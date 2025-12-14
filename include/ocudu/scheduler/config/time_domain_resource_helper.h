@@ -17,9 +17,14 @@ struct pdcch_config;
 
 namespace time_domain_resource_helper {
 
+/// Maximum K1 candidates in a dl-DataToUL-ACK list.
+static constexpr unsigned MAX_K1_CANDIDATES = 8;
+
 /// \brief Generate the list of available k1 candidates for PDSCH-to-HARQ timing for TDD operation.
-static_vector<uint8_t, 8> generate_k1_candidates(const tdd_ul_dl_config_common& tdd_cfg, uint8_t min_k1);
-static_vector<uint8_t, 8> generate_k1_candidates(const std::optional<tdd_ul_dl_config_common>& tdd_cfg, uint8_t min_k1);
+static_vector<uint8_t, MAX_K1_CANDIDATES> generate_k1_candidates(const tdd_ul_dl_config_common& tdd_cfg,
+                                                                 uint8_t                        min_k1);
+static_vector<uint8_t, MAX_K1_CANDIDATES> generate_k1_candidates(const std::optional<tdd_ul_dl_config_common>& tdd_cfg,
+                                                                 uint8_t                                       min_k1);
 
 /// \brief Computes the minimum symbol available for PDSCH, considering that they won't collide with the symbols
 /// reserved for PDCCH in the slot.

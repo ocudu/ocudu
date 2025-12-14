@@ -20,9 +20,8 @@ static_vector<uint8_t, 8> time_domain_resource_helper::generate_k1_candidates(co
   // of slot timing values {1, 2, 3, 4, 5, 6, 7, 8} and the set of slot timing values provided by dl-DataToUL-ACK for
   // the active DL BWP of a corresponding serving cell.
 
-  static constexpr unsigned MAX_K1_CANDIDATES = 8;
-  const unsigned            tdd_period        = nof_slots_per_tdd_period(tdd_cfg);
-  unsigned nof_dl_slots = tdd_cfg.pattern1.nof_dl_slots + (tdd_cfg.pattern1.nof_dl_symbols > 0 ? 1 : 0);
+  const unsigned tdd_period   = nof_slots_per_tdd_period(tdd_cfg);
+  unsigned       nof_dl_slots = tdd_cfg.pattern1.nof_dl_slots + (tdd_cfg.pattern1.nof_dl_symbols > 0 ? 1 : 0);
   if (tdd_cfg.pattern2.has_value()) {
     nof_dl_slots += tdd_cfg.pattern2->nof_dl_slots + (tdd_cfg.pattern2->nof_dl_symbols > 0 ? 1 : 0);
   }
