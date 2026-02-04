@@ -87,10 +87,17 @@ constexpr Integer log2_ceil(Integer value)
   static_assert(std::is_unsigned_v<Integer>, "log2_ceil only works for unsigned integers");
 
   // Avoid unbounded results.
-  if (value == 0) {
+  if (value <= 0) {
     return 0;
   }
-  return static_cast<Integer>(std::ceil(std::log2(static_cast<float>(value))));
+
+  Integer result = 0;
+  Integer v      = value - 1;
+  while (v > 0) {
+    v >>= 1U;
+    ++result;
+  }
+  return result;
 }
 
 /// \brief Converts a value in decibels to linear amplitude ratio
