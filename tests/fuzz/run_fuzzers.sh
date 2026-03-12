@@ -16,6 +16,7 @@
 #                                     ofh_ecpri_decoder_fuzzer
 #                                     ofh_vlan_frame_decoder_fuzzer
 #                                     ngap_pdu_decoder_fuzzer
+#                                     ngap_cu_cp_fuzzer
 #
 # Exit status
 # -----------
@@ -34,6 +35,7 @@ declare -A ALL_TARGETS=(
     ["ofh_ecpri_decoder_fuzzer"]="ecpri"
     ["ofh_vlan_frame_decoder_fuzzer"]="vlan"
     ["ngap_pdu_decoder_fuzzer"]="ngap"
+    ["ngap_cu_cp_fuzzer"]="ngap_cu_cp"
 )
 
 # Optionally restrict which targets run.

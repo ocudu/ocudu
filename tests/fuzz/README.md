@@ -27,9 +27,10 @@ tests/fuzz/
 └── ngap/
     ├── CMakeLists.txt
     ├── ngap_pdu_decoder_fuzzer.cpp         targets: NGAP ASN.1 PDU decoder
+    ├── ngap_cu_cp_fuzzer.cpp               targets: full CU-CP NGAP receive stack
     ├── gen_corpus.py                       generates initial seed corpus
     └── corpus/
-        └── ngap/     seed inputs for the NGAP fuzzer
+        └── ngap/     seed inputs for both NGAP fuzzers
 ```
 
 ### What each harness covers
@@ -40,6 +41,7 @@ tests/fuzz/
 | `ofh_ecpri_decoder_fuzzer` | Both `packet_decoder_use_header_payload_size` and `packet_decoder_ignore_header_payload_size` | Single corpus covers both code paths |
 | `ofh_vlan_frame_decoder_fuzzer` | `vlan_frame_decoder::decode()` | Exercises MAC address and Ethertype parsing |
 | `ngap_pdu_decoder_fuzzer` | `asn1::ngap::ngap_pdu_c::unpack()` | Mirrors `ngap_asn1_packer::handle_packed_pdu()`; covers all three PDU types and every reachable IE parser |
+| `ngap_cu_cp_fuzzer` | Full CU-CP NGAP receive path: decode → validate → procedure dispatch → response | Spins up a real CU-CP with stub AMF/XnC gateways; exercises procedure state-machines, validators and response generators |
 
 ---
 
@@ -188,7 +190,7 @@ The script writes binary seed files into the three corpus sub-directories.
 ### Prepare output directories
 
 ```bash
-mkdir -p findings/uplane findings/ecpri findings/vlan findings/ngap
+mkdir -p findings/uplane findings/ecpri findings/vlan findings/ngap findings/ngap_cu_cp
 ```
 
 ### U-Plane decoder fuzzer
@@ -228,6 +230,22 @@ afl-fuzz \
     -o findings/ngap \
     -- ./build_fuzz/tests/fuzz/ngap/ngap_pdu_decoder_fuzzer @@
 ```
+
+### NGAP full-stack CU-CP fuzzer
+
+```bash
+mkdir -p findings/ngap_cu_cp
+# Recommended: persistent mode for higher throughput (CU-CP stays alive across iterations)
+AFL_FAST_CAL=1 afl-fuzz \
+    -i tests/fuzz/ngap/corpus/ngap \
+    -o findings/ngap_cu_cp \
+    -- ./build_fuzz/tests/fuzz/ngap/ngap_cu_cp_fuzzer @@
+```
+
+> **Note:** The CU-CP state is initialised lazily on the first `LLVMFuzzerTestOneInput` call so
+> that AFL++ forking does not inherit live threads.  In standard fork mode each child re-runs the
+> NG Setup handshake before processing its input; `AFL_FAST_CAL=1` (persistent mode) or libFuzzer
+> are strongly recommended for throughput.
 
 ### Running in parallel (recommended)
 
@@ -475,7 +493,7 @@ cmake -B build_fuzz -DENABLE_FUZZTESTS=ON -DENABLE_ASAN=ON \
     -DCMAKE_CXX_COMPILER=afl-clang-fast++ -DCMAKE_BUILD_TYPE=Debug .
 cmake --build build_fuzz --target \
     ofh_uplane_decoder_fuzzer ofh_ecpri_decoder_fuzzer ofh_vlan_frame_decoder_fuzzer \
-    ngap_pdu_decoder_fuzzer
+    ngap_pdu_decoder_fuzzer ngap_cu_cp_fuzzer
 
 # Copy binaries to PATH
 sudo cp build_fuzz/tests/fuzz/ofh/ofh_*_fuzzer /usr/local/bin/

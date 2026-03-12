@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
-# Single-stage image for OFH fuzz testing with AFL++.
+# Single-stage image for OFH and NGAP/CU-CP fuzz testing with AFL++.
 #
 # A single stage is used so that the AFL++/clang ASAN runtime libraries are
 # always co-located with the compiled fuzz binaries.  Multi-stage builds risk
@@ -89,7 +89,8 @@ RUN ninja -C /build \
         ofh_uplane_decoder_fuzzer \
         ofh_ecpri_decoder_fuzzer \
         ofh_vlan_frame_decoder_fuzzer \
-        ngap_pdu_decoder_fuzzer
+        ngap_pdu_decoder_fuzzer \
+        ngap_cu_cp_fuzzer
 
 # Install binaries to a standard PATH location.
 RUN cp \
@@ -97,6 +98,7 @@ RUN cp \
         /build/tests/fuzz/ofh/ofh_ecpri_decoder_fuzzer \
         /build/tests/fuzz/ofh/ofh_vlan_frame_decoder_fuzzer \
         /build/tests/fuzz/ngap/ngap_pdu_decoder_fuzzer \
+        /build/tests/fuzz/ngap/ngap_cu_cp_fuzzer \
         /usr/local/bin/
 
 # ---------------------------------------------------------------------------

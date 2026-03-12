@@ -16,3 +16,26 @@ target_link_libraries(ngap_pdu_decoder_fuzzer
     ${FUZZ_SANITIZER_FLAGS_LINK}
 )
 target_compile_options(ngap_pdu_decoder_fuzzer PRIVATE ${FUZZ_SANITIZER_FLAGS_COMPILE})
+
+# ---------------------------------------------------------------------------
+# Full-stack NGAP / CU-CP fuzzer
+#
+# Spins up a complete CU-CP instance and injects fuzz inputs through the NGAP
+# message dispatcher so that all procedure state-machines, validators, and
+# response generators are exercised on every iteration.
+#
+# Note: AFL++ fork mode will recreate the CU-CP in each child process because
+# the state is lazily initialised inside LLVMFuzzerTestOneInput.  For higher
+# throughput use AFL++ persistent mode (AFL_FAST_CAL=1) or libFuzzer, both of
+# which keep the CU-CP alive across iterations.
+# ---------------------------------------------------------------------------
+add_executable(ngap_cu_cp_fuzzer ngap_cu_cp_fuzzer.cpp)
+target_include_directories(ngap_cu_cp_fuzzer PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(ngap_cu_cp_fuzzer
+    ocudu_cu_cp
+    ngap_asn1
+    ocudu_support
+    ocudulog
+    ${FUZZ_SANITIZER_FLAGS_LINK}
+)
+target_compile_options(ngap_cu_cp_fuzzer PRIVATE ${FUZZ_SANITIZER_FLAGS_COMPILE})
