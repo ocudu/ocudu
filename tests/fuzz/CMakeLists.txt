@@ -29,3 +29,4 @@ endif ()
 message(STATUS "Fuzz sanitizer flags: ${FUZZ_SANITIZER_FLAGS_COMPILE}")
 
 add_subdirectory(ofh)
+add_subdirectory(ngap)

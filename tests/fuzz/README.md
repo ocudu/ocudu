@@ -1,9 +1,10 @@
-# OFH Fuzz Test Harnesses
+# Fuzz Test Harnesses
 
 Coverage-guided fuzz testing for the Open Fronthaul (OFH) packet-parsing
-stack, targeting [AFL++](https://github.com/AFLplusplus/AFLplusplus).  The
-harnesses use the `LLVMFuzzerTestOneInput` interface so they also run
-unmodified under [libFuzzer](https://llvm.org/docs/LibFuzzer.html).
+stack and the NGAP ASN.1 PDU decoder, targeting
+[AFL++](https://github.com/AFLplusplus/AFLplusplus).  The harnesses use the
+`LLVMFuzzerTestOneInput` interface so they also run unmodified under
+[libFuzzer](https://llvm.org/docs/LibFuzzer.html).
 
 ---
 
@@ -13,16 +14,22 @@ unmodified under [libFuzzer](https://llvm.org/docs/LibFuzzer.html).
 tests/fuzz/
 ├── README.md                               (this file)
 ├── CMakeLists.txt
-└── ofh/
+├── ofh/
+│   ├── CMakeLists.txt
+│   ├── ofh_uplane_decoder_fuzzer.cpp       targets: OFH U-Plane message decoder
+│   ├── ofh_ecpri_decoder_fuzzer.cpp        targets: eCPRI packet decoder
+│   ├── ofh_vlan_frame_decoder_fuzzer.cpp   targets: VLAN Ethernet frame decoder
+│   ├── gen_corpus.py                       generates initial seed corpus
+│   └── corpus/
+│       ├── uplane/   seed inputs for the U-Plane fuzzer
+│       ├── ecpri/    seed inputs for the eCPRI fuzzer
+│       └── vlan/     seed inputs for the VLAN fuzzer
+└── ngap/
     ├── CMakeLists.txt
-    ├── ofh_uplane_decoder_fuzzer.cpp       targets: OFH U-Plane message decoder
-    ├── ofh_ecpri_decoder_fuzzer.cpp        targets: eCPRI packet decoder
-    ├── ofh_vlan_frame_decoder_fuzzer.cpp   targets: VLAN Ethernet frame decoder
+    ├── ngap_pdu_decoder_fuzzer.cpp         targets: NGAP ASN.1 PDU decoder
     ├── gen_corpus.py                       generates initial seed corpus
     └── corpus/
-        ├── uplane/   seed inputs for the U-Plane fuzzer
-        ├── ecpri/    seed inputs for the eCPRI fuzzer
-        └── vlan/     seed inputs for the VLAN fuzzer
+        └── ngap/     seed inputs for the NGAP fuzzer
 ```
 
 ### What each harness covers
@@ -32,6 +39,7 @@ tests/fuzz/
 | `ofh_uplane_decoder_fuzzer` | `uplane_message_decoder_static_compression_impl::decode()` + peek helpers | No-op IQ decompressor keeps focus on parsing |
 | `ofh_ecpri_decoder_fuzzer` | Both `packet_decoder_use_header_payload_size` and `packet_decoder_ignore_header_payload_size` | Single corpus covers both code paths |
 | `ofh_vlan_frame_decoder_fuzzer` | `vlan_frame_decoder::decode()` | Exercises MAC address and Ethertype parsing |
+| `ngap_pdu_decoder_fuzzer` | `asn1::ngap::ngap_pdu_c::unpack()` | Mirrors `ngap_asn1_packer::handle_packed_pdu()`; covers all three PDU types and every reachable IE parser |
 
 ---
 
@@ -111,7 +119,8 @@ cmake .. \
 make -j$(nproc) \
     ofh_uplane_decoder_fuzzer \
     ofh_ecpri_decoder_fuzzer \
-    ofh_vlan_frame_decoder_fuzzer
+    ofh_vlan_frame_decoder_fuzzer \
+    ngap_pdu_decoder_fuzzer
 ```
 
 `ENABLE_ASAN=ON` adds `-fsanitize=address` on top of the fuzzer
@@ -179,7 +188,7 @@ The script writes binary seed files into the three corpus sub-directories.
 ### Prepare output directories
 
 ```bash
-mkdir -p findings/uplane findings/ecpri findings/vlan
+mkdir -p findings/uplane findings/ecpri findings/vlan findings/ngap
 ```
 
 ### U-Plane decoder fuzzer
@@ -207,6 +216,17 @@ afl-fuzz \
     -i tests/fuzz/ofh/corpus/vlan \
     -o findings/vlan \
     -- ./build_fuzz/tests/fuzz/ofh/ofh_vlan_frame_decoder_fuzzer @@
+```
+
+### NGAP PDU decoder fuzzer
+
+```bash
+python3 tests/fuzz/ngap/gen_corpus.py   # generate seeds (only needed once)
+mkdir -p findings/ngap
+afl-fuzz \
+    -i tests/fuzz/ngap/corpus/ngap \
+    -o findings/ngap \
+    -- ./build_fuzz/tests/fuzz/ngap/ngap_pdu_decoder_fuzzer @@
 ```
 
 ### Running in parallel (recommended)
@@ -415,6 +435,8 @@ build-fuzz-image:
     - changes:
         - tests/fuzz/**/*
         - lib/ofh/**/*
+        - lib/asn1/ngap/**/*
+        - lib/ngap/**/*
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker build -f tests/fuzz/Dockerfile -t $FUZZ_IMAGE .
@@ -452,7 +474,8 @@ first:
 cmake -B build_fuzz -DENABLE_FUZZTESTS=ON -DENABLE_ASAN=ON \
     -DCMAKE_CXX_COMPILER=afl-clang-fast++ -DCMAKE_BUILD_TYPE=Debug .
 cmake --build build_fuzz --target \
-    ofh_uplane_decoder_fuzzer ofh_ecpri_decoder_fuzzer ofh_vlan_frame_decoder_fuzzer
+    ofh_uplane_decoder_fuzzer ofh_ecpri_decoder_fuzzer ofh_vlan_frame_decoder_fuzzer \
+    ngap_pdu_decoder_fuzzer
 
 # Copy binaries to PATH
 sudo cp build_fuzz/tests/fuzz/ofh/ofh_*_fuzzer /usr/local/bin/

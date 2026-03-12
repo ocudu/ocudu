@@ -84,25 +84,30 @@ RUN cmake -S /src -B /build \
         -DENABLE_BACKWARD=OFF \
         -DENABLE_WERROR=OFF
 
-# Build only the three OFH fuzz targets – no need to build the full project.
+# Build OFH and NGAP fuzz targets – no need to build the full project.
 RUN ninja -C /build \
         ofh_uplane_decoder_fuzzer \
         ofh_ecpri_decoder_fuzzer \
-        ofh_vlan_frame_decoder_fuzzer
+        ofh_vlan_frame_decoder_fuzzer \
+        ngap_pdu_decoder_fuzzer
 
 # Install binaries to a standard PATH location.
 RUN cp \
         /build/tests/fuzz/ofh/ofh_uplane_decoder_fuzzer \
         /build/tests/fuzz/ofh/ofh_ecpri_decoder_fuzzer \
         /build/tests/fuzz/ofh/ofh_vlan_frame_decoder_fuzzer \
+        /build/tests/fuzz/ngap/ngap_pdu_decoder_fuzzer \
         /usr/local/bin/
 
 # ---------------------------------------------------------------------------
 # Seed corpus
 # ---------------------------------------------------------------------------
 RUN python3 /src/tests/fuzz/ofh/gen_corpus.py
-# Corpus lands in /src/tests/fuzz/ofh/corpus; copy to a stable path.
-RUN cp -r /src/tests/fuzz/ofh/corpus /corpus
+RUN python3 /src/tests/fuzz/ngap/gen_corpus.py
+# Corpora land alongside their gen_corpus.py scripts; merge to a stable path.
+RUN mkdir -p /corpus && \
+    cp -r /src/tests/fuzz/ofh/corpus/* /corpus/ && \
+    cp -r /src/tests/fuzz/ngap/corpus/* /corpus/
 
 # ---------------------------------------------------------------------------
 # Entrypoint
