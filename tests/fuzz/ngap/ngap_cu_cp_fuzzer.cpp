@@ -203,7 +203,7 @@ public:
 
 struct fuzz_state {
   /// Background thread that runs CU-CP tasks (matches production/unit-test setup).
-  task_worker                    worker{"ngap_fuzz_worker", 1024};
+  task_worker                    worker{"ngap_fuzz_workr", 1024};
   std::unique_ptr<task_executor> exec{std::make_unique<task_worker_executor>(worker)};
 
   timer_manager    timers{64};
