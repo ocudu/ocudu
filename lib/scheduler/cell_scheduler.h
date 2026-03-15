@@ -12,6 +12,7 @@
 #include "common_scheduling/si_scheduler.h"
 #include "common_scheduling/ssb_scheduler.h"
 #include "config/cell_configuration.h"
+#include "logging/cell_event_tracer.h"
 #include "logging/cell_metrics_handler.h"
 #include "logging/scheduler_event_logger.h"
 #include "logging/scheduler_result_logger.h"
@@ -77,9 +78,10 @@ private:
   /// Logger of cell events and scheduling results.
   scheduler_event_logger event_logger;
   /// Sink for the slot metrics of this cell. Owned here so that its lifetime matches the cell.
-  cell_metrics_handler    metrics;
-  scheduler_result_logger result_logger;
-  ocudulog::basic_logger& logger;
+  cell_metrics_handler                           metrics;
+  scheduler_result_logger                        result_logger;
+  std::unique_ptr<schedtrace::cell_event_tracer> cell_tracer;
+  ocudulog::basic_logger&                        logger;
 
   ssb_scheduler                 ssb_sch;
   pdcch_resource_allocator_impl pdcch_sch;
