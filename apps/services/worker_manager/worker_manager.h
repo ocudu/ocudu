@@ -90,6 +90,7 @@ struct worker_manager {
   task_executor& get_cmd_line_executor() const { return *non_rt_medium_prio_exec; }
   task_executor& get_timer_source_executor() const { return *timer_source_exec; }
   task_executor& get_metrics_executor() const { return *metrics_exec; }
+  task_executor& get_trace_executor() const { return *non_rt_low_prio_exec; }
 
 private:
   ocudulog::basic_logger& app_logger;

@@ -126,8 +126,27 @@ static void configure_cli11_log_args(CLI::App& app, du_high_unit_logger_config& 
 
 static void configure_cli11_trace_args(CLI::App& app, du_high_unit_tracer_config& config)
 {
-  CLI::App* layers_subcmd = add_subcommand(app, "layers", "Layer basis tracing configuration")->configurable();
-  add_option(*layers_subcmd, "--du_high_enable", config.executor_tracing_enable, "Enable tracing for DU-high executors")
+  CLI::App* layers_subcmd =
+      add_subcommand(app, "layers", "Layer basis execution tracing configuration")->configurable();
+  add_option(
+      *layers_subcmd, "--du_high_enable", config.executor_tracing_enabled, "Enable tracing for DU-high executors")
+      ->capture_default_str();
+
+  CLI::App* schedtrace_subcmd = add_subcommand(app, "schedtrace", "MAC scheduler event and decision tracing");
+  add_option(*schedtrace_subcmd,
+             "--enabled",
+             config.schedtrace.enabled,
+             "Enable schedtrace for tracing MAC scheduler events and decisions")
+      ->capture_default_str();
+  add_option(*schedtrace_subcmd,
+             "--path",
+             config.schedtrace.path,
+             "Directory where schedtrace files will be stored. One file is generated per cell.")
+      ->capture_default_str();
+  add_option(*schedtrace_subcmd,
+             "--flush_period_ms",
+             config.schedtrace.flush_period_ms,
+             "Periodicity in milliseconds at which schedtrace file writing takes place")
       ->capture_default_str();
 }
 
@@ -2829,7 +2848,7 @@ void ocudu::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_pa
   configure_cli11_log_args(*log_subcmd, parsed_cfg.config.loggers);
 
   // Trace section.
-  CLI::App* trace_subcmd = add_subcommand(app, "trace", "General tracer configuration")->configurable();
+  CLI::App* trace_subcmd = add_subcommand(app, "trace", "General tracing configuration")->configurable();
   configure_cli11_trace_args(*trace_subcmd, parsed_cfg.config.tracer);
 
   // Metrics section.

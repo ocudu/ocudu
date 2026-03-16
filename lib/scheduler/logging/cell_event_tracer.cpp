@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
-#include "cell_event_tracer.h"
-#include "ocudu/ocudulog/ocudulog.h"
-
 #ifndef OCUDU_HAS_SCHEDTRACE
 
-using namespace ocudu::schedtrace;
+#include "cell_event_tracer.h"
+#include "ocudu/instrumentation/traces/scheduler_event_tracer.h"
+#include "ocudu/ocudulog/ocudulog.h"
+
+using namespace ocudu;
+using namespace schedtrace;
 
 cell_event_tracer::cell_event_tracer() :
   cell_index(INVALID_DU_CELL_INDEX), logger(ocudulog::fetch_basic_logger("SCHED"))
@@ -40,6 +42,19 @@ std::unique_ptr<cell_event_tracer> ocudu::schedtrace::create_cell_tracer(du_cell
                                                                          const bwp_configuration& ul_bwp)
 {
   return std::make_unique<cell_event_tracer>();
+}
+
+void schedtrace::init_tracer(const std::string&        base_path,
+                             std::chrono::milliseconds flush_period,
+                             timer_manager&            timers,
+                             task_executor&            pool_executor)
+{
+  // Do nothing.
+}
+
+void schedtrace::close_tracer()
+{
+  // Do nothing.
 }
 
 #endif

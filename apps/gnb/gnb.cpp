@@ -39,6 +39,7 @@
 #include "ocudu/f1ap/gateways/f1c_local_connector_factory.h"
 #include "ocudu/f1u/local_connector/f1u_local_connector.h"
 #include "ocudu/gtpu/gtpu_teid_pool_factory.h"
+#include "ocudu/instrumentation/traces/scheduler_event_tracer.h"
 #include "ocudu/ngap/gateways/n2_connection_client_factory.h"
 #include "ocudu/support/backtrace.h"
 #include "ocudu/support/config_parsers.h"
@@ -400,6 +401,15 @@ int main(int argc, char** argv)
   flexible_o_du_pcaps du_pcaps = create_o_du_pcaps(
       o_du_app_unit->get_o_du_high_unit_config(), workers.get_du_pcap_executors(), cleanup_signal_dispatcher);
   auto on_pcap_close_init = make_scope_exit([&gnb_logger]() { gnb_logger.info("Closing PCAP files..."); });
+
+  // Initiate schedtrace, if enabled.
+  if (o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config.tracer.schedtrace.enabled) {
+    auto& schedtrace_cfg = o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config.tracer.schedtrace;
+    schedtrace::init_tracer(schedtrace_cfg.path,
+                            std::chrono::milliseconds{schedtrace_cfg.flush_period_ms},
+                            app_timers,
+                            workers.get_trace_executor());
+  }
 
   // Create XN-C GWs. (TODO cleanup port and PPID args with factory)
   cu_cp_unit_config cp_unit_cfg = o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg;

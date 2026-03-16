@@ -57,9 +57,17 @@ static void fill_du_high_log_section(YAML::Node node, const du_high_unit_logger_
   node["f1ap_json_enabled"]                = config.f1ap_json_enabled;
 }
 
+static void fill_schedtrace_section(YAML::Node node, const du_high_schedtrace_config& config)
+{
+  node["enabled"]         = config.enabled;
+  node["path"]            = config.path;
+  node["flush_period_ms"] = config.flush_period_ms;
+}
+
 static void fill_du_high_tracer_layers_section(YAML::Node node, const du_high_unit_tracer_config& config)
 {
-  node["du_high_enable"] = config.executor_tracing_enable;
+  node["du_high_enable"] = config.executor_tracing_enabled;
+  fill_schedtrace_section(node["schedtrace"], config.schedtrace);
 }
 
 static void fill_du_high_trace_section(YAML::Node node, const du_high_unit_tracer_config& config)

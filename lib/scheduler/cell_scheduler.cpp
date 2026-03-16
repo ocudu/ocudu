@@ -107,6 +107,7 @@ void cell_scheduler::run_slot(slot_point_extended sl_tx_ext)
 
   // > Log the scheduler results.
   result_logger.on_scheduler_result(last_result(), slot_dur);
+  cell_tracer->on_scheduler_result(sl_tx, last_result(), slot_dur);
 
   // > Push the scheduler results to the metrics handler.
   metrics.push_result(sl_tx_ext, last_result(), slot_dur);

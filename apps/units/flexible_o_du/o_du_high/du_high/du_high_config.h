@@ -61,10 +61,24 @@ struct du_high_unit_logger_config {
   bool high_latency_diagnostics_enabled = false;
 };
 
+/// Configuration of schedtrace, to trace scheduler events and decisions.
+struct du_high_schedtrace_config {
+  /// Whether to enable tracing of scheduler events and decisions.
+  bool enabled = false;
+  /// \brief Directory where schedtrace files will be stored.
+  ///
+  /// One file will be generated per active cell.
+  std::string path = "/tmp";
+  /// Period at which pending events are flushed into schedtrace file.
+  unsigned flush_period_ms = 50;
+};
+
 /// DU high tracing functionalities.
 struct du_high_unit_tracer_config {
   /// \brief Whether to enable tracing of the DU-high executors.
-  bool executor_tracing_enable = false;
+  bool executor_tracing_enabled = false;
+  /// MAC scheduler event and decision making tracing.
+  du_high_schedtrace_config schedtrace;
 };
 
 /// Timing Advance MAC CE scheduling expert configuration.
