@@ -4,9 +4,20 @@
 
 #pragma once
 
-#include "ocudu/ocudulog/ocudulog.h"
+#include "ocudu/ocudulog/logger.h"
+#include "ocudu/ran/du_types.h"
+#include "ocudu/ran/harq_id.h"
+#include "ocudu/ran/logical_channel/bsr_format.h"
+#include "ocudu/ran/pci.h"
 #include "ocudu/ran/pusch/pusch_tpmi_select.h"
-#include "ocudu/scheduler/mac_scheduler.h"
+#include "ocudu/ran/rnti.h"
+#include "ocudu/ran/slot_point.h"
+#include "ocudu/scheduler/input/uci_inputs.h"
+#include "ocudu/scheduler/scheduler_configurator.h"
+#include "ocudu/scheduler/scheduler_dl_buffer_state_indication_handler.h"
+#include "ocudu/scheduler/scheduler_feedback_handler.h"
+#include "ocudu/scheduler/scheduler_rach_handler.h"
+#include "ocudu/scheduler/scheduler_slot_handler.h"
 
 namespace ocudu {
 
@@ -47,25 +58,6 @@ public:
     harq_id_t            h_id;
     bool                 crc;
     std::optional<float> ul_sinr_db;
-  };
-  struct harq_ack_event {
-    du_ue_index_t              ue_index;
-    rnti_t                     rnti;
-    du_cell_index_t            cell_index;
-    slot_point                 sl_ack_rx;
-    harq_id_t                  h_id;
-    mac_harq_ack_report_status ack;
-    units::bytes               tbs;
-  };
-  struct sr_event {
-    du_ue_index_t ue_index;
-    rnti_t        rnti;
-  };
-  struct csi_report_event {
-    du_ue_index_t   ue_index;
-    rnti_t          rnti;
-    slot_point      sl_rx;
-    csi_report_data csi;
   };
   struct bsr_event {
     du_ue_index_t          ue_index;

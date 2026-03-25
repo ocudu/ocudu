@@ -5,6 +5,7 @@
 #include "scheduler_event_logger.h"
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/adt/type_list_buffer.h"
+#include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/csi_report/csi_report_formatters.h"
 #include "ocudu/ran/pusch/pusch_tpmi_formatter.h"
 #include "ocudu/support/format/custom_formattable.h"
@@ -30,10 +31,10 @@ using slot_event_buffer = type_list_buffer_stream<cell_creation_event,
                                                   sel::ue_cfg_applied_event,
                                                   sel::ue_deactivation_event,
                                                   sel::error_indication_event,
-                                                  sel::sr_event,
-                                                  sel::csi_report_event,
+                                                  sr_event,
+                                                  csi_report_event,
                                                   sel::bsr_event,
-                                                  sel::harq_ack_event,
+                                                  harq_ack_event,
                                                   sel::crc_event,
                                                   dl_mac_ce_indication,
                                                   dl_buffer_state_indication_message,
@@ -128,9 +129,9 @@ void format_debug_level(FormatContext& ctx, const Event& ev)
                    ev.outcome.pdcch_discarded ? ", PDCCH discarded" : "",
                    ev.outcome.pdsch_discarded ? ", PDSCH discarded" : "",
                    ev.outcome.pusch_and_pucch_discarded ? ", PUSCH and PUCCH discarded" : "");
-  } else if constexpr (std::is_same_v<Event, sel::sr_event>) {
+  } else if constexpr (std::is_same_v<Event, sr_event>) {
     fmt::format_to(ctx.out(), "\n- SR: ue={} rnti={}", fmt::underlying(ev.ue_index), ev.rnti);
-  } else if constexpr (std::is_same_v<Event, sel::csi_report_event>) {
+  } else if constexpr (std::is_same_v<Event, csi_report_event>) {
     fmt::format_to(ctx.out(), "\n- CSI: ue={} rnti={}: slot_rx={}", fmt::underlying(ev.ue_index), ev.rnti, ev.sl_rx);
     if (not ev.csi.first_tb_wideband_cqi.has_value() and not ev.csi.ri.has_value() and not ev.csi.pmi.has_value()) {
       fmt::format_to(ctx.out(), " invalid");
@@ -175,7 +176,7 @@ void format_debug_level(FormatContext& ctx, const Event& ev)
       }
     }
     fmt::format_to(ctx.out(), "}} pending_bytes={}", ev.tot_ul_pending_bytes);
-  } else if constexpr (std::is_same_v<Event, sel::harq_ack_event>) {
+  } else if constexpr (std::is_same_v<Event, harq_ack_event>) {
     fmt::format_to(ctx.out(),
                    "\n- HARQ-ACK: ue={} rnti={} slot_rx={} h_id={} ack={}",
                    fmt::underlying(ev.ue_index),

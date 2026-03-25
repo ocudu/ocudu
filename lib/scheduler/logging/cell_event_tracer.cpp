@@ -35,7 +35,10 @@ void cell_event_tracer::on_scheduler_result_impl(slot_point                sl,
 {
 }
 
-void cell_event_tracer::on_event_impl(const rach_indication_message& /*prach*/) {}
+void cell_event_tracer::on_event_impl(const rach_indication_message& /*unused*/) {}
+void cell_event_tracer::on_event_impl(const harq_ack_event& /*unused*/) {}
+void cell_event_tracer::on_event_impl(const csi_report_event& /*unused*/) {}
+void cell_event_tracer::on_event_impl(const sr_event& /*unused*/) {}
 
 std::unique_ptr<cell_event_tracer> ocudu::schedtrace::create_cell_tracer(du_cell_index_t          cell_idx,
                                                                          const bwp_configuration& dl_bwp,

@@ -26,7 +26,8 @@ ue_cell_scheduler* ue_scheduler_impl::do_add_cell(const ue_cell_scheduler_creati
                                                        cell.srs_sched,
                                                        cell.uci_selector,
                                                        *params.cell_metrics,
-                                                       *params.ev_logger});
+                                                       *params.ev_logger,
+                                                       *params.cell_tracer});
 
   return &cell;
 }

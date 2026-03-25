@@ -67,12 +67,12 @@ static void fill_schedtrace_section(YAML::Node node, const du_high_schedtrace_co
 static void fill_du_high_tracer_layers_section(YAML::Node node, const du_high_unit_tracer_config& config)
 {
   node["du_high_enable"] = config.executor_tracing_enabled;
-  fill_schedtrace_section(node["schedtrace"], config.schedtrace);
 }
 
 static void fill_du_high_trace_section(YAML::Node node, const du_high_unit_tracer_config& config)
 {
   fill_du_high_tracer_layers_section(node["layers"], config);
+  fill_schedtrace_section(node["schedtrace"], config.schedtrace);
 }
 
 static YAML::Node build_du_section(const du_high_unit_config& config)

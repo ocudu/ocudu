@@ -32,8 +32,15 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   pg_sch(cell_cfg, pdcch_sch)
 {
   // Register new cell in the UE scheduler.
-  ue_sched = ue_sched_.add_cell(ue_cell_scheduler_creation_request{
-      msg.cell_index, &pdcch_sch, &pucch_alloc, &uci_alloc, &srs_alloc, &res_grid, &metrics, &event_logger});
+  ue_sched = ue_sched_.add_cell(ue_cell_scheduler_creation_request{msg.cell_index,
+                                                                   &pdcch_sch,
+                                                                   &pucch_alloc,
+                                                                   &uci_alloc,
+                                                                   &srs_alloc,
+                                                                   &res_grid,
+                                                                   &metrics,
+                                                                   &event_logger,
+                                                                   cell_tracer.get()});
 }
 
 void cell_scheduler::handle_si_update_request(const si_scheduling_update_request& msg)

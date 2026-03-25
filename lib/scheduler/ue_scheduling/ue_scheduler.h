@@ -4,10 +4,14 @@
 
 #pragma once
 
+#include "../logging/cell_event_tracer.h"
 #include "../pucch_scheduling/pucch_allocator.h"
+#include "../srs/srs_allocator.h"
 #include "../uci_scheduling/uci_allocator.h"
-#include "ocudu/scheduler/scheduler_configurator.h"
+#include "ocudu/scheduler/scheduler_dl_buffer_state_indication_handler.h"
+#include "ocudu/scheduler/scheduler_feedback_handler.h"
 #include "ocudu/scheduler/scheduler_positioning_handler.h"
+#include "ocudu/scheduler/scheduler_slot_handler.h"
 
 namespace ocudu {
 
@@ -34,6 +38,8 @@ struct ue_cell_scheduler_creation_request {
   cell_metrics_handler* cell_metrics;
   /// Logger of events for the cell.
   scheduler_event_logger* ev_logger;
+  /// Tracer of events for the cell.
+  schedtrace::cell_event_tracer* cell_tracer;
 };
 
 /// Handler of UE grant scheduling for a given cell.

@@ -7,6 +7,7 @@
 #include "ocudu/ocudulog/logger.h"
 #include "ocudu/ran/du_types.h"
 #include "ocudu/ran/slot_point.h"
+#include "ocudu/scheduler/input/uci_inputs.h"
 #include "ocudu/support/rtsan.h"
 
 namespace ocudu {
@@ -67,6 +68,15 @@ private:
 
   /// Called on every detected RACH indication.
   void on_event_impl(const rach_indication_message& msg);
+
+  /// Called on every HARQ-ACK event.
+  void on_event_impl(const harq_ack_event& ev);
+
+  /// Called on every SR event.
+  void on_event_impl(const sr_event& ev);
+
+  /// Called on every CSI report event.
+  void on_event_impl(const csi_report_event& ev);
 
   /// The DU-specific index of this cell.
   const du_cell_index_t cell_index;

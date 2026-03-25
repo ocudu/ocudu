@@ -5,8 +5,8 @@
 #pragma once
 
 #include "../config/sched_config_manager.h"
+#include "../logging/cell_event_tracer.h"
 #include "../slicing/inter_slice_scheduler.h"
-#include "../ue_context/ue.h"
 #include "ue_fallback_scheduler.h"
 #include "ocudu/adt/mpmc_queue.h"
 #include "ocudu/adt/unique_function.h"
@@ -25,15 +25,16 @@ class uci_indication_selector;
 struct uci_action;
 
 struct cell_creation_event {
-  cell_resource_allocator& cell_res_grid;
-  ue_cell_repository&      ue_cell_db;
-  ue_fallback_scheduler&   fallback_sched;
-  uci_scheduler_impl&      uci_sched;
-  inter_slice_scheduler&   slice_sched;
-  srs_scheduler&           srs_sched;
-  uci_indication_selector& uci_selector;
-  cell_metrics_handler&    metrics;
-  scheduler_event_logger&  ev_logger;
+  cell_resource_allocator&       cell_res_grid;
+  ue_cell_repository&            ue_cell_db;
+  ue_fallback_scheduler&         fallback_sched;
+  uci_scheduler_impl&            uci_sched;
+  inter_slice_scheduler&         slice_sched;
+  srs_scheduler&                 srs_sched;
+  uci_indication_selector&       uci_selector;
+  cell_metrics_handler&          metrics;
+  scheduler_event_logger&        ev_logger;
+  schedtrace::cell_event_tracer& cell_tracer;
 };
 
 class ue_event_manager;
@@ -150,16 +151,17 @@ private:
   ue_repository&          ue_db;
   ocudulog::basic_logger& logger;
   // cell parameters.
-  const cell_configuration& cfg;
-  cell_resource_allocator&  res_grid;
-  cell_harq_manager&        cell_harqs;
-  ue_fallback_scheduler&    fallback_sched;
-  uci_scheduler_impl&       uci_sched;
-  inter_slice_scheduler&    slice_sched;
-  srs_scheduler&            srs_sched;
-  uci_indication_selector&  uci_selector;
-  cell_metrics_handler&     metrics;
-  scheduler_event_logger&   ev_logger;
+  const cell_configuration&      cfg;
+  cell_resource_allocator&       res_grid;
+  cell_harq_manager&             cell_harqs;
+  ue_fallback_scheduler&         fallback_sched;
+  uci_scheduler_impl&            uci_sched;
+  inter_slice_scheduler&         slice_sched;
+  srs_scheduler&                 srs_sched;
+  uci_indication_selector&       uci_selector;
+  cell_metrics_handler&          metrics;
+  scheduler_event_logger&        ev_logger;
+  schedtrace::cell_event_tracer& ev_tracer;
 
   std::unique_ptr<pdu_indication_pool> ind_pdu_pool;
 

@@ -12,6 +12,7 @@
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
+#include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/scheduler/config/scheduler_expert_config_factory.h"
 
 namespace ocudu {

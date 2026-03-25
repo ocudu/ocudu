@@ -4,7 +4,11 @@
 
 #pragma once
 
+#include "ocudu/adt/static_vector.h"
+#include "ocudu/ran/du_types.h"
+#include "ocudu/ran/phy_time_unit.h"
 #include "ocudu/ran/rnti.h"
+#include "ocudu/ran/slot_pdu_capacity_constants.h"
 #include "ocudu/ran/slot_point.h"
 
 namespace ocudu {

@@ -3,13 +3,12 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ue_event_manager.h"
+#include "../cell/resource_grid.h"
 #include "../logging/cell_metrics_handler.h"
 #include "../logging/scheduler_event_logger.h"
 #include "../srs/srs_scheduler.h"
-#include "../support/sr_helper.h"
 #include "../uci_scheduling/uci_indication_selector.h"
 #include "../uci_scheduling/uci_scheduler_impl.h"
-#include "../ue_scheduling/ue_cell_grid_allocator.h"
 #include "ocudu/scheduler/scheduler_feedback_handler.h"
 #include "ocudu/support/memory_pool/bounded_object_pool.h"
 #include <memory>
@@ -231,6 +230,7 @@ ue_cell_event_manager::ue_cell_event_manager(ue_event_manager&          parent_,
   uci_selector(cell_ev.uci_selector),
   metrics(cell_ev.metrics),
   ev_logger(cell_ev.ev_logger),
+  ev_tracer(cell_ev.cell_tracer),
   ind_pdu_pool(std::make_unique<pdu_indication_pool>(logger)),
   dl_bo_mng(std::make_unique<ue_dl_buffer_occupancy_manager>(*this)),
   pending_events(CELL_EVENT_LIST_SIZE)
@@ -597,7 +597,9 @@ ue_cell_event_manager::event_result ue_cell_event_manager::handle_uci_pdu(slot_p
     }
 
     // Log SR event.
-    ev_logger.enqueue(scheduler_event_logger::sr_event{ue_cc->ue_index, ue_cc->rnti()});
+    sr_event event{ue_cc->ue_index, ue_cc->rnti()};
+    ev_tracer.on_event(event);
+    ev_logger.enqueue(event);
 
     // Report SR to metrics.
     metrics.handle_sr_indication(ue_cc->ue_index, uci_sl);
@@ -628,20 +630,20 @@ ue_cell_event_manager::event_result ue_cell_event_manager::handle_uci_pdu(slot_p
   return event_result::processed;
 }
 
-void ue_cell_event_manager::handle_uci_indication(const uci_indication& ind)
+void ue_cell_event_manager::handle_uci_indication(const uci_indication& uci)
 {
-  for (unsigned i = 0, e = ind.ucis.size(); i != e; ++i) {
-    auto uci_ptr = ind_pdu_pool->create_pdu(ind.ucis[i]);
+  for (unsigned i = 0, e = uci.ucis.size(); i != e; ++i) {
+    auto uci_ptr = ind_pdu_pool->create_pdu(uci.ucis[i]);
     if (uci_ptr == nullptr) {
       return;
     }
 
-    auto uci_handle_impl = [this, uci_sl = ind.slot_rx, uci_pdu = std::move(uci_ptr)]() {
+    auto uci_handle_impl = [this, uci_sl = uci.slot_rx, uci_pdu = std::move(uci_ptr)]() {
       return handle_uci_pdu(uci_sl, *uci_pdu);
     };
-    push_event(ind.cell_index,
+    push_event(uci.cell_index,
                event_t{"UCI",
-                       ind.ucis[i].ue_index,
+                       uci.ucis[i].ue_index,
                        std::move(uci_handle_impl),
                        // Note: We do not warn if the UE is not found, because there is this transient
                        // period when the UE is about to receive and process the RRC Release, but it is
@@ -651,10 +653,10 @@ void ue_cell_event_manager::handle_uci_indication(const uci_indication& ind)
   }
 }
 
-void ue_cell_event_manager::handle_srs_indication(const srs_indication& ind)
+void ue_cell_event_manager::handle_srs_indication(const srs_indication& srs)
 {
-  for (unsigned i = 0, e = ind.srss.size(); i != e; ++i) {
-    const srs_indication::srs_indication_pdu& srs_pdu     = ind.srss[i];
+  for (unsigned i = 0, e = srs.srss.size(); i != e; ++i) {
+    const srs_indication::srs_indication_pdu& srs_pdu     = srs.srss[i];
     auto                                      srs_pdu_ptr = ind_pdu_pool->create_pdu(srs_pdu);
     if (srs_pdu_ptr == nullptr) {
       return;
@@ -696,7 +698,7 @@ void ue_cell_event_manager::handle_srs_indication(const srs_indication& ind)
       return event_result::processed;
     };
 
-    push_event(ind.cell_index, event_t{"SRS", srs_pdu.ue_index, std::move(srs_handle_impl), false});
+    push_event(srs.cell_index, event_t{"SRS", srs_pdu.ue_index, std::move(srs_handle_impl), false});
   }
 }
 
@@ -969,8 +971,9 @@ void ue_cell_event_manager::handle_harq_ind(ue_cell&                            
     const units::bytes tbs{h_dl->get_grant_params().tbs};
 
     // Log Event.
-    ev_logger.enqueue(scheduler_event_logger::harq_ack_event{
-        ue_cc.ue_index, ue_cc.rnti(), ue_cc.cell_index, uci_sl, h_dl->id(), status, tbs});
+    harq_ack_event event{ue_cc.ue_index, ue_cc.rnti(), ue_cc.cell_index, uci_sl, h_dl->id(), status, tbs};
+    ev_tracer.on_event(event);
+    ev_logger.enqueue(event);
 
     // NOTE: this is for the first attachment only. In this case, the first ACK is the one that acks the ConRes or the
     // ConRes + MSG4; there is only 1 HARQ process waiting for ACKs, which acks the ConRes.
@@ -990,7 +993,9 @@ void ue_cell_event_manager::handle_csi(ue_cell& ue_cc, slot_point sl_rx, const c
   ue_cc.handle_csi_report(csi_rep);
 
   // Log event.
-  ev_logger.enqueue(scheduler_event_logger::csi_report_event{ue_cc.ue_index, ue_cc.rnti(), sl_rx, csi_rep});
+  csi_report_event event{ue_cc.ue_index, ue_cc.rnti(), sl_rx, csi_rep};
+  ev_tracer.on_event(event);
+  ev_logger.enqueue(event);
 }
 
 void ue_cell_event_manager::handle_uci_indication_timeout(slot_point uci_slot, rnti_t crnti, const uci_action& action)
@@ -1025,7 +1030,9 @@ void ue_cell_event_manager::handle_uci_indication_timeout(slot_point uci_slot, r
     }
 
     // Log SR event.
-    ev_logger.enqueue(scheduler_event_logger::sr_event{ue_cc->ue_index, ue_cc->rnti()});
+    sr_event event{ue_cc->ue_index, ue_cc->rnti()};
+    ev_tracer.on_event(event);
+    ev_logger.enqueue(event);
 
     // Report SR to metrics.
     metrics.handle_sr_indication(ue_cc->ue_index, uci_slot);
