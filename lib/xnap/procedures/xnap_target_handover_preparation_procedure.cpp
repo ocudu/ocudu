@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "xnap_target_handover_preparation_procedure.h"
+#include "../xnap_asn1_converters.h"
 #include "xn_handover_asn1_helpers.h"
 #include "ocudu/asn1/xnap/common.h"
 #include "ocudu/asn1/xnap/xnap_pdu_contents.h"
@@ -75,7 +76,9 @@ void xnap_target_handover_preparation_procedure::operator()(coro_context<async_t
 
   logger.debug("ue={}: \"{}\" finished successfully", ho_ack.ue_index, name());
 
-  // Notify CU-CP to await the RRC Reconfiguration Complete and SN Status Transfer.
+  // Notify CU-CP: for immediate HO, await RRC Reconfiguration Complete and SN Status Transfer;
+  // for CHO, the target context is prepared and held until the UE arrives.
+  execution_context.is_conditional_handover = request.is_conditional_handover;
   cu_cp_notifier.on_xn_handover_execution(request.ue_index, execution_context);
 
   CORO_RETURN();
@@ -116,6 +119,13 @@ bool xnap_target_handover_preparation_procedure::send_handover_request_ack(cu_cp
   // local XNAP UE ID.
   ho_request_ack->source_ng_ra_nnode_ue_xn_ap_id = peer_xnap_ue_id_to_uint(target_xnap_ue_id);
   ho_request_ack->target_ng_ra_nnode_ue_xn_ap_id = local_xnap_ue_id_to_uint(local_xnap_ue_id);
+
+  // TS 38.423 Section 8.2.1: if the request contained Conditional Handover Information Request IE,
+  // the target shall include Conditional Handover Information Acknowledge IE in the response.
+  if (request.is_conditional_handover) {
+    ho_request_ack->ch_oinfo_ack_present                                  = true;
+    ho_request_ack->ch_oinfo_ack.requested_target_cell_global_id.set_nr() = cgi_to_asn1(request.nr_cgi);
+  }
 
   // Forward message to XN-C peer.
   if (!tx_notifier.on_new_message(xnap_msg)) {
@@ -159,5 +169,6 @@ bool xnap_target_handover_preparation_procedure::prepare_execution_context(const
         std::get<cu_cp_xn_pdu_session_res_admitted_item>(variant_pdu_session_item));
   }
   execution_context.pdu_session_failed_to_setup_list = ho_ack.pdu_session_failed_to_setup_list;
+  execution_context.cho_timeout                      = request.cho_timeout;
   return true;
 }

@@ -13,6 +13,12 @@
 
 namespace ocudu::ocucp {
 
+/// Granularity of the CHO window duration field. Each integer step = 100 ms (TS 38.331 Section 6.3.2).
+constexpr std::chrono::milliseconds cho_window_duration_step{100};
+
+/// Maximum CHO window duration: INTEGER (1..6000) steps x 100 ms = 600 s (TS 38.331 Section 6.3.2).
+constexpr std::chrono::milliseconds cho_window_duration_max{6000 * 100};
+
 /// Conditional Reconfiguration ID used by CHO procedures. Range is 1..8.
 using cond_recfg_id_t = bounded_integer<uint8_t, 1, 8>;
 

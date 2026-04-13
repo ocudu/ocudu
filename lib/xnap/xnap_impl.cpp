@@ -12,6 +12,7 @@
 #include "procedures/xnap_sn_status_transfer_procedure.h"
 #include "procedures/xnap_source_handover_preparation_procedure.h"
 #include "procedures/xnap_target_handover_preparation_procedure.h"
+#include "xnap_asn1_converters.h"
 #include "xnap_asn1_utils.h"
 #include "ocudu/asn1/xnap/common.h"
 #include "ocudu/asn1/xnap/xnap.h"
@@ -99,6 +100,12 @@ void xnap_impl::handle_initiating_message(const init_msg_s& msg)
       break;
     case xnap_elem_procs_o::init_msg_c::types_opts::ue_context_release:
       handle_ue_context_release(msg.value.ue_context_release());
+      break;
+    case xnap_elem_procs_o::init_msg_c::types_opts::ho_success:
+      handle_handover_success(msg.value.ho_success());
+      break;
+    case xnap_elem_procs_o::init_msg_c::types_opts::conditional_ho_cancel:
+      handle_conditional_ho_cancel(msg.value.conditional_ho_cancel());
       break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
@@ -305,6 +312,72 @@ xnap_impl::handle_handover_request_required(const xnap_handover_request& request
       request, ue_ctxt_list, tx_notifier, cu_cp_notifier, timer_factory{timers, ctrl_exec});
 }
 
+void xnap_impl::handle_cho_cancel_required(cu_cp_ue_index_t ue_index, const nr_cell_global_id_t& target_cgi)
+{
+  if (!ue_ctxt_list.contains(ue_index)) {
+    logger.warning("ue={}: Cannot send HandoverCancel (CHO non-winner): UE context not found", ue_index);
+    return;
+  }
+
+  xnap_ue_context&  ue_ctxt    = ue_ctxt_list[ue_index];
+  peer_xnap_ue_id_t peer_ue_id = ue_ctxt.ue_ids.peer_xnap_ue_id;
+
+  if (peer_ue_id == peer_xnap_ue_id_t::invalid) {
+    ue_ctxt.logger.log_warning("HandoverCancel (CHO non-winner) skipped: peer XNAP UE ID is invalid");
+  } else {
+    // TS 38.423 Section 8.2.3: source sends HANDOVER CANCEL to release a non-winning prepared context at the target.
+    // Include TargetCellsToCancel IE to identify the specific candidate cell being cancelled.
+    xnap_message msg = {};
+    msg.pdu.set_init_msg();
+    msg.pdu.init_msg().load_info_obj(ASN1_XNAP_ID_HO_CANCEL);
+    ho_cancel_s& ho_cancel                    = msg.pdu.init_msg().value.ho_cancel();
+    ho_cancel->source_ng_ra_nnode_ue_xn_ap_id = local_xnap_ue_id_to_uint(ue_ctxt.ue_ids.local_xnap_ue_id);
+    ho_cancel->cause.set_radio_network()      = cause_radio_network_layer_opts::proc_cancelled;
+    if (ue_ctxt.ue_ids.peer_xnap_ue_id != peer_xnap_ue_id_t::invalid) {
+      ho_cancel->target_ng_ra_nnode_ue_xn_ap_id_present = true;
+      ho_cancel->target_ng_ra_nnode_ue_xn_ap_id         = peer_xnap_ue_id_to_uint(ue_ctxt.ue_ids.peer_xnap_ue_id);
+    }
+    ho_cancel->target_cells_to_cancel_present = true;
+    asn1::xnap::target_cell_list_item_s cell_item;
+    cell_item.target_cell.set_nr() = cgi_to_asn1(target_cgi);
+    ho_cancel->target_cells_to_cancel.push_back(cell_item);
+
+    if (!tx_notifier.on_new_message(msg)) {
+      ue_ctxt.logger.log_warning("HandoverCancel (CHO non-winner): XN-C notifier not set, message not sent");
+    } else {
+      ue_ctxt.logger.log_debug("HandoverCancel sent to release non-winning CHO target");
+    }
+  }
+
+  // Release the local XNAP UE context for this candidate.
+  ue_ctxt_list.remove_ue_context(ue_index);
+}
+
+void xnap_impl::handle_handover_success_required(cu_cp_ue_index_t ue_index, const nr_cell_global_id_t& cgi)
+{
+  if (!ue_ctxt_list.contains(ue_index)) {
+    logger.warning("ue={}: Cannot send HandoverSuccess: UE context not found", ue_index);
+    return;
+  }
+
+  xnap_ue_context& ue_ctxt = ue_ctxt_list[ue_index];
+
+  xnap_message xnap_msg = {};
+  xnap_msg.pdu.set_init_msg();
+  xnap_msg.pdu.init_msg().load_info_obj(ASN1_XNAP_ID_HO_SUCCESS);
+
+  ho_success_s& ho_success = xnap_msg.pdu.init_msg().value.ho_success();
+  // HandoverSuccess: target -> source. source_id is the peer (source) XNAP UE ID; target_id is the local XNAP UE ID.
+  ho_success->source_ng_ra_nnode_ue_xn_ap_id           = peer_xnap_ue_id_to_uint(ue_ctxt.ue_ids.peer_xnap_ue_id);
+  ho_success->target_ng_ra_nnode_ue_xn_ap_id           = local_xnap_ue_id_to_uint(ue_ctxt.ue_ids.local_xnap_ue_id);
+  ho_success->requested_target_cell_global_id.set_nr() = cgi_to_asn1(cgi);
+
+  if (!tx_notifier.on_new_message(xnap_msg)) {
+    ue_ctxt.logger.log_warning("XN-C association is not set. Cannot send HandoverSuccess");
+    return;
+  }
+}
+
 void xnap_impl::handle_sn_status_transfer_required(const cu_cp_status_transfer& sn_status_transfer)
 {
   const cu_cp_ue_index_t ue_index = sn_status_transfer.ue_index;
@@ -345,6 +418,44 @@ async_task<expected<cu_cp_status_transfer>> xnap_impl::handle_sn_status_transfer
   xnap_ue_context& ue_ctxt = ue_ctxt_list[ue_index];
   return launch_async<xnap_sn_status_transfer_procedure>(
       xnap_cfg.procedure_timeout, ue_ctxt.sn_status_transfer_outcome, ue_ctxt.logger);
+}
+
+void xnap_impl::handle_handover_success(const asn1::xnap::ho_success_s& msg)
+{
+  // HandoverSuccess is sent from the target to the source. From the source's perspective,
+  // Source NG-RAN node UE XnAP ID is our own (local) XNAP UE ID set in the HandoverRequest.
+  local_xnap_ue_id_t local_xnap_ue_id = uint_to_local_xnap_ue_id(msg->source_ng_ra_nnode_ue_xn_ap_id);
+  if (!ue_ctxt_list.contains(local_xnap_ue_id)) {
+    logger.warning("Received HandoverSuccess for unknown local_xnap_ue_id={}", local_xnap_ue_id);
+    return;
+  }
+
+  cu_cp_ue_index_t ue_index = ue_ctxt_list[local_xnap_ue_id].ue_ids.ue_index;
+
+  // Target NG-RAN node UE XnAP ID is the target's local XNAP UE ID, stored at the source as peer_xnap_ue_id.
+  peer_xnap_ue_id_t winner_peer_id = uint_to_peer_xnap_ue_id(msg->target_ng_ra_nnode_ue_xn_ap_id);
+
+  // Notify CU-CP: source must now send SN Status Transfer and release UE context.
+  cu_cp_notifier.on_handover_success_received(ue_index, winner_peer_id);
+}
+
+void xnap_impl::handle_conditional_ho_cancel(const asn1::xnap::conditional_ho_cancel_s& msg)
+{
+  // ConditionalHandoverCancel is sent from TARGET to SOURCE (TS 38.423 Section 8.2.9).
+  // The target self-cancels a prepared CHO context it no longer wants to hold.
+  // Source NG-RAN node UE XnAP ID is our local XNAP UE ID (we allocated it when initiating HO).
+  // Target NG-RAN node UE XnAP ID is the cancelling target's XNAP UE ID (our peer_xnap_ue_id).
+  local_xnap_ue_id_t local_id = uint_to_local_xnap_ue_id(msg->source_ng_ra_nnode_ue_xn_ap_id);
+  if (!ue_ctxt_list.contains(local_id)) {
+    logger.info("Received ConditionalHandoverCancel for unknown local_xnap_ue_id={}",
+                msg->source_ng_ra_nnode_ue_xn_ap_id);
+    return;
+  }
+
+  cu_cp_ue_index_t ue_index = ue_ctxt_list[local_id].ue_ids.ue_index;
+
+  // Release the XNAP UE context for this preparation link.
+  ue_ctxt_list.remove_ue_context(ue_index);
 }
 
 bool xnap_impl::handle_ue_context_release_required(cu_cp_ue_index_t ue_index)

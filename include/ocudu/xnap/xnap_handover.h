@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "ocudu/adt/byte_buffer.h"
+#include "ocudu/cu_cp/cu_cp_cho_types.h"
 #include "ocudu/cu_cp/cu_cp_location_reporting_types.h"
 #include "ocudu/cu_cp/inter_cu_handover_messages.h"
 #include "ocudu/ran/aggregate_maximum_bit_rate.h"
@@ -15,6 +17,8 @@
 #include "ocudu/ran/nr_cgi.h"
 #include "ocudu/security/security.h"
 #include "ocudu/support/io/transport_layer_address.h"
+#include "ocudu/xnap/xnap_types.h"
+#include <chrono>
 
 namespace ocudu::ocucp {
 
@@ -36,11 +40,23 @@ struct xnap_handover_request {
   nr_cell_global_id_t             nr_cgi;
   guami_t                         guami;
   xnap_ue_context_info_ho_request ue_context_info_ho_request;
+  /// When true, signals a Conditional HO preparation (cho_info_req IE is included in HandoverRequest).
+  /// The target allocates resources but defers execution until the UE arrives.
+  bool is_conditional_handover = false;
+  /// Timeout for the CHO preparation at the target (used to populate cho_time_based_info). Only
+  /// relevant when is_conditional_handover is true.
+  std::chrono::milliseconds cho_timeout = std::chrono::milliseconds{0};
   // TODO: add optional fields.
 };
 
 struct xnap_handover_preparation_response {
   bool success = false;
+  /// CHO-specific fields; populated only when is_conditional_handover is true.
+  unsigned rrc_transaction_id = 0;
+  /// RRC Reconfig message extracted from HO Request Ack.
+  byte_buffer packed_rrc_recfg;
+  /// Target XNAP UE ID.
+  peer_xnap_ue_id_t peer_xnap_ue_id = peer_xnap_ue_id_t::invalid;
 };
 
 struct xnap_handover_target_execution_context {
@@ -49,6 +65,13 @@ struct xnap_handover_target_execution_context {
   unsigned                                            amf_ue_id;
   std::vector<cu_cp_xn_pdu_session_res_admitted_item> pdu_session_res_admitted_list;
   std::vector<cu_cp_pdu_session_with_cause_item>      pdu_session_failed_to_setup_list;
+  /// When true, the UE arrived via Conditional HO (source sent no explicit HO Command);
+  /// the target execution follows the CHO sequence (TS 38.423 Section 8.2.4).
+  bool is_conditional_handover = false;
+  /// How long the target should retain the prepared UE context waiting for the UE to arrive.
+  /// Populated from CHOTimeBasedInformation::cHO-HOWindowDuration in the XNAP HandoverRequest.
+  /// Zero means not signalled by the source (fall back to T304-based timeout).
+  std::chrono::milliseconds cho_timeout = std::chrono::milliseconds{0};
 };
 
 } // namespace ocudu::ocucp

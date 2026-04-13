@@ -60,6 +60,15 @@ public:
   virtual async_task<xnap_handover_preparation_response>
   handle_handover_request_required(const xnap_handover_request& request) = 0;
 
+  /// \brief Sends HandoverCancel to a non-winning target CU-CP (TS 38.423 section 8.2.3).
+  /// \param[in] ue_index    Source UE index used to look up the local XNAP UE context.
+  /// \param[in] target_cgi  Candidate cell CGI, placed in the Candidate Cells To Be Cancelled List IE.
+  virtual void handle_cho_cancel_required(cu_cp_ue_index_t ue_index, const nr_cell_global_id_t& target_cgi) = 0;
+
+  /// \brief Sends HandoverSuccess to the source CU-CP (TS 38.423 section 8.2.4).
+  /// Called by the target after RRCReconfigurationComplete is received from the UE.
+  virtual void handle_handover_success_required(cu_cp_ue_index_t ue_index, const nr_cell_global_id_t& cgi) = 0;
+
   /// \brief Initiate the transmission of a SN Status Transfer message as defined in TS 38.423 section 8.2.2.
   virtual void handle_sn_status_transfer_required(const cu_cp_status_transfer& sn_status_transfer) = 0;
 
@@ -123,6 +132,14 @@ public:
   /// \brief Notify the CU-CP about the reception of a Handover Cancel message.
   /// \param[in] ue_index The index of the UE.
   virtual void on_handover_cancel_received(cu_cp_ue_index_t ue_index) = 0;
+
+  /// \brief Notify the CU-CP about the reception of a HandoverSuccess message (TS 38.423 section 8.2.8).
+  /// Signals that the UE has arrived at the target CU-CP via CHO execution.
+  /// The source CU-CP must send SN Status Transfer and release the source UE context.
+  /// \param[in] source_ue_index The source UE index derived from the XNAP UE ID mapping.
+  /// \param[in] winner_peer_xnap_ue_id The target's XNAP UE ID (used to identify the winning candidate).
+  virtual void on_handover_success_received(cu_cp_ue_index_t  source_ue_index,
+                                            peer_xnap_ue_id_t winner_peer_xnap_ue_id) = 0;
 
   /// \brief Notify the CU-CP about the reception of a UE Context Release message.
   /// \param[in] ue_index The index of the UE.

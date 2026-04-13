@@ -41,6 +41,8 @@ public:
   }
   async_task<xnap_handover_preparation_response>
        handle_handover_request_required(const xnap_handover_request& request) override;
+  void handle_cho_cancel_required(cu_cp_ue_index_t ue_index, const nr_cell_global_id_t& target_cgi) override;
+  void handle_handover_success_required(cu_cp_ue_index_t ue_index, const nr_cell_global_id_t& cgi) override;
   void handle_sn_status_transfer_required(const cu_cp_status_transfer& sn_status_transfer) override;
   async_task<expected<cu_cp_status_transfer>> handle_sn_status_transfer_expected(cu_cp_ue_index_t ue_index) override;
   bool                                        handle_ue_context_release_required(cu_cp_ue_index_t ue_index) override;
@@ -76,6 +78,12 @@ private:
   /// \brief Notify about the reception of a UE Context Release message.
   /// \param[in] msg The received UE Context Release message.
   void handle_ue_context_release(const asn1::xnap::ue_context_release_s& msg);
+
+  /// \brief Handle incoming HandoverSuccess (target notifies source that UE arrived via CHO).
+  void handle_handover_success(const asn1::xnap::ho_success_s& msg);
+
+  /// \brief Handle incoming ConditionalHandoverCancel (source cancels CHO resources at target).
+  void handle_conditional_ho_cancel(const asn1::xnap::conditional_ho_cancel_s& msg);
 
   /// \brief Notify about the reception of a successful outcome message.
   /// \param[in] outcome The successful outcome message.

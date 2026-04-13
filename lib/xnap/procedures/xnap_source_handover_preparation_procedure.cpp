@@ -91,20 +91,36 @@ void xnap_source_handover_preparation_procedure::operator()(
       ue_ctxt->ue_ids.local_xnap_ue_id,
       uint_to_peer_xnap_ue_id(transaction_sink.response()->target_ng_ra_nnode_ue_xn_ap_id));
 
-  // Forward RRC Handover Command to DU Processor.
-  CORO_AWAIT_VALUE(
-      rrc_reconfig_success,
-      cu_cp_notifier.on_new_rrc_handover_command(
-          request.ue_index, transaction_sink.response()->target2_source_ng_ra_nnode_transp_container.copy()));
-  if (!rrc_reconfig_success) {
-    ue_ctxt->logger.log_warning("\"{}\" failed. Cause: Received invalid Handover Command", name());
-    CORO_EARLY_RETURN(xnap_handover_preparation_response{false});
+  if (!request.is_conditional_handover) {
+    // Immediate HO: forward RRC Handover Command to DU Processor.
+    CORO_AWAIT_VALUE(
+        rrc_reconfig_success,
+        cu_cp_notifier.on_new_rrc_handover_command(
+            request.ue_index, transaction_sink.response()->target2_source_ng_ra_nnode_transp_container.copy()));
+    if (!rrc_reconfig_success) {
+      ue_ctxt->logger.log_warning("\"{}\" failed. Cause: Received invalid Handover Command", name());
+      CORO_EARLY_RETURN(xnap_handover_preparation_response{});
+    }
+
+    // Forward procedure result to DU manager.
+    response.success = true;
+  } else {
+    // CHO: return the pre-packed RRC bytes and peer UE ID to the coordinator.
+    // Execution is deferred until the UE satisfies the CHO conditions.
+    auto packed_rrc = transaction_sink.response()->target2_source_ng_ra_nnode_transp_container.copy();
+    if (packed_rrc.empty()) {
+      ue_ctxt->logger.log_warning("\"{}\" failed. Cause: Empty RRC container in HandoverRequest Ack (CHO)", name());
+      CORO_EARLY_RETURN(xnap_handover_preparation_response{});
+    }
+
+    response.success          = true;
+    response.packed_rrc_recfg = std::move(packed_rrc);
+    response.peer_xnap_ue_id  = uint_to_peer_xnap_ue_id(transaction_sink.response()->target_ng_ra_nnode_ue_xn_ap_id);
   }
 
   ue_ctxt->logger.log_debug("\"{}\" finished successfully", name());
 
-  // Forward procedure result to DU manager.
-  CORO_RETURN(xnap_handover_preparation_response{true});
+  CORO_RETURN(response);
 }
 
 bool xnap_source_handover_preparation_procedure::send_handover_request()
@@ -120,8 +136,7 @@ bool xnap_source_handover_preparation_procedure::send_handover_request()
   ho_request->source_ng_ra_nnode_ue_xn_ap_id = local_xnap_ue_id_to_uint(ue_ctxt->ue_ids.local_xnap_ue_id);
 
   // Fill cause.
-  ho_request->cause.set_radio_network();
-  ho_request->cause.radio_network() = cause_radio_network_layer_opts::ho_desirable_for_radio_reasons;
+  ho_request->cause.set_radio_network() = cause_radio_network_layer_opts::ho_desirable_for_radio_reasons;
 
   // Fill target cell global ID.
   ho_request->target_cell_global_id.set_nr() = cgi_to_asn1(request.nr_cgi);
@@ -161,6 +176,23 @@ bool xnap_source_handover_preparation_procedure::send_handover_request()
         location_report_info_to_asn1(request.ue_context_info_ho_request.location_report_info.value());
   }
 
+  if (request.is_conditional_handover) {
+    // Set CHO indication: this is a conditional handover preparation, not an immediate handover.
+    ho_request->ch_oinfo_req_present           = true;
+    ho_request->ch_oinfo_req.cho_trigger.value = ch_otrigger_opts::cho_initiation;
+    // Inform the target how long to keep the prepared UE context active.
+    if (request.cho_timeout.count() > 0) {
+      const auto duration = std::min(request.cho_timeout, cho_window_duration_max);
+      if (duration.count() > 0) {
+        ho_request->ch_oinfo_req.ie_exts_present                              = true;
+        ho_request->ch_oinfo_req.ie_exts.cho_time_based_info_present          = true;
+        ho_request->ch_oinfo_req.ie_exts.cho_time_based_info.cho_ho_win_start = 0;
+        ho_request->ch_oinfo_req.ie_exts.cho_time_based_info.cho_ho_win_dur =
+            static_cast<uint16_t>(duration.count() / cho_window_duration_step.count());
+      }
+    }
+  }
+
   // Fill UE history info.
   asn1::xnap::last_visited_cell_item_c last_visited_cell;
   // TODO: Add real data.
@@ -193,7 +225,6 @@ bool xnap_source_handover_preparation_procedure::send_handover_cancel()
   // This is sent from the source to the target, so the source UE ID is the local XNAP UE ID.
   ho_cancel->source_ng_ra_nnode_ue_xn_ap_id = local_xnap_ue_id_to_uint(ue_ctxt->ue_ids.local_xnap_ue_id);
 
-  ho_cancel->cause.set_radio_network();
   ho_cancel->cause.set_radio_network() = cause_radio_network_layer_opts::txn_relo_cprep_expiry;
 
   // Forward message to XN-C peer.

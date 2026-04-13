@@ -105,6 +105,13 @@ inline bool asn1_to_handover_request(xnap_handover_request& request, const asn1:
     return false;
   }
 
+  // Check whether this is a Conditional Handover (CHO) preparation.
+  request.is_conditional_handover = asn1_request->ch_oinfo_req_present;
+  if (request.is_conditional_handover && asn1_request->ch_oinfo_req.ie_exts.cho_time_based_info_present) {
+    request.cho_timeout =
+        cho_window_duration_step * asn1_request->ch_oinfo_req.ie_exts.cho_time_based_info.cho_ho_win_dur;
+  }
+
   // TODO: fill missing optional parameters.
 
   return true;
