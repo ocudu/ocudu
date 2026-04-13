@@ -483,6 +483,11 @@ bool rrc_ue_impl::handle_rrc_handover_preparation_info(byte_buffer pdu)
 
   context.capabilities_list.emplace(ue_capabilities_list);
 
+  // Parse UE capabilities, so capability checks work on the target.
+  if (std::optional<rrc_ue_capabilities_t> caps = get_capabilities(ue_capabilities_list, logger); caps.has_value()) {
+    context.capabilities = caps.value();
+  }
+
   if (logger.get_basic_logger().debug.enabled()) {
     logger.log_debug("UE Capabilities:");
     asn1::json_writer json_writer;
