@@ -328,6 +328,166 @@ TEST_F(rlc_tx_tm_test, test_tx_metrics)
   ASSERT_EQ(std::get<rlc_tm_tx_metrics_lower>(m.tx_low.mode_specific).num_small_allocs, 1);
 }
 
+TEST_F(rlc_tx_tm_test, test_tx_is_retx_flag)
+{
+  // TM logs an error for is_retx=true but still queues and transmits the SDU.
+  const uint32_t sdu_size = 4;
+  uint32_t       count    = 0;
+
+  byte_buffer sdu_buf =
+      test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ true, count, sdu_size, count);
+
+  rlc->handle_sdu(sdu_buf.deep_copy().value(), /*is_retx=*/true);
+  pcell_worker.run_pending_tasks();
+  EXPECT_EQ(rlc->get_buffer_state().pending_bytes, sdu_size);
+
+  std::vector<uint8_t> tx_pdu(sdu_size);
+  unsigned             nwritten = rlc->pull_pdu(tx_pdu);
+  ue_worker.run_pending_tasks();
+  byte_buffer_chain pdu =
+      byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>(tx_pdu.data(), nwritten)).value()).value();
+  EXPECT_EQ(pdu.length(), sdu_size);
+  EXPECT_EQ(pdu, sdu_buf);
+
+  rlc_tx_metrics m = rlc->get_metrics();
+  EXPECT_EQ(m.tx_high.num_sdus, 1);
+  EXPECT_EQ(m.tx_high.num_dropped_sdus, 0);
+}
+
+TEST_F(rlc_tx_tm_test, queue_full_by_sdu_count_drops_sdu)
+{
+  // The default SRB0 config has queue_size=8. The 9th SDU must be dropped.
+  const uint32_t sdu_size   = 4;
+  const uint32_t queue_size = 8;
+
+  for (uint32_t i = 0; i < queue_size; i++) {
+    byte_buffer sdu = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ true, i, sdu_size, i);
+    rlc->handle_sdu(std::move(sdu), false);
+    pcell_worker.run_pending_tasks();
+  }
+  EXPECT_EQ(rlc->get_buffer_state().pending_bytes, queue_size * sdu_size);
+
+  // 9th SDU must be dropped
+  byte_buffer overflow_sdu =
+      test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ true, queue_size, sdu_size, queue_size);
+  rlc->handle_sdu(std::move(overflow_sdu), false);
+  pcell_worker.run_pending_tasks();
+
+  EXPECT_EQ(rlc->get_buffer_state().pending_bytes, queue_size * sdu_size);
+
+  rlc_tx_metrics m = rlc->get_metrics();
+  EXPECT_EQ(m.tx_high.num_sdus, queue_size);
+  EXPECT_EQ(m.tx_high.num_dropped_sdus, 1);
+}
+
+TEST_F(rlc_tx_tm_test, queue_full_by_bytes_drops_sdu)
+{
+  // The default SRB0 config has queue_size_bytes=16000. Use two large SDUs that
+  // together exceed the byte limit while staying within the count limit (8).
+  // A third SDU is used to fill the remaining space to check the full capacity is available.
+  const uint32_t first_sdu_size  = 8000;
+  const uint32_t second_sdu_size = 8001; // 8000 + 8001 = 16001 > 16000 (too much)
+  const uint32_t third_sdu_size  = 8000; // 8000 + 8000 = 16000 (exact match)
+
+  byte_buffer first_sdu =
+      test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ true, 0, first_sdu_size, 0);
+  rlc->handle_sdu(std::move(first_sdu), false);
+  pcell_worker.run_pending_tasks();
+  EXPECT_EQ(rlc->get_buffer_state().pending_bytes, first_sdu_size);
+
+  byte_buffer second_sdu =
+      test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ true, 1, second_sdu_size, 1);
+  rlc->handle_sdu(std::move(second_sdu), false);
+  pcell_worker.run_pending_tasks();
+
+  EXPECT_EQ(rlc->get_buffer_state().pending_bytes, first_sdu_size);
+
+  byte_buffer third_sdu =
+      test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ true, 1, third_sdu_size, 1);
+  rlc->handle_sdu(std::move(third_sdu), false);
+  pcell_worker.run_pending_tasks();
+
+  EXPECT_EQ(rlc->get_buffer_state().pending_bytes, first_sdu_size + third_sdu_size);
+
+  rlc_tx_metrics m = rlc->get_metrics();
+  EXPECT_EQ(m.tx_high.num_sdus, 2);
+  EXPECT_EQ(m.tx_high.num_dropped_sdus, 1);
+}
+
+TEST_F(rlc_tx_tm_test, buffer_state_dedup_on_rapid_sdu_writes)
+{
+  // Writing two SDUs before draining the pcell worker must produce only one BSR
+  // notification, because the atomic pending_buffer_state flag deduplicates
+  // redundant update tasks.
+  const uint32_t sdu_size = 4;
+
+  byte_buffer sdu1 = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ true, 0, sdu_size, 0);
+  byte_buffer sdu2 = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ true, 1, sdu_size, 1);
+
+  rlc->handle_sdu(std::move(sdu1), false);
+  rlc->handle_sdu(std::move(sdu2), false);
+  // Both SDUs queued; only one deferred buffer-state task should be pending.
+  pcell_worker.run_pending_tasks();
+
+  EXPECT_EQ(tester->bsr_count, 1);
+  EXPECT_EQ(tester->bsr.pending_bytes, 2 * sdu_size);
+  EXPECT_EQ(rlc->get_buffer_state().pending_bytes, 2 * sdu_size);
+}
+
+TEST_F(rlc_tx_tm_test, tx_metrics_on_successful_tx)
+{
+  const uint32_t sdu_size = 4;
+  const uint32_t n_sdus   = 3;
+
+  for (uint32_t i = 0; i < n_sdus; i++) {
+    byte_buffer sdu = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ true, i, sdu_size, i);
+    rlc->handle_sdu(std::move(sdu), false);
+    pcell_worker.run_pending_tasks();
+
+    std::vector<uint8_t> tx_pdu(sdu_size);
+    rlc->pull_pdu(tx_pdu);
+    ue_worker.run_pending_tasks();
+    pcell_worker.run_pending_tasks();
+  }
+
+  rlc_tx_metrics m = rlc->get_metrics();
+  EXPECT_EQ(m.tx_high.num_sdus, n_sdus);
+  EXPECT_EQ(m.tx_high.num_sdu_bytes, n_sdus * sdu_size);
+  EXPECT_EQ(m.tx_high.num_dropped_sdus, 0);
+  EXPECT_EQ(m.tx_low.num_pdus_no_segmentation, n_sdus);
+  EXPECT_EQ(m.tx_low.num_pdu_bytes_no_segmentation, n_sdus * sdu_size);
+  ASSERT_TRUE(std::holds_alternative<rlc_tm_tx_metrics_lower>(m.tx_low.mode_specific));
+  EXPECT_EQ(std::get<rlc_tm_tx_metrics_lower>(m.tx_low.mode_specific).num_small_allocs, 0);
+}
+
+TEST_F(rlc_tx_tm_test, multiple_discard_failures_accumulate)
+{
+  const uint32_t sdu_size = 4;
+  uint32_t       count    = 0;
+
+  byte_buffer sdu_buf =
+      test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ true, count, sdu_size, count);
+  rlc->handle_sdu(sdu_buf.deep_copy().value(), false);
+  pcell_worker.run_pending_tasks();
+
+  rlc->discard_sdu(0);
+  rlc->discard_sdu(1);
+  rlc->discard_sdu(2);
+
+  rlc_tx_metrics m = rlc->get_metrics();
+  EXPECT_EQ(m.tx_high.num_discard_failures, 3);
+  EXPECT_EQ(m.tx_high.num_discarded_sdus, 0);
+
+  // SDU remains in queue and can still be transmitted
+  std::vector<uint8_t> tx_pdu(sdu_size);
+  unsigned             nwritten = rlc->pull_pdu(tx_pdu);
+  ue_worker.run_pending_tasks();
+  byte_buffer_chain pdu =
+      byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>(tx_pdu.data(), nwritten)).value()).value();
+  EXPECT_EQ(pdu.length(), sdu_size);
+  EXPECT_EQ(pdu, sdu_buf);
+}
+
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
