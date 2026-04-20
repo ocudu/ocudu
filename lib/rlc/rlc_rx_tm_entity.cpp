@@ -27,6 +27,10 @@ void rlc_rx_tm_entity::handle_pdu(byte_buffer_slice buf)
 {
   size_t pdu_len = buf.length();
   metrics.metrics_add_pdus(1, pdu_len);
+  if (pdu_len == 0) {
+    logger.log_warning("Dropped empty PDU.");
+    return;
+  }
 
   pcap.push_pdu(pcap_context, buf);
 

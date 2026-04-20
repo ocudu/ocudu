@@ -113,6 +113,38 @@ TEST_F(rlc_rx_am_test, test_rx)
   tester->sdu_queue.pop();
 }
 
+TEST_F(rlc_rx_am_test, rx_metrics_after_rx)
+{
+  const uint32_t sdu_size = 4;
+
+  for (uint32_t i = 0; i < 2; i++) {
+    byte_buffer pdu_buf = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ true, i, sdu_size, i);
+    byte_buffer_slice pdu = {pdu_buf.deep_copy().value()};
+    rlc->handle_pdu(std::move(pdu));
+  }
+
+  rlc_rx_metrics m = rlc->get_metrics();
+  EXPECT_EQ(m.num_pdus, 2);
+  EXPECT_EQ(m.num_pdu_bytes, 2 * sdu_size);
+  EXPECT_EQ(m.num_sdus, 2);
+  EXPECT_EQ(m.num_sdu_bytes, 2 * sdu_size);
+  EXPECT_EQ(m.num_lost_pdus, 0);
+}
+
+TEST_F(rlc_rx_am_test, rx_empty_pdu)
+{
+  // An empty PDU must not be forwarded to the upper layers.
+  byte_buffer_slice pdu = {byte_buffer{}};
+  rlc->handle_pdu(std::move(pdu));
+
+  EXPECT_EQ(tester->sdu_counter, 0);
+  EXPECT_EQ(tester->sdu_queue.size(), 0);
+
+  rlc_rx_metrics m = rlc->get_metrics();
+  EXPECT_EQ(m.num_pdus, 1);
+  EXPECT_EQ(m.num_pdu_bytes, 0);
+}
+
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
