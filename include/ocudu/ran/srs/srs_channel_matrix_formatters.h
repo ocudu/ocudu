@@ -8,7 +8,7 @@
 
 namespace fmt {
 
-/// \brief Custom formatter for \c srs_channel_matrix
+/// \brief Custom formatter for \c srs_channel_matrix.
 template <>
 struct formatter<ocudu::srs_channel_matrix> {
   /// Default constructor.
