@@ -334,8 +334,8 @@ static expected<q_offset_range_t, std::string> parse_q_offset_range(const nlohma
 static expected<subcarrier_spacing, std::string> parse_scs_khz(const nlohmann::json& val,
                                                                const std::string&    field_name)
 {
-  if (!val.is_number_unsigned()) {
-    return make_unexpected(fmt::format("'{}' value type should be an unsigned integer", field_name));
+  if (!val.is_number_integer() || val.get<int64_t>() < 0) {
+    return make_unexpected(fmt::format("'{}' value type should be a non-negative integer", field_name));
   }
   unsigned v = val.get<unsigned>();
   switch (v) {
@@ -449,13 +449,10 @@ static expected<sib3_info, std::string> parse_sib3(const nlohmann::json& content
       if (pci_it == neigh_obj.end()) {
         return make_unexpected(std::string{"'pci' field is missing in 'intra_freq_neigh_cell_list' entry"});
       }
-      if (!pci_it->is_number_unsigned()) {
-        return make_unexpected(std::string{"'pci' value type should be an unsigned integer"});
+      if (!pci_it->is_number_integer() || pci_it->get<int64_t>() < 0 || pci_it->get<int64_t>() > 1007) {
+        return make_unexpected(fmt::format("'pci' value '{}' out of range [0, 1007]", pci_it->dump()));
       }
       unsigned pci_val = pci_it->get<unsigned>();
-      if (pci_val > 1007) {
-        return make_unexpected(fmt::format("'pci' value '{}' out of range [0, 1007]", pci_val));
-      }
       auto q_offset_it = neigh_obj.find("q_offset_cell");
       if (q_offset_it == neigh_obj.end()) {
         return make_unexpected(std::string{"'q_offset_cell' field is missing in 'intra_freq_neigh_cell_list' entry"});
@@ -482,15 +479,13 @@ static expected<sib3_info, std::string> parse_sib3(const nlohmann::json& content
         return make_unexpected(std::string{"'intra_freq_excluded_cell_list' entries should be objects"});
       }
       auto start_it = excl_obj.find("pci_start");
-      if (start_it == excl_obj.end() || !start_it->is_number_unsigned()) {
-        return make_unexpected(std::string{"'pci_start' missing or non-integer in excluded list entry"});
+      if (start_it == excl_obj.end() || !start_it->is_number_integer() || start_it->get<int64_t>() < 0 ||
+          start_it->get<int64_t>() > 1007) {
+        return make_unexpected(std::string{"'pci_start' missing or out of range [0, 1007] in excluded list entry"});
       }
       unsigned start_val = start_it->get<unsigned>();
-      if (start_val > 1007) {
-        return make_unexpected(fmt::format("'pci_start' value '{}' out of range [0, 1007]", start_val));
-      }
-      auto range_it = excl_obj.find("range");
-      if (range_it == excl_obj.end() || !range_it->is_number_unsigned()) {
+      auto     range_it  = excl_obj.find("range");
+      if (range_it == excl_obj.end() || !range_it->is_number_integer() || range_it->get<int64_t>() < 0) {
         return make_unexpected(std::string{"'range' missing or non-integer in excluded list entry"});
       }
       unsigned range_val = range_it->get<unsigned>();
@@ -544,8 +539,8 @@ static expected<sib4_info, std::string> parse_sib4(const nlohmann::json& content
     }
 
     auto arfcn_it = carrier_obj.find("arfcn");
-    if (arfcn_it == carrier_obj.end() || !arfcn_it->is_number_unsigned()) {
-      return make_unexpected(std::string{"'arfcn' missing or non-integer in carrier list entry"});
+    if (arfcn_it == carrier_obj.end() || !arfcn_it->is_number_integer() || arfcn_it->get<int64_t>() < 0) {
+      return make_unexpected(std::string{"'arfcn' missing or not a non-negative integer in carrier list entry"});
     }
 
     auto scs_it = carrier_obj.find("ssb_scs");
