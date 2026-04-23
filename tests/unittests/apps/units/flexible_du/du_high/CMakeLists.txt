@@ -3,6 +3,8 @@
 # Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 
+set_directory_properties(PROPERTIES LABELS "du_high;apps")
+
 add_subdirectory(metrics)
 
 add_executable(du_high_remote_commands_test du_high_remote_commands_test.cpp)
