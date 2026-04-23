@@ -161,9 +161,23 @@ public:
       si_msg_sib19.si_period_radio_frames = 64;
       cfgs.back().si.si_config->si_sched_info.push_back(si_msg_sib19);
 
-      // Add SIB2 and SIB19 with initial value_tag=0.
+      // Add SI message scheduling info for SIB3 (intra-freq neighbors).
+      si_message_sched_info si_msg_sib3;
+      si_msg_sib3.sib_mapping_info.push_back(sib_type::sib3);
+      si_msg_sib3.si_period_radio_frames = 32;
+      cfgs.back().si.si_config->si_sched_info.push_back(si_msg_sib3);
+
+      // Add SI message scheduling info for SIB4 (inter-freq neighbors).
+      si_message_sched_info si_msg_sib4;
+      si_msg_sib4.sib_mapping_info.push_back(sib_type::sib4);
+      si_msg_sib4.si_period_radio_frames = 32;
+      cfgs.back().si.si_config->si_sched_info.push_back(si_msg_sib4);
+
+      // Add SIB2, SIB19, SIB3, SIB4 with initial value_tag=0.
       cfgs.back().si.si_config->sibs.push_back(sib_type_info{create_default_sib2(), value_tag_t{0}});
       cfgs.back().si.si_config->sibs.push_back(sib_type_info{create_default_sib19(), value_tag_t{0}});
+      cfgs.back().si.si_config->sibs.push_back(sib_type_info{create_default_sib3(), value_tag_t{0}});
+      cfgs.back().si.si_config->sibs.push_back(sib_type_info{create_default_sib4(), value_tag_t{0}});
 
       return cfgs;
     }())
@@ -212,6 +226,58 @@ public:
     sib19.ntn_cfg.emplace();
     sib19.ntn_cfg->cell_specific_koffset = std::chrono::milliseconds(200);
     return sib19;
+  }
+
+  // Factory for baseline SIB3 (intra-freq neighbor list).
+  static sib3_info create_default_sib3()
+  {
+    sib3_info sib3;
+    sib3.intra_freq_neigh_cell_list.push_back(
+        intra_freq_neigh_cell_info{.pci = 47, .q_offset_cell = q_offset_range_t::db0});
+    return sib3;
+  }
+
+  // Factory for modified SIB3 (different neighbor list).
+  static sib3_info create_modified_sib3()
+  {
+    sib3_info sib3;
+    sib3.intra_freq_neigh_cell_list.push_back(
+        intra_freq_neigh_cell_info{.pci = 47, .q_offset_cell = q_offset_range_t::db2});
+    sib3.intra_freq_neigh_cell_list.push_back(
+        intra_freq_neigh_cell_info{.pci = 48, .q_offset_cell = q_offset_range_t::db_2});
+    return sib3;
+  }
+
+  // Factory for baseline SIB4 (inter-freq carrier list).
+  static sib4_info create_default_sib4()
+  {
+    sib4_info                    sib4;
+    inter_freq_carrier_freq_info carrier;
+    carrier.arfcn                      = 649632;
+    carrier.ssb_scs                    = subcarrier_spacing::kHz30;
+    carrier.derive_ssb_index_from_cell = true;
+    carrier.q_rx_lev_min               = q_rx_lev_min_t{-70};
+    carrier.thresh_x_high_p            = reselection_threshold_t{16};
+    carrier.thresh_x_low_p             = reselection_threshold_t{4};
+    carrier.q_offset_freq              = q_offset_range_t::db0;
+    sib4.inter_freq_carrier_freq_list.push_back(carrier);
+    return sib4;
+  }
+
+  // Factory for modified SIB4 (different thresholds).
+  static sib4_info create_modified_sib4()
+  {
+    sib4_info                    sib4;
+    inter_freq_carrier_freq_info carrier;
+    carrier.arfcn                      = 649632;
+    carrier.ssb_scs                    = subcarrier_spacing::kHz30;
+    carrier.derive_ssb_index_from_cell = true;
+    carrier.q_rx_lev_min               = q_rx_lev_min_t{-68};
+    carrier.thresh_x_high_p            = reselection_threshold_t{18};
+    carrier.thresh_x_low_p             = reselection_threshold_t{6};
+    carrier.q_offset_freq              = q_offset_range_t::db2;
+    sib4.inter_freq_carrier_freq_list.push_back(carrier);
+    return sib4;
   }
 
   // Get current value_tag for a specific SIB type by decoding the SIB1 sent to MAC.
@@ -442,4 +508,78 @@ TEST_F(du_manager_value_tag_test, when_sib19_updated_then_value_tag_increments_i
   ASSERT_TRUE(decoded_sib19.ntn_cfg.has_value());
   ASSERT_TRUE(decoded_sib19.ntn_cfg->cell_specific_koffset.has_value());
   ASSERT_EQ(decoded_sib19.ntn_cfg->cell_specific_koffset.value(), std::chrono::milliseconds(200));
+}
+
+TEST_F(du_manager_value_tag_test, when_sib3_updated_then_value_tag_increments_independently)
+{
+  // Send SIB3 update request.
+  du_param_config_request  req  = make_sib_update_request(create_modified_sib3());
+  du_param_config_response resp = du_mng->get_operation_configurator().handle_sync_operator_config(req);
+
+  dependencies.worker.run_pending_tasks();
+
+  ASSERT_TRUE(resp.success);
+
+  // SIB3 value_tag incremented to 1.
+  ASSERT_EQ(get_value_tag_for_sib(sib_type::sib3).value(), 1);
+
+  // Other SIBs' value_tags are untouched.
+  ASSERT_EQ(get_value_tag_for_sib(sib_type::sib2).value(), 0);
+  ASSERT_EQ(get_value_tag_for_sib(sib_type::sib4).value(), 0);
+
+  // MAC and F1AP were notified.
+  ASSERT_TRUE(dependencies.mac.mac_cell.last_cell_recfg_req.has_value());
+  ASSERT_TRUE(dependencies.f1ap.last_du_cfg_req.has_value());
+}
+
+TEST_F(du_manager_value_tag_test, when_sib4_updated_then_value_tag_increments_independently)
+{
+  // Send SIB4 update request.
+  du_param_config_request  req  = make_sib_update_request(create_modified_sib4());
+  du_param_config_response resp = du_mng->get_operation_configurator().handle_sync_operator_config(req);
+
+  dependencies.worker.run_pending_tasks();
+
+  ASSERT_TRUE(resp.success);
+
+  // SIB4 value_tag incremented to 1.
+  ASSERT_EQ(get_value_tag_for_sib(sib_type::sib4).value(), 1);
+
+  // Other SIBs' value_tags are untouched.
+  ASSERT_EQ(get_value_tag_for_sib(sib_type::sib2).value(), 0);
+  ASSERT_EQ(get_value_tag_for_sib(sib_type::sib3).value(), 0);
+
+  // MAC and F1AP were notified.
+  ASSERT_TRUE(dependencies.mac.mac_cell.last_cell_recfg_req.has_value());
+  ASSERT_TRUE(dependencies.f1ap.last_du_cfg_req.has_value());
+}
+
+TEST_F(du_manager_value_tag_test, when_sib3_and_sib4_updated_in_sequence_then_each_value_tag_tracks_independently)
+{
+  // Update SIB3: expect SIB3 -> 1, SIB4 stays at 0.
+  du_param_config_request  req1  = make_sib_update_request(create_modified_sib3());
+  du_param_config_response resp1 = du_mng->get_operation_configurator().handle_sync_operator_config(req1);
+  dependencies.worker.run_pending_tasks();
+  ASSERT_TRUE(resp1.success);
+  ASSERT_EQ(get_value_tag_for_sib(sib_type::sib3).value(), 1);
+  ASSERT_EQ(get_value_tag_for_sib(sib_type::sib4).value(), 0);
+
+  // Update SIB4: expect SIB4 -> 1, SIB3 stays at 1.
+  du_param_config_request  req2  = make_sib_update_request(create_modified_sib4());
+  du_param_config_response resp2 = du_mng->get_operation_configurator().handle_sync_operator_config(req2);
+  dependencies.worker.run_pending_tasks();
+  ASSERT_TRUE(resp2.success);
+  ASSERT_EQ(get_value_tag_for_sib(sib_type::sib4).value(), 1);
+  ASSERT_EQ(get_value_tag_for_sib(sib_type::sib3).value(), 1);
+
+  // Update SIB3 again: expect SIB3 -> 2, SIB4 stays at 1.
+  du_param_config_request  req3  = make_sib_update_request(create_default_sib3());
+  du_param_config_response resp3 = du_mng->get_operation_configurator().handle_sync_operator_config(req3);
+  dependencies.worker.run_pending_tasks();
+  ASSERT_TRUE(resp3.success);
+  ASSERT_EQ(get_value_tag_for_sib(sib_type::sib3).value(), 2);
+  ASSERT_EQ(get_value_tag_for_sib(sib_type::sib4).value(), 1);
+
+  // SIB2 is still at 0 throughout.
+  ASSERT_EQ(get_value_tag_for_sib(sib_type::sib2).value(), 0);
 }

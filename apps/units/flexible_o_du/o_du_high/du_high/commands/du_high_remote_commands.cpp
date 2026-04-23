@@ -214,3 +214,485 @@ error_type<std::string> rrm_policy_ratio_remote_command::execute(const nlohmann:
 
   return make_unexpected("RRM policy ratio remote command procedure failed to be applied by the DU");
 }
+
+// =============================================================================
+// sib_update_remote_command helpers
+// =============================================================================
+
+static expected<nr_cell_global_id_t, std::string> parse_cgi(const nlohmann::json& cell)
+{
+  auto plmn_key = cell.find("plmn");
+  if (plmn_key == cell.end()) {
+    return make_unexpected(std::string{"'plmn' object is missing and it is mandatory"});
+  }
+  if (!plmn_key->is_string()) {
+    return make_unexpected(std::string{"'plmn' object value type should be a string"});
+  }
+  auto plmn = plmn_identity::parse(plmn_key->get_ref<const nlohmann::json::string_t&>());
+  if (!plmn) {
+    return make_unexpected(std::string{"invalid PLMN identity value"});
+  }
+
+  auto nci_key = cell.find("nci");
+  if (nci_key == cell.end()) {
+    return make_unexpected(std::string{"'nci' object is missing and it is mandatory"});
+  }
+  if (!nci_key->is_number_unsigned()) {
+    return make_unexpected(std::string{"'nci' object value type should be an integer"});
+  }
+  auto nci = nr_cell_identity::create(nci_key->get<uint64_t>());
+  if (!nci) {
+    return make_unexpected(std::string{"invalid NR cell identity value"});
+  }
+
+  nr_cell_global_id_t cgi;
+  cgi.plmn_id = plmn.value();
+  cgi.nci     = nci.value();
+  return cgi;
+}
+
+static expected<q_hyst_t, std::string> parse_q_hyst_db(const nlohmann::json& obj)
+{
+  auto key = obj.find("q_hyst_db");
+  if (key == obj.end()) {
+    return make_unexpected(std::string{"'q_hyst_db' field is missing and it is mandatory"});
+  }
+  if (!key->is_number_integer()) {
+    return make_unexpected(std::string{"'q_hyst_db' value type should be an integer"});
+  }
+  int v = key->get<int>();
+  switch (v) {
+    case 0:  return q_hyst_t::db0;
+    case 1:  return q_hyst_t::db1;
+    case 2:  return q_hyst_t::db2;
+    case 3:  return q_hyst_t::db3;
+    case 4:  return q_hyst_t::db4;
+    case 5:  return q_hyst_t::db5;
+    case 6:  return q_hyst_t::db6;
+    case 8:  return q_hyst_t::db8;
+    case 10: return q_hyst_t::db10;
+    case 12: return q_hyst_t::db12;
+    case 14: return q_hyst_t::db14;
+    case 16: return q_hyst_t::db16;
+    case 18: return q_hyst_t::db18;
+    case 20: return q_hyst_t::db20;
+    case 22: return q_hyst_t::db22;
+    case 24: return q_hyst_t::db24;
+    default:
+      return make_unexpected(fmt::format(
+          "'q_hyst_db' value '{}' is invalid; valid values: 0,1,2,3,4,5,6,8,10,12,14,16,18,20,22,24", v));
+  }
+}
+
+static expected<q_offset_range_t, std::string> parse_q_offset_range(const nlohmann::json& val,
+                                                                    const std::string&    field_name)
+{
+  if (!val.is_number_integer()) {
+    return make_unexpected(fmt::format("'{}' value type should be an integer", field_name));
+  }
+  int v = val.get<int>();
+  switch (v) {
+    case -24: return q_offset_range_t::db_24;
+    case -22: return q_offset_range_t::db_22;
+    case -20: return q_offset_range_t::db_20;
+    case -18: return q_offset_range_t::db_18;
+    case -16: return q_offset_range_t::db_16;
+    case -14: return q_offset_range_t::db_14;
+    case -12: return q_offset_range_t::db_12;
+    case -10: return q_offset_range_t::db_10;
+    case -8:  return q_offset_range_t::db_8;
+    case -6:  return q_offset_range_t::db_6;
+    case -5:  return q_offset_range_t::db_5;
+    case -4:  return q_offset_range_t::db_4;
+    case -3:  return q_offset_range_t::db_3;
+    case -2:  return q_offset_range_t::db_2;
+    case -1:  return q_offset_range_t::db_1;
+    case 0:   return q_offset_range_t::db0;
+    case 1:   return q_offset_range_t::db1;
+    case 2:   return q_offset_range_t::db2;
+    case 3:   return q_offset_range_t::db3;
+    case 4:   return q_offset_range_t::db4;
+    case 5:   return q_offset_range_t::db5;
+    case 6:   return q_offset_range_t::db6;
+    case 8:   return q_offset_range_t::db8;
+    case 10:  return q_offset_range_t::db10;
+    case 12:  return q_offset_range_t::db12;
+    case 14:  return q_offset_range_t::db14;
+    case 16:  return q_offset_range_t::db16;
+    case 18:  return q_offset_range_t::db18;
+    case 20:  return q_offset_range_t::db20;
+    case 22:  return q_offset_range_t::db22;
+    case 24:  return q_offset_range_t::db24;
+    default:
+      return make_unexpected(fmt::format(
+          "'{}' value '{}' is invalid; valid values: -24,-22,-20,-18,-16,-14,-12,-10,-8,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,8,10,12,14,16,18,20,22,24",
+          field_name,
+          v));
+  }
+}
+
+static expected<subcarrier_spacing, std::string> parse_scs_khz(const nlohmann::json& val,
+                                                               const std::string&    field_name)
+{
+  if (!val.is_number_unsigned()) {
+    return make_unexpected(fmt::format("'{}' value type should be an unsigned integer", field_name));
+  }
+  unsigned v = val.get<unsigned>();
+  switch (v) {
+    case 15:  return subcarrier_spacing::kHz15;
+    case 30:  return subcarrier_spacing::kHz30;
+    case 60:  return subcarrier_spacing::kHz60;
+    case 120: return subcarrier_spacing::kHz120;
+    case 240: return subcarrier_spacing::kHz240;
+    default:
+      return make_unexpected(
+          fmt::format("'{}' value '{}' is invalid; valid kHz values: 15, 30, 60, 120, 240", field_name, v));
+  }
+}
+
+template <typename T, T MIN, T MAX>
+static expected<bounded_integer<T, MIN, MAX>, std::string> parse_bounded_int(const nlohmann::json& val,
+                                                                             const std::string&    field_name)
+{
+  if (!val.is_number_integer()) {
+    return make_unexpected(fmt::format("'{}' value type should be an integer", field_name));
+  }
+  auto v = val.get<int64_t>();
+  if (v < static_cast<int64_t>(MIN) || v > static_cast<int64_t>(MAX)) {
+    return make_unexpected(fmt::format("'{}' value '{}' out of range [{},{}]",
+                                       field_name,
+                                       v,
+                                       static_cast<int64_t>(MIN),
+                                       static_cast<int64_t>(MAX)));
+  }
+  return bounded_integer<T, MIN, MAX>{static_cast<T>(v)};
+}
+
+static expected<sib2_info, std::string> parse_sib2(const nlohmann::json& content)
+{
+  sib2_info sib2;
+
+  auto q_hyst_exp = parse_q_hyst_db(content);
+  if (!q_hyst_exp) {
+    return make_unexpected(q_hyst_exp.error());
+  }
+  sib2.q_hyst = q_hyst_exp.value();
+
+  auto thresh_serv_it = content.find("thresh_serving_low_p");
+  if (thresh_serv_it == content.end()) {
+    return make_unexpected(std::string{"'thresh_serving_low_p' field is missing and it is mandatory"});
+  }
+  auto thresh_serv_exp = parse_bounded_int<uint8_t, 0, 31>(*thresh_serv_it, "thresh_serving_low_p");
+  if (!thresh_serv_exp) {
+    return make_unexpected(thresh_serv_exp.error());
+  }
+  sib2.thresh_serving_low_p = thresh_serv_exp.value();
+
+  auto reselect_prio_it = content.find("cell_reselection_priority");
+  if (reselect_prio_it == content.end()) {
+    return make_unexpected(std::string{"'cell_reselection_priority' field is missing and it is mandatory"});
+  }
+  auto reselect_prio_exp = parse_bounded_int<uint8_t, 0, 7>(*reselect_prio_it, "cell_reselection_priority");
+  if (!reselect_prio_exp) {
+    return make_unexpected(reselect_prio_exp.error());
+  }
+  sib2.cell_reselection_priority = reselect_prio_exp.value();
+
+  auto q_rx_lev_min_it = content.find("q_rx_lev_min");
+  if (q_rx_lev_min_it == content.end()) {
+    return make_unexpected(std::string{"'q_rx_lev_min' field is missing and it is mandatory"});
+  }
+  auto q_rx_lev_min_exp = parse_bounded_int<int8_t, -70, -22>(*q_rx_lev_min_it, "q_rx_lev_min");
+  if (!q_rx_lev_min_exp) {
+    return make_unexpected(q_rx_lev_min_exp.error());
+  }
+  sib2.q_rx_lev_min = q_rx_lev_min_exp.value();
+
+  auto s_intra_search_it = content.find("s_intra_search_p");
+  if (s_intra_search_it == content.end()) {
+    return make_unexpected(std::string{"'s_intra_search_p' field is missing and it is mandatory"});
+  }
+  auto s_intra_search_exp = parse_bounded_int<uint8_t, 0, 31>(*s_intra_search_it, "s_intra_search_p");
+  if (!s_intra_search_exp) {
+    return make_unexpected(s_intra_search_exp.error());
+  }
+  sib2.s_intra_search_p = s_intra_search_exp.value();
+
+  auto t_reselection_it = content.find("t_reselection_nr");
+  if (t_reselection_it == content.end()) {
+    return make_unexpected(std::string{"'t_reselection_nr' field is missing and it is mandatory"});
+  }
+  auto t_reselection_exp = parse_bounded_int<uint8_t, 0, 7>(*t_reselection_it, "t_reselection_nr");
+  if (!t_reselection_exp) {
+    return make_unexpected(t_reselection_exp.error());
+  }
+  sib2.t_reselection_nr = t_reselection_exp.value();
+
+  return sib2;
+}
+
+static expected<sib3_info, std::string> parse_sib3(const nlohmann::json& content)
+{
+  sib3_info sib3;
+
+  auto neigh_list_it = content.find("intra_freq_neigh_cell_list");
+  if (neigh_list_it != content.end()) {
+    if (!neigh_list_it->is_array()) {
+      return make_unexpected(std::string{"'intra_freq_neigh_cell_list' value type should be an array"});
+    }
+    for (const auto& entry : neigh_list_it->items()) {
+      const auto& neigh_obj = entry.value();
+      if (!neigh_obj.is_object()) {
+        return make_unexpected(std::string{"'intra_freq_neigh_cell_list' entries should be objects"});
+      }
+      auto pci_it = neigh_obj.find("pci");
+      if (pci_it == neigh_obj.end()) {
+        return make_unexpected(std::string{"'pci' field is missing in 'intra_freq_neigh_cell_list' entry"});
+      }
+      if (!pci_it->is_number_unsigned()) {
+        return make_unexpected(std::string{"'pci' value type should be an unsigned integer"});
+      }
+      unsigned pci_val = pci_it->get<unsigned>();
+      if (pci_val > 1007) {
+        return make_unexpected(fmt::format("'pci' value '{}' out of range [0, 1007]", pci_val));
+      }
+      auto q_offset_it = neigh_obj.find("q_offset_cell");
+      if (q_offset_it == neigh_obj.end()) {
+        return make_unexpected(std::string{"'q_offset_cell' field is missing in 'intra_freq_neigh_cell_list' entry"});
+      }
+      auto q_offset_exp = parse_q_offset_range(*q_offset_it, "q_offset_cell");
+      if (!q_offset_exp) {
+        return make_unexpected(q_offset_exp.error());
+      }
+      intra_freq_neigh_cell_info neigh;
+      neigh.pci           = static_cast<pci_t>(pci_val);
+      neigh.q_offset_cell = q_offset_exp.value();
+      sib3.intra_freq_neigh_cell_list.push_back(neigh);
+    }
+  }
+
+  auto excluded_list_it = content.find("intra_freq_excluded_cell_list");
+  if (excluded_list_it != content.end()) {
+    if (!excluded_list_it->is_array()) {
+      return make_unexpected(std::string{"'intra_freq_excluded_cell_list' value type should be an array"});
+    }
+    for (const auto& entry : excluded_list_it->items()) {
+      const auto& excl_obj = entry.value();
+      if (!excl_obj.is_object()) {
+        return make_unexpected(std::string{"'intra_freq_excluded_cell_list' entries should be objects"});
+      }
+      auto start_it = excl_obj.find("pci_start");
+      if (start_it == excl_obj.end() || !start_it->is_number_unsigned()) {
+        return make_unexpected(std::string{"'pci_start' missing or non-integer in excluded list entry"});
+      }
+      unsigned start_val = start_it->get<unsigned>();
+      if (start_val > 1007) {
+        return make_unexpected(fmt::format("'pci_start' value '{}' out of range [0, 1007]", start_val));
+      }
+      auto range_it = excl_obj.find("range");
+      if (range_it == excl_obj.end() || !range_it->is_number_unsigned()) {
+        return make_unexpected(std::string{"'range' missing or non-integer in excluded list entry"});
+      }
+      unsigned range_val = range_it->get<unsigned>();
+      pci_range_t pci_range;
+      pci_range.start = static_cast<pci_t>(start_val);
+      switch (range_val) {
+        case 1:    pci_range.size = pci_range_t::range_t::n1;    break;
+        case 4:    pci_range.size = pci_range_t::range_t::n4;    break;
+        case 8:    pci_range.size = pci_range_t::range_t::n8;    break;
+        case 12:   pci_range.size = pci_range_t::range_t::n12;   break;
+        case 16:   pci_range.size = pci_range_t::range_t::n16;   break;
+        case 24:   pci_range.size = pci_range_t::range_t::n24;   break;
+        case 32:   pci_range.size = pci_range_t::range_t::n32;   break;
+        case 48:   pci_range.size = pci_range_t::range_t::n48;   break;
+        case 64:   pci_range.size = pci_range_t::range_t::n64;   break;
+        case 84:   pci_range.size = pci_range_t::range_t::n84;   break;
+        case 96:   pci_range.size = pci_range_t::range_t::n96;   break;
+        case 128:  pci_range.size = pci_range_t::range_t::n128;  break;
+        case 168:  pci_range.size = pci_range_t::range_t::n168;  break;
+        case 252:  pci_range.size = pci_range_t::range_t::n252;  break;
+        case 504:  pci_range.size = pci_range_t::range_t::n504;  break;
+        case 1008: pci_range.size = pci_range_t::range_t::n1008; break;
+        default:
+          return make_unexpected(fmt::format(
+              "'range' value '{}' invalid; valid values: 1,4,8,12,16,24,32,48,64,84,96,128,168,252,504,1008",
+              range_val));
+      }
+      sib3.intra_freq_excluded_cell_list.push_back(pci_range);
+    }
+  }
+
+  return sib3;
+}
+
+static expected<sib4_info, std::string> parse_sib4(const nlohmann::json& content)
+{
+  sib4_info sib4;
+
+  auto carrier_list_it = content.find("inter_freq_carrier_freq_list");
+  if (carrier_list_it == content.end()) {
+    return make_unexpected(std::string{"'inter_freq_carrier_freq_list' field is missing and it is mandatory"});
+  }
+  if (!carrier_list_it->is_array()) {
+    return make_unexpected(std::string{"'inter_freq_carrier_freq_list' value type should be an array"});
+  }
+
+  for (const auto& entry : carrier_list_it->items()) {
+    const auto& carrier_obj = entry.value();
+    if (!carrier_obj.is_object()) {
+      return make_unexpected(std::string{"'inter_freq_carrier_freq_list' entries should be objects"});
+    }
+
+    auto arfcn_it = carrier_obj.find("arfcn");
+    if (arfcn_it == carrier_obj.end() || !arfcn_it->is_number_unsigned()) {
+      return make_unexpected(std::string{"'arfcn' missing or non-integer in carrier list entry"});
+    }
+
+    auto scs_it = carrier_obj.find("ssb_scs");
+    if (scs_it == carrier_obj.end()) {
+      return make_unexpected(std::string{"'ssb_scs' missing in carrier list entry"});
+    }
+    auto scs_exp = parse_scs_khz(*scs_it, "ssb_scs");
+    if (!scs_exp) {
+      return make_unexpected(scs_exp.error());
+    }
+
+    auto derive_it = carrier_obj.find("derive_ssb_index_from_cell");
+    if (derive_it == carrier_obj.end() || !derive_it->is_boolean()) {
+      return make_unexpected(std::string{"'derive_ssb_index_from_cell' missing or non-boolean in carrier list entry"});
+    }
+
+    auto q_rx_lev_min_it = carrier_obj.find("q_rx_lev_min");
+    if (q_rx_lev_min_it == carrier_obj.end()) {
+      return make_unexpected(std::string{"'q_rx_lev_min' missing in carrier list entry"});
+    }
+    auto q_rx_lev_min_exp = parse_bounded_int<int8_t, -70, -22>(*q_rx_lev_min_it, "q_rx_lev_min");
+    if (!q_rx_lev_min_exp) {
+      return make_unexpected(q_rx_lev_min_exp.error());
+    }
+
+    auto thresh_high_it = carrier_obj.find("thresh_x_high_p");
+    if (thresh_high_it == carrier_obj.end()) {
+      return make_unexpected(std::string{"'thresh_x_high_p' missing in carrier list entry"});
+    }
+    auto thresh_high_exp = parse_bounded_int<uint8_t, 0, 31>(*thresh_high_it, "thresh_x_high_p");
+    if (!thresh_high_exp) {
+      return make_unexpected(thresh_high_exp.error());
+    }
+
+    auto thresh_low_it = carrier_obj.find("thresh_x_low_p");
+    if (thresh_low_it == carrier_obj.end()) {
+      return make_unexpected(std::string{"'thresh_x_low_p' missing in carrier list entry"});
+    }
+    auto thresh_low_exp = parse_bounded_int<uint8_t, 0, 31>(*thresh_low_it, "thresh_x_low_p");
+    if (!thresh_low_exp) {
+      return make_unexpected(thresh_low_exp.error());
+    }
+
+    inter_freq_carrier_freq_info carrier;
+    carrier.arfcn                      = arfcn_it->get<uint32_t>();
+    carrier.ssb_scs                    = scs_exp.value();
+    carrier.derive_ssb_index_from_cell = derive_it->get<bool>();
+    carrier.q_rx_lev_min               = q_rx_lev_min_exp.value();
+    carrier.thresh_x_high_p            = thresh_high_exp.value();
+    carrier.thresh_x_low_p             = thresh_low_exp.value();
+
+    // q_offset_freq is optional (default db0).
+    auto q_offset_freq_it = carrier_obj.find("q_offset_freq");
+    if (q_offset_freq_it != carrier_obj.end()) {
+      auto q_offset_freq_exp = parse_q_offset_range(*q_offset_freq_it, "q_offset_freq");
+      if (!q_offset_freq_exp) {
+        return make_unexpected(q_offset_freq_exp.error());
+      }
+      carrier.q_offset_freq = q_offset_freq_exp.value();
+    }
+
+    sib4.inter_freq_carrier_freq_list.push_back(carrier);
+  }
+
+  return sib4;
+}
+
+error_type<std::string> sib_update_remote_command::execute(const nlohmann::json& json)
+{
+  auto cells_key = json.find("cells");
+  if (cells_key == json.end()) {
+    return make_unexpected("'cells' object is missing and it is mandatory");
+  }
+  if (!cells_key->is_array()) {
+    return make_unexpected("'cells' object value type should be an array");
+  }
+  auto cells_items = cells_key->items();
+  if (cells_items.begin() == cells_items.end()) {
+    return make_unexpected("'cells' object does not contain any cell entries");
+  }
+
+  odu::du_param_config_request req;
+  for (const auto& cell : cells_items) {
+    const auto& cell_obj = cell.value();
+
+    auto cgi_exp = parse_cgi(cell_obj);
+    if (!cgi_exp) {
+      return make_unexpected(cgi_exp.error());
+    }
+
+    auto sib_key = cell_obj.find("sib");
+    if (sib_key == cell_obj.end()) {
+      return make_unexpected("'sib' object is missing and it is mandatory");
+    }
+    if (!sib_key->is_object()) {
+      return make_unexpected("'sib' object value type should be an object");
+    }
+
+    auto type_key = sib_key->find("type");
+    if (type_key == sib_key->end()) {
+      return make_unexpected("'sib.type' field is missing and it is mandatory");
+    }
+    if (!type_key->is_string()) {
+      return make_unexpected("'sib.type' value type should be a string");
+    }
+
+    auto content_key = sib_key->find("content");
+    if (content_key == sib_key->end()) {
+      return make_unexpected("'sib.content' field is missing and it is mandatory");
+    }
+    if (!content_key->is_object()) {
+      return make_unexpected("'sib.content' value type should be an object");
+    }
+
+    std::string sib_type_str = type_key->get<std::string>();
+    sib_info    sib_variant;
+    if (sib_type_str == "sib2") {
+      auto parsed = parse_sib2(*content_key);
+      if (!parsed) {
+        return make_unexpected(parsed.error());
+      }
+      sib_variant = std::move(parsed.value());
+    } else if (sib_type_str == "sib3") {
+      auto parsed = parse_sib3(*content_key);
+      if (!parsed) {
+        return make_unexpected(parsed.error());
+      }
+      sib_variant = std::move(parsed.value());
+    } else if (sib_type_str == "sib4") {
+      auto parsed = parse_sib4(*content_key);
+      if (!parsed) {
+        return make_unexpected(parsed.error());
+      }
+      sib_variant = std::move(parsed.value());
+    } else {
+      return make_unexpected(fmt::format(
+          "unsupported 'sib.type' value '{}'; supported types: sib2, sib3, sib4", sib_type_str));
+    }
+
+    auto& cell_cfg        = req.cells.emplace_back();
+    cell_cfg.nr_cgi       = cgi_exp.value();
+    cell_cfg.new_sys_info = std::move(sib_variant);
+  }
+
+  if (configurator.handle_sync_operator_config(req).success) {
+    return {};
+  }
+
+  return make_unexpected("SIB update command procedure failed to be applied by the DU");
+}
