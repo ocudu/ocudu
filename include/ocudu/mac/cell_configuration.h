@@ -16,6 +16,8 @@
 
 namespace ocudu {
 
+class phy_cell_operation_controller;
+
 /// Type that can hold multiple versions of the payload for segmented messages.
 using bcch_dl_sch_payload_type = std::vector<byte_buffer>;
 
@@ -68,6 +70,14 @@ struct mac_cell_creation_request {
 
   /// Cell-specific encoded system information.
   mac_cell_sys_info_config sys_info;
+
+  /// \brief Optional non-owning pointer to the PHY cell operation controller for this cell.
+  ///
+  /// When set, MAC cell start/stop propagates to the PHY via FAPI P5 START/STOP. The pointer is
+  /// supplied by the layer that owns the FAPI adaptor (e.g. o_du_high) and forwarded through the
+  /// MAC cell creation path into mac_cell_config_dependencies. Null leaves PHY untouched on
+  /// MAC cell stop, which preserves the legacy behaviour for builds without a FAPI P5 adaptor.
+  phy_cell_operation_controller* phy_cell_op_controller = nullptr;
 };
 
 } // namespace ocudu

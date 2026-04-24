@@ -11,6 +11,8 @@
 #include "ocudu/du/du_high/o_du_high_config.h"
 #include "ocudu/e2/e2_du_factory.h"
 #include "ocudu/fapi_adaptor/mac/mac_fapi_fastpath_adaptor_factory.h"
+#include "ocudu/fapi_adaptor/mac/mac_fapi_sector_fastpath_adaptor.h"
+#include "ocudu/fapi_adaptor/mac/p5/mac_fapi_p5_sector_fastpath_adaptor.h"
 #include "ocudu/fapi_adaptor/precoding_codebook_generator.h"
 #include "ocudu/fapi_adaptor/uci_part2_correspondence_generator.h"
 #include "ocudu/ran/band_helper.h"
@@ -162,6 +164,16 @@ std::unique_ptr<o_du_high> ocudu::odu::make_o_du_high(const o_du_high_config&  c
   // Resolve dependencies for DU-high.
   odu_dependencies.du_hi.phy_adapter = &odu->get_mac_result_notifier();
   odu_dependencies.du_hi.du_notifier = &odu->get_du_metrics_notifier();
+
+  // Expose the per-cell PHY operation controller (FAPI P5) so MAC cell start/stop drives FAPI
+  // START/STOP and the PHY actually halts RF on cell deactivation. The FAPI adaptor is owned by
+  // o_du_high_impl and outlives the du_high, so a non-owning pointer is safe here.
+  odu_dependencies.du_hi.phy_cell_op_controllers.reserve(config.du_hi.ran.cells.size());
+  for (unsigned i = 0, e = config.du_hi.ran.cells.size(); i != e; ++i) {
+    auto& sector_adaptor = odu->get_mac_fapi_fastpath_adaptor().get_sector_adaptor(i);
+    odu_dependencies.du_hi.phy_cell_op_controllers.push_back(
+        &sector_adaptor.get_p5_sector_fastpath_adaptor().get_operation_controller());
+  }
 
   if (!odu_dependencies.e2_client) {
     odu->set_du_high(make_du_high(du_hi_cfg, odu_dependencies.du_hi));

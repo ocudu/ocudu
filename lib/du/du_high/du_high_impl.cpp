@@ -110,7 +110,7 @@ du_high_impl::du_high_impl(const du_high_configuration& config_, const du_high_d
        cfg.rlc.srb_rx_window_seg_pool_size,
        cfg.rlc.srb_tx_window_seg_size,
        cfg.rlc.srb_tx_window_seg_pool_size},
-      {*mac, cfg.ran.sched_cfg},
+      {*mac, cfg.ran.sched_cfg, dependencies.phy_cell_op_controllers},
       {cfg.metrics.period,
        dependencies.du_notifier,
        cfg.metrics.enable_f1ap,

@@ -28,6 +28,7 @@ namespace ocudu {
 class timer_manager;
 class mac_metrics_notifier;
 class scheduler_metrics_notifier;
+class phy_cell_operation_controller;
 
 namespace ocudu_ntn {
 class ntn_doppler_compensation_handler;
@@ -89,6 +90,12 @@ struct du_manager_params {
     /// Interface to configure the MAC layer.
     mac_manager&            mgr;
     scheduler_expert_config sched_cfg;
+    /// \brief Optional per-cell PHY operation controllers, indexed by du_cell_index.
+    ///
+    /// Forwarded by du_setup_procedure into mac_cell_creation_request.phy_cell_op_controller
+    /// when adding cells, so MAC cell start/stop drives FAPI P5 START/STOP. Empty leaves the
+    /// pointer null and the PHY untouched on MAC cell stop.
+    std::vector<phy_cell_operation_controller*> phy_cell_op_controllers;
   };
 
   struct metrics_config_params {

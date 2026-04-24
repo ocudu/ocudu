@@ -52,10 +52,11 @@ mac_cell_controller& mac_controller::add_cell(const mac_cell_creation_request& c
       mac_scheduler_cell_creation_request{cell_add_req, cell_metrics_cfg.sched_notifier, cfg.metrics.sched_ue_enabled});
 
   // > Create MAC Cell DL Handler.
-  mac_dl_cell_controller& dl_cell =
-      dl_unit.add_cell(cell_add_req,
-                       mac_cell_config_dependencies{
-                           std::move(cell_time_source), cell_metrics_cfg.report_period, cell_metrics_cfg.mac_notifier});
+  mac_dl_cell_controller& dl_cell = dl_unit.add_cell(cell_add_req,
+                                                     mac_cell_config_dependencies{std::move(cell_time_source),
+                                                                                  cell_metrics_cfg.report_period,
+                                                                                  cell_metrics_cfg.mac_notifier,
+                                                                                  cell_add_req.phy_cell_op_controller});
 
   // > Create the cell controller, which starts the broadcast of the cell System Information. The cell must already
   // exist in the scheduler at this point, as an SI-message configured for test mode auto-broadcast is activated
