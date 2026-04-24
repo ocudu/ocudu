@@ -5,6 +5,7 @@
 #pragma once
 
 #include "ocudu/adt/span.h"
+#include "ocudu/cu_cp/cu_cp_cell_command_handler.h"
 #include "ocudu/ran/cu_cp_ue_context_release.h"
 #include "ocudu/ran/meas_types.h"
 #include "ocudu/ran/pci.h"
@@ -96,6 +97,9 @@ public:
 
   /// Get handler for NTN neighbour cell measurement info updates.
   virtual cu_cp_ntn_meas_update_handler& get_ntn_meas_update_handler() = 0;
+
+  /// Get handler for cell-level lifecycle commands (activate, deactivate).
+  virtual cu_cp_cell_command_handler& get_cell_command_handler() = 0;
 };
 
 } // namespace ocudu::ocucp
