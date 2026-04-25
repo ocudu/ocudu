@@ -5,7 +5,9 @@
 #include "lib/mac/mac_dl/mac_cell_processor.h"
 #include "mac_test_helpers.h"
 #include "ocudu/mac/mac_cell_timing_context.h"
+#include "ocudu/mac/phy_cell_operation_controller.h"
 #include "ocudu/support/async/async_test_utils.h"
+#include "ocudu/support/async/eager_async_task.h"
 #include "ocudu/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
@@ -227,5 +229,155 @@ TEST_F(mac_cell_processor_ue_update_test, ues_created_and_removed_in_batches)
       task_worker.run_pending_tasks();
       report_error_if_not(launcher.ready(), "Unable to add UE");
     }
+  }
+}
+
+/// FAPI cell lifecycle init bypass.
+///
+/// In monolithic OCUDU, mac_cell_processor::start() is invoked inside DU.start() during initial
+/// cell bring-up — at a moment when the FAPI executors that would respond to a START.request are
+/// not yet pumping their queues. Awaiting the FAPI START transaction would deadlock for the full
+/// 5-second timeout. To avoid this, the very first activation per cell skips the FAPI await; all
+/// subsequent activations (runtime cell unlock, runtime add) go through the full FAPI path so the
+/// spec-correct lifecycle is honored everywhere it is operationally meaningful.
+///
+/// These tests pin that contract: the controller is NOT invoked on the first start(), but IS
+/// invoked on subsequent starts and on every stop().
+
+namespace {
+
+/// Spy that records every invocation of start()/stop() and returns success.
+class phy_cell_operation_controller_spy : public phy_cell_operation_controller
+{
+  unsigned start_count = 0;
+  unsigned stop_count  = 0;
+
+public:
+  async_task<bool> start() override
+  {
+    ++start_count;
+    return launch_async([](coro_context<async_task<bool>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(true);
+    });
+  }
+
+  async_task<bool> stop() override
+  {
+    ++stop_count;
+    return launch_async([](coro_context<async_task<bool>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(true);
+    });
+  }
+
+  unsigned get_start_count() const { return start_count; }
+  unsigned get_stop_count() const { return stop_count; }
+};
+
+} // namespace
+
+class mac_cell_processor_init_bypass_fixture : public ::testing::Test
+{
+protected:
+  test_helpers::dummy_mac_scheduler_adapter    sched_adapter;
+  test_helpers::dummy_mac_sfn_time_adapter     sfn_time_adapter;
+  du_rnti_table                                rnti_table;
+  test_helpers::dummy_mac_cell_result_notifier phy_notifier;
+  manual_task_worker                           task_worker{128};
+  null_mac_pcap                                pcap;
+  timer_manager                                timers;
+  test_helpers::dummy_mac_clock_controller     timer_ctrl{timers};
+  cell_config_builder_params                   builder_params;
+  phy_cell_operation_controller_spy            phy_spy;
+
+  std::unique_ptr<mac_cell_processor> mac_cell;
+
+  mac_cell_processor_init_bypass_fixture()
+  {
+    mac_cell_config_dependencies deps{timer_ctrl.add_cell(to_du_cell_index(0))};
+    deps.phy_cell_op_controller = &phy_spy;
+    mac_cell = std::make_unique<mac_cell_processor>(test_helpers::make_default_mac_cell_config(builder_params),
+                                                    sched_adapter,
+                                                    sfn_time_adapter,
+                                                    rnti_table,
+                                                    phy_notifier,
+                                                    task_worker,
+                                                    task_worker,
+                                                    task_worker,
+                                                    pcap,
+                                                    timers,
+                                                    std::move(deps));
+  }
+
+  void run_async_void(async_task<void>& t)
+  {
+    lazy_task_launcher<void> launcher{t};
+    task_worker.run_pending_tasks();
+    ASSERT_TRUE(t.ready());
+  }
+};
+
+TEST_F(mac_cell_processor_init_bypass_fixture, first_start_does_not_invoke_phy_controller)
+{
+  ASSERT_EQ(phy_spy.get_start_count(), 0u);
+
+  auto t = mac_cell->start();
+  run_async_void(t);
+
+  // Init bypass: first activation must NOT call the FAPI controller — it would
+  // deadlock during DU.start() because executors are not yet pumping.
+  EXPECT_EQ(phy_spy.get_start_count(), 0u);
+}
+
+TEST_F(mac_cell_processor_init_bypass_fixture, second_start_after_stop_invokes_phy_controller)
+{
+  // First (init) activation — bypassed.
+  auto t1 = mac_cell->start();
+  run_async_void(t1);
+  ASSERT_EQ(phy_spy.get_start_count(), 0u);
+
+  // Stop — always uses the FAPI path.
+  auto t2 = mac_cell->stop();
+  run_async_void(t2);
+  ASSERT_EQ(phy_spy.get_stop_count(), 1u);
+
+  // Subsequent start (runtime unlock equivalent) — full FAPI START path.
+  auto t3 = mac_cell->start();
+  run_async_void(t3);
+  EXPECT_EQ(phy_spy.get_start_count(), 1u);
+}
+
+TEST_F(mac_cell_processor_init_bypass_fixture, stop_always_invokes_phy_controller)
+{
+  auto t1 = mac_cell->start();
+  run_async_void(t1);
+
+  auto t2 = mac_cell->stop();
+  run_async_void(t2);
+  EXPECT_EQ(phy_spy.get_stop_count(), 1u);
+
+  // Re-start, re-stop — stop is always on the FAPI path regardless of init state.
+  auto t3 = mac_cell->start();
+  run_async_void(t3);
+  auto t4 = mac_cell->stop();
+  run_async_void(t4);
+  EXPECT_EQ(phy_spy.get_stop_count(), 2u);
+}
+
+TEST_F(mac_cell_processor_init_bypass_fixture, repeated_runtime_cycles_use_full_fapi_path)
+{
+  // Burn through the init bypass.
+  auto t0 = mac_cell->start();
+  run_async_void(t0);
+
+  // Repeated runtime cycles — every start and stop hits the controller.
+  for (unsigned i = 1; i <= 3; ++i) {
+    auto ts = mac_cell->stop();
+    run_async_void(ts);
+    auto tr = mac_cell->start();
+    run_async_void(tr);
+    EXPECT_EQ(phy_spy.get_start_count(), i);
+    EXPECT_EQ(phy_spy.get_stop_count(), i);
   }
 }
