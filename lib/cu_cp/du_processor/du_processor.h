@@ -63,6 +63,12 @@ public:
   /// \brief Checks whether a cell with the specified NR cell global id is served by the DU.
   virtual bool has_cell(nr_cell_global_id_t cgi) = 0;
 
+  /// \brief Whether the DU knows about this cell, in either served or deactivated state.
+  ///
+  /// has_cell() returns false once a cell is locked because it only checks served_cells. The
+  /// activate_cell path needs to find cells that were previously deactivated, hence this variant.
+  virtual bool has_cell_any_state(nr_cell_global_id_t cgi) = 0;
+
   /// \brief Get DU configuration context.
   virtual const du_configuration_context* get_context() const = 0;
 };

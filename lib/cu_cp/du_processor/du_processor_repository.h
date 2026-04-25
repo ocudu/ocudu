@@ -44,6 +44,12 @@ public:
   /// \return The index of the DU serving the given CGI.
   cu_cp_du_index_t find_du(const nr_cell_global_id_t& cgi);
 
+  /// \brief Find the DU that hosts the given CGI in any state (served or deactivated).
+  ///
+  /// Used by the cell lifecycle command path to resolve previously-locked cells when running an
+  /// activate command. find_du(cgi) only searches served cells and would miss locked ones.
+  cu_cp_du_index_t find_du_any_state(const nr_cell_global_id_t& cgi);
+
   /// \brief Find a DU object.
   /// \param[in] du_index The index of the DU processor object.
   /// \return A pointer to the DU processor object, nullptr if the DU processor object is not found.

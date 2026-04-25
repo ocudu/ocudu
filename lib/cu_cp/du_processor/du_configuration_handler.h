@@ -35,6 +35,21 @@ struct du_configuration_context {
     auto it = std::find_if(served_cells.begin(), served_cells.end(), [&cgi](const auto& c) { return c.cgi == cgi; });
     return it != served_cells.end() ? &(*it) : nullptr;
   }
+  /// \brief Find a cell in either served or deactivated state.
+  ///
+  /// Used by the cell lifecycle command path on CU-CP to locate cells that may currently be
+  /// deactivated (e.g. resolving an activate_cell command for a previously-locked cell). The
+  /// plain find_cell() above only searches served_cells, which is correct for handover and
+  /// admission paths but excludes locked cells.
+  const du_cell_configuration* find_cell_any_state(nr_cell_global_id_t cgi) const
+  {
+    if (auto* c = find_cell(cgi); c != nullptr) {
+      return c;
+    }
+    auto it = std::find_if(
+        deactivated_cells.begin(), deactivated_cells.end(), [&cgi](const auto& c) { return c.cgi == cgi; });
+    return it != deactivated_cells.end() ? &(*it) : nullptr;
+  }
 };
 
 class du_configuration_handler

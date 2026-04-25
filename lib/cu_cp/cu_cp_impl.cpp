@@ -1968,7 +1968,10 @@ static single_cell_f1ap_ctx prepare_single_cell_update(du_processor_repository& 
                                                        bool                       activate)
 {
   single_cell_f1ap_ctx out{};
-  cu_cp_du_index_t           du_idx = du_db.find_du(cgi);
+  // For activate, also accept cells currently in the deactivated list. find_du(cgi) only searches
+  // served_cells, which excludes locked cells; activate is precisely the operation that needs to
+  // address them. Deactivate keeps the stricter served-only lookup.
+  cu_cp_du_index_t du_idx = activate ? du_db.find_du_any_state(cgi) : du_db.find_du(cgi);
   if (du_idx == cu_cp_du_index_t::invalid) {
     out.invalid = true;
     out.error_message =

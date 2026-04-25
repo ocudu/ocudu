@@ -117,6 +117,16 @@ cu_cp_du_index_t du_processor_repository::find_du(const nr_cell_global_id_t& cgi
   return index;
 }
 
+cu_cp_du_index_t du_processor_repository::find_du_any_state(const nr_cell_global_id_t& cgi)
+{
+  for (const auto& du : du_db) {
+    if (du.second.processor->has_cell_any_state(cgi)) {
+      return du.first;
+    }
+  }
+  return cu_cp_du_index_t::invalid;
+}
+
 du_processor* du_processor_repository::find_du_processor(cu_cp_du_index_t du_index)
 {
   if (du_db.find(du_index) == du_db.end()) {
