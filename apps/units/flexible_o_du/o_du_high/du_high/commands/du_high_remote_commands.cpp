@@ -264,12 +264,26 @@ static expected<q_hyst_t, std::string> parse_q_hyst_db(const nlohmann::json& obj
   }
   const int v = key->get<int>();
   switch (v) {
-    case 0: case 1: case 2: case 3: case 4: case 5: case 6:
-    case 8: case 10: case 12: case 14: case 16: case 18: case 20: case 22: case 24:
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+    case 8:
+    case 10:
+    case 12:
+    case 14:
+    case 16:
+    case 18:
+    case 20:
+    case 22:
+    case 24:
       return static_cast<q_hyst_t>(v);
     default:
-      return make_unexpected(fmt::format(
-          "'q_hyst_db' value '{}' is invalid; valid values: 0,1,2,3,4,5,6,8,10,12,14,16,18,20,22,24", v));
+      return make_unexpected(
+          fmt::format("'q_hyst_db' value '{}' is invalid; valid values: 0,1,2,3,4,5,6,8,10,12,14,16,18,20,22,24", v));
   }
 }
 
@@ -283,33 +297,65 @@ static expected<q_offset_range_t, std::string> parse_q_offset_range(const nlohma
   }
   const int v = val.get<int>();
   switch (v) {
-    case -24: case -22: case -20: case -18: case -16: case -14: case -12: case -10:
-    case -8: case -6: case -5: case -4: case -3: case -2: case -1:
-    case 0: case 1: case 2: case 3: case 4: case 5: case 6:
-    case 8: case 10: case 12: case 14: case 16: case 18: case 20: case 22: case 24:
+    case -24:
+    case -22:
+    case -20:
+    case -18:
+    case -16:
+    case -14:
+    case -12:
+    case -10:
+    case -8:
+    case -6:
+    case -5:
+    case -4:
+    case -3:
+    case -2:
+    case -1:
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+    case 8:
+    case 10:
+    case 12:
+    case 14:
+    case 16:
+    case 18:
+    case 20:
+    case 22:
+    case 24:
       return static_cast<q_offset_range_t>(v);
     default:
-      return make_unexpected(fmt::format(
-          "'{}' value '{}' is invalid; valid values: -24,-22,-20,-18,-16,-14,-12,-10,-8,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,8,10,12,14,16,18,20,22,24",
-          field_name,
-          v));
+      return make_unexpected(
+          fmt::format("'{}' value '{}' is invalid; valid values: "
+                      "-24,-22,-20,-18,-16,-14,-12,-10,-8,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,8,10,12,14,16,18,20,22,24",
+                      field_name,
+                      v));
   }
 }
 
 // subcarrier_spacing is numerology-indexed (kHz30 = 1), so the switch is a genuine mapping.
-static expected<subcarrier_spacing, std::string> parse_scs_khz(const nlohmann::json& val,
-                                                               std::string_view      field_name)
+static expected<subcarrier_spacing, std::string> parse_scs_khz(const nlohmann::json& val, std::string_view field_name)
 {
   if (!val.is_number_integer() || val.get<int64_t>() < 0) {
     return make_unexpected(fmt::format("'{}' value type should be a non-negative integer", field_name));
   }
   const unsigned v = val.get<unsigned>();
   switch (v) {
-    case 15:  return subcarrier_spacing::kHz15;
-    case 30:  return subcarrier_spacing::kHz30;
-    case 60:  return subcarrier_spacing::kHz60;
-    case 120: return subcarrier_spacing::kHz120;
-    case 240: return subcarrier_spacing::kHz240;
+    case 15:
+      return subcarrier_spacing::kHz15;
+    case 30:
+      return subcarrier_spacing::kHz30;
+    case 60:
+      return subcarrier_spacing::kHz60;
+    case 120:
+      return subcarrier_spacing::kHz120;
+    case 240:
+      return subcarrier_spacing::kHz240;
     default:
       return make_unexpected(
           fmt::format("'{}' value '{}' is invalid; valid kHz values: 15, 30, 60, 120, 240", field_name, v));
@@ -459,8 +505,22 @@ static expected<sib3_info, std::string> parse_sib3(const nlohmann::json& content
       pci_range_t pci_range;
       pci_range.start = start_exp.value();
       switch (range_val) {
-        case 1: case 4: case 8: case 12: case 16: case 24: case 32: case 48:
-        case 64: case 84: case 96: case 128: case 168: case 252: case 504: case 1008:
+        case 1:
+        case 4:
+        case 8:
+        case 12:
+        case 16:
+        case 24:
+        case 32:
+        case 48:
+        case 64:
+        case 84:
+        case 96:
+        case 128:
+        case 168:
+        case 252:
+        case 504:
+        case 1008:
           pci_range.size = static_cast<pci_range_t::range_t>(range_val);
           break;
         default:
@@ -627,8 +687,8 @@ error_type<std::string> sib_update_remote_command::execute(const nlohmann::json&
       }
       sib_variant = std::move(parsed.value());
     } else {
-      return make_unexpected(fmt::format(
-          "unsupported 'sib.type' value '{}'; supported types: sib2, sib3, sib4", sib_type_str));
+      return make_unexpected(
+          fmt::format("unsupported 'sib.type' value '{}'; supported types: sib2, sib3, sib4", sib_type_str));
     }
 
     auto& cell_cfg        = req.cells.emplace_back();

@@ -17,7 +17,7 @@ class capturing_du_configurator : public odu::du_configurator
 {
 public:
   std::optional<odu::du_param_config_request> last_req;
-  bool                                         next_response_success = true;
+  bool                                        next_response_success = true;
 
   async_task<odu::du_mac_sched_control_config_response>
   configure_ue_mac_scheduler(const odu::du_mac_sched_control_config&) override
@@ -51,7 +51,7 @@ nlohmann::json make_cell_skeleton()
 {
   nlohmann::json cell;
   cell["plmn"] = "001001";
-  cell["nci"]  = uint64_t{6733824};  // must be unsigned — adapter checks is_number_unsigned()
+  cell["nci"]  = uint64_t{6733824}; // must be unsigned — adapter checks is_number_unsigned()
   return cell;
 }
 
@@ -74,15 +74,15 @@ TEST(sib_update_remote_command, valid_sib2_request_builds_sib2_variant)
   capturing_du_configurator mock;
   sib_update_remote_command cmd{mock};
 
-  auto cell    = make_cell_skeleton();
-  cell["sib"]  = {{"type", "sib2"},
-                  {"content",
-                   {{"q_hyst_db", 4},
-                    {"thresh_serving_low_p", 14},
-                    {"cell_reselection_priority", 4},
-                    {"q_rx_lev_min", -70},
-                    {"s_intra_search_p", 31},
-                    {"t_reselection_nr", 1}}}};
+  auto cell   = make_cell_skeleton();
+  cell["sib"] = {{"type", "sib2"},
+                 {"content",
+                  {{"q_hyst_db", 4},
+                   {"thresh_serving_low_p", 14},
+                   {"cell_reselection_priority", 4},
+                   {"q_rx_lev_min", -70},
+                   {"s_intra_search_p", 31},
+                   {"t_reselection_nr", 1}}}};
 
   auto res = cmd.execute(wrap(cell));
   ASSERT_TRUE(res.has_value()) << res.error();
@@ -108,13 +108,12 @@ TEST(sib_update_remote_command, valid_sib3_request_builds_neighbor_and_excluded_
   capturing_du_configurator mock;
   sib_update_remote_command cmd{mock};
 
-  auto cell = make_cell_skeleton();
-  cell["sib"]
-      = {{"type", "sib3"},
-         {"content",
-          {{"intra_freq_neigh_cell_list",
-            nlohmann::json::array({{{"pci", 47}, {"q_offset_cell", 0}}, {{"pci", 48}, {"q_offset_cell", -2}}})},
-           {"intra_freq_excluded_cell_list", nlohmann::json::array({{{"pci_start", 100}, {"range", 4}}})}}}};
+  auto cell   = make_cell_skeleton();
+  cell["sib"] = {{"type", "sib3"},
+                 {"content",
+                  {{"intra_freq_neigh_cell_list",
+                    nlohmann::json::array({{{"pci", 47}, {"q_offset_cell", 0}}, {{"pci", 48}, {"q_offset_cell", -2}}})},
+                   {"intra_freq_excluded_cell_list", nlohmann::json::array({{{"pci_start", 100}, {"range", 4}}})}}}};
 
   auto res = cmd.execute(wrap(cell));
   ASSERT_TRUE(res.has_value()) << res.error();
@@ -328,7 +327,7 @@ TEST(sib_update_remote_command, sib2_invalid_q_hyst_value_returns_error)
   auto cell   = make_cell_skeleton();
   cell["sib"] = {{"type", "sib2"},
                  {"content",
-                  {{"q_hyst_db", 7},  // 7 is not a valid q_hyst_db value (0-6,8,10,...,24)
+                  {{"q_hyst_db", 7}, // 7 is not a valid q_hyst_db value (0-6,8,10,...,24)
                    {"thresh_serving_low_p", 14},
                    {"cell_reselection_priority", 4},
                    {"q_rx_lev_min", -70},
@@ -351,7 +350,7 @@ TEST(sib_update_remote_command, sib2_q_rx_lev_min_out_of_range_returns_error)
                   {{"q_hyst_db", 4},
                    {"thresh_serving_low_p", 14},
                    {"cell_reselection_priority", 4},
-                   {"q_rx_lev_min", -100},  // below allowed range [-70, -22]
+                   {"q_rx_lev_min", -100}, // below allowed range [-70, -22]
                    {"s_intra_search_p", 31},
                    {"t_reselection_nr", 1}}}};
 
@@ -391,7 +390,7 @@ TEST(sib_update_remote_command, sib3_pci_out_of_range_returns_error)
   cell["sib"] = {{"type", "sib3"},
                  {"content",
                   {{"intra_freq_neigh_cell_list",
-                    nlohmann::json::array({{{"pci", 2000}, {"q_offset_cell", 0}}})}}}};  // PCI max is 1007
+                    nlohmann::json::array({{{"pci", 2000}, {"q_offset_cell", 0}}})}}}}; // PCI max is 1007
 
   auto res = cmd.execute(wrap(cell));
   ASSERT_FALSE(res.has_value());
@@ -407,7 +406,7 @@ TEST(sib_update_remote_command, sib3_invalid_q_offset_cell_value_returns_error)
   cell["sib"] = {{"type", "sib3"},
                  {"content",
                   {{"intra_freq_neigh_cell_list",
-                    nlohmann::json::array({{{"pci", 47}, {"q_offset_cell", 7}}})}}}};  // 7 invalid; valid ±(1..6,8..24)
+                    nlohmann::json::array({{{"pci", 47}, {"q_offset_cell", 7}}})}}}}; // 7 invalid; valid ±(1..6,8..24)
 
   auto res = cmd.execute(wrap(cell));
   ASSERT_FALSE(res.has_value());
@@ -448,7 +447,7 @@ TEST(sib_update_remote_command, sib4_invalid_scs_value_returns_error)
                  {"content",
                   {{"inter_freq_carrier_freq_list",
                     nlohmann::json::array({{{"arfcn", 649632},
-                                            {"ssb_scs", 45},  // not a valid kHz value
+                                            {"ssb_scs", 45}, // not a valid kHz value
                                             {"derive_ssb_index_from_cell", true},
                                             {"q_rx_lev_min", -70},
                                             {"thresh_x_high_p", 16},
@@ -487,18 +486,16 @@ TEST(sib_update_remote_command, multi_cell_request_produces_multiple_cell_entrie
   sib_update_remote_command cmd{mock};
 
   nlohmann::json cell_a = make_cell_skeleton();
-  cell_a["sib"]         = {{"type", "sib3"},
-                           {"content",
-                            {{"intra_freq_neigh_cell_list",
-                              nlohmann::json::array({{{"pci", 47}, {"q_offset_cell", 0}}})}}}};
+  cell_a["sib"]         = {
+      {"type", "sib3"},
+      {"content", {{"intra_freq_neigh_cell_list", nlohmann::json::array({{{"pci", 47}, {"q_offset_cell", 0}}})}}}};
 
   nlohmann::json cell_b;
   cell_b["plmn"] = "001001";
   cell_b["nci"]  = uint64_t{6733825};
-  cell_b["sib"]         = {{"type", "sib3"},
-                           {"content",
-                            {{"intra_freq_neigh_cell_list",
-                              nlohmann::json::array({{{"pci", 48}, {"q_offset_cell", 2}}})}}}};
+  cell_b["sib"]  = {
+      {"type", "sib3"},
+      {"content", {{"intra_freq_neigh_cell_list", nlohmann::json::array({{{"pci", 48}, {"q_offset_cell", 2}}})}}}};
 
   nlohmann::json req;
   req["cells"] = nlohmann::json::array({cell_a, cell_b});
@@ -519,7 +516,7 @@ TEST(sib_update_remote_command, multi_cell_request_produces_multiple_cell_entrie
 TEST(sib_update_remote_command, configurator_failure_is_reported_as_error)
 {
   capturing_du_configurator mock;
-  mock.next_response_success = false;  // simulate DU rejecting the config
+  mock.next_response_success = false; // simulate DU rejecting the config
   sib_update_remote_command cmd{mock};
 
   auto cell   = make_cell_skeleton();
