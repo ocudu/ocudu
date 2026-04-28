@@ -1221,19 +1221,19 @@ void benchmark_dl_ul_only_rlc_um(benchmarker&                   bm,
                                  unsigned                       nof_repetitions)
 {
   auto                benchname = fmt::format("{}{}{}, {} UEs, RLC UM",
-                                              dl_bytes_per_slot > 0 ? "DL" : "",
-                                              std::min(dl_bytes_per_slot, ul_bsr_bytes) > 0 ? "+" : "",
-                                              ul_bsr_bytes > 0 ? "UL" : "",
-                                              nof_ues);
+                               dl_bytes_per_slot > 0 ? "DL" : "",
+                               std::min(dl_bytes_per_slot, ul_bsr_bytes) > 0 ? "+" : "",
+                               ul_bsr_bytes > 0 ? "UL" : "",
+                               nof_ues);
   test_delimit_logger test_delim(benchname.c_str());
   du_high_bench       bench{dl_bytes_per_slot,
-                            ul_bsr_bytes,
-                            max_nof_rbs_per_dl_grant,
-                            dl_pdu_size,
-                            du_cell_cores,
-                            strategy_cfg,
-                            sched_tracing_enabled,
-                            generate_custom_cell_config_builder_params(dplx_mode)};
+                      ul_bsr_bytes,
+                      max_nof_rbs_per_dl_grant,
+                      dl_pdu_size,
+                      du_cell_cores,
+                      strategy_cfg,
+                      sched_tracing_enabled,
+                      generate_custom_cell_config_builder_params(dplx_mode)};
   for (unsigned ue_count = 0; ue_count < nof_ues; ++ue_count) {
     bench.add_ue(to_du_ue_index(ue_count));
   }
