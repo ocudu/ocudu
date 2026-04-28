@@ -56,6 +56,7 @@ struct o_du_high_unit {
 struct o_du_high_unit_dependencies {
   odu::du_high_executor_mapper&                execution_mapper;
   odu::f1c_connection_client&                  f1c_client_handler;
+  gtpu_teid_pool&                              f1u_teid_allocator;
   odu::f1u_du_gateway&                         f1u_gw;
   mac_clock_controller&                        timer_ctrl;
   mac_pcap&                                    mac_p;

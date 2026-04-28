@@ -12,6 +12,7 @@
 #include "ocudu/du/du_high/du_test_mode_config.h"
 #include "ocudu/f1ap/du/f1ap_du.h"
 #include "ocudu/f1ap/gateways/f1c_connection_client.h"
+#include "ocudu/gtpu/gtpu_teid_pool.h"
 #include "ocudu/mac/mac_cell_result.h"
 #include "ocudu/mac/mac_config.h"
 #include "ocudu/pcap/dlt_pcap.h"
@@ -61,15 +62,16 @@ struct du_high_configuration {
 
 /// DU high dependencies
 struct du_high_dependencies {
-  du_high_executor_mapper* exec_mapper       = nullptr;
-  f1c_connection_client*   f1c_client        = nullptr;
-  f1u_du_gateway*          f1u_gw            = nullptr;
-  mac_result_notifier*     phy_adapter       = nullptr;
-  mac_clock_controller*    timer_ctrl        = nullptr;
-  du_metrics_notifier*     du_notifier       = nullptr;
-  rlc_metrics_notifier*    rlc_metrics_notif = nullptr;
-  mac_pcap*                mac_p             = nullptr;
-  rlc_pcap*                rlc_p             = nullptr;
+  du_high_executor_mapper* exec_mapper        = nullptr;
+  f1c_connection_client*   f1c_client         = nullptr;
+  gtpu_teid_pool*          f1u_teid_allocator = nullptr;
+  f1u_du_gateway*          f1u_gw             = nullptr;
+  mac_result_notifier*     phy_adapter        = nullptr;
+  mac_clock_controller*    timer_ctrl         = nullptr;
+  du_metrics_notifier*     du_notifier        = nullptr;
+  rlc_metrics_notifier*    rlc_metrics_notif  = nullptr;
+  mac_pcap*                mac_p              = nullptr;
+  rlc_pcap*                rlc_p              = nullptr;
   /// Optional notifier invoked once after a successful F1 Setup.
   du_f1_setup_complete_notifier* f1_setup_notifier = nullptr;
 };

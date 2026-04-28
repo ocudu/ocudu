@@ -99,14 +99,15 @@ du_high_env_simulator::du_high_env_simulator(const du_high_configuration& du_hi_
   du_hi_dependencies([this]() {
     init_loggers();
     du_high_dependencies dependencies;
-    dependencies.exec_mapper = workers.exec_mapper.get();
-    dependencies.f1c_client  = &cu_notifier;
-    dependencies.f1u_gw      = &cu_up_sim;
-    dependencies.du_notifier = &du_metrics;
-    dependencies.phy_adapter = &phy;
-    dependencies.timer_ctrl  = timer_ctrl.get();
-    dependencies.mac_p       = &mac_pcap;
-    dependencies.rlc_p       = &rlc_pcap;
+    dependencies.exec_mapper        = workers.exec_mapper.get();
+    dependencies.f1c_client         = &cu_notifier;
+    dependencies.f1u_teid_allocator = &f1u_teid_allocator;
+    dependencies.f1u_gw             = &cu_up_sim;
+    dependencies.du_notifier        = &du_metrics;
+    dependencies.phy_adapter        = &phy;
+    dependencies.timer_ctrl         = timer_ctrl.get();
+    dependencies.mac_p              = &mac_pcap;
+    dependencies.rlc_p              = &rlc_pcap;
     return dependencies;
   }()),
   du_hi(make_du_high(du_high_cfg, du_hi_dependencies)),

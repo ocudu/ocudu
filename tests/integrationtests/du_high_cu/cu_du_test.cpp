@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "lib/gtpu/gtpu_teid_pool_impl.h"
 #include "tests/integrationtests/du_high/test_utils/du_high_worker_manager.h"
 #include "tests/test_doubles/f1ap/f1c_test_local_gateway.h"
 #include "tests/unittests/cu_cp/test_doubles/mock_amf.h"
@@ -73,11 +74,12 @@ protected:
     du_cfg.ran.gnb_du_name = "test_du";
 
     du_high_dependencies du_dependencies;
-    du_dependencies.exec_mapper = workers.exec_mapper.get();
-    du_dependencies.f1c_client  = &f1c_gw;
-    du_dependencies.f1u_gw      = &f1u_gw;
-    du_dependencies.phy_adapter = &phy;
-    du_dependencies.timer_ctrl  = timer_ctrl.get();
+    du_dependencies.exec_mapper        = workers.exec_mapper.get();
+    du_dependencies.f1c_client         = &f1c_gw;
+    du_dependencies.f1u_teid_allocator = &f1u_teid_allocator;
+    du_dependencies.f1u_gw             = &f1u_gw;
+    du_dependencies.phy_adapter        = &phy;
+    du_dependencies.timer_ctrl         = timer_ctrl.get();
 
     // create DU object
     du_obj = make_du_high(std::move(du_cfg), du_dependencies);
@@ -100,7 +102,8 @@ public:
       odu::create_du_high_clock_controller(timers, *broker, *workers.time_exec)};
   ocudulog::basic_logger& test_logger = ocudulog::fetch_basic_logger("TEST");
   f1c_test_local_gateway  f1c_gw{};
-  f1u_test_local_gateway  f1u_gw{};
+  gtpu_teid_pool_impl f1u_teid_allocator{MAX_NOF_DU_UES * MAX_NOF_DRBS, GTPU_DEFAULT_TEID_RELEASE_LINGER_TIME, timers};
+  f1u_test_local_gateway f1u_gw{};
 
   std::unique_ptr<ocucp::mock_amf> amf{ocucp::create_mock_amf()};
   std::unique_ptr<ocucp::cu_cp>    cu_cp_obj;

@@ -33,6 +33,7 @@
 #include "ocudu/f1u/split_connector/f1u_five_qi_gw_maps.h"
 #include "ocudu/gtpu/gtpu_config.h"
 #include "ocudu/gtpu/gtpu_demux_factory.h"
+#include "ocudu/gtpu/gtpu_teid_pool_factory.h"
 #include "ocudu/support/backtrace.h"
 #include "ocudu/support/config_parsers.h"
 #include "ocudu/support/cpu_features.h"
@@ -311,10 +312,18 @@ int main(int argc, char** argv)
   }
 
   // Create F1-U GW.
+
+  // Create F1-U TEID allocator (DU)
+  gtpu_allocator_creation_request du_f1u_alloc_msg = {.max_nof_teids            = MAX_NOF_DU_UES * MAX_NOF_DRBS,
+                                                      .teid_release_linger_time = GTPU_DEFAULT_TEID_RELEASE_LINGER_TIME,
+                                                      .timers                   = time_ctrl->get_timer_manager()};
+  std::unique_ptr<gtpu_teid_pool> du_f1u_teid_allocator = create_gtpu_allocator(du_f1u_alloc_msg);
+
   // > Create GTP-U Demux.
   gtpu_demux_creation_request du_f1u_gtpu_msg   = {};
   du_f1u_gtpu_msg.cfg.name                      = "DU-NR-U-DEMUX";
   du_f1u_gtpu_msg.cfg.warn_on_drop              = true;
+  du_f1u_gtpu_msg.teid_linger_checker           = du_f1u_teid_allocator.get();
   du_f1u_gtpu_msg.cfg.queue_size                = du_cfg.f1u_cfg.pdu_queue_size;
   du_f1u_gtpu_msg.gtpu_pcap                     = du_pcaps.f1u.get();
   std::unique_ptr<gtpu_demux> du_f1u_gtpu_demux = create_gtpu_demux(du_f1u_gtpu_msg);
@@ -368,6 +377,7 @@ int main(int argc, char** argv)
   o_du_unit_dependencies du_dependencies;
   du_dependencies.workers                = &workers;
   du_dependencies.f1c_client_handler     = f1c_gw.get();
+  du_dependencies.f1u_teid_allocator     = du_f1u_teid_allocator.get();
   du_dependencies.f1u_gw                 = du_f1u_conn.get();
   du_dependencies.timer_ctrl             = time_ctrl.get();
   du_dependencies.mac_p                  = du_pcaps.mac.get();

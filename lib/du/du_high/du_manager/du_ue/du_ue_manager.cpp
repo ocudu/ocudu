@@ -8,7 +8,6 @@
 #include "../procedures/ue_configuration_procedure.h"
 #include "../procedures/ue_creation_procedure.h"
 #include "../procedures/ue_deletion_procedure.h"
-#include "ocudu/gtpu/gtpu_teid_pool_factory.h"
 #include "ocudu/mac/mac_pdu_handler.h"
 #include "ocudu/support/async/async_no_op_task.h"
 
@@ -24,9 +23,7 @@ du_ue_manager::du_ue_manager(du_manager_params&              cfg_,
   cell_mng(cell_mng_),
   metrics(metrics_),
   logger(ocudulog::fetch_basic_logger("DU-MNG")),
-  f1u_teid_pool(create_gtpu_allocator({.max_nof_teids            = MAX_NOF_DU_UES * MAX_NOF_DRBS,
-                                       .teid_release_linger_time = GTPU_DEFAULT_TEID_RELEASE_LINGER_TIME,
-                                       .timers                   = cfg.services.timers}))
+  f1u_teid_pool(cfg.f1u.f1u_teid_allocator)
 {
   // Initialize a control loop for all UE indexes.
   const size_t max_number_of_pending_procedures = 16U;

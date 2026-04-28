@@ -92,17 +92,18 @@ protected:
   dummy_ue_executor_mapper   ue_execs{worker};
   dummy_cell_executor_mapper cell_execs{worker};
 
-  std::vector<du_cell_config>            cells = {config_helpers::make_default_du_cell_config()};
-  f1ap_test_dummy                        f1ap_dummy;
-  f1u_gateway_dummy                      f1u_dummy;
-  mac_test_dummy                         mac_dummy;
-  null_rlc_pcap                          rlc_pcap;
+  std::vector<du_cell_config> cells = {config_helpers::make_default_du_cell_config()};
+  f1ap_test_dummy             f1ap_dummy;
+  gtpu_teid_pool_impl f1u_teid_allocator{MAX_NOF_DU_UES * MAX_NOF_DRBS, GTPU_DEFAULT_TEID_RELEASE_LINGER_TIME, timers};
+  f1u_gateway_dummy   f1u_dummy;
+  mac_test_dummy      mac_dummy;
+  null_rlc_pcap       rlc_pcap;
   dummy_ue_resource_configurator_factory cell_res_alloc;
 
   du_manager_params params{{"ocudu", (gnb_du_id_t)1, 1, cells},
                            {timers, worker, ue_execs, cell_execs},
                            {f1ap_dummy, f1ap_dummy, f1ap_dummy},
-                           {f1u_dummy},
+                           {f1u_teid_allocator, f1u_dummy},
                            {mac_dummy, f1ap_dummy, f1ap_dummy, rlc_pcap},
                            {mac_dummy}};
 

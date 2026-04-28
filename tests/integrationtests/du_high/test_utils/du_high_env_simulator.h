@@ -7,6 +7,7 @@
 #include "du_high_sim_dependencies.h"
 #include "du_high_ue_simulator.h"
 #include "du_high_worker_manager.h"
+#include "lib/gtpu/gtpu_teid_pool_impl.h"
 #include "tests/test_doubles/f1u/dummy_f1u_du_gateway.h"
 #include "tests/test_doubles/mac/dummy_mac_result_notifier.h"
 #include "ocudu/du/du_high/du_high.h"
@@ -96,8 +97,9 @@ public:
   std::unique_ptr<io_broker>            broker;
   std::unique_ptr<mac_clock_controller> timer_ctrl;
   dummy_f1c_test_client                 cu_notifier;
-  cu_up_simulator                       cu_up_sim;
-  dummy_du_metrics_notifier             du_metrics;
+  gtpu_teid_pool_impl f1u_teid_allocator{MAX_NOF_DU_UES * MAX_NOF_DRBS, GTPU_DEFAULT_TEID_RELEASE_LINGER_TIME, timers};
+  cu_up_simulator     cu_up_sim;
+  dummy_du_metrics_notifier du_metrics;
 
   du_high_configuration    du_high_cfg;
   du_high_dependencies     du_hi_dependencies;

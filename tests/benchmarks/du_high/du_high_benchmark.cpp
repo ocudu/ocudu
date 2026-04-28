@@ -22,6 +22,7 @@
 /// and a CPU load of 90%.
 
 #include "lib/du/du_high/du_high_impl.h"
+#include "lib/gtpu/gtpu_teid_pool_impl.h"
 #include "lib/mac/mac_ul/ul_bsr.h"
 #include "tests/test_doubles/du/test_du_high_worker_manager.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
@@ -601,14 +602,15 @@ public:
     cfg.ran.mac_cfg                                = mac_expert_config{.configs = {{10000, 10000, 10000}}};
     cfg.ran.qos = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 1000);
 
-    dependencies.exec_mapper = &workers->get_exec_mapper();
-    dependencies.f1c_client  = &sim_cu_cp;
-    dependencies.f1u_gw      = &sim_cu_up;
-    dependencies.phy_adapter = &sim_phy;
-    dependencies.timer_ctrl  = timer_ctrl.get();
-    dependencies.du_notifier = &metrics_handler;
-    dependencies.mac_p       = &mac_pcap;
-    dependencies.rlc_p       = &rlc_pcap;
+    dependencies.exec_mapper        = &workers->get_exec_mapper();
+    dependencies.f1c_client         = &sim_cu_cp;
+    dependencies.f1u_teid_allocator = &f1u_teid_allocator;
+    dependencies.f1u_gw             = &sim_cu_up;
+    dependencies.phy_adapter        = &sim_phy;
+    dependencies.timer_ctrl         = timer_ctrl.get();
+    dependencies.du_notifier        = &metrics_handler;
+    dependencies.mac_p              = &mac_pcap;
+    dependencies.rlc_p              = &rlc_pcap;
 
     // Increase nof. PUCCH resources to accommodate more UEs.
     auto& pucch_resources                       = cfg.ran.cells[0].ran.init_bwp.pucch.resources;
@@ -1146,9 +1148,10 @@ public:
   null_rlc_pcap                 rlc_pcap;
   std::unique_ptr<du_high_impl> du_hi;
   cu_cp_simulator               sim_cu_cp;
-  cu_up_simulator               sim_cu_up;
-  phy_simulator                 sim_phy;
-  slot_point_extended           next_sl_tx{subcarrier_spacing::kHz15, 0};
+  gtpu_teid_pool_impl f1u_teid_allocator{MAX_NOF_DU_UES * MAX_NOF_DRBS, GTPU_DEFAULT_TEID_RELEASE_LINGER_TIME, timers};
+  cu_up_simulator     sim_cu_up;
+  phy_simulator       sim_phy;
+  slot_point_extended next_sl_tx{subcarrier_spacing::kHz15, 0};
 
   /// Determines whether a UE setup has completed.
   std::array<bool, MAX_NOF_DU_UES> ue_created_flag_list{false};
@@ -1218,19 +1221,19 @@ void benchmark_dl_ul_only_rlc_um(benchmarker&                   bm,
                                  unsigned                       nof_repetitions)
 {
   auto                benchname = fmt::format("{}{}{}, {} UEs, RLC UM",
-                               dl_bytes_per_slot > 0 ? "DL" : "",
-                               std::min(dl_bytes_per_slot, ul_bsr_bytes) > 0 ? "+" : "",
-                               ul_bsr_bytes > 0 ? "UL" : "",
-                               nof_ues);
+                                              dl_bytes_per_slot > 0 ? "DL" : "",
+                                              std::min(dl_bytes_per_slot, ul_bsr_bytes) > 0 ? "+" : "",
+                                              ul_bsr_bytes > 0 ? "UL" : "",
+                                              nof_ues);
   test_delimit_logger test_delim(benchname.c_str());
   du_high_bench       bench{dl_bytes_per_slot,
-                      ul_bsr_bytes,
-                      max_nof_rbs_per_dl_grant,
-                      dl_pdu_size,
-                      du_cell_cores,
-                      strategy_cfg,
-                      sched_tracing_enabled,
-                      generate_custom_cell_config_builder_params(dplx_mode)};
+                            ul_bsr_bytes,
+                            max_nof_rbs_per_dl_grant,
+                            dl_pdu_size,
+                            du_cell_cores,
+                            strategy_cfg,
+                            sched_tracing_enabled,
+                            generate_custom_cell_config_builder_params(dplx_mode)};
   for (unsigned ue_count = 0; ue_count < nof_ues; ++ue_count) {
     bench.add_ue(to_du_ue_index(ue_count));
   }

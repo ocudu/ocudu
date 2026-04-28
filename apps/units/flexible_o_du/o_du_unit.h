@@ -8,6 +8,7 @@
 #include "apps/services/metrics/metrics_config.h"
 #include "apps/units/application_unit_commands.h"
 #include "ocudu/du/du.h"
+#include "ocudu/gtpu/gtpu_teid_pool.h"
 #include "ocudu/ntn/ntn_configuration_manager.h"
 #include <memory>
 #include <vector>
@@ -48,6 +49,7 @@ struct o_du_unit {
 struct o_du_unit_dependencies {
   worker_manager*                              workers                = nullptr;
   odu::f1c_connection_client*                  f1c_client_handler     = nullptr;
+  gtpu_teid_pool*                              f1u_teid_allocator     = nullptr;
   odu::f1u_du_gateway*                         f1u_gw                 = nullptr;
   mac_clock_controller*                        timer_ctrl             = nullptr;
   mac_pcap*                                    mac_p                  = nullptr;

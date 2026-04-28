@@ -215,6 +215,7 @@ o_du_high_unit ocudu::make_o_du_high_unit(const o_du_high_unit_config&  o_du_hig
   odu::du_high_dependencies& du_hi_deps = dependencies.o_du_hi_dependencies.du_hi;
   du_hi_deps.exec_mapper                = &dependencies.execution_mapper;
   du_hi_deps.f1c_client                 = &dependencies.f1c_client_handler;
+  du_hi_deps.f1u_teid_allocator         = &dependencies.f1u_teid_allocator;
   du_hi_deps.f1u_gw                     = &dependencies.f1u_gw;
   du_hi_deps.phy_adapter                = nullptr;
   du_hi_deps.timer_ctrl                 = &dependencies.timer_ctrl;

@@ -121,7 +121,7 @@ du_manager_test_bench::du_manager_test_bench(span<const du_cell_config> cells) :
   params{{"ocudu", (gnb_du_id_t)1, 1, du_cells},
          {timers, du_mng_exec, ue_exec_mapper, cell_exec_mapper},
          {f1ap, f1ap, f1ap},
-         {f1u_gw},
+         {f1u_teid_allocator, f1u_gw},
          {mac, f1ap, f1ap, rlc_pcap},
          {mac}},
   cell_mng(params),

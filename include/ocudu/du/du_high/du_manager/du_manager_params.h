@@ -55,6 +55,7 @@ struct du_manager_params {
   };
 
   struct f1u_config_params {
+    gtpu_teid_pool& f1u_teid_allocator;
     f1u_du_gateway& f1u_gw;
   };
 

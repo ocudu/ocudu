@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "lib/gtpu/gtpu_teid_pool_impl.h"
 #include "tests/test_doubles/du/test_du_high_worker_manager.h"
 #include "tests/test_doubles/f1ap/f1c_test_local_gateway.h"
 #include "tests/test_doubles/mac/dummy_mac_result_notifier.h"
@@ -71,6 +72,7 @@ public:
   std::unique_ptr<mac_clock_controller> timer_ctrl;
   ocucp::dummy_n2_gateway               n2_gw;
   f1c_test_local_gateway                f1c_gw;
+  gtpu_teid_pool_impl f1u_teid_allocator{MAX_NOF_DU_UES * MAX_NOF_DRBS, GTPU_DEFAULT_TEID_RELEASE_LINGER_TIME, timers};
 
   std::unique_ptr<ocucp::cu_cp>        cu_cp_inst;
   std::vector<std::unique_ptr<du_sim>> dus;

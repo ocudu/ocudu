@@ -27,6 +27,7 @@ o_du_unit ocudu::create_o_du_split6(const split6_o_du_unit_config&              
 
   o_du_high_unit_dependencies odu_hi_unit_dependencies = {du_dependencies.workers->get_du_high_executor_mapper(),
                                                           *du_dependencies.f1c_client_handler,
+                                                          *du_dependencies.f1u_teid_allocator,
                                                           *du_dependencies.f1u_gw,
                                                           *du_dependencies.timer_ctrl,
                                                           *du_dependencies.mac_p,
