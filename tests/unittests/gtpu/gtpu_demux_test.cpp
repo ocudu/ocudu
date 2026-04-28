@@ -14,6 +14,20 @@
 
 using namespace ocudu;
 
+// dummy CU-UP GTP-U TEID lingering interface
+class dummy_gtpu_teid_lingering_interface : public gtpu_teid_lingering_interface
+{
+public:
+  dummy_gtpu_teid_lingering_interface() = default;
+
+  bool is_teid_lingering(gtpu_teid_t teid) override { return lingering; }
+
+  void set_teid_lingering(bool is_lingering) { lingering = is_lingering; }
+
+private:
+  bool lingering = false;
+};
+
 class gtpu_tunnel_rx_upper_dummy : public gtpu_tunnel_common_rx_upper_layer_interface
 {
 public:
@@ -43,6 +57,7 @@ protected:
 
     // create DUT object
     gtpu_demux_creation_request msg = {};
+    msg.teid_linger_checker         = &teid_linger_checker;
     msg.gtpu_pcap                   = &dummy_pcap;
     dut                             = create_gtpu_demux(msg);
   }
@@ -55,6 +70,7 @@ protected:
 
   std::unique_ptr<gtpu_tunnel_rx_upper_dummy> gtpu_tunnel;
   manual_task_worker                          teid_worker{128};
+  dummy_gtpu_teid_lingering_interface         teid_linger_checker;
   null_dlt_pcap                               dummy_pcap;
 
   std::unique_ptr<gtpu_demux> dut;
