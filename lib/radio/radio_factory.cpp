@@ -12,6 +12,7 @@
 #endif // ENABLE_ZMQ
 
 #include "plugin_radio_factory.h"
+#include "realtime_dummy/radio_factory_realtime_dummy_impl.h"
 
 using namespace ocudu;
 
@@ -31,7 +32,7 @@ static const std::vector<radio_factory_entry> radio_factory_available_factories 
 #ifdef ENABLE_ZMQ
     {"zmq", []() { return std::make_unique<radio_factory_zmq_impl>(); }},
 #endif // ENABLE_ZMQ
-};
+    {"realtime_dummy", []() { return std::make_unique<radio_factory_realtime_dummy_impl>(); }}};
 
 void ocudu::print_available_radio_factories()
 {
