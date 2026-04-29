@@ -62,9 +62,11 @@ protected:
   std::unique_ptr<sctp_network_server> server2;
   std::unique_ptr<sctp_network_server> server3;
 
-  std::string server1_addr_str = "127.0.0.1";
-  std::string server2_addr_str = "127.0.0.2";
-  std::string server3_addr_str = "127.0.0.3";
+  std::string server1_addr_str            = "127.0.0.1";
+  std::string server2_addr_str            = "127.0.0.2";
+  std::string server3_addr_str            = "127.0.0.3";
+  std::string server1_multihomed_addr_str = "127.0.0.4";
+  std::string server2_multihomed_addr_str = "127.0.0.5";
 
   association_factory assoc_factory1;
   association_factory assoc_factory2;
@@ -110,7 +112,7 @@ TEST_F(sctp_network_server_peer_test, when_association_requested_association_ini
   addr3.set_port(*port3);
 
   // Create associations between S1 <-> S2
-  async_task<bool>         connect1 = server1->connect(addr2);
+  async_task<bool>         connect1 = server1->connect({addr2});
   lazy_task_launcher<bool> l1(connect1);
 
   ASSERT_EQ(0, assoc_factory1.association_count());
@@ -123,7 +125,7 @@ TEST_F(sctp_network_server_peer_test, when_association_requested_association_ini
   ASSERT_EQ(0, assoc_factory3.association_count());
 
   // Create associations between S1 <-> S3
-  async_task<bool>         connect2 = server1->connect(addr3);
+  async_task<bool>         connect2 = server1->connect({addr3});
   lazy_task_launcher<bool> l2(connect2);
 
   broker1.handle_receive(); // CONN_UP
@@ -133,7 +135,7 @@ TEST_F(sctp_network_server_peer_test, when_association_requested_association_ini
   ASSERT_EQ(1, assoc_factory3.association_count());
 
   // Create associations between S2 <-> S3
-  async_task<bool>         connect3 = server2->connect(addr3);
+  async_task<bool>         connect3 = server2->connect({addr3});
   lazy_task_launcher<bool> l3(connect3);
 
   broker2.handle_receive(); // CONN_UP
@@ -159,6 +161,100 @@ TEST_F(sctp_network_server_peer_test, when_association_requested_association_ini
   ASSERT_EQ(assoc_factory1.last_sdu, tx_sdu2);
 }
 
+TEST_F(sctp_network_server_peer_test, when_connect_called_with_empty_address_list_then_returns_false)
+{
+  server1 = create_sctp_network_server(server_cfg1);
+  ASSERT_NE(server1, nullptr);
+  server1->listen();
+
+  async_task<bool>         connect_task = server1->connect({});
+  lazy_task_launcher<bool> launcher(connect_task);
+  ASSERT_TRUE(connect_task.ready());
+  ASSERT_FALSE(connect_task.get());
+  ASSERT_EQ(0, assoc_factory1.association_count());
+}
+
+TEST_F(sctp_network_server_peer_test, when_connect_uses_multiple_destination_addresses_then_association_succeeds)
+{
+  server_cfg1.sctp.bind_addresses = {server1_addr_str, server1_multihomed_addr_str};
+  server_cfg2.sctp.bind_addresses = {server2_addr_str, server2_multihomed_addr_str};
+
+  server1 = create_sctp_network_server(server_cfg1);
+  server2 = create_sctp_network_server(server_cfg2);
+  ASSERT_NE(server1, nullptr);
+  ASSERT_NE(server2, nullptr);
+
+  server1->listen();
+  server2->listen();
+
+  std::optional<uint16_t> port2 = server2->get_listen_port();
+  ASSERT_TRUE(port2);
+
+  transport_layer_address primary_addr = transport_layer_address::create_from_string(server2_addr_str);
+  primary_addr.set_port(*port2);
+  transport_layer_address secondary_addr = transport_layer_address::create_from_string(server2_multihomed_addr_str);
+  secondary_addr.set_port(*port2);
+
+  // Connect with both server2 addresses for SCTP multihoming.
+  async_task<bool>         connect_task = server1->connect({primary_addr, secondary_addr});
+  lazy_task_launcher<bool> launcher(connect_task);
+
+  broker1.handle_receive(); // CONN_UP completes the connect task on server1
+  broker2.handle_receive(); // CONN_UP arrives on server2 and creates the association handler
+  ASSERT_TRUE(connect_task.ready());
+  ASSERT_TRUE(connect_task.get());
+  ASSERT_EQ(1, assoc_factory1.association_count());
+  ASSERT_EQ(1, assoc_factory2.association_count());
+
+  // Sanity check: data exchange works over the multihomed association.
+  std::array<uint8_t, 4> data = {0x10, 0x11, 0x12, 0x13};
+  byte_buffer            tx_sdu;
+  ASSERT_TRUE(tx_sdu.append(data));
+  ASSERT_TRUE(assoc_factory1.association_senders[0]->on_new_sdu(tx_sdu.copy()));
+  broker2.handle_receive();
+  ASSERT_EQ(assoc_factory2.last_sdu, tx_sdu);
+}
+
+TEST_F(sctp_network_server_peer_test, when_pending_connects_overlap_then_second_connect_is_rejected)
+{
+  server_cfg1.sctp.bind_addresses = {server1_addr_str, server1_multihomed_addr_str};
+  server_cfg2.sctp.bind_addresses = {server2_addr_str, server2_multihomed_addr_str};
+
+  server1 = create_sctp_network_server(server_cfg1);
+  server2 = create_sctp_network_server(server_cfg2);
+  ASSERT_NE(server1, nullptr);
+  ASSERT_NE(server2, nullptr);
+
+  server1->listen();
+  server2->listen();
+
+  std::optional<uint16_t> port2 = server2->get_listen_port();
+  ASSERT_TRUE(port2);
+
+  transport_layer_address primary_addr = transport_layer_address::create_from_string(server2_addr_str);
+  primary_addr.set_port(*port2);
+  transport_layer_address secondary_addr = transport_layer_address::create_from_string(server2_multihomed_addr_str);
+  secondary_addr.set_port(*port2);
+
+  // First connect attempt — multihomed; pending until broker processes COMM_UP.
+  async_task<bool>         connect1 = server1->connect({primary_addr, secondary_addr});
+  lazy_task_launcher<bool> launcher1(connect1);
+  ASSERT_FALSE(connect1.ready());
+
+  // Second connect attempt overlaps on primary_addr — should be rejected immediately.
+  async_task<bool>         connect2 = server1->connect({primary_addr});
+  lazy_task_launcher<bool> launcher2(connect2);
+  ASSERT_TRUE(connect2.ready());
+  ASSERT_FALSE(connect2.get());
+
+  // Completing the first connect leaves only one association on server1.
+  broker1.handle_receive();
+  broker2.handle_receive();
+  ASSERT_TRUE(connect1.ready());
+  ASSERT_TRUE(connect1.get());
+  ASSERT_EQ(1, assoc_factory1.association_count());
+}
+
 TEST_F(sctp_network_server_peer_test, when_server_is_destroyed_then_associations_are_cleaned_up)
 {
   server1 = create_sctp_network_server(server_cfg1);
@@ -175,7 +271,7 @@ TEST_F(sctp_network_server_peer_test, when_server_is_destroyed_then_associations
   addr2.set_port(*port2);
 
   // Create association S1 <-> S2.
-  async_task<bool>         connect_task = server1->connect(addr2);
+  async_task<bool>         connect_task = server1->connect({addr2});
   lazy_task_launcher<bool> launcher(connect_task);
   broker1.handle_receive(); // CONN_UP notification completes the connect task
   broker2.handle_receive(); // CONN_UP

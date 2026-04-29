@@ -249,43 +249,80 @@ void sctp_network_server_impl::handle_data(int assoc_id, span<const uint8_t> pay
   assoc_it->second.sctp_data_recv_notifier->on_new_sdu(byte_buffer{byte_buffer::fallback_allocation_tag{}, payload});
 }
 
-async_task<bool> sctp_network_server_impl::connect(transport_layer_address dest_addr)
+async_task<bool> sctp_network_server_impl::connect(std::vector<transport_layer_address> dest_addrs)
 {
-  return launch_async([this, dest_addr, event_ptr = (manual_event<bool>*)nullptr, result = false](
-                          coro_context<async_task<bool>>& ctx) mutable {
+  return launch_async([this,
+                       dest_addrs            = std::move(dest_addrs),
+                       pending_it            = pending_connects.end(),
+                       sctp_connectx_success = false,
+                       result                = false](coro_context<async_task<bool>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
-    logger.info("{}: Initiating SCTP connection to {}", node_cfg.if_name, dest_addr);
-
-    // Try to create pending connect event, fail and return early if duplicated.
-    if (not pending_connects.try_emplace(dest_addr).second) {
-      logger.warning(
-          "{}: Connection to {} already in progress, rejecting duplicate connect", node_cfg.if_name, dest_addr);
+    if (dest_addrs.empty()) {
+      logger.error("{}: Cannot initiate SCTP connection with empty destination address list", node_cfg.if_name);
       CORO_EARLY_RETURN(false);
     }
 
-    {
-      // Initiate the connection via sctp_connectx().
-      transport_layer_address::native_type native_addr = dest_addr.native();
-      int                                  ret         = ::sctp_connectx(get_socket_fd(), native_addr.addr, 1, NULL);
-      if (ret == -1 && errno != EINPROGRESS) {
-        logger.error("{}: sctp_connectx to {} failed. errno={}", node_cfg.if_name, dest_addr, ::strerror(errno));
-      } else {
-        event_ptr = &pending_connects.at(dest_addr);
+    logger.info("{}: Initiating SCTP connection to [{}]", node_cfg.if_name, fmt::join(dest_addrs, ", "));
+
+    // Reject if any of the requested addresses already has a pending connect in flight.
+    for (const auto& dest_addr : dest_addrs) {
+      if (std::any_of(pending_connects.begin(), pending_connects.end(), [&dest_addr](const pending_connect& pending) {
+            return pending.contains(dest_addr);
+          })) {
+        logger.warning("{}: Connection overlapping with {} already in progress, rejecting duplicate connect",
+                       node_cfg.if_name,
+                       dest_addr);
+        CORO_EARLY_RETURN(false);
       }
     }
 
-    if (event_ptr == nullptr) {
+    // Insert pending connect entry with default constructed manual_event, so the SCTP_COMM_UP / SCTP_CANT_STR_ASSOC
+    // handlers can find it as soon as sctp_connectx() returns.
+    pending_it             = pending_connects.emplace(pending_connects.end());
+    pending_it->dest_addrs = dest_addrs;
+
+    {
+      // Pack addresses into a contiguous buffer using each address's actual sockaddr size (sockaddr_in vs
+      // sockaddr_in6), as required by sctp_connectx().
+      std::vector<uint8_t> packed_addrs;
+      size_t               total_size = 0;
+      for (const auto& addr : dest_addrs) {
+        total_size += addr.native().addrlen;
+      }
+      packed_addrs.resize(total_size);
+      size_t offset = 0;
+      for (const auto& addr : dest_addrs) {
+        transport_layer_address::native_type native_addr = addr.native();
+        std::memcpy(packed_addrs.data() + offset, native_addr.addr, native_addr.addrlen);
+        offset += native_addr.addrlen;
+      }
+
+      int ret = ::sctp_connectx(get_socket_fd(),
+                                reinterpret_cast<sockaddr*>(packed_addrs.data()),
+                                static_cast<int>(dest_addrs.size()),
+                                nullptr);
+      if (ret == -1 && errno != EINPROGRESS) {
+        logger.error("{}: sctp_connectx to [{}] failed. errno={}",
+                     node_cfg.if_name,
+                     fmt::join(dest_addrs, ", "),
+                     ::strerror(errno));
+      } else {
+        sctp_connectx_success = true;
+      }
+    }
+
+    if (not sctp_connectx_success) {
       // Clean up the event from pending_connects on sctp_connectx() immediate failure.
-      pending_connects.erase(dest_addr);
+      pending_connects.erase(pending_it);
       CORO_EARLY_RETURN(false);
     }
 
     // Wait for SCTP_COMM_UP or SCTP_CANT_STR_ASSOC.
-    CORO_AWAIT_VALUE(result, *event_ptr);
+    CORO_AWAIT_VALUE(result, pending_it->event);
 
     // Clean up the event from pending_connects after awaited SCTP notification received.
-    pending_connects.erase(dest_addr);
+    pending_connects.erase(pending_it);
 
     CORO_RETURN(result);
   });
@@ -375,9 +412,11 @@ void sctp_network_server_impl::handle_sctp_comm_up(const struct sctp_assoc_chang
   // Signaling inline here would resume the coroutine within this task, before the enqueued tasks that connect the
   // notifiers have a chance to finish.
   while (not app_exec.defer([this, addr = assoc_ctxt.addr]() {
-    auto pending_it = pending_connects.find(addr);
+    auto pending_it = std::find_if(pending_connects.begin(),
+                                   pending_connects.end(),
+                                   [&addr](const pending_connect& pending) { return pending.contains(addr); });
     if (pending_it != pending_connects.end()) {
-      pending_it->second.set(true);
+      pending_it->event.set(true);
     }
   })) {
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -393,9 +432,11 @@ void sctp_network_server_impl::handle_cannot_start_association(int             a
   logger.info("{} assoc={}: SCTP association could not start (peer_addr={})", node_cfg.if_name, assoc_id, addr);
 
   // Signal pending connect failure.
-  auto pending_it = pending_connects.find(addr);
+  auto pending_it = std::find_if(pending_connects.begin(),
+                                 pending_connects.end(),
+                                 [&addr](const pending_connect& pending) { return pending.contains(addr); });
   if (pending_it != pending_connects.end()) {
-    pending_it->second.set(false);
+    pending_it->event.set(false);
   } else {
     logger.warning("{}: SCTP_CANT_STR_ASSOC for unknown peer {}", node_cfg.if_name, addr);
   }

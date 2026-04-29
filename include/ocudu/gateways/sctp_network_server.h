@@ -43,11 +43,13 @@ public:
   /// \brief Initiate a new SCTP association to a peer in a non-blocking way via sctp_connectx().
   /// This can only be used with non-blocking socket, otherwise it will deadlock.
   ///
+  /// All addresses in \p dest_addrs are passed to sctp_connectx() for SCTP multihoming. The list must not be empty.
+  ///
   /// Returns an async_task<bool> that will complete with:
   /// - true on SCTP_COMM_UP, followed by sctp_network_association_factory::create() callback
-  /// - false on SCTP_CANT_STR_ASSOC, immediate sctp_connectx failure, or if a connection to the same address is
-  ///   already pending.
-  virtual async_task<bool> connect(transport_layer_address dest_addr) = 0;
+  /// - false on SCTP_CANT_STR_ASSOC, immediate sctp_connectx failure, or if a connection overlapping with one of
+  ///   \p dest_addrs is already pending.
+  virtual async_task<bool> connect(std::vector<transport_layer_address> dest_addrs) = 0;
 };
 
 } // namespace ocudu

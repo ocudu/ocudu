@@ -127,7 +127,7 @@ public:
   {
     return launch_async([this, peer_addr, result = false](coro_context<async_task<bool>>& ctx) mutable {
       CORO_BEGIN(ctx);
-      CORO_AWAIT_VALUE(result, sctp_server->connect(peer_addr));
+      CORO_AWAIT_VALUE(result, sctp_server->connect({peer_addr}));
       CORO_RETURN(result);
     });
   }

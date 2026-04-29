@@ -6,8 +6,10 @@
 #include "sctp_network_gateway_common_impl.h"
 #include "ocudu/gateways/sctp_network_server.h"
 #include "ocudu/support/async/manual_event.h"
-#include <map>
+#include <algorithm>
+#include <list>
 #include <unordered_map>
+#include <vector>
 
 struct sctp_sndrcvinfo;
 struct sctp_assoc_change;
@@ -45,7 +47,7 @@ public:
 
   std::optional<uint16_t> get_listen_port() override;
 
-  async_task<bool> connect(transport_layer_address dest_addr) override;
+  async_task<bool> connect(std::vector<transport_layer_address> dest_addrs) override;
 
 private:
   class sctp_send_notifier;
@@ -87,6 +89,16 @@ private:
   /// Remove association from the map, triggering recv notifier destruction.
   void remove_association(int assoc_id);
 
+  struct pending_connect {
+    std::vector<transport_layer_address> dest_addrs;
+    manual_event<bool>                   event;
+
+    bool contains(const transport_layer_address& addr) const
+    {
+      return std::find(dest_addrs.begin(), dest_addrs.end(), addr) != dest_addrs.end();
+    }
+  };
+
   io_broker&                        broker;
   task_executor&                    io_rx_executor;
   task_executor&                    app_exec;
@@ -95,8 +107,8 @@ private:
   /// Keep-alive token used to cancel deferred tasks on shutdown. Only accessed from app_exec.
   std::shared_ptr<bool> keepalive_token;
 
-  association_map                                       associations;
-  std::map<transport_layer_address, manual_event<bool>> pending_connects;
+  association_map            associations;
+  std::list<pending_connect> pending_connects;
 };
 
 } // namespace ocudu
