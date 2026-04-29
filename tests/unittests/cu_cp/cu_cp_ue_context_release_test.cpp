@@ -616,3 +616,46 @@ TEST_F(cu_cp_ue_context_release_test, when_pdu_session_setup_is_not_requested_th
   ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu)) << "Failed to receive NGAP UE Context Release Request";
   ASSERT_TRUE(test_helpers::is_valid_ue_context_release_request(ngap_pdu)) << "Invalid NGAP UE Context Release Request";
 }
+
+//----------------------------------------------------------------------------------//
+// CU-CP initiated release with NR redirection                                      //
+//----------------------------------------------------------------------------------//
+
+TEST_F(cu_cp_ue_context_release_test,
+       when_release_with_nr_redirection_triggered_then_rrc_release_has_redirected_carrier_info)
+{
+  // Attach UE.
+  ASSERT_TRUE(attach_ue());
+
+  // Trigger RRC Release with NR redirection (arfcn=520000, SSB SCS 15kHz).
+  get_cu_cp().get_command_handler().get_ue_release_command_handler().trigger_release(
+      pci_t{0}, crnti, cu_cp_release_redirect_nr_info{520000, subcarrier_spacing::kHz15});
+
+  // CU-CP sends NGAP UE Context Release Request to the AMF with cause=Redirection.
+  ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu)) << "Failed to receive NGAP UE Context Release Request";
+  ASSERT_TRUE(test_helpers::is_valid_ue_context_release_request(ngap_pdu)) << "Invalid NGAP UE Context Release Request";
+
+  // AMF responds with NGAP UE Context Release Command; CU-CP sends F1AP UE Context Release Command with RRCRelease.
+  get_amf().push_tx_pdu(generate_valid_ue_context_release_command_with_amf_ue_ngap_id(ue_ctx->amf_ue_id.value()));
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu)) << "Failed to receive F1AP UE Context Release Command";
+  ASSERT_TRUE(test_helpers::is_valid_ue_context_release_command(f1ap_pdu)) << "Invalid F1AP UE Context Release Command";
+
+  // Decode the embedded RRC container and verify redirectedCarrierInfo.
+  const byte_buffer& rrc_container = test_helpers::get_rrc_container(f1ap_pdu);
+  byte_buffer        dl_dcch_bytes = test_helpers::extract_dl_dcch_msg(rrc_container);
+
+  asn1::cbit_ref              bref{dl_dcch_bytes};
+  asn1::rrc_nr::dl_dcch_msg_s dl_dcch;
+  ASSERT_EQ(dl_dcch.unpack(bref), asn1::OCUDUASN_SUCCESS);
+
+  const auto& rrc_release = dl_dcch.msg.c1().rrc_release().crit_exts.rrc_release();
+  ASSERT_TRUE(rrc_release.redirected_carrier_info_present);
+  ASSERT_EQ(rrc_release.redirected_carrier_info.type(), asn1::rrc_nr::redirected_carrier_info_c::types::nr);
+  ASSERT_EQ(rrc_release.redirected_carrier_info.nr().carrier_freq, 520000U);
+
+  // DU confirms release; CU-CP sends NGAP UE Context Release Complete to the AMF.
+  ASSERT_TRUE(send_f1ap_ue_context_release_complete_and_await_ngap_ue_context_release_complete());
+
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.ues.size(), 0) << "UE should be removed";
+}
