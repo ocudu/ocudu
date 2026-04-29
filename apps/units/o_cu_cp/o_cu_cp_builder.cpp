@@ -120,6 +120,8 @@ o_cu_cp_unit ocudu::build_o_cu_cp(const o_cu_cp_unit_config& unit_cfg, o_cu_cp_u
   ocucp.commands.cmdline.commands.push_back(
       std::make_unique<cho_app_command>(ocucp.unit->get_cu_cp().get_command_handler(),
                                         std::chrono::milliseconds{cucp_unit_cfg.mobility_config.cho_timeout_ms}));
+  ocucp.commands.cmdline.commands.push_back(
+      std::make_unique<release_app_command>(ocucp.unit->get_cu_cp().get_command_handler()));
 
   return ocucp;
 }

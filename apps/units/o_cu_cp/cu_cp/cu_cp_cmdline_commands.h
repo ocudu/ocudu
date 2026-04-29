@@ -191,4 +191,100 @@ public:
   }
 };
 
+/// Application command to trigger RRC Release, optionally with NR redirection.
+/// Usage: release <serving_pci> <rnti> [<target_arfcn> [scs <15|30|60|120|240>]]
+class release_app_command : public app_services::cmdline_command
+{
+  ocucp::cu_cp_command_handler& cu_cp;
+
+public:
+  explicit release_app_command(ocucp::cu_cp_command_handler& cu_cp_) : cu_cp(cu_cp_) {}
+
+  std::string_view get_name() const override { return "release"; }
+
+  std::string_view get_description() const override
+  {
+    return " <serving_pci> <rnti> [<target_arfcn> [scs <15|30|60|120|240>]]: release UE to RRC_IDLE, optionally with "
+           "NR redirection";
+  }
+
+  void execute(span<const std::string> args) override
+  {
+    if (args.size() < 2) {
+      fmt::print(
+          "Invalid release command. Usage: release <serving_pci> <rnti> [<target_arfcn> [scs <15|30|60|120|240>]]\n");
+      return;
+    }
+
+    const auto* arg = args.begin();
+
+    expected<unsigned, std::string> serving_pci = app_services::parse_int<unsigned>(*arg);
+    if (not serving_pci.has_value()) {
+      fmt::print("Invalid serving PCI.\n");
+      return;
+    }
+    ++arg;
+
+    expected<unsigned, std::string> rnti = app_services::parse_unsigned_hex<unsigned>(*arg);
+    if (not rnti.has_value()) {
+      fmt::print("Invalid UE RNTI.\n");
+      return;
+    }
+    ++arg;
+
+    std::optional<ocucp::cu_cp_release_redirect_nr_info> redirect_info;
+
+    if (arg != args.end()) {
+      expected<unsigned, std::string> arfcn = app_services::parse_int<unsigned>(*arg);
+      if (not arfcn.has_value()) {
+        fmt::print("Invalid target ARFCN.\n");
+        return;
+      }
+      ++arg;
+
+      subcarrier_spacing ssb_scs = subcarrier_spacing::kHz15;
+      if (arg != args.end()) {
+        if (*arg == "scs") {
+          ++arg;
+          if (arg == args.end()) {
+            fmt::print("Missing SCS value after 'scs' keyword.\n");
+            return;
+          }
+          expected<unsigned, std::string> scs_khz = app_services::parse_int<unsigned>(*arg);
+          if (not scs_khz.has_value()) {
+            fmt::print("Invalid SCS value: {}.\n", *arg);
+            return;
+          }
+          ssb_scs = khz_to_scs(scs_khz.value());
+          if (ssb_scs == subcarrier_spacing::invalid) {
+            fmt::print("Invalid SCS value {}. Supported: 15, 30, 60, 120, 240.\n", scs_khz.value());
+            return;
+          }
+        } else {
+          fmt::print(
+              "Unknown argument '{}'. Usage: release <serving_pci> <rnti> [<target_arfcn> [scs <15|30|60|120|240>]]\n",
+              *arg);
+          return;
+        }
+      }
+
+      redirect_info = ocucp::cu_cp_release_redirect_nr_info{arfcn.value(), ssb_scs};
+    }
+
+    cu_cp.get_ue_release_command_handler().trigger_release(
+        static_cast<pci_t>(serving_pci.value()), static_cast<rnti_t>(rnti.value()), redirect_info);
+
+    if (redirect_info.has_value()) {
+      fmt::print("RRC Release with redirection triggered for UE pci={} rnti={} to NR arfcn={} scs={}kHz.\n",
+                 serving_pci.value(),
+                 static_cast<rnti_t>(rnti.value()),
+                 redirect_info->arfcn,
+                 scs_to_khz(redirect_info->ssb_scs));
+    } else {
+      fmt::print(
+          "RRC Release triggered for UE pci={} rnti={}.\n", serving_pci.value(), static_cast<rnti_t>(rnti.value()));
+    }
+  }
+};
+
 } // namespace ocudu
