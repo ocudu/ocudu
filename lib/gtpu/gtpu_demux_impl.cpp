@@ -99,15 +99,14 @@ void gtpu_demux_impl::handle_pdu(byte_buffer pdu, const sockaddr_storage& src_ad
   if (it == teid_to_tunnel.end()) {
     // write the PDU to PCAP before dropping it.
     write_pcap(pdu);
-    logger.info("Dropped GTP-U PDU, tunnel not found. teid={}", teid);
+    bool err_ind = false;
     if (teid.value() != 0 && tx_upper != nullptr) {
       if (not teid_linger_checker.is_teid_lingering(teid)) {
         send_error_indication(read_teid, src_addr);
-      } else {
-        // TODO: Remove this block - for testing only.
-        logger.warning("Skipped error indication because of lingering teid={}", teid);
+        err_ind = true;
       }
     }
+    logger.info("Dropped GTP-U PDU, tunnel not found. teid={} err_ind={}", teid, err_ind);
     return;
   }
   if (not it->second.batched_queue.try_push(gtpu_demux_pdu_ctx_t{std::move(pdu), src_addr})) {
