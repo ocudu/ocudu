@@ -27,7 +27,7 @@ class f1ap_du;
 
 /// Controls the UE attach/detach cycling lifecycle in DU test mode.
 ///
-/// Per cell, the cycle is: create all UEs → wait until all established → run traffic for attach_detach_duration slots →
+/// Per cell, the cycle is: create all UEs → wait until all established → run traffic for attach_detach_duration ms →
 /// release all UEs → guard period (1 second) → repeat.
 ///
 /// The controller wraps the f1c_connection_client (to intercept outgoing F1AP messages and capture gnb_du_ue_f1ap_id),
@@ -38,6 +38,10 @@ class du_test_mode_controller
 {
   class f1c_wrapper_impl;
   class cell_notifier_impl;
+  /// DU test mode cell-specific state handler.
+  class cell_controller;
+
+  friend class cell_controller;
 
 public:
   du_test_mode_controller(const du_test_mode_config::test_mode_ue_config& cfg_,
@@ -59,8 +63,8 @@ public:
   void connect(mac_pdu_handler& pdu_handler_, f1ap_du& f1ap_);
 
   // Called from cell thread (dispatches to ctrl_exec internally):
-  void on_msg4_received(du_cell_index_t cell_index, rnti_t rnti);
-  void on_slot_completed(du_cell_index_t cell_index, slot_point slot);
+  void handle_conres_scheduled(du_cell_index_t cell_index, rnti_t rnti);
+  void handle_slot_completed(du_cell_index_t cell_index, slot_point slot);
 
   // Called from F1AP tx interceptor thread (dispatches to ctrl_exec internally):
   void on_ue_f1ap_id_captured(rnti_t rnti, gnb_du_ue_f1ap_id_t gnb_du_ue_id);
@@ -74,14 +78,8 @@ private:
     gnb_du_ue_f1ap_id_t gnb_du_ue_id;
   };
 
-  void on_msg4_received_on_ctrl(du_cell_index_t cell_index, rnti_t rnti);
-  void on_slot_completed_on_ctrl(du_cell_index_t cell_index, slot_point slot);
+  // Initiate the UE Context Release Command from the F1AP interface.
   bool release_ue(rnti_t rnti);
-  void handle_attach_detach_timer(du_cell_index_t cell_index);
-  void try_create_ue(du_cell_index_t cell_index, slot_point slot);
-  void start_guard_period(du_cell_index_t cell_index);
-  void start_release_all_ues_in_cell(du_cell_index_t cell_index);
-  void start_reset_cell_for_next_cycle(du_cell_index_t cell_index);
 
   bool is_test_ue_in_cell(du_cell_index_t cell_index, rnti_t rnti) const
   {
@@ -96,20 +94,8 @@ private:
   f1ap_du*                                        f1ap_handler = nullptr;
   ocudulog::basic_logger&                         logger;
 
-  std::vector<ue_entry> ue_id_table;
-
-  enum class cell_cycle_state { creating, running, releasing, guard };
-  struct cell_state {
-    cell_cycle_state  cycle = cell_cycle_state::creating;
-    unique_timer      attach_detach_timer;
-    unsigned          nof_ues_estab          = 0;
-    unsigned          nof_ues_created        = 0;
-    unsigned          nof_ues_pending_remove = 0;
-    slot_point        last_slot;
-    std::vector<bool> msg4_counted;
-  };
-  std::vector<cell_state> cells;
-
+  std::vector<ue_entry>                            ue_id_table;
+  std::vector<std::unique_ptr<cell_controller>>    cells;
   std::unique_ptr<f1c_wrapper_impl>                f1c_wrapper;
   std::vector<std::unique_ptr<cell_notifier_impl>> cell_notifiers;
 };

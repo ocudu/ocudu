@@ -90,39 +90,24 @@ class du_test_mode_controller::cell_notifier_impl : public mac_cell_result_notif
 public:
   cell_notifier_impl(du_test_mode_controller&  parent_,
                      du_cell_index_t           cell_index_,
-                     mac_cell_result_notifier& real_phy_,
-                     unsigned                  nof_ues_) :
-    parent(parent_), cell_index(cell_index_), real_phy(real_phy_), msg4_dispatched(nof_ues_, false)
+                     mac_cell_result_notifier& real_phy_) :
+    parent(parent_), cell_index(cell_index_), real_phy(real_phy_)
   {
   }
 
   void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override
   {
-    // Check if a reset was requested by the controller (new cycle starting).
-    if (reset_requested.exchange(false)) {
-      std::fill(msg4_dispatched.begin(), msg4_dispatched.end(), false);
-    }
-
-    // Scan for first SRB grant per test UE RNTI — signals Msg4 reception.
+    // Searches ConRes CEs in the scheduler result.
     for (const auto& grant : dl_res.dl_res->ue_grants) {
-      const rnti_t crnti = grant.pdsch_cfg.rnti;
-      if (not parent.is_test_ue_in_cell(cell_index, crnti)) {
-        continue;
-      }
-      const unsigned base      = to_value(parent.cfg.rnti) + static_cast<unsigned>(cell_index) * parent.cfg.nof_ues;
-      const unsigned ue_offset = to_value(crnti) - base;
-      if (msg4_dispatched[ue_offset]) {
-        continue;
-      }
-      const auto& lchs = grant.tb_list[0].lc_chs_to_sched;
-      if (std::any_of(lchs.begin(), lchs.end(), [](const auto& lc) {
-            return lc.lcid.is_sdu() and is_srb(lc.lcid.to_lcid());
-          })) {
-        msg4_dispatched[ue_offset] = true;
-        parent.on_msg4_received(cell_index, crnti);
+      // Checks if the first subPDU is ConRes CE. If it is, signal UE connection.
+      if (not grant.tb_list.empty() and grant.tb_list[0].lc_chs_to_sched[0].lcid == lcid_dl_sch_t::UE_CON_RES_ID) {
+        const rnti_t crnti = grant.pdsch_cfg.rnti;
+        ocudu_sanity_check(parent.is_test_ue_in_cell(cell_index, crnti), "Unexpected cell for ConRes CE");
+        parent.handle_conres_scheduled(cell_index, crnti);
       }
     }
 
+    // Forward results to the lower layers.
     real_phy.on_new_downlink_scheduler_results(dl_res);
   }
 
@@ -136,17 +121,252 @@ public:
   void on_cell_results_completion(slot_point slot) override
   {
     real_phy.on_cell_results_completion(slot);
-    parent.on_slot_completed(cell_index, slot);
+    parent.handle_slot_completed(cell_index, slot);
   }
-
-  void request_msg4_reset() { reset_requested.store(true); }
 
 private:
   du_test_mode_controller&  parent;
   du_cell_index_t           cell_index;
   mac_cell_result_notifier& real_phy;
-  std::vector<bool>         msg4_dispatched; // on cell thread; guards redundant ctrl_exec dispatches
-  std::atomic<bool>         reset_requested{false};
+};
+
+// ---- cell_handler ----
+
+class du_test_mode_controller::cell_controller
+{
+public:
+  cell_controller(du_test_mode_controller& parent_,
+                  du_cell_index_t          cell_index_,
+                  timer_manager&           timers_,
+                  task_executor&           ctrl_exec_) :
+    parent(parent_),
+    cell_index(cell_index_),
+    ulcch_buf(byte_buffer::create({0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00}).value()),
+    ues(parent.cfg.nof_ues)
+  {
+    if (parent.cfg.attach_detach_duration.has_value()) {
+      // In case attach-detach cycling is enabled.
+      attach_detach_timer = timers_.create_unique_timer(ctrl_exec_);
+      attach_detach_timer.set(*parent.cfg.attach_detach_duration,
+                              [this](timer_id_t) { this->handle_attach_detach_timer(); });
+      guard_timer = timers_.create_unique_timer(ctrl_exec_);
+      guard_timer.set(GUARD_PERIOD_MSEC, [this](timer_id_t) { this->handle_guard_timer(); });
+    }
+
+    // Start creating UEs.
+    free_list_rnti.reserve(ues.size());
+    start_next_ue_creation_cycle();
+  }
+
+  /// Handles the event of a ConRes CE scheduled.
+  void handle_conres_scheduled(rnti_t rnti)
+  {
+    if (cycle != cell_cycle_state::creating) {
+      parent.logger.warning("TEST_MODE cell={} tc-rnti={}: Unexpected ConRes CE detected", cell_index, rnti);
+      return;
+    }
+
+    const unsigned ue_offset = get_ue_offset(rnti);
+    if (ue_offset >= parent.cfg.nof_ues or ues[ue_offset].conres_sched) {
+      parent.logger.warning("TEST_MODE cell={} tc-rnti={}: Unexpected cell for ConRes CE", cell_index, rnti);
+      return;
+    }
+
+    // UE fully established.
+    ues[ue_offset].conres_sched = true;
+    ++nof_ues_estab;
+
+    if (nof_ues_estab == parent.cfg.nof_ues) {
+      cycle = cell_cycle_state::running;
+
+      // Stop of creation of new UEs.
+      ue_creation_enabled.store(false, std::memory_order_release);
+
+      if (attach_detach_timer.is_valid()) {
+        // Initiate attach-detach timer, if configured.
+        attach_detach_timer.run();
+        parent.logger.info("TEST_MODE cell={}: All {} UE(s) established. Running for {} ms.",
+                           cell_index,
+                           parent.cfg.nof_ues,
+                           parent.cfg.attach_detach_duration->count());
+      } else {
+        parent.logger.info("TEST_MODE cell={}: All {} UE(s) established.", cell_index, parent.cfg.nof_ues);
+      }
+    }
+  }
+
+  void handle_slot_completed(slot_point slot)
+  {
+    // Stagger UE creation.
+    const unsigned cell_offset_mod =
+        parent.cfg.ue_creation_stagger_slots * static_cast<unsigned>(cell_index) / MAX_NOF_DU_CELLS;
+    if (slot.count() % parent.cfg.ue_creation_stagger_slots != cell_offset_mod) {
+      return;
+    }
+
+    if (not ue_creation_enabled.load(std::memory_order_acquire)) {
+      // Not accepting new UEs.
+      return;
+    }
+
+    // Dispatch task to create UE.
+    if (not parent.ctrl_exec.defer([this, slot]() { try_create_ue(slot); })) {
+      parent.logger.warning("TEST_MODE cell={}: Failed to dispatch UE creation request", cell_index);
+    }
+  }
+
+  void on_ue_removed()
+  {
+    if (cycle == cell_cycle_state::releasing and nof_ues_pending_remove > 0) {
+      --nof_ues_pending_remove;
+      if (nof_ues_pending_remove == 0) {
+        start_guard_period();
+      }
+    }
+  }
+
+private:
+  struct ue_cell_context {
+    slot_point ccch_slot;
+    bool       conres_sched = false;
+  };
+
+  void try_create_ue(slot_point slot)
+  {
+    if (cycle != cell_cycle_state::creating) {
+      return;
+    }
+    if (free_list_rnti.empty()) {
+      // No more UEs to create.
+
+      // Check, however, if there is any UE that already passed its ConRes CE window.
+      auto it = std::find_if(ues.begin(), ues.end(), [slot](const ue_cell_context& u) {
+        const unsigned max_conres_win_slots = 64 * get_nof_slots_per_subframe(slot.scs());
+        return u.ccch_slot.valid() and not u.conres_sched and u.ccch_slot + max_conres_win_slots < slot;
+      });
+      if (it == ues.end()) {
+        // All UEs have connected.
+        parent.logger.error("TEST_MODE cell={}: There are no more UEs to establish but the state has not been updated",
+                            cell_index);
+        return;
+      }
+
+      // A UE that failed ConRes was detected. Mark it as empty again.
+      const rnti_t rnti = get_ue_rnti(std::distance(ues.begin(), it));
+      *it               = {};
+      free_list_rnti.push_back(rnti);
+    }
+
+    // Pop next RNTI to create.
+    const rnti_t test_ue_rnti = free_list_rnti.back();
+    free_list_rnti.pop_back();
+
+    // Dispatch UL-CCCH to the DU-high.
+    parent.pdu_handler->handle_rx_data_indication(
+        mac_rx_data_indication{slot, cell_index, {mac_rx_pdu{test_ue_rnti, 0, ulcch_buf.copy()}}});
+
+    parent.logger.info("TEST_MODE cell={} rnti={}: Starting UE creation. There still {}/{} left to be created.",
+                       cell_index,
+                       test_ue_rnti,
+                       free_list_rnti.size(),
+                       parent.cfg.nof_ues);
+  }
+
+  /// Called when the attach-detach timer triggers.
+  void handle_attach_detach_timer()
+  {
+    ocudu_assert(cycle == cell_cycle_state::running, "Invalid state");
+    start_release_all_ues();
+  }
+
+  void handle_guard_timer()
+  {
+    ocudu_assert(cycle == cell_cycle_state::guard, "Invalid state");
+    parent.logger.info("TEST_MODE cell={}: Guard period elapsed. Starting new creation cycle.", cell_index);
+    start_next_ue_creation_cycle();
+  }
+
+  /// Starts guard period, during which, no UE is attached to the cell.
+  void start_guard_period()
+  {
+    parent.logger.info("TEST_MODE cell={}: All UE(s) released. Entering guard period.", cell_index);
+    cycle = cell_cycle_state::guard;
+
+    parent.ue_id_table.erase(
+        std::remove_if(parent.ue_id_table.begin(),
+                       parent.ue_id_table.end(),
+                       [&](const ue_entry& e) { return parent.is_test_ue_in_cell(cell_index, e.rnti); }),
+        parent.ue_id_table.end());
+
+    guard_timer.run();
+  }
+
+  /// Starts the release of all UEs in the cell.
+  void start_release_all_ues()
+  {
+    parent.logger.info(
+        "TEST_MODE cell={}: Attach/detach duration elapsed. Releasing {} UE(s).", cell_index, parent.cfg.nof_ues);
+
+    cycle                 = cell_cycle_state::releasing;
+    unsigned nof_released = 0;
+    for (unsigned u = 0; u < parent.cfg.nof_ues; ++u) {
+      const rnti_t rnti = get_ue_rnti(u);
+      if (parent.release_ue(rnti)) {
+        ++nof_released;
+      }
+    }
+    nof_ues_pending_remove = nof_released;
+
+    if (nof_released == 0) {
+      start_guard_period();
+    }
+  }
+
+  void start_next_ue_creation_cycle()
+  {
+    cycle                  = cell_cycle_state::creating;
+    nof_ues_estab          = 0;
+    nof_ues_pending_remove = 0;
+    std::fill(ues.begin(), ues.end(), ue_cell_context{});
+    for (unsigned i = 0; i != parent.cfg.nof_ues; ++i) {
+      free_list_rnti.push_back(get_ue_rnti(parent.cfg.nof_ues - i - 1));
+    }
+
+    // Signal RT executor that it can start triggering UE creations.
+    ue_creation_enabled.store(true, std::memory_order_release);
+  }
+
+  unsigned get_ue_offset(rnti_t rnti) const
+  {
+    const unsigned base      = to_value(parent.cfg.rnti) + static_cast<unsigned>(cell_index) * parent.cfg.nof_ues;
+    const unsigned ue_offset = to_value(rnti) - base;
+    return ue_offset;
+  }
+  rnti_t get_ue_rnti(unsigned ue_offset) const
+  {
+    const unsigned base = to_value(parent.cfg.rnti) + static_cast<unsigned>(cell_index) * parent.cfg.nof_ues;
+    return to_rnti(ue_offset + base);
+  }
+
+  /// States of the cell test mode controller.
+  enum class cell_cycle_state { creating, running, releasing, guard };
+
+  du_test_mode_controller& parent;
+  du_cell_index_t          cell_index;
+
+  // Pre-canned UL-CCCH message.
+  byte_buffer ulcch_buf;
+
+  cell_cycle_state             cycle = cell_cycle_state::creating;
+  unique_timer                 attach_detach_timer;
+  unique_timer                 guard_timer;
+  unsigned                     nof_ues_estab          = 0;
+  unsigned                     nof_ues_pending_remove = 0;
+  std::vector<ue_cell_context> ues;
+  std::vector<rnti_t>          free_list_rnti;
+
+  // Flag accessed from cell RT executor.
+  std::atomic<bool> ue_creation_enabled{true};
 };
 
 // ---- du_test_mode_controller ----
@@ -158,19 +378,11 @@ du_test_mode_controller::du_test_mode_controller(const du_test_mode_config::test
   cfg(cfg_),
   ctrl_exec(ctrl_exec_),
   logger(ocudulog::fetch_basic_logger("DU")),
-  cells(nof_cells_),
   f1c_wrapper(std::make_unique<f1c_wrapper_impl>(*this))
 {
-  for (unsigned i = 0, sz = nof_cells_; i != sz; ++i) {
-    auto& cell = cells[i];
-    if (cfg.attach_detach_duration.has_value()) {
-      // Setup attach-detach cycle timer.
-      cell.attach_detach_timer = timers_.create_unique_timer(ctrl_exec_);
-      cell.attach_detach_timer.set(*cfg.attach_detach_duration, [this, i](timer_id_t /* unused */) {
-        this->handle_attach_detach_timer(to_du_cell_index(i));
-      });
-    }
-    cell.msg4_counted.assign(cfg.nof_ues, false);
+  cells.reserve(nof_cells_);
+  for (unsigned i = 0; i != nof_cells_; ++i) {
+    cells.push_back(std::make_unique<cell_controller>(*this, to_du_cell_index(i), timers_, ctrl_exec_));
   }
 }
 
@@ -192,7 +404,7 @@ mac_cell_result_notifier& du_test_mode_controller::add_cell_notifier(du_cell_ind
   if (cell_notifiers.size() <= static_cast<unsigned>(cell_index)) {
     cell_notifiers.resize(static_cast<unsigned>(cell_index) + 1);
   }
-  cell_notifiers[cell_index] = std::make_unique<cell_notifier_impl>(*this, cell_index, real_phy_notifier, cfg.nof_ues);
+  cell_notifiers[cell_index] = std::make_unique<cell_notifier_impl>(*this, cell_index, real_phy_notifier);
   return *cell_notifiers[cell_index];
 }
 
@@ -202,18 +414,16 @@ void du_test_mode_controller::connect(mac_pdu_handler& pdu_handler_, f1ap_du& f1
   f1ap_handler = &f1ap_;
 }
 
-void du_test_mode_controller::on_msg4_received(du_cell_index_t cell_index, rnti_t rnti)
+void du_test_mode_controller::handle_conres_scheduled(du_cell_index_t cell_index, rnti_t rnti)
 {
-  if (not ctrl_exec.defer([this, cell_index, rnti]() { on_msg4_received_on_ctrl(cell_index, rnti); })) {
+  if (not ctrl_exec.defer([this, cell_index, rnti]() { cells[cell_index]->handle_conres_scheduled(rnti); })) {
     logger.warning("TEST_MODE: Failed to dispatch Msg4 notification for rnti={}", rnti);
   }
 }
 
-void du_test_mode_controller::on_slot_completed(du_cell_index_t cell_index, slot_point slot)
+void du_test_mode_controller::handle_slot_completed(du_cell_index_t cell_index, slot_point slot)
 {
-  if (not ctrl_exec.defer([this, cell_index, slot]() { on_slot_completed_on_ctrl(cell_index, slot); })) {
-    logger.warning("TEST_MODE: Failed to dispatch slot notification for cell={}", fmt::underlying(cell_index));
-  }
+  cells[cell_index]->handle_slot_completed(slot);
 }
 
 void du_test_mode_controller::on_ue_f1ap_id_captured(rnti_t rnti, gnb_du_ue_f1ap_id_t gnb_du_ue_id)
@@ -227,63 +437,15 @@ void du_test_mode_controller::on_ue_f1ap_id_captured(rnti_t rnti, gnb_du_ue_f1ap
 void du_test_mode_controller::on_ue_removed(rnti_t rnti)
 {
   if (not cfg.attach_detach_duration.has_value()) {
-    // Do nothing if not in attach-detach mode.
+    // Attach-detach mode is not enabled. Early return.
     return;
   }
-
-  // Find which cell this UE belongs to and decrement the pending remove counter.
   for (unsigned c = 0; c < cells.size(); ++c) {
-    if (is_test_ue_in_cell(static_cast<du_cell_index_t>(c), rnti)) {
-      auto& cell = cells[c];
-      if (cell.cycle == cell_cycle_state::releasing and cell.nof_ues_pending_remove > 0) {
-        --cell.nof_ues_pending_remove;
-        if (cell.nof_ues_pending_remove == 0) {
-          start_guard_period(to_du_cell_index(c));
-        }
-      }
+    if (is_test_ue_in_cell(to_du_cell_index(c), rnti)) {
+      cells[c]->on_ue_removed();
       return;
     }
   }
-}
-
-void du_test_mode_controller::on_msg4_received_on_ctrl(du_cell_index_t cell_index, rnti_t rnti)
-{
-  auto& cell = cells[cell_index];
-  if (cell.cycle != cell_cycle_state::creating) {
-    logger.warning("TEST_MODE cell={} tc-rnti={}: Unexpected Msg4 detected", cell_index, rnti);
-    return;
-  }
-
-  const unsigned base      = to_value(cfg.rnti) + static_cast<unsigned>(cell_index) * cfg.nof_ues;
-  const unsigned ue_offset = to_value(rnti) - base;
-  if (ue_offset >= cfg.nof_ues or cell.msg4_counted[ue_offset]) {
-    return;
-  }
-
-  cell.msg4_counted[ue_offset] = true;
-  ++cell.nof_ues_estab;
-
-  if (cell.nof_ues_estab == cfg.nof_ues) {
-    // All test mode UEs have been established.
-    cell.cycle = cell_cycle_state::running;
-    if (cell.attach_detach_timer.is_valid()) {
-      // Start attach-detach timer if set.
-      cell.attach_detach_timer.run();
-      logger.info("TEST_MODE cell={}: All {} UE(s) established. Running for {} ms.",
-                  cell_index,
-                  cfg.nof_ues,
-                  cfg.attach_detach_duration->count());
-    } else {
-      logger.info("TEST_MODE cell={}: All {} UE(s) established.", cell_index, cfg.nof_ues);
-    }
-  }
-}
-
-void du_test_mode_controller::on_slot_completed_on_ctrl(du_cell_index_t cell_index, slot_point slot)
-{
-  auto& cell     = cells[cell_index];
-  cell.last_slot = slot;
-  try_create_ue(cell_index, slot);
 }
 
 bool du_test_mode_controller::release_ue(rnti_t rnti)
@@ -299,6 +461,7 @@ bool du_test_mode_controller::release_ue(rnti_t rnti)
     return false;
   }
 
+  // Prepare F1AP UE Context Release Command.
   f1ap_message rel_cmd;
   rel_cmd.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_RELEASE);
   auto& cmd                            = rel_cmd.pdu.init_msg().value.ue_context_release_cmd();
@@ -309,114 +472,4 @@ bool du_test_mode_controller::release_ue(rnti_t rnti)
   logger.info("TEST_MODE rnti={}: Injecting UE Context Release Command", rnti);
   f1ap_handler->handle_message(rel_cmd);
   return true;
-}
-
-void du_test_mode_controller::try_create_ue(du_cell_index_t cell_index, slot_point slot)
-{
-  auto& cell = cells[cell_index];
-  if (cell.cycle != cell_cycle_state::creating) {
-    return;
-  }
-  if (cell.nof_ues_created >= cfg.nof_ues) {
-    return;
-  }
-  if (pdu_handler == nullptr) {
-    return;
-  }
-
-  const unsigned cell_offset_mod = cfg.ue_creation_stagger_slots * static_cast<unsigned>(cell_index) / MAX_NOF_DU_CELLS;
-  if (slot.count() % cfg.ue_creation_stagger_slots != cell_offset_mod) {
-    return;
-  }
-
-  auto ulcch_buf = byte_buffer::create({0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00});
-  if (not ulcch_buf.has_value()) {
-    logger.warning("TEST_MODE: Postponing creation of test mode ue={}. Cause: Unable to allocate byte_buffer",
-                   cell.nof_ues_created);
-    return;
-  }
-
-  const rnti_t test_ue_rnti =
-      to_rnti(to_value(cfg.rnti) + (static_cast<unsigned>(cell_index) * cfg.nof_ues) + cell.nof_ues_created);
-
-  pdu_handler->handle_rx_data_indication(
-      mac_rx_data_indication{slot, cell_index, {mac_rx_pdu{test_ue_rnti, 0, ulcch_buf.value().copy()}}});
-
-  logger.info("TEST_MODE cell={} rnti={}: Starting UE creation. There still {}/{} left to be created.",
-              test_ue_rnti,
-              cell_index,
-              cfg.nof_ues - (cell.nof_ues_created + 1),
-              cfg.nof_ues);
-  ++cell.nof_ues_created;
-}
-
-void du_test_mode_controller::handle_attach_detach_timer(du_cell_index_t cell_index)
-{
-  auto& cell = cells[cell_index];
-
-  switch (cell.cycle) {
-    case cell_cycle_state::running: {
-      start_release_all_ues_in_cell(cell_index);
-    } break;
-    case cell_cycle_state::guard: {
-      start_reset_cell_for_next_cycle(cell_index);
-    } break;
-    default:
-      break;
-  }
-}
-
-void du_test_mode_controller::start_guard_period(du_cell_index_t cell_index)
-{
-  auto& cell = cells[cell_index];
-
-  logger.info("TEST_MODE cell={}: All UE(s) released. Entering guard period.", cell_index);
-  cell.cycle = cell_cycle_state::guard;
-
-  // Clean up ID table entries for this cell's UEs.
-  ue_id_table.erase(std::remove_if(ue_id_table.begin(),
-                                   ue_id_table.end(),
-                                   [&](const ue_entry& e) { return is_test_ue_in_cell(cell_index, e.rnti); }),
-                    ue_id_table.end());
-
-  // Start GUARD period timer.
-  cell.attach_detach_timer.set(GUARD_PERIOD_MSEC);
-  cell.attach_detach_timer.run();
-}
-
-void du_test_mode_controller::start_release_all_ues_in_cell(du_cell_index_t cell_index)
-{
-  logger.info("TEST_MODE cell={}: Attach/detach duration elapsed. Releasing {} UE(s).", cell_index, cfg.nof_ues);
-
-  auto& cell            = cells[cell_index];
-  cell.cycle            = cell_cycle_state::releasing;
-  unsigned nof_released = 0;
-
-  for (unsigned u = 0; u < cfg.nof_ues; ++u) {
-    const rnti_t rnti = to_rnti(to_value(cfg.rnti) + static_cast<unsigned>(cell_index) * cfg.nof_ues + u);
-    if (release_ue(rnti)) {
-      ++nof_released;
-    }
-  }
-  cell.nof_ues_pending_remove = nof_released;
-
-  if (nof_released == 0) {
-    start_guard_period(cell_index);
-  }
-}
-
-void du_test_mode_controller::start_reset_cell_for_next_cycle(du_cell_index_t cell_index)
-{
-  auto& cell                  = cells[cell_index];
-  cell.cycle                  = cell_cycle_state::creating;
-  cell.nof_ues_estab          = 0;
-  cell.nof_ues_created        = 0;
-  cell.nof_ues_pending_remove = 0;
-  std::fill(cell.msg4_counted.begin(), cell.msg4_counted.end(), false);
-
-  if (cell_index < cell_notifiers.size() and cell_notifiers[cell_index] != nullptr) {
-    cell_notifiers[cell_index]->request_msg4_reset();
-  }
-
-  logger.info("TEST_MODE cell={}: Guard period elapsed. Starting new creation cycle.", cell_index);
 }
