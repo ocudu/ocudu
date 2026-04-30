@@ -42,6 +42,25 @@ constexpr unsigned scs_to_khz(subcarrier_spacing scs)
   return 15U << to_numerology_value(scs);
 }
 
+/// Convert kHz value to SCS. Returns subcarrier_spacing::invalid if khz does not match a valid SCS.
+constexpr subcarrier_spacing khz_to_scs(unsigned khz)
+{
+  switch (khz) {
+    case 15:
+      return subcarrier_spacing::kHz15;
+    case 30:
+      return subcarrier_spacing::kHz30;
+    case 60:
+      return subcarrier_spacing::kHz60;
+    case 120:
+      return subcarrier_spacing::kHz120;
+    case 240:
+      return subcarrier_spacing::kHz240;
+    default:
+      return subcarrier_spacing::invalid;
+  }
+}
+
 /// Convert numerology index (\f$\mu\f$) to SCS.
 constexpr subcarrier_spacing to_subcarrier_spacing(unsigned numerology)
 {
