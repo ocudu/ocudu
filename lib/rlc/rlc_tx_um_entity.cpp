@@ -4,7 +4,7 @@
 
 #include "rlc_tx_um_entity.h"
 #include "rlc_um_pdu.h"
-#include "ocudu/ran/pdcp_sn_util.h"
+#include "ocudu/ran/pdcp/pdcp_sn_util.h"
 #include "ocudu/ran/pdsch/pdsch_constants.h"
 
 using namespace ocudu;

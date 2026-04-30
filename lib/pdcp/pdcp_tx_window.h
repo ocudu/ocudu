@@ -7,7 +7,7 @@
 #include "pdcp_bearer_logger.h"
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/pdcp/pdcp_config.h"
-#include "ocudu/ran/pdcp_sn_size.h"
+#include "ocudu/ran/pdcp/pdcp_sn_size.h"
 #include "ocudu/security/security.h"
 #include "ocudu/support/sdu_window.h"
 

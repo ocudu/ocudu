@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include "ocudu/adt/byte_buffer.h"
+#include "ocudu/adt/byte_buffer_view.h"
 #include "ocudu/ocudulog/logger.h"
-#include "ocudu/ran/pdcp_sn_size.h"
+#include "ocudu/ran/pdcp/pdcp_sn_size.h"
 #include "ocudu/support/bit_encoding.h"
 #include <cstdint>
 #include <optional>

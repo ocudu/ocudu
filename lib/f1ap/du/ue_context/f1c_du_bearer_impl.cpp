@@ -7,7 +7,7 @@
 #include "ocudu/asn1/f1ap/common.h"
 #include "ocudu/asn1/f1ap/f1ap_pdu_contents.h"
 #include "ocudu/f1ap/f1ap_message.h"
-#include "ocudu/ran/pdcp_sn_util.h"
+#include "ocudu/ran/pdcp/pdcp_sn_util.h"
 #include "ocudu/support/async/async_no_op_task.h"
 #include "ocudu/support/async/async_timer.h"
 #include "ocudu/support/async/execute_on_blocking.h"

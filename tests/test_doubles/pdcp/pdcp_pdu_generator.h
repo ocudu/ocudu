@@ -8,12 +8,10 @@
 #pragma once
 
 #include "ocudu/adt/byte_buffer.h"
-#include "ocudu/ran/pdcp_sn_size.h"
+#include "ocudu/ran/pdcp/pdcp_sn_size.h"
 #include <gtest/gtest.h>
 
-namespace ocudu {
-
-namespace test_helpers {
+namespace ocudu::test_helpers {
 
 /// \brief Creates a byte_buffer serving as dummy PDCP PDU, e.g. for use as RLC SDU.
 ///
@@ -30,5 +28,4 @@ namespace test_helpers {
 byte_buffer
 create_pdcp_pdu(pdcp_sn_size pdcp_sn_len, bool is_srb, uint32_t pdcp_sn, uint32_t sdu_size, uint8_t first_byte);
 
-} // namespace test_helpers
-} // namespace ocudu
+} // namespace ocudu::test_helpers

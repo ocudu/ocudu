@@ -9,7 +9,7 @@
 #include "ocudu/asn1/f1ap/common.h"
 #include "ocudu/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "ocudu/du/du_cell_config_helpers.h"
-#include "ocudu/ran/pdcp_sn_util.h"
+#include "ocudu/ran/pdcp/pdcp_sn_util.h"
 #include "ocudu/ran/up_transport_layer_info.h"
 #include "ocudu/support/async/async_test_utils.h"
 
