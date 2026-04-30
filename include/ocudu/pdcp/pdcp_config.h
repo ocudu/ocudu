@@ -5,6 +5,7 @@
 #pragma once
 
 #include "ocudu/pdcp/pdcp_t_reordering.h"
+#include "ocudu/ran/pdcp/pdcp_discard_timer.h"
 #include "ocudu/ran/pdcp/pdcp_sn_size.h"
 #include "ocudu/rohc/rohc_config.h"
 #include "ocudu/support/timers.h"
@@ -67,61 +68,6 @@ constexpr uint16_t pdcp_max_sdu_size = 9000;
 
 /// PDCP security direction.
 enum class pdcp_security_direction { uplink, downlink };
-
-/// PDCP NR discard timer values.
-/// This timer is configured only for DRBs. In the transmitter, a new timer is started upon reception of an SDU from
-/// upper layer.
-/// See TS 38.322 for timer description and TS 38.331 for valid timer durations.
-enum class pdcp_discard_timer {
-  ms10     = 10,
-  ms20     = 20,
-  ms30     = 30,
-  ms40     = 40,
-  ms50     = 50,
-  ms60     = 60,
-  ms75     = 75,
-  ms100    = 100,
-  ms150    = 150,
-  ms200    = 200,
-  ms250    = 250,
-  ms300    = 300,
-  ms500    = 500,
-  ms750    = 750,
-  ms1500   = 1500,
-  infinity = -1
-};
-
-constexpr bool pdcp_discard_timer_from_int(pdcp_discard_timer& discard_timer, int num)
-{
-  switch (num) {
-    case 10:
-    case 20:
-    case 30:
-    case 40:
-    case 50:
-    case 60:
-    case 75:
-    case 100:
-    case 150:
-    case 200:
-    case 250:
-    case 300:
-    case 500:
-    case 750:
-    case 1500:
-    case -1:
-      discard_timer = static_cast<pdcp_discard_timer>(num);
-      return true;
-    default:
-      return false;
-  }
-}
-
-/// Convert PDCP NR discard timer from enum to integer.
-constexpr int16_t pdcp_discard_timer_to_int(pdcp_discard_timer discard_timer)
-{
-  return static_cast<int16_t>(discard_timer);
-}
 
 /// Reordering timeout for serialization of TX PDUs after parallelized crypto operations.
 constexpr uint32_t pdcp_tx_crypto_reordering_timeout_ms = 40;
@@ -335,24 +281,6 @@ struct formatter<ocudu::pdcp_t_reordering> {
 };
 
 template <>
-struct formatter<ocudu::pdcp_discard_timer> {
-  template <typename ParseContext>
-  auto parse(ParseContext& ctx)
-  {
-    return ctx.begin();
-  }
-
-  template <typename FormatContext>
-  auto format(ocudu::pdcp_discard_timer discard_timer, FormatContext& ctx) const
-  {
-    if (discard_timer == ocudu::pdcp_discard_timer::infinity) {
-      return format_to(ctx.out(), "infinity");
-    }
-    return format_to(ctx.out(), "{}", ocudu::pdcp_discard_timer_to_int(discard_timer));
-  }
-};
-
-template <>
 struct formatter<ocudu::pdcp_custom_config_tx> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx)
@@ -400,11 +328,11 @@ struct formatter<ocudu::pdcp_tx_config> {
   {
     auto out = ctx.out();
     out      = format_to(out,
-                    "rb_type={} rlc_mode={} sn_size={} discard_timer={}",
-                    cfg.rb_type,
-                    cfg.rlc_mode,
-                    cfg.sn_size,
-                    cfg.discard_timer);
+                         "rb_type={} rlc_mode={} sn_size={} discard_timer={}",
+                         cfg.rb_type,
+                         cfg.rlc_mode,
+                         cfg.sn_size,
+                         cfg.discard_timer);
     if (cfg.header_compression.has_value()) {
       out = format_to(out, " {}", *cfg.header_compression);
     }
@@ -426,11 +354,11 @@ struct formatter<ocudu::pdcp_rx_config> {
   {
     auto out = ctx.out();
     out      = format_to(ctx.out(),
-                    "rb_type={} rlc_mode={} sn_size={} t_reordering={}",
-                    cfg.rb_type,
-                    cfg.rlc_mode,
-                    cfg.sn_size,
-                    cfg.t_reordering);
+                         "rb_type={} rlc_mode={} sn_size={} t_reordering={}",
+                         cfg.rb_type,
+                         cfg.rlc_mode,
+                         cfg.sn_size,
+                         cfg.t_reordering);
     if (cfg.header_compression.has_value()) {
       out = format_to(out, " {}", *cfg.header_compression);
     }
