@@ -391,8 +391,8 @@ TEST_F(cell_meas_manager_test, cho_multi_frequency_generates_separate_meas_ids_p
 
   ASSERT_TRUE(cho_result.has_value());
 
-  // Multi-frequency: should have 2 measurement objects (one per frequency)
-  ASSERT_EQ(cho_result->meas_obj_to_add_mod_list.size(), 2);
+  // Multi-frequency: 2 target frequencies + 1 serving cell frequency = 3 measurement objects.
+  ASSERT_EQ(cho_result->meas_obj_to_add_mod_list.size(), 3);
 
   // Verify NCI-to-measId mapping contains both target NCIs
   ASSERT_TRUE(cho_result->nci_to_meas_ids.find(nci_target1) != cho_result->nci_to_meas_ids.end() &&
@@ -481,4 +481,45 @@ TEST_F(cell_meas_manager_test, cho_invalid_candidate_pci_filters_correctly)
 
   // Should return nullopt when no valid candidates exist
   ASSERT_FALSE(cho_result.has_value());
+}
+
+TEST_F(cell_meas_manager_test, cho_a5_inter_frequency_includes_serving_cell_meas_obj)
+{
+  create_cho_manager_a5_inter_frequency();
+
+  ue_index_t ue_index = ue_mng.add_ue(uint_to_du_index(0));
+  ASSERT_NE(ue_index, ue_index_t::invalid);
+  ASSERT_FALSE(ue_mng.ue_admission_limit_reached());
+  ASSERT_TRUE(ue_mng.set_plmn(ue_index, plmn_identity::test_value()));
+  attach_rrc_ue(ue_index);
+
+  gnb_id_t         gnb_id{0x19b, 32};
+  nr_cell_identity nci_serving = nr_cell_identity::create(gnb_id, 0).value();
+  nr_cell_identity nci_target  = nr_cell_identity::create(gnb_id, 1).value();
+
+  std::vector<pci_t> candidate_pcis = {2};
+  auto cho_result = manager->get_measurement_config(ue_index, nci_serving, std::nullopt, true, candidate_pcis);
+
+  ASSERT_TRUE(cho_result.has_value());
+
+  // Serving (632628) and target (633000) are on different frequencies: both must have measurement objects.
+  ASSERT_EQ(cho_result->meas_obj_to_add_mod_list.size(), 2);
+
+  auto has_ssb_freq = [&](uint32_t arfcn) {
+    return std::any_of(cho_result->meas_obj_to_add_mod_list.begin(),
+                       cho_result->meas_obj_to_add_mod_list.end(),
+                       [arfcn](const rrc_meas_obj_to_add_mod& mo) {
+                         return mo.meas_obj_nr.has_value() && mo.meas_obj_nr->ssb_freq.has_value() &&
+                                mo.meas_obj_nr->ssb_freq.value() == arfcn;
+                       });
+  };
+  ASSERT_TRUE(has_ssb_freq(632628)) << "Serving cell measurement object must be present for A5 threshold1 evaluation";
+  ASSERT_TRUE(has_ssb_freq(633000)) << "Target cell measurement object missing";
+
+  // Target NCI must have measurement IDs for condExecutionCond assignment.
+  ASSERT_NE(cho_result->nci_to_meas_ids.find(nci_target), cho_result->nci_to_meas_ids.end());
+  ASSERT_FALSE(cho_result->nci_to_meas_ids.at(nci_target).empty());
+
+  // Serving NCI must not appear as a CHO candidate target.
+  ASSERT_EQ(cho_result->nci_to_meas_ids.find(nci_serving), cho_result->nci_to_meas_ids.end());
 }

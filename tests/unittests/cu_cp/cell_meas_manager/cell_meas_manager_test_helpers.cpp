@@ -514,3 +514,41 @@ void cell_meas_manager_test::create_cho_manager_multi_trigger()
   manager = std::make_unique<cell_meas_manager>(cfg, mobility_manager, ue_mng);
   ASSERT_NE(manager, nullptr);
 }
+
+void cell_meas_manager_test::create_cho_manager_a5_inter_frequency()
+{
+  cell_meas_manager_cfg cfg;
+
+  // Serving cell and target cell on DIFFERENT frequencies to exercise inter-frequency A5 CHO.
+  gnb_id_t         gnb_id{0x19b, 32};
+  nr_cell_identity nci_serving = nr_cell_identity::create(gnb_id, 0).value();
+  nr_cell_identity nci_target  = nr_cell_identity::create(gnb_id, 1).value();
+
+  cell_meas_config serving_cfg = make_cell_config(gnb_id, nci_serving, 1, 632628);
+
+  neighbor_cell_meas_config ncell;
+  ncell.nci = nci_target;
+  ncell.report_cfg_ids.push_back(uint_to_report_cfg_id(1));
+  serving_cfg.ncells.push_back(ncell);
+
+  cfg.cells.emplace(nci_serving, serving_cfg);
+  cfg.cells.emplace(nci_target, make_cell_config(gnb_id, nci_target, 2, 633000));
+
+  rrc_report_cfg_nr    cho_trigger_cfg;
+  rrc_cond_trigger_cfg cond_trigger;
+  rrc_event_id         cond_event_a5;
+  cond_event_a5.id = rrc_event_id::event_id_t::a5;
+  cond_event_a5.meas_trigger_quant_thres_or_offset.emplace();
+  cond_event_a5.meas_trigger_quant_thres_or_offset.value().rsrp = 10;
+  cond_event_a5.meas_trigger_quant_thres_2.emplace();
+  cond_event_a5.meas_trigger_quant_thres_2.value().rsrp = 20;
+  cond_event_a5.hysteresis                              = 0;
+  cond_event_a5.time_to_trigger                         = 100;
+  cond_trigger.cond_event_id                            = cond_event_a5;
+  cond_trigger.rs_type                                  = rrc_nr_rs_type::ssb;
+  cho_trigger_cfg                                       = cond_trigger;
+  cfg.report_config_ids.emplace(uint_to_report_cfg_id(1), cho_trigger_cfg);
+
+  manager = std::make_unique<cell_meas_manager>(cfg, mobility_manager, ue_mng);
+  ASSERT_NE(manager, nullptr);
+}

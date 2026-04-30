@@ -170,6 +170,12 @@ std::vector<ssb_frequency_t> ocudu::ocucp::generate_cho_measurement_object_list(
   std::unordered_set<pci_t>           candidate_pcis_set(candidate_pcis.begin(), candidate_pcis.end());
   std::unordered_set<ssb_frequency_t> freqs;
 
+  // Include the serving cell frequency. Required for inter-frequency handovers (e.g., A5 CHO).
+  const auto& serving_cell_cfg = cfg.cells.at(serving_nci).serving_cell_cfg;
+  if (is_complete(serving_cell_cfg)) {
+    freqs.insert(serving_cell_cfg.ssb_arfcn->value());
+  }
+
   for (const auto& ncell : cfg.cells.at(serving_nci).ncells) {
     auto it = cfg.cells.find(ncell.nci);
     if (it == cfg.cells.end()) {

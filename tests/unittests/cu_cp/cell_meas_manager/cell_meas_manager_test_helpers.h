@@ -39,6 +39,7 @@ protected:
   void create_cho_manager_single_frequency();
   void create_cho_manager_multi_frequency();
   void create_cho_manager_multi_trigger();
+  void create_cho_manager_a5_inter_frequency();
   void check_default_meas_cfg(const std::optional<rrc_meas_cfg>& meas_cfg, meas_obj_id_t meas_obj_id);
   void verify_meas_cfg(const std::optional<rrc_meas_cfg>& meas_cfg);
   void verify_empty_meas_cfg(const std::optional<rrc_meas_cfg>& meas_cfg);

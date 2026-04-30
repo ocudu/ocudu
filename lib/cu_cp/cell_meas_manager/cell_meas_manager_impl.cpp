@@ -96,6 +96,10 @@ cell_meas_manager::get_measurement_config(ue_index_t                         ue_
 
     // Add meas obj id to lookup.
     for (const auto& nci : ssb_freq_to_ncis.at(ssb_freq)) {
+      if (cond_meas && nci == serving_nci) {
+        // Skip the serving cell as is not a CHO candidate target.
+        continue;
+      }
       ue_meas_context.nci_to_meas_obj_id.emplace(nci, meas_obj_to_add.meas_obj_id);
       if (cond_meas) {
         const auto&          ncell_cfg = cfg.cells.at(nci);
