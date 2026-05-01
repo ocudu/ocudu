@@ -43,7 +43,7 @@ public:
 
   bool is_msg4_rxed(rnti_t rnti) const;
 
-  void msg4_rxed(rnti_t rnti, bool msg4_rx_flag_);
+  bool msg4_rxed(rnti_t rnti, bool msg4_rx_flag_);
 
   void add_ue(rnti_t rnti, du_ue_index_t ue_idx_, const sched_ue_config_request& sched_ue_cfg_req_);
 

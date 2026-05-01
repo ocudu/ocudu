@@ -3,8 +3,8 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/du/du_high/test_mode/du_test_mode_controller.h"
-#include "lib/du/du_high/test_mode/mac_test_mode_adapter.h"
 #include "tests/unittests/mac/mac_test_helpers.h"
+#include "ocudu/f1ap/gateways/f1c_connection_client.h"
 #include "ocudu/mac/mac_cell_timing_context.h"
 #include "ocudu/mac/mac_positioning_measurement_handler.h"
 #include "ocudu/ran/csi_report/csi_report_config_helpers.h"
@@ -19,6 +19,14 @@
 
 using namespace ocudu;
 using namespace odu;
+
+/// Null F1-C client stub for unit tests (no real CU connection needed).
+struct null_f1c_client : public f1c_connection_client {
+  std::unique_ptr<f1ap_message_notifier> handle_du_connection_request(std::unique_ptr<f1ap_message_notifier>) override
+  {
+    return nullptr;
+  }
+};
 
 struct mac_event_interceptor {
   std::optional<mac_ul_sched_result> next_ul_sched_res;
@@ -164,20 +172,20 @@ class base_mac_test_mode_test
 {
 protected:
   base_mac_test_mode_test(const test_params& params_) :
-    params(params_), ctrl{params.test_ue_cfg, timers, exec, 1}, adapter{params.test_ue_cfg, phy, 1, ctrl}
+    params(params_), ctrl{params.test_ue_cfg, f1c_stub, phy, timers, exec, 1}
   {
-    adapter.connect(std::make_unique<mac_dummy>(mac_events, adapter.get_phy_notifier()));
+    mac_adapted = ctrl.decorate(std::make_unique<mac_dummy>(mac_events, ctrl.get_phy_notifier()));
 
     // create cell
     cell_config_builder_params builder{};
     builder.dl_carrier.nof_ant = params.nof_ports;
-    adapter.add_cell(test_helpers::make_default_mac_cell_config(builder));
+    mac_adapted->get_cell_manager().add_cell(test_helpers::make_default_mac_cell_config(builder));
 
     // create UE
     mac_ue_create_request req = test_helpers::make_default_ue_creation_request(builder);
     req.sched_cfg.cells.value()[0] =
         config_helpers::make_default_ue_cell_config(config_helpers::make_default_ran_cell_config(builder));
-    adapter.get_ue_configurator().handle_ue_create_request(req);
+    mac_adapted->get_ue_configurator().handle_ue_create_request(req);
     ocudu_assert(mac_events.last_ue_created.has_value(), "UE creation request was not forwarded to MAC");
 
     csi_cfg = create_csi_report_configuration(
@@ -186,20 +194,22 @@ protected:
 
   void run_slot()
   {
-    adapter.get_slot_handler(to_du_cell_index(0)).handle_slot_indication({next_slot, std::chrono::system_clock::now()});
+    mac_adapted->get_slot_handler(to_du_cell_index(0))
+        .handle_slot_indication({next_slot, std::chrono::system_clock::now()});
 
     next_slot++;
 
     mac_events.next_ul_sched_res.reset();
   }
 
-  test_params             params;
-  mac_event_interceptor   mac_events;
-  phy_dummy               phy;
-  inline_task_executor    exec;
-  timer_manager           timers;
-  du_test_mode_controller ctrl;
-  mac_test_mode_adapter   adapter;
+  test_params                    params;
+  mac_event_interceptor          mac_events;
+  phy_dummy                      phy;
+  null_f1c_client                f1c_stub;
+  inline_task_executor           exec;
+  timer_manager                  timers;
+  du_test_mode_controller        ctrl;
+  std::unique_ptr<mac_interface> mac_adapted;
 
   csi_report_configuration csi_cfg;
 
@@ -251,7 +261,7 @@ TEST_F(mac_test_mode_test, when_test_mode_ue_has_pucch_grants_then_uci_indicatio
     f1_uci.harq_info.emplace();
     f1_uci.harq_info->harqs.resize(1);
     f1_uci.harq_info->harqs[0] = uci_pucch_f0_or_f1_harq_values::nack;
-    this->adapter.get_control_info_handler(to_du_cell_index(0)).handle_uci(uci);
+    this->mac_adapted->get_control_info_handler(to_du_cell_index(0)).handle_uci(uci);
 
     ASSERT_TRUE(mac_events.last_uci.has_value());
     ASSERT_EQ(mac_events.last_uci->sl_rx, sl_rx.without_hyper_sfn());
@@ -290,7 +300,7 @@ TEST_F(mac_test_mode_test, when_test_mode_ue_has_pusch_grants_then_crc_indicatio
   pdu.rnti           = this->params.test_ue_cfg.rnti;
   pdu.harq_id        = ulgrant.pusch_cfg.harq_id;
   pdu.tb_crc_success = false;
-  this->adapter.get_control_info_handler(to_du_cell_index(0)).handle_crc(crc);
+  this->mac_adapted->get_control_info_handler(to_du_cell_index(0)).handle_crc(crc);
 
   ASSERT_TRUE(mac_events.last_crc.has_value());
   ASSERT_EQ(mac_events.last_crc->sl_rx, sl_rx);
@@ -312,7 +322,7 @@ TEST_P(mac_test_mode_auto_uci_test, when_uci_is_only_for_test_mode_ue_then_it_is
   mac_uci_indication_message uci_ind;
   uci_ind.sl_rx = {0, 0};
   uci_ind.ucis.push_back(make_random_uci_with_csi());
-  adapter.get_control_info_handler(to_du_cell_index(0)).handle_uci(uci_ind);
+  mac_adapted->get_control_info_handler(to_du_cell_index(0)).handle_uci(uci_ind);
 
   ASSERT_FALSE(mac_events.last_uci.has_value());
 }
@@ -324,7 +334,7 @@ TEST_P(mac_test_mode_auto_uci_test, when_uci_is_also_for_other_ues_then_test_mod
   uci_ind.ucis.push_back(make_random_uci_with_csi());
   uci_ind.ucis.push_back(make_random_uci_with_csi());
   uci_ind.ucis.back().rnti = to_rnti(0x4602);
-  adapter.get_control_info_handler(to_du_cell_index(0)).handle_uci(uci_ind);
+  mac_adapted->get_control_info_handler(to_du_cell_index(0)).handle_uci(uci_ind);
 
   ASSERT_TRUE(mac_events.last_uci.has_value());
   ASSERT_EQ(mac_events.last_uci->ucis.size(), 1);

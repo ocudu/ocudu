@@ -4,130 +4,11 @@
 
 #include "du_test_mode_controller.h"
 #include "ocudu/adt/byte_buffer.h"
-#include "ocudu/asn1/f1ap/common.h"
-#include "ocudu/asn1/f1ap/f1ap.h"
-#include "ocudu/asn1/f1ap/f1ap_pdu_contents_ue.h"
-#include "ocudu/asn1/rrc_nr/ue_cap.h"
-#include "ocudu/f1ap/du/f1ap_du.h"
-#include "ocudu/f1ap/f1ap_message.h"
-#include "ocudu/mac/mac_pdu_handler.h"
-#include "ocudu/ran/logical_channel/lcid.h"
-#include "ocudu/scheduler/result/sched_result.h"
 #include "ocudu/support/executors/task_executor.h"
 #include <atomic>
 
 using namespace ocudu;
 using namespace odu;
-
-// ---- f1c_wrapper_impl ----
-
-/// Intercepts outgoing F1AP PDUs (DU → CU) to capture gnb_du_ue_f1ap_id for test mode UEs.
-class du_test_mode_controller::f1c_wrapper_impl : public f1c_connection_client
-{
-public:
-  explicit f1c_wrapper_impl(du_test_mode_controller& parent_) : parent(parent_) {}
-
-  void set_upstream(f1c_connection_client& upstream_) { upstream = &upstream_; }
-
-  std::unique_ptr<f1ap_message_notifier>
-  handle_du_connection_request(std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier) override
-  {
-    ocudu_assert(upstream != nullptr, "f1c upstream not set");
-    auto upstream_tx = upstream->handle_du_connection_request(std::move(du_rx_pdu_notifier));
-    if (upstream_tx == nullptr) {
-      return nullptr;
-    }
-    return std::make_unique<tx_interceptor>(parent, std::move(upstream_tx));
-  }
-
-private:
-  class tx_interceptor : public f1ap_message_notifier
-  {
-  public:
-    tx_interceptor(du_test_mode_controller& parent_, std::unique_ptr<f1ap_message_notifier> upstream_tx_) :
-      parent(parent_), upstream_tx(std::move(upstream_tx_))
-    {
-    }
-
-    void on_new_message(const f1ap_message& msg) override
-    {
-      using namespace asn1::f1ap;
-
-      if (msg.pdu.type().value == f1ap_pdu_c::types_opts::init_msg and
-          msg.pdu.init_msg().value.type().value ==
-              f1ap_elem_procs_o::init_msg_c::types_opts::init_ul_rrc_msg_transfer) {
-        const auto& ie   = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
-        rnti_t      rnti = to_rnti(ie->c_rnti);
-
-        if (ie->du_to_cu_rrc_container_present) {
-          for (unsigned c = 0; c < parent.cells.size(); ++c) {
-            if (parent.is_test_ue_in_cell(static_cast<du_cell_index_t>(c), rnti)) {
-              parent.on_ue_f1ap_id_captured(rnti, int_to_gnb_du_ue_f1ap_id(ie->gnb_du_ue_f1ap_id));
-              break;
-            }
-          }
-        }
-      }
-
-      upstream_tx->on_new_message(msg);
-    }
-
-  private:
-    du_test_mode_controller&               parent;
-    std::unique_ptr<f1ap_message_notifier> upstream_tx;
-  };
-
-  du_test_mode_controller& parent;
-  f1c_connection_client*   upstream = nullptr;
-};
-
-// ---- cell_notifier_impl ----
-
-/// Wraps a mac_cell_result_notifier to intercept Msg4 events and slot timing for the cycling controller.
-class du_test_mode_controller::cell_notifier_impl : public mac_cell_result_notifier
-{
-public:
-  cell_notifier_impl(du_test_mode_controller&  parent_,
-                     du_cell_index_t           cell_index_,
-                     mac_cell_result_notifier& real_phy_) :
-    parent(parent_), cell_index(cell_index_), real_phy(real_phy_)
-  {
-  }
-
-  void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override
-  {
-    // Searches ConRes CEs in the scheduler result.
-    for (const auto& grant : dl_res.dl_res->ue_grants) {
-      // Checks if the first subPDU is ConRes CE. If it is, signal UE connection.
-      if (not grant.tb_list.empty() and grant.tb_list[0].lc_chs_to_sched[0].lcid == lcid_dl_sch_t::UE_CON_RES_ID) {
-        const rnti_t crnti = grant.pdsch_cfg.rnti;
-        ocudu_sanity_check(parent.is_test_ue_in_cell(cell_index, crnti), "Unexpected cell for ConRes CE");
-        parent.handle_conres_scheduled(cell_index, crnti);
-      }
-    }
-
-    // Forward results to the lower layers.
-    real_phy.on_new_downlink_scheduler_results(dl_res);
-  }
-
-  void on_new_downlink_data(const mac_dl_data_result& dl_data) override { real_phy.on_new_downlink_data(dl_data); }
-
-  void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) override
-  {
-    real_phy.on_new_uplink_scheduler_results(ul_res);
-  }
-
-  void on_cell_results_completion(slot_point slot) override
-  {
-    real_phy.on_cell_results_completion(slot);
-    parent.handle_slot_completed(cell_index, slot);
-  }
-
-private:
-  du_test_mode_controller&  parent;
-  du_cell_index_t           cell_index;
-  mac_cell_result_notifier& real_phy;
-};
 
 // ---- cell_handler ----
 
@@ -157,8 +38,8 @@ public:
 
   void start() { start_next_ue_creation_cycle(); }
 
-  /// Handles the event of a ConRes CE scheduled.
-  void handle_conres_scheduled(rnti_t rnti, bool success)
+  /// Handles the event of a ConRes completion.
+  void handle_conres_completed(rnti_t rnti, bool success)
   {
     if (cycle != cell_cycle_state::creating) {
       parent.logger.warning("TEST_MODE cell={} tc-rnti={}: Unexpected ConRes CE detected", cell_index, rnti);
@@ -220,7 +101,11 @@ public:
 
   void on_ue_removed()
   {
-    if (cycle == cell_cycle_state::releasing and nof_ues_pending_remove > 0) {
+    // Note: The UE can be removed during cell_cycle_state::creating (due to rrcReject). In that case, do nothing.
+    if (cycle != cell_cycle_state::releasing) {
+      return;
+    }
+    if (nof_ues_pending_remove > 0) {
       --nof_ues_pending_remove;
       if (nof_ues_pending_remove == 0) {
         start_guard_period();
@@ -250,7 +135,7 @@ private:
       if (it != ues.end()) {
         // A UE that failed ConRes was detected.
         const rnti_t rnti = get_ue_rnti(std::distance(ues.begin(), it));
-        handle_conres_scheduled(rnti, false);
+        handle_conres_completed(rnti, false);
       }
 
       return;
@@ -264,8 +149,7 @@ private:
     ues[get_ue_offset(test_ue_rnti)].ccch_slot = slot;
 
     // Dispatch UL-CCCH to the DU-high.
-    parent.pdu_handler->handle_rx_data_indication(
-        mac_rx_data_indication{slot, cell_index, {mac_rx_pdu{test_ue_rnti, 0, ulcch_buf.copy()}}});
+    parent.mac_ctrl.inject_ul_ccch_msg(slot, cell_index, test_ue_rnti, ulcch_buf.copy());
   }
 
   /// Called when the attach-detach timer triggers.
@@ -287,13 +171,6 @@ private:
   {
     parent.logger.info("TEST_MODE cell={}: All UE(s) released. Entering guard period.", cell_index);
     cycle = cell_cycle_state::guard;
-
-    parent.ue_id_table.erase(
-        std::remove_if(parent.ue_id_table.begin(),
-                       parent.ue_id_table.end(),
-                       [&](const ue_entry& e) { return parent.is_test_ue_in_cell(cell_index, e.rnti); }),
-        parent.ue_id_table.end());
-
     guard_timer.run();
   }
 
@@ -307,7 +184,7 @@ private:
     unsigned nof_released = 0;
     for (unsigned u = 0; u < parent.cfg.nof_ues; ++u) {
       const rnti_t rnti = get_ue_rnti(u);
-      if (parent.release_ue(rnti)) {
+      if (parent.f1c_adapter.try_release_ue(rnti)) {
         ++nof_released;
       }
     }
@@ -365,16 +242,52 @@ private:
   std::atomic<bool> ue_creation_enabled{true};
 };
 
+class du_test_mode_controller::mac_event_notifier final : public mac_test_mode_event_notifier
+{
+public:
+  mac_event_notifier(du_test_mode_controller& parent_) : parent(parent_) {}
+
+  void on_con_res_completed(du_cell_index_t cell_index, rnti_t rnti) override
+  {
+    if (not parent.ctrl_exec.defer(
+            [this, cell_index, rnti]() { parent.cells[cell_index]->handle_conres_completed(rnti, true); })) {
+      parent.logger.warning("TEST_MODE: Failed to dispatch Msg4 notification for rnti={}", rnti);
+    }
+  }
+
+  void on_slot_completed(du_cell_index_t cell_index, slot_point sl_tx) override
+  {
+    parent.cells[cell_index]->handle_slot_completed(sl_tx);
+  }
+
+private:
+  du_test_mode_controller& parent;
+};
+
+class du_test_mode_controller::f1c_event_notifier final : public f1c_test_mode_event_notifier
+{
+public:
+  f1c_event_notifier(du_test_mode_controller& parent_) : parent(parent_) {}
+
+  void on_ue_removed(rnti_t rnti) override { parent.handle_ue_removed(rnti); }
+
+private:
+  du_test_mode_controller& parent;
+};
+
 // ---- du_test_mode_controller ----
 
 du_test_mode_controller::du_test_mode_controller(const du_test_mode_config::test_mode_ue_config& cfg_,
+                                                 f1c_connection_client&                          f1c_client_,
+                                                 mac_result_notifier&                            phy_notifier_,
                                                  timer_manager&                                  timers_,
                                                  task_executor&                                  ctrl_exec_,
                                                  unsigned                                        nof_cells_) :
   cfg(cfg_),
   ctrl_exec(ctrl_exec_),
   logger(ocudulog::fetch_basic_logger("DU")),
-  f1c_wrapper(std::make_unique<f1c_wrapper_impl>(*this))
+  f1c_adapter(f1c_client_, std::make_unique<f1c_event_notifier>(*this), logger),
+  mac_ctrl(cfg_, phy_notifier_, std::make_unique<mac_event_notifier>(*this), nof_cells_)
 {
   cells.reserve(nof_cells_);
   for (unsigned i = 0; i != nof_cells_; ++i) {
@@ -384,56 +297,16 @@ du_test_mode_controller::du_test_mode_controller(const du_test_mode_config::test
 
 du_test_mode_controller::~du_test_mode_controller() = default;
 
-void du_test_mode_controller::set_f1c_upstream(f1c_connection_client& upstream)
+std::unique_ptr<mac_interface> du_test_mode_controller::decorate(std::unique_ptr<mac_interface> mac_ptr)
 {
-  f1c_wrapper->set_upstream(upstream);
-}
-
-f1c_connection_client& du_test_mode_controller::get_f1c_wrapper()
-{
-  return *f1c_wrapper;
-}
-
-mac_cell_result_notifier& du_test_mode_controller::add_cell_notifier(du_cell_index_t           cell_index,
-                                                                     mac_cell_result_notifier& real_phy_notifier)
-{
-  if (cell_notifiers.size() <= static_cast<unsigned>(cell_index)) {
-    cell_notifiers.resize(static_cast<unsigned>(cell_index) + 1);
-  }
-  cell_notifiers[cell_index] = std::make_unique<cell_notifier_impl>(*this, cell_index, real_phy_notifier);
-  return *cell_notifiers[cell_index];
-}
-
-void du_test_mode_controller::connect(mac_pdu_handler& pdu_handler_, f1ap_du& f1ap_)
-{
-  pdu_handler  = &pdu_handler_;
-  f1ap_handler = &f1ap_;
+  auto wrapper = mac_ctrl.decorate(std::move(mac_ptr));
   for (auto& cell : cells) {
     cell->start();
   }
+  return wrapper;
 }
 
-void du_test_mode_controller::handle_conres_scheduled(du_cell_index_t cell_index, rnti_t rnti)
-{
-  if (not ctrl_exec.defer([this, cell_index, rnti]() { cells[cell_index]->handle_conres_scheduled(rnti, true); })) {
-    logger.warning("TEST_MODE: Failed to dispatch Msg4 notification for rnti={}", rnti);
-  }
-}
-
-void du_test_mode_controller::handle_slot_completed(du_cell_index_t cell_index, slot_point slot)
-{
-  cells[cell_index]->handle_slot_completed(slot);
-}
-
-void du_test_mode_controller::on_ue_f1ap_id_captured(rnti_t rnti, gnb_du_ue_f1ap_id_t gnb_du_ue_id)
-{
-  if (not ctrl_exec.defer(
-          [this, rnti, gnb_du_ue_id]() { ue_id_table.push_back({.rnti = rnti, .gnb_du_ue_id = gnb_du_ue_id}); })) {
-    logger.warning("TEST_MODE: Failed to dispatch F1AP ID capture for rnti={}", rnti);
-  }
-}
-
-void du_test_mode_controller::on_ue_removed(rnti_t rnti)
+void du_test_mode_controller::handle_ue_removed(rnti_t rnti)
 {
   if (not cfg.attach_detach_duration.has_value()) {
     // Attach-detach mode is not enabled. Early return.
@@ -445,30 +318,4 @@ void du_test_mode_controller::on_ue_removed(rnti_t rnti)
       return;
     }
   }
-}
-
-bool du_test_mode_controller::release_ue(rnti_t rnti)
-{
-  auto it = std::find_if(ue_id_table.begin(), ue_id_table.end(), [rnti](const ue_entry& e) { return e.rnti == rnti; });
-  if (it == ue_id_table.end()) {
-    return false;
-  }
-
-  auto gnb_cu_ue_id = f1ap_handler->get_gnb_cu_ue_f1ap_id(it->gnb_du_ue_id);
-  if (not gnb_cu_ue_id.has_value()) {
-    logger.warning("TEST_MODE: Cannot release rnti={}: gnb_cu_ue_f1ap_id not found", rnti);
-    return false;
-  }
-
-  // Prepare F1AP UE Context Release Command.
-  f1ap_message rel_cmd;
-  rel_cmd.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_RELEASE);
-  auto& cmd                            = rel_cmd.pdu.init_msg().value.ue_context_release_cmd();
-  cmd->gnb_du_ue_f1ap_id               = gnb_du_ue_f1ap_id_to_uint(it->gnb_du_ue_id);
-  cmd->gnb_cu_ue_f1ap_id               = gnb_cu_ue_f1ap_id_to_uint(*gnb_cu_ue_id);
-  cmd->cause.set_radio_network().value = asn1::f1ap::cause_radio_network_opts::options::normal_release;
-
-  logger.debug("TEST_MODE rnti={}: Injecting UE Context Release Command", rnti);
-  f1ap_handler->handle_message(rel_cmd);
-  return true;
 }

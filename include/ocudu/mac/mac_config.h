@@ -9,7 +9,6 @@
 #include "ocudu/mac/mac_pdu_handler.h"
 #include "ocudu/pcap/mac_pcap.h"
 #include "ocudu/scheduler/config/scheduler_expert_config.h"
-#include "ocudu/scheduler/scheduler_metrics.h"
 
 namespace ocudu {
 

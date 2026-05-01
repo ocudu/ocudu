@@ -62,12 +62,16 @@ bool mac_test_mode_ue_repository::is_msg4_rxed(rnti_t rnti) const
   return false;
 }
 
-void mac_test_mode_ue_repository::msg4_rxed(rnti_t rnti, bool msg4_rx_flag_)
+bool mac_test_mode_ue_repository::msg4_rxed(rnti_t rnti, bool msg4_rx_flag_)
 {
   unsigned cell_idx = get_cell_index(rnti);
   if (cells[cell_idx]->rnti_to_ue_info_lookup.contains(rnti)) {
-    cells[cell_idx]->rnti_to_ue_info_lookup.at(rnti).msg4_rx_flag = msg4_rx_flag_;
+    auto prev = std::exchange(cells[cell_idx]->rnti_to_ue_info_lookup.at(rnti).msg4_rx_flag, msg4_rx_flag_);
+    if (msg4_rx_flag_ and not prev) {
+      return true;
+    }
   }
+  return false;
 }
 
 void mac_test_mode_ue_repository::add_ue(rnti_t                         rnti,

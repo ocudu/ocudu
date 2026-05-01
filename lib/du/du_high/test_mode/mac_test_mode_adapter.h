@@ -12,10 +12,22 @@
 #include "ocudu/mac/mac_cell_result.h"
 #include "ocudu/ocudulog/ocudulog.h"
 
-namespace ocudu {
-namespace odu {
+namespace ocudu::odu {
 
-class du_test_mode_controller;
+/// Notifier used by MAC test mode adapter to notify the test mode controller about MAC events.
+class mac_test_mode_event_notifier
+{
+public:
+  virtual ~mac_test_mode_event_notifier() = default;
+
+  /// Called from MAC when UE completes contention resolution.
+  /// \note Called from cell thread (dispatches to ctrl_exec internally):
+  virtual void on_con_res_completed(du_cell_index_t cell_index, rnti_t rnti) = 0;
+
+  /// Called from MAC on slot completion.
+  /// \note Called from cell thread (dispatches to ctrl_exec internally):
+  virtual void on_slot_completed(du_cell_index_t cell_index, slot_point sl_tx) = 0;
+};
 
 class phy_test_mode_adapter : public mac_result_notifier
 {
@@ -58,6 +70,7 @@ public:
                              mac_cell_slot_handler&                               slot_handler_,
                              mac_cell_result_notifier&                            result_notifier_,
                              std::function<void(rnti_t)>                          dl_bs_notifier_,
+                             mac_test_mode_event_notifier&                        ev_notifier_,
                              mac_test_mode_event_handler&                         event_handler_,
                              mac_test_mode_ue_repository&                         ue_info_mgr_);
 
@@ -93,6 +106,7 @@ private:
   mac_cell_slot_handler&                          slot_handler;
   mac_cell_result_notifier&                       result_notifier;
   std::function<void(rnti_t)>                     dl_bs_notifier;
+  mac_test_mode_event_notifier&                   ev_notifier;
   ocudulog::basic_logger&                         logger;
 
   /// Ring buffer of slot decision history.
@@ -104,82 +118,44 @@ private:
   slot_point last_slot_ind;
 };
 
-class mac_test_mode_adapter final : public mac_interface,
-                                    public mac_ue_control_information_handler,
-                                    public mac_ue_configurator,
-                                    public mac_cell_manager
+/// MAC controller in test mode.
+class mac_test_mode_adapter
 {
 public:
   explicit mac_test_mode_adapter(const du_test_mode_config::test_mode_ue_config& test_ue_cfg,
                                  mac_result_notifier&                            phy_notifier_,
-                                 unsigned                                        nof_cells,
-                                 du_test_mode_controller&                        ctrl_);
-  ~mac_test_mode_adapter() override;
+                                 std::unique_ptr<mac_test_mode_event_notifier>   ev_notifier_,
+                                 unsigned                                        nof_cells);
+  ~mac_test_mode_adapter();
 
-  void connect(std::unique_ptr<mac_interface> mac_ptr);
+  /// Gets notifier that will be intercepting the MAC results.
+  mac_result_notifier& get_phy_notifier() const { return *phy_notifier; }
 
-  // mac_cell_manager
-  mac_cell_controller& add_cell(const mac_cell_creation_request& cell_cfg) override;
-  void                 remove_cell(du_cell_index_t cell_index) override;
-  mac_cell_controller& get_cell_controller(du_cell_index_t cell_index) override;
+  /// Creates a wrapper of the real MAC that adapts its behavior in test mode.
+  std::unique_ptr<mac_interface> decorate(std::unique_ptr<mac_interface> mac_ptr);
 
-  mac_subframe_time_mapper& get_subframe_time_mapper() override;
-
-  mac_cell_slot_handler& get_slot_handler(du_cell_index_t cell_index) override
-  {
-    return *cell_info_handler[cell_index];
-  }
-
-  mac_cell_manager& get_cell_manager() override { return *this; }
-
-  mac_positioning_measurement_handler& get_positioning_handler() override
-  {
-    return mac_adapted->get_positioning_handler();
-  }
-
-  mac_ue_control_information_handler& get_ue_control_info_handler() override { return *this; }
-
-  mac_pdu_handler& get_pdu_handler() override { return mac_adapted->get_pdu_handler(); }
-
-  mac_paging_information_handler& get_cell_paging_info_handler() override
-  {
-    return mac_adapted->get_cell_paging_info_handler();
-  }
-
-  mac_ue_configurator& get_ue_configurator() override { return *this; }
-
-  mac_cell_rach_handler& get_rach_handler(du_cell_index_t cell_index) override
-  {
-    struct dummy_mac_cell_rach_handler : public mac_cell_rach_handler {
-      void handle_rach_indication(const mac_rach_indication& rach_ind) override
-      {
-        // do nothing
-      }
-    };
-    static dummy_mac_cell_rach_handler rach_ignorer;
-    return rach_ignorer;
-  }
-
-  mac_cell_control_information_handler& get_control_info_handler(du_cell_index_t cell_index) override;
-
-  mac_result_notifier& get_phy_notifier() { return *phy_notifier; }
+  /// Inject UL-CCCH messages, forcing the creation of a UE context in the DU-High.
+  void inject_ul_ccch_msg(slot_point sl_rx, du_cell_index_t cell_index, rnti_t tc_rnti, byte_buffer ul_ccch_pdu);
 
 private:
-  void handle_dl_buffer_state_update(const mac_dl_buffer_state_indication_message& dl_bs) override;
+  class mac_wrapper;
 
-  // mac_ue_configurator interface.
-  async_task<mac_ue_create_response> handle_ue_create_request(const mac_ue_create_request& cfg) override;
+  // adapted MAC methods.
+  mac_cell_controller&               add_cell(const mac_cell_creation_request& cell_cfg);
+  void                               remove_cell(du_cell_index_t cell_index);
+  async_task<mac_ue_create_response> handle_ue_create_request(const mac_ue_create_request& cfg);
   async_task<mac_ue_reconfiguration_response>
-  handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request& cfg) override;
-  async_task<mac_ue_delete_response> handle_ue_delete_request(const mac_ue_delete_request& cfg) override;
-  bool                               handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override;
-  void                               handle_ue_config_applied(du_ue_index_t ue_idx) override;
+                                     handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request& cfg);
+  async_task<mac_ue_delete_response> handle_ue_delete_request(const mac_ue_delete_request& cfg);
+  void                               handle_dl_buffer_state_update(const mac_dl_buffer_state_indication_message& dl_bs);
 
   std::vector<mac_logical_channel_config>
   adapt_bearers(const std::vector<mac_logical_channel_config>& orig_bearers) const;
 
-  odu::du_test_mode_config::test_mode_ue_config test_ue;
-  std::unique_ptr<mac_interface>                mac_adapted;
+  du_test_mode_config::test_mode_ue_config      test_ue;
+  std::unique_ptr<mac_test_mode_event_notifier> ev_notifier;
+
+  std::unique_ptr<mac_interface> mac_adapted;
 
   mac_test_mode_event_handler event_handler;
 
@@ -187,10 +163,7 @@ private:
 
   std::unique_ptr<phy_test_mode_adapter> phy_notifier;
 
-  du_test_mode_controller& ctrl;
-
   std::vector<std::unique_ptr<mac_test_mode_cell_adapter>> cell_info_handler;
 };
 
-} // namespace odu
-} // namespace ocudu
+} // namespace ocudu::odu
