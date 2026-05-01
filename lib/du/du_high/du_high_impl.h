@@ -61,7 +61,7 @@ private:
 
   std::unique_ptr<scheduler_metrics_notifier> hub_metrics;
 
-  // Attach/detach cycling controller (only when attach_detach_duration is configured).
+  // Test mode controller: intercepts F1-C and MAC to run without a real CU (only when test mode is configured).
   std::unique_ptr<du_test_mode_controller> test_mode_ctrl;
 
   // DU-high Layers.
