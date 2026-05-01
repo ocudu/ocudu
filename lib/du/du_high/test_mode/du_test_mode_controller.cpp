@@ -7,6 +7,7 @@
 #include "ocudu/asn1/f1ap/common.h"
 #include "ocudu/asn1/f1ap/f1ap.h"
 #include "ocudu/asn1/f1ap/f1ap_pdu_contents_ue.h"
+#include "ocudu/asn1/rrc_nr/ue_cap.h"
 #include "ocudu/f1ap/du/f1ap_du.h"
 #include "ocudu/f1ap/f1ap_message.h"
 #include "ocudu/mac/mac_pdu_handler.h"
@@ -17,8 +18,6 @@
 
 using namespace ocudu;
 using namespace odu;
-
-static constexpr std::chrono::milliseconds GUARD_PERIOD_MSEC{1000};
 
 // ---- f1c_wrapper_impl ----
 
@@ -150,16 +149,16 @@ public:
       attach_detach_timer.set(*parent.cfg.attach_detach_duration,
                               [this](timer_id_t) { this->handle_attach_detach_timer(); });
       guard_timer = timers_.create_unique_timer(ctrl_exec_);
-      guard_timer.set(GUARD_PERIOD_MSEC, [this](timer_id_t) { this->handle_guard_timer(); });
+      guard_timer.set(parent.cfg.attach_detach_guard_duration, [this](timer_id_t) { this->handle_guard_timer(); });
     }
 
-    // Start creating UEs.
     free_list_rnti.reserve(ues.size());
-    start_next_ue_creation_cycle();
   }
 
+  void start() { start_next_ue_creation_cycle(); }
+
   /// Handles the event of a ConRes CE scheduled.
-  void handle_conres_scheduled(rnti_t rnti)
+  void handle_conres_scheduled(rnti_t rnti, bool success)
   {
     if (cycle != cell_cycle_state::creating) {
       parent.logger.warning("TEST_MODE cell={} tc-rnti={}: Unexpected ConRes CE detected", cell_index, rnti);
@@ -167,13 +166,17 @@ public:
     }
 
     const unsigned ue_offset = get_ue_offset(rnti);
-    if (ue_offset >= parent.cfg.nof_ues or ues[ue_offset].conres_sched) {
-      parent.logger.warning("TEST_MODE cell={} tc-rnti={}: Unexpected cell for ConRes CE", cell_index, rnti);
+    if (ue_offset >= parent.cfg.nof_ues or ues[ue_offset].conres_complete) {
+      parent.logger.warning("TEST_MODE cell={} tc-rnti={}: Unexpected cell or UE for ConRes CE", cell_index, rnti);
       return;
     }
 
-    // UE fully established.
-    ues[ue_offset].conres_sched = true;
+    if (not success) {
+      parent.logger.info("TEST_MODE cell={} rnti={}: UE ConRes CE was not scheduled on time", cell_index, rnti);
+    }
+
+    // UE fully established or failed ConRes.
+    ues[ue_offset].conres_complete = true;
     ++nof_ues_estab;
 
     if (nof_ues_estab == parent.cfg.nof_ues) {
@@ -228,7 +231,7 @@ public:
 private:
   struct ue_cell_context {
     slot_point ccch_slot;
-    bool       conres_sched = false;
+    bool       conres_complete = false;
   };
 
   void try_create_ue(slot_point slot)
@@ -239,37 +242,30 @@ private:
     if (free_list_rnti.empty()) {
       // No more UEs to create.
 
-      // Check, however, if there is any UE that already passed its ConRes CE window.
+      // Check, however, if there is any UE that already passed its ConRes window.
       auto it = std::find_if(ues.begin(), ues.end(), [slot](const ue_cell_context& u) {
-        const unsigned max_conres_win_slots = 64 * get_nof_slots_per_subframe(slot.scs());
-        return u.ccch_slot.valid() and not u.conres_sched and u.ccch_slot + max_conres_win_slots < slot;
+        const unsigned conres_win_guard_slots = 128 * get_nof_slots_per_subframe(slot.scs());
+        return u.ccch_slot.valid() and not u.conres_complete and u.ccch_slot + conres_win_guard_slots < slot;
       });
-      if (it == ues.end()) {
-        // All UEs have connected.
-        parent.logger.error("TEST_MODE cell={}: There are no more UEs to establish but the state has not been updated",
-                            cell_index);
-        return;
+      if (it != ues.end()) {
+        // A UE that failed ConRes was detected.
+        const rnti_t rnti = get_ue_rnti(std::distance(ues.begin(), it));
+        handle_conres_scheduled(rnti, false);
       }
 
-      // A UE that failed ConRes was detected. Mark it as empty again.
-      const rnti_t rnti = get_ue_rnti(std::distance(ues.begin(), it));
-      *it               = {};
-      free_list_rnti.push_back(rnti);
+      return;
     }
 
     // Pop next RNTI to create.
     const rnti_t test_ue_rnti = free_list_rnti.back();
     free_list_rnti.pop_back();
 
+    // Record the injection slot for the ConRes timeout check.
+    ues[get_ue_offset(test_ue_rnti)].ccch_slot = slot;
+
     // Dispatch UL-CCCH to the DU-high.
     parent.pdu_handler->handle_rx_data_indication(
         mac_rx_data_indication{slot, cell_index, {mac_rx_pdu{test_ue_rnti, 0, ulcch_buf.copy()}}});
-
-    parent.logger.info("TEST_MODE cell={} rnti={}: Starting UE creation. There still {}/{} left to be created.",
-                       cell_index,
-                       test_ue_rnti,
-                       free_list_rnti.size(),
-                       parent.cfg.nof_ues);
   }
 
   /// Called when the attach-detach timer triggers.
@@ -412,11 +408,14 @@ void du_test_mode_controller::connect(mac_pdu_handler& pdu_handler_, f1ap_du& f1
 {
   pdu_handler  = &pdu_handler_;
   f1ap_handler = &f1ap_;
+  for (auto& cell : cells) {
+    cell->start();
+  }
 }
 
 void du_test_mode_controller::handle_conres_scheduled(du_cell_index_t cell_index, rnti_t rnti)
 {
-  if (not ctrl_exec.defer([this, cell_index, rnti]() { cells[cell_index]->handle_conres_scheduled(rnti); })) {
+  if (not ctrl_exec.defer([this, cell_index, rnti]() { cells[cell_index]->handle_conres_scheduled(rnti, true); })) {
     logger.warning("TEST_MODE: Failed to dispatch Msg4 notification for rnti={}", rnti);
   }
 }
@@ -469,7 +468,7 @@ bool du_test_mode_controller::release_ue(rnti_t rnti)
   cmd->gnb_cu_ue_f1ap_id               = gnb_cu_ue_f1ap_id_to_uint(*gnb_cu_ue_id);
   cmd->cause.set_radio_network().value = asn1::f1ap::cause_radio_network_opts::options::normal_release;
 
-  logger.info("TEST_MODE rnti={}: Injecting UE Context Release Command", rnti);
+  logger.debug("TEST_MODE rnti={}: Injecting UE Context Release Command", rnti);
   f1ap_handler->handle_message(rel_cmd);
   return true;
 }

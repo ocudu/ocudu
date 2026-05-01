@@ -1230,19 +1230,21 @@ static odu::du_test_mode_config generate_test_mode_config(const du_high_unit_con
   if (test_ue.attach_detach_duration_ms.has_value()) {
     attach_detach_duration = std::chrono::milliseconds{*test_ue.attach_detach_duration_ms};
   }
-  test_cfg.test_ue = odu::du_test_mode_config::test_mode_ue_config{test_ue.rnti,
-                                                                   test_ue.nof_ues,
-                                                                   test_ue.ue_creation_stagger_slots,
-                                                                   test_ue.auto_ack_indication_delay,
-                                                                   attach_detach_duration,
-                                                                   test_ue.pdsch_active,
-                                                                   test_ue.pusch_active,
-                                                                   test_ue.cqi,
-                                                                   test_ue.ri,
-                                                                   test_ue.pmi,
-                                                                   test_ue.i_1_1,
-                                                                   test_ue.i_1_3,
-                                                                   test_ue.i_2};
+  test_cfg.test_ue =
+      odu::du_test_mode_config::test_mode_ue_config{test_ue.rnti,
+                                                    test_ue.nof_ues,
+                                                    test_ue.ue_creation_stagger_slots,
+                                                    test_ue.auto_ack_indication_delay,
+                                                    attach_detach_duration,
+                                                    test_ue.pdsch_active,
+                                                    test_ue.pusch_active,
+                                                    test_ue.cqi,
+                                                    test_ue.ri,
+                                                    test_ue.pmi,
+                                                    test_ue.i_1_1,
+                                                    test_ue.i_1_3,
+                                                    test_ue.i_2,
+                                                    std::chrono::milliseconds{test_ue.attach_detach_guard_duration_ms}};
 
   return test_cfg;
 }

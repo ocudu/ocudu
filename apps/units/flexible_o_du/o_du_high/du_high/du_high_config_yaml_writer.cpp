@@ -787,14 +787,15 @@ static YAML::Node build_du_high_testmode_section(const du_high_unit_test_mode_co
     if (config.test_ue.attach_detach_duration_ms.has_value()) {
       ue_node["attach_detach_duration_ms"] = config.test_ue.attach_detach_duration_ms.value();
     }
-    ue_node["pdsch_active"] = config.test_ue.pdsch_active;
-    ue_node["pusch_active"] = config.test_ue.pusch_active;
-    ue_node["cqi"]          = config.test_ue.cqi;
-    ue_node["ri"]           = config.test_ue.ri;
-    ue_node["pmi"]          = config.test_ue.pmi;
-    ue_node["i_1_1"]        = config.test_ue.i_1_1;
-    ue_node["i_1_3"]        = config.test_ue.i_1_3;
-    ue_node["i_2"]          = config.test_ue.i_2;
+    ue_node["attach_detach_guard_duration_ms"] = config.test_ue.attach_detach_guard_duration_ms;
+    ue_node["pdsch_active"]                    = config.test_ue.pdsch_active;
+    ue_node["pusch_active"]                    = config.test_ue.pusch_active;
+    ue_node["cqi"]                             = config.test_ue.cqi;
+    ue_node["ri"]                              = config.test_ue.ri;
+    ue_node["pmi"]                             = config.test_ue.pmi;
+    ue_node["i_1_1"]                           = config.test_ue.i_1_1;
+    ue_node["i_1_3"]                           = config.test_ue.i_1_3;
+    ue_node["i_2"]                             = config.test_ue.i_2;
 
     node["test_ue"] = ue_node;
   }

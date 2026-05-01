@@ -1137,6 +1137,8 @@ struct du_high_unit_test_mode_ue_config {
   /// \brief Duration in milliseconds of active traffic after all UEs are established before they are released and
   /// recreated. When set, UEs cycle indefinitely through attach, traffic, and detach. Unset disables cycling.
   std::optional<unsigned> attach_detach_duration_ms;
+  /// Guard period duration in milliseconds between a release cycle and the next creation cycle.
+  unsigned attach_detach_guard_duration_ms = 1000;
   /// Whether PDSCH grants are automatically assigned to the test UE.
   bool pdsch_active = true;
   /// Whether PUSCH grants are automatically assigned to the test UE.

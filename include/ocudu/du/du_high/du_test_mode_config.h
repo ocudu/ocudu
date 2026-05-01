@@ -30,6 +30,8 @@ struct du_test_mode_config {
     unsigned                                 i_1_1;
     std::optional<unsigned>                  i_1_3;
     unsigned                                 i_2;
+    /// \brief Guard period duration between a release cycle and the next creation cycle.
+    std::chrono::milliseconds attach_detach_guard_duration{1000};
   };
 
   /// Creation of a phantom UE for test mode operation.
