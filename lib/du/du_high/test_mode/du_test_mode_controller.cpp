@@ -21,6 +21,7 @@ public:
                   task_executor&           ctrl_exec_) :
     parent(parent_),
     cell_index(cell_index_),
+    /// Save a pre-canned UL-CCCH message for RRCSetupRequest.
     ulcch_buf(byte_buffer::create({0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00}).value()),
     ues(parent.cfg.nof_ues)
   {

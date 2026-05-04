@@ -151,6 +151,8 @@ void f1c_du_test_mode_adapter::handle_tx_init(const f1ap_message& msg)
         rel_cmd->srb_id_present                  = true;
         rel_cmd->srb_id                          = 0;
         rel_cmd->rrc_container_present           = true;
+        // Normally the RRC container contains a RRC Release, but in test mode it is not important what it contains
+        // as it is transparent to the DU.
         rel_cmd->rrc_container.from_string("012345");
         logger.warning("TEST_MODE rnti={}: Injected UE Context Release (rrcReject)", rnti);
       }
