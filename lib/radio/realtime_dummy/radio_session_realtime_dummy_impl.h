@@ -5,22 +5,19 @@
 
 #include "ocudu/gateways/baseband/baseband_gateway_receiver.h"
 #include "ocudu/gateways/baseband/baseband_gateway_transmitter.h"
-#include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "ocudu/radio/radio_session.h"
 #include "ocudu/support/executors/task_executor.h"
+#include "ocudu/support/synchronization/stop_event.h"
 
 namespace ocudu {
 
-/// Describes a loopback radio session.
+/// Implements a realtime dummy radio session.
 class radio_session_realtime_dummy_impl : public radio_session,
                                           public radio_management_plane,
                                           public baseband_gateway,
                                           public baseband_gateway_transmitter,
                                           public baseband_gateway_receiver
 {
-  /// Radio session logger.
-  ocudulog::basic_logger& logger;
-
 public:
   radio_session_realtime_dummy_impl(const radio_configuration::radio& config,
                                     task_executor&                    async_task_executor,
@@ -62,7 +59,7 @@ public:
   unsigned get_transmitter_optimal_buffer_size() const override { return 0; }
 
   // See the baseband_gateway interface for documentation.
-  unsigned get_receiver_optimal_buffer_size() const override { return 0; }
+  unsigned get_receiver_optimal_buffer_size() const override;
 
   // See the baseband_gateway interface for documentation.
   baseband_gateway_transmitter& get_transmitter() override { return *this; }
@@ -77,6 +74,9 @@ public:
   void transmit(const baseband_gateway_buffer_reader& data, const baseband_gateway_transmitter_metadata& md) override;
 
 private:
+  /// Radio session logger.
+  ocudulog::basic_logger& logger;
+
   /// The system time corresponding to timestamp 0 in nanoseconds.
   std::chrono::nanoseconds ts0_epoch;
 
@@ -102,15 +102,19 @@ private:
   /// \brief Emulates the transmission processing delay of the radio.
   ///
   /// If is used to simulate underflow events. A real radio requires that the samples to be transmitted are passed to
-  /// the driver some time in advance of the actual transmission time. Given a current RX timestamp, if the radio cannot
-  /// retrieve samples from the buffer at \c get_current_rx_timestamp() + \c tx_processing_delay_samples, an underflow
+  /// the driver some time in advance of the actual transmission time. Given a current RF timestamp, if the radio cannot
+  /// retrieve samples from the buffer at \c get_current_rf_timestamp() + \c tx_processing_delay_samples, an underflow
   /// event is logged.
   uint64_t tx_processing_delay_samples;
 
   /// Sampling rate common to all channels.
   double sampling_rate_hz;
 
+  /// Start request flag. It is used to signal the start of the receive stream.
   std::atomic<bool> start_requested;
+
+  /// Stop control.
+  rt_stop_event_source stop_control;
 
   /// \brief Derives the current RF timestamp, based on the system time and the epoch of timestamp 0.
   ///

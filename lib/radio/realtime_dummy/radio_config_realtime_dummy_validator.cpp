@@ -3,7 +3,6 @@
 
 #include "radio_config_realtime_dummy_validator.h"
 #include "fmt/base.h"
-#include <regex>
 
 using namespace ocudu;
 
@@ -122,13 +121,13 @@ bool radio_config_realtime_dummy_validator::is_configuration_valid(const radio_c
     return false;
   }
 
-  if (config.tx_streams.size() != 1) {
-    fmt::print("Only a single transmit and receive stream is currently supported.\n");
+  if (config.tx_streams.empty()) {
+    fmt::print("At least one transmit and one receive stream must be configured.\n");
     return false;
   }
 
-  if (config.tx_streams.empty()) {
-    fmt::print("At least one transmit and one receive stream must be configured.\n");
+  if (config.tx_streams.size() != 1) {
+    fmt::print("Only a single transmit and receive stream is currently supported.\n");
     return false;
   }
 

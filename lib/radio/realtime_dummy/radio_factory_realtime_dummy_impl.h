@@ -8,7 +8,7 @@
 
 namespace ocudu {
 
-/// Describes a dummy realtime radio factory.
+/// Implements a dummy realtime radio factory.
 class radio_factory_realtime_dummy_impl : public radio_factory
 {
 public:

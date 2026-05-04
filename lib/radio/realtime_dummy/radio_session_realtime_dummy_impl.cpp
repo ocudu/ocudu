@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "radio_session_realtime_dummy_impl.h"
+#include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ocuduvec/zero.h"
 #include <thread>
@@ -13,14 +14,14 @@ radio_session_realtime_dummy_impl::radio_session_realtime_dummy_impl(const radio
                                                                      radio_event_notifier& notification_handler) :
   logger(ocudulog::fetch_basic_logger("RF"))
 {
-  // Set the epoch of TS0.
+  // Set the epoch of timestamp 0.
   ts0_epoch = std::chrono::duration_cast<std::chrono::nanoseconds>(
       std::chrono::high_resolution_clock::now().time_since_epoch());
 
   sampling_rate_hz = config.sampling_rate_Hz;
 
-  // Set the emulated TX and RX buffer sizes to hold 1 ms of baseband signal.
-  max_nof_buffered_rx_samples = static_cast<uint64_t>(sampling_rate_hz / 1000);
+  // Set the emulated TX and RX buffer sizes to hold 10 ms of baseband signal.
+  max_nof_buffered_rx_samples = static_cast<uint64_t>(sampling_rate_hz / 100);
   max_nof_buffered_tx_samples = max_nof_buffered_rx_samples;
 
   next_transmit_timestamp = 0;
@@ -28,7 +29,7 @@ radio_session_realtime_dummy_impl::radio_session_realtime_dummy_impl(const radio
 
   start_requested.store(false);
 
-  // Set the TX processing delay of the radio to 1 microsecond.
+  // Set the TX processing delay of the radio to 10 microseconds.
   tx_processing_delay_samples = static_cast<uint64_t>(sampling_rate_hz / 100000);
 
   report_fatal_error_if_not(tx_processing_delay_samples < max_nof_buffered_tx_samples,
@@ -39,6 +40,12 @@ radio_session_realtime_dummy_impl::radio_session_realtime_dummy_impl(const radio
                       "The emulated RX buffer must hold at least 100 microseconds of baseband signal.");
 }
 
+unsigned radio_session_realtime_dummy_impl::get_receiver_optimal_buffer_size() const
+{
+  /// Return a buffer size capable of holding 100 microseconds of samples.
+  return sampling_rate_hz / 10000;
+}
+
 // See the radio_session interface for documentation.
 baseband_gateway_timestamp radio_session_realtime_dummy_impl::read_current_time()
 {
@@ -47,15 +54,22 @@ baseband_gateway_timestamp radio_session_realtime_dummy_impl::read_current_time(
 
 void radio_session_realtime_dummy_impl::start(baseband_gateway_timestamp init_time)
 {
+  // Reset the stop control. This will block if there is an earlier stop request that has not been completed.
+  stop_control.reset();
+
   // Set the next timestamp for the RX samples.
   next_receive_timestamp        = init_time;
   bool expected_start_requested = false;
   if (!start_requested.compare_exchange_weak(expected_start_requested, true)) {
-    report_fatal_error("Called start when radio was already running");
+    report_fatal_error("Called start when radio is already running");
   }
 }
 
-void radio_session_realtime_dummy_impl::stop() {}
+void radio_session_realtime_dummy_impl::stop()
+{
+  // Request the radio to stop.
+  stop_control.stop();
+}
 
 bool radio_session_realtime_dummy_impl::set_tx_gain(unsigned port_id, double gain_dB)
 {
@@ -128,6 +142,11 @@ baseband_gateway_receiver::metadata radio_session_realtime_dummy_impl::receive(b
 void radio_session_realtime_dummy_impl::transmit(const baseband_gateway_buffer_reader&        data,
                                                  const baseband_gateway_transmitter_metadata& md)
 {
+  auto token = stop_control.get_token();
+  if (OCUDU_UNLIKELY(token.is_stop_requested())) {
+    return;
+  }
+
   baseband_gateway_timestamp first_requested_sample_ts = md.ts;
   unsigned                   nof_requested_samples     = data.get_nof_samples();
 
