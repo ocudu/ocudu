@@ -13,6 +13,17 @@
 using namespace ocudu;
 using namespace odu;
 
+static const asn1::rrc_nr::ntn_params_r17_s* get_ntn_params_r17(const asn1::rrc_nr::ue_nr_cap_s& ue_cap)
+{
+  const asn1::rrc_nr::ue_nr_cap_s* ue_cap_ptr = &ue_cap;
+  auto        next  = [](const auto* p) { return p && p->non_crit_ext_present ? &p->non_crit_ext : nullptr; };
+  const auto* v1700 = next(next(next(next(next(next(next(next(next(next(ue_cap_ptr))))))))));
+  if (!v1700 || !v1700->non_terrestrial_network_r17_present || !v1700->ntn_params_r17_present) {
+    return nullptr;
+  }
+  return &v1700->ntn_params_r17;
+}
+
 expected<ue_capability_summary, std::string> ocudu::odu::decode_ue_nr_cap_container(const byte_buffer& ue_cap_container)
 {
   asn1::rrc_nr::ue_nr_cap_s ue_cap;
@@ -58,16 +69,6 @@ expected<ue_capability_summary, std::string> ocudu::odu::decode_ue_nr_cap_contai
 
   return ue_caps;
 }
-
-#ifndef OCUDU_HAS_ENTERPRISE_NTN
-
-void ocudu::odu::decode_advanced_ue_nr_ntn_caps(ue_capability_summary&           ue_capability,
-                                                const asn1::rrc_nr::ue_nr_cap_s& ue_cap)
-{
-  // Advanced NTN UE capabilities is not implemented.
-}
-
-#endif // OCUDU_HAS_ENTERPRISE_NTN
 
 // Configure dedicated UE configuration to set MCS ant CQI tables.
 static void set_pdsch_mcs_table(serving_cell_config& cell_cfg, pdsch_mcs_table mcs_table)
@@ -727,5 +728,66 @@ void ocudu::odu::decode_advanced_ue_nr_caps(odu::ue_capability_summary&      ue_
           break;
       }
     }
+  }
+}
+
+void ocudu::odu::decode_advanced_ue_nr_ntn_caps(ue_capability_summary&           ue_capability,
+                                                const asn1::rrc_nr::ue_nr_cap_s& ue_cap)
+{
+  if (auto* ntn = get_ntn_params_r17(ue_cap)) {
+    const auto& ntn_params_r17  = *ntn;
+    ue_capability.ntn_supported = true;
+    if (ntn_params_r17.mac_params_ntn_r17_present) {
+      if (ntn_params_r17.mac_params_ntn_r17.mac_params_common_present) {
+        // A UE supporting those features shall also indicate the support of nonTerrestrialNetwork-r17.
+        ue_capability.disabled_dl_harq_feedback_supported =
+            ntn_params_r17.mac_params_ntn_r17.mac_params_common.harq_feedback_disabled_r17_present;
+        ue_capability.ul_harq_mode_b_supported =
+            ntn_params_r17.mac_params_ntn_r17.mac_params_common.ul_harq_mode_b_r17_present;
+      }
+    }
+  } else {
+    // No NTN support.
+    return;
+  }
+
+  for (const auto& band : ue_cap.rf_params.supported_band_list_nr) {
+    nr_band band_id = static_cast<nr_band>(band.band_nr);
+
+    // The following fields are only applicable for NTN bands. (See Table 5.2.2-1 in TS 38.101-5).
+    if (not band_helper::is_ntn_band(band_id)) {
+      continue;
+    }
+
+    ue_capability_summary::supported_band& band_cap = ue_capability.bands.at(band_id);
+
+    // Support of this feature in NTN bands is mandatory for UE supporting nonTerrestrialNetwork-r17.
+    if (not band.ul_pre_compensation_r17_present) {
+      band_cap.ul_pre_compensation_supported = false;
+      ue_capability.ntn_supported            = false;
+      return;
+    }
+    band_cap.ul_pre_compensation_supported = true;
+
+    if (band.max_harq_process_num_r17_present) {
+      if (band.max_harq_process_num_r17 == asn1::rrc_nr::band_nr_s::max_harq_process_num_r17_opts::u16d32) {
+        band_cap.max_ul_harq_process_num = 16;
+        band_cap.max_dl_harq_process_num = 32;
+      } else if (band.max_harq_process_num_r17 == asn1::rrc_nr::band_nr_s::max_harq_process_num_r17_opts::u32d16) {
+        band_cap.max_ul_harq_process_num = 32;
+        band_cap.max_dl_harq_process_num = 16;
+      } else if (band.max_harq_process_num_r17 == asn1::rrc_nr::band_nr_s::max_harq_process_num_r17_opts::u32d32) {
+        band_cap.max_ul_harq_process_num = 32;
+        band_cap.max_dl_harq_process_num = 32;
+      }
+    }
+
+    // UE indicating support of this feature shall also indicate support of uplinkPreCompensation-r17 for this band.
+    band_cap.ul_ta_reporting_supported = band.ul_ta_report_r17_present && band_cap.ul_pre_compensation_supported;
+
+    // UE indicating support of this feature shall also indicate support of uplinkPreCompensation-r17 and
+    // uplink-TA-Reporting-r17 for this band.
+    band_cap.ue_specific_k_offset_supported =
+        band.ue_specific_k_offset_r17_present && band_cap.ul_ta_reporting_supported;
   }
 }
