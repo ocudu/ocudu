@@ -19,7 +19,7 @@ security_engine_impl::security_engine_impl(security::sec_128_as_config sec_cfg,
                                            security::integrity_enabled integrity_enabled,
                                            security::ciphering_enabled ciphering_enabled) :
   logger(ocudulog::fetch_basic_logger("SEC")),
-  zero_mac_permitted(integrity_enabled == security::integrity_enabled::smc_transition)
+  allow_unprotected(integrity_enabled == security::integrity_enabled::smc_transition)
 {
   if (integrity_enabled != security::integrity_enabled::off) {
     ocudu_assert(sec_cfg.integ_algo.has_value(), "Cannot enable integrity protection: No algorithm selected");
@@ -56,49 +56,50 @@ security_engine_impl::security_engine_impl(security::sec_128_as_config sec_cfg,
   }
 }
 
-security_result security_engine_impl::encrypt_and_protect_integrity(byte_buffer buf, size_t offset, uint32_t count)
+security_status security_engine_impl::encrypt_and_protect_integrity(byte_buffer& buf, size_t offset, uint32_t count)
 {
-  security_result result{.buf = std::move(buf), .count = count};
+  security_status integ_status = security_status::success_unprotected;
 
   // apply integrity protection if activated
   if (integ_eng != nullptr) {
-    result = integ_eng->protect_integrity(std::move(result.buf.value()), result.count);
-    if (!result.buf.has_value()) {
-      return result;
+    integ_status = integ_eng->protect_integrity(buf, count);
+    if (not is_success(integ_status)) {
+      return integ_status;
     }
   }
 
   // apply ciphering if activated
   if (cipher_eng != nullptr) {
-    result = cipher_eng->apply_ciphering(std::move(result.buf.value()), offset, result.count);
-  }
-
-  return result;
-}
-
-security_result_rx security_engine_impl::decrypt_and_verify_integrity(byte_buffer buf, size_t offset, uint32_t count)
-{
-  security_result_rx result{.buf = std::move(buf), .count = count, .integrity_verified = false};
-
-  // apply deciphering if activated
-  if (cipher_eng != nullptr) {
-    security_result cipher_result = cipher_eng->apply_ciphering(std::move(result.buf.value()), offset, result.count);
-    result                        = {.buf = std::move(cipher_result.buf), .count = count, .integrity_verified = false};
-    if (!result.buf.has_value()) {
-      return result;
+    security_status cipher_status = cipher_eng->apply_ciphering(buf, offset, count);
+    if (not is_success(cipher_status)) {
+      return cipher_status;
     }
   }
+
+  // return the integrity success type (protected/unprotected)
+  return integ_status;
+}
+
+security_status security_engine_impl::decrypt_and_verify_integrity(byte_buffer& buf, size_t offset, uint32_t count)
+{
+  // apply deciphering if activated
+  if (cipher_eng != nullptr) {
+    security_status cipher_status = cipher_eng->apply_ciphering(buf, offset, count);
+    if (not is_success(cipher_status)) {
+      return cipher_status;
+    }
+  }
+
+  security_status integ_status = security_status::success_unprotected;
 
   // verify integrity if activated
   if (integ_eng != nullptr) {
-    security_result integ_result = integ_eng->verify_integrity(std::move(result.buf.value()), result.count);
-    result                       = {.buf = std::move(integ_result.buf), .count = count, .integrity_verified = true};
-    // TODO: second chance for PDUs with zero MAC.
-    if (zero_mac_permitted) {
-      // check zero-padding; cut zero-padding
-      return result;
+    integ_status = integ_eng->verify_integrity(buf, count);
+    if (allow_unprotected && integ_status == security_status::integrity_failure) {
+      // Check + trim zero MAC.
+      integ_status = security_status::success_unprotected;
     }
   }
 
-  return result;
+  return integ_status;
 }

@@ -21,15 +21,15 @@ public:
                        ciphering_enabled  ciphering_enabled);
   ~security_engine_impl() override = default;
 
-  security_result    encrypt_and_protect_integrity(byte_buffer buf, size_t offset, uint32_t count) override;
-  security_result_rx decrypt_and_verify_integrity(byte_buffer buf, size_t offset, uint32_t count) override;
+  security_status encrypt_and_protect_integrity(byte_buffer& buf, size_t offset, uint32_t count) override;
+  security_status decrypt_and_verify_integrity(byte_buffer& buf, size_t offset, uint32_t count) override;
 
 private:
   std::unique_ptr<integrity_engine> integ_eng;
   std::unique_ptr<ciphering_engine> cipher_eng;
 
   ocudulog::basic_logger& logger;
-  bool                    zero_mac_permitted = false;
+  bool                    allow_unprotected = false;
 };
 
 } // namespace ocudu::security

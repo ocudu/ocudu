@@ -16,7 +16,7 @@ public:
   ciphering_engine_nea3(sec_128_key k_128_enc_, uint8_t bearer_id_, security_direction direction_);
   virtual ~ciphering_engine_nea3() = default;
 
-  security_result apply_ciphering(byte_buffer buf, size_t offset, uint32_t count) override;
+  security_status apply_ciphering(byte_buffer& buf, size_t offset, uint32_t count) override;
 
 private:
   sec_128_key        k_128_enc;

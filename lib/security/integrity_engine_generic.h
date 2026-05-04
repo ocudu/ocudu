@@ -19,8 +19,8 @@ public:
                            integrity_algorithm integ_algo_);
   ~integrity_engine_generic() = default;
 
-  security_result protect_integrity(byte_buffer buf, uint32_t count) override;
-  security_result verify_integrity(byte_buffer buf, uint32_t count) override;
+  security_status protect_integrity(byte_buffer& buf, uint32_t count) override;
+  security_status verify_integrity(byte_buffer& buf, uint32_t count) override;
 
 private:
   sec_128_key         k_128_int;

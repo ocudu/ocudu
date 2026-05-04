@@ -14,8 +14,8 @@ class integrity_engine
 public:
   virtual ~integrity_engine() = default;
 
-  virtual security_result protect_integrity(byte_buffer buf, uint32_t count) = 0;
-  virtual security_result verify_integrity(byte_buffer buf, uint32_t count)  = 0;
+  virtual security_status protect_integrity(byte_buffer& buf, uint32_t count) = 0;
+  virtual security_status verify_integrity(byte_buffer& buf, uint32_t count)  = 0;
 };
 
 } // namespace security

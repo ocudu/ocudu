@@ -112,10 +112,11 @@ TEST_P(fxt_nea1, ciphering_engine_nea1)
   std::unique_ptr<ciphering_engine> nea = std::make_unique<ciphering_engine_nea1>(key, param.bearer, dir);
 
   // Apply ciphering and compare results
-  security_result result = nea->apply_ciphering(plaintext.deep_copy().value(), 0, param.count);
-  ASSERT_TRUE(result.buf.has_value());
-  ASSERT_TRUE(trim_tail_to_bitlength(result.buf.value(), param.length));
-  EXPECT_EQ(result.buf.value(), ciphertext);
+  byte_buffer     buf    = plaintext.deep_copy().value();
+  security_status status = nea->apply_ciphering(buf, 0, param.count);
+  ASSERT_EQ(status, security_status::success);
+  ASSERT_TRUE(trim_tail_to_bitlength(buf, param.length));
+  EXPECT_EQ(buf, ciphertext);
 }
 
 TEST_P(fxt_nea2, ciphering_engine_nea2)
@@ -132,10 +133,11 @@ TEST_P(fxt_nea2, ciphering_engine_nea2)
   std::unique_ptr<ciphering_engine> nea = std::make_unique<ciphering_engine_nea2>(key, param.bearer, dir);
 
   // Apply ciphering and compare results
-  security_result result = nea->apply_ciphering(plaintext.deep_copy().value(), 0, param.count);
-  ASSERT_TRUE(result.buf.has_value());
-  ASSERT_TRUE(trim_tail_to_bitlength(result.buf.value(), param.length));
-  EXPECT_EQ(result.buf.value(), ciphertext);
+  byte_buffer     buf    = plaintext.deep_copy().value();
+  security_status status = nea->apply_ciphering(buf, 0, param.count);
+  ASSERT_EQ(status, security_status::success);
+  ASSERT_TRUE(trim_tail_to_bitlength(buf, param.length));
+  EXPECT_EQ(buf, ciphertext);
 }
 
 TEST_P(fxt_nea3, ciphering_engine_nea3)
@@ -152,10 +154,11 @@ TEST_P(fxt_nea3, ciphering_engine_nea3)
   std::unique_ptr<ciphering_engine> nea = std::make_unique<ciphering_engine_nea3>(key, param.bearer, dir);
 
   // Apply ciphering and compare results
-  security_result result = nea->apply_ciphering(plaintext.deep_copy().value(), 0, param.count);
-  ASSERT_TRUE(result.buf.has_value());
-  ASSERT_TRUE(trim_tail_to_bitlength(result.buf.value(), param.length));
-  EXPECT_EQ(result.buf.value(), ciphertext);
+  byte_buffer     buf    = plaintext.deep_copy().value();
+  security_status status = nea->apply_ciphering(buf, 0, param.count);
+  ASSERT_EQ(status, security_status::success);
+  ASSERT_TRUE(trim_tail_to_bitlength(buf, param.length));
+  EXPECT_EQ(buf, ciphertext);
 }
 
 //////////////////////////////////////////////////////////

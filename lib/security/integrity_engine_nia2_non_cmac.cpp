@@ -39,11 +39,9 @@ integrity_engine_nia2_non_cmac::integrity_engine_nia2_non_cmac(sec_128_key      
   }
 }
 
-expected<security::sec_mac, security_error> integrity_engine_nia2_non_cmac::compute_mac(const byte_buffer_view v,
-                                                                                        uint32_t               count)
+security_status
+integrity_engine_nia2_non_cmac::compute_mac(security::sec_mac& mac, const byte_buffer_view v, uint32_t count)
 {
-  security::sec_mac mac = {};
-
   uint32_t len      = v.length();
   uint32_t len_bits = len * 8;
 
@@ -96,73 +94,68 @@ expected<security::sec_mac, security_error> integrity_engine_nia2_non_cmac::comp
   // copy first 4 bytes
   std::copy(tmp_mac.begin(), tmp_mac.begin() + 4, mac.begin());
 
-  return mac;
+  return security_status::success;
 }
 
-security_result integrity_engine_nia2_non_cmac::protect_integrity(byte_buffer buf, uint32_t count)
+security_status integrity_engine_nia2_non_cmac::protect_integrity(byte_buffer& buf, uint32_t count)
 {
-  security_result  result{.buf = std::move(buf), .count = count};
-  byte_buffer_view v{result.buf.value().begin(), result.buf.value().end()};
+  byte_buffer_view v{buf.begin(), buf.end()};
 
   logger.debug("Applying integrity protection. count={}", count);
   logger.debug(v.begin(), v.end(), "Message input:");
 
-  expected<security::sec_mac, security_error> mac = compute_mac(v, count);
+  security::sec_mac mac    = {};
+  security_status   status = compute_mac(mac, v, count);
 
-  if (not mac.has_value()) {
-    result.buf = make_unexpected(mac.error());
-    return result;
+  if (status != security_status::success) {
+    return status;
   }
 
-  if (not result.buf->append(mac.value())) {
-    result.buf = make_unexpected(security_error::buffer_failure);
+  if (not buf.append(mac)) {
+    return security_status::buffer_failure;
   }
 
   logger.debug("K_int: {}", k_128_int);
-  logger.debug("MAC: {}", mac.value());
-  logger.debug(result.buf.value().begin(), result.buf.value().end(), "Message output:");
+  logger.debug("MAC: {}", mac);
+  logger.debug(buf.begin(), buf.end(), "Message output:");
 
-  return result;
+  return security_status::success;
 }
 
-security_result integrity_engine_nia2_non_cmac::verify_integrity(byte_buffer buf, uint32_t count)
+security_status integrity_engine_nia2_non_cmac::verify_integrity(byte_buffer& buf, uint32_t count)
 {
-  security_result result{.buf = std::move(buf), .count = count};
-
-  if (result.buf->length() <= sec_mac_len) {
-    result.buf = make_unexpected(security_error::integrity_failure);
-    return result;
+  if (buf.length() <= sec_mac_len) {
+    return security_status::integrity_failure;
   }
 
-  byte_buffer_view v{result.buf.value(), 0, result.buf.value().length() - sec_mac_len};
-  byte_buffer_view m_rx{result.buf.value(), result.buf.value().length() - sec_mac_len, sec_mac_len};
+  byte_buffer_view v{buf, 0, buf.length() - sec_mac_len};
+  byte_buffer_view m_rx{buf, buf.length() - sec_mac_len, sec_mac_len};
 
   // compute MAC
-  expected<security::sec_mac, security_error> mac = compute_mac(v, count);
+  security::sec_mac mac    = {};
+  security_status   status = compute_mac(mac, v, count);
 
-  if (not mac.has_value()) {
-    result.buf = make_unexpected(mac.error());
-    return result;
+  if (status != security_status::success) {
+    return status;
   }
-  span m_exp{mac.value().data(), sec_mac_len};
+  span m_exp{mac.data(), sec_mac_len};
 
   // verify MAC
-  if (!std::equal(mac.value().begin(), mac.value().end(), m_rx.begin(), m_rx.end())) {
-    result.buf = make_unexpected(security_error::integrity_failure);
+  if (!std::equal(mac.begin(), mac.end(), m_rx.begin(), m_rx.end())) {
     logger.warning("Integrity check failed. count={}", count);
     logger.warning("K_int: {}", k_128_int);
     logger.warning("MAC received: {:x}", m_rx);
     logger.warning("MAC expected: {}", m_exp);
     logger.warning(v.begin(), v.end(), "Message input:");
-    return result;
+    return security_status::integrity_failure;
   }
   logger.debug("Integrity check passed. count={}", count);
   logger.debug("K_int: {}", k_128_int);
-  logger.debug("MAC: {}", mac.value());
+  logger.debug("MAC: {}", mac);
   logger.debug(v.begin(), v.end(), "Message input:");
 
   // trim MAC from PDU
-  result.buf.value().trim_tail(sec_mac_len);
+  buf.trim_tail(sec_mac_len);
 
-  return result;
+  return security_status::success;
 }

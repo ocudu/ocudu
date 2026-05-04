@@ -19,10 +19,9 @@ ciphering_engine_nea2::ciphering_engine_nea2(sec_128_key        k_128_enc_,
   }
 }
 
-security_result ciphering_engine_nea2::apply_ciphering(byte_buffer buf, size_t offset, uint32_t count)
+security_status ciphering_engine_nea2::apply_ciphering(byte_buffer& buf, size_t offset, uint32_t count)
 {
-  security_result  result{.buf = std::move(buf), .count = count};
-  byte_buffer_view msg{result.buf.value().begin() + offset, result.buf.value().end()};
+  byte_buffer_view msg{buf.begin() + offset, buf.end()};
 
   logger.debug("Applying ciphering. count={}", count);
   logger.debug("K_enc: {}", k_128_enc);
@@ -44,11 +43,10 @@ security_result ciphering_engine_nea2::apply_ciphering(byte_buffer buf, size_t o
   for (const auto& segment : segments) {
     int ret = aes_crypt_ctr(&ctx, segment.size(), &nc_off, nonce_cnt, stream_blk, segment.data(), segment.data());
     if (ret != 0) {
-      result.buf = make_unexpected(security_error::ciphering_failure);
-      return result;
+      return security_status::ciphering_failure;
     }
   }
   logger.debug(msg.begin(), msg.end(), "Ciphering output:");
 
-  return result;
+  return security_status::success;
 }

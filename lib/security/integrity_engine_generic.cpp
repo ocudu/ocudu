@@ -21,12 +21,11 @@ integrity_engine_generic::integrity_engine_generic(sec_128_key         k_128_int
 {
 }
 
-security_result integrity_engine_generic::protect_integrity(byte_buffer buf, uint32_t count)
+security_status integrity_engine_generic::protect_integrity(byte_buffer& buf, uint32_t count)
 {
-  security_result   result{.buf = std::move(buf), .count = count};
   security::sec_mac mac = {};
 
-  byte_buffer_view v{result.buf.value().begin(), result.buf.value().end()};
+  byte_buffer_view v{buf.begin(), buf.end()};
 
   logger.debug("Applying integrity protection. count={}", count);
   logger.debug(v.begin(), v.end(), "Message input:");
@@ -51,30 +50,29 @@ security_result integrity_engine_generic::protect_integrity(byte_buffer buf, uin
       break;
   }
 
-  if (not result.buf->append(mac)) {
-    result.buf = make_unexpected(security_error::buffer_failure);
+  if (not buf.append(mac)) {
+    logger.warning("Failed to append MAC to PDU. count={} pdu_len={}", count, buf.length());
+    return security_status::buffer_failure;
   }
 
   logger.debug("Integrity protection applied. count={}", count);
   logger.debug("K_int: {}", k_128_int);
   logger.debug("MAC: {}", mac);
-  logger.debug(result.buf.value().begin(), result.buf.value().end(), "Message output:");
+  logger.debug(buf.begin(), buf.end(), "Message output:");
 
-  return result;
+  return security_status::success;
 }
 
-security_result integrity_engine_generic::verify_integrity(byte_buffer buf, uint32_t count)
+security_status integrity_engine_generic::verify_integrity(byte_buffer& buf, uint32_t count)
 {
-  security_result   result{.buf = std::move(buf), .count = count};
   security::sec_mac mac = {};
 
-  if (result.buf->length() <= mac.size()) {
-    result.buf = make_unexpected(security_error::integrity_failure);
-    return result;
+  if (buf.length() <= mac.size()) {
+    return security_status::integrity_failure;
   }
 
-  byte_buffer_view v{result.buf.value(), 0, result.buf.value().length() - mac.size()};
-  byte_buffer_view m{result.buf.value(), result.buf.value().length() - mac.size(), mac.size()};
+  byte_buffer_view v{buf, 0, buf.length() - mac.size()};
+  byte_buffer_view m{buf, buf.length() - mac.size(), mac.size()};
 
   switch (integ_algo) {
     case security::integrity_algorithm::nia0:
@@ -98,7 +96,6 @@ security_result integrity_engine_generic::verify_integrity(byte_buffer buf, uint
 
   // Verify MAC
   if (!std::equal(mac.begin(), mac.end(), m.begin(), m.end())) {
-    result.buf = make_unexpected(security_error::integrity_failure);
     security::sec_mac mac_rx;
     std::copy(m.begin(), m.end(), mac_rx.begin());
     span m_rx{mac.data(), sec_mac_len};
@@ -107,7 +104,7 @@ security_result integrity_engine_generic::verify_integrity(byte_buffer buf, uint
     logger.warning("MAC received: {}", mac_rx);
     logger.warning("MAC expected: {}", mac);
     logger.warning(v.begin(), v.end(), "Message input:");
-    return result;
+    return security_status::integrity_failure;
   }
   logger.debug("Integrity check passed. count={}", count);
   logger.debug("K_int: {}", k_128_int);
@@ -115,7 +112,7 @@ security_result integrity_engine_generic::verify_integrity(byte_buffer buf, uint
   logger.debug(v.begin(), v.end(), "Message input:");
 
   // Trim MAC from PDU
-  result.buf.value().trim_tail(mac.size());
+  buf.trim_tail(mac.size());
 
-  return result;
+  return security_status::success;
 }

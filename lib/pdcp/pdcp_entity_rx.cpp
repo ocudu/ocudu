@@ -372,50 +372,51 @@ void pdcp_entity_rx::apply_security(pdcp_rx_pdu_info&& pdu_info)
   uint32_t rcvd_count = pdu_info.count;
 
   // Apply deciphering and integrity check
-  security::security_result_rx result = apply_deciphering_and_integrity_check(std::move(pdu_info.buf), rcvd_count);
+  security::security_status status = apply_deciphering_and_integrity_check(pdu_info.buf, rcvd_count);
 
-  if (!result.buf.has_value()) {
-    auto handle_failure =
-        [this, sec_err = result.buf.error(), count = result.count, token = std::move(pdu_info.token)]() {
-          switch (sec_err) {
-            case ocudu::security::security_error::integrity_failure:
-              logger.log_warning("Integrity failed, dropping PDU. count={}", count);
-              metrics.add_integrity_failed_pdus(1);
-              upper_cn.on_integrity_failure();
-              break;
-            case ocudu::security::security_error::ciphering_failure:
-              logger.log_warning("Deciphering failed, dropping PDU. count={}", count);
-              upper_cn.on_protocol_failure();
-              break;
-            case ocudu::security::security_error::buffer_failure:
-              logger.log_error("Buffer error when decrypting and verifying integrity, dropping PDU. count={}", count);
-              upper_cn.on_protocol_failure();
-              break;
-            case ocudu::security::security_error::engine_failure:
-              logger.log_error("Engine error when decrypting and verifying integrity, dropping PDU. count={}", count);
-              upper_cn.on_protocol_failure();
-              break;
-          }
-        };
+  if (not is_success(status)) {
+    auto handle_failure = [this, status = status, count = rcvd_count, token = std::move(pdu_info.token)]() {
+      switch (status) {
+        case security::security_status::integrity_failure:
+          logger.log_warning("Integrity failed, dropping PDU. count={}", count);
+          metrics.add_integrity_failed_pdus(1);
+          upper_cn.on_integrity_failure();
+          break;
+        case security::security_status::ciphering_failure:
+          logger.log_warning("Deciphering failed, dropping PDU. count={}", count);
+          upper_cn.on_protocol_failure();
+          break;
+        case security::security_status::buffer_failure:
+          logger.log_error("Buffer error when decrypting and verifying integrity, dropping PDU. count={}", count);
+          upper_cn.on_protocol_failure();
+          break;
+        case security::security_status::engine_failure:
+          logger.log_error("Engine error when decrypting and verifying integrity, dropping PDU. count={}", count);
+          upper_cn.on_protocol_failure();
+          break;
+        case security::security_status::success:
+        case security::security_status::success_unprotected:
+          logger.log_error("Unexpected error handling, dropping PDU. count={} status={}", count, status);
+          upper_cn.on_protocol_failure();
+          break;
+      }
+    };
     if (not ue_ul_executor.execute(std::move(handle_failure))) {
-      logger.log_warning("Dropped PDU with security error, UE executor queue is full. count={} sec_err={}",
-                         rcvd_count,
-                         result.buf.error());
+      logger.log_warning(
+          "Dropped PDU with security error, UE executor queue is full. count={} status={}", rcvd_count, status);
     }
     return;
   }
-  logger.log_debug(result.buf.value().begin(),
-                   result.buf.value().end(),
+  pdu_info.integrity_verified = status == security::security_status::success;
+  logger.log_debug(pdu_info.buf.begin(),
+                   pdu_info.buf.end(),
                    "Security passed. count={} verified={}",
                    rcvd_count,
-                   result.integrity_verified);
+                   pdu_info.integrity_verified);
 
   // After checking the integrity, we can discard the header.
   unsigned hdr_size = cfg.sn_size == pdcp_sn_size::size12bits ? 2 : 3;
-  result.buf.value().trim_head(hdr_size);
-
-  pdu_info.buf                = std::move(result.buf.value());
-  pdu_info.integrity_verified = result.integrity_verified;
+  pdu_info.buf.trim_head(hdr_size);
 
   auto post           = std::chrono::high_resolution_clock::now();
   auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(post - pre);
@@ -655,7 +656,7 @@ bool pdcp_entity_rx::apply_header_decompression(byte_buffer& buf)
 /*
  * Deciphering and Integrity Protection Helpers
  */
-security::security_result_rx pdcp_entity_rx::apply_deciphering_and_integrity_check(byte_buffer buf, uint32_t count)
+security::security_status pdcp_entity_rx::apply_deciphering_and_integrity_check(byte_buffer& buf, uint32_t count)
 {
   // obtain the thread-specific ID of the worker
   uint32_t worker_idx = execution_context::get_current_worker_index();
@@ -667,21 +668,21 @@ security::security_result_rx pdcp_entity_rx::apply_deciphering_and_integrity_che
     logger.log_error("Worker index exceeds number of crypto workers. worker_idx={} max_nof_crypto_workers={}",
                      worker_idx,
                      max_nof_crypto_workers);
-    return {.buf = make_unexpected(ocudu::security::security_error::engine_failure), .count = count};
+    return security::security_status::engine_failure;
   }
   logger.log_debug("Using sec_engine with worker_idx={}. count={} pdu_len={}", worker_idx, count, buf.length());
 
   security::security_engine_rx* sec_engine = sec_engine_pool[worker_idx].get();
   if (sec_engine == nullptr) {
-    // Security is not configured. Pass through for DRBs; trim zero MAC-I for SRBs.
+    // Security is not configured. Pass through for DRBs; trim zero MAC for SRBs.
     if (is_srb()) {
       if (buf.length() <= security::sec_mac_len) {
         logger.log_warning("Failed to trim MAC-I from PDU. count={}", count);
-        return {.buf = make_unexpected(ocudu::security::security_error::buffer_failure), .count = count};
+        return security::security_status::buffer_failure;
       }
       buf.trim_tail(security::sec_mac_len);
     }
-    return {.buf = std::move(buf), .count = count, .integrity_verified = false};
+    return security::security_status::success_unprotected;
   }
 
   // TS 38.323, section 5.8: Deciphering
@@ -693,9 +694,8 @@ security::security_result_rx pdcp_entity_rx::apply_deciphering_and_integrity_che
   // The data unit that is integrity protected is the PDU header
   // and the data part of the PDU before ciphering.
 
-  unsigned                     hdr_size = cfg.sn_size == pdcp_sn_size::size12bits ? 2 : 3;
-  security::security_result_rx result   = sec_engine->decrypt_and_verify_integrity(std::move(buf), hdr_size, count);
-  return result;
+  unsigned hdr_size = cfg.sn_size == pdcp_sn_size::size12bits ? 2 : 3;
+  return sec_engine->decrypt_and_verify_integrity(buf, hdr_size, count);
 }
 
 /*

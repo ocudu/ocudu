@@ -11,45 +11,46 @@
 namespace ocudu {
 namespace security {
 
-enum class security_error { buffer_failure, engine_failure, integrity_failure, ciphering_failure };
-inline const char* to_string(security_error sec_err)
+enum class security_status {
+  success = 0,
+  success_unprotected,
+  buffer_failure,
+  engine_failure,
+  integrity_failure,
+  ciphering_failure
+};
+
+inline bool is_success(security_status status)
 {
-  switch (sec_err) {
-    case security_error::buffer_failure:
-      return "buffer failure";
-    case security_error::engine_failure:
-      return "engine failure";
-    case security_error::integrity_failure:
-      return "integrity failure";
-    case security_error::ciphering_failure:
-      return "ciphering failure";
+  return status <= security_status::success_unprotected;
+}
+
+inline const char* to_string(security_status status)
+{
+  switch (status) {
+    case security_status::success:
+      return "success";
+    case security_status::success_unprotected:
+      return "success_unprotected";
+    case security_status::buffer_failure:
+      return "buffer_failure";
+    case security_status::engine_failure:
+      return "engine_failure";
+    case security_status::integrity_failure:
+      return "integrity_failure";
+    case security_status::ciphering_failure:
+      return "ciphering_failure";
     default:
       return "invalid";
   }
 }
-
-struct security_result {
-  /// Buffer that stores the resulting SDU in case of success. Otherwise it contains information about the failure.
-  expected<byte_buffer, security_error> buf;
-  /// The count value that is associated to this SDU.
-  uint32_t count;
-};
-
-struct security_result_rx {
-  /// Buffer that stores the resulting SDU in case of success. Otherwise it contains information about the failure.
-  expected<byte_buffer, security_error> buf;
-  /// The count value that is associated to this SDU.
-  uint32_t count;
-  /// Indicates whether the integrity of \c buf is verified (true) or unverified/unchecked (false).
-  bool integrity_verified;
-};
 
 class security_engine_tx
 {
 public:
   virtual ~security_engine_tx() = default;
 
-  virtual security_result encrypt_and_protect_integrity(byte_buffer buf, size_t offset, uint32_t count) = 0;
+  virtual security_status encrypt_and_protect_integrity(byte_buffer& buf, size_t offset, uint32_t count) = 0;
 };
 
 class security_engine_rx
@@ -57,7 +58,7 @@ class security_engine_rx
 public:
   virtual ~security_engine_rx() = default;
 
-  virtual security_result_rx decrypt_and_verify_integrity(byte_buffer buf, size_t offset, uint32_t count) = 0;
+  virtual security_status decrypt_and_verify_integrity(byte_buffer& buf, size_t offset, uint32_t count) = 0;
 };
 
 } // namespace security
@@ -66,7 +67,7 @@ public:
 namespace fmt {
 
 template <>
-struct formatter<ocudu::security::security_error> {
+struct formatter<ocudu::security::security_status> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx)
   {
@@ -74,9 +75,9 @@ struct formatter<ocudu::security::security_error> {
   }
 
   template <typename FormatContext>
-  auto format(ocudu::security::security_error sec_err, FormatContext& ctx) const
+  auto format(ocudu::security::security_status status, FormatContext& ctx) const
   {
-    return format_to(ctx.out(), "{}", to_string(sec_err));
+    return format_to(ctx.out(), "{}", to_string(status));
   }
 };
 } // namespace fmt

@@ -229,7 +229,7 @@ private:
   void record_reordering_delay(std::chrono::system_clock::time_point time_of_arrival);
 
   /// Apply deciphering and integrity check to the PDU
-  security::security_result_rx apply_deciphering_and_integrity_check(byte_buffer buf, uint32_t count);
+  security::security_status apply_deciphering_and_integrity_check(byte_buffer& buf, uint32_t count);
 
   /// \brief Creates (and replaces) a ROHC decompressor according to the ROHC configuration, if needed.
   void init_header_decompression();

@@ -14,7 +14,7 @@ class ciphering_engine
 public:
   virtual ~ciphering_engine() = default;
 
-  virtual security_result apply_ciphering(byte_buffer buf, size_t offset, uint32_t count) = 0;
+  virtual security_status apply_ciphering(byte_buffer& buf, size_t offset, uint32_t count) = 0;
 };
 
 } // namespace security

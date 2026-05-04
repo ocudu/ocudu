@@ -117,22 +117,22 @@ TEST_P(fxt_nia1, integrity_engine_generic_nia1)
 
   // Apply integrity and compare results
   for (unsigned i = 0; i < 2; i++) {
-    security_result result = nia->protect_integrity(message.deep_copy().value(), param.count_i);
-    ASSERT_TRUE(result.buf.has_value());
-    logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
+    byte_buffer     buf    = message.deep_copy().value();
+    security_status status = nia->protect_integrity(buf, param.count_i);
+    ASSERT_EQ(status, security_status::success);
+    logger.info(buf.begin(), buf.end(), "result:");
     logger.info(prot_buf.begin(), prot_buf.end(), "exp:");
-    EXPECT_EQ(result.buf.value(), prot_buf);
-    EXPECT_EQ(result.count, param.count_i);
+    EXPECT_EQ(buf, prot_buf);
   }
 
   // Verify integrity
   for (unsigned i = 0; i < 2; i++) {
-    security_result result = nia->verify_integrity(prot_buf.deep_copy().value(), param.count_i);
-    ASSERT_TRUE(result.buf.has_value());
-    logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
+    byte_buffer     buf    = prot_buf.deep_copy().value();
+    security_status status = nia->verify_integrity(buf, param.count_i);
+    ASSERT_EQ(status, security_status::success);
+    logger.info(buf.begin(), buf.end(), "result:");
     logger.info(message.begin(), message.end(), "exp:");
-    EXPECT_EQ(result.buf.value(), message);
-    EXPECT_EQ(result.count, param.count_i);
+    EXPECT_EQ(buf, message);
   }
 }
 
@@ -154,22 +154,22 @@ TEST_P(fxt_nia2, integrity_engine_nia2_cmac)
 
   // Apply integrity and compare results
   for (unsigned i = 0; i < 2; i++) {
-    security_result result = nia->protect_integrity(message.deep_copy().value(), param.count_i);
-    ASSERT_TRUE(result.buf.has_value());
-    logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
+    byte_buffer     buf    = message.deep_copy().value();
+    security_status status = nia->protect_integrity(buf, param.count_i);
+    ASSERT_EQ(status, security_status::success);
+    logger.info(buf.begin(), buf.end(), "result:");
     logger.info(prot_buf.begin(), prot_buf.end(), "exp:");
-    EXPECT_EQ(result.buf.value(), prot_buf);
-    EXPECT_EQ(result.count, param.count_i);
+    EXPECT_EQ(buf, prot_buf);
   }
 
   // Verify integrity
   for (unsigned i = 0; i < 2; i++) {
-    security_result result = nia->verify_integrity(prot_buf.deep_copy().value(), param.count_i);
-    ASSERT_TRUE(result.buf.has_value());
-    logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
+    byte_buffer     buf    = prot_buf.deep_copy().value();
+    security_status status = nia->verify_integrity(buf, param.count_i);
+    ASSERT_EQ(status, security_status::success);
+    logger.info(buf.begin(), buf.end(), "result:");
     logger.info(message.begin(), message.end(), "exp:");
-    EXPECT_EQ(result.buf.value(), message);
-    EXPECT_EQ(result.count, param.count_i);
+    EXPECT_EQ(buf, message);
   }
 }
 #endif // MBEDTLS_CMAC_C
@@ -191,22 +191,22 @@ TEST_P(fxt_nia2, integrity_engine_nia2_non_cmac)
 
   // Apply integrity and compare results
   for (unsigned i = 0; i < 2; i++) {
-    security_result result = nia->protect_integrity(message.deep_copy().value(), param.count_i);
-    ASSERT_TRUE(result.buf.has_value());
-    logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
+    byte_buffer     buf    = message.deep_copy().value();
+    security_status status = nia->protect_integrity(buf, param.count_i);
+    ASSERT_EQ(status, security_status::success);
+    logger.info(buf.begin(), buf.end(), "result:");
     logger.info(prot_buf.begin(), prot_buf.end(), "exp:");
-    EXPECT_EQ(result.buf.value(), prot_buf);
-    EXPECT_EQ(result.count, param.count_i);
+    EXPECT_EQ(buf, prot_buf);
   }
 
   // Verify integrity
   for (unsigned i = 0; i < 2; i++) {
-    security_result result = nia->verify_integrity(prot_buf.deep_copy().value(), param.count_i);
-    ASSERT_TRUE(result.buf.has_value());
-    logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
+    byte_buffer     buf    = prot_buf.deep_copy().value();
+    security_status status = nia->verify_integrity(buf, param.count_i);
+    ASSERT_EQ(status, security_status::success);
+    logger.info(buf.begin(), buf.end(), "result:");
     logger.info(message.begin(), message.end(), "exp:");
-    EXPECT_EQ(result.buf.value(), message);
-    EXPECT_EQ(result.count, param.count_i);
+    EXPECT_EQ(buf, message);
   }
 }
 
@@ -228,22 +228,22 @@ TEST_P(fxt_nia2, integrity_engine_generic_nia2)
 
   // Apply integrity and compare results
   for (unsigned i = 0; i < 2; i++) {
-    security_result result = nia->protect_integrity(message.deep_copy().value(), param.count_i);
-    ASSERT_TRUE(result.buf.has_value());
-    logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
+    byte_buffer     buf    = message.deep_copy().value();
+    security_status status = nia->protect_integrity(buf, param.count_i);
+    ASSERT_EQ(status, security_status::success);
+    logger.info(buf.begin(), buf.end(), "result:");
     logger.info(prot_buf.begin(), prot_buf.end(), "exp:");
-    EXPECT_EQ(result.buf.value(), prot_buf);
-    EXPECT_EQ(result.count, param.count_i);
+    EXPECT_EQ(buf, prot_buf);
   }
 
   // Verify integrity
   for (unsigned i = 0; i < 2; i++) {
-    security_result result = nia->verify_integrity(prot_buf.deep_copy().value(), param.count_i);
-    ASSERT_TRUE(result.buf.has_value());
-    logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
+    byte_buffer     buf    = prot_buf.deep_copy().value();
+    security_status status = nia->verify_integrity(buf, param.count_i);
+    ASSERT_EQ(status, security_status::success);
+    logger.info(buf.begin(), buf.end(), "result:");
     logger.info(message.begin(), message.end(), "exp:");
-    EXPECT_EQ(result.buf.value(), message);
-    EXPECT_EQ(result.count, param.count_i);
+    EXPECT_EQ(buf, message);
   }
 }
 
@@ -265,22 +265,22 @@ TEST_P(fxt_nia3, integrity_engine_generic_nia3)
 
   // Apply integrity and compare results
   for (unsigned i = 0; i < 2; i++) {
-    security_result result = nia->protect_integrity(message.deep_copy().value(), param.count_i);
-    ASSERT_TRUE(result.buf.has_value());
-    logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
+    byte_buffer     buf    = message.deep_copy().value();
+    security_status status = nia->protect_integrity(buf, param.count_i);
+    ASSERT_EQ(status, security_status::success);
+    logger.info(buf.begin(), buf.end(), "result:");
     logger.info(prot_buf.begin(), prot_buf.end(), "exp:");
-    EXPECT_EQ(result.buf.value(), prot_buf);
-    EXPECT_EQ(result.count, param.count_i);
+    EXPECT_EQ(buf, prot_buf);
   }
 
   // Verify integrity
   for (unsigned i = 0; i < 2; i++) {
-    security_result result = nia->verify_integrity(prot_buf.deep_copy().value(), param.count_i);
-    ASSERT_TRUE(result.buf.has_value());
-    logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
+    byte_buffer     buf    = prot_buf.deep_copy().value();
+    security_status status = nia->verify_integrity(buf, param.count_i);
+    ASSERT_EQ(status, security_status::success);
+    logger.info(buf.begin(), buf.end(), "result:");
     logger.info(message.begin(), message.end(), "exp:");
-    EXPECT_EQ(result.buf.value(), message);
-    EXPECT_EQ(result.count, param.count_i);
+    EXPECT_EQ(buf, message);
   }
 }
 

@@ -313,7 +313,7 @@ private:
   void apply_security(pdcp_tx_buffer_info buf_info);
 
   /// Apply ciphering and integrity protection to the payload
-  security::security_result apply_ciphering_and_integrity_protection(byte_buffer buf, uint32_t count);
+  security::security_status apply_ciphering_and_integrity_protection(byte_buffer& buf, uint32_t count);
 
   /// \brief Creates (and replaces) a ROHC compressor according to the ROHC configuration, if needed.
   void init_header_compression();
