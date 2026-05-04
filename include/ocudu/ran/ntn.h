@@ -131,10 +131,10 @@ struct ntn_config {
 struct ntn_cov_enh_t {
   /// The number of repetition slots for PUCCH transmission with HARQ-ACK information for Msg4, see clause 9.2.6 in
   /// TS 38.213.
-  std::optional<unsigned> nof_msg4_harg_ack_rep;
+  unsigned nof_msg4_harq_ack_rep;
   /// This threshold is used by the UE for determining the configuration of the MAC entity for PUCCH repetition for Msg4
   /// HARQ-ACK, as specified in clause 6.2.1 in TS 38.321.
-  std::optional<unsigned> rsrp_thres_mgs4_harq_ack;
+  std::optional<unsigned> rsrp_thres_msg4_harq_ack;
 };
 
 /// Provides parameters for the target satellite required to perform satellite switch with resynchronization.
