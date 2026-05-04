@@ -307,13 +307,3 @@ span<const uint8_t> sib_pdu_assembler::encode_si_pdu(slot_point_extended sl_tx, 
 
   return span<const uint8_t>(std::get<bcch_dl_sch_buffer>(current_buffers.si_msg_buffers[idx].second)->data(), tbs);
 }
-
-#ifndef OCUDU_HAS_ENTERPRISE_NTN
-
-std::unique_ptr<sib_pdu_assembler::message_handler>
-ocudu::create_si_message_extension_handler(const mac_cell_sys_info_config& req)
-{
-  return nullptr;
-}
-
-#endif // OCUDU_HAS_ENTERPRISE_NTN

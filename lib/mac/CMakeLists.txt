@@ -14,6 +14,7 @@ set(SOURCES mac_factory.cpp
         mac_ctrl/mac_ue_removal_procedure.cpp
         mac_ctrl/mac_metrics_aggregator.cpp
         mac_dl/sib_pdu_assembler.cpp
+        mac_dl/si_message_extension_handler_impl.cpp
         mac_dl/mac_dl_processor.cpp
         mac_dl/mac_subframe_time_mapper_impl.cpp
         mac_dl/mac_cell_processor.cpp
