@@ -47,11 +47,21 @@ static void fill_cu_up_appconfig_remote_control_section(YAML::Node node, const r
 
 static void fill_cu_up_appconfig_e1ap_section(YAML::Node node, const ocuup::e1ap_appconfig& config)
 {
-  YAML::Node cu_up_node   = node["cu_up"];
-  YAML::Node e1ap_node    = cu_up_node["e1ap"];
+  YAML::Node e1ap_node    = node["gateways"];
   e1ap_node["addrs"]      = config.cu_cp_addresses;
   e1ap_node["bind_addrs"] = config.bind_addresses;
   fill_sctp_config_in_yaml_schema(e1ap_node, config.sctp);
+}
+
+static void fill_cu_up_appconfig_e1ap_list_section(YAML::Node node, const ocuup::e1ap_list_appconfig& config)
+{
+  YAML::Node cu_up_node = node["cu_up"];
+  YAML::Node e1ap_node  = cu_up_node["e1ap"];
+  for (const auto& e1ap_cfg : config.e1ap_cfgs) {
+    YAML::Node sock_node;
+    fill_cu_up_appconfig_e1ap_section(sock_node, e1ap_cfg);
+    sock_node.push_back(sock_node);
+  }
 }
 
 static void fill_cu_up_appconfig_f1u_section(YAML::Node& node, const f1u_sockets_appconfig& config)
@@ -71,6 +81,6 @@ void ocudu::fill_cu_up_appconfig_in_yaml_schema(YAML::Node& node, const cu_up_ap
   // TODO: move duplicated cu/cu_cp/cu_up/du YAML writers to helpers/app_services
   fill_cu_up_appconfig_expert_execution_section(node["expert_execution"], config.expert_execution_cfg);
   fill_cu_up_appconfig_remote_control_section(node["remote_control"], config.remote_control_config);
-  fill_cu_up_appconfig_e1ap_section(node, config.e1ap_cfg);
+  fill_cu_up_appconfig_e1ap_list_section(node, config.e1ap_cfg);
   fill_cu_up_appconfig_f1u_section(node, config.f1u_cfg);
 }

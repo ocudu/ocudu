@@ -19,7 +19,7 @@
 namespace ocudu {
 namespace ocuup {
 
-/// Configuration of the E1AP interface of the CU-UP.
+/// Configuration of an individual E1AP interface of the CU-UP.
 struct e1ap_appconfig {
   /// CU-CP E1 addresses the CU-UP will connect to.
   std::vector<std::string> cu_cp_addresses = {"127.0.20.1"};
@@ -27,6 +27,11 @@ struct e1ap_appconfig {
   std::vector<std::string> bind_addresses = {"127.0.20.2"};
   /// SCTP socket options.
   sctp_appconfig sctp;
+};
+
+/// Configuration of the E1AP interface(s) of the CU-UP.
+struct e1ap_list_appconfig {
+  std::vector<e1ap_appconfig> e1ap_cfgs;
 };
 
 /// Metrics report configuration.
@@ -49,7 +54,7 @@ struct cu_up_appconfig {
   /// Expert configuration.
   expert_execution_appconfig expert_execution_cfg;
   /// E1AP configuration.
-  ocuup::e1ap_appconfig e1ap_cfg;
+  ocuup::e1ap_list_appconfig e1ap_cfg;
   /// F1-U configuration.
   f1u_sockets_appconfig f1u_cfg;
   /// Buffer pool configuration.
