@@ -1,0 +1,38 @@
+# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+# Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
+
+set_directory_properties(PROPERTIES LABELS "ntn")
+
+add_executable(coordinate_converter_test coordinate_converter_test.cpp)
+target_include_directories(coordinate_converter_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(coordinate_converter_test ocudu_ntn_lib ocudu_support ocudulog gtest gtest_main)
+gtest_discover_tests(coordinate_converter_test)
+
+add_executable(reference_frame_converter_test reference_frame_converter_test.cpp)
+target_include_directories(reference_frame_converter_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(reference_frame_converter_test ocudu_ntn_lib ocudu_support ocudulog gtest gtest_main)
+gtest_discover_tests(reference_frame_converter_test)
+
+
+add_executable(ephemeris_info_converter_test ephemeris_info_converter_test.cpp)
+target_include_directories(ephemeris_info_converter_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(ephemeris_info_converter_test ocudu_ntn_lib ocudu_support ocudulog gtest gtest_main)
+gtest_discover_tests(ephemeris_info_converter_test)
+
+
+add_executable(rk4_propagator_test rk4_propagator_test.cpp)
+target_include_directories(rk4_propagator_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(rk4_propagator_test ocudu_ntn_lib ocudu_support ocudulog gtest gtest_main)
+gtest_discover_tests(rk4_propagator_test)
+
+
+add_executable(ntn_math_helpers_test ntn_math_helpers_test.cpp)
+target_include_directories(ntn_math_helpers_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(ntn_math_helpers_test ocudu_ntn_lib ocudu_support ocudulog gtest gtest_main)
+gtest_discover_tests(ntn_math_helpers_test)
+
+add_executable(ntn_assistance_info_gen_test ntn_assistance_info_gen_test.cpp)
+target_include_directories(ntn_assistance_info_gen_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(ntn_assistance_info_gen_test ocudu_ntn_lib ocudu_support ocudulog gtest gtest_main)
+gtest_discover_tests(ntn_assistance_info_gen_test)

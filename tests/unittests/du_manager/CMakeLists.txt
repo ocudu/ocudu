@@ -93,3 +93,13 @@ add_executable(cbs_encoder_test cbs/cbs_encoder_test.cpp)
 target_include_directories(cbs_encoder_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(cbs_encoder_test ocudu_cbs_encoder ocudu_support gtest ocudu_gtest_main)
 gtest_discover_tests(cbs_encoder_test)
+
+add_executable(sib19_ntn_test sib19_ntn_test.cpp)
+target_include_directories(sib19_ntn_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(sib19_ntn_test du_manager_converters ocudu_du_manager ocudu_support ocudulog gtest gtest_main)
+gtest_discover_tests(sib19_ntn_test)
+
+add_executable(sib19_value_tag_test sib19_value_tag_test.cpp)
+target_include_directories(sib19_value_tag_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(sib19_value_tag_test ocudu_du_high du_manager_converters ocudu_du_manager ocudu_support ocudulog gtest gtest_main)
+gtest_discover_tests(sib19_value_tag_test)
