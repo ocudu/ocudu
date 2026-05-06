@@ -290,6 +290,7 @@ void ue_repository::rem_ue(const ue& u)
 
   // Remove UE components.
   ue_drx_controllers.erase(ue_idx);
+  ue_fsms.erase(ue_idx);
 
   // Remove UE from RNTI->UE lookup.
   auto it = rnti_to_ue_index_lookup.find(crnti);
