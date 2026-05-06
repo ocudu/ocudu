@@ -135,6 +135,8 @@ public:
   async_task<cu_cp_handover_resource_allocation_response>
        handle_xnap_handover_request(const xnap_handover_request& request) override;
   void handle_handover_cancel_received(cu_cp_ue_index_t ue_index) override;
+  void handle_xnap_handover_success_received(cu_cp_ue_index_t  source_ue_index,
+                                             peer_xnap_ue_id_t winner_peer_xnap_ue_id) override;
   void handle_xnap_ue_context_release_received(cu_cp_ue_index_t ue_index) override;
 
   // cu_cp_nrppa_handler.
