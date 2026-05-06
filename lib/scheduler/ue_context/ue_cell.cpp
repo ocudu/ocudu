@@ -73,10 +73,13 @@ void ue_cell::handle_reconfiguration_request(const ue_cell_configuration& ue_cel
                               ? static_cast<unsigned>(ue_cell_cfg.pusch_serving_cell_cfg()->nof_harq_proc)
                               : harqs.nof_ul_harqs();
 
+  // TODO: when CG is supported, pass the number of requested HARQ processes for CG use.
+  constexpr unsigned nof_cg_reserved_harq = 0;
   harqs.reconfigure(new_dl_harqs,
                     new_ul_harqs,
                     ue_cell_cfg.pdsch_serving_cell_cfg()->dl_harq_feedback_disabled,
-                    ue_cell_cfg.pusch_serving_cell_cfg()->ul_harq_mode);
+                    ue_cell_cfg.pusch_serving_cell_cfg()->ul_harq_mode,
+                    nof_cg_reserved_harq);
 
   get_pusch_power_controller().reconfigure(ue_cell_cfg);
 }

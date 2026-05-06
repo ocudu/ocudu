@@ -43,7 +43,7 @@ namespace harq_utils {
 /// Possible states of a HARQ process.
 enum class harq_state_t : uint8_t { empty, pending_retx, waiting_ack };
 
-/// HARQ operation modes as per TS38.300, Section 16.14.2.
+/// HARQ operation modes as per TS 38.300, Section 16.14.2.
 enum class harq_mode_t : uint8_t {
   normal,                     // Standard Stop-and-Wait Operation (NTN: DL Feedback Enabled, UL Mode A)
   feedback_disabled_or_mode_b // Re-use allowed before RTT elapses (NTN: DL Feedback Disabled, UL Mode B)
@@ -143,6 +143,8 @@ struct cell_harq_repository {
     slot_point             last_slot_ack;
     /// NTN helper variable indicating the presence of HARQ process with feedback disabled or mode B.
     bool feedback_disabled_or_mode_b_harq_present = false;
+    /// First HARQ-id that is not reserved for Configured Grant use.
+    harq_id_t first_non_reserved_harq_id = to_harq_id(0);
   };
 
   cell_harq_repository(unsigned                max_ues,
@@ -175,11 +177,12 @@ struct cell_harq_repository {
   void               slot_indication(slot_point sl_tx);
   void               stop();
   void               handle_harq_ack_timeout(harq_type& h, slot_point sl_tx);
-  harq_type*         alloc_harq(du_ue_index_t ue_idx,
-                                slot_point    sl_tx,
-                                slot_point    sl_ack,
-                                unsigned      max_nof_harq_retxs,
-                                bool          select_normal_mode = true);
+  harq_type*         alloc_harq(du_ue_index_t            ue_idx,
+                                slot_point               sl_tx,
+                                slot_point               sl_ack,
+                                unsigned                 max_nof_harq_retxs,
+                                std::optional<harq_id_t> harq_id            = std::nullopt,
+                                bool                     select_normal_mode = true);
   void               dealloc_harq(harq_type& h);
   void               handle_ack(harq_type& h, bool ack);
   void               set_pending_retx(harq_type& h);
@@ -471,11 +474,12 @@ private:
                                               bool          select_normal_mode = true);
 
   /// \brief Called on every UL new Tx to allocate an UL HARQ process.
-  harq_utils::ul_harq_process_impl* new_ul_tx(du_ue_index_t ue_idx,
-                                              rnti_t        rnti,
-                                              slot_point    pusch_slot,
-                                              unsigned      max_harq_nof_retxs,
-                                              bool          select_normal_mode = true);
+  harq_utils::ul_harq_process_impl* new_ul_tx(du_ue_index_t            ue_idx,
+                                              rnti_t                   rnti,
+                                              slot_point               pusch_slot,
+                                              unsigned                 max_harq_nof_retxs,
+                                              std::optional<harq_id_t> harq_id            = std::nullopt,
+                                              bool                     select_normal_mode = true);
 
   const uint8_t                          max_harqs_per_ue;
   std::unique_ptr<harq_timeout_notifier> dl_timeout_notifier;
@@ -512,10 +516,12 @@ public:
   /// \param new_nof_ul_harqs Number of UL HARQ processes.
   /// \param dl_harq_feedback_disabled_mask Bitmask for DL HARQ feedback disabled mode.
   /// \param ul_harq_mode_mask Bitmask for UL HARQ mode (mode A vs mode B).
+  /// \param nof_cg_reserved_harqs Number of UL HARQ processes reserved for Configured Grants.
   void reconfigure(unsigned                              new_nof_dl_harqs,
                    unsigned                              new_nof_ul_harqs,
                    const harq_dl_feedback_disabled_mask& dl_harq_feedback_disabled_mask,
-                   const harq_ul_mode_mask&              ul_harq_mode_mask);
+                   const harq_ul_mode_mask&              ul_harq_mode_mask,
+                   unsigned                              nof_cg_reserved_harqs);
 
   /// Checks whether there are free HARQ processes.
   bool   has_empty_dl_harqs(bool select_normal_mode_only = false) const;
@@ -570,8 +576,10 @@ public:
                                                       unsigned   max_harq_nof_retxs,
                                                       unsigned   harq_bit_idx,
                                                       bool       select_normal_mode = true);
-  std::optional<ul_harq_process_handle>
-  alloc_ul_harq(slot_point sl_tx, unsigned max_harq_nof_retxs, bool select_normal_mode = true);
+  std::optional<ul_harq_process_handle> alloc_ul_harq(slot_point               sl_tx,
+                                                      unsigned                 max_harq_nof_retxs,
+                                                      std::optional<harq_id_t> harq_id            = std::nullopt,
+                                                      bool                     select_normal_mode = true);
 
   std::optional<dl_harq_process_handle>       find_pending_dl_retx();
   std::optional<const dl_harq_process_handle> find_pending_dl_retx() const;
@@ -602,9 +610,10 @@ private:
   ul_harq_ent_impl&       get_ul_ue() { return cell_harq_mgr->ul.ues[ue_index]; }
   const ul_harq_ent_impl& get_ul_ue() const { return cell_harq_mgr->ul.ues[ue_index]; }
 
-  cell_harq_manager* cell_harq_mgr = nullptr;
-  du_ue_index_t      ue_index      = INVALID_DU_UE_INDEX;
-  rnti_t             crnti         = rnti_t::INVALID_RNTI;
+  harq_id_t          first_non_reserved_harq_id = to_harq_id(0);
+  cell_harq_manager* cell_harq_mgr              = nullptr;
+  du_ue_index_t      ue_index                   = INVALID_DU_UE_INDEX;
+  rnti_t             crnti                      = rnti_t::INVALID_RNTI;
 };
 
 } // namespace ocudu
