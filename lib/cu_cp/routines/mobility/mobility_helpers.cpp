@@ -98,25 +98,44 @@ bool ocudu::ocucp::handle_bearer_context_modification_response(
   return bearer_context_modification_response.success;
 }
 
-unsigned ocudu::ocucp::cancel_cho_candidates(cu_cp_ue& source_ue, ue_manager& ue_mng, cu_cp_ue_index_t winner_ue_index)
+unsigned ocudu::ocucp::cancel_cho_candidates(cu_cp_ue&         source_ue,
+                                             ue_manager&       ue_mng,
+                                             xnap_repository*  xnap_db,
+                                             cu_cp_ue_index_t  winner_ue_index,
+                                             peer_xnap_ue_id_t winner_peer_xnap_ue_id)
 {
   unsigned cancelled = 0;
   auto&    cho_ctx   = source_ue.get_cho_context();
   if (!cho_ctx.has_value()) {
     return 0;
   }
+  const cu_cp_ue_index_t source_ue_index = source_ue.get_ue_index();
+  const bool             has_xnap_winner = winner_peer_xnap_ue_id != peer_xnap_ue_id_t::invalid;
   for (const auto& candidate : cho_ctx->candidates) {
-    if (candidate.target_ue_index == cu_cp_ue_index_t::invalid ||
-        candidate.target_ue_index == source_ue.get_ue_index() || candidate.target_ue_index == winner_ue_index) {
-      continue;
+    if (candidate.is_inter_cu()) {
+      if (has_xnap_winner && candidate.peer_xnap_ue_id == winner_peer_xnap_ue_id) {
+        continue;
+      }
+      if (xnap_db != nullptr && candidate.xnc_index.has_value()) {
+        xnap_interface* xnap = xnap_db->find_xnap(*candidate.xnc_index);
+        if (xnap != nullptr) {
+          xnap->handle_cho_cancel_required(source_ue_index, candidate.target_cgi);
+          ++cancelled;
+        }
+      }
+    } else {
+      if (candidate.target_ue_index == cu_cp_ue_index_t::invalid || candidate.target_ue_index == source_ue_index ||
+          candidate.target_ue_index == winner_ue_index) {
+        continue;
+      }
+      auto* cand_ue = ue_mng.find_du_ue(candidate.target_ue_index);
+      if (cand_ue == nullptr) {
+        continue;
+      }
+      cand_ue->get_rrc_ue()->cancel_handover_reconfiguration_transaction(
+          static_cast<uint8_t>(candidate.rrc_reconfig_transaction_id));
+      ++cancelled;
     }
-    auto* cand_ue = ue_mng.find_du_ue(candidate.target_ue_index);
-    if (cand_ue == nullptr) {
-      continue;
-    }
-    cand_ue->get_rrc_ue()->cancel_handover_reconfiguration_transaction(
-        static_cast<uint8_t>(candidate.rrc_reconfig_transaction_id));
-    ++cancelled;
   }
   return cancelled;
 }

@@ -10,8 +10,9 @@ using namespace ocudu::ocucp;
 
 conditional_handover_source_routine::conditional_handover_source_routine(const cu_cp_access_success_indication& msg_,
                                                                          ue_manager&                            ue_mng_,
+                                                                         xnap_repository*        xnap_db_,
                                                                          ocudulog::basic_logger& logger_) :
-  msg(msg_), ue_mng(ue_mng_), logger(logger_)
+  msg(msg_), ue_mng(ue_mng_), xnap_db(xnap_db_), logger(logger_)
 {
 }
 
@@ -52,9 +53,9 @@ void conditional_handover_source_routine::operator()(coro_context<async_task<voi
               winner->target_ue_index,
               winner->target_cgi.nci);
 
-  // Cancel each non-winning candidate's RRC reconfiguration transaction. Each non-winner's target routine observes
-  // the cancellation and self-releases.
-  const unsigned cancelled = cancel_cho_candidates(*source_ue, ue_mng, winner->target_ue_index);
+  // Cancel each non-winning candidate. Inter-CU candidates are cancelled via Xn; intra-CU candidates have their RRC
+  // reconfiguration transaction cancelled so the waiting target routine self-releases.
+  const unsigned cancelled = cancel_cho_candidates(*source_ue, ue_mng, xnap_db, winner->target_ue_index);
 
   // Clear source CHO context. The winning target UE's CHO context is cleared by the target routine.
   source_ue->get_cho_context()->clear();

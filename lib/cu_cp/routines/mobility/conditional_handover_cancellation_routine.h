@@ -5,6 +5,7 @@
 #pragma once
 
 #include "../../ue_manager/ue_manager_impl.h"
+#include "../../xnap_repository.h"
 #include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/support/async/async_task.h"
 
@@ -19,6 +20,7 @@ class conditional_handover_cancellation_routine
 public:
   conditional_handover_cancellation_routine(cu_cp_ue_index_t        source_ue_index,
                                             ue_manager&             ue_mng,
+                                            xnap_repository*        xnap_db,
                                             ocudulog::basic_logger& logger);
 
   void operator()(coro_context<async_task<void>>& ctx);
@@ -28,6 +30,7 @@ public:
 private:
   const cu_cp_ue_index_t  source_ue_index;
   ue_manager&             ue_mng;
+  xnap_repository*        xnap_db;
   ocudulog::basic_logger& logger;
 
   cu_cp_ue*                             source_ue      = nullptr;

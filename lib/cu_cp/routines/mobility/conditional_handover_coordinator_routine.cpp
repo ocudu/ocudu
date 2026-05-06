@@ -4,9 +4,11 @@
 
 #include "conditional_handover_coordinator_routine.h"
 #include "../../du_processor/du_processor_repository.h"
+#include "../../mobility_manager/mobility_manager_helpers.h"
 #include "../../ue_manager/ue_manager_impl.h"
 #include "conditional_handover_reconfiguration_routine.h"
 #include "intra_cu_handover_routine.h"
+#include "ocudu/xnap/xnap_handover.h"
 
 using namespace ocudu;
 using namespace ocudu::ocucp;
@@ -17,12 +19,16 @@ conditional_handover_coordinator_routine::conditional_handover_coordinator_routi
     cu_cp_impl_interface&             cu_cp_handler_,
     ue_manager&                       ue_mng_,
     mobility_manager&                 mobility_mng_,
+    ngap_repository&                  ngap_db_,
+    xnap_repository*                  xnap_db_,
     ocudulog::basic_logger&           logger_) :
   request(request_),
   du_db(du_db_),
   cu_cp_handler(cu_cp_handler_),
   ue_mng(ue_mng_),
   mobility_mng(mobility_mng_),
+  ngap_db(ngap_db_),
+  xnap_db(xnap_db_),
   logger(logger_)
 {
 }
@@ -81,9 +87,104 @@ std::vector<async_task<cu_cp_cho_candidate>> conditional_handover_coordinator_ro
   return tasks;
 }
 
+std::vector<async_task<cu_cp_cho_candidate>> conditional_handover_coordinator_routine::build_inter_cu_prep_tasks()
+{
+  std::vector<async_task<cu_cp_cho_candidate>> tasks;
+
+  if (xnap_db == nullptr) {
+    return tasks;
+  }
+
+  cu_cp_ue* ue = ue_mng.find_du_ue(request.source_ue_index);
+  if (ue == nullptr) {
+    logger.warning("ue={}: CHO inter-CU preparation skipped: source UE not found", request.source_ue_index);
+    return tasks;
+  }
+
+  ngap_interface* ngap = ngap_db.find_ngap(ue->get_ue_context().plmn);
+  if (ngap == nullptr) {
+    logger.warning("ue={}: CHO inter-CU preparation skipped: NGAP not found", request.source_ue_index);
+    return tasks;
+  }
+
+  const ngap_context_t&  ngap_ctxt = ngap->get_ngap_context();
+  std::optional<guami_t> served_guami;
+  for (const auto& guami : ngap_ctxt.served_guami_list) {
+    if (guami.plmn == ue->get_ue_context().plmn) {
+      served_guami = guami;
+      break;
+    }
+  }
+  if (!served_guami.has_value()) {
+    logger.warning("ue={}: CHO inter-CU preparation skipped: GUAMI not found for plmn={}",
+                   request.source_ue_index,
+                   ue->get_ue_context().plmn);
+    return tasks;
+  }
+
+  amf_ue_id_t source_amf_ue_id = ngap->get_amf_ue_id(request.source_ue_index);
+  if (source_amf_ue_id == amf_ue_id_t::invalid) {
+    logger.warning("ue={}: CHO inter-CU preparation skipped: invalid AMF UE ID", request.source_ue_index);
+    return tasks;
+  }
+
+  for (size_t i = 0; i < request.targets.size(); ++i) {
+    const auto& target = request.targets[i];
+    if (!target.xnc_index.has_value()) {
+      continue;
+    }
+
+    xnap_interface* xnap = xnap_db->find_xnap(*target.xnc_index);
+    if (xnap == nullptr) {
+      logger.warning("ue={}: CHO inter-CU candidate skipped: XNAP not found for xnc_index={}",
+                     request.source_ue_index,
+                     *target.xnc_index);
+      continue;
+    }
+
+    xnap_handover_request ho_request = generate_xnap_handover_request(
+        request.source_ue_index,
+        target.cgi,
+        served_guami.value(),
+        source_amf_ue_id,
+        ue->get_ue_ambr(),
+        ue->get_security_manager().get_security_context(),
+        ue->get_up_resource_manager().get_pdu_sessions_map(),
+        ue->get_rrc_ue()->get_rrc_ue_control_message_handler().get_packed_handover_preparation_message(),
+        ue->get_location_manager().get_location_reporting_request());
+
+    ho_request.is_conditional_handover = true;
+    ho_request.cho_timeout             = request.timeout;
+
+    // Pre-populate candidate with input fields; response fields filled in by the wrapper below.
+    cu_cp_cho_candidate cand = {};
+    cand.cond_recfg_id       = static_cast<cond_recfg_id_t>(i + 1);
+    cand.target_pci          = target.pci;
+    cand.target_cgi          = target.cgi;
+    cand.xnc_index           = target.xnc_index;
+
+    tasks.push_back(launch_async([cand, xnap, ho_request, resp = xnap_handover_preparation_response{}](
+                                     coro_context<async_task<cu_cp_cho_candidate>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_AWAIT_VALUE(resp, xnap->handle_handover_request_required(ho_request));
+      if (resp.success) {
+        cand.prepared_rrc_recfg          = std::move(resp.packed_rrc_recfg);
+        cand.rrc_reconfig_transaction_id = resp.rrc_transaction_id;
+        cand.peer_xnap_ue_id             = resp.peer_xnap_ue_id;
+      }
+      CORO_RETURN(cand);
+    }));
+  }
+
+  return tasks;
+}
+
 std::vector<async_task<cu_cp_cho_candidate>> conditional_handover_coordinator_routine::build_all_prep_tasks()
 {
-  return build_intra_cu_prep_tasks();
+  std::vector<async_task<cu_cp_cho_candidate>> all_tasks = build_intra_cu_prep_tasks();
+  std::vector<async_task<cu_cp_cho_candidate>> inter_cu  = build_inter_cu_prep_tasks();
+  all_tasks.insert(all_tasks.end(), std::make_move_iterator(inter_cu.begin()), std::make_move_iterator(inter_cu.end()));
+  return all_tasks;
 }
 
 void conditional_handover_coordinator_routine::operator()(coro_context<async_task<cu_cp_intra_cu_cho_response>>& ctx)
@@ -120,7 +221,7 @@ void conditional_handover_coordinator_routine::operator()(coro_context<async_tas
     }
   }
 
-  // Phase 1: CHO Preparation — launch all candidates in parallel.
+  // Phase 1: CHO Preparation — launch all intra-CU and inter-CU candidates in parallel.
   source_ue->get_cho_context()->state = cu_cp_ue_cho_context::state_t::targets_preparation;
   CORO_AWAIT_VALUE(all_candidates, when_all(build_all_prep_tasks()));
 
@@ -131,14 +232,17 @@ void conditional_handover_coordinator_routine::operator()(coro_context<async_tas
 
   // Process all preparation responses uniformly.
   for (auto& candidate : all_candidates) {
-    if (candidate.target_ue_index == cu_cp_ue_index_t::invalid) {
+    const bool success = candidate.is_inter_cu() ? candidate.peer_xnap_ue_id != peer_xnap_ue_id_t::invalid
+                                                 : candidate.target_ue_index != cu_cp_ue_index_t::invalid;
+
+    if (!success) {
       logger.warning(
           "ue={}: CHO candidate preparation failed for target_pci={}", request.source_ue_index, candidate.target_pci);
       continue;
     }
 
-    if (candidate.target_ue_index != request.source_ue_index) {
-      // Set source_ue_idx on target UE so it can be found during CHO completion.
+    if (!candidate.is_inter_cu() && candidate.target_ue_index != request.source_ue_index) {
+      // Set source_ue_idx on intra-CU target UE so it can be found during CHO completion.
       auto* target_ue_ptr = ue_mng.find_du_ue(candidate.target_ue_index);
       if (target_ue_ptr != nullptr) {
         target_ue_ptr->get_cho_context().emplace();
@@ -182,7 +286,8 @@ void conditional_handover_coordinator_routine::operator()(coro_context<async_tas
   // Start cancellation timer. Fires conditional_handover_cancellation_routine if UE never executes CHO.
   cu_cp_handler.initialize_cho_execution_timer(request.source_ue_index, request.timeout);
 
-  // Phase 3: CHO completion is handled asynchronously by conditional_handover_source_routine after Access Success.
+  // Phase 3: CHO completion is handled asynchronously by conditional_handover_source_routine after Access Success,
+  // or by inter_cu_cho_source_completion_routine after HandoverSuccess from the winning target CU-CP.
 
   logger.debug("ue={}: \"{}\" finished successfully", source_ue->get_ue_index(), name());
   response.success = true;

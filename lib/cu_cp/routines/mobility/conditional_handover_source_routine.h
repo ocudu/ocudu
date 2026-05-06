@@ -6,6 +6,7 @@
 
 #include "../../cu_cp_impl_interface.h"
 #include "../../ue_manager/ue_manager_impl.h"
+#include "../../xnap_repository.h"
 #include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/support/async/async_task.h"
 
@@ -22,6 +23,7 @@ class conditional_handover_source_routine
 public:
   conditional_handover_source_routine(const cu_cp_access_success_indication& msg_,
                                       ue_manager&                            ue_mng_,
+                                      xnap_repository*                       xnap_db_,
                                       ocudulog::basic_logger&                logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
@@ -32,6 +34,7 @@ private:
   const cu_cp_access_success_indication msg;
 
   ue_manager&             ue_mng;
+  xnap_repository*        xnap_db;
   ocudulog::basic_logger& logger;
 
   cu_cp_ue*            source_ue = nullptr;

@@ -4,6 +4,9 @@
 
 #pragma once
 
+#include "../../ngap_repository.h"
+#include "../../ue_manager/cu_cp_ue_impl.h"
+#include "../../xnap_repository.h"
 #include "conditional_handover_reconfiguration_routine.h"
 #include "ocudu/cu_cp/cu_cp_cho_types.h"
 #include "ocudu/cu_cp/cu_cp_intra_cu_ho_types.h"
@@ -20,7 +23,7 @@ class ue_manager;
 class cu_cp_impl_interface;
 class du_processor_repository;
 
-/// \brief Coordinates full intra-CU CHO flow: preparation and execution/cancellation decision.
+/// \brief Coordinates full CHO flow (intra-CU and inter-CU via Xn): preparation and execution/cancellation decision.
 class conditional_handover_coordinator_routine
 {
 public:
@@ -29,6 +32,8 @@ public:
                                            cu_cp_impl_interface&             cu_cp_handler_,
                                            ue_manager&                       ue_mng_,
                                            mobility_manager&                 mobility_mng_,
+                                           ngap_repository&                  ngap_db_,
+                                           xnap_repository*                  xnap_db_,
                                            ocudulog::basic_logger&           logger_);
 
   void operator()(coro_context<async_task<cu_cp_intra_cu_cho_response>>& ctx);
@@ -41,6 +46,8 @@ private:
   cu_cp_impl_interface&            cu_cp_handler;
   ue_manager&                      ue_mng;
   mobility_manager&                mobility_mng; // needed for intra_cu_handover_routine
+  ngap_repository&                 ngap_db;
+  xnap_repository*                 xnap_db; // nullable; null when no Xn peers are configured
   ocudulog::basic_logger&          logger;
 
   cu_cp_intra_cu_cho_response response{};
@@ -55,7 +62,12 @@ private:
   /// Only candidates without xnc_index (intra-CU) are included.
   std::vector<async_task<cu_cp_cho_candidate>> build_intra_cu_prep_tasks();
 
-  /// \brief Builds the merged task vector of all candidate preparation tasks.
+  /// \brief Builds one CHO preparation task per inter-CU candidate.
+  /// Each task returns a cu_cp_cho_candidate; peer_xnap_ue_id is invalid on failure.
+  /// Only candidates with xnc_index set (inter-CU via Xn) are included.
+  std::vector<async_task<cu_cp_cho_candidate>> build_inter_cu_prep_tasks();
+
+  /// \brief Builds the merged task vector of all intra-CU and inter-CU candidate preparation tasks.
   std::vector<async_task<cu_cp_cho_candidate>> build_all_prep_tasks();
 };
 

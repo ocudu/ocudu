@@ -405,7 +405,7 @@ cu_cp_impl::handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti,
       old_ue->get_cho_context()->role == cu_cp_ue_cho_context::role_t::source &&
       !old_ue->get_cho_context()->candidates.empty()) {
     logger.debug("ue={}: Cancelling CHO on reestablishment", old_ue_index);
-    cancel_cho_candidates(*old_ue, ue_mng);
+    cancel_cho_candidates(*old_ue, ue_mng, &xnap_db);
     old_ue->get_cho_context()->clear();
   }
 
@@ -710,7 +710,7 @@ async_task<void> cu_cp_impl::handle_ue_context_release(const cu_cp_ue_context_re
 
 async_task<void> cu_cp_impl::handle_access_success(const cu_cp_access_success_indication& msg)
 {
-  return launch_async<conditional_handover_source_routine>(msg, ue_mng, logger);
+  return launch_async<conditional_handover_source_routine>(msg, ue_mng, &xnap_db, logger);
 }
 
 async_task<rrc_resume_request_response> cu_cp_impl::handle_rrc_resume_request(const cu_cp_rrc_resume_request& request)
@@ -1398,7 +1398,8 @@ cu_cp_impl::handle_intra_cu_cho_request(const cu_cp_intra_cu_cho_request& reques
       CORO_RETURN(cu_cp_intra_cu_cho_response{});
     });
   }
-  return launch_async<conditional_handover_coordinator_routine>(request, du_db, *this, ue_mng, mobility_mng, logger);
+  return launch_async<conditional_handover_coordinator_routine>(
+      request, du_db, *this, ue_mng, mobility_mng, ngap_db, &xnap_db, logger);
 }
 
 void cu_cp_impl::handle_intra_cell_handover_required(cu_cp_ue_index_t ue_index)
@@ -1442,7 +1443,7 @@ async_task<void> cu_cp_impl::handle_ue_removal_request(cu_cp_ue_index_t ue_index
   if (ue->get_cho_context().has_value() && ue->get_cho_context()->role == cu_cp_ue_cho_context::role_t::source &&
       !ue->get_cho_context()->candidates.empty()) {
     logger.debug("ue={}: Cancelling CHO as source UE is being removed", ue_index);
-    cancel_cho_candidates(*ue, ue_mng);
+    cancel_cho_candidates(*ue, ue_mng, &xnap_db);
     ue->get_cho_context()->clear();
   }
 
@@ -1595,7 +1596,7 @@ void cu_cp_impl::initialize_cho_execution_timer(cu_cp_ue_index_t ue_index, std::
       return;
     }
     ue2->get_task_sched().schedule_async_task(
-        launch_async<conditional_handover_cancellation_routine>(ue_index, ue_mng, logger));
+        launch_async<conditional_handover_cancellation_routine>(ue_index, ue_mng, &xnap_db, logger));
   });
   ue->get_cho_context()->cho_execution_timer.run();
   logger.debug("ue={}: CHO execution timer started ({}ms)", ue_index, timeout.count());
