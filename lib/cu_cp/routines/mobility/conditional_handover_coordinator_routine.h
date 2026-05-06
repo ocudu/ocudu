@@ -45,13 +45,18 @@ private:
 
   cu_cp_intra_cu_cho_response response{};
 
-  cu_cp_ue*                                     source_ue = nullptr;
-  std::vector<cu_cp_intra_cu_handover_response> prep_responses;
-  cu_cp_cho_reconfiguration_request             cho_reconfig_request;
-  bool                                          cho_reconfig_result = false;
+  cu_cp_ue*                         source_ue = nullptr;
+  std::vector<cu_cp_cho_candidate>  all_candidates;
+  cu_cp_cho_reconfiguration_request cho_reconfig_request;
+  bool                              cho_reconfig_result = false;
 
-  /// \brief Builds one intra-CU handover task per candidate target.
-  std::vector<async_task<cu_cp_intra_cu_handover_response>> build_prep_tasks();
+  /// \brief Builds one CHO preparation task per intra-CU candidate.
+  /// Each task returns a cu_cp_cho_candidate; target_ue_index is invalid on failure.
+  /// Only candidates without xnc_index (intra-CU) are included.
+  std::vector<async_task<cu_cp_cho_candidate>> build_intra_cu_prep_tasks();
+
+  /// \brief Builds the merged task vector of all candidate preparation tasks.
+  std::vector<async_task<cu_cp_cho_candidate>> build_all_prep_tasks();
 };
 
 } // namespace ocucp
