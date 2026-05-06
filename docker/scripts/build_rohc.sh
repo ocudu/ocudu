@@ -31,6 +31,7 @@ main() {
     tar -xf "${rohc_archive}"
 
     pushd "${rohc_name}-${rohc_version}"
+    export PATH="/bin:${PATH}"
     ./autogen.sh
     ./configure --prefix=/opt/rohc
     make all -j"${ncores}"

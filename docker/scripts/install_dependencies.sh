@@ -137,7 +137,7 @@ install_dependencies_arch() {
     local -a pkgs=()
 
     local -a build_pkgs=(
-        cmake make base-devel fftw mbedtls yaml-cpp lksctp-tools gtest pkgconf
+        cmake fftw mbedtls yaml-cpp lksctp-tools gtest pkgconf
     )
     local -a run_pkgs=(
         fftw mbedtls yaml-cpp lksctp-tools gtest libcap

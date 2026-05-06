@@ -823,3 +823,16 @@ image-build-publish [archlinux, latest, amd64]:
     OS_VERSION: latest
     PLATFORM: amd64
     MULTI_ARCH_BUILD: ""
+
+################################################################################
+# Fedora
+################################################################################
+image-build-publish [fedora, 44, amd64]:
+  extends:
+    - .image-build-publish
+  variables:
+    OS_FAMILY: fedora
+    OS_NAME: fedora
+    OS_VERSION: "44"
+    PLATFORM: amd64
+    MULTI_ARCH_BUILD: ""

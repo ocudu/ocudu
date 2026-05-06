@@ -58,10 +58,19 @@ ocudu image:
       if [ -z "${CPU_JOBS}" ] || [ "${CPU_JOBS}" -lt 1 ]; then
         CPU_JOBS=1
       fi
-      export NAME="ocudu_nightly_${SUFFIX}"
+      if [ -n "${OS}" ]; then
+        export NAME="ocudu_alt_os_${OS}_${OS_VERSION}_${SUFFIX}"
+        export OS_BUILD_ARGS="OS=${OS};OS_VERSION=${OS_VERSION}"
+      else
+        export NAME="ocudu_nightly_${SUFFIX}"
+      fi
       export VERSION="$(git show -s --date=format:%Y%m%d --format=%cd ${CI_COMMIT_SHA})_${CI_COMMIT_SHORT_SHA}"
       echo "CI_SHARED_OCUDU_IMAGE_VERSION=${VERSION}" >> variables.env
-      export BUILD_ARGS="UHD_VERSION=${DOCKER_UHD_VERSION};DPDK_VERSION=${DOCKER_DPDK_VERSION};MARCH=${MARCH};NUM_JOBS=${CPU_JOBS};EXTRA_CMAKE_ARGS=\"${EXTRA_CMAKE_ARGS}\""
+      if [ -n "${OS_BUILD_ARGS}" ]; then
+        export BUILD_ARGS="${OS_BUILD_ARGS};UHD_VERSION=${DOCKER_UHD_VERSION};DPDK_VERSION=${DOCKER_DPDK_VERSION};MARCH=${MARCH};NUM_JOBS=${CPU_JOBS};EXTRA_CMAKE_ARGS=\"${EXTRA_CMAKE_ARGS}\""
+      else
+        export BUILD_ARGS="UHD_VERSION=${DOCKER_UHD_VERSION};DPDK_VERSION=${DOCKER_DPDK_VERSION};MARCH=${MARCH};NUM_JOBS=${CPU_JOBS};EXTRA_CMAKE_ARGS=\"${EXTRA_CMAKE_ARGS}\""
+      fi
   artifacts:
     reports:
       dotenv: variables.env
@@ -97,6 +106,28 @@ ocudu image:
         MARCH: neoverse-n1+crc+crypto+ssbs # keep using MARCH as a job variable here. It's converted to mcpu in the dockerfile
         TAG: arm64
         PLATFORM: arm64
+  needs: []
+
+ocudu image alternative os:
+  extends: ocudu image
+  rules:
+    - if: $SKIP_OCUDU_BUILDING_CONTAINERS_CI
+      when: never
+    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Alternative OSs/
+  variables:
+    MODE: build
+  parallel:
+    matrix:
+      - OS: debian
+        OS_VERSION: "13"
+        SUFFIX: amd64
+        MARCH: x86-64-v3
+        PLATFORM: amd64
+      - OS: fedora
+        OS_VERSION: "44"
+        SUFFIX: amd64
+        MARCH: x86-64-v3
+        PLATFORM: amd64
   needs: []
 
 ocudu image update latest:

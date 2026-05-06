@@ -53,6 +53,100 @@ install_dpdk_dependencies_debian_ubuntu() {
     fi
 }
 
+install_dpdk_dependencies_fedora() {
+    local mode="${1:?}"
+    local -a pkgs=()
+    local -a pip_pkgs=()
+
+    local -a build_pkgs=(
+        curl ca-certificates xz
+        python3-pip ninja-build gcc gcc-c++ make pkgconf-pkg-config numactl-devel libfdt-devel pciutils
+    )
+    local -a extra_pkgs=(
+        libatomic iproute
+    )
+    local -a run_pkgs=(
+        python3-pip numactl-devel pciutils libfdt libatomic iproute
+    )
+    local -a pip_build_pkgs=(meson pyelftools)
+    local -a pip_run_pkgs=(pyelftools)
+
+    case "$mode" in
+        all)
+            pkgs+=( "${build_pkgs[@]}" "${extra_pkgs[@]}" )
+            pip_pkgs+=( "${pip_build_pkgs[@]}" )
+            ;;
+        build)
+            pkgs+=( "${build_pkgs[@]}" )
+            pip_pkgs+=( "${pip_build_pkgs[@]}" )
+            ;;
+        run)
+            pkgs+=( "${run_pkgs[@]}" )
+            pip_pkgs+=( "${pip_run_pkgs[@]}" )
+            ;;
+        *)
+            echo >&2 "Unsupported mode: $mode"
+            exit 1
+            ;;
+    esac
+
+    if ((${#pkgs[@]})); then
+        dnf -y install "${pkgs[@]}"
+        dnf clean all
+    fi
+
+    if ((${#pip_pkgs[@]})); then
+        pip3 install "${pip_pkgs[@]}" --break-system-packages
+    fi
+}
+
+install_dpdk_dependencies_arch() {
+    local mode="${1:?}"
+    local -a pkgs=()
+    local -a pip_pkgs=()
+
+    local -a build_pkgs=(
+        curl ca-certificates xz
+        python-pip ninja base-devel pkgconf numactl dtc pciutils
+    )
+    local -a extra_pkgs=(
+        iproute2
+    )
+    local -a run_pkgs=(
+        python-pip numactl dtc pciutils iproute2
+    )
+    local -a pip_build_pkgs=(meson pyelftools)
+    local -a pip_run_pkgs=(pyelftools)
+
+    case "$mode" in
+        all)
+            pkgs+=( "${build_pkgs[@]}" "${extra_pkgs[@]}" )
+            pip_pkgs+=( "${pip_build_pkgs[@]}" )
+            ;;
+        build)
+            pkgs+=( "${build_pkgs[@]}" )
+            pip_pkgs+=( "${pip_build_pkgs[@]}" )
+            ;;
+        run)
+            pkgs+=( "${run_pkgs[@]}" )
+            pip_pkgs+=( "${pip_run_pkgs[@]}" )
+            ;;
+        *)
+            echo >&2 "Unsupported mode: $mode"
+            exit 1
+            ;;
+    esac
+
+    if ((${#pkgs[@]})); then
+        pacman -Syu --noconfirm "${pkgs[@]}"
+        pacman -Scc --noconfirm
+    fi
+
+    if ((${#pip_pkgs[@]})); then
+        pip3 install "${pip_pkgs[@]}" --break-system-packages
+    fi
+}
+
 main() {
 
     if [ $# != 0 ] && [ $# != 1 ]; then
@@ -70,6 +164,12 @@ main() {
     case "$ID" in
         debian|ubuntu)
             install_dpdk_dependencies_debian_ubuntu "$mode"
+            ;;
+        fedora)
+            install_dpdk_dependencies_fedora "$mode"
+            ;;
+        arch)
+            install_dpdk_dependencies_arch "$mode"
             ;;
         *)
             echo "OS $ID not supported"

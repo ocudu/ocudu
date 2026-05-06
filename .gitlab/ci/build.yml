@@ -797,6 +797,39 @@ debian 13 avx512:
     matrix:
       - <<: *basic_combinations
 
+fedora 44 avx2:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Alternative OSs/
+      when: delayed
+      start_in: 6 hours
+  variables:
+    OS: fedora-44
+    ENABLE_WERROR: "False"
+    MARCH: x86-64-v3
+  parallel:
+    matrix:
+      - <<: *basic_combinations
+
+fedora 44 avx512:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Alternative OSs/
+      when: delayed
+      start_in: 7 hours
+  variables:
+    OS: fedora-44
+    ENABLE_WERROR: "False"
+    MARCH: x86-64-v4
+    TEST_MODE: full
+  tags:
+    - ${OCUDU_RUNNER_TAG}-amd64
+    - avx512
+    - sctp
+  parallel:
+    matrix:
+      - <<: *basic_combinations
+
 ##########
 # Weekly #
 ##########

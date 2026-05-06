@@ -28,6 +28,7 @@ main() {
         -DENABLE_PYTHON_API=Off \
         -DENABLE_EXAMPLES=Off \
         -DENABLE_TESTS=Off \
+        -DBoost_NO_BOOST_CMAKE=ON \
         -DCMAKE_CXX_FLAGS="${arch}" ..
     cmake --build . -- -j"${ncores}"
     cmake --install .

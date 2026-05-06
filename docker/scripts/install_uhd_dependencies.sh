@@ -16,12 +16,64 @@ install_uhd_dependencies_debian_ubuntu() {
         python3-mako python3-numpy python3-setuptools python3-requests
     )
     local -a run_pkgs=(
-        cpufrequtils inetutils-tools libboost-all-dev libncurses5-dev libusb-1.0-0 libusb-1.0-0-dev
+        inetutils-tools libboost-all-dev libncurses5-dev libusb-1.0-0 libusb-1.0-0-dev
         libusb-dev python3-dev python3-requests
     )
     local -a extra_pkgs=(
-        cpufrequtils inetutils-tools libncurses5-dev libusb-1.0-0 libusb-1.0-0-dev
+        inetutils-tools libncurses5-dev libusb-1.0-0 libusb-1.0-0-dev
         libusb-dev python3-dev
+    )
+    local -a optional_pkgs=()
+
+    case "$mode" in
+        all)
+            pkgs+=( "${build_pkgs[@]}" "${extra_pkgs[@]}" )
+            optional_pkgs+=(cpufrequtils)
+            ;;
+        build)
+            pkgs+=( "${build_pkgs[@]}" )
+            ;;
+        run)
+            pkgs+=( "${run_pkgs[@]}" )
+            optional_pkgs+=(cpufrequtils)
+            ;;
+        *)
+            echo >&2 "Unsupported mode: $mode"
+            exit 1
+            ;;
+    esac
+
+    if ((${#pkgs[@]})); then
+        DEBIAN_FRONTEND=noninteractive apt-get update
+        for pkg in "${optional_pkgs[@]}"; do
+            if apt-cache policy "$pkg" | awk '$1 == "Candidate:" && $2 != "(none)" { found = 1 } END { exit !found }'; then
+                pkgs+=("$pkg")
+            fi
+        done
+        DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${pkgs[@]}"
+        apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/*
+    fi
+
+    if [[ "$mode" == "all" || "$mode" == "run" ]]; then
+        uhd_images_downloader
+    fi
+}
+
+install_uhd_dependencies_fedora() {
+    local mode="${1:?}"
+    local -a pkgs=()
+
+    local -a build_pkgs=(
+        curl ca-certificates xz
+        cmake gcc gcc-c++ make pkgconf-pkg-config
+        boost-devel libusb1-devel
+        python3-mako python3-numpy python3-setuptools python3-requests
+    )
+    local -a run_pkgs=(
+        boost-devel libusb1 libusb1-devel python3-devel python3-requests
+    )
+    local -a extra_pkgs=(
+        boost-devel libusb1 libusb1-devel python3-devel
     )
 
     case "$mode" in
@@ -41,9 +93,51 @@ install_uhd_dependencies_debian_ubuntu() {
     esac
 
     if ((${#pkgs[@]})); then
-        DEBIAN_FRONTEND=noninteractive apt-get update
-        DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${pkgs[@]}"
-        apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/*
+        dnf -y install "${pkgs[@]}"
+        dnf clean all
+    fi
+
+    if [[ "$mode" == "all" || "$mode" == "run" ]]; then
+        uhd_images_downloader
+    fi
+}
+
+install_uhd_dependencies_arch() {
+    local mode="${1:?}"
+    local -a pkgs=()
+
+    local -a build_pkgs=(
+        curl ca-certificates xz
+        cmake base-devel pkgconf
+        boost boost-libs libusb
+        python-mako python-numpy python-setuptools python-requests
+    )
+    local -a run_pkgs=(
+        boost boost-libs libusb python python-requests
+    )
+    local -a extra_pkgs=(
+        boost boost-libs libusb python
+    )
+
+    case "$mode" in
+        all)
+            pkgs+=( "${build_pkgs[@]}" "${extra_pkgs[@]}" )
+            ;;
+        build)
+            pkgs+=( "${build_pkgs[@]}" )
+            ;;
+        run)
+            pkgs+=( "${run_pkgs[@]}" )
+            ;;
+        *)
+            echo >&2 "Unsupported mode: $mode"
+            exit 1
+            ;;
+    esac
+
+    if ((${#pkgs[@]})); then
+        pacman -Syu --noconfirm "${pkgs[@]}"
+        pacman -Scc --noconfirm
     fi
 
     if [[ "$mode" == "all" || "$mode" == "run" ]]; then
@@ -68,6 +162,12 @@ main() {
     case "$ID" in
         debian|ubuntu)
             install_uhd_dependencies_debian_ubuntu "$mode"
+            ;;
+        fedora)
+            install_uhd_dependencies_fedora "$mode"
+            ;;
+        arch)
+            install_uhd_dependencies_arch "$mode"
             ;;
         *)
             echo "OS $ID not supported"
