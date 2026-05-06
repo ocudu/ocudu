@@ -578,6 +578,16 @@ rrc_ue_impl::get_rrc_ue_handover_reconfiguration_context(const rrc_reconfigurati
 
   if (request.is_cho_preparation) {
     // CHO Preparation: Plain ASN.1, no DL-DCCH wrapper, no PDCP. Embedded in condRRCReconfiguration-r16.
+    // Extract T304 from MasterCellGroup so the target execution routine can use it for the reconfiguration timeout.
+    if (request.non_crit_ext.has_value() && !request.non_crit_ext->master_cell_group.empty()) {
+      asn1::rrc_nr::cell_group_cfg_s cell_group_cfg;
+      asn1::cbit_ref                 bref(request.non_crit_ext->master_cell_group);
+      if (cell_group_cfg.unpack(bref) == asn1::OCUDUASN_SUCCESS && cell_group_cfg.sp_cell_cfg_present &&
+          cell_group_cfg.sp_cell_cfg.recfg_with_sync_present) {
+        context.cell.timers.t304 =
+            std::chrono::milliseconds{cell_group_cfg.sp_cell_cfg.recfg_with_sync.t304.to_number()};
+      }
+    }
     rrc_recfg_s rrc_recfg;
     rrc_recfg.crit_exts.set_rrc_recfg();
     fill_asn1_rrc_reconfiguration_msg(rrc_recfg, ho_reconf_ctxt.transaction_id, request);
