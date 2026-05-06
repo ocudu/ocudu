@@ -506,10 +506,13 @@ static expected<sib3_info, std::string> parse_sib3(const nlohmann::json& content
         return make_unexpected(start_exp.error());
       }
       auto range_it = excl_obj.find("range");
-      if (range_it == excl_obj.end() || !range_it->is_number_integer() || range_it->get<int64_t>() < 0) {
+      if (range_it == excl_obj.end() || !range_it->is_number_integer()) {
         return make_unexpected("'range' missing or not a non-negative integer in excluded list entry");
       }
-      const unsigned range_val = range_it->get<unsigned>();
+      const int64_t range_val = range_it->get<int64_t>();
+      if (range_val < 0) {
+        return make_unexpected("'range' missing or not a non-negative integer in excluded list entry");
+      }
       // pci_range_t::range_t enum values equal the integer widths (n4 = 4, n1008 = 1008).
       pci_range_t pci_range;
       pci_range.start = start_exp.value();

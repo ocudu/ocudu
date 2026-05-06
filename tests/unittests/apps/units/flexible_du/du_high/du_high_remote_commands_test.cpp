@@ -578,6 +578,71 @@ TEST(sib_update_remote_command, sib3_invalid_q_offset_cell_value_returns_error)
   EXPECT_NE(res.error().find("q_offset_cell"), std::string::npos) << "actual: " << res.error();
 }
 
+// Narrowing-wrap regression tests for the enum-mapped helpers (parse_q_hyst_db,
+// parse_q_offset_range, parse_sib3 range parsing). With get<int> / get<unsigned>
+// the JSON value would static_cast onto a 32-bit type and could land on a valid
+// switch case; reading into int64_t preserves the original value so the switch
+// default catches it.
+
+TEST(sib_update_remote_command, sib2_q_hyst_db_wrap_to_valid_case_rejected)
+{
+  capturing_du_configurator mock;
+  sib_update_remote_command cmd{mock};
+
+  auto cell = make_cell_skeleton();
+  // 2^32 = 4294967296: get<int> would static_cast to 0 (a valid q_hyst_db case);
+  // get<int64_t> preserves the value so the switch falls through to default.
+  cell["sib"] = {{"type", "sib2"},
+                 {"content",
+                  {{"q_hyst_db", 4294967296LL},
+                   {"thresh_serving_low_p", 14},
+                   {"cell_reselection_priority", 4},
+                   {"q_rx_lev_min", -70},
+                   {"s_intra_search_p", 31},
+                   {"t_reselection_nr", 1}}}};
+
+  auto res = cmd.execute(wrap(cell));
+  ASSERT_FALSE(res.has_value());
+  EXPECT_NE(res.error().find("q_hyst_db"), std::string::npos) << "actual: " << res.error();
+  EXPECT_NE(res.error().find("invalid"), std::string::npos) << "actual: " << res.error();
+}
+
+TEST(sib_update_remote_command, sib3_q_offset_cell_wrap_to_valid_case_rejected)
+{
+  capturing_du_configurator mock;
+  sib_update_remote_command cmd{mock};
+
+  auto cell = make_cell_skeleton();
+  // 2^32 = 4294967296: get<int> would static_cast to 0 (a valid q_offset_range case);
+  // get<int64_t> preserves the value so the switch falls through to default.
+  cell["sib"] = {
+      {"type", "sib3"},
+      {"content",
+       {{"intra_freq_neigh_cell_list", nlohmann::json::array({{{"pci", 47}, {"q_offset_cell", 4294967296LL}}})}}}};
+
+  auto res = cmd.execute(wrap(cell));
+  ASSERT_FALSE(res.has_value());
+  EXPECT_NE(res.error().find("q_offset_cell"), std::string::npos) << "actual: " << res.error();
+}
+
+TEST(sib_update_remote_command, sib3_excluded_range_wrap_to_valid_case_rejected)
+{
+  capturing_du_configurator mock;
+  sib_update_remote_command cmd{mock};
+
+  auto cell = make_cell_skeleton();
+  // 2^32 + 1 = 4294967297: get<unsigned> would static_cast to 1 (a valid pci_range case);
+  // get<int64_t> preserves the value so the switch falls through to default.
+  cell["sib"] = {
+      {"type", "sib3"},
+      {"content",
+       {{"intra_freq_excluded_cell_list", nlohmann::json::array({{{"pci_start", 100}, {"range", 4294967297LL}}})}}}};
+
+  auto res = cmd.execute(wrap(cell));
+  ASSERT_FALSE(res.has_value());
+  EXPECT_NE(res.error().find("range"), std::string::npos) << "actual: " << res.error();
+}
+
 TEST(sib_update_remote_command, sib4_arfcn_out_of_range_returns_error)
 {
   // Above the 3GPP NR-ARFCN max of 3279165; without a range check, uint32_t truncation would
