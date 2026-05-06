@@ -271,7 +271,7 @@ void rrc_reestablishment_procedure::create_srb1()
   srb_notifier.create_srb(srb1_msg);
 
   // Activate SRB1 PDCP security.
-  rrc_ue_reest_notifier.on_new_as_security_context();
+  rrc_ue_reest_notifier.on_new_as_security_context(/* security_mode_active */ true);
 }
 
 void rrc_reestablishment_procedure::send_rrc_reestablishment()

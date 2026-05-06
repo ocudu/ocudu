@@ -380,7 +380,7 @@ void rrc_ue_impl::handle_rrc_transaction_complete(const ul_dcch_msg_s& msg, uint
 rrc_ue_security_mode_command_context rrc_ue_impl::get_security_mode_command_context()
 {
   // Activate SRB1 PDCP security.
-  on_new_as_security_context();
+  on_new_as_security_context(/* security_mode_active */ false);
 
   rrc_ue_security_mode_command_context smc_ctxt;
 

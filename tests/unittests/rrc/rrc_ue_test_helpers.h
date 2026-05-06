@@ -195,7 +195,7 @@ protected:
     }
 
     // Configure PDCP entity security on SRB1.
-    rrc_ue->on_new_as_security_context();
+    rrc_ue->on_new_as_security_context(false);
 
     return true;
   }

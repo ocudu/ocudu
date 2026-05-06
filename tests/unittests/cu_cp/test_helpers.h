@@ -820,7 +820,7 @@ public:
   bool is_conditional_handover_time_based_supported() const override { return true; }
 
   // RRC UE Reestablishment proc notifier.
-  void on_new_as_security_context() override {}
+  void on_new_as_security_context(bool security_mode_active) override {}
 
   // Interface functions.
   rrc_ue_controller&              get_controller() override { return *this; }

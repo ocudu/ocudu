@@ -141,7 +141,7 @@ private:
 
   // rrc_ue_security_mode_command_proc_notifier
   void on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg) override;
-  void on_new_as_security_context() override;
+  void on_new_as_security_context(bool security_mode_active) override;
 
   rrc_ue_logger                   logger;
   rrc_ue_context_t                context;

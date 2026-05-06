@@ -159,8 +159,14 @@ public:
   virtual void on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg) = 0;
 
   /// \brief Refresh AS security keys after horizontal key derivation.
+  ///
   /// This includes configuring the PDCP entity security on SRB1 with the new AS keys.
-  virtual void on_new_as_security_context() = 0;
+  /// If \p security_mode_active is \c true, the SRB1 will be configured with strict integrity check. Otherwise the
+  /// PDCP RX of SRB1 will be configured in SMC transition mode to also allow reception of in-flight PDUs without
+  /// integrity protection. The strict integrity check is activated later upon reception of security mode complete.
+  ///
+  /// \param[in] security_mode_present Indicates whether the UE is already in security mode or not (yet).
+  virtual void on_new_as_security_context(bool security_mode_active) = 0;
 };
 
 /// Interface to notify about NGAP messages.
