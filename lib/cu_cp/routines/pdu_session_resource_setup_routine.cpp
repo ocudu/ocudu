@@ -5,6 +5,7 @@
 #include "pdu_session_resource_setup_routine.h"
 #include "pdu_session_routine_helpers.h"
 #include "ocudu/ran/cause/common.h"
+#include "ocudu/ran/cause/e1ap_cause.h"
 #include "ocudu/ran/cause/e1ap_cause_converters.h"
 #include "ocudu/ran/cause/ngap_cause.h"
 
@@ -14,7 +15,7 @@ using namespace asn1::rrc_nr;
 
 // Free function to amend to the final procedure response message. This will take the results from the various
 // sub-procedures and update the succeeded/failed fields.
-bool handle_bearer_context_modification_response(
+static bool handle_bearer_context_modification_response(
     cu_cp_pdu_session_resource_setup_response&       response_msg,
     f1ap_ue_context_modification_request&            ue_context_mod_request,
     up_config_update&                                next_config,
@@ -25,30 +26,31 @@ bool handle_bearer_context_modification_response(
     ocudulog::basic_logger&                          logger);
 
 // Same as above but taking the result from E1AP Bearer Context Setup message.
-bool handle_bearer_context_setup_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
-                                          f1ap_ue_context_modification_request&           ue_context_mod_request,
-                                          const cu_cp_pdu_session_resource_setup_request& setup_msg,
-                                          const e1ap_bearer_context_setup_response&       bearer_context_setup_response,
-                                          up_config_update&                               next_config,
-                                          up_resource_manager&                            up_resource_mng_,
-                                          const security_indication_t&                    default_security_indication,
-                                          ocudulog::basic_logger&                         logger);
+static bool
+handle_bearer_context_setup_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
+                                     f1ap_ue_context_modification_request&           ue_context_mod_request,
+                                     const cu_cp_pdu_session_resource_setup_request& setup_msg,
+                                     const e1ap_bearer_context_setup_response&       bearer_context_setup_response,
+                                     up_config_update&                               next_config,
+                                     up_resource_manager&                            up_resource_mng_,
+                                     const security_indication_t&                    default_security_indication,
+                                     ocudulog::basic_logger&                         logger);
 
 // This method takes the F1AP UE Context Modification Response message and pre-fills the subsequent
 // bearer context modification message to be send to the CU-UP.
 // In case of a negative outcome it also prefills the final PDU session resource setup respone message.
-bool handle_ue_context_modification_response(
-    cu_cp_pdu_session_resource_setup_response&      response_msg,
-    e1ap_bearer_context_modification_request&       bearer_ctxt_mod_request,
-    const cu_cp_pdu_session_resource_setup_request& setup_msg,
-    const f1ap_ue_context_modification_response&    ue_context_modification_response,
-    const up_config_update&                         next_config,
-    const ocudulog::basic_logger&                   logger);
+static bool
+handle_ue_context_modification_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
+                                        e1ap_bearer_context_modification_request&       bearer_ctxt_mod_request,
+                                        const cu_cp_pdu_session_resource_setup_request& setup_msg,
+                                        const f1ap_ue_context_modification_response& ue_context_modification_response,
+                                        const up_config_update&                      next_config,
+                                        const ocudulog::basic_logger&                logger);
 
-bool handle_rrc_reconfiguration_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
-                                         const cu_cp_pdu_session_resource_setup_request& setup_msg,
-                                         bool                                            rrc_reconfig_result,
-                                         const ocudulog::basic_logger&                   logger);
+static bool handle_rrc_reconfiguration_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
+                                                const cu_cp_pdu_session_resource_setup_request& setup_msg,
+                                                bool                                            rrc_reconfig_result,
+                                                const ocudulog::basic_logger&                   logger);
 
 pdu_session_resource_setup_routine::pdu_session_resource_setup_routine(
     const cu_cp_pdu_session_resource_setup_request& setup_msg_,
@@ -183,6 +185,15 @@ void pdu_session_resource_setup_routine::operator()(
                                                  next_config,
                                                  logger)) {
       logger.warning("ue={}: \"{}\" failed to modify UE context at DU", setup_msg.ue_index, name());
+      if (next_config.initial_context_creation) {
+        // Notify CU-UP to release the bearer context that has been setup above.
+        CORO_AWAIT(e1ap_bearer_ctxt_mng.handle_bearer_context_release_command(
+            {setup_msg.ue_index, e1ap_cause_radio_network_t::interaction_with_other_proc}));
+      } else {
+        // Notify NGAP to request UE context release from AMF.
+        ue_task_sched.schedule_async_task(cu_cp_notifier.handle_ue_context_release(
+            {setup_msg.ue_index, {}, ngap_cause_radio_network_t::release_due_to_ngran_generated_reason}));
+      }
       CORO_EARLY_RETURN(
           handle_pdu_session_resource_setup_result(false, cause_protocol_t::msg_not_compatible_with_receiver_state));
     }
@@ -211,6 +222,9 @@ void pdu_session_resource_setup_routine::operator()(
                                                      default_security_indication,
                                                      logger)) {
       logger.warning("ue={}: \"{}\" failed to modify bearer at CU-UP", setup_msg.ue_index, name());
+      // Notify NGAP to request UE context release from AMF.
+      ue_task_sched.schedule_async_task(cu_cp_notifier.handle_ue_context_release(
+          {setup_msg.ue_index, {}, ngap_cause_radio_network_t::release_due_to_ngran_generated_reason}));
       CORO_EARLY_RETURN(
           handle_pdu_session_resource_setup_result(false, cause_protocol_t::msg_not_compatible_with_receiver_state));
     }
@@ -247,6 +261,9 @@ void pdu_session_resource_setup_routine::operator()(
                                   std::nullopt,
                                   logger)) {
         logger.warning("ue={}: \"{}\" Failed to fill RrcReconfiguration", setup_msg.ue_index, name());
+        // Notify NGAP to request UE context release from AMF.
+        ue_task_sched.schedule_async_task(cu_cp_notifier.handle_ue_context_release(
+            {setup_msg.ue_index, {}, ngap_cause_radio_network_t::release_due_to_ngran_generated_reason}));
         CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(
             false, cause_protocol_t::abstract_syntax_error_falsely_constructed_msg));
       }

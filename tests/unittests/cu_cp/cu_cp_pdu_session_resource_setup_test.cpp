@@ -274,16 +274,28 @@ TEST_F(cu_cp_pdu_session_resource_setup_test, when_bearer_context_setup_failure_
 
 TEST_F(cu_cp_pdu_session_resource_setup_test, when_ue_context_modification_failure_received_then_setup_fails)
 {
+  ngap_message pdu_session_resource_setup_request = generate_valid_pdu_session_resource_setup_request_message(
+      ue_ctx->amf_ue_id.value(), ue_ctx->ran_ue_id.value(), {{psi, {pdu_session_type_t::ipv4, {{qfi, 9}}}}});
+
   // Inject NGAP PDU Session Resource Setup Request and await Bearer Context Setup Request.
   ASSERT_TRUE(send_pdu_session_resource_setup_request_and_await_bearer_context_setup_request(
-      generate_valid_pdu_session_resource_setup_request_message(
-          ue_ctx->amf_ue_id.value(), ue_ctx->ran_ue_id.value(), {{psi, {pdu_session_type_t::ipv4, {{qfi, 9}}}}})));
+      pdu_session_resource_setup_request));
 
   // Inject Bearer Context Setup Response and await UE Context Modification Request.
   ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_modification_request());
 
-  // Inject UE Context Modification Failure and await PDU Session Resource Setup Response.
-  ASSERT_TRUE(send_ue_context_modification_failure_and_await_pdu_session_setup_response());
+  // Inject UE Context Modification Failure and validate E1AP cleanup for failed setup.
+  get_du(du_idx).push_ul_pdu(
+      test_helpers::generate_ue_context_modification_failure(ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value()));
+  ASSERT_TRUE(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_bearer_context_release_command(e1ap_pdu));
+
+  // Complete bearer context release and await failed PDU Session Resource Setup Response.
+  get_cu_up(cu_up_idx).push_tx_pdu(
+      generate_bearer_context_release_complete(ue_ctx->cu_cp_e1ap_id.value(), ue_ctx->cu_up_e1ap_id.value()));
+  ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_pdu_session_resource_setup_response(ngap_pdu));
+  ASSERT_TRUE(test_helpers::is_expected_pdu_session_resource_setup_response(ngap_pdu, {}, {psi}));
 }
 
 TEST_F(cu_cp_pdu_session_resource_setup_test, when_bearer_context_modification_failure_received_then_setup_fails)
