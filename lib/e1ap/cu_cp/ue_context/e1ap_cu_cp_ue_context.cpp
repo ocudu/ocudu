@@ -16,7 +16,7 @@ e1ap_ue_context* e1ap_ue_context_list::add_ue(ue_index_t ue_index, gnb_cu_cp_ue_
                fmt::underlying(cu_cp_ue_e1ap_id));
 
   if (ue_index_to_ue_e1ap_id.find(ue_index) != ue_index_to_ue_e1ap_id.end()) {
-    logger.error("ue={}: UE already exists", ue_index);
+    logger.error("ue={} cu_cp_ue_e1ap_id={}: UE already exists", ue_index, fmt::underlying(cu_cp_ue_e1ap_id));
     return nullptr;
   }
 
@@ -29,7 +29,9 @@ e1ap_ue_context* e1ap_ue_context_list::add_ue(ue_index_t ue_index, gnb_cu_cp_ue_
   }
   ue_index_to_ue_e1ap_id.emplace(ue_index, cu_cp_ue_e1ap_id);
 
-  logger.info("{}: Created new E1AP UE context", ret.first->second.ue_ids);
+  logger.info("{} cu_cp_ue_e1ap_id={}: Created new E1AP UE context",
+              ret.first->second.ue_ids,
+              fmt::underlying(cu_cp_ue_e1ap_id));
   return &ret.first->second;
 }
 
