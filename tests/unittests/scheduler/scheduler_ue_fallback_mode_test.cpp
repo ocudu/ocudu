@@ -138,6 +138,7 @@ public:
     ue_cfg.ue_index           = ue_index;
     ue_cfg.crnti              = rnti;
     ue_cfg.starts_in_fallback = true;
+    ue_cfg.ul_ccch_slot_rx    = this->next_slot.without_hyper_sfn();
     scheduler_test_simulator::add_ue(ue_cfg, true);
   }
 

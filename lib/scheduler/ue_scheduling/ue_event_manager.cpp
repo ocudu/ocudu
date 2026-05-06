@@ -272,6 +272,13 @@ void ue_cell_event_manager::handle_ue_creation(ue_config_update_event ev)
     bool                  is_in_fallback = ev.get_fallback_command().has_value() and ev.get_fallback_command().value();
     ue_db.add_ue(ev.next_config(), is_in_fallback, ev.get_ul_ccch_slot_rx());
 
+    if (not is_in_fallback) {
+      // For UEs created in non-fallback mode, initialize UCI and SRS schedulers immediately.
+      auto& ue_cc = ue_db[ue_index].get_pcell();
+      uci_sched.add_ue(ue_cc.cfg());
+      srs_sched.add_ue(ue_cc.cfg());
+    }
+
     // Add UE to slice scheduler.
     // Note: This action only has effect when UE is created in non-fallback mode.
     slice_sched.add_ue(ue_index);
@@ -693,9 +700,12 @@ void ue_cell_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indicati
                        u.ue_index);
         return event_result::invalid_ue_cc;
       }
-      if (ue_cc.get_pcell_state().conres_completed) {
+      if (ue_cc.get_pcell_state().state != ue_cell::ue_pcell_state::states::pending_conres) {
         logger.warning("cell={} rnti={} ue={}: Discarding ConRes CE indication. Cause: UE already finished the "
-                       "contention resolution");
+                       "contention resolution",
+                       cfg.cell_index,
+                       u.crnti,
+                       u.ue_index);
         return event_result::processed;
       }
 
@@ -918,7 +928,8 @@ void ue_cell_event_manager::handle_harq_ind(ue_cell&                            
 
     // NOTE: this is for the first attachment only. In this case, the first ACK is the one that acks the ConRes or the
     // ConRes + MSG4; there is only 1 HARQ process waiting for ACKs, which acks the ConRes.
-    if (h_dl->empty() and ue_cc.is_pcell() and not ue_cc.get_pcell_state().conres_completed) {
+    if (h_dl->empty() and ue_cc.is_pcell() and
+        ue_cc.get_pcell_state().state == ue_cell::ue_pcell_state::states::pending_conres) {
       ue_cc.handle_conres_completed();
     }
 

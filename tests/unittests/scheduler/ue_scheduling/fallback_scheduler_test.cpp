@@ -81,7 +81,7 @@ struct test_bench {
     }
     ue_db.add_ue(ev.next_config(), create_req.starts_in_fallback, create_req.ul_ccch_slot_rx);
     auto& ue = ue_db[create_req.ue_index];
-    ue.get_pcell().set_fallback_state(true, false, false);
+    ue.get_pcell().set_fallback_state(ue_cell::ue_pcell_state::states::pending_conres, false);
     if (not create_req.ul_ccch_slot_rx.has_value() and not create_req.starts_in_fallback) {
       ue.get_pcell().handle_conres_completed();
     }

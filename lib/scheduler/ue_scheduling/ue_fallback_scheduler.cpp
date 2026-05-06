@@ -276,7 +276,8 @@ bool ue_fallback_scheduler::schedule_dl_new_tx(cell_resource_allocator& res_allo
 
     const bool srb0_or_srb1_only =
         alloc_type != dl_new_tx_alloc_type::conres_only and not u.logical_channels().is_con_res_id_pending();
-    if (srb0_or_srb1_only and not u.get_pcell().get_pcell_state().conres_completed) {
+    if (srb0_or_srb1_only and
+        u.get_pcell().get_pcell_state().state == ue_cell::ue_pcell_state::states::pending_conres) {
       // If ConRes is not completed, SRB0/SRB1 cannot be scheduled. Any MAC PDU without the ConRes MAC CE would cause
       // Contention Resolution to fail (TS 38.331, Section 5.1.5).
       // F1AP-created UEs can also only start to transmit after C-RNTI CE is received.
@@ -372,7 +373,8 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res
     // If the UE hasn't acked (or received) the ConRes (for a new tx or retx) and ra-ContentionResolutionTimer will
     // expire by the slot it will receive the ConRes, abort the allocation; the \ref slot_indication function will take
     // care of removing the UE.
-    if (u.get_pcell().get_pcell_state().msg3_rx_slot.valid() and not u.get_pcell().get_pcell_state().conres_completed) {
+    if (u.get_pcell().get_pcell_state().msg3_rx_slot.valid() and
+        u.get_pcell().get_pcell_state().state == ue_cell::ue_pcell_state::states::pending_conres) {
       const auto ntn_cs_koffset_subframes =
           cell_cfg.ntn_cs_koffset
               ? divide_ceil<uint32_t, uint32_t>(cell_cfg.ntn_cs_koffset, pdsch_alloc.slot.nof_slots_per_subframe())
@@ -659,9 +661,9 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
   // allocations.
   // Note: \c u.is_reestablished() is only set at the start of the RRC Reconfiguration procedure following a
   // re-establishment.
-  const bool use_common =
-      not u.get_pcell().get_pcell_state().reconf_ongoing or u.get_pcell().get_pcell_state().reestablished;
-  bool use_dedicated = u.get_pcell().get_pcell_state().reconf_ongoing;
+  const bool use_common = u.get_pcell().get_pcell_state().state != ue_cell::ue_pcell_state::states::pending_reconf or
+                          u.get_pcell().get_pcell_state().reestablished;
+  bool use_dedicated = u.get_pcell().get_pcell_state().state == ue_cell::ue_pcell_state::states::pending_reconf;
   if (u.ue_cfg_dedicated()->is_ue_cfg_complete()) {
     // Note: this check is meant for the case of the GNB missing the ACK for RRCSetup and then retransmitting it. In
     // this case, we need to schedule also on dedicated because the UE already has a dedicated configuration, even
@@ -1378,7 +1380,8 @@ static bool handle_conres_expiry(ue& u, slot_point sl_tx, ocudulog::basic_logger
 {
   auto& ue_pcell = u.get_pcell();
 
-  if (ue_pcell.get_pcell_state().conres_completed or not ue_pcell.get_pcell_state().msg3_rx_slot.valid()) {
+  if (ue_pcell.get_pcell_state().state != ue_cell::ue_pcell_state::states::pending_conres or
+      not ue_pcell.get_pcell_state().msg3_rx_slot.valid()) {
     return false;
   }
 

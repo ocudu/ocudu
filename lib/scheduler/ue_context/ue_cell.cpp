@@ -49,9 +49,7 @@ ue_cell::ue_cell(du_ue_index_t                ue_index_,
 {
   if (serv_cell_index_ == SERVING_PCELL_IDX) {
     pcell_state.emplace(ue_pcell_state{});
-    if (msg3_slot_rx.has_value()) {
-      pcell_state->msg3_rx_slot = msg3_slot_rx.value();
-    }
+    pcell_state->msg3_rx_slot = msg3_slot_rx.value_or(slot_point{});
   }
 }
 
@@ -89,28 +87,25 @@ void ue_cell::handle_reconfiguration_request(const ue_cell_configuration& ue_cel
   get_pusch_power_controller().reconfigure(ue_cell_cfg);
 }
 
-void ue_cell::set_fallback_state(bool set_fallback, bool is_reconfig, bool reestablished)
+void ue_cell::set_fallback_state(ue_pcell_state::states new_state, bool reestablished)
 {
-  ocudu_assert(pcell_state.has_value(),
-               "ue={} rnti={}: Cannot set fallback state on non-Pcell",
-               fmt::underlying(ue_index),
-               rnti());
+  ocudu_assert(pcell_state.has_value(), "ue={} rnti={}: Cannot set fallback state on non-Pcell", ue_index, rnti());
 
-  // In case of Pcell, update reconf_ongoing state.
-  pcell_state->reconf_ongoing = is_reconfig;
-  pcell_state->reestablished  = reestablished;
-  if (pcell_state->in_fallback_mode == set_fallback) {
+  pcell_state->reestablished = reestablished;
+  if (new_state == pcell_state->state) {
     // No state change.
     return;
   }
-  pcell_state->in_fallback_mode = set_fallback;
+  auto prev_state = std::exchange(pcell_state->state, new_state);
 
-  // Cancel pending HARQs retxs of different state.
-  harqs.cancel_retxs();
-  logger.debug("ue={} rnti={}: {} fallback mode",
-               fmt::underlying(ue_index),
-               rnti(),
-               pcell_state->in_fallback_mode ? "Entering" : "Leaving");
+  if (prev_state == ue_pcell_state::states::normal or new_state == ue_pcell_state::states::normal) {
+    // Entering/Exiting fallback mode. Cancel pending HARQs retxs.
+    harqs.cancel_retxs();
+    logger.debug("ue={} rnti={}: {} fallback mode",
+                 ue_index,
+                 rnti(),
+                 new_state != ue_pcell_state::states::normal ? "Entering" : "Leaving");
+  }
 }
 
 std::optional<dl_harq_process_handle> ue_cell::handle_dl_ack_info(slot_point                 uci_slot,
@@ -495,14 +490,14 @@ double ue_cell::get_estimated_ul_rate(const pusch_config_params& pusch_cfg, sch_
 
 bool ue_cell::handle_conres_completed()
 {
-  if (pcell_state->conres_completed) {
+  if (pcell_state->state != ue_pcell_state::states::pending_conres) {
     // No changes.
     return false;
   }
 
   // Update state.
-  pcell_state->conres_completed = true;
-  pcell_state->msg3_rx_slot     = slot_point{};
+  pcell_state->state        = ue_pcell_state::states::pending_setup;
+  pcell_state->msg3_rx_slot = slot_point{};
   logger.debug("ue={} rnti={}: ConRes procedure completed", ue_index, rnti());
   return true;
 }

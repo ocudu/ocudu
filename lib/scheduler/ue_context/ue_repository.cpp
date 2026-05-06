@@ -149,7 +149,9 @@ void ue_repository::add_ue(const ue_configuration&   ue_cfg,
 
   // Set the UE carriers as fallback or normal operation.
   for (auto& ue_cc : cell_lookup.ue_cells) {
-    ue_cc->set_fallback_state(starts_in_fallback, false, false);
+    ue_cc->set_fallback_state(starts_in_fallback ? ue_cell::ue_pcell_state::states::pending_conres
+                                                 : ue_cell::ue_pcell_state::states::normal,
+                              false);
   }
 
   // Add UE in the repository.
@@ -169,7 +171,7 @@ void ue_repository::reconfigure_ue(const ue_configuration& new_cfg, bool reestab
   auto& lc_mng = u.logical_channels();
 
   // UE enters fallback mode when a Reconfiguration takes place.
-  u.get_pcell().set_fallback_state(true, true, reestablished_);
+  u.get_pcell().set_fallback_state(ue_cell::ue_pcell_state::states::pending_reconf, reestablished_);
   lc_mng.set_fallback_state(true);
 
   // Configure Logical Channels.
@@ -222,7 +224,7 @@ void ue_repository::ue_config_applied(du_ue_index_t ue_index)
   auto& u = ues[ue_index];
 
   // The UE gets out of fallback mode once it has applied the new configuration.
-  u.get_pcell().set_fallback_state(false, false, false);
+  u.get_pcell().set_fallback_state(ue_cell::ue_pcell_state::states::normal, false);
   u.logical_channels().set_fallback_state(false);
 }
 

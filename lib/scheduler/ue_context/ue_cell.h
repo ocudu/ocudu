@@ -40,13 +40,11 @@ class ue_cell
 public:
   /// State in case carrier corresponds to UE pcell.
   struct ue_pcell_state {
-    /// Current state of the UE contention resolution procedure.
-    bool conres_completed = false;
-    /// Fallback state of the UE. When in "fallback" mode, only the search spaces and the configuration of
-    /// cellConfigCommon are used.
-    bool in_fallback_mode = true;
-    /// Whether a UE reconfiguration is taking place.
-    bool reconf_ongoing = false;
+    enum class states { pending_conres, pending_setup, pending_reconf, normal };
+    /// Current state of the UE configuration in the scheduler.
+    /// \note When in fallback mode (!= normal mode), only the search spaces and the configuration of cellConfigCommon
+    /// are used.
+    states state = states::pending_conres;
     /// Whether the UE has been reestablished.
     bool reestablished = false;
     /// MSG3 rx-slot, if applicable (e.g. The UE was created via RA procedure).
@@ -77,7 +75,10 @@ public:
   bool is_active() const { return active; }
 
   /// Whether the UE is in fallback mode.
-  bool is_in_fallback_mode() const { return pcell_state.has_value() and pcell_state->in_fallback_mode; }
+  bool is_in_fallback_mode() const
+  {
+    return pcell_state.has_value() and pcell_state->state != ue_pcell_state::states::normal;
+  }
 
   const ue_cell_configuration& cfg() const { return *ue_cfg; }
 
@@ -87,7 +88,7 @@ public:
   void handle_reconfiguration_request(const ue_cell_configuration& ue_cell_cfg);
 
   /// Update UE fallback state.
-  void set_fallback_state(bool in_fallback, bool is_reconfig, bool reestablished);
+  void set_fallback_state(ue_pcell_state::states new_state, bool reestablished);
 
   bool is_pdcch_enabled(slot_point dl_slot) const
   {
