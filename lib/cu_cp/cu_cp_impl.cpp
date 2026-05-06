@@ -1104,11 +1104,18 @@ void cu_cp_impl::handle_handover_cancel_received(cu_cp_ue_index_t ue_index)
     return;
   }
 
-  // Request UE release.
-  cu_cp_ue_context_release_request release_request;
-  release_request.ue_index = ue_index;
-  release_request.cause    = ngap_cause_radio_network_t::ho_cancelled;
-  ue->get_task_sched().schedule_async_task(handle_ue_context_release(release_request));
+  if (ue->get_rrc_ue() != nullptr) {
+    // Cancel the pending RRC reconfiguration transaction so the target execution routine unblocks
+    // immediately. Both immediate-HO and CHO routines handle their own UE release after the
+    // transaction is cancelled.
+    ue->get_rrc_ue()->cancel_handover_reconfiguration_transaction(0);
+  } else {
+    // If no RRC UE, release directly.
+    cu_cp_ue_context_release_request release_request;
+    release_request.ue_index = ue_index;
+    release_request.cause    = ngap_cause_radio_network_t::ho_cancelled;
+    ue->get_task_sched().schedule_async_task(handle_ue_context_release(release_request));
+  }
 }
 
 void cu_cp_impl::handle_xnap_ue_context_release_received(cu_cp_ue_index_t ue_index)
