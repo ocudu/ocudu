@@ -221,6 +221,14 @@ static bool validate_mobility_appconfig(gnb_id_t gnb_id, const cu_cp_unit_mobili
             external_cells.push_back(fmt::format("{:#x}", c.nr_cell_id));
           }
         }
+        std::string valid_nci_str;
+        if (!internal_cells.empty()) {
+          valid_nci_str = fmt::format("{}", fmt::join(internal_cells, ", "));
+        } else {
+          uint64_t nci_base = static_cast<uint64_t>(gnb_id.id) << (36U - gnb_id.bit_length);
+          valid_nci_str =
+              fmt::format("none configured yet, possible nr_cell_ids: {:#x}, {:#x}", nci_base, nci_base | 1U);
+        }
         fmt::print("cell={:#x} is detected as external because its gnb_id part of nr_cell_id differs from this "
                    "CU-CP's gnb_id={:#x}, but some parameters required for external cells are missing.\n"
                    "If this cell is correctly assigned to a different CU-CP - fix the missing parameters:\n"
@@ -252,7 +260,7 @@ static bool validate_mobility_appconfig(gnb_id_t gnb_id, const cu_cp_unit_mobili
                    cell.ssb_duration.has_value() ? fmt::format("{}", cell.ssb_duration.value()) : "[MISSING]",
                    gnb_id.id,
                    gnb_id.bit_length,
-                   fmt::join(internal_cells, ", "),
+                   valid_nci_str,
                    fmt::join(external_cells, ", "));
         return false;
       }
