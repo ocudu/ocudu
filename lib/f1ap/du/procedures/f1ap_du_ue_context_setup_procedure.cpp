@@ -143,6 +143,12 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
   // > If the UE CONTEXT SETUP REQUEST message contains the RRC-Container IE, the gNB-DU shall send the corresponding
   // RRC message to the UE via SRB1.
   if (msg->rrc_container_present and not msg->rrc_container.empty()) {
+    if (not msg->gnb_du_ue_f1ap_id_present) {
+      // Awaiting the transmission of a RRC container in a UEContextSetupRequest for a newly created UE will likely
+      // fail, because the UE only becomes active in the scheduler after the reception of a C-RNTI CE.
+      logger.warning("{}: Unexpected presence of RRC container in a UEContextSetupRequest for a newly created UE",
+                     f1ap_log_prefix{ue->context, name()});
+    }
     CORO_AWAIT_VALUE(bool ret, handle_rrc_container());
     if (ret) {
       logger.debug("{}: RRC container sent successfully.", f1ap_log_prefix{ue->context, name()});
