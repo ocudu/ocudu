@@ -5,6 +5,7 @@
 #pragma once
 
 #include "ocudu/adt/expected.h"
+#include "fmt/format.h"
 #include <cerrno>
 #include <charconv>
 #include <cstdlib>
