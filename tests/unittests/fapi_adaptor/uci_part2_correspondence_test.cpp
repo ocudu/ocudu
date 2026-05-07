@@ -11,6 +11,25 @@ using namespace fapi_adaptor;
 
 static constexpr unsigned NUM_CSI_RESOURCES = 1;
 
+namespace ocudu {
+
+inline std::ostream& operator<<(std::ostream& os, const pmi_codebook_config& pmi)
+{
+  return os << to_string(pmi);
+}
+
+inline std::ostream& operator<<(std::ostream& os, const csi_report_quantities& csi)
+{
+  return os << to_string(csi);
+}
+
+} // namespace ocudu
+
+inline std::ostream& operator<<(std::ostream& os, const pmi_codebook_config& pmi)
+{
+  return os << to_string(pmi);
+}
+
 namespace {
 
 class uci_part2_correspondence_generator_test
