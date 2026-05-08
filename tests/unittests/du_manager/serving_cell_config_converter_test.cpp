@@ -43,8 +43,7 @@ static pusch_config make_initial_pusch_config()
   cfg.pusch_pwr_ctrl.value().p0_alphasets.push_back(pusch_config::pusch_power_control::p0_pusch_alphaset{
       .id = static_cast<p0_pusch_alphaset_id>(0), .p0 = 0, .p0_pusch_alpha = alpha::alpha1});
   cfg.pusch_pwr_ctrl.value().pathloss_ref_rs.push_back(pusch_config::pusch_power_control::pusch_pathloss_ref_rs{
-      .id = static_cast<pusch_config::pusch_power_control::pusch_pathloss_ref_rs_id>(0),
-      .rs = static_cast<ssb_id_t>(0)});
+      .id = static_cast<pusch_config::pusch_power_control::pusch_pathloss_ref_rs_id>(0), .rs = 0});
   cfg.pusch_pwr_ctrl.value().sri_pusch_mapping.push_back(pusch_config::pusch_power_control::sri_pusch_pwr_ctrl{
       .id                           = static_cast<pusch_config::pusch_power_control::sri_pusch_pwr_ctrl_id>(0),
       .sri_pusch_pathloss_ref_rs_id = static_cast<pusch_config::pusch_power_control::pusch_pathloss_ref_rs_id>(0),
@@ -1055,8 +1054,8 @@ TEST(serving_cell_config_converter_test, test_custom_csi_meas_cfg_conversion)
   dest_csi_meas_cfg.csi_im_res_set_list.back().csi_ims_resources = {static_cast<csi_im_res_id_t>(1)};
 
   // Add new configurations. Configuration need not be valid.
-  dest_csi_meas_cfg.csi_ssb_res_set_list.push_back(csi_ssb_resource_set{
-      .res_set_id = static_cast<csi_ssb_res_set_id_t>(0), .csi_ssb_res_list = {static_cast<ssb_id_t>(0)}});
+  dest_csi_meas_cfg.csi_ssb_res_set_list.push_back(
+      csi_ssb_resource_set{.res_set_id = static_cast<csi_ssb_res_set_id_t>(0), .csi_ssb_res_list = {0}});
 
   // Add new/remove configurations. Configuration need not be valid.
   dest_csi_meas_cfg.csi_res_cfg_list.push_back(dest_csi_meas_cfg.csi_res_cfg_list[0]);

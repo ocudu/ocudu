@@ -306,7 +306,7 @@ asn1::nrppa::nr_ppa_pdu_c positioning_information_exchange_procedure::create_pos
             asn1_ssb.pci_nr = ssb.pci_nr;
             if (ssb.ssb_idx.has_value()) {
               asn1_ssb.ssb_idx_present = true;
-              asn1_ssb.ssb_idx         = ssb.ssb_idx.value();
+              asn1_ssb.ssb_idx         = ssb.ssb_idx->value();
             }
             asn1_pos_srs_res_item.spatial_relation_pos.set_ssb_pos() = asn1_ssb;
           } else {

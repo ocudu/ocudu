@@ -371,7 +371,7 @@ static asn1::rrc_nr::csi_ssb_res_set_s make_asn1_csi_ssb_resource_set(const csi_
   csi_ssb_res_set_s out{};
   out.csi_ssb_res_set_id = cfg.res_set_id;
   for (const auto& res_id : cfg.csi_ssb_res_list) {
-    out.csi_ssb_res_list.push_back(res_id);
+    out.csi_ssb_res_list.push_back(res_id.value());
   }
   return out;
 }

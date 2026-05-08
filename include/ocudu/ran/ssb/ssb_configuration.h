@@ -16,7 +16,7 @@ constexpr size_t NOF_SSB_BEAMS = 64;
 
 /// SSB-Index identifies an SS-Block within an SS-Burst.
 /// \remark See TS 38.331, "SSB-Index" and "maxNrofSSBs". See also, TS 38.213, clause 4.1.
-enum ssb_id_t : uint8_t { MIN_SSB_ID = 0, MAX_SSB_ID = 63, MAX_NOF_SSB_RESOURCES = NOF_SSB_BEAMS };
+using ssb_id_t = bounded_integer<uint8_t, 0, 63>;
 
 /// Implements \c ssb-PositionsInBurst, as per TS 38.331.
 class ssb_bitmap_t : public bounded_bitset<NOF_SSB_BEAMS, true>

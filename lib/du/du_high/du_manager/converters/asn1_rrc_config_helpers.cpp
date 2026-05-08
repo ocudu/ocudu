@@ -1053,7 +1053,7 @@ static void make_asn1_rrc_qcl_info(asn1::rrc_nr::qcl_info_s& out, const qcl_info
   }
   if (cfg.ref_sig.type == ocudu::qcl_info::reference_signal::reference_signal_type::ssb) {
     auto& ssb = out.ref_sig.set_ssb();
-    ssb       = cfg.ref_sig.ssb;
+    ssb       = cfg.ref_sig.ssb.value();
   } else if (cfg.ref_sig.type == ocudu::qcl_info::reference_signal::reference_signal_type::csi_rs) {
     auto& csi_rs = out.ref_sig.set_csi_rs();
     csi_rs       = cfg.ref_sig.csi_rs;
@@ -1328,7 +1328,7 @@ make_asn1_rrc_rlm_resource(const radio_link_monitoring_config::radio_link_monito
   }
 
   if (std::holds_alternative<ssb_id_t>(cfg.detection_resource)) {
-    rlm_res.detection_res.set_ssb_idx() = std::get<ssb_id_t>(cfg.detection_resource);
+    rlm_res.detection_res.set_ssb_idx() = std::get<ssb_id_t>(cfg.detection_resource).value();
   } else {
     rlm_res.detection_res.set_csi_rs_idx() = std::get<nzp_csi_rs_res_id_t>(cfg.detection_resource);
   }
@@ -1854,7 +1854,7 @@ ocudu::odu::make_asn1_rrc_pusch_pathloss_ref_rs(const pusch_config::pusch_power_
     csi_rs_idx       = *nzp_csi_res;
   } else if (const auto* ssb_id = std::get_if<ssb_id_t>(&cfg.rs)) {
     auto& ssb_idx = ploss_ref_rs.ref_sig.set_ssb_idx();
-    ssb_idx       = *ssb_id;
+    ssb_idx       = ssb_id->value();
   }
   return ploss_ref_rs;
 }
@@ -2340,7 +2340,7 @@ static srs_res_set_s make_asn1_rrc_srs_res_set(const srs_config::srs_resource_se
     srs_res_set.pathloss_ref_rs_present = true;
     if (const auto* ssb_id = std::get_if<ssb_id_t>(&cfg.pathloss_ref_rs.value())) {
       auto& ssb_idx = srs_res_set.pathloss_ref_rs.set_ssb_idx();
-      ssb_idx       = *ssb_id;
+      ssb_idx       = ssb_id->value();
     } else if (const auto* csi_rs_res = std::get_if<nzp_csi_rs_res_id_t>(&cfg.pathloss_ref_rs.value())) {
       auto& csi_res_idx = srs_res_set.pathloss_ref_rs.set_csi_rs_idx();
       csi_res_idx       = *csi_rs_res;
@@ -2552,7 +2552,7 @@ static srs_res_s make_asn1_rrc_srs_res(const srs_config::srs_resource& cfg)
     }
     if (const auto* ssb_id = std::get_if<ssb_id_t>(&cfg.spatial_relation_info.value().reference_signal)) {
       auto& ssb_idx = res.spatial_relation_info.ref_sig.set_ssb_idx();
-      ssb_idx       = *ssb_id;
+      ssb_idx       = ssb_id->value();
     } else if (const auto* nzp_csi_res =
                    std::get_if<nzp_csi_rs_res_id_t>(&cfg.spatial_relation_info.value().reference_signal)) {
       auto& csi_rs_idx = res.spatial_relation_info.ref_sig.set_csi_rs_idx();

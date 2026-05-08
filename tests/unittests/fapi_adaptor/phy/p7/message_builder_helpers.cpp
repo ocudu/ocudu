@@ -120,7 +120,7 @@ static ssb_id_t generate_block_index()
 {
   std::uniform_int_distribution<unsigned> dist(0, 63);
 
-  return ssb_id_t(dist(gen));
+  return dist(gen);
 }
 
 static ssb_subcarrier_offset generate_subcarrier_offset()

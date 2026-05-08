@@ -15,7 +15,7 @@ void pbch_modulator_impl::scramble(span<const uint8_t> b, span<uint8_t> b_hat, c
   scrambler->init(config.phys_cell_id);
 
   // Advance sequence.
-  scrambler->advance((config.ssb_idx & 0x7) * M_bit);
+  scrambler->advance((config.ssb_idx.value() & 0x7) * M_bit);
 
   // Apply XOR.
   scrambler->apply_xor(b_hat, b);

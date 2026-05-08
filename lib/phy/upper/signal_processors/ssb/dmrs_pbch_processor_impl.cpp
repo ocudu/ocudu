@@ -11,10 +11,10 @@ using namespace ocudu;
 unsigned dmrs_pbch_processor_impl::c_init(const config_t& config)
 {
   // Default values for L_max == 4
-  uint64_t i_ssb = (config.ssb_idx & 0b11U) + 4UL * config.hrf; // Least 2 significant bits
+  uint64_t i_ssb = (config.ssb_idx.value() & 0b11U) + 4UL * config.hrf; // Least 2 significant bits
 
   if (config.L_max == 8 || config.L_max == 64) {
-    i_ssb = config.ssb_idx & 0b111U; // Least 3 significant bits
+    i_ssb = config.ssb_idx.value() & 0b111U; // Least 3 significant bits
   }
 
   return ((i_ssb + 1UL) * ((config.phys_cell_id / 4UL) + 1UL) << 11UL) + ((i_ssb + 1UL) << 6UL) +

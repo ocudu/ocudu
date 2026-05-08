@@ -55,7 +55,7 @@ struct formatter<ocudu::fapi::dl_ssb_pdu> {
               "\n\t- SSB pci={} ssb_block_index={} k_SSB={} pointA={} bch_payload={}"
               "ssb_pattern_case={} scs={} L_max={}",
               pdu.phys_cell_id,
-              underlying(pdu.ssb_block_index),
+              pdu.ssb_block_index,
               pdu.subcarrier_offset.value(),
               pdu.ssb_offset_pointA.value(),
               pdu.bch_payload,

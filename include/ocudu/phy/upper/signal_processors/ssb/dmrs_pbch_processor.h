@@ -7,6 +7,7 @@
 #include "ocudu/adt/static_vector.h"
 #include "ocudu/phy/antenna_ports.h"
 #include "ocudu/ran/pci.h"
+#include "ocudu/ran/ssb/ssb_configuration.h"
 
 namespace ocudu {
 
@@ -21,7 +22,7 @@ public:
     /// Physical cell identifier.
     pci_t phys_cell_id;
     /// SS/PBCH block index in the burst.
-    unsigned ssb_idx;
+    ssb_id_t ssb_idx;
     /// Maximum number of SS/PBCH transmissions in a burst (5ms).
     unsigned L_max;
     /// First subcarrier in the resource grid.

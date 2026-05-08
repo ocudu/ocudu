@@ -87,7 +87,7 @@ TEST(fapi_to_phy_ssb_conversion_test, valid_pdu_conversion_success)
               builder.set_carrier_parameters(scs)
                   .set_cell_parameters(pci)
                   .set_nr_power_parameters(beta_pss)
-                  .set_ssb_parameters(ssb_id_t(ssb_idx), subcarrier_offset, offset_pointA, pattern_case, lmax);
+                  .set_ssb_parameters(ssb_idx, subcarrier_offset, offset_pointA, pattern_case, lmax);
 
               uint32_t mib_payload = generate_bch_payload(subcarrier_offset,
                                                           dmrs_type_a_position,

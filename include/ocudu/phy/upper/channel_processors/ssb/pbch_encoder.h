@@ -6,6 +6,7 @@
 
 #include "ocudu/adt/span.h"
 #include "ocudu/ran/pci.h"
+#include "ocudu/ran/ssb/ssb_configuration.h"
 #include "ocudu/ran/ssb/ssb_properties.h"
 #include <array>
 
@@ -35,7 +36,7 @@ public:
     /// Physical cell identifier.
     pci_t N_id;
     /// SSB candidate index in a 5ms burst.
-    unsigned ssb_idx;
+    ssb_id_t ssb_idx;
     /// Maximum number of SS/PBCH block candidates in a 5ms burst, described in TS38.213 Section 4.1.
     unsigned L_max;
     /// Flag: true if the SS/PBCH block transmission is in an odd half frame, false otherwise.

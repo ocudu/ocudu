@@ -3,7 +3,6 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/scheduler/config/rlm_helper.h"
-#include "ocudu/ran/ssb/ssb_mapping.h"
 #include "ocudu/support/ocudu_assert.h"
 
 using namespace ocudu;
@@ -51,7 +50,7 @@ ocudu::rlm_helper::make_radio_link_monitoring_config(const rlm_builder_params&  
     rlm_rs.res_id = to_rlm_res_id(rlm_rs_idx++);
     // [Implementation-defined] This is the only supported option at the moment.
     rlm_rs.resource_purpose = radio_link_monitoring_config::radio_link_monitoring_rs::purpose::rlf;
-    rlm_rs.detection_resource.emplace<ssb_id_t>(static_cast<ssb_id_t>(params.ssb_params.value().ssb_beam_ids[0U]));
+    rlm_rs.detection_resource.emplace<ssb_id_t>(params.ssb_params.value().ssb_beam_ids[0U]);
   }
 
   // [Implementation-defined] We build the RLM resource list with the maximum allowed number of resources N_RLM, as per

@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include "ocudu/adt/complex.h"
 #include "ocudu/adt/span.h"
 #include "ocudu/adt/static_vector.h"
 #include "ocudu/phy/antenna_ports.h"
 #include "ocudu/ran/pci.h"
+#include "ocudu/ran/ssb/ssb_configuration.h"
 
 namespace ocudu {
 
@@ -29,7 +29,7 @@ public:
     /// Physical cell identifier.
     pci_t phys_cell_id;
     /// SS/PBCH block index.
-    unsigned ssb_idx;
+    ssb_id_t ssb_idx;
     /// First subcarrier in the resource grid.
     unsigned ssb_first_subcarrier;
     /// First symbol of the SS/PBCH block within the slot.

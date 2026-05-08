@@ -719,7 +719,7 @@ static inline asn1::f1ap::srs_configuration_s srs_configuration_to_asn1(const sr
           asn1_ssb.pci_nr = ssb.pci_nr;
           if (ssb.ssb_idx.has_value()) {
             asn1_ssb.ssb_idx_present = true;
-            asn1_ssb.ssb_idx         = ssb.ssb_idx.value();
+            asn1_ssb.ssb_idx         = ssb.ssb_idx->value();
           }
           asn1_pos_srs_res_item.spatial_relation_pos.set_ssb_pos() = asn1_ssb;
         } else {

@@ -34,7 +34,7 @@ void ocudu::fapi_adaptor::convert_ssb_mac_to_fapi(fapi::dl_ssb_pdu_builder& buil
   builder.set_carrier_parameters(mac_pdu.scs)
       .set_cell_parameters(mac_pdu.pci)
       .set_nr_power_parameters(mac_pdu.pss_to_sss_epre)
-      .set_ssb_parameters(ssb_id_t(mac_pdu.ssb_index),
+      .set_ssb_parameters(mac_pdu.ssb_index,
                           mac_pdu.subcarrier_offset.value(),
                           mac_pdu.offset_to_pointA,
                           mac_pdu.ssb_case,

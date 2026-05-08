@@ -8,10 +8,9 @@
 #include "ocudu/ran/frequency_range.h"
 #include "ocudu/ran/resource_allocation/rb_interval.h"
 #include "ocudu/ran/resource_block.h"
-#include "ocudu/ran/slot_point.h"
+#include "ocudu/ran/ssb/ssb_configuration.h"
 #include "ocudu/ran/ssb/ssb_properties.h"
 #include "ocudu/ran/subcarrier_spacing.h"
-#include "ocudu/support/math/math_utils.h"
 #include <array>
 #include <cassert>
 
@@ -21,7 +20,7 @@ namespace ocudu {
 /// \param [in] pattern_case Provides the pattern
 /// \param [in] ssb_idx Provides the SS/PBCH block opportunity index
 /// \return the first OFDM symbol index in a half-frame
-inline unsigned ssb_get_l_first(ssb_pattern_case pattern_case, unsigned ssb_idx)
+inline unsigned ssb_get_l_first(ssb_pattern_case pattern_case, ssb_id_t ssb_idx)
 {
   // Case A - 15 kHz SCS: the first symbols of the candidate SS/PBCH blocks have indexes of { 2, 8 } + 14 * n. For
   // carrier frequencies smaller than or equal to 3 GHz, n = 0, 1 . For carrier frequencies within FR1 larger than 3
@@ -29,7 +28,7 @@ inline unsigned ssb_get_l_first(ssb_pattern_case pattern_case, unsigned ssb_idx)
   if (pattern_case == ssb_pattern_case::A) {
     constexpr std::array<unsigned, 2> first_symbols = {2, 8};
     ocudu_assert(ssb_idx < first_symbols.size() * 4, "SSB index out of range.");
-    return first_symbols[ssb_idx % first_symbols.size()] + 14 * (ssb_idx / first_symbols.size());
+    return first_symbols[ssb_idx.value() % first_symbols.size()] + 14 * (ssb_idx.value() / first_symbols.size());
   }
 
   // Case B - 30 kHz SCS: the first symbols of the candidate SS/PBCH blocks have indexes { 4, 8, 16, 20 } + 28 * n.
@@ -38,7 +37,7 @@ inline unsigned ssb_get_l_first(ssb_pattern_case pattern_case, unsigned ssb_idx)
   if (pattern_case == ssb_pattern_case::B) {
     constexpr std::array<unsigned, 4> first_symbols = {4, 8, 16, 20};
     ocudu_assert(ssb_idx < first_symbols.size() * 2, "SSB index out of range.");
-    return first_symbols[ssb_idx % first_symbols.size()] + 28 * (ssb_idx / first_symbols.size());
+    return first_symbols[ssb_idx.value() % first_symbols.size()] + 28 * (ssb_idx.value() / first_symbols.size());
   }
 
   // Case C - 30 kHz SCS: the first symbols of the candidate SS/PBCH blocks have indexes { 2, 8 } + 14 * n.
@@ -51,7 +50,7 @@ inline unsigned ssb_get_l_first(ssb_pattern_case pattern_case, unsigned ssb_idx)
   if (pattern_case == ssb_pattern_case::C) {
     constexpr std::array<unsigned, 2> first_symbols = {2, 8};
     ocudu_assert(ssb_idx < first_symbols.size() * 4, "SSB index out of range.");
-    return first_symbols[ssb_idx % first_symbols.size()] + 14 * (ssb_idx / first_symbols.size());
+    return first_symbols[ssb_idx.value() % first_symbols.size()] + 14 * (ssb_idx.value() / first_symbols.size());
   }
 
   // Case D - 120 kHz SCS: the first symbols of the candidate SS/PBCH blocks have indexes { 4, 8, 16, 20 } + 28 * n.
@@ -60,7 +59,7 @@ inline unsigned ssb_get_l_first(ssb_pattern_case pattern_case, unsigned ssb_idx)
     constexpr std::array<unsigned, 4>  first_symbols = {4, 8, 16, 20};
     constexpr std::array<unsigned, 16> n             = {0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18};
     ocudu_assert(ssb_idx < first_symbols.size() * n.size(), "SSB index out of range.");
-    return first_symbols[ssb_idx % first_symbols.size()] + 28 * n[ssb_idx / first_symbols.size()];
+    return first_symbols[ssb_idx.value() % first_symbols.size()] + 28 * n[ssb_idx.value() / first_symbols.size()];
   }
 
   // Case E - 240 kHz SCS: the first symbols of the candidate SS/PBCH blocks have indexes
@@ -69,7 +68,7 @@ inline unsigned ssb_get_l_first(ssb_pattern_case pattern_case, unsigned ssb_idx)
     constexpr std::array<unsigned, 8> first_symbols = {8, 12, 16, 20, 32, 36, 40, 44};
     constexpr std::array<unsigned, 8> n             = {0, 1, 2, 3, 5, 6, 7, 8};
     ocudu_assert(ssb_idx < first_symbols.size() * n.size(), "SSB index out of range.");
-    return first_symbols[ssb_idx % first_symbols.size()] + 56 * n[ssb_idx / first_symbols.size()];
+    return first_symbols[ssb_idx.value() % first_symbols.size()] + 56 * n[ssb_idx.value() / first_symbols.size()];
   }
 
   // Impossible!

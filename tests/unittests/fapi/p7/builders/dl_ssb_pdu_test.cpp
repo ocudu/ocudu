@@ -14,7 +14,7 @@ TEST(dl_ssb_pdu_builder, valid_basic_parameters_passes)
 
   pci_t                 pci               = 106;
   ssb_pss_to_sss_epre   pss_profile       = ssb_pss_to_sss_epre::dB_0;
-  auto                  block_index       = ssb_id_t(3);
+  ssb_id_t              block_index       = 3;
   ssb_subcarrier_offset subcarrier_offset = 2;
   unsigned              offset_pointA     = 39;
   ssb_pattern_case      case_type         = ssb_pattern_case::A;

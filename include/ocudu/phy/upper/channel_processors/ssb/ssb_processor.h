@@ -9,6 +9,7 @@
 #include "ocudu/phy/antenna_ports.h"
 #include "ocudu/ran/pci.h"
 #include "ocudu/ran/slot_point.h"
+#include "ocudu/ran/ssb/ssb_configuration.h"
 #include "ocudu/ran/ssb/ssb_properties.h"
 
 namespace ocudu {
@@ -31,7 +32,7 @@ public:
     /// PSS power level allocation in dB, relative to SSS.
     ssb_pss_to_sss_epre beta_pss;
     /// SSB opportunity index in a burst.
-    unsigned ssb_idx;
+    ssb_id_t ssb_idx;
     /// Maximum number of SS/PBCH block candidates in a 5ms burst, described in TS38.213 Section 4.1.
     unsigned L_max;
     /// Higher layer parameter \e subCarrierSpacingCommon as per TS38.331 Section 6.2.2 - MIB.

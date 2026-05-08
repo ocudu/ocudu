@@ -35,23 +35,23 @@ void pbch_encoder_impl::payload_generate(span<uint8_t> a, const ocudu::pbch_enco
   }
 
   // Put SFN in a_hat[A_hat] to a_hat[A_hat + 3].
-  a[G[j_sfn++]] = (uint8_t)((msg.sfn >> 3U) & 1U); // 4th LSB of SFN
-  a[G[j_sfn++]] = (uint8_t)((msg.sfn >> 2U) & 1U); // 3th LSB of SFN
-  a[G[j_sfn++]] = (uint8_t)((msg.sfn >> 1U) & 1U); // 2th LSB of SFN
-  a[G[j_sfn++]] = (uint8_t)((msg.sfn >> 0U) & 1U); // 1th LSB of SFN
+  a[G[j_sfn++]] = static_cast<uint8_t>((msg.sfn >> 3U) & 1U); // 4th LSB of SFN
+  a[G[j_sfn++]] = static_cast<uint8_t>((msg.sfn >> 2U) & 1U); // 3th LSB of SFN
+  a[G[j_sfn++]] = static_cast<uint8_t>((msg.sfn >> 1U) & 1U); // 2th LSB of SFN
+  a[G[j_sfn++]] = static_cast<uint8_t>((msg.sfn >> 0U) & 1U); // 1th LSB of SFN
 
   // Put HRF in a_hat[A_hat + 4].
   a[G[10]] = (msg.hrf ? 1 : 0);
 
   // Put SSB related in a_hat[A_hat + 5] to a_hat[A_hat + 7].
   if (msg.L_max == 64) {
-    a[G[11]] = (uint8_t)((msg.ssb_idx >> 5U) & 1U); // 6th bit of SSB index
-    a[G[12]] = (uint8_t)((msg.ssb_idx >> 4U) & 1U); // 5th bit of SSB index
-    a[G[13]] = (uint8_t)((msg.ssb_idx >> 3U) & 1U); // 4th bit of SSB index
+    a[G[11]] = static_cast<uint8_t>((msg.ssb_idx.value() >> 5U) & 1U); // 6th bit of SSB index
+    a[G[12]] = static_cast<uint8_t>((msg.ssb_idx.value() >> 4U) & 1U); // 5th bit of SSB index
+    a[G[13]] = static_cast<uint8_t>((msg.ssb_idx.value() >> 3U) & 1U); // 4th bit of SSB index
   } else {
-    a[G[11]] = (uint8_t)((msg.k_ssb.value() >> 4U) & 1U); // 5th bit of SSB index
-    a[G[12]] = 0;                                         // Reserved
-    a[G[13]] = 0;                                         // Reserved
+    a[G[11]] = static_cast<uint8_t>((msg.k_ssb.value() >> 4U) & 1U); // 5th bit of SSB index
+    a[G[12]] = 0;                                                    // Reserved
+    a[G[13]] = 0;                                                    // Reserved
   }
 }
 

@@ -30,8 +30,7 @@ static pdsch_config make_default_pdsch_config(const ran_cell_config& cell_cfg)
 
   pdsch_cfg.tci_states.push_back(tci_state{
       .state_id  = static_cast<tci_state_id_t>(0),
-      .qcl_type1 = {.ref_sig  = {.type = qcl_info::reference_signal::reference_signal_type::ssb,
-                                 .ssb  = static_cast<ssb_id_t>(0)},
+      .qcl_type1 = {.ref_sig  = {.type = qcl_info::reference_signal::reference_signal_type::ssb, .ssb = 0},
                     .qcl_type = qcl_info::qcl_type::type_d},
   });
 
@@ -165,8 +164,7 @@ static pusch_config make_default_pusch_config(const ran_cell_config& cell_cfg, c
   cfg.pusch_pwr_ctrl->p0_alphasets.emplace_back(pusch_config::pusch_power_control::p0_pusch_alphaset{
       .id = static_cast<p0_pusch_alphaset_id>(0), .p0 = 0, .p0_pusch_alpha = alpha::alpha1});
   cfg.pusch_pwr_ctrl->pathloss_ref_rs.emplace_back(pusch_config::pusch_power_control::pusch_pathloss_ref_rs{
-      .id = static_cast<pusch_config::pusch_power_control::pusch_pathloss_ref_rs_id>(0),
-      .rs = static_cast<ssb_id_t>(0)});
+      .id = static_cast<pusch_config::pusch_power_control::pusch_pathloss_ref_rs_id>(0), .rs = 0});
   cfg.pusch_pwr_ctrl->sri_pusch_mapping.emplace_back(pusch_config::pusch_power_control::sri_pusch_pwr_ctrl{
       .id                           = static_cast<pusch_config::pusch_power_control::sri_pusch_pwr_ctrl_id>(0),
       .sri_pusch_pathloss_ref_rs_id = static_cast<pusch_config::pusch_power_control::pusch_pathloss_ref_rs_id>(0),
@@ -234,7 +232,7 @@ static srs_config make_default_srs_config(const ran_cell_config& cell_cfg, const
 
   res_set.srs_res_set_usage = srs_usage::codebook;
   res_set.p0                = cell_srs_cfg.p0;
-  res_set.pathloss_ref_rs   = static_cast<ssb_id_t>(0);
+  res_set.pathloss_ref_rs   = 0;
 
   if (cell_srs_cfg.srs_type_enabled == srs_type::periodic) {
     res.res_type = srs_resource_type::periodic;

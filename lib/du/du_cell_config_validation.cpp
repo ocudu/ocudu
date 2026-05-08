@@ -215,7 +215,7 @@ static check_outcome check_rlm_config(const du_cell_config& cell_cfg)
     return {};
   }
   const auto csi_meas_cfg = serv_cell_cfg.csi_meas_cfg;
-  for (auto& rlm_res : rlm_cfg->rlm_resources) {
+  for (const auto& rlm_res : rlm_cfg->rlm_resources) {
     CHECK_TRUE(rlm_res.resource_purpose == radio_link_monitoring_config::radio_link_monitoring_rs::purpose::rlf,
                "Radio Link Failure is the only supported Radio Link Monitoring purpose");
     if (not csi_meas_cfg.has_value()) {
@@ -250,7 +250,7 @@ static check_outcome check_rlm_config(const du_cell_config& cell_cfg)
                              [ssb_rs_id](const uint8_t ssb_idx) { return ssb_idx == static_cast<uint8_t>(ssb_rs_id); }),
                  "RLM resource id={} points at SSB index={}, which wasn't found in SSB configuration",
                  fmt::underlying(rlm_res.res_id),
-                 fmt::underlying(ssb_rs_id));
+                 ssb_rs_id);
     }
   }
 
@@ -397,7 +397,7 @@ static check_outcome check_ssb_configuration(const du_cell_config& cell_cfg)
     constexpr uint8_t      nof_groups_and_bits_per_gr = 8U;
     std::optional<uint8_t> first_non_zero_group;
     for (uint8_t group_idx = 0; group_idx != nof_groups_and_bits_per_gr; ++group_idx) {
-      const uint8_t group_8_bits =
+      const auto group_8_bits =
           ssb_cfg.ssb_bitmap.extract<uint8_t>(nof_groups_and_bits_per_gr * group_idx, nof_groups_and_bits_per_gr);
       if (group_8_bits != 0U and not first_non_zero_group.has_value()) {
         first_non_zero_group.emplace(group_8_bits);

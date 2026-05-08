@@ -463,7 +463,7 @@ fill_positioning_information_response(const asn1::f1ap::positioning_info_resp_s&
             srs_config::srs_pos_resource::srs_spatial_relation_pos::ssb ssb;
             ssb.pci_nr = asn1_pos_srs_res.spatial_relation_pos.ssb_pos().pci_nr;
             if (asn1_pos_srs_res.spatial_relation_pos.ssb_pos().ssb_idx_present) {
-              ssb.ssb_idx = ssb_id_t(asn1_pos_srs_res.spatial_relation_pos.ssb_pos().ssb_idx);
+              ssb.ssb_idx = asn1_pos_srs_res.spatial_relation_pos.ssb_pos().ssb_idx;
             }
             pos_srs_res.spatial_relation_info->reference_signal = ssb;
           } else {

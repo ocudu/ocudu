@@ -11,7 +11,7 @@ using namespace ocudu;
 void ssb_processor_impl::process(resource_grid_writer& grid, const pdu_t& pdu)
 {
   // Calculate derivative parameters.
-  unsigned l_start_in_burst = ssb_get_l_first(pdu.pattern_case, pdu.ssb_idx);
+  unsigned l_start_in_burst = ssb_get_l_first(pdu.pattern_case, pdu.ssb_idx.value());
   unsigned l_start          = (l_start_in_burst % get_nsymb_per_slot(cyclic_prefix::NORMAL));
   unsigned k_start          = ssb_get_k_first(to_frequency_range(pdu.pattern_case),
                                      to_subcarrier_spacing(pdu.pattern_case),
