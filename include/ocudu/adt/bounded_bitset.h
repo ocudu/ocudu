@@ -619,14 +619,14 @@ public:
 
   /// \brief Finds the highest bit with value set to the value passed as argument.
   /// \param[in] value The bit value to find, either true (1) or false (0).
-  /// \return Returns the lowest found bit index or -1 in case no bit was found with the provided value argument.
+  /// \return Returns the highest found bit index or -1 in case no bit was found with the provided value argument.
   int find_highest(bool value = true) const noexcept { return find_highest(0, size(), value); }
 
   /// \brief Finds, within a range of bit indexes, the highest bit with value set to the value passed as argument.
   /// \param[in] startpos Starting bit index for the search.
   /// \param[in] endpos End bit index for the search.
   /// \param[in] value The bit value to find, either true (1) or false (0).
-  /// \return Returns the lowest found bit index or -1 in case no bit was found with the provided value argument.
+  /// \return Returns the highest found bit index or -1 in case no bit was found with the provided value argument.
   int find_highest(size_t startpos, size_t endpos, bool value = true) const noexcept
   {
     assert_range_bounds_(startpos, endpos);
