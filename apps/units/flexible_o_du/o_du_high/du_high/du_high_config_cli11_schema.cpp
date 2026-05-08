@@ -1263,6 +1263,21 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
   app.add_option("--target_sinr_f3", pucch_params.pucch_f3_sinr_target_dB, "Target PUCCH F3 SINR in dB")
       ->capture_default_str()
       ->check(CLI::Range(-15.0, 10.0));
+  add_option(
+      app,
+      "--repetition_sinr_thresholds",
+      pucch_params.repetition_sinr_thresholds,
+      "Thresholds (in dB) used to map UE SINR to PUCCH repetition factor. Up to 3 entries: [max SINR for 2 reps, "
+      "max SINR for 4 reps, max SINR for 8 reps]. An empty list disables PUCCH repetition.")
+      ->capture_default_str()
+      ->expected(0, 3);
+  add_option(app,
+             "--repetition_factors",
+             pucch_params.repetition_factors,
+             "Repetition factor configured for each PUCCH resource within a HARQ-ACK PUCCH resource set. Allowed "
+             "values: {1, 2, 4, 8}.")
+      ->capture_default_str()
+      ->check(CLI::IsMember({1, 2, 4, 8}));
 }
 
 static void configure_cli11_srs_args(CLI::App& app, du_high_unit_srs_config& srs_params)

@@ -413,6 +413,20 @@ static YAML::Node build_du_high_pucch_section(const du_high_unit_pucch_config& c
   if (config.f3_max_payload_bits.has_value()) {
     node["f3_max_payload"] = config.f3_max_payload_bits.value();
   }
+  {
+    YAML::Node thresholds_node(YAML::NodeType::Sequence);
+    for (float v : config.repetition_sinr_thresholds) {
+      thresholds_node.push_back(v);
+    }
+    node["repetition_sinr_thresholds"] = thresholds_node;
+  }
+  {
+    YAML::Node factors_node(YAML::NodeType::Sequence);
+    for (unsigned v : config.repetition_factors) {
+      factors_node.push_back(v);
+    }
+    node["repetition_factors"] = factors_node;
+  }
 
   return node;
 }

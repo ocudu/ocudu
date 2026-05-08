@@ -13,6 +13,7 @@
 #include "ocudu/ran/pucch/pucch_mapping.h"
 #include "ocudu/ran/transform_precoding/transform_precoding_helpers.h"
 #include "ocudu/rlc/rlc_config.h"
+#include "ocudu/support/math/math_utils.h"
 #include <algorithm>
 
 using namespace ocudu;
@@ -507,6 +508,32 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
     }
   } else {
     if (!validate_ntn_config(*config.ntn_cfg)) {
+      return false;
+    }
+  }
+
+  if (!pucch_cfg.repetition_sinr_thresholds.empty()) {
+    if (pucch_cfg.repetition_sinr_thresholds.size() > 3) {
+      fmt::print("Too many PUCCH repetition SINR thresholds defined (maximum is 3 to allow repetition factor 8).\n");
+      return false;
+    }
+    if (pucch_cfg.repetition_factors.size() != pucch_cfg.res_set_size) {
+      fmt::print("With PUCCH repetition enabled, the provided number of repetition factors ({}) must equal the "
+                 "resource set size ({}).\n",
+                 pucch_cfg.repetition_factors.size(),
+                 pucch_cfg.res_set_size);
+      return false;
+    }
+    const unsigned max_factor =
+        *std::max_element(pucch_cfg.repetition_factors.begin(), pucch_cfg.repetition_factors.end());
+    // Enabling repetition factor 2 requires 1 threshold, 4 requires 2, and 8 requires 3.
+    unsigned required_thresholds = log2_ceil(max_factor);
+    if (pucch_cfg.repetition_sinr_thresholds.size() < required_thresholds) {
+      fmt::print(
+          "Enabling PUCCH repetition factor {} requires {} PUCCH repetition SINR thresholds (only {} provided).\n",
+          max_factor,
+          required_thresholds,
+          pucch_cfg.repetition_sinr_thresholds.size());
       return false;
     }
   }

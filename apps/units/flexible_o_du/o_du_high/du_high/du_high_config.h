@@ -31,6 +31,7 @@
 #include "ocudu/ran/subcarrier_spacing.h"
 #include "ocudu/ran/tac.h"
 #include "ocudu/scheduler/config/scheduler_expert_config.h"
+#include <algorithm>
 #include <map>
 #include <string>
 #include <vector>
@@ -466,6 +467,14 @@ struct du_high_unit_pucch_config {
   float pucch_f2_sinr_target_dB{6.0f};
   float pucch_f3_sinr_target_dB{1.0f};
 
+  /// Thresholds for the mapping of SINR (in dB) to PUCCH repetition factor. The list is interpreted as
+  /// [max SINR for 2 reps, max SINR for 4 reps, max SINR for 8 reps]. Up to 3 entries. An empty list disables
+  /// PUCCH repetition.
+  std::vector<float> repetition_sinr_thresholds;
+  /// Repetition factor configured for each PUCCH resource within a HARQ-ACK PUCCH resource set. The size of this
+  /// list must equal \ref res_set_size when \ref repetition_sinr_thresholds is not empty. Allowed values: {1, 2, 4, 8}.
+  std::vector<unsigned> repetition_factors;
+
   template <typename T>
   bool almost_equal(T a, T b) const
   {
@@ -495,7 +504,13 @@ struct du_high_unit_pucch_config {
            enable_closed_loop_pw_control == rhs.enable_closed_loop_pw_control &&
            almost_equal<float>(pucch_f0_sinr_target_dB, rhs.pucch_f0_sinr_target_dB) &&
            almost_equal<float>(pucch_f2_sinr_target_dB, rhs.pucch_f2_sinr_target_dB) &&
-           almost_equal<float>(pucch_f3_sinr_target_dB, rhs.pucch_f3_sinr_target_dB);
+           almost_equal<float>(pucch_f3_sinr_target_dB, rhs.pucch_f3_sinr_target_dB) &&
+           repetition_sinr_thresholds.size() == rhs.repetition_sinr_thresholds.size() &&
+           std::equal(repetition_sinr_thresholds.begin(),
+                      repetition_sinr_thresholds.end(),
+                      rhs.repetition_sinr_thresholds.begin(),
+                      [this](float a, float b) { return almost_equal<float>(a, b); }) &&
+           repetition_factors == rhs.repetition_factors;
   }
   bool operator!=(const du_high_unit_pucch_config& rhs) const { return !(*this == rhs); }
 };
