@@ -18,6 +18,7 @@
 #include "ocudu/phy/upper/upper_phy_timing_context.h"
 #include "ocudu/ran/prach/prach_constants.h"
 #include "ocudu/ran/precoding/precoding_codebooks.h"
+#include "ocudu/ran/ssb/ssb_mapping.h"
 #include <condition_variable>
 #include <mutex>
 #include <random>

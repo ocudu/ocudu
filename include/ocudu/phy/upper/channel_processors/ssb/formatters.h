@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "ocudu/ocuduvec/copy.h"
 #include "ocudu/phy/upper/channel_processors/ssb/ssb_processor.h"
 #include "ocudu/support/format/delimited_formatter.h"
 
@@ -36,7 +35,7 @@ struct formatter<ocudu::ssb_processor::pdu_t> {
     helper.format_always(ctx, "offset_PointA={}", pdu.offset_to_pointA.value());
     helper.format_always(ctx, "pattern={}", to_string(pdu.pattern_case));
 
-    helper.format_if_verbose(ctx, "beta_pss={:+.1f}dB", pdu.beta_pss);
+    helper.format_if_verbose(ctx, "beta_pss={:+.1f}dB", ocudu::ssb_pss_to_sss_epre_to_dB(pdu.beta_pss));
     helper.format_if_verbose(ctx, "slot={}", pdu.slot);
     helper.format_if_verbose(ctx, "ports={}", ocudu::span<const uint8_t>(pdu.ports));
 

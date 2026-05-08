@@ -4,11 +4,12 @@
 
 #pragma once
 
+#include "ocudu/adt/expected.h"
 #include "ocudu/adt/static_vector.h"
 #include "ocudu/phy/antenna_ports.h"
 #include "ocudu/ran/pci.h"
 #include "ocudu/ran/slot_point.h"
-#include "ocudu/ran/ssb/ssb_mapping.h"
+#include "ocudu/ran/ssb/ssb_properties.h"
 
 namespace ocudu {
 
@@ -28,7 +29,7 @@ public:
     /// Physical Cell identifier.
     pci_t phys_cell_id;
     /// PSS power level allocation in dB, relative to SSS.
-    float beta_pss;
+    ssb_pss_to_sss_epre beta_pss;
     /// SSB opportunity index in a burst.
     unsigned ssb_idx;
     /// Maximum number of SS/PBCH block candidates in a 5ms burst, described in TS38.213 Section 4.1.

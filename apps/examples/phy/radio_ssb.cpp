@@ -680,7 +680,7 @@ int main(int argc, char** argv)
   upper_phy_sample_config.ssb_config.phys_cell_id      = 500;
   upper_phy_sample_config.ssb_config.cp                = cyclic_prefix::NORMAL;
   upper_phy_sample_config.ssb_config.period_ms         = 5;
-  upper_phy_sample_config.ssb_config.beta_pss_dB       = 0.0;
+  upper_phy_sample_config.ssb_config.beta_pss_dB       = ssb_pss_to_sss_epre::dB_0;
   upper_phy_sample_config.ssb_config.ssb_idx           = {0};
   upper_phy_sample_config.ssb_config.L_max             = 8;
   upper_phy_sample_config.ssb_config.subcarrier_offset = subcarrier_offset;

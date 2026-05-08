@@ -31,6 +31,18 @@ inline unsigned ssb_periodicity_to_value(ssb_periodicity periodicity)
 /// \brief PSS EPRE to SSS EPRE for SSB, as per TS 38.213, Section 4.1.
 enum class ssb_pss_to_sss_epre { dB_0, dB_3 };
 
+/// \brief Converts the PSS EPRE to SSS EPRE value to decibels.
+inline float ssb_pss_to_sss_epre_to_dB(ssb_pss_to_sss_epre value)
+{
+  return (value == ssb_pss_to_sss_epre::dB_3) ? 3.0F : 0.0F;
+}
+
+/// \brief Converts the PSS EPRE to SSS EPRE value to a linear amplitude.
+inline float ssb_pss_to_sss_epre_to_amplitude(ssb_pss_to_sss_epre value)
+{
+  return (value == ssb_pss_to_sss_epre::dB_3) ? M_SQRT2f : 1.0F;
+}
+
 /// Labels for the different SS/PBCH block patterns defined in TS38.213 Section 4.1.
 enum class ssb_pattern_case {
   /// Case A - 15 kHz SCS, FR1: index pattern \f$\{2, 8\} + 14\cdot n\f$.

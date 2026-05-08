@@ -13,6 +13,7 @@
 #include "ocudu/phy/phys_cell_id.h"
 #include "ocudu/phy/upper/channel_processors/ssb/ssb_processor.h"
 #include "ocudu/ran/cyclic_prefix.h"
+#include "ocudu/ran/ssb/ssb_mapping.h"
 #include <gtest/gtest.h>
 #include <random>
 
@@ -21,12 +22,12 @@ using namespace ocudu;
 namespace {
 
 struct test_parameters {
-  ssb_pattern_case   pattern_case;
-  unsigned           L_max;
-  unsigned           beta_pss;
-  subcarrier_spacing scs;
+  ssb_pattern_case    pattern_case;
+  unsigned            L_max;
+  ssb_pss_to_sss_epre beta_pss;
+  subcarrier_spacing  scs;
 
-  test_parameters(ssb_pattern_case pc, unsigned l, unsigned b, subcarrier_spacing scs_) :
+  test_parameters(ssb_pattern_case pc, unsigned l, ssb_pss_to_sss_epre b, subcarrier_spacing scs_) :
     pattern_case(pc), L_max(l), beta_pss(b), scs(scs_)
   {
   }
@@ -37,7 +38,7 @@ std::ostream& operator<<(std::ostream& os, const test_parameters& tp)
   return os << fmt::format("SSB pattern case = {}, L_max = {}, beta_pss = {}, SCS = {}",
                            to_string(tp.pattern_case),
                            tp.L_max,
-                           tp.beta_pss,
+                           ssb_pss_to_sss_epre_to_dB(tp.beta_pss),
                            to_string(tp.scs));
 }
 
@@ -100,10 +101,10 @@ protected:
     ASSERT_TRUE(sss) << "Failed to create SSS processor.";
   }
 
-  ssb_pattern_case   pattern_case;
-  unsigned           L_max;
-  float              beta_pss;
-  subcarrier_spacing common_scs;
+  ssb_pattern_case    pattern_case;
+  unsigned            L_max;
+  ssb_pss_to_sss_epre beta_pss;
+  subcarrier_spacing  common_scs;
 
   std::unique_ptr<ssb_processor>     pbch           = nullptr;
   std::unique_ptr<ssb_pdu_validator> pbch_validator = nullptr;
@@ -246,7 +247,7 @@ TEST_P(SsbProcessorFixture, UnitTest)
       ASSERT_TRUE(pss_entry.config.phys_cell_id == pdu.phys_cell_id);
       ASSERT_TRUE(pss_entry.config.ssb_first_subcarrier == ssb_first_subcarrier);
       ASSERT_TRUE(pss_entry.config.ssb_first_symbol == ssb_first_symbol_slot);
-      ASSERT_TRUE(pss_entry.config.amplitude == convert_dB_to_amplitude(beta_pss));
+      ASSERT_TRUE(pss_entry.config.amplitude == ssb_pss_to_sss_epre_to_amplitude(beta_pss));
       ASSERT_TRUE(ocuduvec::equal(pss_entry.config.ports, pdu.ports));
 
       // Assert SSS.
@@ -265,7 +266,7 @@ constexpr auto ssb_pattern_case_values = to_array<ssb_pattern_case>(
 
 constexpr auto L_max_values = to_array<unsigned>({4, 8, 64});
 
-constexpr auto beta_pss_values = to_array<float>({0.0, -3.0f});
+constexpr auto beta_pss_values = to_array<ssb_pss_to_sss_epre>({ssb_pss_to_sss_epre::dB_0, ssb_pss_to_sss_epre::dB_3});
 
 constexpr auto subcarrier_spacing_values = to_array<subcarrier_spacing>(
     {subcarrier_spacing::kHz15, subcarrier_spacing::kHz30, subcarrier_spacing::kHz60, subcarrier_spacing::kHz120});

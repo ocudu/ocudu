@@ -5,13 +5,13 @@
 #pragma once
 
 #include "ocudu/ocudulog/logger.h"
-#include "ocudu/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "ocudu/phy/upper/upper_phy_rg_gateway.h"
 #include "ocudu/phy/upper/upper_phy_rx_symbol_request_notifier.h"
 #include "ocudu/phy/upper/upper_phy_timing_handler.h"
 #include "ocudu/ran/cyclic_prefix.h"
 #include "ocudu/ran/pci.h"
-#include "ocudu/ran/ssb/ssb_mapping.h"
+#include "ocudu/ran/sch/modulation_scheme.h"
+#include "ocudu/ran/ssb/ssb_properties.h"
 #include <memory>
 #include <string>
 
@@ -41,7 +41,7 @@ public:
     /// SSB period in milliseconds.
     unsigned period_ms;
     /// PSS scaling relative to SSS, in decibels.
-    float beta_pss_dB;
+    ssb_pss_to_sss_epre beta_pss_dB;
     /// SSB candidates to transmit.
     std::vector<unsigned> ssb_idx;
     /// Maximum number of SSB candidates.

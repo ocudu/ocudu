@@ -110,14 +110,7 @@ TEST(fapi_to_phy_ssb_conversion_test, valid_pdu_conversion_success)
               ASSERT_EQ(pdu.slot.sfn(), sfn);
               ASSERT_EQ(pdu.slot.slot_index(), slot.slot_index());
               ASSERT_EQ(pdu.phys_cell_id, pci);
-              switch (beta_pss) {
-                case ssb_pss_to_sss_epre::dB_0:
-                  ASSERT_EQ(pdu.beta_pss, 0.0);
-                  break;
-                case ssb_pss_to_sss_epre::dB_3:
-                  ASSERT_EQ(pdu.beta_pss, 3.0);
-                  break;
-              }
+              ASSERT_EQ(pdu.beta_pss, beta_pss);
               ASSERT_EQ(pdu.ssb_idx, ssb_idx);
               ASSERT_EQ(pdu.L_max, lmax);
               ASSERT_EQ(pdu.subcarrier_offset, subcarrier_offset);

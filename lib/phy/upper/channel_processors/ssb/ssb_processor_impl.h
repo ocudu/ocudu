@@ -10,6 +10,7 @@
 #include "ocudu/phy/upper/signal_processors/ssb/dmrs_pbch_processor.h"
 #include "ocudu/phy/upper/signal_processors/ssb/pss_processor.h"
 #include "ocudu/phy/upper/signal_processors/ssb/sss_processor.h"
+#include "ocudu/support/math/math_utils.h"
 
 namespace ocudu {
 
