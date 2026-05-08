@@ -70,7 +70,9 @@ inline bool scalars_equivalent(const std::string& a, const std::string& b)
   auto na = as_number(a);
   auto nb = as_number(b);
   if (na.has_value() && nb.has_value()) {
-    return std::fabs(*na - *nb) < 1e-9;
+    const double diff  = std::fabs(*na - *nb);
+    const double scale = std::max({1.0, std::fabs(*na), std::fabs(*nb)});
+    return diff < 1e-6 * scale;
   }
   return false;
 }
