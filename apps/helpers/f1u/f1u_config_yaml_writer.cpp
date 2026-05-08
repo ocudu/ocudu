@@ -12,7 +12,9 @@ using namespace ocudu;
 static void fill_cu_up_f1u_socket_entry(YAML::Node& node, const f1u_socket_appconfig& config)
 {
   node["bind_addr"] = config.bind_addr;
-  node["ext_addr"]  = config.udp_config.ext_addr;
+  if (!config.udp_config.ext_addr.empty()) {
+    node["ext_addr"] = config.udp_config.ext_addr;
+  }
   if (config.sst.has_value()) {
     node["sst"] = static_cast<unsigned>(*config.sst);
   }
