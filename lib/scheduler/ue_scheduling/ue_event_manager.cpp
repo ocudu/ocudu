@@ -272,7 +272,8 @@ void ue_cell_event_manager::handle_ue_creation(ue_config_update_event ev)
     bool                  is_in_fallback = ev.get_fallback_command().has_value() and ev.get_fallback_command().value();
     ue_db.add_ue(ev.next_config(), is_in_fallback, ev.get_ul_ccch_slot_rx());
 
-    auto& ue_cc = ue_db[ue_index].get_pcell();
+    auto& u     = ue_db[ue_index];
+    auto& ue_cc = u.get_pcell();
     if (ue_cc.get_pcell_state().state != ue_fsm_states::pending_conres_crnti_ce) {
       // In case the UE is expecting a C-RNTI CE, defer activation of UCI/SR scheduling.
       uci_sched.add_ue(ue_cc.cfg());
@@ -282,6 +283,16 @@ void ue_cell_event_manager::handle_ue_creation(ue_config_update_event ev)
     // Add UE to slice scheduler.
     // Note: This action only has effect when UE is created in non-fallback mode.
     slice_sched.add_ue(ue_index);
+
+    if (ue_cc.get_pcell_state().state == ue_fsm_states::pending_conres_ce) {
+      // Note: In case of RACH-created UE, auto-inject MAC ConRes CE.
+
+      // Forward CE to ue instance.
+      u.handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
+
+      // Notify fallback scheduler of a pending ConRes CE.
+      fallback_sched.handle_conres_indication(ue_index);
+    }
 
     // Log Event.
     ev_logger.enqueue(scheduler_event_logger::ue_creation_event{ue_index, crnti, pcell_index});
@@ -692,31 +703,19 @@ void ue_cell_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indicati
       return event_result::invalid_ue;
     }
     auto& u = ue_db[ce.ue_index];
-    u.handle_dl_mac_ce_indication(ce);
 
     // Notify SRB fallback scheduler upon receiving ConRes CE indication.
     if (ce.ce_lcid == lcid_dl_sch_t::UE_CON_RES_ID) {
-      auto& ue_cc = u.get_pcell();
-      if (ue_cc.cell_index != cfg.cell_index) {
-        logger.warning("cell={} rnti={} ue={}: Discarding ConRes CE indication. Cause: The CE cannot be scheduled in a "
-                       "cell different than PCell ({})",
-                       cfg.cell_index,
-                       u.crnti,
-                       u.ue_index);
-        return event_result::invalid_ue_cc;
-      }
-      if (ue_cc.get_pcell_state().state != ue_fsm_states::pending_conres_ce) {
-        logger.warning("cell={} rnti={} ue={}: Discarding ConRes CE indication. Cause: UE already finished the "
-                       "contention resolution",
-                       cfg.cell_index,
-                       u.crnti,
-                       u.ue_index);
-        return event_result::processed;
-      }
-
-      // Notify fallback scheduler of a pending ConRes CE.
-      fallback_sched.handle_conres_indication(ce.ue_index);
+      logger.warning("cell={} rnti={} ue={}: Discarding ConRes CE indication. Cause: The scheduler automatically "
+                     "triggers this type of CE",
+                     cfg.cell_index,
+                     u.crnti,
+                     u.ue_index);
+      return event_result::processed;
     }
+
+    // Forward CE to UE instance.
+    u.handle_dl_mac_ce_indication(ce);
 
     // Log event.
     ev_logger.enqueue(ce);

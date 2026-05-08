@@ -153,9 +153,6 @@ class scheduler_conres_without_pdu_test : public base_single_ue_scheduler_conres
 
 TEST_F(scheduler_conres_without_pdu_test, when_conres_ce_is_enqueued_and_no_msg4_is_enqueued_then_pdsch_is_scheduled)
 {
-  // Enqueue ConRes CE.
-  this->sched->handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
-
   // Ensure the ConRes CE is scheduled without a Msg4 SDU.
   ASSERT_TRUE(this->run_slot_until([this]() { return find_ue_pdsch(rnti, *this->last_sched_result()) != nullptr; }));
   const dl_msg_alloc* conres_alloc = find_ue_pdsch(rnti, *this->last_sched_result());
@@ -210,12 +207,6 @@ TEST_P(scheduler_con_res_msg4_test,
   // Enqueue several RACH indications, so that RARs that need to be scheduled may fight for RB space with the Msg4.
   enqueue_random_number_of_rach_indications();
 
-  // Run until all RARs are scheduled.
-  this->run_slot_until([this]() { return this->last_sched_result()->dl.rar_grants.empty(); });
-
-  // Enqueue ConRes CE for one UE.
-  this->sched->handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
-
   // Enqueue Msg4 in SRB0/SRB1.
   this->push_dl_buffer_state(dl_buffer_state_indication_message{this->ue_index, params.msg4_lcid, msg4_size});
 
@@ -252,7 +243,6 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
   static constexpr unsigned crnti_msg_size = 8;
 
   // Enqueue ConRes CE + Msg4.
-  this->sched->handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
   this->push_dl_buffer_state(dl_buffer_state_indication_message{this->ue_index, params.msg4_lcid, msg4_size});
 
   ASSERT_TRUE(run_until_conres_msg4_scheduled(rnti, lcid_dl_sch_t::UE_CON_RES_ID)) << "ConRes not scheduled";
@@ -348,8 +338,7 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
 
 TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_ss_is_used)
 {
-  // Enqueue ConRes CE + Msg4.
-  this->sched->handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
+  // Enqueue Msg4.
   this->push_dl_buffer_state(dl_buffer_state_indication_message{this->ue_index, params.msg4_lcid, msg4_size});
 
   // Wait for ConRes + Msg4 PDCCH to be scheduled.
@@ -375,8 +364,7 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_ss_is_us
 
 TEST_P(scheduler_con_res_msg4_test, when_msg4_gets_retxed_then_tc_rnti_is_used_and_csi_rs_avoided)
 {
-  // Enqueue ConRes CE and Msg4.
-  this->sched->handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
+  // Enqueue Msg4.
   this->push_dl_buffer_state(dl_buffer_state_indication_message{this->ue_index, params.msg4_lcid, msg4_size});
 
   // Wait for ConRes + Msg4 PDCCH, PDSCH and PUCCH to be scheduled.

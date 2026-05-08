@@ -1654,7 +1654,6 @@ TEST_F(fallback_sched_ue_w_out_pucch_cfg, when_reconf_is_after_reest_both_common
   ASSERT_TRUE(u.get_pcell().cfg().init_bwp().ul.ded() != nullptr);
 
   // Schedule and ACK ConResCE.
-  u.handle_dl_mac_ce_indication(dl_mac_ce_indication{u.ue_index, lcid_dl_sch_t{lcid_dl_sch_t::UE_CON_RES_ID}});
   bench->fallback_sched.handle_conres_indication(u.ue_index);
   for (unsigned i = 0; i != MAX_TEST_RUN_SLOTS; ++i) {
     run_slot();
