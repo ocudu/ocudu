@@ -15,13 +15,13 @@ ue_config_update_event::ue_config_update_event(du_ue_index_t                    
                                                std::unique_ptr<ue_configuration> next_cfg,
                                                const std::optional<bool>&        set_fallback,
                                                std::optional<slot_point>         ul_ccch_slot_rx_,
-                                               bool                              reestablished_) :
+                                               sched_ue_config_request::causes   cause_) :
   ue_index(ue_index_),
   parent(&parent_),
   next_ded_cfg(std::move(next_cfg)),
   set_fallback_mode(set_fallback),
   ul_ccch_slot_rx(ul_ccch_slot_rx_),
-  reestablished(reestablished_)
+  cause(cause_)
 {
 }
 
@@ -209,9 +209,9 @@ ue_config_update_event sched_config_manager::update_ue(const sched_ue_reconfigur
   const ue_configuration& current_ue_cfg = *ue_cfg_list[cfg_req.ue_index];
   if (current_ue_cfg.crnti != cfg_req.crnti) {
     logger.error("ue={} c-rnti={}: Discarding UE configuration. Cause: UE with provided C-RNTI does not exist.",
-                 fmt::underlying(cfg_req.ue_index),
+                 cfg_req.ue_index,
                  cfg_req.crnti);
-    return ue_config_update_event{cfg_req.ue_index, *this, nullptr, {}, slot_point(), cfg_req.cfg.reestablished};
+    return ue_config_update_event{cfg_req.ue_index, *this};
   }
 
   // Make a copy of the current UE dedicated config.
@@ -221,8 +221,7 @@ ue_config_update_event sched_config_manager::update_ue(const sched_ue_reconfigur
   next_ded_cfg->update(added_cells, group_cfg_pool[group_idx]->reconf_ue(cfg_req));
 
   // Return RAII event.
-  return ue_config_update_event{
-      cfg_req.ue_index, *this, std::move(next_ded_cfg), {}, slot_point(), cfg_req.cfg.reestablished};
+  return ue_config_update_event{cfg_req.ue_index, *this, std::move(next_ded_cfg), {}, slot_point(), cfg_req.cfg.cause};
 }
 
 ue_config_delete_event sched_config_manager::remove_ue(du_ue_index_t ue_index)

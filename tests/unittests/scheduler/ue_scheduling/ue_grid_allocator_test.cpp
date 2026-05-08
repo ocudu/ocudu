@@ -551,7 +551,7 @@ TEST_P(ue_grid_allocator_default_cfg_test, successfully_allocates_pdsch_with_gbr
   (*cfg_req.lc_config_list)[3].qos->arp_priority = arp_prio_level_t::max();
   (*cfg_req.lc_config_list)[3].qos->gbr_qos_info = gbr_qos_flow_information{128000, 128000, 128000, 128000};
   ue_config_update_event ev                      = cfg_mng.update_ue(reconf_msg);
-  ues.reconfigure_ue(ev.next_config(), false);
+  ues.reconfigure_ue(ev.next_config(), sched_ue_config_request::causes::other_rrc_proc);
   ues.ue_config_applied(ev.get_ue_index());
 
   // Add LCID to the bearers of the UE belonging to this slice.

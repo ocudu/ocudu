@@ -163,7 +163,7 @@ void ue_repository::add_ue(const ue_configuration&   ue_cfg,
   ocudu_assert(res.second, "UE with duplicate RNTI being added to the repository");
 }
 
-void ue_repository::reconfigure_ue(const ue_configuration& new_cfg, bool reestablished_)
+void ue_repository::reconfigure_ue(const ue_configuration& new_cfg, sched_ue_config_request::causes cause)
 {
   ocudu_assert(
       ues.contains(new_cfg.ue_index), "ue={} : UE not found in the repository", fmt::underlying(new_cfg.ue_index));
@@ -171,10 +171,13 @@ void ue_repository::reconfigure_ue(const ue_configuration& new_cfg, bool reestab
   auto& u      = ues[new_cfg.ue_index];
   auto& lc_mng = u.logical_channels();
 
-  // UE enters fallback mode when a Reconfiguration takes place.
-  update_ue_fsm(new_cfg.ue_index,
-                reestablished_ ? ue_fsm_config_event::reest_reconf_initiated : ue_fsm_config_event::reconf_initiated);
-  lc_mng.set_fallback_state(true);
+  // UE enters fallback mode when a RRC Reconfiguration takes place.
+  if (cause != sched_ue_config_request::causes::not_rrc_proc) {
+    update_ue_fsm(new_cfg.ue_index,
+                  cause == sched_ue_config_request::causes::rrc_reconf_after_reest
+                      ? ue_fsm_config_event::reest_reconf_initiated
+                      : ue_fsm_config_event::reconf_initiated);
+  }
 
   // Configure Logical Channels.
   lc_mng.configure(new_cfg.logical_channels());

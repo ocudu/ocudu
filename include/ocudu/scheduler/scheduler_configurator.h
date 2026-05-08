@@ -78,6 +78,11 @@ struct ue_cell_config {
 
 /// Request for a new UE configuration provided to the scheduler during UE creation or reconfiguration.
 struct sched_ue_config_request {
+  /// Possible contexts which triggered this UE config update.
+  /// \note The scheduler will handle the UE configuration procedure differently depending on the cause. For instance,
+  /// if the cause is not a RRC procedure (not_rrc_proc), the UE does not need to enter fallback mode.
+  enum class causes { other_rrc_proc, rrc_reconf_after_reest, not_rrc_proc };
+
   /// List of configured Logical Channels. See \c mac-LogicalChannelConfig, TS38.331.
   std::optional<std::vector<logical_channel_config>> lc_config_list;
   /// UE-dedicated configuration for the PCell and SCells.
@@ -88,8 +93,8 @@ struct sched_ue_config_request {
   std::optional<drx_config> drx_cfg;
   /// measGapConfig.
   std::optional<meas_gap_config> meas_gap_cfg;
-  /// Whether this configuration procedure comes after rrcReestablishment.
-  bool reestablished;
+  /// Whether this configuration was triggered by RRC.
+  causes cause = causes::other_rrc_proc;
 };
 
 /// Request to create a new UE in scheduler.

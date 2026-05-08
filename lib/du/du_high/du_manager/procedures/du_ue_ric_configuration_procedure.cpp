@@ -74,9 +74,10 @@ async_task<mac_ue_reconfiguration_response> du_ue_ric_configuration_procedure::h
 {
   mac_ue_reconfiguration_request mac_request;
 
-  mac_request.ue_index    = ue->ue_index;
-  mac_request.crnti       = ue->rnti;
-  mac_request.pcell_index = ue->pcell_index;
+  mac_request.ue_index        = ue->ue_index;
+  mac_request.crnti           = ue->rnti;
+  mac_request.pcell_index     = ue->pcell_index;
+  mac_request.sched_cfg.cause = sched_ue_config_request::causes::not_rrc_proc;
 
   // Configure UE resource allocation parameters.
   mac_request.sched_cfg.res_alloc_cfg.emplace();

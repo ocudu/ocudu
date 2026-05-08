@@ -52,7 +52,7 @@ public:
   void add_ue(const ue_configuration& ue_cfg, bool starts_in_fallback, std::optional<slot_point> ul_ccch_slot_rx);
 
   /// \brief Reconfigure existing UE.
-  void reconfigure_ue(const ue_configuration& new_cfg, bool reestablished_);
+  void reconfigure_ue(const ue_configuration& new_cfg, sched_ue_config_request::causes cause);
 
   /// \brief Called when UE configuration has been applied (e.g. after RRC ReconfigurationComplete).
   bool ue_config_applied(du_ue_index_t ue_index);
