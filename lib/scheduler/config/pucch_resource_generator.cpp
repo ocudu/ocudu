@@ -464,10 +464,16 @@ std::vector<pucch_resource> config_helpers::generate_cell_pucch_res_list(const p
     for (unsigned pri = 0; pri != params.res_set_size.value(); ++pri) {
       unsigned cell_res_id = params.get_res_set_cell_res_idx<0>(pucch_resource_set_config_id(res_set_cfg_id), pri);
       resources[cell_res_id].res_id = {cell_res_id, params.get_res_set_ue_res_idx<0>(pri)};
+      if (params.harq_ack_rep.has_value()) {
+        resources[cell_res_id].rep_factor = params.harq_ack_rep->factors_per_res[pri];
+      }
     }
     for (unsigned pri = 0; pri != params.res_set_size.value(); ++pri) {
       unsigned cell_res_id = params.get_res_set_cell_res_idx<1>(pucch_resource_set_config_id(res_set_cfg_id), pri);
       resources[cell_res_id].res_id = {cell_res_id, params.get_res_set_ue_res_idx<1>(pri)};
+      if (params.harq_ack_rep.has_value()) {
+        resources[cell_res_id].rep_factor = params.harq_ack_rep->factors_per_res[pri];
+      }
     }
   }
   for (unsigned sr_res_id = 0; sr_res_id != params.nof_cell_sr_resources; ++sr_res_id) {

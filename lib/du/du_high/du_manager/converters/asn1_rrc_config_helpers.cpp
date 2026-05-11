@@ -8,6 +8,7 @@
 #include "ocudu/asn1/asn1_diff_utils.h"
 #include "ocudu/ran/band_helper.h"
 #include "ocudu/support/error_handling.h"
+#include "ocudu/support/math/math_utils.h"
 
 using namespace ocudu;
 using namespace ocudu::odu;
@@ -1640,6 +1641,30 @@ calculate_pucch_config_diff(asn1::rrc_nr::pucch_cfg_s& out, const pucch_config& 
         // wouldn't change and the function would not detect the change of configuration.
         return (static_cast<uint64_t>(res.res_id.ue_res_id) << 32U) + static_cast<uint64_t>(res.res_id.cell_res_id);
       });
+
+  // PUCCH Resource extension (\c pucch-RepetitionNrofSlots-r17): mirror res_to_add_mod_list in size and order.
+  // Only emit the ext list if at least one resource has a non-default repetition factor.
+  const bool any_repetition = std::any_of(dest.pucch_res_list.begin(), dest.pucch_res_list.end(), [](const auto& r) {
+    return r.rep_factor != pucch_repetition_factor::n1;
+  });
+  if (any_repetition and out.res_to_add_mod_list.size() > 0) {
+    out.res_to_add_mod_list_ext_v1610.set_present();
+    auto* ext_list = out.res_to_add_mod_list_ext_v1610.get();
+    for (const auto& asn1_res : out.res_to_add_mod_list) {
+      const auto it =
+          std::find_if(dest.pucch_res_list.begin(), dest.pucch_res_list.end(), [&](const pucch_resource& r) {
+            return r.res_id.ue_res_id == asn1_res.pucch_res_id;
+          });
+      pucch_res_ext_v1610_s ext{};
+      if (it != dest.pucch_res_list.end() and it->rep_factor != pucch_repetition_factor::n1) {
+        ext.pucch_repeat_nrof_slots_r17_present = true;
+        ext.pucch_repeat_nrof_slots_r17.value =
+            static_cast<pucch_res_ext_v1610_s::pucch_repeat_nrof_slots_r17_opts::options>(
+                log2_ceil(static_cast<unsigned>(it->rep_factor)));
+      }
+      ext_list->push_back(ext);
+    }
+  }
 
   if ((dest.format_1_common_param.has_value() && not src.format_1_common_param.has_value()) ||
       (dest.format_1_common_param.has_value() && src.format_1_common_param.has_value() &&

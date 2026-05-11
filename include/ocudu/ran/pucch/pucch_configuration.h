@@ -130,6 +130,9 @@ struct pucch_format_4_cfg {
   bool operator!=(const pucch_format_4_cfg& rhs) const { return !(rhs == *this); }
 };
 
+/// PUCCH repetition factor (\c pucch-RepetitionNrofSlots, TS 38.331).
+enum class pucch_repetition_factor : uint8_t { n1 = 1, n2 = 2, n4 = 4, n8 = 8 };
+
 /// \c PUCCH-Resource, in \c PUCCH-Config, TS 38.331.
 struct pucch_resource {
   pucch_res_id_t                                                                                 res_id = {0, 0};
@@ -139,12 +142,14 @@ struct pucch_resource {
   uint8_t                                                                                        starting_sym_idx;
   pucch_format                                                                                   format;
   std::variant<pucch_format_0_cfg, pucch_format_1_cfg, pucch_format_2_3_cfg, pucch_format_4_cfg> format_params;
+  /// Number of slots over which this PUCCH resource is repeated (\c pucch-RepetitionNrofSlots, TS 38.331).
+  pucch_repetition_factor rep_factor = pucch_repetition_factor::n1;
 
   bool operator==(const pucch_resource& rhs) const
   {
     return res_id == rhs.res_id && starting_prb == rhs.starting_prb && second_hop_prb == rhs.second_hop_prb &&
            nof_symbols == rhs.nof_symbols && starting_sym_idx == rhs.starting_sym_idx && format == rhs.format &&
-           format_params == rhs.format_params;
+           format_params == rhs.format_params && rep_factor == rhs.rep_factor;
   }
   bool operator!=(const pucch_resource& rhs) const { return !(rhs == *this); }
 };

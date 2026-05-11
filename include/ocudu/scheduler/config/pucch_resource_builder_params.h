@@ -169,9 +169,6 @@ struct pucch_csi_resource_id_tag;
 using pucch_csi_resource_id =
     strong_type<uint8_t, struct pucch_csi_resource_id_tag, strong_equality, strong_increment_decrement>;
 
-/// PUCCH repetition factor (\c pucch-RepetitionNrofSlots, TS 38.331).
-enum class pucch_repetition_factor : uint8_t { n1 = 1, n2 = 2, n4 = 4, n8 = 8 };
-
 /// PUCCH HARQ-ACK repetition configuration for a cell.
 struct pucch_harq_ack_rep_params {
   /// SINR thresholds (in dB) used to map UE SINR to PUCCH HARQ-ACK repetition factor. Up to 3 entries, in order:
