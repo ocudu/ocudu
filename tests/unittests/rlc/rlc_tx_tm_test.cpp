@@ -67,10 +67,11 @@ protected:
         gnb_du_id_t{}, du_ue_index_t{}, rb_id_t{}, timer_duration{1000}, tester.get(), ue_worker);
 
     // Create RLC TM TX entity
+    cfg = make_default_srb0_rlc_config().tm.tx;
     rlc = std::make_unique<rlc_tx_tm_entity>(gnb_du_id_t::min,
                                              du_ue_index_t::MIN_DU_UE_INDEX,
                                              srb_id_t::srb0,
-                                             make_default_srb0_rlc_config().tm.tx,
+                                             cfg,
                                              *tester,
                                              *tester,
                                              *tester,
@@ -102,6 +103,7 @@ protected:
   manual_task_worker                            ue_worker{128};
   std::unique_ptr<rlc_tx_tm_test_frame>         tester;
   null_rlc_pcap                                 pcap;
+  rlc_tx_tm_config                              cfg;
   std::unique_ptr<rlc_tx_tm_entity>             rlc;
   std::unique_ptr<rlc_bearer_metrics_collector> metrics_coll;
 };
@@ -361,7 +363,7 @@ TEST_F(rlc_tx_tm_test, queue_full_by_sdu_count_drops_sdu)
 {
   // The default SRB0 config has queue_size=8. The 9th SDU must be dropped.
   const uint32_t sdu_size   = 4;
-  const uint32_t queue_size = 8;
+  const uint32_t queue_size = cfg.queue_size;
 
   for (uint32_t i = 0; i < queue_size; i++) {
     byte_buffer sdu = create_buffer(sdu_size, i);
@@ -387,9 +389,9 @@ TEST_F(rlc_tx_tm_test, queue_full_by_bytes_drops_sdu)
   // The default SRB0 config has queue_size_bytes=16000. Use two large SDUs that
   // together exceed the byte limit while staying within the count limit (8).
   // A third SDU is used to fill the remaining space to check the full capacity is available.
-  const uint32_t first_sdu_size  = 8000;
-  const uint32_t second_sdu_size = 8001; // 8000 + 8001 = 16001 > 16000 (too much)
-  const uint32_t third_sdu_size  = 8000; // 8000 + 8000 = 16000 (exact match)
+  const uint32_t first_sdu_size  = cfg.queue_size_bytes / 2;
+  const uint32_t second_sdu_size = cfg.queue_size_bytes - first_sdu_size + 1; // 8000 + 8001 = 16001 > 16000 (too much)
+  const uint32_t third_sdu_size  = cfg.queue_size_bytes - first_sdu_size;     // 8000 + 8000 = 16000 (exact match)
 
   byte_buffer first_sdu = create_buffer(first_sdu_size, 0);
   rlc->handle_sdu(std::move(first_sdu), false);
