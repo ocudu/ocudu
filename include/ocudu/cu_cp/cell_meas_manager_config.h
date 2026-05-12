@@ -6,17 +6,15 @@
 
 #include "ocudu/ran/band_helper.h"
 #include "ocudu/ran/gnb_id.h"
-#include "ocudu/ran/nr_cgi.h"
 #include "ocudu/ran/plmn_identity.h"
 #include "ocudu/ran/subcarrier_spacing.h"
+#include "ocudu/ran/tac.h"
 #include "ocudu/rrc/meas_types.h"
 #include <map>
 #include <unordered_map>
 #include <vector>
 
-namespace ocudu {
-
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// \brief Essential parameters required to configure serving cell measurements in the UE.
 /// Note that some optional values need to be provided by the DU upon F1Setup.
@@ -26,6 +24,7 @@ struct serving_cell_meas_config {
   unsigned         gnb_id_bit_length;                  ///< gNodeB identifier bit length.
   plmn_identity    plmn = plmn_identity::test_value(); ///< PLMN identity.
   /// If not set in config must be provided by config update after DU attach.
+  std::optional<tac_t>              tac;       ///< Tracking area code.
   std::optional<pci_t>              pci;       ///< Physical cell identifier.
   std::optional<nr_band>            band;      ///< NR band.
   std::optional<rrc_ssb_mtc>        ssb_mtc;   ///< SSB measurement and timing config.
@@ -64,9 +63,7 @@ bool is_valid_configuration(const cell_meas_manager_cfg&                        
 /// all cells.
 bool is_complete(const cell_meas_manager_cfg& cfg);
 
-} // namespace ocucp
-
-} // namespace ocudu
+} // namespace ocudu::ocucp
 
 namespace fmt {
 

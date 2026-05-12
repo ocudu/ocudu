@@ -112,6 +112,10 @@ struct cu_cp_unit_cell_config_item {
   std::optional<unsigned> gnb_id_bit_length;
   /// PCI.
   std::optional<pci_t> pci;
+  /// PLMN.
+  std::optional<std::string> plmn_id;
+  /// TAC.
+  std::optional<tac_t> tac;
   /// NR band.
   std::optional<nr_band> band;
   /// SSB ARFCN.

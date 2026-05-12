@@ -207,9 +207,9 @@ static bool validate_mobility_appconfig(gnb_id_t gnb_id, const cu_cp_unit_mobili
 
     // Check if cell is an external managed cell.
     if (nci.gnb_id(gnb_id.bit_length) != gnb_id) {
-      if (!cell.gnb_id_bit_length.has_value() || !cell.pci.has_value() || !cell.band.has_value() ||
-          !cell.ssb_arfcn.has_value() || !cell.ssb_scs.has_value() || !cell.ssb_period.has_value() ||
-          !cell.ssb_offset.has_value() || !cell.ssb_duration.has_value()) {
+      if (!cell.gnb_id_bit_length.has_value() || !cell.pci.has_value() || !cell.plmn_id.has_value() ||
+          !cell.tac.has_value() || !cell.band.has_value() || !cell.ssb_arfcn.has_value() || !cell.ssb_scs.has_value() ||
+          !cell.ssb_period.has_value() || !cell.ssb_offset.has_value() || !cell.ssb_duration.has_value()) {
         // Collect internal and external cells to help the user diagnose misconfiguration.
         std::vector<std::string> internal_cells;
         std::vector<std::string> external_cells;
@@ -226,6 +226,8 @@ static bool validate_mobility_appconfig(gnb_id_t gnb_id, const cu_cp_unit_mobili
                    "If this cell is correctly assigned to a different CU-CP - fix the missing parameters:\n"
                    "  - gnb_id_bit_length: {}\n"
                    "  - pci: {}\n"
+                   "  - plmn_id: {}\n"
+                   "  - tac: {}\n"
                    "  - band: {}\n"
                    "  - ssb_arfcn: {}\n"
                    "  - ssb_scs: {}\n"
@@ -240,6 +242,8 @@ static bool validate_mobility_appconfig(gnb_id_t gnb_id, const cu_cp_unit_mobili
                    gnb_id.id,
                    cell.gnb_id_bit_length.has_value() ? fmt::format("{}", cell.gnb_id_bit_length.value()) : "[MISSING]",
                    cell.pci.has_value() ? fmt::format("{}", cell.pci.value()) : "[MISSING]",
+                   cell.plmn_id.has_value() ? fmt::format("{}", cell.plmn_id.value()) : "[MISSING]",
+                   cell.tac.has_value() ? fmt::format("{}", cell.tac.value()) : "[MISSING]",
                    cell.band.has_value() ? fmt::format("n{}", static_cast<unsigned>(cell.band.value())) : "[MISSING]",
                    cell.ssb_arfcn.has_value() ? fmt::format("{}", cell.ssb_arfcn.value()) : "[MISSING]",
                    cell.ssb_scs.has_value() ? fmt::format("{}", cell.ssb_scs.value()) : "[MISSING]",
@@ -270,6 +274,8 @@ static bool validate_mobility_appconfig(gnb_id_t gnb_id, const cu_cp_unit_mobili
                    "CU-CP's gnb_id={:#x}, but some parameters that are only valid for external cells are configured.\n"
                    "If this cell is correctly assigned to this CU-CP - remove the following parameters:\n"
                    "  - pci: {}\n"
+                   "  - plmn_id: {}\n"
+                   "  - tac: {}\n"
                    "  - band: {}\n"
                    "  - ssb_arfcn: {}\n"
                    "  - ssb_scs: {}\n"
@@ -283,6 +289,8 @@ static bool validate_mobility_appconfig(gnb_id_t gnb_id, const cu_cp_unit_mobili
                    cell.nr_cell_id,
                    gnb_id.id,
                    cell.pci.has_value() ? fmt::format("{} [REMOVE]", cell.pci.value()) : "not set",
+                   cell.plmn_id.has_value() ? fmt::format("{} [REMOVE]", cell.plmn_id.value()) : "not set",
+                   cell.tac.has_value() ? fmt::format("{} [REMOVE]", cell.tac.value()) : "not set",
                    cell.band.has_value() ? fmt::format("n{} [REMOVE]", static_cast<unsigned>(cell.band.value()))
                                          : "not set",
                    cell.ssb_arfcn.has_value() ? fmt::format("{} [REMOVE]", cell.ssb_arfcn.value()) : "not set",

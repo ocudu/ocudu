@@ -148,6 +148,8 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
         cell_cfg_3.serving_cell_cfg.gnb_id_bit_length = gnb_id2.bit_length;
         cell_cfg_3.serving_cell_cfg.nci               = nci3;
         cell_cfg_3.serving_cell_cfg.pci               = 3;
+        cell_cfg_3.serving_cell_cfg.plmn              = plmn_identity::test_value();
+        cell_cfg_3.serving_cell_cfg.tac               = 7;
         cell_cfg_3.serving_cell_cfg.ssb_arfcn         = 632628;
         cell_cfg_3.serving_cell_cfg.band              = nr_band::n78;
         cell_cfg_3.serving_cell_cfg.ssb_scs           = subcarrier_spacing::kHz15;
@@ -165,6 +167,8 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
           cell_cfg_4.serving_cell_cfg.gnb_id_bit_length = gnb_id3.bit_length;
           cell_cfg_4.serving_cell_cfg.nci               = nci4;
           cell_cfg_4.serving_cell_cfg.pci               = 4;
+          cell_cfg_4.serving_cell_cfg.plmn              = plmn_identity::test_value();
+          cell_cfg_4.serving_cell_cfg.tac               = 7;
           cell_cfg_4.serving_cell_cfg.ssb_arfcn         = 621300;
           cell_cfg_4.serving_cell_cfg.band              = nr_band::n78;
           cell_cfg_4.serving_cell_cfg.ssb_scs           = subcarrier_spacing::kHz30;

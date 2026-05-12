@@ -143,6 +143,12 @@ static YAML::Node build_cu_cp_mobility_cells_section(const cu_cp_unit_cell_confi
   if (config.pci) {
     node["pci"] = config.pci.value();
   }
+  if (config.plmn_id) {
+    node["plmn"] = config.plmn_id.value();
+  }
+  if (config.tac) {
+    node["tac"] = config.tac.value();
+  }
   if (config.ssb_arfcn) {
     node["ssb_arfcn"] = config.ssb_arfcn.value().value();
   }

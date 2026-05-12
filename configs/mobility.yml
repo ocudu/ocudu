@@ -21,6 +21,8 @@ cu_cp:
         # Must be present if values are not provided over F1.
         gnb_id_bit_length: 32
         pci: 1
+        plmn: "00101"
+        tac: 7
         ssb_arfcn: 632628
         band: 78
         ssb_scs: 30

@@ -382,7 +382,9 @@ ocucp::cu_cp_configuration ocudu::generate_cu_cp_config(const cu_cp_unit_config&
       std::vector<ocucp::plmn_item> plmn_list;
       for (const auto& plmn_item : supported_ta.plmn_list) {
         expected<plmn_identity> plmn = plmn_identity::parse(plmn_item.plmn_id);
-        ocudu_assert(plmn.has_value(), "Invalid PLMN: {}", plmn_item.plmn_id);
+        if (!plmn.has_value()) {
+          report_error("Invalid PLMN: {}\n", plmn_item.plmn_id);
+        }
         plmn_list.push_back({plmn.value(), {}});
         for (const auto& elem : plmn_item.tai_slice_support_list) {
           plmn_list.back().slice_support_list.push_back(
@@ -400,7 +402,9 @@ ocucp::cu_cp_configuration ocudu::generate_cu_cp_config(const cu_cp_unit_config&
       std::vector<ocucp::plmn_item> plmn_list;
       for (const auto& plmn_item : supported_ta.plmn_list) {
         expected<plmn_identity> plmn = plmn_identity::parse(plmn_item.plmn_id);
-        ocudu_assert(plmn.has_value(), "Invalid PLMN: {}", plmn_item.plmn_id);
+        if (!plmn.has_value()) {
+          report_error("Invalid PLMN: {}\n", plmn_item.plmn_id);
+        }
         plmn_list.push_back({plmn.value(), {}});
         for (const auto& elem : plmn_item.tai_slice_support_list) {
           plmn_list.back().slice_support_list.push_back(
@@ -485,8 +489,17 @@ ocucp::cu_cp_configuration ocudu::generate_cu_cp_config(const cu_cp_unit_config&
 
     meas_cfg_item.serving_cell_cfg.gnb_id_bit_length = app_cfg_item.gnb_id_bit_length.value();
     meas_cfg_item.serving_cell_cfg.pci               = app_cfg_item.pci;
-    meas_cfg_item.serving_cell_cfg.band              = app_cfg_item.band;
-    meas_cfg_item.serving_cell_cfg.ssb_arfcn         = app_cfg_item.ssb_arfcn;
+    if (app_cfg_item.plmn_id.has_value()) {
+      expected<plmn_identity> plmn = plmn_identity::parse(app_cfg_item.plmn_id.value());
+      if (!plmn.has_value()) {
+        report_error("External cell (nci={:#x}) has invalid PLMN: {}\n", nci, app_cfg_item.plmn_id.value());
+      }
+      meas_cfg_item.serving_cell_cfg.plmn = plmn.value();
+    }
+
+    meas_cfg_item.serving_cell_cfg.tac       = app_cfg_item.tac;
+    meas_cfg_item.serving_cell_cfg.band      = app_cfg_item.band;
+    meas_cfg_item.serving_cell_cfg.ssb_arfcn = app_cfg_item.ssb_arfcn;
     if (app_cfg_item.ssb_scs.has_value()) {
       meas_cfg_item.serving_cell_cfg.ssb_scs.emplace() =
           to_subcarrier_spacing(std::to_string(app_cfg_item.ssb_scs.value()));

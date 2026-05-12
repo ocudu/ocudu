@@ -375,6 +375,8 @@ static void configure_cli11_cells_args(CLI::App& app, cu_cp_unit_cell_config_ite
              "the CU-CP")
       ->check(CLI::Range(22, 32));
   add_option(app, "--pci", config.pci, "Physical Cell Id")->check(CLI::Range(0, 1007));
+  add_option(app, "--plmn", config.plmn_id, "PLMN of the cell");
+  add_option(app, "--tac", config.tac, "Tracking Area Code")->check(CLI::Range(0, 0xffffff));
   add_option(app, "--ssb_arfcn", config.ssb_arfcn, "SSB ARFCN");
   add_option(app, "--ssb_scs", config.ssb_scs, "SSB subcarrier spacing")->check(CLI::IsMember({15, 30, 60, 120, 240}));
   add_option(app, "--ssb_period", config.ssb_period, "SSB period in ms")
