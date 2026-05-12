@@ -34,6 +34,7 @@ public:
 
 private:
   void fill_e1ap_bearer_context_modification_request();
+  void fill_e1ap_bearer_context_tunnel_update_request(const cu_cp_path_switch_request_ack& ack);
   bool initialize_reconfiguration_timeout();
   static cu_cp_path_switch_request
        fill_path_switch_request(const xnap_handover_target_execution_context& target_execution_ctxt,
@@ -44,6 +45,7 @@ private:
 
   // (sub-)routine requests
   e1ap_bearer_context_modification_request bearer_context_modification_request;
+  e1ap_bearer_context_modification_request tunnel_context_modification_request;
   cu_cp_path_switch_request                path_switch_request;
 
   // (sub-)routine results
