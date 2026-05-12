@@ -12,6 +12,8 @@
 #include "ocudu/ngap/ngap_handover.h"
 #include "ocudu/ngap/ngap_types.h"
 #include "ocudu/ran/cause/ngap_cause.h"
+#include "ocudu/ran/gtpu/gtpu_teid.h"
+#include "ocudu/ran/up_transport_layer_info.h"
 
 namespace ocudu::ocucp {
 
@@ -283,5 +285,12 @@ ngap_message generate_path_switch_request_failure(amf_ue_id_t amf_ue_id, ran_ue_
 
 /// \brief Generate a Path Switch Request Ack message.
 ngap_message generate_path_switch_request_ack(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
+
+/// \brief Generate a Path Switch Request Ack message with a new UL NG-U tunnel endpoint for each PDU session.
+ngap_message generate_path_switch_request_ack_with_ul_tunnel(amf_ue_id_t             amf_ue_id,
+                                                             ran_ue_id_t             ran_ue_id,
+                                                             pdu_session_id_t        psi,
+                                                             transport_layer_address ul_tla,
+                                                             gtpu_teid_t             ul_teid);
 
 } // namespace ocudu::ocucp

@@ -155,9 +155,9 @@ public:
     return true;
   }
 
-  [[nodiscard]]
-  bool send_sn_status_transfer_and_await_bearer_context_modification_request(local_xnap_ue_id_t local_xnap_ue_id,
-                                                                             peer_xnap_ue_id_t  peer_xnap_ue_id)
+  [[nodiscard]] bool
+  send_sn_status_transfer_and_await_bearer_context_modification_request(local_xnap_ue_id_t local_xnap_ue_id,
+                                                                        peer_xnap_ue_id_t  peer_xnap_ue_id)
   {
     get_xnc_cu_cp(xnc_peer_idx).push_tx_pdu(generate_sn_status_transfer(local_xnap_ue_id, peer_xnap_ue_id));
     report_fatal_error_if_not(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu),
@@ -186,6 +186,22 @@ public:
                               "Failed to receive F1AP UE Context Modification Request (containing RRC Release)");
     report_fatal_error_if_not(test_helpers::is_valid_ue_context_modification_request(f1ap_pdu),
                               "Invalid UE Context Modification Request");
+    return true;
+  }
+
+  [[nodiscard]] bool send_path_switch_request_ack_with_ul_tunnel_and_await_bearer_context_modification_request()
+  {
+    // Inject Path Switch Request Ack carrying a new UL tunnel endpoint and await Bearer Context Modification Request.
+    get_amf().push_tx_pdu(
+        generate_path_switch_request_ack_with_ul_tunnel(uint_to_amf_ue_id(1),
+                                                        ran_ue_id_t::min,
+                                                        psi,
+                                                        transport_layer_address::create_from_string("127.0.1.1"),
+                                                        int_to_gtpu_teid(0x00000001)));
+    report_fatal_error_if_not(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu),
+                              "Failed to receive E1AP Bearer Context Modification Request (tunnel update)");
+    report_fatal_error_if_not(test_helpers::is_valid_bearer_context_modification_request(e1ap_pdu),
+                              "Invalid Bearer Context Modification Request");
     return true;
   }
 
@@ -473,6 +489,55 @@ TEST_F(cu_cp_inter_cu_xn_handover_test, when_handover_request_received_then_path
 
   // Inject UE Context Modification Response to ACK the RRC reconfiguration complete indicator.
   ASSERT_TRUE(send_ue_context_modification_response_empty(cu_ue_id, du_ue_id));
+}
+
+TEST_F(cu_cp_inter_cu_xn_handover_test,
+       when_path_switch_ack_contains_new_ul_tunnel_then_bearer_context_modification_is_sent)
+{
+  // Bring handover up to the point where the Path Switch Request has been sent.
+  ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request(source_local_xnap_ue_id));
+  ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_setup_request());
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_handover_request_ack());
+  ASSERT_TRUE(send_sn_status_transfer_and_await_bearer_context_modification_request(source_local_xnap_ue_id,
+                                                                                    source_peer_xnap_ue_id));
+  ASSERT_TRUE(send_bearer_context_modification_response());
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_path_switch_request());
+
+  // Inject Path Switch Request Ack with a new UL tunnel and await E1AP Bearer Context Modification carrying it.
+  ASSERT_TRUE(send_path_switch_request_ack_with_ul_tunnel_and_await_bearer_context_modification_request());
+
+  // Inject Bearer Context Modification Response; expect UE Context Modification Request (RRC release indicator).
+  ASSERT_TRUE(send_bearer_context_modification_response());
+  report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu),
+                            "Failed to receive F1AP UE Context Modification Request after tunnel update");
+  report_fatal_error_if_not(test_helpers::is_valid_ue_context_modification_request(f1ap_pdu),
+                            "Invalid UE Context Modification Request");
+  ASSERT_TRUE(send_ue_context_modification_response_empty(cu_ue_id, du_ue_id));
+}
+
+TEST_F(cu_cp_inter_cu_xn_handover_test, when_path_switch_request_is_rejected_by_amf_then_routine_fails)
+{
+  // Bring handover up to the point where the Path Switch Request has been sent.
+  ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request(source_local_xnap_ue_id));
+  ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_setup_request());
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_handover_request_ack());
+  ASSERT_TRUE(send_sn_status_transfer_and_await_bearer_context_modification_request(source_local_xnap_ue_id,
+                                                                                    source_peer_xnap_ue_id));
+  ASSERT_TRUE(send_bearer_context_modification_response());
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_path_switch_request());
+
+  // Inject Path Switch Request Failure; the routine should terminate without sending further messages.
+  get_amf().push_tx_pdu(generate_path_switch_request_failure(
+      uint_to_amf_ue_id(1), ran_ue_id_t::min, ngap_cause_t{ngap_cause_radio_network_t::ho_target_not_allowed}));
+
+  report_fatal_error_if_not(not this->get_xnc_cu_cp(xnc_peer_idx).try_pop_rx_pdu(xnap_pdu),
+                            "Unexpected XNAP message after path switch failure");
+  report_fatal_error_if_not(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu),
+                            "Unexpected F1AP message after path switch failure");
+  report_fatal_error_if_not(not this->get_cu_up(cu_up_idx).try_pop_rx_pdu(e1ap_pdu),
+                            "Unexpected E1AP message after path switch failure");
 }
 
 ///////////////////////////////////////////////////////////////////////////////
