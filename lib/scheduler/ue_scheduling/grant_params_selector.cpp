@@ -10,6 +10,7 @@
 #include "../support/rb_helper.h"
 #include "../ue_context/ue_cell.h"
 #include "ocudu/ran/csi_rs/csi_report_config.h"
+#include "ocudu/ran/sch/tbs_calculator.h"
 #include "ocudu/ran/transform_precoding/transform_precoding_helpers.h"
 #include <variant>
 
@@ -180,6 +181,82 @@ static std::optional<mcs_prbs_selection> compute_newtx_required_mcs_and_prbs(con
   return mcs_prbs_selection{mcs, nof_prbs};
 }
 
+/// Finds the number of PRBs that yields a TBS exactly equal to target_tbs for the given MCS and PDSCH config.
+/// Returns std::nullopt if no such value exists within rb_lims (target_tbs skipped by quantisation).
+static std::optional<unsigned> compute_retx_nof_rbs(const pdsch_config_params& pdsch_cfg,
+                                                    sch_mcs_index              mcs,
+                                                    units::bytes               target_tbs,
+                                                    const interval<unsigned>&  rb_lims)
+{
+  const unsigned      dmrs_prbs = calculate_nof_dmrs_per_rb(pdsch_cfg.dmrs);
+  sch_mcs_description mcs_info  = pdsch_mcs_get_config(pdsch_cfg.mcs_table, mcs);
+  for (unsigned n = rb_lims.start(), ne = rb_lims.stop(); n <= ne; ++n) {
+    units::bytes tbs = tbs_calculator_calculate({.nof_symb_sh      = pdsch_cfg.symbols.length(),
+                                                 .nof_dmrs_prb     = dmrs_prbs,
+                                                 .nof_oh_prb       = pdsch_cfg.nof_oh_prb,
+                                                 .mcs_descr        = mcs_info,
+                                                 .nof_layers       = pdsch_cfg.nof_layers,
+                                                 .tb_scaling_field = pdsch_cfg.tb_scaling_field,
+                                                 .n_prb            = n});
+    if (tbs == target_tbs) {
+      return n;
+    }
+    if (tbs > target_tbs) {
+      return std::nullopt;
+    }
+  }
+  return std::nullopt;
+}
+
+static std::optional<std::pair<unsigned, sch_mcs_index>>
+compute_retx_nof_rbs_mcs(const search_space_info&                    ss,
+                         const dl_harq_process_handle::grant_params& prev_h_params,
+                         const ue_link_adaptation_controller&        la,
+                         const interval<unsigned>&                   rb_lims,
+                         unsigned                                    pdsch_td_index)
+{
+  const unsigned                               nof_layers   = prev_h_params.nof_layers;
+  const pdsch_time_domain_resource_allocation& pdsch_td_res = ss.pdsch_time_domain_list[pdsch_td_index];
+
+  if (pdsch_td_res.symbols.length() == prev_h_params.nof_symbols) {
+    // Number of symbols did not change. Reuse the same MCS and TBS of previous HARQ transmission.
+    unsigned nof_rbs = prev_h_params.rbs.type1().length();
+    if (nof_rbs > rb_lims.stop()) {
+      return std::nullopt;
+    }
+    return std::make_pair(nof_rbs, prev_h_params.mcs);
+  }
+
+  // Number of symbols changed. Recompute MCS and TBS.
+  // Note: While the previous MCS could be used, the fact that the recommended MCS increased since the last tx
+  // can give the scheduler more margin to adapt to the different number of symbols.
+  const pdsch_config_params& pdsch_cfg       = ss.get_pdsch_config(pdsch_td_index, nof_layers);
+  const auto                 recommended_mcs = la.calculate_dl_mcs(pdsch_cfg.mcs_table);
+  if (not recommended_mcs.has_value()) {
+    return std::nullopt;
+  }
+  const sch_mcs_index mcs = recommended_mcs.value();
+
+  // Define range of RBs for the search.
+  interval<unsigned> nrb_search{1, rb_lims.stop()};
+  if (pdsch_td_res.symbols.length() < prev_h_params.nof_symbols and mcs <= prev_h_params.mcs) {
+    // If symbols and mcs decreased, the number of required RBs will most likely increase. We can narrow down
+    // the search.
+    nrb_search = {prev_h_params.rbs.type1().length(), rb_lims.stop()};
+  } else if (pdsch_td_res.symbols.length() > prev_h_params.nof_symbols and mcs >= prev_h_params.mcs) {
+    // If symbols and mcs increased, the number of required RBs will most likely decrease. We can narrow down
+    // the search.
+    nrb_search = {1, prev_h_params.rbs.type1().length()};
+  }
+
+  // Compute number of RBs.
+  const auto nof_rbs_opt = compute_retx_nof_rbs(pdsch_cfg, mcs, prev_h_params.tbs, nrb_search);
+  if (not nof_rbs_opt.has_value()) {
+    return std::nullopt;
+  }
+  return std::make_pair(nof_rbs_opt.value(), mcs);
+}
+
 static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&               u,
                                                             slot_point                    pdcch_slot,
                                                             slot_point                    pdsch_slot,
@@ -204,10 +281,6 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
 
   if (h_dl != nullptr) {
     // ReTx case.
-    if (slot_nof_symbols < h_dl->get_grant_params().nof_symbols) {
-      // Early exit if there are not enough symbols in the slot for the retransmission.
-      return std::nullopt;
-    }
     ocudu_assert(ss.get_dl_dci_format() == get_dci_format(h_dl->get_grant_params().dci_cfg_type),
                  "DCI type cannot change across reTxs");
   }
@@ -228,12 +301,6 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
 
     // Check that k0 matches the chosen PDSCH slot
     if (pdcch_slot + pdsch_td_res.k0 != pdsch_slot) {
-      continue;
-    }
-
-    // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
-    // the first transmission.
-    if (h_dl != nullptr and pdsch_td_res.symbols.length() != h_dl->get_grant_params().nof_symbols) {
       continue;
     }
 
@@ -264,12 +331,15 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
       nof_rbs = mcs_prbs_sel.value().nof_prbs;
     } else {
       // ReTx Case.
-      nof_layers = h_dl->get_grant_params().nof_layers;
-      mcs        = h_dl->get_grant_params().mcs;
-      nof_rbs    = h_dl->get_grant_params().rbs.type1().length();
-      if (nof_rbs > nof_rb_lims.stop()) {
-        return std::nullopt;
+      const auto& prev_params = h_dl->get_grant_params();
+      auto        result =
+          compute_retx_nof_rbs_mcs(ss, prev_params, ue_cc.link_adaptation_controller(), nof_rb_lims, pdsch_td_index);
+      if (not result.has_value()) {
+        continue;
       }
+      nof_layers = prev_params.nof_layers;
+      nof_rbs    = result.value().first;
+      mcs        = result.value().second;
     }
 
     dl_sched_context ctxt;
