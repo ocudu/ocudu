@@ -400,6 +400,82 @@ vrb_interval sched_helper::compute_retx_dl_vrbs(const dl_sched_context& decision
   return vrbs;
 }
 
+/// Finds the number of PRBs that yields a TBS exactly equal to target_tbs for the given MCS and PUSCH config.
+/// Returns std::nullopt if no such value exists within rb_lims (target_tbs skipped by quantisation or code rate
+/// exceeded at every candidate).
+static std::optional<unsigned> compute_retx_ul_nof_rbs(const pusch_config_params& pusch_cfg,
+                                                       const sched_bwp_config&    active_bwp,
+                                                       sch_mcs_index              mcs,
+                                                       units::bytes               target_tbs,
+                                                       const interval<unsigned>&  rb_lims)
+{
+  // Note: We take the conservative approach of assuming the reTx will intersect the DC.
+  static constexpr bool contains_dc = true;
+  for (unsigned n = rb_lims.start(), ne = rb_lims.stop(); n <= ne; ++n) {
+    auto tbs = compute_ul_tbs(pusch_cfg, active_bwp, mcs, n, contains_dc);
+    if (not tbs.has_value()) {
+      // Code rate or UCI not valid yet — more RBs may help.
+      continue;
+    }
+    if (tbs.value() == target_tbs) {
+      return n;
+    }
+    if (tbs.value() > target_tbs) {
+      return std::nullopt;
+    }
+  }
+  return std::nullopt;
+}
+
+static std::optional<std::pair<unsigned, sch_mcs_index>>
+compute_retx_ul_nof_rbs_mcs(const pusch_config_params&    pusch_cfg,
+                            const ul_harq_process_handle& h_ul,
+                            const ue_cell&                ue_cc,
+                            const interval<unsigned>&     rb_lims)
+{
+  const auto& prev_params = h_ul.get_grant_params();
+
+  if (pusch_cfg.symbols.length() == prev_params.nof_symbols) {
+    // Number of symbols did not change. Reuse the same MCS and TBS of previous HARQ transmission.
+    const unsigned nof_rbs = prev_params.rbs.type1().length();
+    if (nof_rbs > rb_lims.stop()) {
+      return std::nullopt;
+    }
+    // Re-validate TBS: UCI overhead can change across retransmissions.
+    static constexpr bool contains_dc = true;
+    const auto            tbs = compute_ul_tbs(pusch_cfg, ue_cc.active_bwp(), prev_params.mcs, nof_rbs, contains_dc);
+    if (not tbs.has_value() or tbs.value() != prev_params.tbs) {
+      return std::nullopt;
+    }
+    return std::make_pair(nof_rbs, prev_params.mcs);
+  }
+
+  // Number of symbols changed. Recompute MCS and RBs.
+  // Note: While the previous MCS could be used, the fact that the recommended MCS increased since the last tx
+  // can give the scheduler more margin to adapt to the different number of symbols.
+  const sch_mcs_index mcs =
+      ue_cc.link_adaptation_controller().calculate_ul_mcs(pusch_cfg.mcs_table, pusch_cfg.use_transform_precoder);
+
+  // Define range of RBs for the search.
+  interval<unsigned> nrb_search{1, rb_lims.stop()};
+  if (pusch_cfg.symbols.length() < prev_params.nof_symbols and mcs <= prev_params.mcs) {
+    // If symbols and mcs decreased, the number of required RBs will most likely increase. We can narrow down
+    // the search.
+    nrb_search = {prev_params.rbs.type1().length(), rb_lims.stop()};
+  } else if (pusch_cfg.symbols.length() > prev_params.nof_symbols and mcs >= prev_params.mcs) {
+    // If symbols and mcs increased, the number of required RBs will most likely decrease. We can narrow down
+    // the search.
+    nrb_search = {1, prev_params.rbs.type1().length()};
+  }
+
+  // Compute number of RBs.
+  const auto nof_rbs_opt = compute_retx_ul_nof_rbs(pusch_cfg, ue_cc.active_bwp(), mcs, prev_params.tbs, nrb_search);
+  if (not nof_rbs_opt.has_value()) {
+    return std::nullopt;
+  }
+  return std::make_pair(nof_rbs_opt.value(), mcs);
+}
+
 static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&               u,
                                                             slot_point                    pdcch_slot,
                                                             slot_point                    pusch_slot,
@@ -417,8 +493,6 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
 
   const ue_cell_configuration& ue_cell_cfg = ue_cc.cfg();
   const cell_configuration&    cell_cfg    = ue_cell_cfg.cell_cfg_common;
-  // If the slot has SRS allocated, take the min between the symbols per slots and available symbols in that slot.
-  unsigned slot_nof_symbols = std::min(cell_cfg.get_nof_ul_symbol_per_slot(pusch_slot), allowed_symbols.length());
 
   // TODO: Support more search spaces.
   static constexpr search_space_id ue_ded_ss_id = to_search_space_id(2);
@@ -426,10 +500,6 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
 
   if (h_ul != nullptr) {
     // ReTx case.
-    if (slot_nof_symbols < h_ul->get_grant_params().nof_symbols) {
-      // Early exit if there are not enough symbols in the slot for the retransmission.
-      return std::nullopt;
-    }
     ocudu_assert(ss.get_ul_dci_format() == get_dci_format(h_ul->get_grant_params().dci_cfg_type),
                  "DCI type cannot change across reTxs");
   }
@@ -451,12 +521,6 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
 
     // Check that k2 matches the chosen PUSCH slot.
     if (pdcch_slot + pusch_td_res.k2 + cell_cfg.ntn_cs_koffset != pusch_slot) {
-      continue;
-    }
-
-    // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
-    // the first transmission.
-    if (h_ul != nullptr and pusch_td_res.symbols.length() != h_ul->get_grant_params().nof_symbols) {
       continue;
     }
 
@@ -510,21 +574,14 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
       nof_rbs = mcs_prbs_sel->nof_prbs;
     } else {
       // ReTx Case.
-      mcs     = h_ul->get_grant_params().mcs;
-      nof_rbs = h_ul->get_grant_params().rbs.type1().length();
-      if (nof_rbs > nof_rb_lims.stop()) {
-        continue;
-      }
-      pusch_cfg = compute_retx_pusch_config_params(ue_cc, *h_ul, pusch_td_res, uci_nof_harq_bits, include_csi);
-
       // Compute if effective code rate does not go over the limit for this reTx, for instance, due to presence of UCI.
-      // Note: We take the conservative approach of assuming the reTx will intersect the DC.
-      static constexpr bool contains_dc = true;
-      auto                  tbs_res     = compute_ul_tbs(pusch_cfg, ue_cc.active_bwp(), mcs, nof_rbs, contains_dc);
-      if (not tbs_res.has_value() or tbs_res.value() != h_ul->get_grant_params().tbs) {
-        // Unable to keep the same TBS for PUSCH reTx.
+      pusch_cfg         = compute_retx_pusch_config_params(ue_cc, *h_ul, pusch_td_res, uci_nof_harq_bits, include_csi);
+      const auto result = compute_retx_ul_nof_rbs_mcs(pusch_cfg, *h_ul, ue_cc, nof_rb_lims);
+      if (not result.has_value()) {
         continue;
       }
+      nof_rbs = result.value().first;
+      mcs     = result.value().second;
     }
 
     // Successful selection of grant parameters.
