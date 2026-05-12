@@ -23,144 +23,9 @@ static const asn1::rrc_nr::ntn_params_r17_s* get_ntn_params_r17(const asn1::rrc_
   return &v1700->ntn_params_r17;
 }
 
-expected<ue_capability_summary, std::string> ocudu::odu::decode_ue_nr_cap_container(const byte_buffer& ue_cap_container)
-{
-  asn1::rrc_nr::ue_nr_cap_s ue_cap;
-  {
-    asn1::cbit_ref bref{ue_cap_container};
-    if (ue_cap.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
-      return make_unexpected(std::string("Couldn't unpack UE NR Capability RRC container"));
-    }
-  }
-
-  ue_capability_summary ue_caps;
-
-  // fill UE capability summary.
-  if (ue_cap.phy_params.phy_params_fr1_present) {
-    ue_caps.pdsch_qam256_supported = ue_cap.phy_params.phy_params_fr1.pdsch_256_qam_fr1_present;
-  }
-  if (ue_cap.phy_params.phy_params_frx_diff_present) {
-    ue_caps.pdsch_qam64lowse_supported = ue_cap.phy_params.phy_params_frx_diff.dl_64_qam_mcs_table_alt_present;
-    ue_caps.pusch_qam64lowse_supported = ue_cap.phy_params.phy_params_frx_diff.ul_64_qam_mcs_table_alt_present;
-  }
-  if (ue_cap.phy_params.phy_params_common_present) {
-    ue_caps.pdsch_interleaving_vrb_to_prb_supported =
-        ue_cap.phy_params.phy_params_common.interleaving_vrb_to_prb_pdsch_present;
-  }
-  for (const auto& band : ue_cap.rf_params.supported_band_list_nr) {
-    // Create and convert band capability.
-    ue_capability_summary::supported_band band_cap;
-    band_cap.pusch_qam256_supported = band.pusch_256_qam_present;
-
-    // Emplace the band capability in the map.
-    ue_caps.bands.emplace(static_cast<nr_band>(band.band_nr), band_cap);
-  }
-  if (ue_cap.mac_params_present and ue_cap.mac_params.mac_params_xdd_diff_present) {
-    ue_caps.long_drx_cycle_supported  = ue_cap.mac_params.mac_params_xdd_diff.long_drx_cycle_present;
-    ue_caps.short_drx_cycle_supported = ue_cap.mac_params.mac_params_xdd_diff.short_drx_cycle_present;
-  }
-
-  // Convert advanced UE NR capabilities.
-  decode_advanced_ue_nr_caps(ue_caps, ue_cap);
-
-  // Convert advanced UE NR NTN capabilities.
-  decode_advanced_ue_nr_ntn_caps(ue_caps, ue_cap);
-
-  return ue_caps;
-}
-
-ue_capability_manager::ue_capability_manager(span<const du_cell_config> cell_cfg_list_,
-                                             du_drx_resource_manager&   drx_mng_,
-                                             ocudulog::basic_logger&    logger_,
-                                             const du_test_mode_config& test_mode_) :
-  base_cell_cfg_list(cell_cfg_list_), drx_res_mng(drx_mng_), logger(logger_), test_cfg(test_mode_)
-{
-}
-
-void ue_capability_manager::handle_ue_creation(du_ue_resource_config& ue_res_cfg)
-{
-  drx_res_mng.handle_ue_creation(ue_res_cfg.cell_group);
-}
-
-void ue_capability_manager::update(du_ue_resource_config& ue_res_cfg, const byte_buffer& ue_cap_rat_list)
-{
-  // Decode new UE capabilities.
-  if (not decode_ue_capability_list(ue_cap_rat_list)) {
-    // No changes detected in the UE capabilities, and update(...) was called before. In this case, we can do not need
-    // to apply any extra changes to the ue_res_cfg that weren't already applied.
-    return;
-  }
-
-  update_impl(ue_res_cfg);
-}
-
-void ue_capability_manager::update(du_ue_resource_config& ue_res_cfg, const ue_capability_summary& summary)
-{
-  // Store injected UE capabilities.
-  ue_caps = summary;
-
-  update_impl(ue_res_cfg);
-}
-
-void ue_capability_manager::update_impl(du_ue_resource_config& ue_res_cfg)
-{
-  update_drx(ue_res_cfg);
-}
-
-void ue_capability_manager::release(du_ue_resource_config& ue_res_cfg)
-{
-  // Deallocate DRX resources.
-  drx_res_mng.handle_ue_removal(ue_res_cfg.cell_group);
-}
-
-bool ue_capability_manager::decode_ue_capability_list(const byte_buffer& ue_cap_rat_list)
-{
-  using namespace asn1::rrc_nr;
-
-  if (ue_cap_rat_list.empty()) {
-    // No update.
-    return false;
-  }
-
-  ue_cap_rat_container_list_l asn1_cap_list;
-  {
-    asn1::cbit_ref bref{ue_cap_rat_list};
-    if (asn1::unpack_dyn_seq_of(asn1_cap_list, bref, 0, 8) != asn1::OCUDUASN_SUCCESS) {
-      logger.error("Couldn't unpack UE Capability RAT Container List RRC container");
-      return false;
-    }
-  }
-
-  for (const ue_cap_rat_container_s& ue_cap_rat : asn1_cap_list) {
-    if (ue_cap_rat.rat_type.value != rat_type_opts::nr) {
-      logger.warning("Unsupported RAT type in UE Capability RAT Container List RRC container");
-      continue;
-    }
-    expected<ue_capability_summary, std::string> asn1_cap = decode_ue_nr_cap_container(ue_cap_rat.ue_cap_rat_container);
-    if (not asn1_cap.has_value()) {
-      logger.warning("{}", asn1_cap.error());
-      continue;
-    }
-    ue_caps = asn1_cap.value();
-    return true;
-  }
-
-  return false;
-}
-
-void ue_capability_manager::update_drx(du_ue_resource_config& ue_res_cfg)
-{
-  cell_group_config& cell_group = ue_res_cfg.cell_group;
-
-  // If UE capabilities are not available or DRX is disabled, disable DRX
-  const bool long_drx_supported = ue_caps.has_value() and ue_caps->long_drx_cycle_supported;
-
-  // Allocate DRX resources if DRX is enabled in the gNB.
-  drx_res_mng.handle_ue_cap_update(cell_group, long_drx_supported);
-}
-
-void ocudu::odu::decode_advanced_ue_nr_caps(odu::ue_capability_summary&      ue_capability,
-                                            const asn1::rrc_nr::ue_nr_cap_s& ue_cap)
+/// Helper function to convert advanced UE NR capabilities.
+static expected<ue_capability_summary, std::string>
+decode_advanced_ue_nr_caps(odu::ue_capability_summary& ue_capability, const asn1::rrc_nr::ue_nr_cap_s& ue_cap)
 {
   for (const auto& band : ue_cap.rf_params.supported_band_list_nr) {
     // Select band.
@@ -182,6 +47,8 @@ void ocudu::odu::decode_advanced_ue_nr_caps(odu::ue_capability_summary&      ue_
           case asn1::rrc_nr::mimo_params_per_band_s::pusch_trans_coherence_opts::full_coherent:
             pusch_tx_coherence = tx_scheme_codebook_subset::fully_and_partial_and_non_coherent;
             break;
+          default:
+            return make_unexpected("Invalid MIMO PUSCH coherence option");
         }
       }
     }
@@ -283,10 +150,13 @@ void ocudu::odu::decode_advanced_ue_nr_caps(odu::ue_capability_summary&      ue_
       }
     }
   }
+
+  return {};
 }
 
-void ocudu::odu::decode_advanced_ue_nr_ntn_caps(ue_capability_summary&           ue_capability,
-                                                const asn1::rrc_nr::ue_nr_cap_s& ue_cap)
+/// Helper function to convert advanced UE NR capabilities.
+static void decode_advanced_ue_nr_ntn_caps(ue_capability_summary&           ue_capability,
+                                           const asn1::rrc_nr::ue_nr_cap_s& ue_cap)
 {
   if (auto* ntn = get_ntn_params_r17(ue_cap)) {
     const auto& ntn_params_r17  = *ntn;
@@ -344,4 +214,98 @@ void ocudu::odu::decode_advanced_ue_nr_ntn_caps(ue_capability_summary&          
     band_cap.ue_specific_k_offset_supported =
         band.ue_specific_k_offset_r17_present && band_cap.ul_ta_reporting_supported;
   }
+}
+
+expected<ue_capability_summary, std::string> odu::decode_ue_nr_cap_container(const byte_buffer& ue_cap_container)
+{
+  asn1::rrc_nr::ue_nr_cap_s ue_cap;
+  {
+    asn1::cbit_ref bref{ue_cap_container};
+    if (ue_cap.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+      return make_unexpected(std::string("Couldn't unpack UE NR Capability RRC container"));
+    }
+  }
+
+  ue_capability_summary ue_caps;
+
+  // fill UE capability summary.
+  if (ue_cap.phy_params.phy_params_fr1_present) {
+    ue_caps.pdsch_qam256_supported = ue_cap.phy_params.phy_params_fr1.pdsch_256_qam_fr1_present;
+  }
+  if (ue_cap.phy_params.phy_params_frx_diff_present) {
+    ue_caps.pdsch_qam64lowse_supported = ue_cap.phy_params.phy_params_frx_diff.dl_64_qam_mcs_table_alt_present;
+    ue_caps.pusch_qam64lowse_supported = ue_cap.phy_params.phy_params_frx_diff.ul_64_qam_mcs_table_alt_present;
+  }
+  if (ue_cap.phy_params.phy_params_common_present) {
+    ue_caps.pdsch_interleaving_vrb_to_prb_supported =
+        ue_cap.phy_params.phy_params_common.interleaving_vrb_to_prb_pdsch_present;
+  }
+  for (const auto& band : ue_cap.rf_params.supported_band_list_nr) {
+    // Create and convert band capability.
+    ue_capability_summary::supported_band band_cap;
+    band_cap.pusch_qam256_supported = band.pusch_256_qam_present;
+
+    // Emplace the band capability in the map.
+    ue_caps.bands.emplace(static_cast<nr_band>(band.band_nr), band_cap);
+  }
+  if (ue_cap.mac_params_present and ue_cap.mac_params.mac_params_xdd_diff_present) {
+    ue_caps.long_drx_cycle_supported  = ue_cap.mac_params.mac_params_xdd_diff.long_drx_cycle_present;
+    ue_caps.short_drx_cycle_supported = ue_cap.mac_params.mac_params_xdd_diff.short_drx_cycle_present;
+  }
+
+  // Convert advanced UE NR capabilities.
+  if (auto err = decode_advanced_ue_nr_caps(ue_caps, ue_cap); not err.has_value()) {
+    return err;
+  }
+
+  // Convert advanced UE NR NTN capabilities.
+  decode_advanced_ue_nr_ntn_caps(ue_caps, ue_cap);
+
+  return ue_caps;
+}
+
+ue_capability_manager::ue_capability_manager(span<const du_cell_config> cell_cfg_list_,
+                                             ocudulog::basic_logger&    logger_) :
+  base_cell_cfg_list(cell_cfg_list_), logger(logger_)
+{
+}
+
+void ue_capability_manager::update(const ue_capability_summary& summary)
+{
+  ue_caps = summary;
+}
+
+bool ue_capability_manager::update(const byte_buffer& ue_cap_rat_list)
+{
+  using namespace asn1::rrc_nr;
+
+  if (ue_cap_rat_list.empty()) {
+    // No update.
+    return false;
+  }
+
+  ue_cap_rat_container_list_l asn1_cap_list;
+  {
+    asn1::cbit_ref bref{ue_cap_rat_list};
+    if (asn1::unpack_dyn_seq_of(asn1_cap_list, bref, 0, 8) != asn1::OCUDUASN_SUCCESS) {
+      logger.error("Couldn't unpack UE Capability RAT Container List RRC container");
+      return false;
+    }
+  }
+
+  for (const ue_cap_rat_container_s& ue_cap_rat : asn1_cap_list) {
+    if (ue_cap_rat.rat_type.value != rat_type_opts::nr) {
+      logger.warning("Unsupported RAT type in UE Capability RAT Container List RRC container");
+      continue;
+    }
+    expected<ue_capability_summary, std::string> asn1_cap = decode_ue_nr_cap_container(ue_cap_rat.ue_cap_rat_container);
+    if (not asn1_cap.has_value()) {
+      logger.warning("{}", asn1_cap.error());
+      continue;
+    }
+    ue_caps = asn1_cap.value();
+    return true;
+  }
+
+  return false;
 }

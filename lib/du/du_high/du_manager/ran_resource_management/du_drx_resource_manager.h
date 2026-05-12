@@ -5,7 +5,9 @@
 #pragma once
 
 #include "du_ue_resource_config.h"
+#include "ue_capability_summary.h"
 #include "ocudu/du/du_cell_config.h"
+#include <optional>
 
 namespace ocudu {
 namespace odu {
@@ -27,7 +29,7 @@ public:
 
   /// \brief Reserve gaps for DRX/measGaps for a given UE. The resources are stored in the UE's cell group config.
   /// \return true if allocation was successful.
-  void handle_ue_cap_update(cell_group_config& cell_grp_cfg, bool long_drx_cycle_supported);
+  void handle_ue_cap_update(cell_group_config& cell_grp_cfg, const std::optional<ue_capability_summary>& ue_caps);
 
   /// \brief Deallocate DRX/measGaps resources previously given to a UE. The resources are returned back to a pool.
   void handle_ue_removal(cell_group_config& cell_grp_cfg);

@@ -4,6 +4,7 @@
 
 #include "du_drx_resource_manager.h"
 #include <map>
+#include <optional>
 
 using namespace ocudu;
 using namespace odu;
@@ -65,9 +66,11 @@ void du_drx_resource_manager::handle_ue_creation(cell_group_config& cell_grp_cfg
   cell_grp_cfg.mcg_cfg.drx_cfg.reset();
 }
 
-void du_drx_resource_manager::handle_ue_cap_update(cell_group_config& cell_grp_cfg, bool long_drx_cycle_supported)
+void du_drx_resource_manager::handle_ue_cap_update(cell_group_config&                          cell_grp_cfg,
+                                                   const std::optional<ue_capability_summary>& ue_caps)
 {
-  std::optional<drx_config>& current_ue_drx   = cell_grp_cfg.mcg_cfg.drx_cfg;
+  const bool                 long_drx_cycle_supported = ue_caps.has_value() and ue_caps->long_drx_cycle_supported;
+  std::optional<drx_config>& current_ue_drx           = cell_grp_cfg.mcg_cfg.drx_cfg;
   const du_cell_index_t      pcell_index      = cell_grp_cfg.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.cell_index;
   const du_cell_config&      pcell_cfg_common = cell_cfg_list[pcell_index];
 

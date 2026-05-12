@@ -135,8 +135,8 @@ du_ran_resource_manager_impl::create_ue_resource_configurator(du_ue_index_t   ue
     logger.info("Failed to create a configuration for ue={}. Cause: {}", static_cast<unsigned>(ue_index), err.error());
   }
 
-  // Initialize correct defaults for UE RAN resources dependent on UE capabilities.
-  ue_res.ue_cap_manager.handle_ue_creation(ue_res.cg_cfg);
+  // Initialize UE with DRX disabled.
+  drx_res_mng.handle_ue_creation(ue_res.cg_cfg.cell_group);
 
   // Allocate CFRA resources when TC-RNTI was not yet assigned (e.g. during for Handover).
   if (not has_tc_rnti) {
@@ -201,13 +201,14 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
   // > Process UE NR capabilities and update UE dedicated configuration only if test mode is not configured.
   if (not test_cfg.test_ue.has_value() or test_cfg.test_ue->rnti == rnti_t::INVALID_RNTI) {
     if (reestablished_ue_caps != nullptr) {
-      u.ue_cap_manager.update(ue_mcg, *reestablished_ue_caps);
+      u.ue_cap_manager.update(*reestablished_ue_caps);
     }
-    u.ue_cap_manager.update(ue_mcg, upd_req.ue_cap_rat_list);
+    u.ue_cap_manager.update(upd_req.ue_cap_rat_list);
   }
   if (u.ue_cap_manager.summary().has_value()) {
     pdsch_res_mng.update_resources(ue_mcg.cell_group, *u.ue_cap_manager.summary());
     pusch_res_mng.update_resources(ue_mcg.cell_group, *u.ue_cap_manager.summary());
+    drx_res_mng.handle_ue_cap_update(ue_mcg.cell_group, u.ue_cap_manager.summary());
   }
 
   // > Update UE SRBs and DRBs.
@@ -230,8 +231,7 @@ void du_ran_resource_manager_impl::deallocate_context(du_ue_index_t ue_index)
   du_ue_resource_config& ue_mcg = ue_res.cg_cfg;
 
   ra_res_alloc.deallocate_cfra_resources(ue_mcg);
-
-  ue_res.ue_cap_manager.release(ue_mcg);
+  drx_res_mng.handle_ue_removal(ue_mcg.cell_group);
 
   for (auto p : ue_mcg.cell_group.cells) {
     deallocate_cell_resources(ue_index, p.first);
@@ -323,6 +323,6 @@ void du_ran_resource_manager_impl::deallocate_cell_resources(du_ue_index_t ue_in
 }
 
 du_ran_resource_manager_impl::ue_resource_context::ue_resource_context(du_ran_resource_manager_impl& parent) :
-  ue_cap_manager(parent.cell_cfg_list, parent.drx_res_mng, parent.logger, parent.test_cfg)
+  ue_cap_manager(parent.cell_cfg_list, parent.logger)
 {
 }

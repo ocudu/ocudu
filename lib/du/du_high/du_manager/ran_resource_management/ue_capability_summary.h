@@ -4,6 +4,11 @@
 
 #pragma once
 
+#include "ocudu/ran/nr_band.h"
+#include "ocudu/ran/pusch/tx_scheme_configuration.h"
+#include <cstdint>
+#include <unordered_map>
+
 namespace ocudu {
 namespace odu {
 
