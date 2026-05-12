@@ -75,10 +75,7 @@ private:
 
   void update_impl(du_ue_resource_config& ue_res_cfg);
 
-  pdsch_mcs_table select_pdsch_mcs_table(du_cell_index_t cell_idx) const;
   pusch_mcs_table select_pusch_mcs_table(du_cell_index_t cell_idx) const;
-
-  vrb_to_prb::mapping_type select_pdsch_interleaving(du_cell_index_t cell_idx) const;
 
   /// Selects the PUSCH transmission codebook subset.
   tx_scheme_codebook_subset select_tx_codebook_subset(du_cell_index_t cell_idx) const;
@@ -86,16 +83,10 @@ private:
   unsigned select_srs_nof_ports(du_cell_index_t cell_idx) const;
   /// Selects the PUSCH maximum number of layers.
   unsigned select_pusch_max_rank(du_cell_index_t cell_idx) const;
-  /// Selects the maximum number of DL HARQ processes.
-  unsigned select_max_dl_nof_harqs(du_cell_index_t cell_idx) const;
-  /// Selects the maximum number of DL HARQ processes.
+  /// Selects the maximum number of UL HARQ processes.
   unsigned select_max_ul_nof_harqs(du_cell_index_t cell_idx) const;
-  /// Selects the DL HARQ Process Number field size.
-  unsigned select_dl_dci_harq_num_field_size(du_cell_index_t cell_idx) const;
   /// Selects the UL HARQ Process Number field size.
   unsigned select_ul_dci_harq_num_field_size(du_cell_index_t cell_idx) const;
-  /// Selects the DL HARQ feedback disabled.
-  harq_dl_feedback_disabled_mask select_disabled_dl_harq_feedback(du_cell_index_t cell_idx) const;
   /// Selects the UL HARQ Mode B.
   harq_ul_mode_mask select_ul_harq_mode(du_cell_index_t cell_idx) const;
 

@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 # Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
-
 add_library(du_resource_manager
         du_bearer_resource_manager.cpp
+        du_pdsch_resource_manager.cpp
         du_pucch_resource_manager.cpp
         du_ran_resource_manager_impl.cpp
         du_srs_periodic_res_mng.cpp

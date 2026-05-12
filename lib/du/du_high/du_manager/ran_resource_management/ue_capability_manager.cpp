@@ -70,38 +70,6 @@ expected<ue_capability_summary, std::string> ocudu::odu::decode_ue_nr_cap_contai
   return ue_caps;
 }
 
-// Configure dedicated UE configuration to set MCS ant CQI tables.
-static void set_pdsch_mcs_table(serving_cell_config& cell_cfg, pdsch_mcs_table mcs_table)
-{
-  cqi_table_t cqi_table;
-  // Set CQI table according to the MCS table used for PDSCH.
-  switch (mcs_table) {
-    case pdsch_mcs_table::qam64:
-      cqi_table = cqi_table_t::table1;
-      break;
-    case pdsch_mcs_table::qam256:
-      cqi_table = cqi_table_t::table2;
-      break;
-    case pdsch_mcs_table::qam64LowSe:
-      cqi_table = cqi_table_t::table3;
-      break;
-    default:
-      report_error("Invalid MCS table={}\n", fmt::underlying(mcs_table));
-  }
-
-  // Set MCS index table for PDSCH. See TS 38.214, Table 5.1.3.1-[1-3].
-  if (cell_cfg.init_dl_bwp.pdsch_cfg.has_value()) {
-    cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = mcs_table;
-  }
-
-  if (cell_cfg.csi_meas_cfg.has_value()) {
-    for (auto& csi_report_cfg : cell_cfg.csi_meas_cfg.value().csi_report_cfg_list) {
-      // Set CQI table. See TS 38.214, Table 5.2.2.1-[1-4].
-      csi_report_cfg.cqi_table = cqi_table;
-    }
-  }
-}
-
 // Configure dedicated UE configuration to set PUSCH MCS.
 static void set_pusch_mcs_table(serving_cell_config& cell_cfg, pusch_mcs_table mcs_table)
 {
@@ -136,37 +104,11 @@ static void set_ul_mimo(ue_cell_config&           cell_cfg,
   }
 }
 
-static void set_pdsch_interleaving(serving_cell_config& cell_cfg, vrb_to_prb::mapping_type interleaving_opt)
-{
-  // Set \c vrb-ToPRB-Interleaver for PDSCH, as per TS 38.331, \c PDSCH-Config.
-  if (cell_cfg.init_dl_bwp.pdsch_cfg.has_value()) {
-    cell_cfg.init_dl_bwp.pdsch_cfg->vrb_to_prb_interleaving = interleaving_opt;
-  }
-}
-
-static void set_max_dl_nof_harqs(serving_cell_config& cell_cfg, unsigned nof_harqs)
-{
-  if (cell_cfg.pdsch_serv_cell_cfg.has_value()) {
-    cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc =
-        static_cast<pdsch_serving_cell_config::nof_harq_proc_for_pdsch>(nof_harqs);
-  }
-}
-
 static void set_max_ul_nof_harqs(serving_cell_config& cell_cfg, unsigned nof_harqs)
 {
   if (cell_cfg.ul_config.has_value() and cell_cfg.ul_config->pusch_serv_cell_cfg.has_value()) {
     cell_cfg.ul_config->pusch_serv_cell_cfg->nof_harq_proc =
         static_cast<pusch_serving_cell_config::nof_harq_proc_for_pusch>(nof_harqs);
-  }
-}
-
-static void set_dl_dci_harq_num_field_size(serving_cell_config& cell_cfg, unsigned field_size)
-{
-  if (cell_cfg.init_dl_bwp.pdsch_cfg.has_value()) {
-    cell_cfg.init_dl_bwp.pdsch_cfg->harq_process_num_size_dci_1_1 =
-        static_cast<pdsch_config::harq_process_num_dci_1_1_size>(field_size);
-    cell_cfg.init_dl_bwp.pdsch_cfg->harq_process_num_size_dci_1_2 =
-        static_cast<pdsch_config::harq_process_num_dci_1_2_size>(field_size);
   }
 }
 
@@ -187,14 +129,6 @@ static void set_ul_harq_mode(serving_cell_config& cell_cfg, const harq_ul_mode_m
   }
 }
 
-static void set_dl_harq_feedback_disabled(serving_cell_config&                  cell_cfg,
-                                          const harq_dl_feedback_disabled_mask& disabled_harq_feedback_mask)
-{
-  if (cell_cfg.pdsch_serv_cell_cfg.has_value()) {
-    cell_cfg.pdsch_serv_cell_cfg->dl_harq_feedback_disabled = disabled_harq_feedback_mask;
-  }
-}
-
 ue_capability_manager::ue_capability_manager(span<const du_cell_config> cell_cfg_list_,
                                              du_drx_resource_manager&   drx_mng_,
                                              ocudulog::basic_logger&    logger_,
@@ -208,17 +142,11 @@ void ue_capability_manager::handle_ue_creation(du_ue_resource_config& ue_res_cfg
   du_cell_index_t cell_idx  = to_du_cell_index(0);
   ue_cell_config& pcell_cfg = ue_res_cfg.cell_group.cells.at(SERVING_PCELL_IDX);
 
-  // Set default MCS tables and disable UL MIMO.
-  set_pdsch_mcs_table(pcell_cfg.serv_cell_cfg, select_pdsch_mcs_table(cell_idx));
   set_pusch_mcs_table(pcell_cfg.serv_cell_cfg, select_pusch_mcs_table(cell_idx));
-  set_pdsch_interleaving(pcell_cfg.serv_cell_cfg, select_pdsch_interleaving(cell_idx));
   set_ul_mimo(
       pcell_cfg, select_pusch_max_rank(cell_idx), select_srs_nof_ports(cell_idx), select_tx_codebook_subset(cell_idx));
-  set_max_dl_nof_harqs(pcell_cfg.serv_cell_cfg, select_max_dl_nof_harqs(cell_idx));
   set_max_ul_nof_harqs(pcell_cfg.serv_cell_cfg, select_max_ul_nof_harqs(cell_idx));
-  set_dl_dci_harq_num_field_size(pcell_cfg.serv_cell_cfg, select_dl_dci_harq_num_field_size(cell_idx));
   set_ul_dci_harq_num_field_size(pcell_cfg.serv_cell_cfg, select_ul_dci_harq_num_field_size(cell_idx));
-  set_dl_harq_feedback_disabled(pcell_cfg.serv_cell_cfg, select_disabled_dl_harq_feedback(cell_idx));
   set_ul_harq_mode(pcell_cfg.serv_cell_cfg, select_ul_harq_mode(cell_idx));
 
   // Initialize UE with DRX disabled.
@@ -250,29 +178,18 @@ void ue_capability_manager::update_impl(du_ue_resource_config& ue_res_cfg)
   du_cell_index_t cell_idx  = to_du_cell_index(0);
   ue_cell_config& pcell_cfg = ue_res_cfg.cell_group.cells.at(SERVING_PCELL_IDX);
 
-  // Enable 256QAM for PDSCH, if supported.
-  set_pdsch_mcs_table(pcell_cfg.serv_cell_cfg, select_pdsch_mcs_table(cell_idx));
-
   // Enable 256QAM for PUSCH, if supported.
   set_pusch_mcs_table(pcell_cfg.serv_cell_cfg, select_pusch_mcs_table(cell_idx));
-
-  // Enable VRB-to-PRB interleaving for PDSCH, if supported.
-  set_pdsch_interleaving(pcell_cfg.serv_cell_cfg, select_pdsch_interleaving(cell_idx));
 
   // Setup UL MIMO parameters.
   set_ul_mimo(
       pcell_cfg, select_pusch_max_rank(cell_idx), select_srs_nof_ports(cell_idx), select_tx_codebook_subset(cell_idx));
 
-  // Set max DL/UL nof HARQs.
-  set_max_dl_nof_harqs(pcell_cfg.serv_cell_cfg, select_max_dl_nof_harqs(cell_idx));
+  // Set max UL nof HARQs.
   set_max_ul_nof_harqs(pcell_cfg.serv_cell_cfg, select_max_ul_nof_harqs(cell_idx));
 
-  // Set DL/UL DCI HARQ Process Number size.
-  set_dl_dci_harq_num_field_size(pcell_cfg.serv_cell_cfg, select_dl_dci_harq_num_field_size(cell_idx));
+  // Set UL DCI HARQ Process Number size.
   set_ul_dci_harq_num_field_size(pcell_cfg.serv_cell_cfg, select_ul_dci_harq_num_field_size(cell_idx));
-
-  // Set DL HARQ feedback disabled.
-  set_dl_harq_feedback_disabled(pcell_cfg.serv_cell_cfg, select_disabled_dl_harq_feedback(cell_idx));
 
   // Set UL HARQ Mode B enabled.
   set_ul_harq_mode(pcell_cfg.serv_cell_cfg, select_ul_harq_mode(cell_idx));
@@ -322,25 +239,6 @@ bool ue_capability_manager::decode_ue_capability_list(const byte_buffer& ue_cap_
   return false;
 }
 
-pdsch_mcs_table ue_capability_manager::select_pdsch_mcs_table(du_cell_index_t cell_idx) const
-{
-  const pdsch_mcs_table app_mcs_table = base_cell_cfg_list[cell_idx].ran.init_bwp.pdsch.mcs_table;
-  if (ue_caps.has_value()) {
-    if (app_mcs_table == pdsch_mcs_table::qam256 and ue_caps->pdsch_qam256_supported) {
-      return pdsch_mcs_table::qam256;
-    }
-    if (app_mcs_table == pdsch_mcs_table::qam64LowSe and ue_caps->pdsch_qam64lowse_supported) {
-      return pdsch_mcs_table::qam64LowSe;
-    }
-  } else if (test_cfg.test_ue.has_value() and test_cfg.test_ue->rnti != rnti_t::INVALID_RNTI) {
-    // Has no capabilities but the UE is in test mode.
-    return app_mcs_table;
-  }
-
-  // Default to QAM64 if no base cell PDSCH config of if the UE capabilities are not available.
-  return pdsch_mcs_table::qam64;
-}
-
 pusch_mcs_table ue_capability_manager::select_pusch_mcs_table(du_cell_index_t cell_idx) const
 {
   nr_band               band          = base_cell_cfg_list[cell_idx].ran.ul_carrier.band;
@@ -372,24 +270,6 @@ pusch_mcs_table ue_capability_manager::select_pusch_mcs_table(du_cell_index_t ce
   }
 
   return app_mcs_table;
-}
-
-vrb_to_prb::mapping_type ue_capability_manager::select_pdsch_interleaving(du_cell_index_t cell_idx) const
-{
-  const vrb_to_prb::mapping_type app_pdsch_interleaving =
-      base_cell_cfg_list[cell_idx].ran.init_bwp.pdsch.interleaving_bundle_size;
-  if (ue_caps.has_value()) {
-    if (ue_caps->pdsch_interleaving_vrb_to_prb_supported) {
-      // If the PDSCH interleaving is enabled in the application configuration and supported by the UE, return it.
-      return app_pdsch_interleaving;
-    }
-  } else if (test_cfg.test_ue.has_value() and test_cfg.test_ue->rnti != rnti_t::INVALID_RNTI) {
-    // Has no capabilities but the UE is in test mode.
-    return app_pdsch_interleaving;
-  }
-
-  // Default to \c non-interleaved if no base cell PDSCH config or if the UE capabilities are not available.
-  return vrb_to_prb::mapping_type::non_interleaved;
 }
 
 tx_scheme_codebook_subset ue_capability_manager::select_tx_codebook_subset(du_cell_index_t cell_idx) const
@@ -431,33 +311,6 @@ unsigned ue_capability_manager::select_pusch_max_rank(du_cell_index_t cell_idx) 
   return std::min(pusch_max_rank, ue_caps->bands.at(band).pusch_max_rank);
 }
 
-unsigned ue_capability_manager::select_max_dl_nof_harqs(du_cell_index_t cell_idx) const
-{
-  // Configured maximum number of DL HARQs.
-  unsigned cell_max_nof_dl_harq_proc = base_cell_cfg_list[cell_idx].ran.init_bwp.pdsch.max_harq_procs;
-
-  if (test_cfg.test_ue.has_value() and test_cfg.test_ue->rnti != rnti_t::INVALID_RNTI) {
-    // In case of test mode, we do not need to rely on capabilities.
-    return cell_max_nof_dl_harq_proc;
-  }
-
-  nr_band band = base_cell_cfg_list[cell_idx].ran.dl_carrier.band;
-
-  // UE capabilities not yet decoded, so return at most 16.
-  // Extended HARQ processes (up to 32 for NTN) require explicit UE capability confirmation.
-  if (not ue_caps.has_value()) {
-    return std::min(cell_max_nof_dl_harq_proc, ue_capability_summary::default_max_harq_process_num);
-  }
-
-  // UE capabilities available but band info not available, or UE does not support NTN, return at most 16.
-  if (not band_helper::is_ntn_band(band) || ue_caps->bands.count(band) == 0 || not ue_caps->ntn_supported) {
-    return std::min(cell_max_nof_dl_harq_proc, ue_capability_summary::default_max_harq_process_num);
-  }
-
-  // UE capabilities available and NTN supported.
-  return std::min(cell_max_nof_dl_harq_proc, (unsigned)ue_caps->bands.at(band).max_dl_harq_process_num);
-}
-
 unsigned ue_capability_manager::select_max_ul_nof_harqs(du_cell_index_t cell_idx) const
 {
   // Configured maximum number of UL HARQs.
@@ -485,33 +338,6 @@ unsigned ue_capability_manager::select_max_ul_nof_harqs(du_cell_index_t cell_idx
   return std::min(cell_max_nof_ul_harq_proc, (unsigned)ue_caps->bands.at(band).max_ul_harq_process_num);
 }
 
-unsigned ue_capability_manager::select_dl_dci_harq_num_field_size(du_cell_index_t cell_idx) const
-{
-  auto default_dci_size = log2_ceil(ue_capability_summary::default_max_harq_process_num);
-
-  if (test_cfg.test_ue.has_value() and test_cfg.test_ue->rnti != rnti_t::INVALID_RNTI) {
-    // In case of test mode, we do not need to rely on capabilities.
-    return default_dci_size;
-  }
-
-  // Configured maximum number of DL HARQs.
-  unsigned cell_max_nof_dl_harq_proc = base_cell_cfg_list[cell_idx].ran.init_bwp.pdsch.max_harq_procs;
-  auto     cell_dci_size             = log2_ceil(cell_max_nof_dl_harq_proc);
-
-  nr_band band = base_cell_cfg_list[cell_idx].ran.dl_carrier.band;
-
-  // UE capabilities have not been decoded yet, band info no available, or UE does not support NTN.
-  if (not band_helper::is_ntn_band(band) || not ue_caps.has_value() || ue_caps->bands.count(band) == 0 ||
-      not ue_caps->ntn_supported) {
-    // return 4
-    return default_dci_size;
-  }
-
-  auto band_dci_size = log2_ceil((unsigned)ue_caps->bands.at(band).max_dl_harq_process_num);
-  // return 4 or 5
-  return std::max(std::min(cell_dci_size, band_dci_size), default_dci_size);
-}
-
 unsigned ue_capability_manager::select_ul_dci_harq_num_field_size(du_cell_index_t cell_idx) const
 {
   auto default_dci_size = log2_ceil(ue_capability_summary::default_max_harq_process_num);
@@ -537,35 +363,6 @@ unsigned ue_capability_manager::select_ul_dci_harq_num_field_size(du_cell_index_
   auto band_dci_size = log2_ceil((unsigned)ue_caps->bands.at(band).max_ul_harq_process_num);
   // return 4 or 5
   return std::max(std::min(cell_dci_size, band_dci_size), default_dci_size);
-}
-
-harq_dl_feedback_disabled_mask ue_capability_manager::select_disabled_dl_harq_feedback(du_cell_index_t cell_idx) const
-{
-  // The bit(s) set to zero identify HARQ processes with enabled DL HARQ feedback.
-  harq_dl_feedback_disabled_mask default_harq_feedback_disabled(MAX_NOF_HARQS);
-  default_harq_feedback_disabled.reset();
-
-  // Configured disabled DL HARQ feedback.
-  harq_dl_feedback_disabled_mask cell_harq_feedback_disabled =
-      base_cell_cfg_list[cell_idx].ran.init_bwp.pdsch.dl_harq_feedback_disabled;
-
-  if (test_cfg.test_ue.has_value() and test_cfg.test_ue->rnti != rnti_t::INVALID_RNTI) {
-    // In case of test mode, we do not need to rely on capabilities.
-    return cell_harq_feedback_disabled;
-  }
-
-  const nr_band band = base_cell_cfg_list[cell_idx].ran.dl_carrier.band;
-  // Not NTN band, UE capabilities have not been decoded yet, band info no available, or UE does not support NTN.
-  if (not band_helper::is_ntn_band(band) || not ue_caps.has_value() || ue_caps->bands.count(band) == 0 ||
-      not ue_caps->ntn_supported) {
-    // DL HARQ Feedback cannot be disabled.
-    return default_harq_feedback_disabled;
-  }
-
-  if (ue_caps->disabled_dl_harq_feedback_supported) {
-    return cell_harq_feedback_disabled;
-  }
-  return default_harq_feedback_disabled;
 }
 
 harq_ul_mode_mask ue_capability_manager::select_ul_harq_mode(du_cell_index_t cell_idx) const
