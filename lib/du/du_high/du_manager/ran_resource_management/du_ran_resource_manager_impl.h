@@ -9,6 +9,7 @@
 #include "du_meas_config_manager.h"
 #include "du_pdsch_resource_manager.h"
 #include "du_pucch_resource_manager.h"
+#include "du_pusch_resource_manager.h"
 #include "du_ran_resource_manager.h"
 #include "du_srs_resource_manager.h"
 #include "ra_resource_manager.h"
@@ -117,6 +118,9 @@ private:
 
   // Manager of UE PDSCH configuration.
   du_pdsch_resource_manager pdsch_res_mng;
+
+  // Manager of UE PUSCH configuration.
+  du_pusch_resource_manager pusch_res_mng;
 
   // Allocator of UE bearer resources.
   du_bearer_resource_manager bearer_res_mng;
