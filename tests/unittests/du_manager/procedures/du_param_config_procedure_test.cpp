@@ -259,10 +259,14 @@ public:
           if (sib_type_info_r17.sib_type_r17.type().value ==
               asn1::rrc_nr::sib_type_info_v1700_s::sib_type_r17_c_::types_opts::type1_r17) {
             // Convert the ASN.1 enum to our sib_type.
-            const auto& type1_r17 = sib_type_info_r17.sib_type_r17.type1_r17();
-            uint8_t     asn1_sib_number =
-                type1_r17.value == asn1::rrc_nr::sib_type_info_v1700_s::sib_type_r17_c_::type1_r17_e_::sib_type19 ? 19
-                                                                                                                      : 0;
+            const auto& type1_r17       = sib_type_info_r17.sib_type_r17.type1_r17();
+            uint8_t     asn1_sib_number = 0;
+            if (type1_r17.value == asn1::rrc_nr::sib_type_info_v1700_s::sib_type_r17_c_::type1_r17_e_::sib_type16) {
+              asn1_sib_number = 16;
+            } else if (type1_r17.value ==
+                       asn1::rrc_nr::sib_type_info_v1700_s::sib_type_r17_c_::type1_r17_e_::sib_type19) {
+              asn1_sib_number = 19;
+            }
             if (asn1_sib_number == sib_number) {
               return value_tag_t{sib_type_info_r17.value_tag_r17};
             }

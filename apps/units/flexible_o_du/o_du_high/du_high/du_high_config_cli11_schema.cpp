@@ -1375,7 +1375,7 @@ static void configure_cli11_si_sched_info(CLI::App& app, du_high_unit_sib_config
              "Mapping of SIB types to SI-messages. SIB numbers should not be repeated")
       ->default_function(get_vector_default_function(span<const uint8_t>(si_sched_info.sib_mapping_info)))
       ->capture_default_str()
-      ->check(CLI::IsMember({2, 3, 4, 5, 6, 7, 8, 19}));
+      ->check(CLI::IsMember({2, 3, 4, 5, 6, 7, 8, 16, 19}));
   add_option(
       app, "--si_window_position", si_sched_info.si_window_position, "SI window position of the associated SI-message")
       ->capture_default_str()
