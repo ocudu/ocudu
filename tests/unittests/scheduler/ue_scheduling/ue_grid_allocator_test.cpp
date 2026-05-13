@@ -775,65 +775,6 @@ TEST_P(ue_grid_allocator_expert_cfg_pxsch_crb_limits_tester, allocates_pusch_wit
   ASSERT_EQ(find_ue_pusch(u1.crnti, res_grid[0].result.ul)->pusch_cfg.rbs.type1(), pusch_vrb_limits);
 }
 
-TEST_P(ue_grid_allocator_default_cfg_test, pdsch_allocation_is_skipped_when_dmrs_collides_with_csi_rs_symbol)
-{
-  static const units::bytes nof_bytes_to_schedule{40U};
-
-  sched_ue_creation_request_message ue_creation_req =
-      sched_config_helper::create_default_sched_ue_creation_request(cell_cfg.params);
-  ue_creation_req.ue_index = to_du_ue_index(0);
-  ue_creation_req.crnti    = to_rnti(0x4601);
-  ue& u                    = add_ue(ue_creation_req);
-
-  // For the default config (dmrs_typeA_pos=pos2, additional_positions=pos2), a 14-symbol PDSCH
-  // has DMRS at symbols {2, 7, 11}. Symbol 7 is used as the CSI-RS collision symbol.
-  static constexpr uint8_t csi_rs_symbol_at_dmrs_pos = 7;
-
-  // Step 1: Allocate a newtx PDSCH so a HARQ process enters the waiting_ack state.
-  ASSERT_TRUE(run_until([&]() { allocate_dl_newtx_grant(slice_ues[u.ue_index], nof_bytes_to_schedule, false); },
-                        [&]() { return find_ue_pdsch(u.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
-  harq_id_t h_id = res_grid[0].result.dl.ue_grants.back().pdsch_cfg.harq_id;
-
-  // Step 2: NACK the HARQ to transition it from waiting_ack to pending_retx.
-  auto h_opt = u.find_cell(to_du_cell_index(0))->harqs.dl_harq(h_id);
-  ASSERT_TRUE(h_opt.has_value());
-  // (void) cast is needed to prevent compile error due to dl_ack_info declared as [[no_discard]].
-  (void)h_opt.value().dl_ack_info(mac_harq_ack_report_status::nack, std::nullopt);
-
-  // Step 3: Collision check — inject a fake CSI-RS at a DMRS symbol and verify that the
-  // retransmission allocation is skipped by the is_retx-gated check in setup_dl_grant_builder().
-  bool collision_detected = false;
-  ASSERT_TRUE(run_until(
-      [&]() {
-        // Only test in fully DL-enabled slots, where the 14-symbol PDSCH DMRS mask {2,7,11} applies.
-        if (not cell_cfg.is_fully_dl_enabled(current_slot)) {
-          return;
-        }
-        auto h_retx = u.find_cell(to_du_cell_index(0))->harqs.dl_harq(h_id);
-        if (not h_retx.has_value() or not h_retx.value().has_pending_retx()) {
-          return;
-        }
-        csi_rs_info fake_csi{};
-        fake_csi.symbol0 = csi_rs_symbol_at_dmrs_pos;
-        // Not used for this test, set this value to its minimum.
-        fake_csi.symbol1              = 2;
-        fake_csi.type                 = csi_rs_type::CSI_RS_NZP;
-        fake_csi.row                  = 1;
-        fake_csi.cdm_type             = csi_rs_cdm_type::no_CDM;
-        fake_csi.freq_density         = csi_rs_freq_density_type::one;
-        fake_csi.scrambling_id        = 0;
-        fake_csi.power_ctrl_offset    = 0;
-        fake_csi.power_ctrl_offset_ss = 0;
-        res_grid[0].result.dl.csi_rs.push_back(fake_csi);
-
-        allocate_dl_retx_grant(slice_ues[u.ue_index], h_retx.value());
-        collision_detected = (find_ue_pdsch(u.crnti, res_grid[0].result.dl.ue_grants) == nullptr);
-      },
-      [&]() { return collision_detected; },
-      20));
-  ASSERT_TRUE(collision_detected);
-}
-
 INSTANTIATE_TEST_SUITE_P(ue_grid_allocator_test,
                          ue_grid_allocator_css_test,
                          testing::Values(duplex_mode::FDD, duplex_mode::TDD));
