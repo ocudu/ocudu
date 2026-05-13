@@ -10,8 +10,8 @@ namespace ocudu {
 
 /// State tracking the UE's RRC configuration progress in the scheduler.
 enum class ue_config_state : uint8_t {
-  /// Awaiting confirmation that the UE applied the RRC Setup or RRC Reestablishment.
-  pending_setup_or_reest,
+  /// Awaiting confirmation that the UE applied the RRC Setup/Reestablishment/Resume.
+  pending_initial_conf,
   /// Awaiting confirmation that the UE applied an RRC Reconfiguration.
   pending_reconf,
   /// Awaiting confirmation that the UE applied an RRC Reconfiguration following RRC Reestablishment.
@@ -39,8 +39,8 @@ inline bool is_in_fallback(ue_config_state cfg_st, ue_conres_state conres_st)
 inline const char* to_string(ue_config_state state)
 {
   switch (state) {
-    case ue_config_state::pending_setup_or_reest:
-      return "pending_setup";
+    case ue_config_state::pending_initial_conf:
+      return "pending_initial_conf";
     case ue_config_state::pending_reconf:
       return "pending_reconf";
     case ue_config_state::pending_reest_reconf:
@@ -66,11 +66,17 @@ inline const char* to_string(ue_conres_state state)
 
 /// Type of events that trigger UE FSM updates.
 enum class ue_fsm_config_event : uint8_t {
+  /// Contention Resolution MAC CE has been ACKed by the UE.
   conres_ce_acked,
+  /// Timed out waiting for the Contention Resolution MAC CE to be ACKed (timer has expired).
   conres_ce_timeout,
+  /// C-RNTI MAC CE has been received from the UE (F1AP-created UE path).
   crnti_ce_received,
+  /// An RRC Reconfiguration following an RRC Reestablishment has been initiated.
   reest_reconf_initiated,
-  reconf_initiated,
+  /// A UE Context Setup Request from the CU has been received (may trigger a reconfiguration or be a no-op).
+  ue_ctx_setup_received,
+  /// The UE has confirmed that the pending RRC configuration has been applied.
   config_applied
 };
 
@@ -85,8 +91,8 @@ inline const char* to_string(ue_fsm_config_event ev)
       return "crnti_ce_received";
     case ue_fsm_config_event::reest_reconf_initiated:
       return "reest_reconf_initiated";
-    case ue_fsm_config_event::reconf_initiated:
-      return "reconf_initiated";
+    case ue_fsm_config_event::ue_ctx_setup_received:
+      return "ue_context_setup_received";
     case ue_fsm_config_event::config_applied:
       return "config_applied";
   }

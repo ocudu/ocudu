@@ -126,8 +126,8 @@ void ue_repository::add_ue(const ue_configuration&   ue_cfg,
   ue_conres_state init_conres_st = ue_conres_state::conres_completed;
   if (starts_in_fallback) {
     if (ul_ccch_slot_rx.has_value()) {
-      // RACH-created UE: ConRes CE pending + RRC Setup/Reestablishment pending.
-      init_cfg_st    = ue_config_state::pending_setup_or_reest;
+      // RACH-created UE: ConRes CE pending + RRC Setup/Reestablishment/Resume pending.
+      init_cfg_st    = ue_config_state::pending_initial_conf;
       init_conres_st = ue_conres_state::pending_conres_ce;
     } else {
       // F1AP-created UE: already RRC connected but waiting for C-RNTI CE.
@@ -183,7 +183,7 @@ void ue_repository::reconfigure_ue(const ue_configuration& new_cfg, sched_ue_con
     update_ue_fsm(new_cfg.ue_index,
                   cause == sched_ue_config_request::causes::rrc_reconf_after_reest
                       ? ue_fsm_config_event::reest_reconf_initiated
-                      : ue_fsm_config_event::reconf_initiated);
+                      : ue_fsm_config_event::ue_ctx_setup_received);
   }
 
   // Configure Logical Channels.
@@ -393,12 +393,16 @@ bool ue_repository::update_ue_fsm(du_ue_index_t ue_index, ue_fsm_config_event ev
       con_st = ue_conres_state::conres_completed;
       logger.debug("ue={} rnti={}: C-RNTI CE received, contention resolution completed", ue_index, ue_cc.rnti());
       break;
-    case events::reconf_initiated:
+    case events::ue_ctx_setup_received:
       if (cfg_st == ue_config_state::pending_reconf) {
         // Already waiting for reconf complete: no-op.
         return false;
       }
-      if (cfg_st != ue_config_state::pending_setup_or_reest and cfg_st != ue_config_state::config_applied) {
+      if (cfg_st == ue_config_state::pending_initial_conf) {
+        // During RRC Resume, UEContextSetup is triggered before the DL
+        return false;
+      }
+      if (cfg_st != ue_config_state::config_applied) {
         logger.warning("ue={} rnti={}: Invalid event={} in config_state={}",
                        ue_index,
                        ue_cc.rnti(),
@@ -414,7 +418,7 @@ bool ue_repository::update_ue_fsm(du_ue_index_t ue_index, ue_fsm_config_event ev
       }
       return true;
     case events::reest_reconf_initiated:
-      if (cfg_st != ue_config_state::pending_setup_or_reest and cfg_st != ue_config_state::config_applied) {
+      if (cfg_st != ue_config_state::pending_initial_conf and cfg_st != ue_config_state::config_applied) {
         logger.warning("ue={} rnti={}: Invalid event={} in config_state={}",
                        ue_index,
                        ue_cc.rnti(),
