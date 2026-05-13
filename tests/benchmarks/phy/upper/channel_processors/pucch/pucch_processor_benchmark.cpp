@@ -3,18 +3,18 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/adt/to_array.h"
+#include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/phy/support/resource_grid_reader.h"
 #include "ocudu/phy/support/support_factories.h"
 #include "ocudu/phy/upper/channel_processors/pucch/factories.h"
 #include "ocudu/ran/pucch/pucch_constants.h"
 #include "ocudu/support/benchmark_utils.h"
-#include "ocudu/support/executors/task_worker_pool.h"
 #include "ocudu/support/executors/unique_thread.h"
 #include "ocudu/support/math/complex_normal_random.h"
-#include "ocudu/support/math/math_utils.h"
 #include "ocudu/support/ocudu_test.h"
 #include <getopt.h>
 #include <random>
+#include <thread>
 #include <variant>
 
 using namespace ocudu;
@@ -145,9 +145,8 @@ static const auto profile_set = to_array<test_profile>({
                                                                .ports        = {0, 1, 2, 3},
                                                                .bwp_size_rb  = bwp_size_rb,
                                                                .bwp_start_rb = bwp_start_rb,
-                                                               .starting_prb = 0,
+                                                               .prbs         = {0, 16},
                                                                .second_hop_prb     = 5,
-                                                               .nof_prb            = 16,
                                                                .start_symbol_index = 0,
                                                                .nof_symbols        = 2,
                                                                .rnti               = 0x1234,
@@ -167,9 +166,8 @@ static const auto profile_set = to_array<test_profile>({
                                                                .ports        = {0, 1, 2, 3},
                                                                .bwp_size_rb  = bwp_size_rb,
                                                                .bwp_start_rb = bwp_start_rb,
-                                                               .starting_prb = 0,
+                                                               .prbs         = {0, 16},
                                                                .second_hop_prb     = 5,
-                                                               .nof_prb            = 16,
                                                                .start_symbol_index = 0,
                                                                .nof_symbols        = 2,
                                                                .rnti               = 0x1234,
@@ -189,9 +187,8 @@ static const auto profile_set = to_array<test_profile>({
                                                                .ports        = {0, 1, 2, 3},
                                                                .bwp_size_rb  = bwp_size_rb,
                                                                .bwp_start_rb = bwp_start_rb,
-                                                               .starting_prb = 0,
+                                                               .prbs         = {0, 16},
                                                                .second_hop_prb     = 5,
-                                                               .nof_prb            = 16,
                                                                .start_symbol_index = 0,
                                                                .nof_symbols        = 2,
                                                                .rnti               = 0x1234,

@@ -10,6 +10,7 @@
 #include "ocudu/phy/upper/channel_processors/pucch/pucch_processor_result.h"
 #include "ocudu/ran/cyclic_prefix.h"
 #include "ocudu/ran/pucch/pucch_context.h"
+#include "ocudu/ran/resource_allocation/rb_interval.h"
 #include "ocudu/ran/slot_point.h"
 #include <string>
 
@@ -214,20 +215,16 @@ public:
     unsigned bwp_size_rb;
     /// BWP start RB index from Point A {0, ..., 274}.
     unsigned bwp_start_rb;
-    /// \brief Lowest PRB index used for the PUCCH transmission within the BWP {0, ..., 274}.
+    /// \brief PRBs used for PUCCH transmission.
     ///
-    /// Index of the first PRB prior to frequency hopping or for no frequency hopping as per TS38.213 Section 9.2.1.
-    unsigned starting_prb;
+    /// The PRB set is expressed as an interval [start, stop). If intra-slot frequency hopping is enabled, this PRB set
+    /// is used in the first hop (see TS38.213 Section 9.2.1).
+    prb_interval prbs;
     /// \brief Index of the first PRB after frequency hopping as per TS38.213 Section 9.2.1.
     ///
-    /// Lowest PRB index used for the PUCCH transmission within the BWP {0, ..., 274} if intra-slot frequency hopping is
-    /// enabled, empty otherwise.
+    /// Lowest PRB index used for the PUCCH transmission in the second hop if intra-slot frequency hopping is
+    /// enabled, empty otherwise. The number of PRBs used in the second hop is derived from \ref prbs.
     std::optional<unsigned> second_hop_prb;
-    /// \brief Number of PRB {1, ..., 16}.
-    ///
-    /// This parameter is equivalent to parameter \f$N^\textup{PUCCH, 2}_\textup{PRB}\f$ in TS38.212 Section 6.3.1.4,
-    /// and parameter \f$M^\textup{PUCCH}_\textup{RB,min}\f$ in TS38.213 Section 9.2.5.2.
-    unsigned nof_prb;
     /// Start symbol index {0, ..., 12}.
     unsigned start_symbol_index;
     /// Number of symbols for the PUCCH transmission {1, 2}.

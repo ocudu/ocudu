@@ -115,7 +115,7 @@ struct formatter<ocudu::pucch_processor::format2_configuration> {
     }
     helper.format_always(ctx, "format=2");
     helper.format_if_verbose(ctx, "bwp=[{}, {})", config.bwp_start_rb, config.bwp_start_rb + config.bwp_size_rb);
-    helper.format_always(ctx, "prb=[{}, {})", config.starting_prb, config.starting_prb + config.nof_prb);
+    helper.format_always(ctx, "prb=[{}, {})", config.prbs.start(), config.prbs.stop());
     helper.format_always(
         ctx, "prb2={}", config.second_hop_prb.has_value() ? std::to_string(*config.second_hop_prb) : "na");
     helper.format_always(

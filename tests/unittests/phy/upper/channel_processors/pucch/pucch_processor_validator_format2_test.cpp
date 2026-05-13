@@ -29,12 +29,10 @@ const pucch_processor::format2_configuration base_format_2_config = {
     50,
     // BWP start.
     10,
-    // Starting PRB.
-    1,
+    // PRB interval.
+    {1, 11},
     // Second hop PRB.
     {},
-    // Number of PRB.
-    10,
     // Start symbol index.
     12,
     // Number of OFDM symbols.
@@ -101,13 +99,25 @@ static const auto processor_validator_test_data = to_array<test_case_t>(
      },
      {
          [] {
-           test_params entry         = {};
-           entry.config              = base_format_2_config;
-           entry.config.starting_prb = entry.config.bwp_size_rb - entry.config.nof_prb + 1;
+           test_params entry = {};
+           entry.config      = base_format_2_config;
+           entry.config.prbs.displace_to(entry.config.bwp_size_rb - entry.config.prbs.length() + 1);
            entry.assert_message =
                fmt::format(R"(PRB allocation within the BWP goes up to PRB {}\, exceeding BWP size\, i\.e\.\, {}\.)",
-                           entry.config.starting_prb + entry.config.nof_prb,
+                           entry.config.prbs.stop(),
                            entry.config.bwp_size_rb);
+           return entry;
+         },
+     },
+     {
+         [] {
+           test_params entry           = {};
+           entry.config                = base_format_2_config;
+           entry.config.second_hop_prb = entry.config.bwp_size_rb - entry.config.prbs.length() + 1;
+           entry.assert_message        = fmt::format(
+               R"(PRB allocation within the BWP goes up to PRB {} in the second hop\, exceeding BWP size\, i\.e\.\, {}\.)",
+               *entry.config.second_hop_prb + entry.config.prbs.length(),
+               entry.config.bwp_size_rb);
            return entry;
          },
      },
@@ -205,8 +215,7 @@ static const auto processor_validator_test_data = to_array<test_case_t>(
            entry.config.nof_csi_part2      = 0;
            entry.config.start_symbol_index = 0;
            entry.config.nof_symbols        = max_dimensions.nof_symbols;
-           entry.config.starting_prb       = 0;
-           entry.config.nof_prb            = entry.config.bwp_size_rb;
+           entry.config.prbs               = {0, entry.config.bwp_size_rb};
            entry.assert_message            = fmt::format(
                R"(UCI Payload length \(i\.e\.\, {}\) is outside the supported range \(i\.e\.\, \[{}\.\.{}\]\)\.)",
                entry.config.nof_harq_ack + entry.config.nof_sr + entry.config.nof_csi_part1 +

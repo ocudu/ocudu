@@ -145,9 +145,9 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
   estimator_config.group_hopping      = pucch_group_hopping::NEITHER;
   estimator_config.start_symbol_index = config.start_symbol_index;
   estimator_config.nof_symbols        = config.nof_symbols;
-  estimator_config.starting_prb       = config.bwp_start_rb + config.starting_prb;
+  estimator_config.starting_prb       = config.bwp_start_rb + config.prbs.start();
   estimator_config.second_hop_prb     = transform_optional(config.second_hop_prb, std::plus(), config.bwp_start_rb);
-  estimator_config.nof_prb            = config.nof_prb;
+  estimator_config.nof_prb            = config.prbs.length();
   estimator_config.n_id_0             = config.n_id_0;
   estimator_config.ports.assign(config.ports.begin(), config.ports.end());
 
@@ -166,15 +166,15 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
   estimates.get_channel_state_information(result.csi);
 
   span<log_likelihood_ratio> llr =
-      span<log_likelihood_ratio>(temp_llr).first(pucch_constants::f2::NOF_DATA_SUBC_PER_RB * config.nof_prb *
+      span<log_likelihood_ratio>(temp_llr).first(pucch_constants::f2::NOF_DATA_SUBC_PER_RB * config.prbs.length() *
                                                  config.nof_symbols * get_bits_per_symbol(modulation_scheme::QPSK));
 
   // PUCCH Format 2 demodulator configuration.
   pucch_demodulator::format2_configuration demod_config;
   demod_config.rx_ports           = config.ports;
-  demod_config.first_prb          = config.bwp_start_rb + config.starting_prb;
+  demod_config.first_prb          = config.bwp_start_rb + config.prbs.start();
   demod_config.second_hop_prb     = transform_optional(config.second_hop_prb, std::plus(), config.bwp_start_rb);
-  demod_config.nof_prb            = config.nof_prb;
+  demod_config.nof_prb            = config.prbs.length();
   demod_config.start_symbol_index = config.start_symbol_index;
   demod_config.nof_symbols        = config.nof_symbols;
   demod_config.rnti               = config.rnti;
@@ -536,10 +536,18 @@ error_type<std::string> pucch_pdu_validator_impl::is_valid(const pucch_processor
   }
 
   // None of the occupied PRB within the BWP can exceed the BWP dimensions.
-  if (config.starting_prb + config.nof_prb > config.bwp_size_rb) {
+  if (config.prbs.stop() > config.bwp_size_rb) {
     return make_unexpected(fmt::format("PRB allocation within the BWP goes up to PRB {}, exceeding BWP size, i.e., {}.",
-                                       config.starting_prb + config.nof_prb,
+                                       config.prbs.stop(),
                                        config.bwp_size_rb));
+  }
+
+  // If needed, check the PRB allocation for the second hop.
+  if (config.second_hop_prb.has_value() && (*config.second_hop_prb + config.prbs.length() > config.bwp_size_rb)) {
+    return make_unexpected(
+        fmt::format("PRB allocation within the BWP goes up to PRB {} in the second hop, exceeding BWP size, i.e., {}.",
+                    *config.second_hop_prb + config.prbs.length(),
+                    config.bwp_size_rb));
   }
 
   // None of the occupied symbols can exceed the configured maximum slot size, or the slot size given by the CP.
@@ -580,7 +588,7 @@ error_type<std::string> pucch_pdu_validator_impl::is_valid(const pucch_processor
   unsigned nof_uci_bits = config.nof_harq_ack + config.nof_sr + config.nof_csi_part1 + config.nof_csi_part2;
 
   // Calculate effective code rate.
-  float effective_code_rate = pucch_format2_code_rate(config.nof_prb, config.nof_symbols, nof_uci_bits);
+  float effective_code_rate = pucch_format2_code_rate(config.prbs.length(), config.nof_symbols, nof_uci_bits);
 
   // The code rate shall not exceed the maximum.
   if (effective_code_rate > pucch_constants::f2::MAX_CODE_RATE) {
