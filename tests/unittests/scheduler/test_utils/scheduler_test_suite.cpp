@@ -1136,3 +1136,91 @@ bool test_helper::ra_scheduler_tracker::is_expired(const preamble_context& ctxt,
   }
   return false;
 }
+
+void test_helper::harq_tracker::on_new_result(slot_point /*sl_tx*/, const sched_result& result)
+{
+  // Build DL NDI map from DL PDCCHs (UE-specific formats with NDI).
+  std::unordered_map<harq_key, bool, harq_key_hash> dl_ndi_map;
+  for (const pdcch_dl_information& pdcch : result.dl.dl_pdcchs) {
+    bool     ndi     = false;
+    unsigned harq_id = 0;
+    switch (pdcch.dci.type) {
+      case dci_dl_rnti_config_type::c_rnti_f1_0:
+        ndi     = pdcch.dci.c_rnti_f1_0.new_data_indicator != 0;
+        harq_id = pdcch.dci.c_rnti_f1_0.harq_process_number;
+        break;
+      case dci_dl_rnti_config_type::tc_rnti_f1_0:
+        ndi     = pdcch.dci.tc_rnti_f1_0.new_data_indicator != 0;
+        harq_id = pdcch.dci.tc_rnti_f1_0.harq_process_number;
+        break;
+      case dci_dl_rnti_config_type::c_rnti_f1_1:
+        ndi     = pdcch.dci.c_rnti_f1_1.tb1_new_data_indicator != 0;
+        harq_id = pdcch.dci.c_rnti_f1_1.harq_process_number;
+        break;
+      default:
+        continue;
+    }
+    dl_ndi_map[{pdcch.ctx.rnti, static_cast<harq_id_t>(harq_id)}] = ndi;
+  }
+
+  for (const dl_msg_alloc& grant : result.dl.ue_grants) {
+    const pdsch_information& pdsch  = grant.pdsch_cfg;
+    const pdsch_codeword&    cw     = pdsch.codewords[0];
+    const harq_key           key    = {pdsch.rnti, pdsch.harq_id};
+    const auto               ndi_it = dl_ndi_map.find(key);
+    ASSERT_TRUE(ndi_it != dl_ndi_map.end()) << fmt::format(
+        "DL UE grant has no matching PDCCH for rnti={} h_id={}", pdsch.rnti, fmt::underlying(pdsch.harq_id));
+    const bool ndi = ndi_it->second;
+    const auto it  = dl_harqs.find(key);
+    if (cw.new_data) {
+      // newTx.
+      dl_harqs[key] = {ndi, cw.tb_size_bytes};
+    } else {
+      // reTx.
+      ASSERT_NE(it, dl_harqs.end()) << "PDSCH reTx but no previous PDSCH for the same HARQ";
+      ASSERT_EQ(it->second.ndi, ndi) << "NDI cannot flip in a HARQ reTx";
+      ASSERT_EQ(it->second.tbs, cw.tb_size_bytes) << "TBS mismatch for DL HARQ reTx";
+    }
+  }
+
+  // Build UL NDI map from UL PDCCHs (C-RNTI formats with NDI; tc_rnti_f0_0 has none).
+  std::unordered_map<harq_key, bool, harq_key_hash> ul_ndi_map;
+  for (const pdcch_ul_information& pdcch : result.dl.ul_pdcchs) {
+    bool     ndi     = false;
+    unsigned harq_id = 0;
+    switch (pdcch.dci.type) {
+      case dci_ul_rnti_config_type::c_rnti_f0_0:
+        ndi     = pdcch.dci.c_rnti_f0_0.new_data_indicator != 0;
+        harq_id = pdcch.dci.c_rnti_f0_0.harq_process_number;
+        break;
+      case dci_ul_rnti_config_type::c_rnti_f0_1:
+        ndi     = pdcch.dci.c_rnti_f0_1.new_data_indicator != 0;
+        harq_id = pdcch.dci.c_rnti_f0_1.harq_process_number;
+        break;
+      default:
+        continue;
+    }
+    ul_ndi_map[{pdcch.ctx.rnti, static_cast<harq_id_t>(harq_id)}] = ndi;
+  }
+
+  for (const ul_sched_info& sched_info : result.ul.puschs) {
+    const pusch_information& pusch  = sched_info.pusch_cfg;
+    const harq_key           key    = {pusch.rnti, pusch.harq_id};
+    const auto               ndi_it = ul_ndi_map.find(key);
+    if (ndi_it == ul_ndi_map.end()) {
+      // No matching PDCCH (e.g. Msg3 newTx, MsgA-PUSCH, CGs) — skip NDI tracking.
+      continue;
+    }
+    const bool ndi = ndi_it->second;
+    const auto it  = ul_harqs.find(key);
+    if (pusch.new_data) {
+      // newTx.
+      ul_harqs[key] = {ndi, pusch.tb_size_bytes};
+    } else {
+      // reTx.
+      ASSERT_NE(it, ul_harqs.end()) << "PUSCH reTx but no previous PUSCH for the same HARQ";
+      ASSERT_EQ(it->second.ndi, ndi) << "NDI cannot flip in a UL HARQ reTx";
+      ASSERT_EQ(it->second.tbs, pusch.tb_size_bytes) << "TBS mismatch for UL HARQ reTx";
+    }
+  }
+}

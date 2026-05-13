@@ -13,6 +13,7 @@
 #include "lib/scheduler/cell/resource_grid.h"
 #include "ocudu/scheduler/scheduler_rach_handler.h"
 #include <deque>
+#include <unordered_map>
 
 namespace ocudu {
 
@@ -189,6 +190,35 @@ private:
   std::deque<preamble_context>      pending_preambles;
   std::deque<msg3_retx_context>     pending_msg3_retxs;
   std::deque<msga_preamble_context> pending_msga_preambles;
+};
+
+/// Helper test class to track HARQ allocations and verify parameter consistency across retransmissions.
+class harq_tracker
+{
+public:
+  void on_new_result(slot_point sl_tx, const sched_result& result);
+
+private:
+  struct harq_alloc {
+    bool         ndi;
+    units::bytes tbs;
+  };
+
+  struct harq_key {
+    rnti_t    rnti;
+    harq_id_t harq_id;
+    bool      operator==(const harq_key& o) const { return rnti == o.rnti and harq_id == o.harq_id; }
+  };
+
+  struct harq_key_hash {
+    size_t operator()(const harq_key& k) const
+    {
+      return std::hash<uint32_t>{}((static_cast<uint32_t>(to_value(k.rnti)) << 8) | static_cast<uint8_t>(k.harq_id));
+    }
+  };
+
+  std::unordered_map<harq_key, harq_alloc, harq_key_hash> dl_harqs;
+  std::unordered_map<harq_key, harq_alloc, harq_key_hash> ul_harqs;
 };
 
 } // namespace test_helper
