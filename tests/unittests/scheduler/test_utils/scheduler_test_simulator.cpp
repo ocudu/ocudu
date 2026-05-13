@@ -121,6 +121,9 @@ void scheduler_test_simulator::run_slot(std::optional<du_cell_index_t> cell_idx)
     // Ensure the scheduler result is consistent with the cell configuration and there are no collisions.
     test_scheduler_result_consistency(cell_cfg(cidx), next_slot.without_hyper_sfn(), *last_sched_result(cidx));
 
+    // Verify HARQ NDI and TBS consistency across retransmissions.
+    sim_cells[cidx]->harq_tracker.on_new_result(next_slot.without_hyper_sfn(), *last_sched_result(cidx));
+
     // In case auto-feedback is enabled, handle it.
     handle_auto_feedback(cidx);
   };

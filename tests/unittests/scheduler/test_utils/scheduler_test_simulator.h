@@ -7,6 +7,7 @@
 #include "config_generators.h"
 #include "dummy_test_components.h"
 #include "result_test_helpers.h"
+#include "scheduler_test_suite.h"
 #include "tests/test_doubles/scheduler/dummy_scheduler_ue_metric_notifier.h"
 #include "ocudu/scheduler/config/scheduler_expert_config_factory.h"
 #include "ocudu/scheduler/mac_scheduler.h"
@@ -121,6 +122,7 @@ private:
     dummy_scheduler_cell_metrics_notifier cell_metrics;
     const cell_configuration*             cfg      = nullptr;
     const sched_result*                   last_res = nullptr;
+    test_helper::harq_tracker             harq_tracker;
 
     explicit sim_cell_context(const cell_configuration* cfg_) : cfg(cfg_) {}
   };
