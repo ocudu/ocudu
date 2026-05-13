@@ -512,7 +512,23 @@ INSTANTIATE_TEST_SUITE_P(
                           .prach_cfg_index = 137},
         prach_test_params{.scs             = ocudu::subcarrier_spacing::kHz120,
                           .band            = ocudu::nr_band::n261,
-                          .prach_cfg_index = 143}),
+                          .prach_cfg_index = 143},
+        // Format C0.
+        prach_test_params{.scs             = ocudu::subcarrier_spacing::kHz120,
+                          .band            = ocudu::nr_band::n261,
+                          .prach_cfg_index = 145},
+        prach_test_params{.scs             = ocudu::subcarrier_spacing::kHz120,
+                          .band            = ocudu::nr_band::n261,
+                          .prach_cfg_index = 151},
+        prach_test_params{.scs             = ocudu::subcarrier_spacing::kHz120,
+                          .band            = ocudu::nr_band::n261,
+                          .prach_cfg_index = 162},
+        prach_test_params{.scs             = ocudu::subcarrier_spacing::kHz120,
+                          .band            = ocudu::nr_band::n261,
+                          .prach_cfg_index = 167},
+        prach_test_params{.scs             = ocudu::subcarrier_spacing::kHz120,
+                          .band            = ocudu::nr_band::n261,
+                          .prach_cfg_index = 171}),
     [](const testing::TestParamInfo<prach_scheduler_test::ParamType>& info_) {
       return fmt::format("tdd_fr2_scs_{}_prach_cfg_idx_{}", to_string(info_.param.scs), info_.param.prach_cfg_index);
     });
