@@ -33,13 +33,21 @@ f1u_split_connector::f1u_split_connector(const gtpu_gateway_maps& udp_gw_maps,
   gw_data_gtpu_demux_adapter = std::make_unique<network_gateway_data_gtpu_demux_adapter>();
   // Create default session(s)
   for (const std::unique_ptr<gtpu_gateway>& udp_gw : udp_gw_maps.default_gws) {
-    f1u_sessions.default_gw_sessions.push_back(udp_gw->create(*gw_data_gtpu_demux_adapter));
+    std::unique_ptr<gtpu_tnl_pdu_session> f1u_session = udp_gw->create(*gw_data_gtpu_demux_adapter);
+    if (f1u_session == nullptr) {
+      report_error("Failed to create and bind default F1-U gateway");
+    }
+    f1u_sessions.default_gw_sessions.push_back(std::move(f1u_session));
   }
 
   for (auto const& [s_nssai, s_nssai_gws] : udp_gw_maps.gw_maps) {
     for (auto const& [five_qi, five_qi_gws] : s_nssai_gws) {
       for (const std::unique_ptr<gtpu_gateway>& gw : five_qi_gws) {
-        f1u_sessions.session_maps[s_nssai][five_qi].push_back(gw->create(*gw_data_gtpu_demux_adapter));
+        std::unique_ptr<gtpu_tnl_pdu_session> f1u_session = gw->create(*gw_data_gtpu_demux_adapter);
+        if (f1u_session == nullptr) {
+          report_error("Failed to create and bind F1-U gateway for slice. nssai={} five_qi={}", s_nssai, five_qi);
+        }
+        f1u_sessions.session_maps[s_nssai][five_qi].push_back(std::move(f1u_session));
       }
     }
   }

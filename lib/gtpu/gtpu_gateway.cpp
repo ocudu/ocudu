@@ -40,7 +40,8 @@ public:
 
     // Bind/open the gateway, start handling of incoming traffic from UPF, e.g. echo
     if (not conn->udp_gw->create_and_bind()) {
-      conn->logger.error("Failed to create and connect NG-U gateway");
+      conn->logger.error("Failed to create and bind NG-U gateway");
+      return nullptr;
     }
 
     if (not conn->udp_gw->subscribe_to(io_brk)) {
