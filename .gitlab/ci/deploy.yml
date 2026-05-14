@@ -43,6 +43,8 @@ ocudu image:
     MODE: publish
     ATTESTATION_FILE: /usr/local/share/ocudu.spdx
     # Arguments
+    OS: ubuntu
+    OS_VERSION: "24.04"
     DOCKER_UHD_VERSION: "4.9.0.0"
     DOCKER_DPDK_VERSION: "24.11.2"
     # CI
@@ -58,19 +60,14 @@ ocudu image:
       if [ -z "${CPU_JOBS}" ] || [ "${CPU_JOBS}" -lt 1 ]; then
         CPU_JOBS=1
       fi
-      if [ -n "${OS}" ]; then
-        export NAME="ocudu_alt_os_${OS}_${OS_VERSION}_${SUFFIX}"
-        export OS_BUILD_ARGS="OS=${OS};OS_VERSION=${OS_VERSION}"
-      else
+      if [ "${OS}" = "ubuntu" ]; then
         export NAME="ocudu_nightly_${SUFFIX}"
+      else
+        export NAME="ocudu_nightly_${OS}_${OS_VERSION}_${SUFFIX}"
       fi
       export VERSION="$(git show -s --date=format:%Y%m%d --format=%cd ${CI_COMMIT_SHA})_${CI_COMMIT_SHORT_SHA}"
       echo "CI_SHARED_OCUDU_IMAGE_VERSION=${VERSION}" >> variables.env
-      if [ -n "${OS_BUILD_ARGS}" ]; then
-        export BUILD_ARGS="${OS_BUILD_ARGS};UHD_VERSION=${DOCKER_UHD_VERSION};DPDK_VERSION=${DOCKER_DPDK_VERSION};MARCH=${MARCH};NUM_JOBS=${CPU_JOBS};EXTRA_CMAKE_ARGS=\"${EXTRA_CMAKE_ARGS}\""
-      else
-        export BUILD_ARGS="UHD_VERSION=${DOCKER_UHD_VERSION};DPDK_VERSION=${DOCKER_DPDK_VERSION};MARCH=${MARCH};NUM_JOBS=${CPU_JOBS};EXTRA_CMAKE_ARGS=\"${EXTRA_CMAKE_ARGS}\""
-      fi
+      export BUILD_ARGS="OS=${OS};OS_VERSION=${OS_VERSION};UHD_VERSION=${DOCKER_UHD_VERSION};DPDK_VERSION=${DOCKER_DPDK_VERSION};MARCH=${MARCH};NUM_JOBS=${CPU_JOBS};EXTRA_CMAKE_ARGS=\"${EXTRA_CMAKE_ARGS}\""
   artifacts:
     reports:
       dotenv: variables.env
