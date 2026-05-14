@@ -239,6 +239,7 @@ ra_scheduler::ra_scheduler(const cell_configuration& cellcfg_,
   ra_crb_lims(pdsch_helper::get_ra_crb_limits_common(
       cell_cfg.params.dl_cfg_common.init_dl_bwp,
       cell_cfg.params.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id)),
+  cfra_preambles(ra_helper::get_cfra_preambles(*cell_cfg.params.ul_cfg_common.init_ul_bwp.rach_cfg_common)),
   prach_format_is_long(is_long_preamble(
       prach_configuration_get(
           band_helper::get_freq_range(cell_cfg.band()),
@@ -259,7 +260,8 @@ ra_scheduler::ra_scheduler(const cell_configuration& cellcfg_,
            cell_cfg.params.ntn_params.has_value() && cell_cfg.params.ntn_params->ul_harq_mode_b),
   pending_rachs(RACH_IND_QUEUE_SIZE),
   pending_crcs(CRC_IND_QUEUE_SIZE),
-  pending_msg3s(MAX_CONCURRENT_MSG3_OR_MSGB)
+  pending_msg3s(MAX_CONCURRENT_MSG3_OR_MSGB),
+  pending_cfra_ues(cfra_preambles.empty() ? 0 : MAX_NOF_DU_UES)
 {
   // The maximum number of pending RARs is given by the maximum number of PRACH occasions that can accumulate from a
   // given UL slot (at which the PRACH is received) until the expiration of the RAR window. The worst case is when:
@@ -275,6 +277,10 @@ ra_scheduler::ra_scheduler(const cell_configuration& cellcfg_,
   pending_rars.reserve(MAX_PRACH_OCCASIONS_PER_SLOT * MAX_PENDING_RARS_SLOTS);
   // MsgB window can be up to 320 slots (msgB-ResponseWindow-r16), so use the same bound.
   pending_msgbs.reserve(MAX_PRACH_OCCASIONS_PER_SLOT * MAX_PENDING_RARS_SLOTS);
+
+  for (auto& cfra_ue : pending_cfra_ues) {
+    cfra_ue.store(rnti_t::INVALID_RNTI, std::memory_order_relaxed);
+  }
 
   // Precompute RAR PDSCH and DCI PDUs.
   precompute_rar_fields();
@@ -497,6 +503,12 @@ void ra_scheduler::handle_msg1_occasion(const rach_indication_message::occasion&
     // Store Msg3 request and create a HARQ entity of 1 UL HARQ.
     msg3_entry.preamble = preamble;
     msg3_entry.harq_ent = ra_harqs.add_ue(to_du_ue_index(msg3_ring_idx), preamble.tc_rnti, 1, 1);
+
+    if (cfra_preambles.contains(preamble.preamble_id)) {
+      // CFRA is enabled and preamble is a CFRA preamble.
+      // We mark its RNTI to handle upcoming CRCs.
+      pending_cfra_ues[static_cast<unsigned>(preamble.tc_rnti)] = preamble.tc_rnti;
+    }
   }
 }
 
@@ -686,7 +698,29 @@ void ra_scheduler::handle_msga_occasion(const rach_indication_message::occasion&
 
 void ra_scheduler::handle_crc_indication(const ul_crc_indication& crc_ind)
 {
-  if (not pending_crcs.try_push(crc_ind)) {
+  // Filter out CRCs that are not associated with the CBRA or CFRA.
+  // Note: Only HARQ-ID=0 is relevant for the RA procedure.
+  // Note: UEs on CBRA have no ue_index assigned, but CFRA UEs do. We determine that a CRC is for a CFRA by checking
+  // if its RNTI is in the pending_cfra_ues map.
+  auto is_ra_crc = [this](const ul_crc_pdu_indication& pdu) {
+    return pdu.harq_id == to_harq_id(0) and
+           (pdu.ue_index == INVALID_DU_UE_INDEX or
+            (not pending_cfra_ues.empty() and pending_cfra_ues[static_cast<unsigned>(pdu.rnti)] == pdu.rnti));
+  };
+  ul_crc_indication ra_crc_ind;
+  for (auto& crc : crc_ind.crcs) {
+    if (is_ra_crc(crc)) {
+      ra_crc_ind.crcs.push_back(crc);
+    }
+  }
+  if (ra_crc_ind.crcs.empty()) {
+    // Early exit: No RA CRCs found.
+    return;
+  }
+  ra_crc_ind.sl_rx      = crc_ind.sl_rx;
+  ra_crc_ind.cell_index = crc_ind.cell_index;
+
+  if (not pending_crcs.try_push(ra_crc_ind)) {
     logger.warning(
         "pci={}: CRC indication for slot={} discarded. Cause: Event queue is full", cell_cfg.params.pci, crc_ind.sl_rx);
   }

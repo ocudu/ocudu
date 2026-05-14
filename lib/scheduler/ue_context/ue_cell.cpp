@@ -125,6 +125,15 @@ expected<units::bytes> ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_c
   // Find UL HARQ with matching PUSCH slot.
   std::optional<ul_harq_process_handle> h_ul = harqs.find_ul_harq_waiting_ack(pusch_slot);
   if (not h_ul.has_value() or h_ul->id() != crc_pdu.harq_id) {
+    if (crc_pdu.harq_id == to_harq_id(0) and get_pcell_state().cfra_pending) {
+      // This is a CFRA-created UE. The UL HARQ is being handled by the RA scheduler.
+      if (crc_pdu.tb_crc_success) {
+        components.pcell_state->cfra_pending = false;
+      }
+      // We do not account for the RAR UL grant in the metrics.
+      return make_unexpected(default_error_t{});
+    }
+
     logger.warning("rnti={} h_id={}: Discarding CRC. Cause: UL HARQ process is not expecting CRC for PUSCH slot {}",
                    rnti(),
                    fmt::underlying(crc_pdu.harq_id),

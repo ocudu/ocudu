@@ -33,16 +33,12 @@ public:
   void handle_cfra_deallocation(du_ue_index_t ue_idx);
 
 private:
-  // Whether the preamble provided is reserved for CFRA.
-  bool is_cfra_preamble(unsigned ra_preamble_id) const;
-
   // Map of preamble ID to entry in \c preambles vector.
   unsigned get_cfra_index(unsigned ra_preamble_id) const;
 
   mac_rach_handler&     parent;
   const du_cell_index_t cell_index;
-  const unsigned        nof_cb_preambles;
-  const unsigned        nof_msga_preambles;
+  interval<unsigned>    cfra_preambles;
 
   std::vector<std::atomic<rnti_t>> preambles;
 };

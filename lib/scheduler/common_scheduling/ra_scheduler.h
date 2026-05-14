@@ -202,9 +202,10 @@ private:
   // -- Derived from args.
 
   /// RA window size in number of slots.
-  const unsigned ra_win_nof_slots;
-  crb_interval   ra_crb_lims;
-  const bool     prach_format_is_long;
+  const unsigned     ra_win_nof_slots;
+  crb_interval       ra_crb_lims;
+  interval<unsigned> cfra_preambles;
+  const bool         prach_format_is_long;
   /// Duration of a single PRACH occasion in slots.
   const unsigned prach_occasion_duration_slots;
   /// Bitmap of CRBs that might be used for PUCCH transmissions, to avoid scheduling MSG3-PUSCH over them.
@@ -255,6 +256,9 @@ private:
 
   // Marks whether the next slot indication is the first.
   bool first_slot_flag = true;
+
+  // Circular map of RNTIs associated with CFRA.
+  circular_vector<std::atomic<rnti_t>> pending_cfra_ues;
 };
 
 } // namespace ocudu

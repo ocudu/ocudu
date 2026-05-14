@@ -149,4 +149,20 @@ struct rach_config_common {
   }
 };
 
+namespace ra_helper {
+
+/// Determines range of RA preambles associated with CFRA.
+inline interval<unsigned> get_cfra_preambles(const rach_config_common& rach_cfg)
+{
+  const auto nof_cb_preambles = rach_cfg.nof_cb_preambles_per_ssb;
+  const auto nof_msga_preambles =
+      rach_cfg.two_step_rach_cfg.has_value() ? rach_cfg.two_step_rach_cfg->cb_preambles_per_ssb_per_shared_ro : 0U;
+
+  // Preambles above the CB (4-step) and MsgA (2-step CB) ranges are reserved for CFRA.
+  const unsigned cfra_start = nof_cb_preambles + nof_msga_preambles;
+  return {cfra_start, rach_cfg.total_nof_ra_preambles};
+}
+
+} // namespace ra_helper
+
 } // namespace ocudu

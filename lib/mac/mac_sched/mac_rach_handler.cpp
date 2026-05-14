@@ -13,30 +13,19 @@ mac_cell_rach_handler_impl::mac_cell_rach_handler_impl(mac_rach_handler&        
                                                        const sched_cell_configuration_request_message& sched_cfg) :
   parent(parent_),
   cell_index(sched_cfg.cell_index),
-  nof_cb_preambles(sched_cfg.ran.ul_cfg_common.init_ul_bwp.rach_cfg_common->nof_cb_preambles_per_ssb),
-  nof_msga_preambles(sched_cfg.ran.ul_cfg_common.init_ul_bwp.rach_cfg_common->two_step_rach_cfg.has_value()
-                         ? sched_cfg.ran.ul_cfg_common.init_ul_bwp.rach_cfg_common->two_step_rach_cfg
-                               ->cb_preambles_per_ssb_per_shared_ro
-                         : 0U),
+  cfra_preambles(ra_helper::get_cfra_preambles(*sched_cfg.ran.ul_cfg_common.init_ul_bwp.rach_cfg_common)),
   // Preambles above the CB (4-step) and MsgA (2-step CB) ranges are reserved for CFRA.
-  preambles(sched_cfg.ran.ul_cfg_common.init_ul_bwp.rach_cfg_common->total_nof_ra_preambles - nof_cb_preambles -
-            nof_msga_preambles)
+  preambles(cfra_preambles.length())
 {
   for (auto& preamble : preambles) {
     preamble.store(rnti_t::INVALID_RNTI, std::memory_order_relaxed);
   }
 }
 
-bool mac_cell_rach_handler_impl::is_cfra_preamble(unsigned ra_preamble_id) const
-{
-  const unsigned cfra_start = nof_cb_preambles + nof_msga_preambles;
-  return ra_preamble_id >= cfra_start and ra_preamble_id < cfra_start + preambles.size();
-}
-
 unsigned mac_cell_rach_handler_impl::get_cfra_index(unsigned ra_preamble_id) const
 {
-  ocudu_assert(is_cfra_preamble(ra_preamble_id), "Invalid CFRA preamble");
-  return ra_preamble_id - nof_cb_preambles - nof_msga_preambles;
+  ocudu_assert(cfra_preambles.contains(ra_preamble_id), "Invalid CFRA preamble");
+  return ra_preamble_id - cfra_preambles.start();
 }
 
 void mac_cell_rach_handler_impl::handle_rach_indication(const mac_rach_indication& rach_ind)
@@ -51,7 +40,7 @@ void mac_cell_rach_handler_impl::handle_rach_indication(const mac_rach_indicatio
     sched_occasion.frequency_index = occasion.frequency_index;
     for (const auto& preamble : occasion.preambles) {
       rnti_t selected_rnti = rnti_t::INVALID_RNTI;
-      if (is_cfra_preamble(preamble.index)) {
+      if (cfra_preambles.contains(preamble.index)) {
         // Fetch C-RNTI if it is Contention-free RACH preamble.
         selected_rnti = preambles[get_cfra_index(preamble.index)].load(std::memory_order_acquire);
         if (selected_rnti == rnti_t::INVALID_RNTI) {
@@ -90,7 +79,7 @@ void mac_cell_rach_handler_impl::handle_rach_indication(const mac_rach_indicatio
 
 bool mac_cell_rach_handler_impl::handle_cfra_allocation(uint8_t preamble_id, du_ue_index_t ue_idx, rnti_t crnti)
 {
-  ocudu_assert(is_cfra_preamble(preamble_id), "Invalid preamble_id={}", preamble_id);
+  ocudu_assert(cfra_preambles.contains(preamble_id), "Invalid preamble_id={}", preamble_id);
   if (parent.ue_map[ue_idx].cell_idx != INVALID_DU_CELL_INDEX or
       parent.ue_map[ue_idx].preamble_id != MAX_NOF_RA_PREAMBLES_PER_OCCASION) {
     return false;
