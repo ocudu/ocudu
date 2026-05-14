@@ -23,8 +23,6 @@ public:
                               .sr_period        = sr_period,
                               .sr_offset        = sr_offset}}
   {
-    static constexpr max_pucch_code_rate max_code_rate = max_pucch_code_rate::dot_25;
-
     csi_offset = std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
                      t_bench.get_main_ue().get_pcell().cfg().csi_meas_cfg()->csi_report_cfg_list[0].report_cfg_type)
                      .report_slot_offset;
@@ -37,15 +35,13 @@ public:
     pucch_sr_only_test =
         test_helpers::make_ded_pucch_info(t_bench.cell_cfg,
                                           t_bench.cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.resources[6],
-                                          {.sr_bits = sr_nof_bits::one},
-                                          max_code_rate);
+                                          {.sr_bits = sr_nof_bits::one});
 
     // Set the expected HARQ CSI grant to the CSI resource.
     pucch_sr_csi_test =
         test_helpers::make_ded_pucch_info(t_bench.cell_cfg,
                                           t_bench.cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.resources[14],
-                                          {.sr_bits = sr_nof_bits::one, .csi_part1_nof_bits = default_csi_part1_bits},
-                                          max_code_rate);
+                                          {.sr_bits = sr_nof_bits::one, .csi_part1_nof_bits = default_csi_part1_bits});
   }
 
 protected:
@@ -121,8 +117,6 @@ public:
     csi_offset(test_rng::uniform_int<unsigned>(0, csi_resource_periodicity_to_uint(GetParam()) - 1)),
     t_bench{test_bench_params{.csi_period = csi_period, .csi_offset = csi_offset}}
   {
-    static constexpr max_pucch_code_rate max_code_rate = max_pucch_code_rate::dot_25;
-
     sr_period = sr_periodicity_to_slot(
         t_bench.get_main_ue().get_pcell().cfg().init_bwp().ul.ded()->pucch_cfg.value().sr_res_list[0].period);
 
@@ -132,8 +126,7 @@ public:
     pucch_csi_and_sr_test =
         test_helpers::make_ded_pucch_info(t_bench.cell_cfg,
                                           t_bench.cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.resources[14],
-                                          {.sr_bits = sr_nof_bits::one, .csi_part1_nof_bits = default_csi_part1_bits},
-                                          max_code_rate);
+                                          {.sr_bits = sr_nof_bits::one, .csi_part1_nof_bits = default_csi_part1_bits});
 
     pucch_csi_only_test                  = pucch_csi_and_sr_test;
     pucch_csi_only_test.uci_bits.sr_bits = sr_nof_bits::no_sr;

@@ -628,7 +628,6 @@ pucch_info_test_helper ocudu::unittests::build_valid_pucch_format_2_pdu()
   pucch.resources.prbs              = {1, 4};
   pucch.resources.symbols           = {0, 1};
   pucch.resources.second_hop_prbs   = {1, 11};
-  format_2.max_code_rate            = max_pucch_code_rate::dot_08;
   pucch.uci_bits.csi_part1_nof_bits = 102;
   pucch.uci_bits.harq_ack_nof_bits  = 100;
   pucch.uci_bits.sr_bits            = sr_nof_bits::one;
@@ -651,7 +650,6 @@ pucch_info_test_helper ocudu::unittests::build_valid_pucch_format_3_pdu()
   pucch.resources.prbs              = {1, 4};
   pucch.resources.symbols           = {0, 3};
   pucch.resources.second_hop_prbs   = {1, 11};
-  format_3.max_code_rate            = max_pucch_code_rate::dot_08;
   pucch.uci_bits.csi_part1_nof_bits = 102;
   pucch.uci_bits.harq_ack_nof_bits  = 100;
   pucch.uci_bits.sr_bits            = sr_nof_bits::one;
@@ -677,7 +675,6 @@ pucch_info_test_helper ocudu::unittests::build_valid_pucch_format_4_pdu()
   pucch.resources.prbs              = {1, 2};
   pucch.resources.symbols           = {0, 3};
   pucch.resources.second_hop_prbs   = {10, 11};
-  format_4.max_code_rate            = max_pucch_code_rate::dot_08;
   pucch.uci_bits.csi_part1_nof_bits = 102;
   pucch.uci_bits.harq_ack_nof_bits  = 100;
   pucch.uci_bits.sr_bits            = sr_nof_bits::one;

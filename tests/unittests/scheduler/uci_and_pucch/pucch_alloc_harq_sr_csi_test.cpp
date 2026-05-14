@@ -16,22 +16,16 @@ public:
     pucch_allocator_base_test(
         test_bench_params{.pucch_ded_params = {.f2_or_f3_or_f4_params = pucch_f2_params{.max_nof_rbs = 3U}}})
   {
-    static constexpr auto max_code_rate = max_pucch_code_rate::dot_25;
-
     // This PUCCH grant will be for 5 HARQ bits, which fit in 1 PRB.
-    pucch_expected_harq_only =
-        test_helpers::make_ded_pucch_info(t_bench.cell_cfg,
-                                          t_bench.cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.resources[8],
-                                          {.harq_ack_nof_bits = 5U},
-                                          max_code_rate);
+    pucch_expected_harq_only = test_helpers::make_ded_pucch_info(
+        t_bench.cell_cfg, t_bench.cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.resources[8], {.harq_ack_nof_bits = 5U});
     pucch_expected_harq_only.resources.prbs.resize(1);
 
     // This PUCCH grant will be for 4 CSI bits only, which are encoded in the maximum number of PRBs.
     pucch_expected_csi_only =
         test_helpers::make_ded_pucch_info(t_bench.cell_cfg,
                                           t_bench.cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.resources[14],
-                                          {.csi_part1_nof_bits = default_csi_part1_bits},
-                                          max_code_rate);
+                                          {.csi_part1_nof_bits = default_csi_part1_bits});
     pucch_expected_csi_only.resources.prbs.resize(3);
 
     // This PUCCH grant will be for 5 HARQ bits + 4 CSI bits, which fit in 2 PRBs.

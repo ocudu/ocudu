@@ -1787,7 +1787,6 @@ void pucch_allocator_impl::fill_ded_pdu(pucch_info&           pucch_pdu,
 
       format_2.n_id_scrambling   = n_id_scrambling();
       format_2.n_id_0_scrambling = n_id_0_scrambling();
-      format_2.max_code_rate     = cell_cfg.params.init_bwp.pucch.resources.max_code_rate_234();
     } break;
     case pucch_format::FORMAT_3: {
       auto& format_3 = pucch_pdu.format_params.emplace<pucch_format_3>();
@@ -1803,8 +1802,6 @@ void pucch_allocator_impl::fill_ded_pdu(pucch_info&           pucch_pdu,
       const auto& f3_params = std::get<pucch_f3_params>(cell_cfg.params.init_bwp.pucch.resources.f2_or_f3_or_f4_params);
       format_3.pi_2_bpsk    = f3_params.pi2_bpsk;
       format_3.additional_dmrs = f3_params.additional_dmrs;
-      // \f$N_{ID}^0\f$ as per TS 38.211, Section 6.4.1.3.2.1.
-      format_3.max_code_rate = cell_cfg.params.init_bwp.pucch.resources.max_code_rate_234();
     } break;
     case pucch_format::FORMAT_4: {
       const auto& res_f4   = std::get<pucch_format_4_cfg>(pucch_res.format_params);
@@ -1821,10 +1818,8 @@ void pucch_allocator_impl::fill_ded_pdu(pucch_info&           pucch_pdu,
       const auto& f4_params = std::get<pucch_f4_params>(cell_cfg.params.init_bwp.pucch.resources.f2_or_f3_or_f4_params);
       format_4.pi_2_bpsk    = f4_params.pi2_bpsk;
       format_4.additional_dmrs = f4_params.additional_dmrs;
-      // \f$N_{ID}^0\f$ as per TS 38.211, Section 6.4.1.3.2.1.
-      format_4.max_code_rate  = cell_cfg.params.init_bwp.pucch.resources.max_code_rate_234();
-      format_4.orthog_seq_idx = static_cast<unsigned>(res_f4.occ_index);
-      format_4.n_sf_pucch_f4  = static_cast<pucch_format_4_sf>(res_f4.occ_length);
+      format_4.orthog_seq_idx  = static_cast<unsigned>(res_f4.occ_index);
+      format_4.n_sf_pucch_f4   = static_cast<pucch_format_4_sf>(res_f4.occ_length);
     } break;
     default:
       ocudu_assertion_failure("Invalid PUCCH format");

@@ -28,10 +28,7 @@ pucch_info make_common_pucch_info(const bwp_configuration* bwp_cfg,
                                   uint8_t                  initial_cyclic_shift,
                                   uint8_t                  time_domain_occ);
 
-pucch_info make_ded_pucch_info(const cell_configuration& cell_cfg,
-                               const pucch_resource&     res,
-                               pucch_uci_bits            uci_bits,
-                               max_pucch_code_rate       max_code_rate);
+pucch_info make_ded_pucch_info(const cell_configuration& cell_cfg, const pucch_resource& res, pucch_uci_bits uci_bits);
 
 } // namespace test_helpers
 
