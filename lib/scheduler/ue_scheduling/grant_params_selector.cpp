@@ -183,25 +183,44 @@ static std::optional<mcs_prbs_selection> compute_newtx_required_mcs_and_prbs(con
 
 /// Finds the number of PRBs that yields a TBS exactly equal to target_tbs for the given MCS and PDSCH config.
 /// Returns std::nullopt if no such value exists within rb_lims (target_tbs skipped by quantisation).
-static std::optional<unsigned> compute_retx_nof_rbs(const pdsch_config_params& pdsch_cfg,
-                                                    sch_mcs_index              mcs,
-                                                    units::bytes               target_tbs,
-                                                    const interval<unsigned>&  rb_lims)
+static std::optional<unsigned> compute_retx_nof_rbs(const pdsch_config_params&                  pdsch_cfg,
+                                                    sch_mcs_index                               mcs,
+                                                    const dl_harq_process_handle::grant_params& prev_h_params,
+                                                    const interval<unsigned>&                   rb_lims)
 {
-  const unsigned      dmrs_prbs = calculate_nof_dmrs_per_rb(pdsch_cfg.dmrs);
-  sch_mcs_description mcs_info  = pdsch_mcs_get_config(pdsch_cfg.mcs_table, mcs);
-  for (unsigned n = rb_lims.start(), ne = rb_lims.stop(); n <= ne; ++n) {
-    units::bytes tbs = tbs_calculator_calculate({.nof_symb_sh      = pdsch_cfg.symbols.length(),
-                                                 .nof_dmrs_prb     = dmrs_prbs,
-                                                 .nof_oh_prb       = pdsch_cfg.nof_oh_prb,
-                                                 .mcs_descr        = mcs_info,
-                                                 .nof_layers       = pdsch_cfg.nof_layers,
-                                                 .tb_scaling_field = pdsch_cfg.tb_scaling_field,
-                                                 .n_prb            = n});
+  const units::bytes           target_tbs = prev_h_params.tbs;
+  tbs_calculator_configuration tbs_calc_cfg{.nof_symb_sh      = pdsch_cfg.symbols.length(),
+                                            .nof_dmrs_prb     = calculate_nof_dmrs_per_rb(pdsch_cfg.dmrs),
+                                            .nof_oh_prb       = pdsch_cfg.nof_oh_prb,
+                                            .mcs_descr        = pdsch_mcs_get_config(pdsch_cfg.mcs_table, mcs),
+                                            .nof_layers       = pdsch_cfg.nof_layers,
+                                            .tb_scaling_field = pdsch_cfg.tb_scaling_field,
+                                            .n_prb            = 1};
+
+  // Start with an estimate for the number of RBs.
+  auto           old_mcs_descr = pdsch_mcs_get_config(prev_h_params.mcs_table, prev_h_params.mcs);
+  const unsigned nrb_estim     = std::max<unsigned>(
+      1U,
+      prev_h_params.rbs.type1().length() * old_mcs_descr.get_spectral_efficiency() * prev_h_params.nof_symbols /
+          (tbs_calc_cfg.mcs_descr.get_spectral_efficiency() * pdsch_cfg.symbols.length()));
+  tbs_calc_cfg.n_prb = nrb_estim;
+  units::bytes tbs   = tbs_calculator_calculate(tbs_calc_cfg);
+  if (tbs == target_tbs) {
+    return nrb_estim;
+  }
+
+  const int dir = tbs < target_tbs ? 1 : -1;
+  for (int n     = static_cast<int>(nrb_estim) + dir,
+           start = static_cast<int>(rb_lims.start()),
+           stop  = static_cast<int>(rb_lims.stop());
+       n >= start and n < stop;
+       n += dir) {
+    tbs_calc_cfg.n_prb = n;
+    tbs                = tbs_calculator_calculate(tbs_calc_cfg);
     if (tbs == target_tbs) {
       return n;
     }
-    if (tbs > target_tbs) {
+    if (dir == 1 ? tbs > target_tbs : tbs < target_tbs) {
       return std::nullopt;
     }
   }
@@ -238,7 +257,7 @@ compute_retx_nof_rbs_mcs(const search_space_info&                    ss,
   const sch_mcs_index mcs = recommended_mcs.value();
 
   // Define range of RBs for the search.
-  interval<unsigned> nrb_search{1, rb_lims.stop()};
+  interval<unsigned> nrb_search = rb_lims;
   if (pdsch_td_res.symbols.length() < prev_h_params.nof_symbols and mcs <= prev_h_params.mcs) {
     // If symbols and mcs decreased, the number of required RBs will most likely increase. We can narrow down
     // the search.
@@ -250,7 +269,7 @@ compute_retx_nof_rbs_mcs(const search_space_info&                    ss,
   }
 
   // Compute number of RBs.
-  const auto nof_rbs_opt = compute_retx_nof_rbs(pdsch_cfg, mcs, prev_h_params.tbs, nrb_search);
+  const auto nof_rbs_opt = compute_retx_nof_rbs(pdsch_cfg, mcs, prev_h_params, nrb_search);
   if (not nof_rbs_opt.has_value()) {
     return std::nullopt;
   }
@@ -403,24 +422,46 @@ vrb_interval sched_helper::compute_retx_dl_vrbs(const dl_sched_context& decision
 /// Finds the number of PRBs that yields a TBS exactly equal to target_tbs for the given MCS and PUSCH config.
 /// Returns std::nullopt if no such value exists within rb_lims (target_tbs skipped by quantisation or code rate
 /// exceeded at every candidate).
-static std::optional<unsigned> compute_retx_ul_nof_rbs(const pusch_config_params& pusch_cfg,
-                                                       const sched_bwp_config&    active_bwp,
-                                                       sch_mcs_index              mcs,
-                                                       units::bytes               target_tbs,
-                                                       const interval<unsigned>&  rb_lims)
+static std::optional<unsigned> compute_retx_ul_nof_rbs(const pusch_config_params&                  pusch_cfg,
+                                                       const sched_bwp_config&                     active_bwp,
+                                                       sch_mcs_index                               mcs,
+                                                       const ul_harq_process_handle::grant_params& prev_h_params,
+                                                       const interval<unsigned>&                   rb_lims)
 {
-  // Note: We take the conservative approach of assuming the reTx will intersect the DC.
+  const units::bytes    target_tbs  = prev_h_params.tbs;
   static constexpr bool contains_dc = true;
-  for (unsigned n = rb_lims.start(), ne = rb_lims.stop(); n <= ne; ++n) {
-    auto tbs = compute_ul_tbs(pusch_cfg, active_bwp, mcs, n, contains_dc);
+
+  // Start with an estimate for the number of RBs.
+  const auto old_mcs_descr = pusch_mcs_get_config(
+      prev_h_params.mcs_table, prev_h_params.mcs, pusch_cfg.use_transform_precoder, pusch_cfg.tp_pi2bpsk_present);
+  const auto new_mcs_descr =
+      pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, pusch_cfg.use_transform_precoder, pusch_cfg.tp_pi2bpsk_present);
+  const unsigned nrb_estim = std::max<unsigned>(
+      1U,
+      prev_h_params.rbs.type1().length() * old_mcs_descr.get_spectral_efficiency() * prev_h_params.nof_symbols /
+          (new_mcs_descr.get_spectral_efficiency() * pusch_cfg.symbols.length()));
+
+  // Note: We take the conservative approach of assuming the reTx will intersect the DC.
+  auto tbs = compute_ul_tbs(pusch_cfg, active_bwp, mcs, nrb_estim, contains_dc);
+  if (tbs.has_value() and tbs.value() == target_tbs) {
+    return nrb_estim;
+  }
+
+  // Go up if TBS is too small or code rate is invalid (more RBs needed); go down if too large.
+  const int dir = (not tbs.has_value() or tbs.value() < target_tbs) ? 1 : -1;
+  for (int n = static_cast<int>(nrb_estim) + dir;
+       n >= static_cast<int>(rb_lims.start()) and n < static_cast<int>(rb_lims.stop());
+       n += dir) {
+    tbs = compute_ul_tbs(pusch_cfg, active_bwp, mcs, n, contains_dc);
     if (not tbs.has_value()) {
-      // Code rate or UCI not valid yet — more RBs may help.
-      continue;
+      if (dir == 1)
+        continue;
+      return std::nullopt;
     }
     if (tbs.value() == target_tbs) {
       return n;
     }
-    if (tbs.value() > target_tbs) {
+    if (dir == 1 ? tbs.value() > target_tbs : tbs.value() < target_tbs) {
       return std::nullopt;
     }
   }
@@ -457,7 +498,7 @@ compute_retx_ul_nof_rbs_mcs(const pusch_config_params&    pusch_cfg,
       ue_cc.link_adaptation_controller().calculate_ul_mcs(pusch_cfg.mcs_table, pusch_cfg.use_transform_precoder);
 
   // Define range of RBs for the search.
-  interval<unsigned> nrb_search{1, rb_lims.stop()};
+  interval<unsigned> nrb_search = rb_lims;
   if (pusch_cfg.symbols.length() < prev_params.nof_symbols and mcs <= prev_params.mcs) {
     // If symbols and mcs decreased, the number of required RBs will most likely increase. We can narrow down
     // the search.
@@ -469,7 +510,7 @@ compute_retx_ul_nof_rbs_mcs(const pusch_config_params&    pusch_cfg,
   }
 
   // Compute number of RBs.
-  const auto nof_rbs_opt = compute_retx_ul_nof_rbs(pusch_cfg, ue_cc.active_bwp(), mcs, prev_params.tbs, nrb_search);
+  const auto nof_rbs_opt = compute_retx_ul_nof_rbs(pusch_cfg, ue_cc.active_bwp(), mcs, prev_params, nrb_search);
   if (not nof_rbs_opt.has_value()) {
     return std::nullopt;
   }
