@@ -58,8 +58,7 @@ private:
   friend class mac_cell_rach_handler_impl;
 
   struct cfra_ue_context {
-    du_cell_index_t cell_idx;
-    uint8_t         preamble_id;
+    uint8_t preamble_id;
   };
 
   scheduler_rach_handler& sched;

@@ -41,7 +41,7 @@ void mac_cell_rach_handler_impl::handle_rach_indication(const mac_rach_indicatio
     for (const auto& preamble : occasion.preambles) {
       rnti_t selected_rnti = rnti_t::INVALID_RNTI;
       if (cfra_preambles.contains(preamble.index)) {
-        // Fetch C-RNTI if it is Contention-free RACH preamble.
+        // Fetch C-RNTI if it is Contention-free RACH (CFRA) preamble.
         selected_rnti = preambles[get_cfra_index(preamble.index)].load(std::memory_order_acquire);
         if (selected_rnti == rnti_t::INVALID_RNTI) {
           parent.logger.info("cell={} preamble id={}: Ignoring detected contention-free PRACH preamble. Cause: No "
@@ -80,14 +80,12 @@ void mac_cell_rach_handler_impl::handle_rach_indication(const mac_rach_indicatio
 bool mac_cell_rach_handler_impl::handle_cfra_allocation(uint8_t preamble_id, du_ue_index_t ue_idx, rnti_t crnti)
 {
   ocudu_assert(cfra_preambles.contains(preamble_id), "Invalid preamble_id={}", preamble_id);
-  if (parent.ue_map[ue_idx].cell_idx != INVALID_DU_CELL_INDEX or
-      parent.ue_map[ue_idx].preamble_id != MAX_NOF_RA_PREAMBLES_PER_OCCASION) {
+  if (parent.ue_map[ue_idx].preamble_id != MAX_NOF_RA_PREAMBLES_PER_OCCASION) {
     return false;
   }
   const unsigned idx           = get_cfra_index(preamble_id);
   rnti_t         expected_rnti = rnti_t::INVALID_RNTI;
   if (preambles[idx].compare_exchange_strong(expected_rnti, crnti, std::memory_order_acq_rel)) {
-    parent.ue_map[ue_idx].cell_idx    = cell_index;
     parent.ue_map[ue_idx].preamble_id = preamble_id;
     return true;
   }
@@ -99,7 +97,6 @@ void mac_cell_rach_handler_impl::handle_cfra_deallocation(du_ue_index_t ue_idx)
   auto&         ue_entry    = parent.ue_map[ue_idx];
   const uint8_t preamble_id = ue_entry.preamble_id;
   if (preamble_id != MAX_NOF_RA_PREAMBLES_PER_OCCASION) {
-    ue_entry.cell_idx    = INVALID_DU_CELL_INDEX;
     ue_entry.preamble_id = MAX_NOF_RA_PREAMBLES_PER_OCCASION;
     preambles[get_cfra_index(preamble_id)].store(rnti_t::INVALID_RNTI, std::memory_order_release);
   }
@@ -111,7 +108,7 @@ mac_rach_handler::mac_rach_handler(scheduler_rach_handler& sched_,
   sched(sched_),
   rnti_mng(rnti_mng_),
   logger(logger_),
-  ue_map(MAX_NOF_DU_UES, cfra_ue_context{INVALID_DU_CELL_INDEX, MAX_NOF_RA_PREAMBLES_PER_OCCASION})
+  ue_map(MAX_NOF_DU_UES, cfra_ue_context{MAX_NOF_RA_PREAMBLES_PER_OCCASION})
 {
 }
 
