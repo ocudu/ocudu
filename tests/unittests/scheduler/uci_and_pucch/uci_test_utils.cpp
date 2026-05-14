@@ -18,7 +18,7 @@ pucch_info test_helpers::make_common_pucch_info(const bwp_configuration* bwp_cfg
                                                 unsigned                 pci,
                                                 pucch_format             format,
                                                 prb_interval             prbs,
-                                                prb_interval             second_hop_prbs,
+                                                std::optional<unsigned>  second_hop_prb,
                                                 ofdm_symbol_range        symbols,
                                                 uint8_t                  initial_cyclic_shift,
                                                 uint8_t                  time_domain_occ)
@@ -26,7 +26,7 @@ pucch_info test_helpers::make_common_pucch_info(const bwp_configuration* bwp_cfg
   pucch_info pucch_test{
       .crnti     = to_rnti(0x4601),
       .bwp_cfg   = bwp_cfg,
-      .resources = {.prbs = prbs, .symbols = symbols, .second_hop_prbs = second_hop_prbs},
+      .resources = {.prbs = prbs, .symbols = symbols, .second_hop_prb = second_hop_prb},
       .uci_bits  = {.harq_ack_nof_bits = 1U},
   };
 
@@ -63,10 +63,9 @@ pucch_info test_helpers::make_ded_pucch_info(const cell_configuration& cell_cfg,
   }
 
   info.resources = pucch_resources{
-      .prbs            = prb_interval::start_and_len(res.starting_prb, nof_prbs),
-      .symbols         = ofdm_symbol_range::start_and_len(res.starting_sym_idx, res.nof_symbols),
-      .second_hop_prbs = res.second_hop_prb.has_value() ? prb_interval::start_and_len(*res.second_hop_prb, nof_prbs)
-                                                        : prb_interval{0U, 0U},
+      .prbs           = prb_interval::start_and_len(res.starting_prb, nof_prbs),
+      .symbols        = ofdm_symbol_range::start_and_len(res.starting_sym_idx, res.nof_symbols),
+      .second_hop_prb = res.second_hop_prb,
   };
 
   switch (res.format) {
@@ -133,7 +132,7 @@ bool ocudu::pucch_info_match(const pucch_info& expected, const pucch_info& test)
       expected.crnti == test.crnti && *expected.bwp_cfg == *test.bwp_cfg && expected.format() == test.format();
   is_equal = is_equal && expected.resources.prbs == test.resources.prbs &&
              expected.resources.symbols == test.resources.symbols &&
-             expected.resources.second_hop_prbs == test.resources.second_hop_prbs;
+             expected.resources.second_hop_prb == test.resources.second_hop_prb;
 
   if (not is_equal) {
     return false;

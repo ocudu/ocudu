@@ -545,8 +545,8 @@ static auto make_pucch_debug_log_entry(const pucch_info& pucch)
     switch (pucch.format()) {
       case pucch_format::FORMAT_0: {
         format_to(ctx.out(), "\n- PUCCH: c-rnti={} format=0 prb={}", pucch.crnti, pucch.resources.prbs);
-        if (not pucch.resources.second_hop_prbs.empty()) {
-          format_to(ctx.out(), " second_prbs={}", pucch.resources.second_hop_prbs);
+        if (pucch.resources.second_hop_prb.has_value()) {
+          format_to(ctx.out(), " second_prb={}", *pucch.resources.second_hop_prb);
         }
         format_to(ctx.out(),
                   " symb={} uci: harq_bits={} sr={}",
@@ -557,8 +557,8 @@ static auto make_pucch_debug_log_entry(const pucch_info& pucch)
       case pucch_format::FORMAT_1: {
         const auto& format_1 = std::get<pucch_format_1>(pucch.format_params);
         format_to(ctx.out(), "\n- PUCCH: c-rnti={} format=1 prb={}", pucch.crnti, pucch.resources.prbs);
-        if (not pucch.resources.second_hop_prbs.empty()) {
-          format_to(ctx.out(), " second_prbs={}", pucch.resources.second_hop_prbs);
+        if (pucch.resources.second_hop_prb.has_value()) {
+          format_to(ctx.out(), " second_prb={}", *pucch.resources.second_hop_prb);
         }
         format_to(ctx.out(),
                   " symb={} cs={} occ={} uci: harq_bits={} sr={}",
@@ -571,8 +571,8 @@ static auto make_pucch_debug_log_entry(const pucch_info& pucch)
       } break;
       case pucch_format::FORMAT_2: {
         format_to(ctx.out(), "\n- PUCCH: c-rnti={} format=2 prb={}", pucch.crnti, pucch.resources.prbs);
-        if (not pucch.resources.second_hop_prbs.empty()) {
-          format_to(ctx.out(), " second_prbs={}", pucch.resources.second_hop_prbs);
+        if (pucch.resources.second_hop_prb.has_value()) {
+          format_to(ctx.out(), " second_prb={}", *pucch.resources.second_hop_prb);
         }
         format_to(ctx.out(),
                   " symb={} uci: harq_bits={} sr={} csi-1_bits={}",
@@ -584,8 +584,8 @@ static auto make_pucch_debug_log_entry(const pucch_info& pucch)
       } break;
       case pucch_format::FORMAT_3: {
         format_to(ctx.out(), "\n- PUCCH: c-rnti={} format=3 prb={}", pucch.crnti, pucch.resources.prbs);
-        if (not pucch.resources.second_hop_prbs.empty()) {
-          format_to(ctx.out(), " second_prbs={}", pucch.resources.second_hop_prbs);
+        if (pucch.resources.second_hop_prb.has_value()) {
+          format_to(ctx.out(), " second_prb={}", *pucch.resources.second_hop_prb);
         }
         format_to(ctx.out(),
                   " symb={} uci: harq_bits={} sr={} csi-1_bits={}",
@@ -597,8 +597,8 @@ static auto make_pucch_debug_log_entry(const pucch_info& pucch)
       case pucch_format::FORMAT_4: {
         const auto& format_4 = std::get<pucch_format_4>(pucch.format_params);
         format_to(ctx.out(), "\n- PUCCH: c-rnti={} format=4 prb={}", pucch.crnti, pucch.resources.prbs);
-        if (not pucch.resources.second_hop_prbs.empty()) {
-          format_to(ctx.out(), " second_prbs={}", pucch.resources.second_hop_prbs);
+        if (pucch.resources.second_hop_prb.has_value()) {
+          format_to(ctx.out(), " second_prb={}", *pucch.resources.second_hop_prb);
         }
         format_to(ctx.out(),
                   " symb={} occ={}/{} uci: harq_bits={} sr={} csi-1_bits={}",

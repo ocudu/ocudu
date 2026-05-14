@@ -133,10 +133,7 @@ void pucch_existing_pdus_handler::update_harq_pdu_bits(unsigned                 
                                      pucch_res_cfg.nof_symbols,
                                      to_max_code_rate_float(res_params.max_code_rate_234()));
       harq_pdu->resources.prbs.set(pucch_res_cfg.starting_prb, pucch_res_cfg.starting_prb + nof_prbs);
-      if (pucch_res_cfg.second_hop_prb.has_value()) {
-        harq_pdu->resources.second_hop_prbs.set(pucch_res_cfg.second_hop_prb.value(),
-                                                pucch_res_cfg.second_hop_prb.value() + nof_prbs);
-      }
+      harq_pdu->resources.second_hop_prb = pucch_res_cfg.second_hop_prb;
     } break;
     case pucch_format::FORMAT_3: {
       harq_pdu->uci_bits.csi_part1_nof_bits = csi_part1_bits;
@@ -153,10 +150,7 @@ void pucch_existing_pdus_handler::update_harq_pdu_bits(unsigned                 
                                      f3_params.additional_dmrs,
                                      f3_params.pi2_bpsk);
       harq_pdu->resources.prbs.set(pucch_res_cfg.starting_prb, pucch_res_cfg.starting_prb + nof_prbs);
-      if (pucch_res_cfg.second_hop_prb.has_value()) {
-        harq_pdu->resources.second_hop_prbs.set(pucch_res_cfg.second_hop_prb.value(),
-                                                pucch_res_cfg.second_hop_prb.value() + nof_prbs);
-      }
+      harq_pdu->resources.second_hop_prb = pucch_res_cfg.second_hop_prb;
     } break;
     case pucch_format::FORMAT_4: {
       harq_pdu->uci_bits.csi_part1_nof_bits = csi_part1_bits;

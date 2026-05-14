@@ -533,7 +533,9 @@ void cell_metrics_handler::handle_slot_result(slot_point_extended       sl_tx,
   for (const auto& pucch : slot_result.ul.pucchs) {
     // Mark the PRBs used by this PUCCH.
     pucch_prbs.fill(pucch.resources.prbs.start(), pucch.resources.prbs.stop());
-    pucch_prbs.fill(pucch.resources.second_hop_prbs.start(), pucch.resources.second_hop_prbs.stop());
+    if (pucch.resources.second_hop_prb.has_value()) {
+      pucch_prbs.fill(*pucch.resources.second_hop_prb, *pucch.resources.second_hop_prb + pucch.resources.prbs.length());
+    }
   }
   data.pucch_rbs_used += pucch_prbs.count();
 

@@ -941,13 +941,13 @@ void ue_cell_grid_allocator::post_process_pucch_pw_ctrl_results(slot_point slot)
         const auto& format_3   = std::get<pucch_format_3>(pucch.format_params);
         pi_2_bpsk              = format_3.pi_2_bpsk;
         additional_dmrs        = format_3.additional_dmrs;
-        intraslot_freq_hopping = not pucch.resources.second_hop_prbs.empty();
+        intraslot_freq_hopping = pucch.resources.second_hop_prb.has_value();
       } break;
       case pucch_format::FORMAT_4: {
         const auto& format_4   = std::get<pucch_format_4>(pucch.format_params);
         pi_2_bpsk              = format_4.pi_2_bpsk;
         additional_dmrs        = format_4.additional_dmrs;
-        intraslot_freq_hopping = not pucch.resources.second_hop_prbs.empty();
+        intraslot_freq_hopping = pucch.resources.second_hop_prb.has_value();
       } break;
       default:
         break;

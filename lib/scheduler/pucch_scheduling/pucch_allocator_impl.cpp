@@ -17,6 +17,7 @@
 #include "ocudu/scheduler/result/pucch_format.h"
 #include "ocudu/scheduler/result/sched_result.h"
 #include "ocudu/support/ocudu_assert.h"
+#include "fmt/std.h"
 #include <algorithm>
 #include <fmt/format.h>
 #include <string>
@@ -66,7 +67,7 @@ struct pucch_allocator_impl::alloc_context {
             slot,
             updated,
             pucch_pdu.resources.prbs,
-            pucch_pdu.resources.second_hop_prbs,
+            pucch_pdu.resources.second_hop_prb,
             pucch_pdu.resources.symbols,
             format0.initial_cyclic_shift,
             pucch_pdu.uci_bits);
@@ -80,7 +81,7 @@ struct pucch_allocator_impl::alloc_context {
             slot,
             updated,
             pucch_pdu.resources.prbs,
-            pucch_pdu.resources.second_hop_prbs,
+            pucch_pdu.resources.second_hop_prb,
             pucch_pdu.resources.symbols,
             format1.initial_cyclic_shift,
             format1.time_domain_occ,
@@ -93,7 +94,7 @@ struct pucch_allocator_impl::alloc_context {
             slot,
             updated,
             pucch_pdu.resources.prbs,
-            pucch_pdu.resources.second_hop_prbs,
+            pucch_pdu.resources.second_hop_prb,
             pucch_pdu.resources.symbols,
             pucch_pdu.uci_bits);
       } break;
@@ -104,7 +105,7 @@ struct pucch_allocator_impl::alloc_context {
             slot,
             updated,
             pucch_pdu.resources.prbs,
-            pucch_pdu.resources.second_hop_prbs,
+            pucch_pdu.resources.second_hop_prb,
             pucch_pdu.resources.symbols,
             pucch_pdu.uci_bits);
       } break;
@@ -116,7 +117,7 @@ struct pucch_allocator_impl::alloc_context {
             slot,
             updated,
             pucch_pdu.resources.prbs,
-            pucch_pdu.resources.second_hop_prbs,
+            pucch_pdu.resources.second_hop_prb,
             pucch_pdu.resources.symbols,
             fmt::underlying(format4.occ_index),
             pucch_pdu.uci_bits);
@@ -1654,9 +1655,9 @@ void pucch_allocator_impl::fill_common_pdu(pucch_info&                pucch_pdu,
 {
   pucch_pdu.crnti = rnti;
   pucch_pdu.set_format(pucch_res.format);
-  pucch_pdu.bwp_cfg                   = &cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params;
-  pucch_pdu.resources.prbs            = crb_to_prb(*pucch_pdu.bwp_cfg, pucch_res.first_hop_res.crbs);
-  pucch_pdu.resources.second_hop_prbs = crb_to_prb(*pucch_pdu.bwp_cfg, pucch_res.second_hop_res.crbs);
+  pucch_pdu.bwp_cfg                  = &cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params;
+  pucch_pdu.resources.prbs           = crb_to_prb(*pucch_pdu.bwp_cfg, pucch_res.first_hop_res.crbs);
+  pucch_pdu.resources.second_hop_prb = crb_to_prb(*pucch_pdu.bwp_cfg, pucch_res.second_hop_res.crbs).start();
   pucch_pdu.resources.symbols =
       ofdm_symbol_range{pucch_res.first_hop_res.symbols.start(), pucch_res.second_hop_res.symbols.stop()};
   pucch_pdu.pdu_context.res_id = std::nullopt;
@@ -1738,9 +1739,7 @@ void pucch_allocator_impl::fill_ded_pdu(pucch_info&           pucch_pdu,
     }
   }
   pucch_pdu.resources.prbs.set(pucch_res.starting_prb, pucch_res.starting_prb + nof_prbs);
-  if (pucch_res.second_hop_prb.has_value()) {
-    pucch_pdu.resources.second_hop_prbs.set(*pucch_res.second_hop_prb, *pucch_res.second_hop_prb + nof_prbs);
-  }
+  pucch_pdu.resources.second_hop_prb = pucch_res.second_hop_prb;
   pucch_pdu.resources.symbols.set(pucch_res.starting_sym_idx, pucch_res.starting_sym_idx + pucch_res.nof_symbols);
 
   if (pucch_res.format == pucch_format::FORMAT_0 or pucch_res.format == pucch_format::FORMAT_1) {

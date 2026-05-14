@@ -34,7 +34,7 @@ TEST(mac_fapi_ul_pucch_format1_pdu_conversor_test, ul_pucch_format1_pdu_valid_sh
   ASSERT_EQ(resources.prbs, fapi_pdu.prbs);
   ASSERT_EQ(resources.symbols, fapi_pdu.symbols);
   ASSERT_TRUE(fapi_pdu.second_hop_prb.has_value());
-  ASSERT_EQ(resources.second_hop_prbs.start(), *fapi_pdu.second_hop_prb);
+  ASSERT_EQ(*resources.second_hop_prb, *fapi_pdu.second_hop_prb);
 
   // Format 1.
   const pucch_format_1& f1 = std::get<pucch_format_1>(mac_pdu.format_params);
@@ -67,7 +67,7 @@ TEST(mac_fapi_ul_pucch_format2_pdu_conversor_test, ul_pucch_format2_pdu_valid_sh
   // Resources.
   const pucch_resources& resources = mac_pdu.resources;
   ASSERT_TRUE(fapi_pdu.second_hop_prb.has_value());
-  ASSERT_EQ(resources.second_hop_prbs.start(), fapi_pdu.second_hop_prb.value());
+  ASSERT_EQ(resources.second_hop_prb.value(), fapi_pdu.second_hop_prb.value());
   ASSERT_EQ(resources.prbs, fapi_pdu.prbs);
   ASSERT_EQ(resources.symbols, fapi_pdu.symbols);
 
@@ -102,7 +102,7 @@ TEST(mac_fapi_ul_pucch_format3_pdu_conversor_test, ul_pucch_format3_pdu_valid_sh
   // Resources.
   const pucch_resources& resources = mac_pdu.resources;
   ASSERT_TRUE(fapi_pdu.second_hop_prb.has_value());
-  ASSERT_EQ(resources.second_hop_prbs.start(), fapi_pdu.second_hop_prb.value());
+  ASSERT_EQ(resources.second_hop_prb.value(), fapi_pdu.second_hop_prb.value());
   ASSERT_EQ(resources.prbs, fapi_pdu.prbs);
   ASSERT_EQ(resources.symbols, fapi_pdu.symbols);
 
@@ -140,7 +140,7 @@ TEST(mac_fapi_ul_pucch_format4_pdu_conversor_test, ul_pucch_format4_pdu_valid_sh
   // Resources.
   const pucch_resources& resources = mac_pdu.resources;
   ASSERT_TRUE(fapi_pdu.second_hop_prb.has_value());
-  ASSERT_EQ(resources.second_hop_prbs.start(), fapi_pdu.second_hop_prb.value());
+  ASSERT_EQ(resources.second_hop_prb.value(), fapi_pdu.second_hop_prb.value());
   ASSERT_EQ(resources.prbs, fapi_pdu.prbs);
   ASSERT_EQ(resources.symbols, fapi_pdu.symbols);
 

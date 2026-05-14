@@ -603,7 +603,7 @@ pucch_info_test_helper unittests::build_valid_pucch_format_1_pdu()
   auto& format_1                   = pucch.format_params.emplace<pucch_format_1>();
   pucch.resources.prbs             = {1, 4};
   pucch.resources.symbols          = {0, 14};
-  pucch.resources.second_hop_prbs  = {2, 12};
+  pucch.resources.second_hop_prb   = 2;
   pucch.uci_bits.harq_ack_nof_bits = 2;
   pucch.uci_bits.sr_bits           = sr_nof_bits::no_sr;
   format_1.time_domain_occ         = 3;
@@ -627,7 +627,7 @@ pucch_info_test_helper ocudu::unittests::build_valid_pucch_format_2_pdu()
   auto& format_2                    = pucch.format_params.emplace<pucch_format_2>();
   pucch.resources.prbs              = {1, 4};
   pucch.resources.symbols           = {0, 1};
-  pucch.resources.second_hop_prbs   = {1, 11};
+  pucch.resources.second_hop_prb    = 1;
   pucch.uci_bits.csi_part1_nof_bits = 102;
   pucch.uci_bits.harq_ack_nof_bits  = 100;
   pucch.uci_bits.sr_bits            = sr_nof_bits::one;
@@ -649,7 +649,7 @@ pucch_info_test_helper ocudu::unittests::build_valid_pucch_format_3_pdu()
   auto& format_3                    = pucch.format_params.emplace<pucch_format_3>();
   pucch.resources.prbs              = {1, 4};
   pucch.resources.symbols           = {0, 3};
-  pucch.resources.second_hop_prbs   = {1, 11};
+  pucch.resources.second_hop_prb    = 1;
   pucch.uci_bits.csi_part1_nof_bits = 102;
   pucch.uci_bits.harq_ack_nof_bits  = 100;
   pucch.uci_bits.sr_bits            = sr_nof_bits::one;
@@ -674,7 +674,7 @@ pucch_info_test_helper ocudu::unittests::build_valid_pucch_format_4_pdu()
   auto& format_4                    = pucch.format_params.emplace<pucch_format_4>();
   pucch.resources.prbs              = {1, 2};
   pucch.resources.symbols           = {0, 3};
-  pucch.resources.second_hop_prbs   = {10, 11};
+  pucch.resources.second_hop_prb    = 10;
   pucch.uci_bits.csi_part1_nof_bits = 102;
   pucch.uci_bits.harq_ack_nof_bits  = 100;
   pucch.uci_bits.sr_bits            = sr_nof_bits::one;

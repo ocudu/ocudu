@@ -501,7 +501,7 @@ TEST_P(pucch_alloc_ded_resources_test, alloc_common_and_ded_harq_ack_succeeds)
   ASSERT_EQ(pucch_format::FORMAT_1, default_slot_grid.result.ul.pucchs[1].format());
   ASSERT_EQ(1U, default_slot_grid.result.ul.pucchs[1].uci_bits.harq_ack_nof_bits);
   ASSERT_EQ(sr_nof_bits::no_sr, default_slot_grid.result.ul.pucchs[1].uci_bits.sr_bits);
-  ASSERT_FALSE(default_slot_grid.result.ul.pucchs[1].resources.second_hop_prbs.empty());
+  ASSERT_TRUE(default_slot_grid.result.ul.pucchs[1].resources.second_hop_prb.has_value());
 }
 
 TEST_P(pucch_alloc_ded_resources_test, alloc_common_and_ded_harq_ack_with_existing_sr_succeeds)

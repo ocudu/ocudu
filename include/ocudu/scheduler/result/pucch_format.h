@@ -6,17 +6,17 @@
 
 #include "ocudu/ran/pucch/pucch_configuration.h"
 #include "ocudu/ran/pucch/pucch_mapping.h"
-#include "ocudu/ran/pucch/pucch_uci_bits.h"
 #include "ocudu/ran/resource_allocation/ofdm_symbol_range.h"
 #include "ocudu/ran/resource_allocation/rb_interval.h"
+#include <optional>
 
 namespace ocudu {
 
 /// PRBs and symbols used for PUCCH resources.
 struct pucch_resources {
-  prb_interval      prbs;
-  ofdm_symbol_range symbols;
-  prb_interval      second_hop_prbs{0U, 0U};
+  prb_interval            prbs;
+  ofdm_symbol_range       symbols;
+  std::optional<unsigned> second_hop_prb;
 };
 
 /// Scheduler output for PUCCH Format 0.
@@ -73,11 +73,10 @@ struct pucch_format_4 {
   pucch_repetition_tx_slot slot_repetition;
   uint16_t                 n_id_scrambling;
   bool                     pi_2_bpsk;
-  /// \c occ-Index as per TS 38.331, or equivalent to index \f$n\f$ in Tables 6.3.2.6.3-1/2, TS 38.211.
+  /// Index \f$n\f$ in Tables 6.3.2.6.3-1/2, TS 38.211.
   pucch_f4_occ_idx occ_index;
-  /// Spreading Factor \f$N_{SF}^{PUCCH,4}\f$, as per TS 38.211, Section 6.3.2.6.3.
+  /// Spreading Factor \f$N_{SF}^{PUCCH,4}\f$, as per Section 6.3.2.6.3, TS 38.211.
   pucch_f4_occ_len occ_length;
-
   /// DMRS parameters.
   bool     additional_dmrs;
   uint16_t n_id_0_scrambling;

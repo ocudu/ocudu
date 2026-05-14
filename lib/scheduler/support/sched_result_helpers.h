@@ -132,7 +132,7 @@ get_prach_grant_info(const cell_configuration&                                  
 inline std::pair<grant_info, std::optional<grant_info>> get_pucch_grant_info(const pucch_info& pucch)
 {
   const bwp_configuration& bwp_cfg = *pucch.bwp_cfg;
-  if (not pucch.resources.second_hop_prbs.empty()) {
+  if (pucch.resources.second_hop_prb.has_value()) {
     // Intra-slot frequency hopping.
     ofdm_symbol_range first_hop_symbols{pucch.resources.symbols.start(),
                                         pucch.resources.symbols.start() + pucch.resources.symbols.length() / 2};

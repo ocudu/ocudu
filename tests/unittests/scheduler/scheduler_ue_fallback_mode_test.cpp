@@ -24,7 +24,7 @@ ocudulog::basic_levels sched_log_level = ocudulog::basic_levels::warning;
 static bool is_f1_pucch_with_harq_bits(const pucch_info& pucch, bool is_common, bool has_sr)
 {
   return pucch.format() == pucch_format::FORMAT_1 and ((pucch.uci_bits.sr_bits != sr_nof_bits::no_sr) == has_sr) and
-         pucch.uci_bits.harq_ack_nof_bits > 0 and (pucch.resources.second_hop_prbs.empty() != is_common);
+         pucch.uci_bits.harq_ack_nof_bits > 0 and (not pucch.resources.second_hop_prb.has_value() != is_common);
 }
 
 class base_scheduler_conres_test : public scheduler_test_simulator

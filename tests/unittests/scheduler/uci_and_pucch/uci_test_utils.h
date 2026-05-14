@@ -23,7 +23,7 @@ pucch_info make_common_pucch_info(const bwp_configuration* bwp_cfg,
                                   unsigned                 pci,
                                   pucch_format             format,
                                   prb_interval             prbs,
-                                  prb_interval             second_hop_prbs,
+                                  std::optional<unsigned>  second_hop_prb,
                                   ofdm_symbol_range        symbols,
                                   uint8_t                  initial_cyclic_shift,
                                   uint8_t                  time_domain_occ);
