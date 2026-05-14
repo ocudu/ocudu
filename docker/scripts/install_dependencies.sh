@@ -28,7 +28,7 @@ install_dependencies_debian_ubuntu() {
         libfftw3-dev libmbedtls-dev libsctp-dev libyaml-cpp-dev libgtest-dev libcap2-bin
     )
     local -a extra_pkgs=(
-        libzmq3-dev libuhd-dev uhd-host libboost-program-options-dev libdpdk-dev libelf-dev libdwarf-dev libdw-dev
+        libzmq3-dev libuhd-dev uhd-host libboost-program-options-dev libdpdk-dev libelf-dev libdwarf-dev libdw-dev capnproto libcapnp-dev
     )
 
     case "$mode" in
@@ -103,7 +103,7 @@ install_dependencies_fedora() {
         fftw-devel lksctp-tools-devel yaml-cpp-devel mbedtls-devel gtest-devel libcap
     )
     local -a extra_pkgs=(
-        cppzmq-devel libusb1-devel boost-devel numactl-devel
+        cppzmq-devel libusb1-devel boost-devel numactl-devel capnproto capnproto-devel
     )
 
     case "$mode" in
@@ -143,7 +143,7 @@ install_dependencies_arch() {
         fftw mbedtls yaml-cpp lksctp-tools gtest libcap
     )
     local -a extra_pkgs=(
-        zeromq libuhd boost dpdk libelf libdwarf elfutils
+        zeromq libuhd boost dpdk libelf libdwarf elfutils capnproto
     )
 
     case "$mode" in
@@ -184,7 +184,7 @@ install_dependencies_rhel() {
         fftw-devel lksctp-tools-devel yaml-cpp-devel mbedtls-devel gcc-toolset-12-libatomic-devel libcap
     )
     local -a extra_pkgs=(
-        cppzmq-devel libusb1-devel boost-devel numactl-devel
+        cppzmq-devel libusb1-devel boost-devel numactl-devel capnproto capnproto-devel
     )
 
     case "$mode" in
