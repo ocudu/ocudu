@@ -18,6 +18,7 @@ static sched_ue_creation_request_message make_scheduler_ue_creation_request(cons
   ret.crnti              = request.crnti;
   ret.starts_in_fallback = request.initial_fallback;
   ret.ul_ccch_slot_rx    = request.ul_ccch_slot_rx;
+  ret.cfra_enabled       = request.cfra_preamble_index.has_value();
   ret.cfg                = request.sched_cfg;
   return ret;
 }

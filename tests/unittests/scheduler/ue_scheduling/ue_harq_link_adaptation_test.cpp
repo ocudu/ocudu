@@ -46,7 +46,8 @@ protected:
     }
     ue_ded_cfg = cfg_mng.add_ue(ue_creation_req);
     report_error_if_not(ue_ded_cfg != nullptr, "Failed to create UE configuration");
-    ues.add_ue(*ue_ded_cfg, ue_creation_req.starts_in_fallback, std::nullopt);
+    ues.add_ue(
+        *ue_ded_cfg, ue_creation_req.starts_in_fallback, ue_creation_req.ul_ccch_slot_rx, ue_creation_req.cfra_enabled);
     ue_ptr = &ues[ue_creation_req.ue_index];
     ue_cc  = &ue_ptr->get_cell(SERVING_PCELL_IDX);
   }

@@ -15,12 +15,14 @@ ue_config_update_event::ue_config_update_event(du_ue_index_t                    
                                                std::unique_ptr<ue_configuration> next_cfg,
                                                const std::optional<bool>&        set_fallback,
                                                std::optional<slot_point>         ul_ccch_slot_rx_,
+                                               bool                              cfra_enabled_,
                                                sched_ue_config_request::causes   cause_) :
   ue_index(ue_index_),
   parent(&parent_),
   next_ded_cfg(std::move(next_cfg)),
   set_fallback_mode(set_fallback),
   ul_ccch_slot_rx(ul_ccch_slot_rx_),
+  cfra_enabled(cfra_enabled_),
   cause(cause_)
 {
 }
@@ -134,7 +136,7 @@ void sched_config_manager::rem_cell(du_cell_index_t cell_index)
 
 ue_config_update_event sched_config_manager::add_ue(const sched_ue_creation_request_message& cfg_req)
 {
-  ocudu_assert(cfg_req.ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", fmt::underlying(cfg_req.ue_index));
+  ocudu_assert(cfg_req.ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", cfg_req.ue_index);
 
   // See if there are any pending events to process out of the critical path.
   flush_ues_to_rem();
@@ -142,7 +144,7 @@ ue_config_update_event sched_config_manager::add_ue(const sched_ue_creation_requ
   // Ensure PCell exists.
   if (not cfg_req.cfg.cells.has_value() or cfg_req.cfg.cells->empty()) {
     logger.warning("ue={} rnti={}: Discarding invalid UE creation request. Cause: PCell config not provided",
-                   fmt::underlying(cfg_req.ue_index),
+                   cfg_req.ue_index,
                    cfg_req.crnti);
     return ue_config_update_event{cfg_req.ue_index, *this};
   }
@@ -151,7 +153,7 @@ ue_config_update_event sched_config_manager::add_ue(const sched_ue_creation_requ
   const du_cell_index_t pcell_index = (*cfg_req.cfg.cells)[0].serv_cell_cfg.cell_index;
   if (not contains(pcell_index)) {
     logger.warning("ue={} rnti={}: Discarding invalid UE creation request. Cause: PCell={} does not exist",
-                   fmt::underlying(cfg_req.ue_index),
+                   cfg_req.ue_index,
                    cfg_req.crnti,
                    fmt::underlying(pcell_index));
     return ue_config_update_event{cfg_req.ue_index, *this};
@@ -162,7 +164,7 @@ ue_config_update_event sched_config_manager::add_ue(const sched_ue_creation_requ
       config_validators::validate_sched_ue_creation_request_message(cfg_req, *added_cells[pcell_index]);
   if (not result.has_value()) {
     logger.warning("ue={} rnti={}: Discarding invalid UE creation request. Cause: {}",
-                   fmt::underlying(cfg_req.ue_index),
+                   cfg_req.ue_index,
                    cfg_req.crnti,
                    result.error());
     return ue_config_update_event{cfg_req.ue_index, *this};
@@ -176,7 +178,7 @@ ue_config_update_event sched_config_manager::add_ue(const sched_ue_creation_requ
                                                                       std::memory_order::memory_order_acquire)) {
     logger.warning(
         "ue={} rnti={}: Discarding invalid UE creation request. Cause: UE with the same index already exists",
-        fmt::underlying(cfg_req.ue_index),
+        cfg_req.ue_index,
         cfg_req.crnti);
     return ue_config_update_event{cfg_req.ue_index, *this};
   }
@@ -187,8 +189,12 @@ ue_config_update_event sched_config_manager::add_ue(const sched_ue_creation_requ
   auto                        next_ded_cfg   = std::make_unique<ue_configuration>(
       cfg_req.ue_index, cfg_req.crnti, added_cells, group_cfg_pool[target_grp_idx]->add_ue(cfg_req));
 
-  return ue_config_update_event{
-      cfg_req.ue_index, *this, std::move(next_ded_cfg), cfg_req.starts_in_fallback, cfg_req.ul_ccch_slot_rx};
+  return ue_config_update_event{cfg_req.ue_index,
+                                *this,
+                                std::move(next_ded_cfg),
+                                cfg_req.starts_in_fallback,
+                                cfg_req.ul_ccch_slot_rx,
+                                cfg_req.cfra_enabled};
 }
 
 ue_config_update_event sched_config_manager::update_ue(const sched_ue_reconfiguration_message& cfg_req)
@@ -221,7 +227,8 @@ ue_config_update_event sched_config_manager::update_ue(const sched_ue_reconfigur
   next_ded_cfg->update(added_cells, group_cfg_pool[group_idx]->reconf_ue(cfg_req));
 
   // Return RAII event.
-  return ue_config_update_event{cfg_req.ue_index, *this, std::move(next_ded_cfg), {}, slot_point(), cfg_req.cfg.cause};
+  return ue_config_update_event{
+      cfg_req.ue_index, *this, std::move(next_ded_cfg), {}, slot_point(), false, cfg_req.cfg.cause};
 }
 
 ue_config_delete_event sched_config_manager::remove_ue(du_ue_index_t ue_index)

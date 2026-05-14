@@ -63,7 +63,7 @@ protected:
   const ue_configuration* add_ue(const sched_ue_creation_request_message& req)
   {
     const ue_configuration* ue_cfg = test_cfg.add_ue(req);
-    ues.add_ue(*ue_cfg, req.starts_in_fallback, std::nullopt);
+    ues.add_ue(*ue_cfg, req.starts_in_fallback, req.ul_ccch_slot_rx, req.cfra_enabled);
     slice_sched.add_ue(req.ue_index);
     return ue_cfg;
   }

@@ -270,7 +270,7 @@ void ue_cell_event_manager::handle_ue_creation(ue_config_update_event ev)
     // Insert UE in UE repository.
     const du_cell_index_t pcell_index    = ev.next_config().pcell_common_cfg().cell_index;
     bool                  is_in_fallback = ev.get_fallback_command().has_value() and ev.get_fallback_command().value();
-    ue_db.add_ue(ev.next_config(), is_in_fallback, ev.get_ul_ccch_slot_rx());
+    ue_db.add_ue(ev.next_config(), is_in_fallback, ev.get_ul_ccch_slot_rx(), ev.get_cfra_enabled());
 
     auto& u     = ue_db[ue_index];
     auto& ue_cc = u.get_pcell();

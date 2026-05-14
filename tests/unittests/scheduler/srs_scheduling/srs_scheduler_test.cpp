@@ -169,7 +169,7 @@ public:
         cell_cfg.params.tdd_cfg);
     ue_ded_cfgs.emplace_back(cfg_mng.add_ue(ue_req));
     report_error_if_not(ue_ded_cfgs.back() != nullptr, "Failed to create UE configuration");
-    ues.add_ue(*ue_ded_cfgs.back(), ue_req.starts_in_fallback, std::nullopt);
+    ues.add_ue(*ue_ded_cfgs.back(), ue_req.starts_in_fallback, ue_req.ul_ccch_slot_rx, ue_req.cfra_enabled);
     srs_sched.add_ue(ues[ue_req.ue_index].get_pcell().cfg());
   }
 

@@ -66,7 +66,7 @@ public:
   {
     ue_ded_cfgs.emplace_back(cfg_mng.add_ue(ue_req));
     report_error_if_not(ue_ded_cfgs.back() != nullptr, "Failed to create UE configuration");
-    ues.add_ue(*ue_ded_cfgs.back(), ue_req.starts_in_fallback, std::nullopt);
+    ues.add_ue(*ue_ded_cfgs.back(), ue_req.starts_in_fallback, ue_req.ul_ccch_slot_rx, ue_req.cfra_enabled);
   }
 
   void slot_indication(slot_point slot_tx)

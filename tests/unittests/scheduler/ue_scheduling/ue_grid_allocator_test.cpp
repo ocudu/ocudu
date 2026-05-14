@@ -142,7 +142,10 @@ protected:
   {
     auto ev = cfg_mng.add_ue(ue_creation_req);
     report_fatal_error_if_not(ev.valid(), "UE creation failed");
-    ues.add_ue(ev.next_config(), ue_creation_req.starts_in_fallback, std::nullopt);
+    ues.add_ue(ev.next_config(),
+               ue_creation_req.starts_in_fallback,
+               ue_creation_req.ul_ccch_slot_rx,
+               ue_creation_req.cfra_enabled);
     for (const auto& lc_cfg : *ue_creation_req.cfg.lc_config_list) {
       slice_ues.add_logical_channel(ues[ue_creation_req.ue_index], lc_cfg.lcid, lc_cfg.lc_group);
     }

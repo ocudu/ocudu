@@ -49,7 +49,10 @@ public:
   const ue* find_by_rnti(rnti_t rnti) const;
 
   /// \brief Add new UE in the UE repository.
-  void add_ue(const ue_configuration& ue_cfg, bool starts_in_fallback, std::optional<slot_point> ul_ccch_slot_rx);
+  void add_ue(const ue_configuration&   ue_cfg,
+              bool                      starts_in_fallback,
+              std::optional<slot_point> ul_ccch_slot_rx,
+              bool                      cfra_enabled);
 
   /// \brief Reconfigure existing UE.
   void reconfigure_ue(const ue_configuration& new_cfg, sched_ue_config_request::causes cause);

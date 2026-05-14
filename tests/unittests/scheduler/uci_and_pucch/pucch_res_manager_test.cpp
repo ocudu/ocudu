@@ -109,11 +109,13 @@ public:
   {
     auto ue_req = t_bench.make_ue_creation_req();
     t_bench.ue_ded_cfgs.push_back(t_bench.cfg_mng.add_ue(ue_req));
-    t_bench.ues.add_ue(*t_bench.ue_ded_cfgs.back(), ue_req.starts_in_fallback, std::nullopt);
+    t_bench.ues.add_ue(
+        *t_bench.ue_ded_cfgs.back(), ue_req.starts_in_fallback, ue_req.ul_ccch_slot_rx, ue_req.cfra_enabled);
 
     ue_req = t_bench.make_ue_creation_req(pucch_sr_resource_id(1));
     t_bench.ue_ded_cfgs.push_back(t_bench.cfg_mng.add_ue(ue_req));
-    t_bench.ues.add_ue(*t_bench.ue_ded_cfgs.back(), ue_req.starts_in_fallback, std::nullopt);
+    t_bench.ues.add_ue(
+        *t_bench.ue_ded_cfgs.back(), ue_req.starts_in_fallback, ue_req.ul_ccch_slot_rx, ue_req.cfra_enabled);
   }
 
   const ue_cell_configuration& ue_cfg_0() const { return t_bench.ue_ded_cfgs[0]->pcell_cfg(); }
@@ -583,7 +585,8 @@ protected:
                                    : t_bench->make_ue_creation_req();
 
       t_bench->ue_ded_cfgs.push_back(t_bench->cfg_mng.add_ue(ue_req));
-      t_bench->ues.add_ue(*t_bench->ue_ded_cfgs.back(), ue_req.starts_in_fallback, std::nullopt);
+      t_bench->ues.add_ue(
+          *t_bench->ue_ded_cfgs.back(), ue_req.starts_in_fallback, ue_req.ul_ccch_slot_rx, ue_req.cfra_enabled);
     }
   }
 

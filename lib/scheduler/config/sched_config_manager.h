@@ -26,6 +26,7 @@ public:
                          std::unique_ptr<ue_configuration> next_cfg         = nullptr,
                          const std::optional<bool>&        set_fallback     = {},
                          std::optional<slot_point>         ul_ccch_slot_rx_ = {},
+                         bool                              cfra_enabled     = false,
                          sched_ue_config_request::causes   cause = sched_ue_config_request::causes::other_rrc_proc);
   ue_config_update_event(ue_config_update_event&&) noexcept            = default;
   ue_config_update_event& operator=(ue_config_update_event&&) noexcept = default;
@@ -37,6 +38,7 @@ public:
   const ue_configuration&         next_config() const { return *next_ded_cfg; }
   std::optional<bool>             get_fallback_command() const { return set_fallback_mode; }
   std::optional<slot_point>       get_ul_ccch_slot_rx() const { return ul_ccch_slot_rx; }
+  bool                            get_cfra_enabled() const { return cfra_enabled; }
   sched_ue_config_request::causes get_cause() const { return cause; }
 
   void notify_completion();
@@ -48,6 +50,7 @@ private:
   std::unique_ptr<ue_configuration>                     next_ded_cfg;
   std::optional<bool>                                   set_fallback_mode;
   std::optional<slot_point>                             ul_ccch_slot_rx;
+  bool                                                  cfra_enabled = false;
   sched_ue_config_request::causes                       cause;
 };
 

@@ -36,7 +36,7 @@ protected:
   {
     ue_cfg_pool.push_back(
         std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_db, cfg_pool.add_ue(ue_req)));
-    ue_db.add_ue(*ue_cfg_pool.back(), ue_req.starts_in_fallback, std::nullopt);
+    ue_db.add_ue(*ue_cfg_pool.back(), ue_req.starts_in_fallback, ue_req.ul_ccch_slot_rx, ue_req.cfra_enabled);
     return ue_db[ue_req.ue_index];
   }
 };

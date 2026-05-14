@@ -71,7 +71,7 @@ protected:
     }
     req.cfg.lc_config_list         = lc_cfg_list;
     const ue_configuration* ue_cfg = test_cfg.add_ue(req);
-    ue_db.add_ue(*ue_cfg, req.starts_in_fallback, std::nullopt);
+    ue_db.add_ue(*ue_cfg, req.starts_in_fallback, req.ul_ccch_slot_rx, req.cfra_enabled);
 
     for (const auto& lc_ch : lc_chs) {
       slices[lc_ch.slice_id.value()]->add_logical_channel(ue_db[ue_idx], lc_ch.lcid, lc_ch.lcg_id);

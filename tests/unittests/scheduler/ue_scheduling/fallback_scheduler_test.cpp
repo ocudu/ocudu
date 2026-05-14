@@ -79,7 +79,7 @@ struct test_bench {
       // UE already exists.
       return false;
     }
-    ue_db.add_ue(ev.next_config(), create_req.starts_in_fallback, create_req.ul_ccch_slot_rx);
+    ue_db.add_ue(ev.next_config(), create_req.starts_in_fallback, create_req.ul_ccch_slot_rx, create_req.cfra_enabled);
     if (not create_req.ul_ccch_slot_rx.has_value() and not create_req.starts_in_fallback) {
       ue_db.crnti_ce_received(create_req.ue_index);
     }

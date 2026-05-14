@@ -115,26 +115,32 @@ void ue_repository::rem_cell(du_cell_index_t cell_index)
 
 void ue_repository::add_ue(const ue_configuration&   ue_cfg,
                            bool                      starts_in_fallback,
-                           std::optional<slot_point> ul_ccch_slot_rx)
+                           std::optional<slot_point> ul_ccch_slot_rx,
+                           bool                      cfra_enabled)
 {
   ocudu_assert(not ues.contains(ue_cfg.ue_index), "UE with duplicate index being added to the repository");
 
   // Create UE components.
   const du_ue_index_t ue_index = ue_cfg.ue_index;
 
-  ue_config_state init_cfg_st    = ue_config_state::config_applied;
-  ue_conres_state init_conres_st = ue_conres_state::conres_completed;
+  ue_pcell_state st;
+  st.msg3_rx_slot = ul_ccch_slot_rx.value_or(slot_point{});
   if (starts_in_fallback) {
-    if (ul_ccch_slot_rx.has_value()) {
+    if (st.msg3_rx_slot.valid()) {
       // RACH-created UE: ConRes CE pending + RRC Setup/Reestablishment/Resume pending.
-      init_cfg_st    = ue_config_state::pending_initial_conf;
-      init_conres_st = ue_conres_state::pending_conres_ce;
+      st.config_st = ue_config_state::pending_initial_conf;
+      st.conres_st = ue_conres_state::pending_conres_ce;
+    } else if (cfra_enabled) {
+      // F1AP-created UE that is expecting a CFRA.
+      st.cfra_pending = cfra_enabled;
+      st.config_st    = ue_config_state::pending_reconf;
+      st.conres_st    = ue_conres_state::conres_completed;
     } else {
       // F1AP-created UE: already RRC connected but waiting for C-RNTI CE.
-      init_conres_st = ue_conres_state::pending_conres_crnti_ce;
+      st.conres_st = ue_conres_state::pending_conres_crnti_ce;
     }
   }
-  ue_fsms.emplace(ue_index, ue_pcell_state{init_cfg_st, init_conres_st, ul_ccch_slot_rx.value_or(slot_point{})});
+  ue_fsms.emplace(ue_index, st);
 
   const rnti_t             rnti      = ue_cfg.crnti;
   const auto&              pcell_cmn = ue_cfg.pcell_common_cfg();

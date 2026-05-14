@@ -12,7 +12,6 @@
 #include "ue_drx_controller.h"
 #include "ue_fsm_states.h"
 #include "ue_link_adaptation_controller.h"
-#include "ocudu/ran/serv_cell_index.h"
 #include "ocudu/scheduler/config/scheduler_expert_config.h"
 #include "ocudu/scheduler/scheduler_feedback_handler.h"
 
@@ -32,11 +31,13 @@ struct ue_shared_context {
 struct ue_pcell_state {
   /// RRC configuration progress state.
   /// \note When in fallback mode, only the search spaces and the configuration of cellConfigCommon are used.
-  ue_config_state config_st;
+  ue_config_state config_st = ue_config_state::config_applied;
   /// Contention resolution state.
-  ue_conres_state conres_st;
+  ue_conres_state conres_st = ue_conres_state::conres_completed;
   /// MSG3 rx-slot, set for RACH-created UEs (conres_st == pending_conres_ce).
   slot_point msg3_rx_slot;
+  /// Set to true when the UE is expecting a CFRA.
+  bool cfra_pending = false;
 };
 
 struct ue_cell_components {
