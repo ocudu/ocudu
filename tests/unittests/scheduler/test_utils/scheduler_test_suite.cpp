@@ -408,7 +408,7 @@ void ocudu::test_pucch_consistency(const cell_configuration& cell_cfg, span<cons
       } break;
       case pucch_format::FORMAT_4: {
         const auto&    f4_params        = std::get<pucch_format_4>(pucch.format_params);
-        const unsigned multiplexing_idx = f4_params.orthog_seq_idx;
+        const unsigned multiplexing_idx = static_cast<unsigned>(f4_params.occ_index);
         // Multiplexed by orthogonal sequence index.
         // Check the general grid, the union of the F0/F1 grids and the F4 specific grid.
         // Write to both the F4 union grid and the F4 specific grid.

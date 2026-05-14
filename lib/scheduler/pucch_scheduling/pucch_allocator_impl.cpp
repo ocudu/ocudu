@@ -118,7 +118,7 @@ struct pucch_allocator_impl::alloc_context {
             pucch_pdu.resources.prbs,
             pucch_pdu.resources.second_hop_prbs,
             pucch_pdu.resources.symbols,
-            format4.orthog_seq_idx,
+            fmt::underlying(format4.occ_index),
             pucch_pdu.uci_bits);
       } break;
       default:
@@ -1818,8 +1818,8 @@ void pucch_allocator_impl::fill_ded_pdu(pucch_info&           pucch_pdu,
       const auto& f4_params = std::get<pucch_f4_params>(cell_cfg.params.init_bwp.pucch.resources.f2_or_f3_or_f4_params);
       format_4.pi_2_bpsk    = f4_params.pi2_bpsk;
       format_4.additional_dmrs = f4_params.additional_dmrs;
-      format_4.orthog_seq_idx  = static_cast<unsigned>(res_f4.occ_index);
-      format_4.n_sf_pucch_f4   = static_cast<pucch_format_4_sf>(res_f4.occ_length);
+      format_4.occ_index       = res_f4.occ_index;
+      format_4.occ_length      = res_f4.occ_length;
     } break;
     default:
       ocudu_assertion_failure("Invalid PUCCH format");

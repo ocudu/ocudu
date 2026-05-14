@@ -154,6 +154,6 @@ TEST(mac_fapi_ul_pucch_format4_pdu_conversor_test, ul_pucch_format4_pdu_valid_sh
   ASSERT_EQ(mac_pdu.uci_bits.csi_part1_nof_bits, format4->csi_part1_bit_length.value());
   ASSERT_EQ(f4.additional_dmrs, format4->add_dmrs_flag);
   ASSERT_EQ(f4.pi_2_bpsk, format4->pi2_bpsk);
-  ASSERT_EQ(static_cast<unsigned>(f4.n_sf_pucch_f4), format4->pre_dft_occ_len);
-  ASSERT_EQ(f4.orthog_seq_idx, format4->pre_dft_occ_idx);
+  ASSERT_EQ(static_cast<unsigned>(f4.occ_length), format4->pre_dft_occ_len);
+  ASSERT_EQ(static_cast<unsigned>(f4.occ_index), format4->pre_dft_occ_idx);
 }

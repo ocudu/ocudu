@@ -12,9 +12,6 @@
 
 namespace ocudu {
 
-/// PUCCH Format 4 spreading factor.
-enum class pucch_format_4_sf { sf2 = 2, sf4 = 4 };
-
 /// PRBs and symbols used for PUCCH resources.
 struct pucch_resources {
   prb_interval      prbs;
@@ -76,12 +73,10 @@ struct pucch_format_4 {
   pucch_repetition_tx_slot slot_repetition;
   uint16_t                 n_id_scrambling;
   bool                     pi_2_bpsk;
-  /// \c occ-Index as per TS 38.331, or equivalent to index \f$n\f$ in Tables 6.3.2.6.3-1/2, TS 38.211. Only for PUCCH
-  /// Format 4.
-  uint8_t orthog_seq_idx;
-  /// Spreading Factor \f$N_{SF}^{PUCCH,4}\f$, as per TS 38.211, Section 6.3.2.6.3. Only for PUCCH Format 4.
-  /// TODO: check if this corresponds to \ref pucch_f4_occ_len.
-  pucch_format_4_sf n_sf_pucch_f4;
+  /// \c occ-Index as per TS 38.331, or equivalent to index \f$n\f$ in Tables 6.3.2.6.3-1/2, TS 38.211.
+  pucch_f4_occ_idx occ_index;
+  /// Spreading Factor \f$N_{SF}^{PUCCH,4}\f$, as per TS 38.211, Section 6.3.2.6.3.
+  pucch_f4_occ_len occ_length;
 
   /// DMRS parameters.
   bool     additional_dmrs;

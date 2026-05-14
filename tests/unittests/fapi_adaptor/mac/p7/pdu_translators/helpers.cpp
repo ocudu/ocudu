@@ -683,8 +683,8 @@ pucch_info_test_helper ocudu::unittests::build_valid_pucch_format_4_pdu()
   format_4.n_id_hopping             = 180;
   format_4.additional_dmrs          = false;
   format_4.pi_2_bpsk                = true;
-  format_4.n_sf_pucch_f4            = pucch_format_4_sf::sf2;
-  format_4.orthog_seq_idx           = 1;
+  format_4.occ_length               = pucch_f4_occ_len::n2;
+  format_4.occ_index                = pucch_f4_occ_idx::n1;
 
   return helper;
 }

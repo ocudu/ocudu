@@ -603,8 +603,8 @@ static auto make_pucch_debug_log_entry(const pucch_info& pucch)
         format_to(ctx.out(),
                   " symb={} occ={}/{} uci: harq_bits={} sr={} csi-1_bits={}",
                   pucch.resources.symbols,
-                  format_4.orthog_seq_idx,
-                  fmt::underlying(format_4.n_sf_pucch_f4),
+                  fmt::underlying(format_4.occ_index),
+                  fmt::underlying(format_4.occ_length),
                   pucch.uci_bits.harq_ack_nof_bits,
                   fmt::underlying(pucch.uci_bits.sr_bits),
                   pucch.uci_bits.csi_part1_nof_bits);

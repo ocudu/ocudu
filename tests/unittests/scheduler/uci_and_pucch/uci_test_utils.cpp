@@ -113,8 +113,8 @@ pucch_info test_helpers::make_ded_pucch_info(const cell_configuration& cell_cfg,
           .slot_repetition   = pucch_repetition_tx_slot::no_multi_slot,
           .n_id_scrambling   = cell_cfg.params.pci,
           .pi_2_bpsk         = false,
-          .orthog_seq_idx    = static_cast<uint8_t>(f4.occ_index),
-          .n_sf_pucch_f4     = static_cast<pucch_format_4_sf>(f4.occ_length),
+          .occ_index         = f4.occ_index,
+          .occ_length        = f4.occ_length,
           .additional_dmrs   = false,
           .n_id_0_scrambling = cell_cfg.params.pci,
       });
@@ -190,8 +190,7 @@ bool ocudu::pucch_info_match(const pucch_info& expected, const pucch_info& test)
                  expected.uci_bits.csi_part1_nof_bits == test.uci_bits.csi_part1_nof_bits &&
                  expected_f.slot_repetition == test_f.slot_repetition &&
                  expected_f.n_id_scrambling == test_f.n_id_scrambling && expected_f.pi_2_bpsk == test_f.pi_2_bpsk &&
-                 expected_f.orthog_seq_idx == test_f.orthog_seq_idx &&
-                 expected_f.n_sf_pucch_f4 == test_f.n_sf_pucch_f4 &&
+                 expected_f.occ_index == test_f.occ_index && expected_f.occ_length == test_f.occ_length &&
                  expected_f.additional_dmrs == test_f.additional_dmrs &&
                  expected_f.n_id_0_scrambling == test_f.n_id_0_scrambling;
     } break;
