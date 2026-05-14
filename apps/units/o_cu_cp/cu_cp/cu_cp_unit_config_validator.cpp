@@ -690,6 +690,46 @@ static bool validate_amf_appconfig(const cu_cp_unit_amf_config&                 
   return true;
 }
 
+/// Validates the XnAP configuration:
+/// - checks that no peer address is listed under more than one peer
+/// - checks that no bind address is listed under more than one gateway.
+/// Uses string-level comparison: equivalent representations (IPv4 vs IPv4-mapped IPv6) or hostnames resolving to the
+/// same address are not detected here — those errors will surface at SCTP bind/connect time.
+static bool validate_xnap_appconfig(const cu_cp_unit_xnap_config& config)
+{
+  std::set<std::string> seen_peer_addrs;
+  for (const auto& gw : config.gateways) {
+    for (const auto& peer : gw.connections) {
+      for (const auto& addr : peer.peer_addrs) {
+        if (addr.empty()) {
+          fmt::print("XnAP peer address cannot be empty\n");
+          return false;
+        }
+        if (!seen_peer_addrs.insert(addr).second) {
+          fmt::print("XnAP peer address {} is listed under more than one peer\n", addr);
+          return false;
+        }
+      }
+    }
+  }
+
+  std::set<std::string> seen_bind_addrs;
+  for (const auto& gw : config.gateways) {
+    for (const auto& addr : gw.bind_addrs) {
+      if (addr.empty()) {
+        fmt::print("XnAP bind address cannot be empty\n");
+        return false;
+      }
+      if (!seen_bind_addrs.insert(addr).second) {
+        fmt::print("XnAP bind address {} is listed under more than one gateway\n", addr);
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 /// Validates the given CU-CP configuration. Returns true on success, otherwise false.
 static bool validate_cu_cp_appconfig(const gnb_id_t gnb_id, const cu_cp_unit_config& config)
 {
@@ -708,6 +748,10 @@ static bool validate_cu_cp_appconfig(const gnb_id_t gnb_id, const cu_cp_unit_con
   }
 
   if (!validate_qos_appconfig(config.qos_cfg)) {
+    return false;
+  }
+
+  if (!validate_xnap_appconfig(config.xnap_config)) {
     return false;
   }
 
