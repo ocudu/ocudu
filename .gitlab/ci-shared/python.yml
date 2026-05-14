@@ -31,9 +31,12 @@
   script:
     - &setup_env_variables |
       export PIP_EXTRA_INDEX_URL="https://${TWINE_USERNAME}:${TWINE_PASSWORD}@${TWINE_REPO#https://}/simple"
+    - mkdir -p $CI_PROJECT_DIR/.apk-cache && apk add --cache-dir $CI_PROJECT_DIR/.apk-cache git
     - pip install 'tox<5'
     - cd $PY_DIR
     - tox -p auto
+    - git diff > $CI_PROJECT_DIR/ci.patch
+    - git diff --color=always --exit-code
   variables:
     PIP_CACHE_DIR: $CI_PROJECT_DIR/.pip-cache
   cache:
@@ -41,6 +44,12 @@
     paths:
       - "**/.tox/"
       - .pip-cache/
+      - .apk-cache/
+  artifacts:
+    paths:
+      - ci.patch
+    when: on_failure
+    expire_in: 1 week
   parallel: *matrix-python-version
 
 .publish deps:

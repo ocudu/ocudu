@@ -41,15 +41,6 @@ deps =
   black
   isort
 commands =
-  black --check --diff --color .
-  isort --check .
-
-[testenv:format_apply]
-skip_install = true
-deps =
-  black
-  isort
-commands =
   black .
   isort .
 
