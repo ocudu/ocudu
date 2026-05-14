@@ -40,8 +40,9 @@ public:
   void stop();
 
 private:
-  void
-  reconnect_peer(xnc_peer_index_t xnc_idx, const transport_layer_address& peer_addr, xnc_connection_gateway* xnc_gw);
+  void reconnect_peer(xnc_peer_index_t                            xnc_idx,
+                      const std::vector<transport_layer_address>& peer_addrs,
+                      xnc_connection_gateway*                     xnc_gw);
 
   class shared_xnc_connection_context;
   class xnc_gw_to_cu_cp_pdu_adapter;

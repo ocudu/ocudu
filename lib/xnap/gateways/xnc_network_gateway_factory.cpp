@@ -123,13 +123,14 @@ public:
                params.sctp.bind_port);
   }
 
-  async_task<bool> connect_to_peer(transport_layer_address peer_addr) override
+  async_task<bool> connect_to_peer(std::vector<transport_layer_address> peer_addrs) override
   {
-    return launch_async([this, peer_addr, result = false](coro_context<async_task<bool>>& ctx) mutable {
-      CORO_BEGIN(ctx);
-      CORO_AWAIT_VALUE(result, sctp_server->connect({peer_addr}));
-      CORO_RETURN(result);
-    });
+    return launch_async(
+        [this, peer_addrs = std::move(peer_addrs), result = false](coro_context<async_task<bool>>& ctx) mutable {
+          CORO_BEGIN(ctx);
+          CORO_AWAIT_VALUE(result, sctp_server->connect(std::move(peer_addrs)));
+          CORO_RETURN(result);
+        });
   }
 
   std::optional<uint16_t> get_listen_port() const override { return sctp_server->get_listen_port(); }

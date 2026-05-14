@@ -93,7 +93,8 @@ struct cu_cp_configuration {
   };
 
   struct xnap_config {
-    transport_layer_address peer_addr;
+    /// XN-C peer addresses. Multiple addresses can be provided for SCTP multihoming.
+    std::vector<transport_layer_address> peer_addrs;
   };
 
   struct xnap_params {

@@ -84,7 +84,7 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
     cu_cp_cfg.xnap.xnc_gws.push_back(peer.get());
     cu_cp_cfg.xnap.peer_to_gateway[peer_idx] = gw_idx;
     cu_cp_cfg.xnap.xnaps.push_back(
-        cu_cp_configuration::xnap_config{.peer_addr = transport_layer_address::create_from_string("127.0.0.1")});
+        cu_cp_configuration::xnap_config{.peer_addrs = {transport_layer_address::create_from_string("127.0.0.1")}});
     next_xnc_peer_idx++;
   }
 

@@ -30,11 +30,12 @@ public:
 
   /// \brief Adds an XNAP object to the CU-CP.
   /// \param[in] xnc_index Index of the XN-C peer to which the XNAP object will be connected.
-  /// \param[in] peer_addr Address of the XN-C peer to which the XNAP object will be connected.
+  /// \param[in] peer_addrs Addresses of the XN-C peer (multiple for SCTP multihoming).
   /// \param[in] xnap_cfg Configuration of the XNAP object to be added.
   /// \return A pointer to the interface of the added XNAP object if it was successfully created, a nullptr otherwise.
-  xnap_interface*
-  add_xnap(xnc_peer_index_t xnc_index, const transport_layer_address& peer_addr, const xnap_configuration& xnap_cfg);
+  xnap_interface* add_xnap(xnc_peer_index_t                            xnc_index,
+                           const std::vector<transport_layer_address>& peer_addrs,
+                           const xnap_configuration&                   xnap_cfg);
 
   /// \brief Find an XNAP object in the repository.
   /// \param[in] xnc_index Index of the XN-C peer to which the XNAP object is connected.
@@ -43,6 +44,7 @@ public:
 
   /// \brief Find an XNAP object in the repository.
   /// \param[in] peer_addr Address of the XN-C peer to which the XNAP object is connected.
+  /// The lookup matches if the address reported by SCTP COMM_UP equals any of the peer's configured addresses.
   /// \return The index of the XN-C peer if the XNAP object was found, xnc_peer_index_t::invalid otherwise.
   xnc_peer_index_t find_xnap(const transport_layer_address& peer_addr);
 
@@ -51,10 +53,10 @@ public:
   /// \return A pointer to the interface of the added XNAP object if it was successfully found, a nullptr otherwise.
   xnap_interface* find_xnap(const gnb_id_t& peer_gnb_id);
 
-  /// \brief Get the peer address of an XNAP connection.
-  /// \param[in] Index of the XN-C peer in the XNAP repository.
-  /// \return Address of the XN-C peer to which the XNAP object should be connected.
-  std::optional<transport_layer_address> get_peer_addr(xnc_peer_index_t xnc_index) const;
+  /// \brief Get the peer addresses of an XNAP connection.
+  /// \param[in] xnc_index Index of the XN-C peer in the XNAP repository.
+  /// \return Addresses of the XN-C peer (multiple if SCTP multihoming is used), or std::nullopt if not found.
+  std::optional<std::vector<transport_layer_address>> get_peer_addrs(xnc_peer_index_t xnc_index) const;
 
   /// \brief Get the all XNAP interfaces.
   std::map<xnc_peer_index_t, xnap_interface*> get_xnaps();
@@ -70,8 +72,8 @@ public:
 
 private:
   struct xnap_context {
-    // Peer address.
-    transport_layer_address peer_addr;
+    // Peer addresses (multiple for SCTP multihoming).
+    std::vector<transport_layer_address> peer_addrs;
     // CU-CP handler of XNAP events.
     xnap_cu_cp_adapter xnap_to_cu_cp_notifier;
 

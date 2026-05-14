@@ -18,9 +18,9 @@ class xnc_connection_gateway
 public:
   virtual ~xnc_connection_gateway() = default;
 
-  /// Initiate a connection to a peer.
+  /// Initiate a connection to a peer. Multiple addresses can be provided for SCTP multihoming.
   /// \return async_task that resolves to true when SCTP association is ready, false on failure.
-  virtual async_task<bool> connect_to_peer(transport_layer_address peer_addr) = 0;
+  virtual async_task<bool> connect_to_peer(std::vector<transport_layer_address> peer_addrs) = 0;
 
   /// Attach a CU-CP handler to the XN-C connection server.
   virtual void attach_cu_cp(cu_cp_xnc_handler& xnc_handler_) = 0;

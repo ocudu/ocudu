@@ -46,7 +46,7 @@ TEST_F(cu_cp_xnap_repository_test,
        when_adding_xnap_then_xnap_is_added_to_repository_and_can_be_retrieved_by_index_and_peer_addr)
 {
   // Add XNAP.
-  xnap_interface* xnap = xnap_db.add_xnap(xnc_peer_index_t::min, default_peer_addr, xnap_cfg);
+  xnap_interface* xnap = xnap_db.add_xnap(xnc_peer_index_t::min, {default_peer_addr}, xnap_cfg);
   ASSERT_TRUE(xnap != nullptr) << "Failed to add XNAP to repository";
 
   ASSERT_EQ(xnap_db.get_nof_xnaps(), 1U) << "Unexpected number of XNAPs in repository after adding XNAP";
@@ -58,4 +58,24 @@ TEST_F(cu_cp_xnap_repository_test,
 
   // Retrieve XNAP by peer address.
   ASSERT_EQ(xnc_peer_index_t::min, xnap_db.find_xnap(default_peer_addr)) << "Failed to retrieve XNAP by peer address";
+}
+
+TEST_F(cu_cp_xnap_repository_test, when_multihomed_peer_added_then_find_xnap_matches_any_of_its_addresses)
+{
+  // Add a multihomed XNAP peer with three addresses.
+  const transport_layer_address addr_a = transport_layer_address::create_from_string("127.0.0.1");
+  const transport_layer_address addr_b = transport_layer_address::create_from_string("127.0.0.2");
+  const transport_layer_address addr_c = transport_layer_address::create_from_string("127.0.0.3");
+
+  xnap_interface* xnap = xnap_db.add_xnap(xnc_peer_index_t::min, {addr_a, addr_b, addr_c}, xnap_cfg);
+  ASSERT_TRUE(xnap != nullptr) << "Failed to add multihomed XNAP to repository";
+
+  // SCTP COMM_UP notification may report any of the configured addresses, lookup must find on any of them.
+  ASSERT_EQ(xnc_peer_index_t::min, xnap_db.find_xnap(addr_a)) << "Failed to retrieve XNAP by first address";
+  ASSERT_EQ(xnc_peer_index_t::min, xnap_db.find_xnap(addr_b)) << "Failed to retrieve XNAP by second address";
+  ASSERT_EQ(xnc_peer_index_t::min, xnap_db.find_xnap(addr_c)) << "Failed to retrieve XNAP by third address";
+
+  // An unrelated address must not match.
+  const transport_layer_address unrelated = transport_layer_address::create_from_string("127.0.0.99");
+  ASSERT_EQ(xnc_peer_index_t::invalid, xnap_db.find_xnap(unrelated)) << "Unexpected match for unrelated address";
 }

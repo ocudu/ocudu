@@ -425,9 +425,11 @@ ocucp::cu_cp_configuration ocudu::generate_cu_cp_config(const cu_cp_unit_config&
   for (const auto& gw_cfg : cu_cfg.xnap_config.gateways) {
     for (const auto& peer : gw_cfg.connections) {
       ocucp::cu_cp_configuration::xnap_config xn_config{};
-      // TODO: support multiple XNAP peer addresses configuration for SCTP multihoming.
-      xn_config.peer_addr = transport_layer_address::create_from_string(peer.peer_addrs.front());
-      xn_config.peer_addr.set_port(XNAP_PORT);
+      for (const auto& addr_str : peer.peer_addrs) {
+        transport_layer_address addr = transport_layer_address::create_from_string(addr_str);
+        addr.set_port(XNAP_PORT);
+        xn_config.peer_addrs.push_back(addr);
+      }
       out_cfg.xnap.xnaps.push_back(xn_config);
       out_cfg.xnap.peer_to_gateway[ocucp::uint_to_xnc_peer_index(peer_idx)] = ocucp::uint_to_xnc_gateway_index(gw_idx);
       ++peer_idx;

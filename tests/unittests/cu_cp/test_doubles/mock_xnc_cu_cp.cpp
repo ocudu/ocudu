@@ -18,7 +18,7 @@ class synchronized_mock_xnc_cu_cp : public mock_xnc_cu_cp
 public:
   explicit synchronized_mock_xnc_cu_cp() : rx_pdus(1024), pending_tx_pdus(16) {}
 
-  async_task<bool> connect_to_peer(transport_layer_address peer_addr) override
+  async_task<bool> connect_to_peer(std::vector<transport_layer_address> peer_addrs) override
   {
     // Simulate SCTP_COMM_UP by creating the association (matching real gateway behavior).
     if (xnc_handler != nullptr && rx_pdu_notifier == nullptr) {

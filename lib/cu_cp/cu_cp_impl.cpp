@@ -163,9 +163,10 @@ bool cu_cp_impl::start()
         uint32_t xnc_idx = 0;
         for (const auto& xnap : cfg.xnap.xnaps) {
           const auto      peer_idx    = uint_to_xnc_peer_index(xnc_idx);
-          xnap_interface* xnap_entity = xnap_db.add_xnap(peer_idx, xnap.peer_addr, xnc_cfg);
+          xnap_interface* xnap_entity = xnap_db.add_xnap(peer_idx, xnap.peer_addrs, xnc_cfg);
           if (xnap_entity == nullptr) {
-            report_fatal_error("Failed to create XNAP entity for peer address {}", xnap.peer_addr);
+            report_fatal_error("Failed to create XNAP entity for peer address {}",
+                               xnap.peer_addrs.empty() ? transport_layer_address{} : xnap.peer_addrs.front());
           }
           auto gw_it = cfg.xnap.peer_to_gateway.find(peer_idx);
           if (gw_it != cfg.xnap.peer_to_gateway.end() &&
