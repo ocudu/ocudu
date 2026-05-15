@@ -36,9 +36,9 @@ private:
   // Map of preamble ID to entry in \c preambles vector.
   unsigned get_cfra_index(unsigned ra_preamble_id) const;
 
-  mac_rach_handler&     parent;
-  const du_cell_index_t cell_index;
-  interval<unsigned>    cfra_preambles;
+  mac_rach_handler&        parent;
+  const du_cell_index_t    cell_index;
+  const interval<unsigned> cfra_preambles;
 
   std::vector<std::atomic<rnti_t>> preambles;
 };
