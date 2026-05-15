@@ -14,6 +14,7 @@ RUN pacman-key --init \
   && pacman -Syu --noconfirm
 RUN install_dependencies.sh && pacman -Syu --noconfirm \
   git \
+  which \
   clang \
   ccache valgrind \
   python-pip
