@@ -147,6 +147,16 @@ public:
     /// Sets the direct current position relative to Point A.
     /// \remark An assertion is triggered if the DC position is not within the resource grid.
     std::optional<unsigned> dc_position;
+    /// \brief Random Access Preamble Index (RAPID) associated with msgA on PUSCH (Release 16). Possible values
+    /// are {0, ..., 63}.
+    ///
+    /// During 2-step RACH, the PUSCH carrying msgA is alternatively scrambled using an initialization value that
+    /// depends on the sequence index of the detected RACH preamble.
+    ///
+    /// The presence of this parameter indicates the PUSCH is a msgA and the scrambling sequence is initialized as:
+    /// \f$c_{init} = n_{RNTI} \cdot 2^{16} + n_{RAPID} \cdot 2^{10} + n_{ID}\f$
+    /// as specified in TS 38.211, Section 6.3.1.1.
+    std::optional<unsigned> n_rapid;
   };
 
   /// \brief Channel size as seen by the PUSCH channel estimator.

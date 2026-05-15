@@ -310,7 +310,7 @@ void uplink_processor_impl::process_pusch(const uplink_pdu_slot_repository::pusc
     // Assume that count_pusch_adaptors will not exceed MAX_PUSCH_PDUS_PER_SLOT.
     unsigned                         notifier_adaptor_id = count_pusch_adaptors.fetch_add(1, std::memory_order_acq_rel);
     pusch_processor_result_notifier& processor_notifier  = pusch_adaptors[notifier_adaptor_id].configure(
-        notifier, to_rnti(pdu.pdu.rnti), pdu.pdu.slot, to_harq_id(pdu.harq_id), data, [this]() {
+        notifier, to_rnti(pdu.pdu.rnti), pdu.pdu.slot, to_harq_id(pdu.harq_id), data, pdu.pdu.n_rapid, [this]() {
           state_machine.on_finish_processing_pdu();
         });
 

@@ -42,12 +42,14 @@ public:
   /// \param[in] slot_       Current slot.
   /// \param[in] harq_id_    User HARQ process identifier.
   /// \param[in] payload_    View to the data payload.
-  /// \param[in] callback_   Callback function when the PUSCH transmission is completed.
+  /// \param[in] n_rapid_    Random Access Preamble Index (RAPID) associated with msgA on PUSCH (Release 16), \c
+  /// std::nullopt if not used. \param[in] callback_   Callback function when the PUSCH transmission is completed.
   pusch_processor_result_notifier& configure(upper_phy_rx_results_notifier& notifier_,
                                              rnti_t                         rnti_,
                                              slot_point                     slot_,
                                              harq_id_t                      harq_id_,
                                              span<const uint8_t>            payload_,
+                                             std::optional<unsigned>        n_rapid_,
                                              callback_func                  callback_)
   {
     notifier = &notifier_;
@@ -55,6 +57,7 @@ public:
     slot     = slot_;
     harq_id  = harq_id_;
     payload  = payload_;
+    n_rapid  = n_rapid_;
     callback = std::move(callback_);
     return *this;
   }
@@ -103,6 +106,7 @@ private:
     result.harq_id        = harq_id;
     result.decoder_result = sch.data;
     result.payload        = (sch.data.tb_crc_ok) ? payload : span<const uint8_t>();
+    result.n_rapid        = n_rapid;
     notifier_->on_new_pusch_results_data(result);
 
     l1_ul_tracer << instant_trace_event("on_sch", instant_trace_event::cpu_scope::thread);
@@ -117,6 +121,7 @@ private:
   slot_point                     slot     = slot_point();
   harq_id_t                      harq_id  = harq_id_t::INVALID_HARQ_ID;
   span<const uint8_t>            payload;
+  std::optional<unsigned>        n_rapid;
   callback_func                  callback;
 };
 

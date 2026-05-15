@@ -193,6 +193,7 @@ protected:
     pdu.nof_symbols        = nof_symbols_slot - pdu.start_symbol_index;
     pdu.tbs_lbrm           = units::bytes(tbs_lbrm_bytes_dist(rgen));
     pdu.dmrs_symbol_mask   = symbol_slot_mask(nof_symbols_slot);
+    pdu.n_rapid            = n_rapid_dist(rgen);
 
     for (unsigned i_symbol = pdu.start_symbol_index, i_symbol_end = pdu.start_symbol_index + pdu.nof_symbols;
          i_symbol != i_symbol_end;
@@ -251,6 +252,7 @@ protected:
   static std::uniform_int_distribution<unsigned> tbs_lbrm_bytes_dist;
   static std::uniform_int_distribution<unsigned> tbs_dist;
   static std::uniform_real_distribution<float>   target_code_rate_dist;
+  static std::uniform_int_distribution<unsigned> n_rapid_dist;
 
   pusch_processor::pdu_t pdu;
 };
@@ -284,6 +286,7 @@ std::uniform_int_distribution<unsigned> PuschProcessorFixture::start_symbol_inde
 std::uniform_int_distribution<unsigned> PuschProcessorFixture::tbs_lbrm_bytes_dist(1, ldpc::MAX_CODEBLOCK_SIZE / 8);
 std::uniform_int_distribution<unsigned> PuschProcessorFixture::tbs_dist(1, 1024);
 std::uniform_real_distribution<float>   PuschProcessorFixture::target_code_rate_dist(30.F, 772.F);
+std::uniform_int_distribution<unsigned> PuschProcessorFixture::n_rapid_dist(0, 64);
 
 TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
 {
@@ -408,6 +411,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   ASSERT_EQ(pdu.nof_tx_layers, demodulator_entry.config.nof_tx_layers);
   ASSERT_EQ(false, demodulator_entry.config.enable_transform_precoding);
   ASSERT_EQ(span<const uint8_t>(pdu.rx_ports), span<const uint8_t>(demodulator_entry.config.rx_ports));
+  ASSERT_EQ(pdu.n_rapid, demodulator_entry.config.n_rapid);
 
   // Assert demux if UCI is multiplexed.
   ASSERT_EQ(1, demux_spy->get_demultiplex_entries().size());

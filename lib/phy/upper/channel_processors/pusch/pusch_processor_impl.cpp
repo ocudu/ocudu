@@ -338,6 +338,7 @@ void pusch_processor_impl::process_data(span<uint8_t>                          d
   demod_config.dc_position                 = pdu.dc_position;
   demod_config.enable_transform_precoding  = enable_transform_precoding;
   demod_config.rx_ports                    = pdu.rx_ports;
+  demod_config.n_rapid                     = pdu.n_rapid;
   dependencies->get_demodulator().demodulate(
       demodulator_buffer, notifier_adaptor.get_demodulator_notifier(), grid, est_results, demod_config);
 }

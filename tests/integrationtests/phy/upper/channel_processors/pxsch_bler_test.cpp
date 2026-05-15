@@ -320,11 +320,9 @@ private:
     pusch_config.start_symbol_index = 0;
     pusch_config.nof_symbols        = nof_ofdm_symbols;
     pusch_config.tbs_lbrm           = tbs_lbrm_default;
-    pusch_config.dc_position        = {};
-
-    if (enable_dc_position) {
-      pusch_config.dc_position = {bwp_size_rb * NOF_SUBCARRIERS_PER_RB / 2};
-    }
+    pusch_config.dc_position =
+        enable_dc_position ? std::optional(bwp_size_rb * NOF_SUBCARRIERS_PER_RB / 2) : std::nullopt;
+    pusch_config.n_rapid = std::nullopt;
 
     // Resize data to accomodate the transport block.
     tx_data.resize(tbs.value());

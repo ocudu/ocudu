@@ -28,14 +28,16 @@ struct ul_prach_results {
 
 /// Data-related PUSCH decoding output.
 struct ul_pusch_results_data {
-  /// Parameter \f$n_{RNTI}\f$ from TS38.211 Section 6.3.1.1.
-  rnti_t rnti;
   /// Slot description (also specifies the numerology).
   slot_point slot;
-  /// Channel state information.
-  channel_state_information csi;
+  /// Parameter \f$n_{RNTI}\f$ from TS38.211 Section 6.3.1.1.
+  rnti_t rnti;
+  /// Random Access Preamble Index (RAPID) associated with msgA on PUSCH (Release 16).
+  std::optional<unsigned> n_rapid;
   /// HARQ process ID.
   unsigned harq_id;
+  /// Channel state information.
+  channel_state_information csi;
   /// PUSCH decoder result.
   pusch_decoder_result decoder_result;
   /// \brief Data payload of the PUSCH PDU.

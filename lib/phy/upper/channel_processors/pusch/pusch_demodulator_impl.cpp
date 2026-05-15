@@ -260,8 +260,14 @@ void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&              code
   // Number of receive antenna ports.
   auto nof_rx_ports = static_cast<unsigned>(config.rx_ports.size());
 
-  // Initialize sequence.
-  unsigned c_init = config.rnti * pow2(15) + config.n_id;
+  // Initialize scrambling sequence. When msgA is sent over PUSCH, an alternative scrambling sequence is used, as per
+  // TS 38.211 Section 6.3.1.1 Release 16.
+  unsigned c_init  = config.rnti * pow2(15) + config.n_id;
+  bool     is_msgA = config.n_rapid.has_value();
+  if (is_msgA) {
+    c_init = config.rnti * pow2(16) + *config.n_rapid * pow2(10) + config.n_id;
+  }
+
   descrambler->init(c_init);
 
   // Prepare PRB active RE mask.
