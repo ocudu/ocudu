@@ -466,7 +466,7 @@ static void ssb_per_rach_occasion_and_cb_preambles_per_ssb_to_asn1(const float  
                                                                    rach_cfg_common_s& out_cfg)
 {
   out_cfg.ssb_per_rach_occasion_and_cb_preambs_per_ssb_present = true;
-  if (nof_ssb_per_ro == 1 / 8) {
+  if (nof_ssb_per_ro == 1.0f / 8) {
     auto& nof_cb_preambles_per_ssb_opt = out_cfg.ssb_per_rach_occasion_and_cb_preambs_per_ssb.set_one_eighth();
     switch (nof_cb_preambles_per_ssb) {
       case 4:
@@ -520,7 +520,7 @@ static void ssb_per_rach_occasion_and_cb_preambles_per_ssb_to_asn1(const float  
       default:
         report_fatal_error("Invalid nof. contention based preambles per SSB value {}", nof_cb_preambles_per_ssb);
     }
-  } else if (nof_ssb_per_ro == 1 / 4) {
+  } else if (nof_ssb_per_ro == 1.0f / 4) {
     auto& nof_cb_preambles_per_ssb_opt = out_cfg.ssb_per_rach_occasion_and_cb_preambs_per_ssb.set_one_fourth();
     switch (nof_cb_preambles_per_ssb) {
       case 4:
@@ -574,7 +574,7 @@ static void ssb_per_rach_occasion_and_cb_preambles_per_ssb_to_asn1(const float  
       default:
         report_fatal_error("Invalid nof. contention based preambles per SSB value {}", nof_cb_preambles_per_ssb);
     }
-  } else if (nof_ssb_per_ro == 1 / 2) {
+  } else if (nof_ssb_per_ro == 1.0f / 2) {
     auto& nof_cb_preambles_per_ssb_opt = out_cfg.ssb_per_rach_occasion_and_cb_preambs_per_ssb.set_one_half();
     switch (nof_cb_preambles_per_ssb) {
       case 4:
