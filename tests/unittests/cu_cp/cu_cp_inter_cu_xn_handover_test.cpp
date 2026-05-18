@@ -566,6 +566,11 @@ TEST_F(cu_cp_inter_cu_xn_handover_test, when_path_switch_request_is_rejected_by_
   get_amf().push_tx_pdu(generate_path_switch_request_failure(
       uint_to_amf_ue_id(1), ran_ue_id_t::min, ngap_cause_t{ngap_cause_radio_network_t::ho_target_not_allowed}));
 
+  // TODO: this should not be sent on path swith request failure.
+  report_fatal_error_if_not(
+      this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu),
+      "Failed to transmit F1AP UE Context Modification Request (containing RRC Reconf complete indicator)");
+
   report_fatal_error_if_not(not this->get_xnc_cu_cp(xnc_peer_idx).try_pop_rx_pdu(xnap_pdu),
                             "Unexpected XNAP message after path switch failure");
   report_fatal_error_if_not(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu),
