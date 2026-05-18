@@ -384,6 +384,74 @@ TEST_F(pdu_session_manager_test, when_new_ul_info_is_requested_f1u_is_disconnect
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
 }
 
+/// N3 UL tunnel update via ng_ul_up_tnl_info in a Bearer Context Modification (Xn path switch).
+TEST_F(pdu_session_manager_test, when_ng_ul_up_tnl_info_is_set_in_modify_item_then_tunnel_update_succeeds)
+{
+  ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
+
+  pdu_session_id_t psi    = uint_to_pdu_session_id(1);
+  drb_id_t         drb_id = uint_to_drb_id(1);
+  qos_flow_id_t    qfi    = uint_to_qos_flow_id(8);
+
+  // Set up the PDU session first.
+  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item =
+      generate_pdu_session_res_to_setup_item(psi, drb_id, qfi, uint_to_five_qi(9));
+  pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
+  ASSERT_TRUE(setup_result.success);
+  ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
+
+  // Modify with a new N3 UL tunnel endpoint (simulates AMF providing new UPF address after Xn HO).
+  e1ap_pdu_session_res_to_modify_item pdu_session_modify_item =
+      generate_pdu_session_res_to_modify_item_with_ng_ul_up_tnl_info(psi, "10.0.0.1", 0xabcd1234);
+  pdu_session_modification_result mod_result = pdu_session_mng->modify_pdu_session(pdu_session_modify_item, false);
+
+  // The session should still exist and the modification should succeed.
+  EXPECT_TRUE(mod_result.success);
+  EXPECT_EQ(mod_result.pdu_session_id, psi);
+  EXPECT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
+}
+
+/// Modifying a PDU session without ng_ul_up_tnl_info must succeed without touching the N3 tunnel
+/// (negative: absence of ng_ul_up_tnl_info must not cause failure or unintended side effects).
+TEST_F(pdu_session_manager_test, when_ng_ul_up_tnl_info_absent_in_modify_item_then_no_tunnel_change)
+{
+  ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
+
+  pdu_session_id_t psi    = uint_to_pdu_session_id(1);
+  drb_id_t         drb_id = uint_to_drb_id(1);
+  qos_flow_id_t    qfi    = uint_to_qos_flow_id(8);
+
+  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item =
+      generate_pdu_session_res_to_setup_item(psi, drb_id, qfi, uint_to_five_qi(9));
+  pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
+  ASSERT_TRUE(setup_result.success);
+
+  // Modification without ng_ul_up_tnl_info — must succeed and leave the session intact.
+  e1ap_pdu_session_res_to_modify_item pdu_session_modify_item;
+  pdu_session_modify_item.pdu_session_id = psi;
+  ASSERT_FALSE(pdu_session_modify_item.ng_ul_up_tnl_info.has_value());
+
+  pdu_session_modification_result mod_result = pdu_session_mng->modify_pdu_session(pdu_session_modify_item, false);
+
+  EXPECT_TRUE(mod_result.success);
+  EXPECT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
+}
+
+/// Modifying a non-existent session with ng_ul_up_tnl_info set must fail gracefully.
+TEST_F(pdu_session_manager_test, when_session_not_found_and_ng_ul_up_tnl_info_set_then_modify_fails)
+{
+  ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
+
+  e1ap_pdu_session_res_to_modify_item pdu_session_modify_item =
+      generate_pdu_session_res_to_modify_item_with_ng_ul_up_tnl_info(uint_to_pdu_session_id(99), "10.0.0.1", 0x1);
+
+  pdu_session_modification_result mod_result = pdu_session_mng->modify_pdu_session(pdu_session_modify_item, false);
+
+  // Session does not exist — modification must fail cleanly (no crash, no new session created).
+  EXPECT_FALSE(mod_result.success);
+  EXPECT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
+}
+
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);

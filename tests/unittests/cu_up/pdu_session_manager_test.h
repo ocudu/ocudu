@@ -213,5 +213,17 @@ generate_pdu_session_res_to_modify_item_to_setup_drb(pdu_session_id_t           
   return pdu_session_modify_item;
 }
 
+inline e1ap_pdu_session_res_to_modify_item
+generate_pdu_session_res_to_modify_item_with_ng_ul_up_tnl_info(pdu_session_id_t   psi,
+                                                               const std::string& peer_addr,
+                                                               uint32_t           peer_teid)
+{
+  e1ap_pdu_session_res_to_modify_item pdu_session_modify_item;
+  pdu_session_modify_item.pdu_session_id = psi;
+  pdu_session_modify_item.ng_ul_up_tnl_info =
+      up_transport_layer_info(transport_layer_address::create_from_string(peer_addr), int_to_gtpu_teid(peer_teid));
+  return pdu_session_modify_item;
+}
+
 } // namespace ocuup
 } // namespace ocudu

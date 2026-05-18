@@ -6,6 +6,7 @@
 #include "ocudu/asn1/e1ap/common.h"
 #include "ocudu/asn1/e1ap/e1ap_pdu_contents.h"
 #include "ocudu/e1ap/common/e1ap_message.h"
+#include <arpa/inet.h>
 
 using namespace ocudu;
 using namespace ocuup;
@@ -157,7 +158,8 @@ e1ap_message ocudu::ocuup::generate_bearer_context_modification_request(unsigned
   bearer_context_modification_request.pdu.set_init_msg();
   bearer_context_modification_request.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_MOD);
   auto& bearer_context_mod_req = bearer_context_modification_request.pdu.init_msg().value.bearer_context_mod_request();
-  bearer_context_mod_req->gnb_cu_cp_ue_e1ap_id = cu_cp_ue_e1ap_id;
+  bearer_context_mod_req->gnb_cu_cp_ue_e1ap_id                   = cu_cp_ue_e1ap_id;
+  bearer_context_mod_req->sys_bearer_context_mod_request_present = true;
   bearer_context_mod_req->sys_bearer_context_mod_request.set_ng_ran_bearer_context_mod_request();
 
   auto& ng_ran_bearer_context_mod_req =
@@ -185,6 +187,39 @@ e1ap_message ocudu::ocuup::generate_bearer_context_modification_request(unsigned
   ng_ran_bearer_context_mod_req.pdu_session_res_to_modify_list.push_back(pdu_session_res_to_setup_modify_item);
 
   return bearer_context_modification_request;
+}
+
+e1ap_message ocudu::ocuup::generate_bearer_context_modification_request_with_ng_ul_tnl(unsigned    cu_cp_ue_e1ap_id,
+                                                                                       uint32_t    upf_teid,
+                                                                                       const char* upf_addr)
+{
+  e1ap_message msg = {};
+  msg.pdu.set_init_msg();
+  msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_MOD);
+
+  auto& req                                   = msg.pdu.init_msg().value.bearer_context_mod_request();
+  req->gnb_cu_cp_ue_e1ap_id                   = cu_cp_ue_e1ap_id;
+  req->sys_bearer_context_mod_request_present = true;
+  req->sys_bearer_context_mod_request.set_ng_ran_bearer_context_mod_request();
+
+  auto& ng_ran = req->sys_bearer_context_mod_request.ng_ran_bearer_context_mod_request();
+  ng_ran.pdu_session_res_to_modify_list_present = true;
+
+  asn1::e1ap::pdu_session_res_to_modify_item_s item = {};
+  item.pdu_session_id                               = 1;
+  item.ng_ul_up_tnl_info_present                    = true;
+  item.ng_ul_up_tnl_info.set_gtp_tunnel();
+  auto& gtp = item.ng_ul_up_tnl_info.gtp_tunnel();
+  gtp.gtp_teid.from_number(upf_teid);
+  // Encode the IPv4 address as a 32-bit big-endian bitstring.
+  ::in_addr addr4 = {};
+  ::inet_pton(AF_INET, upf_addr, &addr4);
+  uint32_t addr_uint = ntohl(addr4.s_addr);
+  gtp.transport_layer_address.from_number(addr_uint, 32);
+
+  ng_ran.pdu_session_res_to_modify_list.push_back(item);
+
+  return msg;
 }
 
 e1ap_message ocudu::ocuup::generate_invalid_bearer_context_modification_request(unsigned cu_cp_ue_e1ap_id,
