@@ -7,6 +7,7 @@
 #include "ocudu/cu_cp/inter_cu_handover_messages.h"
 #include "ocudu/security/security.h"
 #include "ocudu/support/async/coroutine.h"
+#include "ocudu/support/async/when_all.h"
 #include "ocudu/xnap/xnap.h"
 
 using namespace ocudu;
@@ -46,15 +47,16 @@ void inter_cu_handover_execution_target_routine::operator()(coro_context<async_t
 
   logger.debug("ue={}: \"{}\" started...", ue->get_ue_index(), name());
 
-  if (!is_xn_handover()) {
-    // Await for NGAP DL Status transfer.
-    CORO_AWAIT_VALUE(sn_status, ngap.handle_dl_ran_status_transfer_required(ue->get_ue_index()));
-  } else {
-    // Await for SN Status transfer from source XN-C.
-    CORO_AWAIT_VALUE(sn_status, xnap->handle_sn_status_transfer_expected(ue->get_ue_index()));
+  // Notify RRC UE to await ReconfigurationComplete.
+  if (!initialize_reconfiguration_timeout()) {
+    logger.warning(
+        "ue={}: \"{}\" failed. Cause: Failed to initialize reconfiguration timeout", ue->get_ue_index(), name());
+    CORO_EARLY_RETURN();
   }
 
-  if (not sn_status.has_value()) {
+  CORO_AWAIT_VALUE(completed_events, when_all(build_parallel_wait_tasks()));
+
+  if (!completed_events[0]) {
     logger.warning("ue={}: \"{}\" failed. Cause: Failed to receive {} Status Transfer",
                    ue->get_ue_index(),
                    name(),
@@ -62,20 +64,7 @@ void inter_cu_handover_execution_target_routine::operator()(coro_context<async_t
     CORO_EARLY_RETURN();
   }
 
-  // Inform CU-UP of the current PDCP state.
-  bearer_context_modification_request.ue_index = ue->get_ue_index();
-  fill_e1ap_bearer_context_modification_request();
-  CORO_AWAIT(e1ap.handle_bearer_context_modification_request(bearer_context_modification_request));
-
-  // Notify RRC UE to await ReconfigurationComplete.
-  if (!initialize_reconfiguration_timeout()) {
-    logger.warning(
-        "ue={}: \"{}\" failed. Cause: Failed to initialize reconfiguration timeout", ue->get_ue_index(), name());
-    CORO_EARLY_RETURN();
-  }
-  CORO_AWAIT_VALUE(reconf_result,
-                   ue->get_rrc_ue()->handle_handover_reconfiguration_complete_expected(0, reconf_timeout));
-  if (!reconf_result) {
+  if (!completed_events[1]) {
     logger.warning(
         "ue={}: \"{}\" failed. Cause: Failed to receive RRC Reconfiguration Complete", ue->get_ue_index(), name());
     CORO_EARLY_RETURN();
@@ -120,6 +109,54 @@ void inter_cu_handover_execution_target_routine::operator()(coro_context<async_t
   }
 
   CORO_RETURN();
+}
+
+std::vector<async_task<bool>> inter_cu_handover_execution_target_routine::build_parallel_wait_tasks()
+{
+  std::vector<async_task<bool>> pending_events;
+  pending_events.reserve(2);
+
+  if (!is_xn_handover()) {
+    pending_events.push_back(launch_async([this](coro_context<async_task<bool>>& task_ctx) {
+      CORO_BEGIN(task_ctx);
+      // Await NGAP DL RAN Status Transfer.
+      CORO_AWAIT_VALUE(sn_status, ngap.handle_dl_ran_status_transfer_required(ue->get_ue_index()));
+      if (!sn_status.has_value()) {
+        CORO_EARLY_RETURN(false);
+      }
+
+      // Inform CU-UP of the current PDCP state.
+      bearer_context_modification_request.ue_index = ue->get_ue_index();
+      fill_e1ap_bearer_context_modification_request();
+      CORO_AWAIT(e1ap.handle_bearer_context_modification_request(bearer_context_modification_request));
+
+      CORO_RETURN(true);
+    }));
+  } else {
+    pending_events.push_back(launch_async([this](coro_context<async_task<bool>>& task_ctx) {
+      CORO_BEGIN(task_ctx);
+      // Await SN Status Transfer from source XN-C.
+      CORO_AWAIT_VALUE(sn_status, xnap->handle_sn_status_transfer_expected(ue->get_ue_index()));
+      if (!sn_status.has_value()) {
+        CORO_EARLY_RETURN(false);
+      }
+
+      // Inform CU-UP of the current PDCP state.
+      bearer_context_modification_request.ue_index = ue->get_ue_index();
+      fill_e1ap_bearer_context_modification_request();
+      CORO_AWAIT(e1ap.handle_bearer_context_modification_request(bearer_context_modification_request));
+
+      CORO_RETURN(true);
+    }));
+  }
+
+  pending_events.push_back(launch_async([this](coro_context<async_task<bool>>& task_ctx) {
+    CORO_BEGIN(task_ctx);
+    CORO_AWAIT_VALUE(reconf_result,
+                     ue->get_rrc_ue()->handle_handover_reconfiguration_complete_expected(0, reconf_timeout));
+    CORO_RETURN(reconf_result);
+  }));
+  return pending_events;
 }
 
 void inter_cu_handover_execution_target_routine::fill_e1ap_bearer_context_modification_request()

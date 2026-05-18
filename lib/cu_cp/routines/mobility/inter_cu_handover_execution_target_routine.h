@@ -8,10 +8,10 @@
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "ocudu/ngap/ngap.h"
-#include "ocudu/ngap/ngap_handover.h"
 #include "ocudu/support/async/async_task.h"
 #include "ocudu/xnap/xnap.h"
 #include <chrono>
+#include <vector>
 
 namespace ocudu::ocucp {
 
@@ -35,7 +35,8 @@ public:
 private:
   void fill_e1ap_bearer_context_modification_request();
   void fill_e1ap_bearer_context_tunnel_update_request(const cu_cp_path_switch_request_ack& ack);
-  bool initialize_reconfiguration_timeout();
+  std::vector<async_task<bool>> build_parallel_wait_tasks();
+  bool                          initialize_reconfiguration_timeout();
   static cu_cp_path_switch_request
        fill_path_switch_request(const xnap_handover_target_execution_context& target_execution_ctxt,
                                 const rrc_cell_context&                       cell_context,
@@ -50,6 +51,7 @@ private:
 
   // (sub-)routine results
   expected<cu_cp_status_transfer>           sn_status;
+  std::vector<bool>                         completed_events;
   e1ap_bearer_context_modification_response bearer_context_modification_response;
   cu_cp_path_switch_response                path_switch_response;
 
