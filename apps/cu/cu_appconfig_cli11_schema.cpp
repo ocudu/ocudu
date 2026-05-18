@@ -6,6 +6,8 @@
 #include "apps/helpers/f1u/f1u_cli11_schema.h"
 #include "apps/helpers/logger/logger_appconfig_cli11_schema.h"
 #include "apps/helpers/network/sctp_cli11_schema.h"
+#include "apps/helpers/tracing/tracer_appconfig_cli11_schema.h"
+#include "apps/services/app_execution_metrics/executor_metrics_config_cli11_schema.h"
 #include "apps/services/app_resource_usage/app_resource_usage_config_cli11_schema.h"
 #include "apps/services/buffer_pool/buffer_pool_appconfig_cli11_schema.h"
 #include "apps/services/metrics/metrics_config_cli11_schema.h"
@@ -34,6 +36,9 @@ void ocudu::configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_appconfig
   // Logging section.
   configure_cli11_with_logger_appconfig_schema(app, cu_cfg.log_cfg);
 
+  // Tracing section.
+  configure_cli11_with_tracer_appconfig_schema(app, cu_cfg.trace_cfg);
+
   // Buffer pool section.
   configure_cli11_with_buffer_pool_appconfig_schema(app, cu_cfg.buffer_pool_config);
 
@@ -46,6 +51,7 @@ void ocudu::configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_appconfig
   // Metrics section.
   app_services::configure_cli11_with_app_resource_usage_config_schema(app, cu_cfg.metrics_cfg.rusage_config);
   app_services::configure_cli11_with_metrics_appconfig_schema(app, cu_cfg.metrics_cfg.metrics_service_cfg);
+  app_services::configure_cli11_with_executor_metrics_appconfig_schema(app, cu_cfg.metrics_cfg.executors_metrics_cfg);
 
   // F1AP section.
   CLI::App* cu_cp_subcmd = add_subcommand(app, "cu_cp", "CU-CP parameters")->configurable();

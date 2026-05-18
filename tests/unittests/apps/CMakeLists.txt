@@ -38,8 +38,32 @@ target_link_libraries(yaml_roundtrip_du_test PRIVATE
         ${YAML_ROUNDTRIP_LINKS})
 gtest_discover_tests(yaml_roundtrip_du_test)
 
-# CU-CP. The cu_cp app does not have a base static library, so we compile its appconfig sources directly
-# into the test target.
+# CU. The cu app does not have a base static library, so we compile its appconfig sources directly into the test target.
+add_executable(yaml_roundtrip_cu_test
+        yaml_roundtrip_cu_test.cpp
+        ${CMAKE_SOURCE_DIR}/apps/cu/cu_appconfig_cli11_schema.cpp
+        ${CMAKE_SOURCE_DIR}/apps/cu/cu_appconfig_validator.cpp
+        ${CMAKE_SOURCE_DIR}/apps/cu/cu_appconfig_yaml_writer.cpp)
+target_include_directories(yaml_roundtrip_cu_test PRIVATE ${YAML_ROUNDTRIP_INCLUDES})
+target_compile_definitions(yaml_roundtrip_cu_test PRIVATE CONFIGS_DIR="${CMAKE_SOURCE_DIR}/configs")
+target_link_libraries(yaml_roundtrip_cu_test PRIVATE
+        ocudu_app_helpers
+        ocudu_app_services
+        ocudu_e1_gateway
+        ocudu_e2
+        ocudu_f1c_gateway
+        ocudu_xnc_gateway
+        ocudu_f1u_cu_up_split_connector
+        ocudu_ngap
+        ocudu_o_cu_cp_app_unit
+        ocudu_o_cu_up_app_unit
+        ocudu_pcap
+        ocudu_versioning
+        ${YAML_ROUNDTRIP_LINKS})
+gtest_discover_tests(yaml_roundtrip_cu_test)
+
+
+# CU-CP.  Same approach as CU.
 add_executable(yaml_roundtrip_cu_cp_test
         yaml_roundtrip_cu_cp_test.cpp
         ${CMAKE_SOURCE_DIR}/apps/cu_cp/cu_cp_appconfig_cli11_schema.cpp
@@ -60,7 +84,7 @@ target_link_libraries(yaml_roundtrip_cu_cp_test PRIVATE
         ${YAML_ROUNDTRIP_LINKS})
 gtest_discover_tests(yaml_roundtrip_cu_cp_test)
 
-# CU-UP. Same approach as CU-CP.
+# CU-UP. Same approach as CU.
 add_executable(yaml_roundtrip_cu_up_test
         yaml_roundtrip_cu_up_test.cpp
         ${CMAKE_SOURCE_DIR}/apps/cu_up/cu_up_appconfig_cli11_schema.cpp
