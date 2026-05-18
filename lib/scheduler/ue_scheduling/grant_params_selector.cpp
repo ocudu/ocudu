@@ -205,7 +205,7 @@ static std::optional<unsigned> compute_retx_nof_rbs(const pdsch_config_params&  
           (tbs_calc_cfg.mcs_descr.get_spectral_efficiency() * pdsch_cfg.symbols.length()));
   tbs_calc_cfg.n_prb = nrb_estim;
   units::bytes tbs   = tbs_calculator_calculate(tbs_calc_cfg);
-  if (tbs == target_tbs) {
+  if (tbs == target_tbs && nrb_estim >= rb_lims.start() && nrb_estim < rb_lims.stop()) {
     return nrb_estim;
   }
 
@@ -443,7 +443,7 @@ static std::optional<unsigned> compute_retx_ul_nof_rbs(const pusch_config_params
 
   // Note: We take the conservative approach of assuming the reTx will intersect the DC.
   auto tbs = compute_ul_tbs(pusch_cfg, active_bwp, mcs, nrb_estim, contains_dc);
-  if (tbs.has_value() and tbs.value() == target_tbs) {
+  if (tbs.has_value() and tbs.value() == target_tbs and nrb_estim >= rb_lims.start() and nrb_estim < rb_lims.stop()) {
     return nrb_estim;
   }
 
