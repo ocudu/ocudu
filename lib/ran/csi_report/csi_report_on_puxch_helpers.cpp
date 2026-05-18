@@ -5,6 +5,7 @@
 #include "csi_report_on_puxch_helpers.h"
 #include "ocudu/adt/interval.h"
 #include "ocudu/ran/precoding/precoding_codebook_helpers.h"
+#include "ocudu/ran/precoding/precoding_constants.h"
 #include "ocudu/support/error_handling.h"
 
 using namespace ocudu;
@@ -58,7 +59,9 @@ struct ri_li_cqi_cri_size_calculator {
   ri_li_cqi_cri_sizes operator()(const pmi_codebook_typeI_single_panel& pmi_codebook) const
   {
     unsigned nof_csi_antenna_ports = get_precoding_codebook_antenna_ports(pmi_codebook);
-    ocudu_assert(nof_csi_antenna_ports == 4, "Only four ports are currently supported.");
+    ocudu_assert(nof_csi_antenna_ports <= precoding_constants::MAX_NOF_PORTS,
+                 "Maximum number of supported CSI-RS antenna ports is {}.",
+                 precoding_constants::MAX_NOF_PORTS);
 
     unsigned ri_uint              = ri.value();
     unsigned ri_restriction_count = static_cast<unsigned>(ri_restriction.count());
@@ -162,18 +165,25 @@ struct pmi_unpacker {
   {
     ocudu_assert(codebook.mode == pmi_codebook_typeI_mode::one, "Only mode 1 is currently supported.");
 
-    unsigned                           count = 0;
-    pmi_typeI_single_panel_param_sizes sizes =
-        get_pmi_sizes_typeI_single_panel(get_single_panel_info(codebook.n1_n2), ri.value());
+    unsigned                             count      = 0;
+    const pmi_codebook_single_panel_info panel_info = get_single_panel_info(codebook.n1_n2);
+    pmi_typeI_single_panel_param_sizes   sizes      = get_pmi_sizes_typeI_single_panel(panel_info, ri.value());
 
     unsigned i_1_1 = packed.extract(count, sizes.i_1_1);
     count += sizes.i_1_1;
 
     std::optional<unsigned> i_1_2;
-    ocudu_assert(sizes.i_1_2 == 0, "PMI field i_1_2 size must be 0 bits for 4 ports.");
+    ocudu_assert((panel_info.n2 > 1) || (sizes.i_1_2 == 0), "PMI field i_1_2 size must be 0 bits if N2 = 1.");
+    if (sizes.i_1_2 > 0) {
+      i_1_2.emplace(packed.extract(count, sizes.i_1_2));
+      count += sizes.i_1_2;
+    }
 
     std::optional<unsigned> i_1_3;
-    if (ri > 1) {
+    ocudu_assert(((ri > 1) && (ri <= 4)) || (sizes.i_1_3 == 0),
+                 "PMI field i_1_3 size must be zero if RI = 1 or RI > 4.");
+
+    if (sizes.i_1_3 > 0) {
       i_1_3.emplace(packed.extract(count, sizes.i_1_3));
       count += sizes.i_1_3;
     }
@@ -186,11 +196,8 @@ struct pmi_unpacker {
                  packed.size(),
                  count);
 
-    return pmi_typeI_single_panel{.panel_config = pmi_codebook_single_panel_config::two_one,
-                                  .i_1_1        = i_1_1,
-                                  .i_1_2        = i_1_2,
-                                  .i_1_3        = i_1_3,
-                                  .i_2          = i_2};
+    return pmi_typeI_single_panel{
+        .panel_config = codebook.n1_n2, .i_1_1 = i_1_1, .i_1_2 = i_1_2, .i_1_3 = i_1_3, .i_2 = i_2};
   }
 };
 

@@ -40,13 +40,12 @@ static units::bits get_csi_report_pucch_size_cri_ri_li_pmi_cqi(const csi_report_
     count += csi_report_get_size_pmi(config.pmi_codebook, ri);
   }
 
-  // Wideband CQI ...
+  // Wideband CQI.
   if ((config.quantities == csi_report_quantities::cri_ri_pmi_cqi) ||
       (config.quantities == csi_report_quantities::cri_ri_cqi) ||
       (config.quantities == csi_report_quantities::cri_ri_li_pmi_cqi)) {
     // For the first TB.
     count += sizes.wideband_cqi_first_tb;
-
     // For the second TB.
     count += sizes.wideband_cqi_second_tb;
   }
@@ -72,14 +71,15 @@ static csi_report_data csi_report_unpack_pucch_cri_ri_li_pmi_cqi(const csi_repor
                units::bits(packed.size()),
                csi_report_size.part1_size);
 
-  // Gets RI, LI, CQI and CRI field sizes as the rank was one.
+  // Extract field sizes. Given that the PMI field sizes depend on the RI,
+  // use a placeholder for the RI (one layer) and get its correct size after extracting the RI.
   ri_li_cqi_cri_sizes sizes =
       get_ri_li_cqi_cri_sizes(config.pmi_codebook, config.ri_restriction, 1U, config.nof_csi_rs_resources);
 
   // Unpacks bits following the order in TS38.212 Table 6.3.1.1.2-7.
   unsigned count = 0;
 
-  // CRI.
+  // Extract CRI.
   unsigned cri = 0;
   if (sizes.cri > 0) {
     cri = packed.extract(count, sizes.cri);
@@ -87,14 +87,14 @@ static csi_report_data csi_report_unpack_pucch_cri_ri_li_pmi_cqi(const csi_repor
   data.cri.emplace(cri);
   count += sizes.cri;
 
-  // RI.
+  // Extract RI.
   csi_report_data::ri_type ri = csi_report_unpack_ri(packed.slice(count, count + sizes.ri), config.ri_restriction);
   data.ri.emplace(ri.value());
   count += sizes.ri;
 
-  // LI.
+  // Extract LI.
   if (config.quantities == csi_report_quantities::cri_ri_li_pmi_cqi) {
-    // Gets RI, LI, CQI and CRI field sizes.
+    // Get the quantity sizes with the correct RI.
     ri_li_cqi_cri_sizes sizes_ri =
         get_ri_li_cqi_cri_sizes(config.pmi_codebook, config.ri_restriction, ri, config.nof_csi_rs_resources);
 
@@ -107,7 +107,7 @@ static csi_report_data csi_report_unpack_pucch_cri_ri_li_pmi_cqi(const csi_repor
     count += sizes_ri.li;
   }
 
-  // Padding.
+  // Skip padding bits.
   units::bits csi_report_size_ri = get_csi_report_pucch_size_cri_ri_li_pmi_cqi(config, ri);
   ocudu_assert(
       csi_report_size.part1_size >= csi_report_size_ri,
@@ -116,7 +116,7 @@ static csi_report_data csi_report_unpack_pucch_cri_ri_li_pmi_cqi(const csi_repor
       csi_report_size_ri);
   count += csi_report_size.part1_size.value() - csi_report_size_ri.value();
 
-  // PMI.
+  // Extract PMI.
   if ((config.quantities == csi_report_quantities::cri_ri_pmi_cqi) ||
       (config.quantities == csi_report_quantities::cri_ri_li_pmi_cqi)) {
     unsigned pmi_size = csi_report_get_size_pmi(config.pmi_codebook, ri);
@@ -127,20 +127,24 @@ static csi_report_data csi_report_unpack_pucch_cri_ri_li_pmi_cqi(const csi_repor
     }
   }
 
-  // Wideband CQI ...
+  // Extract wideband CQI.
   if ((config.quantities == csi_report_quantities::cri_ri_pmi_cqi) ||
       (config.quantities == csi_report_quantities::cri_ri_cqi) ||
       (config.quantities == csi_report_quantities::cri_ri_li_pmi_cqi)) {
+    // Get the wideband CQI sizes for the unpacked RI (second TB only present for RI > 4).
+    ri_li_cqi_cri_sizes sizes_ri =
+        get_ri_li_cqi_cri_sizes(config.pmi_codebook, config.ri_restriction, ri, config.nof_csi_rs_resources);
+
     // For the first TB.
     data.first_tb_wideband_cqi.emplace(
-        csi_report_unpack_wideband_cqi(packed.slice(count, count + sizes.wideband_cqi_first_tb)));
-    count += sizes.wideband_cqi_first_tb;
+        csi_report_unpack_wideband_cqi(packed.slice(count, count + sizes_ri.wideband_cqi_first_tb)));
+    count += sizes_ri.wideband_cqi_first_tb;
 
     // For the second TB.
-    if (sizes.wideband_cqi_second_tb != 0) {
+    if (sizes_ri.wideband_cqi_second_tb != 0) {
       data.second_tb_wideband_cqi.emplace(
-          csi_report_unpack_wideband_cqi(packed.slice(count, count + sizes.wideband_cqi_second_tb)));
-      count += sizes.wideband_cqi_second_tb;
+          csi_report_unpack_wideband_cqi(packed.slice(count, count + sizes_ri.wideband_cqi_second_tb)));
+      count += sizes_ri.wideband_cqi_second_tb;
     }
   }
 

@@ -7,6 +7,7 @@
 #include "ocudu/ran/csi_report/csi_report_formatters.h"
 #include "ocudu/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "ocudu/ran/csi_report/csi_report_on_pusch_helpers.h"
+#include "ocudu/ran/precoding/precoding_codebook_helpers.h"
 #include <fmt/ostream.h>
 #include <gtest/gtest.h>
 #include <random>
@@ -151,14 +152,8 @@ private:
 
   static void fill_ri(csi_report_packed& packed, csi_report_data& unpacked, const csi_report_configuration& config)
   {
-    unsigned nof_ri = static_cast<unsigned>(config.ri_restriction.count());
-
-    unsigned nof_ri_bits = 0;
-    if (std::holds_alternative<pmi_codebook_two_port>(config.pmi_codebook)) {
-      nof_ri_bits = std::min(1U, log2_ceil(nof_ri));
-    } else if (std::holds_alternative<pmi_codebook_typeI_single_panel>(config.pmi_codebook)) {
-      nof_ri_bits = std::min(2U, log2_ceil(nof_ri));
-    }
+    unsigned nof_ri      = static_cast<unsigned>(config.ri_restriction.count());
+    unsigned nof_ri_bits = get_nof_ri_bits(config);
 
     // Create a uniform distribution to select a random rank index.
     std::uniform_int_distribution<unsigned> rank_idx_dist(0, nof_ri - 1);
@@ -177,34 +172,104 @@ private:
 
   static void fill_li(csi_report_packed& packed, csi_report_data& unpacked, const csi_report_configuration& config)
   {
-    unsigned nof_layers = unpacked.ri.value().value();
-
-    unsigned nof_li_bits = 0;
-    if (std::holds_alternative<pmi_codebook_two_port>(config.pmi_codebook)) {
-      nof_li_bits = log2_ceil(nof_layers);
-    } else if (std::holds_alternative<pmi_codebook_typeI_single_panel>(config.pmi_codebook)) {
-      nof_li_bits = std::min(2U, log2_ceil(nof_layers));
-    }
+    unsigned nof_layers  = unpacked.ri.value().value();
+    unsigned nof_li_bits = get_nof_li_bits(config, nof_layers);
 
     unsigned li = (rgen() & mask_lsb_ones<unsigned>(nof_li_bits));
     unpacked.li.emplace(li);
     packed.push_back(li, nof_li_bits);
   }
 
+  static unsigned get_nof_ri_bits(const csi_report_configuration& config)
+  {
+    unsigned ri_restriction_count     = static_cast<unsigned>(config.ri_restriction.count());
+    unsigned nof_csi_rs_antenna_ports = get_precoding_codebook_antenna_ports(config.pmi_codebook);
+
+    if (std::holds_alternative<pmi_codebook_two_port>(config.pmi_codebook)) {
+      return std::min(1U, log2_ceil(ri_restriction_count));
+    }
+    if (std::holds_alternative<pmi_codebook_typeI_single_panel>(config.pmi_codebook)) {
+      return (nof_csi_rs_antenna_ports == 4) ? std::min(2U, log2_ceil(ri_restriction_count))
+                                             : log2_ceil(ri_restriction_count);
+    }
+    return 0;
+  }
+
+  static unsigned get_nof_li_bits(const csi_report_configuration& config, unsigned ri)
+  {
+    if (std::holds_alternative<pmi_codebook_two_port>(config.pmi_codebook)) {
+      return log2_ceil(ri);
+    }
+    if (std::holds_alternative<pmi_codebook_typeI_single_panel>(config.pmi_codebook)) {
+      return std::min(2U, log2_ceil(ri));
+    }
+    return 0;
+  }
+
+  static unsigned get_nof_pmi_bits(const csi_report_configuration& config, unsigned ri)
+  {
+    if (std::holds_alternative<pmi_codebook_two_port>(config.pmi_codebook)) {
+      return (ri == 1) ? 2 : 1;
+    }
+    if (std::holds_alternative<pmi_codebook_typeI_single_panel>(config.pmi_codebook)) {
+      const auto&                           codebook   = std::get<pmi_codebook_typeI_single_panel>(config.pmi_codebook);
+      const pmi_codebook_single_panel_info& panel_info = get_single_panel_info(codebook.n1_n2);
+      const pmi_typeI_single_panel_param_sizes sizes   = get_pmi_sizes_typeI_single_panel(panel_info, ri);
+      return sizes.i_1_1 + sizes.i_1_2 + sizes.i_1_3 + sizes.i_2;
+    }
+    return 0;
+  }
+
+  static unsigned get_pucch_payload_size(const csi_report_configuration& config, unsigned ri)
+  {
+    // CRI.
+    unsigned count = log2_ceil(config.nof_csi_rs_resources);
+
+    // RI.
+    count += get_nof_ri_bits(config);
+
+    // LI.
+    if (config.quantities == csi_report_quantities::cri_ri_li_pmi_cqi) {
+      count += get_nof_li_bits(config, ri);
+    }
+
+    // PMI.
+    if ((config.quantities == csi_report_quantities::cri_ri_pmi_cqi) ||
+        (config.quantities == csi_report_quantities::cri_ri_li_pmi_cqi)) {
+      count += get_nof_pmi_bits(config, ri);
+    }
+
+    // CQI.
+    if ((config.quantities == csi_report_quantities::cri_ri_pmi_cqi) ||
+        (config.quantities == csi_report_quantities::cri_ri_cqi) ||
+        (config.quantities == csi_report_quantities::cri_ri_li_pmi_cqi)) {
+      count += 4;
+
+      // Second TB for RI > 4.
+      if (ri > 4) {
+        count += 4;
+      }
+    }
+    return count;
+  }
+
   static void fill_padding(csi_report_packed& packed, csi_report_data& unpacked, const csi_report_configuration& config)
   {
-    csi_report_data::ri_type ri = unpacked.ri.value();
+    if (std::holds_alternative<pmi_codebook_one_port>(config.pmi_codebook) ||
+        std::holds_alternative<std::monostate>(config.pmi_codebook)) {
+      return;
+    }
 
-    if (std::holds_alternative<pmi_codebook_two_port>(config.pmi_codebook) &&
-        (config.quantities == csi_report_quantities::cri_ri_pmi_cqi) && (ri == 2)) {
-      packed.push_back(1U, 1);
-    } else if (std::holds_alternative<pmi_codebook_typeI_single_panel>(config.pmi_codebook)) {
-      if ((config.quantities == csi_report_quantities::cri_ri_pmi_cqi) && (ri > 2)) {
-        packed.push_back(1U, 1);
-      }
-      if ((config.quantities == csi_report_quantities::cri_ri_li_pmi_cqi) && (ri == 1)) {
-        packed.push_back(1U, 1);
-      }
+    unsigned ri                       = unpacked.ri.value().value();
+    unsigned nof_csi_rs_antenna_ports = get_precoding_codebook_antenna_ports(config.pmi_codebook);
+    unsigned current_size             = get_pucch_payload_size(config, ri);
+    unsigned max_size                 = 0;
+    for (unsigned i_rank = 1; i_rank <= nof_csi_rs_antenna_ports; ++i_rank) {
+      max_size = std::max(max_size, get_pucch_payload_size(config, i_rank));
+    }
+
+    if (max_size > current_size) {
+      packed.push_back(0U, max_size - current_size);
     }
   }
 
@@ -224,24 +289,23 @@ private:
 
       packed.push_back(type.pmi, nof_pmi_bits);
     } else if (std::holds_alternative<pmi_codebook_typeI_single_panel>(config.pmi_codebook)) {
-      unsigned nof_i_1_1_bits = log2_ceil(8U);
-      unsigned nof_i_1_3_bits = 0;
-      if (ri == 2) {
-        nof_i_1_3_bits = 1;
-      }
-      unsigned nof_i_2_bits = 1;
-      if (ri == 1) {
-        nof_i_2_bits = 2;
-      }
+      const auto&                           codebook   = std::get<pmi_codebook_typeI_single_panel>(config.pmi_codebook);
+      const pmi_codebook_single_panel_info& panel_info = get_single_panel_info(codebook.n1_n2);
+      const pmi_typeI_single_panel_param_sizes sizes   = get_pmi_sizes_typeI_single_panel(panel_info, ri);
 
-      unsigned i_1_1 = rgen() & mask_lsb_ones<unsigned>(nof_i_1_1_bits);
-      unsigned i_1_3 = rgen() & mask_lsb_ones<unsigned>(nof_i_1_3_bits);
-      unsigned i_2   = rgen() & mask_lsb_ones<unsigned>(nof_i_2_bits);
+      unsigned i_1_1 = rgen() & mask_lsb_ones<unsigned>(sizes.i_1_1);
+      unsigned i_1_2 = rgen() & mask_lsb_ones<unsigned>(sizes.i_1_2);
+      unsigned i_1_3 = rgen() & mask_lsb_ones<unsigned>(sizes.i_1_3);
+      unsigned i_2   = rgen() & mask_lsb_ones<unsigned>(sizes.i_2);
 
       // Set PMI values.
       pmi_typeI_single_panel type;
-      type.i_1_1 = i_1_1;
-      if (ri > 1) {
+      type.panel_config = codebook.n1_n2;
+      type.i_1_1        = i_1_1;
+      if (sizes.i_1_2 > 0) {
+        type.i_1_2.emplace(i_1_2);
+      }
+      if (sizes.i_1_3 > 0) {
         type.i_1_3.emplace(i_1_3);
       }
       type.i_2 = i_2;
@@ -250,10 +314,15 @@ private:
       pmi.emplace<pmi_typeI_single_panel>(type);
       unpacked.pmi.emplace(pmi);
 
-      // Pack PMI values.
-      packed.push_back(i_1_1, nof_i_1_1_bits);
-      packed.push_back(i_1_3, nof_i_1_3_bits);
-      packed.push_back(i_2, nof_i_2_bits);
+      // Pack PMI values in TS38.212 Section 6.3.1.1.2 order.
+      packed.push_back(i_1_1, sizes.i_1_1);
+      if (sizes.i_1_2 > 0) {
+        packed.push_back(i_1_2, sizes.i_1_2);
+      }
+      if (sizes.i_1_3 > 0) {
+        packed.push_back(i_1_3, sizes.i_1_3);
+      }
+      packed.push_back(i_2, sizes.i_2);
     }
   }
 
@@ -298,14 +367,18 @@ TEST_P(CsiReportPucchFixture, CsiReportPucchUnpacking)
   ASSERT_EQ(unpacked_data, unpacked);
 }
 
-INSTANTIATE_TEST_SUITE_P(CsiReportPucchHelpersTest,
-                         CsiReportPucchFixture,
-                         ::testing::Combine(::testing::Values(pmi_codebook_one_port{},
-                                                              pmi_codebook_two_port{},
-                                                              pmi_codebook_typeI_single_panel{
-                                                                  pmi_codebook_single_panel_config::two_one,
-                                                                  pmi_codebook_typeI_mode::one}),
-                                            ::testing::Values(csi_report_quantities::cri_ri_pmi_cqi,
-                                                              csi_report_quantities::cri_ri_cqi,
-                                                              csi_report_quantities::cri_ri_li_pmi_cqi),
-                                            ::testing::Range(0U, 10U)));
+INSTANTIATE_TEST_SUITE_P(
+    CsiReportPucchHelpersTest,
+    CsiReportPucchFixture,
+    ::testing::Combine(::testing::Values(pmi_codebook_one_port{},
+                                         pmi_codebook_two_port{},
+                                         pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::two_one,
+                                                                         pmi_codebook_typeI_mode::one},
+                                         pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::two_two,
+                                                                         pmi_codebook_typeI_mode::one},
+                                         pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::four_one,
+                                                                         pmi_codebook_typeI_mode::one}),
+                       ::testing::Values(csi_report_quantities::cri_ri_pmi_cqi,
+                                         csi_report_quantities::cri_ri_cqi,
+                                         csi_report_quantities::cri_ri_li_pmi_cqi),
+                       ::testing::Range(0U, 10U)));

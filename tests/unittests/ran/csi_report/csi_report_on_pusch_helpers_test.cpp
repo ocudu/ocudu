@@ -5,6 +5,7 @@
 #include "ocudu/ran/csi_report/csi_report_configuration.h"
 #include "ocudu/ran/csi_report/csi_report_formatters.h"
 #include "ocudu/ran/csi_report/csi_report_on_pusch_helpers.h"
+#include "ocudu/ran/precoding/precoding_codebook_helpers.h"
 #include "ocudu/ran/uci/uci_part2_size_calculator.h"
 #include <fmt/ostream.h>
 #include <gtest/gtest.h>
@@ -183,9 +184,13 @@ protected:
     // Calculate CSI Part 1 size as described in TS38.212 Table 6.3.2.1.2-3.
     expected_csi_report_size.part1_size = units::bits{cri_size + ri_size + wideband_cqi_1st_tb_size};
 
-    // Skip CSI Part 2 if it is not present.
-    if ((nof_csi_rs_antenna_ports == 1) || ((configuration.quantities != csi_report_quantities::cri_ri_li_pmi_cqi) &&
-                                            (configuration.quantities != csi_report_quantities::cri_ri_pmi_cqi))) {
+    // Skip CSI Part 2 if it is not present. The cri-RI-CQI quantity reports the wideband CQI for the second TB in CSI
+    // Part 2 when more than four CSI-RS ports are configured.
+    const bool has_part2_content =
+        (quantities == csi_report_quantities::cri_ri_li_pmi_cqi) ||
+        (quantities == csi_report_quantities::cri_ri_pmi_cqi) ||
+        ((quantities == csi_report_quantities::cri_ri_cqi) && (nof_csi_rs_antenna_ports > 4));
+    if ((nof_csi_rs_antenna_ports == 1) || !has_part2_content) {
       return;
     }
 
@@ -286,19 +291,11 @@ private:
 
   static unsigned get_pmi_size(pmi_codebook_two_port, unsigned ri) { return (ri == 1) ? 2 : 1; }
 
-  static unsigned get_pmi_size(const pmi_codebook_typeI_single_panel&, unsigned ri)
+  static unsigned get_pmi_size(const pmi_codebook_typeI_single_panel& codebook, unsigned ri)
   {
-    unsigned nof_i_1_1_bits = log2_ceil(8U);
-    unsigned nof_i_1_3_bits = 0;
-    if (ri == 2) {
-      nof_i_1_3_bits = 1;
-    }
-    unsigned nof_i_2_bits = 1;
-    if (ri == 1) {
-      nof_i_2_bits = 2;
-    }
-
-    return nof_i_1_1_bits + nof_i_1_3_bits + nof_i_2_bits;
+    const pmi_codebook_single_panel_info&    panel_info = get_single_panel_info(codebook.n1_n2);
+    const pmi_typeI_single_panel_param_sizes sizes      = get_pmi_sizes_typeI_single_panel(panel_info, ri);
+    return sizes.i_1_1 + sizes.i_1_2 + sizes.i_1_3 + sizes.i_2;
   }
 
   static unsigned get_pmi_size(const csi_report_configuration& config, unsigned ri)
@@ -326,13 +323,14 @@ private:
 
   static unsigned fill_ri(csi_report_packed& packed, csi_report_data& unpacked, const csi_report_configuration& config)
   {
-    unsigned nof_ri = static_cast<unsigned>(config.ri_restriction.count());
+    unsigned nof_ri                   = static_cast<unsigned>(config.ri_restriction.count());
+    unsigned nof_csi_rs_antenna_ports = get_precoding_codebook_antenna_ports(config.pmi_codebook);
 
     unsigned nof_ri_bits = 0;
     if (std::holds_alternative<pmi_codebook_two_port>(config.pmi_codebook)) {
       nof_ri_bits = std::min(1U, log2_ceil(nof_ri));
     } else if (std::holds_alternative<pmi_codebook_typeI_single_panel>(config.pmi_codebook)) {
-      nof_ri_bits = std::min(2U, log2_ceil(nof_ri));
+      nof_ri_bits = (nof_csi_rs_antenna_ports == 4) ? std::min(2U, log2_ceil(nof_ri)) : log2_ceil(nof_ri);
     }
 
     // Create a uniform distribution to select a random rank index.
@@ -381,24 +379,23 @@ private:
 
       packed.push_back(type.pmi, nof_pmi_bits);
     } else if (std::holds_alternative<pmi_codebook_typeI_single_panel>(config.pmi_codebook)) {
-      unsigned nof_i_1_1_bits = log2_ceil(8U);
-      unsigned nof_i_1_3_bits = 0;
-      if (ri == 2) {
-        nof_i_1_3_bits = 1;
-      }
-      unsigned nof_i_2_bits = 1;
-      if (ri == 1) {
-        nof_i_2_bits = 2;
-      }
+      const auto&                           codebook   = std::get<pmi_codebook_typeI_single_panel>(config.pmi_codebook);
+      const pmi_codebook_single_panel_info& panel_info = get_single_panel_info(codebook.n1_n2);
+      const pmi_typeI_single_panel_param_sizes sizes   = get_pmi_sizes_typeI_single_panel(panel_info, ri);
 
-      unsigned i_1_1 = rgen() & mask_lsb_ones<unsigned>(nof_i_1_1_bits);
-      unsigned i_1_3 = rgen() & mask_lsb_ones<unsigned>(nof_i_1_3_bits);
-      unsigned i_2   = rgen() & mask_lsb_ones<unsigned>(nof_i_2_bits);
+      unsigned i_1_1 = rgen() & mask_lsb_ones<unsigned>(sizes.i_1_1);
+      unsigned i_1_2 = rgen() & mask_lsb_ones<unsigned>(sizes.i_1_2);
+      unsigned i_1_3 = rgen() & mask_lsb_ones<unsigned>(sizes.i_1_3);
+      unsigned i_2   = rgen() & mask_lsb_ones<unsigned>(sizes.i_2);
 
       // Set PMI values.
       pmi_typeI_single_panel type;
-      type.i_1_1 = i_1_1;
-      if (ri > 1) {
+      type.panel_config = codebook.n1_n2;
+      type.i_1_1        = i_1_1;
+      if (sizes.i_1_2 > 0) {
+        type.i_1_2.emplace(i_1_2);
+      }
+      if (sizes.i_1_3 > 0) {
         type.i_1_3.emplace(i_1_3);
       }
       type.i_2 = i_2;
@@ -407,10 +404,15 @@ private:
       pmi.emplace<pmi_typeI_single_panel>(type);
       unpacked.pmi.emplace(pmi);
 
-      // Pack PMI values.
-      packed.push_back(i_1_1, nof_i_1_1_bits);
-      packed.push_back(i_1_3, nof_i_1_3_bits);
-      packed.push_back(i_2, nof_i_2_bits);
+      // Pack PMI values in TS38.212 Section 6.3.2.1.2 order.
+      packed.push_back(i_1_1, sizes.i_1_1);
+      if (sizes.i_1_2 > 0) {
+        packed.push_back(i_1_2, sizes.i_1_2);
+      }
+      if (sizes.i_1_3 > 0) {
+        packed.push_back(i_1_3, sizes.i_1_3);
+      }
+      packed.push_back(i_2, sizes.i_2);
     }
   }
 
@@ -468,14 +470,18 @@ TEST_P(CsiReportPuschFixture, csiReportPuschUnpacking)
   ASSERT_EQ(expected_unpacked_data, unpacked);
 }
 
-INSTANTIATE_TEST_SUITE_P(CsiReportPuschHelpersTest,
-                         CsiReportPuschFixture,
-                         ::testing::Combine(::testing::Values(pmi_codebook_one_port{},
-                                                              pmi_codebook_two_port{},
-                                                              pmi_codebook_typeI_single_panel{
-                                                                  pmi_codebook_single_panel_config::two_one,
-                                                                  pmi_codebook_typeI_mode::one}),
-                                            ::testing::Values(csi_report_quantities::cri_ri_pmi_cqi,
-                                                              csi_report_quantities::cri_ri_cqi,
-                                                              csi_report_quantities::cri_ri_li_pmi_cqi),
-                                            ::testing::Range(0U, 10U)));
+INSTANTIATE_TEST_SUITE_P(
+    CsiReportPuschHelpersTest,
+    CsiReportPuschFixture,
+    ::testing::Combine(::testing::Values(pmi_codebook_one_port{},
+                                         pmi_codebook_two_port{},
+                                         pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::two_one,
+                                                                         pmi_codebook_typeI_mode::one},
+                                         pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::two_two,
+                                                                         pmi_codebook_typeI_mode::one},
+                                         pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::four_one,
+                                                                         pmi_codebook_typeI_mode::one}),
+                       ::testing::Values(csi_report_quantities::cri_ri_pmi_cqi,
+                                         csi_report_quantities::cri_ri_cqi,
+                                         csi_report_quantities::cri_ri_li_pmi_cqi),
+                       ::testing::Range(0U, 10U)));

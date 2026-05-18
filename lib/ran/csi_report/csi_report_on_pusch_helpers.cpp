@@ -64,7 +64,8 @@ static csi_report_data unpack_pusch_csi_cri_ri_li_pmi_cqi(const csi_report_packe
 {
   csi_report_data data{.valid = true};
 
-  // Gets RI, LI, CQI and CRI field sizes as if the rank was one.
+  // Extract field sizes. Given that the PMI field sizes depend on the RI, use a placeholder for the RI (one layer) and
+  // get its correct size after extracting the RI.
   ri_li_cqi_cri_sizes sizes =
       get_ri_li_cqi_cri_sizes(config.pmi_codebook, config.ri_restriction, 1U, config.nof_csi_rs_resources);
 
@@ -79,7 +80,7 @@ static csi_report_data unpack_pusch_csi_cri_ri_li_pmi_cqi(const csi_report_packe
   unsigned csi1_count = 0;
   unsigned csi2_count = 0;
 
-  // CRI.
+  // Extract CRI.
   unsigned cri = 0;
   if (sizes.cri > 0) {
     cri = csi1_packed.extract(csi1_count, sizes.cri);
@@ -87,7 +88,7 @@ static csi_report_data unpack_pusch_csi_cri_ri_li_pmi_cqi(const csi_report_packe
   data.cri.emplace(cri);
   csi1_count += sizes.cri;
 
-  // RI.
+  // Extract RI.
   csi_report_data::ri_type ri =
       csi_report_unpack_ri(csi1_packed.slice(csi1_count, csi1_count + sizes.ri), config.ri_restriction);
   data.ri.emplace(ri.value());
@@ -100,9 +101,6 @@ static csi_report_data unpack_pusch_csi_cri_ri_li_pmi_cqi(const csi_report_packe
     data.first_tb_wideband_cqi.emplace(
         csi_report_unpack_wideband_cqi(csi1_packed.slice(csi1_count, csi1_count + sizes.wideband_cqi_first_tb)));
     csi1_count += sizes.wideband_cqi_first_tb;
-
-    // Subband differential CQI for the first TB
-    // ... Not supported.
   }
 
   ocudu_assert(csi1_count == csi1_packed.size(),
@@ -122,23 +120,23 @@ static csi_report_data unpack_pusch_csi_cri_ri_li_pmi_cqi(const csi_report_packe
     return data;
   }
 
+  // Get field sizes for the unpacked RI.
+  ri_li_cqi_cri_sizes sizes_ri =
+      get_ri_li_cqi_cri_sizes(config.pmi_codebook, config.ri_restriction, ri, config.nof_csi_rs_resources);
+
   if ((config.quantities == csi_report_quantities::cri_ri_pmi_cqi) ||
       (config.quantities == csi_report_quantities::cri_ri_cqi) ||
       (config.quantities == csi_report_quantities::cri_ri_li_pmi_cqi)) {
-    // Wideband CQI for the second TB.
-    if (sizes.wideband_cqi_second_tb != 0) {
+    // Wideband CQI for the second TB (only present for RI > 4).
+    if (sizes_ri.wideband_cqi_second_tb != 0) {
       data.second_tb_wideband_cqi.emplace(
-          csi_report_unpack_wideband_cqi(csi2_packed.slice(csi2_count, csi2_count + sizes.wideband_cqi_second_tb)));
-      csi2_count += sizes.wideband_cqi_second_tb;
+          csi_report_unpack_wideband_cqi(csi2_packed.slice(csi2_count, csi2_count + sizes_ri.wideband_cqi_second_tb)));
+      csi2_count += sizes_ri.wideband_cqi_second_tb;
     }
   }
 
-  // Layer Indicator.
+  // Extract LI.
   if (config.quantities == csi_report_quantities::cri_ri_li_pmi_cqi) {
-    // Gets RI, LI, CQI and CRI field sizes.
-    ri_li_cqi_cri_sizes sizes_ri =
-        get_ri_li_cqi_cri_sizes(config.pmi_codebook, config.ri_restriction, ri, config.nof_csi_rs_resources);
-
     unsigned li = 0;
     if (sizes_ri.li != 0) {
       li = csi2_packed.extract(csi2_count, sizes_ri.li);
@@ -182,9 +180,13 @@ csi_report_size ocudu::get_csi_report_pusch_size(const csi_report_configuration&
   // Calculate CSI Part 1 size following TS38.212 Table 6.3.2.1.2-3.
   result.part1_size = get_csi_report_part1_size(config, part1_sizes);
 
-  // Skip CSI Part 2 if there is one transmit port and no quantity is reported in CSI Part 2.
-  if ((nof_csi_antenna_ports == 1) || ((config.quantities != csi_report_quantities::cri_ri_li_pmi_cqi) &&
-                                       (config.quantities != csi_report_quantities::cri_ri_pmi_cqi))) {
+  // Skip CSI Part 2 if there is one transmit port or no quantity is reported in CSI Part 2. The cri-RI-CQI quantity
+  // reports the wideband CQI for the second TB in CSI Part 2 when more than four CSI-RS ports are configured.
+  const bool has_part2_content =
+      (config.quantities == csi_report_quantities::cri_ri_li_pmi_cqi) ||
+      (config.quantities == csi_report_quantities::cri_ri_pmi_cqi) ||
+      ((config.quantities == csi_report_quantities::cri_ri_cqi) && (nof_csi_antenna_ports > 4));
+  if ((nof_csi_antenna_ports == 1) || !has_part2_content) {
     return result;
   }
 
