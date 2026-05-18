@@ -7,6 +7,7 @@ set -e
 
 install_rohc_dependencies_debian_ubuntu() {
     local mode="${1:?}"
+    local -x DEBIAN_FRONTEND=noninteractive
     local -a pkgs=()
 
     local -a build_pkgs=(
@@ -28,8 +29,8 @@ install_rohc_dependencies_debian_ubuntu() {
     esac
 
     if ((${#pkgs[@]})); then
-        DEBIAN_FRONTEND=noninteractive apt-get update
-        DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${pkgs[@]}"
+        apt-get update
+        apt-get install -y --no-install-recommends "${pkgs[@]}"
         apt-get clean && rm -rf /var/lib/apt/lists/*
     fi
 }

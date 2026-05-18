@@ -17,6 +17,7 @@ set -e
 
 install_docker_dependencies_debian_ubuntu() {
     local mode="${1:?}"
+    local -x DEBIAN_FRONTEND=noninteractive
     local -a pkgs=()
 
     local -a build_pkgs=(git ca-certificates)
@@ -35,7 +36,7 @@ install_docker_dependencies_debian_ubuntu() {
             ;;
     esac
 
-    DEBIAN_FRONTEND=noninteractive apt-get update
+    apt-get update
     if [[ "$mode" == "run" ]]; then
         if apt-cache policy ntpdate | awk '$1 == "Candidate:" && $2 != "(none)" { found = 1 } END { exit !found }'; then
             pkgs+=(ntpdate)
@@ -43,7 +44,7 @@ install_docker_dependencies_debian_ubuntu() {
             pkgs+=(ntpsec-ntpdate)
         fi
     fi
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${pkgs[@]}"
+    apt-get install -y --no-install-recommends "${pkgs[@]}"
     apt-get clean && rm -rf /var/lib/apt/lists/*
 }
 

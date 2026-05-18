@@ -17,6 +17,7 @@ set -e
 
 install_dependencies_debian_ubuntu() {
     local mode="${1:?}"
+    local -x DEBIAN_FRONTEND=noninteractive
     local -a pkgs=()
     local ARCH=""
 
@@ -61,16 +62,16 @@ install_dependencies_debian_ubuntu() {
     fi
 
     if ((${#pkgs[@]})); then
-        DEBIAN_FRONTEND=noninteractive apt-get update
-        DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${pkgs[@]}"
+        apt-get update
+        apt-get install -y --no-install-recommends "${pkgs[@]}"
     fi
 
     if [[ "$mode" == "all" || "$mode" == "extra" ]]; then
         if [[ "$ARCH" == "x86_64" ]]; then
             wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
             echo "deb [trusted=yes] https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
-            DEBIAN_FRONTEND=noninteractive apt-get update
-            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            apt-get update
+            apt-get install -y --no-install-recommends \
                 intel-oneapi-mkl-core-devel-2025.0 libomp-dev
         else
             pushd /tmp
@@ -89,7 +90,7 @@ install_dependencies_debian_ubuntu() {
         fi
     fi
 
-    DEBIAN_FRONTEND=noninteractive apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/*
+    apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/*
 }
 
 install_dependencies_fedora() {

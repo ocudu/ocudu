@@ -7,6 +7,7 @@ set -e
 
 install_uhd_dependencies_debian_ubuntu() {
     local mode="${1:?}"
+    local -x DEBIAN_FRONTEND=noninteractive
     local -a pkgs=()
 
     local -a build_pkgs=(
@@ -44,13 +45,13 @@ install_uhd_dependencies_debian_ubuntu() {
     esac
 
     if ((${#pkgs[@]})); then
-        DEBIAN_FRONTEND=noninteractive apt-get update
+        apt-get update
         for pkg in "${optional_pkgs[@]}"; do
             if apt-cache policy "$pkg" | awk '$1 == "Candidate:" && $2 != "(none)" { found = 1 } END { exit !found }'; then
                 pkgs+=("$pkg")
             fi
         done
-        DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${pkgs[@]}"
+        apt-get install -y --no-install-recommends "${pkgs[@]}"
         apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/*
     fi
 
