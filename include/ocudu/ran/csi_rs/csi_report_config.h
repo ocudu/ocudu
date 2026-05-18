@@ -67,7 +67,7 @@ struct csi_report_config {
     bwp_id_t ul_bwp;
     /// Defines the PUCCH resource ID used for this config report. Ref to \ref ocudu::pucch_res_id_t for the
     /// documentation.
-    pucch_res_id_t pucch_res_id = {0, 0};
+    pucch_res_id_t pucch_res_id = pucch_res_id_t::make_ded(0, 0);
 
     bool operator==(const pucch_csi_resource& rhs) const
     {

@@ -20,10 +20,16 @@ struct cell_dl_bwp_res_config {
 
 /// This structure defines all the PUCCH resources available in a given BWP.
 struct cell_pucch_res_config {
-  /// List of all supported PUCCH resources.
+  /// List of all supported UE-dedicated PUCCH resources.
   std::vector<pucch_resource> resources;
+  /// List of pre-built PUCCH resources for the common (pre-dedicated-config) case, indexed by \f$r_{PUCCH}\f$
+  /// (TS 38.213 Section 9.2.1). Empty when the cell does not configure \c pucch-ResourceCommon.
+  std::vector<pucch_resource> common_resources;
 
-  bool operator==(const cell_pucch_res_config& other) const { return resources == other.resources; }
+  bool operator==(const cell_pucch_res_config& other) const
+  {
+    return resources == other.resources && common_resources == other.common_resources;
+  }
 };
 
 /// \brief Cell-wide UL resources available in a given BWP.

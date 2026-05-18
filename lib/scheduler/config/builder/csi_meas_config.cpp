@@ -31,11 +31,9 @@ std::optional<csi_meas_config> config_helpers::build_csi_meas_config(const ran_c
     auto& report_cfg = std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
         cfg.csi_report_cfg_list[0].report_cfg_type);
     report_cfg.report_slot_offset                      = ue_bwp_cfg.ul.periodic_csi_report->offset;
-    report_cfg.pucch_csi_res_list.front().pucch_res_id = pucch_res_id_t{
-        .cell_res_id =
-            cell_cfg.init_bwp.pucch.resources.get_csi_cell_res_idx(ue_bwp_cfg.ul.periodic_csi_report->pucch_res_id),
-        .ue_res_id = cell_cfg.init_bwp.pucch.resources.get_csi_ue_res_idx(),
-    };
+    report_cfg.pucch_csi_res_list.front().pucch_res_id = pucch_res_id_t::make_ded(
+        cell_cfg.init_bwp.pucch.resources.get_csi_cell_res_idx(ue_bwp_cfg.ul.periodic_csi_report->pucch_res_id),
+        cell_cfg.init_bwp.pucch.resources.get_csi_ue_res_idx());
   }
 
   return cfg;

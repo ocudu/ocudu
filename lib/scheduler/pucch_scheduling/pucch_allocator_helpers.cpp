@@ -22,16 +22,16 @@ pucch_existing_pdus_handler::pucch_existing_pdus_handler(rnti_t                 
 
       if (pucch.uci_bits.harq_ack_nof_bits != 0U) {
         if (pucch.format() == pucch_format::FORMAT_1 and
-            pucch.pdu_context.res_id->ue_res_id == res_params.get_sr_ue_res_idx()) {
+            pucch.pdu_context.res_id->as_ded().ue_res_id == res_params.get_sr_ue_res_idx()) {
           // For Format 1, the SR resource can carry HARQ-ACK.
           sr_pdu = &pucch;
         } else {
           harq_pdu = &pucch;
         }
       } else {
-        if (pucch.pdu_context.res_id->ue_res_id == res_params.get_sr_ue_res_idx()) {
+        if (pucch.pdu_context.res_id->as_ded().ue_res_id == res_params.get_sr_ue_res_idx()) {
           sr_pdu = &pucch;
-        } else if (pucch.pdu_context.res_id->ue_res_id == res_params.get_csi_ue_res_idx()) {
+        } else if (pucch.pdu_context.res_id->as_ded().ue_res_id == res_params.get_csi_ue_res_idx()) {
           csi_pdu = &pucch;
         } else {
           ocudu_assertion_failure("Unexpected PUCCH resource carrying SR/CSI only");

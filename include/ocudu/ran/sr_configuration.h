@@ -138,7 +138,7 @@ struct scheduling_request_resource_config {
   unsigned       offset;
   /// \c resource, which identifies the PUCCH resource to be used for this SR.
   /// Refer to \ref pucch_res_id_t.
-  pucch_res_id_t pucch_res_id = {0, 0};
+  pucch_res_id_t pucch_res_id = pucch_res_id_t::make_ded(0, 0);
 };
 
 } // namespace ocudu

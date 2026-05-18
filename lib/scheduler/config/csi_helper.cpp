@@ -547,7 +547,7 @@ make_csi_report_configs(const csi_meas_config_builder_params&                   
     const unsigned            ue_res_id =
         pucch_builder_params.res_set_size.value() + nof_ue_sr_resources + pucch_builder_params.res_set_size.value();
     report_cfg_type.pucch_csi_res_list = {csi_report_config::pucch_csi_resource{
-        .ul_bwp = to_bwp_id(0), .pucch_res_id = pucch_res_id_t{cell_res_id, ue_res_id}}};
+        .ul_bwp = to_bwp_id(0), .pucch_res_id = pucch_res_id_t::make_ded(cell_res_id, ue_res_id)}};
     reps[0].report_cfg_type            = report_cfg_type;
   }
   if (params.csi_params.enable_aperiodic_report) {

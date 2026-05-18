@@ -135,12 +135,12 @@ enum class pucch_repetition_factor : uint8_t { n1 = 1, n2 = 2, n4 = 4, n8 = 8 };
 
 /// \c PUCCH-Resource, in \c PUCCH-Config, TS 38.331.
 struct pucch_resource {
-  pucch_res_id_t                                                                                 res_id = {0, 0};
-  unsigned                                                                                       starting_prb;
-  std::optional<unsigned>                                                                        second_hop_prb;
-  uint8_t                                                                                        nof_symbols;
-  uint8_t                                                                                        starting_sym_idx;
-  pucch_format                                                                                   format;
+  pucch_res_id_t          res_id = pucch_res_id_t::make_ded(0, 0);
+  unsigned                starting_prb;
+  std::optional<unsigned> second_hop_prb;
+  uint8_t                 nof_symbols;
+  uint8_t                 starting_sym_idx;
+  pucch_format            format;
   std::variant<pucch_format_0_cfg, pucch_format_1_cfg, pucch_format_2_3_cfg, pucch_format_4_cfg> format_params;
   /// Number of slots over which this PUCCH resource is repeated (\c pucch-RepetitionNrofSlots, TS 38.331).
   pucch_repetition_factor rep_factor = pucch_repetition_factor::n1;

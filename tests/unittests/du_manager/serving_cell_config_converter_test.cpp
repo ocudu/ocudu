@@ -397,12 +397,12 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pucch_cfg_conversion)
   // >> PUCCH Resource Set 1.
   dest_pucch_cfg.pucch_res_set.emplace_back();
   dest_pucch_cfg.pucch_res_set.back().pucch_res_set_id = ocudu::pucch_res_set_idx::set_1;
-  dest_pucch_cfg.pucch_res_set.back().pucch_res_id_list.emplace_back(pucch_res_id_t{1, 1});
+  dest_pucch_cfg.pucch_res_set.back().pucch_res_id_list.emplace_back(pucch_res_id_t::make_ded(1, 1));
   // Remove first element.
   dest_pucch_cfg.pucch_res_set.erase(dest_pucch_cfg.pucch_res_set.begin());
 
   // >>> PUCCH resource 2.
-  pucch_resource res_basic{.res_id           = pucch_res_id_t{14, 14},
+  pucch_resource res_basic{.res_id           = pucch_res_id_t::make_ded(14, 14),
                            .starting_prb     = 40,
                            .second_hop_prb   = 50,
                            .nof_symbols      = 1,
@@ -436,11 +436,12 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pucch_cfg_conversion)
   dest_pucch_cfg.format_4_common_param.value().additional_dmrs = true;
 
   // >>> SR Resource.
-  dest_pucch_cfg.sr_res_list.push_back(scheduling_request_resource_config{.sr_res_id    = 2,
-                                                                          .sr_id        = uint_to_sched_req_id(1),
-                                                                          .period       = sr_periodicity::sl_80,
-                                                                          .offset       = 0,
-                                                                          .pucch_res_id = pucch_res_id_t{1, 1}});
+  dest_pucch_cfg.sr_res_list.push_back(
+      scheduling_request_resource_config{.sr_res_id    = 2,
+                                         .sr_id        = uint_to_sched_req_id(1),
+                                         .period       = sr_periodicity::sl_80,
+                                         .offset       = 0,
+                                         .pucch_res_id = pucch_res_id_t::make_ded(1, 1)});
 
   // Remove first element.
   dest_pucch_cfg.sr_res_list.erase(dest_pucch_cfg.sr_res_list.begin());

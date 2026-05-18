@@ -67,19 +67,6 @@ public:
 private:
   /// ////////////  Helper struct and classes   //////////////
 
-  // Structs with the info about the PUCCH resources.
-  struct pucch_res_alloc_cfg {
-    // True if the struct has a valid config.
-    unsigned   pucch_res_indicator;
-    grant_info first_hop_res;
-    // Contains grant only if intra-slot freq-hopping is active.
-    grant_info second_hop_res;
-    // Cyclic-shift.
-    unsigned cs;
-    // PUCCH format.
-    pucch_format format;
-  };
-
   struct pucch_common_params {
     unsigned pucch_res_indicator;
     unsigned r_pucch;
@@ -173,7 +160,7 @@ private:
   ///////////////  Main private functions   //////////////
 
   // Allocates the PUCCH (common) resource for HARQ-(N)-ACK.
-  std::optional<pucch_res_alloc_cfg> alloc_pucch_common_res_harq(cell_slot_resource_allocator&  pucch_slot_alloc,
+  std::optional<pucch_common_params> alloc_pucch_common_res_harq(cell_slot_resource_allocator&  pucch_slot_alloc,
                                                                  const dci_context_information& dci_info);
 
   void compute_pucch_common_params_and_alloc(cell_slot_resource_allocator& pucch_alloc,
@@ -261,7 +248,7 @@ private:
   /// \param[out] pucch_pdu PUCCH PDU to be filled.
   /// \param[in] pucch_res PUCCH resource configuration.
   /// \param[in] rnti RNTI of the UE.
-  void fill_common_pdu(pucch_info& pucch_pdu, const pucch_res_alloc_cfg& pucch_res, rnti_t rnti) const;
+  void fill_common_pdu(pucch_info& pucch_pdu, const pucch_resource& common_res, rnti_t rnti) const;
 
   /// \brief Fills the PUCCH PDU for dedicated resources.
   // \param[out] pucch_pdu PUCCH PDU to be filled.
