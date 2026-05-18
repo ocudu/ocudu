@@ -40,7 +40,7 @@ ocudu::get_pmi_sizes_typeI_single_panel(const pmi_codebook_single_panel_info& pa
   unsigned O1                       = panel_info.o1;
   unsigned O2                       = panel_info.o2;
 
-  if ((ri == 1) && (nof_csi_rs_antenna_ports > 2) && (N2 == 1)) {
+  if ((ri == 1) && (nof_csi_rs_antenna_ports > 2)) {
     return {log2_ceil(N1 * O1), log2_ceil(N2 * O2), 0, 2};
   }
 
@@ -48,11 +48,27 @@ ocudu::get_pmi_sizes_typeI_single_panel(const pmi_codebook_single_panel_info& pa
     return {log2_ceil(N1 * O1), log2_ceil(N2 * O2), 1, 1};
   }
 
-  if ((ri == 2) && (nof_csi_rs_antenna_ports > 4) && (N2 == 1)) {
+  if ((ri == 2) && (nof_csi_rs_antenna_ports > 4)) {
     return {log2_ceil(N1 * O1), log2_ceil(N2 * O2), 2, 1};
   }
 
   if (((ri == 3) || (ri == 4)) && (nof_csi_rs_antenna_ports == 4)) {
+    return {log2_ceil(N1 * O1), log2_ceil(N2 * O2), 0, 1};
+  }
+
+  if (((ri == 3) || (ri == 4)) && (nof_csi_rs_antenna_ports == 8)) {
+    return {log2_ceil(N1 * O1), log2_ceil(N2 * O2), 2, 1};
+  }
+
+  if ((ri == 5) || (ri == 6)) {
+    return {log2_ceil(N1 * O1), log2_ceil(N2 * O2), 0, 1};
+  }
+
+  if (((ri == 7) || (ri == 8)) && ((panel_info.n1 == 4) && (panel_info.n2 == 1))) {
+    return {log2_ceil((N1 * O1) / 2), log2_ceil(N2 * O2), 0, 1};
+  }
+
+  if (((ri == 7) || (ri == 8)) && ((panel_info.n1 == 2) && (panel_info.n2 == 2))) {
     return {log2_ceil(N1 * O1), log2_ceil(N2 * O2), 0, 1};
   }
 

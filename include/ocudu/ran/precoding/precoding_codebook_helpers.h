@@ -42,7 +42,7 @@ struct pmi_typeI_single_panel_param_sizes {
   unsigned i_2;
 };
 
-/// Gets PMI parameter sizes for \e TypeI-SinglePanel codebook configuration as per TS38.212 Table 6.3.1.1.2-1.
+/// Gets PMI parameter sizes for \e TypeI-SinglePanel Mode 1 codebook configuration as per TS38.212 Table 6.3.1.1.2-1.
 pmi_typeI_single_panel_param_sizes get_pmi_sizes_typeI_single_panel(const pmi_codebook_single_panel_info& panel_info,
                                                                     uint8_t                               ri);
 
