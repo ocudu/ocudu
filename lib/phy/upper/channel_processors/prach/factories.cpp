@@ -157,7 +157,7 @@ public:
         // Detailed log information, including a list of all PRACH config and result fields.
         logger.debug(config.slot.sfn(),
                      config.slot.slot_index(),
-                     "PRACH: {:s} {:s} {}\n  {:n}\n  {:n}\n",
+                     "PRACH: {:s} {:s} {}\n  {:n}\n  {:n}",
                      config,
                      result,
                      time_ns,
