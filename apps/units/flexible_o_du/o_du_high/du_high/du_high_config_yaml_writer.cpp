@@ -420,7 +420,7 @@ static YAML::Node build_du_high_pucch_section(const du_high_unit_pucch_config& c
     }
     node["repetition_sinr_thresholds"] = thresholds_node;
   }
-  {
+  if (!config.repetition_factors.empty()) {
     YAML::Node factors_node(YAML::NodeType::Sequence);
     for (unsigned v : config.repetition_factors) {
       factors_node.push_back(v);

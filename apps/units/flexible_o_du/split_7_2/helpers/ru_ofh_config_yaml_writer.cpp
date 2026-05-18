@@ -74,8 +74,8 @@ static unsigned translate_c_plane_prach_fft_len(ofh::cplane_fft_size c_plane_pra
   }
 }
 
-// Fills only the base-cell options. These are accepted by the CLI schema both at the ru_ofh top level
-// (as the common template) and inside each cells[] entry.
+/// Fills only the base-cell options. These are accepted by the CLI schema both at the ru_ofh top level
+/// (as the common template) and inside each cells[] entry.
 static void fill_ru_ofh_base_cell_section(YAML::Node node, const ru_ofh_unit_base_cell_config& config)
 {
   if (config.ru_operating_bw.has_value()) {
