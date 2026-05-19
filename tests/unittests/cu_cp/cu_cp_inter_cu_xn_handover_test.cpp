@@ -589,6 +589,41 @@ TEST_F(cu_cp_inter_cu_xn_handover_test, when_path_switch_request_is_rejected_by_
                             "Unexpected E1AP message after path switch failure");
 }
 
+TEST_F(cu_cp_inter_cu_xn_handover_test, when_path_switch_succeeds_then_rrc_reconfiguration_complete_indicator_is_sent)
+{
+  // Bring handover up to the point where the Path Switch Request has been sent.
+  ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request(source_local_xnap_ue_id));
+  ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_setup_request());
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_handover_request_ack());
+  ASSERT_TRUE(send_sn_status_transfer_and_await_bearer_context_modification_request(source_local_xnap_ue_id,
+                                                                                    source_peer_xnap_ue_id));
+  ASSERT_TRUE(send_bearer_context_modification_response());
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_path_switch_request());
+
+  // Inject Path Switch Request Ack; routine should send RRC reconfiguration complete indicator to DU.
+  ASSERT_TRUE(send_path_switch_request_ack_and_await_ue_context_modification_request());
+
+  // Verify the F1AP UE Context Modification Request contains the RRC reconfiguration complete indicator.
+  report_fatal_error_if_not(test_helpers::is_valid_ue_context_modification_request(f1ap_pdu),
+                            "Invalid F1AP UE Context Modification Request");
+
+  // Inject UE Context Modification Response to ACK the RRC reconfiguration complete indicator.
+  ASSERT_TRUE(send_ue_context_modification_response_empty(cu_ue_id, du_ue_id));
+
+  // Verify XNAP UE Context Release was sent to source CU-CP.
+  report_fatal_error_if_not(this->wait_for_xnap_tx_pdu(xnc_peer_idx, xnap_pdu),
+                            "Failed to receive XNAP UE Context Release after path switch success");
+  report_fatal_error_if_not(test_helpers::is_valid_ue_context_release(xnap_pdu),
+                            "Invalid XNAP UE Context Release after path switch success");
+
+  // Verify no unexpected messages remain.
+  report_fatal_error_if_not(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu),
+                            "Unexpected F1AP message after path switch success");
+  report_fatal_error_if_not(not this->get_cu_up(cu_up_idx).try_pop_rx_pdu(e1ap_pdu),
+                            "Unexpected E1AP message after path switch success");
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //                             ZigZag Handover
 ///////////////////////////////////////////////////////////////////////////////

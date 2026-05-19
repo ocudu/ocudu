@@ -666,3 +666,45 @@ TEST_F(cu_cp_inter_cu_ng_handover_test, when_zigzag_handover_is_performed_then_h
   report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ues.size(), 0) << "UE should be removed";
 }
+
+TEST_F(
+    cu_cp_inter_cu_ng_handover_test,
+    when_inter_cu_ng_handover_target_receives_rrc_reconfiguration_complete_then_handover_notify_and_rrc_indicator_are_sent)
+{
+  // Inject Handover Request and await Bearer Context Setup Request
+  ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request());
+
+  // Inject Bearer Context Setup Response and await UE Context Setup Request
+  ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_setup_request());
+
+  // Inject UE Context Setup Response and await Bearer Context Modification Request
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
+
+  // Inject Bearer Context Modification Response and await Handover Request Ack
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_handover_request_ack());
+
+  // Inject NGAP DL RAN Status Transfer and await Bearer Context Modification Request
+  ASSERT_TRUE(send_dl_ran_status_transfer_and_await_bearer_context_modification_request());
+
+  // Inject Bearer Context Modification Response
+  ASSERT_TRUE(send_bearer_context_modification_response());
+
+  // Inject RRC Reconfiguration Complete and verify Handover Notify and UE Context Modification Request (with RRC
+  // reconfiguration complete indicator) are sent.
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_handover_notify_and_ue_context_modification_request());
+
+  // Verify the F1AP UE Context Modification Request contains the RRC reconfiguration complete indicator.
+  report_fatal_error_if_not(test_helpers::is_valid_ue_context_modification_request(f1ap_pdu),
+                            "Invalid F1AP UE Context Modification Request");
+
+  // Inject UE Context Modification Response to ACK the RRC reconfiguration complete indicator.
+  ASSERT_TRUE(send_ue_context_modification_response_empty(cu_ue_id, du_ue_id));
+
+  // Verify no unexpected messages remain.
+  report_fatal_error_if_not(not this->get_amf().try_pop_rx_pdu(ngap_pdu),
+                            "Unexpected NGAP message after handover target success");
+  report_fatal_error_if_not(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu),
+                            "Unexpected F1AP message after handover target success");
+  report_fatal_error_if_not(not this->get_cu_up(cu_up_idx).try_pop_rx_pdu(e1ap_pdu),
+                            "Unexpected E1AP message after handover target success");
+}
