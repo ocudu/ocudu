@@ -37,13 +37,15 @@ private:
 
 } // namespace
 
-e1ap_cu_up_impl::e1ap_cu_up_impl(const e1ap_configuration&    e1ap_cfg_,
+e1ap_cu_up_impl::e1ap_cu_up_impl(cu_up_e1_index_t             e1_index_,
+                                 const e1ap_configuration&    e1ap_cfg_,
                                  e1_connection_client&        e1_client_handler_,
                                  e1ap_cu_up_manager_notifier& cu_up_notifier_,
                                  timer_manager&               timers_,
                                  task_executor&               cu_up_exec_) :
+  e1_index(e1_index_),
   e1ap_cfg(e1ap_cfg_),
-  logger(ocudulog::fetch_basic_logger("CU-UP-E1")),
+  logger("CU-UP-E1", e1_index_),
   cu_up_notifier(cu_up_notifier_),
   timers(timers_),
   cu_up_exec(cu_up_exec_),
@@ -72,7 +74,7 @@ bool e1ap_cu_up_impl::connect_to_cu_cp()
 {
   e1ap_message_notifier* notif = connection_handler.connect_to_cu_cp();
   if (notif == nullptr) {
-    logger.warning("Failed to connect to CU-CP");
+    logger.log_warning("Failed to connect to CU-CP");
     return false;
   }
   pdu_notifier = std::make_unique<e1ap_message_notifier_with_logging>(*this, *notif);
@@ -95,8 +97,8 @@ void e1ap_cu_up_impl::handle_bearer_context_inactivity_notification(
     const e1ap_bearer_context_inactivity_notification& msg)
 {
   if (!ue_ctxt_list.contains(msg.ue_index)) {
-    logger.error("ue={}: Dropping BearerContextInactivityNotification. UE does not exist",
-                 fmt::underlying(msg.ue_index));
+    logger.log_error("ue={}: Dropping BearerContextInactivityNotification. UE does not exist",
+                     fmt::underlying(msg.ue_index));
     return;
   }
 
@@ -129,7 +131,7 @@ void e1ap_cu_up_impl::handle_bearer_context_inactivity_notification(
 void e1ap_cu_up_impl::handle_bearer_context_release_request_required(cu_up_ue_index_t ue_index)
 {
   if (!ue_ctxt_list.contains(ue_index)) {
-    logger.error("ue={}: Dropping PDCP max count reached. UE does not exist.", fmt::underlying(ue_index));
+    logger.log_error("ue={}: Dropping PDCP max count reached. UE does not exist.", fmt::underlying(ue_index));
     return;
   }
 
@@ -153,7 +155,7 @@ void e1ap_cu_up_impl::handle_dl_data_notification_required(cu_up_ue_index_t ue_i
 {
   // Get UE context.
   if (!ue_ctxt_list.contains(ue_index)) {
-    logger.error("ue={}: Dropping DL data notification. UE does not exist", fmt::underlying(ue_index));
+    logger.log_error("ue={}: Dropping DL data notification. UE does not exist", fmt::underlying(ue_index));
     return;
   }
   e1ap_ue_context& ue_ctxt = ue_ctxt_list[ue_index];
@@ -188,11 +190,11 @@ void e1ap_cu_up_impl::handle_message(const e1ap_message& msg)
             handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
             break;
           default:
-            logger.error("Invalid PDU type");
+            logger.log_error("Invalid PDU type");
             break;
         }
       })) {
-    logger.warning("Discarding E1AP PDU. Cause: CU-UP task queue is full");
+    logger.log_warning("Discarding E1AP PDU. Cause: CU-UP task queue is full");
   }
 }
 
@@ -212,7 +214,7 @@ void e1ap_cu_up_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& ms
       handle_cu_up_e1ap_reset(msg.value.reset());
     } break;
     default:
-      logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
+      logger.log_error("Initiating message of type {} is not supported", msg.value.type().to_string());
   }
 }
 
@@ -228,17 +230,17 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
 
   // Do basic syntax/semantic checks on the validity of the received message.
   if (not check_e1ap_bearer_context_setup_request_valid(msg, logger)) {
-    logger.debug("Sending BearerContextSetupFailure. Cause: Received invalid BearerContextSetupRequest");
+    logger.log_debug("Sending BearerContextSetupFailure. Cause: Received invalid BearerContextSetupRequest");
     pdu_notifier->on_new_message(e1ap_msg);
     return;
   }
 
-  logger.debug("Received BearerContextSetupRequest (plmn={})",
-               bcd_helper::plmn_bcd_to_string(msg->serving_plmn.to_number()));
+  logger.log_debug("Received BearerContextSetupRequest (plmn={})",
+                   bcd_helper::plmn_bcd_to_string(msg->serving_plmn.to_number()));
 
   gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = ue_ctxt_list.next_gnb_cu_up_ue_e1ap_id();
   if (cu_up_ue_e1ap_id == gnb_cu_up_ue_e1ap_id_t::invalid) {
-    logger.error("Sending BearerContextSetupFailure. Cause: No CU-UP-UE-E1AP-ID available");
+    logger.log_error("Sending BearerContextSetupFailure. Cause: No CU-UP-UE-E1AP-ID available");
 
     // Send response.
     pdu_notifier->on_new_message(e1ap_msg);
@@ -252,7 +254,7 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
   // Forward message to CU-UP.
   e1ap_bearer_context_setup_request bearer_context_setup = {};
   if (!fill_e1ap_bearer_context_setup_request(bearer_context_setup, msg)) {
-    logger.error("Sending BearerContextSetupFailure. Cause: Invalid BearerContextSetupRequest");
+    logger.log_error("Sending BearerContextSetupFailure. Cause: Invalid BearerContextSetupRequest");
     // Send response.
     pdu_notifier->on_new_message(e1ap_msg);
     return;
@@ -262,7 +264,7 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
       cu_up_notifier.on_bearer_context_setup_request_received(bearer_context_setup);
 
   if (bearer_context_setup_response_msg.ue_index == INVALID_CU_UP_UE_INDEX) {
-    logger.error("Sending BearerContextSetupFailure. Cause: Invalid UE index");
+    logger.log_error("Sending BearerContextSetupFailure. Cause: Invalid UE index");
 
     // Send response.
     pdu_notifier->on_new_message(e1ap_msg);
@@ -314,7 +316,7 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
   e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_mod_fail()->cause.set_protocol();
 
   if (!ue_ctxt_list.contains(int_to_gnb_cu_up_ue_e1ap_id(msg->gnb_cu_up_ue_e1ap_id))) {
-    logger.warning("Sending BearerContextModificationFailure. UE context not available");
+    logger.log_warning("Sending BearerContextModificationFailure. UE context not available");
     pdu_notifier->on_new_message(e1ap_msg);
     return;
   }
@@ -335,7 +337,7 @@ void e1ap_cu_up_impl::handle_bearer_context_release_command(const asn1::e1ap::be
     e1ap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_RELEASE);
     // TODO fill other values.
 
-    logger.error("No UE context for the received gnb_cu_up_ue_e1ap_id={} available", msg->gnb_cu_up_ue_e1ap_id);
+    logger.log_error("No UE context for the received gnb_cu_up_ue_e1ap_id={} available", msg->gnb_cu_up_ue_e1ap_id);
     pdu_notifier->on_new_message(e1ap_msg);
     return;
   }
@@ -362,13 +364,13 @@ void e1ap_cu_up_impl::handle_successful_outcome(const asn1::e1ap::successful_out
 {
   std::optional<uint8_t> transaction_id = get_transaction_id(outcome);
   if (not transaction_id.has_value()) {
-    logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
+    logger.log_error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
     return;
   }
 
   // Set transaction result and resume suspended procedure.
   if (not ev_mng->transactions.set_response(transaction_id.value(), outcome)) {
-    logger.warning("Unexpected transaction id={}", transaction_id.value());
+    logger.log_warning("Unexpected transaction id={}", transaction_id.value());
   }
 }
 
@@ -376,19 +378,19 @@ void e1ap_cu_up_impl::handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful
 {
   std::optional<uint8_t> transaction_id = get_transaction_id(outcome);
   if (not transaction_id.has_value()) {
-    logger.error("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());
+    logger.log_error("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());
     return;
   }
 
   // Set transaction result and resume suspended procedure.
   if (not ev_mng->transactions.set_response(transaction_id.value(), make_unexpected(outcome))) {
-    logger.warning("Unexpected transaction id={}", transaction_id.value());
+    logger.log_warning("Unexpected transaction id={}", transaction_id.value());
   }
 }
 
 void e1ap_cu_up_impl::log_pdu(bool is_rx, const e1ap_message& e1ap_pdu)
 {
-  if (not logger.info.enabled()) {
+  if (not logger.get_basic_logger().info.enabled()) {
     return;
   }
 

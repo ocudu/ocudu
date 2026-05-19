@@ -4,14 +4,12 @@
 
 #pragma once
 
+#include "common/e1ap_logger.h"
 #include "e1ap_ue_logger.h"
-#include "ocudu/adt/slotted_array.h"
-#include "ocudu/cu_up/cu_up_types.h"
 #include "ocudu/e1ap/common/e1ap_types.h"
 #include <unordered_map>
 
-namespace ocudu {
-namespace ocuup {
+namespace ocudu::ocuup {
 
 struct e1ap_ue_ids {
   cu_up_ue_index_t             ue_index         = INVALID_CU_UP_UE_INDEX;
@@ -38,10 +36,7 @@ struct e1ap_ue_context {
 class e1ap_ue_context_list
 {
 public:
-  e1ap_ue_context_list(uint32_t max_nof_ues_, ocudulog::basic_logger& logger_) :
-    max_nof_ues(max_nof_ues_), logger(logger_)
-  {
-  }
+  e1ap_ue_context_list(uint32_t max_nof_ues_, e1ap_logger& logger_) : max_nof_ues(max_nof_ues_), logger(logger_) {}
 
   bool contains(gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id) const { return ues.find(cu_up_ue_e1ap_id) != ues.end(); }
 
@@ -54,8 +49,8 @@ public:
       return false;
     }
     if (ues.find(ue_index_to_ue_e1ap_id.at(ue_index)) == ues.end()) {
-      logger.warning("No UE context found for cu_up_ue_e1ap_id={}.",
-                     fmt::underlying(ue_index_to_ue_e1ap_id.at(ue_index)));
+      logger.log_warning("No UE context found for cu_up_ue_e1ap_id={}.",
+                         fmt::underlying(ue_index_to_ue_e1ap_id.at(ue_index)));
       return false;
     }
     return true;
@@ -102,10 +97,10 @@ public:
                  "Invalid cu_cp_ue_e1ap_id={}",
                  fmt::underlying(cu_cp_ue_e1ap_id));
 
-    logger.debug("ue={} cu_up_ue_e1ap_id={} cu_cp_ue_e1ap_id={}: Adding E1AP UE context",
-                 fmt::underlying(ue_index),
-                 fmt::underlying(cu_up_ue_e1ap_id),
-                 fmt::underlying(cu_cp_ue_e1ap_id));
+    logger.log_debug("ue={} cu_up_ue_e1ap_id={} cu_cp_ue_e1ap_id={}: Adding E1AP UE context",
+                     fmt::underlying(ue_index),
+                     fmt::underlying(cu_up_ue_e1ap_id),
+                     fmt::underlying(cu_cp_ue_e1ap_id));
     ues.emplace(std::piecewise_construct,
                 std::forward_as_tuple(cu_up_ue_e1ap_id),
                 std::forward_as_tuple(ue_index, cu_up_ue_e1ap_id, cu_cp_ue_e1ap_id, activity_notification_level));
@@ -118,7 +113,7 @@ public:
     ocudu_assert(ue_index != INVALID_CU_UP_UE_INDEX, "Invalid ue_index={}", fmt::underlying(ue_index));
 
     if (ue_index_to_ue_e1ap_id.find(ue_index) == ue_index_to_ue_e1ap_id.end()) {
-      logger.warning("ue={}: GNB-CU-UP-UE-E1AP-ID not found", fmt::underlying(ue_index));
+      logger.log_warning("ue={}: GNB-CU-UP-UE-E1AP-ID not found", fmt::underlying(ue_index));
       return;
     }
 
@@ -127,7 +122,7 @@ public:
     ue_index_to_ue_e1ap_id.erase(ue_index);
 
     if (ues.find(cu_up_ue_e1ap_id) == ues.end()) {
-      logger.warning("cu_up_ue_e1ap_id={}: UE context not found", fmt::underlying(cu_up_ue_e1ap_id));
+      logger.log_warning("cu_up_ue_e1ap_id={}: UE context not found", fmt::underlying(cu_up_ue_e1ap_id));
       return;
     }
 
@@ -194,8 +189,7 @@ private:
   const uint32_t                                               max_nof_ues;
   std::unordered_map<gnb_cu_up_ue_e1ap_id_t, e1ap_ue_context>  ues; // indexed by gnb_cu_up_ue_e1ap_id
   std::unordered_map<cu_up_ue_index_t, gnb_cu_up_ue_e1ap_id_t> ue_index_to_ue_e1ap_id; // indexed by ue_index
-  ocudulog::basic_logger&                                      logger;
+  e1ap_logger&                                                 logger;
 };
 
-} // namespace ocuup
-} // namespace ocudu
+} // namespace ocudu::ocuup

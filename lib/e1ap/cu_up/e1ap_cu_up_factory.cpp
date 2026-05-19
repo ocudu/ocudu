@@ -16,7 +16,11 @@ std::unique_ptr<e1ap_interface> ocudu::ocuup::create_e1ap(const e1ap_configurati
                                                           timer_manager&               timers_,
                                                           task_executor&               cu_up_exec_)
 {
-  auto e1ap_cu_up =
-      std::make_unique<e1ap_cu_up_impl>(e1ap_cfg_, e1_client_handler_, cu_up_notifier_, timers_, cu_up_exec_);
+  auto e1ap_cu_up = std::make_unique<e1ap_cu_up_impl>(cu_up_e1_index_t{0}, // TODO: pass index through factory function.
+                                                      e1ap_cfg_,
+                                                      e1_client_handler_,
+                                                      cu_up_notifier_,
+                                                      timers_,
+                                                      cu_up_exec_);
   return e1ap_cu_up;
 }

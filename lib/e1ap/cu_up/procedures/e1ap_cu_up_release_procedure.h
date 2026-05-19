@@ -5,6 +5,7 @@
 #pragma once
 
 #include "../e1ap_cu_up_connection_handler.h"
+#include "common/e1ap_logger.h"
 #include "e1ap_cu_up_event_manager.h"
 #include "ocudu/support/async/async_task.h"
 
@@ -18,7 +19,7 @@ public:
   e1ap_cu_up_release_procedure(e1ap_cu_up_connection_handler& cu_up_conn_handler_,
                                e1ap_message_notifier&         tx_pdu_notifier_,
                                e1ap_event_manager&            ev_mng_,
-                               ocudulog::basic_logger&        logger_);
+                               e1ap_logger&                   logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -32,7 +33,7 @@ private:
   e1ap_cu_up_connection_handler& cu_up_conn_handler;
   e1ap_message_notifier&         cu_notifier;
   e1ap_event_manager&            ev_mng;
-  ocudulog::basic_logger&        logger;
+  e1ap_logger&                   logger;
 
   e1ap_transaction transaction;
 };

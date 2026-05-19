@@ -16,7 +16,7 @@ using namespace asn1::e1ap;
 e1ap_cu_up_release_procedure::e1ap_cu_up_release_procedure(e1ap_cu_up_connection_handler& cu_up_conn_handler_,
                                                            e1ap_message_notifier&         tx_pdu_notifier_,
                                                            e1ap_event_manager&            ev_mng_,
-                                                           ocudulog::basic_logger&        logger_) :
+                                                           e1ap_logger&                   logger_) :
   cu_up_conn_handler(cu_up_conn_handler_), cu_notifier(tx_pdu_notifier_), ev_mng(ev_mng_), logger(logger_)
 {
 }
@@ -25,7 +25,7 @@ void e1ap_cu_up_release_procedure::operator()(coro_context<async_task<void>>& ct
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("\"{}\" started...", name());
+  logger.log_debug("\"{}\" started...", name());
 
   // Check if the TNL is still up.
   if (not cu_up_conn_handler.is_connected()) {
@@ -36,9 +36,9 @@ void e1ap_cu_up_release_procedure::operator()(coro_context<async_task<void>>& ct
   transaction = ev_mng.transactions.create_transaction(std::chrono::milliseconds{1000});
   if (not transaction.valid()) {
     // Just shutdown the TNL association and finish procedure.
-    logger.error("{}: Unable to allocate transaction. Shutting down E1 TNL association...", name());
+    logger.log_error("{}: Unable to allocate transaction. Shutting down E1 TNL association...", name());
     CORO_AWAIT(cu_up_conn_handler.handle_tnl_association_removal());
-    logger.info("{}: E1 TNL association shut down", name());
+    logger.log_info("{}: E1 TNL association shut down", name());
     CORO_EARLY_RETURN();
   }
 
@@ -51,9 +51,9 @@ void e1ap_cu_up_release_procedure::operator()(coro_context<async_task<void>>& ct
   handle_e1ap_release_response();
 
   // Tear down TNL association and await it.
-  logger.debug("{}: Shutting down E1 TNL association...", name());
+  logger.log_debug("{}: Shutting down E1 TNL association...", name());
   CORO_AWAIT(cu_up_conn_handler.handle_tnl_association_removal());
-  logger.info("{}: E1 TNL association shut down", name());
+  logger.log_info("{}: E1 TNL association shut down", name());
 
   CORO_RETURN();
 }
@@ -75,13 +75,13 @@ void e1ap_cu_up_release_procedure::handle_e1ap_release_response()
 {
   if (transaction.aborted()) {
     // Timeout or cancellation case.
-    logger.warning(
+    logger.log_warning(
         "{}: Forcing shutdown of E1 TNL association. Cause: Timeout reached for reception of the E1 Release Response",
         name());
   } else {
     const asn1::e1ap::successful_outcome_s& success = transaction.response().value();
     if (success.value.type().value != e1ap_elem_procs_o::successful_outcome_c::types_opts::e1_release_resp) {
-      logger.warning("{}: Received unexpected E1AP PDU type \"{}\"", name(), success.value.type().to_string());
+      logger.log_warning("{}: Received unexpected E1AP PDU type \"{}\"", name(), success.value.type().to_string());
 
       cause_c cause;
       cause.set_protocol().value = cause_protocol_opts::msg_not_compatible_with_receiver_state;
@@ -89,9 +89,9 @@ void e1ap_cu_up_release_procedure::handle_e1ap_release_response()
       return;
     }
     if (success.value.e1_release_resp()->transaction_id != transaction.id()) {
-      logger.warning("{}: Received E1 Release Response with wrong transaction ID", name());
+      logger.log_warning("{}: Received E1 Release Response with wrong transaction ID", name());
       return;
     }
-    logger.debug("\"{}\" finished successfully", name());
+    logger.log_debug("\"{}\" finished successfully", name());
   }
 }

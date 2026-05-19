@@ -16,7 +16,7 @@ bearer_context_release_procedure::bearer_context_release_procedure(cu_up_ue_inde
                                                                    e1ap_message_notifier&        pdu_notifier_,
                                                                    e1ap_cu_up_manager_notifier&  cu_up_notifier_,
                                                                    e1ap_cu_up_metrics_collector& metrics_,
-                                                                   ocudulog::basic_logger&       logger_) :
+                                                                   e1ap_logger&                  logger_) :
   ue_index(ue_index_),
   cmd(cmd_),
   pdu_notifier(pdu_notifier_),
@@ -51,10 +51,10 @@ void bearer_context_release_procedure::operator()(coro_context<async_task<void>>
       cmd->gnb_cu_up_ue_e1ap_id;
 
   // send response
-  logger.debug("ue={} cu_up_ue_e1ap_id={} cu_cp_ue_e1ap_id={}: Sending BearerContextReleaseComplete",
-               fmt::underlying(bearer_context_release_cmd.ue_index),
-               cmd->gnb_cu_up_ue_e1ap_id,
-               cmd->gnb_cu_cp_ue_e1ap_id);
+  logger.log_debug("ue={} cu_up_ue_e1ap_id={} cu_cp_ue_e1ap_id={}: Sending BearerContextReleaseComplete",
+                   fmt::underlying(bearer_context_release_cmd.ue_index),
+                   cmd->gnb_cu_up_ue_e1ap_id,
+                   cmd->gnb_cu_cp_ue_e1ap_id);
   pdu_notifier.on_new_message(e1ap_msg);
   CORO_RETURN();
 }

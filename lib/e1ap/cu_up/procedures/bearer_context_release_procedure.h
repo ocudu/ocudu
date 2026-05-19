@@ -25,7 +25,7 @@ public:
                                    e1ap_message_notifier&                          pdu_notifier_,
                                    e1ap_cu_up_manager_notifier&                    cu_up_notifier_,
                                    e1ap_cu_up_metrics_collector&                   metrics_,
-                                   ocudulog::basic_logger&                         logger_);
+                                   e1ap_logger&                                    logger_);
 
   ~bearer_context_release_procedure();
 
@@ -39,7 +39,7 @@ private:
   e1ap_message_notifier&                         pdu_notifier;
   e1ap_cu_up_manager_notifier&                   cu_up_notifier;
   e1ap_cu_up_metrics_collector&                  metrics;
-  ocudulog::basic_logger&                        logger;
+  e1ap_logger&                                   logger;
 
   // local variables
   e1ap_message                        e1ap_msg                   = {};

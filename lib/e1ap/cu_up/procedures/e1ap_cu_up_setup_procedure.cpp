@@ -19,7 +19,7 @@ e1ap_cu_up_setup_procedure::e1ap_cu_up_setup_procedure(const cu_up_e1_setup_requ
                                                        e1ap_message_notifier&        cu_cp_notif_,
                                                        e1ap_event_manager&           ev_mng_,
                                                        timer_factory                 timers_,
-                                                       ocudulog::basic_logger&       logger_) :
+                                                       e1ap_logger&                  logger_) :
   request(request_),
   cu_cp_notifier(cu_cp_notif_),
   ev_mng(ev_mng_),
@@ -33,7 +33,7 @@ void e1ap_cu_up_setup_procedure::operator()(coro_context<async_task<cu_up_e1_set
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("\"{}\" initialized", name());
+  logger.log_debug("\"{}\" initialized", name());
 
   while (true) {
     transaction = ev_mng.transactions.create_transaction(e1_setup_response_timeout);
@@ -50,10 +50,10 @@ void e1ap_cu_up_setup_procedure::operator()(coro_context<async_task<cu_up_e1_set
     }
 
     // Await timer.
-    logger.debug("Reinitiating E1 setup in {}s (retry={}/{}). Received E1SetupFailure with Time to Wait IE",
-                 time_to_wait.count(),
-                 e1_setup_retry_no,
-                 request.max_setup_retries);
+    logger.log_debug("Reinitiating E1 setup in {}s (retry={}/{}). Received E1SetupFailure with Time to Wait IE",
+                     time_to_wait.count(),
+                     e1_setup_retry_no,
+                     request.max_setup_retries);
     CORO_AWAIT(
         async_wait_for(e1_setup_wait_timer, std::chrono::duration_cast<std::chrono::milliseconds>(time_to_wait)));
   }
@@ -81,12 +81,10 @@ void e1ap_cu_up_setup_procedure::send_cu_up_e1_setup_request()
     if (msg.pdu.pack(bref) == asn1::OCUDUASN_SUCCESS) {
       captured_request = std::move(packed);
     } else {
-      logger.warning("\"{}\": failed to pack E1SetupRequest", name());
+      logger.log_warning("\"{}\": failed to pack E1SetupRequest", name());
     }
   }
 
-  // send request
-  logger.info("Sending E1SetupRequest");
   cu_cp_notifier.on_new_message(msg);
 }
 
@@ -112,12 +110,12 @@ bool e1ap_cu_up_setup_procedure::retry_required()
       *cu_cp_pdu_response.error().value.gnb_cu_up_e1_setup_fail();
   if (not e1_setup_fail.time_to_wait_present) {
     // CU didn't command a waiting time.
-    logger.error("CU-CP did not set any retry waiting time");
+    logger.log_error("CU-CP did not set any retry waiting time");
     return false;
   }
   if (e1_setup_retry_no++ >= request.max_setup_retries) {
     // Number of retries exceeded, or there is no time to wait.
-    logger.error("Reached maximum number of E1 Setup connection retries ({})", request.max_setup_retries);
+    logger.log_error("Reached maximum number of E1 Setup connection retries ({})", request.max_setup_retries);
     return false;
   }
 
@@ -131,7 +129,7 @@ cu_up_e1_setup_response e1ap_cu_up_setup_procedure::create_e1_setup_result()
 
   if (transaction.aborted()) {
     // Abortion/timeout case.
-    logger.warning("\"{}\" failed (timeout reached)", name());
+    logger.log_warning("\"{}\" failed (timeout reached)", name());
     res.success = false;
     return res;
   }
@@ -156,21 +154,21 @@ cu_up_e1_setup_response e1ap_cu_up_setup_procedure::create_e1_setup_result()
       if (resp_msg.pdu.pack(bref) == asn1::OCUDUASN_SUCCESS) {
         res.packed_e1_setup_response = std::move(packed);
       } else {
-        logger.warning("\"{}\": failed to pack E1SetupResponse", name());
+        logger.log_warning("\"{}\": failed to pack E1SetupResponse", name());
       }
     }
 
-    logger.info("\"{}\" finalized", name());
+    logger.log_info("\"{}\" finalized", name());
 
   } else if (cu_cp_pdu_response.has_value() and
              cu_cp_pdu_response.error().value.type().value !=
                  e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::gnb_cu_up_e1_setup_fail) {
-    logger.error("\"{}\" failed with cause={}", name(), cu_cp_pdu_response.value().value.type().to_string());
+    logger.log_error("\"{}\" failed with cause={}", name(), cu_cp_pdu_response.value().value.type().to_string());
     res.success = false;
   } else {
-    logger.error("\"{}\" failed with cause={}",
-                 name(),
-                 get_cause_str(cu_cp_pdu_response.error().value.gnb_cu_up_e1_setup_fail()->cause));
+    logger.log_error("\"{}\" failed with cause={}",
+                     name(),
+                     get_cause_str(cu_cp_pdu_response.error().value.gnb_cu_up_e1_setup_fail()->cause));
     res.success = false;
   }
   return res;

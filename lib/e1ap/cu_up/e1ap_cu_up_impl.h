@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "common/e1ap_logger.h"
 #include "cu_up/e1ap_cu_up_metrics_collector.h"
 #include "e1ap_cu_up_connection_handler.h"
 #include "ue_context/e1ap_cu_up_ue_context.h"
@@ -21,7 +22,8 @@ class e1ap_event_manager;
 class e1ap_cu_up_impl final : public e1ap_interface
 {
 public:
-  e1ap_cu_up_impl(const e1ap_configuration&    e1ap_cfg_,
+  e1ap_cu_up_impl(cu_up_e1_index_t             e1_index,
+                  const e1ap_configuration&    e1ap_cfg_,
                   e1_connection_client&        e1_client_handler_,
                   e1ap_cu_up_manager_notifier& cu_up_notifier_,
                   timer_manager&               timers_,
@@ -99,8 +101,9 @@ private:
   /// \param[in] msg The received unsuccessful outcome message.
   void handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful_outcome_s& outcome);
 
+  const cu_up_e1_index_t   e1_index;
   const e1ap_configuration e1ap_cfg;
-  ocudulog::basic_logger&  logger;
+  e1ap_logger              logger;
 
   // nofifiers and handles
   e1ap_cu_up_manager_notifier& cu_up_notifier;

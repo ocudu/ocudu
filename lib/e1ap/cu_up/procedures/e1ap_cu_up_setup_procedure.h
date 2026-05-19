@@ -5,6 +5,7 @@
 #pragma once
 
 #include "../../common/e1ap_asn1_utils.h"
+#include "common/e1ap_logger.h"
 #include "e1ap_cu_up_event_manager.h"
 #include "ocudu/e1ap/common/e1_setup_messages.h"
 #include "ocudu/e1ap/cu_up/e1ap_cu_up.h"
@@ -22,7 +23,7 @@ public:
                              e1ap_message_notifier&        cu_cp_notif_,
                              e1ap_event_manager&           ev_mng_,
                              timer_factory                 timers_,
-                             ocudulog::basic_logger&       logger_);
+                             e1ap_logger&                  logger_);
 
   void operator()(coro_context<async_task<cu_up_e1_setup_response>>& ctx);
 
@@ -42,7 +43,7 @@ private:
   e1ap_message_notifier&       cu_cp_notifier;
   e1ap_event_manager&          ev_mng;
   timer_factory                timers;
-  ocudulog::basic_logger&      logger;
+  e1ap_logger&                 logger;
 
   unique_timer e1_setup_wait_timer;
 

@@ -40,6 +40,22 @@ static void log_common_message(ocudulog::basic_logger& logger,
   }
 }
 
+static void log_common_message(e1ap_logger&        logger,
+                               bool                is_rx,
+                               uint8_t             transaction_id,
+                               const e1ap_message& e1ap_msg,
+                               bool                json_enabled)
+{
+  const char* msg_name = get_message_type_str(e1ap_msg.pdu);
+  const char* rx_str   = is_rx ? "Rx" : "Tx";
+
+  if (json_enabled) {
+    logger.log_info("{} PDU tid={} {}\n{}", rx_str, transaction_id, msg_name, e1ap_msg.pdu);
+  } else {
+    logger.log_info("{} PDU tid={} {}", rx_str, transaction_id, msg_name);
+  }
+}
+
 template <typename UeIndex>
 void ocudu::log_e1ap_pdu(ocudulog::basic_logger&       logger,
                          bool                          is_rx,
@@ -81,12 +97,59 @@ void ocudu::log_e1ap_pdu(ocudulog::basic_logger&       logger,
   }
 }
 
+template <typename UeIndex>
+void ocudu::log_e1ap_pdu(e1ap_logger&                  logger,
+                         bool                          is_rx,
+                         const std::optional<UeIndex>& ue_id,
+                         const e1ap_message&           e1ap_msg,
+                         bool                          json_enabled)
+{
+  if (not logger.get_basic_logger().info.enabled()) {
+    return;
+  }
+
+  // Determine if it is a UE-dedicated message or common message.
+  std::optional<uint8_t> transaction_id = get_transaction_id(e1ap_msg.pdu);
+  if (transaction_id.has_value()) {
+    log_common_message(logger, is_rx, transaction_id.value(), e1ap_msg, json_enabled);
+    return;
+  }
+
+  std::optional<gnb_cu_cp_ue_e1ap_id_t> cp_ue_id = get_gnb_cu_cp_ue_e1ap_id(e1ap_msg.pdu);
+  std::optional<gnb_cu_up_ue_e1ap_id_t> up_ue_id = get_gnb_cu_up_ue_e1ap_id(e1ap_msg.pdu);
+  const char*                           msg_name = get_message_type_str(e1ap_msg.pdu);
+
+  // Create PDU formatter that runs in log backend.
+  // Note: msg_name is a string literal and therefore it is ok to pass by pointer.
+  auto pdu_description = make_formattable([is_rx, cp_ue_id, up_ue_id, ue_id, msg_name = msg_name](auto& ctx) {
+    return fmt::format_to(ctx.out(),
+                          "{} PDU{}{}{} {}",
+                          is_rx ? "Rx" : "Tx",
+                          add_prefix_if_set(" ue=", ue_id),
+                          add_prefix_if_set(" cu_cp_ue=", cp_ue_id),
+                          add_prefix_if_set(" cu_up_ue=", up_ue_id),
+                          msg_name);
+  });
+
+  if (json_enabled) {
+    logger.log_info("{}\n{}", pdu_description, e1ap_msg.pdu);
+  } else {
+    logger.log_info("{}", pdu_description);
+  }
+}
+
 template void ocudu::log_e1ap_pdu<cu_cp_ue_index_t>(ocudulog::basic_logger&                logger,
                                                     bool                                   is_rx,
                                                     const std::optional<cu_cp_ue_index_t>& ue_id,
                                                     const e1ap_message&                    e1ap_msg,
                                                     bool                                   json_enabled);
 template void ocudu::log_e1ap_pdu<cu_up_ue_index_t>(ocudulog::basic_logger&                logger,
+                                                    bool                                   is_rx,
+                                                    const std::optional<cu_up_ue_index_t>& ue_id,
+                                                    const e1ap_message&                    e1ap_msg,
+                                                    bool                                   json_enabled);
+
+template void ocudu::log_e1ap_pdu<cu_up_ue_index_t>(e1ap_logger&                           logger,
                                                     bool                                   is_rx,
                                                     const std::optional<cu_up_ue_index_t>& ue_id,
                                                     const e1ap_message&                    e1ap_msg,

@@ -21,7 +21,7 @@ public:
                              e1ap_ue_context_list&        ue_ctxt_list_,
                              e1ap_cu_up_manager_notifier& cu_up_notifier_,
                              e1ap_message_notifier&       tx_pdu_notifier_,
-                             ocudulog::basic_logger&      logger_);
+                             e1ap_logger&                 logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -36,7 +36,7 @@ private:
   e1ap_ue_context_list&        ue_ctxt_list;
   e1ap_cu_up_manager_notifier& cu_up_notifier;
   e1ap_message_notifier&       tx_pdu_notifier;
-  ocudulog::basic_logger&      logger;
+  e1ap_logger&                 logger;
 };
 
 } // namespace ocuup

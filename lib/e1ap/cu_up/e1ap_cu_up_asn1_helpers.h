@@ -5,6 +5,7 @@
 #pragma once
 
 #include "../common/e1ap_asn1_converters.h"
+#include "../common/e1ap_logger.h"
 #include "ocudu/asn1/e1ap/e1ap.h"
 #include "ocudu/asn1/e1ap/e1ap_ies.h"
 #include "ocudu/asn1/e1ap/e1ap_pdu_contents.h"
@@ -109,28 +110,28 @@ inline asn1::e1ap::gnb_cu_up_e1_setup_request_s cu_up_e1_setup_request_to_asn1(c
 
 inline bool
 check_e1ap_bearer_context_setup_request_valid(const asn1::e1ap::bearer_context_setup_request_s& asn1_request,
-                                              ocudulog::basic_logger&                           logger)
+                                              e1ap_logger&                                      logger)
 {
   // We only support NG-RAN Bearer.
   if (asn1_request->sys_bearer_context_setup_request.type() !=
       asn1::e1ap::sys_bearer_context_setup_request_c::types::ng_ran_bearer_context_setup_request) {
-    logger.error("Not handling E-UTRAN Bearers");
+    logger.log_error("Not handling E-UTRAN Bearers");
     return false;
   }
 
   // Check UE-AMBR makes sense.
   if (asn1_request->ue_dl_aggr_max_bit_rate == 0) {
-    logger.error("Invalid UE-DL-AMBR");
+    logger.log_error("Invalid UE-DL-AMBR");
     return false;
   }
 
   // Check activity level.
   if (asn1_request->activity_notif_level.value != asn1::e1ap::activity_notif_level_e::ue) {
-    logger.warning("Unsupported activity notification level: {}", asn1_request->activity_notif_level.to_string());
+    logger.log_warning("Unsupported activity notification level: {}", asn1_request->activity_notif_level.to_string());
     return false;
   }
   if (!asn1_request->ue_inactivity_timer_present) {
-    logger.warning("Activity notification level is UE, but no UE inactivity timer present.");
+    logger.log_warning("Activity notification level is UE, but no UE inactivity timer present.");
     return false;
   }
   return true;
