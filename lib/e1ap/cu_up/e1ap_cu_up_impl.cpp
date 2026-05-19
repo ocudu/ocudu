@@ -45,7 +45,7 @@ e1ap_cu_up_impl::e1ap_cu_up_impl(cu_up_e1_index_t             e1_index_,
                                  task_executor&               cu_up_exec_) :
   e1_index(e1_index_),
   e1ap_cfg(e1ap_cfg_),
-  logger("CU-UP-E1", e1_index_),
+  logger("CU-UP-E1", e1_index),
   cu_up_notifier(cu_up_notifier_),
   timers(timers_),
   cu_up_exec(cu_up_exec_),

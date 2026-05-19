@@ -75,22 +75,22 @@ public:
     }
   }
 
-  template <typename It, typename... Args>
+  template <typename It, typename... Args, std::enable_if_t<!std::is_convertible_v<It, const char*>, int> = 0>
   void log_debug(It it_begin, It it_end, const char* fmt, Args&&... args) const
   {
     log_helper(it_begin, it_end, logger.debug, fmt, std::forward<Args>(args)...);
   }
-  template <typename It, typename... Args>
+  template <typename It, typename... Args, std::enable_if_t<!std::is_convertible_v<It, const char*>, int> = 0>
   void log_info(It it_begin, It it_end, const char* fmt, Args&&... args) const
   {
     log_helper(it_begin, it_end, logger.info, fmt, std::forward<Args>(args)...);
   }
-  template <typename It, typename... Args>
+  template <typename It, typename... Args, std::enable_if_t<!std::is_convertible_v<It, const char*>, int> = 0>
   void log_warning(It it_begin, It it_end, const char* fmt, Args&&... args) const
   {
     log_helper(it_begin, it_end, logger.warning, fmt, std::forward<Args>(args)...);
   }
-  template <typename It, typename... Args>
+  template <typename It, typename... Args, std::enable_if_t<!std::is_convertible_v<It, const char*>, int> = 0>
   void log_error(It it_begin, It it_end, const char* fmt, Args&&... args) const
   {
     log_helper(it_begin, it_end, logger.error, fmt, std::forward<Args>(args)...);
