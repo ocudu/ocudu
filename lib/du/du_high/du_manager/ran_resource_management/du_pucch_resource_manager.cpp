@@ -232,7 +232,6 @@ du_pucch_resource_manager::get_compatible_csi_cfg(const cell_resource_context&  
 {
   const pucch_resource& sr_res = cell_ctx.cell_bwp_cfg.ul.pucch.resources.at(
       cell_ctx.cell_params.init_bwp.pucch.resources.get_sr_cell_res_idx(pucch_sr_resource_id(sr_cfg.res)));
-  const auto     sr_symbols        = ofdm_symbol_range::start_and_len(sr_res.starting_sym_idx, sr_res.nof_symbols);
   const unsigned max_pucch_payload = cell_ctx.cell_params.init_bwp.pucch.resources.max_payload_234();
   const auto     is_compatible     = [&](const periodic_pucch_config& csi_cfg) {
     // Ensure the max PUCCH grants limit is not exceeded.
@@ -243,8 +242,7 @@ du_pucch_resource_manager::get_compatible_csi_cfg(const cell_resource_context&  
     // Ensure the CSI and SR resources collide in OFDM symbols, so they are multiplexed.
     const pucch_resource& csi_res = cell_ctx.cell_bwp_cfg.ul.pucch.resources.at(
         cell_ctx.cell_params.init_bwp.pucch.resources.get_csi_cell_res_idx(pucch_csi_resource_id(csi_cfg.res)));
-    const auto csi_symbols = ofdm_symbol_range::start_and_len(csi_res.starting_sym_idx, csi_res.nof_symbols);
-    if (not csi_symbols.overlaps(sr_symbols)) {
+    if (not csi_res.syms.overlaps(sr_res.syms)) {
       return false;
     }
 

@@ -54,50 +54,34 @@ TEST(pucch_collision_info_test, resources_with_non_overlapping_grants_do_not_col
 {
   {
     // Different symbols.
-    const pucch_resource res1{.starting_prb     = 0,
-                              .second_hop_prb   = std::nullopt,
-                              .nof_symbols      = pucch_constants::f2::MAX_NOF_SYMS,
-                              .starting_sym_idx = 0,
-                              .format           = pucch_format::FORMAT_2,
-                              .format_params    = pucch_format_2_3_cfg{pucch_constants::f2::MIN_NOF_RBS}};
-    const pucch_resource res2{.starting_prb     = 0,
-                              .second_hop_prb   = std::nullopt,
-                              .nof_symbols      = pucch_constants::f2::MAX_NOF_SYMS,
-                              .starting_sym_idx = 2,
-                              .format           = pucch_format::FORMAT_2,
-                              .format_params    = pucch_format_1_cfg{pucch_constants::f2::MIN_NOF_RBS}};
+    const pucch_resource res1{.starting_prb  = 0,
+                              .syms          = ofdm_symbol_range::start_and_len(0, pucch_constants::f2::MAX_NOF_SYMS),
+                              .format_params = pucch_resource::f2_config{.nof_prbs = pucch_constants::f2::MIN_NOF_RBS}};
+    const pucch_resource res2{.starting_prb  = 0,
+                              .syms          = ofdm_symbol_range::start_and_len(2, pucch_constants::f2::MAX_NOF_SYMS),
+                              .format_params = pucch_resource::f1_config{}};
     ASSERT_FALSE(pucch_collision_info(res1, test_bwp_cfg).collides(pucch_collision_info(res2, test_bwp_cfg)));
   }
   {
     // Different RBs.
-    const pucch_resource res1{.starting_prb     = 0,
-                              .second_hop_prb   = std::nullopt,
-                              .nof_symbols      = pucch_constants::f2::MAX_NOF_SYMS,
-                              .starting_sym_idx = 0,
-                              .format           = pucch_format::FORMAT_2,
-                              .format_params    = pucch_format_2_3_cfg{pucch_constants::f2::MIN_NOF_RBS}};
-    const pucch_resource res2{.starting_prb     = 1,
-                              .second_hop_prb   = std::nullopt,
-                              .nof_symbols      = pucch_constants::f2::MAX_NOF_SYMS,
-                              .starting_sym_idx = 0,
-                              .format           = pucch_format::FORMAT_2,
-                              .format_params    = pucch_format_1_cfg{pucch_constants::f2::MIN_NOF_RBS}};
+    const pucch_resource res1{.starting_prb  = 0,
+                              .syms          = ofdm_symbol_range::start_and_len(0, pucch_constants::f2::MAX_NOF_SYMS),
+                              .format_params = pucch_resource::f2_config{.nof_prbs = pucch_constants::f2::MIN_NOF_RBS}};
+    const pucch_resource res2{.starting_prb  = pucch_constants::f2::MIN_NOF_RBS,
+                              .syms          = ofdm_symbol_range::start_and_len(0, pucch_constants::f2::MAX_NOF_SYMS),
+                              .format_params = pucch_resource::f1_config{}};
     ASSERT_FALSE(pucch_collision_info(res1, test_bwp_cfg).collides(pucch_collision_info(res2, test_bwp_cfg)));
   }
   {
     // Different hops.
-    const pucch_resource res1{.starting_prb     = 0,
-                              .second_hop_prb   = pucch_constants::f2::MIN_NOF_RBS,
-                              .nof_symbols      = pucch_constants::f2::MAX_NOF_SYMS,
-                              .starting_sym_idx = 0,
-                              .format           = pucch_format::FORMAT_2,
-                              .format_params    = pucch_format_2_3_cfg{pucch_constants::f2::MIN_NOF_RBS}};
-    const pucch_resource res2{.starting_prb     = pucch_constants::f2::MIN_NOF_RBS,
-                              .second_hop_prb   = 0,
-                              .nof_symbols      = pucch_constants::f2::MAX_NOF_SYMS,
-                              .starting_sym_idx = 0,
-                              .format           = pucch_format::FORMAT_2,
-                              .format_params    = pucch_format_1_cfg{pucch_constants::f2::MIN_NOF_RBS}};
+    const pucch_resource res1{.starting_prb   = 0,
+                              .syms           = ofdm_symbol_range::start_and_len(0, pucch_constants::f2::MAX_NOF_SYMS),
+                              .second_hop_prb = pucch_constants::f2::MIN_NOF_RBS,
+                              .format_params = pucch_resource::f2_config{.nof_prbs = pucch_constants::f2::MIN_NOF_RBS}};
+    const pucch_resource res2{.starting_prb   = pucch_constants::f2::MIN_NOF_RBS,
+                              .syms           = ofdm_symbol_range::start_and_len(0, pucch_constants::f2::MAX_NOF_SYMS),
+                              .second_hop_prb = 0,
+                              .format_params  = pucch_resource::f1_config{}};
     ASSERT_FALSE(pucch_collision_info(res1, test_bwp_cfg).collides(pucch_collision_info(res2, test_bwp_cfg)));
   }
 }
@@ -106,82 +90,57 @@ TEST(pucch_collision_info_test, resources_with_overlapping_grants_collide)
 {
   {
     // Same grants.
-    const pucch_resource res1{.starting_prb     = 0,
-                              .second_hop_prb   = std::nullopt,
-                              .nof_symbols      = pucch_constants::f2::MAX_NOF_SYMS,
-                              .starting_sym_idx = 0,
-                              .format           = pucch_format::FORMAT_2,
-                              .format_params    = pucch_format_2_3_cfg{pucch_constants::f2::MAX_NOF_RBS}};
-    const pucch_resource res2{.starting_prb     = 0,
-                              .second_hop_prb   = std::nullopt,
-                              .nof_symbols      = pucch_constants::f2::MAX_NOF_SYMS,
-                              .starting_sym_idx = 0,
-                              .format           = pucch_format::FORMAT_2,
-                              .format_params    = pucch_format_1_cfg{pucch_constants::f2::MAX_NOF_RBS}};
+    const pucch_resource res1{.starting_prb  = 0,
+                              .syms          = ofdm_symbol_range::start_and_len(0, pucch_constants::f2::MAX_NOF_SYMS),
+                              .format_params = pucch_resource::f2_config{.nof_prbs = pucch_constants::f2::MAX_NOF_RBS}};
+    const pucch_resource res2{.starting_prb  = 0,
+                              .syms          = ofdm_symbol_range::start_and_len(0, pucch_constants::f2::MAX_NOF_SYMS),
+                              .format_params = pucch_resource::f2_config{.nof_prbs = pucch_constants::f2::MAX_NOF_RBS}};
     ASSERT_TRUE(pucch_collision_info(res1, test_bwp_cfg).collides(pucch_collision_info(res2, test_bwp_cfg)));
   }
   {
     // Same RBs, partially overlapping symbols.
-    const pucch_resource res1{.starting_prb     = 0,
-                              .second_hop_prb   = std::nullopt,
-                              .nof_symbols      = pucch_constants::f2::MAX_NOF_SYMS,
-                              .starting_sym_idx = 0,
-                              .format           = pucch_format::FORMAT_2,
-                              .format_params    = pucch_format_2_3_cfg{pucch_constants::f2::MAX_NOF_RBS}};
-    const pucch_resource res2{.starting_prb     = 0,
-                              .second_hop_prb   = std::nullopt,
-                              .nof_symbols      = pucch_constants::f2::MAX_NOF_SYMS,
-                              .starting_sym_idx = pucch_constants::f2::MAX_NOF_SYMS - 1,
-                              .format           = pucch_format::FORMAT_2,
-                              .format_params    = pucch_format_1_cfg{pucch_constants::f2::MAX_NOF_RBS}};
+    const pucch_resource res1{.starting_prb  = 0,
+                              .syms          = ofdm_symbol_range::start_and_len(0, pucch_constants::f2::MAX_NOF_SYMS),
+                              .format_params = pucch_resource::f2_config{.nof_prbs = pucch_constants::f2::MAX_NOF_RBS}};
+    const pucch_resource res2{.starting_prb  = 0,
+                              .syms          = ofdm_symbol_range::start_and_len(pucch_constants::f2::MAX_NOF_SYMS - 1,
+                                                                       pucch_constants::f2::MAX_NOF_SYMS),
+                              .format_params = pucch_resource::f1_config{}};
     ASSERT_TRUE(pucch_collision_info(res1, test_bwp_cfg).collides(pucch_collision_info(res2, test_bwp_cfg)));
   }
   {
     // Partially overlapping RBs, same symbols.
-    const pucch_resource res1{.starting_prb     = 0,
-                              .second_hop_prb   = std::nullopt,
-                              .nof_symbols      = pucch_constants::f2::MAX_NOF_SYMS,
-                              .starting_sym_idx = 0,
-                              .format           = pucch_format::FORMAT_2,
-                              .format_params    = pucch_format_2_3_cfg{pucch_constants::f2::MAX_NOF_RBS}};
-    const pucch_resource res2{.starting_prb     = pucch_constants::f2::MAX_NOF_RBS - 1,
-                              .second_hop_prb   = std::nullopt,
-                              .nof_symbols      = pucch_constants::f2::MAX_NOF_SYMS,
-                              .starting_sym_idx = 0,
-                              .format           = pucch_format::FORMAT_2,
-                              .format_params    = pucch_format_1_cfg{pucch_constants::f2::MAX_NOF_RBS}};
+    const pucch_resource res1{.starting_prb  = 0,
+                              .syms          = ofdm_symbol_range::start_and_len(0, pucch_constants::f2::MAX_NOF_SYMS),
+                              .format_params = pucch_resource::f2_config{.nof_prbs = pucch_constants::f2::MAX_NOF_RBS}};
+    const pucch_resource res2{.starting_prb  = pucch_constants::f2::MAX_NOF_RBS - 1,
+                              .syms          = ofdm_symbol_range::start_and_len(0, pucch_constants::f2::MAX_NOF_SYMS),
+                              .format_params = pucch_resource::f1_config{}};
     ASSERT_TRUE(pucch_collision_info(res1, test_bwp_cfg).collides(pucch_collision_info(res2, test_bwp_cfg)));
   }
   {
     // Same first hop.
-    const pucch_resource res1{.starting_prb     = 0,
-                              .second_hop_prb   = 1,
-                              .nof_symbols      = pucch_constants::f2::MAX_NOF_SYMS,
-                              .starting_sym_idx = 0,
-                              .format           = pucch_format::FORMAT_2,
-                              .format_params    = pucch_format_2_3_cfg{pucch_constants::f2::MIN_NOF_RBS}};
-    const pucch_resource res2{.starting_prb     = 0,
-                              .second_hop_prb   = 2,
-                              .nof_symbols      = pucch_constants::f2::MAX_NOF_SYMS,
-                              .starting_sym_idx = 0,
-                              .format           = pucch_format::FORMAT_2,
-                              .format_params    = pucch_format_1_cfg{pucch_constants::f2::MIN_NOF_RBS}};
+    const pucch_resource res1{.starting_prb   = 0,
+                              .syms           = ofdm_symbol_range::start_and_len(0, pucch_constants::f2::MAX_NOF_SYMS),
+                              .second_hop_prb = 1,
+                              .format_params = pucch_resource::f2_config{.nof_prbs = pucch_constants::f2::MIN_NOF_RBS}};
+    const pucch_resource res2{.starting_prb   = 0,
+                              .syms           = ofdm_symbol_range::start_and_len(0, pucch_constants::f2::MAX_NOF_SYMS),
+                              .second_hop_prb = 2,
+                              .format_params = pucch_resource::f2_config{.nof_prbs = pucch_constants::f2::MIN_NOF_RBS}};
     ASSERT_TRUE(pucch_collision_info(res1, test_bwp_cfg).collides(pucch_collision_info(res2, test_bwp_cfg)));
   }
   {
     // Same second hop.
-    const pucch_resource res1{.starting_prb     = 1,
-                              .second_hop_prb   = 0,
-                              .nof_symbols      = pucch_constants::f2::MAX_NOF_SYMS,
-                              .starting_sym_idx = 0,
-                              .format           = pucch_format::FORMAT_2,
-                              .format_params    = pucch_format_2_3_cfg{pucch_constants::f2::MIN_NOF_RBS}};
-    const pucch_resource res2{.starting_prb     = 2,
-                              .second_hop_prb   = 0,
-                              .nof_symbols      = pucch_constants::f2::MAX_NOF_SYMS,
-                              .starting_sym_idx = 0,
-                              .format           = pucch_format::FORMAT_2,
-                              .format_params    = pucch_format_1_cfg{pucch_constants::f2::MIN_NOF_RBS}};
+    const pucch_resource res1{.starting_prb   = 1,
+                              .syms           = ofdm_symbol_range::start_and_len(0, pucch_constants::f2::MAX_NOF_SYMS),
+                              .second_hop_prb = 0,
+                              .format_params = pucch_resource::f2_config{.nof_prbs = pucch_constants::f2::MIN_NOF_RBS}};
+    const pucch_resource res2{.starting_prb   = 2,
+                              .syms           = ofdm_symbol_range::start_and_len(0, pucch_constants::f2::MAX_NOF_SYMS),
+                              .second_hop_prb = 0,
+                              .format_params = pucch_resource::f2_config{.nof_prbs = pucch_constants::f2::MIN_NOF_RBS}};
     ASSERT_TRUE(pucch_collision_info(res1, test_bwp_cfg).collides(pucch_collision_info(res2, test_bwp_cfg)));
   }
 }
@@ -190,12 +149,10 @@ TEST(pucch_collision_info_test, f0_multiplexed_resources_do_not_collide)
 {
   std::vector<pucch_collision_info> infos;
   for (uint8_t ics = 0; ics != pucch_constants::f0::NOF_ICS; ++ics) {
-    infos.emplace_back(pucch_resource{.starting_prb     = 0,
-                                      .second_hop_prb   = pucch_constants::f0::NOF_RBS,
-                                      .nof_symbols      = pucch_constants::f0::MAX_NOF_SYMS,
-                                      .starting_sym_idx = 0,
-                                      .format           = pucch_format::FORMAT_0,
-                                      .format_params    = pucch_format_0_cfg{ics}},
+    infos.emplace_back(pucch_resource{.starting_prb = 0,
+                                      .syms = ofdm_symbol_range::start_and_len(0, pucch_constants::f0::MAX_NOF_SYMS),
+                                      .second_hop_prb = pucch_constants::f0::NOF_RBS,
+                                      .format_params  = pucch_resource::f0_config{.initial_cyclic_shift = ics}},
                        test_bwp_cfg);
   }
 
@@ -207,12 +164,11 @@ TEST(pucch_collision_info_test, f1_multiplexed_resources_do_not_collide)
   std::vector<pucch_collision_info> infos;
   for (uint8_t ics = 0; ics != pucch_constants::f1::NOF_ICS; ++ics) {
     for (uint8_t occ = 0; occ != pucch_constants::f1::NOF_TD_OCC; ++occ) {
-      infos.emplace_back(pucch_resource{.starting_prb     = 0,
-                                        .second_hop_prb   = pucch_constants::f1::NOF_RBS,
-                                        .nof_symbols      = pucch_constants::f1::MAX_NOF_SYMS,
-                                        .starting_sym_idx = 0,
-                                        .format           = pucch_format::FORMAT_1,
-                                        .format_params    = pucch_format_1_cfg{ics, occ}},
+      infos.emplace_back(pucch_resource{.starting_prb = 0,
+                                        .syms = ofdm_symbol_range::start_and_len(0, pucch_constants::f1::MAX_NOF_SYMS),
+                                        .second_hop_prb = pucch_constants::f1::NOF_RBS,
+                                        .format_params  = pucch_resource::f1_config{.initial_cyclic_shift = ics,
+                                                                                    .time_domain_occ      = occ}},
                          test_bwp_cfg);
     }
   }
@@ -225,12 +181,11 @@ TEST(pucch_collision_info_test, f4_multiplexed_resources_do_not_collide)
   std::vector<pucch_collision_info> infos;
   for (unsigned occ = 0; occ != static_cast<unsigned>(pucch_f4_occ_len::n4); ++occ) {
     infos.emplace_back(
-        pucch_resource{.starting_prb     = 0,
-                       .second_hop_prb   = pucch_constants::f1::NOF_RBS,
-                       .nof_symbols      = pucch_constants::f1::MAX_NOF_SYMS,
-                       .starting_sym_idx = 0,
-                       .format           = pucch_format::FORMAT_4,
-                       .format_params = pucch_format_4_cfg{pucch_f4_occ_len::n4, static_cast<pucch_f4_occ_idx>(occ)}},
+        pucch_resource{.starting_prb   = 0,
+                       .syms           = ofdm_symbol_range::start_and_len(0, pucch_constants::f1::MAX_NOF_SYMS),
+                       .second_hop_prb = pucch_constants::f1::NOF_RBS,
+                       .format_params  = pucch_resource::f4_config{.occ_index  = static_cast<pucch_f4_occ_idx>(occ),
+                                                                   .occ_length = pucch_f4_occ_len::n4}},
         test_bwp_cfg);
   }
 

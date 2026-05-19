@@ -402,14 +402,12 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pucch_cfg_conversion)
   dest_pucch_cfg.pucch_res_set.erase(dest_pucch_cfg.pucch_res_set.begin());
 
   // >>> PUCCH resource 2.
-  pucch_resource res_basic{.res_id           = pucch_res_id_t::make_ded(14, 14),
-                           .starting_prb     = 40,
-                           .second_hop_prb   = 50,
-                           .nof_symbols      = 1,
-                           .starting_sym_idx = 13,
-                           .format           = pucch_format::FORMAT_3};
-  res_basic.format = pucch_format::FORMAT_2;
-  res_basic.format_params.emplace<pucch_format_2_3_cfg>();
+  pucch_resource res_basic;
+  res_basic.res_id         = pucch_res_id_t::make_ded(14, 14);
+  res_basic.starting_prb   = 40;
+  res_basic.second_hop_prb = 50;
+  res_basic.syms           = ofdm_symbol_range::start_and_len(13, 1);
+  res_basic.format_params.emplace<pucch_resource::f2_config>(pucch_resource::f2_config{.nof_prbs = 1});
   dest_pucch_cfg.pucch_res_list.push_back(res_basic);
 
   // Remove first element.

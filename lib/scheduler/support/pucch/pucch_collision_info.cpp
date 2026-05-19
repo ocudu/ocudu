@@ -46,25 +46,25 @@ pucch_collision_info::pucch_collision_info(const pucch_default_resource& res,
 /// Constructs resource_info for a dedicated PUCCH resource.
 pucch_collision_info::pucch_collision_info(const pucch_resource& res, const bwp_configuration& bwp_cfg)
 {
-  format = res.format;
+  format = res.format();
 
   // Compute multiplexing index.
-  switch (res.format) {
+  switch (res.format()) {
     case pucch_format::FORMAT_0: {
-      const auto& f0_params = std::get<pucch_format_0_cfg>(res.format_params);
+      const auto& f0_params = std::get<pucch_resource::f0_config>(res.format_params);
       multiplexing_index    = f0_params.initial_cyclic_shift;
     } break;
     case pucch_format::FORMAT_1: {
       // For PUCCH Format 1, two sequences are orthogonal unless both the initial cyclic shift and the time domain OCC
       // index are the same.
-      const auto& f1_params = std::get<pucch_format_1_cfg>(res.format_params);
+      const auto& f1_params = std::get<pucch_resource::f1_config>(res.format_params);
       multiplexing_index    = f1_params.initial_cyclic_shift + f1_params.time_domain_occ * pucch_constants::f1::NOF_ICS;
     } break;
     case pucch_format::FORMAT_4: {
       // For PUCCH Format 4, the OCC index is mapped to a cyclic shift value, as per Table 6.4.1.3.3.1-1, TS 38.211.
       // Thus, resources with different OCC indices will never collide, even if they have different OCC lengths.
       // Therefore, we can use the OCC index directly as the multiplexing index.
-      const auto& f4_params = std::get<pucch_format_4_cfg>(res.format_params);
+      const auto& f4_params = std::get<pucch_resource::f4_config>(res.format_params);
       multiplexing_index    = static_cast<unsigned>(f4_params.occ_index);
     } break;
     default:
@@ -74,25 +74,19 @@ pucch_collision_info::pucch_collision_info(const pucch_resource& res, const bwp_
   }
 
   // Compute time-frequency grants.
-  unsigned nof_prbs = 1;
-  if (const auto* format_2_3 = std::get_if<pucch_format_2_3_cfg>(&res.format_params)) {
-    nof_prbs = format_2_3->nof_prbs;
-  }
   if (res.second_hop_prb.has_value()) {
     // Intra-slot frequency hopping.
-    grants = {.first_hop = grant_info{bwp_cfg.scs,
-                                      {res.starting_sym_idx, res.starting_sym_idx + res.nof_symbols / 2},
-                                      prb_to_crb(bwp_cfg, prb_interval::start_and_len(res.starting_prb, nof_prbs))},
-              .second_hop =
-                  grant_info{bwp_cfg.scs,
-                             {res.starting_sym_idx + res.nof_symbols / 2, res.starting_sym_idx + res.nof_symbols},
-                             prb_to_crb(bwp_cfg, prb_interval::start_and_len(res.second_hop_prb.value(), nof_prbs))}};
+    const unsigned half = res.syms.length() / 2;
+    grants              = {.first_hop =
+                               grant_info{bwp_cfg.scs, {res.syms.start(), res.syms.start() + half}, prb_to_crb(bwp_cfg, res.prbs())},
+                           .second_hop = grant_info{
+                  bwp_cfg.scs,
+                               {res.syms.start() + half, res.syms.stop()},
+                  prb_to_crb(bwp_cfg, prb_interval::start_and_len(*res.second_hop_prb, res.prbs().length()))}};
   } else {
     // No intra-slot frequency hopping.
     grants = {
-        .first_hop  = grant_info{bwp_cfg.scs,
-                                ofdm_symbol_range::start_and_len(res.starting_sym_idx, res.nof_symbols),
-                                prb_to_crb(bwp_cfg, prb_interval::start_and_len(res.starting_prb, nof_prbs))},
+        .first_hop  = grant_info{bwp_cfg.scs, res.syms, prb_to_crb(bwp_cfg, res.prbs())},
         .second_hop = std::nullopt,
     };
   }

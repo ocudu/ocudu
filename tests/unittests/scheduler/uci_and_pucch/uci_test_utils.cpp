@@ -57,20 +57,15 @@ pucch_info test_helpers::make_ded_pucch_info(const cell_configuration& cell_cfg,
                   .bwp_cfg  = &cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params,
                   .uci_bits = uci_bits};
 
-  unsigned nof_prbs = 1;
-  if (const auto* format_2_3 = std::get_if<pucch_format_2_3_cfg>(&res.format_params)) {
-    nof_prbs = format_2_3->nof_prbs;
-  }
-
   info.resources = pucch_resources{
-      .prbs           = prb_interval::start_and_len(res.starting_prb, nof_prbs),
-      .symbols        = ofdm_symbol_range::start_and_len(res.starting_sym_idx, res.nof_symbols),
+      .prbs           = res.prbs(),
+      .symbols        = res.syms,
       .second_hop_prb = res.second_hop_prb,
   };
 
-  switch (res.format) {
+  switch (res.format()) {
     case pucch_format::FORMAT_0: {
-      const auto& f0 = std::get<pucch_format_0_cfg>(res.format_params);
+      const auto& f0 = std::get<pucch_resource::f0_config>(res.format_params);
       info.format_params.emplace<pucch_format_0>(pucch_format_0{
           .group_hopping        = pucch_group_hopping::NEITHER,
           .n_id_hopping         = cell_cfg.params.pci,
@@ -78,7 +73,7 @@ pucch_info test_helpers::make_ded_pucch_info(const cell_configuration& cell_cfg,
       });
     } break;
     case pucch_format::FORMAT_1: {
-      const auto& f1 = std::get<pucch_format_1_cfg>(res.format_params);
+      const auto& f1 = std::get<pucch_resource::f1_config>(res.format_params);
       info.format_params.emplace<pucch_format_1>(pucch_format_1{
           .group_hopping        = pucch_group_hopping::NEITHER,
           .n_id_hopping         = cell_cfg.params.pci,
@@ -94,27 +89,28 @@ pucch_info test_helpers::make_ded_pucch_info(const cell_configuration& cell_cfg,
       });
     } break;
     case pucch_format::FORMAT_3: {
+      const auto& f3 = std::get<pucch_resource::f3_config>(res.format_params);
       info.format_params.emplace<pucch_format_3>(pucch_format_3{
           .group_hopping     = pucch_group_hopping::NEITHER,
           .n_id_hopping      = cell_cfg.params.pci,
           .slot_repetition   = pucch_repetition_tx_slot::no_multi_slot,
           .n_id_scrambling   = cell_cfg.params.pci,
-          .pi_2_bpsk         = false,
-          .additional_dmrs   = false,
+          .pi_2_bpsk         = f3.pi_2_bpsk,
+          .additional_dmrs   = f3.additional_dmrs,
           .n_id_0_scrambling = cell_cfg.params.pci,
       });
     } break;
     case pucch_format::FORMAT_4: {
-      const auto& f4 = std::get<pucch_format_4_cfg>(res.format_params);
+      const auto& f4 = std::get<pucch_resource::f4_config>(res.format_params);
       info.format_params.emplace<pucch_format_4>(pucch_format_4{
           .group_hopping     = pucch_group_hopping::NEITHER,
           .n_id_hopping      = cell_cfg.params.pci,
           .slot_repetition   = pucch_repetition_tx_slot::no_multi_slot,
           .n_id_scrambling   = cell_cfg.params.pci,
-          .pi_2_bpsk         = false,
+          .pi_2_bpsk         = f4.pi_2_bpsk,
           .occ_index         = f4.occ_index,
           .occ_length        = f4.occ_length,
-          .additional_dmrs   = false,
+          .additional_dmrs   = f4.additional_dmrs,
           .n_id_0_scrambling = cell_cfg.params.pci,
       });
     } break;

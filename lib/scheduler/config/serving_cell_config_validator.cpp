@@ -149,16 +149,6 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
 
   // Verify the PUCCH resource list.
   for (const auto& res : pucch_cfg.pucch_res_list) {
-    const bool format_match_format_params =
-        (res.format == pucch_format::FORMAT_0 and std::holds_alternative<pucch_format_0_cfg>(res.format_params)) or
-        (res.format == pucch_format::FORMAT_1 and std::holds_alternative<pucch_format_1_cfg>(res.format_params)) or
-        (res.format == pucch_format::FORMAT_2 and std::holds_alternative<pucch_format_2_3_cfg>(res.format_params)) or
-        (res.format == pucch_format::FORMAT_3 and std::holds_alternative<pucch_format_2_3_cfg>(res.format_params)) or
-        (res.format == pucch_format::FORMAT_4 and std::holds_alternative<pucch_format_4_cfg>(res.format_params));
-    VERIFY(format_match_format_params,
-           "PUCCH resource with cell_res_id={} format does not match the PUCCH format parameters",
-           res.res_id.as_ded().cell_res_id);
-
     // Verify that each PUCCH resource matches the corresponding cell resource.
     VERIFY(res.res_id.as_ded().cell_res_id < cell_pucch_res_list.size(),
            "PUCCH resource with cell_res_id={} does not exist in the cell configuration",
@@ -168,7 +158,7 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
     VERIFY(res == cell_res,
            "PUCCH resource with cell_res_id={} does not match the corresponding cell resource",
            res.res_id.as_ded().cell_res_id);
-    VERIFY(res.format == res_params.format_01() or res.format == res_params.format_234(),
+    VERIFY(res.format() == res_params.format_01() or res.format() == res_params.format_234(),
            "Invalid PUCCH format configured for UE resource ID {}",
            res.res_id.as_ded().ue_res_id);
   }
@@ -199,13 +189,13 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
   for (auto res_id : res_set_0.pucch_res_id_list) {
     VERIFY(res_id.as_ded().ue_res_id < pucch_cfg.pucch_res_list.size(), "Invalid UE resource ID");
     const auto& res = pucch_cfg.pucch_res_list[res_id.as_ded().ue_res_id];
-    VERIFY(res.res_id == res_id and res.format == res_params.format_01(),
+    VERIFY(res.res_id == res_id and res.format() == res_params.format_01(),
            "Invalid PUCCH resource in Resource Set ID 0");
   }
   for (auto res_id : res_set_1.pucch_res_id_list) {
     VERIFY(res_id.as_ded().ue_res_id < pucch_cfg.pucch_res_list.size(), "Invalid UE resource ID");
     const auto& res = pucch_cfg.pucch_res_list[res_id.as_ded().ue_res_id];
-    VERIFY(res.res_id == res_id and res.format == res_params.format_234(),
+    VERIFY(res.res_id == res_id and res.format() == res_params.format_234(),
            "Invalid PUCCH resource in Resource Set ID 1");
   }
 
@@ -230,7 +220,7 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
          "Invalid UE resource ID");
   const auto  sr_res_id = pucch_cfg.sr_res_list.front().pucch_res_id;
   const auto& sr_res    = pucch_cfg.pucch_res_list[sr_res_id.as_ded().ue_res_id];
-  VERIFY(sr_res.res_id == sr_res_id and sr_res.format == res_params.format_01(),
+  VERIFY(sr_res.res_id == sr_res_id and sr_res.format() == res_params.format_01(),
          "Invalid PUCCH resource used for SR reporting");
 
   // With Format 0, the last resource in PUCCH resource set 1 should point at the SR resource. Also, the last (or second
@@ -257,7 +247,7 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
     // Verify the PUCCH resource id that indicated in the CSI resource config exists in the PUCCH resource list.
     const auto  csi_res_id = csi.pucch_csi_res_list.front().pucch_res_id;
     const auto& csi_res    = pucch_cfg.pucch_res_list[csi_res_id.as_ded().ue_res_id];
-    VERIFY(csi_res.res_id == csi_res_id and csi_res.format == res_params.format_234(),
+    VERIFY(csi_res.res_id == csi_res_id and csi_res.format() == res_params.format_234(),
            "Invalid PUCCH resource used for CSI reporting");
 
     // Verify the CSI/SR bits do not exceed the PUCCH F2/F3/F4 payload.

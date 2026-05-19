@@ -31,17 +31,11 @@ crb_bitmap ocudu::compute_pucch_crbs(const cell_configuration& cell_cfg)
 
   // Fill the CRB bitmap with the PRBs used by the dedicated PUCCH resources.
   for (const auto& res : cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.resources) {
-    unsigned nof_rbs = 1;
-    if (const auto* params = std::get_if<pucch_format_2_3_cfg>(&res.format_params)) {
-      nof_rbs = params->nof_prbs;
-    }
-
-    const prb_interval prbs1 = prb_interval::start_and_len(res.starting_prb, nof_rbs);
-    const crb_interval crbs1 = prb_to_crb(cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.crbs, prbs1);
+    const crb_interval crbs1 = prb_to_crb(cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.crbs, res.prbs());
     pucch_crbs.fill(crbs1.start(), crbs1.stop());
 
     if (res.second_hop_prb.has_value()) {
-      const prb_interval prbs2 = prb_interval::start_and_len(res.second_hop_prb.value(), nof_rbs);
+      const prb_interval prbs2 = prb_interval::start_and_len(*res.second_hop_prb, res.prbs().length());
       const crb_interval crbs2 = prb_to_crb(cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.crbs, prbs2);
       pucch_crbs.fill(crbs2.start(), crbs2.stop());
     }

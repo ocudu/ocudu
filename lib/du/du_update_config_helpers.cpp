@@ -25,26 +25,21 @@ static prb_interval find_pucch_inner_prbs(const pucch_resource& res, unsigned bw
   // NOTE: for odd bwp_size and the for central PRB, both is_on_bwp_right_side() and is_on_bwp_left_side() are false.
   auto is_on_bwp_right_side = [bwp_size](unsigned prb) { return prb >= bwp_size - bwp_size / 2; };
 
-  constexpr unsigned nof_prbs_f0_f1_f4 = 1U;
-
-  const unsigned nof_prbs = res.format == pucch_format::FORMAT_2 or res.format == pucch_format::FORMAT_3
-                                ? std::get<pucch_format_2_3_cfg>(res.format_params).nof_prbs
-                                : nof_prbs_f0_f1_f4;
-
   unsigned max_rb_idx_on_left_side  = 0;
   unsigned min_rb_idx_on_right_side = bwp_size;
 
-  if (is_on_bwp_left_side(res.starting_prb + nof_prbs)) {
-    max_rb_idx_on_left_side = std::max(res.starting_prb + nof_prbs, max_rb_idx_on_left_side);
-  }
-  if (res.second_hop_prb.has_value() and is_on_bwp_left_side(res.second_hop_prb.value() + nof_prbs)) {
-    max_rb_idx_on_left_side = std::max(res.second_hop_prb.value() + nof_prbs, max_rb_idx_on_left_side);
-  }
-  if (is_on_bwp_right_side(res.starting_prb)) {
-    min_rb_idx_on_right_side = std::min(res.starting_prb, min_rb_idx_on_right_side);
-  }
-  if (res.second_hop_prb.has_value() and is_on_bwp_right_side(res.second_hop_prb.value())) {
-    min_rb_idx_on_right_side = std::min(res.second_hop_prb.value(), min_rb_idx_on_right_side);
+  const prb_interval prbs          = res.prbs();
+  auto               update_limits = [&](prb_interval hop) {
+    if (is_on_bwp_left_side(hop.stop())) {
+      max_rb_idx_on_left_side = std::max(hop.stop(), max_rb_idx_on_left_side);
+    }
+    if (is_on_bwp_right_side(hop.start())) {
+      min_rb_idx_on_right_side = std::min(hop.start(), min_rb_idx_on_right_side);
+    }
+  };
+  update_limits(prbs);
+  if (res.second_hop_prb.has_value()) {
+    update_limits(prb_interval::start_and_len(*res.second_hop_prb, prbs.length()));
   }
 
   return prb_interval{max_rb_idx_on_left_side, min_rb_idx_on_right_side};

@@ -1474,41 +1474,39 @@ asn1::rrc_nr::pucch_res_s ocudu::odu::make_asn1_rrc_pucch_resource(const pucch_r
   if (cfg.second_hop_prb.has_value()) {
     pucch_res.second_hop_prb = cfg.second_hop_prb.value();
   }
-  switch (cfg.format) {
+  switch (cfg.format()) {
     case pucch_format::FORMAT_0: {
-      const auto& f0            = std::get<pucch_format_0_cfg>(cfg.format_params);
+      const auto& f0            = std::get<pucch_resource::f0_config>(cfg.format_params);
       auto&       format0       = pucch_res.format.set_format0();
       format0.init_cyclic_shift = f0.initial_cyclic_shift;
-      format0.nrof_symbols      = cfg.nof_symbols;
-      format0.start_symbol_idx  = cfg.starting_sym_idx;
+      format0.start_symbol_idx  = cfg.syms.start();
+      format0.nrof_symbols      = cfg.syms.length();
     } break;
     case pucch_format::FORMAT_1: {
-      const auto& f1            = std::get<pucch_format_1_cfg>(cfg.format_params);
+      const auto& f1            = std::get<pucch_resource::f1_config>(cfg.format_params);
       auto&       format1       = pucch_res.format.set_format1();
       format1.init_cyclic_shift = f1.initial_cyclic_shift;
-      format1.nrof_symbols      = cfg.nof_symbols;
-      format1.start_symbol_idx  = cfg.starting_sym_idx;
+      format1.start_symbol_idx  = cfg.syms.start();
+      format1.nrof_symbols      = cfg.syms.length();
       format1.time_domain_occ   = f1.time_domain_occ;
     } break;
     case pucch_format::FORMAT_2: {
-      const auto& f2           = std::get<pucch_format_2_3_cfg>(cfg.format_params);
-      auto&       format2      = pucch_res.format.set_format2();
-      format2.start_symbol_idx = cfg.starting_sym_idx;
-      format2.nrof_symbols     = cfg.nof_symbols;
-      format2.nrof_prbs        = f2.nof_prbs;
+      auto& format2            = pucch_res.format.set_format2();
+      format2.start_symbol_idx = cfg.syms.start();
+      format2.nrof_symbols     = cfg.syms.length();
+      format2.nrof_prbs        = cfg.prbs().length();
     } break;
     case pucch_format::FORMAT_3: {
-      const auto& f3           = std::get<pucch_format_2_3_cfg>(cfg.format_params);
-      auto&       format3      = pucch_res.format.set_format3();
-      format3.start_symbol_idx = cfg.starting_sym_idx;
-      format3.nrof_symbols     = cfg.nof_symbols;
-      format3.nrof_prbs        = f3.nof_prbs;
+      auto& format3            = pucch_res.format.set_format3();
+      format3.start_symbol_idx = cfg.syms.start();
+      format3.nrof_symbols     = cfg.syms.length();
+      format3.nrof_prbs        = cfg.prbs().length();
     } break;
     case pucch_format::FORMAT_4: {
-      const auto& f4           = std::get<pucch_format_4_cfg>(cfg.format_params);
+      const auto& f4           = std::get<pucch_resource::f4_config>(cfg.format_params);
       auto&       format4      = pucch_res.format.set_format4();
-      format4.start_symbol_idx = cfg.starting_sym_idx;
-      format4.nrof_symbols     = cfg.nof_symbols;
+      format4.start_symbol_idx = cfg.syms.start();
+      format4.nrof_symbols     = cfg.syms.length();
       switch (f4.occ_index) {
         case pucch_f4_occ_idx::n0:
           format4.occ_idx = pucch_format4_s::occ_idx_opts::n0;
@@ -1537,7 +1535,7 @@ asn1::rrc_nr::pucch_res_s ocudu::odu::make_asn1_rrc_pucch_resource(const pucch_r
       }
     } break;
     default:
-      ocudu_assertion_failure("Invalid PDCCH resource format={}", fmt::underlying(cfg.format));
+      ocudu_assertion_failure("Invalid PUCCH resource format={}", fmt::underlying(cfg.format()));
   }
   return pucch_res;
 }

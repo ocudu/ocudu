@@ -146,32 +146,6 @@ class pucch_power_control_test_bench : public ::testing::TestWithParam<pucch_pw_
     return req;
   }
 
-  static void set_pucch_formats(span<pucch_resource> pucch_res_list, const pucch_pw_ctrl_params& tparams)
-  {
-    // Set the format of the PUCCH resources as per the test parameters.
-    // NOTE: The parameter won't match the PUCCH format, but this is not important for this test.
-    // Make all PUCCH Format 1 resources (by default, the PUCCH resource in set 0 are of Format 1) as per test
-    // parameters.
-    for (auto& res : pucch_res_list) {
-      if (res.format == pucch_format::FORMAT_1) {
-        res.format = tparams.format_set_0;
-        if (tparams.format_set_0 == pucch_format::FORMAT_0) {
-          res.format_params = pucch_format_0_cfg{};
-        }
-      }
-    }
-    // Make all PUCCH Format 2 resources (by default, the PUCCH resource in set 1 are of Format 2) as per test
-    // parameters.
-    for (auto& res : pucch_res_list) {
-      if (res.format == pucch_format::FORMAT_2) {
-        res.format = tparams.format_set_1;
-        if (tparams.format_set_1 == pucch_format::FORMAT_4) {
-          res.format_params = pucch_format_4_cfg{};
-        }
-      }
-    }
-  }
-
 protected:
   pucch_power_control_test_bench() :
     sched_basic_custom_test_bench(

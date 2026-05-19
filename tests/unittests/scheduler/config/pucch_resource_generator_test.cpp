@@ -62,11 +62,11 @@ TEST_P(pucch_resource_generator_test, generated_resources_are_consistent_with_pa
   }
 
   for (const auto& res : span<const pucch_resource>(res_list.data(), nof_res_f0_f1 + nof_res_f2_f3_f4)) {
-    if (res.format == params.format_01()) {
-      ASSERT_EQ(params.nof_syms_01(), res.nof_symbols);
+    if (res.format() == params.format_01()) {
+      ASSERT_EQ(params.nof_syms_01(), res.syms.length());
       ASSERT_EQ(params.intraslot_freq_hopping_01(), res.second_hop_prb.has_value());
-    } else if (res.format == params.format_234()) {
-      ASSERT_EQ(params.nof_syms_234(), res.nof_symbols);
+    } else if (res.format() == params.format_234()) {
+      ASSERT_EQ(params.nof_syms_234(), res.syms.length());
       ASSERT_EQ(params.intraslot_freq_hopping_234(), res.second_hop_prb.has_value());
     } else {
       FAIL() << "Unexpected PUCCH format in generated resource list.";
