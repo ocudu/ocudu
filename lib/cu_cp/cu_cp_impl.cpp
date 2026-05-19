@@ -1043,7 +1043,7 @@ void cu_cp_impl::handle_inter_cu_target_handover_execution(
   }
 
   ue->get_task_sched().schedule_async_task(launch_async<inter_cu_handover_execution_target_routine>(
-      ue, xnap_ho_target_execution_ctxt, e1ap, *ngap, xnap, logger));
+      ue, xnap_ho_target_execution_ctxt, get_cu_cp_rrc_ue_interface(), e1ap, *ngap, xnap, logger));
 }
 
 void cu_cp_impl::handle_transmission_of_handover_required()

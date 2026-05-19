@@ -257,10 +257,6 @@ void rrc_ue_impl::handle_pdu(const srb_id_t srb_id, byte_buffer rrc_pdu, bool in
     case ul_dcch_msg_type_c::c1_c_::types_opts::rrc_recfg_complete:
       // P=+ AI=- CI=- (Info: Unprotected in response to RRCConnectionReconfiguration prior to security activation.)
       handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().rrc_recfg_complete().rrc_transaction_id);
-      if (context.transfer_context.has_value() && context.transfer_context.value().is_inter_cu_handover) {
-        context.transfer_context.value().is_inter_cu_handover = false;
-        cu_cp_notifier.on_rrc_reconfiguration_complete_indicator();
-      }
       break;
     case ul_dcch_msg_type_c::c1_c_::types_opts::rrc_reest_complete:
       // P=- AI=- CI=-

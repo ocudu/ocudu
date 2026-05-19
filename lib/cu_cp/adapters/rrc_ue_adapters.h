@@ -193,12 +193,6 @@ public:
     cu_cp_rrc_ue_handler->handle_rrc_reestablishment_complete(old_ue_index);
   }
 
-  void on_rrc_reconfiguration_complete_indicator() override
-  {
-    ocudu_assert(cu_cp_rrc_ue_handler != nullptr, "CU-CP handler must not be nullptr");
-    cu_cp_rrc_ue_handler->handle_rrc_reconf_complete_indicator(ue_index);
-  }
-
   async_task<bool> on_ue_transfer_required(cu_cp_ue_index_t old_ue_index) override
   {
     ocudu_assert(cu_cp_rrc_ue_handler != nullptr, "CU-CP handler must not be nullptr");

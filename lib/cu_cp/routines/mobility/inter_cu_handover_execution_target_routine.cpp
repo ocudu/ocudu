@@ -16,12 +16,14 @@ using namespace ocucp;
 inter_cu_handover_execution_target_routine::inter_cu_handover_execution_target_routine(
     cu_cp_ue*                                                    ue_,
     const std::optional<xnap_handover_target_execution_context>& xnap_ho_target_execution_ctxt_,
+    cu_cp_rrc_ue_interface&                                      cu_cp_notifier_,
     e1ap_bearer_context_manager&                                 e1ap_,
     ngap_interface&                                              ngap_,
     xnap_interface*                                              xnap_,
     ocudulog::basic_logger&                                      logger_) :
   ue(ue_),
   xnap_ho_target_execution_ctxt(xnap_ho_target_execution_ctxt_),
+  cu_cp_notifier(cu_cp_notifier_),
   e1ap(e1ap_),
   ngap(ngap_),
   xnap(xnap_),
@@ -104,9 +106,9 @@ void inter_cu_handover_execution_target_routine::operator()(coro_context<async_t
       logger.warning("ue={}: \"{}\" failed. Cause: Failed to transmit UE Context Release", ue->get_ue_index(), name());
       CORO_EARLY_RETURN();
     }
-
-    CORO_EARLY_RETURN();
   }
+
+  cu_cp_notifier.handle_rrc_reconf_complete_indicator(ue->get_ue_index());
 
   CORO_RETURN();
 }

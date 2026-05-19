@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "../../cu_cp_impl_interface.h"
 #include "../../ue_manager/cu_cp_ue_impl.h"
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
@@ -23,6 +24,7 @@ public:
   inter_cu_handover_execution_target_routine(
       cu_cp_ue*                                                    ue_,
       const std::optional<xnap_handover_target_execution_context>& xnap_ho_target_execution_ctxt_,
+      cu_cp_rrc_ue_interface&                                      cu_cp_notifier_,
       e1ap_bearer_context_manager&                                 e1ap_,
       ngap_interface&                                              ngap_,
       xnap_interface*                                              xnap_,
@@ -57,6 +59,7 @@ private:
 
   cu_cp_ue*                                                   ue = nullptr;
   const std::optional<xnap_handover_target_execution_context> xnap_ho_target_execution_ctxt;
+  cu_cp_rrc_ue_interface&                                     cu_cp_notifier;
   e1ap_bearer_context_manager&                                e1ap;
   ngap_interface&                                             ngap;
   xnap_interface*                                             xnap = nullptr;
