@@ -227,18 +227,14 @@ static std::optional<unsigned> compute_retx_nof_rbs(const pdsch_config_params&  
 }
 
 static std::optional<std::pair<unsigned, sch_mcs_index>>
-compute_retx_nof_rbs_mcs(const search_space_info&                    ss,
+compute_retx_nof_rbs_mcs(const pdsch_config_params&                  pdsch_cfg,
                          const dl_harq_process_handle::grant_params& prev_h_params,
                          const ue_link_adaptation_controller&        la,
-                         const interval<unsigned>&                   rb_lims,
-                         unsigned                                    pdsch_td_index)
+                         const interval<unsigned>&                   rb_lims)
 {
-  const unsigned                               nof_layers   = prev_h_params.nof_layers;
-  const pdsch_time_domain_resource_allocation& pdsch_td_res = ss.pdsch_time_domain_list[pdsch_td_index];
-
-  if (pdsch_td_res.symbols.length() == prev_h_params.nof_symbols) {
+  if (pdsch_cfg.symbols.length() == prev_h_params.nof_symbols) {
     // Number of symbols did not change. Reuse the same MCS and TBS of previous HARQ transmission.
-    unsigned nof_rbs = prev_h_params.rbs.type1().length();
+    const unsigned nof_rbs = prev_h_params.rbs.type1().length();
     if (nof_rbs > rb_lims.stop()) {
       return std::nullopt;
     }
@@ -248,8 +244,7 @@ compute_retx_nof_rbs_mcs(const search_space_info&                    ss,
   // Number of symbols changed. Recompute MCS and TBS.
   // Note: While the previous MCS could be used, the fact that the recommended MCS increased since the last tx
   // can give the scheduler more margin to adapt to the different number of symbols.
-  const pdsch_config_params& pdsch_cfg       = ss.get_pdsch_config(pdsch_td_index, nof_layers);
-  const auto                 recommended_mcs = la.calculate_dl_mcs(pdsch_cfg.mcs_table);
+  const auto recommended_mcs = la.calculate_dl_mcs(pdsch_cfg.mcs_table);
   if (not recommended_mcs.has_value()) {
     return std::nullopt;
   }
@@ -344,9 +339,9 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
     nof_rbs = mcs_prbs_sel.value().nof_prbs;
   } else {
     // ReTx Case.
-    const auto& prev_params = h_dl->get_grant_params();
-    auto        result      = compute_retx_nof_rbs_mcs(
-        ss, prev_params, ue_cc.link_adaptation_controller(), nof_rb_lims, *selected_pdsch_td_index);
+    const auto&                prev_params = h_dl->get_grant_params();
+    const pdsch_config_params& pdsch_cfg   = ss.get_pdsch_config(*selected_pdsch_td_index, prev_params.nof_layers);
+    auto result = compute_retx_nof_rbs_mcs(pdsch_cfg, prev_params, ue_cc.link_adaptation_controller(), nof_rb_lims);
     if (not result.has_value()) {
       return std::nullopt;
     }
@@ -460,26 +455,25 @@ static std::optional<unsigned> compute_retx_nof_rbs(const pusch_config_params&  
   return std::nullopt;
 }
 
-static std::optional<std::pair<unsigned, sch_mcs_index>> compute_retx_nof_rbs_mcs(const pusch_config_params& pusch_cfg,
-                                                                                  const ul_harq_process_handle& h_ul,
-                                                                                  const ue_cell&                ue_cc,
-                                                                                  const interval<unsigned>&     rb_lims)
+static std::optional<std::pair<unsigned, sch_mcs_index>>
+compute_retx_nof_rbs_mcs(const pusch_config_params&                  pusch_cfg,
+                         const ul_harq_process_handle::grant_params& prev_h_params,
+                         const ue_cell&                              ue_cc,
+                         const interval<unsigned>&                   rb_lims)
 {
-  const auto& prev_params = h_ul.get_grant_params();
-
-  if (pusch_cfg.symbols.length() == prev_params.nof_symbols) {
+  if (pusch_cfg.symbols.length() == prev_h_params.nof_symbols) {
     // Number of symbols did not change. Reuse the same MCS and TBS of previous HARQ transmission.
-    const unsigned nof_rbs = prev_params.rbs.type1().length();
+    const unsigned nof_rbs = prev_h_params.rbs.type1().length();
     if (nof_rbs > rb_lims.stop()) {
       return std::nullopt;
     }
     // Re-validate TBS: UCI overhead can change across retransmissions.
     static constexpr bool contains_dc = true;
-    const auto            tbs = compute_ul_tbs(pusch_cfg, ue_cc.active_bwp(), prev_params.mcs, nof_rbs, contains_dc);
-    if (not tbs.has_value() or tbs.value() != prev_params.tbs) {
+    const auto            tbs = compute_ul_tbs(pusch_cfg, ue_cc.active_bwp(), prev_h_params.mcs, nof_rbs, contains_dc);
+    if (not tbs.has_value() or tbs.value() != prev_h_params.tbs) {
       return std::nullopt;
     }
-    return std::make_pair(nof_rbs, prev_params.mcs);
+    return std::make_pair(nof_rbs, prev_h_params.mcs);
   }
 
   // Number of symbols changed. Recompute MCS and RBs.
@@ -489,7 +483,7 @@ static std::optional<std::pair<unsigned, sch_mcs_index>> compute_retx_nof_rbs_mc
       ue_cc.link_adaptation_controller().calculate_ul_mcs(pusch_cfg.mcs_table, pusch_cfg.use_transform_precoder);
 
   // Compute number of RBs.
-  const auto nof_rbs_opt = compute_retx_nof_rbs(pusch_cfg, ue_cc.active_bwp(), mcs, prev_params, rb_lims);
+  const auto nof_rbs_opt = compute_retx_nof_rbs(pusch_cfg, ue_cc.active_bwp(), mcs, prev_h_params, rb_lims);
   if (not nof_rbs_opt.has_value()) {
     return std::nullopt;
   }
@@ -596,7 +590,7 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
       // ReTx Case.
       // Compute if effective code rate does not go over the limit for this reTx, for instance, due to presence of UCI.
       pusch_cfg         = compute_retx_pusch_config_params(ue_cc, *h_ul, pusch_td_res, uci_nof_harq_bits, include_csi);
-      const auto result = compute_retx_nof_rbs_mcs(pusch_cfg, *h_ul, ue_cc, nof_rb_lims);
+      const auto result = compute_retx_nof_rbs_mcs(pusch_cfg, h_ul->get_grant_params(), ue_cc, nof_rb_lims);
       if (not result.has_value()) {
         continue;
       }
