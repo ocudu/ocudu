@@ -380,6 +380,31 @@ TEST_F(ue_config_tester, when_config_is_empty_then_procedure_avoids_configuring_
   ASSERT_TRUE(resp.failed_drbs_setups.empty());
 }
 
+TEST_F(ue_config_tester, when_ue_cap_rat_list_present_without_drbs_then_capability_update_is_not_skipped)
+{
+  // Regression test for the Xn handover path: the UEContextSetupRequest carries UE capabilities
+  // but no DRBs/SRBs to set up (they are already active from the HO context). Verify that
+  // changed_detected() does not short-circuit the procedure before ue_cap_rat_list is applied,
+  // which would otherwise leave PUSCH resource allocation at conservative defaults (maxRank=1).
+  f1ap_ue_context_update_request req = create_f1ap_ue_context_update_request(test_ue->ue_index, {}, {});
+  req.ue_cap_rat_list                = byte_buffer::create({0x01, 0x02, 0x03}).value();
+
+  start_procedure(req);
+
+  // With a non-empty ue_cap_rat_list the procedure must not early-return: MAC must receive a
+  // reconfiguration request so that UE capabilities reach the resource manager.
+  ASSERT_TRUE(this->mac.last_ue_reconf_msg.has_value());
+
+  mac_finishes_ue_config(test_ue->ue_index, true);
+
+  ASSERT_TRUE(proc.ready());
+  f1ap_ue_context_update_response resp = proc.get();
+  ASSERT_TRUE(resp.result);
+  // A packed ASN.1 CellGroupConfig (always contains at least phys_cell_group_cfg) is non-empty,
+  // distinguishing this from the early-return path which produces an empty byte_buffer.
+  ASSERT_FALSE(resp.cell_group_cfg.empty());
+}
+
 TEST_F(ue_config_tester, when_drbs_are_released_then_they_are_added_in_rrc_container)
 {
   // Run procedure to create DRB1.
