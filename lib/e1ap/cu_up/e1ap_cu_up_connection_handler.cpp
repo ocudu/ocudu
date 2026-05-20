@@ -29,10 +29,12 @@ private:
 
 } // namespace
 
-e1ap_cu_up_connection_handler::e1ap_cu_up_connection_handler(e1_connection_client&                   e1_client_handler_,
+e1ap_cu_up_connection_handler::e1ap_cu_up_connection_handler(cu_up_e1_index_t                        e1_index_,
+                                                             e1_connection_client&                   e1_client_handler_,
                                                              e1ap_message_handler&                   e1ap_pdu_handler_,
                                                              e1ap_cu_up_manager_connection_notifier& cu_up_manager_,
                                                              task_executor&                          cu_up_executor_) :
+  e1_index(e1_index_),
   e1_client_handler(e1_client_handler_),
   e1ap_pdu_handler(e1ap_pdu_handler_),
   cu_up_manager(cu_up_manager_),
@@ -92,7 +94,7 @@ void e1ap_cu_up_connection_handler::handle_connection_loss_impl()
     e1ap_notifier.reset();
 
     // Signal to DU that the E1 connection is lost.
-    cu_up_manager.on_connection_loss();
+    cu_up_manager.on_connection_loss(e1_index);
   }
 
   // Signal back that the E1 Rx path has been successfully shutdown to any awaiting coroutine.

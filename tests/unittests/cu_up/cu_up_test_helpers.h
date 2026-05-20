@@ -326,7 +326,6 @@ public:
   handle_bearer_context_inactivity_notification(const ocuup::e1ap_bearer_context_inactivity_notification& msg) override
   {
   }
-  void handle_connection_loss() override {}
 
   bool connect_to_cu_cp() override { return true; }
 

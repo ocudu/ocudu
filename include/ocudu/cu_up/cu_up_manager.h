@@ -38,7 +38,7 @@ public:
   /// \param[in] msg The reset message.
   virtual async_task<void> handle_e1_reset(const e1ap_reset& msg) = 0;
 
-  virtual void handle_e1ap_connection_drop() = 0;
+  virtual void handle_e1ap_connection_drop(cu_up_e1_index_t e1_index) = 0;
 
   virtual void schedule_cu_up_async_task(async_task<void> task) = 0;
 

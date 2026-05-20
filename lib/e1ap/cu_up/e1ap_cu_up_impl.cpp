@@ -49,7 +49,7 @@ e1ap_cu_up_impl::e1ap_cu_up_impl(cu_up_e1_index_t             e1_index_,
   cu_up_notifier(cu_up_notifier_),
   timers(timers_),
   cu_up_exec(cu_up_exec_),
-  connection_handler(e1_client_handler_, *this, cu_up_notifier_, cu_up_exec),
+  connection_handler(e1_index, e1_client_handler_, *this, cu_up_notifier_, cu_up_exec),
   ue_ctxt_list(e1ap_cfg.max_nof_ues, logger),
   ev_mng(std::make_unique<e1ap_event_manager>(timer_factory{timers, cu_up_exec})),
   metrics(e1ap_cfg.metrics_period.count())

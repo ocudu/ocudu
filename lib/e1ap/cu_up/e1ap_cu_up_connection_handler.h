@@ -15,7 +15,8 @@ namespace ocuup {
 class e1ap_cu_up_connection_handler
 {
 public:
-  e1ap_cu_up_connection_handler(e1_connection_client&                   e1ap_client_handler_,
+  e1ap_cu_up_connection_handler(cu_up_e1_index_t                        e1_index_,
+                                e1_connection_client&                   e1ap_client_handler_,
                                 e1ap_message_handler&                   e1ap_pdu_handler_,
                                 e1ap_cu_up_manager_connection_notifier& cu_up_manager_,
                                 task_executor&                          cu_up_executor_);
@@ -29,6 +30,8 @@ public:
 private:
   void handle_connection_loss();
   void handle_connection_loss_impl();
+
+  cu_up_e1_index_t e1_index;
 
   e1_connection_client&                   e1_client_handler;
   e1ap_message_handler&                   e1ap_pdu_handler;

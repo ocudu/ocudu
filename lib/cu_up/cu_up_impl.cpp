@@ -49,7 +49,7 @@ generate_cu_up_manager_impl_dependencies(std::atomic<bool>&         stop_command
                                          fifo_async_task_scheduler& main_ctrl_loop)
 {
   return {stop_command,
-          e1ap,
+          {e1ap}, // TODO: Allow multiple E1APs.
           ngu_demux,
           ngu_session_mngr,
           n3_teid_allocator,

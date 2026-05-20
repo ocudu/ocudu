@@ -83,13 +83,13 @@ public:
     cu_up_handler->schedule_ue_async_task(ue_index, std::move(task));
   }
 
-  void on_connection_loss() override
+  void on_connection_loss(cu_up_e1_index_t e1_index) override
   {
     if (cu_up_handler == nullptr) {
       logger.error("Connection loss detected, but no CU-UP handler present.");
       return;
     }
-    cu_up_handler->handle_e1ap_connection_drop();
+    cu_up_handler->handle_e1ap_connection_drop(e1_index);
   }
 
 private:
