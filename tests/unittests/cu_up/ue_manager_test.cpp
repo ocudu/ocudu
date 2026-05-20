@@ -39,7 +39,7 @@ protected:
 
     // create DUT object
     ue_mng = std::make_unique<ue_manager>(ue_manager_config{max_nof_ues, n3_config, test_mode_config},
-                                          ue_manager_dependencies{*e1ap1,
+                                          ue_manager_dependencies{{*e1ap1, *e1ap2},
                                                                   timers,
                                                                   *f1u_gw,
                                                                   *ngu_session_mngr,
@@ -127,9 +127,9 @@ TEST_F(ue_manager_test, when_ues_come_from_different_cps_different_e1_indexes_ar
 {
   ue_context* ue1 = ue_mng->add_ue(e1ap1->get_e1_index(), ue_cfg);
   ASSERT_NE(ue1, nullptr);
-  ASSERT_NE(ue1->get_e1_index(), e1ap1->get_e1_index());
+  ASSERT_EQ(ue1->get_e1_index(), e1ap1->get_e1_index());
 
   ue_context* ue2 = ue_mng->add_ue(e1ap2->get_e1_index(), ue_cfg);
   ASSERT_NE(ue2, nullptr);
-  ASSERT_NE(ue2->get_e1_index(), e1ap2->get_e1_index());
+  ASSERT_EQ(ue2->get_e1_index(), e1ap2->get_e1_index());
 }

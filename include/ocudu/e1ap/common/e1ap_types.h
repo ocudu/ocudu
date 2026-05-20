@@ -22,6 +22,10 @@ namespace ocudu {
 /// \brief Index used to identify the E1 interface in the CU-UP.
 constexpr uint16_t MAX_NOF_E1S = std::numeric_limits<uint16_t>::max();
 enum class cu_up_e1_index_t : uint16_t { min = 0, max = MAX_NOF_E1S - 1, invalid = MAX_NOF_E1S };
+constexpr uint16_t cu_up_e1_index_to_uint(cu_up_e1_index_t index)
+{
+  return static_cast<uint16_t>(index);
+}
 
 /// \brief GNB-CU-CP-UE-E1AP-ID used to identify the UE in the CU-CP E1AP.
 /// \remark See TS 38.463 Section 9.3.1.4: GNB-CU-UE-E1AP-ID valid values: (0..2^32-1).

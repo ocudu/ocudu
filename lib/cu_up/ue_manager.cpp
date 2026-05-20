@@ -12,7 +12,7 @@ ue_manager::ue_manager(const ue_manager_config& config, const ue_manager_depende
   max_nof_ues(config.max_nof_ues),
   n3_config(config.n3_config),
   test_mode_config(config.test_mode_config),
-  e1ap(dependencies.e1ap),
+  e1aps(dependencies.e1aps),
   f1u_gw(dependencies.f1u_gw),
   ngu_session_mngr(dependencies.ngu_session_mngr),
   cu_up_mngr_pdcp_if(dependencies.cu_up_mngr_pdcp_if),
@@ -73,6 +73,12 @@ ue_context* ue_manager::add_ue(cu_up_e1_index_t e1_index, const ue_context_cfg& 
     logger.error("Can't add new UE. Max number of UEs reached.");
     return nullptr;
   }
+
+  // Find E1AP for this bearer context.
+  if (cu_up_e1_index_to_uint(e1_index) >= e1aps.size()) {
+    return nullptr;
+  }
+  std::reference_wrapper<e1ap_interface> e1ap = e1aps[cu_up_e1_index_to_uint(e1_index)];
 
   cu_up_ue_index_t new_idx = get_next_ue_index();
   if (new_idx == INVALID_CU_UP_UE_INDEX) {
