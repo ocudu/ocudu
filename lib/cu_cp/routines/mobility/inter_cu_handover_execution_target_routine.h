@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "../../cu_cp_impl_interface.h"
 #include "../../ue_manager/cu_cp_ue_impl.h"
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
@@ -24,10 +23,10 @@ public:
   inter_cu_handover_execution_target_routine(
       cu_cp_ue*                                                    ue_,
       const std::optional<xnap_handover_target_execution_context>& xnap_ho_target_execution_ctxt_,
-      cu_cp_rrc_ue_interface&                                      cu_cp_notifier_,
       e1ap_bearer_context_manager&                                 e1ap_,
       ngap_interface&                                              ngap_,
       xnap_interface*                                              xnap_,
+      f1ap_ue_context_manager&                                     f1ap_,
       ocudulog::basic_logger&                                      logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
@@ -51,6 +50,7 @@ private:
   e1ap_bearer_context_modification_request tunnel_context_modification_request;
   cu_cp_path_switch_request                path_switch_request;
   cu_cp_ue_context_release_request         ue_context_release_request;
+  f1ap_ue_context_modification_request     ue_context_mod_request;
 
   // (sub-)routine results
   expected<cu_cp_status_transfer>           sn_status;
@@ -60,10 +60,10 @@ private:
 
   cu_cp_ue*                                                   ue = nullptr;
   const std::optional<xnap_handover_target_execution_context> xnap_ho_target_execution_ctxt;
-  cu_cp_rrc_ue_interface&                                     cu_cp_notifier;
   e1ap_bearer_context_manager&                                e1ap;
   ngap_interface&                                             ngap;
   xnap_interface*                                             xnap = nullptr;
+  f1ap_ue_context_manager&                                    f1ap;
   ocudulog::basic_logger&                                     logger;
 
   std::chrono::milliseconds reconf_timeout;

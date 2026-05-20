@@ -14,7 +14,6 @@
 #include "ocudu/rrc/rrc_du.h"
 #include "ocudu/rrc/rrc_ue.h"
 #include "ocudu/xnap/xnap_handover.h"
-#include <string>
 
 namespace ocudu::ocucp {
 
@@ -255,11 +254,6 @@ public:
   /// \brief Handle an successful reestablishment by removing the old UE.
   /// \param[in] ue_index The index of the old UE to remove.
   virtual void handle_rrc_reestablishment_complete(cu_cp_ue_index_t old_ue_index) = 0;
-
-  /// \brief Handle a notification of the reception of the RRC Reconfiguration Complete, and notify the DU with the F1AP
-  /// UE context modification procedure with the RRC Reconfiguration Complete Indicator IE present.
-  /// \param[in] ue_index The index of the UE that received the reconfiguration complete.
-  virtual void handle_rrc_reconf_complete_indicator(cu_cp_ue_index_t ue_index) = 0;
 
   /// \brief Transfer and remove UE contexts for an ongoing Reestablishment.
   /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.

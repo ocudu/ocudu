@@ -71,7 +71,6 @@ struct dummy_cu_cp_rrc_ue_interface : public cu_cp_rrc_ue_interface {
     return launch_no_op_task(rrc_resume_request_response{.success = true});
   }
   void handle_ran_paging_required(cu_cp_ue_index_t ue_index) override {}
-  void handle_rrc_reconf_complete_indicator(cu_cp_ue_index_t ue_index) override {}
 };
 
 struct dummy_cu_cp_du_event_handler : public cu_cp_du_event_handler {

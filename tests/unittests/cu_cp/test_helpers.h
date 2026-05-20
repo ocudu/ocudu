@@ -614,8 +614,6 @@ public:
     return launch_no_op_task();
   }
 
-  void handle_rrc_reconf_complete_indicator(cu_cp_ue_index_t ue_index) override {}
-
   cu_cp_ue_context_release_request last_cu_cp_ue_context_release_request;
 
 private:

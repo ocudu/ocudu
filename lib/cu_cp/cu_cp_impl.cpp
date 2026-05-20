@@ -473,36 +473,6 @@ void cu_cp_impl::handle_rrc_reestablishment_complete(cu_cp_ue_index_t old_ue_ind
   };
 }
 
-void cu_cp_impl::handle_rrc_reconf_complete_indicator(cu_cp_ue_index_t ue_index)
-{
-  cu_cp_ue* ue = ue_mng.find_du_ue(ue_index);
-  if (ue == nullptr) {
-    logger.warning("ue={}: Could not find UE, dropping RRC Reconfiguration Complete Indicator", ue_index);
-    return;
-  }
-
-  if (ue != nullptr) {
-    ue->get_task_sched().schedule_async_task(
-        launch_async([this, ue_index, ue_context_mod_request = f1ap_ue_context_modification_request{}](
-                         coro_context<async_task<void>>& ctx) mutable {
-          CORO_BEGIN(ctx);
-
-          if (ue_mng.find_du_ue(ue_index) == nullptr) {
-            CORO_EARLY_RETURN();
-          }
-
-          ue_context_mod_request.ue_index               = ue_index;
-          ue_context_mod_request.rrc_recfg_complete_ind = f1ap_rrc_recfg_complete_ind::true_value;
-
-          CORO_AWAIT(du_db.get_du_processor(ue_mng.find_du_ue(ue_index)->get_du_index())
-                         .get_f1ap_handler()
-                         .handle_ue_context_modification_request(ue_context_mod_request));
-
-          CORO_RETURN();
-        }));
-  }
-}
-
 async_task<bool> cu_cp_impl::handle_ue_context_transfer(cu_cp_ue_index_t ue_index, cu_cp_ue_index_t old_ue_index)
 {
   if (cu_up_db.get_nof_cu_ups() == 0) {
@@ -1025,6 +995,14 @@ void cu_cp_impl::handle_inter_cu_target_handover_execution(
     return;
   }
 
+  du_index_t    du_index = ue_mng.find_du_ue(ue_index)->get_du_index();
+  du_processor* du       = du_db.find_du_processor(du_index);
+  if (du == nullptr) {
+    logger.warning("ue={}: could not find DU for handover execution. du={}", ue_index, du_index);
+    return;
+  }
+  f1ap_ue_context_manager& f1ap = du->get_f1ap_handler();
+
   cu_up_index_t    cu_up_index = uint_to_cu_up_index(0); // TODO: Update when mapping from UE index to CU-UP exists
   cu_up_processor* cu_up       = cu_up_db.find_cu_up_processor(cu_up_index);
   if (cu_up == nullptr) {
@@ -1043,7 +1021,7 @@ void cu_cp_impl::handle_inter_cu_target_handover_execution(
   }
 
   ue->get_task_sched().schedule_async_task(launch_async<inter_cu_handover_execution_target_routine>(
-      ue, xnap_ho_target_execution_ctxt, get_cu_cp_rrc_ue_interface(), e1ap, *ngap, xnap, logger));
+      ue, xnap_ho_target_execution_ctxt, e1ap, *ngap, xnap, f1ap, logger));
 }
 
 void cu_cp_impl::handle_transmission_of_handover_required()
