@@ -258,13 +258,15 @@ make_default_csi_meas_builder_params(const config_helpers::cell_config_builder_p
     const unsigned max_csi_symbol = *std::max_element(csi_params.csi_params.tracking_csi_ofdm_symbol_indices.begin(),
                                                       csi_params.csi_params.tracking_csi_ofdm_symbol_indices.end());
 
+    static constexpr std::array<unsigned, 1> default_ssb_slots = {0U};
     if (not csi_helper::derive_valid_csi_rs_slot_offsets(csi_params.csi_params,
                                                          std::nullopt,
                                                          std::nullopt,
                                                          std::nullopt,
                                                          tdd_pattern,
                                                          max_csi_symbol,
-                                                         default_ssb_period_ms)) {
+                                                         default_ssb_period_ms,
+                                                         default_ssb_slots)) {
       report_fatal_error("Failed to find valid csi-MeasConfig");
     }
 

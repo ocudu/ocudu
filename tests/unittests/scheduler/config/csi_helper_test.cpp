@@ -29,14 +29,16 @@ protected:
     static constexpr std::array<unsigned, 4> def_track_csi_ofdm_symbol_idx = {6, 10, 6, 10};
     const unsigned                           max_csi_symbol =
         *std::max_element(def_track_csi_ofdm_symbol_idx.begin(), def_track_csi_ofdm_symbol_idx.end());
-    static constexpr unsigned default_ssb_period_ms = 10U;
+    static constexpr unsigned                default_ssb_period_ms = 10U;
+    static constexpr std::array<unsigned, 1> default_ssb_slots     = {0U};
     ocudu_assert(csi_helper::derive_valid_csi_rs_slot_offsets(result.csi_params,
                                                               std::nullopt,
                                                               std::nullopt,
                                                               std::nullopt,
                                                               tdd_cfg,
                                                               max_csi_symbol,
-                                                              default_ssb_period_ms),
+                                                              default_ssb_period_ms,
+                                                              default_ssb_slots),
                  "Derivation failed");
   }
 
@@ -90,3 +92,33 @@ INSTANTIATE_TEST_SUITE_P(
                       tdd_ul_dl_config_common{subcarrier_spacing::kHz30, {10, 6, 9, 3, 0}, std::nullopt},
                       tdd_ul_dl_config_common{subcarrier_spacing::kHz30, {10, 7, 9, 2, 0}, std::nullopt}));
 // clang-format on
+
+TEST(csi_helper_test, ssb_slot_offsets_are_all_avoided)
+{
+  // With L_max=4 and all beams active, SSBs occupy slots 0 and 1 (for 30 kHz SCS, case C).
+  // Verify that no derived CSI-RS offset lands on either of those slots within the SSB period.
+  static const tdd_ul_dl_config_common     tdd_cfg{subcarrier_spacing::kHz30, {10, 6, 9, 3, 0}, std::nullopt};
+  static constexpr unsigned                ssb_period_ms = 10U;
+  static constexpr std::array<unsigned, 2> ssb_slots     = {0U, 1U};
+
+  static constexpr std::array<unsigned, 4> track_sym      = {6, 10, 6, 10};
+  const unsigned                           max_csi_symbol = *std::max_element(track_sym.begin(), track_sym.end());
+
+  csi_helper::csi_meas_config_builder_params params{};
+  params.csi_params.csi_rs_period = csi_helper::get_max_csi_rs_period(tdd_cfg.ref_scs);
+
+  ASSERT_TRUE(csi_helper::derive_valid_csi_rs_slot_offsets(
+      params.csi_params, std::nullopt, std::nullopt, std::nullopt, tdd_cfg, max_csi_symbol, ssb_period_ms, ssb_slots));
+
+  const unsigned ssb_period_slots = ssb_period_ms * get_nof_slots_per_subframe(tdd_cfg.ref_scs);
+  for (unsigned ssb_slot : ssb_slots) {
+    EXPECT_NE(params.csi_params.meas_csi_slot_offset % ssb_period_slots, ssb_slot)
+        << "meas_csi_slot_offset collides with SSB slot " << ssb_slot;
+    EXPECT_NE(params.csi_params.zp_csi_slot_offset % ssb_period_slots, ssb_slot)
+        << "zp_csi_slot_offset collides with SSB slot " << ssb_slot;
+    EXPECT_NE(params.csi_params.tracking_csi_slot_offset % ssb_period_slots, ssb_slot)
+        << "tracking_csi_slot_offset collides with SSB slot " << ssb_slot;
+    EXPECT_NE((params.csi_params.tracking_csi_slot_offset + 1) % ssb_period_slots, ssb_slot)
+        << "tracking_csi_slot_offset+1 collides with SSB slot " << ssb_slot;
+  }
+}
