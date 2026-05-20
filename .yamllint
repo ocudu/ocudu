@@ -25,3 +25,5 @@ rules:
 
 ignore: |
   build/
+  build_trx_retina/
+  build_retina/

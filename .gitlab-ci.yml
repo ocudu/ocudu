@@ -139,7 +139,7 @@ warning about unapplied changes:
   stage: ci
   image: alpine:3.16.0
   rules:
-    - if: $SKIP_OCUDU_BUILDING_CONTAINERS_CI
+    - if: $SKIP_OCUDU_BUILDING_CONTAINERS_CI && $ON_MR
       changes: &warning_container_changes
         paths:
           - .gitlab/ci/builders/**/*
@@ -373,6 +373,9 @@ unit coverage:
     - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
       variables:
         coverage_report: summary
+    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Smoke/
+      variables:
+        coverage_report: summary
     - if: $ON_PROTECTED_BRANCH
       variables:
         coverage_report: full
@@ -447,6 +450,7 @@ doxygen:
         paths:
           - docs/**/*
     - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
+    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Smoke/
     - if: $ON_PROTECTED_BRANCH
   script:
     - |
