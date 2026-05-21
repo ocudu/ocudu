@@ -1399,7 +1399,7 @@ asn1::rrc_nr::pucch_res_set_s ocudu::odu::make_asn1_rrc_pucch_resource_set(const
   pucch_res_set_s pucch_res_set;
   pucch_res_set.pucch_res_set_id = static_cast<uint8_t>(cfg.pucch_res_set_id);
   for (const auto& it : cfg.pucch_res_id_list) {
-    pucch_res_set.res_list.push_back(it.as_ded().ue_res_id);
+    pucch_res_set.res_list.push_back(it.ded().ue_res_id);
   }
   if (cfg.max_payload_size.has_value()) {
     pucch_res_set.max_payload_size = cfg.max_payload_size.value();
@@ -1467,7 +1467,7 @@ static void make_asn1_rrc_pucch_formats_common_param(asn1::rrc_nr::pucch_format_
 asn1::rrc_nr::pucch_res_s ocudu::odu::make_asn1_rrc_pucch_resource(const pucch_resource& cfg)
 {
   pucch_res_s pucch_res;
-  pucch_res.pucch_res_id                = cfg.res_id.as_ded().ue_res_id;
+  pucch_res.pucch_res_id                = cfg.res_id.ded().ue_res_id;
   pucch_res.start_prb                   = cfg.starting_prb;
   pucch_res.intra_slot_freq_hop_present = cfg.second_hop_prb.has_value();
   pucch_res.second_hop_prb_present      = cfg.second_hop_prb.has_value();
@@ -1547,7 +1547,7 @@ ocudu::odu::make_asn1_rrc_sr_resource(const scheduling_request_resource_config& 
   sr_res_cfg.sched_request_res_id           = cfg.sr_res_id;
   sr_res_cfg.sched_request_id               = cfg.sr_id;
   sr_res_cfg.res_present                    = true;
-  sr_res_cfg.res                            = cfg.pucch_res_id.as_ded().ue_res_id;
+  sr_res_cfg.res                            = cfg.pucch_res_id.ded().ue_res_id;
   sr_res_cfg.periodicity_and_offset_present = true;
   switch (cfg.period) {
     case sr_periodicity::sym_2:
@@ -1637,8 +1637,8 @@ calculate_pucch_config_diff(asn1::rrc_nr::pucch_cfg_s& out, const pucch_config& 
         // only by using the UE PUCCH resource ID. This is because the UE PUCCH resource ID always uses index {0
         // , ..., max_UE_PUCCH_resources - 1}; therefore, even if we changed the configuration, this index
         // wouldn't change and the function would not detect the change of configuration.
-        return (static_cast<uint64_t>(res.res_id.as_ded().ue_res_id) << 32U) +
-               static_cast<uint64_t>(res.res_id.as_ded().cell_res_id);
+        return (static_cast<uint64_t>(res.res_id.ded().ue_res_id) << 32U) +
+               static_cast<uint64_t>(res.res_id.ded().cell_res_id);
       });
 
   // PUCCH Resource extension (\c pucch-RepetitionNrofSlots-r17): mirror res_to_add_mod_list in size and order.
@@ -1652,7 +1652,7 @@ calculate_pucch_config_diff(asn1::rrc_nr::pucch_cfg_s& out, const pucch_config& 
     for (const auto& asn1_res : out.res_to_add_mod_list) {
       const auto* const it =
           std::find_if(dest.pucch_res_list.begin(), dest.pucch_res_list.end(), [&](const pucch_resource& r) {
-            return r.res_id.as_ded().ue_res_id == asn1_res.pucch_res_id;
+            return r.res_id.ded().ue_res_id == asn1_res.pucch_res_id;
           });
       pucch_res_ext_v1610_s ext{};
       if (it != dest.pucch_res_list.end() and it->rep_factor != pucch_repetition_factor::n1) {

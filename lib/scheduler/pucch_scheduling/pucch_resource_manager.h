@@ -188,7 +188,7 @@ private:
     std::optional<unsigned> find_res_used_by_ue(span<const pucch_res_id_t> res_to_check, rnti_t rnti) const
     {
       for (unsigned r_pucch = 0; r_pucch != res_to_check.size(); ++r_pucch) {
-        const unsigned cell_res_id = res_to_check[r_pucch].as_ded().cell_res_id;
+        const unsigned cell_res_id = res_to_check[r_pucch].ded().cell_res_id;
         ocudu_assert(cell_res_id < ues_using_pucch_res.size(),
                      "PUCCH resource index from PUCCH resource set exceeds the size of the cell resource array");
         if (ues_using_pucch_res[cell_res_id] == rnti) {

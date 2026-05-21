@@ -192,9 +192,9 @@ static bool validate_generated_list(const std::vector<pucch_resource>&   res_lis
 
   std::array<unsigned, 5> res_count_by_format{0, 0, 0, 0, 0};
   for (const auto& res : res_list) {
-    if (res.res_id.as_ded().cell_res_id >= res_list.size()) {
+    if (res.res_id.ded().cell_res_id >= res_list.size()) {
       ocudu_assertion_failure("Invalid cell resource ID {} in the generated resource list",
-                              res.res_id.as_ded().cell_res_id);
+                              res.res_id.ded().cell_res_id);
       return false;
     }
 

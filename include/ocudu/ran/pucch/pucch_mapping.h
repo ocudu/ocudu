@@ -147,8 +147,8 @@ struct pucch_res_id_t {
   bool is_cmn() const { return std::holds_alternative<common>(id); }
   bool is_ded() const { return std::holds_alternative<dedicated>(id); }
 
-  const common&    as_cmn() const { return std::get<common>(id); }
-  const dedicated& as_ded() const { return std::get<dedicated>(id); }
+  const common&    cmn() const { return std::get<common>(id); }
+  const dedicated& ded() const { return std::get<dedicated>(id); }
 
   bool operator==(const pucch_res_id_t& rhs) const { return id == rhs.id; }
   bool operator!=(const pucch_res_id_t& rhs) const { return !(rhs == *this); }

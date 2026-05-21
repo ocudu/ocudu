@@ -28,8 +28,7 @@ static prb_interval find_pucch_inner_prbs(const pucch_resource& res, unsigned bw
   unsigned max_rb_idx_on_left_side  = 0;
   unsigned min_rb_idx_on_right_side = bwp_size;
 
-  const prb_interval prbs          = res.prbs();
-  auto               update_limits = [&](prb_interval hop) {
+  auto update_limits = [&](prb_interval hop) {
     if (is_on_bwp_left_side(hop.stop())) {
       max_rb_idx_on_left_side = std::max(hop.stop(), max_rb_idx_on_left_side);
     }
@@ -37,6 +36,7 @@ static prb_interval find_pucch_inner_prbs(const pucch_resource& res, unsigned bw
       min_rb_idx_on_right_side = std::min(hop.start(), min_rb_idx_on_right_side);
     }
   };
+  const prb_interval prbs = res.prbs();
   update_limits(prbs);
   if (res.second_hop_prb.has_value()) {
     update_limits(prb_interval::start_and_len(*res.second_hop_prb, prbs.length()));

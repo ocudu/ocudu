@@ -180,13 +180,13 @@ struct pucch_resource {
   /// Returns the PRB interval occupied by the resource (first hop).
   prb_interval prbs() const
   {
-    unsigned nof = 1U;
+    unsigned nof_prbs = 1U;
     if (const auto* f2 = std::get_if<f2_config>(&format_params)) {
-      nof = f2->nof_prbs;
+      nof_prbs = f2->nof_prbs;
     } else if (const auto* f3 = std::get_if<f3_config>(&format_params)) {
-      nof = f3->nof_prbs;
+      nof_prbs = f3->nof_prbs;
     }
-    return prb_interval::start_and_len(starting_prb, nof);
+    return prb_interval::start_and_len(starting_prb, nof_prbs);
   }
 };
 

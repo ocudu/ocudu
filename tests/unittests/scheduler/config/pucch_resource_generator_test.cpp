@@ -140,7 +140,7 @@ TEST_P(pucch_resource_generator_test, ue_pucch_config_builder_test)
                   pucch_cfg.pucch_res_list.size());
 
         auto are_cell_and_ue_resources_equal = [&cell_res_list, &pucch_cfg](const pucch_res_id_t& res_id) {
-          return cell_res_list[res_id.as_ded().cell_res_id] == pucch_cfg.pucch_res_list[res_id.as_ded().ue_res_id];
+          return cell_res_list[res_id.ded().cell_res_id] == pucch_cfg.pucch_res_list[res_id.ded().ue_res_id];
         };
 
         // Check the SR resource.
