@@ -6,6 +6,7 @@
 
 #include "ocudu/ran/nr_band.h"
 #include "ocudu/ran/pdcch/search_space.h"
+#include "ocudu/ran/sib/sib_configuration.h"
 #include "ocudu/ran/ssb/ssb_configuration.h"
 #include "ocudu/ran/subcarrier_spacing.h"
 #include <vector>
@@ -36,10 +37,12 @@ struct sib1_sched_occations {
 /// \param scs_common   Reference SCS used for slot counting (i.e., the common SCS).
 /// \param ss0_idx      SearchSpace#0 index from PDCCH-ConfigSIB1 (parameter \c searchSpaceZero, TS 38.331).
 /// \param coreset0_idx CORESET#0 index from PDCCH-ConfigSIB1 (parameter \c controlResourceSetZero, TS 38.331).
+/// \param min_sib1_retx_period Minimum periodicity for SIB1 repetitions.
 sib1_sched_occations get_occupied_slot_offsets(const ssb_configuration& ssb_cfg,
                                                nr_band                  band,
                                                subcarrier_spacing       scs_common,
                                                search_space0_index      ss0_idx,
-                                               uint8_t                  coreset0_idx);
+                                               uint8_t                  coreset0_idx,
+                                               sib1_rtx_periodicity min_sib1_retx_period = sib1_rtx_periodicity::ms160);
 
 } // namespace ocudu::sib_helper

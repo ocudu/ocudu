@@ -11,7 +11,7 @@
 #include "../support/prbs_calculator.h"
 #include "../support/rb_helper.h"
 #include "../support/sch_pdu_builder.h"
-#include "ocudu/ran/sib/sib_configuration.h"
+#include "ocudu/support/enum_utils.h"
 #include <algorithm>
 
 using namespace ocudu;
@@ -37,8 +37,8 @@ sib1_scheduler::sib1_scheduler(const cell_configuration& cfg_,
   ocudu_assert(searchspace0.has_value(), "SearchSpace#0 not found in common SearchSpace list");
 
   // Compute derived SIB1 parameters.
-  sib1_rtx_period = std::chrono::milliseconds{std::max(ssb_periodicity_to_value(cfg_.params.ssb_cfg.ssb_period),
-                                                       sib1_rtx_periodicity_to_value(expert_cfg.sib1_retx_period))};
+  sib1_rtx_period = std::chrono::milliseconds{std::max<unsigned>(
+      ssb_periodicity_to_value(cfg_.params.ssb_cfg.ssb_period), to_value(expert_cfg.sib1_retx_period))};
 
   // Only the first L_max SSB beams can be used.
   for (size_t i_ssb = 0; i_ssb != L_max; ++i_ssb) {
