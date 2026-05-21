@@ -5,7 +5,10 @@
 #include "f1ap_du_test_helpers.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/test_doubles/utils/test_rng.h"
+#include "ocudu/asn1/asn1_utils.h"
 #include "ocudu/asn1/f1ap/f1ap_pdu_contents_ue.h"
+#include "ocudu/asn1/rrc_nr/rrc_nr.h"
+#include "ocudu/asn1/rrc_nr/ul_dcch_msg_ies.h"
 #include "ocudu/du/du_cell_config_helpers.h"
 #include <gtest/gtest.h>
 
@@ -280,6 +283,50 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_without_pdcp_sn
   ASSERT_EQ(resp->gnb_cu_ue_f1ap_id, msg.pdu.init_msg().value.ue_context_setup_request()->gnb_cu_ue_f1ap_id);
   ASSERT_FALSE(resp->drbs_setup_list_present);
   ASSERT_EQ(resp->drbs_setup_list.size(), 0);
+}
+
+TEST_F(f1ap_du_ue_context_setup_test, when_ue_caps_arrive_in_ho_prep_info_then_ue_cap_rat_list_is_populated)
+{
+  // Regression test: in Xn HO the CU-CP embeds UE capabilities inside HandoverPreparationInformation
+  // rather than sending a standalone ue-CapabilityRAT-ContainerList in the F1AP message.
+  // Verify the F1AP setup procedure forwards ho_prep_info to the DU manager; the resource manager
+  // extracts ue_cap_rat_list from it (tested separately at that layer).
+  du_creates_f1_logical_connection();
+
+  f1ap_message msg =
+      test_helpers::generate_ue_context_setup_request(gnb_cu_ue_f1ap_id_t{0},
+                                                      gnb_du_ue_f1ap_id_t{0},
+                                                      1,
+                                                      {drb_id_t::drb1},
+                                                      config_helpers::make_default_du_cell_config().nr_cgi);
+
+  // Build a minimal HandoverPreparationInformation containing one UE-CapabilityRAT-Container entry.
+  byte_buffer ho_prep_bytes;
+  {
+    asn1::rrc_nr::ho_prep_info_s ho_prep;
+    ho_prep.crit_exts.set_c1().set_ho_prep_info();
+    asn1::rrc_nr::ue_cap_rat_container_s cap;
+    cap.rat_type.value                     = asn1::rrc_nr::rat_type_opts::nr;
+    const std::array<uint8_t, 2> dummy_cap = {0x01, 0x02};
+    cap.ue_cap_rat_container.from_bytes(dummy_cap); // dummy capability bytes
+    ho_prep.crit_exts.c1().ho_prep_info().ue_cap_rat_list.push_back(cap);
+    asn1::bit_ref bref{ho_prep_bytes};
+    ASSERT_EQ(ho_prep.pack(bref), asn1::OCUDUASN_SUCCESS);
+  }
+
+  // Inject the HandoverPreparationInformation into the F1AP message.
+  auto& cu_to_du                        = msg.pdu.init_msg().value.ue_context_setup_request()->cu_to_du_rrc_info;
+  cu_to_du.ie_exts_present              = true;
+  cu_to_du.ie_exts.ho_prep_info_present = true;
+  cu_to_du.ie_exts.ho_prep_info         = std::move(ho_prep_bytes);
+
+  start_procedure(msg);
+
+  // The F1AP layer must forward ho_prep_info opaquely; ue_cap_rat_list stays empty here
+  // and is extracted by the DU resource manager (ue_capability_manager::update_from_ho_prep_info).
+  ASSERT_TRUE(this->f1ap_du_cfg_handler.last_ue_context_update_req.has_value());
+  ASSERT_FALSE(this->f1ap_du_cfg_handler.last_ue_context_update_req->ho_prep_info.empty());
+  ASSERT_TRUE(this->f1ap_du_cfg_handler.last_ue_context_update_req->ue_cap_rat_list.empty());
 }
 
 TEST_F(f1ap_du_test, f1ap_handles_precanned_ue_context_setup_request_correctly)
