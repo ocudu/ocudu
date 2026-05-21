@@ -60,7 +60,7 @@ public:
         const dl_msg_alloc* pdsch_alloc = find_ue_pdsch(rnti_to_find, *this->last_sched_result());
         // These conditions must be verified to consider the ConRes correctly scheduled.
         const bool conres_tc_rnti_check =
-            grant_lcid != lcid_dl_sch_t::UE_CON_RES_ID or dl_pdcch->dci.type == dci_dl_rnti_config_type::tc_rnti_f1_0;
+            grant_lcid != lcid_dl_sch_t::UE_CON_RES_ID or dl_pdcch->dci.type() == dci_dl_rnti_config_type::tc_rnti_f1_0;
         if (not conres_tc_rnti_check or pdsch_alloc == nullptr or not pdsch_alloc->pdsch_cfg.codewords[0].new_data or
             pdsch_alloc->tb_list.size() != 1) {
           return false;
@@ -159,7 +159,7 @@ TEST_F(scheduler_conres_without_pdu_test, when_conres_ce_is_enqueued_and_no_msg4
   ASSERT_EQ(conres_alloc->tb_list.size(), 1);
   ASSERT_EQ(conres_alloc->tb_list[0].lc_chs_to_sched.size(), 1);
   ASSERT_EQ(conres_alloc->tb_list[0].lc_chs_to_sched[0].lcid, lcid_dl_sch_t::UE_CON_RES_ID);
-  ASSERT_EQ(find_ue_dl_pdcch(rnti)->dci.type, dci_dl_rnti_config_type::tc_rnti_f1_0);
+  ASSERT_EQ(find_ue_dl_pdcch(rnti)->dci.type(), dci_dl_rnti_config_type::tc_rnti_f1_0);
   ASSERT_TRUE(this->last_sched_result()->dl.csi_rs.empty());
 }
 
@@ -270,7 +270,7 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
   // Ensure common resources for PDCCH and PDSCH are used rather than UE-dedicated.
   ASSERT_TRUE(this->run_slot_until([this]() { return find_ue_pdsch(rnti, *this->last_sched_result()) != nullptr; }));
   const pdcch_dl_information& dl_pdcch = *find_ue_dl_pdcch(rnti);
-  ASSERT_EQ(dl_pdcch.dci.type, dci_dl_rnti_config_type::c_rnti_f1_0) << "Invalid format used for UE in fallback mode";
+  ASSERT_EQ(dl_pdcch.dci.type(), dci_dl_rnti_config_type::c_rnti_f1_0) << "Invalid format used for UE in fallback mode";
   ASSERT_EQ(dl_pdcch.ctx.coreset_cfg->get_id(), to_coreset_id(0));
   const dl_msg_alloc& pdsch = *find_ue_pdsch(rnti, *this->last_sched_result());
   ASSERT_EQ(pdsch.pdsch_cfg.dci_fmt, dci_dl_format::f1_0);
@@ -384,7 +384,7 @@ TEST_P(scheduler_con_res_msg4_test, when_msg4_gets_retxed_then_tc_rnti_is_used_a
   const dl_msg_alloc* msg4_alloc = find_ue_pdsch(rnti, *this->last_sched_result());
   ASSERT_EQ(msg4_alloc->tb_list.size(), 0) << "Retransmissions should not have a TB list";
   ASSERT_EQ(msg4_alloc->pdsch_cfg.dci_fmt, dci_dl_format::f1_0);
-  ASSERT_EQ(find_ue_dl_pdcch(rnti)->dci.type, dci_dl_rnti_config_type::tc_rnti_f1_0);
+  ASSERT_EQ(find_ue_dl_pdcch(rnti)->dci.type(), dci_dl_rnti_config_type::tc_rnti_f1_0);
   ASSERT_TRUE(this->last_sched_result()->dl.csi_rs.empty());
 
   // Ensure the retransmission uses common PUCCH.

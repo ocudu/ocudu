@@ -1196,7 +1196,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
                            get_nof_pdsch_prbs_required(pdsch_time_res_index, msg3_candidates.size()).tbs_bytes,
                            pdcch.ctx.rnti,
                            cell_cfg,
-                           pdcch.dci.ra_f1_0,
+                           pdcch.dci.as_ra_rnti_f1_0(),
                            rar_crbs,
                            rar_data[pdsch_time_res_index].dmrs_info);
 
@@ -1639,7 +1639,7 @@ void ra_scheduler::schedule_pending_msgbs(cell_resource_allocator& res_alloc, sl
                              get_nof_pdsch_prbs_required(pdsch_time_res_index, effective_nof_sched).tbs_bytes,
                              msgb.msgb_rnti,
                              cell_cfg,
-                             pdcch->dci.ra_f1_0,
+                             pdcch->dci.as_ra_rnti_f1_0(),
                              msgb_crbs,
                              rar_data[pdsch_time_res_index].dmrs_info);
 

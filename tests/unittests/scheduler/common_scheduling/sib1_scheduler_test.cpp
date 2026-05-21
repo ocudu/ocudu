@@ -107,9 +107,9 @@ public:
                      res_grid[0].result.dl.dl_pdcchs.end(),
                      [](const auto& pdcch_) { return pdcch_.ctx.rnti == rnti_t::SI_RNTI; });
     TESTASSERT(pdcch != nullptr);
-    TESTASSERT_EQ(fmt::underlying(dci_dl_rnti_config_type::si_f1_0), fmt::underlying(pdcch->dci.type));
-    TESTASSERT_EQ(si_cfg.sib1_mcs_index, pdcch->dci.si_f1_0.modulation_coding_scheme);
-    TESTASSERT_EQ(0, pdcch->dci.si_f1_0.redundancy_version);
+    TESTASSERT_EQ(fmt::underlying(dci_dl_rnti_config_type::si_f1_0), fmt::underlying(pdcch->dci.type()));
+    TESTASSERT_EQ(si_cfg.sib1_mcs_index, pdcch->dci.as_si_rnti_f1_0().modulation_coding_scheme);
+    TESTASSERT_EQ(0, pdcch->dci.as_si_rnti_f1_0().redundancy_version);
   }
 
   /// Tests if PRBs have been set as used in the resource grid for the current slot.

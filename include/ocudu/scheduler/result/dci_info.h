@@ -7,6 +7,7 @@
 #include "ocudu/ran/pdcch/aggregation_level.h"
 #include "ocudu/ran/pdcch/dci_format.h"
 #include "ocudu/ran/pdcch/dci_packing.h"
+#include <variant>
 
 namespace ocudu {
 
@@ -41,17 +42,56 @@ inline const char* dci_dl_rnti_config_format(dci_dl_rnti_config_type type)
 /// \brief Describes an unpacked DL DCI message.
 /// \remark See FAPI DCI PDU and ORAN WG8 DL-DCI Configuration.
 struct dci_dl_info {
-  dci_dl_rnti_config_type type;
-  union {
-    dci_1_0_si_rnti_configuration si_f1_0;
-    dci_1_0_ra_rnti_configuration ra_f1_0;
-    dci_1_0_c_rnti_configuration  c_rnti_f1_0;
-    dci_1_0_tc_rnti_configuration tc_rnti_f1_0;
-    dci_1_0_p_rnti_configuration  p_rnti_f1_0;
-    dci_1_1_configuration         c_rnti_f1_1;
-  };
+  using payload_type = std::variant<dci_1_0_si_rnti_configuration,
+                                    dci_1_0_ra_rnti_configuration,
+                                    dci_1_0_c_rnti_configuration,
+                                    dci_1_0_tc_rnti_configuration,
+                                    dci_1_0_p_rnti_configuration,
+                                    dci_1_1_configuration>;
 
-  dci_dl_info() : type(dci_dl_rnti_config_type::si_f1_0) { new (&si_f1_0) dci_1_0_si_rnti_configuration(); }
+  dci_dl_rnti_config_type type() const { return static_cast<dci_dl_rnti_config_type>(payload_.index()); }
+
+  const dci_1_0_si_rnti_configuration& as_si_rnti_f1_0() const
+  {
+    return std::get<dci_1_0_si_rnti_configuration>(payload_);
+  }
+  dci_1_0_si_rnti_configuration& as_si_rnti_f1_0() { return std::get<dci_1_0_si_rnti_configuration>(payload_); }
+  dci_1_0_si_rnti_configuration& set_si_rnti_f1_0() { return payload_.emplace<dci_1_0_si_rnti_configuration>(); }
+
+  const dci_1_0_ra_rnti_configuration& as_ra_rnti_f1_0() const
+  {
+    return std::get<dci_1_0_ra_rnti_configuration>(payload_);
+  }
+  dci_1_0_ra_rnti_configuration& as_ra_rnti_f1_0() { return std::get<dci_1_0_ra_rnti_configuration>(payload_); }
+  dci_1_0_ra_rnti_configuration& set_ra_rnti_f1_0() { return payload_.emplace<dci_1_0_ra_rnti_configuration>(); }
+
+  const dci_1_0_c_rnti_configuration& as_c_rnti_f1_0() const
+  {
+    return std::get<dci_1_0_c_rnti_configuration>(payload_);
+  }
+  dci_1_0_c_rnti_configuration& as_c_rnti_f1_0() { return std::get<dci_1_0_c_rnti_configuration>(payload_); }
+  dci_1_0_c_rnti_configuration& set_c_rnti_f1_0() { return payload_.emplace<dci_1_0_c_rnti_configuration>(); }
+
+  const dci_1_0_tc_rnti_configuration& as_tc_rnti_f1_0() const
+  {
+    return std::get<dci_1_0_tc_rnti_configuration>(payload_);
+  }
+  dci_1_0_tc_rnti_configuration& as_tc_rnti_f1_0() { return std::get<dci_1_0_tc_rnti_configuration>(payload_); }
+  dci_1_0_tc_rnti_configuration& set_tc_rnti_f1_0() { return payload_.emplace<dci_1_0_tc_rnti_configuration>(); }
+
+  const dci_1_0_p_rnti_configuration& as_p_rnti_f1_0() const
+  {
+    return std::get<dci_1_0_p_rnti_configuration>(payload_);
+  }
+  dci_1_0_p_rnti_configuration& as_p_rnti_f1_0() { return std::get<dci_1_0_p_rnti_configuration>(payload_); }
+  dci_1_0_p_rnti_configuration& set_p_rnti_f1_0() { return payload_.emplace<dci_1_0_p_rnti_configuration>(); }
+
+  const dci_1_1_configuration& as_c_rnti_f1_1() const { return std::get<dci_1_1_configuration>(payload_); }
+  dci_1_1_configuration&       as_c_rnti_f1_1() { return std::get<dci_1_1_configuration>(payload_); }
+  dci_1_1_configuration&       set_c_rnti_f1_1() { return payload_.emplace<dci_1_1_configuration>(); }
+
+private:
+  payload_type payload_;
 };
 
 /// Defines which fields are stored in the DCI payload, based on the chosen DCI format and RNTI type.

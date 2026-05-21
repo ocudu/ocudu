@@ -160,11 +160,10 @@ static dci_1_0_ra_rnti_configuration generate_ra_f1_0()
 static dci_dl_info generate_dci_dl_info()
 {
   dci_dl_info info;
-  info.type = static_cast<dci_dl_rnti_config_type>(generate_binary());
-  if (info.type == dci_dl_rnti_config_type::si_f1_0) {
-    info.si_f1_0 = generate_si_f1_0();
+  if (generate_binary() == 0) {
+    info.set_si_rnti_f1_0() = generate_si_f1_0();
   } else {
-    info.ra_f1_0 = generate_ra_f1_0();
+    info.set_ra_rnti_f1_0() = generate_ra_f1_0();
   }
 
   return info;

@@ -421,19 +421,19 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point_extended      sl
 /// Encodes DL DCI.
 static dci_payload encode_dci(const pdcch_dl_information& pdcch)
 {
-  switch (pdcch.dci.type) {
+  switch (pdcch.dci.type()) {
     case dci_dl_rnti_config_type::si_f1_0:
-      return dci_1_0_si_rnti_pack(pdcch.dci.si_f1_0);
+      return dci_1_0_si_rnti_pack(pdcch.dci.as_si_rnti_f1_0());
     case dci_dl_rnti_config_type::ra_f1_0:
-      return dci_1_0_ra_rnti_pack(pdcch.dci.ra_f1_0);
+      return dci_1_0_ra_rnti_pack(pdcch.dci.as_ra_rnti_f1_0());
     case dci_dl_rnti_config_type::c_rnti_f1_0:
-      return dci_1_0_c_rnti_pack(pdcch.dci.c_rnti_f1_0);
+      return dci_1_0_c_rnti_pack(pdcch.dci.as_c_rnti_f1_0());
     case dci_dl_rnti_config_type::tc_rnti_f1_0:
-      return dci_1_0_tc_rnti_pack(pdcch.dci.tc_rnti_f1_0);
+      return dci_1_0_tc_rnti_pack(pdcch.dci.as_tc_rnti_f1_0());
     case dci_dl_rnti_config_type::p_rnti_f1_0:
-      return dci_1_0_p_rnti_pack(pdcch.dci.p_rnti_f1_0);
+      return dci_1_0_p_rnti_pack(pdcch.dci.as_p_rnti_f1_0());
     case dci_dl_rnti_config_type::c_rnti_f1_1:
-      return dci_1_1_pack(pdcch.dci.c_rnti_f1_1);
+      return dci_1_1_pack(pdcch.dci.as_c_rnti_f1_1());
     default:
       ocudu_terminate("Invalid DCI format");
   }

@@ -486,8 +486,8 @@ void paging_scheduler::fill_paging_grant(dl_paging_allocation&            pg_gra
   build_pdsch_f1_0_p_rnti(pdsch,
                           cell_cfg,
                           tbs,
-                          pdcch.dci.p_rnti_f1_0,
+                          pdcch.dci.as_p_rnti_f1_0(),
                           crbs_grant,
-                          pdsch_td_alloc_list[pdcch.dci.p_rnti_f1_0.time_resource].symbols,
+                          pdsch_td_alloc_list[pdcch.dci.as_p_rnti_f1_0().time_resource].symbols,
                           dmrs_info);
 }

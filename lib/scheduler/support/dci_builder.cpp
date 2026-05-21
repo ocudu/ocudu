@@ -40,9 +40,7 @@ void ocudu::build_dci_f1_0_si_rnti(dci_dl_info&               dci,
                                    sch_mcs_index              mcs_index,
                                    uint8_t                    si_indicator)
 {
-  dci.type                              = dci_dl_rnti_config_type::si_f1_0;
-  dci.si_f1_0                           = {};
-  dci_1_0_si_rnti_configuration& si_dci = dci.si_f1_0;
+  dci_1_0_si_rnti_configuration& si_dci = dci.set_si_rnti_f1_0();
   // as per TS38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB.
   si_dci.N_rb_dl_bwp = init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length();
   const vrb_interval si_vrbs =
@@ -66,9 +64,7 @@ void ocudu::build_dci_f1_0_p_rnti(dci_dl_info&               dci,
                                   unsigned                   time_resource,
                                   sch_mcs_index              mcs_index)
 {
-  dci.type        = dci_dl_rnti_config_type::p_rnti_f1_0;
-  dci.p_rnti_f1_0 = {};
-  auto& p_dci     = dci.p_rnti_f1_0;
+  auto& p_dci = dci.set_p_rnti_f1_0();
   // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB for P-RNTI.
   p_dci.N_rb_dl_bwp = init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length();
   const vrb_interval paging_vrbs =
@@ -85,9 +81,7 @@ void ocudu::build_dci_f1_0_p_rnti(dci_dl_info&               dci,
 
 void ocudu::build_dci_f1_0_p_rnti(dci_dl_info& dci, const bwp_downlink_common& init_dl_bwp, unsigned short_messages)
 {
-  dci.type        = dci_dl_rnti_config_type::p_rnti_f1_0;
-  dci.p_rnti_f1_0 = {};
-  auto& p_dci     = dci.p_rnti_f1_0;
+  auto& p_dci = dci.set_p_rnti_f1_0();
   // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB for P-RNTI.
   p_dci.N_rb_dl_bwp              = init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length();
   p_dci.short_messages_indicator = dci_1_0_p_rnti_configuration::payload_info::short_messages;
@@ -100,9 +94,7 @@ void ocudu::build_dci_f1_0_ra_rnti(dci_dl_info&               dci,
                                    unsigned                   time_resource,
                                    sch_mcs_index              mcs_index)
 {
-  dci.type                              = dci_dl_rnti_config_type::ra_f1_0;
-  dci.ra_f1_0                           = {};
-  dci_1_0_ra_rnti_configuration& ra_dci = dci.ra_f1_0;
+  dci_1_0_ra_rnti_configuration& ra_dci = dci.set_ra_rnti_f1_0();
   // as per TS38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB.
   ra_dci.N_rb_dl_bwp = init_dl_bwp.pdcch_common.coreset0.has_value()
                            ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length()
@@ -127,9 +119,7 @@ void ocudu::build_dci_f1_0_tc_rnti(dci_dl_info&                  dci,
                                    uint8_t                       rv,
                                    const dl_harq_process_handle& h_dl)
 {
-  dci.type                            = dci_dl_rnti_config_type::tc_rnti_f1_0;
-  dci.tc_rnti_f1_0                    = {};
-  dci_1_0_tc_rnti_configuration& f1_0 = dci.tc_rnti_f1_0;
+  dci_1_0_tc_rnti_configuration& f1_0 = dci.set_tc_rnti_f1_0();
 
   f1_0.tpc_command                 = 1;
   f1_0.interleaved_vrb_prb_mapping = false;
@@ -169,9 +159,7 @@ void ocudu::build_dci_f1_0_c_rnti(dci_dl_info&                  dci,
 {
   const bwp_configuration& active_dl_bwp = ss_info.bwp->dl.cfg();
 
-  dci.type                           = dci_dl_rnti_config_type::c_rnti_f1_0;
-  dci.c_rnti_f1_0                    = {};
-  dci_1_0_c_rnti_configuration& f1_0 = dci.c_rnti_f1_0;
+  dci_1_0_c_rnti_configuration& f1_0 = dci.set_c_rnti_f1_0();
 
   f1_0.tpc_command                 = 1;
   f1_0.interleaved_vrb_prb_mapping = false;
@@ -231,9 +219,7 @@ void ocudu::build_dci_f1_1_c_rnti(dci_dl_info&                  dci,
   const auto               k1_candidates =
       get_k1_candidates(ss_info.get_dl_dci_format(), ue_cell_cfg.cell_cfg_common.dl_data_to_ul_ack);
 
-  dci.type                    = dci_dl_rnti_config_type::c_rnti_f1_1;
-  dci.c_rnti_f1_1             = {};
-  dci_1_1_configuration& f1_1 = dci.c_rnti_f1_1;
+  dci_1_1_configuration& f1_1 = dci.set_c_rnti_f1_1();
 
   f1_1.tpc_command             = static_cast<unsigned>(tpc);
   f1_1.srs_request             = srs_request;

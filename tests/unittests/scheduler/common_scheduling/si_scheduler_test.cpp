@@ -182,11 +182,11 @@ TEST_F(si_scheduler_test, when_si_is_updated_all_ues_in_rrc_idle_get_notified_ex
     }
 
     for (const auto& pdcch : res_grid[0].result.dl.dl_pdcchs) {
-      if (pdcch.dci.type != ocudu::dci_dl_rnti_config_type::p_rnti_f1_0) {
+      if (pdcch.dci.type() != ocudu::dci_dl_rnti_config_type::p_rnti_f1_0) {
         continue;
       }
 
-      const auto& dci = pdcch.dci.p_rnti_f1_0;
+      const auto& dci = pdcch.dci.as_p_rnti_f1_0();
       if (dci.short_messages_indicator != ocudu::dci_1_0_p_rnti_configuration::payload_info::short_messages) {
         continue;
       }

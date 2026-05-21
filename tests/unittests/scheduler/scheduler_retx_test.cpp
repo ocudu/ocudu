@@ -254,9 +254,9 @@ TEST_F(scheduler_error_indication_tester, when_uci_lost_due_to_error_indication_
     return pdcch != nullptr;
   };
   ASSERT_TRUE(this->bench.run_slot_until(pdcch_found, PDSCH_TIMEOUT));
-  ASSERT_EQ(pdcch->dci.type, dci_dl_rnti_config_type::c_rnti_f1_1);
-  harq_id_t h_id = to_harq_id(pdcch->dci.c_rnti_f1_1.harq_process_number);
-  bool      ndi  = pdcch->dci.c_rnti_f1_1.tb1_new_data_indicator;
+  ASSERT_EQ(pdcch->dci.type(), dci_dl_rnti_config_type::c_rnti_f1_1);
+  harq_id_t h_id = to_harq_id(pdcch->dci.as_c_rnti_f1_1().harq_process_number);
+  bool      ndi  = pdcch->dci.as_c_rnti_f1_1().tb1_new_data_indicator;
 
   // Wait for HARQ-ACK.
   const unsigned       ACK_TIMEOUT = 20;
@@ -277,8 +277,8 @@ TEST_F(scheduler_error_indication_tester, when_uci_lost_due_to_error_indication_
 
   // The HARQ should not timeout and should be retransmitted.
   ASSERT_TRUE(this->bench.run_slot_until(pdcch_found, PDSCH_TIMEOUT));
-  ASSERT_EQ(h_id, to_harq_id(pdcch->dci.c_rnti_f1_1.harq_process_number));
-  ASSERT_EQ(ndi, pdcch->dci.c_rnti_f1_1.tb1_new_data_indicator) << "A HARQ retransmission should have taken place";
+  ASSERT_EQ(h_id, to_harq_id(pdcch->dci.as_c_rnti_f1_1().harq_process_number));
+  ASSERT_EQ(ndi, pdcch->dci.as_c_rnti_f1_1().tb1_new_data_indicator) << "A HARQ retransmission should have taken place";
 }
 
 TEST_F(scheduler_error_indication_tester,

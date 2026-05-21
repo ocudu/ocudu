@@ -128,7 +128,7 @@ public:
 
       const bool has_ra_dl_pdcch =
           std::any_of(dl_res.dl_pdcchs.begin(), dl_res.dl_pdcchs.end(), [](const pdcch_dl_information& pdcch) {
-            return pdcch.dci.type == dci_dl_rnti_config_type::ra_f1_0;
+            return pdcch.dci.type() == dci_dl_rnti_config_type::ra_f1_0;
           });
       const bool has_msg3_retx_pdcch =
           std::any_of(dl_res.ul_pdcchs.begin(), dl_res.ul_pdcchs.end(), [](const pdcch_ul_information& pdcch) {

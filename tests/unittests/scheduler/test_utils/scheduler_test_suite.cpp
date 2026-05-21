@@ -113,13 +113,13 @@ void ocudu::assert_pdcch_pdsch_common_consistency(const cell_configuration&   ce
   unsigned                                          freq_assignment = 0;
   unsigned                                          N_rb_dl_bwp     = 0;
   span<const pdsch_time_domain_resource_allocation> td_list;
-  switch (pdcch.dci.type) {
+  switch (pdcch.dci.type()) {
     case dci_dl_rnti_config_type::si_f1_0: {
       ASSERT_EQ(pdcch.ctx.rnti, rnti_t::SI_RNTI);
-      time_assignment = pdcch.dci.si_f1_0.time_resource;
-      freq_assignment = pdcch.dci.si_f1_0.frequency_resource;
-      N_rb_dl_bwp     = pdcch.dci.si_f1_0.N_rb_dl_bwp;
-      if (pdcch.dci.si_f1_0.system_information_indicator == 1) {
+      time_assignment = pdcch.dci.as_si_rnti_f1_0().time_resource;
+      freq_assignment = pdcch.dci.as_si_rnti_f1_0().frequency_resource;
+      N_rb_dl_bwp     = pdcch.dci.as_si_rnti_f1_0().N_rb_dl_bwp;
+      if (pdcch.dci.as_si_rnti_f1_0().system_information_indicator == 1) {
         td_list = get_si_rnti_type0A_common_pdsch_time_domain_list(
             cell_cfg.params.dl_cfg_common.init_dl_bwp.pdsch_common,
             cell_cfg.params.dl_cfg_common.init_dl_bwp.generic_params.cp,
@@ -132,32 +132,32 @@ void ocudu::assert_pdcch_pdsch_common_consistency(const cell_configuration&   ce
       break;
     }
     case dci_dl_rnti_config_type::ra_f1_0: {
-      time_assignment = pdcch.dci.ra_f1_0.time_resource;
+      time_assignment = pdcch.dci.as_ra_rnti_f1_0().time_resource;
       td_list         = get_ra_rnti_pdsch_time_domain_list(cell_cfg.params.dl_cfg_common.init_dl_bwp.pdsch_common,
                                                    cell_cfg.params.dl_cfg_common.init_dl_bwp.generic_params.cp,
                                                    cell_cfg.params.dmrs_typeA_pos);
-      freq_assignment = pdcch.dci.ra_f1_0.frequency_resource;
-      N_rb_dl_bwp     = pdcch.dci.ra_f1_0.N_rb_dl_bwp;
+      freq_assignment = pdcch.dci.as_ra_rnti_f1_0().frequency_resource;
+      N_rb_dl_bwp     = pdcch.dci.as_ra_rnti_f1_0().N_rb_dl_bwp;
       ASSERT_EQ(N_rb_dl_bwp, bwp_cfg.crbs.length());
       ASSERT_EQ(pdcch.ctx.context.ss_id, cell_cfg.params.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id);
     } break;
     case dci_dl_rnti_config_type::tc_rnti_f1_0: {
-      time_assignment = pdcch.dci.tc_rnti_f1_0.time_resource;
-      freq_assignment = pdcch.dci.tc_rnti_f1_0.frequency_resource;
-      N_rb_dl_bwp     = pdcch.dci.tc_rnti_f1_0.N_rb_dl_bwp;
+      time_assignment = pdcch.dci.as_tc_rnti_f1_0().time_resource;
+      freq_assignment = pdcch.dci.as_tc_rnti_f1_0().frequency_resource;
+      N_rb_dl_bwp     = pdcch.dci.as_tc_rnti_f1_0().N_rb_dl_bwp;
       td_list         = cell_cfg.params.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
       ASSERT_EQ(N_rb_dl_bwp, cs_zero_crbs.length());
     } break;
     case dci_dl_rnti_config_type::c_rnti_f1_0: {
-      time_assignment = pdcch.dci.c_rnti_f1_0.time_resource;
-      freq_assignment = pdcch.dci.c_rnti_f1_0.frequency_resource;
+      time_assignment = pdcch.dci.as_c_rnti_f1_0().time_resource;
+      freq_assignment = pdcch.dci.as_c_rnti_f1_0().frequency_resource;
       N_rb_dl_bwp     = cs_zero_crbs.length();
       td_list         = cell_cfg.params.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
     } break;
     case dci_dl_rnti_config_type::p_rnti_f1_0: {
-      time_assignment = pdcch.dci.p_rnti_f1_0.time_resource;
-      freq_assignment = pdcch.dci.p_rnti_f1_0.frequency_resource;
-      N_rb_dl_bwp     = pdcch.dci.p_rnti_f1_0.N_rb_dl_bwp;
+      time_assignment = pdcch.dci.as_p_rnti_f1_0().time_resource;
+      freq_assignment = pdcch.dci.as_p_rnti_f1_0().frequency_resource;
+      N_rb_dl_bwp     = pdcch.dci.as_p_rnti_f1_0().N_rb_dl_bwp;
       td_list         = cell_cfg.params.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
       ASSERT_EQ(N_rb_dl_bwp, cs_zero_crbs.length());
     } break;
@@ -179,23 +179,25 @@ void ocudu::assert_pdcch_pdsch_common_consistency(const cell_configuration&     
   span<const pdcch_dl_information> pdcchs = cell_res_grid[0].result.dl.dl_pdcchs;
   for (const pdcch_dl_information& pdcch : pdcchs) {
     const pdsch_information* linked_pdsch = nullptr;
-    switch (pdcch.dci.type) {
+    switch (pdcch.dci.type()) {
       case dci_dl_rnti_config_type::si_f1_0: {
         const auto&     sibs = cell_res_grid[0].result.dl.bc.sibs;
         sib_information sib;
         const auto&     it = std::find_if(sibs.begin(), sibs.end(), [&pdcch](const auto& sib_) {
-          unsigned pdsch_freq_resource = ra_frequency_type1_get_riv(ra_frequency_type1_configuration{
-              pdcch.dci.si_f1_0.N_rb_dl_bwp, sib_.pdsch_cfg.rbs.type1().start(), sib_.pdsch_cfg.rbs.type1().length()});
+          unsigned pdsch_freq_resource =
+              ra_frequency_type1_get_riv(ra_frequency_type1_configuration{pdcch.dci.as_si_rnti_f1_0().N_rb_dl_bwp,
+                                                                          sib_.pdsch_cfg.rbs.type1().start(),
+                                                                          sib_.pdsch_cfg.rbs.type1().length()});
           return (sib_.pdsch_cfg.rnti == pdcch.ctx.rnti) &&
-                 (pdsch_freq_resource == pdcch.dci.si_f1_0.frequency_resource);
+                 (pdsch_freq_resource == pdcch.dci.as_si_rnti_f1_0().frequency_resource);
         });
         ASSERT_NE(it, sibs.end());
         linked_pdsch = &it->pdsch_cfg;
       } break;
       case dci_dl_rnti_config_type::ra_f1_0: {
-        uint8_t k0 =
-            cell_cfg.params.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[pdcch.dci.ra_f1_0.time_resource]
-                .k0;
+        uint8_t k0 = cell_cfg.params.dl_cfg_common.init_dl_bwp.pdsch_common
+                         .pdsch_td_alloc_list[pdcch.dci.as_ra_rnti_f1_0().time_resource]
+                         .k0;
         const auto& rars = cell_res_grid[k0].result.dl.rar_grants;
         const auto* it   = std::find_if(
             rars.begin(), rars.end(), [&pdcch](const auto& rar) { return rar.pdsch_cfg.rnti == pdcch.ctx.rnti; });
@@ -204,7 +206,7 @@ void ocudu::assert_pdcch_pdsch_common_consistency(const cell_configuration&     
       } break;
       case dci_dl_rnti_config_type::c_rnti_f1_0: {
         uint8_t k0 = cell_cfg.params.dl_cfg_common.init_dl_bwp.pdsch_common
-                         .pdsch_td_alloc_list[pdcch.dci.c_rnti_f1_0.time_resource]
+                         .pdsch_td_alloc_list[pdcch.dci.as_c_rnti_f1_0().time_resource]
                          .k0;
         const auto& ue_grants = cell_res_grid[k0].result.dl.ue_grants;
         const auto* it        = std::find_if(ue_grants.begin(), ue_grants.end(), [&pdcch](const auto& grant) {
@@ -215,7 +217,7 @@ void ocudu::assert_pdcch_pdsch_common_consistency(const cell_configuration&     
       } break;
       case dci_dl_rnti_config_type::tc_rnti_f1_0: {
         uint8_t k0 = cell_cfg.params.dl_cfg_common.init_dl_bwp.pdsch_common
-                         .pdsch_td_alloc_list[pdcch.dci.tc_rnti_f1_0.time_resource]
+                         .pdsch_td_alloc_list[pdcch.dci.as_tc_rnti_f1_0().time_resource]
                          .k0;
         const auto& ue_grants = cell_res_grid[k0].result.dl.ue_grants;
         const auto* it        = std::find_if(ue_grants.begin(), ue_grants.end(), [&pdcch](const auto& grant) {
@@ -226,12 +228,12 @@ void ocudu::assert_pdcch_pdsch_common_consistency(const cell_configuration&     
       } break;
       case dci_dl_rnti_config_type::p_rnti_f1_0: {
         // No corresponding PDSCH.
-        if (pdcch.dci.p_rnti_f1_0.short_messages_indicator ==
+        if (pdcch.dci.as_p_rnti_f1_0().short_messages_indicator ==
             dci_1_0_p_rnti_configuration::payload_info::short_messages) {
           break;
         }
         uint8_t k0 = cell_cfg.params.dl_cfg_common.init_dl_bwp.pdsch_common
-                         .pdsch_td_alloc_list[pdcch.dci.p_rnti_f1_0.time_resource]
+                         .pdsch_td_alloc_list[pdcch.dci.as_p_rnti_f1_0().time_resource]
                          .k0;
         const auto& pg_grants = cell_res_grid[k0].result.dl.paging_grants;
         const auto* it        = std::find_if(pg_grants.begin(), pg_grants.end(), [&pdcch](const auto& grant) {
@@ -459,21 +461,21 @@ static void test_pdcch_common_consistency(const cell_configuration&        cell_
     span<const pdsch_time_domain_resource_allocation> pdsch_td_list;
     std::optional<unsigned>                           time_res;
     std::optional<unsigned>                           k1;
-    switch (pdcch.dci.type) {
+    switch (pdcch.dci.type()) {
       case dci_dl_rnti_config_type::si_f1_0:
         pdsch_td_list =
             get_si_rnti_pdsch_time_domain_list(init_dl_bwp.generic_params.cp, cell_cfg.params.dmrs_typeA_pos);
-        time_res = pdcch.dci.si_f1_0.time_resource;
+        time_res = pdcch.dci.as_si_rnti_f1_0().time_resource;
         break;
       case dci_dl_rnti_config_type::ra_f1_0:
         pdsch_td_list = get_ra_rnti_pdsch_time_domain_list(
             init_dl_bwp.pdsch_common, init_dl_bwp.generic_params.cp, cell_cfg.params.dmrs_typeA_pos);
-        time_res = pdcch.dci.ra_f1_0.time_resource;
+        time_res = pdcch.dci.as_ra_rnti_f1_0().time_resource;
         break;
       case dci_dl_rnti_config_type::tc_rnti_f1_0:
         pdsch_td_list = init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
-        time_res      = pdcch.dci.tc_rnti_f1_0.time_resource;
-        k1            = pdcch.dci.tc_rnti_f1_0.pdsch_harq_fb_timing_indicator + 1;
+        time_res      = pdcch.dci.as_tc_rnti_f1_0().time_resource;
+        k1            = pdcch.dci.as_tc_rnti_f1_0().pdsch_harq_fb_timing_indicator + 1;
         break;
       default:
         break;
@@ -538,13 +540,14 @@ static void assert_rar_grant_msg3_pusch_consistency(const cell_configuration&   
 
   span<const pdcch_dl_information> pdcchs = res_grid[0].result.dl.dl_pdcchs;
   for (const pdcch_dl_information& pdcch : pdcchs) {
-    if (pdcch.dci.type != dci_dl_rnti_config_type::ra_f1_0) {
+    if (pdcch.dci.type() != dci_dl_rnti_config_type::ra_f1_0) {
       continue;
     }
 
     // For a given PDCCH for a RAR, search for the respective RAR PDSCH.
-    uint8_t k0 =
-        cell_cfg.params.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[pdcch.dci.ra_f1_0.time_resource].k0;
+    uint8_t k0 = cell_cfg.params.dl_cfg_common.init_dl_bwp.pdsch_common
+                     .pdsch_td_alloc_list[pdcch.dci.as_ra_rnti_f1_0().time_resource]
+                     .k0;
     span<const rar_information> rars   = res_grid[k0].result.dl.rar_grants;
     const auto*                 rar_it = std::find_if(
         rars.begin(), rars.end(), [&pdcch](const auto& rar) { return rar.pdsch_cfg.rnti == pdcch.ctx.rnti; });
@@ -907,7 +910,7 @@ void test_helper::ra_scheduler_tracker::on_crc_indication(const ul_crc_indicatio
 void test_helper::ra_scheduler_tracker::on_new_result(slot_point sl_tx, const sched_result& result)
 {
   for (auto& dl_pdcch : result.dl.dl_pdcchs) {
-    if (dl_pdcch.dci.type != dci_dl_rnti_config_type::ra_f1_0) {
+    if (dl_pdcch.dci.type() != dci_dl_rnti_config_type::ra_f1_0) {
       // Skip PDCCHs that are not for RAR or MsgB.
       continue;
     }
@@ -925,10 +928,10 @@ void test_helper::ra_scheduler_tracker::on_new_result(slot_point sl_tx, const sc
     }
     ++ra_dl_pdcch_ack_counter;
 
-    const auto& td_res =
-        get_ra_rnti_pdsch_time_domain_list(cell_cfg.params.dl_cfg_common.init_dl_bwp.pdsch_common,
-                                           cell_cfg.params.dl_cfg_common.init_dl_bwp.generic_params.cp,
-                                           cell_cfg.params.dmrs_typeA_pos)[dl_pdcch.dci.ra_f1_0.time_resource];
+    const auto& td_res = get_ra_rnti_pdsch_time_domain_list(
+        cell_cfg.params.dl_cfg_common.init_dl_bwp.pdsch_common,
+        cell_cfg.params.dl_cfg_common.init_dl_bwp.generic_params.cp,
+        cell_cfg.params.dmrs_typeA_pos)[dl_pdcch.dci.as_ra_rnti_f1_0().time_resource];
     auto& expected_rar      = pending_rars.emplace_back();
     expected_rar.pdcch      = dl_pdcch;
     expected_rar.pdcch_slot = sl_tx;
@@ -1144,18 +1147,18 @@ void test_helper::harq_tracker::on_new_result(slot_point /*sl_tx*/, const sched_
   for (const pdcch_dl_information& pdcch : result.dl.dl_pdcchs) {
     bool     ndi     = false;
     unsigned harq_id = 0;
-    switch (pdcch.dci.type) {
+    switch (pdcch.dci.type()) {
       case dci_dl_rnti_config_type::c_rnti_f1_0:
-        ndi     = pdcch.dci.c_rnti_f1_0.new_data_indicator != 0;
-        harq_id = pdcch.dci.c_rnti_f1_0.harq_process_number;
+        ndi     = pdcch.dci.as_c_rnti_f1_0().new_data_indicator != 0;
+        harq_id = pdcch.dci.as_c_rnti_f1_0().harq_process_number;
         break;
       case dci_dl_rnti_config_type::tc_rnti_f1_0:
-        ndi     = pdcch.dci.tc_rnti_f1_0.new_data_indicator != 0;
-        harq_id = pdcch.dci.tc_rnti_f1_0.harq_process_number;
+        ndi     = pdcch.dci.as_tc_rnti_f1_0().new_data_indicator != 0;
+        harq_id = pdcch.dci.as_tc_rnti_f1_0().harq_process_number;
         break;
       case dci_dl_rnti_config_type::c_rnti_f1_1:
-        ndi     = pdcch.dci.c_rnti_f1_1.tb1_new_data_indicator != 0;
-        harq_id = pdcch.dci.c_rnti_f1_1.harq_process_number;
+        ndi     = pdcch.dci.as_c_rnti_f1_1().tb1_new_data_indicator != 0;
+        harq_id = pdcch.dci.as_c_rnti_f1_1().harq_process_number;
         break;
       default:
         continue;

@@ -225,11 +225,12 @@ TEST_P(multi_cell_scheduler_tester, test_rar_scheduling_for_ues_in_different_cel
   for (unsigned slot_count = 0; slot_count < test_run_nof_slots; ++slot_count) {
     for (unsigned cell_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++cell_idx) {
       if (last_sched_result(to_du_cell_index(cell_idx)) != nullptr and not is_rar_scheduled[cell_idx]) {
-        is_rar_scheduled[cell_idx] = std::any_of(last_sched_result(to_du_cell_index(cell_idx))->dl.dl_pdcchs.begin(),
-                                                 last_sched_result(to_du_cell_index(cell_idx))->dl.dl_pdcchs.end(),
-                                                 [](const pdcch_dl_information& dl_pdcch) {
-                                                   return dl_pdcch.dci.type == ocudu::dci_dl_rnti_config_type::ra_f1_0;
-                                                 });
+        is_rar_scheduled[cell_idx] =
+            std::any_of(last_sched_result(to_du_cell_index(cell_idx))->dl.dl_pdcchs.begin(),
+                        last_sched_result(to_du_cell_index(cell_idx))->dl.dl_pdcchs.end(),
+                        [](const pdcch_dl_information& dl_pdcch) {
+                          return dl_pdcch.dci.type() == ocudu::dci_dl_rnti_config_type::ra_f1_0;
+                        });
       }
     }
     run_slot();

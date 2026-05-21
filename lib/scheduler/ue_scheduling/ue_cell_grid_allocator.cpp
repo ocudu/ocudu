@@ -386,7 +386,7 @@ void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&                    
   if (not is_retx and ue_cc.link_adaptation_controller().is_dl_olla_enabled()) {
     msg.context.olla_offset = ue_cc.link_adaptation_controller().dl_cqi_offset();
   }
-  switch (grant.pdcch->dci.type) {
+  switch (grant.pdcch->dci.type()) {
     case dci_dl_rnti_config_type::c_rnti_f1_0:
       build_pdsch_f1_0_c_rnti(msg.pdsch_cfg,
                               pdsch_cfg,
@@ -394,7 +394,7 @@ void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&                    
                               u.crnti,
                               cell_cfg,
                               ss_info,
-                              grant.pdcch->dci.c_rnti_f1_0,
+                              grant.pdcch->dci.as_c_rnti_f1_0(),
                               vrbs,
                               not is_retx);
       break;
@@ -405,7 +405,7 @@ void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&                    
                               u.crnti,
                               ue_cell_cfg,
                               grant.cfg.ss_id,
-                              grant.pdcch->dci.c_rnti_f1_1,
+                              grant.pdcch->dci.as_c_rnti_f1_1(),
                               vrbs,
                               not is_retx,
                               ue_cc.channel_state_manager());
@@ -416,7 +416,7 @@ void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&                    
 
   // Save set PDCCH and PDSCH PDU parameters in HARQ process.
   dl_harq_alloc_context pdsch_sched_ctx;
-  pdsch_sched_ctx.dci_cfg_type = grant.pdcch->dci.type;
+  pdsch_sched_ctx.dci_cfg_type = grant.pdcch->dci.type();
   if (not is_retx) {
     pdsch_sched_ctx.olla_mcs =
         ue_cc.link_adaptation_controller().calculate_dl_mcs(msg.pdsch_cfg.codewords[0].mcs_table);

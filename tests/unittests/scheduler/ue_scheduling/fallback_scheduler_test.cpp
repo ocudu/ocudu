@@ -505,9 +505,9 @@ TEST_P(fallback_scheduler_tester, when_conres_and_msg4_scheduled_separately_msg4
 
     const pdcch_dl_information* pdcch_it = get_ue_allocated_pdcch(test_ue);
     if (pdcch_it != nullptr) {
-      if (pdcch_it->dci.type == dci_dl_rnti_config_type::tc_rnti_f1_0) {
+      if (pdcch_it->dci.type() == dci_dl_rnti_config_type::tc_rnti_f1_0) {
         conres_pdcch = current_slot;
-      } else if (pdcch_it->dci.type == dci_dl_rnti_config_type::c_rnti_f1_0) {
+      } else if (pdcch_it->dci.type() == dci_dl_rnti_config_type::c_rnti_f1_0) {
         msg4_pdcch = current_slot;
       }
     }
@@ -523,7 +523,7 @@ TEST_P(fallback_scheduler_tester, when_conres_and_msg4_scheduled_separately_msg4
     run_slot();
 
     const pdcch_dl_information* pdcch_it = get_ue_allocated_pdcch(test_ue);
-    if (pdcch_it != nullptr and pdcch_it->dci.type == dci_dl_rnti_config_type::c_rnti_f1_0) {
+    if (pdcch_it != nullptr and pdcch_it->dci.type() == dci_dl_rnti_config_type::c_rnti_f1_0) {
       msg4_pdcch = current_slot;
     }
   }
@@ -562,9 +562,9 @@ TEST_P(fallback_scheduler_tester, conres_and_msg4_scheduled_scheduled_over_diffe
 
     const pdcch_dl_information* pdcch_it = get_ue_allocated_pdcch(test_ue);
     if (pdcch_it != nullptr) {
-      if (pdcch_it->dci.type == dci_dl_rnti_config_type::tc_rnti_f1_0) {
+      if (pdcch_it->dci.type() == dci_dl_rnti_config_type::tc_rnti_f1_0) {
         conres_pdcch = current_slot;
-      } else if (pdcch_it->dci.type == dci_dl_rnti_config_type::c_rnti_f1_0) {
+      } else if (pdcch_it->dci.type() == dci_dl_rnti_config_type::c_rnti_f1_0) {
         msg4_pdcch = current_slot;
       }
     }
@@ -603,9 +603,9 @@ TEST_P(fallback_scheduler_tester, when_conres_and_msg4_srb1_scheduled_separately
 
     const pdcch_dl_information* pdcch_it = get_ue_allocated_pdcch(test_ue);
     if (pdcch_it != nullptr) {
-      if (pdcch_it->dci.type == dci_dl_rnti_config_type::tc_rnti_f1_0) {
+      if (pdcch_it->dci.type() == dci_dl_rnti_config_type::tc_rnti_f1_0) {
         conres_pdcch = current_slot;
-      } else if (pdcch_it->dci.type == dci_dl_rnti_config_type::c_rnti_f1_0) {
+      } else if (pdcch_it->dci.type() == dci_dl_rnti_config_type::c_rnti_f1_0) {
         msg4_srb1_pdcch = current_slot;
       }
     }
@@ -621,7 +621,7 @@ TEST_P(fallback_scheduler_tester, when_conres_and_msg4_srb1_scheduled_separately
     run_slot();
 
     const pdcch_dl_information* pdcch_it = get_ue_allocated_pdcch(test_ue);
-    if (pdcch_it != nullptr and pdcch_it->dci.type == dci_dl_rnti_config_type::c_rnti_f1_0) {
+    if (pdcch_it != nullptr and pdcch_it->dci.type() == dci_dl_rnti_config_type::c_rnti_f1_0) {
       msg4_srb1_pdcch = current_slot;
     }
   }
@@ -670,7 +670,7 @@ TEST_P(fallback_scheduler_tester, when_ra_conres_timer_expires_ue_doesnt_get_all
 
     const pdcch_dl_information* pdcch_it = get_ue_allocated_pdcch(test_ue);
     if (pdcch_it != nullptr) {
-      if (pdcch_it->dci.type == dci_dl_rnti_config_type::tc_rnti_f1_0) {
+      if (pdcch_it->dci.type() == dci_dl_rnti_config_type::tc_rnti_f1_0) {
         conres_pdcch = current_slot;
       }
     }
@@ -777,7 +777,7 @@ TEST_P(fallback_scheduler_tester, test_srb0_buffer_size_exceeding_max_msg4_mcs_i
     run_slot();
     const pdcch_dl_information* pdcch_it = get_ue_allocated_pdcch(test_ue);
     // ConRes CE is sent beforehand hence DCI 1_0 scrambled with C-RNTI is used to send Msg4.
-    ASSERT_FALSE(pdcch_it != nullptr and pdcch_it->dci.type == ocudu::dci_dl_rnti_config_type::c_rnti_f1_0);
+    ASSERT_FALSE(pdcch_it != nullptr and pdcch_it->dci.type() == ocudu::dci_dl_rnti_config_type::c_rnti_f1_0);
     if (pdcch_it != nullptr) {
       const dl_msg_alloc* pdsch_it = get_ue_allocated_pdsch(test_ue);
       // ConRes CE is sent beforehand hence Msg4 should consist only SDU with no ConRes MAC CE.

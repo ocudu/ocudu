@@ -905,7 +905,7 @@ dl_harq_process_handle ue_fallback_scheduler::fill_dl_srb_grant(ue&             
                                units::bytes{tbs_bytes},
                                u.crnti,
                                cell_cfg,
-                               pdcch.dci.tc_rnti_f1_0,
+                               pdcch.dci.as_tc_rnti_f1_0(),
                                vrbs,
                                not is_retx);
       break;
@@ -917,7 +917,7 @@ dl_harq_process_handle ue_fallback_scheduler::fill_dl_srb_grant(ue&             
                               u.crnti,
                               cell_cfg,
                               u.get_pcell().cfg().search_space(pdcch.ctx.context.ss_id),
-                              pdcch.dci.c_rnti_f1_0,
+                              pdcch.dci.as_c_rnti_f1_0(),
                               vrbs,
                               not is_retx);
       break;
@@ -935,7 +935,7 @@ dl_harq_process_handle ue_fallback_scheduler::fill_dl_srb_grant(ue&             
   }
 
   // Save in HARQ the parameters set for this PDCCH and PDSCH PDUs.
-  dl_harq_alloc_context ctxt{pdcch.dci.type, std::nullopt, std::nullopt, std::nullopt, true};
+  dl_harq_alloc_context ctxt{pdcch.dci.type(), std::nullopt, std::nullopt, std::nullopt, true};
   h_dl->save_grant_params(ctxt, msg);
 
   return *h_dl;

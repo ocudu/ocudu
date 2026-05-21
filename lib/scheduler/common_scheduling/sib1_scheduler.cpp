@@ -237,9 +237,9 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   build_pdsch_f1_0_si_rnti(pdsch,
                            cell_cfg,
                            tbs,
-                           sib1_pdcch.dci.si_f1_0,
+                           sib1_pdcch.dci.as_si_rnti_f1_0(),
                            sib1_crbs_grant,
-                           pdsch_td_res_alloc_list[sib1_pdcch.dci.si_f1_0.time_resource].symbols,
+                           pdsch_td_res_alloc_list[sib1_pdcch.dci.as_si_rnti_f1_0().time_resource].symbols,
                            dmrs_info);
 }
 
