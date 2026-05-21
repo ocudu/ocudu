@@ -72,6 +72,8 @@ async_task<void> ue_manager::remove_e1_ues(cu_up_e1_index_t e1_index)
     while (ue_it != ue_db.end()) {
       if (ue_it->second->get_e1_index() == e1_index) {
         CORO_AWAIT(schedule_and_wait_ue_removal((ue_it++)->first));
+      } else {
+        ue_it++;
       }
     }
 

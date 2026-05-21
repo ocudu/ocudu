@@ -133,3 +133,39 @@ TEST_F(ue_manager_test, when_ues_come_from_different_cps_different_e1_indexes_ar
   ASSERT_NE(ue2, nullptr);
   ASSERT_EQ(ue2->get_e1_index(), e1ap2->get_e1_index());
 }
+
+// Add two bearer contexts to E1AP 1 and one to E1AP 2.
+// Make sure that when E1AP 1 loses connection, only the bearer
+// contexts associated with it are removed.
+TEST_F(ue_manager_test, when_e1_is_lost_only_ues_from_that_e1_are_removed)
+{
+  ue_context* ue1_1 = ue_mng->add_ue(e1ap1->get_e1_index(), ue_cfg);
+  ASSERT_NE(ue1_1, nullptr);
+  ASSERT_EQ(ue1_1->get_e1_index(), e1ap1->get_e1_index());
+
+  ue_context* ue1_2 = ue_mng->add_ue(e1ap1->get_e1_index(), ue_cfg);
+  ASSERT_NE(ue1_2, nullptr);
+  ASSERT_EQ(ue1_2->get_e1_index(), e1ap1->get_e1_index());
+
+  ue_context* ue2_1 = ue_mng->add_ue(e1ap2->get_e1_index(), ue_cfg);
+  ASSERT_NE(ue2_1, nullptr);
+  ASSERT_EQ(ue2_1->get_e1_index(), e1ap2->get_e1_index());
+
+  cu_up_ue_index_t ue1_1_index = ue1_1->get_index();
+  cu_up_ue_index_t ue1_2_index = ue1_2->get_index();
+  cu_up_ue_index_t ue2_1_index = ue2_1->get_index();
+
+  // Remove all UEs from E1AP 1.
+  t = ue_mng->remove_e1_ues(ue1_1->get_e1_index());
+  t_launcher.emplace(t);
+
+  // We should not be able to find UEs associated with E1AP 1.
+  ue_context* ret = ue_mng->find_ue(ue1_1_index);
+  ASSERT_EQ(ret, nullptr);
+  ret = ue_mng->find_ue(ue1_2_index);
+  ASSERT_EQ(ret, nullptr);
+
+  // Bearer contexts associated with with E1AP 2 should still be present.
+  ret = ue_mng->find_ue(ue2_1_index);
+  ASSERT_NE(ret, nullptr);
+}
