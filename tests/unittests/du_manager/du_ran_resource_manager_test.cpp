@@ -375,7 +375,7 @@ protected:
   interval<unsigned, true> get_pucch_res_id_interval(const pucch_config& pucch_cfg, pucch_format format) const
   {
     const unsigned pucch_res_set_id = format == pucch_format::FORMAT_1 ? 0U : 1U;
-    const auto&    pucch_res_set    = pucch_cfg.pucch_res_set[pucch_res_set_id].pucch_res_id_list;
+    const auto&    pucch_res_set    = pucch_cfg.pucch_res_set[pucch_res_set_id].resources;
     const unsigned expected_pucch_res_set_size =
         format == pucch_format::FORMAT_1 ? cell_cfg_list[0].ran.init_bwp.pucch.resources.res_set_size.value()
                                          : cell_cfg_list[0].ran.init_bwp.pucch.resources.res_set_size.value();

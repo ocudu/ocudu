@@ -156,41 +156,41 @@ TEST_P(pucch_resource_generator_test, ue_pucch_config_builder_test)
 
         // Check Resource Set ID 0.
         const auto& res_set_0 = pucch_cfg.pucch_res_set[0];
-        ASSERT_EQ(pucch_res_set_idx::set_0, res_set_0.pucch_res_set_id);
-        ASSERT_EQ(params.res_set_size.value() + extra_res_per_res_set, res_set_0.pucch_res_id_list.size());
+        ASSERT_EQ(pucch_res_set_id::set_0, res_set_0.id);
+        ASSERT_EQ(params.res_set_size.value() + extra_res_per_res_set, res_set_0.resources.size());
 
         for (unsigned pri = 0; pri != params.res_set_size.value(); ++pri) {
           const pucch_res_id_t expected_res_id = params.harq_res_id<0>(res_set_cfg_id, pri);
-          ASSERT_EQ(expected_res_id, res_set_0.pucch_res_id_list[pri]);
+          ASSERT_EQ(expected_res_id, res_set_0.resources[pri]);
           ASSERT_TRUE(are_cell_and_ue_resources_equal(expected_res_id));
         }
 
         // Check Resource Set ID 1.
         const auto& res_set_1 = pucch_cfg.pucch_res_set[1];
-        ASSERT_EQ(pucch_res_set_idx::set_1, res_set_1.pucch_res_set_id);
-        ASSERT_EQ(params.res_set_size.value() + extra_res_per_res_set, res_set_1.pucch_res_id_list.size());
+        ASSERT_EQ(pucch_res_set_id::set_1, res_set_1.id);
+        ASSERT_EQ(params.res_set_size.value() + extra_res_per_res_set, res_set_1.resources.size());
 
         for (unsigned pri = 0; pri != params.res_set_size.value(); ++pri) {
           const pucch_res_id_t expected_res_id = params.harq_res_id<1>(res_set_cfg_id, pri);
-          ASSERT_EQ(expected_res_id, res_set_1.pucch_res_id_list[pri]);
+          ASSERT_EQ(expected_res_id, res_set_1.resources[pri]);
           ASSERT_TRUE(are_cell_and_ue_resources_equal(expected_res_id));
         }
 
         if (using_02) {
           // Check SR_F0 and SR_F2.
-          ASSERT_EQ(expected_sr_res_id, res_set_0.pucch_res_id_list[params.res_set_size.value()]);
+          ASSERT_EQ(expected_sr_res_id, res_set_0.resources[params.res_set_size.value()]);
           const pucch_res_id_t expected_id_sr_f2 = params.sr_f2_res_id(sr_res_id);
-          ASSERT_EQ(expected_id_sr_f2, res_set_1.pucch_res_id_list[params.res_set_size.value()]);
+          ASSERT_EQ(expected_id_sr_f2, res_set_1.resources[params.res_set_size.value()]);
           ASSERT_TRUE(are_cell_and_ue_resources_equal(expected_id_sr_f2));
 
           if (params.nof_cell_csi_resources != 0) {
             // Check CSI_F0 and CSI_F2.
             const pucch_res_id_t expected_id_csi_f0 = params.csi_f0_res_id(csi_res_id);
-            ASSERT_EQ(expected_id_csi_f0, res_set_0.pucch_res_id_list[params.res_set_size.value() + 1U]);
+            ASSERT_EQ(expected_id_csi_f0, res_set_0.resources[params.res_set_size.value() + 1U]);
             ASSERT_TRUE(are_cell_and_ue_resources_equal(expected_id_csi_f0));
 
             const pucch_res_id_t expected_csi_res_id = params.csi_res_id(csi_res_id);
-            ASSERT_EQ(expected_csi_res_id, res_set_1.pucch_res_id_list[params.res_set_size.value() + 1U]);
+            ASSERT_EQ(expected_csi_res_id, res_set_1.resources[params.res_set_size.value() + 1U]);
           }
         }
       }

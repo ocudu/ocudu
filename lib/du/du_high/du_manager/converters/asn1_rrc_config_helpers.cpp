@@ -1398,12 +1398,9 @@ static bool calculate_bwp_dl_dedicated_diff(asn1::rrc_nr::bwp_dl_ded_s&   out,
 asn1::rrc_nr::pucch_res_set_s ocudu::odu::make_asn1_rrc_pucch_resource_set(const pucch_resource_set& cfg)
 {
   pucch_res_set_s pucch_res_set;
-  pucch_res_set.pucch_res_set_id = static_cast<uint8_t>(cfg.pucch_res_set_id);
-  for (const auto& it : cfg.pucch_res_id_list) {
+  pucch_res_set.pucch_res_set_id = static_cast<uint8_t>(cfg.id);
+  for (const auto& it : cfg.resources) {
     pucch_res_set.res_list.push_back(it.ded().ue_res_id);
-  }
-  if (cfg.max_payload_size.has_value()) {
-    pucch_res_set.max_payload_size = cfg.max_payload_size.value();
   }
   return pucch_res_set;
 }
@@ -1624,7 +1621,7 @@ calculate_pucch_config_diff(asn1::rrc_nr::pucch_cfg_s& out, const pucch_config& 
       src.pucch_res_set,
       dest.pucch_res_set,
       [](const pucch_resource_set& res_set) { return make_asn1_rrc_pucch_resource_set(res_set); },
-      [](const pucch_resource_set& res_set) { return static_cast<uint8_t>(res_set.pucch_res_set_id); });
+      [](const pucch_resource_set& res_set) { return static_cast<uint8_t>(res_set.id); });
 
   // PUCCH Resource.
   calculate_addmodremlist_diff(
@@ -1633,14 +1630,7 @@ calculate_pucch_config_diff(asn1::rrc_nr::pucch_cfg_s& out, const pucch_config& 
       src.pucch_res_list,
       dest.pucch_res_list,
       [](const pucch_resource& res) { return make_asn1_rrc_pucch_resource(res); },
-      [](const pucch_resource& res) {
-        // NOTE: For safety, we use an ID composed of both UE and cell PUCCH resource IDs. We cannot compare
-        // only by using the UE PUCCH resource ID. This is because the UE PUCCH resource ID always uses index {0
-        // , ..., max_UE_PUCCH_resources - 1}; therefore, even if we changed the configuration, this index
-        // wouldn't change and the function would not detect the change of configuration.
-        return (static_cast<uint64_t>(res.res_id.ded().ue_res_id) << 32U) +
-               static_cast<uint64_t>(res.res_id.ded().cell_res_id);
-      });
+      [](const pucch_resource& res) { return res.res_id.ded().ue_res_id; });
 
   // PUCCH Resource extension (\c pucch-RepetitionNrofSlots-r17): mirror res_to_add_mod_list in size and order.
   // Only emit the ext list if at least one resource has a non-default repetition factor.

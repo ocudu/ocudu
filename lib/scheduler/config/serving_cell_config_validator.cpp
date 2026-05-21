@@ -167,17 +167,16 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
   VERIFY(pucch_cfg.pucch_res_set.size() >= 2, "At least 2 PUCCH resource sets need to be configured in PUCCH-Config");
   const auto& res_set_0 = pucch_cfg.pucch_res_set[0];
   const auto& res_set_1 = pucch_cfg.pucch_res_set[1];
-  VERIFY(res_set_0.pucch_res_set_id == pucch_res_set_idx::set_0 and
-             res_set_1.pucch_res_set_id == pucch_res_set_idx::set_1,
+  VERIFY(res_set_0.id == pucch_res_set_id::set_0 and res_set_1.id == pucch_res_set_id::set_1,
          "PUCCH resource sets 0 and 1 are expected to have PUCCH-ResourceSetId 0 and 1, respectively");
-  VERIFY((not res_set_0.pucch_res_id_list.empty()) and (not res_set_1.pucch_res_id_list.empty()),
+  VERIFY((not res_set_0.resources.empty()) and (not res_set_1.resources.empty()),
          "PUCCH resource sets 0 and 1 are expected to have a non-empty list of PUCCH resource ID");
-  VERIFY(res_set_0.pucch_res_id_list.size() <= res_set_1.pucch_res_id_list.size(),
+  VERIFY(res_set_0.resources.size() <= res_set_1.resources.size(),
          "PUCCH Resource Set ID 1's size should be greater or equal to PUCCH Resource Set ID 0's size");
 
   // Verify that the resources indicated in the Resource Sets point to the correct resources in the PUCCH resource list.
   for (size_t pucch_res_set_idx = 0; pucch_res_set_idx != 2; ++pucch_res_set_idx) {
-    for (auto res_id : pucch_cfg.pucch_res_set[pucch_res_set_idx].pucch_res_id_list) {
+    for (auto res_id : pucch_cfg.pucch_res_set[pucch_res_set_idx].resources) {
       const auto& res = pucch_cfg.pucch_res_list[res_id.ded().ue_res_id];
       VERIFY(res.res_id == res_id,
              "PUCCH resource with UE resource ID {} does not match the corresponding resource ID in the resource set",
@@ -186,13 +185,13 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
   }
 
   // Check PUCCH Formats for each Resource Set.
-  for (auto res_id : res_set_0.pucch_res_id_list) {
+  for (auto res_id : res_set_0.resources) {
     VERIFY(res_id.ded().ue_res_id < pucch_cfg.pucch_res_list.size(), "Invalid UE resource ID");
     const auto& res = pucch_cfg.pucch_res_list[res_id.ded().ue_res_id];
     VERIFY(res.res_id == res_id and res.format() == res_params.format_01(),
            "Invalid PUCCH resource in Resource Set ID 0");
   }
-  for (auto res_id : res_set_1.pucch_res_id_list) {
+  for (auto res_id : res_set_1.resources) {
     VERIFY(res_id.ded().ue_res_id < pucch_cfg.pucch_res_list.size(), "Invalid UE resource ID");
     const auto& res = pucch_cfg.pucch_res_list[res_id.ded().ue_res_id];
     VERIFY(res.res_id == res_id and res.format() == res_params.format_234(),
@@ -200,7 +199,7 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
   }
 
   if (res_params.format_01() == pucch_format::FORMAT_0) {
-    VERIFY(res_set_0.pucch_res_id_list.size() == pucch_cfg.pucch_res_set[1].pucch_res_id_list.size(),
+    VERIFY(res_set_0.resources.size() == pucch_cfg.pucch_res_set[1].resources.size(),
            "With Format 0, the PUCCH resource sets 0 and 1 must have the same size");
   }
 
@@ -229,10 +228,10 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
   const bool using_02 =
       res_params.format_01() == pucch_format::FORMAT_0 and res_params.format_234() == pucch_format::FORMAT_2;
   if (using_02) {
-    VERIFY(res_set_0.pucch_res_id_list[res_params.res_set_size.value()] == sr_res_id,
+    VERIFY(res_set_0.resources[res_params.res_set_size.value()] == sr_res_id,
            "With Format 0, the SR resource must be present in Resource Set ID 0");
 
-    VERIFY(res_set_1.pucch_res_id_list[res_params.res_set_size.value()].ded().ue_res_id ==
+    VERIFY(res_set_1.resources[res_params.res_set_size.value()].ded().ue_res_id ==
                res_params.sr_f2_res_id(pucch_sr_resource_id(0)).ded().ue_res_id,
            "With Format 0, the SR_F2 resource must be present in Resource Set ID 1");
   }
@@ -271,11 +270,11 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
            res_params.max_payload_234());
 
     if (using_02) {
-      VERIFY(res_set_0.pucch_res_id_list[res_params.res_set_size.value() + 1].ded().ue_res_id ==
+      VERIFY(res_set_0.resources[res_params.res_set_size.value() + 1].ded().ue_res_id ==
                  res_params.csi_f0_res_id(pucch_csi_resource_id(0)).ded().ue_res_id,
              "With Format 0, the CSI_F0 resource must be present in Resource Set ID 0");
 
-      VERIFY(res_set_1.pucch_res_id_list[res_params.res_set_size.value() + 1] == csi_res_id,
+      VERIFY(res_set_1.resources[res_params.res_set_size.value() + 1] == csi_res_id,
              "With Format 0, the CSI resource must be present in Resource Set ID 1");
     }
   }

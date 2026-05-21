@@ -39,15 +39,15 @@ constexpr size_t MAX_NOF_PUCCH_P0_PER_SET = 8;
 constexpr size_t MAX_NOF_PUCCH_PATHLOSS_REF_RS_PER_SET = 4;
 
 /// Options for \c occ-Length in \c PUCCH-format4, in \c PUCCH-Config, TS 38.331.
-enum class pucch_f4_occ_len { n2 = 2, n4 = 4 };
+enum class pucch_f4_occ_len : uint8_t { n2 = 2, n4 = 4 };
 
 /// Options for \c occ-Index in \c PUCCH-format4, in \c PUCCH-Config, TS 38.331.
-enum class pucch_f4_occ_idx { n0, n1, n2, n3 };
+enum class pucch_f4_occ_idx : uint8_t { n0, n1, n2, n3 };
 
 /// Options for \c PUCCH-MaxCodeRate in \c PUCCH-Config, TS 38.331.
 enum class max_pucch_code_rate { not_set = 0, dot_08, dot_15, dot_25, dot_35, dot_45, dot_60, dot_80 };
 
-inline float to_max_code_rate_float(max_pucch_code_rate opt)
+inline float to_float(max_pucch_code_rate opt)
 {
   switch (opt) {
     case max_pucch_code_rate::dot_08:
@@ -191,21 +191,13 @@ struct pucch_resource {
 };
 
 /// \c PUCCH-ResourceSet, in \c PUCCH-Config, TS 38.331.
-/// \remark The field \c pucch-ResourceSetId is not included, as we reference the resource set ID explicitly in
-/// \ref pucch_config.
 struct pucch_resource_set {
   /// \c PUCCH-ResourceSetId.
-  pucch_res_set_idx pucch_res_set_id;
+  pucch_res_set_id id;
   /// \c resourceList.
-  static_vector<pucch_res_id_t, MAX_NOF_PUCCH_RESOURCES_PER_PUCCH_RESOURCE_SET> pucch_res_id_list;
-  /// \c maxPayloadSize.
-  std::optional<unsigned> max_payload_size;
+  static_vector<pucch_res_id_t, MAX_NOF_PUCCH_RESOURCES_PER_PUCCH_RESOURCE_SET> resources;
 
-  bool operator==(const pucch_resource_set& rhs) const
-  {
-    return pucch_res_set_id == rhs.pucch_res_set_id && pucch_res_id_list == rhs.pucch_res_id_list &&
-           max_payload_size == rhs.max_payload_size;
-  }
+  bool operator==(const pucch_resource_set& rhs) const { return id == rhs.id && resources == rhs.resources; }
   bool operator!=(const pucch_resource_set& rhs) const { return !(rhs == *this); }
 };
 

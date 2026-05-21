@@ -44,12 +44,12 @@ pucch_config config_helpers::build_pucch_config(const ran_cell_config&        ce
       .pucch_pw_control = build_pucch_power_control(),
   };
 
-  auto& res_list             = cfg.pucch_res_list;
-  auto& res_set_0            = cfg.pucch_res_set.emplace_back();
-  res_set_0.pucch_res_set_id = pucch_res_set_idx::set_0;
-  auto& res_set_1            = cfg.pucch_res_set.emplace_back();
-  res_set_1.pucch_res_set_id = pucch_res_set_idx::set_1;
-  auto& sr_res_list          = cfg.sr_res_list;
+  auto& res_list    = cfg.pucch_res_list;
+  auto& res_set_0   = cfg.pucch_res_set.emplace_back();
+  res_set_0.id      = pucch_res_set_id::set_0;
+  auto& res_set_1   = cfg.pucch_res_set.emplace_back();
+  res_set_1.id      = pucch_res_set_id::set_1;
+  auto& sr_res_list = cfg.sr_res_list;
 
   const bool using_02 = cell_cfg.init_bwp.pucch.resources.format_01() == pucch_format::FORMAT_0 and
                         cell_cfg.init_bwp.pucch.resources.format_234() == pucch_format::FORMAT_2;
@@ -60,7 +60,7 @@ pucch_config config_helpers::build_pucch_config(const ran_cell_config&        ce
 
     // Add resource to both the PUCCH resource list and Resource Set ID 0.
     res_list.emplace_back(cell_res);
-    res_set_0.pucch_res_id_list.emplace_back(cell_res.res_id);
+    res_set_0.resources.emplace_back(cell_res.res_id);
   }
 
   // Add SR resource to both the PUCCH resource list and the SR resource list.
@@ -78,7 +78,7 @@ pucch_config config_helpers::build_pucch_config(const ran_cell_config&        ce
 
     // Add resource to both the PUCCH resource list and Resource Set ID 1.
     res_list.emplace_back(res);
-    res_set_1.pucch_res_id_list.emplace_back(res.res_id);
+    res_set_1.resources.emplace_back(res.res_id);
   }
 
   if (ue_periodic_csi_report_cfg.has_value()) {
@@ -112,20 +112,20 @@ pucch_config config_helpers::build_pucch_config(const ran_cell_config&        ce
     // - CSI_F0 is a F0 resource in Resource Set ID 0 that overlaps in symbols with the CSI (F2) resource.
     // - SR_F2 is a F2 resource in Resource Set ID 1 that overlaps in symbols with the SR (F0) resource.
     // - CSI_F2 is the same F2 resource in the PUCCH resource list as the CSI resource.
-    res_set_0.pucch_res_id_list.emplace_back(sr_res.res_id);
+    res_set_0.resources.emplace_back(sr_res.res_id);
 
     const auto& sr_f2_res = cell_resources.get_ded(res_params.sr_f2_res_id(ue_pucch_cfg.sr_res_id));
     res_list.emplace_back(sr_f2_res);
-    res_set_1.pucch_res_id_list.emplace_back(sr_f2_res.res_id);
+    res_set_1.resources.emplace_back(sr_f2_res.res_id);
 
     if (ue_periodic_csi_report_cfg.has_value()) {
       const auto& csi_f0_res =
           cell_resources.get_ded(res_params.csi_f0_res_id(ue_periodic_csi_report_cfg->pucch_res_id));
       res_list.emplace_back(csi_f0_res);
-      res_set_0.pucch_res_id_list.emplace_back(csi_f0_res.res_id);
+      res_set_0.resources.emplace_back(csi_f0_res.res_id);
 
       const auto& csi_res = cell_resources.get_ded(res_params.csi_res_id(ue_periodic_csi_report_cfg->pucch_res_id));
-      res_set_1.pucch_res_id_list.emplace_back(csi_res.res_id);
+      res_set_1.resources.emplace_back(csi_res.res_id);
     }
   }
 

@@ -19,11 +19,12 @@ enum class pucch_group_hopping {
   DISABLE
 };
 
-/// \brief PUCCH resource set index, as per \c PUCCH-ResourceSetId, TS 38.331.
+/// \brief PUCCH Resource Set ID, as per \c PUCCH-ResourceSetId, TS 38.331.
+///
 /// At the moment, we only supports PUCCH resource set index 0 and 1.
-enum class pucch_res_set_idx : uint8_t { set_0 = 0, set_1 };
+enum class pucch_res_set_id : uint8_t { set_0 = 0, set_1 };
 
-inline uint8_t pucch_res_set_idx_to_uint(pucch_res_set_idx format)
+inline uint8_t to_uint(pucch_res_set_id format)
 {
   return static_cast<uint8_t>(format);
 }
@@ -31,7 +32,7 @@ inline uint8_t pucch_res_set_idx_to_uint(pucch_res_set_idx format)
 /// \brief PUCCH Formats as described in TS38.213 Section 9.2.
 enum class pucch_format : uint8_t { FORMAT_0, FORMAT_1, FORMAT_2, FORMAT_3, FORMAT_4, NOF_FORMATS };
 
-inline uint8_t pucch_format_to_uint(pucch_format format)
+inline uint8_t to_uint(pucch_format format)
 {
   return static_cast<uint8_t>(format);
 }

@@ -83,7 +83,7 @@ error_type<const char*> config_helpers::pucch_parameters_validator(const pucch_r
     const unsigned f2_max_rbs = f2_params.max_payload_bits.has_value()
                                     ? get_pucch_format2_max_nof_prbs(f2_params.max_payload_bits.value(),
                                                                      f2_params.nof_syms.value(),
-                                                                     to_max_code_rate_float(f2_params.max_code_rate))
+                                                                     to_float(f2_params.max_code_rate))
                                     : f2_params.max_nof_rbs.value();
     if (f2_max_rbs > pucch_constants::f2::MAX_NOF_RBS) {
       return make_unexpected("The configured maximum number of RBs for PUCCH Format 2 exceeds the limit of 16");
@@ -103,7 +103,7 @@ error_type<const char*> config_helpers::pucch_parameters_validator(const pucch_r
     const unsigned f3_max_rbs = f3_params.max_payload_bits.has_value()
                                     ? get_pucch_format3_max_nof_prbs(f3_params.max_payload_bits.value(),
                                                                      f3_params.nof_syms.value(),
-                                                                     to_max_code_rate_float(f3_params.max_code_rate),
+                                                                     to_float(f3_params.max_code_rate),
                                                                      f3_params.intraslot_freq_hopping,
                                                                      f3_params.additional_dmrs,
                                                                      f3_params.pi2_bpsk)

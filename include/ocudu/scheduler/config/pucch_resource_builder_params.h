@@ -432,20 +432,20 @@ struct pucch_resource_builder_params {
     if (std::holds_alternative<pucch_f2_params>(f2_or_f3_or_f4_params)) {
       const auto& f2_params = std::get<pucch_f2_params>(f2_or_f3_or_f4_params);
       return get_pucch_format2_max_payload(
-          f2_params.max_nof_rbs.value(), f2_params.nof_syms.value(), to_max_code_rate_float(f2_params.max_code_rate));
+          f2_params.max_nof_rbs.value(), f2_params.nof_syms.value(), to_float(f2_params.max_code_rate));
     }
     if (std::holds_alternative<pucch_f3_params>(f2_or_f3_or_f4_params)) {
       const auto& f3_params = std::get<pucch_f3_params>(f2_or_f3_or_f4_params);
       return get_pucch_format3_max_payload(f3_params.max_nof_rbs.value(),
                                            f3_params.nof_syms.value(),
-                                           to_max_code_rate_float(f3_params.max_code_rate),
+                                           to_float(f3_params.max_code_rate),
                                            f3_params.intraslot_freq_hopping,
                                            f3_params.additional_dmrs,
                                            f3_params.pi2_bpsk);
     }
     const auto& f4_params = std::get<pucch_f4_params>(f2_or_f3_or_f4_params);
     return get_pucch_format4_max_payload(f4_params.nof_syms.value(),
-                                         to_max_code_rate_float(f4_params.max_code_rate),
+                                         to_float(f4_params.max_code_rate),
                                          f4_params.intraslot_freq_hopping,
                                          f4_params.additional_dmrs,
                                          f4_params.pi2_bpsk,

@@ -866,14 +866,13 @@ std::vector<odu::du_cell_config> ocudu::generate_du_cell_config(const du_high_un
         constexpr unsigned pucch_f2_nof_symbols = 2U;
         auto&              f2_params            = du_pucch_cfg.f2_or_f3_or_f4_params.emplace<pucch_f2_params>();
         f2_params.max_code_rate                 = user_pucch_cfg.f2_max_code_rate;
-        f2_params.max_nof_rbs =
-            user_pucch_cfg.f2_max_payload_bits.has_value()
-                ? get_pucch_format2_max_nof_prbs(user_pucch_cfg.f2_max_payload_bits.value(),
-                                                 pucch_f2_nof_symbols,
-                                                 to_max_code_rate_float(user_pucch_cfg.f2_max_code_rate))
-                : user_pucch_cfg.f2_max_nof_rbs;
-        f2_params.intraslot_freq_hopping = user_pucch_cfg.f2_intraslot_freq_hopping;
-        f2_params.max_payload_bits       = user_pucch_cfg.f2_max_payload_bits;
+        f2_params.max_nof_rbs                   = user_pucch_cfg.f2_max_payload_bits.has_value()
+                                                      ? get_pucch_format2_max_nof_prbs(user_pucch_cfg.f2_max_payload_bits.value(),
+                                                                     pucch_f2_nof_symbols,
+                                                                     to_float(user_pucch_cfg.f2_max_code_rate))
+                                                      : user_pucch_cfg.f2_max_nof_rbs;
+        f2_params.intraslot_freq_hopping        = user_pucch_cfg.f2_intraslot_freq_hopping;
+        f2_params.max_payload_bits              = user_pucch_cfg.f2_max_payload_bits;
       } break;
       case pucch_format::FORMAT_3: {
         // The number of symbols per PUCCH resource is not exposed to the DU user interface; for PUCCH F3, we use all
@@ -890,7 +889,7 @@ std::vector<odu::du_cell_config> ocudu::generate_du_cell_config(const du_high_un
                                                    ? get_pucch_format3_max_nof_prbs(
                                           user_pucch_cfg.f3_max_payload_bits.value(),
                                           pucch_f3_nof_symbols,
-                                          to_max_code_rate_float(user_pucch_cfg.f3_max_code_rate),
+                                          to_float(user_pucch_cfg.f3_max_code_rate),
                                           // Since we are forcing 14 symbols intraslot_freq_hopping doesn't matter.
                                           false,
                                           user_pucch_cfg.f3_additional_dmrs,

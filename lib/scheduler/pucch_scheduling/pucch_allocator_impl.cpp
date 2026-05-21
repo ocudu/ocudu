@@ -460,7 +460,7 @@ pucch_uci_bits pucch_allocator_impl::remove_ue_uci_from_pucch(cell_slot_resource
     // Release the resources used in the PUCCH resource manager first.
     pucch_resource_manager::ue_reservation_guard guard(&resource_manager, slot_alloc, crnti, ue_cell_cfg);
     if (existing_ue_grants->pucch_grants.harq_resource.has_value()) {
-      if (existing_ue_grants->pucch_grants.harq_resource.value().harq_id.pucch_set_idx == pucch_res_set_idx::set_0) {
+      if (existing_ue_grants->pucch_grants.harq_resource.value().harq_id.pucch_set_idx == pucch_res_set_id::set_0) {
         guard.release_harq_set_0_resource();
       } else {
         guard.release_harq_set_1_resource();
@@ -723,7 +723,7 @@ std::optional<unsigned> pucch_allocator_impl::allocate_harq_grant(cell_slot_reso
   auto& grants = slots_ctx[sl_tx.to_uint()].ue_grants_list.emplace_back(ue_grants{.rnti = alloc_ctx.rnti});
   grants.pucch_grants.harq_resource.emplace(pucch_grant{.type = pucch_grant_type::harq_ack});
   grants.pucch_grants.harq_resource.value().set_res_config(*harq_res.resource);
-  grants.pucch_grants.harq_resource.value().harq_id.pucch_set_idx  = pucch_res_set_idx::set_0;
+  grants.pucch_grants.harq_resource.value().harq_id.pucch_set_idx  = pucch_res_set_id::set_0;
   grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind  = harq_res.pucch_res_indicator;
   grants.pucch_grants.harq_resource.value().bits.harq_ack_nof_bits = harq_ack_nof_bits;
 
@@ -902,8 +902,8 @@ pucch_allocator_impl::get_pucch_res_pre_multiplexing(pucch_resource_manager::ue_
   if (new_bits.harq_ack_nof_bits > 0) {
     // Case HARQ ACK bits 1 or 2, resource to be chosen from PUCCH resource set 0; else, pick from PUCCH resource
     // set 1.
-    const pucch_res_set_idx pucch_set_idx =
-        new_bits.harq_ack_nof_bits <= 2U ? pucch_res_set_idx::set_0 : pucch_res_set_idx::set_1;
+    const pucch_res_set_id pucch_set_idx =
+        new_bits.harq_ack_nof_bits <= 2U ? pucch_res_set_id::set_0 : pucch_res_set_id::set_1;
 
     // Not all UEs support transmission of more than 1 PUCCHs per slot. This would be the case if:
     //  - UE configured with F0 and F2 resources
@@ -931,7 +931,7 @@ pucch_allocator_impl::get_pucch_res_pre_multiplexing(pucch_resource_manager::ue_
               ? get_pucch_resource_ind_f0_sr_csi(new_bits, cell_cfg.params.init_bwp.pucch.resources)
               : ue_current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind;
 
-      const pucch_resource* harq_res = pucch_set_idx == pucch_res_set_idx::set_0
+      const pucch_resource* harq_res = pucch_set_idx == pucch_res_set_id::set_0
                                            ? guard.reserve_harq_set_0_resource_by_res_indicator(pucch_res_ind)
                                            : guard.reserve_harq_set_1_resource_by_res_indicator(pucch_res_ind);
       if (harq_res == nullptr) {
@@ -952,7 +952,7 @@ pucch_allocator_impl::get_pucch_res_pre_multiplexing(pucch_resource_manager::ue_
     // Get a new PUCCH resource for HARQ-ACK from the correct PUCCH resource set.
     else {
       // Only copy the HARQ-ACK bits, as at this stage we only need to consider the UCI bits before multiplexing.
-      pucch_harq_resource_alloc_record harq_res = pucch_set_idx == pucch_res_set_idx::set_0
+      pucch_harq_resource_alloc_record harq_res = pucch_set_idx == pucch_res_set_id::set_0
                                                       ? guard.reserve_harq_set_0_resource_next_available()
                                                       : guard.reserve_harq_set_1_resource_next_available();
       if (harq_res.resource == nullptr) {
@@ -1205,7 +1205,7 @@ pucch_allocator_impl::merge_pucch_resources(pucch_resource_manager::ue_reservati
                    "The two resources must have the same format");
       // Apply F2 CSI merging rule: SR and CSI PUCCH resources will be multiplexed in the CSI PUCCH resource.
       // A HARQ resource from PUCCH resource set idx 1 already exits. Use that one.
-      if (r_harq.harq_id.pucch_set_idx == pucch_res_set_idx::set_1) {
+      if (r_harq.harq_id.pucch_set_idx == pucch_res_set_id::set_1) {
         new_resource = r_harq;
       }
       // Get a resource from PUCCH resource set idx 1, if available, with the same PUCCH resource indicator as for
@@ -1217,7 +1217,7 @@ pucch_allocator_impl::merge_pucch_resources(pucch_resource_manager::ue_reservati
         if (harq_res != nullptr) {
           return std::nullopt;
         }
-        new_resource.harq_id.pucch_set_idx = pucch_res_set_idx::set_1;
+        new_resource.harq_id.pucch_set_idx = pucch_res_set_id::set_1;
         new_resource.harq_id.pucch_res_ind = r_harq.harq_id.pucch_res_ind;
         new_resource.set_res_config(*harq_res);
       }
@@ -1227,7 +1227,7 @@ pucch_allocator_impl::merge_pucch_resources(pucch_resource_manager::ue_reservati
         if (harq_res.resource != nullptr) {
           return std::nullopt;
         }
-        new_resource.harq_id.pucch_set_idx = pucch_res_set_idx::set_1;
+        new_resource.harq_id.pucch_set_idx = pucch_res_set_id::set_1;
         new_resource.harq_id.pucch_res_ind = harq_res.pucch_res_indicator;
         new_resource.set_res_config(*harq_res.resource);
       }
@@ -1275,7 +1275,7 @@ pucch_allocator_impl::merge_pucch_resources(pucch_resource_manager::ue_reservati
       const pucch_grant& r_csi  = r_0.type == pucch_grant_type::csi ? r_0 : r_1;
 
       // A HARQ resource from PUCCH resource set idx 1 already exits. Use that one.
-      if (r_harq.harq_id.pucch_set_idx == pucch_res_set_idx::set_1) {
+      if (r_harq.harq_id.pucch_set_idx == pucch_res_set_id::set_1) {
         new_resource = r_harq;
       }
       // NOTE: In this case, the PUCCH resource before merging is from PUCCH resource set 0.
@@ -1290,7 +1290,7 @@ pucch_allocator_impl::merge_pucch_resources(pucch_resource_manager::ue_reservati
         if (harq_res == nullptr) {
           return std::nullopt;
         }
-        new_resource.harq_id.pucch_set_idx = pucch_res_set_idx::set_1;
+        new_resource.harq_id.pucch_set_idx = pucch_res_set_id::set_1;
         new_resource.harq_id.pucch_res_ind = r_harq.harq_id.pucch_res_ind;
         new_resource.set_res_config(*harq_res);
       }
@@ -1351,7 +1351,7 @@ pucch_allocator_impl::merge_pucch_resources(pucch_resource_manager::ue_reservati
       if (harq_res == nullptr) {
         return std::nullopt;
       }
-      new_resource.harq_id.pucch_set_idx = pucch_res_set_idx::set_1;
+      new_resource.harq_id.pucch_set_idx = pucch_res_set_id::set_1;
       new_resource.harq_id.pucch_res_ind = r_harq->harq_id.pucch_res_ind;
       new_resource.set_res_config(*harq_res);
     }
@@ -1628,7 +1628,7 @@ void pucch_allocator_impl::fill_ded_pdu(pucch_info&           pucch_pdu,
   const prb_interval res_prbs = pucch_res.prbs();
   unsigned           nof_prbs = res_prbs.length();
   if (adjust_prbs) {
-    const auto max_c_rate = to_max_code_rate_float(cell_cfg.params.init_bwp.pucch.resources.max_code_rate_234());
+    const auto max_c_rate = to_float(cell_cfg.params.init_bwp.pucch.resources.max_code_rate_234());
     if (std::holds_alternative<pucch_resource::f2_config>(pucch_res.format_params)) {
       nof_prbs =
           get_pucch_format2_nof_prbs(uci_bits.get_total_bits(), res_prbs.length(), pucch_res.syms.length(), max_c_rate);
@@ -1760,7 +1760,7 @@ void pucch_allocator_impl::remove_unused_pucch_res(pucch_resource_manager::ue_re
   if (existing_pucchs.pucch_grants.harq_resource.has_value() and
       (not grants_to_tx.harq_resource.has_value() or
        existing_pucchs.pucch_grants.harq_resource->format != grants_to_tx.harq_resource->format)) {
-    if (existing_pucchs.pucch_grants.harq_resource.value().harq_id.pucch_set_idx == pucch_res_set_idx::set_0) {
+    if (existing_pucchs.pucch_grants.harq_resource.value().harq_id.pucch_set_idx == pucch_res_set_id::set_0) {
       guard.release_harq_set_0_resource();
     } else {
       guard.release_harq_set_1_resource();

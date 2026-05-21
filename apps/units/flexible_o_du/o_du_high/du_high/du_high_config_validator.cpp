@@ -613,12 +613,11 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
     case pucch_format::FORMAT_2: {
       // The number of symbols per PUCCH resource F2 is not exposed to the DU user interface and set by default to 2.
       constexpr unsigned pucch_f2_nof_symbols = 2U;
-      const unsigned     f2_max_rbs =
-          pucch_cfg.f2_max_payload_bits.has_value()
-                  ? get_pucch_format2_max_nof_prbs(pucch_cfg.f2_max_payload_bits.value(),
-                                               pucch_f2_nof_symbols,
-                                               to_max_code_rate_float(pucch_cfg.f2_max_code_rate))
-                  : pucch_cfg.f2_max_nof_rbs;
+      const unsigned     f2_max_rbs           = pucch_cfg.f2_max_payload_bits.has_value()
+                                                    ? get_pucch_format2_max_nof_prbs(pucch_cfg.f2_max_payload_bits.value(),
+                                                                       pucch_f2_nof_symbols,
+                                                                       to_float(pucch_cfg.f2_max_code_rate))
+                                                    : pucch_cfg.f2_max_nof_rbs;
 
       const unsigned nof_f2_blocks = max_nof_pucch_symbols / pucch_f2_nof_symbols;
       nof_f2_f3_f4_rbs =
@@ -628,8 +627,8 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
       if (pucch_cfg.f2_intraslot_freq_hopping) {
         nof_f2_f3_f4_rbs = static_cast<unsigned>(std::ceil(static_cast<float>(nof_f2_f3_f4_rbs) / 2.0F)) * 2;
       }
-      f2_f3_f4_max_payload = get_pucch_format2_max_payload(
-          f2_max_rbs, pucch_f2_nof_symbols, to_max_code_rate_float(pucch_cfg.f2_max_code_rate));
+      f2_f3_f4_max_payload =
+          get_pucch_format2_max_payload(f2_max_rbs, pucch_f2_nof_symbols, to_float(pucch_cfg.f2_max_code_rate));
     } break;
     case pucch_format::FORMAT_3: {
       // The number of symbols per PUCCH resource is not exposed to the DU user interface; for PUCCH F3, we use all
@@ -639,7 +638,7 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
           pucch_cfg.f3_max_payload_bits.has_value()
               ? get_pucch_format3_max_nof_prbs(pucch_cfg.f3_max_payload_bits.value(),
                                                pucch_f3_nof_symbols,
-                                               to_max_code_rate_float(pucch_cfg.f3_max_code_rate),
+                                               to_float(pucch_cfg.f3_max_code_rate),
                                                // Since we are forcing 14 symbols intraslot_freq_hopping doesn't matter.
                                                false,
                                                pucch_cfg.f3_additional_dmrs,
@@ -656,7 +655,7 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
       }
       f2_f3_f4_max_payload = get_pucch_format3_max_payload(f3_max_rbs,
                                                            pucch_f3_nof_symbols,
-                                                           to_max_code_rate_float(pucch_cfg.f3_max_code_rate),
+                                                           to_float(pucch_cfg.f3_max_code_rate),
                                                            false,
                                                            pucch_cfg.f3_additional_dmrs,
                                                            pucch_cfg.f3_pi2_bpsk);
@@ -673,7 +672,7 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
         nof_f2_f3_f4_rbs = static_cast<unsigned>(std::ceil(static_cast<float>(nof_f2_f3_f4_rbs) / 2.0F)) * 2;
       }
       f2_f3_f4_max_payload = get_pucch_format4_max_payload(pucch_f4_nof_symbols,
-                                                           to_max_code_rate_float(pucch_cfg.f4_max_code_rate),
+                                                           to_float(pucch_cfg.f4_max_code_rate),
                                                            false,
                                                            pucch_cfg.f4_additional_dmrs,
                                                            pucch_cfg.f4_pi2_bpsk,

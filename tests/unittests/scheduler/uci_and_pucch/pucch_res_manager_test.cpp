@@ -175,7 +175,7 @@ TEST_F(test_pucch_resource_manager, common_res_available_reserve_and_check)
 
 TEST_F(test_pucch_resource_manager, reserve_harq_set_0_until_exhausted)
 {
-  const unsigned res_set_size = pucch_cfg_0().pucch_res_set[0].pucch_res_id_list.size();
+  const unsigned res_set_size = pucch_cfg_0().pucch_res_set[0].resources.size();
   for (unsigned i = 0; i != res_set_size; ++i) {
     pucch_resource_manager::ue_reservation_guard guard(
         &t_bench.res_manager, t_bench.slot_alloc, to_rnti(0x4601 + i), ue_cfg_0());
@@ -183,7 +183,7 @@ TEST_F(test_pucch_resource_manager, reserve_harq_set_0_until_exhausted)
     ASSERT_EQ(i, record.pucch_res_indicator);
     ASSERT_EQ(&t_bench.cell_cfg.bwp_res[to_bwp_id(0)]
                    .ul()
-                   .pucch.dedicated[pucch_cfg_0().pucch_res_set[0].pucch_res_id_list[i].ded().cell_res_id],
+                   .pucch.dedicated[pucch_cfg_0().pucch_res_set[0].resources[i].ded().cell_res_id],
               record.resource);
     guard.commit();
   }
@@ -207,8 +207,7 @@ TEST_F(test_pucch_resource_manager, get_next_harq_different_slot)
 
   // Expect that pucch_res_indicator = 0 is returned, as the UE 0x4602 is allocated in a different slot to UE 0x4601.
   ASSERT_EQ(0U, record.pucch_res_indicator);
-  ASSERT_EQ(&t_bench.cell_res_list[pucch_cfg_0().pucch_res_set[0].pucch_res_id_list[0].ded().cell_res_id],
-            record.resource);
+  ASSERT_EQ(&t_bench.cell_res_list[pucch_cfg_0().pucch_res_set[0].resources[0].ded().cell_res_id], record.resource);
 }
 
 TEST_F(test_pucch_resource_manager, allocate_and_release_f1)
@@ -218,8 +217,7 @@ TEST_F(test_pucch_resource_manager, allocate_and_release_f1)
   const pucch_harq_resource_alloc_record record = guard.reserve_harq_set_0_resource_next_available();
 
   ASSERT_EQ(0, record.pucch_res_indicator);
-  ASSERT_EQ(&t_bench.cell_res_list[pucch_cfg_0().pucch_res_set[0].pucch_res_id_list[0].ded().cell_res_id],
-            record.resource);
+  ASSERT_EQ(&t_bench.cell_res_list[pucch_cfg_0().pucch_res_set[0].resources[0].ded().cell_res_id], record.resource);
 
   // Release the resource and verify the UE does not hold it anymore.
   ASSERT_TRUE(guard.release_harq_set_0_resource());
@@ -252,14 +250,13 @@ TEST_F(test_pucch_resource_manager, allocate_and_release_multiple_ues)
 
 TEST_F(test_pucch_resource_manager, reserve_harq_set_1_until_exhausted)
 {
-  const unsigned res_set_size = pucch_cfg_0().pucch_res_set[1].pucch_res_id_list.size();
+  const unsigned res_set_size = pucch_cfg_0().pucch_res_set[1].resources.size();
   for (unsigned i = 0; i != res_set_size; ++i) {
     pucch_resource_manager::ue_reservation_guard guard(
         &t_bench.res_manager, t_bench.slot_alloc, to_rnti(0x4601 + i), ue_cfg_0());
     const auto record = guard.reserve_harq_set_1_resource_next_available();
     ASSERT_EQ(i, record.pucch_res_indicator);
-    const unsigned cell_res_id =
-        pucch_cfg_0().pucch_res_set[1].pucch_res_id_list[record.pucch_res_indicator].ded().cell_res_id;
+    const unsigned cell_res_id = pucch_cfg_0().pucch_res_set[1].resources[record.pucch_res_indicator].ded().cell_res_id;
     ASSERT_EQ(&t_bench.cell_res_list[cell_res_id], record.resource);
     guard.commit();
   }
@@ -322,8 +319,7 @@ TEST_F(test_pucch_resource_manager, get_format2_different_slot)
 
   // Expect that pucch_res_indicator = 0 is returned, as the UE 0x4602 is allocated in a different slot to UE 0x4601.
   ASSERT_EQ(0U, record.pucch_res_indicator);
-  const unsigned cell_res_id =
-      pucch_cfg_0().pucch_res_set[1].pucch_res_id_list[record.pucch_res_indicator].ded().cell_res_id;
+  const unsigned cell_res_id = pucch_cfg_0().pucch_res_set[1].resources[record.pucch_res_indicator].ded().cell_res_id;
   ASSERT_EQ(&t_bench.cell_res_list[cell_res_id], record.resource);
 }
 
@@ -334,7 +330,7 @@ TEST_F(test_pucch_resource_manager, allocate_and_release_f2)
   const pucch_harq_resource_alloc_record record = guard.reserve_harq_set_1_resource_next_available();
 
   ASSERT_EQ(0U, record.pucch_res_indicator);
-  unsigned cell_res_id = pucch_cfg_0().pucch_res_set[1].pucch_res_id_list[record.pucch_res_indicator].ded().cell_res_id;
+  unsigned cell_res_id = pucch_cfg_0().pucch_res_set[1].resources[record.pucch_res_indicator].ded().cell_res_id;
   ASSERT_EQ(&t_bench.cell_res_list[cell_res_id], record.resource);
 
   // Release the resource and verify the UE does not hold it anymore.

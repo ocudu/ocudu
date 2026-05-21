@@ -134,7 +134,7 @@ void pucch_existing_pdus_handler::update_harq_pdu_bits(unsigned                 
           get_pucch_format2_nof_prbs(harq_ack_bits + sr_nof_bits_to_uint(sr_bits) + csi_part1_bits,
                                      res_prbs.length(),
                                      pucch_res_cfg.syms.length(),
-                                     to_max_code_rate_float(res_params.max_code_rate_234()));
+                                     to_float(res_params.max_code_rate_234()));
       harq_pdu->resources.prbs           = {res_prbs.start(), res_prbs.start() + nof_prbs};
       harq_pdu->resources.second_hop_prb = pucch_res_cfg.second_hop_prb;
     } break;
@@ -147,7 +147,7 @@ void pucch_existing_pdus_handler::update_harq_pdu_bits(unsigned                 
           get_pucch_format3_nof_prbs(harq_ack_bits + sr_nof_bits_to_uint(sr_bits) + csi_part1_bits,
                                      res_prbs.length(),
                                      pucch_res_cfg.syms.length(),
-                                     to_max_code_rate_float(res_params.max_code_rate_234()),
+                                     to_float(res_params.max_code_rate_234()),
                                      pucch_res_cfg.second_hop_prb.has_value(),
                                      f3_cfg.additional_dmrs,
                                      f3_cfg.pi_2_bpsk);

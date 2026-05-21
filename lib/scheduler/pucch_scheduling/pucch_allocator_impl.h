@@ -73,8 +73,8 @@ private:
   };
 
   struct harq_res_id {
-    pucch_res_set_idx pucch_set_idx = pucch_res_set_idx::set_0;
-    uint8_t           pucch_res_ind = 0;
+    pucch_res_set_id pucch_set_idx = pucch_res_set_id::set_0;
+    uint8_t          pucch_res_ind = 0;
   };
 
   /// \brief Defines the type of PUCCH resource.

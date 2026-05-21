@@ -396,8 +396,8 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pucch_cfg_conversion)
 
   // >> PUCCH Resource Set 1.
   dest_pucch_cfg.pucch_res_set.emplace_back();
-  dest_pucch_cfg.pucch_res_set.back().pucch_res_set_id = ocudu::pucch_res_set_idx::set_1;
-  dest_pucch_cfg.pucch_res_set.back().pucch_res_id_list.emplace_back(pucch_res_id_t::make_ded(1, 1));
+  dest_pucch_cfg.pucch_res_set.back().id = ocudu::pucch_res_set_id::set_1;
+  dest_pucch_cfg.pucch_res_set.back().resources.emplace_back(pucch_res_id_t::make_ded(1, 1));
   // Remove first element.
   dest_pucch_cfg.pucch_res_set.erase(dest_pucch_cfg.pucch_res_set.begin());
 
