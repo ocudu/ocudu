@@ -3,11 +3,10 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/gtpu/gtpu_pdu.h"
-#include "lib/gtpu/gtpu_tunnel_ngu_rx_impl.h"
 #include "lib/gtpu/gtpu_tunnel_ngu_tx_impl.h"
 #include "tests/unittests/gtpu/gtpu_test_shared.h"
-#include "ocudu/support/bit_encoding.h"
 #include "ocudu/support/executors/manual_task_worker.h"
+#include "ocudu/support/io/sockets.h"
 #include <gtest/gtest.h>
 #include <sys/socket.h>
 
@@ -31,30 +30,6 @@ public:
   std::vector<byte_buffer> tx_ul_pdus;
   ::sockaddr_storage       last_dest_addr = {};
 };
-
-// Extract the TEID field (bytes 4-7, big-endian) from a captured GTP-U PDU.
-static uint32_t extract_gtpu_teid(const byte_buffer& pdu)
-{
-  auto it = pdu.begin();
-  std::advance(it, 4);
-  uint32_t teid = 0;
-  for (int i = 0; i < 4; ++i, ++it) {
-    teid = (teid << 8U) | static_cast<uint8_t>(*it);
-  }
-  return teid;
-}
-
-// Extract the IPv4 destination address from a sockaddr_storage.
-static std::string dest_addr_to_str(const ::sockaddr_storage& addr)
-{
-  char buf[INET6_ADDRSTRLEN] = {};
-  if (addr.ss_family == AF_INET) {
-    ::inet_ntop(AF_INET, &reinterpret_cast<const ::sockaddr_in&>(addr).sin_addr, buf, sizeof(buf));
-  } else if (addr.ss_family == AF_INET6) {
-    ::inet_ntop(AF_INET6, &reinterpret_cast<const ::sockaddr_in6&>(addr).sin6_addr, buf, sizeof(buf));
-  }
-  return buf;
-}
 
 /// Fixture class for GTP-U tunnel NG-U Rx tests
 class gtpu_tunnel_ngu_tx_test : public ::testing::Test
@@ -191,7 +166,9 @@ TEST_F(gtpu_tunnel_ngu_tx_test, update_tx_endpoint_changes_teid_in_pdu)
   byte_buffer sdu_before = byte_buffer::create(gtpu_ping_sdu).value();
   tx->handle_sdu(std::move(sdu_before), uint_to_qos_flow_id(1));
   ASSERT_EQ(tx_upper.tx_ul_pdus.size(), 1U);
-  EXPECT_EQ(extract_gtpu_teid(tx_upper.tx_ul_pdus[0]), 0x2U);
+  gtpu_teid_t teid_out = {};
+  ASSERT_TRUE(gtpu_read_teid(teid_out.value(), tx_upper.tx_ul_pdus[0], gtpu_logger));
+  ASSERT_EQ(teid_out, tx_cfg.peer_teid);
   tx_upper.clear();
 
   // Update the endpoint to a new TEID.
@@ -201,10 +178,14 @@ TEST_F(gtpu_tunnel_ngu_tx_test, update_tx_endpoint_changes_teid_in_pdu)
   byte_buffer sdu_after = byte_buffer::create(gtpu_ping_sdu).value();
   tx->handle_sdu(std::move(sdu_after), uint_to_qos_flow_id(1));
   ASSERT_EQ(tx_upper.tx_ul_pdus.size(), 1U);
-  EXPECT_EQ(extract_gtpu_teid(tx_upper.tx_ul_pdus[0]), 0x5U);
+  gtpu_teid_t teid_out_after = {};
+  ASSERT_TRUE(gtpu_read_teid(teid_out_after.value(), tx_upper.tx_ul_pdus[0], gtpu_logger));
+  ASSERT_EQ(teid_out_after, gtpu_teid_t{0x5});
 
   // Destination address should reflect the new peer.
-  EXPECT_EQ(dest_addr_to_str(tx_upper.last_dest_addr), "127.0.0.2");
+  std::string dest_addr_str;
+  ASSERT_TRUE(ocudu::sockaddr_to_ip_str(reinterpret_cast<sockaddr*>(&tx_upper.last_dest_addr), dest_addr_str, logger));
+  ASSERT_EQ(dest_addr_str, "127.0.0.2");
 }
 
 /// \brief Calling update_tx_endpoint() a second time overrides the first update.
@@ -224,8 +205,12 @@ TEST_F(gtpu_tunnel_ngu_tx_test, update_tx_endpoint_second_call_overrides_first)
   ASSERT_EQ(tx_upper.tx_ul_pdus.size(), 1U);
 
   // Only the second update should be in effect.
-  EXPECT_EQ(extract_gtpu_teid(tx_upper.tx_ul_pdus[0]), 0xbbU);
-  EXPECT_EQ(dest_addr_to_str(tx_upper.last_dest_addr), "10.0.0.2");
+  gtpu_teid_t teid_out = {};
+  ASSERT_TRUE(gtpu_read_teid(teid_out.value(), tx_upper.tx_ul_pdus[0], gtpu_logger));
+  ASSERT_EQ(teid_out, gtpu_teid_t{0xbb});
+  std::string dest_addr_str;
+  ASSERT_TRUE(ocudu::sockaddr_to_ip_str(reinterpret_cast<sockaddr*>(&tx_upper.last_dest_addr), dest_addr_str, logger));
+  ASSERT_EQ(dest_addr_str, "10.0.0.2");
 }
 
 /// \brief Without calling update_tx_endpoint() the original TEID and address remain unchanged
@@ -241,8 +226,13 @@ TEST_F(gtpu_tunnel_ngu_tx_test, no_update_keeps_original_endpoint)
   for (unsigned i = 0; i < 3; i++) {
     byte_buffer sdu = byte_buffer::create(gtpu_ping_sdu).value();
     tx->handle_sdu(std::move(sdu), uint_to_qos_flow_id(1));
-    EXPECT_EQ(extract_gtpu_teid(tx_upper.tx_ul_pdus[i]), 0x2U);
-    EXPECT_EQ(dest_addr_to_str(tx_upper.last_dest_addr), "127.0.0.1");
+    gtpu_teid_t teid_out = {};
+    ASSERT_TRUE(gtpu_read_teid(teid_out.value(), tx_upper.tx_ul_pdus[i], gtpu_logger));
+    ASSERT_EQ(teid_out, tx_cfg.peer_teid);
+    std::string dest_addr_str;
+    ASSERT_TRUE(
+        ocudu::sockaddr_to_ip_str(reinterpret_cast<sockaddr*>(&tx_upper.last_dest_addr), dest_addr_str, logger));
+    ASSERT_EQ(dest_addr_str, "127.0.0.1");
   }
 }
 

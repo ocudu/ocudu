@@ -6,7 +6,6 @@
 #include "ocudu/asn1/e1ap/common.h"
 #include "ocudu/asn1/e1ap/e1ap_pdu_contents.h"
 #include "ocudu/e1ap/common/e1ap_message.h"
-#include <arpa/inet.h>
 
 using namespace ocudu;
 using namespace ocuup;
@@ -212,10 +211,8 @@ e1ap_message ocudu::ocuup::generate_bearer_context_modification_request_with_ng_
   auto& gtp = item.ng_ul_up_tnl_info.gtp_tunnel();
   gtp.gtp_teid.from_number(upf_teid);
   // Encode the IPv4 address as a 32-bit big-endian bitstring.
-  ::in_addr addr4 = {};
-  ::inet_pton(AF_INET, upf_addr, &addr4);
-  uint32_t addr_uint = ntohl(addr4.s_addr);
-  gtp.transport_layer_address.from_number(addr_uint, 32);
+  transport_layer_address addr = transport_layer_address::create_from_string(upf_addr);
+  tla_to_asn1_bitstring(gtp.transport_layer_address, addr);
 
   ng_ran.pdu_session_res_to_modify_list.push_back(item);
 
@@ -255,7 +252,8 @@ e1ap_message ocudu::ocuup::generate_bearer_context_release_command(unsigned cu_c
   return bearer_context_release_command;
 }
 
-e1ap_message ocudu::ocuup::generate_e1_reset(std::vector<std::pair<gnb_cu_cp_ue_e1ap_id_t, gnb_cu_up_ue_e1ap_id_t>> ues)
+e1ap_message
+ocudu::ocuup::generate_e1_reset(const std::vector<std::pair<gnb_cu_cp_ue_e1ap_id_t, gnb_cu_up_ue_e1ap_id_t>>& ues)
 {
   e1ap_message msg = {};
 
@@ -267,7 +265,7 @@ e1ap_message ocudu::ocuup::generate_e1_reset(std::vector<std::pair<gnb_cu_cp_ue_
     e1_reset->reset_type.set_e1_interface();
   } else {
     ue_associated_lc_e1_conn_list_res_l& reset_part_of_e1_interface = e1_reset->reset_type.set_part_of_e1_interface();
-    for (auto ue_ids : ues) {
+    for (const auto& ue_ids : ues) {
       asn1::protocol_ie_single_container_s<asn1::e1ap::ue_associated_lc_e1_conn_item_res_o> item_container;
       asn1::e1ap::ue_associated_lc_e1_conn_item_s& conn_item = item_container->ue_associated_lc_e1_conn_item();
 
