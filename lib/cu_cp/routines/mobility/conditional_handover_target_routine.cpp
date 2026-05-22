@@ -155,14 +155,16 @@ void conditional_handover_target_routine::schedule_source_release_on_source_task
     logger.warning("target_ue={}: source_ue={} already removed", request.target_ue_index, source_ue_index);
     return;
   }
-  release_cmd                      = {};
-  release_cmd.ue_index             = source_ue_index;
-  release_cmd.cause                = ngap_cause_radio_network_t::unspecified;
-  release_cmd.requires_rrc_message = false;
-  src_ue->get_task_sched().schedule_async_task(launch_async([this](coro_context<async_task<void>>& ctx) {
-    CORO_BEGIN(ctx);
-    CORO_AWAIT(ue_context_release_handler.handle_ue_context_release_command(release_cmd));
-    CORO_RETURN();
-  }));
+  // Note: Cannot capture [this] as routine may be destroyed before the lambda runs on the source UE's scheduler.
+  cu_cp_ue_context_release_command cmd = {};
+  cmd.ue_index                         = source_ue_index;
+  cmd.cause                            = ngap_cause_radio_network_t::unspecified;
+  cmd.requires_rrc_message             = false;
+  src_ue->get_task_sched().schedule_async_task(
+      launch_async([&handler = ue_context_release_handler, cmd](coro_context<async_task<void>>& ctx) {
+        CORO_BEGIN(ctx);
+        CORO_AWAIT(handler.handle_ue_context_release_command(cmd));
+        CORO_RETURN();
+      }));
   logger.debug("target_ue={}: scheduled source_ue={} context release", request.target_ue_index, source_ue_index);
 }
