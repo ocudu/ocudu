@@ -67,6 +67,29 @@ inline expected<uint8_t> get_transaction_id(const asn1::e2ap::e2ap_pdu_c& pdu)
   return make_unexpected(default_error_t{});
 }
 
+/// Returns a human-readable string for an E2AP cause value.
+inline const char* get_cause_str(const asn1::e2ap::cause_c& cause)
+{
+  using namespace asn1::e2ap;
+  switch (cause.type()) {
+    case cause_c::types_opts::ric_request:
+      return cause.ric_request().to_string();
+    case cause_c::types_opts::ric_service:
+      return cause.ric_service().to_string();
+    case cause_c::types_opts::e2_node:
+      return cause.e2_node().to_string();
+    case cause_c::types_opts::transport:
+      return cause.transport().to_string();
+    case cause_c::types_opts::protocol:
+      return cause.protocol().to_string();
+    case cause_c::types_opts::misc:
+      return cause.misc().to_string();
+    default:
+      break;
+  }
+  return "unknown";
+}
+
 /// Extracts message type.
 inline const char* get_message_type_str(const asn1::e2ap::e2ap_pdu_c& pdu)
 {

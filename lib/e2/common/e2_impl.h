@@ -11,16 +11,11 @@
 #include "e2_connection_handler.h"
 #include "ocudu/asn1/e2ap/e2ap.h"
 #include "ocudu/e2/e2.h"
-#include "ocudu/e2/e2_node_component_config.h"
-#include "ocudu/e2/e2_node_component_config_provider.h"
-#include "ocudu/e2/e2ap_configuration.h"
 #include "ocudu/e2/e2sm/e2sm.h"
 #include "ocudu/e2/e2sm/e2sm_manager.h"
 #include "ocudu/ran/nr_cgi.h"
 #include "ocudu/support/async/fifo_async_task_scheduler.h"
-#include <map>
 #include <memory>
-#include <vector>
 
 namespace ocudu {
 
@@ -29,15 +24,13 @@ class e2_event_manager;
 class e2_impl final : public e2_interface
 {
 public:
-  e2_impl(ocudulog::basic_logger&            logger_,
-          const e2ap_configuration&          cfg_,
-          e2ap_e2agent_notifier&             agent_notifier_,
-          timer_factory                      timers_,
-          e2_connection_client&              e2_client_,
-          e2_subscription_manager&           subscription_mngr_,
-          e2sm_manager&                      e2sm_mngr_,
-          task_executor&                     task_exec_,
-          e2_node_component_config_provider& node_component_config_provider_);
+  e2_impl(ocudulog::basic_logger&  logger_,
+          e2ap_e2agent_notifier&   agent_notifier_,
+          timer_factory            timers_,
+          e2_connection_client&    e2_client_,
+          e2_subscription_manager& subscription_mngr_,
+          e2sm_manager&            e2sm_mngr_,
+          task_executor&           task_exec_);
 
   void start() override {}
   void stop() override {}
@@ -45,8 +38,7 @@ public:
   /// E2 connection manager functions.
   bool                                  handle_e2_tnl_connection_request() override;
   async_task<void>                      handle_e2_disconnection_request() override;
-  async_task<e2_setup_response_message> handle_e2_setup_request(e2_setup_request_message& request) override;
-  async_task<e2_setup_response_message> start_initial_e2_setup_routine() override;
+  async_task<e2_setup_response_message> handle_e2_setup_request(const e2_setup_request_message& request) override;
 
   /// E2_event_ handler functions.
   void handle_connection_loss() override {}
@@ -87,28 +79,12 @@ private:
   /// \param[in] msg The received E2 Connection Update message.
   void handle_e2_connection_update(const asn1::e2ap::e2conn_upd_s& msg);
 
-  /// \brief handle e2 setup response message from the ric interface.
-  /// @param[in] msg  The received e2 setup response message.
-  void handle_e2_setup_response(const e2_setup_response_message& msg);
-
-  /// \brief handle e2 setup failure message from the ric interface.
-  /// \param[in] msg  The received e2 setup failure message.
-  void handle_e2_setup_failure(const e2_setup_response_message& msg);
-
-  /// \brief set the allowed ran functions from the e2 setuo response message.
-  /// \param[in] msg The received ran_function_id from the e2 setup response message.
-  void set_allowed_ran_functions(const uint16_t ran_function_id);
-
-  ocudulog::basic_logger&                             logger;
-  const e2ap_configuration&                           cfg;
-  timer_factory                                       timers;
-  e2_node_component_config_provider&                  node_component_config_provider;
-  std::map<uint16_t, asn1::e2ap::ran_function_item_s> candidate_ran_functions;
-  std::map<uint16_t, asn1::e2ap::ran_function_item_s> allowed_ran_functions;
-  e2_subscription_proc&                               subscription_proc;
-  e2sm_manager&                                       e2sm_mngr;
-  std::unique_ptr<e2_event_manager>                   events;
-  fifo_async_task_scheduler                           async_tasks;
+  ocudulog::basic_logger&           logger;
+  timer_factory                     timers;
+  e2_subscription_proc&             subscription_proc;
+  e2sm_manager&                     e2sm_mngr;
+  std::unique_ptr<e2_event_manager> events;
+  fifo_async_task_scheduler         async_tasks;
 
   e2_connection_handler                connection_handler;
   std::unique_ptr<e2_message_notifier> tx_pdu_notifier;

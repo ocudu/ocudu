@@ -1041,9 +1041,6 @@ protected:
   std::unique_ptr<e2sm_manager>                           e2sm_mngr;
   std::unique_ptr<e2_interface>                           e2;
   std::unique_ptr<e2_agent>                               e2agent;
-  /// Used by e2_impl-based fixtures that drive the event directly.
-  manual_event<std::vector<e2_node_component_config>> node_cfg_event;
-  dummy_e2_node_component_config_provider             node_cfg_provider{node_cfg_event};
   /// Used by e2_entity_test which goes through the full aggregator path.
   /// Raw non-owning pointer; ownership is transferred to e2agent on construction.
   e2_node_component_config_collector* node_component_config_collector = nullptr;
@@ -1069,15 +1066,8 @@ class e2_test : public e2_test_base
     factory              = timer_factory{timers, task_worker};
     e2sm_mngr            = std::make_unique<e2sm_manager>(test_logger);
     agent_notifier       = std::make_unique<dummy_e2_agent_mng>();
-    e2                   = std::make_unique<e2_impl>(test_logger,
-                                   cfg,
-                                   *agent_notifier,
-                                   factory,
-                                   *e2_client,
-                                   *e2_subscription_mngr,
-                                   *e2sm_mngr,
-                                   task_worker,
-                                   node_cfg_provider);
+    e2                   = std::make_unique<e2_impl>(
+        test_logger, *agent_notifier, factory, *e2_client, *e2_subscription_mngr, *e2sm_mngr, task_worker);
     // Packer allows to inject packed message into E2 interface.
     gw     = std::make_unique<dummy_sctp_association_sdu_notifier>();
     pcap   = std::make_unique<dummy_e2ap_pcap>();
@@ -1151,15 +1141,8 @@ class e2_test_subscriber : public e2_test_base
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2sm_mngr);
     e2_subscription_mngr->add_ran_function_oid(1, "1.3.6.1.4.1.53148.1.2.2.2");
     agent_notifier = std::make_unique<dummy_e2_agent_mng>();
-    e2             = std::make_unique<e2_impl>(test_logger,
-                                   cfg,
-                                   *agent_notifier,
-                                   factory,
-                                   *e2_client,
-                                   *e2_subscription_mngr,
-                                   *e2sm_mngr,
-                                   task_worker,
-                                   node_cfg_provider);
+    e2             = std::make_unique<e2_impl>(
+        test_logger, *agent_notifier, factory, *e2_client, *e2_subscription_mngr, *e2sm_mngr, task_worker);
     // Packer allows to inject packed message into E2 interface.
     gw     = std::make_unique<dummy_sctp_association_sdu_notifier>();
     pcap   = std::make_unique<dummy_e2ap_pcap>();
@@ -1181,6 +1164,7 @@ class e2_test_setup : public e2_test_base
   {
     cfg                  = config_helpers::make_default_e2ap_config();
     cfg.e2sm_kpm_enabled = true;
+    cfg.e2sm_rc_enabled  = true;
 
     factory                        = timer_factory{timers, task_worker};
     e2_client                      = std::make_unique<dummy_e2_connection_client>();
@@ -1212,15 +1196,8 @@ class e2_test_setup : public e2_test_base
     e2sm_mngr->add_supported_ran_function(3, "1.3.6.1.4.1.53148.1.1.2.3");
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2sm_mngr);
     agent_notifier       = std::make_unique<dummy_e2_agent_mng>();
-    e2                   = std::make_unique<e2_impl>(test_logger,
-                                   cfg,
-                                   *agent_notifier,
-                                   factory,
-                                   *e2_client,
-                                   *e2_subscription_mngr,
-                                   *e2sm_mngr,
-                                   task_worker,
-                                   node_cfg_provider);
+    e2                   = std::make_unique<e2_impl>(
+        test_logger, *agent_notifier, factory, *e2_client, *e2_subscription_mngr, *e2sm_mngr, task_worker);
     // Packer allows to inject packed message into E2 interface.
     gw     = std::make_unique<dummy_sctp_association_sdu_notifier>();
     pcap   = std::make_unique<dummy_e2ap_pcap>();
@@ -1264,20 +1241,9 @@ public:
     });
   }
 
-  async_task<e2_setup_response_message> handle_e2_setup_request(e2_setup_request_message& request) override
+  async_task<e2_setup_response_message> handle_e2_setup_request(const e2_setup_request_message& /*request*/) override
   {
     logger.info("E2 setup request received");
-    return launch_async([](coro_context<async_task<e2_setup_response_message>>& ctx) {
-      CORO_BEGIN(ctx);
-      e2_setup_response_message response;
-      response.success = true;
-      CORO_RETURN(response);
-    });
-  }
-
-  async_task<e2_setup_response_message> start_initial_e2_setup_routine() override
-  {
-    logger.info("Starting initial E2 setup routine");
     return launch_async([](coro_context<async_task<e2_setup_response_message>>& ctx) {
       CORO_BEGIN(ctx);
       e2_setup_response_message response;

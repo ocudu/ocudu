@@ -3,30 +3,24 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "e2_impl.h"
-#include "e2ap_asn1_helpers.h"
 #include "procedures/e2_connection_update_procedure.h"
 #include "ocudu/asn1/e2ap/e2ap.h"
 #include "ocudu/e2/e2.h"
-#include "ocudu/ran/nr_cgi.h"
 #include <memory>
 
 using namespace ocudu;
 using namespace asn1::e2ap;
 using namespace asn1;
 
-e2_impl::e2_impl(ocudulog::basic_logger&            logger_,
-                 const e2ap_configuration&          cfg_,
-                 e2ap_e2agent_notifier&             agent_notifier_,
-                 timer_factory                      timers_,
-                 e2_connection_client&              e2_client_,
-                 e2_subscription_manager&           subscription_mngr_,
-                 e2sm_manager&                      e2sm_mngr_,
-                 task_executor&                     task_exec_,
-                 e2_node_component_config_provider& node_component_config_provider_) :
+e2_impl::e2_impl(ocudulog::basic_logger&  logger_,
+                 e2ap_e2agent_notifier&   agent_notifier_,
+                 timer_factory            timers_,
+                 e2_connection_client&    e2_client_,
+                 e2_subscription_manager& subscription_mngr_,
+                 e2sm_manager&            e2sm_mngr_,
+                 task_executor&           task_exec_) :
   logger(logger_),
-  cfg(cfg_),
   timers(timers_),
-  node_component_config_provider(node_component_config_provider_),
   subscription_proc(subscription_mngr_),
   e2sm_mngr(e2sm_mngr_),
   events(std::make_unique<e2_event_manager>(timers)),
@@ -46,88 +40,16 @@ async_task<void> e2_impl::handle_e2_disconnection_request()
   return connection_handler.handle_tnl_association_removal();
 }
 
-async_task<e2_setup_response_message> e2_impl::handle_e2_setup_request(e2_setup_request_message& request)
+async_task<e2_setup_response_message> e2_impl::handle_e2_setup_request(const e2_setup_request_message& request)
 {
-  for (unsigned i = 0; i < request.request->ran_functions_added.size(); i++) {
-    auto&    ran_function_item = request.request->ran_functions_added[i].value().ran_function_item();
-    uint16_t id                = ran_function_item.ran_function_id;
-
-    logger.info("Added RAN function OID {} to candidate list under RAN function ID {}",
-                ran_function_item.ran_function_o_id.to_string().c_str(),
-                id);
-    std::string     ran_oid  = ran_function_item.ran_function_o_id.to_string();
-    e2sm_interface* e2_iface = e2sm_mngr.get_e2sm_interface(ran_oid);
-    if (e2_iface == nullptr) {
-      logger.error("No E2SM interface found for RAN OID {}", ran_oid.c_str());
-      continue;
-    }
-    ran_function_item.ran_function_definition = e2_iface->get_e2sm_packer().pack_ran_function_description();
-    if (ran_function_item.ran_function_definition.size() == 0) {
-      logger.error("Failed to pack RAN function description");
-      continue;
-    }
-    candidate_ran_functions[id] = ran_function_item;
+  if (tx_pdu_notifier == nullptr) {
+    logger.warning("E2 TNL not established; aborting E2 Setup");
+    return launch_async([](coro_context<async_task<e2_setup_response_message>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(e2_setup_response_message{});
+    });
   }
   return launch_async<e2_setup_procedure>(request, *tx_pdu_notifier, *events, timers, logger);
-}
-
-async_task<e2_setup_response_message> e2_impl::start_initial_e2_setup_routine()
-{
-  return launch_async([this,
-                       response  = e2_setup_response_message{},
-                       request   = e2_setup_request_message{},
-                       node_cfgs = std::vector<e2_node_component_config>{}](
-                          coro_context<async_task<e2_setup_response_message>>& ctx) mutable {
-    CORO_BEGIN(ctx);
-
-    // Wait for the interface-setup PDU bytes (from F1/NG/E1 setup) or timeout.
-    CORO_AWAIT_VALUE(node_cfgs, node_component_config_provider.get_configs());
-
-    if (node_cfgs.empty()) {
-      logger.warning("No node component configs received; aborting E2 Setup");
-      CORO_EARLY_RETURN(response);
-    }
-    fill_asn1_e2ap_setup_request(logger, request.request, cfg, e2sm_mngr, node_cfgs);
-
-    for (const auto& ran_function : request.request->ran_functions_added) {
-      auto&    ran_function_item = ran_function.value().ran_function_item();
-      uint16_t id                = ran_function_item.ran_function_id;
-      logger.info("Added RAN function OID {} to candidate list under RAN Function ID {}",
-                  ran_function_item.ran_function_o_id.to_string().c_str(),
-                  id);
-      candidate_ran_functions[id] = ran_function_item;
-    }
-
-    CORO_AWAIT_VALUE(response, launch_async<e2_setup_procedure>(request, *tx_pdu_notifier, *events, timers, logger));
-
-    CORO_RETURN(response);
-  });
-}
-
-void e2_impl::handle_e2_setup_response(const e2_setup_response_message& msg)
-{
-  e2_message e2_msg;
-  if (msg.success) {
-    logger.info("Received E2 Setup Response message");
-    e2_msg.pdu.set_successful_outcome().load_info_obj(ASN1_E2AP_ID_E2SETUP);
-    e2_msg.pdu.successful_outcome().value.e2setup_resp() = msg.response;
-  } else {
-    logger.error("E2 Setup Failure message received");
-    return;
-  }
-  if (e2_msg.pdu.successful_outcome().value.e2setup_resp()->ran_functions_accepted_present) {
-    for (unsigned i = 0, e = e2_msg.pdu.successful_outcome().value.e2setup_resp()->ran_functions_accepted.size();
-         i != e;
-         ++i) {
-      auto& ran_function_item = e2_msg.pdu.successful_outcome()
-                                    .value.e2setup_resp()
-                                    ->ran_functions_accepted[i]
-                                    .value()
-                                    .ran_function_id_item();
-      uint16_t id = ran_function_item.ran_function_id;
-      set_allowed_ran_functions(id);
-    }
-  }
 }
 
 void e2_impl::handle_ric_control_request(const asn1::e2ap::ric_ctrl_request_s msg)
@@ -136,19 +58,6 @@ void e2_impl::handle_ric_control_request(const asn1::e2ap::ric_ctrl_request_s ms
   e2_ric_control_request request;
   request.request = msg;
   async_tasks.schedule<e2_ric_control_procedure>(request, *tx_pdu_notifier, e2sm_mngr, logger);
-}
-
-void e2_impl::handle_e2_setup_failure(const e2_setup_response_message& msg)
-{
-  e2_message e2_msg;
-  if (!msg.success) {
-    logger.info("Transmitting E2 Setup Failure message");
-    e2_msg.pdu.set_unsuccessful_outcome().load_info_obj(ASN1_E2AP_ID_E2SETUP);
-    e2_msg.pdu.unsuccessful_outcome().value.e2setup_fail() = msg.failure;
-  } else {
-    logger.error("E2 Setup Response message received");
-    return;
-  }
 }
 
 void e2_impl::handle_ric_subscription_request(const asn1::e2ap::ric_sub_request_s& msg)
@@ -237,7 +146,6 @@ void e2_impl::handle_successful_outcome(const asn1::e2ap::successful_outcome_s& 
       if (not events->transactions.set_response(transaction_id.value(), outcome)) {
         logger.warning("Unrecognized transaction id={}", transaction_id.value());
       }
-      handle_e2_setup_response({outcome.value.e2setup_resp(), {}, true});
     } break;
     default:
       logger.error("Invalid E2AP successful outcome message type");
@@ -259,22 +167,9 @@ void e2_impl::handle_unsuccessful_outcome(const asn1::e2ap::unsuccessful_outcome
       if (not events->transactions.set_response(transaction_id.value(), make_unexpected(outcome))) {
         logger.warning("Unrecognized transaction id={}", transaction_id.value());
       }
-      handle_e2_setup_failure({{}, outcome.value.e2setup_fail(), false});
     } break;
     default:
       logger.error("Invalid E2AP unsuccessful outcome message type");
       break;
-  }
-}
-
-void e2_impl::set_allowed_ran_functions(uint16_t ran_function_id)
-{
-  if (candidate_ran_functions.count(ran_function_id)) {
-    allowed_ran_functions[ran_function_id] = candidate_ran_functions[ran_function_id];
-    std::string ran_func_oid               = allowed_ran_functions[ran_function_id].ran_function_o_id.to_string();
-    e2sm_mngr.add_supported_ran_function(ran_function_id, ran_func_oid);
-    logger.info("Added supported RAN function with id {} and OID {}", ran_function_id, ran_func_oid);
-  } else {
-    logger.warning("RAN function with id {} is not a candidate", ran_function_id);
   }
 }

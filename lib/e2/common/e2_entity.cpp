@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "e2_entity.h"
+#include "../procedures/e2_setup_routine.h"
 #include "e2_impl.h"
 #include "e2_subscription_manager_impl.h"
 #include "ocudu/e2/e2.h"
@@ -14,6 +15,7 @@ e2_entity::e2_entity(e2_agent_dependencies&& dependencies) :
   logger(*dependencies.logger),
   cfg(dependencies.cfg),
   task_exec(*dependencies.task_exec),
+  timers(*dependencies.timers),
   main_ctrl_loop(128),
   node_cfg_timeout(dependencies.timers->create_timer()),
   node_component_config_provider(std::move(dependencies.node_component_config_provider))
@@ -29,19 +31,17 @@ e2_entity::e2_entity(e2_agent_dependencies&& dependencies) :
   }
 
   e2ap = std::make_unique<e2_impl>(logger,
-                                   cfg,
                                    *this,
                                    *dependencies.timers,
                                    *dependencies.e2_client,
                                    *subscription_mngr,
                                    *e2sm_mngr,
-                                   *dependencies.task_exec,
-                                   *node_component_config_provider);
+                                   *dependencies.task_exec);
 }
 
 void e2_entity::start()
 {
-  // Create e2ap (sctp) connection to RIC
+  // Create e2ap (sctp) connection to RIC.
   e2ap->handle_e2_tnl_connection_request();
 
   // Start a 5-second timeout so that the setup coroutine is not blocked indefinitely waiting for
@@ -57,10 +57,8 @@ void e2_entity::start()
   if (not task_exec.execute([this]() {
         main_ctrl_loop.schedule([this](coro_context<async_task<void>>& ctx) {
           CORO_BEGIN(ctx);
-
-          // Send E2AP Setup Request and await for E2AP setup response.
-          CORO_AWAIT(e2ap->start_initial_e2_setup_routine());
-
+          CORO_AWAIT(
+              launch_async<e2_setup_routine>(cfg, *node_component_config_provider, *e2sm_mngr, *e2ap, timers, logger));
           CORO_RETURN();
         });
       })) {

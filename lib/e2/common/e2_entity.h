@@ -34,6 +34,7 @@ private:
 
   // Handler for E2AP tasks.
   task_executor&            task_exec;
+  timer_factory             timers;
   fifo_async_task_scheduler main_ctrl_loop;
 
   // Timeout timer that triggers on_timeout() on the aggregator, ensuring the setup coroutine does not block

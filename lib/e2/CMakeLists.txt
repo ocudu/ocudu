@@ -5,6 +5,7 @@
 
 set(SOURCES
         procedures/e2_setup_procedure.cpp
+        procedures/e2_setup_routine.cpp
         procedures/e2_subscription_setup_procedure.cpp
         procedures/e2_subscription_delete_procedure.cpp
         procedures/e2_indication_procedure.cpp
