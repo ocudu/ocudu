@@ -25,7 +25,7 @@ struct ssb_params {
 
 std::ostream& operator<<(std::ostream& os, const ssb_params& params)
 {
-  os << "p_" << to_value(params.periodicity);
+  os << "p_" << static_cast<unsigned>(to_value(params.periodicity));
   os << "_n" << fmt::underlying(params.band);
   os << "_arfnc_" << params.freq_arfcn.value();
   // Apply cast to avoid fmt:: complains.
