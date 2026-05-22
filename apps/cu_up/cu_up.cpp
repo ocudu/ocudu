@@ -358,19 +358,23 @@ int main(int argc, char** argv)
   std::unique_ptr<f1u_cu_up_udp_gateway> cu_f1u_conn =
       ocuup::create_split_f1u_gw({f1u_gw_maps, *cu_f1u_gtpu_demux, *cu_up_dlt_pcaps.f1u, cu_up_cfg.f1u_cfg.peer_port});
 
-  // Instantiate E1 client gateway.
-  // > Create E1 config
-  sctp_network_connector_config e1_sctp{};
-  e1_sctp.if_name           = "E1";
-  e1_sctp.dest_name         = "CU-CP";
-  e1_sctp.connect_addresses = cu_up_cfg.e1ap_cfg.e1ap_cfgs[0].cu_cp_addresses; // TODO create multiple SCTP clients
-  e1_sctp.connect_port      = E1AP_PORT;
-  e1_sctp.ppid              = E1AP_PPID;
-  e1_sctp.bind_addresses    = cu_up_cfg.e1ap_cfg.e1ap_cfgs[0].bind_addresses;
-  fill_sctp_network_gateway_config_socket_params(e1_sctp, cu_up_cfg.e1ap_cfg.e1ap_cfgs[0].sctp);
-  // > Create E1 gateway
-  std::unique_ptr<ocuup::e1_connection_client> e1_gw = create_e1_gateway_client(e1_cu_up_sctp_gateway_config{
-      e1_sctp, *epoll_broker, workers.get_cu_up_executor_mapper().e1_rx_executor(), *cu_up_dlt_pcaps.e1ap});
+  // Instantiate E1 client gateway(s).
+  std::vector<std::unique_ptr<ocuup::e1_connection_client>> e1_gws;
+  for (const auto& e1_cfg : cu_up_cfg.e1ap_cfg.e1ap_cfgs) {
+    // > Create E1 config
+    sctp_network_connector_config e1_sctp{};
+    e1_sctp.if_name           = "E1";
+    e1_sctp.dest_name         = "CU-CP";
+    e1_sctp.connect_addresses = e1_cfg.cu_cp_addresses;
+    e1_sctp.connect_port      = E1AP_PORT;
+    e1_sctp.ppid              = E1AP_PPID;
+    e1_sctp.bind_addresses    = e1_cfg.bind_addresses;
+    fill_sctp_network_gateway_config_socket_params(e1_sctp, e1_cfg.sctp);
+    // > Create E1 gateway
+    std::unique_ptr<ocuup::e1_connection_client> e1_gw = create_e1_gateway_client(e1_cu_up_sctp_gateway_config{
+        e1_sctp, *epoll_broker, workers.get_cu_up_executor_mapper().e1_rx_executor(), *cu_up_dlt_pcaps.e1ap});
+    e1_gws.push_back(std::move(e1_gw));
+  }
 
   // Instantiate E2AP client gateway.
   std::unique_ptr<e2_connection_client> e2_gw_cu_up = create_e2_gateway_client(
@@ -396,7 +400,9 @@ int main(int argc, char** argv)
   // Create and start O-CU-UP
   o_cu_up_unit_dependencies o_cuup_unit_deps;
   o_cuup_unit_deps.workers = &workers;
-  o_cuup_unit_deps.e1ap_conn_client.push_back(e1_gw.get()); // TODO pass all GWs.
+  for (const auto& e1_gw : e1_gws) {
+    o_cuup_unit_deps.e1ap_conn_client.push_back(e1_gw.get());
+  }
   o_cuup_unit_deps.f1u_teid_allocator     = cu_f1u_teid_allocator.get();
   o_cuup_unit_deps.f1u_gateway            = cu_f1u_conn.get();
   o_cuup_unit_deps.gtpu_pcap              = cu_up_dlt_pcaps.n3.get();
