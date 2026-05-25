@@ -560,30 +560,49 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_chain status)
 
   // Validate FMC field.
   if (fmc > st.tx_next) {
-    logger.log_error("Invalid status report, FMC > TX_NEXT. fmc={} st={}", fmc, st);
+    logger.log_error("Invalid status report, FMC > TX_NEXT. st={} fmc={}", st, fmc);
     upper_cn.on_protocol_failure();
     return;
   }
 
   // Validate bitmap length.
-  // > Round the difference between FMC and TX_NEXT to the next multiple of 8,
-  // > that will be the maximum number of bits that can be present in the bitmap.
-  uint32_t delta              = st.tx_next - fmc;
-  uint32_t max_count_possible = ((delta + 7) >> 3) << 3;
-  // > Compare the maximum number of bits in the bitmap with the bitmap length.
-  unsigned bitmap_length    = buf.length() - 5;
-  unsigned max_count_actual = bitmap_length * 8;
-  if (max_count_actual > max_count_possible) {
-    logger.log_error("Invalid status report, FMC > TX_NEXT. fmc={} st={}", fmc, st);
+  // > If FMC == TX_NEXT, bitmap must be zero length.
+  unsigned bitmap_length = buf.length() - 5;
+  if (fmc == st.tx_next && bitmap_length != 0) {
+    logger.log_error("Invalid status report, bitmap non-zero for equal FMC and TX_NEXT. st={} fmc={} bitmap_length={}",
+                     st,
+                     fmc,
+                     bitmap_length);
+    upper_cn.on_protocol_failure();
+  }
+
+  // > Compute how many bytes the bitmap length can have in the maximum case.
+  uint32_t delta                   = st.tx_next - fmc - 1;
+  uint32_t max_possible_bithlength = (delta + 7) / 8; // round up division by 8.
+  if (bitmap_length > max_possible_bithlength) {
+    logger.log_error("Invalid status report, bitmap length too large. tx_next={} fmc={} bitmap_length={}",
+                     st.tx_next,
+                     fmc,
+                     bitmap_length);
     upper_cn.on_protocol_failure();
     return;
   }
 
   // Validate tail of bitmap.
   if (bitmap_length != 0) {
-    uint8_t tail = buf.back();
-    (void)tail;
-    tail = delta;
+    uint8_t bitlength_without_padding = delta % 8;
+    uint8_t tail                      = buf.back();
+    uint8_t res                       = (tail << bitlength_without_padding);
+    if (res) {
+      logger.log_error("Invalid status report, bits set in padding of bitmap. tx_next={} fmc={} tail={:b} "
+                       "bitlength={}",
+                       st.tx_next,
+                       fmc,
+                       tail,
+                       bitlength_without_padding);
+      upper_cn.on_protocol_failure();
+      return;
+    }
   }
 
   if (fmc < st.tx_next_ack) {
@@ -601,11 +620,6 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_chain status)
   unsigned bit = 0;
   while (dec.unpack(bit, 1)) {
     fmc++;
-    if (fmc >= st.tx_next) {
-      logger.log_warning("Invalid status report, bitmap length exceeds TX_NEXT. fmc={} st={}", fmc, st);
-      break;
-    }
-
     // Bit == 0: PDCP SDU with COUNT = (FMC + bit position) modulo 2^32 is missing.
     // Bit == 1: PDCP SDU with COUNT = (FMC + bit position) modulo 2^32 is correctly received.
     if (bit == 1) {
