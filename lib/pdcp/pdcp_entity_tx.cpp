@@ -579,6 +579,13 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_chain status)
     return;
   }
 
+  // Validate tail of bitmap.
+  if (bitmap_length != 0) {
+    uint8_t tail = buf.back();
+    (void)tail;
+    tail = delta;
+  }
+
   if (fmc < st.tx_next_ack) {
     // Do not return if FMC < TX_NEXT_ACK.
     // Perhaps the PDCP status PDU arrived out-of-order and PDUs were acked in the meanttime.
