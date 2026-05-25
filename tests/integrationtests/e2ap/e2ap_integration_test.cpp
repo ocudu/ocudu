@@ -54,6 +54,8 @@ public:
 
   void connect_e2ap(e2_interface* e2ap_) { e2ap = e2ap_; }
 
+  bool is_connected() const { return sctp_sender != nullptr; }
+
   e2_message last_tx_e2_msg;
   e2_message last_rx_e2_msg;
 
@@ -210,6 +212,9 @@ protected:
 /// Test successful e2 setup procedure
 TEST_F(e2ap_integration_test, when_e2_setup_response_received_then_ric_connected)
 {
+  if (!adapter->is_connected()) {
+    GTEST_SKIP() << "No NearRT-RIC available at 127.0.0.1:36421";
+  }
   report_fatal_error_if_not(e2ap->handle_e2_tnl_connection_request(), "Unable to establish connection to RIC");
 
   // Pre-fire the node component config event so the setup coroutine is not blocked awaiting it.
