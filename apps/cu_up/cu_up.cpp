@@ -367,7 +367,7 @@ int main(int argc, char** argv)
   // Instantiate E1 client gateway(s).
   std::vector<std::unique_ptr<ocuup::e1_connection_client>> e1_gws;
   for (const auto& e1_cfg : cu_up_cfg.e1ap_cfg.e1ap_cfgs) {
-    // > Create E1 config
+    // > Create E1 config.
     sctp_network_connector_config e1_sctp{};
     e1_sctp.if_name           = "E1";
     e1_sctp.dest_name         = "CU-CP";
@@ -376,7 +376,7 @@ int main(int argc, char** argv)
     e1_sctp.ppid              = E1AP_PPID;
     e1_sctp.bind_addresses    = e1_cfg.bind_addresses;
     fill_sctp_network_gateway_config_socket_params(e1_sctp, e1_cfg.sctp);
-    // > Create E1 gateway
+    // > Create E1 gateway.
     std::unique_ptr<ocuup::e1_connection_client> e1_gw = create_e1_gateway_client(e1_cu_up_sctp_gateway_config{
         e1_sctp, *epoll_broker, workers.get_cu_up_executor_mapper().e1_rx_executor(), *cu_up_dlt_pcaps.e1ap});
     e1_gws.push_back(std::move(e1_gw));
@@ -403,7 +403,7 @@ int main(int argc, char** argv)
 
   // TODO: Create console helper object for commands and metrics printing.
 
-  // Create and start O-CU-UP
+  // Create and start O-CU-UP.
   o_cu_up_unit_dependencies o_cuup_unit_deps;
   o_cuup_unit_deps.workers = &workers;
   for (const auto& e1_gw : e1_gws) {
