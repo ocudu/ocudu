@@ -75,9 +75,6 @@ bool meas_gap_collides(const meas_gap_config&          gap,
 {
   const unsigned mgrp_slots = static_cast<unsigned>(gap.mgrp) * get_nof_slots_per_subframe(scs);
   for (const auto& occ : ul_occasions) {
-    if (occ.period_slots == 0) {
-      continue;
-    }
     if (mode == collision_check::strict) {
       // `strict` check collides when any periodic UL occasion repetition overlaps the measurement gap.
       for (unsigned slot = occ.offset_slots % occ.period_slots; slot < mgrp_slots; slot += occ.period_slots) {
@@ -126,9 +123,7 @@ odu::create_meas_gap(subcarrier_spacing scs, const ssb_mtc_s& smtc1, span<const 
   // to ensure that one MGRP contains at least one SSB, SR and periodic CSI occasion we have to align it with.
   unsigned min_mgrp_ms = smtc_period_ms;
   for (const auto& occ : ul_occasions) {
-    if (occ.period_slots == 0) {
-      continue;
-    }
+    ocudu_assert(occ.period_slots > 0, "Periodic UL occasion must have a non-zero period");
     const unsigned occ_period_ms = (occ.period_slots + slots_per_ms - 1) / slots_per_ms;
     min_mgrp_ms                  = std::max(min_mgrp_ms, occ_period_ms);
   }
