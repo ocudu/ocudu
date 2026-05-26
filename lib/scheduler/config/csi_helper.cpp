@@ -466,9 +466,6 @@ ocudu::csi_helper::make_nzp_csi_rs_resource_list(const csi_meas_config_builder_p
   for (unsigned i = 0; i < nof_beams; ++i) {
     list[i]        = make_channel_measurement_nzp_csi_rs_resource(params, params.csi_params.meas_csi_slot_offsets[i]);
     list[i].res_id = static_cast<nzp_csi_rs_res_id_t>(i);
-    if (nof_beams > 0) {
-      list[i].qcl_info_periodic_csi_rs = static_cast<tci_state_id_t>(1 + i);
-    }
   }
 
   // Tracking - Resources N..N+3.
