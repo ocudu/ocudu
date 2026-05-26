@@ -120,6 +120,13 @@ TEST_F(gtpu_tunnel_ngu_tx_test, tx_sdus)
 
     tx->handle_sdu(std::move(sdu), uint_to_qos_flow_id(1));
     ASSERT_EQ(pdu, tx_upper.tx_ul_pdus[i]);
+    gtpu_teid_t teid_out = {};
+    ASSERT_TRUE(gtpu_read_teid(teid_out.value(), tx_upper.tx_ul_pdus[i], gtpu_logger));
+    ASSERT_EQ(teid_out, tx_cfg.peer_teid);
+    std::string dest_addr_str;
+    ASSERT_TRUE(
+        ocudu::sockaddr_to_ip_str(reinterpret_cast<sockaddr*>(&tx_upper.last_dest_addr), dest_addr_str, logger));
+    ASSERT_EQ(dest_addr_str, "127.0.0.1");
   }
 }
 
@@ -211,29 +218,6 @@ TEST_F(gtpu_tunnel_ngu_tx_test, update_tx_endpoint_second_call_overrides_first)
   std::string dest_addr_str;
   ASSERT_TRUE(ocudu::sockaddr_to_ip_str(reinterpret_cast<sockaddr*>(&tx_upper.last_dest_addr), dest_addr_str, logger));
   ASSERT_EQ(dest_addr_str, "10.0.0.2");
-}
-
-/// \brief Without calling update_tx_endpoint() the original TEID and address remain unchanged
-/// (negative: no accidental mutation of TX state at construction or stop).
-TEST_F(gtpu_tunnel_ngu_tx_test, no_update_keeps_original_endpoint)
-{
-  gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_tx_config tx_cfg = {};
-  tx_cfg.peer_addr                                         = "127.0.0.1";
-  tx_cfg.peer_teid                                         = gtpu_teid_t{0x2};
-
-  tx = std::make_unique<gtpu_tunnel_ngu_tx_impl>(cu_up_ue_index_t::MIN_CU_UP_UE_INDEX, tx_cfg, dummy_pcap, tx_upper);
-
-  for (unsigned i = 0; i < 3; i++) {
-    byte_buffer sdu = byte_buffer::create(gtpu_ping_sdu).value();
-    tx->handle_sdu(std::move(sdu), uint_to_qos_flow_id(1));
-    gtpu_teid_t teid_out = {};
-    ASSERT_TRUE(gtpu_read_teid(teid_out.value(), tx_upper.tx_ul_pdus[i], gtpu_logger));
-    ASSERT_EQ(teid_out, tx_cfg.peer_teid);
-    std::string dest_addr_str;
-    ASSERT_TRUE(
-        ocudu::sockaddr_to_ip_str(reinterpret_cast<sockaddr*>(&tx_upper.last_dest_addr), dest_addr_str, logger));
-    ASSERT_EQ(dest_addr_str, "127.0.0.1");
-  }
 }
 
 int main(int argc, char** argv)

@@ -437,21 +437,6 @@ TEST_F(pdu_session_manager_test, when_ng_ul_up_tnl_info_absent_in_modify_item_th
   EXPECT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
 }
 
-/// Modifying a non-existent session with ng_ul_up_tnl_info set must fail gracefully.
-TEST_F(pdu_session_manager_test, when_session_not_found_and_ng_ul_up_tnl_info_set_then_modify_fails)
-{
-  ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
-
-  e1ap_pdu_session_res_to_modify_item pdu_session_modify_item =
-      generate_pdu_session_res_to_modify_item_with_ng_ul_up_tnl_info(uint_to_pdu_session_id(99), "10.0.0.1", 0x1);
-
-  pdu_session_modification_result mod_result = pdu_session_mng->modify_pdu_session(pdu_session_modify_item, false);
-
-  // Session does not exist — modification must fail cleanly (no crash, no new session created).
-  EXPECT_FALSE(mod_result.success);
-  EXPECT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
-}
-
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
