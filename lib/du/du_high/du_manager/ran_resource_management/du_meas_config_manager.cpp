@@ -77,7 +77,7 @@ bool meas_gap_collides(const meas_gap_config&          gap,
   for (const auto& occ : ul_occasions) {
     if (mode == collision_check::strict) {
       // `strict` check collides when any periodic UL occasion repetition overlaps the measurement gap.
-      for (unsigned slot = occ.offset_slots % occ.period_slots; slot < mgrp_slots; slot += occ.period_slots) {
+      for (unsigned slot = occ.offset_slots; slot < mgrp_slots; slot += occ.period_slots) {
         if (is_inside_meas_gap(gap, slot_point(scs, slot))) {
           return true;
         }
@@ -85,7 +85,7 @@ bool meas_gap_collides(const meas_gap_config&          gap,
     } else {
       // `loose` check collides when all periodic UL resource repetitions overlap the measurement gap.
       bool all_inside_meas_gap = true;
-      for (unsigned slot = occ.offset_slots % occ.period_slots; slot < mgrp_slots; slot += occ.period_slots) {
+      for (unsigned slot = occ.offset_slots; slot < mgrp_slots; slot += occ.period_slots) {
         if (!is_inside_meas_gap(gap, slot_point(scs, slot))) {
           all_inside_meas_gap = false;
           break;
@@ -124,6 +124,10 @@ odu::create_meas_gap(subcarrier_spacing scs, const ssb_mtc_s& smtc1, span<const 
   unsigned min_mgrp_ms = smtc_period_ms;
   for (const auto& occ : ul_occasions) {
     ocudu_assert(occ.period_slots > 0, "Periodic UL occasion must have a non-zero period");
+    ocudu_assert(occ.offset_slots < occ.period_slots,
+                 "Periodic UL occasion offset ({}) must be less than its period ({})",
+                 occ.offset_slots,
+                 occ.period_slots);
     const unsigned occ_period_ms = (occ.period_slots + slots_per_ms - 1) / slots_per_ms;
     min_mgrp_ms                  = std::max(min_mgrp_ms, occ_period_ms);
   }
