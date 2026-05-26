@@ -446,8 +446,12 @@ expected<vrb_interval, dl_alloc_failure_cause>
 ue_cell_grid_allocator::allocate_dl_grant(const ue_retx_dl_grant_request& request) const
 {
   // Select PDCCH searchSpace and PDSCH time-domain resource config.
-  auto sched_ctxt = sched_helper::get_retx_dl_sched_context(
-      request.user, cell_alloc[0].slot, request.pdsch_slot, request.interleaving_enabled, request.h_dl);
+  auto sched_ctxt = sched_helper::get_retx_dl_sched_context(request.user,
+                                                            cell_alloc[0].slot,
+                                                            request.pdsch_slot,
+                                                            request.interleaving_enabled,
+                                                            request.h_dl,
+                                                            request.max_rbs);
   if (not sched_ctxt) {
     return make_unexpected(dl_alloc_failure_cause::other);
   }
@@ -521,7 +525,8 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_retx_ul_grant_request& reques
                                                             request.pusch_slot,
                                                             pending_uci_harq_bits,
                                                             request.h_ul,
-                                                            request.allowed_symbols);
+                                                            request.allowed_symbols,
+                                                            request.max_rbs);
   if (not sched_ctxt) {
     return make_unexpected(alloc_status::skip_ue);
   }

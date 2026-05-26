@@ -263,7 +263,8 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
                                                             slot_point                    pdsch_slot,
                                                             bool                          interleaving_enabled,
                                                             const dl_harq_process_handle* h_dl,
-                                                            units::bytes                  pending_bytes)
+                                                            units::bytes                  pending_bytes,
+                                                            unsigned                      max_rbs = MAX_NOF_PRBS)
 {
   const ue_cell& ue_cc = u.get_cc();
 
@@ -288,10 +289,13 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
 
   // Determine RB allocation limits.
   const auto crb_lims = (cell_cfg.expert_cfg.ue.pdsch_crb_limits & ss.dl_crb_lims).convert_to<crb_interval>();
+  // For reTx, additionally cap by the slice's max RB budget to prevent overflowing the slice allocation.
+  const interval<unsigned> slice_max_lims =
+      (h_dl != nullptr) ? interval<unsigned>{0, max_rbs + 1} : interval<unsigned>{0, MAX_NOF_PRBS};
   const interval<unsigned> nof_rb_lims =
       cell_cfg.expert_cfg.ue.pdsch_nof_rbs &
       ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits.convert_to<interval<unsigned>>() &
-      interval<unsigned>{0, crb_lims.length()};
+      interval<unsigned>{0, crb_lims.length()} & slice_max_lims;
   if (nof_rb_lims.empty()) {
     // Invalid RB allocation range.
     return std::nullopt;
@@ -375,9 +379,10 @@ std::optional<dl_sched_context> sched_helper::get_retx_dl_sched_context(const sl
                                                                         slot_point      pdcch_slot,
                                                                         slot_point      pdsch_slot,
                                                                         bool            interleaving_enabled,
-                                                                        const dl_harq_process_handle& h_dl)
+                                                                        const dl_harq_process_handle& h_dl,
+                                                                        unsigned                      max_rbs)
 {
-  return get_dl_sched_context(u, pdcch_slot, pdsch_slot, interleaving_enabled, &h_dl, units::bytes{0});
+  return get_dl_sched_context(u, pdcch_slot, pdsch_slot, interleaving_enabled, &h_dl, units::bytes{0}, max_rbs);
 }
 
 static vrb_interval
@@ -496,7 +501,8 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
                                                             unsigned                      uci_nof_harq_bits,
                                                             const ul_harq_process_handle* h_ul,
                                                             units::bytes                  pending_bytes,
-                                                            ofdm_symbol_range             allowed_symbols)
+                                                            ofdm_symbol_range             allowed_symbols,
+                                                            unsigned                      max_rbs = MAX_NOF_PRBS)
 {
   const ue_cell& ue_cc = u.get_cc();
 
@@ -519,8 +525,12 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
   }
 
   // Determine RB allocation limits.
+  // For reTx, additionally cap by the slice's max RB budget to prevent overflowing the slice allocation.
+  const interval<unsigned> slice_max_lims =
+      (h_ul != nullptr) ? interval<unsigned>{0, max_rbs + 1} : interval<unsigned>{0, MAX_NOF_PRBS};
   interval<unsigned> nof_rb_lims = cell_cfg.expert_cfg.ue.pusch_nof_rbs &
-                                   ue_cell_cfg.rrm_cfg().pusch_grant_size_limits.convert_to<interval<unsigned>>();
+                                   ue_cell_cfg.rrm_cfg().pusch_grant_size_limits.convert_to<interval<unsigned>>() &
+                                   slice_max_lims;
   const auto crb_lims = cell_cfg.expert_cfg.ue.pusch_crb_limits & ss.ul_crb_lims;
   const auto prb_lims = crb_to_prb(ss.ul_crb_lims, crb_lims);
   const auto vrb_lims = prb_lims.convert_to<vrb_interval>();
@@ -629,9 +639,11 @@ std::optional<ul_sched_context> sched_helper::get_retx_ul_sched_context(const sl
                                                                         slot_point                    pusch_slot,
                                                                         unsigned                      uci_nof_harq_bits,
                                                                         const ul_harq_process_handle& h_ul,
-                                                                        ofdm_symbol_range             allowed_symbols)
+                                                                        ofdm_symbol_range             allowed_symbols,
+                                                                        unsigned                      max_rbs)
 {
-  return get_ul_sched_context(u, pdcch_slot, pusch_slot, uci_nof_harq_bits, &h_ul, units::bytes{0}, allowed_symbols);
+  return get_ul_sched_context(
+      u, pdcch_slot, pusch_slot, uci_nof_harq_bits, &h_ul, units::bytes{0}, allowed_symbols, max_rbs);
 }
 
 static vrb_interval

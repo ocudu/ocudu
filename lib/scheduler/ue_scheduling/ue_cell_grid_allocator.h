@@ -40,6 +40,8 @@ struct ue_retx_dl_grant_request {
   vrb_bitmap& used_dl_vrbs;
   /// Whether interleaving VRB-to-PRB mapping is enabled.
   bool interleaving_enabled;
+  /// Maximum number of RBs the slice allows for this grant (caps adaptive retx search).
+  unsigned max_rbs = MAX_NOF_PRBS;
 };
 
 /// Request to reserve space for control channels of a UL grant.
@@ -66,6 +68,8 @@ struct ue_retx_ul_grant_request {
   vrb_bitmap& used_ul_vrbs;
   /// Symbols that can be used for PUSCH allocation.
   ofdm_symbol_range allowed_symbols;
+  /// Maximum number of RBs the slice allows for this grant (caps adaptive retx search).
+  unsigned max_rbs = MAX_NOF_PRBS;
 };
 
 /// \brief Status of a UE grant allocation, and action for the scheduler policy to follow afterwards.

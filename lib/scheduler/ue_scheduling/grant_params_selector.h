@@ -44,7 +44,8 @@ std::optional<dl_sched_context> get_retx_dl_sched_context(const slice_ue&       
                                                           slot_point                    pdcch_slot,
                                                           slot_point                    pdsch_slot,
                                                           bool                          interleaving_enabled,
-                                                          const dl_harq_process_handle& h_dl);
+                                                          const dl_harq_process_handle& h_dl,
+                                                          unsigned                      max_rbs = MAX_NOF_PRBS);
 
 /// Select DL VRBs to allocate for a newTx.
 vrb_interval compute_newtx_dl_vrbs(const dl_sched_context& decision_ctxt,
@@ -88,7 +89,8 @@ std::optional<ul_sched_context> get_retx_ul_sched_context(const slice_ue&       
                                                           slot_point                    pusch_slot,
                                                           unsigned                      uci_nof_harq_bits,
                                                           const ul_harq_process_handle& h_ul,
-                                                          ofdm_symbol_range             allowed_symbols);
+                                                          ofdm_symbol_range             allowed_symbols,
+                                                          unsigned                      max_rbs = MAX_NOF_PRBS);
 
 /// Select UL VRBs to allocate for a newTx.
 vrb_interval compute_newtx_ul_vrbs(const ul_sched_context& decision_ctxt,
