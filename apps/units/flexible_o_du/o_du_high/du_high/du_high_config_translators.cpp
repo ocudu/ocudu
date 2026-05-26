@@ -293,16 +293,22 @@ static void fill_csi_resources(odu::du_cell_config& out_cell, const du_high_unit
     const auto&    pdcch_common         = out_cell.ran.dl_cfg_common.init_dl_bwp.pdcch_common;
     const auto     ssb_slots =
         ssb_helper::get_occupied_slot_offsets(out_cell.ran.ssb_cfg, out_cell.ran.dl_carrier.band, cell_cfg.common_scs);
-    const auto sib1_occ = sib_helper::get_occupied_slot_offsets(out_cell.ran.ssb_cfg,
+    const auto              sib1_occ = sib_helper::get_occupied_slot_offsets(out_cell.ran.ssb_cfg,
                                                                 out_cell.ran.dl_carrier.band,
                                                                 cell_cfg.common_scs,
                                                                 *pdcch_common.get_searchspace0(),
                                                                 pdcch_common.get_coreset0()->value());
+    std::array<unsigned, 1> zp_arr;
+    span<const unsigned>    zp_offsets;
+    if (csi_cfg.zp_csi_slot_offset.has_value()) {
+      zp_arr     = {*csi_cfg.zp_csi_slot_offset};
+      zp_offsets = zp_arr;
+    }
     if (not csi_helper::derive_valid_csi_rs_slot_offsets(
             du_csi,
             csi_cfg.meas_csi_slot_offset,
             csi_cfg.tracking_csi_slot_offset,
-            csi_cfg.zp_csi_slot_offset,
+            zp_offsets,
             generate_tdd_pattern(cell_cfg.common_scs, *cell_cfg.tdd_ul_dl_cfg),
             max_csi_symbol_index,
             static_cast<ssb_periodicity>(cell_cfg.ssb_cfg.ssb_period_msec),
@@ -312,8 +318,10 @@ static void fill_csi_resources(odu::du_cell_config& out_cell, const du_high_unit
       report_error("Unable to derive valid CSI-RS slot offsets and period for cell with pci={}\n", cell_cfg.pci);
     }
   } else {
-    du_csi.meas_csi_slot_offset = csi_cfg.meas_csi_slot_offset.has_value() ? *csi_cfg.meas_csi_slot_offset : 2;
-    du_csi.zp_csi_slot_offset   = csi_cfg.zp_csi_slot_offset.has_value() ? *csi_cfg.zp_csi_slot_offset : 2;
+    du_csi.meas_csi_slot_offsets = {csi_cfg.meas_csi_slot_offset.has_value() ? *csi_cfg.meas_csi_slot_offset : 2U};
+    if (csi_cfg.zp_csi_slot_offset.has_value()) {
+      du_csi.zp_csi_slot_offsets = {*csi_cfg.zp_csi_slot_offset};
+    }
     du_csi.tracking_csi_slot_offset =
         csi_cfg.tracking_csi_slot_offset.has_value() ? *csi_cfg.tracking_csi_slot_offset : 12;
   }

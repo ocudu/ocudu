@@ -35,7 +35,7 @@ protected:
     ocudu_assert(csi_helper::derive_valid_csi_rs_slot_offsets(result.csi_params,
                                                               std::nullopt,
                                                               std::nullopt,
-                                                              std::nullopt,
+                                                              {},
                                                               tdd_cfg,
                                                               max_csi_symbol,
                                                               default_ssb_period,
@@ -53,10 +53,11 @@ TEST_P(csi_rs_slot_derivation_test, csi_rs_slot_offset_fall_in_dl_slots)
 {
   static const unsigned ZP_SYMBOL_IDX = 8, MEAS_SYMBOL_IDX = 4, TRACKING_MAX_SYMBOL_IDX = 8;
 
-  ASSERT_GE(get_active_tdd_dl_symbols(tdd_cfg, result.csi_params.zp_csi_slot_offset, cyclic_prefix::NORMAL).stop(),
+  ASSERT_GE(get_active_tdd_dl_symbols(tdd_cfg, result.csi_params.zp_csi_slot_offsets[0], cyclic_prefix::NORMAL).stop(),
             ZP_SYMBOL_IDX);
-  ASSERT_GE(get_active_tdd_dl_symbols(tdd_cfg, result.csi_params.meas_csi_slot_offset, cyclic_prefix::NORMAL).stop(),
-            MEAS_SYMBOL_IDX);
+  ASSERT_GE(
+      get_active_tdd_dl_symbols(tdd_cfg, result.csi_params.meas_csi_slot_offsets[0], cyclic_prefix::NORMAL).stop(),
+      MEAS_SYMBOL_IDX);
   // Note: Tracking occupies two consecutive slots.
   ASSERT_GE(
       get_active_tdd_dl_symbols(tdd_cfg, result.csi_params.tracking_csi_slot_offset, cyclic_prefix::NORMAL).stop(),
@@ -69,10 +70,10 @@ TEST_P(csi_rs_slot_derivation_test, csi_rs_slot_offset_fall_in_dl_slots)
 TEST_P(csi_rs_slot_derivation_test, csi_rs_slot_offsets_do_not_collide)
 {
   // Note: ZP and NZP-CSI-RS slots are always in different symbols.
-  ASSERT_NE(result.csi_params.zp_csi_slot_offset, result.csi_params.tracking_csi_slot_offset);
-  ASSERT_NE(result.csi_params.zp_csi_slot_offset, result.csi_params.tracking_csi_slot_offset + 1);
-  ASSERT_NE(result.csi_params.meas_csi_slot_offset, result.csi_params.tracking_csi_slot_offset);
-  ASSERT_NE(result.csi_params.meas_csi_slot_offset, result.csi_params.tracking_csi_slot_offset + 1);
+  ASSERT_NE(result.csi_params.zp_csi_slot_offsets[0], result.csi_params.tracking_csi_slot_offset);
+  ASSERT_NE(result.csi_params.zp_csi_slot_offsets[0], result.csi_params.tracking_csi_slot_offset + 1);
+  ASSERT_NE(result.csi_params.meas_csi_slot_offsets[0], result.csi_params.tracking_csi_slot_offset);
+  ASSERT_NE(result.csi_params.meas_csi_slot_offsets[0], result.csi_params.tracking_csi_slot_offset + 1);
 }
 
 TEST_P(csi_rs_slot_derivation_test, generated_csi_meas_config_validation)
@@ -110,23 +111,15 @@ TEST(csi_helper_test, ssb_slot_offsets_are_all_avoided)
   csi_helper::csi_meas_config_builder_params params{};
   params.csi_params.csi_rs_period = csi_helper::get_max_csi_rs_period(tdd_cfg.ref_scs);
 
-  ASSERT_TRUE(csi_helper::derive_valid_csi_rs_slot_offsets(params.csi_params,
-                                                           std::nullopt,
-                                                           std::nullopt,
-                                                           std::nullopt,
-                                                           tdd_cfg,
-                                                           max_csi_symbol,
-                                                           ssb_period,
-                                                           ssb_slots,
-                                                           1U,
-                                                           {}));
+  ASSERT_TRUE(csi_helper::derive_valid_csi_rs_slot_offsets(
+      params.csi_params, std::nullopt, std::nullopt, {}, tdd_cfg, max_csi_symbol, ssb_period, ssb_slots, 1U, {}));
 
   const unsigned ssb_period_slots = to_value(ssb_period) * get_nof_slots_per_subframe(tdd_cfg.ref_scs);
   for (unsigned ssb_slot : ssb_slots) {
-    EXPECT_NE(params.csi_params.meas_csi_slot_offset % ssb_period_slots, ssb_slot)
-        << "meas_csi_slot_offset collides with SSB slot " << ssb_slot;
-    EXPECT_NE(params.csi_params.zp_csi_slot_offset % ssb_period_slots, ssb_slot)
-        << "zp_csi_slot_offset collides with SSB slot " << ssb_slot;
+    EXPECT_NE(params.csi_params.meas_csi_slot_offsets[0] % ssb_period_slots, ssb_slot)
+        << "meas_csi_slot_offsets[0] collides with SSB slot " << ssb_slot;
+    EXPECT_NE(params.csi_params.zp_csi_slot_offsets[0] % ssb_period_slots, ssb_slot)
+        << "zp_csi_slot_offsets[0] collides with SSB slot " << ssb_slot;
     EXPECT_NE(params.csi_params.tracking_csi_slot_offset % ssb_period_slots, ssb_slot)
         << "tracking_csi_slot_offset collides with SSB slot " << ssb_slot;
     EXPECT_NE((params.csi_params.tracking_csi_slot_offset + 1) % ssb_period_slots, ssb_slot)

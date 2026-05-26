@@ -256,9 +256,11 @@ du_pucch_resource_manager::get_compatible_csi_cfg(const cell_resource_context&  
   };
 
   // [Implementation-defined] CSI resource and report periods are the same.
-  // TODO: Support more than one nzp-CSI-RS resource for measurement.
+  // Note: We use the latest meas CSI-RS offset as the reference to derive the CSI report offset. We want all CSI-RS
+  // resources to be considered for the report.
   const unsigned csi_rs_period   = cell_ctx.csi_period_slots;
-  const unsigned csi_rs_offset   = cell_ctx.cell_params.init_bwp.csi->meas_csi_slot_offset;
+  const unsigned csi_rs_offset   = *std::max_element(cell_ctx.cell_params.init_bwp.csi->meas_csi_slot_offsets.begin(),
+                                                   cell_ctx.cell_params.init_bwp.csi->meas_csi_slot_offsets.end());
   const auto     weight_function = [&](const periodic_pucch_config& candidate_csi_cfg) -> unsigned {
     // [Implementation-defined] Given that it takes some time for a UE to process a CSI-RS and integrate its estimate
     // in the following CSI report, we consider a minimum slot distance before which CSI report slot offsets should be

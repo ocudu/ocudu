@@ -31,12 +31,24 @@ struct du_csi_params {
   ///
   /// The UE expects a period of \f$2^\mu\{10, 20, 40, 80\}\f$ slots.
   csi_resource_periodicity csi_rs_period = csi_resource_periodicity::slots80;
-  /// Slot offset for measurement CSI-RS resources. Note: Should avoid collisions with SSB and SIB1.
-  unsigned meas_csi_slot_offset = 2;
+  /// \brief Number of NZP-CSI-RS resources used for channel measurement.
+  ///
+  /// When set to 1 (default), a single omnidirectional resource is configured. When set to N > 1,
+  /// N resources are configured in one resource set with repetition disabled, allowing the UE to
+  /// measure and report the best resource via CRI.
+  unsigned nof_beams = 1;
+  /// \brief Slot offsets for NZP channel-measurement CSI-RS resources.
+  ///
+  /// Size equals \c nof_beams. If left empty, it should be auto-derived.
+  /// All offsets are within [0, csi_rs_period) and avoid SSB, SIB1, ZP-CSI-RS, and tracking slots.
+  std::vector<unsigned> meas_csi_slot_offsets;
   /// Slot offset of the first CSI-RS resource used for tracking. Note: Should avoid collisions with SSB and SIB1.
   unsigned tracking_csi_slot_offset = 12;
-  /// Slot offset for zp-CSI-RS resources. Note: Should avoid collisions with SSB and SIB1.
-  unsigned zp_csi_slot_offset = 2;
+  /// \brief Slot offsets for ZP-CSI-RS resources (size == nof_beams after derivation).
+  ///
+  /// When left empty, the slot offsets are automatically set to \c meas_csi_slot_offsets.
+  /// When non-empty, must have the same size as \c nof_beams and each offset must be valid.
+  std::vector<unsigned> zp_csi_slot_offsets;
   /// Report slot offset for periodic CSI reports.
   std::optional<unsigned> csi_report_slot_offset = 9;
   /// Whether to configure aperiodic CSI reports.
@@ -86,27 +98,28 @@ std::optional<csi_resource_periodicity> find_valid_csi_rs_period(const tdd_ul_dl
 
 /// \brief Search for valid CSI-RS slot offsets for measurement, tracking and interference management.
 ///
-/// \param csi_params [in/out] Parameters used to generate CSI Meas Config. This function assumes that the CSI-RS
+/// \param[in/out] csi_params Parameters used to generate CSI Meas Config. This function assumes that the CSI-RS
 /// period, is already set.
-/// \param meas_csi_slot_offset [in] Slot offset for measurement CSI-RS resources. If passed as empty, a new value is
+/// \param[in] meas_csi_slot_offset Slot offset override for the first (or only) measurement CSI-RS resource. If
+/// passed as empty, all \c nof_beams offsets are derived automatically. If passed as non-empty, it is validated and
+/// used as \c meas_csi_slot_offsets[0]; remaining beam slots (when \c nof_beams > 1) are derived.
+/// \param[in] tracking_csi_slot_offset Slot offset for tracking CSI-RS resources. If passed as empty, a new value is
 /// derived. If passed as non-empty, the function will check whether the value is valid.
-/// \param tracking_csi_slot_offset [in] Slot offset for tracking CSI-RS resources. If passed as empty, a new value is
-/// derived. If passed as non-empty, the function will check whether the value is valid.
-/// \param zp_csi_slot_offset [in] Slot offset for IM CSI-RS resources. If passed as empty, a new value is derived.
-/// If passed as non-empty, the function will check whether the value is valid.
-/// \param tdd_cfg [in] TDD pattern.
-/// \param max_csi_symbol_index [in] Maximum CSI symbol among those used for CSI-RS.
-/// \param ssb_period [in] SSB periodicity.
-/// \param ssb_slot_offsets [in] Slot offsets (within one SSB period) that carry SSB transmissions, using SCS common
+/// \param[in] zp_csi_slot_offsets Slot offsets for ZP-CSI-RS resources. If empty, automatically set equal to the
+/// derived \c meas_csi_slot_offsets. If non-empty, must have size equal to \c nof_beams; each offset is validated.
+/// \param[in] tdd_cfg TDD pattern.
+/// \param[in] max_csi_symbol_index Maximum CSI symbol among those used for CSI-RS.
+/// \param[in] ssb_period SSB periodicity.
+/// \param[in] ssb_slot_offsets Slot offsets (within one SSB period) that carry SSB transmissions, using SCS common
 /// as reference (not SSB SCS). All listed slots are excluded from CSI-RS placement.
-/// \param sib1_period_slots [in] Period of the SIB1 Type0-CSS monitoring window in \c tdd_cfg SCS slots, as returned
+/// \param[in] sib1_period_slots Period of the SIB1 Type0-CSS monitoring window in \c tdd_cfg SCS slots, as returned
 /// by \c sib_helper::type0_css_occasions::window_period_slots. Derived from the CORESET multiplexing pattern.
-/// \param sib1_slot_offsets [in] Slot offsets (within one SIB1 monitoring window) carrying SIB1 PDSCHs, as returned
+/// \param[in] sib1_slot_offsets Slot offsets (within one SIB1 monitoring window) carrying SIB1 PDSCHs, as returned
 /// by \c sib_helper::type0_css_occasions::slot_offsets. All listed slots are excluded from CSI-RS placement.
 [[nodiscard]] bool derive_valid_csi_rs_slot_offsets(du_csi_params&                 csi_params,
                                                     const std::optional<unsigned>& meas_csi_slot_offset,
                                                     const std::optional<unsigned>& tracking_csi_slot_offset,
-                                                    const std::optional<unsigned>& zp_csi_slot_offset,
+                                                    span<const unsigned>           zp_csi_slot_offsets,
                                                     const tdd_ul_dl_config_common& tdd_cfg,
                                                     unsigned                       max_csi_symbol_index,
                                                     ssb_periodicity                ssb_period,

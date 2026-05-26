@@ -265,7 +265,7 @@ make_default_csi_meas_builder_params(const config_helpers::cell_config_builder_p
     if (not csi_helper::derive_valid_csi_rs_slot_offsets(csi_params.csi_params,
                                                          std::nullopt,
                                                          std::nullopt,
-                                                         std::nullopt,
+                                                         {},
                                                          tdd_pattern,
                                                          max_csi_symbol,
                                                          ssb_cfg.ssb_period,
@@ -281,6 +281,8 @@ make_default_csi_meas_builder_params(const config_helpers::cell_config_builder_p
         csi_params.csi_params.csi_report_slot_offset = i;
       }
     }
+  } else {
+    csi_params.csi_params.meas_csi_slot_offsets = {2U};
   }
 
   return csi_params;

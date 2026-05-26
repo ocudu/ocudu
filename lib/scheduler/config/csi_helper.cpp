@@ -127,7 +127,7 @@ static bool is_csi_slot_offset_valid(unsigned                       slot_offset,
 bool csi_helper::derive_valid_csi_rs_slot_offsets(du_csi_params&                 csi_params,
                                                   const std::optional<unsigned>& meas_csi_slot_offset,
                                                   const std::optional<unsigned>& tracking_csi_slot_offset,
-                                                  const std::optional<unsigned>& zp_csi_slot_offset,
+                                                  span<const unsigned>           zp_csi_slot_offsets,
                                                   const tdd_ul_dl_config_common& tdd_cfg,
                                                   unsigned                       max_csi_symbol_index,
                                                   ssb_periodicity                ssb_period,
@@ -139,7 +139,41 @@ bool csi_helper::derive_valid_csi_rs_slot_offsets(du_csi_params&                
                "Invalid CSI-RS period {} for provided TDD pattern",
                fmt::underlying(csi_params.csi_rs_period));
 
+  ocudu_assert(csi_params.nof_beams >= 1, "nof_beams must be at least 1");
+
+  // Validate and pre-load ZP overrides.
+  csi_params.zp_csi_slot_offsets.clear();
+  if (not zp_csi_slot_offsets.empty()) {
+    ocudu_assert(zp_csi_slot_offsets.size() == csi_params.nof_beams,
+                 "zp_csi_slot_offsets size {} != nof_beams {}",
+                 zp_csi_slot_offsets.size(),
+                 csi_params.nof_beams);
+    for (unsigned off : zp_csi_slot_offsets) {
+      if (not is_csi_slot_offset_valid(
+              off, tdd_cfg, max_csi_symbol_index, ssb_period, ssb_slot_offsets, sib1_period_slots, sib1_slot_offsets)) {
+        return false;
+      }
+    }
+    csi_params.zp_csi_slot_offsets.assign(zp_csi_slot_offsets.begin(), zp_csi_slot_offsets.end());
+  }
+
+  // Returns true if candidate collides with any already-assigned meas, pre-specified ZP, or tracking slot.
+  auto is_occupied = [&](unsigned candidate) {
+    for (unsigned s : csi_params.meas_csi_slot_offsets) {
+      if (candidate == s) {
+        return true;
+      }
+    }
+    for (unsigned s : csi_params.zp_csi_slot_offsets) {
+      if (candidate == s) {
+        return true;
+      }
+    }
+    return candidate == csi_params.tracking_csi_slot_offset or candidate == csi_params.tracking_csi_slot_offset + 1;
+  };
+
   // Fill the pre-specified parameters and verify if valid.
+  csi_params.meas_csi_slot_offsets.clear();
   if (meas_csi_slot_offset.has_value()) {
     if (not is_csi_slot_offset_valid(*meas_csi_slot_offset,
                                      tdd_cfg,
@@ -150,7 +184,7 @@ bool csi_helper::derive_valid_csi_rs_slot_offsets(du_csi_params&                
                                      sib1_slot_offsets)) {
       return false;
     }
-    csi_params.meas_csi_slot_offset = *meas_csi_slot_offset;
+    csi_params.meas_csi_slot_offsets.push_back(*meas_csi_slot_offset);
   }
   if (tracking_csi_slot_offset.has_value()) {
     // Tracking CSI-RS uses two consecutive slots.
@@ -172,33 +206,16 @@ bool csi_helper::derive_valid_csi_rs_slot_offsets(du_csi_params&                
     }
     csi_params.tracking_csi_slot_offset = *tracking_csi_slot_offset;
   }
-  if (zp_csi_slot_offset.has_value()) {
-    if (not is_csi_slot_offset_valid(*zp_csi_slot_offset,
-                                     tdd_cfg,
-                                     max_csi_symbol_index,
-                                     ssb_period,
-                                     ssb_slot_offsets,
-                                     sib1_period_slots,
-                                     sib1_slot_offsets)) {
-      return false;
-    }
-    csi_params.zp_csi_slot_offset = *zp_csi_slot_offset;
-  }
-
-  // Make slot offset the same for IM and measurement by default.
-  if (meas_csi_slot_offset.has_value() and not zp_csi_slot_offset.has_value()) {
-    csi_params.zp_csi_slot_offset = *meas_csi_slot_offset;
-  }
-  if (not meas_csi_slot_offset.has_value() and zp_csi_slot_offset.has_value()) {
-    csi_params.meas_csi_slot_offset = *zp_csi_slot_offset;
-  }
 
   bool tracking_found = tracking_csi_slot_offset.has_value();
-  bool meas_found     = meas_csi_slot_offset.has_value() or zp_csi_slot_offset.has_value();
-  for (unsigned i = 0; i < static_cast<unsigned>(csi_params.csi_rs_period) and (not meas_found or not tracking_found);
+  for (unsigned i = 0; i < static_cast<unsigned>(csi_params.csi_rs_period) and
+                       (not tracking_found or csi_params.meas_csi_slot_offsets.size() < csi_params.nof_beams);
        ++i) {
     if (not is_csi_slot_offset_valid(
             i, tdd_cfg, max_csi_symbol_index, ssb_period, ssb_slot_offsets, sib1_period_slots, sib1_slot_offsets)) {
+      continue;
+    }
+    if (is_occupied(i)) {
       continue;
     }
     // Note: Tracking CSI-RS occupies two consecutive slots.
@@ -210,22 +227,28 @@ bool csi_helper::derive_valid_csi_rs_slot_offsets(du_csi_params&                
                                  ssb_slot_offsets,
                                  sib1_period_slots,
                                  sib1_slot_offsets) and
-        (not meas_found or (i != csi_params.meas_csi_slot_offset and (i + 1) != csi_params.meas_csi_slot_offset and
-                            i != csi_params.zp_csi_slot_offset and (i + 1) != csi_params.zp_csi_slot_offset))) {
+        not is_occupied(i + 1)) {
       tracking_found                      = true;
       csi_params.tracking_csi_slot_offset = i;
-      i++;
+      ++i;
+      continue;
     }
 
-    if (not meas_found and (not tracking_found or (i != csi_params.tracking_csi_slot_offset and
-                                                   (i != csi_params.tracking_csi_slot_offset + 1)))) {
-      meas_found                      = true;
-      csi_params.meas_csi_slot_offset = i;
-      csi_params.zp_csi_slot_offset   = i;
+    if (csi_params.meas_csi_slot_offsets.size() < csi_params.nof_beams) {
+      csi_params.meas_csi_slot_offsets.push_back(i);
     }
   }
 
-  return meas_found and tracking_found;
+  if (not(tracking_found and csi_params.meas_csi_slot_offsets.size() == csi_params.nof_beams)) {
+    return false;
+  }
+
+  // Auto-fill ZP slot offsets from meas when not explicitly specified.
+  if (csi_params.zp_csi_slot_offsets.empty()) {
+    csi_params.zp_csi_slot_offsets = csi_params.meas_csi_slot_offsets;
+  }
+
+  return true;
 }
 
 static zp_csi_rs_resource make_default_zp_csi_rs_resource(const csi_meas_config_builder_params& params)
@@ -258,14 +281,18 @@ ocudu::csi_helper::make_periodic_zp_csi_rs_resource_list(const csi_meas_config_b
     report_error("Unsupported number of antenna ports {}", params.nof_ports);
   }
 
-  std::vector<zp_csi_rs_resource> list;
-  // 1 zp-CSI-RS resource.
-  list.resize(1, make_default_zp_csi_rs_resource(params));
-  list[0].id = static_cast<zp_csi_rs_res_id_t>(0);
+  const unsigned nof_beams  = params.csi_params.nof_beams;
+  const auto&    zp_offsets = params.csi_params.zp_csi_slot_offsets.empty() ? params.csi_params.meas_csi_slot_offsets
+                                                                            : params.csi_params.zp_csi_slot_offsets;
+  ocudu_assert(
+      zp_offsets.size() == nof_beams, "zp_csi_slot_offsets size {} != nof_beams {}", zp_offsets.size(), nof_beams);
 
-  for (auto& res : list) {
-    res.offset = params.csi_params.zp_csi_slot_offset;
-    res.period = params.csi_params.csi_rs_period;
+  const zp_csi_rs_resource        tmpl = make_default_zp_csi_rs_resource(params);
+  std::vector<zp_csi_rs_resource> list(nof_beams, tmpl);
+  for (unsigned i = 0; i < nof_beams; ++i) {
+    list[i].id     = static_cast<zp_csi_rs_res_id_t>(i);
+    list[i].offset = zp_offsets[i];
+    list[i].period = params.csi_params.csi_rs_period;
   }
 
   return list;
@@ -279,9 +306,10 @@ ocudu::csi_helper::make_periodic_zp_csi_rs_resource_set(const csi_meas_config_bu
   }
 
   zp_csi_rs_resource_set zp_set{};
-
-  zp_set.id                 = static_cast<zp_csi_rs_res_set_id_t>(0);
-  zp_set.zp_csi_rs_res_list = {static_cast<zp_csi_rs_res_set_id_t>(0)};
+  zp_set.id = static_cast<zp_csi_rs_res_set_id_t>(0);
+  for (unsigned i = 0; i < params.csi_params.nof_beams; ++i) {
+    zp_set.zp_csi_rs_res_list.push_back(static_cast<zp_csi_rs_res_set_id_t>(i));
+  }
 
   return zp_set;
 }
@@ -341,17 +369,17 @@ static nzp_csi_rs_resource make_common_nzp_csi_rs_resource(const csi_meas_config
   return res;
 }
 
-static nzp_csi_rs_resource make_channel_measurement_nzp_csi_rs_resource(const csi_meas_config_builder_params& params)
+static nzp_csi_rs_resource make_channel_measurement_nzp_csi_rs_resource(const csi_meas_config_builder_params& params,
+                                                                        unsigned slot_offset)
 {
-  ocudu_assert(params.csi_params.meas_csi_slot_offset <
-                   csi_resource_periodicity_to_uint(params.csi_params.csi_rs_period),
+  ocudu_assert(slot_offset < csi_resource_periodicity_to_uint(params.csi_params.csi_rs_period),
                "Invalid CSI slot offset {} >= {}",
-               params.csi_params.meas_csi_slot_offset,
+               slot_offset,
                csi_resource_periodicity_to_uint(params.csi_params.csi_rs_period));
   nzp_csi_rs_resource res = make_common_nzp_csi_rs_resource(params);
 
   res.res_id                              = static_cast<nzp_csi_rs_res_id_t>(0);
-  res.csi_res_offset                      = params.csi_params.meas_csi_slot_offset;
+  res.csi_res_offset                      = slot_offset;
   res.res_mapping.first_ofdm_symbol_in_td = params.csi_params.cm_csi_ofdm_symbol_index;
   res.res_mapping.nof_ports               = params.nof_ports;
   res.res_mapping.freq_density            = csi_rs_freq_density_type::one;
@@ -391,10 +419,9 @@ static nzp_csi_rs_resource make_channel_measurement_nzp_csi_rs_resource(const cs
 ///
 /// The NZP-CSI-RS resources selected for TRS are constrained by TS 38.214 Section 5.1.6.1.1 which specifies the number
 /// of ports, multiplexing, OFDM symbols to use within the slot, periodicity, and density.
-static void
-fill_tracking_nzp_csi_rs_resource(span<nzp_csi_rs_resource>             tracking_csi_rs,
-                                  const csi_meas_config_builder_params& params,
-                                  nzp_csi_rs_res_id_t first_csi_res_id = static_cast<nzp_csi_rs_res_id_t>(1))
+static void fill_tracking_nzp_csi_rs_resource(span<nzp_csi_rs_resource>             tracking_csi_rs,
+                                              const csi_meas_config_builder_params& params,
+                                              nzp_csi_rs_res_id_t                   first_csi_res_id)
 {
   static constexpr size_t NOF_TRACKING_RESOURCES = 4;
 
@@ -425,33 +452,51 @@ fill_tracking_nzp_csi_rs_resource(span<nzp_csi_rs_resource>             tracking
 std::vector<nzp_csi_rs_resource>
 ocudu::csi_helper::make_nzp_csi_rs_resource_list(const csi_meas_config_builder_params& params)
 {
-  std::vector<nzp_csi_rs_resource> list(5);
+  ocudu_assert(not params.csi_params.meas_csi_slot_offsets.empty(), "meas_csi_slot_offsets must be non-empty");
+  ocudu_assert(params.csi_params.meas_csi_slot_offsets.size() == params.csi_params.nof_beams,
+               "meas_csi_slot_offsets size {} != nof_beams {}",
+               params.csi_params.meas_csi_slot_offsets.size(),
+               params.csi_params.nof_beams);
 
-  // Channel Measurement - Resource 0.
-  list[0]        = make_channel_measurement_nzp_csi_rs_resource(params);
-  list[0].res_id = static_cast<nzp_csi_rs_res_id_t>(0);
+  // Beam resources at IDs 0..N-1; TRS at IDs N..N+3.
+  const unsigned                   nof_beams = params.csi_params.nof_beams;
+  std::vector<nzp_csi_rs_resource> list(nof_beams + 4);
 
-  // Tracking - Resources 1-4.
-  fill_tracking_nzp_csi_rs_resource(span<nzp_csi_rs_resource>(list).subspan(1, 4), params);
+  // Measurement resources.
+  for (unsigned i = 0; i < nof_beams; ++i) {
+    list[i]        = make_channel_measurement_nzp_csi_rs_resource(params, params.csi_params.meas_csi_slot_offsets[i]);
+    list[i].res_id = static_cast<nzp_csi_rs_res_id_t>(i);
+    if (nof_beams > 0) {
+      list[i].qcl_info_periodic_csi_rs = static_cast<tci_state_id_t>(1 + i);
+    }
+  }
+
+  // Tracking - Resources N..N+3.
+  fill_tracking_nzp_csi_rs_resource(
+      span<nzp_csi_rs_resource>(list).subspan(nof_beams, 4), params, static_cast<nzp_csi_rs_res_id_t>(nof_beams));
 
   return list;
 }
 
-static std::vector<nzp_csi_rs_resource_set> make_nzp_csi_rs_resource_sets()
+static std::vector<nzp_csi_rs_resource_set> make_nzp_csi_rs_resource_sets(const csi_meas_config_builder_params& params)
 {
   std::vector<nzp_csi_rs_resource_set> sets(2);
 
-  // Resource Set 0 - Measurement.
+  // Resource Set 0 - Measurement (single beam) or beam sweep (multi-beam).
   sets[0].res_set_id          = static_cast<nzp_csi_rs_res_set_id_t>(0);
-  sets[0].nzp_csi_rs_res      = {static_cast<nzp_csi_rs_res_id_t>(0)};
   sets[0].is_trs_info_present = false;
+  const unsigned nof_beams    = params.csi_params.nof_beams;
+  for (unsigned i = 0; i < nof_beams; ++i) {
+    sets[0].nzp_csi_rs_res.push_back(static_cast<nzp_csi_rs_res_id_t>(i));
+  }
+  // Single beam: repetition on (omnidirectional). Multi-beam: repetition off (distinct spatial directions).
+  sets[0].is_repetition_on = (nof_beams == 1);
 
-  // Resource Set 1 - Tracking.
-  sets[1].res_set_id          = static_cast<nzp_csi_rs_res_set_id_t>(1);
-  sets[1].nzp_csi_rs_res      = {static_cast<nzp_csi_rs_res_id_t>(1),
-                                 static_cast<nzp_csi_rs_res_id_t>(2),
-                                 static_cast<nzp_csi_rs_res_id_t>(3),
-                                 static_cast<nzp_csi_rs_res_id_t>(4)};
+  // Resource Set 1 - Tracking: IDs N..N+3.
+  sets[1].res_set_id = static_cast<nzp_csi_rs_res_set_id_t>(1);
+  for (unsigned i = 0; i < 4; ++i) {
+    sets[1].nzp_csi_rs_res.push_back(static_cast<nzp_csi_rs_res_id_t>(nof_beams + i));
+  }
   sets[1].is_trs_info_present = true;
 
   return sets;
@@ -499,31 +544,32 @@ static std::vector<csi_im_resource> make_csi_im_resources(const csi_meas_config_
     report_error("Unsupported number of antenna ports={}", params.nof_ports);
   }
 
-  std::vector<csi_im_resource> res(1);
+  const std::vector<zp_csi_rs_resource> zp_list = make_periodic_zp_csi_rs_resource_list(params);
 
-  // Make CSI-IM resource match in REs, symbols, slots with zp-CSI-RS>
-  std::vector<zp_csi_rs_resource> zp_csi_rs_list = make_periodic_zp_csi_rs_resource_list(params);
-  const zp_csi_rs_resource&       zp0            = zp_csi_rs_list[0];
-
-  res[0].res_id = static_cast<csi_im_res_id_t>(0);
-  res[0].csi_im_res_element_pattern.emplace();
-  res[0].csi_im_res_element_pattern->pattern_type = csi_im_resource::csi_im_resource_element_pattern_type::pattern1;
-  res[0].csi_im_res_element_pattern->subcarrier_location = get_subcarrier_location_from_fd_alloc_bit_location(
-      zp0.res_mapping.fd_alloc.find_lowest(), zp0.res_mapping.fd_alloc.size());
-  res[0].csi_im_res_element_pattern->symbol_location = zp0.res_mapping.first_ofdm_symbol_in_td;
-  res[0].freq_band_rbs                               = zp0.res_mapping.freq_band_rbs;
-  res[0].csi_res_period                              = *zp0.period;
-  res[0].csi_res_offset                              = *zp0.offset;
-
+  std::vector<csi_im_resource> res(zp_list.size());
+  for (unsigned i = 0; i < zp_list.size(); ++i) {
+    const zp_csi_rs_resource& zp = zp_list[i];
+    res[i].res_id                = static_cast<csi_im_res_id_t>(i);
+    res[i].csi_im_res_element_pattern.emplace();
+    res[i].csi_im_res_element_pattern->pattern_type = csi_im_resource::csi_im_resource_element_pattern_type::pattern1;
+    res[i].csi_im_res_element_pattern->subcarrier_location = get_subcarrier_location_from_fd_alloc_bit_location(
+        zp.res_mapping.fd_alloc.find_lowest(), zp.res_mapping.fd_alloc.size());
+    res[i].csi_im_res_element_pattern->symbol_location = zp.res_mapping.first_ofdm_symbol_in_td;
+    res[i].freq_band_rbs                               = zp.res_mapping.freq_band_rbs;
+    res[i].csi_res_period                              = *zp.period;
+    res[i].csi_res_offset                              = *zp.offset;
+  }
   return res;
 }
 
-static std::vector<csi_im_resource_set> make_csi_im_resource_sets()
+static std::vector<csi_im_resource_set> make_csi_im_resource_sets(const csi_meas_config_builder_params& params)
 {
   std::vector<csi_im_resource_set> res_set(1);
 
-  res_set[0].res_set_id        = static_cast<csi_im_res_set_id_t>(0);
-  res_set[0].csi_ims_resources = {static_cast<csi_im_res_id_t>(0)};
+  res_set[0].res_set_id = static_cast<csi_im_res_set_id_t>(0);
+  for (unsigned i = 0; i < params.csi_params.nof_beams; ++i) {
+    res_set[0].csi_ims_resources.push_back(static_cast<csi_im_res_id_t>(i));
+  }
 
   return res_set;
 }
@@ -532,19 +578,19 @@ static std::vector<csi_resource_config> make_csi_resource_configs()
 {
   std::vector<csi_resource_config> res_cfgs(3);
 
-  // Resource 0 - Measurement.
+  // Resource 0 - Measurement (single beam) or beam sweep (multi-beam); always NZP set 0.
   res_cfgs[0].res_cfg_id = static_cast<csi_res_config_id_t>(0);
   res_cfgs[0].csi_rs_res_set_list =
       csi_resource_config::nzp_csi_rs_ssb{.nzp_csi_rs_res_set_list = {static_cast<nzp_csi_rs_res_set_id_t>(0)}};
   res_cfgs[0].bwp_id   = to_bwp_id(0);
   res_cfgs[0].res_type = csi_resource_config::resource_type::periodic;
 
-  // Resource 1 - Interference.
+  // Resource 1 - Interference; always CSI-IM set 0.
   res_cfgs[1]                     = res_cfgs[0];
   res_cfgs[1].res_cfg_id          = static_cast<csi_res_config_id_t>(1);
   res_cfgs[1].csi_rs_res_set_list = csi_resource_config::csi_im_resource_set_list{static_cast<csi_im_res_set_id_t>(0)};
 
-  // Resource 2 - Tracking.
+  // Resource 2 - Tracking; always NZP set 1.
   res_cfgs[2]            = res_cfgs[0];
   res_cfgs[2].res_cfg_id = static_cast<csi_res_config_id_t>(2);
   res_cfgs[2].csi_rs_res_set_list =
@@ -677,13 +723,13 @@ ocudu::csi_helper::make_csi_meas_config(const csi_meas_config_builder_params&   
   csi_meas.nzp_csi_rs_res_list = make_nzp_csi_rs_resource_list(params);
 
   // NZP-CSI-RS-ResourceSets.
-  csi_meas.nzp_csi_rs_res_set_list = make_nzp_csi_rs_resource_sets();
+  csi_meas.nzp_csi_rs_res_set_list = make_nzp_csi_rs_resource_sets(params);
 
   // csi-IM-Resources.
   csi_meas.csi_im_res_list = make_csi_im_resources(params);
 
   // csi-IM-ResourceSets.
-  csi_meas.csi_im_res_set_list = make_csi_im_resource_sets();
+  csi_meas.csi_im_res_set_list = make_csi_im_resource_sets(params);
 
   // CSI-ResourceConfig.
   csi_meas.csi_res_cfg_list = make_csi_resource_configs();
