@@ -244,6 +244,7 @@ void rrc_ue_impl::handle_pdu(const srb_id_t srb_id, byte_buffer rrc_pdu, bool in
     case ul_dcch_msg_type_c::c1_c_::types_opts::security_mode_complete:
       // P=- AI=NA CI=NA (Info: Integrity is applied, but no ciphering. Ciphering is activated after this procedure.)
       if (!integrity_verified) {
+        cancel_rrc_transaction(ul_dcch_msg.msg.c1().security_mode_complete().rrc_transaction_id);
         handle_illegal_pdu_integrity(ul_dcch_msg.msg.c1().type().to_string(), integrity_verified);
         return;
       }
@@ -399,6 +400,16 @@ void rrc_ue_impl::handle_rrc_transaction_complete(const ul_dcch_msg_s& msg, uint
   // Set transaction result and resume suspended procedure.
   if (not event_mng->transactions.set_response(transaction_id.value(), msg)) {
     logger.log_warning("Unexpected RRC transaction id={}", transaction_id.value());
+  }
+}
+
+void rrc_ue_impl::cancel_rrc_transaction(uint8_t transaction_id_)
+{
+  expected<uint8_t> transaction_id = transaction_id_;
+
+  // Set transaction result and resume suspended procedure.
+  if (not event_mng->transactions.cancel_transaction(transaction_id.value())) {
+    logger.log_warning("Unable to cancel RRC transaction id={}", transaction_id.value());
   }
 }
 

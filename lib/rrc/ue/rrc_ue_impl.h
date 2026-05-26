@@ -126,9 +126,10 @@ private:
   void handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request_s& msg);
   void handle_rrc_resume_request(const asn1::rrc_nr::rrc_resume_request_s& msg, rnti_t c_rnti);
   void handle_ul_info_transfer(const asn1::rrc_nr::ul_info_transfer_ies_s& ul_info_transfer);
-  void handle_rrc_transaction_complete(const asn1::rrc_nr::ul_dcch_msg_s& msg, uint8_t transaction_id_);
   void handle_security_mode_complete(const asn1::rrc_nr::security_mode_complete_s& msg);
   void handle_measurement_report(const asn1::rrc_nr::meas_report_s& msg);
+  void handle_rrc_transaction_complete(const asn1::rrc_nr::ul_dcch_msg_s& msg, uint8_t transaction_id_);
+  void cancel_rrc_transaction(uint8_t transaction_id_);
 
   // message senders
   /// Packs a DL-CCCH message and logs the message
