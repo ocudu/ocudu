@@ -123,7 +123,6 @@ void uci_scheduler_impl::add_ue_to_grid(const ue_cell_configuration& ue_cfg, boo
 
   // Save SR resource in the slot wheel.
   const unsigned sr_period_slots = sr_periodicity_to_slot(cell_cfg.params.init_bwp.pucch.sr_period);
-  ocudu_assert(sr_period_slots >= 1, "Minimum supported SR periodicity is 1 slot.");
   add_resource(ue_cfg.crnti, ue_ul_cfg->pucch.sr_offset, sr_period_slots, true);
 
   if (ue_ul_cfg->periodic_csi_report.has_value()) {

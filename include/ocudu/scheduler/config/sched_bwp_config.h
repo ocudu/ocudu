@@ -115,7 +115,8 @@ public:
 
   bool operator==(const sched_bwp_ul_config& other) const
   {
-    return *bwp_ul_common == *other.bwp_ul_common and *bwp_ul_ded == *other.bwp_ul_ded;
+    return *bwp_ul_common == *other.bwp_ul_common and *bwp_ul_ded == *other.bwp_ul_ded and
+           ue_ul_bwp_cfg == other.ue_ul_bwp_cfg;
   }
 
 private:
