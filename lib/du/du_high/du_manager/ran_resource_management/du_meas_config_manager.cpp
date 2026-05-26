@@ -68,10 +68,10 @@ std::pair<ssb_periodicity, unsigned> extract_smtc_period_offset(const ssb_mtc_s&
 
 enum class collision_check { strict, loose };
 
-bool meas_gap_collides(const meas_gap_config&           gap,
-                       subcarrier_spacing               scs,
-                       span<const periodic_ul_occasion> ul_occasions,
-                       collision_check                  mode)
+bool meas_gap_collides(const meas_gap_config&          gap,
+                       subcarrier_spacing              scs,
+                       span<const periodic_uci_config> ul_occasions,
+                       collision_check                 mode)
 {
   const unsigned mgrp_slots = static_cast<unsigned>(gap.mgrp) * get_nof_slots_per_subframe(scs);
   for (const auto& occ : ul_occasions) {
@@ -105,7 +105,7 @@ bool meas_gap_collides(const meas_gap_config&           gap,
 } // namespace
 
 meas_gap_config
-odu::create_meas_gap(subcarrier_spacing scs, const ssb_mtc_s& smtc1, span<const periodic_ul_occasion> ul_occasions)
+odu::create_meas_gap(subcarrier_spacing scs, const ssb_mtc_s& smtc1, span<const periodic_uci_config> ul_occasions)
 {
   const meas_gap_length mgl              = get_default_mgl(scs, smtc1.dur);
   const auto            smtc_po          = extract_smtc_period_offset(smtc1);
@@ -191,10 +191,10 @@ du_meas_config_manager::du_meas_config_manager(span<const du_cell_config> cell_c
 }
 
 // Collects SR and periodic-CSI occasions from the UE's PCell serving cell config.
-static static_vector<periodic_ul_occasion, MAX_NOF_SR_RESOURCES + MAX_NOF_CSI_REPORT_CONFIGS>
+static static_vector<periodic_uci_config, MAX_NOF_SR_RESOURCES + MAX_NOF_CSI_REPORT_CONFIGS>
 collect_ul_occasions(const ue_cell_config& pcell_ue_cfg)
 {
-  static_vector<periodic_ul_occasion, MAX_NOF_SR_RESOURCES + MAX_NOF_CSI_REPORT_CONFIGS> out;
+  static_vector<periodic_uci_config, MAX_NOF_SR_RESOURCES + MAX_NOF_CSI_REPORT_CONFIGS> out;
 
   if (pcell_ue_cfg.serv_cell_cfg.ul_config.has_value() &&
       pcell_ue_cfg.serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.has_value()) {

@@ -19,7 +19,7 @@ struct ssb_mtc_s;
 namespace ocudu::odu {
 
 /// Single UL periodic resource occasion (SR or periodic CSI). Period and offset in PCell slots.
-struct periodic_ul_occasion {
+struct periodic_uci_config {
   unsigned period_slots;
   unsigned offset_slots;
 };
@@ -30,9 +30,9 @@ struct periodic_ul_occasion {
 /// The search prefers a strict no-collision config, falls back to a loose one that checks that at least every other
 /// periodic UL occasion does not collide with measurement gap after MGRP is increased (doubled).
 /// As a last resort returns a best-effort gap at the maximum MGRP with the SMTC offset.
-meas_gap_config create_meas_gap(subcarrier_spacing               scs,
-                                const asn1::rrc_nr::ssb_mtc_s&   smtc1,
-                                span<const periodic_ul_occasion> ul_occasions);
+meas_gap_config create_meas_gap(subcarrier_spacing              scs,
+                                const asn1::rrc_nr::ssb_mtc_s&  smtc1,
+                                span<const periodic_uci_config> ul_occasions);
 
 /// Class that handles the measConfig of the UE.
 ///

@@ -180,13 +180,13 @@ INSTANTIATE_TEST_SUITE_P(periodicity_to_mgrp,
 // ---------- Collision avoidance scenarios ----------
 
 struct collision_params {
-  const char*                       tag;
-  subcarrier_spacing                pcell_scs;
-  ssb_periodicity                   smtc_period;
-  uint8_t                           smtc_offset;
-  smtc_duration                     smtc_dur;
-  std::vector<periodic_ul_occasion> ul_occasions;
-  meas_gap_config                   expected;
+  const char*                      tag;
+  subcarrier_spacing               pcell_scs;
+  ssb_periodicity                  smtc_period;
+  uint8_t                          smtc_offset;
+  smtc_duration                    smtc_dur;
+  std::vector<periodic_uci_config> ul_occasions;
+  meas_gap_config                  expected;
 };
 
 class du_meas_config_manager_collision_test : public ::testing::TestWithParam<collision_params>
