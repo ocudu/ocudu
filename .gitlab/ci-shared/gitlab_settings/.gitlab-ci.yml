@@ -19,7 +19,7 @@ variables:
   TF_VAR_ci_project_title: $CI_PROJECT_TITLE
 
 include:
-  - component: ${CI_SERVER_FQDN}/components/opentofu/validate-plan-apply@4.6.0
+  - component: ${CI_SERVER_FQDN}/components/opentofu/validate-plan-apply@4.5.0
     inputs:
       root_dir: .gitlab
       state_name: gitlab-configuration
