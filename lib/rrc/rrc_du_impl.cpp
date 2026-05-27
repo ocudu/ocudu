@@ -64,7 +64,16 @@ rrc_du_impl::get_cell_info(const std::vector<cu_cp_du_served_cells_item>& served
     }
 
     for (const auto& asn1_meas_timing : asn1_meas_timing_cfg.crit_exts.c1().meas_timing_conf().meas_timing) {
-      cell_info.meas_timings.push_back(asn1_to_meas_timing(asn1_meas_timing));
+      if (asn1_meas_timing.freq_and_timing_present) {
+        // Only add measurement configs with freq_and_timing.
+        cell_info.meas_timings.push_back(asn1_to_meas_timing(asn1_meas_timing));
+      }
+    }
+
+    // At least one measurement timing config entry with freq_and_timing must be present.
+    if (cell_info.meas_timings.empty()) {
+      logger.error("No Measurement Timing Config contained freq_and_timing entry");
+      return {};
     }
 
     if (!served_cell.gnb_du_sys_info.has_value()) {
@@ -275,6 +284,11 @@ rrc_ue_interface* rrc_du_impl::add_ue(const rrc_ue_creation_message& msg)
   ue_cfg.meas_timings                   = cell_info_db.at(msg.cell.cgi.nci).meas_timings;
 
   // Copy RRC cell and add SSB ARFCN.
+  // Defensive check: freq_and_timing must be present.
+  if (ue_cfg.meas_timings.empty() || !ue_cfg.meas_timings.front().freq_and_timing.has_value()) {
+    logger.error("ue={}: Missing freq_and_timing in meas_timings - aborting UE creation", ue_index);
+    return nullptr;
+  }
   rrc_cell_context rrc_cell   = msg.cell;
   rrc_cell.ssb_arfcn          = ue_cfg.meas_timings.front().freq_and_timing.value().carrier_freq;
   rrc_cell.timers             = cell_info_db.at(msg.cell.cgi.nci).timers;
