@@ -242,6 +242,38 @@ TEST_F(cell_meas_manager_test, when_only_event_based_reports_configured_then_mea
   ASSERT_EQ(target_meas_cfg.value().report_cfg_to_add_mod_list.size(), 2);
 }
 
+TEST_F(cell_meas_manager_test, when_serving_cell_has_no_periodic_report_then_serving_meas_obj_is_still_generated)
+{
+  // Inter-frequency setup: serving cell (632628) without periodic report, neighbor (633000) with A3 report.
+  create_manager_inter_freq_without_periodic_report();
+
+  cu_cp_ue_index_t ue_index = ue_mng.add_ue(uint_to_du_index(0));
+  ASSERT_NE(ue_index, cu_cp_ue_index_t::invalid);
+  ASSERT_FALSE(ue_mng.ue_admission_limit_reached());
+  ASSERT_TRUE(ue_mng.set_plmn(ue_index, plmn_identity::test_value()));
+
+  const nr_cell_identity      serving_nci = nr_cell_identity::create(gnb_id_t{0x19b, 32}, 0).value();
+  std::optional<rrc_meas_cfg> meas_cfg    = manager->get_measurement_config(ue_index, serving_nci);
+  ASSERT_TRUE(meas_cfg.has_value());
+
+  // Both serving and neighbor frequencies must have a measurement object, even though only the neighbor has a report.
+  ASSERT_EQ(meas_cfg.value().meas_obj_to_add_mod_list.size(), 2);
+  auto has_ssb_freq = [&](uint32_t arfcn) {
+    return std::any_of(meas_cfg.value().meas_obj_to_add_mod_list.begin(),
+                       meas_cfg.value().meas_obj_to_add_mod_list.end(),
+                       [arfcn](const rrc_meas_obj_to_add_mod& mo) {
+                         return mo.meas_obj_nr.has_value() && mo.meas_obj_nr->ssb_freq == arfcn;
+                       });
+  };
+  ASSERT_TRUE(has_ssb_freq(632628)) << "Serving cell measurement object must be present for servingCellMO reference";
+  ASSERT_TRUE(has_ssb_freq(633000)) << "Neighbor cell measurement object missing";
+
+  // Only the neighbor's A3 report (and its meas id) is configured: the serving cell MO carries no report on its own.
+  ASSERT_EQ(meas_cfg.value().report_cfg_to_add_mod_list.size(), 1);
+  ASSERT_EQ(meas_cfg.value().meas_id_to_add_mod_list.size(), 1);
+  verify_meas_cfg(meas_cfg);
+}
+
 TEST_F(cell_meas_manager_test, when_invalid_cell_config_update_received_then_config_is_not_updated)
 {
   create_manager_with_incomplete_cells_and_periodic_report_at_target_cell();
@@ -281,10 +313,13 @@ TEST_F(cell_meas_manager_test, when_invalid_cell_config_update_received_then_con
 
   ASSERT_FALSE(manager->update_cell_config(target_nci, serving_cell_cfg));
 
-  // Make sure meas_cfg is created for cell 1 and contains measurement objects to add mod
+  // Make sure meas_cfg for cell 1 only contains the serving cell measurement object
   std::optional<rrc_meas_cfg> initial_meas_cfg = manager->get_measurement_config(ue_index, initial_nci);
   ASSERT_TRUE(initial_meas_cfg.has_value());
-  ASSERT_TRUE(initial_meas_cfg.value().meas_obj_to_add_mod_list.empty());
+  ASSERT_EQ(initial_meas_cfg.value().meas_obj_to_add_mod_list.size(), 1);
+  ASSERT_TRUE(initial_meas_cfg.value().meas_obj_to_add_mod_list.begin()->meas_obj_nr.has_value());
+  ASSERT_EQ(initial_meas_cfg.value().meas_obj_to_add_mod_list.begin()->meas_obj_nr.value().ssb_freq,
+            serving_cell_cfg.ssb_arfcn);
   ASSERT_TRUE(initial_meas_cfg.value().report_cfg_to_add_mod_list.empty());
 
   std::optional<rrc_meas_cfg> target_meas_cfg = manager->get_measurement_config(ue_index, target_nci, initial_meas_cfg);

@@ -38,6 +38,7 @@ protected:
   void create_default_manager_with_cell_params();
   void create_manager_with_incomplete_cells_and_periodic_report_at_target_cell();
   void create_manager_without_ncells_and_periodic_report();
+  void create_manager_inter_freq_without_periodic_report();
   void create_cho_manager_single_frequency();
   void create_cho_manager_multi_frequency();
   void create_cho_manager_multi_trigger();

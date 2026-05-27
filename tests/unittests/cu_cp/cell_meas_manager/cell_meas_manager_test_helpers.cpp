@@ -307,6 +307,49 @@ void cell_meas_manager_test::create_manager_without_ncells_and_periodic_report()
   ASSERT_NE(manager, nullptr);
 }
 
+void cell_meas_manager_test::create_manager_inter_freq_without_periodic_report()
+{
+  cell_meas_manager_cfg cfg;
+
+  // Serving cell and neighbor on different frequencies, with only an event-based (A3) report on the neighbor and
+  // no periodic report on the serving cell (inter-frequency handover setup).
+  gnb_id_t         gnb_id{0x19b, 32};
+  nr_cell_identity nci_serving = nr_cell_identity::create(gnb_id, 0).value();
+  nr_cell_identity nci_target  = nr_cell_identity::create(gnb_id, 1).value();
+
+  cell_meas_config serving_cfg = make_cell_config(gnb_id, nci_serving, 1, 632628);
+
+  neighbor_cell_meas_config ncell;
+  ncell.nci = nci_target;
+  ncell.report_cfg_ids.push_back(uint_to_report_cfg_id(1));
+  serving_cfg.ncells.push_back(ncell);
+
+  cfg.cells.emplace(nci_serving, serving_cfg);
+  cfg.cells.emplace(nci_target, make_cell_config(gnb_id, nci_target, 2, 633000));
+
+  // Add A3 event report config for the neighbor.
+  rrc_report_cfg_nr     a3_report_cfg;
+  rrc_event_trigger_cfg event_trigger_cfg = {};
+  rrc_event_id          event_a3;
+  event_a3.id = rrc_event_id::event_id_t::a3;
+  event_a3.meas_trigger_quant_thres_or_offset.emplace();
+  event_a3.meas_trigger_quant_thres_or_offset.value().rsrp.emplace() = 6;
+  event_a3.hysteresis                                                = 0;
+  event_a3.time_to_trigger                                           = 100;
+  event_a3.use_allowed_cell_list                                     = false;
+  event_trigger_cfg.event_id                                         = event_a3;
+  event_trigger_cfg.rs_type                                          = ocucp::rrc_nr_rs_type::ssb;
+  event_trigger_cfg.report_interv                                    = 1024;
+  event_trigger_cfg.report_amount                                    = -1;
+  event_trigger_cfg.report_quant_cell.rsrp                           = true;
+  event_trigger_cfg.max_report_cells                                 = 4;
+  a3_report_cfg                                                      = event_trigger_cfg;
+  cfg.report_config_ids.emplace(uint_to_report_cfg_id(1), a3_report_cfg);
+
+  manager = std::make_unique<cell_meas_manager>(cfg, mobility_manager, ue_mng);
+  ASSERT_NE(manager, nullptr);
+}
+
 void cell_meas_manager_test::check_default_meas_cfg(const std::optional<rrc_meas_cfg>& meas_cfg,
                                                     meas_obj_id_t                      meas_obj_id)
 {
