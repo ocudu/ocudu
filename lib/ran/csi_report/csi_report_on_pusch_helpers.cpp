@@ -85,7 +85,7 @@ static csi_report_data unpack_pusch_csi_cri_ri_li_pmi_cqi(const csi_report_packe
   if (sizes.cri > 0) {
     cri = csi1_packed.extract(csi1_count, sizes.cri);
   }
-  data.cri.emplace(cri);
+  data.cri.push_back(cri);
   csi1_count += sizes.cri;
 
   // Extract RI.
@@ -168,6 +168,20 @@ static csi_report_data unpack_pusch_csi_cri_ri_li_pmi_cqi(const csi_report_packe
 
 csi_report_size ocudu::get_csi_report_pusch_size(const csi_report_configuration& config)
 {
+  // Handle cri-RSRP and ssb-Index-RSRP quantities.
+  if ((config.quantities == csi_report_quantities::cri_rsrp) ||
+      (config.quantities == csi_report_quantities::ssb_index_rsrp)) {
+    // Make sure configurations are valid.
+    ocudu_assert(std::holds_alternative<std::monostate>(config.pmi_codebook),
+                 "PMI codebook is not compatible with this CSI report quantity.");
+    ocudu_assert(config.ri_restriction.empty(), "RI restriction is not compatible with this CSI report quantity.");
+    ocudu_assert(!config.subband.has_value(), "Subband is not compatible with this CSI report quantity.");
+
+    // Get the CSI report size.
+    return get_csi_report_size_cri_ssbri_rsrp(config.nof_csi_rs_resources, config.nof_reported_rs);
+  }
+
+  ocudu_assert(config.nof_reported_rs == 1, "The number of reported Resource Sets must be one.");
   ocudu_assert(!config.subband.has_value(), "Subbands CSI reports are not supported on PUSCH.");
 
   csi_report_size result                = {};
@@ -295,6 +309,10 @@ csi_report_data ocudu::csi_report_unpack_pusch(const csi_report_packed&        c
     case csi_report_quantities::cri_ri_cqi:
     case csi_report_quantities::cri_ri_li_pmi_cqi:
       return unpack_pusch_csi_cri_ri_li_pmi_cqi(csi1_packed, csi2_packed, config);
+    case csi_report_quantities::cri_rsrp:
+    case csi_report_quantities::ssb_index_rsrp:
+      ocudu_assert(csi2_packed.empty(), "CSI Part 2 is not expected for this quantity.");
+      return csi_report_unpack_cri_ssbri_rsrp(csi1_packed, config.nof_csi_rs_resources, config.nof_reported_rs);
     case csi_report_quantities::other:
     default:
       report_error("Invalid CSI report quantities.");

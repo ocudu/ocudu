@@ -149,6 +149,7 @@ protected:
 
     // Prepare CSI report configuration.
     configuration.nof_csi_rs_resources = nof_csi_rs_resources_dist(rgen);
+    configuration.nof_reported_rs      = 1;
     configuration.pmi_codebook         = pmi_codebook;
     configuration.ri_restriction       = ~ri_restriction_type(nof_csi_rs_antenna_ports);
     configuration.quantities           = quantities;
@@ -312,7 +313,7 @@ private:
     unsigned nof_cri_bits = get_cri_size(config);
 
     unsigned cri = rgen() & mask_lsb_ones<unsigned>(nof_cri_bits);
-    unpacked.cri.emplace(cri);
+    unpacked.cri.push_back(cri);
 
     if (nof_cri_bits > 0) {
       packed.push_back(cri, nof_cri_bits);

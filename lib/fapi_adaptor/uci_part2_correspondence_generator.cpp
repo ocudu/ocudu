@@ -43,14 +43,23 @@ ocudu::fapi_adaptor::generate_uci_part2_correspondence(unsigned nof_csi_rs_resou
            ri_index != ri_index_end;
            ++ri_index) {
         for (unsigned quantities_index = 0; quantities_index != MAX_NUM_QUANTITIES; ++quantities_index) {
+          csi_report_quantities quantities = static_cast<csi_report_quantities>(quantities_index);
+
+          // Skip cri-RSRP and ssb-Index-RSRP quantities.
+          if ((quantities == csi_report_quantities::cri_rsrp) ||
+              (quantities == csi_report_quantities::ssb_index_rsrp)) {
+            continue;
+          }
+
           ri_restriction_type ri_restriction(nof_csi_rs_ports);
           ri_restriction.from_uint64(ri_index);
 
           csi_report_configuration report_cfg;
           report_cfg.nof_csi_rs_resources = csi_resource_index;
+          report_cfg.nof_reported_rs      = 1;
           report_cfg.pmi_codebook         = pmi_codebook;
           report_cfg.ri_restriction       = ri_restriction;
-          report_cfg.quantities           = static_cast<csi_report_quantities>(quantities_index);
+          report_cfg.quantities           = quantities;
 
           uci_part2_size_description part2_correspondence = get_csi_report_pusch_size(report_cfg).part2_correspondence;
           unsigned                   repo_index =

@@ -29,6 +29,7 @@ struct fmt::formatter<ocudu::csi_report_configuration> {
   auto format(const ocudu::csi_report_configuration& config, FormatContext& ctx) const
   {
     helper.format_always(ctx, "nof_csi_rs_resources={}", config.nof_csi_rs_resources);
+    helper.format_always(ctx, "nof_reported_rs={}", config.nof_reported_rs);
     helper.format_always(ctx, "pmi_codebook={}", to_string(config.pmi_codebook));
     helper.format_always(ctx, "ri_restriction={}", config.ri_restriction);
 
@@ -87,8 +88,12 @@ struct fmt::formatter<ocudu::csi_report_data> {
   template <typename FormatContext>
   auto format(const ocudu::csi_report_data& data, FormatContext& ctx) const
   {
-    if (data.cri.has_value()) {
-      helper.format_always(ctx, "cri={}", data.cri.value());
+    if (!data.cri.empty()) {
+      helper.format_always(ctx, "cri=[{}]", data.cri);
+    }
+
+    if (!data.rsrp_dBm.empty()) {
+      helper.format_always(ctx, "rsrp=[{}]dBm", data.rsrp_dBm);
     }
 
     if (data.ri.has_value()) {

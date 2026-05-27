@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "ocudu/adt/to_array.h"
 #include "ocudu/ran/csi_report/csi_report_configuration.h"
 #include "ocudu/ran/csi_report/csi_report_data.h"
 #include "ocudu/ran/csi_report/csi_report_formatters.h"
@@ -18,7 +19,8 @@ namespace ocudu {
 
 auto to_tuple(const csi_report_data& data)
 {
-  return std::tie(data.cri, data.ri, data.li, data.pmi, data.first_tb_wideband_cqi, data.second_tb_wideband_cqi);
+  return std::tie(
+      data.cri, data.rsrp_dBm, data.ri, data.li, data.pmi, data.first_tb_wideband_cqi, data.second_tb_wideband_cqi);
 }
 
 bool operator==(const precoding_matrix_indicator& left, const precoding_matrix_indicator& right)
@@ -49,105 +51,98 @@ std::ostream& operator<<(std::ostream& os, csi_report_data data)
   return os;
 }
 
-std::ostream& operator<<(std::ostream& os, units::bits data)
+std::ostream& operator<<(std::ostream& os, const csi_report_configuration& config)
 {
-  fmt::print(os, "{}", data);
-  return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const pmi_codebook_config& codebook)
-{
-  fmt::print(os, "{}", to_string(codebook));
-  return os;
-}
-
-std::ostream& operator<<(std::ostream& os, csi_report_quantities quantities)
-{
-  fmt::print(os, "{}", to_string(quantities));
+  fmt::print(os, "{}", config);
   return os;
 }
 
 } // namespace ocudu
 
-std::ostream& operator<<(std::ostream& os, const pmi_codebook_config& codebook)
-{
-  fmt::print(os, "{}", to_string(codebook));
-  return os;
-}
-
 namespace {
 
-using Repetitions = unsigned;
-
-using CsiReportUnpackingParams = std::tuple<pmi_codebook_config, csi_report_quantities, Repetitions>;
+using CsiReportUnpackingParams = csi_report_configuration;
 
 class CsiReportPucchFixture : public ::testing::TestWithParam<CsiReportUnpackingParams>
 {
 protected:
-  csi_report_configuration configuration;
-  csi_report_data          unpacked_data;
-  csi_report_packed        packed_pucch_data;
+  csi_report_data   expected_unpacked;
+  csi_report_packed packed_pucch_data;
 
   void SetUp() override
   {
-    const pmi_codebook_config&   pmi_codebook = std::get<0>(GetParam());
-    const csi_report_quantities& quantities   = std::get<1>(GetParam());
-
-    unsigned nof_csi_rs_antenna_ports = get_precoding_codebook_antenna_ports(pmi_codebook);
-
-    configuration.nof_csi_rs_resources = nof_csi_rs_resources_dist(rgen);
-    configuration.pmi_codebook         = pmi_codebook;
-    configuration.ri_restriction       = ~ri_restriction_type(nof_csi_rs_antenna_ports);
-    configuration.quantities           = quantities;
-
-    if (configuration.ri_restriction.count() > 2) {
-      // Set a random RI restriction element to false.
-      std::uniform_int_distribution<unsigned> ri_restriction_dist(1, nof_csi_rs_antenna_ports - 1);
-      configuration.ri_restriction.set(ri_restriction_dist(rgen), false);
-    }
+    const csi_report_configuration& configuration = GetParam();
 
     // Pack CRI if enabled.
     if (configuration.quantities < csi_report_quantities::other) {
-      fill_cri(packed_pucch_data, unpacked_data, configuration);
+      fill_cri(packed_pucch_data, expected_unpacked, configuration);
+    }
+
+    // Pack RSRP if enabled.
+    if ((configuration.quantities == csi_report_quantities::cri_rsrp) ||
+        (configuration.quantities == csi_report_quantities::ssb_index_rsrp)) {
+      fill_rsrp(packed_pucch_data, expected_unpacked, configuration);
     }
 
     // Pack RI if enabled.
-    if (configuration.quantities < csi_report_quantities::other) {
-      fill_ri(packed_pucch_data, unpacked_data, configuration);
+    if ((configuration.quantities == csi_report_quantities::cri_ri_pmi_cqi) ||
+        (configuration.quantities == csi_report_quantities::cri_ri_cqi) ||
+        (configuration.quantities == csi_report_quantities::cri_ri_li_pmi_cqi)) {
+      fill_ri(packed_pucch_data, expected_unpacked, configuration);
     }
 
     // Pack LI if enabled.
-    if (quantities == csi_report_quantities::cri_ri_li_pmi_cqi) {
-      fill_li(packed_pucch_data, unpacked_data, configuration);
+    if (configuration.quantities == csi_report_quantities::cri_ri_li_pmi_cqi) {
+      fill_li(packed_pucch_data, expected_unpacked, configuration);
     }
 
     // Fill with padding.
-    fill_padding(packed_pucch_data, unpacked_data, configuration);
+    fill_padding(packed_pucch_data, expected_unpacked, configuration);
 
     // Pack PMI if enabled.
-    if ((quantities == csi_report_quantities::cri_ri_pmi_cqi) ||
-        (quantities == csi_report_quantities::cri_ri_li_pmi_cqi)) {
-      fill_pmi(packed_pucch_data, unpacked_data, configuration);
+    if ((configuration.quantities == csi_report_quantities::cri_ri_pmi_cqi) ||
+        (configuration.quantities == csi_report_quantities::cri_ri_li_pmi_cqi)) {
+      fill_pmi(packed_pucch_data, expected_unpacked, configuration);
     }
 
     // Pack Wideband CQI if enabled.
-    if ((quantities == csi_report_quantities::cri_ri_pmi_cqi) || (quantities == csi_report_quantities::cri_ri_cqi) ||
-        (quantities == csi_report_quantities::cri_ri_li_pmi_cqi)) {
-      fill_wideband_cqi(packed_pucch_data, unpacked_data, configuration);
+    if ((configuration.quantities == csi_report_quantities::cri_ri_pmi_cqi) ||
+        (configuration.quantities == csi_report_quantities::cri_ri_cqi) ||
+        (configuration.quantities == csi_report_quantities::cri_ri_li_pmi_cqi)) {
+      fill_wideband_cqi(packed_pucch_data, expected_unpacked, configuration);
     }
   }
 
 private:
   static void fill_cri(csi_report_packed& packed, csi_report_data& unpacked, const csi_report_configuration& config)
   {
-    unsigned nof_cri_bits = 0;
-    if (!std::holds_alternative<std::monostate>(config.pmi_codebook)) {
-      nof_cri_bits = log2_ceil(config.nof_csi_rs_resources);
-    }
+    unsigned nof_reported_rs = config.nof_reported_rs.value();
+    unsigned nof_cri_bits    = log2_ceil(config.nof_csi_rs_resources);
 
-    unsigned cri = rgen() & mask_lsb_ones<unsigned>(nof_cri_bits);
-    unpacked.cri.emplace(cri);
-    packed.push_back(cri, nof_cri_bits);
+    // Pack each of the CRI.
+    for (unsigned i = 0; i != nof_reported_rs; ++i) {
+      unsigned cri = rgen() & mask_lsb_ones<unsigned>(nof_cri_bits);
+      unpacked.cri.emplace_back(cri);
+      packed.push_back(cri, nof_cri_bits);
+    }
+  }
+
+  static void fill_rsrp(csi_report_packed& packed, csi_report_data& unpacked, const csi_report_configuration& config)
+  {
+    unsigned nof_reported_rs = config.nof_reported_rs.value();
+
+    // Pack first RSRP. The RSRP value is expressed in 1 dB steps from [-140, -44] dBm, as per TS38.214
+    // Section 5.2.1.4.3.
+    uint8_t rsrp = rgen() % (140 - 44);
+    unpacked.rsrp_dBm.push_back(-140 + rsrp);
+    packed.push_back(rsrp, 7);
+
+    // Pack the differential RSRP.
+    for (unsigned i = 1; i != nof_reported_rs; ++i) {
+      uint8_t diff_rsrp = rgen() % 16;
+      unpacked.rsrp_dBm.push_back(unpacked.rsrp_dBm.front() - 2 * diff_rsrp);
+      packed.push_back(diff_rsrp, 4);
+    }
   }
 
   static void fill_ri(csi_report_packed& packed, csi_report_data& unpacked, const csi_report_configuration& config)
@@ -255,14 +250,19 @@ private:
 
   static void fill_padding(csi_report_packed& packed, csi_report_data& unpacked, const csi_report_configuration& config)
   {
+    // Padding is not applicable if the RI is not reported.
+    if (!unpacked.ri.has_value()) {
+      return;
+    }
+
+    csi_report_data::ri_type ri = unpacked.ri.value();
     if (std::holds_alternative<pmi_codebook_one_port>(config.pmi_codebook) ||
         std::holds_alternative<std::monostate>(config.pmi_codebook)) {
       return;
     }
 
-    unsigned ri                       = unpacked.ri.value().value();
     unsigned nof_csi_rs_antenna_ports = get_precoding_codebook_antenna_ports(config.pmi_codebook);
-    unsigned current_size             = get_pucch_payload_size(config, ri);
+    unsigned current_size             = get_pucch_payload_size(config, ri.value());
     unsigned max_size                 = 0;
     for (unsigned i_rank = 1; i_rank <= nof_csi_rs_antenna_ports; ++i_rank) {
       max_size = std::max(max_size, get_pucch_payload_size(config, i_rank));
@@ -289,40 +289,38 @@ private:
 
       packed.push_back(type.pmi, nof_pmi_bits);
     } else if (std::holds_alternative<pmi_codebook_typeI_single_panel>(config.pmi_codebook)) {
-      const auto&                           codebook   = std::get<pmi_codebook_typeI_single_panel>(config.pmi_codebook);
-      const pmi_codebook_single_panel_info& panel_info = get_single_panel_info(codebook.n1_n2);
-      const pmi_typeI_single_panel_param_sizes sizes   = get_pmi_sizes_typeI_single_panel(panel_info, ri);
+      // Obtain PMI codebook configuration.
+      const pmi_codebook_typeI_single_panel pmi_codebook =
+          std::get<pmi_codebook_typeI_single_panel>(config.pmi_codebook);
 
-      unsigned i_1_1 = rgen() & mask_lsb_ones<unsigned>(sizes.i_1_1);
-      unsigned i_1_2 = rgen() & mask_lsb_ones<unsigned>(sizes.i_1_2);
-      unsigned i_1_3 = rgen() & mask_lsb_ones<unsigned>(sizes.i_1_3);
-      unsigned i_2   = rgen() & mask_lsb_ones<unsigned>(sizes.i_2);
+      // Get parameter sizes for the selected RI.
+      pmi_typeI_single_panel_param_sizes param_sizes =
+          get_pmi_sizes_typeI_single_panel(get_single_panel_info(pmi_codebook.n1_n2), ri);
 
       // Set PMI values.
       pmi_typeI_single_panel type;
-      type.panel_config = codebook.n1_n2;
-      type.i_1_1        = i_1_1;
-      if (sizes.i_1_2 > 0) {
-        type.i_1_2.emplace(i_1_2);
+      type.i_1_1 = rgen() & mask_lsb_ones<unsigned>(param_sizes.i_1_1);
+      if (param_sizes.i_1_2) {
+        type.i_1_2.emplace(rgen() & mask_lsb_ones<unsigned>(param_sizes.i_1_2));
       }
-      if (sizes.i_1_3 > 0) {
-        type.i_1_3.emplace(i_1_3);
+      if (param_sizes.i_1_3) {
+        type.i_1_3.emplace(rgen() & mask_lsb_ones<unsigned>(param_sizes.i_1_3));
       }
-      type.i_2 = i_2;
+      type.i_2 = rgen() & mask_lsb_ones<unsigned>(param_sizes.i_2);
 
       precoding_matrix_indicator pmi;
       pmi.emplace<pmi_typeI_single_panel>(type);
       unpacked.pmi.emplace(pmi);
 
-      // Pack PMI values in TS38.212 Section 6.3.1.1.2 order.
-      packed.push_back(i_1_1, sizes.i_1_1);
-      if (sizes.i_1_2 > 0) {
-        packed.push_back(i_1_2, sizes.i_1_2);
+      // Pack PMI values.
+      packed.push_back(type.i_1_1, param_sizes.i_1_1);
+      if (type.i_1_2.has_value()) {
+        packed.push_back(*type.i_1_2, param_sizes.i_1_2);
       }
-      if (sizes.i_1_3 > 0) {
-        packed.push_back(i_1_3, sizes.i_1_3);
+      if (type.i_1_3.has_value()) {
+        packed.push_back(*type.i_1_3, param_sizes.i_1_3);
       }
-      packed.push_back(i_2, sizes.i_2);
+      packed.push_back(type.i_2, param_sizes.i_2);
     }
   }
 
@@ -342,43 +340,85 @@ private:
     }
   }
 
-  static std::mt19937                            rgen;
-  static std::uniform_int_distribution<unsigned> nof_csi_rs_resources_dist;
+  static std::mt19937 rgen;
 };
 
-std::mt19937                            CsiReportPucchFixture::rgen;
-std::uniform_int_distribution<unsigned> CsiReportPucchFixture::nof_csi_rs_resources_dist(1, 16);
+std::mt19937 CsiReportPucchFixture::rgen;
 
 } // namespace
 
 TEST_P(CsiReportPucchFixture, CsiReportPucchUnpacking)
 {
+  const csi_report_configuration& configuration = GetParam();
+
   // Get report size.
   csi_report_size csi_report_size = get_csi_report_pucch_size(configuration);
 
   // Assert report size.
-  ASSERT_EQ(csi_report_size.part1_size, units::bits(packed_pucch_data.size()));
+  ASSERT_EQ(csi_report_size.part1_size.value(), packed_pucch_data.size());
 
   // Unpack.
   ASSERT_TRUE(validate_pucch_csi_payload(packed_pucch_data, configuration));
   csi_report_data unpacked = csi_report_unpack_pucch(packed_pucch_data, configuration);
 
   // Assert CRI.
-  ASSERT_EQ(unpacked_data, unpacked);
+  ASSERT_EQ(expected_unpacked, unpacked);
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    CsiReportPucchHelpersTest,
-    CsiReportPucchFixture,
-    ::testing::Combine(::testing::Values(pmi_codebook_one_port{},
-                                         pmi_codebook_two_port{},
-                                         pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::two_one,
-                                                                         pmi_codebook_typeI_mode::one},
-                                         pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::two_two,
-                                                                         pmi_codebook_typeI_mode::one},
-                                         pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::four_one,
-                                                                         pmi_codebook_typeI_mode::one}),
-                       ::testing::Values(csi_report_quantities::cri_ri_pmi_cqi,
-                                         csi_report_quantities::cri_ri_cqi,
-                                         csi_report_quantities::cri_ri_li_pmi_cqi),
-                       ::testing::Range(0U, 10U)));
+static std::vector<csi_report_configuration> generate_test_cases()
+{
+  std::mt19937                           rgen;
+  std::vector<csi_report_configuration>  test_cases;
+  std::uniform_int_distribution<uint8_t> nof_csi_rs_resources_dist(1, 16);
+  std::uniform_int_distribution<uint8_t> nof_reported_rs_dist(1, 4);
+  for (unsigned i = 0; i != 10; ++i) {
+    for (const auto& quantities : {csi_report_quantities::cri_ri_pmi_cqi,
+                                   csi_report_quantities::cri_ri_cqi,
+                                   csi_report_quantities::cri_rsrp,
+                                   csi_report_quantities::ssb_index_rsrp,
+                                   csi_report_quantities::cri_ri_li_pmi_cqi}) {
+      // Handle quantities for cri-RSRP and ssb-Index-RSRP.
+      if ((quantities == csi_report_quantities::cri_rsrp) || (quantities == csi_report_quantities::ssb_index_rsrp)) {
+        test_cases.emplace_back(csi_report_configuration{
+            .nof_csi_rs_resources = nof_csi_rs_resources_dist(rgen),
+            .nof_reported_rs      = nof_reported_rs_dist(rgen),
+            .pmi_codebook         = std::monostate{},
+            .ri_restriction       = {},
+            .quantities           = quantities,
+            .subband              = std::nullopt,
+        });
+        continue;
+      }
+
+      for (const pmi_codebook_config pmi_codebook :
+           to_array<pmi_codebook_config>({pmi_codebook_one_port{},
+                                          pmi_codebook_two_port{},
+                                          pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::two_one,
+                                                                          pmi_codebook_typeI_mode::one},
+                                          pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::four_one,
+                                                                          pmi_codebook_typeI_mode::one},
+                                          pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::two_two,
+                                                                          pmi_codebook_typeI_mode::one}})) {
+        csi_report_configuration config;
+        config.nof_csi_rs_resources = nof_csi_rs_resources_dist(rgen);
+        config.nof_reported_rs      = 1;
+        config.pmi_codebook         = pmi_codebook;
+        config.ri_restriction       = ~ri_restriction_type(get_precoding_codebook_antenna_ports(pmi_codebook));
+        config.quantities           = quantities;
+
+        // Set a random RI restrictiion bit to false.
+        if (config.ri_restriction.size() > 1) {
+          config.ri_restriction.set(rgen() % config.ri_restriction.size(), false);
+        }
+
+        test_cases.push_back(config);
+      }
+    }
+  }
+
+  return test_cases;
+}
+
+static const std::vector<CsiReportUnpackingParams> test_cases = generate_test_cases();
+
+INSTANTIATE_TEST_SUITE_P(CsiReportPucchHelpersTest, CsiReportPucchFixture, ::testing::ValuesIn(test_cases));

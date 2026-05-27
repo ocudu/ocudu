@@ -4,7 +4,9 @@
 
 #pragma once
 
+#include "csi_report_configuration.h"
 #include "ocudu/adt/bounded_integer.h"
+#include "ocudu/adt/static_vector.h"
 #include "ocudu/ran/precoding/precoding_matrix_indicator.h"
 #include <optional>
 #include <variant>
@@ -26,8 +28,11 @@ struct csi_report_data {
   /// Wideband Channel Quality Indicator (CQI) data type.
   using wideband_cqi_type = bounded_integer<uint8_t, 0, 15>;
 
-  /// CSI-RS Resource Indicator (CRI) if reported.
-  std::optional<uint8_t> cri;
+  /// CSI-RS Resource Indicator (CRI) for each reported CSI-RS resource if reported.
+  static_vector<uint8_t, csi_max_nof_reported_rs> cri;
+  /// Reference Signal Received Power (RSRP) in dBm for each reported CSI-RS resource if reported. The range is
+  /// [-140, -44] dBm.
+  static_vector<int, csi_max_nof_reported_rs> rsrp_dBm;
   /// Rank Indicator (RI) if reported. The range is {1, ..., 8}.
   std::optional<ri_type> ri;
   /// Layer Indicator (LI) if reported.

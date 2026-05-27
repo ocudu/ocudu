@@ -18,6 +18,8 @@ namespace {
 const csi_report_configuration base_csi_configuration = {
     // Number of CSI RS resources.
     1,
+    // Number of reported Resource Sets.
+    1,
     // PMI codebook.
     pmi_codebook_one_port{},
     // RI restriction.

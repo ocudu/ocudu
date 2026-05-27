@@ -35,15 +35,16 @@ class uci_part2_correspondence_generator_test
   : public ::testing::TestWithParam<std::tuple<pmi_codebook_config, csi_report_quantities>>
 {
 protected:
-  unsigned              nof_csi_rs_resources = NUM_CSI_RESOURCES;
-  pmi_codebook_config   codebook             = std::get<0>(GetParam());
-  csi_report_quantities quantities           = std::get<1>(GetParam());
+  unsigned nof_csi_rs_resources = NUM_CSI_RESOURCES;
 };
 
 } // namespace
 
 TEST_P(uci_part2_correspondence_generator_test, correct_generation_test)
 {
+  pmi_codebook_config   codebook   = std::get<0>(GetParam());
+  csi_report_quantities quantities = std::get<1>(GetParam());
+
   std::unique_ptr<uci_part2_correspondence_mapper>     mapper;
   std::unique_ptr<uci_part2_correspondence_repository> repository;
   std::tie(mapper, repository) = generate_uci_part2_correspondence(NUM_CSI_RESOURCES);
@@ -57,6 +58,7 @@ TEST_P(uci_part2_correspondence_generator_test, correct_generation_test)
   report_cfg.pmi_codebook         = codebook;
   report_cfg.ri_restriction       = ri_restiction;
   report_cfg.quantities           = quantities;
+  report_cfg.nof_reported_rs      = 1;
 
   uci_part2_size_description part2_correspondence = get_csi_report_pusch_size(report_cfg).part2_correspondence;
 

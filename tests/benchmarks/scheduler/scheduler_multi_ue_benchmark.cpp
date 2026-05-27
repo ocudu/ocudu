@@ -176,7 +176,8 @@ public:
             f2.csi =
 
                 f2.csi =
-                    csi_report_data{std::nullopt,
+                    csi_report_data{{},
+                                    {},
                                     4,
                                     std::nullopt,
                                     precoding_matrix_indicator{pmi_typeI_single_panel{
@@ -199,7 +200,8 @@ public:
             pusch_pdu.harqs.resize(ul_grant.uci->harq.value().harq_ack_nof_bits, mac_harq_ack_report_status::ack);
           }
           pusch_pdu.csi =
-              csi_report_data{std::nullopt,
+              csi_report_data{{},
+                              {},
                               4,
                               std::nullopt,
                               precoding_matrix_indicator{pmi_typeI_single_panel{

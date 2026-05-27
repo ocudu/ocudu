@@ -21,6 +21,14 @@ csi_report_configuration ocudu::create_csi_report_configuration(const csi_meas_c
           .nzp_csi_rs_res_set_list[0];
   csi_rep.nof_csi_rs_resources = csi_meas.nzp_csi_rs_res_set_list[nzp_csi_set_id].nzp_csi_rs_res.size();
 
+  // Select the given number of reported Resource Sets if group based beamforming is disabled and the number of resource
+  // sets to report is present.
+  if (!csi_rep_cfg.is_group_based_beam_reporting_enabled && csi_rep_cfg.nof_reported_rs.has_value()) {
+    csi_rep.nof_reported_rs = csi_rep_cfg.nof_reported_rs.value();
+  } else {
+    csi_rep.nof_reported_rs = 1;
+  }
+
   // Enable indicators
   switch (csi_rep_cfg.report_qty_type) {
     case csi_report_config::report_quantity_type_t::none:
@@ -77,8 +85,10 @@ bool ocudu::is_valid(const csi_report_configuration& config)
     return false;
   }
 
-  // The PMI codebook type is not supported.
-  if (std::holds_alternative<std::monostate>(config.pmi_codebook)) {
+  // PMI codebook is not supported if the measurement is for cri-RSRP or ssb-Index-RSRP.
+  if (std::holds_alternative<std::monostate>(config.pmi_codebook) &&
+      (config.quantities != csi_report_quantities::cri_rsrp) &&
+      (config.quantities != csi_report_quantities::ssb_index_rsrp)) {
     return false;
   }
 

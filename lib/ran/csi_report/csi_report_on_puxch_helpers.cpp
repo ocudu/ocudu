@@ -173,18 +173,14 @@ struct pmi_unpacker {
     count += sizes.i_1_1;
 
     std::optional<unsigned> i_1_2;
-    ocudu_assert((panel_info.n2 > 1) || (sizes.i_1_2 == 0), "PMI field i_1_2 size must be 0 bits if N2 = 1.");
     if (sizes.i_1_2 > 0) {
-      i_1_2.emplace(packed.extract(count, sizes.i_1_2));
+      i_1_2 = packed.extract(count, sizes.i_1_2);
       count += sizes.i_1_2;
     }
 
     std::optional<unsigned> i_1_3;
-    ocudu_assert(((ri > 1) && (ri <= 4)) || (sizes.i_1_3 == 0),
-                 "PMI field i_1_3 size must be zero if RI = 1 or RI > 4.");
-
     if (sizes.i_1_3 > 0) {
-      i_1_3.emplace(packed.extract(count, sizes.i_1_3));
+      i_1_3 = packed.extract(count, sizes.i_1_3);
       count += sizes.i_1_3;
     }
 
@@ -219,6 +215,24 @@ ri_li_cqi_cri_sizes ocudu::get_ri_li_cqi_cri_sizes(const pmi_codebook_config& pm
   return std::visit(ri_li_cqi_cri_size_calculator{ri_restriction, ri, nof_csi_rs_resources}, pmi_codebook);
 }
 
+cri_ssbri_rsrp_sizes ocudu::get_cri_ssbri_rsrp_sizes(unsigned nof_csi_rs_resources)
+{
+  return {.cri = log2_ceil(nof_csi_rs_resources), .rsrp = 7, .diff_rsrp = 4};
+}
+
+csi_report_size ocudu::get_csi_report_size_cri_ssbri_rsrp(unsigned                       nof_csi_rs_resources,
+                                                          bounded_integer<uint8_t, 1, 4> nof_reported_rs_)
+{
+  using namespace units::literals;
+  cri_ssbri_rsrp_sizes sizes           = get_cri_ssbri_rsrp_sizes(nof_csi_rs_resources);
+  unsigned             nof_reported_rs = nof_reported_rs_.value();
+
+  // The CSI report comprises a CRI/SSBRI field per Resource Set (RS) - the RSRP for the first entry and
+  // differential RSRP for the rest of RS, as per TS38.214 Section 5.2.1.4.3.
+  units::bits part1_size{nof_reported_rs * sizes.cri + sizes.rsrp + sizes.diff_rsrp * (nof_reported_rs - 1)};
+  return {.part1_size = part1_size, .part2_correspondence = {}, .part2_min_size = 0_bits, .part2_max_size = 0_bits};
+}
+
 unsigned ocudu::csi_report_get_size_pmi(const pmi_codebook_config& codebook, csi_report_data::ri_type ri)
 {
   return std::visit(pmi_size_calculator{ri}, codebook);
@@ -240,16 +254,58 @@ precoding_matrix_indicator ocudu::csi_report_unpack_pmi(const csi_report_packed&
 csi_report_data::ri_type ocudu::csi_report_unpack_ri(const csi_report_packed&   ri_packed,
                                                      const ri_restriction_type& ri_restriction)
 {
-  unsigned ri = 1;
+  unsigned ri = 0;
+
   if (!ri_packed.empty()) {
     ri = ri_packed.extract(0, ri_packed.size());
+  }
 
+  if (!ri_restriction.empty()) {
     ocudu_assert(ri < ri_restriction.count(),
                  "Packed RI, i.e., {}, is out of bounds given the number of allowed rank values, i.e., {}.",
                  ri,
                  ri_restriction.count());
 
-    ri = ri_restriction.get_bit_positions()[ri] + 1;
+    return ri_restriction.get_bit_positions()[ri] + 1;
   }
-  return ri;
+
+  return 1;
+}
+
+csi_report_data ocudu::csi_report_unpack_cri_ssbri_rsrp(const csi_report_packed&       packed,
+                                                        unsigned                       nof_csi_rs_resources,
+                                                        bounded_integer<uint8_t, 1, 4> nof_reported_rs_)
+{
+  cri_ssbri_rsrp_sizes sizes           = get_cri_ssbri_rsrp_sizes(nof_csi_rs_resources);
+  unsigned             nof_reported_rs = nof_reported_rs_.value();
+
+  csi_report_data result;
+  unsigned        offset = 0;
+
+  // Unpack each CRI for each reported resource set.
+  for (unsigned i = 0; i != nof_reported_rs; ++i) {
+    result.cri.push_back(packed.extract(offset, sizes.cri));
+    offset += sizes.cri;
+  }
+
+  // Unpack RSRP. The RSRP value is expressed in 1 dB steps from [-140, -44] dBm with 7-bit bitwidth, as per TS38.214
+  // Section 5.2.1.4.3.
+  int reference_rsrp = -140 + packed.extract(offset, sizes.rsrp);
+  result.rsrp_dBm.push_back(reference_rsrp);
+  offset += sizes.rsrp;
+
+  // Unpack differential RSRP for each reported resource set. Conversion from the 4-bit field to dBm is described in
+  // TS38.214 Section 5.2.1.4.3.
+  for (unsigned i = 1; i != nof_reported_rs; ++i) {
+    result.rsrp_dBm.push_back(reference_rsrp - 2 * packed.extract(offset, sizes.diff_rsrp));
+    offset += sizes.diff_rsrp;
+  }
+
+  // Validate all packed bits have been used.
+  ocudu_assert(packed.size() == offset,
+               "Packet input size (i.e., {}) does not match with the fields size (i.e., {})",
+               packed.size(),
+               offset);
+  result.valid = true;
+  return result;
 }
