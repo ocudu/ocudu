@@ -153,6 +153,18 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
         continue;
       }
 
+      // Scale slice RB limits to account for RBs already occupied by other UL channels (e.g. PUCCH) before PUSCH
+      // scheduling. Without scaling, the overhead falls entirely on the last-scheduled slice, breaking the
+      // dedicated-PRB ratio between slices.
+      const unsigned cell_nof_rbs    = cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
+      const unsigned pusch_avail_rbs = cell_nof_rbs - pusch_used_crbs.count();
+      // TODO: Refactor to use slice ratios from config to avoid conversation from ratio to PRBs and again to ratio.
+      const unsigned scaled_max = slice.inst.cfg.rbs.max() * pusch_avail_rbs / cell_nof_rbs;
+      if (scaled_max <= pusch_rb_count) {
+        // Slice already has at or above its proportional share of available RBs; skip.
+        continue;
+      }
+
       interval<unsigned> rb_lims;
       // When minRB > 0, minRB != maxRB, sliceRBs < min_RB, we create two candidates. One with limit set to minRB
       // with high priority, and another one with limit set to maxRB with normal priority.
@@ -161,12 +173,13 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
         // NOTE: keep pusch_rb_count in the rb_lims computation below; note that, after running slot_indication for
         // each slice (see above), pusch_rb_count is 0 only for k2 = min_k2; but in UL, we have other k2 values for
         // which pusch_rb_count wouldn't be 0.
-        rb_lims         = {pusch_rb_count, slice.inst.cfg.rbs.min()};
-        const auto prio = slice.get_prio(false, slot_tx, pusch_slot, rb_lims.stop());
+        const unsigned scaled_min = slice.inst.cfg.rbs.min() * pusch_avail_rbs / cell_nof_rbs;
+        rb_lims                   = {pusch_rb_count, scaled_min};
+        const auto prio           = slice.get_prio(false, slot_tx, pusch_slot, rb_lims.stop());
         ul_prio_queue.push(slice_candidate_context{slice.inst.id, prio, rb_lims, pusch_slot});
-        rb_lims = {slice.inst.cfg.rbs.min(), slice.inst.cfg.rbs.max()};
+        rb_lims = {scaled_min, scaled_max};
       } else {
-        rb_lims = {pusch_rb_count, slice.inst.cfg.rbs.max()};
+        rb_lims = {pusch_rb_count, scaled_max};
       }
       const auto prio = slice.get_prio(false, slot_tx, pusch_slot, rb_lims.stop());
       allocated_k2.emplace(pusch_time_domain_list[pusch_td_res_idx].k2);

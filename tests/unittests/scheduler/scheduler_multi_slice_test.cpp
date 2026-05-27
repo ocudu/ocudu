@@ -8,6 +8,7 @@
 #include "tests/unittests/scheduler/test_utils/scheduler_test_simulator.h"
 #include "ocudu/adt/ranges/transform.h"
 #include "ocudu/ran/du_types.h"
+#include "ocudu/scheduler/scheduler_feedback_handler.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -270,4 +271,170 @@ TEST_F(multi_slice_with_prio_slice_scheduler_test, multi_ue_limited_to_max_rbs_r
 
   // Re-run scheduler with the new set of parameters.
   run_scheduler_assess_rbs(new_max_slice1_rbs, new_min_slice1_rbs, new_max_slice2_rbs, 0);
+}
+
+// Sanity check: single UE with max RB slice gets UL grants.
+TEST_F(single_slice_limited_max_rbs_scheduler_test, single_ue_ul_gets_scheduled)
+{
+  rnti_t                    rnti = this->add_ue({std::make_pair(LCID_MIN_DRB, get_nssai(1, 1))});
+  ul_bsr_indication_message bsr{to_du_cell_index(0),
+                                to_du_ue_index(0),
+                                rnti,
+                                bsr_format::SHORT_BSR,
+                                {ul_bsr_lcg_report{uint_to_lcg_id(2), 10000000}}};
+  this->push_bsr(bsr);
+  auto_crc = true;
+  auto_uci = true;
+
+  unsigned ul_rbs = 0;
+  for (unsigned i = 0; i < 200; ++i) {
+    run_slot();
+    for (const ul_sched_info& pusch : last_sched_result()->ul.puschs) {
+      if (pusch.pusch_cfg.rnti == rnti) {
+        ul_rbs += pusch.pusch_cfg.rbs.type1().length();
+      }
+    }
+  }
+  ASSERT_GT(ul_rbs, 0U) << "Single UE never got UL grant";
+}
+
+class multi_slice_dedicated_ul_rbs_test : public scheduler_test_simulator, public ::testing::Test
+{
+protected:
+  // sst=2, sd=42 → 25% of 51 PRBs = 13 RBs.
+  // sst=1, sd=1  → 75% of 51 PRBs = 38 RBs.
+  static constexpr unsigned slice_25_rbs = 13;
+  static constexpr unsigned slice_75_rbs = 38;
+
+  static s_nssai_t nssai_25() { return get_nssai(2, 42); }
+  static s_nssai_t nssai_75() { return get_nssai(1, 1); }
+
+  multi_slice_dedicated_ul_rbs_test() : scheduler_test_simulator(4, subcarrier_spacing::kHz30)
+  {
+    auto_crc = true;
+    auto_uci = true;
+
+    auto params                 = cell_config_builder_profiles::create(duplex_mode::TDD);
+    params.tdd_ul_dl_cfg_common = cell_config_builder_profiles::create_tdd_pattern(
+        cell_config_builder_profiles::tdd_pattern_profile_fr1_30khz::DDDSU);
+
+    auto cell_req               = sched_config_helper::make_default_sched_cell_configuration_request(params);
+    cell_req.rrm_policy_members = {
+        slice_rrm_policy_config{get_rrm_policy(2, 42), {slice_25_rbs, slice_25_rbs, slice_25_rbs}},
+        slice_rrm_policy_config{get_rrm_policy(1, 1), {slice_75_rbs, slice_75_rbs, slice_75_rbs}}};
+    this->add_cell(cell_req);
+  }
+
+  rnti_t add_ue_to_slice(unsigned ue_idx, s_nssai_t nssai)
+  {
+    auto ue_cfg = sched_config_helper::create_default_sched_ue_creation_request(cell_cfg(to_du_cell_index(0)).params,
+                                                                                {LCID_MIN_DRB});
+    ue_cfg.ue_index                                         = to_du_ue_index(ue_idx);
+    ue_cfg.crnti                                            = to_rnti(0x4601 + ue_idx);
+    ue_cfg.cfg.lc_config_list.value()[2].rrm_policy.s_nssai = nssai;
+    scheduler_test_simulator::add_ue(ue_cfg);
+    return ue_cfg.crnti;
+  }
+
+  void push_bsr_for_ue(du_ue_index_t ue_idx, rnti_t rnti)
+  {
+    ul_bsr_indication_message bsr{
+        to_du_cell_index(0), ue_idx, rnti, bsr_format::SHORT_BSR, {ul_bsr_lcg_report{uint_to_lcg_id(2), 10000000}}};
+    this->push_bsr(bsr);
+  }
+};
+
+// Tests that UL dedicated PRB ratios are respected when two slices together cover 100% of the cell bandwidth.
+// Regression test for: slicing: dedicated UL proportion not following config and DL (issue #383).
+// Slice config mirrors the original bug report:
+//   sst=2, sd=42 → 25% dedicated/min/max PRBs
+//   sst=1, sd=1  → 75% dedicated/min/max PRBs
+// TDD DDDSU pattern, 30kHz SCS, 20MHz (51 PRBs). Both DL and UL traffic present.
+TEST_F(multi_slice_dedicated_ul_rbs_test, ul_dedicated_rbs_ratio_is_respected)
+{
+  // UE0 in the 75% slice (sst=1,sd=1), UE1 in the 25% slice (sst=2,sd=42).
+  rnti_t rnti_75 = this->add_ue_to_slice(0, nssai_75());
+  rnti_t rnti_25 = this->add_ue_to_slice(1, nssai_25());
+
+  // Push large UL and DL buffers — matches real-world scenario from bug report.
+  push_bsr_for_ue(to_du_ue_index(0), rnti_75);
+  push_bsr_for_ue(to_du_ue_index(1), rnti_25);
+  this->push_dl_buffer_state(dl_buffer_state_indication_message{to_du_ue_index(0), LCID_MIN_DRB, 10000000});
+  this->push_dl_buffer_state(dl_buffer_state_indication_message{to_du_ue_index(1), LCID_MIN_DRB, 10000000});
+
+  static constexpr unsigned nof_test_slots = 2000;
+  unsigned                  ul_rbs_75      = 0;
+  unsigned                  ul_rbs_25      = 0;
+  unsigned                  ul_rbs_total   = 0;
+  unsigned                  ul_slots       = 0;
+  unsigned                  dl_rbs_75      = 0;
+  unsigned                  dl_rbs_25      = 0;
+
+  for (unsigned i = 0; i < nof_test_slots; ++i) {
+    run_slot();
+    const sched_result* res = last_sched_result();
+
+    // UL: count per-slice PRBs and total PRBs in each UL slot.
+    if (not res->ul.puschs.empty()) {
+      unsigned slot_ul_total = 0;
+      for (const ul_sched_info& pusch : res->ul.puschs) {
+        unsigned nof_rbs = pusch.pusch_cfg.rbs.type1().length();
+        slot_ul_total += nof_rbs;
+        if (pusch.pusch_cfg.rnti == rnti_75) {
+          ul_rbs_75 += nof_rbs;
+        } else if (pusch.pusch_cfg.rnti == rnti_25) {
+          ul_rbs_25 += nof_rbs;
+        }
+      }
+      ul_rbs_total += slot_ul_total;
+      ++ul_slots;
+    }
+
+    // DL: count per-slice PRBs.
+    for (const dl_msg_alloc& pdsch : res->dl.ue_grants) {
+      unsigned nof_rbs = pdsch.pdsch_cfg.rbs.type1().length();
+      if (pdsch.pdsch_cfg.rnti == rnti_75) {
+        dl_rbs_75 += nof_rbs;
+      } else if (pdsch.pdsch_cfg.rnti == rnti_25) {
+        dl_rbs_25 += nof_rbs;
+      }
+    }
+  }
+
+  const double avg_ul_prbs_per_slot = ul_slots > 0 ? static_cast<double>(ul_rbs_total) / ul_slots : 0.0;
+  const auto   cell_ul_prbs         = static_cast<double>(slice_75_rbs + slice_25_rbs);
+
+  test_logger.info("UL RBs: 75%={} 25%={} total={} ul_slots={} avg_prbs/ul_slot={:.1f} (cell={})",
+                   ul_rbs_75,
+                   ul_rbs_25,
+                   ul_rbs_total,
+                   ul_slots,
+                   avg_ul_prbs_per_slot,
+                   cell_ul_prbs);
+  test_logger.info("DL RBs: 75%={} 25%={}", dl_rbs_75, dl_rbs_25);
+
+  ASSERT_GT(ul_rbs_75, 0U) << "75% slice UE was never scheduled in UL";
+  ASSERT_GT(ul_rbs_25, 0U) << "25% slice UE was never scheduled in UL";
+  ASSERT_GT(dl_rbs_75, 0U) << "75% slice UE was never scheduled in DL";
+  ASSERT_GT(dl_rbs_25, 0U) << "25% slice UE was never scheduled in DL";
+
+  static constexpr double expected_ratio = static_cast<double>(slice_75_rbs) / slice_25_rbs;
+  static constexpr double tolerance      = 0.15;
+
+  // DL ratio must be correct — this is a sanity check; DL slicing works in the bug report.
+  if (dl_rbs_25 > 0) {
+    double dl_ratio = static_cast<double>(dl_rbs_75) / dl_rbs_25;
+    EXPECT_NEAR(dl_ratio, expected_ratio, expected_ratio * tolerance)
+        << "DL RB ratio wrong: 75%=" << dl_rbs_75 << " 25%=" << dl_rbs_25;
+  }
+
+  // UL ratio must match configured dedicated PRB shares.
+  double ul_ratio = static_cast<double>(ul_rbs_75) / ul_rbs_25;
+  EXPECT_NEAR(ul_ratio, expected_ratio, expected_ratio * tolerance)
+      << "UL RB ratio wrong: 75%=" << ul_rbs_75 << " 25%=" << ul_rbs_25;
+
+  // Total UL PRBs per slot must equal the sum of both slices' dedicated allocations.
+  // When both UEs have data, the scheduler should fully utilise the UL slot.
+  EXPECT_NEAR(avg_ul_prbs_per_slot, cell_ul_prbs, cell_ul_prbs * tolerance)
+      << "UL slot underutilised: avg=" << avg_ul_prbs_per_slot << " expected=" << cell_ul_prbs;
 }
