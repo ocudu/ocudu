@@ -1,14 +1,7 @@
 # SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
-
 terraform {
-  required_providers {
-    gitlab = {
-      source  = "gitlabhq/gitlab"
-      version = ">= 18.0"
-    }
-  }
   backend "http" {}
 }
 
@@ -112,7 +105,7 @@ module "settings" {
   requirements_access_level            = "enabled"
   security_and_compliance_access_level = "private"
   snippets_access_level                = "enabled"
-  wiki_access_level                    = "enabled"
+  wiki_access_level                    = "disabled"
   request_access_enabled               = false
 
   # =============================================================================
@@ -145,7 +138,7 @@ module "settings" {
     disable_overriding_approvers_per_merge_request = true
     merge_requests_author_approval                 = true
     merge_requests_disable_committers_approval     = true
-    require_password_to_approve                    = false
+    require_reauthentication_to_approve            = false
     reset_approvals_on_push                        = false
     selective_code_owner_removals                  = false
   }
@@ -165,14 +158,16 @@ module "settings" {
     dev = {
       allow_force_push             = false
       code_owner_approval_required = false
-      merge_access_level           = "developer"
-      push_access_level            = "no one"
+
+      allowed_to_merge = [{ access_level = "developer" }]
+      allowed_to_push  = [{ access_level = "no one" }]
     }
     main = {
       allow_force_push             = false
       code_owner_approval_required = false
-      merge_access_level           = "no one"
-      push_access_level            = "maintainer"
+
+      allowed_to_merge = [{ access_level = "no one" }]
+      allowed_to_push  = [{ access_level = "maintainer" }]
     }
   }
 

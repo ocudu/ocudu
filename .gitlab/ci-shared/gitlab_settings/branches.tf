@@ -9,6 +9,6 @@ resource "gitlab_branch_protection" "protected_branches" {
   branch                       = each.key
   allow_force_push             = each.value.allow_force_push
   code_owner_approval_required = each.value.code_owner_approval_required
-  merge_access_level           = each.value.merge_access_level
-  push_access_level            = each.value.push_access_level
+  allowed_to_merge             = each.value.allowed_to_merge
+  allowed_to_push              = each.value.allowed_to_push
 }

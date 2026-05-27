@@ -293,7 +293,7 @@ variable "mr_approvals" {
     disable_overriding_approvers_per_merge_request = bool
     merge_requests_author_approval                 = bool
     merge_requests_disable_committers_approval     = bool
-    require_password_to_approve                    = bool
+    require_reauthentication_to_approve            = bool
     reset_approvals_on_push                        = bool
     selective_code_owner_removals                  = bool
   })
@@ -301,7 +301,7 @@ variable "mr_approvals" {
     disable_overriding_approvers_per_merge_request = true
     merge_requests_author_approval                 = true
     merge_requests_disable_committers_approval     = true
-    require_password_to_approve                    = false
+    require_reauthentication_to_approve            = false
     reset_approvals_on_push                        = false
     selective_code_owner_removals                  = false
   }
@@ -329,8 +329,17 @@ variable "protected_branches" {
   type = map(object({
     allow_force_push             = bool
     code_owner_approval_required = bool
-    merge_access_level           = string
-    push_access_level            = string
+    allowed_to_merge = optional(set(object({
+      access_level = optional(string)
+      user_id      = optional(number)
+      group_id     = optional(number)
+    })), [])
+    allowed_to_push = optional(set(object({
+      access_level  = optional(string)
+      user_id       = optional(number)
+      group_id      = optional(number)
+      deploy_key_id = optional(number)
+    })), [])
   }))
 }
 

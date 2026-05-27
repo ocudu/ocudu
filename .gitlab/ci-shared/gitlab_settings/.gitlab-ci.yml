@@ -19,7 +19,7 @@ variables:
   TF_VAR_ci_project_title: $CI_PROJECT_TITLE
 
 include:
-  - component: ${CI_SERVER_FQDN}/components/opentofu/validate-plan-apply@3.11.0
+  - component: ${CI_SERVER_FQDN}/components/opentofu/validate-plan-apply@4.6.0
     inputs:
       root_dir: .gitlab
       state_name: gitlab-configuration
@@ -45,6 +45,10 @@ include:
           allow_failure: false
       apply_rules:
         - if: $ON_DEFAULT_BRANCH
+
+gitlab_configuration:
+  variables:
+    CACHE_KEY: .gitlab-$CI_PIPELINE_ID
 
 # Additional CI/CD settings not supported by Terraform provider
 configure_cicd_settings:
