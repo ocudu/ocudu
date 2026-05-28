@@ -46,6 +46,7 @@ bool ocudu::validate_plmn_and_tacs(const du_high_unit_config& du_hi_cfg, const c
 
   std::vector<cu_cp_unit_supported_ta_item> supported_tas;
 
+  supported_tas.reserve(cu_cp_cfg.amf_config.amf.supported_tas.size());
   for (const auto& supported_ta : cu_cp_cfg.amf_config.amf.supported_tas) {
     supported_tas.push_back(supported_ta);
   }
@@ -56,17 +57,18 @@ bool ocudu::validate_plmn_and_tacs(const du_high_unit_config& du_hi_cfg, const c
     }
   }
 
-  bool ret_val = false;
   for (const auto& cell : du_hi_cfg.cells_cfg) {
+    bool found = false;
     for (const auto& supported_ta : supported_tas) {
       for (const auto& plmn_item : supported_ta.plmn_list) {
         if (plmn_item.plmn_id == cell.cell.plmn && supported_ta.tac == cell.cell.tac) {
-          ret_val = true;
+          found = true;
+          break;
         }
       }
     }
 
-    if (!ret_val) {
+    if (!found) {
       fmt::print("Could not find cell PLMN '{}' and cell TAC '{}' in the CU-CP supported tracking areas list\n",
                  cell.cell.plmn,
                  cell.cell.tac);
@@ -74,5 +76,5 @@ bool ocudu::validate_plmn_and_tacs(const du_high_unit_config& du_hi_cfg, const c
     }
   }
 
-  return ret_val;
+  return true;
 }
