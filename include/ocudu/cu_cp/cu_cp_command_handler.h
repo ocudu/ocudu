@@ -5,14 +5,14 @@
 #pragma once
 
 #include "ocudu/adt/span.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
+#include "ocudu/ran/cu_cp_ue_context_release.h"
 #include "ocudu/ran/pci.h"
+#include "ocudu/ran/plmn_identity.h"
 #include "ocudu/ran/rnti.h"
 #include <chrono>
 #include <optional>
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 class cu_cp_mobility_command_handler
 {
@@ -76,6 +76,4 @@ public:
   virtual cu_cp_ue_release_command_handler& get_ue_release_command_handler() = 0;
 };
 
-} // namespace ocucp
-
-} // namespace ocudu
+} // namespace ocudu::ocucp

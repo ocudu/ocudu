@@ -10,6 +10,7 @@
 #include "ocudu/asn1/rrc_nr/ul_dcch_msg_ies.h"
 #include "ocudu/cu_cp/cu_cp_ue_messages.h"
 #include "ocudu/ran/cu_cp_types.h"
+#include "ocudu/ran/cu_cp_ue_context_release.h"
 #include "ocudu/ran/i_rnti.h"
 #include "ocudu/ran/plmn_identity.h"
 #include "ocudu/ran/rnti.h"

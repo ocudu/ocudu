@@ -7,9 +7,10 @@
 #include "cu_cp/ue_context/e1ap_cu_cp_ue_context.h"
 #include "ocudu/asn1/e1ap/e1ap.h"
 #include "ocudu/asn1/e1ap/e1ap_pdu_contents.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/e1ap/common/e1ap_common.h"
 #include "ocudu/e1ap/common/e1ap_types.h"
+#include "ocudu/ran/cu_cp_types.h"
+#include "ocudu/ran/cu_cp_ue_context_release.h"
 #include "ocudu/support/async/async_task.h"
 
 namespace ocudu::ocucp {

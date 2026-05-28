@@ -8,6 +8,8 @@
 #include "ocudu/e1ap/common/e1_setup_messages.h"
 #include "ocudu/e1ap/common/e1ap_common.h"
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
+#include "ocudu/ran/cu_cp_types.h"
+#include "ocudu/ran/cu_cp_ue_context_release.h"
 #include "ocudu/support/async/async_task.h"
 
 namespace ocudu::ocucp {
