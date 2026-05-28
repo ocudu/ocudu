@@ -482,7 +482,7 @@ bool ue_configuration_procedure::changed_detected() const
   return !request.drbs_to_setup.empty() || !request.drbs_to_mod.empty() || !request.srbs_to_setup.empty() ||
          !request.drbs_to_rem.empty() || !request.scells_to_setup.empty() || !request.scells_to_rem.empty() ||
          !request.ho_prep_info.empty() || request.full_config_required || request.cho_trigger.has_value() ||
-         !request.ue_cap_rat_list.empty();
+         !request.ue_cap_rat_list.empty() || !request.meas_cfg.empty();
 }
 
 bool ue_configuration_procedure::handle_conditional_mobility_request()

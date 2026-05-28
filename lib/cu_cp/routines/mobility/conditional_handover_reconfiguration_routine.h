@@ -30,11 +30,13 @@ struct cu_cp_cho_reconfiguration_request {
 /// attach to one of the target cells.
 ///
 /// Steps:
-/// 1. Build RRCReconfiguration with conditionalReconfiguration-r16 for all candidates.
-/// 2. Notify CU-CP to start conditional_handover_target_routine on each target UE.
-/// 3. Send via F1AP UE Context Modification without stopping source-UE data transmission.
-/// 4. Wait for RRCReconfigurationComplete on SOURCE UE (acknowledgment).
-/// 5. Set CHO state to executing.
+/// 1. Request measGapConfig from source DU via UE Context Modification (need_for_gap=true).
+/// 2. Build RRCReconfiguration with conditionalReconfiguration-r16 for all candidates,
+///    including the measGapConfig returned by the source DU for inter-frequency CHO.
+/// 3. Notify CU-CP to start conditional_handover_target_routine on each target UE.
+/// 4. Send via F1AP UE Context Modification without stopping source-UE data transmission.
+/// 5. Wait for RRCReconfigurationComplete on SOURCE UE (acknowledgment).
+/// 6. Set CHO state to executing.
 class conditional_handover_reconfiguration_routine
 {
 public:
@@ -52,10 +54,16 @@ public:
 
 private:
   /// \brief Build the RRC message with conditional reconfiguration for all candidates.
+  /// \param[in] source_du_meas_gap_cfg measGapConfig returned by the source DU; included in the
+  ///            outer CHO measConfig when candidates are on different ARFCNs.
   /// \return Packed RRC message on success, empty buffer on failure.
-  byte_buffer build_conditional_reconfiguration_message();
+  byte_buffer build_conditional_reconfiguration_message(const byte_buffer& source_du_meas_gap_cfg);
 
-  /// \brief Generate the F1AP UE Context Modification request.
+  /// \brief Generate an F1AP UE Context Modification request asking the source DU to configure
+  ///        measurement gaps and return the resulting measGapConfig.
+  void generate_gap_request();
+
+  /// \brief Generate the F1AP UE Context Modification request carrying the CHO RRCReconfiguration.
   void generate_ue_context_modification_request();
 
   /// \brief Release prepared CHO candidates and clear CHO context after failures.
@@ -78,6 +86,7 @@ private:
   f1ap_ue_context_modification_request ue_context_mod_request;
 
   // (sub-)routine results
+  f1ap_ue_context_modification_response gap_response;
   f1ap_ue_context_modification_response ue_context_mod_response;
   bool                                  reconfig_result = false;
 };
