@@ -173,18 +173,11 @@ public:
             f2.harqs.resize(pucch.uci_bits.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
           }
           if (pucch.csi_rep_cfg.has_value()) {
-            f2.csi =
-
-                f2.csi =
-                    csi_report_data{{},
-                                    {},
-                                    4,
-                                    std::nullopt,
-                                    precoding_matrix_indicator{pmi_typeI_single_panel{
-                                        pmi_codebook_single_panel_config::two_one, 0, std::nullopt, std::nullopt, 0}},
-                                    15,
-                                    std::nullopt,
-                                    true};
+            f2.csi = csi_report_data{.ri                    = 4,
+                                     .pmi                   = precoding_matrix_indicator{pmi_typeI_single_panel{
+                                         pmi_codebook_single_panel_config::two_one, 0, std::nullopt, std::nullopt, 0}},
+                                     .first_tb_wideband_cqi = 15,
+                                     .valid                 = true};
           }
           pdu.pdu = f2;
           ind.ucis.push_back(pdu);
@@ -200,15 +193,11 @@ public:
             pusch_pdu.harqs.resize(ul_grant.uci->harq.value().harq_ack_nof_bits, mac_harq_ack_report_status::ack);
           }
           pusch_pdu.csi =
-              csi_report_data{{},
-                              {},
-                              4,
-                              std::nullopt,
-                              precoding_matrix_indicator{pmi_typeI_single_panel{
+              csi_report_data{.ri                    = 4,
+                              .pmi                   = precoding_matrix_indicator{pmi_typeI_single_panel{
                                   pmi_codebook_single_panel_config::two_one, 0, std::nullopt, std::nullopt, 0}},
-                              15,
-                              std::nullopt,
-                              true};
+                              .first_tb_wideband_cqi = 15,
+                              .valid                 = true};
           ind.ucis.push_back(pdu);
         }
       }

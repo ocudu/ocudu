@@ -37,4 +37,28 @@ bool validate_pucch_csi_payload(const csi_report_packed& packed, const csi_repor
 /// \return The CSI report data.
 csi_report_data csi_report_unpack_pucch(const csi_report_packed& packed, const csi_report_configuration& config);
 
+/// \brief Unpacks CSI Part 2 wideband information multiplexed in PUCCH.
+///
+/// The unpacking is defined in TS38.212 Table 6.3.1.1.2-10.
+///
+/// \param[in,out] data CSI report data containing the decoded Part 2 fields.
+/// \param[in] packed Packed CSI Part 2 report.
+/// \param[in] config CSI report configuration.
+/// \return A slice of the remaining data.
+csi_report_packed csi_report_unpack_pucch_part2_wideband(csi_report_data&                data,
+                                                         const csi_report_packed&        packed,
+                                                         const csi_report_configuration& config);
+
+/// \brief Unpacks CSI Part 2 subband CQI information multiplexed in PUCCH.
+///
+/// The unpacking is defined in TS38.212 Table 6.3.1.1.2-11. Subband PMI is not supported.
+///
+/// \param[in,out] data CSI report data containing the decoded Part 2 fields.
+/// \param[in] packed Packed CSI Part 2 report.
+/// \param[in] config CSI report configuration.
+/// \return A slice of the remaining data.
+csi_report_packed csi_report_unpack_pucch_part2_subband(csi_report_data&                data,
+                                                        const csi_report_packed&        packed,
+                                                        const csi_report_configuration& config);
+
 } // namespace ocudu

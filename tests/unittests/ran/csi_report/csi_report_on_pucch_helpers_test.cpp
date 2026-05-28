@@ -19,8 +19,15 @@ namespace ocudu {
 
 auto to_tuple(const csi_report_data& data)
 {
-  return std::tie(
-      data.cri, data.rsrp_dBm, data.ri, data.li, data.pmi, data.first_tb_wideband_cqi, data.second_tb_wideband_cqi);
+  return std::tie(data.cri,
+                  data.rsrp_dBm,
+                  data.ri,
+                  data.li,
+                  data.pmi,
+                  data.first_tb_wideband_cqi,
+                  data.second_tb_wideband_cqi,
+                  data.first_tb_subband_diff_cqi,
+                  data.second_tb_subband_diff_cqi);
 }
 
 bool operator==(const precoding_matrix_indicator& left, const precoding_matrix_indicator& right)
@@ -68,6 +75,7 @@ class CsiReportPucchFixture : public ::testing::TestWithParam<CsiReportUnpacking
 protected:
   csi_report_data   expected_unpacked;
   csi_report_packed packed_pucch_data;
+  csi_report_packed packed_part2_data;
 
   void SetUp() override
   {
@@ -89,6 +97,44 @@ protected:
         (configuration.quantities == csi_report_quantities::cri_ri_cqi) ||
         (configuration.quantities == csi_report_quantities::cri_ri_li_pmi_cqi)) {
       fill_ri(packed_pucch_data, expected_unpacked, configuration);
+    }
+
+    // If subband reports are enabled, apply TS38.212 Tables 6.3.1.1.2-9 and 6.3.1.1.2-10 for wideband
+    // and subband. Otherwise, keep going with the fields in Table 6.3.1.1.2-7.
+    if (configuration.subband.has_value()) {
+      // Pack wideband CQI in Part 1.
+      fill_wideband_cqi(packed_pucch_data, expected_unpacked, configuration);
+
+      // Pack subband differential CQI in Part 1 if enabled.
+      if (configuration.subband->cqi) {
+        fill_subband_diff_cqi_first_tb(packed_pucch_data, expected_unpacked, configuration);
+      }
+
+      // Pack wideband CQI for the second TB in Part 2 (wideband).
+      fill_wideband_cqi_second_tb(packed_part2_data, expected_unpacked, configuration);
+
+      // Pack LI in Part 2 (wideband) if enabled.
+      if (configuration.quantities == csi_report_quantities::cri_ri_li_pmi_cqi) {
+        fill_li(packed_part2_data, expected_unpacked, configuration);
+      }
+
+      // Pack PMI in Part 2 (wideband) if enabled.
+      if ((configuration.quantities == csi_report_quantities::cri_ri_pmi_cqi) ||
+          (configuration.quantities == csi_report_quantities::cri_ri_li_pmi_cqi)) {
+        fill_pmi(packed_part2_data, expected_unpacked, configuration);
+      }
+
+      // Pack CQI differential for even subbands in Part 2 (subband) if enabled.
+      if (configuration.subband->cqi) {
+        fill_even_subband_diff_cqi_second_tb(packed_part2_data, expected_unpacked, configuration);
+      }
+
+      // Pack CQI differential for odd subbands in Part 2 (subband) if enabled.
+      if (configuration.subband->cqi) {
+        fill_odd_subband_diff_cqi_second_tb(packed_part2_data, expected_unpacked, configuration);
+      }
+
+      return;
     }
 
     // Pack LI if enabled.
@@ -334,9 +380,75 @@ private:
     unpacked.first_tb_wideband_cqi.emplace(wideband_cqi1);
     packed.push_back(wideband_cqi1, 4);
 
-    if (ri > 4) {
+    if (!config.subband.has_value() && (ri > 4)) {
       unpacked.second_tb_wideband_cqi.emplace(wideband_cqi2);
       packed.push_back(wideband_cqi2, 4);
+    }
+  }
+
+  static void fill_wideband_cqi_second_tb(csi_report_packed&              packed,
+                                          csi_report_data&                unpacked,
+                                          const csi_report_configuration& config)
+  {
+    unsigned ri = unpacked.ri.value().value();
+    if (ri <= 4) {
+      return;
+    }
+
+    unsigned wideband_cqi2 = rgen() & mask_lsb_ones<unsigned>(4);
+    unpacked.second_tb_wideband_cqi.emplace(wideband_cqi2);
+    packed.push_back(wideband_cqi2, 4);
+  }
+
+  static void fill_subband_diff_cqi_first_tb(csi_report_packed&              packed,
+                                             csi_report_data&                unpacked,
+                                             const csi_report_configuration& config)
+  {
+    csi_report_data::subband_diff_cqi_list diff_cqi;
+    for (unsigned i_subband = 0, nof_subbands = config.subband->nof_subbands.value(); i_subband != nof_subbands;
+         ++i_subband) {
+      unsigned value = rgen() & mask_lsb_ones<unsigned>(2);
+      diff_cqi.emplace_back(value);
+      packed.push_back(value, 2);
+    }
+    unpacked.first_tb_subband_diff_cqi.emplace(diff_cqi);
+  }
+
+  static void fill_even_subband_diff_cqi_second_tb(csi_report_packed&              packed,
+                                                   csi_report_data&                unpacked,
+                                                   const csi_report_configuration& config)
+  {
+    unsigned ri = unpacked.ri.value().value();
+    if (ri <= 4) {
+      return;
+    }
+
+    unsigned                               nof_subbands = config.subband->nof_subbands.value();
+    csi_report_data::subband_diff_cqi_list diff_cqi;
+    for (unsigned i_subband = 0; i_subband != nof_subbands; ++i_subband) {
+      diff_cqi.emplace_back((rgen() + i_subband) & mask_lsb_ones<unsigned>(2));
+    }
+
+    for (unsigned i_subband = 0; i_subband < nof_subbands; i_subband += 2) {
+      packed.push_back(diff_cqi[i_subband].value(), 2);
+    }
+    unpacked.second_tb_subband_diff_cqi.emplace(diff_cqi);
+  }
+
+  static void fill_odd_subband_diff_cqi_second_tb(csi_report_packed&              packed,
+                                                  csi_report_data&                unpacked,
+                                                  const csi_report_configuration& config)
+  {
+    unsigned ri = unpacked.ri.value().value();
+    if (ri <= 4) {
+      return;
+    }
+
+    const unsigned nof_subbands = config.subband->nof_subbands.value();
+    const auto&    diff_cqi     = unpacked.second_tb_subband_diff_cqi.value();
+
+    for (unsigned i_subband = 1; i_subband < nof_subbands; i_subband += 2) {
+      packed.push_back(diff_cqi[i_subband].value(), 2);
     }
   }
 
@@ -360,6 +472,12 @@ TEST_P(CsiReportPucchFixture, CsiReportPucchUnpacking)
   // Unpack.
   ASSERT_TRUE(validate_pucch_csi_payload(packed_pucch_data, configuration));
   csi_report_data unpacked = csi_report_unpack_pucch(packed_pucch_data, configuration);
+  if (configuration.subband.has_value()) {
+    csi_report_packed remaining_part2 =
+        csi_report_unpack_pucch_part2_wideband(unpacked, packed_part2_data, configuration);
+    remaining_part2 = csi_report_unpack_pucch_part2_subband(unpacked, remaining_part2, configuration);
+    ASSERT_TRUE(remaining_part2.empty());
+  }
 
   // Assert CRI.
   ASSERT_EQ(expected_unpacked, unpacked);
@@ -371,6 +489,14 @@ static std::vector<csi_report_configuration> generate_test_cases()
   std::vector<csi_report_configuration>  test_cases;
   std::uniform_int_distribution<uint8_t> nof_csi_rs_resources_dist(1, 16);
   std::uniform_int_distribution<uint8_t> nof_reported_rs_dist(1, 4);
+  std::uniform_int_distribution<uint8_t> nof_subbands_dist(5, csi_max_nof_subbands);
+  const auto                             pmi_codebooks = to_array<pmi_codebook_config>(
+      {pmi_codebook_one_port{},
+                                   pmi_codebook_two_port{},
+                                   pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::two_one, pmi_codebook_typeI_mode::one},
+                                   pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::four_one, pmi_codebook_typeI_mode::one},
+                                   pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::two_two, pmi_codebook_typeI_mode::one}});
+
   for (unsigned i = 0; i != 10; ++i) {
     for (const auto& quantities : {csi_report_quantities::cri_ri_pmi_cqi,
                                    csi_report_quantities::cri_ri_cqi,
@@ -390,31 +516,42 @@ static std::vector<csi_report_configuration> generate_test_cases()
         continue;
       }
 
-      for (const pmi_codebook_config pmi_codebook :
-           to_array<pmi_codebook_config>({pmi_codebook_one_port{},
-                                          pmi_codebook_two_port{},
-                                          pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::two_one,
-                                                                          pmi_codebook_typeI_mode::one},
-                                          pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::four_one,
-                                                                          pmi_codebook_typeI_mode::one},
-                                          pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::two_two,
-                                                                          pmi_codebook_typeI_mode::one}})) {
-        csi_report_configuration config;
-        config.nof_csi_rs_resources = nof_csi_rs_resources_dist(rgen);
-        config.nof_reported_rs      = 1;
-        config.pmi_codebook         = pmi_codebook;
-        config.ri_restriction       = ~ri_restriction_type(get_precoding_codebook_antenna_ports(pmi_codebook));
-        config.quantities           = quantities;
+      for (bool subband : {false, true}) {
+        for (const pmi_codebook_config pmi_codebook : pmi_codebooks) {
+          csi_report_configuration config;
+          config.nof_csi_rs_resources = nof_csi_rs_resources_dist(rgen);
+          config.nof_reported_rs      = 1;
+          config.pmi_codebook         = pmi_codebook;
+          config.ri_restriction       = ~ri_restriction_type(get_precoding_codebook_antenna_ports(pmi_codebook));
+          config.quantities           = quantities;
 
-        // Set a random RI restrictiion bit to false.
-        if (config.ri_restriction.size() > 1) {
-          config.ri_restriction.set(rgen() % config.ri_restriction.size(), false);
+          // Set a random RI restriction bit to false.
+          if (config.ri_restriction.size() > 1) {
+            config.ri_restriction.set(rgen() % config.ri_restriction.size(), false);
+          }
+
+          if (subband) {
+            config.subband.emplace(
+                csi_report_subband_configuration{.cqi = true, .pmi = false, .nof_subbands = nof_subbands_dist(rgen)});
+          }
+
+          test_cases.push_back(config);
         }
-
-        test_cases.push_back(config);
       }
     }
   }
+
+  // Test case for the largest CSI report size on PUCCH. The current supported maximum report size is for a
+  // single-panel codebook for eight ports (4x1) and the maximum number of wideband CQI subbands.
+  test_cases.emplace_back(csi_report_configuration{
+      .nof_csi_rs_resources = 64,
+      .nof_reported_rs      = 1,
+      .pmi_codebook =
+          pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::four_one, pmi_codebook_typeI_mode::one},
+      .ri_restriction = ~ri_restriction_type(8),
+      .quantities     = csi_report_quantities::cri_ri_cqi,
+      .subband = csi_report_subband_configuration{.cqi = true, .pmi = false, .nof_subbands = csi_max_nof_subbands},
+  });
 
   return test_cases;
 }

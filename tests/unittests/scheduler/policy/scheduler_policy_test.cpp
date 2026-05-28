@@ -226,8 +226,7 @@ TEST_P(scheduler_policy_css_test, when_coreset0_used_then_dl_grant_is_within_bou
   ue& u                                                                     = add_ue(ue_req);
 
   // Note: set CQI=15 to use low aggregation level.
-  u.get_pcell().handle_csi_report(
-      csi_report_data{{}, {}, std::nullopt, std::nullopt, std::nullopt, cqi_value{15U}, true});
+  u.get_pcell().handle_csi_report(csi_report_data{.first_tb_wideband_cqi = cqi_value{15U}, .valid = true});
   push_dl_bs(u.ue_index, uint_to_lcid(4), 100000000);
 
   run_slot();
@@ -531,13 +530,10 @@ TEST_F(scheduler_pf_test, pf_ensures_fairness_in_dl_when_ues_have_different_chan
   for (unsigned i = 0; i != 100; ++i) {
     // Report different CQIs for different UEs.
     // Best channel condition.
-    u1.get_pcell().handle_csi_report(
-        csi_report_data{{}, {}, std::nullopt, std::nullopt, std::nullopt, cqi_value{15U}, true});
+    u1.get_pcell().handle_csi_report(csi_report_data{.first_tb_wideband_cqi = cqi_value{15U}, .valid = true});
     // Worst channel condition.
-    u2.get_pcell().handle_csi_report(
-        csi_report_data{{}, {}, std::nullopt, std::nullopt, std::nullopt, cqi_value{10U}, true});
-    u3.get_pcell().handle_csi_report(
-        csi_report_data{{}, {}, std::nullopt, std::nullopt, std::nullopt, cqi_value{12U}, true});
+    u2.get_pcell().handle_csi_report(csi_report_data{.first_tb_wideband_cqi = cqi_value{10U}, .valid = true});
+    u3.get_pcell().handle_csi_report(csi_report_data{.first_tb_wideband_cqi = cqi_value{12U}, .valid = true});
 
     run_slot();
     const slot_point current_slot = next_slot - 1;
@@ -675,10 +671,8 @@ TEST_P(scheduler_pf_qos_test, pf_upholds_qos_in_dl_gbr_flows)
   push_dl_bs(ue_with_no_gbr.ue_index, non_gbr_bearer_lcid, 1000000);
 
   // Report best channel condition for different UEs.
-  ue_with_gbr.get_pcell().handle_csi_report(
-      csi_report_data{{}, {}, std::nullopt, std::nullopt, std::nullopt, cqi_value{15U}, true});
-  ue_with_no_gbr.get_pcell().handle_csi_report(
-      csi_report_data{{}, {}, std::nullopt, std::nullopt, std::nullopt, cqi_value{15U}, true});
+  ue_with_gbr.get_pcell().handle_csi_report(csi_report_data{.first_tb_wideband_cqi = cqi_value{15U}, .valid = true});
+  ue_with_no_gbr.get_pcell().handle_csi_report(csi_report_data{.first_tb_wideband_cqi = cqi_value{15U}, .valid = true});
 
   unsigned              scheduled_bytes_for_gbr_bearer = 0;
   static const unsigned max_nof_slots                  = 50;

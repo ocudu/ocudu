@@ -27,6 +27,10 @@ struct csi_report_data {
   using li_type = bounded_integer<uint8_t, 0, 7>;
   /// Wideband Channel Quality Indicator (CQI) data type.
   using wideband_cqi_type = bounded_integer<uint8_t, 0, 15>;
+  /// Subband differential Channel Quality Indicator (CQI) data type.
+  using subband_diff_cqi_type = bounded_integer<uint8_t, 0, 3>;
+  /// Subband differential CQI collection data type.
+  using subband_diff_cqi_list = static_vector<subband_diff_cqi_type, csi_max_nof_subbands>;
 
   /// CSI-RS Resource Indicator (CRI) for each reported CSI-RS resource if reported.
   static_vector<uint8_t, csi_max_nof_reported_rs> cri;
@@ -43,6 +47,10 @@ struct csi_report_data {
   std::optional<wideband_cqi_type> first_tb_wideband_cqi;
   /// Wideband CQI for the second TB.
   std::optional<wideband_cqi_type> second_tb_wideband_cqi;
+  /// Subband differential CQI for the first TB.
+  std::optional<subband_diff_cqi_list> first_tb_subband_diff_cqi;
+  /// Subband differential CQI for the second TB.
+  std::optional<subband_diff_cqi_list> second_tb_subband_diff_cqi;
   /// Flag indicating if the CSI was detected correctly.
   bool valid;
 };

@@ -14,6 +14,9 @@ namespace ocudu {
 /// parameter \e nrofReportedRS in IE \e CSI-ReportConfig.
 static constexpr unsigned csi_max_nof_reported_rs = 4;
 
+/// Maximum number of CSI reporting subbands. The range is deduced from TS38.214 Table 5.2.1.4-2.
+static constexpr unsigned csi_max_nof_subbands = 18;
+
 /// CSI reporting configuration type.
 enum class csi_report_type { periodic, aperiodic };
 
@@ -50,7 +53,7 @@ struct csi_report_subband_configuration {
   /// \brief Number of subbands in {5..18}.
   ///
   /// Range deduced from TS38.214 Table 5.2.1.4-2. The minimum number of subbands is 5 and the maximum 18.
-  bounded_integer<uint8_t, 5, 18> nof_subbands;
+  bounded_integer<uint8_t, 5, csi_max_nof_subbands> nof_subbands;
 };
 
 /// Collects Channel State Information (CSI) report configuration parameters.
