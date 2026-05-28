@@ -190,30 +190,6 @@ ue_cell_grid_allocator::setup_dl_grant_builder(const slice_ue&                  
   cell_slot_resource_allocator& pdcch_alloc = cell_alloc[0];
   cell_slot_resource_allocator& pdsch_alloc = cell_alloc[pdsch_td_cfg.k0];
 
-  // Check if the DMRS symbols for the to-be-allocated PDSCH would collide with any CSI-RS symbol already scheduled in
-  // the PDSCH slot (e.g., retx of a short PDSCH in a slot with CSI-RS at a position that conflicts with the shorter
-  // DMRS pattern).
-  // NOTE: CSI-RS are configured to avoid collisions with PDSCH DM-RS, when PDSCH uses all slot's symbols. However, for
-  // retransmission, it is possible that PDSCHs use fewer symbols than those available for PDSCH; because of this,
-  // PDSCH DM-RS/CSI-RS collisions may occur during retransmissions.
-  if (is_retx and not pdsch_alloc.result.dl.csi_rs.empty()) {
-    const auto& pdsch_cfg  = ss_info.get_pdsch_config(pdsch_td_res_index, params.recommended_ri);
-    const auto& dmrs_symbs = pdsch_cfg.dmrs.dmrs_symb_pos;
-    for (const auto& csi : pdsch_alloc.result.dl.csi_rs) {
-      // NOTE: check only collisions with csi.symbol0, as csi.symbol1 is not used with cdm-Type \c no-CDM and \c fd-CDM2
-      // supported by the GNB.
-      // TODO: extend check to csi.symbol1 when other cdm-Type are supported for CSI-RS.
-      if (dmrs_symbs.test(csi.symbol0)) {
-        logger.debug("ue={} rnti={}: Skipping PDSCH allocation in slot {} due to DMRS/CSI-RS collision at symbol {}.",
-                     fmt::underlying(u.ue_index),
-                     u.crnti,
-                     pdsch_alloc.slot,
-                     csi.symbol0);
-        return make_unexpected(dl_alloc_failure_cause::other);
-      }
-    }
-  }
-
   ocudu_sanity_check(not pdcch_alloc.result.dl.dl_pdcchs.full(), "No space available for PDCCH");
   ocudu_sanity_check(pdsch_alloc.result.dl.bc.sibs.size() + pdsch_alloc.result.dl.paging_grants.size() +
                              pdsch_alloc.result.dl.rar_grants.size() + pdsch_alloc.result.dl.ue_grants.size() <

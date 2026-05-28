@@ -181,19 +181,19 @@ static std::optional<mcs_prbs_selection> compute_newtx_required_mcs_and_prbs(con
   return mcs_prbs_selection{mcs, nof_prbs};
 }
 
-static std::optional<std::pair<unsigned, sch_mcs_index>>
+static std::optional<mcs_prbs_selection>
 compute_retx_nof_rbs_mcs(const pdsch_config_params&                  pdsch_cfg,
                          const dl_harq_process_handle::grant_params& prev_h_params,
-                         const ue_link_adaptation_controller&        la,
                          const interval<unsigned>&                   rb_lims)
 {
   if (pdsch_cfg.symbols.length() == prev_h_params.nof_symbols) {
     // Number of symbols did not change. Reuse the same MCS and TBS of previous HARQ transmission.
     const unsigned nof_rbs = prev_h_params.rbs.type1().length();
     if (nof_rbs > rb_lims.stop()) {
+      // If we are exceeding imposed RB limits, postpone reTx.
       return std::nullopt;
     }
-    return std::make_pair(nof_rbs, prev_h_params.mcs);
+    return mcs_prbs_selection{prev_h_params.mcs, nof_rbs};
   }
   return std::nullopt;
 }
@@ -267,39 +267,30 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
   }
 
   // Compute recommended number of layers, MCS and PRBs.
-  unsigned      nof_layers;
-  unsigned      nof_rbs;
-  sch_mcs_index mcs;
+  unsigned                          nof_layers;
+  std::optional<mcs_prbs_selection> mcs_prbs_sel;
   if (h_dl == nullptr) {
     // NewTx Case.
     nof_layers                           = ue_cc.channel_state_manager().get_nof_dl_layers();
     const pdsch_config_params& pdsch_cfg = ss.get_pdsch_config(*selected_pdsch_td_index, nof_layers);
-    auto mcs_prbs_sel = compute_newtx_required_mcs_and_prbs(pdsch_cfg, ue_cc, pending_bytes, nof_rb_lims);
-    if (not mcs_prbs_sel.has_value()) {
-      // Note: No point in carrying on.
-      return std::nullopt;
-    }
-    mcs     = mcs_prbs_sel.value().mcs;
-    nof_rbs = mcs_prbs_sel.value().nof_prbs;
+    mcs_prbs_sel = compute_newtx_required_mcs_and_prbs(pdsch_cfg, ue_cc, pending_bytes, nof_rb_lims);
   } else {
     // ReTx Case.
-    const auto&                prev_params = h_dl->get_grant_params();
-    const pdsch_config_params& pdsch_cfg   = ss.get_pdsch_config(*selected_pdsch_td_index, prev_params.nof_layers);
-    auto result = compute_retx_nof_rbs_mcs(pdsch_cfg, prev_params, ue_cc.link_adaptation_controller(), nof_rb_lims);
-    if (not result.has_value()) {
-      return std::nullopt;
-    }
-    nof_layers = prev_params.nof_layers;
-    nof_rbs    = result.value().first;
-    mcs        = result.value().second;
+    const auto& prev_params              = h_dl->get_grant_params();
+    nof_layers                           = prev_params.nof_layers;
+    const pdsch_config_params& pdsch_cfg = ss.get_pdsch_config(*selected_pdsch_td_index, nof_layers);
+    mcs_prbs_sel                         = compute_retx_nof_rbs_mcs(pdsch_cfg, prev_params, nof_rb_lims);
+  }
+  if (not mcs_prbs_sel.has_value()) {
+    return std::nullopt;
   }
 
   dl_sched_context ctxt;
   ctxt.ss_id              = ss.cfg->get_id();
   ctxt.pdsch_td_res_index = *selected_pdsch_td_index;
-  ctxt.recommended_mcs    = mcs;
+  ctxt.recommended_mcs    = mcs_prbs_sel->mcs;
   ctxt.recommended_ri     = nof_layers;
-  ctxt.expected_nof_rbs   = nof_rbs;
+  ctxt.expected_nof_rbs   = mcs_prbs_sel->nof_prbs;
   ctxt.pending_bytes      = units::bytes{pending_bytes};
   return ctxt;
 
@@ -352,7 +343,7 @@ vrb_interval sched_helper::compute_retx_dl_vrbs(const dl_sched_context& decision
   return vrbs;
 }
 
-static std::optional<std::pair<unsigned, sch_mcs_index>>
+static std::optional<mcs_prbs_selection>
 compute_retx_nof_rbs_mcs(const pusch_config_params&                  pusch_cfg,
                          const ul_harq_process_handle::grant_params& prev_h_params,
                          const ue_cell&                              ue_cc,
@@ -362,15 +353,18 @@ compute_retx_nof_rbs_mcs(const pusch_config_params&                  pusch_cfg,
     // Number of symbols did not change. Reuse the same MCS and TBS of previous HARQ transmission.
     const unsigned nof_rbs = prev_h_params.rbs.type1().length();
     if (nof_rbs > rb_lims.stop()) {
+      // ReTx would exceed the assigned RB limits. Postpone it.
       return std::nullopt;
     }
     // Re-validate TBS: UCI overhead can change across retransmissions.
+    // Note: Assume worst-case that the grant would collide with DC.
     static constexpr bool contains_dc = true;
     const auto            tbs = compute_ul_tbs(pusch_cfg, ue_cc.active_bwp(), prev_h_params.mcs, nof_rbs, contains_dc);
     if (not tbs.has_value() or tbs.value() != prev_h_params.tbs) {
+      // UCI would lead to an invalid code rate.
       return std::nullopt;
     }
-    return std::make_pair(nof_rbs, prev_h_params.mcs);
+    return mcs_prbs_selection{prev_h_params.mcs, nof_rbs};
   }
   return std::nullopt;
 }
@@ -442,9 +436,6 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
     }
 
     // Compute recommended number of layers, MCS and PRBs.
-    sch_mcs_index       mcs;
-    pusch_config_params pusch_cfg;
-    unsigned            nof_rbs;
 
     bool include_csi = false;
     if (ue_cell_cfg.csi_meas_cfg() != nullptr) {
@@ -463,29 +454,25 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
         include_csi = true;
       }
     }
+
+    pusch_config_params               pusch_cfg;
+    std::optional<mcs_prbs_selection> mcs_prbs_sel;
     if (h_ul == nullptr) {
       // NewTx Case.
       dci_ul_rnti_config_type dci_type = ss.get_ul_dci_format() == dci_ul_format::f0_0
                                              ? dci_ul_rnti_config_type::c_rnti_f0_0
                                              : dci_ul_rnti_config_type::c_rnti_f0_1;
       // Note: We assume k2 <= k1, which means that all the HARQ bits are set at this point for this UL slot and UE.
-      pusch_cfg = compute_newtx_pusch_config_params(ue_cc, dci_type, pusch_td_res, uci_nof_harq_bits, include_csi);
-      auto mcs_prbs_sel = compute_newtx_required_mcs_and_prbs(pusch_cfg, ue_cc, pending_bytes, nof_rb_lims);
-      if (not mcs_prbs_sel.has_value()) {
-        return std::nullopt;
-      }
-      mcs     = mcs_prbs_sel->mcs;
-      nof_rbs = mcs_prbs_sel->nof_prbs;
+      pusch_cfg    = compute_newtx_pusch_config_params(ue_cc, dci_type, pusch_td_res, uci_nof_harq_bits, include_csi);
+      mcs_prbs_sel = compute_newtx_required_mcs_and_prbs(pusch_cfg, ue_cc, pending_bytes, nof_rb_lims);
     } else {
       // ReTx Case.
       // Compute if effective code rate does not go over the limit for this reTx, for instance, due to presence of UCI.
-      pusch_cfg         = compute_retx_pusch_config_params(ue_cc, *h_ul, pusch_td_res, uci_nof_harq_bits, include_csi);
-      const auto result = compute_retx_nof_rbs_mcs(pusch_cfg, h_ul->get_grant_params(), ue_cc, nof_rb_lims);
-      if (not result.has_value()) {
-        continue;
-      }
-      nof_rbs = result.value().first;
-      mcs     = result.value().second;
+      pusch_cfg    = compute_retx_pusch_config_params(ue_cc, *h_ul, pusch_td_res, uci_nof_harq_bits, include_csi);
+      mcs_prbs_sel = compute_retx_nof_rbs_mcs(pusch_cfg, h_ul->get_grant_params(), ue_cc, nof_rb_lims);
+    }
+    if (not mcs_prbs_sel.has_value()) {
+      continue;
     }
 
     // Successful selection of grant parameters.
@@ -494,8 +481,8 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
     ctxt.pusch_td_res_index = pusch_td_index;
     ctxt.vrb_lims           = vrb_lims;
     ctxt.nof_rb_lims        = nof_rb_lims;
-    ctxt.recommended_mcs    = mcs;
-    ctxt.expected_nof_rbs   = nof_rbs;
+    ctxt.recommended_mcs    = mcs_prbs_sel->mcs;
+    ctxt.expected_nof_rbs   = mcs_prbs_sel->nof_prbs;
     ctxt.pending_bytes      = units::bytes{pending_bytes};
     ctxt.pusch_cfg          = pusch_cfg;
     return ctxt;
