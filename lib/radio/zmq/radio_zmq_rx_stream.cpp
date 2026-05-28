@@ -4,6 +4,7 @@
 #include "radio_zmq_rx_stream.h"
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_writer.h"
 #include "ocudu/ocuduvec/conversion.h"
+#include "ocudu/ocuduvec/sc_prod.h"
 
 using namespace ocudu;
 
@@ -83,6 +84,10 @@ baseband_gateway_receiver::metadata radio_zmq_rx_stream::receive(baseband_gatewa
   for (unsigned channel_id = 0, channel_id_end = channels.size(); channel_id != channel_id_end; ++channel_id) {
     span<cf_t> view = span<cf_t>(cf_buffer).first(data.get_channel_buffer(channel_id).size());
     channels[channel_id]->receive(view);
+    float gain = channel_gains[channel_id].load(std::memory_order_relaxed);
+    if (gain != 1.0f) {
+      ocuduvec::sc_prod(view, view, gain);
+    }
     ocuduvec::convert(data.get_channel_buffer(channel_id), view, scaling_factor_cf_to_ci16);
   }
 
@@ -90,4 +95,13 @@ baseband_gateway_receiver::metadata radio_zmq_rx_stream::receive(baseband_gatewa
   sample_count += data.get_nof_samples();
 
   return ret;
+}
+
+void radio_zmq_rx_stream::set_channel_gain(unsigned channel_id, float gain_linear)
+{
+  ocudu_assert(channel_id < channels.size(),
+               "Channel identifier (i.e., {}) exceeds the number of channels (i.e., {}).",
+               channel_id,
+               channels.size());
+  channel_gains[channel_id].store(gain_linear, std::memory_order_relaxed);
 }

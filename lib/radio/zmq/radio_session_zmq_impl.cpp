@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "radio_session_zmq_impl.h"
+#include "ocudu/support/math/math_utils.h"
 
 using namespace ocudu;
 
@@ -94,6 +95,18 @@ radio_session_zmq_impl::radio_session_zmq_impl(const radio_configuration::radio&
     if (!gateway->get_tx_stream().is_successful() || !gateway->get_rx_stream().is_successful()) {
       return;
     }
+
+    // Build port maps and apply initial gains from configuration.
+    for (unsigned ch_id = 0, nof_ch = tx_radio_stream_config.channels.size(); ch_id != nof_ch; ++ch_id) {
+      tx_port_map.emplace_back(port_to_stream_channel(stream_id, ch_id));
+      gateway->get_tx_stream().set_channel_gain(
+          ch_id, convert_dB_to_amplitude(static_cast<float>(tx_radio_stream_config.channels[ch_id].gain_dB)));
+    }
+    for (unsigned ch_id = 0, nof_ch = rx_radio_stream_config.channels.size(); ch_id != nof_ch; ++ch_id) {
+      rx_port_map.emplace_back(port_to_stream_channel(stream_id, ch_id));
+      gateway->get_rx_stream().set_channel_gain(
+          ch_id, convert_dB_to_amplitude(static_cast<float>(rx_radio_stream_config.channels[ch_id].gain_dB)));
+    }
   }
 
   successful = true;
@@ -127,12 +140,26 @@ void radio_session_zmq_impl::stop()
 
 bool radio_session_zmq_impl::set_tx_gain(unsigned port_id, double gain_dB)
 {
-  return false;
+  if (port_id >= tx_port_map.size()) {
+    logger.error("Invalid TX port index ({}).", port_id);
+    return false;
+  }
+  auto [stream_id, channel_id] = tx_port_map[port_id];
+  bb_gateways[stream_id]->get_tx_stream().set_channel_gain(channel_id,
+                                                           convert_dB_to_amplitude(static_cast<float>(gain_dB)));
+  return true;
 }
 
 bool radio_session_zmq_impl::set_rx_gain(unsigned port_id, double gain_dB)
 {
-  return false;
+  if (port_id >= rx_port_map.size()) {
+    logger.error("Invalid RX port index ({}).", port_id);
+    return false;
+  }
+  auto [stream_id, channel_id] = rx_port_map[port_id];
+  bb_gateways[stream_id]->get_rx_stream().set_channel_gain(channel_id,
+                                                           convert_dB_to_amplitude(static_cast<float>(gain_dB)));
+  return true;
 }
 
 void radio_session_zmq_impl::start(baseband_gateway_timestamp start_time)

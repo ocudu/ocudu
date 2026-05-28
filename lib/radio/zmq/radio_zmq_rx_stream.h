@@ -6,6 +6,9 @@
 #include "radio_zmq_rx_channel.h"
 #include "radio_zmq_tx_align_interface.h"
 #include "ocudu/gateways/baseband/baseband_gateway_receiver.h"
+#include "ocudu/radio/radio_constants.h"
+#include <array>
+#include <atomic>
 #include <memory>
 
 namespace ocudu {
@@ -23,6 +26,8 @@ class radio_zmq_rx_stream : public baseband_gateway_receiver
   uint64_t sample_count = 0;
   /// Buffer to hold complex floating-point based samples.
   std::vector<cf_t> cf_buffer;
+  /// Per-channel linear amplitude gains. Atomic for lock-free concurrent set/read.
+  std::array<std::atomic<float>, RADIO_MAX_NOF_CHANNELS> channel_gains;
 
 public:
   /// Describes the necessary parameters to create a ZMQ Tx stream.
@@ -61,6 +66,9 @@ public:
   void start(baseband_gateway_timestamp init_time);
 
   void stop();
+
+  /// Sets the linear amplitude gain for a specific channel.
+  void set_channel_gain(unsigned channel_id, float gain_linear);
 };
 
 } // namespace ocudu

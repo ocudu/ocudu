@@ -127,9 +127,9 @@ protected:
     // Fix parameters.
     sampling_rate_Hz = 3.84e6;
     tx_freq_Hz       = 3.5e9;
-    tx_gain_db       = 60.0;
+    tx_gain_db       = 0.0;
     rx_freq_Hz       = 3.5e9;
-    rx_gain_db       = 60.0;
+    rx_gain_db       = 0.0;
 
     // Setup random generators.
     for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
@@ -295,3 +295,46 @@ INSTANTIATE_TEST_SUITE_P(RadioZmqE2ETest,
                                             ::testing::Values(39, 123),
                                             ::testing::Values(61440),
                                             ::testing::Values(false, true)));
+
+TEST(RadioZmqGainTest, SetGainReturnsTrueForValidPort)
+{
+  task_worker                    async_worker("gain_test_thread", 2 * RADIO_MAX_NOF_PORTS);
+  std::unique_ptr<task_executor> async_task_executor = make_task_executor_ptr(async_worker);
+
+  std::unique_ptr<radio_factory> zmq_factory = create_radio_factory("zmq");
+  ASSERT_NE(zmq_factory, nullptr);
+
+  fmt::memory_buffer addr_buf;
+  fmt::format_to(std::back_inserter(addr_buf), "inproc://{}#gain", getpid());
+  std::string address = to_string(addr_buf);
+
+  radio_configuration::radio   radio_config;
+  radio_configuration::stream  stream_config;
+  radio_configuration::channel ch_config;
+  ch_config.freq.center_frequency_Hz = 3.5e9;
+  ch_config.gain_dB                  = 0.0;
+  ch_config.args                     = address;
+  stream_config.channels.push_back(ch_config);
+  radio_config.tx_streams.push_back(stream_config);
+  radio_config.rx_streams.push_back(stream_config);
+  radio_config.log_level        = log_level;
+  radio_config.sampling_rate_Hz = 3.84e6;
+  radio_config.tx_mode          = radio_configuration::transmission_mode::continuous;
+
+  radio_notifier_spy             notifier;
+  std::unique_ptr<radio_session> session = zmq_factory->create(radio_config, *async_task_executor, notifier);
+  ASSERT_NE(session, nullptr);
+
+  radio_management_plane& mgmt = session->get_management_plane();
+
+  // Valid port - must succeed.
+  EXPECT_TRUE(mgmt.set_tx_gain(0, 10.0));
+  EXPECT_TRUE(mgmt.set_rx_gain(0, -3.0));
+
+  // Out-of-range port - must fail.
+  EXPECT_FALSE(mgmt.set_tx_gain(1, 0.0));
+  EXPECT_FALSE(mgmt.set_rx_gain(1, 0.0));
+
+  session->stop();
+  async_worker.stop();
+}

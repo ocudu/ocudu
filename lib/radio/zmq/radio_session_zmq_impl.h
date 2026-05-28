@@ -20,7 +20,10 @@ class radio_session_zmq_impl : public radio_session, public radio_management_pla
   /// Stores transmit streams.
   std::vector<std::unique_ptr<radio_zmq_baseband_gateway>> bb_gateways;
   /// Indicates the session has been created successfully.
-  bool successful = false;
+  bool successful              = false;
+  using port_to_stream_channel = std::pair<unsigned, unsigned>;
+  static_vector<port_to_stream_channel, RADIO_MAX_NOF_PORTS> tx_port_map;
+  static_vector<port_to_stream_channel, RADIO_MAX_NOF_PORTS> rx_port_map;
 
 public:
   /// \brief Default constructor.

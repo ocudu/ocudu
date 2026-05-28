@@ -297,5 +297,15 @@ void ocudu::autoderive_ru_sdr_parameters_after_parsing(CLI::App&           app,
   // Set the lower PHY to blocking for ZMQ.
   if (parsed_cfg.device_driver == "zmq") {
     parsed_cfg.expert_execution_cfg.threads.execution_profile = lower_phy_thread_profile::blocking;
+
+    // Default TX/RX gains to 0 dB for ZMQ if not explicitly configured. The non-zero defaults are tuned for USRP
+    // hardware and cause clipping with ZMQ.
+    CLI::App* ru_sdr_subcmd = app.get_subcommand("ru_sdr");
+    if (ru_sdr_subcmd->get_option("--tx_gain")->count() == 0) {
+      parsed_cfg.tx_gain_dB = 0.0;
+    }
+    if (ru_sdr_subcmd->get_option("--rx_gain")->count() == 0) {
+      parsed_cfg.rx_gain_dB = 0.0;
+    }
   }
 }

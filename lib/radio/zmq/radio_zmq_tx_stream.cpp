@@ -4,6 +4,7 @@
 #include "radio_zmq_tx_stream.h"
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_reader.h"
 #include "ocudu/ocuduvec/conversion.h"
+#include "ocudu/ocuduvec/sc_prod.h"
 
 using namespace ocudu;
 
@@ -95,6 +96,19 @@ void radio_zmq_tx_stream::transmit(const baseband_gateway_buffer_reader&        
   for (unsigned channel_id = 0, channel_id_end = channels.size(); channel_id != channel_id_end; ++channel_id) {
     span<cf_t> view = span<cf_t>(cf_buffer).first(data.get_channel_buffer(channel_id).size());
     ocuduvec::convert(view, data.get_channel_buffer(channel_id), scaling_factor_ci16_to_cf);
+    float gain = channel_gains[channel_id].load(std::memory_order_relaxed);
+    if (gain != 1.0f) {
+      ocuduvec::sc_prod(view, view, gain);
+    }
     channels[channel_id]->transmit(view);
   }
+}
+
+void radio_zmq_tx_stream::set_channel_gain(unsigned channel_id, float gain_linear)
+{
+  ocudu_assert(channel_id < channels.size(),
+               "Channel identifier (i.e., {}) exceeds the number of channels (i.e., {}).",
+               channel_id,
+               channels.size());
+  channel_gains[channel_id].store(gain_linear, std::memory_order_relaxed);
 }
