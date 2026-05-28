@@ -7,8 +7,8 @@
 
 namespace ocudu {
 
-/// Radio configuration validator for the dummy realtime radio.
-class radio_config_realtime_dummy_validator : public radio_configuration::validator
+/// Radio configuration validator for the loopback realtime radio.
+class radio_config_realtime_loopback_validator : public radio_configuration::validator
 {
 public:
   // See interface for documentation.

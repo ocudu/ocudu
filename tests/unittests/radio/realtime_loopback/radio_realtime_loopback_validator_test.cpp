@@ -87,7 +87,7 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
   return os;
 }
 
-const std::vector<test_case_t> realtime_dummy_radio_validator_test_data = {
+const std::vector<test_case_t> realtime_loopback_radio_validator_test_data = {
     {[] {
        radio_configuration::radio config = radio_base_config;
        return config;
@@ -220,16 +220,16 @@ const std::vector<test_case_t> realtime_dummy_radio_validator_test_data = {
        config.tx_mode                    = radio_configuration::transmission_mode::discontinuous;
        return config;
      },
-     "Discontinuous transmission modes are not supported by the realtime dummy radio.\n"},
+     "Discontinuous transmission modes are not supported by the realtime loopback radio.\n"},
     {[] {
        radio_configuration::radio config = radio_base_config;
        config.power_ramping_us           = 1.0F;
        return config;
      },
-     "Power ramping is not supported by the realtime dummy radio.\n"},
+     "Power ramping is not supported by the realtime loopback radio.\n"},
 };
 
-class RealtimeDummyRadioValidatorFixture : public ::testing::TestWithParam<test_case_t>
+class RealtimeLoopbackRadioValidatorFixture : public ::testing::TestWithParam<test_case_t>
 {
 protected:
   static std::unique_ptr<radio_factory> factory;
@@ -241,7 +241,7 @@ protected:
     }
 
     // Create pseudo-random sequence generator.
-    factory = create_radio_factory("realtime_dummy");
+    factory = create_radio_factory("realtime_loopback");
     ASSERT_NE(factory, nullptr);
   }
 };
@@ -252,9 +252,9 @@ public:
   void on_radio_rt_event(const event_description& description) override {}
 };
 
-std::unique_ptr<radio_factory> RealtimeDummyRadioValidatorFixture::factory = nullptr;
+std::unique_ptr<radio_factory> RealtimeLoopbackRadioValidatorFixture::factory = nullptr;
 
-TEST_P(RealtimeDummyRadioValidatorFixture, RealtimeDummyRadioValidatorTest)
+TEST_P(RealtimeLoopbackRadioValidatorFixture, RealtimeLoopbackRadioValidatorTest)
 {
   ASSERT_NE(factory, nullptr);
 
@@ -291,8 +291,8 @@ TEST_P(RealtimeDummyRadioValidatorFixture, RealtimeDummyRadioValidatorTest)
 }
 
 // Creates test suite that combines all possible parameters.
-INSTANTIATE_TEST_SUITE_P(RealtimeDummyRadioValidatorTest,
-                         RealtimeDummyRadioValidatorFixture,
-                         ::testing::ValuesIn(realtime_dummy_radio_validator_test_data));
+INSTANTIATE_TEST_SUITE_P(RealtimeLoopbackRadioValidatorTest,
+                         RealtimeLoopbackRadioValidatorFixture,
+                         ::testing::ValuesIn(realtime_loopback_radio_validator_test_data));
 
 } // namespace

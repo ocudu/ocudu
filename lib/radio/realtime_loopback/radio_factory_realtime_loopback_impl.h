@@ -3,13 +3,13 @@
 
 #pragma once
 
-#include "radio_config_realtime_dummy_validator.h"
+#include "radio_config_realtime_loopback_validator.h"
 #include "ocudu/radio/radio_factory.h"
 
 namespace ocudu {
 
-/// Implements a dummy realtime radio factory.
-class radio_factory_realtime_dummy_impl : public radio_factory
+/// Implements a loopback realtime radio factory.
+class radio_factory_realtime_loopback_impl : public radio_factory
 {
 public:
   // See interface for documentation.
@@ -20,7 +20,7 @@ public:
                                         task_executor&                    async_task_executor,
                                         radio_event_notifier&             notifier) override;
 
-  /// Creates a realtime dummy radio with a customizable function to obtain the current RF time.
+  /// Creates a realtime loopback radio with a customizable function to obtain the current RF time.
   std::unique_ptr<radio_session>
   create_with_custom_time(const radio_configuration::radio&                    config,
                           task_executor&                                       async_task_executor,

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
-#include "radio_config_realtime_dummy_validator.h"
+#include "radio_config_realtime_loopback_validator.h"
 #include "fmt/base.h"
 
 using namespace ocudu;
@@ -39,7 +39,7 @@ static bool validate_lo_freq(const radio_configuration::lo_frequency& lo_freq)
 static bool validate_channel_args(const std::string& channel_args)
 {
   if (!channel_args.empty()) {
-    fmt::print("Channel arguments are not supported by the dummy realtime radio.\n");
+    fmt::print("Channel arguments are not supported by the loopback realtime radio.\n");
     return false;
   }
 
@@ -110,7 +110,7 @@ static bool validate_otw_format(radio_configuration::over_the_wire_format otw_fo
   return true;
 }
 
-bool radio_config_realtime_dummy_validator::is_configuration_valid(const radio_configuration::radio& config) const
+bool radio_config_realtime_loopback_validator::is_configuration_valid(const radio_configuration::radio& config) const
 {
   if (!validate_clock_sources(config.clock)) {
     return false;
@@ -152,12 +152,12 @@ bool radio_config_realtime_dummy_validator::is_configuration_valid(const radio_c
   }
 
   if (config.tx_mode != radio_configuration::transmission_mode::continuous) {
-    fmt::print("Discontinuous transmission modes are not supported by the realtime dummy radio.\n");
+    fmt::print("Discontinuous transmission modes are not supported by the realtime loopback radio.\n");
     return false;
   }
 
   if (config.power_ramping_us != 0.0F) {
-    fmt::print("Power ramping is not supported by the realtime dummy radio.\n");
+    fmt::print("Power ramping is not supported by the realtime loopback radio.\n");
     return false;
   }
 

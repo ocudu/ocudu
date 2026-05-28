@@ -11,7 +11,7 @@
 
 namespace ocudu {
 
-/// \brief Sample loopback buffer for the realtime dummy radio.
+/// \brief Sample loopback buffer for the realtime loopback radio.
 ///
 /// It allows writing samples with a given timestamp and reading them later on. It is implemented as a circular buffer.
 class loopback_buffer

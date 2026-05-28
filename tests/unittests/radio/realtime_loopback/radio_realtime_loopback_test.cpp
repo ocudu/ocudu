@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
-#include "../../../lib/radio/realtime_dummy/radio_factory_realtime_dummy_impl.h"
+#include "radio_factory_realtime_loopback_impl.h"
 #include "ocudu/gateways/baseband/baseband_gateway_receiver.h"
 #include "ocudu/gateways/baseband/baseband_gateway_transmitter.h"
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
@@ -16,12 +16,12 @@ using namespace ocudu;
 // - Number of channels;
 // - Transmit block size;
 // - Receive block size;
-using radio_realtime_dummy_test_parameters = std::tuple<unsigned, unsigned, unsigned>;
+using radio_realtime_loopback_test_parameters = std::tuple<unsigned, unsigned, unsigned>;
 
 /// Indicates the test logging level.
 static const ocudulog::basic_levels log_level = ocudulog::basic_levels::warning;
 
-class RealtimeDummyRadioFixture : public ::testing::TestWithParam<radio_realtime_dummy_test_parameters>
+class RealtimeLoopbackRadioFixture : public ::testing::TestWithParam<radio_realtime_loopback_test_parameters>
 {
 protected:
   static constexpr float ASSERT_MAX_ERROR_COMPLEX = 1.414213562f;
@@ -43,12 +43,12 @@ protected:
   /// Total number of samples to transmit and receive.
   unsigned nof_samples = 10000U;
 
-  static std::unique_ptr<radio_factory_realtime_dummy_impl> factory;
-  static std::unique_ptr<task_worker>                       async_task_worker;
-  std::vector<std::mt19937>                                 tx_rgen;
-  std::vector<std::mt19937>                                 rx_rgen;
-  complex_normal_distribution<cf_t>                         tx_dist;
-  complex_normal_distribution<cf_t>                         rx_dist;
+  static std::unique_ptr<radio_factory_realtime_loopback_impl> factory;
+  static std::unique_ptr<task_worker>                          async_task_worker;
+  std::vector<std::mt19937>                                    tx_rgen;
+  std::vector<std::mt19937>                                    rx_rgen;
+  complex_normal_distribution<cf_t>                            tx_dist;
+  complex_normal_distribution<cf_t>                            rx_dist;
 
   static void SetUpTestSuite()
   {
@@ -60,8 +60,8 @@ protected:
       return;
     }
 
-    // Create realtime dummy radio factory.
-    factory = std::make_unique<radio_factory_realtime_dummy_impl>();
+    // Create realtime loopback radio factory.
+    factory = std::make_unique<radio_factory_realtime_loopback_impl>();
     ASSERT_NE(factory, nullptr);
 
     ocudulog::init();
@@ -185,10 +185,10 @@ public:
   void on_radio_rt_event(const event_description& description) override {}
 };
 
-std::unique_ptr<radio_factory_realtime_dummy_impl> RealtimeDummyRadioFixture::factory           = nullptr;
-std::unique_ptr<task_worker>                       RealtimeDummyRadioFixture::async_task_worker = nullptr;
+std::unique_ptr<radio_factory_realtime_loopback_impl> RealtimeLoopbackRadioFixture::factory           = nullptr;
+std::unique_ptr<task_worker>                          RealtimeLoopbackRadioFixture::async_task_worker = nullptr;
 
-TEST_P(RealtimeDummyRadioFixture, RealtimeFlow)
+TEST_P(RealtimeLoopbackRadioFixture, RealtimeFlow)
 {
   // Asynchronous and TX task executors.
   std::unique_ptr<task_executor> async_task_executor = make_task_executor_ptr(*async_task_worker);
@@ -230,8 +230,8 @@ TEST_P(RealtimeDummyRadioFixture, RealtimeFlow)
     baseband_gateway_receiver::metadata md = receiver.receive(rx_buffer.get_writer());
 
     // Check that the timestamp of the received samples matches the expected value, which is the sample index offset by
-    // the starting timestamp. The actual sample values are not checked, since in realtime operation, the realtime dummy
-    // radio can drop samples in the event of lates, underflows or overflows.
+    // the starting timestamp. The actual sample values are not checked, since in realtime operation, the realtime
+    // loopback radio can drop samples in the event of lates, underflows or overflows.
     ASSERT_EQ(md.ts, start_time + rx_sample_count);
 
     rx_sample_count += block_size;
@@ -243,7 +243,7 @@ TEST_P(RealtimeDummyRadioFixture, RealtimeFlow)
   session->stop();
 }
 
-TEST_P(RealtimeDummyRadioFixture, NonRealtimeFlow)
+TEST_P(RealtimeLoopbackRadioFixture, NonRealtimeFlow)
 {
   // Asynchronous task executor.
   std::unique_ptr<task_executor> async_task_executor = make_task_executor_ptr(*async_task_worker);
@@ -254,7 +254,7 @@ TEST_P(RealtimeDummyRadioFixture, NonRealtimeFlow)
   // Radio configuration.
   radio_configuration::radio radio_config = create_radio_config();
 
-  // Create a custom current time function for the realtime dummy radio. This function increments the RF timestamp
+  // Create a custom current time function for the realtime loopback radio. This function increments the RF timestamp
   // each time it is called.
   baseband_gateway_timestamp                    current_rf_timestamp                  = 0;
   unique_function<baseband_gateway_timestamp()> get_current_rf_timestamp_manual_clock = [&current_rf_timestamp]() {
@@ -327,7 +327,7 @@ TEST_P(RealtimeDummyRadioFixture, NonRealtimeFlow)
 
 // Triggers a TX underflow followed by an in-time transmisswhich are in the past compared to the last TX timestampion,
 // and checks that the received samples are still valid.
-TEST_P(RealtimeDummyRadioFixture, TxUnderflow)
+TEST_P(RealtimeLoopbackRadioFixture, TxUnderflow)
 {
   // Asynchronous task executor.
   std::unique_ptr<task_executor> async_task_executor = make_task_executor_ptr(*async_task_worker);
@@ -338,7 +338,7 @@ TEST_P(RealtimeDummyRadioFixture, TxUnderflow)
   // Radio configuration.
   radio_configuration::radio radio_config = create_radio_config();
 
-  // Create a custom current time function for the realtime dummy radio. This function increments the RF timestamp
+  // Create a custom current time function for the realtime loopback radio. This function increments the RF timestamp
   // each time it is called.
   baseband_gateway_timestamp                    current_rf_timestamp                  = 0;
   unique_function<baseband_gateway_timestamp()> get_current_rf_timestamp_manual_clock = [&current_rf_timestamp]() {
@@ -368,7 +368,7 @@ TEST_P(RealtimeDummyRadioFixture, TxUnderflow)
   // Generate transmit random data for each channel.
   generate_random_samples(tx_buffer.get_writer());
 
-  // Transmit stream buffer. The transmission timestamp is too early, since the realtime dummy radio emulates the
+  // Transmit stream buffer. The transmission timestamp is too early, since the realtime loopback radio emulates the
   // constraint of a minimum required radio processing time, leading to an underflow. The samples should be discarded.
   baseband_gateway_transmitter_metadata tx_md;
   tx_md.ts = start_time;
@@ -402,7 +402,7 @@ TEST_P(RealtimeDummyRadioFixture, TxUnderflow)
   session->stop();
 }
 
-TEST_P(RealtimeDummyRadioFixture, TxLate)
+TEST_P(RealtimeLoopbackRadioFixture, TxLate)
 {
   // Asynchronous task executor.
   std::unique_ptr<task_executor> async_task_executor = make_task_executor_ptr(*async_task_worker);
@@ -413,7 +413,7 @@ TEST_P(RealtimeDummyRadioFixture, TxLate)
   // Radio configuration.
   radio_configuration::radio radio_config = create_radio_config();
 
-  // Create a custom current time function for the realtime dummy radio. This function increments the RF timestamp
+  // Create a custom current time function for the realtime loopback radio. This function increments the RF timestamp
   // each time it is called.
   baseband_gateway_timestamp                    current_rf_timestamp                  = 0;
   unique_function<baseband_gateway_timestamp()> get_current_rf_timestamp_manual_clock = [&current_rf_timestamp]() {
@@ -473,7 +473,7 @@ TEST_P(RealtimeDummyRadioFixture, TxLate)
   }
 }
 
-TEST_P(RealtimeDummyRadioFixture, RxOverflow)
+TEST_P(RealtimeLoopbackRadioFixture, RxOverflow)
 {
   // Asynchronous task executor.
   std::unique_ptr<task_executor> async_task_executor = make_task_executor_ptr(*async_task_worker);
@@ -484,7 +484,7 @@ TEST_P(RealtimeDummyRadioFixture, RxOverflow)
   // Radio configuration.
   radio_configuration::radio radio_config = create_radio_config();
 
-  // Create a custom current time function for the realtime dummy radio. This function adds a large jump to the RF
+  // Create a custom current time function for the realtime loopback radio. This function adds a large jump to the RF
   // timestamp each time it is called.
   baseband_gateway_timestamp                    current_rf_timestamp                  = 0;
   unique_function<baseband_gateway_timestamp()> get_current_rf_timestamp_manual_clock = [&current_rf_timestamp]() {
@@ -542,8 +542,8 @@ TEST_P(RealtimeDummyRadioFixture, RxOverflow)
 }
 
 // Creates test suite that combines all possible parameters.
-INSTANTIATE_TEST_SUITE_P(RealtimeDummyRadioTest,
-                         RealtimeDummyRadioFixture,
+INSTANTIATE_TEST_SUITE_P(RealtimeLoopbackRadioTest,
+                         RealtimeLoopbackRadioFixture,
                          ::testing::Combine(::testing::Values(1, 2),
                                             ::testing::Values(39, 123),
                                             ::testing::Values(39, 123)));

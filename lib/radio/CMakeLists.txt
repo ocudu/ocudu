@@ -9,8 +9,8 @@ add_library(ocudu_radio STATIC
 set(OCUDU_RADIO_DEFINITIONS "")
 set(OCUDU_RADIO_LIBRARIES "")
 
-add_subdirectory(realtime_dummy)
-list(APPEND OCUDU_RADIO_LIBRARIES ocudu_radio_realtime_dummy)
+add_subdirectory(realtime_loopback)
+list(APPEND OCUDU_RADIO_LIBRARIES ocudu_radio_realtime_loopback)
 
 if (UHD_FOUND AND ENABLE_UHD)
     # The UHD library uses RTTI

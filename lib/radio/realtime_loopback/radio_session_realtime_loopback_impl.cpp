@@ -1,27 +1,26 @@
 // SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
-#include "radio_session_realtime_dummy_impl.h"
+#include "radio_session_realtime_loopback_impl.h"
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_reader.h"
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_writer.h"
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_writer_view.h"
 #include "ocudu/ocudulog/ocudulog.h"
-#include <boost/next_prior.hpp>
 #include <thread>
 
 using namespace ocudu;
 
-radio_session_realtime_dummy_impl::radio_session_realtime_dummy_impl(const radio_configuration::radio& config,
-                                                                     task_executor&        async_task_executor,
-                                                                     radio_event_notifier& notification_handler) :
-  radio_session_realtime_dummy_impl(config,
-                                    async_task_executor,
-                                    notification_handler,
-                                    get_current_rf_timestamp_realtime_clock)
+radio_session_realtime_loopback_impl::radio_session_realtime_loopback_impl(const radio_configuration::radio& config,
+                                                                           task_executor&        async_task_executor,
+                                                                           radio_event_notifier& notification_handler) :
+  radio_session_realtime_loopback_impl(config,
+                                       async_task_executor,
+                                       notification_handler,
+                                       get_current_rf_timestamp_realtime_clock)
 {
 }
 
-radio_session_realtime_dummy_impl::radio_session_realtime_dummy_impl(
+radio_session_realtime_loopback_impl::radio_session_realtime_loopback_impl(
     const radio_configuration::radio&                    config,
     task_executor&                                       async_task_executor,
     radio_event_notifier&                                notification_handler,
@@ -47,19 +46,19 @@ radio_session_realtime_dummy_impl::radio_session_realtime_dummy_impl(
                       "The emulated RX buffer must hold at least 100 microseconds of baseband signal.");
 }
 
-unsigned radio_session_realtime_dummy_impl::get_receiver_optimal_buffer_size() const
+unsigned radio_session_realtime_loopback_impl::get_receiver_optimal_buffer_size() const
 {
   /// Return a buffer size capable of holding 100 microseconds of samples.
   return sampling_rate_hz / 10000;
 }
 
 // See the radio_session interface for documentation.
-baseband_gateway_timestamp radio_session_realtime_dummy_impl::read_current_time()
+baseband_gateway_timestamp radio_session_realtime_loopback_impl::read_current_time()
 {
   return get_current_rf_timestamp();
 }
 
-void radio_session_realtime_dummy_impl::start(baseband_gateway_timestamp init_time)
+void radio_session_realtime_loopback_impl::start(baseband_gateway_timestamp init_time)
 {
   // Reset the stop control. This will block if there is an earlier stop request that has not been completed.
   stop_control.reset();
@@ -73,33 +72,33 @@ void radio_session_realtime_dummy_impl::start(baseband_gateway_timestamp init_ti
   }
 }
 
-void radio_session_realtime_dummy_impl::stop()
+void radio_session_realtime_loopback_impl::stop()
 {
   // Request the radio to stop.
   stop_control.stop();
 }
 
-bool radio_session_realtime_dummy_impl::set_tx_gain(unsigned port_id, double gain_dB)
+bool radio_session_realtime_loopback_impl::set_tx_gain(unsigned port_id, double gain_dB)
 {
   return true;
 }
 
-bool radio_session_realtime_dummy_impl::set_rx_gain(unsigned port_id, double gain_dB)
+bool radio_session_realtime_loopback_impl::set_rx_gain(unsigned port_id, double gain_dB)
 {
   return true;
 }
 
-bool radio_session_realtime_dummy_impl::set_tx_freq(unsigned stream_id, double center_freq_Hz)
+bool radio_session_realtime_loopback_impl::set_tx_freq(unsigned stream_id, double center_freq_Hz)
 {
   return true;
 }
 
-bool radio_session_realtime_dummy_impl::set_rx_freq(unsigned stream_id, double center_freq_Hz)
+bool radio_session_realtime_loopback_impl::set_rx_freq(unsigned stream_id, double center_freq_Hz)
 {
   return true;
 }
 
-baseband_gateway_receiver::metadata radio_session_realtime_dummy_impl::receive(baseband_gateway_buffer_writer& data)
+baseband_gateway_receiver::metadata radio_session_realtime_loopback_impl::receive(baseband_gateway_buffer_writer& data)
 {
   // Sleep until the radio is requested to start.
   while (!start_requested.load()) {
@@ -164,8 +163,8 @@ baseband_gateway_receiver::metadata radio_session_realtime_dummy_impl::receive(b
   return return_md;
 }
 
-void radio_session_realtime_dummy_impl::transmit(const baseband_gateway_buffer_reader&        data,
-                                                 const baseband_gateway_transmitter_metadata& md)
+void radio_session_realtime_loopback_impl::transmit(const baseband_gateway_buffer_reader&        data,
+                                                    const baseband_gateway_transmitter_metadata& md)
 {
   auto token = stop_control.get_token();
   if (OCUDU_UNLIKELY(token.is_stop_requested())) {
