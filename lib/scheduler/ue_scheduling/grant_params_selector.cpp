@@ -255,6 +255,11 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
       continue;
     }
 
+    // In case of HARQ retxs, skip candidates where the number of symbols differs from the original grant.
+    if (h_dl != nullptr and h_dl->get_grant_params().nof_symbols != pdsch_td_res.symbols.length()) {
+      continue;
+    }
+
     if (not selected_pdsch_td_index.has_value() or
         ss.pdsch_time_domain_list[*selected_pdsch_td_index].symbols.length() < pdsch_td_res.symbols.length()) {
       // A better PDSCH time-domain resource candidate was found.
