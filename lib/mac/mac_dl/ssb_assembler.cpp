@@ -24,7 +24,7 @@ ssb_assembler::ssb_assembler(const mac_cell_creation_request& cell_cfg) :
 void ssb_assembler::assemble_ssb(dl_ssb_pdu& ssb_pdu, const ssb_information& ssb_info)
 {
   ssb_pdu.pci               = pci;
-  ssb_pdu.pss_to_sss_epre   = ssb_pss_to_sss_epre::dB_0;
+  ssb_pdu.pss_to_sss_epre   = ssb_cfg.pss_to_sss_epre;
   ssb_pdu.ssb_index         = ssb_info.ssb_index;
   ssb_pdu.scs               = ssb_cfg.scs;
   ssb_pdu.subcarrier_offset = ssb_cfg.k_ssb;

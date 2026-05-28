@@ -504,10 +504,14 @@ static void configure_cli11_ssb_args(CLI::App& app, du_high_unit_ssb_config& ssb
       app,
       "--pss_to_sss_epre_db",
       [&ssb_params](const std::string& value) {
-        unsigned temp_value = CLI::detail::lexical_cast(value, temp_value);
+        unsigned temp_value = 0;
+        if (!CLI::detail::lexical_cast(value, temp_value)) {
+          report_fatal_error("Invalid --pss_to_sss_epre_db value '{}'", value);
+        }
+
         if (temp_value == 0) {
           ssb_params.pss_to_sss_epre = ocudu::ssb_pss_to_sss_epre::dB_0;
-        } else if (temp_value == 3) {
+        } else {
           ssb_params.pss_to_sss_epre = ocudu::ssb_pss_to_sss_epre::dB_3;
         }
       },
