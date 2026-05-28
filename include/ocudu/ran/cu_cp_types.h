@@ -4,7 +4,9 @@
 
 #pragma once
 
+#include "ocudu/ran/gnb_id.h"
 #include "ocudu/ran/nr_cgi.h"
+#include "ocudu/ran/plmn_identity.h"
 #include "ocudu/ran/tai.h"
 #include "fmt/format.h"
 #include <cstdint>
@@ -107,6 +109,11 @@ struct cu_cp_user_location_info_nr {
   nr_cell_global_id_t     nr_cgi;
   tai_t                   tai;
   std::optional<uint64_t> time_stamp;
+};
+
+struct cu_cp_global_gnb_id {
+  plmn_identity plmn_id = plmn_identity::test_value();
+  gnb_id_t      gnb_id;
 };
 
 } // namespace ocudu

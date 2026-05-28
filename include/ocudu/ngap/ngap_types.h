@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "ocudu/cu_cp/cu_cp_types.h"
+#include "ocudu/ran/cu_cp_paging.h"
 #include "ocudu/ran/tai.h"
 
 namespace ocudu::ocucp {

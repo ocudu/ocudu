@@ -6,7 +6,6 @@
 
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/adt/expected.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/cu_cp/cu_cp_ue_messages.h"
 #include "ocudu/f1ap/cu_cp/du_setup_notifier.h"
 #include "ocudu/f1ap/cu_cp/f1ap_cu_configuration_update.h"
@@ -15,6 +14,8 @@
 #include "ocudu/f1ap/cu_cp/f1ap_nrppa_msg_handling.h"
 #include "ocudu/f1ap/cu_cp/f1ap_rrc_msg_transfer_handling.h"
 #include "ocudu/f1ap/f1ap_message_handler.h"
+#include "ocudu/ran/cu_cp_paging.h"
+#include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/ran/rb_id.h"
 #include "ocudu/support/async/async_task.h"
 
