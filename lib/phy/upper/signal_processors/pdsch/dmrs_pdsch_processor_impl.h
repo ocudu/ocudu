@@ -11,7 +11,6 @@
 #include "ocudu/phy/support/resource_grid_writer.h"
 #include "ocudu/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "ocudu/phy/upper/signal_processors/pdsch/dmrs_pdsch_processor.h"
-#include "ocudu/support/math/math_utils.h"
 
 namespace ocudu {
 
@@ -21,7 +20,7 @@ class dmrs_pdsch_processor_impl : public dmrs_pdsch_processor
 private:
   /// Defines the maximum number of DMRS per RB.
   static constexpr unsigned MAX_DRMS_PER_RB =
-      std::max(dmrs_type(dmrs_type::TYPE1).nof_dmrs_per_rb(), dmrs_type(dmrs_type::TYPE2).nof_dmrs_per_rb());
+      std::max(get_nof_re_per_prb(dmrs_config_type::type1), get_nof_re_per_prb(dmrs_config_type::type2));
 
   /// Define the maximum number of DMRS per symbol.
   static constexpr unsigned MAX_DMRS_PER_SYMBOL = MAX_NOF_PRBS * MAX_DRMS_PER_RB;

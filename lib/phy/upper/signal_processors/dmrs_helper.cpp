@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "dmrs_helper.h"
+#include "ocudu/phy/upper/dmrs_mapping.h"
 
 using namespace ocudu;
 
@@ -17,7 +18,7 @@ static constexpr re_prb_mask RE_PATTERN_TYPE2_DELTA2 =
 static constexpr re_prb_mask RE_PATTERN_TYPE2_DELTA4 =
     {false, false, false, false, true, true, false, false, false, false, true, true};
 
-static const std::array<dmrs_pxsch_parameters, dmrs_type::DMRS_MAX_PORTS_TYPE1> params_type1 = {{
+static const std::array<dmrs_pxsch_parameters, DMRS_MAX_PORTS_TYPE1> params_type1 = {{
     /* Port 1000 */ {RE_PATTERN_TYPE1_DELTA0, {+1.0F, +1.0F}, {+1.0F, +1.0F}},
     /* Port 1001 */ {RE_PATTERN_TYPE1_DELTA0, {+1.0F, -1.0F}, {+1.0F, +1.0F}},
     /* Port 1002 */ {RE_PATTERN_TYPE1_DELTA1, {+1.0F, +1.0F}, {+1.0F, +1.0F}},
@@ -28,7 +29,7 @@ static const std::array<dmrs_pxsch_parameters, dmrs_type::DMRS_MAX_PORTS_TYPE1> 
     /* Port 1007 */ {RE_PATTERN_TYPE1_DELTA1, {+1.0F, -1.0F}, {+1.0F, -1.0F}},
 }};
 
-static const std::array<dmrs_pxsch_parameters, dmrs_type::DMRS_MAX_PORTS_TYPE2> params_type2 = {{
+static const std::array<dmrs_pxsch_parameters, DMRS_MAX_PORTS_TYPE2> params_type2 = {{
     /* Port 1000 */ {RE_PATTERN_TYPE2_DELTA0, {+1.0F, +1.0F}, {+1.0F, +1.0F}},
     /* Port 1001 */ {RE_PATTERN_TYPE2_DELTA0, {+1.0F, -1.0F}, {+1.0F, +1.0F}},
     /* Port 1002 */ {RE_PATTERN_TYPE2_DELTA2, {+1.0F, +1.0F}, {+1.0F, +1.0F}},
@@ -76,10 +77,12 @@ void ocudu::dmrs_sequence_generate(span<ocudu::cf_t>        sequence,
       });
 }
 
-dmrs_pxsch_parameters ocudu::get_pxsch_dmrs_params(dmrs_type type, unsigned i_dmrs_port)
+dmrs_pxsch_parameters ocudu::get_pxsch_dmrs_params(dmrs_config_type type, unsigned i_dmrs_port)
 {
+  ocudu_assert(type != dmrs_config_type::not_set, "Invalid DM-RS type.");
+
   // Select view of the selected table.
-  span<const dmrs_pxsch_parameters> params = (type == dmrs_type::options::TYPE1)
+  span<const dmrs_pxsch_parameters> params = (type == dmrs_config_type::type1)
                                                  ? span<const dmrs_pxsch_parameters>(params_type1)
                                                  : span<const dmrs_pxsch_parameters>(params_type2);
 
@@ -88,7 +91,7 @@ dmrs_pxsch_parameters ocudu::get_pxsch_dmrs_params(dmrs_type type, unsigned i_dm
   ocudu_assert(i_dmrs_port_range.contains(i_dmrs_port),
                "The DM-RS port index (i.e., {}) for DM-RS {} is out of the range {}.",
                i_dmrs_port,
-               type.to_string(),
+               type,
                i_dmrs_port_range);
 
   // Return layer parameters.

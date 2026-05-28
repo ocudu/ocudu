@@ -4,7 +4,8 @@
 
 #pragma once
 
-#include "ocudu/phy/upper/dmrs_mapping.h"
+#include "ocudu/phy/support/mask_types.h"
+#include "ocudu/ran/dmrs/dmrs.h"
 #include "ocudu/ran/sch/modulation_scheme.h"
 
 /// \file
@@ -41,7 +42,7 @@ public:
     /// Number of reserved bits for HARQ-ACK. Parameter \f$G^\textup{HARQ-ACK}_\textup{rvd}\f$.
     unsigned nof_harq_ack_rvd;
     /// Transmission DM-RS Type.
-    dmrs_type dmrs;
+    dmrs_config_type dmrs;
     /// Mask indicating which OFDM symbols in the slot contain DM-RS.
     symbol_slot_mask dmrs_symbol_mask;
     /// Number of CDM groups without data.

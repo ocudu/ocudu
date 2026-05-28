@@ -33,11 +33,11 @@ const pusch_processor::pdu_t base_pdu = {.context          = std::nullopt,
                                          .nof_tx_layers    = 1,
                                          .rx_ports         = {0, 1, 2, 3},
                                          .dmrs_symbol_mask = dmrs_symbol_mask,
-                                         .dmrs       = pusch_processor::dmrs_configuration{.dmrs          = dmrs_type::TYPE1,
-                                                                                           .scrambling_id = 0,
-                                                                                           .n_scid        = false,
-                                                                                           .nof_cdm_groups_without_data = 2},
-                                         .freq_alloc = rb_allocation::make_type1(15, 1),
+                                         .dmrs = pusch_processor::dmrs_configuration{.dmrs = dmrs_config_type::type1,
+                                                                                     .scrambling_id = 0,
+                                                                                     .n_scid        = false,
+                                                                                     .nof_cdm_groups_without_data = 2},
+                                         .freq_alloc         = rb_allocation::make_type1(15, 1),
                                          .start_symbol_index = 0,
                                          .nof_symbols        = 14,
                                          .tbs_lbrm           = units::bytes(ldpc::MAX_CODEBLOCK_SIZE / 8),
@@ -127,7 +127,7 @@ const std::vector<test_case_t> pusch_processor_validator_test_data = {
      R"(The symbol allocation \(i\.e\., \[0, 15\)\) exceeds the slot size \(i\.e\., 14\)\.)"},
     {[] {
        pusch_processor::pdu_t pdu                                   = base_pdu;
-       std::get<pusch_processor::dmrs_configuration>(pdu.dmrs).dmrs = dmrs_type::TYPE2;
+       std::get<pusch_processor::dmrs_configuration>(pdu.dmrs).dmrs = dmrs_config_type::type2;
        return pdu;
      },
      R"(Only DM-RS Type 1 is currently supported\.)"},

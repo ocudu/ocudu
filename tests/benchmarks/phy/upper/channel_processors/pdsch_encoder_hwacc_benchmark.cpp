@@ -10,16 +10,15 @@
 
 #include "ocudu/phy/upper/channel_processors/pdsch/factories.h"
 #include "ocudu/phy/upper/channel_processors/pdsch/pdsch_encoder.h"
-#include "ocudu/ran/pdsch/pdsch_constants.h"
 #include "ocudu/ran/sch/tbs_calculator.h"
 #include "ocudu/support/ocudu_test.h"
-#include "ocudu/support/test_utils.h"
 #ifdef DPDK_FOUND
 #include "ocudu/hal/dpdk/bbdev/bbdev_acc.h"
 #include "ocudu/hal/dpdk/bbdev/bbdev_acc_factory.h"
 #include "ocudu/hal/dpdk/dpdk_eal_factory.h"
 #include "ocudu/hal/phy/upper/channel_processors/hw_accelerator_factories.h"
 #include "ocudu/hal/phy/upper/channel_processors/hw_accelerator_pdsch_enc_factory.h"
+#include "ocudu/ocudulog/ocudulog.h"
 #include <rte_cycles.h>
 #endif // DPDK_FOUND
 #include <getopt.h>
@@ -33,9 +32,9 @@ using namespace ocudu::ldpc;
 using test_case_type = std::tuple<pdsch_encoder::configuration, unsigned, unsigned, unsigned>;
 
 static std::string                        hwacc_encoder_type          = "acc100";
-static dmrs_type                          dmrs                        = dmrs_type::TYPE1;
+static dmrs_config_type                   dmrs                        = dmrs_config_type::type1;
 static unsigned                           nof_cdm_groups_without_data = 2;
-static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
+static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_mask =
     {false, false, true, false, false, false, false, false, false, false, false, false, false, false};
 
 #ifdef DPDK_FOUND
@@ -253,7 +252,7 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
       tbs_config.n_prb                        = nof_prb;
       tbs_config.nof_layers                   = profile.nof_tx_layers;
       tbs_config.nof_symb_sh                  = profile.nof_symbols;
-      tbs_config.nof_dmrs_prb = dmrs.nof_dmrs_per_rb() * dmrs_symbol_mask.count() * nof_cdm_groups_without_data;
+      tbs_config.nof_dmrs_prb = get_nof_re_per_prb(dmrs) * dmrs_mask.count() * nof_cdm_groups_without_data;
       units::bytes tbs        = tbs_calculator_calculate(tbs_config);
 
       // Build the PDSCH encoder configuration.

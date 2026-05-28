@@ -9,9 +9,9 @@
 
 #include "ocudu/instrumentation/traces/du_traces.h"
 #include "ocudu/phy/upper/channel_processors/pdsch/pdsch_processor.h"
+#include "ocudu/phy/upper/dmrs_mapping.h"
 #include "ocudu/phy/upper/signal_processors/pdsch/dmrs_pdsch_processor.h"
 #include "ocudu/phy/upper/signal_processors/ptrs/ptrs_pdsch_generator.h"
-#include "ocudu/ran/dmrs/dmrs.h"
 #include "ocudu/ran/ptrs/ptrs_pattern.h"
 #include "ocudu/support/tracing/event_tracing.h"
 
@@ -79,7 +79,7 @@ pdsch_process_ptrs(resource_grid_writer& grid, ptrs_pdsch_generator& ptrs_genera
   ptrs_pdsch_generator::configuration ptrs_config;
   ptrs_config.slot                 = pdu.slot;
   ptrs_config.rnti                 = to_rnti(pdu.rnti);
-  ptrs_config.dmrs_config_type     = pdu.dmrs;
+  ptrs_config.dmrs_type            = pdu.dmrs;
   ptrs_config.reference_point_k_rb = ptrs_reference_point_k_rb;
   ptrs_config.scrambling_id        = pdu.scrambling_id;
   ptrs_config.n_scid               = pdu.n_scid;
@@ -117,8 +117,8 @@ inline unsigned pdsch_compute_nof_data_re(const pdsch_processor::pdu_t& pdu)
   unsigned nof_grid_re = nof_prb * NOF_SUBCARRIERS_PER_RB * pdu.nof_symbols;
 
   // Generate DM-RS pattern.
-  re_pattern dmrs_pattern = pdu.dmrs.get_dmrs_pattern(
-      pdu.bwp_start_rb, pdu.bwp_size_rb, pdu.nof_cdm_groups_without_data, pdu.dmrs_symbol_mask);
+  re_pattern dmrs_pattern = get_dmrs_pattern(
+      pdu.dmrs, pdu.bwp_start_rb, pdu.bwp_size_rb, pdu.nof_cdm_groups_without_data, pdu.dmrs_symbol_mask);
 
   // Calculate the number of RE used by DM-RS. It assumes it does not overlap with reserved elements.
   unsigned nof_grid_dmrs = nof_prb * dmrs_pattern.re_mask.count() * dmrs_pattern.symbols.count();
@@ -134,7 +134,7 @@ inline unsigned pdsch_compute_nof_data_re(const pdsch_processor::pdu_t& pdu)
     // Create PT-RS pattern configuration.
     ptrs_pattern_configuration ptrs_pattern_config = {
         .rnti             = to_rnti(pdu.rnti),
-        .dmrs_type        = (pdu.dmrs == dmrs_type::TYPE1) ? dmrs_config_type::type1 : dmrs_config_type::type2,
+        .dmrs_type        = pdu.dmrs,
         .dmrs_symbol_mask = pdu.dmrs_symbol_mask,
         .rb_mask          = crb_mask,
         .time_allocation  = {pdu.start_symbol_index, pdu.start_symbol_index + pdu.nof_symbols},

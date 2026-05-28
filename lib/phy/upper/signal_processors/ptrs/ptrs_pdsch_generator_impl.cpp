@@ -4,7 +4,6 @@
 
 #include "ptrs_pdsch_generator_impl.h"
 #include "ocudu/phy/support/resource_grid_mapper.h"
-#include "ocudu/ran/precoding/precoding_weight_matrix_formatters.h"
 #include "ocudu/ran/ptrs/ptrs_pattern.h"
 
 using namespace ocudu;
@@ -15,7 +14,7 @@ void ptrs_pdsch_generator_generic_impl::generate(resource_grid_writer& grid, con
   unsigned nof_ports = config.precoding.get_nof_layers();
 
   // Get the number of DM-RS per RB.
-  unsigned nof_dmrs_prb = config.dmrs_config_type.nof_dmrs_per_rb();
+  unsigned nof_dmrs_prb = get_nof_re_per_prb(config.dmrs_type);
 
   // The PT-RS antenna port is associated with the lowest indexed DM-RS antenna port among the DM-RS antenna ports
   // assigned for the PDSCH (TS38.214 Section 5.1.6.3).
@@ -23,8 +22,8 @@ void ptrs_pdsch_generator_generic_impl::generate(resource_grid_writer& grid, con
 
   // Prepare PT-RS pattern configuration.
   ptrs_pattern_configuration ptrs_pattern_config = {
-      .rnti      = config.rnti,
-      .dmrs_type = (config.dmrs_config_type == dmrs_type::TYPE1) ? dmrs_config_type::type1 : dmrs_config_type::type2,
+      .rnti             = config.rnti,
+      .dmrs_type        = config.dmrs_type,
       .dmrs_symbol_mask = config.dmrs_symbols_mask,
       .rb_mask          = config.rb_mask,
       .time_allocation  = config.time_allocation,

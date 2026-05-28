@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "ocudu/phy/support/re_buffer.h"
 #include "ocudu/phy/support/resource_grid_mapper.h"
+#include "ocudu/phy/upper/channel_modulation/modulation_mapper.h"
 #include "ocudu/phy/upper/channel_processors/pdsch/pdsch_modulator.h"
 #include "ocudu/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "ocudu/ran/pdsch/pdsch_constants.h"

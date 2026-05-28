@@ -6,33 +6,29 @@
 #include "../dmrs_helper.h"
 #include "ocudu/ocuduvec/copy.h"
 #include "ocudu/ocuduvec/sc_prod.h"
+#include "ocudu/phy/support/re_pattern.h"
 #include "ocudu/phy/support/resource_grid_mapper.h"
 
 using namespace ocudu;
 
 /// Resource element allocation patterns within a resource block for PDSCH DM-RS type 1.
-static const re_prb_mask& get_re_mask_type_1(unsigned cdm_group_id)
+static const re_prb_mask& get_re_mask(dmrs_config_type type, unsigned cdm_group_id)
 {
+  ocudu_assert(type != dmrs_config_type::not_set, "Invalid DM-RS type.");
+
   static constexpr unsigned MAX_CDM_GROUPS_TYPE1 = 2;
+  static constexpr unsigned MAX_CDM_GROUPS_TYPE2 = 3;
 
   static constexpr std::array<re_prb_mask, MAX_CDM_GROUPS_TYPE1> re_mask_type1 = {
       {{true, false, true, false, true, false, true, false, true, false, true, false},
        {false, true, false, true, false, true, false, true, false, true, false, true}}};
-
-  return re_mask_type1[cdm_group_id];
-}
-
-/// Resource element allocation patterns within a resource block for PDSCH DM-RS type 2.
-static const re_prb_mask& get_re_mask_type_2(unsigned cdm_group_id)
-{
-  static constexpr unsigned MAX_CDM_GROUPS_TYPE2 = 3;
 
   static constexpr std::array<const re_prb_mask, MAX_CDM_GROUPS_TYPE2> re_mask_type2 = {
       {{true, true, false, false, false, false, true, true, false, false, false, false},
        {false, false, true, true, false, false, false, false, true, true, false, false},
        {false, false, false, false, true, true, false, false, false, false, true, true}}};
 
-  return re_mask_type2[cdm_group_id];
+  return (type == dmrs_config_type::type1) ? re_mask_type1[cdm_group_id] : re_mask_type2[cdm_group_id];
 }
 
 void ocudu::dmrs_pdsch_processor_impl::sequence_generation(span<cf_t>      sequence,
@@ -56,7 +52,7 @@ void ocudu::dmrs_pdsch_processor_impl::sequence_generation(span<cf_t>      seque
 
   // Generate sequence.
   dmrs_sequence_generate(
-      sequence, *prg, amplitude, config.reference_point_k_rb, config.type.nof_dmrs_per_rb(), config.rb_mask);
+      sequence, *prg, amplitude, config.reference_point_k_rb, get_nof_re_per_prb(config.type), config.rb_mask);
 }
 
 void dmrs_pdsch_processor_impl::apply_cdm(span<cf_t>       sequence,
@@ -99,7 +95,7 @@ void dmrs_pdsch_processor_impl::apply_cdm(span<cf_t>       sequence,
 void ocudu::dmrs_pdsch_processor_impl::map(resource_grid_writer& grid, const config_t& config)
 {
   // Number of DM-RS RE in an OFDM symbol.
-  unsigned nof_dmrs_re_symbol = config.type.nof_dmrs_per_rb() * config.rb_mask.count();
+  unsigned nof_dmrs_re_symbol = get_nof_re_per_prb(config.type) * config.rb_mask.count();
 
   // Number of DM-RS RE in the entire slot.
   unsigned nof_dmrs_re_slot = nof_dmrs_re_symbol * config.symbols_mask.count();
@@ -157,8 +153,7 @@ void ocudu::dmrs_pdsch_processor_impl::map(resource_grid_writer& grid, const con
     re_pattern dmrs_pattern_cdm;
     dmrs_pattern_cdm.crb_mask = config.rb_mask;
     dmrs_pattern_cdm.symbols  = config.symbols_mask;
-    dmrs_pattern_cdm.re_mask =
-        (config.type == dmrs_type::TYPE1) ? get_re_mask_type_1(i_cdm_group) : get_re_mask_type_2(i_cdm_group);
+    dmrs_pattern_cdm.re_mask  = get_re_mask(config.type, i_cdm_group);
 
     // Iterate each port within the CDM group
     for (unsigned i_cdm_port = 0; i_cdm_port != nof_dmrs_ports_cdm; ++i_cdm_port) {

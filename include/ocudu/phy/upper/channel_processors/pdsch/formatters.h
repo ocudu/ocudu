@@ -66,7 +66,7 @@ struct formatter<ocudu::pdsch_processor::pdu_t> {
     helper.format_if_verbose(ctx, "n_id={}", pdu.n_id);
     helper.format_if_verbose(
         ctx, "ref_point={}", (pdu.ref_point == ocudu::pdsch_processor::pdu_t::CRB0) ? "CRB0" : "PRB0");
-    helper.format_if_verbose(ctx, "dmrs_type={}", (pdu.dmrs == ocudu::dmrs_type::TYPE1) ? 1 : 2);
+    helper.format_if_verbose(ctx, "dmrs_type={}", (pdu.dmrs == ocudu::dmrs_config_type::type1) ? 1 : 2);
     helper.format_if_verbose(ctx, "dmrs_mask={}", pdu.dmrs_symbol_mask);
     helper.format_if_verbose(ctx, "n_scidid={}", pdu.scrambling_id);
     helper.format_if_verbose(ctx, "n_scid={}", pdu.n_scid);

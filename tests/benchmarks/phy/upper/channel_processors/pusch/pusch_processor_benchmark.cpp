@@ -111,9 +111,9 @@ static benchmark_modes                    benchmark_mode              = benchmar
 static unsigned                           nof_harq_ack                = 0;
 static unsigned                           nof_csi_part1               = 0;
 static unsigned                           nof_csi_part2               = 0;
-static dmrs_type                          dmrs                        = dmrs_type::TYPE1;
+static dmrs_config_type                   dmrs                        = dmrs_config_type::type1;
 static unsigned                           nof_cdm_groups_without_data = 2;
-static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
+static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_mask =
     {false, false, true, false, false, false, false, false, false, false, false, true, false, false};
 static constexpr channel_equalizer_algorithm_type equalizer_algorithm_type = channel_equalizer_algorithm_type::zf;
 static constexpr port_channel_estimator_fd_smoothing_strategy fd_smoothing_strategy =
@@ -368,7 +368,7 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
           tbs_config.n_prb                        = nof_prb;
           tbs_config.nof_layers                   = nof_layers;
           tbs_config.nof_symb_sh                  = profile.nof_symbols;
-          tbs_config.nof_dmrs_prb = dmrs.nof_dmrs_per_rb() * dmrs_symbol_mask.count() * nof_cdm_groups_without_data;
+          tbs_config.nof_dmrs_prb = get_nof_re_per_prb(dmrs) * dmrs_mask.count() * nof_cdm_groups_without_data;
           units::bits tbs         = tbs_calculator_calculate(tbs_config).to_bits();
 
           // Build the PUSCH PDU configuration.
@@ -392,7 +392,7 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
           config.nof_tx_layers             = nof_layers;
           config.rx_ports.resize(profile.nof_rx_ports);
           std::iota(config.rx_ports.begin(), config.rx_ports.end(), 0);
-          config.dmrs_symbol_mask   = dmrs_symbol_mask;
+          config.dmrs_symbol_mask   = dmrs_mask;
           config.dmrs               = pusch_processor::dmrs_configuration{.dmrs                        = dmrs,
                                                                           .scrambling_id               = 0,
                                                                           .n_scid                      = false,

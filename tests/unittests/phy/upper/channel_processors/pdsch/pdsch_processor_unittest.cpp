@@ -11,6 +11,7 @@
 #include "ocudu/ocuduvec/compare.h"
 #include "ocudu/phy/upper/channel_processors/pdsch/factories.h"
 #include "ocudu/phy/upper/channel_processors/pdsch/pdsch_processor.h"
+#include "ocudu/phy/upper/dmrs_mapping.h"
 #include "ocudu/ran/precoding/precoding_codebooks.h"
 #include "ocudu/ran/sch/sch_segmentation.h"
 #include "fmt/ostream.h"
@@ -23,12 +24,6 @@ namespace ocudu {
 static std::ostream& operator<<(std::ostream& os, cyclic_prefix value)
 {
   fmt::print(os, value.to_string());
-  return os;
-}
-
-static std::ostream& operator<<(std::ostream& os, const dmrs_type& value)
-{
-  fmt::print(os, "{}", value.to_string());
   return os;
 }
 
@@ -47,7 +42,7 @@ static bool operator==(const span<const uint8_t> lhs, const span<const uint8_t> 
 
 namespace {
 
-using PdschProcessorParams = std::tuple<unsigned, cyclic_prefix, dmrs_type>;
+using PdschProcessorParams = std::tuple<unsigned, cyclic_prefix, dmrs_config_type>;
 
 class PdschProcessorFixture : public testing::TestWithParam<PdschProcessorParams>
 {
@@ -60,9 +55,9 @@ protected:
     dmrs_type_value = std::get<2>(GetParam());
   }
 
-  unsigned      nof_layers;
-  cyclic_prefix cp;
-  dmrs_type     dmrs_type_value;
+  unsigned         nof_layers;
+  cyclic_prefix    cp;
+  dmrs_config_type dmrs_type_value;
 
   static float get_power()
   {
@@ -84,10 +79,10 @@ protected:
   static std::uniform_int_distribution<unsigned> dist_mod;
 };
 
-static const std::array<modulation_scheme, 5> modulations = {modulation_scheme::QPSK,
-                                                             modulation_scheme::QAM16,
-                                                             modulation_scheme::QAM64,
-                                                             modulation_scheme::QAM256};
+const std::array<modulation_scheme, 5> modulations = {modulation_scheme::QPSK,
+                                                      modulation_scheme::QAM16,
+                                                      modulation_scheme::QAM64,
+                                                      modulation_scheme::QAM256};
 
 std::mt19937                            PdschProcessorFixture::rgen;
 std::uniform_int_distribution<uint8_t>  PdschProcessorFixture::dist_payload(0, UINT8_MAX);
@@ -160,8 +155,8 @@ TEST_P(PdschProcessorFixture, UnitTest)
   pdu.ratio_pdsch_data_to_sss_dB = get_power();
 
   // Generate reserved element pattern for DM-RS.
-  re_pattern dmrs_reserved_pattern = pdu.dmrs.get_dmrs_pattern(
-      pdu.bwp_start_rb, pdu.bwp_size_rb, pdu.nof_cdm_groups_without_data, pdu.dmrs_symbol_mask);
+  re_pattern dmrs_reserved_pattern = get_dmrs_pattern(
+      pdu.dmrs, pdu.bwp_start_rb, pdu.bwp_size_rb, pdu.nof_cdm_groups_without_data, pdu.dmrs_symbol_mask);
 
   // Create overall reserved pattern.
   re_pattern_list reserved = pdu.reserved;
@@ -287,6 +282,6 @@ INSTANTIATE_TEST_SUITE_P(PdschProcessorUnittest,
                          PdschProcessorFixture,
                          testing::Combine(testing::Values(1, 2),
                                           testing::Values(cyclic_prefix::NORMAL, cyclic_prefix::EXTENDED),
-                                          testing::Values(dmrs_type::options::TYPE1)));
+                                          testing::Values(dmrs_config_type::type1)));
 
 } // namespace

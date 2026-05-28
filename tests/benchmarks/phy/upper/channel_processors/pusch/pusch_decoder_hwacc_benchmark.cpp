@@ -16,7 +16,7 @@
 #include "ocudu/ran/resource_block.h"
 #include "ocudu/ran/sch/sch_segmentation.h"
 #include "ocudu/ran/sch/tbs_calculator.h"
-#include "ocudu/support/test_utils.h"
+#include "ocudu/support/ocudu_test.h"
 #ifdef DPDK_FOUND
 #include "ocudu/hal/dpdk/bbdev/bbdev_acc.h"
 #include "ocudu/hal/dpdk/bbdev/bbdev_acc_factory.h"
@@ -24,6 +24,7 @@
 #include "ocudu/hal/phy/upper/channel_processors/pusch/ext_harq_buffer_context_repository_factory.h"
 #include "ocudu/hal/phy/upper/channel_processors/pusch/hw_accelerator_factories.h"
 #include "ocudu/hal/phy/upper/channel_processors/pusch/hw_accelerator_pusch_dec_factory.h"
+#include "ocudu/ocudulog/ocudulog.h"
 #include <rte_cycles.h>
 #endif // DPDK_FOUND
 #include <getopt.h>
@@ -39,9 +40,9 @@ static std::string                        hwacc_decoder_type          = "acc100"
 static bool                               external_harq               = false;
 static bool                               use_early_stop              = true;
 static unsigned                           nof_ldpc_iterations         = 2;
-static dmrs_type                          dmrs                        = dmrs_type::TYPE1;
+static dmrs_config_type                   dmrs                        = dmrs_config_type::type1;
 static unsigned                           nof_cdm_groups_without_data = 2;
-static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
+static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_mask =
     {false, false, true, false, false, false, false, false, false, false, false, false, false, false};
 
 #ifdef DPDK_FOUND
@@ -258,7 +259,7 @@ static std::shared_ptr<pusch_decoder_factory> create_acc100_pusch_decoder_factor
   return create_pusch_decoder_factory_hw(decoder_hw_factory_config);
 }
 
-static std::shared_ptr<pusch_decoder_factory> create_pusch_decoder_factory(std::string decoder_type)
+static std::shared_ptr<pusch_decoder_factory> create_pusch_decoder_factory(const std::string& decoder_type)
 {
   if (decoder_type == "generic") {
     return create_generic_pusch_decoder_factory();
@@ -284,7 +285,7 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
       tbs_config.n_prb                        = nof_prb;
       tbs_config.nof_layers                   = profile.nof_tx_layers;
       tbs_config.nof_symb_sh                  = profile.nof_symbols;
-      tbs_config.nof_dmrs_prb = dmrs.nof_dmrs_per_rb() * dmrs_symbol_mask.count() * nof_cdm_groups_without_data;
+      tbs_config.nof_dmrs_prb = get_nof_re_per_prb(dmrs) * dmrs_mask.count() * nof_cdm_groups_without_data;
       units::bytes tbs        = tbs_calculator_calculate(tbs_config);
 
       // Build the LDPC segmenter configuration.
@@ -301,8 +302,7 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
       unsigned bits_per_symbol = get_bits_per_symbol(mcs.modulation);
       unsigned nof_llr         = config.nof_ch_symbols * bits_per_symbol;
 
-      test_case_set.emplace_back(
-          std::tuple<segmenter_config, unsigned, unsigned, unsigned>(config, tbs.value(), nof_llr, nof_prb));
+      test_case_set.emplace_back(config, tbs.value(), nof_llr, nof_prb);
     }
   }
   return test_case_set;

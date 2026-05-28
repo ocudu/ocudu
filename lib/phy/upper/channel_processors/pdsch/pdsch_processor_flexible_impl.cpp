@@ -225,8 +225,11 @@ void pdsch_processor_flexible_impl::initialize_new_transmission(
   reserved = re_pattern_list(config.reserved);
 
   // Get DM-RS RE pattern.
-  re_pattern dmrs_pattern = config.dmrs.get_dmrs_pattern(
-      config.bwp_start_rb, config.bwp_size_rb, config.nof_cdm_groups_without_data, config.dmrs_symbol_mask);
+  re_pattern dmrs_pattern = get_dmrs_pattern(config.dmrs,
+                                             config.bwp_start_rb,
+                                             config.bwp_size_rb,
+                                             config.nof_cdm_groups_without_data,
+                                             config.dmrs_symbol_mask);
 
   // Merge DM-RS RE pattern into the reserved RE patterns.
   reserved.merge(dmrs_pattern);

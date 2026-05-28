@@ -6,7 +6,6 @@
 #include "ocudu/fapi/p7/builders/dl_pdsch_pdu_builder.h"
 #include "ocudu/fapi_adaptor/precoding_matrix_table_generator.h"
 #include "ocudu/ran/pdcch/dci_format.h"
-#include "ocudu/ran/sch/sch_constants.h"
 #include <gtest/gtest.h>
 #include <random>
 
@@ -222,9 +221,7 @@ TEST(fapi_to_phy_pdsch_conversion_test, valid_pdu_conversion_success)
                     ASSERT_EQ(dl_dmrs_symbol, proc_pdu.dmrs_symbol_mask);
 
                     ASSERT_EQ(static_cast<unsigned>(ref_point), static_cast<unsigned>(proc_pdu.ref_point));
-                    ASSERT_TRUE(dmrs_type((config_type == dmrs_config_type::type1)
-                                              ? dmrs_type::options::TYPE1
-                                              : dmrs_type::options::TYPE2) == proc_pdu.dmrs);
+                    ASSERT_TRUE(config_type == proc_pdu.dmrs);
                     ASSERT_EQ(scrambling_id, proc_pdu.scrambling_id);
                     ASSERT_EQ(n_scid, proc_pdu.n_scid);
                     ASSERT_EQ(dmrs_cdm_grps_no_data, proc_pdu.nof_cdm_groups_without_data);

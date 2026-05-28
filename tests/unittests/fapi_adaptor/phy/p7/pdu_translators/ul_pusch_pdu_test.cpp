@@ -64,9 +64,7 @@ TEST(fapi_phy_ul_pusch_adaptor_test, valid_pdu_pass)
   } else if (const auto* tp_disabled =
                  std::get_if<fapi::ul_pusch_pdu::transform_precoding_disabled>(&fapi_pdu.transform_precoding)) {
     const auto& dmrs_config = std::get<pusch_processor::dmrs_configuration>(phy_pdu.dmrs);
-    ASSERT_EQ(dmrs_type((fapi_pdu.dmrs_type == dmrs_config_type::type1) ? dmrs_type::options::TYPE1
-                                                                        : dmrs_type::options::TYPE2),
-              dmrs_config.dmrs);
+    ASSERT_EQ(fapi_pdu.dmrs_type, dmrs_config.dmrs);
     ASSERT_EQ(fapi_pdu.pusch_dmrs_scrambling_id, dmrs_config.scrambling_id);
     ASSERT_EQ(fapi_pdu.nscid, dmrs_config.n_scid);
     ASSERT_EQ(tp_disabled->num_dmrs_cdm_grps_no_data, dmrs_config.nof_cdm_groups_without_data);

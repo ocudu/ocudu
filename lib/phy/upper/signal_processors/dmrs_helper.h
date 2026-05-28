@@ -7,10 +7,9 @@
 #include "ocudu/adt/complex.h"
 #include "ocudu/adt/span.h"
 #include "ocudu/phy/support/mask_types.h"
-#include "ocudu/phy/upper/dmrs_mapping.h"
 #include "ocudu/phy/upper/sequence_generators/pseudo_random_generator.h"
+#include "ocudu/ran/dmrs/dmrs.h"
 #include "ocudu/ran/resource_allocation/rb_bitmap.h"
-#include "ocudu/ran/resource_block.h"
 #include <array>
 
 namespace ocudu {
@@ -57,6 +56,6 @@ struct dmrs_pxsch_parameters {
 /// \param type        Specifies the DM-RS configuration type.
 /// \param i_dmrs_port The DM-RS port index, indicating the specific configuration to retrieve.
 /// \return The DM-RS parameters for the specified channel and configuration type.
-dmrs_pxsch_parameters get_pxsch_dmrs_params(dmrs_type type, unsigned i_dmrs_port);
+dmrs_pxsch_parameters get_pxsch_dmrs_params(dmrs_config_type type, unsigned i_dmrs_port);
 
 } // namespace ocudu

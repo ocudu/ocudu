@@ -137,7 +137,7 @@ private:
                                              pusch_processor_result_notifier&       notifier_,
                                              const resource_grid_reader&            grid_,
                                              const pdu_t&                           pdu_,
-                                             const dmrs_type&                       dmrs_type_,
+                                             dmrs_config_type                       dmrs_type_,
                                              unsigned                               cdm_)
     {
       // Set new PUSCH reception parameters. Use exchange for verifying that previous receptions are not overwritten.
@@ -205,7 +205,7 @@ private:
     /// Pointer to the PDU describing the processed PUSCH transmission.
     const pdu_t* pdu = nullptr;
     /// DM-RS type.
-    dmrs_type used_dmrs_type = dmrs_type::TYPE1;
+    dmrs_config_type used_dmrs_type = dmrs_config_type::type1;
     /// Number of CDM groups without data.
     unsigned nof_cdm_groups_without_data = 2;
   };
@@ -247,7 +247,7 @@ private:
                     const dmrs_pusch_estimator_results&    est_results,
                     const resource_grid_reader&            grid,
                     const pdu_t&                           pdu,
-                    const dmrs_type&                       dmrs_type,
+                    dmrs_config_type                       dmrs_type,
                     unsigned                               nof_cdm_groups_without_data);
 };
 

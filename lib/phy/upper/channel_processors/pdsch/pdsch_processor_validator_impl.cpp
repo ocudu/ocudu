@@ -25,7 +25,7 @@ error_type<std::string> pdsch_processor_validator_impl::is_valid(const pdsch_pro
   using namespace units::literals;
 
   unsigned         nof_symbols_slot = get_nsymb_per_slot(pdu.cp);
-  dmrs_config_type dmrs_config = (pdu.dmrs == dmrs_type::TYPE1) ? dmrs_config_type::type1 : dmrs_config_type::type2;
+  dmrs_config_type dmrs_config      = pdu.dmrs;
 
   // The frequency allocation is not compatible with the BWP parameters.
   if (!pdu.freq_alloc.is_bwp_valid(pdu.bwp_start_rb, pdu.bwp_size_rb)) {
@@ -78,7 +78,7 @@ error_type<std::string> pdsch_processor_validator_impl::is_valid(const pdsch_pro
   }
 
   // Only DM-RS Type 1 is supported.
-  if (pdu.dmrs != dmrs_type::TYPE1) {
+  if (pdu.dmrs != dmrs_config_type::type1) {
     return make_unexpected("Only DM-RS Type 1 is currently supported.");
   }
 

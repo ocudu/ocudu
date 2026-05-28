@@ -3,9 +3,8 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "pdsch_modulator_impl.h"
-#include "ocudu/ocuduvec/bit.h"
 #include "ocudu/phy/support/resource_grid_mapper.h"
-#include "ocudu/support/math/math_utils.h"
+#include "ocudu/phy/upper/dmrs_mapping.h"
 
 using namespace ocudu;
 
@@ -48,8 +47,11 @@ void pdsch_modulator_impl::map(resource_grid_writer& grid,
   re_pattern_list reserved(config.reserved);
 
   // Get DM-RS RE pattern.
-  re_pattern dmrs_pattern = config.dmrs_config_type.get_dmrs_pattern(
-      config.bwp.start(), config.bwp.length(), config.nof_cdm_groups_without_data, config.dmrs_symb_pos);
+  re_pattern dmrs_pattern = get_dmrs_pattern(config.dmrs_type,
+                                             config.bwp.start(),
+                                             config.bwp.length(),
+                                             config.nof_cdm_groups_without_data,
+                                             config.dmrs_symb_pos);
 
   // Merge DM-RS RE pattern into the reserved RE patterns.
   reserved.merge(dmrs_pattern);

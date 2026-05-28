@@ -146,7 +146,7 @@ struct formatter<ocudu::pusch_processor::pdu_t> {
       helper.format_if_verbose(ctx, "n_scr_id={}", dmrs_config.scrambling_id);
       helper.format_if_verbose(ctx, "n_scid={}", dmrs_config.n_scid);
       helper.format_if_verbose(ctx, "n_cdm_g_wd={}", dmrs_config.nof_cdm_groups_without_data);
-      helper.format_if_verbose(ctx, "dmrs_type={}", (dmrs_config.dmrs == ocudu::dmrs_type::TYPE1) ? 1 : 2);
+      helper.format_if_verbose(ctx, "dmrs_type={}", (dmrs_config.dmrs == ocudu::dmrs_config_type::type1) ? 1 : 2);
     } else {
       const auto& dmrs_config = std::get<ocudu::pusch_processor::dmrs_transform_precoding_configuration>(pdu.dmrs);
       helper.format_if_verbose(ctx, "n_rs_id={}", dmrs_config.n_rs_id);

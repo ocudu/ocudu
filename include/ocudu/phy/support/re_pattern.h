@@ -9,6 +9,7 @@
 #include "ocudu/adt/static_vector.h"
 #include "ocudu/phy/support/mask_types.h"
 #include "ocudu/ran/resource_allocation/rb_bitmap.h"
+#include <utility>
 
 namespace ocudu {
 
@@ -17,9 +18,9 @@ struct re_pattern {
   /// Common Resource Block (CRB) mask, relative to Point A.
   crb_bitmap crb_mask;
   /// Resource element mask per resource block. True entries indicate the resource elements affected by the pattern.
-  re_prb_mask re_mask{};
+  re_prb_mask re_mask;
   /// Symbol mask. True entries indicate the symbols affected by the pattern.
-  symbol_slot_mask symbols{};
+  symbol_slot_mask symbols;
 
   /// Default constructor. It allows instantiating the structure without using other constructors.
   re_pattern() = default;
@@ -33,12 +34,8 @@ struct re_pattern {
   /// \remark An assertion is triggered if \c rb_begin, \c rb_end or \c rb_stride value is not within the indicated
   /// interval.
   /// \remark An assertion is triggered if \c rb_end is less than \c rb_begin.
-  re_pattern(unsigned                rb_begin,
-             unsigned                rb_end,
-             unsigned                rb_stride,
-             const re_prb_mask&      re_mask_,
-             const symbol_slot_mask& symbols_) :
-    crb_mask(rb_end), re_mask(re_mask_), symbols(symbols_)
+  re_pattern(unsigned rb_begin, unsigned rb_end, unsigned rb_stride, re_prb_mask re_mask_, symbol_slot_mask symbols_) :
+    crb_mask(rb_end), re_mask(std::move(re_mask_)), symbols(std::move(symbols_))
   {
     static constexpr interval<unsigned, true> rb_begin_interval  = {0, MAX_NOF_PRBS - 1};
     static constexpr interval<unsigned, true> rb_stride_interval = {1, MAX_NOF_PRBS - 1};
@@ -129,7 +126,7 @@ public:
   re_pattern_list() = default;
 
   /// Implicit construction from a single RE pattern.
-  re_pattern_list(const re_pattern& pattern) : list() { list.emplace_back(pattern); }
+  re_pattern_list(const re_pattern& pattern) { list.emplace_back(pattern); }
 
   /// \brief Create a pattern list from an initializer list of patterns.
   ///

@@ -6,7 +6,7 @@
 
 #include "ocudu/phy/support/precoding_configuration.h"
 #include "ocudu/phy/support/re_pattern.h"
-#include "ocudu/phy/upper/dmrs_mapping.h"
+#include "ocudu/ran/dmrs/dmrs.h"
 #include "ocudu/ran/ptrs/ptrs.h"
 #include "ocudu/ran/rnti.h"
 #include "ocudu/ran/slot_point.h"
@@ -26,7 +26,7 @@ public:
     /// RNTI associated with the DCI scheduling the transmission, parameter \f$n_{RNTI}\f$.
     rnti_t rnti;
     /// DM-RS config type (\e dmrsConfigType).
-    dmrs_type dmrs_config_type;
+    dmrs_config_type dmrs_type;
     /// DM-RS for PDSCH reference point \e k in RBs, relative to Point A.
     unsigned reference_point_k_rb;
     /// PDSCH DMRS-Scrambling-ID (\e pdschDmrsScramblingId).

@@ -10,7 +10,6 @@
 #include "ocudu/ran/sch/tbs_calculator.h"
 #include "ocudu/support/benchmark_utils.h"
 #include "ocudu/support/executors/task_worker_pool.h"
-#include "ocudu/support/executors/unique_thread.h"
 #include "ocudu/support/math/math_utils.h"
 #include "ocudu/support/memory_pool/bounded_object_pool.h"
 #include "ocudu/support/ocudu_test.h"
@@ -23,9 +22,7 @@
 #include "ocudu/hal/phy/upper/channel_processors/hw_accelerator_factories.h"
 #include "ocudu/hal/phy/upper/channel_processors/hw_accelerator_pdsch_enc_factory.h"
 #endif // HWACC_PDSCH_ENABLED
-#include <condition_variable>
 #include <getopt.h>
-#include <mutex>
 #include <random>
 
 using namespace ocudu;
@@ -77,17 +74,17 @@ static constexpr concurrent_queue_policy queue_policy = concurrent_queue_policy:
 static constexpr auto sleep_duration = std::chrono::microseconds(10);
 
 // General test configuration parameters.
-static uint64_t                           nof_repetitions             = 10;
-static uint64_t                           nof_threads                 = max_nof_threads;
-static uint64_t                           batch_size_per_thread       = 100;
-static std::string                        selected_profile_name       = "default";
-static std::string                        ldpc_encoder_type           = "auto";
-static std::string                        pdsch_processor_type        = "flexible";
-static benchmark_modes                    benchmark_mode              = benchmark_modes::throughput_total;
-static std::string                        tracing_filename            = "";
-static dmrs_type                          dmrs                        = dmrs_type::TYPE1;
+static uint64_t                           nof_repetitions       = 10;
+static uint64_t                           nof_threads           = max_nof_threads;
+static uint64_t                           batch_size_per_thread = 100;
+static std::string                        selected_profile_name = "default";
+static std::string                        ldpc_encoder_type     = "auto";
+static std::string                        pdsch_processor_type  = "flexible";
+static benchmark_modes                    benchmark_mode        = benchmark_modes::throughput_total;
+static std::string                        tracing_filename;
+static dmrs_config_type                   dmrs                        = dmrs_config_type::type1;
 static unsigned                           nof_cdm_groups_without_data = 2;
-static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
+static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_mask =
     {false, false, true, false, false, false, false, true, false, false, false, true, false, false};
 static unsigned                                                 nof_pdsch_processor_concurrent_threads = 0;
 static unsigned                                                 cb_batch_length = std::numeric_limits<unsigned>::max();
@@ -462,7 +459,7 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
         tbs_config.n_prb                        = nof_prb;
         tbs_config.nof_layers                   = precoding_config.get_nof_layers();
         tbs_config.nof_symb_sh                  = profile.nof_symbols;
-        tbs_config.nof_dmrs_prb = dmrs.nof_dmrs_per_rb() * dmrs_symbol_mask.count() * nof_cdm_groups_without_data;
+        tbs_config.nof_dmrs_prb = get_nof_re_per_prb(dmrs) * dmrs_mask.count() * nof_cdm_groups_without_data;
         units::bits tbs         = tbs_calculator_calculate(tbs_config).to_bits();
 
         // Build the PDSCH PDU configuration.
@@ -476,8 +473,8 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
             .codewords                   = {pdsch_processor::codeword_description{mcs.modulation, i_rv}},
             .n_id                        = 0,
             .ref_point                   = pdsch_processor::pdu_t::CRB0,
-            .dmrs_symbol_mask            = dmrs_symbol_mask,
-            .dmrs                        = dmrs_type::options::TYPE1,
+            .dmrs_symbol_mask            = dmrs_mask,
+            .dmrs                        = dmrs_config_type::type1,
             .scrambling_id               = 0,
             .n_scid                      = false,
             .nof_cdm_groups_without_data = nof_cdm_groups_without_data,
@@ -775,7 +772,7 @@ int main(int argc, char** argv)
 
   // Inform of the benchmark configuration.
   if (benchmark_mode != benchmark_modes::silent) {
-    std::string hwacc_verbose = "";
+    std::string hwacc_verbose;
     if (ldpc_encoder_type == "acc100") {
       hwacc_verbose = fmt::format(" ({} VFs)", nof_threads);
     }

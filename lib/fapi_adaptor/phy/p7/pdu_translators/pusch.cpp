@@ -23,7 +23,7 @@ static void fill_codeword(uplink_pdu_slot_repository::pusch_pdu& pdu, const fapi
   pdu.harq_id = fapi_pdu.pusch_data->harq_process_id;
   pdu.tb_size = fapi_pdu.pusch_data->tb_size;
 
-  pdu.pdu.codeword = std::optional<pusch_processor::codeword_description>(std::move(cw));
+  pdu.pdu.codeword = std::optional<pusch_processor::codeword_description>(cw);
 }
 
 /// Fills the \c rb_allocation parameter of the PUSCH PDU.
@@ -102,11 +102,11 @@ void ocudu::fapi_adaptor::convert_pusch_fapi_to_phy(uplink_pdu_slot_repository::
     proc_pdu.dmrs = pusch_processor::dmrs_transform_precoding_configuration{.n_rs_id = tp_enabled->pusch_dmrs_identity};
   } else if (const auto* tp_disabled =
                  std::get_if<fapi::ul_pusch_pdu::transform_precoding_disabled>(&fapi_pdu.transform_precoding)) {
-    proc_pdu.dmrs = pusch_processor::dmrs_configuration{
-        .dmrs = fapi_pdu.dmrs_type == dmrs_config_type::type1 ? dmrs_type::options::TYPE1 : dmrs_type::options::TYPE2,
-        .scrambling_id               = fapi_pdu.pusch_dmrs_scrambling_id,
-        .n_scid                      = (fapi_pdu.nscid == 1),
-        .nof_cdm_groups_without_data = tp_disabled->num_dmrs_cdm_grps_no_data};
+    proc_pdu.dmrs =
+        pusch_processor::dmrs_configuration{.dmrs                        = fapi_pdu.dmrs_type,
+                                            .scrambling_id               = fapi_pdu.pusch_dmrs_scrambling_id,
+                                            .n_scid                      = (fapi_pdu.nscid == 1),
+                                            .nof_cdm_groups_without_data = tp_disabled->num_dmrs_cdm_grps_no_data};
   }
   proc_pdu.start_symbol_index = fapi_pdu.symbols.start();
   proc_pdu.nof_symbols        = fapi_pdu.symbols.length();

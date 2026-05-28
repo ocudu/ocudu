@@ -7,8 +7,10 @@
 #include "ocudu/adt/expected.h"
 #include "ocudu/adt/static_vector.h"
 #include "ocudu/phy/antenna_ports.h"
+#include "ocudu/phy/support/mask_types.h"
 #include "ocudu/phy/support/rb_allocation.h"
-#include "ocudu/phy/upper/dmrs_mapping.h"
+#include "ocudu/ran/cyclic_prefix.h"
+#include "ocudu/ran/dmrs/dmrs.h"
 #include "ocudu/ran/pusch/pusch_context.h"
 #include "ocudu/ran/sch/ldpc_base_graph.h"
 #include "ocudu/ran/sch/sch_mcs.h"
@@ -66,7 +68,7 @@ public:
   /// Collects the DM-RS parameters.
   struct dmrs_configuration {
     /// Indicates the DM-RS type.
-    dmrs_type dmrs;
+    dmrs_config_type dmrs;
     /// \brief Parameter \f$N^{n_{SCID}}_{ID}\f$ TS38.211 Section 6.4.1.1.1.
     ///
     /// It is equal to:

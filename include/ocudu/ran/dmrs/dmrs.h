@@ -18,7 +18,7 @@ inline unsigned to_symbol_index(dmrs_typeA_position pos)
   return static_cast<unsigned>(pos);
 }
 
-/// Type of DMRS to be used in DL and UL.
+/// \brief Type of DM-RS to be used in DL and UL.
 /// \remark See TS 38.331, DMRS-DownlinkConfig and DMRS-UplinkConfig.
 enum class dmrs_config_type { type1 = 1, type2, not_set };
 
@@ -31,8 +31,10 @@ inline dmrs_additional_positions uint_to_dmrs_additional_positions(uint8_t dmrs_
   return static_cast<dmrs_additional_positions>(dmrs_add_pos);
 }
 
-/// \brief The maximum number of OFDM symbols for DL front loaded DMRS. If set to len2, the UE determines the actual
-/// number of DM-RS symbols by the associated DCI. (see TS 38.214, clause 7.4.1.1.2).
+/// \brief The maximum number of OFDM symbols for DL front loaded DM-RS.
+///
+/// If set to len2, the UE determines the actual number of DM-RS symbols by the associated DCI. (see TS 38.214,
+/// clause 7.4.1.1.2).
 /// \remark See TS 38.214, DMRS-DownlinkConfig.
 enum class dmrs_max_length { len1 = 1, len2, not_set };
 
@@ -48,7 +50,20 @@ constexpr unsigned get_max_nof_cdm_groups_without_data(dmrs_config_type type)
   return type == dmrs_config_type::type1 ? 2 : 3;
 }
 
-/// \brief Data type used to represent a DMRS symbol mask for PDSCH and PUSCH transmissions.
+/// Returns a string with the DM-RS type.
+constexpr const char* to_string(dmrs_config_type type)
+{
+  ocudu_assert(type != dmrs_config_type::not_set, "Invalid DM-RS type.");
+  return (type == dmrs_config_type::type1) ? "Type1" : "Type2";
+}
+
+/// FMT formatting function
+inline std::string format_as(dmrs_config_type type)
+{
+  return to_string(type);
+}
+
+/// \brief Data type used to represent a DM-RS symbol mask for PDSCH and PUSCH transmissions.
 ///
 /// Each bit set in the bitset represents a symbol within the slot. The first bit corresponds to the first symbol.
 using dmrs_symbol_mask = bounded_bitset<14>;

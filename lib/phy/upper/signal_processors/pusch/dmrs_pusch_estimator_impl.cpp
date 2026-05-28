@@ -6,7 +6,6 @@
 #include "../dmrs_helper.h"
 #include "ocudu/ocuduvec/copy.h"
 #include "ocudu/ocuduvec/sc_prod.h"
-#include "ocudu/phy/upper/channel_estimation.h"
 
 using namespace ocudu;
 
@@ -14,10 +13,10 @@ void dmrs_pusch_estimator_impl::estimate(dmrs_pusch_estimator_notifier& notifier
                                          const resource_grid_reader&    grid,
                                          const configuration&           config)
 {
-  dmrs_type type         = config.get_dmrs_type();
-  unsigned  nof_rx_ports = config.rx_ports.size();
-  nof_tx_layers          = config.get_nof_tx_layers();
-  nof_re                 = config.rb_mask.size() * NOF_SUBCARRIERS_PER_RB;
+  dmrs_config_type type         = config.get_dmrs_type();
+  unsigned         nof_rx_ports = config.rx_ports.size();
+  nof_tx_layers                 = config.get_nof_tx_layers();
+  nof_re                        = config.rb_mask.size() * NOF_SUBCARRIERS_PER_RB;
   ofdm_symbols.set(config.first_symbol, config.first_symbol + config.nof_symbols);
 
   ocudu_assert(nof_rx_ports <= ch_estimator.size(),
@@ -30,7 +29,7 @@ void dmrs_pusch_estimator_impl::estimate(dmrs_pusch_estimator_notifier& notifier
 
   // Prepare DM-RS symbol buffer dimensions.
   re_measurement_dimensions dims;
-  dims.nof_subc    = config.rb_mask.count() * type.nof_dmrs_per_rb();
+  dims.nof_subc    = config.rb_mask.count() * get_nof_re_per_prb(type);
   dims.nof_symbols = config.symbols_mask.count();
   dims.nof_slices  = nof_tx_layers;
 
@@ -99,14 +98,14 @@ void dmrs_pusch_estimator_impl::sequence_generation(span<cf_t>           sequenc
 
   // Generate sequence.
   dmrs_sequence_generate(
-      sequence, *prg, amplitude, DMRS_REF_POINT_K_TO_POINT_A, sequence_config.type.nof_dmrs_per_rb(), config.rb_mask);
+      sequence, *prg, amplitude, DMRS_REF_POINT_K_TO_POINT_A, get_nof_re_per_prb(sequence_config.type), config.rb_mask);
 }
 
 void dmrs_pusch_estimator_impl::generate(dmrs_symbol_list&        symbols,
                                          span<layer_dmrs_pattern> mask,
                                          const configuration&     cfg)
 {
-  dmrs_type type = cfg.get_dmrs_type();
+  dmrs_config_type type = cfg.get_dmrs_type();
 
   // For each symbol in the transmission generate DMRS for layer 0.
   for (unsigned ofdm_symbol_index = cfg.first_symbol,

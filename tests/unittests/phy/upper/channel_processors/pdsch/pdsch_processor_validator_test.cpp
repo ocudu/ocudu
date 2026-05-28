@@ -27,7 +27,7 @@ const pdsch_processor::pdu_t base_pdu = {.context                     = std::nul
                                          .n_id                        = 1,
                                          .ref_point                   = pdsch_processor::pdu_t::CRB0,
                                          .dmrs_symbol_mask            = {0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0},
-                                         .dmrs                        = dmrs_type::TYPE1,
+                                         .dmrs                        = dmrs_config_type::type1,
                                          .scrambling_id               = 0,
                                          .n_scid                      = 0,
                                          .nof_cdm_groups_without_data = 1,
@@ -100,7 +100,7 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
      R"(The symbol allocation \(i\.e\., \[2, 15\)\) exceeds the slot size \(i\.e\., 14\)\.)"},
     {[] {
        pdsch_processor::pdu_t pdu = base_pdu;
-       pdu.dmrs                   = dmrs_type::TYPE2;
+       pdu.dmrs                   = dmrs_config_type::type2;
        return pdu;
      },
      R"(Only DM-RS Type 1 is currently supported.)"},

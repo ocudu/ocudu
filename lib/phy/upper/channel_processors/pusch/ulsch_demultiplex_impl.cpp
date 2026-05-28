@@ -36,9 +36,9 @@ static unsigned get_ulsch_demultiplex_l1_csi(const symbol_slot_mask& dmrs_symbol
 }
 
 static unsigned
-get_ulsch_demultiplex_nof_re_prb_dmrs(dmrs_type dmrs_, unsigned nof_cdm_groups_without_data, unsigned nof_prb)
+get_ulsch_demultiplex_nof_re_prb_dmrs(dmrs_config_type dmrs, unsigned nof_cdm_groups_without_data, unsigned nof_prb)
 {
-  dmrs_config_type dmrs = (dmrs_ == dmrs_type::TYPE1) ? dmrs_config_type::type1 : dmrs_config_type::type2;
+  ocudu_assert(dmrs != dmrs_config_type::not_set, "Invalid DM-RS type.");
 
   // Check whether the number of CDM groups without data is valid.
   ocudu_assert(nof_cdm_groups_without_data >= 1 &&
@@ -258,7 +258,8 @@ void ulsch_demultiplex_impl::on_new_block(span<const log_likelihood_ratio> new_d
     // Bypass buffer if no UCI and no samples are stored in the buffer.
     if ((softbit_count == 0) && (harq_ack == nullptr) && (csi_part1 == nullptr) && (csi_part2 == nullptr) &&
         (sch_data != nullptr)) {
-      return sch_data->on_new_softbits(new_data);
+      sch_data->on_new_softbits(new_data);
+      return;
     }
 
     unsigned block_size = std::min(static_cast<unsigned>(new_data.size()), nof_softbits - softbit_count);

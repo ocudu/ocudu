@@ -39,7 +39,7 @@ public:
   /// Parameters for pseudo-random sequence.
   struct pseudo_random_sequence_configuration {
     /// DL DM-RS configuration type.
-    dmrs_type type;
+    dmrs_config_type type;
     /// Number of transmit layers.
     unsigned nof_tx_layers;
     /// PUSCH DM-RS scrambling ID.
@@ -99,13 +99,13 @@ public:
     ///
     /// The DM-RS type is always 1 when low-PAPR sequences are used. Otherwise, it is specified in the sequence
     /// configuration.
-    dmrs_type get_dmrs_type() const
+    dmrs_config_type get_dmrs_type() const
     {
       if (std::holds_alternative<pseudo_random_sequence_configuration>(sequence_config)) {
         return std::get<pseudo_random_sequence_configuration>(sequence_config).type;
       }
 
-      return dmrs_type::TYPE1;
+      return dmrs_config_type::type1;
     }
   };
 

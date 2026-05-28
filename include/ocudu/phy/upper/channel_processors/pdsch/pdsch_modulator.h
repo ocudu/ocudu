@@ -4,16 +4,14 @@
 
 #pragma once
 
-#include "ocudu/adt/span.h"
-#include "ocudu/adt/static_vector.h"
+#include "ocudu/adt/bit_buffer.h"
 #include "ocudu/phy/support/precoding_configuration.h"
 #include "ocudu/phy/support/rb_allocation.h"
 #include "ocudu/phy/support/re_pattern.h"
 #include "ocudu/phy/support/resource_grid_writer.h"
-#include "ocudu/phy/upper/channel_modulation/modulation_mapper.h"
-#include "ocudu/phy/upper/dmrs_mapping.h"
-#include "ocudu/ran/cyclic_prefix.h"
+#include "ocudu/ran/dmrs/dmrs.h"
 #include "ocudu/ran/resource_allocation/ofdm_symbol_range.h"
+#include "ocudu/ran/sch/modulation_scheme.h"
 
 namespace ocudu {
 
@@ -53,7 +51,7 @@ public:
     /// DM-RS symbol positions as a mask.
     symbol_slot_mask dmrs_symb_pos;
     /// Indicates the DMRS configuration type.
-    dmrs_type dmrs_config_type;
+    dmrs_config_type dmrs_type;
     /// Number of DMRS CDM groups without data.
     unsigned nof_cdm_groups_without_data;
     /// Provides \f$n_{ID}\f$ from TS38.211 Section 7.3.1.1 Scrambling. Range is (0...1023).

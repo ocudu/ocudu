@@ -130,7 +130,7 @@ error_type<std::string> pusch_processor_validator_impl::is_valid(const pusch_pro
   if (std::holds_alternative<pusch_processor::dmrs_configuration>(pdu.dmrs)) {
     const auto& dmrs_config = std::get<pusch_processor::dmrs_configuration>(pdu.dmrs);
     // Only DM-RS Type 1 is supported.
-    if (dmrs_config.dmrs != dmrs_type::TYPE1) {
+    if (dmrs_config.dmrs != dmrs_config_type::type1) {
       return make_unexpected("Only DM-RS Type 1 is currently supported.");
     }
 

@@ -5,10 +5,11 @@
 #include "du_low_config_translator.h"
 #include "apps/services/worker_manager/worker_manager_config.h"
 #include "du_low_config.h"
-#include "ocudu/du/du_cell_config.h"
+#include "ocudu/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "ocudu/phy/upper/upper_phy_factories.h"
 #include "ocudu/ran/duplex_mode.h"
 #include "ocudu/ran/prach/prach_configuration.h"
+#include "ocudu/ran/pusch/pusch_constants.h"
 
 using namespace ocudu;
 

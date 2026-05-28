@@ -123,9 +123,9 @@ int main(int argc, char** argv)
 
     // Test DM-RS Type 1 generation.
     {
-      dmrs_config.type          = dmrs_type::options::TYPE1;
+      dmrs_config.type          = dmrs_config_type::type1;
       unsigned nof_dmrs_symbols = dmrs_config.rb_mask.count() * dmrs_config.symbols_mask.count() *
-                                  dmrs_config.type.nof_dmrs_per_rb() * topology.nof_layers;
+                                  get_nof_re_per_prb(dmrs_config.type) * topology.nof_layers;
 
       std::string meas_descr = fmt::to_string(topology.nof_ports) + " ports x " + fmt::to_string(topology.nof_layers) +
                                " layers, DM-RS Type 1 ";
@@ -137,9 +137,9 @@ int main(int argc, char** argv)
 
     // Test DM-RS Type 2 generation.
     {
-      dmrs_config.type          = dmrs_type::options::TYPE2;
+      dmrs_config.type          = dmrs_config_type::type2;
       unsigned nof_dmrs_symbols = dmrs_config.rb_mask.count() * dmrs_config.symbols_mask.count() *
-                                  dmrs_config.type.nof_dmrs_per_rb() * topology.nof_layers;
+                                  get_nof_re_per_prb(dmrs_config.type) * topology.nof_layers;
 
       std::string meas_descr = fmt::to_string(topology.nof_ports) + " ports x " + fmt::to_string(topology.nof_layers) +
                                " layers, DM-RS Type 2 ";

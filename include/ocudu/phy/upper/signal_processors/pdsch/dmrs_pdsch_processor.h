@@ -4,8 +4,10 @@
 
 #pragma once
 
+#include "ocudu/phy/support/mask_types.h"
 #include "ocudu/phy/support/precoding_configuration.h"
-#include "ocudu/phy/upper/dmrs_mapping.h"
+#include "ocudu/ran/dmrs/dmrs.h"
+#include "ocudu/ran/resource_allocation/rb_bitmap.h"
 #include "ocudu/ran/slot_point.h"
 
 namespace ocudu {
@@ -23,7 +25,7 @@ public:
     /// Reference point for PDSCH DM-RS \e k in RBs.
     unsigned reference_point_k_rb;
     /// DM-RS config type (\e dmrsConfigType).
-    dmrs_type type;
+    dmrs_config_type type;
     /// PDSCH DMRS-Scrambling-ID (\e pdschDmrsScramblingId).
     unsigned scrambling_id;
     /// DM-RS sequence initialization (\f$n_{SCID}\f$).

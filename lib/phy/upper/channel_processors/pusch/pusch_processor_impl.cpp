@@ -148,12 +148,12 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   // Get RB mask relative to Point A. It assumes PUSCH is never interleaved.
   crb_bitmap rb_mask = pdu.freq_alloc.get_crb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
-  bool      enable_transform_precoding  = false;
-  unsigned  scrambling_id               = 0;
-  unsigned  n_rs_id                     = 0;
-  bool      n_scid                      = false;
-  unsigned  nof_cdm_groups_without_data = 2;
-  dmrs_type dmrs_type                   = ocudu::dmrs_type::TYPE1;
+  bool             enable_transform_precoding  = false;
+  unsigned         scrambling_id               = 0;
+  unsigned         n_rs_id                     = 0;
+  bool             n_scid                      = false;
+  unsigned         nof_cdm_groups_without_data = 2;
+  dmrs_config_type dmrs_type                   = dmrs_config_type::type1;
   if (std::holds_alternative<ocudu::pusch_processor::dmrs_configuration>(pdu.dmrs)) {
     const auto& dmrs_config     = std::get<ocudu::pusch_processor::dmrs_configuration>(pdu.dmrs);
     scrambling_id               = dmrs_config.scrambling_id;
@@ -199,7 +199,7 @@ void pusch_processor_impl::process_data(span<uint8_t>                          d
                                         const dmrs_pusch_estimator_results&    est_results,
                                         const resource_grid_reader&            grid,
                                         const pdu_t&                           pdu,
-                                        const dmrs_type&                       dmrs_type,
+                                        dmrs_config_type                       dmrs_type,
                                         unsigned                               nof_cdm_groups_without_data)
 {
   using namespace units::literals;
@@ -224,20 +224,20 @@ void pusch_processor_impl::process_data(span<uint8_t>                          d
 
   // Configure the UL SCH transmission.
   ulsch_configuration ulsch_config;
-  ulsch_config.tbs                   = units::bytes(data.size()).to_bits();
-  ulsch_config.mcs_descr             = pdu.mcs_descr;
-  ulsch_config.nof_harq_ack_bits     = units::bits(pdu.uci.nof_harq_ack);
-  ulsch_config.nof_csi_part1_bits    = units::bits(pdu.uci.nof_csi_part1);
-  ulsch_config.nof_csi_part2_bits    = 0_bits;
-  ulsch_config.alpha_scaling         = pdu.uci.alpha_scaling;
-  ulsch_config.beta_offset_harq_ack  = pdu.uci.beta_offset_harq_ack;
-  ulsch_config.beta_offset_csi_part1 = pdu.uci.beta_offset_csi_part1;
-  ulsch_config.beta_offset_csi_part2 = pdu.uci.beta_offset_csi_part2;
-  ulsch_config.nof_rb                = nof_rb;
-  ulsch_config.start_symbol_index    = pdu.start_symbol_index;
-  ulsch_config.nof_symbols           = pdu.nof_symbols;
-  ulsch_config.dmrs_type        = (dmrs_type == dmrs_type::TYPE1 ? dmrs_config_type::type1 : dmrs_config_type::type2);
-  ulsch_config.dmrs_symbol_mask = pdu.dmrs_symbol_mask;
+  ulsch_config.tbs                         = units::bytes(data.size()).to_bits();
+  ulsch_config.mcs_descr                   = pdu.mcs_descr;
+  ulsch_config.nof_harq_ack_bits           = units::bits(pdu.uci.nof_harq_ack);
+  ulsch_config.nof_csi_part1_bits          = units::bits(pdu.uci.nof_csi_part1);
+  ulsch_config.nof_csi_part2_bits          = 0_bits;
+  ulsch_config.alpha_scaling               = pdu.uci.alpha_scaling;
+  ulsch_config.beta_offset_harq_ack        = pdu.uci.beta_offset_harq_ack;
+  ulsch_config.beta_offset_csi_part1       = pdu.uci.beta_offset_csi_part1;
+  ulsch_config.beta_offset_csi_part2       = pdu.uci.beta_offset_csi_part2;
+  ulsch_config.nof_rb                      = nof_rb;
+  ulsch_config.start_symbol_index          = pdu.start_symbol_index;
+  ulsch_config.nof_symbols                 = pdu.nof_symbols;
+  ulsch_config.dmrs_type                   = dmrs_type;
+  ulsch_config.dmrs_symbol_mask            = pdu.dmrs_symbol_mask;
   ulsch_config.nof_cdm_groups_without_data = nof_cdm_groups_without_data;
   ulsch_config.nof_layers                  = pdu.nof_tx_layers;
   ulsch_config.contains_dc                 = overlap_dc;
@@ -331,7 +331,7 @@ void pusch_processor_impl::process_data(span<uint8_t>                          d
   demod_config.start_symbol_index          = pdu.start_symbol_index;
   demod_config.nof_symbols                 = pdu.nof_symbols;
   demod_config.dmrs_symb_pos               = pdu.dmrs_symbol_mask;
-  demod_config.dmrs_config_type            = demux_config.dmrs;
+  demod_config.dmrs_type                   = demux_config.dmrs;
   demod_config.nof_cdm_groups_without_data = ulsch_config.nof_cdm_groups_without_data;
   demod_config.n_id                        = pdu.n_id;
   demod_config.nof_tx_layers               = pdu.nof_tx_layers;

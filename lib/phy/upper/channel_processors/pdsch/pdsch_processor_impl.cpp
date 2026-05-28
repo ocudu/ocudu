@@ -125,6 +125,7 @@ void pdsch_processor_impl::modulate(resource_grid_writer& grid, span<const bit_b
   modulator_config.freq_allocation = pdu.freq_alloc;
   modulator_config.time_alloc      = {pdu.start_symbol_index, pdu.start_symbol_index + pdu.nof_symbols};
   modulator_config.dmrs_symb_pos   = pdu.dmrs_symbol_mask;
+  modulator_config.dmrs_type       = pdu.dmrs;
   modulator_config.nof_cdm_groups_without_data = pdu.nof_cdm_groups_without_data;
   modulator_config.n_id                        = pdu.n_id;
   modulator_config.scaling                     = convert_dB_to_amplitude(-pdu.ratio_pdsch_data_to_sss_dB);

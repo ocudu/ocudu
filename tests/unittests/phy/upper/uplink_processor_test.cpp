@@ -13,7 +13,7 @@
 #include "rx_buffer_pool_test_doubles.h"
 #include "signal_processors/srs/srs_estimator_test_doubles.h"
 #include "upper_phy_rx_results_notifier_test_doubles.h"
-#include "ocudu/phy/upper/upper_phy_factories.h"
+#include "ocudu/phy/upper/channel_coding/ldpc/ldpc.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -29,8 +29,7 @@ public:
     srs_executor(1),
     prach_executor(1),
     grid_reader_spy(max_nof_layers, max_nof_symbols, max_nof_prb),
-    grid_writer_spy(max_nof_layers, max_nof_symbols, max_nof_prb),
-    grid_spy(nullptr)
+    grid_writer_spy(max_nof_layers, max_nof_symbols, max_nof_prb)
   {
   }
 
@@ -98,7 +97,7 @@ protected:
                   .rx_ports      = {0, 1, 2, 3},
                   .dmrs_symbol_mask =
                       {false, false, true, false, false, false, false, false, false, false, false, true, false, false},
-                  .dmrs               = pusch_processor::dmrs_configuration{.dmrs                        = dmrs_type::TYPE1,
+                  .dmrs               = pusch_processor::dmrs_configuration{.dmrs                        = dmrs_config_type::type1,
                                                                             .scrambling_id               = 0,
                                                                             .n_scid                      = false,
                                                                             .nof_cdm_groups_without_data = 2},
@@ -140,7 +139,7 @@ protected:
 
   resource_grid_reader_spy grid_reader_spy;
   resource_grid_writer_spy grid_writer_spy;
-  resource_grid_spy*       grid_spy;
+  resource_grid_spy*       grid_spy = nullptr;
   phy_tap_spy*             tap_spy;
 };
 
