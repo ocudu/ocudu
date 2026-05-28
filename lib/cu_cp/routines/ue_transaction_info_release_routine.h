@@ -43,9 +43,9 @@ private:
   ngap_interface*                                ngap = nullptr;
 
   // E1 reset messages per CU-UP.
-  std::map<cu_up_index_t, cu_cp_reset>           e1_reset_per_cu_up;
-  std::map<cu_up_index_t, cu_cp_reset>::iterator cu_up_id_it;
-  cu_up_processor*                               cu_up = nullptr;
+  std::map<cu_cp_cu_up_index_t, cu_cp_reset>           e1_reset_per_cu_up;
+  std::map<cu_cp_cu_up_index_t, cu_cp_reset>::iterator cu_up_id_it;
+  cu_up_processor*                                     cu_up = nullptr;
 
   unsigned          ues_remaining_count{0};
   manual_event_flag all_ues_reset;

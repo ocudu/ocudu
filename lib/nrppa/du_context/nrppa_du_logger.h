@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "ocudu/cu_cp/cu_cp_types.h"
+#include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/support/format/fmt_to_c_str.h"
 #include "ocudu/support/format/prefixed_logger.h"
 #include "fmt/format.h"
@@ -14,7 +14,7 @@ namespace ocudu::ocucp {
 class nrppa_du_log_prefix
 {
 public:
-  nrppa_du_log_prefix(du_index_t du_index)
+  nrppa_du_log_prefix(cu_cp_du_index_t du_index)
   {
     fmt::memory_buffer buffer;
     fmt::format_to(std::back_inserter(buffer), "du={}: ", fmt::underlying(du_index));

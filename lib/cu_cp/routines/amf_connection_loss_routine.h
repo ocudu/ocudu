@@ -7,16 +7,14 @@
 #include "../cu_cp_controller/cu_cp_controller.h"
 #include "../ue_manager/ue_manager_impl.h"
 #include "ocudu/support/async/async_task.h"
-#include "ocudu/support/timers.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// \brief Handles the reconnection between the CU-CP and AMF.
 class amf_connection_loss_routine
 {
 public:
-  amf_connection_loss_routine(const amf_index_t                 amf_index_,
+  amf_connection_loss_routine(cu_cp_amf_index_t                 amf_index_,
                               const cu_cp_configuration&        cu_cp_cfg_,
                               std::vector<plmn_identity>&       plmns_,
                               du_processor_repository&          du_db_,
@@ -30,7 +28,7 @@ public:
   void operator()(coro_context<async_task<void>>& ctx);
 
 private:
-  const amf_index_t                 amf_index;
+  const cu_cp_amf_index_t           amf_index;
   const cu_cp_configuration&        cu_cp_cfg;
   std::vector<plmn_identity>&       plmns;
   du_processor_repository&          du_db;
@@ -40,5 +38,4 @@ private:
   ocudulog::basic_logger&           logger;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

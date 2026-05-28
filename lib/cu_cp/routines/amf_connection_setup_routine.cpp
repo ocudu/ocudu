@@ -3,25 +3,25 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "amf_connection_setup_routine.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/ngap/ngap_setup.h"
+#include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/support/async/coroutine.h"
 
 using namespace ocudu;
 using namespace ocucp;
 
 async_task<bool>
-ocudu::ocucp::start_amf_connection_setup(ngap_repository&                                    ngap_db,
-                                         std::unordered_map<amf_index_t, std::atomic<bool>>& amfs_connected,
-                                         cu_cp_ng_setup_complete_notifier*                   ng_setup_notifier)
+ocudu::ocucp::start_amf_connection_setup(ngap_repository&                                          ngap_db,
+                                         std::unordered_map<cu_cp_amf_index_t, std::atomic<bool>>& amfs_connected,
+                                         cu_cp_ng_setup_complete_notifier*                         ng_setup_notifier)
 {
   return launch_async<amf_connection_setup_routine>(ngap_db, amfs_connected, ng_setup_notifier);
 }
 
 amf_connection_setup_routine::amf_connection_setup_routine(
-    ngap_repository&                                    ngap_db_,
-    std::unordered_map<amf_index_t, std::atomic<bool>>& amfs_connected_,
-    cu_cp_ng_setup_complete_notifier*                   ng_setup_notifier_) :
+    ngap_repository&                                          ngap_db_,
+    std::unordered_map<cu_cp_amf_index_t, std::atomic<bool>>& amfs_connected_,
+    cu_cp_ng_setup_complete_notifier*                         ng_setup_notifier_) :
   ngap_db(ngap_db_),
   amfs_connected(amfs_connected_),
   ng_setup_notifier(ng_setup_notifier_),

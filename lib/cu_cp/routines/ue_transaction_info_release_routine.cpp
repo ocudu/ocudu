@@ -106,7 +106,7 @@ void ue_transaction_info_release_routine::prepare_e1_reset_messages()
       continue;
     }
 
-    if (ue->get_cu_up_index() == cu_up_index_t::invalid) {
+    if (ue->get_cu_up_index() == cu_cp_cu_up_index_t::invalid) {
       logger.debug("ue={}: UE was not connected to CU-UP or has invalid CU-UP index. Skipping E1Reset", ue_idx);
       continue;
     }

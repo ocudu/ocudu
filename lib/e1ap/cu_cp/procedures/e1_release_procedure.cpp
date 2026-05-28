@@ -14,7 +14,7 @@ using namespace ocudu;
 using namespace ocucp;
 
 e1_release_procedure::e1_release_procedure(const asn1::e1ap::e1_release_request_s& request_,
-                                           cu_up_index_t                           cu_up_index_,
+                                           cu_cp_cu_up_index_t                     cu_up_index_,
                                            e1ap_message_notifier&                  pdu_notifier_,
                                            e1ap_cu_cp_notifier&                    cu_cp_notifier_,
                                            e1ap_ue_context_list&                   ue_list_,

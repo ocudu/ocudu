@@ -23,7 +23,7 @@ using namespace asn1::e1ap;
 using namespace ocucp;
 
 e1ap_cu_cp_impl::e1ap_cu_cp_impl(const e1ap_configuration&      e1ap_cfg_,
-                                 cu_up_index_t                  cu_up_index_,
+                                 cu_cp_cu_up_index_t            cu_up_index_,
                                  e1ap_message_notifier&         e1ap_pdu_notifier_,
                                  e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
                                  e1ap_cu_cp_notifier&           cu_cp_notifier_,

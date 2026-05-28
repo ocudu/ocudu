@@ -85,7 +85,10 @@ public:
                                                             ue_mng.find_ue(ue_index)->get_up_resource_manager(),
                                                             meas_handler);
   }
-  byte_buffer handle_target_cell_sib1_required(du_index_t du_index, nr_cell_global_id_t cgi) override { return {}; }
+  byte_buffer handle_target_cell_sib1_required(cu_cp_du_index_t du_index, nr_cell_global_id_t cgi) override
+  {
+    return {};
+  }
   async_task<void> handle_transaction_info_loss(const ue_transaction_info_loss_event& ev) override
   {
     return launch_no_op_task();
@@ -120,7 +123,7 @@ du_processor_test::du_processor_test() :
   ocudulog::init();
 
   // Create and start DU processor.
-  du_processor_config_t du_cfg = {uint_to_du_index(0),
+  du_processor_config_t du_cfg = {uint_to_cu_cp_du_index(0),
                                   cu_cp_cfg,
                                   ocudulog::fetch_basic_logger("CU-CP"),
                                   &du_conn_notifier,

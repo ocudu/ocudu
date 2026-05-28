@@ -351,7 +351,7 @@ public:
 
   void on_n2_handover_execution(cu_cp_ue_index_t ue_index) override {}
 
-  void on_n2_disconnection(amf_index_t amf_index) override {}
+  void on_n2_disconnection(cu_cp_amf_index_t amf_index) override {}
 
   cu_cp_ue_context_release_command last_command;
   byte_buffer                      last_handover_command;
@@ -395,7 +395,7 @@ public:
     logger.error("DL UE associated NRPPa transport failed. Cause: NRPPa transport PDUs not supported.");
   }
 
-  void on_dl_non_ue_associated_nrppa_transport_pdu(amf_index_t amf_index, const byte_buffer& nrppa_pdu) override
+  void on_dl_non_ue_associated_nrppa_transport_pdu(cu_cp_amf_index_t amf_index, const byte_buffer& nrppa_pdu) override
   {
     logger.error("DL non UE associated NRPPa transport failed. Cause: NRPPa transport PDUs not supported.");
   }

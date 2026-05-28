@@ -16,12 +16,12 @@ ngap_task_scheduler::ngap_task_scheduler(timer_manager&          timers_,
   // init AMF control loops
   const size_t number_of_pending_amf_procedures = 16;
   for (size_t i = 0; i < max_nof_amfs; ++i) {
-    amf_ctrl_loop.emplace(uint_to_amf_index(i), number_of_pending_amf_procedures);
+    amf_ctrl_loop.emplace(uint_to_cu_cp_amf_index(i), number_of_pending_amf_procedures);
   }
 }
 
 // AMF task scheduler
-void ngap_task_scheduler::handle_amf_async_task(amf_index_t amf_index, async_task<void>&& task)
+void ngap_task_scheduler::handle_amf_async_task(cu_cp_amf_index_t amf_index, async_task<void>&& task)
 {
   logger.debug("amf={}: Scheduling async task", amf_index);
   amf_ctrl_loop.at(amf_index).schedule(std::move(task));

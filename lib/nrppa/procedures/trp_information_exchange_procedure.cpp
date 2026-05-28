@@ -13,13 +13,13 @@ using namespace ocudu;
 using namespace ocucp;
 
 trp_information_exchange_procedure::trp_information_exchange_procedure(
-    amf_index_t                      amf_index_,
-    const trp_information_request_t& request_,
-    uint16_t                         transaction_id_,
-    nrppa_cu_cp_notifier&            cu_cp_notifier_,
-    std::map<trp_id_t, du_index_t>&  trp_id_to_du_idx_,
-    nrppa_du_context_list&           du_ctxt_list_,
-    ocudulog::basic_logger&          logger_) :
+    cu_cp_amf_index_t                     amf_index_,
+    const trp_information_request_t&      request_,
+    uint16_t                              transaction_id_,
+    nrppa_cu_cp_notifier&                 cu_cp_notifier_,
+    std::map<trp_id_t, cu_cp_du_index_t>& trp_id_to_du_idx_,
+    nrppa_du_context_list&                du_ctxt_list_,
+    ocudulog::basic_logger&               logger_) :
   amf_index(amf_index_),
   trp_info_request(request_),
   transaction_id(transaction_id_),
@@ -30,8 +30,8 @@ trp_information_exchange_procedure::trp_information_exchange_procedure(
 {
 }
 
-static bool all_trp_ids_known(const std::vector<trp_id_t>&          trp_list,
-                              const std::map<trp_id_t, du_index_t>& trp_id_to_du_idx)
+static bool all_trp_ids_known(const std::vector<trp_id_t>&                trp_list,
+                              const std::map<trp_id_t, cu_cp_du_index_t>& trp_id_to_du_idx)
 {
   return std::all_of(trp_list.begin(), trp_list.end(), [&](const trp_id_t& trp_id) {
     return trp_id_to_du_idx.find(trp_id) != trp_id_to_du_idx.end();

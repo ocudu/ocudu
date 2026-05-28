@@ -23,7 +23,7 @@ public:
   ~shared_du_connection_context() { disconnect(); }
 
   /// Assign a DU repository index to the context. This is called when the DU repository is actually created.
-  void connect_du(du_index_t du_idx_)
+  void connect_du(cu_cp_du_index_t du_idx_)
   {
     du_idx      = du_idx_;
     msg_handler = &parent.dus.get_du_processor(du_idx).get_f1ap_handler();
@@ -43,7 +43,7 @@ public:
     // Notify DU that the connection is closed.
     parent.handle_f1c_gw_connection_closed(du_idx);
 
-    du_idx      = du_index_t::invalid;
+    du_idx      = cu_cp_du_index_t::invalid;
     msg_handler = nullptr;
   }
 
@@ -60,7 +60,7 @@ public:
 
 private:
   du_connection_manager& parent;
-  du_index_t             du_idx      = du_index_t::invalid;
+  cu_cp_du_index_t       du_idx      = cu_cp_du_index_t::invalid;
   f1ap_message_handler*  msg_handler = nullptr;
 };
 
@@ -142,8 +142,8 @@ du_connection_manager::handle_new_du_connection(std::unique_ptr<f1ap_message_not
   // We dispatch the task to allocate a DU processor and "attach" it to the notifier
   while (not cu_cp_exec.execute([this, shared_ctxt, sender_notifier = std::move(f1ap_tx_pdu_notifier)]() mutable {
     // Create a new DU processor.
-    du_index_t du_index = dus.add_du(std::move(sender_notifier));
-    if (du_index == du_index_t::invalid) {
+    cu_cp_du_index_t du_index = dus.add_du(std::move(sender_notifier));
+    if (du_index == cu_cp_du_index_t::invalid) {
       logger.warning("Rejecting new DU connection. Cause: Failed to create a new DU");
       return;
     }
@@ -165,7 +165,7 @@ du_connection_manager::handle_new_du_connection(std::unique_ptr<f1ap_message_not
   return rx_pdu_notifier;
 }
 
-void du_connection_manager::handle_f1c_gw_connection_closed(du_index_t du_idx)
+void du_connection_manager::handle_f1c_gw_connection_closed(cu_cp_du_index_t du_idx)
 {
   // Note: Called from within CU-CP execution context.
 
@@ -209,12 +209,12 @@ void du_connection_manager::stop()
     }
 
     // For each created DU connection context, launch the deletion routine.
-    std::vector<du_index_t> du_idxs;
+    std::vector<cu_cp_du_index_t> du_idxs;
     du_idxs.reserve(du_connections.size());
     for (const auto& [du_idx, ctxt] : du_connections) {
       du_idxs.push_back(du_idx);
     }
-    for (du_index_t du_idx : du_idxs) {
+    for (cu_cp_du_index_t du_idx : du_idxs) {
       // Disconnect DU notifier.
       du_connections[du_idx]->disconnect();
     }

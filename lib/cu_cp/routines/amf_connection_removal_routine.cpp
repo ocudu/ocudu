@@ -10,15 +10,15 @@ using namespace ocudu;
 using namespace ocucp;
 
 async_task<void>
-ocudu::ocucp::start_amf_connection_removal(ngap_repository&                                    ngap_db,
-                                           std::unordered_map<amf_index_t, std::atomic<bool>>& amfs_connected)
+ocudu::ocucp::start_amf_connection_removal(ngap_repository&                                          ngap_db,
+                                           std::unordered_map<cu_cp_amf_index_t, std::atomic<bool>>& amfs_connected)
 {
   return launch_async<amf_connection_removal_routine>(ngap_db, amfs_connected);
 }
 
 amf_connection_removal_routine::amf_connection_removal_routine(
-    ngap_repository&                                    ngap_db_,
-    std::unordered_map<amf_index_t, std::atomic<bool>>& amfs_connected_) :
+    ngap_repository&                                          ngap_db_,
+    std::unordered_map<cu_cp_amf_index_t, std::atomic<bool>>& amfs_connected_) :
   amfs_connected(amfs_connected_), ngaps(ngap_db_.get_ngaps()), logger(ocudulog::fetch_basic_logger("CU-CP"))
 {
 }

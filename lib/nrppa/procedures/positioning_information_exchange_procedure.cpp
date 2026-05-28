@@ -19,7 +19,7 @@ using namespace ocucp;
 positioning_information_exchange_procedure::positioning_information_exchange_procedure(
     const positioning_information_request_t& request_,
     uint16_t                                 transaction_id_,
-    du_index_t                               du_index_,
+    cu_cp_du_index_t                         du_index_,
     nrppa_du_context_list&                   du_ctxt_list_,
     nrppa_cu_cp_notifier&                    cu_cp_notifier_,
     ocudulog::basic_logger&                  logger_) :

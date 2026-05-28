@@ -20,7 +20,7 @@ using cond_recfg_id_t = bounded_integer<uint8_t, 1, 8>;
 struct cu_cp_cho_target_candidate {
   pci_t               pci = INVALID_PCI;
   nr_cell_global_id_t cgi;
-  du_index_t          du_index = du_index_t::invalid; ///< Invalid for inter-CU (Xn) candidates.
+  cu_cp_du_index_t    du_index = cu_cp_du_index_t::invalid; ///< Invalid for inter-CU (Xn) candidates.
   /// Xn-C peer index for inter-CU candidates. When set, the target is served by a remote CU-CP.
   std::optional<xnc_peer_index_t> xnc_index;
 };
@@ -28,7 +28,7 @@ struct cu_cp_cho_target_candidate {
 /// \brief Request for intra-CU CHO orchestration.
 struct cu_cp_intra_cu_cho_request {
   cu_cp_ue_index_t                        source_ue_index = cu_cp_ue_index_t::invalid;
-  du_index_t                              source_du_index = du_index_t::invalid;
+  cu_cp_du_index_t                        source_du_index = cu_cp_du_index_t::invalid;
   std::vector<cu_cp_cho_target_candidate> targets;
   std::chrono::milliseconds               timeout = std::chrono::milliseconds{10000};
   /// Runtime override for the T1 conditional event threshold. Replaces the configured value when set.

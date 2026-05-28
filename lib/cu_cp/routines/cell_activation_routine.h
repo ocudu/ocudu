@@ -5,12 +5,12 @@
 #pragma once
 
 #include "../du_processor/du_processor.h"
-#include "../ue_manager/ue_manager_impl.h"
+#include "../du_processor/du_processor_repository.h"
+#include "ocudu/cu_cp/cu_cp_configuration.h"
 #include "ocudu/f1ap/cu_cp/f1ap_cu_configuration_update.h"
 #include <unordered_set>
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// \brief Handles the activation of the cell.
 class cell_activation_routine
@@ -43,11 +43,10 @@ private:
   f1ap_gnb_cu_configuration_update_response f1ap_cu_cfg_update_response;
   bool                                      routine_success = true;
 
-  std::unordered_set<plmn_identity> plmns_to_activate;
-  std::vector<du_index_t>           du_indexes;
-  std::vector<du_index_t>::iterator du_idx_it;
-  du_processor*                     du_proc = nullptr;
+  std::unordered_set<plmn_identity>       plmns_to_activate;
+  std::vector<cu_cp_du_index_t>           du_indexes;
+  std::vector<cu_cp_du_index_t>::iterator du_idx_it;
+  du_processor*                           du_proc = nullptr;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

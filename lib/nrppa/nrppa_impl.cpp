@@ -12,7 +12,7 @@
 #include "procedures/positioning_information_exchange_procedure.h"
 #include "procedures/trp_information_exchange_procedure.h"
 #include "ocudu/asn1/nrppa/common.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
+#include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/support/async/coroutine.h"
 #include "fmt/format.h"
 #include <variant>
@@ -154,8 +154,8 @@ void nrppa_impl::on_meas_report_timer_expired(cu_cp_ue_index_t ue_index)
   handle_e_cid_meas_result(ue_index, meas_result.value());
 }
 
-void nrppa_impl::handle_new_nrppa_pdu(const byte_buffer&                          nrppa_pdu,
-                                      std::variant<cu_cp_ue_index_t, amf_index_t> ue_or_amf_index)
+void nrppa_impl::handle_new_nrppa_pdu(const byte_buffer&                                nrppa_pdu,
+                                      std::variant<cu_cp_ue_index_t, cu_cp_amf_index_t> ue_or_amf_index)
 {
   // Parse NRPPa-PDU.
   asn1::nrppa::nr_ppa_pdu_c nrppa_msg;
@@ -183,8 +183,8 @@ void nrppa_impl::handle_new_nrppa_pdu(const byte_buffer&                        
   }
 }
 
-void nrppa_impl::handle_initiating_message(const init_msg_s&                           msg,
-                                           std::variant<cu_cp_ue_index_t, amf_index_t> ue_or_amf_index)
+void nrppa_impl::handle_initiating_message(const init_msg_s&                                 msg,
+                                           std::variant<cu_cp_ue_index_t, cu_cp_amf_index_t> ue_or_amf_index)
 {
   switch (msg.value.type().value) {
     case nr_ppa_elem_procs_o::init_msg_c::types_opts::e_c_id_meas_initiation_request:
@@ -198,7 +198,7 @@ void nrppa_impl::handle_initiating_message(const init_msg_s&                    
       break;
     case nr_ppa_elem_procs_o::init_msg_c::types_opts::trp_info_request:
       handle_trp_information_request(
-          msg.value.trp_info_request(), std::get<amf_index_t>(ue_or_amf_index), msg.nrppatransaction_id);
+          msg.value.trp_info_request(), std::get<cu_cp_amf_index_t>(ue_or_amf_index), msg.nrppatransaction_id);
       break;
     case nr_ppa_elem_procs_o::init_msg_c::types_opts::positioning_info_request:
       handle_positioning_information_request(
@@ -211,7 +211,7 @@ void nrppa_impl::handle_initiating_message(const init_msg_s&                    
       break;
     case nr_ppa_elem_procs_o::init_msg_c::types_opts::meas_request:
       handle_measurement_request(
-          msg.value.meas_request(), std::get<amf_index_t>(ue_or_amf_index), msg.nrppatransaction_id);
+          msg.value.meas_request(), std::get<cu_cp_amf_index_t>(ue_or_amf_index), msg.nrppatransaction_id);
       break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
@@ -300,7 +300,7 @@ void nrppa_impl::handle_e_cid_meas_termination_command(const asn1::nrppa::e_c_id
 }
 
 void nrppa_impl::handle_trp_information_request(const asn1::nrppa::trp_info_request_s& msg,
-                                                amf_index_t                            amf_index,
+                                                cu_cp_amf_index_t                      amf_index,
                                                 uint16_t                               transaction_id)
 {
   logger.debug("Handling TRP Information Request");
@@ -319,7 +319,7 @@ void nrppa_impl::handle_positioning_information_request(const asn1::nrppa::posit
   logger.debug("Handling positioning information request");
 
   nrppa_cu_cp_ue_notifier* ue_notifier = cu_cp_notifier.on_new_nrppa_ue(ue_index);
-  du_index_t               du_index    = ue_notifier->get_du_index();
+  cu_cp_du_index_t         du_index    = ue_notifier->get_du_index();
 
   positioning_information_request_t request;
   request.ue_index = ue_index;
@@ -336,7 +336,7 @@ void nrppa_impl::handle_positioning_activation_request(const asn1::nrppa::positi
   logger.debug("Handling positioning activation request");
 
   nrppa_cu_cp_ue_notifier* ue_notifier = cu_cp_notifier.on_new_nrppa_ue(ue_index);
-  du_index_t               du_index    = ue_notifier->get_du_index();
+  cu_cp_du_index_t         du_index    = ue_notifier->get_du_index();
 
   positioning_activation_request_t request;
   request.ue_index = ue_index;
@@ -347,7 +347,7 @@ void nrppa_impl::handle_positioning_activation_request(const asn1::nrppa::positi
 }
 
 void nrppa_impl::handle_measurement_request(const asn1::nrppa::meas_request_s& msg,
-                                            amf_index_t                        amf_index,
+                                            cu_cp_amf_index_t                  amf_index,
                                             uint16_t                           transaction_id)
 {
   logger.debug("Handling Measurement Request");

@@ -55,7 +55,7 @@ static void remove_non_applicable_recommended_cells(cu_cp_paging_message& msg, c
                           recommended_cells.end());
 }
 
-bool paging_message_handler::handle_du_paging_message(du_index_t du_index, const cu_cp_paging_message& msg_before)
+bool paging_message_handler::handle_du_paging_message(cu_cp_du_index_t du_index, const cu_cp_paging_message& msg_before)
 {
   du_processor&                   du     = dus.get_du_processor(du_index);
   const du_configuration_context* du_cfg = du.get_context();

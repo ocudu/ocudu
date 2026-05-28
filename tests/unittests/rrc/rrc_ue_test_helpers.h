@@ -72,7 +72,7 @@ protected:
   void init()
   {
     // Add UE to UE manager.
-    allocated_ue_index = ue_mng.add_ue(du_index_t::min);
+    allocated_ue_index = ue_mng.add_ue(cu_cp_du_index_t::min);
     ASSERT_NE(allocated_ue_index, cu_cp_ue_index_t::invalid);
     ASSERT_FALSE(ue_mng.ue_admission_limit_reached());
 

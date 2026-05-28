@@ -5,22 +5,23 @@
 #pragma once
 
 #include "nrppa_meas_logger.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
+#include "ocudu/adt/expected.h"
+#include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/ran/positioning/positioning_ids.h"
 #include <unordered_map>
 
 namespace ocudu::ocucp {
 
 struct nrppa_meas_context {
-  amf_index_t   amf_index;
-  ran_meas_id_t ran_meas_id;
-  lmf_meas_id_t lmf_meas_id;
+  cu_cp_amf_index_t amf_index;
+  ran_meas_id_t     ran_meas_id;
+  lmf_meas_id_t     lmf_meas_id;
 
   std::vector<trp_id_t> trp_list;
 
   nrppa_meas_logger logger;
 
-  nrppa_meas_context(amf_index_t                  amf_index_,
+  nrppa_meas_context(cu_cp_amf_index_t            amf_index_,
                      ran_meas_id_t                ran_meas_id_,
                      lmf_meas_id_t                lmf_meas_id_,
                      const std::vector<trp_id_t>& trp_list_) :
@@ -45,7 +46,7 @@ public:
 
   nrppa_meas_context& operator[](lmf_meas_id_t lmf_meas_id);
 
-  nrppa_meas_context& add_measurement(amf_index_t                  amf_index,
+  nrppa_meas_context& add_measurement(cu_cp_amf_index_t            amf_index,
                                       ran_meas_id_t                ran_meas_id,
                                       lmf_meas_id_t                lmf_meas_id,
                                       const std::vector<trp_id_t>& trp_list);

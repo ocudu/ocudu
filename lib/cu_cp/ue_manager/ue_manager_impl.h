@@ -103,7 +103,7 @@ public:
   /// \return The UE index of the added UE. If the UE context couldn't be created, cu_cp_ue_index_t::invalid is
   /// returned. Note: No admission control is performed in this function, so the returned UE index may be valid even if
   /// the UE cannot be served.
-  cu_cp_ue_index_t add_ue(du_index_t du_index);
+  cu_cp_ue_index_t add_ue(cu_cp_du_index_t du_index);
 
   /// \brief Check if the UE admission limit has been reached.
   /// \note Admission is split from add_ue(). Callers should evaluate this function in conjunction with add_ue(),
@@ -119,8 +119,11 @@ public:
   /// \param[in] rnti The RNTI of the UE.
   /// \param[in] pcell_index The index of the PCell the UE is connected to.
   /// \return True if the update was successful, false otherwise.
-  bool
-  update_ue_context(cu_cp_ue_index_t ue_index, gnb_du_id_t du_id, pci_t pci, rnti_t rnti, du_cell_index_t pcell_index);
+  bool update_ue_context(cu_cp_ue_index_t      ue_index,
+                         gnb_du_id_t           du_id,
+                         pci_t                 pci,
+                         rnti_t                rnti,
+                         cu_cp_du_cell_index_t pcell_index);
 
   /// \brief Find the UE with the given UE index, thats DU context is set up.
   /// \param[in] ue_index Index of the UE to be found.
@@ -129,7 +132,7 @@ public:
 
   /// \brief Get the number of UEs connected to a specific DU.
   /// \return Number of UEs.
-  size_t get_nof_du_ues(du_index_t du_index);
+  size_t get_nof_du_ues(cu_cp_du_index_t du_index);
 
   // ngap
 

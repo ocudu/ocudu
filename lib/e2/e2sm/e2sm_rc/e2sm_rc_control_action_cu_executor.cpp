@@ -107,7 +107,7 @@ e2sm_rc_control_action_3_1_cu_executor::execute_ric_control_action(const e2sm_ri
   }
 
   auto source_du_index = cu_param_configurator.get_du_index(ue_index);
-  if (source_du_index == ocucp::du_index_t::invalid) {
+  if (source_du_index == cu_cp_du_index_t::invalid) {
     logger.error("Ignoring Handover Request. Cause: Couldn't find DU index for given UE-IDs.");
     return return_ctrl_failure(req);
   }
@@ -136,7 +136,7 @@ e2sm_rc_control_action_3_1_cu_executor::execute_ric_control_action(const e2sm_ri
   handover_req.cgi             = ho_ctrl_cfg.target_cell_id;
   handover_req.target_pci      = cu_param_configurator.get_pci(ho_ctrl_cfg.target_cell_id);
 
-  if (handover_req.target_du_index == ocucp::du_index_t::invalid) {
+  if (handover_req.target_du_index == cu_cp_du_index_t::invalid) {
     logger.error("Ignoring Handover Request. Cause: Couldn't find DU index for CGI=[plmn: {}, nci: {}]",
                  ho_ctrl_cfg.target_cell_id.plmn_id.to_string(),
                  ho_ctrl_cfg.target_cell_id.nci.value());

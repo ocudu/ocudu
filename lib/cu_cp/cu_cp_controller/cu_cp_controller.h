@@ -45,7 +45,7 @@ public:
 
   xnc_connection_manager& xnc_connection_handler() { return xnc_mng; }
 
-  bool handle_du_setup_request(du_index_t du_idx, const std::set<plmn_identity>& plmn_ids);
+  bool handle_du_setup_request(cu_cp_du_index_t du_idx, const std::set<plmn_identity>& plmn_ids);
 
   /// \brief Determines whether the CU-CP should accept new UE connections.
   bool request_ue_setup() const override;

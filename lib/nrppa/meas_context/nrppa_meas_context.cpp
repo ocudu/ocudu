@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "nrppa_meas_context.h"
+#include "ocudu/support/ocudu_assert.h"
 
 using namespace ocudu;
 using namespace ocucp;
@@ -23,7 +24,7 @@ nrppa_meas_context& nrppa_meas_context_list::operator[](lmf_meas_id_t lmf_meas_i
   return measurements.at(lmf_meas_id);
 }
 
-nrppa_meas_context& nrppa_meas_context_list::add_measurement(amf_index_t                  amf_index,
+nrppa_meas_context& nrppa_meas_context_list::add_measurement(cu_cp_amf_index_t            amf_index,
                                                              ran_meas_id_t                ran_meas_id,
                                                              lmf_meas_id_t                lmf_meas_id,
                                                              const std::vector<trp_id_t>& trp_list)

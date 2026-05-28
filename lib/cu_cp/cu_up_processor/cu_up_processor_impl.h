@@ -29,7 +29,7 @@ public:
 
   // Getter functions.
   e1ap_cu_cp&                          get_e1ap_handler() override { return *e1ap; }
-  cu_up_index_t                        get_cu_up_index() override { return context.cu_up_index; }
+  cu_cp_cu_up_index_t                  get_cu_up_index() override { return context.cu_up_index; }
   cu_up_processor_context&             get_context() override { return context; }
   e1ap_message_handler&                get_e1ap_message_handler() override { return *e1ap; }
   e1ap_bearer_context_manager&         get_e1ap_bearer_context_manager() override { return *e1ap; }

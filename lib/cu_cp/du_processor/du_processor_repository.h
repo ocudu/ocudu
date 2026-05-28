@@ -5,19 +5,15 @@
 #pragma once
 
 #include "../adapters/du_processor_adapters.h"
-#include "../adapters/f1ap_adapters.h"
-#include "../adapters/ngap_adapters.h"
 #include "../cu_cp_impl_interface.h"
 #include "../ue_manager/ue_manager_impl.h"
 #include "du_configuration_manager.h"
 #include "du_metrics_handler.h"
 #include "ocudu/cu_cp/common_task_scheduler.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
+#include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/support/async/async_task.h"
-#include <unordered_map>
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 struct cu_cp_configuration;
 
@@ -41,24 +37,24 @@ public:
   /// \brief Checks whether a cell with the specified PCI is served by any of the connected DUs.
   /// \param[in] pci The serving cell PCI.
   /// \return The index of the DU serving the given PCI.
-  du_index_t find_du(pci_t pci);
+  cu_cp_du_index_t find_du(pci_t pci);
 
   /// \brief Checks whether a cell with the specified CGI is served by any of the connected DUs.
   /// \param[in] cgi The serving cell CGI.
   /// \return The index of the DU serving the given CGI.
-  du_index_t find_du(const nr_cell_global_id_t& cgi);
+  cu_cp_du_index_t find_du(const nr_cell_global_id_t& cgi);
 
   /// \brief Find a DU object.
   /// \param[in] du_index The index of the DU processor object.
   /// \return A pointer to the DU processor object, nullptr if the DU processor object is not found.
-  du_processor* find_du_processor(du_index_t du_index);
+  du_processor* find_du_processor(cu_cp_du_index_t du_index);
 
   /// \brief Find a DU object.
   /// \param[in] du_index The index of the DU processor object.
   /// \return The DU processor object.
-  du_processor& get_du_processor(du_index_t du_index);
+  du_processor& get_du_processor(cu_cp_du_index_t du_index);
 
-  std::vector<du_index_t> get_du_processor_indexes() const;
+  std::vector<cu_cp_du_index_t> get_du_processor_indexes() const;
 
   std::vector<cu_cp_metrics_report::du_info> handle_du_metrics_report_request() const override;
 
@@ -68,12 +64,12 @@ public:
 
   /// \brief Adds a DU processor object to the CU-CP.
   /// \return The DU index of the added DU processor object.
-  du_index_t add_du(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier);
+  cu_cp_du_index_t add_du(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier);
 
   /// \brief Launches task that removes the specified DU processor object from the CU-CP.
   /// \param[in] du_index The index of the DU processor to delete.
   /// \return asynchronous task for the DU processor removal.
-  async_task<void> remove_du(du_index_t du_index);
+  async_task<void> remove_du(cu_cp_du_index_t du_index);
 
   /// Number of DUs managed by the CU-CP.
   size_t get_nof_dus() const { return du_db.size(); }
@@ -91,15 +87,14 @@ private:
 
   /// \brief Get the next available index from the DU processor database.
   /// \return The DU index.
-  du_index_t get_next_du_index();
+  cu_cp_du_index_t get_next_du_index();
 
   du_repository_config    cfg;
   ocudulog::basic_logger& logger;
 
-  std::map<du_index_t, du_context> du_db;
+  std::map<cu_cp_du_index_t, du_context> du_db;
 
   du_configuration_manager du_cfg_mng;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

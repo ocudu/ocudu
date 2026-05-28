@@ -45,8 +45,8 @@ std::vector<async_task<cu_cp_cho_candidate>> conditional_handover_coordinator_ro
     req.cho_preparation.emplace();
     req.cho_preparation->cond_recfg_id = static_cast<cond_recfg_id_t>(i + 1);
 
-    const du_index_t target_du = target.du_index;
-    byte_buffer      sib1      = du_db.get_du_processor(target_du).get_mobility_handler().get_packed_sib1(target.cgi);
+    const cu_cp_du_index_t target_du = target.du_index;
+    byte_buffer            sib1 = du_db.get_du_processor(target_du).get_mobility_handler().get_packed_sib1(target.cgi);
 
     cu_cp_cho_candidate cand = {};
     cand.cond_recfg_id       = static_cast<cond_recfg_id_t>(i + 1);
@@ -92,7 +92,7 @@ void conditional_handover_coordinator_routine::operator()(coro_context<async_tas
 
   logger.debug("ue={}: \"{}\" started...", request.source_ue_index, name());
 
-  if (request.source_ue_index == cu_cp_ue_index_t::invalid || request.source_du_index == du_index_t::invalid ||
+  if (request.source_ue_index == cu_cp_ue_index_t::invalid || request.source_du_index == cu_cp_du_index_t::invalid ||
       request.targets.empty()) {
     logger.warning("CHO coordinator request is invalid");
     CORO_EARLY_RETURN(response);

@@ -15,14 +15,14 @@
 using namespace ocudu;
 using namespace ocucp;
 
-measurement_procedure::measurement_procedure(amf_index_t                           amf_index_,
-                                             const measurement_request_t&          request_,
-                                             uint16_t                              transaction_id_,
-                                             const std::map<trp_id_t, du_index_t>& trp_id_to_du_idx_,
-                                             nrppa_meas_context_list&              meas_ctxt_list_,
-                                             nrppa_du_context_list&                du_ctxt_list_,
-                                             nrppa_cu_cp_notifier&                 cu_cp_notifier_,
-                                             ocudulog::basic_logger&               logger_) :
+measurement_procedure::measurement_procedure(cu_cp_amf_index_t                           amf_index_,
+                                             const measurement_request_t&                request_,
+                                             uint16_t                                    transaction_id_,
+                                             const std::map<trp_id_t, cu_cp_du_index_t>& trp_id_to_du_idx_,
+                                             nrppa_meas_context_list&                    meas_ctxt_list_,
+                                             nrppa_du_context_list&                      du_ctxt_list_,
+                                             nrppa_cu_cp_notifier&                       cu_cp_notifier_,
+                                             ocudulog::basic_logger&                     logger_) :
   amf_index(amf_index_),
   meas_request(request_),
   transaction_id(transaction_id_),
@@ -101,7 +101,7 @@ bool measurement_procedure::prepare_du_measurement_information_requests()
   for (const auto& trp_meas_req_item : meas_request.trp_meas_request_list) {
     trp_id_t trp_id = trp_meas_req_item.trp_id;
     if (trp_id_to_du_idx.find(trp_id) != trp_id_to_du_idx.end()) {
-      du_index_t du_index = trp_id_to_du_idx.at(trp_id);
+      cu_cp_du_index_t du_index = trp_id_to_du_idx.at(trp_id);
       // If the DU index is not found in the du_meas_requests map, create it.
       if (du_meas_requests.find(du_index) == du_meas_requests.end()) {
         measurement_request_t du_meas_request;
@@ -136,7 +136,7 @@ bool measurement_procedure::prepare_du_measurement_information_requests()
   return true;
 }
 
-void measurement_procedure::handle_du_measurement_information_outcome(du_index_t du_index)
+void measurement_procedure::handle_du_measurement_information_outcome(cu_cp_du_index_t du_index)
 {
   if (du_meas_outcome.has_value()) {
     if (procedure_outcome.has_value()) {

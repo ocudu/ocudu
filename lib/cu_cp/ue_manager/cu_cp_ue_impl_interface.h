@@ -26,10 +26,10 @@ public:
   virtual cu_cp_ue_index_t get_ue_index() const = 0;
 
   /// \brief Get the index of the DU where the UE is connected.
-  virtual du_index_t get_du_index() const = 0;
+  virtual cu_cp_du_index_t get_du_index() const = 0;
 
   /// \brief Get the CU-UP index of the UE.
-  virtual cu_up_index_t get_cu_up_index() const = 0;
+  virtual cu_cp_cu_up_index_t get_cu_up_index() const = 0;
 
   /// \brief Get the XN-C peer index of the UE.
   virtual xnc_peer_index_t get_xnc_peer_index() const = 0;

@@ -25,8 +25,8 @@ public:
   ~nrppa_impl();
 
   // See nrppa_message_handler for documentation.
-  void handle_new_nrppa_pdu(const byte_buffer&                          nrppa_pdu,
-                            std::variant<cu_cp_ue_index_t, amf_index_t> ue_or_amf_index) override;
+  void handle_new_nrppa_pdu(const byte_buffer&                                nrppa_pdu,
+                            std::variant<cu_cp_ue_index_t, cu_cp_amf_index_t> ue_or_amf_index) override;
 
   // See nrppa_ue_context_removal_handler for documentation.
   void remove_ue_context(cu_cp_ue_index_t ue_index) override;
@@ -50,8 +50,8 @@ private:
   /// \param[in] msg The received initiating message.
   /// \param[in] ue_or_amf_index The UE index for UE associated NRPPa messages or the AMF index for non UE associated
   /// NRPPa messages.
-  void handle_initiating_message(const asn1::nrppa::init_msg_s&              msg,
-                                 std::variant<cu_cp_ue_index_t, amf_index_t> ue_or_amf_index);
+  void handle_initiating_message(const asn1::nrppa::init_msg_s&                    msg,
+                                 std::variant<cu_cp_ue_index_t, cu_cp_amf_index_t> ue_or_amf_index);
 
   /// \brief Handle an E-CID measurement initiation request.
   void handle_e_cid_meas_initiation_request(const asn1::nrppa::e_c_id_meas_initiation_request_s& msg,
@@ -64,7 +64,7 @@ private:
 
   /// \brief Handle a TRP information request.
   void handle_trp_information_request(const asn1::nrppa::trp_info_request_s& msg,
-                                      amf_index_t                            amf_index,
+                                      cu_cp_amf_index_t                      amf_index,
                                       uint16_t                               transaction_id);
 
   /// \brief Handle a positioning information request.
@@ -78,8 +78,9 @@ private:
                                              uint16_t                                             transaction_id);
 
   /// \brief Handle a measurement request.
-  void
-  handle_measurement_request(const asn1::nrppa::meas_request_s& msg, amf_index_t amf_index, uint16_t transaction_id);
+  void handle_measurement_request(const asn1::nrppa::meas_request_s& msg,
+                                  cu_cp_amf_index_t                  amf_index,
+                                  uint16_t                           transaction_id);
 
   /// \brief Handle the reception of a successful outcome message.
   /// \param[in] outcome The successful outcome message.
@@ -97,8 +98,8 @@ private:
   nrppa_cu_cp_notifier&   cu_cp_notifier;
   common_task_scheduler&  common_task_sched;
 
-  std::map<plmn_identity, tac_t> plmn_to_tac;
-  std::map<trp_id_t, du_index_t> trp_id_to_du_idx;
+  std::map<plmn_identity, tac_t>       plmn_to_tac;
+  std::map<trp_id_t, cu_cp_du_index_t> trp_id_to_du_idx;
 };
 
 } // namespace ocudu::ocucp

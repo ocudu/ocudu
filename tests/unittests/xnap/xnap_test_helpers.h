@@ -75,7 +75,7 @@ public:
   cu_cp_ue_index_t request_new_ue_index_allocation(const nr_cell_global_id_t& cgi, const plmn_identity& plmn) override
   {
     if (ho_request_outcome) {
-      cu_cp_ue_index_t ue_index = ue_mng.add_ue(du_index_t::min);
+      cu_cp_ue_index_t ue_index = ue_mng.add_ue(cu_cp_du_index_t::min);
       if (ue_index == cu_cp_ue_index_t::invalid) {
         logger.error("Failed to create UE");
         return cu_cp_ue_index_t::invalid;

@@ -3,10 +3,10 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "du_processor_test_messages.h"
-#include "lib/f1ap/asn1_helpers.h"
-#include "lib/f1ap/cu_cp/f1ap_asn1_helpers.h"
 #include "lib/f1ap/cu_cp/procedures/f1_setup_procedure.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
+#include "ocudu/asn1/f1ap/common.h"
+#include "ocudu/asn1/f1ap/f1ap_pdu_contents.h"
 #include "ocudu/f1ap/f1ap_message.h"
 
 using namespace ocudu;
@@ -38,7 +38,7 @@ f1ap_message ocudu::ocucp::create_f1_setup_request_with_too_many_cells(const f1a
   msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
   msg.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list_present = true;
   auto& cells = msg.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list;
-  cells.resize(MAX_NOF_DU_CELLS + 1);
+  cells.resize(CU_CP_MAX_NOF_DU_CELLS + 1);
   for (unsigned i = 0; i != cells.size(); ++i) {
     cells[i].load_info_obj(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_ITEM);
     cells[i]->gnb_du_served_cells_item() = test_helpers::generate_served_cells_item(
@@ -56,7 +56,8 @@ void ocudu::ocucp::generate_f1_setup_request_with_too_many_cells(du_setup_reques
 
   f1_setup_req->gnb_du_served_cells_list_present = true;
 
-  for (int du_cell_idx_int = du_cell_index_to_uint(du_cell_index_t::min); du_cell_idx_int < MAX_NOF_DU_CELLS + 1;
+  for (int du_cell_idx_int = cu_cp_du_cell_index_to_uint(cu_cp_du_cell_index_t::min);
+       du_cell_idx_int < CU_CP_MAX_NOF_DU_CELLS + 1;
        du_cell_idx_int++) {
     f1_setup_req->gnb_du_served_cells_list.push_back({});
     f1_setup_req->gnb_du_served_cells_list.back().load_info_obj(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_ITEM);

@@ -39,17 +39,17 @@ public:
                                         const gnb_cu_ue_f1ap_id_t& gnb_cu_ue_f1ap_id) const = 0;
 
   /// Get index of the DU that serves the given UE.
-  virtual ocucp::du_index_t get_du_index(const cu_cp_ue_index_t& ue_index) const = 0;
+  virtual cu_cp_du_index_t get_du_index(const cu_cp_ue_index_t& ue_index) const = 0;
 
   /// Get DU index for a given NR Cell Global ID.
-  virtual ocucp::du_index_t get_du_index(const nr_cell_global_id_t& nr_cgi) const = 0;
+  virtual cu_cp_du_index_t get_du_index(const nr_cell_global_id_t& nr_cgi) const = 0;
 
   /// Get PCI for a given NR Cell Global ID.
   virtual pci_t get_pci(const nr_cell_global_id_t& nr_cgi) const = 0;
 
   /// Trigger UE Handover.
   virtual async_task<ocucp::cu_cp_intra_cu_handover_response>
-  trigger_handover(const ocucp::du_index_t&                      source_du_index,
+  trigger_handover(const cu_cp_du_index_t&                       source_du_index,
                    const ocucp::cu_cp_intra_cu_handover_request& handover_req) = 0;
 };
 

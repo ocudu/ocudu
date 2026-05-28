@@ -137,7 +137,8 @@ public:
   /// \brief Handles a DL non UE associated NRPPa transport.
   /// \param[in] amf_index The index of the AMF that received the NRPPa transport.
   /// \param[in] nrppa_pdu The NRPPa transport PDU.
-  virtual void handle_dl_non_ue_associated_nrppa_transport_pdu(amf_index_t amf_index, const byte_buffer& nrppa_pdu) = 0;
+  virtual void handle_dl_non_ue_associated_nrppa_transport_pdu(cu_cp_amf_index_t  amf_index,
+                                                               const byte_buffer& nrppa_pdu) = 0;
 
   /// \brief Handles Location Reporting Control message.
   virtual void handle_location_reporting_control_message(cu_cp_ue_index_t               ue_index,
@@ -145,7 +146,7 @@ public:
 
   /// \brief Handle N2 AMF connection drop.
   /// \param[in] amf_index The index of the dropped AMF.
-  virtual void handle_n2_disconnection(amf_index_t amf_index) = 0;
+  virtual void handle_n2_disconnection(cu_cp_amf_index_t amf_index) = 0;
 };
 
 /// Interface for the NRPPa notifier to communicate with the CU-CP.
@@ -162,8 +163,8 @@ public:
   /// \brief Handle a UL NRPPa PDU.
   /// \param[in] msg The NRPPa PDU.
   /// \param[in] ue_or_amf_index The UE index for UE associated NRPPa messages or the AMF index for non UE associated
-  virtual void handle_ul_nrppa_pdu(const byte_buffer&                          nrppa_pdu,
-                                   std::variant<cu_cp_ue_index_t, amf_index_t> ue_or_amf_index) = 0;
+  virtual void handle_ul_nrppa_pdu(const byte_buffer&                                nrppa_pdu,
+                                   std::variant<cu_cp_ue_index_t, cu_cp_amf_index_t> ue_or_amf_index) = 0;
 
   /// \brief Handle a TRP information request.
   /// \param[in] request The TRP information request.
@@ -196,7 +197,7 @@ public:
 
   /// \brief Handles the reception of an E1 Release Request message.
   /// \param[in] cu_up_index The index of the CU-UP processor.
-  virtual void handle_e1_release_request(cu_up_index_t cu_up_index) = 0;
+  virtual void handle_e1_release_request(cu_cp_cu_up_index_t cu_up_index) = 0;
 
   /// \brief Handle transaction information loss in the E1AP.
   virtual async_task<void> handle_transaction_info_loss(const ue_transaction_info_loss_event& ev) = 0;
@@ -217,7 +218,7 @@ public:
   /// \param[in] du_index The index of the DU the cell is connected to.
   /// \param[in] cgi The cell global id of the cell.
   /// \returns The packed SIB1 for the cell, if available. An empty byte_buffer otherwise.
-  virtual byte_buffer handle_target_cell_sib1_required(du_index_t du_index, nr_cell_global_id_t cgi) = 0;
+  virtual byte_buffer handle_target_cell_sib1_required(cu_cp_du_index_t du_index, nr_cell_global_id_t cgi) = 0;
 
   /// \brief Handle transaction information loss in the F1AP.
   virtual async_task<void> handle_transaction_info_loss(const ue_transaction_info_loss_event& ev) = 0;
@@ -403,8 +404,8 @@ public:
   /// \brief Handle an Intra CU handover.
   virtual async_task<cu_cp_intra_cu_handover_response>
   handle_intra_cu_handover_request(const cu_cp_intra_cu_handover_request& request,
-                                   du_index_t&                            source_du_index,
-                                   du_index_t&                            target_du_index) = 0;
+                                   cu_cp_du_index_t&                      source_du_index,
+                                   cu_cp_du_index_t&                      target_du_index) = 0;
 
   /// \brief Handle full intra-CU CHO coordinator request (prepare + execute/cancel).
   virtual async_task<cu_cp_intra_cu_cho_response>
@@ -448,7 +449,7 @@ public:
 
   /// \brief Handle AMF reconnections.
   /// \param[in] amf_index The index of the AMF that reconnected.
-  virtual void handle_amf_reconnection(amf_index_t amf_index) = 0;
+  virtual void handle_amf_reconnection(cu_cp_amf_index_t amf_index) = 0;
 };
 
 /// \brief Handler of the XNAP of the CU-CP. This interface is used to forward XNAP messages to the CU-CP.

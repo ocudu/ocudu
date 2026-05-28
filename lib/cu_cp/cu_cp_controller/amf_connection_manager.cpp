@@ -64,12 +64,12 @@ async_task<void> amf_connection_manager::disconnect_amf()
   return start_amf_connection_removal(ngaps, amfs_connected);
 }
 
-void amf_connection_manager::handle_amf_connection_loss(amf_index_t amf_index)
+void amf_connection_manager::handle_amf_connection_loss(cu_cp_amf_index_t amf_index)
 {
   amfs_connected.erase(amf_index);
 }
 
-void amf_connection_manager::reconnect_to_amf(amf_index_t               amf_index,
+void amf_connection_manager::reconnect_to_amf(cu_cp_amf_index_t         amf_index,
                                               ue_manager*               ue_mng,
                                               std::chrono::milliseconds amf_reconnection_retry_time)
 {
@@ -143,15 +143,15 @@ void amf_connection_manager::stop()
 
 bool amf_connection_manager::is_amf_connected(plmn_identity plmn) const
 {
-  amf_index_t amf_index = plmn_to_amf_index(plmn);
-  if (amf_index == amf_index_t::invalid) {
+  cu_cp_amf_index_t amf_index = plmn_to_amf_index(plmn);
+  if (amf_index == cu_cp_amf_index_t::invalid) {
     return false;
   }
 
   return is_amf_connected(amf_index);
 }
 
-bool amf_connection_manager::is_amf_connected(amf_index_t amf_index) const
+bool amf_connection_manager::is_amf_connected(cu_cp_amf_index_t amf_index) const
 {
   const auto& amf_connected = amfs_connected.find(amf_index);
   if (amf_connected == amfs_connected.end()) {
@@ -161,13 +161,13 @@ bool amf_connection_manager::is_amf_connected(amf_index_t amf_index) const
   return amf_connected->second.load(std::memory_order_relaxed);
 }
 
-void amf_connection_manager::handle_connection_setup_result(amf_index_t amf_index, bool success)
+void amf_connection_manager::handle_connection_setup_result(cu_cp_amf_index_t amf_index, bool success)
 {
   // Update AMF connection handler state.
   amfs_connected.emplace(amf_index, success);
 }
 
-amf_index_t amf_connection_manager::plmn_to_amf_index(plmn_identity plmn) const
+cu_cp_amf_index_t amf_connection_manager::plmn_to_amf_index(plmn_identity plmn) const
 {
   for (const auto& [amf_index, ngap] : ngaps.get_ngaps()) {
     for (auto& supported_plmn : ngap->get_ngap_context().get_supported_plmns()) {
@@ -177,5 +177,5 @@ amf_index_t amf_connection_manager::plmn_to_amf_index(plmn_identity plmn) const
     }
   }
 
-  return amf_index_t::invalid;
+  return cu_cp_amf_index_t::invalid;
 }

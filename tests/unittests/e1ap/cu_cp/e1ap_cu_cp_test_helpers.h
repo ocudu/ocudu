@@ -50,7 +50,7 @@ public:
     });
   }
 
-  void on_e1_release_request_received(cu_up_index_t cu_up_index) override
+  void on_e1_release_request_received(cu_cp_cu_up_index_t cu_up_index) override
   {
     logger.info("Received E1 Release Request for CU-UP {}", cu_up_index);
   }

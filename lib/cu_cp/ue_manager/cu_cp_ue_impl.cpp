@@ -7,17 +7,17 @@
 using namespace ocudu;
 using namespace ocucp;
 
-cu_cp_ue::cu_cp_ue(cu_cp_ue_index_t               ue_index_,
-                   du_index_t                     du_index_,
-                   timer_manager&                 timers_,
-                   task_executor&                 task_exec_,
-                   const up_resource_manager_cfg& up_cfg,
-                   const security_manager_config& sec_cfg,
-                   ue_task_scheduler_impl         task_sched_,
-                   std::optional<gnb_du_id_t>     du_id_,
-                   std::optional<pci_t>           pci_,
-                   std::optional<rnti_t>          c_rnti_,
-                   std::optional<du_cell_index_t> pcell_index_) :
+cu_cp_ue::cu_cp_ue(cu_cp_ue_index_t                     ue_index_,
+                   cu_cp_du_index_t                     du_index_,
+                   timer_manager&                       timers_,
+                   task_executor&                       task_exec_,
+                   const up_resource_manager_cfg&       up_cfg,
+                   const security_manager_config&       sec_cfg,
+                   ue_task_scheduler_impl               task_sched_,
+                   std::optional<gnb_du_id_t>           du_id_,
+                   std::optional<pci_t>                 pci_,
+                   std::optional<rnti_t>                c_rnti_,
+                   std::optional<cu_cp_du_cell_index_t> pcell_index_) :
   ue_index(ue_index_),
   task_sched(std::move(task_sched_)),
   up_mng(up_cfg),
@@ -36,7 +36,7 @@ cu_cp_ue::cu_cp_ue(cu_cp_ue_index_t               ue_index_,
     ue_ctxt.crnti = c_rnti_.value();
   }
 
-  if (pcell_index_.has_value() && pcell_index_.value() != du_cell_index_t::invalid) {
+  if (pcell_index_.has_value() && pcell_index_.value() != cu_cp_du_cell_index_t::invalid) {
     pcell_index = pcell_index_.value();
   }
 
@@ -51,7 +51,7 @@ cu_cp_ue::cu_cp_ue(cu_cp_ue_index_t               ue_index_,
   rna_update_timer          = timers_.create_unique_timer(task_exec_);
 }
 
-void cu_cp_ue::update_du_ue(gnb_du_id_t du_id_, pci_t pci_, rnti_t c_rnti_, du_cell_index_t pcell_index_)
+void cu_cp_ue::update_du_ue(gnb_du_id_t du_id_, pci_t pci_, rnti_t c_rnti_, cu_cp_du_cell_index_t pcell_index_)
 {
   if (du_id_ != gnb_du_id_t::invalid) {
     ue_ctxt.du_id = du_id_;
@@ -65,7 +65,7 @@ void cu_cp_ue::update_du_ue(gnb_du_id_t du_id_, pci_t pci_, rnti_t c_rnti_, du_c
     ue_ctxt.crnti = c_rnti_;
   }
 
-  if (pcell_index_ != du_cell_index_t::invalid) {
+  if (pcell_index_ != cu_cp_du_cell_index_t::invalid) {
     pcell_index = pcell_index_;
   }
 }

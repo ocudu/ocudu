@@ -45,7 +45,7 @@ public:
     return cu_cp_handler->handle_ue_context_release(request);
   }
 
-  void on_e1_release_request_received(cu_up_index_t cu_up_index) override
+  void on_e1_release_request_received(cu_cp_cu_up_index_t cu_up_index) override
   {
     ocudu_assert(cu_cp_handler != nullptr, "E1AP handler must not be nullptr");
     cu_cp_handler->handle_e1_release_request(cu_up_index);

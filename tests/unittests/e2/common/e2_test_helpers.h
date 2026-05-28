@@ -882,8 +882,8 @@ class dummy_e2_mobility_notifier : public ocucp::mobility_manager_cu_cp_notifier
 public:
   virtual async_task<ocucp::cu_cp_intra_cu_handover_response>
   on_intra_cu_handover_required(const ocucp::cu_cp_intra_cu_handover_request& request,
-                                ocucp::du_index_t                             source_du_index,
-                                ocucp::du_index_t                             target_du_index) override
+                                cu_cp_du_index_t                              source_du_index,
+                                cu_cp_du_index_t                              target_du_index) override
   {
     return launch_async([](coro_context<async_task<ocucp::cu_cp_intra_cu_handover_response>>& ctx) {
       CORO_BEGIN(ctx);
@@ -944,17 +944,14 @@ public:
     return uint_to_ue_index(1);
   }
 
-  ocucp::du_index_t get_du_index(const cu_cp_ue_index_t& ue_index) const override { return ocucp::uint_to_du_index(1); }
+  cu_cp_du_index_t get_du_index(const cu_cp_ue_index_t& ue_index) const override { return uint_to_cu_cp_du_index(1); }
 
-  ocucp::du_index_t get_du_index(const nr_cell_global_id_t& nr_cgi) const override
-  {
-    return ocucp::uint_to_du_index(1);
-  }
+  cu_cp_du_index_t get_du_index(const nr_cell_global_id_t& nr_cgi) const override { return uint_to_cu_cp_du_index(1); }
 
   pci_t get_pci(const nr_cell_global_id_t& nr_cgi) const override { return pci_t(1); }
 
   async_task<ocucp::cu_cp_intra_cu_handover_response>
-  trigger_handover(const ocucp::du_index_t&                      source_du_index,
+  trigger_handover(const cu_cp_du_index_t&                       source_du_index,
                    const ocucp::cu_cp_intra_cu_handover_request& handover_req) override
   {
     return launch_async([](coro_context<async_task<ocucp::cu_cp_intra_cu_handover_response>>& ctx) {

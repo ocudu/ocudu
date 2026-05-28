@@ -99,7 +99,7 @@ public:
   /// \param[in] du_index The index of the DU the cell is connected to.
   /// \param[in] cgi The cell global id of the target cell.
   /// \returns The packed SIB1 for the target cell, if available. An empty byte_buffer otherwise.
-  virtual byte_buffer on_target_cell_sib1_required(du_index_t du_index, nr_cell_global_id_t cgi) = 0;
+  virtual byte_buffer on_target_cell_sib1_required(cu_cp_du_index_t du_index, nr_cell_global_id_t cgi) = 0;
 
   /// \brief Notify the CU-CP to completly remove a UE from the CU-CP.
   /// \param[in] ue_index The index of the UE to remove.

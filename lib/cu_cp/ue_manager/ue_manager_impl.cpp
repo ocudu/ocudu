@@ -31,9 +31,9 @@ void ue_manager::stop()
   ue_task_scheds.stop();
 }
 
-cu_cp_ue_index_t ue_manager::add_ue(du_index_t du_index)
+cu_cp_ue_index_t ue_manager::add_ue(cu_cp_du_index_t du_index)
 {
-  if (du_index == du_index_t::invalid) {
+  if (du_index == cu_cp_du_index_t::invalid) {
     logger.warning("Invalid du_index={}", du_index);
     return cu_cp_ue_index_t::invalid;
   }
@@ -68,11 +68,11 @@ bool ue_manager::ue_admission_limit_reached() const
   return ues.size() > max_nof_ues;
 }
 
-bool ue_manager::update_ue_context(cu_cp_ue_index_t ue_index,
-                                   gnb_du_id_t      du_id,
-                                   pci_t            pci,
-                                   rnti_t           rnti,
-                                   du_cell_index_t  pcell_index)
+bool ue_manager::update_ue_context(cu_cp_ue_index_t      ue_index,
+                                   gnb_du_id_t           du_id,
+                                   pci_t                 pci,
+                                   rnti_t                rnti,
+                                   cu_cp_du_cell_index_t pcell_index)
 {
   if (ue_index == cu_cp_ue_index_t::invalid) {
     logger.warning("Can't update UE with invalid UE index");
@@ -99,7 +99,7 @@ bool ue_manager::update_ue_context(cu_cp_ue_index_t ue_index,
     return false;
   }
 
-  if (pcell_index == du_cell_index_t::invalid) {
+  if (pcell_index == cu_cp_du_cell_index_t::invalid) {
     logger.warning("Invalid pcell_index={}", fmt::underlying(pcell_index));
     return false;
   }
@@ -349,7 +349,7 @@ cu_cp_ue* ue_manager::find_du_ue(cu_cp_ue_index_t ue_index)
   return nullptr;
 }
 
-size_t ue_manager::get_nof_du_ues(du_index_t du_index)
+size_t ue_manager::get_nof_du_ues(cu_cp_du_index_t du_index)
 {
   unsigned ue_count = 0;
   // Count UEs connected to the DU.

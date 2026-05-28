@@ -6,11 +6,10 @@
 
 #include "cu_up_processor.h"
 #include "ocudu/cu_cp/common_task_scheduler.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
+#include "ocudu/ran/cu_cp_types.h"
 #include <map>
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 struct cu_cp_configuration;
 
@@ -28,24 +27,24 @@ public:
 
   /// \brief Adds a CU-UP processor object to the CU-CP.
   /// \return The CU-UP index of the added CU-UP processor object.
-  cu_up_index_t add_cu_up(std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier);
+  cu_cp_cu_up_index_t add_cu_up(std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier);
 
   /// \brief Removes the specified CU-UP processor object from the CU-CP.
   /// \param[in] cu_up_index The index of the CU-UP processor to delete.
-  async_task<void> remove_cu_up(cu_up_index_t cu_up_index);
+  async_task<void> remove_cu_up(cu_cp_cu_up_index_t cu_up_index);
 
   size_t get_nof_cu_ups() const { return cu_up_db.size(); }
 
-  cu_up_processor_e1ap_interface& get_cu_up(cu_up_index_t cu_up_index);
+  cu_up_processor_e1ap_interface& get_cu_up(cu_cp_cu_up_index_t cu_up_index);
 
   /// \brief Find a CU-UP object.
   /// \param[in] cu_up_index The index of the CU-UP processor object.
   /// \return The CU-UP processor object if it exists, nullptr otherwise.
-  cu_up_processor* find_cu_up_processor(cu_up_index_t cu_up_index);
+  cu_up_processor* find_cu_up_processor(cu_cp_cu_up_index_t cu_up_index);
 
   /// \brief Select a CU-UP.
   /// \return The CU-UP index of the selected CU-UP.
-  cu_up_index_t select_cu_up();
+  cu_cp_cu_up_index_t select_cu_up();
 
   size_t get_nof_e1ap_ues();
 
@@ -59,13 +58,12 @@ private:
 
   /// \brief Get the next available index from the CU-UP processor database.
   /// \return The CU-UP index.
-  cu_up_index_t allocate_cu_up_index();
+  cu_cp_cu_up_index_t allocate_cu_up_index();
 
   cu_up_repository_config cfg;
   ocudulog::basic_logger& logger;
 
-  std::map<cu_up_index_t, cu_up_context> cu_up_db;
+  std::map<cu_cp_cu_up_index_t, cu_up_context> cu_up_db;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

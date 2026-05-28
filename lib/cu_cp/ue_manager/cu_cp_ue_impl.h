@@ -24,8 +24,8 @@ namespace ocudu::ocucp {
 
 /// \brief Context of a CU-CP UE.
 struct cu_cp_ue_context {
-  du_index_t                       du_idx       = du_index_t::invalid;
-  cu_up_index_t                    cu_up_idx    = cu_up_index_t::invalid;
+  cu_cp_du_index_t                 du_idx       = cu_cp_du_index_t::invalid;
+  cu_cp_cu_up_index_t              cu_up_idx    = cu_cp_cu_up_index_t::invalid;
   xnc_peer_index_t                 xnc_peer_idx = xnc_peer_index_t::invalid;
   plmn_identity                    plmn         = plmn_identity::test_value();
   gnb_du_id_t                      du_id        = gnb_du_id_t::invalid;
@@ -132,17 +132,17 @@ struct cu_cp_ue_cho_context {
 class cu_cp_ue : public cu_cp_ue_impl_interface
 {
 public:
-  cu_cp_ue(cu_cp_ue_index_t               ue_index_,
-           du_index_t                     du_index_,
-           timer_manager&                 timers_,
-           task_executor&                 task_exec_,
-           const up_resource_manager_cfg& up_cfg,
-           const security_manager_config& sec_cfg,
-           ue_task_scheduler_impl         task_sched_,
-           std::optional<gnb_du_id_t>     du_id_       = std::nullopt,
-           std::optional<pci_t>           pci_         = std::nullopt,
-           std::optional<rnti_t>          c_rnti_      = std::nullopt,
-           std::optional<du_cell_index_t> pcell_index_ = std::nullopt);
+  cu_cp_ue(cu_cp_ue_index_t                     ue_index_,
+           cu_cp_du_index_t                     du_index_,
+           timer_manager&                       timers_,
+           task_executor&                       task_exec_,
+           const up_resource_manager_cfg&       up_cfg,
+           const security_manager_config&       sec_cfg,
+           ue_task_scheduler_impl               task_sched_,
+           std::optional<gnb_du_id_t>           du_id_       = std::nullopt,
+           std::optional<pci_t>                 pci_         = std::nullopt,
+           std::optional<rnti_t>                c_rnti_      = std::nullopt,
+           std::optional<cu_cp_du_cell_index_t> pcell_index_ = std::nullopt);
 
   /// \brief Cancel all pending UE tasks.
   void stop();
@@ -159,16 +159,16 @@ public:
   [[nodiscard]] gnb_du_id_t get_du_id() const { return ue_ctxt.du_id; }
 
   /// \brief Get the DU index of the UE.
-  [[nodiscard]] du_index_t get_du_index() const override { return ue_ctxt.du_idx; }
+  [[nodiscard]] cu_cp_du_index_t get_du_index() const override { return ue_ctxt.du_idx; }
 
   /// \brief Get the CU-UP index of the UE.
-  [[nodiscard]] cu_up_index_t get_cu_up_index() const override { return ue_ctxt.cu_up_idx; }
+  [[nodiscard]] cu_cp_cu_up_index_t get_cu_up_index() const override { return ue_ctxt.cu_up_idx; }
 
   /// \brief Get the XN-C peer index of the UE.
   [[nodiscard]] xnc_peer_index_t get_xnc_peer_index() const override { return ue_ctxt.xnc_peer_idx; }
 
   /// \brief Get the PCell index of the UE.
-  du_cell_index_t get_pcell_index() { return pcell_index; }
+  cu_cp_du_cell_index_t get_pcell_index() { return pcell_index; }
 
   /// \brief Get the UP resource manager of the UE.
   up_resource_manager& get_up_resource_manager() override { return up_mng; }
@@ -195,23 +195,23 @@ public:
   unique_timer& get_rna_update_timer() { return rna_update_timer; }
 
   /// \brief Update a UE with PCI and/or C-RNTI.
-  void update_du_ue(gnb_du_id_t     du_id_       = gnb_du_id_t::invalid,
-                    pci_t           pci_         = INVALID_PCI,
-                    rnti_t          c_rnti_      = rnti_t::INVALID_RNTI,
-                    du_cell_index_t pcell_index_ = du_cell_index_t::invalid);
+  void update_du_ue(gnb_du_id_t           du_id_       = gnb_du_id_t::invalid,
+                    pci_t                 pci_         = INVALID_PCI,
+                    rnti_t                c_rnti_      = rnti_t::INVALID_RNTI,
+                    cu_cp_du_cell_index_t pcell_index_ = cu_cp_du_cell_index_t::invalid);
 
   /// \brief Set/update the measurement context of the UE.
   void update_meas_context(cell_meas_manager_ue_context meas_ctxt);
 
   /// \brief Check if the DU UE context is created.
   /// \return True if the DU UE context is created, false otherwise.
-  [[nodiscard]] bool du_ue_created() const { return ue_ctxt.du_idx != du_index_t::invalid; }
+  [[nodiscard]] bool du_ue_created() const { return ue_ctxt.du_idx != cu_cp_du_index_t::invalid; }
 
   /// \brief Set the RRC UE of the UE.
   void set_rrc_ue(rrc_ue_interface& rrc_ue_);
 
   /// \brief Set the CU-UP index of the UE.
-  void set_cu_up_index(cu_up_index_t cu_up_idx) { ue_ctxt.cu_up_idx = cu_up_idx; }
+  void set_cu_up_index(cu_cp_cu_up_index_t cu_up_idx) { ue_ctxt.cu_up_idx = cu_up_idx; }
 
   /// \brief Set the XN-C peer index of the UE.
   void set_xnc_peer_index(xnc_peer_index_t xnc_peer_idx) { ue_ctxt.xnc_peer_idx = xnc_peer_idx; }
@@ -274,9 +274,9 @@ private:
   ue_location_manager    loc_mng;
 
   // DU/CU-UP UE context.
-  cu_cp_ue_context ue_ctxt;
-  du_cell_index_t  pcell_index = du_cell_index_t::invalid;
-  pci_t            pci         = INVALID_PCI;
+  cu_cp_ue_context      ue_ctxt;
+  cu_cp_du_cell_index_t pcell_index = cu_cp_du_cell_index_t::invalid;
+  pci_t                 pci         = INVALID_PCI;
 
   // RRC UE context.
   rrc_ue_interface*       rrc_ue = nullptr;

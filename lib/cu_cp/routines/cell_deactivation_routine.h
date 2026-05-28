@@ -11,8 +11,7 @@
 #include "ocudu/support/async/eager_async_task.h"
 #include <unordered_set>
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// \brief Handles the release of the connected UEs and the deactivation of the cell.
 class cell_deactivation_routine
@@ -55,14 +54,13 @@ private:
   std::vector<ue_release_task_t>           ue_release_tasks;
   std::vector<ue_release_task_t>::iterator ue_release_task_it;
 
-  std::unordered_set<plmn_identity> remaining_plmns;
-  std::vector<du_index_t>           du_indexes;
-  std::vector<du_index_t>::iterator du_idx_it;
-  du_processor*                     du_proc = nullptr;
+  std::unordered_set<plmn_identity>       remaining_plmns;
+  std::vector<cu_cp_du_index_t>           du_indexes;
+  std::vector<cu_cp_du_index_t>::iterator du_idx_it;
+  du_processor*                           du_proc = nullptr;
 
   std::chrono::steady_clock::time_point proc_start_tp;
   std::chrono::steady_clock::time_point ue_release_finish_tp;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

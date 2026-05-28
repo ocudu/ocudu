@@ -22,16 +22,16 @@ du_processor_repository::du_processor_repository(du_repository_config cfg_) :
 {
 }
 
-du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier)
+cu_cp_du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier)
 {
-  du_index_t du_index = get_next_du_index();
-  if (du_index == du_index_t::invalid) {
+  cu_cp_du_index_t du_index = get_next_du_index();
+  if (du_index == cu_cp_du_index_t::invalid) {
     logger.warning("DU connection failed. Cause: Maximum number of DUs connected ({})",
                    cfg.cu_cp.admission.max_nof_dus);
     fmt::print("DU connection failed. Cause: Maximum number of DUs connected ({}). To increase the number of allowed "
                "DUs change the \"--max_nof_dus\" in the CU-CP configuration\n",
                cfg.cu_cp.admission.max_nof_dus);
-    return du_index_t::invalid;
+    return cu_cp_du_index_t::invalid;
   }
 
   // Create DU object
@@ -55,9 +55,9 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
   return du_index;
 }
 
-async_task<void> du_processor_repository::remove_du(du_index_t du_index)
+async_task<void> du_processor_repository::remove_du(cu_cp_du_index_t du_index)
 {
-  ocudu_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
+  ocudu_assert(du_index != cu_cp_du_index_t::invalid, "Invalid du_index={}", du_index);
   logger.debug("Removing DU {}...", du_index);
 
   return launch_async([this, du_index](coro_context<async_task<void>>& ctx) {
@@ -80,21 +80,22 @@ async_task<void> du_processor_repository::remove_du(du_index_t du_index)
   });
 }
 
-du_index_t du_processor_repository::get_next_du_index()
+cu_cp_du_index_t du_processor_repository::get_next_du_index()
 {
-  for (unsigned du_idx_int = du_index_to_uint(du_index_t::min); du_idx_int < cfg.cu_cp.admission.max_nof_dus;
+  for (unsigned du_idx_int = cu_cp_du_index_to_uint(cu_cp_du_index_t::min);
+       du_idx_int < cfg.cu_cp.admission.max_nof_dus;
        du_idx_int++) {
-    du_index_t du_idx = uint_to_du_index(du_idx_int);
+    cu_cp_du_index_t du_idx = uint_to_cu_cp_du_index(du_idx_int);
     if (du_db.find(du_idx) == du_db.end()) {
       return du_idx;
     }
   }
-  return du_index_t::invalid;
+  return cu_cp_du_index_t::invalid;
 }
 
-du_index_t du_processor_repository::find_du(pci_t pci)
+cu_cp_du_index_t du_processor_repository::find_du(pci_t pci)
 {
-  du_index_t index = du_index_t::invalid;
+  cu_cp_du_index_t index = cu_cp_du_index_t::invalid;
   for (const auto& du : du_db) {
     if (du.second.processor->has_cell(pci)) {
       return du.first;
@@ -104,9 +105,9 @@ du_index_t du_processor_repository::find_du(pci_t pci)
   return index;
 }
 
-du_index_t du_processor_repository::find_du(const nr_cell_global_id_t& cgi)
+cu_cp_du_index_t du_processor_repository::find_du(const nr_cell_global_id_t& cgi)
 {
-  du_index_t index = du_index_t::invalid;
+  cu_cp_du_index_t index = cu_cp_du_index_t::invalid;
   for (const auto& du : du_db) {
     if (du.second.processor->has_cell(cgi)) {
       return du.first;
@@ -116,7 +117,7 @@ du_index_t du_processor_repository::find_du(const nr_cell_global_id_t& cgi)
   return index;
 }
 
-du_processor* du_processor_repository::find_du_processor(du_index_t du_index)
+du_processor* du_processor_repository::find_du_processor(cu_cp_du_index_t du_index)
 {
   if (du_db.find(du_index) == du_db.end()) {
     return nullptr;
@@ -124,16 +125,16 @@ du_processor* du_processor_repository::find_du_processor(du_index_t du_index)
   return du_db.at(du_index).processor.get();
 }
 
-du_processor& du_processor_repository::get_du_processor(du_index_t du_index)
+du_processor& du_processor_repository::get_du_processor(cu_cp_du_index_t du_index)
 {
-  ocudu_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
+  ocudu_assert(du_index != cu_cp_du_index_t::invalid, "Invalid du_index={}", du_index);
   ocudu_assert(du_db.find(du_index) != du_db.end(), "DU not found du_index={}", du_index);
   return *du_db.at(du_index).processor;
 }
 
-std::vector<du_index_t> du_processor_repository::get_du_processor_indexes() const
+std::vector<cu_cp_du_index_t> du_processor_repository::get_du_processor_indexes() const
 {
-  std::vector<du_index_t> du_indexes;
+  std::vector<cu_cp_du_index_t> du_indexes;
   du_indexes.reserve(du_db.size());
   for (const auto& du : du_db) {
     du_indexes.push_back(du.first);

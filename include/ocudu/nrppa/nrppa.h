@@ -33,7 +33,7 @@ public:
   virtual cu_cp_ue_index_t get_ue_index() const = 0;
 
   /// \brief Get the index of the DU where the UE is connected.
-  virtual du_index_t get_du_index() const = 0;
+  virtual cu_cp_du_index_t get_du_index() const = 0;
 
   /// \brief Get the measurement results of the UE.
   virtual std::optional<cell_measurement_positioning_info>& on_measurement_results_required() = 0;
@@ -66,8 +66,8 @@ public:
 
 // TRP information CU-CP response, containing information for all available TRPs at all DUs.
 struct trp_information_cu_cp_response_t {
-  std::map<du_index_t, trp_information_response_t> trp_info_responses;
-  std::map<du_index_t, nrppa_f1ap_notifier*>       f1ap_notifiers;
+  std::map<cu_cp_du_index_t, trp_information_response_t> trp_info_responses;
+  std::map<cu_cp_du_index_t, nrppa_f1ap_notifier*>       f1ap_notifiers;
 };
 
 /// Methods used by NRPPa to signal events to the CU-CP.
@@ -84,8 +84,8 @@ public:
   /// \brief Notifies about a NRPPa PDU.
   /// \param[in] nrppa_pdu The NRPPa PDU.
   /// \param[in] ue_or_amf_index The UE index for UE associated NRPPa messages or the AMF index for non UE associated
-  virtual void on_ul_nrppa_pdu(const byte_buffer&                          nrppa_pdu,
-                               std::variant<cu_cp_ue_index_t, amf_index_t> ue_or_amf_index) = 0;
+  virtual void on_ul_nrppa_pdu(const byte_buffer&                                nrppa_pdu,
+                               std::variant<cu_cp_ue_index_t, cu_cp_amf_index_t> ue_or_amf_index) = 0;
 
   /// \brief Notifies the CU-CP about a TRP information request.
   /// \param[in] request The TRP information request.
@@ -104,8 +104,8 @@ public:
   /// \param[in] nrppa_pdu The NRPPA message.
   /// \param[in] ue_or_amf_index The UE index for UE associated NRPPa messages or the AMF index for non UE associated
   /// NRPPa messages.
-  virtual void handle_new_nrppa_pdu(const byte_buffer&                          nrppa_pdu,
-                                    std::variant<cu_cp_ue_index_t, amf_index_t> ue_or_amf_index) = 0;
+  virtual void handle_new_nrppa_pdu(const byte_buffer&                                nrppa_pdu,
+                                    std::variant<cu_cp_ue_index_t, cu_cp_amf_index_t> ue_or_amf_index) = 0;
 };
 
 /// Handle ue context removal.

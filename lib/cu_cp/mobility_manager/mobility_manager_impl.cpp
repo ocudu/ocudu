@@ -101,7 +101,7 @@ void mobility_manager::trigger_auto_conditional_handover(cu_cp_ue_index_t ue_ind
     return;
   }
 
-  if (u->get_cu_up_index() == cu_up_index_t::invalid || u->get_up_resource_manager().get_nof_drbs() == 0) {
+  if (u->get_cu_up_index() == cu_cp_cu_up_index_t::invalid || u->get_up_resource_manager().get_nof_drbs() == 0) {
     logger.info("ue={}: Auto-CHO deferred: bearer/user-plane context not ready yet", ue_index);
     return;
   }
@@ -182,16 +182,16 @@ void mobility_manager::handle_conditional_handover(
   }
 
   // Validate all targets are intra-CU.
-  du_index_t source_du = u->get_du_index();
-  if (source_du == du_index_t::invalid) {
+  cu_cp_du_index_t source_du = u->get_du_index();
+  if (source_du == cu_cp_du_index_t::invalid) {
     logger.warning("ue={}: CHO preparation failed. Source DU index is invalid", ue_index);
     return;
   }
 
   std::vector<cu_cp_cho_target_candidate> targets;
   for (pci_t target_pci : unique_target_pcis) {
-    du_index_t target_du = du_db.find_du(target_pci);
-    if (target_du == du_index_t::invalid) {
+    cu_cp_du_index_t target_du = du_db.find_du(target_pci);
+    if (target_du == cu_cp_du_index_t::invalid) {
       logger.warning("ue={}: CHO preparation failed. Target PCI {} not found in any local DU", ue_index, target_pci);
       return;
     }
@@ -285,8 +285,8 @@ void mobility_manager::handle_handover(cu_cp_ue_index_t     ue_index,
 
   // Try to find target DU. If it is not found, it means that the target cell is not managed by this CU-CP and
   // an inter-CU handover is required.
-  du_index_t target_du = du_db.find_du(neighbor_pci);
-  if (target_du == du_index_t::invalid) {
+  cu_cp_du_index_t target_du = du_db.find_du(neighbor_pci);
+  if (target_du == cu_cp_du_index_t::invalid) {
     logger.debug("ue={}: Requesting inter CU handover. No local DU/cell with pci={} found", ue_index, neighbor_pci);
     if (!neighbor_tac.has_value()) {
       logger.error("ue={}: Cannot trigger inter-CU handover. Target TAC is required but not set", ue_index);
@@ -296,7 +296,7 @@ void mobility_manager::handle_handover(cu_cp_ue_index_t     ue_index,
     return;
   }
 
-  du_index_t source_du = ue_mng.find_du_ue(ue_index)->get_du_index();
+  cu_cp_du_index_t source_du = ue_mng.find_du_ue(ue_index)->get_du_index();
 
   if (source_du == target_du) {
     logger.info("ue={}: Trigger intra-CU (intra-DU) handover on du={}", ue_index, source_du);
@@ -311,8 +311,8 @@ void mobility_manager::handle_handover(cu_cp_ue_index_t     ue_index,
 
 void mobility_manager::handle_intra_cu_handover(cu_cp_ue_index_t source_ue_index,
                                                 pci_t            neighbor_pci,
-                                                du_index_t       source_du_index,
-                                                du_index_t       target_du_index)
+                                                cu_cp_du_index_t source_du_index,
+                                                cu_cp_du_index_t target_du_index)
 {
   // Lookup CGI at target DU.
   std::optional<nr_cell_global_id_t> cgi =

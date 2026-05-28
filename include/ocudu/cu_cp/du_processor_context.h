@@ -4,15 +4,14 @@
 
 #pragma once
 
-#include "ocudu/adt/slotted_array.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
-#include "ocudu/ran/band_helper.h"
+#include "ocudu/adt/byte_buffer.h"
+#include "ocudu/ran/cu_cp_types.h"
+#include "ocudu/ran/nr_band.h"
 #include "ocudu/ran/nr_cgi.h"
+#include "ocudu/ran/pci.h"
 #include "ocudu/ran/tac.h"
-#include <string>
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// Basic cell system information provided by DU
 struct du_sys_info {
@@ -22,7 +21,7 @@ struct du_sys_info {
 
 struct du_cell_configuration {
   /// CU-CP specific DU cell identifier.
-  du_cell_index_t cell_index = du_cell_index_t::invalid;
+  cu_cp_du_cell_index_t cell_index = cu_cp_du_cell_index_t::invalid;
   /// Global cell ID.
   nr_cell_global_id_t cgi;
   /// Tracking Area Code
@@ -39,5 +38,4 @@ struct du_cell_configuration {
   std::vector<plmn_identity> deactivated_plmns;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

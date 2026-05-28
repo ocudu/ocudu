@@ -4,15 +4,14 @@
 
 #pragma once
 
-#include "ocudu/adt/slotted_array.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
+#include "ocudu/ocudulog/logger.h"
+#include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/support/async/fifo_async_task_scheduler.h"
 #include "ocudu/support/executors/task_executor.h"
 #include "ocudu/support/timers.h"
 #include <map>
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// \brief Service provided by CU-CP to schedule async tasks for a given AMF.
 class ngap_task_scheduler
@@ -25,7 +24,7 @@ public:
   ~ngap_task_scheduler() = default;
 
   // CU-UP task scheduler
-  void handle_amf_async_task(amf_index_t amf_index, async_task<void>&& task);
+  void handle_amf_async_task(cu_cp_amf_index_t amf_index, async_task<void>&& task);
 
   unique_timer   make_unique_timer();
   timer_manager& get_timer_manager();
@@ -36,8 +35,7 @@ private:
   ocudulog::basic_logger& logger;
 
   // task event loops indexed by amf_index
-  std::map<amf_index_t, fifo_async_task_scheduler> amf_ctrl_loop;
+  std::map<cu_cp_amf_index_t, fifo_async_task_scheduler> amf_ctrl_loop;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

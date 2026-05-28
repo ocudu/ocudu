@@ -6,24 +6,24 @@
 #include "cu_up_processor_config.h"
 #include "cu_up_processor_factory.h"
 #include "ocudu/cu_cp/cu_cp_configuration.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
+#include "ocudu/ran/cu_cp_types.h"
 
 using namespace ocudu;
 using namespace ocucp;
 
 cu_up_processor_repository::cu_up_processor_repository(cu_up_repository_config cfg_) : cfg(cfg_), logger(cfg.logger) {}
 
-cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier)
+cu_cp_cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier)
 {
-  cu_up_index_t cu_up_index = allocate_cu_up_index();
-  if (cu_up_index == cu_up_index_t::invalid) {
+  cu_cp_cu_up_index_t cu_up_index = allocate_cu_up_index();
+  if (cu_up_index == cu_cp_cu_up_index_t::invalid) {
     logger.warning("CU-UP connection failed. Cause: Maximum number of CU-UPs connected ({})",
                    cfg.cu_cp.admission.max_nof_cu_ups);
     fmt::print(
         "CU-UP connection failed. Cause: Maximum number of CU-UPs connected ({}). To increase the number of allowed "
         "CU-UPs change the \"--max_nof_cu_ups\" in the CU-CP configuration\n",
         cfg.cu_cp.admission.max_nof_cu_ups);
-    return cu_up_index_t::invalid;
+    return cu_cp_cu_up_index_t::invalid;
   }
 
   // Create CU-UP object
@@ -43,22 +43,22 @@ cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_message
   return cu_up_index;
 }
 
-cu_up_index_t cu_up_processor_repository::allocate_cu_up_index()
+cu_cp_cu_up_index_t cu_up_processor_repository::allocate_cu_up_index()
 {
-  for (unsigned cu_up_index_int = cu_up_index_to_uint(cu_up_index_t::min);
+  for (unsigned cu_up_index_int = cu_cp_cu_up_index_to_uint(cu_cp_cu_up_index_t::min);
        cu_up_index_int < cfg.cu_cp.admission.max_nof_cu_ups;
        cu_up_index_int++) {
-    cu_up_index_t cu_up_index = uint_to_cu_up_index(cu_up_index_int);
+    cu_cp_cu_up_index_t cu_up_index = uint_to_cu_cp_cu_up_index(cu_up_index_int);
     if (cu_up_db.find(cu_up_index) == cu_up_db.end()) {
       return cu_up_index;
     }
   }
-  return cu_up_index_t::invalid;
+  return cu_cp_cu_up_index_t::invalid;
 }
 
-async_task<void> cu_up_processor_repository::remove_cu_up(cu_up_index_t cu_up_index)
+async_task<void> cu_up_processor_repository::remove_cu_up(cu_cp_cu_up_index_t cu_up_index)
 {
-  ocudu_assert(cu_up_index != cu_up_index_t::invalid, "Invalid cu_up_index={}", cu_up_index);
+  ocudu_assert(cu_up_index != cu_cp_cu_up_index_t::invalid, "Invalid cu_up_index={}", cu_up_index);
   logger.debug("Removing CU-UP {}...", cu_up_index);
 
   return launch_async([this, cu_up_index](coro_context<async_task<void>>& ctx) {
@@ -81,34 +81,34 @@ async_task<void> cu_up_processor_repository::remove_cu_up(cu_up_index_t cu_up_in
   });
 }
 
-cu_up_processor_e1ap_interface& cu_up_processor_repository::get_cu_up(cu_up_index_t cu_up_index)
+cu_up_processor_e1ap_interface& cu_up_processor_repository::get_cu_up(cu_cp_cu_up_index_t cu_up_index)
 {
-  ocudu_assert(cu_up_index != cu_up_index_t::invalid, "Invalid cu_up_index={}", cu_up_index);
+  ocudu_assert(cu_up_index != cu_cp_cu_up_index_t::invalid, "Invalid cu_up_index={}", cu_up_index);
   ocudu_assert(cu_up_db.find(cu_up_index) != cu_up_db.end(), "CU-UP not found cu_up_index={}", cu_up_index);
   return *cu_up_db.at(cu_up_index).processor;
 }
 
-cu_up_processor* cu_up_processor_repository::find_cu_up_processor(cu_up_index_t cu_up_index)
+cu_up_processor* cu_up_processor_repository::find_cu_up_processor(cu_cp_cu_up_index_t cu_up_index)
 {
-  ocudu_assert(cu_up_index != cu_up_index_t::invalid, "Invalid cu_up_index={}", cu_up_index);
+  ocudu_assert(cu_up_index != cu_cp_cu_up_index_t::invalid, "Invalid cu_up_index={}", cu_up_index);
   if (cu_up_db.find(cu_up_index) == cu_up_db.end()) {
     return nullptr;
   }
   return cu_up_db.at(cu_up_index).processor.get();
 }
 
-cu_up_index_t cu_up_processor_repository::select_cu_up()
+cu_cp_cu_up_index_t cu_up_processor_repository::select_cu_up()
 {
   if (cu_up_db.empty()) {
-    return cu_up_index_t::invalid;
+    return cu_cp_cu_up_index_t::invalid;
   }
 
   // Equally distribute UEs among available CU-UPs.
-  unsigned      min_nof_ues    = 0;
-  cu_up_index_t selected_cu_up = cu_up_index_t::invalid;
+  unsigned            min_nof_ues    = 0;
+  cu_cp_cu_up_index_t selected_cu_up = cu_cp_cu_up_index_t::invalid;
   for (const auto& [cu_up_idx, cu_up] : cu_up_db) {
     if (cu_up.processor->get_e1ap_statistics_handler().get_nof_ues() < min_nof_ues ||
-        selected_cu_up == cu_up_index_t::invalid) {
+        selected_cu_up == cu_cp_cu_up_index_t::invalid) {
       min_nof_ues    = cu_up.processor->get_e1ap_statistics_handler().get_nof_ues();
       selected_cu_up = cu_up_idx;
     }

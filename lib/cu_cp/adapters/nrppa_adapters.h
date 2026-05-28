@@ -25,8 +25,8 @@ public:
     return cu_cp_handler->handle_new_nrppa_ue(ue_index);
   }
 
-  void on_ul_nrppa_pdu(const byte_buffer&                          nrppa_pdu,
-                       std::variant<cu_cp_ue_index_t, amf_index_t> ue_or_amf_index) override
+  void on_ul_nrppa_pdu(const byte_buffer&                                nrppa_pdu,
+                       std::variant<cu_cp_ue_index_t, cu_cp_amf_index_t> ue_or_amf_index) override
   {
     ocudu_assert(cu_cp_handler != nullptr, "CU-CP NRPPA handler must not be nullptr");
     cu_cp_handler->handle_ul_nrppa_pdu(nrppa_pdu, ue_or_amf_index);
@@ -59,7 +59,7 @@ public:
   }
 
   /// \brief Get the index of the DU where the UE is connected.
-  du_index_t get_du_index() const override
+  cu_cp_du_index_t get_du_index() const override
   {
     ocudu_assert(ue != nullptr, "CU-CP UE must not be nullptr");
     return ue->get_du_index();

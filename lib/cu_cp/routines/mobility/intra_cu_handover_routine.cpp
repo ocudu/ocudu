@@ -21,7 +21,7 @@ static bool verify_ho_request(const cu_cp_intra_cu_handover_request& request,
     return false;
   }
 
-  if (request.target_du_index == du_index_t::invalid) {
+  if (request.target_du_index == cu_cp_du_index_t::invalid) {
     logger.warning("Target DU index must not be invalid");
     return false;
   }

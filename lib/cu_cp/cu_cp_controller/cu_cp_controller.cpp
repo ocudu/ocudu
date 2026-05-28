@@ -51,7 +51,7 @@ void cu_cp_controller::stop()
   amf_mng.stop();
 }
 
-bool cu_cp_controller::handle_du_setup_request(du_index_t du_idx, const std::set<plmn_identity>& plmn_ids)
+bool cu_cp_controller::handle_du_setup_request(cu_cp_du_index_t du_idx, const std::set<plmn_identity>& plmn_ids)
 {
   bool success = false;
   for (const auto& plmn : plmn_ids) {

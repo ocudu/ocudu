@@ -101,8 +101,8 @@ private:
                                        nr_cell_identity target_nci);
   void        handle_intra_cu_handover(cu_cp_ue_index_t source_ue_index,
                                        pci_t            neighbor_pci,
-                                       du_index_t       source_du_index,
-                                       du_index_t       target_du_index);
+                                       cu_cp_du_index_t source_du_index,
+                                       cu_cp_du_index_t target_du_index);
   static void handle_ngap_handover(ngap_interface&  ngap,
                                    cu_cp_ue&        ue,
                                    gnb_id_t         target_gnb_id,

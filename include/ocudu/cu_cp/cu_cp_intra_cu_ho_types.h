@@ -12,7 +12,7 @@ namespace ocudu::ocucp {
 
 struct cu_cp_intra_cu_handover_request {
   cu_cp_ue_index_t    source_ue_index = cu_cp_ue_index_t::invalid;
-  du_index_t          target_du_index = du_index_t::invalid;
+  cu_cp_du_index_t    target_du_index = cu_cp_du_index_t::invalid;
   nr_cell_global_id_t cgi;
   pci_t               target_pci = INVALID_PCI;
   /// When set, the request is treated as CHO candidate preparation (not immediate HO execution).

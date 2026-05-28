@@ -19,7 +19,7 @@ class e1ap_cu_cp_impl final : public e1ap_cu_cp
 {
 public:
   e1ap_cu_cp_impl(const e1ap_configuration&      e1ap_cfg_,
-                  cu_up_index_t                  cu_up_index_,
+                  cu_cp_cu_up_index_t            cu_up_index_,
                   e1ap_message_notifier&         e1ap_pdu_notifier_,
                   e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
                   e1ap_cu_cp_notifier&           cu_cp_notifier_,
@@ -106,7 +106,7 @@ private:
   void log_pdu(bool is_rx, const e1ap_message& e1ap_pdu);
 
   const e1ap_configuration e1ap_cfg;
-  cu_up_index_t            cu_up_index;
+  cu_cp_cu_up_index_t      cu_up_index;
   ocudulog::basic_logger&  logger;
 
   // Notifiers and handlers.

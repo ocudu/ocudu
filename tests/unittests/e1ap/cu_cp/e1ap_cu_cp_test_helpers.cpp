@@ -31,7 +31,7 @@ e1ap_cu_cp_test::e1ap_cu_cp_test() :
   tmp.json_log_enabled = true;
 
   e1ap = create_e1ap(tmp,
-                     cu_up_index_t::min,
+                     cu_cp_cu_up_index_t::min,
                      e1ap_pdu_notifier,
                      cu_up_processor_notifier,
                      cu_cp_notifier,
@@ -74,7 +74,7 @@ void e1ap_cu_cp_test::run_bearer_context_setup(cu_cp_ue_index_t ue_index, gnb_cu
 
 e1ap_cu_cp_test::test_ue& e1ap_cu_cp_test::create_ue()
 {
-  cu_cp_ue_index_t ue_index = ue_mng.add_ue(du_index_t::min);
+  cu_cp_ue_index_t ue_index = ue_mng.add_ue(cu_cp_du_index_t::min);
   report_fatal_error_if_not(ue_index != cu_cp_ue_index_t::invalid, "Failed to create UE");
   if (ue_mng.ue_admission_limit_reached()) {
     ue_mng.remove_ue(ue_index);

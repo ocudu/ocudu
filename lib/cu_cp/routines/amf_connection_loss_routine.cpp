@@ -9,7 +9,7 @@
 using namespace ocudu;
 using namespace ocucp;
 
-amf_connection_loss_routine::amf_connection_loss_routine(const amf_index_t                 amf_index_,
+amf_connection_loss_routine::amf_connection_loss_routine(const cu_cp_amf_index_t           amf_index_,
                                                          const cu_cp_configuration&        cu_cp_cfg_,
                                                          std::vector<plmn_identity>&       plmns_,
                                                          du_processor_repository&          du_db_,

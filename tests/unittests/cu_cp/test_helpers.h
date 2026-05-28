@@ -62,7 +62,7 @@ public:
     }
   }
 
-  byte_buffer on_target_cell_sib1_required(du_index_t du_index, nr_cell_global_id_t cgi) override
+  byte_buffer on_target_cell_sib1_required(cu_cp_du_index_t du_index, nr_cell_global_id_t cgi) override
   {
     return make_byte_buffer("deadbeef").value();
   }
@@ -209,7 +209,7 @@ private:
 class dummy_du_connection_notifier : public du_connection_notifier
 {
 public:
-  bool on_du_setup_request(du_index_t du_index, const std::set<plmn_identity>& plmn_ids) override { return true; }
+  bool on_du_setup_request(cu_cp_du_index_t du_index, const std::set<plmn_identity>& plmn_ids) override { return true; }
 };
 
 struct dummy_ngap_ue_context_removal_handler : public ngap_ue_context_removal_handler {
@@ -542,13 +542,13 @@ public:
 
   void on_new_cu_up_connection() override { logger.info("Received a new CU-UP connection notification"); }
 
-  void on_cu_up_remove_request_received(const cu_up_index_t cu_up_index) override
+  void on_cu_up_remove_request_received(const cu_cp_cu_up_index_t cu_up_index) override
   {
     logger.info("Received a CU-UP remove request for cu_up_index={}", cu_up_index);
     last_cu_up_index_to_remove = cu_up_index;
   }
 
-  cu_up_index_t last_cu_up_index_to_remove;
+  cu_cp_cu_up_index_t last_cu_up_index_to_remove;
 
 private:
   ocudulog::basic_logger& logger = ocudulog::fetch_basic_logger("TEST");

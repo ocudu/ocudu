@@ -12,7 +12,7 @@ using namespace ocudu;
 using namespace ocucp;
 
 std::unique_ptr<e1ap_cu_cp> ocudu::ocucp::create_e1ap(const e1ap_configuration&      e1ap_cfg_,
-                                                      cu_up_index_t                  cu_up_index_,
+                                                      cu_cp_cu_up_index_t            cu_up_index_,
                                                       e1ap_message_notifier&         e1ap_pdu_notifier_,
                                                       e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
                                                       e1ap_cu_cp_notifier&           cu_cp_notifier_,

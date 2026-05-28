@@ -61,7 +61,7 @@ TEST_F(ngap_asn1_packer_test, when_packing_successful_then_pdu_matches_tv)
   ngap_context_t ngap_ctxt = {{411, 22},
                               "tstgnb01",
                               "AMF",
-                              amf_index_t::min,
+                              cu_cp_amf_index_t::min,
                               {{7, {{plmn_identity::test_value(), {{slice_service_type{1}}}}}}},
                               {},
                               256};

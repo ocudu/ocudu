@@ -15,7 +15,6 @@
 #include "ocudu/ran/crit_diagnostics.h"
 #include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/ran/cu_types.h"
-#include "ocudu/ran/gnb_constants.h"
 #include "ocudu/ran/gnb_id.h"
 #include "ocudu/ran/i_rnti.h"
 #include "ocudu/ran/nr_cgi.h"
@@ -36,77 +35,9 @@
 
 namespace ocudu::ocucp {
 
-/// Maximum number of DUs supported by CU-CP (implementation-defined).
-const uint16_t MAX_NOF_DUS = 65535;
-/// Maximum number of cells per DU supported by CU-CP (implementation-defined).
-const uint16_t MAX_NOF_DU_CELLS = MAX_CELLS_PER_DU;
-/// Maximum number of CU-UPs supported by CU-CP (implementation-defined).
-const uint16_t MAX_NOF_CU_UPS = 65535;
-/// Maximum number of AMFs supported by CU-CP (implementation-defined).
-const uint16_t MAX_NOF_AMFS = 65535;
 /// Maximum number of XN-C peers supported by CU-CP (implementation-defined).
 const uint16_t MAX_NOF_XNC_PEERS    = 65535;
 const uint16_t MAX_NOF_XNC_GATEWAYS = 256;
-
-/// Maximum number of DUs supported by CU-CP (implementation-defined).
-enum class du_index_t : uint16_t { min = 0, max = MAX_NOF_DUS - 1, invalid = MAX_NOF_DUS };
-
-/// Convert integer to DU index type.
-constexpr du_index_t uint_to_du_index(std::underlying_type_t<du_index_t> index)
-{
-  return static_cast<du_index_t>(index);
-}
-
-/// Convert DU index type to integer.
-constexpr std::underlying_type_t<du_index_t> du_index_to_uint(du_index_t du_index)
-{
-  return static_cast<std::underlying_type_t<du_index_t>>(du_index);
-}
-
-/// Maximum number of CU-UPs supported by CU-CP (implementation-defined).
-enum class cu_up_index_t : uint16_t { min = 0, max = MAX_NOF_CU_UPS - 1, invalid = MAX_NOF_CU_UPS };
-
-/// Convert integer to CU-UP index type.
-constexpr cu_up_index_t uint_to_cu_up_index(std::underlying_type_t<cu_up_index_t> index)
-{
-  return static_cast<cu_up_index_t>(index);
-}
-
-/// Convert CU-UP index type to integer.
-constexpr std::underlying_type_t<cu_up_index_t> cu_up_index_to_uint(cu_up_index_t cu_up_index)
-{
-  return static_cast<std::underlying_type_t<cu_up_index_t>>(cu_up_index);
-}
-
-/// Maximum number of cells per DU supported by CU-CP (implementation-defined).
-enum class du_cell_index_t : uint16_t { min = 0, max = MAX_NOF_DU_CELLS - 1, invalid = MAX_NOF_DU_CELLS };
-
-/// Convert integer to DU cell index type.
-inline du_cell_index_t uint_to_du_cell_index(std::underlying_type_t<du_cell_index_t> index)
-{
-  return static_cast<du_cell_index_t>(index);
-}
-
-/// Convert DU cell index type to integer.
-constexpr std::underlying_type_t<du_cell_index_t> du_cell_index_to_uint(du_cell_index_t du_cell_index)
-{
-  return static_cast<std::underlying_type_t<du_cell_index_t>>(du_cell_index);
-}
-
-/// Maximum number of AMFs supported by CU-CP (implementation-defined).
-enum class amf_index_t : uint16_t { min = 0, max = MAX_NOF_AMFS - 1, invalid = MAX_NOF_AMFS };
-
-/// Convert integer to AMF index type.
-constexpr amf_index_t uint_to_amf_index(std::underlying_type_t<amf_index_t> index)
-{
-  return static_cast<amf_index_t>(index);
-}
-
-/// Convert AMF index type to integer.
-constexpr std::underlying_type_t<amf_index_t> amf_index_to_uint(amf_index_t amf_index)
-{
-  return static_cast<std::underlying_type_t<amf_index_t>>(amf_index);
-}
 
 /// Maximum number of XN-C peers supported by CU-CP (implementation-defined).
 enum class xnc_peer_index_t : uint16_t { min = 0, max = MAX_NOF_XNC_PEERS - 1, invalid = MAX_NOF_XNC_PEERS };
@@ -638,82 +569,6 @@ struct cu_cp_rrc_resume_request {
 } // namespace ocudu::ocucp
 
 namespace fmt {
-
-// DU index formatter.
-template <>
-struct formatter<ocudu::ocucp::du_index_t> {
-  template <typename ParseContext>
-  auto parse(ParseContext& ctx)
-  {
-    return ctx.begin();
-  }
-
-  template <typename FormatContext>
-  auto format(const ocudu::ocucp::du_index_t& idx, FormatContext& ctx) const
-  {
-    if (idx == ocudu::ocucp::du_index_t::invalid) {
-      return format_to(ctx.out(), "invalid");
-    }
-    return format_to(ctx.out(), "{}", (unsigned)idx);
-  }
-};
-
-// CU-UP index formatter.
-template <>
-struct formatter<ocudu::ocucp::cu_up_index_t> {
-  template <typename ParseContext>
-  auto parse(ParseContext& ctx)
-  {
-    return ctx.begin();
-  }
-
-  template <typename FormatContext>
-  auto format(const ocudu::ocucp::cu_up_index_t& idx, FormatContext& ctx) const
-  {
-    if (idx == ocudu::ocucp::cu_up_index_t::invalid) {
-      return format_to(ctx.out(), "invalid");
-    }
-    return format_to(ctx.out(), "{}", (unsigned)idx);
-  }
-};
-
-// DU cell index formatter.
-template <>
-struct formatter<ocudu::ocucp::du_cell_index_t> {
-  template <typename ParseContext>
-  auto parse(ParseContext& ctx)
-  {
-    return ctx.begin();
-  }
-
-  template <typename FormatContext>
-  auto format(const ocudu::ocucp::du_cell_index_t& idx, FormatContext& ctx) const
-  {
-    if (idx == ocudu::ocucp::du_cell_index_t::invalid) {
-      return format_to(ctx.out(), "invalid");
-    }
-    return format_to(ctx.out(), "{}", (unsigned)idx);
-  }
-};
-
-// AMF index formatter.
-template <>
-struct formatter<ocudu::ocucp::amf_index_t> {
-  template <typename ParseContext>
-  auto parse(ParseContext& ctx)
-  {
-    return ctx.begin();
-  }
-
-  template <typename FormatContext>
-  auto format(const ocudu::ocucp::amf_index_t& idx, FormatContext& ctx) const
-  {
-    if (idx == ocudu::ocucp::amf_index_t::invalid) {
-      return format_to(ctx.out(), "invalid");
-    }
-    return format_to(ctx.out(), "{}", (unsigned)idx);
-  }
-};
 
 // XNC peer index formatter.
 template <>

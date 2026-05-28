@@ -216,7 +216,7 @@ public:
 
   /// \brief Notify that the TNL connection to the AMF was lost.
   /// \param[in] amf_index The index of the lost AMF.
-  virtual void on_n2_disconnection(amf_index_t amf_index) = 0;
+  virtual void on_n2_disconnection(cu_cp_amf_index_t amf_index) = 0;
 
   /// \brief Notifies the CU-CP about a Paging message.
   virtual void on_paging_message(cu_cp_paging_message& msg) = 0;
@@ -234,7 +234,8 @@ public:
   /// \brief Notifies the CU-CP about a DL non UE associated NRPPa transport.
   /// \param[in] amf_index The index of the AMF that received the NRPPa transport.
   /// \param[in] nrppa_pdu The NRPPa transport PDU.
-  virtual void on_dl_non_ue_associated_nrppa_transport_pdu(amf_index_t amf_index, const byte_buffer& nrppa_pdu) = 0;
+  virtual void on_dl_non_ue_associated_nrppa_transport_pdu(cu_cp_amf_index_t  amf_index,
+                                                           const byte_buffer& nrppa_pdu) = 0;
 
   /// \brief Notifies the CU-CP about a Location Reporting Control message.
   virtual void on_location_reporting_control_message(cu_cp_ue_index_t ue_index, const location_report_request& msg) = 0;

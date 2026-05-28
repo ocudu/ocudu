@@ -12,8 +12,7 @@
 #include "ocudu/e1ap/common/e1ap_types.h"
 #include "ocudu/support/async/async_task.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 class e1ap_cu_cp_notifier;
 class e1ap_ue_context_list;
@@ -23,7 +22,7 @@ class e1_release_procedure
 {
 public:
   e1_release_procedure(const asn1::e1ap::e1_release_request_s& request_,
-                       cu_up_index_t                           cu_up_index_,
+                       cu_cp_cu_up_index_t                     cu_up_index_,
                        e1ap_message_notifier&                  pdu_notifier_,
                        e1ap_cu_cp_notifier&                    cu_cp_notifier_,
                        e1ap_ue_context_list&                   ue_list_,
@@ -37,7 +36,7 @@ private:
   void        send_e1_release_response();
 
   const asn1::e1ap::e1_release_request_s request;
-  cu_up_index_t                          cu_up_index;
+  cu_cp_cu_up_index_t                    cu_up_index;
   e1ap_message_notifier&                 pdu_notifier;
   e1ap_cu_cp_notifier&                   cu_cp_notifier;
   e1ap_ue_context_list&                  ue_list;
@@ -48,5 +47,4 @@ private:
   std::unordered_map<gnb_cu_cp_ue_e1ap_id_t, e1ap_ue_context>::iterator ue;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

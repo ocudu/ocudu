@@ -28,16 +28,16 @@ public:
                                 const gnb_cu_ue_f1ap_id_t& gnb_cu_ue_f1ap_id) const override;
 
   /// Get index of the DU that has UE with a given GNB-CU-UE-F1AP-ID.
-  ocucp::du_index_t get_du_index(const cu_cp_ue_index_t& ue_index) const override;
+  cu_cp_du_index_t get_du_index(const cu_cp_ue_index_t& ue_index) const override;
 
   /// Get DU index for a given NR Cell Global ID.
-  ocucp::du_index_t get_du_index(const nr_cell_global_id_t& nr_cgi) const override;
+  cu_cp_du_index_t get_du_index(const nr_cell_global_id_t& nr_cgi) const override;
 
   /// Get PCI for a given NR Cell Global ID.
   pci_t get_pci(const nr_cell_global_id_t& nr_cgi) const override;
 
   async_task<ocucp::cu_cp_intra_cu_handover_response>
-  trigger_handover(const ocucp::du_index_t&                      source_du_index,
+  trigger_handover(const cu_cp_du_index_t&                       source_du_index,
                    const ocucp::cu_cp_intra_cu_handover_request& handover_req) override;
 
 private:

@@ -10,8 +10,7 @@
 #include "ocudu/nrppa/nrppa.h"
 #include "ocudu/ran/cause/nrppa_cause.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// \brief Positioning Information Exchange, TS 38.455 section 8.2.6.
 /// The Positioning Information Exchange procedure is initiated by the LMF to request to the NG-RAN node positioning
@@ -21,7 +20,7 @@ class positioning_information_exchange_procedure
 public:
   positioning_information_exchange_procedure(const positioning_information_request_t& request_,
                                              uint16_t                                 transaction_id_,
-                                             du_index_t                               du_index_,
+                                             cu_cp_du_index_t                         du_index_,
                                              nrppa_du_context_list&                   du_ctxt_list_,
                                              nrppa_cu_cp_notifier&                    cu_cp_notifier_,
                                              ocudulog::basic_logger&                  logger_);
@@ -48,7 +47,7 @@ private:
 
   const positioning_information_request_t pos_info_request;
   uint16_t                                transaction_id;
-  du_index_t                              du_index;
+  cu_cp_du_index_t                        du_index;
   nrppa_du_context_list&                  du_ctxt_list;
   nrppa_cu_cp_notifier&                   cu_cp_notifier;
   ocudulog::basic_logger&                 logger;
@@ -59,5 +58,4 @@ private:
   byte_buffer               ul_nrppa_pdu;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "du_configuration_manager.h"
+#include "ocudu/ran/band_helper.h"
 #include "ocudu/ran/plmn_identity.h"
 
 using namespace ocudu;
@@ -88,7 +89,7 @@ std::unique_ptr<du_configuration_handler> du_configuration_manager::create_du_ha
   return std::make_unique<du_configuration_handler_impl>(*this);
 }
 
-static du_cell_configuration create_du_cell_config(du_cell_index_t                   cell_idx,
+static du_cell_configuration create_du_cell_config(cu_cp_du_cell_index_t             cell_idx,
                                                    const cu_cp_du_served_cells_item& f1ap_cell_cfg)
 {
   const auto&           cell_req = f1ap_cell_cfg.served_cell_info;
@@ -135,7 +136,7 @@ du_configuration_manager::add_du_config(const du_setup_request& req)
   ctxt.rrc_version               = req.gnb_du_rrc_version;
   ctxt.served_cells.resize(req.gnb_du_served_cells_list.size());
   for (unsigned i = 0; i != ctxt.served_cells.size(); ++i) {
-    ctxt.served_cells[i] = create_du_cell_config(uint_to_du_cell_index(i), req.gnb_du_served_cells_list[i]);
+    ctxt.served_cells[i] = create_du_cell_config(uint_to_cu_cp_du_cell_index(i), req.gnb_du_served_cells_list[i]);
   }
   return &ctxt;
 }
@@ -177,18 +178,18 @@ du_configuration_manager::handle_du_config_update(const du_configuration_context
   // > Add new cells.
   for (const auto& cell_to_add : req.served_cells_to_add) {
     // Allocate cell index.
-    du_cell_index_t cell_idx = du_cell_index_t::invalid;
-    for (unsigned i = 0; i != MAX_NOF_DU_CELLS; ++i) {
+    cu_cp_du_cell_index_t cell_idx = cu_cp_du_cell_index_t::invalid;
+    for (unsigned i = 0; i != CU_CP_MAX_NOF_DU_CELLS; ++i) {
       if (std::none_of(
               du_context.served_cells.begin(), du_context.served_cells.end(), [i](const du_cell_configuration& item) {
-                return item.cell_index == uint_to_du_cell_index(i);
+                return item.cell_index == uint_to_cu_cp_du_cell_index(i);
               })) {
-        cell_idx = uint_to_du_cell_index(i);
+        cell_idx = uint_to_cu_cp_du_cell_index(i);
         break;
       }
     }
     // Note: Existence of a free cell index should be guaranteed during validation.
-    ocudu_assert(cell_idx != du_cell_index_t::invalid, "Failed to allocate cell index");
+    ocudu_assert(cell_idx != cu_cp_du_cell_index_t::invalid, "Failed to allocate cell index");
 
     du_context.served_cells.push_back(create_du_cell_config(cell_idx, cell_to_add));
   }
@@ -299,7 +300,7 @@ void du_configuration_manager::rem_du(gnb_du_id_t du_id)
 error_type<du_setup_result::rejected>
 du_configuration_manager::validate_new_du_config(const du_setup_request& req) const
 {
-  if (req.gnb_du_served_cells_list.size() > MAX_NOF_DU_CELLS) {
+  if (req.gnb_du_served_cells_list.size() > CU_CP_MAX_NOF_DU_CELLS) {
     return make_unexpected(
         du_setup_result::rejected{cause_protocol_t::msg_not_compatible_with_receiver_state, "Too many served cells"});
   }

@@ -7,8 +7,7 @@
 #include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/ocudulog/logger.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 class du_processor_repository;
 struct cu_cp_paging_message;
@@ -23,11 +22,10 @@ public:
   void handle_paging_message(const cu_cp_paging_message& msg);
 
 private:
-  bool handle_du_paging_message(du_index_t du_index, const cu_cp_paging_message& msg);
+  bool handle_du_paging_message(cu_cp_du_index_t du_index, const cu_cp_paging_message& msg);
 
   du_processor_repository& dus;
   ocudulog::basic_logger&  logger;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

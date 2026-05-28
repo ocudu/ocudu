@@ -49,7 +49,7 @@ public:
     return nullptr;
   }
 
-  f1ap_message_notifier& get_du(du_index_t du_idx) { return *du_tx_notifiers.at((unsigned)du_idx); }
+  f1ap_message_notifier& get_du(cu_cp_du_index_t du_idx) { return *du_tx_notifiers.at((unsigned)du_idx); }
 
   void remove_du_connection(size_t connection_idx) { du_tx_notifiers.erase(du_tx_notifiers.begin() + connection_idx); }
 

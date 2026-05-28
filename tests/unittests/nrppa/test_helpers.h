@@ -29,8 +29,8 @@ public:
     return &ue->get_nrppa_cu_cp_ue_notifier();
   }
 
-  void on_ul_nrppa_pdu(const byte_buffer&                          nrppa_pdu,
-                       std::variant<cu_cp_ue_index_t, amf_index_t> ue_or_amf_index) override
+  void on_ul_nrppa_pdu(const byte_buffer&                                nrppa_pdu,
+                       std::variant<cu_cp_ue_index_t, cu_cp_amf_index_t> ue_or_amf_index) override
   {
     last_ul_nrppa_pdu = nrppa_pdu.copy();
   }
@@ -49,7 +49,7 @@ public:
   ~dummy_nrppa_cu_cp_ue_notifier() = default;
 
   void set_ue_index(cu_cp_ue_index_t ue_index_) { ue_index = ue_index_; }
-  void set_du_index(du_index_t du_index_) { du_index = du_index_; }
+  void set_du_index(cu_cp_du_index_t du_index_) { du_index = du_index_; }
   void set_meas_results(std::optional<cell_measurement_positioning_info>& meas_results_)
   {
     meas_results = meas_results_;
@@ -59,7 +59,7 @@ public:
   cu_cp_ue_index_t get_ue_index() const override { return ue_index.value(); }
 
   /// \brief Get the DU index of the UE.
-  du_index_t get_du_index() const override { return du_index.value(); }
+  cu_cp_du_index_t get_du_index() const override { return du_index.value(); }
 
   std::optional<cell_measurement_positioning_info>& on_measurement_results_required() override { return meas_results; }
 
@@ -67,7 +67,7 @@ public:
   bool schedule_async_task(async_task<void> task) override { return true; }
 
   std::optional<cu_cp_ue_index_t>                  ue_index;
-  std::optional<du_index_t>                        du_index;
+  std::optional<cu_cp_du_index_t>                  du_index;
   std::optional<cell_measurement_positioning_info> meas_results;
 };
 

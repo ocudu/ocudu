@@ -39,11 +39,11 @@ public:
 
   /// \brief Adds a NGAP object to the CU-CP.
   /// \return A pointer to the interface of the added NGAP object if it was successfully created, a nullptr otherwise.
-  ngap_interface* add_ngap(amf_index_t amf_index, const cu_cp_configuration::ngap_config& config);
+  ngap_interface* add_ngap(cu_cp_amf_index_t amf_index, const cu_cp_configuration::ngap_config& config);
 
   /// \brief Updates the PLMN lookup table with the PLMNs supported by the connected NGAP.
   /// \param[in] amf_index The AMF index to identify the NGAP.
-  void update_plmn_lookup(amf_index_t amf_index);
+  void update_plmn_lookup(cu_cp_amf_index_t amf_index);
 
   /// \brief Checks whether a AMF with the specified PLMN is served by any of the connected NGAPs.
   /// \param[in] plmn The PLMN to identify the NGAP.
@@ -53,10 +53,10 @@ public:
   /// \brief Checks whether a AMF with the specified AMF index is in the connected NGAPs.
   /// \param[in] amf_index The AMF index to identify the NGAP.
   /// \return The interface of the NGAP for the given AMF index if it is found, nullptr not.
-  ngap_interface* find_ngap(const amf_index_t& amf_index);
+  ngap_interface* find_ngap(const cu_cp_amf_index_t& amf_index);
 
   /// \brief Get the all NGAP interfaces.
-  std::map<amf_index_t, ngap_interface*> get_ngaps();
+  std::map<cu_cp_amf_index_t, ngap_interface*> get_ngaps();
 
   ngap_task_scheduler& get_ngap_task_scheduler() { return amf_task_sched; }
 
@@ -90,8 +90,8 @@ private:
 
   ngap_task_scheduler amf_task_sched;
 
-  std::unordered_map<plmn_identity, amf_index_t> plmn_to_amf_index;
-  std::map<amf_index_t, ngap_context>            ngap_db;
+  std::unordered_map<plmn_identity, cu_cp_amf_index_t> plmn_to_amf_index;
+  std::map<cu_cp_amf_index_t, ngap_context>            ngap_db;
 };
 
 } // namespace ocudu::ocucp

@@ -3,15 +3,15 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "trp_information_exchange_routine.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
+#include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/support/async/coroutine.h"
 
 using namespace ocudu::ocucp;
 
 trp_information_exchange_routine::trp_information_exchange_routine(
-    const trp_information_request_t&          request_,
-    du_processor_repository&                  du_db_,
-    std::map<du_index_t, nrppa_f1ap_adapter>& nrppa_f1ap_ev_notifiers_) :
+    const trp_information_request_t&                request_,
+    du_processor_repository&                        du_db_,
+    std::map<cu_cp_du_index_t, nrppa_f1ap_adapter>& nrppa_f1ap_ev_notifiers_) :
   request(request_),
   du_db(du_db_),
   nrppa_f1ap_ev_notifiers(nrppa_f1ap_ev_notifiers_),

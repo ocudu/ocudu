@@ -17,7 +17,7 @@ using namespace ocucp;
 
 positioning_activation_procedure::positioning_activation_procedure(const positioning_activation_request_t& request_,
                                                                    uint16_t                transaction_id_,
-                                                                   du_index_t              du_index_,
+                                                                   cu_cp_du_index_t        du_index_,
                                                                    nrppa_du_context_list&  du_ctxt_list_,
                                                                    nrppa_cu_cp_notifier&   cu_cp_notifier_,
                                                                    ocudulog::basic_logger& logger_) :

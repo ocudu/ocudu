@@ -17,12 +17,12 @@ ngap_repository::ngap_repository(ngap_repository_config cfg_) :
   amf_task_sched(*cfg.cu_cp.services.timers, *cfg.cu_cp.services.cu_cp_executor, cfg.cu_cp.ngap.ngaps.size(), logger)
 {
   for (uint16_t amf_idx = 0; amf_idx < cfg.cu_cp.ngap.ngaps.size(); amf_idx++) {
-    auto* ngap_entity = add_ngap(uint_to_amf_index(amf_idx), cfg.cu_cp.ngap.ngaps.at(amf_idx));
+    auto* ngap_entity = add_ngap(uint_to_cu_cp_amf_index(amf_idx), cfg.cu_cp.ngap.ngaps.at(amf_idx));
     ocudu_assert(ngap_entity != nullptr, "Failed to add NGAP for gateway");
   }
 }
 
-ngap_interface* ngap_repository::add_ngap(amf_index_t amf_index, const cu_cp_configuration::ngap_config& config)
+ngap_interface* ngap_repository::add_ngap(cu_cp_amf_index_t amf_index, const cu_cp_configuration::ngap_config& config)
 {
   // Create NGAP object
   auto it = ngap_db.insert(std::make_pair(amf_index, ngap_context{}));
@@ -52,7 +52,7 @@ ngap_interface* ngap_repository::add_ngap(amf_index_t amf_index, const cu_cp_con
   return ngap_ctxt.ngap.get();
 }
 
-void ngap_repository::update_plmn_lookup(amf_index_t amf_index)
+void ngap_repository::update_plmn_lookup(cu_cp_amf_index_t amf_index)
 {
   auto ngap = ngap_db.find(amf_index);
   if (ngap == ngap_db.end()) {
@@ -75,7 +75,7 @@ ngap_interface* ngap_repository::find_ngap(const plmn_identity& plmn)
   return ngap_db.at(plmn_to_amf_index.at(plmn)).ngap.get();
 }
 
-ngap_interface* ngap_repository::find_ngap(const amf_index_t& amf_index)
+ngap_interface* ngap_repository::find_ngap(const cu_cp_amf_index_t& amf_index)
 {
   if (ngap_db.find(amf_index) == ngap_db.end()) {
     return nullptr;
@@ -84,9 +84,9 @@ ngap_interface* ngap_repository::find_ngap(const amf_index_t& amf_index)
   return ngap_db.at(amf_index).ngap.get();
 }
 
-std::map<amf_index_t, ngap_interface*> ngap_repository::get_ngaps()
+std::map<cu_cp_amf_index_t, ngap_interface*> ngap_repository::get_ngaps()
 {
-  std::map<amf_index_t, ngap_interface*> ngaps;
+  std::map<cu_cp_amf_index_t, ngap_interface*> ngaps;
   for (auto& amf : ngap_db) {
     ngaps.emplace(amf.first, amf.second.ngap.get());
   }

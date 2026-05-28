@@ -22,7 +22,7 @@ public:
 
   /// \brief Get the CU-UP index.
   /// \return The CU-UP index.
-  virtual cu_up_index_t get_cu_up_index() = 0;
+  virtual cu_cp_cu_up_index_t get_cu_up_index() = 0;
 
   /// \brief Get the CU-UP processor context.
   /// \return The CU-UP processor context.
@@ -66,7 +66,7 @@ public:
   /// \brief Notifies about a failed CU-CP E1 Setup procedure.
   /// The corresponding CU-UP processor will be removed now.
   /// \param[in] cu_up_index The index of the CU-UP processor to delete.
-  virtual void on_cu_up_remove_request_received(const cu_up_index_t cu_up_index) = 0;
+  virtual void on_cu_up_remove_request_received(const cu_cp_cu_up_index_t cu_up_index) = 0;
 };
 
 class cu_up_ue_handler

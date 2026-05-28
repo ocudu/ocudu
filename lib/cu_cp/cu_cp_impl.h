@@ -20,6 +20,7 @@
 #include "ue_manager/ue_manager_impl.h"
 #include "xnap_repository.h"
 #include "ocudu/cu_cp/cu_configurator.h"
+#include "ocudu/cu_cp/cu_cp.h"
 #include "ocudu/cu_cp/cu_cp_configuration.h"
 #include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/cu_cp/inter_cu_handover_messages.h"
@@ -64,7 +65,7 @@ public:
   void handle_bearer_context_release_request(const cu_cp_bearer_context_release_request& msg) override;
   void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
   void handle_dl_data_notification(cu_cp_ue_index_t ue_index) override;
-  void handle_e1_release_request(cu_up_index_t cu_up_index) override;
+  void handle_e1_release_request(cu_cp_cu_up_index_t cu_up_index) override;
 
   // cu_cp_rrc_ue_interface.
   bool handle_ue_plmn_selected(cu_cp_ue_index_t ue_index, const plmn_identity& plmn) override;
@@ -111,10 +112,11 @@ public:
        handle_ngap_handover_request(const ngap_handover_request& request) override;
   void handle_transmission_of_handover_required() override;
   void handle_dl_ue_associated_nrppa_transport_pdu(cu_cp_ue_index_t ue_index, const byte_buffer& nrppa_pdu) override;
-  void handle_dl_non_ue_associated_nrppa_transport_pdu(amf_index_t amf_index, const byte_buffer& nrppa_pdu) override;
+  void handle_dl_non_ue_associated_nrppa_transport_pdu(cu_cp_amf_index_t  amf_index,
+                                                       const byte_buffer& nrppa_pdu) override;
   void handle_location_reporting_control_message(cu_cp_ue_index_t               ue_index,
                                                  const location_report_request& msg) override;
-  void handle_n2_disconnection(amf_index_t amf_index) override;
+  void handle_n2_disconnection(cu_cp_amf_index_t amf_index) override;
 
   // cu_cp_inter_cu_handover_handler.
   async_task<bool> handle_new_rrc_handover_command(cu_cp_ue_index_t                ue_index,
@@ -137,8 +139,8 @@ public:
 
   // cu_cp_nrppa_handler.
   nrppa_cu_cp_ue_notifier* handle_new_nrppa_ue(cu_cp_ue_index_t ue_index) override;
-  void                     handle_ul_nrppa_pdu(const byte_buffer&                          nrppa_pdu,
-                                               std::variant<cu_cp_ue_index_t, amf_index_t> ue_or_amf_index) override;
+  void                     handle_ul_nrppa_pdu(const byte_buffer&                                nrppa_pdu,
+                                               std::variant<cu_cp_ue_index_t, cu_cp_amf_index_t> ue_or_amf_index) override;
   async_task<trp_information_cu_cp_response_t>
   handle_trp_information_request(const trp_information_request_t& request) override;
 
@@ -157,8 +159,8 @@ public:
   // cu_cp_mobility_manager_handler.
   async_task<cu_cp_intra_cu_handover_response>
   handle_intra_cu_handover_request(const cu_cp_intra_cu_handover_request& request,
-                                   du_index_t&                            source_du_index,
-                                   du_index_t&                            target_du_index) override;
+                                   cu_cp_du_index_t&                      source_du_index,
+                                   cu_cp_du_index_t&                      target_du_index) override;
 
   async_task<cu_cp_intra_cu_cho_response>
   handle_intra_cu_cho_request(const cu_cp_intra_cu_cho_request& request) override;
@@ -179,7 +181,7 @@ public:
   metrics_handler&                  get_metrics_handler() override { return *metrics_hdlr; }
 
   // cu_cp_amf_reconnection_handler.
-  void handle_amf_reconnection(amf_index_t amf_index) override;
+  void handle_amf_reconnection(cu_cp_amf_index_t amf_index) override;
 
   // cu_cp public interface.
   cu_cp_f1c_handler&                     get_f1c_handler() override { return controller.get_f1c_handler(); }
@@ -205,7 +207,7 @@ private:
   // Handling of DU events.
   void handle_rrc_ue_creation(cu_cp_ue_index_t ue_index, rrc_ue_interface& rrc_ue) override;
 
-  byte_buffer handle_target_cell_sib1_required(du_index_t du_index, nr_cell_global_id_t cgi) override;
+  byte_buffer handle_target_cell_sib1_required(cu_cp_du_index_t du_index, nr_cell_global_id_t cgi) override;
 
   async_task<void> handle_transaction_info_loss(const ue_transaction_info_loss_event& ev) override;
 
@@ -275,7 +277,7 @@ private:
   nrppa_cu_cp_adapter nrppa_cu_cp_ev_notifier;
 
   // NRPPa to F1AP adapter.
-  std::map<du_index_t, nrppa_f1ap_adapter> nrppa_f1ap_ev_notifiers;
+  std::map<cu_cp_du_index_t, nrppa_f1ap_adapter> nrppa_f1ap_ev_notifiers;
 
   // NRPPA entity.
   std::unique_ptr<nrppa_interface> nrppa_entity;

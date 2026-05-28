@@ -6,9 +6,9 @@
 
 #include "../du_context/nrppa_du_context.h"
 #include "ocudu/asn1/nrppa/nrppa.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/nrppa/nrppa.h"
 #include "ocudu/ran/cause/nrppa_cause.h"
+#include "ocudu/ran/cu_cp_types.h"
 
 namespace ocudu::ocucp {
 
@@ -18,13 +18,13 @@ namespace ocudu::ocucp {
 class trp_information_exchange_procedure
 {
 public:
-  trp_information_exchange_procedure(amf_index_t                      amf_index_,
-                                     const trp_information_request_t& request_,
-                                     uint16_t                         transaction_id_,
-                                     nrppa_cu_cp_notifier&            cu_cp_notifier_,
-                                     std::map<trp_id_t, du_index_t>&  trp_id_to_du_idx_,
-                                     nrppa_du_context_list&           du_ctxt_list_,
-                                     ocudulog::basic_logger&          logger_);
+  trp_information_exchange_procedure(cu_cp_amf_index_t                     amf_index_,
+                                     const trp_information_request_t&      request_,
+                                     uint16_t                              transaction_id_,
+                                     nrppa_cu_cp_notifier&                 cu_cp_notifier_,
+                                     std::map<trp_id_t, cu_cp_du_index_t>& trp_id_to_du_idx_,
+                                     nrppa_du_context_list&                du_ctxt_list_,
+                                     ocudulog::basic_logger&               logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -46,13 +46,13 @@ private:
   /// \brief Send the TRP info outcome to the CU-CP.
   void send_ul_nrppa_pdu(const asn1::nrppa::nr_ppa_pdu_c& pdu);
 
-  amf_index_t                     amf_index;
-  const trp_information_request_t trp_info_request;
-  uint16_t                        transaction_id;
-  nrppa_cu_cp_notifier&           cu_cp_notifier;
-  std::map<trp_id_t, du_index_t>& trp_id_to_du_idx;
-  nrppa_du_context_list&          du_ctxt_list;
-  ocudulog::basic_logger&         logger;
+  cu_cp_amf_index_t                     amf_index;
+  const trp_information_request_t       trp_info_request;
+  uint16_t                              transaction_id;
+  nrppa_cu_cp_notifier&                 cu_cp_notifier;
+  std::map<trp_id_t, cu_cp_du_index_t>& trp_id_to_du_idx;
+  nrppa_du_context_list&                du_ctxt_list;
+  ocudulog::basic_logger&               logger;
 
   trp_information_cu_cp_response_t cu_cp_response;
   asn1::nrppa::nr_ppa_pdu_c        trp_info_outcome;

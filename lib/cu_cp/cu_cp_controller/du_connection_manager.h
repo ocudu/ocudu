@@ -5,13 +5,13 @@
 #pragma once
 
 #include "ocudu/cu_cp/cu_cp_f1c_handler.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
+#include "ocudu/ocudulog/logger.h"
+#include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/support/executors/task_executor.h"
 #include <condition_variable>
 #include <map>
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 class du_processor_repository;
 class common_task_scheduler;
@@ -40,7 +40,7 @@ private:
   class f1_gw_to_cu_cp_pdu_adapter;
 
   // Called by the F1-C GW when it disconnects its PDU notifier endpoint.
-  void handle_f1c_gw_connection_closed(du_index_t du_idx);
+  void handle_f1c_gw_connection_closed(cu_cp_du_index_t du_idx);
 
   const unsigned           max_nof_dus;
   du_processor_repository& dus;
@@ -48,8 +48,8 @@ private:
   common_task_scheduler&   common_task_sched;
   ocudulog::basic_logger&  logger;
 
-  std::map<du_index_t, std::shared_ptr<shared_du_connection_context>> du_connections;
-  std::atomic<unsigned>                                               du_count{0};
+  std::map<cu_cp_du_index_t, std::shared_ptr<shared_du_connection_context>> du_connections;
+  std::atomic<unsigned>                                                     du_count{0};
 
   std::atomic<bool>       stopped{false};
   std::mutex              stop_mutex;
@@ -57,5 +57,4 @@ private:
   bool                    stop_completed = false;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

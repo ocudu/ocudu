@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include "ocudu/cu_cp/cu_cp_types.h"
+#include "ocudu/ran/cu_cp_types.h"
+#include "ocudu/ran/plmn_identity.h"
 #include <set>
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// \brief Class responsible for notifying the CU-CP about DU node connections.
 class du_connection_notifier
@@ -18,8 +18,7 @@ public:
 
   /// \brief Notifies the CU-CP about a DU setup request.
   /// \return True if CU-CP accepts the request.
-  virtual bool on_du_setup_request(du_index_t du_index, const std::set<plmn_identity>& plmn_ids) = 0;
+  virtual bool on_du_setup_request(cu_cp_du_index_t du_index, const std::set<plmn_identity>& plmn_ids) = 0;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp
