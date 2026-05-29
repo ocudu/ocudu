@@ -8,6 +8,7 @@
 # OS_VERSION            Image tag, e.g. 24.04 or bookworm (must match OS)
 # UHD_VERSION           UHD version number
 # DPDK_VERSION          DPDK version number
+# ROHC_VERSION          ROHC version number
 # MARCH                 gcc/clang compatible arch
 # NUM_JOBS              Number or empty for all
 # EXTRA_CMAKE_ARGS      Extra flags for OCUDU
@@ -16,63 +17,97 @@ ARG OS=ubuntu
 ARG OS_VERSION=26.04
 ARG UHD_VERSION=4.9.0.1
 ARG DPDK_VERSION=25.11.2
+ARG ROHC_VERSION=2.3.1
 ARG MARCH=native
 ARG NUM_JOBS=""
 ARG TARGETARCH
 
-##################
-# Stage 1: Build #
-##################
+#########################
+# Stage 1.1: Build ROHC #
+#########################
+FROM ${OS}:${OS_VERSION} AS builder-rohc
 
-FROM ${OS}:${OS_VERSION} AS builder-base
-
-# Adding the complete repo to the context, in /src folder
-ADD . /src
-
-# Install OCUDU build dependencies
-RUN /src/docker/scripts/install_dependencies.sh build && \
-    /src/docker/scripts/install_uhd_dependencies.sh build && \
-    /src/docker/scripts/install_dpdk_dependencies.sh build && \
-    /src/docker/scripts/install_docker_dependencies.sh build 
-
-
-
-FROM builder-base AS builder-rohc
-
-ARG MARCH
-ARG NUM_JOBS
+COPY docker/scripts/ /src/docker/scripts/
 
 RUN /src/docker/scripts/install_rohc_dependencies.sh build
 
-# Compile ROHC
-RUN /src/docker/scripts/build_rohc.sh ${MARCH} ${NUM_JOBS}
+ARG ROHC_VERSION
+ARG MARCH
+ARG NUM_JOBS
 
+RUN /src/docker/scripts/build_rohc.sh "${ROHC_VERSION}" ${MARCH} ${NUM_JOBS}
 
+########################
+# Stage 1.2: Build UHD #
+########################
+FROM ${OS}:${OS_VERSION} AS builder-uhd
 
-FROM builder-base AS builder
+COPY docker/scripts/ /src/docker/scripts/
+
+RUN /src/docker/scripts/install_uhd_dependencies.sh build
 
 ARG UHD_VERSION
+ARG MARCH
+ARG NUM_JOBS
+ARG TARGETARCH
+
+RUN UHD_ARCH=$([ "${TARGETARCH}" = "arm64" ] && echo "-mcpu=${MARCH}" || echo "-march=${MARCH}") && \
+    /src/docker/scripts/build_uhd.sh "${UHD_VERSION}" ${UHD_ARCH} ${NUM_JOBS}
+
+
+#########################
+# Stage 1.3: Build DPDK #
+#########################
+FROM ${OS}:${OS_VERSION} AS builder-dpdk
+
+COPY docker/scripts/ /src/docker/scripts/
+
+RUN /src/docker/scripts/install_dpdk_dependencies.sh build
+
 ARG DPDK_VERSION
 ARG MARCH
 ARG NUM_JOBS
 ARG TARGETARCH
 
-# Copy ROHC binaries and libraries installed in builder-rohc stage (without taking ROHC build deps that confuse DPDK build)
-COPY --from=builder-rohc /opt/rohc /opt/rohc
-
-# Compile UHD/DPDK
-RUN UHD_ARCH=$([ "${TARGETARCH}" = "arm64" ] && echo "-mcpu=${MARCH}" || echo "-march=${MARCH}") && \
-    DPDK_PLATFORM=$(case "${MARCH}" in *neoverse-n1*) echo n1sdp ;; *) echo "${MARCH}" ;; esac) && \
+RUN DPDK_PLATFORM=$(case "${MARCH}" in *neoverse-n1*) echo n1sdp ;; *) echo "${MARCH}" ;; esac) && \
     DPDK_ARCH=$([ "${TARGETARCH}" = "arm64" ] && echo "-Dplatform=${DPDK_PLATFORM} -Dmax_numa_nodes=1" || echo "-Dcpu_instruction_set=${MARCH}") && \
-    /src/docker/scripts/build_uhd.sh "${UHD_VERSION}" ${UHD_ARCH} ${NUM_JOBS} && \
     /src/docker/scripts/build_dpdk.sh "${DPDK_VERSION}" "${DPDK_ARCH}" ${NUM_JOBS}
 
-# Compile OCUDU and install it in the OS
+
+########################
+# Stage 3: Build Ocudu #
+########################
+
+FROM ${OS}:${OS_VERSION} AS builder
+
+# Install build deps before touching the full source tree: source-only changes
+COPY docker/scripts/ /src/docker/scripts/
+
+RUN /src/docker/scripts/install_dependencies.sh build && \
+    /src/docker/scripts/install_uhd_dependencies.sh build && \
+    /src/docker/scripts/install_docker_dependencies.sh build
+
+ARG UHD_VERSION
+ARG DPDK_VERSION
+
+# Copy artifacts from the parallel build stages
+COPY --from=builder-rohc /opt/rohc /opt/rohc
+COPY --from=builder-uhd /opt/uhd/${UHD_VERSION} /opt/uhd/${UHD_VERSION}
+COPY --from=builder-dpdk /opt/dpdk/${DPDK_VERSION} /opt/dpdk/${DPDK_VERSION}
+
+ARG MARCH
+ARG NUM_JOBS
+ARG TARGETARCH
 ARG COMPILER=gcc
 ARG EXTRA_CMAKE_ARGS=""
+
 ENV ROHC_DIR=/opt/rohc
 ENV UHD_DIR=/opt/uhd/${UHD_VERSION}
 ENV DPDK_DIR=/opt/dpdk/${DPDK_VERSION}
+
+# Full source added last: source changes only invalidate the compile step below
+ADD . /src
+
 RUN if [ -z "$NUM_JOBS" ]; then NUM_JOBS=$(nproc); fi \
     && ARCH_FLAG=$([ "${TARGETARCH}" = "arm64" ] && echo "-DMCPU=${MARCH}" || echo "-DMARCH=${MARCH}") \
     && \
@@ -100,7 +135,7 @@ RUN cp /src/build/apps/cu/ocu                     /tmp/ocu                     &
     rm -rf /src
 
 ################
-# Stage 2: Run #
+# Stage 3: Run #
 ################
 
 FROM ${OS}:${OS_VERSION} AS runtime
