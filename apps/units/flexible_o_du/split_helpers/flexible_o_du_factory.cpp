@@ -9,7 +9,7 @@
 #include "apps/units/flexible_o_du/o_du_high/du_high/du_high_config_translators.h"
 #include "apps/units/flexible_o_du/o_du_high/o_du_high_unit_factory.h"
 #include "apps/units/flexible_o_du/o_du_low/o_du_low_unit_factory.h"
-#include "commands/ntn_config_update_remote_command_factory.h"
+#include "commands/ntn_config_update_remote_command.h"
 #include "flexible_o_du_impl.h"
 #include "flexible_o_du_ntn_configuration_manager_factory.h"
 #include "metrics/flexible_o_du_metrics_builder.h"
@@ -372,10 +372,8 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
                                          ru->get_controller(),
                                          dependencies.timer_ctrl->get_timer_manager(),
                                          dependencies.workers->get_du_high_executor_mapper().du_control_executor());
-
-    if (o_du.ntn_configurator_manager) {
-      add_ntn_config_update_remote_command(o_du.commands, *o_du.ntn_configurator_manager);
-    }
+    o_du.commands.remote.push_back(
+        std::make_unique<ocudu_ntn::ntn_config_update_remote_command>(*o_du.ntn_configurator_manager));
   }
 
   // Configure the RU and DU in the dynamic DU.
