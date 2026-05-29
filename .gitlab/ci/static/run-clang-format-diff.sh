@@ -31,7 +31,9 @@ echo "Using clang-format version:"
 clang-format --version
 
 # Get modified files (added, removed or changed) compared with target branch
-files=$(git diff --name-only --relative --diff-filter=d "${target}" | grep -E "${FILE_EXTENSION_REGEX}" | tr '\n' ' ')
+#files=$(git diff --name-only --relative --diff-filter=d "${target}" | grep -E "${FILE_EXTENSION_REGEX}" | tr '\n' ' ')
+# Get all tracked files matching source extensions
+files=$(git ls-files | grep -E "${FILE_EXTENSION_REGEX}" | tr '\n' ' ')
 
 # Run clang-format for those files and apply changes
 [ "$files" ] && clang-format -style=file -i ${files} || echo "No files changed"
