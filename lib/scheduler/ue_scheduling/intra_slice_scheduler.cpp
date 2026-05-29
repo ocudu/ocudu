@@ -919,6 +919,7 @@ void intra_slice_scheduler::update_used_ul_vrbs(const ul_ran_slice_candidate& sl
   if (symbols_to_check.empty()) {
     logger.debug(
         "No symbols available for PUSCH allocation on slot={} for slice_id={}", pusch_slot, slice.id().value());
+    return;
   }
 
   used_ul_vrbs = cell_alloc[pusch_slot]
