@@ -40,7 +40,7 @@ services:
       dockerfile: docker/Dockerfile
       args:
         OS: ${OS:-ubuntu}
-        OS_VERSION: ${OS_VERSION:-24.04}
+        OS_VERSION: ${OS_VERSION:-26.04}
     # privileged mode is requred only for accessing usb devices
     privileged: true
     # Extra capabilities always required

@@ -111,9 +111,9 @@ gnb docker compose:
   extends: .docker compose
   variables:
     OS: ubuntu
-    OS_VERSION: "24.04"
-    DOCKER_UHD_VERSION: "4.7.0.0"
-    DOCKER_DPDK_VERSION: "24.11.2"
+    OS_VERSION: "26.04"
+    DOCKER_UHD_VERSION: "4.9.0.1"
+    DOCKER_DPDK_VERSION: "25.11.2"
   rules:
     - if: $ON_MR
       changes:
