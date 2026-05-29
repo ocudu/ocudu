@@ -7,6 +7,7 @@
 #include "ocudu/cu_cp/cu_cp_f1c_handler.h"
 #include "ocudu/ocudulog/logger.h"
 #include "ocudu/ran/cu_cp_types.h"
+#include "ocudu/support/async/async_task_scheduler.h"
 #include "ocudu/support/executors/task_executor.h"
 #include <condition_variable>
 #include <map>
@@ -14,7 +15,6 @@
 namespace ocudu::ocucp {
 
 class du_processor_repository;
-class common_task_scheduler;
 struct du_setup_request;
 
 /// \brief This class is responsible for allocating the resources in the CU-CP required to handle the establishment
@@ -28,7 +28,7 @@ public:
   du_connection_manager(unsigned                 max_nof_dus,
                         du_processor_repository& dus_,
                         task_executor&           cu_cp_exec_,
-                        common_task_scheduler&   common_task_sched_);
+                        async_task_scheduler&    common_task_sched_);
 
   std::unique_ptr<f1ap_message_notifier>
   handle_new_du_connection(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier) override;
@@ -45,7 +45,7 @@ private:
   const unsigned           max_nof_dus;
   du_processor_repository& dus;
   task_executor&           cu_cp_exec;
-  common_task_scheduler&   common_task_sched;
+  async_task_scheduler&    common_task_sched;
   ocudulog::basic_logger&  logger;
 
   std::map<cu_cp_du_index_t, std::shared_ptr<shared_du_connection_context>> du_connections;

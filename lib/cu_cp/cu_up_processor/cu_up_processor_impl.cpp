@@ -4,6 +4,7 @@
 
 #include "cu_up_processor_impl.h"
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp_factory.h"
+#include "ocudu/support/async/async_task_scheduler.h"
 
 using namespace ocudu;
 using namespace ocucp;
@@ -12,7 +13,7 @@ using namespace ocucp;
 class cu_up_processor_impl::e1ap_cu_up_processor_adapter : public e1ap_cu_up_processor_notifier
 {
 public:
-  e1ap_cu_up_processor_adapter(cu_up_processor_impl& parent_, common_task_scheduler& common_task_sched_) :
+  e1ap_cu_up_processor_adapter(cu_up_processor_impl& parent_, async_task_scheduler& common_task_sched_) :
     parent(parent_), common_task_sched(&common_task_sched_)
   {
   }
@@ -22,20 +23,17 @@ public:
     parent.handle_cu_up_e1_setup_request(msg);
   }
 
-  bool schedule_async_task(async_task<void> task) override
-  {
-    return common_task_sched->schedule_async_task(std::move(task));
-  }
+  bool schedule_async_task(async_task<void> task) override { return common_task_sched->schedule(std::move(task)); }
 
 private:
-  cu_up_processor_impl&  parent;
-  common_task_scheduler* common_task_sched = nullptr;
+  cu_up_processor_impl& parent;
+  async_task_scheduler* common_task_sched = nullptr;
 };
 
 cu_up_processor_impl::cu_up_processor_impl(const cu_up_processor_config_t cu_up_processor_config_,
                                            e1ap_message_notifier&         e1ap_notifier_,
                                            e1ap_cu_cp_notifier&           cu_cp_notifier_,
-                                           common_task_scheduler&         common_task_sched_) :
+                                           async_task_scheduler&          common_task_sched_) :
   cfg(cu_up_processor_config_),
   e1ap_notifier(e1ap_notifier_),
   cu_cp_notifier(cu_cp_notifier_),

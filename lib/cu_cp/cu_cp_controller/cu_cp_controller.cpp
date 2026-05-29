@@ -12,7 +12,7 @@ using namespace ocucp;
 
 cu_cp_controller::cu_cp_controller(const cu_cp_configuration&      config_,
                                    cu_cp_amf_reconnection_handler& cu_cp_notifier,
-                                   common_task_scheduler&          common_task_sched_,
+                                   async_task_scheduler&           common_task_sched_,
                                    ngap_repository&                ngaps_,
                                    cu_up_processor_repository&     cu_ups_,
                                    du_processor_repository&        dus_,

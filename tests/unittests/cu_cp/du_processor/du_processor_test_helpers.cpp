@@ -4,9 +4,9 @@
 
 #include "du_processor_test_helpers.h"
 #include "tests/unittests/cu_cp/test_helpers.h"
-#include "ocudu/cu_cp/common_task_scheduler.h"
 #include "ocudu/cu_cp/cu_cp_configuration_helpers.h"
 #include "ocudu/ran/plmn_identity.h"
+#include "ocudu/support/async/async_task_scheduler.h"
 #include <memory>
 
 using namespace ocudu;
@@ -14,10 +14,10 @@ using namespace ocucp;
 
 namespace {
 
-class dummy_task_sched final : public common_task_scheduler
+class dummy_task_sched final : public async_task_scheduler
 {
 public:
-  bool schedule_async_task(async_task<void> task) override { return task_sched.schedule(std::move(task)); }
+  bool schedule(async_task<void> task) override { return task_sched.schedule(std::move(task)); }
 
 private:
   fifo_async_task_scheduler task_sched{32};

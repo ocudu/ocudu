@@ -5,8 +5,8 @@
 #pragma once
 
 #include "../xnap_repository.h"
-#include "ocudu/cu_cp/common_task_scheduler.h"
 #include "ocudu/cu_cp/cu_cp_xnc_handler.h"
+#include "ocudu/support/async/async_task_scheduler.h"
 #include "ocudu/xnap/gateways/xnc_connection_gateway.h"
 #include "ocudu/xnap/xnap_configuration.h"
 #include <condition_variable>
@@ -24,7 +24,7 @@ public:
                          const std::vector<xnc_connection_gateway*>& xnc_gws_,
                          timer_manager&                              timers_,
                          task_executor&                              cu_cp_exec_,
-                         common_task_scheduler&                      common_task_sched_);
+                         async_task_scheduler&                       common_task_sched_);
 
   void start(const xnap_configuration& xnap_cfg);
 
@@ -51,7 +51,7 @@ private:
   std::vector<xnc_connection_gateway*> xnc_gws;
   timer_manager&                       timers;
   task_executor&                       cu_cp_exec;
-  common_task_scheduler&               common_task_sched;
+  async_task_scheduler&                common_task_sched;
   ocudulog::basic_logger&              logger;
 
   /// XNAP configuration used to recreate XNAP instances after connection loss.

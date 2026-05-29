@@ -6,8 +6,8 @@
 
 #include "cu_up_processor.h"
 #include "cu_up_processor_config.h"
-#include "ocudu/cu_cp/common_task_scheduler.h"
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp.h"
+#include "ocudu/support/async/async_task_scheduler.h"
 #include <string>
 
 namespace ocudu::ocucp {
@@ -15,12 +15,12 @@ namespace ocudu::ocucp {
 class cu_up_processor_impl : public cu_up_processor
 {
 public:
-  cu_up_processor_impl(const cu_up_processor_config_t cu_up_processor_config_,
-                       e1ap_message_notifier&         e1ap_notifier_,
-                       e1ap_cu_cp_notifier&           cu_cp_notifier_,
-                       common_task_scheduler&         common_task_sched_);
+  cu_up_processor_impl(cu_up_processor_config_t cu_up_processor_config_,
+                       e1ap_message_notifier&   e1ap_notifier_,
+                       e1ap_cu_cp_notifier&     cu_cp_notifier_,
+                       async_task_scheduler&    common_task_sched_);
 
-  void stop(cu_cp_ue_index_t ue_index) override;
+  void stop(cu_cp_ue_index_t ue_idx) override;
 
   // Message handlers.
   void             handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& msg) override;

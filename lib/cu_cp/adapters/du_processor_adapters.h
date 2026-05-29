@@ -5,6 +5,7 @@
 #pragma once
 
 #include "../cu_cp_controller/cu_cp_controller.h"
+#include "../cu_cp_controller/node_connection_notifier.h"
 #include "../cu_cp_impl_interface.h"
 #include "../du_processor/du_processor.h"
 #include "ocudu/support/ocudu_assert.h"

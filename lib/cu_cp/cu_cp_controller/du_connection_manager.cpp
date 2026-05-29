@@ -5,7 +5,6 @@
 #include "du_connection_manager.h"
 #include "../du_processor/du_processor_repository.h"
 #include "ocudu/f1ap/f1ap_message.h"
-#include "ocudu/support/executors/sync_task_executor.h"
 #include <thread>
 
 using namespace ocudu;
@@ -107,7 +106,7 @@ private:
 du_connection_manager::du_connection_manager(unsigned                 max_nof_dus_,
                                              du_processor_repository& dus_,
                                              task_executor&           cu_cp_exec_,
-                                             common_task_scheduler&   common_task_sched_) :
+                                             async_task_scheduler&    common_task_sched_) :
   max_nof_dus(max_nof_dus_),
   dus(dus_),
   cu_cp_exec(cu_cp_exec_),
@@ -169,7 +168,7 @@ void du_connection_manager::handle_f1c_gw_connection_closed(cu_cp_du_index_t du_
 {
   // Note: Called from within CU-CP execution context.
 
-  common_task_sched.schedule_async_task(launch_async([this, du_idx](coro_context<async_task<void>>& ctx) {
+  common_task_sched.schedule(launch_async([this, du_idx](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
     if (du_connections.find(du_idx) == du_connections.end()) {
       // DU was already removed.

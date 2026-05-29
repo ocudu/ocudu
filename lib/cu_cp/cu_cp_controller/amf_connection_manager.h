@@ -6,9 +6,9 @@
 
 #include "../ngap_repository.h"
 #include "../ue_manager/ue_manager_impl.h"
-#include "ocudu/cu_cp/common_task_scheduler.h"
 #include "ocudu/cu_cp/cu_cp_ng_setup_notifier.h"
 #include "ocudu/ran/plmn_identity.h"
+#include "ocudu/support/async/async_task_scheduler.h"
 #include <future>
 
 namespace ocudu::ocucp {
@@ -23,7 +23,7 @@ public:
                          cu_cp_amf_reconnection_handler&   cu_cp_notifier_,
                          timer_manager&                    timers_,
                          task_executor&                    cu_cp_exec_,
-                         common_task_scheduler&            common_task_sched_,
+                         async_task_scheduler&             common_task_sched_,
                          cu_cp_ng_setup_complete_notifier* ng_setup_notifier_ = nullptr);
 
   /// \brief Initiates the connection to the AMF.
@@ -62,7 +62,7 @@ private:
   cu_cp_amf_reconnection_handler&   cu_cp_notifier;
   timer_manager&                    timers;
   task_executor&                    cu_cp_exec;
-  common_task_scheduler&            common_task_sched;
+  async_task_scheduler&             common_task_sched;
   ocudulog::basic_logger&           logger;
   cu_cp_ng_setup_complete_notifier* ng_setup_notifier;
 

@@ -4,9 +4,7 @@
 
 #include "cu_up_connection_manager.h"
 #include "../cu_up_processor/cu_up_processor_repository.h"
-#include "ocudu/cu_cp/common_task_scheduler.h"
 #include "ocudu/e1ap/common/e1ap_message.h"
-#include "ocudu/support/executors/sync_task_executor.h"
 #include <thread>
 
 using namespace ocudu;
@@ -109,7 +107,7 @@ private:
 cu_up_connection_manager::cu_up_connection_manager(unsigned                    max_nof_cu_ups_,
                                                    cu_up_processor_repository& cu_ups_,
                                                    task_executor&              cu_cp_exec_,
-                                                   common_task_scheduler&      common_task_sched_) :
+                                                   async_task_scheduler&       common_task_sched_) :
   max_nof_cu_ups(max_nof_cu_ups_),
   cu_ups(cu_ups_),
   cu_cp_exec(cu_cp_exec_),
@@ -168,7 +166,7 @@ void cu_up_connection_manager::handle_e1_gw_connection_closed(cu_cp_cu_up_index_
 {
   // Note: Called from within CU-CP execution context.
 
-  common_task_sched.schedule_async_task(launch_async([this, cu_up_idx](coro_context<async_task<void>>& ctx) {
+  common_task_sched.schedule(launch_async([this, cu_up_idx](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
     if (cu_up_connections.find(cu_up_idx) == cu_up_connections.end()) {
       // CU-UP was already removed.

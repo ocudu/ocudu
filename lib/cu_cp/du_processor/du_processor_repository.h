@@ -9,9 +9,9 @@
 #include "../ue_manager/ue_manager_impl.h"
 #include "du_configuration_manager.h"
 #include "du_metrics_handler.h"
-#include "ocudu/cu_cp/common_task_scheduler.h"
 #include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/support/async/async_task.h"
+#include "ocudu/support/async/async_task_scheduler.h"
 
 namespace ocudu::ocucp {
 
@@ -23,7 +23,7 @@ struct du_repository_config {
   cu_cp_measurement_config_handler&      meas_config_handler;
   cu_cp_ue_removal_handler&              ue_removal_handler;
   cu_cp_ue_context_manipulation_handler& ue_context_handler;
-  common_task_scheduler&                 common_task_sched;
+  async_task_scheduler&                  common_task_sched;
   ue_manager&                            ue_mng;
   du_connection_notifier&                du_conn_notif;
   ocudulog::basic_logger&                logger;

@@ -30,12 +30,12 @@
 
 namespace ocudu::ocucp {
 
-class cu_cp_common_task_scheduler : public common_task_scheduler
+class cu_cp_common_task_scheduler : public async_task_scheduler
 {
 public:
   cu_cp_common_task_scheduler() : main_ctrl_loop(128) {}
 
-  bool schedule_async_task(async_task<void> task) override { return main_ctrl_loop.schedule(std::move(task)); }
+  bool schedule(async_task<void> task) override { return main_ctrl_loop.schedule(std::move(task)); }
 
 private:
   // cu-cp task event loop

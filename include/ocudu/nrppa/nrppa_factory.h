@@ -4,17 +4,15 @@
 
 #pragma once
 
-#include "ocudu/cu_cp/common_task_scheduler.h"
 #include "ocudu/cu_cp/cu_cp_configuration.h"
 #include "ocudu/nrppa/nrppa.h"
+#include "ocudu/support/async/async_task_scheduler.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// Creates an instance of an NRPPA interface, notifying outgoing packets on the specified listener object.
 std::unique_ptr<nrppa_interface> create_nrppa(const cu_cp_configuration& cfg,
                                               nrppa_cu_cp_notifier&      cu_cp_notifier,
-                                              common_task_scheduler&     common_task_sched);
+                                              async_task_scheduler&      common_task_sched);
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

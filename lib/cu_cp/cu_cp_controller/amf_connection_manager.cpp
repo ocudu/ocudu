@@ -21,7 +21,7 @@ amf_connection_manager::amf_connection_manager(ngap_repository&                 
                                                cu_cp_amf_reconnection_handler&   cu_cp_notifier_,
                                                timer_manager&                    timers_,
                                                task_executor&                    cu_cp_exec_,
-                                               common_task_scheduler&            common_task_sched_,
+                                               async_task_scheduler&             common_task_sched_,
                                                cu_cp_ng_setup_complete_notifier* ng_setup_notifier_) :
   ngaps(ngaps_),
   cu_cp_notifier(cu_cp_notifier_),
@@ -36,7 +36,7 @@ amf_connection_manager::amf_connection_manager(ngap_repository&                 
 void amf_connection_manager::connect_to_amf(std::promise<bool>* completion_signal)
 {
   // Schedules setup routine to be executed in sequence with other CU-CP procedures.
-  common_task_sched.schedule_async_task(
+  common_task_sched.schedule(
       launch_async([this, success = false, p = completion_signal](coro_context<async_task<void>>& ctx) mutable {
         CORO_BEGIN(ctx);
 
@@ -115,7 +115,7 @@ void amf_connection_manager::stop()
 
   // Stop and delete AMF connections.
   while (not cu_cp_exec.defer([this, signal_stop = std::move(signal_stop)]() mutable {
-    common_task_sched.schedule_async_task(
+    common_task_sched.schedule(
         launch_async([this, signal_stop = std::move(signal_stop)](coro_context<async_task<void>>& ctx) mutable {
           CORO_BEGIN(ctx);
           // Disconnect AMF connection.

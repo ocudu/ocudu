@@ -3,16 +3,16 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "cu_up_processor_test_helpers.h"
+#include "lib/cu_cp/cu_up_processor/cu_up_processor_factory.h"
 #include "ocudu/cu_cp/cu_cp_configuration_helpers.h"
-#include "ocudu/support/async/async_test_utils.h"
 
 using namespace ocudu;
 using namespace ocucp;
 
-class dummy_task_sched final : public common_task_scheduler
+class dummy_task_sched final : public async_task_scheduler
 {
 public:
-  bool schedule_async_task(async_task<void> task) override { return task_sched.schedule(std::move(task)); }
+  bool schedule(async_task<void> task) override { return task_sched.schedule(std::move(task)); }
 
 private:
   fifo_async_task_scheduler task_sched{32};

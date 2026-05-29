@@ -1317,18 +1317,17 @@ void cu_cp_impl::handle_ul_nrppa_pdu(const byte_buffer&                         
     cu_cp_amf_index_t amf_index = std::get<cu_cp_amf_index_t>(ue_or_amf_index);
 
     // Forward the NRPPa message to the NGAP.
-    common_task_sched.schedule_async_task(
-        launch_async([this, amf_index, nrppa_pdu](coro_context<async_task<void>>& ctx) {
-          CORO_BEGIN(ctx);
+    common_task_sched.schedule(launch_async([this, amf_index, nrppa_pdu](coro_context<async_task<void>>& ctx) {
+      CORO_BEGIN(ctx);
 
-          if (ngap_db.find_ngap(amf_index) == nullptr) {
-            logger.warning("NGAP not found for AMF index={}", amf_index);
-            CORO_EARLY_RETURN();
-          }
+      if (ngap_db.find_ngap(amf_index) == nullptr) {
+        logger.warning("NGAP not found for AMF index={}", amf_index);
+        CORO_EARLY_RETURN();
+      }
 
-          CORO_AWAIT(ngap_db.find_ngap(amf_index)->handle_ul_non_ue_associated_nrppa_transport(nrppa_pdu));
-          CORO_RETURN();
-        }));
+      CORO_AWAIT(ngap_db.find_ngap(amf_index)->handle_ul_non_ue_associated_nrppa_transport(nrppa_pdu));
+      CORO_RETURN();
+    }));
   }
 }
 
@@ -1344,7 +1343,7 @@ void cu_cp_impl::handle_n2_disconnection(cu_cp_amf_index_t amf_index)
 
   logger.warning("Handling N2 disconnection. Lost PLMNs: {}", fmt::format("{}", fmt::join(plmns, " ")));
 
-  common_task_sched.schedule_async_task(
+  common_task_sched.schedule(
       launch_async<amf_connection_loss_routine>(amf_index, cfg, plmns, du_db, *this, ue_mng, controller, logger));
 }
 
@@ -1515,7 +1514,7 @@ void cu_cp_impl::handle_amf_reconnection(cu_cp_amf_index_t amf_index)
 
   std::vector<plmn_identity> served_plmns = ngap_db.find_ngap(amf_index)->get_ngap_context().get_supported_plmns();
 
-  common_task_sched.schedule_async_task(launch_async<cell_activation_routine>(cfg, served_plmns, du_db, logger));
+  common_task_sched.schedule(launch_async<cell_activation_routine>(cfg, served_plmns, du_db, logger));
 }
 
 void cu_cp_impl::initialize_handover_ue_release_timer(

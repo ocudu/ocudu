@@ -31,7 +31,7 @@ static rrc_cfg_t create_rrc_config(const cu_cp_configuration& cu_cp_cfg)
 class du_processor_impl::f1ap_du_processor_adapter : public f1ap_du_processor_notifier
 {
 public:
-  f1ap_du_processor_adapter(du_processor_impl& parent_, common_task_scheduler& common_task_sched_) :
+  f1ap_du_processor_adapter(du_processor_impl& parent_, async_task_scheduler& common_task_sched_) :
     parent(parent_), common_task_sched(&common_task_sched_)
   {
   }
@@ -56,10 +56,7 @@ public:
 
   void on_access_success(const f1ap_access_success& msg) override { parent.handle_access_success(msg); }
 
-  bool schedule_async_task(async_task<void> task) override
-  {
-    return common_task_sched->schedule_async_task(std::move(task));
-  }
+  bool schedule_async_task(async_task<void> task) override { return common_task_sched->schedule(std::move(task)); }
 
   async_task<void> on_transaction_info_loss(const ue_transaction_info_loss_event& ev) override
   {
@@ -67,8 +64,8 @@ public:
   }
 
 private:
-  du_processor_impl&     parent;
-  common_task_scheduler* common_task_sched = nullptr;
+  du_processor_impl&    parent;
+  async_task_scheduler* common_task_sched = nullptr;
 };
 
 // du_processor_impl
@@ -76,7 +73,7 @@ private:
 du_processor_impl::du_processor_impl(du_processor_config_t        du_processor_config_,
                                      du_processor_cu_cp_notifier& cu_cp_notifier_,
                                      f1ap_message_notifier&       f1ap_pdu_notifier_,
-                                     common_task_scheduler&       common_task_sched_,
+                                     async_task_scheduler&        common_task_sched_,
                                      ue_manager&                  ue_mng_) :
   cfg(std::move(du_processor_config_)),
   cu_cp_notifier(cu_cp_notifier_),

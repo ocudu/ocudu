@@ -5,8 +5,8 @@
 #pragma once
 
 #include "cu_up_processor.h"
-#include "ocudu/cu_cp/common_task_scheduler.h"
 #include "ocudu/ran/cu_cp_types.h"
+#include "ocudu/support/async/async_task_scheduler.h"
 #include <map>
 
 namespace ocudu::ocucp {
@@ -16,7 +16,7 @@ struct cu_cp_configuration;
 struct cu_up_repository_config {
   const cu_cp_configuration& cu_cp;
   e1ap_cu_cp_notifier&       e1ap_ev_notifier;
-  common_task_scheduler&     common_task_sched;
+  async_task_scheduler&      common_task_sched;
   ocudulog::basic_logger&    logger;
 };
 

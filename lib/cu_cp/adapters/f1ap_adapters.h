@@ -4,12 +4,10 @@
 
 #pragma once
 
-#include "../du_processor/du_processor.h"
-#include "ocudu/cu_cp/common_task_scheduler.h"
-#include "ocudu/f1ap/cu_cp/f1ap_cu.h"
+#include "ocudu/f1ap/cu_cp/f1ap_rrc_msg_transfer_handling.h"
+#include "ocudu/rrc/rrc_ue.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 class cu_cp_controller;
 
@@ -67,5 +65,4 @@ private:
   f1ap_rrc_ul_dcch_adapter srb2_adapter;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

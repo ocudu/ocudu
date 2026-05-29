@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "xnc_connection_manager.h"
+#include "ocudu/support/async/async_task_scheduler.h"
 #include "ocudu/support/async/async_timer.h"
 #include "ocudu/xnap/xnap_message.h"
 #include "ocudu/xnap/xnap_message_notifier.h"
@@ -105,7 +106,7 @@ xnc_connection_manager::xnc_connection_manager(xnap_repository&                 
                                                const std::vector<xnc_connection_gateway*>& xnc_gws_,
                                                timer_manager&                              timers_,
                                                task_executor&                              cu_cp_exec_,
-                                               common_task_scheduler&                      common_task_sched_) :
+                                               async_task_scheduler&                       common_task_sched_) :
   xnaps(xnaps_),
   xnc_gws(xnc_gws_),
   timers(timers_),
@@ -270,7 +271,7 @@ void xnc_connection_manager::handle_xnc_gw_connection_closed(xnc_peer_index_t xn
   // Save peer addresses before removal so we can recreate the XNAP.
   std::optional<std::vector<transport_layer_address>> peer_addrs = xnaps.get_peer_addrs(xnc_idx);
 
-  common_task_sched.schedule_async_task(
+  common_task_sched.schedule(
       launch_async([this, xnc_idx, peer_addrs = std::move(peer_addrs)](coro_context<async_task<void>>& ctx) {
         CORO_BEGIN(ctx);
         if (xnaps.find_xnap(xnc_idx) == nullptr) {

@@ -35,7 +35,7 @@ static inline void create_plmn_tac_map(const std::vector<cu_cp_configuration::ng
 
 nrppa_impl::nrppa_impl(const cu_cp_configuration& cfg,
                        nrppa_cu_cp_notifier&      cu_cp_notifier_,
-                       common_task_scheduler&     common_task_sched_) :
+                       async_task_scheduler&      common_task_sched_) :
   logger(ocudulog::fetch_basic_logger("NRPPA")),
   ue_ctxt_list(logger),
   du_ctxt_list(logger),
@@ -308,7 +308,7 @@ void nrppa_impl::handle_trp_information_request(const asn1::nrppa::trp_info_requ
   trp_information_request_t request;
   fill_trp_information_request(request, msg);
 
-  common_task_sched.schedule_async_task(launch_async<trp_information_exchange_procedure>(
+  common_task_sched.schedule(launch_async<trp_information_exchange_procedure>(
       amf_index, request, transaction_id, cu_cp_notifier, trp_id_to_du_idx, du_ctxt_list, logger));
 }
 
@@ -355,7 +355,7 @@ void nrppa_impl::handle_measurement_request(const asn1::nrppa::meas_request_s& m
   measurement_request_t request;
   fill_measurement_request(request, msg);
 
-  common_task_sched.schedule_async_task(launch_async<measurement_procedure>(
+  common_task_sched.schedule(launch_async<measurement_procedure>(
       amf_index, request, transaction_id, trp_id_to_du_idx, meas_ctxt_list, du_ctxt_list, cu_cp_notifier, logger));
 }
 
