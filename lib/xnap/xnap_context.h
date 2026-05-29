@@ -5,6 +5,7 @@
 #pragma once
 
 #include "ocudu/cu_cp/cu_cp_configuration.h"
+#include "ocudu/ran/cu_cp_cell_configuration.h"
 #include "ocudu/ran/gnb_id.h"
 #include "ocudu/xnap/xn_setup.h"
 

@@ -4,10 +4,12 @@
 
 #pragma once
 
+#include "ocudu/adt/byte_buffer.h"
 #include "ocudu/f1ap/common/f1ap_cho_types.h"
 #include "ocudu/f1ap/f1ap_ue_id_types.h"
 #include "ocudu/f1ap/ue_context_management_configs.h"
 #include "ocudu/ran/cause/f1ap_cause.h"
+#include "ocudu/ran/crit_diagnostics.h"
 #include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/ran/cu_types.h"
 #include "ocudu/ran/nr_cgi.h"

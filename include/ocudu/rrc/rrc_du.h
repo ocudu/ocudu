@@ -5,6 +5,7 @@
 #pragma once
 
 #include "ocudu/ran/cause/common.h"
+#include "ocudu/ran/cu_cp_cell_configuration.h"
 #include "ocudu/ran/plmn_identity.h"
 #include "ocudu/rrc/rrc_cell_context.h"
 #include "ocudu/rrc/rrc_metrics.h"

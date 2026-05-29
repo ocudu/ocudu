@@ -8,6 +8,7 @@
 #include "ocudu/cu_cp/cu_cp_location_reporting_types.h"
 #include "ocudu/cu_cp/inter_cu_handover_messages.h"
 #include "ocudu/ran/cause/xnap_cause.h"
+#include "ocudu/ran/cu_cp_cell_configuration.h"
 #include "ocudu/ran/cu_types.h"
 #include "ocudu/ran/guami.h"
 #include "ocudu/ran/nr_cgi.h"

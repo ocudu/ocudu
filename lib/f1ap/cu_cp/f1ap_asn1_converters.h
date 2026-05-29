@@ -5,10 +5,9 @@
 #pragma once
 
 #include "ocudu/asn1/f1ap/f1ap_ies.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/f1ap/cu_cp/f1ap_cu_ue_context_update.h"
+#include "ocudu/ran/cu_cp_cell_configuration.h"
 #include "ocudu/ran/nr_cgi.h"
-#include <vector>
 
 namespace ocudu::ocucp {
 

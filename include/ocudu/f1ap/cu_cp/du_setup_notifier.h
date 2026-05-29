@@ -4,9 +4,8 @@
 
 #pragma once
 
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/ran/cause/f1ap_cause.h"
-#include "ocudu/ran/crit_diagnostics.h"
+#include "ocudu/ran/cu_cp_cell_configuration.h"
 #include "ocudu/ran/gnb_du_id.h"
 #include "ocudu/ran/nr_cgi.h"
 #include "ocudu/ran/pci.h"
@@ -15,8 +14,7 @@
 #include <variant>
 #include <vector>
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 struct du_setup_request {
   gnb_du_id_t                             gnb_du_id;
@@ -67,5 +65,4 @@ public:
   virtual du_setup_result on_new_du_setup_request(const du_setup_request& msg) = 0;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp
