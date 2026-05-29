@@ -24,8 +24,8 @@ pucch_power_controller::pucch_power_controller(const ue_cell_configuration& ue_c
     return tpc_adjust_prohibit_time_ms << to_numerology_value(
                ue_cell_cfg.cell_cfg_common.params.ul_cfg_common.init_ul_bwp.generic_params.scs);
   }()),
-  sinr_dB_01(alpha_ema_sinr),
-  sinr_dB_234(alpha_ema_sinr),
+  sinr_dB_01(ue_cell_cfg.cell_cfg_common.expert_cfg.ue.ul_power_ctrl.ema_alpha_cl_pw_control_pucch_sinr),
+  sinr_dB_234(ue_cell_cfg.cell_cfg_common.expert_cfg.ue.ul_power_ctrl.ema_alpha_cl_pw_control_pucch_sinr),
   logger(logger_)
 {
   // Initialize PUCCH PRB grid.

@@ -344,7 +344,7 @@ struct du_high_unit_pusch_config {
   /// Values: {0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0}.
   float path_loss_compensation_factor{1.0f};
   /// Smoothing factor "alpha" for Exponential Moving Average filter of PUSCH Closed-Loop Power Control SINR.
-  /// Values: [0, 1].
+  /// Range: (0, 1).
   float ema_alpha_cl_pw_control_sinr{0.5f};
   /// Set to true to enable transform precoding in PUSCH.
   bool enable_transform_precoding = false;
@@ -468,6 +468,9 @@ struct du_high_unit_pucch_config {
   float pucch_f0_sinr_target_dB{10.0f};
   float pucch_f2_sinr_target_dB{6.0f};
   float pucch_f3_sinr_target_dB{1.0f};
+  /// Smoothing factor "alpha" for Exponential Moving Average filter of PUCCH Closed-Loop Power Control SINR.
+  /// Range: (0, 1).
+  float ema_alpha_cl_pw_control_sinr{0.5f};
 
   /// Thresholds for the mapping of SINR (in dB) to PUCCH repetition factor. The list is interpreted as
   /// [max SINR for 2 reps, max SINR for 4 reps, max SINR for 8 reps]. Up to 3 entries. An empty list disables
@@ -507,6 +510,7 @@ struct du_high_unit_pucch_config {
            almost_equal<float>(pucch_f0_sinr_target_dB, rhs.pucch_f0_sinr_target_dB) &&
            almost_equal<float>(pucch_f2_sinr_target_dB, rhs.pucch_f2_sinr_target_dB) &&
            almost_equal<float>(pucch_f3_sinr_target_dB, rhs.pucch_f3_sinr_target_dB) &&
+           almost_equal<float>(ema_alpha_cl_pw_control_sinr, rhs.ema_alpha_cl_pw_control_sinr) &&
            repetition_sinr_thresholds.size() == rhs.repetition_sinr_thresholds.size() &&
            std::equal(repetition_sinr_thresholds.begin(),
                       repetition_sinr_thresholds.end(),

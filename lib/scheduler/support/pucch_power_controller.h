@@ -61,8 +61,6 @@ private:
   /// Interval of allowed closed-loop power control adjustment values. This is to avoid the power control going too
   /// low or high.
   static constexpr interval<int> g_cl_pw_control_bounds{-30, 12};
-  /// Defines the alpha value for the exponential moving average of the PUCCH SINR.
-  static constexpr float alpha_ema_sinr = 0.5f;
   /// This is maximum number of PUCCH grants per UE per slot that can be scheduled by the GNB.
   static constexpr size_t MAX_SCHED_PUCCH_GRANTS_PER_UE = 3;
 
