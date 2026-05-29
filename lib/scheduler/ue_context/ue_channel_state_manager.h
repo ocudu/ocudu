@@ -90,8 +90,6 @@ public:
 private:
   /// \brief Number of indexes -> nof_layers for precoding (Options: 1, 2, 3, 4 layers).
   static constexpr size_t NOF_LAYER_CHOICES = 4;
-  /// Defines the alpha value for the exponential moving average of the PUSCH SINR.
-  static constexpr float alpha_ema_sinr = 0.5f;
 
   /// Mapping of number of layers to array index.
   static size_t nof_layers_to_index(unsigned nof_layers) { return nof_layers - 1U; }

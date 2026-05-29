@@ -343,7 +343,9 @@ struct du_high_unit_pusch_config {
   /// Factor "alpha" for fractional path-loss compensation in PUSCH power control.
   /// Values: {0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0}.
   float path_loss_compensation_factor{1.0f};
-
+  /// Smoothing factor "alpha" for Exponential Moving Average filter of PUSCH Closed-Loop Power Control SINR.
+  /// Values: [0, 1].
+  float ema_alpha_cl_pw_control_sinr{0.5f};
   /// Set to true to enable transform precoding in PUSCH.
   bool enable_transform_precoding = false;
 };

@@ -1063,6 +1063,12 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
                  "Fractional path-loss compensation factor in PUSCH power control")
       ->capture_default_str()
       ->check(CLI::IsMember({0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0}));
+  app.add_option("--ema_alpha_cl_pw_control_sinr",
+                 pusch_params.ema_alpha_cl_pw_control_sinr,
+                 "Smoothing factor alpha for EMA filter of PUSCH closed-loop power control SINR")
+      ->capture_default_str()
+      ->check(CLI::Range(0.0f, 1.0f));
+
   app.add_option("--enable_transform_precoding",
                  pusch_params.enable_transform_precoding,
                  "Enable transform precoding for PUSCH.")

@@ -75,6 +75,9 @@ struct ul_power_control {
   float pucch_f0_sinr_target_dB = 6.0f;
   float pucch_f2_sinr_target_dB = 3.0f;
   float pucch_f3_sinr_target_dB = -3.0f;
+  /// Smoothing factor "alpha" for Exponential Moving Average filter of PUSCH Closed-Loop Power Control SINR.
+  /// Values: [0, 1].
+  float ema_alpha_cl_pw_control_sinr{0.5f};
 };
 
 /// \brief Time Advance (TA) control-loop and MAC CE scheduling parameters.

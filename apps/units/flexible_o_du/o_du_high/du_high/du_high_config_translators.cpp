@@ -1205,6 +1205,7 @@ static scheduler_expert_config generate_scheduler_expert_config(const du_high_un
   out_cfg.ue.ul_power_ctrl.enable_phr_bw_adaptation          = pusch.enable_phr_bw_adaptation;
   out_cfg.ue.ul_power_ctrl.target_pusch_sinr                 = pusch.target_pusch_sinr;
   out_cfg.ue.ul_power_ctrl.path_loss_for_target_pusch_sinr   = pusch.path_loss_for_target_pusch_sinr;
+  out_cfg.ue.ul_power_ctrl.ema_alpha_cl_pw_control_sinr      = pusch.ema_alpha_cl_pw_control_sinr;
   out_cfg.ue.ta_control.ta_cmd_offset_threshold              = cell.ta_cfg.ta_cmd_offset_threshold;
   out_cfg.ue.ta_control.target                               = cell.ta_cfg.ta_target;
   out_cfg.ue.ta_control.measurement_period                   = cell.ta_cfg.ta_measurement_slot_period;

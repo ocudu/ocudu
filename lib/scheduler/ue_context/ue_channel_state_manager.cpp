@@ -10,7 +10,7 @@ ue_channel_state_manager::ue_channel_state_manager(const scheduler_ue_expert_con
                                                    unsigned                          nof_dl_ports_) :
   nof_dl_ports(nof_dl_ports_),
   pusch_snr_db(expert_cfg.initial_ul_sinr),
-  average_pusch_sinr_dB(alpha_ema_sinr),
+  average_pusch_sinr_dB(expert_cfg.ul_power_ctrl.ema_alpha_cl_pw_control_sinr),
   wideband_cqi(expert_cfg.initial_cqi),
   // Only relevant if the srs_prohibit_time has a value.
   srs_prohibit_window(expert_cfg.srs_prohibit_time.value_or(srs_periodicity::sl40))
