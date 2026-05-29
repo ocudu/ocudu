@@ -174,11 +174,13 @@ void io_broker_epoll::thread_loop()
       }
 
       // Make sure that the socket was not re-armed while the callback is still running.
-      if (it->second.is_executing_recv_callback.load(std::memory_order_acquire)) {
+      bool in_callback = false;
+      it->second.is_executing_recv_callback.compare_exchange_strong(
+          in_callback, true, std::memory_order_acq_rel, std::memory_order_relaxed);
+      if (in_callback) {
         logger.error("Trying to defer callback execution, but previous callback for this socket is not finished");
         continue;
       }
-      it->second.is_executing_recv_callback.store(true, std::memory_order_release);
 
       // Increment fd_handler job count before deferring the task.
       it->second.job_count.fetch_add(1, std::memory_order_release);
