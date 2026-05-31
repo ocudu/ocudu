@@ -189,6 +189,7 @@ RUN printf '%s\n' \
 # live OFH traffic):
 #   cap_sys_nice  - SCHED_FIFO on ru_timing / tx-rx threads (DPDK real-time)
 #   cap_ipc_lock  - mlock() on DPDK hugepages
-RUN setcap cap_sys_nice,cap_ipc_lock+ep /usr/local/bin/gnb && \
+#   cap_perfmon   - perf_event_open() RAPL energy reader (kernel >= 5.8, opt-in via metricsService.powercap.enabled)
+RUN setcap cap_sys_nice,cap_ipc_lock,cap_perfmon+ep /usr/local/bin/gnb && \
     setcap cap_sys_nice,cap_ipc_lock+ep /usr/local/bin/ru_emulator && \
     getcap /usr/local/bin/gnb /usr/local/bin/ru_emulator
