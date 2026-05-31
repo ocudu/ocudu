@@ -185,11 +185,17 @@ RUN printf '%s\n' \
 # populates the bounding set for non-root processes; for caps to land in
 # the effective set after execve(), they must be declared as file caps.
 #
-# Caps (same minimum set for both binaries, empirically verified against
-# live OFH traffic):
 #   cap_sys_nice  - SCHED_FIFO on ru_timing / tx-rx threads (DPDK real-time)
 #   cap_ipc_lock  - mlock() on DPDK hugepages
 #   cap_perfmon   - perf_event_open() RAPL energy reader (kernel >= 5.8, opt-in via metricsService.powercap.enabled)
+#
+# gnb/odu: DPDK real-time + hugepages + powercap metrics
+# ocu: no DPDK/hugepages, no powercap; SYS_NICE+IPC_LOCK for non-root Kubernetes scheduling
 RUN setcap cap_sys_nice,cap_ipc_lock,cap_perfmon+ep /usr/local/bin/gnb && \
-    setcap cap_sys_nice,cap_ipc_lock+ep /usr/local/bin/ru_emulator && \
-    getcap /usr/local/bin/gnb /usr/local/bin/ru_emulator
+    setcap cap_sys_nice,cap_ipc_lock,cap_perfmon+ep /usr/local/bin/odu && \
+    setcap cap_sys_nice,cap_ipc_lock,cap_perfmon+ep /usr/local/bin/odu_split_8 && \
+    setcap cap_sys_nice,cap_ipc_lock,cap_perfmon+ep /usr/local/bin/odu_split_7_2 && \
+    setcap cap_sys_nice,cap_ipc_lock+ep             /usr/local/bin/ocu && \
+    setcap cap_sys_nice,cap_ipc_lock+ep             /usr/local/bin/ru_emulator && \
+    getcap /usr/local/bin/gnb /usr/local/bin/odu /usr/local/bin/odu_split_8 \
+           /usr/local/bin/odu_split_7_2 /usr/local/bin/ocu /usr/local/bin/ru_emulator
