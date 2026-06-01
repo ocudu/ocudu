@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "ocudu/cu_cp/cu_cp_f1c_handler.h"
+#include "ocudu/f1ap/cu_cp/cu_cp_f1c_handler.h"
 #include "ocudu/f1ap/f1ap_message.h"
 #include "ocudu/f1ap/gateways/f1c_connection_client.h"
 #include "ocudu/f1u/du/f1u_gateway.h"

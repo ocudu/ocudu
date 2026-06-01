@@ -4,8 +4,8 @@
 
 #include "ocudu/adt/blocking_queue.h"
 #include "ocudu/asn1/f1ap/common.h"
-#include "ocudu/asn1/f1ap/f1ap_pdu_contents.h"
-#include "ocudu/cu_cp/cu_cp_f1c_handler.h"
+#include "ocudu/asn1/f1ap/f1ap_pdu_contents_ue.h"
+#include "ocudu/f1ap/cu_cp/cu_cp_f1c_handler.h"
 #include "ocudu/f1ap/f1ap_message.h"
 #include "ocudu/f1ap/gateways/f1c_local_connector_factory.h"
 #include "ocudu/pcap/dlt_pcap.h"

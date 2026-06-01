@@ -7,7 +7,7 @@
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "ocudu/adt/mutexed_mpmc_queue.h"
 #include "ocudu/asn1/f1ap/f1ap.h"
-#include "ocudu/cu_cp/cu_cp_f1c_handler.h"
+#include "ocudu/f1ap/cu_cp/cu_cp_f1c_handler.h"
 #include "ocudu/f1ap/f1ap_message.h"
 #include "ocudu/support/error_handling.h"
 #include <future>

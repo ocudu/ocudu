@@ -7,8 +7,7 @@
 #include "ocudu/f1ap/f1ap_message_notifier.h"
 #include <memory>
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// \brief Handler of the F1-C interface of the CU-CP.
 ///
@@ -29,5 +28,4 @@ public:
   handle_new_du_connection(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier) = 0;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

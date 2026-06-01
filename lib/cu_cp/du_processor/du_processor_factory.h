@@ -8,6 +8,7 @@
 #include "du_processor.h"
 #include "du_processor_config.h"
 #include "ocudu/f1ap/f1ap_message_notifier.h"
+#include "ocudu/support/async/async_task_scheduler.h"
 #include <memory>
 
 namespace ocudu::ocucp {

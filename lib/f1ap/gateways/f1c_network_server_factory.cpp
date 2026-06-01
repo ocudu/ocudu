@@ -4,7 +4,9 @@
 
 #include "ocudu/f1ap/gateways/f1c_network_server_factory.h"
 #include "ocudu/asn1/f1ap/f1ap.h"
+#include "ocudu/f1ap/cu_cp/cu_cp_f1c_handler.h"
 #include "ocudu/f1ap/f1ap_message.h"
+#include "ocudu/f1ap/f1ap_message_notifier.h"
 #include "ocudu/gateways/sctp_network_server_factory.h"
 #include "ocudu/pcap/dlt_pcap.h"
 #include "ocudu/support/error_handling.h"

@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "ocudu/cu_cp/cu_cp_f1c_handler.h"
 #include "ocudu/f1ap/gateways/f1c_connection_server.h"
 #include "ocudu/gateways/sctp_network_gateway.h"
 

@@ -8,15 +8,13 @@
 #include "../mobility_manager/mobility_manager_impl.h"
 #include "../ngap_repository.h"
 #include "../ue_manager/ue_metrics_handler.h"
-#include "ocudu/cu_cp/cu_cp_f1c_handler.h"
 #include "ocudu/cu_cp/cu_cp_metrics_handler.h"
 #include "ocudu/support/executors/task_executor.h"
 #include "ocudu/support/timers.h"
 #include <deque>
 #include <mutex>
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 class metrics_handler_impl final : public metrics_handler
 {
@@ -61,5 +59,4 @@ private:
   std::vector<unsigned>                free_list;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp
