@@ -3,7 +3,7 @@
 
 
 add_executable(ocuduvec_add_test ocuduvec_add_test.cpp)
-target_link_libraries(ocuduvec_add_test ocuduvec ocudulog)
+target_link_libraries(ocuduvec_add_test ocuduvec ocudulog gtest gtest_main)
 add_test(ocuduvec_add_test ocuduvec_add_test)
 
 add_executable(ocuduvec_bit_test ocuduvec_bit_test.cpp)
@@ -11,11 +11,11 @@ target_link_libraries(ocuduvec_bit_test ocuduvec ocudulog gtest gtest_main)
 add_test(ocuduvec_bit_test ocuduvec_bit_test)
 
 add_executable(ocuduvec_compare_test ocuduvec_compare_test.cpp)
-target_link_libraries(ocuduvec_compare_test ocuduvec ocudulog)
+target_link_libraries(ocuduvec_compare_test ocuduvec ocudulog gtest gtest_main)
 add_test(ocuduvec_compare_test ocuduvec_compare_test)
 
 add_executable(ocuduvec_binary_test ocuduvec_binary_test.cpp)
-target_link_libraries(ocuduvec_binary_test ocuduvec ocudulog)
+target_link_libraries(ocuduvec_binary_test ocuduvec ocudulog gtest gtest_main)
 add_test(ocuduvec_binary_test ocuduvec_binary_test)
 
 add_executable(ocuduvec_convert_test ocuduvec_convert_test.cpp)
@@ -23,11 +23,11 @@ target_link_libraries(ocuduvec_convert_test ocuduvec ocudulog gtest gtest_main)
 add_test(ocuduvec_convert_test ocuduvec_convert_test)
 
 add_executable(ocuduvec_division_test ocuduvec_division_test.cpp)
-target_link_libraries(ocuduvec_division_test ocuduvec ocudulog)
+target_link_libraries(ocuduvec_division_test ocuduvec ocudulog gtest gtest_main)
 add_test(ocuduvec_division_test ocuduvec_division_test)
 
 add_executable(ocuduvec_dot_prod_test ocuduvec_dot_prod_test.cpp)
-target_link_libraries(ocuduvec_dot_prod_test ocuduvec ocudulog)
+target_link_libraries(ocuduvec_dot_prod_test ocuduvec ocudulog gtest gtest_main)
 add_test(ocuduvec_dot_prod_test ocuduvec_dot_prod_test)
 
 add_executable(ocuduvec_modulus_square_test ocuduvec_modulus_square_test.cpp)
@@ -43,7 +43,7 @@ target_link_libraries(ocuduvec_sc_prod_test ocuduvec ocudulog gtest gtest_main)
 add_test(ocuduvec_sc_prod_test ocuduvec_sc_prod_test)
 
 add_executable(ocuduvec_clipping_test ocuduvec_clipping_test.cpp)
-target_link_libraries(ocuduvec_clipping_test ocuduvec ocudulog)
+target_link_libraries(ocuduvec_clipping_test ocuduvec ocudulog gtest gtest_main)
 add_test(ocuduvec_clipping_test ocuduvec_clipping_test)
 
 add_executable(ocuduvec_convolution_test ocuduvec_convolution_test.cpp)

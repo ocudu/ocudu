@@ -3,18 +3,34 @@
 
 #include "ocudu/ocuduvec/compare.h"
 #include "ocudu/support/math/math_utils.h"
-#include "ocudu/support/ocudu_test.h"
+#include <gtest/gtest.h>
 #include <random>
 
 static std::mt19937 rgen(0);
 
 using namespace ocudu;
 
-static void test_max_abs_ccc(std::size_t N)
+namespace {
+
+using OcuduvecCompareParams = unsigned;
+
+class OcuduvecCompareFixture : public ::testing::TestWithParam<OcuduvecCompareParams>
+{
+protected:
+  unsigned size;
+
+  void SetUp() override
+  {
+    auto params = GetParam();
+    size        = params;
+  }
+};
+
+TEST_P(OcuduvecCompareFixture, OcuduvecCompareTestMaxAbsCcc)
 {
   std::uniform_real_distribution<float> dist(-1.0, 1.0);
 
-  std::vector<cf_t> x(N);
+  std::vector<cf_t> x(size);
   for (cf_t& v : x) {
     v = {dist(rgen), dist(rgen)};
   }
@@ -25,28 +41,26 @@ static void test_max_abs_ccc(std::size_t N)
   unsigned expected_max_index = static_cast<unsigned>(expected_it - x.begin());
   float    expected_max_value = abs_sq(*expected_it);
 
-  TESTASSERT_EQ(expected_max_index, result.first);
-  TESTASSERT(std::abs(expected_max_value - result.second) < 1e-6);
+  ASSERT_EQ(expected_max_index, result.first);
+  ASSERT_LT(std::abs(expected_max_value - result.second), 1e-6F);
 }
 
-static void test_max_abs_ccc_same(std::size_t N)
+TEST_P(OcuduvecCompareFixture, OcuduvecCompareTestMaxAbsCccSame)
 {
-  std::uniform_real_distribution<float> dist(-1.0, 1.0);
-
-  std::vector<cf_t> x(N);
+  std::vector<cf_t> x(size);
   std::fill(x.begin(), x.end(), 0);
 
   std::pair<unsigned, float> result = ocuduvec::max_abs_element(x);
 
-  TESTASSERT_EQ(0, result.first);
-  TESTASSERT_EQ(0.0, result.second);
+  ASSERT_EQ(0U, result.first);
+  ASSERT_EQ(0.0F, result.second);
 }
 
-static void test_max_f(std::size_t N)
+TEST_P(OcuduvecCompareFixture, OcuduvecCompareTestMaxF)
 {
   std::uniform_real_distribution<float> dist(-1.0, 1.0);
 
-  std::vector<float> x(N);
+  std::vector<float> x(size);
   for (float& v : x) {
     v = dist(rgen);
   }
@@ -57,27 +71,27 @@ static void test_max_f(std::size_t N)
   unsigned expected_max_index = static_cast<unsigned>(expected_it - x.begin());
   float    expected_max_value = *expected_it;
 
-  TESTASSERT_EQ(expected_max_index, result.first);
-  TESTASSERT_EQ(expected_max_value, result.second);
+  ASSERT_EQ(expected_max_index, result.first);
+  ASSERT_EQ(expected_max_value, result.second);
 }
 
-static void test_max_f_same(std::size_t N)
+TEST_P(OcuduvecCompareFixture, OcuduvecCompareTestMaxFSame)
 {
-  std::vector<float> x(N);
+  std::vector<float> x(size);
   std::fill(x.begin(), x.end(), 0);
 
   std::pair<unsigned, float> result = ocuduvec::max_element(x);
 
-  TESTASSERT_EQ(0, result.first);
-  TESTASSERT_EQ(0.0, result.second);
+  ASSERT_EQ(0U, result.first);
+  ASSERT_EQ(0.0F, result.second);
 }
 
-static void test_count_if_part_abs_greater_than(std::size_t N)
+TEST_P(OcuduvecCompareFixture, OcuduvecCompareTestCountIfPartAbsGreaterThan)
 {
   float                                 threshold = 0.5;
   std::uniform_real_distribution<float> dist(-1.0, 1.0);
 
-  std::vector<cf_t> x(N);
+  std::vector<cf_t> x(size);
   std::generate(x.begin(), x.end(), [&dist]() { return cf_t{dist(rgen), dist(rgen)}; });
 
   unsigned result = ocuduvec::count_if_part_abs_greater_than(x, threshold);
@@ -86,18 +100,11 @@ static void test_count_if_part_abs_greater_than(std::size_t N)
     return (std::abs(sample.real()) > threshold) || (std::abs(sample.imag()) > threshold);
   });
 
-  TESTASSERT_EQ(expected, result);
+  ASSERT_EQ(expected, result);
 }
 
-int main()
-{
-  std::vector<std::size_t> sizes = {1, 5, 7, 19, 23, 65, 130, 257, 1234};
+INSTANTIATE_TEST_SUITE_P(OcuduvecCompareTest,
+                         OcuduvecCompareFixture,
+                         ::testing::Values(1, 5, 7, 19, 23, 65, 130, 257, 1234));
 
-  for (std::size_t N : sizes) {
-    test_max_abs_ccc(N);
-    test_max_abs_ccc_same(N);
-    test_max_f(N);
-    test_max_f_same(N);
-    test_count_if_part_abs_greater_than(N);
-  }
-}
+} // namespace

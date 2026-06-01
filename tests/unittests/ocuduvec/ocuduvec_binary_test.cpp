@@ -2,95 +2,101 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "ocudu/ocuduvec/binary.h"
-#include "ocudu/support/ocudu_test.h"
+#include <gtest/gtest.h>
 #include <random>
 
 static std::mt19937 rgen(0);
 
 using namespace ocudu;
 
-template <typename T, unsigned RANGE>
-void test_binary_xor(std::size_t N)
+namespace {
+
+using OcuduvecBinaryParams = unsigned;
+
+class OcuduvecBinaryFixture : public ::testing::TestWithParam<OcuduvecBinaryParams>
 {
-  std::uniform_int_distribution<T> dist(0, RANGE);
+protected:
+  unsigned size;
 
-  std::vector<T> x(N);
-  for (T& v : x) {
+  void SetUp() override
+  {
+    auto params = GetParam();
+    size        = params;
+  }
+};
+
+TEST_P(OcuduvecBinaryFixture, OcuduvecBinaryTestXorUint8)
+{
+  std::uniform_int_distribution<uint8_t> dist(0, UINT8_MAX);
+
+  std::vector<uint8_t> x(size);
+  for (uint8_t& v : x) {
     v = dist(rgen);
   }
 
-  std::vector<T> y(N);
-  for (T& v : y) {
+  std::vector<uint8_t> y(size);
+  for (uint8_t& v : y) {
     v = dist(rgen);
   }
 
-  std::vector<T> z(N);
+  std::vector<uint8_t> z(size);
 
   ocuduvec::binary_xor(z, x, y);
 
-  for (size_t i = 0; i != N; ++i) {
-    T gold_z = x[i] ^ y[i];
-    TESTASSERT_EQ(gold_z, z[i]);
+  for (size_t i = 0; i != size; ++i) {
+    uint8_t gold_z = x[i] ^ y[i];
+    ASSERT_EQ(gold_z, z[i]);
   }
 }
 
-template <typename T, unsigned RANGE>
-void test_binary_and(std::size_t N)
+TEST_P(OcuduvecBinaryFixture, OcuduvecBinaryTestAndUint8)
 {
-  std::uniform_int_distribution<T> dist(0, RANGE);
+  std::uniform_int_distribution<uint8_t> dist(0, UINT8_MAX);
 
-  std::vector<T> x(N);
-  for (T& v : x) {
+  std::vector<uint8_t> x(size);
+  for (uint8_t& v : x) {
     v = dist(rgen);
   }
 
-  std::vector<T> y(N);
-  for (T& v : y) {
+  std::vector<uint8_t> y(size);
+  for (uint8_t& v : y) {
     v = dist(rgen);
   }
 
-  std::vector<T> z(N);
+  std::vector<uint8_t> z(size);
 
   ocuduvec::binary_and(z, x, y);
 
-  for (size_t i = 0; i != N; ++i) {
-    T gold_z = x[i] & y[i];
-    TESTASSERT_EQ(gold_z, z[i]);
+  for (size_t i = 0; i != size; ++i) {
+    uint8_t gold_z = x[i] & y[i];
+    ASSERT_EQ(gold_z, z[i]);
   }
 }
 
-template <typename T, unsigned RANGE>
-void test_binary_or(std::size_t N)
+TEST_P(OcuduvecBinaryFixture, OcuduvecBinaryTestOrUint8)
 {
-  std::uniform_int_distribution<T> dist(0, RANGE);
+  std::uniform_int_distribution<uint8_t> dist(0, UINT8_MAX);
 
-  std::vector<T> x(N);
-  for (T& v : x) {
+  std::vector<uint8_t> x(size);
+  for (uint8_t& v : x) {
     v = dist(rgen);
   }
 
-  std::vector<T> y(N);
-  for (T& v : y) {
+  std::vector<uint8_t> y(size);
+  for (uint8_t& v : y) {
     v = dist(rgen);
   }
 
-  std::vector<T> z(N);
+  std::vector<uint8_t> z(size);
 
   ocuduvec::binary_or(z, x, y);
 
-  for (size_t i = 0; i != N; ++i) {
-    T gold_z = x[i] | y[i];
-    TESTASSERT_EQ(gold_z, z[i]);
+  for (size_t i = 0; i != size; ++i) {
+    uint8_t gold_z = x[i] | y[i];
+    ASSERT_EQ(gold_z, z[i]);
   }
 }
 
-int main()
-{
-  std::vector<std::size_t> sizes = {1, 5, 7, 19, 23, 257};
+INSTANTIATE_TEST_SUITE_P(OcuduvecBinaryTest, OcuduvecBinaryFixture, ::testing::Values(1, 5, 7, 19, 23, 257));
 
-  for (std::size_t N : sizes) {
-    test_binary_xor<uint8_t, UINT8_MAX>(N);
-    test_binary_and<uint8_t, UINT8_MAX>(N);
-    test_binary_or<uint8_t, UINT8_MAX>(N);
-  }
-}
+} // namespace
