@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+set -e
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+# Apply clang-format to files changed vs HEAD
+"$REPO_ROOT/.gitlab/ci/static/run-clang-format-diff.sh" HEAD
+
+# Re-stage any files that clang-format modified
+git diff --name-only | xargs -r git add
