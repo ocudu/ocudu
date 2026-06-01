@@ -234,6 +234,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
       } else {
         logger.log_debug("Dropping SDU. SDU buffer is full");
       }
+      metrics.add_lost_sdus(1);
       return;
     }
     logger.log_debug("Buffered SDU. Entity is paused. buffer_size={}", sdu_buffer.size());

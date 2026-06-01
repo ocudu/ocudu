@@ -70,6 +70,7 @@ std::map<five_qi_t, ocuup::cu_up_qos_config> ocudu::generate_cu_up_qos_config(co
     pdcp_custom_config& out_pdcp_custom = out_cfg[qos.five_qi].pdcp_custom_cfg;
     out_pdcp_custom.metrics_period =
         timer_duration(cu_up_config.metrics.layers_cfg.enable_pdcp ? cu_up_config.metrics.cu_up_report_period : 0);
+    out_pdcp_custom.rx.warn_on_drop = cu_up_config.warn_on_drop;
     out_pdcp_custom.tx.warn_on_drop = cu_up_config.warn_on_drop;
     out_pdcp_custom.tx.test_mode    = cu_up_config.test_mode_cfg.enabled;
 

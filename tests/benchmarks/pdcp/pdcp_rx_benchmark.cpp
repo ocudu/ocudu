@@ -230,12 +230,13 @@ static void benchmark_pdcp_rx(bench_params                  params,
       task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc>(crypto_worker_pool);
 
   // Set RX config
-  pdcp_rx_config config = {};
-  config.rb_type        = pdcp_rb_type::drb;
-  config.rlc_mode       = pdcp_rlc_mode::um;
-  config.sn_size        = pdcp_sn_size::size18bits;
-  config.direction      = pdcp_security_direction::uplink;
-  config.t_reordering   = pdcp_t_reordering::ms100;
+  pdcp_rx_config config      = {};
+  config.rb_type             = pdcp_rb_type::drb;
+  config.rlc_mode            = pdcp_rlc_mode::um;
+  config.sn_size             = pdcp_sn_size::size18bits;
+  config.direction           = pdcp_security_direction::uplink;
+  config.t_reordering        = pdcp_t_reordering::ms100;
+  config.custom.warn_on_drop = true;
 
   security::sec_128_as_config sec_cfg = {};
 

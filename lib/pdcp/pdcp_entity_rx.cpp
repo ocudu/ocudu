@@ -187,8 +187,13 @@ manual_event_flag& pdcp_entity_rx::crypto_awaitable()
 
 void pdcp_entity_rx::handle_pdu(byte_buffer_chain buf)
 {
-  if (stopped) {
-    logger.log_info("Dropping PDU. Entity is stopped");
+  if (OCUDU_UNLIKELY(stopped)) {
+    if (not cfg.custom.warn_on_drop) {
+      logger.log_info("Dropping PDU. Entity is stopped");
+    } else {
+      logger.log_warning("Dropping PDU. Entity is stopped");
+    }
+    metrics.add_dropped_pdus(1);
     return;
   }
 
@@ -200,7 +205,12 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_chain buf)
 
   if (buffering) {
     if (not pdu_buffer.try_push(std::move(buf))) {
-      logger.log_debug("Dropping PDU. SDU buffer is full");
+      if (cfg.custom.warn_on_drop) {
+        logger.log_warning("Dropping PDU. SDU buffer is full");
+      } else {
+        logger.log_debug("Dropping PDU. SDU buffer is full");
+      }
+      metrics.add_dropped_pdus(1);
       return;
     }
     logger.log_debug("Buffered PDU. Entity is paused");
@@ -384,19 +394,23 @@ void pdcp_entity_rx::apply_security(pdcp_rx_pdu_info&& pdu_info)
           break;
         case security::security_status::ciphering_failure:
           logger.log_warning("Deciphering failed, dropping PDU. count={}", count);
+          metrics.add_lost_pdus(1);
           upper_cn.on_protocol_failure();
           break;
         case security::security_status::buffer_failure:
           logger.log_error("Buffer error when decrypting and verifying integrity, dropping PDU. count={}", count);
+          metrics.add_lost_pdus(1);
           upper_cn.on_protocol_failure();
           break;
         case security::security_status::engine_failure:
           logger.log_error("Engine error when decrypting and verifying integrity, dropping PDU. count={}", count);
+          metrics.add_lost_pdus(1);
           upper_cn.on_protocol_failure();
           break;
         case security::security_status::success:
         case security::security_status::success_unprotected:
           logger.log_error("Unexpected error handling, dropping PDU. count={} status={}", count, status);
+          metrics.add_lost_pdus(1);
           upper_cn.on_protocol_failure();
           break;
       }
@@ -446,7 +460,12 @@ void pdcp_entity_rx::apply_reordering(pdcp_rx_pdu_info pdu_info)
    *   - discard the PDCP Data PDU;
    */
   if (rcvd_count < st.rx_deliv) {
-    logger.log_debug("Out-of-order after timeout, duplicate or count wrap-around. count={} {}", rcvd_count, st);
+    if (cfg.custom.warn_on_drop) {
+      logger.log_warning("Out-of-order after timeout, duplicate or count wrap-around. count={} {}", rcvd_count, st);
+    } else {
+      logger.log_debug("Out-of-order after timeout, duplicate or count wrap-around. count={} {}", rcvd_count, st);
+    }
+    metrics.add_dropped_pdus(1);
     return; // Invalid count, drop.
   }
 
@@ -454,7 +473,12 @@ void pdcp_entity_rx::apply_reordering(pdcp_rx_pdu_info pdu_info)
   if (rx_window.has_sn(rcvd_count)) {
     const pdcp_rx_sdu_info& sdu_info = rx_window[rcvd_count];
     if (sdu_info.count == rcvd_count) {
-      logger.log_debug("Duplicate PDU dropped. count={}", rcvd_count);
+      if (cfg.custom.warn_on_drop) {
+        logger.log_warning("Duplicate PDU dropped. count={}", rcvd_count);
+      } else {
+        logger.log_debug("Duplicate PDU dropped. count={}", rcvd_count);
+      }
+      metrics.add_dropped_pdus(1);
       return; // PDU already present, drop.
     }
     logger.log_error("Removing old PDU with count={} for new PDU with count={}", sdu_info.count, rcvd_count);
@@ -527,6 +551,7 @@ void pdcp_entity_rx::handle_control_pdu(byte_buffer_chain pdu)
       break;
     default:
       logger.log_error(pdu.begin(), pdu.end(), "Unsupported control PDU type. {}", control_hdr);
+      metrics.add_dropped_pdus(1);
   }
 }
 
@@ -636,7 +661,12 @@ bool pdcp_entity_rx::apply_header_decompression(byte_buffer& buf)
   // TODO: skip SDAP header if present
   rohc::rohc_decromp_result decomp_result = rohc_decomp->decompress(std::move(buf));
   if (decomp_result.decomp_packet.empty() && decomp_result.feedback_packet.empty()) {
-    logger.log_error("Header decompression failed. No PDU or feedback extracted. count={} {}", st.rx_deliv, st);
+    if (cfg.custom.warn_on_drop) {
+      logger.log_warning("Header decompression failed. No PDU or feedback extracted. count={} {}", st.rx_deliv, st);
+    } else {
+      logger.log_info("Header decompression failed. No PDU or feedback extracted. count={} {}", st.rx_deliv, st);
+    }
+    metrics.add_dropped_pdus(1);
     return false;
   }
 

@@ -92,7 +92,7 @@ struct pdcp_custom_config_tx : public pdcp_custom_config_base {
 };
 
 struct pdcp_custom_config_rx : public pdcp_custom_config_base {
-  // Empty
+  bool warn_on_drop = false;
 };
 
 /// \brief Non-standard configurable parameters for PDCP.
@@ -275,7 +275,11 @@ struct formatter<ocudu::pdcp_custom_config_rx> {
   template <typename FormatContext>
   auto format(ocudu::pdcp_custom_config_rx cfg, FormatContext& ctx) const
   {
-    return format_to(ctx.out(), "count_notify={} count_max={}", cfg.max_count.notify, cfg.max_count.hard);
+    return format_to(ctx.out(),
+                     "count_notify={} count_max={} warn_on_drop={}",
+                     cfg.max_count.notify,
+                     cfg.max_count.hard,
+                     cfg.warn_on_drop);
   }
 };
 
