@@ -9,10 +9,18 @@
 set -o pipefail
 
 # check for apps
-app1=$(which clang-format)
+if [ -n "$OCUDU_CLANG_FORMAT" ] && [ -x "$OCUDU_CLANG_FORMAT" ]; then
+  clang_format=$OCUDU_CLANG_FORMAT
+elif app1=$(which clang-format) && [ -x "$app1" ]; then
+  clang_format=$app1
+else
+  echo "Please install clang-format or set OCUDU_CLANG_FORMAT to a valid executable"
+  exit 1
+fi
+
 app2=$(which git)
-if [ ! -x "$app1" ] || [ ! -x "$app2" ]; then
-  echo "Please install clang-format and git"
+if [ ! -x "$app2" ]; then
+  echo "Please install git"
   exit 1
 fi
 
@@ -30,7 +38,7 @@ else
 fi
 
 echo "Using clang-format version:"
-clang-format --version
+"$clang_format" --version
 
 # Run clang-format for those files and apply changes
-[ "$files" ] && clang-format -style=file -i ${files} || echo "No files changed"
+[ "$files" ] && "$clang_format" -style=file -i ${files} || echo "No files changed"
