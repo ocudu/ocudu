@@ -14,6 +14,7 @@
 #include "ocudu/ran/pucch/pucch_uci_bits.h"
 #include "ocudu/ran/resource_allocation/ofdm_symbol_range.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
+#include "ocudu/scheduler/resource_grid_util.h"
 #include "ocudu/scheduler/result/sched_result.h"
 #include "ocudu/support/ocudu_assert.h"
 #include "fmt/std.h"
@@ -211,7 +212,8 @@ std::optional<unsigned> pucch_allocator_impl::alloc_common_harq_ack(cell_resourc
   }
 
   // Try to get an available PUCCH common resource for HARQ-ACK.
-  std::optional<pucch_common_params> pucch_res = alloc_pucch_common_res_harq(pucch_slot_alloc, dci_info.ctx);
+  std::optional<pucch_common_params> pucch_res =
+      alloc_pucch_common_res_harq(pucch_slot_alloc, dci_info.ctx, alloc_ctx.rnti);
 
   if (not pucch_res.has_value()) {
     alloc_ctx.log_skipped_alloc(logger.debug, "no resources available");
@@ -574,7 +576,8 @@ unsigned pucch_allocator_impl::pucch_grant_list::get_nof_grants() const
 // if no resource is available.
 std::optional<pucch_allocator_impl::pucch_common_params>
 pucch_allocator_impl::alloc_pucch_common_res_harq(cell_slot_resource_allocator&  pucch_slot_alloc,
-                                                  const dci_context_information& dci_info)
+                                                  const dci_context_information& dci_info,
+                                                  rnti_t                         rnti)
 {
   // Get N_CCE (nof_coreset_cces) and n_{CCE,0} (start_cce_idx), as per TS 38.213, Section 9.2.1.
   const unsigned nof_coreset_cces = dci_info.coreset_cfg->get_nof_cces();
@@ -589,7 +592,7 @@ pucch_allocator_impl::alloc_pucch_common_res_harq(cell_slot_resource_allocator& 
     ocudu_assert(r_pucch < 16, "r_PUCCH must be less than 16");
 
     // Look for an available PUCCH common resource.
-    if (not resource_manager.reserve_harq_common_resource(pucch_slot_alloc, r_pucch)) {
+    if (not resource_manager.reserve_harq_common_resource(pucch_slot_alloc, r_pucch, rnti)) {
       continue;
     }
 
@@ -647,14 +650,14 @@ pucch_allocator_impl::find_common_and_ded_harq_res_available(cell_slot_resource_
 
     // Look for an available PUCCH common resource.
     // TODO: allow collisions between common and dedicated resources for the same UE, since it will never send both.
-    if (not resource_manager.reserve_harq_common_resource(pucch_slot_alloc, r_pucch)) {
+    if (not resource_manager.reserve_harq_common_resource(pucch_slot_alloc, r_pucch, alloc_ctx.rnti)) {
       continue;
     }
 
     // Look for an available PUCCH dedicated resource with the same PUCCH resource indicator as the common's.
     const pucch_resource* ded_res = guard.reserve_harq_set_0_resource_by_res_indicator(d_pri);
     if (ded_res == nullptr) {
-      resource_manager.release_harq_common_resource(pucch_slot_alloc, r_pucch);
+      resource_manager.release_harq_common_resource(pucch_slot_alloc, r_pucch, alloc_ctx.rnti);
       continue;
     }
 
@@ -675,7 +678,7 @@ pucch_allocator_impl::find_common_and_ded_harq_res_available(cell_slot_resource_
     // pre-allocated are constrained in the PUCCH resource indicator. Therefore, the \ref multiplex_and_allocate_pucch
     // function might not preserve the requested PUCCH resource indicator \ref d_pri.
     if (not d_pri_ded.has_value() or (cell_cfg.is_pucch_f0_and_f2() and *d_pri_ded != d_pri)) {
-      resource_manager.release_harq_common_resource(pucch_slot_alloc, r_pucch);
+      resource_manager.release_harq_common_resource(pucch_slot_alloc, r_pucch, alloc_ctx.rnti);
       continue;
     }
     ocudu_assert(*d_pri_ded == d_pri, "The PUCCH resource indicator must match for common and ded. resources");

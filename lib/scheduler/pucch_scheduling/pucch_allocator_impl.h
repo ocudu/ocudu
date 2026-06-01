@@ -161,7 +161,8 @@ private:
 
   // Allocates the PUCCH (common) resource for HARQ-(N)-ACK.
   std::optional<pucch_common_params> alloc_pucch_common_res_harq(cell_slot_resource_allocator&  pucch_slot_alloc,
-                                                                 const dci_context_information& dci_info);
+                                                                 const dci_context_information& dci_info,
+                                                                 rnti_t                         rnti);
 
   void compute_pucch_common_params_and_alloc(cell_slot_resource_allocator& pucch_alloc,
                                              rnti_t                        rnti,

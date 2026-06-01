@@ -71,18 +71,24 @@ public:
 
   /// Reasons for a PUCCH allocation failure.
   enum class alloc_failure_reason {
+    ALREADY_ALLOCATED,
+    RESOURCE_IN_USE,
     PUCCH_COLLISION,
     UL_GRANT_COLLISION,
   };
   using alloc_result_t = error_type<alloc_failure_reason>;
 
+  /// \brief Check if a PUCCH resource can be allocated at a given slot.
+  /// \return Success if the resource can be allocated, otherwise an error indicating the reason of failure.
+  alloc_result_t can_alloc(cell_slot_resource_allocator& slot_alloc, const pucch_resource& res, rnti_t rnti) const;
+
   /// \brief Allocate a PUCCH resource at a given slot.
   /// \return Success if the allocation was successful, otherwise an error indicating the reason of failure.
-  alloc_result_t alloc(cell_slot_resource_allocator& slot_alloc, const pucch_resource& res);
+  alloc_result_t alloc(cell_slot_resource_allocator& slot_alloc, const pucch_resource& res, rnti_t rnti);
 
   /// Free a common PUCCH resource at the given slot.
-  /// \return True if the resource was successfully freed, false if the resource was not allocated.
-  bool free(cell_slot_resource_allocator& slot_alloc, const pucch_resource& res);
+  /// \return True if the resource was successfully freed, false if the resource was not allocated to this UE.
+  bool free(cell_slot_resource_allocator& slot_alloc, const pucch_resource& res, rnti_t rnti);
 
 private:
   using mux_region_lookup_t = slotted_array<size_t, pucch_constants::MAX_NOF_TOT_CELL_RESOURCES>;

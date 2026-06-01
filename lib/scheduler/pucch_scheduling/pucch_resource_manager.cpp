@@ -4,10 +4,8 @@
 
 #include "pucch_resource_manager.h"
 #include "pucch_collision_manager.h"
-#include "ocudu/adt/static_vector.h"
 #include "ocudu/ran/rnti.h"
 #include "ocudu/scheduler/config/ue_bwp_config.h"
-#include "ocudu/scheduler/resource_grid_util.h"
 #include "ocudu/support/ocudu_assert.h"
 
 using namespace ocudu;
@@ -17,50 +15,33 @@ using namespace ocudu;
 /////////////   Public methods   /////////////
 
 pucch_resource_manager::pucch_resource_manager(const cell_configuration& cell_cfg_) :
-  cell_cfg(cell_cfg_),
-  cell_resources(cell_cfg_.bwp_res[to_bwp_id(0)].ul().pucch),
-  collision_manager(cell_cfg_),
-  // The ring must be at least 1 slot larger than the max. UL allocation delay, to take into account the current slot.
-  slots_ctx(get_allocator_ring_size_gt_min(get_max_slot_ul_alloc_delay(cell_cfg_.ntn_cs_koffset) + 1),
-            {static_vector<rnti_t, pucch_constants::MAX_NOF_CELL_DED_RESOURCES>(
-                cell_cfg_.bwp_res[to_bwp_id(0)].ul().pucch.dedicated.size(),
-                rnti_t::INVALID_RNTI)})
+  cell_cfg(cell_cfg_), cell_resources(cell_cfg_.bwp_res[to_bwp_id(0)].ul().pucch), collision_manager(cell_cfg_)
 {
 }
 
 void pucch_resource_manager::slot_indication(slot_point slot_tx)
 {
-  // If last_sl_ind is not valid (not initialized), then the check sl_tx == last_sl_ind + 1 does not matter.
-  ocudu_sanity_check(not last_sl_ind.valid() or slot_tx == last_sl_ind + 1, "Detected a skipped slot");
-
-  // Update Slot.
-  last_sl_ind = slot_tx;
-
-  // Clear previous slot context.
-  auto& ctx = slots_ctx[(slot_tx - 1).count()];
-  std::fill(ctx.ues_using_pucch_res.begin(), ctx.ues_using_pucch_res.end(), rnti_t::INVALID_RNTI);
-
   collision_manager.slot_indication(slot_tx);
 }
 
 void pucch_resource_manager::stop()
 {
-  for (auto& ctx : slots_ctx) {
-    std::fill(ctx.ues_using_pucch_res.begin(), ctx.ues_using_pucch_res.end(), rnti_t::INVALID_RNTI);
-  }
-  last_sl_ind = {};
   collision_manager.stop();
 }
 
-bool pucch_resource_manager::reserve_harq_common_resource(cell_slot_resource_allocator& slot_alloc, size_t r_pucch)
+bool pucch_resource_manager::reserve_harq_common_resource(cell_slot_resource_allocator& slot_alloc,
+                                                          size_t                        r_pucch,
+                                                          rnti_t                        rnti)
 
 {
-  return collision_manager.alloc(slot_alloc, cell_resources.get_cmn(r_pucch)).has_value();
+  return collision_manager.alloc(slot_alloc, cell_resources.get_cmn(r_pucch), rnti).has_value();
 }
 
-void pucch_resource_manager::release_harq_common_resource(cell_slot_resource_allocator& slot_alloc, size_t r_pucch)
+void pucch_resource_manager::release_harq_common_resource(cell_slot_resource_allocator& slot_alloc,
+                                                          size_t                        r_pucch,
+                                                          rnti_t                        rnti)
 {
-  collision_manager.free(slot_alloc, cell_resources.get_cmn(r_pucch));
+  collision_manager.free(slot_alloc, cell_resources.get_cmn(r_pucch), rnti);
 }
 
 /////////////   UE Reservation Guard   /////////////
@@ -77,8 +58,6 @@ pucch_resource_manager::ue_reservation_guard::ue_reservation_guard(pucch_resourc
   ue_bwp_cfg(*ue_cfg_.bwp(to_bwp_id(0)).ul.ue_cfg())
 {
   ocudu_sanity_check(parent != nullptr, "PUCCH Resource Manager pointer cannot be null");
-  ocudu_sanity_check(slot_alloc.slot < parent->last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
-                     "PUCCH being allocated too far into the future");
   ocudu_sanity_check(rnti != rnti_t::INVALID_RNTI, "RNTI cannot be invalid");
 }
 
@@ -116,58 +95,38 @@ const pucch_resource* pucch_resource_manager::ue_reservation_guard::reserve_sr_r
 {
   ocudu_assert(parent != nullptr, "Trying to make a new PUCCH resource reservation after commit has been called");
 
-  // Get resource list of wanted slot.
-  auto& ctx = parent->slots_ctx[slot_alloc.slot.count()];
-
-  // Check if the wanted resource is already allocated to another UE in this slot.
-  const auto&    sr_res         = cell_resources.get_ded(res_params.sr_res_id(ue_bwp_cfg.pucch.sr_res_id));
-  const unsigned sr_cell_res_id = sr_res.res_id.ded().cell_res_id;
-  auto&          res_rnti       = ctx.ues_using_pucch_res[sr_cell_res_id];
-  if (res_rnti != rnti_t::INVALID_RNTI and res_rnti != rnti) {
+  const auto& sr_res    = cell_resources.get_ded(res_params.sr_res_id(ue_bwp_cfg.pucch.sr_res_id));
+  const auto  alloc_res = parent->collision_manager.alloc(slot_alloc, sr_res, rnti);
+  if (not alloc_res.has_value()) {
+    if (alloc_res.error() == pucch_collision_manager::alloc_failure_reason::ALREADY_ALLOCATED) {
+      // Resource is already allocated to this RNTI, just return it.
+      return &sr_res;
+    }
     return nullptr;
   }
 
-  // If the PUCCH res with correct ID was not allocated to the UE's RNTI, allocate it to this RNTI; otherwise, it means
-  // the resource had already been allocated, just return it.
-  if (res_rnti != rnti) {
-    // Check for collisions.
-    if (not parent->collision_manager.alloc(slot_alloc, sr_res).has_value()) {
-      return nullptr;
-    }
-    res_rnti                                                     = rnti;
-    reservations[static_cast<unsigned>(resource_usage_type::sr)] = {sr_cell_res_id};
-  }
-
-  return &cell_resources.dedicated[sr_cell_res_id];
+  const unsigned sr_cell_res_id                                = sr_res.res_id.ded().cell_res_id;
+  reservations[static_cast<unsigned>(resource_usage_type::sr)] = {sr_cell_res_id};
+  return &sr_res;
 }
 
 const pucch_resource* pucch_resource_manager::ue_reservation_guard::reserve_csi_resource()
 {
   ocudu_assert(parent != nullptr, "Trying to make a new PUCCH resource reservation after commit has been called");
 
-  // Get resource list of wanted slot.
-  auto& ctx = parent->slots_ctx[slot_alloc.slot.count()];
-
-  // Check if the wanted resource is already allocated to another UE in this slot.
-  const auto&    csi_res = cell_resources.get_ded(res_params.csi_res_id(ue_bwp_cfg.periodic_csi_report->pucch_res_id));
-  const unsigned csi_cell_res_id = csi_res.res_id.ded().cell_res_id;
-  auto&          res_rnti        = ctx.ues_using_pucch_res[csi_cell_res_id];
-  if (res_rnti != rnti_t::INVALID_RNTI and res_rnti != rnti) {
+  const auto& csi_res   = cell_resources.get_ded(res_params.csi_res_id(ue_bwp_cfg.periodic_csi_report->pucch_res_id));
+  const auto  alloc_res = parent->collision_manager.alloc(slot_alloc, csi_res, rnti);
+  if (not alloc_res.has_value()) {
+    if (alloc_res.error() == pucch_collision_manager::alloc_failure_reason::ALREADY_ALLOCATED) {
+      // Resource is already allocated to this RNTI, just return it.
+      return &csi_res;
+    }
     return nullptr;
   }
 
-  // If the PUCCH res with correct ID was not allocated to the UE's RNTI, allocate it to this RNTI; otherwise, it means
-  // the resource had already been allocated, just return it.
-  if (res_rnti != rnti) {
-    // Check for collisions.
-    if (not parent->collision_manager.alloc(slot_alloc, csi_res).has_value()) {
-      return nullptr;
-    }
-    res_rnti                                                      = rnti;
-    reservations[static_cast<unsigned>(resource_usage_type::csi)] = {csi_cell_res_id};
-  }
-
-  return &cell_resources.dedicated[csi_cell_res_id];
+  const unsigned csi_cell_res_id                                = csi_res.res_id.ded().cell_res_id;
+  reservations[static_cast<unsigned>(resource_usage_type::csi)] = {csi_cell_res_id};
+  return &csi_res;
 }
 
 const pucch_resource* pucch_resource_manager::ue_reservation_guard::peek_sr_resource() const
@@ -202,19 +161,11 @@ bool pucch_resource_manager::ue_reservation_guard::release_sr_resource()
 {
   ocudu_assert(parent != nullptr, "Trying to release a PUCCH resource after commit has been called");
 
-  // Get resource list of wanted slot.
-  auto& ctx = parent->slots_ctx[slot_alloc.slot.count()];
-
-  // Check if the resource is allocated to this RNTI.
-  const auto&    sr_res         = cell_resources.get_ded(res_params.sr_res_id(ue_bwp_cfg.pucch.sr_res_id));
-  const unsigned sr_cell_res_id = sr_res.res_id.ded().cell_res_id;
-  if (ctx.ues_using_pucch_res[sr_cell_res_id] != rnti) {
+  const auto& sr_res = cell_resources.get_ded(res_params.sr_res_id(ue_bwp_cfg.pucch.sr_res_id));
+  if (not parent->collision_manager.free(slot_alloc, sr_res, rnti)) {
     return false;
   }
 
-  // Release the resource.
-  ctx.ues_using_pucch_res[sr_cell_res_id] = rnti_t::INVALID_RNTI;
-  parent->collision_manager.free(slot_alloc, sr_res);
   reservations[static_cast<unsigned>(resource_usage_type::sr)].cell_res_id = std::nullopt;
   return true;
 }
@@ -223,20 +174,12 @@ bool pucch_resource_manager::ue_reservation_guard::release_csi_resource()
 {
   ocudu_assert(parent != nullptr, "Trying to release a PUCCH resource after commit has been called");
 
-  // Get resource list of wanted slot.
-  auto& ctx = parent->slots_ctx[slot_alloc.slot.count()];
-
-  // Check if the resource is allocated to this RNTI.
-  const auto&    csi_res = cell_resources.get_ded(res_params.csi_res_id(ue_bwp_cfg.periodic_csi_report->pucch_res_id));
-  const unsigned csi_cell_res_id = csi_res.res_id.ded().cell_res_id;
-  if (ctx.ues_using_pucch_res[csi_cell_res_id] != rnti) {
+  const auto& csi_res = cell_resources.get_ded(res_params.csi_res_id(ue_bwp_cfg.periodic_csi_report->pucch_res_id));
+  if (not parent->collision_manager.free(slot_alloc, csi_res, rnti)) {
     return false;
   }
 
-  // Release the resource.
-  ctx.ues_using_pucch_res[csi_cell_res_id] = rnti_t::INVALID_RNTI;
-  parent->collision_manager.free(slot_alloc, csi_res);
-  reservations[static_cast<unsigned>(resource_usage_type::csi)].cell_res_id = std::nullopt;
+  reservations[static_cast<unsigned>(resource_usage_type::sr)].cell_res_id = std::nullopt;
   return true;
 }
 
@@ -245,19 +188,15 @@ pucch_harq_resource_alloc_record pucch_resource_manager::ue_reservation_guard::r
 {
   ocudu_assert(parent != nullptr, "Trying to make a new PUCCH resource reservation after commit has been called");
 
-  // Get context of wanted slot.
-  auto& ctx = parent->slots_ctx[slot_alloc.slot.count()];
-
   // If a resource is already allocated to this RNTI, use it.
   std::optional<unsigned> available_res;
   const auto              res_set_cfg_id = ue_bwp_cfg.pucch.res_set_cfg_id;
   const unsigned          res_set_size   = res_params.res_set_size.value();
   for (uint8_t r_pucch = 0; r_pucch != res_set_size; ++r_pucch) {
-    const auto& res         = cell_resources.get_ded(res_params.harq_res_id<ResourceSetId>(res_set_cfg_id, r_pucch));
-    unsigned    cell_res_id = res.res_id.ded().cell_res_id;
-
-    auto& res_rnti = ctx.ues_using_pucch_res[cell_res_id];
-    if (res_rnti == rnti) {
+    const auto& res       = cell_resources.get_ded(res_params.harq_res_id<ResourceSetId>(res_set_cfg_id, r_pucch));
+    const auto  alloc_res = parent->collision_manager.can_alloc(slot_alloc, res, rnti);
+    if (not alloc_res.has_value() and
+        alloc_res.error() == pucch_collision_manager::alloc_failure_reason::ALREADY_ALLOCATED) {
       available_res = r_pucch;
       break;
     }
@@ -266,13 +205,11 @@ pucch_harq_resource_alloc_record pucch_resource_manager::ue_reservation_guard::r
   if (not available_res.has_value()) {
     // Else, try to allocate the first available resource.
     for (unsigned r_pucch = 0; r_pucch != res_set_size; ++r_pucch) {
-      const auto& res         = cell_resources.get_ded(res_params.harq_res_id<ResourceSetId>(res_set_cfg_id, r_pucch));
-      unsigned    cell_res_id = res.res_id.ded().cell_res_id;
-      auto&       res_rnti    = ctx.ues_using_pucch_res[cell_res_id];
-      if (res_rnti == rnti_t::INVALID_RNTI and parent->collision_manager.alloc(slot_alloc, res).has_value()) {
-        ctx.ues_using_pucch_res[cell_res_id] = rnti;
+      const auto& res = cell_resources.get_ded(res_params.harq_res_id<ResourceSetId>(res_set_cfg_id, r_pucch));
+      if (parent->collision_manager.alloc(slot_alloc, res, rnti).has_value()) {
         const unsigned usage_type_idx = ResourceSetId == 0 ? static_cast<unsigned>(resource_usage_type::harq_set_0)
                                                            : static_cast<unsigned>(resource_usage_type::harq_set_1);
+        unsigned       cell_res_id    = res.res_id.ded().cell_res_id;
         reservations[usage_type_idx]  = {cell_res_id};
         available_res                 = r_pucch;
         break;
@@ -304,9 +241,6 @@ pucch_resource_manager::ue_reservation_guard::reserve_harq_resource_by_res_indic
     return nullptr;
   }
 
-  // Get resource list of wanted slot.
-  slot_context& ctx = parent->slots_ctx[slot_alloc.slot.count()];
-
   // Get PUCCH resource ID from the PUCCH resource set.
   // [Implementation-defined] We assume at most 8 resources per resource set. If this is the case, r_pucch = d_pri.
 
@@ -327,27 +261,20 @@ pucch_resource_manager::ue_reservation_guard::reserve_harq_resource_by_res_indic
     return &cell_resources.get_ded(res_params.csi_res_id(ue_bwp_cfg.periodic_csi_report->pucch_res_id));
   }
 
-  // Check first if the wanted PUCCH resource is available.
   const auto& res =
       cell_resources.get_ded(res_params.harq_res_id<ResourceSetId>(ue_bwp_cfg.pucch.res_set_cfg_id, d_pri));
-  const unsigned cell_res_id = res.res_id.ded().cell_res_id;
-  auto&          res_rnti    = ctx.ues_using_pucch_res[cell_res_id];
-  if (res_rnti != rnti_t::INVALID_RNTI and res_rnti != rnti) {
+  const auto alloc_res = parent->collision_manager.alloc(slot_alloc, res, rnti);
+  if (not alloc_res.has_value()) {
+    if (alloc_res.error() == pucch_collision_manager::alloc_failure_reason::ALREADY_ALLOCATED) {
+      // Resource is already allocated to this RNTI, just return it.
+      return &res;
+    }
     return nullptr;
   }
 
-  if (res_rnti == rnti) {
-    // If the resource is already allocated to this RNTI, just return it.
-    return &cell_resources.dedicated[cell_res_id];
-  }
-
-  // Allocate the resource to this RNTI.
-  if (not parent->collision_manager.alloc(slot_alloc, res).has_value()) {
-    return nullptr;
-  }
-  res_rnti                      = rnti;
   const unsigned usage_type_idx = ResourceSetId == 0 ? static_cast<unsigned>(resource_usage_type::harq_set_0)
                                                      : static_cast<unsigned>(resource_usage_type::harq_set_1);
+  const unsigned cell_res_id    = res.res_id.ded().cell_res_id;
   reservations[usage_type_idx]  = {cell_res_id};
   return &cell_resources.dedicated[cell_res_id];
 }
@@ -359,19 +286,11 @@ bool pucch_resource_manager::ue_reservation_guard::release_harq_resource()
 
   const unsigned res_set_size = res_params.res_set_size.value();
 
-  // Get resource list of wanted slot.
-  slot_context& ctx = parent->slots_ctx[slot_alloc.slot.count()];
-
   for (unsigned r_pucch = 0; r_pucch != res_set_size; ++r_pucch) {
     const auto& res =
         cell_resources.get_ded(res_params.harq_res_id<ResourceSetId>(ue_bwp_cfg.pucch.res_set_cfg_id, r_pucch));
-    const unsigned cell_res_id = res.res_id.ded().cell_res_id;
-    auto&          res_rnti    = ctx.ues_using_pucch_res[cell_res_id];
-
-    if (res_rnti == rnti) {
+    if (parent->collision_manager.free(slot_alloc, res, rnti)) {
       // Release the resource.
-      res_rnti = rnti_t::INVALID_RNTI;
-      parent->collision_manager.free(slot_alloc, res);
       const unsigned usage_type_idx = ResourceSetId == 0 ? static_cast<unsigned>(resource_usage_type::harq_set_0)
                                                          : static_cast<unsigned>(resource_usage_type::harq_set_1);
       reservations[usage_type_idx].cell_res_id = std::nullopt;
@@ -379,6 +298,7 @@ bool pucch_resource_manager::ue_reservation_guard::release_harq_resource()
     }
   }
 
+  // If no resource could be released, return false.
   return false;
 }
 
@@ -392,10 +312,8 @@ void pucch_resource_manager::ue_reservation_guard::commit()
     // Release HARQ Resource Set ID 0 reservation.
     const unsigned cell_res_id =
         reservations[static_cast<unsigned>(resource_usage_type::harq_set_0)].cell_res_id.value();
-    const auto& res                      = cell_resources.dedicated[cell_res_id];
-    auto&       ctx                      = parent->slots_ctx[slot_alloc.slot.count()];
-    ctx.ues_using_pucch_res[cell_res_id] = rnti_t::INVALID_RNTI;
-    parent->collision_manager.free(slot_alloc, res);
+    const auto& res = cell_resources.dedicated[cell_res_id];
+    parent->collision_manager.free(slot_alloc, res, rnti);
     reservations[static_cast<unsigned>(resource_usage_type::harq_set_0)].cell_res_id = std::nullopt;
   }
 
@@ -410,16 +328,9 @@ void pucch_resource_manager::ue_reservation_guard::rollback()
     // Release all reservations made so far.
     for (auto& r : reservations) {
       if (r.cell_res_id.has_value()) {
-        // Get resource list of wanted slot.
-        auto& ctx = parent->slots_ctx[slot_alloc.slot.count()];
-        ocudu_assert(r.cell_res_id.value() < ctx.ues_using_pucch_res.size(),
-                     "rnti={}: PUCCH resource index exceeds the size of the cell resource array",
-                     rnti);
-
         // Release the resource.
-        ctx.ues_using_pucch_res[*r.cell_res_id] = rnti_t::INVALID_RNTI;
-        const auto& res                         = cell_resources.dedicated[*r.cell_res_id];
-        parent->collision_manager.free(slot_alloc, res);
+        const auto& res = cell_resources.dedicated[*r.cell_res_id];
+        parent->collision_manager.free(slot_alloc, res, rnti);
       }
     }
   }

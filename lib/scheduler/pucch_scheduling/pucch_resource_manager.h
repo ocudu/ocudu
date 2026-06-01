@@ -6,12 +6,10 @@
 
 #include "../config/ue_configuration.h"
 #include "pucch_collision_manager.h"
-#include "ocudu/ran/pucch/pucch_constants.h"
 #include "ocudu/ran/slot_point.h"
 #include "ocudu/scheduler/config/cell_bwp_res_config.h"
 #include "ocudu/scheduler/config/pucch_resource_builder_params.h"
 #include "ocudu/scheduler/config/ue_bwp_config.h"
-#include "ocudu/scheduler/resource_grid_util.h"
 #include <array>
 #include <optional>
 
@@ -46,10 +44,10 @@ public:
   void stop();
 
   /// \brief Reserve the common PUCCH resource indexed by r_pucch, if available.
-  bool reserve_harq_common_resource(cell_slot_resource_allocator& slot_alloc, size_t r_pucch);
+  bool reserve_harq_common_resource(cell_slot_resource_allocator& slot_alloc, size_t r_pucch, rnti_t rnti);
 
   /// \brief Release the common PUCCH resource indexed by r_pucch from being allocated to a given UE.
-  void release_harq_common_resource(cell_slot_resource_allocator& slot_alloc, size_t r_pucch);
+  void release_harq_common_resource(cell_slot_resource_allocator& slot_alloc, size_t r_pucch, rnti_t rnti);
 
   /// \brief RAII helper class that manages the reservation of dedicated PUCCH resources for a given UE at a given slot.
   /// The reservation is temporary until \c commit() is called, which makes the reservation permanent.
@@ -165,48 +163,14 @@ public:
 
     template <unsigned ResourceSetId>
     bool release_harq_resource();
-
-    const pucch_resource* get_res_by_id(pucch_res_id_t res_id) const;
   };
 
 private:
   friend class ue_reservation_guard;
 
-  /// Size of the ring buffer of pucch_resource_manager. This size sets a limit on how far in advance a PUCCH can be
-  /// allocated.
-  static constexpr size_t RES_MANAGER_RING_BUFFER_SIZE =
-      get_allocator_ring_size_gt_min(SCHEDULER_MAX_K0 + SCHEDULER_MAX_K1 + NTN_CELL_SPECIFIC_KOFFSET_MAX);
-
-  // Record for the RNTI and PUCCH resource indicator used for a given resource at a given slot; this information is
-  // used to keep track of which resources are available and which UE is using them. This information is preserved over
-  // the slots.
-  struct slot_context {
-    static_vector<rnti_t, pucch_constants::MAX_NOF_CELL_DED_RESOURCES> ues_using_pucch_res;
-
-    /// Find the index of the first PUCCH resource used by a given UE among a list of resources to check.
-    std::optional<unsigned> find_res_used_by_ue(span<const pucch_res_id_t> res_to_check, rnti_t rnti) const
-    {
-      for (unsigned r_pucch = 0; r_pucch != res_to_check.size(); ++r_pucch) {
-        const unsigned cell_res_id = res_to_check[r_pucch].ded().cell_res_id;
-        ocudu_assert(cell_res_id < ues_using_pucch_res.size(),
-                     "PUCCH resource index from PUCCH resource set exceeds the size of the cell resource array");
-        if (ues_using_pucch_res[cell_res_id] == rnti) {
-          return r_pucch;
-        }
-      }
-      return std::nullopt;
-    }
-  };
-
   const cell_configuration&    cell_cfg;
   const cell_pucch_res_config& cell_resources;
   pucch_collision_manager      collision_manager;
-
-  // Ring buffer of slot contexts to keep track of PUCCH resource usage in recent slots.
-  circular_vector<slot_context> slots_ctx;
-
-  // Keeps track of the last slot_point used by the resource manager.
-  slot_point last_sl_ind;
 };
 
 } // namespace ocudu
