@@ -6,8 +6,8 @@
 
 #include "ocudu/adt/bounded_integer.h"
 #include "ocudu/adt/byte_buffer.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/e1ap/common/e1ap_types.h"
+#include "ocudu/ran/cu_cp_types.h"
 #include <chrono>
 #include <optional>
 

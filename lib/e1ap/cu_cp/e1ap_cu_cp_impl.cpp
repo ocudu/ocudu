@@ -13,9 +13,9 @@
 #include "procedures/bearer_context_release_procedure.h"
 #include "procedures/bearer_context_setup_procedure.h"
 #include "ocudu/asn1/e1ap/e1ap.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/ran/cause/e1ap_cause.h"
 #include "ocudu/ran/cause/e1ap_cause_converters.h"
+#include "ocudu/ran/cu_cp_types.h"
 #include <variant>
 
 using namespace ocudu;

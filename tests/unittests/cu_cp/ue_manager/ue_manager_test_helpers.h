@@ -7,7 +7,7 @@
 #include "../test_helpers.h"
 #include "lib/cu_cp/ue_manager/ue_manager_impl.h"
 #include "tests/unittests/ngap/test_helpers.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
+#include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 #include <memory>

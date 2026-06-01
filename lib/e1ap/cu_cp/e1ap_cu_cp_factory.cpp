@@ -4,7 +4,7 @@
 
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp_factory.h"
 #include "e1ap_cu_cp_impl.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
+#include "ocudu/ran/cu_cp_types.h"
 
 /// Notice this would be the only place were we include concrete class implementation files.
 

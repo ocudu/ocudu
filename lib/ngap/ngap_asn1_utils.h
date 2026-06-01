@@ -4,17 +4,11 @@
 
 #pragma once
 
-#include "ocudu/adt/expected.h"
-#include "ocudu/asn1/asn1_utils.h"
 #include "ocudu/asn1/ngap/ngap.h"
-#include "ocudu/asn1/ngap/ngap_pdu_contents.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/ngap/ngap_types.h"
-#include "ocudu/security/security.h"
-#include "ocudu/support/error_handling.h"
+#include "ocudu/ran/cu_types.h"
 
-namespace asn1 {
-namespace ngap {
+namespace asn1::ngap {
 
 struct cause_c;
 struct init_msg_s;
@@ -22,12 +16,9 @@ struct successful_outcome_s;
 struct unsuccessful_outcome_s;
 struct ngap_pdu_c;
 
-} // namespace ngap
-} // namespace asn1
+} // namespace asn1::ngap
 
-namespace ocudu {
-namespace ocucp {
-namespace asn1_utils {
+namespace ocudu::ocucp::asn1_utils {
 
 /// Get string with NGAP error cause.
 const char* get_cause_str(const asn1::ngap::cause_c& cause);
@@ -46,6 +37,4 @@ std::optional<amf_ue_id_t> get_amf_ue_id(const asn1::ngap::successful_outcome_s&
 std::optional<amf_ue_id_t> get_amf_ue_id(const asn1::ngap::unsuccessful_outcome_s& unsuccessful_outcome);
 std::optional<amf_ue_id_t> get_amf_ue_id(const asn1::ngap::ngap_pdu_c& pdu);
 
-} // namespace asn1_utils
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp::asn1_utils

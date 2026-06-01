@@ -4,7 +4,7 @@
 
 #include "paging_message_handler.h"
 #include "../du_processor/du_processor_repository.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
+#include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/ran/tac.h"
 
 using namespace ocudu;

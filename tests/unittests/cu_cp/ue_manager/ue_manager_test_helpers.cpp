@@ -4,7 +4,7 @@
 
 #include "ue_manager_test_helpers.h"
 #include "ocudu/cu_cp/cu_cp_configuration_helpers.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
+#include "ocudu/ran/cu_cp_types.h"
 #include <gtest/gtest.h>
 #include <memory>
 

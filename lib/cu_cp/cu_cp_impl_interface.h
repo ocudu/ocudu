@@ -5,7 +5,6 @@
 #pragma once
 
 #include "ocudu/cu_cp/cell_meas_manager_config.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "ocudu/f1ap/cu_cp/f1ap_cu.h"
 #include "ocudu/ngap/ngap.h"

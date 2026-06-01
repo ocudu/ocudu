@@ -9,9 +9,9 @@
 #include "ocudu/adt/expected.h"
 #include "ocudu/asn1/rrc_nr/cell_group_config.h"
 #include "ocudu/asn1/rrc_nr/dl_ccch_msg.h"
+#include "ocudu/asn1/rrc_nr/rrc_nr.h"
 #include "ocudu/asn1/rrc_nr/ul_ccch1_msg.h"
 #include "ocudu/asn1/rrc_nr/ul_ccch_msg.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/ran/plmn_identity.h"
 
 using namespace ocudu;

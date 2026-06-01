@@ -4,9 +4,8 @@
 
 #pragma once
 
-#include "ocudu/cu_cp/cu_cp_types.h"
-#include "ocudu/ran/cause/f1ap_cause.h"
 #include "ocudu/ran/cause/nrppa_cause.h"
+#include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/ran/positioning/measurement_information.h"
 #include "ocudu/ran/positioning/positioning_activation.h"
 #include "ocudu/ran/positioning/positioning_information_exchange.h"

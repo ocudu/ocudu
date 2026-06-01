@@ -6,13 +6,12 @@
 
 #include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/ran/gnb_id.h"
+#include "ocudu/ran/qos/five_qi.h"
 #include "ocudu/rrc/rrc_ue_config.h"
 #include "ocudu/security/security.h"
 #include <map>
 
-namespace ocudu {
-
-namespace ocucp {
+namespace ocudu::ocucp {
 
 struct rrc_cfg_t {
   /// The gNodeB identifier to use for measurement configs.
@@ -33,6 +32,4 @@ struct rrc_cfg_t {
   std::chrono::milliseconds rrc_procedure_guard_time_ms{500};
 };
 
-} // namespace ocucp
-
-} // namespace ocudu
+} // namespace ocudu::ocucp

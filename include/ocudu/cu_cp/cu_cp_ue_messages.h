@@ -6,14 +6,12 @@
 
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/adt/static_vector.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/cu_cp/up_context.h"
 #include "ocudu/rrc/meas_types.h"
 #include "ocudu/security/security.h"
 #include <optional>
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// \brief RRC context transfered from one UE object to the other during mobility.
 struct rrc_ue_transfer_context {
@@ -26,5 +24,4 @@ struct rrc_ue_transfer_context {
   bool                                  is_inter_cu_handover = false;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

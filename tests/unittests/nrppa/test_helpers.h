@@ -5,7 +5,7 @@
 #pragma once
 
 #include "lib/cu_cp/ue_manager/ue_manager_impl.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
+#include "ocudu/ran/cu_cp_types.h"
 #include <gtest/gtest.h>
 
 namespace ocudu::ocucp {

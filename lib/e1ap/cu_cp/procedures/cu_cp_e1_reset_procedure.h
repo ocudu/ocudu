@@ -6,14 +6,12 @@
 
 #include "cu_cp/procedures/e1ap_transaction_manager.h"
 #include "cu_cp/ue_context/e1ap_cu_cp_ue_context.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/e1ap/common/e1ap_common.h"
-#include "ocudu/e1ap/common/e1ap_message.h"
 #include "ocudu/e1ap/cu_cp/e1ap_configuration.h"
+#include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/support/async/async_task.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// \brief Handle the CU-CP initiated E1 Reset Procedure as per TS 37.483 section 8.2.1.
 class cu_cp_e1_reset_procedure
@@ -43,5 +41,4 @@ private:
   e1ap_transaction transaction;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

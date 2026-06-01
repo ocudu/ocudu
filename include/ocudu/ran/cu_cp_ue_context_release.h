@@ -7,6 +7,7 @@
 #include "ocudu/ran/cause/ngap_cause.h"
 #include "ocudu/ran/crit_diagnostics.h"
 #include "ocudu/ran/cu_cp_paging.h"
+#include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/ran/cu_types.h"
 #include "ocudu/ran/subcarrier_spacing.h"
 #include <chrono>

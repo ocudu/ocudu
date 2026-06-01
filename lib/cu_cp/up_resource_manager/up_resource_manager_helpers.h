@@ -6,6 +6,7 @@
 
 #include "up_resource_manager_impl.h"
 #include "ocudu/pdcp/pdcp_config.h"
+#include "ocudu/ran/cu_cp_pdu_session.h"
 
 namespace ocudu::ocucp {
 

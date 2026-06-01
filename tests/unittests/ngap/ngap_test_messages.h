@@ -6,12 +6,12 @@
 
 #include "ocudu/asn1/ngap/ngap.h"
 #include "ocudu/asn1/ngap/ngap_ies.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/cu_cp/up_context.h"
 #include "ocudu/ngap/ngap.h"
 #include "ocudu/ngap/ngap_handover.h"
 #include "ocudu/ngap/ngap_types.h"
 #include "ocudu/ran/cause/ngap_cause.h"
+#include "ocudu/ran/cu_cp_pdu_session.h"
 #include "ocudu/ran/gtpu/gtpu_teid.h"
 
 namespace ocudu::ocucp {

@@ -5,8 +5,8 @@
 #include "../common/test_helpers.h"
 #include "lib/e1ap/cu_cp/ue_context/e1ap_cu_cp_ue_context.h"
 #include "tests/test_doubles/utils/test_rng.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/ocudulog/logger.h"
+#include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 

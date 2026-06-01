@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/ocudulog/logger.h"
+#include "ocudu/ran/cu_cp_types.h"
 
 namespace ocudu::ocucp {
 

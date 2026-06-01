@@ -6,6 +6,7 @@
 #include "common/e1ap_asn1_converters.h"
 #include "ocudu/asn1/e1ap/common.h"
 #include "ocudu/asn1/e1ap/e1ap_pdu_contents.h"
+#include "ocudu/e1ap/common/e1ap_message.h"
 
 using namespace ocudu;
 using namespace ocucp;
@@ -75,7 +76,7 @@ bool cu_cp_e1_reset_procedure::send_e1_reset()
   // Reset only specific UEs.
   asn1::e1ap::ue_associated_lc_e1_conn_list_res_l& reset_part_of_e1_interface =
       e1_reset->reset_type.set_part_of_e1_interface();
-  for (auto& ue : reset.ues_to_reset) {
+  for (const auto& ue : reset.ues_to_reset) {
     if (!ue_ctxt_list.contains(ue)) {
       logger.debug("ue={}: Excluding UE from E1 Reset. UE context does not exist", ue);
     } else {

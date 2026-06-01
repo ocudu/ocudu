@@ -10,6 +10,7 @@
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "ocudu/f1ap/cu_cp/f1ap_cu_ue_context_update.h"
 #include "ocudu/pdcp/pdcp_config.h"
+#include "ocudu/ran/cu_cp_pdu_session.h"
 #include "ocudu/rrc/rrc_types.h"
 
 namespace ocudu::ocucp {

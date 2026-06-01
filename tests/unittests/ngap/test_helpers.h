@@ -7,10 +7,10 @@
 #include "lib/cu_cp/ue_manager/ue_manager_impl.h"
 #include "ngap_test_messages.h"
 #include "ocudu/adt/byte_buffer.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/cu_cp/ue_task_scheduler.h"
 #include "ocudu/ngap/gateways/n2_connection_client.h"
 #include "ocudu/ngap/ngap_message.h"
+#include "ocudu/ran/cu_cp_pdu_session.h"
 #include "ocudu/security/security.h"
 #include <gtest/gtest.h>
 #include <optional>

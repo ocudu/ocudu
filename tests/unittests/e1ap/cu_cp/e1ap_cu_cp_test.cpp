@@ -4,7 +4,7 @@
 
 #include "../common/test_helpers.h"
 #include "e1ap_cu_cp_test_helpers.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
+#include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/support/async/async_test_utils.h"
 #include <gtest/gtest.h>
 

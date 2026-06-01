@@ -7,7 +7,6 @@
 #include "adapters/ngap_adapters.h"
 #include "task_schedulers/ngap_task_scheduler.h"
 #include "ocudu/cu_cp/cu_cp_configuration.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/ngap/ngap.h"
 #include "ocudu/ran/plmn_identity.h"
 

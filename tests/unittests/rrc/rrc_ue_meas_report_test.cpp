@@ -6,7 +6,6 @@
 #include "rrc_ue_test_helpers.h"
 #include "rrc_ue_test_messages.h"
 #include "ocudu/asn1/rrc_nr/ul_dcch_msg_ies.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;

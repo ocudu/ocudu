@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "du_configuration_manager.h"
+#include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/band_helper.h"
 #include "ocudu/ran/plmn_identity.h"
 

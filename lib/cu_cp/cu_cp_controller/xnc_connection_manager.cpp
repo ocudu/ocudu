@@ -3,7 +3,6 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "xnc_connection_manager.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/support/async/async_timer.h"
 #include "ocudu/xnap/xnap_message.h"
 #include "ocudu/xnap/xnap_message_notifier.h"

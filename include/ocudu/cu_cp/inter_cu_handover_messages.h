@@ -5,11 +5,14 @@
 #pragma once
 
 #include "ocudu/adt/slotted_vector.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/ngap/ngap_types.h"
+#include "ocudu/pdcp/pdcp_config.h"
 #include "ocudu/ran/cause/ngap_cause.h"
 #include "ocudu/ran/cause/xnap_cause.h"
+#include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/ran/cu_types.h"
+#include "ocudu/ran/pdcp/pdcp_sn_size.h"
+#include "ocudu/ran/rb_id.h"
 #include "ocudu/ran/up_transport_layer_info.h"
 #include "ocudu/security/security.h"
 

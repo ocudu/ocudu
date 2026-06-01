@@ -4,10 +4,10 @@
 
 #include "du_processor_impl.h"
 #include "ocudu/adt/expected.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/f1ap/cu_cp/f1ap_cu_factory.h"
 #include "ocudu/ran/cause/f1ap_cause.h"
 #include "ocudu/ran/cause/f1ap_cause_converters.h"
+#include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/rrc/rrc_du_factory.h"
 #include "ocudu/support/async/coroutine.h"
 

@@ -7,7 +7,6 @@
 #include "../common/test_helpers.h"
 #include "e1_test_local_gateway.h"
 #include "lib/cu_cp/ue_manager/ue_manager_impl.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/e1ap/common/e1ap_common.h"
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "ocudu/support/executors/manual_task_worker.h"
@@ -24,13 +23,13 @@ public:
   {
   }
 
-  void on_bearer_context_release_request_received(const ocucp::cu_cp_bearer_context_release_request& msg) override
+  void on_bearer_context_release_request_received(const cu_cp_bearer_context_release_request& msg) override
   {
     last_release_request = msg;
     logger.info("Received a bearer context release request");
   }
 
-  void on_bearer_context_inactivity_notification_received(const ocucp::cu_cp_inactivity_notification& msg) override
+  void on_bearer_context_inactivity_notification_received(const cu_cp_inactivity_notification& msg) override
   {
     last_msg = msg;
     logger.info("Received an inactivity notification");
@@ -70,8 +69,8 @@ public:
     });
   }
 
-  ocucp::cu_cp_bearer_context_release_request last_release_request;
-  ocucp::cu_cp_inactivity_notification        last_msg;
+  cu_cp_bearer_context_release_request last_release_request;
+  cu_cp_inactivity_notification        last_msg;
 
 private:
   ue_manager&             ue_mng;

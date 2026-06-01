@@ -5,7 +5,6 @@
 #pragma once
 
 #include "../cu_cp_impl_interface.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "ocudu/f1ap/cu_cp/f1ap_cu.h"
 #include "ocudu/ngap/ngap_rrc_inactive_transition.h"

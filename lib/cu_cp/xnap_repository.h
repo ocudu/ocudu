@@ -7,7 +7,6 @@
 #include "adapters/xnap_adapters.h"
 #include "task_schedulers/xnap_task_scheduler.h"
 #include "ocudu/cu_cp/cu_cp_configuration.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/support/io/transport_layer_address.h"
 #include "ocudu/xnap/xnap.h"
 #include "ocudu/xnap/xnap_configuration.h"

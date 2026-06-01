@@ -5,7 +5,6 @@
 #pragma once
 
 #include "ocudu/asn1/f1ap/f1ap.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/f1ap/f1ap_message_notifier.h"
 #include "ocudu/support/async/async_task.h"
 

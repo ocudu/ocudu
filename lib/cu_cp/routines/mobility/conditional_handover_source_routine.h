@@ -4,14 +4,12 @@
 
 #pragma once
 
-#include "../../cu_cp_impl_interface.h"
 #include "../../ue_manager/ue_manager_impl.h"
 #include "../../xnap_repository.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
+#include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/support/async/async_task.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// \brief Cancels non-winning CHO candidates upon ACCESS SUCCESS.
 ///
@@ -41,5 +39,4 @@ private:
   cu_cp_cho_candidate* winner    = nullptr;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

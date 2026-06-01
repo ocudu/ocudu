@@ -5,13 +5,11 @@
 #pragma once
 
 #include "du_configuration_handler.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/f1ap/cu_cp/f1ap_cu_configuration_update.h"
-#include "ocudu/ocudulog/ocudulog.h"
+#include "ocudu/ocudulog/logger.h"
 #include "ocudu/ran/plmn_identity.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// Validator and repository of configurations for DUs handled by the CU-CP.
 class du_configuration_manager
@@ -47,5 +45,4 @@ private:
   std::unordered_map<gnb_du_id_t, du_configuration_context> dus;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

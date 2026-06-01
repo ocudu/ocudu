@@ -7,6 +7,7 @@
 #include "../cu_cp_impl_interface.h"
 #include "../ue_manager/cu_cp_ue_impl_interface.h"
 #include "ocudu/cu_cp/ue_task_scheduler.h"
+#include "ocudu/f1ap/cu_cp/f1ap_nrppa_msg_handling.h"
 #include "ocudu/nrppa/nrppa.h"
 
 namespace ocudu::ocucp {

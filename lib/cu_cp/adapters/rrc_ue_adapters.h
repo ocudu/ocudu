@@ -10,6 +10,7 @@
 #include "../up_resource_manager/up_resource_manager_impl.h"
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/cu_cp/ue_task_scheduler.h"
+#include "ocudu/f1ap/cu_cp/f1ap_rrc_msg_transfer_handling.h"
 #include "ocudu/ngap/ngap.h"
 #include "ocudu/ran/plmn_identity.h"
 #include "ocudu/rrc/rrc_ue.h"

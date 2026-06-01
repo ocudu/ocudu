@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "ocudu/cu_cp/cu_cp_types.h"
+#include "ocudu/cu_cp/cu_cp_intra_cu_ho_types.h"
 
 namespace ocudu {
 namespace ocucp {

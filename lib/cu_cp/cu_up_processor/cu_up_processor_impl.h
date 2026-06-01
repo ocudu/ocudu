@@ -7,7 +7,6 @@
 #include "cu_up_processor.h"
 #include "cu_up_processor_config.h"
 #include "ocudu/cu_cp/common_task_scheduler.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp.h"
 #include <string>
 
