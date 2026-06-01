@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "ocudu/cu_cp/cu_cp_e1_handler.h"
 #include "ocudu/e1ap/common/e1ap_message.h"
+#include "ocudu/e1ap/cu_cp/cu_cp_e1_handler.h"
 #include "ocudu/e1ap/gateways/e1_connection_client.h"
 
 namespace ocudu {

@@ -4,7 +4,9 @@
 
 #pragma once
 
-#include "ocudu/cu_cp/cu_cp_e1_handler.h"
+#include "ocudu/e1ap/cu_cp/cu_cp_e1_handler.h"
+#include "ocudu/ocudulog/logger.h"
+#include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/support/async/async_task_scheduler.h"
 #include "ocudu/support/executors/task_executor.h"
 #include <condition_variable>

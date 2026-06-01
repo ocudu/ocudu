@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "ocudu/cu_cp/cu_cp_e1_handler.h"
 #include "ocudu/e1ap/gateways/e1_connection_server.h"
 #include "ocudu/gateways/sctp_network_gateway.h"
 
@@ -30,6 +29,6 @@ struct e1_cu_cp_sctp_gateway_config {
 
 /// Creates an E1 Gateway server that listens for incoming SCTP connections, packs/unpacks E1AP PDUs and forwards
 /// them to the GW/CU-CP E1AP handler.
-std::unique_ptr<ocucp::e1_connection_server> create_e1_gateway_server(const e1_cu_cp_sctp_gateway_config& params);
+std::unique_ptr<ocucp::e1_connection_server> create_e1_gateway_server(const e1_cu_cp_sctp_gateway_config& cfg);
 
 } // namespace ocudu

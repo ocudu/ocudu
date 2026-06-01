@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "cu_up_processor_test_helpers.h"
+#include "lib/cu_cp/cu_up_processor/cu_up_processor_config.h"
 #include "lib/cu_cp/cu_up_processor/cu_up_processor_factory.h"
 #include "ocudu/cu_cp/cu_cp_configuration_helpers.h"
 

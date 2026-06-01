@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include "ocudu/e1ap/cu_cp/e1ap_cu_cp.h"
+#include "ocudu/e1ap/common/e1ap_common.h"
+#include <memory>
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// \brief Handler of the E1 interface of the CU-CP.
 ///
@@ -27,5 +27,4 @@ public:
   handle_new_cu_up_connection(std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier) = 0;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

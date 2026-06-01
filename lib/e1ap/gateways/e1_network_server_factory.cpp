@@ -4,7 +4,9 @@
 
 #include "ocudu/e1ap/gateways/e1_network_server_factory.h"
 #include "ocudu/asn1/e1ap/e1ap.h"
+#include "ocudu/e1ap/common/e1ap_common.h"
 #include "ocudu/e1ap/common/e1ap_message.h"
+#include "ocudu/e1ap/cu_cp/cu_cp_e1_handler.h"
 #include "ocudu/gateways/sctp_network_server_factory.h"
 #include "ocudu/pcap/dlt_pcap.h"
 #include "ocudu/support/error_handling.h"

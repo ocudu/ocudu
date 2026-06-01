@@ -4,11 +4,10 @@
 
 #pragma once
 
-#include "ocudu/cu_cp/cu_cp_e1_handler.h"
 #include "ocudu/e1ap/common/e1ap_message.h"
+#include "ocudu/e1ap/cu_cp/cu_cp_e1_handler.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// \brief Mock class for the interface between CU-UP and CU-CP.
 class mock_cu_up
@@ -29,5 +28,4 @@ public:
 /// Create a mock of the CU-UP for CU-CP testing.
 std::unique_ptr<mock_cu_up> create_mock_cu_up(cu_cp_e1_handler& cu_cp_e1_handler);
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp
