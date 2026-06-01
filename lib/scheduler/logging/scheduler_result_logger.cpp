@@ -541,28 +541,30 @@ static auto make_pusch_debug_log_entry(const ul_sched_info& ul_info)
 
 static auto make_pucch_debug_log_entry(const pucch_info& pucch)
 {
-  return make_formattable([pucch](auto& ctx) {
+  // Capture res by value and pre-compute grant_prbs() to avoid a dangling pointer: the pucch_resource
+  // objects live in cell config vectors that may be freed before the async logging thread formats this entry.
+  return make_formattable([pucch, res = *pucch.res, grant_prbs = pucch.grant_prbs()](auto& ctx) {
     switch (pucch.format()) {
       case pucch_format::FORMAT_0: {
-        format_to(ctx.out(), "\n- PUCCH: c-rnti={} format=0 prb={}", pucch.crnti, pucch.grant_prbs());
-        if (pucch.res->second_hop_prb.has_value()) {
-          format_to(ctx.out(), " prb2={}", *pucch.res->second_hop_prb);
+        format_to(ctx.out(), "\n- PUCCH: c-rnti={} format=0 prb={}", pucch.crnti, grant_prbs);
+        if (res.second_hop_prb.has_value()) {
+          format_to(ctx.out(), " prb2={}", *res.second_hop_prb);
         }
         format_to(ctx.out(),
                   " symb={} uci: harq_bits={} sr={}",
-                  pucch.res->syms,
+                  res.syms,
                   pucch.uci_bits.harq_ack_nof_bits,
                   fmt::underlying(pucch.uci_bits.sr_bits));
       } break;
       case pucch_format::FORMAT_1: {
-        const auto& f1 = std::get<pucch_resource::f1_config>(pucch.res->format_params);
-        format_to(ctx.out(), "\n- PUCCH: c-rnti={} format=1 prb={}", pucch.crnti, pucch.grant_prbs());
-        if (pucch.res->second_hop_prb.has_value()) {
-          format_to(ctx.out(), " prb2={}", *pucch.res->second_hop_prb);
+        const auto& f1 = std::get<pucch_resource::f1_config>(res.format_params);
+        format_to(ctx.out(), "\n- PUCCH: c-rnti={} format=1 prb={}", pucch.crnti, grant_prbs);
+        if (res.second_hop_prb.has_value()) {
+          format_to(ctx.out(), " prb2={}", *res.second_hop_prb);
         }
         format_to(ctx.out(),
                   " symb={} cs={} occ={} uci: harq_bits={} sr={}",
-                  pucch.res->syms,
+                  res.syms,
                   f1.initial_cyclic_shift,
                   f1.time_domain_occ,
                   pucch.uci_bits.harq_ack_nof_bits,
@@ -570,39 +572,39 @@ static auto make_pucch_debug_log_entry(const pucch_info& pucch)
 
       } break;
       case pucch_format::FORMAT_2: {
-        format_to(ctx.out(), "\n- PUCCH: c-rnti={} format=2 prb={}", pucch.crnti, pucch.grant_prbs());
-        if (pucch.res->second_hop_prb.has_value()) {
-          format_to(ctx.out(), " prb2={}", *pucch.res->second_hop_prb);
+        format_to(ctx.out(), "\n- PUCCH: c-rnti={} format=2 prb={}", pucch.crnti, grant_prbs);
+        if (res.second_hop_prb.has_value()) {
+          format_to(ctx.out(), " prb2={}", *res.second_hop_prb);
         }
         format_to(ctx.out(),
                   " symb={} uci: harq_bits={} sr={} csi-1_bits={}",
-                  pucch.res->syms,
+                  res.syms,
                   pucch.uci_bits.harq_ack_nof_bits,
                   fmt::underlying(pucch.uci_bits.sr_bits),
                   pucch.uci_bits.csi_part1_nof_bits);
 
       } break;
       case pucch_format::FORMAT_3: {
-        format_to(ctx.out(), "\n- PUCCH: c-rnti={} format=3 prb={}", pucch.crnti, pucch.grant_prbs());
-        if (pucch.res->second_hop_prb.has_value()) {
-          format_to(ctx.out(), " prb2={}", *pucch.res->second_hop_prb);
+        format_to(ctx.out(), "\n- PUCCH: c-rnti={} format=3 prb={}", pucch.crnti, grant_prbs);
+        if (res.second_hop_prb.has_value()) {
+          format_to(ctx.out(), " prb2={}", *res.second_hop_prb);
         }
         format_to(ctx.out(),
                   " symb={} uci: harq_bits={} sr={} csi-1_bits={}",
-                  pucch.res->syms,
+                  res.syms,
                   pucch.uci_bits.harq_ack_nof_bits,
                   fmt::underlying(pucch.uci_bits.sr_bits),
                   pucch.uci_bits.csi_part1_nof_bits);
       } break;
       case pucch_format::FORMAT_4: {
-        const auto& f4 = std::get<pucch_resource::f4_config>(pucch.res->format_params);
-        format_to(ctx.out(), "\n- PUCCH: c-rnti={} format=4 prb={}", pucch.crnti, pucch.grant_prbs());
-        if (pucch.res->second_hop_prb.has_value()) {
-          format_to(ctx.out(), " prb2={}", *pucch.res->second_hop_prb);
+        const auto& f4 = std::get<pucch_resource::f4_config>(res.format_params);
+        format_to(ctx.out(), "\n- PUCCH: c-rnti={} format=4 prb={}", pucch.crnti, grant_prbs);
+        if (res.second_hop_prb.has_value()) {
+          format_to(ctx.out(), " prb2={}", *res.second_hop_prb);
         }
         format_to(ctx.out(),
                   " symb={} occ={}/{} uci: harq_bits={} sr={} csi-1_bits={}",
-                  pucch.res->syms,
+                  res.syms,
                   fmt::underlying(f4.occ_index),
                   fmt::underlying(f4.occ_length),
                   pucch.uci_bits.harq_ack_nof_bits,
