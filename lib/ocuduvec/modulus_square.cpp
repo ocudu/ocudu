@@ -43,7 +43,7 @@ static void modulus_square_simd(float* result, const cbf16_t* input, std::size_t
 #if OCUDU_SIMD_CF_SIZE
   for (unsigned simd_end = OCUDU_SIMD_CF_SIZE * (len / OCUDU_SIMD_CF_SIZE); i != simd_end; i += OCUDU_SIMD_CF_SIZE) {
     // Load input from 16-bit brain float to single precision floating point.
-    simd_cf_t simd_input = ocudu_simd_cbf16_loadu(input + i);
+    simd_cf_t simd_input = ocudu_simd_loadu(input + i);
 
     // Calculate the modulus squares.
     simd_f_t simd_abs2 = ocudu_simd_cf_norm_sq(simd_input);
@@ -101,7 +101,7 @@ static void modulus_square_and_add_simd(float* result, const cbf16_t* input, con
 #if OCUDU_SIMD_CF_SIZE
   for (unsigned simd_end = OCUDU_SIMD_CF_SIZE * (len / OCUDU_SIMD_CF_SIZE); i != simd_end; i += OCUDU_SIMD_CF_SIZE) {
     // Load input from 16-bit brain float to single precision floating point.
-    simd_cf_t simd_input = ocudu_simd_cbf16_loadu(input + i);
+    simd_cf_t simd_input = ocudu_simd_loadu(input + i);
 
     // Calculate the modulus squares.
     simd_f_t simd_abs2 = ocudu_simd_cf_norm_sq(simd_input);

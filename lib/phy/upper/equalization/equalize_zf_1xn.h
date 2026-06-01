@@ -59,8 +59,8 @@ void equalize_zf_1xn(span<cf_t>                            symbols_out,
 
     for (unsigned i_port = 0; i_port != RX_PORTS; ++i_port) {
       // Get the input RE and channel estimate coefficients.
-      simd_cf_t re_in  = ocudu_simd_cbf16_loadu(port_symbols[i_port].data() + i_re);
-      simd_cf_t ch_est = ocudu_simd_cbf16_loadu(port_ests[i_port].data() + i_re);
+      simd_cf_t re_in  = ocudu_simd_loadu(port_symbols[i_port].data() + i_re);
+      simd_cf_t ch_est = ocudu_simd_loadu(port_ests[i_port].data() + i_re);
 
       // Compute the channel square norm.
       simd_f_t ch_est_norm = ocudu_simd_cf_norm_sq(ch_est);
@@ -103,7 +103,7 @@ void equalize_zf_1xn(span<cf_t>                            symbols_out,
     re_out = ocudu_simd_cf_mul(re_out, d_pinv_rcp);
 
     // If abnormal calculation parameters are detected, the equalized symbols are set to zero.
-    ocudu_simd_cfi_storeu(symbols_out.data() + i_re, ocudu_simd_cf_select(cf_zero, re_out, isnormal_mask));
+    ocudu_simd_storeu(symbols_out.data() + i_re, ocudu_simd_cf_select(cf_zero, re_out, isnormal_mask));
   }
 #endif // __AVX2__ || __ARM_NEON
 

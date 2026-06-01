@@ -70,14 +70,14 @@ void equalize_zf_2xn(span<cf_t>                            eq_symbols,
     std::array<std::array<simd_cf_t, nof_layers>, nof_ports> ch;
     for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
       for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
-        ch[i_port][i_layer] = ocudu_simd_cbf16_loadu(ch_estimates[i_port][i_layer].data() + i_re);
+        ch[i_port][i_layer] = ocudu_simd_loadu(ch_estimates[i_port][i_layer].data() + i_re);
       }
     }
 
     // Input Resource Elements.
     std::array<simd_cf_t, nof_ports> re_in;
     for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
-      re_in[i_port] = ocudu_simd_cbf16_loadu(symbols_in[i_port].data() + i_re);
+      re_in[i_port] = ocudu_simd_loadu(symbols_in[i_port].data() + i_re);
     }
 
     // Calculate the product of the channel matrix (recall, it's an Nx2 matrix) and its hermitian transpose.
@@ -147,8 +147,8 @@ void equalize_zf_2xn(span<cf_t>                            eq_symbols,
     // Revert layer mapping for the equalized symbols.
     simd_cf_t symbols_low  = ocudu_simd_cf_interleave_low(symbols_out_l0, symbols_out_l1);
     simd_cf_t symbols_high = ocudu_simd_cf_interleave_high(symbols_out_l0, symbols_out_l1);
-    ocudu_simd_cfi_storeu(eq_symbols.data() + nof_layers * i_re, symbols_low);
-    ocudu_simd_cfi_storeu(eq_symbols.data() + nof_layers * i_re + OCUDU_SIMD_CF_SIZE, symbols_high);
+    ocudu_simd_storeu(eq_symbols.data() + nof_layers * i_re, symbols_low);
+    ocudu_simd_storeu(eq_symbols.data() + nof_layers * i_re + OCUDU_SIMD_CF_SIZE, symbols_high);
 
     // Revert layer mapping for the estimated noise variance.
     simd_f_t eq_noise_vars_low  = ocudu_simd_f_interleave_low(eq_noise_vars_l0, eq_noise_vars_l1);

@@ -219,9 +219,9 @@ static void equalize_zf_mxn(span<cf_t>                            eq_symbols,
     simd_cf_t ch_symbols_re[NofPorts];
     simd_cf_t ch_estimates_re[NofPorts][NofLayers];
     for (unsigned i_port = 0; i_port != NofPorts; ++i_port) {
-      ch_symbols_re[i_port] = ocudu_simd_cbf16_loadu(&ch_symbols_view[i_port][i_re]);
+      ch_symbols_re[i_port] = ocudu_simd_loadu(&ch_symbols_view[i_port][i_re]);
       for (unsigned i_layer = 0; i_layer != NofLayers; ++i_layer) {
-        simd_cf_t ch_estimates_simd = ocudu_simd_cbf16_loadu(&ch_estimates_view[i_port][i_layer][i_re]);
+        simd_cf_t ch_estimates_simd = ocudu_simd_loadu(&ch_estimates_view[i_port][i_layer][i_re]);
         ch_estimates_simd *= tx_scaling;
         ch_estimates_re[i_port][i_layer] = ch_estimates_simd;
       }
@@ -249,13 +249,13 @@ static void equalize_zf_mxn(span<cf_t>                            eq_symbols,
   for (unsigned i_port = 0; i_port != NofPorts; ++i_port) {
     std::array<cbf16_t, OCUDU_SIMD_CF_SIZE> temp_ch_symbols = {};
     ocuduvec::copy(span<cbf16_t>(temp_ch_symbols).first(nof_re), ch_symbols_view[i_port].last(nof_re));
-    ch_symbols_re[i_port] = ocudu_simd_cbf16_loadu(temp_ch_symbols.data());
+    ch_symbols_re[i_port] = ocudu_simd_loadu(temp_ch_symbols.data());
 
     for (unsigned i_layer = 0; i_layer != NofLayers; ++i_layer) {
       std::array<cbf16_t, OCUDU_SIMD_CF_SIZE> temp_ch_estimates = {};
       ocuduvec::copy(span<cbf16_t>(temp_ch_estimates).first(nof_re), ch_estimates_view[i_port][i_layer].last(nof_re));
 
-      simd_cf_t ch_estimates_simd = ocudu_simd_cbf16_loadu(temp_ch_estimates.data());
+      simd_cf_t ch_estimates_simd = ocudu_simd_loadu(temp_ch_estimates.data());
       ch_estimates_simd *= tx_scaling;
       ch_estimates_re[i_port][i_layer] = ch_estimates_simd;
     }
@@ -320,9 +320,9 @@ static void equalize_mmse_mxn(span<cf_t>                            eq_symbols,
     simd_cf_t ch_symbols_re[NofPorts];
     simd_cf_t ch_estimates_re[NofPorts][NofLayers];
     for (unsigned i_port = 0; i_port != NofPorts; ++i_port) {
-      ch_symbols_re[i_port] = ocudu_simd_cbf16_loadu(&ch_symbols_view[i_port][i_re]);
+      ch_symbols_re[i_port] = ocudu_simd_loadu(&ch_symbols_view[i_port][i_re]);
       for (unsigned i_layer = 0; i_layer != NofLayers; ++i_layer) {
-        simd_cf_t ch_estimates_simd = ocudu_simd_cbf16_loadu(&ch_estimates_view[i_port][i_layer][i_re]);
+        simd_cf_t ch_estimates_simd = ocudu_simd_loadu(&ch_estimates_view[i_port][i_layer][i_re]);
         ch_estimates_simd *= tx_scaling;
         ch_estimates_re[i_port][i_layer] = ch_estimates_simd;
       }
@@ -350,13 +350,13 @@ static void equalize_mmse_mxn(span<cf_t>                            eq_symbols,
   for (unsigned i_port = 0; i_port != NofPorts; ++i_port) {
     std::array<cbf16_t, OCUDU_SIMD_CF_SIZE> temp_ch_symbols = {};
     ocuduvec::copy(span<cbf16_t>(temp_ch_symbols).first(nof_re), ch_symbols_view[i_port].last(nof_re));
-    ch_symbols_re[i_port] = ocudu_simd_cbf16_loadu(temp_ch_symbols.data());
+    ch_symbols_re[i_port] = ocudu_simd_loadu(temp_ch_symbols.data());
 
     for (unsigned i_layer = 0; i_layer != NofLayers; ++i_layer) {
       std::array<cbf16_t, OCUDU_SIMD_CF_SIZE> temp_ch_estimates = {};
       ocuduvec::copy(span<cbf16_t>(temp_ch_estimates).first(nof_re), ch_estimates_view[i_port][i_layer].last(nof_re));
 
-      simd_cf_t ch_estimates_simd = ocudu_simd_cbf16_loadu(temp_ch_estimates.data());
+      simd_cf_t ch_estimates_simd = ocudu_simd_loadu(temp_ch_estimates.data());
       ch_estimates_simd *= tx_scaling;
       ch_estimates_re[i_port][i_layer] = ch_estimates_simd;
     }

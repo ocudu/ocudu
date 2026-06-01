@@ -673,7 +673,7 @@ struct simd_cf_t {
 /// Complex Single precision Floating point functions.
 ///
 
-inline simd_cf_t ocudu_simd_cfi_load(const cf_t* ptr)
+inline simd_cf_t ocudu_simd_load(const cf_t* ptr)
 {
   simd_cf_t ret;
 #ifdef __AVX512F__
@@ -714,7 +714,7 @@ inline simd_cf_t ocudu_simd_cfi_load(const cf_t* ptr)
   return ret;
 }
 
-inline simd_cf_t ocudu_simd_cfi_loadu(const cf_t* ptr)
+inline simd_cf_t ocudu_simd_loadu(const cf_t* ptr)
 {
   simd_cf_t ret;
 #ifdef __AVX512F__
@@ -755,7 +755,7 @@ inline simd_cf_t ocudu_simd_cfi_loadu(const cf_t* ptr)
   return ret;
 }
 
-inline simd_cf_t ocudu_simd_cf_load(const float* re, const float* im)
+inline simd_cf_t ocudu_simd_load(const float* re, const float* im)
 {
   simd_cf_t ret;
 #ifdef __AVX512F__
@@ -780,7 +780,7 @@ inline simd_cf_t ocudu_simd_cf_load(const float* re, const float* im)
   return ret;
 }
 
-inline simd_cf_t ocudu_simd_cf_loadu(const float* re, const float* im)
+inline simd_cf_t ocudu_simd_loadu(const float* re, const float* im)
 {
   simd_cf_t ret;
 #ifdef __AVX512F__
@@ -805,7 +805,7 @@ inline simd_cf_t ocudu_simd_cf_loadu(const float* re, const float* im)
   return ret;
 }
 
-inline void ocudu_simd_cfi_store(cf_t* ptr, simd_cf_t simdreg)
+inline void ocudu_simd_store(cf_t* ptr, simd_cf_t simdreg)
 {
 #ifdef __AVX512F__
   __m512 s1 = _mm512_permutex2var_ps(
@@ -842,7 +842,7 @@ inline void ocudu_simd_cfi_store(cf_t* ptr, simd_cf_t simdreg)
 #endif /* __AVX512F__ */
 }
 
-inline void ocudu_simd_cfi_storeu(cf_t* ptr, simd_cf_t simdreg)
+inline void ocudu_simd_storeu(cf_t* ptr, simd_cf_t simdreg)
 {
 #ifdef __AVX512F__
   __m512 s1 = _mm512_permutex2var_ps(
@@ -1258,15 +1258,15 @@ inline simd_cf_t ocudu_simd_cf_interleave_low(simd_cf_t a, simd_cf_t b)
   ret.im = _mm256_set_m128(hi_im, lo_im);
 #else  /* __AVX2__ */
   cf_t reg_a[OCUDU_SIMD_CF_SIZE], reg_b[OCUDU_SIMD_CF_SIZE], reg_ret[OCUDU_SIMD_CF_SIZE];
-  ocudu_simd_cfi_storeu(reg_a, a);
-  ocudu_simd_cfi_storeu(reg_b, b);
+  ocudu_simd_storeu(reg_a, a);
+  ocudu_simd_storeu(reg_b, b);
 
   for (unsigned i = 0, j = 0; i != OCUDU_SIMD_CF_SIZE / 2; ++i) {
     reg_ret[j++] = reg_a[i];
     reg_ret[j++] = reg_b[i];
   }
 
-  ret = ocudu_simd_cfi_loadu(reg_ret);
+  ret = ocudu_simd_loadu(reg_ret);
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
   return ret;
@@ -1302,15 +1302,15 @@ inline simd_cf_t ocudu_simd_cf_interleave_high(simd_cf_t a, simd_cf_t b)
   ret.im = _mm256_set_m128(hi_im, lo_im);
 #else  /* __AVX2__ */
   cf_t reg_a[OCUDU_SIMD_CF_SIZE], reg_b[OCUDU_SIMD_CF_SIZE], reg_ret[OCUDU_SIMD_CF_SIZE];
-  ocudu_simd_cfi_storeu(reg_a, a);
-  ocudu_simd_cfi_storeu(reg_b, b);
+  ocudu_simd_storeu(reg_a, a);
+  ocudu_simd_storeu(reg_b, b);
 
   for (unsigned i = 0, j = 0; i != OCUDU_SIMD_CF_SIZE / 2; ++i) {
     reg_ret[j++] = reg_a[i + OCUDU_SIMD_CF_SIZE / 2];
     reg_ret[j++] = reg_b[i + OCUDU_SIMD_CF_SIZE / 2];
   }
 
-  ret = ocudu_simd_cfi_loadu(reg_ret);
+  ret = ocudu_simd_loadu(reg_ret);
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
   return ret;
@@ -1320,7 +1320,7 @@ inline void ocudu_simd_cf_fprintf(std::FILE* stream, simd_cf_t a)
 {
   cf_t x[OCUDU_SIMD_CF_SIZE];
 
-  ocudu_simd_cfi_storeu(x, a);
+  ocudu_simd_storeu(x, a);
 
   std::fprintf(stream, "[");
   for (auto c : x) {
@@ -2545,7 +2545,7 @@ inline void ocudu_simd_bf16_loadu(simd_f_t& even, simd_f_t& odd, const bf16_t* p
 }
 
 #ifdef OCUDU_SIMD_CF_SIZE
-inline simd_cf_t ocudu_simd_cbf16_loadu(const cbf16_t* ptr)
+inline simd_cf_t ocudu_simd_loadu(const cbf16_t* ptr)
 {
   simd_cf_t ret;
 #ifdef __ARM_NEON
@@ -2578,7 +2578,29 @@ inline void ocudu_simd_bf16_storeu(bf16_t* ptr, simd_f_t a, simd_f_t b)
 }
 
 #ifdef OCUDU_SIMD_CF_SIZE
-inline void ocudu_simd_cbf16_storeu(cbf16_t* ptr, simd_cf_t simdreg)
+inline void ocudu_simd_store(cbf16_t* ptr, simd_cf_t simdreg)
+{
+  simd_s_t packed_iq_bf16 =
+      ocudu_simd_convert_2f_interleaved_bf16(ocudu_simd_cf_re(simdreg), ocudu_simd_cf_im(simdreg));
+
+#ifdef __AVX512F__
+  _mm512_store_si512(reinterpret_cast<__m512i*>(ptr), packed_iq_bf16);
+#else /* __AVX512F__ */
+#ifdef __AVX2__
+  _mm256_store_si256(reinterpret_cast<__m256i*>(ptr), packed_iq_bf16);
+#else /* __AVX2__ */
+#ifdef __SSE4_1__
+  _mm_store_si128(reinterpret_cast<__m128i*>(ptr), packed_iq_bf16);
+#else /* __SSE4_1__ */
+#ifdef __ARM_NEON
+  vst1q_u32(reinterpret_cast<uint32_t*>(ptr), vreinterpretq_u32_s16(packed_iq_bf16));
+#endif /* __ARM_NEON */
+#endif /* __SSE4_1__ */
+#endif /* __AVX2__ */
+#endif /* __AVX512F__ */
+}
+
+inline void ocudu_simd_storeu(cbf16_t* ptr, simd_cf_t simdreg)
 {
   simd_s_t packed_iq_bf16 =
       ocudu_simd_convert_2f_interleaved_bf16(ocudu_simd_cf_re(simdreg), ocudu_simd_cf_im(simdreg));

@@ -94,10 +94,10 @@ public:
 #if OCUDU_SIMD_CF_SIZE
     if (N / 2 >= OCUDU_SIMD_CF_SIZE) {
       for (; k != ((N / 2) / OCUDU_SIMD_CF_SIZE) * OCUDU_SIMD_CF_SIZE; k += OCUDU_SIMD_CF_SIZE) {
-        simd_cf_t p = ocudu_simd_cfi_loadu(&out[k]);
-        simd_cf_t q = ocudu_simd_cf_prod(ocudu_simd_cfi_loadu(&table[k]), ocudu_simd_cfi_loadu(&out[k + N / 2]));
-        ocudu_simd_cfi_storeu(&out[k], ocudu_simd_cf_add(p, q));
-        ocudu_simd_cfi_storeu(&out[k + N / 2], ocudu_simd_cf_sub(p, q));
+        simd_cf_t p = ocudu_simd_loadu(&out[k]);
+        simd_cf_t q = ocudu_simd_cf_prod(ocudu_simd_loadu(&table[k]), ocudu_simd_loadu(&out[k + N / 2]));
+        ocudu_simd_storeu(&out[k], ocudu_simd_cf_add(p, q));
+        ocudu_simd_storeu(&out[k + N / 2], ocudu_simd_cf_sub(p, q));
       }
     }
 #endif // OCUDU_SIMD_CF_SIZE
@@ -158,14 +158,14 @@ public:
     simd_cf_t w1_simd = ocudu_simd_cf_set1(w1);
     simd_cf_t w2_simd = ocudu_simd_cf_set1(w2);
     for (; k != (N_3 / OCUDU_SIMD_CF_SIZE) * OCUDU_SIMD_CF_SIZE; k += OCUDU_SIMD_CF_SIZE) {
-      simd_cf_t p_simd = ocudu_simd_cfi_loadu(&out[k]);
-      simd_cf_t q_simd = ocudu_simd_cf_loadu(&table_re[k], &table_im[k]) * ocudu_simd_cfi_loadu(&out[k + N_3]);
-      simd_cf_t r_simd = ocudu_simd_cf_loadu(&table2_re[k], &table2_im[k]) * ocudu_simd_cfi_loadu(&out[k + 2 * N_3]);
+      simd_cf_t p_simd = ocudu_simd_loadu(&out[k]);
+      simd_cf_t q_simd = ocudu_simd_loadu(&table_re[k], &table_im[k]) * ocudu_simd_loadu(&out[k + N_3]);
+      simd_cf_t r_simd = ocudu_simd_loadu(&table2_re[k], &table2_im[k]) * ocudu_simd_loadu(&out[k + 2 * N_3]);
 
       // Radix-3 butterfly (like a 3-point DFT).
-      ocudu_simd_cfi_storeu(&out[k], p_simd + q_simd + r_simd);
-      ocudu_simd_cfi_storeu(&out[k + N_3], p_simd + q_simd * w1_simd + r_simd * w2_simd);
-      ocudu_simd_cfi_storeu(&out[k + 2 * N_3], p_simd + q_simd * w2_simd + r_simd * w1_simd);
+      ocudu_simd_storeu(&out[k], p_simd + q_simd + r_simd);
+      ocudu_simd_storeu(&out[k + N_3], p_simd + q_simd * w1_simd + r_simd * w2_simd);
+      ocudu_simd_storeu(&out[k + 2 * N_3], p_simd + q_simd * w2_simd + r_simd * w1_simd);
     }
 #endif // OCUDU_SIMD_CF_SIZE
 
@@ -337,12 +337,12 @@ public:
     simd_cf_t p_simd = ocudu_simd_cf_set1(in[0]);
     for (unsigned n = 1; n != N; ++n) {
       simd_cf_t p_in_simd = ocudu_simd_cf_set1(in[stride * n]);
-      simd_cf_t w_simd    = ocudu_simd_cf_loadu(&tables_re[n * N], &tables_im[n * N]);
+      simd_cf_t w_simd    = ocudu_simd_loadu(&tables_re[n * N], &tables_im[n * N]);
 
       p_simd = ocudu_simd_cf_add(p_simd, ocudu_simd_cf_prod(p_in_simd, w_simd));
     }
 
-    ocudu_simd_cfi_storeu(out, p_simd);
+    ocudu_simd_storeu(out, p_simd);
   }
 };
 
@@ -394,16 +394,16 @@ public:
       in += stride;
       simd_cf_t q_in_simd = ocudu_simd_cf_set1(*in);
       in += stride;
-      simd_cf_t w_simd = ocudu_simd_cf_load(&tables_re[N * n], &tables_im[N * n]);
+      simd_cf_t w_simd = ocudu_simd_load(&tables_re[N * n], &tables_im[N * n]);
 
       p_simd += p_in_simd * w_simd;
       q_simd += q_in_simd * w_simd;
     }
 
-    q_simd = q_simd * ocudu_simd_cf_load(tables_re.data(), tables_im.data());
+    q_simd = q_simd * ocudu_simd_load(tables_re.data(), tables_im.data());
 
-    ocudu_simd_cfi_storeu(out, p_simd + q_simd);
-    ocudu_simd_cfi_storeu(out + N, p_simd - q_simd);
+    ocudu_simd_storeu(out, p_simd + q_simd);
+    ocudu_simd_storeu(out + N, p_simd - q_simd);
   }
 };
 

@@ -19,14 +19,14 @@ cf_t ocudu::ocuduvec::dot_prod(span<const cf_t> x, span<const cf_t> y)
   if (len >= OCUDU_SIMD_CF_SIZE) {
     simd_cf_t simd_result = ocudu_simd_cf_zero();
     for (unsigned simd_end = OCUDU_SIMD_CF_SIZE * (len / OCUDU_SIMD_CF_SIZE); i != simd_end; i += OCUDU_SIMD_CF_SIZE) {
-      simd_cf_t simd_x = ocudu_simd_cfi_loadu(x.data() + i);
-      simd_cf_t simd_y = ocudu_simd_cfi_loadu(y.data() + i);
+      simd_cf_t simd_x = ocudu_simd_loadu(x.data() + i);
+      simd_cf_t simd_y = ocudu_simd_loadu(y.data() + i);
 
       simd_result = ocudu_simd_cf_add(ocudu_simd_cf_conjprod(simd_x, simd_y), simd_result);
     }
 
     alignas(SIMD_BYTE_ALIGN) std::array<cf_t, OCUDU_SIMD_CF_SIZE> simd_vector_sum;
-    ocudu_simd_cfi_store(simd_vector_sum.data(), simd_result);
+    ocudu_simd_store(simd_vector_sum.data(), simd_result);
     result = std::accumulate(simd_vector_sum.begin(), simd_vector_sum.end(), cf_t());
   }
 #endif // OCUDU_SIMD_CF_SIZE
@@ -50,14 +50,14 @@ cf_t ocudu::ocuduvec::dot_prod(span<const cbf16_t> x, span<const cf_t> y)
   if (len >= OCUDU_SIMD_CF_SIZE) {
     simd_cf_t simd_result = ocudu_simd_cf_zero();
     for (unsigned simd_end = OCUDU_SIMD_CF_SIZE * (len / OCUDU_SIMD_CF_SIZE); i != simd_end; i += OCUDU_SIMD_CF_SIZE) {
-      simd_cf_t simd_x = ocudu_simd_cbf16_loadu(x.data() + i);
-      simd_cf_t simd_y = ocudu_simd_cfi_loadu(y.data() + i);
+      simd_cf_t simd_x = ocudu_simd_loadu(x.data() + i);
+      simd_cf_t simd_y = ocudu_simd_loadu(y.data() + i);
 
       simd_result = ocudu_simd_cf_add(ocudu_simd_cf_conjprod(simd_x, simd_y), simd_result);
     }
 
     alignas(SIMD_BYTE_ALIGN) std::array<cf_t, OCUDU_SIMD_CF_SIZE> simd_vector_sum;
-    ocudu_simd_cfi_store(simd_vector_sum.data(), simd_result);
+    ocudu_simd_store(simd_vector_sum.data(), simd_result);
     result = std::accumulate(simd_vector_sum.begin(), simd_vector_sum.end(), cf_t());
   }
 #endif // OCUDU_SIMD_CF_SIZE
@@ -88,7 +88,7 @@ float ocudu::ocuduvec::average_power(span<const cf_t> x)
   if (len >= OCUDU_SIMD_CF_SIZE) {
     simd_f_t simd_result = ocudu_simd_f_zero();
     for (unsigned simd_end = OCUDU_SIMD_CF_SIZE * (len / OCUDU_SIMD_CF_SIZE); i != simd_end; i += OCUDU_SIMD_CF_SIZE) {
-      simd_cf_t simd_x = ocudu_simd_cfi_loadu(x.data() + i);
+      simd_cf_t simd_x = ocudu_simd_loadu(x.data() + i);
 
       simd_result = ocudu_simd_f_add(ocudu_simd_cf_norm_sq(simd_x), simd_result);
     }
@@ -120,7 +120,7 @@ float ocudu::ocuduvec::average_power(span<const cbf16_t> x)
   if (len >= OCUDU_SIMD_CF_SIZE) {
     simd_f_t simd_result = ocudu_simd_f_zero();
     for (unsigned simd_end = OCUDU_SIMD_CF_SIZE * (len / OCUDU_SIMD_CF_SIZE); i != simd_end; i += OCUDU_SIMD_CF_SIZE) {
-      simd_cf_t simd_x = ocudu_simd_cbf16_loadu(x.data() + i);
+      simd_cf_t simd_x = ocudu_simd_loadu(x.data() + i);
 
       simd_result = ocudu_simd_f_add(ocudu_simd_cf_norm_sq(simd_x), simd_result);
     }

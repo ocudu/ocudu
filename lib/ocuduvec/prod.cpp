@@ -71,28 +71,29 @@ static void prod_sss_simd(const int16_t* x, const int16_t* y, int16_t* z, std::s
   }
 }
 
-static void prod_ccc_simd(const cf_t* x, const cf_t* y, cf_t* z, std::size_t len)
+template <typename OutComplexType, typename InComplexType>
+static void prod_ccc_simd(OutComplexType* z, const InComplexType* x, const InComplexType* y, std::size_t len)
 {
   std::size_t i = 0;
 
 #if OCUDU_SIMD_CF_SIZE
   if (SIMD_IS_ALIGNED(x) && SIMD_IS_ALIGNED(y) && SIMD_IS_ALIGNED(z)) {
     for (std::size_t i_end = (len / OCUDU_SIMD_CF_SIZE) * OCUDU_SIMD_CF_SIZE; i != i_end; i += OCUDU_SIMD_CF_SIZE) {
-      simd_cf_t a = ocudu_simd_cfi_load(x + i);
-      simd_cf_t b = ocudu_simd_cfi_load(y + i);
+      simd_cf_t a = ocudu_simd_load(x + i);
+      simd_cf_t b = ocudu_simd_load(y + i);
 
       simd_cf_t r = ocudu_simd_cf_prod(a, b);
 
-      ocudu_simd_cfi_store(z + i, r);
+      ocudu_simd_store(z + i, r);
     }
   } else {
     for (std::size_t i_end = (len / OCUDU_SIMD_CF_SIZE) * OCUDU_SIMD_CF_SIZE; i != i_end; i += OCUDU_SIMD_CF_SIZE) {
-      simd_cf_t a = ocudu_simd_cfi_loadu(x + i);
-      simd_cf_t b = ocudu_simd_cfi_loadu(y + i);
+      simd_cf_t a = ocudu_simd_loadu(x + i);
+      simd_cf_t b = ocudu_simd_loadu(y + i);
 
       simd_cf_t r = ocudu_simd_cf_prod(a, b);
 
-      ocudu_simd_cfi_storeu(z + i, r);
+      ocudu_simd_storeu(z + i, r);
     }
   }
 #endif
@@ -102,48 +103,29 @@ static void prod_ccc_simd(const cf_t* x, const cf_t* y, cf_t* z, std::size_t len
   }
 }
 
-static void prod_ccc_simd(const cf_t* x, const cf_t* y, cbf16_t* z, std::size_t len)
-{
-  std::size_t i = 0;
-
-#if OCUDU_SIMD_CF_SIZE
-  for (std::size_t i_end = (len / OCUDU_SIMD_CF_SIZE) * OCUDU_SIMD_CF_SIZE; i != i_end; i += OCUDU_SIMD_CF_SIZE) {
-    simd_cf_t a = ocudu_simd_cfi_loadu(x + i);
-    simd_cf_t b = ocudu_simd_cfi_loadu(y + i);
-
-    simd_cf_t r = ocudu_simd_cf_prod(a, b);
-
-    ocudu_simd_cbf16_storeu(z + i, r);
-  }
-#endif
-
-  for (; i != len; ++i) {
-    z[i] = x[i] * y[i];
-  }
-}
-
-static void prod_conj_ccc_simd(const cf_t* x, const cf_t* y, cf_t* z, std::size_t len)
+template <typename OutComplexType, typename InComplexType>
+static void prod_conj_ccc_simd(OutComplexType* z, const InComplexType* x, const InComplexType* y, std::size_t len)
 {
   std::size_t i = 0;
 
 #if OCUDU_SIMD_CF_SIZE
   if (SIMD_IS_ALIGNED(x) && SIMD_IS_ALIGNED(y) && SIMD_IS_ALIGNED(z)) {
     for (std::size_t i_end = (len / OCUDU_SIMD_CF_SIZE) * OCUDU_SIMD_CF_SIZE; i != i_end; i += OCUDU_SIMD_CF_SIZE) {
-      simd_cf_t a = ocudu_simd_cfi_load(x + i);
-      simd_cf_t b = ocudu_simd_cfi_load(y + i);
+      simd_cf_t a = ocudu_simd_load(x + i);
+      simd_cf_t b = ocudu_simd_load(y + i);
 
       simd_cf_t r = ocudu_simd_cf_conjprod(a, b);
 
-      ocudu_simd_cfi_store(z + i, r);
+      ocudu_simd_store(z + i, r);
     }
   } else {
     for (std::size_t i_end = (len / OCUDU_SIMD_CF_SIZE) * OCUDU_SIMD_CF_SIZE; i != i_end; i += OCUDU_SIMD_CF_SIZE) {
-      simd_cf_t a = ocudu_simd_cfi_loadu(x + i);
-      simd_cf_t b = ocudu_simd_cfi_loadu(y + i);
+      simd_cf_t a = ocudu_simd_loadu(x + i);
+      simd_cf_t b = ocudu_simd_loadu(y + i);
 
       simd_cf_t r = ocudu_simd_cf_conjprod(a, b);
 
-      ocudu_simd_cfi_storeu(z + i, r);
+      ocudu_simd_storeu(z + i, r);
     }
   }
 #endif
@@ -153,7 +135,8 @@ static void prod_conj_ccc_simd(const cf_t* x, const cf_t* y, cf_t* z, std::size_
   }
 }
 
-static void prod_cexp_simd(cf_t* out, const cf_t* in, float cfo, float initial_phase, unsigned len)
+template <typename OutComplexType, typename InComplexType>
+static void prod_cexp_simd(OutComplexType* out, const InComplexType* in, float cfo, float initial_phase, unsigned len)
 {
   // Phase increment for each sample.
   cf_t osc = std::polar<float>(1.0F, TWOPI * cfo);
@@ -172,7 +155,7 @@ static void prod_cexp_simd(cf_t* out, const cf_t* in, float cfo, float initial_p
     }
 
     // Load the current phase SIMD register with the initial phases;
-    simd_cf_t simd_phase = ocudu_simd_cfi_loadu(temp_phase.data());
+    simd_cf_t simd_phase = ocudu_simd_loadu(temp_phase.data());
 
     // Prepare SIMD oscillator phase shift.
     simd_cf_t simd_osc = ocudu_simd_cf_set1(std::polar<float>(1.0F, OCUDU_SIMD_CF_SIZE * TWOPI * cfo));
@@ -180,26 +163,26 @@ static void prod_cexp_simd(cf_t* out, const cf_t* in, float cfo, float initial_p
     // Process in blocks of the SIMD register size.
     for (unsigned end = (len / OCUDU_SIMD_CF_SIZE) * OCUDU_SIMD_CF_SIZE; i != end; i += OCUDU_SIMD_CF_SIZE) {
       // Load input.
-      simd_cf_t simd_in = ocudu_simd_cfi_loadu(&in[i]);
+      simd_cf_t simd_in = ocudu_simd_loadu(&in[i]);
 
       // Apply current phase to the input.
       simd_cf_t simd_out = ocudu_simd_cf_prod(simd_in, simd_phase);
 
       // Store result.
-      ocudu_simd_cfi_storeu(&out[i], simd_out);
+      ocudu_simd_storeu(&out[i], simd_out);
 
       // Increment current phase.
       simd_phase = ocudu_simd_cf_prod(simd_phase, simd_osc);
     }
 
     // Store phase SIMD register and update the current phase with the next phase.
-    ocudu_simd_cfi_storeu(temp_phase.data(), simd_phase);
+    ocudu_simd_storeu(temp_phase.data(), simd_phase);
     phase = temp_phase.front();
   }
 #endif
 
   for (; i != len; ++i) {
-    out[i] = in[i] * phase;
+    out[i] = to_cf(in[i]) * phase;
     phase *= osc;
   }
 }
@@ -209,7 +192,7 @@ void ocudu::ocuduvec::prod(span<cf_t> z, span<const cf_t> x, span<const cf_t> y)
   ocudu_ocuduvec_assert_size(x, y);
   ocudu_ocuduvec_assert_size(x, z);
 
-  prod_ccc_simd(x.data(), y.data(), z.data(), x.size());
+  prod_ccc_simd(z.data(), x.data(), y.data(), x.size());
 }
 
 void ocudu::ocuduvec::prod(span<cbf16_t> z, span<const cf_t> x, span<const cf_t> y)
@@ -217,7 +200,7 @@ void ocudu::ocuduvec::prod(span<cbf16_t> z, span<const cf_t> x, span<const cf_t>
   ocudu_ocuduvec_assert_size(x, y);
   ocudu_ocuduvec_assert_size(x, z);
 
-  prod_ccc_simd(x.data(), y.data(), z.data(), x.size());
+  prod_ccc_simd(z.data(), x.data(), y.data(), x.size());
 }
 
 void ocudu::ocuduvec::prod(span<float> z, span<const float> x, span<const float> y)
@@ -241,10 +224,24 @@ void ocudu::ocuduvec::prod_conj(span<cf_t> z, span<const cf_t> x, span<const cf_
   ocudu_ocuduvec_assert_size(x, y);
   ocudu_ocuduvec_assert_size(x, z);
 
-  prod_conj_ccc_simd(x.data(), y.data(), z.data(), x.size());
+  prod_conj_ccc_simd(z.data(), x.data(), y.data(), x.size());
 }
 
 void ocudu::ocuduvec::prod_cexp(span<cf_t> out, span<const cf_t> in, float norm_cfo, float initial_phase)
+{
+  ocudu_ocuduvec_assert_size(out, in);
+
+  prod_cexp_simd(out.data(), in.data(), norm_cfo, initial_phase, in.size());
+}
+
+void ocudu::ocuduvec::prod_cexp(span<cbf16_t> out, span<const cbf16_t> in, float norm_cfo, float initial_phase)
+{
+  ocudu_ocuduvec_assert_size(out, in);
+
+  prod_cexp_simd(out.data(), in.data(), norm_cfo, initial_phase, in.size());
+}
+
+void ocudu::ocuduvec::prod_cexp(span<cbf16_t> out, span<const cf_t> in, float norm_cfo, float initial_phase)
 {
   ocudu_ocuduvec_assert_size(out, in);
 

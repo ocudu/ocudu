@@ -42,5 +42,23 @@ void prod_conj(span<cf_t> z, span<const cf_t> x, span<const cf_t> y);
 /// \warning An assertion is triggered if input and output vectors have different sizes.
 void prod_cexp(span<cf_t> out, span<const cf_t> in, float norm_freq, float initial_phase = 0.0F);
 
+/// \brief Multiplies a given signal by a complex exponential.
+///
+/// \param[out] out           Resultant complex samples.
+/// \param[in]  in            Input complex samples.
+/// \param[in]  norm_freq     Normalized frequency.
+/// \param[in]  initial_phase Initial phase in radians.
+/// \warning An assertion is triggered if input and output vectors have different sizes.
+void prod_cexp(span<cbf16_t> out, span<const cbf16_t> in, float norm_freq, float initial_phase = 0.0F);
+
+/// \brief Multiplies a given signal by a complex exponential.
+///
+/// \param[out] out           Resultant complex samples.
+/// \param[in]  in            Input complex samples.
+/// \param[in]  norm_freq     Normalized frequency.
+/// \param[in]  initial_phase Initial phase in radians.
+/// \warning An assertion is triggered if input and output vectors have different sizes.
+void prod_cexp(span<cbf16_t> out, span<const cf_t> in, float norm_freq, float initial_phase = 0.0F);
+
 } // namespace ocuduvec
 } // namespace ocudu

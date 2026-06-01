@@ -44,12 +44,12 @@ static void add_ccc_simd(const cf_t* x, const cbf16_t* y, cf_t* z, std::size_t l
 
 #if OCUDU_SIMD_F_SIZE
   for (std::size_t i_end = (len / OCUDU_SIMD_F_SIZE) * OCUDU_SIMD_F_SIZE; i != i_end; i += OCUDU_SIMD_F_SIZE) {
-    simd_cf_t a = ocudu_simd_cfi_loadu(x + i);
-    simd_cf_t b = ocudu_simd_cbf16_loadu(y + i);
+    simd_cf_t a = ocudu_simd_loadu(x + i);
+    simd_cf_t b = ocudu_simd_loadu(y + i);
 
     simd_cf_t r = ocudu_simd_cf_add(a, b);
 
-    ocudu_simd_cfi_storeu(z + i, r);
+    ocudu_simd_storeu(z + i, r);
   }
 #endif
 

@@ -57,18 +57,18 @@ static void simd_interpolate(span<cf_t> output, span<const cf_t> input, unsigned
       for (unsigned i_simd = 0; i_simd != stride; ++i_simd) {
         // Load the temporary data into SIMD registers.
         simd_f_t  simd_interpolate_stairs = ocudu_simd_f_loadu(&interpolate_stairs[i_simd * OCUDU_SIMD_CF_SIZE]);
-        simd_cf_t simd_interpolate_input0 = ocudu_simd_cf_loadu(&interpolate_input_re[i_simd * OCUDU_SIMD_CF_SIZE],
-                                                                &interpolate_input_im[i_simd * OCUDU_SIMD_CF_SIZE]);
+        simd_cf_t simd_interpolate_input0 = ocudu_simd_loadu(&interpolate_input_re[i_simd * OCUDU_SIMD_CF_SIZE],
+                                                             &interpolate_input_im[i_simd * OCUDU_SIMD_CF_SIZE]);
         simd_cf_t simd_interpolate_input1 =
-            ocudu_simd_cf_loadu(&interpolate_input_re[i_simd * OCUDU_SIMD_CF_SIZE + stride],
-                                &interpolate_input_im[i_simd * OCUDU_SIMD_CF_SIZE + stride]);
+            ocudu_simd_loadu(&interpolate_input_re[i_simd * OCUDU_SIMD_CF_SIZE + stride],
+                             &interpolate_input_im[i_simd * OCUDU_SIMD_CF_SIZE + stride]);
 
         // Calculate results.
         simd_cf_t simd_result =
             (simd_interpolate_input1 - simd_interpolate_input0) * simd_interpolate_stairs + simd_interpolate_input0;
 
         // Store and advance output index.
-        ocudu_simd_cfi_storeu(&output[i_output], simd_result);
+        ocudu_simd_storeu(&output[i_output], simd_result);
         i_output += OCUDU_SIMD_CF_SIZE;
       }
     }

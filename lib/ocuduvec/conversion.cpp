@@ -116,7 +116,7 @@ static void convert_cbf16_to_cf_simd(cf_t* out, const cbf16_t* in, unsigned len)
 
 #if OCUDU_SIMD_CF_SIZE
   for (unsigned end = (len / OCUDU_SIMD_CF_SIZE) * OCUDU_SIMD_CF_SIZE; i != end; i += OCUDU_SIMD_CF_SIZE) {
-    ocudu_simd_cfi_storeu(out + i, ocudu_simd_cbf16_loadu(in + i));
+    ocudu_simd_storeu(out + i, ocudu_simd_loadu(in + i));
   }
 #endif // OCUDU_SIMD_CF_SIZE
 

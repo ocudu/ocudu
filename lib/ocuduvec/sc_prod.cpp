@@ -45,19 +45,19 @@ static void sc_prod_ccc_simd(const cf_t* x, cf_t h, cf_t* z, std::size_t len)
   simd_cf_t b = ocudu_simd_cf_set1(h);
   if (SIMD_IS_ALIGNED(x) && SIMD_IS_ALIGNED(z)) {
     for (; i + OCUDU_SIMD_CF_SIZE < len + 1; i += OCUDU_SIMD_F_SIZE) {
-      simd_cf_t a = ocudu_simd_cfi_load(x + i);
+      simd_cf_t a = ocudu_simd_load(x + i);
 
       simd_cf_t r = ocudu_simd_cf_prod(a, b);
 
-      ocudu_simd_cfi_store(z + i, r);
+      ocudu_simd_store(z + i, r);
     }
   } else {
     for (; i + OCUDU_SIMD_CF_SIZE < len + 1; i += OCUDU_SIMD_F_SIZE) {
-      simd_cf_t a = ocudu_simd_cfi_loadu(x + i);
+      simd_cf_t a = ocudu_simd_loadu(x + i);
 
       simd_cf_t r = ocudu_simd_cf_prod(a, b);
 
-      ocudu_simd_cfi_storeu(z + i, r);
+      ocudu_simd_storeu(z + i, r);
     }
   }
 #endif
@@ -74,11 +74,11 @@ static void sc_prod_ccc_simd(const cbf16_t* x, cf_t h, cbf16_t* z, std::size_t l
 #if OCUDU_SIMD_CF_SIZE
   simd_cf_t b = ocudu_simd_cf_set1(h);
   for (unsigned i_end = (len / OCUDU_SIMD_CF_SIZE) * OCUDU_SIMD_CF_SIZE; i != i_end; i += OCUDU_SIMD_CF_SIZE) {
-    simd_cf_t a = ocudu_simd_cbf16_loadu(x + i);
+    simd_cf_t a = ocudu_simd_loadu(x + i);
 
     simd_cf_t r = ocudu_simd_cf_prod(a, b);
 
-    ocudu_simd_cbf16_storeu(z + i, r);
+    ocudu_simd_storeu(z + i, r);
   }
 #endif
 
@@ -127,13 +127,13 @@ static void sc_prod_cfc_simd(const cf_t* x, float h, cbf16_t* z, unsigned len)
 
   for (unsigned end = (len / OCUDU_SIMD_CF_SIZE) * OCUDU_SIMD_CF_SIZE; i != end; i += OCUDU_SIMD_CF_SIZE) {
     // Load interleaved complex float values into SIMD registers.
-    simd_cf_t a = ocudu_simd_cfi_loadu(x + i);
+    simd_cf_t a = ocudu_simd_loadu(x + i);
 
     // Multiply with the scaling factor.
     simd_cf_t r = ocudu_simd_cf_mul(a, b);
 
     // Convert complex float to complex brain float and store the result back to memory.
-    ocudu_simd_cbf16_storeu(z + i, r);
+    ocudu_simd_storeu(z + i, r);
   }
 #endif // OCUDU_SIMD_CF_SIZE
 
@@ -152,13 +152,13 @@ static void sc_prod_cfc_simd(const cbf16_t* x, float h, cbf16_t* z, unsigned len
 
   for (unsigned end = (len / OCUDU_SIMD_CF_SIZE) * OCUDU_SIMD_CF_SIZE; i != end; i += OCUDU_SIMD_CF_SIZE) {
     // Load interleaved complex float values into SIMD registers.
-    simd_cf_t a = ocudu_simd_cbf16_loadu(x + i);
+    simd_cf_t a = ocudu_simd_loadu(x + i);
 
     // Multiply with the scaling factor.
     simd_cf_t r = ocudu_simd_cf_mul(a, b);
 
     // Convert complex float to complex brain float and store the result back to memory.
-    ocudu_simd_cbf16_storeu(z + i, r);
+    ocudu_simd_storeu(z + i, r);
   }
 #endif // OCUDU_SIMD_CF_SIZE
 
