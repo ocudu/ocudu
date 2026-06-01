@@ -14,11 +14,11 @@ using namespace ocudu::ocucp;
 using namespace asn1::ngap;
 
 ngap_pdu_session_resource_release_procedure::ngap_pdu_session_resource_release_procedure(
-    const cu_cp_pdu_session_resource_release_command& command_,
-    const ngap_ue_ids&                                ue_ids_,
-    ngap_cu_cp_notifier&                              cu_cp_notifier_,
-    ngap_message_notifier&                            amf_notifier_,
-    ngap_ue_logger&                                   logger_) :
+    const ngap_pdu_session_resource_release_command& command_,
+    const ngap_ue_ids&                               ue_ids_,
+    ngap_cu_cp_notifier&                             cu_cp_notifier_,
+    ngap_message_notifier&                           amf_notifier_,
+    ngap_ue_logger&                                  logger_) :
   command(command_), ue_ids(ue_ids_), cu_cp_notifier(cu_cp_notifier_), amf_notifier(amf_notifier_), logger(logger_)
 {
 }
@@ -49,8 +49,8 @@ void ngap_pdu_session_resource_release_procedure::operator()(coro_context<async_
 /// \param[in] cu_cp_resp The CU-CP PDU Session Resource Release Response message.
 /// \return True on success, otherwise false.
 static bool
-fill_asn1_pdu_session_resource_release_response(asn1::ngap::pdu_session_res_release_resp_s&        resp,
-                                                const cu_cp_pdu_session_resource_release_response& cu_cp_resp)
+fill_asn1_pdu_session_resource_release_response(asn1::ngap::pdu_session_res_release_resp_s&       resp,
+                                                const ngap_pdu_session_resource_release_response& cu_cp_resp)
 {
   for (const auto& cu_cp_pdu_session_res_released_item : cu_cp_resp.released_pdu_sessions) {
     asn1::ngap::pdu_session_res_released_item_rel_res_s asn1_pdu_session_res_released_item;

@@ -613,20 +613,20 @@ ocudu::ocucp::generate_pdu_session_resource_setup_request_with_pdu_session_type_
   return ngap_msg;
 }
 
-cu_cp_pdu_session_resource_setup_response
-ocudu::ocucp::generate_cu_cp_pdu_session_resource_setup_response(cu_cp_pdu_session_resource_setup_request& request)
+ngap_pdu_session_resource_setup_response
+ocudu::ocucp::generate_ngap_pdu_session_resource_setup_response(ngap_pdu_session_resource_setup_request& request)
 {
-  cu_cp_pdu_session_resource_setup_response pdu_session_res_setup_resp;
+  ngap_pdu_session_resource_setup_response pdu_session_res_setup_resp;
 
   for (const auto& pdu_session : request.pdu_session_res_setup_items) {
-    cu_cp_pdu_session_res_setup_response_item pdu_session_setup_response_item;
+    ngap_pdu_session_res_setup_response_item pdu_session_setup_response_item;
     pdu_session_setup_response_item.pdu_session_id = pdu_session.pdu_session_id;
 
     auto& dlqos_flow_per_tnl_info =
         pdu_session_setup_response_item.pdu_session_resource_setup_response_transfer.dlqos_flow_per_tnl_info;
     dlqos_flow_per_tnl_info.up_tp_layer_info = {transport_layer_address::create_from_string("0.0.0.0"),
                                                 int_to_gtpu_teid(0)};
-    cu_cp_associated_qos_flow assoc_qos_flow;
+    ngap_associated_qos_flow assoc_qos_flow;
     assoc_qos_flow.qos_flow_id = uint_to_qos_flow_id(1);
     dlqos_flow_per_tnl_info.associated_qos_flow_list.emplace(uint_to_qos_flow_id(1), assoc_qos_flow);
 
@@ -682,12 +682,12 @@ ngap_message ocudu::ocucp::generate_invalid_pdu_session_resource_release_command
   return ngap_msg;
 }
 
-cu_cp_pdu_session_resource_release_response
-ocudu::ocucp::generate_cu_cp_pdu_session_resource_release_response(pdu_session_id_t pdu_session_id)
+ngap_pdu_session_resource_release_response
+ocudu::ocucp::generate_ngap_pdu_session_resource_release_response(pdu_session_id_t pdu_session_id)
 {
-  cu_cp_pdu_session_resource_release_response pdu_session_res_release_resp;
+  ngap_pdu_session_resource_release_response pdu_session_res_release_resp;
 
-  cu_cp_pdu_session_res_released_item_rel_res pdu_session_res_released_item_rel_res;
+  ngap_pdu_session_res_released_item_rel_res pdu_session_res_released_item_rel_res;
 
   pdu_session_res_released_item_rel_res.pdu_session_id = pdu_session_id;
 
@@ -813,20 +813,20 @@ ngap_message ocudu::ocucp::generate_invalid_pdu_session_resource_modify_request_
   return ngap_msg;
 }
 
-cu_cp_pdu_session_resource_modify_response
-ocudu::ocucp::generate_cu_cp_pdu_session_resource_modify_response(pdu_session_id_t pdu_session_id,
-                                                                  qos_flow_id_t    qos_flow_id)
+ngap_pdu_session_resource_modify_response
+ocudu::ocucp::generate_ngap_pdu_session_resource_modify_response(pdu_session_id_t pdu_session_id,
+                                                                 qos_flow_id_t    qos_flow_id)
 {
-  cu_cp_pdu_session_resource_modify_response pdu_session_res_modify_resp;
+  ngap_pdu_session_resource_modify_response pdu_session_res_modify_resp;
 
-  cu_cp_pdu_session_resource_modify_response_item pdu_session_modify_response_item;
+  ngap_pdu_session_resource_modify_response_item pdu_session_modify_response_item;
   pdu_session_modify_response_item.pdu_session_id = pdu_session_id;
 
-  cu_cp_qos_flow_per_tnl_information qos_flow_per_tnl_info;
+  ngap_qos_flow_per_tnl_information qos_flow_per_tnl_info;
   qos_flow_per_tnl_info.up_tp_layer_info = {transport_layer_address::create_from_string("127.0.0.1"),
                                             int_to_gtpu_teid(1)};
 
-  cu_cp_associated_qos_flow assoc_qos_flow;
+  ngap_associated_qos_flow assoc_qos_flow;
   assoc_qos_flow.qos_flow_id = qos_flow_id;
 
   qos_flow_per_tnl_info.associated_qos_flow_list.emplace(qos_flow_id, assoc_qos_flow);

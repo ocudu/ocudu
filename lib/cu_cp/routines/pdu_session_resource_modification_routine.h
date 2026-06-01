@@ -5,31 +5,29 @@
 #pragma once
 
 #include "../cu_cp_impl_interface.h"
-#include "../du_processor/du_processor.h"
 #include "../up_resource_manager/up_resource_manager_impl.h"
 #include "ocudu/cu_cp/ue_task_scheduler.h"
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "ocudu/support/async/async_task.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// \brief Handles the modification of an existing PDU session resources.
 /// TODO Add seqdiag
 class pdu_session_resource_modification_routine
 {
 public:
-  pdu_session_resource_modification_routine(const cu_cp_pdu_session_resource_modify_request& modify_request_,
-                                            e1ap_bearer_context_manager&                     e1ap_bearer_ctxt_mng_,
-                                            f1ap_ue_context_manager&                         f1ap_ue_ctxt_mng_,
-                                            rrc_ue_interface*                                rrc_ue_,
-                                            cu_cp_rrc_ue_interface&                          cu_cp_notifier_,
-                                            cu_cp_mobility_manager_handler&                  mobility_mng_,
-                                            ue_task_scheduler&                               ue_task_sched_,
-                                            up_resource_manager&                             up_resource_mng_,
-                                            ocudulog::basic_logger&                          logger_);
+  pdu_session_resource_modification_routine(const ngap_pdu_session_resource_modify_request& modify_request_,
+                                            e1ap_bearer_context_manager&                    e1ap_bearer_ctxt_mng_,
+                                            f1ap_ue_context_manager&                        f1ap_ue_ctxt_mng_,
+                                            rrc_ue_interface*                               rrc_ue_,
+                                            cu_cp_rrc_ue_interface&                         cu_cp_notifier_,
+                                            cu_cp_mobility_manager_handler&                 mobility_mng_,
+                                            ue_task_scheduler&                              ue_task_sched_,
+                                            up_resource_manager&                            up_resource_mng_,
+                                            ocudulog::basic_logger&                         logger_);
 
-  void operator()(coro_context<async_task<cu_cp_pdu_session_resource_modify_response>>& ctx);
+  void operator()(coro_context<async_task<ngap_pdu_session_resource_modify_response>>& ctx);
 
   static const char* name() { return "PDU Session Resource Modification Routine"; }
 
@@ -37,9 +35,9 @@ private:
   void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_modification_request& e1ap_request);
   void fill_initial_e1ap_bearer_context_modification_request(e1ap_bearer_context_modification_request& e1ap_request);
 
-  cu_cp_pdu_session_resource_modify_response generate_pdu_session_resource_modify_response(bool success);
+  ngap_pdu_session_resource_modify_response generate_pdu_session_resource_modify_response(bool success);
 
-  const cu_cp_pdu_session_resource_modify_request modify_request; // the original request
+  const ngap_pdu_session_resource_modify_request modify_request; // the original request
 
   up_config_update next_config;
 
@@ -58,12 +56,11 @@ private:
   rrc_reconfiguration_procedure_request    rrc_reconfig_args;
 
   // (sub-)routine results
-  cu_cp_pdu_session_resource_modify_response response_msg;                     // Final routine result.
-  f1ap_ue_context_modification_response      ue_context_modification_response; // to inform DU about the new DRBs
+  ngap_pdu_session_resource_modify_response response_msg;                     // Final routine result.
+  f1ap_ue_context_modification_response     ue_context_modification_response; // to inform DU about the new DRBs
   e1ap_bearer_context_modification_response
        bearer_context_modification_response; // to inform CU-UP about the new TEID for UL F1u traffic
   bool rrc_reconfig_result = false;          // the final UE reconfiguration
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

@@ -63,8 +63,8 @@ private:
   rrc_reconfiguration_procedure_request    rrc_reconfig_args;
 
   // (sub-)routine results
-  cu_cp_pdu_session_resource_modify_response response_msg;                     // Final routine result.
-  f1ap_ue_context_modification_response      ue_context_modification_response; // to inform DU about the new DRBs
+  ngap_pdu_session_resource_modify_response response_msg;                     // Final routine result.
+  f1ap_ue_context_modification_response     ue_context_modification_response; // to inform DU about the new DRBs
   e1ap_bearer_context_modification_response
        bearer_context_modification_response; // to inform CU-UP about the new TEID for UL F1u traffic
   bool rrc_reconfig_result = false;          // the final UE reconfiguration

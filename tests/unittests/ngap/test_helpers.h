@@ -200,7 +200,7 @@ public:
             if (last_init_ctxt_setup_request.pdu_session_res_setup_list_cxt_req.has_value()) {
               for (const auto& session : last_init_ctxt_setup_request.pdu_session_res_setup_list_cxt_req.value()
                                              .pdu_session_res_setup_items) {
-                cu_cp_pdu_session_res_setup_failed_item failed_item;
+                ngap_pdu_session_res_setup_failed_item failed_item;
                 failed_item.pdu_session_id              = session.pdu_session_id;
                 failed_item.unsuccessful_transfer.cause = ngap_cause_radio_network_t::unspecified;
 
@@ -214,14 +214,14 @@ public:
           if (last_init_ctxt_setup_request.pdu_session_res_setup_list_cxt_req.has_value()) {
             for (const auto& session :
                  last_init_ctxt_setup_request.pdu_session_res_setup_list_cxt_req.value().pdu_session_res_setup_items) {
-              cu_cp_pdu_session_res_setup_response_item response_item;
+              ngap_pdu_session_res_setup_response_item response_item;
               response_item.pdu_session_id = session.pdu_session_id;
               response_item.pdu_session_resource_setup_response_transfer.dlqos_flow_per_tnl_info.up_tp_layer_info =
                   up_transport_layer_info{transport_layer_address::create_from_string("127.0.0.1"),
                                           int_to_gtpu_teid(1)};
               response_item.pdu_session_resource_setup_response_transfer.dlqos_flow_per_tnl_info
                   .associated_qos_flow_list.emplace(uint_to_qos_flow_id(5),
-                                                    cu_cp_associated_qos_flow{uint_to_qos_flow_id(5)});
+                                                    ngap_associated_qos_flow{uint_to_qos_flow_id(5)});
               resp.pdu_session_res_setup_response_items.emplace(response_item.pdu_session_id, response_item);
             }
           }
@@ -245,71 +245,71 @@ public:
         });
   }
 
-  async_task<cu_cp_pdu_session_resource_setup_response>
-  on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) override
+  async_task<ngap_pdu_session_resource_setup_response>
+  on_new_pdu_session_resource_setup_request(ngap_pdu_session_resource_setup_request& request) override
   {
     logger.info("Received a new pdu session resource setup request");
 
     last_request = std::move(request);
 
-    return launch_async([this, res = cu_cp_pdu_session_resource_setup_response{}](
-                            coro_context<async_task<cu_cp_pdu_session_resource_setup_response>>& ctx) mutable {
+    return launch_async([this, res = ngap_pdu_session_resource_setup_response{}](
+                            coro_context<async_task<ngap_pdu_session_resource_setup_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
 
       if (last_request.pdu_session_res_setup_items.empty()) {
-        cu_cp_pdu_session_res_setup_failed_item failed_item;
+        ngap_pdu_session_res_setup_failed_item failed_item;
         for (const auto& pdu_session : last_request.pdu_session_res_setup_items) {
           failed_item.pdu_session_id              = pdu_session.pdu_session_id;
           failed_item.unsuccessful_transfer.cause = ngap_cause_radio_network_t::unspecified;
           res.pdu_session_res_failed_to_setup_items.emplace(failed_item.pdu_session_id, failed_item);
         }
       } else {
-        res = generate_cu_cp_pdu_session_resource_setup_response(last_request);
+        res = generate_ngap_pdu_session_resource_setup_response(last_request);
       }
 
       CORO_RETURN(res);
     });
   }
 
-  async_task<cu_cp_pdu_session_resource_modify_response>
-  on_new_pdu_session_resource_modify_request(cu_cp_pdu_session_resource_modify_request& request) override
+  async_task<ngap_pdu_session_resource_modify_response>
+  on_new_pdu_session_resource_modify_request(ngap_pdu_session_resource_modify_request& request) override
   {
     logger.info("Received a new pdu session resource modify request");
 
     last_modify_request = std::move(request);
 
-    return launch_async([this, res = cu_cp_pdu_session_resource_modify_response{}](
-                            coro_context<async_task<cu_cp_pdu_session_resource_modify_response>>& ctx) mutable {
+    return launch_async([this, res = ngap_pdu_session_resource_modify_response{}](
+                            coro_context<async_task<ngap_pdu_session_resource_modify_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
 
       if (!last_modify_request.pdu_session_res_modify_items.empty()) {
-        res = generate_cu_cp_pdu_session_resource_modify_response(uint_to_pdu_session_id(1));
+        res = generate_ngap_pdu_session_resource_modify_response(uint_to_pdu_session_id(1));
       }
 
       CORO_RETURN(res);
     });
   }
 
-  void set_pdu_session_resource_release_outcome(const cu_cp_pdu_session_resource_release_response& outcome)
+  void set_pdu_session_resource_release_outcome(const ngap_pdu_session_resource_release_response& outcome)
   {
     release_command_outcome = outcome;
   }
 
-  async_task<cu_cp_pdu_session_resource_release_response>
-  on_new_pdu_session_resource_release_command(cu_cp_pdu_session_resource_release_command& command) override
+  async_task<ngap_pdu_session_resource_release_response>
+  on_new_pdu_session_resource_release_command(ngap_pdu_session_resource_release_command& command) override
   {
     logger.info("Received a new pdu session resource release command");
 
     last_release_command = std::move(command);
 
-    return launch_async([this](coro_context<async_task<cu_cp_pdu_session_resource_release_response>>& ctx) mutable {
+    return launch_async([this](coro_context<async_task<ngap_pdu_session_resource_release_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
 
       if (release_command_outcome.has_value()) {
         CORO_EARLY_RETURN(release_command_outcome.value());
       }
 
-      CORO_RETURN(generate_cu_cp_pdu_session_resource_release_response(uint_to_pdu_session_id(1)));
+      CORO_RETURN(generate_ngap_pdu_session_resource_release_response(uint_to_pdu_session_id(1)));
     });
   }
 
@@ -406,17 +406,17 @@ public:
     last_location_reporting_ctrl          = msg;
   }
 
-  cu_cp_ue_index_t                                           last_ue = cu_cp_ue_index_t::invalid;
-  ngap_init_context_setup_request                            last_init_ctxt_setup_request;
-  ngap_ue_context_modification_request                       last_ue_ctxt_modification_request;
-  cu_cp_pdu_session_resource_setup_request                   last_request;
-  cu_cp_pdu_session_resource_modify_request                  last_modify_request;
-  std::optional<cu_cp_pdu_session_resource_release_response> release_command_outcome;
-  cu_cp_pdu_session_resource_release_command                 last_release_command;
-  std::optional<cu_cp_ue_index_t>                            last_created_ue_index;
-  cu_cp_paging_message                                       last_paging_msg;
-  std::optional<cu_cp_ue_index_t>                            last_location_reporting_ctrl_ue_index;
-  std::optional<location_report_request>                     last_location_reporting_ctrl;
+  cu_cp_ue_index_t                                          last_ue = cu_cp_ue_index_t::invalid;
+  ngap_init_context_setup_request                           last_init_ctxt_setup_request;
+  ngap_ue_context_modification_request                      last_ue_ctxt_modification_request;
+  ngap_pdu_session_resource_setup_request                   last_request;
+  ngap_pdu_session_resource_modify_request                  last_modify_request;
+  std::optional<ngap_pdu_session_resource_release_response> release_command_outcome;
+  ngap_pdu_session_resource_release_command                 last_release_command;
+  std::optional<cu_cp_ue_index_t>                           last_created_ue_index;
+  cu_cp_paging_message                                      last_paging_msg;
+  std::optional<cu_cp_ue_index_t>                           last_location_reporting_ctrl_ue_index;
+  std::optional<location_report_request>                    last_location_reporting_ctrl;
 
 private:
   ue_manager&             ue_mng;

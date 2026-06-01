@@ -15,7 +15,7 @@ namespace ocudu::ocucp {
 class ngap_pdu_session_resource_setup_procedure
 {
 public:
-  ngap_pdu_session_resource_setup_procedure(const cu_cp_pdu_session_resource_setup_request&    request_,
+  ngap_pdu_session_resource_setup_procedure(const ngap_pdu_session_resource_setup_request&     request_,
                                             const asn1::ngap::pdu_session_res_setup_request_s& asn1_request_,
                                             ngap_ue_context_list&                              ue_ctxt_list_,
                                             ngap_cu_cp_notifier&                               cu_cp_notifier_,
@@ -32,12 +32,12 @@ private:
   // Result senders.
   bool send_pdu_session_resource_setup_response();
 
-  const cu_cp_pdu_session_resource_setup_request    request;
+  const ngap_pdu_session_resource_setup_request     request;
   const asn1::ngap::pdu_session_res_setup_request_s asn1_request;
-  cu_cp_pdu_session_resource_setup_response         validation_response;
+  ngap_pdu_session_resource_setup_response          validation_response;
   byte_buffer                                       nas_pdu;
   ngap_ue_context_list&                             ue_ctxt_list;
-  cu_cp_pdu_session_resource_setup_response         response;
+  ngap_pdu_session_resource_setup_response          response;
   ngap_cu_cp_notifier&                              cu_cp_notifier;
   ngap_metrics_aggregator&                          metrics_handler;
   ngap_message_notifier&                            amf_notifier;

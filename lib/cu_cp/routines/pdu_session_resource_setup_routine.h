@@ -35,20 +35,20 @@ namespace ocucp {
 class pdu_session_resource_setup_routine
 {
 public:
-  pdu_session_resource_setup_routine(const cu_cp_pdu_session_resource_setup_request& setup_msg_,
-                                     const ue_configuration&                         ue_cfg_,
-                                     const ocudu::security::sec_as_config&           security_cfg_,
-                                     const security_indication_t&                    default_security_indication_,
-                                     e1ap_bearer_context_manager&                    e1ap_bearer_ctxt_mng_,
-                                     f1ap_ue_context_manager&                        f1ap_ue_ctxt_mng_,
-                                     rrc_ue_interface*                               rrc_ue_,
-                                     cu_cp_rrc_ue_interface&                         cu_cp_notifier_,
-                                     cu_cp_mobility_manager_handler&                 mobility_mng_,
-                                     ue_task_scheduler&                              ue_task_sched_,
-                                     up_resource_manager&                            up_resource_mng_,
-                                     ocudulog::basic_logger&                         logger_);
+  pdu_session_resource_setup_routine(const ngap_pdu_session_resource_setup_request& setup_msg_,
+                                     const ue_configuration&                        ue_cfg_,
+                                     const ocudu::security::sec_as_config&          security_cfg_,
+                                     const security_indication_t&                   default_security_indication_,
+                                     e1ap_bearer_context_manager&                   e1ap_bearer_ctxt_mng_,
+                                     f1ap_ue_context_manager&                       f1ap_ue_ctxt_mng_,
+                                     rrc_ue_interface*                              rrc_ue_,
+                                     cu_cp_rrc_ue_interface&                        cu_cp_notifier_,
+                                     cu_cp_mobility_manager_handler&                mobility_mng_,
+                                     ue_task_scheduler&                             ue_task_sched_,
+                                     up_resource_manager&                           up_resource_mng_,
+                                     ocudulog::basic_logger&                        logger_);
 
-  void operator()(coro_context<async_task<cu_cp_pdu_session_resource_setup_response>>& ctx);
+  void operator()(coro_context<async_task<ngap_pdu_session_resource_setup_response>>& ctx);
 
   static const char* name() { return "PDU Session Resource Setup Routine"; }
 
@@ -56,13 +56,13 @@ private:
   bool fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_request& e1ap_request);
   void fill_initial_e1ap_bearer_context_modification_request(e1ap_bearer_context_modification_request& e1ap_request);
 
-  cu_cp_pdu_session_resource_setup_response
+  ngap_pdu_session_resource_setup_response
   handle_pdu_session_resource_setup_result(bool success, ngap_cause_t cause = ngap_cause_radio_network_t::unspecified);
 
-  const cu_cp_pdu_session_resource_setup_request setup_msg;
-  const ue_configuration                         ue_cfg;
-  const ocudu::security::sec_as_config           security_cfg;
-  const security_indication_t&                   default_security_indication; // default if not signaled via NGAP
+  const ngap_pdu_session_resource_setup_request setup_msg;
+  const ue_configuration                        ue_cfg;
+  const ocudu::security::sec_as_config          security_cfg;
+  const security_indication_t&                  default_security_indication; // default if not signaled via NGAP
 
   up_config_update next_config;
 
@@ -82,9 +82,9 @@ private:
   rrc_reconfiguration_procedure_request    rrc_reconfig_args;
 
   // (sub-)routine results
-  cu_cp_pdu_session_resource_setup_response response_msg;
-  e1ap_bearer_context_setup_response        bearer_context_setup_response; // to initially setup the DRBs at the CU-UP
-  f1ap_ue_context_modification_response     ue_context_modification_response; // to inform DU about the new DRBs
+  ngap_pdu_session_resource_setup_response response_msg;
+  e1ap_bearer_context_setup_response       bearer_context_setup_response;    // to initially setup the DRBs at the CU-UP
+  f1ap_ue_context_modification_response    ue_context_modification_response; // to inform DU about the new DRBs
   e1ap_bearer_context_modification_response
        bearer_context_modification_response; // to inform CU-UP about the new TEID for UL F1u traffic
   bool rrc_reconfig_result = false;          // the final UE reconfiguration

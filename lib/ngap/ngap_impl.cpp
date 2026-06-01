@@ -720,10 +720,10 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
   }
 
   // Convert to common type.
-  cu_cp_pdu_session_resource_setup_request msg;
+  ngap_pdu_session_resource_setup_request msg;
   msg.ue_index     = ue_ctxt.ue_ids.ue_index;
   msg.serving_plmn = ue_ctxt.serving_guami.plmn;
-  if (!fill_cu_cp_pdu_session_resource_setup_request(msg, request->pdu_session_res_setup_list_su_req)) {
+  if (!fill_ngap_pdu_session_resource_setup_request(msg, request->pdu_session_res_setup_list_su_req)) {
     ue_ctxt.logger.log_warning("Conversion of PDUSessionResourceSetupRequest failed");
     send_error_indication(tx_pdu_notifier, logger, ue_ctxt.ue_ids.ran_ue_id, ue_ctxt.ue_ids.amf_ue_id, {});
     return;
@@ -778,9 +778,9 @@ void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu
   }
 
   // Convert to common type.
-  cu_cp_pdu_session_resource_modify_request msg;
+  ngap_pdu_session_resource_modify_request msg;
   msg.ue_index = ue_ctxt.ue_ids.ue_index;
-  if (!fill_cu_cp_pdu_session_resource_modify_request(msg, request->pdu_session_res_modify_list_mod_req)) {
+  if (!fill_ngap_pdu_session_resource_modify_request(msg, request->pdu_session_res_modify_list_mod_req)) {
     ue_ctxt.logger.log_warning("Unable to fill ASN1 contents for PDUSessionResourceModifyRequest");
     schedule_error_indication(ue_ctxt.ue_ids.ue_index, ngap_cause_radio_network_t::unspecified);
     return;
@@ -825,9 +825,9 @@ void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pd
                fmt::underlying(ue_ctxt.ue_ids.amf_ue_id));
 
   // Convert to common type.
-  cu_cp_pdu_session_resource_release_command msg;
+  ngap_pdu_session_resource_release_command msg;
   msg.ue_index = ue_ctxt.ue_ids.ue_index;
-  fill_cu_cp_pdu_session_resource_release_command(msg, command);
+  fill_ngap_pdu_session_resource_release_command(msg, command);
 
   // Start routine.
   ue->schedule_async_task(launch_async<ngap_pdu_session_resource_release_procedure>(

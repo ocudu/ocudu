@@ -5,7 +5,6 @@
 #pragma once
 
 #include "../up_resource_manager/up_resource_manager_impl.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/cu_cp/ue_configuration.h"
 #include "ocudu/e1ap/common/e1ap_types.h"
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
@@ -13,8 +12,7 @@
 #include "ocudu/pdcp/pdcp_config.h"
 #include "ocudu/rrc/rrc_types.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 bool verify_and_log_cell_group_config(const byte_buffer& packed_cell_group_cfg, const ocudulog::basic_logger& logger);
 
@@ -28,9 +26,9 @@ bool verify_and_log_cell_group_config(const byte_buffer& packed_cell_group_cfg, 
 /// \param[in] ngap_qos_flow_setup_items The initial QoS flow setup request from AMF.
 /// \param[in] logger The logger.
 bool fill_f1ap_drb_setup_mod_item(f1ap_drb_to_setup& drb_setup_mod_item, // Request to setup DRB at DU.
-                                  slotted_id_vector<qos_flow_id_t, cu_cp_associated_qos_flow>* response_flow_list,
-                                  pdu_session_id_t                                             psi,
-                                  drb_id_t                                                     drb_id,
+                                  slotted_id_vector<qos_flow_id_t, ngap_associated_qos_flow>* response_flow_list,
+                                  pdu_session_id_t                                            psi,
+                                  drb_id_t                                                    drb_id,
                                   up_drb_context& next_drb_config,                 // DRB config (info is written back).
                                   const e1ap_drb_setup_item_ng_ran& e1ap_drb_item, // Response from CU-UP.
                                   const slotted_id_vector<qos_flow_id_t, qos_flow_setup_request_item>&
@@ -57,9 +55,9 @@ void fill_drb_to_setup_list(slotted_id_vector<drb_id_t, e1ap_drb_to_setup_item_n
                             const std::map<drb_id_t, up_drb_context>&                            drb_to_add_list,
                             const ocudulog::basic_logger&                                        logger);
 void fill_drb_to_modify_list(slotted_id_vector<drb_id_t, e1ap_drb_to_modify_item_ng_ran>& e1ap_drb_to_modify_list,
-                             const slotted_id_vector<qos_flow_id_t, cu_cp_qos_flow_add_or_mod_item>& qos_flow_list,
-                             const std::map<drb_id_t, up_drb_context>&                               drb_to_modify_list,
-                             const ocudulog::basic_logger&                                           logger);
+                             const slotted_id_vector<qos_flow_id_t, ngap_qos_flow_add_or_mod_item>& qos_flow_list,
+                             const std::map<drb_id_t, up_drb_context>&                              drb_to_modify_list,
+                             const ocudulog::basic_logger&                                          logger);
 void fill_drb_to_remove_list(std::vector<drb_id_t>&       e1ap_drb_to_remove_list,
                              const std::vector<drb_id_t>& drb_to_remove_list);
 
@@ -101,5 +99,4 @@ bool update_setup_list_with_ue_ctxt_setup_response(e1ap_bearer_context_modificat
                                                    const up_config_update&                   next_config,
                                                    const ocudulog::basic_logger&             logger);
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

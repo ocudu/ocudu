@@ -71,22 +71,22 @@ public:
     return cu_cp_handler->handle_new_ue_context_modification_request(request);
   }
 
-  async_task<cu_cp_pdu_session_resource_setup_response>
-  on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) override
+  async_task<ngap_pdu_session_resource_setup_response>
+  on_new_pdu_session_resource_setup_request(ngap_pdu_session_resource_setup_request& request) override
   {
     ocudu_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
     return cu_cp_handler->handle_new_pdu_session_resource_setup_request(request);
   }
 
-  async_task<cu_cp_pdu_session_resource_modify_response>
-  on_new_pdu_session_resource_modify_request(cu_cp_pdu_session_resource_modify_request& request) override
+  async_task<ngap_pdu_session_resource_modify_response>
+  on_new_pdu_session_resource_modify_request(ngap_pdu_session_resource_modify_request& request) override
   {
     ocudu_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
     return cu_cp_handler->handle_new_pdu_session_resource_modify_request(request);
   }
 
-  async_task<cu_cp_pdu_session_resource_release_response>
-  on_new_pdu_session_resource_release_command(cu_cp_pdu_session_resource_release_command& command) override
+  async_task<ngap_pdu_session_resource_release_response>
+  on_new_pdu_session_resource_release_command(ngap_pdu_session_resource_release_command& command) override
   {
     ocudu_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
     return cu_cp_handler->handle_new_pdu_session_resource_release_command(command);

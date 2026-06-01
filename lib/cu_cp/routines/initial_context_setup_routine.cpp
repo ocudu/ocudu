@@ -167,7 +167,7 @@ void initial_context_setup_routine::handle_failure(ngap_cause_t cause)
   if (request.pdu_session_res_setup_list_cxt_req.has_value()) {
     for (const auto& pdu_session_item :
          request.pdu_session_res_setup_list_cxt_req.value().pdu_session_res_setup_items) {
-      cu_cp_pdu_session_res_setup_failed_item failed_item;
+      ngap_pdu_session_res_setup_failed_item failed_item;
       failed_item.pdu_session_id              = pdu_session_item.pdu_session_id;
       failed_item.unsuccessful_transfer.cause = cause;
 

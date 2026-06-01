@@ -5,33 +5,31 @@
 #pragma once
 
 #include "up_resource_manager_impl.h"
-#include "ocudu/cu_cp/cu_cp_types.h" // for SDAP config
 #include "ocudu/pdcp/pdcp_config.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// \brief Perform sanity check on incoming resource setup/modification/release requests.
 bool is_valid(const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items,
               const up_context&                                                            context,
               const up_resource_manager_cfg&                                               cfg,
               const ocudulog::basic_logger&                                                logger);
-bool is_valid(const cu_cp_pdu_session_resource_modify_request& pdu,
+bool is_valid(const ngap_pdu_session_resource_modify_request& pdu,
+              const up_context&                               context,
+              const up_resource_manager_cfg&                  cfg,
+              const ocudulog::basic_logger&                   logger);
+bool is_valid(const ngap_pdu_session_resource_release_command& pdu,
               const up_context&                                context,
               const up_resource_manager_cfg&                   cfg,
               const ocudulog::basic_logger&                    logger);
-bool is_valid(const cu_cp_pdu_session_resource_release_command& pdu,
-              const up_context&                                 context,
-              const up_resource_manager_cfg&                    cfg,
-              const ocudulog::basic_logger&                     logger);
 
 /// \brief Validates that a given FiveQI has a valid PDCP and SDAP config.
 bool is_valid(five_qi_t five_qi, const up_resource_manager_cfg& cfg, const ocudulog::basic_logger& logger);
 
 /// @brief Perform sanity check on requested QoS flow configuration.
-five_qi_t get_five_qi(const cu_cp_qos_flow_add_or_mod_item& qos_flow,
-                      const up_resource_manager_cfg&        cfg,
-                      const ocudulog::basic_logger&         logger);
+five_qi_t get_five_qi(const ngap_qos_flow_add_or_mod_item& qos_flow,
+                      const up_resource_manager_cfg&       cfg,
+                      const ocudulog::basic_logger&        logger);
 
 /// \brief Functions to calculate a configuration update based on the active config and an incoming PDU session
 /// setup/modfication/release request/command. No configuration state is altered.
@@ -43,14 +41,14 @@ calculate_update(const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res
                  const up_context&                                                            context,
                  const up_resource_manager_cfg&                                               cfg,
                  const ocudulog::basic_logger&                                                logger);
-up_config_update calculate_update(const cu_cp_pdu_session_resource_modify_request& pdu,
+up_config_update calculate_update(const ngap_pdu_session_resource_modify_request& pdu,
+                                  const up_context&                               context,
+                                  const up_resource_manager_cfg&                  cfg,
+                                  const ocudulog::basic_logger&                   logger);
+up_config_update calculate_update(const ngap_pdu_session_resource_release_command& pdu,
                                   const up_context&                                context,
                                   const up_resource_manager_cfg&                   cfg,
                                   const ocudulog::basic_logger&                    logger);
-up_config_update calculate_update(const cu_cp_pdu_session_resource_release_command& pdu,
-                                  const up_context&                                 context,
-                                  const up_resource_manager_cfg&                    cfg,
-                                  const ocudulog::basic_logger&                     logger);
 
 // \brief Allocates a new DRB ID and returns it.
 drb_id_t allocate_drb_id(const up_pdu_session_context_update& new_session_context,
@@ -68,5 +66,4 @@ sdap_config_t set_rrc_sdap_config(const up_drb_context& context);
 
 unsigned get_used_drb_index(drb_id_t drb_id);
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

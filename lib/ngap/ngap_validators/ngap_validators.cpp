@@ -10,7 +10,7 @@ using namespace ocudu;
 using namespace ocucp;
 
 pdu_session_resource_setup_validation_outcome
-ocudu::ocucp::verify_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_request&    request,
+ocudu::ocucp::verify_pdu_session_resource_setup_request(const ngap_pdu_session_resource_setup_request&     request,
                                                         const asn1::ngap::pdu_session_res_setup_request_s& asn1_request,
                                                         const ngap_ue_logger&                              ue_logger)
 {
@@ -26,7 +26,7 @@ ocudu::ocucp::verify_pdu_session_resource_setup_request(const cu_cp_pdu_session_
       // Make sure to only add each duplicate psi once.
       if (failed_psis.emplace(psi).second) {
         // Add failed psi to response.
-        cu_cp_pdu_session_res_setup_failed_item failed_item;
+        ngap_pdu_session_res_setup_failed_item failed_item;
         failed_item.pdu_session_id              = psi;
         failed_item.unsuccessful_transfer.cause = ngap_cause_radio_network_t::multiple_pdu_session_id_instances;
         verification_outcome.response.pdu_session_res_failed_to_setup_items.emplace(psi, failed_item);
@@ -40,7 +40,7 @@ ocudu::ocucp::verify_pdu_session_resource_setup_request(const cu_cp_pdu_session_
       ue_logger.log_warning("Unsupported PDU Session Type: {}", pdu_session_item.pdu_session_type);
       failed_psis.emplace(pdu_session_item.pdu_session_id);
       // Add failed psi to response.
-      cu_cp_pdu_session_res_setup_failed_item failed_item;
+      ngap_pdu_session_res_setup_failed_item failed_item;
       failed_item.pdu_session_id              = pdu_session_item.pdu_session_id;
       failed_item.unsuccessful_transfer.cause = cause_protocol_t::unspecified;
       verification_outcome.response.pdu_session_res_failed_to_setup_items.emplace(pdu_session_item.pdu_session_id,
@@ -67,7 +67,7 @@ ocudu::ocucp::verify_pdu_session_resource_setup_request(const cu_cp_pdu_session_
           ue_logger.log_warning("Non-GBR QoS flow for {} present but PduSessionAggregateMaximumBitRate not set", psi);
           failed_psis.emplace(psi);
           // Add failed psi to response.
-          cu_cp_pdu_session_res_setup_failed_item failed_item;
+          ngap_pdu_session_res_setup_failed_item failed_item;
           failed_item.pdu_session_id              = psi;
           failed_item.unsuccessful_transfer.cause = ngap_cause_radio_network_t::invalid_qos_combination;
           verification_outcome.response.pdu_session_res_failed_to_setup_items.emplace(psi, failed_item);
@@ -95,7 +95,7 @@ ocudu::ocucp::verify_pdu_session_resource_setup_request(const cu_cp_pdu_session_
 }
 
 pdu_session_resource_modify_validation_outcome ocudu::ocucp::verify_pdu_session_resource_modify_request(
-    const cu_cp_pdu_session_resource_modify_request&    request,
+    const ngap_pdu_session_resource_modify_request&     request,
     const asn1::ngap::pdu_session_res_modify_request_s& asn1_request,
     const ngap_ue_logger&                               ue_logger)
 {
@@ -111,7 +111,7 @@ pdu_session_resource_modify_validation_outcome ocudu::ocucp::verify_pdu_session_
       // Make sure to only add each duplicate psi once.
       if (failed_psis.emplace(psi).second) {
         // Add failed psi to response.
-        cu_cp_pdu_session_res_setup_failed_item failed_item;
+        ngap_pdu_session_res_setup_failed_item failed_item;
         failed_item.pdu_session_id              = psi;
         failed_item.unsuccessful_transfer.cause = ngap_cause_radio_network_t::multiple_pdu_session_id_instances;
         verification_outcome.response.pdu_session_res_failed_to_modify_list.emplace(psi, failed_item);

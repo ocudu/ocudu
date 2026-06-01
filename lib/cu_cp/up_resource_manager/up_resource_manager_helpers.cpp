@@ -116,10 +116,10 @@ bool ocudu::ocucp::is_valid(const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_
 }
 
 /// \brief Validates an incoming PDU session modify request.
-bool ocudu::ocucp::is_valid(const cu_cp_pdu_session_resource_modify_request& pdu,
-                            const up_context&                                context,
-                            const up_resource_manager_cfg&                   cfg,
-                            const ocudulog::basic_logger&                    logger)
+bool ocudu::ocucp::is_valid(const ngap_pdu_session_resource_modify_request& pdu,
+                            const up_context&                               context,
+                            const up_resource_manager_cfg&                  cfg,
+                            const ocudulog::basic_logger&                   logger)
 {
   // Reject empty modification requests.
   if (pdu.pdu_session_res_modify_items.empty()) {
@@ -163,10 +163,10 @@ bool ocudu::ocucp::is_valid(const cu_cp_pdu_session_resource_modify_request& pdu
 }
 
 /// \brief Validates an incoming PDU session release command.
-bool ocudu::ocucp::is_valid(const cu_cp_pdu_session_resource_release_command& pdu,
-                            const up_context&                                 context,
-                            const up_resource_manager_cfg&                    cfg,
-                            const ocudulog::basic_logger&                     logger)
+bool ocudu::ocucp::is_valid(const ngap_pdu_session_resource_release_command& pdu,
+                            const up_context&                                context,
+                            const up_resource_manager_cfg&                   cfg,
+                            const ocudulog::basic_logger&                    logger)
 {
   // Reject empty release requests.
   if (pdu.pdu_session_res_to_release_list_rel_cmd.empty()) {
@@ -321,9 +321,9 @@ ocudu::ocucp::calculate_update(const slotted_id_vector<pdu_session_id_t, cu_cp_p
 }
 
 /// \brief Determines the 5QI to use for QoS flow.
-five_qi_t ocudu::ocucp::get_five_qi(const cu_cp_qos_flow_add_or_mod_item& qos_flow,
-                                    const up_resource_manager_cfg&        cfg,
-                                    const ocudulog::basic_logger&         logger)
+five_qi_t ocudu::ocucp::get_five_qi(const ngap_qos_flow_add_or_mod_item& qos_flow,
+                                    const up_resource_manager_cfg&       cfg,
+                                    const ocudulog::basic_logger&        logger)
 {
   five_qi_t   five_qi    = five_qi_t::invalid;
   const auto& qos_params = qos_flow.qos_flow_level_qos_params;
@@ -343,10 +343,10 @@ five_qi_t ocudu::ocucp::get_five_qi(const cu_cp_qos_flow_add_or_mod_item& qos_fl
   return five_qi;
 }
 
-up_config_update ocudu::ocucp::calculate_update(const cu_cp_pdu_session_resource_modify_request& pdu,
-                                                const up_context&                                context,
-                                                const up_resource_manager_cfg&                   cfg,
-                                                const ocudulog::basic_logger&                    logger)
+up_config_update ocudu::ocucp::calculate_update(const ngap_pdu_session_resource_modify_request& pdu,
+                                                const up_context&                               context,
+                                                const up_resource_manager_cfg&                  cfg,
+                                                const ocudulog::basic_logger&                   logger)
 {
   up_config_update update;
   update.initial_context_creation = false;
@@ -416,10 +416,10 @@ up_config_update ocudu::ocucp::calculate_update(const cu_cp_pdu_session_resource
   return update;
 }
 
-up_config_update ocudu::ocucp::calculate_update(const cu_cp_pdu_session_resource_release_command& pdu,
-                                                const up_context&                                 context,
-                                                const up_resource_manager_cfg&                    cfg,
-                                                const ocudulog::basic_logger&                     logger)
+up_config_update ocudu::ocucp::calculate_update(const ngap_pdu_session_resource_release_command& pdu,
+                                                const up_context&                                context,
+                                                const up_resource_manager_cfg&                   cfg,
+                                                const ocudulog::basic_logger&                    logger)
 {
   up_config_update update;
 

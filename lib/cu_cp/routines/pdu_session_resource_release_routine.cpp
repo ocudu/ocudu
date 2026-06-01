@@ -10,14 +10,14 @@ using namespace ocudu::ocucp;
 using namespace asn1::rrc_nr;
 
 pdu_session_resource_release_routine::pdu_session_resource_release_routine(
-    const cu_cp_pdu_session_resource_release_command& release_cmd_,
-    e1ap_bearer_context_manager&                      e1ap_bearer_ctxt_mng_,
-    f1ap_ue_context_manager&                          f1ap_ue_ctxt_mng_,
-    rrc_ue_interface*                                 rrc_ue_,
-    cu_cp_rrc_ue_interface&                           cu_cp_notifier_,
-    ue_task_scheduler&                                task_sched_,
-    up_resource_manager&                              up_resource_mng_,
-    ocudulog::basic_logger&                           logger_) :
+    const ngap_pdu_session_resource_release_command& release_cmd_,
+    e1ap_bearer_context_manager&                     e1ap_bearer_ctxt_mng_,
+    f1ap_ue_context_manager&                         f1ap_ue_ctxt_mng_,
+    rrc_ue_interface*                                rrc_ue_,
+    cu_cp_rrc_ue_interface&                          cu_cp_notifier_,
+    ue_task_scheduler&                               task_sched_,
+    up_resource_manager&                             up_resource_mng_,
+    ocudulog::basic_logger&                          logger_) :
   release_cmd(release_cmd_),
   e1ap_bearer_ctxt_mng(e1ap_bearer_ctxt_mng_),
   f1ap_ue_ctxt_mng(f1ap_ue_ctxt_mng_),
@@ -30,10 +30,10 @@ pdu_session_resource_release_routine::pdu_session_resource_release_routine(
 }
 
 // Handle RRC reconfiguration result.
-static bool handle_rrc_reconfiguration_response(cu_cp_pdu_session_resource_release_response&      response_msg,
-                                                const cu_cp_pdu_session_resource_release_command& release_cmd,
-                                                bool                                              rrc_reconfig_result,
-                                                const ocudulog::basic_logger&                     logger)
+static bool handle_rrc_reconfiguration_response(ngap_pdu_session_resource_release_response&      response_msg,
+                                                const ngap_pdu_session_resource_release_command& release_cmd,
+                                                bool                                             rrc_reconfig_result,
+                                                const ocudulog::basic_logger&                    logger)
 {
   // Let all PDU sessions fail if response is negative.
   if (!rrc_reconfig_result) {
@@ -44,7 +44,7 @@ static bool handle_rrc_reconfiguration_response(cu_cp_pdu_session_resource_relea
 }
 
 void pdu_session_resource_release_routine::operator()(
-    coro_context<async_task<cu_cp_pdu_session_resource_release_response>>& ctx)
+    coro_context<async_task<ngap_pdu_session_resource_release_response>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -152,7 +152,7 @@ void pdu_session_resource_release_routine::operator()(
   CORO_RETURN(handle_pdu_session_resource_release_response(true));
 }
 
-cu_cp_pdu_session_resource_release_response
+ngap_pdu_session_resource_release_response
 pdu_session_resource_release_routine::handle_pdu_session_resource_release_response(bool success)
 {
   // Prepare update for UP resource manager.
@@ -165,7 +165,7 @@ pdu_session_resource_release_routine::handle_pdu_session_resource_release_respon
   if (success) {
     // Fill PDUSessionResponse with the released PDU sessions.
     for (const auto& setup_item : release_cmd.pdu_session_res_to_release_list_rel_cmd) {
-      cu_cp_pdu_session_res_released_item_rel_res item;
+      ngap_pdu_session_res_released_item_rel_res item;
       item.pdu_session_id = setup_item.pdu_session_id;
 
       response_msg.released_pdu_sessions.emplace(setup_item.pdu_session_id, item);

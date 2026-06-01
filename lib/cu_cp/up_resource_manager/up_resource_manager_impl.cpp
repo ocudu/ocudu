@@ -20,12 +20,12 @@ bool up_resource_manager::validate_request(
   return is_valid(setup_items, context, cfg, logger);
 }
 
-bool up_resource_manager::validate_request(const cu_cp_pdu_session_resource_modify_request& pdu) const
+bool up_resource_manager::validate_request(const ngap_pdu_session_resource_modify_request& pdu) const
 {
   return is_valid(pdu, context, cfg, logger);
 }
 
-bool up_resource_manager::validate_request(const cu_cp_pdu_session_resource_release_command& pdu) const
+bool up_resource_manager::validate_request(const ngap_pdu_session_resource_release_command& pdu) const
 {
   return is_valid(pdu, context, cfg, logger);
 }
@@ -37,13 +37,13 @@ up_config_update up_resource_manager::calculate_update(
   return ocudu::ocucp::calculate_update(setup_items, context, cfg, logger);
 }
 
-up_config_update up_resource_manager::calculate_update(const cu_cp_pdu_session_resource_modify_request& pdu)
+up_config_update up_resource_manager::calculate_update(const ngap_pdu_session_resource_modify_request& pdu)
 {
   ocudu_assert(is_valid(pdu, context, cfg, logger), "Invalid PDU Session Resource Modify request.");
   return ocudu::ocucp::calculate_update(pdu, context, cfg, logger);
 }
 
-up_config_update up_resource_manager::calculate_update(const cu_cp_pdu_session_resource_release_command& pdu)
+up_config_update up_resource_manager::calculate_update(const ngap_pdu_session_resource_release_command& pdu)
 {
   ocudu_assert(is_valid(pdu, context, cfg, logger), "Invalid PDU Session Resource Release command.");
   return ocudu::ocucp::calculate_update(pdu, context, cfg, logger);

@@ -7,7 +7,7 @@
 #include "ocudu/cu_cp/cu_cp_types.h"
 #include "ocudu/e1ap/common/e1ap_types.h"
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
-#include "ocudu/ran/cu_cp_pdu_session.h"
+#include "ocudu/ngap/ngap_pdu_session.h"
 
 namespace ocudu::ocucp {
 
@@ -20,28 +20,28 @@ generate_ue_context_release_command(cu_cp_ue_index_t ue_index,
                                     ngap_cause_t     cause = ngap_cause_radio_network_t::unspecified);
 
 /// \brief Generate a dummy PDU Session Resource Setup request.
-cu_cp_pdu_session_resource_setup_request
+ngap_pdu_session_resource_setup_request
 generate_pdu_session_resource_setup(cu_cp_ue_index_t ue_index         = cu_cp_ue_index_t::min,
                                     unsigned         num_pdu_sessions = 1,
                                     unsigned         num_qos_flows    = 1);
 
 /// \brief Generate a dummy PDU Session Resource Setup request with a specific PDU session id and QoS flow id.
-cu_cp_pdu_session_resource_setup_request
+ngap_pdu_session_resource_setup_request
 generate_pdu_session_resource_setup(cu_cp_ue_index_t ue_index, pdu_session_id_t psi, qos_flow_id_t qfi);
 
 /// \brief Generate a dummy PDU Session Resource Release Command.
-cu_cp_pdu_session_resource_release_command
+ngap_pdu_session_resource_release_command
 generate_pdu_session_resource_release(cu_cp_ue_index_t ue_index = cu_cp_ue_index_t::min,
                                       pdu_session_id_t psi      = pdu_session_id_t{1});
 
 /// \brief Generate a dummy PDU Session Resource Modification Request.
-cu_cp_pdu_session_resource_modify_request
+ngap_pdu_session_resource_modify_request
 generate_pdu_session_resource_modification(cu_cp_ue_index_t ue_index = cu_cp_ue_index_t::min,
                                            unsigned         psi      = 1,
                                            unsigned         qfi      = 2);
 
 /// \brief Generate a dummy PDU Session Resource Modification Request with QoS flow to remove item.
-cu_cp_pdu_session_resource_modify_request
+ngap_pdu_session_resource_modify_request
 generate_pdu_session_resource_modification_with_qos_flow_removal(qos_flow_id_t flow_id);
 
 /// \brief Generate a dummy E1AP Bearer Context Setup Response.

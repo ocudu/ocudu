@@ -9,8 +9,8 @@
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "ocudu/f1ap/cu_cp/f1ap_cu.h"
 #include "ocudu/ngap/ngap.h"
+#include "ocudu/ngap/ngap_pdu_session.h"
 #include "ocudu/nrppa/nrppa.h"
-#include "ocudu/ran/cu_cp_pdu_session.h"
 #include "ocudu/ran/plmn_identity.h"
 #include "ocudu/rrc/rrc_du.h"
 #include "ocudu/rrc/rrc_ue.h"
@@ -109,20 +109,20 @@ public:
   /// \brief Handle the reception of a new PDU Session Resource Setup Request.
   /// \param[in] request The received PDU Session Resource Setup Request.
   /// \returns The PDU Session Resource Setup Response.
-  virtual async_task<cu_cp_pdu_session_resource_setup_response>
-  handle_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) = 0;
+  virtual async_task<ngap_pdu_session_resource_setup_response>
+  handle_new_pdu_session_resource_setup_request(ngap_pdu_session_resource_setup_request& request) = 0;
 
   /// \brief Handle the reception of a new PDU Session Resource Modify Request.
   /// \param[in] request The received PDU Session Resource Modify Request.
   /// \returns The PDU Session Resource Modify Response.
-  virtual async_task<cu_cp_pdu_session_resource_modify_response>
-  handle_new_pdu_session_resource_modify_request(const cu_cp_pdu_session_resource_modify_request& request) = 0;
+  virtual async_task<ngap_pdu_session_resource_modify_response>
+  handle_new_pdu_session_resource_modify_request(const ngap_pdu_session_resource_modify_request& request) = 0;
 
   /// \brief Handle the reception of a new PDU Session Resource Release Command.
   /// \param[in] command The received PDU Session Resource Release Command.
   /// \returns The PDU Session Resource Release Response.
-  virtual async_task<cu_cp_pdu_session_resource_release_response>
-  handle_new_pdu_session_resource_release_command(const cu_cp_pdu_session_resource_release_command& command) = 0;
+  virtual async_task<ngap_pdu_session_resource_release_response>
+  handle_new_pdu_session_resource_release_command(const ngap_pdu_session_resource_release_command& command) = 0;
 
   /// \brief Handle the handover request of the handover resource allocation procedure handover procedure.
   /// See TS 38.413 section 8.4.2.2.

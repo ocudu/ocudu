@@ -16,38 +16,38 @@ using namespace asn1::rrc_nr;
 
 /// \brief Handle first Bearer Context Modification response and prepare subsequent UE context modification request.
 bool handle_bearer_context_modification_response(
-    cu_cp_pdu_session_resource_modify_response&      response_msg,
+    ngap_pdu_session_resource_modify_response&       response_msg,
     f1ap_ue_context_modification_request&            ue_context_mod_request,
-    const cu_cp_pdu_session_resource_modify_request& modify_request,
+    const ngap_pdu_session_resource_modify_request&  modify_request,
     const e1ap_bearer_context_modification_response& bearer_context_modification_response,
     up_config_update&                                next_config,
     ocudulog::basic_logger&                          logger);
 
 /// \brief Handle UE context modification response and prepare second Bearer Context Modification.
 bool handle_ue_context_modification_response(
-    cu_cp_pdu_session_resource_modify_response&      response_msg,
-    e1ap_bearer_context_modification_request&        bearer_ctxt_mod_request,
-    const cu_cp_pdu_session_resource_modify_request& modify_request,
-    const f1ap_ue_context_modification_response&     ue_context_modification_response,
-    const up_config_update&                          next_config,
-    const ocudulog::basic_logger&                    logger);
+    ngap_pdu_session_resource_modify_response&      response_msg,
+    e1ap_bearer_context_modification_request&       bearer_ctxt_mod_request,
+    const ngap_pdu_session_resource_modify_request& modify_request,
+    const f1ap_ue_context_modification_response&    ue_context_modification_response,
+    const up_config_update&                         next_config,
+    const ocudulog::basic_logger&                   logger);
 
 /// \brief Handle RRC reconfiguration result.
-bool handle_rrc_reconfiguration_response(cu_cp_pdu_session_resource_modify_response&      response_msg,
-                                         const cu_cp_pdu_session_resource_modify_request& modify_request,
-                                         bool                                             rrc_reconfig_result,
-                                         const ocudulog::basic_logger&                    logger);
+bool handle_rrc_reconfiguration_response(ngap_pdu_session_resource_modify_response&      response_msg,
+                                         const ngap_pdu_session_resource_modify_request& modify_request,
+                                         bool                                            rrc_reconfig_result,
+                                         const ocudulog::basic_logger&                   logger);
 
 pdu_session_resource_modification_routine::pdu_session_resource_modification_routine(
-    const cu_cp_pdu_session_resource_modify_request& modify_request_,
-    e1ap_bearer_context_manager&                     e1ap_bearer_ctxt_mng_,
-    f1ap_ue_context_manager&                         f1ap_ue_ctxt_mng_,
-    rrc_ue_interface*                                rrc_ue_,
-    cu_cp_rrc_ue_interface&                          cu_cp_notifier_,
-    cu_cp_mobility_manager_handler&                  mobility_mng_,
-    ue_task_scheduler&                               ue_task_sched_,
-    up_resource_manager&                             up_resource_mng_,
-    ocudulog::basic_logger&                          logger_) :
+    const ngap_pdu_session_resource_modify_request& modify_request_,
+    e1ap_bearer_context_manager&                    e1ap_bearer_ctxt_mng_,
+    f1ap_ue_context_manager&                        f1ap_ue_ctxt_mng_,
+    rrc_ue_interface*                               rrc_ue_,
+    cu_cp_rrc_ue_interface&                         cu_cp_notifier_,
+    cu_cp_mobility_manager_handler&                 mobility_mng_,
+    ue_task_scheduler&                              ue_task_sched_,
+    up_resource_manager&                            up_resource_mng_,
+    ocudulog::basic_logger&                         logger_) :
   modify_request(modify_request_),
   e1ap_bearer_ctxt_mng(e1ap_bearer_ctxt_mng_),
   f1ap_ue_ctxt_mng(f1ap_ue_ctxt_mng_),
@@ -61,7 +61,7 @@ pdu_session_resource_modification_routine::pdu_session_resource_modification_rou
 }
 
 void pdu_session_resource_modification_routine::operator()(
-    coro_context<async_task<cu_cp_pdu_session_resource_modify_response>>& ctx)
+    coro_context<async_task<ngap_pdu_session_resource_modify_response>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -207,7 +207,7 @@ static void fill_e1ap_pdu_session_res_to_modify_list(
     slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_res_to_modify_item>& pdu_session_res_to_modify_list,
     ocudulog::basic_logger&                                                   logger,
     const up_config_update&                                                   next_config,
-    const cu_cp_pdu_session_resource_modify_request&                          modify_request)
+    const ngap_pdu_session_resource_modify_request&                           modify_request)
 {
   for (const auto& modify_item : next_config.pdu_sessions_to_modify_list) {
     const auto& session = modify_item.second;
@@ -268,9 +268,9 @@ void pdu_session_resource_modification_routine::fill_initial_e1ap_bearer_context
 /// \param[in] logger Reference to the logger.
 /// \return True on success, false otherwise.
 static bool update_modify_list_with_bearer_ctxt_mod_response(
-    slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_resource_modify_response_item>& ngap_response_list,
-    f1ap_ue_context_modification_request&                                                 ue_context_mod_request,
-    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_item_mod_req>& ngap_modify_list,
+    slotted_id_vector<pdu_session_id_t, ngap_pdu_session_resource_modify_response_item>& ngap_response_list,
+    f1ap_ue_context_modification_request&                                                ue_context_mod_request,
+    const slotted_id_vector<pdu_session_id_t, ngap_pdu_session_res_modify_item_mod_req>& ngap_modify_list,
     const e1ap_bearer_context_modification_response& bearer_context_modification_response,
     up_config_update&                                next_config,
     const ocudulog::basic_logger&                    logger)
@@ -293,14 +293,14 @@ static bool update_modify_list_with_bearer_ctxt_mod_response(
       logger.debug("Amend to existing NGAP response item for {}", psi);
     } else {
       // Add empty new item.
-      cu_cp_pdu_session_resource_modify_response_item new_item;
+      ngap_pdu_session_resource_modify_response_item new_item;
       new_item.pdu_session_id = psi;
       ngap_response_list.emplace(new_item.pdu_session_id, new_item);
       logger.debug("Insert new NGAP response item for {}", psi);
     }
 
     // Start/continue filling response item.
-    cu_cp_pdu_session_resource_modify_response_item& ngap_item = ngap_response_list[psi];
+    ngap_pdu_session_resource_modify_response_item& ngap_item = ngap_response_list[psi];
     for (const auto& e1ap_drb_item : e1ap_item.drb_setup_list_ng_ran) {
       const auto& drb_id = e1ap_drb_item.drb_id;
       if (next_config.pdu_sessions_to_modify_list.at(psi).drb_to_add.find(drb_id) ==
@@ -363,7 +363,7 @@ static bool update_modify_list_with_bearer_ctxt_mod_response(
 /// \param[in] pdu_session_resource_failed_list Const reference to the failed PDU sessions of the Bearer Context
 /// Modification Response.
 static void update_failed_list_with_bearer_ctxt_mod_response(
-    cu_cp_pdu_session_resource_modify_response&                                       response_msg,
+    ngap_pdu_session_resource_modify_response&                                        response_msg,
     up_config_update&                                                                 next_config,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item>& pdu_session_resource_failed_list)
 {
@@ -373,7 +373,7 @@ static void update_failed_list_with_bearer_ctxt_mod_response(
     response_msg.pdu_session_res_modify_list.erase(e1ap_item.pdu_session_id);
 
     // Add to list taking cause received from CU-UP.
-    cu_cp_pdu_session_res_setup_failed_item failed_item;
+    ngap_pdu_session_res_setup_failed_item failed_item;
     failed_item.pdu_session_id              = e1ap_item.pdu_session_id;
     failed_item.unsuccessful_transfer.cause = e1ap_to_ngap_cause(e1ap_item.cause);
     response_msg.pdu_session_res_failed_to_modify_list.emplace(failed_item.pdu_session_id, failed_item);
@@ -382,9 +382,9 @@ static void update_failed_list_with_bearer_ctxt_mod_response(
 
 // \brief Handle first BearerContextModificationResponse and prepare subsequent UEContextModificationRequest.
 bool handle_bearer_context_modification_response(
-    cu_cp_pdu_session_resource_modify_response&      response_msg,
+    ngap_pdu_session_resource_modify_response&       response_msg,
     f1ap_ue_context_modification_request&            ue_context_mod_request,
-    const cu_cp_pdu_session_resource_modify_request& modify_request,
+    const ngap_pdu_session_resource_modify_request&  modify_request,
     const e1ap_bearer_context_modification_response& bearer_context_modification_response,
     up_config_update&                                next_config,
     ocudulog::basic_logger&                          logger)
@@ -415,9 +415,9 @@ bool handle_bearer_context_modification_response(
 /// \param[in] logger Reference to the logger.
 /// \return True on success, false otherwise.
 static bool update_modify_list_with_ue_ctxt_mod_response(
-    slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_resource_modify_response_item>& ngap_response_list,
-    e1ap_bearer_context_modification_request&                                             bearer_ctxt_mod_request,
-    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_item_mod_req>& ngap_modify_list,
+    slotted_id_vector<pdu_session_id_t, ngap_pdu_session_resource_modify_response_item>& ngap_response_list,
+    e1ap_bearer_context_modification_request&                                            bearer_ctxt_mod_request,
+    const slotted_id_vector<pdu_session_id_t, ngap_pdu_session_res_modify_item_mod_req>& ngap_modify_list,
     const f1ap_ue_context_modification_response& ue_context_modification_response,
     const up_config_update&                      next_config,
     const ocudulog::basic_logger&                logger)
@@ -453,12 +453,12 @@ static bool update_modify_list_with_ue_ctxt_mod_response(
 
 // Handle UEContextModificationResponse and prepare second BearerContextModificationRequest.
 bool handle_ue_context_modification_response(
-    cu_cp_pdu_session_resource_modify_response&      response_msg,
-    e1ap_bearer_context_modification_request&        bearer_ctxt_mod_request,
-    const cu_cp_pdu_session_resource_modify_request& modify_request,
-    const f1ap_ue_context_modification_response&     ue_context_modification_response,
-    const up_config_update&                          next_config,
-    const ocudulog::basic_logger&                    logger)
+    ngap_pdu_session_resource_modify_response&      response_msg,
+    e1ap_bearer_context_modification_request&       bearer_ctxt_mod_request,
+    const ngap_pdu_session_resource_modify_request& modify_request,
+    const f1ap_ue_context_modification_response&    ue_context_modification_response,
+    const up_config_update&                         next_config,
+    const ocudulog::basic_logger&                   logger)
 {
   // Traverse modify list.
   if (!update_modify_list_with_ue_ctxt_mod_response(response_msg.pdu_session_res_modify_list,
@@ -474,11 +474,11 @@ bool handle_ue_context_modification_response(
 }
 
 // Helper function to fail all requested PDU session.
-static void fill_modify_failed_list(cu_cp_pdu_session_resource_modify_response&      response_msg,
-                                    const cu_cp_pdu_session_resource_modify_request& modify_request)
+static void fill_modify_failed_list(ngap_pdu_session_resource_modify_response&      response_msg,
+                                    const ngap_pdu_session_resource_modify_request& modify_request)
 {
   for (const auto& item : modify_request.pdu_session_res_modify_items) {
-    cu_cp_pdu_session_resource_failed_to_modify_item failed_item;
+    ngap_pdu_session_resource_failed_to_modify_item failed_item;
     failed_item.pdu_session_id              = item.pdu_session_id;
     failed_item.unsuccessful_transfer.cause = ngap_cause_misc_t::unspecified;
     response_msg.pdu_session_res_failed_to_modify_list.emplace(failed_item.pdu_session_id, failed_item);
@@ -486,10 +486,10 @@ static void fill_modify_failed_list(cu_cp_pdu_session_resource_modify_response& 
 }
 
 // Handle RRCReconfiguration result.
-bool handle_rrc_reconfiguration_response(cu_cp_pdu_session_resource_modify_response&      response_msg,
-                                         const cu_cp_pdu_session_resource_modify_request& modify_request,
-                                         bool                                             rrc_reconfig_result,
-                                         const ocudulog::basic_logger&                    logger)
+bool handle_rrc_reconfiguration_response(ngap_pdu_session_resource_modify_response&      response_msg,
+                                         const ngap_pdu_session_resource_modify_request& modify_request,
+                                         bool                                            rrc_reconfig_result,
+                                         const ocudulog::basic_logger&                   logger)
 {
   // Let all PDU sessions fail if response is negative.
   if (!rrc_reconfig_result) {
@@ -500,11 +500,11 @@ bool handle_rrc_reconfiguration_response(cu_cp_pdu_session_resource_modify_respo
 }
 
 // Helper to mark all PDU sessions that were requested to be set up as failed.
-static void mark_all_sessions_as_failed(cu_cp_pdu_session_resource_modify_response&      response_msg,
-                                        const cu_cp_pdu_session_resource_modify_request& modify_request)
+static void mark_all_sessions_as_failed(ngap_pdu_session_resource_modify_response&      response_msg,
+                                        const ngap_pdu_session_resource_modify_request& modify_request)
 {
   for (const auto& modify_item : modify_request.pdu_session_res_modify_items) {
-    cu_cp_pdu_session_resource_failed_to_modify_item failed_item;
+    ngap_pdu_session_resource_failed_to_modify_item failed_item;
     failed_item.pdu_session_id              = modify_item.pdu_session_id;
     failed_item.unsuccessful_transfer.cause = ngap_cause_radio_network_t::unspecified;
     response_msg.pdu_session_res_failed_to_modify_list.emplace(failed_item.pdu_session_id, failed_item);
@@ -513,7 +513,7 @@ static void mark_all_sessions_as_failed(cu_cp_pdu_session_resource_modify_respon
   response_msg.pdu_session_res_modify_list.clear();
 }
 
-cu_cp_pdu_session_resource_modify_response
+ngap_pdu_session_resource_modify_response
 pdu_session_resource_modification_routine::generate_pdu_session_resource_modify_response(bool success)
 {
   if (success) {
@@ -527,7 +527,7 @@ pdu_session_resource_modification_routine::generate_pdu_session_resource_modify_
     up_resource_mng.apply_config_update(result);
 
     for (const auto& psi : next_config.pdu_sessions_failed_to_modify_list) {
-      cu_cp_pdu_session_resource_failed_to_modify_item failed_item;
+      ngap_pdu_session_resource_failed_to_modify_item failed_item;
       failed_item.pdu_session_id              = psi;
       failed_item.unsuccessful_transfer.cause = ngap_cause_radio_network_t::unspecified;
       response_msg.pdu_session_res_failed_to_modify_list.emplace(failed_item.pdu_session_id, failed_item);

@@ -4,10 +4,8 @@
 
 #include "cu_cp_test_messages.h"
 #include "lib/e1ap/cu_cp/e1ap_cu_cp_asn1_helpers.h"
-#include "lib/f1ap/cu_cp/f1ap_asn1_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "ocudu/e1ap/common/e1ap_message.h"
-#include "ocudu/f1ap/f1ap_message.h"
 
 using namespace ocudu;
 using namespace ocucp;
@@ -21,11 +19,11 @@ cu_cp_ue_context_release_command ocudu::ocucp::generate_ue_context_release_comma
   return ue_context_release_command;
 }
 
-cu_cp_pdu_session_resource_setup_request ocudu::ocucp::generate_pdu_session_resource_setup(cu_cp_ue_index_t ue_index,
-                                                                                           unsigned num_pdu_sessions,
-                                                                                           unsigned num_qos_flows)
+ngap_pdu_session_resource_setup_request ocudu::ocucp::generate_pdu_session_resource_setup(cu_cp_ue_index_t ue_index,
+                                                                                          unsigned num_pdu_sessions,
+                                                                                          unsigned num_qos_flows)
 {
-  cu_cp_pdu_session_resource_setup_request req;
+  ngap_pdu_session_resource_setup_request req;
   req.ue_index = ue_index;
 
   req.ue_ambr.dl = 1000;
@@ -66,10 +64,10 @@ cu_cp_pdu_session_resource_setup_request ocudu::ocucp::generate_pdu_session_reso
   return req;
 }
 
-cu_cp_pdu_session_resource_setup_request
+ngap_pdu_session_resource_setup_request
 ocudu::ocucp::generate_pdu_session_resource_setup(cu_cp_ue_index_t ue_index, pdu_session_id_t psi, qos_flow_id_t qfi)
 {
-  cu_cp_pdu_session_resource_setup_request req;
+  ngap_pdu_session_resource_setup_request req;
   req.ue_index = ue_index;
 
   req.ue_ambr.dl = 1000;
@@ -104,14 +102,14 @@ ocudu::ocucp::generate_pdu_session_resource_setup(cu_cp_ue_index_t ue_index, pdu
   return req;
 }
 
-cu_cp_pdu_session_resource_release_command
-ocudu::ocucp::generate_pdu_session_resource_release(cu_cp_ue_index_t ue_index, pdu_session_id_t psi)
+ngap_pdu_session_resource_release_command ocudu::ocucp::generate_pdu_session_resource_release(cu_cp_ue_index_t ue_index,
+                                                                                              pdu_session_id_t psi)
 {
-  cu_cp_pdu_session_resource_release_command cmd;
+  ngap_pdu_session_resource_release_command cmd;
 
   cmd.ue_index = ue_index;
 
-  cu_cp_pdu_session_res_to_release_item_rel_cmd pdu_session_res_to_release_item_rel_cmd;
+  ngap_pdu_session_res_to_release_item_rel_cmd pdu_session_res_to_release_item_rel_cmd;
   pdu_session_res_to_release_item_rel_cmd.pdu_session_id = psi;
   pdu_session_res_to_release_item_rel_cmd.pdu_session_res_release_cmd_transfer.cause =
       ngap_cause_radio_network_t::unspecified;
@@ -121,16 +119,16 @@ ocudu::ocucp::generate_pdu_session_resource_release(cu_cp_ue_index_t ue_index, p
   return cmd;
 }
 
-cu_cp_pdu_session_resource_modify_request
+ngap_pdu_session_resource_modify_request
 ocudu::ocucp::generate_pdu_session_resource_modification(cu_cp_ue_index_t ue_index, unsigned psi, unsigned qfi)
 {
-  cu_cp_pdu_session_resource_modify_request request;
+  ngap_pdu_session_resource_modify_request request;
   request.ue_index = ue_index;
 
-  cu_cp_pdu_session_res_modify_item_mod_req modify_item;
+  ngap_pdu_session_res_modify_item_mod_req modify_item;
   modify_item.pdu_session_id = uint_to_pdu_session_id(psi);
 
-  cu_cp_qos_flow_add_or_mod_item qos_item;
+  ngap_qos_flow_add_or_mod_item qos_item;
   qos_item.qos_flow_id = uint_to_qos_flow_id(qfi);
   {
     non_dyn_5qi_descriptor non_dyn_5qi;
@@ -139,7 +137,7 @@ ocudu::ocucp::generate_pdu_session_resource_modification(cu_cp_ue_index_t ue_ind
     qos_item.qos_flow_level_qos_params.alloc_retention_prio.prio_level_arp = 8;
   }
 
-  cu_cp_pdu_session_res_modify_request_transfer transfer;
+  ngap_pdu_session_res_modify_request_transfer transfer;
   transfer.qos_flow_add_or_modify_request_list.emplace(qos_item.qos_flow_id, qos_item);
 
   modify_item.transfer = transfer;
@@ -148,19 +146,19 @@ ocudu::ocucp::generate_pdu_session_resource_modification(cu_cp_ue_index_t ue_ind
   return request;
 }
 
-cu_cp_pdu_session_resource_modify_request
+ngap_pdu_session_resource_modify_request
 ocudu::ocucp::generate_pdu_session_resource_modification_with_qos_flow_removal(qos_flow_id_t flow_id)
 {
-  cu_cp_pdu_session_resource_modify_request request;
+  ngap_pdu_session_resource_modify_request request;
   request.ue_index = uint_to_ue_index(0);
 
-  cu_cp_pdu_session_res_modify_item_mod_req modify_item;
+  ngap_pdu_session_res_modify_item_mod_req modify_item;
   modify_item.pdu_session_id = uint_to_pdu_session_id(1);
 
-  cu_cp_pdu_session_res_modify_request_transfer transfer;
+  ngap_pdu_session_res_modify_request_transfer transfer;
 
   // Add item to remove inexisting QoS flow.
-  cu_cp_qos_flow_failed_to_setup_item release_item;
+  ngap_qos_flow_failed_to_setup_item release_item;
   release_item.qos_flow_id = flow_id;
   release_item.cause       = ngap_cause_radio_network_t::unspecified;
   transfer.qos_flow_to_release_list.emplace(release_item.qos_flow_id, release_item);

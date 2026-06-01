@@ -6,6 +6,7 @@
 
 #include "ocudu/cu_cp/cu_cp_location_reporting_types.h"
 #include "ocudu/cu_cp/inter_cu_handover_messages.h"
+#include "ocudu/ran/aggregate_maximum_bit_rate.h"
 #include "ocudu/ran/cause/xnap_cause.h"
 #include "ocudu/ran/cu_cp_pdu_session.h"
 #include "ocudu/ran/cu_cp_types.h"

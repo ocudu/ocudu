@@ -19,25 +19,25 @@ namespace ocucp {
 class pdu_session_resource_release_routine
 {
 public:
-  pdu_session_resource_release_routine(const cu_cp_pdu_session_resource_release_command& release_cmd_,
-                                       e1ap_bearer_context_manager&                      e1ap_bearer_ctxt_mng_,
-                                       f1ap_ue_context_manager&                          f1ap_ue_ctxt_mng_,
-                                       rrc_ue_interface*                                 rrc_ue_,
-                                       cu_cp_rrc_ue_interface&                           cu_cp_notifier_,
-                                       ue_task_scheduler&                                task_sched_,
-                                       up_resource_manager&                              up_resource_mng_,
-                                       ocudulog::basic_logger&                           logger_);
+  pdu_session_resource_release_routine(const ngap_pdu_session_resource_release_command& release_cmd_,
+                                       e1ap_bearer_context_manager&                     e1ap_bearer_ctxt_mng_,
+                                       f1ap_ue_context_manager&                         f1ap_ue_ctxt_mng_,
+                                       rrc_ue_interface*                                rrc_ue_,
+                                       cu_cp_rrc_ue_interface&                          cu_cp_notifier_,
+                                       ue_task_scheduler&                               task_sched_,
+                                       up_resource_manager&                             up_resource_mng_,
+                                       ocudulog::basic_logger&                          logger_);
 
-  void operator()(coro_context<async_task<cu_cp_pdu_session_resource_release_response>>& ctx);
+  void operator()(coro_context<async_task<ngap_pdu_session_resource_release_response>>& ctx);
 
   static const char* name() { return "PDU Session Resource Release Routine"; }
 
 private:
   void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_modification_request& e1ap_request);
 
-  cu_cp_pdu_session_resource_release_response handle_pdu_session_resource_release_response(bool success);
+  ngap_pdu_session_resource_release_response handle_pdu_session_resource_release_response(bool success);
 
-  const cu_cp_pdu_session_resource_release_command release_cmd;
+  const ngap_pdu_session_resource_release_command release_cmd;
 
   up_config_update next_config;
 
@@ -57,8 +57,8 @@ private:
   cu_cp_ue_context_release_request         ue_context_release_request;
 
   // (sub-)routine results
-  cu_cp_pdu_session_resource_release_response response_msg;
-  f1ap_ue_context_modification_response       ue_context_modification_response; // to inform DU about the new DRBs
+  ngap_pdu_session_resource_release_response response_msg;
+  f1ap_ue_context_modification_response      ue_context_modification_response; // to inform DU about the new DRBs
   e1ap_bearer_context_modification_response
        bearer_context_modification_response; // to inform CU-UP about the new TEID for UL F1u traffic
   bool rrc_reconfig_result = false;          // the final UE reconfiguration

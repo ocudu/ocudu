@@ -14,7 +14,7 @@ using namespace ocudu::ocucp;
 using namespace asn1::ngap;
 
 ngap_pdu_session_resource_setup_procedure::ngap_pdu_session_resource_setup_procedure(
-    const cu_cp_pdu_session_resource_setup_request&    request_,
+    const ngap_pdu_session_resource_setup_request&     request_,
     const asn1::ngap::pdu_session_res_setup_request_s& asn1_request_,
     ngap_ue_context_list&                              ue_ctxt_list_,
     ngap_cu_cp_notifier&                               cu_cp_notifier_,

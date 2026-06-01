@@ -5,6 +5,7 @@
 #pragma once
 
 #include "ocudu/cu_cp/up_context.h"
+#include "ocudu/ngap/ngap_pdu_session.h"
 #include "ocudu/ran/cu_cp_pdu_session.h"
 #include <map>
 
@@ -67,13 +68,13 @@ public:
   ~up_resource_manager() = default;
 
   bool validate_request(const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items) const;
-  bool validate_request(const cu_cp_pdu_session_resource_modify_request& pdu) const;
-  bool validate_request(const cu_cp_pdu_session_resource_release_command& pdu) const;
+  bool validate_request(const ngap_pdu_session_resource_modify_request& pdu) const;
+  bool validate_request(const ngap_pdu_session_resource_release_command& pdu) const;
 
   up_config_update
   calculate_update(const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items);
-  up_config_update calculate_update(const cu_cp_pdu_session_resource_modify_request& pdu);
-  up_config_update calculate_update(const cu_cp_pdu_session_resource_release_command& pdu);
+  up_config_update calculate_update(const ngap_pdu_session_resource_modify_request& pdu);
+  up_config_update calculate_update(const ngap_pdu_session_resource_release_command& pdu);
 
   void                          apply_config_update(const up_config_update_result& result);
   void                          refresh_drb_id_after_key_change();

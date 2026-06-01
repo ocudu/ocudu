@@ -859,8 +859,8 @@ cu_cp_impl::handle_new_ue_context_modification_request(const ngap_ue_context_mod
       });
 }
 
-async_task<cu_cp_pdu_session_resource_setup_response>
-cu_cp_impl::handle_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request)
+async_task<ngap_pdu_session_resource_setup_response>
+cu_cp_impl::handle_new_pdu_session_resource_setup_request(ngap_pdu_session_resource_setup_request& request)
 {
   cu_cp_ue* ue = ue_mng.find_du_ue(request.ue_index);
   ocudu_assert(ue != nullptr, "ue={}: Could not find DU UE", request.ue_index);
@@ -891,8 +891,8 @@ cu_cp_impl::handle_new_pdu_session_resource_setup_request(cu_cp_pdu_session_reso
                                                                          logger);
 
   return launch_async([this, ue_index = request.ue_index, drbs_before, setup_task = std::move(pdu_setup_task)](
-                          coro_context<async_task<cu_cp_pdu_session_resource_setup_response>>& ctx) mutable {
-    cu_cp_pdu_session_resource_setup_response setup_response;
+                          coro_context<async_task<ngap_pdu_session_resource_setup_response>>& ctx) mutable {
+    ngap_pdu_session_resource_setup_response setup_response;
     CORO_BEGIN(ctx);
     CORO_AWAIT_VALUE(setup_response, std::move(setup_task));
 
@@ -908,8 +908,8 @@ cu_cp_impl::handle_new_pdu_session_resource_setup_request(cu_cp_pdu_session_reso
   });
 }
 
-async_task<cu_cp_pdu_session_resource_modify_response>
-cu_cp_impl::handle_new_pdu_session_resource_modify_request(const cu_cp_pdu_session_resource_modify_request& request)
+async_task<ngap_pdu_session_resource_modify_response>
+cu_cp_impl::handle_new_pdu_session_resource_modify_request(const ngap_pdu_session_resource_modify_request& request)
 {
   cu_cp_ue* ue = ue_mng.find_du_ue(request.ue_index);
   ocudu_assert(ue != nullptr, "ue={}: Could not find DU UE", request.ue_index);
@@ -928,17 +928,17 @@ cu_cp_impl::handle_new_pdu_session_resource_modify_request(const cu_cp_pdu_sessi
       logger);
 }
 
-async_task<cu_cp_pdu_session_resource_release_response>
-cu_cp_impl::handle_new_pdu_session_resource_release_command(const cu_cp_pdu_session_resource_release_command& command)
+async_task<ngap_pdu_session_resource_release_response>
+cu_cp_impl::handle_new_pdu_session_resource_release_command(const ngap_pdu_session_resource_release_command& command)
 {
   cu_cp_ue* ue = ue_mng.find_du_ue(command.ue_index);
   if (ue == nullptr) {
     logger.error("ue={}: Dropping PDUSessionResourceReleaseCommand. Could not find DU UE", command.ue_index);
-    return launch_no_op_task(cu_cp_pdu_session_resource_release_response{});
+    return launch_no_op_task(ngap_pdu_session_resource_release_response{});
   }
   if (ue->get_cu_up_index() == cu_cp_cu_up_index_t::invalid) {
     logger.error("ue={}: Dropping PDUSessionResourceReleaseCommand. Could not find CU-UP of the UE", command.ue_index);
-    return launch_no_op_task(cu_cp_pdu_session_resource_release_response{});
+    return launch_no_op_task(ngap_pdu_session_resource_release_response{});
   }
 
   return launch_async<pdu_session_resource_release_routine>(

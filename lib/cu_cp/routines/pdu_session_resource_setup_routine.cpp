@@ -16,10 +16,10 @@ using namespace asn1::rrc_nr;
 // Free function to amend to the final procedure response message. This will take the results from the various
 // sub-procedures and update the succeeded/failed fields.
 static bool handle_bearer_context_modification_response(
-    cu_cp_pdu_session_resource_setup_response&       response_msg,
+    ngap_pdu_session_resource_setup_response&        response_msg,
     f1ap_ue_context_modification_request&            ue_context_mod_request,
     up_config_update&                                next_config,
-    const cu_cp_pdu_session_resource_setup_request&  setup_msg,
+    const ngap_pdu_session_resource_setup_request&   setup_msg,
     const e1ap_bearer_context_modification_response& bearer_context_modification_response,
     up_resource_manager&                             up_resource_mng,
     const security_indication_t&                     default_security_indication,
@@ -27,44 +27,44 @@ static bool handle_bearer_context_modification_response(
 
 // Same as above but taking the result from E1AP Bearer Context Setup message.
 static bool
-handle_bearer_context_setup_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
-                                     f1ap_ue_context_modification_request&           ue_context_mod_request,
-                                     const cu_cp_pdu_session_resource_setup_request& setup_msg,
-                                     const e1ap_bearer_context_setup_response&       bearer_context_setup_response,
-                                     up_config_update&                               next_config,
-                                     up_resource_manager&                            up_resource_mng_,
-                                     const security_indication_t&                    default_security_indication,
-                                     ocudulog::basic_logger&                         logger);
+handle_bearer_context_setup_response(ngap_pdu_session_resource_setup_response&      response_msg,
+                                     f1ap_ue_context_modification_request&          ue_context_mod_request,
+                                     const ngap_pdu_session_resource_setup_request& setup_msg,
+                                     const e1ap_bearer_context_setup_response&      bearer_context_setup_response,
+                                     up_config_update&                              next_config,
+                                     up_resource_manager&                           up_resource_mng_,
+                                     const security_indication_t&                   default_security_indication,
+                                     ocudulog::basic_logger&                        logger);
 
 // This method takes the F1AP UE Context Modification Response message and pre-fills the subsequent
 // bearer context modification message to be send to the CU-UP.
 // In case of a negative outcome it also prefills the final PDU session resource setup respone message.
 static bool
-handle_ue_context_modification_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
-                                        e1ap_bearer_context_modification_request&       bearer_ctxt_mod_request,
-                                        const cu_cp_pdu_session_resource_setup_request& setup_msg,
-                                        const f1ap_ue_context_modification_response& ue_context_modification_response,
-                                        const up_config_update&                      next_config,
-                                        const ocudulog::basic_logger&                logger);
+handle_ue_context_modification_response(ngap_pdu_session_resource_setup_response&      response_msg,
+                                        e1ap_bearer_context_modification_request&      bearer_ctxt_mod_request,
+                                        const ngap_pdu_session_resource_setup_request& setup_msg,
+                                        const f1ap_ue_context_modification_response&   ue_context_modification_response,
+                                        const up_config_update&                        next_config,
+                                        const ocudulog::basic_logger&                  logger);
 
-static bool handle_rrc_reconfiguration_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
-                                                const cu_cp_pdu_session_resource_setup_request& setup_msg,
-                                                bool                                            rrc_reconfig_result,
-                                                const ocudulog::basic_logger&                   logger);
+static bool handle_rrc_reconfiguration_response(ngap_pdu_session_resource_setup_response&      response_msg,
+                                                const ngap_pdu_session_resource_setup_request& setup_msg,
+                                                bool                                           rrc_reconfig_result,
+                                                const ocudulog::basic_logger&                  logger);
 
 pdu_session_resource_setup_routine::pdu_session_resource_setup_routine(
-    const cu_cp_pdu_session_resource_setup_request& setup_msg_,
-    const ue_configuration&                         ue_cfg_,
-    const ocudu::security::sec_as_config&           security_cfg_,
-    const security_indication_t&                    default_security_indication_,
-    e1ap_bearer_context_manager&                    e1ap_bearer_ctxt_mng_,
-    f1ap_ue_context_manager&                        f1ap_ue_ctxt_mng_,
-    rrc_ue_interface*                               rrc_ue_,
-    cu_cp_rrc_ue_interface&                         cu_cp_notifier_,
-    cu_cp_mobility_manager_handler&                 mobility_mng_,
-    ue_task_scheduler&                              ue_task_sched_,
-    up_resource_manager&                            up_resource_mng_,
-    ocudulog::basic_logger&                         logger_) :
+    const ngap_pdu_session_resource_setup_request& setup_msg_,
+    const ue_configuration&                        ue_cfg_,
+    const ocudu::security::sec_as_config&          security_cfg_,
+    const security_indication_t&                   default_security_indication_,
+    e1ap_bearer_context_manager&                   e1ap_bearer_ctxt_mng_,
+    f1ap_ue_context_manager&                       f1ap_ue_ctxt_mng_,
+    rrc_ue_interface*                              rrc_ue_,
+    cu_cp_rrc_ue_interface&                        cu_cp_notifier_,
+    cu_cp_mobility_manager_handler&                mobility_mng_,
+    ue_task_scheduler&                             ue_task_sched_,
+    up_resource_manager&                           up_resource_mng_,
+    ocudulog::basic_logger&                        logger_) :
   setup_msg(setup_msg_),
   ue_cfg(ue_cfg_),
   security_cfg(security_cfg_),
@@ -81,7 +81,7 @@ pdu_session_resource_setup_routine::pdu_session_resource_setup_routine(
 }
 
 void pdu_session_resource_setup_routine::operator()(
-    coro_context<async_task<cu_cp_pdu_session_resource_setup_response>>& ctx)
+    coro_context<async_task<ngap_pdu_session_resource_setup_response>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -308,11 +308,11 @@ void pdu_session_resource_setup_routine::operator()(
 /// \param[in] logger Reference to the logger.
 /// \return True on success, false otherwise.
 static bool update_setup_list_with_bearer_ctxt_setup_mod_response(
-    slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>& ngap_response_list,
-    std::vector<f1ap_srb_to_setup>&                                                 srb_setup_mod_list,
-    std::vector<f1ap_drb_to_setup>&                                                 drb_setup_mod_list,
-    up_config_update&                                                               next_config,
-    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>&    ngap_setup_list,
+    slotted_id_vector<pdu_session_id_t, ngap_pdu_session_res_setup_response_item>& ngap_response_list,
+    std::vector<f1ap_srb_to_setup>&                                                srb_setup_mod_list,
+    std::vector<f1ap_drb_to_setup>&                                                drb_setup_mod_list,
+    up_config_update&                                                              next_config,
+    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>&   ngap_setup_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
                                   pdu_session_resource_setup_list,
     up_resource_manager&          up_resource_mng,
@@ -340,7 +340,7 @@ static bool update_setup_list_with_bearer_ctxt_setup_mod_response(
       return false;
     }
 
-    cu_cp_pdu_session_res_setup_response_item item;
+    ngap_pdu_session_res_setup_response_item item;
     item.pdu_session_id = psi;
 
     auto& transfer                                    = item.pdu_session_resource_setup_response_transfer;
@@ -450,7 +450,7 @@ static bool update_setup_list_with_bearer_ctxt_setup_mod_response(
 /// \param[in] pdu_session_resource_failed_list Const reference to the failed PDU sessions of the Bearer Context
 /// Setup/Modification Response.
 static void update_failed_list(
-    cu_cp_pdu_session_resource_setup_response&                                        response_msg,
+    ngap_pdu_session_resource_setup_response&                                         response_msg,
     up_config_update&                                                                 next_config,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item>& pdu_session_resource_failed_list)
 {
@@ -460,7 +460,7 @@ static void update_failed_list(
     response_msg.pdu_session_res_setup_response_items.erase(e1ap_item.pdu_session_id);
 
     // Add to list taking cause received from CU-UP.
-    cu_cp_pdu_session_res_setup_failed_item failed_item;
+    ngap_pdu_session_res_setup_failed_item failed_item;
     failed_item.pdu_session_id              = e1ap_item.pdu_session_id;
     failed_item.unsuccessful_transfer.cause = e1ap_to_ngap_cause(e1ap_item.cause);
     response_msg.pdu_session_res_failed_to_setup_items.emplace(failed_item.pdu_session_id, failed_item);
@@ -532,7 +532,7 @@ static bool validate_next_config_with_bearer_ctxt_mod_response(
 /// \param[in] bearer_context_modification_response Const reference to the response of the Bearer Context Modification
 /// Request.
 static void update_failed_to_modify_list_with_bearer_ctxt_mod_resp(
-    cu_cp_pdu_session_resource_setup_response&       response_msg,
+    ngap_pdu_session_resource_setup_response&        response_msg,
     up_config_update&                                next_config,
     const e1ap_bearer_context_modification_response& bearer_context_modification_response)
 {
@@ -542,7 +542,7 @@ static void update_failed_to_modify_list_with_bearer_ctxt_mod_resp(
     response_msg.pdu_session_res_setup_response_items.erase(e1ap_item.pdu_session_id);
 
     // Add to list taking cause received from CU-UP.
-    cu_cp_pdu_session_res_setup_failed_item failed_item;
+    ngap_pdu_session_res_setup_failed_item failed_item;
     failed_item.pdu_session_id              = e1ap_item.pdu_session_id;
     failed_item.unsuccessful_transfer.cause = e1ap_to_ngap_cause(e1ap_item.cause);
     response_msg.pdu_session_res_failed_to_setup_items.emplace(failed_item.pdu_session_id, failed_item);
@@ -552,10 +552,10 @@ static void update_failed_to_modify_list_with_bearer_ctxt_mod_resp(
 // Free function to amend to the final procedure response message. This will take the results from the various
 // sub-procedures and update the succeeded/failed fields.
 bool handle_bearer_context_modification_response(
-    cu_cp_pdu_session_resource_setup_response&       response_msg,
+    ngap_pdu_session_resource_setup_response&        response_msg,
     f1ap_ue_context_modification_request&            ue_context_mod_request,
     up_config_update&                                next_config,
-    const cu_cp_pdu_session_resource_setup_request&  setup_msg,
+    const ngap_pdu_session_resource_setup_request&   setup_msg,
     const e1ap_bearer_context_modification_response& bearer_context_modification_response,
     up_resource_manager&                             up_resource_mng,
     const security_indication_t&                     default_security_indication,
@@ -595,14 +595,14 @@ bool handle_bearer_context_modification_response(
 }
 
 // Same as above but taking the result from E1AP Bearer Context Setup message.
-bool handle_bearer_context_setup_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
-                                          f1ap_ue_context_modification_request&           ue_context_mod_request,
-                                          const cu_cp_pdu_session_resource_setup_request& setup_msg,
-                                          const e1ap_bearer_context_setup_response&       bearer_context_setup_response,
-                                          up_config_update&                               next_config,
-                                          up_resource_manager&                            up_resource_mng_,
-                                          const security_indication_t&                    default_security_indication,
-                                          ocudulog::basic_logger&                         logger)
+bool handle_bearer_context_setup_response(ngap_pdu_session_resource_setup_response&      response_msg,
+                                          f1ap_ue_context_modification_request&          ue_context_mod_request,
+                                          const ngap_pdu_session_resource_setup_request& setup_msg,
+                                          const e1ap_bearer_context_setup_response&      bearer_context_setup_response,
+                                          up_config_update&                              next_config,
+                                          up_resource_manager&                           up_resource_mng_,
+                                          const security_indication_t&                   default_security_indication,
+                                          ocudulog::basic_logger&                        logger)
 {
   // Traverse setup list.
   if (!update_setup_list_with_bearer_ctxt_setup_mod_response(
@@ -625,11 +625,11 @@ bool handle_bearer_context_setup_response(cu_cp_pdu_session_resource_setup_respo
 }
 
 // Helper function to fail all requested PDU session.
-static void fill_setup_failed_list(cu_cp_pdu_session_resource_setup_response&      response_msg,
-                                   const cu_cp_pdu_session_resource_setup_request& setup_msg)
+static void fill_setup_failed_list(ngap_pdu_session_resource_setup_response&      response_msg,
+                                   const ngap_pdu_session_resource_setup_request& setup_msg)
 {
   for (const auto& item : setup_msg.pdu_session_res_setup_items) {
-    cu_cp_pdu_session_res_setup_failed_item failed_item;
+    ngap_pdu_session_res_setup_failed_item failed_item;
     failed_item.pdu_session_id              = item.pdu_session_id;
     failed_item.unsuccessful_transfer.cause = ngap_cause_misc_t::unspecified;
     response_msg.pdu_session_res_failed_to_setup_items.emplace(failed_item.pdu_session_id, failed_item);
@@ -640,12 +640,12 @@ static void fill_setup_failed_list(cu_cp_pdu_session_resource_setup_response&   
 // bearer context modification message to be send to the CU-UP.
 // In case of a negative outcome it also prefills the final PDU session resource setup respone message.
 bool handle_ue_context_modification_response(
-    cu_cp_pdu_session_resource_setup_response&      response_msg,
-    e1ap_bearer_context_modification_request&       bearer_ctxt_mod_request,
-    const cu_cp_pdu_session_resource_setup_request& setup_msg,
-    const f1ap_ue_context_modification_response&    ue_context_modification_response,
-    const up_config_update&                         next_config,
-    const ocudulog::basic_logger&                   logger)
+    ngap_pdu_session_resource_setup_response&      response_msg,
+    e1ap_bearer_context_modification_request&      bearer_ctxt_mod_request,
+    const ngap_pdu_session_resource_setup_request& setup_msg,
+    const f1ap_ue_context_modification_response&   ue_context_modification_response,
+    const up_config_update&                        next_config,
+    const ocudulog::basic_logger&                  logger)
 {
   // Fail procedure if (single) DRB couldn't be setup.
   if (!ue_context_modification_response.drbs_failed_to_be_setup_list.empty()) {
@@ -669,10 +669,10 @@ bool handle_ue_context_modification_response(
   return ue_context_modification_response.success;
 }
 
-bool handle_rrc_reconfiguration_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
-                                         const cu_cp_pdu_session_resource_setup_request& setup_msg,
-                                         bool                                            rrc_reconfig_result,
-                                         const ocudulog::basic_logger&                   logger)
+bool handle_rrc_reconfiguration_response(ngap_pdu_session_resource_setup_response&      response_msg,
+                                         const ngap_pdu_session_resource_setup_request& setup_msg,
+                                         bool                                           rrc_reconfig_result,
+                                         const ocudulog::basic_logger&                  logger)
 {
   // Let all PDU sessions fail if response is negative.
   if (!rrc_reconfig_result) {
@@ -683,10 +683,10 @@ bool handle_rrc_reconfiguration_response(cu_cp_pdu_session_resource_setup_respon
 }
 
 // Helper to mark all PDU sessions that were requested to be set up as failed.
-static void mark_all_sessions_as_failed(cu_cp_pdu_session_resource_setup_response&      response_msg,
-                                        const cu_cp_pdu_session_resource_setup_request& setup_msg,
-                                        up_config_update&                               next_config,
-                                        ngap_cause_t                                    cause)
+static void mark_all_sessions_as_failed(ngap_pdu_session_resource_setup_response&      response_msg,
+                                        const ngap_pdu_session_resource_setup_request& setup_msg,
+                                        up_config_update&                              next_config,
+                                        ngap_cause_t                                   cause)
 {
   slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item> failed_list;
   for (const auto& setup_item : setup_msg.pdu_session_res_setup_items) {
@@ -695,7 +695,7 @@ static void mark_all_sessions_as_failed(cu_cp_pdu_session_resource_setup_respons
     response_msg.pdu_session_res_setup_response_items.erase(setup_item.pdu_session_id);
 
     // Add to list taking cause received from CU-UP.
-    cu_cp_pdu_session_res_setup_failed_item failed_item;
+    ngap_pdu_session_res_setup_failed_item failed_item;
     failed_item.pdu_session_id              = setup_item.pdu_session_id;
     failed_item.unsuccessful_transfer.cause = cause;
     response_msg.pdu_session_res_failed_to_setup_items.emplace(setup_item.pdu_session_id, failed_item);
@@ -705,7 +705,7 @@ static void mark_all_sessions_as_failed(cu_cp_pdu_session_resource_setup_respons
   response_msg.pdu_session_res_setup_response_items.clear();
 }
 
-cu_cp_pdu_session_resource_setup_response
+ngap_pdu_session_resource_setup_response
 pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(bool success, ngap_cause_t cause)
 {
   if (success) {

@@ -100,12 +100,12 @@ public:
   handle_new_initial_context_setup_request(const ngap_init_context_setup_request& request) override;
   async_task<expected<ngap_ue_context_modification_response, ngap_ue_context_modification_failure>>
   handle_new_ue_context_modification_request(const ngap_ue_context_modification_request& request) override;
-  async_task<cu_cp_pdu_session_resource_setup_response>
-  handle_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) override;
-  async_task<cu_cp_pdu_session_resource_modify_response>
-  handle_new_pdu_session_resource_modify_request(const cu_cp_pdu_session_resource_modify_request& request) override;
-  async_task<cu_cp_pdu_session_resource_release_response>
-  handle_new_pdu_session_resource_release_command(const cu_cp_pdu_session_resource_release_command& command) override;
+  async_task<ngap_pdu_session_resource_setup_response>
+  handle_new_pdu_session_resource_setup_request(ngap_pdu_session_resource_setup_request& request) override;
+  async_task<ngap_pdu_session_resource_modify_response>
+  handle_new_pdu_session_resource_modify_request(const ngap_pdu_session_resource_modify_request& request) override;
+  async_task<ngap_pdu_session_resource_release_response>
+  handle_new_pdu_session_resource_release_command(const ngap_pdu_session_resource_release_command& command) override;
   async_task<cu_cp_ue_context_release_complete>
   handle_ue_context_release_command(const cu_cp_ue_context_release_command& command) override;
   async_task<cu_cp_handover_resource_allocation_response>

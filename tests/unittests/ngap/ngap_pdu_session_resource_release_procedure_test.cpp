@@ -98,7 +98,7 @@ TEST_F(ngap_pdu_session_resource_release_procedure_test,
   // Set CU-CP outcome to response with empty released PDU sessions list, which should trigger transmission of error
   // indication.
   cu_cp_notifier.set_pdu_session_resource_release_outcome(
-      cu_cp_pdu_session_resource_release_response{.released_pdu_sessions = {}});
+      ngap_pdu_session_resource_release_response{.released_pdu_sessions = {}});
 
   ngap_message pdu_session_resource_release_command =
       generate_valid_pdu_session_resource_release_command(ue.amf_ue_id.value(), ue.ran_ue_id.value(), pdu_session_id);

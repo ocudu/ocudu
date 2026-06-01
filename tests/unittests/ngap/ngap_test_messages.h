@@ -13,14 +13,13 @@
 #include "ocudu/ngap/ngap_types.h"
 #include "ocudu/ran/cause/ngap_cause.h"
 #include "ocudu/ran/gtpu/gtpu_teid.h"
-#include "ocudu/ran/up_transport_layer_info.h"
 
 namespace ocudu::ocucp {
 
 /// \brief Check that two NGAP PDUs have the same type.
 bool is_same_pdu_type(const ngap_message& lhs, const ngap_message& rhs);
-bool is_pdu_type(const ngap_message& pdu, const asn1::ngap::ngap_elem_procs_o::init_msg_c::types type);
-bool is_pdu_type(const ngap_message& pdu, const asn1::ngap::ngap_elem_procs_o::successful_outcome_c::types type);
+bool is_pdu_type(const ngap_message& pdu, asn1::ngap::ngap_elem_procs_o::init_msg_c::types type);
+bool is_pdu_type(const ngap_message& pdu, asn1::ngap::ngap_elem_procs_o::successful_outcome_c::types type);
 
 // NG Application Protocol (NGSetupRequest)
 //     NGAP-PDU: initiatingMessage (0)
@@ -183,8 +182,8 @@ ngap_message generate_pdu_session_resource_setup_request_with_pdu_session_type_i
     ran_ue_id_t ran_ue_id);
 
 /// \brief Generate a dummy PDU Session Resource Setup Response.
-cu_cp_pdu_session_resource_setup_response
-generate_cu_cp_pdu_session_resource_setup_response(cu_cp_pdu_session_resource_setup_request& request);
+ngap_pdu_session_resource_setup_response
+generate_ngap_pdu_session_resource_setup_response(ngap_pdu_session_resource_setup_request& request);
 
 /// \brief Generate a dummy PDU Session Resource Release Command base.
 ngap_message generate_pdu_session_resource_release_command_base(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
@@ -198,8 +197,8 @@ ngap_message generate_valid_pdu_session_resource_release_command(amf_ue_id_t    
 ngap_message generate_invalid_pdu_session_resource_release_command(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
 
 /// \brief Generate a dummy PDU Session Resource Release Response.
-cu_cp_pdu_session_resource_release_response
-generate_cu_cp_pdu_session_resource_release_response(pdu_session_id_t pdu_session_id);
+ngap_pdu_session_resource_release_response
+generate_ngap_pdu_session_resource_release_response(pdu_session_id_t pdu_session_id);
 
 /// \brief Generate a dummy PDU Session Resource Modify Request base.
 ngap_message generate_pdu_session_resource_modify_request_base(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
@@ -218,9 +217,9 @@ ngap_message generate_invalid_pdu_session_resource_modify_request_message(amf_ue
                                                                           pdu_session_id_t pdu_session_id);
 
 /// \brief Generate a dummy PDU Session Resource Modify Response.
-cu_cp_pdu_session_resource_modify_response
-generate_cu_cp_pdu_session_resource_modify_response(pdu_session_id_t pdu_session_id,
-                                                    qos_flow_id_t    qos_flow_id = uint_to_qos_flow_id(1));
+ngap_pdu_session_resource_modify_response
+generate_ngap_pdu_session_resource_modify_response(pdu_session_id_t pdu_session_id,
+                                                   qos_flow_id_t    qos_flow_id = uint_to_qos_flow_id(1));
 
 /// \brief Generate a valid dummy Paging message with only mandatory fields set.
 ngap_message generate_valid_minimal_paging_message();

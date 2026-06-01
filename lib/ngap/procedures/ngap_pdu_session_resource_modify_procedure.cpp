@@ -12,7 +12,7 @@ using namespace ocudu::ocucp;
 using namespace asn1::ngap;
 
 ngap_pdu_session_resource_modify_procedure::ngap_pdu_session_resource_modify_procedure(
-    const cu_cp_pdu_session_resource_modify_request&    request_,
+    const ngap_pdu_session_resource_modify_request&     request_,
     const asn1::ngap::pdu_session_res_modify_request_s& asn1_request_,
     const ngap_ue_ids&                                  ue_ids_,
     ngap_cu_cp_notifier&                                cu_cp_notifier_,
@@ -87,8 +87,8 @@ void ngap_pdu_session_resource_modify_procedure::combine_pdu_session_resource_mo
 /// \param[out] resp The ASN1 NGAP PDU Session Resource Modify Response message.
 /// \param[in]  cu_cp_resp The CU-CP PDU Session Resource Modify Response message.
 /// \return True on success, otherwise false.
-static bool fill_asn1_pdu_session_res_modify_response(asn1::ngap::pdu_session_res_modify_resp_s&        resp,
-                                                      const cu_cp_pdu_session_resource_modify_response& cu_cp_resp)
+static bool fill_asn1_pdu_session_res_modify_response(asn1::ngap::pdu_session_res_modify_resp_s&       resp,
+                                                      const ngap_pdu_session_resource_modify_response& cu_cp_resp)
 {
   // Fill PDU Session Resource Modify Response List
   if (!cu_cp_resp.pdu_session_res_modify_list.empty()) {

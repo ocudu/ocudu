@@ -4,9 +4,7 @@
 
 #include "../cu_cp_test_messages.h"
 #include "lib/cu_cp/up_resource_manager/up_resource_manager_impl.h"
-#include "ocudu/adt/byte_buffer.h"
 #include "ocudu/ran/rb_id.h"
-#include "ocudu/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -32,7 +30,7 @@ protected:
 
   void setup_initial_pdu_session()
   {
-    cu_cp_pdu_session_resource_setup_request msg = generate_pdu_session_resource_setup();
+    ngap_pdu_session_resource_setup_request msg = generate_pdu_session_resource_setup();
     ASSERT_TRUE(manager.validate_request(msg.pdu_session_res_setup_items));
 
     // No DRB present
@@ -61,8 +59,8 @@ protected:
   void modify_pdu_session()
   {
     // Modify existing session.
-    cu_cp_pdu_session_resource_modify_request msg = generate_pdu_session_resource_modification();
-    const auto                                psi = uint_to_pdu_session_id(1);
+    ngap_pdu_session_resource_modify_request msg = generate_pdu_session_resource_modification();
+    const auto                               psi = uint_to_pdu_session_id(1);
 
     ASSERT_TRUE(manager.validate_request(msg));
     up_config_update update = manager.calculate_update(msg);
@@ -103,7 +101,7 @@ TEST_F(up_resource_manager_test, when_initial_pdu_session_is_created_new_drb_is_
 
 TEST_F(up_resource_manager_test, when_same_pdu_session_is_created_no_new_drb_is_set_up)
 {
-  cu_cp_pdu_session_resource_setup_request msg = generate_pdu_session_resource_setup();
+  ngap_pdu_session_resource_setup_request msg = generate_pdu_session_resource_setup();
   ASSERT_TRUE(manager.validate_request(msg.pdu_session_res_setup_items));
 
   // single DRB should be added
@@ -124,7 +122,7 @@ TEST_F(up_resource_manager_test, when_same_pdu_session_is_created_no_new_drb_is_
 
 TEST_F(up_resource_manager_test, when_drb_is_added_pdcp_config_is_valid)
 {
-  cu_cp_pdu_session_resource_setup_request msg = generate_pdu_session_resource_setup();
+  ngap_pdu_session_resource_setup_request msg = generate_pdu_session_resource_setup();
   ASSERT_TRUE(manager.validate_request(msg.pdu_session_res_setup_items));
   up_config_update update = manager.calculate_update(msg.pdu_session_res_setup_items);
 
@@ -138,7 +136,7 @@ TEST_F(up_resource_manager_test, when_drb_is_added_pdcp_config_is_valid)
 
 TEST_F(up_resource_manager_test, when_pdu_session_setup_with_two_qos_flows_both_are_mapped_on_own_drb)
 {
-  cu_cp_pdu_session_resource_setup_request msg = generate_pdu_session_resource_setup(cu_cp_ue_index_t::min, 1, 2);
+  ngap_pdu_session_resource_setup_request msg = generate_pdu_session_resource_setup(cu_cp_ue_index_t::min, 1, 2);
   ASSERT_TRUE(manager.validate_request(msg.pdu_session_res_setup_items));
   up_config_update update = manager.calculate_update(msg.pdu_session_res_setup_items);
 
@@ -162,7 +160,7 @@ TEST_F(up_resource_manager_test, when_inexiting_qos_flow_gets_removed_removal_fa
   setup_initial_pdu_session();
 
   // Modify existing session by trying to remove invalid/inexisting QoS flow.
-  cu_cp_pdu_session_resource_modify_request msg =
+  ngap_pdu_session_resource_modify_request msg =
       generate_pdu_session_resource_modification_with_qos_flow_removal(uint_to_qos_flow_id(9));
 
   ASSERT_FALSE(manager.validate_request(msg));
@@ -178,7 +176,7 @@ TEST_F(up_resource_manager_test, when_only_existing_qos_flow_gets_removed_remova
   setup_initial_pdu_session();
 
   // Modify existing session and remove only existing QoS flow.
-  cu_cp_pdu_session_resource_modify_request msg =
+  ngap_pdu_session_resource_modify_request msg =
       generate_pdu_session_resource_modification_with_qos_flow_removal(uint_to_qos_flow_id(1));
 
   ASSERT_FALSE(manager.validate_request(msg));
@@ -191,7 +189,7 @@ TEST_F(up_resource_manager_test, when_existing_qos_flow_gets_removed_removal_suc
   modify_pdu_session();
 
   // Modify existing session and remove existing QoS flow.
-  cu_cp_pdu_session_resource_modify_request msg =
+  ngap_pdu_session_resource_modify_request msg =
       generate_pdu_session_resource_modification_with_qos_flow_removal(uint_to_qos_flow_id(2));
   const auto psi = uint_to_pdu_session_id(1);
 
@@ -226,11 +224,11 @@ TEST_F(up_resource_manager_test, when_pdu_session_gets_removed_all_resources_are
   modify_pdu_session();
 
   // Attempt to create new session with same PSI fails.
-  cu_cp_pdu_session_resource_setup_request setup_msg = generate_pdu_session_resource_setup();
+  ngap_pdu_session_resource_setup_request setup_msg = generate_pdu_session_resource_setup();
   ASSERT_FALSE(manager.validate_request(setup_msg.pdu_session_res_setup_items));
 
   // Remove existing session.
-  cu_cp_pdu_session_resource_release_command release_msg = generate_pdu_session_resource_release();
+  ngap_pdu_session_resource_release_command release_msg = generate_pdu_session_resource_release();
   ASSERT_TRUE(manager.validate_request(release_msg));
 
   // Calculate update
@@ -271,8 +269,8 @@ TEST_F(up_resource_manager_test, when_all_drb_ids_are_used_allocation_fails_unti
 
   for (unsigned i = 1; i < MAX_NOF_DRBS; i++) {
     // Attempt to create new session with PSI=2.
-    pdu_session_id_t                         psi{2};
-    cu_cp_pdu_session_resource_setup_request setup_msg =
+    pdu_session_id_t                        psi{2};
+    ngap_pdu_session_resource_setup_request setup_msg =
         generate_pdu_session_resource_setup(cu_cp_ue_index_t::min, psi, qos_flow_id_t::min);
     ASSERT_TRUE(manager.validate_request(setup_msg.pdu_session_res_setup_items));
 
@@ -296,7 +294,7 @@ TEST_F(up_resource_manager_test, when_all_drb_ids_are_used_allocation_fails_unti
     ASSERT_EQ(manager.get_nof_drbs(), 2);
 
     // Remove PDU session, DRB ID is stale and still marked as used.
-    cu_cp_pdu_session_resource_release_command release_msg =
+    ngap_pdu_session_resource_release_command release_msg =
         generate_pdu_session_resource_release(cu_cp_ue_index_t::min, psi);
     ASSERT_TRUE(manager.validate_request(release_msg));
 
@@ -328,8 +326,8 @@ TEST_F(up_resource_manager_test, when_all_drb_ids_are_used_allocation_fails_unti
   // All DRB IDs were used. There are no more DRB IDs available and allocation will fail.
   ASSERT_TRUE(manager.key_refresh_required());
   {
-    pdu_session_id_t                         psi{2};
-    cu_cp_pdu_session_resource_setup_request setup_msg =
+    pdu_session_id_t                        psi{2};
+    ngap_pdu_session_resource_setup_request setup_msg =
         generate_pdu_session_resource_setup(cu_cp_ue_index_t::min, psi, qos_flow_id_t::min);
     ASSERT_TRUE(manager.validate_request(setup_msg.pdu_session_res_setup_items));
 
@@ -346,8 +344,8 @@ TEST_F(up_resource_manager_test, when_all_drb_ids_are_used_allocation_fails_unti
   manager.refresh_drb_id_after_key_change();
   ASSERT_FALSE(manager.key_refresh_required());
   {
-    pdu_session_id_t                         psi{2};
-    cu_cp_pdu_session_resource_setup_request setup_msg =
+    pdu_session_id_t                        psi{2};
+    ngap_pdu_session_resource_setup_request setup_msg =
         generate_pdu_session_resource_setup(cu_cp_ue_index_t::min, psi, qos_flow_id_t::min);
     ASSERT_TRUE(manager.validate_request(setup_msg.pdu_session_res_setup_items));
 
@@ -379,8 +377,8 @@ TEST_P(up_resource_manager_used_drb_ids_test, when_there_are_no_stale_drb_ids_th
 {
   for (uint16_t i = 1; i <= MAX_NOF_DRBS; i++) {
     // Attempt to create new PDU Session.
-    pdu_session_id_t                         psi{i};
-    cu_cp_pdu_session_resource_setup_request setup_msg =
+    pdu_session_id_t                        psi{i};
+    ngap_pdu_session_resource_setup_request setup_msg =
         generate_pdu_session_resource_setup(cu_cp_ue_index_t::min, psi, qos_flow_id_t::min);
     ASSERT_TRUE(manager.validate_request(setup_msg.pdu_session_res_setup_items));
 
@@ -429,8 +427,8 @@ TEST_P(up_resource_manager_key_refresh_useful_test,
   // Add MAX_NOF_DRBS stale PDU sessions
   for (uint16_t i = 1; i <= MAX_NOF_DRBS; i++) {
     // Attempt to create new PDU Session.
-    pdu_session_id_t                         psi{i};
-    cu_cp_pdu_session_resource_setup_request setup_msg =
+    pdu_session_id_t                        psi{i};
+    ngap_pdu_session_resource_setup_request setup_msg =
         generate_pdu_session_resource_setup(cu_cp_ue_index_t::min, psi, qos_flow_id_t::min);
     ASSERT_TRUE(manager.validate_request(setup_msg.pdu_session_res_setup_items));
 
@@ -455,7 +453,7 @@ TEST_P(up_resource_manager_key_refresh_useful_test,
     ASSERT_EQ(manager.get_nof_used_drb_ids(), i);
 
     // Remove existing session.
-    cu_cp_pdu_session_resource_release_command release_msg =
+    ngap_pdu_session_resource_release_command release_msg =
         generate_pdu_session_resource_release(cu_cp_ue_index_t::min, psi);
     ASSERT_TRUE(manager.validate_request(release_msg));
 
@@ -505,8 +503,8 @@ TEST_P(up_resource_manager_max_nof_drbs_per_ue_test, max_nof_drbs_per_ue_is_chec
 {
   for (uint16_t i = 1; i <= GetParam(); i++) {
     // Attempt to create new PDU Session.
-    pdu_session_id_t                         psi{i};
-    cu_cp_pdu_session_resource_setup_request setup_msg =
+    pdu_session_id_t                        psi{i};
+    ngap_pdu_session_resource_setup_request setup_msg =
         generate_pdu_session_resource_setup(cu_cp_ue_index_t::min, psi, qos_flow_id_t::min);
     ASSERT_TRUE(manager.validate_request(setup_msg.pdu_session_res_setup_items));
 
@@ -532,8 +530,8 @@ TEST_P(up_resource_manager_max_nof_drbs_per_ue_test, max_nof_drbs_per_ue_is_chec
   }
 
   // Try to add one more PDU Session with one DRB
-  uint16_t                                 psi = GetParam() + 1;
-  cu_cp_pdu_session_resource_setup_request setup_msg =
+  uint16_t                                psi = GetParam() + 1;
+  ngap_pdu_session_resource_setup_request setup_msg =
       generate_pdu_session_resource_setup(cu_cp_ue_index_t::min, pdu_session_id_t{psi}, qos_flow_id_t::min);
   ASSERT_TRUE(manager.validate_request(setup_msg.pdu_session_res_setup_items));
 
