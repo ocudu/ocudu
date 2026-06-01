@@ -22,6 +22,21 @@ ARG MARCH=native
 ARG NUM_JOBS=""
 ARG TARGETARCH
 
+########################
+# Stage 0: Shared base #
+########################
+# All build stages except builder-rohc share this base so that UHD/DPDK system
+# deps (Boost, libusb, libnuma, libfdt, …) are installed only once
+# builder-rohc is kept separate: its deps are known to conflict with the DPDK build.
+FROM ${OS}:${OS_VERSION} AS builder-base
+
+COPY docker/scripts/ /src/docker/scripts/
+
+RUN /src/docker/scripts/install_dependencies.sh build && \
+    /src/docker/scripts/install_uhd_dependencies.sh build && \
+    /src/docker/scripts/install_dpdk_dependencies.sh build && \
+    /src/docker/scripts/install_docker_dependencies.sh build
+
 #########################
 # Stage 1.1: Build ROHC #
 #########################
@@ -37,14 +52,11 @@ ARG NUM_JOBS
 
 RUN /src/docker/scripts/build_rohc.sh "${ROHC_VERSION}" ${MARCH} ${NUM_JOBS}
 
+
 ########################
 # Stage 1.2: Build UHD #
 ########################
-FROM ${OS}:${OS_VERSION} AS builder-uhd
-
-COPY docker/scripts/ /src/docker/scripts/
-
-RUN /src/docker/scripts/install_uhd_dependencies.sh build
+FROM builder-base AS builder-uhd
 
 ARG UHD_VERSION
 ARG MARCH
@@ -58,11 +70,7 @@ RUN UHD_ARCH=$([ "${TARGETARCH}" = "arm64" ] && echo "-mcpu=${MARCH}" || echo "-
 #########################
 # Stage 1.3: Build DPDK #
 #########################
-FROM ${OS}:${OS_VERSION} AS builder-dpdk
-
-COPY docker/scripts/ /src/docker/scripts/
-
-RUN /src/docker/scripts/install_dpdk_dependencies.sh build
+FROM builder-base AS builder-dpdk
 
 ARG DPDK_VERSION
 ARG MARCH
@@ -75,22 +83,14 @@ RUN DPDK_PLATFORM=$(case "${MARCH}" in *neoverse-n1*) echo n1sdp ;; *) echo "${M
 
 
 ########################
-# Stage 3: Build Ocudu #
+# Stage 2: Build OCUDU #
 ########################
-
-FROM ${OS}:${OS_VERSION} AS builder
-
-# Install build deps before touching the full source tree: source-only changes
-COPY docker/scripts/ /src/docker/scripts/
-
-RUN /src/docker/scripts/install_dependencies.sh build && \
-    /src/docker/scripts/install_uhd_dependencies.sh build && \
-    /src/docker/scripts/install_docker_dependencies.sh build
+FROM builder-base AS builder
 
 ARG UHD_VERSION
 ARG DPDK_VERSION
 
-# Copy artifacts from the parallel build stages
+# Copy compiled artifacts from the parallel build stages
 COPY --from=builder-rohc /opt/rohc /opt/rohc
 COPY --from=builder-uhd /opt/uhd/${UHD_VERSION} /opt/uhd/${UHD_VERSION}
 COPY --from=builder-dpdk /opt/dpdk/${DPDK_VERSION} /opt/dpdk/${DPDK_VERSION}
