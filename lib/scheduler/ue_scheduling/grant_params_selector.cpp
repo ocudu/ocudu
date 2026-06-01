@@ -255,8 +255,12 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
       continue;
     }
 
-    // In case of HARQ retxs, skip candidates where the number of symbols differs from the original grant.
-    if (h_dl != nullptr and h_dl->get_grant_params().nof_symbols != pdsch_td_res.symbols.length()) {
+    // In case of HARQ retxs, skip (i) candidates where the number of symbols differs from the original grant and (ii)
+    // candidates where the total number of symbols (PDCCH + PDSCH) doesn't match the available number of DL symbols.
+    // Without this second condition, it would still be possible to allocate a retx (whose original TX was in a special
+    // slot) in a full DL slot, as long there is a candidate for it.
+    if (h_dl != nullptr and (h_dl->get_grant_params().nof_symbols != pdsch_td_res.symbols.length() or
+                             ss.coreset->cfg().duration() + pdsch_td_res.symbols.length() != slot_nof_symbols)) {
       continue;
     }
 

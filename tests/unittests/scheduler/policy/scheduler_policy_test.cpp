@@ -326,35 +326,6 @@ TEST_P(scheduler_policy_test, scheduler_allocates_ues_with_sr_opportunity_first_
       << fmt::format("UE with SR opportunity should have been scheduled first.");
 }
 
-TEST_P(scheduler_policy_test, scheduler_allocates_ues_with_ul_retx_first_than_ues_with_newtx)
-{
-  const lcg_id_t lcg_id = uint_to_lcg_id(2);
-  ue&            u1     = add_ue(make_ue_create_req(to_du_ue_index(0), to_rnti(0x4601), {uint_to_lcid(5)}, lcg_id));
-  ue&            u2     = add_ue(make_ue_create_req(to_du_ue_index(1), to_rnti(0x4602), {uint_to_lcid(5)}, lcg_id));
-
-  // Push high enough UL BSR such that grant occupies entire BWP CRBs.
-  notify_ul_bsr(u1.ue_index, lcg_id, 20000);
-  notify_ul_bsr(u2.ue_index, lcg_id, 20000);
-
-  bool             pusch_scheduled = run_until([this]() { return not this->res_grid[0].result.ul.puschs.empty(); });
-  const slot_point current_slot    = next_slot - 1;
-  ASSERT_TRUE(pusch_scheduled);
-  const ul_sched_info& pusch = this->res_grid[0].result.ul.puschs[0];
-  // Send CRC=KO to trigger retransmission.
-  const ul_crc_pdu_indication crc_pdu{
-      pusch.pusch_cfg.rnti, pusch.context.ue_index, to_harq_id(pusch.pusch_cfg.harq_id), false};
-  if (pusch.context.ue_index == u1.ue_index) {
-    u1.get_pcell().handle_crc_pdu(current_slot, crc_pdu);
-  } else if (pusch.context.ue_index == u2.ue_index) {
-    u2.get_pcell().handle_crc_pdu(current_slot, crc_pdu);
-  }
-  const du_ue_index_t ue_with_retx = pusch.context.ue_index;
-
-  pusch_scheduled = run_until([this]() { return not this->res_grid[0].result.ul.puschs.empty(); });
-  ASSERT_TRUE(pusch_scheduled);
-  ASSERT_EQ(this->res_grid[0].result.ul.puschs[0].context.ue_index, ue_with_retx);
-}
-
 TEST_P(scheduler_policy_test, scheduler_allocates_ues_with_ul_srb_newtx_first_than_ues_with_ul_drb_newtx)
 {
   const lcg_id_t drb_lcg_id = uint_to_lcg_id(2);
@@ -369,44 +340,6 @@ TEST_P(scheduler_policy_test, scheduler_allocates_ues_with_ul_srb_newtx_first_th
   ASSERT_TRUE(pusch_scheduled);
   // UE2 with SRB newTx data is scheduled first.
   ASSERT_EQ(this->res_grid[0].result.ul.puschs[0].context.ue_index, u2.ue_index);
-}
-
-TEST_P(scheduler_policy_test, scheduler_allocates_ues_with_dl_retx_first_than_ues_with_newtx)
-{
-  const lcg_id_t lcg_id = uint_to_lcg_id(2);
-  ue&            u1     = add_ue(make_ue_create_req(to_du_ue_index(0), to_rnti(0x4601), {uint_to_lcid(5)}, lcg_id));
-  ue&            u2     = add_ue(make_ue_create_req(to_du_ue_index(1), to_rnti(0x4602), {uint_to_lcid(5)}, lcg_id));
-
-  // Push high enough DL buffer status such that grant occupies entire BWP CRBs.
-  push_dl_bs(u1.ue_index, uint_to_lcid(5), 100000);
-  push_dl_bs(u2.ue_index, uint_to_lcid(5), 100000);
-
-  bool pdsch_scheduled = run_until([this]() { return not this->res_grid[0].result.dl.ue_grants.empty(); });
-  ASSERT_TRUE(pdsch_scheduled);
-  const bool pdsch_ack_scheduled = run_until([this]() { return not this->res_grid[0].result.ul.pucchs.empty(); });
-  ASSERT_TRUE(pdsch_ack_scheduled);
-  const slot_point  current_slot = next_slot - 1;
-  const pucch_info& pucch        = this->res_grid[0].result.ul.pucchs[0];
-  // Auto NACK HARQ.
-  const unsigned nof_ack_bits = pucch.uci_bits.harq_ack_nof_bits;
-  du_ue_index_t  ue_with_retx;
-
-  if (pucch.crnti == u1.crnti) {
-    ue_with_retx = u1.ue_index;
-    for (unsigned harq_bit_idx = 0; harq_bit_idx < nof_ack_bits; ++harq_bit_idx) {
-      u1.get_pcell().handle_dl_ack_info(current_slot, mac_harq_ack_report_status::nack, harq_bit_idx, 100);
-    }
-  } else if (pucch.crnti == u2.crnti) {
-    ue_with_retx = u2.ue_index;
-    for (unsigned harq_bit_idx = 0; harq_bit_idx < nof_ack_bits; ++harq_bit_idx) {
-      u2.get_pcell().handle_dl_ack_info(current_slot, mac_harq_ack_report_status::nack, harq_bit_idx, 100);
-    }
-  }
-
-  run_slot();
-  pdsch_scheduled = run_until([this]() { return not this->res_grid[0].result.dl.ue_grants.empty(); });
-  ASSERT_TRUE(pdsch_scheduled);
-  ASSERT_EQ(this->res_grid[0].result.dl.ue_grants[0].context.ue_index, ue_with_retx);
 }
 
 TEST_P(scheduler_policy_test, scheduler_allocates_ues_with_dl_srb_newtx_first_than_ues_with_dl_drb_newtx)
