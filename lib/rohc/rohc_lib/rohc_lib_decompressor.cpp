@@ -58,7 +58,7 @@ rohc_decromp_result rohc_lib_decompressor::decompress(byte_buffer packet)
 
   rohc_status_t ret = rohc_decompress3(decompressor, input_packet, &output_packet, input_feedback, &output_feedback);
   if (ret != rohc_status_t::ROHC_STATUS_OK) {
-    logger.warning("ROHC decompressor failed. error={} packet_len={}", rohc_strerror(ret), packet.length());
+    logger.info("ROHC decompressor failed. error={} packet_len={}", rohc_strerror(ret), packet.length());
     return result;
   }
 
