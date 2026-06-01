@@ -95,7 +95,7 @@ struct ngap_handover_request {
   cu_cp_ue_index_t                                                      ue_index = cu_cp_ue_index_t::invalid;
   ngap_handov_type                                                      handov_type;
   ngap_cause_t                                                          cause;
-  cu_cp_aggregate_maximum_bit_rate                                      ue_aggr_max_bit_rate;
+  aggregate_maximum_bit_rate_t                                          ue_aggr_max_bit_rate;
   std::optional<ngap_core_network_assist_info_for_inactive>             core_network_assist_info_for_inactive;
   security::security_context                                            security_context;
   std::optional<bool>                                                   new_security_context_ind;

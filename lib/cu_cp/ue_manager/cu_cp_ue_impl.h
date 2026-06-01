@@ -25,14 +25,14 @@ namespace ocudu::ocucp {
 
 /// \brief Context of a CU-CP UE.
 struct cu_cp_ue_context {
-  cu_cp_du_index_t                 du_idx       = cu_cp_du_index_t::invalid;
-  cu_cp_cu_up_index_t              cu_up_idx    = cu_cp_cu_up_index_t::invalid;
-  xnc_peer_index_t                 xnc_peer_idx = xnc_peer_index_t::invalid;
-  plmn_identity                    plmn         = plmn_identity::test_value();
-  gnb_du_id_t                      du_id        = gnb_du_id_t::invalid;
-  cu_cp_ue_index_t                 ue_index     = cu_cp_ue_index_t::invalid;
-  rnti_t                           crnti        = rnti_t::INVALID_RNTI;
-  cu_cp_aggregate_maximum_bit_rate ue_ambr;
+  cu_cp_du_index_t             du_idx       = cu_cp_du_index_t::invalid;
+  cu_cp_cu_up_index_t          cu_up_idx    = cu_cp_cu_up_index_t::invalid;
+  xnc_peer_index_t             xnc_peer_idx = xnc_peer_index_t::invalid;
+  plmn_identity                plmn         = plmn_identity::test_value();
+  gnb_du_id_t                  du_id        = gnb_du_id_t::invalid;
+  cu_cp_ue_index_t             ue_index     = cu_cp_ue_index_t::invalid;
+  rnti_t                       crnti        = rnti_t::INVALID_RNTI;
+  aggregate_maximum_bit_rate_t ue_ambr;
   /// \brief Flag to disable new UE reconfigurations. This can be used, for instance, to reconfigure UE contexts
   /// that are in the process of handover.
   bool reconfiguration_disabled = false;
@@ -254,10 +254,10 @@ public:
 
   /// \brief Set UE AMBR.
   /// \param[in] ue_ambr The AMBR to set for the UE.
-  void set_ue_ambr(cu_cp_aggregate_maximum_bit_rate ue_ambr) override;
+  void set_ue_ambr(aggregate_maximum_bit_rate_t ue_ambr) override;
 
   /// \brief Get UE AMBR.
-  cu_cp_aggregate_maximum_bit_rate get_ue_ambr() const override { return ue_ctxt.ue_ambr; }
+  aggregate_maximum_bit_rate_t get_ue_ambr() const override { return ue_ctxt.ue_ambr; }
 
   unique_timer& get_handover_ue_release_timer() { return handover_ue_release_timer; }
 

@@ -139,7 +139,7 @@ ngap_message generate_ue_context_modification_request_base(amf_ue_id_t amf_ue_id
 ngap_message generate_valid_ue_context_modification_request_message(
     amf_ue_id_t                                               amf_ue_id,
     ran_ue_id_t                                               ran_ue_id,
-    std::optional<cu_cp_aggregate_maximum_bit_rate>           ue_ambr                     = std::nullopt,
+    std::optional<aggregate_maximum_bit_rate_t>               ue_ambr                     = std::nullopt,
     std::optional<ngap_core_network_assist_info_for_inactive> cn_assist_info_for_inactive = std::nullopt,
     std::optional<guami_t>                                    new_guami                   = std::nullopt);
 

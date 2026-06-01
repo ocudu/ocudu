@@ -42,7 +42,7 @@ generate_xnap_handover_request(cu_cp_ue_index_t                                 
                                nr_cell_global_id_t                                       target_nr_cgi,
                                guami_t                                                   guami,
                                amf_ue_id_t                                               source_amf_ue_id,
-                               cu_cp_aggregate_maximum_bit_rate                          ue_ambr,
+                               aggregate_maximum_bit_rate_t                              ue_ambr,
                                const security::security_context&                         security_context,
                                const std::map<pdu_session_id_t, up_pdu_session_context>& pdu_sessions,
                                const byte_buffer&                            rrc_handover_preparation_information,

@@ -22,7 +22,7 @@ struct xnap_ue_context_info_ho_request {
   unsigned                                                              amf_ue_id;
   transport_layer_address                                               amf_addr;
   security::security_context                                            security_context;
-  cu_cp_aggregate_maximum_bit_rate                                      ue_ambr;
+  aggregate_maximum_bit_rate_t                                          ue_ambr;
   slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item> pdu_session_res_to_be_setup_list;
   byte_buffer                                                           rrc_handover_preparation_information;
   std::optional<location_report_request>                                location_report_info;

@@ -193,13 +193,13 @@ public:
     return ue->get_security_manager().is_security_enabled();
   }
 
-  void set_ue_ambr(cu_cp_aggregate_maximum_bit_rate ue_ambr) override
+  void set_ue_ambr(aggregate_maximum_bit_rate_t ue_ambr) override
   {
     ocudu_assert(ue != nullptr, "CU-CP UE must not be nullptr");
     ue->set_ue_ambr(ue_ambr);
   }
 
-  cu_cp_aggregate_maximum_bit_rate get_ue_ambr() const override
+  aggregate_maximum_bit_rate_t get_ue_ambr() const override
   {
     ocudu_assert(ue != nullptr, "CU-CP UE must not be nullptr");
     return ue->get_ue_ambr();

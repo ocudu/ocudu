@@ -489,10 +489,10 @@ public:
 
   /// \brief Set UE AMBR.
   /// \param[in] ue_ambr The AMBR to set for the UE.
-  void set_ue_ambr(cu_cp_aggregate_maximum_bit_rate ue_ambr) override {}
+  void set_ue_ambr(aggregate_maximum_bit_rate_t ue_ambr) override {}
 
   /// \brief Get UE AMBR.
-  cu_cp_aggregate_maximum_bit_rate get_ue_ambr() const override { return cu_cp_aggregate_maximum_bit_rate{}; }
+  aggregate_maximum_bit_rate_t get_ue_ambr() const override { return aggregate_maximum_bit_rate_t{}; }
 
   std::optional<cu_cp_ue_index_t> ue_index;
   dummy_ngap_rrc_ue_notifier*     rrc_ue_notifier = nullptr;

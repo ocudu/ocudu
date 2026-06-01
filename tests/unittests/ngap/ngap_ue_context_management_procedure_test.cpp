@@ -559,7 +559,7 @@ TEST_F(ngap_ue_context_management_procedure_test,
   ngap_message ue_context_mod_request = generate_valid_ue_context_modification_request_message(
       ue.amf_ue_id.value(),
       ue.ran_ue_id.value(),
-      cu_cp_aggregate_maximum_bit_rate{.dl = 100000, .ul = 100000},
+      aggregate_maximum_bit_rate_t{.dl = 100000, .ul = 100000},
       ngap_core_network_assist_info_for_inactive{.ue_id_idx_value = 0x64c0},
       guami_t{.plmn = plmn_identity::test_value(), .amf_set_id = 1, .amf_pointer = 1, .amf_region_id = 1});
   ngap->handle_message(ue_context_mod_request);
@@ -616,7 +616,7 @@ TEST_F(ngap_ue_context_management_procedure_test,
   ngap_message ue_context_mod_request = generate_valid_ue_context_modification_request_message(
       unknown_amf_ue_id,
       unknown_ran_ue_id,
-      cu_cp_aggregate_maximum_bit_rate{.dl = 100000, .ul = 100000},
+      aggregate_maximum_bit_rate_t{.dl = 100000, .ul = 100000},
       ngap_core_network_assist_info_for_inactive{.ue_id_idx_value = 0x64c0},
       guami_t{.plmn = plmn_identity::test_value(), .amf_set_id = 1, .amf_pointer = 1, .amf_region_id = 1});
   ngap->handle_message(ue_context_mod_request);

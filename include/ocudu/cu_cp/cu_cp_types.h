@@ -204,11 +204,6 @@ struct cu_cp_du_served_cells_item {
   std::optional<cu_cp_gnb_du_sys_info> gnb_du_sys_info; // not optional for NG-RAN
 };
 
-struct cu_cp_aggregate_maximum_bit_rate {
-  uint64_t dl = 0;
-  uint64_t ul = 0;
-};
-
 /// NR carrier target for RRC Release with redirection (TS 38.331 Sec. 5.3.8.3).
 struct cu_cp_release_redirect_nr_info {
   uint32_t           arfcn;                               ///< Target NR downlink ARFCN

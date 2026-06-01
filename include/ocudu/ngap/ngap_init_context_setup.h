@@ -16,7 +16,7 @@ namespace ocudu::ocucp {
 struct ngap_init_context_setup_request {
   cu_cp_ue_index_t                                          ue_index = cu_cp_ue_index_t::invalid;
   std::optional<std::string>                                old_amf;
-  std::optional<cu_cp_aggregate_maximum_bit_rate>           ue_aggr_max_bit_rate;
+  std::optional<aggregate_maximum_bit_rate_t>               ue_aggr_max_bit_rate;
   std::optional<ngap_core_network_assist_info_for_inactive> core_network_assist_info_for_inactive;
   guami_t                                                   guami;
   std::optional<cu_cp_pdu_session_resource_setup_request>   pdu_session_res_setup_list_cxt_req;

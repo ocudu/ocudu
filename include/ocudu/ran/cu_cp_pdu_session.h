@@ -6,7 +6,8 @@
 
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/adt/slotted_vector.h"
-#include "ocudu/cu_cp/cu_cp_types.h"
+#include "ocudu/ran/aggregate_maximum_bit_rate.h"
+#include "ocudu/ran/cause/ngap_cause.h"
 #include "ocudu/ran/crit_diagnostics.h"
 #include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/ran/cu_types.h"
@@ -39,7 +40,7 @@ struct cu_cp_pdu_session_res_setup_item {
 struct cu_cp_pdu_session_resource_setup_request {
   cu_cp_ue_index_t                                                      ue_index = cu_cp_ue_index_t::invalid;
   slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item> pdu_session_res_setup_items;
-  cu_cp_aggregate_maximum_bit_rate                                      ue_ambr;
+  aggregate_maximum_bit_rate_t                                          ue_ambr;
   plmn_identity                                                         serving_plmn = plmn_identity::test_value();
   byte_buffer                                                           nas_pdu; ///< optional NAS PDU
 };

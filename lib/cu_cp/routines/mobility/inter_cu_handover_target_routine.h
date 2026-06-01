@@ -38,7 +38,7 @@ struct cu_cp_inter_cu_handover_request {
   nr_cell_global_id_t                                                   target_cell_id;
   security::security_context                                            security_context;
   guami_t                                                               guami;
-  cu_cp_aggregate_maximum_bit_rate                                      ue_ambr;
+  aggregate_maximum_bit_rate_t                                          ue_ambr;
   slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item> pdu_session_res_setup_list;
   byte_buffer                                                           rrc_handover_preparation_information;
   std::optional<location_report_request>                                location_report_request_type;

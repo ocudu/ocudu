@@ -82,7 +82,7 @@ void cu_cp_ue::set_rrc_ue(rrc_ue_interface& rrc_ue_)
   rrc_ue = &rrc_ue_;
 }
 
-void cu_cp_ue::set_ue_ambr(cu_cp_aggregate_maximum_bit_rate ue_ambr)
+void cu_cp_ue::set_ue_ambr(aggregate_maximum_bit_rate_t ue_ambr)
 {
   ue_ctxt.ue_ambr = ue_ambr;
 }

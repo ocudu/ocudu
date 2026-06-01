@@ -51,10 +51,10 @@ public:
 
   /// \brief Set UE AMBR.
   /// \param[in] ue_ambr The AMBR to set for the UE.
-  virtual void set_ue_ambr(cu_cp_aggregate_maximum_bit_rate ue_ambr) = 0;
+  virtual void set_ue_ambr(aggregate_maximum_bit_rate_t ue_ambr) = 0;
 
   /// \brief Get UE AMBR.
-  virtual cu_cp_aggregate_maximum_bit_rate get_ue_ambr() const = 0;
+  virtual aggregate_maximum_bit_rate_t get_ue_ambr() const = 0;
 };
 
 } // namespace ocudu::ocucp
