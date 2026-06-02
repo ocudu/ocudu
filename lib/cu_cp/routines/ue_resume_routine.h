@@ -16,7 +16,7 @@ namespace ocudu::ocucp {
 class ue_resume_routine
 {
 public:
-  ue_resume_routine(const cu_cp_rrc_resume_request&        request_,
+  ue_resume_routine(const rrc_resume_request&              request_,
                     const ue_configuration&                ue_cfg_,
                     du_processor&                          du_proc_,
                     cu_cp_ue_context_manipulation_handler& ue_context_handler_,
@@ -50,7 +50,7 @@ private:
                                         bool                                        reestablish_drbs,
                                         std::optional<security::sec_selected_algos> selected_algos);
 
-  const cu_cp_rrc_resume_request request;
+  const rrc_resume_request request;
 
   cu_cp_ue* ue = nullptr; // Pointer to UE in the DU
 

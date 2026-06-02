@@ -62,7 +62,7 @@ public:
 
   // CU-UP handler.
   void handle_bearer_context_release_request(const cu_cp_bearer_context_release_request& msg) override;
-  void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
+  void handle_bearer_context_inactivity_notification(const e1ap_inactivity_notification& msg) override;
   void handle_dl_data_notification(cu_cp_ue_index_t ue_index) override;
   void handle_e1_release_request(cu_cp_cu_up_index_t cu_up_index) override;
 
@@ -77,7 +77,7 @@ public:
   async_task<bool> handle_ue_context_transfer(cu_cp_ue_index_t ue_index, cu_cp_ue_index_t old_ue_index) override;
   async_task<void> handle_ue_context_release(const cu_cp_ue_context_release_request& request) override;
   async_task<void> handle_access_success(const cu_cp_access_success_indication& msg) override;
-  async_task<rrc_resume_request_response> handle_rrc_resume_request(const cu_cp_rrc_resume_request& request) override;
+  async_task<rrc_resume_request_response> handle_rrc_resume_request(const rrc_resume_request& request) override;
   void                                    handle_ran_paging_required(cu_cp_ue_index_t ue_index) override;
 
   // cu_cp_ue_context_manipulation_handler.

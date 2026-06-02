@@ -7,6 +7,7 @@
 #include "ocudu/e1ap/common/e1_setup_messages.h"
 #include "ocudu/e1ap/common/e1ap_common.h"
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
+#include "ocudu/e1ap/cu_cp/inactivity_notification.h"
 #include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/ran/cu_cp_ue_context_release.h"
 #include "ocudu/support/async/async_task.h"
@@ -142,7 +143,7 @@ public:
 
   /// \brief Notifies about the reception of a Bearer Context Inactivity Notification message.
   /// \param[in] msg The received Bearer Context Inactivity Notification message.
-  virtual void on_bearer_context_inactivity_notification_received(const cu_cp_inactivity_notification& msg) = 0;
+  virtual void on_bearer_context_inactivity_notification_received(const e1ap_inactivity_notification& msg) = 0;
 
   /// \brief Notifies about the reception of a DL Data Notification message.
   /// \param[in] ue_index The index of the UE.

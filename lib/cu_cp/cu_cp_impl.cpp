@@ -34,6 +34,7 @@
 #include "ocudu/nrppa/nrppa.h"
 #include "ocudu/nrppa/nrppa_factory.h"
 #include "ocudu/ran/cause/common.h"
+#include "ocudu/ran/cause/e1ap_cause_converters.h"
 #include "ocudu/ran/cause/ngap_cause.h"
 #include "ocudu/ran/plmn_identity.h"
 #include "ocudu/ran/time/radio_frame.h"
@@ -240,10 +241,10 @@ void cu_cp_impl::handle_bearer_context_release_request(const cu_cp_bearer_contex
     return;
   }
 
-  request_ue_release(*ue, msg.cause);
+  request_ue_release(*ue, e1ap_to_ngap_cause(msg.cause));
 }
 
-void cu_cp_impl::handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg)
+void cu_cp_impl::handle_bearer_context_inactivity_notification(const e1ap_inactivity_notification& msg)
 {
   if (msg.ue_inactive) {
     cu_cp_ue* ue = ue_mng.find_du_ue(msg.ue_index);
@@ -712,7 +713,7 @@ async_task<void> cu_cp_impl::handle_access_success(const cu_cp_access_success_in
   return launch_async<conditional_handover_source_routine>(msg, ue_mng, &xnap_db, logger);
 }
 
-async_task<rrc_resume_request_response> cu_cp_impl::handle_rrc_resume_request(const cu_cp_rrc_resume_request& request)
+async_task<rrc_resume_request_response> cu_cp_impl::handle_rrc_resume_request(const rrc_resume_request& request)
 {
   cu_cp_ue* ue = ue_mng.find_du_ue(request.ue_index);
   ocudu_assert(ue != nullptr, "ue={}: Could not find DU UE", request.ue_index);

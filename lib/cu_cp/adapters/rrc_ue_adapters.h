@@ -224,7 +224,7 @@ public:
     return ue_removal_handler->handle_ue_removal_request(ue_index);
   }
 
-  async_task<rrc_resume_request_response> on_rrc_resume_request(const cu_cp_rrc_resume_request& request) override
+  async_task<rrc_resume_request_response> on_rrc_resume_request(const rrc_resume_request& request) override
   {
     ocudu_assert(cu_cp_rrc_ue_handler != nullptr, "CU-CP handler must not be nullptr");
     return cu_cp_rrc_ue_handler->handle_rrc_resume_request(request);

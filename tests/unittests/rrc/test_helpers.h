@@ -5,6 +5,7 @@
 #pragma once
 
 #include "ocudu/ran/cu_cp_types.h"
+#include "ocudu/rrc/rrc_resume.h"
 #include "ocudu/rrc/rrc_ue.h"
 
 namespace ocudu::ocucp {
@@ -124,7 +125,7 @@ public:
     });
   }
 
-  async_task<rrc_resume_request_response> on_rrc_resume_request(const cu_cp_rrc_resume_request& request) override
+  async_task<rrc_resume_request_response> on_rrc_resume_request(const rrc_resume_request& request) override
   {
     logger.info("ue={}: Received RRC Resume Request", request.ue_index);
     return launch_async([](coro_context<async_task<rrc_resume_request_response>>& ctx) mutable {

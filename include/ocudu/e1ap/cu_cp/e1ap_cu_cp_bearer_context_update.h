@@ -68,6 +68,11 @@ struct e1ap_bearer_context_modification_response {
   std::optional<e1ap_crit_diagnostics> crit_diagnostics;
 };
 
+struct cu_cp_bearer_context_release_request {
+  cu_cp_ue_index_t ue_index = cu_cp_ue_index_t::invalid;
+  e1ap_cause_t     cause;
+};
+
 struct e1ap_bearer_context_release_command {
   cu_cp_ue_index_t ue_index = cu_cp_ue_index_t::invalid;
   e1ap_cause_t     cause;

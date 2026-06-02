@@ -66,7 +66,7 @@ struct dummy_cu_cp_rrc_ue_interface : public cu_cp_rrc_ue_interface {
   {
     return launch_no_op_task();
   }
-  async_task<rrc_resume_request_response> handle_rrc_resume_request(const cu_cp_rrc_resume_request& request) override
+  async_task<rrc_resume_request_response> handle_rrc_resume_request(const rrc_resume_request& request) override
   {
     return launch_no_op_task(rrc_resume_request_response{.success = true});
   }

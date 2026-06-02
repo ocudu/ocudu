@@ -9,6 +9,7 @@
 #include "ocudu/asn1/rrc_nr/dl_dcch_msg.h"
 #include "ocudu/asn1/rrc_nr/ul_dcch_msg.h"
 #include "ocudu/asn1/rrc_nr/ul_dcch_msg_ies.h"
+#include "ocudu/rrc/rrc_resume.h"
 #include "ocudu/rrc/rrc_types.h"
 
 namespace ocudu::ocucp {

@@ -7,6 +7,7 @@
 #include "../rrc_ue_context.h"
 #include "../rrc_ue_logger.h"
 #include "rrc_ue_event_manager.h"
+#include "ocudu/rrc/rrc_resume.h"
 #include "ocudu/rrc/rrc_ue.h"
 #include "ocudu/support/async/async_task.h"
 #include "ocudu/support/async/eager_async_task.h"
@@ -59,7 +60,7 @@ private:
   rrc_ue_event_manager&                    event_mng;              // event manager for the RRC UE entity
   rrc_ue_logger&                           logger;
 
-  cu_cp_rrc_resume_request request;
+  rrc_resume_request request;
 
   const asn1::rrc_nr::pdcp_cfg_s   srb1_pdcp_cfg;
   std::chrono::milliseconds        procedure_timeout{0};

@@ -140,13 +140,4 @@ struct rrc_plmn_ran_area_cell_t {
 using rrc_ran_notification_area_info_t =
     std::variant<std::vector<rrc_plmn_ran_area_cell_t>, std::vector<rrc_plmn_ran_area_cfg_t>>;
 
-struct rrc_resume_request_response {
-  bool                                   success = false;
-  std::optional<rrc_radio_bearer_config> radio_bearer_cfg;
-  byte_buffer                            master_cell_group;
-  std::optional<rrc_meas_cfg>            meas_cfg;
-  // Optional measurement gap config to include in RRC Resume.
-  byte_buffer meas_gap_cfg;
-};
-
 } // namespace ocudu::ocucp

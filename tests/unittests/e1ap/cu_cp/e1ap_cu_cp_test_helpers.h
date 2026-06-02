@@ -29,7 +29,7 @@ public:
     logger.info("Received a bearer context release request");
   }
 
-  void on_bearer_context_inactivity_notification_received(const cu_cp_inactivity_notification& msg) override
+  void on_bearer_context_inactivity_notification_received(const e1ap_inactivity_notification& msg) override
   {
     last_msg = msg;
     logger.info("Received an inactivity notification");
@@ -70,7 +70,7 @@ public:
   }
 
   cu_cp_bearer_context_release_request last_release_request;
-  cu_cp_inactivity_notification        last_msg;
+  e1ap_inactivity_notification         last_msg;
 
 private:
   ue_manager&             ue_mng;

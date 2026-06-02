@@ -49,7 +49,7 @@ TEST(rrc_asn1_helpers_test, test_amf_identifier_converter_for_valid_amf_id)
   asn1::rrc_nr::registered_amf_s registered_amf;
   registered_amf.amf_id.from_number(0xf511b2);
 
-  cu_cp_amf_identifier_t amf_id = asn1_to_amf_identifier(registered_amf.amf_id);
+  amf_identifier_t amf_id = asn1_to_amf_identifier(registered_amf.amf_id);
 
   ASSERT_EQ(245U, amf_id.amf_region_id);
   ASSERT_EQ(70U, amf_id.amf_set_id);

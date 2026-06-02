@@ -27,7 +27,7 @@ public:
     cu_cp_handler->handle_bearer_context_release_request(msg);
   }
 
-  void on_bearer_context_inactivity_notification_received(const cu_cp_inactivity_notification& msg) override
+  void on_bearer_context_inactivity_notification_received(const e1ap_inactivity_notification& msg) override
   {
     ocudu_assert(cu_cp_handler != nullptr, "CU-CP handler must not be nullptr");
     cu_cp_handler->handle_bearer_context_inactivity_notification(msg);

@@ -248,9 +248,9 @@ five_g_s_tmsi_t ocudu::ocucp::asn1_to_five_g_s_tmsi(const asn1::fixed_bitstring<
   return five_g_s_tmsi_t{five_g_s_tmsi};
 }
 
-cu_cp_amf_identifier_t ocudu::ocucp::asn1_to_amf_identifier(const asn1::fixed_bitstring<24>& asn1_amf_id)
+amf_identifier_t ocudu::ocucp::asn1_to_amf_identifier(const asn1::fixed_bitstring<24>& asn1_amf_id)
 {
-  cu_cp_amf_identifier_t amf_id;
+  amf_identifier_t amf_id;
 
   uint32_t amf_identifier = 0;
   amf_identifier          = (uint32_t)asn1_amf_id.to_number();
