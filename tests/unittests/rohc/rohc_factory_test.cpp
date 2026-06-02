@@ -3,8 +3,8 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/ocudulog/ocudulog.h"
+#include "ocudu/ran/rohc/rohc_config.h"
 #include "ocudu/rohc/rohc_compressor.h"
-#include "ocudu/rohc/rohc_config.h"
 #include "ocudu/rohc/rohc_decompressor.h"
 #include "ocudu/rohc/rohc_factory.h"
 #include "ocudu/rohc/rohc_support.h"

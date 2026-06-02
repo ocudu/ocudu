@@ -8,7 +8,7 @@
 #include "ocudu/ran/pdcp/pdcp_rlc_mode.h"
 #include "ocudu/ran/pdcp/pdcp_sn_size.h"
 #include "ocudu/ran/pdcp/pdcp_t_reordering.h"
-#include "ocudu/rohc/rohc_config.h"
+#include "ocudu/ran/rohc/rohc_config.h"
 #include "ocudu/support/timers.h"
 #include "fmt/format.h"
 #include <cstdint>
@@ -110,11 +110,11 @@ struct pdcp_custom_config {
 /// \brief Configurable parameters for PDCP that are common for both TX and RX.
 /// Ref: 3GPP TS 38.331 version 15.2.1.
 struct pdcp_config_common {
-  pdcp_rb_type                     rb_type;
-  pdcp_rlc_mode                    rlc_mode;
-  pdcp_sn_size                     sn_size;
-  pdcp_security_direction          direction;
-  std::optional<rohc::rohc_config> header_compression;
+  pdcp_rb_type               rb_type;
+  pdcp_rlc_mode              rlc_mode;
+  pdcp_sn_size               sn_size;
+  pdcp_security_direction    direction;
+  std::optional<rohc_config> header_compression;
 };
 
 struct pdcp_tx_config : pdcp_config_common {
@@ -134,11 +134,11 @@ struct pdcp_rx_config : pdcp_config_common {
 /// Parameters and valid values for them are taken from the RRC-NR PDCP-Config Information Element.
 /// Ref: 3GPP TS 38.331 version 15.2.1.
 struct pdcp_config {
-  pdcp_rb_type                     rb_type;
-  pdcp_rlc_mode                    rlc_mode;
-  std::optional<rohc::rohc_config> header_compression;
-  bool                             integrity_protection_required;
-  bool                             ciphering_required;
+  pdcp_rb_type               rb_type;
+  pdcp_rlc_mode              rlc_mode;
+  std::optional<rohc_config> header_compression;
+  bool                       integrity_protection_required;
+  bool                       ciphering_required;
   struct {
     pdcp_sn_size                      sn_size;
     pdcp_security_direction           direction;

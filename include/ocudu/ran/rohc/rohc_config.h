@@ -8,7 +8,7 @@
 #include "fmt/std.h"
 #include <cstdint>
 
-namespace ocudu::rohc {
+namespace ocudu {
 
 /// \brief Type of header compression.
 ///
@@ -132,14 +132,6 @@ private:
   uint16_t profile_bitmap = 0;
 };
 
-/// The maximum size of a ROHC packet. This implementation-specific parameter shall be larger than the maximum supported
-/// PDCP SDU size (see TS 38.323, Sec. 4.3.1) \c pdcp_max_sdu_size and equals the \c network_gateway_udp_max_len.
-static constexpr uint32_t rohc_max_packet_size = 9100;
-
-/// Threshold for CID type. Large CIDs shall be used if maximum CID > 15. Otherwise small CIDs shall be used.
-/// See TS 38.323 Sec. 5.7.3.
-static constexpr uint16_t rohc_cid_type_threshold = 15;
-
 /// Default maximum CID (Default 15 defined in TS 38.331 Sec. 6.3.2).
 static constexpr uint16_t default_rohc_max_cid = 15;
 
@@ -162,7 +154,7 @@ struct rohc_config {
   }
 };
 
-} // namespace ocudu::rohc
+} // namespace ocudu
 
 //
 // Formatters
@@ -170,7 +162,7 @@ struct rohc_config {
 namespace fmt {
 
 template <>
-struct formatter<ocudu::rohc::rohc_type_t> {
+struct formatter<ocudu::rohc_type_t> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx)
   {
@@ -178,14 +170,14 @@ struct formatter<ocudu::rohc::rohc_type_t> {
   }
 
   template <typename FormatContext>
-  auto format(ocudu::rohc::rohc_type_t rohc_type, FormatContext& ctx) const
+  auto format(ocudu::rohc_type_t rohc_type, FormatContext& ctx) const
   {
-    return format_to(ctx.out(), "{}", ocudu::rohc::to_string(rohc_type));
+    return format_to(ctx.out(), "{}", ocudu::to_string(rohc_type));
   }
 };
 
 template <>
-struct formatter<ocudu::rohc::rohc_profile> {
+struct formatter<ocudu::rohc_profile> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx)
   {
@@ -193,14 +185,14 @@ struct formatter<ocudu::rohc::rohc_profile> {
   }
 
   template <typename FormatContext>
-  auto format(ocudu::rohc::rohc_profile profile, FormatContext& ctx) const
+  auto format(ocudu::rohc_profile profile, FormatContext& ctx) const
   {
-    return format_to(ctx.out(), "{}", ocudu::rohc::to_string(profile));
+    return format_to(ctx.out(), "{}", ocudu::to_string(profile));
   }
 };
 
 template <>
-struct formatter<ocudu::rohc::rohc_profile_config> {
+struct formatter<ocudu::rohc_profile_config> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx)
   {
@@ -208,11 +200,11 @@ struct formatter<ocudu::rohc::rohc_profile_config> {
   }
 
   template <typename FormatContext>
-  auto format(ocudu::rohc::rohc_profile_config profile_config, FormatContext& ctx) const
+  auto format(ocudu::rohc_profile_config profile_config, FormatContext& ctx) const
   {
     auto out   = ctx.out();
     bool first = true;
-    for (auto profile : ocudu::rohc::all_rohc_profiles) {
+    for (auto profile : ocudu::all_rohc_profiles) {
       if (profile_config.is_profile_enabled(profile)) {
         out   = format_to(out, "{}{}", first ? "" : ",", profile);
         first = false;
@@ -223,7 +215,7 @@ struct formatter<ocudu::rohc::rohc_profile_config> {
 };
 
 template <>
-struct formatter<ocudu::rohc::rohc_config> {
+struct formatter<ocudu::rohc_config> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx)
   {
@@ -231,7 +223,7 @@ struct formatter<ocudu::rohc::rohc_config> {
   }
 
   template <typename FormatContext>
-  auto format(ocudu::rohc::rohc_config cfg, FormatContext& ctx) const
+  auto format(ocudu::rohc_config cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "rohc_type={} max_cid={} profiles={} continue_rohc={}",

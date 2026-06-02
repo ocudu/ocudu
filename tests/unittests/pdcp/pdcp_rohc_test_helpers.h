@@ -4,8 +4,8 @@
 
 #pragma once
 
+#include "ocudu/ran/rohc/rohc_config.h"
 #include "ocudu/rohc/rohc_compressor.h"
-#include "ocudu/rohc/rohc_config.h"
 #include "ocudu/rohc/rohc_decompressor.h"
 #include "ocudu/rohc/rohc_factory.h"
 

@@ -19,10 +19,10 @@ void ocudu::ocucp::fill_e1ap_drb_pdcp_config(e1ap_pdcp_config& e1ap_pdcp_cfg, co
     const auto&      rohc_cfg_in  = *cu_cp_pdcp_cfg.header_compression;
     e1ap_rohc_config rohc_cfg_out = {};
     switch (rohc_cfg_in.rohc_type) {
-      case rohc::rohc_type_t::rohc:
+      case rohc_type_t::rohc:
         rohc_cfg_out.rohc_type = e1ap_rohc_type::rohc;
         break;
-      case rohc::rohc_type_t::uplink_only_rohc:
+      case rohc_type_t::uplink_only_rohc:
         rohc_cfg_out.rohc_type = e1ap_rohc_type::uplink_only_rohc;
         break;
     }

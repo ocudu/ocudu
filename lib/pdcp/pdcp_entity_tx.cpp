@@ -72,9 +72,9 @@ pdcp_entity_tx::pdcp_entity_tx(uint32_t                        ue_index,
     }
     if (cfg.header_compression.has_value()) {
       const auto& header_compression = *cfg.header_compression;
-      if (header_compression.rohc_type == rohc::rohc_type_t::uplink_only_rohc) {
-        for (auto profile : rohc::all_rohc_profiles) {
-          if (profile != rohc::rohc_profile::profile0x0006 && header_compression.profiles.is_profile_enabled(profile)) {
+      if (header_compression.rohc_type == rohc_type_t::uplink_only_rohc) {
+        for (auto profile : all_rohc_profiles) {
+          if (profile != rohc_profile::profile0x0006 && header_compression.profiles.is_profile_enabled(profile)) {
             logger.log_error(
                 "Invalid ROHC profile for {}. profiles={}", header_compression.rohc_type, header_compression.profiles);
             break;
@@ -819,7 +819,7 @@ security::security_status pdcp_entity_tx::apply_ciphering_and_integrity_protecti
 
 void pdcp_entity_tx::init_header_compression()
 {
-  if (cfg.header_compression.has_value() && cfg.header_compression->rohc_type == rohc::rohc_type_t::rohc) {
+  if (cfg.header_compression.has_value() && cfg.header_compression->rohc_type == rohc_type_t::rohc) {
     rohc_comp = rohc_comp_factory.create_rohc_compressor(*cfg.header_compression);
     if (rohc_comp == nullptr) {
       logger.log_error("Failed to create ROHC compressor. {}", cfg);

@@ -3,11 +3,10 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/ocudulog/ocudulog.h"
-#include "ocudu/rohc/rohc_config.h"
+#include "ocudu/ran/rohc/rohc_config.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
-using namespace ocudu::rohc;
 
 /// Fixture class for ROHC config tests
 class rohc_config_test : public ::testing::Test
@@ -58,15 +57,15 @@ TEST_F(rohc_config_test, format)
   EXPECT_NE(str.find("profiles="), std::string::npos);
   EXPECT_NE(str.find("continue_rohc=false"), std::string::npos);
 
-  cfg.profiles.set_profile(ocudu::rohc::rohc_profile::profile0x0001, true);
-  cfg.profiles.set_profile(ocudu::rohc::rohc_profile::profile0x0006, true);
+  cfg.profiles.set_profile(ocudu::rohc_profile::profile0x0001, true);
+  cfg.profiles.set_profile(ocudu::rohc_profile::profile0x0006, true);
   logger.debug("Config: {}", cfg);
   str = fmt::format("{}", cfg);
   EXPECT_NE(str.find("profiles="), std::string::npos);
   EXPECT_NE(str.find("v1-RTP/UDP/IP"), std::string::npos);
   EXPECT_NE(str.find("v1-TCP/IP"), std::string::npos);
 
-  cfg.profiles.set_profile(ocudu::rohc::rohc_profile::profile0x0006, false);
+  cfg.profiles.set_profile(ocudu::rohc_profile::profile0x0006, false);
   logger.debug("Config: {}", cfg);
   str = fmt::format("{}", cfg);
   EXPECT_NE(str.find("profiles="), std::string::npos);

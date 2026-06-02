@@ -5,8 +5,8 @@
 #pragma once
 
 #include "ocudu/ocudulog/logger.h"
+#include "ocudu/ran/rohc/rohc_config.h"
 #include "ocudu/rohc/rohc_compressor.h"
-#include "ocudu/rohc/rohc_config.h"
 #include <rohc/rohc.h>
 #include <rohc/rohc_comp.h>
 #include <rohc/rohc_decomp.h>

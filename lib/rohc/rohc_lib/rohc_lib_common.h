@@ -4,12 +4,20 @@
 
 #pragma once
 
-#include "ocudu/rohc/rohc_config.h"
+#include "ocudu/ran/rohc/rohc_config.h"
 #include <rohc/rohc.h>
 #include <rohc/rohc_comp.h>
 #include <rohc/rohc_decomp.h>
 
 namespace ocudu::rohc {
+
+/// The maximum size of a ROHC packet. This implementation-specific parameter shall be larger than the maximum supported
+/// PDCP SDU size (see TS 38.323, Sec. 4.3.1) \c pdcp_max_sdu_size and equals the \c network_gateway_udp_max_len.
+static constexpr uint32_t rohc_max_packet_size = 9100;
+
+/// Threshold for CID type. Large CIDs shall be used if maximum CID > 15. Otherwise small CIDs shall be used.
+/// See TS 38.323 Sec. 5.7.3.
+static constexpr uint16_t rohc_cid_type_threshold = 15;
 
 static constexpr rohc_cid_type_t rohc_lib_get_cid_type(uint16_t max_cid)
 {

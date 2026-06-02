@@ -20,18 +20,18 @@
 namespace ocudu {
 
 struct rohc_test_params {
-  const char*                      name;
-  std::optional<rohc::rohc_config> config;
+  const char*                name;
+  std::optional<rohc_config> config;
 };
 
 rohc_test_params cfg_rohc_disabled{.name = "rohc_disabled", .config = std::nullopt};
-rohc_test_params cfg_rohc_uncompressed{.name = "rohc_uncompressed", .config = rohc::rohc_config{}};
-rohc_test_params cfg_rohc_compressed{
-    .name   = "rohc_v1_RTP_UDP_IP_v1_UDP_IP_v1_IP",
-    .config = rohc::rohc_config{.profiles = rohc::rohc_profile_config()
-                                                .set_profile(rohc::rohc_profile::profile0x0001, true)
-                                                .set_profile(rohc::rohc_profile::profile0x0002, true)
-                                                .set_profile(rohc::rohc_profile::profile0x0004, true)}};
+rohc_test_params cfg_rohc_uncompressed{.name = "rohc_uncompressed", .config = rohc_config{}};
+rohc_test_params cfg_rohc_compressed{.name = "rohc_v1_RTP_UDP_IP_v1_UDP_IP_v1_IP",
+                                     .config =
+                                         rohc_config{.profiles = rohc_profile_config()
+                                                                     .set_profile(rohc_profile::profile0x0001, true)
+                                                                     .set_profile(rohc_profile::profile0x0002, true)
+                                                                     .set_profile(rohc_profile::profile0x0004, true)}};
 
 /// Dummy operator to avoid Valgrind warnings.
 inline std::ostream& operator<<(std::ostream& os, const rohc_test_params& params)
@@ -215,7 +215,7 @@ protected:
 
   pdcp_sn_size                        sn_size = {};
   unsigned                            algo    = {};
-  std::optional<rohc::rohc_config>    header_compression;
+  std::optional<rohc_config>          header_compression;
   pdcp_rx_config                      config = {};
   timer_manager                       timers;
   std::unique_ptr<pdcp_rx_test_frame> test_frame;

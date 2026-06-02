@@ -4,13 +4,13 @@
 
 #pragma once
 
+#include "ocudu/ran/rohc/rohc_config.h"
 #include <memory>
 
 namespace ocudu::rohc {
 
 class rohc_compressor;
 class rohc_decompressor;
-struct rohc_config;
 
 class rohc_factory
 {

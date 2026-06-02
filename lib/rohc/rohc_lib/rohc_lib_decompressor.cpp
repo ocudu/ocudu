@@ -21,7 +21,7 @@ rohc_lib_decompressor::rohc_lib_decompressor(rohc_config cfg_) : logger(ocudulog
   report_error_if_not(ok, "Failed to enable ROHC profile=uncompressed. {}", cfg);
 
   // Enable configured profiles.
-  for (rohc_profile profile : rohc::all_rohc_profiles) {
+  for (rohc_profile profile : all_rohc_profiles) {
     if (cfg.profiles.is_profile_enabled(profile)) {
       ok = rohc_decomp_enable_profile(decompressor, to_rohc_profile_t(profile));
       report_error_if_not(ok, "Failed to enable ROHC profile={}. {}", profile, cfg);
