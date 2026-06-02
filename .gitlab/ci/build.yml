@@ -49,27 +49,24 @@ variables:
         fi
       }
 
-      launch_tests() {
+      launch_tests_ocudu_extended() {
         cd ${CI_PROJECT_DIR}/${OCUDU_BUILD_DIR}
         if [ -n "${FINGERPRINT}" ]; then
           echo "Searching for changed tests"
           CTEST_SUBSET=$(/usr/local/builder_tools/bin/python /usr/local/bin/changed_tests.py -b . -i "../${FINGERPRINT}" -d md5)
           if [ -n "${CTEST_SUBSET}" ]; then
             echo "Tests with changed fingerprint: ${CTEST_SUBSET}"
-            CTEST_SUBSET_CMD="-I 0,0,0,${CTEST_SUBSET}"
+            CTEST_ARGS="-I 0,0,0,${CTEST_SUBSET} ${CTEST_ARGS}"
           else
             echo "No tests changed"
             ret=0
             exit $ret
           fi
         fi
-        echo "Using LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
-        CTEST_CMD="ctest -j${CPU_JOBS} ${CTEST_SUBSET_CMD} $CTEST_ARGS --schedule-random --output-on-failure --output-junit xunit.xml"
-        echo "+ ${CTEST_CMD}"
-
+        export -f launch_tests_ocudu
         status_file=$(mktemp)
         timeout ${TEST_EXECUTION_TIMEOUT} \
-          bash -c "${CTEST_CMD}; echo \$? > ${status_file}" \
+          bash -c "launch_tests_ocudu; echo \$? > ${status_file}" \
           && ret=$(cat ${status_file}) || ret=124
 
         if [[ $TEST_MODE = "coverage" ]]; then
@@ -145,7 +142,7 @@ variables:
       }
 
     - build_ocudu_extended
-    - launch_tests
+    - launch_tests_ocudu_extended
   timeout: 3 hours
   after_script:
     - mv ${CI_PROJECT_DIR}/${OCUDU_BUILD_DIR}/coverage_1.xml   ${CI_PROJECT_DIR}/${CI_JOB_ID}_coverage_1.xml           || true
@@ -396,7 +393,7 @@ intermediate commits cached:
         fi
         build_ocudu_extended
       done
-    - launch_tests
+    - launch_tests_ocudu_extended
   cache:
     - *cache_build_get
 
@@ -432,7 +429,7 @@ valgrind changed tests:
       git checkout $SOURCE_SHA
       build_ocudu_extended
     - echo "This test execution has a timeout of ${TEST_EXECUTION_TIMEOUT}. If the execution excess that timer, the job will be marked as allowed_to_fail. This will avoid the job to have a huge duration in a MR pipeline."
-    - launch_tests
+    - launch_tests_ocudu_extended
   cache:
     - *cache_build_get
 
