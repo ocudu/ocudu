@@ -20,6 +20,8 @@
 #include "ocudu/cu_cp/mobility_manager_config.h"
 #include "ocudu/e2/e2.h"
 #include "ocudu/e2/e2_cu.h"
+#include "ocudu/e2/e2_cu_cp_factory.h"
+#include "ocudu/e2/e2_cu_up_factory.h"
 #include "ocudu/e2/e2_du_factory.h"
 #include "ocudu/e2/e2_node_component_config_collector.h"
 #include "ocudu/e2/e2ap_configuration_helpers.h"
@@ -379,6 +381,18 @@ public:
 
 private:
   std::unique_ptr<scheduler_metrics_notifier> e2_meas_provider;
+};
+
+class dummy_e2_cu_metrics : public e2_cu_metrics_interface
+{
+public:
+  void connect_e2_cu_meas_provider(std::unique_ptr<e2_cu_metrics_notifier> meas_provider) override
+  {
+    e2_meas_provider = std::move(meas_provider);
+  }
+
+private:
+  std::unique_ptr<e2_cu_metrics_notifier> e2_meas_provider;
 };
 
 class dummy_f1ap_ue_id_translator : public odu::f1ap_ue_id_translator
