@@ -26,6 +26,15 @@ struct meas_gap_test_params {
   meas_gap_repetition_period expected_mgrp;
 };
 
+void PrintTo(const meas_gap_test_params& p, std::ostream* os)
+{
+  *os << "scs=" << scs_to_khz(p.pcell_scs) << "kHz period=" << static_cast<unsigned>(p.smtc_period)
+      << "sf off=" << +p.smtc_offsets.first << "_" << +p.smtc_offsets.second
+      << " dur=" << (static_cast<unsigned>(p.smtc_dur) + 1) << "sf"
+      << " mgl=" << meas_gap_length_to_msec(p.expected_mgl) << "ms mgrp=" << static_cast<unsigned>(p.expected_mgrp)
+      << "ms";
+}
+
 ssb_mtc_s make_smtc(ssb_periodicity period, uint8_t offset, smtc_duration dur)
 {
   ssb_mtc_s smtc;
@@ -188,6 +197,14 @@ struct collision_params {
   std::vector<periodic_uci_config> ul_occasions;
   meas_gap_config                  expected;
 };
+
+void PrintTo(const collision_params& p, std::ostream* os)
+{
+  *os << p.tag << " scs=" << scs_to_khz(p.pcell_scs) << "kHz period=" << static_cast<unsigned>(p.smtc_period)
+      << "sf offset=" << +p.smtc_offset << " dur=" << (static_cast<unsigned>(p.smtc_dur) + 1)
+      << "sf expected={offset=" << p.expected.offset << " mgl=" << meas_gap_length_to_msec(p.expected.mgl)
+      << "ms mgrp=" << static_cast<unsigned>(p.expected.mgrp) << "ms}";
+}
 
 class du_meas_config_manager_collision_test : public ::testing::TestWithParam<collision_params>
 {};
