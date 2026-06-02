@@ -164,9 +164,9 @@ void pucch_collision_manager::stop()
   last_sl_ind = {};
 }
 
-pucch_collision_manager::alloc_result_t pucch_collision_manager::can_alloc(cell_slot_resource_allocator& slot_alloc,
-                                                                           const pucch_resource&         res,
-                                                                           rnti_t                        rnti) const
+error_type<pucch_alloc_failure> pucch_collision_manager::can_alloc(cell_slot_resource_allocator& slot_alloc,
+                                                                   const pucch_resource&         res,
+                                                                   rnti_t                        rnti) const
 {
   ocudu_sanity_check(slot_alloc.slot < last_sl_ind + slots_ctx.size(),
                      "PUCCH resource ring-buffer accessed too far into the future");
@@ -178,9 +178,9 @@ pucch_collision_manager::alloc_result_t pucch_collision_manager::can_alloc(cell_
   // Check if the resource is already in use.
   if (ctx.owners[res_idx] != rnti_t::INVALID_RNTI) {
     if (ctx.owners[res_idx] == rnti) {
-      return make_unexpected(alloc_failure_reason::ALREADY_ALLOCATED);
+      return make_unexpected(pucch_alloc_failure::ALREADY_ALLOCATED);
     }
-    return make_unexpected(alloc_failure_reason::RESOURCE_IN_USE);
+    return make_unexpected(pucch_alloc_failure::RESOURCE_IN_USE);
   }
 
   // Check for PUCCH-to-other UL grant collisions using the resource grids.
@@ -188,23 +188,23 @@ pucch_collision_manager::alloc_result_t pucch_collision_manager::can_alloc(cell_
   const std::optional<grant_info> second_hop =
       res.second_hop_prb.has_value() ? std::optional{pucch_hop_grant(res, bwp_cfg, false)} : std::nullopt;
   if (slot_alloc.ul_res_grid.collides(first_hop, &ctx.pucch_res_grid)) {
-    return make_unexpected(alloc_failure_reason::UL_GRANT_COLLISION);
+    return make_unexpected(pucch_alloc_failure::UL_GRANT_COLLISION);
   }
   if (second_hop.has_value() and slot_alloc.ul_res_grid.collides(*second_hop, &ctx.pucch_res_grid)) {
-    return make_unexpected(alloc_failure_reason::UL_GRANT_COLLISION);
+    return make_unexpected(pucch_alloc_failure::UL_GRANT_COLLISION);
   }
 
   // Check for PUCCH-to-PUCCH collisions using the collision matrix.
   const auto& row = col_matrix[res_idx];
   if ((row & ctx.current_state).any()) {
-    return make_unexpected(alloc_failure_reason::PUCCH_COLLISION);
+    return make_unexpected(pucch_alloc_failure::PUCCH_COLLISION);
   }
 
   // If all checks passed, the resource can be allocated.
   return default_success_t();
 }
 
-pucch_collision_manager::alloc_result_t
+error_type<pucch_alloc_failure>
 pucch_collision_manager::alloc(cell_slot_resource_allocator& slot_alloc, const pucch_resource& res, rnti_t rnti)
 {
   if (auto alloc_res = can_alloc(slot_alloc, res, rnti); not alloc_res.has_value()) {
@@ -212,6 +212,12 @@ pucch_collision_manager::alloc(cell_slot_resource_allocator& slot_alloc, const p
   }
 
   // Allocate the resource.
+  do_alloc(slot_alloc, res, rnti);
+  return default_success_t();
+}
+
+void pucch_collision_manager::do_alloc(cell_slot_resource_allocator& slot_alloc, const pucch_resource& res, rnti_t rnti)
+{
   const auto&                     bwp_cfg   = cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params;
   const unsigned                  res_idx   = get_res_idx(cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch, res.res_id);
   const grant_info                first_hop = pucch_hop_grant(res, bwp_cfg, true);
@@ -226,7 +232,6 @@ pucch_collision_manager::alloc(cell_slot_resource_allocator& slot_alloc, const p
     slot_alloc.ul_res_grid.fill(*second_hop);
     ctx.pucch_res_grid.fill(*second_hop);
   }
-  return default_success_t();
 }
 
 bool pucch_collision_manager::free(cell_slot_resource_allocator& slot_alloc, const pucch_resource& res, rnti_t rnti)

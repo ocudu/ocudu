@@ -197,7 +197,7 @@ TEST_F(pucch_collision_manager_rg_test, alloc_fails_if_ul_res_grid_occupied)
 
     auto res = allocator();
     ASSERT_FALSE(res.has_value());
-    ASSERT_EQ(pucch_collision_manager::alloc_failure_reason::UL_GRANT_COLLISION, res.error());
+    ASSERT_EQ(pucch_alloc_failure::UL_GRANT_COLLISION, res.error());
     ASSERT_EQ(slot_alloc.ul_res_grid, expected_rg);
 
     slot_alloc.ul_res_grid.clear(grant);
@@ -222,8 +222,7 @@ TEST_F(pucch_collision_manager_rg_test, alloc_fails_if_already_allocated)
   // Allocate the same resource twice.
   ASSERT_TRUE(col_manager.alloc(slot_alloc, ded_res[0], rnti).has_value());
   ASSERT_FALSE(col_manager.alloc(slot_alloc, ded_res[0], rnti).has_value());
-  ASSERT_EQ(pucch_collision_manager::alloc_failure_reason::ALREADY_ALLOCATED,
-            col_manager.alloc(slot_alloc, ded_res[0], rnti).error());
+  ASSERT_EQ(pucch_alloc_failure::ALREADY_ALLOCATED, col_manager.alloc(slot_alloc, ded_res[0], rnti).error());
 }
 
 TEST_F(pucch_collision_manager_rg_test, alloc_fails_if_pucch_collision)
@@ -233,16 +232,14 @@ TEST_F(pucch_collision_manager_rg_test, alloc_fails_if_pucch_collision)
   // First common, then dedicated.
   ASSERT_TRUE(col_manager.alloc(slot_alloc, common_res[0], rnti).has_value());
   ASSERT_FALSE(col_manager.alloc(slot_alloc, ded_res[0], rnti).has_value());
-  ASSERT_EQ(pucch_collision_manager::alloc_failure_reason::PUCCH_COLLISION,
-            col_manager.alloc(slot_alloc, ded_res[0], rnti).error());
+  ASSERT_EQ(pucch_alloc_failure::PUCCH_COLLISION, col_manager.alloc(slot_alloc, ded_res[0], rnti).error());
 
   run_slot();
 
   // First dedicated, then common.
   ASSERT_TRUE(col_manager.alloc(slot_alloc, ded_res[0], rnti).has_value());
   ASSERT_FALSE(col_manager.alloc(slot_alloc, common_res[0], rnti).has_value());
-  ASSERT_EQ(pucch_collision_manager::alloc_failure_reason::PUCCH_COLLISION,
-            col_manager.alloc(slot_alloc, common_res[0], rnti).error());
+  ASSERT_EQ(pucch_alloc_failure::PUCCH_COLLISION, col_manager.alloc(slot_alloc, common_res[0], rnti).error());
 }
 
 TEST_F(pucch_collision_manager_rg_test, free_clears_grants_in_ul_res_grid)
@@ -310,7 +307,7 @@ TEST_F(pucch_collision_manager_rg_test, slot_indication_clears_pucch_res_grid)
 
     auto res = col_manager.alloc(slot_alloc, ded_res[0], rnti);
     ASSERT_FALSE(res.has_value());
-    ASSERT_EQ(pucch_collision_manager::alloc_failure_reason::UL_GRANT_COLLISION, res.error());
+    ASSERT_EQ(pucch_alloc_failure::UL_GRANT_COLLISION, res.error());
 
     run_slot();
   }

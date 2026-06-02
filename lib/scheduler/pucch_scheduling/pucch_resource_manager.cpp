@@ -98,7 +98,7 @@ const pucch_resource* pucch_resource_manager::ue_reservation_guard::reserve_sr_r
   const auto& sr_res    = cell_resources.get_ded(res_params.sr_res_id(ue_bwp_cfg.pucch.sr_res_id));
   const auto  alloc_res = parent->collision_manager.alloc(slot_alloc, sr_res, rnti);
   if (not alloc_res.has_value()) {
-    if (alloc_res.error() == pucch_collision_manager::alloc_failure_reason::ALREADY_ALLOCATED) {
+    if (alloc_res.error() == pucch_alloc_failure::ALREADY_ALLOCATED) {
       // Resource is already allocated to this RNTI, just return it.
       return &sr_res;
     }
@@ -117,7 +117,7 @@ const pucch_resource* pucch_resource_manager::ue_reservation_guard::reserve_csi_
   const auto& csi_res   = cell_resources.get_ded(res_params.csi_res_id(ue_bwp_cfg.periodic_csi_report->pucch_res_id));
   const auto  alloc_res = parent->collision_manager.alloc(slot_alloc, csi_res, rnti);
   if (not alloc_res.has_value()) {
-    if (alloc_res.error() == pucch_collision_manager::alloc_failure_reason::ALREADY_ALLOCATED) {
+    if (alloc_res.error() == pucch_alloc_failure::ALREADY_ALLOCATED) {
       // Resource is already allocated to this RNTI, just return it.
       return &csi_res;
     }
@@ -195,8 +195,7 @@ pucch_harq_resource_alloc_record pucch_resource_manager::ue_reservation_guard::r
   for (uint8_t r_pucch = 0; r_pucch != res_set_size; ++r_pucch) {
     const auto& res       = cell_resources.get_ded(res_params.harq_res_id<ResourceSetId>(res_set_cfg_id, r_pucch));
     const auto  alloc_res = parent->collision_manager.can_alloc(slot_alloc, res, rnti);
-    if (not alloc_res.has_value() and
-        alloc_res.error() == pucch_collision_manager::alloc_failure_reason::ALREADY_ALLOCATED) {
+    if (not alloc_res.has_value() and alloc_res.error() == pucch_alloc_failure::ALREADY_ALLOCATED) {
       available_res = r_pucch;
       break;
     }
@@ -265,7 +264,7 @@ pucch_resource_manager::ue_reservation_guard::reserve_harq_resource_by_res_indic
       cell_resources.get_ded(res_params.harq_res_id<ResourceSetId>(ue_bwp_cfg.pucch.res_set_cfg_id, d_pri));
   const auto alloc_res = parent->collision_manager.alloc(slot_alloc, res, rnti);
   if (not alloc_res.has_value()) {
-    if (alloc_res.error() == pucch_collision_manager::alloc_failure_reason::ALREADY_ALLOCATED) {
+    if (alloc_res.error() == pucch_alloc_failure::ALREADY_ALLOCATED) {
       // Resource is already allocated to this RNTI, just return it.
       return &res;
     }

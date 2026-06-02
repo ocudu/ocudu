@@ -40,6 +40,14 @@ mux_regions_matrix make_mux_regions_matrix(const cell_pucch_res_config& cell_res
 
 } // namespace detail
 
+/// Reasons for a PUCCH allocation failure.
+enum class pucch_alloc_failure {
+  ALREADY_ALLOCATED,
+  RESOURCE_IN_USE,
+  PUCCH_COLLISION,
+  UL_GRANT_COLLISION,
+};
+
 /// \brief This class manages PUCCH resource collisions within a cell.
 ///
 /// It keeps track of the usage of both common and dedicated resources for each slot, and provides methods to allocate
@@ -69,22 +77,18 @@ public:
   void slot_indication(slot_point sl_tx);
   void stop();
 
-  /// Reasons for a PUCCH allocation failure.
-  enum class alloc_failure_reason {
-    ALREADY_ALLOCATED,
-    RESOURCE_IN_USE,
-    PUCCH_COLLISION,
-    UL_GRANT_COLLISION,
-  };
-  using alloc_result_t = error_type<alloc_failure_reason>;
-
   /// \brief Check if a PUCCH resource can be allocated at a given slot.
   /// \return Success if the resource can be allocated, otherwise an error indicating the reason of failure.
-  alloc_result_t can_alloc(cell_slot_resource_allocator& slot_alloc, const pucch_resource& res, rnti_t rnti) const;
+  error_type<pucch_alloc_failure>
+  can_alloc(cell_slot_resource_allocator& slot_alloc, const pucch_resource& res, rnti_t rnti) const;
 
   /// \brief Allocate a PUCCH resource at a given slot.
   /// \return Success if the allocation was successful, otherwise an error indicating the reason of failure.
-  alloc_result_t alloc(cell_slot_resource_allocator& slot_alloc, const pucch_resource& res, rnti_t rnti);
+  error_type<pucch_alloc_failure>
+  alloc(cell_slot_resource_allocator& slot_alloc, const pucch_resource& res, rnti_t rnti);
+
+  /// Allocate a PUCCH resource at a given slot, without doing any checks.
+  void do_alloc(cell_slot_resource_allocator& slot_alloc, const pucch_resource& res, rnti_t rnti);
 
   /// Free a common PUCCH resource at the given slot.
   /// \return True if the resource was successfully freed, false if the resource was not allocated to this UE.

@@ -38,7 +38,6 @@ class pucch_resource_manager
 public:
   pucch_resource_manager(const cell_configuration& cell_cfg_);
 
-  /// Reset all resources to "unused".
   void slot_indication(slot_point slot_tx);
 
   void stop();
