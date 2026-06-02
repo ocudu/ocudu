@@ -6,6 +6,7 @@
 
 #include "../../ue_manager/cu_cp_ue_impl.h"
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
+#include "ocudu/f1ap/cu_cp/f1ap_cu.h"
 #include "ocudu/rrc/rrc_types.h"
 #include "ocudu/support/async/async_task.h"
 #include <chrono>

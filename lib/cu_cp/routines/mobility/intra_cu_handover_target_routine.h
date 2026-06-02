@@ -7,6 +7,8 @@
 #include "../../cu_cp_impl_interface.h"
 #include "../../mobility_manager/mobility_manager_impl.h"
 #include "../../ue_manager/ue_manager_impl.h"
+#include "ocudu/e1ap/cu_cp/e1ap_cu_cp.h"
+#include "ocudu/f1ap/cu_cp/f1ap_cu.h"
 #include "ocudu/support/async/async_task.h"
 
 namespace ocudu::ocucp {

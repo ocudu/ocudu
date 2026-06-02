@@ -4,13 +4,16 @@
 
 #pragma once
 
+#include "../cu_cp_impl_interface.h"
 #include "../ue_location_manager/ue_location_manager.h"
-#include "../ue_manager/ue_manager_impl.h"
+#include "../ue_security_manager/ue_security_manager_impl.h"
+#include "ocudu/f1ap/cu_cp/f1ap_cu.h"
+#include "ocudu/ngap/ngap.h"
 #include "ocudu/ngap/ngap_init_context_setup.h"
 #include "ocudu/ngap/ngap_ue_radio_capability_management.h"
+#include "ocudu/rrc/rrc_ue.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// \brief Handles the setup of PDU session resources from the RRC viewpoint.
 class initial_context_setup_routine
@@ -61,5 +64,4 @@ private:
   ngap_init_context_setup_response         resp_msg;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

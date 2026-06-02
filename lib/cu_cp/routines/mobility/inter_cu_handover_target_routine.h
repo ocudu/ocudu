@@ -7,6 +7,7 @@
 #include "../../cell_meas_manager/cell_meas_manager_impl.h"
 #include "../../du_processor/du_processor.h"
 #include "../../ue_manager/ue_manager_impl.h"
+#include "ocudu/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "ocudu/ngap/ngap_handover.h"
 #include "ocudu/support/async/async_task.h"
 

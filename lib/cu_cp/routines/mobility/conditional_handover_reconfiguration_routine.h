@@ -6,11 +6,11 @@
 
 #include "../../cu_cp_impl_interface.h"
 #include "../../ue_manager/ue_manager_impl.h"
+#include "ocudu/f1ap/cu_cp/f1ap_cu.h"
 #include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/support/async/async_task.h"
 #include <chrono>
 #include <optional>
-#include <vector>
 
 namespace ocudu::ocucp {
 

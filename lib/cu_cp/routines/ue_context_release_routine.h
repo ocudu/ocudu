@@ -6,8 +6,8 @@
 
 #include "../du_processor/du_processor.h"
 #include "../ue_manager/ue_manager_impl.h"
+#include "ocudu/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "ocudu/support/async/async_task.h"
-#include "ocudu/support/async/eager_async_task.h"
 
 namespace ocudu::ocucp {
 

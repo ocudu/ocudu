@@ -8,6 +8,7 @@
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "ocudu/f1ap/cu_cp/f1ap_cu.h"
 #include "ocudu/ngap/ngap_rrc_inactive_transition.h"
+#include "ocudu/rrc/rrc_du.h"
 #include "ocudu/rrc/rrc_ue.h"
 #include "ocudu/support/async/async_task.h"
 

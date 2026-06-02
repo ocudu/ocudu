@@ -6,9 +6,11 @@
 
 #include "ocudu/cu_cp/cu_configurator.h"
 #include "ocudu/cu_cp/cu_cp_configuration.h"
+#include "ocudu/e2/e2_cu.h"
+#include "ocudu/e2/e2ap_configuration.h"
+#include "ocudu/e2/gateways/e2_connection_client.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// O-RAN CU-CP configuration.
 struct o_cu_cp_config {
@@ -28,5 +30,4 @@ struct o_cu_cp_dependencies {
   cu_configurator* cu_cfg = nullptr;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

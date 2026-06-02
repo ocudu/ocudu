@@ -9,11 +9,11 @@
 #include "ocudu/cu_cp/ue_configuration.h"
 #include "ocudu/cu_cp/ue_task_scheduler.h"
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp.h"
+#include "ocudu/f1ap/cu_cp/f1ap_cu.h"
 #include "ocudu/ran/cause/ngap_cause.h"
 #include "ocudu/support/async/async_task.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// \brief Handles the setup of PDU session resources from the CU-CP point of view.
 ///
@@ -90,5 +90,4 @@ private:
   bool rrc_reconfig_result = false;          // the final UE reconfiguration
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

@@ -11,14 +11,10 @@
 #include "ocudu/cu_cp/mobility_manager_config.h"
 #include "ocudu/cu_cp/ue_configuration.h"
 #include "ocudu/e1ap/cu_cp/e1ap_configuration.h"
-#include "ocudu/e2/e2_cu.h"
-#include "ocudu/e2/e2ap_configuration.h"
-#include "ocudu/e2/gateways/e2_connection_client.h"
 #include "ocudu/f1ap/cu_cp/f1ap_configuration.h"
 #include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/ran/supported_tracking_area.h"
 #include "ocudu/rrc/rrc_ue_config.h"
-#include "ocudu/support/async/async_task.h"
 #include "ocudu/support/executors/task_executor.h"
 #include <chrono>
 #include <map>
