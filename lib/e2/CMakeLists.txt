@@ -7,6 +7,7 @@ set(SOURCES
         procedures/e2ap_setup_procedure.cpp
         procedures/e2_setup_routine.cpp
         procedures/ric_reconnection_routine.cpp
+        procedures/ric_connection_loss_routine.cpp
         procedures/e2ap_subscription_setup_procedure.cpp
         procedures/e2ap_subscription_delete_procedure.cpp
         procedures/e2ap_indication_procedure.cpp
