@@ -30,4 +30,9 @@ using harq_ul_mode_mask = bounded_bitset<MAX_NOF_HARQS, true>;
 /// Outcomes of a HARQ-ACK report.
 enum class mac_harq_ack_report_status : int8_t { nack = 0, ack, dtx };
 
+/// FMT formatting function.
+inline uint8_t format_as(harq_id_t harq_id)
+{
+  return static_cast<uint8_t>(harq_id);
+}
 } // namespace ocudu

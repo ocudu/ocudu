@@ -81,7 +81,7 @@ protected:
   static constexpr slot_point slot            = {0, 9};
 
   const uplink_pdu_slot_repository::pusch_pdu pusch_pdu = {
-      .harq_id = 0,
+      .harq_id = to_harq_id(0),
       .tb_size = units::bytes(8),
       .pdu     = {.context       = std::nullopt,
                   .slot          = slot,

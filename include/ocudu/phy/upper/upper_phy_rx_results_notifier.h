@@ -15,6 +15,7 @@
 #include "ocudu/phy/upper/channel_processors/pusch/pusch_processor_result_notifier.h"
 #include "ocudu/phy/upper/signal_processors/srs/srs_estimator_result.h"
 #include "ocudu/phy/upper/uplink_processor_context.h"
+#include "ocudu/ran/harq_id.h"
 
 namespace ocudu {
 
@@ -35,7 +36,7 @@ struct ul_pusch_results_data {
   /// Random Access Preamble Index (RAPID) associated with msgA on PUSCH (Release 16).
   std::optional<unsigned> n_rapid;
   /// HARQ process ID.
-  unsigned harq_id;
+  harq_id_t harq_id;
   /// Channel state information.
   channel_state_information csi;
   /// PUSCH decoder result.
@@ -51,7 +52,7 @@ struct ul_pusch_results_data {
   /// \param[in] slot_     Slot description (also specifies the numerology).
   /// \param[in] harq_id_  HARQ process ID.
   /// \return The data-related PUSCH processing results without CSI measurements and marked as failed transmission.
-  static ul_pusch_results_data create_discarded(rnti_t rnti_, slot_point slot_, unsigned harq_id_)
+  static ul_pusch_results_data create_discarded(rnti_t rnti_, slot_point slot_, harq_id_t harq_id_)
   {
     ul_pusch_results_data ret;
     ret.rnti           = rnti_;

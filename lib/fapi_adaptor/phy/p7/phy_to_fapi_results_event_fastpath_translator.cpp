@@ -259,15 +259,8 @@ void phy_to_fapi_results_event_fastpath_translator::notify_crc_indication(const 
         convert_to_dBFS(rsrp.value(), dBFS_calibration_value), MIN_UL_RSRP_VALUE_DBFS, MAX_UL_RSRP_VALUE_DBFS);
   }
 
-  // TODO: Remove to_harq_id once this type has been changed in the PHY layer
-  builder.set_pdu(result.rnti,
-                  to_harq_id(result.harq_id),
-                  result.decoder_result.tb_crc_ok,
-                  sinr_dB,
-                  timing_advance,
-                  {},
-                  rsrp,
-                  false);
+  builder.set_pdu(
+      result.rnti, result.harq_id, result.decoder_result.tb_crc_ok, sinr_dB, timing_advance, {}, rsrp, false);
 
   p7_notifier->on_crc_indication(msg);
 }
@@ -279,8 +272,7 @@ void phy_to_fapi_results_event_fastpath_translator::notify_rx_data_indication(co
 
   builder.set_slot(result.slot);
 
-  // TODO: Remove the to_harq_id call once it is changed in the PHY layer.
-  builder.set_pdu(result.rnti, to_harq_id(result.harq_id), result.payload);
+  builder.set_pdu(result.rnti, result.harq_id, result.payload);
 
   p7_notifier->on_rx_data_indication(msg);
 }
