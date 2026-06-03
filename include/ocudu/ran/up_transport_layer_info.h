@@ -23,7 +23,14 @@ transport_layer_address tla_from_asn1_bitstring(const Asn1Bitstring& bs)
                             "Bitstring octet count {} exceeds maximum supported size {}",
                             bs.nof_octets(),
                             ip_bytes.size());
+#ifndef __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
   std::reverse_copy(bs.data(), bs.data() + bs.nof_octets(), ip_bytes.begin());
+#ifndef __clang__
+#pragma GCC diagnostic pop
+#endif
   return transport_layer_address::create_from_bytes({ip_bytes.data(), bs.nof_octets()});
 }
 
