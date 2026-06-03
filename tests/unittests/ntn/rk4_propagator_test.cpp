@@ -6,6 +6,7 @@
 #include "lib/ntn/converters/ephemeris_info_converter.h"
 #include "lib/ntn/coordinates_types.h"
 #include "lib/ntn/orbit_ephemeris_info.h"
+#include "lib/ntn/propagators/keplerian_propagator.h"
 #include "lib/ntn/propagators/rk4_propagator.h"
 #include "ocudu/support/test_utils.h"
 #include "fmt/chrono.h"
@@ -1174,4 +1175,77 @@ TEST(test_converters, propagate_leo_orbit_for_5s_step_160ms_with_ref_from_matlab
                max_range_error_m,
                max_delay_error_ns);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Head-to-head comparison: RK4 vs Keplerian on the same LEO initial conditions
+// ---------------------------------------------------------------------------
+//
+// Both propagators start from the same orbital elements and are advanced 1 s
+// at a time for 5 minutes.  At every step the satellite ECEF position, the
+// slant range to a reference UE, and the one-way propagation delay are
+// compared.  With debug_mode=true a per-step table and a max-error summary
+// are printed so the accuracy trade-off between the two propagators is
+// immediately visible when the test is run.
+
+TEST(test_converters, compare_rk4_vs_keplerian_leo_5min)
+{
+  std::string init_utc_time   = "2025-06-24T09:00:00";
+  time_point  init_epoch_time = string_to_timepoint(init_utc_time);
+
+  // LEO initial orbital elements - same as propagate_leo_orbit_with_initial_oe_test.
+  orbital_elements init_oe{
+      6877286.310, 0.0012074892907, 0.9295782970760, 2.0359402522293, 0.8669148350739, 5.4309100278415};
+
+  // Reference UE location - same as the SGP4/numerical reference tests.
+  geodetic_coordinates ue_location = {7.734134202493742, 124.2115429594156, 1.0};
+  state_vector         ue_ecef     = coordinate_converter::geodetic_to_ecef(ue_location);
+
+  rk4_propagator       rk4;
+  keplerian_propagator kepler;
+
+  orbit_ephemeris_info orbit_rk4{rk4, init_epoch_time, init_oe};
+  orbit_ephemeris_info orbit_kep{kepler, init_epoch_time, init_oe};
+
+  double max_pos_error_m    = 0;
+  double max_range_error_m  = 0;
+  double max_delay_error_ns = 0;
+
+  if (debug_mode) {
+    fmt::print("\n{:>6s} | {:>12s} | {:>14s} | {:>14s}\n", "t [s]", "pos_err [m]", "range_err [m]", "delay_err [ns]");
+    fmt::print("{:-<54}\n", "");
+  }
+
+  for (int t = 1; t <= 300; ++t) {
+    orbit_rk4.propagate(init_epoch_time + std::chrono::seconds(t) - orbit_rk4.epoch_time(), true);
+    orbit_kep.propagate(init_epoch_time + std::chrono::seconds(t) - orbit_kep.epoch_time(), true);
+
+    const state_vector& ecef_rk4 = orbit_rk4.ecef_rv();
+    const state_vector& ecef_kep = orbit_kep.ecef_rv();
+
+    double pos_error_m    = norm((ecef_rk4 - ecef_kep).position);
+    double range_rk4_m    = norm((ecef_rk4 - ue_ecef).position);
+    double range_kep_m    = norm((ecef_kep - ue_ecef).position);
+    double range_error_m  = std::abs(range_rk4_m - range_kep_m);
+    double delay_error_ns = range_error_m / LIGHT_SPEED_M_S * 1e9;
+
+    max_pos_error_m    = std::max(max_pos_error_m, pos_error_m);
+    max_range_error_m  = std::max(max_range_error_m, range_error_m);
+    max_delay_error_ns = std::max(max_delay_error_ns, delay_error_ns);
+
+    if (debug_mode) {
+      fmt::print("{:6d} | {:12.3f} | {:14.3f} | {:14.3f}\n", t, pos_error_m, range_error_m, delay_error_ns);
+    }
+  }
+
+  if (debug_mode) {
+    fmt::print("{:-<54}\n", "");
+    fmt::print(
+        "{:>6s} | {:12.3f} | {:14.3f} | {:14.3f}\n", "MAX", max_pos_error_m, max_range_error_m, max_delay_error_ns);
+  }
+
+  // Check that errors do not exceed thresholds.
+  EXPECT_LT(max_pos_error_m, 600.0);
+  EXPECT_LT(max_range_error_m, 300.0);
+  EXPECT_LT(max_delay_error_ns, 1000.0);
 }
