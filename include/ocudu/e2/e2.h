@@ -97,6 +97,9 @@ public:
 
   /// \brief Stop the E2 Agent operation.
   virtual void stop() = 0;
+
+  /// \brief Returns true if E2 Setup has completed successfully and the RIC connection is up.
+  virtual bool is_ric_connected() const = 0;
 };
 
 } // namespace ocudu

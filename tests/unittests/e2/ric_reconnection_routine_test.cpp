@@ -84,6 +84,7 @@ protected:
   manual_task_worker                                                   task_worker{64};
   timer_factory                                                        factory;
   std::atomic<bool>                                                    stopped{false};
+  std::atomic<bool>                                                    ric_connected{false};
   std::unique_ptr<dummy_e2sm_kpm_du_meas_provider>                     du_meas_provider;
   std::unique_ptr<e2sm_kpm_asn1_packer>                                e2sm_kpm_packer;
   std::unique_ptr<e2sm_interface>                                      kpm_iface;
@@ -98,7 +99,7 @@ protected:
 TEST_F(ric_reconnection_routine_test, initial_timer_fires_before_tnl_attempt)
 {
   async_task<bool> t = launch_async<ric_reconnection_routine>(
-      cfg, *node_cfg_provider, *e2sm_mngr, *conn_mngr, factory, test_logger, stopped);
+      cfg, *node_cfg_provider, *e2sm_mngr, *conn_mngr, factory, test_logger, stopped, ric_connected);
   lazy_task_launcher<bool> launcher(t);
   task_worker.run_pending_tasks();
 
@@ -113,6 +114,7 @@ TEST_F(ric_reconnection_routine_test, initial_timer_fires_before_tnl_attempt)
 
   ASSERT_TRUE(t.ready());
   ASSERT_TRUE(t.get());
+  ASSERT_TRUE(ric_connected.load());
   ASSERT_EQ(conn_mngr->tnl_call_count, 1);
 }
 
@@ -122,7 +124,7 @@ TEST_F(ric_reconnection_routine_test, tnl_retries_until_success_returns_true)
   conn_mngr->tnl_fail_count = 2;
 
   async_task<bool> t = launch_async<ric_reconnection_routine>(
-      cfg, *node_cfg_provider, *e2sm_mngr, *conn_mngr, factory, test_logger, stopped);
+      cfg, *node_cfg_provider, *e2sm_mngr, *conn_mngr, factory, test_logger, stopped, ric_connected);
   lazy_task_launcher<bool> launcher(t);
   task_worker.run_pending_tasks();
 
@@ -136,6 +138,7 @@ TEST_F(ric_reconnection_routine_test, tnl_retries_until_success_returns_true)
 
   ASSERT_TRUE(t.ready());
   ASSERT_TRUE(t.get());
+  ASSERT_TRUE(ric_connected.load());
   ASSERT_EQ(conn_mngr->tnl_call_count, 3);
 }
 
@@ -145,7 +148,7 @@ TEST_F(ric_reconnection_routine_test, setup_rejected_returns_false)
   conn_mngr->response.success = false;
 
   async_task<bool> t = launch_async<ric_reconnection_routine>(
-      cfg, *node_cfg_provider, *e2sm_mngr, *conn_mngr, factory, test_logger, stopped);
+      cfg, *node_cfg_provider, *e2sm_mngr, *conn_mngr, factory, test_logger, stopped, ric_connected);
   lazy_task_launcher<bool> launcher(t);
 
   for (unsigned ms = 0; ms <= 100; ++ms) {
@@ -154,13 +157,14 @@ TEST_F(ric_reconnection_routine_test, setup_rejected_returns_false)
 
   ASSERT_TRUE(t.ready());
   ASSERT_FALSE(t.get());
+  ASSERT_FALSE(ric_connected.load());
 }
 
 /// When stopped is set the routine must exit without completing a TNL attempt.
 TEST_F(ric_reconnection_routine_test, stopped_flag_causes_early_exit)
 {
   async_task<bool> t = launch_async<ric_reconnection_routine>(
-      cfg, *node_cfg_provider, *e2sm_mngr, *conn_mngr, factory, test_logger, stopped);
+      cfg, *node_cfg_provider, *e2sm_mngr, *conn_mngr, factory, test_logger, stopped, ric_connected);
   lazy_task_launcher<bool> launcher(t);
   task_worker.run_pending_tasks();
 
@@ -172,5 +176,6 @@ TEST_F(ric_reconnection_routine_test, stopped_flag_causes_early_exit)
 
   ASSERT_TRUE(t.ready());
   ASSERT_FALSE(t.get());
+  ASSERT_FALSE(ric_connected.load());
   ASSERT_EQ(conn_mngr->tnl_call_count, 0);
 }

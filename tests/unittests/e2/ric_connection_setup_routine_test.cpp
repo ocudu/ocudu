@@ -97,6 +97,7 @@ protected:
   manual_task_worker                                                   task_worker{64};
   timer_factory                                                        factory;
   std::atomic<bool>                                                    stopped{false};
+  std::atomic<bool>                                                    ric_connected{false};
   std::unique_ptr<dummy_e2sm_kpm_du_meas_provider>                     du_meas_provider;
   std::unique_ptr<e2sm_kpm_asn1_packer>                                e2sm_kpm_packer;
   std::unique_ptr<e2sm_interface>                                      kpm_iface;
@@ -111,11 +112,12 @@ protected:
 TEST_F(ric_connection_setup_routine_test, immediate_success_exits)
 {
   async_task<void> t = launch_async<ric_connection_setup_routine>(
-      cfg, *node_cfg_provider, *e2sm_mngr, *conn_mngr, factory, test_logger, stopped);
+      cfg, *node_cfg_provider, *e2sm_mngr, *conn_mngr, factory, test_logger, stopped, ric_connected);
   lazy_task_launcher<void> launcher(t);
   task_worker.run_pending_tasks();
 
   ASSERT_TRUE(t.ready());
+  ASSERT_TRUE(ric_connected.load());
   ASSERT_EQ(conn_mngr->tnl_call_count, 1);
   ASSERT_EQ(conn_mngr->setup_call_count, 1);
 }
@@ -126,7 +128,7 @@ TEST_F(ric_connection_setup_routine_test, tnl_retries_then_exits)
   conn_mngr->tnl_fail_count = 2;
 
   async_task<void> t = launch_async<ric_connection_setup_routine>(
-      cfg, *node_cfg_provider, *e2sm_mngr, *conn_mngr, factory, test_logger, stopped);
+      cfg, *node_cfg_provider, *e2sm_mngr, *conn_mngr, factory, test_logger, stopped, ric_connected);
   lazy_task_launcher<void> launcher(t);
   task_worker.run_pending_tasks();
 
@@ -136,6 +138,7 @@ TEST_F(ric_connection_setup_routine_test, tnl_retries_then_exits)
   task_worker.run_pending_tasks();
 
   ASSERT_TRUE(t.ready());
+  ASSERT_TRUE(ric_connected.load());
   ASSERT_EQ(conn_mngr->tnl_call_count, 3);
 }
 
@@ -145,11 +148,12 @@ TEST_F(ric_connection_setup_routine_test, setup_rejection_exits_immediately)
   conn_mngr->setup_fail_count = 1;
 
   async_task<void> t = launch_async<ric_connection_setup_routine>(
-      cfg, *node_cfg_provider, *e2sm_mngr, *conn_mngr, factory, test_logger, stopped);
+      cfg, *node_cfg_provider, *e2sm_mngr, *conn_mngr, factory, test_logger, stopped, ric_connected);
   lazy_task_launcher<void> launcher(t);
   task_worker.run_pending_tasks();
 
   ASSERT_TRUE(t.ready());
+  ASSERT_FALSE(ric_connected.load());
   ASSERT_EQ(conn_mngr->setup_call_count, 1);
   ASSERT_EQ(conn_mngr->disconnect_count, 0);
 }
@@ -160,7 +164,7 @@ TEST_F(ric_connection_setup_routine_test, stopped_exits_cleanly)
   conn_mngr->tnl_fail_count = 1; // first attempt fails, enters wait
 
   async_task<void> t = launch_async<ric_connection_setup_routine>(
-      cfg, *node_cfg_provider, *e2sm_mngr, *conn_mngr, factory, test_logger, stopped);
+      cfg, *node_cfg_provider, *e2sm_mngr, *conn_mngr, factory, test_logger, stopped, ric_connected);
   lazy_task_launcher<void> launcher(t);
   task_worker.run_pending_tasks();
 

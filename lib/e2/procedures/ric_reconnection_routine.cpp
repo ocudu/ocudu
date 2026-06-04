@@ -14,7 +14,8 @@ ric_reconnection_routine::ric_reconnection_routine(const e2ap_configuration&    
                                                    e2_connection_manager&             e2_conn_mng_,
                                                    timer_factory                      timers_,
                                                    ocudulog::basic_logger&            logger_,
-                                                   const std::atomic<bool>&           stopped_) :
+                                                   const std::atomic<bool>&           stopped_,
+                                                   std::atomic<bool>&                 ric_connected_) :
   cfg(cfg_),
   node_cfg_provider(node_cfg_provider_),
   e2sm_mngr(e2sm_mngr_),
@@ -22,6 +23,7 @@ ric_reconnection_routine::ric_reconnection_routine(const e2ap_configuration&    
   timers(timers_),
   logger(logger_),
   stopped(stopped_),
+  ric_connected(ric_connected_),
   retry_timer(timers_.create_timer())
 {
 }
@@ -46,6 +48,7 @@ void ric_reconnection_routine::operator()(coro_context<async_task<bool>>& ctx)
   }
 
   if (reconnected) {
+    ric_connected = true;
     logger.info("\"{}\" finished successfully.", name());
   } else {
     logger.info("\"{}\" failed - RIC rejected E2 Setup.", name());

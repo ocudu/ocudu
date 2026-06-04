@@ -28,7 +28,8 @@ public:
                            e2_connection_manager&             e2_conn_mng,
                            timer_factory                      timers,
                            ocudulog::basic_logger&            logger,
-                           const std::atomic<bool>&           stopped);
+                           const std::atomic<bool>&           stopped,
+                           std::atomic<bool>&                 ric_connected);
 
   void operator()(coro_context<async_task<bool>>& ctx);
 
@@ -42,6 +43,7 @@ private:
   timer_factory                      timers;
   ocudulog::basic_logger&            logger;
   const std::atomic<bool>&           stopped;
+  std::atomic<bool>&                 ric_connected;
 
   unique_timer retry_timer;
   bool         reconnected = false;

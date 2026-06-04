@@ -59,7 +59,7 @@ void e2_entity::start()
         main_ctrl_loop.schedule([this](coro_context<async_task<void>>& ctx) {
           CORO_BEGIN(ctx);
           CORO_AWAIT(launch_async<ric_connection_setup_routine>(
-              cfg, *node_component_config_provider, *e2sm_mngr, *e2ap, timers, logger, stopped));
+              cfg, *node_component_config_provider, *e2sm_mngr, *e2ap, timers, logger, stopped, ric_connected));
           CORO_RETURN();
         });
       })) {
@@ -106,6 +106,7 @@ void e2_entity::on_e2_disconnection()
   if (stopped) {
     return;
   }
+  ric_connected = false;
   if (not main_ctrl_loop.schedule([this](coro_context<async_task<void>>& ctx) {
         CORO_BEGIN(ctx);
         CORO_AWAIT(launch_async<ric_connection_loss_routine>(*subscription_mngr, logger));
@@ -124,9 +125,10 @@ void e2_entity::reconnect_to_ric()
   }
   if (not main_ctrl_loop.schedule([this, success = false](coro_context<async_task<void>>& ctx) mutable {
         CORO_BEGIN(ctx);
-        CORO_AWAIT_VALUE(success,
-                         launch_async<ric_reconnection_routine>(
-                             cfg, *node_component_config_provider, *e2sm_mngr, *e2ap, timers, logger, stopped));
+        CORO_AWAIT_VALUE(
+            success,
+            launch_async<ric_reconnection_routine>(
+                cfg, *node_component_config_provider, *e2sm_mngr, *e2ap, timers, logger, stopped, ric_connected));
         if (success) {
           logger.info("RIC reconnection successful.");
         } else {
