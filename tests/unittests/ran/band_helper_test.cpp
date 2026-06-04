@@ -952,3 +952,109 @@ TEST(test_ul_arfcn_validator, test_different_bands)
   // Let's provide a n14 frequency to n28.
   ASSERT_FALSE(is_ul_arfcn_valid_given_band(nr_band::n28, 157600).has_value());
 }
+
+class custom_band_test : public ::testing::Test
+{
+protected:
+  void SetUp() override
+  {
+    band_helper::custom_band_config tdd;
+    tdd.band          = uint_to_nr_band(109);
+    tdd.delta_f_rast  = delta_freq_raster::kHz30;
+    tdd.dl_nref_first = 620100;
+    tdd.dl_nref_step  = 20;
+    tdd.dl_nref_last  = 625000;
+    tdd.ul_nref_first = 0; // TDD
+    tdd.ssb_scs       = subcarrier_spacing::kHz30;
+    tdd.ssb_case_c    = true;
+    tdd.delta_gscn    = 3;
+
+    band_helper::custom_band_config fdd;
+    fdd.band          = uint_to_nr_band(200);
+    fdd.delta_f_rast  = delta_freq_raster::kHz100;
+    fdd.dl_nref_first = 386000;
+    fdd.dl_nref_step  = 20;
+    fdd.dl_nref_last  = 398000;
+    fdd.ul_nref_first = 370000;
+    fdd.ul_nref_step  = 20;
+    fdd.ul_nref_last  = 382000;
+    fdd.ssb_scs       = subcarrier_spacing::kHz15;
+
+    band_helper::custom_band_config ntn;
+    ntn.band          = uint_to_nr_band(300);
+    ntn.delta_f_rast  = delta_freq_raster::kHz100;
+    ntn.dl_nref_first = 322000;
+    ntn.dl_nref_step  = 20;
+    ntn.dl_nref_last  = 325300;
+    ntn.ul_nref_first = 496700;
+    ntn.ul_nref_step  = 20;
+    ntn.ul_nref_last  = 500000;
+    ntn.ssb_scs       = subcarrier_spacing::kHz15;
+    ntn.ntn           = true;
+
+    std::array<band_helper::custom_band_config, 3> bands = {tdd, fdd, ntn};
+    band_helper::register_custom_bands(bands);
+  }
+  void TearDown() override { band_helper::register_custom_bands({}); }
+};
+
+TEST_F(custom_band_test, duplex_mode_tdd)
+{
+  ASSERT_EQ(duplex_mode::TDD, get_duplex_mode(uint_to_nr_band(109)));
+}
+
+TEST_F(custom_band_test, duplex_mode_fdd)
+{
+  ASSERT_EQ(duplex_mode::FDD, get_duplex_mode(uint_to_nr_band(200)));
+}
+
+TEST_F(custom_band_test, band_from_dl_arfcn)
+{
+  ASSERT_EQ(uint_to_nr_band(109), get_band_from_dl_arfcn(620100U));
+  ASSERT_EQ(uint_to_nr_band(109), get_band_from_dl_arfcn(625000U));
+  ASSERT_NE(uint_to_nr_band(109), get_band_from_dl_arfcn(620110U)); // wrong step
+  ASSERT_EQ(uint_to_nr_band(200), get_band_from_dl_arfcn(386000U));
+}
+
+TEST_F(custom_band_test, dl_arfcn_valid)
+{
+  ASSERT_TRUE(is_dl_arfcn_valid_given_band(uint_to_nr_band(109), 620100U, subcarrier_spacing::kHz30).has_value());
+  ASSERT_FALSE(is_dl_arfcn_valid_given_band(uint_to_nr_band(109), 619000U, subcarrier_spacing::kHz30).has_value());
+}
+
+TEST_F(custom_band_test, ul_arfcn_tdd)
+{
+  ASSERT_EQ(arfcn_t{620100U}, get_ul_arfcn_from_dl_arfcn(620100U, uint_to_nr_band(109)));
+}
+
+TEST_F(custom_band_test, ul_arfcn_fdd)
+{
+  ASSERT_EQ(arfcn_t{370000U}, get_ul_arfcn_from_dl_arfcn(386000U, uint_to_nr_band(200)));
+}
+
+TEST_F(custom_band_test, ssb_pattern)
+{
+  ASSERT_EQ(ssb_pattern_case::C, get_ssb_pattern(uint_to_nr_band(109), subcarrier_spacing::kHz30));
+  ASSERT_EQ(ssb_pattern_case::A, get_ssb_pattern(uint_to_nr_band(200), subcarrier_spacing::kHz15));
+  ASSERT_EQ(ssb_pattern_case::invalid, get_ssb_pattern(uint_to_nr_band(109), subcarrier_spacing::kHz15));
+}
+
+TEST_F(custom_band_test, ntn_flag)
+{
+  ASSERT_FALSE(is_ntn_band(uint_to_nr_band(109)));
+  ASSERT_TRUE(is_ntn_band(uint_to_nr_band(300)));
+  ASSERT_TRUE(is_ntn_band(nr_band::n254)); // standard NTN bands still work
+}
+
+TEST_F(custom_band_test, freq_range_fr1)
+{
+  // Band 109 has dl_arfcn_min=620100 < 2016667 (FR1 threshold)
+  ASSERT_EQ(frequency_range::FR1, get_freq_range(uint_to_nr_band(109)));
+}
+
+TEST_F(custom_band_test, clear_restores_unknown)
+{
+  band_helper::register_custom_bands({});
+  ASSERT_EQ(duplex_mode::INVALID, get_duplex_mode(uint_to_nr_band(109)));
+  ASSERT_FALSE(is_ntn_band(uint_to_nr_band(300)));
+}

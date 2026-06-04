@@ -1051,6 +1051,12 @@ static bool validate_dl_ul_arfcn_and_band(const du_high_unit_base_cell_config& c
 {
   const nr_band band = config.band.value_or(band_helper::get_band_from_dl_arfcn(config.dl_f_ref_arfcn));
 
+  if (!band_helper::is_band_known(band)) {
+    fmt::print("Band n{} is not a known NR band and has not been registered as a custom band.\n",
+               fmt::underlying(band));
+    return false;
+  }
+
   // Check if the band is supported with given SCS or band.
   // NOTE: Band n46 would be compatible with the 10MHz BW, but there is no sync raster that falls within the band
   // limits. Also, the Coreset#0 width in RBs given in Table 13-4A, TS 38.213, is larger than the band itself, which is
@@ -1677,6 +1683,54 @@ static bool validate_rlc_unit_config(five_qi_t five_qi, const du_high_unit_rlc_c
   return true;
 }
 
+static bool validate_custom_freq_bands(const std::vector<du_high_unit_custom_band_config>& bands)
+{
+  for (const auto& cb : bands) {
+    if (cb.band_nr < 1 || cb.band_nr > 1024) {
+      fmt::print("Custom band number {} is out of range [1, 1024].\n", cb.band_nr);
+      return false;
+    }
+    if (cb.dl_freq_min >= cb.dl_freq_max) {
+      fmt::print("Custom band {}: dl_freq_min ({}) >= dl_freq_max ({}).\n", cb.band_nr, cb.dl_freq_min, cb.dl_freq_max);
+      return false;
+    }
+    if (cb.dl_freq_max - cb.dl_freq_min < 5.0) {
+      fmt::print("Custom band {}: DL frequency range ({} - {} MHz) is less than the minimum 5 MHz bandwidth.\n",
+                 cb.band_nr,
+                 cb.dl_freq_min,
+                 cb.dl_freq_max);
+      return false;
+    }
+    if (cb.ul_freq_min.has_value() && *cb.ul_freq_min >= *cb.ul_freq_max) {
+      fmt::print("Custom band {}: ul_freq_min ({}) >= ul_freq_max ({}) for FDD band.\n",
+                 cb.band_nr,
+                 *cb.ul_freq_min,
+                 *cb.ul_freq_max);
+      return false;
+    }
+    if (cb.ul_freq_min.has_value() && *cb.ul_freq_max - *cb.ul_freq_min < 5.0) {
+      fmt::print("Custom band {}: UL frequency range ({} - {} MHz) is less than the minimum 5 MHz bandwidth.\n",
+                 cb.band_nr,
+                 *cb.ul_freq_min,
+                 *cb.ul_freq_max);
+      return false;
+    }
+    if (cb.f_raster == band_helper::delta_freq_raster::DEFAULT) {
+      fmt::print("Custom band {}: f_raster is invalid (must be 15, 30, 60, 100, or 120 kHz).\n", cb.band_nr);
+      return false;
+    }
+    if (cb.ssb_scs == subcarrier_spacing::invalid) {
+      fmt::print("Custom band {}: ssb_scs is invalid (must be 15, 30, 120, or 240 kHz).\n", cb.band_nr);
+      return false;
+    }
+    if (cb.delta_gscn != 1 && cb.delta_gscn != 3 && cb.delta_gscn != 7 && cb.delta_gscn != 16) {
+      fmt::print("Custom band {}: delta_gscn={} is invalid (must be 1, 3, 7, or 16).\n", cb.band_nr, cb.delta_gscn);
+      return false;
+    }
+  }
+  return true;
+}
+
 /// Validates the given QoS configuration. Returns true on success, otherwise false.
 static bool validate_qos_config(span<const du_high_unit_qos_config> config)
 {
@@ -1699,6 +1753,10 @@ static bool validate_qos_config(span<const du_high_unit_qos_config> config)
 
 bool ocudu::validate_du_high_config(const du_high_unit_config& config)
 {
+  if (!validate_custom_freq_bands(config.custom_freq_bands)) {
+    return false;
+  }
+
   if (!validate_cells_unit_config(config.cells_cfg, config.gnb_id)) {
     return false;
   }

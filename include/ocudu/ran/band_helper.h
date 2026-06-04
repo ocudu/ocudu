@@ -8,6 +8,8 @@
 /// provided by DU.
 
 #include "ocudu/adt/expected.h"
+#include "ocudu/adt/span.h"
+#include "ocudu/adt/static_vector.h"
 #include "ocudu/ran/arfcn.h"
 #include "ocudu/ran/band_helper_constants.h"
 #include "ocudu/ran/bs_channel_bandwidth.h"
@@ -50,10 +52,31 @@ constexpr nr_band uint_to_nr_band(unsigned band)
 
 namespace band_helper {
 
+/// Possible values of delta f_raster as per TS 38.104 Tables 5.4.2.3-1 and 5.4.2.3-2.
+enum class delta_freq_raster {
+  /// For bands with 2 possible values for delta_f_raster (e.g. 15 and 30 kHz), the lowest is chosen.
+  DEFAULT = 0,
+  kHz15,
+  kHz30,
+  kHz60,
+  kHz100,
+  kHz120
+};
+
+/// Convert a kHz integer to the corresponding delta_freq_raster enumerator.
+/// Returns delta_freq_raster::DEFAULT if the value is not a recognised raster.
+delta_freq_raster to_delta_freq_raster(unsigned khz);
+
+/// Returns the raster step in kHz for the given delta_freq_raster. Asserts on DEFAULT.
+unsigned delta_freq_raster_to_khz(delta_freq_raster raster);
+
 /// \brief     Gets the NR band duplex mode.
 /// \param[in] band Given band.
 /// \return    A valid duplex_mode if the band is valid, duplex_mode::INVALID otherwise.
 duplex_mode get_duplex_mode(nr_band band);
+
+/// \brief     Returns true if the band is known, either a standard NR band or a registered custom band.
+bool is_band_known(nr_band band);
 
 /// \brief     Gets the lowest band that includes a given Downlink ARFCN.
 /// \remark    Some bands can be subset of others, e.g., band 2 is a subset of band 25.
@@ -363,6 +386,31 @@ error_type<std::string> is_ssb_arfcn_valid_given_band(arfcn_t              ssb_a
                                                       nr_band              band,
                                                       subcarrier_spacing   scs,
                                                       bs_channel_bandwidth bw = bs_channel_bandwidth::invalid);
+
+/// [Implementation-defined] Maximum number of user-defined custom NR bands that can be registered.
+constexpr unsigned max_nof_custom_bands = 8;
+
+/// User-defined NR operating band with ARFCN-based frequency ranges.
+struct custom_band_config {
+  nr_band           band          = nr_band::invalid;
+  delta_freq_raster delta_f_rast  = delta_freq_raster::kHz100;
+  arfcn_t           dl_nref_first = 0;
+  arfcn_t           dl_nref_step  = 20;
+  arfcn_t           dl_nref_last  = 0;
+  /// ul_nref_first == 0 indicates TDD (UL same as DL). Non-zero: FDD.
+  arfcn_t            ul_nref_first = 0;
+  arfcn_t            ul_nref_step  = 20;
+  arfcn_t            ul_nref_last  = 0;
+  subcarrier_spacing ssb_scs       = subcarrier_spacing::kHz15;
+  /// true: ssb_pattern_case::C (30 kHz TDD, e.g. n77/n78/n79-like)
+  bool    ssb_case_c   = false;
+  bool    min_40mhz_bw = false;
+  uint8_t delta_gscn   = 1;
+  bool    ntn          = false;
+};
+
+/// Register user-defined bands. Must be called before any band_helper query.
+void register_custom_bands(span<const custom_band_config> bands);
 
 } // namespace band_helper
 

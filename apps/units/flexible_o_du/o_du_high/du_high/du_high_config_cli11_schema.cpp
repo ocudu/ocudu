@@ -2697,6 +2697,32 @@ static void configure_cli11_qos_args(CLI::App& app, du_high_unit_qos_config& qos
   app.needs(f1u_du_subcmd);
 }
 
+static void configure_cli11_custom_freq_band_args(CLI::App& app, du_high_unit_custom_band_config& cfg)
+{
+  add_option(app, "--band_nr", cfg.band_nr, "NR band number")->required();
+  add_option(app, "--dl_freq_min", cfg.dl_freq_min, "DL frequency range start in MHz")->required();
+  add_option(app, "--dl_freq_max", cfg.dl_freq_max, "DL frequency range end in MHz")->required();
+  add_option(app, "--ul_freq_min", cfg.ul_freq_min, "UL frequency range start in MHz (omit for TDD)");
+  add_option(app, "--ul_freq_max", cfg.ul_freq_max, "UL frequency range end in MHz (omit for TDD)");
+  app.add_option_function<unsigned>(
+         "--f_raster",
+         [&cfg](unsigned val) { cfg.f_raster = band_helper::to_delta_freq_raster(val); },
+         "ARFCN raster in kHz")
+      ->required()
+      ->check(CLI::IsMember({15u, 30u, 60u, 100u, 120u}));
+  app.add_option_function<unsigned>(
+         "--ssb_scs",
+         [&cfg](unsigned val) { cfg.ssb_scs = to_subcarrier_spacing(std::to_string(val)); },
+         "SSB subcarrier spacing in kHz")
+      ->required()
+      ->check(CLI::IsMember({15u, 30u, 120u, 240u}));
+  add_option(app, "--ssb_case_c", cfg.ssb_case_c, "SSB pattern case C (true for n77/n78/n79-like TDD)");
+  add_option(app, "--min_40mhz_bw", cfg.min_40mhz_bw, "Minimum 40 MHz BW constraint");
+  add_option(app, "--delta_gscn", cfg.delta_gscn, "GSCN step for SSB candidate search")
+      ->check(CLI::IsMember({1u, 3u, 7u, 16u}));
+  add_option(app, "--ntn", cfg.ntn, "Non-Terrestrial Network band");
+}
+
 void ocudu::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_parsed_config& parsed_cfg)
 {
   add_option(app, "--gnb_id", parsed_cfg.config.gnb_id.id, "gNodeB identifier")->capture_default_str();
@@ -2805,6 +2831,20 @@ void ocudu::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_pa
   };
   app.add_option_function<std::vector<std::string>>("--srbs", srb_lambda, "Configures signaling radio bearers.");
 
+  // Custom frequency bands section.
+  auto custom_freq_bands_lambda = [&parsed_cfg](const std::vector<std::string>& values) {
+    parsed_cfg.config.custom_freq_bands.resize(values.size());
+    for (unsigned i = 0, e = values.size(); i != e; ++i) {
+      CLI::App subapp("Custom frequency band parameters", "Custom frequency band config, item #" + std::to_string(i));
+      subapp.config_formatter(create_yaml_config_parser());
+      subapp.allow_config_extras(CLI::config_extras_mode::capture);
+      configure_cli11_custom_freq_band_args(subapp, parsed_cfg.config.custom_freq_bands[i]);
+      std::istringstream ss(values[i]);
+      subapp.parse_from_stream(ss);
+    }
+  };
+  add_option_cell(app, "--custom_freq_bands", custom_freq_bands_lambda, "User-defined non-standard NR frequency bands");
+
   // Test mode section.
   CLI::App* test_mode_subcmd = add_subcommand(app, "test_mode", "Test mode configuration")->configurable();
   configure_cli11_test_mode_args(*test_mode_subcmd, parsed_cfg.config.test_mode_cfg);
@@ -2867,7 +2907,47 @@ static void derive_auto_params(du_high_unit_config& config)
   }
 }
 
+static band_helper::custom_band_config to_custom_band_config(const du_high_unit_custom_band_config& src)
+{
+  // Derive ARFCN step from f_raster and frequency region.
+  // delta_F_global: 5 kHz below 3 GHz, 15 kHz for 3-24.5 GHz, 60 kHz for FR2.
+  const double f_raster_khz = static_cast<double>(band_helper::delta_freq_raster_to_khz(src.f_raster));
+  const double dl_freq_hz   = src.dl_freq_min * 1e6;
+  double       delta_f_global_khz;
+  if (dl_freq_hz < band_helper::N_REF_OFFSET_3_GHZ_24_5_GHZ) {
+    delta_f_global_khz = 5.0;
+  } else if (dl_freq_hz < band_helper::N_REF_OFFSET_24_5_GHZ_100_GHZ) {
+    delta_f_global_khz = 15.0;
+  } else {
+    delta_f_global_khz = 60.0;
+  }
+  const arfcn_t step = arfcn_t(static_cast<uint32_t>(f_raster_khz / delta_f_global_khz));
+
+  const bool is_tdd = !src.ul_freq_min.has_value();
+
+  band_helper::custom_band_config dst;
+  dst.band          = uint_to_nr_band(src.band_nr);
+  dst.delta_f_rast  = src.f_raster;
+  dst.dl_nref_first = band_helper::freq_to_nr_arfcn(src.dl_freq_min * 1e6);
+  dst.dl_nref_step  = step;
+  dst.dl_nref_last  = band_helper::freq_to_nr_arfcn(src.dl_freq_max * 1e6);
+  dst.ul_nref_first = is_tdd ? arfcn_t(0) : band_helper::freq_to_nr_arfcn(*src.ul_freq_min * 1e6);
+  dst.ul_nref_step  = is_tdd ? arfcn_t(0) : step;
+  dst.ul_nref_last  = is_tdd ? arfcn_t(0) : band_helper::freq_to_nr_arfcn(*src.ul_freq_max * 1e6);
+  dst.ssb_scs       = src.ssb_scs;
+  dst.ssb_case_c    = src.ssb_case_c;
+  dst.min_40mhz_bw  = src.min_40mhz_bw;
+  dst.delta_gscn    = src.delta_gscn;
+  dst.ntn           = src.ntn;
+  return dst;
+}
+
 void ocudu::autoderive_du_high_parameters_after_parsing(CLI::App& app, du_high_unit_config& unit_cfg)
 {
+  static_vector<band_helper::custom_band_config, band_helper::max_nof_custom_bands> raster_bands;
+  for (const auto& cb : unit_cfg.custom_freq_bands) {
+    raster_bands.push_back(to_custom_band_config(cb));
+  }
+  band_helper::register_custom_bands(raster_bands);
   derive_auto_params(unit_cfg);
 }

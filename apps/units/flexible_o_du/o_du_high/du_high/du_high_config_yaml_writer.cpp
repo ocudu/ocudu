@@ -787,6 +787,27 @@ static void fill_qos_section(YAML::Node node, span<const du_high_unit_qos_config
   }
 }
 
+static void fill_custom_freq_bands_section(YAML::Node& node, const std::vector<du_high_unit_custom_band_config>& bands)
+{
+  for (const auto& cb : bands) {
+    YAML::Node entry;
+    entry["band_nr"]     = cb.band_nr;
+    entry["dl_freq_min"] = cb.dl_freq_min;
+    entry["dl_freq_max"] = cb.dl_freq_max;
+    if (cb.ul_freq_min.has_value()) {
+      entry["ul_freq_min"] = *cb.ul_freq_min;
+      entry["ul_freq_max"] = *cb.ul_freq_max;
+    }
+    entry["f_raster"]     = band_helper::delta_freq_raster_to_khz(cb.f_raster);
+    entry["ssb_scs"]      = scs_to_khz(cb.ssb_scs);
+    entry["ssb_case_c"]   = cb.ssb_case_c;
+    entry["min_40mhz_bw"] = cb.min_40mhz_bw;
+    entry["delta_gscn"]   = static_cast<unsigned>(cb.delta_gscn);
+    entry["ntn"]          = cb.ntn;
+    node["custom_freq_bands"].push_back(entry);
+  }
+}
+
 static void build_du_high_sbr_section(YAML::Node& node, const std::map<srb_id_t, du_high_unit_srb_config>& sbrs)
 {
   for (const auto& cell : sbrs) {
@@ -845,6 +866,7 @@ void ocudu::fill_du_high_config_in_yaml_schema(YAML::Node& node, const du_high_p
     node["test_mode"] = build_du_high_testmode_section(config.test_mode_cfg);
   }
 
+  fill_custom_freq_bands_section(node, config.custom_freq_bands);
   fill_qos_section(node, config.qos_cfg);
   // Emit a 'cell_cfg' section from the original common base cell config (the CLI schema treats it as
   // the template propagated to every cell during parsing, so per-cell overrides applied later don't

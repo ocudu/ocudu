@@ -1337,6 +1337,26 @@ struct du_high_unit_qos_config {
   du_high_unit_mac_config    mac;
 };
 
+/// User-defined NR frequency band.
+struct du_high_unit_custom_band_config {
+  /// Band number 1-1024.
+  uint16_t band_nr = 0;
+  /// DL frequency range in MHz.
+  double dl_freq_min = 0.0;
+  double dl_freq_max = 0.0;
+  /// UL frequency range in MHz. Absent for TDD (UL same as DL).
+  std::optional<double> ul_freq_min;
+  std::optional<double> ul_freq_max;
+  /// ARFCN raster (channel spacing). Determines dl_nref_step / ul_nref_step.
+  band_helper::delta_freq_raster f_raster     = band_helper::delta_freq_raster::kHz100;
+  subcarrier_spacing             ssb_scs      = subcarrier_spacing::kHz15;
+  bool                           ssb_case_c   = false;
+  bool                           min_40mhz_bw = false;
+  /// GSCN step for SSB candidate search. Valid values: 1, 3, 7, 16. Default = 1.
+  uint8_t delta_gscn = 1;
+  bool    ntn        = false;
+};
+
 /// DU high configuration.
 struct du_high_unit_config {
   bool warn_on_drop = false;
@@ -1358,6 +1378,8 @@ struct du_high_unit_config {
   ///
   /// \note Add one cell by default.
   std::vector<du_high_unit_cell_config> cells_cfg = {{}};
+  /// User-defined non-standard NR frequency bands.
+  std::vector<du_high_unit_custom_band_config> custom_freq_bands;
   /// QoS configuration.
   std::vector<du_high_unit_qos_config> qos_cfg;
   /// DU high expert execution settings.

@@ -22,17 +22,6 @@ using namespace band_helper;
 
 namespace {
 
-/// Possible values of delta f_raster in Table 5.4.2.3-1 and Table 5.4.2.3-2
-enum class delta_freq_raster {
-  /// For bands with 2 possible values for delta_f_raster (e.g. 15 and 30 kHz), the lowest is chosen.
-  DEFAULT = 0,
-  kHz15,
-  kHz30,
-  kHz60,
-  kHz100,
-  kHz120
-};
-
 /// NR operating band and DL ARFCN lower-bound and upper-bound. See Table 5.4.2.3-1 in TS 38.104.
 struct nr_band_raster {
   nr_band           band;
@@ -334,6 +323,47 @@ static constexpr std::array<nr_band_ssb_scs_case, nof_nr_ssb_bands> nr_ssb_band_
     {nr_band::n262,  subcarrier_spacing::kHz240, ssb_pattern_case::E},
     // clang-format on
 }};
+
+class custom_band_registry
+{
+public:
+  custom_band_registry() = default;
+
+  explicit custom_band_registry(span<const custom_band_config> bands)
+  {
+    ocudu_assert(bands.size() <= max_nof_custom_bands,
+                 "Number of custom bands ({}) exceeds max_nof_custom_bands ({})",
+                 bands.size(),
+                 max_nof_custom_bands);
+    bands_.assign(bands.begin(), bands.end());
+  }
+
+  const custom_band_config* find_by_band(nr_band band) const
+  {
+    for (const custom_band_config& cb : bands_) {
+      if (cb.band == band) {
+        return &cb;
+      }
+    }
+    return nullptr;
+  }
+
+  const custom_band_config* find_by_dl_arfcn(arfcn_t arfcn) const
+  {
+    for (const custom_band_config& cb : bands_) {
+      if (arfcn >= cb.dl_nref_first && arfcn <= cb.dl_nref_last &&
+          (arfcn.value() - cb.dl_nref_first.value()) % cb.dl_nref_step.value() == 0) {
+        return &cb;
+      }
+    }
+    return nullptr;
+  }
+
+private:
+  static_vector<custom_band_config, max_nof_custom_bands> bands_;
+};
+
+static custom_band_registry g_registry;
 
 namespace {
 
@@ -751,6 +781,10 @@ nr_band ocudu::band_helper::get_band_from_dl_arfcn(arfcn_t arfcn_f_ref)
     return nr_band::n28;
   }
 
+  if (const custom_band_config* cb = g_registry.find_by_dl_arfcn(arfcn_f_ref); cb != nullptr) {
+    return cb->band;
+  }
+
   for (const nr_band_raster& band : nr_band_table) {
     // Check given ARFCN is between the first and last possible ARFCN.
     if (arfcn_f_ref >= band.dl_nref_first and arfcn_f_ref <= band.dl_nref_last and
@@ -766,6 +800,19 @@ error_type<std::string> ocudu::band_helper::is_dl_arfcn_valid_given_band(nr_band
                                                                          subcarrier_spacing   scs,
                                                                          bs_channel_bandwidth bw)
 {
+  if (const custom_band_config* cb = g_registry.find_by_band(band); cb != nullptr) {
+    if (arfcn_f_ref >= cb->dl_nref_first && arfcn_f_ref <= cb->dl_nref_last &&
+        (arfcn_f_ref.value() - cb->dl_nref_first.value()) % cb->dl_nref_step.value() == 0) {
+      return {};
+    }
+    return make_unexpected(
+        fmt::format("DL ARFCN must be within the interval [{},{}], in steps of {}, for custom band {}",
+                    cb->dl_nref_first,
+                    cb->dl_nref_last,
+                    cb->dl_nref_step,
+                    nr_band_to_uint(cb->band)));
+  }
+
   // Validates first the bands with non-standard ARFCN values.
   if (band == nr_band::n28) {
     return validate_band_n28(arfcn_f_ref, bw, true);
@@ -824,6 +871,23 @@ error_type<std::string> ocudu::band_helper::is_dl_arfcn_valid_given_band(nr_band
 error_type<std::string>
 ocudu::band_helper::is_ul_arfcn_valid_given_band(nr_band band, arfcn_t arfcn_f_ref, bs_channel_bandwidth bw)
 {
+  if (const custom_band_config* cb = g_registry.find_by_band(band); cb != nullptr) {
+    // TDD: no UL raster configured (ul_nref_first == 0), DL is used for UL, always valid.
+    if (cb->ul_nref_first.value() == 0) {
+      return {};
+    }
+    if (arfcn_f_ref >= cb->ul_nref_first && arfcn_f_ref <= cb->ul_nref_last &&
+        (arfcn_f_ref.value() - cb->ul_nref_first.value()) % cb->ul_nref_step.value() == 0) {
+      return {};
+    }
+    return make_unexpected(
+        fmt::format("UL ARFCN must be within the interval [{},{}], in steps of {}, for custom band {}",
+                    cb->ul_nref_first,
+                    cb->ul_nref_last,
+                    cb->ul_nref_step,
+                    nr_band_to_uint(cb->band)));
+  }
+
   if (get_duplex_mode(band) != duplex_mode::FDD) {
     return {};
   }
@@ -866,6 +930,16 @@ arfcn_t ocudu::band_helper::get_ul_arfcn_from_dl_arfcn(arfcn_t dl_arfcn, std::op
 {
   // NOTE: The procedure implemented in this function is implementation-defined.
   const nr_band operating_band = band.value_or(get_band_from_dl_arfcn(dl_arfcn));
+
+  if (const custom_band_config* cb = g_registry.find_by_band(operating_band); cb != nullptr) {
+    // TDD: no UL raster configured (ul_nref_first == 0), return DL ARFCN as UL.
+    if (cb->ul_nref_first.value() == 0) {
+      return dl_arfcn;
+    }
+    const uint32_t offset       = (dl_arfcn.value() - cb->dl_nref_first.value()) / cb->dl_nref_step.value();
+    const arfcn_t  candidate_ul = arfcn_t(cb->ul_nref_first.value() + offset * cb->ul_nref_step.value());
+    return (candidate_ul >= cb->ul_nref_first && candidate_ul <= cb->ul_nref_last) ? candidate_ul : 0U;
+  }
 
   // Return same ARFCN for TDD bands.
   if (get_duplex_mode(operating_band) == duplex_mode::TDD) {
@@ -933,11 +1007,21 @@ bool ocudu::band_helper::is_band_40mhz_min_ch_bw_equivalent(nr_band band)
 
 bool ocudu::band_helper::is_ntn_band(nr_band band)
 {
+  if (const custom_band_config* cb = g_registry.find_by_band(band); cb != nullptr) {
+    return cb->ntn;
+  }
   return band == nr_band::n254 or band == nr_band::n255 or band == nr_band::n256;
 }
 
 ssb_pattern_case ocudu::band_helper::get_ssb_pattern(nr_band band, subcarrier_spacing scs)
 {
+  if (const custom_band_config* cb = g_registry.find_by_band(band); cb != nullptr) {
+    if (cb->ssb_scs != scs) {
+      return ssb_pattern_case::invalid;
+    }
+    return cb->ssb_case_c ? ssb_pattern_case::C : ssb_pattern_case::A;
+  }
+
   // Look for the given band and SCS.
   for (const nr_band_ssb_scs_case& ssb_scs_case : nr_ssb_band_scs_case_table) {
     // As bands are in ascending order, do not waste more time if the current band is bigger.
@@ -956,6 +1040,10 @@ ssb_pattern_case ocudu::band_helper::get_ssb_pattern(nr_band band, subcarrier_sp
 
 subcarrier_spacing ocudu::band_helper::get_most_suitable_ssb_scs(nr_band band, subcarrier_spacing scs_common)
 {
+  if (const custom_band_config* cb = g_registry.find_by_band(band); cb != nullptr) {
+    return cb->ssb_scs;
+  }
+
   subcarrier_spacing lowest_scs = subcarrier_spacing::invalid;
 
   // Look for the given band and SCS
@@ -985,6 +1073,10 @@ subcarrier_spacing ocudu::band_helper::get_most_suitable_ssb_scs(nr_band band, s
 
 duplex_mode ocudu::band_helper::get_duplex_mode(nr_band band)
 {
+  if (const custom_band_config* cb = g_registry.find_by_band(band); cb != nullptr) {
+    return (cb->ul_nref_first.value() == 0) ? duplex_mode::TDD : duplex_mode::FDD;
+  }
+
   // Look for the given band.
   for (const nr_operating_band& b : nr_operating_bands) {
     // Check if band and SCS match!
@@ -1000,6 +1092,22 @@ duplex_mode ocudu::band_helper::get_duplex_mode(nr_band band)
 
   // Band is out of range, so consider invalid.
   return duplex_mode::INVALID;
+}
+
+bool ocudu::band_helper::is_band_known(nr_band band)
+{
+  if (g_registry.find_by_band(band) != nullptr) {
+    return true;
+  }
+  for (const nr_operating_band& b : nr_operating_bands) {
+    if (b.band == band) {
+      return true;
+    }
+    if (b.band > band) {
+      return false;
+    }
+  }
+  return false;
 }
 
 bool ocudu::band_helper::is_paired_spectrum(nr_band band)
@@ -1026,6 +1134,10 @@ bool ocudu::band_helper::is_unlicensed_band(nr_band band)
 
 frequency_range ocudu::band_helper::get_freq_range(nr_band band)
 {
+  if (const custom_band_config* cb = g_registry.find_by_band(band); cb != nullptr) {
+    return (cb->dl_nref_first < MIN_ARFCN_24_5_GHZ_100_GHZ) ? frequency_range::FR1 : frequency_range::FR2;
+  }
+
   ocudu_assert(band != nr_band::invalid, "Band must be a valid NR band.");
   return (band <= nr_band::n104 || band == nr_band::n254 || band == nr_band::n255 || band == nr_band::n256)
              ? frequency_range::FR1
@@ -1109,6 +1221,13 @@ unsigned ocudu::band_helper::get_n_rbs_from_bw(bs_channel_bandwidth bw, subcarri
 
 min_channel_bandwidth ocudu::band_helper::get_min_channel_bw(nr_band nr_band, subcarrier_spacing scs)
 {
+  if (const custom_band_config* cb = g_registry.find_by_band(nr_band); cb != nullptr) {
+    if (cb->min_40mhz_bw) {
+      return min_channel_bandwidth::MHz40;
+    }
+    return (scs == subcarrier_spacing::kHz15) ? min_channel_bandwidth::MHz5 : min_channel_bandwidth::MHz10;
+  }
+
   switch (nr_band) {
     case nr_band::n1:
     case nr_band::n2:
@@ -1584,6 +1703,10 @@ error_type<std::string> ocudu::band_helper::is_ssb_arfcn_valid_given_band(arfcn_
                                                                           subcarrier_spacing   ssb_scs,
                                                                           bs_channel_bandwidth bw)
 {
+  if (g_registry.find_by_band(band) != nullptr) {
+    return {};
+  }
+
   // Convert the ARFCN to GSCN.
   std::optional<unsigned> gscn = band_helper::get_gscn_from_ss_ref(nr_arfcn_to_freq(ssb_arfcn));
   if (not gscn.has_value()) {
@@ -1592,4 +1715,46 @@ error_type<std::string> ocudu::band_helper::is_ssb_arfcn_valid_given_band(arfcn_
   }
   // If the GCSN exists, check if it is a valid one.
   return band_helper::is_gscn_valid_given_band(gscn.value(), band, ssb_scs, bw);
+}
+
+void ocudu::band_helper::register_custom_bands(span<const custom_band_config> bands)
+{
+  g_registry = custom_band_registry(bands);
+}
+
+delta_freq_raster ocudu::band_helper::to_delta_freq_raster(unsigned khz)
+{
+  switch (khz) {
+    case 15:
+      return delta_freq_raster::kHz15;
+    case 30:
+      return delta_freq_raster::kHz30;
+    case 60:
+      return delta_freq_raster::kHz60;
+    case 100:
+      return delta_freq_raster::kHz100;
+    case 120:
+      return delta_freq_raster::kHz120;
+    default:
+      return delta_freq_raster::DEFAULT;
+  }
+}
+
+unsigned ocudu::band_helper::delta_freq_raster_to_khz(delta_freq_raster raster)
+{
+  switch (raster) {
+    case delta_freq_raster::kHz15:
+      return 15;
+    case delta_freq_raster::kHz30:
+      return 30;
+    case delta_freq_raster::kHz60:
+      return 60;
+    case delta_freq_raster::kHz100:
+      return 100;
+    case delta_freq_raster::kHz120:
+      return 120;
+    default:
+      ocudu_assert(false, "delta_freq_raster_to_khz called with DEFAULT (unset) raster");
+      return 0;
+  }
 }
