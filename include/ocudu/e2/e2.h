@@ -53,12 +53,16 @@ public:
   /// \brief Request a new TNL association to the Near-RT RIC.
   virtual bool handle_e2_tnl_connection_request() = 0;
 
-  /// \brief Request the E2AP handler to disconnect from the Near-RT RIC.
+  /// \brief Request the E2 handler to disconnect from the RIC.
+  /// Tear down the TNL association without an E2AP handshake.
   virtual async_task<void> handle_e2_disconnection_request() = 0;
 
   /// \brief Transmit the pre-built E2 Setup Request and await the RIC response.
   /// Called by e2_setup_routine after building the request from node config + E2SM modules.
   virtual async_task<e2_setup_response_message> handle_e2_setup_request(const e2_setup_request_message& request) = 0;
+
+  /// \brief Send E2 REMOVAL REQUEST and await the RIC response.
+  virtual async_task<void> handle_e2_node_initiated_removal_request() = 0;
 };
 
 /// Combined entry point for E2 handling.

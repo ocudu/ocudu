@@ -4,6 +4,7 @@
 
 #include "e2_entity.h"
 #include "../procedures/ric_connection_loss_routine.h"
+#include "../procedures/ric_connection_removal_routine.h"
 #include "../procedures/ric_connection_setup_routine.h"
 #include "../procedures/ric_reconnection_routine.h"
 #include "e2_impl.h"
@@ -83,8 +84,7 @@ void e2_entity::stop()
   while (not task_exec.defer([this, signal_stop = std::move(signal_stop)]() mutable {
     main_ctrl_loop.schedule([this, signal_stop = std::move(signal_stop)](coro_context<async_task<void>>& ctx) mutable {
       CORO_BEGIN(ctx);
-      // Disconnect RIC connection.
-      CORO_AWAIT(e2ap->handle_e2_disconnection_request());
+      CORO_AWAIT(disconnect_ric());
 
       // RIC disconnection successfully finished. Stop the main task loop.
       // Dispatch main async task loop destruction via defer so that the current coroutine ends successfully.
@@ -116,6 +116,11 @@ void e2_entity::on_e2_disconnection()
     logger.error("Failed to schedule RIC connection loss handling. Stopping subscriptions.");
     subscription_mngr->stop();
   }
+}
+
+async_task<void> e2_entity::disconnect_ric()
+{
+  return launch_async<ric_connection_removal_routine>(*e2ap, *subscription_mngr, ric_connected, logger);
 }
 
 void e2_entity::reconnect_to_ric()

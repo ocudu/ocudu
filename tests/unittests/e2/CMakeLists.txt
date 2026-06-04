@@ -54,6 +54,12 @@ target_link_libraries(ric_connection_setup_routine_test ocudu_e2 ocudu_support o
 target_include_directories(ric_connection_setup_routine_test PRIVATE ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(ric_connection_setup_routine_test)
 
+add_executable(e2_removal_procedure_test e2_removal_procedure_test.cpp)
+target_link_libraries(e2_removal_procedure_test ocudu_e2 ocudu_support ocudulog e2ap_asn1 e2_test_helpers GTest::gtest GTest::gtest_main
+)
+target_include_directories(e2_removal_procedure_test PRIVATE ${CMAKE_SOURCE_DIR})
+gtest_discover_tests(e2_removal_procedure_test)
+
 add_executable(e2_subscription_setup_test e2_subscription_setup_test.cpp)
 target_link_libraries(e2_subscription_setup_test ocudu_e2 ocudu_support ocudulog e2ap_asn1 ocudu_ran e2_test_helpers GTest::gtest GTest::gtest_main
 )

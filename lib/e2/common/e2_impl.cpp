@@ -4,6 +4,7 @@
 
 #include "e2_impl.h"
 #include "procedures/e2ap_connection_update_procedure.h"
+#include "procedures/e2ap_removal_procedure.h"
 #include "ocudu/asn1/e2ap/e2ap.h"
 #include "ocudu/e2/e2.h"
 #include <memory>
@@ -38,6 +39,17 @@ bool e2_impl::handle_e2_tnl_connection_request()
   tx_pdu_notifier.reset();
   tx_pdu_notifier = connection_handler.connect_to_ric();
   return tx_pdu_notifier != nullptr;
+}
+
+async_task<void> e2_impl::handle_e2_node_initiated_removal_request()
+{
+  if (tx_pdu_notifier == nullptr) {
+    return launch_async([](coro_context<async_task<void>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+  return launch_async<e2ap_removal_procedure>(*tx_pdu_notifier, *events, timers, logger);
 }
 
 async_task<void> e2_impl::handle_e2_disconnection_request()
@@ -141,14 +153,13 @@ void e2_impl::handle_initiating_message(const asn1::e2ap::init_msg_s& msg)
 void e2_impl::handle_successful_outcome(const asn1::e2ap::successful_outcome_s& outcome)
 {
   switch (outcome.value.type().value) {
-    case asn1::e2ap::e2ap_elem_procs_o::successful_outcome_c::types_opts::options::e2setup_resp: {
-      // Handle successful outcomes with transaction id
+    case asn1::e2ap::e2ap_elem_procs_o::successful_outcome_c::types_opts::options::e2setup_resp:
+    case asn1::e2ap::e2ap_elem_procs_o::successful_outcome_c::types_opts::options::e2_removal_resp: {
       expected<uint8_t> transaction_id = get_transaction_id(outcome);
       if (not transaction_id.has_value()) {
         logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
         return;
       }
-      // Set transaction result and resume suspended procedure.
       if (not events->transactions.set_response(transaction_id.value(), outcome)) {
         logger.warning("Unrecognized transaction id={}", transaction_id.value());
       }
@@ -162,14 +173,13 @@ void e2_impl::handle_successful_outcome(const asn1::e2ap::successful_outcome_s& 
 void e2_impl::handle_unsuccessful_outcome(const asn1::e2ap::unsuccessful_outcome_s& outcome)
 {
   switch (outcome.value.type().value) {
-    case asn1::e2ap::e2ap_elem_procs_o::unsuccessful_outcome_c::types_opts::options::e2setup_fail: {
-      // Handle successful outcomes with transaction id
+    case asn1::e2ap::e2ap_elem_procs_o::unsuccessful_outcome_c::types_opts::options::e2setup_fail:
+    case asn1::e2ap::e2ap_elem_procs_o::unsuccessful_outcome_c::types_opts::options::e2_removal_fail: {
       expected<uint8_t> transaction_id = get_transaction_id(outcome);
       if (not transaction_id.has_value()) {
         logger.error("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());
         return;
       }
-      // Set transaction result and resume suspended procedure.
       if (not events->transactions.set_response(transaction_id.value(), make_unexpected(outcome))) {
         logger.warning("Unrecognized transaction id={}", transaction_id.value());
       }

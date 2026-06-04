@@ -39,6 +39,7 @@ public:
 
   /// E2 connection manager functions.
   bool                                  handle_e2_tnl_connection_request() override;
+  async_task<void>                      handle_e2_node_initiated_removal_request() override;
   async_task<void>                      handle_e2_disconnection_request() override;
   async_task<e2_setup_response_message> handle_e2_setup_request(const e2_setup_request_message& request) override;
 

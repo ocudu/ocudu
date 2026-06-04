@@ -15,6 +15,14 @@ class dummy_e2_conn_mngr_for_routine : public e2_connection_manager
 public:
   bool handle_e2_tnl_connection_request() override { return true; }
 
+  async_task<void> handle_e2_node_initiated_removal_request() override
+  {
+    return launch_async([](coro_context<async_task<void>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
   async_task<void> handle_e2_disconnection_request() override
   {
     return launch_async([](coro_context<async_task<void>>& ctx) {

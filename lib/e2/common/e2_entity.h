@@ -31,7 +31,8 @@ public:
   void on_e2_disconnection() override;
 
 private:
-  void reconnect_to_ric();
+  async_task<void> disconnect_ric();
+  void             reconnect_to_ric();
 
   ocudulog::basic_logger&  logger;
   const e2ap_configuration cfg;
