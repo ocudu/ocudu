@@ -5,6 +5,7 @@
 #pragma once
 
 #include "../../cu_cp_impl_interface.h"
+#include "../../mobility_manager/mobility_manager_impl.h"
 #include "../../ue_manager/cu_cp_ue_impl.h"
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
@@ -34,6 +35,7 @@ public:
                                                          xnap_interface*                               xnap_,
                                                          f1ap_ue_context_manager&                      f1ap_,
                                                          cu_cp_ue_context_release_handler& ue_ctx_release_handler_,
+                                                         mobility_manager&                 mobility_mng_,
                                                          ocudulog::basic_logger&           logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
@@ -53,6 +55,7 @@ private:
   xnap_interface*                              xnap;
   f1ap_ue_context_manager&                     f1ap;
   cu_cp_ue_context_release_handler&            ue_ctx_release_handler;
+  mobility_manager&                            mobility_mng;
   ocudulog::basic_logger&                      logger;
 
   // (sub-)routine results

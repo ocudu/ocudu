@@ -1052,7 +1052,7 @@ void cu_cp_impl::handle_inter_cu_target_handover_execution(
 
   if (xnap_ho_target_execution_ctxt.has_value() && xnap_ho_target_execution_ctxt->is_conditional_handover) {
     ue->get_task_sched().schedule_async_task(launch_async<inter_cu_conditional_handover_target_execution_routine>(
-        ue, xnap_ho_target_execution_ctxt.value(), e1ap, *ngap, xnap, f1ap, *this, logger));
+        ue, xnap_ho_target_execution_ctxt.value(), e1ap, *ngap, xnap, f1ap, *this, mobility_mng, logger));
   } else {
     ue->get_task_sched().schedule_async_task(launch_async<inter_cu_handover_execution_target_routine>(
         ue, xnap_ho_target_execution_ctxt, e1ap, *ngap, xnap, f1ap, logger));

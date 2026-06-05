@@ -20,6 +20,7 @@ inter_cu_conditional_handover_target_execution_routine::inter_cu_conditional_han
     xnap_interface*                               xnap_,
     f1ap_ue_context_manager&                      f1ap_,
     cu_cp_ue_context_release_handler&             ue_ctx_release_handler_,
+    mobility_manager&                             mobility_mng_,
     ocudulog::basic_logger&                       logger_) :
   ue(ue_),
   execution_ctxt(execution_ctxt_),
@@ -28,6 +29,7 @@ inter_cu_conditional_handover_target_execution_routine::inter_cu_conditional_han
   xnap(xnap_),
   f1ap(f1ap_),
   ue_ctx_release_handler(ue_ctx_release_handler_),
+  mobility_mng(mobility_mng_),
   logger(logger_)
 {
 }
@@ -125,6 +127,9 @@ void inter_cu_conditional_handover_target_execution_routine::operator()(coro_con
 
   // Clear the CHO target role context; the UE is now the serving UE on this CU and may become a CHO source.
   ue->get_cho_context().reset();
+
+  // Re-arm auto-CHO on the new serving cell.
+  mobility_mng.trigger_auto_conditional_handover(ue->get_ue_index());
 
   CORO_RETURN();
 }
