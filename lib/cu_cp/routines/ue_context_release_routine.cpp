@@ -38,6 +38,12 @@ void ue_context_release_routine::operator()(coro_context<async_task<cu_cp_ue_con
     command.redirect_nr_info     = ue->get_ue_context().pending_redirect_nr_info;
   }
 
+  // Per TS 23.502, the gNB shall not send RRC Release when the NG release cause is de-registration.
+  if (const auto* nas_cause = std::get_if<cause_nas_t>(&command.cause);
+      nas_cause != nullptr && *nas_cause == cause_nas_t::deregister) {
+    command.requires_rrc_message = false;
+  }
+
   // Prepare context release complete
   {
     release_complete.ue_index = command.ue_index;
