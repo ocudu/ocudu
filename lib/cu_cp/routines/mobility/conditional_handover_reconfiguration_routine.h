@@ -5,6 +5,7 @@
 #pragma once
 
 #include "../../cu_cp_impl_interface.h"
+#include "../../mobility_manager/mobility_manager_impl.h"
 #include "../../ue_manager/ue_manager_impl.h"
 #include "ocudu/f1ap/cu_cp/f1ap_cu.h"
 #include "ocudu/ran/cu_cp_types.h"
@@ -46,6 +47,7 @@ public:
                                                cu_cp_ue_context_manipulation_handler&   cu_cp_handler_,
                                                cu_cp_ue_context_release_handler&        ue_context_release_handler_,
                                                ue_manager&                              ue_mng_,
+                                               mobility_manager&                        mobility_mng_,
                                                ocudulog::basic_logger&                  logger_);
 
   void operator()(coro_context<async_task<bool>>& ctx);
@@ -76,6 +78,7 @@ private:
   cu_cp_ue_context_manipulation_handler& cu_cp_handler;
   cu_cp_ue_context_release_handler&      ue_context_release_handler;
   ue_manager&                            ue_mng;
+  mobility_manager&                      mobility_mng;
   ocudulog::basic_logger&                logger;
 
   // RRC reconfiguration context

@@ -277,6 +277,7 @@ void conditional_handover_coordinator_routine::operator()(coro_context<async_tas
                        cu_cp_handler,
                        cu_cp_handler,
                        ue_mng,
+                       mobility_mng,
                        logger));
   if (!cho_reconfig_result) {
     logger.warning("ue={}: CHO coordinator failed. Reconfiguration phase failed", request.source_ue_index);

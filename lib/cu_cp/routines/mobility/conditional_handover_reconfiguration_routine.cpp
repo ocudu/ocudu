@@ -18,6 +18,7 @@ conditional_handover_reconfiguration_routine::conditional_handover_reconfigurati
     cu_cp_ue_context_manipulation_handler&   cu_cp_handler_,
     cu_cp_ue_context_release_handler&        ue_context_release_handler_,
     ue_manager&                              ue_mng_,
+    mobility_manager&                        mobility_mng_,
     ocudulog::basic_logger&                  logger_) :
   request(request_),
   source_ue(source_ue_),
@@ -25,6 +26,7 @@ conditional_handover_reconfiguration_routine::conditional_handover_reconfigurati
   cu_cp_handler(cu_cp_handler_),
   ue_context_release_handler(ue_context_release_handler_),
   ue_mng(ue_mng_),
+  mobility_mng(mobility_mng_),
   logger(logger_)
 {
   ocudu_assert(
@@ -172,6 +174,8 @@ void conditional_handover_reconfiguration_routine::operator()(coro_context<async
                   source_ue.get_ue_index());
     }
   }
+
+  mobility_mng.get_metrics_handler().aggregate_requested_handover_execution();
 
   logger.debug("ue={}: \"{}\" finished successfully", source_ue.get_ue_index(), name());
 
