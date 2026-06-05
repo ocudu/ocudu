@@ -8,6 +8,7 @@ set(SOURCES
         converters/coordinate_converter.cpp
         propagators/ordinary_differential_equation.cpp
         propagators/rk4_propagator.cpp
+        propagators/keplerian_propagator.cpp
         orbit_ephemeris_info.cpp
         ntn_math_helpers.cpp
         ntn_assistance_info_generator.cpp

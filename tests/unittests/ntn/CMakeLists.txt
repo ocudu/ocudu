@@ -27,6 +27,12 @@ target_link_libraries(rk4_propagator_test ocudu_ntn_lib ocudu_support ocudulog g
 gtest_discover_tests(rk4_propagator_test)
 
 
+add_executable(keplerian_propagator_test keplerian_propagator_test.cpp)
+target_include_directories(keplerian_propagator_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(keplerian_propagator_test ocudu_ntn_lib ocudu_support ocudulog gtest gtest_main)
+gtest_discover_tests(keplerian_propagator_test)
+
+
 add_executable(ntn_math_helpers_test ntn_math_helpers_test.cpp)
 target_include_directories(ntn_math_helpers_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(ntn_math_helpers_test ocudu_ntn_lib ocudu_support ocudulog gtest gtest_main)
