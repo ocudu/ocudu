@@ -202,7 +202,8 @@ void io_broker_epoll::thread_loop()
             job_count->fetch_sub(1, std::memory_order_release);
           })) {
         rearm_fd(fd);
-        // Decrement fd_handler job count after task deferring failed.
+        // Reset is_executing_recv_callback flag and decrement fd_handler job count after task deferring failed.
+        it->second.is_executing_recv_callback.store(false, std::memory_order_release);
         it->second.job_count.fetch_sub(1, std::memory_order_release);
         logger.error("Could not enqueue task for processing file descriptor: {}", fd);
       }
