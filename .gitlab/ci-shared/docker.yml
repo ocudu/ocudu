@@ -3,6 +3,7 @@
 
 variables:
   BUILDKIT_CLI_VERSION: "0.28.0"
+  RH_TOOL_CLI_VERSION: "1.0.0"
 
 .docker-builder:
   tags:

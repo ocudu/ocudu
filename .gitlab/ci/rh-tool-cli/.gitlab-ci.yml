@@ -1,0 +1,45 @@
+# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+include:
+  - local: .gitlab/ci-shared/docker.yml
+
+stages:
+  - publish
+
+build-and-publish:
+  stage: publish
+  extends: .docker-builder
+  image: ${CI_REGISTRY_IMAGE}/buildkit-cli:latest
+  rules:
+    - if: $ON_MR
+  variables: &image_variables
+    NAME: rh-tool-cli
+    CONTEXT: .gitlab/ci/rh-tool-cli
+    VERSION: ${RH_TOOL_CLI_VERSION}
+    BUILD_ARGS: "BUILDKIT_CLI_VERSION=${BUILDKIT_CLI_VERSION};PREFLIGHT_VERSION=${PREFLIGHT_VERSION}"
+    MULTI_ARCH_BUILD: "true"
+    MODE: publish
+    PREFLIGHT_VERSION: "1.19.0"
+  parallel:
+    matrix:
+      - PLATFORM: ["arm64", "amd64"]
+
+docker manifest:
+  extends: .docker manifest
+  image: ${CI_REGISTRY_IMAGE}/buildkit-cli:latest
+  variables:
+    <<: *image_variables
+  needs:
+    - job: build-and-publish
+      optional: false
+
+docker manifest latest:
+  extends: docker manifest
+  script:
+    - |
+      docker manifest create \
+        ${CI_REGISTRY_IMAGE}/${NAME}:latest \
+        --amend ${CI_REGISTRY_IMAGE}/${NAME}:${VERSION}-amd64 \
+        --amend ${CI_REGISTRY_IMAGE}/${NAME}:${VERSION}-arm64
+      docker manifest push ${CI_REGISTRY_IMAGE}/${NAME}:latest
