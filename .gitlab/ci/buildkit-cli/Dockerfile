@@ -5,6 +5,7 @@ ARG UBUNTU_VERSION=24.04
 ARG COSIGN_VERSION=v2.5.2
 ARG REGCLIENT_VERSION=v0.9.0
 ARG SYFT_VERSION=v1.26.1
+ARG GRYPE_VERSION=v0.88.0
 
 FROM ubuntu:${UBUNTU_VERSION} AS builder
 ARG BUILDKIT_CLI_VERSION=0.27.1
@@ -31,6 +32,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 FROM ghcr.io/sigstore/cosign/cosign:${COSIGN_VERSION} AS cosign
 FROM ghcr.io/regclient/regctl:${REGCLIENT_VERSION} AS regclient
 FROM anchore/syft:${SYFT_VERSION} AS syft
+FROM anchore/grype:${GRYPE_VERSION} AS grype
 
 FROM ubuntu:${UBUNTU_VERSION}
 
@@ -39,6 +41,7 @@ COPY --from=builder    /root/bin/*     /usr/local/bin
 COPY --from=cosign     /ko-app/cosign  /usr/local/bin/cosign
 COPY --from=regclient  /regctl         /usr/local/bin/regctl
 COPY --from=syft       /syft           /usr/local/bin/syft
+COPY --from=grype      /grype          /usr/local/bin/grype
 
 COPY buildctl-daemonless.sh /usr/local/bin
 

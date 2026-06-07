@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 variables:
-  BUILDKIT_CLI_VERSION: "0.27.1"
+  BUILDKIT_CLI_VERSION: "0.28.0"
 
 .docker-builder:
   tags:
