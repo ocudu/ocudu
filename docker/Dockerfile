@@ -117,11 +117,14 @@ RUN if [ -z "$NUM_JOBS" ]; then NUM_JOBS=$(nproc); fi \
     && ARCH_FLAG=$([ "${TARGETARCH}" = "arm64" ] && echo "-DMCPU=${MARCH}" || echo "-DMARCH=${MARCH}") \
     && mkdir -p /opt/ocudu/bin \
     && if [ -z "${COMPONENT}" ]; then \
-         /src/docker/scripts/builder.sh -c ${COMPILER} -m "-j${NUM_JOBS} ocu odu odu_split_8 odu_split_7_2 gnb gnb_split_8 gnb_split_7_2 ru_emulator" \
+         /src/docker/scripts/builder.sh -c ${COMPILER} -m "-j${NUM_JOBS} ocu ocucp ocuup odu odu_low odu_split_8 odu_split_7_2 gnb gnb_split_8 gnb_split_7_2 ru_emulator" \
            -DBUILD_TESTING=False -DENABLE_UHD=${ENABLE_UHD} -DENABLE_DPDK=${ENABLE_DPDK} \
            ${ARCH_FLAG} -DCMAKE_INSTALL_PREFIX=/opt/ocudu ${EXTRA_CMAKE_ARGS} /src \
          && cp /src/build/apps/cu/ocu                     /opt/ocudu/bin/ocu           \
+         && cp /src/build/apps/cu_cp/ocucp                /opt/ocudu/bin/ocucp         \
+         && cp /src/build/apps/cu_up/ocuup                /opt/ocudu/bin/ocuup         \
          && cp /src/build/apps/du/odu                     /opt/ocudu/bin/odu           \
+         && cp /src/build/apps/du_low/odu_low             /opt/ocudu/bin/odu_low       \
          && cp /src/build/apps/du_split_8/odu             /opt/ocudu/bin/odu_split_8   \
          && cp /src/build/apps/du_split_7_2/odu           /opt/ocudu/bin/odu_split_7_2 \
          && cp /src/build/apps/gnb/gnb                    /opt/ocudu/bin/gnb           \
