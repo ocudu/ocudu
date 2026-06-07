@@ -159,6 +159,49 @@ install_uhd_dependencies_fedora() {
     fi
 }
 
+install_uhd_dependencies_rhel() {
+    local mode="${1:?}"
+    local -a pkgs=()
+
+    local -a build_pkgs=(
+        "$(_pkg_ver curl)" "$(_pkg_ver ca-certificates)" "$(_pkg_ver xz)"
+        "$(_pkg_ver cmake)" "$(_pkg_ver gcc)" "$(_pkg_ver gcc-c++)" "$(_pkg_ver make)" "$(_pkg_ver pkgconf-pkg-config)"
+        "$(_pkg_ver boost-devel)" "$(_pkg_ver libusb1-devel)"
+        "$(_pkg_ver python3-mako)" "$(_pkg_ver python3-numpy)" "$(_pkg_ver python3-setuptools)" "$(_pkg_ver python3-requests)"
+    )
+    local -a run_pkgs=(
+        "$(_pkg_ver boost-devel)" "$(_pkg_ver libusb1)" "$(_pkg_ver libusb1-devel)" "$(_pkg_ver python3-devel)" "$(_pkg_ver python3-requests)"
+    )
+    local -a extra_pkgs=(
+        "$(_pkg_ver boost-devel)" "$(_pkg_ver libusb1)" "$(_pkg_ver libusb1-devel)" "$(_pkg_ver python3-devel)"
+    )
+
+    case "$mode" in
+        all)
+            pkgs+=( "${build_pkgs[@]}" "${extra_pkgs[@]}" )
+            ;;
+        build)
+            pkgs+=( "${build_pkgs[@]}" )
+            ;;
+        run)
+            pkgs+=( "${run_pkgs[@]}" )
+            ;;
+        *)
+            echo >&2 "Unsupported mode: $mode"
+            exit 1
+            ;;
+    esac
+
+    if ((${#pkgs[@]})); then
+        dnf -y install "${pkgs[@]}"
+        dnf clean all
+    fi
+
+    if [[ "$mode" == "all" || "$mode" == "run" ]]; then
+        uhd_images_downloader
+    fi
+}
+
 main() {
 
     if [ $# != 0 ] && [ $# != 1 ]; then
@@ -179,6 +222,9 @@ main() {
             ;;
         fedora)
             install_uhd_dependencies_fedora "$mode"
+            ;;
+        rhel)
+            install_uhd_dependencies_rhel "$mode"
             ;;
         arch)
             install_uhd_dependencies_arch "$mode"

@@ -171,6 +171,53 @@ install_dpdk_dependencies_arch() {
     fi
 }
 
+install_dpdk_dependencies_rhel() {
+    local mode="${1:?}"
+    local -a pkgs=()
+    local -a pip_pkgs=()
+
+    local -a build_pkgs=(
+        "$(_pkg_ver curl)" "$(_pkg_ver ca-certificates)" "$(_pkg_ver xz)"
+        "$(_pkg_ver python3-pip)" "$(_pkg_ver ninja-build)" "$(_pkg_ver gcc)" "$(_pkg_ver gcc-c++)" "$(_pkg_ver make)" "$(_pkg_ver pkgconf-pkg-config)" "$(_pkg_ver numactl-devel)" "$(_pkg_ver libfdt-devel)" "$(_pkg_ver pciutils)"
+    )
+    local -a extra_pkgs=(
+        "$(_pkg_ver libatomic)" "$(_pkg_ver iproute)"
+    )
+    local -a run_pkgs=(
+        "$(_pkg_ver python3-pip)" "$(_pkg_ver numactl-devel)" "$(_pkg_ver pciutils)" "$(_pkg_ver libfdt)" "$(_pkg_ver libatomic)" "$(_pkg_ver iproute)"
+    )
+    local -a pip_build_pkgs=("$(_pip_ver meson)" "$(_pip_ver pyelftools)")
+    local -a pip_run_pkgs=("$(_pip_ver pyelftools)")
+
+    case "$mode" in
+        all)
+            pkgs+=( "${build_pkgs[@]}" "${extra_pkgs[@]}" )
+            pip_pkgs+=( "${pip_build_pkgs[@]}" )
+            ;;
+        build)
+            pkgs+=( "${build_pkgs[@]}" )
+            pip_pkgs+=( "${pip_build_pkgs[@]}" )
+            ;;
+        run)
+            pkgs+=( "${run_pkgs[@]}" )
+            pip_pkgs+=( "${pip_run_pkgs[@]}" )
+            ;;
+        *)
+            echo >&2 "Unsupported mode: $mode"
+            exit 1
+            ;;
+    esac
+
+    if ((${#pkgs[@]})); then
+        dnf -y install "${pkgs[@]}"
+        dnf clean all
+    fi
+
+    if ((${#pip_pkgs[@]})); then
+        pip3 install "${pip_pkgs[@]}" --break-system-packages
+    fi
+}
+
 main() {
 
     if [ $# != 0 ] && [ $# != 1 ]; then
@@ -191,6 +238,9 @@ main() {
             ;;
         fedora)
             install_dpdk_dependencies_fedora "$mode"
+            ;;
+        rhel)
+            install_dpdk_dependencies_rhel "$mode"
             ;;
         arch)
             install_dpdk_dependencies_arch "$mode"

@@ -104,6 +104,43 @@ install_rohc_dependencies_arch() {
     fi
 }
 
+install_rohc_dependencies_rhel() {
+    local mode="${1:?}"
+    local -a pkgs=()
+
+    local -a build_pkgs=(
+        curl ca-certificates gcc gcc-c++ make which xz autoconf automake libtool libpcap-devel libcmocka-devel
+    )
+    local -a run_pkgs=()
+
+    case "$mode" in
+        all|build)
+            pkgs+=( "${build_pkgs[@]}" )
+            ;;
+        run)
+            pkgs+=( "${run_pkgs[@]}" )
+            ;;
+        *)
+            echo >&2 "Unsupported mode: $mode"
+            exit 1
+            ;;
+    esac
+
+    if ((${#pkgs[@]})); then
+        dnf -y install "${pkgs[@]}"
+        dnf clean all
+    fi
+
+    if [[ "$mode" != "run" ]]; then
+        if ! command -v aclocal >/dev/null 2>&1 && command -v aclocal-1.18 >/dev/null 2>&1; then
+            ln -sf "$(command -v aclocal-1.18)" /usr/bin/aclocal
+        fi
+        if ! command -v automake >/dev/null 2>&1 && command -v automake-1.18 >/dev/null 2>&1; then
+            ln -sf "$(command -v automake-1.18)" /usr/bin/automake
+        fi
+    fi
+}
+
 main() {
 
     if [ $# != 0 ] && [ $# != 1 ]; then
@@ -124,6 +161,9 @@ main() {
             ;;
         fedora)
             install_rohc_dependencies_fedora "$mode"
+            ;;
+        rhel)
+            install_rohc_dependencies_rhel "$mode"
             ;;
         arch)
             install_rohc_dependencies_arch "$mode"
