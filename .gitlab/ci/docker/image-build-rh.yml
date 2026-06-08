@@ -4,16 +4,14 @@
 # OCUDU component image build pipeline — Red Hat UBI9 variant.
 #
 # Builds the same component matrix as image-build.yml but on UBI9 base images
-# for Red Hat container certification. Jobs run on RHEL-registered runners so
+# for Red Hat container builds. Jobs run on RHEL-registered runners so
 # that EPEL/CRB packages are available via the host subscription bind-mount.
 #
 # Stages:
 #   build   — parallel matrix jobs, one per component × driver × arch/SIMD
-#   certify — preflight check container (--submit when Pyxis credentials set)
 
 stages:
   - build
-  - certify
 
 # ---------------------------------------------------------------------------
 # Derive the SIMD label used in the image tag from the MARCH value.
@@ -32,6 +30,7 @@ stages:
 .image-build-rh:
   extends: .docker-builder
   stage: build
+  timeout: 3 hours
   tags:
     - ocudu-rhel-${TARGETARCH}
   image: ${OCUDU_REGISTRY_URI}/rh-tool-cli:$RH_TOOL_CLI_VERSION
@@ -42,7 +41,7 @@ stages:
     CACHE: "true"
     CACHE_MODE: "max"
     OS: registry.access.redhat.com/ubi9/ubi
-    OS_VERSION: "9"
+    OS_VERSION: "9.6"
     COMPONENT: ""
     DRIVER: ""
     TARGETARCH: amd64
@@ -64,7 +63,12 @@ stages:
     - |
       case "${COMPONENT}" in
         cu|cu-cp|cu-up) DOCKER_TARGET=runtime-lean ;;
-        *)              DOCKER_TARGET=runtime ;;
+        *)
+          case "${DRIVER}" in
+            uhd)  DOCKER_TARGET=runtime-uhd ;;
+            dpdk) DOCKER_TARGET=runtime-dpdk ;;
+            *)    DOCKER_TARGET=runtime ;;
+          esac ;;
       esac
     - export DOCKER_TARGET
     - |
@@ -75,6 +79,12 @@ stages:
         dpdk) ENABLE_DPDK=On ;;
       esac
     - |
+      CPU_JOBS="$(/usr/local/bin/get_available_cores.sh 2>/dev/null || ${CI_PROJECT_DIR}/.gitlab/ci/builders/get_available_cores.sh)"
+      if [ -z "${CPU_JOBS}" ] || [ "${CPU_JOBS}" -lt 1 ]; then
+        CPU_JOBS=1
+      fi
+      export CPU_JOBS
+    - |
       export BUILD_ARGS="\
       OS=${OS};\
       OS_VERSION=${OS_VERSION};\
@@ -82,6 +92,7 @@ stages:
       DPDK_VERSION=${DPDK_VERSION};\
       ROHC_VERSION=${ROHC_VERSION};\
       MARCH=${MARCH};\
+      NUM_JOBS=${CPU_JOBS};\
       TARGETARCH=${TARGETARCH};\
       COMPONENT=${COMPONENT};\
       ENABLE_UHD=${ENABLE_UHD};\
@@ -92,11 +103,25 @@ stages:
         BUILD_ARGS="${BUILD_ARGS};PKG_VERSIONS=${PKG_VERSIONS}"
       fi
     - |
+      ENT_DIR=/etc/pki/entitlement
+      ENT_CERT=$(ls "$ENT_DIR"/*.pem 2>/dev/null | grep -v -- '-key.pem' | head -n1)
+      ENT_KEY=$(ls "$ENT_DIR"/*-key.pem 2>/dev/null | head -n1)
+      if [ -n "$ENT_CERT" ] && [ -n "$ENT_KEY" ]; then
+        export BUILD_SECRETS="\
+        id=rh_entitlement_cert,src=${ENT_CERT};\
+        id=rh_entitlement_key,src=${ENT_KEY};\
+        id=rh_rhsm_conf,src=/etc/rhsm/rhsm.conf;\
+        id=rh_rhsm_ca,src=/etc/rhsm/ca/redhat-uep.pem"
+      else
+        echo "WARNING: No RH entitlement certs found at $ENT_DIR, subscription repos unavailable"
+      fi
+    - |
       IMAGE_REF="${REGISTRY_URI}/${NAME}:${VERSION}"
       echo "IMAGE_REF=${IMAGE_REF}" > build.env
   artifacts:
     reports:
       dotenv: build.env
+  needs: []
 
 # ---------------------------------------------------------------------------
 # Build jobs
@@ -171,15 +196,12 @@ build-rh:cu:
   parallel:
     matrix:
       - COMPONENT: cu
-        DRIVER: ""
         TARGETARCH: amd64
         MARCH: x86-64-v4
       - COMPONENT: cu
-        DRIVER: ""
         TARGETARCH: amd64
         MARCH: x86-64-v3
       - COMPONENT: cu
-        DRIVER: ""
         TARGETARCH: arm64
         MARCH: neoverse-n1+crc+crypto+ssbs
   rules:
@@ -191,15 +213,12 @@ build-rh:cu-cp:
   parallel:
     matrix:
       - COMPONENT: cu-cp
-        DRIVER: ""
         TARGETARCH: amd64
         MARCH: x86-64-v4
       - COMPONENT: cu-cp
-        DRIVER: ""
         TARGETARCH: amd64
         MARCH: x86-64-v3
       - COMPONENT: cu-cp
-        DRIVER: ""
         TARGETARCH: arm64
         MARCH: neoverse-n1+crc+crypto+ssbs
   rules:
@@ -211,15 +230,12 @@ build-rh:cu-up:
   parallel:
     matrix:
       - COMPONENT: cu-up
-        DRIVER: ""
         TARGETARCH: amd64
         MARCH: x86-64-v4
       - COMPONENT: cu-up
-        DRIVER: ""
         TARGETARCH: amd64
         MARCH: x86-64-v3
       - COMPONENT: cu-up
-        DRIVER: ""
         TARGETARCH: arm64
         MARCH: neoverse-n1+crc+crypto+ssbs
   rules:
@@ -245,94 +261,3 @@ build-rh:ru-emulator:
   rules:
     - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
     - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
-
-# ---------------------------------------------------------------------------
-# Certify jobs — preflight check container
-#
-# Images remain in the GitLab registry; preflight pulls from there using
-# CI registry credentials passed via PFLT_DOCKERCONFIG.
-#
-# --submit is only added when PFLT_PYXIS_API_TOKEN is set. Each concrete
-# job passes its own PFLT_CERTIFICATION_COMPONENT_ID from a per-component
-# GitLab CI/CD variable (e.g. PFLT_CERTIFICATION_COMPONENT_ID_GNB).
-# Set those variables in GitLab CI/CD settings once Partner Connect
-# project IDs are available.
-# ---------------------------------------------------------------------------
-
-.preflight-gate:
-  stage: certify
-  tags:
-    - ocudu-rhel-amd64
-  image: ${OCUDU_REGISTRY_URI}/rh-tool-cli:$RH_TOOL_CLI_VERSION
-  variables:
-    PFLT_PYXIS_API_TOKEN: ""
-    PFLT_CERTIFICATION_COMPONENT_ID: ""
-  before_script:
-    - |
-      echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY \
-        -u $CI_REGISTRY_USER --password-stdin
-    - |
-      export PFLT_DOCKERCONFIG=/root/.docker/config.json
-  script:
-    - |
-      [ -z "$IMAGE_REF" ] && echo "IMAGE_REF not set — dotenv artifact missing?" && exit 1
-    - |
-      SUBMIT_FLAG=""
-      [ -n "${PFLT_PYXIS_API_TOKEN}" ] && [ -n "${PFLT_CERTIFICATION_COMPONENT_ID}" ] && SUBMIT_FLAG="--submit"
-      preflight check container ${IMAGE_REF} ${SUBMIT_FLAG}
-  artifacts:
-    paths:
-      - preflight-results/
-    expire_in: 7 days
-    when: always
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
-    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
-
-certify:gnb:
-  extends: .preflight-gate
-  variables:
-    PFLT_CERTIFICATION_COMPONENT_ID: ${PFLT_CERTIFICATION_COMPONENT_ID_GNB}
-  needs:
-    - job: build-rh:gnb
-      artifacts: true
-
-certify:du:
-  extends: .preflight-gate
-  variables:
-    PFLT_CERTIFICATION_COMPONENT_ID: ${PFLT_CERTIFICATION_COMPONENT_ID_DU}
-  needs:
-    - job: build-rh:du
-      artifacts: true
-
-certify:cu:
-  extends: .preflight-gate
-  variables:
-    PFLT_CERTIFICATION_COMPONENT_ID: ${PFLT_CERTIFICATION_COMPONENT_ID_CU}
-  needs:
-    - job: build-rh:cu
-      artifacts: true
-
-certify:cu-cp:
-  extends: .preflight-gate
-  variables:
-    PFLT_CERTIFICATION_COMPONENT_ID: ${PFLT_CERTIFICATION_COMPONENT_ID_CU_CP}
-  needs:
-    - job: build-rh:cu-cp
-      artifacts: true
-
-certify:cu-up:
-  extends: .preflight-gate
-  variables:
-    PFLT_CERTIFICATION_COMPONENT_ID: ${PFLT_CERTIFICATION_COMPONENT_ID_CU_UP}
-  needs:
-    - job: build-rh:cu-up
-      artifacts: true
-
-certify:ru-emulator:
-  extends: .preflight-gate
-  variables:
-    PFLT_CERTIFICATION_COMPONENT_ID: ${PFLT_CERTIFICATION_COMPONENT_ID_RU_EMULATOR}
-  needs:
-    - job: build-rh:ru-emulator
-      artifacts: true

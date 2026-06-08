@@ -191,15 +191,21 @@ install_dependencies_rhel() {
     local mode="${1:?}"
     local -a pkgs=()
 
+    # gcc-toolset-11/12 are RHEL subscription-only and redundant on UBI9/RHEL9
+    # where GCC 11 is the default compiler. libatomic replaces gcc-toolset-12-libatomic-devel.
+    # yaml-cpp-devel and mbedtls-devel come from EPEL (installed below).
     local -a build_pkgs=(
-        "$(_pkg_ver cmake)" "$(_pkg_ver which)" "$(_pkg_ver fftw-devel)" "$(_pkg_ver lksctp-tools-devel)" "$(_pkg_ver yaml-cpp-devel)" "$(_pkg_ver mbedtls-devel)"
-        "$(_pkg_ver gcc-toolset-11)" "$(_pkg_ver gcc-toolset-11-gcc-c++)" "$(_pkg_ver gcc-toolset-12-libatomic-devel)"
+        "$(_pkg_ver cmake)" "$(_pkg_ver fftw-devel)" "$(_pkg_ver lksctp-tools-devel)"
+        "$(_pkg_ver gcc)" "$(_pkg_ver gcc-c++)" "$(_pkg_ver libatomic)"
+        "$(_pkg_ver yaml-cpp-devel)" "$(_pkg_ver mbedtls-devel)"
     )
     local -a run_pkgs=(
-        "$(_pkg_ver fftw-devel)" "$(_pkg_ver lksctp-tools-devel)" "$(_pkg_ver yaml-cpp-devel)" "$(_pkg_ver mbedtls-devel)" "$(_pkg_ver gcc-toolset-12-libatomic-devel)" "$(_pkg_ver libcap)"
+        "$(_pkg_ver fftw-devel)" "$(_pkg_ver lksctp-tools)"
+        "$(_pkg_ver libatomic)" "$(_pkg_ver libcap)"
+        "$(_pkg_ver yaml-cpp-devel)" "$(_pkg_ver mbedtls-devel)"
     )
     local -a extra_pkgs=(
-        "$(_pkg_ver cppzmq-devel)" "$(_pkg_ver libusb1-devel)" "$(_pkg_ver boost-devel)" "$(_pkg_ver numactl-devel)" "$(_pkg_ver capnproto)" "$(_pkg_ver capnproto-devel)"
+        "$(_pkg_ver cppzmq-devel)" "$(_pkg_ver libusbx-devel)" "$(_pkg_ver boost-devel)" "$(_pkg_ver numactl-devel)" "$(_pkg_ver capnproto)" "$(_pkg_ver capnproto-devel)"
     )
 
     case "$mode" in
@@ -222,6 +228,8 @@ install_dependencies_rhel() {
             ;;
     esac
 
+    # EPEL provides yaml-cpp-devel and mbedtls-devel which are not in UBI9 free repos
+    dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
     if ((${#pkgs[@]})); then
         dnf -y install "${pkgs[@]}"
         dnf clean all

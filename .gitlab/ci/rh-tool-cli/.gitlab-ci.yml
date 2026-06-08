@@ -21,6 +21,7 @@ build-and-publish:
     MULTI_ARCH_BUILD: "true"
     MODE: publish
     PREFLIGHT_VERSION: "1.19.0"
+    GRYPE_SKIP: "true"
   parallel:
     matrix:
       - PLATFORM: ["arm64", "amd64"]

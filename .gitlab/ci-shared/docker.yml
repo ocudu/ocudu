@@ -3,7 +3,7 @@
 
 variables:
   BUILDKIT_CLI_VERSION: "0.28.0"
-  RH_TOOL_CLI_VERSION: "1.0.0"
+  RH_TOOL_CLI_VERSION: "1.0.3"
 
 .docker-builder:
   tags:
@@ -24,6 +24,7 @@ variables:
     CACHE_MODE: "min" # min or max
     OVERWRITE: "false"
     ATTESTATION_FILE: ""
+    GRYPE_SKIP: "false"
     COSIGN_YES: "true" # Used by Cosign to skip confirmation prompts for non-destructive operations
     REGISTRY_URI: ${CI_REGISTRY_IMAGE}
   id_tokens:
@@ -153,6 +154,13 @@ variables:
           echo "=== Attesting ${ATTESTATION_FILE} ==="
           regctl image get-file ${IMAGE_NAME_VERSION} ${ATTESTATION_FILE} > build.spdx
           attest_spdx build.spdx
+        fi
+
+        if [ "${GRYPE_SKIP}" != "true" ]; then
+          echo "=== Running grype CVE scan on ${IMAGE_NAME_VERSION} ==="
+          grype registry:${IMAGE_NAME_VERSION} --fail-on critical -o json > grype-report.json
+          echo "=== Attesting grype report ==="
+          cosign attest --predicate grype-report.json --type vuln ${IMAGE_DIGEST}
         fi
       fi
 

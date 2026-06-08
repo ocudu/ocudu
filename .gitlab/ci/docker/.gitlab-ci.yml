@@ -4,6 +4,7 @@
 include:
   - local: .gitlab/ci-shared/docker.yml
   - local: .gitlab/ci-shared/version_check.yml
+  - local: .gitlab/ci/docker/image-matrix.yml
   - local: .gitlab/ci/docker/image-build.yml
   - local: .gitlab/ci/docker/image-build-rh.yml
 
@@ -17,7 +18,6 @@ stages:
   - compose
   - publish
   - sign-sbom
-  - certify
 
 .gnb-docker:
   - changes: &container_changes

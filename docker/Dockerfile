@@ -34,8 +34,58 @@ FROM ${OS}:${OS_VERSION} AS builder-base
 
 COPY docker/scripts/ /src/docker/scripts/
 
-RUN /src/docker/scripts/install_dependencies.sh build && \
+RUN --mount=type=secret,id=rh_entitlement_cert,target=/etc/pki/entitlement/entitlement.pem \
+    --mount=type=secret,id=rh_entitlement_key,target=/etc/pki/entitlement/entitlement-key.pem \
+    --mount=type=secret,id=rh_rhsm_conf,target=/etc/rhsm/rhsm.conf \
+    --mount=type=secret,id=rh_rhsm_ca,target=/etc/rhsm/ca/redhat-uep.pem \
+    /src/docker/scripts/install_dependencies.sh build && \
     /src/docker/scripts/install_uhd_dependencies.sh build && \
+    /src/docker/scripts/install_dpdk_dependencies.sh build && \
+    /src/docker/scripts/install_docker_dependencies.sh build
+
+#################################
+# Stage 0b: Shared lean base     #
+#################################
+# CU, CU-CP and CU-UP images do not need UHD or DPDK. Keep a separate base for
+# these targets so they do not install or build driver dependencies.
+FROM ${OS}:${OS_VERSION} AS builder-base-lean
+
+COPY docker/scripts/ /src/docker/scripts/
+
+RUN --mount=type=secret,id=rh_entitlement_cert,target=/etc/pki/entitlement/entitlement.pem \
+    --mount=type=secret,id=rh_entitlement_key,target=/etc/pki/entitlement/entitlement-key.pem \
+    --mount=type=secret,id=rh_rhsm_conf,target=/etc/rhsm/rhsm.conf \
+    --mount=type=secret,id=rh_rhsm_ca,target=/etc/rhsm/ca/redhat-uep.pem \
+    /src/docker/scripts/install_dependencies.sh build && \
+    /src/docker/scripts/install_docker_dependencies.sh build
+
+################################
+# Stage 0c: Shared UHD base    #
+################################
+FROM ${OS}:${OS_VERSION} AS builder-base-uhd
+
+COPY docker/scripts/ /src/docker/scripts/
+
+RUN --mount=type=secret,id=rh_entitlement_cert,target=/etc/pki/entitlement/entitlement.pem \
+    --mount=type=secret,id=rh_entitlement_key,target=/etc/pki/entitlement/entitlement-key.pem \
+    --mount=type=secret,id=rh_rhsm_conf,target=/etc/rhsm/rhsm.conf \
+    --mount=type=secret,id=rh_rhsm_ca,target=/etc/rhsm/ca/redhat-uep.pem \
+    /src/docker/scripts/install_dependencies.sh build && \
+    /src/docker/scripts/install_uhd_dependencies.sh build && \
+    /src/docker/scripts/install_docker_dependencies.sh build
+
+#################################
+# Stage 0d: Shared DPDK base    #
+#################################
+FROM ${OS}:${OS_VERSION} AS builder-base-dpdk
+
+COPY docker/scripts/ /src/docker/scripts/
+
+RUN --mount=type=secret,id=rh_entitlement_cert,target=/etc/pki/entitlement/entitlement.pem \
+    --mount=type=secret,id=rh_entitlement_key,target=/etc/pki/entitlement/entitlement-key.pem \
+    --mount=type=secret,id=rh_rhsm_conf,target=/etc/rhsm/rhsm.conf \
+    --mount=type=secret,id=rh_rhsm_ca,target=/etc/rhsm/ca/redhat-uep.pem \
+    /src/docker/scripts/install_dependencies.sh build && \
     /src/docker/scripts/install_dpdk_dependencies.sh build && \
     /src/docker/scripts/install_docker_dependencies.sh build
 
@@ -46,7 +96,11 @@ FROM ${OS}:${OS_VERSION} AS builder-rohc
 
 COPY docker/scripts/ /src/docker/scripts/
 
-RUN /src/docker/scripts/install_rohc_dependencies.sh build
+RUN --mount=type=secret,id=rh_entitlement_cert,target=/etc/pki/entitlement/entitlement.pem \
+    --mount=type=secret,id=rh_entitlement_key,target=/etc/pki/entitlement/entitlement-key.pem \
+    --mount=type=secret,id=rh_rhsm_conf,target=/etc/rhsm/rhsm.conf \
+    --mount=type=secret,id=rh_rhsm_ca,target=/etc/rhsm/ca/redhat-uep.pem \
+    /src/docker/scripts/install_rohc_dependencies.sh build
 
 ARG ROHC_VERSION
 ARG MARCH
@@ -58,7 +112,7 @@ RUN /src/docker/scripts/build_rohc.sh "${ROHC_VERSION}" ${MARCH} ${NUM_JOBS}
 ########################
 # Stage 1.2: Build UHD #
 ########################
-FROM builder-base AS builder-uhd
+FROM builder-base-uhd AS builder-uhd
 
 ARG UHD_VERSION
 ARG MARCH
@@ -72,7 +126,7 @@ RUN UHD_ARCH=$([ "${TARGETARCH}" = "arm64" ] && echo "-mcpu=${MARCH}" || echo "-
 #########################
 # Stage 1.3: Build DPDK #
 #########################
-FROM builder-base AS builder-dpdk
+FROM builder-base-dpdk AS builder-dpdk
 
 ARG DPDK_VERSION
 ARG MARCH
@@ -102,7 +156,7 @@ ARG NUM_JOBS
 ARG TARGETARCH
 ARG COMPILER=gcc
 ARG EXTRA_CMAKE_ARGS=""
-ARG COMPONENT=""
+ARG COMPONENT="ocu ocucp ocuup odu odu_low odu_split_8 odu_split_7_2 gnb gnb_split_8 gnb_split_7_2 ru_emulator"
 ARG ENABLE_UHD=On
 ARG ENABLE_DPDK=On
 
@@ -116,55 +170,47 @@ ADD . /src
 RUN if [ -z "$NUM_JOBS" ]; then NUM_JOBS=$(nproc); fi \
     && ARCH_FLAG=$([ "${TARGETARCH}" = "arm64" ] && echo "-DMCPU=${MARCH}" || echo "-DMARCH=${MARCH}") \
     && mkdir -p /opt/ocudu/bin \
-    && if [ -z "${COMPONENT}" ]; then \
-         /src/docker/scripts/builder.sh -c ${COMPILER} -m "-j${NUM_JOBS} ocu ocucp ocuup odu odu_low odu_split_8 odu_split_7_2 gnb gnb_split_8 gnb_split_7_2 ru_emulator" \
-           -DBUILD_TESTING=False -DENABLE_UHD=${ENABLE_UHD} -DENABLE_DPDK=${ENABLE_DPDK} \
-           ${ARCH_FLAG} -DCMAKE_INSTALL_PREFIX=/opt/ocudu ${EXTRA_CMAKE_ARGS} /src \
-         && cp /src/build/apps/cu/ocu                     /opt/ocudu/bin/ocu           \
-         && cp /src/build/apps/cu_cp/ocucp                /opt/ocudu/bin/ocucp         \
-         && cp /src/build/apps/cu_up/ocuup                /opt/ocudu/bin/ocuup         \
-         && cp /src/build/apps/du/odu                     /opt/ocudu/bin/odu           \
-         && cp /src/build/apps/du_low/odu_low             /opt/ocudu/bin/odu_low       \
-         && cp /src/build/apps/du_split_8/odu             /opt/ocudu/bin/odu_split_8   \
-         && cp /src/build/apps/du_split_7_2/odu           /opt/ocudu/bin/odu_split_7_2 \
-         && cp /src/build/apps/gnb/gnb                    /opt/ocudu/bin/gnb           \
-         && cp /src/build/apps/gnb_split_8/gnb            /opt/ocudu/bin/gnb_split_8   \
-         && cp /src/build/apps/gnb_split_7_2/gnb          /opt/ocudu/bin/gnb_split_7_2 \
-         && cp /src/build/apps/examples/ofh/ru_emulator   /opt/ocudu/bin/ru_emulator; \
+    && case "${COMPONENT}" in \
+         gnb)           TARGETS="gnb";           SRC="apps/gnb/gnb";                  BIN="gnb" ;; \
+         du)            TARGETS="odu";           SRC="apps/du/odu";                   BIN="odu" ;; \
+         cu)            TARGETS="ocu";           SRC="apps/cu/ocu";                   BIN="ocu" ;; \
+         cu-cp)         TARGETS="ocucp";         SRC="apps/cu_cp/ocucp";              BIN="ocucp" ;; \
+         cu-up)         TARGETS="ocuup";         SRC="apps/cu_up/ocuup";              BIN="ocuup" ;; \
+         ru-emulator)   TARGETS="ru_emulator";   SRC="apps/examples/ofh/ru_emulator"; BIN="ru_emulator" ;; \
+         gnb_split_8)   TARGETS="gnb_split_8";   SRC="apps/gnb_split_8/gnb";          BIN="gnb_split_8" ;; \
+         gnb_split_7_2) TARGETS="gnb_split_7_2"; SRC="apps/gnb_split_7_2/gnb";        BIN="gnb_split_7_2" ;; \
+         odu_split_8)   TARGETS="odu_split_8";   SRC="apps/du_split_8/odu";            BIN="odu_split_8" ;; \
+         odu_split_7_2) TARGETS="odu_split_7_2"; SRC="apps/du_split_7_2/odu";          BIN="odu_split_7_2" ;; \
+         *)             TARGETS="${COMPONENT}" ;; \
+       esac \
+    && /src/docker/scripts/builder.sh -c ${COMPILER} -m "-j${NUM_JOBS} ${TARGETS}" \
+       -DBUILD_TESTING=False -DENABLE_UHD=${ENABLE_UHD} -DENABLE_DPDK=${ENABLE_DPDK} \
+       ${ARCH_FLAG} -DCMAKE_INSTALL_PREFIX=/opt/ocudu ${EXTRA_CMAKE_ARGS} /src \
+    && if [ -n "${BIN}" ]; then \
+         cp /src/build/${SRC} /opt/ocudu/bin/${BIN}; \
        else \
-         case "${COMPONENT}" in \
-           gnb)         TARGET="gnb";         SRC="apps/gnb/gnb";                  BIN="gnb" ;; \
-           du)          TARGET="odu";         SRC="apps/du/odu";                   BIN="odu" ;; \
-           cu)          TARGET="ocu";         SRC="apps/cu/ocu";                   BIN="ocu" ;; \
-           cu-cp)       TARGET="ocucp";       SRC="apps/cu_cp/ocucp";              BIN="ocucp" ;; \
-           cu-up)       TARGET="ocuup";       SRC="apps/cu_up/ocuup";              BIN="ocuup" ;; \
-           ru-emulator) TARGET="ru_emulator"; SRC="apps/examples/ofh/ru_emulator"; BIN="ru_emulator" ;; \
-           *) echo "Unknown COMPONENT: ${COMPONENT}" && exit 1 ;; \
-         esac \
-         && /src/docker/scripts/builder.sh -c ${COMPILER} -m "-j${NUM_JOBS} ${TARGET}" \
-            -DBUILD_TESTING=False -DENABLE_UHD=${ENABLE_UHD} -DENABLE_DPDK=${ENABLE_DPDK} \
-            ${ARCH_FLAG} -DCMAKE_INSTALL_PREFIX=/opt/ocudu ${EXTRA_CMAKE_ARGS} /src \
-         && cp /src/build/${SRC} /opt/ocudu/bin/${BIN}; \
+         cmake --install /src/build; \
+         # Split targets are EXCLUDE_FROM_ALL in CMake so cmake --install skips them; copy manually. \
+         cp /src/build/apps/gnb_split_8/gnb   /opt/ocudu/bin/gnb_split_8; \
+         cp /src/build/apps/gnb_split_7_2/gnb /opt/ocudu/bin/gnb_split_7_2; \
+         cp /src/build/apps/du_split_8/odu    /opt/ocudu/bin/odu_split_8; \
+         cp /src/build/apps/du_split_7_2/odu  /opt/ocudu/bin/odu_split_7_2; \
        fi \
     && rm -rf /src
 
-############################
-# Stage 2b: Build OCUDU    #
-# (lean — no UHD/DPDK)     #
-# Used for cu, cu-cp, cu-up #
-############################
-FROM builder-base AS builder-lean
+################################
+# Stage 2b: Build OCUDU lean   #
+################################
+FROM builder-base-lean AS builder-lean
+
+COPY --from=builder-rohc /opt/rohc /opt/rohc
 
 ARG MARCH
 ARG NUM_JOBS
 ARG TARGETARCH
 ARG COMPILER=gcc
 ARG EXTRA_CMAKE_ARGS=""
-ARG COMPONENT=""
-ARG ENABLE_UHD=Off
-ARG ENABLE_DPDK=Off
-
-COPY --from=builder-rohc /opt/rohc /opt/rohc
+ARG COMPONENT
 
 ENV ROHC_DIR=/opt/rohc
 
@@ -174,13 +220,86 @@ RUN if [ -z "$NUM_JOBS" ]; then NUM_JOBS=$(nproc); fi \
     && ARCH_FLAG=$([ "${TARGETARCH}" = "arm64" ] && echo "-DMCPU=${MARCH}" || echo "-DMARCH=${MARCH}") \
     && mkdir -p /opt/ocudu/bin \
     && case "${COMPONENT}" in \
-         cu)    TARGET="ocu";   SRC="apps/cu/ocu";      BIN="ocu"   ;; \
-         cu-cp) TARGET="ocucp"; SRC="apps/cu_cp/ocucp"; BIN="ocucp" ;; \
-         cu-up) TARGET="ocuup"; SRC="apps/cu_up/ocuup"; BIN="ocuup" ;; \
-         *) echo "builder-lean only supports cu/cu-cp/cu-up (got: '${COMPONENT}')" && exit 1 ;; \
+         cu)    TARGETS="ocu";   SRC="apps/cu/ocu";       BIN="ocu" ;; \
+         cu-cp) TARGETS="ocucp"; SRC="apps/cu_cp/ocucp";  BIN="ocucp" ;; \
+         cu-up) TARGETS="ocuup"; SRC="apps/cu_up/ocuup";  BIN="ocuup" ;; \
+         *)     echo "Unsupported lean component: ${COMPONENT}" >&2; exit 1 ;; \
        esac \
-    && /src/docker/scripts/builder.sh -c ${COMPILER} -m "-j${NUM_JOBS} ${TARGET}" \
-       -DBUILD_TESTING=False -DENABLE_UHD=${ENABLE_UHD} -DENABLE_DPDK=${ENABLE_DPDK} \
+    && /src/docker/scripts/builder.sh -c ${COMPILER} -m "-j${NUM_JOBS} ${TARGETS}" \
+       -DBUILD_TESTING=False -DENABLE_UHD=Off -DENABLE_DPDK=Off \
+       ${ARCH_FLAG} -DCMAKE_INSTALL_PREFIX=/opt/ocudu ${EXTRA_CMAKE_ARGS} /src \
+    && cp /src/build/${SRC} /opt/ocudu/bin/${BIN} \
+    && rm -rf /src
+
+######################################
+# Stage 2c: Build OCUDU with UHD     #
+######################################
+FROM builder-base-uhd AS builder-component-uhd
+
+ARG UHD_VERSION
+
+COPY --from=builder-rohc /opt/rohc /opt/rohc
+COPY --from=builder-uhd /opt/uhd/${UHD_VERSION} /opt/uhd/${UHD_VERSION}
+
+ARG MARCH
+ARG NUM_JOBS
+ARG TARGETARCH
+ARG COMPILER=gcc
+ARG EXTRA_CMAKE_ARGS=""
+ARG COMPONENT
+
+ENV ROHC_DIR=/opt/rohc
+ENV UHD_DIR=/opt/uhd/${UHD_VERSION}
+
+ADD . /src
+
+RUN if [ -z "$NUM_JOBS" ]; then NUM_JOBS=$(nproc); fi \
+    && ARCH_FLAG=$([ "${TARGETARCH}" = "arm64" ] && echo "-DMCPU=${MARCH}" || echo "-DMARCH=${MARCH}") \
+    && mkdir -p /opt/ocudu/bin \
+    && case "${COMPONENT}" in \
+         gnb) TARGETS="gnb"; SRC="apps/gnb/gnb"; BIN="gnb" ;; \
+         du)  TARGETS="odu"; SRC="apps/du/odu";  BIN="odu" ;; \
+         *)   echo "Unsupported UHD component: ${COMPONENT}" >&2; exit 1 ;; \
+       esac \
+    && /src/docker/scripts/builder.sh -c ${COMPILER} -m "-j${NUM_JOBS} ${TARGETS}" \
+       -DBUILD_TESTING=False -DENABLE_UHD=On -DENABLE_DPDK=Off \
+       ${ARCH_FLAG} -DCMAKE_INSTALL_PREFIX=/opt/ocudu ${EXTRA_CMAKE_ARGS} /src \
+    && cp /src/build/${SRC} /opt/ocudu/bin/${BIN} \
+    && rm -rf /src
+
+#######################################
+# Stage 2d: Build OCUDU with DPDK     #
+#######################################
+FROM builder-base-dpdk AS builder-component-dpdk
+
+ARG DPDK_VERSION
+
+COPY --from=builder-rohc /opt/rohc /opt/rohc
+COPY --from=builder-dpdk /opt/dpdk/${DPDK_VERSION} /opt/dpdk/${DPDK_VERSION}
+
+ARG MARCH
+ARG NUM_JOBS
+ARG TARGETARCH
+ARG COMPILER=gcc
+ARG EXTRA_CMAKE_ARGS=""
+ARG COMPONENT
+
+ENV ROHC_DIR=/opt/rohc
+ENV DPDK_DIR=/opt/dpdk/${DPDK_VERSION}
+
+ADD . /src
+
+RUN if [ -z "$NUM_JOBS" ]; then NUM_JOBS=$(nproc); fi \
+    && ARCH_FLAG=$([ "${TARGETARCH}" = "arm64" ] && echo "-DMCPU=${MARCH}" || echo "-DMARCH=${MARCH}") \
+    && mkdir -p /opt/ocudu/bin \
+    && case "${COMPONENT}" in \
+         gnb)         TARGETS="gnb";         SRC="apps/gnb/gnb";                  BIN="gnb" ;; \
+         du)          TARGETS="odu";         SRC="apps/du/odu";                   BIN="odu" ;; \
+         ru-emulator) TARGETS="ru_emulator"; SRC="apps/examples/ofh/ru_emulator"; BIN="ru_emulator" ;; \
+         *)           echo "Unsupported DPDK component: ${COMPONENT}" >&2; exit 1 ;; \
+       esac \
+    && /src/docker/scripts/builder.sh -c ${COMPILER} -m "-j${NUM_JOBS} ${TARGETS}" \
+       -DBUILD_TESTING=False -DENABLE_UHD=Off -DENABLE_DPDK=On \
        ${ARCH_FLAG} -DCMAKE_INSTALL_PREFIX=/opt/ocudu ${EXTRA_CMAKE_ARGS} /src \
     && cp /src/build/${SRC} /opt/ocudu/bin/${BIN} \
     && rm -rf /src
@@ -189,8 +308,6 @@ RUN if [ -z "$NUM_JOBS" ]; then NUM_JOBS=$(nproc); fi \
 # Stage 3: Run    #
 ###################
 
-# Shared runtime base: installs OS packages and sets env vars.
-# Does NOT copy any built artifacts — extended by runtime and runtime-lean.
 FROM ${OS}:${OS_VERSION} AS runtime-base
 
 ARG UHD_VERSION
@@ -206,7 +323,11 @@ ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/dpdk/${DPDK_VERSION}/lib/:/opt/dpdk/${
 ENV PATH=$PATH:/opt/uhd/${UHD_VERSION}/bin/
 
 # Install base runtime dependencies shared by all targets
-RUN /usr/local/etc/install_ocudu_dependencies.sh run && \
+RUN --mount=type=secret,id=rh_entitlement_cert,target=/etc/pki/entitlement/entitlement.pem \
+    --mount=type=secret,id=rh_entitlement_key,target=/etc/pki/entitlement/entitlement-key.pem \
+    --mount=type=secret,id=rh_rhsm_conf,target=/etc/rhsm/rhsm.conf \
+    --mount=type=secret,id=rh_rhsm_ca,target=/etc/rhsm/ca/redhat-uep.pem \
+    /usr/local/etc/install_ocudu_dependencies.sh run && \
     /usr/local/etc/install_rohc_dependencies.sh run && \
     /usr/local/etc/install_docker_dependencies.sh run
 
@@ -227,30 +348,7 @@ RUN printf '%s\n' \
     > /etc/ld.so.conf.d/ocudu.conf && \
     ldconfig
 
-# Stage 3a: runtime-lean — cu, cu-cp, cu-up (no UHD/DPDK build or runtime libs)
-FROM runtime-base AS runtime-lean
-
-ARG COMPONENT=""
-
-COPY --from=builder-lean /opt/rohc  /opt/rohc
-COPY --from=builder-lean /opt/ocudu /usr/local
-
-# Bake minimum-privilege Linux capabilities into the binaries that need to
-# run as a non-root uid in Kubernetes. Kubernetes' capabilities.add only
-# populates the bounding set for non-root processes; for caps to land in
-# the effective set after execve(), they must be declared as file caps.
-#
-#   cap_sys_nice  - SCHED_FIFO on ru_timing / tx-rx threads (DPDK real-time)
-#   cap_ipc_lock  - mlock() on DPDK hugepages
-RUN case "${COMPONENT}" in \
-      cu)    setcap cap_sys_nice,cap_ipc_lock+ep /usr/local/bin/ocu   && getcap /usr/local/bin/ocu ;; \
-      cu-cp) setcap cap_sys_nice,cap_ipc_lock+ep /usr/local/bin/ocucp && getcap /usr/local/bin/ocucp ;; \
-      cu-up) setcap cap_sys_nice,cap_ipc_lock+ep /usr/local/bin/ocuup && getcap /usr/local/bin/ocuup ;; \
-      *) echo "runtime-lean only supports cu/cu-cp/cu-up (got: '${COMPONENT}')" && exit 1 ;; \
-    esac
-
-# Stage 3b: runtime — gnb, du, ru-emulator, and legacy all-binary build.
-# This is the last stage, so docker-compose (no --target) lands here.
+# Stage 3b: runtime — all components. Last stage so docker-compose lands here.
 FROM runtime-base AS runtime
 
 ARG UHD_VERSION
@@ -268,7 +366,11 @@ COPY --from=builder /opt/ocudu                /usr/local
 # Install UHD/DPDK runtime dependencies after copying binaries — uhd_images_downloader
 # must be on PATH before install_uhd_dependencies.sh run can execute.
 # Only install deps for drivers that were actually built.
-RUN if [ "${ENABLE_UHD}" = "On" ]; then /usr/local/etc/install_uhd_dependencies.sh run; fi && \
+RUN --mount=type=secret,id=rh_entitlement_cert,target=/etc/pki/entitlement/entitlement.pem \
+    --mount=type=secret,id=rh_entitlement_key,target=/etc/pki/entitlement/entitlement-key.pem \
+    --mount=type=secret,id=rh_rhsm_conf,target=/etc/rhsm/rhsm.conf \
+    --mount=type=secret,id=rh_rhsm_ca,target=/etc/rhsm/ca/redhat-uep.pem \
+    if [ "${ENABLE_UHD}" = "On" ]; then /usr/local/etc/install_uhd_dependencies.sh run; fi && \
     if [ "${ENABLE_DPDK}" = "On" ]; then /usr/local/etc/install_dpdk_dependencies.sh run; fi
 
 # Bake minimum-privilege Linux capabilities into the binaries that need to
@@ -289,6 +391,9 @@ RUN case "${COMPONENT}" in \
         setcap cap_sys_nice,cap_ipc_lock,cap_perfmon+ep /usr/local/bin/${BIN} && \
         getcap /usr/local/bin/${BIN} ;; \
       ru-emulator) setcap cap_sys_nice,cap_ipc_lock+ep /usr/local/bin/ru_emulator && getcap /usr/local/bin/ru_emulator ;; \
+      cu)    setcap cap_sys_nice,cap_ipc_lock+ep /usr/local/bin/ocu   && getcap /usr/local/bin/ocu ;; \
+      cu-cp) setcap cap_sys_nice,cap_ipc_lock+ep /usr/local/bin/ocucp && getcap /usr/local/bin/ocucp ;; \
+      cu-up) setcap cap_sys_nice,cap_ipc_lock+ep /usr/local/bin/ocuup && getcap /usr/local/bin/ocuup ;; \
       *) \
         for bin in gnb odu; do \
             test -f /usr/local/bin/${bin} && setcap cap_sys_nice,cap_ipc_lock,cap_perfmon+ep /usr/local/bin/${bin} || true; \
@@ -300,3 +405,66 @@ RUN case "${COMPONENT}" in \
             test -f /usr/local/bin/${bin} && getcap /usr/local/bin/${bin} || true; \
         done ;; \
     esac
+
+# Stage 3c: runtime — CU-only images without UHD/DPDK.
+FROM runtime-base AS runtime-lean
+
+ARG COMPONENT
+
+COPY --from=builder-lean /opt/rohc  /opt/rohc
+COPY --from=builder-lean /opt/ocudu /usr/local
+
+RUN case "${COMPONENT}" in \
+      cu)    setcap cap_sys_nice,cap_ipc_lock+ep /usr/local/bin/ocu   && getcap /usr/local/bin/ocu ;; \
+      cu-cp) setcap cap_sys_nice,cap_ipc_lock+ep /usr/local/bin/ocucp && getcap /usr/local/bin/ocucp ;; \
+      cu-up) setcap cap_sys_nice,cap_ipc_lock+ep /usr/local/bin/ocuup && getcap /usr/local/bin/ocuup ;; \
+      *)     echo "Unsupported lean component: ${COMPONENT}" >&2; exit 1 ;; \
+    esac
+
+# Stage 3d: runtime — UHD components without DPDK.
+FROM runtime-base AS runtime-uhd
+
+ARG UHD_VERSION
+ARG COMPONENT
+
+COPY --from=builder-component-uhd /opt/rohc               /opt/rohc
+COPY --from=builder-component-uhd /opt/uhd/${UHD_VERSION} /opt/uhd/${UHD_VERSION}
+COPY --from=builder-component-uhd /opt/ocudu              /usr/local
+
+RUN --mount=type=secret,id=rh_entitlement_cert,target=/etc/pki/entitlement/entitlement.pem \
+    --mount=type=secret,id=rh_entitlement_key,target=/etc/pki/entitlement/entitlement-key.pem \
+    --mount=type=secret,id=rh_rhsm_conf,target=/etc/rhsm/rhsm.conf \
+    --mount=type=secret,id=rh_rhsm_ca,target=/etc/rhsm/ca/redhat-uep.pem \
+    /usr/local/etc/install_uhd_dependencies.sh run
+
+RUN case "${COMPONENT}" in \
+      gnb) setcap cap_sys_nice,cap_ipc_lock,cap_perfmon+ep /usr/local/bin/gnb && getcap /usr/local/bin/gnb ;; \
+      du)  setcap cap_sys_nice,cap_ipc_lock,cap_perfmon+ep /usr/local/bin/odu && getcap /usr/local/bin/odu ;; \
+      *)   echo "Unsupported UHD component: ${COMPONENT}" >&2; exit 1 ;; \
+    esac
+
+# Stage 3e: runtime — DPDK components without UHD.
+FROM runtime-base AS runtime-dpdk
+
+ARG DPDK_VERSION
+ARG COMPONENT
+
+COPY --from=builder-component-dpdk /opt/rohc                 /opt/rohc
+COPY --from=builder-component-dpdk /opt/dpdk/${DPDK_VERSION} /opt/dpdk/${DPDK_VERSION}
+COPY --from=builder-component-dpdk /opt/ocudu                /usr/local
+
+RUN --mount=type=secret,id=rh_entitlement_cert,target=/etc/pki/entitlement/entitlement.pem \
+    --mount=type=secret,id=rh_entitlement_key,target=/etc/pki/entitlement/entitlement-key.pem \
+    --mount=type=secret,id=rh_rhsm_conf,target=/etc/rhsm/rhsm.conf \
+    --mount=type=secret,id=rh_rhsm_ca,target=/etc/rhsm/ca/redhat-uep.pem \
+    /usr/local/etc/install_dpdk_dependencies.sh run
+
+RUN case "${COMPONENT}" in \
+      gnb)         setcap cap_sys_nice,cap_ipc_lock,cap_perfmon+ep /usr/local/bin/gnb && getcap /usr/local/bin/gnb ;; \
+      du)          setcap cap_sys_nice,cap_ipc_lock,cap_perfmon+ep /usr/local/bin/odu && getcap /usr/local/bin/odu ;; \
+      ru-emulator) setcap cap_sys_nice,cap_ipc_lock+ep /usr/local/bin/ru_emulator && getcap /usr/local/bin/ru_emulator ;; \
+      *)           echo "Unsupported DPDK component: ${COMPONENT}" >&2; exit 1 ;; \
+    esac
+
+# Keep no-target builds, including docker-compose, on the full runtime image.
+FROM runtime AS default

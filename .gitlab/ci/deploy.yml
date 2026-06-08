@@ -1,18 +1,30 @@
 # SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
+include:
+  - local: .gitlab/ci/docker/image-matrix.yml
+
+# ---------------------------------------------------------------------------
+# Derive the SIMD label used in the image tag from the MARCH value.
+# ---------------------------------------------------------------------------
+.simd-label: &simd-label |
+  case "${MARCH}" in
+    x86-64-v3)                   SIMD=avx2 ;;
+    x86-64-v4)                   SIMD=avx512 ;;
+    neoverse-n1+crc+crypto+ssbs) SIMD=neon ;;
+    *)                           SIMD="${MARCH}" ;;
+  esac
+
 ################################################################################
-# Deploy Docker images
+# Legacy all-binary Ubuntu image (docker-compose / dev builds)
 ################################################################################
 
 ocudu image:
   extends: .docker-builder
   stage: deploy
   rules:
-    # General
     - if: $SKIP_OCUDU_BUILDING_CONTAINERS_CI
       when: never
-    # Scheduled and manual pipelines
     - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
     - if: $ON_WEB
       when: manual
@@ -20,7 +32,6 @@ ocudu image:
     - if: $ON_API
       when: manual
       allow_failure: true
-    # MRs
     - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-docker/
       when: never
     - if: $ON_MR_FORK
@@ -35,31 +46,28 @@ ocudu image:
         MODE: build
   retry: 2
   variables:
-    # Docker
     REGISTRY_URI: ${OCUDU_REGISTRY_URI}
     REGISTRY_ORG: /${OCUDU_IMAGE_PREFIX}
     CONTEXT: ${CI_PROJECT_DIR}
     DOCKERFILE: docker
     MODE: publish
     ATTESTATION_FILE: /usr/local/share/ocudu.spdx
-    # Arguments
     OS: ubuntu
     OS_VERSION: "24.04"
     DOCKER_UHD_VERSION: "4.9.0.0"
     DOCKER_DPDK_VERSION: "24.11.2"
-    # CI
     KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "100G"
     KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "100G"
   timeout: 3 hours
   tags:
     - $OCUDU_RUNNER_TAG-${PLATFORM}
   before_script:
-    # Set variables
     - |
-      export CPU_JOBS="$(/usr/local/bin/get_available_cores.sh 2>/dev/null || ${CI_PROJECT_DIR}/.gitlab/ci/builders/get_available_cores.sh)"
+      CPU_JOBS="$(/usr/local/bin/get_available_cores.sh 2>/dev/null || ${CI_PROJECT_DIR}/.gitlab/ci/builders/get_available_cores.sh)"
       if [ -z "${CPU_JOBS}" ] || [ "${CPU_JOBS}" -lt 1 ]; then
         CPU_JOBS=1
       fi
+      export CPU_JOBS
       if [ "${OS}" = "ubuntu" ]; then
         export NAME="ocudu_nightly_${SUFFIX}"
       else
@@ -73,7 +81,6 @@ ocudu image:
       dotenv: variables.env
   parallel: &matrix-ocudu-image-variants
     matrix:
-      # AMD AVX2
       - SUFFIX: avx2
         MARCH: x86-64-v3
         TAG: amd64-avx2
@@ -83,7 +90,6 @@ ocudu image:
         MARCH: x86-64-v3
         TAG: amd64-avx2
         PLATFORM: amd64
-      # AMD AVX512
       - SUFFIX: avx512
         MARCH: x86-64-v4
         TAG: amd64-avx2-avx512
@@ -93,14 +99,13 @@ ocudu image:
         MARCH: x86-64-v4
         TAG: amd64-avx2-avx512
         PLATFORM: amd64
-      # ARM
       - SUFFIX: arm64
-        MARCH: neoverse-n1+crc+crypto+ssbs # keep using MARCH as a job variable here. It's converted to mcpu in the dockerfile
+        MARCH: neoverse-n1+crc+crypto+ssbs
         TAG: arm64
         PLATFORM: arm64
       - SUFFIX: arm64_debug
         EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
-        MARCH: neoverse-n1+crc+crypto+ssbs # keep using MARCH as a job variable here. It's converted to mcpu in the dockerfile
+        MARCH: neoverse-n1+crc+crypto+ssbs
         TAG: arm64
         PLATFORM: arm64
   needs: []
@@ -143,8 +148,211 @@ ocudu image update latest:
       docker manifest create ${REGISTRY_URI}/${NAME}:latest --amend ${REGISTRY_URI}/${NAME}:${VERSION}
       docker manifest push ${REGISTRY_URI}/${NAME}:latest
       echo "Image ${RETINA_REGISTRY_URI}/${NAME}:latest pushed"
-
   parallel: *matrix-ocudu-image-variants
   needs:
     - job: ocudu image
       artifacts: true
+
+################################################################################
+# Per-component images — Ubuntu (standard build)
+################################################################################
+
+.image-build:
+  extends: .docker-builder
+  stage: deploy
+  rules:
+    - if: $SKIP_OCUDU_BUILDING_CONTAINERS_CI
+      when: never
+    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
+    - if: $ON_WEB
+      when: manual
+      allow_failure: true
+    - if: $ON_API
+      when: manual
+      allow_failure: true
+  variables:
+    REGISTRY_URI: ${CI_REGISTRY}/${CI_PROJECT_PATH}/images
+    MODE: publish
+    MULTI_ARCH_BUILD: "false"
+    CACHE: "true"
+    CACHE_MODE: "max"
+    COMPONENT: ""
+    DRIVER: ""
+    OS: ubuntu
+    OS_VERSION: "24.04"
+    TARGETARCH: amd64
+    MARCH: x86-64-v4
+  before_script:
+    - *simd-label
+    - export CONTEXT=${CI_PROJECT_DIR}
+    - export DOCKERFILE=${CI_PROJECT_DIR}/docker
+    - |
+      if [ -n "${DRIVER}" ]; then
+        IMAGE_COMPONENT="${COMPONENT}-${DRIVER}"
+      else
+        IMAGE_COMPONENT="${COMPONENT}"
+      fi
+    - DATE=$(date +%Y%m%d)
+    - export NAME="${IMAGE_COMPONENT}"
+    - export VERSION="${OS}-${OS_VERSION}-${SIMD}-${DATE}"
+    - export PLATFORM="${TARGETARCH}"
+    - |
+      case "${COMPONENT}" in
+        cu|cu-cp|cu-up) DOCKER_TARGET=runtime-lean ;;
+        *)
+          case "${DRIVER}" in
+            uhd)  DOCKER_TARGET=runtime-uhd ;;
+            dpdk) DOCKER_TARGET=runtime-dpdk ;;
+            *)    DOCKER_TARGET=runtime ;;
+          esac ;;
+      esac
+    - export DOCKER_TARGET
+    - |
+      ENABLE_UHD=Off
+      ENABLE_DPDK=Off
+      case "${DRIVER}" in
+        uhd)  ENABLE_UHD=On ;;
+        dpdk) ENABLE_DPDK=On ;;
+      esac
+    - |
+      CPU_JOBS="$(/usr/local/bin/get_available_cores.sh 2>/dev/null || ${CI_PROJECT_DIR}/.gitlab/ci/builders/get_available_cores.sh)"
+      if [ -z "${CPU_JOBS}" ] || [ "${CPU_JOBS}" -lt 1 ]; then
+        CPU_JOBS=1
+      fi
+      export CPU_JOBS
+    - |
+      export BUILD_ARGS="\
+      OS=${OS};\
+      OS_VERSION=${OS_VERSION};\
+      UHD_VERSION=${UHD_VERSION};\
+      DPDK_VERSION=${DPDK_VERSION};\
+      ROHC_VERSION=${ROHC_VERSION};\
+      MARCH=${MARCH};\
+      NUM_JOBS=${CPU_JOBS};\
+      TARGETARCH=${TARGETARCH};\
+      COMPONENT=${COMPONENT};\
+      ENABLE_UHD=${ENABLE_UHD};\
+      ENABLE_DPDK=${ENABLE_DPDK};\
+      EXTRA_CMAKE_ARGS=${EXTRA_CMAKE_ARGS}"
+    - |
+      if [ -n "${PKG_VERSIONS}" ]; then
+        BUILD_ARGS="${BUILD_ARGS};PKG_VERSIONS=${PKG_VERSIONS}"
+      fi
+  needs: []
+
+build-and-publish:gnb:
+  extends: .image-build
+  parallel:
+    matrix:
+      - COMPONENT: gnb
+        DRIVER: uhd
+        TARGETARCH: amd64
+        MARCH: x86-64-v4
+      - COMPONENT: gnb
+        DRIVER: uhd
+        TARGETARCH: amd64
+        MARCH: x86-64-v3
+      - COMPONENT: gnb
+        DRIVER: dpdk
+        TARGETARCH: amd64
+        MARCH: x86-64-v4
+      - COMPONENT: gnb
+        DRIVER: dpdk
+        TARGETARCH: amd64
+        MARCH: x86-64-v3
+      - COMPONENT: gnb
+        DRIVER: uhd
+        TARGETARCH: arm64
+        MARCH: neoverse-n1+crc+crypto+ssbs
+      - COMPONENT: gnb
+        DRIVER: dpdk
+        TARGETARCH: arm64
+        MARCH: neoverse-n1+crc+crypto+ssbs
+
+build-and-publish:du:
+  extends: .image-build
+  parallel:
+    matrix:
+      - COMPONENT: du
+        DRIVER: uhd
+        TARGETARCH: amd64
+        MARCH: x86-64-v4
+      - COMPONENT: du
+        DRIVER: uhd
+        TARGETARCH: amd64
+        MARCH: x86-64-v3
+      - COMPONENT: du
+        DRIVER: dpdk
+        TARGETARCH: amd64
+        MARCH: x86-64-v4
+      - COMPONENT: du
+        DRIVER: dpdk
+        TARGETARCH: amd64
+        MARCH: x86-64-v3
+      - COMPONENT: du
+        DRIVER: uhd
+        TARGETARCH: arm64
+        MARCH: neoverse-n1+crc+crypto+ssbs
+      - COMPONENT: du
+        DRIVER: dpdk
+        TARGETARCH: arm64
+        MARCH: neoverse-n1+crc+crypto+ssbs
+
+build-and-publish:cu:
+  extends: .image-build
+  parallel:
+    matrix:
+      - COMPONENT: cu
+        TARGETARCH: amd64
+        MARCH: x86-64-v4
+      - COMPONENT: cu
+        TARGETARCH: amd64
+        MARCH: x86-64-v3
+      - COMPONENT: cu
+        TARGETARCH: arm64
+        MARCH: neoverse-n1+crc+crypto+ssbs
+
+build-and-publish:cu-cp:
+  extends: .image-build
+  parallel:
+    matrix:
+      - COMPONENT: cu-cp
+        TARGETARCH: amd64
+        MARCH: x86-64-v4
+      - COMPONENT: cu-cp
+        TARGETARCH: amd64
+        MARCH: x86-64-v3
+      - COMPONENT: cu-cp
+        TARGETARCH: arm64
+        MARCH: neoverse-n1+crc+crypto+ssbs
+
+build-and-publish:cu-up:
+  extends: .image-build
+  parallel:
+    matrix:
+      - COMPONENT: cu-up
+        TARGETARCH: amd64
+        MARCH: x86-64-v4
+      - COMPONENT: cu-up
+        TARGETARCH: amd64
+        MARCH: x86-64-v3
+      - COMPONENT: cu-up
+        TARGETARCH: arm64
+        MARCH: neoverse-n1+crc+crypto+ssbs
+
+build-and-publish:ru-emulator:
+  extends: .image-build
+  parallel:
+    matrix:
+      - COMPONENT: ru-emulator
+        DRIVER: dpdk
+        TARGETARCH: amd64
+        MARCH: x86-64-v4
+      - COMPONENT: ru-emulator
+        DRIVER: dpdk
+        TARGETARCH: amd64
+        MARCH: x86-64-v3
+      - COMPONENT: ru-emulator
+        DRIVER: dpdk
+        TARGETARCH: arm64
+        MARCH: neoverse-n1+crc+crypto+ssbs

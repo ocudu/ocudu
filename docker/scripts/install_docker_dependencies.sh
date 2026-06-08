@@ -15,6 +15,19 @@
 
 set -e
 
+# Return "name=version" if PKG_VERSIONS contains an entry for the given package name,
+# otherwise return the bare name. PKG_VERSIONS is a space-separated list of "name=version" pairs.
+_pkg_ver() {
+    local name="$1"
+    local pair
+    for pair in $PKG_VERSIONS; do
+        case "$pair" in
+            "${name}="*) echo "${pair}"; return ;;
+        esac
+    done
+    echo "$name"
+}
+
 install_docker_dependencies_debian_ubuntu() {
     local mode="${1:?}"
     local -x DEBIAN_FRONTEND=noninteractive
@@ -36,15 +49,17 @@ install_docker_dependencies_debian_ubuntu() {
             ;;
     esac
 
+    local -a versioned_pkgs=()
+    for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
     apt-get update
     if [[ "$mode" == "run" ]]; then
         if apt-cache policy ntpdate | awk '$1 == "Candidate:" && $2 != "(none)" { found = 1 } END { exit !found }'; then
-            pkgs+=(ntpdate)
+            versioned_pkgs+=(ntpdate)
         else
-            pkgs+=(ntpsec-ntpdate)
+            versioned_pkgs+=(ntpsec-ntpdate)
         fi
     fi
-    apt-get install -y --no-install-recommends "${pkgs[@]}"
+    apt-get install -y --no-install-recommends "${versioned_pkgs[@]}"
     apt-get clean && rm -rf /var/lib/apt/lists/*
 }
 
@@ -68,7 +83,9 @@ install_docker_dependencies_arch() {
             ;;
     esac
 
-    pacman -Syu --noconfirm "${pkgs[@]}"
+    local -a versioned_pkgs=()
+    for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
+    pacman -Syu --noconfirm "${versioned_pkgs[@]}"
     pacman -Scc --noconfirm
 }
 
@@ -92,7 +109,9 @@ install_docker_dependencies_fedora() {
             ;;
     esac
 
-    dnf -y install "${pkgs[@]}"
+    local -a versioned_pkgs=()
+    for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
+    dnf -y install "${versioned_pkgs[@]}"
     dnf clean all
 }
 
@@ -101,7 +120,7 @@ install_docker_dependencies_rhel() {
     local -a pkgs=()
 
     local -a build_pkgs=(git ca-certificates make gcc gcc-c++ pkgconf-pkg-config which)
-    local -a run_pkgs=(curl ntp)
+    local -a run_pkgs=(chrony)
 
     case "$mode" in
         build)
@@ -116,7 +135,9 @@ install_docker_dependencies_rhel() {
             ;;
     esac
 
-    dnf -y install "${pkgs[@]}"
+    local -a versioned_pkgs=()
+    for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
+    dnf -y install "${versioned_pkgs[@]}"
     dnf clean all
 }
 

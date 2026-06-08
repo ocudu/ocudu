@@ -38,17 +38,17 @@ install_dpdk_dependencies_debian_ubuntu() {
     local -a pip_pkgs=()
 
     local -a build_pkgs=(
-        "$(_pkg_ver curl)" "$(_pkg_ver apt-transport-https)" "$(_pkg_ver ca-certificates)" "$(_pkg_ver xz-utils)"
-        "$(_pkg_ver python3-pip)" "$(_pkg_ver ninja-build)" "$(_pkg_ver g++)" "$(_pkg_ver build-essential)" "$(_pkg_ver pkg-config)" "$(_pkg_ver libnuma-dev)" "$(_pkg_ver libfdt-dev)" "$(_pkg_ver pciutils)"
+        curl apt-transport-https ca-certificates xz-utils
+        python3-pip ninja-build g++ build-essential pkg-config libnuma-dev libfdt-dev pciutils
     )
     local -a extra_pkgs=(
-        "$(_pkg_ver libatomic1)" "$(_pkg_ver iproute2)"
+        libatomic1 iproute2
     )
     local -a run_pkgs=(
-        "$(_pkg_ver python3-pip)" "$(_pkg_ver libnuma-dev)" "$(_pkg_ver pciutils)" "$(_pkg_ver libfdt-dev)" "$(_pkg_ver libatomic1)" "$(_pkg_ver iproute2)"
+        python3-pip libnuma-dev pciutils libfdt-dev libatomic1 iproute2
     )
-    local -a pip_build_pkgs=("$(_pip_ver meson)" "$(_pip_ver pyelftools)")
-    local -a pip_run_pkgs=("$(_pip_ver pyelftools)")
+    local -a pip_build_pkgs=(meson pyelftools)
+    local -a pip_run_pkgs=(pyelftools)
 
     case "$mode" in
         all)
@@ -70,13 +70,17 @@ install_dpdk_dependencies_debian_ubuntu() {
     esac
 
     if ((${#pkgs[@]})); then
+        local -a versioned_pkgs=()
+        for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
         apt-get update
-        apt-get install -y --no-install-recommends "${pkgs[@]}"
+        apt-get install -y --no-install-recommends "${versioned_pkgs[@]}"
         apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/*
     fi
 
     if ((${#pip_pkgs[@]})); then
-        pip3 install "${pip_pkgs[@]}" || pip3 install --break-system-packages "${pip_pkgs[@]}"
+        local -a versioned_pip_pkgs=()
+        for pkg in "${pip_pkgs[@]}"; do versioned_pip_pkgs+=("$(_pip_ver "$pkg")"); done
+        pip3 install "${versioned_pip_pkgs[@]}" || pip3 install --break-system-packages "${versioned_pip_pkgs[@]}"
     fi
 }
 
@@ -86,16 +90,17 @@ install_dpdk_dependencies_fedora() {
     local -a pip_pkgs=()
 
     local -a build_pkgs=(
-        "$(_pkg_ver curl)" "$(_pkg_ver ca-certificates)" "$(_pkg_ver xz)" "$(_pkg_ver ninja-build)" "$(_pkg_ver make)" "$(_pkg_ver numactl-devel)" "$(_pkg_ver libfdt-devel)" "$(_pkg_ver pciutils)" "$(_pkg_ver python3-pyelftools)" "$(_pkg_ver meson)"
+        curl ca-certificates xz
+        python3-pip ninja-build gcc gcc-c++ make pkgconf-pkg-config numactl-devel libfdt-devel pciutils
     )
     local -a extra_pkgs=(
-        "$(_pkg_ver libatomic)" "$(_pkg_ver iproute)"
+        libatomic iproute
     )
     local -a run_pkgs=(
-        "$(_pkg_ver numactl-libs)" "$(_pkg_ver pciutils)" "$(_pkg_ver libfdt)" "$(_pkg_ver libatomic)" "$(_pkg_ver iproute)"
+        python3-pip numactl-libs pciutils libfdt libatomic iproute
     )
-    local -a pip_build_pkgs=()
-    local -a pip_run_pkgs=()
+    local -a pip_build_pkgs=(meson pyelftools)
+    local -a pip_run_pkgs=(pyelftools)
 
     case "$mode" in
         all)
@@ -117,10 +122,17 @@ install_dpdk_dependencies_fedora() {
     esac
 
     if ((${#pkgs[@]})); then
-        dnf -y install "${pkgs[@]}"
+        local -a versioned_pkgs=()
+        for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
+        dnf -y install "${versioned_pkgs[@]}"
         dnf clean all
     fi
 
+    if ((${#pip_pkgs[@]})); then
+        local -a versioned_pip_pkgs=()
+        for pkg in "${pip_pkgs[@]}"; do versioned_pip_pkgs+=("$(_pip_ver "$pkg")"); done
+        pip3 install "${versioned_pip_pkgs[@]}" --break-system-packages
+    fi
 }
 
 install_dpdk_dependencies_arch() {
@@ -129,17 +141,17 @@ install_dpdk_dependencies_arch() {
     local -a pip_pkgs=()
 
     local -a build_pkgs=(
-        "$(_pkg_ver curl)" "$(_pkg_ver ca-certificates)" "$(_pkg_ver xz)"
-        "$(_pkg_ver python-pip)" "$(_pkg_ver ninja)" "$(_pkg_ver base-devel)" "$(_pkg_ver pkgconf)" "$(_pkg_ver numactl)" "$(_pkg_ver dtc)" "$(_pkg_ver pciutils)"
+        curl ca-certificates xz
+        python-pip ninja base-devel pkgconf numactl dtc pciutils
     )
     local -a extra_pkgs=(
-        "$(_pkg_ver iproute2)"
+        iproute2
     )
     local -a run_pkgs=(
-        "$(_pkg_ver python-pip)" "$(_pkg_ver numactl)" "$(_pkg_ver dtc)" "$(_pkg_ver pciutils)" "$(_pkg_ver iproute2)"
+        python-pip numactl dtc pciutils iproute2
     )
-    local -a pip_build_pkgs=("$(_pip_ver meson)" "$(_pip_ver pyelftools)")
-    local -a pip_run_pkgs=("$(_pip_ver pyelftools)")
+    local -a pip_build_pkgs=(meson pyelftools)
+    local -a pip_run_pkgs=(pyelftools)
 
     case "$mode" in
         all)
@@ -161,13 +173,16 @@ install_dpdk_dependencies_arch() {
     esac
 
     if ((${#pkgs[@]})); then
-        pacman -Syu --noconfirm "${pkgs[@]}"
+        local -a versioned_pkgs=()
+        for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
+        pacman -Syu --noconfirm "${versioned_pkgs[@]}"
         pacman -Scc --noconfirm
     fi
 
     if ((${#pip_pkgs[@]})); then
-        pip3 install "${pip_pkgs[@]}" --break-system-packages
-        pip3 install "${pip_pkgs[@]}" || pip3 install --break-system-packages "${pip_pkgs[@]}"
+        local -a versioned_pip_pkgs=()
+        for pkg in "${pip_pkgs[@]}"; do versioned_pip_pkgs+=("$(_pip_ver "$pkg")"); done
+        pip3 install "${versioned_pip_pkgs[@]}" --break-system-packages
     fi
 }
 
@@ -177,17 +192,17 @@ install_dpdk_dependencies_rhel() {
     local -a pip_pkgs=()
 
     local -a build_pkgs=(
-        "$(_pkg_ver curl)" "$(_pkg_ver ca-certificates)" "$(_pkg_ver xz)"
-        "$(_pkg_ver python3-pip)" "$(_pkg_ver ninja-build)" "$(_pkg_ver gcc)" "$(_pkg_ver gcc-c++)" "$(_pkg_ver make)" "$(_pkg_ver pkgconf-pkg-config)" "$(_pkg_ver numactl-devel)" "$(_pkg_ver libfdt-devel)" "$(_pkg_ver pciutils)"
+        ca-certificates xz
+        python3-pip ninja-build gcc gcc-c++ make pkgconf-pkg-config numactl-devel libfdt-devel pciutils
     )
     local -a extra_pkgs=(
-        "$(_pkg_ver libatomic)" "$(_pkg_ver iproute)"
+        libatomic iproute
     )
     local -a run_pkgs=(
-        "$(_pkg_ver python3-pip)" "$(_pkg_ver numactl-devel)" "$(_pkg_ver pciutils)" "$(_pkg_ver libfdt)" "$(_pkg_ver libatomic)" "$(_pkg_ver iproute)"
+        python3-pip numactl-libs pciutils libfdt libatomic iproute
     )
-    local -a pip_build_pkgs=("$(_pip_ver meson)" "$(_pip_ver pyelftools)")
-    local -a pip_run_pkgs=("$(_pip_ver pyelftools)")
+    local -a pip_build_pkgs=(meson pyelftools)
+    local -a pip_run_pkgs=(pyelftools)
 
     case "$mode" in
         all)
@@ -208,13 +223,23 @@ install_dpdk_dependencies_rhel() {
             ;;
     esac
 
+    # libfdt-devel is in RHEL CRB (subscription-only)
+    if [[ "$mode" != "run" ]]; then
+        dnf -y install dnf-plugins-core
+        dnf config-manager --enable "codeready-builder-for-rhel-9-$(uname -m)-rpms" 2>/dev/null || true
+    fi
+
     if ((${#pkgs[@]})); then
-        dnf -y install "${pkgs[@]}"
+        local -a versioned_pkgs=()
+        for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
+        dnf -y install "${versioned_pkgs[@]}"
         dnf clean all
     fi
 
     if ((${#pip_pkgs[@]})); then
-        pip3 install "${pip_pkgs[@]}" --break-system-packages
+        local -a versioned_pip_pkgs=()
+        for pkg in "${pip_pkgs[@]}"; do versioned_pip_pkgs+=("$(_pip_ver "$pkg")"); done
+        pip3 install "${versioned_pip_pkgs[@]}"
     fi
 }
 

@@ -63,6 +63,23 @@ trigger buildkit:
     include: .gitlab/ci/buildkit-cli/.gitlab-ci.yml
     strategy: mirror
 
+trigger rh-tool-cli:
+  stage: ci
+  rules:
+    - if: $SKIP_OCUDU_BUILDING_CONTAINERS_CI
+      when: never
+    - if: $ON_MR_FORK
+      when: never
+    - if: $ON_MR_TRAIN
+      when: never
+    - if: $ON_MR
+      changes:
+        paths:
+          - .gitlab/ci/rh-tool-cli/**/*
+  trigger:
+    include: .gitlab/ci/rh-tool-cli/.gitlab-ci.yml
+    strategy: mirror
+
 trigger docker:
   stage: ci
   rules:

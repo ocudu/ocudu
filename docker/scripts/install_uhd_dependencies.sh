@@ -24,18 +24,18 @@ install_uhd_dependencies_debian_ubuntu() {
     local -a pkgs=()
 
     local -a build_pkgs=(
-        "$(_pkg_ver curl)" "$(_pkg_ver apt-transport-https)" "$(_pkg_ver ca-certificates)" "$(_pkg_ver xz-utils)"
-        "$(_pkg_ver cmake)" "$(_pkg_ver build-essential)" "$(_pkg_ver pkg-config)"
-        "$(_pkg_ver libboost-all-dev)" "$(_pkg_ver libusb-1.0-0-dev)"
-        "$(_pkg_ver python3-mako)" "$(_pkg_ver python3-numpy)" "$(_pkg_ver python3-setuptools)" "$(_pkg_ver python3-requests)"
+        curl apt-transport-https ca-certificates xz-utils
+        cmake build-essential pkg-config
+        libboost-all-dev libusb-1.0-0-dev
+        python3-mako python3-numpy python3-setuptools python3-requests
     )
     local -a run_pkgs=(
-        "$(_pkg_ver inetutils-tools)" "$(_pkg_ver libboost-all-dev)" "$(_pkg_ver libncurses5-dev)" "$(_pkg_ver libusb-1.0-0)" "$(_pkg_ver libusb-1.0-0-dev)"
-        "$(_pkg_ver libusb-dev)" "$(_pkg_ver python3-dev)" "$(_pkg_ver python3-requests)"
+        inetutils-tools libboost-all-dev libncurses5-dev libusb-1.0-0 libusb-1.0-0-dev
+        libusb-dev python3-dev python3-requests
     )
     local -a extra_pkgs=(
-        "$(_pkg_ver inetutils-tools)" "$(_pkg_ver libncurses5-dev)" "$(_pkg_ver libusb-1.0-0)" "$(_pkg_ver libusb-1.0-0-dev)"
-        "$(_pkg_ver libusb-dev)" "$(_pkg_ver python3-dev)"
+        inetutils-tools libncurses5-dev libusb-1.0-0 libusb-1.0-0-dev
+        libusb-dev python3-dev
     )
     local -a optional_pkgs=()
 
@@ -58,13 +58,15 @@ install_uhd_dependencies_debian_ubuntu() {
     esac
 
     if ((${#pkgs[@]})); then
+        local -a versioned_pkgs=()
+        for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
         apt-get update
         for pkg in "${optional_pkgs[@]}"; do
             if apt-cache policy "$pkg" | awk '$1 == "Candidate:" && $2 != "(none)" { found = 1 } END { exit !found }'; then
-                pkgs+=("$pkg")
+                versioned_pkgs+=("$pkg")
             fi
         done
-        apt-get install -y --no-install-recommends "${pkgs[@]}"
+        apt-get install -y --no-install-recommends "${versioned_pkgs[@]}"
         apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/*
     fi
 
@@ -78,16 +80,16 @@ install_uhd_dependencies_arch() {
     local -a pkgs=()
 
     local -a build_pkgs=(
-        "$(_pkg_ver curl)" "$(_pkg_ver ca-certificates)" "$(_pkg_ver xz)"
-        "$(_pkg_ver cmake)" "$(_pkg_ver base-devel)" "$(_pkg_ver pkgconf)"
-        "$(_pkg_ver boost)" "$(_pkg_ver boost-libs)" "$(_pkg_ver libusb)"
-        "$(_pkg_ver python-mako)" "$(_pkg_ver python-numpy)" "$(_pkg_ver python-setuptools)" "$(_pkg_ver python-requests)"
+        curl ca-certificates xz
+        cmake base-devel pkgconf
+        boost boost-libs libusb
+        python-mako python-numpy python-setuptools python-requests
     )
     local -a run_pkgs=(
-        "$(_pkg_ver boost)" "$(_pkg_ver boost-libs)" "$(_pkg_ver libusb)" "$(_pkg_ver python)" "$(_pkg_ver python-requests)"
+        boost boost-libs libusb python python-requests
     )
     local -a extra_pkgs=(
-        "$(_pkg_ver boost)" "$(_pkg_ver boost-libs)" "$(_pkg_ver libusb)" "$(_pkg_ver python)"
+        boost boost-libs libusb python
     )
 
     case "$mode" in
@@ -107,7 +109,9 @@ install_uhd_dependencies_arch() {
     esac
 
     if ((${#pkgs[@]})); then
-        pacman -Syu --noconfirm "${pkgs[@]}"
+        local -a versioned_pkgs=()
+        for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
+        pacman -Syu --noconfirm "${versioned_pkgs[@]}"
         pacman -Scc --noconfirm
     fi
 
@@ -164,16 +168,16 @@ install_uhd_dependencies_rhel() {
     local -a pkgs=()
 
     local -a build_pkgs=(
-        "$(_pkg_ver curl)" "$(_pkg_ver ca-certificates)" "$(_pkg_ver xz)"
-        "$(_pkg_ver cmake)" "$(_pkg_ver gcc)" "$(_pkg_ver gcc-c++)" "$(_pkg_ver make)" "$(_pkg_ver pkgconf-pkg-config)"
-        "$(_pkg_ver boost-devel)" "$(_pkg_ver libusb1-devel)"
-        "$(_pkg_ver python3-mako)" "$(_pkg_ver python3-numpy)" "$(_pkg_ver python3-setuptools)" "$(_pkg_ver python3-requests)"
+        ca-certificates xz
+        cmake gcc gcc-c++ make pkgconf-pkg-config
+        boost-devel libusbx-devel
+        python3-mako python3-numpy python3-setuptools python3-requests
     )
     local -a run_pkgs=(
-        "$(_pkg_ver boost-devel)" "$(_pkg_ver libusb1)" "$(_pkg_ver libusb1-devel)" "$(_pkg_ver python3-devel)" "$(_pkg_ver python3-requests)"
+        boost-devel libusbx libusbx-devel python3-devel python3-requests
     )
     local -a extra_pkgs=(
-        "$(_pkg_ver boost-devel)" "$(_pkg_ver libusb1)" "$(_pkg_ver libusb1-devel)" "$(_pkg_ver python3-devel)"
+        boost-devel libusbx libusbx-devel python3-devel
     )
 
     case "$mode" in
@@ -193,7 +197,9 @@ install_uhd_dependencies_rhel() {
     esac
 
     if ((${#pkgs[@]})); then
-        dnf -y install "${pkgs[@]}"
+        local -a versioned_pkgs=()
+        for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
+        dnf -y install "${versioned_pkgs[@]}"
         dnf clean all
     fi
 

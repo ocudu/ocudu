@@ -15,7 +15,6 @@
 
 stages:
   - build
-  - sign-sbom
 
 # ---------------------------------------------------------------------------
 # Derive the SIMD label used in the image tag from the MARCH value.
@@ -68,11 +67,15 @@ stages:
     - export NAME="${IMAGE_COMPONENT}"
     - export VERSION="${OS}-${OS_VERSION}-${SIMD}-${DATE}"
     - export PLATFORM="${TARGETARCH}"
-    # Select Dockerfile target stage: lean path skips UHD/DPDK build stages
     - |
       case "${COMPONENT}" in
         cu|cu-cp|cu-up) DOCKER_TARGET=runtime-lean ;;
-        *)              DOCKER_TARGET=runtime ;;
+        *)
+          case "${DRIVER}" in
+            uhd)  DOCKER_TARGET=runtime-uhd ;;
+            dpdk) DOCKER_TARGET=runtime-dpdk ;;
+            *)    DOCKER_TARGET=runtime ;;
+          esac ;;
       esac
     - export DOCKER_TARGET
     # Build args forwarded into the Dockerfile
@@ -84,6 +87,12 @@ stages:
         dpdk) ENABLE_DPDK=On ;;
       esac
     - |
+      CPU_JOBS="$(/usr/local/bin/get_available_cores.sh 2>/dev/null || ${CI_PROJECT_DIR}/.gitlab/ci/builders/get_available_cores.sh)"
+      if [ -z "${CPU_JOBS}" ] || [ "${CPU_JOBS}" -lt 1 ]; then
+        CPU_JOBS=1
+      fi
+      export CPU_JOBS
+    - |
       export BUILD_ARGS="\
       OS=${OS};\
       OS_VERSION=${OS_VERSION};\
@@ -91,6 +100,7 @@ stages:
       DPDK_VERSION=${DPDK_VERSION};\
       ROHC_VERSION=${ROHC_VERSION};\
       MARCH=${MARCH};\
+      NUM_JOBS=${CPU_JOBS};\
       TARGETARCH=${TARGETARCH};\
       COMPONENT=${COMPONENT};\
       ENABLE_UHD=${ENABLE_UHD};\
@@ -211,19 +221,16 @@ build-and-publish:cu:
   parallel:
     matrix:
       - COMPONENT: cu
-        DRIVER: ""
         OS: ubuntu
         OS_VERSION: "24.04"
         TARGETARCH: amd64
         MARCH: x86-64-v4
       - COMPONENT: cu
-        DRIVER: ""
         OS: ubuntu
         OS_VERSION: "24.04"
         TARGETARCH: amd64
         MARCH: x86-64-v3
       - COMPONENT: cu
-        DRIVER: ""
         OS: ubuntu
         OS_VERSION: "24.04"
         TARGETARCH: arm64
@@ -238,19 +245,16 @@ build-and-publish:cu-cp:
   parallel:
     matrix:
       - COMPONENT: cu-cp
-        DRIVER: ""
         OS: ubuntu
         OS_VERSION: "24.04"
         TARGETARCH: amd64
         MARCH: x86-64-v4
       - COMPONENT: cu-cp
-        DRIVER: ""
         OS: ubuntu
         OS_VERSION: "24.04"
         TARGETARCH: amd64
         MARCH: x86-64-v3
       - COMPONENT: cu-cp
-        DRIVER: ""
         OS: ubuntu
         OS_VERSION: "24.04"
         TARGETARCH: arm64
@@ -265,19 +269,16 @@ build-and-publish:cu-up:
   parallel:
     matrix:
       - COMPONENT: cu-up
-        DRIVER: ""
         OS: ubuntu
         OS_VERSION: "24.04"
         TARGETARCH: amd64
         MARCH: x86-64-v4
       - COMPONENT: cu-up
-        DRIVER: ""
         OS: ubuntu
         OS_VERSION: "24.04"
         TARGETARCH: amd64
         MARCH: x86-64-v3
       - COMPONENT: cu-up
-        DRIVER: ""
         OS: ubuntu
         OS_VERSION: "24.04"
         TARGETARCH: arm64
@@ -313,78 +314,3 @@ build-and-publish:ru-emulator:
   rules:
     - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
     - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
-
-# ---------------------------------------------------------------------------
-# sign-sbom stage — grype CVE gate
-#
-# One concrete job per build:* job. Each needs: its corresponding build job
-# and inherits IMAGE_REF from the dotenv artifact.
-# cosign sign + SPDX attestation are already handled inside .docker-builder.
-# This stage adds the grype CVE gate (fail on CRITICAL) and attaches the
-# grype report as a second cosign attestation.
-# ---------------------------------------------------------------------------
-
-.grype-gate:
-  stage: sign-sbom
-  image: ${OCUDU_REGISTRY_URI}/buildkit-cli:$BUILDKIT_CLI_VERSION
-  variables:
-    COSIGN_YES: "true"
-  id_tokens:
-    SIGSTORE_ID_TOKEN:
-      aud: sigstore
-  before_script:
-    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
-  script:
-    - |
-      [ -z "$IMAGE_REF" ] && echo "IMAGE_REF not set — dotenv artifact missing?" && exit 1
-    - |
-      echo "=== Running grype CVE scan on ${IMAGE_REF} ==="
-      grype registry:${IMAGE_REF} --fail-on critical -o json > grype-report.json
-    - |
-      echo "=== Attesting grype report ==="
-      IMAGE_DIGEST="${IMAGE_REF}@$(regctl image digest ${IMAGE_REF})"
-      cosign attest --predicate grype-report.json --type vuln ${IMAGE_DIGEST}
-  artifacts:
-    paths:
-      - grype-report.json
-    expire_in: 7 days
-    when: always
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
-    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
-
-sign-sbom:gnb:
-  extends: .grype-gate
-  needs:
-    - job: build-and-publish:gnb
-      artifacts: true
-
-sign-sbom:du:
-  extends: .grype-gate
-  needs:
-    - job: build-and-publish:du
-      artifacts: true
-
-sign-sbom:cu:
-  extends: .grype-gate
-  needs:
-    - job: build-and-publish:cu
-      artifacts: true
-
-sign-sbom:cu-cp:
-  extends: .grype-gate
-  needs:
-    - job: build-and-publish:cu-cp
-      artifacts: true
-
-sign-sbom:cu-up:
-  extends: .grype-gate
-  needs:
-    - job: build-and-publish:cu-up
-      artifacts: true
-
-sign-sbom:ru-emulator:
-  extends: .grype-gate
-  needs:
-    - job: build-and-publish:ru-emulator
-      artifacts: true
