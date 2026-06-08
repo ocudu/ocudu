@@ -320,6 +320,8 @@ struct si_acquisition_info {
   std::optional<si_scheduling_info_config> si_config;
   /// \c ueTimersAndConstants, sent in \c SIB1, as per TS 38.331.
   ue_timers_and_constants_config ue_timers_and_constants;
+  /// \c SIB1 IMS and eCall support field, sent in \c SIB1, as per TS 38.331: true=allowed, false=notAllowed.
+  bool ims_and_ecall_support = true;
 };
 
 } // namespace ocudu

@@ -470,6 +470,11 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
   sib1.serving_cell_cfg_common_present = true;
   sib1.serving_cell_cfg_common         = make_asn1_rrc_cell_serving_cell_common(du_cfg);
 
+  if (du_cfg.si.ims_and_ecall_support) {
+    sib1.ims_emergency_support_present  = true;
+    sib1.ecall_over_ims_support_present = true;
+  }
+
   sib1.ue_timers_and_consts_present = true;
 
   bool ret = asn1::number_to_enum(sib1.ue_timers_and_consts.t300, du_cfg.si.ue_timers_and_constants.t300.count());
