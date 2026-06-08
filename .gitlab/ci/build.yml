@@ -367,10 +367,7 @@ intermediate commits cached:
       git config advice.detachedHead false
       UNSHALLOW=$([ "$(git rev-parse --is-shallow-repository)" = "true" ] && echo --unshallow || true)
       if [ "$CI_MERGE_REQUEST_SOURCE_PROJECT_PATH" != "$CI_PROJECT_PATH" ]; then
-        git remote add fork $CI_MERGE_REQUEST_SOURCE_PROJECT_URL
-        git fetch $UNSHALLOW origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
-        git fetch fork $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
-        git branch -f $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME fork/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
+        git fetch $UNSHALLOW origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME "refs/merge-requests/$CI_MERGE_REQUEST_IID/head:$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME"
         git branch -f $CI_MERGE_REQUEST_TARGET_BRANCH_NAME origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME
       else
         git fetch $UNSHALLOW origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
