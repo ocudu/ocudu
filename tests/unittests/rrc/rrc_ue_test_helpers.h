@@ -5,6 +5,7 @@
 #pragma once
 
 #include "../cu_cp/test_helpers.h"
+#include "lib/cu_cp/pdcp/srb_pdcp_ue_context.h"
 #include "lib/cu_cp/ue_manager/cu_cp_ue_impl.h"
 #include "lib/rrc/ue/rrc_ue_impl.h"
 #include "rrc_ue_test_messages.h"
@@ -103,12 +104,18 @@ protected:
 
     ue_cfg.meas_timings.push_back(meas_timing);
     ue_cfg.rrc_procedure_guard_time_ms = cu_cp_cfg.rrc.rrc_procedure_guard_time_ms;
-    rrc_ue                             = std::make_unique<rrc_ue_impl>(*rrc_ue_create_msg.f1ap_pdu_notifier,
+
+    // Create PDCP context for the UE (mirrors what du_processor_impl does in production).
+    pdcp_ctx =
+        std::make_unique<srb_pdcp_ue_context>(allocated_ue_index, timer_factory{timers, ctrl_worker}, ctrl_worker, 1u);
+
+    rrc_ue = std::make_unique<rrc_ue_impl>(*rrc_ue_create_msg.f1ap_pdu_notifier,
                                            rrc_ue_ngap_notifier,
                                            *rrc_ue_create_msg.rrc_ue_cu_cp_notifier,
                                            *rrc_ue_create_msg.measurement_notifier,
                                            *rrc_ue_create_msg.cu_cp_ue_notifier,
                                            rrc_ue_rrc_du_notifier,
+                                           *pdcp_ctx,
                                            rrc_ue_create_msg.ue_index,
                                            rrc_ue_create_msg.c_rnti,
                                            rrc_ue_create_msg.cell,
@@ -117,6 +124,8 @@ protected:
                                            std::optional<rrc_ue_transfer_context>{});
 
     ASSERT_NE(rrc_ue, nullptr);
+    // Wire PDCP UL delivery path to RRC (no-op release callback for tests).
+    pdcp_ctx->connect_rrc_ue(rrc_ue->get_ul_pdu_handler(), [](ngap_cause_t) {});
   }
 
   asn1::rrc_nr::dl_ccch_msg_s get_srb0_pdu()
@@ -253,23 +262,17 @@ protected:
 
   void receive_reestablishment_complete()
   {
-    // Inject RRC Reestablishment complete.
-    rrc_ue->get_ul_pdu_handler().handle_ul_dcch_pdu(srb_id_t::srb1,
-                                                    byte_buffer::create(rrc_reest_complete_pdu).value());
+    pdcp_ctx->handle_ul_dcch_pdu(srb_id_t::srb1, byte_buffer::create(rrc_reest_complete_pdu).value());
   }
 
   void receive_setup_complete()
   {
-    // Inject RRC setup complete.
-    rrc_ue->get_ul_pdu_handler().handle_ul_dcch_pdu(srb_id_t::srb1,
-                                                    byte_buffer::create(rrc_setup_complete_pdu).value());
+    pdcp_ctx->handle_ul_dcch_pdu(srb_id_t::srb1, byte_buffer::create(rrc_setup_complete_pdu).value());
   }
 
   void receive_corrupted_setup_complete()
   {
-    // Inject corrupted RRC setup complete.
-    rrc_ue->get_ul_pdu_handler().handle_ul_dcch_pdu(srb_id_t::srb1,
-                                                    byte_buffer::create(corrupted_rrc_setup_complete_pdu).value());
+    pdcp_ctx->handle_ul_dcch_pdu(srb_id_t::srb1, byte_buffer::create(corrupted_rrc_setup_complete_pdu).value());
   }
 
   void send_dl_info_transfer(byte_buffer nas_pdu)
@@ -315,7 +318,7 @@ protected:
   void receive_smc_complete()
   {
     // Inject RRC SMC complete into UE object.
-    rrc_ue->get_ul_pdu_handler().handle_ul_dcch_pdu(srb_id_t::srb1, byte_buffer::create(rrc_smc_complete_pdu).value());
+    pdcp_ctx->handle_ul_dcch_pdu(srb_id_t::srb1, byte_buffer::create(rrc_smc_complete_pdu).value());
   }
 
   void check_smc_pdu() { ASSERT_EQ(rrc_ue_f1ap_notifier.last_rrc_pdu, byte_buffer::create(rrc_smc_pdu).value()); }
@@ -334,7 +337,7 @@ protected:
     byte_buffer ul_dcch_msg_pdu = byte_buffer::create(span<uint8_t>{rrc_ue_capability_information_pdu}).value();
 
     // Inject RRC UE capability information into UE object.
-    rrc_ue->get_ul_pdu_handler().handle_ul_dcch_pdu(srb_id_t::srb1, std::move(ul_dcch_msg_pdu));
+    pdcp_ctx->handle_ul_dcch_pdu(srb_id_t::srb1, std::move(ul_dcch_msg_pdu));
   }
 
   void check_rrc_reconfig_pdu() { ASSERT_EQ(rrc_ue_f1ap_notifier.last_rrc_pdu, rrc_reconfig_pdu); }
@@ -342,8 +345,7 @@ protected:
   void receive_reconfig_complete()
   {
     // Inject RRC Reconfiguration complete into UE object.
-    rrc_ue->get_ul_pdu_handler().handle_ul_dcch_pdu(srb_id_t::srb1,
-                                                    byte_buffer::create(rrc_reconfig_complete_pdu).value());
+    pdcp_ctx->handle_ul_dcch_pdu(srb_id_t::srb1, byte_buffer::create(rrc_reconfig_complete_pdu).value());
   }
 
   void add_ue_reestablishment_context(cu_cp_ue_index_t ue_index)
@@ -442,9 +444,10 @@ protected:
 
   ue_manager ue_mng{cu_cp_cfg};
 
-  std::unique_ptr<rrc_ue_interface> rrc_ue;
-  ocudulog::basic_logger&           logger = ocudulog::fetch_basic_logger("TEST", false);
-  dummy_ue_task_scheduler           task_sched_handle{timers, ctrl_worker};
+  std::unique_ptr<srb_pdcp_ue_context> pdcp_ctx;
+  std::unique_ptr<rrc_ue_interface>    rrc_ue;
+  ocudulog::basic_logger&              logger = ocudulog::fetch_basic_logger("TEST", false);
+  dummy_ue_task_scheduler              task_sched_handle{timers, ctrl_worker};
 
   // UL-CCCH with RRC setup request message.
   std::array<uint8_t, 6> rrc_setup_pdu = {0x1d, 0xec, 0x89, 0xd0, 0x57, 0x66};

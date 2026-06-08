@@ -1515,13 +1515,17 @@ async_task<void> cu_cp_impl::handle_ue_removal_request(cu_cp_ue_index_t ue_index
     e1ap_removal_handler = &cu_up_db.find_cu_up_processor(cu_up_index)->get_e1ap_bearer_context_removal_handler();
   }
 
-  rrc_ue_handler*                  rrc_ue_removal_handler = nullptr;
-  f1ap_ue_context_removal_handler* f1ap_removal_handler   = nullptr;
+  rrc_ue_handler*                          rrc_ue_removal_handler  = nullptr;
+  du_processor_ue_context_removal_handler* du_proc_removal_handler = nullptr;
+  pdcp_ue_context_removal_handler*         pdcp_removal_handler    = nullptr;
+  f1ap_ue_context_removal_handler*         f1ap_removal_handler    = nullptr;
   if (du_index != cu_cp_du_index_t::invalid) {
     du_processor* du_proc = du_db.find_du_processor(du_index);
     if (du_proc != nullptr) {
-      rrc_ue_removal_handler = &du_proc->get_rrc_du_handler();
-      f1ap_removal_handler   = &du_proc->get_f1ap_handler();
+      rrc_ue_removal_handler  = &du_proc->get_rrc_du_handler();
+      du_proc_removal_handler = &du_proc->get_du_processor_ue_removal_handler();
+      pdcp_removal_handler    = &du_proc->get_pdcp_ue_removal_handler();
+      f1ap_removal_handler    = &du_proc->get_f1ap_handler();
     }
   }
 
@@ -1542,6 +1546,8 @@ async_task<void> cu_cp_impl::handle_ue_removal_request(cu_cp_ue_index_t ue_index
 
   return launch_async<ue_removal_routine>(ue_index,
                                           rrc_ue_removal_handler,
+                                          du_proc_removal_handler,
+                                          pdcp_removal_handler,
                                           e1ap_removal_handler,
                                           f1ap_removal_handler,
                                           ngap_removal_handler,

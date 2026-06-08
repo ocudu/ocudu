@@ -10,6 +10,7 @@
 #include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/rrc/rrc_du_factory.h"
 #include "ocudu/support/async/coroutine.h"
+#include "ocudu/support/cpu_architecture_info.h"
 
 using namespace ocudu;
 using namespace ocucp;
@@ -177,36 +178,61 @@ bool du_processor_impl::create_rrc_ue(cu_cp_ue&                              ue,
                                       byte_buffer                            du_to_cu_rrc_container,
                                       std::optional<rrc_ue_transfer_context> rrc_context)
 {
-  // Create RRC UE to F1AP adapter.
+  const cu_cp_ue_index_t ue_index = ue.get_ue_index();
+
+  // Create RRC UE to F1AP adapter (DL path).
   rrc_ue_f1ap_adapters.emplace(std::piecewise_construct,
-                               std::forward_as_tuple(ue.get_ue_index()),
-                               std::forward_as_tuple(f1ap->get_f1ap_rrc_message_handler(), ue.get_ue_index()));
+                               std::forward_as_tuple(ue_index),
+                               std::forward_as_tuple(f1ap->get_f1ap_rrc_message_handler(), ue_index));
+
+  // Create per-UE SRB PDCP context.
+  uint32_t nof_cores = cpu_architecture_info::get().get_host_nof_available_cpus();
+  srb_pdcp_contexts.emplace(std::piecewise_construct,
+                            std::forward_as_tuple(ue_index),
+                            std::forward_as_tuple(ue_index,
+                                                  ue.get_rrc_ue_cu_cp_ue_notifier().get_timer_factory(),
+                                                  ue.get_rrc_ue_cu_cp_ue_notifier().get_executor(),
+                                                  nof_cores));
 
   const du_cell_configuration& cell = *cfg.du_cfg_hdlr->get_context().find_cell(cgi);
 
   // Create new RRC UE entity.
   rrc_ue_creation_message rrc_ue_create_msg{};
-  rrc_ue_create_msg.ue_index              = ue.get_ue_index();
+  rrc_ue_create_msg.ue_index              = ue_index;
   rrc_ue_create_msg.c_rnti                = c_rnti;
   rrc_ue_create_msg.cell.cgi              = cgi;
   rrc_ue_create_msg.cell.tac              = cell.tac;
   rrc_ue_create_msg.cell.pci              = cell.pci;
   rrc_ue_create_msg.cell.bands            = cell.bands;
-  rrc_ue_create_msg.f1ap_pdu_notifier     = &rrc_ue_f1ap_adapters.at(ue.get_ue_index());
+  rrc_ue_create_msg.f1ap_pdu_notifier     = &rrc_ue_f1ap_adapters.at(ue_index);
   rrc_ue_create_msg.ngap_notifier         = &ue.get_rrc_ue_ngap_adapter();
   rrc_ue_create_msg.rrc_ue_cu_cp_notifier = &ue.get_rrc_ue_context_update_notifier();
   rrc_ue_create_msg.measurement_notifier  = &ue.get_rrc_ue_measurement_notifier();
   rrc_ue_create_msg.cu_cp_ue_notifier     = &ue.get_rrc_ue_cu_cp_ue_notifier();
+  rrc_ue_create_msg.pdcp_notifier         = &srb_pdcp_contexts.at(ue_index);
   rrc_ue_create_msg.du_to_cu_container    = std::move(du_to_cu_rrc_container);
   rrc_ue_create_msg.rrc_context           = std::move(rrc_context);
   auto* rrc_ue                            = rrc->add_ue(rrc_ue_create_msg);
   if (rrc_ue == nullptr) {
     logger.warning("Could not create RRC UE");
+    pdcp_removal.remove_ue_context(ue_index);
+    remove_ue_context(ue_index);
     return false;
   }
 
+  // Connect PDCP to RRC for the UL SDU delivery path.
+  srb_pdcp_contexts.at(ue_index).connect_rrc_ue(rrc_ue->get_ul_pdu_handler(), [rrc_ue](ngap_cause_t cause) {
+    rrc_ue->get_controller().on_ue_release_required(cause);
+  });
+
+  // Connect F1AP to PDCP (SRB1/SRB2) and F1AP to RRC (SRB0) adapters.
+  f1ap_pdcp_dcch_adapters[ue_index] = {};
+  f1ap_rrc_ccch_adapters[ue_index]  = {};
+  f1ap_rrc_ccch_adapters.at(ue_index).connect_rrc_ue(rrc_ue->get_ul_pdu_handler());
+  f1ap_pdcp_dcch_adapters.at(ue_index).connect_pdcp(srb_pdcp_contexts.at(ue_index));
+
   // Notify CU-CP about the creation of the RRC UE.
-  cu_cp_notifier.on_rrc_ue_created(ue.get_ue_index(), *rrc_ue);
+  cu_cp_notifier.on_rrc_ue_created(ue_index, *rrc_ue);
 
   return true;
 }
@@ -332,12 +358,6 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
       release_ue(ue->get_ue_index());
       return make_unexpected(default_error_t{});
     }
-
-    rrc_ue_interface* rrc_ue                   = rrc->find_ue(ue->get_ue_index());
-    f1ap_rrc_dcch_adapters[ue->get_ue_index()] = {};
-    f1ap_rrc_ccch_adapters[ue->get_ue_index()] = {};
-    f1ap_rrc_ccch_adapters.at(ue->get_ue_index()).connect_rrc_ue(rrc_ue->get_ul_pdu_handler());
-    f1ap_rrc_dcch_adapters.at(ue->get_ue_index()).connect_rrc_ue(rrc_ue->get_ul_pdu_handler());
   }
 
   // Signal back that the UE was successfully created.
@@ -346,8 +366,8 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
 
   return ue_rrc_context_creation_response{ue->get_ue_index(),
                                           &f1ap_rrc_ccch_adapters.at(ue->get_ue_index()),
-                                          &f1ap_rrc_dcch_adapters.at(ue->get_ue_index()).get_srb1_notifier(),
-                                          &f1ap_rrc_dcch_adapters.at(ue->get_ue_index()).get_srb2_notifier()};
+                                          &f1ap_pdcp_dcch_adapters.at(ue->get_ue_index()).get_srb1_notifier(),
+                                          &f1ap_pdcp_dcch_adapters.at(ue->get_ue_index()).get_srb2_notifier()};
 }
 
 void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request)
@@ -462,6 +482,18 @@ byte_buffer du_processor_impl::get_packed_sib1(nr_cell_global_id_t cgi)
     }
   }
   return byte_buffer{};
+}
+
+void du_processor_impl::pdcp_removal_handler_impl::remove_ue_context(cu_cp_ue_index_t ue_index)
+{
+  parent->srb_pdcp_contexts.erase(ue_index);
+}
+
+void du_processor_impl::remove_ue_context(cu_cp_ue_index_t ue_index)
+{
+  f1ap_pdcp_dcch_adapters.erase(ue_index);
+  f1ap_rrc_ccch_adapters.erase(ue_index);
+  rrc_ue_f1ap_adapters.erase(ue_index);
 }
 
 cu_cp_metrics_report::du_info du_processor_impl::handle_du_metrics_report_request() const

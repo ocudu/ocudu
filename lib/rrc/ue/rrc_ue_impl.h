@@ -25,6 +25,7 @@ public:
               rrc_ue_measurement_notifier&           measurement_notifier_,
               rrc_ue_cu_cp_ue_notifier&              cu_cp_ue_notifier_,
               rrc_ue_event_notifier&                 metrics_notifier_,
+              rrc_ue_pdcp_notifier&                  pdcp_notifier_,
               cu_cp_ue_index_t                       ue_index_,
               rnti_t                                 c_rnti_,
               const rrc_cell_context&                cell_,
@@ -35,7 +36,7 @@ public:
 
   // rrc_ul_pdu_handler
   void handle_ul_ccch_pdu(byte_buffer pdu, rnti_t c_rnti) override;
-  void handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdcp_pdu) override;
+  void handle_ul_dcch_pdu(srb_id_t srb_id, byte_buffer rrc_pdu, bool integrity_verified) override;
 
   // rrc_ue_interface
   rrc_ue_controller&              get_controller() override { return *this; }

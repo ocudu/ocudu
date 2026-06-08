@@ -5,7 +5,9 @@
 #pragma once
 
 #include "../adapters/f1ap_adapters.h"
+#include "../adapters/pdcp_adapters.h"
 #include "../adapters/rrc_ue_adapters.h"
+#include "../pdcp/srb_pdcp_ue_context.h"
 #include "../ue_manager/ue_manager_impl.h"
 #include "du_configuration_handler.h"
 #include "du_processor.h"
@@ -19,7 +21,10 @@
 
 namespace ocudu::ocucp {
 
-class du_processor_impl : public du_processor, public du_metrics_handler, public du_processor_mobility_handler
+class du_processor_impl : public du_processor,
+                          public du_processor_ue_context_removal_handler,
+                          public du_metrics_handler,
+                          public du_processor_mobility_handler
 {
 public:
   du_processor_impl(du_processor_config_t        du_processor_config_,
@@ -55,11 +60,25 @@ public:
 
   cu_cp_metrics_report::du_info handle_du_metrics_report_request() const override;
 
-  du_processor_mobility_handler& get_mobility_handler() override { return *this; }
-  du_metrics_handler&            get_metrics_handler() override { return *this; }
+  pdcp_ue_context_removal_handler&         get_pdcp_ue_removal_handler() override { return pdcp_removal; }
+  du_processor_ue_context_removal_handler& get_du_processor_ue_removal_handler() override { return *this; }
+  du_processor_mobility_handler&           get_mobility_handler() override { return *this; }
+  du_metrics_handler&                      get_metrics_handler() override { return *this; }
 
 private:
   class f1ap_du_processor_adapter;
+
+  /// Proxy implementing pdcp_ue_context_removal_handler; avoids method-name collision with
+  /// du_processor_ue_context_removal_handler (both would otherwise expose remove_ue_context()).
+  class pdcp_removal_handler_impl : public pdcp_ue_context_removal_handler
+  {
+  public:
+    explicit pdcp_removal_handler_impl(du_processor_impl& parent_) : parent(&parent_) {}
+    void remove_ue_context(cu_cp_ue_index_t ue_index) override;
+
+  private:
+    du_processor_impl* parent = nullptr;
+  };
 
   /// \brief Request to create a new UE RRC context.
   ///
@@ -86,6 +105,9 @@ private:
                      byte_buffer                            du_to_cu_rrc_container,
                      std::optional<rrc_ue_transfer_context> rrc_context);
 
+  // du_processor_ue_context_removal_handler
+  void remove_ue_context(cu_cp_ue_index_t ue_index) override;
+
   ocudulog::basic_logger& logger = ocudulog::fetch_basic_logger("CU-CP");
   du_processor_config_t   cfg;
 
@@ -93,14 +115,21 @@ private:
   f1ap_message_notifier&       f1ap_pdu_notifier;
   ue_manager&                  ue_mng;
 
+  pdcp_removal_handler_impl pdcp_removal{*this};
+
   // F1AP to DU processor adapter.
   std::unique_ptr<f1ap_du_processor_notifier> f1ap_ev_notifier;
 
-  // F1AP to RRC UE adapters.
-  std::unordered_map<cu_cp_ue_index_t, f1ap_rrc_ul_ccch_adapter>            f1ap_rrc_ccch_adapters;
-  std::unordered_map<cu_cp_ue_index_t, f1ap_rrc_ul_dcch_adapter_collection> f1ap_rrc_dcch_adapters;
+  // Per-UE SRB PDCP entities (sit between F1AP and RRC, owned by the DU processor).
+  std::unordered_map<cu_cp_ue_index_t, srb_pdcp_ue_context> srb_pdcp_contexts;
 
-  // RRC UE to F1AP adapters.
+  // F1AP to RRC adapters for SRB0 (CCCH, unprotected path).
+  std::unordered_map<cu_cp_ue_index_t, f1ap_rrc_ul_ccch_adapter> f1ap_rrc_ccch_adapters;
+
+  // F1AP to PDCP adapters for SRB1/SRB2 (DCCH, ciphered/integrity-protected path).
+  std::unordered_map<cu_cp_ue_index_t, f1ap_pdcp_ul_dcch_adapter_collection> f1ap_pdcp_dcch_adapters;
+
+  // RRC UE to F1AP adapters (DL path).
   std::unordered_map<cu_cp_ue_index_t, rrc_ue_f1ap_pdu_adapter> rrc_ue_f1ap_adapters;
 
   // Components

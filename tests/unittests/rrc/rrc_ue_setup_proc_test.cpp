@@ -122,8 +122,7 @@ TEST_F(rrc_ue_setup, when_malformed_setup_complete_received_then_ue_deleted)
       0x44, 0x00, 0x00, 0x00, 0x00, 0x04, 0x0c, 0x95, 0x1d, 0x82, 0x0b, 0x80, 0xbc, 0x1c};
 
   // Inject malformed RRC setup complete.
-  rrc_ue->get_ul_pdu_handler().handle_ul_dcch_pdu(srb_id_t::srb1,
-                                                  byte_buffer::create(malformed_rrc_setup_complete_pdu).value());
+  pdcp_ctx->handle_ul_dcch_pdu(srb_id_t::srb1, byte_buffer::create(malformed_rrc_setup_complete_pdu).value());
   // Tick timer until RRC setup complete timer fires.
   tick_timer();
 

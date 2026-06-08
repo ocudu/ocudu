@@ -5,7 +5,6 @@
 #include "rrc_ue_impl.h"
 #include "rrc_asn1_helpers.h"
 #include "ocudu/asn1/rrc_nr/rrc_nr.h"
-#include "ocudu/support/cpu_architecture_info.h"
 #include "ocudu/support/ocudu_assert.h"
 
 using namespace ocudu;
@@ -18,6 +17,7 @@ rrc_ue_impl::rrc_ue_impl(rrc_pdu_f1ap_notifier&                 f1ap_pdu_notifie
                          rrc_ue_measurement_notifier&           measurement_notifier_,
                          rrc_ue_cu_cp_ue_notifier&              cu_cp_ue_notifier_,
                          rrc_ue_event_notifier&                 metrics_notifier_,
+                         rrc_ue_pdcp_notifier&                  pdcp_notifier_,
                          const cu_cp_ue_index_t                 ue_index_,
                          const rnti_t                           c_rnti_,
                          const rrc_cell_context&                cell_,
@@ -35,6 +35,7 @@ rrc_ue_impl::rrc_ue_impl(rrc_pdu_f1ap_notifier&                 f1ap_pdu_notifie
   du_to_cu_container(du_to_cu_container_),
   event_mng(std::make_unique<rrc_ue_event_manager>(cu_cp_ue_notifier.get_timer_factory()))
 {
+  context.pdcp_notifier = &pdcp_notifier_;
   ocudu_assert(context.cell.bands.empty() == false, "Band must be present in RRC cell configuration.");
 
   // Update security context and keys.
@@ -69,22 +70,14 @@ void rrc_ue_impl::create_srb(const srb_creation_message& msg)
   }
 
   if (msg.srb_id <= srb_id_t::srb2) {
-    auto&    cpu_desc  = cpu_architecture_info::get();
-    uint32_t nof_cores = cpu_desc.get_host_nof_available_cpus();
-
-    // Create PDCP entity for this SRB.
-    context.srbs.emplace(std::piecewise_construct,
-                         std::forward_as_tuple(msg.srb_id),
-                         std::forward_as_tuple(msg.ue_index,
-                                               msg.srb_id,
-                                               cu_cp_ue_notifier.get_timer_factory(),
-                                               cu_cp_ue_notifier.get_executor(),
-                                               nof_cores));
-    auto& srb_context = context.srbs.at(msg.srb_id);
+    context.pdcp_notifier->create_srb(msg.srb_id);
 
     if (msg.srb_id == srb_id_t::srb2 || msg.enable_security) {
-      security::sec_as_config sec_cfg = cu_cp_ue_notifier.get_rrc_as_config();
-      srb_context.enable_full_security(security::truncate_config(sec_cfg));
+      security::sec_128_as_config sec_cfg = security::truncate_config(cu_cp_ue_notifier.get_rrc_as_config());
+      context.pdcp_notifier->enable_tx_security(
+          msg.srb_id, security::integrity_enabled::on, security::ciphering_enabled::on, sec_cfg);
+      context.pdcp_notifier->enable_rx_security(
+          msg.srb_id, security::integrity_enabled::on, security::ciphering_enabled::on, sec_cfg);
     }
   } else {
     logger.log_error("Couldn't create {}", msg.srb_id);
@@ -93,12 +86,7 @@ void rrc_ue_impl::create_srb(const srb_creation_message& msg)
 
 static_vector<srb_id_t, MAX_NOF_SRBS> rrc_ue_impl::get_srbs()
 {
-  static_vector<srb_id_t, MAX_NOF_SRBS> srb_ids;
-  for (const auto& srb_ctxt : context.srbs) {
-    srb_ids.push_back(srb_ctxt.first);
-  }
-
-  return srb_ids;
+  return context.pdcp_notifier->get_srb_ids();
 }
 
 rrc_state rrc_ue_impl::get_rrc_state() const
@@ -145,17 +133,17 @@ void rrc_ue_impl::on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_ms
 
 void rrc_ue_impl::on_new_as_security_context(bool security_mode_active)
 {
-  ocudu_sanity_check(context.srbs.find(srb_id_t::srb1) != context.srbs.end(),
+  ocudu_sanity_check(context.pdcp_notifier->has_srb(srb_id_t::srb1),
                      "Attempted to configure security, but there is no interface to PDCP");
 
-  context.srbs.at(srb_id_t::srb1)
-      .enable_rx_security(security_mode_active ? security::integrity_enabled::on
-                                               : security::integrity_enabled::smc_transition,
-                          security::ciphering_enabled::off,
-                          cu_cp_ue_notifier.get_rrc_128_as_config());
-  context.srbs.at(srb_id_t::srb1)
-      .enable_tx_security(
-          security::integrity_enabled::on, security::ciphering_enabled::off, cu_cp_ue_notifier.get_rrc_128_as_config());
+  security::sec_128_as_config sec_cfg = cu_cp_ue_notifier.get_rrc_128_as_config();
+  context.pdcp_notifier->enable_rx_security(srb_id_t::srb1,
+                                            security_mode_active ? security::integrity_enabled::on
+                                                                 : security::integrity_enabled::smc_transition,
+                                            security::ciphering_enabled::off,
+                                            sec_cfg);
+  context.pdcp_notifier->enable_tx_security(
+      srb_id_t::srb1, security::integrity_enabled::on, security::ciphering_enabled::off, sec_cfg);
 }
 
 byte_buffer rrc_ue_impl::get_packed_handover_preparation_message()

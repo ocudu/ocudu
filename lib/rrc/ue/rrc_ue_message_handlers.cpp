@@ -302,46 +302,28 @@ void rrc_ue_impl::handle_illegal_pdu_integrity(const char* msg, bool integrity_v
   on_ue_release_required(cause_protocol_t::unspecified);
 }
 
-void rrc_ue_impl::handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdcp_pdu)
+void rrc_ue_impl::handle_ul_dcch_pdu(srb_id_t srb_id, byte_buffer rrc_pdu, bool integrity_verified)
 {
-  logger.log_debug(pdcp_pdu.begin(), pdcp_pdu.end(), "Rx {} PDCP PDU", srb_id);
+  logger.log_debug(rrc_pdu.begin(), rrc_pdu.end(), "Rx {} RRC PDU", srb_id);
 
-  if (context.srbs.find(srb_id) == context.srbs.end()) {
-    logger.log_error(pdcp_pdu.begin(), pdcp_pdu.end(), "Dropping UL-DCCH PDU. Rx {} is not set up", srb_id);
+  if (!context.pdcp_notifier->has_srb(srb_id)) {
+    logger.log_error(rrc_pdu.begin(), rrc_pdu.end(), "Dropping UL-DCCH PDU. Rx {} is not set up", srb_id);
     return;
   }
 
-  // Unpack PDCP PDU.
-  pdcp_rx_result pdcp_unpacking_result = context.srbs.at(srb_id).unpack_pdcp_pdu(std::move(pdcp_pdu));
-  if (!pdcp_unpacking_result.is_successful()) {
-    logger.log_info("Requesting UE release. Cause: PDCP unpacking failed with {}",
-                    pdcp_unpacking_result.get_failure_cause());
-    on_ue_release_required(pdcp_unpacking_result.get_failure_cause());
-    return;
-  }
-
-  std::vector<rrc_ue_rx_pdu_info> rrc_pdus = pdcp_unpacking_result.pop_pdus();
-  if (rrc_pdus.empty()) {
-    logger.log_debug(
-        "PDCP did not provide any SDU. PDU could be out-of-order, failed integrity or be outside of the RX window");
-    return;
-  }
-  for (rrc_ue_rx_pdu_info& pdu_info : rrc_pdus) {
-    handle_pdu(srb_id, std::move(pdu_info.rrc_pdu), pdu_info.integrity_verified);
-  }
+  handle_pdu(srb_id, std::move(rrc_pdu), integrity_verified);
 }
 
 void rrc_ue_impl::handle_security_mode_complete(const asn1::rrc_nr::security_mode_complete_s& msg)
 {
-  ocudu_sanity_check(context.srbs.find(srb_id_t::srb1) != context.srbs.end(),
+  ocudu_sanity_check(context.pdcp_notifier->has_srb(srb_id_t::srb1),
                      "Attempted to configure security, but there is no interface to PDCP");
 
-  context.srbs.at(srb_id_t::srb1)
-      .enable_rx_security(
-          security::integrity_enabled::on, security::ciphering_enabled::on, cu_cp_ue_notifier.get_rrc_128_as_config());
-  context.srbs.at(srb_id_t::srb1)
-      .enable_tx_security(
-          security::integrity_enabled::on, security::ciphering_enabled::on, cu_cp_ue_notifier.get_rrc_128_as_config());
+  security::sec_128_as_config sec_cfg = cu_cp_ue_notifier.get_rrc_128_as_config();
+  context.pdcp_notifier->enable_rx_security(
+      srb_id_t::srb1, security::integrity_enabled::on, security::ciphering_enabled::on, sec_cfg);
+  context.pdcp_notifier->enable_tx_security(
+      srb_id_t::srb1, security::integrity_enabled::on, security::ciphering_enabled::on, sec_cfg);
 }
 
 void rrc_ue_impl::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_info_transfer)
@@ -386,7 +368,7 @@ void rrc_ue_impl::handle_dl_nas_transport_message(byte_buffer nas_pdu)
       dl_dcch_msg.msg.set_c1().set_dl_info_transfer().crit_exts.set_dl_info_transfer();
   dl_info_transfer.ded_nas_msg = nas_pdu.copy();
 
-  if (context.srbs.find(srb_id_t::srb2) != context.srbs.end()) {
+  if (context.pdcp_notifier->has_srb(srb_id_t::srb2)) {
     send_dl_dcch(srb_id_t::srb2, dl_dcch_msg);
   } else {
     send_dl_dcch(srb_id_t::srb1, dl_dcch_msg);
@@ -420,7 +402,7 @@ rrc_ue_security_mode_command_context rrc_ue_impl::get_security_mode_command_cont
 
   rrc_ue_security_mode_command_context smc_ctxt;
 
-  if (context.srbs.find(srb_id_t::srb1) == context.srbs.end()) {
+  if (!context.pdcp_notifier->has_srb(srb_id_t::srb1)) {
     logger.log_error("Can't get security mode command. {} is not set up", srb_id_t::srb1);
     return smc_ctxt;
   }
@@ -442,7 +424,7 @@ rrc_ue_security_mode_command_context rrc_ue_impl::get_security_mode_command_cont
 
   // Pack DL DCCH msg.
   pdcp_tx_result pdcp_packing_result =
-      context.srbs.at(srb_id_t::srb1).pack_rrc_pdu(pack_into_pdu(dl_dcch_msg, "SecurityModeCommand"));
+      context.pdcp_notifier->encrypt_pdu(srb_id_t::srb1, pack_into_pdu(dl_dcch_msg, "SecurityModeCommand"));
   if (!pdcp_packing_result.is_successful()) {
     logger.log_info("Requesting UE release. Cause: PDCP packing failed with {}",
                     pdcp_packing_result.get_failure_cause());
@@ -567,7 +549,7 @@ rrc_ue_impl::get_rrc_ue_handover_reconfiguration_context(const rrc_reconfigurati
 {
   rrc_ue_handover_reconfiguration_context ho_reconf_ctxt;
 
-  if (context.srbs.find(srb_id_t::srb1) == context.srbs.end()) {
+  if (!context.pdcp_notifier->has_srb(srb_id_t::srb1)) {
     logger.log_error("Can't get handover reconfiguration context. {} is not set up", srb_id_t::srb1);
     return ho_reconf_ctxt;
   }
@@ -602,7 +584,7 @@ rrc_ue_impl::get_rrc_ue_handover_reconfiguration_context(const rrc_reconfigurati
     dl_dcch_msg.msg.set_c1().set_rrc_recfg().crit_exts.set_rrc_recfg();
     fill_asn1_rrc_reconfiguration_msg(dl_dcch_msg.msg.c1().rrc_recfg(), ho_reconf_ctxt.transaction_id, request);
     pdcp_tx_result result =
-        context.srbs.at(srb_id_t::srb1).pack_rrc_pdu(pack_into_pdu(dl_dcch_msg, "RRCReconfiguration"));
+        context.pdcp_notifier->encrypt_pdu(srb_id_t::srb1, pack_into_pdu(dl_dcch_msg, "RRCReconfiguration"));
     if (!result.is_successful()) {
       logger.log_info("Requesting UE release. Cause: PDCP packing failed with {}", result.get_failure_cause());
       on_ue_release_required(result.get_failure_cause());
@@ -620,7 +602,7 @@ rrc_ue_impl::get_rrc_ue_cond_reconfiguration_context(const rrc_reconfiguration_p
 {
   rrc_ue_cond_reconfiguration_context cond_reconf_ctxt;
 
-  if (context.srbs.find(srb_id_t::srb1) == context.srbs.end()) {
+  if (!context.pdcp_notifier->has_srb(srb_id_t::srb1)) {
     logger.log_error("Can't get CHO reconfiguration context. {} is not set up", srb_id_t::srb1);
     return cond_reconf_ctxt;
   }
@@ -747,7 +729,7 @@ rrc_ue_impl::get_rrc_ue_cond_reconfiguration_context(const rrc_reconfiguration_p
 
   // Pack DL DCCH message.
   pdcp_tx_result pdcp_packing_result =
-      context.srbs.at(srb_id_t::srb1).pack_rrc_pdu(pack_into_pdu(dl_dcch_msg, "CHO RRCReconfiguration"));
+      context.pdcp_notifier->encrypt_pdu(srb_id_t::srb1, pack_into_pdu(dl_dcch_msg, "CHO RRCReconfiguration"));
 
   if (!pdcp_packing_result.is_successful()) {
     logger.log_info("Requesting UE release. Cause: PDCP packing failed with {}",
@@ -860,7 +842,7 @@ rrc_ue_impl::get_rrc_ue_release_context(bool                                    
   release_context.user_location_info.tai    = {context.plmn_id, context.cell.tac};
 
   if (requires_rrc_message) {
-    if (context.srbs.empty()) {
+    if (context.pdcp_notifier->get_srb_ids().empty()) {
       // SRB1 was not created, so we need to reject the UE.
       // Create and RRCReject container, see section 5.3.15 in TS 38.331.
       dl_ccch_msg_s dl_ccch_msg;
@@ -879,7 +861,7 @@ rrc_ue_impl::get_rrc_ue_release_context(bool                                    
       log_rrc_message(logger, Tx, release_context.rrc_pdu, dl_ccch_msg, srb_id_t::srb0, "CCCH DL");
     } else {
       // Prepare SRB1 RRC Release PDU to return.
-      if (context.srbs.find(srb_id_t::srb1) == context.srbs.end()) {
+      if (!context.pdcp_notifier->has_srb(srb_id_t::srb1)) {
         logger.log_error("Can't create RRCRelease PDU. Rx {} is not set up", srb_id_t::srb1);
         return release_context;
       }
@@ -923,9 +905,9 @@ rrc_ue_impl::get_rrc_ue_release_context(bool                                    
         nr_info.ssb_subcarrier_spacing          = subcarrier_spacing_to_rrc_asn1(redirect_nr_info->ssb_scs);
       }
 
-      // Pack DL CCCH msg.
+      // Pack DL DCCH msg.
       pdcp_tx_result pdcp_packing_result =
-          context.srbs.at(srb_id_t::srb1).pack_rrc_pdu(pack_into_pdu(dl_dcch_msg, "RRCRelease"));
+          context.pdcp_notifier->encrypt_pdu(srb_id_t::srb1, pack_into_pdu(dl_dcch_msg, "RRCRelease"));
       if (!pdcp_packing_result.is_successful()) {
         logger.log_info("Requesting UE release. Cause: PDCP packing failed with {}",
                         pdcp_packing_result.get_failure_cause());
@@ -1108,9 +1090,9 @@ byte_buffer rrc_ue_impl::handle_rrc_handover_command(byte_buffer cmd)
     return ho_reconf_pdu;
   }
 
-  // Pack DL CCCH msg.
+  // Pack DL DCCH msg.
   pdcp_tx_result pdcp_packing_result =
-      context.srbs.at(srb_id_t::srb1).pack_rrc_pdu(pack_into_pdu(dl_dcch_msg, "RRCReconfiguration"));
+      context.pdcp_notifier->encrypt_pdu(srb_id_t::srb1, pack_into_pdu(dl_dcch_msg, "RRCReconfiguration"));
   if (!pdcp_packing_result.is_successful()) {
     logger.log_info("Requesting UE release. Cause: PDCP packing failed with {}",
                     pdcp_packing_result.get_failure_cause());

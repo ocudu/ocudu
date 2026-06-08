@@ -287,16 +287,16 @@ void rrc_reestablishment_procedure::send_rrc_reestablishment()
 
 void rrc_reestablishment_procedure::enable_srb1_ciphering()
 {
-  auto srb_it = context.srbs.find(srb_id_t::srb1);
-  if (srb_it == context.srbs.end()) {
+  if (!context.pdcp_notifier->has_srb(srb_id_t::srb1)) {
     logger.log_error("Could not enable ciphering for SRB1. Cause: SRB1 not found in the UE context");
     return;
   }
 
-  srb_it->second.enable_rx_security(
-      security::integrity_enabled::on, security::ciphering_enabled::on, cu_cp_ue_notifier.get_rrc_128_as_config());
-  srb_it->second.enable_tx_security(
-      security::integrity_enabled::on, security::ciphering_enabled::on, cu_cp_ue_notifier.get_rrc_128_as_config());
+  security::sec_128_as_config sec_cfg = cu_cp_ue_notifier.get_rrc_128_as_config();
+  context.pdcp_notifier->enable_rx_security(
+      srb_id_t::srb1, security::integrity_enabled::on, security::ciphering_enabled::on, sec_cfg);
+  context.pdcp_notifier->enable_tx_security(
+      srb_id_t::srb1, security::integrity_enabled::on, security::ciphering_enabled::on, sec_cfg);
 }
 
 void rrc_reestablishment_procedure::log_rejected_reestablishment(const char* cause_str)

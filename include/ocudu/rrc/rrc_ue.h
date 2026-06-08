@@ -9,10 +9,12 @@
 #include "ocudu/adt/static_vector.h"
 #include "ocudu/asn1/rrc_nr/ul_dcch_msg_ies.h"
 #include "ocudu/cu_cp/cu_cp_ue_messages.h"
+#include "ocudu/ran/cause/ngap_cause.h"
 #include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/ran/cu_cp_ue_context_release.h"
 #include "ocudu/ran/i_rnti.h"
 #include "ocudu/ran/plmn_identity.h"
+#include "ocudu/ran/rb_id.h"
 #include "ocudu/ran/rnti.h"
 #include "ocudu/rrc/rrc_cell_context.h"
 #include "ocudu/rrc/rrc_resume.h"
@@ -20,6 +22,7 @@
 #include "ocudu/rrc/rrc_ue_config.h"
 #include "ocudu/security/security.h"
 #include "ocudu/support/async/async_task.h"
+#include <variant>
 
 namespace asn1::rrc_nr {
 
@@ -41,6 +44,9 @@ public:
 
   /// \brief Cancel currently running transactions.
   virtual void stop() = 0;
+
+  /// \brief Trigger an asynchronous UE release with the given cause.
+  virtual void on_ue_release_required(const ngap_cause_t& cause) = 0;
 };
 
 enum ue_context_release_cause : uint16_t {
@@ -63,7 +69,7 @@ public:
   virtual void handle_ul_ccch_pdu(byte_buffer pdu, rnti_t c_rnti) = 0;
 
   /// Handle the incoming SRB PDCP PDU on the UL-DCCH logical channel.
-  virtual void handle_ul_dcch_pdu(srb_id_t srb_id, byte_buffer pdu) = 0;
+  virtual void handle_ul_dcch_pdu(srb_id_t srb_id, byte_buffer rrc_pdu, bool integrity_verified) = 0;
 };
 
 /// This interface represents the data entry point for the RRC receiving NAS and control messages from the NGAP.
@@ -583,6 +589,44 @@ public:
 
   /// \brief Notify the RRC DU about the attempted RRC connection resume followed by RRC setup.
   virtual void on_attempted_rrc_connection_resume_followed_by_rrc_setup(resume_cause_t cause) = 0;
+};
+
+/// Result of a PDCP TX (encryption) operation on an RRC PDU.
+struct pdcp_tx_result {
+  std::variant<byte_buffer, ngap_cause_t> result;
+
+  bool         is_successful() const { return std::holds_alternative<byte_buffer>(result); }
+  ngap_cause_t get_failure_cause() const { return std::get<ngap_cause_t>(result); }
+  byte_buffer  pop_pdu() { return std::move(std::get<byte_buffer>(result)); }
+};
+
+/// Interface through which the RRC UE drives the per-UE SRB PDCP entities that live outside of RRC.
+class rrc_ue_pdcp_notifier
+{
+public:
+  virtual ~rrc_ue_pdcp_notifier() = default;
+
+  virtual bool has_srb(srb_id_t srb_id) const = 0;
+
+  /// Create a PDCP entity for the given SRB. Security is configured separately.
+  virtual void create_srb(srb_id_t srb_id) = 0;
+
+  /// Encrypt a plaintext RRC PDU for downlink transmission.
+  virtual pdcp_tx_result encrypt_pdu(srb_id_t srb_id, byte_buffer pdu) = 0;
+
+  virtual void enable_tx_security(srb_id_t                    srb_id,
+                                  security::integrity_enabled int_enabled,
+                                  security::ciphering_enabled ciph_enabled,
+                                  security::sec_128_as_config sec_cfg) = 0;
+
+  virtual void enable_rx_security(srb_id_t                    srb_id,
+                                  security::integrity_enabled int_enabled,
+                                  security::ciphering_enabled ciph_enabled,
+                                  security::sec_128_as_config sec_cfg) = 0;
+
+  virtual void reestablish(srb_id_t srb_id, security::sec_128_as_config sec_cfg) = 0;
+
+  virtual static_vector<srb_id_t, MAX_NOF_SRBS> get_srb_ids() const = 0;
 };
 
 /// Combined entry point for the RRC UE handling.

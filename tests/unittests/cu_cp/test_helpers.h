@@ -636,7 +636,7 @@ public:
 
   // RRC UL PDU handler
   void handle_ul_ccch_pdu(byte_buffer pdu, rnti_t rnti) override {}
-  void handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdu) override {}
+  void handle_ul_dcch_pdu(srb_id_t srb_id, byte_buffer rrc_pdu, bool integrity_verified) override {}
 
   // RRC NGAP Message handler.
   void        handle_dl_nas_transport_message(byte_buffer nas_pdu) override {}

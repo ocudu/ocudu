@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "../pdcp/pdcp_ue_context_removal_handler.h"
 #include "du_configuration_handler.h"
 #include "du_metrics_handler.h"
 #include "ocudu/cu_cp/cell_meas_manager_config.h"
@@ -129,6 +130,17 @@ public:
   handle_configuration_update(const f1ap_gnb_cu_configuration_update& request) = 0;
 };
 
+/// Handler to remove per-UE F1AP to PDCP and RRC to F1AP adapter state held by the DU processor.
+class du_processor_ue_context_removal_handler
+{
+public:
+  virtual ~du_processor_ue_context_removal_handler() = default;
+
+  /// \brief Remove all DU-processor adapter state for the given UE.
+  /// \param[in] ue_index The index of the UE to remove.
+  virtual void remove_ue_context(cu_cp_ue_index_t ue_index) = 0;
+};
+
 class du_processor : public du_processor_cell_info_interface, public du_processor_configuration_update_interface
 {
 public:
@@ -139,6 +151,12 @@ public:
 
   /// \brief Retrieve RRC DU handler for the respective DU.
   virtual rrc_du& get_rrc_du_handler() = 0;
+
+  /// \brief Retrieve the handler for removing per-UE SRB PDCP entities.
+  virtual pdcp_ue_context_removal_handler& get_pdcp_ue_removal_handler() = 0;
+
+  /// \brief Retrieve the handler for removing per-UE DU processor adapter state.
+  virtual du_processor_ue_context_removal_handler& get_du_processor_ue_removal_handler() = 0;
 
   virtual du_processor_mobility_handler& get_mobility_handler() = 0;
 
