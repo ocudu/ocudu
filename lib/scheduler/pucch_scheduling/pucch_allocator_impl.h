@@ -186,13 +186,6 @@ private:
                           unsigned                      csi_part1_bits,
                           const alloc_context&          alloc_ctx);
 
-  // Update the grants data for the case in which multiplexing is not needed.
-  std::optional<unsigned> allocate_without_multiplexing(cell_slot_resource_allocator& pucch_slot_alloc,
-                                                        const pucch_uci_bits&         new_bits,
-                                                        ue_grants&                    current_grants,
-                                                        const ue_cell_configuration&  ue_cell_cfg,
-                                                        const alloc_context&          alloc_ctx);
-
   // Implements the main steps of the multiplexing procedure as defined in TS 38.213, Section 9.2.5.
   // Note: If \c common_grants is set, it means that the function is called while allocating common and dedicated
   // resources together. In this case, the allocation will fail if the multiplexed resources collide with it or with any
