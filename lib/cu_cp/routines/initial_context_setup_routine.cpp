@@ -17,6 +17,7 @@ initial_context_setup_routine::initial_context_setup_routine(
     const ngap_init_context_setup_request&       request_,
     rrc_ue_interface&                            rrc_ue_,
     ngap_ue_radio_capability_management_handler& ngap_ue_radio_cap_handler_,
+    ngap_location_reporting_handler&             ngap_location_reporting_handler_,
     ue_security_manager&                         security_mng_,
     ue_location_manager&                         loc_mng_,
     f1ap_ue_context_manager&                     f1ap_ue_ctxt_mng_,
@@ -25,6 +26,7 @@ initial_context_setup_routine::initial_context_setup_routine(
   request(request_),
   rrc_ue(rrc_ue_),
   ngap_ue_radio_cap_handler(ngap_ue_radio_cap_handler_),
+  ngap_ue_location_reporting_handler(ngap_location_reporting_handler_),
   security_mng(security_mng_),
   loc_mng(loc_mng_),
   f1ap_ue_ctxt_mng(f1ap_ue_ctxt_mng_),
@@ -146,9 +148,25 @@ void initial_context_setup_routine::operator()(
     }
   }
 
-  // Configure location reporting if requested.
+  // Configure location reporting or/and send direct location report if requested.
   if (request.location_report_request_type.has_value()) {
-    loc_mng.configure_location_reporting(request.location_report_request_type.value());
+    const auto msg = request.location_report_request_type.value();
+    loc_mng.configure_location_reporting(msg);
+    // Send immediate location report if required, 3GPP TS 38.413 8.12.1.2 states that "if reporting upon change of
+    // serving cell is requested, the NG-RAN node shall send a report immediately"
+    using event_type = location_report_request::event_type;
+    if (msg.location_reporting_type == event_type::direct ||
+        msg.location_reporting_type == event_type::change_of_serve_cell ||
+        msg.location_reporting_type == event_type::change_of_serving_cell_and_ue_presence_in_the_area_of_interest) {
+      // Get cell info and build location report immediately.
+      const auto& cell_ctx = rrc_ue.get_cell_context();
+
+      cu_cp_user_location_info_nr user_location_info;
+      user_location_info.nr_cgi = {request.guami.plmn, cell_ctx.cgi.nci};
+      user_location_info.tai    = {request.guami.plmn, cell_ctx.tac};
+      auto report               = loc_mng.get_direct_location_report(request.ue_index, user_location_info, msg);
+      ngap_ue_location_reporting_handler.handle_location_report_transmission(report);
+    }
   }
 
   // Schedule transmission of UE Radio Capability Info Indication.

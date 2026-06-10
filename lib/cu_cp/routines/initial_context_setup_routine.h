@@ -22,6 +22,7 @@ public:
   initial_context_setup_routine(const ngap_init_context_setup_request&       request_,
                                 rrc_ue_interface&                            rrc_ue_,
                                 ngap_ue_radio_capability_management_handler& ngap_ue_radio_cap_handler_,
+                                ngap_location_reporting_handler&             ngap_location_reporting_handler_,
                                 ue_security_manager&                         security_mng_,
                                 ue_location_manager&                         loc_mng_,
                                 f1ap_ue_context_manager&                     f1ap_ue_ctxt_mng_,
@@ -42,6 +43,7 @@ private:
 
   rrc_ue_interface&                            rrc_ue;
   ngap_ue_radio_capability_management_handler& ngap_ue_radio_cap_handler;
+  ngap_location_reporting_handler&             ngap_ue_location_reporting_handler;
   ue_security_manager&                         security_mng;
   ue_location_manager&                         loc_mng;
   f1ap_ue_context_manager&                     f1ap_ue_ctxt_mng;          // to trigger UE context setup at F1AP

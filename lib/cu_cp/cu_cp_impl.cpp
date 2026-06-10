@@ -822,6 +822,7 @@ cu_cp_impl::handle_new_initial_context_setup_request(const ngap_init_context_set
   return launch_async<initial_context_setup_routine>(request,
                                                      *rrc_ue,
                                                      ngap->get_ngap_ue_radio_cap_management_handler(),
+                                                     ngap->get_ngap_location_reporting_handler(),
                                                      ue->get_security_manager(),
                                                      ue->get_location_manager(),
                                                      du_db.get_du_processor(ue->get_du_index()).get_f1ap_handler(),
@@ -1469,10 +1470,10 @@ void cu_cp_impl::handle_intra_cell_handover_required(cu_cp_ue_index_t ue_index)
     nr_cell_global_id_t cgi = du_db.get_du_processor(ue->get_du_index()).get_context()->find_cell(ue->get_pci())->cgi;
     cu_cp_intra_cu_handover_request intra_cu_handover_request = {ue_index, ue->get_du_index(), cgi, ue->get_pci()};
 
-    byte_buffer sib1 = du_db.get_du_processor(ue->get_du_index())
-                           .get_mobility_handler()
-                           .get_packed_sib1(intra_cu_handover_request.cgi);
-    auto& du_processor = du_db.get_du_processor(ue->get_du_index()).get_f1ap_handler();
+    byte_buffer sib1         = du_db.get_du_processor(ue->get_du_index())
+                                   .get_mobility_handler()
+                                   .get_packed_sib1(intra_cu_handover_request.cgi);
+    auto&       du_processor = du_db.get_du_processor(ue->get_du_index()).get_f1ap_handler();
     ue->get_task_sched().schedule_async_task(launch_async([this, intra_cu_handover_request, &du_processor, sib1](
                                                               coro_context<async_task<void>>& ctx) mutable {
       CORO_BEGIN(ctx);

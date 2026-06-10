@@ -408,6 +408,7 @@ public:
   virtual ngap_event_handler&                          get_ngap_event_handler()                   = 0;
   virtual ngap_connection_manager&                     get_ngap_connection_manager()              = 0;
   virtual ngap_nas_message_handler&                    get_ngap_nas_message_handler()             = 0;
+  virtual ngap_location_reporting_handler&             get_ngap_location_reporting_handler()      = 0;
   virtual ngap_ue_radio_capability_management_handler& get_ngap_ue_radio_cap_management_handler() = 0;
   virtual ngap_control_message_handler&                get_ngap_control_message_handler()         = 0;
   virtual ngap_ue_control_manager&                     get_ngap_ue_control_manager()              = 0;
