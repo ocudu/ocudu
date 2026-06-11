@@ -148,6 +148,11 @@ void initial_context_setup_routine::operator()(
     }
   }
 
+  // Schedule transmission of UE Radio Capability Info Indication.
+  if (!request.ue_radio_cap.has_value()) {
+    send_ue_radio_capability_info_indication();
+  }
+
   // Configure location reporting or/and send direct location report if requested.
   if (request.location_report_request_type.has_value()) {
     const location_report_request loc_req = *request.location_report_request_type;
@@ -173,11 +178,6 @@ void initial_context_setup_routine::operator()(
       auto report               = loc_mng.get_direct_location_report(request.ue_index, user_location_info, loc_req);
       ngap_ue_location_reporting_handler.handle_location_report_transmission(report);
     }
-  }
-
-  // Schedule transmission of UE Radio Capability Info Indication.
-  if (!request.ue_radio_cap.has_value()) {
-    send_ue_radio_capability_info_indication();
   }
 
   logger.info("ue={}: \"{}\" finished successfully", request.ue_index, name());

@@ -44,9 +44,9 @@ public:
     return ue_ctx != nullptr;
   }
 
-  // Runs the UE attach up through ICS with location reporting configured, capturing the Location Report emitted.
+  // Runs the UE attach up through ICS with location reporting configured.
   [[nodiscard]] bool attach_ue_with_ics_location_reporting(const location_report_request& loc_req,
-                                                           ngap_message&                  out_location_report)
+                                                           std::optional<ngap_message>&   location_report)
   {
     if (!connect_new_ue(du_idx, du_ue_id, crnti)) {
       return false;
@@ -58,7 +58,13 @@ public:
     if (ue_ctx == nullptr) {
       return false;
     }
-    return setup_ue_security_and_ue_capabilies(du_idx, du_ue_id, std::nullopt, true, loc_req, &out_location_report);
+    if (!setup_ue_security_and_ue_capabilies(du_idx, du_ue_id, std::nullopt, true, loc_req)) {
+      return false;
+    }
+
+    location_report = get_location_report_if_required(loc_req);
+
+    return true;
   }
 
   unsigned du_idx    = 0;
@@ -266,7 +272,11 @@ TEST_F(cu_cp_location_reporting_test, when_ics_with_direct_type_is_received_then
   loc_req.location_reporting_type = location_report_request::event_type::direct;
   loc_req.location_report_area    = location_report_request::report_area::cell;
 
-  ASSERT_TRUE(attach_ue_with_ics_location_reporting(loc_req, ngap_pdu));
+  std::optional<ngap_message> loc_report;
+  ASSERT_TRUE(attach_ue_with_ics_location_reporting(loc_req, loc_report));
+
+  ASSERT_TRUE(loc_report.has_value());
+  ngap_pdu = *loc_report;
 
   // Verify the captured Location Report.
   ASSERT_EQ(ngap_pdu.pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::init_msg);
@@ -299,7 +309,11 @@ TEST_F(cu_cp_location_reporting_test,
   loc_req.location_reporting_type = location_report_request::event_type::change_of_serve_cell;
   loc_req.location_report_area    = location_report_request::report_area::cell;
 
-  ASSERT_TRUE(attach_ue_with_ics_location_reporting(loc_req, ngap_pdu));
+  std::optional<ngap_message> loc_report;
+  ASSERT_TRUE(attach_ue_with_ics_location_reporting(loc_req, loc_report));
+
+  ASSERT_TRUE(loc_report.has_value());
+  ngap_pdu = *loc_report;
 
   ASSERT_EQ(ngap_pdu.pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(ngap_pdu.pdu.init_msg().value.type(),

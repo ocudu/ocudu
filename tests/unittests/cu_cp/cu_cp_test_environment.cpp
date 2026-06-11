@@ -619,8 +619,7 @@ bool cu_cp_test_environment::setup_ue_security_and_ue_capabilies(
     gnb_du_ue_f1ap_id_t                                       du_ue_id,
     std::optional<ngap_core_network_assist_info_for_inactive> cn_assist_info_for_inactive,
     bool                                                      rrc_inactive_supported,
-    std::optional<location_report_request>                    location_reporting_request,
-    ngap_message*                                             out_location_report_pdu)
+    std::optional<location_report_request>                    location_reporting_request)
 {
   ngap_message ngap_pdu;
   ocudu_assert(not this->get_amf().try_pop_rx_pdu(ngap_pdu), "there are still NGAP messages to pop from AMF");
@@ -687,17 +686,9 @@ bool cu_cp_test_environment::setup_ue_security_and_ue_capabilies(
   report_fatal_error_if_not(test_helpers::is_valid_dl_rrc_message_transfer(f1ap_pdu),
                             "Invalid DL RRC Message Transfer");
 
-  // When a direct or cell-change location report is requested via ICS, the Location Report is sent before the ICS
-  // Response. Consume it here so callers don't need to handle the ordering.
+  // Wait for Initial Context Setup Response.
   result = this->wait_for_ngap_tx_pdu(ngap_pdu);
   report_fatal_error_if_not(result, "Failed to receive first NGAP PDU after ICS");
-  if (test_helpers::is_valid_location_report(ngap_pdu)) {
-    if (out_location_report_pdu != nullptr) {
-      *out_location_report_pdu = ngap_pdu;
-    }
-    result = this->wait_for_ngap_tx_pdu(ngap_pdu);
-    report_fatal_error_if_not(result, "Failed to receive Initial Context Setup Response after Location Report");
-  }
   report_fatal_error_if_not(test_helpers::is_valid_initial_context_setup_response(ngap_pdu), "Invalid init ctxt setup");
 
   // Wait for UE Radio Capability Info Indication.
@@ -706,9 +697,30 @@ bool cu_cp_test_environment::setup_ue_security_and_ue_capabilies(
   report_fatal_error_if_not(test_helpers::is_valid_ue_radio_capability_info_indication(ngap_pdu),
                             "Invalid UE Radio Capability Info Indication");
 
+  // Do not wait for Location Report, as tests may check its contents.
   return true;
 }
 
+std::optional<ngap_message> cu_cp_test_environment::get_location_report_if_required(
+    std::optional<location_report_request> location_reporting_request)
+{
+  ngap_message ngap_pdu;
+  // Wait for location report, if required.
+  if (location_reporting_request.has_value()) {
+    using event_type = location_report_request::event_type;
+    if (location_reporting_request->location_reporting_type == event_type::direct ||
+        location_reporting_request->location_reporting_type == event_type::change_of_serve_cell ||
+        location_reporting_request->location_reporting_type ==
+            event_type::change_of_serving_cell_and_ue_presence_in_the_area_of_interest) {
+      bool result = this->wait_for_ngap_tx_pdu(ngap_pdu);
+      report_fatal_error_if_not(result, "Failed to transmit Location Report");
+      report_fatal_error_if_not(test_helpers::is_valid_location_report(ngap_pdu), "Invalid Location Report");
+
+      return ngap_pdu;
+    }
+  }
+  return std::nullopt;
+}
 bool cu_cp_test_environment::finish_ue_registration(unsigned du_idx, unsigned cu_up_idx, gnb_du_ue_f1ap_id_t du_ue_id)
 {
   ngap_message ngap_pdu;
@@ -1046,6 +1058,9 @@ bool cu_cp_test_environment::attach_ue(
                                               std::move(location_reporting_request))) {
     return false;
   }
+
+  get_location_report_if_required(location_reporting_request);
+
   if (not finish_ue_registration(du_idx, cu_up_idx, du_ue_id)) {
     return false;
   }

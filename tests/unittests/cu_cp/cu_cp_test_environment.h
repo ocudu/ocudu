@@ -140,8 +140,10 @@ public:
       gnb_du_ue_f1ap_id_t                                       du_ue_id,
       std::optional<ngap_core_network_assist_info_for_inactive> cn_assist_info_for_inactive = std::nullopt,
       bool                                                      rrc_inactive_supported      = true,
-      std::optional<location_report_request>                    location_reporting_request  = std::nullopt,
-      ngap_message*                                             out_location_report_pdu     = nullptr);
+      std::optional<location_report_request>                    location_reporting_request  = std::nullopt);
+  /// Get a Location Report, if one is awaited for.
+  std::optional<ngap_message>
+  get_location_report_if_required(std::optional<location_report_request> location_reporting_request);
   /// Finishes the registration for a given UE.
   [[nodiscard]] bool finish_ue_registration(unsigned du_idx, unsigned cu_up_idx, gnb_du_ue_f1ap_id_t du_ue_id);
   /// Requests PDU Session Resource Setup

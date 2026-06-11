@@ -281,11 +281,15 @@ void ngap_impl::handle_location_report_transmission(const location_report& msg)
 
   fill_asn1_location_report(*location_report_msg, msg);
 
-  // Forward message to AMF.
-  if (!tx_pdu_notifier.on_new_message(ngap_msg)) {
-    logger.warning("ue={}: AMF notifier is not set. Cannot send LocationReport", msg.ue_index);
-    return;
-  }
+  // Schedule transmission of Location Report message to AMF.
+  ue->schedule_async_task(launch_async([this, msg, ngap_msg](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+    if (!tx_pdu_notifier.on_new_message(ngap_msg)) {
+      logger.error("ue={}: AMF notifier is not set. Cannot send LocationReport", msg.ue_index);
+      CORO_EARLY_RETURN();
+    }
+    CORO_RETURN();
+  }));
 }
 
 void ngap_impl::handle_location_reporting_failure_indication_transmission(const location_report_failure_indication& msg)

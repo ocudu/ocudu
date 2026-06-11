@@ -253,7 +253,6 @@ void inter_cu_handover_target_routine::operator()(
       ue->get_location_manager().configure_location_reporting(loc_req);
     }
 
-    using event_type = location_report_request::event_type;
     if (loc_req.location_reporting_type == event_type::direct ||
         loc_req.location_reporting_type == event_type::change_of_serve_cell ||
         loc_req.location_reporting_type == event_type::change_of_serving_cell_and_ue_presence_in_the_area_of_interest) {
