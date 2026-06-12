@@ -135,11 +135,13 @@ public:
 
 class mac_dl_sch_assembler_tester : public testing::Test
 {
+  static constexpr unsigned max_test_ues = 16;
+
 public:
   mac_dl_sch_assembler_tester() :
     ue_mng(rnti_table),
     dl_bearers(2),
-    harqs(MAX_NOF_PRBS, pdsch_constants::CODEWORD_MAX_NOF_LAYERS, MAX_NOF_HARQS * MAX_NOF_DU_UES_PER_CELL),
+    harqs(MAX_NOF_PRBS, pdsch_constants::CODEWORD_MAX_NOF_LAYERS, MAX_NOF_HARQS * max_test_ues),
     dl_sch_enc(ue_mng, harqs)
   {
     ocudulog::fetch_basic_logger("MAC", true).set_level(ocudulog::basic_levels::debug);
