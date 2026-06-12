@@ -14,14 +14,6 @@
 
 namespace ocudu {
 
-async_task<bool> start_ric_reconnection(const e2ap_configuration&          cfg,
-                                        e2_node_component_config_provider& node_cfg_provider,
-                                        e2sm_manager&                      e2sm_mngr,
-                                        e2_connection_manager&             e2_conn_mng,
-                                        timer_factory                      timers,
-                                        ocudulog::basic_logger&            logger,
-                                        const std::atomic<bool>&           stopped);
-
 /// Recovers an E2 TNL connection after loss.
 ///
 /// Waits ric_reconnection_retry_time, then loops handle_e2_tnl_connection_request() until

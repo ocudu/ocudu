@@ -8,18 +8,6 @@
 
 using namespace ocudu;
 
-async_task<bool> ocudu::start_ric_reconnection(const e2ap_configuration&          cfg,
-                                               e2_node_component_config_provider& node_cfg_provider,
-                                               e2sm_manager&                      e2sm_mngr,
-                                               e2_connection_manager&             e2_conn_mng,
-                                               timer_factory                      timers,
-                                               ocudulog::basic_logger&            logger,
-                                               const std::atomic<bool>&           stopped)
-{
-  return launch_async<ric_reconnection_routine>(
-      cfg, node_cfg_provider, e2sm_mngr, e2_conn_mng, timers, logger, stopped);
-}
-
 ric_reconnection_routine::ric_reconnection_routine(const e2ap_configuration&          cfg_,
                                                    e2_node_component_config_provider& node_cfg_provider_,
                                                    e2sm_manager&                      e2sm_mngr_,
