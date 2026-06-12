@@ -1012,7 +1012,8 @@ TEST_F(custom_band_test, band_from_dl_arfcn)
 {
   ASSERT_EQ(uint_to_nr_band(109), get_band_from_dl_arfcn(620100U));
   ASSERT_EQ(uint_to_nr_band(109), get_band_from_dl_arfcn(625000U));
-  ASSERT_NE(uint_to_nr_band(109), get_band_from_dl_arfcn(620110U)); // wrong step
+  // Test wrong step.
+  ASSERT_NE(uint_to_nr_band(109), get_band_from_dl_arfcn(620110U));
   ASSERT_EQ(uint_to_nr_band(200), get_band_from_dl_arfcn(386000U));
 }
 
@@ -1043,12 +1044,13 @@ TEST_F(custom_band_test, ntn_flag)
 {
   ASSERT_FALSE(is_ntn_band(uint_to_nr_band(109)));
   ASSERT_TRUE(is_ntn_band(uint_to_nr_band(300)));
-  ASSERT_TRUE(is_ntn_band(nr_band::n254)); // standard NTN bands still work
+  // Standard NTN bands still work.
+  ASSERT_TRUE(is_ntn_band(nr_band::n254));
 }
 
 TEST_F(custom_band_test, freq_range_fr1)
 {
-  // Band 109 has dl_arfcn_min=620100 < 2016667 (FR1 threshold)
+  // Band 109 has dl_arfcn_min=620100 < 2016667 (FR1 threshold).
   ASSERT_EQ(frequency_range::FR1, get_freq_range(uint_to_nr_band(109)));
 }
 

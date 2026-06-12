@@ -1339,7 +1339,8 @@ struct du_high_unit_qos_config {
 
 /// User-defined NR frequency band.
 struct du_high_unit_custom_band_config {
-  /// Band number 1-1024.
+  /// Band identifier (1-1024). Used as a lookup key; any value in range is accepted.
+  /// If the number matches an existing standard NR band, this custom definition takes priority.
   uint16_t band_nr = 0;
   /// DL frequency range in MHz.
   double dl_freq_min = 0.0;
