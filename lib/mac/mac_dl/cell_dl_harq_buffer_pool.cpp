@@ -16,22 +16,17 @@ static units::bytes derive_max_pdu_length(unsigned cell_nof_prbs, unsigned nof_p
   return cw_max_size.round_up_to_bytes();
 }
 
-// (Implementation-defined) Number of HARQs needed to account for UEs that the DU cannot support but still require
-// HARQs for sending an RRC Reject. We consider that UEs to be RRC Rejected only need one HARQ.
-static constexpr unsigned HARQS_FOR_RRC_REJECTS = 64;
-
 cell_dl_harq_buffer_pool::cell_dl_harq_buffer_pool(unsigned cell_nof_prbs,
                                                    unsigned nof_ports,
                                                    unsigned max_harqs_per_cell) :
   max_pdu_len(derive_max_pdu_length(cell_nof_prbs, nof_ports).value()),
-  nof_buffers(max_harqs_per_cell + HARQS_FOR_RRC_REJECTS),
+  nof_buffers(max_harqs_per_cell),
   logger(ocudulog::fetch_basic_logger("MAC")),
   cell_buffers(MAX_NOF_DU_UES_PER_CELL),
   pool(std::make_unique<dl_harq_buffer_storage[]>(nof_buffers))
 {
   // Preallocate all DL HARQ buffers and make them available in the free list, so that UEs do not need to allocate
-  // buffers in their creation critical path. The pool is dimensioned to hold the maximum number of HARQs the cell can
-  // support plus a margin for UEs that need a single HARQ to be RRC Rejected.
+  // buffers in their creation critical path.
   free_buffer_list.reserve(nof_buffers);
   for (unsigned i = 0; i != nof_buffers; ++i) {
     pool[i].buffer.resize(max_pdu_len);

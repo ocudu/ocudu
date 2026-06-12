@@ -50,7 +50,9 @@ struct mac_cell_creation_request {
   coreset0_index        cs0_index;
   search_space0_index   ss0_index;
 
-  /// Information used by MAC to dimension resources for the given cell.
+  /// Total number of DL HARQ buffers the MAC preallocates for the cell. It accounts for the UEs the cell can support
+  /// (each using the configured number of DL HARQ processes) plus a margin for UEs that only need a single HARQ to be
+  /// RRC Rejected.
   unsigned max_harq_buffers = MAX_NOF_HARQS * MAX_NOF_DU_UES_PER_CELL;
 
   /// Embedded scheduler cell configuration request.

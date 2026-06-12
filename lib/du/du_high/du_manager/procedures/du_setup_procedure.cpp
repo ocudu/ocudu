@@ -49,9 +49,13 @@ static mac_cell_creation_request make_mac_cell_config(du_cell_index_t           
   mac_cfg.cell_barred                     = du_cfg.cell_barred;
   mac_cfg.intra_freq_reselection          = du_cfg.intra_freq_reselection;
 
-  // Dimension the MAC DL HARQ buffer pool based on the number of UEs the cell can actually support and the configured
-  // number of DL HARQ processes per UE.
-  mac_cfg.max_harq_buffers = du_cfg.ran.init_bwp.pdsch.max_harq_procs * max_nof_setup_ues;
+  // (Implementation-defined) Number of HARQs needed to account for UEs that the cell cannot support but still require
+  // HARQs for sending an RRC Reject. We consider that UEs to be RRC Rejected only need one HARQ.
+  static constexpr unsigned harqs_for_rrc_rejects = 64;
+
+  // Dimension the MAC DL HARQ buffer pool based on the number of UEs the cell can actually support (each using the
+  // configured number of DL HARQ processes) plus a margin for UEs that only need a single HARQ to be RRC Rejected.
+  mac_cfg.max_harq_buffers = du_cfg.ran.init_bwp.pdsch.max_harq_procs * max_nof_setup_ues + harqs_for_rrc_rejects;
 
   return mac_cfg;
 }
