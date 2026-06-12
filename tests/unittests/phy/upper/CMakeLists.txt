@@ -19,6 +19,10 @@ add_executable(channel_state_information_test channel_state_information_test.cpp
 target_link_libraries(channel_state_information_test ocudulog fmt GTest::gtest GTest::gtest_main)
 add_test(channel_state_information_test channel_state_information_test)
 
+add_executable(upper_phy_operation_controller_impl_test upper_phy_operation_controller_impl_test.cpp)
+target_link_libraries(upper_phy_operation_controller_impl_test ocudulog GTest::gtest GTest::gtest_main)
+gtest_discover_tests(upper_phy_operation_controller_impl_test)
+
 add_executable(downlink_processor_pool_test downlink_processor_pool_test.cpp)
 target_link_libraries(downlink_processor_pool_test ocudu_ran ocudu_upper_phy ocudulog GTest::gtest GTest::gtest_main)
 add_test(downlink_processor_pool_test downlink_processor_pool_test)
