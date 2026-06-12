@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include "apps/services/cmdline/cmdline_command_dispatcher_utils.h"
 #include "apps/services/cmdline/stdout_metrics_command.h"
 #include "split_helpers/metrics/flexible_o_du_metrics_consumers.h"
 #include "ocudu/adt/expected.h"
 #include "ocudu/adt/to_array.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ru/ru_controller.h"
+#include "ocudu/support/string_parsing_utils.h"
 
 namespace ocudu {
 
@@ -36,14 +36,14 @@ public:
       return;
     }
 
-    expected<unsigned, std::string> port_id = app_services::parse_int<unsigned>(args.front());
+    expected<unsigned, std::string> port_id = parse_int<unsigned>(args.front());
     if (not port_id.has_value()) {
-      fmt::print("Invalid port ID.\n");
+      fmt::print("Invalid port ID. Reason: {}\n", port_id.error());
       return;
     }
-    expected<double, std::string> gain_dB = app_services::parse_double(args.back());
+    expected<double, std::string> gain_dB = parse_double(args.back());
     if (not gain_dB.has_value()) {
-      fmt::print("Invalid gain value.\n");
+      fmt::print("Invalid gain value. Reason: {}\n", gain_dB.error());
       return;
     }
 
@@ -78,14 +78,14 @@ public:
       return;
     }
 
-    expected<unsigned, std::string> port_id = app_services::parse_int<unsigned>(args.front());
+    expected<unsigned, std::string> port_id = parse_int<unsigned>(args.front());
     if (not port_id.has_value()) {
-      fmt::print("Invalid port ID.\n");
+      fmt::print("Invalid port ID. Reason: {}\n", port_id.error());
       return;
     }
-    expected<double, std::string> gain_dB = app_services::parse_double(args.back());
+    expected<double, std::string> gain_dB = parse_double(args.back());
     if (not gain_dB.has_value()) {
-      fmt::print("Invalid gain value.\n");
+      fmt::print("Invalid gain value. Reason: {}\n", gain_dB.error());
       return;
     }
 
@@ -187,14 +187,14 @@ public:
       return;
     }
 
-    expected<unsigned, std::string> sector_id = app_services::parse_int<unsigned>(args.front());
+    expected<unsigned, std::string> sector_id = parse_int<unsigned>(args.front());
     if (not sector_id.has_value()) {
-      fmt::print("Invalid sector identifier.\n");
+      fmt::print("Invalid sector identifier. Reason: {}\n", sector_id.error());
       return;
     }
-    expected<double, std::string> cfo = app_services::parse_double(args.back());
+    expected<double, std::string> cfo = parse_double(args.back());
     if (not cfo.has_value()) {
-      fmt::print("Invalid CFO value.\n");
+      fmt::print("Invalid CFO value. Reason: {}\n", cfo.error());
       return;
     }
 
@@ -240,14 +240,14 @@ public:
       return;
     }
 
-    expected<unsigned, std::string> sector_id = app_services::parse_int<unsigned>(args.front());
+    expected<unsigned, std::string> sector_id = parse_int<unsigned>(args.front());
     if (not sector_id.has_value()) {
-      fmt::print("Invalid sector identifier.\n");
+      fmt::print("Invalid sector identifier. Reason: {}\n", sector_id.error());
       return;
     }
-    expected<double, std::string> tx_time_offset_us = app_services::parse_double(args.back());
+    expected<double, std::string> tx_time_offset_us = parse_double(args.back());
     if (not tx_time_offset_us.has_value()) {
-      fmt::print("Invalid transmit time offset format.\n");
+      fmt::print("Invalid transmit time offset format. Reason: {}\n", tx_time_offset_us.error());
       return;
     }
 

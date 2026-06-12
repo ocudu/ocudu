@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "ocudu/support/string_parsing_utils.h"
 #include "CLI/CLI11.hpp"
 #include <optional>
 
@@ -183,13 +184,21 @@ inline CLI::Option* add_option_cell(CLI::App&                                   
 template <typename T>
 bool lexical_cast(const std::string& in, std::optional<T>& output)
 {
-  using CLI::detail::lexical_cast;
+  expected<T, std::string> result;
 
-  T val;
-  if (not lexical_cast(in, val)) {
+  if constexpr (std::is_integral_v<T>) {
+    result = parse_int<T>(in);
+  } else if constexpr (std::is_same_v<T, float>) {
+    result = parse_float(in);
+  } else {
+    result = parse_double(in);
+  }
+
+  if (!result.has_value()) {
     return false;
   }
-  output = val;
+
+  output = result.value();
   return true;
 }
 

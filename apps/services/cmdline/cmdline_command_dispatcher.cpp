@@ -3,9 +3,9 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "cmdline_command_dispatcher.h"
-#include "cmdline_command_dispatcher_utils.h"
 #include "stdout_metrics_command.h"
 #include "ocudu/ocudulog/ocudulog.h"
+#include "ocudu/support/string_parsing_utils.h"
 #include <csignal>
 #include <fcntl.h>
 #include <unistd.h>
@@ -52,7 +52,7 @@ public:
     }
 
     // Parse seconds.
-    expected<int64_t, std::string> seconds = app_services::parse_int<int64_t>(args.front());
+    expected<int64_t, std::string> seconds = parse_int<int64_t>(args.front());
 
     // Verify the argument is numeric.
     if (not seconds.has_value()) {

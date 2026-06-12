@@ -18,23 +18,12 @@
 #include "ocudu/support/cli11_utils.h"
 #include "ocudu/support/config_parsers.h"
 #include "ocudu/support/format/fmt_to_c_str.h"
+#include "ocudu/support/string_parsing_utils.h"
 #include "CLI/CLI11.hpp"
 #include <charconv>
 #include <cmath>
 
 using namespace ocudu;
-
-template <typename Integer>
-static expected<Integer, std::string> parse_int(const std::string& value)
-{
-  try {
-    return std::stoi(value);
-  } catch (const std::invalid_argument& e) {
-    return make_unexpected(e.what());
-  } catch (const std::out_of_range& e) {
-    return make_unexpected(e.what());
-  }
-}
 
 static expected<uint32_t, std::string> parse_32bit_mask_input(std::string_view value)
 {
@@ -389,7 +378,12 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
         } else if (value == "center") {
           pdsch_params.dc_offset = dc_offset_t::center;
         } else {
-          pdsch_params.dc_offset = static_cast<dc_offset_t>(parse_int<int>(value).value());
+          const auto dc_offset = parse_int<int>(value);
+
+          report_fatal_error_if_not(dc_offset.has_value(),
+                                    fmt::format("Invalid --dc_offset value '" + value + "'").c_str());
+
+          pdsch_params.dc_offset = static_cast<dc_offset_t>(dc_offset.value());
         }
       },
       "Direct Current (DC) Offset in number of subcarriers, using the common SCS as reference for carrier spacing, "
@@ -504,12 +498,12 @@ static void configure_cli11_ssb_args(CLI::App& app, du_high_unit_ssb_config& ssb
       app,
       "--pss_to_sss_epre_db",
       [&ssb_params](const std::string& value) {
-        unsigned temp_value = 0;
-        if (!CLI::detail::lexical_cast(value, temp_value)) {
+        auto parsed_value = parse_int<unsigned>(value);
+        if (!parsed_value.has_value()) {
           report_fatal_error("Invalid --pss_to_sss_epre_db value '{}'", value);
         }
 
-        if (temp_value == 0) {
+        if (*parsed_value == 0) {
           ssb_params.pss_to_sss_epre = ocudu::ssb_pss_to_sss_epre::dB_0;
         } else {
           ssb_params.pss_to_sss_epre = ocudu::ssb_pss_to_sss_epre::dB_3;
@@ -916,40 +910,42 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
              "msg3-DeltaPreamble, Power offset between msg3 and RACH preamble transmission")
       ->capture_default_str()
       ->check(CLI::Range(-1, 6));
-  add_option(app,
-             "--p0_nominal_with_grant",
-             pusch_params.p0_nominal_with_grant,
-             "P0 value for PUSCH with grant (except msg3). Value in dBm. Valid values must be multiple of 2 and "
-             "within the [-202, 24] interval.  Default: -76")
-      ->capture_default_str()
-      ->check([](const std::string& value) -> std::string {
-        std::stringstream ss(value);
-        int               pw;
-        ss >> pw;
+  add_option_function<std::string>(
+      app,
+      "--p0_nominal_with_grant",
+      [&pusch_params](const std::string& value) {
+        auto pw = parse_int<int>(value);
+
+        report_fatal_error_if_not(pw.has_value(),
+                                  fmt::format("Invalid --p0_nominal_with_grant value '" + value + "'").c_str());
+
         const std::string& error_message = "Must be a multiple of 2 and within the [-202, 24] interval";
-        if (pw < -202 or pw > 24 or pw % 2 != 0) {
-          return error_message;
+        if (*pw < -202 || *pw > 24 || *pw % 2 != 0) {
+          report_fatal_error(error_message.c_str());
         }
 
-        return "";
-      });
-  add_option(app,
-             "--msg3_delta_power",
-             pusch_params.msg3_delta_power,
-             "Target power level at the network receiver side, in dBm. Valid values must be multiple of 2 and "
-             "within the [-6, 8] interval. Default: 8")
-      ->capture_default_str()
-      ->check([](const std::string& value) -> std::string {
-        std::stringstream ss(value);
-        int               pw;
-        ss >> pw;
+        pusch_params.p0_nominal_with_grant = *pw;
+      },
+      "P0 value for PUSCH with grant (except msg3). Value in dBm. Valid values must be multiple of 2 and "
+      "within the [-202, 24] interval.  Default: -76");
+  add_option_function<std::string>(
+      app,
+      "--msg3_delta_power",
+      [&pusch_params](const std::string& value) {
+        auto pw = parse_int<int>(value);
+
+        report_fatal_error_if_not(pw.has_value(),
+                                  fmt::format("Invalid --msg3_delta_power value '" + value + "'").c_str());
+
         const std::string& error_message = "Must be a multiple of 2 and within the [-6, 8] interval";
-        if (pw < -6 or pw > 8 or pw % 2 != 0) {
-          return error_message;
+        if (*pw < -6 || *pw > 8 || *pw % 2 != 0) {
+          report_fatal_error(error_message.c_str());
         }
 
-        return "";
-      });
+        pusch_params.msg3_delta_power = *pw;
+      },
+      "Target power level at the network receiver side, in dBm. Valid values must be multiple of 2 and "
+      "within the [-6, 8] interval. Default: 8");
   add_option(app, "--max_puschs_per_slot", pusch_params.max_puschs_per_slot, "Maximum number of PUSCH grants per slot")
       ->capture_default_str()
       ->check(CLI::Range(1U, (unsigned)MAX_PUSCH_PDUS_PER_SLOT));
@@ -1003,7 +999,12 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
         } else if (value == "center") {
           pusch_params.dc_offset = dc_offset_t::center;
         } else {
-          pusch_params.dc_offset = static_cast<dc_offset_t>(parse_int<int>(value).value());
+          const auto dc_offset = parse_int<int>(value);
+
+          report_fatal_error_if_not(dc_offset.has_value(),
+                                    fmt::format("Invalid --dc_offset value '" + value + "'").c_str());
+
+          pusch_params.dc_offset = static_cast<dc_offset_t>(dc_offset.value());
         }
       },
       "Direct Current (DC) Offset in number of subcarriers, using the common SCS as reference for carrier spacing, "
@@ -1072,8 +1073,13 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
                  "Smoothing factor alpha for EMA filter of PUSCH closed-loop power control SINR")
       ->capture_default_str()
       ->check([](const std::string& value) -> std::string {
-        const float alpha = std::stof(value);
-        if (alpha <= 0.0f or alpha >= 1.0f) {
+        const auto alpha = parse_float(value);
+
+        if (!alpha.has_value()) {
+          return alpha.error();
+        }
+
+        if (*alpha <= 0.0f || *alpha >= 1.0f) {
           return "Must be in the open interval (0, 1)";
         }
         return "";
@@ -1107,23 +1113,22 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
     };
   };
 
-  add_option(app,
-             "--p0_nominal",
-             pucch_params.p0_nominal,
-             "Power control parameter P0 for PUCCH transmissions. Value in dBm. Valid values must be multiple of 2 and "
-             "within the [-202, 24] interval. Default: -90")
-      ->capture_default_str()
-      ->check([](const std::string& value) -> std::string {
-        std::stringstream ss(value);
-        int               pw;
-        ss >> pw;
+  add_option_function<std::string>(
+      app,
+      "--p0_nominal",
+      [&pucch_params](const std::string& value) {
+        auto pw = parse_int<int>(value);
+        report_fatal_error_if_not(pw.has_value(), fmt::format("Invalid --p0_nominal value '" + value + "'").c_str());
+
         const std::string& error_message = "Must be a multiple of 2 and within the [-202, 24] interval";
-        if (pw < -202 or pw > 24 or pw % 2 != 0) {
-          return error_message;
+        if (*pw < -202 || *pw > 24 || *pw % 2 != 0) {
+          report_error(error_message.c_str());
         }
 
-        return "";
-      });
+        pucch_params.p0_nominal = *pw;
+      },
+      "Power control parameter P0 for PUCCH transmissions. Value in dBm. Valid values must be multiple of 2 and "
+      "within the [-202, 24] interval. Default: -90");
   add_option(app,
              "--pucch_resource_common",
              pucch_params.pucch_resource_common,
@@ -1283,8 +1288,13 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
                  "Smoothing factor alpha for EMA filter of PUCCH closed-loop power control SINR")
       ->capture_default_str()
       ->check([](const std::string& value) -> std::string {
-        const float alpha = std::stof(value);
-        if (alpha <= 0.0f or alpha >= 1.0f) {
+        const auto alpha = parse_float(value);
+
+        if (!alpha.has_value()) {
+          return alpha.error();
+        }
+
+        if (*alpha <= 0.0f || *alpha >= 1.0f) {
           return "Must be in the open interval (0, 1)";
         }
         return "";
@@ -1371,23 +1381,23 @@ static void configure_cli11_srs_args(CLI::App& app, du_high_unit_srs_config& srs
              "Enable the reuse of SRS sequence id with the set reuse factor")
       ->capture_default_str()
       ->check(CLI::IsMember({1, 2, 3, 5, 6, 10, 15, 30}));
-  add_option(app,
-             "--p0",
-             srs_params.p0,
-             "P0 value for SRS. Value in dBm. Valid values must be multiple of 2 and "
-             "within the [-202, 24] interval.  Default: -84")
-      ->capture_default_str()
-      ->check([](const std::string& value) -> std::string {
-        std::stringstream ss(value);
-        int               pw;
-        ss >> pw;
+  add_option_function<std::string>(
+      app,
+      "--p0",
+      [&srs_params](const std::string& value) {
+        auto pw = parse_int<int>(value);
+
+        report_error_if_not(pw.has_value(), fmt::format("Invalid --p0 value '" + value + "'").c_str());
+
         const std::string& error_message = "Must be a multiple of 2 and within the [-202, 24] interval";
-        if (pw < -202 or pw > 24 or pw % 2 != 0) {
-          return error_message;
+        if (*pw < -202 or *pw > 24 or *pw % 2 != 0) {
+          report_error(error_message.c_str());
         }
 
-        return "";
-      });
+        srs_params.p0 = *pw;
+      },
+      "P0 value for SRS. Value in dBm. Valid values must be multiple of 2 and "
+      "within the [-202, 24] interval.  Default: -84");
 }
 
 static void configure_cli11_si_sched_info(CLI::App& app, du_high_unit_sib_config::si_sched_info_config& si_sched_info)
@@ -1519,23 +1529,24 @@ static void configure_cli11_prach_args(CLI::App& app, du_high_unit_rach_config& 
              " PRACH opportunities do not overlap with the PUCCH resources")
       ->capture_default_str()
       ->check(CLI::Range(0, 274));
-  add_option(app,
-             "--preamble_rx_target_pw",
-             prach_params.preamble_rx_target_pw,
-             "Target power level at the network receiver side, in dBm")
-      ->capture_default_str()
-      ->check([](const std::string& value) -> std::string {
-        std::stringstream ss(value);
-        int               pw;
-        ss >> pw;
+  add_option_function<std::string>(
+      app,
+      "--preamble_rx_target_pw",
+      [&prach_params](const std::string& value) {
+        auto pw = parse_int<int>(value);
+
+        report_fatal_error_if_not(pw.has_value(),
+                                  fmt::format("Invalid --preamble_rx_target_pw value '" + value + "'").c_str());
+
         const std::string& error_message = "Must be a multiple of 2 and within the [-202, -60] interval";
         // Bandwidth cannot be less than 5MHz.
-        if (pw < -202 or pw > -60 or pw % 2 != 0) {
-          return error_message;
+        if (*pw < -202 || *pw > -60 || *pw % 2 != 0) {
+          report_error(error_message.c_str());
         }
 
-        return "";
-      });
+        prach_params.preamble_rx_target_pw = *pw;
+      },
+      "Target power level at the network receiver side, in dBm");
   add_option(app,
              "--preamble_trans_max",
              prach_params.preamble_trans_max,
@@ -1626,9 +1637,14 @@ static void configure_cli11_sib2_config_args(CLI::App& app, du_high_unit_sib_con
   add_option(app, "--q_rx_lev_min", sib2_cfg.q_rx_lev_min, "Minimum required Rx level in the cell in dBm")
       ->capture_default_str()
       ->check([](const std::string& value) -> std::string {
-        int                                  v = std::stoi(value);
+        const auto v = parse_int<int>(value);
+
+        if (!v.has_value()) {
+          return v.error();
+        }
+
         static constexpr interval<int, true> valid_range(-140, -44);
-        if (not valid_range.contains(v) or (v % 2 != 0)) {
+        if (not valid_range.contains(*v) || (*v % 2 != 0)) {
           return fmt::format("Must be an even value within the {} interval", valid_range);
         }
         return "";
@@ -1637,9 +1653,14 @@ static void configure_cli11_sib2_config_args(CLI::App& app, du_high_unit_sib_con
       app, "--s_intra_search_p", sib2_cfg.s_intra_search_p, "Rx level threshold for intra frequency measurements in dB")
       ->capture_default_str()
       ->check([](const std::string& value) -> std::string {
-        int                                       v = std::stoi(value);
+        const auto v = parse_int<int>(value);
+
+        if (!v.has_value()) {
+          return v.error();
+        }
+
         static constexpr interval<unsigned, true> valid_range(0, 62);
-        if (not valid_range.contains(v) or (v % 2 != 0)) {
+        if (not valid_range.contains(*v) or (*v % 2 != 0)) {
           return fmt::format("Must be an even value within the {} interval", valid_range);
         }
         return "";
@@ -1722,7 +1743,7 @@ static void configure_cli11_inter_freq_carrier_freq_info_args(
       [&scs = config.ssb_scs](const std::string& value) -> std::string {
         scs = to_subcarrier_spacing(value);
         if (scs == subcarrier_spacing::invalid) {
-          return fmt::format("Invalid SSB subcarrier spacing '{}'", value);
+          report_error(fmt::format("Invalid SSB subcarrier spacing '" + value + "'").c_str());
         }
         return {};
       },
@@ -1733,9 +1754,14 @@ static void configure_cli11_inter_freq_carrier_freq_info_args(
   add_option(app, "--q_rx_lev_min", config.q_rx_lev_min, "Minimum required Rx level in the cell in dBm")
       ->capture_default_str()
       ->check([](const std::string& value) -> std::string {
-        int                                  v = std::stoi(value);
+        const auto v = parse_int<int>(value);
+
+        if (!v.has_value()) {
+          return v.error();
+        }
+
         static constexpr interval<int, true> valid_range(-140, -44);
-        if (not valid_range.contains(v) or (v % 2 != 0)) {
+        if (not valid_range.contains(*v) or (*v % 2 != 0)) {
           return fmt::format("Must be an even value within the {} interval", valid_range);
         }
         return "";
@@ -1746,9 +1772,14 @@ static void configure_cli11_inter_freq_carrier_freq_info_args(
              "Rx level threshold in dB used when reselecting to a higher priority RAT/frequency in dB")
       ->capture_default_str()
       ->check([](const std::string& value) -> std::string {
-        int                                       v = std::stoi(value);
+        const auto v = parse_int<int>(value);
+
+        if (!v.has_value()) {
+          return v.error();
+        }
+
         static constexpr interval<unsigned, true> valid_range(0, 62);
-        if (not valid_range.contains(v) or (v % 2 != 0)) {
+        if (not valid_range.contains(*v) or (*v % 2 != 0)) {
           return fmt::format("Must be an even value within the {} interval", valid_range);
         }
         return "";
@@ -1759,9 +1790,14 @@ static void configure_cli11_inter_freq_carrier_freq_info_args(
              "Rx level threshold in dB used when reselecting to a lower priority RAT/frequency in dB")
       ->capture_default_str()
       ->check([](const std::string& value) -> std::string {
-        int                                       v = std::stoi(value);
+        const auto v = parse_int<int>(value);
+
+        if (!v.has_value()) {
+          return v.error();
+        }
+
         static constexpr interval<unsigned, true> valid_range(0, 62);
-        if (not valid_range.contains(v) or (v % 2 != 0)) {
+        if (not valid_range.contains(*v) || (*v % 2 != 0)) {
           return fmt::format("Must be an even value within the {} interval", valid_range);
         }
         return "";
@@ -1822,9 +1858,14 @@ configure_cli11_carrier_freq_eutra_args(CLI::App&                               
              "Rx level threshold in dB used when reselecting to a higher priority RAT/frequency in dB")
       ->capture_default_str()
       ->check([](const std::string& value) -> std::string {
-        int                                       v = std::stoi(value);
+        const auto v = parse_int<int>(value);
+
+        if (!v.has_value()) {
+          return v.error();
+        }
+
         static constexpr interval<unsigned, true> valid_range(0, 62);
-        if (not valid_range.contains(v) or (v % 2 != 0)) {
+        if (not valid_range.contains(*v) || (*v % 2 != 0)) {
           return fmt::format("Must be an even value within the {} interval", valid_range);
         }
         return "";
@@ -1835,9 +1876,12 @@ configure_cli11_carrier_freq_eutra_args(CLI::App&                               
              "Rx level threshold in dB used when reselecting to a lower priority RAT/frequency in dB")
       ->capture_default_str()
       ->check([](const std::string& value) -> std::string {
-        int                                       v = std::stoi(value);
+        const auto v = parse_int<int>(value);
+        if (!v.has_value()) {
+          return v.error();
+        }
         static constexpr interval<unsigned, true> valid_range(0, 62);
-        if (not valid_range.contains(v) or (v % 2 != 0)) {
+        if (not valid_range.contains(*v) || (*v % 2 != 0)) {
           return fmt::format("Must be an even value within the {} interval", valid_range);
         }
         return "";
@@ -1845,9 +1889,14 @@ configure_cli11_carrier_freq_eutra_args(CLI::App&                               
   add_option(app, "--q_rx_lev_min", config.q_rx_lev_min, "Minimum required Rx level in the cell in dBm")
       ->capture_default_str()
       ->check([](const std::string& value) -> std::string {
-        int                                  v = std::stoi(value);
+        const auto v = parse_int<int>(value);
+
+        if (!v.has_value()) {
+          return v.error();
+        }
+
         static constexpr interval<int, true> valid_range(-140, -44);
-        if (not valid_range.contains(v) or (v % 2 != 0)) {
+        if (not valid_range.contains(*v) || (*v % 2 != 0)) {
           return fmt::format("Must be an even value within the {} interval", valid_range);
         }
         return "";
@@ -1901,11 +1950,16 @@ static void configure_cli11_sib16_slice_info_args(CLI::App&                     
       app, "--reselection_priority", slice.reselection_priority, "Priority associated with this cell reselection slice")
       ->capture_default_str()
       ->check([](const std::string& value) -> std::string {
-        float v = std::stof(value);
-        if (v < 0.0F || v > 7.8F) {
+        const auto v = parse_float(value);
+
+        if (!v.has_value()) {
+          return v.error();
+        }
+
+        if (*v < 0.0F || *v > 7.8F) {
           return "Must be within [0, 7.8]";
         }
-        float scaled  = v * 10.0F;
+        float scaled  = *v * 10.0F;
         float rounded = std::round(scaled);
         if (std::fabs(scaled - rounded) > 1e-3F || (static_cast<int>(rounded) % 2 != 0)) {
           return "Must be in steps of 0.2 within [0, 7.8]";
@@ -2291,36 +2345,43 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
       },
       "Cell common subcarrier spacing")
       ->capture_default_str();
-  add_option(app, "--channel_bandwidth_MHz", cell_params.channel_bw_mhz, "Channel bandwidth in MHz")
-      ->capture_default_str()
-      ->check([](const std::string& value) -> std::string {
-        std::stringstream ss(value);
-        unsigned          bw;
-        ss >> bw;
-        const std::string& error_message = "Error in the channel bandwidth property. Valid values "
-                                           "[5,10,15,20,25,30,40,50,60,70,80,90,100,200,400]";
+  add_option_function<std::string>(
+      app,
+      "--channel_bandwidth_MHz",
+      [&cell_params](const std::string& value) {
+        auto bw = parse_int<unsigned>(value);
+
+        report_fatal_error_if_not(bw.has_value(),
+                                  fmt::format("Invalid --channel_bandwidth_MHz value '" + value + "'").c_str());
+
+        const std::string error_message = "Error in the channel bandwidth property. Valid values "
+                                          "[5,10,15,20,25,30,40,50,60,70,80,90,100,200,400]";
+
         // Bandwidth cannot be less than 5MHz.
-        if (bw < 5U) {
-          return error_message;
+        if (*bw < 5U) {
+          report_error(error_message.c_str());
         }
 
-        // Check from [5-25] in steps of 5.
-        if (bw < 26U) {
-          return ((bw % 5) == 0) ? "" : error_message;
+        if (*bw < 26U) { // Check from [5-25] in steps of 5.
+          if ((*bw % 5) != 0) {
+            report_error(error_message.c_str());
+          }
+        } else if (*bw < 101U) { // Check from [30-100] in steps of 10.
+          if ((*bw % 10) != 0) {
+            report_error(error_message.c_str());
+          }
+        } else if (*bw < 401U) { // Check from [200-400] in steps of 200.
+          if ((*bw % 200) != 0) {
+            report_error(error_message.c_str());
+          }
+        } else {
+          report_error(error_message.c_str());
         }
 
-        // Check from [30-100] in steps of 10.
-        if (bw < 101U) {
-          return ((bw % 10) == 0) ? "" : error_message;
-        }
-
-        // Check from [200-400] in steps of 200.
-        if (bw < 401U) {
-          return ((bw % 200) == 0) ? "" : error_message;
-        }
-
-        return error_message;
-      });
+        cell_params.channel_bw_mhz = static_cast<bs_channel_bandwidth>(*bw);
+      },
+      "Channel bandwidth in MHz")
+      ->default_val(static_cast<unsigned>(cell_params.channel_bw_mhz));
   add_option(app, "--nof_antennas_ul", cell_params.nof_antennas_ul, "Number of antennas in uplink")
       ->capture_default_str();
   add_option(app, "--nof_antennas_dl", cell_params.nof_antennas_dl, "Number of antennas in downlink")
@@ -2332,18 +2393,26 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
   add_option(app, "--additional_plmns", cell_params.additional_plmns, "List of PLMNs")
       ->capture_default_str()
       ->check(plmn_is_valid);
-  add_option(app, "--tac", cell_params.tac, "TAC")->capture_default_str()->check([](const std::string& value) {
-    std::stringstream ss(value);
-    unsigned          tac;
-    ss >> tac;
+  add_option_function<std::string>(
+      app,
+      "--tac",
+      [&cell_params](const std::string& value) {
+        auto tac = parse_int<unsigned>(value);
 
-    // Values 0 and 0xfffffe are reserved.
-    if (tac == 0U || tac == 0xfffffeU) {
-      return "TAC values 0 or 0xfffffe are reserved";
-    }
+        report_fatal_error_if_not(tac.has_value(), fmt::format("Invalid --tac value '" + value + "'").c_str());
 
-    return (tac <= 0xffffffU) ? "" : "TAC value out of range";
-  });
+        // Values 0 and 0xfffffe are reserved.
+        if (*tac == 0U || *tac == 0xfffffeU) {
+          report_error("TAC values 0 or 0xfffffe are reserved");
+        }
+
+        if (*tac > 0xffffffU) {
+          report_error("TAC value out of range");
+        }
+
+        cell_params.tac = *tac;
+      },
+      "TAC");
   add_option(app, "--enabled", cell_params.enabled, "Automatically activate the cell on startup")
       ->capture_default_str();
   add_option(app, "--cell_barred", cell_params.cell_barred, "MIB cellBarred: if true, UEs cannot camp on this cell")

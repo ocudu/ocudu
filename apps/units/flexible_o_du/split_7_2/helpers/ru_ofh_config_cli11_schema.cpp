@@ -9,6 +9,7 @@
 #include "ru_ofh_config.h"
 #include "ocudu/support/cli11_utils.h"
 #include "ocudu/support/config_parsers.h"
+#include "ocudu/support/string_parsing_utils.h"
 
 using namespace ocudu;
 
@@ -18,9 +19,9 @@ static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_unit_bas
       app,
       "--ru_bandwidth_MHz",
       [&config](const std::string& value) {
-        unsigned bandwidth;
-        if (CLI::detail::lexical_cast(value, bandwidth)) {
-          config.ru_operating_bw = MHz_to_bs_channel_bandwidth(bandwidth);
+        auto bandwidth = parse_int<unsigned>(value);
+        if (bandwidth.has_value()) {
+          config.ru_operating_bw = MHz_to_bs_channel_bandwidth(*bandwidth);
         } else {
           config.ru_operating_bw.reset();
         }

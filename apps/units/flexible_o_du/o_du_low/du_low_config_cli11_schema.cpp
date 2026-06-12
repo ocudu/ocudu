@@ -8,24 +8,10 @@
 #include "apps/services/worker_manager/cli11_cpu_affinities_parser_helper.h"
 #include "du_low_config.h"
 #include "ocudu/adt/expected.h"
-#include "ocudu/ran/slot_point.h"
-#include "ocudu/ran/slot_point_extended.h"
 #include "ocudu/support/cli11_utils.h"
-#include "ocudu/support/config_parsers.h"
+#include "ocudu/support/string_parsing_utils.h"
 
 using namespace ocudu;
-
-template <typename Integer>
-static expected<Integer, std::string> parse_int(const std::string& value)
-{
-  try {
-    return std::stoi(value);
-  } catch (const std::invalid_argument& e) {
-    return make_unexpected(e.what());
-  } catch (const std::out_of_range& e) {
-    return make_unexpected(e.what());
-  }
-}
 
 static void configure_cli11_log_args(CLI::App& app, du_low_unit_logger_config& log_params)
 {

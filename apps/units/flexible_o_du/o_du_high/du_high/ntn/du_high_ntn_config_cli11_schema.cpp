@@ -3,11 +3,11 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "du_high_ntn_config_cli11_schema.h"
-#include "apps/services/cmdline/cmdline_command_dispatcher_utils.h"
 #include "du_high_unit_cell_ntn_config.h"
 #include "ocudu/ran/ntn.h"
 #include "ocudu/support/cli11_utils.h"
 #include "ocudu/support/config_parsers.h"
+#include "ocudu/support/string_parsing_utils.h"
 #include <regex>
 
 using namespace ocudu;
@@ -99,9 +99,13 @@ static void configure_cli11_sat_switch_with_resync(CLI::App& app, sat_switch_wit
          "--epoch_timestamp",
          [&sat_switch_config](const std::string& value) {
            if (is_number(value)) {
-             auto ms_since_epoch = app_services::parse_int<int64_t>(value).value();
+             const auto ms_since_epoch = parse_int<int64_t>(value);
+
+             report_fatal_error_if_not(ms_since_epoch.has_value(),
+                                       fmt::format("Invalid --epoch_timestamp value '" + value + "'").c_str());
+
              sat_switch_config.epoch_timestamp =
-                 std::chrono::system_clock::time_point(std::chrono::milliseconds(ms_since_epoch));
+                 std::chrono::system_clock::time_point(std::chrono::milliseconds(*ms_since_epoch));
            } else {
              sat_switch_config.epoch_timestamp = parse_timestamp_ms(value).value();
            }
@@ -130,9 +134,13 @@ static void configure_cli11_sat_switch_with_resync(CLI::App& app, sat_switch_wit
          "--t_service_start",
          [&sat_switch_config](const std::string& value) {
            if (is_number(value)) {
-             auto ms_since_epoch = app_services::parse_int<int64_t>(value).value();
+             const auto ms_since_epoch = parse_int<int64_t>(value);
+
+             report_fatal_error_if_not(ms_since_epoch.has_value(),
+                                       fmt::format("Invalid --t_service_start value '" + value + "'").c_str());
+
              sat_switch_config.t_service_start =
-                 std::chrono::system_clock::time_point(std::chrono::milliseconds(ms_since_epoch));
+                 std::chrono::system_clock::time_point(std::chrono::milliseconds(*ms_since_epoch));
            } else {
              sat_switch_config.t_service_start = parse_timestamp_ms(value).value();
            }
@@ -173,8 +181,7 @@ static void configure_cli11_ncells(CLI::App& app, std::vector<neighbor_ntn_cell>
       "--ncells",
       [&ncells](const std::vector<std::string>& values) {
         if (values.size() > MAX_NOF_NTN_NEIGHBORS) {
-          throw CLI::ValidationError(
-              fmt::format("ncells: at most {} neighbor cells are supported", MAX_NOF_NTN_NEIGHBORS));
+          report_error(fmt::format("ncells: at most {} neighbor cells are supported", MAX_NOF_NTN_NEIGHBORS).c_str());
         }
         ncells.resize(values.size());
         for (unsigned i = 0, e = values.size(); i != e; ++i) {
@@ -451,8 +458,12 @@ static void configure_cli11_ntn_args(CLI::App& app, du_high_unit_cell_ntn_config
          [&config](const std::string& value) {
            if (is_number(value)) {
              // Parse Unix timestamp in milliseconds and convert to timepoint.
-             auto ms_since_epoch = app_services::parse_int<int64_t>(value).value();
-             config.t_service    = std::chrono::system_clock::time_point(std::chrono::milliseconds(ms_since_epoch));
+             const auto ms_since_epoch = parse_int<int64_t>(value);
+
+             report_fatal_error_if_not(ms_since_epoch.has_value(),
+                                       fmt::format("Invalid --t_service value '" + value + "'").c_str());
+
+             config.t_service = std::chrono::system_clock::time_point(std::chrono::milliseconds(*ms_since_epoch));
            } else {
              // Parse as UTC time string.
              config.t_service = parse_timestamp_ms(value).value();
@@ -489,8 +500,12 @@ static void configure_cli11_ntn_args(CLI::App& app, du_high_unit_cell_ntn_config
          [&config](const std::string& value) {
            if (is_number(value)) {
              // Parse Unix timestamp in milliseconds and convert to timepoint.
-             auto ms_since_epoch    = app_services::parse_int<int64_t>(value).value();
-             config.epoch_timestamp = std::chrono::system_clock::time_point(std::chrono::milliseconds(ms_since_epoch));
+             const auto ms_since_epoch = parse_int<int64_t>(value);
+
+             report_fatal_error_if_not(ms_since_epoch.has_value(),
+                                       fmt::format("Invalid --epoch_timestamp value '" + value + "'").c_str());
+
+             config.epoch_timestamp = std::chrono::system_clock::time_point(std::chrono::milliseconds(*ms_since_epoch));
            } else {
              // Parse as UTC time string.
              config.epoch_timestamp = parse_timestamp_ms(value).value();

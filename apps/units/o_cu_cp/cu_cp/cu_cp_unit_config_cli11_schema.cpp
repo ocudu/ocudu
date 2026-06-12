@@ -351,9 +351,7 @@ static void configure_cli11_report_args(CLI::App& app, cu_cp_unit_report_config&
          "--t1_thres",
          [&report_params](const std::string& v) {
            auto result = parse_timestamp_ms(v);
-           if (!result) {
-             throw CLI::ValidationError("--t1_thres", result.error());
-           }
+           report_fatal_error_if_not(result, result.error().c_str());
            report_params.t1_thres = result.value();
          },
          "T1: time threshold (Unix ms integer or YYYY-MM-DDTHH:MM:SS[.mmm])")

@@ -1,6 +1,5 @@
 // SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
-// Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #pragma once
 
@@ -8,10 +7,39 @@
 #include "fmt/format.h"
 #include <cerrno>
 #include <charconv>
-#include <cstdlib>
 
 namespace ocudu {
-namespace app_services {
+namespace detail {
+
+/// \brief Parses a floating point value from the given string into a floating type.
+///
+/// Note: Takes std::string as an argument as std::strod requires the array to be null-termitated and std::string_view
+/// does not guarantee it.
+template <typename Float>
+expected<Float, std::string> parse_floating_point(const std::string& value)
+{
+  // Reset a possible previous error.
+  errno                = 0;
+  const char* str_init = value.c_str();
+  char*       str_end  = nullptr;
+
+  Float out_value;
+  if constexpr (std::is_same_v<Float, float>) {
+    out_value = std::strtof(str_init, &str_end);
+  } else if constexpr (std::is_same_v<Float, double>) {
+    out_value = std::strtod(str_init, &str_end);
+  } else {
+    out_value = std::strtold(str_init, &str_end);
+  }
+
+  if (errno == ERANGE || str_end == str_init || *str_end != '\0') {
+    return make_unexpected(fmt::format("Could not convert '{}' to double", value));
+  }
+
+  return out_value;
+}
+
+} // namespace detail
 
 /// Parses integer values from a console command.
 template <typename Integer>
@@ -52,25 +80,16 @@ inline expected<Integer, std::string> parse_unsigned_hex(std::string_view value)
   return make_unexpected(fmt::format("Could not convert '{}' to integer", value));
 }
 
-/// \brief Parses floating point values from a console command and attempts to store them in a double.
-///
-/// Note: using std::string as argument as std::strod requires the array to be null-termitated and std::string_view does
-/// not guarantee it.
+/// Parses a floating point value from the given string into a double.
 inline expected<double, std::string> parse_double(const std::string& value)
 {
-  // Reset a possible previous error.
-  errno                = 0;
-  const char* str_init = value.c_str();
-  char*       str_end  = nullptr;
-
-  double out_value = std::strtod(str_init, &str_end);
-
-  if (errno == ERANGE || str_end == str_init) {
-    return make_unexpected(fmt::format("Could not convert '{}' to double", value));
-  }
-
-  return out_value;
+  return detail::parse_floating_point<double>(value);
 }
 
-} // namespace app_services
+/// Parses a floating point value from the given string into a float.
+inline expected<float, std::string> parse_float(const std::string& value)
+{
+  return detail::parse_floating_point<float>(value);
+}
+
 } // namespace ocudu

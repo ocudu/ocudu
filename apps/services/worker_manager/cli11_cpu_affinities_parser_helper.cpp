@@ -6,20 +6,9 @@
 #include "os_sched_affinity_manager.h"
 #include "ocudu/adt/expected.h"
 #include "ocudu/adt/interval.h"
+#include "ocudu/support/string_parsing_utils.h"
 
 using namespace ocudu;
-
-template <typename Integer>
-static expected<Integer, std::string> parse_int(const std::string& value)
-{
-  try {
-    return std::stoi(value);
-  } catch (const std::invalid_argument& e) {
-    return make_unexpected(e.what());
-  } catch (const std::out_of_range& e) {
-    return make_unexpected(e.what());
-  }
-}
 
 static error_type<std::string> is_valid_cpu_index(unsigned cpu_idx)
 {
