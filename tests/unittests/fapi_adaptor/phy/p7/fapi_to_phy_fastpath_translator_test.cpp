@@ -6,8 +6,11 @@
 #include "../../../phy/upper/downlink_processor_test_doubles.h"
 #include "fapi_to_phy_fastpath_translator.h"
 #include "message_builder_helpers.h"
+#include "phy_to_fapi_time_event_fastpath_translator.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/fapi/common/error_indication.h"
+#include "ocudu/fapi/p7/builders/slot_indication_builder.h"
+#include "ocudu/fapi/p7/p7_slot_indication_notifier.h"
 #include "ocudu/fapi_adaptor/precoding_codebook_generator.h"
 #include "ocudu/fapi_adaptor/uci_part2_correspondence_generator.h"
 #include "ocudu/ocudulog/ocudulog.h"
@@ -16,6 +19,7 @@
 #include "ocudu/phy/upper/uplink_pdu_slot_repository.h"
 #include "ocudu/phy/upper/uplink_pdu_validator.h"
 #include "ocudu/phy/upper/uplink_request_processor.h"
+#include "ocudu/phy/upper/upper_phy_timing_context.h"
 #include "ocudu/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
@@ -662,5 +666,88 @@ TEST_F(fapi_to_phy_translator_fixture, terrestrial_pucch_config_slot_offset_is_z
   ASSERT_EQ(config_slot, msg_slot) << "PUCCH config.slot must equal message slot for terrestrial";
   ASSERT_EQ(config_slot_offset, 0U) << "PUCCH config.slot_offset must be zero for terrestrial";
 
+  ASSERT_FALSE(error_notifier_spy.has_on_error_indication_been_called());
+}
+
+// phy_to_fapi_time_event_fastpath_translator slot-jump tests.
+//
+// Under the FAPI cell lifecycle, the upper PHY operation controller suppresses timing
+// notifications towards the FAPI adaptor while a cell is stopped, so on restart the time
+// translator observes a slot jump of arbitrary size. These tests pin the translator's tolerance
+// of that gap: indications resume at the new slot and requests for the new slot are accepted.
+
+namespace {
+
+/// Spy implementation of fapi::p7_slot_indication_notifier that records every invocation.
+class p7_slot_indication_notifier_spy : public fapi::p7_slot_indication_notifier
+{
+  unsigned call_count = 0;
+
+public:
+  void     on_slot_indication(const fapi::slot_indication& msg) override { ++call_count; }
+  unsigned get_call_count() const { return call_count; }
+};
+
+} // namespace
+
+class phy_to_fapi_time_event_translator_fixture : public fapi_to_phy_translator_fixture
+{
+protected:
+  p7_slot_indication_notifier_spy            slot_notifier_spy;
+  phy_to_fapi_time_event_fastpath_translator time_translator;
+
+public:
+  phy_to_fapi_time_event_translator_fixture() : time_translator(translator)
+  {
+    time_translator.set_p7_slot_indication_notifier(slot_notifier_spy);
+  }
+
+  upper_phy_timing_context make_context(slot_point context_slot) const
+  {
+    upper_phy_timing_context context;
+    context.slot       = slot_point_extended{context_slot};
+    context.time_point = {};
+    return context;
+  }
+};
+
+TEST_F(phy_to_fapi_time_event_translator_fixture, slot_indication_is_delivered_on_every_boundary)
+{
+  ASSERT_EQ(slot_notifier_spy.get_call_count(), 0u);
+  time_translator.on_tti_boundary(make_context(slot));
+  time_translator.on_tti_boundary(make_context(slot + 1));
+  ASSERT_EQ(slot_notifier_spy.get_call_count(), 2u);
+}
+
+TEST_F(phy_to_fapi_time_event_translator_fixture, slot_jump_after_stopped_period_is_tolerated)
+{
+  // Last boundary before the cell was stopped.
+  time_translator.on_tti_boundary(make_context(slot));
+  ASSERT_EQ(slot_notifier_spy.get_call_count(), 1u);
+
+  // The cell restarts 300 slots later: the first boundary after the stopped period carries the
+  // jump. The indication is delivered and no error indication is raised.
+  const slot_point jumped_slot = slot + 300;
+  time_translator.on_tti_boundary(make_context(jumped_slot));
+  ASSERT_EQ(slot_notifier_spy.get_call_count(), 2u);
+  ASSERT_FALSE(error_notifier_spy.has_on_error_indication_been_called());
+}
+
+TEST_F(phy_to_fapi_time_event_translator_fixture, requests_at_the_new_slot_are_accepted_after_a_jump)
+{
+  time_translator.on_tti_boundary(make_context(slot));
+
+  // Restart after a stopped period: the translator's current slot must follow the jump so that
+  // requests for the new slot validate as in-time.
+  const slot_point jumped_slot = slot + 300;
+  time_translator.on_tti_boundary(make_context(jumped_slot));
+
+  fapi::dl_tti_request msg;
+  msg.slot                    = jumped_slot;
+  msg.pdus.emplace_back().pdu = unittest::build_valid_dl_pdcch_pdu();
+
+  translator.send_dl_tti_request(msg);
+
+  ASSERT_TRUE(dl_processor_pool.processor(jumped_slot).has_configure_resource_grid_method_been_called());
   ASSERT_FALSE(error_notifier_spy.has_on_error_indication_been_called());
 }
