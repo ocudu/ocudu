@@ -74,6 +74,11 @@ void e2_entity::stop()
 
   stopped = true;
 
+  // Stop E2 interface, so the procedures exits promptly.
+  while (not task_exec.execute([this]() { e2ap->stop(); })) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+
   // Stop and delete RIC connection.
   while (not task_exec.defer([this, signal_stop = std::move(signal_stop)]() mutable {
     main_ctrl_loop.schedule([this, signal_stop = std::move(signal_stop)](coro_context<async_task<void>>& ctx) mutable {

@@ -14,6 +14,7 @@
 #include "ocudu/e2/e2sm/e2sm.h"
 #include "ocudu/e2/e2sm/e2sm_manager.h"
 #include "ocudu/ran/nr_cgi.h"
+#include "ocudu/support/async/async_event_source.h"
 #include "ocudu/support/async/fifo_async_task_scheduler.h"
 #include <memory>
 
@@ -33,7 +34,7 @@ public:
           task_executor&           task_exec_);
 
   void start() override {}
-  void stop() override {}
+  void stop() override { cancel_event.set(false); }
 
   /// E2 connection manager functions.
   bool                                  handle_e2_tnl_connection_request() override;
@@ -81,6 +82,7 @@ private:
 
   ocudulog::basic_logger&           logger;
   timer_factory                     timers;
+  async_event_source<bool>          cancel_event;
   e2_subscription_proc&             subscription_proc;
   e2sm_manager&                     e2sm_mngr;
   std::unique_ptr<e2_event_manager> events;

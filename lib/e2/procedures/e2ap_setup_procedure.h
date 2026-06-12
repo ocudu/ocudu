@@ -6,6 +6,7 @@
 
 #include "ocudu/e2/e2.h"
 #include "ocudu/e2/e2_event_manager.h"
+#include "ocudu/support/async/async_event_source.h"
 #include "ocudu/support/async/async_task.h"
 
 namespace ocudu {
@@ -16,8 +17,8 @@ public:
   e2ap_setup_procedure(const e2_setup_request_message& request_,
                        e2_message_notifier&            notif_,
                        e2_event_manager&               ev_mng_,
-                       timer_factory                   timers,
-                       ocudulog::basic_logger&         logger);
+                       ocudulog::basic_logger&         logger,
+                       async_event_source<bool>&       cancel_event_);
 
   void operator()(coro_context<async_task<e2_setup_response_message>>& ctx);
 
@@ -37,12 +38,13 @@ private:
   e2_message_notifier&           notifier;
   e2_event_manager&              ev_mng;
   ocudulog::basic_logger&        logger;
+  async_event_source<bool>&      cancel_event;
 
-  unique_timer e2_setup_wait_timer;
-
-  e2ap_transaction     transaction;
-  unsigned             e2_setup_retry_no = 0;
-  std::chrono::seconds time_to_wait{0};
+  async_single_event_observer<bool> wait_observer;
+  e2ap_transaction                  transaction;
+  unsigned                          e2_setup_retry_no = 0;
+  std::chrono::seconds              time_to_wait{0};
+  bool                              timer_expired = false;
 };
 
 } // namespace ocudu

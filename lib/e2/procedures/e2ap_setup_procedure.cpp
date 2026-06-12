@@ -5,7 +5,7 @@
 #include "e2ap_setup_procedure.h"
 #include "../common/e2ap_asn1_utils.h"
 #include "ocudu/asn1/e2ap/e2ap.h"
-#include "ocudu/support/async/async_timer.h"
+#include "ocudu/support/async/async_event_source.h"
 
 using namespace ocudu;
 using namespace asn1::e2ap;
@@ -13,9 +13,9 @@ using namespace asn1::e2ap;
 e2ap_setup_procedure::e2ap_setup_procedure(const e2_setup_request_message& request_,
                                            e2_message_notifier&            notif_,
                                            e2_event_manager&               ev_mng_,
-                                           timer_factory                   timers,
-                                           ocudulog::basic_logger&         logger_) :
-  request(request_), notifier(notif_), ev_mng(ev_mng_), logger(logger_), e2_setup_wait_timer(timers.create_timer())
+                                           ocudulog::basic_logger&         logger_,
+                                           async_event_source<bool>&       cancel_event_) :
+  request(request_), notifier(notif_), ev_mng(ev_mng_), logger(logger_), cancel_event(cancel_event_)
 {
 }
 
@@ -37,8 +37,14 @@ void e2ap_setup_procedure::operator()(coro_context<async_task<e2_setup_response_
       break;
     }
 
-    CORO_AWAIT(
-        async_wait_for(e2_setup_wait_timer, std::chrono::duration_cast<std::chrono::milliseconds>(time_to_wait)));
+    // Wait time_to_wait before retrying. Fires early with false if cancel_event is set externally.
+    wait_observer.subscribe_to(cancel_event,
+                               std::chrono::duration_cast<std::chrono::milliseconds>(time_to_wait),
+                               true /* value set when timer fires */);
+    CORO_AWAIT_VALUE(timer_expired, wait_observer);
+    if (not timer_expired) {
+      break;
+    }
   }
 
   // Forward procedure result to DU manager.

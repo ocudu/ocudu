@@ -21,6 +21,7 @@ e2_impl::e2_impl(ocudulog::basic_logger&  logger_,
                  task_executor&           task_exec_) :
   logger(logger_),
   timers(timers_),
+  cancel_event(timers_),
   subscription_proc(subscription_mngr_),
   e2sm_mngr(e2sm_mngr_),
   events(std::make_unique<e2_event_manager>(timers)),
@@ -52,7 +53,7 @@ async_task<e2_setup_response_message> e2_impl::handle_e2_setup_request(const e2_
       CORO_RETURN(e2_setup_response_message{});
     });
   }
-  return launch_async<e2ap_setup_procedure>(request, *tx_pdu_notifier, *events, timers, logger);
+  return launch_async<e2ap_setup_procedure>(request, *tx_pdu_notifier, *events, logger, cancel_event);
 }
 
 void e2_impl::handle_ric_control_request(const asn1::e2ap::ric_ctrl_request_s msg)
