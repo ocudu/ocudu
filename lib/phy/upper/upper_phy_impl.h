@@ -6,6 +6,7 @@
 
 #include "uplink_request_processor_impl.h"
 #include "upper_phy_error_handler_impl.h"
+#include "upper_phy_operation_controller_impl.h"
 #include "upper_phy_pdu_validators.h"
 #include "upper_phy_rx_results_notifier_wrapper.h"
 #include "upper_phy_rx_symbol_handler_impl.h"
@@ -156,5 +157,7 @@ private:
   upper_phy_timing_handler_impl timing_handler;
   /// Error events handler.
   upper_phy_error_handler_impl error_handler;
+  /// Operation controller. Its timing proxy is interposed in set_timing_notifier().
+  upper_phy_operation_controller_impl operation_controller;
 };
 } // namespace ocudu

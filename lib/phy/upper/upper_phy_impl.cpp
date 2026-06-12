@@ -12,15 +12,6 @@ using namespace ocudu;
 
 namespace {
 
-/// Dummy operation controller.
-class upper_phy_operation_controller_dummy : public upper_phy_operation_controller
-{
-public:
-  void start() override {}
-
-  void stop() override {}
-};
-
 /// Dummy implementation of an upper PHY timing notifier.
 class upper_phy_timing_notifier_dummy : public upper_phy_timing_notifier
 {
@@ -30,8 +21,7 @@ public:
 
 } // namespace
 
-static upper_phy_timing_notifier_dummy      notifier_dummy;
-static upper_phy_operation_controller_dummy controller_dummy;
+static upper_phy_timing_notifier_dummy notifier_dummy;
 
 upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
   logger(ocudulog::fetch_basic_logger("PHY", true)),
@@ -64,7 +54,7 @@ upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
 
 upper_phy_operation_controller& upper_phy_impl::get_operation_controller()
 {
-  return controller_dummy;
+  return operation_controller;
 }
 
 upper_phy_error_handler& upper_phy_impl::get_error_handler()
@@ -114,7 +104,11 @@ void upper_phy_impl::set_error_notifier(upper_phy_error_notifier& notifier)
 
 void upper_phy_impl::set_timing_notifier(ocudu::upper_phy_timing_notifier& notifier)
 {
-  timing_handler.set_upper_phy_notifier(notifier);
+  // Interpose the operation controller's timing proxy between the timing handler and the external
+  // notifier, so the FAPI P5 start and stop procedures control the propagation of slot boundary
+  // events towards higher layers.
+  operation_controller.connect_timing_notifier(notifier);
+  timing_handler.set_upper_phy_notifier(operation_controller.get_timing_notifier_proxy());
 }
 
 void upper_phy_impl::set_rx_results_notifier(upper_phy_rx_results_notifier& notifier)
