@@ -13,10 +13,11 @@ namespace ocudu {
 
 /// Maximum number of UEs supported by DU (implementation-defined).
 enum du_ue_index_t : uint16_t {
-  MIN_DU_UE_INDEX     = 0,
-  MAX_DU_UE_INDEX     = 8191,
-  MAX_NOF_DU_UES      = 8192,
-  INVALID_DU_UE_INDEX = MAX_NOF_DU_UES
+  MIN_DU_UE_INDEX         = 0,
+  MAX_NOF_DU_UES_PER_CELL = 2048,
+  MAX_DU_UE_INDEX         = 8191,
+  MAX_NOF_DU_UES          = 8192,
+  INVALID_DU_UE_INDEX     = MAX_NOF_DU_UES
 };
 
 /// Convert integer to DU UE index type.

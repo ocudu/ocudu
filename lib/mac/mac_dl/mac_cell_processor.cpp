@@ -44,6 +44,7 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
                                                  cell_cfg.scs_common,
                                                  band_helper::get_freq_range(cell_cfg.dl_carrier.band)),
                   cell_cfg.dl_carrier.nof_ant,
+                  cell_cfg.max_harq_buffers,
                   ctrl_exec_),
   // The PDU pool has to be large enough to fit the maximum number of RARs and Paging PDUs per slot for all possible K0
   // values.

@@ -84,8 +84,12 @@ public:
   ///
   /// \param cell_nof_prbs Number of PRBs of the cell.
   /// \param nof_ports Number of ports of the cell.
+  /// \param max_harqs_per_cell Maximum number of HARQs per cell.
   /// \param ctrl_exec Executor to which DL HARQ buffer allocation tasks is dispatched.
-  cell_dl_harq_buffer_pool(unsigned cell_nof_prbs, unsigned nof_ports, task_executor& ctrl_exec);
+  cell_dl_harq_buffer_pool(unsigned       cell_nof_prbs,
+                           unsigned       nof_ports,
+                           unsigned       max_harqs_per_cell,
+                           task_executor& ctrl_exec);
   ~cell_dl_harq_buffer_pool();
 
   /// Called on cell deactivation to clear all available buffers.

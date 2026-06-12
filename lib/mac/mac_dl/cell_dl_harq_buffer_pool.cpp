@@ -25,18 +25,19 @@ static constexpr unsigned DL_HARQ_ALLOC_MINIBATCH = 2;
 
 cell_dl_harq_buffer_pool::cell_dl_harq_buffer_pool(unsigned       cell_nof_prbs,
                                                    unsigned       nof_ports,
+                                                   unsigned       max_harqs_per_cell,
                                                    task_executor& ctrl_exec_) :
   max_pdu_len(derive_max_pdu_length(cell_nof_prbs, nof_ports).value()),
   ctrl_exec(ctrl_exec_),
   logger(ocudulog::fetch_basic_logger("MAC")),
-  cell_buffers(MAX_NOF_DU_UES),
+  cell_buffers(MAX_NOF_DU_UES_PER_CELL),
   pool(std::make_unique<std::array<dl_harq_buffer_storage, MAX_NOF_DU_UES * MAX_NOF_HARQS>>()),
   pool_elem_index(pool->size())
 {
-  buffer_cache.reserve(MAX_NOF_DU_UES * MAX_NOF_HARQS);
+  buffer_cache.reserve(max_harqs_per_cell);
 
   // Preallocate DL HARQ buffers for any UEs that may be added.
-  for (unsigned i = 0; i != DL_HARQ_ALLOC_BATCH; ++i) {
+  for (unsigned i = 0; i != max_harqs_per_cell; ++i) {
     auto* buffer = allocate_from_pool();
     if (not buffer) {
       break;
