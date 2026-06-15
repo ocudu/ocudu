@@ -2545,6 +2545,17 @@ inline void ocudu_simd_bf16_loadu(simd_f_t& even, simd_f_t& odd, const bf16_t* p
 }
 
 #ifdef OCUDU_SIMD_CF_SIZE
+inline simd_cf_t ocudu_simd_load(const cbf16_t* ptr)
+{
+  simd_cf_t ret;
+#ifdef __ARM_NEON
+  ocudu_simd_bf16_load(ret.val[0], ret.val[1], reinterpret_cast<const bf16_t*>(ptr));
+#else // __ARM_NEON
+  ocudu_simd_bf16_loadu(ret.re, ret.im, reinterpret_cast<const bf16_t*>(ptr));
+#endif
+  return ret;
+}
+
 inline simd_cf_t ocudu_simd_loadu(const cbf16_t* ptr)
 {
   simd_cf_t ret;
