@@ -319,6 +319,6 @@ void sched_config_manager::flush_ues_to_rem()
 
   // Clear the UEs to rem.
   std::unique_ptr<ue_configuration> obj;
-  while (ues_to_rem.try_pop(obj)) {
+  for (unsigned remaining_rems = 3; remaining_rems != 0 and ues_to_rem.try_pop(obj); --remaining_rems) {
   }
 }
