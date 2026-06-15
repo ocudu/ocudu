@@ -52,8 +52,15 @@ class fixed_size_memory_block_pool
   /// The number of blocks in batch that the worker can steal from the central cache.
   static constexpr size_t block_batch_size = 32U;
 
-  /// The number of batches of blocks that a worker can store in its own thread for non-contended access.
+  /// The maximum number of batches of blocks that a worker can store in its own thread for non-contended access.
   static constexpr size_t MAX_LOCAL_BATCH_CAPACITY = 64U;
+
+  /// \brief Maximum number of workers expected to access this pool.
+  ///
+  /// This constant is used to derive the number of blocks that can be stored per worker cache.
+  /// \note If the number of active workers exceeds this constant, the worker cache will be too large and there is a
+  /// possibility that all worker caches will take all blocks without the central cache reclaiming them.
+  static constexpr size_t MAX_EXPECTED_WORKERS = 128;
 
   /// A batch of memory blocks that is exchanged in bulk between the central and local caches.
   using memory_block_batch = free_memory_block_list;
@@ -74,9 +81,9 @@ class fixed_size_memory_block_pool
     // Make sure all batches are filled with block_batch_size blocks.
     nof_blocks(ceil(nof_blocks_ / (double)block_batch_size) * block_batch_size),
     // Calculate the maximum number of batches that can be stored in the local cache.
-    max_local_batches(
-        std::max(std::min((size_t)MAX_LOCAL_BATCH_CAPACITY, static_cast<size_t>(nof_blocks / block_batch_size / 32U)),
-                 static_cast<size_t>(2U))),
+    max_local_batches(std::max<size_t>(
+        std::min<size_t>(MAX_LOCAL_BATCH_CAPACITY, nof_blocks / block_batch_size / MAX_EXPECTED_WORKERS),
+        2U)),
     // Allocate the required memory for the given number of segments and segment size.
     allocated_memory(mblock_size * nof_blocks),
     // Pre-reserve space in the central cache to hold all batches and avoid reallocations.
