@@ -18,11 +18,6 @@ using namespace odu;
 /// and the timeout of 60msec specified in TS 38.331, 5.3.8.3 for the UE to ACK the RRC container.
 static constexpr std::chrono::milliseconds rrc_container_delivery_timeout{120};
 
-/// Grace period to let the SRB RLC flush a pending STATUS PDU before tearing down the UE when no RRC container is
-/// provided (e.g. switch-off detach). Otherwise the UE's t-PollRetransmit expires, triggering spurious SRs and a RACH
-/// with a C-RNTI MAC CE for an already-removed context.
-static constexpr std::chrono::milliseconds srb_flush_grace_period{20};
-
 f1ap_du_ue_context_release_procedure::f1ap_du_ue_context_release_procedure(
     const asn1::f1ap::ue_context_release_cmd_s& msg_,
     f1ap_du_ue_manager&                         ues,
@@ -67,10 +62,6 @@ void f1ap_du_ue_context_release_procedure::operator()(coro_context<async_task<vo
           f1ap_log_prefix{ue.context, name()},
           (rrc_container_delivery_timeout + cell_ctx.ntn_link_rtt).count());
     }
-  } else {
-    // No RRC container is provided (e.g. switch-off detach). The bearers are still active at this point, so give the
-    // SRB RLC a brief window to flush any pending STATUS PDU (ACK) for the last received uplink before removing the UE.
-    CORO_AWAIT(async_wait_for(timers.create_timer(), srb_flush_grace_period));
   }
 
   // Remove UE from DU manager.
