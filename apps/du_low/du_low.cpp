@@ -190,9 +190,9 @@ int main(int argc, char** argv)
     YAML::Node node;
     fill_du_low_appconfig_in_yaml_schema(node, du_low_cfg);
     o_du_app_unit->dump_config(node);
-    config_logger.debug("Input configuration (all values): \n{}", YAML::Dump(node));
+    config_logger.debug("DU-low input configuration (all values): \n{}", YAML::Dump(node));
   } else {
-    config_logger.info("Input configuration (only non-default values): \n{}", app.config_to_str(false, false));
+    config_logger.info("DU-low input configuration (only non-default values): \n{}", app.config_to_str(false, false));
   }
 
   app_services::application_tracer app_tracer;

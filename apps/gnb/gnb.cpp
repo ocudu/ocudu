@@ -310,9 +310,9 @@ int main(int argc, char** argv)
     o_cu_cp_app_unit->dump_config(node);
     o_cu_up_app_unit->dump_config(node);
     o_du_app_unit->dump_config(node);
-    config_logger.debug("Input configuration (all values): \n{}", YAML::Dump(node));
+    config_logger.debug("gNB input configuration (all values): \n{}", YAML::Dump(node));
   } else {
-    config_logger.info("Input configuration (only non-default values): \n{}", app.config_to_str(false, false));
+    config_logger.info("gNB input configuration (only non-default values): \n{}", app.config_to_str(false, false));
   }
 
   app_services::application_tracer app_tracer;

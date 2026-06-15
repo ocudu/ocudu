@@ -217,9 +217,9 @@ int main(int argc, char** argv)
     YAML::Node node;
     fill_du_appconfig_in_yaml_schema(node, du_cfg);
     o_du_app_unit->dump_config(node);
-    config_logger.debug("Input configuration (all values): \n{}", YAML::Dump(node));
+    config_logger.debug("DU input configuration (all values): \n{}", YAML::Dump(node));
   } else {
-    config_logger.info("Input configuration (only non-default values): \n{}", app.config_to_str(false, false));
+    config_logger.info("DU input configuration (only non-default values): \n{}", app.config_to_str(false, false));
   }
 
   ocudulog::basic_logger&          du_logger = ocudulog::fetch_basic_logger("DU");
