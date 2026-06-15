@@ -102,7 +102,8 @@ void cell_metrics_handler::handle_ue_deletion(du_ue_index_t ue_index)
     return;
   }
   if (ues.contains(ue_index)) {
-    rnti_t rnti = ues[ue_index].rnti;
+    ue_metric_context& ue   = ues[ue_index];
+    const rnti_t       rnti = ue.rnti;
 
     if (pending_events.size() < pending_events.capacity()) {
       pending_events.push_back(
@@ -111,8 +112,11 @@ void cell_metrics_handler::handle_ue_deletion(du_ue_index_t ue_index)
       data.filtered_events_counter++;
     }
 
+    // Keep the UE context until the next periodic report so that the metrics accumulated since the last report (e.g.
+    // CRC KOs) are reported instead of discarded on removal. The RNTI lookup is freed immediately so that it can be
+    // reused by a new UE.
     rnti_to_ue_index_lookup.erase(rnti);
-    ues.erase(ue_index);
+    ue.pending_removal = true;
   }
 }
 
@@ -373,8 +377,17 @@ void cell_metrics_handler::report_metrics()
 
   const std::chrono::milliseconds report_period{data.nof_slots / last_slot_tx.nof_slots_per_subframe()};
   for (ue_metric_context& ue : ues) {
-    // Compute statistics of the UE metrics and push the result to the report.
+    // Compute statistics of the UE metrics and push the result to the report. This includes the final report of UEs
+    // that were removed during this report period.
     next_report->ue_metrics.push_back(ue.compute_report(report_period, nof_slots_per_sf));
+  }
+  // Now that their final metrics have been reported, erase the UEs that were removed during this report period.
+  for (auto it = ues.begin(); it != ues.end();) {
+    if (it->pending_removal) {
+      it = ues.erase(it);
+    } else {
+      ++it;
+    }
   }
   next_report->events.swap(pending_events);
 

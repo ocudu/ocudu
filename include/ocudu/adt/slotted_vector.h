@@ -90,7 +90,7 @@ private:
   template <typename U>
   friend class slotted_vector_iter_impl;
   template <typename T>
-  friend class slotted_vector;
+  friend class ocudu::slotted_vector;
 
   VectorData*                vec          = nullptr;
   const std::vector<size_t>* index_mapper = nullptr;
@@ -238,8 +238,16 @@ public:
   }
 
   /// Erase object pointed by the given iterator. Iterator must point to valid element.
-  /// \param it container iterator
-  void erase(iterator it) noexcept { erase(it.idx); }
+  /// \param it container iterator.
+  /// \return Iterator pointing to the element that followed the erased one (or end() if it was the last).
+  iterator erase(iterator it) noexcept
+  {
+    erase(it.idx);
+    // erase() only marks index_mapper[it.idx] as absent (and may trim trailing absent positions); the iteration
+    // order over indexes is unaffected. Re-seat the iterator at the same index so it skips forward to the next
+    // present element, or to end() if the position was trimmed away.
+    return iterator{objects, index_mapper, std::min(it.idx, index_mapper.size())};
+  }
 
   /// Clear all elements of the container, while maintaining its capacity.
   void clear() noexcept
@@ -336,8 +344,9 @@ public:
   bool erase(key_type id) noexcept { return sl_vec.erase(to_index(id)); }
 
   /// Erase object pointed by the given iterator. Iterator must point to valid element
-  /// \param it container iterator
-  void erase(iterator it) noexcept { sl_vec.erase(it); }
+  /// \param it container iterator.
+  /// \return Iterator pointing to the element that followed the erased one (or end() if it was the last).
+  iterator erase(iterator it) noexcept { return sl_vec.erase(it); }
 
   /// Clear all elements of the container
   void clear() noexcept { sl_vec.clear(); }

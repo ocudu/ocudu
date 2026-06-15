@@ -247,3 +247,50 @@ TEST(slotted_array, lower_bound_beyond_max_returns_end)
   ASSERT_EQ(vec.lower_bound(6), vec.end());
   ASSERT_EQ(vec.lower_bound(21), vec.end());
 }
+
+TEST(slotted_vector, erase_by_iterator_returns_iterator_to_next_element)
+{
+  slotted_vector<int> vec;
+  vec.emplace(0, 10);
+  vec.emplace(1, 20);
+  vec.emplace(2, 30);
+
+  auto it   = ++vec.begin();
+  auto next = vec.erase(it);
+  ASSERT_EQ(*next, 30);
+  ASSERT_FALSE(vec.contains(1));
+}
+
+TEST(slotted_vector, erase_last_element_by_iterator_returns_end)
+{
+  slotted_vector<int> vec;
+  vec.emplace(0, 10);
+  vec.emplace(1, 20);
+
+  // Erase the highest index, which trims the index_mapper. The returned iterator must compare equal to end().
+  auto it   = ++vec.begin();
+  auto next = vec.erase(it);
+  ASSERT_EQ(next, vec.end());
+}
+
+TEST(slotted_vector, erase_matching_elements_during_iteration_keeps_remaining)
+{
+  slotted_vector<int> vec;
+  for (int i = 0; i < 6; ++i) {
+    vec.emplace(i, i);
+  }
+
+  // Remove every even value while iterating. erase() internally swaps with the last element, but iteration order is
+  // by index, so each surviving element is visited exactly once.
+  for (auto it = vec.begin(); it != vec.end();) {
+    if (*it % 2 == 0) {
+      it = vec.erase(it);
+    } else {
+      ++it;
+    }
+  }
+
+  ASSERT_EQ(vec.size(), 3);
+  std::vector<int> remaining(vec.begin(), vec.end());
+  ASSERT_EQ(remaining, (std::vector<int>{1, 3, 5}));
+}

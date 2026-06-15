@@ -95,10 +95,13 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
     // with std::optional.
     ue_metric_context() {}
 
-    pci_t                                  pci;
-    du_ue_index_t                          ue_index;
-    rnti_t                                 rnti;
-    unsigned                               last_bsr = 0;
+    pci_t         pci;
+    du_ue_index_t ue_index;
+    rnti_t        rnti;
+    /// Set when the UE has been removed. The context is kept until the next periodic report so that metrics accumulated
+    /// since the last report (e.g. CRC KOs) are reported instead of discarded, and is erased right after.
+    bool                                   pending_removal = false;
+    unsigned                               last_bsr        = 0;
     std::optional<int>                     last_phr;
     std::array<unsigned, MAX_NOF_RB_LCIDS> last_dl_bs{0};
     std::optional<float>                   last_dl_olla;

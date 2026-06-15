@@ -303,6 +303,46 @@ TEST_F(scheduler_metrics_handler_tester, compute_latency_metric)
   }
 }
 
+TEST_F(scheduler_metrics_handler_tester, when_ue_is_removed_mid_period_then_its_last_metrics_are_still_reported)
+{
+  unsigned nof_acks  = test_rng::uniform_int<unsigned>(1, 100);
+  unsigned nof_nacks = test_rng::uniform_int<unsigned>(1, 100);
+
+  ul_crc_pdu_indication crc_pdu;
+  crc_pdu.rnti     = to_rnti(0x4601);
+  crc_pdu.ue_index = test_ue_index;
+
+  crc_pdu.tb_crc_success = true;
+  for (unsigned i = 0; i != nof_acks; ++i) {
+    metrics.handle_crc_indication(next_sl_tx.without_hyper_sfn() - 1, crc_pdu, units::bytes{1});
+  }
+  crc_pdu.tb_crc_success = false;
+  for (unsigned i = 0; i != nof_nacks; ++i) {
+    metrics.handle_crc_indication(next_sl_tx.without_hyper_sfn() - 1, crc_pdu, units::bytes{1});
+  }
+
+  // Remove the UE before the periodic report is generated.
+  metrics.handle_ue_deletion(test_ue_index);
+
+  // The next report must still carry the metrics accumulated by the removed UE.
+  this->get_next_metric();
+  ASSERT_EQ(metrics_notif.last_report.ue_metrics.size(), 1);
+  scheduler_ue_metrics ue_metrics = metrics_notif.last_report.ue_metrics[0];
+  ASSERT_EQ(ue_metrics.rnti, to_rnti(0x4601));
+  ASSERT_EQ(ue_metrics.ul_nof_ok, nof_acks);
+  ASSERT_EQ(ue_metrics.ul_nof_nok, nof_nacks);
+
+  // The removed UE must not be reported again on subsequent reports.
+  metrics_notif.last_report = {};
+  sched_result sched_res;
+  sched_res.dl.nof_dl_symbols = 14;
+  sched_res.ul.nof_ul_symbols = 14;
+  for (unsigned i = 0; i != report_period.count() * next_sl_tx.nof_slots_per_subframe(); ++i) {
+    run_slot(sched_res);
+  }
+  ASSERT_TRUE(metrics_notif.last_report.ue_metrics.empty());
+}
+
 TEST_F(scheduler_metrics_handler_tester, compute_error_indications)
 {
   metrics.handle_error_indication();
