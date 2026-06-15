@@ -14,8 +14,15 @@ rrc_ue_context_t::rrc_ue_context_t(const cu_cp_ue_index_t                 ue_ind
                                    const rrc_cell_context&                cell_,
                                    const rrc_ue_cfg_t&                    cfg_,
                                    std::optional<rrc_ue_transfer_context> rrc_context_,
+                                   rrc_ue_srb_pdcp_manager&               pdcp_manager_,
                                    rrc_ue_logger&                         logger_) :
-  ue_index(ue_index_), c_rnti(c_rnti_), cell(cell_), cfg(cfg_), transfer_context(rrc_context_), logger(logger_)
+  ue_index(ue_index_),
+  c_rnti(c_rnti_),
+  cell(cell_),
+  cfg(cfg_),
+  pdcp_manager(pdcp_manager_),
+  transfer_context(rrc_context_),
+  logger(logger_)
 {
   if (transfer_context.has_value()) {
     // Handle handover preparation info.

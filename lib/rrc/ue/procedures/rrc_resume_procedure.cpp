@@ -179,8 +179,8 @@ void rrc_resume_procedure::update_security_keys()
 void rrc_resume_procedure::reestablish_srbs()
 {
   security::sec_128_as_config sec_cfg = cu_cp_ue_notifier.get_rrc_128_as_config();
-  for (srb_id_t srb_id : context.pdcp_notifier->get_srb_ids()) {
-    context.pdcp_notifier->reestablish(srb_id, sec_cfg);
+  for (srb_id_t srb_id : context.pdcp_manager.get_srb_ids()) {
+    context.get_pdcp_notifier(srb_id)->reestablish(sec_cfg);
   }
 }
 
@@ -201,7 +201,7 @@ void rrc_resume_procedure::send_pending_dl_nas(byte_buffer& nas_pdu)
       dl_dcch_msg.msg.set_c1().set_dl_info_transfer().crit_exts.set_dl_info_transfer();
   dl_info_transfer.ded_nas_msg = nas_pdu.copy();
 
-  if (context.pdcp_notifier->has_srb(srb_id_t::srb2)) {
+  if (context.pdcp_manager.has_srb(srb_id_t::srb2)) {
     rrc_ue_resume_notifier.on_new_dl_dcch(srb_id_t::srb2, dl_dcch_msg);
   } else {
     rrc_ue_resume_notifier.on_new_dl_dcch(srb_id_t::srb1, dl_dcch_msg);

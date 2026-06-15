@@ -119,12 +119,43 @@ private:
 // Per-SRB PDCP entity bundle
 // ---------------------------------------------------------------------------
 
-struct srb_pdcp_entry {
+/// Owns one SRB's PDCP entity and implements the per-SRB notifier interface consumed by RRC.
+struct srb_pdcp_entry : public rrc_ue_pdcp_notifier {
   inline_task_executor         inline_executor;
   std::unique_ptr<pdcp_entity> entity;
   pdcp_srb_tx_adapter          pdcp_tx_notifier;
   pdcp_srb_tx_control_adapter  rrc_tx_control_notifier;
   pdcp_srb_rx_adapter          rrc_rx_data_notifier;
+
+  pdcp_tx_result on_new_pdu(byte_buffer pdu) override
+  {
+    entity->get_tx_upper_data_interface().handle_sdu(std::move(pdu));
+    byte_buffer packed = pdcp_tx_notifier.get_pdcp_pdu();
+    if (packed.empty()) {
+      return pdcp_tx_result{rrc_tx_control_notifier.get_failure_cause()};
+    }
+    return pdcp_tx_result{std::move(packed)};
+  }
+
+  void enable_tx_security(security::integrity_enabled int_enabled,
+                          security::ciphering_enabled ciph_enabled,
+                          security::sec_128_as_config sec_cfg) override
+  {
+    entity->get_tx_upper_control_interface().configure_security(sec_cfg, int_enabled, ciph_enabled);
+  }
+
+  void enable_rx_security(security::integrity_enabled int_enabled,
+                          security::ciphering_enabled ciph_enabled,
+                          security::sec_128_as_config sec_cfg) override
+  {
+    entity->get_rx_upper_control_interface().configure_security(sec_cfg, int_enabled, ciph_enabled);
+  }
+
+  void reestablish(security::sec_128_as_config sec_cfg) override
+  {
+    entity->get_tx_upper_control_interface().reestablish(sec_cfg);
+    entity->get_rx_upper_control_interface().reestablish(sec_cfg);
+  }
 };
 
 // ---------------------------------------------------------------------------
@@ -132,7 +163,7 @@ struct srb_pdcp_entry {
 // ---------------------------------------------------------------------------
 
 /// Owns and manages PDCP entities for a single UE's SRBs (SRB1 and SRB2).
-class srb_pdcp_ue_context : public rrc_ue_pdcp_notifier
+class srb_pdcp_ue_context : public rrc_ue_srb_pdcp_manager
 {
 public:
   srb_pdcp_ue_context(cu_cp_ue_index_t ue_index_,
@@ -182,7 +213,7 @@ public:
     }
   }
 
-  // rrc_ue_pdcp_notifier
+  // rrc_ue_srb_pdcp_manager
 
   bool has_srb(srb_id_t srb_id) const override
   {
@@ -190,7 +221,7 @@ public:
     return idx < MAX_NOF_SRBS && srbs[idx].has_value();
   }
 
-  void create_srb(srb_id_t srb_id) override
+  rrc_ue_pdcp_notifier& create_srb(srb_id_t srb_id) override
   {
     auto& entry = srbs[srb_id_to_uint(srb_id)].emplace();
 
@@ -212,42 +243,7 @@ public:
     msg.max_nof_crypto_workers = max_nof_crypto_workers;
 
     entry.entity = create_pdcp_entity(msg);
-  }
-
-  pdcp_tx_result encrypt_pdu(srb_id_t srb_id, byte_buffer pdu) override
-  {
-    srb_pdcp_entry& entry = *srbs[srb_id_to_uint(srb_id)];
-    entry.entity->get_tx_upper_data_interface().handle_sdu(std::move(pdu));
-
-    byte_buffer packed = entry.pdcp_tx_notifier.get_pdcp_pdu();
-    if (packed.empty()) {
-      return pdcp_tx_result{entry.rrc_tx_control_notifier.get_failure_cause()};
-    }
-    return pdcp_tx_result{std::move(packed)};
-  }
-
-  void enable_tx_security(srb_id_t                    srb_id,
-                          security::integrity_enabled int_enabled,
-                          security::ciphering_enabled ciph_enabled,
-                          security::sec_128_as_config sec_cfg) override
-  {
-    srbs[srb_id_to_uint(srb_id)]->entity->get_tx_upper_control_interface().configure_security(
-        sec_cfg, int_enabled, ciph_enabled);
-  }
-
-  void enable_rx_security(srb_id_t                    srb_id,
-                          security::integrity_enabled int_enabled,
-                          security::ciphering_enabled ciph_enabled,
-                          security::sec_128_as_config sec_cfg) override
-  {
-    srbs[srb_id_to_uint(srb_id)]->entity->get_rx_upper_control_interface().configure_security(
-        sec_cfg, int_enabled, ciph_enabled);
-  }
-
-  void reestablish(srb_id_t srb_id, security::sec_128_as_config sec_cfg) override
-  {
-    srbs[srb_id_to_uint(srb_id)]->entity->get_tx_upper_control_interface().reestablish(sec_cfg);
-    srbs[srb_id_to_uint(srb_id)]->entity->get_rx_upper_control_interface().reestablish(sec_cfg);
+    return entry;
   }
 
   static_vector<srb_id_t, MAX_NOF_SRBS> get_srb_ids() const override

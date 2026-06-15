@@ -209,7 +209,7 @@ bool du_processor_impl::create_rrc_ue(cu_cp_ue&                              ue,
   rrc_ue_create_msg.rrc_ue_cu_cp_notifier = &ue.get_rrc_ue_context_update_notifier();
   rrc_ue_create_msg.measurement_notifier  = &ue.get_rrc_ue_measurement_notifier();
   rrc_ue_create_msg.cu_cp_ue_notifier     = &ue.get_rrc_ue_cu_cp_ue_notifier();
-  rrc_ue_create_msg.pdcp_notifier         = &srb_pdcp_contexts.at(ue_index);
+  rrc_ue_create_msg.pdcp_manager          = &srb_pdcp_contexts.at(ue_index);
   rrc_ue_create_msg.du_to_cu_container    = std::move(du_to_cu_rrc_container);
   rrc_ue_create_msg.rrc_context           = std::move(rrc_context);
   auto* rrc_ue                            = rrc->add_ue(rrc_ue_create_msg);

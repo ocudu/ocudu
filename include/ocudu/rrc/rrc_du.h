@@ -55,7 +55,7 @@ struct rrc_ue_creation_message {
   rrc_ue_context_update_notifier*        rrc_ue_cu_cp_notifier;
   rrc_ue_measurement_notifier*           measurement_notifier;
   rrc_ue_cu_cp_ue_notifier*              cu_cp_ue_notifier;
-  rrc_ue_pdcp_notifier*                  pdcp_notifier;
+  rrc_ue_srb_pdcp_manager*               pdcp_manager;
   byte_buffer                            du_to_cu_container;
   std::optional<rrc_ue_transfer_context> rrc_context;
 };

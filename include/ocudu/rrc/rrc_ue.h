@@ -600,31 +600,36 @@ struct pdcp_tx_result {
   byte_buffer  pop_pdu() { return std::move(std::get<byte_buffer>(result)); }
 };
 
-/// Interface through which the RRC UE drives the per-UE SRB PDCP entities that live outside of RRC.
+/// Per-SRB PDCP notifier.
 class rrc_ue_pdcp_notifier
 {
 public:
   virtual ~rrc_ue_pdcp_notifier() = default;
 
+  /// Pass a plaintext RRC PDU to PDCP for downlink transmission on this SRB.
+  virtual pdcp_tx_result on_new_pdu(byte_buffer pdu) = 0;
+
+  virtual void enable_tx_security(security::integrity_enabled int_enabled,
+                                  security::ciphering_enabled ciph_enabled,
+                                  security::sec_128_as_config sec_cfg) = 0;
+
+  virtual void enable_rx_security(security::integrity_enabled int_enabled,
+                                  security::ciphering_enabled ciph_enabled,
+                                  security::sec_128_as_config sec_cfg) = 0;
+
+  virtual void reestablish(security::sec_128_as_config sec_cfg) = 0;
+};
+
+/// Per-UE interface to create and track SRB PDCP entities.
+class rrc_ue_srb_pdcp_manager
+{
+public:
+  virtual ~rrc_ue_srb_pdcp_manager() = default;
+
+  /// Create a PDCP entity for the given SRB and return its SRB notifier. Security is configured separately.
+  virtual rrc_ue_pdcp_notifier& create_srb(srb_id_t srb_id) = 0;
+
   virtual bool has_srb(srb_id_t srb_id) const = 0;
-
-  /// Create a PDCP entity for the given SRB. Security is configured separately.
-  virtual void create_srb(srb_id_t srb_id) = 0;
-
-  /// Encrypt a plaintext RRC PDU for downlink transmission.
-  virtual pdcp_tx_result encrypt_pdu(srb_id_t srb_id, byte_buffer pdu) = 0;
-
-  virtual void enable_tx_security(srb_id_t                    srb_id,
-                                  security::integrity_enabled int_enabled,
-                                  security::ciphering_enabled ciph_enabled,
-                                  security::sec_128_as_config sec_cfg) = 0;
-
-  virtual void enable_rx_security(srb_id_t                    srb_id,
-                                  security::integrity_enabled int_enabled,
-                                  security::ciphering_enabled ciph_enabled,
-                                  security::sec_128_as_config sec_cfg) = 0;
-
-  virtual void reestablish(srb_id_t srb_id, security::sec_128_as_config sec_cfg) = 0;
 
   virtual static_vector<srb_id_t, MAX_NOF_SRBS> get_srb_ids() const = 0;
 };

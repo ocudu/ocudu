@@ -17,7 +17,7 @@ rrc_ue_impl::rrc_ue_impl(rrc_pdu_f1ap_notifier&                 f1ap_pdu_notifie
                          rrc_ue_measurement_notifier&           measurement_notifier_,
                          rrc_ue_cu_cp_ue_notifier&              cu_cp_ue_notifier_,
                          rrc_ue_event_notifier&                 metrics_notifier_,
-                         rrc_ue_pdcp_notifier&                  pdcp_notifier_,
+                         rrc_ue_srb_pdcp_manager&               pdcp_manager_,
                          const cu_cp_ue_index_t                 ue_index_,
                          const rnti_t                           c_rnti_,
                          const rrc_cell_context&                cell_,
@@ -25,7 +25,7 @@ rrc_ue_impl::rrc_ue_impl(rrc_pdu_f1ap_notifier&                 f1ap_pdu_notifie
                          const byte_buffer&                     du_to_cu_container_,
                          std::optional<rrc_ue_transfer_context> rrc_context) :
   logger("RRC", {ue_index_, c_rnti_}),
-  context(ue_index_, c_rnti_, cell_, cfg_, rrc_context, logger),
+  context(ue_index_, c_rnti_, cell_, cfg_, rrc_context, pdcp_manager_, logger),
   f1ap_pdu_notifier(f1ap_pdu_notifier_),
   ngap_notifier(ngap_notifier_),
   cu_cp_notifier(cu_cp_notifier_),
@@ -35,7 +35,6 @@ rrc_ue_impl::rrc_ue_impl(rrc_pdu_f1ap_notifier&                 f1ap_pdu_notifie
   du_to_cu_container(du_to_cu_container_),
   event_mng(std::make_unique<rrc_ue_event_manager>(cu_cp_ue_notifier.get_timer_factory()))
 {
-  context.pdcp_notifier = &pdcp_notifier_;
   ocudu_assert(context.cell.bands.empty() == false, "Band must be present in RRC cell configuration.");
 
   // Update security context and keys.
@@ -70,14 +69,13 @@ void rrc_ue_impl::create_srb(const srb_creation_message& msg)
   }
 
   if (msg.srb_id <= srb_id_t::srb2) {
-    context.pdcp_notifier->create_srb(msg.srb_id);
+    rrc_ue_pdcp_notifier& notifier                     = context.pdcp_manager.create_srb(msg.srb_id);
+    context.pdcp_notifiers[srb_id_to_uint(msg.srb_id)] = &notifier;
 
     if (msg.srb_id == srb_id_t::srb2 || msg.enable_security) {
       security::sec_128_as_config sec_cfg = security::truncate_config(cu_cp_ue_notifier.get_rrc_as_config());
-      context.pdcp_notifier->enable_tx_security(
-          msg.srb_id, security::integrity_enabled::on, security::ciphering_enabled::on, sec_cfg);
-      context.pdcp_notifier->enable_rx_security(
-          msg.srb_id, security::integrity_enabled::on, security::ciphering_enabled::on, sec_cfg);
+      notifier.enable_tx_security(security::integrity_enabled::on, security::ciphering_enabled::on, sec_cfg);
+      notifier.enable_rx_security(security::integrity_enabled::on, security::ciphering_enabled::on, sec_cfg);
     }
   } else {
     logger.log_error("Couldn't create {}", msg.srb_id);
@@ -86,7 +84,7 @@ void rrc_ue_impl::create_srb(const srb_creation_message& msg)
 
 static_vector<srb_id_t, MAX_NOF_SRBS> rrc_ue_impl::get_srbs()
 {
-  return context.pdcp_notifier->get_srb_ids();
+  return context.pdcp_manager.get_srb_ids();
 }
 
 rrc_state rrc_ue_impl::get_rrc_state() const
@@ -133,17 +131,16 @@ void rrc_ue_impl::on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_ms
 
 void rrc_ue_impl::on_new_as_security_context(bool security_mode_active)
 {
-  ocudu_sanity_check(context.pdcp_notifier->has_srb(srb_id_t::srb1),
+  ocudu_sanity_check(context.pdcp_manager.has_srb(srb_id_t::srb1),
                      "Attempted to configure security, but there is no interface to PDCP");
 
   security::sec_128_as_config sec_cfg = cu_cp_ue_notifier.get_rrc_128_as_config();
-  context.pdcp_notifier->enable_rx_security(srb_id_t::srb1,
-                                            security_mode_active ? security::integrity_enabled::on
-                                                                 : security::integrity_enabled::smc_transition,
-                                            security::ciphering_enabled::off,
-                                            sec_cfg);
-  context.pdcp_notifier->enable_tx_security(
-      srb_id_t::srb1, security::integrity_enabled::on, security::ciphering_enabled::off, sec_cfg);
+  rrc_ue_pdcp_notifier&       srb1    = *context.get_pdcp_notifier(srb_id_t::srb1);
+  srb1.enable_rx_security(security_mode_active ? security::integrity_enabled::on
+                                               : security::integrity_enabled::smc_transition,
+                          security::ciphering_enabled::off,
+                          sec_cfg);
+  srb1.enable_tx_security(security::integrity_enabled::on, security::ciphering_enabled::off, sec_cfg);
 }
 
 byte_buffer rrc_ue_impl::get_packed_handover_preparation_message()
