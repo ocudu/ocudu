@@ -17,7 +17,6 @@ stages:
   - build
   - compose
   - publish
-  - sign-sbom
 
 .gnb-docker:
   - changes: &container_changes

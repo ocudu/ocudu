@@ -133,6 +133,9 @@ stages:
     reports:
       dotenv: build.env
   needs: []
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
+    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
 
 # ---------------------------------------------------------------------------
 # Build jobs
@@ -142,46 +145,28 @@ build-rh:gnb:
   extends:
     - .image-build-rh
     - .matrix-image-rh-gnb
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
-    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
 
 build-rh:du:
   extends:
     - .image-build-rh
     - .matrix-image-rh-du
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
-    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
 
 build-rh:cu:
   extends:
     - .image-build-rh
     - .matrix-image-rh-cu
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
-    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
 
 build-rh:cu-cp:
   extends:
     - .image-build-rh
     - .matrix-image-rh-cu-cp
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
-    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
 
 build-rh:cu-up:
   extends:
     - .image-build-rh
     - .matrix-image-rh-cu-up
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
-    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
 
 build-rh:ru-emulator:
   extends:
     - .image-build-rh
     - .matrix-image-rh-ru-emulator
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
-    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/

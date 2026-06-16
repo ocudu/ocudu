@@ -7,8 +7,6 @@
 #          or manual job trigger.
 # Stages:
 #   build     — parallel matrix jobs, one per component × driver × OS × arch/SIMD
-#   sign-sbom — grype CVE gate per published image (cosign sign + SPDX already
-#               handled by .docker-builder when MODE=publish)
 #
 # To add a driver, OS, component, or SIMD variant: edit the matching
 # .matrix-* template in .gitlab/ci/docker/image-matrix.yml.
@@ -127,6 +125,9 @@ stages:
   artifacts:
     reports:
       dotenv: build.env
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
+    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
 
 # ---------------------------------------------------------------------------
 # Build jobs
@@ -136,46 +137,28 @@ build-and-publish:gnb:
   extends:
     - .image-build
     - .matrix-image-gnb
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
-    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
 
 build-and-publish:du:
   extends:
     - .image-build
     - .matrix-image-du
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
-    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
 
 build-and-publish:cu:
   extends:
     - .image-build
     - .matrix-image-cu
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
-    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
 
 build-and-publish:cu-cp:
   extends:
     - .image-build
     - .matrix-image-cu-cp
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
-    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
 
 build-and-publish:cu-up:
   extends:
     - .image-build
     - .matrix-image-cu-up
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
-    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
 
 build-and-publish:ru-emulator:
   extends:
     - .image-build
     - .matrix-image-ru-emulator
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
-    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
