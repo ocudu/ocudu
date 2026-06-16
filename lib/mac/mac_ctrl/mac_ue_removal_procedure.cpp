@@ -4,6 +4,7 @@
 
 #include "mac_ue_removal_procedure.h"
 #include "proc_logger.h"
+#include "ocudu/support/async/when_all.h"
 
 using namespace ocudu;
 
@@ -18,11 +19,9 @@ void mac_ue_removal_procedure::operator()(coro_context<async_task<mac_ue_delete_
   // doesn't allocate UEs after being removed).
   CORO_AWAIT(sched_configurator.handle_ue_removal_request(req));
 
-  // > Remove UE and associated DL channels from the MAC DL.
-  CORO_AWAIT(dl_mac.remove_ue(req));
-
-  // > Remove UE associated UL channels from the MAC UL.
-  CORO_AWAIT(ul_mac.remove_ue(req));
+  // > Remove the UE from the MAC DL and MAC UL concurrently. They run on independent executors (DL cell executor and
+  // UL PDU executor) over disjoint state, so racing them halves the per-UE round-trips back to the CTRL executor.
+  CORO_AWAIT(when_all(create_ul_dl_rem_tasks()));
 
   // > Enqueue UE deletion
   ctrl_mac.remove_ue(req.ue_index);
@@ -31,4 +30,13 @@ void mac_ue_removal_procedure::operator()(coro_context<async_task<mac_ue_delete_
 
   // 4. Signal end of procedure and pass response
   CORO_RETURN(mac_ue_delete_response{true});
+}
+
+std::vector<async_task<void>> mac_ue_removal_procedure::create_ul_dl_rem_tasks()
+{
+  std::vector<async_task<void>> tasks;
+  tasks.reserve(2);
+  tasks.push_back(ul_mac.remove_ue(req));
+  tasks.push_back(dl_mac.remove_ue(req));
+  return tasks;
 }

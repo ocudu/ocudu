@@ -35,6 +35,10 @@ public:
   static const char* name() { return "MAC UE Removal"; }
 
 private:
+  /// Builds the concurrently-run MAC DL and MAC UL removal tasks (helper needed because an initializer list cannot
+  /// hold move-only async_task objects).
+  std::vector<async_task<void>> create_ul_dl_rem_tasks();
+
   mac_ue_delete_request       req;
   mac_control_config&         cfg;
   ocudulog::basic_logger&     logger;
