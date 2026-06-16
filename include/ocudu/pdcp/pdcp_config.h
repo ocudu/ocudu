@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "ocudu/ran/pdcp/pdcp_count_info.h"
 #include "ocudu/ran/pdcp/pdcp_discard_timer.h"
 #include "ocudu/ran/pdcp/pdcp_rlc_mode.h"
 #include "ocudu/ran/pdcp/pdcp_sn_size.h"
@@ -210,11 +211,6 @@ inline pdcp_config pdcp_make_default_srb_config()
 
   return config;
 }
-
-struct pdcp_count_info {
-  uint32_t sn  = 0;
-  uint32_t hfn = 0;
-};
 
 struct pdcp_sn_status_info {
   pdcp_count_info ul_count;

@@ -7,11 +7,10 @@
 #include "ocudu/ngap/ngap.h"
 #include "ocudu/ngap/ngap_configuration.h"
 #include "ocudu/support/executors/task_executor.h"
+#include "ocudu/support/timers.h"
 #include <memory>
 
-namespace ocudu {
-
-namespace ocucp {
+namespace ocudu::ocucp {
 
 class n2_connection_client;
 
@@ -22,6 +21,4 @@ std::unique_ptr<ngap_interface> create_ngap(const ngap_configuration& ngap_cfg_,
                                             timer_manager&            timers_,
                                             task_executor&            ctrl_exec_);
 
-} // namespace ocucp
-
-} // namespace ocudu
+} // namespace ocudu::ocucp

@@ -6,6 +6,7 @@
 
 #include "ocudu/gateways/sctp_network_gateway.h"
 #include "ocudu/ngap/gateways/n2_connection_client.h"
+#include "ocudu/support/executors/task_executor.h"
 #include <variant>
 
 namespace ocudu {

@@ -6,6 +6,7 @@
 
 #include "ocudu/ran/cu_cp_paging.h"
 #include "ocudu/ran/tai.h"
+#include "fmt/format.h"
 
 namespace ocudu::ocucp {
 

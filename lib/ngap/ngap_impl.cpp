@@ -29,6 +29,7 @@
 #include "ocudu/ran/cu_cp_location_reporting_types.h"
 #include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/support/async/async_no_op_task.h"
+#include "fmt/std.h"
 
 using namespace ocudu;
 using namespace asn1::ngap;

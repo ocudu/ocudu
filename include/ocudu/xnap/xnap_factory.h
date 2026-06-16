@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "ocudu/support/timers.h"
 #include "ocudu/xnap/xnap.h"
 #include "ocudu/xnap/xnap_configuration.h"
 #include <memory>
