@@ -8,13 +8,11 @@
 #include "ocudu/ran/crit_diagnostics.h"
 #include <optional>
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 struct nrppa_error_indication {
   nrppa_cause_t                     cause;
   std::optional<crit_diagnostics_t> crit_diagnostics;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

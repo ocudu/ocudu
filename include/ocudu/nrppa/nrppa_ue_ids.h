@@ -6,8 +6,7 @@
 
 #include <cstdint>
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 // LMF UE measurement ID.
 enum class lmf_ue_meas_id_t : uint16_t { min = 1, max = 256 };
@@ -39,5 +38,4 @@ inline ran_ue_meas_id_t uint_to_ran_ue_meas_id(uint16_t id)
   return static_cast<ran_ue_meas_id_t>(id);
 }
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

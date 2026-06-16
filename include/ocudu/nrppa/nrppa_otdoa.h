@@ -13,8 +13,7 @@
 #include <variant>
 #include <vector>
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 enum class nrppa_otdoa_info_item {
   pci,
@@ -72,5 +71,4 @@ struct nrppa_error_indication {
   std::optional<crit_diagnostics_t> crit_diagnostics;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp
