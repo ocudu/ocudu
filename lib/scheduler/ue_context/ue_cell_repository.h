@@ -26,7 +26,10 @@ public:
   ue_cell_repository(const cell_configuration& cell_cfg, cell_metrics_handler* cell_metrics);
 
   du_cell_index_t cell_index() const { return cell_idx; }
-  bool            contains(du_ue_index_t ue_index) const { return ues.contains(ue_index); }
+
+  /// Metrics handler for this cell (may be nullptr if metrics are disabled).
+  cell_metrics_handler* get_metrics() const { return metrics; }
+  bool                  contains(du_ue_index_t ue_index) const { return ues.contains(ue_index); }
   bool     contains(rnti_t rnti) const { return rnti_to_ue_index_lookup.find(rnti) != rnti_to_ue_index_lookup.end(); }
   size_t   size() const { return ues.size(); }
   bool     empty() const { return ues.empty(); }
@@ -71,6 +74,7 @@ private:
   void rem_ue(du_ue_index_t ue_index);
 
   const du_cell_index_t   cell_idx;
+  cell_metrics_handler*   metrics;
   ocudulog::basic_logger& logger;
 
   /// HARQs manager for the cell.

@@ -9,7 +9,7 @@
 using namespace ocudu;
 
 scheduler_impl::scheduler_impl(const scheduler_config& sched_cfg_) :
-  expert_params(sched_cfg_.expert_params), logger(ocudulog::fetch_basic_logger("SCHED")), cfg_mng(sched_cfg_, metrics)
+  expert_params(sched_cfg_.expert_params), logger(ocudulog::fetch_basic_logger("SCHED")), cfg_mng(sched_cfg_)
 {
 }
 
@@ -19,6 +19,9 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
   if (cell_cfg == nullptr) {
     return false;
   }
+
+  cell_metrics_handler* cell_metrics = metrics.add_cell(*cell_cfg, msg.metrics);
+  ocudu_assert(cell_metrics != nullptr, "Unable to create metrics handler");
 
   // Check if it is a new DU Cell Group.
   if (not groups.contains(msg.cell_group_index)) {
@@ -43,6 +46,9 @@ void scheduler_impl::handle_cell_removal_request(du_cell_index_t cell_index)
 
   // Remove cell from config.
   cfg_mng.rem_cell(cell_index);
+
+  // Eliminate the cell metrics after the cell scheduler that referenced them is destroyed.
+  metrics.rem_cell(cell_index);
 }
 
 void scheduler_impl::handle_cell_activation_request(du_cell_index_t cell_index)

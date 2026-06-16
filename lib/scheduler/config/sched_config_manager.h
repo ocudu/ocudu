@@ -14,7 +14,6 @@
 namespace ocudu {
 
 class sched_config_manager;
-class scheduler_metrics_handler;
 
 /// Event to create/reconfigure a UE in the scheduler.
 class ue_config_update_event
@@ -106,12 +105,11 @@ public:
 ///
 /// In particular, this class is responsible for:
 /// - notifying back to the MAC when the configurations are complete,
-/// - adding/removing UE entries in the scheduler reported metrics,
 /// - validating the configuration requests provided by the MAC.
 class sched_config_manager
 {
 public:
-  sched_config_manager(const scheduler_config& sched_cfg_, scheduler_metrics_handler& metrics_handler_);
+  explicit sched_config_manager(const scheduler_config& sched_cfg_);
 
   const cell_configuration* add_cell(const sched_cell_configuration_request_message& msg);
 
@@ -163,7 +161,6 @@ private:
   void handle_ue_delete_complete(du_ue_index_t ue_index);
 
   const scheduler_expert_config expert_params;
-  scheduler_metrics_handler&    metrics_handler;
   sched_configuration_notifier& config_notifier;
   ocudulog::basic_logger&       logger;
 

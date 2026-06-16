@@ -231,7 +231,7 @@ protected:
   scheduler_metrics_handler               metrics;
 
   cell_config_builder_params cfg_builder_params;
-  sched_config_manager       cfg_mng{scheduler_config{sched_cfg, mac_notif}, metrics};
+  sched_config_manager       cfg_mng{scheduler_config{sched_cfg, mac_notif}};
   const cell_configuration&  cell_cfg;
 
   cell_resource_allocator res_grid{cell_cfg};

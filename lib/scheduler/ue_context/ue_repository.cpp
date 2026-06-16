@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ue_repository.h"
+#include "../logging/scheduler_metrics_handler.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/scheduler/resource_grid_util.h"
 
@@ -298,6 +299,11 @@ void ue_repository::rem_ue(const ue& u)
 {
   const rnti_t        crnti  = u.crnti;
   const du_ue_index_t ue_idx = u.ue_index;
+
+  // Remove UE from the cell metrics on its primary cell.
+  if (cell_metrics_handler* cell_metrics = cell_ues[u.get_pcell().cell_index]->get_metrics()) {
+    cell_metrics->handle_ue_deletion(ue_idx);
+  }
 
   // Remove UE from the cell-specific repositories.
   for (auto& ue_cc : ue_cell_lookups[ue_idx].ue_cells) {

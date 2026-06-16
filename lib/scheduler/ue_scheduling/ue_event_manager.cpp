@@ -326,6 +326,9 @@ void ue_cell_event_manager::handle_ue_creation(ue_config_update_event ev)
     // Log Event.
     ev_logger.enqueue(scheduler_event_logger::ue_creation_event{ue_index, crnti, pcell_index});
 
+    // Register UE in the cell metrics.
+    metrics.handle_ue_creation(ue_index, crnti, ev.next_config().pcell_common_cfg().params.pci);
+
     // Notify config manager that creation is complete with success.
     ev.notify_completion();
 
@@ -366,6 +369,9 @@ void ue_cell_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
 
     // Log event.
     ev_logger.enqueue(scheduler_event_logger::ue_reconf_event{ue_idx, u.crnti});
+
+    // Update the cell metrics.
+    metrics.handle_ue_reconfiguration(ue_idx);
 
     // Notify config manager that creation is complete with success.
     ev.notify_completion();

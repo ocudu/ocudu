@@ -41,7 +41,6 @@ private:
   std::unique_ptr<sched_configuration_notifier>  cfg_notifier;
   std::unique_ptr<scheduler_metrics_notifier>    metric_notifier;
   std::unique_ptr<sched_metrics_ue_configurator> ue_metrics_configurator;
-  scheduler_metrics_handler                      metrics_handler;
 
   sched_cell_configuration_request_message default_cell_req;
   sched_ue_creation_request_message        default_ue_req;

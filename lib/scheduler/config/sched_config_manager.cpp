@@ -3,7 +3,6 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "sched_config_manager.h"
-#include "../logging/scheduler_metrics_handler.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/scheduler/config/scheduler_cell_config_validator.h"
 #include "ocudu/scheduler/config/scheduler_ue_config_validator.h"
@@ -68,10 +67,8 @@ void ue_config_delete_event::reset()
 
 // class: sched_config_manager
 
-sched_config_manager::sched_config_manager(const scheduler_config&    sched_cfg,
-                                           scheduler_metrics_handler& metrics_handler_) :
+sched_config_manager::sched_config_manager(const scheduler_config& sched_cfg) :
   expert_params(sched_cfg.expert_params),
-  metrics_handler(metrics_handler_),
   config_notifier(sched_cfg.config_notifier),
   logger(ocudulog::fetch_basic_logger("SCHED")),
   ues_to_rem(MAX_NOF_DU_UES)
@@ -95,9 +92,6 @@ const cell_configuration* sched_config_manager::add_cell(const sched_cell_config
 
   // Add cell configuration.
   added_cells.emplace(msg.cell_index, &cell_cfg);
-
-  cell_metrics_handler* cell_metrics = metrics_handler.add_cell(cell_cfg, msg.metrics);
-  ocudu_assert(cell_metrics != nullptr, "Unable to create metrics handler");
 
   return &cell_cfg;
 }
@@ -134,9 +128,6 @@ void sched_config_manager::rem_cell(du_cell_index_t cell_index)
   // See if there are any pending events to process out of the critical path.
   // \note Destroy as many UEs as possible to avoid dangling references to the cell about to be destroyed.
   flush_ues_to_rem(MAX_NOF_DU_UES);
-
-  // Eliminate metrics.
-  metrics_handler.rem_cell(cell_index);
 
   // Eliminate respective cell configuration.
   added_cells.erase(cell_index);
@@ -273,15 +264,6 @@ void sched_config_manager::handle_ue_config_complete(du_ue_index_t ue_index, std
   if (next_cfg != nullptr) {
     // Creation/Reconfig succeeded.
 
-    cell_metrics_handler& cell_metrics = metrics_handler.at(next_cfg->pcell_common_cfg().cell_index);
-    if (ue_cfg_list[ue_index] == nullptr) {
-      // UE creation case.
-      cell_metrics.handle_ue_creation(ue_index, next_cfg->crnti, next_cfg->pcell_common_cfg().params.pci);
-    } else {
-      // Reconfiguration case.
-      cell_metrics.handle_ue_reconfiguration(ue_index);
-    }
-
     // Stores new UE config and deletes old config.
     ue_cfg_list[ue_index].swap(next_cfg);
     if (not ues_to_rem.try_push(std::move(next_cfg))) {
@@ -304,18 +286,12 @@ void sched_config_manager::handle_ue_config_complete(du_ue_index_t ue_index, std
 
 void sched_config_manager::handle_ue_delete_complete(du_ue_index_t ue_index)
 {
-  du_cell_index_t pcell_idx = ue_cfg_list[ue_index]->pcell_common_cfg().cell_index;
-
   // Deletes UE config.
   auto old_ue_cfg = std::move(ue_cfg_list[ue_index]);
   ue_cfg_list[ue_index].reset();
   if (not ues_to_rem.try_push(std::move(old_ue_cfg))) {
     logger.warning("Failed to offload UE config removal. Performance may be affected");
   }
-
-  // Remove UE from metrics.
-  cell_metrics_handler& cell_metrics = metrics_handler.at(pcell_idx);
-  cell_metrics.handle_ue_deletion(ue_index);
 
   // Mark the UE as released.
   ue_to_pcell_index[ue_index].store(INVALID_DU_CELL_INDEX, std::memory_order_release);

@@ -39,7 +39,7 @@ struct test_bench {
   cell_config_builder_params              builder_params;
   scheduler_metrics_handler               metrics;
 
-  sched_config_manager      cfg_mng{scheduler_config{sched_cfg, dummy_notif}, metrics};
+  sched_config_manager      cfg_mng{scheduler_config{sched_cfg, dummy_notif}};
   const cell_configuration& cell_cfg;
 
   cell_resource_allocator       res_grid{cell_cfg};

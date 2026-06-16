@@ -20,7 +20,7 @@ class sched_ue_test : public ::testing::Test
 protected:
   sched_ue_test() :
     expert_cfg(config_helpers::make_default_scheduler_expert_config()),
-    cfg_mng(scheduler_config{expert_cfg, metric_notif}, metrics_handler),
+    cfg_mng(scheduler_config{expert_cfg, metric_notif}),
     sched_cfg(sched_config_helper::make_default_sched_cell_configuration_request(builder_params)),
     cell_cfg(*cfg_mng.add_cell(sched_cfg)),
     serv_cell_cfg(config_helpers::make_default_ue_cell_config(cell_cfg.params).serv_cell_cfg),
@@ -196,7 +196,7 @@ class cfra_ue_repository_test : public ::testing::Test
 protected:
   cfra_ue_repository_test() :
     expert_cfg(config_helpers::make_default_scheduler_expert_config()),
-    cfg_mng(scheduler_config{expert_cfg, metric_notif}, metrics_handler),
+    cfg_mng(scheduler_config{expert_cfg, metric_notif}),
     sched_cfg(sched_config_helper::make_default_sched_cell_configuration_request(builder_params)),
     cell_cfg(*cfg_mng.add_cell(sched_cfg)),
     ue_db(expert_cfg.ue)
