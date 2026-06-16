@@ -5,7 +5,7 @@
 #pragma once
 
 #include "lib/scheduler/config/sched_config_manager.h"
-#include "lib/scheduler/logging/scheduler_metrics_handler.h"
+#include "lib/scheduler/logging/cell_metrics_handler.h"
 #include "ocudu/scheduler/config/cell_config_builder_params.h"
 
 namespace ocudu {

@@ -3,8 +3,8 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ra_scheduler.h"
+#include "../logging/cell_metrics_handler.h"
 #include "../logging/scheduler_event_logger.h"
-#include "../logging/scheduler_metrics_handler.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "../support/csi_rs_helpers.h"
 #include "../support/dci_builder.h"

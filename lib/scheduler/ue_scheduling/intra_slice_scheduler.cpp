@@ -3,7 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "intra_slice_scheduler.h"
-#include "../logging/scheduler_metrics_handler.h"
+#include "../logging/cell_metrics_handler.h"
 #include "ocudu/ran/pdcch/search_space.h"
 #include "ocudu/support/math/mod_math_utils.h"
 

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
-#include "scheduler_metrics_handler.h"
+#include "cell_metrics_handler.h"
 #include "../config/cell_configuration.h"
 #include "../uci_scheduling/uci_indication_selector.h"
 #include "ocudu/ocudulog/ocudulog.h"
@@ -682,21 +682,3 @@ void cell_metrics_handler::ue_metric_context::reset()
   data = {};
 }
 
-cell_metrics_handler* scheduler_metrics_handler::add_cell(
-    const cell_configuration&                                                      cell_cfg,
-    const std::optional<sched_cell_configuration_request_message::metrics_config>& metrics_cfg)
-{
-  if (cells.contains(cell_cfg.cell_index)) {
-    ocudulog::fetch_basic_logger("SCHED").warning("Cell={} already exists", fmt::underlying(cell_cfg.cell_index));
-    return nullptr;
-  }
-
-  cells.emplace(cell_cfg.cell_index, std::make_unique<cell_metrics_handler>(cell_cfg, metrics_cfg));
-
-  return cells[cell_cfg.cell_index].get();
-}
-
-void scheduler_metrics_handler::rem_cell(du_cell_index_t cell_index)
-{
-  cells.erase(cell_index);
-}

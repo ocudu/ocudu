@@ -3,7 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/scheduler/config/cell_configuration.h"
-#include "lib/scheduler/logging/scheduler_metrics_handler.h"
+#include "lib/scheduler/logging/cell_metrics_handler.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
@@ -86,7 +86,7 @@ protected:
 
   slot_point_extended next_sl_tx{
       subcarrier_spacing::kHz15,
-      test_rng::uniform_int<unsigned>(0, NOF_HYPER_SFNS * NOF_SFNS * NOF_SUBFRAMES_PER_FRAME - 1)};
+      test_rng::uniform_int<unsigned>(0, NOF_HYPER_SFNS* NOF_SFNS* NOF_SUBFRAMES_PER_FRAME - 1)};
   unsigned slot_count = 0;
 };
 

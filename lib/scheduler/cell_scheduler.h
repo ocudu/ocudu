@@ -12,6 +12,7 @@
 #include "common_scheduling/si_scheduler.h"
 #include "common_scheduling/ssb_scheduler.h"
 #include "config/cell_configuration.h"
+#include "logging/cell_metrics_handler.h"
 #include "logging/scheduler_event_logger.h"
 #include "logging/scheduler_result_logger.h"
 #include "pdcch_scheduling/pdcch_resource_allocator_impl.h"
@@ -22,8 +23,6 @@
 
 namespace ocudu {
 
-class cell_metrics_handler;
-
 /// \brief This class holds all the resources that are specific to a cell.
 /// This includes the SIB and RA scheduler objects, PDCCH scheduler object, the cell resource grid, etc.
 class cell_scheduler
@@ -32,8 +31,7 @@ public:
   explicit cell_scheduler(const scheduler_expert_config&                  sched_cfg,
                           const sched_cell_configuration_request_message& msg,
                           const cell_configuration&                       cell_cfg,
-                          ue_scheduler&                                   ue_sched,
-                          cell_metrics_handler&                           metrics);
+                          ue_scheduler&                                   ue_sched);
 
   /// Handle a slot indication for this cell.
   void run_slot(slot_point_extended sl_tx);
@@ -77,8 +75,9 @@ private:
   cell_resource_allocator res_grid;
 
   /// Logger of cell events and scheduling results.
-  scheduler_event_logger  event_logger;
-  cell_metrics_handler&   metrics;
+  scheduler_event_logger event_logger;
+  /// Sink for the slot metrics of this cell. Owned here so that its lifetime matches the cell.
+  cell_metrics_handler    metrics;
   scheduler_result_logger result_logger;
   ocudulog::basic_logger& logger;
 

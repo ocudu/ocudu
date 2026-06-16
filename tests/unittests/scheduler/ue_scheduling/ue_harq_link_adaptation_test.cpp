@@ -5,7 +5,7 @@
 #include "../test_utils/config_generators.h"
 #include "../test_utils/sched_random_utils.h"
 #include "lib/scheduler/config/du_cell_group_config_pool.h"
-#include "lib/scheduler/logging/scheduler_metrics_handler.h"
+#include "lib/scheduler/logging/cell_metrics_handler.h"
 #include "lib/scheduler/ue_context/ue.h"
 #include "lib/scheduler/ue_context/ue_repository.h"
 #include "ocudu/scheduler/config/logical_channel_config_factory.h"

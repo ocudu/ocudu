@@ -85,7 +85,6 @@ protected:
 
   scheduler_expert_config                  expert_cfg;
   sched_cfg_dummy_notifier                 metric_notif;
-  scheduler_metrics_handler                metrics_handler;
   cell_config_builder_params               builder_params;
   sched_config_manager                     cfg_mng;
   sched_cell_configuration_request_message sched_cfg;
@@ -222,7 +221,6 @@ protected:
 
   scheduler_expert_config                  expert_cfg;
   sched_cfg_dummy_notifier                 metric_notif;
-  scheduler_metrics_handler                metrics_handler;
   cell_config_builder_params               builder_params;
   sched_config_manager                     cfg_mng;
   sched_cell_configuration_request_message sched_cfg;

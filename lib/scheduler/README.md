@@ -7,8 +7,8 @@ The MAC scheduler allocates radio resources — time, frequency, and control cha
 ```
 scheduler_impl
 ├── sched_config_manager          # Validates and distributes cell/UE config
-├── scheduler_metrics_handler     # Per-slot metric aggregation
 ├── cell_scheduler  [per cell]    # All resources specific to one cell
+│   ├── cell_metrics_handler      # Per-slot metric aggregation for this cell
 │   ├── cell_resource_allocator   # Circular-buffer resource grid (16 slots)
 │   ├── ssb_scheduler             # SSB bursts
 │   ├── pdcch_resource_allocator  # PDCCH/DCI allocation

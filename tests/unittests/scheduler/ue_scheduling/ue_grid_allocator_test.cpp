@@ -4,7 +4,7 @@
 
 #include "../test_utils/dummy_test_components.h"
 #include "lib/scheduler/config/sched_config_manager.h"
-#include "lib/scheduler/logging/scheduler_metrics_handler.h"
+#include "lib/scheduler/logging/cell_metrics_handler.h"
 #include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
@@ -228,7 +228,6 @@ protected:
   sched_cfg_dummy_notifier                mac_notif;
   scheduler_ue_metrics_dummy_notifier     metrics_notif;
   scheduler_ue_metrics_dummy_configurator metrics_ue_handler;
-  scheduler_metrics_handler               metrics;
 
   cell_config_builder_params cfg_builder_params;
   sched_config_manager       cfg_mng{scheduler_config{sched_cfg, mac_notif}};

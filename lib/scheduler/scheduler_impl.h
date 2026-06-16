@@ -6,7 +6,6 @@
 
 #include "cell_scheduler.h"
 #include "config/sched_config_manager.h"
-#include "logging/scheduler_metrics_handler.h"
 #include "ue_scheduling/ue_scheduler.h"
 #include "ocudu/scheduler/config/scheduler_expert_config.h"
 #include "ocudu/scheduler/mac_scheduler.h"
@@ -67,9 +66,6 @@ private:
   const scheduler_expert_config expert_params;
 
   ocudulog::basic_logger& logger;
-
-  // Slot metrics sink.
-  scheduler_metrics_handler metrics;
 
   // Manager of configurations forwarded to the scheduler.
   sched_config_manager cfg_mng;

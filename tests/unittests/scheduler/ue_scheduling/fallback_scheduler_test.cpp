@@ -4,7 +4,7 @@
 
 #include "lib/scheduler/common_scheduling/csi_rs_scheduler.h"
 #include "lib/scheduler/config/sched_config_manager.h"
-#include "lib/scheduler/logging/scheduler_metrics_handler.h"
+#include "lib/scheduler/logging/cell_metrics_handler.h"
 #include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
@@ -37,7 +37,6 @@ struct test_bench {
   scheduler_ue_metrics_dummy_notifier     metrics_notif;
   scheduler_ue_metrics_dummy_configurator metrics_ue_handler;
   cell_config_builder_params              builder_params;
-  scheduler_metrics_handler               metrics;
 
   sched_config_manager      cfg_mng{scheduler_config{sched_cfg, dummy_notif}};
   const cell_configuration& cell_cfg;

@@ -20,9 +20,6 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
     return false;
   }
 
-  cell_metrics_handler* cell_metrics = metrics.add_cell(*cell_cfg, msg.metrics);
-  ocudu_assert(cell_metrics != nullptr, "Unable to create metrics handler");
-
   // Check if it is a new DU Cell Group.
   if (not groups.contains(msg.cell_group_index)) {
     // If it is a new group, create a new instance.
@@ -31,8 +28,7 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
 
   // Create a new cell scheduler instance.
   cells.emplace(msg.cell_index,
-                std::make_unique<cell_scheduler>(
-                    expert_params, msg, *cell_cfg, *groups[msg.cell_group_index], metrics.at(msg.cell_index)));
+                std::make_unique<cell_scheduler>(expert_params, msg, *cell_cfg, *groups[msg.cell_group_index]));
 
   return true;
 }
@@ -41,14 +37,11 @@ void scheduler_impl::handle_cell_removal_request(du_cell_index_t cell_index)
 {
   ocudu_assert(cells.contains(cell_index), "cell={} does not exist", fmt::underlying(cell_index));
 
-  // Remove cell.
+  // Remove cell. This also destroys the cell metrics owned by the cell scheduler.
   cells.erase(cell_index);
 
   // Remove cell from config.
   cfg_mng.rem_cell(cell_index);
-
-  // Eliminate the cell metrics after the cell scheduler that referenced them is destroyed.
-  metrics.rem_cell(cell_index);
 }
 
 void scheduler_impl::handle_cell_activation_request(du_cell_index_t cell_index)

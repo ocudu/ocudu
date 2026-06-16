@@ -3,7 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ue_repository.h"
-#include "../logging/scheduler_metrics_handler.h"
+#include "../logging/cell_metrics_handler.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/scheduler/resource_grid_util.h"
 

@@ -3,19 +3,17 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "cell_scheduler.h"
-#include "logging/scheduler_metrics_handler.h"
 
 using namespace ocudu;
 
 cell_scheduler::cell_scheduler(const scheduler_expert_config&                  sched_cfg,
                                const sched_cell_configuration_request_message& msg,
                                const cell_configuration&                       cell_cfg_,
-                               ue_scheduler&                                   ue_sched_,
-                               cell_metrics_handler&                           metrics_handler) :
+                               ue_scheduler&                                   ue_sched_) :
   cell_cfg(cell_cfg_),
   res_grid(cell_cfg),
   event_logger(cell_cfg.cell_index, cell_cfg.params.pci),
-  metrics(metrics_handler),
+  metrics(cell_cfg, msg.metrics),
   result_logger(sched_cfg.log_broadcast_messages, cell_cfg.params.pci),
   logger(ocudulog::fetch_basic_logger("SCHED")),
   ssb_sch(cell_cfg),

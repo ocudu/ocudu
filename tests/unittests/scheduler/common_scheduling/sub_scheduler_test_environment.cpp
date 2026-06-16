@@ -3,7 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "sub_scheduler_test_environment.h"
-#include "lib/scheduler/logging/scheduler_metrics_handler.h"
+#include "lib/scheduler/logging/cell_metrics_handler.h"
 #include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"

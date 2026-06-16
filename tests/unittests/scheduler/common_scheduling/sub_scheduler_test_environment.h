@@ -6,8 +6,8 @@
 
 #include "lib/scheduler/cell/resource_grid.h"
 #include "lib/scheduler/config/cell_configuration.h"
+#include "lib/scheduler/logging/cell_metrics_handler.h"
 #include "lib/scheduler/logging/scheduler_event_logger.h"
-#include "lib/scheduler/logging/scheduler_metrics_handler.h"
 #include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator.h"
 #include "tests/test_doubles/utils/test_rng.h"

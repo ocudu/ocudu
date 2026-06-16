@@ -3,8 +3,8 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ue_event_manager.h"
+#include "../logging/cell_metrics_handler.h"
 #include "../logging/scheduler_event_logger.h"
-#include "../logging/scheduler_metrics_handler.h"
 #include "../srs/srs_scheduler.h"
 #include "../support/sr_helper.h"
 #include "../uci_scheduling/uci_indication_selector.h"

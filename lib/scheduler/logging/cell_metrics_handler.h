@@ -6,7 +6,6 @@
 
 #include "scheduler_metrics_ue_configurator.h"
 #include "ocudu/adt/flat_map.h"
-#include "ocudu/adt/slotted_array.h"
 #include "ocudu/adt/slotted_vector.h"
 #include "ocudu/ran/slot_point_extended.h"
 #include "ocudu/scheduler/scheduler_configurator.h"
@@ -255,22 +254,6 @@ private:
                           std::chrono::microseconds slot_decision_latency);
 
   std::vector<scheduler_cell_event> pending_events;
-};
-
-/// Handler of metrics for all the UEs and cells of the scheduler.
-class scheduler_metrics_handler
-{
-public:
-  cell_metrics_handler*
-  add_cell(const cell_configuration&                                                      cell_cfg,
-           const std::optional<sched_cell_configuration_request_message::metrics_config>& metrics_cfg);
-
-  void rem_cell(du_cell_index_t cell_index);
-
-  cell_metrics_handler& at(du_cell_index_t cell_idx) { return *cells[cell_idx]; }
-
-private:
-  slotted_array<std::unique_ptr<cell_metrics_handler>, MAX_NOF_DU_CELLS> cells;
 };
 
 } // namespace ocudu
