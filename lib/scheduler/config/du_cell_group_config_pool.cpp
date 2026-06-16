@@ -72,10 +72,10 @@ ue_cell_res_config& du_cell_config_pool::acquire_ue_cell_cfg()
 {
   // Reuse a slot whose references have all been dropped (ref_cnt == 0), else grow the pool. Both happen on the
   // (non-RT) config path, so the allocation on growth is fine; the pool plateaus at the peak concurrent UE count.
-  for (ue_cell_res_config& slot : ue_cell_cfg_pool) {
-    if (slot.ref_cnt.is_unreferenced()) {
-      slot.clear();
-      return slot;
+  for (ue_cell_res_config& pooled_cfg : ue_cell_cfg_pool) {
+    if (pooled_cfg.is_unreferenced()) {
+      pooled_cfg.clear();
+      return pooled_cfg;
     }
   }
   return ue_cell_cfg_pool.emplace_back();

@@ -10,14 +10,12 @@
 #include "ocudu/ran/du_types.h"
 #include "ocudu/scheduler/config/sched_bwp_config.h"
 #include "ocudu/scheduler/config/serving_cell_config.h"
-#include "ocudu/scheduler/config/ue_bwp_config.h"
 
 namespace ocudu {
 
 struct sched_ue_config_request;
 
-/// List of UE-dedicated BWP configs. Owned per-UE (high-cardinality: PUCCH/SR/SRS resources differ per UE, so
-/// interning these in a shared pool only grows it unbounded).
+/// List of UE-dedicated BWP configs.
 using bwp_config_list = slotted_id_vector<bwp_id_t, sched_bwp_config>;
 
 /// UE-dedicated resources for a given cell.
@@ -43,10 +41,6 @@ struct ue_cell_res_config {
   /// Timing Advance Group ID to which this cell belongs to.
   time_alignment_group::id_t tag_id{0};
 
-  /// \brief Intrusive reference counter. The object lives in a pool (du_cell_config_pool); >0 means in use, 0 means
-  /// free to be reused. Mutable so references can be taken/dropped through a const handle.
-  mutable intrusive_ptr_atomic_ref_counter ref_cnt;
-
   /// Resets the payload for reuse from the pool. The reference counter is intentionally left untouched.
   void clear()
   {
@@ -59,22 +53,24 @@ struct ue_cell_res_config {
     csi_meas_cfg.reset();
     tag_id = time_alignment_group::id_t{0};
   }
-};
 
-/// \brief Intrusive ref-counting hooks for \c ue_cell_res_config.
-///
-/// The referenced object is owned by a pool (\c du_cell_config_pool), not by the handle. Dropping the last reference
-/// therefore does NOT free the object — it only decrements the counter, marking the pool slot as reusable. This is
-/// what makes dropping a reference safe to do from the real-time scheduler thread (no malloc/free).
-inline void intrusive_ptr_inc_ref(const ue_cell_res_config* cfg)
-{
-  cfg->ref_cnt.inc_ref();
-}
-inline void intrusive_ptr_dec_ref(const ue_cell_res_config* cfg)
-{
-  // Note: deliberately ignores the "reached zero" return — the pool owns the storage and reuses it; we never free here.
-  cfg->ref_cnt.dec_ref();
-}
+  /// Determines whether any UE is currently using this config.
+  bool is_unreferenced() const { return ref_cnt.is_unreferenced(); }
+
+private:
+  /// \brief Intrusive ref-counting hook for \c ue_cell_res_config.
+  friend void intrusive_ptr_inc_ref(const ue_cell_res_config* cfg) { cfg->ref_cnt.inc_ref(); }
+  friend void intrusive_ptr_dec_ref(const ue_cell_res_config* cfg)
+  {
+    // Note: deliberately ignores the "reached zero" return — the pool owns the storage and reuses it; we never free
+    // here.
+    cfg->ref_cnt.dec_ref();
+  }
+
+  /// \brief Intrusive reference counter. The object lives in a pool (du_cell_config_pool); >0 means in use, 0 means
+  /// free to be reused. Mutable so references can be taken/dropped through a const handle.
+  mutable intrusive_ptr_atomic_ref_counter ref_cnt;
+};
 
 /// Reference-counted handle to a per-UE dedicated cell config. The config is owned by the scheduler config pool and
 /// reused once no UE references it; the handle is an intrusive_ptr so that dropping it on the RT thread never frees.

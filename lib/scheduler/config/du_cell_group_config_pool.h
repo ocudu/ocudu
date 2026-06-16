@@ -36,9 +36,7 @@ public:
 
   const bwp_downlink_common& dl_common() const { return bwp_dl_cmn; }
 
-  // Builds the UE-dedicated BWP config. The returned object is owned by the caller (per-UE): the UL dedicated config
-  // and the sched_bwp_config itself are high-cardinality (PUCCH/SR/SRS resources differ per UE), so interning them in a
-  // shared pool only grows the pool unbounded. Only the genuinely-shared DL dedicated config is still pooled.
+  // Builds the UE-dedicated BWP config.
   sched_bwp_config add_ded_cfg(const bwp_downlink_dedicated* dl_ded,
                                const bwp_uplink_dedicated*   ul_ded,
                                const ue_bwp_config&          ue_bwp_cfg);
@@ -64,9 +62,7 @@ public:
   const cell_configuration& cell_cfg() const { return cell_cfg_inst; }
   cell_configuration&       cell_cfg() { return cell_cfg_inst; }
 
-  // Builds the UE-dedicated cell config. Reference-counted per-UE: ue_cell_res_config embeds the per-UE BWP config, so
-  // it is high-cardinality and not interned in a shared pool. The shared serving-cell/csi configs it references are
-  // still pooled.
+  // Builds a reference-counted UE-dedicated cell config.
   ue_cell_config_ptr update_ue(const ue_cell_config& ue_cell);
 
 private:

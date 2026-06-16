@@ -75,9 +75,9 @@ class sched_bwp_ul_config
 public:
   sched_bwp_ul_config() = default;
   sched_bwp_ul_config(const bwp_uplink_common&                   common,
-                      std::optional<bwp_uplink_dedicated>        ded,
+                      const std::optional<bwp_uplink_dedicated>& ded,
                       const std::optional<ue_uplink_bwp_config>& ue_cfg = std::nullopt) :
-    bwp_ul_common(&common), bwp_ul_ded(std::move(ded)), ue_ul_bwp_cfg(ue_cfg)
+    bwp_ul_common(&common), bwp_ul_ded(ded), ue_ul_bwp_cfg(ue_cfg)
   {
   }
 

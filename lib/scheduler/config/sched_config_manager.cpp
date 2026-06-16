@@ -316,9 +316,11 @@ void sched_config_manager::handle_ue_delete_complete(du_ue_index_t ue_index)
 void sched_config_manager::flush_ues_to_rem()
 {
   // Note: This should be called by a thread outside of the critical path.
+  static constexpr unsigned max_rems_per_flush = 3;
 
   // Clear the UEs to rem.
   std::unique_ptr<ue_configuration> obj;
-  for (unsigned remaining_rems = 3; remaining_rems != 0 and ues_to_rem.try_pop(obj); --remaining_rems) {
+  for (unsigned remaining_rems = max_rems_per_flush; remaining_rems != 0 and ues_to_rem.try_pop(obj);
+       --remaining_rems) {
   }
 }
