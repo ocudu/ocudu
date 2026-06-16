@@ -118,14 +118,19 @@ private:
 class ocudu::pdu_indication_pool
 {
   // We use this value as a safety margin to account for skipped slot indications.
-  static constexpr size_t MAX_EXPECTED_SLOTS        = 4;
-  static constexpr size_t UCI_INITIAL_POOL_SIZE     = MAX_PUCCH_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
-  static constexpr size_t PHR_INITIAL_POOL_SIZE     = MAX_PUSCH_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
-  static constexpr size_t CRC_INITIAL_POOL_SIZE     = MAX_PUSCH_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
-  static constexpr size_t SRS_INITIAL_POOL_SIZE     = MAX_SRS_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
-  static constexpr size_t BSR_INITIAL_POOL_SIZE     = MAX_PUSCH_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
-  static constexpr size_t POSITIONING_REQ_POOL_SIZE = 1 * MAX_EXPECTED_SLOTS;
-  static constexpr size_t SLICE_RECONF_POOL_SIZE    = 1 * MAX_EXPECTED_SLOTS;
+  static constexpr size_t MAX_EXPECTED_SLOTS = 4;
+  // Although PHR and BSR indications are reported in the same quantity as CRC indications, the formers follow a slower
+  // path to reach the scheduler; there's both a thread hop (dispatched to a per-UE MAC UL PDU executor) and processing
+  // latency (MAC PDU decoding + subPDU parsing); therefore, there can be a larger accumulation of in-flight BSR/PHR
+  // indications compared to CRC.
+  static constexpr size_t MAX_BSR_PHR_EXPECTED_SLOTS = 6;
+  static constexpr size_t UCI_INITIAL_POOL_SIZE      = MAX_PUCCH_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
+  static constexpr size_t PHR_INITIAL_POOL_SIZE      = MAX_PUSCH_PDUS_PER_SLOT * MAX_BSR_PHR_EXPECTED_SLOTS;
+  static constexpr size_t CRC_INITIAL_POOL_SIZE      = MAX_PUSCH_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
+  static constexpr size_t SRS_INITIAL_POOL_SIZE      = MAX_SRS_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
+  static constexpr size_t BSR_INITIAL_POOL_SIZE      = MAX_PUSCH_PDUS_PER_SLOT * MAX_BSR_PHR_EXPECTED_SLOTS;
+  static constexpr size_t POSITIONING_REQ_POOL_SIZE  = 1 * MAX_EXPECTED_SLOTS;
+  static constexpr size_t SLICE_RECONF_POOL_SIZE     = 1 * MAX_EXPECTED_SLOTS;
 
   using uci_pool          = bounded_object_pool<uci_indication::uci_pdu>;
   using phr_pool          = bounded_object_pool<ul_phr_indication_message>;
