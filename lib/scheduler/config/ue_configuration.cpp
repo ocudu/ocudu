@@ -612,8 +612,7 @@ ue_cell_configuration::ue_cell_configuration(rnti_t                             
   crnti(crnti_),
   cell_cfg_common(cell_cfg_common_),
   multi_cells_configured(multi_cells_configured_),
-  nof_dl_ports(ue_cell_params_->csi_meas_cfg.has_value() ? compute_nof_dl_ports(*ue_cell_params_->csi_meas_cfg.value())
-                                                         : 1)
+  nof_dl_ports(ue_cell_params_->csi_meas_cfg.has_value() ? compute_nof_dl_ports(*ue_cell_params_->csi_meas_cfg) : 1)
 {
   // Apply UE-dedicated Config.
   reconfigure(ue_cell_params_, meas_gap_cfg_);

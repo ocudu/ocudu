@@ -170,7 +170,7 @@ public:
   /// Get CSI-MeasConfig for the UE.
   const csi_meas_config* csi_meas_cfg() const
   {
-    return cell_ded->csi_meas_cfg.has_value() ? &*cell_ded->csi_meas_cfg.value() : nullptr;
+    return cell_ded->csi_meas_cfg.has_value() ? &*cell_ded->csi_meas_cfg : nullptr;
   }
 
   /// PDSCH parameters common to all BWPs.

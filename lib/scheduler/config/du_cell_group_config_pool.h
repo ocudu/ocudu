@@ -91,7 +91,6 @@ private:
   // Pools of UE-dedicated configurations.
   config_object_pool<pdsch_serving_cell_config> pdsch_serv_cell_pool;
   config_object_pool<pusch_serving_cell_config> pusch_serv_cell_pool;
-  config_object_pool<csi_meas_config>           csi_meas_config_pool;
 };
 
 /// Class responsible for managing the configurations of all the entities (cells, UEs, slices) in a cell group.

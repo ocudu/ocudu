@@ -37,7 +37,7 @@ struct ue_cell_res_config {
   /// BWPs of one serving cell.
   std::optional<config_ptr<pusch_serving_cell_config>> pusch_serv_cell_cfg;
   /// \c CSI-MeasConfig.
-  std::optional<config_ptr<csi_meas_config>> csi_meas_cfg;
+  std::optional<csi_meas_config> csi_meas_cfg;
   /// Timing Advance Group ID to which this cell belongs to.
   time_alignment_group::id_t tag_id{0};
 

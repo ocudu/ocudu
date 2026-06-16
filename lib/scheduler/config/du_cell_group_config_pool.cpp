@@ -94,7 +94,7 @@ ue_cell_config_ptr du_cell_config_pool::update_ue(const ue_cell_config& ue_cell)
     ret.pdsch_serv_cell_cfg = pdsch_serv_cell_pool.create(ue_cell.serv_cell_cfg.pdsch_serv_cell_cfg.value());
   }
   if (ue_cell.serv_cell_cfg.csi_meas_cfg.has_value()) {
-    ret.csi_meas_cfg = csi_meas_config_pool.create(ue_cell.serv_cell_cfg.csi_meas_cfg.value());
+    ret.csi_meas_cfg = ue_cell.serv_cell_cfg.csi_meas_cfg.value();
   }
   ret.tag_id = ue_cell.serv_cell_cfg.tag_id;
 
