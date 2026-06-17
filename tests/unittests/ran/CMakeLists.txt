@@ -7,6 +7,10 @@ set_directory_properties(PROPERTIES LABELS "ran")
 
 include_directories(../../..)
 
+add_executable(beam_codebook_generator_test beamforming/beam_codebook_generator_test.cpp)
+target_link_libraries(beam_codebook_generator_test ocudu_ran GTest::gtest ocudu_gtest_main)
+gtest_discover_tests(beam_codebook_generator_test beam_codebook_generator_test)
+
 add_executable(csi_report_on_pucch_helpers_test csi_report/csi_report_on_pucch_helpers_test.cpp)
 target_link_libraries(csi_report_on_pucch_helpers_test ocudu_ran GTest::gtest ocudu_gtest_main)
 gtest_discover_tests(csi_report_on_pucch_helpers_test)

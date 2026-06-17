@@ -3,6 +3,8 @@
 # Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 add_library(ocudu_ran
+        beamforming/beam_identifier_helpers.cpp
+        beamforming/beam_weights_codebook_generator.cpp
         cause/ngap_cause_converters.cpp
         cause/f1ap_cause_converters.cpp
         cause/e1ap_cause_converters.cpp
