@@ -20,6 +20,7 @@
     CACHE: "true"
     CACHE_MODE: "max"
     IMAGE_TAG_OS: ""
+    IMAGE_TAG_DRIVER: "false"
     COMPONENT: ""
     DRIVER: ""
     OS: ubuntu
@@ -46,10 +47,14 @@
     - export NAME="${IMAGE_COMPONENT}"
     - |
       TAG_OS="${IMAGE_TAG_OS:-${OS}}"
+      TAG_DRIVER=""
+      if [ "${IMAGE_TAG_DRIVER}" = "true" ] && [ -n "${DRIVER}" ]; then
+        TAG_DRIVER="-${DRIVER}"
+      fi
       if [ -n "${PROMOTE_IMAGE_TAG:-}" ]; then
-        VERSION="${PROMOTE_IMAGE_TAG}-${TAG_OS}-${OS_VERSION}-${SIMD}"
+        VERSION="${PROMOTE_IMAGE_TAG}-${TAG_OS}-${OS_VERSION}${TAG_DRIVER}-${SIMD}"
       else
-        VERSION="${TAG_OS}-${OS_VERSION}-${SIMD}-${DATE}"
+        VERSION="${TAG_OS}-${OS_VERSION}${TAG_DRIVER}-${SIMD}-${DATE}"
       fi
       export VERSION
     - export PLATFORM="${TARGETARCH}"

@@ -210,13 +210,15 @@ promote-stable:ubuntu:ru-emulator:
     - |
       if [ -n "${DRIVER}" ]; then
         IMAGE_COMPONENT="${COMPONENT}-${DRIVER}"
+        TAG_DRIVER="-${DRIVER}"
       else
         IMAGE_COMPONENT="${COMPONENT}"
+        TAG_DRIVER=""
       fi
       if [ -n "${PROMOTE_IMAGE_TAG:-}" ]; then
-        VERSION="${PROMOTE_IMAGE_TAG}-ubi9-9.6-${SIMD}"
+        VERSION="${PROMOTE_IMAGE_TAG}-ubi9-9.6${TAG_DRIVER}-${SIMD}"
       else
-        VERSION="ubi9-9.6-${SIMD}-$(date +%Y%m%d)"
+        VERSION="ubi9-9.6${TAG_DRIVER}-${SIMD}-$(date +%Y%m%d)"
       fi
       IMAGE_REF="${CI_REGISTRY}/${CI_PROJECT_PATH}/images/${IMAGE_COMPONENT}:${VERSION}"
       export SOURCE_IMAGE="${IMAGE_REF}"
@@ -279,22 +281,22 @@ promote-stable:rh:ru-emulator:
     - |
       if [ -n "${DRIVER}" ]; then
         IMAGE_COMPONENT="${COMPONENT}-${DRIVER}"
+        TAG_DRIVER="-${DRIVER}"
       else
         IMAGE_COMPONENT="${COMPONENT}"
+        TAG_DRIVER=""
       fi
       if [ -n "${PROMOTE_IMAGE_TAG:-}" ]; then
-        VERSION="${PROMOTE_IMAGE_TAG}-ubi9-9.6-${SIMD}"
+        VERSION="${PROMOTE_IMAGE_TAG}-ubi9-9.6${TAG_DRIVER}-${SIMD}"
       else
-        VERSION="ubi9-9.6-${SIMD}-$(date +%Y%m%d)"
+        VERSION="ubi9-9.6${TAG_DRIVER}-${SIMD}-$(date +%Y%m%d)"
       fi
       export IMAGE_REF="${CI_REGISTRY}/${CI_PROJECT_PATH}/images/${IMAGE_COMPONENT}:${VERSION}"
     - |
       CERTIFICATION_COMPONENT_ID=""
       case "${IMAGE_COMPONENT}" in
-        gnb-uhd)          CERTIFICATION_COMPONENT_ID="${PFLT_CERTIFICATION_COMPONENT_ID_GNB}" ;;
-        gnb-dpdk)         CERTIFICATION_COMPONENT_ID="${PFLT_CERTIFICATION_COMPONENT_ID_GNB_DPDK}" ;;
-        du-uhd)           CERTIFICATION_COMPONENT_ID="${PFLT_CERTIFICATION_COMPONENT_ID_DU}" ;;
-        du-dpdk)          CERTIFICATION_COMPONENT_ID="${PFLT_CERTIFICATION_COMPONENT_ID_DU_DPDK}" ;;
+        gnb-uhd|gnb-dpdk) CERTIFICATION_COMPONENT_ID="${PFLT_CERTIFICATION_COMPONENT_ID_GNB}" ;;
+        du-uhd|du-dpdk)   CERTIFICATION_COMPONENT_ID="${PFLT_CERTIFICATION_COMPONENT_ID_DU}" ;;
         cu)               CERTIFICATION_COMPONENT_ID="${PFLT_CERTIFICATION_COMPONENT_ID_CU}" ;;
         cu-cp)            CERTIFICATION_COMPONENT_ID="${PFLT_CERTIFICATION_COMPONENT_ID_CU_CP}" ;;
         cu-up)            CERTIFICATION_COMPONENT_ID="${PFLT_CERTIFICATION_COMPONENT_ID_CU_UP}" ;;

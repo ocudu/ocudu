@@ -30,6 +30,7 @@ stages:
     OS: registry.access.redhat.com/ubi9/ubi
     OS_VERSION: "9.6"
     IMAGE_TAG_OS: ubi9
+    IMAGE_TAG_DRIVER: "true"
   before_script:
     - !reference [.image-build-common, before_script]
     - |
