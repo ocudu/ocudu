@@ -154,6 +154,8 @@ struct scheduler_cell_metrics {
   unsigned nof_msg3_ok = 0;
   /// Number of MSG3 KOs.
   unsigned nof_msg3_nok = 0;
+  /// Number of ra-ContentionResolutionTimer expiries that occurred before the ConRes CE could be scheduled.
+  unsigned nof_conres_timer_expired = 0;
   /// Average PRACH delay in slots.
   std::optional<float> avg_prach_delay_slots;
   /// Number of failed PDSCH allocations due to late HARQs.

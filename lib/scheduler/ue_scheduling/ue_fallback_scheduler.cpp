@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ue_fallback_scheduler.h"
+#include "../logging/cell_metrics_handler.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "../pucch_scheduling/pucch_allocator.h"
 #include "../support/csi_rs_helpers.h"
@@ -29,13 +30,15 @@ ue_fallback_scheduler::ue_fallback_scheduler(const scheduler_ue_expert_config& e
                                              pdcch_resource_allocator&         pdcch_sch_,
                                              pucch_allocator&                  pucch_alloc_,
                                              uci_allocator&                    uci_alloc_,
-                                             ue_repository&                    ues_) :
+                                             ue_repository&                    ues_,
+                                             cell_metrics_handler&             metrics_) :
   expert_cfg(expert_cfg_),
   cell_cfg(cell_cfg_),
   pdcch_sch(pdcch_sch_),
   pucch_alloc(pucch_alloc_),
   uci_alloc(uci_alloc_),
   ues(ues_),
+  metrics(metrics_),
   initial_active_dl_bwp(cell_cfg.params.dl_cfg_common.init_dl_bwp.generic_params),
   ss_cfg(cell_cfg.params.dl_cfg_common.init_dl_bwp.pdcch_common
              .search_spaces[cell_cfg.params.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id]),
@@ -1374,14 +1377,10 @@ void ue_fallback_scheduler::store_harq_tx(du_ue_index_t ue_index, const dl_harq_
   ongoing_ues_ack_retxs.emplace_back(ue_index, h_dl);
 }
 
-/// Helper function to check if the conRes timer has expired for a given UE in fallback mode.
-static bool handle_conres_expiry(ue_repository&          ues,
-                                 ue&                     u,
-                                 slot_point              sl_tx,
-                                 ocudulog::basic_logger& logger,
-                                 unsigned                ntn_cs_koffset = 0)
+bool ue_fallback_scheduler::handle_conres_expiry(ue& u, slot_point sl_tx)
 {
-  auto& ue_pcell = u.get_pcell();
+  const unsigned ntn_cs_koffset = cell_cfg.ntn_cs_koffset;
+  auto&          ue_pcell       = u.get_pcell();
 
   if (ue_pcell.get_pcell_state().conres_st != ue_conres_state::pending_conres_ce) {
     return false;
@@ -1415,6 +1414,7 @@ static bool handle_conres_expiry(ue_repository&          ues,
         make_formattable([k = ntn_cs_koffset_ms](auto& ctx) {
           return k ? fmt::format_to(ctx.out(), " + RTT: {}ms", k) : ctx.out();
         }));
+    metrics.handle_conres_timer_expired();
     ues.handle_conres_ce_outcome(u.ue_index, false);
     return true;
   }
@@ -1498,7 +1498,7 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
       continue;
     }
 
-    if (handle_conres_expiry(ues, u, sl, logger, cell_cfg.ntn_cs_koffset)) {
+    if (handle_conres_expiry(u, sl)) {
       // Remove the UE from the fallback scheduler.
       ue_it = pending_dl_ues_new_tx.erase(ue_it);
       if (not ue_pcell.is_active()) {
@@ -1548,7 +1548,7 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
       continue;
     }
 
-    if (handle_conres_expiry(ues, u, sl, logger, cell_cfg.ntn_cs_koffset)) {
+    if (handle_conres_expiry(u, sl)) {
       it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
       if (not ue_pcell.is_active()) {
         // Remove the UE from the fallback scheduler if it got deactivated.

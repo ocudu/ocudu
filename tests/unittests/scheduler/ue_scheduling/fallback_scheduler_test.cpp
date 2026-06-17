@@ -47,6 +47,7 @@ struct test_bench {
   uci_allocator_impl            uci_alloc{cell_cfg, pucch_alloc};
   ue_repository                 ue_db;
   ue_cell_repository&           ue_cell_db;
+  cell_metrics_handler          metrics_hdlr{cell_cfg, std::nullopt};
   ue_fallback_scheduler         fallback_sched;
   csi_rs_scheduler              csi_rs_sched;
 
@@ -58,7 +59,7 @@ struct test_bench {
     cell_cfg{*[&]() { return cfg_mng.add_cell(cell_req); }()},
     ue_db(cell_cfg.expert_cfg.ue),
     ue_cell_db(ue_db.add_cell(cell_cfg, nullptr)),
-    fallback_sched(expert_cfg, cell_cfg, pdcch_sch, pucch_alloc, uci_alloc, ue_db),
+    fallback_sched(expert_cfg, cell_cfg, pdcch_sch, pucch_alloc, uci_alloc, ue_db, metrics_hdlr),
     csi_rs_sched(cell_cfg)
   {
     ocudulog::fetch_basic_logger("SCHED", true).set_level(ocudulog::basic_levels::debug);

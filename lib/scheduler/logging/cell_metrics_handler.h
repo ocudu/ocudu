@@ -150,6 +150,8 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
     unsigned nof_msg3_ok = 0;
     // Number of MSG3 KOs.
     unsigned nof_msg3_nok = 0;
+    // Number of ra-ContentionResolutionTimer expiries that occurred before the ConRes CE could be scheduled.
+    unsigned nof_conres_timer_expired = 0;
     // Total PRACH delay in slots.
     unsigned sum_prach_delay_slots = 0;
     // Number of failed PDSCH allocations due to late HARQs.
@@ -201,6 +203,9 @@ public:
 
   /// \brief Register MSG3 CRC indication.
   void handle_msg3_crc_indication(const ul_crc_pdu_indication& crc_pdu);
+
+  /// \brief Register a ra-ContentionResolutionTimer expiry that occurred before the ConRes CE could be scheduled.
+  void handle_conres_timer_expired();
 
   /// \brief Register CRC indication.
   void handle_crc_indication(slot_point sl_rx, const ul_crc_pdu_indication& crc_pdu, units::bytes tbs);

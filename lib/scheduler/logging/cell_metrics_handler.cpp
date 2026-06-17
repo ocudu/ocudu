@@ -145,6 +145,14 @@ void cell_metrics_handler::handle_msg3_crc_indication(const ul_crc_pdu_indicatio
   }
 }
 
+void cell_metrics_handler::handle_conres_timer_expired()
+{
+  if (not enabled()) {
+    return;
+  }
+  data.nof_conres_timer_expired++;
+}
+
 void cell_metrics_handler::handle_crc_indication(slot_point                   sl_rx,
                                                  const ul_crc_pdu_indication& crc_pdu,
                                                  units::bytes                 tbs)
@@ -417,6 +425,7 @@ void cell_metrics_handler::report_metrics()
   next_report->nof_failed_uci_allocs     = data.nof_failed_uci_allocs;
   next_report->nof_msg3_ok               = data.nof_msg3_ok;
   next_report->nof_msg3_nok              = data.nof_msg3_nok;
+  next_report->nof_conres_timer_expired  = data.nof_conres_timer_expired;
   next_report->avg_prach_delay_slots =
       data.nof_prach_preambles > 0
           ? std::optional{static_cast<float>(data.sum_prach_delay_slots) / static_cast<float>(data.nof_prach_preambles)}
