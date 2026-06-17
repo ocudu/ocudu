@@ -282,12 +282,12 @@ public:
   }
 
   template <typename EventType>
-  void push(const EventType& ev)
+  [[nodiscard]] bool push(const EventType& ev)
   {
     if (mode == mode_t::none or (mode == mode_t::info and not has_info_formatter<EventType>())) {
-      return;
+      return true;
     }
-    cur_buffer.push(ev);
+    return cur_buffer.push(ev) != nullptr;
   }
 
   bool empty() const { return mode == mode_t::none or cur_buffer.empty(); }
@@ -317,7 +317,9 @@ scheduler_event_logger::scheduler_event_logger(du_cell_index_t cell_index_, pci_
   mode(logger.debug.enabled() ? mode_t::debug : (logger.info.enabled() ? mode_t::info : mode_t::none)),
   slot_buffer_writer(std::make_unique<event_buffer_writer>(mode))
 {
-  slot_buffer_writer->push(cell_creation_event{cell_index});
+  if (not slot_buffer_writer->push(cell_creation_event{cell_index})) {
+    logger.error("Scheduler event log entry exceeded segment size and was dropped");
+  }
 }
 
 scheduler_event_logger::~scheduler_event_logger() = default;
@@ -336,90 +338,126 @@ void scheduler_event_logger::log_impl()
 
 void scheduler_event_logger::enqueue_impl(const prach_event& rach_ev)
 {
-  slot_buffer_writer->push(rach_ev);
+  if (not slot_buffer_writer->push(rach_ev)) {
+    logger.error("Scheduler event log entry exceeded segment size and was dropped");
+  }
 }
 
 void scheduler_event_logger::enqueue_impl(const rach_indication_message& rach_ind)
 {
-  slot_buffer_writer->push(rach_ind);
+  if (not slot_buffer_writer->push(rach_ind)) {
+    logger.error("Scheduler event log entry exceeded segment size and was dropped");
+  }
 }
 
 void scheduler_event_logger::enqueue_impl(const ue_creation_event& ue_request)
 {
-  slot_buffer_writer->push(ue_request);
+  if (not slot_buffer_writer->push(ue_request)) {
+    logger.error("Scheduler event log entry exceeded segment size and was dropped");
+  }
 }
 
 void scheduler_event_logger::enqueue_impl(const ue_reconf_event& ue_request)
 {
-  slot_buffer_writer->push(ue_request);
+  if (not slot_buffer_writer->push(ue_request)) {
+    logger.error("Scheduler event log entry exceeded segment size and was dropped");
+  }
 }
 
 void scheduler_event_logger::enqueue_impl(const sched_ue_delete_message& ue_request)
 {
-  slot_buffer_writer->push(ue_request);
+  if (not slot_buffer_writer->push(ue_request)) {
+    logger.error("Scheduler event log entry exceeded segment size and was dropped");
+  }
 }
 
 void scheduler_event_logger::enqueue_impl(const ue_cfg_applied_event& ev)
 {
-  slot_buffer_writer->push(ev);
+  if (not slot_buffer_writer->push(ev)) {
+    logger.error("Scheduler event log entry exceeded segment size and was dropped");
+  }
 }
 
 void scheduler_event_logger::enqueue_impl(const ue_deactivation_event& req)
 {
-  slot_buffer_writer->push(req);
+  if (not slot_buffer_writer->push(req)) {
+    logger.error("Scheduler event log entry exceeded segment size and was dropped");
+  }
 }
 
 void scheduler_event_logger::enqueue_impl(const error_indication_event& err_ind)
 {
-  slot_buffer_writer->push(err_ind);
+  if (not slot_buffer_writer->push(err_ind)) {
+    logger.error("Scheduler event log entry exceeded segment size and was dropped");
+  }
 }
 
 void scheduler_event_logger::enqueue_impl(const sr_event& sr)
 {
-  slot_buffer_writer->push(sr);
+  if (not slot_buffer_writer->push(sr)) {
+    logger.error("Scheduler event log entry exceeded segment size and was dropped");
+  }
 }
 
 void scheduler_event_logger::enqueue_impl(const csi_report_event& csi)
 {
-  slot_buffer_writer->push(csi);
+  if (not slot_buffer_writer->push(csi)) {
+    logger.error("Scheduler event log entry exceeded segment size and was dropped");
+  }
 }
 
 void scheduler_event_logger::enqueue_impl(const bsr_event& bsr)
 {
-  slot_buffer_writer->push(bsr);
+  if (not slot_buffer_writer->push(bsr)) {
+    logger.error("Scheduler event log entry exceeded segment size and was dropped");
+  }
 }
 
 void scheduler_event_logger::enqueue_impl(const harq_ack_event& harq_ev)
 {
-  slot_buffer_writer->push(harq_ev);
+  if (not slot_buffer_writer->push(harq_ev)) {
+    logger.error("Scheduler event log entry exceeded segment size and was dropped");
+  }
 }
 
 void scheduler_event_logger::enqueue_impl(const crc_event& crc_ev)
 {
-  slot_buffer_writer->push(crc_ev);
+  if (not slot_buffer_writer->push(crc_ev)) {
+    logger.error("Scheduler event log entry exceeded segment size and was dropped");
+  }
 }
 
 void scheduler_event_logger::enqueue_impl(const dl_mac_ce_indication& mac_ce)
 {
-  slot_buffer_writer->push(mac_ce);
+  if (not slot_buffer_writer->push(mac_ce)) {
+    logger.error("Scheduler event log entry exceeded segment size and was dropped");
+  }
 }
 
 void scheduler_event_logger::enqueue_impl(const dl_buffer_state_indication_message& bs)
 {
-  slot_buffer_writer->push(bs);
+  if (not slot_buffer_writer->push(bs)) {
+    logger.error("Scheduler event log entry exceeded segment size and was dropped");
+  }
 }
 
 void scheduler_event_logger::enqueue_impl(const phr_event& phr_ev)
 {
-  slot_buffer_writer->push(phr_ev);
+  if (not slot_buffer_writer->push(phr_ev)) {
+    logger.error("Scheduler event log entry exceeded segment size and was dropped");
+  }
 }
 
 void scheduler_event_logger::enqueue_impl(const srs_indication_event& srs_ev)
 {
-  slot_buffer_writer->push(srs_ev);
+  if (not slot_buffer_writer->push(srs_ev)) {
+    logger.error("Scheduler event log entry exceeded segment size and was dropped");
+  }
 }
 
 void scheduler_event_logger::enqueue_impl(const slice_reconfiguration_event& slice_reconf_ev)
 {
-  slot_buffer_writer->push(slice_reconf_ev);
+  if (not slot_buffer_writer->push(slice_reconf_ev)) {
+    logger.error("Scheduler event log entry exceeded segment size and was dropped");
+  }
 }

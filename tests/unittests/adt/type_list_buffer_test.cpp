@@ -467,10 +467,10 @@ TEST(static_type_list_buffer_test, for_each_visits_in_order)
 {
   static_type_list_buffer<64, int, float> buf;
 
-  buf.emplace<int>(1);
-  buf.push(2.0f);
-  buf.emplace<int>(3);
-  buf.push(4.0f);
+  ASSERT_NE(buf.emplace<int>(1), nullptr);
+  ASSERT_NE(buf.push(2.0f), nullptr);
+  ASSERT_NE(buf.emplace<int>(3), nullptr);
+  ASSERT_NE(buf.push(4.0f), nullptr);
 
   std::vector<int> order; // 0 = int, 1 = float
   buf.for_each([&](const auto& obj) {
@@ -516,9 +516,9 @@ TEST(static_type_list_buffer_test, clear_destroys_and_allows_reuse)
   {
     static_type_list_buffer<256, counted, int> buf;
 
-    buf.emplace<counted>(1);
-    buf.push(0);
-    buf.emplace<counted>(2);
+    ASSERT_NE(buf.emplace<counted>(1), nullptr);
+    ASSERT_NE(buf.push(0), nullptr);
+    ASSERT_NE(buf.emplace<counted>(2), nullptr);
 
     const int live = counted::constructions - counted::destructions;
     ASSERT_EQ(live, 2);
@@ -599,10 +599,10 @@ TEST(type_list_buffer_view_test, for_each_visits_in_order)
   std::array<uint8_t, 64>           storage{};
   type_list_buffer_view<int, float> buf{span<uint8_t>{storage}};
 
-  buf.emplace<int>(1);
-  buf.push(2.0f);
-  buf.emplace<int>(3);
-  buf.push(4.0f);
+  ASSERT_NE(buf.emplace<int>(1), nullptr);
+  ASSERT_NE(buf.push(2.0f), nullptr);
+  ASSERT_NE(buf.emplace<int>(3), nullptr);
+  ASSERT_NE(buf.push(4.0f), nullptr);
 
   std::vector<int> order; // 0 = int, 1 = float
   buf.for_each([&](const auto& obj) {
@@ -641,9 +641,9 @@ TEST(type_list_buffer_view_test, clear_destroys_and_allows_reuse)
     std::array<uint8_t, 256>            storage{};
     type_list_buffer_view<counted, int> buf{span<uint8_t>{storage}};
 
-    buf.emplace<counted>(1);
-    buf.push(0);
-    buf.emplace<counted>(2);
+    ASSERT_NE(buf.emplace<counted>(1), nullptr);
+    ASSERT_NE(buf.push(0), nullptr);
+    ASSERT_NE(buf.emplace<counted>(2), nullptr);
 
     const int live = counted::constructions - counted::destructions;
     ASSERT_EQ(live, 2);
@@ -665,9 +665,9 @@ TEST(type_list_buffer_view_test, move_transfers_elements)
 {
   std::array<uint8_t, 256>          storage{};
   type_list_buffer_view<int, float> src{span<uint8_t>{storage}};
-  src.emplace<int>(10);
-  src.push(2.5f);
-  src.emplace<int>(20);
+  ASSERT_NE(src.emplace<int>(10), nullptr);
+  ASSERT_NE(src.push(2.5f), nullptr);
+  ASSERT_NE(src.emplace<int>(20), nullptr);
 
   type_list_buffer_view<int, float> dst(std::move(src));
 
@@ -705,10 +705,10 @@ TEST(type_list_buffer_stream_test, for_each_visits_in_order)
 {
   type_list_buffer_stream<int, float> buf;
 
-  buf.emplace<int>(1);
-  buf.push(2.0f);
-  buf.emplace<int>(3);
-  buf.push(4.0f);
+  ASSERT_NE(buf.emplace<int>(1), nullptr);
+  ASSERT_NE(buf.push(2.0f), nullptr);
+  ASSERT_NE(buf.emplace<int>(3), nullptr);
+  ASSERT_NE(buf.push(4.0f), nullptr);
 
   std::vector<int> order; // 0 = int, 1 = float
   buf.for_each([&](const auto& obj) {
@@ -738,9 +738,9 @@ TEST(type_list_buffer_stream_test, clear_destroys_and_allows_reuse)
   {
     type_list_buffer_stream<counted, int> buf;
 
-    buf.emplace<counted>(1);
-    buf.push(0);
-    buf.emplace<counted>(2);
+    ASSERT_NE(buf.emplace<counted>(1), nullptr);
+    ASSERT_NE(buf.push(0), nullptr);
+    ASSERT_NE(buf.emplace<counted>(2), nullptr);
 
     ASSERT_EQ(counted::constructions - counted::destructions, 2);
     const int dtors_before = counted::destructions;
@@ -760,9 +760,9 @@ TEST(type_list_buffer_stream_test, clear_destroys_and_allows_reuse)
 TEST(type_list_buffer_stream_test, move_transfers_elements)
 {
   type_list_buffer_stream<int, float> src;
-  src.emplace<int>(10);
-  src.push(2.5f);
-  src.emplace<int>(20);
+  ASSERT_NE(src.emplace<int>(10), nullptr);
+  ASSERT_NE(src.push(2.5f), nullptr);
+  ASSERT_NE(src.emplace<int>(20), nullptr);
 
   type_list_buffer_stream<int, float> dst(std::move(src));
 
@@ -783,9 +783,9 @@ TEST(type_list_buffer_stream_test, destructor_calls_dtors)
   counted::reset();
   {
     type_list_buffer_stream<counted, int> buf;
-    buf.emplace<counted>(1);
-    buf.emplace<counted>(2);
-    buf.emplace<counted>(3);
+    ASSERT_NE(buf.emplace<counted>(1), nullptr);
+    ASSERT_NE(buf.emplace<counted>(2), nullptr);
+    ASSERT_NE(buf.emplace<counted>(3), nullptr);
     ASSERT_EQ(counted::constructions, 3);
   }
   ASSERT_EQ(counted::destructions, 3);
@@ -796,12 +796,12 @@ TEST(type_list_buffer_stream_test, copy_assignment_destroys_existing_elements)
   counted::reset();
 
   type_list_buffer_stream<counted, int> dst;
-  dst.emplace<counted>(1);
-  dst.emplace<counted>(2);
+  ASSERT_NE(dst.emplace<counted>(1), nullptr);
+  ASSERT_NE(dst.emplace<counted>(2), nullptr);
   ASSERT_EQ(counted::constructions - counted::destructions, 2);
 
   type_list_buffer_stream<counted, int> src;
-  src.emplace<counted>(99);
+  ASSERT_NE(src.emplace<counted>(99), nullptr);
 
   const int dtors_before = counted::destructions;
   dst                    = src;
@@ -813,15 +813,15 @@ TEST(type_list_buffer_stream_test, copy_assignment_destroys_existing_elements)
 TEST(type_list_buffer_stream_test, shallow_copy_shares_elements)
 {
   type_list_buffer_stream<int, float> src;
-  src.emplace<int>(7);
-  src.push(3.14f);
+  ASSERT_NE(src.emplace<int>(7), nullptr);
+  ASSERT_NE(src.push(3.14f), nullptr);
 
   // Shallow copy: both see the same elements.
   type_list_buffer_stream<int, float> c = src;
   ASSERT_EQ(c.size(), 2u);
 
   // Elements pushed after the copy are visible through both handles.
-  src.emplace<int>(99);
+  ASSERT_NE(src.emplace<int>(99), nullptr);
   ASSERT_EQ(src.size(), 3u);
   ASSERT_EQ(c.size(), 3u);
 }
@@ -832,7 +832,7 @@ TEST(type_list_buffer_stream_test, shallow_copy_defers_destruction_until_last_ow
 
   {
     type_list_buffer_stream<counted, int> src;
-    src.emplace<counted>(11);
+    ASSERT_NE(src.emplace<counted>(11), nullptr);
     ASSERT_EQ(counted::constructions, 1);
     ASSERT_EQ(counted::destructions, 0);
 

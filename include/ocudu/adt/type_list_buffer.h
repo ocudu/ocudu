@@ -452,7 +452,7 @@ public:
   /// \tparam T must appear in \c Types.
   /// \returns A pointer to the newly stored element, or \c nullptr if the buffer is full.
   template <typename T>
-  std::decay_t<T>* push(T&& val)
+  [[nodiscard]] std::decay_t<T>* push(T&& val)
   {
     using U = std::decay_t<T>;
     static_assert(type_list_helper::contains_v<U, Types...>,
@@ -464,7 +464,7 @@ public:
   /// \tparam T must appear in \c Types.
   /// \returns A pointer to the newly constructed element, or \c nullptr if the buffer is full.
   template <typename T, typename... Args>
-  T* emplace(Args&&... args)
+  [[nodiscard]] T* emplace(Args&&... args)
   {
     static_assert(type_list_helper::contains_v<T, Types...>,
                   "emplace(): T is not present in this static_type_list_buffer's type list");
@@ -568,7 +568,7 @@ public:
   /// \tparam T must appear in \c Types.
   /// \returns A pointer to the newly stored element, or \c nullptr if the buffer is full.
   template <typename T>
-  std::decay_t<T>* push(T&& val)
+  [[nodiscard]] std::decay_t<T>* push(T&& val)
   {
     using U = std::decay_t<T>;
     static_assert(type_list_helper::contains_v<U, Types...>,
@@ -580,7 +580,7 @@ public:
   /// \tparam T must appear in \c Types.
   /// \returns A pointer to the newly constructed element, or \c nullptr if the buffer is full.
   template <typename T, typename... Args>
-  T* emplace(Args&&... args)
+  [[nodiscard]] T* emplace(Args&&... args)
   {
     static_assert(type_list_helper::contains_v<T, Types...>,
                   "emplace(): T is not present in this type_list_buffer_view's type list");
@@ -709,7 +709,7 @@ public:
   /// Appends a copy or move of \p val to the buffer.
   /// \returns A pointer to the newly stored element, or \c nullptr on allocation failure.
   template <typename T>
-  std::decay_t<T>* push(T&& val)
+  [[nodiscard]] std::decay_t<T>* push(T&& val)
   {
     using U = std::decay_t<T>;
     static_assert(type_list_helper::contains_v<U, Types...>,
@@ -720,7 +720,7 @@ public:
   /// Constructs a \c T in-place at the end of the buffer.
   /// \returns A pointer to the newly constructed element, or \c nullptr on allocation failure.
   template <typename T, typename... Args>
-  T* emplace(Args&&... args)
+  [[nodiscard]] T* emplace(Args&&... args)
   {
     static_assert(type_list_helper::contains_v<T, Types...>,
                   "emplace(): T is not present in this type_list_buffer_stream's type list");
