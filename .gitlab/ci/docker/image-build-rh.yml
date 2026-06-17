@@ -17,125 +17,36 @@ stages:
   - build
 
 # ---------------------------------------------------------------------------
-# Derive the SIMD label used in the image tag from the MARCH value.
-# ---------------------------------------------------------------------------
-.simd-label: &simd-label |
-  case "${MARCH}" in
-    x86-64-v3)                   SIMD=avx2 ;;
-    x86-64-v4)                   SIMD=avx512 ;;
-    neoverse-n1+crc+crypto+ssbs) SIMD=neon ;;
-    *)                           SIMD="${MARCH}" ;;
-  esac
-
-# ---------------------------------------------------------------------------
 # Base job — all RH build cells extend this
 # ---------------------------------------------------------------------------
 .image-build-rh:
-  extends: .docker-builder
-  stage: build
+  extends: .image-build-common
   timeout: 3 hours
   tags:
     - ocudu-rhel-${TARGETARCH}
   image: ${OCUDU_REGISTRY_URI}/rh-tool-cli:$RH_TOOL_CLI_VERSION
   variables:
-    REGISTRY_URI: ${CI_REGISTRY}/${CI_PROJECT_PATH}/images
-    MODE: publish
-    MULTI_ARCH_BUILD: "false"
-    CACHE: "true"
-    CACHE_MODE: "max"
+    RH_TOOL_CLI_VERSION: "1.0.3"
     OS: registry.access.redhat.com/ubi9/ubi
     OS_VERSION: "9.6"
-    COMPONENT: ""
-    DRIVER: ""
-    TARGETARCH: amd64
-    MARCH: x86-64-v4
+    IMAGE_TAG_OS: ubi9
   before_script:
-    - *simd-label
-    - export CONTEXT=${CI_PROJECT_DIR}
-    - export DOCKERFILE=${CI_PROJECT_DIR}/docker
-    - |
-      if [ -n "${DRIVER}" ]; then
-        IMAGE_COMPONENT="${COMPONENT}-${DRIVER}"
-      else
-        IMAGE_COMPONENT="${COMPONENT}"
-      fi
-    - DATE=$(date +%Y%m%d)
-    - export NAME="${IMAGE_COMPONENT}"
-    - |
-      if [ -n "${PROMOTE_IMAGE_TAG:-}" ]; then
-        VERSION="${PROMOTE_IMAGE_TAG}-ubi9-${OS_VERSION}-${SIMD}"
-      else
-        VERSION="ubi9-${OS_VERSION}-${SIMD}-${DATE}"
-      fi
-      export VERSION
-    - export PLATFORM="${TARGETARCH}"
-    - |
-      case "${COMPONENT}" in
-        cu|cu-cp|cu-up) DOCKER_TARGET=runtime-lean ;;
-        *)
-          case "${DRIVER}" in
-            uhd)  DOCKER_TARGET=runtime-uhd ;;
-            dpdk) DOCKER_TARGET=runtime-dpdk ;;
-            *)    DOCKER_TARGET=runtime ;;
-          esac ;;
-      esac
-    - export DOCKER_TARGET
-    - |
-      ENABLE_UHD=Off
-      ENABLE_DPDK=Off
-      case "${DRIVER}" in
-        uhd)  ENABLE_UHD=On ;;
-        dpdk) ENABLE_DPDK=On ;;
-      esac
-    - |
-      CPU_JOBS="$(/usr/local/bin/get_available_cores.sh 2>/dev/null || ${CI_PROJECT_DIR}/.gitlab/ci/builders/get_available_cores.sh)"
-      if [ -z "${CPU_JOBS}" ] || [ "${CPU_JOBS}" -lt 1 ]; then
-        CPU_JOBS=1
-      fi
-      export CPU_JOBS
-    - |
-      export BUILD_ARGS="\
-      OS=${OS};\
-      OS_VERSION=${OS_VERSION};\
-      UHD_VERSION=${UHD_VERSION};\
-      DPDK_VERSION=${DPDK_VERSION};\
-      ROHC_VERSION=${ROHC_VERSION};\
-      OCUDU_IMAGE_VERSION=${VERSION};\
-      OCUDU_IMAGE_RELEASE=${CI_COMMIT_SHORT_SHA};\
-      MARCH=${MARCH};\
-      NUM_JOBS=${CPU_JOBS};\
-      TARGETARCH=${TARGETARCH};\
-      COMPONENT=${COMPONENT};\
-      ENABLE_UHD=${ENABLE_UHD};\
-      ENABLE_DPDK=${ENABLE_DPDK};\
-      EXTRA_CMAKE_ARGS=${EXTRA_CMAKE_ARGS}"
-    - |
-      if [ -n "${PKG_VERSIONS}" ]; then
-        BUILD_ARGS="${BUILD_ARGS};PKG_VERSIONS=${PKG_VERSIONS}"
-      fi
+    - !reference [.image-build-common, before_script]
     - |
       ENT_DIR=/etc/pki/entitlement
       ENT_CERT=$(ls "$ENT_DIR"/*.pem 2>/dev/null | grep -v -- '-key.pem' | head -n1)
       ENT_KEY=$(ls "$ENT_DIR"/*-key.pem 2>/dev/null | head -n1)
       if [ -n "$ENT_CERT" ] && [ -n "$ENT_KEY" ]; then
-        export BUILD_SECRETS="\
+        BUILD_SECRETS="\
         id=rh_entitlement_cert,src=${ENT_CERT};\
         id=rh_entitlement_key,src=${ENT_KEY};\
         id=rh_rhsm_conf,src=/etc/rhsm/rhsm.conf;\
         id=rh_rhsm_ca,src=/etc/rhsm/ca/redhat-uep.pem"
+        export BUILD_SECRETS
       else
         echo "WARNING: No RH entitlement certs found at $ENT_DIR, subscription repos unavailable"
       fi
-    - |
-      IMAGE_REF="${REGISTRY_URI}/${NAME}:${VERSION}"
-      echo "IMAGE_REF=${IMAGE_REF}" > build.env
-  artifacts:
-    reports:
-      dotenv: build.env
   needs: []
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
-    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
 
 # ---------------------------------------------------------------------------
 # Build jobs

@@ -1,17 +1,111 @@
 # SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
-# Default library versions — overridable per pipeline run via CI/CD variables.
+# Common image build setup and matrix definitions.
 # To add a driver, OS, component, or SIMD variant: edit the matching
 # .matrix-* template in this file.
 
-variables:
-  UHD_VERSION: "4.6.0.0"
-  DPDK_VERSION: "25.11.2"
-  ROHC_VERSION: "2.3.1"
-  PKG_VERSIONS: ""
-  EXTRA_CMAKE_ARGS: "-DCMAKE_BUILD_TYPE=Release"
-  RH_TOOL_CLI_VERSION: "1.0.3"
+.image-build-common:
+  extends: .docker-builder
+  stage: build
+  variables:
+    UHD_VERSION: "4.6.0.0"
+    DPDK_VERSION: "25.11.2"
+    ROHC_VERSION: "2.3.1"
+    PKG_VERSIONS: ""
+    EXTRA_CMAKE_ARGS: "-DCMAKE_BUILD_TYPE=Release"
+    REGISTRY_URI: ${CI_REGISTRY}/${CI_PROJECT_PATH}/images
+    MODE: publish
+    MULTI_ARCH_BUILD: "false"
+    CACHE: "true"
+    CACHE_MODE: "max"
+    IMAGE_TAG_OS: ""
+    COMPONENT: ""
+    DRIVER: ""
+    OS: ubuntu
+    OS_VERSION: "24.04"
+    TARGETARCH: amd64
+    MARCH: x86-64-v4
+  before_script:
+    - |
+      case "${MARCH}" in
+        x86-64-v3)                   SIMD=avx2 ;;
+        x86-64-v4)                   SIMD=avx512 ;;
+        neoverse-n1+crc+crypto+ssbs) SIMD=neon ;;
+        *)                           SIMD="${MARCH}" ;;
+      esac
+    - export CONTEXT=${CI_PROJECT_DIR}
+    - export DOCKERFILE=${CI_PROJECT_DIR}/docker
+    - |
+      if [ -n "${DRIVER}" ]; then
+        IMAGE_COMPONENT="${COMPONENT}-${DRIVER}"
+      else
+        IMAGE_COMPONENT="${COMPONENT}"
+      fi
+    - DATE=$(date +%Y%m%d)
+    - export NAME="${IMAGE_COMPONENT}"
+    - |
+      TAG_OS="${IMAGE_TAG_OS:-${OS}}"
+      if [ -n "${PROMOTE_IMAGE_TAG:-}" ]; then
+        VERSION="${PROMOTE_IMAGE_TAG}-${TAG_OS}-${OS_VERSION}-${SIMD}"
+      else
+        VERSION="${TAG_OS}-${OS_VERSION}-${SIMD}-${DATE}"
+      fi
+      export VERSION
+    - export PLATFORM="${TARGETARCH}"
+    - |
+      case "${COMPONENT}" in
+        cu|cu-cp|cu-up) DOCKER_TARGET=runtime-lean ;;
+        *)
+          case "${DRIVER}" in
+            uhd)  DOCKER_TARGET=runtime-uhd ;;
+            dpdk) DOCKER_TARGET=runtime-dpdk ;;
+            *)    DOCKER_TARGET=runtime ;;
+          esac ;;
+      esac
+    - export DOCKER_TARGET
+    - |
+      ENABLE_UHD=Off
+      ENABLE_DPDK=Off
+      case "${DRIVER}" in
+        uhd)  ENABLE_UHD=On ;;
+        dpdk) ENABLE_DPDK=On ;;
+      esac
+    - |
+      CPU_JOBS="$(/usr/local/bin/get_available_cores.sh 2>/dev/null || ${CI_PROJECT_DIR}/.gitlab/ci/builders/get_available_cores.sh)"
+      if [ -z "${CPU_JOBS}" ] || [ "${CPU_JOBS}" -lt 1 ]; then
+        CPU_JOBS=1
+      fi
+      export CPU_JOBS
+    - |
+      export BUILD_ARGS="\
+      OS=${OS};\
+      OS_VERSION=${OS_VERSION};\
+      UHD_VERSION=${UHD_VERSION};\
+      DPDK_VERSION=${DPDK_VERSION};\
+      ROHC_VERSION=${ROHC_VERSION};\
+      OCUDU_IMAGE_VERSION=${VERSION};\
+      OCUDU_IMAGE_RELEASE=${CI_COMMIT_SHORT_SHA};\
+      MARCH=${MARCH};\
+      NUM_JOBS=${CPU_JOBS};\
+      TARGETARCH=${TARGETARCH};\
+      COMPONENT=${COMPONENT};\
+      ENABLE_UHD=${ENABLE_UHD};\
+      ENABLE_DPDK=${ENABLE_DPDK};\
+      EXTRA_CMAKE_ARGS=${EXTRA_CMAKE_ARGS}"
+    - |
+      if [ -n "${PKG_VERSIONS}" ]; then
+        BUILD_ARGS="${BUILD_ARGS};PKG_VERSIONS=${PKG_VERSIONS}"
+      fi
+    - |
+      IMAGE_REF="${REGISTRY_URI}/${NAME}:${VERSION}"
+      echo "IMAGE_REF=${IMAGE_REF}" > build.env
+  artifacts:
+    reports:
+      dotenv: build.env
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
+    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
 
 .matrix-legacy-image:
   parallel:
