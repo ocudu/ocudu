@@ -150,7 +150,8 @@ expected<units::bytes> ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_c
     components.ue_mcs_calculator->handle_ul_crc_info(crc_pdu.tb_crc_success,
                                                      h_ul->get_grant_params().mcs,
                                                      h_ul->get_grant_params().mcs_table,
-                                                     h_ul->get_grant_params().olla_mcs);
+                                                     h_ul->get_grant_params().olla_mcs,
+                                                     crc_pdu.ul_sinr_dB);
 
     // Update PUSCH SNR reported from PHY.
     if (crc_pdu.ul_sinr_dB.has_value()) {

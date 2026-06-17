@@ -27,7 +27,8 @@ public:
   void handle_ul_crc_info(bool                         crc,
                           sch_mcs_index                used_mcs,
                           pusch_mcs_table              mcs_table,
-                          std::optional<sch_mcs_index> olla_mcs);
+                          std::optional<sch_mcs_index> olla_mcs,
+                          std::optional<float>         pusch_snr_db);
 
   /// \brief Derives an adequate MCS given the reported CQI and experienced BLER.
   std::optional<sch_mcs_index> calculate_dl_mcs(pdsch_mcs_table mcs_table) const;

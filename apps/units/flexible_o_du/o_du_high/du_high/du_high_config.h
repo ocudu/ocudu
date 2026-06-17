@@ -319,6 +319,8 @@ struct du_high_unit_pusch_config {
   float olla_target_bler{0.01};
   /// Maximum CQI offset that the OLLA algorithm can apply to the reported CQI.
   float olla_max_snr_offset{5.0};
+  /// Minimum PUSCH SINR, in dB, below which a CRC is ignored by the UL OLLA algorithm.
+  float olla_min_pusch_snr{-10.0};
   /// Position for additional DM-RS in UL (see TS 38.211, clause 6.4.1.1.3).
   unsigned dmrs_add_pos{2};
   /// Minimum number of RBs for resource allocation of UE PUSCHs.

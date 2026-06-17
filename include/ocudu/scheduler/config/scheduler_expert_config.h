@@ -187,6 +187,9 @@ struct scheduler_ue_expert_config {
   float olla_ul_target_bler{0.01};
   /// Maximum UL SNR offset that the OLLA algorithm can apply on top of the estimated UL SINR.
   float olla_max_ul_snr_offset{5.0};
+  /// Minimum PUSCH SINR, in dB, that a CRC must report to be considered by the UL OLLA algorithm. CRCs reporting a
+  /// lower SINR are ignored, as they are unreliable indicators of the link adaptation bias.
+  float olla_ul_min_pusch_snr{-10.0};
   /// Threshold for drop in CQI of the first HARQ transmission above which HARQ retransmissions are cancelled.
   uint8_t dl_harq_la_cqi_drop_threshold{2};
   /// Threshold for drop in nof. layers of the first HARQ transmission above which HARQ retransmission is cancelled.

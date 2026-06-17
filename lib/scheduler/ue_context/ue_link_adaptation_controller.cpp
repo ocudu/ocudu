@@ -54,10 +54,17 @@ void ue_link_adaptation_controller::handle_dl_ack_info(bool                     
 void ue_link_adaptation_controller::handle_ul_crc_info(bool                         crc,
                                                        sch_mcs_index                used_mcs,
                                                        pusch_mcs_table              mcs_table,
-                                                       std::optional<sch_mcs_index> olla_mcs)
+                                                       std::optional<sch_mcs_index> olla_mcs,
+                                                       std::optional<float>         pusch_snr_db)
 {
   if (not ul_olla.has_value()) {
     // UL OLLA is disabled.
+    return;
+  }
+
+  // A NACK reported at very low SINR (e.g. deep in a coverage hole) does not reflect a bias in the link adaptation
+  // and would spuriously drag the OLLA offset down, so such CRCs are excluded from the update.
+  if (pusch_snr_db.has_value() and pusch_snr_db.value() < cell_cfg.expert_cfg.ue.olla_ul_min_pusch_snr) {
     return;
   }
 

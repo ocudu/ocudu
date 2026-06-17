@@ -332,6 +332,7 @@ static YAML::Node build_du_high_pusch_section(const du_high_unit_pusch_config& c
   node["olla_snr_inc_step"]            = config.olla_snr_inc;
   node["olla_target_bler"]             = config.olla_target_bler;
   node["olla_max_snr_offset"]          = config.olla_max_snr_offset;
+  node["olla_min_pusch_snr"]           = config.olla_min_pusch_snr;
   node["dmrs_additional_position"]     = config.dmrs_add_pos;
   node["min_rb_size"]                  = config.min_rb_size;
   node["max_rb_size"]                  = config.max_rb_size;

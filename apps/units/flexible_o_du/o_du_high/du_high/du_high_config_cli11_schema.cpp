@@ -1033,6 +1033,12 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
              "Maximum offset that the Outer-loop link adaptation (OLLA) can apply to the estimated UL SINR")
       ->capture_default_str()
       ->check(CLI::PositiveNumber);
+  add_option(app,
+             "--olla_min_pusch_snr",
+             pusch_params.olla_min_pusch_snr,
+             "Minimum PUSCH SINR in dB below which a CRC is ignored by the Outer-loop link adaptation (OLLA)")
+      ->capture_default_str()
+      ->check(CLI::Range(-30.0, 30.0));
   add_option(app, "--dmrs_additional_position", pusch_params.dmrs_add_pos, "PUSCH DMRS additional position")
       ->capture_default_str()
       ->check(CLI::Range(0, 3));

@@ -1206,6 +1206,7 @@ static scheduler_expert_config generate_scheduler_expert_config(const du_high_un
   out_cfg.ue.olla_ul_target_bler              = pusch.olla_target_bler;
   out_cfg.ue.olla_ul_snr_inc                  = pusch.olla_snr_inc;
   out_cfg.ue.olla_max_ul_snr_offset           = pusch.olla_max_snr_offset;
+  out_cfg.ue.olla_ul_min_pusch_snr            = pusch.olla_min_pusch_snr;
   out_cfg.ue.pdsch_crb_limits                 = {pdsch.start_rb, pdsch.end_rb};
   out_cfg.ue.pdsch_interleaving_bundle_size   = pdsch.interleaving_bundle_size;
   out_cfg.ue.pusch_crb_limits                 = {pusch.start_rb, pusch.end_rb};

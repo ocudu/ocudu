@@ -61,7 +61,7 @@ TEST_F(ue_link_adaptation_controller_test, acks_increase_offsets)
   controller.handle_dl_ack_info(true, sch_mcs_index{5}, dl_mcs_table, sch_mcs_index{5});
   ASSERT_GT(controller.dl_cqi_offset(), 0);
 
-  controller.handle_ul_crc_info(true, sch_mcs_index{5}, pusch_mcs_table::qam64, sch_mcs_index{5});
+  controller.handle_ul_crc_info(true, sch_mcs_index{5}, pusch_mcs_table::qam64, sch_mcs_index{5}, std::nullopt);
   ASSERT_GT(controller.ul_snr_offset_db(), 0);
 }
 
@@ -70,7 +70,20 @@ TEST_F(ue_link_adaptation_controller_test, nacks_increase_offsets)
   controller.handle_dl_ack_info(false, sch_mcs_index{5}, dl_mcs_table, sch_mcs_index{5});
   ASSERT_LT(controller.dl_cqi_offset(), 0);
 
-  controller.handle_ul_crc_info(false, sch_mcs_index{5}, pusch_mcs_table::qam64, sch_mcs_index{5});
+  controller.handle_ul_crc_info(false, sch_mcs_index{5}, pusch_mcs_table::qam64, sch_mcs_index{5}, std::nullopt);
+  ASSERT_LT(controller.ul_snr_offset_db(), 0);
+}
+
+TEST_F(ue_link_adaptation_controller_test, crc_below_min_pusch_snr_is_ignored_by_ul_olla)
+{
+  // A CRC whose reported SINR is below the configured minimum must leave the UL OLLA offset untouched.
+  controller.handle_ul_crc_info(
+      false, sch_mcs_index{5}, pusch_mcs_table::qam64, sch_mcs_index{5}, sched_cfg.ue.olla_ul_min_pusch_snr - 1.0F);
+  ASSERT_EQ(controller.ul_snr_offset_db(), 0);
+
+  // A CRC whose reported SINR is not below the minimum is processed as usual.
+  controller.handle_ul_crc_info(
+      false, sch_mcs_index{5}, pusch_mcs_table::qam64, sch_mcs_index{5}, sched_cfg.ue.olla_ul_min_pusch_snr);
   ASSERT_LT(controller.ul_snr_offset_db(), 0);
 }
 
