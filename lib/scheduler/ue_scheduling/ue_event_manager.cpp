@@ -49,7 +49,7 @@ public:
     // Signal that this bearer needs its BO state updated.
     if (not pending_evs.try_push(key)) {
       parent.logger.warning("ue={} lcid={}: Discarding DL buffer occupancy update. Cause: Event queue is full",
-                            fmt::underlying(rlc_dl_bo.ue_index),
+                            rlc_dl_bo.ue_index,
                             fmt::underlying(rlc_dl_bo.lcid));
     }
   }
@@ -72,7 +72,7 @@ public:
       dl_bo.bs = ue_dl_bo_table[key].first.exchange(-1, std::memory_order_release);
       if (dl_bo.bs < 0) {
         parent.logger.warning("ue={} lcid={}: Invalid DL buffer occupancy value: {}",
-                              fmt::underlying(dl_bo.ue_index),
+                              dl_bo.ue_index,
                               fmt::underlying(dl_bo.lcid),
                               dl_bo.bs);
         continue;
@@ -80,8 +80,7 @@ public:
 
       // Retrieve UE.
       if (not parent.ue_db.contains(dl_bo.ue_index)) {
-        parent.logger.warning("ue={}: Discarding DL buffer occupancy update. Cause: UE not recognized",
-                              fmt::underlying(dl_bo.ue_index));
+        parent.logger.warning("ue={}: Discarding DL buffer occupancy update. Cause: UE not recognized", dl_bo.ue_index);
         continue;
       }
       ue& u = parent.ue_db[dl_bo.ue_index];

@@ -298,8 +298,9 @@ void cell_metrics_handler::handle_sr_indication(du_ue_index_t ue_index, slot_poi
 {
   if (ues.contains(ue_index)) {
     auto& u = ues[ue_index];
-    if (not u.data.last_sr_slot.valid()) {
-      u.data.last_sr_slot = sr_slot;
+    if (not u.oldest_unserved_sr_slot.valid()) {
+      // Note: We only count the oldest unserved SR.
+      u.oldest_unserved_sr_slot = sr_slot;
     }
     ++u.data.count_sr;
   }
@@ -528,11 +529,11 @@ void cell_metrics_handler::handle_slot_result(slot_point_extended       sl_tx,
     ue_metric_context& u = ues[it->second];
     u.data.ul_mcs += ul_grant.pusch_cfg.mcs_index.value();
     u.last_ul_olla = ul_grant.context.olla_offset;
-    if (u.data.last_sr_slot.valid()) {
-      unsigned sr_to_pusch_delay = last_slot_tx.without_hyper_sfn() - u.data.last_sr_slot;
+    if (u.oldest_unserved_sr_slot.valid()) {
+      unsigned sr_to_pusch_delay = last_slot_tx.without_hyper_sfn() - u.oldest_unserved_sr_slot;
       u.data.sum_sr_to_pusch_delay_slots += sr_to_pusch_delay;
       u.data.max_sr_to_pusch_delay_slots = std::max(sr_to_pusch_delay, u.data.max_sr_to_pusch_delay_slots);
-      u.data.last_sr_slot.clear();
+      u.oldest_unserved_sr_slot.clear();
       u.data.count_handled_sr++;
     }
     ++u.data.nof_puschs;

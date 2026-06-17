@@ -69,7 +69,6 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
       unsigned   sum_ul_ce_delay_slots          = 0;
       unsigned   max_ul_ce_delay_slots          = 0;
       unsigned   nof_ul_ces                     = 0;
-      slot_point last_sr_slot;
       slot_point last_pusch_slot;
       slot_point last_pdsch_slot;
       unsigned   max_pusch_distance_slots = 0;
@@ -99,9 +98,11 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
     rnti_t        rnti;
     /// Set when the UE has been removed. The context is kept until the next periodic report so that metrics accumulated
     /// since the last report (e.g. CRC KOs) are reported instead of discarded, and is erased right after.
-    bool                                   pending_removal = false;
-    unsigned                               last_bsr        = 0;
-    std::optional<int>                     last_phr;
+    bool               pending_removal = false;
+    unsigned           last_bsr        = 0;
+    std::optional<int> last_phr;
+    /// First slot at which a positive SR was received for this UE, but after which no PUSCH grant was scheduled.
+    slot_point                             oldest_unserved_sr_slot;
     std::array<unsigned, MAX_NOF_RB_LCIDS> last_dl_bs{0};
     std::optional<float>                   last_dl_olla;
     std::optional<float>                   last_ul_olla;
