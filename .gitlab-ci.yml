@@ -134,6 +134,7 @@ promote stable docker images:
       when: never
     - if: $ON_MR_FORK
       when: never
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "main"
     - if: $ON_WEB
       when: manual
       allow_failure: true
