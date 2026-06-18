@@ -16,6 +16,7 @@
 #include "ocudu/ran/nr_cgi.h"
 #include "ocudu/support/async/async_event_source.h"
 #include "ocudu/support/async/fifo_async_task_scheduler.h"
+#include "ocudu/support/executors/task_executor.h"
 #include <memory>
 
 namespace ocudu {
@@ -82,6 +83,7 @@ private:
 
   ocudulog::basic_logger&           logger;
   timer_factory                     timers;
+  task_executor&                    ctrl_exec;
   async_event_source<bool>          cancel_event;
   e2_subscription_proc&             subscription_proc;
   e2sm_manager&                     e2sm_mngr;

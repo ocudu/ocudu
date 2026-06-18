@@ -21,6 +21,7 @@ e2_impl::e2_impl(ocudulog::basic_logger&  logger_,
                  task_executor&           task_exec_) :
   logger(logger_),
   timers(timers_),
+  ctrl_exec(task_exec_),
   cancel_event(timers_),
   subscription_proc(subscription_mngr_),
   e2sm_mngr(e2sm_mngr_),
@@ -86,32 +87,33 @@ void e2_impl::handle_e2_connection_update(const asn1::e2ap::e2conn_upd_s& msg)
 
 void e2_impl::handle_message(const e2_message& msg)
 {
-  logger.info("Handling E2 PDU of type {}", msg.pdu.type().to_string());
+  if (not ctrl_exec.execute([this, msg]() {
+        expected<uint8_t> transaction_id = get_transaction_id(msg.pdu);
+        if (transaction_id.has_value()) {
+          logger.info("E2AP msg, \"{}.{}\", transaction id={}",
+                      msg.pdu.type().to_string(),
+                      get_message_type_str(msg.pdu),
+                      transaction_id.value());
+        } else {
+          logger.info("E2AP SDU, \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
+        }
 
-  // Log message.
-  expected<uint8_t> transaction_id = get_transaction_id(msg.pdu);
-  if (transaction_id.has_value()) {
-    logger.info("E2AP msg, \"{}.{}\", transaction id={}",
-                msg.pdu.type().to_string(),
-                get_message_type_str(msg.pdu),
-                transaction_id.value());
-  } else {
-    logger.info("E2AP SDU, \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
-  }
-
-  switch (msg.pdu.type().value) {
-    case asn1::e2ap::e2ap_pdu_c::types_opts::init_msg:
-      handle_initiating_message(msg.pdu.init_msg());
-      break;
-    case asn1::e2ap::e2ap_pdu_c::types_opts::successful_outcome:
-      handle_successful_outcome(msg.pdu.successful_outcome());
-      break;
-    case asn1::e2ap::e2ap_pdu_c::types_opts::unsuccessful_outcome:
-      handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
-      break;
-    default:
-      logger.error("Invalid E2 PDU type");
-      break;
+        switch (msg.pdu.type().value) {
+          case asn1::e2ap::e2ap_pdu_c::types_opts::init_msg:
+            handle_initiating_message(msg.pdu.init_msg());
+            break;
+          case asn1::e2ap::e2ap_pdu_c::types_opts::successful_outcome:
+            handle_successful_outcome(msg.pdu.successful_outcome());
+            break;
+          case asn1::e2ap::e2ap_pdu_c::types_opts::unsuccessful_outcome:
+            handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
+            break;
+          default:
+            logger.error("Invalid E2 PDU type");
+            break;
+        }
+      })) {
+    logger.error("Failed to dispatch E2 PDU to E2AP executor. Dropping PDU of type {}", msg.pdu.type().to_string());
   }
 }
 
