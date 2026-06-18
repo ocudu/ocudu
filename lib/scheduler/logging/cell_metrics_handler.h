@@ -56,6 +56,8 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
       unsigned   max_pucch_harq_delay_slots     = 0;
       unsigned   sum_sr_to_pusch_delay_slots    = 0;
       unsigned   max_sr_to_pusch_delay_slots    = 0;
+      unsigned   max_dl_lcid0_flush_delay_slots = 0;
+      unsigned   max_dl_lcid1_flush_delay_slots = 0;
       unsigned   nof_pucch_snr_reports          = 0;
       unsigned   nof_pucch_f0f1_invalid_harqs   = 0;
       unsigned   nof_pucch_f2f3f4_invalid_harqs = 0;
@@ -102,7 +104,10 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
     unsigned           last_bsr        = 0;
     std::optional<int> last_phr;
     /// First slot at which a positive SR was received for this UE, but after which no PUSCH grant was scheduled.
-    slot_point                             oldest_unserved_sr_slot;
+    slot_point oldest_unserved_sr_slot;
+    /// First slot at which a positive DL BO was received for SRB0/SRB1, indexed by LCID. Gets reset when DL BO goes
+    /// back to zero.
+    std::array<slot_point, 2>              oldest_positive_dl_bo_slot;
     std::array<unsigned, MAX_NOF_RB_LCIDS> last_dl_bs{0};
     std::optional<float>                   last_dl_olla;
     std::optional<float>                   last_ul_olla;

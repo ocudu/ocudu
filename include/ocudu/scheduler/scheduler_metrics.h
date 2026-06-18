@@ -81,6 +81,8 @@ struct scheduler_ue_metrics {
   std::optional<float> max_pucch_harq_delay_ms;
   std::optional<float> avg_sr_to_pusch_delay_ms;
   std::optional<float> max_sr_to_pusch_delay_ms;
+  std::optional<float> max_dl_lcid0_flush_delay_ms;
+  std::optional<float> max_dl_lcid1_flush_delay_ms;
   /// @}
   std::optional<float>    last_dl_olla;
   std::optional<float>    last_ul_olla;

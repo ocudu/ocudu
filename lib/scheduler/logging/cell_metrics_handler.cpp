@@ -360,6 +360,26 @@ void cell_metrics_handler::handle_dl_buffer_state_indication(const dl_buffer_sta
   if (ues.contains(dl_bs.ue_index)) {
     auto& u = ues[dl_bs.ue_index];
 
+    if (dl_bs.lcid == LCID_SRB0 or dl_bs.lcid == LCID_SRB1) {
+      if ((u.last_dl_bs[dl_bs.lcid] > 0) != (dl_bs.bs > 0)) {
+        slot_point& oldest_bo_slot = u.oldest_positive_dl_bo_slot[dl_bs.lcid];
+        if (dl_bs.bs > 0) {
+          // Edge trigger from 0 -> positive.
+          oldest_bo_slot = last_slot_tx.without_hyper_sfn();
+        } else {
+          // Edge trigger from positive -> 0.
+          // Save latency and reset count.
+          const unsigned flush_delay_slots = last_slot_tx.without_hyper_sfn() - oldest_bo_slot;
+          if (dl_bs.lcid == LCID_SRB0) {
+            u.data.max_dl_lcid0_flush_delay_slots = flush_delay_slots;
+          } else {
+            u.data.max_dl_lcid1_flush_delay_slots = flush_delay_slots;
+          }
+          oldest_bo_slot.clear();
+        }
+      }
+    }
+
     // Store last DL buffer state.
     u.last_dl_bs[dl_bs.lcid] = dl_bs.bs;
   }
@@ -684,6 +704,12 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
     ret.avg_sr_to_pusch_delay_ms =
         convert_slots_to_ms(data.sum_sr_to_pusch_delay_slots) / static_cast<float>(data.count_handled_sr);
     ret.max_sr_to_pusch_delay_ms = convert_slots_to_ms(data.max_sr_to_pusch_delay_slots);
+  }
+  if (data.max_dl_lcid0_flush_delay_slots > 0) {
+    ret.max_dl_lcid0_flush_delay_ms = convert_slots_to_ms(data.max_dl_lcid0_flush_delay_slots);
+  }
+  if (data.max_dl_lcid1_flush_delay_slots > 0) {
+    ret.max_dl_lcid1_flush_delay_ms = convert_slots_to_ms(data.max_dl_lcid1_flush_delay_slots);
   }
 
   // Reset UE stats metrics on every report.

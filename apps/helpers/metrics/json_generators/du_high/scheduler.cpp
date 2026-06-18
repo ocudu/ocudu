@@ -97,6 +97,10 @@ void to_json(nlohmann::json& json, const scheduler_ue_metrics& metrics)
       metrics.avg_sr_to_pusch_delay_ms.has_value() ? metrics.avg_sr_to_pusch_delay_ms : 0.0f;
   json["max_sr_to_pusch_delay"] =
       metrics.max_sr_to_pusch_delay_ms.has_value() ? metrics.max_sr_to_pusch_delay_ms : 0.0f;
+  json["max_dl_lcid0_flush_delay"] =
+      metrics.max_dl_lcid0_flush_delay_ms.has_value() ? metrics.max_dl_lcid0_flush_delay_ms : 0.0f;
+  json["max_dl_lcid1_flush_delay"] =
+      metrics.max_dl_lcid1_flush_delay_ms.has_value() ? metrics.max_dl_lcid1_flush_delay_ms : 0.0f;
 }
 
 void to_json(nlohmann::json& json, const scheduler_cell_metrics& metrics)

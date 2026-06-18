@@ -387,6 +387,12 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
       fmt::format_to(out_it, " max_pucch_harq_delay={:.3}", format_unit_or(ue.max_pucch_harq_delay_ms, "ms", "n/a"));
       fmt::format_to(out_it, " avg_sr_to_pusch_delay={:.3}", format_unit_or(ue.avg_sr_to_pusch_delay_ms, "ms", "n/a"));
       fmt::format_to(out_it, " max_sr_to_pusch_delay={:.3}", format_unit_or(ue.max_sr_to_pusch_delay_ms, "ms", "n/a"));
+      if (ue.max_dl_lcid0_flush_delay_ms.value_or(0) > 0) {
+        fmt::format_to(out_it, " max_dl_lcid0_flush_delay={:.3}ms", *ue.max_dl_lcid0_flush_delay_ms);
+      }
+      if (ue.max_dl_lcid1_flush_delay_ms.value_or(0) > 0) {
+        fmt::format_to(out_it, " max_dl_lcid1_flush_delay={:.3}ms", *ue.max_dl_lcid1_flush_delay_ms);
+      }
 
       log_chan("{}", to_c_str(buffer));
       buffer.clear();
