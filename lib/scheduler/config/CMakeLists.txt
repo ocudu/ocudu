@@ -12,6 +12,8 @@ add_library(sched_config STATIC
         scheduler_ue_config_validator.cpp
         serving_cell_config_validator.cpp
         csi_helper.cpp
+        pucch_default_resource.cpp
+        pucch_guardbands.cpp
         pucch_resource_generator.cpp
         time_domain_resource_helper.cpp
         rlm_helper.cpp)

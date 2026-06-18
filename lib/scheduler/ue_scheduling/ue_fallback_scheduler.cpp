@@ -12,12 +12,12 @@
 #include "../support/mcs_calculator.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/prbs_calculator.h"
-#include "../support/pucch/pucch_guardbands.h"
 #include "../support/rb_helper.h"
 #include "../uci_scheduling/uci_allocator.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/sch/tbs_calculator.h"
 #include "ocudu/ran/transform_precoding/transform_precoding_helpers.h"
+#include "ocudu/scheduler/config/pucch_guardbands.h"
 #include "ocudu/scheduler/config/pusch_td_resource_indices.h"
 #include "ocudu/scheduler/result/pusch_info.h"
 #include "ocudu/support/format/custom_formattable.h"
@@ -43,7 +43,10 @@ ue_fallback_scheduler::ue_fallback_scheduler(const scheduler_ue_expert_config& e
   ss_cfg(cell_cfg.params.dl_cfg_common.init_dl_bwp.pdcch_common
              .search_spaces[cell_cfg.params.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id]),
   cs_cfg(cell_cfg.get_common_coreset(ss_cfg.get_coreset_id())),
-  pucch_crbs(ocudu::compute_pucch_crbs(cell_cfg)),
+  pucch_crbs(
+      ocudu::compute_pucch_crbs(cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.crbs,
+                                cell_cfg.params.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common,
+                                cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated)),
   logger(ocudulog::fetch_basic_logger("SCHED"))
 {
   // Pre-reserve memory to avoid allocations in RT.

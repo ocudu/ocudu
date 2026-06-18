@@ -3,7 +3,6 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "pucch_allocator_impl.h"
-#include "../support/pucch/pucch_default_resource.h"
 #include "pucch_allocator_helpers.h"
 #include "pucch_resource_manager.h"
 #include "ocudu/ocudulog/log_channel.h"
@@ -13,6 +12,7 @@
 #include "ocudu/ran/pucch/pucch_info.h"
 #include "ocudu/ran/pucch/pucch_uci_bits.h"
 #include "ocudu/ran/resource_allocation/ofdm_symbol_range.h"
+#include "ocudu/scheduler/config/pucch_default_resource.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
 #include "ocudu/scheduler/resource_grid_util.h"
 #include "ocudu/scheduler/result/sched_result.h"

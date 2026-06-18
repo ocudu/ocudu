@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
-#include "lib/scheduler/support/pucch/pucch_default_resource.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "uci_test_utils.h"
+#include "ocudu/scheduler/config/pucch_default_resource.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;

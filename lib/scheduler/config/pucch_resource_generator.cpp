@@ -3,11 +3,11 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/scheduler/config/pucch_resource_generator.h"
-#include "../support/pucch/pucch_default_resource.h"
 #include "ocudu/adt/expected.h"
 #include "ocudu/ran/pucch/pucch_constants.h"
 #include "ocudu/ran/pucch/pucch_info.h"
 #include "ocudu/ran/pucch/pucch_mapping.h"
+#include "ocudu/scheduler/config/pucch_default_resource.h"
 #include "ocudu/scheduler/config/pucch_resource_builder_params.h"
 #include "ocudu/support/math/math_utils.h"
 #include "ocudu/support/ocudu_assert.h"

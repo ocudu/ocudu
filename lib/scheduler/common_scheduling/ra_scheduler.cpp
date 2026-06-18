@@ -11,7 +11,6 @@
 #include "../support/dmrs_helpers.h"
 #include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
-#include "../support/pucch/pucch_guardbands.h"
 #include "../support/rb_helper.h"
 #include "../support/sch_pdu_builder.h"
 #include "ocudu/adt/scope_exit.h"
@@ -21,6 +20,7 @@
 #include "ocudu/ran/prach/ra_helper.h"
 #include "ocudu/ran/resource_allocation/resource_allocation_frequency.h"
 #include "ocudu/ran/sch/tbs_calculator.h"
+#include "ocudu/scheduler/config/pucch_guardbands.h"
 #include "ocudu/support/compiler.h"
 
 using namespace ocudu;
@@ -247,7 +247,9 @@ ra_scheduler::ra_scheduler(const cell_configuration& cellcfg_,
           cell_cfg.params.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index)
           .format)),
   prach_occasion_duration_slots(compute_prach_occasion_duration_slots(cell_cfg)),
-  pucch_crbs(compute_pucch_crbs(cell_cfg)),
+  pucch_crbs(compute_pucch_crbs(cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.crbs,
+                                cell_cfg.params.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common,
+                                cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated)),
   cached_init_bwp_info(std::make_unique<cached_bwp_info>(cell_cfg)),
   ra_harqs(MAX_NOF_DU_UES,
            1,
