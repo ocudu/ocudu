@@ -90,6 +90,7 @@ e1ap_cu_up_impl::handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& req
 
 async_task<void> e1ap_cu_up_impl::handle_cu_up_e1ap_release_request()
 {
+  metrics_timer.stop();
   return launch_async<e1ap_cu_up_release_procedure>(connection_handler, *pdu_notifier, *ev_mng, logger);
 }
 
