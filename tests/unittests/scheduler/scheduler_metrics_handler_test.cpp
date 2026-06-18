@@ -86,7 +86,7 @@ protected:
 
   slot_point_extended next_sl_tx{
       subcarrier_spacing::kHz15,
-      test_rng::uniform_int<unsigned>(0, NOF_HYPER_SFNS* NOF_SFNS* NOF_SUBFRAMES_PER_FRAME - 1)};
+      test_rng::uniform_int<unsigned>(0, NOF_HYPER_SFNS * NOF_SFNS * NOF_SUBFRAMES_PER_FRAME - 1)};
   unsigned slot_count = 0;
 };
 

@@ -681,4 +681,3 @@ void cell_metrics_handler::ue_metric_context::reset()
   // Note: for BSR and CQI we just keep the last without resetting the value at every slot.
   data = {};
 }
-
