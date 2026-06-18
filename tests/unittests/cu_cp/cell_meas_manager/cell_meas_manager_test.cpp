@@ -38,6 +38,42 @@ TEST_F(cell_meas_manager_test, when_empty_config_is_used_validation_succeeds)
   ASSERT_TRUE(is_valid_configuration(cfg));
 }
 
+TEST_F(cell_meas_manager_test, when_periodic_report_cfg_id_is_unknown_validation_fails)
+{
+  cell_meas_manager_cfg cfg;
+
+  cell_meas_config cell_cfg;
+  cell_cfg.serving_cell_cfg.nci               = nr_cell_identity::create(0x19b0).value();
+  cell_cfg.serving_cell_cfg.gnb_id_bit_length = 32;
+  cell_cfg.periodic_report_cfg_id             = uint_to_report_cfg_id(1);
+  cfg.cells.emplace(cell_cfg.serving_cell_cfg.nci, cell_cfg);
+
+  // Note: cfg.report_config_ids does not contain report_cfg_id 1.
+  ASSERT_FALSE(is_valid_configuration(cfg));
+}
+
+TEST_F(cell_meas_manager_test, when_neighbor_report_cfg_id_is_unknown_validation_fails)
+{
+  cell_meas_manager_cfg cfg;
+
+  nr_cell_identity nci1 = nr_cell_identity::create(0x19b0).value();
+  nr_cell_identity nci2 = nr_cell_identity::create(0x19b1).value();
+
+  cell_meas_config cell_cfg;
+  cell_cfg.serving_cell_cfg.nci               = nci1;
+  cell_cfg.serving_cell_cfg.gnb_id_bit_length = 32;
+
+  neighbor_cell_meas_config ncell_meas_cfg;
+  ncell_meas_cfg.nci = nci2;
+  ncell_meas_cfg.report_cfg_ids.push_back(uint_to_report_cfg_id(2));
+  cell_cfg.ncells.push_back(ncell_meas_cfg);
+
+  cfg.cells.emplace(nci1, cell_cfg);
+
+  // Note: cfg.report_config_ids does not contain report_cfg_id 2.
+  ASSERT_FALSE(is_valid_configuration(cfg));
+}
+
 TEST_F(cell_meas_manager_test, when_empty_config_is_used_then_no_neighbor_cells_are_available)
 {
   create_empty_manager();
