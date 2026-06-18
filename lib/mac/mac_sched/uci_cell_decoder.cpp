@@ -96,12 +96,48 @@ decode_csi_bits(const mac_uci_pdu::pusch_type& pusch, const csi_report_configura
   return csi_report_unpack_pusch(csi1_bits, csi2_bits, csi_rep_cfg);
 }
 
+static bool grid_access_required(const mac_uci_indication_message& msg)
+{
+  return std::any_of(msg.ucis.begin(), msg.ucis.end(), [](const mac_uci_pdu& pdu) {
+    if (const auto* puschuci = std::get_if<mac_uci_pdu::pusch_type>(&pdu.pdu)) {
+      return puschuci->csi_part1_info.has_value() and puschuci->csi_part1_info->is_valid;
+    }
+    if (const auto* f2uci = std::get_if<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(&pdu.pdu)) {
+      return f2uci->csi_part1_info.has_value() and f2uci->csi_part1_info->is_valid;
+    }
+    return false;
+  });
+}
+
 uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& msg)
 {
   // Convert MAC UCI indication to OCUDU scheduler UCI indication.
   uci_indication ind{};
   ind.slot_rx    = msg.sl_rx;
   ind.cell_index = cell_index;
+
+  // Acquire shared (reader) access to the grid entry holding the expected UCI report configs for this slot. Multiple
+  // PHY worker threads may decode the same slot's UCIs concurrently, so reader access is shared. A failed acquisition,
+  // or an entry that has been recycled for a different slot, means the slot-indication writer wrapped around the ring
+  // and caught up with this reader, i.e. the ring buffer overflowed; the CSI report configs cannot be read and the
+  // associated CSI reports are discarded.
+  slot_ucis_entry* slot_entry = nullptr;
+  if (grid_access_required(msg)) {
+    slot_ucis_entry& entry = expected_uci_report_grid[to_grid_index(msg.sl_rx)];
+    if (not entry.try_acquire_read()) {
+      logger.warning("cell={}: Discarding CSI reports for slot_rx={}. Cause: UCI report ring buffer overflow.",
+                     cell_index,
+                     msg.sl_rx);
+    } else if (entry.slot != msg.sl_rx) {
+      entry.release_read();
+      logger.warning("cell={}: Discarding CSI reports for slot_rx={}. Cause: UCI report ring buffer overflow.",
+                     cell_index,
+                     msg.sl_rx);
+    } else {
+      slot_entry = &entry;
+    }
+  }
+
   for (const auto& mac_uci : msg.ucis) {
     uci_indication::uci_pdu& uci_pdu = ind.ucis.emplace_back();
     uci_pdu.crnti                    = mac_uci.rnti;
@@ -170,12 +206,10 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
       }
 
       if (pusch->csi_part1_info.has_value()) {
-        if (pusch->csi_part1_info->is_valid) {
+        if (pusch->csi_part1_info->is_valid and slot_entry != nullptr) {
           // Decode CSI bits given the CSI report config previously stored in the grid.
-          const auto& slot_ucis = expected_uci_report_grid[to_grid_index(msg.sl_rx)];
-
           // Search for CSI report config with matching RNTI.
-          for (const auto& expected_slot_uci : slot_ucis) {
+          for (const auto& expected_slot_uci : slot_entry->ucis) {
             if (expected_slot_uci.rnti == uci_pdu.crnti) {
               pdu.csi = decode_csi_bits(*pusch, expected_slot_uci.csi_rep_cfg, aperiodic_csi_report);
               break;
@@ -183,11 +217,11 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
           }
           if (not pdu.csi.has_value()) {
             logger.warning("cell={} ue={} rnti={}: Discarding CSI report. Cause: Unable to find CSI report config.",
-                           fmt::underlying(cell_index),
-                           fmt::underlying(uci_pdu.ue_index),
+                           cell_index,
+                           uci_pdu.ue_index,
                            uci_pdu.crnti);
           }
-        } else {
+        } else if (not pusch->csi_part1_info->is_valid) {
           pdu.csi = csi_report_data{.valid = false};
         }
 
@@ -219,12 +253,10 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
 
       // Check if the UCI has been correctly decoded.
       if (pucch_f2f3f4->csi_part1_info.has_value()) {
-        if (pucch_f2f3f4->csi_part1_info->is_valid) {
+        if (pucch_f2f3f4->csi_part1_info->is_valid and slot_entry != nullptr) {
           // Decode CSI bits given the CSI report config previously stored in the grid.
-          const auto& slot_ucis = expected_uci_report_grid[to_grid_index(msg.sl_rx)];
-
           // Search for CSI report config with matching RNTI.
-          for (const auto& expected_slot_uci : slot_ucis) {
+          for (const auto& expected_slot_uci : slot_entry->ucis) {
             if (expected_slot_uci.rnti == uci_pdu.crnti) {
               pdu.csi = decode_csi_bits(*pucch_f2f3f4, expected_slot_uci.csi_rep_cfg);
               break;
@@ -232,11 +264,11 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
           }
           if (not pdu.csi.has_value()) {
             logger.warning("cell={} ue={} rnti={}: Discarding CSI report. Cause: Unable to find CSI report config.",
-                           fmt::underlying(cell_index),
-                           fmt::underlying(uci_pdu.ue_index),
+                           cell_index,
+                           uci_pdu.ue_index,
                            uci_pdu.crnti);
           }
-        } else {
+        } else if (not pucch_f2f3f4->csi_part1_info->is_valid) {
           pdu.csi = csi_report_data{.valid = false};
         }
 
@@ -246,14 +278,47 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
     }
   }
 
+  if (slot_entry != nullptr) {
+    // Do not clear the entry: the PHY may deliver the UCIs for a given slot across several indications, all sharing the
+    // same sl_rx, so the stored configs must remain available until store_uci overwrites the entry on ring wrap-around.
+    slot_entry->release_read();
+  }
+
   return ind;
+}
+
+static bool uci_storage_required(span<const pucch_info> scheduled_pucchs, span<const ul_sched_info> scheduled_puschs)
+{
+  return std::any_of(scheduled_pucchs.begin(),
+                     scheduled_pucchs.end(),
+                     [](const pucch_info& pucch) { return pucch.csi_rep_cfg.has_value(); }) or
+         std::any_of(scheduled_puschs.begin(), scheduled_puschs.end(), [](const ul_sched_info& pusch) {
+           return pusch.uci.has_value() and pusch.uci->csi.has_value();
+         });
 }
 
 void uci_cell_decoder::store_uci(slot_point                uci_sl,
                                  span<const pucch_info>    scheduled_pucchs,
                                  span<const ul_sched_info> scheduled_puschs)
 {
-  auto& slot_ucis = expected_uci_report_grid[to_grid_index(uci_sl)];
+  if (not uci_storage_required(scheduled_pucchs, scheduled_puschs)) {
+    // Early exit.
+    return;
+  }
+
+  // Acquire exclusive (writer) access to the grid entry. A failed acquisition means one or more readers are still
+  // decoding an aliasing slot, i.e. the ring buffer overflowed; skip the write to avoid racing on the underlying
+  // container.
+  slot_ucis_entry& slot_entry = expected_uci_report_grid[to_grid_index(uci_sl)];
+  if (not slot_entry.try_acquire_write()) {
+    logger.warning("cell={}: Skipping storage of expected UCIs for slot={}. Cause: UCI report ring buffer overflow.",
+                   cell_index,
+                   uci_sl);
+    return;
+  }
+
+  slot_entry.slot = uci_sl;
+  auto& slot_ucis = slot_entry.ucis;
   slot_ucis.clear();
 
   for (const pucch_info& pucch : scheduled_pucchs) {
@@ -270,4 +335,6 @@ void uci_cell_decoder::store_uci(slot_point                uci_sl,
       uci_ctx.csi_rep_cfg  = pusch.uci->csi->csi_rep_cfg;
     }
   }
+
+  slot_entry.release_write();
 }
