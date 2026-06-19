@@ -49,7 +49,7 @@ async_task<void> e2_impl::handle_e2_node_initiated_removal_request()
       CORO_RETURN();
     });
   }
-  return launch_async<e2ap_removal_procedure>(*tx_pdu_notifier, *events, timers, logger);
+  return launch_async<e2ap_removal_procedure>(*tx_pdu_notifier, *events, logger);
 }
 
 async_task<void> e2_impl::handle_e2_disconnection_request()
@@ -154,16 +154,11 @@ void e2_impl::handle_successful_outcome(const asn1::e2ap::successful_outcome_s& 
 {
   switch (outcome.value.type().value) {
     case asn1::e2ap::e2ap_elem_procs_o::successful_outcome_c::types_opts::options::e2setup_resp:
-    case asn1::e2ap::e2ap_elem_procs_o::successful_outcome_c::types_opts::options::e2_removal_resp: {
-      expected<uint8_t> transaction_id = get_transaction_id(outcome);
-      if (not transaction_id.has_value()) {
-        logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
-        return;
-      }
-      if (not events->transactions.set_response(transaction_id.value(), outcome)) {
-        logger.warning("Unrecognized transaction id={}", transaction_id.value());
-      }
-    } break;
+      events->e2_setup_outcome.set(outcome.value.e2setup_resp());
+      break;
+    case asn1::e2ap::e2ap_elem_procs_o::successful_outcome_c::types_opts::options::e2_removal_resp:
+      events->e2_removal_outcome.set(outcome.value.e2_removal_resp());
+      break;
     default:
       logger.error("Invalid E2AP successful outcome message type");
       break;
@@ -174,16 +169,11 @@ void e2_impl::handle_unsuccessful_outcome(const asn1::e2ap::unsuccessful_outcome
 {
   switch (outcome.value.type().value) {
     case asn1::e2ap::e2ap_elem_procs_o::unsuccessful_outcome_c::types_opts::options::e2setup_fail:
-    case asn1::e2ap::e2ap_elem_procs_o::unsuccessful_outcome_c::types_opts::options::e2_removal_fail: {
-      expected<uint8_t> transaction_id = get_transaction_id(outcome);
-      if (not transaction_id.has_value()) {
-        logger.error("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());
-        return;
-      }
-      if (not events->transactions.set_response(transaction_id.value(), make_unexpected(outcome))) {
-        logger.warning("Unrecognized transaction id={}", transaction_id.value());
-      }
-    } break;
+      events->e2_setup_outcome.set(outcome.value.e2setup_fail());
+      break;
+    case asn1::e2ap::e2ap_elem_procs_o::unsuccessful_outcome_c::types_opts::options::e2_removal_fail:
+      events->e2_removal_outcome.set(outcome.value.e2_removal_fail());
+      break;
     default:
       logger.error("Invalid E2AP unsuccessful outcome message type");
       break;

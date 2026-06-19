@@ -40,11 +40,12 @@ private:
   ocudulog::basic_logger&        logger;
   async_event_source<bool>&      cancel_event;
 
-  async_single_event_observer<bool> wait_observer;
-  e2ap_transaction                  transaction;
-  unsigned                          e2_setup_retry_no = 0;
-  std::chrono::seconds              time_to_wait{0};
-  bool                              timer_expired = false;
+  async_single_event_observer<bool>                                                             wait_observer;
+  protocol_transaction_outcome_observer<asn1::e2ap::e2setup_resp_s, asn1::e2ap::e2setup_fail_s> transaction_sink;
+  unsigned                                                                                      e2_setup_retry_no = 0;
+  uint8_t                                                                                       transaction_id    = 0;
+  std::chrono::seconds                                                                          time_to_wait{0};
+  bool                                                                                          timer_expired = false;
 };
 
 } // namespace ocudu

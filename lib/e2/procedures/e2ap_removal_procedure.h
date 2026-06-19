@@ -15,10 +15,7 @@ namespace ocudu {
 class e2ap_removal_procedure
 {
 public:
-  e2ap_removal_procedure(e2_message_notifier&    notif_,
-                         e2_event_manager&       ev_mng_,
-                         timer_factory           timers_,
-                         ocudulog::basic_logger& logger_);
+  e2ap_removal_procedure(e2_message_notifier& notif_, e2_event_manager& ev_mng_, ocudulog::basic_logger& logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -31,7 +28,7 @@ private:
   e2_event_manager&       ev_mng;
   ocudulog::basic_logger& logger;
 
-  e2ap_transaction transaction;
+  protocol_transaction_outcome_observer<asn1::e2ap::e2_removal_resp_s, asn1::e2ap::e2_removal_fail_s> transaction_sink;
 };
 
 } // namespace ocudu

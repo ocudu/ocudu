@@ -4,23 +4,17 @@
 
 #pragma once
 
-#include "ocudu/adt/expected.h"
 #include "ocudu/asn1/e2ap/e2ap.h"
-#include "ocudu/support/async/event_signal.h"
 #include "ocudu/support/async/protocol_transaction_manager.h"
 #include <map>
 
 namespace ocudu {
 
-using e2ap_outcome     = expected<asn1::e2ap::successful_outcome_s, asn1::e2ap::unsuccessful_outcome_s>;
-using e2ap_transaction = protocol_transaction<e2ap_outcome>;
-
 class e2_event_manager
 {
 public:
-  /// Transaction Response Container, which gets indexed by transaction_id.
-  static constexpr size_t                    MAX_NOF_TRANSACTIONS = 256;
-  protocol_transaction_manager<e2ap_outcome> transactions;
+  protocol_transaction_event_source<asn1::e2ap::e2setup_resp_s, asn1::e2ap::e2setup_fail_s>       e2_setup_outcome;
+  protocol_transaction_event_source<asn1::e2ap::e2_removal_resp_s, asn1::e2ap::e2_removal_fail_s> e2_removal_outcome;
 
   std::map<std::tuple<uint32_t, uint32_t>,
            std::unique_ptr<protocol_transaction_event_source<asn1::e2ap::ric_sub_delete_request_s>>>
@@ -31,7 +25,7 @@ public:
     sub_del_reqs[{ric_request_id.ric_requestor_id, ric_request_id.ric_instance_id}] =
         std::make_unique<protocol_transaction_event_source<asn1::e2ap::ric_sub_delete_request_s>>(timer);
   }
-  explicit e2_event_manager(timer_factory timers) : transactions(MAX_NOF_TRANSACTIONS, timers) {}
+  explicit e2_event_manager(timer_factory timers) : e2_setup_outcome(timers), e2_removal_outcome(timers) {}
 };
 
 } // namespace ocudu

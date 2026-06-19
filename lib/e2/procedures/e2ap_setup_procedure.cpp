@@ -24,13 +24,13 @@ void e2ap_setup_procedure::operator()(coro_context<async_task<e2_setup_response_
   CORO_BEGIN(ctx);
 
   while (true) {
-    transaction = ev_mng.transactions.create_transaction();
+    transaction_sink.subscribe_to(ev_mng.e2_setup_outcome, std::chrono::seconds{5});
 
     // Send request to RIC interface.
     send_e2_setup_request();
 
     // Await RIC response.
-    CORO_AWAIT(transaction);
+    CORO_AWAIT(transaction_sink);
 
     if (not retry_required()) {
       // No more attempts. Exit loop.
@@ -58,21 +58,17 @@ void e2ap_setup_procedure::send_e2_setup_request()
   msg.pdu.init_msg().load_info_obj(ASN1_E2AP_ID_E2SETUP);
   msg.pdu.init_msg().value.e2setup_request() = request.request;
   auto& setup_req                            = msg.pdu.init_msg().value.e2setup_request();
-  setup_req->transaction_id                  = transaction.id();
+  setup_req->transaction_id                  = transaction_id++;
   notifier.on_new_message(msg);
 }
 
 bool e2ap_setup_procedure::retry_required()
 {
-  if (transaction.aborted()) {
-    return false;
-  }
-  const e2ap_outcome& outcome = transaction.response();
-  if (outcome.has_value()) {
+  if (not transaction_sink.failed()) {
     return false;
   }
 
-  const auto& fail = outcome.error().value.e2setup_fail();
+  const auto& fail = transaction_sink.failure();
   if (not fail->time_to_wait_present) {
     logger.warning("\"{}\" failed. RIC E2AP cause: \"{}\". RIC did not set a retry waiting time.",
                    name(),
@@ -108,16 +104,9 @@ e2_setup_response_message e2ap_setup_procedure::create_e2_setup_result()
 {
   e2_setup_response_message res{};
 
-  if (transaction.aborted()) {
-    logger.error("E2 Setup procedure aborted.");
-    res.success = false;
-    return res;
-  }
-
-  const e2ap_outcome& e2_setup_outcome = transaction.response();
-  if (e2_setup_outcome.has_value()) {
+  if (transaction_sink.successful()) {
     res.success  = true;
-    res.response = e2_setup_outcome.value().value.e2setup_resp();
+    res.response = transaction_sink.response();
     logger.info("E2 Setup procedure successful.");
   } else {
     res.success = false;
