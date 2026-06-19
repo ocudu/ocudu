@@ -749,7 +749,8 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
       result.dl.ul_pdcchs.empty() and result.dl.paging_grants.empty() and result.dl.rar_grants.empty() and
       result.dl.ue_grants.empty() and result.ul.puschs.empty() and result.ul.pucchs.empty() and result.ul.srss.empty();
 
-  const bool failed_attempts = result.failed_attempts.pdcch + result.failed_attempts.uci > 0;
+  const bool failed_attempts =
+      result.failed_attempts.dl_pdcch + result.failed_attempts.ul_pdcch + result.failed_attempts.uci > 0;
   const bool slot_is_logged =
       (log_broadcast and not broadcast_is_empty) or not non_broadcast_is_empty or failed_attempts;
 
@@ -760,7 +761,7 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
     }
     const unsigned nof_puschs       = result.ul.puschs.size();
     const unsigned nof_pucchs       = result.ul.pucchs.size();
-    const unsigned nof_failed_pdcch = result.failed_attempts.pdcch;
+    const unsigned nof_failed_pdcch = result.failed_attempts.dl_pdcch + result.failed_attempts.ul_pdcch;
     const unsigned nof_failed_uci   = result.failed_attempts.uci;
     logger.debug("Slot decisions pci={} t={}us ({} PDSCH{}, {} PUSCH{}, {} PUCCH{}, {} attempted PDCCH{}, {} attempted "
                  "UCI{}):{}",
@@ -782,8 +783,9 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
 
 void scheduler_result_logger::log_info(const sched_result& result, std::chrono::microseconds decision_latency)
 {
-  const bool failed_attempts = result.failed_attempts.pdcch + result.failed_attempts.uci > 0;
-  bool       slot_is_logged  = (log_broadcast and not result.dl.bc.sibs.empty()) or not result.dl.rar_grants.empty() or
+  const bool failed_attempts =
+      result.failed_attempts.dl_pdcch + result.failed_attempts.ul_pdcch + result.failed_attempts.uci > 0;
+  bool slot_is_logged = (log_broadcast and not result.dl.bc.sibs.empty()) or not result.dl.rar_grants.empty() or
                         not result.dl.ue_grants.empty() or not result.ul.puschs.empty() or
                         not result.dl.paging_grants.empty() or failed_attempts;
 

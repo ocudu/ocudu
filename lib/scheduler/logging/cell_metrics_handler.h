@@ -135,8 +135,14 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
     unsigned nof_ue_pdsch_grants = 0;
     // Sum of UE PUSCH grants.
     unsigned nof_ue_pusch_grants = 0;
-    // Number of failed PDCCH allocation attempts.
-    unsigned nof_failed_pdcch_allocs = 0;
+    // Number of failed DL PDCCH allocation attempts (common and UE-dedicated SearchSpaces).
+    unsigned failed_dl_pdcch = 0;
+    // Number of failed UL PDCCH allocation attempts (common and UE-dedicated SearchSpaces).
+    unsigned failed_ul_pdcch = 0;
+    // Number of failed DL PDCCH allocation attempts in common SearchSpaces.
+    unsigned failed_common_dl_pdcch = 0;
+    // Number of failed UL PDCCH allocation attempts in common SearchSpaces.
+    unsigned failed_common_ul_pdcch = 0;
     // Number of failed UCI allocation attempts.
     unsigned nof_failed_uci_allocs = 0;
     // Number of MSG3 OKs.

@@ -351,6 +351,13 @@ TEST_F(common_pdcch_allocator_tester, when_no_pdcch_space_for_rar_then_allocatio
   ASSERT_EQ(pdcch1, &res_grid[0].result.dl.dl_pdcchs[0]);
   ASSERT_EQ(pdcch1->ctx.rnti, ra_rnti1);
   ASSERT_EQ(pdcch2, nullptr);
+
+  // RAR PDCCH uses a common SearchSpace, so the failed attempt counts towards both the DL and common-DL counters.
+  const failed_alloc_attempts& failed = res_grid[0].result.failed_attempts;
+  ASSERT_EQ(failed.dl_pdcch, 1);
+  ASSERT_EQ(failed.common_dl_pdcch, 1);
+  ASSERT_EQ(failed.ul_pdcch, 0);
+  ASSERT_EQ(failed.common_ul_pdcch, 0);
 }
 
 class ue_pdcch_resource_allocator_scrambling_tester : public base_pdcch_resource_allocator_tester,
@@ -419,6 +426,13 @@ TEST_P(ue_pdcch_resource_allocator_scrambling_tester,
     ASSERT_EQ(pdcch_sch.alloc_dl_pdcch_ue(res_grid[0], rnti, *u->pcell_cfg, params.ss_id, aggregation_level::n4),
               nullptr);
 
+    // The failed DL allocation counts as common only when the SearchSpace is common.
+    const bool                   is_common = u->pcell_cfg->search_space(params.ss_id).cfg->is_common_search_space();
+    const failed_alloc_attempts& failed    = res_grid[0].result.failed_attempts;
+    ASSERT_EQ(failed.dl_pdcch, 1);
+    ASSERT_EQ(failed.common_dl_pdcch, is_common ? 1U : 0U);
+    ASSERT_EQ(failed.ul_pdcch, 0);
+
     run_slot();
   }
 
@@ -451,6 +465,13 @@ TEST_P(ue_pdcch_resource_allocator_scrambling_tester,
     }
     ASSERT_EQ(pdcch_sch.alloc_ul_pdcch_ue(res_grid[0], rnti, *u->pcell_cfg, params.ss_id, aggregation_level::n4),
               nullptr);
+
+    // The failed UL allocation counts as common only when the SearchSpace is common.
+    const bool                   is_common = u->pcell_cfg->search_space(params.ss_id).cfg->is_common_search_space();
+    const failed_alloc_attempts& failed    = res_grid[0].result.failed_attempts;
+    ASSERT_EQ(failed.ul_pdcch, 1);
+    ASSERT_EQ(failed.common_ul_pdcch, is_common ? 1U : 0U);
+    ASSERT_EQ(failed.dl_pdcch, 0);
 
     run_slot();
   }

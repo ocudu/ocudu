@@ -140,8 +140,14 @@ struct scheduler_cell_metrics {
   unsigned dl_grants_count = 0;
   /// Counter of UE PUSCH grants.
   unsigned ul_grants_count = 0;
-  /// Number of failed PDCCH allocation attempts.
-  unsigned nof_failed_pdcch_allocs = 0;
+  /// Number of failed DL PDCCH allocation attempts (common and UE-dedicated SearchSpaces).
+  unsigned failed_dl_pdcch = 0;
+  /// Number of failed UL PDCCH allocation attempts (common and UE-dedicated SearchSpaces).
+  unsigned failed_ul_pdcch = 0;
+  /// Number of failed DL PDCCH allocation attempts in common SearchSpaces. Subset of \c failed_dl_pdcch.
+  unsigned failed_common_dl_pdcch = 0;
+  /// Number of failed UL PDCCH allocation attempts in common SearchSpaces. Subset of \c failed_ul_pdcch.
+  unsigned failed_common_ul_pdcch = 0;
   /// Number of failed UCI allocation attempts.
   unsigned nof_failed_uci_allocs = 0;
   /// Number of MSG3s.

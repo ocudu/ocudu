@@ -352,3 +352,37 @@ TEST_F(scheduler_metrics_handler_tester, compute_error_indications)
   this->get_next_metric();
   ASSERT_EQ(metrics_notif.last_report.nof_error_indications, 0);
 }
+
+TEST_F(scheduler_metrics_handler_tester, failed_pdcch_allocs_are_accumulated_per_dl_ul_and_common)
+{
+  // Discard first report, as it may have not enough slots.
+  get_next_metric();
+  metrics_notif.last_report = {};
+
+  // Per-slot failures: two DL (one of which in a common SearchSpace) and one common UL.
+  sched_result sched_res;
+  sched_res.dl.nof_dl_symbols               = 14;
+  sched_res.ul.nof_ul_symbols               = 14;
+  sched_res.failed_attempts.dl_pdcch        = 2;
+  sched_res.failed_attempts.common_dl_pdcch = 1;
+  sched_res.failed_attempts.ul_pdcch        = 1;
+  sched_res.failed_attempts.common_ul_pdcch = 1;
+
+  for (unsigned i = 0; i != report_period.count() and metrics_notif.last_report.nof_slots == 0; ++i) {
+    run_slot(sched_res);
+  }
+
+  const scheduler_cell_metrics& report = metrics_notif.last_report;
+  ASSERT_GT(report.nof_slots, 0);
+  ASSERT_EQ(report.failed_dl_pdcch, report.nof_slots * 2);
+  ASSERT_EQ(report.failed_common_dl_pdcch, report.nof_slots * 1);
+  ASSERT_EQ(report.failed_ul_pdcch, report.nof_slots * 1);
+  ASSERT_EQ(report.failed_common_ul_pdcch, report.nof_slots * 1);
+
+  // Counters reset on the next report.
+  this->get_next_metric();
+  ASSERT_EQ(metrics_notif.last_report.failed_dl_pdcch, 0);
+  ASSERT_EQ(metrics_notif.last_report.failed_common_dl_pdcch, 0);
+  ASSERT_EQ(metrics_notif.last_report.failed_ul_pdcch, 0);
+  ASSERT_EQ(metrics_notif.last_report.failed_common_ul_pdcch, 0);
+}

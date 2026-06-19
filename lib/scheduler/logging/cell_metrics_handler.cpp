@@ -409,7 +409,10 @@ void cell_metrics_handler::report_metrics()
   next_report->nof_prach_preambles       = data.nof_prach_preambles;
   next_report->dl_grants_count           = data.nof_ue_pdsch_grants;
   next_report->ul_grants_count           = data.nof_ue_pusch_grants;
-  next_report->nof_failed_pdcch_allocs   = data.nof_failed_pdcch_allocs;
+  next_report->failed_dl_pdcch           = data.failed_dl_pdcch;
+  next_report->failed_ul_pdcch           = data.failed_ul_pdcch;
+  next_report->failed_common_dl_pdcch    = data.failed_common_dl_pdcch;
+  next_report->failed_common_ul_pdcch    = data.failed_common_ul_pdcch;
   next_report->nof_failed_uci_allocs     = data.nof_failed_uci_allocs;
   next_report->nof_msg3_ok               = data.nof_msg3_ok;
   next_report->nof_msg3_nok              = data.nof_msg3_nok;
@@ -568,7 +571,10 @@ void cell_metrics_handler::handle_slot_result(slot_point_extended       sl_tx,
   ++data.decision_latency_hist[bin_idx];
 
   // Failed allocation attempts.
-  data.nof_failed_pdcch_allocs += slot_result.failed_attempts.pdcch;
+  data.failed_dl_pdcch += slot_result.failed_attempts.dl_pdcch;
+  data.failed_ul_pdcch += slot_result.failed_attempts.ul_pdcch;
+  data.failed_common_dl_pdcch += slot_result.failed_attempts.common_dl_pdcch;
+  data.failed_common_ul_pdcch += slot_result.failed_attempts.common_ul_pdcch;
   data.nof_failed_uci_allocs += slot_result.failed_attempts.uci;
 }
 

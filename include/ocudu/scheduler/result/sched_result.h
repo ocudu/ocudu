@@ -50,8 +50,14 @@ struct ul_sched_result {
 
 /// Failed allocation attempts in a given slot.
 struct failed_alloc_attempts {
-  /// Number of failed PDCCH allocation attempts.
-  unsigned pdcch = 0;
+  /// Number of failed DL PDCCH allocation attempts (common and UE-dedicated SearchSpaces).
+  unsigned dl_pdcch = 0;
+  /// Number of failed UL PDCCH allocation attempts (common and UE-dedicated SearchSpaces).
+  unsigned ul_pdcch = 0;
+  /// Number of failed DL PDCCH allocation attempts in common SearchSpaces. Subset of \c dl_pdcch.
+  unsigned common_dl_pdcch = 0;
+  /// Number of failed UL PDCCH allocation attempts in common SearchSpaces. Subset of \c ul_pdcch.
+  unsigned common_ul_pdcch = 0;
   /// Number of failed UCI allocation attempts.
   unsigned uci = 0;
 };

@@ -200,7 +200,6 @@ ue_cell_grid_allocator::setup_dl_grant_builder(const slice_ue&                  
   // Allocate PDCCH.
   auto pdcch_result = alloc_dl_pdcch(ue_cc, ss_info);
   if (not pdcch_result.has_value()) {
-    ++pdcch_alloc.result.failed_attempts.pdcch;
     return make_unexpected(dl_alloc_failure_cause::pdcch_alloc_failed);
   }
   pdcch_dl_information* pdcch = pdcch_result.value();

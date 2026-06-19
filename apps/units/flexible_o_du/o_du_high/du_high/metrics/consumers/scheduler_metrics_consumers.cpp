@@ -197,7 +197,8 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
         "Scheduler cell pci={} metrics:"
         " total_dl_brate={}bps total_ul_brate={}bps nof_prbs={} nof_dl_slots={} nof_ul_slots={} nof_prach_preambles={} "
         "error_indications={} pdsch_rbs_per_slot={} pusch_rbs_per_slot={} pdschs_per_slot={:.3} puschs_per_slot={:.3} "
-        "failed_pdcch={} failed_uci={} nof_ues={} mean_latency={}usec max_latency={}usec max_latency_slot={} "
+        "failed_dl_pdcch={} failed_common_dl_pdcch={} failed_ul_pdcch={} failed_common_ul_pdcch={} failed_uci={} "
+        "nof_ues={} mean_latency={}usec max_latency={}usec max_latency_slot={} "
         "latency_hist=[{}] msg3_ok={} msg3_nok={} late_dl_harqs={} late_ul_harqs={} pucch_tot_rb_usage_avg={:.3}",
         cell.pci,
         float_to_eng_string(sum_dl_bitrate_kbps * 1e3, 2, false),
@@ -211,7 +212,10 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
         cell.nof_ul_slots > 0 ? sum_pusch_rbs / cell.nof_ul_slots : 0,
         cell.nof_dl_slots > 0 ? cell.dl_grants_count / (float)cell.nof_dl_slots : 0,
         cell.nof_ul_slots > 0 ? cell.ul_grants_count / (float)cell.nof_ul_slots : 0,
-        cell.nof_failed_pdcch_allocs,
+        cell.failed_dl_pdcch,
+        cell.failed_common_dl_pdcch,
+        cell.failed_ul_pdcch,
+        cell.failed_common_ul_pdcch,
         cell.nof_failed_uci_allocs,
         cell.ue_metrics.size(),
         cell.average_decision_latency.count(),

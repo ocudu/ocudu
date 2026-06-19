@@ -334,8 +334,11 @@ void cell_slot_resource_allocator::clear()
   result.ul.prachs.clear();
   result.ul.pucchs.clear();
   result.ul.srss.clear();
-  result.failed_attempts.pdcch = 0;
-  result.failed_attempts.uci   = 0;
+  result.failed_attempts.dl_pdcch        = 0;
+  result.failed_attempts.ul_pdcch        = 0;
+  result.failed_attempts.common_dl_pdcch = 0;
+  result.failed_attempts.common_ul_pdcch = 0;
+  result.failed_attempts.uci             = 0;
   dl_res_grid.clear();
   ul_res_grid.clear();
   result.success = false;

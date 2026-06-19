@@ -118,6 +118,10 @@ pdcch_ul_information* pdcch_resource_allocator_impl::alloc_ul_pdcch_helper(cell_
 {
   if (not pdcch_helper::is_pdcch_monitoring_active(slot_alloc.slot, ss_cfg)) {
     // PDCCH monitoring is not active in this slot.
+    ++slot_alloc.result.failed_attempts.ul_pdcch;
+    if (ss_cfg.is_common_search_space()) {
+      ++slot_alloc.result.failed_attempts.common_ul_pdcch;
+    }
     return nullptr;
   }
 
@@ -151,6 +155,10 @@ pdcch_ul_information* pdcch_resource_allocator_impl::alloc_ul_pdcch_helper(cell_
   pdcch_slot_allocator& pdcch_alloc = get_pdcch_slot_alloc(slot_alloc.slot);
   if (not pdcch_alloc.alloc_pdcch(pdcch.ctx, slot_alloc, cs_cfg, ss_cfg, candidates)) {
     slot_alloc.result.dl.ul_pdcchs.pop_back();
+    ++slot_alloc.result.failed_attempts.ul_pdcch;
+    if (ss_cfg.is_common_search_space()) {
+      ++slot_alloc.result.failed_attempts.common_ul_pdcch;
+    }
     return nullptr;
   }
   return &pdcch;
@@ -166,6 +174,10 @@ pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_helper(cell_
 {
   if (not pdcch_helper::is_pdcch_monitoring_active(slot_alloc.slot, ss_cfg)) {
     // PDCCH monitoring is not active in this slot.
+    ++slot_alloc.result.failed_attempts.dl_pdcch;
+    if (ss_cfg.is_common_search_space()) {
+      ++slot_alloc.result.failed_attempts.common_dl_pdcch;
+    }
     return nullptr;
   }
 
@@ -199,6 +211,10 @@ pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_helper(cell_
   pdcch_slot_allocator& pdcch_alloc = get_pdcch_slot_alloc(slot_alloc.slot);
   if (not pdcch_alloc.alloc_pdcch(pdcch.ctx, slot_alloc, cs_cfg, ss_cfg, candidates)) {
     slot_alloc.result.dl.dl_pdcchs.pop_back();
+    ++slot_alloc.result.failed_attempts.dl_pdcch;
+    if (ss_cfg.is_common_search_space()) {
+      ++slot_alloc.result.failed_attempts.common_dl_pdcch;
+    }
     return nullptr;
   }
   return &pdcch;
