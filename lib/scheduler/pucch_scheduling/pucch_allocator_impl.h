@@ -8,6 +8,7 @@
 #include "../config/ue_configuration.h"
 #include "pucch_allocator.h"
 #include "pucch_resource_manager.h"
+#include "ocudu/adt/static_flat_map.h"
 #include "ocudu/ocudulog/logger.h"
 #include "ocudu/ran/pucch/pucch_uci_bits.h"
 #include "ocudu/scheduler/result/sched_result.h"
@@ -123,7 +124,6 @@ private:
 
   /// Keeps track of the PUCCH grants (common + dedicated) for a given UE.
   struct ue_grants {
-    rnti_t rnti;
     // Information about the common PUCCH grant.
     bool has_common_pucch = false;
     // List of PUCCH grants with dedicated resources.
@@ -132,18 +132,16 @@ private:
 
   /// Keeps track of the PUCCH allocation context for a given slot.
   struct slot_context {
-    static_vector<ue_grants, MAX_PUCCH_PDUS_PER_SLOT> ue_grants_list;
+    static_flat_map<rnti_t, ue_grants, MAX_PUCCH_PDUS_PER_SLOT> ue_grants_map;
 
     /// Clears the slot context.
-    void clear() { ue_grants_list.clear(); }
+    void clear() { ue_grants_map.clear(); }
 
     /// Finds the UE grants for a given RNTI.
     [[nodiscard]] ue_grants* find_ue_grants(rnti_t rnti)
     {
-      auto* it = std::find_if(ue_grants_list.begin(), ue_grants_list.end(), [rnti](const ue_grants& grants) {
-        return grants.rnti == rnti;
-      });
-      return it != ue_grants_list.end() ? it : nullptr;
+      auto it = ue_grants_map.find(rnti);
+      return it != ue_grants_map.end() ? &it->second : nullptr;
     }
   };
 
