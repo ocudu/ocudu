@@ -141,13 +141,15 @@ void du_bearer_resource_manager::setup_srbs(du_ue_resource_config&              
     ue_cfg.srbs.emplace(srb_id);
     du_ue_srb_config& new_srb = ue_cfg.srbs[srb_id];
     new_srb.srb_id            = srb_id;
+    new_srb.mac_cfg           = make_default_srb_mac_lc_config(srb_id_to_lcid(srb_id));
     auto srb_config_it        = srb_config.find(srb_id);
     if (srb_config_it != srb_config.end()) {
       new_srb.rlc_cfg = srb_config_it->second.rlc;
+      // Apply the optional proactive UL grant configuration (currently used for SRB1).
+      new_srb.mac_cfg.triggered_ul_grant = srb_config_it->second.triggered_ul_grant;
     } else {
       new_srb.rlc_cfg = make_default_srb_rlc_config();
     }
-    new_srb.mac_cfg = make_default_srb_mac_lc_config(srb_id_to_lcid(srb_id));
   }
 }
 

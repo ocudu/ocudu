@@ -8,6 +8,7 @@
 #include "ocudu/scheduler/config/logical_channel_group.h"
 #include "ocudu/support/error_handling.h"
 #include "ocudu/support/units.h"
+#include <chrono>
 
 namespace ocudu {
 
@@ -123,8 +124,9 @@ inline bucket_size_duration to_bucket_size_duration(unsigned bsd)
 struct mac_lc_config {
   /// Configuration for proactive UL grant triggered in reaction to a DL allocation on this LC.
   struct triggered_ul_grant_cfg {
-    /// Number of slots to wait after DL PDCCH before issuing the UL PDCCH.
-    uint8_t delay_slots = 3;
+    /// Minimum delay in milliseconds to wait after the DL PDCCH before issuing the UL PDCCH. The scheduler converts it
+    /// to slots using the cell numerology.
+    std::chrono::milliseconds delay_ms{3};
     /// Number of bytes to inject as pending UL buffer when the grant fires.
     units::bytes grant_size = units::bytes{512};
 
@@ -134,7 +136,7 @@ struct mac_lc_config {
 
     bool operator==(const triggered_ul_grant_cfg& rhs) const
     {
-      return delay_slots == rhs.delay_slots && grant_size == rhs.grant_size;
+      return delay_ms == rhs.delay_ms && grant_size == rhs.grant_size;
     }
   };
 

@@ -11,8 +11,10 @@
 
 using namespace ocudu;
 
-triggered_ul_grant_scheduler::triggered_ul_grant_scheduler(ue_repository& ues_, du_cell_index_t cell_index_) :
-  logger(ocudulog::fetch_basic_logger("SCHED")), ues(ues_), cell_index(cell_index_)
+triggered_ul_grant_scheduler::triggered_ul_grant_scheduler(ue_repository&     ues_,
+                                                           du_cell_index_t    cell_index_,
+                                                           subcarrier_spacing scs_) :
+  logger(ocudulog::fetch_basic_logger("SCHED")), ues(ues_), cell_index(cell_index_), scs(scs_)
 {
   pending_grants.reserve(pending_grants_size);
 }
@@ -21,14 +23,14 @@ void triggered_ul_grant_scheduler::process_dl_results(slot_point sl_tx, const sc
 {
   for (const dl_msg_alloc& grant : sched_result.dl.ue_grants) {
     ue* u = ues.find(grant.context.ue_index);
-    ocudu_assert(u != nullptr, "no UE context found for triggered UL grant");
+    ocudu_assert(u != nullptr, "No UE context found for triggered UL grant");
     const ue_configuration* ue_cfg  = u->ue_cfg_dedicated();
     const auto              lc_list = ue_cfg->logical_channels();
 
     for (const dl_msg_tb_info& tb : grant.tb_list) {
       for (const dl_msg_lc_info& lc : tb.lc_chs_to_sched) {
         if (pending_grants.size() >= pending_grants_size) {
-          logger.warning("triggered UL grant queue full ({} entries) at slot={} — skipping DL results",
+          logger.warning("Triggered UL grant queue full ({} entries) at slot={} — skipping DL results",
                          pending_grants.size(),
                          sl_tx);
           return;
@@ -40,9 +42,10 @@ void triggered_ul_grant_scheduler::process_dl_results(slot_point sl_tx, const sc
         if (not lc_cfg->triggered_ul_grant.has_value()) {
           continue;
         }
-        const auto& trig = *lc_cfg->triggered_ul_grant;
+        const auto&    trig        = *lc_cfg->triggered_ul_grant;
+        const unsigned delay_slots = static_cast<unsigned>(trig.delay_ms.count()) * get_nof_slots_per_subframe(scs);
         pending_grants.emplace_back(
-            sl_tx + trig.delay_slots, grant.context.ue_index, lc_cfg->lc_group, units::bytes{trig.grant_size});
+            sl_tx + delay_slots, grant.context.ue_index, lc_cfg->lc_group, units::bytes{trig.grant_size});
       }
     }
   }
@@ -56,9 +59,10 @@ void triggered_ul_grant_scheduler::run_slot(slot_point pdcch_slot)
     }
 
     ue* u = ues.find(g.ue_index);
-    ocudu_assert(u != nullptr, "no UE context found for triggered UL grant");
+    ocudu_assert(u != nullptr, "No UE context found for triggered UL grant");
 
-    if (u->logical_channels().pending_bytes(g.lcg_id) >= g.bytes.value()) {
+    const unsigned ue_pending_bytes = u->logical_channels().pending_bytes(g.lcg_id);
+    if (ue_pending_bytes >= g.bytes.value()) {
       // UE already has already more data pending than the triggered grant size; skip to avoid shrinking its BSR.
       continue;
     }

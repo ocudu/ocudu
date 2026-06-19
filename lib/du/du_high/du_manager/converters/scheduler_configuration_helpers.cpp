@@ -79,6 +79,7 @@ sched_ue_config_request ocudu::odu::create_scheduler_ue_config_request(const du_
     sched_lc_ch.lc_sr_mask                = srb.mac_cfg.lc_sr_mask;
     sched_lc_ch.lc_sr_delay_timer_applied = srb.mac_cfg.lc_sr_delay_applied;
     sched_lc_ch.sr_id.emplace(srb.mac_cfg.sr_id);
+    sched_lc_ch.triggered_ul_grant = srb.mac_cfg.triggered_ul_grant;
   }
   for (const auto& drb : ue_res_cfg.drbs) {
     auto& sched_lc_ch =

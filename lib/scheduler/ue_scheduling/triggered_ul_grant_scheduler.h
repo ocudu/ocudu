@@ -8,6 +8,7 @@
 #include "ocudu/ran/du_types.h"
 #include "ocudu/ran/slot_pdu_capacity_constants.h"
 #include "ocudu/ran/slot_point.h"
+#include "ocudu/ran/subcarrier_spacing.h"
 #include "ocudu/scheduler/config/logical_channel_group.h"
 #include "ocudu/scheduler/result/sched_result.h"
 #include "ocudu/scheduler/sched_consts.h"
@@ -26,7 +27,7 @@ struct cell_resource_allocator;
 class triggered_ul_grant_scheduler
 {
 public:
-  triggered_ul_grant_scheduler(ue_repository& ues_, du_cell_index_t cell_index_);
+  triggered_ul_grant_scheduler(ue_repository& ues_, du_cell_index_t cell_index_, subcarrier_spacing scs_);
 
   /// Scans finalized DL grants and enqueues triggered UL grants for UEs whose DL grant included a LCID configured
   /// with triggered_ul_grant. \p pdsch_slot must be valid.
@@ -51,9 +52,11 @@ private:
   ocudulog::basic_logger&    logger;
   ue_repository&             ues;
   const du_cell_index_t      cell_index;
+  const subcarrier_spacing   scs;
   std::vector<pending_grant> pending_grants;
-  // It's reserved for SCHEDULER_MAX_TRIG_UL_DELAY slots, as maximum configurable delay.
-  const unsigned pending_grants_size = MAX_UE_PDUS_PER_SLOT * SCHEDULER_MAX_TRIG_UL_DELAY;
+  // Reserve enough entries for all the PDUs schedulable across the maximum triggered-grant delay window.
+  const unsigned pending_grants_size =
+      MAX_UE_PDUS_PER_SLOT * get_nof_slots_per_subframe(scs) * SCHEDULER_MAX_TRIG_UL_DELAY.count();
 
   void clean_pending_grants(slot_point pdcch_slot);
 };

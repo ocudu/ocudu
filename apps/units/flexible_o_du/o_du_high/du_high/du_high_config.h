@@ -31,7 +31,9 @@
 #include "ocudu/ran/subcarrier_spacing.h"
 #include "ocudu/ran/tac.h"
 #include "ocudu/scheduler/config/scheduler_expert_config.h"
+#include "ocudu/support/units.h"
 #include <algorithm>
+#include <chrono>
 #include <map>
 #include <string>
 #include <vector>
@@ -1282,10 +1284,23 @@ struct du_high_unit_rlc_am_config {
   du_high_unit_rlc_rx_am_config rx;
 };
 
-/// QoS configuration
+/// Proactive UL grant triggered in reaction to a DL allocation on an SRB. Presence enables the feature; the grant size
+/// is fixed internally. Currently supported only for SRB1.
+struct du_high_unit_srb_triggered_ul_grant_config {
+  // Minimum delay between DL PDCCH and UL PDCCH grant in ms.
+  std::chrono::milliseconds delay{10};
+};
+
+/// MAC scheduler configuration for an SRB.
+struct du_high_unit_srb_mac_config {
+  std::optional<du_high_unit_srb_triggered_ul_grant_config> triggered_ul_grant;
+};
+
+/// SRB configuration
 struct du_high_unit_srb_config {
-  unsigned                   srb_id;
-  du_high_unit_rlc_am_config rlc;
+  unsigned                    srb_id;
+  du_high_unit_rlc_am_config  rlc;
+  du_high_unit_srb_mac_config mac;
 };
 
 /// F1-U configuration at DU side
@@ -1322,8 +1337,10 @@ struct du_high_unit_rlc_config {
 
 /// Proactive UL grant triggered in reaction to a DL allocation, per 5QI.
 struct du_high_unit_triggered_ul_grant_config {
-  uint8_t  delay_slots = 3;   // Minimum slots delay between PDSCH and UL PDCCH grant.
-  unsigned grant_size  = 512; // Value of triggered ul grant in bytes.
+  // Minimum delay between PDSCH and UL PDCCH grant in ms.
+  std::chrono::milliseconds delay{3};
+  // Value of triggered ul grant in bytes.
+  units::bytes grant_size{512};
 };
 
 /// MAC scheduler configuration per 5QI.

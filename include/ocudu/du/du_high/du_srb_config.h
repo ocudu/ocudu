@@ -4,7 +4,9 @@
 
 #pragma once
 
+#include "ocudu/mac/mac_lc_config.h"
 #include "ocudu/rlc/rlc_config.h"
+#include <optional>
 
 namespace ocudu {
 namespace odu {
@@ -12,6 +14,9 @@ namespace odu {
 /// \brief SRB Configuration, i.e. associated RLC and MAC configuration for SRBs in the DU
 struct du_srb_config {
   rlc_config rlc;
+  /// If set, a proactive UL grant is triggered in reaction to each DL allocation on this SRB. Currently honored for
+  /// SRB1.
+  std::optional<mac_lc_config::triggered_ul_grant_cfg> triggered_ul_grant;
 };
 
 } // namespace odu

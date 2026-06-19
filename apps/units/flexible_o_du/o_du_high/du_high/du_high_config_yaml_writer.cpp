@@ -7,6 +7,7 @@
 #include "du_high_config.h"
 #include "ntn/du_high_ntn_config_yaml_writer.h"
 #include "ocudu/adt/span.h"
+#include "ocudu/adt/static_vector.h"
 
 using namespace ocudu;
 
@@ -755,11 +756,22 @@ static void fill_du_high_f1u_qos_section(YAML::Node node, const du_high_unit_f1u
   node["backoff_timer"] = config.t_notify;
 }
 
+static void fill_du_high_mac_qos_section(YAML::Node node, const du_high_unit_mac_config& config)
+{
+  YAML::Node trig_node    = node["triggered_ul_grant"];
+  trig_node["delay"]      = static_cast<unsigned>(config.triggered_ul_grant->delay.count());
+  trig_node["grant_size"] = static_cast<unsigned>(config.triggered_ul_grant->grant_size.value());
+}
+
 static void fill_du_high_qos_entry(YAML::Node node, const du_high_unit_qos_config& config)
 {
   node["five_qi"] = five_qi_to_uint(config.five_qi);
   fill_du_high_rlc_qos_section(node["rlc"], config.rlc);
   fill_du_high_f1u_qos_section(node["f1u_du"], config.f1u_du);
+  // The MAC section is only emitted when it carries non-default values (optional triggered UL grant).
+  if (config.mac.triggered_ul_grant.has_value()) {
+    fill_du_high_mac_qos_section(node["mac"], config.mac);
+  }
 }
 
 static YAML::Node get_last_entry(YAML::Node node)
@@ -815,6 +827,9 @@ static void build_du_high_sbr_section(YAML::Node& node, const std::map<srb_id_t,
     YAML::Node entry;
     entry["srb_id"] = cell.second.srb_id;
     fill_du_high_am_section(entry["rlc"], cell.second.rlc);
+    if (cell.second.mac.triggered_ul_grant.has_value()) {
+      entry["mac"]["triggered_ul_grant"]["delay"] = cell.second.mac.triggered_ul_grant->delay.count();
+    }
     node["srbs"].push_back(entry);
   }
 }

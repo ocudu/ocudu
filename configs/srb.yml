@@ -8,7 +8,7 @@
 # on a per SRB basis.
 
 srbs:
-  - srb_id: 1
+  - srb_id: 2
     rlc:
       tx:
         sn: 12
@@ -23,7 +23,5 @@ srbs:
         t-reassembly: 35
         t-status-prohibit: 0
     mac:
-      lc_priority: 1
-      lc_group_id: 0
-      bucket_size_duration_ms: 5
-      prioritized_bit_rate_kBps: 65537
+      triggered_ul_grant:
+        delay: 16

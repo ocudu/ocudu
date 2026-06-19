@@ -12,18 +12,21 @@
 #include "ocudu/mac/mac_lc_config.h"
 #include "ocudu/ran/logical_channel/lcid.h"
 #include "ocudu/scheduler/result/pdsch_info.h"
+#include <chrono>
 #include <gtest/gtest.h>
 
 using namespace ocudu;
 
 namespace {
 
-constexpr du_cell_index_t CELL_IDX      = to_du_cell_index(0);
-constexpr uint8_t         DELAY_SLOTS   = 4;
-constexpr unsigned        GRANT_BYTES   = 600;
-constexpr lcid_t          TRIG_LCID     = lcid_t::LCID_MIN_DRB;
-constexpr lcid_t          NOT_TRIG_LCID = uint_to_lcid(TRIG_LCID + 1);
-constexpr lcg_id_t        TRIG_LCG      = uint_to_lcg_id(2);
+constexpr du_cell_index_t CELL_IDX = to_du_cell_index(0);
+// Configured triggered-grant delay, in ms. All cells in this fixture use 15 kHz SCS (numerology 0), i.e. 1 slot per
+// subframe, so a delay of DELAY_SLOTS ms maps to the same number of slots. The scheduler does the ms->slot conversion.
+constexpr uint8_t  DELAY_SLOTS   = 4;
+constexpr unsigned GRANT_BYTES   = 600;
+constexpr lcid_t   TRIG_LCID     = lcid_t::LCID_MIN_DRB;
+constexpr lcid_t   NOT_TRIG_LCID = uint_to_lcid(TRIG_LCID + 1);
+constexpr lcg_id_t TRIG_LCG      = uint_to_lcg_id(2);
 
 class trig_ul_sched_test : public scheduler_test_simulator, public ::testing::Test
 {
@@ -40,10 +43,10 @@ public:
     req.ue_index = ue_idx;
     req.crnti    = crnti;
     if (with_trigger) {
-      auto& drb_lc                           = req.cfg.lc_config_list->back();
-      drb_lc.triggered_ul_grant              = mac_lc_config::triggered_ul_grant_cfg{};
-      drb_lc.triggered_ul_grant->delay_slots = DELAY_SLOTS;
-      drb_lc.triggered_ul_grant->grant_size  = units::bytes{GRANT_BYTES};
+      auto& drb_lc                          = req.cfg.lc_config_list->back();
+      drb_lc.triggered_ul_grant             = mac_lc_config::triggered_ul_grant_cfg{};
+      drb_lc.triggered_ul_grant->delay_ms   = std::chrono::milliseconds{DELAY_SLOTS};
+      drb_lc.triggered_ul_grant->grant_size = units::bytes{GRANT_BYTES};
     }
     return req;
   }
@@ -271,10 +274,10 @@ protected:
     req.ue_index = ue_idx;
     req.crnti    = crnti;
     if (with_trigger) {
-      auto& drb_lc                           = req.cfg.lc_config_list->back();
-      drb_lc.triggered_ul_grant              = mac_lc_config::triggered_ul_grant_cfg{};
-      drb_lc.triggered_ul_grant->delay_slots = DELAY_SLOTS;
-      drb_lc.triggered_ul_grant->grant_size  = units::bytes{GRANT_BYTES};
+      auto& drb_lc                          = req.cfg.lc_config_list->back();
+      drb_lc.triggered_ul_grant             = mac_lc_config::triggered_ul_grant_cfg{};
+      drb_lc.triggered_ul_grant->delay_ms   = std::chrono::milliseconds(DELAY_SLOTS);
+      drb_lc.triggered_ul_grant->grant_size = units::bytes{GRANT_BYTES};
     }
     ue_repo.add_ue(*cfg_mgr.add_ue(req), false, {}, false);
     return *ue_repo.find(ue_idx);
@@ -308,7 +311,7 @@ protected:
 
   test_helpers::test_sched_config_manager cfg_mgr{cell_config_builder_params{}};
   ue_repository                           ue_repo{scheduler_ue_expert_config{}};
-  triggered_ul_grant_scheduler            ul_trig_sched{ue_repo, CELL_IDX};
+  triggered_ul_grant_scheduler            ul_trig_sched{ue_repo, CELL_IDX, subcarrier_spacing::kHz15};
   const slot_point                        sl{subcarrier_spacing::kHz15, 0};
 };
 

@@ -1089,11 +1089,12 @@ static std::map<five_qi_t, odu::du_qos_config> generate_du_qos_config(const du_h
     out_f1u.warn_on_drop   = config.warn_on_drop;
     out_f1u.ul_buffer_size = qos.f1u_du.ul_buffer_size;
 
-    // Convert triggered UL grant config (optional - presence enables the feature)
+    // Convert triggered UL grant config (optional - presence enables the feature). The configured delay is in ms; the
+    // scheduler converts it to slots using the cell numerology.
     if (qos.mac.triggered_ul_grant.has_value()) {
-      auto& out_trig       = out_cfg[qos.five_qi].triggered_ul_grant.emplace();
-      out_trig.delay_slots = qos.mac.triggered_ul_grant->delay_slots;
-      out_trig.grant_size  = units::bytes{qos.mac.triggered_ul_grant->grant_size};
+      auto& out_trig      = out_cfg[qos.five_qi].triggered_ul_grant.emplace();
+      out_trig.delay_ms   = qos.mac.triggered_ul_grant->delay;
+      out_trig.grant_size = qos.mac.triggered_ul_grant->grant_size;
     }
   }
   return out_cfg;
@@ -1106,10 +1107,20 @@ static std::map<srb_id_t, odu::du_srb_config> generate_du_srb_config(const du_hi
   // SRB1
   srb_cfg.insert(std::make_pair(srb_id_t::srb1, odu::du_srb_config{}));
   if (config.srb_cfg.find(srb_id_t::srb1) != config.srb_cfg.end()) {
-    auto& out_rlc             = srb_cfg[srb_id_t::srb1].rlc;
+    const auto& in_srb1       = config.srb_cfg.at(srb_id_t::srb1);
+    auto&       out_srb1      = srb_cfg[srb_id_t::srb1];
+    auto&       out_rlc       = out_srb1.rlc;
     out_rlc.mode              = rlc_mode::am;
-    out_rlc.am                = generate_du_rlc_am_config(config.srb_cfg.at(srb_id_t::srb1).rlc);
+    out_rlc.am                = generate_du_rlc_am_config(in_srb1.rlc);
     out_rlc.am.tx.pdcp_sn_len = pdcp_sn_size::size12bits;
+    // The presence of the triggered_ul_grant block enables the feature.
+    if (in_srb1.mac.triggered_ul_grant.has_value()) {
+      // [Implementation-defined] Fixed UL grant size for SRB1, sized for a small RRC UL response.
+      static constexpr units::bytes srb1_triggered_ul_grant_size = SRB1_TRIG_GRANT_SIZE;
+      auto&                         trig                         = out_srb1.triggered_ul_grant.emplace();
+      trig.delay_ms                                              = in_srb1.mac.triggered_ul_grant->delay;
+      trig.grant_size                                            = srb1_triggered_ul_grant_size;
+    }
   } else {
     srb_cfg.at(srb_id_t::srb1).rlc = make_default_srb_rlc_config();
   }

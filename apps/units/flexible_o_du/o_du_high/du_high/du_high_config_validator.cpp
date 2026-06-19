@@ -11,6 +11,7 @@
 #include "ocudu/ran/pucch/pucch_constants.h"
 #include "ocudu/ran/pucch/pucch_info.h"
 #include "ocudu/ran/pucch/pucch_mapping.h"
+#include "ocudu/ran/rb_id.h"
 #include "ocudu/ran/transform_precoding/transform_precoding_helpers.h"
 #include "ocudu/rlc/rlc_config.h"
 #include "ocudu/support/math/math_utils.h"
@@ -147,10 +148,23 @@ static bool validate_srb_unit_config(const std::map<srb_id_t, du_high_unit_srb_c
 {
   for (const auto& srb : config) {
     if (srb.first != srb_id_t::srb1 && srb.first != srb_id_t::srb2 && srb.first != srb_id_t::srb3) {
-      fmt::print("Cannot configure SRB{}. Only SRB1, SRB2 and SRB3 can be configured", srb.first);
+      fmt::print("Cannot configure {}. Only SRB1, SRB2 and SRB3 can be configured", srb.first);
       return false;
     }
     if (!validate_rlc_am_unit_config(srb.first, srb.second.rlc)) {
+      return false;
+    }
+    if (srb.first != srb_id_t::srb1 && srb.second.mac.triggered_ul_grant.has_value()) {
+      fmt::print("{} can't be configured with triggered UL grant. It's supported only for SBR1\n", srb.first);
+      return false;
+    }
+    // Delay is in ms and capped to bound the pending-grant vector size in the scheduler.
+    if (srb.second.mac.triggered_ul_grant.has_value() &&
+        srb.second.mac.triggered_ul_grant->delay > SCHEDULER_MAX_TRIG_UL_DELAY) {
+      fmt::print("{} triggered_ul_grant delay={} exceeds maximum of {} ms\n",
+                 srb.first,
+                 srb.second.mac.triggered_ul_grant->delay,
+                 SCHEDULER_MAX_TRIG_UL_DELAY);
       return false;
     }
   }
@@ -556,8 +570,8 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
     return false;
   }
 
-  // [Implementation defined] The scheduler expects the resources from the common resource set and Resource Set 0 to use
-  // the same format. The formats from the common resource sets are expressed in TS 38.213 Table 9.2.1-1.
+  // [Implementation defined] The scheduler expects the resources from the common resource set and Resource Set 0 to
+  // use the same format. The formats from the common resource sets are expressed in TS 38.213 Table 9.2.1-1.
   if (pucch_cfg.pucch_resource_common.has_value()) {
     if (pucch_f0f1_format(pucch_cfg.formats) == pucch_format::FORMAT_0 and
         pucch_cfg.pucch_resource_common.value() > 2) {
@@ -706,10 +720,10 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
   }
 
   // Verify the number of RBs for the PUCCH resources does not exceed the BWP size.
-  // [Implementation-defined] We do not allow the PUCCH resources to occupy more than 50% of the BWP. This is an extreme
-  // case, and ideally the PUCCH configuration should result in a much lower PRBs usage.
-  // NOTE: for 5MHz BW or for TDD and 10MHz BW, the default PUCCH config will be overwritten to force it to pass this
-  // check; skip this check here.
+  // [Implementation-defined] We do not allow the PUCCH resources to occupy more than 50% of the BWP. This is an
+  // extreme case, and ideally the PUCCH configuration should result in a much lower PRBs usage. NOTE: for 5MHz BW or
+  // for TDD and 10MHz BW, the default PUCCH config will be overwritten to force it to pass this check; skip this
+  // check here.
   const bool def_cfg_for_narrow_bw =
       (config.channel_bw_mhz < bs_channel_bandwidth::MHz10 or
        (config.tdd_ul_dl_cfg.has_value() and config.channel_bw_mhz <= bs_channel_bandwidth::MHz10)) and
@@ -1067,8 +1081,8 @@ static bool validate_dl_ul_arfcn_and_band(const du_high_unit_base_cell_config& c
 
   // Check if the band is supported with given SCS or band.
   // NOTE: Band n46 would be compatible with the 10MHz BW, but there is no sync raster that falls within the band
-  // limits. Also, the Coreset#0 width in RBs given in Table 13-4A, TS 38.213, is larger than the band itself, which is
-  // odd. Therefore, we limit the band to minimum 20MHz BW.
+  // limits. Also, the Coreset#0 width in RBs given in Table 13-4A, TS 38.213, is larger than the band itself, which
+  // is odd. Therefore, we limit the band to minimum 20MHz BW.
   if (band == ocudu::nr_band::n46 and config.channel_bw_mhz < bs_channel_bandwidth::MHz20) {
     fmt::print("Minimum supported bandwidth for n46 is 20MHz.\n");
     return false;
@@ -1170,7 +1184,8 @@ static bool validate_cell_sib_config(const du_high_unit_base_cell_config& cell_c
   unsigned              n_sched_info_list_messages = 0;
   for (const auto& si_msg : sib_cfg.si_sched_info) {
     for (const uint8_t sib_it : si_msg.sib_mapping_info) {
-      // si-WindowPosition-r17 is part of release 17 specification only. See TS 38.331, V17.0.0, \c SchedulingInfo2-r17.
+      // si-WindowPosition-r17 is part of release 17 specification only. See TS 38.331, V17.0.0, \c
+      // SchedulingInfo2-r17.
       if (sib_it < r17_min_sib_type and si_msg.si_window_position.has_value()) {
         fmt::print("The SIB{} cannot be configured with SI-window position.\n", sib_it);
         return false;
@@ -1746,12 +1761,11 @@ static bool validate_qos_config(span<const du_high_unit_qos_config> config)
     if (!validate_rlc_unit_config(qos.five_qi, qos.rlc)) {
       return false;
     }
-    // delay_slots is capped at 10 slots to bound the pending-grant vector size.
-    if (qos.mac.triggered_ul_grant.has_value() &&
-        qos.mac.triggered_ul_grant->delay_slots > SCHEDULER_MAX_TRIG_UL_DELAY) {
-      fmt::print("5QI {} triggered_ul_grant delay_slots={} exceeds maximum of {}\n",
+    // delay is in ms and capped to bound the pending-grant vector size in the scheduler.
+    if (qos.mac.triggered_ul_grant.has_value() && qos.mac.triggered_ul_grant->delay > SCHEDULER_MAX_TRIG_UL_DELAY) {
+      fmt::print("5QI {} triggered_ul_grant delay={} exceeds maximum of {} ms\n",
                  qos.five_qi,
-                 qos.mac.triggered_ul_grant->delay_slots,
+                 qos.mac.triggered_ul_grant->delay,
                  SCHEDULER_MAX_TRIG_UL_DELAY);
       return false;
     }

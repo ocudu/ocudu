@@ -15,6 +15,7 @@
 #include "ocudu/ran/pucch/pucch_mapping.h"
 #include "ocudu/ran/slot_point_extended.h"
 #include "ocudu/scheduler/config/scheduler_expert_config.h"
+#include "ocudu/scheduler/sched_consts.h"
 #include "ocudu/support/cli11_utils.h"
 #include "ocudu/support/config_parsers.h"
 #include "ocudu/support/format/fmt_to_c_str.h"
@@ -2672,6 +2673,18 @@ static void configure_cli11_srb_args(CLI::App& app, du_high_unit_srb_config& srb
   CLI::App* rlc_subcmd = add_subcommand(app, "rlc", "RLC parameters");
   configure_cli11_rlc_am_args(*rlc_subcmd, srb_params.rlc);
 
+  // MAC section. Setting the triggered_ul_grant delay enables the feature for the
+  // SRB (currently only honored for SRB1); the grant size is fixed internally.
+  static du_high_unit_srb_triggered_ul_grant_config trig_cfg;
+  CLI::App* mac_subcmd = add_subcommand(app, "mac", "MAC scheduler parameters")->configurable();
+  CLI::App* trig_ul_subcmd =
+      add_subcommand(*mac_subcmd, "triggered_ul_grant", "Proactive UL grant triggered by DL allocation")
+          ->configurable();
+  add_option(*trig_ul_subcmd, "--delay", trig_cfg.delay, "Minimum delay between DL PDCCH and UL PDCCH in ms.")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, static_cast<unsigned>(SCHEDULER_MAX_TRIG_UL_DELAY.count())));
+  trig_ul_subcmd->parse_complete_callback([&srb_params]() { srb_params.mac.triggered_ul_grant.emplace(trig_cfg); });
+
   // Require RLC configuration.
   app.needs(rlc_subcmd);
 }
@@ -2754,13 +2767,12 @@ static void configure_cli11_qos_args(CLI::App& app, du_high_unit_qos_config& qos
   CLI::App* trig_ul_subcmd =
       add_subcommand(*mac_subcmd, "triggered_ul_grant", "Proactive UL grant triggered by DL allocation")
           ->configurable();
-  add_option(
-      *trig_ul_subcmd, "--delay_slots", trig_cfg.delay_slots, "Minimium slots delay between DL PDCCH and UL PDCCH")
+  add_option(*trig_ul_subcmd, "--delay", trig_cfg.delay, "Minimium delay between DL PDCCH and UL PDCCH in ms.")
       ->capture_default_str()
-      ->check(CLI::Range(1, 15));
-  add_option(*trig_ul_subcmd, "--grant_size", trig_cfg.grant_size, "Injected UL pending bytes to the BSR")
+      ->check(CLI::Range(1U, static_cast<unsigned>(SCHEDULER_MAX_TRIG_UL_DELAY.count())));
+  add_option(*trig_ul_subcmd, "--grant_size", trig_cfg.grant_size, "Injected UL pending bytes to the BSR, max: 1500B.")
       ->capture_default_str()
-      ->check(CLI::PositiveNumber);
+      ->check(CLI::Range(1U, SCHEDULER_MAX_TRIG_GRANT_SIZE.value()));
   trig_ul_subcmd->parse_complete_callback([&qos_params]() { qos_params.mac.triggered_ul_grant.emplace(trig_cfg); });
 
   // Mark the application that these subcommands need to be present.

@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "ocudu/support/units.h"
+#include <chrono>
 namespace ocudu {
 
 /// SSB constants.
@@ -32,8 +34,16 @@ constexpr unsigned SCHEDULER_MAX_K1 = 15;
 /// and to reduce BLER, we restrict maximum value of k2 to 11.
 constexpr unsigned SCHEDULER_MAX_K2 = 11;
 
-/// [Implementation defined] Maximum allowed slot delay between PDSCH and BSR injection in triggered UL grant feature.
-constexpr unsigned SCHEDULER_MAX_TRIG_UL_DELAY = 10;
+/// [Implementation defined] Maximum allowed delay in ms, between PDSCH and BSR injection in triggered UL grant feature.
+constexpr std::chrono::milliseconds SCHEDULER_MAX_TRIG_UL_DELAY{16};
+
+/// [Implementation defined] Maximum allowed size of BSR injection in triggered UL grant feature. 1500 bytes coresponds
+/// to standard Ethernet packet size.
+constexpr units::bytes SCHEDULER_MAX_TRIG_GRANT_SIZE{1500};
+
+/// [Implementation defined] Hardcoded grant size for SRB1 triggered UL grant. The value base on maxiumum RCC processing
+/// delay defined in TS 38.331.
+constexpr units::bytes SRB1_TRIG_GRANT_SIZE{16};
 
 /// Maximum value of NTN Cell-specific K-offset. The field is expressed in slots for a subcarrier spacing of 15 kHz.
 /// See TS 38.331.
