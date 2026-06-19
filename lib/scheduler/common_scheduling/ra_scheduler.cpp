@@ -11,7 +11,6 @@
 #include "../support/dmrs_helpers.h"
 #include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
-#include "../support/rb_helper.h"
 #include "../support/sch_pdu_builder.h"
 #include "ocudu/adt/scope_exit.h"
 #include "ocudu/ran/band_helper.h"
@@ -21,6 +20,7 @@
 #include "ocudu/ran/resource_allocation/resource_allocation_frequency.h"
 #include "ocudu/ran/sch/tbs_calculator.h"
 #include "ocudu/scheduler/config/pucch_guardbands.h"
+#include "ocudu/scheduler/support/rb_helper.h"
 #include "ocudu/support/compiler.h"
 
 using namespace ocudu;

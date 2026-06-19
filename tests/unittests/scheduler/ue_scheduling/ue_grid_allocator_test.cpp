@@ -10,7 +10,6 @@
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
 #include "lib/scheduler/slicing/ran_slice_instance.h"
 #include "lib/scheduler/srs/srs_allocator_impl.h"
-#include "lib/scheduler/support/rb_helper.h"
 #include "lib/scheduler/uci_scheduling/uci_allocator_impl.h"
 #include "lib/scheduler/ue_context/ue.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
@@ -23,6 +22,7 @@
 #include "ocudu/ran/pdcch/search_space.h"
 #include "ocudu/scheduler/config/logical_channel_config_factory.h"
 #include "ocudu/scheduler/config/scheduler_expert_config_factory.h"
+#include "ocudu/scheduler/support/rb_helper.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;

@@ -7,10 +7,10 @@
 #include "../support/dmrs_helpers.h"
 #include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/prbs_calculator.h"
-#include "../support/rb_helper.h"
 #include "../support/sch_pdu_builder.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/slot_point_extended.h"
+#include "ocudu/scheduler/support/rb_helper.h"
 #include "ocudu/support/math/mod_math_utils.h"
 
 using namespace ocudu;

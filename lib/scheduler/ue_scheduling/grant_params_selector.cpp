@@ -7,11 +7,11 @@
 #include "../support/csi_report_helpers.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/prbs_calculator.h"
-#include "../support/rb_helper.h"
 #include "../ue_context/ue_cell.h"
 #include "ocudu/ran/csi_rs/csi_report_config.h"
 #include "ocudu/ran/sch/tbs_calculator.h"
 #include "ocudu/ran/transform_precoding/transform_precoding_helpers.h"
+#include "ocudu/scheduler/support/rb_helper.h"
 #include <variant>
 
 using namespace ocudu;

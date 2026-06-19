@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include "../support/rb_helper.h"
 #include "ocudu/adt/bounded_bitset.h"
 #include "ocudu/adt/interval.h"
 #include "ocudu/scheduler/result/vrb_alloc.h"
+#include "ocudu/scheduler/support/rb_helper.h"
 
 namespace ocudu {
 

@@ -3,7 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/scheduler/cell/scheduler_prb.h"
-#include "lib/scheduler/support/rb_helper.h"
+#include "ocudu/scheduler/support/rb_helper.h"
 #include "ocudu/support/test_utils.h"
 #include <gtest/gtest.h>
 

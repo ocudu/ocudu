@@ -9,8 +9,8 @@
 #include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/prbs_calculator.h"
-#include "../support/rb_helper.h"
 #include "../support/sch_pdu_builder.h"
+#include "ocudu/scheduler/support/rb_helper.h"
 #include "ocudu/support/enum_utils.h"
 #include <algorithm>
 

@@ -5,12 +5,12 @@
 #include "dci_builder.h"
 #include "../cell/cell_harq_manager.h"
 #include "pucch/pucch_k1_helper.h"
-#include "rb_helper.h"
 #include "ocudu/ran/pdcch/dci_packing.h"
 #include "ocudu/ran/pdcch/search_space.h"
 #include "ocudu/ran/pdsch/pdsch_antenna_ports_mapping.h"
 #include "ocudu/ran/pusch/pusch_antenna_ports_mapping.h"
 #include "ocudu/scheduler/config/bwp_configuration.h"
+#include "ocudu/scheduler/support/rb_helper.h"
 #include <algorithm>
 
 using namespace ocudu;

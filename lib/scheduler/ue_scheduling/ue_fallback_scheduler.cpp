@@ -12,7 +12,6 @@
 #include "../support/mcs_calculator.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/prbs_calculator.h"
-#include "../support/rb_helper.h"
 #include "../uci_scheduling/uci_allocator.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/sch/tbs_calculator.h"
@@ -20,6 +19,7 @@
 #include "ocudu/scheduler/config/pucch_guardbands.h"
 #include "ocudu/scheduler/config/pusch_td_resource_indices.h"
 #include "ocudu/scheduler/result/pusch_info.h"
+#include "ocudu/scheduler/support/rb_helper.h"
 #include "ocudu/support/format/custom_formattable.h"
 #include <algorithm>
 
