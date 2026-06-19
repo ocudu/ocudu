@@ -28,6 +28,7 @@ struct pusch_time_domain_resource_allocation;
 /// \param[in] pusch_cfg_common PUSCH common configuration.
 /// \param[in] dl_data_to_ul_ack List of viable k1 values.
 /// \param[in] ss_info SearchSpace information.
+/// \param[in] is_fallback whether it's for fallback scheduler.
 /// \return List of PUSCH Time Domain resource indexes.
 /// \remark If \c ss_info is nullptr, then minimum k1 is taken from \c cell_cfg.
 static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>
@@ -35,7 +36,8 @@ get_pusch_td_resource_indices(slot_point                                    pdcc
                               const std::optional<tdd_ul_dl_config_common>& tdd_cfg_common,
                               const pusch_config_common&                    pusch_cfg_common,
                               span<const uint8_t>                           dl_data_to_ul_ack,
-                              const search_space_info*                      ss_info = nullptr);
+                              const search_space_info*                      ss_info     = nullptr,
+                              bool                                          is_fallback = false);
 
 /// \brief Returns the list circularly indexed by slot containing the list of applicable PUSCH Time Domain resource
 /// indexes per slot, only for TDD UL-heavy pattern.

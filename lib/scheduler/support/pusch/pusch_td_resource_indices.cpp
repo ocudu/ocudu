@@ -233,7 +233,8 @@ pusch_index_list ocudu::get_pusch_td_resource_indices(slot_point                
                                                       const std::optional<tdd_ul_dl_config_common>& tdd_cfg_common,
                                                       const pusch_config_common&                    pusch_cfg_common,
                                                       span<const uint8_t>                           dl_data_to_ul_ack,
-                                                      const search_space_info*                      ss_info)
+                                                      const search_space_info*                      ss_info,
+                                                      bool                                          is_fallback)
 {
   if (not tdd_cfg_common.has_value()) {
     // FDD case.
@@ -260,8 +261,9 @@ pusch_index_list ocudu::get_pusch_td_resource_indices(slot_point                
       // [Implementation-defined] For DL heavy TDD configuration, we allow only entries with the same k2 value that are
       // less than or equal to minimum value of k1(s); these multiple entries can have different symbols. This condition
       // the condition pusch_td_res.k2 <= min_k1 prevents allocating a PUSCH before a PUCCH for the same UE on the same
-      // slot (used by the fallback scheduler)
-      if (pusch_td_res.k2 > min_k1) {
+      // slot.
+      // NOTE: For the fallback scheduler, this is not needed, as we don't multiplex UCI on PUSCH in that case.
+      if (not is_fallback and pusch_td_res.k2 > min_k1) {
         continue;
       }
       // Stop if this entry has a different k2 than what was already collected (all accepted entries must share k2).
