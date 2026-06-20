@@ -718,6 +718,19 @@ public:
     return test_helper::create_rach_indication(next_slot_rx(), {preamble});
   }
 
+  void send_cfra_crc(bool success)
+  {
+    ul_crc_indication crc_ind;
+    crc_ind.cell_index = to_du_cell_index(0);
+    crc_ind.sl_rx      = last_result_slot();
+    auto& pdu          = crc_ind.crcs.emplace_back();
+    pdu.rnti           = cfra_tc_rnti;
+    pdu.ue_index       = cfra_ue_index;
+    pdu.harq_id        = to_harq_id(0);
+    pdu.tb_crc_success = success;
+    sched->handle_crc_indication(crc_ind);
+  }
+
   const du_ue_index_t cfra_ue_index = to_du_ue_index(0);
   const rnti_t        cfra_tc_rnti  = to_rnti(0x4601);
 };
@@ -755,3 +768,132 @@ TEST_P(cfra_csi_collision_test, msg3_pusch_never_shares_slot_with_csi_pucch)
 }
 
 INSTANTIATE_TEST_SUITE_P(cfra_csi_sweep, cfra_csi_collision_test, ::testing::Range(0U, 20U));
+
+/// Verify that a Msg3 *retransmission* for a CFRA UE also avoids slots carrying a PUCCH for it.
+///
+/// The initial Msg3 avoidance lives in schedule_rar; the retx path (schedule_msg3_retx) has its own guard. NACK
+/// the initial Msg3 and check the retransmission never shares a slot with the UE's PUCCH.
+TEST_P(cfra_csi_collision_test, msg3_retx_never_shares_slot_with_pucch)
+{
+  // Sweep the RACH trigger across the periodic-CSI grid to vary the retx/PUCCH alignment.
+  for (unsigned i = 0; i != GetParam(); ++i) {
+    run_slot();
+  }
+
+  sched->handle_rach_indication(create_cfra_rach_indication());
+
+  // Wait for the initial Msg3 transmission.
+  ASSERT_TRUE(run_slot_until([this]() {
+    const ul_sched_info* pusch = find_ue_pusch(cfra_tc_rnti, last_sched_result()->ul.puschs);
+    return pusch != nullptr and pusch->context.nof_retxs == 0;
+  })) << "Initial Msg3 PUSCH was not scheduled (rach_lead="
+      << GetParam() << ")";
+
+  // NACK the initial Msg3 so a retransmission is scheduled.
+  send_cfra_crc(false);
+
+  // Wait for the retransmission and verify it does not share a slot with a PUCCH for the UE.
+  bool retx_found = false;
+  ASSERT_TRUE(run_slot_until([this, &retx_found]() {
+    const ul_sched_info* pusch = find_ue_pusch(cfra_tc_rnti, last_sched_result()->ul.puschs);
+    if (pusch != nullptr and pusch->context.nof_retxs > 0) {
+      EXPECT_EQ(find_ue_pucch(cfra_tc_rnti, last_sched_result()->ul.pucchs), nullptr)
+          << "PUCCH coincides with Msg3 retx (rach_lead=" << GetParam() << ")";
+      retx_found = true;
+      return true;
+    }
+    return false;
+  })) << "Msg3 retx was not scheduled (rach_lead="
+      << GetParam() << ")";
+
+  ASSERT_TRUE(retx_found);
+}
+
+/// Fixture for a single RAR grouping a CFRA UE (with dense periodic CSI) and a CBRA UE. Used to verify that the
+/// per-UE Msg3 PUCCH avoidance does not push the CBRA UE off a slot just because the CFRA UE has a PUCCH there.
+class cfra_multi_ue_rar_test : public scheduler_test_simulator, public ::testing::TestWithParam<unsigned>
+{
+  static constexpr unsigned NOF_CB_PREAMBLES = 60;
+
+public:
+  // Set to true by any iteration that schedules the CBRA Msg3 in a slot where the CFRA UE has a PUCCH, i.e. the
+  // CFRA UE's PUCCH skip did not block the CBRA UE. Checked once for the whole sweep in TearDownTestSuite.
+  static bool saw_cbra_msg3_with_cfra_pucch;
+
+  cfra_multi_ue_rar_test()
+  {
+    cell_config_builder_params bparams;
+    auto                       cell_req = sched_config_helper::make_default_sched_cell_configuration_request(bparams);
+    cell_req.ran.ul_cfg_common.init_ul_bwp.rach_cfg_common->nof_cb_preambles_per_ssb = NOF_CB_PREAMBLES;
+    // Dense CSI so the CFRA UE reliably has a PUCCH coinciding with a Msg3 candidate slot.
+    if (cell_req.ran.init_bwp.csi.has_value()) {
+      cell_req.ran.init_bwp.csi->csi_rs_period = csi_resource_periodicity::slots20;
+    }
+    add_cell(cell_req);
+
+    auto ue_req = sched_config_helper::create_default_sched_ue_creation_request(
+        cell_cfg().params, std::array<lcid_t, 3>{lcid_t::LCID_SRB1, lcid_t::LCID_SRB2, lcid_t::LCID_MIN_DRB});
+    ue_req.crnti              = cfra_tc_rnti;
+    ue_req.ue_index           = cfra_ue_index;
+    ue_req.starts_in_fallback = true;
+    ue_req.cfra_enabled       = true;
+    ue_req.ul_ccch_slot_rx    = std::nullopt;
+    add_ue(ue_req);
+  }
+
+  static void TearDownTestSuite()
+  {
+    EXPECT_TRUE(saw_cbra_msg3_with_cfra_pucch)
+        << "No iteration scheduled the CBRA Msg3 in a slot where the CFRA UE had a PUCCH; the per-UE avoidance "
+           "evidence is missing";
+  }
+
+  const du_ue_index_t cfra_ue_index    = to_du_ue_index(0);
+  const rnti_t        cfra_tc_rnti     = to_rnti(0x4601);
+  const rnti_t        cbra_tc_rnti     = to_rnti(0x4602);
+  const unsigned      cbra_preamble_id = 0;
+};
+
+bool cfra_multi_ue_rar_test::saw_cbra_msg3_with_cfra_pucch = false;
+
+TEST_P(cfra_multi_ue_rar_test, cfra_pucch_does_not_block_other_ue_msg3_in_same_rar)
+{
+  // Sweep the RACH trigger across the periodic-CSI grid to vary the CFRA-PUCCH/Msg3 alignment.
+  for (unsigned i = 0; i != GetParam(); ++i) {
+    run_slot();
+  }
+
+  // Single RAR grouping one CFRA and one CBRA preamble in the same occasion (same RA-RNTI).
+  const unsigned cfra_preamble_id =
+      cell_cfg().params.ul_cfg_common.init_ul_bwp.rach_cfg_common->nof_cb_preambles_per_ssb;
+  const std::vector<rach_indication_message::preamble> preambles = {
+      test_helper::create_preamble(cfra_preamble_id, cfra_tc_rnti),
+      test_helper::create_preamble(cbra_preamble_id, cbra_tc_rnti)};
+  sched->handle_rach_indication(test_helper::create_rach_indication(next_slot_rx(), preambles));
+
+  bool cfra_msg3_seen = false;
+  bool cbra_msg3_seen = false;
+  for (unsigned i = 0; i != 40; ++i) {
+    run_slot();
+    const auto& res            = *last_sched_result();
+    const bool  cfra_has_pucch = find_ue_pucch(cfra_tc_rnti, res.ul.pucchs) != nullptr;
+    if (find_ue_pusch(cfra_tc_rnti, res.ul.puschs) != nullptr) {
+      cfra_msg3_seen = true;
+      EXPECT_FALSE(cfra_has_pucch) << "CFRA Msg3 shares a slot with the CFRA UE's PUCCH (rach_lead=" << GetParam()
+                                   << ")";
+    }
+    if (find_ue_pusch(cbra_tc_rnti, res.ul.puschs) != nullptr) {
+      cbra_msg3_seen = true;
+      // The CBRA UE has no dedicated config, so it never has a PUCCH; if it is scheduled in a slot where the CFRA
+      // UE does have one, the per-UE avoidance correctly served the CBRA UE without being blocked by the CFRA UE.
+      if (cfra_has_pucch) {
+        saw_cbra_msg3_with_cfra_pucch = true;
+      }
+    }
+  }
+
+  EXPECT_TRUE(cfra_msg3_seen) << "CFRA Msg3 was not scheduled (rach_lead=" << GetParam() << ")";
+  EXPECT_TRUE(cbra_msg3_seen) << "CBRA Msg3 was not scheduled (rach_lead=" << GetParam() << ")";
+}
+
+INSTANTIATE_TEST_SUITE_P(cfra_multi_ue_sweep, cfra_multi_ue_rar_test, ::testing::Range(0U, 20U));
