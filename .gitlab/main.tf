@@ -114,7 +114,7 @@ module "settings" {
   container_expiration_policy = {
     cadence           = "1d"
     enabled           = true
-    keep_n            = 25
+    keep_n            = 100
     older_than        = "7d"
     name_regex_delete = ".*"
     name_regex_keep   = null
