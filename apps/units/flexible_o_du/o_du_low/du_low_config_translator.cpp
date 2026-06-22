@@ -39,9 +39,14 @@ static odu::du_low_config generate_du_low_config(const du_low_unit_config&      
   upper_phy_factory_config.enable_metrics                   = du_low.metrics_cfg.enable_du_low;
   upper_phy_factory_config.pusch_sinr_calc_method =
       channel_state_information::sinr_type_from_string(du_low.expert_phy_cfg.pusch_sinr_calc_method);
-  upper_phy_factory_config.rx_symbol_printer_filename = du_low.loggers.phy_rx_symbols_filename;
-  upper_phy_factory_config.rx_symbol_printer_port     = du_low.loggers.phy_rx_symbols_port;
-  upper_phy_factory_config.rx_symbol_printer_prach    = du_low.loggers.phy_rx_symbols_prach;
+  upper_phy_factory_config.rx_symbol_printer.filename = du_low.loggers.phy_rx_symbol_printer.filename;
+  upper_phy_factory_config.rx_symbol_printer.ul_ports = {0, max_nof_rx_antennas};
+  upper_phy_factory_config.rx_symbol_printer.triggers.prach_threshold_rssi_dB =
+      du_low.loggers.phy_rx_symbol_printer.triggers.prach_threshold_rssi_dB;
+  upper_phy_factory_config.rx_symbol_printer.triggers.pusch_on_ko =
+      du_low.loggers.phy_rx_symbol_printer.triggers.pusch_on_ko;
+  upper_phy_factory_config.rx_symbol_printer.triggers.pusch_threshold_sinr_dB =
+      du_low.loggers.phy_rx_symbol_printer.triggers.pusch_threshold_sinr_dB;
   upper_phy_factory_config.ldpc_encoder_type          = "auto";
   upper_phy_factory_config.ldpc_decoder_type          = "auto";
   upper_phy_factory_config.ldpc_rate_dematcher_type   = "auto";
@@ -61,7 +66,10 @@ static odu::du_low_config generate_du_low_config(const du_low_unit_config&      
   upper_phy_factory_config.ul_bw_rb                          = max_ul_bw_rb;
   upper_phy_factory_config.pusch_max_nof_layers              = pusch_max_nof_layers;
   upper_phy_factory_config.enable_metrics                    = du_low.metrics_cfg.enable_du_low;
-  upper_phy_factory_config.ldpc_decoder_type                 = "auto";
+  if (du_low.loggers.phy_rx_symbol_printer.port.has_value()) {
+    upper_phy_factory_config.rx_symbol_printer.ul_ports.set(*du_low.loggers.phy_rx_symbol_printer.port,
+                                                            *du_low.loggers.phy_rx_symbol_printer.port + 1);
+  }
   if (du_low.expert_phy_cfg.enable_phy_tap) {
     upper_phy_factory_config.phy_tap_arguments = du_low.expert_phy_cfg.phy_tap_arguments;
     if (cells[0].tdd_pattern) {
@@ -171,6 +179,7 @@ static odu::du_low_config generate_du_low_config(const du_low_unit_config&      
                  to_string(cell.freq_range),
                  to_string(cell.duplex));
 
+    upper_phy_cell.sector                     = i;
     upper_phy_cell.nof_tx_ports               = cell.nof_tx_antennas;
     upper_phy_cell.nof_rx_ports               = cell.nof_rx_antennas;
     upper_phy_cell.nof_dl_rg                  = dl_pipeline_depth + 2;

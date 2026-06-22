@@ -10,6 +10,7 @@
 #include "uplink_processor_pool_impl.h"
 #include "upper_phy_impl.h"
 #include "upper_phy_pdu_validators.h"
+#include "upper_phy_rx_results_notifier_printer_decorator.h"
 #include "upper_phy_rx_symbol_handler_printer_decorator.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/phy/metrics/phy_metrics_factories.h"
@@ -330,19 +331,11 @@ class upper_phy_rx_symbol_handler_printer_decorator_factory : public upper_phy_r
 public:
   explicit upper_phy_rx_symbol_handler_printer_decorator_factory(
       std::shared_ptr<upper_phy_rx_symbol_handler_factory> factory_,
-      ocudulog::basic_logger&                              logger_,
-      const std::string&                                   filename_,
-      unsigned                                             nof_rb_,
-      interval<unsigned>                                   ul_print_ports_,
-      bool                                                 print_prach_) :
-    base_factory(std::move(factory_)),
-    logger(logger_),
-    filename(filename_),
-    nof_rb(nof_rb_),
-    ul_print_ports(ul_print_ports_),
-    print_prach(print_prach_)
+      std::shared_ptr<rx_resource_grid_printer_backend>    backend_) :
+    base_factory(std::move(factory_)), backend(std::move(backend_))
   {
     ocudu_assert(base_factory, "Invalid Rx symbol handler factory.");
+    ocudu_assert(backend, "Invalid backend.");
   }
 
   // See interface for documentation.
@@ -352,17 +345,75 @@ public:
     std::unique_ptr<upper_phy_rx_symbol_handler> rx_symbol_handler = base_factory->create(ul_processor_pool_);
 
     // Create and return the RX symbol handler printer decorator.
-    return std::make_unique<upper_phy_rx_symbol_handler_printer_decorator>(
-        std::move(rx_symbol_handler), logger, filename, nof_rb, ul_print_ports, print_prach);
+    return std::make_unique<upper_phy_rx_symbol_handler_printer_decorator>(std::move(rx_symbol_handler), backend);
   }
 
 private:
   std::shared_ptr<upper_phy_rx_symbol_handler_factory> base_factory;
-  ocudulog::basic_logger&                              logger;
-  const std::string&                                   filename;
-  unsigned                                             nof_rb;
-  interval<unsigned>                                   ul_print_ports;
-  bool                                                 print_prach;
+  std::shared_ptr<rx_resource_grid_printer_backend>    backend;
+};
+
+/// Uplink processor factory with printer decorator.
+class uplink_processor_printer_decorator_factory : public uplink_processor_factory
+{
+public:
+  uplink_processor_printer_decorator_factory(std::shared_ptr<uplink_processor_factory>         factory_,
+                                             std::shared_ptr<rx_resource_grid_printer_backend> backend_,
+                                             const rx_symbol_trigger_configuration&            triggers_) :
+    base_factory(std::move(factory_)), backend(std::move(backend_)), triggers(triggers_)
+  {
+    ocudu_assert(base_factory, "Invalid uplink processor factory.");
+    ocudu_assert(backend, "Invalid backend.");
+  }
+
+  // See the uplink_processor_factory interface for documentation.
+  std::unique_ptr<uplink_processor> create(const uplink_processor_config& config) override
+  {
+    return create_helper(config);
+  }
+
+  // See the uplink_processor_factory interface for documentation.
+  std::unique_ptr<uplink_processor>
+  create(const uplink_processor_config& config, ocudulog::basic_logger& logger, bool log_all_opportunities) override
+  {
+    return create_helper(config, logger, log_all_opportunities);
+  }
+
+  // See the uplink_processor_factory interface for documentation.
+  std::unique_ptr<uplink_pdu_validator> create_pdu_validator() override { return base_factory->create_pdu_validator(); }
+
+private:
+  /// \brief Internal create helper method.
+  ///
+  /// Creates an uplink processor wrapped with the notifier connected to the printer backend.
+  template <typename... Args>
+  std::unique_ptr<uplink_processor> create_helper(const uplink_processor_config& config, Args&&... args)
+  {
+    // Create notifier.
+    std::unique_ptr<upper_phy_rx_results_notifier> notifier =
+        std::make_unique<upper_phy_rx_results_notifier_printer_decorator>(
+            config.notifier, backend, config.sector, triggers);
+
+    // Create new configuration and substitute the notifier.
+    uplink_processor_config config2{
+        .sector         = config.sector,
+        .notifier       = *notifier,
+        .rm_buffer_pool = config.rm_buffer_pool,
+        .nof_rx_ports   = config.nof_rx_ports,
+        .nof_rb         = config.nof_rb,
+        .max_nof_layers = config.max_nof_layers,
+    };
+
+    // Add new sector in the printer backend.
+    backend->on_new_sector(config.sector, std::move(notifier));
+
+    // Create uplink processor using the new notifier.
+    return base_factory->create(config2, std::forward<Args>(args)...);
+  }
+
+  std::shared_ptr<uplink_processor_factory>         base_factory;
+  std::shared_ptr<rx_resource_grid_printer_backend> backend;
+  rx_symbol_trigger_configuration                   triggers;
 };
 
 class upper_phy_factory_impl : public upper_phy_factory
@@ -409,27 +460,29 @@ public:
     }
 
     uplink_proc_factory = create_ul_processor_factory(factory_config, factory_deps, rg_factory, metric_notifier);
-    report_fatal_error_if_not(downlink_proc_factory, "Failed to create an UL processor factory.");
+    report_fatal_error_if_not(uplink_proc_factory, "Failed to create an UL processor factory.");
 
     rx_symbol_handler_factory = create_rx_symbol_handler_factory();
     report_fatal_error_if_not(rx_symbol_handler_factory, "Invalid Rx symbol handler factory.");
 
     // If the RX symbol filename is set, create an RX symbol handler printer decorator.
-    if (!factory_config.rx_symbol_printer_filename.empty()) {
-      interval<unsigned> ul_ports(0, factory_config.nof_rx_ports);
-      if (factory_config.rx_symbol_printer_port.has_value()) {
-        ul_ports.set(*factory_config.rx_symbol_printer_port, *factory_config.rx_symbol_printer_port + 1);
-      }
+    if (!factory_config.rx_symbol_printer.filename.empty()) {
       // Configure RX symbol handler for printing the resource grid.
       ocudulog::basic_logger& logger = ocudulog::fetch_basic_logger("PHY", true);
-      rx_symbol_handler_factory =
-          create_rx_symbol_handler_printer_decorator_factory(std::move(rx_symbol_handler_factory),
-                                                             logger,
-                                                             factory_config.rx_symbol_printer_filename,
+
+      std::shared_ptr<rx_resource_grid_printer_backend> backend =
+          std::make_shared<rx_resource_grid_printer_backend>(logger,
+                                                             factory_config.rx_symbol_printer.filename,
                                                              factory_config.ul_bw_rb,
-                                                             ul_ports,
-                                                             factory_config.rx_symbol_printer_prach);
+                                                             factory_config.rx_symbol_printer.ul_ports);
+
+      rx_symbol_handler_factory = std::make_shared<upper_phy_rx_symbol_handler_printer_decorator_factory>(
+          std::move(rx_symbol_handler_factory), backend);
       report_fatal_error_if_not(rx_symbol_handler_factory, "Invalid Rx symbol handler printer decorator factory.");
+
+      uplink_proc_factory = std::make_shared<uplink_processor_printer_decorator_factory>(
+          std::move(uplink_proc_factory), backend, factory_config.rx_symbol_printer.triggers);
+      report_fatal_error_if_not(uplink_proc_factory, "Invalid uplink processor printer decorator factory.");
     }
   }
 
@@ -949,7 +1002,8 @@ create_ul_processor_pool(uplink_processor_factory&              factory,
     info.scs = to_subcarrier_spacing(scs);
 
     // Prepare UL processor configuration.
-    uplink_processor_config ul_proc_config = {.notifier       = rx_results_notifier,
+    uplink_processor_config ul_proc_config = {.sector         = config.sector,
+                                              .notifier       = rx_results_notifier,
                                               .rm_buffer_pool = rm_buffer_pool,
                                               .nof_rx_ports   = config.nof_rx_ports,
                                               .nof_rb         = config.ul_bw_rb,
@@ -1004,18 +1058,6 @@ static std::vector<std::unique_ptr<prach_buffer>> create_prach_buffers(const upp
 std::shared_ptr<upper_phy_rx_symbol_handler_factory> ocudu::create_rx_symbol_handler_factory()
 {
   return std::make_shared<upper_phy_rx_symbol_handler_factory_impl>();
-}
-
-std::shared_ptr<upper_phy_rx_symbol_handler_factory>
-ocudu::create_rx_symbol_handler_printer_decorator_factory(std::shared_ptr<upper_phy_rx_symbol_handler_factory> factory_,
-                                                          ocudulog::basic_logger&                              logger_,
-                                                          const std::string&                                   filename,
-                                                          unsigned                                             nof_rb,
-                                                          interval<unsigned> ul_print_ports,
-                                                          bool               print_prach_)
-{
-  return std::make_shared<upper_phy_rx_symbol_handler_printer_decorator_factory>(
-      std::move(factory_), logger_, filename, nof_rb, ul_print_ports, print_prach_);
 }
 
 std::shared_ptr<downlink_processor_factory>

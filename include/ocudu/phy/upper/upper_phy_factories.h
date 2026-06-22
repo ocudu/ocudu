@@ -11,6 +11,7 @@
 #include "ocudu/phy/upper/downlink_processor.h"
 #include "ocudu/phy/upper/phy_tap/phy_tap.h"
 #include "ocudu/phy/upper/rx_buffer_pool.h"
+#include "ocudu/phy/upper/rx_symbol_printer_configuration.h"
 #include "ocudu/phy/upper/uplink_processor.h"
 #include "ocudu/phy/upper/upper_phy.h"
 #include "ocudu/phy/upper/upper_phy_execution_configuration.h"
@@ -26,6 +27,8 @@ class upper_phy_rx_symbol_request_notifier;
 
 /// Configuration parameters for uplink processors.
 struct uplink_processor_config {
+  /// Sector identifier.
+  unsigned sector;
   /// Uplink processor result notifier.
   upper_phy_rx_results_notifier& notifier;
   /// Rate Matching receive buffer pool.
@@ -205,6 +208,8 @@ std::unique_ptr<downlink_processor_pool> create_dl_processor_pool(downlink_proce
 
 /// Collects upper PHY configuration parameters used to create a new upper PHY object.
 struct upper_phy_configuration {
+  /// Sector identifier.
+  unsigned sector;
   /// Number of transmit antenna ports.
   unsigned nof_tx_ports;
   /// Number of receive antenna ports.
@@ -276,12 +281,8 @@ struct upper_phy_factory_configuration {
   bool enable_metrics;
   /// Selects the PUSCH SINR calculation method used for choosing the modulation and coding scheme.
   channel_state_information::sinr_type pusch_sinr_calc_method;
-  /// Receive symbol printer. Leave empty to disable.
-  std::string rx_symbol_printer_filename;
-  /// Receive port the UL symbols are dumped from. Leave emtpy for all ports.
-  std::optional<unsigned> rx_symbol_printer_port;
-  /// Boolean flag for dumping PRACH symbols when set to true.
-  bool rx_symbol_printer_prach;
+  /// Receive symbol printer. Leave the filename empty to disable.
+  rx_symbol_printer_configuration rx_symbol_printer;
   /// Enables the PHY tap plugin if present.
   std::optional<std::string> phy_tap_arguments;
   /// Informs the PHY tap plugin if the TDD configuration if present.
@@ -400,17 +401,6 @@ public:
 
 /// Creates an RX symbol handler factory.
 std::shared_ptr<upper_phy_rx_symbol_handler_factory> create_rx_symbol_handler_factory();
-
-/// \brief Creates an RX symbol handler printer decorator factory.
-///
-/// This factory is used to create an RX symbol handler that prints the received symbols to a file.
-std::shared_ptr<upper_phy_rx_symbol_handler_factory>
-create_rx_symbol_handler_printer_decorator_factory(std::shared_ptr<upper_phy_rx_symbol_handler_factory> factory_,
-                                                   ocudulog::basic_logger&                              logger_,
-                                                   const std::string&                                   filename_,
-                                                   unsigned                                             nof_rb_,
-                                                   interval<unsigned>                                   ul_print_ports_,
-                                                   bool                                                 print_prach_);
 
 /// Factory interface for creating an upper physical layer tap. This factory msut be defined in the physical layer tap
 /// plugin.

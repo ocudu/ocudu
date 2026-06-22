@@ -23,30 +23,39 @@ static void configure_cli11_log_args(CLI::App& app, du_low_unit_logger_config& l
              log_params.broadcast_enabled,
              "Enable logging in the physical and MAC layer of broadcast messages and all PRACH opportunities")
       ->always_capture_default();
-  add_option(app,
-             "--phy_rx_symbols_filename",
-             log_params.phy_rx_symbols_filename,
-             "Set to a valid file path to print the received symbols.")
+  app.add_option("--phy_rx_symbols_filename",
+                 log_params.phy_rx_symbol_printer.filename,
+                 "Set to a valid file path to print the received symbols.")
       ->always_capture_default();
-  add_option_function<std::string>(
-      app,
-      "--phy_rx_symbols_port",
-      [&log_params](const std::string& value) {
-        if (value == "all") {
-          log_params.phy_rx_symbols_port = std::nullopt;
-        } else {
-          log_params.phy_rx_symbols_port = parse_int<unsigned>(value).value();
-        }
-      },
-      "Set to a valid receive port number to dump the IQ symbols from that port only, or set to \"all\" to dump the "
-      "IQ symbols from all UL receive ports. Only works if \"phy_rx_symbols_filename\" is set.")
+  app.add_option_function<std::string>(
+         "--phy_rx_symbols_port",
+         [&log_params](const std::string& value) {
+           if (value == "all") {
+             log_params.phy_rx_symbol_printer.port = std::nullopt;
+           } else {
+             log_params.phy_rx_symbol_printer.port = parse_int<unsigned>(value).value();
+           }
+         },
+         "Set to a valid receive port number to dump the IQ symbols from that port only, or set to \"all\" to dump the "
+         "IQ symbols from all UL receive ports. Only works if \"phy_rx_symbols_filename\" is set.")
       ->default_str("0")
       ->check(CLI::NonNegativeNumber | CLI::IsMember({"all"}));
-  add_option(app,
-             "--phy_rx_symbols_prach",
-             log_params.phy_rx_symbols_prach,
-             "Set to true to dump the IQ symbols from all the PRACH ports. Only works if "
-             "\"phy_rx_symbols_filename\" is set.")
+  app.add_option(
+         "--phy_rx_symbols_prach_threshold_rssi_dB",
+         log_params.phy_rx_symbol_printer.triggers.prach_threshold_rssi_dB,
+         "Set to a minimum RSSI value in decibels to dump the IQ symbols from all the PRACH ports. Only works if "
+         "\"phy_rx_symbols_filename\" is set.")
+      ->capture_default_str();
+  app.add_option("--phy_rx_symbols_pusch_on_ko",
+                 log_params.phy_rx_symbol_printer.triggers.pusch_on_ko,
+                 "Set to true to dump the uplink resource grid IQ symbols when a PUSCH CRC check fails. Only works if "
+                 "\"phy_rx_symbols_filename\" is set.")
+      ->capture_default_str();
+  app.add_option(
+         "--phy_rx_symbols_pusch_threshold_sinr_dB",
+         log_params.phy_rx_symbol_printer.triggers.pusch_threshold_sinr_dB,
+         "Set to a SINR threshold in dB to dump the uplink resource grid IQ symbols when the PUSCH SINR is below this "
+         "value. Only works if \"phy_rx_symbols_filename\" is set.")
       ->capture_default_str();
 
   add_option(app,
@@ -54,7 +63,7 @@ static void configure_cli11_log_args(CLI::App& app, du_low_unit_logger_config& l
              log_params.hex_max_size,
              "Maximum number of bytes to print in hex (zero for no hex dumps, -1 for unlimited bytes)")
       ->capture_default_str()
-      ->range(-1, 1024);
+      ->check(CLI::Range(-1, 1024));
 }
 
 static void configure_cli11_trace_args(CLI::App& app, du_low_unit_tracer_config& config)

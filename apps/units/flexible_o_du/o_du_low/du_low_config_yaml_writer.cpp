@@ -14,13 +14,17 @@ static void fill_du_low_log_section(YAML::Node node, const du_low_unit_logger_co
   node["hal_level"]         = ocudulog::basic_level_to_string(config.hal_level);
   node["broadcast_enabled"] = config.broadcast_enabled;
   node["hex_max_size"]      = config.hex_max_size;
-  if (!config.phy_rx_symbols_filename.empty()) {
-    node["phy_rx_symbols_filename"] = config.phy_rx_symbols_filename;
+  if (!config.phy_rx_symbol_printer.filename.empty()) {
+    node["phy_rx_symbols_filename"] = config.phy_rx_symbol_printer.filename;
   }
-  if (config.phy_rx_symbols_port.has_value()) {
-    node["phy_rx_symbols_port"] = config.phy_rx_symbols_port.value();
+  if (config.phy_rx_symbol_printer.port.has_value()) {
+    node["phy_rx_symbols_port"] = config.phy_rx_symbol_printer.port.value();
   }
-  node["phy_rx_symbols_prach"] = config.phy_rx_symbols_prach;
+  node["phy_rx_symbols_prach_threshold_rssi_dB"] =
+      fmt::format("{}", config.phy_rx_symbol_printer.triggers.prach_threshold_rssi_dB);
+  node["phy_rx_symbols_pusch_on_ko"] = config.phy_rx_symbol_printer.triggers.pusch_on_ko;
+  node["phy_rx_symbols_pusch_threshold_sinr_dB"] =
+      fmt::format("{}", config.phy_rx_symbol_printer.triggers.pusch_threshold_sinr_dB);
 }
 
 static void fill_du_low_tracer_layers_section(YAML::Node node, const du_low_unit_tracer_config& config)

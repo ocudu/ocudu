@@ -78,6 +78,35 @@ struct du_low_unit_expert_upper_phy_config {
   std::string phy_tap_arguments;
 };
 
+/// DU low receive symbols print trigger configuration.
+struct du_low_unit_rx_symbol_trigger_config {
+  /// \brief PRACH buffer print trigger: RSSI threshold in decibels.
+  ///
+  /// Saves the PRACH buffer in the file when the RSSI is above the selected threshold. Set to infinity for not saving
+  /// any PRACH buffer.
+  float prach_threshold_rssi_dB = std::numeric_limits<float>::infinity();
+  /// \brief UL resource grid print trigger: save the uplink grid when PUSCH message is not decoded successfully.
+  ///
+  /// Set to true for saving the uplink resource grid when a CRC check fails.
+  bool pusch_on_ko = false;
+  /// \brief UL resource grid print trigger: save the uplink grid when the measured SINR in a PUSCH message is below
+  /// the threshold.
+  ///
+  /// Saves the uplink resource grid in the file when a PUSCH SINR for a slot is below the given threshold. Set to
+  /// minus infinity for disabling this trigger.
+  float pusch_threshold_sinr_dB = -std::numeric_limits<float>::infinity();
+};
+
+/// DU low receive symbols printer configuration.
+struct du_low_unit_rx_symbols_printer_config {
+  /// Set to a valid file path to print the received symbols.
+  std::string filename;
+  /// Set to a valid Rx port number or empty for all ports.
+  std::optional<unsigned> port = 0;
+  /// Print triggers.
+  du_low_unit_rx_symbol_trigger_config triggers;
+};
+
 /// DU low logging functionalities.
 struct du_low_unit_logger_config {
   /// Upper physical layer log level.
@@ -88,12 +117,8 @@ struct du_low_unit_logger_config {
   bool broadcast_enabled = false;
   /// Maximum number of bytes to write when dumping hex arrays.
   int hex_max_size = 0;
-  /// Set to a valid file path to print the received symbols.
-  std::string phy_rx_symbols_filename;
-  /// Set to a valid Rx port number or empty for all ports.
-  std::optional<unsigned> phy_rx_symbols_port = 0;
-  /// If true, prints the PRACH frequency-domain symbols.
-  bool phy_rx_symbols_prach = false;
+  /// Physical layer receive symbol printer configuration.
+  du_low_unit_rx_symbols_printer_config phy_rx_symbol_printer;
 };
 
 /// DU low tracing functionalities.

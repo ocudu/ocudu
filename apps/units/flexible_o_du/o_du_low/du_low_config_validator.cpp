@@ -90,10 +90,10 @@ static bool validate_expert_phy_unit_config(const du_low_unit_expert_upper_phy_c
 
 static bool validate_log_options(const du_low_unit_logger_config& config, const du_low_prach_validation_config& cell)
 {
-  if (!config.phy_rx_symbols_filename.empty() && config.phy_rx_symbols_port.has_value() &&
-      (config.phy_rx_symbols_port.value() >= cell.nof_antennas_ul)) {
+  if (!config.phy_rx_symbol_printer.filename.empty() && config.phy_rx_symbol_printer.port.has_value() &&
+      (config.phy_rx_symbol_printer.port.value() >= cell.nof_antennas_ul)) {
     fmt::print("Requested IQ dump from Rx port {}, valid Rx ports are 0-{}.\n",
-               config.phy_rx_symbols_port.value(),
+               config.phy_rx_symbol_printer.port.value(),
                cell.nof_antennas_ul - 1);
     return false;
   }
