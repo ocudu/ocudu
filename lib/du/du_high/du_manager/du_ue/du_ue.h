@@ -38,7 +38,28 @@ struct du_ue_context {
 };
 
 /// \brief Handled causes for RLF.
-enum class rlf_cause { max_mac_kos_reached, max_rlc_retxs_reached, rlc_protocol_failure };
+enum class rlf_cause {
+  max_harq_nacks_reached,
+  max_crc_kos_reached,
+  max_csi_dtx_reached,
+  max_rlc_retxs_reached,
+  rlc_protocol_failure
+};
+
+/// \brief Whether the RLF was detected in the MAC (as opposed to the RLC).
+inline bool is_mac_rlf_cause(rlf_cause cause)
+{
+  switch (cause) {
+    case rlf_cause::max_harq_nacks_reached:
+    case rlf_cause::max_crc_kos_reached:
+    case rlf_cause::max_csi_dtx_reached:
+      return true;
+    case rlf_cause::max_rlc_retxs_reached:
+    case rlf_cause::rlc_protocol_failure:
+      return false;
+  }
+  return false;
+}
 
 /// The interface exposes the methods to interact with the state of a DU UE.
 class du_ue_controller

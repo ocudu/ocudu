@@ -43,7 +43,7 @@ public:
   void             handle_rlf_detection(rlf_cause cause) override {}
   void             handle_crnti_ce_detection() override {}
   mac_ue_radio_link_notifier&          get_mac_rlf_notifier() override { return *this; }
-  void                                 on_rlf_detected() override {}
+  void                                 on_rlf_detected(mac_rlf_cause cause) override {}
   void                                 on_crnti_ce_received() override {}
   rlc_tx_upper_layer_control_notifier& get_rlc_rlf_notifier() override { return *this; }
   void on_protocol_failure() override { this->handle_rlf_detection(rlf_cause::rlc_protocol_failure); }

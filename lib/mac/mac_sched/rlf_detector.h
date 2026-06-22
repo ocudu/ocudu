@@ -24,7 +24,11 @@ struct rlf_metrics {
 /// \brief Detector of RLFs in the MAC, based on HARQ-ACK and CRC indications.
 class rlf_detector
 {
-  enum class event_index_t : uint8_t { ack = 0, crc, csi };
+  // Each mac_rlf_cause indexes one KO counter dimension, so its values must stay contiguous from 0.
+  static_assert(static_cast<size_t>(mac_rlf_cause::max_consecutive_harq_kos) == 0 and
+                    static_cast<size_t>(mac_rlf_cause::max_consecutive_crc_kos) == 1 and
+                    static_cast<size_t>(mac_rlf_cause::max_consecutive_csi_dtx) == 2,
+                "mac_rlf_cause values must be contiguous from 0 to index the KO counters");
 
 public:
   rlf_detector(const mac_expert_config& expert_cfg, task_executor& ctrl_exec_) :
@@ -68,17 +72,17 @@ public:
 
   void handle_ack(du_ue_index_t ue_index, du_cell_index_t cell_index, bool ack)
   {
-    handle_event(cell_index, ue_index, event_index_t::ack, ack);
+    handle_event(cell_index, ue_index, mac_rlf_cause::max_consecutive_harq_kos, ack);
   }
 
   void handle_crc(du_ue_index_t ue_index, du_cell_index_t cell_index, bool crc)
   {
-    handle_event(cell_index, ue_index, event_index_t::crc, crc);
+    handle_event(cell_index, ue_index, mac_rlf_cause::max_consecutive_crc_kos, crc);
   }
 
   void handle_csi(du_ue_index_t ue_index, du_cell_index_t cell_index, bool csi_decoded)
   {
-    handle_event(cell_index, ue_index, event_index_t::csi, csi_decoded);
+    handle_event(cell_index, ue_index, mac_rlf_cause::max_consecutive_csi_dtx, csi_decoded);
   }
 
   void handle_crnti_ce(du_ue_index_t ue_index)
@@ -100,11 +104,11 @@ public:
   }
 
 private:
-  void handle_event(du_cell_index_t cell_index, du_ue_index_t ue_index, event_index_t ev_index, bool valid)
+  void handle_event(du_cell_index_t cell_index, du_ue_index_t ue_index, mac_rlf_cause cause, bool valid)
   {
     ocudu_assert(ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", ue_index);
     auto& u          = ues[ue_index];
-    auto& ko_counter = u.ko_counters[(size_t)ev_index];
+    auto& ko_counter = u.ko_counters[(size_t)cause];
 
     if (valid) {
       // Reset counter back to zero.
@@ -114,39 +118,40 @@ private:
 
     // Increment consecutive KOs.
     unsigned       current_count = ko_counter.fetch_add(1, std::memory_order::memory_order_relaxed) + 1;
-    const unsigned max_kos       = get_max_kos(cell_index, ev_index);
+    const unsigned max_kos       = get_max_kos(cell_index, cause);
 
     // Note: We use != instead of < to ensure only one notification is sent.
     if (current_count != max_kos) {
       return;
     }
 
-    if (not ctrl_exec.defer([this, cell_index, ue_index, ev_index]() {
+    if (not ctrl_exec.defer([this, cell_index, ue_index, cause]() {
           auto* notifier = ues[ue_index].notifier;
           if (notifier == nullptr) {
             // UE likely removed while we were enqueueing this task. No need to notify RLF.
             return;
           }
-          const unsigned ko_count = get_max_kos(cell_index, ev_index);
-          const char*    ev_str   = ev_index == event_index_t::ack
+          const unsigned ko_count = get_max_kos(cell_index, cause);
+          const char*    ev_str   = cause == mac_rlf_cause::max_consecutive_harq_kos
                                         ? "HARQ-ACK KOs"
-                                        : (ev_index == event_index_t::crc ? "CRC KOs" : "undecoded CSIs");
+                                        : (cause == mac_rlf_cause::max_consecutive_crc_kos ? "CRC KOs" : "undecoded CSIs");
           logger.info("ue={}: RLF detected. Cause: {} consecutive {}", ue_index, ko_count, ev_str);
 
           // Notify upper layers.
-          notifier->on_rlf_detected();
+          notifier->on_rlf_detected(cause);
         })) {
       logger.warning("ue={}: Failed to handle RLF detection. Cause: Task queue is full");
       ko_counter.store(0, std::memory_order_relaxed);
     }
   }
 
-  unsigned get_max_kos(du_cell_index_t cell_index, event_index_t ev_index) const
+  unsigned get_max_kos(du_cell_index_t cell_index, mac_rlf_cause cause) const
   {
     const auto& cell = max_consecutive_kos[cell_index];
-    return ev_index == event_index_t::ack
+    return cause == mac_rlf_cause::max_consecutive_harq_kos
                ? cell.max_consecutive_dl_kos
-               : (ev_index == event_index_t::crc ? cell.max_consecutive_ul_kos : cell.max_consecutive_csi_dtx);
+               : (cause == mac_rlf_cause::max_consecutive_crc_kos ? cell.max_consecutive_ul_kos
+                                                                  : cell.max_consecutive_csi_dtx);
   }
 
   // DL for index 0, UL for index 1, CSI for index 2 in each cell.

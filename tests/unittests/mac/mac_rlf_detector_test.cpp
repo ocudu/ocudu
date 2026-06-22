@@ -45,6 +45,7 @@ TEST_F(mac_rlf_detector_test, when_consecutive_harq_kos_reaches_limit_then_rlf_i
   ASSERT_FALSE(rlf_notif.rlf_detected);
   worker.run_pending_tasks();
   ASSERT_TRUE(rlf_notif.rlf_detected);
+  ASSERT_EQ(rlf_notif.last_cause, mac_rlf_cause::max_consecutive_harq_kos);
 
   // Check that the RLF is not triggered again, if more KOs are detected.
   rlf_notif.rlf_detected = false;
@@ -89,6 +90,7 @@ TEST_F(mac_rlf_detector_test, when_consecutive_undetected_csi_reaches_limit_then
   ASSERT_FALSE(rlf_notif.rlf_detected);
   worker.run_pending_tasks();
   ASSERT_TRUE(rlf_notif.rlf_detected);
+  ASSERT_EQ(rlf_notif.last_cause, mac_rlf_cause::max_consecutive_csi_dtx);
 
   // Check that the RLF is not triggered again, if any more undetected CSIs.
   rlf_notif.rlf_detected = false;
@@ -97,4 +99,25 @@ TEST_F(mac_rlf_detector_test, when_consecutive_undetected_csi_reaches_limit_then
   }
   worker.run_pending_tasks();
   ASSERT_FALSE(rlf_notif.rlf_detected);
+}
+
+TEST_F(mac_rlf_detector_test, when_consecutive_crc_kos_reaches_limit_then_rlf_is_triggered)
+{
+  const du_ue_index_t   ue_index   = to_du_ue_index(0);
+  const du_cell_index_t cell_index = to_du_cell_index(0);
+  rlf_handler.add_ue(ue_index, rlf_notif);
+
+  unsigned nof_oks = test_rng::uniform_int<unsigned>(0, MAX_KOS + 1);
+  for (unsigned i = 0; i != nof_oks; ++i) {
+    rlf_handler.handle_crc(ue_index, cell_index, true);
+  }
+
+  for (unsigned i = 0; i != MAX_KOS; ++i) {
+    ASSERT_FALSE(rlf_notif.rlf_detected);
+    rlf_handler.handle_crc(ue_index, cell_index, false);
+  }
+  ASSERT_FALSE(rlf_notif.rlf_detected);
+  worker.run_pending_tasks();
+  ASSERT_TRUE(rlf_notif.rlf_detected);
+  ASSERT_EQ(rlf_notif.last_cause, mac_rlf_cause::max_consecutive_crc_kos);
 }

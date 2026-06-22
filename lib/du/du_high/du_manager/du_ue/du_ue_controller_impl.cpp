@@ -14,8 +14,12 @@ using namespace odu;
 static const char* get_rlf_cause_str(rlf_cause cause)
 {
   switch (cause) {
-    case rlf_cause::max_mac_kos_reached:
-      return "MAC max KOs reached";
+    case rlf_cause::max_harq_nacks_reached:
+      return "MAC max consecutive HARQ NACKs/DTX reached";
+    case rlf_cause::max_crc_kos_reached:
+      return "MAC max consecutive CRC KOs reached";
+    case rlf_cause::max_csi_dtx_reached:
+      return "MAC max consecutive undecoded CSIs reached";
     case rlf_cause::max_rlc_retxs_reached:
       return "RLC max ReTxs reached";
     case rlf_cause::rlc_protocol_failure:
@@ -26,6 +30,19 @@ static const char* get_rlf_cause_str(rlf_cause cause)
   return "unknown";
 }
 
+static rlf_cause to_rlf_cause(mac_rlf_cause cause)
+{
+  switch (cause) {
+    case mac_rlf_cause::max_consecutive_harq_kos:
+      return rlf_cause::max_harq_nacks_reached;
+    case mac_rlf_cause::max_consecutive_crc_kos:
+      return rlf_cause::max_crc_kos_reached;
+    case mac_rlf_cause::max_consecutive_csi_dtx:
+      return rlf_cause::max_csi_dtx_reached;
+  }
+  return rlf_cause::max_harq_nacks_reached;
+}
+
 namespace {
 
 /// Adapter between MAC and DU manager RLF detection handler.
@@ -34,7 +51,7 @@ class mac_rlf_du_adapter final : public mac_ue_radio_link_notifier
 public:
   mac_rlf_du_adapter(du_ue_index_t ue_index_, du_ue_manager_repository& ue_db_) : ue_index(ue_index_), ue_db(ue_db_) {}
 
-  void on_rlf_detected() override
+  void on_rlf_detected(mac_rlf_cause cause) override
   {
     // Note: The UE might have already been deleted by the time this method is called, so we need to check if it still
     // exists.
@@ -42,7 +59,7 @@ public:
     if (u == nullptr) {
       return;
     }
-    u->handle_rlf_detection(rlf_cause::max_mac_kos_reached);
+    u->handle_rlf_detection(to_rlf_cause(cause));
   }
 
   void on_crnti_ce_received() override
@@ -134,7 +151,7 @@ public:
     if (release_timer.is_running()) {
       // In case the RLF has already been triggered, check if RLF cause can be promoted in severity.
 
-      if (cause != rlf_cause::max_mac_kos_reached and current_cause == rlf_cause::max_mac_kos_reached) {
+      if (not is_mac_rlf_cause(cause) and is_mac_rlf_cause(*current_cause)) {
         // RLFs due to RLC failures take priority over RLF due to MAC KOs, as they cannot be recovered from.
         current_cause = cause;
         stop_ue_drb_activity();
@@ -156,14 +173,14 @@ public:
     release_timer.run();
 
     // Stop traffic in case of RLC-initiated RLF.
-    if (cause != rlf_cause::max_mac_kos_reached) {
+    if (not is_mac_rlf_cause(cause)) {
       stop_ue_drb_activity();
     }
   }
 
   void handle_crnti_ce_detection()
   {
-    if (release_timer.is_running() and current_cause == rlf_cause::max_mac_kos_reached) {
+    if (release_timer.is_running() and is_mac_rlf_cause(*current_cause)) {
       // If the RLF was not due to MAC KOs, a C-RNTI CE is not enough to cancel the RLF.
       release_timer.stop();
       logger.info("ue={}: RLF timer reset. Cause: C-RNTI CE was received for the UE", fmt::underlying(ue_ctx.ue_index));
@@ -206,7 +223,7 @@ private:
 
     // Request UE release to the CU.
     using cause_type = f1ap_ue_context_release_request::cause_type;
-    cause_type cause = *current_cause == rlf_cause::max_mac_kos_reached ? cause_type::rlf_mac : cause_type::rlf_rlc;
+    cause_type cause = is_mac_rlf_cause(*current_cause) ? cause_type::rlf_mac : cause_type::rlf_rlc;
     cfg.f1ap.ue_mng.handle_ue_context_release_request(f1ap_ue_context_release_request{ue_ctx.ue_index, cause});
 
     // Stop handling of RLFs, so that no new RLFs are triggered after the UE is scheduled for release.

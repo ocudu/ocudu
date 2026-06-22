@@ -296,6 +296,18 @@ TEST_F(du_ue_manager_tester, when_ue_is_being_removed_then_ue_notifiers_get_disc
   ASSERT_TRUE(not mac_dummy.last_dl_bs.has_value() or mac_dummy.last_dl_bs.value().bs == 0);
 }
 
+static mac_rlf_cause to_mac_rlf_cause(rlf_cause cause)
+{
+  switch (cause) {
+    case rlf_cause::max_crc_kos_reached:
+      return mac_rlf_cause::max_consecutive_crc_kos;
+    case rlf_cause::max_csi_dtx_reached:
+      return mac_rlf_cause::max_consecutive_csi_dtx;
+    default:
+      return mac_rlf_cause::max_consecutive_harq_kos;
+  }
+}
+
 class du_ue_manager_rlf_tester : public du_ue_manager_tester
 {
 public:
@@ -324,8 +336,8 @@ public:
     auto& mac_rlf_notifier = *mac_dummy.last_ue_create_msg->rlf_notifier;
     auto& rlc_rlf_notifier = ue_mng.find_ue(test_ue_index)->get_rlc_rlf_notifier();
 
-    if (cause == rlf_cause::max_mac_kos_reached) {
-      mac_rlf_notifier.on_rlf_detected();
+    if (is_mac_rlf_cause(cause)) {
+      mac_rlf_notifier.on_rlf_detected(to_mac_rlf_cause(cause));
     } else if (cause == rlf_cause::max_rlc_retxs_reached) {
       rlc_rlf_notifier.on_max_retx();
     } else {
@@ -341,15 +353,27 @@ public:
 static f1ap_ue_context_release_request::cause_type rlf_cause_to_f1ap_cause(rlf_cause rlf_cause)
 {
   using cause_type = f1ap_ue_context_release_request::cause_type;
-  cause_type cause = rlf_cause == rlf_cause::max_mac_kos_reached ? cause_type::rlf_mac : cause_type::rlf_rlc;
+  cause_type cause = is_mac_rlf_cause(rlf_cause) ? cause_type::rlf_mac : cause_type::rlf_rlc;
   return cause;
+}
+
+/// All RLF causes, used to exercise cause-independent RLF handling.
+static constexpr std::array<rlf_cause, 5> all_rlf_causes = {rlf_cause::max_harq_nacks_reached,
+                                                            rlf_cause::max_crc_kos_reached,
+                                                            rlf_cause::max_csi_dtx_reached,
+                                                            rlf_cause::max_rlc_retxs_reached,
+                                                            rlf_cause::rlc_protocol_failure};
+
+static rlf_cause random_rlf_cause()
+{
+  return all_rlf_causes[test_rng::uniform_int<unsigned>(0, all_rlf_causes.size() - 1)];
 }
 
 TEST_F(du_ue_manager_rlf_tester,
        when_rlf_is_triggered_then_timer_starts_and_on_timeout_f1ap_is_notified_of_ue_context_removal_request)
 {
   // Action: RLF is triggered.
-  const rlf_cause cause = static_cast<rlf_cause>(test_rng::uniform_int<unsigned>(0, 2));
+  const rlf_cause cause = random_rlf_cause();
   this->rlf_detected(cause);
 
   // TEST: On RLF timer timeout, F1AP is notified of UE context removal request.
@@ -363,7 +387,7 @@ TEST_F(du_ue_manager_rlf_tester,
 TEST_F(du_ue_manager_rlf_tester, when_mac_rlf_is_triggered_and_then_crnti_ce_is_detected_then_rlf_is_aborted)
 {
   // Action: MAC RLF is triggered.
-  rlf_cause cause = rlf_cause::max_mac_kos_reached;
+  rlf_cause cause = rlf_cause::max_harq_nacks_reached;
   this->rlf_detected(cause);
 
   timers.tick();
@@ -383,7 +407,7 @@ TEST_F(du_ue_manager_rlf_tester,
        when_rlc_rlf_is_triggered_after_mac_rlf_then_rlc_rlf_is_reported_and_crnti_ce_detection_has_no_effect)
 {
   // Action: MAC RLF is triggered.
-  rlf_cause cause = rlf_cause::max_mac_kos_reached;
+  rlf_cause cause = rlf_cause::max_harq_nacks_reached;
   this->rlf_detected(cause);
 
   timers.tick();
@@ -408,7 +432,7 @@ TEST_F(du_ue_manager_rlf_tester,
 TEST_F(du_ue_manager_rlf_tester, when_rlf_is_triggered_then_following_rlfs_have_no_effect)
 {
   // Action: RLF is triggered.
-  rlf_cause cause = static_cast<rlf_cause>(test_rng::uniform_int<unsigned>(0, 2));
+  rlf_cause cause = random_rlf_cause();
   this->rlf_detected(cause);
 
   // TEST: First RLF is reported.
@@ -417,7 +441,7 @@ TEST_F(du_ue_manager_rlf_tester, when_rlf_is_triggered_then_following_rlfs_have_
   f1ap_dummy.last_ue_release_req.reset();
 
   // Action: RLF is triggered again.
-  cause = static_cast<rlf_cause>(test_rng::uniform_int<unsigned>(0, 2));
+  cause = random_rlf_cause();
   this->rlf_detected(cause);
 
   // TEST: Second RLF is not reported.
@@ -436,7 +460,7 @@ TEST_F(du_ue_manager_rlf_tester, when_ue_is_being_deleted_then_rlf_should_have_n
   ASSERT_EQ(get_last_ue_index(), mac_dummy.last_ue_delete_msg->ue_index);
 
   // Action: RLF is triggered.
-  rlf_cause cause = static_cast<rlf_cause>(test_rng::uniform_int<unsigned>(0, 2));
+  rlf_cause cause = random_rlf_cause();
   this->rlf_detected(cause);
 
   // Test: No RLF is reported.
@@ -447,7 +471,7 @@ TEST_F(du_ue_manager_rlf_tester, when_ue_is_being_deleted_then_rlf_should_have_n
 TEST_F(du_ue_manager_rlf_tester, when_rlf_is_triggered_but_ue_removal_starts_then_rlf_should_have_no_effect)
 {
   // Action: RLF is triggered.
-  rlf_cause cause = static_cast<rlf_cause>(test_rng::uniform_int<unsigned>(0, 2));
+  rlf_cause cause = random_rlf_cause();
   this->rlf_detected(cause);
 
   // Action: Initiate UE removal.
