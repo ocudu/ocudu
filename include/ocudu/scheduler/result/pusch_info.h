@@ -119,6 +119,8 @@ struct ul_sched_info {
     unsigned nof_retxs;
     /// Delay between PDSCH message with RAR and its corresponding PUSCH. Only set for the Msg3 first tx.
     std::optional<unsigned> msg3_delay;
+    /// RAPID (RACH preamble index) of the UE this PUSCH belongs to. Only set for MsgA PUSCH and Msg3.
+    std::optional<unsigned> rapid;
     /// Offset that the OLLA algorithm applied to derive the UL MCS.
     std::optional<float> olla_offset;
     /// Number of overhead PRBs.
