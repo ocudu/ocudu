@@ -70,6 +70,10 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
           }
         }
       }
+      // ROHC should not be used with out-of-order (OOO) delivery.
+      if (cfg.out_of_order_delivery) {
+        logger.log_warning("Conflicting PDCP config: ROHC is ineffective with out-of-order delivery enabled.");
+      }
     }
   }
 
@@ -157,7 +161,7 @@ bool pdcp_entity_rx::suspend()
   }
 
   reordering_timer.stop();
-  deliver_all_sdus();
+  flush_rx_window();
   st        = {0, 0, 0};
   suspended = true;
   return true;
@@ -254,7 +258,7 @@ void pdcp_entity_rx::reestablish(security::sec_128_as_config sec_cfg)
 
   // - for SRBs, discard all stored PDCP SDUs and PDCP PDUs;
   if (is_srb()) {
-    discard_all_sdus();
+    discard_rx_window();
   }
 
   // - for SRBs and UM DRBs, if t-Reordering is running:
@@ -266,7 +270,7 @@ void pdcp_entity_rx::reestablish(security::sec_128_as_config sec_cfg)
       reordering_timer.stop();
     }
     if (is_um()) {
-      deliver_all_sdus();
+      flush_rx_window();
     }
   }
 
@@ -504,9 +508,14 @@ void pdcp_entity_rx::apply_reordering(pdcp_rx_pdu_info pdu_info)
   //     - clean upon each rx'ed PDU
   //     - don't forward empty buffer to upper layers
 
+  if (cfg.out_of_order_delivery) {
+    deliver_sdu(sdu_info);
+    // Keep sdu_info wrapper with empty SDU buffer in RX window. Helps with status report and RX window logic.
+  }
+
   if (rcvd_count == st.rx_deliv) {
     // Deliver to upper layers in ascending order of associated COUNT
-    deliver_all_consecutive_counts();
+    advance_rx_window();
   }
 
   // Handle reordering timers
@@ -571,12 +580,16 @@ void pdcp_entity_rx::deliver_sdu(pdcp_rx_sdu_info& sdu_info)
   }
 }
 
-// Deliver all consecutively associated COUNTs.
-// Update RX_DELIV after submitting to higher layers
-void pdcp_entity_rx::deliver_all_consecutive_counts()
+void pdcp_entity_rx::advance_rx_window()
 {
   while (st.rx_deliv != st.rx_next && rx_window.has_sn(st.rx_deliv)) {
-    deliver_sdu(rx_window[st.rx_deliv]);
+    pdcp_rx_sdu_info sdu_info = rx_window[st.rx_deliv];
+    // Skip empty SDU buffers that have been delivered already out of order.
+    if (!sdu_info.buf.empty()) {
+      deliver_sdu(sdu_info);
+    } else {
+      logger.log_debug("Skipped OOO SDU. count={}", st.rx_deliv);
+    }
     rx_window.remove_sn(st.rx_deliv);
 
     // Update RX_DELIV
@@ -584,21 +597,23 @@ void pdcp_entity_rx::deliver_all_consecutive_counts()
   }
 }
 
-// Deliver all RX'ed SDUs, regardless of order. Used during re-establishment.
-// No need to update RX_DELIV, as the re-establishment procedure will be responsible
-// for updating the state.
-void pdcp_entity_rx::deliver_all_sdus()
+void pdcp_entity_rx::flush_rx_window()
 {
   for (uint32_t count = st.rx_deliv; count < st.rx_next; count++) {
     if (rx_window.has_sn(count)) {
-      deliver_sdu(rx_window[count]);
+      pdcp_rx_sdu_info sdu_info = rx_window[count];
+      // Skip empty SDU buffers that have been delivered already out of order.
+      if (!sdu_info.buf.empty()) {
+        deliver_sdu(sdu_info);
+      } else {
+        logger.log_debug("Skipped OOO SDU. count={}", st.rx_deliv);
+      }
       rx_window.remove_sn(count);
     }
   }
 }
 
-// Discard all SDUs.
-void pdcp_entity_rx::discard_all_sdus()
+void pdcp_entity_rx::discard_rx_window()
 {
   while (st.rx_deliv != st.rx_next) {
     if (rx_window.has_sn(st.rx_deliv)) {
@@ -823,18 +838,11 @@ void pdcp_entity_rx::handle_t_reordering_expire()
   while (st.rx_deliv != st.rx_reord) {
     if (rx_window.has_sn(st.rx_deliv)) {
       pdcp_rx_sdu_info& sdu_info = rx_window[st.rx_deliv];
-
-      // Perform header decompression if required.
-      if (apply_header_decompression(sdu_info.buf)) {
-        logger.log_info("RX SDU. count={}", st.rx_deliv);
-
-        // Pass PDCP SDU to the upper layers
-        metrics.add_sdus(1, sdu_info.buf.length());
-        record_reordering_delay(sdu_info.time_of_arrival);
-        auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
-            std::chrono::high_resolution_clock::now() - sdu_info.time_of_arrival);
-        metrics.add_sdu_latency_ns(sdu_latency_ns.count());
-        upper_dn.on_new_sdu(std::move(sdu_info.buf), sdu_info.integrity_verified);
+      // Skip empty SDU buffers that have been delivered already out of order.
+      if (!sdu_info.buf.empty()) {
+        deliver_sdu(sdu_info);
+      } else {
+        logger.log_debug("Skipped OOO SDU. count={}", st.rx_deliv);
       }
       rx_window.remove_sn(st.rx_deliv);
     }
@@ -844,7 +852,7 @@ void pdcp_entity_rx::handle_t_reordering_expire()
   }
 
   // Deliver all PDCP SDU(s) consecutively associated COUNT value(s) starting from RX_REORD
-  deliver_all_consecutive_counts();
+  advance_rx_window();
 
   // Log state
   log_state(ocudulog::basic_levels::debug);

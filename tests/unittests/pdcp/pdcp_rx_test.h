@@ -27,9 +27,10 @@ ocudu::log_sink_spy& test_spy = []() -> ocudu::log_sink_spy& {
 
 /// Fixture class for PDCP tests with DRBs
 /// It requires TEST_P() and INSTANTIATE_TEST_SUITE_P() to create/spawn tests for each supported SN size
-class pdcp_rx_test_drb : public pdcp_rx_test_helper_default_crypto,
-                         public ::testing::Test,
-                         public ::testing::WithParamInterface<std::tuple<pdcp_sn_size, unsigned, rohc_test_params>>
+class pdcp_rx_test_drb
+  : public pdcp_rx_test_helper_default_crypto,
+    public ::testing::Test,
+    public ::testing::WithParamInterface<std::tuple<pdcp_sn_size, unsigned, rohc_test_params, bool>>
 {
 protected:
   void SetUp() override
@@ -44,6 +45,8 @@ protected:
     // init RLC logger
     ocudulog::fetch_basic_logger("PDCP", false).set_level(ocudulog::basic_levels::debug);
     ocudulog::fetch_basic_logger("PDCP", false).set_hex_dump_max_size(100);
+
+    set_out_of_order_delivery(std::get<bool>(GetParam()));
   }
 
   void TearDown() override

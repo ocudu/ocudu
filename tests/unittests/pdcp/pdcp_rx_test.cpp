@@ -162,7 +162,13 @@ TEST_P(pdcp_rx_test_drb, rx_out_of_order)
     // Wait for crypto and reordering
     wait_pending_crypto();
     worker.run_pending_tasks();
-    ASSERT_EQ(0, test_frame->sdu_queue.size());
+    if (config.out_of_order_delivery) {
+      ASSERT_EQ(1, test_frame->sdu_queue.size());
+      ASSERT_EQ(test_frame->sdu_queue.front(), sdu1);
+      test_frame->sdu_queue.pop();
+    } else {
+      ASSERT_EQ(0, test_frame->sdu_queue.size());
+    }
     // check rx_reord matches rx_next matches count + 2
     EXPECT_EQ(pdcp_rx->get_state().rx_reord, count + 2);
     EXPECT_EQ(pdcp_rx->get_state().rx_reord, pdcp_rx->get_state().rx_next);
@@ -172,7 +178,13 @@ TEST_P(pdcp_rx_test_drb, rx_out_of_order)
     // Wait for crypto and reordering
     wait_pending_crypto();
     worker.run_pending_tasks();
-    ASSERT_EQ(0, test_frame->sdu_queue.size());
+    if (config.out_of_order_delivery) {
+      ASSERT_EQ(1, test_frame->sdu_queue.size());
+      ASSERT_EQ(test_frame->sdu_queue.front(), sdu1);
+      test_frame->sdu_queue.pop();
+    } else {
+      ASSERT_EQ(0, test_frame->sdu_queue.size());
+    }
     // check rx_reord still maches count + 2, i.e did not change because t_reord is already running; rx_next moved on
     EXPECT_EQ(pdcp_rx->get_state().rx_reord, count + 2);
     EXPECT_EQ(pdcp_rx->get_state().rx_next, count + 3);
@@ -182,7 +194,11 @@ TEST_P(pdcp_rx_test_drb, rx_out_of_order)
     // Wait for crypto and reordering
     wait_pending_crypto();
     worker.run_pending_tasks();
-    ASSERT_EQ(3, test_frame->sdu_queue.size());
+    if (config.out_of_order_delivery) {
+      ASSERT_EQ(1, test_frame->sdu_queue.size());
+    } else {
+      ASSERT_EQ(3, test_frame->sdu_queue.size());
+    }
     while (not test_frame->sdu_queue.empty()) {
       ASSERT_EQ(test_frame->sdu_queue.front(), sdu1);
       test_frame->sdu_queue.pop();
@@ -242,7 +258,13 @@ TEST_P(pdcp_rx_test_drb, rx_duplicate)
     // Wait for crypto and reordering
     wait_pending_crypto();
     worker.run_pending_tasks();
-    ASSERT_EQ(0, test_frame->sdu_queue.size());
+    if (config.out_of_order_delivery) {
+      ASSERT_EQ(1, test_frame->sdu_queue.size());
+      ASSERT_EQ(test_frame->sdu_queue.front(), sdu1);
+      test_frame->sdu_queue.pop();
+    } else {
+      ASSERT_EQ(0, test_frame->sdu_queue.size());
+    }
     // check rx_reord matches rx_next matches count + 2
     EXPECT_EQ(pdcp_rx->get_state().rx_reord, count + 2);
     EXPECT_EQ(pdcp_rx->get_state().rx_reord, pdcp_rx->get_state().rx_next);
@@ -252,7 +274,13 @@ TEST_P(pdcp_rx_test_drb, rx_duplicate)
     // Wait for crypto and reordering
     wait_pending_crypto();
     worker.run_pending_tasks();
-    ASSERT_EQ(0, test_frame->sdu_queue.size());
+    if (config.out_of_order_delivery) {
+      ASSERT_EQ(1, test_frame->sdu_queue.size());
+      ASSERT_EQ(test_frame->sdu_queue.front(), sdu1);
+      test_frame->sdu_queue.pop();
+    } else {
+      ASSERT_EQ(0, test_frame->sdu_queue.size());
+    }
     // check rx_reord still maches count + 2, i.e did not change because t_reord is already running; rx_next moved on
     EXPECT_EQ(pdcp_rx->get_state().rx_reord, count + 2);
     EXPECT_EQ(pdcp_rx->get_state().rx_next, count + 3);
@@ -273,7 +301,11 @@ TEST_P(pdcp_rx_test_drb, rx_duplicate)
     // Wait for crypto and reordering
     wait_pending_crypto();
     worker.run_pending_tasks();
-    ASSERT_EQ(3, test_frame->sdu_queue.size());
+    if (config.out_of_order_delivery) {
+      ASSERT_EQ(1, test_frame->sdu_queue.size());
+    } else {
+      ASSERT_EQ(3, test_frame->sdu_queue.size());
+    }
     while (not test_frame->sdu_queue.empty()) {
       ASSERT_EQ(test_frame->sdu_queue.front(), sdu1);
       test_frame->sdu_queue.pop();
@@ -301,7 +333,7 @@ TEST_P(pdcp_rx_test_drb, rx_duplicate)
 }
 
 /// Test out of order reception of PDUs.
-/// The out-of-order PDU is received after the t-Reordering expires.
+/// The out-of-order PDU is received after the t-Reordering expires (except if OOO delivery is configured).
 TEST_P(pdcp_rx_test_drb, rx_reordering_timer)
 {
   set_sn_size(std::get<pdcp_sn_size>(GetParam()));
@@ -329,7 +361,12 @@ TEST_P(pdcp_rx_test_drb, rx_reordering_timer)
     // Wait for crypto and reordering
     wait_pending_crypto();
     worker.run_pending_tasks();
-    ASSERT_EQ(0, test_frame->sdu_queue.size());
+    if (config.out_of_order_delivery) {
+      ASSERT_EQ(1, test_frame->sdu_queue.size());
+      ASSERT_EQ(test_frame->sdu_queue.front(), sdu1);
+    } else {
+      ASSERT_EQ(0, test_frame->sdu_queue.size());
+    }
     tick_all(10);
     ASSERT_EQ(1, test_frame->sdu_queue.size());
     pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu1)).value());
@@ -426,8 +463,8 @@ TEST_P(pdcp_rx_test_drb, rx_reordering_timer_0ms)
 }
 
 /// Test out of order reception of PDUs.
-/// t-Reordering is set to infinite, so  no PDUs are delivered
-/// until they are received in order.
+/// t-Reordering is set to infinite, so no PDUs are delivered
+/// until they are received in order (except if OOO delivery is configured).
 TEST_P(pdcp_rx_test_drb, rx_reordering_timer_infinite)
 {
   set_sn_size(std::get<pdcp_sn_size>(GetParam()));
@@ -460,7 +497,12 @@ TEST_P(pdcp_rx_test_drb, rx_reordering_timer_infinite)
     // Wait for crypto and reordering
     wait_pending_crypto();
     worker.run_pending_tasks();
-    ASSERT_EQ(0, test_frame->sdu_queue.size());
+    if (config.out_of_order_delivery) {
+      ASSERT_EQ(1, test_frame->sdu_queue.size());
+      ASSERT_EQ(test_frame->sdu_queue.front(), sdu1);
+    } else {
+      ASSERT_EQ(0, test_frame->sdu_queue.size());
+    }
 
     pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu1)).value());
 
@@ -768,25 +810,35 @@ TEST_P(pdcp_rx_test_drb, rx_buffer)
 // Finally, instantiate all testcases for each supported SN size //
 ///////////////////////////////////////////////////////////////////
 static std::string pdcp_rx_test_drb_param_info_to_string(
-    const ::testing::TestParamInfo<std::tuple<pdcp_sn_size, unsigned, rohc_test_params>>& info)
+    const ::testing::TestParamInfo<std::tuple<pdcp_sn_size, unsigned, rohc_test_params, bool>>& info)
 {
   fmt::memory_buffer buffer;
   fmt::format_to(std::back_inserter(buffer),
-                 "{}bit_nia{}_nea{}_{}",
+                 "{}bit_nia{}_nea{}_{}_ooo_{}",
                  pdcp_sn_size_to_uint(std::get<pdcp_sn_size>(info.param)),
                  std::get<unsigned>(info.param),
                  std::get<unsigned>(info.param),
-                 std::get<rohc_test_params>(info.param).name);
+                 std::get<rohc_test_params>(info.param).name,
+                 std::get<bool>(info.param));
   return fmt::to_string(buffer);
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    pdcp_rx_test_all_variants,
+    pdcp_rx_test_sn_all_algo_all_rohc_all_ooo_off,
     pdcp_rx_test_drb,
     ::testing::Combine(::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
                        ::testing::Values(1, 2, 3),
-                       ::testing::Values(cfg_rohc_disabled, cfg_rohc_uncompressed, cfg_rohc_compressed)),
+                       ::testing::Values(cfg_rohc_disabled, cfg_rohc_uncompressed, cfg_rohc_compressed),
+                       ::testing::Values(false)),
     pdcp_rx_test_drb_param_info_to_string);
+
+INSTANTIATE_TEST_SUITE_P(pdcp_rx_test_sn_all_algo_all_rohc_off_ooo_all,
+                         pdcp_rx_test_drb,
+                         ::testing::Combine(::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
+                                            ::testing::Values(1, 2, 3),
+                                            ::testing::Values(cfg_rohc_disabled),
+                                            ::testing::Values(true)),
+                         pdcp_rx_test_drb_param_info_to_string);
 
 static std::string pdcp_rx_test_srb_param_info_to_string(
     const ::testing::TestParamInfo<std::tuple<unsigned, security::integrity_enabled>>& info)

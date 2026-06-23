@@ -221,10 +221,30 @@ private:
   /// \param buf The control PDU to be handled (including header and payload)
   void handle_control_pdu(byte_buffer_chain pdu);
 
+  /// \brief Deliver a single SDU to upper layers after optional header decompression.
+  ///
+  /// Applies ROHC decompression if configured; drops the SDU on decompression failure.
+  /// On success, updates SDU metrics and reordering delay statistics, then forwards the payload to the upper layers.
+  /// Does not modify any RX state variables (RX_DELIV, RX_NEXT).
+  /// \param sdu_info Deciphered SDU with associated metadata. The internal buffer is consumed (moved) on success.
   void deliver_sdu(pdcp_rx_sdu_info& sdu_info);
-  void deliver_all_consecutive_counts();
-  void deliver_all_sdus();
-  void discard_all_sdus();
+
+  /// \brief Advance RX_DELIV through consecutively buffered COUNTs, stopping at the first gap.
+  ///
+  /// For each buffered SDU at RX_DELIV, delivers it to upper layers and removes it from the window. If the SDU was
+  /// already delivered out-of-order (OOO), only advances RX_DELIV and cleans the window entry.
+  void advance_rx_window();
+
+  /// \brief Flush all buffered SDUs from the RX window, regardless of gaps. Used during re-establishment.
+  ///
+  /// Delivers any remaining SDU between RX_DELIV and RX_NEXT, ignoring gaps and delivered out-of-order (OOO) SDUs.
+  /// RX_DELIV is not updated here - the re-establishment procedure is responsible for resetting the state variables.
+  void flush_rx_window();
+
+  /// \brief Discard all buffered SDUs from the RX window without delivering. Used for reestablishment of SRBs.
+  ///
+  /// Iterates from RX_DELIV to RX_NEXT, removing each buffered entry and advancing RX_DELIV. Gaps are ignored.
+  void discard_rx_window();
 
   void record_reordering_delay(std::chrono::system_clock::time_point time_of_arrival);
 
