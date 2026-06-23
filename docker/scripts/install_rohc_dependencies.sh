@@ -5,18 +5,8 @@
 
 set -e
 
-# Return "name=version" if PKG_VERSIONS contains an entry for the given package name,
-# otherwise return the bare name. PKG_VERSIONS is a space-separated list of "name=version" pairs.
-_pkg_ver() {
-    local name="$1"
-    local pair
-    for pair in $PKG_VERSIONS; do
-        case "$pair" in
-            "${name}="*) echo "${pair}"; return ;;
-        esac
-    done
-    echo "$name"
-}
+# shellcheck source=common.sh
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 
 install_rohc_dependencies_debian_ubuntu() {
     local mode="${1:?}"
@@ -41,13 +31,7 @@ install_rohc_dependencies_debian_ubuntu() {
             ;;
     esac
 
-    if ((${#pkgs[@]})); then
-        local -a versioned_pkgs=()
-        for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
-        apt-get update
-        apt-get install -y --no-install-recommends "${versioned_pkgs[@]}"
-        apt-get clean && rm -rf /var/lib/apt/lists/*
-    fi
+    install_ubuntu_pkgs "${pkgs[@]}"
 }
 
 install_rohc_dependencies_fedora() {
@@ -73,12 +57,7 @@ install_rohc_dependencies_fedora() {
             ;;
     esac
 
-    if ((${#pkgs[@]})); then
-        local -a versioned_pkgs=()
-        for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
-        dnf -y install "${versioned_pkgs[@]}"
-        dnf clean all
-    fi
+    install_fedora_pkgs "${pkgs[@]}"
 
     if [[ "$mode" != "run" ]]; then
         local tool ver
@@ -115,12 +94,7 @@ install_rohc_dependencies_arch() {
             ;;
     esac
 
-    if ((${#pkgs[@]})); then
-        local -a versioned_pkgs=()
-        for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
-        pacman -Syu --noconfirm "${versioned_pkgs[@]}"
-        pacman -Scc --noconfirm
-    fi
+    install_arch_pkgs "${pkgs[@]}"
 }
 
 install_rohc_dependencies_rhel() {
@@ -151,12 +125,7 @@ install_rohc_dependencies_rhel() {
         dnf config-manager --enable "codeready-builder-for-rhel-9-$(uname -m)-rpms" 2>/dev/null || true
     fi
 
-    if ((${#pkgs[@]})); then
-        local -a versioned_pkgs=()
-        for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
-        dnf -y install "${versioned_pkgs[@]}"
-        dnf clean all
-    fi
+    install_rhel_pkgs "${pkgs[@]}"
 
     if [[ "$mode" != "run" ]]; then
         if ! command -v aclocal >/dev/null 2>&1 && command -v aclocal-1.18 >/dev/null 2>&1; then

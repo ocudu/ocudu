@@ -5,18 +5,8 @@
 
 set -e
 
-# Return "name=version" if PKG_VERSIONS contains an entry for the given package name,
-# otherwise return the bare name. PKG_VERSIONS is a space-separated list of "name=version" pairs.
-_pkg_ver() {
-    local name="$1"
-    local pair
-    for pair in $PKG_VERSIONS; do
-        case "$pair" in
-            "${name}="*) echo "${pair}"; return ;;
-        esac
-    done
-    echo "$name"
-}
+# shellcheck source=common.sh
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 
 install_uhd_dependencies_debian_ubuntu() {
     local mode="${1:?}"
@@ -58,16 +48,14 @@ install_uhd_dependencies_debian_ubuntu() {
     esac
 
     if ((${#pkgs[@]})); then
-        local -a versioned_pkgs=()
-        for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
         apt-get update
+        local -a install_pkgs=( "${pkgs[@]}" )
         for pkg in "${optional_pkgs[@]}"; do
             if apt-cache policy "$pkg" | awk '$1 == "Candidate:" && $2 != "(none)" { found = 1 } END { exit !found }'; then
-                versioned_pkgs+=("$pkg")
+                install_pkgs+=("$pkg")
             fi
         done
-        apt-get install -y --no-install-recommends "${versioned_pkgs[@]}"
-        apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/*
+        install_ubuntu_pkgs "${install_pkgs[@]}"
     fi
 
     if [[ "$mode" == "all" || "$mode" == "run" ]]; then
@@ -108,12 +96,7 @@ install_uhd_dependencies_arch() {
             ;;
     esac
 
-    if ((${#pkgs[@]})); then
-        local -a versioned_pkgs=()
-        for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
-        pacman -Syu --noconfirm "${versioned_pkgs[@]}"
-        pacman -Scc --noconfirm
-    fi
+    install_arch_pkgs "${pkgs[@]}"
 
     if [[ "$mode" == "all" || "$mode" == "run" ]]; then
         uhd_images_downloader
@@ -153,12 +136,7 @@ install_uhd_dependencies_fedora() {
             ;;
     esac
 
-    if ((${#pkgs[@]})); then
-        local -a versioned_pkgs=()
-        for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
-        dnf -y install "${versioned_pkgs[@]}"
-        dnf clean all
-    fi
+    install_fedora_pkgs "${pkgs[@]}"
 
     if [[ "$mode" == "all" || "$mode" == "run" ]]; then
         uhd_images_downloader
@@ -198,12 +176,7 @@ install_uhd_dependencies_rhel() {
             ;;
     esac
 
-    if ((${#pkgs[@]})); then
-        local -a versioned_pkgs=()
-        for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
-        dnf -y install "${versioned_pkgs[@]}"
-        dnf clean all
-    fi
+    install_rhel_pkgs "${pkgs[@]}"
 
     if [[ "$mode" == "all" || "$mode" == "run" ]]; then
         uhd_images_downloader

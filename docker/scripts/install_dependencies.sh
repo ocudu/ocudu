@@ -15,18 +15,8 @@
 
 set -e
 
-# Return "name=version" if PKG_VERSIONS contains an entry for the given package name,
-# otherwise return the bare name. PKG_VERSIONS is a space-separated list of "name=version" pairs.
-_pkg_ver() {
-    local name="$1"
-    local pair
-    for pair in $PKG_VERSIONS; do
-        case "$pair" in
-            "${name}="*) echo "${pair}"; return ;;
-        esac
-    done
-    echo "$name"
-}
+# shellcheck source=common.sh
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 
 install_dependencies_debian_ubuntu() {
     local mode="${1:?}"
@@ -75,10 +65,7 @@ install_dependencies_debian_ubuntu() {
     fi
 
     if ((${#pkgs[@]})); then
-        local -a versioned_pkgs=()
-        for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
-        apt-get update
-        apt-get install -y --no-install-recommends "${versioned_pkgs[@]}"
+        install_ubuntu_pkgs "${pkgs[@]}"
     fi
 
     if [[ "$mode" == "all" || "$mode" == "extra" ]]; then
@@ -105,7 +92,7 @@ install_dependencies_debian_ubuntu() {
         fi
     fi
 
-    apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/*
+    _ubuntu_apt_cleanup
 }
 
 install_dependencies_fedora() {
@@ -143,12 +130,7 @@ install_dependencies_fedora() {
             ;;
     esac
 
-    if ((${#pkgs[@]})); then
-        local -a versioned_pkgs=()
-        for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
-        dnf -y install "${versioned_pkgs[@]}"
-        dnf clean all
-    fi
+    install_fedora_pkgs "${pkgs[@]}"
 }
 
 install_dependencies_arch() {
@@ -185,12 +167,7 @@ install_dependencies_arch() {
             ;;
     esac
 
-    if ((${#pkgs[@]})); then
-        local -a versioned_pkgs=()
-        for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
-        pacman -Syu --noconfirm "${versioned_pkgs[@]}"
-        pacman -Scc --noconfirm
-    fi
+    install_arch_pkgs "${pkgs[@]}"
 }
 
 install_dependencies_rhel() {
@@ -234,14 +211,8 @@ install_dependencies_rhel() {
             ;;
     esac
 
-    # EPEL provides yaml-cpp-devel and mbedtls-devel which are not in UBI9 free repos
     dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
-    if ((${#pkgs[@]})); then
-        local -a versioned_pkgs=()
-        for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
-        dnf -y install "${versioned_pkgs[@]}"
-        dnf clean all
-    fi
+    install_rhel_pkgs "${pkgs[@]}"
 }
 
 main() {

@@ -15,18 +15,8 @@
 
 set -e
 
-# Return "name=version" if PKG_VERSIONS contains an entry for the given package name,
-# otherwise return the bare name. PKG_VERSIONS is a space-separated list of "name=version" pairs.
-_pkg_ver() {
-    local name="$1"
-    local pair
-    for pair in $PKG_VERSIONS; do
-        case "$pair" in
-            "${name}="*) echo "${pair}"; return ;;
-        esac
-    done
-    echo "$name"
-}
+# shellcheck source=common.sh
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 
 install_docker_dependencies_debian_ubuntu() {
     local mode="${1:?}"
@@ -49,18 +39,16 @@ install_docker_dependencies_debian_ubuntu() {
             ;;
     esac
 
-    local -a versioned_pkgs=()
-    for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
-    apt-get update
+    local -a extra_pkgs=()
     if [[ "$mode" == "run" ]]; then
+        apt-get update
         if apt-cache policy ntpdate | awk '$1 == "Candidate:" && $2 != "(none)" { found = 1 } END { exit !found }'; then
-            versioned_pkgs+=(ntpdate)
+            extra_pkgs+=(ntpdate)
         else
-            versioned_pkgs+=(ntpsec-ntpdate)
+            extra_pkgs+=(ntpsec-ntpdate)
         fi
     fi
-    apt-get install -y --no-install-recommends "${versioned_pkgs[@]}"
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+    install_ubuntu_pkgs "${pkgs[@]}" "${extra_pkgs[@]}"
 }
 
 install_docker_dependencies_arch() {
@@ -83,10 +71,7 @@ install_docker_dependencies_arch() {
             ;;
     esac
 
-    local -a versioned_pkgs=()
-    for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
-    pacman -Syu --noconfirm "${versioned_pkgs[@]}"
-    pacman -Scc --noconfirm
+    install_arch_pkgs "${pkgs[@]}"
 }
 
 install_docker_dependencies_fedora() {
@@ -109,10 +94,7 @@ install_docker_dependencies_fedora() {
             ;;
     esac
 
-    local -a versioned_pkgs=()
-    for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
-    dnf -y install "${versioned_pkgs[@]}"
-    dnf clean all
+    install_fedora_pkgs "${pkgs[@]}"
 }
 
 install_docker_dependencies_rhel() {
@@ -135,10 +117,7 @@ install_docker_dependencies_rhel() {
             ;;
     esac
 
-    local -a versioned_pkgs=()
-    for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
-    dnf -y install "${versioned_pkgs[@]}"
-    dnf clean all
+    install_rhel_pkgs "${pkgs[@]}"
 }
 
 main() {

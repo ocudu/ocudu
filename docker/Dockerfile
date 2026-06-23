@@ -316,7 +316,7 @@ LABEL name="OCUDU" \
       maintainer="Software Radio Systems Limited"
 
 # Copy the install dependencies scripts (top-level dispatchers and per-OS implementations)
-ADD docker/scripts/install_*.sh /usr/local/etc/
+ADD docker/scripts/install_*.sh docker/scripts/common.sh /usr/local/etc/
 ADD LICENSE /licenses/LICENSE
 RUN chmod +x /usr/local/etc/install_*.sh && \
     ln -sf /usr/local/etc/install_dependencies.sh /usr/local/etc/install_ocudu_dependencies.sh

@@ -5,31 +5,8 @@
 
 set -e
 
-# Return "name=version" if PKG_VERSIONS contains an entry for the given package name,
-# otherwise return the bare name. PKG_VERSIONS is a space-separated list of "name=version" pairs.
-_pkg_ver() {
-    local name="$1"
-    local pair
-    for pair in $PKG_VERSIONS; do
-        case "$pair" in
-            "${name}="*) echo "${pair}"; return ;;
-        esac
-    done
-    echo "$name"
-}
-
-# Return "name==version" if PKG_VERSIONS contains an entry for the given pip package name,
-# otherwise return the bare name. Uses pip's == version pin syntax.
-_pip_ver() {
-    local name="$1"
-    local pair
-    for pair in $PKG_VERSIONS; do
-        case "$pair" in
-            "${name}="*) echo "${name}==${pair#*=}"; return ;;
-        esac
-    done
-    echo "$name"
-}
+# shellcheck source=common.sh
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 
 install_dpdk_dependencies_debian_ubuntu() {
     local mode="${1:?}"
@@ -69,19 +46,9 @@ install_dpdk_dependencies_debian_ubuntu() {
             ;;
     esac
 
-    if ((${#pkgs[@]})); then
-        local -a versioned_pkgs=()
-        for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
-        apt-get update
-        apt-get install -y --no-install-recommends "${versioned_pkgs[@]}"
-        apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/*
-    fi
+    install_ubuntu_pkgs "${pkgs[@]}"
 
-    if ((${#pip_pkgs[@]})); then
-        local -a versioned_pip_pkgs=()
-        for pkg in "${pip_pkgs[@]}"; do versioned_pip_pkgs+=("$(_pip_ver "$pkg")"); done
-        pip3 install "${versioned_pip_pkgs[@]}" || pip3 install --break-system-packages "${versioned_pip_pkgs[@]}"
-    fi
+    install_pip_pkgs "${pip_pkgs[@]}"
 }
 
 install_dpdk_dependencies_fedora() {
@@ -121,18 +88,8 @@ install_dpdk_dependencies_fedora() {
             ;;
     esac
 
-    if ((${#pkgs[@]})); then
-        local -a versioned_pkgs=()
-        for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
-        dnf -y install "${versioned_pkgs[@]}"
-        dnf clean all
-    fi
-
-    if ((${#pip_pkgs[@]})); then
-        local -a versioned_pip_pkgs=()
-        for pkg in "${pip_pkgs[@]}"; do versioned_pip_pkgs+=("$(_pip_ver "$pkg")"); done
-        pip3 install "${versioned_pip_pkgs[@]}" --break-system-packages
-    fi
+    install_fedora_pkgs "${pkgs[@]}"
+    install_pip_pkgs --break-system-packages "${pip_pkgs[@]}"
 }
 
 install_dpdk_dependencies_arch() {
@@ -172,18 +129,8 @@ install_dpdk_dependencies_arch() {
             ;;
     esac
 
-    if ((${#pkgs[@]})); then
-        local -a versioned_pkgs=()
-        for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
-        pacman -Syu --noconfirm "${versioned_pkgs[@]}"
-        pacman -Scc --noconfirm
-    fi
-
-    if ((${#pip_pkgs[@]})); then
-        local -a versioned_pip_pkgs=()
-        for pkg in "${pip_pkgs[@]}"; do versioned_pip_pkgs+=("$(_pip_ver "$pkg")"); done
-        pip3 install "${versioned_pip_pkgs[@]}" --break-system-packages
-    fi
+    install_arch_pkgs "${pkgs[@]}"
+    install_pip_pkgs --break-system-packages "${pip_pkgs[@]}"
 }
 
 install_dpdk_dependencies_rhel() {
@@ -229,22 +176,11 @@ install_dpdk_dependencies_rhel() {
         dnf config-manager --enable "codeready-builder-for-rhel-9-$(uname -m)-rpms" 2>/dev/null || true
     fi
 
-    if ((${#pkgs[@]})); then
-        local -a versioned_pkgs=()
-        for pkg in "${pkgs[@]}"; do versioned_pkgs+=("$(_pkg_ver "$pkg")"); done
-        dnf -y install "${versioned_pkgs[@]}"
-        dnf clean all
-    fi
-
-    if ((${#pip_pkgs[@]})); then
-        local -a versioned_pip_pkgs=()
-        for pkg in "${pip_pkgs[@]}"; do versioned_pip_pkgs+=("$(_pip_ver "$pkg")"); done
-        pip3 install "${versioned_pip_pkgs[@]}"
-    fi
+    install_rhel_pkgs "${pkgs[@]}"
+    install_pip_pkgs "${pip_pkgs[@]}"
 }
 
 main() {
-
     if [ $# != 0 ] && [ $# != 1 ]; then
         echo >&2 "Illegal number of parameters"
         echo >&2 "Run like this: \"./install_dpdk_dependencies.sh [<mode>]\" where mode could be: build, run and all"
