@@ -95,7 +95,7 @@ add_test(NAME e2sm_kpm_cu_cp_meas_provider_metrics_test.e2sm_kpm_cu_cp_returns_e
                  "--gtest_filter=e2sm_kpm_cu_cp_meas_provider_metrics_test.e2sm_kpm_cu_cp_returns_expected_rrc_metrics")
 set_tests_properties(
     e2sm_kpm_cu_cp_meas_provider_metrics_test.e2sm_kpm_cu_cp_returns_expected_rrc_metrics
-    PROPERTIES LABELS "MVP-GOV-E2-1;MVP-GOV-E2-2;MVP-GOV-E2-3;MVP-GOV-E2-4;MVP-GOV-E2-5;MVP-GOV-E2-6;MVP-GOV-E2-7;MVP-GOV-E2-8;MVP-GOV-E2-9")
+    PROPERTIES LABELS "MVP-GOV-E2-15.1;MVP-GOV-E2-15.2;MVP-GOV-E2-15.3;MVP-GOV-E2-16.1;MVP-GOV-E2-16.2;MVP-GOV-E2-17.1;MVP-GOV-E2-17.2;MVP-GOV-E2-4.1;MVP-GOV-E2-4.2")
 
 add_executable(e2sm_kpm_test e2sm_kpm_test.cpp)
 target_link_libraries(e2sm_kpm_test ocudulog ocudu_e2 e2ap_asn1 ocudu_pcap ocudu_gateway ocudu_support e2_test_helpers GTest::gtest GTest::gtest_main
