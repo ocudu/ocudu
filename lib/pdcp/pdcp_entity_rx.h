@@ -229,17 +229,16 @@ private:
   /// \param sdu_info Deciphered SDU with associated metadata. The internal buffer is consumed (moved) on success.
   void deliver_sdu(pdcp_rx_sdu_info& sdu_info);
 
-  /// \brief Advance RX_DELIV through consecutively buffered COUNTs, stopping at the first gap.
+  /// \brief Advance RX_DELIV through consecutively buffered COUNTs, stopping at the first gap or at \p stop_count.
   ///
   /// For each buffered SDU at RX_DELIV, delivers it to upper layers and removes it from the window. If the SDU was
   /// already delivered out-of-order (OOO), only advances RX_DELIV and cleans the window entry.
-  void advance_rx_window();
-
-  /// \brief Flush all buffered SDUs from the RX window, regardless of gaps. Used during re-establishment.
   ///
-  /// Delivers any remaining SDU between RX_DELIV and RX_NEXT, ignoring gaps and delivered out-of-order (OOO) SDUs.
-  /// RX_DELIV is not updated here - the re-establishment procedure is responsible for resetting the state variables.
-  void flush_rx_window();
+  /// \param stop_count Exclusive upper bound on RX_DELIV advancement; the window is not advanced to or beyond this
+  ///                   COUNT value.
+  /// \param stop_on_gap Stop advancement on first gap, i.e. stop at the first count for which no SDU has been placed in
+  ///                   the receive window.
+  void advance_rx_window(uint32_t stop_count, bool stop_on_gap);
 
   /// \brief Discard all buffered SDUs from the RX window without delivering. Used for reestablishment of SRBs.
   ///

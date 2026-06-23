@@ -161,8 +161,8 @@ bool pdcp_entity_rx::suspend()
   }
 
   reordering_timer.stop();
-  flush_rx_window();
-  st        = {0, 0, 0};
+  advance_rx_window(st.rx_next, false);
+  st        = {};
   suspended = true;
   return true;
 }
@@ -270,7 +270,7 @@ void pdcp_entity_rx::reestablish(security::sec_128_as_config sec_cfg)
       reordering_timer.stop();
     }
     if (is_um()) {
-      flush_rx_window();
+      advance_rx_window(st.rx_next, false);
     }
   }
 
@@ -515,7 +515,7 @@ void pdcp_entity_rx::apply_reordering(pdcp_rx_pdu_info pdu_info)
 
   if (rcvd_count == st.rx_deliv) {
     // Deliver to upper layers in ascending order of associated COUNT
-    advance_rx_window();
+    advance_rx_window(st.rx_next, true);
   }
 
   // Handle reordering timers
@@ -580,42 +580,33 @@ void pdcp_entity_rx::deliver_sdu(pdcp_rx_sdu_info& sdu_info)
   }
 }
 
-void pdcp_entity_rx::advance_rx_window()
+void pdcp_entity_rx::advance_rx_window(uint32_t stop_count, bool stop_on_gap)
 {
-  while (st.rx_deliv != st.rx_next && rx_window.has_sn(st.rx_deliv)) {
-    pdcp_rx_sdu_info sdu_info = rx_window[st.rx_deliv];
-    // Skip empty SDU buffers that have been delivered already out of order.
-    if (!sdu_info.buf.empty()) {
-      deliver_sdu(sdu_info);
-    } else {
-      logger.log_debug("Skipped OOO SDU. count={}", st.rx_deliv);
-    }
-    rx_window.remove_sn(st.rx_deliv);
-
-    // Update RX_DELIV
-    st.rx_deliv = st.rx_deliv + 1;
-  }
-}
-
-void pdcp_entity_rx::flush_rx_window()
-{
-  for (uint32_t count = st.rx_deliv; count < st.rx_next; count++) {
-    if (rx_window.has_sn(count)) {
-      pdcp_rx_sdu_info sdu_info = rx_window[count];
+  ocudu_assert(stop_count <= st.rx_next, "Invalid argument. stop_count={} > rx_next={}", stop_count, st.rx_next);
+  while (st.rx_deliv < stop_count) {
+    if (rx_window.has_sn(st.rx_deliv)) {
+      pdcp_rx_sdu_info sdu_info = rx_window[st.rx_deliv];
       // Skip empty SDU buffers that have been delivered already out of order.
       if (!sdu_info.buf.empty()) {
         deliver_sdu(sdu_info);
       } else {
         logger.log_debug("Skipped OOO SDU. count={}", st.rx_deliv);
       }
-      rx_window.remove_sn(count);
+      rx_window.remove_sn(st.rx_deliv);
+    } else {
+      if (stop_on_gap) {
+        break;
+      }
     }
+
+    // Update RX_DELIV
+    st.rx_deliv = st.rx_deliv + 1;
   }
 }
 
 void pdcp_entity_rx::discard_rx_window()
 {
-  while (st.rx_deliv != st.rx_next) {
+  while (st.rx_deliv < st.rx_next) {
     if (rx_window.has_sn(st.rx_deliv)) {
       rx_window.remove_sn(st.rx_deliv);
       logger.log_debug("Discarded RX SDU. count={}", st.rx_next);
@@ -834,25 +825,12 @@ void pdcp_entity_rx::configure_security(security::sec_128_as_config sec_cfg,
 void pdcp_entity_rx::handle_t_reordering_expire()
 {
   metrics.add_t_reordering_timeouts(1);
-  // Deliver all PDCP SDU(s) with associated COUNT value(s) < RX_REORD
-  while (st.rx_deliv != st.rx_reord) {
-    if (rx_window.has_sn(st.rx_deliv)) {
-      pdcp_rx_sdu_info& sdu_info = rx_window[st.rx_deliv];
-      // Skip empty SDU buffers that have been delivered already out of order.
-      if (!sdu_info.buf.empty()) {
-        deliver_sdu(sdu_info);
-      } else {
-        logger.log_debug("Skipped OOO SDU. count={}", st.rx_deliv);
-      }
-      rx_window.remove_sn(st.rx_deliv);
-    }
 
-    // Update RX_DELIV
-    st.rx_deliv = st.rx_deliv + 1;
-  }
+  // Deliver all PDCP SDU(s) with associated COUNT value(s) < RX_REORD
+  advance_rx_window(st.rx_reord, false);
 
   // Deliver all PDCP SDU(s) consecutively associated COUNT value(s) starting from RX_REORD
-  advance_rx_window();
+  advance_rx_window(st.rx_next, true);
 
   // Log state
   log_state(ocudulog::basic_levels::debug);
