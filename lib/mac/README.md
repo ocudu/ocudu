@@ -45,9 +45,9 @@ Configuration and UE lifecycle events, driven by the DU manager:
 
 User-plane SDUs, one bearer per logical channel, bound through `mac_logical_channel_config`:
 
-- a `mac_sdu_tx_builder` supplies DL SDUs (`on_new_tx_sdu`) and reports each RLC bearer's buffer
+- a `mac_sdu_tx_builder` supplies DL SDUs (`on_new_tx_sdu`) for MAC PDU assembly and reports each RLC bearer's buffer
   occupancy (`on_buffer_state_update`), which the MAC forwards to the scheduler, and
-- a `mac_sdu_rx_notifier` (`on_new_sdu`) receives UL SDUs.
+- a `mac_sdu_rx_notifier` (`on_new_sdu`) which the MAC uses to forward decoded UL SDUs to the RLC.
 
 ### FAPI interface
 
@@ -225,8 +225,8 @@ reverse; cell start/stop map onto scheduler cell activation/deactivation.
 UE add, reconfigure and remove are asynchronous procedures (`ue_creation_procedure`,
 `ue_reconfiguration_procedure`, `mac_ue_removal_procedure`) implemented as coroutines that hop between
 the control executor and the per-cell/per-UE executors, setting up or tearing down the DL and UL
-contexts. UE creation is deferred until Msg3 (see
-[RA Procedure](#ra-procedure)); if any step fails, the earlier ones are rolled back in reverse order.
+contexts. UE creation is deferred until Msg3 (see the
+[RA Procedure](procedures.md#ra-procedure)); if any step fails, the earlier ones are rolled back in reverse order.
 Removal deletes the scheduler context first — so no further grants are produced — then the UL/DL
 contexts, and finally the controller's UE entry.
 
@@ -252,55 +252,7 @@ time a counter reaches its threshold, an RLF is reported to the DU manager via
 resets all counters and invokes `on_crnti_ce_received`, cancelling a spurious RLF once the UE
 re-synchronises.
 
-## RA Procedure
+## Procedures
 
-The Random Access procedure is handled primarily by the DU MAC in the following steps:
-
-1. The RACH handler manages the allocation of temporary RNTIs (TC-RNTIs) for each of the detected PRACH preambles in a given slot, and forwarding of these preambles and TC-RNTIs to the scheduler.
-2. The scheduler is then responsible for allocating the RAR and Msg3 grant for each detected PRACH preamble.
-3. The MAC DL processor has the role of encoding the MAC DL PDUs sent to FAPI.
-
-This leads to the following messaging flow graph:
-
-```mermaid
-sequenceDiagram
-    participant FAPI
-    participant RACH as RACH Handler
-    participant DL as MAC DL
-    participant SCHED as Scheduler
-    participant UL as MAC UL
-
-    FAPI->>RACH: rach_indication
-    Note over RACH: For each preamble,<br/>allocate TC-RNTI
-    RACH->>SCHED: rach_indication (with TC-RNTI)
-
-    rect rgb(238, 238, 238)
-    Note over FAPI,UL: RAR scheduling
-    FAPI->>DL: slot_indication
-    DL->>SCHED: slot_indication
-    Note over SCHED: Allocate RAR(s)
-    SCHED->>DL: DL Sched Result
-    Note over DL: Encode RAR PDU(s)
-    DL->>FAPI: DL_TTI.request
-    end
-
-    rect rgb(238, 238, 238)
-    Note over FAPI,UL: RAR UL Grant scheduling
-    FAPI->>DL: slot_indication
-    DL->>SCHED: slot_indication
-    Note over SCHED: Allocate RAR UL grant(s)
-    SCHED->>DL: UL Sched Result
-    DL->>FAPI: UL_TTI.request
-    end
-
-    FAPI->>UL: MAC PDU(s)
-    Note over UL: Decode MAC PDU(s)
-    Note over UL: UL CCCH detected
-    Note over FAPI,UL: UE created in DU
-    Note over UL: Forward UL-CCCH<br/>PDU to upper layers
-```
-
-It is worth noting that the creation of a new UE in the DU is deferred until Msg3 is received. This design has the following advantages:
-
-- UE Resources are not allocated unnecessarily for the cases when a phantom PRACH is detected, the UE fails to detect the RAR, or the Msg3 is not correctly decoded by the gNB.
-- UE Resources are allocated after the RAR window has passed. With this design, any latency in the UE resource allocation thus won’t affect the ability of the scheduler to timely schedule RARs. Notice that the RAR window in NR can be relatively short, depending on the type of service provided.
+Step-by-step descriptions of the MAC's runtime procedures (e.g. Random Access) are documented
+separately in [`procedures.md`](procedures.md).
