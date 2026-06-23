@@ -42,6 +42,26 @@ Executors are supplied to the MAC through `mac_config` as three handles:
 - `cell_exec_mapper` (`mac_cell_executor_mapper`) — per-cell executors.
 - `ue_exec_mapper` (`mac_ue_executor_mapper`) — per-UE executors.
 
+### External events and thread-safety
+
+The MAC's public entry points are invoked from threads it does not control: slot indications, RACH
+indications, CRC/UCI/SRS indications and received PDUs all arrive on PHY/FAPI threads, while
+configuration requests arrive on the DU manager's thread. These callers touch no MAC or scheduler
+state directly. Each entry point either:
+
+- **dispatches the event onto a MAC executor** — e.g. the slot indication is enqueued onto the
+  cell's `slot_ind_executor` and received UL PDUs onto the UE's `mac_ul_pdu_executor` — so that the
+  actual handling runs serialized on the owning strand; or
+- **forwards the event to the scheduler**, which manages its own thread-safety internally. CRC, UCI,
+  SRS and error indications are passed straight into the scheduler from the calling thread; the
+  scheduler buffers them in its own thread-safe queues and applies them later, in the cell's
+  `slot_indication()` context.
+
+This is the central invariant of the MAC's concurrency model: any state mutation must reach the
+owning strand (or the scheduler's internal queues) before it touches shared state. A new entry point
+that reads or writes MAC/scheduler state inline on the caller's thread, instead of hopping onto the
+appropriate executor or deferring to the scheduler, introduces a data race.
+
 ### Serialization vs. parallelism
 
 The MAC relies on **strands** (see `support/executors/strand_executor.h`) rather than locks to keep
