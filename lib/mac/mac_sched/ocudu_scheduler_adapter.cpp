@@ -55,8 +55,9 @@ void ocudu_scheduler_adapter::add_cell(const mac_scheduler_cell_creation_request
   cell_handlers.emplace(msg.cell_params.cell_index, *this, msg.cell_params.sched_req);
 
   // Forward cell configuration to scheduler.
-  auto sched_req    = msg.cell_params.sched_req;
-  sched_req.metrics = {msg.metric_notifier};
+  auto sched_req                      = msg.cell_params.sched_req;
+  sched_req.metrics                   = {msg.metric_notifier};
+  sched_req.metrics.report_ue_metrics = msg.report_ue_metrics;
   sched_impl->handle_cell_configuration_request(sched_req);
 }
 

@@ -2611,6 +2611,8 @@ static void configure_cli11_metrics_layers_args(CLI::App& app, du_high_unit_metr
 {
   add_option(app, "--enable_sched", metrics_params.enable_scheduler, "Enable DU scheduler metrics")
       ->capture_default_str();
+  add_option(app, "--enable_sched_ue", metrics_params.enable_scheduler_ue, "Enable DU per-UE scheduler metrics")
+      ->capture_default_str();
   add_option(app, "--enable_rlc", metrics_params.enable_rlc, "Enable RLC metrics")->capture_default_str();
   add_option(app, "--enable_mac", metrics_params.enable_mac, "Enable MAC metrics")->capture_default_str();
   add_option(

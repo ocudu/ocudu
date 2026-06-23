@@ -46,11 +46,12 @@ struct du_high_ran_config {
 /// Configuration passed to DU-High.
 struct du_high_configuration {
   struct metrics_config {
-    bool                      enable_sched   = false;
-    bool                      enable_mac     = false;
-    bool                      enable_rlc     = false;
-    bool                      enable_f1ap    = false;
-    bool                      enable_du_proc = false;
+    bool                      enable_sched    = false;
+    bool                      enable_sched_ue = true;
+    bool                      enable_mac      = false;
+    bool                      enable_rlc      = false;
+    bool                      enable_f1ap     = false;
+    bool                      enable_du_proc  = false;
     std::chrono::milliseconds period{1000};
     unsigned                  max_nof_sched_ue_events = 64;
   };

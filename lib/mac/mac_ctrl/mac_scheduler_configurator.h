@@ -15,6 +15,8 @@ class scheduler_cell_metrics_notifier;
 struct mac_scheduler_cell_creation_request {
   const mac_cell_creation_request& cell_params;
   scheduler_cell_metrics_notifier* metric_notifier;
+  /// Whether per-UE scheduler metrics should be reported.
+  bool report_ue_metrics = true;
 };
 
 /// \brief Adapter interface between MAC and scheduler that allows the OCUDU gNB MAC to configure different scheduler

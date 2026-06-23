@@ -27,6 +27,8 @@ struct sched_cell_configuration_request_message {
     scheduler_cell_metrics_notifier* notifier = nullptr;
     /// Maximum number of UE events per report.
     unsigned max_ue_events_per_report = 64;
+    /// Whether per-UE scheduler metrics should be reported. Cell-level metrics are reported regardless.
+    bool report_ue_metrics = true;
   };
 
   /// Cell identifier internal to the DU.

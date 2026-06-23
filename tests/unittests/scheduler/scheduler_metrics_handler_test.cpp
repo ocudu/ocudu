@@ -110,6 +110,29 @@ TEST_F(scheduler_metrics_handler_tester, metrics_sent_with_defined_periodicity)
   }
 }
 
+TEST_F(scheduler_metrics_handler_tester, when_ue_metrics_disabled_then_only_cell_metrics_are_reported)
+{
+  test_scheduler_cell_metrics_notifier cell_only_notif;
+  cell_only_notif.period_slots = report_period.count() * get_nof_slots_per_subframe(cell_cfg.scs_common());
+  cell_metrics_handler cell_only_metrics(
+      cell_cfg, sched_cell_configuration_request_message::metrics_config{&cell_only_notif, 64, false});
+  cell_only_metrics.handle_ue_creation(test_ue_index, to_rnti(0x4601), pci_t{0});
+
+  sched_result sched_res;
+  sched_res.dl.nof_dl_symbols = 14;
+  sched_res.ul.nof_ul_symbols = 14;
+
+  // Drive enough slots to span at least two report periods.
+  slot_point_extended sl = next_sl_tx;
+  for (unsigned i = 0, e = 2 * cell_only_notif.period_slots; i != e; ++i) {
+    cell_only_metrics.push_result(sl, sched_res, std::chrono::microseconds{0});
+    ++sl;
+  }
+
+  ASSERT_GT(cell_only_notif.last_report.nof_slots, 0) << "Cell metrics must still be reported";
+  ASSERT_TRUE(cell_only_notif.last_report.ue_metrics.empty()) << "Per-UE metrics must be suppressed";
+}
+
 TEST_F(scheduler_metrics_handler_tester, when_no_events_took_place_then_metrics_are_zero)
 {
   this->get_next_metric();

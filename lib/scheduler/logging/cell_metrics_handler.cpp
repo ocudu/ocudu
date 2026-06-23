@@ -40,6 +40,7 @@ cell_metrics_handler::cell_metrics_handler(
     const std::optional<sched_cell_configuration_request_message::metrics_config>& metrics_cfg) :
   notifier(metrics_cfg.has_value() and metrics_cfg->notifier != nullptr ? *metrics_cfg->notifier : null_notifier),
   cell_cfg(cell_cfg_),
+  report_ue_metrics(not metrics_cfg.has_value() or metrics_cfg->report_ue_metrics),
   nof_slots_per_sf(get_nof_slots_per_subframe(cell_cfg.scs_common()))
 {
   if (not enabled()) {
@@ -405,10 +406,12 @@ void cell_metrics_handler::report_metrics()
   auto next_report = notifier.get_builder();
 
   const std::chrono::milliseconds report_period{data.nof_slots / last_slot_tx.nof_slots_per_subframe()};
-  for (ue_metric_context& ue : ues) {
-    // Compute statistics of the UE metrics and push the result to the report. This includes the final report of UEs
-    // that were removed during this report period.
-    next_report->ue_metrics.push_back(ue.compute_report(report_period, nof_slots_per_sf));
+  if (report_ue_metrics) {
+    for (ue_metric_context& ue : ues) {
+      // Compute statistics of the UE metrics and push the result to the report. This includes the final report of UEs
+      // that were removed during this report period.
+      next_report->ue_metrics.push_back(ue.compute_report(report_period, nof_slots_per_sf));
+    }
   }
   // Now that their final metrics have been reported, erase the UEs that were removed during this report period.
   for (auto it = ues.begin(); it != ues.end();) {

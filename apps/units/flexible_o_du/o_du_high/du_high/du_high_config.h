@@ -1192,8 +1192,10 @@ struct du_high_unit_cell_config {
 /// Configuration to enable/disable metrics per layer.
 struct du_high_unit_metrics_layer_config {
   bool enable_scheduler = true;
-  bool enable_rlc       = false;
-  bool enable_mac       = false;
+  /// Enable per-UE scheduler metrics. Only takes effect when scheduler metrics are enabled.
+  bool enable_scheduler_ue = true;
+  bool enable_rlc          = false;
+  bool enable_mac          = false;
   /// Enable DU management and control procedure metrics.
   bool enable_du_proc = false;
 
