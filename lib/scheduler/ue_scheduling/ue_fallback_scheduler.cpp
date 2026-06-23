@@ -1573,5 +1573,8 @@ void ue_fallback_scheduler::rem_fallback_ue(du_ue_index_t ue_index)
                      [ue_index = ue_index](const fallback_ue& ue) { return ue.ue_index == ue_index; }),
       pending_dl_ues_new_tx.end());
   // Note: We do not use the erase+remove pattern because we want to maintain the order of pending_ul_ues.
-  pending_ul_ues.erase(std::find(pending_ul_ues.begin(), pending_ul_ues.end(), ue_index));
+  // The UE may not be in the list, so we must check the iterator before erasing; erasing end() is UB.
+  if (auto it = std::find(pending_ul_ues.begin(), pending_ul_ues.end(), ue_index); it != pending_ul_ues.end()) {
+    pending_ul_ues.erase(it);
+  }
 }
