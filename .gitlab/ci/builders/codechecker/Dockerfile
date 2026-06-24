@@ -24,7 +24,7 @@ RUN pip install codechecker==${CODECHECKER_VERSION}
 ADD codechecker/static-analyzer.sh codechecker/cppcheck_suppress_unspecified.py /usr/local/bin/
 RUN chmod +x /usr/local/bin/static-analyzer.sh /usr/local/bin/cppcheck_suppress_unspecified.py
 
-ADD install_dependencies.sh builder.sh get_available_cores.sh /usr/local/bin/
+ADD install_dependencies.sh common.sh builder.sh get_available_cores.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/install_dependencies.sh /usr/local/bin/builder.sh /usr/local/bin/get_available_cores.sh
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && install_dependencies.sh \

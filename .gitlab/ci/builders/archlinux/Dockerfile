@@ -4,7 +4,7 @@
 ARG VERSION=base-20251019.0.436919
 FROM archlinux:$VERSION
 
-ADD install_dependencies.sh /usr/local/bin
+ADD install_dependencies.sh common.sh /usr/local/bin
 RUN chmod +x /usr/local/bin/install_dependencies.sh
 
 RUN TZ=Europe/Madrid && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ >/etc/timezone

@@ -9,6 +9,7 @@ RUN TZ=Europe/Madrid && \
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
     echo $TZ > /etc/timezone && \
     apt-get update && \
+    (apt-get remove --purge -y pebble; rm -f /usr/bin/pebble) && \
     apt-get install -y --no-install-recommends \
     git gdb \
     clang llvm lld mold \
@@ -17,7 +18,7 @@ RUN TZ=Europe/Madrid && \
     (apt-get install -y --no-install-recommends libclang-rt-dev || true) && \
     apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-ADD install_dependencies.sh builder.sh changed_tests.py get_available_cores.sh /usr/local/bin/
+ADD install_dependencies.sh common.sh builder.sh changed_tests.py get_available_cores.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/install_dependencies.sh /usr/local/bin/builder.sh /usr/local/bin/changed_tests.py /usr/local/bin/get_available_cores.sh && \
     /usr/local/bin/install_dependencies.sh && \
     apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
