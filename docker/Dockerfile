@@ -394,14 +394,14 @@ RUN case "${COMPONENT}" in \
         setcap cap_sys_nice,cap_ipc_lock,cap_perfmon+ep /usr/local/bin/${BIN} && \
         getcap /usr/local/bin/${BIN} ;; \
       ru-emulator) setcap cap_sys_nice,cap_ipc_lock+ep /usr/local/bin/ru_emulator && getcap /usr/local/bin/ru_emulator ;; \
-      cu)    setcap cap_sys_nice,cap_ipc_lock+ep /usr/local/bin/ocu   && getcap /usr/local/bin/ocu ;; \
-      cu-cp) setcap cap_sys_nice,cap_ipc_lock+ep /usr/local/bin/ocucp && getcap /usr/local/bin/ocucp ;; \
-      cu-up) setcap cap_sys_nice,cap_ipc_lock+ep /usr/local/bin/ocuup && getcap /usr/local/bin/ocuup ;; \
+      cu)    setcap cap_sys_nice,cap_ipc_lock+ep             /usr/local/bin/ocu   && getcap /usr/local/bin/ocu ;; \
+      cu-cp) setcap cap_sys_nice,cap_ipc_lock,cap_perfmon+ep /usr/local/bin/ocucp && getcap /usr/local/bin/ocucp ;; \
+      cu-up) setcap cap_sys_nice,cap_ipc_lock,cap_perfmon+ep /usr/local/bin/ocuup && getcap /usr/local/bin/ocuup ;; \
       *) \
-        for bin in gnb odu; do \
+        for bin in gnb odu ocucp ocuup; do \
             test -f /usr/local/bin/${bin} && setcap cap_sys_nice,cap_ipc_lock,cap_perfmon+ep /usr/local/bin/${bin} || true; \
         done && \
-        for bin in ocu ocucp ocuup ru_emulator; do \
+        for bin in ocu ru_emulator; do \
             test -f /usr/local/bin/${bin} && setcap cap_sys_nice,cap_ipc_lock+ep /usr/local/bin/${bin} || true; \
         done && \
         for bin in gnb odu ocu ocucp ocuup ru_emulator; do \
@@ -418,9 +418,9 @@ COPY --from=builder-lean /opt/rohc  /opt/rohc
 COPY --from=builder-lean /opt/ocudu /usr/local
 
 RUN case "${COMPONENT}" in \
-      cu)    setcap cap_sys_nice,cap_ipc_lock+ep /usr/local/bin/ocu   && getcap /usr/local/bin/ocu ;; \
-      cu-cp) setcap cap_sys_nice,cap_ipc_lock+ep /usr/local/bin/ocucp && getcap /usr/local/bin/ocucp ;; \
-      cu-up) setcap cap_sys_nice,cap_ipc_lock+ep /usr/local/bin/ocuup && getcap /usr/local/bin/ocuup ;; \
+      cu)    setcap cap_sys_nice,cap_ipc_lock+ep             /usr/local/bin/ocu   && getcap /usr/local/bin/ocu ;; \
+      cu-cp) setcap cap_sys_nice,cap_ipc_lock,cap_perfmon+ep /usr/local/bin/ocucp && getcap /usr/local/bin/ocucp ;; \
+      cu-up) setcap cap_sys_nice,cap_ipc_lock,cap_perfmon+ep /usr/local/bin/ocuup && getcap /usr/local/bin/ocuup ;; \
       *)     echo "Unsupported lean component: ${COMPONENT}" >&2; exit 1 ;; \
     esac
 
