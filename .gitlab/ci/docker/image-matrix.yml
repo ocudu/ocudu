@@ -54,7 +54,7 @@
       if [ -n "${PROMOTE_IMAGE_TAG:-}" ]; then
         VERSION="${PROMOTE_IMAGE_TAG}-${TAG_OS}-${OS_VERSION}${TAG_DRIVER}-${SIMD}"
       else
-        VERSION="${TAG_OS}-${OS_VERSION}${TAG_DRIVER}-${SIMD}-${DATE}"
+        VERSION="${TAG_OS}-${OS_VERSION}${TAG_DRIVER}-${SIMD}-${DATE}_${CI_COMMIT_SHORT_SHA}"
       fi
       export VERSION
     - export PLATFORM="${TARGETARCH}"
