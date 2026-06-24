@@ -29,6 +29,10 @@ add_executable(circular_map_test circular_map_test.cpp)
 target_link_libraries(circular_map_test ocudulog GTest::gtest GTest::gtest_main)
 gtest_discover_tests(circular_map_test)
 
+add_executable(segmented_circular_map_test segmented_circular_map_test.cpp)
+target_link_libraries(segmented_circular_map_test ocudulog GTest::gtest GTest::gtest_main)
+gtest_discover_tests(segmented_circular_map_test)
+
 add_executable(expected_test expected_test.cpp)
 target_link_libraries(expected_test ocudulog)
 add_test(expected_test expected_test)
