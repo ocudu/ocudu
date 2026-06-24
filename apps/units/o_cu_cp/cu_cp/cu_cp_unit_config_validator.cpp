@@ -441,9 +441,11 @@ static bool validate_pdcp_appconfig(five_qi_t five_qi, const cu_cp_unit_pdcp_con
     fmt::print("PDCP t-Reordering=infinity on DRBs is not advised. It can cause data stalls. {}\n", five_qi);
   }
 
-  if (config.rx.out_of_order_delivery) {
-    fmt::print("PDCP RX out-of-order delivery is not supported. {}\n", five_qi);
-    return false;
+  if (config.rohc.rohc_type != cu_cp_unit_pdcp_rohc_type::none) {
+    if (config.rx.out_of_order_delivery) {
+      fmt::print("Conflicting PDCP config: ROHC is ineffective with out-of-order delivery enabled. {}\n", five_qi);
+      return false;
+    }
   }
   return true;
 }
