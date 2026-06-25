@@ -5,8 +5,12 @@
 
 #include "ocudu/adt/expected.h"
 #include "ocudu/support/ocudu_assert.h"
+#include <algorithm>
 #include <array>
+#include <cstdint>
 #include <optional>
+#include <tuple>
+#include <type_traits>
 #include <vector>
 
 namespace ocudu {
@@ -73,6 +77,89 @@ public:
 
   /// Return a previously acquired segment to the pool.
   virtual void return_segment(map_segment<K, V, L>* seg) = 0;
+};
+
+/// \brief Shared memory pool for map_segment objects across multiple value types.
+///
+/// Maintains a single raw-memory pool where each slot is sized and aligned to hold the
+/// largest map_segment<K, V, L> among all V in Vs. Any of the registered value types can
+/// draw from the same underlying allocation, keeping total memory usage bounded.
+///
+/// Use get_map_segment_pool<V>() to obtain a map_segment_pool_interface<K, V, L> suitable
+/// for constructing a segmented_circular_map<K, V, L>. The call fails to compile if V was
+/// not listed in Vs, guaranteeing at compile time that every user type fits in a pool slot.
+///
+/// The pool is non-copyable and non-movable; construct it in a stable location (heap or
+/// class member) before handing out interface references.
+///
+/// \tparam K   Key type.
+/// \tparam L   Number of slots per segment.
+/// \tparam Vs  Value types sharing this pool (non-empty, pairwise distinct).
+template <typename K, size_t L, typename... Vs>
+class shared_map_segment_pool
+{
+  static_assert(sizeof...(Vs) > 0, "shared_map_segment_pool requires at least one value type");
+
+  static constexpr size_t slot_size  = std::max({sizeof(map_segment<K, Vs, L>)...});
+  static constexpr size_t slot_align = std::max({alignof(map_segment<K, Vs, L>)...});
+
+  struct alignas(slot_align) storage_slot {
+    uint8_t data[slot_size];
+  };
+
+  template <typename V>
+  class typed_adapter : public map_segment_pool_interface<K, V, L>
+  {
+  public:
+    explicit typed_adapter(shared_map_segment_pool& p) noexcept : parent(p) {}
+
+    map_segment<K, V, L>* get_segment() override
+    {
+      if (parent.free_list.empty()) {
+        return nullptr;
+      }
+      uint8_t* raw = parent.free_list.back();
+      parent.free_list.pop_back();
+      return ::new (raw) map_segment<K, V, L>();
+    }
+
+    void return_segment(map_segment<K, V, L>* seg) override
+    {
+      seg->~map_segment<K, V, L>();
+      parent.free_list.push_back(reinterpret_cast<uint8_t*>(seg));
+    }
+
+  private:
+    shared_map_segment_pool& parent;
+  };
+
+  std::vector<storage_slot>        slots;
+  std::vector<uint8_t*>            free_list;
+  std::tuple<typed_adapter<Vs>...> adapters;
+
+public:
+  explicit shared_map_segment_pool(size_t num_slots) : slots(num_slots), adapters(typed_adapter<Vs>(*this)...)
+  {
+    free_list.reserve(num_slots);
+    for (auto& s : slots) {
+      free_list.push_back(s.data);
+    }
+  }
+
+  ~shared_map_segment_pool() = default;
+
+  shared_map_segment_pool(const shared_map_segment_pool&)            = delete;
+  shared_map_segment_pool& operator=(const shared_map_segment_pool&) = delete;
+  shared_map_segment_pool(shared_map_segment_pool&&)                 = delete;
+  shared_map_segment_pool& operator=(shared_map_segment_pool&&)      = delete;
+
+  /// Returns the pool interface for value type V. Fails to compile if V is not in Vs.
+  template <typename V>
+  map_segment_pool_interface<K, V, L>& get_pool_of_type()
+  {
+    static_assert((std::is_same_v<V, Vs> || ...), "Type V was not registered in this shared pool");
+    return std::get<typed_adapter<V>>(adapters);
+  }
 };
 
 /// \brief Contiguous circular map with lazy per-segment allocation from a shared pool.
@@ -220,8 +307,8 @@ public:
     size_t                        flat_idx = 0;
   };
 
-  segmented_circular_map(size_t num_segments, map_segment_pool_interface<K, V, L>& pool_ref) :
-    entries(num_segments), pool(pool_ref)
+  segmented_circular_map(size_t num_segments, map_segment_pool_interface<K, V, L>& pool_) :
+    entries(num_segments), pool(pool_)
   {
     ocudu_assert(num_segments > 0, "segmented_circular_map requires at least one segment slot");
   }

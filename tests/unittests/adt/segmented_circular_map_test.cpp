@@ -3,7 +3,6 @@
 
 #include "ocudu/adt/segmented_circular_map.h"
 #include <gtest/gtest.h>
-#include <memory>
 
 using namespace ocudu;
 
@@ -283,6 +282,155 @@ TEST(segmented_circular_map_test, test_correct_destruction)
   }
   ASSERT_EQ(0U, C::count);
   ASSERT_EQ(2U, pool.available());
+}
+
+// ---- shared_map_segment_pool tests ----------------------------------------
+
+// Two counter types used to verify object lifetime across type-switched slots.
+struct Ca {
+  Ca() noexcept { ++live; }
+  Ca(Ca&&) noexcept { ++live; }
+  Ca(const Ca&)       = delete;
+  Ca& operator=(Ca&&) = default;
+  ~Ca() { --live; }
+  static int live;
+};
+int Ca::live = 0;
+
+struct Cb {
+  Cb() noexcept { ++live; }
+  Cb(Cb&&) noexcept { ++live; }
+  Cb(const Cb&)       = delete;
+  Cb& operator=(Cb&&) = default;
+  ~Cb() { --live; }
+  static int live;
+};
+int Cb::live = 0;
+
+// L=4, 4 slots per segment.
+using shared_pool_2t = shared_map_segment_pool<unsigned, 4, std::string, int>;
+using str_smap       = segmented_circular_map<unsigned, std::string, 4>;
+using int_smap       = segmented_circular_map<unsigned, int, 4>;
+
+TEST(shared_map_segment_pool_test, basic_single_type)
+{
+  shared_map_segment_pool<unsigned, 4, std::string> pool(2);
+  str_smap                                          mymap(2, pool.get_pool_of_type<std::string>());
+
+  ASSERT_TRUE(mymap.insert(0, "a"));
+  ASSERT_TRUE(mymap.insert(4, "b"));
+  ASSERT_TRUE(mymap.contains(0) and mymap[0] == "a");
+  ASSERT_TRUE(mymap.contains(4) and mymap[4] == "b");
+  ASSERT_EQ(2U, mymap.size());
+
+  mymap.clear();
+  ASSERT_TRUE(mymap.empty());
+}
+
+TEST(shared_map_segment_pool_test, maps_share_capacity)
+{
+  // 2-slot pool shared between a str_smap and an int_smap.
+  shared_pool_2t pool(2);
+  str_smap       smap(2, pool.get_pool_of_type<std::string>());
+  int_smap       imap(2, pool.get_pool_of_type<int>());
+
+  // Consume both slots.
+  ASSERT_TRUE(smap.insert(0, "x")); // acquires slot 0
+  ASSERT_TRUE(imap.insert(4, 99));  // acquires slot 1 (key 4 → segment index 1)
+  ASSERT_EQ(2U, smap.size() + imap.size());
+
+  // Pool exhausted — a third segment cannot be acquired by either type.
+  ASSERT_FALSE(smap.insert(4, "y")); // would need a new segment
+  ASSERT_FALSE(imap.insert(0, 1));
+}
+
+TEST(shared_map_segment_pool_test, cross_type_slot_reuse)
+{
+  // 1-slot pool: a segment freed by a str_smap must be reusable by an int_smap.
+  shared_pool_2t pool(1);
+  str_smap       smap(2, pool.get_pool_of_type<std::string>());
+  int_smap       imap(2, pool.get_pool_of_type<int>());
+
+  ASSERT_TRUE(smap.insert(0, "held"));
+  ASSERT_FALSE(imap.insert(0, 1)); // pool exhausted
+
+  smap.erase(0); // returns the slot to the pool
+
+  ASSERT_TRUE(imap.insert(0, 42)); // same slot reused for a different type
+  ASSERT_EQ(42, imap[0]);
+}
+
+TEST(shared_map_segment_pool_test, clear_restores_shared_capacity)
+{
+  shared_pool_2t pool(2);
+  str_smap       smap(2, pool.get_pool_of_type<std::string>());
+  int_smap       imap(2, pool.get_pool_of_type<int>());
+
+  smap.insert(0, "a");
+  smap.insert(4, "b"); // both pool slots taken
+  ASSERT_FALSE(imap.insert(0, 1));
+
+  smap.clear(); // returns both slots
+
+  ASSERT_TRUE(imap.insert(0, 10));
+  ASSERT_TRUE(imap.insert(4, 20));
+  ASSERT_EQ(10, imap[0]);
+  ASSERT_EQ(20, imap[4]);
+}
+
+TEST(shared_map_segment_pool_test, values_stored_independently)
+{
+  shared_pool_2t pool(4);
+  str_smap       smap(2, pool.get_pool_of_type<std::string>());
+  int_smap       imap(2, pool.get_pool_of_type<int>());
+
+  smap.insert(0, "hello");
+  smap.insert(1, "world");
+  imap.insert(0, 100);
+  imap.insert(1, 200);
+
+  ASSERT_EQ("hello", smap[0]);
+  ASSERT_EQ("world", smap[1]);
+  ASSERT_EQ(100, imap[0]);
+  ASSERT_EQ(200, imap[1]);
+
+  smap.erase(0);
+  ASSERT_FALSE(smap.contains(0));
+  ASSERT_EQ(100, imap[0]); // imap unaffected
+}
+
+TEST(shared_map_segment_pool_test, correct_object_destruction)
+{
+  using pool_t = shared_map_segment_pool<unsigned, 4, Ca, Cb>;
+  using a_map  = segmented_circular_map<unsigned, Ca, 4>;
+  using b_map  = segmented_circular_map<unsigned, Cb, 4>;
+
+  Ca::live = 0;
+  Cb::live = 0;
+
+  pool_t pool(2);
+
+  {
+    a_map mymap(2, pool.get_pool_of_type<Ca>());
+    mymap.emplace(0); // default-constructs Ca in-place
+    mymap.emplace(1);
+    ASSERT_EQ(2, Ca::live);
+
+    mymap.erase(1);
+    ASSERT_EQ(1, Ca::live);
+
+    mymap.clear(); // returns segment, destroys remaining Ca
+    ASSERT_EQ(0, Ca::live);
+  }
+
+  // Pool slots freed; now reuse them for Cb.
+  {
+    b_map mymap(2, pool.get_pool_of_type<Cb>());
+    mymap.emplace(0);
+    mymap.emplace(1);
+    ASSERT_EQ(2, Cb::live);
+  } // destructor clears map → destroys Cb objects
+  ASSERT_EQ(0, Cb::live);
 }
 
 } // namespace
