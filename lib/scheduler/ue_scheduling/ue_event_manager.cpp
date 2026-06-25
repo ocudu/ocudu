@@ -121,7 +121,7 @@ class ocudu::pdu_indication_pool
   // path to reach the scheduler; there's both a thread hop (dispatched to a per-UE MAC UL PDU executor) and processing
   // latency (MAC PDU decoding + subPDU parsing); therefore, there can be a larger accumulation of in-flight BSR/PHR
   // indications compared to CRC.
-  static constexpr size_t MAX_BSR_PHR_EXPECTED_SLOTS = 6;
+  static constexpr size_t MAX_BSR_PHR_EXPECTED_SLOTS = 8;
   static constexpr size_t UCI_INITIAL_POOL_SIZE      = MAX_PUCCH_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
   static constexpr size_t PHR_INITIAL_POOL_SIZE      = MAX_PUSCH_PDUS_PER_SLOT * MAX_BSR_PHR_EXPECTED_SLOTS;
   static constexpr size_t CRC_INITIAL_POOL_SIZE      = MAX_PUSCH_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
