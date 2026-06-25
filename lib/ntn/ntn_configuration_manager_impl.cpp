@@ -31,6 +31,55 @@ static double compute_doppler_shift_rate_hz_per_s(double ta_common_drift_variant
   return ta_common_drift_variant_us_per_s2 * 1e-6 * carrier_freq_hz;
 }
 
+/// \brief Merges a sparse cell config update into a full cell config snapshot.
+///
+/// ntn_cell_config_update_info uses optional fields as a patch: only the fields present in the update are applied;
+/// absent fields leave the existing values in cfg unchanged. This allows O&M to send partial updates, e.g. only a
+/// new feeder_link_info without repeating unchanged parameters.
+static void merge_cell_config_update(ntn_cell_config& cfg, const ntn_cell_config_update_info& update)
+{
+  cfg.assistance_info.ntn_ul_sync_validity_dur = update.ntn_ul_sync_validity_duration;
+  if (update.ta_info && update.ta_info->ta_common_offset != 0.0) {
+    if (!cfg.assistance_info.ta_info) {
+      cfg.assistance_info.ta_info.emplace();
+    }
+    cfg.assistance_info.ta_info->ta_common_offset = update.ta_info->ta_common_offset;
+  }
+  if (update.reference_location) {
+    cfg.assistance_info.reference_location = update.reference_location;
+  }
+  if (update.distance_threshold) {
+    cfg.assistance_info.distance_threshold = update.distance_threshold;
+  }
+  if (update.t_service) {
+    cfg.assistance_info.t_service = update.t_service;
+  }
+  if (update.polarization) {
+    cfg.assistance_info.polarization = update.polarization;
+  }
+  if (update.ta_report) {
+    cfg.assistance_info.ta_report = update.ta_report;
+  }
+  if (update.ncells) {
+    cfg.assistance_info.ncells.clear();
+    for (const auto& ncell : *update.ncells) {
+      cfg.assistance_info.ncells.push_back(ncell);
+    }
+  }
+  if (update.moving_ref_location) {
+    cfg.assistance_info.moving_reference_location = update.moving_ref_location;
+  }
+  if (update.sat_switch_with_resync) {
+    cfg.assistance_info.sat_switch_with_resync = update.sat_switch_with_resync;
+  } else {
+    cfg.assistance_info.sat_switch_with_resync.reset();
+  }
+  if (update.feeder_link_info) {
+    cfg.assistance_info.feeder_link_info = update.feeder_link_info;
+  }
+}
+
+/// Returns the start slot of the next SI window for the given cell config, strictly after cur_sl.
 static slot_point get_next_si_win_start(const ntn_cell_config& ntn_cell_cfg, slot_point cur_sl)
 {
   // 2> The concerned SI message is configured in the schedulingInfoList2.
@@ -64,7 +113,6 @@ static slot_point get_next_si_win_start(const ntn_cell_config& ntn_cell_cfg, slo
 ntn_configuration_manager_impl::ntn_configuration_manager_impl(const ntn_configuration_manager_config& config,
                                                                ntn_configuration_manager_dependencies  dependencies) :
   logger(ocudulog::fetch_basic_logger("NTN")),
-  cfg(config),
   sib19_pdu_update_handler(std::move(dependencies.sib19_msg_update_handler)),
   time_provider(std::move(dependencies.time_provider)),
   doppler_handler(std::move(dependencies.doppler_handler)),
@@ -82,10 +130,10 @@ ntn_configuration_manager_impl::ntn_configuration_manager_impl(const ntn_configu
       logger.error("Duplicate nr_cgi {} in NTN configuration, skipping", cell_config.nr_cgi.nci);
       continue;
     }
-    auto& ctx    = it->second;
-    ctx.cell_cfg = cell_config;
+    auto& ctx = it->second;
     // Check if sat_switch field is enabled.
     ctx.sat_switch_enabled = cell_config.assistance_info.sat_switch_with_resync.has_value();
+    ctx.cell_cfg_queue.push(cell_config_snapshot{time_point{}, cell_config});
 
     if (cell_config.assistance_info.epoch_timestamp) {
       ctx.ntn_info_generator.enqueue_ephemeris_info(ephemeris_info_update{*cell_config.assistance_info.epoch_timestamp,
@@ -147,6 +195,15 @@ ntn_configuration_manager_impl::ntn_configuration_manager_impl(const ntn_configu
   }
 }
 
+const ntn_cell_config& ntn_configuration_manager_impl::get_cell_config(per_cell_context& ctx, time_point t)
+{
+  auto& q = ctx.cell_cfg_queue;
+  while (q.size() > 1 && t >= q[1].epoch_time) {
+    q.pop();
+  }
+  return q[0].config;
+}
+
 ntn_config_update_result ntn_configuration_manager_impl::handle_ntn_config_update(const ntn_config_update_info& req)
 {
   ntn_config_update_result result;
@@ -182,9 +239,12 @@ bool ntn_configuration_manager_impl::handle_ntn_cell_config_update(const ntn_cel
 
   auto& ctx = it->second;
 
-  // Enqueue the update for epoch-gated application of all cell config fields.
-  if (!ctx.deferred_cell_cfg_queue.try_push(cell_req)) {
-    logger.warning("Deferred cell config queue full for cell {}, dropping update", cell_req.nr_cgi.nci);
+  // Merge the update onto the most recent snapshot and enqueue for epoch-gated selection.
+  ntn_cell_config merged_cfg = ctx.cell_cfg_queue[ctx.cell_cfg_queue.size() - 1].config;
+  merge_cell_config_update(merged_cfg, cell_req);
+  ctx.sat_switch_enabled = cell_req.sat_switch_with_resync.has_value();
+  if (!ctx.cell_cfg_queue.try_push(cell_config_snapshot{cell_req.epoch_time, std::move(merged_cfg)})) {
+    logger.warning("Cell config queue full for cell {}, dropping update", cell_req.nr_cgi.nci);
     return false;
   }
 
@@ -222,58 +282,15 @@ bool ntn_configuration_manager_impl::handle_ntn_cell_config_update(const ntn_cel
       ephemeris_info_update{cell_req.epoch_time, cell_req.ephemeris_info});
 }
 
-void ntn_configuration_manager_impl::apply_deferred_cell_config_update(per_cell_context&                  ctx,
-                                                                       const ntn_cell_config_update_info& update)
+bool ntn_configuration_manager_impl::send_cfo_compensation_request(const ntn_cell_config& cell_cfg,
+                                                                   time_point             doppler_update_time,
+                                                                   const ta_info_t&       ta_info)
 {
-  ctx.cell_cfg.assistance_info.ntn_ul_sync_validity_dur = update.ntn_ul_sync_validity_duration;
-  if (update.ta_info) {
-    ctx.cell_cfg.assistance_info.ta_info = update.ta_info;
-  }
-  if (update.feeder_link_info) {
-    ctx.cell_cfg.assistance_info.feeder_link_info = update.feeder_link_info;
-  }
-  if (update.reference_location) {
-    ctx.cell_cfg.assistance_info.reference_location = update.reference_location;
-  }
-  if (update.distance_threshold) {
-    ctx.cell_cfg.assistance_info.distance_threshold = update.distance_threshold;
-  }
-  if (update.t_service) {
-    ctx.cell_cfg.assistance_info.t_service = update.t_service;
-  }
-  if (update.polarization) {
-    ctx.cell_cfg.assistance_info.polarization = update.polarization;
-  }
-  if (update.ta_report) {
-    ctx.cell_cfg.assistance_info.ta_report = update.ta_report;
-  }
-  if (update.ncells) {
-    ctx.cell_cfg.assistance_info.ncells.clear();
-    for (const auto& ncell : *update.ncells) {
-      ctx.cell_cfg.assistance_info.ncells.push_back(ncell);
-    }
-  }
-  if (update.moving_ref_location) {
-    ctx.cell_cfg.assistance_info.moving_reference_location = update.moving_ref_location;
-  }
-  if (update.sat_switch_with_resync) {
-    ctx.cell_cfg.assistance_info.sat_switch_with_resync = update.sat_switch_with_resync;
-    ctx.sat_switch_enabled                              = true;
-  } else {
-    ctx.cell_cfg.assistance_info.sat_switch_with_resync.reset();
-    ctx.sat_switch_enabled = false;
-  }
-}
-
-bool ntn_configuration_manager_impl::send_cfo_compensation_request(const per_cell_context& ctx,
-                                                                   time_point              doppler_update_time,
-                                                                   const ta_info_t&        ta_info)
-{
-  if (not ctx.cell_cfg.assistance_info.feeder_link_info) {
+  if (not cell_cfg.assistance_info.feeder_link_info) {
     return false;
   }
 
-  if (not ctx.cell_cfg.assistance_info.feeder_link_info->enable_doppler_compensation) {
+  if (not cell_cfg.assistance_info.feeder_link_info->enable_doppler_compensation) {
     return false;
   }
 
@@ -281,7 +298,7 @@ bool ntn_configuration_manager_impl::send_cfo_compensation_request(const per_cel
     return false;
   }
 
-  const feeder_link_info_t& fl = *ctx.cell_cfg.assistance_info.feeder_link_info;
+  const feeder_link_info_t& fl = *cell_cfg.assistance_info.feeder_link_info;
 
   // Send CFO and CFO drift to PHY.
   double doppler_dl      = compute_doppler_hz(ta_info.ta_common_drift, fl.dl_freq);
@@ -290,11 +307,11 @@ bool ntn_configuration_manager_impl::send_cfo_compensation_request(const per_cel
   double doppler_ul_rate = compute_doppler_shift_rate_hz_per_s(ta_info.ta_common_drift_variant, fl.ul_freq);
 
   // Check if sector_id is configured, warn if missing.
-  if (!ctx.cell_cfg.sector_id) {
+  if (!cell_cfg.sector_id) {
     logger.warning("Cell {} has no sector_id configured, using default value 0 for Doppler compensation",
-                   ctx.cell_cfg.nr_cgi.nci);
+                   cell_cfg.nr_cgi.nci);
   }
-  unsigned sector_id = ctx.cell_cfg.sector_id.value_or(0);
+  unsigned sector_id = cell_cfg.sector_id.value_or(0);
 
   doppler_compensation_request dl_cfo_reqs;
   dl_cfo_reqs.sector_id       = sector_id;
@@ -310,7 +327,7 @@ bool ntn_configuration_manager_impl::send_cfo_compensation_request(const per_cel
 
   logger.debug("Apply feeder link Doppler compensation for cell {} at time={:%T}, dl_doppler={:.1f}Hz, "
                "dl_doppler_drift={:.1f}Hz/s, ul_doppler={:.1f}Hz, ul_doppler_drift={:.1f}Hz/s",
-               ctx.cell_cfg.nr_cgi.nci,
+               cell_cfg.nr_cgi.nci,
                doppler_update_time,
                doppler_dl,
                doppler_dl_rate,
@@ -336,23 +353,18 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
 
   auto& ctx = it->second;
 
-  slot_point next_si_win_start = get_next_si_win_start(ctx.cell_cfg, sl);
-  slot_point next_si_win_end   = next_si_win_start + ctx.cell_cfg.si_window_len_slots;
+  const ntn_cell_config& cell_cfg          = get_cell_config(ctx, tp);
+  slot_point             next_si_win_start = get_next_si_win_start(cell_cfg, sl);
+  slot_point             next_si_win_end   = next_si_win_start + cell_cfg.si_window_len_slots;
   // If absent for the NTN serving cell, the epoch time is the end of SI window where this SIB19 is scheduled.
   slot_point epoch_slot = next_si_win_end + 1;
   // or if an offset provided then with the offset
-  epoch_slot += ctx.cell_cfg.assistance_info.epoch_sfn_offset.value_or(0) * next_si_win_start.nof_slots_per_frame();
+  epoch_slot += cell_cfg.assistance_info.epoch_sfn_offset.value_or(0) * next_si_win_start.nof_slots_per_frame();
   auto       slot_diff  = epoch_slot - sl;
   time_point epoch_time = tp + std::chrono::milliseconds(slot_diff);
 
-  // Drain all deferred cell config updates whose epoch_time has been reached.
-  while (!ctx.deferred_cell_cfg_queue.empty() && (*ctx.deferred_cell_cfg_queue.begin()).epoch_time <= epoch_time) {
-    apply_deferred_cell_config_update(ctx, *ctx.deferred_cell_cfg_queue.begin());
-    ctx.deferred_cell_cfg_queue.pop();
-  }
-
-  unsigned ntn_ul_sync_validity_dur = ctx.cell_cfg.assistance_info.ntn_ul_sync_validity_dur.value_or(5);
-  bool     use_state_vector         = ctx.cell_cfg.assistance_info.use_state_vector.value_or(true);
+  unsigned ntn_ul_sync_validity_dur = cell_cfg.assistance_info.ntn_ul_sync_validity_dur.value_or(5);
+  bool     use_state_vector         = cell_cfg.assistance_info.use_state_vector.value_or(true);
 
   ntn_orbital_state state =
       ctx.ntn_info_generator.compute_orbital_state(epoch_time, ntn_ul_sync_validity_dur, use_state_vector);
@@ -363,8 +375,8 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
     return;
   }
 
-  if (ctx.cell_cfg.assistance_info.feeder_link_info &&
-      (ctx.cell_cfg.assistance_info.ntn_gateway_location || ctx.cell_cfg.assistance_info.ta_info) && !state.ta_info) {
+  if (cell_cfg.assistance_info.feeder_link_info &&
+      (cell_cfg.assistance_info.ntn_gateway_location || cell_cfg.assistance_info.ta_info) && !state.ta_info) {
     logger.error("Feeder link is configured for cell {} but TA-info was not computed at slot={}, epoch={:%T}",
                  nr_cgi.nci,
                  sl,
@@ -376,10 +388,10 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
   ntn_orbital_state  sat_state;
   ntn_orbital_state* sat_state_ptr = nullptr;
   if (ctx.sat_switch_enabled) {
-    const auto& sw_cfg = ctx.cell_cfg.assistance_info.sat_switch_with_resync;
-    if (sw_cfg && sw_cfg->epoch_timestamp && sw_cfg->ntn_cfg.ephemeris_info) {
-      bool     sat_use_sv       = std::holds_alternative<ecef_coordinates_t>(*sw_cfg->ntn_cfg.ephemeris_info);
-      unsigned sat_validity_dur = sw_cfg->ntn_cfg.ntn_ul_sync_validity_dur.value_or(ntn_ul_sync_validity_dur);
+    const auto& sw_cfg = *cell_cfg.assistance_info.sat_switch_with_resync;
+    if (sw_cfg.epoch_timestamp && sw_cfg.ntn_cfg.ephemeris_info) {
+      bool     sat_use_sv       = std::holds_alternative<ecef_coordinates_t>(*sw_cfg.ntn_cfg.ephemeris_info);
+      unsigned sat_validity_dur = sw_cfg.ntn_cfg.ntn_ul_sync_validity_dur.value_or(ntn_ul_sync_validity_dur);
       sat_state = ctx.sat_switch_info_generator.compute_orbital_state(epoch_time, sat_validity_dur, sat_use_sv);
       if (sat_state.success) {
         sat_state_ptr = &sat_state;
@@ -399,13 +411,13 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
     }
 
     ntn_sib19_update_request ntn_req;
-    ntn_req.nr_cgi         = ctx.cell_cfg.nr_cgi;
-    ntn_req.si_msg_idx     = ctx.cell_cfg.si_msg_idx;
+    ntn_req.nr_cgi         = cell_cfg.nr_cgi;
+    ntn_req.si_msg_idx     = cell_cfg.si_msg_idx;
     ntn_req.sib_idx        = 19;
     ntn_req.slot           = next_si_win_start;
-    ntn_req.si_slot_period = ctx.cell_cfg.si_period_rf * next_si_win_start.nof_slots_per_frame();
+    ntn_req.si_slot_period = cell_cfg.si_period_rf * next_si_win_start.nof_slots_per_frame();
     ntn_req.epoch_time     = epoch_time;
-    ntn_req.sib19          = generate_sib19_info(ctx.cell_cfg, epoch_slot, state, sat_state_ptr);
+    ntn_req.sib19          = generate_sib19_info(cell_cfg, epoch_slot, state, sat_state_ptr);
 
     ntn_req.si_valuetag_change = sib19_tracked_fields_changed(ctx.last_sib19, ntn_req.sib19);
     if (ntn_req.si_valuetag_change) {
@@ -418,6 +430,6 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
 
   // Send CFO compensation request to PHY.
   if (state.ta_info) {
-    send_cfo_compensation_request(ctx, epoch_time, *state.ta_info);
+    send_cfo_compensation_request(cell_cfg, epoch_time, *state.ta_info);
   }
 }

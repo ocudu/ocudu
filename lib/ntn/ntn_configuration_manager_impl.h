@@ -51,6 +51,12 @@ private:
   /// \return True if the update was successfully handled; false otherwise.
   bool handle_ntn_cell_config_update(const ntn_cell_config_update_info& cell_req);
 
+  /// Full cell config snapshot at a specific epoch time.
+  struct cell_config_snapshot {
+    time_point      epoch_time;
+    ntn_cell_config config;
+  };
+
   /// Per-cell context holding cell-specific NTN assistance info.
   struct per_cell_context {
     explicit per_cell_context(orbit_propagator_type type = orbit_propagator_type::rk4) :
@@ -58,32 +64,32 @@ private:
     {
     }
 
-    ntn_cell_config            cell_cfg;
     ntn_orbital_compute_module ntn_info_generator;
-    bool                       sat_switch_enabled = false;
     ntn_orbital_compute_module sat_switch_info_generator;
+    bool                       sat_switch_enabled = false;
     unique_timer               timer;
     std::optional<sib19_info>  last_sib19;
-    /// Deferred cell-config updates waiting for SIB19_Tx_time >= epoch_time.
-    static_ring_buffer<ntn_cell_config_update_info, 8> deferred_cell_cfg_queue;
+    /// Queue of full cell config snapshots ordered by epoch_time. Always non-empty (seeded at construction).
+    static_ring_buffer<cell_config_snapshot, 8> cell_cfg_queue;
   };
 
-  /// \brief Apply a previously deferred cell config update to the per-cell context.
+  /// \brief Returns the cell config applicable for the given epoch time.
   ///
-  /// Performs the field assignments that are deferred until SIB19_Tx_time >= entry.epoch_time.
-  /// \param ctx    Per-cell context to update.
-  /// \param update The deferred config update to apply.
-  void apply_deferred_cell_config_update(per_cell_context& ctx, const ntn_cell_config_update_info& update);
+  /// Pops snapshots superseded by a newer applicable entry and returns a reference to the
+  /// most recent snapshot whose epoch_time <= t.
+  /// \param ctx Per-cell context.
+  /// \param t   SIB19 epoch time.
+  const ntn_cell_config& get_cell_config(per_cell_context& ctx, time_point t);
 
   /// \brief Computes and sends a request to apply CFO compensation for the feeder link Doppler shift.
   ///
-  /// \param ctx Per-cell context containing cell configuration
+  /// \param cell_cfg Cell configuration containing feeder link parameters and sector ID.
   /// \param doppler_update_time The time point at which the Doppler compensation should be updated.
   /// \param ta_info TA-Info used to compute Doppler shift frequencies.
-  /// \return True if the request was successfully sent;
-  /// false otherwise.
-  bool
-  send_cfo_compensation_request(const per_cell_context& ctx, time_point doppler_update_time, const ta_info_t& ta_info);
+  /// \return True if the request was successfully sent; false otherwise.
+  bool send_cfo_compensation_request(const ntn_cell_config& cell_cfg,
+                                     time_point             doppler_update_time,
+                                     const ta_info_t&       ta_info);
 
   /// \brief Periodic task to generate and update NTN configuration for a specific cell.
   ///
@@ -96,7 +102,6 @@ private:
   void periodic_ntn_config_update_task(const nr_cell_global_id_t& nr_cgi, time_point tp, slot_point sl);
 
   ocudulog::basic_logger&                           logger;
-  ntn_configuration_manager_config                  cfg;
   std::unique_ptr<ntn_sib19_update_handler>         sib19_pdu_update_handler;
   std::unique_ptr<ntn_time_provider>                time_provider;
   std::unique_ptr<ntn_doppler_compensation_handler> doppler_handler;
