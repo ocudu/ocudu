@@ -725,11 +725,11 @@ mac_ul_sched_result_test_helper ocudu::unittests::build_valid_mac_ul_sched_resul
   helper.pucch_f1              = build_valid_pucch_format_1_pdu();
   helper.pucch_f1.info.bwp_cfg = &helper.pucch_f1.bwp_cfg;
   helper.pucch_f1.info.res     = &helper.pucch_f1.res;
-  helper.sched_result.pucchs.push_back(helper.pucch_f1.info);
+  helper.sched_result.pucchs.emplace(helper.pucch_f1.info);
   helper.pucch_f2              = build_valid_pucch_format_2_pdu();
   helper.pucch_f2.info.bwp_cfg = &helper.pucch_f2.bwp_cfg;
   helper.pucch_f2.info.res     = &helper.pucch_f2.res;
-  helper.sched_result.pucchs.push_back(helper.pucch_f2.info);
+  helper.sched_result.pucchs.emplace(helper.pucch_f2.info);
 
   // Add PUSCH PDU.
   helper.pusch                        = build_valid_pusch_pdu();
@@ -754,7 +754,7 @@ mac_ul_sched_result_test_helper unittests::build_valid_mac_ul_sched_result_with_
     helper.pucch_f1              = build_valid_pucch_format_1_pdu();
     helper.pucch_f1.info.bwp_cfg = &helper.pucch_f1.bwp_cfg;
     helper.pucch_f1.info.res     = &helper.pucch_f1.res;
-    helper.sched_result.pucchs.push_back(helper.pucch_f1.info);
+    helper.sched_result.pucchs.emplace(helper.pucch_f1.info);
   }
 
   // Add PUSCH PDU.

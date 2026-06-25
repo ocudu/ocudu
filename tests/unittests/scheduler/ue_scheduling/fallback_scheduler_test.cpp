@@ -240,9 +240,8 @@ protected:
 
   bool ue_is_allocated_pucch(const ue& u)
   {
-    return std::any_of(bench->res_grid[0].result.ul.pucchs.begin(),
-                       bench->res_grid[0].result.ul.pucchs.end(),
-                       [&u](const auto& pucch) { return pucch.crnti == u.crnti; });
+    span<const pucch_info> pucchs = bench->res_grid[0].result.ul.pucchs.unsorted();
+    return std::any_of(pucchs.begin(), pucchs.end(), [&u](const auto& pucch) { return pucch.crnti == u.crnti; });
   }
 
   bool tbs_scheduled_bytes_matches_given_size(const ue& u, unsigned exp_size)
@@ -423,12 +422,11 @@ TEST_P(fallback_scheduler_tester, successfully_allocated_resources_for_srb1_pdu_
   for (unsigned sl_idx = 0; sl_idx < bench->max_test_run_slots_per_ue * (1U << current_slot.numerology()); sl_idx++) {
     run_slot();
     // If the UE is allocated a PUCCH, then assume it has acked the ConRes.
-    if (std::any_of(bench->res_grid[0].result.ul.pucchs.begin(),
-                    bench->res_grid[0].result.ul.pucchs.end(),
-                    [&test_ue](const pucch_info& pucch) {
-                      return pucch.crnti == test_ue.crnti and pucch.uci_bits.harq_ack_nof_bits != 0 and
-                             pucch.format() == ocudu::pucch_format::FORMAT_1;
-                    })) {
+    span<const pucch_info> pucchs = bench->res_grid[0].result.ul.pucchs.unsorted();
+    if (std::any_of(pucchs.begin(), pucchs.end(), [&test_ue](const pucch_info& pucch) {
+          return pucch.crnti == test_ue.crnti and pucch.uci_bits.harq_ack_nof_bits != 0 and
+                 pucch.format() == ocudu::pucch_format::FORMAT_1;
+        })) {
       bench->handle_conres_completed(test_ue.ue_index);
     }
 
@@ -549,12 +547,10 @@ TEST_P(fallback_scheduler_tester, conres_and_msg4_scheduled_scheduled_over_diffe
     run_slot();
 
     // If PUCCH is allocated, set the Contention Resolution complete for the UE.
-    bool con_res_pucch_allocated =
-        std::any_of(bench->res_grid[0].result.ul.pucchs.begin(),
-                    bench->res_grid[0].result.ul.pucchs.end(),
-                    [&test_ue](const pucch_info& pucch) {
-                      return pucch.crnti == test_ue.crnti and pucch.uci_bits.harq_ack_nof_bits == 1U;
-                    });
+    span<const pucch_info> pucchs = bench->res_grid[0].result.ul.pucchs.unsorted();
+    bool con_res_pucch_allocated  = std::any_of(pucchs.begin(), pucchs.end(), [&test_ue](const pucch_info& pucch) {
+      return pucch.crnti == test_ue.crnti and pucch.uci_bits.harq_ack_nof_bits == 1U;
+    });
     if (con_res_pucch_allocated) {
       // Set ConRes complete for the UE.
       bench->handle_conres_completed(test_ue.ue_index);
@@ -1620,10 +1616,10 @@ TEST_F(fallback_sched_ue_w_out_pucch_cfg, when_srb0_is_retx_ed_only_pucch_common
     }
 
     // If PUCCH is detected, then it must be 1 grant only (PUCCH common).
-    auto& pucchs = bench->res_grid[0].result.ul.pucchs;
+    span<const pucch_info> pucchs = bench->res_grid[0].result.ul.pucchs.unsorted();
     if (not pucchs.empty()) {
-      srb_transmitted        = true;
-      const auto* pucch_srb0 = std::find_if(
+      srb_transmitted              = true;
+      const auto* const pucch_srb0 = std::find_if(
           pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) { return pucch.crnti == rnti; });
       ASSERT_TRUE(pucch_srb0 != pucchs.end());
       ASSERT_TRUE(not pucch_srb0->res->res_id.is_ded());
@@ -1658,8 +1654,8 @@ TEST_F(fallback_sched_ue_w_out_pucch_cfg, when_reconf_is_after_reest_both_common
   bench->fallback_sched.handle_conres_indication(u.ue_index);
   for (unsigned i = 0; i != MAX_TEST_RUN_SLOTS; ++i) {
     run_slot();
-    auto&       pucchs       = bench->res_grid[0].result.ul.pucchs;
-    const auto* pucch_common = std::find_if(pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) {
+    span<const pucch_info> pucchs = bench->res_grid[0].result.ul.pucchs.unsorted();
+    const auto pucch_common = std::find_if(pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) {
       return pucch.crnti == rnti and pucch.uci_bits.harq_ack_nof_bits > 0;
     });
     if (pucch_common != pucchs.end()) {
@@ -1688,19 +1684,19 @@ TEST_F(fallback_sched_ue_w_out_pucch_cfg, when_reconf_is_after_reest_both_common
     }
 
     // If PUCCH is detected, then it must be 1 grant only (PUCCH common).
-    auto& pucchs = bench->res_grid[0].result.ul.pucchs;
+    span<const pucch_info> pucchs = bench->res_grid[0].result.ul.pucchs.unsorted();
     if (not pucchs.empty()) {
       srb_transmitted = true;
       ASSERT_EQ(2, std::count_if(pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) {
                   return pucch.crnti == rnti;
                 }));
 
-      const auto* pucch_common = std::find_if(pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) {
+      const auto pucch_common = std::find_if(pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) {
         return pucch.crnti == rnti and pucch.res->res_id.is_cmn();
       });
       ASSERT_TRUE(pucch_common != pucchs.end());
 
-      const auto* pucch_ded = std::find_if(pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) {
+      const auto pucch_ded = std::find_if(pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) {
         return pucch.crnti == rnti and pucch.res->res_id.is_ded();
       });
       ASSERT_TRUE(pucch_ded != pucchs.end());
@@ -1742,19 +1738,19 @@ TEST_F(fallback_sched_ue_w_out_pucch_cfg, when_srb1_is_scheduled_with_crnti_both
     }
 
     // If PUCCH is detected, then it must be 1 grant only (PUCCH common).
-    auto& pucchs = bench->res_grid[0].result.ul.pucchs;
+    span<const pucch_info> pucchs = bench->res_grid[0].result.ul.pucchs.unsorted();
     if (not pucchs.empty()) {
       srb_transmitted = true;
       ASSERT_EQ(2, std::count_if(pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) {
                   return pucch.crnti == rnti;
                 }));
 
-      const auto* pucch_common = std::find_if(pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) {
+      const auto pucch_common = std::find_if(pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) {
         return pucch.crnti == rnti and pucch.res->res_id.is_cmn();
       });
       ASSERT_TRUE(pucch_common != pucchs.end());
 
-      const auto* pucch_ded = std::find_if(pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) {
+      const auto pucch_ded = std::find_if(pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) {
         return pucch.crnti == rnti and pucch.res->res_id.is_ded();
       });
       ASSERT_TRUE(pucch_ded != pucchs.end());

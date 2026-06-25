@@ -21,11 +21,14 @@ namespace test_helpers {
 
 pucch_info make_pucch_info(const cell_configuration& cell_cfg, const pucch_resource& res, pucch_uci_bits uci_bits);
 
+// Returns pointers to all PUCCH PDUs allocated to the given UE, in storage order.
+std::vector<const pucch_info*> find_ue_pucchs(span<const pucch_info> pucch_pdus, rnti_t rnti);
+
 } // namespace test_helpers
 
-// Wrapper for std::find_if() to find a PUCCH PDU in a vector of PUCCH PDUs.
+// Wrapper for std::find_if() to find a PUCCH PDU in a range of PUCCH PDUs.
 template <typename F>
-bool find_pucch_pdu(const static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT>& pucch_pdus, const F& func)
+bool find_pucch_pdu(const span<const pucch_info> pucch_pdus, const F& func)
 {
   return std::find_if(pucch_pdus.begin(), pucch_pdus.end(), func) != pucch_pdus.end();
 }

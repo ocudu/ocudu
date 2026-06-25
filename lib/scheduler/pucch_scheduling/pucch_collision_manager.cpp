@@ -164,9 +164,9 @@ void pucch_collision_manager::stop()
   last_sl_ind = {};
 }
 
-error_type<pucch_alloc_failure> pucch_collision_manager::can_alloc(cell_slot_resource_allocator& slot_alloc,
-                                                                   const pucch_resource&         res,
-                                                                   rnti_t                        rnti) const
+error_type<pucch_alloc_failure> pucch_collision_manager::can_alloc(const cell_slot_resource_allocator& slot_alloc,
+                                                                   const pucch_resource&               res,
+                                                                   rnti_t                              rnti) const
 {
   ocudu_sanity_check(slot_alloc.slot < last_sl_ind + slots_ctx.size(),
                      "PUCCH resource ring-buffer accessed too far into the future");

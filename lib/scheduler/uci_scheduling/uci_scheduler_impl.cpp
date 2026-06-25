@@ -259,9 +259,9 @@ void uci_scheduler_impl::schedule_updated_ues_ucis(cell_resource_allocator& res_
           // capacity.
 
           if (uci_info.sr_counter > 0) {
-            bool existing_grants = std::any_of(res_alloc[n].result.ul.pucchs.begin(),
-                                               res_alloc[n].result.ul.pucchs.end(),
-                                               [rnti](const pucch_info& grant) { return grant.crnti == rnti; });
+            span<const pucch_info> pucchs          = res_alloc[n].result.ul.pucchs.unsorted();
+            bool                   existing_grants = std::any_of(
+                pucchs.begin(), pucchs.end(), [rnti](const pucch_info& grant) { return grant.crnti == rnti; });
             if (not existing_grants) {
               // Only allocate SR if there are no existing PUCCH grants for this UE in this slot, as the PUCCH allocator
               // doesn't support multiplexing SR over other UCI.

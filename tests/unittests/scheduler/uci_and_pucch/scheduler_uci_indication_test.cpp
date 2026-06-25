@@ -8,8 +8,9 @@
 
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
-#include "tests/unittests/scheduler/test_utils/scheduler_test_simulator.h"
+#include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
+#include "ocudu/scheduler/config/scheduler_expert_config_factory.h"
 #include "ocudu/scheduler/scheduler_factory.h"
 #include <gtest/gtest.h>
 
@@ -45,7 +46,7 @@ protected:
   void run_slot()
   {
     last_sched_res = &sched->slot_indication(next_slot, to_du_cell_index(0));
-    TESTASSERT(last_sched_res->success);
+    ASSERT_TRUE(last_sched_res->success);
     test_scheduler_result_consistency(*cell_cfg, next_slot.without_hyper_sfn(), *last_sched_res);
     ++next_slot;
   }
@@ -109,7 +110,8 @@ protected:
 
   bool ue_pucch_harq_ack_grant_scheduled() const
   {
-    return std::any_of(last_sched_res->ul.pucchs.begin(), last_sched_res->ul.pucchs.end(), [](const pucch_info& pucch) {
+    span<const pucch_info> pucchs = last_sched_res->ul.pucchs.unsorted();
+    return std::any_of(pucchs.begin(), pucchs.end(), [](const pucch_info& pucch) {
       bool is_harq_ack = pucch.uci_bits.harq_ack_nof_bits > 0;
       return pucch.crnti == ue_rnti and is_harq_ack;
     });

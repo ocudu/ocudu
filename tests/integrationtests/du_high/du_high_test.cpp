@@ -204,10 +204,10 @@ TEST_F(du_high_tester,
     }
 
     // TEST CASE: Ensure UE1 UCI periodic resources are still scheduled.
-    if (find_ue_pucch_with_csi(rnti1, phy.cells[0].last_ul_res.value().ul_res->pucchs) != nullptr) {
+    if (find_ue_pucch_with_csi(rnti1, phy.cells[0].last_ul_res.value().ul_res->pucchs.unsorted()) != nullptr) {
       ue1_csi_count++;
     }
-    auto* pucch = find_ue_pucch_with_sr(rnti1, phy.cells[0].last_ul_res.value().ul_res->pucchs);
+    auto* pucch = find_ue_pucch_with_sr(rnti1, phy.cells[0].last_ul_res.value().ul_res->pucchs.unsorted());
     if (pucch != nullptr) {
       // Push SR indication to MAC. It should be ignored.
       mac_uci_indication_message uci;

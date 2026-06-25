@@ -290,7 +290,7 @@ const sched_result& ocudu_scheduler_adapter::slot_indication(slot_point_extended
 
   if (res.success) {
     // Store UCI PDUs for later decoding.
-    cell_handlers[cell_idx].uci_decoder.store_uci(slot_tx.without_hyper_sfn(), res.ul.pucchs, res.ul.puschs);
+    cell_handlers[cell_idx].uci_decoder.store_uci(slot_tx.without_hyper_sfn(), res.ul.pucchs.unsorted(), res.ul.puschs);
   }
 
   return res;

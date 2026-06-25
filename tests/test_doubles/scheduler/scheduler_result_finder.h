@@ -10,7 +10,7 @@ namespace ocudu {
 
 inline const pdcch_dl_information* find_ue_dl_pdcch(rnti_t rnti, const dl_sched_result& res)
 {
-  auto* it = std::find_if(res.dl_pdcchs.begin(), res.dl_pdcchs.end(), [rnti](const pdcch_dl_information& pdcch) {
+  const auto* it = std::find_if(res.dl_pdcchs.begin(), res.dl_pdcchs.end(), [rnti](const pdcch_dl_information& pdcch) {
     return pdcch.ctx.rnti == rnti;
   });
   return it != res.dl_pdcchs.end() ? &*it : nullptr;
@@ -18,7 +18,7 @@ inline const pdcch_dl_information* find_ue_dl_pdcch(rnti_t rnti, const dl_sched_
 
 inline const pdcch_ul_information* find_ue_ul_pdcch(rnti_t rnti, const dl_sched_result& res)
 {
-  auto* it = std::find_if(res.ul_pdcchs.begin(), res.ul_pdcchs.end(), [rnti](const pdcch_ul_information& pdcch) {
+  const auto* it = std::find_if(res.ul_pdcchs.begin(), res.ul_pdcchs.end(), [rnti](const pdcch_ul_information& pdcch) {
     return pdcch.ctx.rnti == rnti;
   });
   return it != res.ul_pdcchs.end() ? &*it : nullptr;
@@ -26,14 +26,14 @@ inline const pdcch_ul_information* find_ue_ul_pdcch(rnti_t rnti, const dl_sched_
 
 inline const rar_information* find_rar_pdsch(rnti_t ra_rnti, span<const rar_information> rars)
 {
-  auto it = std::find_if(
+  const auto* it = std::find_if(
       rars.begin(), rars.end(), [ra_rnti](const rar_information& grant) { return grant.pdsch_cfg.rnti == ra_rnti; });
   return it != rars.end() ? &*it : nullptr;
 }
 
 inline const dl_msg_alloc* find_ue_pdsch(rnti_t rnti, span<const dl_msg_alloc> dlgrants)
 {
-  auto it = std::find_if(
+  const auto* it = std::find_if(
       dlgrants.begin(), dlgrants.end(), [rnti](const dl_msg_alloc& pdsch) { return pdsch.pdsch_cfg.rnti == rnti; });
   return it != dlgrants.end() ? &*it : nullptr;
 }
@@ -43,7 +43,7 @@ const dl_msg_alloc* find_ue_pdsch_with_lcid(rnti_t rnti, lcid_t lcid, span<const
 
 inline const ul_sched_info* find_ue_pusch(rnti_t rnti, span<const ul_sched_info> ulgrants)
 {
-  auto it = std::find_if(
+  const auto* it = std::find_if(
       ulgrants.begin(), ulgrants.end(), [rnti](const auto& pusch) { return pusch.pusch_cfg.rnti == rnti; });
   return it != ulgrants.end() ? &*it : nullptr;
 }
@@ -53,9 +53,10 @@ inline const ul_sched_info* find_ue_pusch(rnti_t rnti, const ul_sched_result& re
   return find_ue_pusch(rnti, res.puschs);
 }
 
-inline const pucch_info* find_ue_pucch(rnti_t rnti, span<const pucch_info> pucchs)
+inline const pucch_info* find_ue_pucch(rnti_t rnti, const span<const pucch_info> pucchs)
 {
-  auto it = std::find_if(pucchs.begin(), pucchs.end(), [rnti](const pucch_info& pucch) { return pucch.crnti == rnti; });
+  const auto* it =
+      std::find_if(pucchs.begin(), pucchs.end(), [rnti](const pucch_info& pucch) { return pucch.crnti == rnti; });
   return it != pucchs.end() ? &*it : nullptr;
 }
 

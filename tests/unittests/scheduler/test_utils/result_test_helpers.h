@@ -58,12 +58,12 @@ inline const dl_msg_alloc* find_ue_pdsch_with_lcid(rnti_t rnti, lcid_dl_sch_t lc
 
 inline const pucch_info* find_ue_pucch(rnti_t rnti, const sched_result& res)
 {
-  return find_ue_pucch(rnti, res.ul.pucchs);
+  return find_ue_pucch(rnti, res.ul.pucchs.unsorted());
 }
 
 inline const pucch_info* find_ue_pucch_with_harq_ack(rnti_t rnti, const sched_result& res)
 {
-  return find_ue_pucch_with_harq_ack(rnti, res.ul.pucchs);
+  return find_ue_pucch_with_harq_ack(rnti, res.ul.pucchs.unsorted());
 }
 
 inline uci_indication::uci_pdu create_uci_pdu_with_harq_ack(du_ue_index_t ue_index, const pucch_info& pucch_pdu)

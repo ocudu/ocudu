@@ -26,9 +26,9 @@ has_space_for_uci_pdu(const sched_result& result, rnti_t crnti, const scheduler_
   }
 
   // Check if we can fit the UCI in an existing PUCCH PDU for the same UE.
-  bool has_pucch = std::any_of(result.ul.pucchs.begin(), result.ul.pucchs.end(), [crnti](const pucch_info& grant) {
-    return grant.crnti == crnti;
-  });
+  span<const pucch_info> pucchs = result.ul.pucchs.unsorted();
+  bool                   has_pucch =
+      std::any_of(pucchs.begin(), pucchs.end(), [crnti](const pucch_info& grant) { return grant.crnti == crnti; });
   if (has_pucch) {
     return true;
   }
@@ -59,9 +59,9 @@ get_space_left_for_pusch_pdus(const sched_result& result, rnti_t crnti, const sc
 
   // Check if max UL grant limit (PUCCH + PUSCH) is not reached.
   // Note: Consider that if an PUSCH grant is scheduled for this UE, its PUCCH PDUs are removed.
-  unsigned nof_pucchs    = std::count_if(result.ul.pucchs.begin(),
-                                      result.ul.pucchs.end(),
-                                      [crnti](const pucch_info& pucch) { return pucch.crnti == crnti; });
+  span<const pucch_info> pucchs = result.ul.pucchs.unsorted();
+  unsigned               nof_pucchs =
+      std::count_if(pucchs.begin(), pucchs.end(), [crnti](const pucch_info& pucch) { return pucch.crnti == crnti; });
   unsigned nof_ul_grants = result.ul.pucchs.size() + result.ul.puschs.size() - nof_pucchs;
   unsigned space2 =
       expert_cfg.max_ul_grants_per_slot >= nof_ul_grants ? expert_cfg.max_ul_grants_per_slot - nof_ul_grants : 0;

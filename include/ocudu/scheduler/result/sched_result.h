@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "ocudu/adt/stable_id_map.h"
 #include "ocudu/scheduler/result/csi_rs_info.h"
 #include "ocudu/scheduler/result/pdcch_info.h"
 #include "ocudu/scheduler/result/pdsch_info.h"
@@ -43,7 +44,7 @@ struct ul_sched_result {
   /// PRACH occasions within the given slot.
   static_vector<prach_occasion_info, MAX_PRACH_OCCASIONS_PER_SLOT> prachs;
   /// PUCCH grants allocated in the current slot.
-  static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT> pucchs;
+  stable_id_map<pucch_info> pucchs;
   /// SRS grants allocated in the current slot.
   static_vector<srs_info, MAX_SRS_PDUS_PER_SLOT> srss;
 };

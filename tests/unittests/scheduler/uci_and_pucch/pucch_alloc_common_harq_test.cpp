@@ -73,7 +73,7 @@ TEST_P(pucch_alloc_common_harq_test, test_pucch_output_info)
   ASSERT_EQ(0, pucch_res_indicator.value());
 
   ASSERT_FALSE(t_bench.res_grid[t_bench.k0 + default_k1].result.ul.pucchs.empty());
-  ASSERT_TRUE(find_pucch_pdu(t_bench.res_grid[t_bench.k0 + default_k1].result.ul.pucchs,
+  ASSERT_TRUE(find_pucch_pdu(t_bench.res_grid[t_bench.k0 + default_k1].result.ul.pucchs.unsorted(),
                              [&expected = expected_info](const auto& pdu) { return pucch_info_match(expected, pdu); }));
 }
 
@@ -105,19 +105,6 @@ protected:
   test_bench t_bench;
 };
 
-TEST_F(pucch_alloc_common_harq_multiple_alloc_test, test_pucch_double_alloc)
-{
-  const std::optional<unsigned> pucch_res_indicator = t_bench.pucch_alloc.alloc_common_harq_ack(
-      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, default_k1, t_bench.dci_info);
-  ASSERT_TRUE(pucch_res_indicator.has_value());
-
-  // If we allocate the same UE twice, the scheduler is expected to fail, as we don't support PUCCH multiplexing on
-  // PUCCH common resources.
-  std::optional<unsigned> pucch_res_indicator_1 = t_bench.pucch_alloc.alloc_common_harq_ack(
-      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, default_k1, t_bench.dci_info);
-  ASSERT_FALSE(pucch_res_indicator_1.has_value());
-}
-
 TEST_F(pucch_alloc_common_harq_multiple_alloc_test, test_pucch_out_of_resources)
 {
   // For this specific n_cce value (1) and for d_pri = {0,...,7}, we get 8 r_pucch values. This is the maximum number of
@@ -131,8 +118,10 @@ TEST_F(pucch_alloc_common_harq_multiple_alloc_test, test_pucch_out_of_resources)
   }
 
   // If we allocate an extra UE, the scheduler is expected to fail.
+  t_bench.add_ue();
+  du_ue_index_t                 ue_idx = to_du_ue_index(static_cast<uint16_t>(t_bench.get_main_ue().ue_index) + 8);
   const std::optional<unsigned> pucch_res_indicator_1 = t_bench.pucch_alloc.alloc_common_harq_ack(
-      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, default_k1, t_bench.dci_info);
+      t_bench.res_grid, t_bench.get_ue(ue_idx).crnti, t_bench.k0, default_k1, t_bench.dci_info);
   ASSERT_FALSE(pucch_res_indicator_1.has_value());
 }
 

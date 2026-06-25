@@ -4,35 +4,24 @@
 
 #pragma once
 
-#include "ocudu/scheduler/config/pucch_resource_builder_params.h"
-#include "ocudu/scheduler/result/pucch_info.h"
+#include "../config/ue_configuration.h"
+#include "ocudu/ran/pucch/pucch_configuration.h"
+#include "ocudu/scheduler/result/pdcch_info.h"
 
-namespace ocudu {
+namespace ocudu::pucch_helper {
 
-/// Contains the existing PUCCH grants currently allocated to a given UE.
-class pucch_existing_pdus_handler
-{
-public:
-  pucch_existing_pdus_handler(rnti_t crnti, span<pucch_info> pucchs, const pucch_resource_builder_params& res_params);
+/// Returns the PUCCH resource from Resource Set \c ResourceSetId indexed by the given PUCCH Resource Indicator.
+template <unsigned ResourceSetId>
+const pucch_resource& get_harq_resource(const ue_cell_configuration& ue_cfg, unsigned pri);
 
-  [[nodiscard]] bool     is_empty() const { return pdus_cnt == 0; }
-  [[nodiscard]] unsigned get_nof_unallocated_pdu() const { return pdus_cnt; }
-  pucch_info*            get_next_pdu(static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT>& pucchs);
-  void remove_unused_pdus(static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT>& pucchs, rnti_t rnti) const;
-  void update_sr_pdu_bits(sr_nof_bits sr_bits, unsigned harq_ack_bits);
-  void update_csi_pdu_bits(unsigned csi_part1_bits, sr_nof_bits sr_bits);
-  void update_harq_pdu_bits(unsigned                             harq_ack_bits,
-                            sr_nof_bits                          sr_bits,
-                            unsigned                             csi_part1_bits,
-                            const pucch_resource_builder_params& res_params,
-                            const pucch_resource&                pucch_res_cfg);
+/// Returns the SR PUCCH resource configured for the given UE.
+const pucch_resource& get_sr_resource(const ue_cell_configuration& ue_cfg);
 
-  pucch_info* sr_pdu{nullptr};
-  pucch_info* harq_pdu{nullptr};
-  pucch_info* csi_pdu{nullptr};
+/// Returns the CSI PUCCH resource configured for the given UE.
+const pucch_resource& get_csi_resource(const ue_cell_configuration& ue_cfg);
 
-private:
-  unsigned pdus_cnt = 0;
-};
+/// Returns the common PUCCH resource indexed by the given DCI info and PRI.
+const pucch_resource&
+get_common_resource(const cell_configuration& cell_cfg, const dci_context_information& dci_info, unsigned d_pri);
 
-} // namespace ocudu
+} // namespace ocudu::pucch_helper

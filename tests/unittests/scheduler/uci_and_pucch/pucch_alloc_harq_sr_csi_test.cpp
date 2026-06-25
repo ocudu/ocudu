@@ -28,10 +28,10 @@ public:
                                       {.csi_part1_nof_bits = default_csi_part1_bits});
     std::get<pucch_info::f2_config>(pucch_expected_csi_only.format_params).nof_prbs = 3;
 
-    // This PUCCH grant will be for 5 HARQ bits + 4 CSI bits, which fit in 2 PRBs.
-    pucch_expected_harq_csi                                                         = pucch_expected_harq_only;
-    std::get<pucch_info::f2_config>(pucch_expected_harq_csi.format_params).nof_prbs = 2;
-    pucch_expected_harq_csi.uci_bits.csi_part1_nof_bits                             = default_csi_part1_bits;
+    // This PUCCH grant will be for 2 HARQ bits + 4 CSI bits, which fit in 1 PRB.
+    pucch_expected_harq_csi                             = pucch_expected_harq_only;
+    pucch_expected_harq_csi.uci_bits.harq_ack_nof_bits  = 2U;
+    pucch_expected_harq_csi.uci_bits.csi_part1_nof_bits = default_csi_part1_bits;
   }
 
 protected:
@@ -51,10 +51,10 @@ TEST_F(pucch_alloc_multiple_rbs_test, test_prb_allocation_csi_only)
 
   // Expect 1 PUCCH grant with CSI.
   ASSERT_EQ(1U, default_slot_grid.result.ul.pucchs.size());
-  ASSERT_TRUE(
-      find_pucch_pdu(default_slot_grid.result.ul.pucchs, [&expected = pucch_expected_csi_only](const auto& pdu) {
-        return pucch_info_match(expected, pdu) and pdu.csi_rep_cfg.has_value();
-      }));
+  ASSERT_TRUE(find_pucch_pdu(default_slot_grid.result.ul.pucchs.unsorted(),
+                             [&expected = pucch_expected_csi_only](const auto& pdu) {
+                               return pucch_info_match(expected, pdu) and pdu.csi_rep_cfg.has_value();
+                             }));
 }
 
 TEST_F(pucch_alloc_multiple_rbs_test, test_prb_allocation_csi_sr)
@@ -65,10 +65,10 @@ TEST_F(pucch_alloc_multiple_rbs_test, test_prb_allocation_csi_sr)
   alloc_csi_opportunity(t_bench.get_main_ue(), default_csi_part1_bits);
 
   ASSERT_EQ(1U, default_slot_grid.result.ul.pucchs.size());
-  ASSERT_TRUE(
-      find_pucch_pdu(default_slot_grid.result.ul.pucchs, [&expected = pucch_expected_csi_only](const auto& pdu) {
-        return pucch_info_match(expected, pdu) and pdu.csi_rep_cfg.has_value();
-      }));
+  ASSERT_TRUE(find_pucch_pdu(default_slot_grid.result.ul.pucchs.unsorted(),
+                             [&expected = pucch_expected_csi_only](const auto& pdu) {
+                               return pucch_info_match(expected, pdu) and pdu.csi_rep_cfg.has_value();
+                             }));
 }
 
 TEST_F(pucch_alloc_multiple_rbs_test, test_prb_allocation_harq_only)
@@ -78,31 +78,21 @@ TEST_F(pucch_alloc_multiple_rbs_test, test_prb_allocation_harq_only)
   }
 
   ASSERT_EQ(1U, default_slot_grid.result.ul.pucchs.size());
-  ASSERT_TRUE(
-      find_pucch_pdu(default_slot_grid.result.ul.pucchs, [&expected = pucch_expected_harq_only](const auto& pdu) {
-        return pucch_info_match(expected, pdu);
-      }));
+  ASSERT_TRUE(find_pucch_pdu(
+      default_slot_grid.result.ul.pucchs.unsorted(),
+      [&expected = pucch_expected_harq_only](const auto& pdu) { return pucch_info_match(expected, pdu); }));
 }
 
 TEST_F(pucch_alloc_multiple_rbs_test, test_prb_allocation_harq_csi_only)
 {
-  // We don't know a-priori whether CSI and HARQ will be multilplexed within the same resource; we need to consider both
-  // possibilities, (i) 2 separate PUCCH resources HARQ + CSI, and (ii) 1 PUCCH resource with both HARQ and CSI.
   alloc_csi_opportunity(t_bench.get_main_ue(), default_csi_part1_bits);
-  for (unsigned i = 0; i != 5; ++i) {
+  for (unsigned i = 0; i != 2; ++i) {
     alloc_ded_harq_ack(t_bench.get_main_ue());
   }
 
-  ASSERT_TRUE(
-      find_pucch_pdu(
-          default_slot_grid.result.ul.pucchs,
-          [&expected = pucch_expected_harq_only](const auto& pdu) { return pucch_info_match(expected, pdu); }) or
-      find_pucch_pdu(
-          default_slot_grid.result.ul.pucchs,
-          [&expected = pucch_expected_csi_only](const auto& pdu) { return pucch_info_match(expected, pdu); }) or
-      find_pucch_pdu(default_slot_grid.result.ul.pucchs, [&expected = pucch_expected_harq_csi](const auto& pdu) {
-        return pucch_info_match(expected, pdu);
-      }));
+  ASSERT_TRUE(find_pucch_pdu(
+      default_slot_grid.result.ul.pucchs.unsorted(),
+      [&expected = pucch_expected_harq_csi](const auto& pdu) { return pucch_info_match(expected, pdu); }));
 }
 
 ///////   Test UL grants reached and PUCCH fails.    ///////

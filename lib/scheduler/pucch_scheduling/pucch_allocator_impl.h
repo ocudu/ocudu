@@ -7,10 +7,12 @@
 #include "../cell/resource_grid.h"
 #include "../config/ue_configuration.h"
 #include "pucch_allocator.h"
-#include "pucch_resource_manager.h"
+#include "pucch_collision_manager.h"
 #include "ocudu/adt/static_flat_map.h"
 #include "ocudu/ocudulog/logger.h"
 #include "ocudu/ran/pucch/pucch_uci_bits.h"
+#include "ocudu/scheduler/config/cell_bwp_res_config.h"
+#include "ocudu/scheduler/result/pdcch_info.h"
 #include "ocudu/scheduler/result/sched_result.h"
 
 namespace ocudu {
@@ -82,17 +84,17 @@ private:
   /// - harq_ack indicates the HAR-ACK resource (it can carry HARQ-ACK and/or SR and/or CSI bits).
   /// - sr indicates the resource dedicated for SR (it can carry SR and HARQ-ACK bits).
   /// - csi indicates the resource dedicated for CSI (it can carry CSI and SR bits).
-  enum class pucch_grant_type { harq_ack, sr, csi };
+  enum class pucch_resource_type { harq_ack, sr, csi };
 
   /// Converts a pucch_grant_type to string.
-  static const char* to_string(pucch_grant_type type)
+  static const char* to_string(pucch_resource_type type)
   {
     switch (type) {
-      case pucch_grant_type::harq_ack:
+      case pucch_resource_type::harq_ack:
         return "HARQ-ACK";
-      case pucch_grant_type::sr:
+      case pucch_resource_type::sr:
         return "SR";
-      case pucch_grant_type::csi:
+      case pucch_resource_type::csi:
         return "CSI";
       default:
         return "unknown";
@@ -102,11 +104,9 @@ private:
   /// \brief Defines a PUCCH grant (and its relevant information) currently allocated to a given UE.
   /// It is used internally to keep track of the UEs' allocations of the PUCCH grants with dedicated resources.
   struct pucch_grant {
-    pucch_grant_type      type;
+    pucch_resource_type   type;
     const pucch_resource* res = nullptr;
-    // Only relevant for HARQ-ACK resources.
-    harq_res_id    harq_id;
-    pucch_uci_bits bits;
+    pucch_uci_bits        bits;
   };
 
   /// \brief List of possible PUCCH grants that allocated to a UE, at a given slot.
@@ -116,18 +116,27 @@ private:
     std::optional<pucch_grant> harq_ack;
     std::optional<pucch_grant> sr;
     std::optional<pucch_grant> csi;
+    // Only relevant if there is a HARQ-ACK grant.
+    unsigned d_pri = 0U;
 
-    [[nodiscard]] pucch_uci_bits get_uci_bits() const;
-    [[nodiscard]] bool           is_empty() const;
-    [[nodiscard]] unsigned       get_nof_grants() const;
+    [[nodiscard]] unsigned nof_grants() const;
   };
 
-  /// Keeps track of the PUCCH grants (common + dedicated) for a given UE.
+  /// Keeps track of the PUCCH grants (both common and dedicated) for a given UE.
   struct ue_grants {
-    // Information about the common PUCCH grant.
-    bool has_common_pucch = false;
-    // List of PUCCH grants with dedicated resources.
-    pucch_grant_list pucch_grants;
+    /// [Implementation-defined] Corresponds to the case of the UE having common, F1 HARQ-ACK, and F1 SR grants.
+    static constexpr unsigned max_nof_ue_grants = 3U;
+
+    std::optional<stable_id_t> common;
+    std::optional<stable_id_t> harq_ack;
+    std::optional<stable_id_t> sr;
+    std::optional<stable_id_t> csi;
+    // Only relevant if there is a HARQ-ACK grant.
+    unsigned d_pri = 0U;
+
+    [[nodiscard]] static_vector<stable_id_t, max_nof_ue_grants> pdu_indices(bool include_common = true) const;
+    [[nodiscard]] unsigned                                      nof_grants(bool include_common = true) const;
+    [[nodiscard]] pucch_uci_bits                                uci_bits(const stable_id_map<pucch_info>& pdus) const;
   };
 
   /// Keeps track of the PUCCH allocation context for a given slot.
@@ -150,52 +159,40 @@ private:
 
   ///////////////  Main private functions   //////////////
 
-  // Allocates the PUCCH (common) resource for HARQ-(N)-ACK.
-  std::optional<pucch_common_params> alloc_pucch_common_res_harq(cell_slot_resource_allocator&  pucch_slot_alloc,
-                                                                 const dci_context_information& dci_info,
-                                                                 rnti_t                         rnti);
-
-  void compute_pucch_common_params_and_alloc(cell_slot_resource_allocator& pucch_alloc,
-                                             rnti_t                        rnti,
-                                             pucch_common_params           pucch_params);
-
-  std::optional<pucch_common_params>
-  find_common_and_ded_harq_res_available(cell_slot_resource_allocator&  pucch_slot_alloc,
-                                         ue_grants&                     current_grants,
-                                         const ue_cell_configuration&   ue_cell_cfg,
-                                         const dci_context_information& dci_info,
-                                         const alloc_context&           alloc_ctx);
+  std::optional<unsigned> select_pri(const cell_slot_resource_allocator& pucch_slot_alloc,
+                                     const ue_cell_configuration&        ue_cell_cfg,
+                                     const pucch_uci_bits&               bits,
+                                     const dci_context_information*      dci_info);
 
   // Implements the main steps of the multiplexing procedure as defined in TS 38.213, Section 9.2.5.
-  std::optional<unsigned> multiplex_and_allocate_pucch(cell_slot_resource_allocator& pucch_slot_alloc,
-                                                       const pucch_uci_bits&         new_bits,
-                                                       ue_grants&                    current_grants,
-                                                       const ue_cell_configuration&  ue_cell_cfg,
-                                                       std::optional<uint8_t>        preserve_res_indicator,
-                                                       const alloc_context&          alloc_ctx);
+  std::optional<ue_grants> multiplex_and_allocate_pucch(cell_slot_resource_allocator& pucch_slot_alloc,
+                                                        const pucch_uci_bits&         new_bits,
+                                                        const ue_grants&              old_grants,
+                                                        const ue_cell_configuration&  ue_cell_cfg,
+                                                        std::optional<unsigned>       d_pri,
+                                                        const alloc_context&          alloc_ctx);
 
   // Computes which resources are expected to be sent, depending on the UCI bits to be sent, before any multiplexing.
-  std::optional<pucch_grant_list> get_pucch_res_pre_multiplexing(pucch_resource_manager::ue_reservation_guard& guard,
-                                                                 const ue_grants&      ue_current_grants,
-                                                                 const pucch_uci_bits& new_bits);
+  static pucch_grant_list get_resources_pre_multiplexing(const ue_cell_configuration& ue_cell_cfg,
+                                                         const pucch_uci_bits&        bits,
+                                                         std::optional<unsigned>      d_pri);
 
   // Execute the multiplexing algorithm as defined in TS 38.213, Section 9.2.5.
-  pucch_grant_list multiplex_resources(pucch_resource_manager::ue_reservation_guard& guard,
-                                       const pucch_grant_list&                       candidate_grants,
-                                       std::optional<uint8_t>                        preserve_res_indicator);
+  pucch_grant_list multiplex_resources(const ue_cell_configuration& ue_cell_cfg,
+                                       const pucch_grant_list&      candidate_grants);
 
   // Applies the multiplexing rules depending on the PUCCH resource format, as per TS 38.213, Section 9.2.5.1/2.
-  std::optional<pucch_grant> merge_pucch_resources(pucch_resource_manager::ue_reservation_guard& guard,
-                                                   span<const pucch_grant>                       resources_to_merge,
-                                                   std::optional<uint8_t> preserve_res_indicator);
+  static std::optional<pucch_grant> merge_pucch_resources(const ue_cell_configuration& ue_cell_cfg,
+                                                          span<const pucch_grant>      resources_to_merge,
+                                                          unsigned                     d_pri);
 
   // Allocate the PUCCH PDUs in the scheduler output, depending on the new PUCCH grants to be transmitted, and depending
   // on the PUCCH PDUs currently allocated.
-  std::optional<unsigned> allocate_grants(pucch_resource_manager::ue_reservation_guard& guard,
-                                          cell_slot_resource_allocator&                 pucch_slot_alloc,
-                                          ue_grants&                                    existing_pucchs,
-                                          const pucch_grant_list&                       grants_to_tx,
-                                          const alloc_context&                          alloc_ctx);
+  std::optional<ue_grants> allocate_grants(cell_slot_resource_allocator& pucch_slot_alloc,
+                                           const ue_cell_configuration&  ue_cell_cfg,
+                                           const ue_grants&              old_grants,
+                                           const pucch_grant_list&       new_grants,
+                                           const alloc_context&          alloc_ctx);
 
   ///////////////  Private helpers   ///////////////
 
@@ -212,9 +209,6 @@ private:
   /// Returns whether there is space for new PUCCH grants in the given scheduler result.
   bool is_there_space_for_new_pucch_grants(const sched_result& slot_result, unsigned nof_grants_to_allocate) const;
 
-  /// Returns the maximum number of UCI bits that can be carried in a PUCCH of a given format.
-  unsigned get_max_payload(pucch_format format) const;
-
   /// \brief Fills the PUCCH PDU for common HARQ-ACK resources.
   /// \param[out] pucch_pdu PUCCH PDU to be filled.
   /// \param[in] pucch_res PUCCH resource configuration.
@@ -226,17 +220,10 @@ private:
   // \param[in] pucch_res PUCCH resource configuration.
   // \param[in] uci_bits UCI bits to be sent in the PUCCH.
   // \param[in] rnti RNTI of the UE.
-  // \param[in] adjust_prbs If true, adjusts the number of PRBs based on the number of UCI bits to be carried.
-  //            Only applicable for PUCCH resources of Formats 2 or 3.
   void fill_ded_pdu(pucch_info&           pucch_pdu,
                     const pucch_resource& pucch_res,
                     const pucch_uci_bits& uci_bits,
-                    rnti_t                rnti,
-                    bool                  adjust_prbs) const;
-
-  void remove_unused_pucch_res(pucch_resource_manager::ue_reservation_guard& guard,
-                               const ue_grants&                              existing_pucchs,
-                               const pucch_grant_list&                       grants_to_tx);
+                    rnti_t                rnti) const;
 
   // \brief Ring of PUCCH allocations indexed by slot.
   circular_vector<slot_context> slots_ctx;
@@ -244,10 +231,11 @@ private:
   const cell_configuration&                     cell_cfg;
   const unsigned                                max_pucch_grants_per_slot;
   const unsigned                                max_ul_grants_per_slot;
+  const cell_pucch_res_config&                  cell_resources;
   const pucch_resource_builder_params&          res_params;
   const std::optional<csi_report_configuration> csi_report_cfg;
   slot_point                                    last_sl_ind;
-  pucch_resource_manager                        resource_manager;
+  pucch_collision_manager                       resource_manager;
 
   // \brief Get \f$n_{ID}\f$ as per Sections 6.3.2.5.1 and 6.3.2.6.1, TS 38.211.
   //

@@ -10,7 +10,6 @@
 #include "ocudu/ran/pucch/pucch_mapping.h"
 #include "ocudu/ran/pucch/pucch_uci_bits.h"
 #include "ocudu/ran/rnti.h"
-#include "ocudu/ran/slot_pdu_capacity_constants.h"
 
 namespace ocudu {
 

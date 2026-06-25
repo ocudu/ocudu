@@ -48,6 +48,11 @@ public:
   /// \brief Release the common PUCCH resource indexed by r_pucch from being allocated to a given UE.
   void release_harq_common_resource(cell_slot_resource_allocator& slot_alloc, size_t r_pucch, rnti_t rnti);
 
+  bool free(cell_slot_resource_allocator& slot_alloc, const pucch_resource& res, rnti_t rnti)
+  {
+    return collision_manager.free(slot_alloc, res, rnti);
+  }
+
   /// \brief RAII helper class that manages the reservation of dedicated PUCCH resources for a given UE at a given slot.
   /// The reservation is temporary until \c commit() is called, which makes the reservation permanent.
   /// \remark If \c commit() is not called before the destructor is invoked, all reservations are cancelled.

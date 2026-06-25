@@ -13,6 +13,7 @@
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/prbs_calculator.h"
 #include "../uci_scheduling/uci_allocator.h"
+#include "ocudu/adt/stable_id_map.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/sch/tbs_calculator.h"
 #include "ocudu/ran/transform_precoding/transform_precoding_helpers.h"
@@ -1049,16 +1050,14 @@ ue_fallback_scheduler::ul_srb_sched_outcome ue_fallback_scheduler::schedule_ul_u
         continue;
       }
 
-      auto* existing_pucch = std::find_if(pusch_alloc.result.ul.pucchs.begin(),
-                                          pusch_alloc.result.ul.pucchs.end(),
-                                          [rnti = u.crnti](const pucch_info& pucch) { return pucch.crnti == rnti; });
+      span<const pucch_info> pucchs         = pusch_alloc.result.ul.pucchs.unsorted();
+      const auto*            existing_pucch = std::find_if(
+          pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) { return pucch.crnti == rnti; });
 
       bool remove_pucch = false;
-      if (existing_pucch != pusch_alloc.result.ul.pucchs.end()) {
-        auto existing_pucch_count =
-            std::count_if(pusch_alloc.result.ul.pucchs.begin(),
-                          pusch_alloc.result.ul.pucchs.end(),
-                          [rnti = u.crnti](const pucch_info& pucch) { return pucch.crnti == rnti; });
+      if (existing_pucch != pucchs.end()) {
+        auto existing_pucch_count = std::count_if(
+            pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) { return pucch.crnti == rnti; });
 
         // [Implementation-defined]
         // Given that we don't support multiplexing of UCI on PUSCH at this point, removal of an existing PUCCH grant

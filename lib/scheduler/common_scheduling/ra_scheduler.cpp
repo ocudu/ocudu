@@ -742,9 +742,8 @@ bool ra_scheduler::can_allocate_rar_ul_grant(rnti_t crnti, const cell_slot_resou
   }
   // If it is a CFRA UE that already has a PUCCH in this slot, the UE would multiplex its UCI onto the Msg3 PUSCH;
   // since the RA scheduler builds a UCI-free Msg3 grant, avoid such slots.
-  return std::none_of(slot_alloc.result.ul.pucchs.begin(),
-                      slot_alloc.result.ul.pucchs.end(),
-                      [crnti](const pucch_info& pucch) { return pucch.crnti == crnti; });
+  span<const pucch_info> pucchs = slot_alloc.result.ul.pucchs.unsorted();
+  return std::none_of(pucchs.begin(), pucchs.end(), [crnti](const pucch_info& pucch) { return pucch.crnti == crnti; });
 }
 
 void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& res_alloc)

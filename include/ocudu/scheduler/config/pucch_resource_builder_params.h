@@ -256,17 +256,6 @@ struct pucch_resource_builder_params {
   pucch_res_id_t harq_res_id(pucch_resource_set_config_id res_set_cfg_id, unsigned pri) const
   {
     static_assert(ResourceSetId == 0 or ResourceSetId == 1, "Only Resource Sets ID 0 and 1 are supported");
-    if constexpr (ResourceSetId == 0) {
-      ocudu_assert(res_set_cfg_id.value() < nof_cell_res_set_configs,
-                   "Resource set config index={} exceeds configured number of resource set configs={}",
-                   res_set_cfg_id.value(),
-                   nof_cell_res_set_configs);
-      ocudu_assert(pri < res_set_size.value(),
-                   "Resource index={} exceeds configured resource set size={}",
-                   pri,
-                   res_set_size.value());
-      return pucch_res_id_t::make_ded(res_set_cfg_id.value() * res_set_size.value() + pri, pri);
-    }
     ocudu_assert(res_set_cfg_id.value() < nof_cell_res_set_configs,
                  "Resource set config index={} exceeds configured number of resource set configs={}",
                  res_set_cfg_id.value(),
@@ -275,6 +264,9 @@ struct pucch_resource_builder_params {
                  "Resource index={} exceeds configured resource set size={}",
                  pri,
                  res_set_size.value());
+    if constexpr (ResourceSetId == 0) {
+      return pucch_res_id_t::make_ded(res_set_cfg_id.value() * res_set_size.value() + pri, pri);
+    }
     return pucch_res_id_t::make_ded(nof_cell_res_set_configs * res_set_size.value() + nof_cell_sr_resources +
                                         res_set_cfg_id.value() * res_set_size.value() + pri,
                                     res_set_size.value() + nof_sr_res_per_ue + pri);
@@ -330,7 +322,8 @@ struct pucch_resource_builder_params {
   /// \return The ID of the PUCCH resource.
   pucch_res_id_t csi_f0_res_id(pucch_csi_resource_id csi_res_id) const
   {
-    ocudu_assert(format_01() == pucch_format::FORMAT_0 and format_234() == pucch_format::FORMAT_2,
+    ocudu_assert(nof_cell_csi_resources != 0 and format_01() == pucch_format::FORMAT_0 and
+                     format_234() == pucch_format::FORMAT_2,
                  "CSI_F0 resource is only present in the F0+F2 case");
     return pucch_res_id_t::make_ded(nof_cell_res_set_configs * res_set_size.value() + nof_cell_sr_resources +
                                         nof_cell_res_set_configs * res_set_size.value() + nof_cell_csi_resources +

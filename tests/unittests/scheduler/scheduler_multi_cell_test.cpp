@@ -130,11 +130,11 @@ protected:
     if (last_sched_result(to_du_cell_index(cell_idx)) == nullptr) {
       return {};
     }
-    const auto* pucch_res =
-        std::find_if(last_sched_result(to_du_cell_index(cell_idx))->ul.pucchs.begin(),
-                     last_sched_result(to_du_cell_index(cell_idx))->ul.pucchs.end(),
-                     [ue_idx](const pucch_info& pucch) { return pucch.crnti == get_ue_crnti(ue_idx); });
-    if (pucch_res == last_sched_result(to_du_cell_index(cell_idx))->ul.pucchs.end()) {
+    span<const pucch_info> pucchs    = last_sched_result(to_du_cell_index(cell_idx))->ul.pucchs.unsorted();
+    const auto*            pucch_res = std::find_if(pucchs.begin(), pucchs.end(), [ue_idx](const pucch_info& pucch) {
+      return pucch.crnti == get_ue_crnti(ue_idx);
+    });
+    if (pucch_res == pucchs.end()) {
       return {};
     }
 

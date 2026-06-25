@@ -779,7 +779,7 @@ public:
     slot_point msg4_ack_slot;
     auto       msg4_ack_sched = [this, rnti, &msg4_ack_slot]() {
       if (sim_phy.slot_ul_result.ul_res != nullptr) {
-        const auto& pucchs = sim_phy.slot_ul_result.ul_res->pucchs;
+        const auto& pucchs = sim_phy.slot_ul_result.ul_res->pucchs.unsorted();
         auto        it     = std::find_if(pucchs.begin(), pucchs.end(), [rnti](const pucch_info& pucch) {
           return pucch.crnti == rnti and pucch.uci_bits.harq_ack_nof_bits > 0;
         });

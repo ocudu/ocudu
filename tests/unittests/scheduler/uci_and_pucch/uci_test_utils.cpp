@@ -69,6 +69,17 @@ test_helpers::make_pucch_info(const cell_configuration& cell_cfg, const pucch_re
   return info;
 }
 
+std::vector<const pucch_info*> test_helpers::find_ue_pucchs(span<const pucch_info> pucch_pdus, rnti_t rnti)
+{
+  std::vector<const pucch_info*> ue_pucchs;
+  for (const pucch_info& pucch : pucch_pdus) {
+    if (pucch.crnti == rnti) {
+      ue_pucchs.push_back(&pucch);
+    }
+  }
+  return ue_pucchs;
+}
+
 bool ocudu::pucch_info_match(const pucch_info& expected, const pucch_info& test)
 {
   bool is_equal = expected.crnti == test.crnti && *expected.bwp_cfg == *test.bwp_cfg && *expected.res == *test.res &&

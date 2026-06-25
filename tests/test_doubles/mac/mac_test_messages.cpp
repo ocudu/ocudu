@@ -151,7 +151,7 @@ mac_uci_pdu ocudu::test_helpers::create_uci_pdu(rnti_t rnti, const uci_info& pus
   pusch_ind.ul_sinr_dB = 100;
 
   if (pusch_uci.harq.has_value() and pusch_uci.harq->harq_ack_nof_bits > 0) {
-    auto& harq = pusch_uci.harq.value();
+    const auto& harq = pusch_uci.harq.value();
     pusch_ind.harq_info.emplace();
     pusch_ind.harq_info->is_valid = true;
     pusch_ind.harq_info->payload.resize(harq.harq_ack_nof_bits);

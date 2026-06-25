@@ -4,161 +4,69 @@
 
 #include "pucch_allocator_helpers.h"
 #include "ocudu/ran/pucch/pucch_configuration.h"
-#include "ocudu/ran/pucch/pucch_info.h"
+#include "ocudu/scheduler/config/pucch_default_resource.h"
 #include "ocudu/scheduler/config/pucch_resource_builder_params.h"
+#include "ocudu/support/ocudu_assert.h"
 
 using namespace ocudu;
 
-pucch_existing_pdus_handler::pucch_existing_pdus_handler(rnti_t                               crnti,
-                                                         span<pucch_info>                     pucchs,
-                                                         const pucch_resource_builder_params& res_params)
+template <unsigned ResourceSetId>
+const pucch_resource& pucch_helper::get_harq_resource(const ue_cell_configuration& ue_cfg, unsigned pri)
 {
-  for (auto& pucch : pucchs) {
-    if (pucch.crnti == crnti and pucch.res->res_id.is_ded()) {
-      pucch.to_be_removed = true;
-      ++pdus_cnt;
-
-      if (pucch.uci_bits.harq_ack_nof_bits != 0U) {
-        if (pucch.format() == pucch_format::FORMAT_1 and
-            pucch.res->res_id.ded().ue_res_id == res_params.sr_res_id(pucch_sr_resource_id(0)).ded().ue_res_id) {
-          // For Format 1, the SR resource can carry HARQ-ACK.
-          sr_pdu = &pucch;
-        } else {
-          harq_pdu = &pucch;
-        }
-      } else {
-        if (pucch.res->res_id.ded().ue_res_id == res_params.sr_res_id(pucch_sr_resource_id(0)).ded().ue_res_id) {
-          sr_pdu = &pucch;
-        } else if (pucch.res->res_id.ded().ue_res_id ==
-                   res_params.csi_res_id(pucch_csi_resource_id(0)).ded().ue_res_id) {
-          csi_pdu = &pucch;
-        } else {
-          ocudu_assertion_failure("Unexpected PUCCH resource carrying SR/CSI only");
-        }
-      }
+  const auto& res_params = ue_cfg.cell_cfg_common.params.init_bwp.pucch.resources;
+  const auto& cell_res   = ue_cfg.cell_cfg_common.bwp_res[to_bwp_id(0)].ul().pucch;
+  const auto& ue_bwp     = *ue_cfg.init_bwp().ul.ue_cfg();
+  if (pri < res_params.res_set_size.value()) {
+    return cell_res.get_ded(res_params.harq_res_id<ResourceSetId>(ue_bwp.pucch.res_set_cfg_id, pri));
+  }
+  ocudu_assert(res_params.format_01() == pucch_format::FORMAT_0 and res_params.format_234() == pucch_format::FORMAT_2,
+               "Extra PUCCH HARQ-ACK resources are only present when using F0+F2");
+  if (ResourceSetId == 0) {
+    if (pri == res_params.res_set_size.value()) {
+      return cell_res.get_ded(res_params.sr_res_id(ue_bwp.pucch.sr_res_id));
     }
+    ocudu_assert(pri == res_params.res_set_size.value() + 1, "Invalid PRI={} for Resource Set 0", pri);
+    return cell_res.get_ded(res_params.csi_f0_res_id(ue_bwp.periodic_csi_report->pucch_res_id));
   }
+
+  if (pri == res_params.res_set_size.value()) {
+    return cell_res.get_ded(res_params.sr_f2_res_id(ue_bwp.pucch.sr_res_id));
+  }
+  ocudu_assert(pri == res_params.res_set_size.value() + 1, "Invalid PRI={} for Resource Set 1", pri);
+  return cell_res.get_ded(res_params.csi_res_id(ue_bwp.periodic_csi_report->pucch_res_id));
 }
 
-pucch_info* pucch_existing_pdus_handler::get_next_pdu(static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT>& pucchs)
+template const pucch_resource& pucch_helper::get_harq_resource<0>(const ue_cell_configuration&, unsigned);
+template const pucch_resource& pucch_helper::get_harq_resource<1>(const ue_cell_configuration&, unsigned);
+
+const pucch_resource& pucch_helper::get_sr_resource(const ue_cell_configuration& ue_cfg)
 {
-  if (is_empty()) {
-    ocudu_assert(not pucchs.full(), "PUCCH grants list is full");
-    auto* new_pdu          = &pucchs.emplace_back();
-    new_pdu->to_be_removed = false;
-    return new_pdu;
-  }
-  pucch_info* ret_grant = nullptr;
-  if (csi_pdu != nullptr) {
-    ret_grant                = csi_pdu;
-    ret_grant->to_be_removed = false;
-    --pdus_cnt;
-  } else if (sr_pdu != nullptr) {
-    ret_grant                = sr_pdu;
-    ret_grant->to_be_removed = false;
-    --pdus_cnt;
-  } else if (harq_pdu != nullptr) {
-    ret_grant                = harq_pdu;
-    ret_grant->to_be_removed = false;
-    --pdus_cnt;
-  }
-  // NOTE: this cannot be nullptr, otherwise the function would have exited at the previous return.
-  return ret_grant;
+  const auto& res_params = ue_cfg.cell_cfg_common.params.init_bwp.pucch.resources;
+  const auto& cell_res   = ue_cfg.cell_cfg_common.bwp_res[to_bwp_id(0)].ul().pucch;
+  const auto& ue_bwp     = *ue_cfg.init_bwp().ul.ue_cfg();
+  return cell_res.get_ded(res_params.sr_res_id(ue_bwp.pucch.sr_res_id));
 }
 
-void pucch_existing_pdus_handler::remove_unused_pdus(static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT>& pucchs,
-                                                     rnti_t                                              rnti) const
+const pucch_resource& pucch_helper::get_csi_resource(const ue_cell_configuration& ue_cfg)
 {
-  if (pdus_cnt == 0) {
-    return;
-  }
-  auto* it = pucchs.begin();
-  while (it != pucchs.end()) {
-    if (it->crnti == rnti and it->res->res_id.is_ded() and it->to_be_removed) {
-      it = pucchs.erase(it);
-    } else {
-      ++it;
-    }
-  }
+  const auto& ue_bwp = *ue_cfg.init_bwp().ul.ue_cfg();
+  ocudu_assert(ue_bwp.periodic_csi_report.has_value(),
+               "CSI resource requested, but periodic CSI reporting is not configured for the UE");
+  const auto& res_params = ue_cfg.cell_cfg_common.params.init_bwp.pucch.resources;
+  const auto& cell_res   = ue_cfg.cell_cfg_common.bwp_res[to_bwp_id(0)].ul().pucch;
+  return cell_res.get_ded(res_params.csi_res_id(ue_bwp.periodic_csi_report->pucch_res_id));
 }
 
-void pucch_existing_pdus_handler::update_sr_pdu_bits(sr_nof_bits sr_bits, unsigned harq_ack_bits)
+const pucch_resource& pucch_helper::get_common_resource(const cell_configuration&      cell_cfg,
+                                                        const dci_context_information& dci_info,
+                                                        unsigned                       d_pri)
 {
-  if (sr_pdu == nullptr) {
-    return;
-  }
-  ocudu_assert(sr_pdu->format() == pucch_format::FORMAT_0 or sr_pdu->format() == pucch_format::FORMAT_1,
-               "Only PUCCH Formats 0 or 1 can be used for SR grant");
+  // Get N_CCE (nof_coreset_cces) and n_{CCE,0} (start_cce_idx), as per TS 38.213, Section 9.2.1.
+  const unsigned nof_coreset_cces = dci_info.coreset_cfg->get_nof_cces();
+  const unsigned start_cce_idx    = dci_info.cces.ncce;
 
-  sr_pdu->uci_bits.sr_bits           = sr_bits;
-  sr_pdu->uci_bits.harq_ack_nof_bits = harq_ack_bits;
-  sr_pdu->to_be_removed              = false;
-
-  // Once the grant is updated, set the pointer to null, as we don't want to process this again.
-  sr_pdu = nullptr;
-  --pdus_cnt;
-}
-
-void pucch_existing_pdus_handler::update_csi_pdu_bits(unsigned csi_part1_bits, sr_nof_bits sr_bits)
-{
-  ocudu_assert(csi_pdu->format() == pucch_format::FORMAT_2 or csi_pdu->format() == pucch_format::FORMAT_3 or
-                   csi_pdu->format() == pucch_format::FORMAT_4,
-               "Only PUCCH Formats 2, 3 and 4 can be used for CSI grant");
-
-  csi_pdu->uci_bits.csi_part1_nof_bits = csi_part1_bits;
-  csi_pdu->uci_bits.sr_bits            = sr_bits;
-  csi_pdu->to_be_removed               = false;
-
-  // Once the grant is updated, set the pointer to null, as we don't want to process this again.
-  csi_pdu = nullptr;
-  --pdus_cnt;
-}
-
-void pucch_existing_pdus_handler::update_harq_pdu_bits(unsigned                             harq_ack_bits,
-                                                       sr_nof_bits                          sr_bits,
-                                                       unsigned                             csi_part1_bits,
-                                                       const pucch_resource_builder_params& res_params,
-                                                       const pucch_resource&                pucch_res_cfg)
-{
-  const prb_interval res_prbs = pucch_res_cfg.prbs();
-  switch (harq_pdu->format()) {
-    case pucch_format::FORMAT_2: {
-      harq_pdu->uci_bits.csi_part1_nof_bits = csi_part1_bits;
-      // After updating the UCI bits, we need to recompute the number of PRBs for PUCCH format 2, as per TS 38.213,
-      // Section 9.2.5.2.
-      const unsigned nof_prbs =
-          get_pucch_format2_nof_prbs(harq_ack_bits + sr_nof_bits_to_uint(sr_bits) + csi_part1_bits,
-                                     res_prbs.length(),
-                                     pucch_res_cfg.syms.length(),
-                                     to_float(res_params.max_code_rate_234()));
-      std::get<pucch_info::f2_config>(harq_pdu->format_params).nof_prbs = nof_prbs;
-    } break;
-    case pucch_format::FORMAT_3: {
-      harq_pdu->uci_bits.csi_part1_nof_bits = csi_part1_bits;
-      // After updating the UCI bits, we need to recompute the number of PRBs for PUCCH format 3, as per TS 38.213,
-      // Section 9.2.5.2.
-      const auto&    f3_cfg = std::get<pucch_resource::f3_config>(pucch_res_cfg.format_params);
-      const unsigned nof_prbs =
-          get_pucch_format3_nof_prbs(harq_ack_bits + sr_nof_bits_to_uint(sr_bits) + csi_part1_bits,
-                                     res_prbs.length(),
-                                     pucch_res_cfg.syms.length(),
-                                     to_float(res_params.max_code_rate_234()),
-                                     pucch_res_cfg.second_hop_prb.has_value(),
-                                     f3_cfg.additional_dmrs,
-                                     f3_cfg.pi_2_bpsk);
-      std::get<pucch_info::f3_config>(harq_pdu->format_params).nof_prbs = nof_prbs;
-    } break;
-    case pucch_format::FORMAT_4: {
-      harq_pdu->uci_bits.csi_part1_nof_bits = csi_part1_bits;
-    } break;
-    default:
-      break;
-  }
-  harq_pdu->uci_bits.harq_ack_nof_bits = harq_ack_bits;
-  harq_pdu->uci_bits.sr_bits           = sr_bits;
-  harq_pdu->to_be_removed              = false;
-
-  // Once the grant is updated, set the pointer to null, as we don't want to process this again.
-  harq_pdu = nullptr;
-  --pdus_cnt;
+  // r_PUCCH, as per Section 9.2.1, TS 38.213.
+  const unsigned r_pucch = get_pucch_default_resource_index(start_cce_idx, nof_coreset_cces, d_pri);
+  ocudu_assert(r_pucch < 16, "r_PUCCH must be less than 16");
+  return cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.get_cmn(r_pucch);
 }

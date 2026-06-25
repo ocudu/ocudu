@@ -75,15 +75,13 @@ TEST_P(uci_sched_sr_test, test_different_periods)
       // - SR only on slots that are for SR only.
       // - CSI + SR on slots that are for CSI + SR.
       if ((t_bench.sl_tx - csi_offset).to_uint() % csi_report_periodicity_to_uint(csi_period) == 0) {
-        ASSERT_TRUE(
-            find_pucch_pdu(t_bench.res_grid[0].result.ul.pucchs, [&expected = pucch_sr_csi_test](const auto& pdu) {
-              return pucch_info_match(expected, pdu);
-            }));
+        ASSERT_TRUE(find_pucch_pdu(
+            t_bench.res_grid[0].result.ul.pucchs.unsorted(),
+            [&expected = pucch_sr_csi_test](const auto& pdu) { return pucch_info_match(expected, pdu); }));
       } else {
-        ASSERT_TRUE(
-            find_pucch_pdu(t_bench.res_grid[0].result.ul.pucchs, [&expected = pucch_sr_only_test](const auto& pdu) {
-              return pucch_info_match(expected, pdu);
-            }));
+        ASSERT_TRUE(find_pucch_pdu(
+            t_bench.res_grid[0].result.ul.pucchs.unsorted(),
+            [&expected = pucch_sr_only_test](const auto& pdu) { return pucch_info_match(expected, pdu); }));
       }
     }
     // Update the slot indicator.
@@ -162,15 +160,13 @@ TEST_P(uci_sched_csi_test, test_different_periods)
       // - CSI only on slots that are for CSI only.
       // - CSI + SR on slots that are for CSI + SR.
       if ((t_bench.sl_tx - sr_offset).to_uint() % sr_period == 0) {
-        ASSERT_TRUE(
-            find_pucch_pdu(t_bench.res_grid[0].result.ul.pucchs, [&expected = pucch_csi_and_sr_test](const auto& pdu) {
-              return pucch_info_match(expected, pdu);
-            }));
+        ASSERT_TRUE(find_pucch_pdu(
+            t_bench.res_grid[0].result.ul.pucchs.unsorted(),
+            [&expected = pucch_csi_and_sr_test](const auto& pdu) { return pucch_info_match(expected, pdu); }));
       } else {
-        ASSERT_TRUE(
-            find_pucch_pdu(t_bench.res_grid[0].result.ul.pucchs, [&expected = pucch_csi_only_test](const auto& pdu) {
-              return pucch_info_match(expected, pdu);
-            }));
+        ASSERT_TRUE(find_pucch_pdu(
+            t_bench.res_grid[0].result.ul.pucchs.unsorted(),
+            [&expected = pucch_csi_only_test](const auto& pdu) { return pucch_info_match(expected, pdu); }));
       }
     }
     // Update the slot indicator.

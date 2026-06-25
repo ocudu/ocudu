@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "resource_grid.h"
+#include "ocudu/ran/slot_pdu_capacity_constants.h"
 #include "ocudu/scheduler/resource_grid_util.h"
 #include "ocudu/support/compiler.h"
 
@@ -306,6 +307,7 @@ cell_slot_resource_allocator::cell_slot_resource_allocator(const cell_configurat
                                                            span<scs_specific_carrier> ul_scs_carriers) :
   cfg(cfg_), dl_res_grid(dl_scs_carriers), ul_res_grid(ul_scs_carriers)
 {
+  result.ul.pucchs.reserve(MAX_PUCCH_PDUS_PER_SLOT);
 }
 
 void cell_slot_resource_allocator::slot_indication(slot_point sl)

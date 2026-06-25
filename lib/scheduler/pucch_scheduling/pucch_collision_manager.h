@@ -84,7 +84,7 @@ public:
   /// \brief Check if a PUCCH resource can be allocated at a given slot.
   /// \return Success if the resource can be allocated, otherwise an error indicating the reason of failure.
   error_type<pucch_alloc_failure>
-  can_alloc(cell_slot_resource_allocator& slot_alloc, const pucch_resource& res, rnti_t rnti) const;
+  can_alloc(const cell_slot_resource_allocator& slot_alloc, const pucch_resource& res, rnti_t rnti) const;
 
   /// \brief Allocate a PUCCH resource at a given slot.
   /// \return Success if the allocation was successful, otherwise an error indicating the reason of failure.

@@ -26,7 +26,7 @@ const csi_report_configuration* ocudu::find_ue_uci_with_csi(rnti_t rnti, const u
   if (ul_res.nof_ul_symbols == 0) {
     return nullptr;
   }
-  const pucch_info* pucch = find_ue_pucch_with_csi(rnti, ul_res.pucchs);
+  const pucch_info* pucch = find_ue_pucch_with_csi(rnti, ul_res.pucchs.unsorted());
   if (pucch != nullptr) {
     return &pucch->csi_rep_cfg.value();
   }

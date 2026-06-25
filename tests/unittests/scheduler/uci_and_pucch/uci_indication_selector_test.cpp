@@ -45,7 +45,7 @@ protected:
   {
     sched_result result{};
     for (const auto& pucch : pucchs) {
-      result.ul.pucchs.push_back(pucch);
+      result.ul.pucchs.emplace(pucch);
     }
     return result;
   }

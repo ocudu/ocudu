@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "fmt/format.h"
 #include <cstdint>
 #include <variant>
 
@@ -156,3 +157,25 @@ struct pucch_res_id_t {
 };
 
 } // namespace ocudu
+
+// Formatters
+namespace fmt {
+template <>
+struct formatter<ocudu::pucch_res_id_t> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(ocudu::pucch_res_id_t res_id, FormatContext& ctx) const
+  {
+    if (res_id.is_cmn()) {
+      return format_to(ctx.out(), "cmn({})", res_id.cmn().r_pucch);
+    }
+    return format_to(ctx.out(), "ded({}, {})", res_id.ded().cell_res_id, res_id.ded().ue_res_id);
+  }
+};
+
+} // namespace fmt
