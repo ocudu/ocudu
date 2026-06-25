@@ -179,6 +179,8 @@ struct scheduler_cell_metrics {
   std::vector<unsigned>             pdsch_prbs_used_per_tdd_slot_idx;
   std::vector<scheduler_cell_event> events;
   std::vector<scheduler_ue_metrics> ue_metrics;
+  /// Whether the per-UE metrics in this report should be consumed/printed by consumers.
+  bool report_ue_metrics = true;
 };
 
 /// Scheduler metrics report for all active cells of the DU.

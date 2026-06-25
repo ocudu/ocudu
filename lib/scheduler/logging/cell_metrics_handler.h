@@ -172,7 +172,7 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
   scheduler_cell_metrics_notifier& notifier;
   const cell_configuration&        cell_cfg;
 
-  /// Whether per-UE metrics are appended to the cell report.
+  /// Whether per-UE metrics should be consumed/printed by report consumers.
   const bool report_ue_metrics;
 
   // Derived values.

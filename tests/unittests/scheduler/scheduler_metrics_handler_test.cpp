@@ -130,7 +130,8 @@ TEST_F(scheduler_metrics_handler_tester, when_ue_metrics_disabled_then_only_cell
   }
 
   ASSERT_GT(cell_only_notif.last_report.nof_slots, 0) << "Cell metrics must still be reported";
-  ASSERT_TRUE(cell_only_notif.last_report.ue_metrics.empty()) << "Per-UE metrics must be suppressed";
+  ASSERT_FALSE(cell_only_notif.last_report.ue_metrics.empty()) << "UE metrics must still be computed";
+  ASSERT_FALSE(cell_only_notif.last_report.report_ue_metrics) << "Per-UE reporting flag must be disabled";
 }
 
 TEST_F(scheduler_metrics_handler_tester, when_no_events_took_place_then_metrics_are_zero)

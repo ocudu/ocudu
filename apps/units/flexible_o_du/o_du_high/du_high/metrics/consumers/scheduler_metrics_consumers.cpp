@@ -41,7 +41,7 @@ void scheduler_cell_metrics_consumer_stdout::handle_metric(const std::optional<s
   }
 
   for (const auto& cell : report->cells) {
-    if (cell.ue_metrics.empty()) {
+    if (not cell.report_ue_metrics or cell.ue_metrics.empty()) {
       continue;
     }
 
@@ -68,7 +68,7 @@ void scheduler_cell_metrics_consumer_stdout::handle_metric(const std::optional<s
         fmt::print(" {:>3}", "n/a");
       }
 
-      fmt::print("   {:>2}", int(ue.dl_mcs.value()));
+      fmt::print("   {:>2}", static_cast<int>(ue.dl_mcs.value()));
       if (ue.dl_brate_kbps > 0) {
         fmt::print(" {:>6.6}", float_to_eng_string(ue.dl_brate_kbps * 1e3, 1, true));
       } else {
@@ -78,7 +78,7 @@ void scheduler_cell_metrics_consumer_stdout::handle_metric(const std::optional<s
       fmt::print(" {:>4}", ue.dl_nof_nok);
       unsigned dl_total = ue.dl_nof_ok + ue.dl_nof_nok;
       if (dl_total > 0) {
-        fmt::print(" {:>3}%", int((float)100 * ue.dl_nof_nok / dl_total));
+        fmt::print(" {:>3}%", static_cast<int>(100.0f * ue.dl_nof_nok / dl_total));
       } else {
         fmt::print(" {:>3}%", 0);
       }
@@ -119,7 +119,7 @@ void scheduler_cell_metrics_consumer_stdout::handle_metric(const std::optional<s
 
       unsigned ul_total = ue.ul_nof_ok + ue.ul_nof_nok;
       if (ul_total > 0) {
-        fmt::print(" {:>3}%", int((float)100 * ue.ul_nof_nok / ul_total));
+        fmt::print(" {:>3}%", static_cast<int>(100.0f * ue.ul_nof_nok / ul_total));
       } else {
         fmt::print(" {:>3}%", 0);
       }
@@ -211,8 +211,8 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
         cell.nof_error_indications,
         cell.nof_dl_slots > 0 ? sum_pdsch_rbs / cell.nof_dl_slots : 0,
         cell.nof_ul_slots > 0 ? sum_pusch_rbs / cell.nof_ul_slots : 0,
-        cell.nof_dl_slots > 0 ? cell.dl_grants_count / (float)cell.nof_dl_slots : 0,
-        cell.nof_ul_slots > 0 ? cell.ul_grants_count / (float)cell.nof_ul_slots : 0,
+        cell.nof_dl_slots > 0 ? cell.dl_grants_count / static_cast<float>(cell.nof_dl_slots) : 0,
+        cell.nof_ul_slots > 0 ? cell.ul_grants_count / static_cast<float>(cell.nof_ul_slots) : 0,
         cell.failed_dl_pdcch,
         cell.failed_common_dl_pdcch,
         cell.failed_ul_pdcch,
@@ -278,7 +278,10 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
     log_chan("{}", to_c_str(buffer));
     buffer.clear();
 
-    // log ue-specific metrics
+    // Log ue-specific metrics.
+    if (not cell.report_ue_metrics) {
+      continue;
+    }
     for (const auto& ue : cell.ue_metrics) {
       fmt::format_to(std::back_inserter(buffer),
                      "Scheduler UE ue={} pci={} rnti={} metrics:",
@@ -298,7 +301,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
         fmt::format_to(std::back_inserter(buffer), " dl_ri=n/a");
       }
 
-      fmt::format_to(std::back_inserter(buffer), " dl_mcs={}", int(ue.dl_mcs.value()));
+      fmt::format_to(std::back_inserter(buffer), " dl_mcs={}", static_cast<int>(ue.dl_mcs.value()));
       if (ue.dl_brate_kbps > 0) {
         fmt::format_to(
             std::back_inserter(buffer), " dl_brate={}bps", float_to_eng_string(ue.dl_brate_kbps * 1e3, 2, false));

@@ -406,13 +406,12 @@ void cell_metrics_handler::report_metrics()
   auto next_report = notifier.get_builder();
 
   const std::chrono::milliseconds report_period{data.nof_slots / last_slot_tx.nof_slots_per_subframe()};
-  if (report_ue_metrics) {
-    for (ue_metric_context& ue : ues) {
-      // Compute statistics of the UE metrics and push the result to the report. This includes the final report of UEs
-      // that were removed during this report period.
-      next_report->ue_metrics.push_back(ue.compute_report(report_period, nof_slots_per_sf));
-    }
+  for (ue_metric_context& ue : ues) {
+    // Compute statistics of the UE metrics and push the result to the report. This includes the final report of UEs
+    // that were removed during this report period.
+    next_report->ue_metrics.push_back(ue.compute_report(report_period, nof_slots_per_sf));
   }
+  next_report->report_ue_metrics = report_ue_metrics;
   // Now that their final metrics have been reported, erase the UEs that were removed during this report period.
   for (auto it = ues.begin(); it != ues.end();) {
     if (it->pending_removal) {

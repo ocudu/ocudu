@@ -131,7 +131,7 @@ void to_json(nlohmann::json& json, const scheduler_cell_metrics& metrics)
     cell_json["pdsch_prbs_used_per_tdd_slot_idx"] = metrics.pdsch_prbs_used_per_tdd_slot_idx;
   }
 
-  if (!metrics.ue_metrics.empty()) {
+  if (metrics.report_ue_metrics and not metrics.ue_metrics.empty()) {
     json["ue_list"] = metrics.ue_metrics;
   }
   if (!metrics.events.empty()) {
