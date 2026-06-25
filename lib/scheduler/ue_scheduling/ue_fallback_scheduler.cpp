@@ -235,7 +235,13 @@ void ue_fallback_scheduler::schedule_ul_new_tx_and_retx(cell_resource_allocator&
 {
   // Processes all the UL UEs at once, including UEs with new transmissions and UEs with retransmissions.
   for (auto next_ue = pending_ul_ues.begin(); next_ue != pending_ul_ues.end();) {
-    auto&                u       = ues[*next_ue];
+    auto& u = ues[*next_ue];
+    // While the UE is in pending_cfra state, its UL HARQ process 0 (Msg3) is owned by the RA scheduler until Msg3 is
+    // ACKed. Scheduling a UL grant here would collide with the RA scheduler on the same HARQ process, so skip it.
+    if (u.get_pcell().get_pcell_state().conres_st == ue_conres_state::pending_cfra) {
+      ++next_ue;
+      continue;
+    }
     ul_srb_sched_outcome outcome = schedule_ul_ue(res_alloc, u);
     if (outcome == ul_srb_sched_outcome::stop_ul_scheduling) {
       // If there is no PDCCH space, then stop the scheduling for all UL UEs.
