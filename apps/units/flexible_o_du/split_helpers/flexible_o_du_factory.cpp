@@ -124,10 +124,11 @@ generate_o_du_ru_config(span<const odu::du_cell_config> cells, unsigned max_proc
   return out_cfg;
 }
 
-/// Converts app-level ntn_config to library-level ntn_assistance_info.
-static ocudu_ntn::ntn_assistance_info convert_ntn_config_to_assistance_info(const du_high_unit_cell_ntn_config& cfg)
+/// Converts app-level ntn_config to library-level ntn_serving_cell_config.
+static ocudu_ntn::ntn_serving_cell_config
+convert_ntn_config_to_serving_cell_config(const du_high_unit_cell_ntn_config& cfg)
 {
-  ocudu_ntn::ntn_assistance_info info = {};
+  ocudu_ntn::ntn_serving_cell_config info = {};
 
   // SIB19 fields exempt from valuetag.
   info.moving_reference_location = cfg.moving_ref_location;
@@ -203,7 +204,7 @@ generate_ntn_configuration_manager_config(const gnb_id_t& gnb_id, span<const du_
       out_cell.nr_cgi.plmn_id  = plmn.value();
       out_cell.nr_cgi.nci      = nci.value();
       out_cell.satellite_index = sat_idx;
-      out_cell.assistance_info = convert_ntn_config_to_assistance_info(ntn_cfg);
+      out_cell.ntn_cfg         = convert_ntn_config_to_serving_cell_config(ntn_cfg);
 
       // Build sat-switch target satellite (if configured).
       if (ntn_cfg.sat_switch_with_resync) {

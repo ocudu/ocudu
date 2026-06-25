@@ -11,8 +11,9 @@
 namespace ocudu {
 namespace ocudu_ntn {
 
-/// NTN assistance information (SIB19 and ephemeris propagation).
-struct ntn_assistance_info {
+/// NTN serving cell configuration: static fields used for SIB19 generation.
+/// Dynamic fields (ephemeris, ta_info, epoch_time) are filled by the generator from the orbital state.
+struct ntn_serving_cell_config {
   /// SIB19 fields exempt from SIB1 valuetag (changes don't trigger SI change notifications).
   /// Moving reference location for NTN Earth-moving cell. Exempt from SI change determination per TS 38.331.
   std::optional<geodetic_coordinates_t> moving_reference_location;
@@ -87,10 +88,10 @@ struct ntn_cell_config {
   unsigned si_period_rf;
   unsigned si_window_len_slots;
   unsigned si_window_position;
-  /// NTN assistance information.
-  ntn_assistance_info assistance_info;
   /// Satellite this cell is associated with.
   unsigned satellite_index = 0;
+  /// NTN serving cell configuration (SIB19 fields and generation metadata).
+  ntn_serving_cell_config ntn_cfg;
   /// Neighbor NTN cells listed in SIB19.
   static_vector<ntn_neighbor_cell_config, MAX_NOF_NTN_NEIGHBORS> ncells;
   /// Satellite-switch target configuration. Absent if sat-switch is not configured.
