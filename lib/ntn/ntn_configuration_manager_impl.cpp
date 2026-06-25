@@ -281,15 +281,13 @@ bool ntn_configuration_manager_impl::send_cfo_compensation_request(const per_cel
     return false;
   }
 
+  const feeder_link_info_t& fl = *ctx.cell_cfg.assistance_info.feeder_link_info;
+
   // Send CFO and CFO drift to PHY.
-  double doppler_dl =
-      compute_doppler_hz(ta_info.ta_common_drift, ctx.cell_cfg.assistance_info.feeder_link_info->dl_freq);
-  double doppler_ul =
-      compute_doppler_hz(ta_info.ta_common_drift, ctx.cell_cfg.assistance_info.feeder_link_info->ul_freq);
-  double doppler_dl_rate = compute_doppler_shift_rate_hz_per_s(ta_info.ta_common_drift_variant,
-                                                               ctx.cell_cfg.assistance_info.feeder_link_info->dl_freq);
-  double doppler_ul_rate = compute_doppler_shift_rate_hz_per_s(ta_info.ta_common_drift_variant,
-                                                               ctx.cell_cfg.assistance_info.feeder_link_info->ul_freq);
+  double doppler_dl      = compute_doppler_hz(ta_info.ta_common_drift, fl.dl_freq);
+  double doppler_ul      = compute_doppler_hz(ta_info.ta_common_drift, fl.ul_freq);
+  double doppler_dl_rate = compute_doppler_shift_rate_hz_per_s(ta_info.ta_common_drift_variant, fl.dl_freq);
+  double doppler_ul_rate = compute_doppler_shift_rate_hz_per_s(ta_info.ta_common_drift_variant, fl.ul_freq);
 
   // Check if sector_id is configured, warn if missing.
   if (!ctx.cell_cfg.sector_id) {
