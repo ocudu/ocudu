@@ -181,7 +181,7 @@ ntn_configuration_manager_impl::ntn_configuration_manager_impl(const ntn_configu
   }
 }
 
-const ntn_cell_config& ntn_configuration_manager_impl::get_cell_config(per_cell_context& ctx, time_point t)
+const ntn_cell_config& ntn_configuration_manager_impl::get_cell_config(per_cell_context& ctx, time_point t) const
 {
   auto& q = ctx.cell_cfg_queue;
   while (q.size() > 1 && t >= q[1].epoch_time) {
@@ -349,6 +349,25 @@ bool ntn_configuration_manager_impl::send_cfo_compensation_request(const ntn_cel
   return true;
 }
 
+ntn_orbital_state ntn_configuration_manager_impl::compute_orbital_state(per_satellite_context& sat,
+                                                                        time_point             epoch_time,
+                                                                        slot_point             epoch_slot,
+                                                                        unsigned               ntn_ul_sync_validity_dur,
+                                                                        bool                   use_state_vector) const
+{
+  if (sat.last_result && sat.last_result->epoch_slot == epoch_slot &&
+      std::chrono::abs(sat.last_result->epoch_time - epoch_time) < std::chrono::milliseconds(5) &&
+      sat.last_result->ntn_ul_sync_validity_dur == ntn_ul_sync_validity_dur &&
+      sat.last_result->use_state_vector == use_state_vector) {
+    return sat.last_result->state;
+  }
+  ntn_orbital_state result = sat.ocm.compute_orbital_state(epoch_time, ntn_ul_sync_validity_dur, use_state_vector);
+  if (result.success) {
+    sat.last_result = {epoch_time, epoch_slot, ntn_ul_sync_validity_dur, use_state_vector, result};
+  }
+  return result;
+}
+
 void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_cell_global_id_t& nr_cgi,
                                                                      time_point                 tp,
                                                                      slot_point                 sl)
@@ -381,7 +400,7 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
   bool     use_state_vector         = cell_cfg.assistance_info.use_state_vector.value_or(true);
 
   ntn_orbital_state serving_ntn_info =
-      sat_ctx->ocm.compute_orbital_state(epoch_time, ntn_ul_sync_validity_dur, use_state_vector);
+      compute_orbital_state(*sat_ctx, epoch_time, epoch_slot, ntn_ul_sync_validity_dur, use_state_vector);
 
   if (not serving_ntn_info.success) {
     logger.warning(
@@ -406,7 +425,8 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
       logger.warning(
           "Sat-switch satellite index {} not found for cell {}", *cell_cfg.sat_switch_satellite_index, nr_cgi.nci);
     } else {
-      sat_sw_ntn_info = sat_sw_ctx->ocm.compute_orbital_state(epoch_time, ntn_ul_sync_validity_dur, use_state_vector);
+      sat_sw_ntn_info =
+          compute_orbital_state(*sat_sw_ctx, epoch_time, epoch_slot, ntn_ul_sync_validity_dur, use_state_vector);
       if (!sat_sw_ntn_info->success) {
         sat_sw_ntn_info.reset();
         logger.warning("Failed to generate sat-switch propagated config for cell {}.", nr_cgi.nci);

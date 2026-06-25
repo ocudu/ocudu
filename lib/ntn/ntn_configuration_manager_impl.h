@@ -56,6 +56,16 @@ private:
     explicit per_satellite_context(orbit_propagator_type type) : ocm(type) {}
 
     ntn_orbital_compute_module ocm;
+
+    /// Cached result of the last OCM computation.
+    struct cached_result {
+      time_point        epoch_time;
+      slot_point        epoch_slot;
+      unsigned          ntn_ul_sync_validity_dur;
+      bool              use_state_vector;
+      ntn_orbital_state state;
+    };
+    std::optional<cached_result> last_result;
   };
 
   /// Full cell config snapshot at a specific epoch time.
@@ -78,11 +88,19 @@ private:
   /// most recent snapshot whose epoch_time <= t.
   /// \param ctx Per-cell context.
   /// \param t   SIB19 epoch time.
-  const ntn_cell_config& get_cell_config(per_cell_context& ctx, time_point t);
+  const ntn_cell_config& get_cell_config(per_cell_context& ctx, time_point t) const;
 
   /// \brief Looks up the per-satellite context for a given satellite index.
   /// \return Pointer to the context, or nullptr if no satellite with this index is configured.
   per_satellite_context* find_satellite_context(unsigned satellite_index);
+
+  /// \brief Computes the orbital state for the given epoch time, reusing the cached result if the epoch slot and time
+  /// match within a 5 ms tolerance to avoid redundant OCM propagations within the same SI window tick.
+  ntn_orbital_state compute_orbital_state(per_satellite_context& sat,
+                                          time_point             epoch_time,
+                                          slot_point             epoch_slot,
+                                          unsigned               ntn_ul_sync_validity_dur,
+                                          bool                   use_state_vector) const;
 
   /// \brief Computes and sends a request to apply CFO compensation for the feeder link Doppler shift.
   ///
