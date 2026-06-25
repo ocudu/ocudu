@@ -131,10 +131,11 @@ static ocudu_ntn::ntn_assistance_info convert_ntn_config_to_assistance_info(cons
 
   // SIB19 fields exempt from valuetag.
   info.moving_reference_location = cfg.moving_ref_location;
-  info.ephemeris_info            = cfg.ephemeris_info;
-  info.ta_info                   = cfg.ta_info;
-  info.epoch_time                = cfg.epoch_time;
-  info.ntn_ul_sync_validity_dur  = cfg.ntn_ul_sync_validity_dur;
+  if (cfg.ta_info && cfg.ta_info->ta_common_offset != 0.0) {
+    info.ta_common_offset = cfg.ta_info->ta_common_offset;
+  }
+  info.epoch_time               = cfg.epoch_time;
+  info.ntn_ul_sync_validity_dur = cfg.ntn_ul_sync_validity_dur;
 
   // SIB19 fields tracked by valuetag.
   info.reference_location    = cfg.reference_location;
@@ -154,36 +155,78 @@ static ocudu_ntn::ntn_assistance_info convert_ntn_config_to_assistance_info(cons
   info.sat_switch_with_resync = cfg.sat_switch_with_resync;
 
   // Metadata fields.
-  info.epoch_timestamp      = cfg.epoch_timestamp;
-  info.epoch_sfn_offset     = cfg.epoch_sfn_offset;
-  info.use_state_vector     = cfg.use_state_vector;
-  info.feeder_link_info     = cfg.feeder_link_info;
-  info.ntn_gateway_location = cfg.ntn_gateway_location;
-  info.propagator_type      = cfg.propagator_type;
+  info.epoch_sfn_offset = cfg.epoch_sfn_offset;
+  info.use_state_vector = cfg.use_state_vector;
+  info.feeder_link_info = cfg.feeder_link_info;
 
   return info;
+}
+
+/// \brief Appends a new satellite config and returns its assigned index.
+static unsigned add_satellite_config(ocudu_ntn::ntn_configuration_manager_config&                   out_cfg,
+                                     unsigned&                                                      next_satellite_idx,
+                                     std::optional<std::chrono::system_clock::time_point>           epoch_timestamp,
+                                     const std::variant<ecef_coordinates_t, orbital_coordinates_t>& ephemeris_info,
+                                     const std::optional<geodetic_coordinates_t>& ntn_gateway_location,
+                                     const std::optional<ta_info_t>&              ta_info,
+                                     ocudu_ntn::orbit_propagator_type             propagator_type)
+{
+  unsigned sat_idx = next_satellite_idx++;
+  out_cfg.satellites.push_back(
+      {sat_idx, epoch_timestamp, ephemeris_info, ntn_gateway_location, ta_info, propagator_type});
+  return sat_idx;
 }
 
 static ocudu_ntn::ntn_configuration_manager_config
 generate_ntn_configuration_manager_config(const gnb_id_t& gnb_id, span<const du_high_unit_cell_config> du_hi_cells)
 {
-  ocudu_ntn::ntn_configuration_manager_config out_cfg = {};
+  ocudu_ntn::ntn_configuration_manager_config out_cfg            = {};
+  unsigned                                    next_satellite_idx = 0;
+
   for (unsigned phy_sector_idx = 0; phy_sector_idx != du_hi_cells.size(); ++phy_sector_idx) {
     const auto& cell_cfg = du_hi_cells[phy_sector_idx].cell;
-    if (cell_cfg.ntn_cfg.has_value()) {
+    if (cell_cfg.ntn_cfg) {
+      const auto& ntn_cfg = *cell_cfg.ntn_cfg;
+
+      // Build satellite config (1-to-1 mapping for now).
+      unsigned sat_idx = add_satellite_config(out_cfg,
+                                              next_satellite_idx,
+                                              ntn_cfg.epoch_timestamp,
+                                              ntn_cfg.ephemeris_info,
+                                              ntn_cfg.ntn_gateway_location,
+                                              ntn_cfg.ta_info,
+                                              ntn_cfg.propagator_type);
+
+      // Build cell config.
       auto&                      out_cell = out_cfg.cells.emplace_back();
       expected<plmn_identity>    plmn     = plmn_identity::parse(cell_cfg.plmn);
       expected<nr_cell_identity> nci      = nr_cell_identity::create(gnb_id, cell_cfg.sector_id.value());
-      if (not plmn.has_value()) {
+      if (not plmn) {
         report_error("Invalid PLMN: {}", cell_cfg.plmn);
       }
-      if (not nci.has_value()) {
+      if (not nci) {
         report_error("Invalid NR-NCI");
       }
       out_cell.sector_id       = phy_sector_idx;
       out_cell.nr_cgi.plmn_id  = plmn.value();
       out_cell.nr_cgi.nci      = nci.value();
-      out_cell.assistance_info = convert_ntn_config_to_assistance_info(*cell_cfg.ntn_cfg);
+      out_cell.satellite_index = sat_idx;
+      out_cell.assistance_info = convert_ntn_config_to_assistance_info(ntn_cfg);
+
+      // Build sat-switch target satellite (if configured).
+      if (ntn_cfg.sat_switch_with_resync) {
+        const auto& sat_sw = *ntn_cfg.sat_switch_with_resync;
+        if (sat_sw.epoch_timestamp && sat_sw.ntn_cfg.ephemeris_info) {
+          unsigned sw_sat_idx                 = add_satellite_config(out_cfg,
+                                                     next_satellite_idx,
+                                                     sat_sw.epoch_timestamp,
+                                                     *sat_sw.ntn_cfg.ephemeris_info,
+                                                     sat_sw.ntn_gateway_location,
+                                                     std::nullopt,
+                                                     ntn_cfg.propagator_type);
+          out_cell.sat_switch_satellite_index = sw_sat_idx;
+        }
+      }
 
       // SIB19 Scheduling info.
       const auto& sib_cfg = cell_cfg.sib_cfg;

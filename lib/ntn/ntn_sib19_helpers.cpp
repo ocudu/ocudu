@@ -35,11 +35,11 @@ sib19_info ocudu_ntn::generate_sib19_info(const ntn_cell_config&   cell_cfg,
   }
   sib19.ntn_cfg->ntn_ul_sync_validity_dur = ntn_ul_sync_validity_dur;
 
-  if (cell_cfg.assistance_info.ta_info && cell_cfg.assistance_info.ta_info->ta_common_offset != 0.0) {
+  if (cell_cfg.assistance_info.ta_common_offset) {
     if (!sib19.ntn_cfg->ta_info) {
       sib19.ntn_cfg->ta_info.emplace();
     }
-    sib19.ntn_cfg->ta_info->ta_common_offset = cell_cfg.assistance_info.ta_info->ta_common_offset;
+    sib19.ntn_cfg->ta_info->ta_common_offset = *cell_cfg.assistance_info.ta_common_offset;
   }
 
   // Populate sat-switch target ntn_cfg with propagated ephemeris from the sat-switch OCM.

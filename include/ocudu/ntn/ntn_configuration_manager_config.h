@@ -16,11 +16,9 @@ struct ntn_assistance_info {
   /// SIB19 fields exempt from SIB1 valuetag (changes don't trigger SI change notifications).
   /// Moving reference location for NTN Earth-moving cell. Exempt from SI change determination per TS 38.331.
   std::optional<geodetic_coordinates_t> moving_reference_location;
-  /// Ephemeris info. Exempt from SI change determination per TS 38.331.
-  std::variant<ecef_coordinates_t, orbital_coordinates_t> ephemeris_info;
-  /// Timing advance info (ta-Common, ta-CommonDrift, ta-CommonDriftVariant). Exempt from SI change determination.
-  std::optional<ta_info_t> ta_info;
-  /// Epoch time for NTN assistance info. Exempt from SI change determination.
+  /// Cell-level constant offset added to ta_common in SIB19, modelling fixed system delays (e.g. cable, processing).
+  std::optional<double> ta_common_offset;
+  /// If present, overrides the epoch time SFN/subframe broadcast in SIB19. Usually not needed.
   std::optional<epoch_time_t> epoch_time;
   /// Validity duration for UL sync assistance info in seconds. Exempt from SI change determination.
   std::optional<unsigned> ntn_ul_sync_validity_dur;
@@ -48,18 +46,12 @@ struct ntn_assistance_info {
   std::optional<sat_switch_with_resync_t> sat_switch_with_resync;
 
   /// Metadata fields (not directly in SIB19, used for SIB19 generation):
-  /// Epoch timestamp (UTC timepoint) used to calculate epochTime.
-  std::optional<std::chrono::system_clock::time_point> epoch_timestamp;
   /// Offset in SFN between SIB19 transmission and epoch time.
   std::optional<uint64_t> epoch_sfn_offset;
   /// Use ECEF state vectors (true) or ECI orbital parameters (false) for ephemeris format.
   std::optional<bool> use_state_vector;
   /// Feeder link parameters for Doppler computation (backend).
   std::optional<feeder_link_info_t> feeder_link_info;
-  /// Gateway location (in degrees) for backend processing.
-  std::optional<geodetic_coordinates_t> ntn_gateway_location;
-  /// Orbit propagator to use for ephemeris propagation.
-  orbit_propagator_type propagator_type = orbit_propagator_type::rk4;
 };
 
 /// NTN Cell configuration.
@@ -75,10 +67,33 @@ struct ntn_cell_config {
   unsigned si_window_position;
   /// NTN assistance information.
   ntn_assistance_info assistance_info;
+  /// Satellite this cell is associated with.
+  unsigned satellite_index = 0;
+  /// Satellite index of the sat-switch target satellite. Absent if sat-switch is not configured.
+  std::optional<unsigned> sat_switch_satellite_index;
+};
+
+/// NTN Satellite configuration (orbital propagation state, shared across cells).
+struct ntn_satellite_config {
+  /// Index used to associate cells with this satellite.
+  unsigned satellite_index;
+  /// Epoch timestamp (UTC timepoint) for ephemeris information.
+  std::optional<std::chrono::system_clock::time_point> epoch_timestamp;
+  /// Satellite ephemeris: ECEF state vector or ECI orbital parameters.
+  std::variant<ecef_coordinates_t, orbital_coordinates_t> ephemeris_info;
+  /// Geodetic coordinates (in degrees) of the NTN Gateway. Used by the orbital propagation module to compute TA-Info.
+  std::optional<geodetic_coordinates_t> ntn_gateway_location;
+  /// If present, overrides the TA info computed by the orbital propagation module (transparent architecture).
+  /// Mutually exclusive with ntn_gateway_location.
+  std::optional<ta_info_t> ta_info;
+  /// Orbit propagation algorithm to use for this satellite.
+  orbit_propagator_type propagator_type = orbit_propagator_type::rk4;
 };
 
 /// NTN Configuration manager config.
 struct ntn_configuration_manager_config {
+  /// NTN Satellite configuration (one entry per satellite).
+  std::vector<ntn_satellite_config> satellites;
   /// NTN Cell configuration.
   std::vector<ntn_cell_config> cells;
 };

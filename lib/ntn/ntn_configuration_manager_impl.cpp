@@ -40,10 +40,7 @@ static void merge_cell_config_update(ntn_cell_config& cfg, const ntn_cell_config
 {
   cfg.assistance_info.ntn_ul_sync_validity_dur = update.ntn_ul_sync_validity_duration;
   if (update.ta_info && update.ta_info->ta_common_offset != 0.0) {
-    if (!cfg.assistance_info.ta_info) {
-      cfg.assistance_info.ta_info.emplace();
-    }
-    cfg.assistance_info.ta_info->ta_common_offset = update.ta_info->ta_common_offset;
+    cfg.assistance_info.ta_common_offset = update.ta_info->ta_common_offset;
   }
   if (update.reference_location) {
     cfg.assistance_info.reference_location = update.reference_location;
@@ -124,46 +121,35 @@ ntn_configuration_manager_impl::ntn_configuration_manager_impl(const ntn_configu
     return;
   }
 
+  // Create per-satellite contexts and seed their generators.
+  for (const auto& sat_config : config.satellites) {
+    auto [sat_it, inserted] = satellite_contexts.try_emplace(sat_config.satellite_index, sat_config.propagator_type);
+    if (!inserted) {
+      logger.error("Duplicate satellite_index {} in NTN configuration, skipping", sat_config.satellite_index);
+      continue;
+    }
+    auto& sat_ctx = sat_it->second;
+    sat_ctx.ocm.set_ta_info_override(sat_config.ta_info);
+
+    if (sat_config.epoch_timestamp) {
+      sat_ctx.ocm.enqueue_ephemeris_info(ephemeris_info_update{*sat_config.epoch_timestamp, sat_config.ephemeris_info});
+
+      if (sat_config.ntn_gateway_location) {
+        ntn_gateway_location_info gw_location{
+            *sat_config.epoch_timestamp, std::nullopt, *sat_config.ntn_gateway_location, std::nullopt};
+        sat_ctx.ocm.enqueue_ntn_gw_location(gw_location);
+      }
+    }
+  }
+
   for (const auto& cell_config : config.cells) {
-    auto [it, inserted] = cells.try_emplace(cell_config.nr_cgi, cell_config.assistance_info.propagator_type);
+    auto [it, inserted] = cells.try_emplace(cell_config.nr_cgi);
     if (!inserted) {
       logger.error("Duplicate nr_cgi {} in NTN configuration, skipping", cell_config.nr_cgi.nci);
       continue;
     }
     auto& ctx = it->second;
-    // Check if sat_switch field is enabled.
-    ctx.sat_switch_enabled = cell_config.assistance_info.sat_switch_with_resync.has_value();
     ctx.cell_cfg_queue.push(cell_config_snapshot{time_point{}, cell_config});
-
-    if (cell_config.assistance_info.epoch_timestamp) {
-      ctx.ntn_info_generator.enqueue_ephemeris_info(ephemeris_info_update{*cell_config.assistance_info.epoch_timestamp,
-                                                                          cell_config.assistance_info.ephemeris_info});
-
-      if (cell_config.assistance_info.ntn_gateway_location) {
-        ntn_gateway_location_info gw_location{*cell_config.assistance_info.epoch_timestamp,
-                                              std::nullopt,
-                                              *cell_config.assistance_info.ntn_gateway_location,
-                                              std::nullopt};
-        ctx.ntn_info_generator.enqueue_ntn_gw_location(gw_location);
-      }
-    }
-
-    if (ctx.sat_switch_enabled) {
-      const sat_switch_with_resync_t& sat_sw = *cell_config.assistance_info.sat_switch_with_resync;
-      if (sat_sw.epoch_timestamp && sat_sw.ntn_cfg.ephemeris_info) {
-        if (!ctx.sat_switch_info_generator.enqueue_ephemeris_info(
-                ephemeris_info_update{*sat_sw.epoch_timestamp, *sat_sw.ntn_cfg.ephemeris_info})) {
-          logger.warning("Failed to enqueue sat-switch ephemeris for cell {}", cell_config.nr_cgi.nci);
-        }
-        if (sat_sw.ntn_gateway_location) {
-          ntn_gateway_location_info sat_gw_location{
-              *sat_sw.epoch_timestamp, std::nullopt, *sat_sw.ntn_gateway_location, std::nullopt};
-          if (!ctx.sat_switch_info_generator.enqueue_ntn_gw_location(sat_gw_location)) {
-            logger.warning("Failed to enqueue sat-switch gateway location for cell {}", cell_config.nr_cgi.nci);
-          }
-        }
-      }
-    }
 
     // Create per-cell timer for SIB19 updating task.
     auto si_period_ms = cell_config.si_period_rf * 10;
@@ -204,6 +190,13 @@ const ntn_cell_config& ntn_configuration_manager_impl::get_cell_config(per_cell_
   return q[0].config;
 }
 
+ntn_configuration_manager_impl::per_satellite_context*
+ntn_configuration_manager_impl::find_satellite_context(unsigned satellite_index)
+{
+  auto it = satellite_contexts.find(satellite_index);
+  return it != satellite_contexts.end() ? &it->second : nullptr;
+}
+
 ntn_config_update_result ntn_configuration_manager_impl::handle_ntn_config_update(const ntn_config_update_info& req)
 {
   ntn_config_update_result result;
@@ -242,25 +235,51 @@ bool ntn_configuration_manager_impl::handle_ntn_cell_config_update(const ntn_cel
   // Merge the update onto the most recent snapshot and enqueue for epoch-gated selection.
   ntn_cell_config merged_cfg = ctx.cell_cfg_queue[ctx.cell_cfg_queue.size() - 1].config;
   merge_cell_config_update(merged_cfg, cell_req);
-  ctx.sat_switch_enabled = cell_req.sat_switch_with_resync.has_value();
   if (!ctx.cell_cfg_queue.try_push(cell_config_snapshot{cell_req.epoch_time, std::move(merged_cfg)})) {
     logger.warning("Cell config queue full for cell {}, dropping update", cell_req.nr_cgi.nci);
     return false;
   }
 
+  const ntn_cell_config& base_cfg = ctx.cell_cfg_queue[ctx.cell_cfg_queue.size() - 1].config;
+
+  per_satellite_context* sat_ctx = find_satellite_context(base_cfg.satellite_index);
+  if (sat_ctx == nullptr) {
+    logger.warning("Satellite index {} not found for cell {}", base_cfg.satellite_index, cell_req.nr_cgi.nci);
+    return false;
+  }
+
+  if (!sat_ctx->ocm.enqueue_ephemeris_info(ephemeris_info_update{cell_req.epoch_time, cell_req.ephemeris_info})) {
+    return false;
+  }
+
+  if (cell_req.ntn_gateway_location) {
+    ntn_gateway_location_info gw_location{
+        cell_req.epoch_time, std::nullopt, *cell_req.ntn_gateway_location, std::nullopt};
+    if (not sat_ctx->ocm.enqueue_ntn_gw_location(gw_location)) {
+      return false;
+    }
+  }
+
   // Enqueue sat-switch ephemeris and gateway immediately (time-gated by sat_switch.epoch_timestamp).
-  if (cell_req.sat_switch_with_resync) {
-    const sat_switch_with_resync_t& sat_sw = *cell_req.sat_switch_with_resync;
+  if (cell_req.sat_switch_with_resync && base_cfg.sat_switch_satellite_index) {
+    const sat_switch_with_resync_t& sat_sw     = *cell_req.sat_switch_with_resync;
+    per_satellite_context*          sat_sw_ctx = find_satellite_context(*base_cfg.sat_switch_satellite_index);
+    if (sat_sw_ctx == nullptr) {
+      logger.warning("Sat-switch satellite index {} not found for cell {}",
+                     *base_cfg.sat_switch_satellite_index,
+                     cell_req.nr_cgi.nci);
+      return false;
+    }
     if (sat_sw.epoch_timestamp && sat_sw.ntn_cfg.ephemeris_info) {
-      if (!ctx.sat_switch_info_generator.enqueue_ephemeris_info(
+      if (!sat_sw_ctx->ocm.enqueue_ephemeris_info(
               ephemeris_info_update{*sat_sw.epoch_timestamp, *sat_sw.ntn_cfg.ephemeris_info})) {
         logger.warning("Failed to enqueue sat-switch ephemeris for cell {}", cell_req.nr_cgi.nci);
         return false;
       }
       if (sat_sw.ntn_gateway_location) {
-        ntn_gateway_location_info sat_gw_location{
+        ntn_gateway_location_info gw_location{
             *sat_sw.epoch_timestamp, std::nullopt, *sat_sw.ntn_gateway_location, std::nullopt};
-        if (!ctx.sat_switch_info_generator.enqueue_ntn_gw_location(sat_gw_location)) {
+        if (!sat_sw_ctx->ocm.enqueue_ntn_gw_location(gw_location)) {
           logger.warning("Failed to enqueue sat-switch gateway location for cell {}", cell_req.nr_cgi.nci);
           return false;
         }
@@ -268,18 +287,7 @@ bool ntn_configuration_manager_impl::handle_ntn_cell_config_update(const ntn_cel
     }
   }
 
-  // If provided, send NTN gateway location info to SIB19 NTN config generator.
-  if (cell_req.ntn_gateway_location) {
-    ntn_gateway_location_info gw_location{
-        cell_req.epoch_time, std::nullopt, *cell_req.ntn_gateway_location, std::nullopt};
-    if (not ctx.ntn_info_generator.enqueue_ntn_gw_location(gw_location)) {
-      return false;
-    }
-  }
-
-  // Send Ephemeris Info to SIB19 NTN config generator.
-  return ctx.ntn_info_generator.enqueue_ephemeris_info(
-      ephemeris_info_update{cell_req.epoch_time, cell_req.ephemeris_info});
+  return true;
 }
 
 bool ntn_configuration_manager_impl::send_cfo_compensation_request(const ntn_cell_config& cell_cfg,
@@ -363,20 +371,26 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
   auto       slot_diff  = epoch_slot - sl;
   time_point epoch_time = tp + std::chrono::milliseconds(slot_diff);
 
+  per_satellite_context* sat_ctx = find_satellite_context(cell_cfg.satellite_index);
+  if (sat_ctx == nullptr) {
+    logger.error("Satellite index {} not found for cell {}", cell_cfg.satellite_index, nr_cgi.nci);
+    return;
+  }
+
   unsigned ntn_ul_sync_validity_dur = cell_cfg.assistance_info.ntn_ul_sync_validity_dur.value_or(5);
   bool     use_state_vector         = cell_cfg.assistance_info.use_state_vector.value_or(true);
 
-  ntn_orbital_state state =
-      ctx.ntn_info_generator.compute_orbital_state(epoch_time, ntn_ul_sync_validity_dur, use_state_vector);
+  ntn_orbital_state serving_ntn_info =
+      sat_ctx->ocm.compute_orbital_state(epoch_time, ntn_ul_sync_validity_dur, use_state_vector);
 
-  if (!state.success) {
+  if (not serving_ntn_info.success) {
     logger.warning(
         "Failed to generate propagated NTN config for cell {} at slot={}, epoch={:%T}", nr_cgi.nci, sl, epoch_time);
     return;
   }
 
   if (cell_cfg.assistance_info.feeder_link_info &&
-      (cell_cfg.assistance_info.ntn_gateway_location || cell_cfg.assistance_info.ta_info) && !state.ta_info) {
+      cell_cfg.assistance_info.feeder_link_info->enable_doppler_compensation && !serving_ntn_info.ta_info) {
     logger.error("Feeder link is configured for cell {} but TA-info was not computed at slot={}, epoch={:%T}",
                  nr_cgi.nci,
                  sl,
@@ -384,20 +398,18 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
     return;
   }
 
-  // Compute sat-switch orbital state if configured.
-  ntn_orbital_state  sat_state;
-  ntn_orbital_state* sat_state_ptr = nullptr;
-  if (ctx.sat_switch_enabled) {
-    const auto& sw_cfg = *cell_cfg.assistance_info.sat_switch_with_resync;
-    if (sw_cfg.epoch_timestamp && sw_cfg.ntn_cfg.ephemeris_info) {
-      bool     sat_use_sv       = std::holds_alternative<ecef_coordinates_t>(*sw_cfg.ntn_cfg.ephemeris_info);
-      unsigned sat_validity_dur = sw_cfg.ntn_cfg.ntn_ul_sync_validity_dur.value_or(ntn_ul_sync_validity_dur);
-      sat_state = ctx.sat_switch_info_generator.compute_orbital_state(epoch_time, sat_validity_dur, sat_use_sv);
-      if (sat_state.success) {
-        sat_state_ptr = &sat_state;
-      } else {
-        logger.warning("Failed to generate sat-switch propagated config for cell {}. Keeping static sat-switch config.",
-                       nr_cgi.nci);
+  // Optionally propagate sat-switch target satellite using its own OCM.
+  std::optional<ntn_orbital_state> sat_sw_ntn_info;
+  if (cell_cfg.sat_switch_satellite_index) {
+    per_satellite_context* sat_sw_ctx = find_satellite_context(*cell_cfg.sat_switch_satellite_index);
+    if (sat_sw_ctx == nullptr) {
+      logger.warning(
+          "Sat-switch satellite index {} not found for cell {}", *cell_cfg.sat_switch_satellite_index, nr_cgi.nci);
+    } else {
+      sat_sw_ntn_info = sat_sw_ctx->ocm.compute_orbital_state(epoch_time, ntn_ul_sync_validity_dur, use_state_vector);
+      if (!sat_sw_ntn_info->success) {
+        sat_sw_ntn_info.reset();
+        logger.warning("Failed to generate sat-switch propagated config for cell {}.", nr_cgi.nci);
       }
     }
   }
@@ -405,8 +417,12 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
   // Send SIB19 PDU to DU.
   if (sib19_pdu_update_handler) {
     if (OCUDU_UNLIKELY(logger.debug.enabled())) {
-      assistance_info_wrapper assistance_info{
-          next_si_win_start, next_si_win_end, epoch_slot, epoch_time, state.ta_info, state.ephemeris_info};
+      assistance_info_wrapper assistance_info{next_si_win_start,
+                                              next_si_win_end,
+                                              epoch_slot,
+                                              epoch_time,
+                                              serving_ntn_info.ta_info,
+                                              serving_ntn_info.ephemeris_info};
       logger.debug("SIB19 msg update for cell {}: {}", nr_cgi.nci, assistance_info);
     }
 
@@ -417,7 +433,9 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
     ntn_req.slot           = next_si_win_start;
     ntn_req.si_slot_period = cell_cfg.si_period_rf * next_si_win_start.nof_slots_per_frame();
     ntn_req.epoch_time     = epoch_time;
-    ntn_req.sib19          = generate_sib19_info(cell_cfg, epoch_slot, state, sat_state_ptr);
+
+    ntn_req.sib19 = generate_sib19_info(
+        cell_cfg, epoch_slot, serving_ntn_info, sat_sw_ntn_info.has_value() ? &*sat_sw_ntn_info : nullptr);
 
     ntn_req.si_valuetag_change = sib19_tracked_fields_changed(ctx.last_sib19, ntn_req.sib19);
     if (ntn_req.si_valuetag_change) {
@@ -429,7 +447,7 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
   }
 
   // Send CFO compensation request to PHY.
-  if (state.ta_info) {
-    send_cfo_compensation_request(cell_cfg, epoch_time, *state.ta_info);
+  if (serving_ntn_info.ta_info && cell_cfg.assistance_info.feeder_link_info) {
+    send_cfo_compensation_request(cell_cfg, epoch_time, *serving_ntn_info.ta_info);
   }
 }

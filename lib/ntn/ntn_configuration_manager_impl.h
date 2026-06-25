@@ -51,6 +51,13 @@ private:
   /// \return True if the update was successfully handled; false otherwise.
   bool handle_ntn_cell_config_update(const ntn_cell_config_update_info& cell_req);
 
+  /// Per-satellite context holding the orbital compute module for one satellite.
+  struct per_satellite_context {
+    explicit per_satellite_context(orbit_propagator_type type) : ocm(type) {}
+
+    ntn_orbital_compute_module ocm;
+  };
+
   /// Full cell config snapshot at a specific epoch time.
   struct cell_config_snapshot {
     time_point      epoch_time;
@@ -59,16 +66,8 @@ private:
 
   /// Per-cell context holding cell-specific NTN assistance info.
   struct per_cell_context {
-    explicit per_cell_context(orbit_propagator_type type = orbit_propagator_type::rk4) :
-      ntn_info_generator(type), sat_switch_info_generator(type)
-    {
-    }
-
-    ntn_orbital_compute_module ntn_info_generator;
-    ntn_orbital_compute_module sat_switch_info_generator;
-    bool                       sat_switch_enabled = false;
-    unique_timer               timer;
-    std::optional<sib19_info>  last_sib19;
+    unique_timer              timer;
+    std::optional<sib19_info> last_sib19;
     /// Queue of full cell config snapshots ordered by epoch_time. Always non-empty (seeded at construction).
     static_ring_buffer<cell_config_snapshot, 8> cell_cfg_queue;
   };
@@ -80,6 +79,10 @@ private:
   /// \param ctx Per-cell context.
   /// \param t   SIB19 epoch time.
   const ntn_cell_config& get_cell_config(per_cell_context& ctx, time_point t);
+
+  /// \brief Looks up the per-satellite context for a given satellite index.
+  /// \return Pointer to the context, or nullptr if no satellite with this index is configured.
+  per_satellite_context* find_satellite_context(unsigned satellite_index);
 
   /// \brief Computes and sends a request to apply CFO compensation for the feeder link Doppler shift.
   ///
@@ -107,6 +110,7 @@ private:
   std::unique_ptr<ntn_doppler_compensation_handler> doppler_handler;
   timer_manager&                                    timers;
   task_executor&                                    executor;
+  std::map<unsigned, per_satellite_context>         satellite_contexts;
   std::map<nr_cell_global_id_t, per_cell_context>   cells;
 };
 
