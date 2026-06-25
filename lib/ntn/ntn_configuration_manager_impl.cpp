@@ -58,18 +58,35 @@ static void merge_cell_config_update(ntn_cell_config& cfg, const ntn_cell_config
     cfg.assistance_info.ta_report = update.ta_report;
   }
   if (update.ncells) {
-    cfg.assistance_info.ncells.clear();
+    cfg.ncells.clear();
     for (const auto& ncell : *update.ncells) {
-      cfg.assistance_info.ncells.push_back(ncell);
+      ntn_neighbor_cell_config nc_cfg{cfg.satellite_index, ncell.carrier_freq, ncell.phys_cell_id};
+      if (ncell.ntn_cfg) {
+        nc_cfg.cell_specific_koffset    = ncell.ntn_cfg->cell_specific_koffset;
+        nc_cfg.ntn_ul_sync_validity_dur = ncell.ntn_cfg->ntn_ul_sync_validity_dur;
+        nc_cfg.k_mac                    = ncell.ntn_cfg->k_mac;
+        nc_cfg.polarization             = ncell.ntn_cfg->polarization;
+        nc_cfg.ta_report                = ncell.ntn_cfg->ta_report;
+      }
+      cfg.ncells.push_back(nc_cfg);
     }
   }
   if (update.moving_ref_location) {
     cfg.assistance_info.moving_reference_location = update.moving_ref_location;
   }
   if (update.sat_switch_with_resync) {
-    cfg.assistance_info.sat_switch_with_resync = update.sat_switch_with_resync;
+    const auto& sat_sw  = *update.sat_switch_with_resync;
+    unsigned    sat_idx = cfg.sat_switch ? cfg.sat_switch->satellite_index : 0;
+    cfg.sat_switch      = ntn_sat_switch_config{sat_idx,
+                                           sat_sw.t_service_start,
+                                           sat_sw.ssb_time_offset_sf,
+                                           sat_sw.ntn_cfg.ntn_ul_sync_validity_dur,
+                                           sat_sw.ntn_cfg.cell_specific_koffset,
+                                           sat_sw.ntn_cfg.k_mac,
+                                           sat_sw.ntn_cfg.polarization,
+                                           sat_sw.ntn_cfg.ta_report};
   } else {
-    cfg.assistance_info.sat_switch_with_resync.reset();
+    cfg.sat_switch.reset();
   }
   if (update.feeder_link_info) {
     cfg.assistance_info.feeder_link_info = update.feeder_link_info;
@@ -261,12 +278,12 @@ bool ntn_configuration_manager_impl::handle_ntn_cell_config_update(const ntn_cel
   }
 
   // Enqueue sat-switch ephemeris and gateway immediately (time-gated by sat_switch.epoch_timestamp).
-  if (cell_req.sat_switch_with_resync && base_cfg.sat_switch_satellite_index) {
+  if (cell_req.sat_switch_with_resync && base_cfg.sat_switch) {
     const sat_switch_with_resync_t& sat_sw     = *cell_req.sat_switch_with_resync;
-    per_satellite_context*          sat_sw_ctx = find_satellite_context(*base_cfg.sat_switch_satellite_index);
+    per_satellite_context*          sat_sw_ctx = find_satellite_context(base_cfg.sat_switch->satellite_index);
     if (sat_sw_ctx == nullptr) {
       logger.warning("Sat-switch satellite index {} not found for cell {}",
-                     *base_cfg.sat_switch_satellite_index,
+                     base_cfg.sat_switch->satellite_index,
                      cell_req.nr_cgi.nci);
       return false;
     }
@@ -419,11 +436,11 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
 
   // Optionally propagate sat-switch target satellite using its own OCM.
   std::optional<ntn_orbital_state> sat_sw_ntn_info;
-  if (cell_cfg.sat_switch_satellite_index) {
-    per_satellite_context* sat_sw_ctx = find_satellite_context(*cell_cfg.sat_switch_satellite_index);
+  if (cell_cfg.sat_switch) {
+    per_satellite_context* sat_sw_ctx = find_satellite_context(cell_cfg.sat_switch->satellite_index);
     if (sat_sw_ctx == nullptr) {
       logger.warning(
-          "Sat-switch satellite index {} not found for cell {}", *cell_cfg.sat_switch_satellite_index, nr_cgi.nci);
+          "Sat-switch satellite index {} not found for cell {}", cell_cfg.sat_switch->satellite_index, nr_cgi.nci);
     } else {
       sat_sw_ntn_info =
           compute_orbital_state(*sat_sw_ctx, epoch_time, epoch_slot, ntn_ul_sync_validity_dur, use_state_vector);
@@ -431,6 +448,22 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
         sat_sw_ntn_info.reset();
         logger.warning("Failed to generate sat-switch propagated config for cell {}.", nr_cgi.nci);
       }
+    }
+  }
+
+  // Propagate each neighbor satellite using its own OCM.
+  static_vector<ntn_orbital_state, MAX_NOF_NTN_NEIGHBORS> ncell_ntn_info(cell_cfg.ncells.size(), ntn_orbital_state{});
+  for (size_t i = 0; i != cell_cfg.ncells.size(); ++i) {
+    const auto&            nc         = cell_cfg.ncells[i];
+    per_satellite_context* nc_sat_ctx = find_satellite_context(nc.satellite_index);
+    if (nc_sat_ctx == nullptr) {
+      logger.warning("Satellite index {} not found for neighbor of cell {}", nc.satellite_index, nr_cgi.nci);
+      continue;
+    }
+    ncell_ntn_info[i] =
+        compute_orbital_state(*nc_sat_ctx, epoch_time, epoch_slot, ntn_ul_sync_validity_dur, use_state_vector);
+    if (!ncell_ntn_info[i].success) {
+      logger.warning("Failed to generate neighbor OCM for cell {}, sat_idx={}", nr_cgi.nci, nc.satellite_index);
     }
   }
 
@@ -454,8 +487,11 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
     ntn_req.si_slot_period = cell_cfg.si_period_rf * next_si_win_start.nof_slots_per_frame();
     ntn_req.epoch_time     = epoch_time;
 
-    ntn_req.sib19 = generate_sib19_info(
-        cell_cfg, epoch_slot, serving_ntn_info, sat_sw_ntn_info.has_value() ? &*sat_sw_ntn_info : nullptr);
+    ntn_req.sib19 = generate_sib19_info(cell_cfg,
+                                        epoch_slot,
+                                        serving_ntn_info,
+                                        sat_sw_ntn_info.has_value() ? &*sat_sw_ntn_info : nullptr,
+                                        ncell_ntn_info);
 
     ntn_req.si_valuetag_change = sib19_tracked_fields_changed(ctx.last_sib19, ntn_req.sib19);
     if (ntn_req.si_valuetag_change) {

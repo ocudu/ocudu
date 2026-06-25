@@ -7,19 +7,19 @@
 using namespace ocudu;
 using namespace ocudu_ntn;
 
-sib19_info ocudu_ntn::generate_sib19_info(const ntn_cell_config&   cell_cfg,
-                                          slot_point               epoch_slot,
-                                          const ntn_orbital_state& serving_reply,
-                                          const ntn_orbital_state* sat_sw_reply)
+sib19_info ocudu_ntn::generate_sib19_info(const ntn_cell_config&        cell_cfg,
+                                          slot_point                    epoch_slot,
+                                          const ntn_orbital_state&      serving_reply,
+                                          const ntn_orbital_state*      sat_sw_reply,
+                                          span<const ntn_orbital_state> ncell_replies)
+
 {
   unsigned   ntn_ul_sync_validity_dur = cell_cfg.assistance_info.ntn_ul_sync_validity_dur.value_or(5);
   sib19_info sib19;
-  sib19.ref_location           = cell_cfg.assistance_info.reference_location;
-  sib19.distance_thres         = cell_cfg.assistance_info.distance_threshold;
-  sib19.t_service              = cell_cfg.assistance_info.t_service;
-  sib19.ncells                 = cell_cfg.assistance_info.ncells;
-  sib19.moving_ref_location    = cell_cfg.assistance_info.moving_reference_location;
-  sib19.sat_switch_with_resync = cell_cfg.assistance_info.sat_switch_with_resync;
+  sib19.ref_location        = cell_cfg.assistance_info.reference_location;
+  sib19.distance_thres      = cell_cfg.assistance_info.distance_threshold;
+  sib19.t_service           = cell_cfg.assistance_info.t_service;
+  sib19.moving_ref_location = cell_cfg.assistance_info.moving_reference_location;
 
   sib19.ntn_cfg.emplace();
   sib19.ntn_cfg->cell_specific_koffset = cell_cfg.assistance_info.cell_specific_koffset;
@@ -43,24 +43,52 @@ sib19_info ocudu_ntn::generate_sib19_info(const ntn_cell_config&   cell_cfg,
   }
 
   // Populate sat-switch target ntn_cfg with propagated ephemeris from the sat-switch OCM.
-  if (sat_sw_reply != nullptr && sat_sw_reply->success && sib19.sat_switch_with_resync) {
-    auto& sat_sw = *sib19.sat_switch_with_resync;
-    sat_sw.ntn_cfg.epoch_time.emplace();
-    sat_sw.ntn_cfg.epoch_time->sfn             = epoch_slot.sfn();
-    sat_sw.ntn_cfg.epoch_time->subframe_number = epoch_slot.subframe_index();
-    sat_sw.ntn_cfg.ephemeris_info              = sat_sw_reply->ephemeris_info;
-    sat_sw.ntn_cfg.ta_info                     = sat_sw_reply->ta_info;
-    sat_sw.ntn_cfg.ntn_ul_sync_validity_dur =
-        sat_sw.ntn_cfg.ntn_ul_sync_validity_dur.value_or(ntn_ul_sync_validity_dur);
+  if (cell_cfg.sat_switch) {
+    const auto&              sw_cfg = *cell_cfg.sat_switch;
+    sat_switch_with_resync_t sat_sw;
+    sat_sw.t_service_start    = sw_cfg.t_service_start;
+    sat_sw.ssb_time_offset_sf = sw_cfg.ssb_time_offset_sf;
+    if (sat_sw_reply != nullptr && sat_sw_reply->success) {
+      sat_sw.ntn_cfg.cell_specific_koffset    = sw_cfg.cell_specific_koffset;
+      sat_sw.ntn_cfg.ntn_ul_sync_validity_dur = sw_cfg.ntn_ul_sync_validity_dur.value_or(ntn_ul_sync_validity_dur);
+      sat_sw.ntn_cfg.k_mac                    = sw_cfg.k_mac;
+      sat_sw.ntn_cfg.polarization             = sw_cfg.polarization;
+      sat_sw.ntn_cfg.ta_report                = sw_cfg.ta_report;
+      sat_sw.ntn_cfg.epoch_time.emplace();
+      sat_sw.ntn_cfg.epoch_time->sfn             = epoch_slot.sfn();
+      sat_sw.ntn_cfg.epoch_time->subframe_number = epoch_slot.subframe_index();
+      sat_sw.ntn_cfg.ephemeris_info              = sat_sw_reply->ephemeris_info;
+      sat_sw.ntn_cfg.ta_info                     = sat_sw_reply->ta_info;
+    }
+    sib19.sat_switch_with_resync = sat_sw;
   }
 
-  // Propagate serving satellite ephemeris and TA-info to all neighbor NTN cells.
-  for (auto& ncell : sib19.ncells) {
-    if (!ncell.ntn_cfg) {
-      ncell.ntn_cfg.emplace();
+  // Populate each neighbor NTN cell entry and fill OCM result.
+  // Per TS 38.331 SIB19: if ntn-Config is absent, the UE reuses the previous entry's ntn-Config.
+  // Omit ntn_cfg for consecutive entries on the same satellite — ephemeris and static fields are identical.
+  for (size_t i = 0, e = cell_cfg.ncells.size(); i != e; ++i) {
+    const auto&       nc_cfg = cell_cfg.ncells[i];
+    neighbor_ntn_cell ncell;
+    ncell.carrier_freq = nc_cfg.carrier_freq;
+    ncell.phys_cell_id = nc_cfg.phys_cell_id;
+    if (ncell_replies[i].success) {
+      const bool can_inherit =
+          i > 0 && sib19.ncells.back().ntn_cfg && nc_cfg.satellite_index == cell_cfg.ncells[i - 1].satellite_index;
+      if (!can_inherit) {
+        ncell.ntn_cfg.emplace();
+        ncell.ntn_cfg->cell_specific_koffset    = nc_cfg.cell_specific_koffset;
+        ncell.ntn_cfg->ntn_ul_sync_validity_dur = nc_cfg.ntn_ul_sync_validity_dur;
+        ncell.ntn_cfg->k_mac                    = nc_cfg.k_mac;
+        ncell.ntn_cfg->polarization             = nc_cfg.polarization;
+        ncell.ntn_cfg->ta_report                = nc_cfg.ta_report;
+        ncell.ntn_cfg->epoch_time.emplace();
+        ncell.ntn_cfg->epoch_time->sfn             = epoch_slot.sfn();
+        ncell.ntn_cfg->epoch_time->subframe_number = epoch_slot.subframe_index();
+        ncell.ntn_cfg->ephemeris_info              = ncell_replies[i].ephemeris_info;
+        ncell.ntn_cfg->ta_info                     = ncell_replies[i].ta_info;
+      }
     }
-    ncell.ntn_cfg->ephemeris_info = sib19.ntn_cfg->ephemeris_info;
-    ncell.ntn_cfg->ta_info        = sib19.ntn_cfg->ta_info;
+    sib19.ncells.push_back(ncell);
   }
 
   return sib19;

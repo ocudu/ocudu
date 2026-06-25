@@ -146,14 +146,6 @@ static ocudu_ntn::ntn_assistance_info convert_ntn_config_to_assistance_info(cons
   info.polarization          = cfg.polarization;
   info.ta_report             = cfg.ta_report;
 
-  // SIB19 neighbor cells.
-  for (const auto& ncell : cfg.ncells) {
-    info.ncells.push_back(ncell);
-  }
-
-  // SIB19 tracked fields (R18 extensions).
-  info.sat_switch_with_resync = cfg.sat_switch_with_resync;
-
   // Metadata fields.
   info.epoch_sfn_offset = cfg.epoch_sfn_offset;
   info.use_state_vector = cfg.use_state_vector;
@@ -217,14 +209,42 @@ generate_ntn_configuration_manager_config(const gnb_id_t& gnb_id, span<const du_
       if (ntn_cfg.sat_switch_with_resync) {
         const auto& sat_sw = *ntn_cfg.sat_switch_with_resync;
         if (sat_sw.epoch_timestamp && sat_sw.ntn_cfg.ephemeris_info) {
-          unsigned sw_sat_idx                 = add_satellite_config(out_cfg,
+          unsigned sw_sat_idx = add_satellite_config(out_cfg,
                                                      next_satellite_idx,
                                                      sat_sw.epoch_timestamp,
                                                      *sat_sw.ntn_cfg.ephemeris_info,
                                                      sat_sw.ntn_gateway_location,
                                                      std::nullopt,
                                                      ntn_cfg.propagator_type);
-          out_cell.sat_switch_satellite_index = sw_sat_idx;
+          out_cell.sat_switch = {
+              sw_sat_idx,
+              sat_sw.t_service_start,
+              sat_sw.ssb_time_offset_sf,
+              sat_sw.ntn_cfg.ntn_ul_sync_validity_dur,
+              sat_sw.ntn_cfg.cell_specific_koffset,
+              sat_sw.ntn_cfg.k_mac,
+              sat_sw.ntn_cfg.polarization,
+              sat_sw.ntn_cfg.ta_report,
+          };
+        }
+      }
+
+      // Build neighbors' satellite (if configured).
+      // TODO: for now all neighbors use the same satellite as the serving cell.
+      for (const auto& ncell : ntn_cfg.ncells) {
+        if (ncell.ntn_cfg) {
+          ocudu_ntn::ntn_neighbor_cell_config nc_cfg{sat_idx,
+                                                     ncell.carrier_freq,
+                                                     ncell.phys_cell_id,
+                                                     ncell.ntn_cfg->cell_specific_koffset,
+                                                     ncell.ntn_cfg->ntn_ul_sync_validity_dur,
+                                                     ncell.ntn_cfg->k_mac,
+                                                     ncell.ntn_cfg->polarization,
+                                                     ncell.ntn_cfg->ta_report};
+          out_cell.ncells.push_back(nc_cfg);
+        } else {
+          ocudu_ntn::ntn_neighbor_cell_config nc_cfg{sat_idx, ncell.carrier_freq, ncell.phys_cell_id};
+          out_cell.ncells.push_back(nc_cfg);
         }
       }
 

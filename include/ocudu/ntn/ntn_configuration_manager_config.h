@@ -38,12 +38,8 @@ struct ntn_assistance_info {
   std::optional<ntn_polarization_t> polarization;
   /// Indicates if timing advance reporting is enabled.
   std::optional<bool> ta_report;
-  /// List of NTN neighbor cells including their ntn-Config, carrier frequency and PhysCellId.
-  static_vector<neighbor_ntn_cell, MAX_NOF_NTN_NEIGHBORS> ncells;
   /// NTN coverage enhancements defines parameters used to improve UE connectivity under high path-loss conditions.
   std::optional<ntn_cov_enh_t> coverage_enhancements;
-  /// Provides parameters for the target satellite required to perform satellite switch with resynchronization.
-  std::optional<sat_switch_with_resync_t> sat_switch_with_resync;
 
   /// Metadata fields (not directly in SIB19, used for SIB19 generation):
   /// Offset in SFN between SIB19 transmission and epoch time.
@@ -52,6 +48,32 @@ struct ntn_assistance_info {
   std::optional<bool> use_state_vector;
   /// Feeder link parameters for Doppler computation (backend).
   std::optional<feeder_link_info_t> feeder_link_info;
+};
+
+/// Neighbor NTN cell configuration: static (non-satellite-computed) fields only.
+/// Dynamic fields (ephemeris, ta_info, epoch_time) are filled by the generator from the orbital state.
+struct ntn_neighbor_cell_config {
+  unsigned                                 satellite_index;
+  std::optional<arfcn_t>                   carrier_freq;
+  std::optional<pci_t>                     phys_cell_id;
+  std::optional<std::chrono::milliseconds> cell_specific_koffset;
+  std::optional<unsigned>                  ntn_ul_sync_validity_dur;
+  std::optional<unsigned>                  k_mac;
+  std::optional<ntn_polarization_t>        polarization;
+  std::optional<bool>                      ta_report;
+};
+
+/// Satellite-switch configuration: static (non-satellite-computed) fields only.
+/// Dynamic fields (ephemeris, ta_info, epoch_time) are filled by the generator from the orbital state.
+struct ntn_sat_switch_config {
+  unsigned                                                   satellite_index;
+  std::optional<std::chrono::system_clock::time_point>       t_service_start;
+  std::optional<sat_switch_with_resync_t::ssb_time_offset_t> ssb_time_offset_sf;
+  std::optional<unsigned>                                    ntn_ul_sync_validity_dur;
+  std::optional<std::chrono::milliseconds>                   cell_specific_koffset;
+  std::optional<unsigned>                                    k_mac;
+  std::optional<ntn_polarization_t>                          polarization;
+  std::optional<bool>                                        ta_report;
 };
 
 /// NTN Cell configuration.
@@ -69,8 +91,10 @@ struct ntn_cell_config {
   ntn_assistance_info assistance_info;
   /// Satellite this cell is associated with.
   unsigned satellite_index = 0;
-  /// Satellite index of the sat-switch target satellite. Absent if sat-switch is not configured.
-  std::optional<unsigned> sat_switch_satellite_index;
+  /// Neighbor NTN cells listed in SIB19.
+  static_vector<ntn_neighbor_cell_config, MAX_NOF_NTN_NEIGHBORS> ncells;
+  /// Satellite-switch target configuration. Absent if sat-switch is not configured.
+  std::optional<ntn_sat_switch_config> sat_switch;
 };
 
 /// NTN Satellite configuration (orbital propagation state, shared across cells).
