@@ -4,6 +4,7 @@
 
 #include "du_high_ntn_config_cli11_schema.h"
 #include "du_high_unit_cell_ntn_config.h"
+#include "du_high_unit_ntn_satellite_config.h"
 #include "ocudu/ran/ntn.h"
 #include "ocudu/support/cli11_utils.h"
 #include "ocudu/support/config_parsers.h"
@@ -268,6 +269,12 @@ static void configure_cli11_ntn_polarization(CLI::App& app, ntn_polarization_t& 
 
 static void configure_cli11_sat_switch_with_resync(CLI::App& app, du_high_unit_sat_switch_config& sat_switch_config)
 {
+  // Optional reference to a globally-defined satellite.
+  app.add_option("--satellite_idx",
+                 sat_switch_config.satellite_idx,
+                 "Reference to a globally-defined satellite by its satellite_idx. "
+                 "Mutually exclusive with epoch_timestamp, ephemeris_info, gateway_location and ta_info.");
+
   add_timestamp_option(
       app,
       "--epoch_timestamp",
@@ -402,6 +409,12 @@ static void configure_cli11_ntn_args(CLI::App& app, du_high_unit_cell_ntn_config
       "Orbit propagator for ephemeris propagation. Allowed: rk4, keplerian.")
       ->default_str("rk4")
       ->check(CLI::IsMember({"rk4", "keplerian"}));
+
+  // Optional reference to a globally-defined satellite.
+  app.add_option("--satellite_idx",
+                 config.satellite_idx,
+                 "Reference to a globally-defined satellite by its satellite_idx. "
+                 "Mutually exclusive with epoch_timestamp, ephemeris_info, gateway_location and ta_info.");
 
   // Epoch time.
   static epoch_time_t epoch_time;
@@ -539,6 +552,57 @@ static void configure_cli11_ntn_args(CLI::App& app, du_high_unit_cell_ntn_config
       config.sat_switch_with_resync = sat_switch_config;
     }
   });
+}
+
+static void configure_cli11_ntn_satellite_args(CLI::App& app, du_high_unit_ntn_satellite_config& sat)
+{
+  app.add_option("--satellite_idx", sat.satellite_idx, "User-defined satellite index (must be unique)")->required();
+
+  add_timestamp_option(app,
+                       "--epoch_timestamp",
+                       sat.epoch_timestamp,
+                       "Epoch timestamp (Unix ms or ISO 8601: YYYY-MM-DDTHH:MM:SS[.mmm])");
+
+  app.add_option_function<std::string>(
+         "--propagator_type",
+         [&sat](const std::string& value) {
+           sat.propagator_type = (value == "keplerian") ? ocudu_ntn::orbit_propagator_type::keplerian
+                                                        : ocudu_ntn::orbit_propagator_type::rk4;
+         },
+         "Orbit propagator: rk4 or keplerian")
+      ->check(CLI::IsMember({"rk4", "keplerian"}));
+
+  add_ephemeris_subcommands(app, sat.ephemeris_info);
+
+  static geodetic_coordinates_t gateway_loc;
+  CLI::App*                     gw_subcmd = add_subcommand(app, "gateway_location", "NTN gateway geodetic coordinates");
+  configure_cli11_geodetic_coordinates(*gw_subcmd, gateway_loc);
+  gw_subcmd->parse_complete_callback([&sat]() { sat.gateway_location = gateway_loc; });
+
+  static ta_info_t ta_info_val;
+  CLI::App* ta_subcmd = add_subcommand(app, "ta_info", "TA info override (mutually exclusive with gateway_location)");
+  configure_cli11_ta_info(*ta_subcmd, ta_info_val);
+  ta_subcmd->parse_complete_callback([&sat]() { sat.ta_info = ta_info_val; });
+}
+
+void ocudu::configure_cli11_ntn_satellites_args(CLI::App&                                       app,
+                                                std::vector<du_high_unit_ntn_satellite_config>& ntn_satellites)
+{
+  add_option_cell(
+      app,
+      "--satellites",
+      [&ntn_satellites](const std::vector<std::string>& values) {
+        ntn_satellites.resize(values.size());
+        for (unsigned i = 0, e = values.size(); i != e; ++i) {
+          CLI::App subapp("NTN satellite", "satellite #" + std::to_string(i));
+          subapp.config_formatter(create_yaml_config_parser());
+          subapp.allow_config_extras(CLI::config_extras_mode::capture);
+          configure_cli11_ntn_satellite_args(subapp, ntn_satellites[i]);
+          std::istringstream ss(values[i]);
+          subapp.parse_from_stream(ss);
+        }
+      },
+      "Globally-defined NTN satellites referenced by satellite_idx in cell ntn configs");
 }
 
 void ocudu::configure_cli11_cell_ntn_args(CLI::App& app, std::optional<du_high_unit_cell_ntn_config>& cell_ntn_params)

@@ -2863,6 +2863,10 @@ void ocudu::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_pa
   CLI::App* expert_subcmd = add_subcommand(app, "expert_execution", "Expert execution configuration")->configurable();
   configure_cli11_expert_execution_args(*expert_subcmd, parsed_cfg.config.expert_execution_cfg);
 
+  // Global NTN section (shared satellite definitions referenced by satellite_idx in cells).
+  CLI::App* global_ntn_subcmd = add_subcommand(app, "ntn", "Global NTN configuration")->configurable();
+  configure_cli11_ntn_satellites_args(*global_ntn_subcmd, parsed_cfg.config.ntn_satellites);
+
   // Cell section.
   add_option_cell(
       app,
