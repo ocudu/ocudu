@@ -105,6 +105,7 @@ class shared_map_segment_pool
 
   struct alignas(slot_align) storage_slot {
     uint8_t data[slot_size];
+    storage_slot() noexcept {} // suppress value-initialisation of data[]
   };
 
   template <typename V>
