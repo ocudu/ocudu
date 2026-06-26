@@ -5,6 +5,7 @@
 #ifndef OCUDU_HAS_SCHEDTRACE
 
 #include "cell_event_tracer.h"
+#include "../config/cell_configuration.h"
 #include "ocudu/instrumentation/traces/scheduler_event_tracer.h"
 #include "ocudu/ocudulog/ocudulog.h"
 
@@ -16,18 +17,15 @@ cell_event_tracer::cell_event_tracer() :
 {
 }
 
-cell_event_tracer::cell_event_tracer(du_cell_index_t          cell_idx,
-                                     cell_event_channel&      ev_queue_,
-                                     const bwp_configuration& dl_bwp,
-                                     const bwp_configuration& ul_bwp) :
-  cell_index(cell_idx), ev_queue(&ev_queue_), logger(ocudulog::fetch_basic_logger("SCHED"))
+cell_event_tracer::cell_event_tracer(const ocudu::cell_configuration& cell_cfg, cell_event_channel& ev_queue_) :
+  cell_index(cell_cfg.cell_index), ev_queue(&ev_queue_), logger(ocudulog::fetch_basic_logger("SCHED"))
 {
   (void)cell_index;
 }
 
 cell_event_tracer::~cell_event_tracer() {}
 
-void cell_event_tracer::on_cell_start(const bwp_configuration& dl_bwp, const bwp_configuration& ul_bwp) {}
+void cell_event_tracer::on_cell_start(const ocudu::cell_configuration& cell_cfg) {}
 
 void cell_event_tracer::on_scheduler_result_impl(slot_point                sl,
                                                  const sched_result&       result,
@@ -40,14 +38,12 @@ void cell_event_tracer::on_event_impl(const harq_ack_event& /*unused*/) {}
 void cell_event_tracer::on_event_impl(const csi_report_event& /*unused*/) {}
 void cell_event_tracer::on_event_impl(const sr_event& /*unused*/) {}
 
-std::unique_ptr<cell_event_tracer> ocudu::schedtrace::create_cell_tracer(du_cell_index_t          cell_idx,
-                                                                         const bwp_configuration& dl_bwp,
-                                                                         const bwp_configuration& ul_bwp)
+std::unique_ptr<cell_event_tracer> ocudu::schedtrace::create_cell_tracer(const ocudu::cell_configuration& cell_cfg)
 {
   return std::make_unique<cell_event_tracer>();
 }
 
-void schedtrace::init_tracer(const std::string&        base_path,
+void schedtrace::init_tracer(const std::string&        dir_path,
                              std::chrono::milliseconds flush_period,
                              timer_manager&            timers,
                              task_executor&            pool_executor)

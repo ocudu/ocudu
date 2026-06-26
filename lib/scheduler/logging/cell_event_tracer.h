@@ -5,14 +5,13 @@
 #pragma once
 
 #include "ocudu/ocudulog/logger.h"
-#include "ocudu/ran/du_types.h"
 #include "ocudu/ran/slot_point.h"
 #include "ocudu/scheduler/input/uci_inputs.h"
 #include "ocudu/support/rtsan.h"
 
 namespace ocudu {
 
-struct bwp_configuration;
+class cell_configuration;
 struct rach_indication_message;
 struct sched_result;
 
@@ -26,10 +25,7 @@ class cell_event_tracer
 {
 public:
   cell_event_tracer();
-  cell_event_tracer(du_cell_index_t          cell_idx,
-                    cell_event_channel&      ev_queue,
-                    const bwp_configuration& dl_bwp,
-                    const bwp_configuration& ul_bwp);
+  cell_event_tracer(const ocudu::cell_configuration& cell_cfg, cell_event_channel& ev_queue);
   cell_event_tracer(const cell_event_tracer&) = delete;
   cell_event_tracer(cell_event_tracer&&)      = delete;
   ~cell_event_tracer();
@@ -61,7 +57,7 @@ private:
   bool enabled() const { return ev_queue != nullptr; }
 
   /// Called when the cell starts.
-  void on_cell_start(const bwp_configuration& dl_bwp, const bwp_configuration& ul_bwp);
+  void on_cell_start(const ocudu::cell_configuration& cell_cfg);
 
   /// Called when the scheduler makes a decision for a given cell and slot.
   void on_scheduler_result_impl(slot_point sl, const sched_result& result, std::chrono::microseconds slot_latency);
@@ -92,8 +88,7 @@ private:
 /// \param dl_bwp Initial DL BWP configuration of the cell.
 /// \param ul_bwp Initial UL BWP configuration of the cell.
 /// \return Created producer.
-std::unique_ptr<cell_event_tracer>
-create_cell_tracer(du_cell_index_t cell_idx, const bwp_configuration& dl_bwp, const bwp_configuration& ul_bwp);
+std::unique_ptr<cell_event_tracer> create_cell_tracer(const ocudu::cell_configuration& cell_cfg);
 
 } // namespace schedtrace
 } // namespace ocudu
