@@ -171,24 +171,46 @@ static unsigned add_satellite_config(ocudu_ntn::ntn_configuration_manager_config
 }
 
 static ocudu_ntn::ntn_configuration_manager_config
-generate_ntn_configuration_manager_config(const gnb_id_t& gnb_id, span<const du_high_unit_cell_config> du_hi_cells)
+generate_ntn_configuration_manager_config(const gnb_id_t&                                       gnb_id,
+                                          span<const du_high_unit_cell_config>                  du_hi_cells,
+                                          const std::vector<du_high_unit_ntn_satellite_config>& ntn_satellites)
 {
   ocudu_ntn::ntn_configuration_manager_config out_cfg            = {};
   unsigned                                    next_satellite_idx = 0;
+
+  // Add globally-defined satellites first. Use user-defined satellite_idx as internal satellite_index.
+  for (const auto& global_sat : ntn_satellites) {
+    auto& sat                = out_cfg.satellites.emplace_back();
+    sat.satellite_index      = global_sat.satellite_idx;
+    sat.epoch_timestamp      = global_sat.epoch_timestamp;
+    sat.ephemeris_info       = global_sat.ephemeris_info;
+    sat.ntn_gateway_location = global_sat.gateway_location;
+    sat.ta_info              = global_sat.ta_info;
+    sat.propagator_type      = global_sat.propagator_type;
+    // Ensure auto-assigned indices for inline cells don't collide with global ones.
+    if (global_sat.satellite_idx >= next_satellite_idx) {
+      next_satellite_idx = global_sat.satellite_idx + 1;
+    }
+  }
 
   for (unsigned phy_sector_idx = 0; phy_sector_idx != du_hi_cells.size(); ++phy_sector_idx) {
     const auto& cell_cfg = du_hi_cells[phy_sector_idx].cell;
     if (cell_cfg.ntn_cfg) {
       const auto& ntn_cfg = *cell_cfg.ntn_cfg;
 
-      // Build satellite config (1-to-1 mapping for now).
-      unsigned sat_idx = add_satellite_config(out_cfg,
-                                              next_satellite_idx,
-                                              ntn_cfg.epoch_timestamp,
-                                              ntn_cfg.ephemeris_info,
-                                              ntn_cfg.ntn_gateway_location,
-                                              ntn_cfg.ta_info,
-                                              ntn_cfg.propagator_type);
+      // Build satellite config: reuse global satellite if satellite_idx is set, else create inline (1-to-1).
+      unsigned sat_idx;
+      if (ntn_cfg.satellite_idx) {
+        sat_idx = *ntn_cfg.satellite_idx;
+      } else {
+        sat_idx = add_satellite_config(out_cfg,
+                                       next_satellite_idx,
+                                       ntn_cfg.epoch_timestamp,
+                                       ntn_cfg.ephemeris_info,
+                                       ntn_cfg.ntn_gateway_location,
+                                       ntn_cfg.ta_info,
+                                       ntn_cfg.propagator_type);
+      }
 
       // Build cell config.
       auto&                      out_cell = out_cfg.cells.emplace_back();
@@ -209,25 +231,27 @@ generate_ntn_configuration_manager_config(const gnb_id_t& gnb_id, span<const du_
       // Build sat-switch target satellite (if configured).
       if (ntn_cfg.sat_switch_with_resync) {
         const auto& sat_sw = *ntn_cfg.sat_switch_with_resync;
-        if (sat_sw.epoch_timestamp && sat_sw.ephemeris_info) {
-          unsigned sw_sat_idx = add_satellite_config(out_cfg,
-                                                     next_satellite_idx,
-                                                     sat_sw.epoch_timestamp,
-                                                     *sat_sw.ephemeris_info,
-                                                     sat_sw.gateway_location,
-                                                     std::nullopt,
-                                                     ntn_cfg.propagator_type);
-          out_cell.sat_switch = {
-              sw_sat_idx,
-              sat_sw.t_service_start,
-              sat_sw.ssb_time_offset_sf,
-              sat_sw.ntn_ul_sync_validity_dur,
-              sat_sw.cell_specific_koffset,
-              sat_sw.k_mac,
-              sat_sw.polarization,
-              sat_sw.ta_report,
-          };
+        unsigned    sw_sat_idx;
+        if (sat_sw.satellite_idx) {
+          sw_sat_idx = *sat_sw.satellite_idx;
+        } else {
+          sw_sat_idx = add_satellite_config(out_cfg,
+                                            next_satellite_idx,
+                                            sat_sw.epoch_timestamp,
+                                            *sat_sw.ephemeris_info,
+                                            sat_sw.gateway_location,
+                                            std::nullopt,
+                                            ntn_cfg.propagator_type);
         }
+
+        out_cell.sat_switch = {sw_sat_idx,
+                               sat_sw.t_service_start,
+                               sat_sw.ssb_time_offset_sf,
+                               sat_sw.ntn_ul_sync_validity_dur,
+                               sat_sw.cell_specific_koffset,
+                               sat_sw.k_mac,
+                               sat_sw.polarization,
+                               sat_sw.ta_report};
       }
 
       // Build neighbors' satellite (if configured).
@@ -430,7 +454,7 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
 
   // Create the NTN Configuration Manager if at least one NTN cell is present.
   ocudu_ntn::ntn_configuration_manager_config ntn_manager_config =
-      generate_ntn_configuration_manager_config(du_hi.gnb_id, du_hi.cells_cfg);
+      generate_ntn_configuration_manager_config(du_hi.gnb_id, du_hi.cells_cfg, du_hi.ntn_satellites);
 
   if (not ntn_manager_config.cells.empty()) {
     o_du.ntn_configurator_manager =

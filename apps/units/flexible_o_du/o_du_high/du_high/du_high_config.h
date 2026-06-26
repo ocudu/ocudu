@@ -6,6 +6,7 @@
 
 #include "apps/helpers/metrics/metrics_config.h"
 #include "ntn/du_high_unit_cell_ntn_config.h"
+#include "ntn/du_high_unit_ntn_satellite_config.h"
 #include "ocudu/ocudulog/logger.h"
 #include "ocudu/ran/band_helper.h"
 #include "ocudu/ran/bs_channel_bandwidth.h"
@@ -1408,6 +1409,8 @@ struct du_high_unit_config {
   du_high_unit_expert_execution_config expert_execution_cfg;
   /// SRB configuration.
   std::map<srb_id_t, du_high_unit_srb_config> srb_cfg;
+  /// Globally-defined satellites, referenced by satellite_idx in per-cell NTN configs.
+  std::vector<du_high_unit_ntn_satellite_config> ntn_satellites;
 
   /// Returns true if testmode is enabled, false otherwise.
   bool is_testmode_enabled() const { return test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI; }

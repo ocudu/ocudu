@@ -92,6 +92,9 @@ struct du_high_unit_cell_ntn_config {
   std::optional<du_high_unit_sat_switch_config> sat_switch_with_resync;
   /// List of NTN neighbor cells.
   std::vector<neighbor_ntn_cell> ncells;
+  /// Reference to a globally-defined satellite by user-facing satellite_idx.
+  /// When set, ephemeris_info, epoch_timestamp, ntn_gateway_location and ta_info must not be provided.
+  std::optional<unsigned> satellite_idx;
   /// Orbit propagator to use for ephemeris propagation. Allowed values: "rk4", "keplerian".
   ocudu_ntn::orbit_propagator_type propagator_type = ocudu_ntn::orbit_propagator_type::rk4;
 };
