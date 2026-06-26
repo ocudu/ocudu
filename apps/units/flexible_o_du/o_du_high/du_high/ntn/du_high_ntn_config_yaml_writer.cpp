@@ -4,6 +4,8 @@
 
 #include "du_high_ntn_config_yaml_writer.h"
 #include "du_high_unit_cell_ntn_config.h"
+#include "du_high_unit_ntn_satellite_config.h"
+#include <vector>
 
 using namespace ocudu;
 
@@ -102,6 +104,10 @@ void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_
 {
   auto ntn_node = node["ntn"];
 
+  if (config.satellite_idx) {
+    ntn_node["satellite_idx"] = *config.satellite_idx;
+  }
+
   ntn_node["cell_specific_koffset"] = config.cell_specific_koffset.count();
 
   if (config.ntn_ul_sync_validity_dur) {
@@ -193,6 +199,9 @@ void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_
     const auto& sw = *config.sat_switch_with_resync;
     YAML::Node  sat_sw_node;
 
+    if (sw.satellite_idx) {
+      sat_sw_node["satellite_idx"] = *sw.satellite_idx;
+    }
     if (sw.epoch_timestamp) {
       sat_sw_node["epoch_timestamp"] = timepoint_to_iso8601(*sw.epoch_timestamp);
     }
@@ -224,4 +233,45 @@ void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_
 
     ntn_node["sat_switch_with_resync"] = sat_sw_node;
   }
+}
+
+void ocudu::fill_ntn_satellites_in_yaml_schema(YAML::Node&                                           node,
+                                               const std::vector<du_high_unit_ntn_satellite_config>& satellites)
+{
+  if (satellites.empty()) {
+    return;
+  }
+
+  auto       ntn_node = node["ntn"];
+  YAML::Node sats_node;
+
+  for (const auto& sat : satellites) {
+    YAML::Node sat_node;
+    sat_node["satellite_idx"] = sat.satellite_idx;
+
+    if (sat.epoch_timestamp) {
+      sat_node["epoch_timestamp"] = timepoint_to_iso8601(*sat.epoch_timestamp);
+    }
+
+    if (const auto* ecef = std::get_if<ecef_coordinates_t>(&sat.ephemeris_info)) {
+      if (ecef->position_x != 0 || ecef->position_y != 0 || ecef->position_z != 0 || ecef->velocity_vx != 0 ||
+          ecef->velocity_vy != 0 || ecef->velocity_vz != 0) {
+        sat_node["ephemeris_info_ecef"] = build_ecef_node(*ecef);
+      }
+    } else if (const auto* orb = std::get_if<orbital_coordinates_t>(&sat.ephemeris_info)) {
+      sat_node["ephemeris_orbital"] = build_orbital_node(*orb);
+    }
+
+    if (sat.gateway_location) {
+      sat_node["gateway_location"] = build_geodetic_node(*sat.gateway_location);
+    }
+
+    if (sat.ta_info) {
+      sat_node["ta_info"] = build_ta_info_node(*sat.ta_info);
+    }
+
+    sats_node.push_back(sat_node);
+  }
+
+  ntn_node["satellites"] = sats_node;
 }

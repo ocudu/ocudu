@@ -893,4 +893,5 @@ void ocudu::fill_du_high_config_in_yaml_schema(YAML::Node& node, const du_high_p
   }
   build_du_high_cells_section(node, config.cells_cfg);
   build_du_high_sbr_section(node, config.srb_cfg);
+  fill_ntn_satellites_in_yaml_schema(node, config.ntn_satellites);
 }
