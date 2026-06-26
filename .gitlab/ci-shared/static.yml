@@ -28,7 +28,7 @@ include:
       check_headers() {
         EXIT_CODE=0
         reuse --version || EXIT_CODE=$?
-        reuse lint || EXIT_CODE=$?
+        reuse --no-multiprocessing lint || EXIT_CODE=$?
         annotate_headers.sh -s || EXIT_CODE=$?
         is-pristine-repo.sh || EXIT_CODE=$?
         exit $EXIT_CODE
