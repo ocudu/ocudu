@@ -16,6 +16,7 @@
 #include "ocudu/rlc/rlc_config.h"
 #include "ocudu/support/math/math_utils.h"
 #include <algorithm>
+#include <set>
 
 using namespace ocudu;
 
@@ -440,14 +441,86 @@ static bool validate_pusch_cell_unit_config(const du_high_unit_pusch_config& con
   return true;
 }
 
+static bool validate_global_ntn_config(const std::vector<du_high_unit_ntn_satellite_config>& ntn_satellites)
+{
+  bool               valid = true;
+  std::set<unsigned> seen_indices;
+
+  for (const auto& sat : ntn_satellites) {
+    if (!seen_indices.insert(sat.satellite_idx).second) {
+      fmt::print("ntn.satellites: duplicate satellite_idx {}.\n", sat.satellite_idx);
+      valid = false;
+    }
+    if (sat.gateway_location && sat.ta_info) {
+      fmt::print("ntn.satellites[{}]: gateway_location and ta_info are mutually exclusive.\n", sat.satellite_idx);
+      valid = false;
+    }
+    if (const auto* ecef = std::get_if<ecef_coordinates_t>(&sat.ephemeris_info)) {
+      if (ecef->position_x == 0 && ecef->position_y == 0 && ecef->position_z == 0 && ecef->velocity_vx == 0 &&
+          ecef->velocity_vy == 0 && ecef->velocity_vz == 0) {
+        fmt::print("ntn.satellites[{}]: ephemeris_info must be provided.\n", sat.satellite_idx);
+        valid = false;
+      }
+    }
+  }
+  return valid;
+}
+
+static bool validate_ntn_satellite_refs(const std::vector<du_high_unit_cell_config>&          cells,
+                                        const std::vector<du_high_unit_ntn_satellite_config>& ntn_satellites)
+{
+  std::set<unsigned> available;
+  for (const auto& sat : ntn_satellites) {
+    available.insert(sat.satellite_idx);
+  }
+
+  bool valid = true;
+  for (unsigned i = 0; i < cells.size(); ++i) {
+    const auto& cell_cfg = cells[i].cell;
+    if (!cell_cfg.ntn_cfg) {
+      continue;
+    }
+    const auto& ntn = *cell_cfg.ntn_cfg;
+    if (ntn.satellite_idx && available.count(*ntn.satellite_idx) == 0) {
+      fmt::print("cells[{}].ntn.satellite_idx={} not found in ntn.satellites.\n", i, *ntn.satellite_idx);
+      valid = false;
+    }
+    if (ntn.sat_switch_with_resync && ntn.sat_switch_with_resync->satellite_idx) {
+      unsigned sw_idx = *ntn.sat_switch_with_resync->satellite_idx;
+      if (available.count(sw_idx) == 0) {
+        fmt::print("cells[{}].ntn.sat_switch_with_resync.satellite_idx={} not found in ntn.satellites.\n", i, sw_idx);
+        valid = false;
+      }
+    }
+  }
+  return valid;
+}
+
 static bool validate_ntn_config(const du_high_unit_cell_ntn_config& ntn_cfg)
 {
   bool valid = true;
 
-  if (const auto* ecef = std::get_if<ecef_coordinates_t>(&ntn_cfg.ephemeris_info)) {
-    if (ecef->position_x == 0 and ecef->position_y == 0 and ecef->position_z == 0 and ecef->velocity_vx == 0 and
-        ecef->velocity_vy == 0 and ecef->velocity_vz == 0) {
-      fmt::print("Ephemeris info has to be provided (in ECEF State Vector or ECI Orbital Elements format).\n");
+  if (!ntn_cfg.satellite_idx) {
+    // No global satellite reference: require inline ephemeris.
+    if (const auto* ecef = std::get_if<ecef_coordinates_t>(&ntn_cfg.ephemeris_info)) {
+      if (ecef->position_x == 0 and ecef->position_y == 0 and ecef->position_z == 0 and ecef->velocity_vx == 0 and
+          ecef->velocity_vy == 0 and ecef->velocity_vz == 0) {
+        fmt::print("Ephemeris info has to be provided (in ECEF State Vector or ECI Orbital Elements format).\n");
+        valid = false;
+      }
+    }
+  } else {
+    // satellite_idx set: forbid inline satellite data.
+    if (ntn_cfg.epoch_timestamp) {
+      fmt::print("ntn: satellite_idx and epoch_timestamp are mutually exclusive.\n");
+      valid = false;
+    }
+    if (ntn_cfg.ntn_gateway_location) {
+      fmt::print("ntn: satellite_idx and gateway_location are mutually exclusive.\n");
+      valid = false;
+    }
+    if (ntn_cfg.ta_info) {
+      fmt::print("ntn: satellite_idx and ta_info are mutually exclusive.\n");
       valid = false;
     }
   }
@@ -460,9 +533,41 @@ static bool validate_ntn_config(const du_high_unit_cell_ntn_config& ntn_cfg)
     valid = false;
   }
 
-  if (ntn_cfg.feeder_link_info and not ntn_cfg.ntn_gateway_location and not ntn_cfg.ta_info) {
+  if (not ntn_cfg.satellite_idx and ntn_cfg.feeder_link_info and not ntn_cfg.ntn_gateway_location and
+      not ntn_cfg.ta_info) {
     fmt::print("feeder_link requires gateway_location or ta_info to be set.\n");
     valid = false;
+  }
+
+  if (ntn_cfg.sat_switch_with_resync) {
+    const auto& sw = *ntn_cfg.sat_switch_with_resync;
+    if (sw.satellite_idx) {
+      if (sw.epoch_timestamp) {
+        fmt::print("sat_switch_with_resync: satellite_idx and epoch_timestamp are mutually exclusive.\n");
+        valid = false;
+      }
+      if (sw.gateway_location) {
+        fmt::print("sat_switch_with_resync: satellite_idx and gateway_location are mutually exclusive.\n");
+        valid = false;
+      }
+      if (sw.ta_info) {
+        fmt::print("sat_switch_with_resync: satellite_idx and ta_info are mutually exclusive.\n");
+        valid = false;
+      }
+      if (sw.ephemeris_info) {
+        fmt::print("sat_switch_with_resync: satellite_idx and ephemeris_info are mutually exclusive.\n");
+        valid = false;
+      }
+    } else {
+      if (!sw.epoch_timestamp) {
+        fmt::print("sat_switch_with_resync: epoch_timestamp is required when satellite_idx is not set.\n");
+        valid = false;
+      }
+      if (!sw.ephemeris_info) {
+        fmt::print("sat_switch_with_resync: ephemeris_info is required when satellite_idx is not set.\n");
+        valid = false;
+      }
+    }
   }
 
   return valid;
@@ -1801,6 +1906,14 @@ bool ocudu::validate_du_high_config(const du_high_unit_config& config)
   }
 
   if (!validate_pcap_configs(config)) {
+    return false;
+  }
+
+  if (!validate_global_ntn_config(config.ntn_satellites)) {
+    return false;
+  }
+
+  if (!validate_ntn_satellite_refs(config.cells_cfg, config.ntn_satellites)) {
     return false;
   }
 
