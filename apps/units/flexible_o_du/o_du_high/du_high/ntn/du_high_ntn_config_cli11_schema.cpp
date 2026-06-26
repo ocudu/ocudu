@@ -380,56 +380,6 @@ static void configure_cli11_sat_switch_with_resync(CLI::App& app, du_high_unit_s
   app.add_option("--ta_report", sat_switch_config.ta_report, "Enable TA reporting after switch");
 }
 
-void ocudu::configure_cli11_ntn_config_args(CLI::App& app, ntn_config& config)
-{
-  static epoch_time_t epoch_time;
-  CLI::App*           epoch_time_subcmd = add_subcommand(app, "epoch_time", "Epoch time for the NTN assistance info");
-  configure_cli11_epoch_time(*epoch_time_subcmd, epoch_time);
-  epoch_time_subcmd->parse_complete_callback([&]() {
-    if (app.get_subcommand("epoch_time")->count() != 0) {
-      config.epoch_time = epoch_time;
-    }
-  });
-
-  app.add_option_function<unsigned>(
-         "--ntn_ul_sync_validity_dur",
-         [&config](unsigned value) { config.ntn_ul_sync_validity_dur = value; },
-         "An UL sync validity duration")
-      ->check(CLI::IsMember({5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 120, 180, 240, 900}));
-
-  app.add_option_function<unsigned>(
-         "--cell_specific_koffset",
-         [&config](unsigned value) { config.cell_specific_koffset = std::chrono::milliseconds(value); },
-         "Cell-specific k-offset to be used for NTN [ms].")
-      ->check(CLI::Range(1U, 1023U));
-
-  static ta_info_t ta_info;
-  CLI::App*        ta_info_subcmd = add_subcommand(app, "ta_info", "TA Info for the NTN assistance information");
-  configure_cli11_ta_info(*ta_info_subcmd, ta_info);
-  ta_info_subcmd->parse_complete_callback([&]() {
-    if (app.get_subcommand("ta_info")->count() != 0) {
-      config.ta_info = ta_info;
-    }
-  });
-
-  static ntn_polarization_t polarization;
-  CLI::App*                 polarization_subcmd =
-      add_subcommand(app, "polarization", "Polarization information for downlink/uplink transmission");
-  configure_cli11_ntn_polarization(*polarization_subcmd, polarization);
-  polarization_subcmd->parse_complete_callback([&]() {
-    if (app.get_subcommand("polarization")->count() != 0) {
-      config.polarization = polarization;
-    }
-  });
-
-  add_ephemeris_subcommands(app, config.ephemeris_info);
-
-  app.add_option_function<bool>(
-      "--ta_report",
-      [&config](bool value) { config.ta_report = value; },
-      "When this field is included in SIB19, it indicates reporting of timing advanced is enabled");
-}
-
 static void configure_cli11_ntn_args(CLI::App& app, du_high_unit_cell_ntn_config& config)
 {
   add_option(
