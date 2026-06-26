@@ -13,6 +13,7 @@ set(SOURCES
   rlc_rx_am_entity.cpp
   rlc_rx_tm_entity.cpp
   rlc_rx_um_entity.cpp
+  rlc_window_seg_pools.cpp
 )
 
 add_library(ocudu_rlc STATIC ${SOURCES})

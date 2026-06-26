@@ -41,7 +41,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(gnb_du_id_t                          gnb_du_i
   retx_queue(window_size(to_number(cfg.sn_field_length))),
   mod(cardinality(to_number(cfg.sn_field_length))),
   am_window_size(window_size(to_number(cfg.sn_field_length))),
-  tx_window(logger, window_size(to_number(cfg.sn_field_length))),
+  tx_window(logger, window_size(to_number(cfg.sn_field_length)), get_rlc_tx_am_window_seg_pool()),
   pdu_recycler(window_size(to_number(cfg.sn_field_length)), logger),
   head_min_size(rlc_am_pdu_header_min_size(cfg.sn_field_length)),
   head_max_size(rlc_am_pdu_header_max_size(cfg.sn_field_length)),
@@ -236,19 +236,26 @@ size_t rlc_tx_am_entity::build_new_pdu(span<uint8_t> rlc_pdu_buf)
     return 0;
   }
 
-  // Read new SDU from TX queue
+  // Insert newly assigned SN into window. On failure return without pulling anything from SDU queue.
+  if (!tx_window.add_sn(st.tx_next)) {
+    logger.log_warning("Cannot build data PDU, tx_window segment pool is exhausted. grant_len={}", grant_len);
+    return 0;
+  }
+
+  // Read new SDU from TX queue.
   rlc_sdu                         sdu;
   rlc_sdu_queue_lockfree::state_t queue_state = sdu_queue.get_state();
   logger.log_debug("Reading SDU from sdu_queue. {}", queue_state);
   if (not sdu_queue.read(sdu)) {
     logger.log_debug("SDU queue empty. grant_len={}", grant_len);
+    // Remove the newly added SN from window.
+    tx_window.remove_sn(st.tx_next);
     return 0;
   }
   logger.log_debug("Read SDU. sn={} pdcp_sn={} sdu_len={}", st.tx_next, sdu.pdcp_sn, sdu.buf.length());
 
-  // insert newly assigned SN into window and use reference for in-place operations
-  // NOTE: from now on, we can't return from this function anymore before increasing tx_next
-  rlc_tx_am_sdu_info& sdu_info = tx_window.add_sn(st.tx_next);
+  // Fill the window element.
+  rlc_tx_am_sdu_info& sdu_info = tx_window[st.tx_next];
   sdu_info.sdu                 = std::move(sdu.buf); // Move SDU into TX window SDU info
   sdu_info.is_retx             = sdu.is_retx;
   sdu_info.pdcp_sn             = sdu.pdcp_sn;

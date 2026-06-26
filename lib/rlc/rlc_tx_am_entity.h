@@ -10,8 +10,9 @@
 #include "rlc_retx_queue.h"
 #include "rlc_sdu_queue_lockfree.h"
 #include "rlc_tx_entity.h"
+#include "rlc_window_seg_pools.h"
 #include "ocudu/support/executors/task_executor.h"
-#include "ocudu/support/sdu_window.h"
+#include "ocudu/support/segmented_sdu_window.h"
 #include "ocudu/support/timers.h"
 #include "fmt/format.h"
 
@@ -107,7 +108,7 @@ private:
   const uint32_t am_window_size;
 
   /// TX window
-  sdu_window<rlc_tx_am_sdu_info, rlc_bearer_logger> tx_window;
+  segmented_sdu_window<rlc_tx_am_sdu_info, rlc_tx_am_window_seg_size, rlc_bearer_logger> tx_window;
 
   /// Recycler for discarded PDUs (from tx_window) that shall be deleted by a different executor off the critical path
   rlc_pdu_recycler pdu_recycler;

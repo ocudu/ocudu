@@ -7,9 +7,10 @@
 #include "rlc_am_interconnect.h"
 #include "rlc_am_pdu.h"
 #include "rlc_rx_entity.h"
+#include "rlc_window_seg_pools.h"
 #include "ocudu/adt/expected.h"
 #include "ocudu/support/executors/task_executor.h"
-#include "ocudu/support/sdu_window.h"
+#include "ocudu/support/segmented_sdu_window.h"
 #include "ocudu/support/timers.h"
 #include "fmt/format.h"
 #include <atomic>
@@ -92,7 +93,7 @@ private:
   const uint32_t am_window_size;
 
   /// Rx window
-  sdu_window<rlc_rx_am_sdu_info, rlc_bearer_logger> rx_window;
+  segmented_sdu_window<rlc_rx_am_sdu_info, rlc_rx_am_um_shared_window_seg_size, rlc_bearer_logger> rx_window;
   /// Indicates the rx_window has not been changed, i.e. no need to rebuild status report.
   static constexpr bool rx_window_not_changed = false;
   /// Indicates the rx_window has been changed, i.e. need to rebuild status report.
