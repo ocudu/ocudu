@@ -8,8 +8,6 @@
 
 namespace ocudu {
 
-struct ntn_config;
-
 namespace ocudu_ntn {
 
 class ntn_configuration_manager;
