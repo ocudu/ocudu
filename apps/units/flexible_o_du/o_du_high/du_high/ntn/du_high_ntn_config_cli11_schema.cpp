@@ -93,7 +93,9 @@ configure_cli11_geodetic_coordinates(CLI::App& app, geodetic_coordinates_t& loca
   }
 }
 
-static void configure_cli11_ncells(CLI::App& app, std::vector<neighbor_ntn_cell>& ncells)
+static void configure_cli11_ntn_neighbor_cell_args(CLI::App& app, du_high_unit_ntn_neighbor_cell_config& ncell);
+
+static void configure_cli11_ncells(CLI::App& app, std::vector<du_high_unit_ntn_neighbor_cell_config>& ncells)
 {
   add_option_cell(
       app,
@@ -107,25 +109,12 @@ static void configure_cli11_ncells(CLI::App& app, std::vector<neighbor_ntn_cell>
           CLI::App subapp("NTN neighbor cell", "NTN neighbor cell, item #" + std::to_string(i));
           subapp.config_formatter(create_yaml_config_parser());
           subapp.allow_config_extras(CLI::config_extras_mode::capture);
-          unsigned   pci_val     = 0;
-          unsigned   carrier_val = 0;
-          ntn_config ntn_cfg;
-          subapp.add_option("--pci", pci_val, "Physical Cell ID")->check(CLI::Range(0, static_cast<int>(MAX_PCI)));
-          subapp.add_option("--carrier_freq", carrier_val, "Carrier frequency (NR-ARFCN)")
-              ->check(CLI::Range(0U, 3279165U));
-          configure_cli11_ntn_config_args(subapp, ntn_cfg);
+          configure_cli11_ntn_neighbor_cell_args(subapp, ncells[i]);
           std::istringstream ss(values[i]);
           subapp.parse_from_stream(ss);
-          if (subapp["--pci"]->count() != 0U) {
-            ncells[i].phys_cell_id = static_cast<pci_t>(pci_val);
-          }
-          if (subapp["--carrier_freq"]->count() != 0U) {
-            ncells[i].carrier_freq = arfcn_t{carrier_val};
-          }
-          ncells[i].ntn_cfg = ntn_cfg;
         }
       },
-      "List of NTN neighbor cells (pci and carrier_freq)");
+      "List of NTN neighbor cells");
 }
 
 static void configure_cli11_epoch_time(CLI::App& app, epoch_time_t& epoch_time)
@@ -265,6 +254,59 @@ static void configure_cli11_ntn_polarization(CLI::App& app, ntn_polarization_t& 
       },
       "Polarization information for downlink transmission on service link")
       ->check(CLI::IsMember({"lhcp", "rhcp", "linear"}, CLI::ignore_case));
+}
+
+static void configure_cli11_ntn_neighbor_cell_args(CLI::App& app, du_high_unit_ntn_neighbor_cell_config& ncell)
+{
+  app.add_option("--satellite_idx",
+                 ncell.satellite_idx,
+                 "Reference to a globally-defined satellite. "
+                 "Mutually exclusive with epoch_timestamp, ephemeris_info, gateway_location and ta_info.");
+
+  add_timestamp_option(app,
+                       "--epoch_timestamp",
+                       ncell.epoch_timestamp,
+                       "Epoch timestamp (Unix ms or ISO 8601: YYYY-MM-DDTHH:MM:SS[.mmm])");
+
+  add_ephemeris_subcommands(app, ncell.ephemeris_info);
+
+  static geodetic_coordinates_t gateway_loc;
+  CLI::App*                     gw_subcmd = add_subcommand(app, "gateway_location", "NTN gateway geodetic coordinates");
+  configure_cli11_geodetic_coordinates(*gw_subcmd, gateway_loc);
+  gw_subcmd->parse_complete_callback([&ncell]() { ncell.gateway_location = gateway_loc; });
+
+  static ta_info_t ta_info_val;
+  CLI::App*        ta_subcmd = add_subcommand(app, "ta_info", "TA info for this neighbor satellite");
+  configure_cli11_ta_info(*ta_subcmd, ta_info_val);
+  ta_subcmd->parse_complete_callback([&ncell]() { ncell.ta_info = ta_info_val; });
+
+  app.add_option_function<unsigned>(
+         "--pci", [&ncell](unsigned val) { ncell.phys_cell_id = static_cast<pci_t>(val); }, "Physical Cell ID")
+      ->check(CLI::Range(0, static_cast<int>(MAX_PCI)));
+
+  app.add_option_function<unsigned>(
+         "--carrier_freq",
+         [&ncell](unsigned val) { ncell.carrier_freq = arfcn_t{val}; },
+         "Carrier frequency (NR-ARFCN)")
+      ->check(CLI::Range(0U, 3279165U));
+
+  app.add_option_function<unsigned>(
+         "--cell_specific_koffset",
+         [&ncell](unsigned value) { ncell.cell_specific_koffset = std::chrono::milliseconds(value); },
+         "Cell-specific k-offset [ms]")
+      ->check(CLI::Range(1U, 1023U));
+
+  app.add_option("--ntn_ul_sync_validity_dur", ncell.ntn_ul_sync_validity_dur, "UL sync validity duration [s]")
+      ->check(CLI::IsMember({5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 120, 180, 240, 900}));
+
+  app.add_option("--k_mac", ncell.k_mac, "K_mac offset");
+
+  static ntn_polarization_t polarization;
+  CLI::App*                 pol_subcmd = add_subcommand(app, "polarization", "Polarization for this neighbor");
+  configure_cli11_ntn_polarization(*pol_subcmd, polarization);
+  pol_subcmd->parse_complete_callback([&ncell]() { ncell.polarization = polarization; });
+
+  app.add_option("--ta_report", ncell.ta_report, "Enable TA reporting");
 }
 
 static void configure_cli11_sat_switch_with_resync(CLI::App& app, du_high_unit_sat_switch_config& sat_switch_config)

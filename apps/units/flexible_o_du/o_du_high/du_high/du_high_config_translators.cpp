@@ -276,7 +276,19 @@ static sib19_info create_sib19_info(const du_high_unit_cell_ntn_config& config)
   }
 
   for (const auto& ncell : config.ncells) {
-    sib19.ncells.push_back(ncell);
+    neighbor_ntn_cell ntn_ncell;
+    ntn_ncell.phys_cell_id = ncell.phys_cell_id;
+    ntn_ncell.carrier_freq = ncell.carrier_freq;
+    ntn_config ncell_ntn_cfg;
+    ncell_ntn_cfg.cell_specific_koffset    = ncell.cell_specific_koffset;
+    ncell_ntn_cfg.ntn_ul_sync_validity_dur = ncell.ntn_ul_sync_validity_dur;
+    ncell_ntn_cfg.k_mac                    = ncell.k_mac;
+    ncell_ntn_cfg.polarization             = ncell.polarization;
+    ncell_ntn_cfg.ta_report                = ncell.ta_report;
+    ncell_ntn_cfg.ta_info                  = ncell.ta_info;
+    ncell_ntn_cfg.ephemeris_info           = ncell.ephemeris_info;
+    ntn_ncell.ntn_cfg                      = ncell_ntn_cfg;
+    sib19.ncells.push_back(ntn_ncell);
   }
 
   return sib19;

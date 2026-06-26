@@ -13,6 +13,31 @@
 
 namespace ocudu {
 
+/// Application-level per-neighbor NTN cell configuration.
+/// satellite_idx is mutually exclusive with inline ephemeris fields (epoch_timestamp, ephemeris_info,
+/// gateway_location, ta_info). If none of these are set, the serving cell's satellite is reused.
+struct du_high_unit_ntn_neighbor_cell_config {
+  /// Reference to a globally-defined satellite for this neighbor.
+  std::optional<unsigned> satellite_idx;
+
+  /// Inline satellite definition (mutually exclusive with satellite_idx).
+  std::optional<std::chrono::system_clock::time_point>                   epoch_timestamp;
+  std::optional<std::variant<ecef_coordinates_t, orbital_coordinates_t>> ephemeris_info;
+  std::optional<geodetic_coordinates_t>                                  gateway_location;
+  std::optional<ta_info_t>                                               ta_info;
+
+  /// Per-neighbor identity.
+  std::optional<pci_t>   phys_cell_id;
+  std::optional<arfcn_t> carrier_freq;
+
+  /// Per-neighbor NTN parameters.
+  std::optional<std::chrono::milliseconds> cell_specific_koffset;
+  std::optional<unsigned>                  ntn_ul_sync_validity_dur;
+  std::optional<unsigned>                  k_mac;
+  std::optional<ntn_polarization_t>        polarization;
+  std::optional<bool>                      ta_report;
+};
+
 /// Application-level sat_switch_with_resync configuration.
 /// satellite_idx is mutually exclusive with inline ephemeris fields (epoch_timestamp, ephemeris_info,
 /// gateway_location, ta_info).
@@ -91,7 +116,7 @@ struct du_high_unit_cell_ntn_config {
   /// Satellite switch with resynchronization parameters (R18).
   std::optional<du_high_unit_sat_switch_config> sat_switch_with_resync;
   /// List of NTN neighbor cells.
-  std::vector<neighbor_ntn_cell> ncells;
+  std::vector<du_high_unit_ntn_neighbor_cell_config> ncells;
   /// Reference to a globally-defined satellite by user-facing satellite_idx.
   /// When set, ephemeris_info, epoch_timestamp, ntn_gateway_location and ta_info must not be provided.
   std::optional<unsigned> satellite_idx;

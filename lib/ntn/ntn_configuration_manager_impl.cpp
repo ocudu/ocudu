@@ -60,7 +60,10 @@ static void merge_cell_config_update(ntn_cell_config& cfg, const ntn_cell_config
   if (update.ncells) {
     cfg.ncells.clear();
     for (const auto& ncell : *update.ncells) {
-      ntn_neighbor_cell_config nc_cfg{cfg.satellite_index, ncell.carrier_freq, ncell.phys_cell_id};
+      auto& nc_cfg           = cfg.ncells.emplace_back();
+      nc_cfg.satellite_index = cfg.satellite_index;
+      nc_cfg.carrier_freq    = ncell.carrier_freq;
+      nc_cfg.phys_cell_id    = ncell.phys_cell_id;
       if (ncell.ntn_cfg) {
         nc_cfg.cell_specific_koffset    = ncell.ntn_cfg->cell_specific_koffset;
         nc_cfg.ntn_ul_sync_validity_dur = ncell.ntn_cfg->ntn_ul_sync_validity_dur;
@@ -68,7 +71,6 @@ static void merge_cell_config_update(ntn_cell_config& cfg, const ntn_cell_config
         nc_cfg.polarization             = ncell.ntn_cfg->polarization;
         nc_cfg.ta_report                = ncell.ntn_cfg->ta_report;
       }
-      cfg.ncells.push_back(nc_cfg);
     }
   }
   if (update.moving_ref_location) {

@@ -492,6 +492,21 @@ static bool validate_ntn_satellite_refs(const std::vector<du_high_unit_cell_conf
         valid = false;
       }
     }
+    for (unsigned j = 0, e = ntn.ncells.size(); j != e; ++j) {
+      const auto& ncell = ntn.ncells[j];
+      if (ncell.satellite_idx) {
+        if (available.count(*ncell.satellite_idx) == 0) {
+          fmt::print(
+              "cells[{}].ntn.ncells[{}].satellite_idx={} not found in ntn.satellites.\n", i, j, *ncell.satellite_idx);
+          valid = false;
+        }
+        if (ncell.epoch_timestamp || ncell.ephemeris_info || ncell.gateway_location || ncell.ta_info) {
+          fmt::print(
+              "cells[{}].ntn.ncells[{}]: satellite_idx is mutually exclusive with inline ephemeris fields.\n", i, j);
+          valid = false;
+        }
+      }
+    }
   }
   return valid;
 }

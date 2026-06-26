@@ -183,11 +183,39 @@ void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_
     YAML::Node ncells_node;
     for (const auto& ncell : config.ncells) {
       YAML::Node ncell_node;
+      if (ncell.satellite_idx) {
+        ncell_node["satellite_idx"] = *ncell.satellite_idx;
+      }
+      if (ncell.epoch_timestamp) {
+        ncell_node["epoch_timestamp"] = timepoint_to_iso8601(*ncell.epoch_timestamp);
+      }
+      fill_optional_ephemeris(ncell_node, ncell.ephemeris_info);
+      if (ncell.gateway_location) {
+        ncell_node["gateway_location"] = build_geodetic_node(*ncell.gateway_location);
+      }
+      if (ncell.ta_info) {
+        ncell_node["ta_info"] = build_ta_info_node(*ncell.ta_info);
+      }
       if (ncell.phys_cell_id) {
         ncell_node["pci"] = static_cast<unsigned>(*ncell.phys_cell_id);
       }
       if (ncell.carrier_freq) {
         ncell_node["carrier_freq"] = ncell.carrier_freq->value();
+      }
+      if (ncell.cell_specific_koffset) {
+        ncell_node["cell_specific_koffset"] = static_cast<unsigned>(ncell.cell_specific_koffset->count());
+      }
+      if (ncell.ntn_ul_sync_validity_dur) {
+        ncell_node["ntn_ul_sync_validity_dur"] = *ncell.ntn_ul_sync_validity_dur;
+      }
+      if (ncell.k_mac) {
+        ncell_node["k_mac"] = *ncell.k_mac;
+      }
+      if (ncell.polarization) {
+        ncell_node["polarization"] = build_polarization_node(*ncell.polarization);
+      }
+      if (ncell.ta_report) {
+        ncell_node["ta_report"] = *ncell.ta_report;
       }
       ncells_node.push_back(ncell_node);
     }

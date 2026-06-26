@@ -254,23 +254,31 @@ generate_ntn_configuration_manager_config(const gnb_id_t&                       
                                sat_sw.ta_report};
       }
 
-      // Build neighbors' satellite (if configured).
-      // TODO: for now all neighbors use the same satellite as the serving cell.
+      // Build neighbors' satellite configs.
       for (const auto& ncell : ntn_cfg.ncells) {
-        if (ncell.ntn_cfg) {
-          ocudu_ntn::ntn_neighbor_cell_config nc_cfg{sat_idx,
-                                                     ncell.carrier_freq,
-                                                     ncell.phys_cell_id,
-                                                     ncell.ntn_cfg->cell_specific_koffset,
-                                                     ncell.ntn_cfg->ntn_ul_sync_validity_dur,
-                                                     ncell.ntn_cfg->k_mac,
-                                                     ncell.ntn_cfg->polarization,
-                                                     ncell.ntn_cfg->ta_report};
-          out_cell.ncells.push_back(nc_cfg);
+        unsigned nc_sat_idx;
+        if (ncell.satellite_idx) {
+          nc_sat_idx = *ncell.satellite_idx;
+        } else if (ncell.epoch_timestamp && ncell.ephemeris_info) {
+          nc_sat_idx = add_satellite_config(out_cfg,
+                                            next_satellite_idx,
+                                            ncell.epoch_timestamp,
+                                            *ncell.ephemeris_info,
+                                            ncell.gateway_location,
+                                            ncell.ta_info,
+                                            ntn_cfg.propagator_type);
         } else {
-          ocudu_ntn::ntn_neighbor_cell_config nc_cfg{sat_idx, ncell.carrier_freq, ncell.phys_cell_id};
-          out_cell.ncells.push_back(nc_cfg);
+          nc_sat_idx = sat_idx;
         }
+        auto& nc_cfg                    = out_cell.ncells.emplace_back();
+        nc_cfg.satellite_index          = nc_sat_idx;
+        nc_cfg.carrier_freq             = ncell.carrier_freq;
+        nc_cfg.phys_cell_id             = ncell.phys_cell_id;
+        nc_cfg.cell_specific_koffset    = ncell.cell_specific_koffset;
+        nc_cfg.ntn_ul_sync_validity_dur = ncell.ntn_ul_sync_validity_dur;
+        nc_cfg.k_mac                    = ncell.k_mac;
+        nc_cfg.polarization             = ncell.polarization;
+        nc_cfg.ta_report                = ncell.ta_report;
       }
 
       // SIB19 Scheduling info.
