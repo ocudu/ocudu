@@ -11,6 +11,7 @@ target_link_libraries(rrc_ue_test_helpers ocudu_support ocudulog)
 
 set(SOURCES
         rrc_asn1_helpers_test.cpp
+        rrc_du_ref_time_r16_test.cpp
         rrc_ue_setup_proc_test.cpp
         rrc_ue_dl_info_transfer_proc_test.cpp
         rrc_ue_reconfig_proc_test.cpp
