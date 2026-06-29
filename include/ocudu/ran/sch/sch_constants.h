@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "ocudu/ran/resource_block.h"
 #include "ocudu/support/units.h"
 
 namespace ocudu {
@@ -17,7 +18,7 @@ constexpr units::bits MAX_SEG_LENGTH{22 * 384};
 /// \brief Maximum number of segments per transport block.
 ///
 /// It assumes 156 resource elements for a maximum of 275 PRB, four layers and eight bits per RE.
-constexpr unsigned MAX_NOF_SEGMENTS = (156 * 275 * 4 * 8) / MAX_SEG_LENGTH.value();
+constexpr unsigned MAX_NOF_SEGMENTS = (156 * MAX_NOF_PRBS * 4 * 8) / MAX_SEG_LENGTH.value();
 
 /// \brief Default \f$TBS_{LBRM}\f$.
 ///

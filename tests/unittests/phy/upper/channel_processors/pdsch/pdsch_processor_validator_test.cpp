@@ -59,7 +59,8 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
        pdu.bwp_size_rb            = MAX_NOF_PRBS + 1;
        return pdu;
      },
-     R"(Invalid BWP configuration, i\.e\., \[0, 276\) for the given RB allocation, i\.e\., \[0, 52\)\.)"},
+     fmt::format(R"(Invalid BWP configuration, i\.e\., \[0, {}\) for the given RB allocation, i\.e\., \[0, 52\)\.)",
+                 MAX_NOF_PRBS + 1)},
     {[] {
        pdsch_processor::pdu_t pdu = base_pdu;
        pdu.dmrs_symbol_mask       = {true};

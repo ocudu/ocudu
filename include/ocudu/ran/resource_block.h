@@ -18,7 +18,12 @@ struct vrb_tag {};
 
 /// Maximum number of PRBs of a UE carrier, for any SCS.
 /// \remark See TS 38.331 - "maxNrofPhysicalResourceBlocks".
+/// \remark It can be set to any custom value using the pre-processor definition \c MAX_NPRB.
+#ifdef MAX_NPRB
+constexpr std::size_t MAX_NOF_PRBS = MAX_NPRB;
+#else
 constexpr std::size_t MAX_NOF_PRBS = 275;
+#endif
 
 /// See TS 38.211, 4.4.4.1 - Resource Blocks, General.
 constexpr std::size_t NOF_SUBCARRIERS_PER_RB = 12;

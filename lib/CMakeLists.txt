@@ -5,7 +5,9 @@
 # Do not build by default.
 set_directory_properties(PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
-add_subdirectory(asn1)
+if (NOT CUSTOM_MAX_NOF_PRBS)
+    add_subdirectory(asn1)
+endif()
 add_subdirectory(cu_cp)
 add_subdirectory(cu_up)
 add_subdirectory(du)

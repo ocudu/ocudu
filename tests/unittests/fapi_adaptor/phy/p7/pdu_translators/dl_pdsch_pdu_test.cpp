@@ -111,8 +111,8 @@ TEST(fapi_to_phy_pdsch_conversion_test, valid_pdu_conversion_success)
   std::uniform_int_distribution<unsigned> sfn_dist(0, 1023);
   std::uniform_int_distribution<unsigned> slot_dist(0, 159);
   std::uniform_int_distribution<unsigned> rnti_dist(1, 65535);
-  std::uniform_int_distribution<unsigned> bwp_size_dist(1, 275);
-  std::uniform_int_distribution<unsigned> bwp_start_dist(0, 274);
+  std::uniform_int_distribution<unsigned> bwp_size_dist(1, MAX_NOF_PRBS);
+  std::uniform_int_distribution<unsigned> bwp_start_dist(0, MAX_NOF_PRBS - 1);
   std::uniform_int_distribution<unsigned> nid_pdsch_dist(0, 1023);
   std::uniform_int_distribution<unsigned> dmrs_scrambling_dist(0, 65535);
   std::uniform_int_distribution<unsigned> binary_dist(0, 1);

@@ -31,12 +31,24 @@ static std::ostream& operator<<(std::ostream& os, span<const cf_t> data)
   return os;
 }
 
+static std::ostream& operator<<(std::ostream& os, span<cbf16_t> data)
+{
+  fmt::print(os, "{}", data);
+  return os;
+}
+
 static bool operator==(span<const cf_t> lhs, span<const cbf16_t> rhs)
 {
   static constexpr float max_relative_error_cbf16 = 1.0F / 256.0F;
   return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), [](cf_t lhs_cf, cbf16_t rhs_val) {
-    cf_t  rhs_cf = to_cf(rhs_val);
-    float error  = std::abs(lhs_cf - rhs_cf) / std::abs(lhs_cf);
+    cf_t rhs_cf = to_cf(rhs_val);
+
+    // Check against division by zero.
+    if (!std::isnormal(std::abs(lhs_cf))) {
+      return rhs_cf == cf_t(0.0F, 0.0F);
+    }
+
+    float error = std::abs(lhs_cf - rhs_cf) / std::abs(lhs_cf);
     return error < max_relative_error_cbf16;
   });
 }

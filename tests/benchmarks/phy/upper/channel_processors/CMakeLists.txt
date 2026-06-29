@@ -12,7 +12,7 @@ set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR}/test_data)
 # Only implement if hardware-acceleration for the PDSCH is enabled.
 if (ENABLE_PDSCH_HWACC)
     add_executable(pdsch_encoder_hwacc_benchmark pdsch_encoder_hwacc_benchmark.cpp)
-    set(PDSCH_ENCODER_HWACC_BENCHMARK_LIBRARIES ocudu_channel_processors ocudu_sched ocudulog)
+    set(PDSCH_ENCODER_HWACC_BENCHMARK_LIBRARIES ocudu_channel_processors ocudulog)
     if (DPDK_FOUND)
         set_source_files_properties(pdsch_encoder_hwacc_benchmark.cpp PROPERTIES COMPILE_DEFINITIONS "DPDK_FOUND")
         list(APPEND PDSCH_ENCODER_HWACC_BENCHMARK_LIBRARIES ocudu_hal_pdsch)

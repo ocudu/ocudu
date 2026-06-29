@@ -61,7 +61,10 @@ const std::vector<test_case_t> pusch_processor_validator_test_data = {
        pdu.bwp_size_rb            = MAX_NOF_PRBS + 1;
        return pdu;
      },
-     R"(The sum of the BWP start \(i\.e\., 0\) and size \(i\.e\., 276\) exceeds the maximum grid size \(i\.e\., 275 PRB\)\.)"},
+     fmt::format(
+         R"(The sum of the BWP start \(i\.e\., 0\) and size \(i\.e\., {}\) exceeds the maximum grid size \(i\.e\., {} PRB\)\.)",
+         MAX_NOF_PRBS + 1,
+         MAX_NOF_PRBS)},
     {[] {
        pusch_processor::pdu_t pdu = base_pdu;
        pdu.nof_tx_layers          = max_supported_nof_layers + 1;
@@ -160,7 +163,9 @@ const std::vector<test_case_t> pusch_processor_validator_test_data = {
        pdu.dc_position            = MAX_NOF_SUBCARRIERS;
        return pdu;
      },
-     R"(DC position \(i\.e\., 3300\) is out of range \[0\.\.3300\)\.)"},
+     fmt::format(R"(DC position \(i\.e\., {}\) is out of range \[0\.\.{}\)\.)",
+                 MAX_NOF_SUBCARRIERS,
+                 MAX_NOF_SUBCARRIERS)},
     {[] {
        pusch_processor::pdu_t pdu = base_pdu;
        pdu.dmrs                   = pusch_processor::dmrs_transform_precoding_configuration{.n_rs_id = 0};

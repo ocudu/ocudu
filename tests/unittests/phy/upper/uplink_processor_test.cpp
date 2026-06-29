@@ -115,7 +115,7 @@ protected:
       .config  = pucch_processor::format0_configuration{.context              = std::nullopt,
                                                         .slot                 = slot,
                                                         .cp                   = cyclic_prefix::NORMAL,
-                                                        .bwp_size_rb          = 275,
+                                                        .bwp_size_rb          = MAX_NOF_PRBS,
                                                         .bwp_start_rb         = 0,
                                                         .starting_prb         = 0,
                                                         .second_hop_prb       = 270,

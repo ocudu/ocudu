@@ -161,8 +161,8 @@ std::uniform_int_distribution<unsigned> PrachProcessorFixture::start_symbol_inde
 std::uniform_int_distribution<unsigned> PrachProcessorFixture::nof_td_occasions_dist(1, 3);
 std::uniform_int_distribution<unsigned> PrachProcessorFixture::nof_fd_occasions_dist(1, 8);
 std::uniform_int_distribution<unsigned> PrachProcessorFixture::max_nof_concurrent_requests_dist(1, 16);
-std::uniform_int_distribution<unsigned> PrachProcessorFixture::nof_prb_ul_grid_dist(25, 275);
-std::uniform_int_distribution<unsigned> PrachProcessorFixture::rb_offset_dist(0, 270);
+std::uniform_int_distribution<unsigned> PrachProcessorFixture::nof_prb_ul_grid_dist(25, MAX_NOF_PRBS);
+std::uniform_int_distribution<unsigned> PrachProcessorFixture::rb_offset_dist(0, MAX_NOF_PRBS - 5);
 
 // If there is no request, the PRACH processor shall:
 // - not notify any event,

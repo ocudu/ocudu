@@ -18,11 +18,11 @@ TEST(fapi_to_phy_pdcch_conversion_test, valid_pdu_conversion_success)
   // Random generators.
   std::uniform_int_distribution<unsigned> sfn_dist(0, 1023);
   std::uniform_int_distribution<unsigned> slot_dist(0, 159);
-  std::uniform_int_distribution<unsigned> bwp_size_dist(1, 275);
-  std::uniform_int_distribution<unsigned> bwp_start_dist(0, 274);
+  std::uniform_int_distribution<unsigned> bwp_size_dist(1, MAX_NOF_PRBS);
+  std::uniform_int_distribution<unsigned> bwp_start_dist(0, MAX_NOF_PRBS - 1);
   std::uniform_int_distribution<unsigned> start_symbol_index_dist(0, 13);
   std::uniform_int_distribution<unsigned> duration_symbol_dist(0, 3);
-  std::uniform_int_distribution<unsigned> shift_index_dist(0, 275);
+  std::uniform_int_distribution<unsigned> shift_index_dist(0, MAX_NOF_PRBS);
   std::uniform_int_distribution<unsigned> n_rnti_dist(0, 65535);
   std::uniform_int_distribution<unsigned> cce_dist(0, 135);
   std::uniform_int_distribution<unsigned> aggregation_dist(0, 4);
@@ -91,7 +91,9 @@ TEST(fapi_to_phy_pdcch_conversion_test, valid_pdu_conversion_success)
                       .set_control_channel_parameters(cce, aggregation);
 
                   builder_dci.set_profile_nr_tx_power_info_parameters(power_nr);
-                  builder_dci.get_tx_precoding_and_beamforming_pdu_builder().set_prg_parameters(275).set_pmi(0);
+                  builder_dci.get_tx_precoding_and_beamforming_pdu_builder()
+                      .set_prg_parameters(MAX_NOF_PRBS)
+                      .set_pmi(0);
 
                   // Payload.
                   dci_payload payload = {1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1};

@@ -8,7 +8,7 @@ using namespace ocudu;
 
 nominal_rbg_size ocudu::get_nominal_rbg_size(unsigned bwp_nof_prb, bool is_config_1)
 {
-  ocudu_assert(bwp_nof_prb > 0 and bwp_nof_prb <= 275, "Invalid BWP size");
+  ocudu_assert(bwp_nof_prb > 0 and bwp_nof_prb <= MAX_NOF_PRBS, "Invalid BWP size");
   if (bwp_nof_prb <= 36) {
     return is_config_1 ? nominal_rbg_size::P2 : nominal_rbg_size::P4;
   }

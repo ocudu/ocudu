@@ -3,7 +3,7 @@
 # Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 
-if (NOT DISABLE_MBEDTLS AND NOT DISABLE_SCTP)
+if (NOT DISABLE_MBEDTLS AND NOT DISABLE_SCTP AND NOT CUSTOM_MAX_NOF_PRBS)
     add_subdirectory(cu)
     add_subdirectory(cu_cp)
     add_subdirectory(cu_up)
