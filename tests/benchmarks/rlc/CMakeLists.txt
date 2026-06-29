@@ -17,5 +17,18 @@ add_executable(rlc_am_tx_benchmark rlc_am_tx_benchmark.cpp)
 target_link_libraries(rlc_am_tx_benchmark ocudu_rlc ocudulog pdcp_test_doubles)
 add_test(rlc_am_tx_benchmark rlc_am_tx_benchmark)
 
-set_tests_properties(rlc_am_tx_benchmark rlc_am_rx_benchmark PROPERTIES LABELS "rlc|rtsan")
-set_tests_properties(rlc_handle_status_report PROPERTIES LABELS "rlc")
+add_executable(rlc_instances rlc_instances.cpp)
+target_link_libraries(rlc_instances ocudu_rlc ocudulog)
+add_test(rlc_instances rlc_instances)
+
+set_tests_properties(
+  rlc_am_tx_benchmark
+  rlc_am_rx_benchmark
+  PROPERTIES LABELS "rlc|rtsan"
+)
+
+set_tests_properties(
+  rlc_handle_status_report
+  rlc_instances
+  PROPERTIES LABELS "rlc"
+)
