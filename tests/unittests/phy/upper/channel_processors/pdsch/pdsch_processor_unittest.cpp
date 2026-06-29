@@ -134,7 +134,6 @@ TEST_P(PdschProcessorFixture, UnitTest)
     pdu.codewords.back().ldpc_base_graph = static_cast<ldpc_base_graph_type>(dist_bool(rgen));
   }
   pdu.n_id             = 0;
-  pdu.precoding        = precoding_configuration::make_wideband(make_identity(nof_layers));
   pdu.ref_point        = dist_bool(rgen) ? pdsch_processor::pdu_t::PRB0 : pdsch_processor::pdu_t::CRB0;
   pdu.dmrs_symbol_mask = symbol_slot_mask(nof_symbols_slot);
   while (pdu.dmrs_symbol_mask.none()) {
@@ -153,6 +152,14 @@ TEST_P(PdschProcessorFixture, UnitTest)
   pdu.reserved                   = {};
   pdu.ratio_pdsch_dmrs_to_sss_dB = get_power();
   pdu.ratio_pdsch_data_to_sss_dB = get_power();
+
+  // Number of layers of the first codeword.
+  unsigned nof_layers_cw1 = nof_layers / nof_codewords;
+  // Number of layers of the second codeword.
+  unsigned nof_layers_cw2 = nof_layers - nof_layers_cw1;
+
+  // The precoding configuration in the PDSCH processor PDU is the combination of both codewords.
+  pdu.precoding = precoding_configuration::make_wideband(make_identity(nof_layers));
 
   // Generate reserved element pattern for DM-RS.
   re_pattern dmrs_reserved_pattern = get_dmrs_pattern(
@@ -202,9 +209,6 @@ TEST_P(PdschProcessorFixture, UnitTest)
   // Wait for the processor to finish.
   notifier.wait_for_finished();
 
-  unsigned nof_layers_cw0 = nof_layers / nof_codewords;
-  unsigned nof_layers_cw1 = nof_layers - nof_layers_cw0;
-
   // Validate encoder.
   {
     ASSERT_EQ(encoder_spy->get_nof_entries(), nof_codewords);
@@ -221,7 +225,7 @@ TEST_P(PdschProcessorFixture, UnitTest)
       ASSERT_EQ(entry.config.rv, pdu.codewords[codeword].rv);
       ASSERT_EQ(entry.config.mod, pdu.codewords[codeword].modulation);
       ASSERT_EQ(entry.config.Nref, Nref.value());
-      ASSERT_EQ(entry.config.nof_layers, codeword == 0 ? nof_layers_cw0 : nof_layers_cw1);
+      ASSERT_EQ(entry.config.nof_layers, codeword == 0 ? nof_layers_cw1 : nof_layers_cw2);
       ASSERT_EQ(entry.config.nof_ch_symbols, Nre * entry.config.nof_layers);
       ASSERT_EQ(span<const uint8_t>(entry.transport_block), data[codeword].get_buffer());
     }
@@ -235,17 +239,20 @@ TEST_P(PdschProcessorFixture, UnitTest)
     ASSERT_EQ(entry.config.rnti, pdu.rnti);
     ASSERT_EQ(entry.config.bwp.length(), pdu.bwp_size_rb);
     ASSERT_EQ(entry.config.bwp.start(), pdu.bwp_start_rb);
+
     ASSERT_EQ(entry.config.modulation1, pdu.codewords[0].modulation);
     if (nof_codewords > 1) {
       ASSERT_EQ(entry.config.modulation2, pdu.codewords[1].modulation);
     }
+
     ASSERT_EQ(entry.config.freq_allocation, pdu.freq_alloc);
     ASSERT_EQ(entry.config.time_alloc.start(), pdu.start_symbol_index);
     ASSERT_EQ(entry.config.time_alloc.length(), pdu.nof_symbols);
     ASSERT_EQ(entry.config.n_id, pdu.n_id);
     ASSERT_NEAR(entry.config.scaling, convert_dB_to_amplitude(-pdu.ratio_pdsch_data_to_sss_dB), amplitude_max_error);
     ASSERT_EQ(entry.config.reserved, pdu.reserved);
-    ASSERT_EQ(entry.config.precoding, pdu.precoding);
+    ASSERT_EQ(entry.config.precoding.get(), pdu.precoding);
+
     ASSERT_EQ(entry.grid, &rg_dummy.get_writer());
     for (unsigned codeword = 0; codeword != nof_codewords; ++codeword) {
       span<const uint8_t> codeword_encoder   = encoder_spy->get_entries()[codeword].codeword;

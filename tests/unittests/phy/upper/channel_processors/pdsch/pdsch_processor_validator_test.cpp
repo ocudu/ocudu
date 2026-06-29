@@ -123,12 +123,6 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
      R"(Invalid LBRM size \(0 bytes\)\.)"},
     {[] {
        pdsch_processor::pdu_t pdu = base_pdu;
-       pdu.codewords.clear();
-       return pdu;
-     },
-     R"(Only one codeword is currently supported\.)"},
-    {[] {
-       pdsch_processor::pdu_t pdu = base_pdu;
        pdu.bwp_start_rb           = 0;
        pdu.bwp_size_rb            = 52;
        pdu.freq_alloc             = rb_allocation::make_type1(0, 52);

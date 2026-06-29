@@ -34,6 +34,10 @@ void pdsch_processor_flexible_impl::process(resource_grid_writer&               
   [[maybe_unused]] std::string msg;
   ocudu_assert(handle_validation(msg, pdsch_processor_validator_impl().is_valid(pdu_)), "{}", msg);
 
+  // Only one codeword is currently supported in the flexible processor.
+  ocudu_assert((data_.size() == 1) && (pdu_.codewords.size() == 1),
+               "The flexible PDSCH processor only support one codeword.");
+
   // Initialize transmission and save inputs.
   initialize_new_transmission(grid_, notifier_, std::move(data_), pdu_);
 

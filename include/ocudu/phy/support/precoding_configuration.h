@@ -297,6 +297,58 @@ public:
     return *this;
   }
 
+  /// \brief Returns the slice of the precoding configuration defined by the specified layer indices and port indices.
+  ///
+  /// \param[in] layers Interval indicating the layers to include in the slice, it must be contiguous from start to
+  /// stop.
+  /// \param[in] ports  Interval indicating the ports to include in the slice, it must be contiguous from start to
+  /// stop.
+  /// \return The slice of the precoding configuration.
+  /// \remarks An assertion is triggered if any input interval, layers or ports, is invalid, i.e., it is out of bounds
+  /// for the current precoding configuration.
+  precoding_configuration slice(interval<uint8_t> layers, interval<uint8_t> ports) const
+  {
+    ocudu_assert(layers.start() < nof_layers,
+                 "The layer start index (i.e., {}) must be smaller than the number of layers (i.e., {}).",
+                 layers.start(),
+                 nof_layers);
+    ocudu_assert(layers.stop() <= nof_layers,
+                 "The layer stop index (i.e., {}) must not be larger than the number of layers (i.e., {}).",
+                 layers.stop(),
+                 nof_layers);
+    ocudu_assert(ports.start() < nof_ports,
+                 "The port start index (i.e., {}) must be smaller than the number of ports (i.e., {}).",
+                 ports.start(),
+                 nof_ports);
+    ocudu_assert(ports.stop() <= nof_ports,
+                 "The port stop index (i.e., {}) must not be larger than the number of ports (i.e., {}).",
+                 ports.stop(),
+                 nof_ports);
+
+    // Slice of the precoding configuration.
+    precoding_configuration slice_precoding(layers.length(), ports.length(), nof_prg, prg_size);
+
+    // Iterate each PRG.
+    for (unsigned i_prg = 0; i_prg != nof_prg; ++i_prg) {
+      // Original PRG.
+      precoding_weight_matrix prg = get_prg_coefficients(i_prg);
+      // Slice PRG.
+      precoding_weight_matrix slice_prg = slice_precoding.get_prg_coefficients(i_prg);
+
+      // Iterate all ports specified in the slice, extract the layer coefficients and copy them to the slice
+      // precoding.
+      unsigned first_port = ports.start();
+      for (unsigned i_port = first_port, i_port_end = ports.stop(); i_port != i_port_end; ++i_port) {
+        ocuduvec::copy(slice_prg.get_port_coefficients(i_port - first_port),
+                       prg.get_port_coefficients(i_port).subspan(layers.start(), layers.length()));
+      }
+
+      slice_precoding.set_prg_coefficients(slice_prg, i_prg);
+    }
+
+    return slice_precoding;
+  }
+
 private:
   /// Number of physical resource blocks per PRG.
   unsigned prg_size = MAX_NOF_PRBS;

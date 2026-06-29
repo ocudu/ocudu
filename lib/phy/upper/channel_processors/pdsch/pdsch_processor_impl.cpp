@@ -35,7 +35,7 @@ void pdsch_processor_impl::process(resource_grid_writer&                        
   unsigned nof_layers = pdu.precoding.get_nof_layers();
 
   // Number of codewords.
-  unsigned nof_codewords = (nof_layers > 4) ? 2 : 1;
+  unsigned nof_codewords = data.size();
 
   // Calculate the number of layers codeword 0 is mapped to. It is the number of layers divided by the number of
   // codewords, rounding down (floor).
@@ -81,13 +81,11 @@ const bit_buffer& pdsch_processor_impl::encode(span<const uint8_t> data,
                                                const pdu_t&        pdu)
 {
   // Select codeword specific parameters.
-  unsigned          rv         = pdu.codewords[codeword_id].rv;
-  modulation_scheme modulation = pdu.codewords[codeword_id].modulation;
+  unsigned             rv              = pdu.codewords[codeword_id].rv;
+  modulation_scheme    modulation      = pdu.codewords[codeword_id].modulation;
+  ldpc_base_graph_type ldpc_base_graph = pdu.codewords[codeword_id].ldpc_base_graph;
 
   span<uint8_t> tmp_codeword = temp_unpacked_codeword;
-
-  // LDPC base graph for the codeword.
-  ldpc_base_graph_type ldpc_base_graph = pdu.codewords.front().ldpc_base_graph;
 
   // Calculate rate match buffer size.
   units::bits Nref =
@@ -118,22 +116,37 @@ const bit_buffer& pdsch_processor_impl::encode(span<const uint8_t> data,
 
 void pdsch_processor_impl::modulate(resource_grid_writer& grid, span<const bit_buffer> codewords, const pdu_t& pdu)
 {
+  // Number of codewords in this transmission.
   unsigned nof_codewords = codewords.size();
 
-  pdsch_modulator::config_t modulator_config;
-  modulator_config.rnti            = pdu.rnti;
-  modulator_config.bwp             = {pdu.bwp_start_rb, pdu.bwp_start_rb + pdu.bwp_size_rb};
-  modulator_config.modulation1     = pdu.codewords[0].modulation;
-  modulator_config.modulation2     = nof_codewords > 1 ? pdu.codewords[1].modulation : modulation_scheme::BPSK;
-  modulator_config.freq_allocation = pdu.freq_alloc;
-  modulator_config.time_alloc      = {pdu.start_symbol_index, pdu.start_symbol_index + pdu.nof_symbols};
-  modulator_config.dmrs_symb_pos   = pdu.dmrs_symbol_mask;
-  modulator_config.dmrs_type       = pdu.dmrs;
-  modulator_config.nof_cdm_groups_without_data = pdu.nof_cdm_groups_without_data;
-  modulator_config.n_id                        = pdu.n_id;
-  modulator_config.scaling                     = convert_dB_to_amplitude(-pdu.ratio_pdsch_data_to_sss_dB);
-  modulator_config.reserved                    = pdu.reserved;
-  modulator_config.precoding                   = pdu.precoding;
+  // Number of ports from precoding configuration.
+  unsigned nof_ports = pdu.precoding.get_nof_ports();
+
+  pdsch_modulator::config_t modulator_config = {
+      .rnti                        = pdu.rnti,
+      .bwp                         = {pdu.bwp_start_rb, pdu.bwp_start_rb + pdu.bwp_size_rb},
+      .modulation1                 = pdu.codewords[0].modulation,
+      .modulation2                 = std::nullopt,
+      .freq_allocation             = pdu.freq_alloc,
+      .time_alloc                  = {pdu.start_symbol_index, pdu.start_symbol_index + pdu.nof_symbols},
+      .dmrs_symb_pos               = pdu.dmrs_symbol_mask,
+      .dmrs_type                   = pdu.dmrs,
+      .nof_cdm_groups_without_data = pdu.nof_cdm_groups_without_data,
+      .n_id                        = pdu.n_id,
+      .scaling                     = convert_dB_to_amplitude(-pdu.ratio_pdsch_data_to_sss_dB),
+      .reserved                    = pdu.reserved,
+      .precoding                   = pdu.precoding};
+
+  // Populate the list of resource grid ports for this transmission. Since the logical ports map physical ports, the
+  // list is trivial.
+  static_vector<uint8_t, precoding_constants::MAX_NOF_PORTS> ports(nof_ports);
+  std::iota(ports.begin(), ports.end(), 0);
+  modulator_config.ports = ports;
+
+  // Set the second codeword modulation scheme.
+  if (nof_codewords == 2) {
+    modulator_config.modulation2 = pdu.codewords[1].modulation;
+  }
 
   modulator->modulate(grid, codewords, modulator_config);
 }

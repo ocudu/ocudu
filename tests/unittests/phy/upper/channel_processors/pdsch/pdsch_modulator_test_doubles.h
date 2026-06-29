@@ -22,8 +22,7 @@ private:
 public:
   void modulate(resource_grid_writer& grid, span<const bit_buffer> codewords, const config_t& config) override
   {
-    entry_t e = {};
-    e.config  = config;
+    entry_t e = {.config = config};
     for (unsigned cw = 0; cw != codewords.size(); ++cw) {
       e.codewords.emplace_back(codewords[cw]);
     }

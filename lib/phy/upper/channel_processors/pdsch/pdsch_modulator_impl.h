@@ -45,7 +45,12 @@ private:
   /// \param[in] data_re PDSCH resource elements.
   /// \param[in] config  PDSCH modulator configuration parameters.
   /// \note The number of layers and codewords is deduced from the parameters.
-  void map(resource_grid_writer& grid, span<const ci8_t> data_re, float scaling, const config_t& config);
+  void map(resource_grid_writer&    grid,
+           span<const ci8_t>        data_re,
+           unsigned                 i_codeword,
+           precoding_configuration& precoding,
+           span<uint8_t>            ports,
+           const config_t&          config);
 
   /// Temporary buffer for scrambled sequence.
   static_bit_buffer<pdsch_constants::CODEWORD_MAX_SIZE.value()> temp_b_hat;

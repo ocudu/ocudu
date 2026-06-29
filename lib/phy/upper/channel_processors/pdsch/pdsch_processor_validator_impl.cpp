@@ -96,11 +96,6 @@ error_type<std::string> pdsch_processor_validator_impl::is_valid(const pdsch_pro
     return make_unexpected("Only contiguous VRB mask allocation is currently supported.");
   }
 
-  // Only one codeword is currently supported.
-  if (pdu.codewords.size() != 1) {
-    return make_unexpected("Only one codeword is currently supported.");
-  }
-
   // The limited buffer for rate matching size must not be zero.
   if (pdu.tbs_lbrm == 0_bytes) {
     return make_unexpected("Invalid LBRM size (0 bytes).");

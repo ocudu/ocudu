@@ -36,10 +36,10 @@ public:
     /// The BWP start common resource block index is relative to Point A and must be in the range {0, ..., 274}. The BWP
     /// length is expressed as a number of contiguous common resource blocks and must be in the range {1, ..., 275}.
     crb_interval bwp;
-    /// Modulation of codeword 1 (q = 0).
+    /// Modulation of the first codeword (q = 0).
     modulation_scheme modulation1;
-    /// Modulation of codeword 2 ( q = 1).
-    modulation_scheme modulation2;
+    /// Modulation of the second codeword (q = 1).
+    std::optional<modulation_scheme> modulation2;
     /// Frequency domain allocation.
     rb_allocation freq_allocation;
     /// \brief Time-domain allocation within a slot.
@@ -61,8 +61,15 @@ public:
     float scaling;
     /// Reserved RE pattern where PDSCH is not mapped.
     re_pattern_list reserved;
-    /// Precoding information for the PDSCH transmission.
-    precoding_configuration precoding;
+    /// Precoding configuration for both codewords.
+    std::reference_wrapper<const precoding_configuration> precoding;
+    /// \brief List of ports where the codewords are being mapped to.
+    ///
+    /// List of resource grid ports where the codeword or codewords are being mapped to. Given that the maximum number
+    /// of layers is eight, the effective maximum number of logical ports (resource grid ports) is eight, four per
+    /// codeword. If the total logical number of ports were to be higher, i.e., more than eight, as in the case of
+    /// beamforming, codewords will still be mapped to a reduced subset (maximum eight) of logical resource grid ports.
+    static_vector<uint8_t, precoding_constants::MAX_NOF_PORTS> ports;
   };
 
   /// Default destructor.
