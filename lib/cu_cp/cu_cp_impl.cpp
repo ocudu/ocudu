@@ -31,6 +31,7 @@
 #include "routines/ue_resume_routine.h"
 #include "routines/ue_suspend_routine.h"
 #include "routines/ue_transaction_info_release_routine.h"
+#include "routines/write_replace_warning_routine.h"
 #include "ocudu/f1ap/cu_cp/f1ap_cu.h"
 #include "ocudu/nrppa/nrppa.h"
 #include "ocudu/nrppa/nrppa_factory.h"
@@ -1417,13 +1418,7 @@ void cu_cp_impl::handle_n2_disconnection(cu_cp_amf_index_t amf_index)
 async_task<ngap_write_replace_warning_response>
 cu_cp_impl::handle_write_replace_warning_request(const ngap_write_replace_warning_request& request)
 {
-  return launch_async([request](coro_context<async_task<ngap_write_replace_warning_response>>& ctx) mutable {
-    CORO_BEGIN(ctx);
-    ngap_write_replace_warning_response resp;
-    resp.msg_id     = request.msg_id;
-    resp.serial_num = request.serial_num;
-    CORO_RETURN(resp);
-  });
+  return launch_async<cu_cp_write_replace_warning_routine>(request, du_db, logger);
 }
 
 std::optional<rrc_meas_cfg>

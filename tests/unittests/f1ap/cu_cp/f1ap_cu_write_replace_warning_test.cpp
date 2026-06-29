@@ -29,14 +29,6 @@ protected:
     return req;
   }
 
-  f1ap_write_replace_warning_request make_request_with_additional_segments()
-  {
-    f1ap_write_replace_warning_request req = make_request();
-    req.pws_sys_info.additional_sib_segments.push_back(byte_buffer::create({0xca, 0xfe}).value());
-    req.pws_sys_info.additional_sib_segments.push_back(byte_buffer::create({0xba, 0xbe}).value());
-    return req;
-  }
-
   void start_procedure(const f1ap_write_replace_warning_request& req)
   {
     t = f1ap->handle_write_replace_warning_request(req);
@@ -91,18 +83,6 @@ TEST_F(f1ap_cu_write_replace_warning_test, when_response_contains_completed_cell
   ASSERT_TRUE(t.get().success);
   ASSERT_EQ(t.get().cells_broadcast_completed.size(), 1U);
   EXPECT_EQ(t.get().cells_broadcast_completed[0].plmn_id, plmn_identity::test_value());
-}
-
-TEST_F(f1ap_cu_write_replace_warning_test, when_additional_sib_segments_present_they_are_included_in_pdu)
-{
-  start_procedure(make_request_with_additional_segments());
-
-  ASSERT_TRUE(was_request_sent());
-  const auto& pws_info =
-      f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.write_replace_warning_request()->pws_sys_info;
-  ASSERT_TRUE(pws_info.ie_exts_present);
-  ASSERT_TRUE(pws_info.ie_exts.add_sib_msg_list_present);
-  EXPECT_EQ(pws_info.ie_exts.add_sib_msg_list.size(), 2U);
 }
 
 TEST_F(f1ap_cu_write_replace_warning_test, when_timeout_reached_then_procedure_fails)

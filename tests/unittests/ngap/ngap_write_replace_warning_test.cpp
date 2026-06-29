@@ -74,8 +74,7 @@ TEST_F(ngap_write_replace_warning_test, when_request_with_optionals_received_opt
 
   // Warning Type.
   ASSERT_TRUE(req.warning_type.has_value());
-  EXPECT_EQ(req.warning_type.value()[0], 0x01);
-  EXPECT_EQ(req.warning_type.value()[1], 0x80);
+  EXPECT_EQ(req.warning_type.value(), 0x0180U);
 
   // Data Coding Scheme.
   ASSERT_TRUE(req.data_coding_scheme.has_value());

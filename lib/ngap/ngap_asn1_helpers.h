@@ -1232,7 +1232,7 @@ inline void fill_ngap_write_replace_warning_request(ngap_write_replace_warning_r
 
   // Warning Type (optional, fixed_octstring<2>).
   if (msg->warning_type_present) {
-    req.warning_type = msg->warning_type.to_bytes();
+    req.warning_type = static_cast<uint16_t>(msg->warning_type.to_number());
   }
 
   // Data Coding Scheme (optional, 8-bit bitstring).

@@ -41,8 +41,8 @@ struct ngap_write_replace_warning_request {
   uint32_t nof_broadcasts_requested = 0;
   /// Warning Area List (optional; absent = all served cells).
   std::optional<ngap_warning_area_list> warning_area_list;
-  /// Warning Type (2 bytes, optional; identifies ETWS primary/secondary vs. CMAS).
-  std::optional<std::array<uint8_t, 2>> warning_type;
+  /// Warning Type (16-bit value, optional; identifies ETWS primary/secondary vs. CMAS, TS 38.413 section 9.3.1.39).
+  std::optional<uint16_t> warning_type;
   /// Data Coding Scheme (1 byte from 8-bit bitstring, optional).
   std::optional<uint8_t> data_coding_scheme;
   /// Warning Message Contents (up to 9600 bytes, optional).

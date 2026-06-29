@@ -61,17 +61,6 @@ void write_replace_warning_procedure::send_write_replace_warning_request()
     }
   }
 
-  if (!request.pws_sys_info.additional_sib_segments.empty()) {
-    req->pws_sys_info.ie_exts_present                  = true;
-    req->pws_sys_info.ie_exts.add_sib_msg_list_present = true;
-    for (const auto& seg : request.pws_sys_info.additional_sib_segments) {
-      asn1::f1ap::add_sib_msg_list_item_s item;
-      const std::vector<uint8_t>          seg_bytes(seg.begin(), seg.end());
-      item.add_sib.from_bytes(seg_bytes);
-      req->pws_sys_info.ie_exts.add_sib_msg_list.push_back(item);
-    }
-  }
-
   f1ap_notifier.on_new_message(msg);
 }
 

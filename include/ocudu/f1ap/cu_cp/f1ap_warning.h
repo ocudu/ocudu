@@ -13,15 +13,11 @@
 namespace ocudu::ocucp {
 
 /// PWS System Information IE (TS 38.473 section 9.3.1.58).
-/// Carries one encoded SIB message and optional additional segments for large payloads.
 struct f1ap_pws_sys_info {
   /// SIB type (6 = SIB6/ETWS primary, 7 = SIB7/ETWS secondary, 8 = SIB8/CMAS).
   uint8_t sib_type = 6;
-  /// Primary encoded SIB message (ASN.1 PER, TS 38.331).
+  /// Encoded SIB message (ASN.1 PER, TS 38.331).
   byte_buffer sib_msg;
-  /// Additional SIB message segments (TS 38.473 section 9.3.1.86).
-  /// Each element is one additional segment following the primary sib_msg.
-  std::vector<byte_buffer> additional_sib_segments;
 };
 
 /// Common type for F1AP WRITE-REPLACE WARNING REQUEST (TS 38.473 section 8.5.1.1).
