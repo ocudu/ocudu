@@ -423,13 +423,14 @@ void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&                    
   }
   pdsch_sched_ctx.cqi = ue_cc.channel_state_manager().get_wideband_cqi();
 
+  // Set MAC logical channels to schedule in this PDU for each new-TX codeword.
+  for (const auto& cw : msg.pdsch_cfg.codewords) {
+    if (cw.new_data) {
+      build_dl_transport_block_info(
+          msg.tb_list.emplace_back(), u.logical_channels(), cw.tb_size_bytes, grant.user->ran_slice_id());
+    }
+  }
   if (not is_retx) {
-    // Set MAC logical channels to schedule in this PDU if it is a newtx.
-    build_dl_transport_block_info(msg.tb_list.emplace_back(),
-                                  u.logical_channels(),
-                                  msg.pdsch_cfg.codewords[0].tb_size_bytes,
-                                  grant.user->ran_slice_id());
-
     // Update context with buffer occupancy of the slice after the TB is built.
     msg.context.buffer_occupancy = grant.user->pending_dl_newtx_bytes();
   }

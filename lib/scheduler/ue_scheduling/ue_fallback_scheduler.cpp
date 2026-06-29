@@ -940,6 +940,7 @@ dl_harq_process_handle ue_fallback_scheduler::fill_dl_srb_grant(ue&             
   }
 
   // Set MAC logical channels to schedule in this PDU.
+  // Fallback scheduler uses DCI format 1_0 which always carries exactly one codeword.
   if (not is_retx) {
     build_dl_fallback_transport_block_info(
         msg.tb_list.emplace_back(), u.logical_channels(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
