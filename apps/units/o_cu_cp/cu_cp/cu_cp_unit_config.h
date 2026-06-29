@@ -169,6 +169,12 @@ struct cu_cp_unit_security_config {
 struct cu_cp_unit_f1ap_config {
   /// Timeout for the F1AP procedures in milliseconds.
   unsigned procedure_timeout = 1000;
+  /// Enable sending a REFERENCE TIME INFORMATION REPORTING CONTROL to each DU on connection (TS 38.473 section 8.12).
+  bool ref_time_reporting_enabled = false;
+  /// Reporting mode: "on_demand" (single report) or "periodic" (recurring reports).
+  std::string ref_time_reporting_event_type = "periodic";
+  /// Reporting period in radio frames (1 RF = 10 ms). Range: 1..512. Used only when event_type is "periodic".
+  uint16_t ref_time_reporting_periodicity_rf = 100;
 };
 
 /// E1AP-CU-CP configuration parameters.

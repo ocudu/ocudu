@@ -4,7 +4,9 @@
 
 #pragma once
 
+#include "ocudu/f1ap/common/f1ap_ref_time_info.h"
 #include <chrono>
+#include <optional>
 
 namespace ocudu {
 namespace ocucp {
@@ -15,6 +17,8 @@ struct f1ap_configuration {
   std::chrono::milliseconds proc_timeout{1000};
   /// Whether to enable JSON logging of F1AP Tx and Rx messages.
   bool json_log_enabled = false;
+  /// If set, a REFERENCE TIME INFORMATION REPORTING CONTROL is sent to each DU immediately after a successful F1 Setup.
+  std::optional<f1ap_ref_time_report_ctrl_request> ref_time_report_ctrl;
 };
 
 } // namespace ocucp

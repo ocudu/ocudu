@@ -482,6 +482,16 @@ ocucp::cu_cp_configuration ocudu::generate_cu_cp_config(const cu_cp_unit_config&
   // F1AP-CU config.
   out_cfg.f1ap.proc_timeout     = std::chrono::milliseconds{cu_cfg.f1ap_config.procedure_timeout};
   out_cfg.f1ap.json_log_enabled = cu_cfg.loggers.f1ap_json_enabled;
+  if (cu_cfg.f1ap_config.ref_time_reporting_enabled) {
+    f1ap_ref_time_report_ctrl_request ctrl;
+    ctrl.event_type = (cu_cfg.f1ap_config.ref_time_reporting_event_type == "periodic")
+                          ? f1ap_ref_time_event_type::periodic
+                          : f1ap_ref_time_event_type::on_demand;
+    if (ctrl.event_type == f1ap_ref_time_event_type::periodic) {
+      ctrl.report_periodicity_rf = cu_cfg.f1ap_config.ref_time_reporting_periodicity_rf;
+    }
+    out_cfg.f1ap.ref_time_report_ctrl = ctrl;
+  }
 
   // E1AP-CU-CP config.
   out_cfg.e1ap.proc_timeout     = std::chrono::milliseconds{cu_cfg.e1ap_config.procedure_timeout};

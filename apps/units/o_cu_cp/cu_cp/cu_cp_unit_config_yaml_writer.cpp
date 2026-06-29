@@ -345,7 +345,11 @@ static void fill_cu_cp_section(YAML::Node node, const cu_cp_unit_config& config)
   node["rrc"]      = build_cu_cp_rrc_section(config.rrc_config);
   node["security"] = build_cu_cp_security_section(config.security_config);
   // Merge into any existing f1ap/e1ap nodes the appconfig writer may have populated (bind_addrs, sctp...).
-  node["f1ap"]["procedure_timeout"] = config.f1ap_config.procedure_timeout;
+  node["f1ap"]["procedure_timeout"]                    = config.f1ap_config.procedure_timeout;
+  node["f1ap"]["ref_time_reporting"]["enabled"]        = config.f1ap_config.ref_time_reporting_enabled;
+  node["f1ap"]["ref_time_reporting"]["event_type"]     = config.f1ap_config.ref_time_reporting_event_type;
+  node["f1ap"]["ref_time_reporting"]["periodicity_rf"] = config.f1ap_config.ref_time_reporting_periodicity_rf;
+
   node["e1ap"]["procedure_timeout"] = config.e1ap_config.procedure_timeout;
 }
 

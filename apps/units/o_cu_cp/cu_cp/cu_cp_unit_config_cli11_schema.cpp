@@ -526,6 +526,27 @@ static void configure_cli11_security_args(CLI::App& app, cu_cp_unit_security_con
       ->capture_default_str();
 }
 
+static void configure_cli11_ref_time_reporting_args(CLI::App& app, cu_cp_unit_f1ap_config& f1ap_params)
+{
+  add_option(app,
+             "--enabled",
+             f1ap_params.ref_time_reporting_enabled,
+             "Send Reference Time Information Reporting Control to each DU on connection")
+      ->capture_default_str();
+  add_option(app,
+             "--event_type",
+             f1ap_params.ref_time_reporting_event_type,
+             "Reporting mode: \"on_demand\" (single report) or \"periodic\" (recurring reports)")
+      ->capture_default_str()
+      ->check(CLI::IsMember({"on_demand", "periodic"}));
+  add_option(app,
+             "--periodicity_rf",
+             f1ap_params.ref_time_reporting_periodicity_rf,
+             "Reporting period in radio frames (1 RF = 10 ms). Used only when event_type is \"periodic\"")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 512));
+}
+
 static void configure_cli11_f1ap_args(CLI::App& app, cu_cp_unit_f1ap_config& f1ap_params)
 {
   add_option(app,
@@ -533,6 +554,10 @@ static void configure_cli11_f1ap_args(CLI::App& app, cu_cp_unit_f1ap_config& f1a
              f1ap_params.procedure_timeout,
              "Time that the F1AP waits for a DU response in milliseconds")
       ->capture_default_str();
+  CLI::App* rtr_subcmd =
+      add_subcommand(app, "ref_time_reporting", "Reference Time Information Reporting Control (TS 38.473 section 8.12)")
+          ->configurable();
+  configure_cli11_ref_time_reporting_args(*rtr_subcmd, f1ap_params);
 }
 
 static void configure_cli11_e1ap_args(CLI::App& app, cu_cp_unit_e1ap_config& e1ap_params)
