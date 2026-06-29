@@ -5,14 +5,9 @@
 #
 # Trigger: scheduled pipeline with description matching /Nightly/, web UI run,
 #          or manual job trigger.
-# Stages:
-#   build     — parallel matrix jobs, one per component × driver × OS × arch/SIMD
 #
 # To add a driver, OS, component, or SIMD variant: edit the matching
-# .matrix-* template in .gitlab/ci/docker/image-matrix.yml.
-
-stages:
-  - build
+# .matrix-* template in .gitlab/ci/deploy/image-matrix.yml.
 
 # ---------------------------------------------------------------------------
 # Base job — all build cells extend this

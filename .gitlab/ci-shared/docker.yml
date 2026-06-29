@@ -229,6 +229,36 @@ variables:
       regctl image copy "${SOURCE_IMAGE}" "${DESTINATION_IMAGE}"
       echo "Image ${DESTINATION_IMAGE} pushed"
 
+.docker compose:
+  stage: ci
+  image: docker:24.0.7-dind
+  tags:
+    - ${OCUDU_RUNNER_TAG}-${PLATFORM}
+  timeout: 2h
+  variables:
+    PLATFORM: "amd64" # arm64 or amd64
+  before_script:
+    - |
+      export DOCKER_HOST=unix:///var/run/docker.sock
+      export DOCKER_TLS_CERTDIR=""
+      dockerd-entrypoint.sh --host=${DOCKER_HOST} --tls=false 2>&1 &
+    - |
+      i=0
+      while ! docker info >/dev/null 2>&1; do
+        i=$((i+1))
+        if [ "$i" -ge 60 ]; then
+          echo "ERROR: dockerd not ready after 60s"
+          exit 1
+        fi
+        sleep 1
+      done
+    - |
+      CPU_JOBS="$(/usr/local/bin/get_available_cores.sh 2>/dev/null || ${CI_PROJECT_DIR}/.gitlab/ci/builders/get_available_cores.sh)"
+      if [ -z "${CPU_JOBS}" ] || [ "${CPU_JOBS}" -lt 1 ]; then
+        CPU_JOBS=1
+      fi
+      export CPU_JOBS
+
 .check image exists for all supported ubuntu versions:
   image: ${OCUDU_REGISTRY_URI}/buildkit-cli:$BUILDKIT_CLI_VERSION
   variables:

@@ -3,12 +3,12 @@
 
 include:
   - local: .gitlab/ci-shared/docker.yml
-  - local: .gitlab/ci/docker/image-matrix.yml
-  - local: .gitlab/ci/docker/image-build.yml
-  - local: .gitlab/ci/docker/image-build-rh.yml
+  - local: .gitlab/ci/deploy/image-matrix.yml
+  - local: .gitlab/ci/deploy/image-build.yml
+  - local: .gitlab/ci/deploy/image-build-rh.yml
 
 stages:
-  - build
+  - publish
   - promote-stable
   - preflight
 
@@ -78,7 +78,7 @@ stages:
   extends:
     - .docker-builder
     - .matrix-legacy-image
-  stage: build
+  stage: publish
   timeout: 3 hours
   variables:
     REGISTRY_URI: ${OCUDU_REGISTRY_URI}
@@ -229,7 +229,7 @@ promote-stable:rh:gnb:
     - .promote-stable-rh
     - .matrix-image-rh-gnb
   needs:
-    - job: build-rh:gnb
+    - job: build-and-publish-rh:gnb
       artifacts: false
 
 promote-stable:rh:du:
@@ -237,7 +237,7 @@ promote-stable:rh:du:
     - .promote-stable-rh
     - .matrix-image-rh-du
   needs:
-    - job: build-rh:du
+    - job: build-and-publish-rh:du
       artifacts: false
 
 promote-stable:rh:cu:
@@ -245,7 +245,7 @@ promote-stable:rh:cu:
     - .promote-stable-rh
     - .matrix-image-rh-cu
   needs:
-    - job: build-rh:cu
+    - job: build-and-publish-rh:cu
       artifacts: false
 
 promote-stable:rh:cu-cp:
@@ -253,7 +253,7 @@ promote-stable:rh:cu-cp:
     - .promote-stable-rh
     - .matrix-image-rh-cu-cp
   needs:
-    - job: build-rh:cu-cp
+    - job: build-and-publish-rh:cu-cp
       artifacts: false
 
 promote-stable:rh:cu-up:
@@ -261,7 +261,7 @@ promote-stable:rh:cu-up:
     - .promote-stable-rh
     - .matrix-image-rh-cu-up
   needs:
-    - job: build-rh:cu-up
+    - job: build-and-publish-rh:cu-up
       artifacts: false
 
 promote-stable:rh:ru-emulator:
@@ -269,7 +269,7 @@ promote-stable:rh:ru-emulator:
     - .promote-stable-rh
     - .matrix-image-rh-ru-emulator
   needs:
-    - job: build-rh:ru-emulator
+    - job: build-and-publish-rh:ru-emulator
       artifacts: false
 
 .preflight-rh:

@@ -22,15 +22,14 @@ include:
   - local: .gitlab/ci-shared/static.yml
   - local: .gitlab/ci/doxygen/version.yml
   - local: .gitlab/ci/build.yml
-  - local: .gitlab/ci/deploy.yml
+  - local: .gitlab/ci/compose.yml
 
 stages:
   - ci
-  - promote
   - static
   - build and unit tests
-  - documentation
   - deploy
+  - documentation
 
 # variables:
 #   SKIP_OCUDU_BUILDING_CONTAINERS_CI: true # set to any value to skip building ocudu containers in CI
@@ -96,28 +95,55 @@ trigger rh-tool-cli:
     include: .gitlab/ci/rh-tool-cli/.gitlab-ci.yml
     strategy: mirror
 
-trigger docker:
+trigger ui:
   stage: ci
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-docker/
+    - if: $SKIP_OCUDU_BUILDING_CONTAINERS_CI
       when: never
     - if: $ON_MR_FORK
+      when: never
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-docker/
       when: never
     - if: $ON_MR
       changes:
         paths:
-          - .gitlab/ci/docker/**/*
-          - docker/**/*.{yml,env,json,toml,py,sh,csv,py,toml}
-          - docker/**/Dockerfile
-          - .gdbinit
+          - .gitlab/ci/ui/**/*
+          - docker/grafana/**/*
+          - docker/telegraf/**/*
+  trigger:
+    include: .gitlab/ci/ui/.gitlab-ci.yml
+    strategy: mirror
+  needs:
+    - job: trigger buildkit
+      optional: true
+      artifacts: false
+
+trigger deploy:
+  stage: ci
+  rules:
+    - if: $SKIP_OCUDU_BUILDING_CONTAINERS_CI
+      when: never
+    - if: $ON_MR_FORK
+      when: never
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-docker/
+      when: never
+    - if: $ON_MR
+      changes:
+        paths:
+          - .gitlab/ci/deploy/**/*
+          - docker/scripts/**/*
+          - docker/Dockerfile
+    - if: $ON_WEB
+      when: manual
+      allow_failure: true
+    - if: $ON_API
+      when: manual
+      allow_failure: true
     - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
       variables:
         CI_PIPELINE_SCHEDULE_DESCRIPTION: Nightly
-    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Weekly/
-      variables:
-        CI_PIPELINE_SCHEDULE_DESCRIPTION: Weekly
   trigger:
-    include: .gitlab/ci/docker/.gitlab-ci.yml
+    include: .gitlab/ci/deploy/.gitlab-ci.yml
     strategy: mirror
   needs:
     - job: trigger buildkit
@@ -125,14 +151,12 @@ trigger docker:
       artifacts: false
 
 promote stable docker images:
-  stage: promote
+  stage: ci
   variables:
     PROMOTE_IMAGE_TAG: "$[[ inputs.promote-image-tag ]]"
     PFLT_SUBMIT: "$[[ inputs.pflt-submit ]]"
   rules:
     - if: $SKIP_OCUDU_BUILDING_CONTAINERS_CI
-      when: never
-    - if: $ON_MR_FORK
       when: never
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "main"
     - if: $ON_WEB
@@ -142,7 +166,7 @@ promote stable docker images:
       when: manual
       allow_failure: true
   trigger:
-    include: .gitlab/ci/docker/promote-stable-preflight.yml
+    include: .gitlab/ci/deploy/promote-stable-preflight.yml
     strategy: mirror
     forward:
       yaml_variables: true

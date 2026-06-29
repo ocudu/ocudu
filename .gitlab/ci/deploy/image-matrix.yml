@@ -7,7 +7,7 @@
 
 .image-build-common:
   extends: .docker-builder
-  stage: build
+  stage: publish
   variables:
     DOCKER_UHD_VERSION: "4.6.0.0"
     DOCKER_DPDK_VERSION: "25.11.2"
@@ -109,8 +109,17 @@
     reports:
       dotenv: build.env
   rules:
-    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "main"
     - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
+    - if: $ON_MR
+      when: manual
+      allow_failure: true
+    - if: $ON_WEB
+      when: manual
+      allow_failure: true
+    - if: $ON_API
+      when: manual
+      allow_failure: true
 
 .matrix-legacy-image:
   parallel:

@@ -7,14 +7,8 @@
 # for Red Hat container builds. Jobs run on RHEL-registered runners so
 # that EPEL/CRB packages are available via the host subscription bind-mount.
 #
-# Stages:
-#   build   — parallel matrix jobs, one per component × driver × arch/SIMD
-#
 # To add a driver, component, or SIMD variant: edit the matching .matrix-* template
-# in .gitlab/ci/docker/image-matrix.yml.
-
-stages:
-  - build
+# in .gitlab/ci/deploy/image-matrix.yml.
 
 # ---------------------------------------------------------------------------
 # Base job — all RH build cells extend this
@@ -53,32 +47,32 @@ stages:
 # Build jobs
 # ---------------------------------------------------------------------------
 
-build-rh:gnb:
+build-and-publish-rh:gnb:
   extends:
     - .image-build-rh
     - .matrix-image-rh-gnb
 
-build-rh:du:
+build-and-publish-rh:du:
   extends:
     - .image-build-rh
     - .matrix-image-rh-du
 
-build-rh:cu:
+build-and-publish-rh:cu:
   extends:
     - .image-build-rh
     - .matrix-image-rh-cu
 
-build-rh:cu-cp:
+build-and-publish-rh:cu-cp:
   extends:
     - .image-build-rh
     - .matrix-image-rh-cu-cp
 
-build-rh:cu-up:
+build-and-publish-rh:cu-up:
   extends:
     - .image-build-rh
     - .matrix-image-rh-cu-up
 
-build-rh:ru-emulator:
+build-and-publish-rh:ru-emulator:
   extends:
     - .image-build-rh
     - .matrix-image-rh-ru-emulator
