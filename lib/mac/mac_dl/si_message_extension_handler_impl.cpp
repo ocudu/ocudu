@@ -58,7 +58,8 @@ public:
   // See interface for documentation.
   span<const uint8_t> get_pdu(slot_point_extended sl_tx_ext, const sib_information& si_info) override
   {
-    const unsigned   idx   = si_info.si_msg_index.value();
+    const unsigned idx = si_info.si_msg_index.value();
+    ocudu_assert(si_info.pdsch_cfg.codewords.size() == 1, "SIB grants always carry exactly one codeword");
     const unsigned   tbs   = si_info.pdsch_cfg.codewords[0].tb_size_bytes.value();
     const slot_point sl_tx = sl_tx_ext.without_hyper_sfn();
 

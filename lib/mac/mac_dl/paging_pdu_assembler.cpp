@@ -62,6 +62,7 @@ paging_pdu_assembler::~paging_pdu_assembler() = default;
 
 span<const uint8_t> paging_pdu_assembler::encode_paging_pdu(const dl_paging_allocation& pg)
 {
+  ocudu_assert(pg.pdsch_cfg.codewords.size() == 1, "Paging grants always carry exactly one codeword");
   // Encode ASN.1 Paging message into a byte buffer.
   byte_buffer payload{byte_buffer::fallback_allocation_tag{}};
   {
