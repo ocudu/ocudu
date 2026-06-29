@@ -613,23 +613,25 @@ void mac_cell_processor::write_tx_pdu_pcap(slot_point                sl_tx,
     pcap.push_pdu(context, pg_pdu.pdu.get_buffer());
   }
 
-  for (unsigned i = 0, e = dl_res.ue_pdus.size(); i != e; ++i) {
-    const mac_dl_data_result::dl_pdu& ue_pdu   = dl_res.ue_pdus[i];
-    const dl_msg_alloc&               dl_alloc = sl_res.dl.ue_grants[i];
-    if (dl_alloc.pdsch_cfg.codewords[0].new_data) {
-      ocudu::mac_nr_context_info context = {};
-      context.radioType                  = cell_cfg.sched_req.ran.tdd_cfg.has_value() ? PCAP_TDD_RADIO : PCAP_FDD_RADIO;
-      context.direction                  = PCAP_DIRECTION_DOWNLINK;
-      context.rntiType                   = PCAP_C_RNTI;
-      context.rnti                       = to_value(dl_alloc.pdsch_cfg.rnti);
-      context.ueid                       = dl_alloc.context.ue_index == du_ue_index_t::INVALID_DU_UE_INDEX
-                                               ? du_ue_index_t::INVALID_DU_UE_INDEX
-                                               : dl_alloc.context.ue_index + 1;
-      context.harqid                     = dl_alloc.pdsch_cfg.harq_id;
-      context.system_frame_number        = sl_tx.sfn();
-      context.sub_frame_number           = sl_tx.subframe_index();
-      context.length                     = ue_pdu.pdu.get_buffer().size();
-      pcap.push_pdu(context, ue_pdu.pdu.get_buffer());
+  unsigned pdu_idx = 0;
+  for (const dl_msg_alloc& dl_alloc : sl_res.dl.ue_grants) {
+    for (unsigned cw_idx = 0, sz = dl_alloc.pdsch_cfg.codewords.size(); cw_idx != sz; ++cw_idx, ++pdu_idx) {
+      const mac_dl_data_result::dl_pdu& ue_pdu = dl_res.ue_pdus[pdu_idx];
+      if (dl_alloc.pdsch_cfg.codewords[cw_idx].new_data) {
+        ocudu::mac_nr_context_info context = {};
+        context.radioType           = cell_cfg.sched_req.ran.tdd_cfg.has_value() ? PCAP_TDD_RADIO : PCAP_FDD_RADIO;
+        context.direction           = PCAP_DIRECTION_DOWNLINK;
+        context.rntiType            = PCAP_C_RNTI;
+        context.rnti                = to_value(dl_alloc.pdsch_cfg.rnti);
+        context.ueid                = dl_alloc.context.ue_index == du_ue_index_t::INVALID_DU_UE_INDEX
+                                          ? du_ue_index_t::INVALID_DU_UE_INDEX
+                                          : dl_alloc.context.ue_index + 1;
+        context.harqid              = dl_alloc.pdsch_cfg.harq_id;
+        context.system_frame_number = sl_tx.sfn();
+        context.sub_frame_number    = sl_tx.subframe_index();
+        context.length              = ue_pdu.pdu.get_buffer().size();
+        pcap.push_pdu(context, ue_pdu.pdu.get_buffer());
+      }
     }
   }
 }
