@@ -53,7 +53,9 @@ void ue_history_repository::save_dl_newtx_grants(span<const dl_msg_alloc> dl_gra
   std::fill(last_samples_buffer.begin(), last_samples_buffer.begin() + dl_rate.size(), 0.0f);
   for (const dl_msg_alloc& grant : dl_grants) {
     unsigned offset = ue_db.get_offset(ue_row_ids[grant.context.ue_index]);
-    last_samples_buffer[offset] += grant.pdsch_cfg.codewords[0].tb_size_bytes.value();
+    for (const auto& cw : grant.pdsch_cfg.codewords) {
+      last_samples_buffer[offset] += cw.tb_size_bytes.value();
+    }
   }
   auto sample_it = last_samples_buffer.begin();
   for (auto rate_it = dl_rate.begin(), end_it = dl_rate.end(); rate_it != end_it; ++rate_it, ++sample_it) {
