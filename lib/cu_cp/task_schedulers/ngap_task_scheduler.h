@@ -24,7 +24,7 @@ public:
   ~ngap_task_scheduler() = default;
 
   // CU-UP task scheduler
-  void handle_amf_async_task(cu_cp_amf_index_t amf_index, async_task<void>&& task);
+  bool handle_amf_async_task(cu_cp_amf_index_t amf_index, async_task<void>&& task);
 
   unique_timer   make_unique_timer();
   timer_manager& get_timer_manager();

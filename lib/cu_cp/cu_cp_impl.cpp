@@ -129,7 +129,6 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                               *cfg.services.cu_cp_executor);
 
   // Connect event notifiers to layers.
-  ngap_cu_cp_ev_notifier.connect_cu_cp(get_cu_cp_ngap_handler(), paging_handler);
   nrppa_cu_cp_ev_notifier.connect_cu_cp(get_cu_cp_nrppa_handler());
   mobility_manager_ev_notifier.connect_cu_cp(get_cu_cp_mobility_manager_handler());
   e1ap_ev_notifier.connect_cu_cp(get_cu_cp_e1ap_handler());
@@ -1413,6 +1412,18 @@ void cu_cp_impl::handle_n2_disconnection(cu_cp_amf_index_t amf_index)
 
   common_task_sched.schedule(
       launch_async<amf_connection_loss_routine>(amf_index, cfg, plmns, du_db, *this, ue_mng, controller, logger));
+}
+
+async_task<ngap_write_replace_warning_response>
+cu_cp_impl::handle_write_replace_warning_request(const ngap_write_replace_warning_request& request)
+{
+  return launch_async([request](coro_context<async_task<ngap_write_replace_warning_response>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+    ngap_write_replace_warning_response resp;
+    resp.msg_id     = request.msg_id;
+    resp.serial_num = request.serial_num;
+    CORO_RETURN(resp);
+  });
 }
 
 std::optional<rrc_meas_cfg>

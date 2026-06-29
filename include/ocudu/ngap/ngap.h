@@ -14,6 +14,7 @@
 #include "ocudu/ngap/ngap_types.h"
 #include "ocudu/ngap/ngap_ue_context_mod.h"
 #include "ocudu/ngap/ngap_ue_radio_capability_management.h"
+#include "ocudu/ngap/ngap_warning.h"
 #include "ocudu/ran/cu_cp_location_reporting_types.h"
 #include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/ran/cu_cp_ue_context_release.h"
@@ -222,6 +223,17 @@ public:
 
   /// \brief Notifies the CU-CP about a Paging message.
   virtual void on_paging_message(cu_cp_paging_message& msg) = 0;
+
+  /// \brief Notifies the CU-CP about a Write-Replace Warning Request (TS 38.413 section 8.9.1).
+  /// \param[in] request The decoded Write-Replace Warning Request.
+  /// \returns The Write-Replace Warning Response to send back to the AMF.
+  virtual async_task<ngap_write_replace_warning_response>
+  on_write_replace_warning_request(const ngap_write_replace_warning_request& request) = 0;
+
+  /// \brief Request scheduling of an async task tied to the AMF, rather than to a specific UE.
+  /// \param[in] task The task to schedule.
+  /// \returns True if the task was successfully scheduled, false otherwise.
+  virtual bool schedule_async_task(async_task<void> task) = 0;
 
   /// \brief Request UE index allocation on the CU-CP on N2 handover request.
   virtual cu_cp_ue_index_t request_new_ue_index_allocation(nr_cell_global_id_t cgi, const plmn_identity& plmn) = 0;

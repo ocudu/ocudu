@@ -427,6 +427,9 @@ void ngap_impl::handle_initiating_message(const init_msg_s& msg)
     case ngap_elem_procs_o::init_msg_c::types_opts::paging:
       handle_paging(msg.value.paging());
       break;
+    case ngap_elem_procs_o::init_msg_c::types_opts::write_replace_warning_request:
+      handle_write_replace_warning(msg.value.write_replace_warning_request());
+      break;
     case ngap_elem_procs_o::init_msg_c::types_opts::ho_request:
       handle_handover_request(msg.value.ho_request());
       break;
@@ -950,6 +953,34 @@ void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
   fill_cu_cp_paging_message(cu_cp_paging_msg, msg);
 
   cu_cp_notifier.on_paging_message(cu_cp_paging_msg);
+}
+
+void ngap_impl::handle_write_replace_warning(const asn1::ngap::write_replace_warning_request_s& msg)
+{
+  ngap_write_replace_warning_request req = {};
+  fill_ngap_write_replace_warning_request(req, msg);
+
+  if (!cu_cp_notifier.schedule_async_task(launch_async(
+          [this, req, resp = ngap_write_replace_warning_response{}](coro_context<async_task<void>>& ctx) mutable {
+            CORO_BEGIN(ctx);
+            CORO_AWAIT_VALUE(resp, cu_cp_notifier.on_write_replace_warning_request(req));
+            send_write_replace_warning_response(resp);
+            CORO_RETURN();
+          }))) {
+    logger.warning("Failed to schedule Write-Replace Warning procedure");
+  }
+}
+
+void ngap_impl::send_write_replace_warning_response(const ngap_write_replace_warning_response& resp)
+{
+  ngap_message ngap_msg;
+  ngap_msg.pdu.set_successful_outcome();
+  ngap_msg.pdu.successful_outcome().load_info_obj(ASN1_NGAP_ID_WRITE_REPLACE_WARNING);
+  fill_asn1_write_replace_warning_response(ngap_msg.pdu.successful_outcome().value.write_replace_warning_resp(), resp);
+
+  if (!tx_pdu_notifier.on_new_message(ngap_msg)) {
+    logger.warning("Failed to send Write-Replace Warning Response");
+  }
 }
 
 // Free function to generate a handover failure message.

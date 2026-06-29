@@ -21,10 +21,10 @@ ngap_task_scheduler::ngap_task_scheduler(timer_manager&          timers_,
 }
 
 // AMF task scheduler
-void ngap_task_scheduler::handle_amf_async_task(cu_cp_amf_index_t amf_index, async_task<void>&& task)
+bool ngap_task_scheduler::handle_amf_async_task(cu_cp_amf_index_t amf_index, async_task<void>&& task)
 {
   logger.debug("amf={}: Scheduling async task", amf_index);
-  amf_ctrl_loop.at(amf_index).schedule(std::move(task));
+  return amf_ctrl_loop.at(amf_index).schedule(std::move(task));
 }
 
 unique_timer ngap_task_scheduler::make_unique_timer()

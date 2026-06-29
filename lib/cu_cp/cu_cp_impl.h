@@ -8,7 +8,6 @@
 #include "adapters/du_processor_adapters.h"
 #include "adapters/e1ap_adapters.h"
 #include "adapters/mobility_manager_adapters.h"
-#include "adapters/ngap_adapters.h"
 #include "adapters/nrppa_adapters.h"
 #include "cu_configurator_impl.h"
 #include "cu_cp_controller/cu_cp_controller.h"
@@ -117,6 +116,8 @@ public:
   void handle_location_reporting_control_message(cu_cp_ue_index_t               ue_index,
                                                  const location_report_request& msg) override;
   void handle_n2_disconnection(cu_cp_amf_index_t amf_index) override;
+  async_task<ngap_write_replace_warning_response>
+  handle_write_replace_warning_request(const ngap_write_replace_warning_request& request) override;
 
   // cu_cp_inter_cu_handover_handler.
   async_task<bool> handle_new_rrc_handover_command(cu_cp_ue_index_t                ue_index,
@@ -262,9 +263,6 @@ private:
 
   // E1AP to CU-CP adapter.
   e1ap_cu_cp_adapter e1ap_ev_notifier;
-
-  // NGAP to CU-CP adapters.
-  ngap_cu_cp_adapter ngap_cu_cp_ev_notifier;
 
   // Mobility manager to CU-CP adapter.
   mobility_manager_adapter mobility_manager_ev_notifier;

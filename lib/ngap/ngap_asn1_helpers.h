@@ -15,6 +15,7 @@
 #include "ocudu/ngap/ngap_nas.h"
 #include "ocudu/ngap/ngap_rrc_inactive_transition.h"
 #include "ocudu/ngap/ngap_ue_context_mod.h"
+#include "ocudu/ngap/ngap_warning.h"
 #include "ocudu/ran/cu_cp_location_reporting_types.h"
 #include "ocudu/ran/cu_cp_pdu_session.h"
 #include "ocudu/ran/cu_cp_ue_context_release.h"
@@ -1175,6 +1176,90 @@ inline bool ue_context_modification_request_from_asn1(ngap_ue_context_modificati
   /// TODO: Fill missing optional values.
 
   return true;
+}
+
+/// \brief Convert NGAP ASN.1 Write-Replace Warning Request to common type.
+/// \param[out] req  The common-type struct to fill.
+/// \param[in]  msg  The ASN.1 Write-Replace Warning Request.
+inline void fill_ngap_write_replace_warning_request(ngap_write_replace_warning_request&                req,
+                                                    const asn1::ngap::write_replace_warning_request_s& msg)
+{
+  // Mandatory IEs.
+  req.msg_id                   = static_cast<uint16_t>(msg->msg_id.to_number());
+  req.serial_num               = static_cast<uint16_t>(msg->serial_num.to_number());
+  req.repeat_period            = msg->repeat_period;
+  req.nof_broadcasts_requested = msg->nof_broadcasts_requested;
+
+  // Warning Area List (optional).
+  if (msg->warning_area_list_present) {
+    const auto& wal = msg->warning_area_list;
+    switch (wal.type()) {
+      case asn1::ngap::warning_area_list_c::types_opts::nr_cgi_list_for_warning: {
+        ngap_nr_cgi_list_for_warning cgi_list;
+        for (const auto& asn1_cgi : wal.nr_cgi_list_for_warning()) {
+          nr_cell_global_id_t cgi;
+          cgi.plmn_id = plmn_identity::from_bytes(asn1_cgi.plmn_id.to_bytes()).value();
+          cgi.nci     = nr_cell_identity::create(asn1_cgi.nr_cell_id.to_number()).value();
+          cgi_list.push_back(cgi);
+        }
+        req.warning_area_list = std::move(cgi_list);
+        break;
+      }
+      case asn1::ngap::warning_area_list_c::types_opts::tai_list_for_warning: {
+        ngap_tai_list_for_warning tai_list;
+        for (const auto& asn1_tai : wal.tai_list_for_warning()) {
+          tai_t tai;
+          tai.plmn_id = plmn_identity::from_bytes(asn1_tai.plmn_id.to_bytes()).value();
+          tai.tac     = asn1_tai.tac.to_number();
+          tai_list.push_back(tai);
+        }
+        req.warning_area_list = std::move(tai_list);
+        break;
+      }
+      case asn1::ngap::warning_area_list_c::types_opts::emergency_area_id_list: {
+        ngap_emergency_area_id_list eaid_list;
+        for (const auto& asn1_eaid : wal.emergency_area_id_list()) {
+          eaid_list.push_back(asn1_eaid.to_bytes());
+        }
+        req.warning_area_list = std::move(eaid_list);
+        break;
+      }
+      default:
+        // EUTRA CGI list and choice extensions not supported; treat as absent.
+        break;
+    }
+  }
+
+  // Warning Type (optional, fixed_octstring<2>).
+  if (msg->warning_type_present) {
+    req.warning_type = msg->warning_type.to_bytes();
+  }
+
+  // Data Coding Scheme (optional, 8-bit bitstring).
+  if (msg->data_coding_scheme_present) {
+    req.data_coding_scheme = static_cast<uint8_t>(msg->data_coding_scheme.to_number());
+  }
+
+  // Warning Message Contents (optional, bounded_octstring<1,9600>).
+  if (msg->warning_msg_contents_present) {
+    const auto& wmc          = msg->warning_msg_contents;
+    req.warning_msg_contents = byte_buffer::create(wmc.data(), wmc.data() + wmc.size()).value();
+  }
+
+  // Concurrent Warning Message Indication (optional).
+  if (msg->concurrent_warning_msg_ind_present) {
+    req.concurrent_warning_msg_ind = true;
+  }
+}
+
+/// \brief Fill ASN.1 Write-Replace Warning Response from common type.
+/// \param[out] asn1_resp  The ASN.1 struct to fill.
+/// \param[in]  resp       The common-type response.
+inline void fill_asn1_write_replace_warning_response(asn1::ngap::write_replace_warning_resp_s&  asn1_resp,
+                                                     const ngap_write_replace_warning_response& resp)
+{
+  asn1_resp->msg_id.from_number(resp.msg_id, 16);
+  asn1_resp->serial_num.from_number(resp.serial_num, 16);
 }
 
 } // namespace ocudu::ocucp

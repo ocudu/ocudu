@@ -65,9 +65,9 @@ public:
   void handle_ul_ran_status_transfer(const cu_cp_status_transfer& ul_ran_status_transfer) override;
   async_task<expected<cu_cp_status_transfer>>
                         handle_dl_ran_status_transfer_required(cu_cp_ue_index_t ue_index) override;
-  void                  handle_inter_cu_ho_rrc_recfg_complete(const cu_cp_ue_index_t     ue_index,
+  void                  handle_inter_cu_ho_rrc_recfg_complete(cu_cp_ue_index_t           ue_index,
                                                               const nr_cell_global_id_t& cgi,
-                                                              const unsigned             tac) override;
+                                                              unsigned                   tac) override;
   const ngap_context_t& get_ngap_context() const override { return context; }
   void handle_ul_ue_associated_nrppa_transport(cu_cp_ue_index_t ue_index, const byte_buffer& nrppa_pdu) override;
   async_task<void> handle_ul_non_ue_associated_nrppa_transport(const byte_buffer& nrppa_pdu) override;
@@ -168,6 +168,12 @@ private:
   /// \brief Notify about the reception of a Paging message.
   /// \param[in] msg The received Paging message.
   void handle_paging(const asn1::ngap::paging_s& msg);
+
+  /// \brief Handle a received Write-Replace Warning Request from the AMF.
+  void handle_write_replace_warning(const asn1::ngap::write_replace_warning_request_s& msg);
+
+  /// \brief Send a Write-Replace Warning Response to the AMF.
+  void send_write_replace_warning_response(const ngap_write_replace_warning_response& resp);
 
   /// \brief Send a handover failure to the AMF.
   /// \param[in] amf_ue_id The AMF UE NGAP ID.

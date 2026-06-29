@@ -6,6 +6,7 @@
 
 #include "../cu_cp_impl_interface.h"
 #include "../paging/paging_message_handler.h"
+#include "../task_schedulers/ngap_task_scheduler.h"
 #include "../ue_manager/cu_cp_ue_impl_interface.h"
 #include "ocudu/cu_cp/ue_task_scheduler.h"
 #include "ocudu/ngap/ngap.h"
@@ -18,10 +19,15 @@ namespace ocudu::ocucp {
 class ngap_cu_cp_adapter : public ngap_cu_cp_notifier
 {
 public:
-  void connect_cu_cp(cu_cp_ngap_handler& cu_cp_handler_, paging_message_handler& paging_handler_)
+  void connect_cu_cp(cu_cp_ngap_handler&     cu_cp_handler_,
+                     paging_message_handler& paging_handler_,
+                     cu_cp_amf_index_t       amf_index_,
+                     ngap_task_scheduler&    amf_task_sched_)
   {
     cu_cp_handler  = &cu_cp_handler_;
     paging_handler = &paging_handler_;
+    amf_index      = amf_index_;
+    amf_task_sched = &amf_task_sched_;
   }
 
   void on_paging_message(cu_cp_paging_message& msg) override
@@ -129,10 +135,11 @@ public:
     cu_cp_handler->handle_dl_ue_associated_nrppa_transport_pdu(ue_index, nrppa_pdu);
   }
 
-  void on_dl_non_ue_associated_nrppa_transport_pdu(cu_cp_amf_index_t amf_index, const byte_buffer& nrppa_pdu) override
+  void on_dl_non_ue_associated_nrppa_transport_pdu(cu_cp_amf_index_t  target_amf_index,
+                                                   const byte_buffer& nrppa_pdu) override
   {
     ocudu_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
-    cu_cp_handler->handle_dl_non_ue_associated_nrppa_transport_pdu(amf_index, nrppa_pdu);
+    cu_cp_handler->handle_dl_non_ue_associated_nrppa_transport_pdu(target_amf_index, nrppa_pdu);
   }
 
   void on_location_reporting_control_message(cu_cp_ue_index_t ue_index, const location_report_request& msg) override
@@ -141,15 +148,30 @@ public:
     cu_cp_handler->handle_location_reporting_control_message(ue_index, msg);
   }
 
-  void on_n2_disconnection(cu_cp_amf_index_t amf_index) override
+  void on_n2_disconnection(cu_cp_amf_index_t target_amf_index) override
   {
     ocudu_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
-    cu_cp_handler->handle_n2_disconnection(amf_index);
+    cu_cp_handler->handle_n2_disconnection(target_amf_index);
+  }
+
+  async_task<ngap_write_replace_warning_response>
+  on_write_replace_warning_request(const ngap_write_replace_warning_request& request) override
+  {
+    ocudu_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
+    return cu_cp_handler->handle_write_replace_warning_request(request);
+  }
+
+  bool schedule_async_task(async_task<void> task) override
+  {
+    ocudu_assert(amf_task_sched != nullptr, "AMF task scheduler must not be nullptr");
+    return amf_task_sched->handle_amf_async_task(amf_index, std::move(task));
   }
 
 private:
   cu_cp_ngap_handler*     cu_cp_handler  = nullptr;
   paging_message_handler* paging_handler = nullptr;
+  cu_cp_amf_index_t       amf_index      = cu_cp_amf_index_t::invalid;
+  ngap_task_scheduler*    amf_task_sched = nullptr;
 };
 
 /// Adapter between NGAP and CU-CP UE

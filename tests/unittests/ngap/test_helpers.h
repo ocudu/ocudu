@@ -12,6 +12,7 @@
 #include "ocudu/ngap/ngap_message.h"
 #include "ocudu/ran/cu_cp_pdu_session.h"
 #include "ocudu/security/security.h"
+#include "ocudu/support/async/fifo_async_task_scheduler.h"
 #include <gtest/gtest.h>
 #include <optional>
 
@@ -353,6 +354,8 @@ public:
 
   void on_n2_disconnection(cu_cp_amf_index_t amf_index) override {}
 
+  bool schedule_async_task(async_task<void> task) override { return amf_task_sched.schedule(std::move(task)); }
+
   cu_cp_ue_context_release_command last_command;
   byte_buffer                      last_handover_command;
 
@@ -372,6 +375,18 @@ public:
   {
     logger.info("Received a new Paging message");
     last_paging_msg = std::move(msg);
+  }
+
+  async_task<ngap_write_replace_warning_response>
+  on_write_replace_warning_request(const ngap_write_replace_warning_request& request) override
+  {
+    logger.info("Received a new Write-Replace Warning Request");
+    last_write_replace_warning_request = request;
+    return launch_async([resp = write_replace_warning_response](
+                            coro_context<async_task<ngap_write_replace_warning_response>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(resp);
+    });
   }
 
   cu_cp_ue_index_t request_new_ue_index_allocation(nr_cell_global_id_t /*cgi*/, const plmn_identity& /*plmn*/) override
@@ -417,12 +432,15 @@ public:
   cu_cp_paging_message                                      last_paging_msg;
   std::optional<cu_cp_ue_index_t>                           last_location_reporting_ctrl_ue_index;
   std::optional<location_report_request>                    last_location_reporting_ctrl;
+  std::optional<ngap_write_replace_warning_request>         last_write_replace_warning_request;
+  ngap_write_replace_warning_response                       write_replace_warning_response;
 
 private:
   ue_manager&             ue_mng;
   ocudulog::basic_logger& logger;
 
   ngap_ue_context_removal_handler* ngap_handler = nullptr;
+  fifo_async_task_scheduler        amf_task_sched{16};
 
   uint64_t ue_id = cu_cp_ue_index_to_uint(cu_cp_ue_index_t::min);
 };

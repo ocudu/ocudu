@@ -147,6 +147,12 @@ public:
   /// \brief Handle N2 AMF connection drop.
   /// \param[in] amf_index The index of the dropped AMF.
   virtual void handle_n2_disconnection(cu_cp_amf_index_t amf_index) = 0;
+
+  /// \brief Handle WRITE-REPLACE WARNING REQUEST received from the AMF (TS 38.413 section 8.9.1).
+  /// \param[in] request The decoded request.
+  /// \returns Async task resolving to the WRITE-REPLACE WARNING RESPONSE.
+  virtual async_task<ngap_write_replace_warning_response>
+  handle_write_replace_warning_request(const ngap_write_replace_warning_request& request) = 0;
 };
 
 /// Interface for the NRPPa notifier to communicate with the CU-CP.

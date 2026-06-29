@@ -27,7 +27,7 @@ ngap_interface* ngap_repository::add_ngap(cu_cp_amf_index_t amf_index, const cu_
   auto it = ngap_db.insert(std::make_pair(amf_index, ngap_context{}));
   ocudu_assert(it.second, "Unable to insert NGAP in map");
   ngap_context& ngap_ctxt = it.first->second;
-  ngap_ctxt.ngap_to_cu_cp_notifier.connect_cu_cp(cfg.cu_cp_notifier, cfg.paging_handler);
+  ngap_ctxt.ngap_to_cu_cp_notifier.connect_cu_cp(cfg.cu_cp_notifier, cfg.paging_handler, amf_index, amf_task_sched);
 
   ngap_configuration              ngap_cfg    = {cfg.cu_cp.node.gnb_id,
                                                  cfg.cu_cp.node.ran_node_name,
