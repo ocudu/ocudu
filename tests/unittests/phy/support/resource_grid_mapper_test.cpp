@@ -563,13 +563,14 @@ TEST_F(ResourceGridMapperFixture, OneLayerFourPorts)
       grid->set_all_zero();
 
       // Create a single layer to four ports precoding matrix.
-      precoding_matrix_indicator pmi = pmi_typeI_single_panel{.panel_config = pmi_codebook_single_panel_config::two_one,
-                                                              .i_1_1        = i_beam,
-                                                              .i_1_2        = std::nullopt,
-                                                              .i_1_3        = std::nullopt,
-                                                              .i_2          = i_pol_phase};
-      precoding_weight_matrix    precoding        = make_type1_sp_mode1(pmi, nof_layers);
-      precoding_configuration    precoding_config = precoding_configuration::make_wideband(precoding);
+      precoding_matrix_indicator pmi = pmi_typeI_single_panel{
+          .panel_config = {pmi_codebook_single_panel_config::two_one, pmi_codebook_typeI_mode::one},
+          .i_1_1        = i_beam,
+          .i_1_2        = std::nullopt,
+          .i_1_3        = std::nullopt,
+          .i_2          = i_pol_phase};
+      precoding_weight_matrix precoding        = make_type1_sp_mode1(pmi, nof_layers);
+      precoding_configuration precoding_config = precoding_configuration::make_wideband(precoding);
 
       // Generate resource grid allocation.
       re_pattern_list allocation = generate_random_allocation(MAX_NOF_PRBS);
@@ -612,12 +613,12 @@ TEST_F(ResourceGridMapperFixture, TwoLayerFourPorts)
         grid->set_all_zero();
 
         // Create a two layer to four ports precoding matrix.
-        precoding_matrix_indicator pmi =
-            pmi_typeI_single_panel{.panel_config = pmi_codebook_single_panel_config::two_one,
-                                   .i_1_1        = i_beam,
-                                   .i_1_2        = std::nullopt,
-                                   .i_1_3        = i_beam_offset,
-                                   .i_2          = i_pol_phase};
+        precoding_matrix_indicator pmi = pmi_typeI_single_panel{
+            .panel_config = {pmi_codebook_single_panel_config::two_one, pmi_codebook_typeI_mode::one},
+            .i_1_1        = i_beam,
+            .i_1_2        = std::nullopt,
+            .i_1_3        = i_beam_offset,
+            .i_2          = i_pol_phase};
         precoding_weight_matrix precoding        = make_type1_sp_mode1(pmi, nof_layers);
         precoding_configuration precoding_config = precoding_configuration::make_wideband(precoding);
 
@@ -662,13 +663,14 @@ TEST_F(ResourceGridMapperFixture, ThreeLayerFourPorts)
       grid->set_all_zero();
 
       // Create a three layer to four ports precoding matrix.
-      precoding_matrix_indicator pmi = pmi_typeI_single_panel{.panel_config = pmi_codebook_single_panel_config::two_one,
-                                                              .i_1_1        = i_beam,
-                                                              .i_1_2        = std::nullopt,
-                                                              .i_1_3        = std::nullopt,
-                                                              .i_2          = i_pol_phase};
-      precoding_weight_matrix    precoding        = make_type1_sp_mode1(pmi, nof_layers);
-      precoding_configuration    precoding_config = precoding_configuration::make_wideband(precoding);
+      precoding_matrix_indicator pmi = pmi_typeI_single_panel{
+          .panel_config = {pmi_codebook_single_panel_config::two_one, pmi_codebook_typeI_mode::one},
+          .i_1_1        = i_beam,
+          .i_1_2        = std::nullopt,
+          .i_1_3        = std::nullopt,
+          .i_2          = i_pol_phase};
+      precoding_weight_matrix precoding        = make_type1_sp_mode1(pmi, nof_layers);
+      precoding_configuration precoding_config = precoding_configuration::make_wideband(precoding);
 
       // Generate resource grid allocation.
       re_pattern_list allocation = generate_random_allocation(MAX_NOF_PRBS);
@@ -710,13 +712,14 @@ TEST_F(ResourceGridMapperFixture, FourLayerFourPorts)
       grid->set_all_zero();
 
       // Create a four layer to four ports precoding matrix.
-      precoding_matrix_indicator pmi = pmi_typeI_single_panel{.panel_config = pmi_codebook_single_panel_config::two_one,
-                                                              .i_1_1        = i_beam,
-                                                              .i_1_2        = std::nullopt,
-                                                              .i_1_3        = std::nullopt,
-                                                              .i_2          = i_pol_phase};
-      precoding_weight_matrix    precoding        = make_type1_sp_mode1(pmi, 4);
-      precoding_configuration    precoding_config = precoding_configuration::make_wideband(precoding);
+      precoding_matrix_indicator pmi = pmi_typeI_single_panel{
+          .panel_config = {pmi_codebook_single_panel_config::two_one, pmi_codebook_typeI_mode::one},
+          .i_1_1        = i_beam,
+          .i_1_2        = std::nullopt,
+          .i_1_3        = std::nullopt,
+          .i_2          = i_pol_phase};
+      precoding_weight_matrix precoding        = make_type1_sp_mode1(pmi, nof_layers);
+      precoding_configuration precoding_config = precoding_configuration::make_wideband(precoding);
 
       // Generate resource grid allocation.
       re_pattern_list allocation = generate_random_allocation(MAX_NOF_PRBS);

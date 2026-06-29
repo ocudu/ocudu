@@ -4,6 +4,7 @@
 #include "ocudu/fapi_adaptor/precoding_matrix_table_generator.h"
 #include "precoding_matrix_mapper_functions.h"
 #include "precoding_matrix_repository_builder.h"
+#include "ocudu/adt/slotted_array.h"
 #include "ocudu/fapi_adaptor/precoding_matrix_mapper.h"
 #include "ocudu/ran/precoding/precoding_codebook_helpers.h"
 #include "ocudu/ran/precoding/precoding_codebooks.h"
@@ -11,8 +12,21 @@
 using namespace ocudu;
 using namespace fapi_adaptor;
 
-/// Maximum number of codebooks for 1-port, 2-port and 4-port configurations.
-static constexpr std::array<unsigned, 4> max_num_codebooks = {{6, 11, 0, 261}};
+/// Returns the maximum number of codebooks for the given number of antenna ports.
+static unsigned get_max_num_codebooks(unsigned nof_ports)
+{
+  static const slotted_array<unsigned, 9> max_num_codebooks = [] {
+    slotted_array<unsigned, 9> result;
+    result.insert(1, 6);
+    result.insert(2, 11);
+    result.insert(4, 261);
+    result.insert(8, 901);
+    return result;
+  }();
+
+  ocudu_assert(max_num_codebooks.contains(nof_ports), "Unsupported number of antenna ports={}", nof_ports);
+  return max_num_codebooks[nof_ports];
+}
 
 /// Generates SSB codebooks and precoding matrices for the given number of ports.
 static unsigned generate_ssb(unsigned offset, unsigned nof_ports, precoding_matrix_repository_builder& repo_builder)
@@ -75,26 +89,6 @@ generate_identity_matrix(unsigned offset, precoding_matrix_repository_builder& r
   return ++offset;
 }
 
-/// Generates one-port codebooks and precoding matrices.
-static void generate_single_port_table(precoding_matrix_mapper_codebook_offset_configuration& mapper_offsets,
-                                       precoding_matrix_repository_builder&                   repo_builder)
-{
-  unsigned                  offset    = 0U;
-  static constexpr unsigned nof_ports = 1U;
-
-  offset = generate_identity_matrix(offset, repo_builder, nof_ports);
-  mapper_offsets.ssb_codebook_offsets.push_back(offset);
-  offset                           = generate_ssb(offset, nof_ports, repo_builder);
-  mapper_offsets.pdsch_omni_offset = offset;
-  offset                           = generate_pdsch_omnidirectional(offset, nof_ports, repo_builder);
-  mapper_offsets.pdsch_codebook_offsets.push_back(offset);
-  offset = generate_pdsch_one_port(offset, repo_builder);
-  mapper_offsets.pdcch_codebook_offsets.push_back(offset);
-  offset = generate_pdcch(offset, nof_ports, repo_builder);
-  mapper_offsets.csi_rs_codebook_offsets.push_back(offset);
-  generate_csi_rs(offset, nof_ports, repo_builder);
-}
-
 /// Generates two-port PDSCH codebooks and precoding matrices for one layer.
 static unsigned generate_pdsch_2_ports_1_layer(unsigned offset, precoding_matrix_repository_builder& repo_builder)
 {
@@ -122,28 +116,6 @@ static unsigned generate_pdsch_2_ports_2_layers(unsigned offset, precoding_matri
   return ++offset;
 }
 
-/// Generates two-port codebooks and precoding matrices.
-static void generate_2_ports_table(precoding_matrix_mapper_codebook_offset_configuration& mapper_offsets,
-                                   precoding_matrix_repository_builder&                   repo_builder)
-{
-  unsigned                  offset    = 0U;
-  static constexpr unsigned nof_ports = 2U;
-
-  offset = generate_identity_matrix(offset, repo_builder, nof_ports);
-  mapper_offsets.ssb_codebook_offsets.push_back(offset);
-  offset = generate_ssb(offset, nof_ports, repo_builder);
-  mapper_offsets.pdcch_codebook_offsets.push_back(offset);
-  offset                           = generate_pdcch(offset, nof_ports, repo_builder);
-  mapper_offsets.pdsch_omni_offset = offset;
-  offset                           = generate_pdsch_omnidirectional(offset, nof_ports, repo_builder);
-  mapper_offsets.pdsch_codebook_offsets.push_back(offset);
-  offset = generate_pdsch_2_ports_1_layer(offset, repo_builder);
-  mapper_offsets.pdsch_codebook_offsets.push_back(offset);
-  offset = generate_pdsch_2_ports_2_layers(offset, repo_builder);
-  mapper_offsets.csi_rs_codebook_offsets.push_back(offset);
-  generate_csi_rs(offset, nof_ports, repo_builder);
-}
-
 /// Generates PDSCH single-panel type 1 precoding matrices codebook for a number of layers.
 static unsigned generate_pdsch_sp_type1(unsigned                              offset,
                                         const pmi_codebook_typeI_single_panel panel,
@@ -164,11 +136,12 @@ static unsigned generate_pdsch_sp_type1(unsigned                              of
     for (unsigned i_1_2 = 0; i_1_2 != nof_i_1_2; ++i_1_2) {
       for (unsigned i_1_3 = 0; i_1_3 != nof_i_1_3; ++i_1_3) {
         for (unsigned i_2 = 0; i_2 != nof_i_2; ++i_2) {
-          pmi_typeI_single_panel  pmi       = {.panel_config = pmi_codebook_single_panel_config::two_one,
-                                               .i_1_1        = i_1_1,
-                                               .i_1_2        = (param_ranges.i_1_2 > 0) ? std::optional(i_1_2) : std::nullopt,
-                                               .i_1_3        = (param_ranges.i_1_3 > 0) ? std::optional(i_1_3) : std::nullopt,
-                                               .i_2          = i_2};
+          pmi_typeI_single_panel pmi = {.panel_config = panel,
+                                        .i_1_1        = i_1_1,
+                                        .i_1_2        = (param_ranges.i_1_2 > 0) ? std::optional(i_1_2) : std::nullopt,
+                                        .i_1_3        = (param_ranges.i_1_3 > 0) ? std::optional(i_1_3) : std::nullopt,
+                                        .i_2          = i_2};
+
           precoding_weight_matrix precoding = make_type1_sp_mode1(pmi, nof_layers);
           unsigned pm_index = base_offset + get_pdsch_single_panel_type1_precoding_matrix_index(param_ranges, pmi);
           repo_builder.add(pm_index, precoding);
@@ -182,62 +155,84 @@ static unsigned generate_pdsch_sp_type1(unsigned                              of
   return ++offset;
 }
 
-/// Generates four-port codebooks and precoding matrices.
-static void generate_4_ports_table(precoding_matrix_mapper_codebook_offset_configuration& mapper_offsets,
-                                   precoding_matrix_repository_builder&                   repo_builder)
-{
-  static constexpr pmi_codebook_typeI_single_panel panel_config = {pmi_codebook_single_panel_config::two_one,
-                                                                   pmi_codebook_typeI_mode::one};
-  static constexpr unsigned                        nof_ports    = 4U;
+namespace {
 
-  unsigned offset = 0U;
+/// Dispatches codebook generation to the correct handler for the PMI codebook type.
+struct codebook_table_generator {
+  precoding_matrix_mapper_codebook_offset_configuration& mapper_offsets;
+  precoding_matrix_repository_builder&                   repo_builder;
 
-  offset = generate_identity_matrix(offset, repo_builder, nof_ports);
-  mapper_offsets.ssb_codebook_offsets.push_back(offset);
-  offset = generate_ssb(offset, nof_ports, repo_builder);
-  mapper_offsets.pdcch_codebook_offsets.push_back(offset);
-  offset                           = generate_pdcch(offset, nof_ports, repo_builder);
-  mapper_offsets.pdsch_omni_offset = offset;
-  offset                           = generate_pdsch_omnidirectional(offset, nof_ports, repo_builder);
-  for (unsigned nof_layers = 1; nof_layers <= nof_ports; ++nof_layers) {
+  void operator()(std::monostate) const { ocudu_assertion_failure("Unsupported PMI codebook configuration"); }
+
+  void operator()(const pmi_codebook_one_port&) const
+  {
+    unsigned                  offset    = 0U;
+    static constexpr unsigned nof_ports = 1U;
+
+    offset = generate_identity_matrix(offset, repo_builder, nof_ports);
+    mapper_offsets.ssb_codebook_offsets.push_back(offset);
+    offset                           = generate_ssb(offset, nof_ports, repo_builder);
+    mapper_offsets.pdsch_omni_offset = offset;
+    offset                           = generate_pdsch_omnidirectional(offset, nof_ports, repo_builder);
     mapper_offsets.pdsch_codebook_offsets.push_back(offset);
-    offset = generate_pdsch_sp_type1(offset, panel_config, nof_layers, repo_builder);
+    offset = generate_pdsch_one_port(offset, repo_builder);
+    mapper_offsets.pdcch_codebook_offsets.push_back(offset);
+    offset = generate_pdcch(offset, nof_ports, repo_builder);
+    mapper_offsets.csi_rs_codebook_offsets.push_back(offset);
+    generate_csi_rs(offset, nof_ports, repo_builder);
   }
-  mapper_offsets.csi_rs_codebook_offsets.push_back(offset);
-  generate_csi_rs(offset, nof_ports, repo_builder);
-}
+
+  void operator()(const pmi_codebook_two_port&) const
+  {
+    unsigned                  offset    = 0U;
+    static constexpr unsigned nof_ports = 2U;
+
+    offset = generate_identity_matrix(offset, repo_builder, nof_ports);
+    mapper_offsets.ssb_codebook_offsets.push_back(offset);
+    offset = generate_ssb(offset, nof_ports, repo_builder);
+    mapper_offsets.pdcch_codebook_offsets.push_back(offset);
+    offset                           = generate_pdcch(offset, nof_ports, repo_builder);
+    mapper_offsets.pdsch_omni_offset = offset;
+    offset                           = generate_pdsch_omnidirectional(offset, nof_ports, repo_builder);
+    mapper_offsets.pdsch_codebook_offsets.push_back(offset);
+    offset = generate_pdsch_2_ports_1_layer(offset, repo_builder);
+    mapper_offsets.pdsch_codebook_offsets.push_back(offset);
+    offset = generate_pdsch_2_ports_2_layers(offset, repo_builder);
+    mapper_offsets.csi_rs_codebook_offsets.push_back(offset);
+    generate_csi_rs(offset, nof_ports, repo_builder);
+  }
+
+  void operator()(const pmi_codebook_typeI_single_panel& codebook_config) const
+  {
+    unsigned nof_ports = get_precoding_codebook_antenna_ports(codebook_config);
+    unsigned offset    = 0U;
+
+    offset = generate_identity_matrix(offset, repo_builder, nof_ports);
+    mapper_offsets.ssb_codebook_offsets.push_back(offset);
+    offset = generate_ssb(offset, nof_ports, repo_builder);
+    mapper_offsets.pdcch_codebook_offsets.push_back(offset);
+    offset                           = generate_pdcch(offset, nof_ports, repo_builder);
+    mapper_offsets.pdsch_omni_offset = offset;
+    offset                           = generate_pdsch_omnidirectional(offset, nof_ports, repo_builder);
+    for (unsigned nof_layers = 1; nof_layers <= nof_ports; ++nof_layers) {
+      mapper_offsets.pdsch_codebook_offsets.push_back(offset);
+      offset = generate_pdsch_sp_type1(offset, codebook_config, nof_layers, repo_builder);
+    }
+    mapper_offsets.csi_rs_codebook_offsets.push_back(offset);
+    generate_csi_rs(offset, nof_ports, repo_builder);
+  }
+};
+
+} // namespace
 
 std::pair<std::unique_ptr<precoding_matrix_mapper>, std::unique_ptr<precoding_matrix_repository>>
-ocudu::fapi_adaptor::generate_precoding_matrix_tables(unsigned nof_antenna_ports, unsigned sector_id)
+ocudu::fapi_adaptor::generate_precoding_matrix_tables(const pmi_codebook_config& codebook_config, unsigned sector_id)
 {
-  ocudu_assert(nof_antenna_ports > 0, "Invalid number of antenna ports={}", nof_antenna_ports);
-  ocudu_assert(nof_antenna_ports != 3, "Unsupported number of antenna ports={}", nof_antenna_ports);
-
-  unsigned                                              nof_ports_index = nof_antenna_ports - 1U;
   precoding_matrix_mapper_codebook_offset_configuration mapper_offsets;
-  precoding_matrix_repository_builder                   repo_builder(max_num_codebooks[nof_ports_index]);
+  precoding_matrix_repository_builder                   repo_builder(
+      get_max_num_codebooks(get_precoding_codebook_antenna_ports(codebook_config)));
 
-  if (nof_antenna_ports == 1U) {
-    generate_single_port_table(mapper_offsets, repo_builder);
+  std::visit(codebook_table_generator{mapper_offsets, repo_builder}, codebook_config);
 
-    return {std::make_unique<precoding_matrix_mapper>(sector_id, nof_antenna_ports, mapper_offsets),
-            repo_builder.build()};
-  }
-
-  if (nof_antenna_ports == 2U) {
-    generate_2_ports_table(mapper_offsets, repo_builder);
-
-    return {std::make_unique<precoding_matrix_mapper>(sector_id, nof_antenna_ports, mapper_offsets),
-            repo_builder.build()};
-  }
-
-  if (nof_antenna_ports == 4U) {
-    generate_4_ports_table(mapper_offsets, repo_builder);
-
-    return {std::make_unique<precoding_matrix_mapper>(sector_id, nof_antenna_ports, mapper_offsets),
-            repo_builder.build()};
-  }
-
-  ocudu_assert(false, "Unsupported number of ports", nof_antenna_ports);
-  return {};
+  return {std::make_unique<precoding_matrix_mapper>(sector_id, mapper_offsets), repo_builder.build()};
 }

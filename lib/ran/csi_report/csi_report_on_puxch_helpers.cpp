@@ -192,8 +192,7 @@ struct pmi_unpacker {
                  packed.size(),
                  count);
 
-    return pmi_typeI_single_panel{
-        .panel_config = codebook.n1_n2, .i_1_1 = i_1_1, .i_1_2 = i_1_2, .i_1_3 = i_1_3, .i_2 = i_2};
+    return pmi_typeI_single_panel{.panel_config = codebook, .i_1_1 = i_1_1, .i_1_2 = i_1_2, .i_1_3 = i_1_3, .i_2 = i_2};
   }
 };
 

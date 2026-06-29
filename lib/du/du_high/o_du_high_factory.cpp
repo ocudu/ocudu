@@ -90,13 +90,13 @@ generate_fapi_fastpath_adaptor_config(const o_du_high_config& config)
 
 static fapi_adaptor::mac_fapi_p7_sector_fastpath_adaptor_dependencies
 generate_mac_fapi_p7_sector_adaptor_dependencies(const o_du_high_sector_dependencies& sector_dependencies,
-                                                 unsigned                             nof_tx_antennas,
+                                                 const pmi_codebook_config&           codebook_config,
                                                  unsigned                             sector)
 {
   return {.p7_gateway           = sector_dependencies.p7_gateway,
           .p7_last_req_notifier = sector_dependencies.p7_last_req_notifier,
           .pm_mapper            = std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_mapper>>(
-              fapi_adaptor::generate_precoding_matrix_tables(nof_tx_antennas, sector))),
+              fapi_adaptor::generate_precoding_matrix_tables(codebook_config, sector))),
           .part2_mapper         = std::move(std::get<std::unique_ptr<fapi_adaptor::uci_part2_correspondence_mapper>>(
               fapi_adaptor::generate_uci_part2_correspondence(1))),
           .fapi_logger          = sector_dependencies.fapi_logger};
@@ -108,11 +108,31 @@ generate_fapi_fastpath_adaptor_dependencies(const o_du_high_config& config, o_du
   fapi_adaptor::mac_fapi_fastpath_adaptor_dependencies out_dependencies;
 
   for (unsigned i = 0, e = config.du_hi.ran.cells.size(); i != e; ++i) {
+    pmi_codebook_config codebook_config;
+    switch (config.du_hi.ran.cells[i].ran.dl_carrier.nof_ant) {
+      case 1:
+        codebook_config = pmi_codebook_one_port{};
+        break;
+      case 2:
+        codebook_config = pmi_codebook_two_port{};
+        break;
+      case 4:
+        codebook_config =
+            pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::two_one, pmi_codebook_typeI_mode::one};
+        break;
+      case 8:
+        codebook_config =
+            pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::four_one, pmi_codebook_typeI_mode::one};
+        break;
+      default:
+        report_fatal_error(
+            "Unsupported {} antenna ports in sector {}", config.du_hi.ran.cells[i].ran.dl_carrier.nof_ant, i);
+    }
+
     const auto& sector_dependencies = odu_dependencies.sectors[i];
     out_dependencies.sectors.push_back(
         {.p5_dependencies = generate_mac_fapi_p5_sector_adaptor_dependencies(sector_dependencies),
-         .p7_dependencies = generate_mac_fapi_p7_sector_adaptor_dependencies(
-             sector_dependencies, config.du_hi.ran.cells[i].ran.dl_carrier.nof_ant, i)});
+         .p7_dependencies = generate_mac_fapi_p7_sector_adaptor_dependencies(sector_dependencies, codebook_config, i)});
   }
 
   return out_dependencies;

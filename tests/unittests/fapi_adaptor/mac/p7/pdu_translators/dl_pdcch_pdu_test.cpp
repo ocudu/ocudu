@@ -22,7 +22,7 @@ TEST(mac_fapi_pdcch_pdu_conversor_test, mac_to_fapi_conversion_is_valid)
 
   fapi::dl_pdcch_pdu         fapi_pdu;
   fapi::dl_pdcch_pdu_builder builder(fapi_pdu);
-  auto                       pm_tools = generate_precoding_matrix_tables(1, 0);
+  auto                       pm_tools = generate_precoding_matrix_tables(pmi_codebook_one_port{}, 0);
   convert_pdcch_mac_to_fapi(builder, context_information, payload, *std::get<0>(pm_tools), nof_prbs);
 
   // BWP.

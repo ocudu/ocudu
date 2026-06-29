@@ -7,25 +7,15 @@
 #include "ocudu/ran/precoding/precoding_codebook_helpers.h"
 #include "ocudu/ran/precoding/precoding_matrix_indicator.h"
 #include "ocudu/support/ocudu_assert.h"
+#include "fmt/std.h"
 
 using namespace ocudu;
 using namespace fapi_adaptor;
 
-/// Table of PMI parameter ranges for single-panel type 1 PDSCH precoding codebook. Indexed by the number of layers.
-static const std::array<pmi_typeI_single_panel_param_ranges, 5> pdsch_codebook_param_ranges_sp_type1_4port = {{
-    {},
-    get_pmi_ranges_typeI_single_panel({pmi_codebook_single_panel_config::two_one, pmi_codebook_typeI_mode::one}, 1),
-    get_pmi_ranges_typeI_single_panel({pmi_codebook_single_panel_config::two_one, pmi_codebook_typeI_mode::one}, 2),
-    get_pmi_ranges_typeI_single_panel({pmi_codebook_single_panel_config::two_one, pmi_codebook_typeI_mode::one}, 3),
-    get_pmi_ranges_typeI_single_panel({pmi_codebook_single_panel_config::two_one, pmi_codebook_typeI_mode::one}, 4),
-}};
-
 precoding_matrix_mapper::precoding_matrix_mapper(unsigned sector_id_,
-                                                 unsigned nof_ports_,
                                                  const precoding_matrix_mapper_codebook_offset_configuration& config) :
   sector_id(sector_id_),
   logger(ocudulog::fetch_basic_logger("FAPI")),
-  nof_ports(nof_ports_),
   pdsch_omni_offset(config.pdsch_omni_offset),
   ssb_codebook_offsets(config.ssb_codebook_offsets),
   pdsch_codebook_offsets(config.pdsch_codebook_offsets),
@@ -57,19 +47,17 @@ unsigned precoding_matrix_mapper::map(const mac_pdcch_precoding_info& precoding_
 /// of ports.
 static unsigned get_pdsch_precoding_matrix_index(unsigned                          offset,
                                                  const precoding_matrix_indicator& precoding_info,
-                                                 unsigned                          nof_ports,
                                                  unsigned                          nof_layers,
                                                  unsigned                          sector_id,
                                                  ocudulog::basic_logger&           logger)
 {
-  if (nof_ports == 1U) {
+  if (std::holds_alternative<std::monostate>(precoding_info)) {
     logger.debug("Sector#{}: One port PDSCH precoding matrix, nof_layers={}", sector_id, nof_layers);
 
     return offset + get_pdsch_one_port_precoding_matrix_index();
   }
 
-  if (nof_ports == 2U) {
-    ocudu_assert(std::holds_alternative<pmi_two_antenna_port>(precoding_info), "Expected PMI information");
+  if (std::holds_alternative<pmi_two_antenna_port>(precoding_info)) {
     unsigned pmi = std::get<pmi_two_antenna_port>(precoding_info).pmi;
 
     logger.debug("Sector#{}: Two ports PDSCH precoding matrix, pmi={}, nof_layers={}", sector_id, pmi, nof_layers);
@@ -80,21 +68,22 @@ static unsigned get_pdsch_precoding_matrix_index(unsigned                       
     return offset + get_pdsch_two_port_precoding_matrix_index(pmi);
   }
 
-  if (nof_ports == 4U) {
-    ocudu_assert(nof_layers < pdsch_codebook_param_ranges_sp_type1_4port.size(),
-                 "The number of layers exceeds the supported number of layers.");
-    ocudu_assert(std::holds_alternative<pmi_typeI_single_panel>(precoding_info), "Invalid PMI information");
+  if (std::holds_alternative<pmi_typeI_single_panel>(precoding_info)) {
     const auto& report = std::get<pmi_typeI_single_panel>(precoding_info);
+    ocudu_assert(nof_layers <= get_precoding_codebook_antenna_ports(report.panel_config),
+                 "The number of layers exceeds the supported number of layers.");
 
-    logger.debug("Sector#{}: Four ports PDSCH precoding matrix, i11={}, i13={}, i2={}, nof_layers={}",
+    logger.debug("Sector#{}: Type I Single-Panel PDSCH precoding matrix, i11={}, i13={}, i2={}, nof_layers={}",
                  sector_id,
                  report.i_1_1,
-                 (report.i_1_3) ? report.i_1_3.value() : -1,
+                 report.i_1_3,
                  report.i_2,
                  nof_layers);
 
-    return offset + get_pdsch_single_panel_type1_precoding_matrix_index(
-                        pdsch_codebook_param_ranges_sp_type1_4port[nof_layers], report);
+    pmi_typeI_single_panel_param_ranges param_ranges =
+        get_pmi_ranges_typeI_single_panel(report.panel_config, nof_layers);
+
+    return offset + get_pdsch_single_panel_type1_precoding_matrix_index(param_ranges, report);
   }
 
   return 0;
@@ -114,5 +103,5 @@ unsigned precoding_matrix_mapper::map(const mac_pdsch_precoding_info& precoding_
   ocudu_assert(layer_index < pdsch_codebook_offsets.size(), "Invalid layer index value {}", layer_index);
 
   return get_pdsch_precoding_matrix_index(
-      pdsch_codebook_offsets[layer_index], *precoding_info.report, nof_ports, nof_layers, sector_id, logger);
+      pdsch_codebook_offsets[layer_index], *precoding_info.report, nof_layers, sector_id, logger);
 }

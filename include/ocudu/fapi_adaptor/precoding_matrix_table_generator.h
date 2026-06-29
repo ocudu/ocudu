@@ -6,14 +6,13 @@
 #include "ocudu/fapi_adaptor/precoding_matrix_mapper.h"
 #include "ocudu/fapi_adaptor/precoding_matrix_repository.h"
 #include <memory>
-#include <tuple>
 
 namespace ocudu {
 namespace fapi_adaptor {
 
 /// Generates the precoding matrix mapper and precoding matrix repository for the given number of antenna ports.
 std::pair<std::unique_ptr<precoding_matrix_mapper>, std::unique_ptr<precoding_matrix_repository>>
-generate_precoding_matrix_tables(unsigned nof_antenna_ports, unsigned sector_id);
+generate_precoding_matrix_tables(const pmi_codebook_config& codebook_config, unsigned sector_id);
 
 } // namespace fapi_adaptor
 } // namespace ocudu

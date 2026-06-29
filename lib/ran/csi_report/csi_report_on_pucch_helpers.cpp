@@ -352,8 +352,17 @@ csi_report_size ocudu::get_csi_report_pucch_size(const csi_report_configuration&
 
       units::bits csi_report_size(0);
 
+      // The RI restriction is only populated for codebooks that carry it (type-I single panel); it is empty for
+      // 1-/2-port codebooks, in which case all ranks are allowed.
+      const bool has_ri_restriction = config.ri_restriction.size() >= nof_csi_antenna_ports;
+
       // For each possible RI, find the largest CSI report size.
       for (unsigned ri = 1, ri_end = nof_csi_antenna_ports + 1; ri != ri_end; ++ri) {
+        // Skip ranks the UE is restricted from reporting.
+        if (has_ri_restriction && !config.ri_restriction.test(ri - 1)) {
+          continue;
+        }
+
         csi_report_size = std::max(csi_report_size, get_csi_report_size_ri(config, ri));
       }
 

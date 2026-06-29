@@ -44,9 +44,7 @@ struct precoding_matrix_mapper_codebook_offset_configuration {
 class precoding_matrix_mapper
 {
 public:
-  precoding_matrix_mapper(unsigned                                                     sector_id_,
-                          unsigned                                                     nof_ports_,
-                          const precoding_matrix_mapper_codebook_offset_configuration& config);
+  precoding_matrix_mapper(unsigned sector_id_, const precoding_matrix_mapper_codebook_offset_configuration& config);
 
   /// Maps the given MAC precoding information into a precoding matrix index.
   unsigned map(const mac_pdsch_precoding_info& precoding_info, unsigned nof_layers) const;
@@ -65,8 +63,6 @@ private:
   const unsigned sector_id;
   /// Logger.
   ocudulog::basic_logger& logger;
-  /// Number of ports.
-  const unsigned nof_ports;
   /// Codebook offset for the omnidirectional PDSCH.
   unsigned pdsch_omni_offset;
   /// Codebook offsets for SSB. Each entry represents a layer.

@@ -40,8 +40,9 @@ bool operator==(const precoding_matrix_indicator& left, const precoding_matrix_i
   if (std::holds_alternative<pmi_typeI_single_panel>(left) && std::holds_alternative<pmi_typeI_single_panel>(right)) {
     pmi_typeI_single_panel left2  = std::get<pmi_typeI_single_panel>(left);
     pmi_typeI_single_panel right2 = std::get<pmi_typeI_single_panel>(right);
-    return (left2.i_1_1 == right2.i_1_1) && (left2.i_1_2 == right2.i_1_2) && (left2.i_1_3 == right2.i_1_3) &&
-           (left2.i_2 == right2.i_2);
+    return (left2.panel_config.n1_n2 == right2.panel_config.n1_n2) &&
+           (left2.panel_config.mode == right2.panel_config.mode) && (left2.i_1_1 == right2.i_1_1) &&
+           (left2.i_1_2 == right2.i_1_2) && (left2.i_1_3 == right2.i_1_3) && (left2.i_2 == right2.i_2);
   }
 
   return false;
@@ -311,6 +312,10 @@ private:
     unsigned current_size             = get_pucch_payload_size(config, ri.value());
     unsigned max_size                 = 0;
     for (unsigned i_rank = 1; i_rank <= nof_csi_rs_antenna_ports; ++i_rank) {
+      // Skip ranks forbidden by the RI restriction, matching the logic in get_csi_report_pucch_size.
+      if (!config.ri_restriction.test(i_rank - 1)) {
+        continue;
+      }
       max_size = std::max(max_size, get_pucch_payload_size(config, i_rank));
     }
 
@@ -344,7 +349,7 @@ private:
           get_pmi_sizes_typeI_single_panel(get_single_panel_info(pmi_codebook.n1_n2), ri);
 
       // Set PMI values.
-      pmi_typeI_single_panel type;
+      pmi_typeI_single_panel type{pmi_codebook, 0, std::nullopt, std::nullopt, 0};
       type.i_1_1 = rgen() & mask_lsb_ones<unsigned>(param_sizes.i_1_1);
       if (param_sizes.i_1_2) {
         type.i_1_2.emplace(rgen() & mask_lsb_ones<unsigned>(param_sizes.i_1_2));

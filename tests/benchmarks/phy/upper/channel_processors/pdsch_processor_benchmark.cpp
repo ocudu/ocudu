@@ -446,7 +446,12 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
       break;
     case test_profile::mimo_topology::four_port_four_layer:
       precoding_config = precoding_configuration::make_wideband(make_type1_sp_mode1(
-          pmi_typeI_single_panel{pmi_codebook_single_panel_config::two_one, 0, std::nullopt, std::nullopt, 0}, 4));
+          pmi_typeI_single_panel{{pmi_codebook_single_panel_config::two_one, pmi_codebook_typeI_mode::one},
+                                 0,
+                                 std::nullopt,
+                                 std::nullopt,
+                                 0},
+          4));
       break;
   }
 

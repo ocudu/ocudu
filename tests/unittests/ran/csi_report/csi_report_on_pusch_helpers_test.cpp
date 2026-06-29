@@ -390,16 +390,11 @@ private:
       unsigned i_2   = rgen() & mask_lsb_ones<unsigned>(sizes.i_2);
 
       // Set PMI values.
-      pmi_typeI_single_panel type;
-      type.panel_config = codebook.n1_n2;
-      type.i_1_1        = i_1_1;
-      if (sizes.i_1_2 > 0) {
-        type.i_1_2.emplace(i_1_2);
-      }
-      if (sizes.i_1_3 > 0) {
-        type.i_1_3.emplace(i_1_3);
-      }
-      type.i_2 = i_2;
+      pmi_typeI_single_panel type{codebook,
+                                  i_1_1,
+                                  i_1_2 > 0 ? std::make_optional(i_1_2) : std::nullopt,
+                                  i_1_3 > 0 ? std::make_optional(i_1_3) : std::nullopt,
+                                  i_2};
 
       precoding_matrix_indicator pmi;
       pmi.emplace<pmi_typeI_single_panel>(type);

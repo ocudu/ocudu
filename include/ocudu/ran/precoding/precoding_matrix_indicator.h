@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "ocudu/ran/precoding/precoding_codebook_properties.h"
+#include "ocudu/ran/precoding/precoding_codebook_configuration.h"
 #include <optional>
 #include <variant>
 
@@ -28,7 +28,7 @@ struct pmi_two_antenna_port {
 /// This PMI codebook mode is described in TS38.214 Section 5.2.2.2.1.
 struct pmi_typeI_single_panel {
   /// Single-panel topology configuration.
-  pmi_codebook_single_panel_config panel_config;
+  pmi_codebook_typeI_single_panel panel_config;
   /// PMI parameter \f$i_{1,1}\f$.
   unsigned i_1_1;
   /// PMI parameter \f$i_{1,2}\f$. Only available for \f$N_2 > 1\f$ or \f$\upsilon > 2\f$.

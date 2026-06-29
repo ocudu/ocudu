@@ -342,12 +342,12 @@ precoding_weight_matrix ocudu::make_type1_sp_mode1(const precoding_matrix_indica
   ocudu_assert(type1_sp_pmi != nullptr, "The precoding matrix indication (PMI) must be of type Type I Single-Panel.");
 
   // Extract the panel information.
-  const pmi_codebook_single_panel_info& panel_info = get_single_panel_info(type1_sp_pmi->panel_config);
+  const pmi_codebook_single_panel_info& panel_info = get_single_panel_info(type1_sp_pmi->panel_config.n1_n2);
   const unsigned                        o1         = panel_info.o1;
   const unsigned                        o2         = panel_info.o2;
 
   // Calculate the number of CSI-RS ports.
-  unsigned nof_ports = 2 * panel_info.n1 * panel_info.n2;
+  unsigned nof_ports = get_precoding_codebook_antenna_ports(type1_sp_pmi->panel_config);
 
   // Ensure the number of ports is a supported value (positive integer below the maximum number of ports). This also
   // checks that the given Type I Single-Panel configuration is supported, i.e., N1xN2 = {2x1, 2x2, 4x1}.
@@ -371,7 +371,7 @@ precoding_weight_matrix ocudu::make_type1_sp_mode1(const precoding_matrix_indica
 
   // Get the PMI parameters ranges given the selected panel configuration and number of layers.
   pmi_typeI_single_panel_param_ranges pmi_param_ranges =
-      get_pmi_ranges_typeI_single_panel({type1_sp_pmi->panel_config, pmi_codebook_typeI_mode::one}, nof_layers);
+      get_pmi_ranges_typeI_single_panel(type1_sp_pmi->panel_config, nof_layers);
 
   unsigned nof_beams_horizontal      = pmi_param_ranges.i_1_1;
   unsigned nof_beams_vertical        = pmi_param_ranges.i_1_2;
@@ -426,7 +426,7 @@ precoding_weight_matrix ocudu::make_type1_sp_mode1(const precoding_matrix_indica
 
   // For a 3 or 4 layer transmission using 4 antenna ports (N1 = 2, N2 = 1), the beam offset selector can only take the
   // zero value.
-  if ((type1_sp_pmi->panel_config == pmi_codebook_single_panel_config::two_one) &&
+  if ((type1_sp_pmi->panel_config.n1_n2 == pmi_codebook_single_panel_config::two_one) &&
       (nof_layers == 3 || nof_layers == 4)) {
     if (i_1_3 != 0) {
       ocudu_assert(*type1_sp_pmi->i_1_3 == 0,
