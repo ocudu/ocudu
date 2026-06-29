@@ -181,6 +181,7 @@ static auto make_ul_pdcch_log_entry(const pdcch_ul_information& pdcch)
 
 static auto make_sib_info_log_entry(const sib_information& sib_info)
 {
+  // SIB grants always carry exactly one codeword.
   return make_formattable([si_ind       = sib_info.si_indicator,
                            si_msg_index = sib_info.si_msg_index,
                            rbs          = sib_info.pdsch_cfg.rbs,
@@ -198,6 +199,7 @@ static auto make_sib_info_log_entry(const sib_information& sib_info)
 
 static auto make_rar_info_log_entry(const rar_information& rar_info)
 {
+  // RAR grants always carry exactly one codeword.
   return make_formattable([rnti = rar_info.pdsch_cfg.rnti,
                            rb   = rar_info.pdsch_cfg.rbs,
                            tbs  = rar_info.pdsch_cfg.codewords[0].tb_size_bytes](auto& ctx) {
@@ -207,30 +209,28 @@ static auto make_rar_info_log_entry(const rar_information& rar_info)
 
 static auto make_ue_dl_msg_info_log_entry(const dl_msg_alloc& ue_msg)
 {
-  return make_formattable([ue_idx   = ue_msg.context.ue_index,
-                           rnti     = ue_msg.pdsch_cfg.rnti,
-                           rb       = ue_msg.pdsch_cfg.rbs,
-                           h_id     = ue_msg.pdsch_cfg.harq_id,
-                           ss_id    = ue_msg.context.ss_id,
-                           k1       = ue_msg.context.k1,
-                           new_data = ue_msg.pdsch_cfg.codewords[0].new_data,
-                           rv       = ue_msg.pdsch_cfg.codewords[0].rv_index,
-                           tbs      = ue_msg.pdsch_cfg.codewords[0].tb_size_bytes,
-                           ri       = ue_msg.pdsch_cfg.nof_layers,
-                           dl_bo    = ue_msg.context.buffer_occupancy](auto& ctx) {
+  return make_formattable([ue_msg](auto& ctx) {
+    const auto& pdsch = ue_msg.pdsch_cfg;
     fmt::format_to(ctx.out(),
-                   "DL: ue={} c-rnti={} h_id={} ss_id={} rb={} k1={} newtx={} rv={} tbs={}",
-                   fmt::underlying(ue_idx),
-                   rnti,
-                   fmt::underlying(h_id),
-                   fmt::underlying(ss_id),
-                   rb,
-                   k1,
-                   new_data,
-                   rv,
-                   tbs);
-    if (new_data) {
-      fmt::format_to(ctx.out(), " ri={} dl_bo={}", ri, dl_bo);
+                   "DL: ue={} c-rnti={} h_id={} ss_id={} rb={} k1={} cw[0]: newtx={} rv={} tbs={}",
+                   fmt::underlying(ue_msg.context.ue_index),
+                   pdsch.rnti,
+                   fmt::underlying(pdsch.harq_id),
+                   fmt::underlying(ue_msg.context.ss_id),
+                   pdsch.rbs,
+                   ue_msg.context.k1,
+                   pdsch.codewords[0].new_data,
+                   pdsch.codewords[0].rv_index,
+                   pdsch.codewords[0].tb_size_bytes);
+    if (pdsch.codewords.size() > 1) {
+      fmt::format_to(ctx.out(),
+                     " cw[1]: newtx={} rv={} tbs={}",
+                     pdsch.codewords[1].new_data,
+                     pdsch.codewords[1].rv_index,
+                     pdsch.codewords[1].tb_size_bytes);
+    }
+    if (pdsch.codewords[0].new_data or (pdsch.codewords.size() > 1 and pdsch.codewords[1].new_data)) {
+      fmt::format_to(ctx.out(), " ri={} dl_bo={}", pdsch.nof_layers, ue_msg.context.buffer_occupancy);
     }
     return ctx.out();
   });
@@ -270,6 +270,7 @@ static auto make_ue_ul_msg_info_log_entry(const ul_sched_info& ue_msg)
 
 static auto make_paging_info_log_entry(const dl_paging_allocation& pg_info)
 {
+  // Paging grants always carry exactly one codeword.
   return make_formattable([rb             = pg_info.pdsch_cfg.rbs,
                            tbs            = pg_info.pdsch_cfg.codewords[0].tb_size_bytes,
                            paging_ue_list = pg_info.paging_ue_list](auto& ctx) {
@@ -377,6 +378,7 @@ static auto make_csi_rs_log_entry(const csi_rs_info& csi_rs)
 
 static auto make_sib_debug_log_entry(const sib_information& sib_info)
 {
+  // SIB grants always carry exactly one codeword.
   return make_formattable([si_ind       = sib_info.si_indicator,
                            si_msg_index = sib_info.si_msg_index,
                            rbs          = sib_info.pdsch_cfg.rbs,
@@ -404,6 +406,7 @@ static auto make_sib_debug_log_entry(const sib_information& sib_info)
 
 static auto make_rar_debug_log_entry(const rar_information& rar_info)
 {
+  // RAR grants always carry exactly one codeword.
   auto make_rar_grant_debug_entry = [](const rar_ul_grant& grant) {
     const auto* ts     = std::get_if<rar_ul_grant::two_step_info>(&grant.type);
     const auto  result = ts != nullptr ? std::optional<bool>{ts->is_success} : std::nullopt;
@@ -442,23 +445,31 @@ static auto make_rar_debug_log_entry(const rar_information& rar_info)
 static auto make_ue_dl_msg_debug_log_entry(const dl_msg_alloc& ue_grant)
 {
   return make_formattable([ue_grant](auto& ctx) {
+    const auto& pdsch = ue_grant.pdsch_cfg;
     fmt::format_to(ctx.out(),
-                   "\n- UE PDSCH: ue={} c-rnti={} h_id={} rb={} symb={} tbs={} mcs={} rv={} nrtx={} k1={}",
+                   "\n- UE PDSCH: ue={} c-rnti={} h_id={} rb={} symb={} cw[0]: tbs={} mcs={} rv={} nrtx={} k1={}",
                    fmt::underlying(ue_grant.context.ue_index),
-                   ue_grant.pdsch_cfg.rnti,
-                   fmt::underlying(ue_grant.pdsch_cfg.harq_id),
-                   ue_grant.pdsch_cfg.rbs,
-                   ue_grant.pdsch_cfg.symbols,
-                   ue_grant.pdsch_cfg.codewords[0].tb_size_bytes,
-                   ue_grant.pdsch_cfg.codewords[0].mcs_index,
-                   ue_grant.pdsch_cfg.codewords[0].rv_index,
+                   pdsch.rnti,
+                   fmt::underlying(pdsch.harq_id),
+                   pdsch.rbs,
+                   pdsch.symbols,
+                   pdsch.codewords[0].tb_size_bytes,
+                   pdsch.codewords[0].mcs_index,
+                   pdsch.codewords[0].rv_index,
                    ue_grant.context.nof_retxs,
                    ue_grant.context.k1);
-    if (ue_grant.pdsch_cfg.precoding.has_value() and not ue_grant.pdsch_cfg.precoding.value().prg_infos.empty()) {
-      const auto& prg_type = ue_grant.pdsch_cfg.precoding->prg_infos[0];
-      fmt::format_to(ctx.out(), " ri={} {}", ue_grant.pdsch_cfg.nof_layers, precoding_matrix_indicator{prg_type});
+    if (pdsch.codewords.size() > 1) {
+      fmt::format_to(ctx.out(),
+                     " cw[1]: tbs={} mcs={} rv={}",
+                     pdsch.codewords[1].tb_size_bytes,
+                     pdsch.codewords[1].mcs_index,
+                     pdsch.codewords[1].rv_index);
     }
-    if (ue_grant.pdsch_cfg.codewords[0].new_data) {
+    if (pdsch.precoding.has_value() and not pdsch.precoding.value().prg_infos.empty()) {
+      const auto& prg_type = pdsch.precoding->prg_infos[0];
+      fmt::format_to(ctx.out(), " ri={} {}", pdsch.nof_layers, precoding_matrix_indicator{prg_type});
+    }
+    if (pdsch.codewords[0].new_data or (pdsch.codewords.size() > 1 and pdsch.codewords[1].new_data)) {
       fmt::format_to(ctx.out(), " dl_bo={}", ue_grant.context.buffer_occupancy);
     }
     if (ue_grant.context.olla_offset.has_value()) {
@@ -472,6 +483,15 @@ static auto make_ue_dl_msg_debug_log_entry(const dl_msg_alloc& ue_grant)
                        lc.lcid,
                        lc.sched_bytes);
       }
+      if (ue_grant.tb_list.size() > 1) {
+        for (const dl_msg_lc_info& lc : ue_grant.tb_list[1].lc_chs_to_sched) {
+          fmt::format_to(ctx.out(),
+                         "{}lcid={}: size={}",
+                         (&lc == &ue_grant.tb_list[1].lc_chs_to_sched.front()) ? " cw[1] grants: " : ", ",
+                         lc.lcid,
+                         lc.sched_bytes);
+        }
+      }
     }
     return ctx.out();
   });
@@ -479,6 +499,7 @@ static auto make_ue_dl_msg_debug_log_entry(const dl_msg_alloc& ue_grant)
 
 static auto make_paging_debug_log_entry(const dl_paging_allocation& pg)
 {
+  // Paging grants always carry exactly one codeword.
   return make_formattable([pg](auto& ctx) {
     fmt::format_to(ctx.out(),
                    "\n- PCCH: rb={} symb={} tbs={} mcs={} rv={}",
