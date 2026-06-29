@@ -73,7 +73,7 @@ public:
   async_task<f1ap_gnb_cu_configuration_update_response>
   handle_gnb_cu_configuration_update(const f1ap_gnb_cu_configuration_update& request) override;
 
-  void handle_ref_time_info_report_ctrl(const f1ap_ref_time_report_ctrl_request& request) override {}
+  void handle_ref_time_info_report_ctrl(const f1ap_ref_time_report_ctrl_request& request) override;
 
   // f1ap_warning_manager functions.
   async_task<f1ap_write_replace_warning_response>
@@ -169,6 +169,8 @@ private:
 
   // Store current F1AP transaction ID.
   unsigned current_transaction_id = 0;
+  // Counter used to allocate transaction IDs for CU-initiated Reference Time Information Reporting Control messages.
+  uint8_t next_ref_time_transaction_id = 0;
 };
 
 } // namespace ocudu::ocucp

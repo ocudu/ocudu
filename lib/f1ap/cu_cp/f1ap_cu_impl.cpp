@@ -23,8 +23,10 @@
 #include "ocudu/asn1/f1ap/common.h"
 #include "ocudu/asn1/f1ap/f1ap.h"
 #include "ocudu/asn1/f1ap/f1ap_ies.h"
+#include "ocudu/asn1/f1ap/f1ap_pdu_contents.h"
 #include "ocudu/f1ap/f1ap_message.h"
 #include "ocudu/ran/cu_cp_types.h"
+#include "ocudu/ran/subcarrier_spacing.h"
 
 using namespace ocudu;
 using namespace ocucp;
@@ -260,6 +262,9 @@ void f1ap_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
       break;
     case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::options::gnb_du_cfg_upd:
       handle_du_cfg_update(msg.value.gnb_du_cfg_upd());
+      break;
+    case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::options::ref_time_info_report:
+      handle_ref_time_info_report(msg.value.ref_time_info_report());
       break;
     default:
       logger.warning("Initiating message of type {} is not supported", msg.value.type().to_string());
@@ -646,6 +651,50 @@ void f1ap_cu_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_ou
       logger.warning("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());
       break;
   }
+}
+
+void f1ap_cu_impl::handle_ref_time_info_report(const asn1::f1ap::ref_time_info_report_s& msg)
+{
+  logger.debug("Received \"ReferenceTimeInformationReport\"");
+
+  f1ap_time_ref_info info;
+  info.ref_time_r16 = msg->time_ref_info.ref_time.copy();
+  info.ref_slot     = slot_point{subcarrier_spacing::kHz15, msg->time_ref_info.ref_sfn, 0};
+  if (msg->time_ref_info.uncertainty_present) {
+    info.uncertainty = msg->time_ref_info.uncertainty;
+  }
+  info.is_local_clock = msg->time_ref_info.time_info_type_present;
+
+  du_processor_notifier.on_ref_time_info_report(info);
+}
+
+void f1ap_cu_impl::handle_ref_time_info_report_ctrl(const f1ap_ref_time_report_ctrl_request& request)
+{
+  using event_type_opts = asn1::f1ap::event_type_opts;
+
+  f1ap_message msg{};
+  msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_REF_TIME_INFO_REPORT_CTRL);
+  auto& ctrl           = msg.pdu.init_msg().value.ref_time_info_report_ctrl();
+  ctrl->transaction_id = next_ref_time_transaction_id++;
+
+  auto& rrt = ctrl->report_request_type;
+  switch (request.event_type) {
+    case f1ap_ref_time_event_type::on_demand:
+      rrt.event_type.value = event_type_opts::on_demand;
+      break;
+    case f1ap_ref_time_event_type::periodic:
+      rrt.event_type.value                 = event_type_opts::periodic;
+      rrt.report_periodicity_value_present = request.report_periodicity_rf.has_value();
+      if (request.report_periodicity_rf.has_value()) {
+        rrt.report_periodicity_value = *request.report_periodicity_rf;
+      }
+      break;
+    case f1ap_ref_time_event_type::stop:
+      rrt.event_type.value = event_type_opts::stop;
+      break;
+  }
+
+  tx_pdu_notifier.on_new_message(msg);
 }
 
 void f1ap_cu_impl::log_pdu(bool is_rx, const f1ap_message& pdu)

@@ -13,6 +13,7 @@
 #include "procedures/f1ap_du_gnbdu_config_update_procedure.h"
 #include "procedures/f1ap_du_initiated_reset_procedure.h"
 #include "procedures/f1ap_du_paging_procedure.h"
+#include "procedures/f1ap_du_ref_time_info_report_procedure.h"
 #include "procedures/f1ap_du_removal_procedure.h"
 #include "procedures/f1ap_du_reset_procedure.h"
 #include "procedures/f1ap_du_setup_procedure.h"
@@ -80,6 +81,10 @@ bool f1ap_du_impl::connect_to_cu_cp()
     return false;
   }
 
+  // Reset Reference Time reporting procedure. It holds a reference to the previous Tx PDU notifier, which is about
+  // to be destroyed, and its periodic reporting (if any) belongs to the previous CU-CP association.
+  ref_time_proc.reset();
+
   if (logger.info.enabled()) {
     // Decorate notifier with logging, if the logger is enabled.
     tx_pdu_notifier.reset(new tx_pdu_notifier_with_logging(*this, std::move(pdu_notifier)));
@@ -95,6 +100,9 @@ bool f1ap_du_impl::connect_to_cu_cp()
 
 async_task<void> f1ap_du_impl::disconnect_from_cu_cp()
 {
+  // Stop Reference Time reporting procedure; it is tied to the CU-CP association being torn down.
+  ref_time_proc.reset();
+
   return connection_handler.handle_tnl_association_removal();
 }
 
@@ -105,6 +113,9 @@ async_task<f1_setup_result> f1ap_du_impl::handle_f1_setup_request(const f1_setup
 
 async_task<void> f1ap_du_impl::handle_f1_removal_request()
 {
+  // Stop Reference Time reporting procedure; it is tied to the CU-CP association being removed.
+  ref_time_proc.reset();
+
   return launch_async<f1ap_du_removal_procedure>(connection_handler, *tx_pdu_notifier, *events, ctxt);
 }
 
@@ -431,6 +442,9 @@ void f1ap_du_impl::handle_initiating_message(const init_msg_s& msg)
     case msg_types::positioning_info_request:
       handle_positioning_information_request(msg.value.positioning_info_request());
       break;
+    case msg_types::ref_time_info_report_ctrl:
+      handle_ref_time_info_report_ctrl(msg.value.ref_time_info_report_ctrl());
+      break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
   }
@@ -671,4 +685,13 @@ void f1ap_du_impl::log_pdu(bool is_rx, const f1ap_message& msg)
 
   // Log PDU.
   log_f1ap_pdu(logger, is_rx, ctxt.du_id, ue_idx, msg, logger.debug.enabled());
+}
+
+void f1ap_du_impl::handle_ref_time_info_report_ctrl(const asn1::f1ap::ref_time_info_report_ctrl_s& msg)
+{
+  if (ref_time_proc == nullptr) {
+    ref_time_proc = std::make_unique<f1ap_du_ref_time_info_report_procedure>(
+        du_mng.get_time_provider(), *tx_pdu_notifier, du_mng.get_timer_factory(), subcarrier_spacing::kHz15);
+  }
+  ref_time_proc->handle_control(msg);
 }

@@ -8,6 +8,7 @@
 #include "f1ap_du_connection_handler.h"
 #include "f1ap_du_context.h"
 #include "f1ap_du_metrics_collector_impl.h"
+#include "procedures/f1ap_du_ref_time_info_report_procedure.h"
 #include "ocudu/asn1/f1ap/f1ap.h"
 #include "ocudu/f1ap/du/f1ap_du.h"
 #include "ocudu/support/async/async_task.h"
@@ -126,6 +127,9 @@ private:
   /// \brief Handle POSITIONING INFORMATION REQUEST as per TS 38.473, Section 8.13.9.
   void handle_positioning_information_request(const asn1::f1ap::positioning_info_request_s& msg);
 
+  /// \brief Handle REFERENCE TIME INFORMATION REPORTING CONTROL as per TS 38.473, Section 8.12.1.
+  void handle_ref_time_info_report_ctrl(const asn1::f1ap::ref_time_info_report_ctrl_s& msg);
+
   /// \brief Log F1AP PDU.
   void log_pdu(bool is_rx, const f1ap_message& pdu);
 
@@ -144,6 +148,8 @@ private:
   std::unique_ptr<f1ap_event_manager> events;
 
   std::unique_ptr<f1ap_message_notifier> tx_pdu_notifier;
+
+  std::unique_ptr<f1ap_du_ref_time_info_report_procedure> ref_time_proc;
 
   f1ap_metrics_collector_impl metrics;
 };
