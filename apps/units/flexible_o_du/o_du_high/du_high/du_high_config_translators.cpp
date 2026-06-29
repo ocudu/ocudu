@@ -1299,6 +1299,29 @@ static scheduler_expert_config generate_scheduler_expert_config(const du_high_un
   out_cfg.si.sib1_mcs_index    = pdsch.fixed_sib1_mcs;
   out_cfg.si.sib1_dci_aggr_lev = aggregation_level::n4;
 
+  // Paging parameters.
+  out_cfg.pg.paging_mcs_index   = sch_mcs_index{static_cast<uint8_t>(app_sched_expert_cfg.paging_mcs_index)};
+  out_cfg.pg.max_paging_retries = app_sched_expert_cfg.max_paging_retries;
+  switch (app_sched_expert_cfg.paging_dci_aggr_lev) {
+    case 1:
+      out_cfg.pg.paging_dci_aggr_lev = aggregation_level::n1;
+      break;
+    case 2:
+      out_cfg.pg.paging_dci_aggr_lev = aggregation_level::n2;
+      break;
+    case 4:
+      out_cfg.pg.paging_dci_aggr_lev = aggregation_level::n4;
+      break;
+    case 8:
+      out_cfg.pg.paging_dci_aggr_lev = aggregation_level::n8;
+      break;
+    case 16:
+      out_cfg.pg.paging_dci_aggr_lev = aggregation_level::n16;
+      break;
+    default:
+      report_error("Invalid paging_dci_aggr_lev={}\n", app_sched_expert_cfg.paging_dci_aggr_lev);
+  }
+
   // Logging and tracing.
   out_cfg.log_broadcast_messages       = config.loggers.broadcast_enabled;
   out_cfg.log_high_latency_diagnostics = config.loggers.high_latency_diagnostics_enabled;

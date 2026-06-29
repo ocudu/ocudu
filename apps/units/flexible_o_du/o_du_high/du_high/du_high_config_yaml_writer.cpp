@@ -591,8 +591,13 @@ static YAML::Node build_du_high_csi_section(const du_high_unit_csi_config& confi
 
 static void fill_du_high_sched_expert_section(YAML::Node& node, const du_high_unit_scheduler_config& config)
 {
+  YAML::Node sched_node;
+  sched_node["nof_preselected_newtx_ues"] = config.nof_preselected_newtx_ues;
+  sched_node["paging_mcs_index"]          = config.paging_mcs_index;
+  sched_node["paging_dci_aggr_lev"]       = config.paging_dci_aggr_lev;
+  sched_node["max_paging_retries"]        = config.max_paging_retries;
+
   if (config.policy_cfg.has_value() and std::holds_alternative<time_qos_scheduler_config>(*config.policy_cfg)) {
-    YAML::Node sched_node;
     YAML::Node policy_node;
     YAML::Node policy_pf_node;
     policy_pf_node["pf_fairness_coeff"] = std::get<time_qos_scheduler_config>(*config.policy_cfg).pf_fairness_coeff;
@@ -600,8 +605,8 @@ static void fill_du_high_sched_expert_section(YAML::Node& node, const du_high_un
 
     policy_node["qos_sched"] = policy_pf_node;
     sched_node["policy"]     = policy_node;
-    node["scheduler"]        = sched_node;
   }
+  node["scheduler"] = sched_node;
 }
 
 static YAML::Node build_du_high_srs_section(const du_high_unit_srs_config& config)

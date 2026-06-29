@@ -768,6 +768,22 @@ static void configure_cli11_scheduler_args(CLI::App& app, du_high_unit_scheduler
              "applied to the pre-selected UEs.")
       ->capture_default_str()
       ->check(CLI::Range(1U, (unsigned)MAX_NOF_DU_UES));
+
+  add_option(app, "--paging_mcs_index", sched_params.paging_mcs_index, "MCS index used for Paging PDSCH.")
+      ->capture_default_str()
+      ->check(CLI::Range(0U, 28U));
+
+  add_option(app, "--paging_dci_aggr_lev", sched_params.paging_dci_aggr_lev, "Aggregation level for Paging DCI.")
+      ->capture_default_str()
+      ->check(CLI::IsMember({1U, 2U, 4U, 8U, 16U}));
+
+  add_option(app,
+             "--max_paging_retries",
+             sched_params.max_paging_retries,
+             "Maximum number of times a paging message is retransmitted before being dropped.")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, 10U));
+
   CLI::App* policy_cfg_cmd =
       add_subcommand(app, "policy", "Scheduler policy configuration. By default, time-domain QoS-aware policy is used.")
           ->configurable();

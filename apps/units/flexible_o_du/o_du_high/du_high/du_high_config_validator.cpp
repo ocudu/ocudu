@@ -237,6 +237,28 @@ static bool validate_pdcch_unit_config(const du_high_unit_base_cell_config& base
     return false;
   }
 
+  // Validate that the paging DCI aggregation level has at least one candidate in the common search space.
+  const unsigned al  = base_cell.scheduler_cfg.paging_dci_aggr_lev;
+  const unsigned idx = log2_ceil(al);
+  if (base_cell.paging_cfg.paging_search_space_id == 0) {
+    // Type0-PDCCH CSS (SS#0) has fixed candidate counts per TS 38.213, Table 10.1-1.
+    // AL1 and AL2 always have 0 candidates and are therefore invalid for paging.
+    if (al < 4) {
+      fmt::print("Paging aggregation level {} has no PDCCH candidates in Type0-PDCCH CSS (SearchSpace#0). "
+                 "Only AL {{4, 8, 16}} are valid. Adjust --paging_dci_aggr_lev.\n",
+                 al);
+      return false;
+    }
+  } else if (base_cell.paging_cfg.paging_search_space_id == 1) {
+    // SS#1 candidate counts are user-configurable via ss1_n_candidates.
+    if (base_cell.pdcch_cfg.common.ss1_n_candidates[idx] == 0) {
+      fmt::print("Paging aggregation level {} has no PDCCH candidates in SearchSpace#1. "
+                 "Adjust --ss1_n_candidates or --paging_dci_aggr_lev.\n",
+                 al);
+      return false;
+    }
+  }
+
   return true;
 }
 

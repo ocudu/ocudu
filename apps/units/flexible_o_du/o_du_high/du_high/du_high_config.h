@@ -110,6 +110,13 @@ struct du_high_unit_scheduler_config {
   unsigned nof_preselected_newtx_ues = 1024;
   /// Scheduler policy employed to prioritize or deprioritize pre-selected UE candidates.
   std::optional<scheduler_policy_config> policy_cfg;
+
+  /// MCS index to use for Paging PDSCH allocations.
+  unsigned paging_mcs_index = 5;
+  /// Aggregation level for Paging DCI (PDCCH). Values: {1, 2, 4, 8, 16}.
+  unsigned paging_dci_aggr_lev = 4;
+  /// Maximum number of times a paging message is retransmitted before being dropped.
+  unsigned max_paging_retries = 2;
 };
 
 /// DRX configuration.
