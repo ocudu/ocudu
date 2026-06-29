@@ -73,6 +73,8 @@ public:
   async_task<f1ap_gnb_cu_configuration_update_response>
   handle_gnb_cu_configuration_update(const f1ap_gnb_cu_configuration_update& request) override;
 
+  void handle_ref_time_info_report_ctrl(const f1ap_ref_time_report_ctrl_request& request) override {}
+
   // f1ap_warning_manager functions.
   async_task<f1ap_write_replace_warning_response>
   handle_write_replace_warning_request(const f1ap_write_replace_warning_request& request) override;
@@ -142,6 +144,9 @@ private:
   /// \brief Handle the reception of a gNB-DU Configuration Update.
   /// \param[in] msg The gNB-DU Configuration Update message.
   void handle_du_cfg_update(const asn1::f1ap::gnb_du_cfg_upd_s& request);
+
+  /// \brief Handle REFERENCE TIME INFORMATION REPORT from the gNB-DU as per TS 38.473 section 8.12.2.
+  void handle_ref_time_info_report(const asn1::f1ap::ref_time_info_report_s& msg);
 
   /// \brief Log F1AP PDU.
   void log_pdu(bool is_rx, const f1ap_message& pdu);

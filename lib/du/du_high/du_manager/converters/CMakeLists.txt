@@ -7,6 +7,7 @@
 set(SOURCES
         asn1_csi_meas_config_helpers.cpp
         asn1_ntn_config_helpers.cpp
+        asn1_ref_time_r16_helpers.cpp
         asn1_rrc_config_helpers.cpp
         asn1_sys_info_packer.cpp
         asn1_sys_info_packer_helpers.cpp

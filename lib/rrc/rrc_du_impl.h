@@ -91,6 +91,9 @@ public:
 
   void store_cell_info_db(const std::map<nr_cell_global_id_t, rrc_cell_info>& cell_infos) override;
 
+  std::optional<std::chrono::system_clock::time_point> get_ref_time_r16(const byte_buffer& encoded,
+                                                                        bool               is_local_clock) override;
+
   // rrc_du_ue_repository.
   byte_buffer                         get_rrc_reject() override;
   byte_buffer                         pack_meas_config(const rrc_meas_cfg& meas_cfg) override;

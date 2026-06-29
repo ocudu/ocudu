@@ -4,9 +4,11 @@
 
 #pragma once
 
+#include "../du_manager/converters/asn1_ref_time_r16_helpers.h"
 #include "ocudu/adt/slotted_array.h"
 #include "ocudu/du/du_high/du_manager/du_manager.h"
 #include "ocudu/f1ap/du/f1ap_du.h"
+#include "ocudu/mac/mac_subframe_time_mapper.h"
 #include "ocudu/support/timers.h"
 
 namespace ocudu {
@@ -35,6 +37,32 @@ private:
   du_manager_f1ap_event_handler* du_mng = nullptr;
 };
 
+/// Adapts mac_subframe_time_mapper to f1ap_du_time_provider.
+class f1ap_du_mac_time_provider_adapter : public f1ap_du_time_provider
+{
+public:
+  void connect(mac_subframe_time_mapper& mapper_) { mapper = &mapper_; }
+
+  std::optional<f1ap_du_slot_time_info> get_last_mapping(subcarrier_spacing scs) override
+  {
+    if (mapper == nullptr) {
+      return std::nullopt;
+    }
+    auto m = mapper->get_last_mapping(scs);
+    if (not m.has_value()) {
+      return std::nullopt;
+    }
+
+    // mac_subframe_time_mapper always maps to the local system clock, so is_local_clock is hardcoded true.
+    constexpr bool is_local_clock = true;
+
+    return f1ap_du_slot_time_info{m->sl_tx, pack_ref_time_r16(m->time_point, is_local_clock), is_local_clock};
+  }
+
+private:
+  mac_subframe_time_mapper* mapper = nullptr;
+};
+
 class f1ap_du_configurator_adapter : public f1ap_du_configurator
 {
 public:
@@ -52,6 +80,8 @@ public:
       ues[i].connect(*du_mng);
     }
   }
+
+  void connect_time_mapper(mac_subframe_time_mapper& mac_mapper) { time_provider_adapter.connect(mac_mapper); }
 
   timer_factory& get_timer_factory() override { return timers; }
 
@@ -105,9 +135,12 @@ public:
 
   f1ap_du_positioning_handler& get_positioning_handler() override { return du_mng->get_positioning_handler(); }
 
+  f1ap_du_time_provider& get_time_provider() override { return time_provider_adapter; }
+
 private:
   timer_factory                                                 timers;
   du_manager_f1ap_event_handler*                                du_mng = nullptr;
+  f1ap_du_mac_time_provider_adapter                             time_provider_adapter;
   slotted_array<f1ap_ue_task_scheduler_adapter, MAX_NOF_DU_UES> ues;
 };
 

@@ -11,6 +11,7 @@
 #include "ocudu/rrc/rrc_du_factory.h"
 #include "ocudu/support/async/coroutine.h"
 #include "ocudu/support/cpu_architecture_info.h"
+#include "fmt/chrono.h"
 
 using namespace ocudu;
 using namespace ocucp;
@@ -62,6 +63,23 @@ public:
   async_task<void> on_transaction_info_loss(const ue_transaction_info_loss_event& ev) override
   {
     return parent.cu_cp_notifier.on_transaction_info_loss(ev);
+  }
+
+  void on_ref_time_info_report(const f1ap_time_ref_info& info) override
+  {
+    std::optional<std::chrono::system_clock::time_point> time_point =
+        parent.rrc->get_ref_time_r16(info.ref_time_r16, info.is_local_clock);
+    if (not time_point) {
+      parent.logger.warning("du={}: Failed to unpack Reference Time Information Report", parent.cfg.du_index);
+      return;
+    }
+
+    // TODO: forward to upper layers when a consumer is registered
+    parent.logger.debug("du={}: Received Reference Time Information Report: sfn={} time={:%T} is_local_clock={}",
+                        parent.cfg.du_index,
+                        info.ref_slot.sfn(),
+                        *time_point,
+                        info.is_local_clock);
   }
 
 private:

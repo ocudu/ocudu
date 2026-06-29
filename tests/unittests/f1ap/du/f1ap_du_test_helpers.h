@@ -17,6 +17,7 @@
 #include "ocudu/support/async/async_no_op_task.h"
 #include "ocudu/support/async/fifo_async_task_scheduler.h"
 #include "ocudu/support/executors/manual_task_worker.h"
+#include "ocudu/support/ocudu_assert.h"
 #include <gtest/gtest.h>
 #include <queue>
 
@@ -155,6 +156,17 @@ public:
 
   /// \brief Retrieve task scheduler specific to a given UE.
   f1ap_ue_task_scheduler& get_ue_handler(du_ue_index_t ue_index) override { return ue_sched; }
+
+  void connect_time_provider(f1ap_du_time_provider& tp) { time_provider = &tp; }
+
+  f1ap_du_time_provider& get_time_provider() override
+  {
+    ocudu_assert(time_provider != nullptr, "F1AP time provider not set in test double");
+    return *time_provider;
+  }
+
+private:
+  f1ap_du_time_provider* time_provider = nullptr;
 };
 
 class dummy_ue_executor_mapper : public f1ap_ue_executor_mapper

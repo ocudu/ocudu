@@ -10,6 +10,7 @@
 #include "ocudu/asn1/rrc_nr/cell_group_config.h"
 #include "ocudu/asn1/rrc_nr/dl_ccch_msg.h"
 #include "ocudu/asn1/rrc_nr/rrc_nr.h"
+#include "ocudu/asn1/rrc_nr/sys_info.h"
 #include "ocudu/asn1/rrc_nr/ul_ccch1_msg.h"
 #include "ocudu/asn1/rrc_nr/ul_ccch_msg.h"
 #include "ocudu/ran/plmn_identity.h"
@@ -166,6 +167,25 @@ void rrc_du_impl::store_cell_info_db(const std::map<nr_cell_global_id_t, rrc_cel
   for (const auto& [cgi, cell_info] : cell_infos) {
     cell_info_db.emplace(cgi.nci, cell_info);
   }
+}
+
+std::optional<std::chrono::system_clock::time_point> rrc_du_impl::get_ref_time_r16(const byte_buffer& encoded,
+                                                                                   bool               is_local_clock)
+{
+  ref_time_r16_s rrc_ref_time;
+  asn1::cbit_ref bref{encoded};
+  if (rrc_ref_time.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+    logger.error("Failed to unpack ReferenceTime-r16 container");
+    return std::nullopt;
+  }
+
+  constexpr int64_t gps_epoch_offset_ns = 315964800LL * 1'000'000'000LL;
+  int64_t           raw_ns = (static_cast<int64_t>(rrc_ref_time.ref_days_r16) * 86400LL * 1'000'000'000LL) +
+                   (static_cast<int64_t>(rrc_ref_time.ref_seconds_r16) * 1'000'000'000LL) +
+                   (static_cast<int64_t>(rrc_ref_time.ref_milli_seconds_r16) * 1'000'000LL) +
+                   (static_cast<int64_t>(rrc_ref_time.ref_ten_nano_seconds_r16) * 10LL);
+  int64_t unix_ns = is_local_clock ? raw_ns : (raw_ns + gps_epoch_offset_ns);
+  return std::chrono::system_clock::time_point{std::chrono::nanoseconds{unix_ns}};
 }
 
 byte_buffer rrc_du_impl::get_rrc_reject()

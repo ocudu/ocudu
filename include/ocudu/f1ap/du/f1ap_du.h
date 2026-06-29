@@ -6,6 +6,7 @@
 
 #include "ocudu/f1ap/du/f1ap_du_connection_manager.h"
 #include "ocudu/f1ap/du/f1ap_du_metrics_collector.h"
+#include "ocudu/f1ap/du/f1ap_du_time_provider.h"
 #include "ocudu/f1ap/du/f1ap_du_ue_config.h"
 #include "ocudu/f1ap/du/f1ap_du_ue_context_update.h"
 #include "ocudu/f1ap/du/f1c_bearer.h"
@@ -210,6 +211,9 @@ public:
 
   /// \brief Retrieve task scheduler specific to a given UE.
   virtual f1ap_ue_task_scheduler& get_ue_handler(du_ue_index_t ue_index) = 0;
+
+  /// \brief Retrieve the time provider used to obtain slot-to-time mappings for reference time reporting.
+  virtual f1ap_du_time_provider& get_time_provider() = 0;
 };
 
 /// \brief The F1AP uses this interface to notify the DU of paging.

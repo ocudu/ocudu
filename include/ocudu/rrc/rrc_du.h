@@ -10,6 +10,8 @@
 #include "ocudu/rrc/rrc_cell_context.h"
 #include "ocudu/rrc/rrc_metrics.h"
 #include "ocudu/rrc/rrc_ue.h"
+#include <chrono>
+#include <optional>
 
 namespace ocudu::ocucp {
 
@@ -38,6 +40,16 @@ public:
   virtual std::vector<rrc_plmn_ran_area_cell_t> get_ran_area_cells() = 0;
 
   virtual void store_cell_info_db(const std::map<nr_cell_global_id_t, rrc_cell_info>& cell_infos) = 0;
+
+  /// \brief Decodes a PER-encoded ReferenceTime-r16 octet string (TS 38.331 section 6.3.2) into a UTC time point,
+  /// as carried opaquely in the ref_time field of the F1AP TimeReferenceInformation IE (TS 38.473 section 9.3.1.148).
+  ///
+  /// \param encoded The ref_time field of the F1AP TimeReferenceInformation IE.
+  /// \param is_local_clock When true, the counter is relative to the Unix epoch (TS 38.331 leaves the localClock
+  ///        epoch unspecified); otherwise it is relative to the GPS epoch (00:00:00 UTC 6 January 1980).
+  /// \return The decoded time point, or \c std::nullopt if \c encoded is not a valid ReferenceTime-r16 encoding.
+  virtual std::optional<std::chrono::system_clock::time_point> get_ref_time_r16(const byte_buffer& encoded,
+                                                                                bool               is_local_clock) = 0;
 };
 
 struct rrc_resume_context_t {

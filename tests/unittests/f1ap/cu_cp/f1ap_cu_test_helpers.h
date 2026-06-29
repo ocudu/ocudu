@@ -215,12 +215,15 @@ public:
     });
   }
 
+  void on_ref_time_info_report(const f1ap_time_ref_info& info) override { last_ref_time_info_report = info; }
+
   void set_ue_id(uint16_t ue_id_) { ue_id = ue_id_; }
 
   ocucp::du_setup_request last_f1_setup_request_msg;
   ocucp::du_setup_result  next_du_setup_resp;
 
   std::optional<ocucp::f1ap_access_success>            last_access_success_msg;
+  std::optional<f1ap_time_ref_info>                    last_ref_time_info_report;
   ocucp::ue_rrc_context_creation_request               last_ue_creation_msg;
   std::optional<cu_cp_ue_index_t>                      last_created_ue_index;
   std::unique_ptr<dummy_f1ap_ul_ccch_message_notifier> f1ap_srb0_notifier =
