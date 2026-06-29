@@ -27,7 +27,8 @@ std::optional<du_setup_request> create_du_setup_request(const asn1::f1ap::f1_set
 /// \param[in] pdu_notifier The notifier to send F1AP messages to the DU.
 /// \param[in] du_setup_notif The notifier to send the DU setup request to the CU-CP.
 /// \param[in] logger The logger.
-void handle_f1_setup_procedure(const asn1::f1ap::f1_setup_request_s& request,
+/// \return True if the DU was accepted; false if the setup was rejected.
+bool handle_f1_setup_procedure(const asn1::f1ap::f1_setup_request_s& request,
                                f1ap_du_context&                      du_ctxt,
                                f1ap_message_notifier&                pdu_notifier,
                                du_setup_notifier&                    du_setup_notif,

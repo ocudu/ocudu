@@ -313,7 +313,10 @@ void f1ap_cu_impl::handle_du_cfg_update(const asn1::f1ap::gnb_du_cfg_upd_s& requ
 
 void f1ap_cu_impl::handle_f1_setup_request(const asn1::f1ap::f1_setup_request_s& request)
 {
-  handle_f1_setup_procedure(request, du_ctxt, tx_pdu_notifier, du_processor_notifier, logger);
+  bool accepted = handle_f1_setup_procedure(request, du_ctxt, tx_pdu_notifier, du_processor_notifier, logger);
+  if (accepted && cfg.ref_time_report_ctrl) {
+    handle_ref_time_info_report_ctrl(*cfg.ref_time_report_ctrl);
+  }
 }
 
 void f1ap_cu_impl::handle_initial_ul_rrc_message(const asn1::f1ap::init_ul_rrc_msg_transfer_s& msg)

@@ -167,7 +167,7 @@ static f1ap_message create_f1_setup_reject(const asn1::f1ap::f1_setup_request_s&
   return f1ap_msg;
 }
 
-void ocudu::ocucp::handle_f1_setup_procedure(const asn1::f1ap::f1_setup_request_s& request,
+bool ocudu::ocucp::handle_f1_setup_procedure(const asn1::f1ap::f1_setup_request_s& request,
                                              f1ap_du_context&                      du_ctxt,
                                              f1ap_message_notifier&                pdu_notifier,
                                              du_setup_notifier&                    du_setup_notif,
@@ -178,7 +178,7 @@ void ocudu::ocucp::handle_f1_setup_procedure(const asn1::f1ap::f1_setup_request_
   if (not msgerr.has_value()) {
     logger.warning("Rejecting F1 Setup Request. Cause: {}", msgerr.error().second);
     pdu_notifier.on_new_message(create_f1_setup_reject(request, msgerr.error().first));
-    return;
+    return false;
   }
 
   du_ctxt.gnb_du_id          = (gnb_du_id_t)request->gnb_du_id;
@@ -190,7 +190,7 @@ void ocudu::ocucp::handle_f1_setup_procedure(const asn1::f1ap::f1_setup_request_
   if (!du_req.has_value()) {
     logger.warning("Rejecting F1 Setup Request. Cause: Failed to create DU setup request");
     pdu_notifier.on_new_message(create_f1_setup_reject(request, cause_to_asn1(cause_protocol_t::unspecified)));
-    return;
+    return false;
   }
   du_setup_result request_outcome = du_setup_notif.on_new_du_setup_request(du_req.value());
 
@@ -201,11 +201,12 @@ void ocudu::ocucp::handle_f1_setup_procedure(const asn1::f1ap::f1_setup_request_
     auto& fail_resp = std::get<du_setup_result::rejected>(request_outcome.result);
     logger.warning("Rejecting F1 Setup Request. Cause: {}", fail_resp.cause_str);
     f1ap_msg = create_f1_setup_reject(request, cause_to_asn1(fail_resp.cause));
-  } else {
-    // DU has been accepted.
-    f1ap_msg = create_f1_setup_response(request, std::get<du_setup_result::accepted>(request_outcome.result));
+    pdu_notifier.on_new_message(f1ap_msg);
+    return false;
   }
 
-  // Send F1AP PDU to F1-C.
+  // DU has been accepted.
+  f1ap_msg = create_f1_setup_response(request, std::get<du_setup_result::accepted>(request_outcome.result));
   pdu_notifier.on_new_message(f1ap_msg);
+  return true;
 }
