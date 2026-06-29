@@ -232,17 +232,15 @@ TEST_F(mac_cell_processor_ue_update_test, ues_created_and_removed_in_batches)
   }
 }
 
-/// FAPI cell lifecycle init bypass.
+/// FAPI P5 cell lifecycle.
 ///
-/// In monolithic OCUDU, mac_cell_processor::start() is invoked inside DU.start() during initial
-/// cell bring-up — at a moment when the FAPI executors that would respond to a START.request are
-/// not yet pumping their queues. Awaiting the FAPI START transaction would deadlock for the full
-/// 5-second timeout. To avoid this, the very first activation per cell skips the FAPI await; all
-/// subsequent activations (runtime cell unlock, runtime add) go through the full FAPI path so the
-/// spec-correct lifecycle is honored everywhere it is operationally meaningful.
+/// In monolithic OCUDU, mac_cell_processor::start()/stop() drive the FAPI P5 START/STOP procedures
+/// through the phy_cell_operation_controller whenever one is configured. The RU is started before
+/// the DU (see flexible_o_du_impl::start()) so the first cell activation at startup can complete the
+/// FAPI START handshake — which finishes on the first slot indication — without stalling.
 ///
-/// These tests pin that contract: the controller is NOT invoked on the first start(), but IS
-/// invoked on subsequent starts and on every stop().
+/// These tests pin that contract: every start() drives the controller's start(), and every stop()
+/// drives its stop().
 
 namespace {
 
@@ -277,7 +275,7 @@ public:
 
 } // namespace
 
-class mac_cell_processor_init_bypass_fixture : public ::testing::Test
+class mac_cell_processor_fapi_lifecycle_fixture : public ::testing::Test
 {
 protected:
   test_helpers::dummy_mac_scheduler_adapter    sched_adapter;
@@ -293,7 +291,7 @@ protected:
 
   std::unique_ptr<mac_cell_processor> mac_cell;
 
-  mac_cell_processor_init_bypass_fixture()
+  mac_cell_processor_fapi_lifecycle_fixture()
   {
     mac_cell_config_dependencies deps{timer_ctrl.add_cell(to_du_cell_index(0))};
     deps.phy_cell_op_controller = &phy_spy;
@@ -318,37 +316,34 @@ protected:
   }
 };
 
-TEST_F(mac_cell_processor_init_bypass_fixture, first_start_does_not_invoke_phy_controller)
+TEST_F(mac_cell_processor_fapi_lifecycle_fixture, first_start_invokes_phy_controller)
 {
   ASSERT_EQ(phy_spy.get_start_count(), 0u);
 
   auto t = mac_cell->start();
   run_async_void(t);
 
-  // Init bypass: first activation must NOT call the FAPI controller — it would
-  // deadlock during DU.start() because executors are not yet pumping.
-  EXPECT_EQ(phy_spy.get_start_count(), 0u);
+  // Every activation, including the first one at startup, drives the FAPI P5 START procedure.
+  EXPECT_EQ(phy_spy.get_start_count(), 1u);
 }
 
-TEST_F(mac_cell_processor_init_bypass_fixture, second_start_after_stop_invokes_phy_controller)
+TEST_F(mac_cell_processor_fapi_lifecycle_fixture, start_and_stop_invoke_phy_controller)
 {
-  // First (init) activation — bypassed.
   auto t1 = mac_cell->start();
   run_async_void(t1);
-  ASSERT_EQ(phy_spy.get_start_count(), 0u);
+  ASSERT_EQ(phy_spy.get_start_count(), 1u);
 
-  // Stop — always uses the FAPI path.
   auto t2 = mac_cell->stop();
   run_async_void(t2);
   ASSERT_EQ(phy_spy.get_stop_count(), 1u);
 
-  // Subsequent start (runtime unlock equivalent) — full FAPI START path.
+  // Subsequent start (runtime unlock equivalent) — full FAPI START path again.
   auto t3 = mac_cell->start();
   run_async_void(t3);
-  EXPECT_EQ(phy_spy.get_start_count(), 1u);
+  EXPECT_EQ(phy_spy.get_start_count(), 2u);
 }
 
-TEST_F(mac_cell_processor_init_bypass_fixture, stop_always_invokes_phy_controller)
+TEST_F(mac_cell_processor_fapi_lifecycle_fixture, stop_always_invokes_phy_controller)
 {
   auto t1 = mac_cell->start();
   run_async_void(t1);
@@ -357,7 +352,6 @@ TEST_F(mac_cell_processor_init_bypass_fixture, stop_always_invokes_phy_controlle
   run_async_void(t2);
   EXPECT_EQ(phy_spy.get_stop_count(), 1u);
 
-  // Re-start, re-stop — stop is always on the FAPI path regardless of init state.
   auto t3 = mac_cell->start();
   run_async_void(t3);
   auto t4 = mac_cell->stop();
@@ -365,11 +359,12 @@ TEST_F(mac_cell_processor_init_bypass_fixture, stop_always_invokes_phy_controlle
   EXPECT_EQ(phy_spy.get_stop_count(), 2u);
 }
 
-TEST_F(mac_cell_processor_init_bypass_fixture, repeated_runtime_cycles_use_full_fapi_path)
+TEST_F(mac_cell_processor_fapi_lifecycle_fixture, every_cycle_uses_full_fapi_path)
 {
-  // Burn through the init bypass.
+  // The first activation drives the controller too — there is no init bypass.
   auto t0 = mac_cell->start();
   run_async_void(t0);
+  EXPECT_EQ(phy_spy.get_start_count(), 1u);
 
   // Repeated runtime cycles — every start and stop hits the controller.
   for (unsigned i = 1; i <= 3; ++i) {
@@ -377,7 +372,7 @@ TEST_F(mac_cell_processor_init_bypass_fixture, repeated_runtime_cycles_use_full_
     run_async_void(ts);
     auto tr = mac_cell->start();
     run_async_void(tr);
-    EXPECT_EQ(phy_spy.get_start_count(), i);
+    EXPECT_EQ(phy_spy.get_start_count(), i + 1);
     EXPECT_EQ(phy_spy.get_stop_count(), i);
   }
 }

@@ -70,28 +70,15 @@ async_task<void> mac_cell_processor::start()
     CORO_BEGIN(ctx);
 
     // Start PHY cell (FAPI P5 START.request) if a controller is configured.
-    // The PHY must be ready to receive DL grants before the MAC scheduler begins issuing them.
-    //
-    // Init bypass: the very first activation of every cell happens inside DU.start(), at a moment
-    // when the FAPI control executors are not yet draining their queues. Awaiting the FAPI START
-    // transaction here deadlocks for the full 5-second timeout window — DU.start() blocks on this
-    // coroutine, this coroutine blocks on a deferred outcome, the executor that would fire the
-    // outcome is held back by DU.start() not yet returning. The first activation per cell skips the
-    // FAPI await; subsequent activations (runtime cell unlock, NRCell add at runtime, etc.) hit the
-    // proper FAPI path because by then DU.start() has returned and executors are pumping normally.
-    //
-    // Why this is safe: the FAPI P7 slot-indication gate defaults to active=true, so SSB starts
-    // broadcasting as soon as the slot machinery comes online — no FAPI handshake required to get
-    // the first cell on the air. The full handshake remains in force for every later transition.
+    // The PHY must be ready to receive DL grants before the MAC scheduler begins issuing them. The
+    // FAPI P5 START procedure completes on the first slot indication; the RU is started before the DU
+    // (see flexible_o_du_impl::start()) so slot indications are already flowing when the first cell is
+    // activated at startup and the handshake completes without stalling.
     if (phy_cell_op_controller != nullptr) {
-      if (is_first_activation) {
-        is_first_activation = false;
-      } else {
-        CORO_AWAIT_VALUE(bool phy_ok, phy_cell_op_controller->start());
-        if (!phy_ok) {
-          logger.warning("cell={}: PHY start failed; cell remains inactive.", cell_cfg.cell_index);
-          CORO_EARLY_RETURN();
-        }
+      CORO_AWAIT_VALUE(bool phy_ok, phy_cell_op_controller->start());
+      if (!phy_ok) {
+        logger.warning("cell={}: PHY start failed; cell remains inactive.", cell_cfg.cell_index);
+        CORO_EARLY_RETURN();
       }
     }
 

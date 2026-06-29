@@ -30,8 +30,12 @@ flexible_o_du_impl::~flexible_o_du_impl()
 
 void flexible_o_du_impl::start()
 {
-  du->get_operation_controller().start();
+  // Start the RU before the DU. The DU activates its first cell during start(), and that activation
+  // drives the FAPI P5 START procedure, which only completes once the first slot indication arrives.
+  // Slot indications are produced by the RU, so it must already be running; otherwise the START
+  // handshake times out and the cell fails to activate at startup.
   ru->get_controller().get_operation_controller().start();
+  du->get_operation_controller().start();
 }
 
 void flexible_o_du_impl::stop()
