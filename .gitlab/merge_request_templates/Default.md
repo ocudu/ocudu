@@ -49,7 +49,7 @@ Why is this change required? What problem does it solve?
 
 
 ## Related Issues
-* Link the relevant issue(s) here (e.g., Closes #123).
+* Link the relevant issue(s) here (e.g., Closes #0).
 
 ---
 
@@ -66,4 +66,5 @@ Why is this change required? What problem does it solve?
 - [ ] I have added tests to cover my changes, and all previous tests pass.
 - [ ] I have enabled GitLab Shared Runners in my private OCUDU fork. See [here](https://docs.ocudu.org/dev_guide/contributing_guide/#gitlab-ci)
 
-/assign @andrepuschmann @ismael.gomez1
+/assign me
+/request_review @andrepuschmann @ismael.gomez1

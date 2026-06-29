@@ -44,4 +44,4 @@ If you have a suggestion on how to implement the fix or feature, please describe
 
 <!-- Add any other files, links to external documentation, or related issues go here. -->
 
-/assign @andrepuschmann @ismael.gomez1
+/assign me @andrepuschmann @ismael.gomez1
