@@ -73,6 +73,10 @@ public:
   async_task<f1ap_gnb_cu_configuration_update_response>
   handle_gnb_cu_configuration_update(const f1ap_gnb_cu_configuration_update& request) override;
 
+  // f1ap_warning_manager functions.
+  async_task<f1ap_write_replace_warning_response>
+  handle_write_replace_warning_request(const f1ap_write_replace_warning_request& request) override;
+
   // f1ap_cu_interface
   f1ap_message_handler&              get_f1ap_message_handler() override { return *this; }
   f1ap_rrc_message_handler&          get_f1ap_rrc_message_handler() override { return *this; }
@@ -82,6 +86,7 @@ public:
   f1ap_ue_context_removal_handler&   get_f1ap_ue_context_removal_handler() override { return *this; }
   f1ap_nrppa_message_handler&        get_f1ap_nrppa_message_handler() override { return *this; }
   f1ap_interface_management_handler& get_f1ap_interface_management_handler() override { return *this; }
+  f1ap_warning_manager&              get_f1ap_warning_manager() override { return *this; }
 
 private:
   class tx_pdu_notifier_with_logging final : public f1ap_message_notifier

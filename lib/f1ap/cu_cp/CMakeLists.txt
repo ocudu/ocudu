@@ -15,6 +15,7 @@ add_library(ocudu_f1ap_cu
         procedures/f1ap_stop_procedure.cpp
         procedures/f1ap_trp_information_exchange_procedure.cpp
         procedures/gnb_cu_configuration_update_procedure.cpp
+        procedures/write_replace_warning_procedure.cpp
         procedures/ue_context_setup_procedure.cpp
         procedures/ue_context_modification_procedure.cpp
         procedures/ue_context_release_procedure.cpp

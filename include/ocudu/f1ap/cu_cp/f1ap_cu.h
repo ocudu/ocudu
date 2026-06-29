@@ -13,6 +13,7 @@
 #include "ocudu/f1ap/cu_cp/f1ap_du_context.h"
 #include "ocudu/f1ap/cu_cp/f1ap_nrppa_msg_handling.h"
 #include "ocudu/f1ap/cu_cp/f1ap_rrc_msg_transfer_handling.h"
+#include "ocudu/f1ap/cu_cp/f1ap_warning.h"
 #include "ocudu/f1ap/f1ap_message_handler.h"
 #include "ocudu/ran/cu_cp_paging.h"
 #include "ocudu/ran/cu_cp_types.h"
@@ -169,6 +170,19 @@ public:
   handle_gnb_cu_configuration_update(const f1ap_gnb_cu_configuration_update& request) = 0;
 };
 
+/// Handle F1AP Write-Replace Warning procedure as defined in TS 38.473 section 8.9.
+class f1ap_warning_manager
+{
+public:
+  virtual ~f1ap_warning_manager() = default;
+
+  /// \brief Initiates the Write-Replace Warning procedure as per TS 38.473 section 8.9.1.
+  /// \param[in] request The Write-Replace Warning Request message to transmit.
+  /// \return Returns an f1ap_write_replace_warning_response with success set to true on a valid response.
+  virtual async_task<f1ap_write_replace_warning_response>
+  handle_write_replace_warning_request(const f1ap_write_replace_warning_request& request) = 0;
+};
+
 /// Combined entry point for F1AP handling.
 class f1ap_cu : public f1ap_message_handler,
                 public f1ap_rrc_message_handler,
@@ -177,7 +191,8 @@ class f1ap_cu : public f1ap_message_handler,
                 public f1ap_paging_manager,
                 public f1ap_ue_context_removal_handler,
                 public f1ap_nrppa_message_handler,
-                public f1ap_interface_management_handler
+                public f1ap_interface_management_handler,
+                public f1ap_warning_manager
 {
 public:
   virtual ~f1ap_cu() = default;
@@ -194,6 +209,7 @@ public:
   virtual f1ap_ue_context_removal_handler&   get_f1ap_ue_context_removal_handler()   = 0;
   virtual f1ap_nrppa_message_handler&        get_f1ap_nrppa_message_handler()        = 0;
   virtual f1ap_interface_management_handler& get_f1ap_interface_management_handler() = 0;
+  virtual f1ap_warning_manager&              get_f1ap_warning_manager()              = 0;
 };
 
 } // namespace ocudu::ocucp

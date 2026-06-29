@@ -18,6 +18,7 @@
 #include "procedures/ue_context_modification_procedure.h"
 #include "procedures/ue_context_release_procedure.h"
 #include "procedures/ue_context_setup_procedure.h"
+#include "procedures/write_replace_warning_procedure.h"
 #include "ocudu/adt/expected.h"
 #include "ocudu/asn1/f1ap/common.h"
 #include "ocudu/asn1/f1ap/f1ap.h"
@@ -227,6 +228,12 @@ async_task<f1ap_gnb_cu_configuration_update_response>
 f1ap_cu_impl::handle_gnb_cu_configuration_update(const f1ap_gnb_cu_configuration_update& request)
 {
   return launch_async<gnb_cu_configuration_update_procedure>(cfg, request, tx_pdu_notifier, ev_mng, logger);
+}
+
+async_task<f1ap_write_replace_warning_response>
+f1ap_cu_impl::handle_write_replace_warning_request(const f1ap_write_replace_warning_request& request)
+{
+  return launch_async<write_replace_warning_procedure>(cfg, request, tx_pdu_notifier, ev_mng, logger);
 }
 
 void f1ap_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
@@ -538,6 +545,16 @@ void f1ap_cu_impl::handle_successful_outcome(const asn1::f1ap::successful_outcom
       }
       break;
     case asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::gnb_cu_cfg_upd_ack:
+      transaction_id = get_transaction_id(outcome);
+      if (not transaction_id.has_value()) {
+        logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
+        break;
+      }
+      if (not ev_mng.transactions.set_response(transaction_id.value(), outcome)) {
+        logger.warning("Unexpected transaction id={}", transaction_id.value());
+      }
+      break;
+    case asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::write_replace_warning_resp:
       transaction_id = get_transaction_id(outcome);
       if (not transaction_id.has_value()) {
         logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
