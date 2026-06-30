@@ -292,4 +292,10 @@ ngap_message generate_path_switch_request_ack_with_ul_tunnel(amf_ue_id_t        
                                                              transport_layer_address ul_tla,
                                                              gtpu_teid_t             ul_teid);
 
+/// \brief Generate a minimal WRITE-REPLACE WARNING REQUEST with mandatory IEs only.
+ngap_message generate_write_replace_warning_request();
+
+/// \brief Generate a WRITE-REPLACE WARNING REQUEST with optional IEs (warning type, msg contents, warning area list).
+ngap_message generate_write_replace_warning_request_with_optionals();
+
 } // namespace ocudu::ocucp

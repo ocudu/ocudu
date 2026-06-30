@@ -1336,3 +1336,53 @@ ngap_message ocudu::ocucp::generate_path_switch_request_ack_with_ul_tunnel(amf_u
 
   return msg;
 }
+
+ngap_message ocudu::ocucp::generate_write_replace_warning_request()
+{
+  ngap_message ngap_msg;
+  ngap_msg.pdu.set_init_msg();
+  ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_WRITE_REPLACE_WARNING);
+  auto& req = ngap_msg.pdu.init_msg().value.write_replace_warning_request();
+
+  req->msg_id.from_number(0x1234, 16);
+  req->serial_num.from_number(0x0001, 16);
+  req->repeat_period            = 4;
+  req->nof_broadcasts_requested = 2;
+
+  return ngap_msg;
+}
+
+ngap_message ocudu::ocucp::generate_write_replace_warning_request_with_optionals()
+{
+  ngap_message ngap_msg = generate_write_replace_warning_request();
+  auto&        req      = ngap_msg.pdu.init_msg().value.write_replace_warning_request();
+
+  // Warning Type: ETWS primary notification (0x0180).
+  req->warning_type_present = true;
+  req->warning_type.from_string("0180");
+
+  // Data Coding Scheme: 0x0f (GSM 7-bit default alphabet).
+  req->data_coding_scheme_present = true;
+  req->data_coding_scheme.from_number(0x0f, 8);
+
+  // Warning Message Contents (short test message).
+  req->warning_msg_contents_present = true;
+  req->warning_msg_contents.resize(3);
+  req->warning_msg_contents[0] = 0xaa;
+  req->warning_msg_contents[1] = 0xbb;
+  req->warning_msg_contents[2] = 0xcc;
+
+  // Warning Area List: one NR CGI.
+  req->warning_area_list_present   = true;
+  auto&                nr_cgi_list = req->warning_area_list.set_nr_cgi_list_for_warning();
+  asn1::ngap::nr_cgi_s asn1_cgi;
+  asn1_cgi.plmn_id.from_string("00f110");
+  asn1_cgi.nr_cell_id.from_number(0x19b01, 36);
+  nr_cgi_list.push_back(asn1_cgi);
+
+  // Concurrent Warning Message Indication.
+  req->concurrent_warning_msg_ind_present = true;
+  req->concurrent_warning_msg_ind.value   = asn1::ngap::concurrent_warning_msg_ind_opts::options::true_value;
+
+  return ngap_msg;
+}
