@@ -372,6 +372,7 @@ public:
                                                        const ue_capability_summary*          reestablished_ue_caps) override;
     void                                        config_applied() override {}
     const du_ue_resource_config&                get() override;
+    void                                        set_cs_rnti(rnti_t cs_rnti) override {}
     const std::optional<ue_capability_summary>& ue_capabilities() const override;
 
     du_ue_index_t                           ue_index;

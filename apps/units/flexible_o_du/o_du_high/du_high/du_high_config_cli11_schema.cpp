@@ -1454,6 +1454,36 @@ static void configure_cli11_srs_args(CLI::App& app, du_high_unit_srs_config& srs
       "within the [-202, 24] interval.  Default: -84");
 }
 
+static void configure_cli11_cg_args(CLI::App& app, du_high_configured_grants& cg_params)
+{
+  add_option(app,
+             "--periodicity_slots",
+             cg_params.periodicity_slots,
+             "CG periodicity in slots. When absent, Configured Grants are disabled. Valid values for 14-symbol slots: "
+             "{1,2,4,5,8,10,16,20,32,40,64,80,128,160,256,320,512,640,1024,1280,2560,5120}")
+      ->capture_default_str()
+      ->check(CLI::IsMember({1U,  2U,   4U,   5U,   8U,   10U,  16U,  20U,   32U,   40U,   64U,
+                             80U, 128U, 160U, 256U, 320U, 512U, 640U, 1024U, 1280U, 2560U, 5120U}));
+  add_option(app, "--nof_rbs", cg_params.nof_rbs, "Number of PRBs allocated to the CG resource. Values: {1,...,275}")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, 275U));
+  add_option(app, "--mcs", cg_params.mcs, "MCS index for the CG PUSCH. Values: {0,...,27}")
+      ->capture_default_str()
+      ->check(CLI::Range(0U, 28U));
+  add_option(app,
+             "--nof_harq_processes",
+             cg_params.nof_harq_processes,
+             "Number of HARQ processes for CG transmissions. Values: {1,...,16}")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, 16U));
+  add_option(app,
+             "--max_nof_cg_rbs",
+             cg_params.max_nof_cell_cg_rbs,
+             "Maximum number of RBs that can be allocated to CG resources at cell-level. Values: {1,...,275}")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, 275U));
+}
+
 static void configure_cli11_si_sched_info(CLI::App& app, du_high_unit_sib_config::si_sched_info_config& si_sched_info)
 {
   add_option(app, "--si_period", si_sched_info.si_period_rf, "SI message scheduling period in radio frames")
@@ -2535,6 +2565,10 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
   // SRS configuration.
   CLI::App* srs_subcmd = add_subcommand(app, "srs", "SRS parameters");
   configure_cli11_srs_args(*srs_subcmd, cell_params.srs_cfg);
+
+  // Configured Grant configuration.
+  CLI::App* cg_subcmd = add_subcommand(app, "cg", "Configured Grant parameters");
+  configure_cli11_cg_args(*cg_subcmd, cell_params.cg_cfg);
 
   // PRACH configuration.
   CLI::App* prach_subcmd = add_subcommand(app, "prach", "PRACH parameters");

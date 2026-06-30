@@ -8,6 +8,7 @@
 #include "ocudu/asn1/asn1_diff_utils.h"
 #include "ocudu/ran/band_helper.h"
 #include "ocudu/ran/frequency_range.h"
+#include "ocudu/ran/resource_allocation/resource_allocation_frequency.h"
 #include "ocudu/support/enum_utils.h"
 #include "ocudu/support/error_handling.h"
 #include "ocudu/support/math/math_utils.h"
@@ -198,12 +199,13 @@ static rlc_bearer_cfg_s make_asn1_rrc_rlc_bearer(const rlc_bearer_config& cfg)
     default:
       report_fatal_error("Invalid Bucket size duration {}", fmt::underlying(cfg.mac_cfg->bsd));
   }
-  out.mac_lc_ch_cfg.ul_specific_params.lc_ch_group_present          = true;
-  out.mac_lc_ch_cfg.ul_specific_params.lc_ch_group                  = cfg.mac_cfg->lcg_id;
-  out.mac_lc_ch_cfg.ul_specific_params.sched_request_id_present     = true;
-  out.mac_lc_ch_cfg.ul_specific_params.sched_request_id             = cfg.mac_cfg->sr_id;
-  out.mac_lc_ch_cfg.ul_specific_params.lc_ch_sr_mask                = cfg.mac_cfg->lc_sr_mask;
-  out.mac_lc_ch_cfg.ul_specific_params.lc_ch_sr_delay_timer_applied = cfg.mac_cfg->lc_sr_delay_applied;
+  out.mac_lc_ch_cfg.ul_specific_params.lc_ch_group_present             = true;
+  out.mac_lc_ch_cfg.ul_specific_params.lc_ch_group                     = cfg.mac_cfg->lcg_id;
+  out.mac_lc_ch_cfg.ul_specific_params.sched_request_id_present        = true;
+  out.mac_lc_ch_cfg.ul_specific_params.sched_request_id                = cfg.mac_cfg->sr_id;
+  out.mac_lc_ch_cfg.ul_specific_params.lc_ch_sr_mask                   = cfg.mac_cfg->lc_sr_mask;
+  out.mac_lc_ch_cfg.ul_specific_params.lc_ch_sr_delay_timer_applied    = cfg.mac_cfg->lc_sr_delay_applied;
+  out.mac_lc_ch_cfg.ul_specific_params.cfg_grant_type1_allowed_present = true;
 
   return out;
 }
@@ -2611,6 +2613,229 @@ static void calculate_srs_config_diff(asn1::rrc_nr::srs_cfg_s& out, const srs_co
   }
 }
 
+static void make_asn1_rrc_cfg_grant_cfg(asn1::rrc_nr::cfg_grant_cfg_s& out, const cg_configuration& cfg)
+{
+  // Frequency hopping.
+  if (cfg.frequency_hopping != cg_configuration::freq_hopping::disabled) {
+    out.freq_hop_present = true;
+    out.freq_hop         = cfg.frequency_hopping == cg_configuration::freq_hopping::intra_slot
+                               ? cfg_grant_cfg_s::freq_hop_e_::intra_slot
+                               : cfg_grant_cfg_s::freq_hop_e_::inter_slot;
+  }
+
+  // DMRS for CG-PUSCH.
+  make_asn1_rrc_dmrs_ul_for_pusch(out.cg_dmrs_cfg, dmrs_uplink_config{}, cfg.cg_dmrs_cfg);
+
+  // MCS table.
+  if (cfg.mcs_table != pusch_mcs_table::qam64) {
+    out.mcs_table_present = true;
+    out.mcs_table         = cfg.mcs_table == pusch_mcs_table::qam256 ? cfg_grant_cfg_s::mcs_table_e_::qam256
+                                                                     : cfg_grant_cfg_s::mcs_table_e_::qam64_low_se;
+  }
+
+  // MCS table for transform precoder.
+  if (cfg.mcs_table_transform_precoder != pusch_mcs_table::qam64) {
+    out.mcs_table_transform_precoder_present = true;
+    out.mcs_table_transform_precoder         = cfg.mcs_table_transform_precoder == pusch_mcs_table::qam256
+                                                   ? cfg_grant_cfg_s::mcs_table_transform_precoder_e_::qam256
+                                                   : cfg_grant_cfg_s::mcs_table_transform_precoder_e_::qam64_low_se;
+  }
+
+  // UCI on PUSCH (CG-UCI-OnPUSCH carries only beta offsets, no scaling field).
+  if (cfg.uci_on_pusch_cfg.beta_offsets_cfg.has_value()) {
+    out.uci_on_pusch_present = true;
+    auto& cg_uci             = out.uci_on_pusch.set_setup();
+    if (const auto* semi_static =
+            std::get_if<uci_on_pusch::beta_offsets_semi_static>(&cfg.uci_on_pusch_cfg.beta_offsets_cfg.value())) {
+      fill_uci_beta_offset(cg_uci.set_semi_static(), *semi_static);
+    } else {
+      const auto& dyn = std::get<uci_on_pusch::beta_offsets_dynamic>(cfg.uci_on_pusch_cfg.beta_offsets_cfg.value());
+      auto&       asn1_dyn = cg_uci.set_dyn();
+      asn1_dyn.resize(dyn.size());
+      for (unsigned i = 0; i < dyn.size(); ++i) {
+        fill_uci_beta_offset(asn1_dyn[i], dyn[i]);
+      }
+    }
+  }
+
+  // Resource allocation type.
+  switch (cfg.res_alloc) {
+    case cg_configuration::res_allocation::type_0:
+      out.res_alloc = cfg_grant_cfg_s::res_alloc_e_::res_alloc_type0;
+      break;
+    case cg_configuration::res_allocation::type_1:
+      out.res_alloc = cfg_grant_cfg_s::res_alloc_e_::res_alloc_type1;
+      break;
+    case cg_configuration::res_allocation::dynamic_switch:
+      out.res_alloc = cfg_grant_cfg_s::res_alloc_e_::dyn_switch;
+      break;
+    default:
+      ocudu_assertion_failure("Invalid CG resource allocation type={}", fmt::underlying(cfg.res_alloc));
+  }
+
+  // Power control loop.
+  out.pwr_ctrl_loop_to_use = cfg.enable_pwr_ctrl_loop_n1 ? cfg_grant_cfg_s::pwr_ctrl_loop_to_use_e_::n1
+                                                         : cfg_grant_cfg_s::pwr_ctrl_loop_to_use_e_::n0;
+
+  // P0-PUSCH-Alpha set index.
+  out.p0_pusch_alpha = cfg.p0_pusch_alpha;
+
+  // Transform precoder.
+  if (cfg.trans_precoder.has_value()) {
+    out.transform_precoder_present = true;
+    out.transform_precoder         = cfg.trans_precoder.value() ? cfg_grant_cfg_s::transform_precoder_e_::enabled
+                                                                : cfg_grant_cfg_s::transform_precoder_e_::disabled;
+  }
+
+  // Number of HARQ processes.
+  out.nrof_harq_processes = cfg.nof_harq_processes;
+
+  // repK.
+  switch (cfg.rep.rep_k) {
+    case cg_configuration::rep_k_t::n1:
+      out.rep_k = cfg_grant_cfg_s::rep_k_e_::n1;
+      break;
+    case cg_configuration::rep_k_t::n2:
+      out.rep_k = cfg_grant_cfg_s::rep_k_e_::n2;
+      break;
+    case cg_configuration::rep_k_t::n4:
+      out.rep_k = cfg_grant_cfg_s::rep_k_e_::n4;
+      break;
+    case cg_configuration::rep_k_t::n8:
+      out.rep_k = cfg_grant_cfg_s::rep_k_e_::n8;
+      break;
+    default:
+      ocudu_assertion_failure("Invalid CG repK={}", fmt::underlying(cfg.rep.rep_k));
+  }
+
+  // repK-RV (absent means the default sequence {0,2,3,1}).
+  if (cfg.rep.rv_seq != cg_configuration::rep_k_rv::s1_0231) {
+    out.rep_k_rv_present = true;
+    switch (cfg.rep.rv_seq) {
+      case cg_configuration::rep_k_rv::s2_0303:
+        out.rep_k_rv = cfg_grant_cfg_s::rep_k_rv_e_::s2_neg0303;
+        break;
+      case cg_configuration::rep_k_rv::s3_0000:
+        out.rep_k_rv = cfg_grant_cfg_s::rep_k_rv_e_::s3_neg0000;
+        break;
+      default:
+        break;
+    }
+  }
+
+  // Periodicity (mapping from slot count to ASN.1 symbol×slot enum for 14-symbol slots).
+  // TODO: Add support for 12-symbol slots.
+  switch (cfg.periodicity) {
+    case cg_configuration::periodicity_t::sl1:
+      out.periodicity = cfg_grant_cfg_s::periodicity_e_::sym1x14;
+      break;
+    case cg_configuration::periodicity_t::sl2:
+      out.periodicity = cfg_grant_cfg_s::periodicity_e_::sym2x14;
+      break;
+    case cg_configuration::periodicity_t::sl4:
+      out.periodicity = cfg_grant_cfg_s::periodicity_e_::sym4x14;
+      break;
+    case cg_configuration::periodicity_t::sl5:
+      out.periodicity = cfg_grant_cfg_s::periodicity_e_::sym5x14;
+      break;
+    case cg_configuration::periodicity_t::sl8:
+      out.periodicity = cfg_grant_cfg_s::periodicity_e_::sym8x14;
+      break;
+    case cg_configuration::periodicity_t::sl10:
+      out.periodicity = cfg_grant_cfg_s::periodicity_e_::sym10x14;
+      break;
+    case cg_configuration::periodicity_t::sl16:
+      out.periodicity = cfg_grant_cfg_s::periodicity_e_::sym16x14;
+      break;
+    case cg_configuration::periodicity_t::sl20:
+      out.periodicity = cfg_grant_cfg_s::periodicity_e_::sym20x14;
+      break;
+    case cg_configuration::periodicity_t::sl32:
+      out.periodicity = cfg_grant_cfg_s::periodicity_e_::sym32x14;
+      break;
+    case cg_configuration::periodicity_t::sl40:
+      out.periodicity = cfg_grant_cfg_s::periodicity_e_::sym40x14;
+      break;
+    case cg_configuration::periodicity_t::sl64:
+      out.periodicity = cfg_grant_cfg_s::periodicity_e_::sym64x14;
+      break;
+    case cg_configuration::periodicity_t::sl80:
+      out.periodicity = cfg_grant_cfg_s::periodicity_e_::sym80x14;
+      break;
+    case cg_configuration::periodicity_t::sl128:
+      out.periodicity = cfg_grant_cfg_s::periodicity_e_::sym128x14;
+      break;
+    case cg_configuration::periodicity_t::sl160:
+      out.periodicity = cfg_grant_cfg_s::periodicity_e_::sym160x14;
+      break;
+    case cg_configuration::periodicity_t::sl256:
+      out.periodicity = cfg_grant_cfg_s::periodicity_e_::sym256x14;
+      break;
+    case cg_configuration::periodicity_t::sl320:
+      out.periodicity = cfg_grant_cfg_s::periodicity_e_::sym320x14;
+      break;
+    case cg_configuration::periodicity_t::sl512:
+      out.periodicity = cfg_grant_cfg_s::periodicity_e_::sym512x14;
+      break;
+    case cg_configuration::periodicity_t::sl640:
+      out.periodicity = cfg_grant_cfg_s::periodicity_e_::sym640x14;
+      break;
+    case cg_configuration::periodicity_t::sl1024:
+      out.periodicity = cfg_grant_cfg_s::periodicity_e_::sym1024x14;
+      break;
+    case cg_configuration::periodicity_t::sl1280:
+      out.periodicity = cfg_grant_cfg_s::periodicity_e_::sym1280x14;
+      break;
+    case cg_configuration::periodicity_t::sl2560:
+      out.periodicity = cfg_grant_cfg_s::periodicity_e_::sym2560x14;
+      break;
+    case cg_configuration::periodicity_t::sl5120:
+      out.periodicity = cfg_grant_cfg_s::periodicity_e_::sym5120x14;
+      break;
+    default:
+      ocudu_assertion_failure("Invalid CG periodicity={}", fmt::underlying(cfg.periodicity));
+  }
+
+  // Configured grant timer.
+  if (cfg.configured_grant_timer != 0) {
+    out.cfg_grant_timer_present = true;
+    out.cfg_grant_timer         = cfg.configured_grant_timer;
+  }
+
+  // RRC-configured UL grant (Type 1 CG).
+  if (cfg.rrc_configured_ul_grant_cfg.has_value()) {
+    out.rrc_cfg_ul_grant_present = true;
+    auto&       asn1_grant       = out.rrc_cfg_ul_grant;
+    const auto& grant            = cfg.rrc_configured_ul_grant_cfg.value();
+
+    asn1_grant.time_domain_offset = grant.time_domain_offset;
+    asn1_grant.time_domain_alloc  = grant.time_domain_allocation;
+
+    // Frequency domain allocation: RIV encoding for resource allocation type 1 (TS 38.214, clause 6.1.2.2).
+    ocudu_assert(cfg.bwp_nof_prbs > 0, "CG bwp_nof_prbs must be set before RRC encoding");
+    const unsigned riv = ra_frequency_type1_get_riv(
+        ra_frequency_type1_configuration{cfg.bwp_nof_prbs, grant.vrbs.start(), grant.vrbs.length()});
+    asn1_grant.freq_domain_alloc.from_number(riv);
+
+    asn1_grant.ant_port = grant.antenna_port;
+    if (grant.dmrs_seq_initialization.has_value()) {
+      asn1_grant.dmrs_seq_initization_present = true;
+      asn1_grant.dmrs_seq_initization         = grant.dmrs_seq_initialization.value();
+    }
+    asn1_grant.precoding_and_nof_layers = grant.precoding_and_nof_layers;
+    if (grant.srs_resource_indicator.has_value()) {
+      asn1_grant.srs_res_ind_present = true;
+      asn1_grant.srs_res_ind         = grant.srs_resource_indicator.value();
+    }
+    asn1_grant.mcs_and_tbs = grant.mcs;
+    if (grant.frequency_hopping_offset.has_value()) {
+      asn1_grant.freq_hop_offset_present = true;
+      asn1_grant.freq_hop_offset         = grant.frequency_hopping_offset.value();
+    }
+    asn1_grant.pathloss_ref_idx = grant.pathloss_ref_index;
+  }
+}
+
 static bool calculate_bwp_ul_dedicated_diff(asn1::rrc_nr::bwp_ul_ded_s& out,
                                             const bwp_uplink_dedicated& src,
                                             const bwp_uplink_dedicated& dest)
@@ -2646,9 +2871,17 @@ static bool calculate_bwp_ul_dedicated_diff(asn1::rrc_nr::bwp_ul_ded_s& out,
     out.srs_cfg_present = true;
     out.srs_cfg.set_release();
   }
-  // TODO: Remaining.
 
-  return out.pucch_cfg_present || out.pusch_cfg_present || out.srs_cfg_present;
+  if ((dest.cg_cfg.has_value() && not src.cg_cfg.has_value()) ||
+      (dest.cg_cfg.has_value() && src.cg_cfg.has_value() && dest.cg_cfg != src.cg_cfg)) {
+    out.cfg_grant_cfg_present = true;
+    make_asn1_rrc_cfg_grant_cfg(out.cfg_grant_cfg.set_setup(), dest.cg_cfg.value());
+  } else if (src.cg_cfg.has_value() && not dest.cg_cfg.has_value()) {
+    out.cfg_grant_cfg_present = true;
+    out.cfg_grant_cfg.set_release();
+  }
+
+  return out.pucch_cfg_present || out.pusch_cfg_present || out.srs_cfg_present || out.cfg_grant_cfg_present;
 }
 
 static void calculate_pusch_serving_cell_cfg_diff(asn1::rrc_nr::pusch_serving_cell_cfg_s& out,
@@ -3367,6 +3600,10 @@ void ocudu::odu::calculate_cell_group_config_diff(asn1::rrc_nr::cell_group_cfg_s
     out.phys_cell_group_cfg.p_nr_fr1_present = true;
     out.phys_cell_group_cfg.p_nr_fr1         = dest.cell_group.pcg_cfg.p_nr_fr1.value();
   }
+  if (dest.cell_group.pcg_cfg.cs_rnti.has_value()) {
+    out.phys_cell_group_cfg.cs_rnti_present     = true;
+    out.phys_cell_group_cfg.cs_rnti.set_setup() = to_value(dest.cell_group.pcg_cfg.cs_rnti.value());
+  }
   out.phys_cell_group_cfg.pdsch_harq_ack_codebook.value =
       dest.cell_group.pcg_cfg.pdsch_harq_codebook == pdsch_harq_ack_codebook::dynamic
           ? phys_cell_group_cfg_s::pdsch_harq_ack_codebook_opts::dyn
@@ -3398,7 +3635,7 @@ static ssb_mtc_s make_ssb_mtc(const du_cell_config& du_cell_cfg)
       ret.periodicity_and_offset.set_sf160() = 0;
       break;
     default:
-      report_fatal_error("Invalud SSB period={}", fmt::underlying(du_cell_cfg.ran.ssb_cfg.ssb_period));
+      report_fatal_error("Invalid SSB period={}", fmt::underlying(du_cell_cfg.ran.ssb_cfg.ssb_period));
   }
   ret.dur.value = ssb_mtc_s::dur_opts::sf5;
 

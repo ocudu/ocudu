@@ -5,6 +5,8 @@
 #pragma once
 
 #include "ocudu/ran/pusch/tx_scheme_configuration.h"
+#include "ocudu/ran/resource_allocation/rb_interval.h"
+#include "ocudu/ran/rnti.h"
 #include "ocudu/ran/srs/srs_configuration.h"
 #include "ocudu/scheduler/config/pucch_resource_builder_params.h"
 #include <optional>
@@ -42,6 +44,14 @@ struct ue_pusch_config {
   bool operator==(const ue_pusch_config& other) const { return tx_cfg == other.tx_cfg; }
 };
 
+struct ue_cg_config {
+  rnti_t       cs_rnti;
+  unsigned     cg_offset;
+  vrb_interval vrbs;
+
+  bool operator==(const ue_cg_config& other) const { return cg_offset == other.cg_offset and vrbs == other.vrbs; }
+};
+
 struct ue_srs_config {
   srs_config::srs_resource::nof_srs_ports nof_ports;
   /// Offset (periodicity is common).
@@ -60,12 +70,13 @@ struct ue_uplink_bwp_config {
   // Only present if periodic CSI reporting is enabled in the cell.
   std::optional<ue_periodic_csi_config> periodic_csi_report;
   ue_pusch_config                       pusch;
+  ue_cg_config                          cg;
   ue_srs_config                         srs;
 
   bool operator==(const ue_uplink_bwp_config& other) const
   {
     return pucch == other.pucch and periodic_csi_report == other.periodic_csi_report and pusch == other.pusch and
-           srs == other.srs;
+           srs == other.srs and cg == other.cg;
   }
 };
 

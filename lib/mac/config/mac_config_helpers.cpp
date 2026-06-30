@@ -34,6 +34,7 @@ mac_lc_config ocudu::make_default_drb_mac_lc_config()
   mac_cfg.lc_sr_mask          = false;
   mac_cfg.lc_sr_delay_applied = false;
   mac_cfg.sr_id               = uint_to_sched_req_id(0);
+  mac_cfg.cg_type1_allowed    = true;
   return mac_cfg;
 }
 

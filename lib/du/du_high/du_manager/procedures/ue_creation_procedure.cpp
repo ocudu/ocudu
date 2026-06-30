@@ -159,8 +159,8 @@ bool ue_creation_procedure::setup_du_ue_resources()
   f1ap_ue_context_update_request f1_req;
   f1_req.ue_index = ue_ctx->ue_index;
   f1_req.srbs_to_setup.resize(1);
-  f1_req.srbs_to_setup[0]             = srb_id_t::srb1;
-  du_ue_resource_update_response resp = ue_ctx->resources.update(req.pcell_index, f1_req);
+  f1_req.srbs_to_setup[0]                   = srb_id_t::srb1;
+  const du_ue_resource_update_response resp = ue_ctx->resources.update(req.pcell_index, f1_req);
   if (resp.failed()) {
     proc_logger.log_proc_failure("Unable to setup DU UE PCell and SRB resources. Cause: {}",
                                  resp.procedure_error.error().data());

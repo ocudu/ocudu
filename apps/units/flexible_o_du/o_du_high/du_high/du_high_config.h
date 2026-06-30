@@ -556,6 +556,24 @@ struct du_high_unit_pucch_config {
   bool operator!=(const du_high_unit_pucch_config& rhs) const { return !(*this == rhs); }
 };
 
+struct du_high_configured_grants {
+  /// If presents, enables Configured Grants Type1 and sets its periodicity in slots.
+  /// For 14-symbol slots, values: {1, 2, 4, 5, 8, 10, 16, 20, 32, 40, 64, 80, 128, 160, 256, 320, 512, 640, 1024, 1280,
+  /// 2560, 5120}.
+  /// For 12 symbol slots, values: {1, 2, 4, 5, 8, 10, 16, 20, 32, 40, 64, 80, 128, 160, 256, 320, 512, 640, 1280,
+  /// 2560}.
+  /// \remark Only 14-symbol slot is currently supported.
+  std::optional<unsigned> periodicity_slots = 40;
+  /// Number of RBs that are configured for the UE configured grant.
+  unsigned nof_rbs = 10;
+  /// MCS configured for the UE configured grant. Values: {1,...,27}.
+  unsigned mcs = 5;
+  /// Number of HARQ processes reserved for configured grant. Values: {1,...,16}.
+  unsigned nof_harq_processes = 4;
+  /// Number of RBs that are available for configured grants at cell-level. Values: {1,...,275}.
+  unsigned max_nof_cell_cg_rbs = 20;
+};
+
 struct du_high_unit_srs_config {
   /// Enables and sets the Sounding Reference Signals (SRS) type to be used.
   /// Values: {"disabled", "periodic", "aperiodic"}.
@@ -1156,6 +1174,8 @@ struct du_high_unit_base_cell_config {
   du_high_unit_pucch_config pucch_cfg;
   /// SRS configuration.
   du_high_unit_srs_config srs_cfg;
+  /// Configured Grant configuration.
+  du_high_configured_grants cg_cfg;
   /// Physical Cell Group parameters.
   du_high_unit_phy_cell_group_config pcg_cfg;
   /// MAC Cell Gropup parameters.

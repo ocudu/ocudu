@@ -13,8 +13,15 @@ mac_ue_reconfiguration_procedure::mac_ue_reconfiguration_procedure(const mac_ue_
                                                                    mac_control_config&                   cfg_,
                                                                    mac_ul_configurator&                  mac_ul_,
                                                                    mac_dl_configurator&                  mac_dl_,
-                                                                   mac_scheduler_configurator&           sched_cfg_) :
-  req(req_), cfg(cfg_), logger(cfg.logger), ul_unit(mac_ul_), dl_unit(mac_dl_), sched_cfg(sched_cfg_)
+                                                                   mac_scheduler_configurator&           sched_cfg_,
+                                                                   std::optional<rnti_t> allocated_cs_rnti_) :
+  req(req_),
+  cfg(cfg_),
+  logger(cfg.logger),
+  ul_unit(mac_ul_),
+  dl_unit(mac_dl_),
+  sched_cfg(sched_cfg_),
+  allocated_cs_rnti(allocated_cs_rnti_)
 {
 }
 
@@ -77,5 +84,6 @@ mac_ue_reconfiguration_response mac_ue_reconfiguration_procedure::handle_result(
   mac_ue_reconfiguration_response resp{};
   resp.ue_index = req.ue_index;
   resp.result   = result;
+  resp.cs_rnti  = allocated_cs_rnti;
   return resp;
 }

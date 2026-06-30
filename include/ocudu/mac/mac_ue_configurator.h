@@ -97,8 +97,9 @@ struct mac_ue_reconfiguration_request {
 
 /// \brief Outcome of a MAC UE reconfiguration request procedure.
 struct mac_ue_reconfiguration_response {
-  du_ue_index_t ue_index;
-  bool          result;
+  du_ue_index_t         ue_index;
+  bool                  result;
+  std::optional<rnti_t> cs_rnti;
 };
 
 /// Input parameters used to delete a UE in the scheduler.

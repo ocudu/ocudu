@@ -1567,6 +1567,34 @@ static bool validate_ntn_tn_cell_config(const du_high_unit_cell_ntn_config& ntn,
   return validate_ntn_neighbor_cells(ntn);
 }
 
+static bool validate_cell_cg_config(const du_high_configured_grants& cg_cfg, unsigned nof_crbs, unsigned max_nof_harqs)
+{
+  if (cg_cfg.max_nof_cell_cg_rbs > nof_crbs) {
+    fmt::print("Max number of RBs {} for configured grant exceeds the number of BWP RBs {}.\n",
+               cg_cfg.max_nof_cell_cg_rbs,
+               nof_crbs);
+    return false;
+  }
+
+  if (cg_cfg.nof_rbs > cg_cfg.max_nof_cell_cg_rbs) {
+    fmt::print(
+        "Number of UE RBs {} for configured grant (CG) exceeds the max number of CG RBs {} allocated to the cell.\n",
+        cg_cfg.nof_rbs,
+        cg_cfg.max_nof_cell_cg_rbs);
+    return false;
+  }
+
+  if (cg_cfg.nof_harq_processes >= max_nof_harqs) {
+    fmt::print("Too many UE HARQ processes {} reserved for configured grant (CG). Its value shouldn't exceed the total"
+               " maximum number of PUSCH HARQ processes {} - 1.\n",
+               cg_cfg.nof_harq_processes,
+               max_nof_harqs);
+    return false;
+  }
+
+  return true;
+}
+
 /// Validates the given cell application configuration. Returns true on success, otherwise false.
 static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& config)
 {
@@ -1691,6 +1719,10 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
     if (not validate_cell_slicing_config(slice_cfg)) {
       return false;
     }
+  }
+
+  if (!validate_cell_cg_config(config.cg_cfg, nof_crbs, config.pusch_cfg.nof_harqs)) {
+    return false;
   }
 
   return true;

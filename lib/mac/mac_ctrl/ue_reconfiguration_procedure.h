@@ -20,7 +20,8 @@ public:
                                             mac_control_config&                   cfg_,
                                             mac_ul_configurator&                  mac_ul_,
                                             mac_dl_configurator&                  mac_dl_,
-                                            mac_scheduler_configurator&           sched_cfg_);
+                                            mac_scheduler_configurator&           sched_cfg_,
+                                            std::optional<rnti_t>                 allocated_cs_rnti_ = {});
 
   void operator()(coro_context<async_task<mac_ue_reconfiguration_response>>& ctx);
 
@@ -35,6 +36,7 @@ private:
   mac_ul_configurator&           ul_unit;
   mac_dl_configurator&           dl_unit;
   mac_scheduler_configurator&    sched_cfg;
+  std::optional<rnti_t>          allocated_cs_rnti;
 
   bool add_ue_result  = false;
   bool sched_conf_res = true;

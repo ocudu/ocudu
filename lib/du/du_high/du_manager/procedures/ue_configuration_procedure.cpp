@@ -68,6 +68,12 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   // > Update MAC bearers.
   CORO_AWAIT_VALUE(mac_res, update_mac_and_sched());
 
+  // > Store CS-RNTI allocated by MAC back into the UE resource configuration, so that it is included in the
+  // > RRC cellGroupConfig sent to the CU in the F1AP response.
+  if (mac_res.result and mac_res.cs_rnti.has_value()) {
+    ue->resources.set_cs_rnti(mac_res.cs_rnti.value());
+  }
+
   // > Destroy old DU UE bearers that are now detached from remaining layers.
   clear_old_ue_context();
 

@@ -995,6 +995,18 @@ std::vector<odu::du_cell_config> ocudu::generate_du_cell_config(const du_high_un
     du_srs_cfg.sequence_id_reuse_factor  = user_srs_cfg.sequence_id_reuse_factor;
     du_srs_cfg.p0                        = user_srs_cfg.p0;
 
+    // Parameters for Configured Grant.
+    const du_high_configured_grants& user_cg_cfg = base_cell.cg_cfg;
+    if (user_cg_cfg.periodicity_slots.has_value()) {
+      cg_builder_params du_cg_params{};
+      du_cg_params.periodicity = static_cast<cg_configuration::periodicity_t>(user_cg_cfg.periodicity_slots.value());
+      du_cg_params.nof_rbs     = user_cg_cfg.nof_rbs;
+      du_cg_params.mcs         = user_cg_cfg.mcs;
+      du_cg_params.nof_harq_processes  = user_cg_cfg.nof_harq_processes;
+      du_cg_params.max_nof_cell_cg_rbs = user_cg_cfg.max_nof_cell_cg_rbs;
+      out_cell.ran.init_bwp.cg_cfg.emplace(du_cg_params);
+    }
+
     // If any dependent parameter needs to be updated, this is the place.
     config_helpers::compute_nof_sr_csi_pucch_res(du_pucch_cfg,
                                                  base_cell.ul_common_cfg.max_pucchs_per_slot,

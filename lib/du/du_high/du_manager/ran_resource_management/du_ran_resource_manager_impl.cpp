@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "du_ran_resource_manager_impl.h"
+#include "du_cg_res_mng.h"
 #include "du_srs_aperiodic_res_mng.h"
 #include "du_srs_periodic_res_mng.h"
 #include "ocudu/mac/config/mac_cell_group_config_factory.h"
@@ -41,6 +42,24 @@ void du_ue_ran_resource_updater_impl::config_applied()
   parent->ue_config_applied(ue_index);
 }
 
+void du_ue_ran_resource_updater_impl::set_cs_rnti(rnti_t cs_rnti)
+{
+  // Update CS-RNTI in the physical cell group config.
+  cell_grp->cell_group.pcg_cfg.cs_rnti = cs_rnti;
+
+  // Update CS-RNTI in the PCell's serving cell CG config and scheduler BWP config.
+  if (cell_grp->cell_group.cells.contains(SERVING_PCELL_IDX)) {
+    auto& cell_cfg_ded = cell_grp->cell_group.cells.at(SERVING_PCELL_IDX);
+    if (cell_cfg_ded.serv_cell_cfg.ul_config.has_value() and
+        cell_cfg_ded.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.has_value()) {
+      cell_cfg_ded.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg->cs_rnti = cs_rnti;
+    }
+    if (not cell_cfg_ded.bwps.empty()) {
+      cell_cfg_ded.init_bwp().ul.cg.cs_rnti = cs_rnti;
+    }
+  }
+}
+
 ///////////////////////////
 
 // Helper that resets the PUCCH and SRS configurations in the serving cell configuration.
@@ -57,6 +76,7 @@ static void reset_serv_cell_cfg(serving_cell_config& serv_cell_cfg)
   }
 
   serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.reset();
+  serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.reset();
 }
 
 static std::unique_ptr<du_srs_resource_manager> build_srs_res_mng(span<const du_cell_config> cell_cfg_list)
@@ -88,6 +108,9 @@ du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_co
     const auto&           cell     = cell_cfg_list[cell_idx_uint];
     const du_cell_index_t cell_idx = to_du_cell_index(cell_idx_uint);
     pucch_res_mng.add_cell(cell_idx, cell.ran);
+    if (cell.ran.init_bwp.cg_cfg.has_value()) {
+      cg_res_mng.add_cell(cell_idx, cell);
+    }
 
     const bool is_periodic_csi_report =
         cell.ran.init_bwp.csi.has_value() and cell.ran.init_bwp.csi->csi_report_slot_offset.has_value();
@@ -233,6 +256,23 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
   resp.failed_drbs.insert(
       resp.failed_drbs.end(), bearer_resp.drbs_failed_to_mod.begin(), bearer_resp.drbs_failed_to_mod.end());
 
+  // > Allocate or deallocate Configured Grant resources based on DRB presence.
+  if (ue_mcg.cell_group.cells.contains(SERVING_PCELL_IDX)) {
+    const bool has_drbs = not ue_mcg.drbs.empty();
+    const bool cg_active =
+        ue_mcg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.ul_config.has_value() and
+        ue_mcg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.has_value();
+    if (has_drbs and not cg_active) {
+      if (not cg_res_mng.alloc_resources(ue_mcg.cell_group)) {
+        resp.procedure_error = make_unexpected(fmt::format("Unable to allocate CG resources for ue={} at cell={}",
+                                                           fmt::underlying(ue_index),
+                                                           fmt::underlying(pcell_idx)));
+      }
+    } else if (not has_drbs and cg_active) {
+      cg_res_mng.dealloc_resources(ue_mcg.cell_group);
+    }
+  }
+
   return resp;
 }
 
@@ -300,9 +340,6 @@ error_type<std::string> du_ran_resource_manager_impl::allocate_cell_resources(du
           fmt::format("Unable to allocate dedicated PUCCH resources for cell={}", fmt::underlying(cell_index)));
     }
 
-    pdsch_res_mng.alloc_resources(ue_res.cell_group);
-    pusch_res_mng.alloc_resources(ue_res.cell_group);
-
   } else {
     ocudu_assert(not ue_res.cell_group.cells.contains(serv_cell_index), "Reallocation of SCell detected");
     ue_res.cell_group.cells.emplace(serv_cell_index, ue_cell_config{});
@@ -327,6 +364,7 @@ void du_ran_resource_manager_impl::deallocate_cell_resources(du_ue_index_t ue_in
     srs_res_mng->dealloc_resources(ue_res.cell_group);
     pdsch_res_mng.dealloc_resources(ue_res.cell_group);
     pusch_res_mng.dealloc_resources(ue_res.cell_group);
+    cg_res_mng.dealloc_resources(ue_res.cell_group);
     ue_res.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.cell_index = INVALID_DU_CELL_INDEX;
   } else {
     // TODO: Remove of SCell params.

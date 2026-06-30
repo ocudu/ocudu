@@ -5,6 +5,7 @@
 #pragma once
 
 #include "du_bearer_resource_manager.h"
+#include "du_cg_res_mng.h"
 #include "du_drx_resource_manager.h"
 #include "du_meas_config_manager.h"
 #include "du_pdsch_resource_manager.h"
@@ -42,6 +43,8 @@ public:
   void config_applied() override;
 
   const du_ue_resource_config& get() override { return *cell_grp; }
+
+  void set_cs_rnti(rnti_t cs_rnti) override;
 
   const std::optional<ue_capability_summary>& ue_capabilities() const override { return *ue_caps; }
 
@@ -128,6 +131,9 @@ private:
   du_bearer_resource_manager bearer_res_mng;
 
   std::unique_ptr<du_srs_resource_manager> srs_res_mng;
+
+  // Allocator of Configured Grant resources.
+  du_cg_type1_res_mng cg_res_mng;
 
   // measConfig resources.
   du_meas_config_manager meas_cfg_mng;

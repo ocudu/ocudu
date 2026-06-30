@@ -38,7 +38,7 @@ public:
   /// \brief Associates the given RNTI to a value.
   ///
   /// \param crnti RNTI value.
-  /// \param value Value to associante with an RNTI.
+  /// \param value Value to associate with an RNTI.
   /// \return Returns true if the RNTI does not yet exist, otherwise false.
   bool add_ue(rnti_t crnti, T value)
   {

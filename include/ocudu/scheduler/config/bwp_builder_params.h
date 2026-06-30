@@ -10,6 +10,7 @@
 #include "ocudu/ran/radio_link_monitoring.h"
 #include "ocudu/ran/resource_allocation/vrb_to_prb.h"
 #include "ocudu/ran/sr_configuration.h"
+#include "ocudu/scheduler/config/cg_builder_params.h"
 #include "ocudu/scheduler/config/csi_helper.h"
 #include "ocudu/scheduler/config/pucch_resource_builder_params.h"
 #include "ocudu/scheduler/config/serving_cell_config.h"
@@ -116,6 +117,8 @@ struct bwp_builder_params {
   std::optional<du_csi_params> csi;
   /// Parameters for SRS-Config generation.
   srs_builder_params srs_cfg;
+  /// Parameters for Configured Grant (CG) PUSCH generation. When absent, no CG is configured.
+  std::optional<cg_builder_params> cg_cfg;
   /// Parameters for Random Access in this BWP.
   rach_builder_params rach;
   /// Parameters relative to the generation of the paging configs.

@@ -5,6 +5,7 @@
 #include "mac_controller.h"
 #include "../rnti_manager.h"
 #include "mac_ue_removal_procedure.h"
+#include "proc_logger.h"
 #include "ue_creation_procedure.h"
 #include "ue_reconfiguration_procedure.h"
 #include "ocudu/mac/mac_clock_controller.h"
@@ -83,6 +84,68 @@ async_task<mac_ue_delete_response> mac_controller::handle_ue_delete_request(cons
 async_task<mac_ue_reconfiguration_response>
 mac_controller::handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request& msg)
 {
+  // Detect whether configured grant (CG) is present in the new configuration.
+  bool has_cg_in_request = false;
+  if (msg.sched_cfg.cells.has_value()) {
+    for (const auto& cell : msg.sched_cfg.cells.value()) {
+      if (cell.serv_cell_cfg.ul_config.has_value() and cell.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.has_value()) {
+        has_cg_in_request = true;
+        break;
+      }
+    }
+  }
+
+  mac_ue_context*       ue_ctx      = find_ue(msg.ue_index);
+  bool                  had_cs_rnti = ue_ctx != nullptr and ue_ctx->cs_rnti != rnti_t::INVALID_RNTI;
+  std::optional<rnti_t> cs_rnti     = {};
+
+  if (has_cg_in_request and not had_cs_rnti) {
+    // CG activation: allocate a new CS-RNTI.
+    rnti_t new_cs_rnti = rnti_table.allocate();
+    if (new_cs_rnti == rnti_t::INVALID_RNTI) {
+      logger.warning("{}: Failed to allocate CS-RNTI for configured grant",
+                     mac_log_prefix(msg.ue_index, msg.crnti, "MAC UE Reconfiguration"));
+    } else {
+      if (not rnti_table.add_ue(new_cs_rnti, msg.ue_index)) {
+        logger.warning("{}: CS-RNTI={} collided in RNTI table",
+                       mac_log_prefix(msg.ue_index, msg.crnti, "MAC UE Reconfiguration"),
+                       new_cs_rnti);
+      } else {
+        cs_rnti = new_cs_rnti;
+        if (ue_ctx != nullptr) {
+          ue_ctx->cs_rnti = new_cs_rnti;
+        }
+        logger.debug("{}: Allocated CS-RNTI={} for configured grant",
+                     mac_log_prefix(msg.ue_index, msg.crnti, "MAC UE Reconfiguration"),
+                     new_cs_rnti);
+      }
+    }
+  } else if (not has_cg_in_request and had_cs_rnti) {
+    // CG deactivation: free the CS-RNTI.
+    logger.debug("{}: Deallocating CS-RNTI={} (configured grant deactivated)",
+                 mac_log_prefix(msg.ue_index, msg.crnti, "MAC UE Reconfiguration"),
+                 ue_ctx->cs_rnti);
+    rnti_table.rem_ue(ue_ctx->cs_rnti);
+    ue_ctx->cs_rnti = rnti_t::INVALID_RNTI;
+  }
+
+  if (cs_rnti.has_value()) {
+    // Patch the CS-RNTI into the request copy before forwarding to the scheduler.
+    mac_ue_reconfiguration_request patched_msg = msg;
+    for (auto& cell : patched_msg.sched_cfg.cells.value()) {
+      if (cell.serv_cell_cfg.ul_config.has_value() and cell.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.has_value()) {
+        cell.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg->cs_rnti = cs_rnti.value();
+        if (not cell.bwps.empty()) {
+          cell.init_bwp().ul.cg.cs_rnti = cs_rnti.value();
+        }
+      }
+    }
+    if (patched_msg.phy_cell_group_cfg.has_value()) {
+      patched_msg.phy_cell_group_cfg->cs_rnti = cs_rnti.value();
+    }
+    return launch_async<mac_ue_reconfiguration_procedure>(patched_msg, cfg, ul_unit, dl_unit, sched_cfg, cs_rnti);
+  }
+
   return launch_async<mac_ue_reconfiguration_procedure>(msg, cfg, ul_unit, dl_unit, sched_cfg);
 }
 
@@ -135,8 +198,13 @@ void mac_controller::remove_ue(du_ue_index_t ue_index)
     return;
   }
 
-  // Remove RNTI from the RNTI entry.
+  // Remove C-RNTI from the RNTI table.
   rnti_table.rem_ue(ue_db[ue_index].rnti);
+
+  // Remove CS-RNTI from the RNTI table, if allocated for configured grants.
+  if (ue_db[ue_index].cs_rnti != rnti_t::INVALID_RNTI) {
+    rnti_table.rem_ue(ue_db[ue_index].cs_rnti);
+  }
 
   ue_db.erase(ue_index);
 }

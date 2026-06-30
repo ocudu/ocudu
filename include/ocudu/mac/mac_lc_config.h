@@ -159,12 +159,15 @@ struct mac_lc_config {
   bool lc_sr_delay_applied;
   /// If set, a proactive UL grant is triggered in reaction to each DL allocation on this LC.
   std::optional<triggered_ul_grant_cfg> triggered_ul_grant;
+  /// Indicates whether this Logical Channel can be allocated on Configured Grant type 1, as per \c
+  /// configuredGrantType1Allowed, TS 38.331.
+  bool cg_type1_allowed = false;
 
   bool operator==(const mac_lc_config& rhs) const
   {
     return priority == rhs.priority && pbr == rhs.pbr && bsd == rhs.bsd && lcg_id == rhs.lcg_id &&
            lc_sr_mask == rhs.lc_sr_mask && sr_id == rhs.sr_id && lc_sr_delay_applied == rhs.lc_sr_delay_applied &&
-           triggered_ul_grant == rhs.triggered_ul_grant;
+           triggered_ul_grant == rhs.triggered_ul_grant && cg_type1_allowed == rhs.cg_type1_allowed;
   }
   bool operator!=(const mac_lc_config& rhs) const { return !(rhs == *this); }
 };

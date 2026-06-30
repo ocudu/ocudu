@@ -7,7 +7,6 @@
 #include "../mac_config_interfaces.h"
 #include "mac_config.h"
 #include "mac_scheduler_configurator.h"
-#include "ocudu/adt/span.h"
 #include "ocudu/mac/mac.h"
 #include "ocudu/support/async/async_task.h"
 
