@@ -26,6 +26,78 @@ static std::string timepoint_to_iso8601(const std::chrono::system_clock::time_po
   return std::string(buf) + ms_buf;
 }
 
+static YAML::Node build_ecef_node(const ecef_coordinates_t& ecef)
+{
+  YAML::Node node;
+  node["pos_x"] = ecef.position_x;
+  node["pos_y"] = ecef.position_y;
+  node["pos_z"] = ecef.position_z;
+  node["vel_x"] = ecef.velocity_vx;
+  node["vel_y"] = ecef.velocity_vy;
+  node["vel_z"] = ecef.velocity_vz;
+  return node;
+}
+
+static YAML::Node build_orbital_node(const orbital_coordinates_t& orb)
+{
+  YAML::Node node;
+  node["semi_major_axis"] = orb.semi_major_axis;
+  node["eccentricity"]    = orb.eccentricity;
+  node["periapsis"]       = orb.periapsis;
+  node["longitude"]       = orb.longitude;
+  node["inclination"]     = orb.inclination;
+  node["mean_anomaly"]    = orb.mean_anomaly;
+  return node;
+}
+
+static YAML::Node build_geodetic_node(const geodetic_coordinates_t& loc, bool with_altitude = true)
+{
+  YAML::Node node;
+  node["latitude"]  = loc.latitude;
+  node["longitude"] = loc.longitude;
+  if (with_altitude) {
+    node["altitude"] = loc.altitude;
+  }
+  return node;
+}
+
+static YAML::Node build_ta_info_node(const ta_info_t& ta)
+{
+  YAML::Node node;
+  node["ta_common"]               = ta.ta_common;
+  node["ta_common_drift"]         = ta.ta_common_drift;
+  node["ta_common_drift_variant"] = ta.ta_common_drift_variant;
+  if (ta.ta_common_offset) {
+    node["ta_common_offset"] = *ta.ta_common_offset;
+  }
+  return node;
+}
+
+static YAML::Node build_polarization_node(const ntn_polarization_t& pol)
+{
+  YAML::Node node;
+  if (pol.dl) {
+    node["dl"] = to_string(*pol.dl);
+  }
+  if (pol.ul) {
+    node["ul"] = to_string(*pol.ul);
+  }
+  return node;
+}
+
+static void fill_optional_ephemeris(YAML::Node&                                                                   node,
+                                    const std::optional<std::variant<ecef_coordinates_t, orbital_coordinates_t>>& ephem)
+{
+  if (!ephem) {
+    return;
+  }
+  if (const auto* ecef = std::get_if<ecef_coordinates_t>(&*ephem)) {
+    node["ephemeris_info_ecef"] = build_ecef_node(*ecef);
+  } else if (const auto* orb = std::get_if<orbital_coordinates_t>(&*ephem)) {
+    node["ephemeris_orbital"] = build_orbital_node(*orb);
+  }
+}
+
 void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_cell_ntn_config& config)
 {
   auto ntn_node = node["ntn"];
@@ -33,135 +105,71 @@ void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_
   ntn_node["cell_specific_koffset"] = config.cell_specific_koffset.count();
 
   if (config.ntn_ul_sync_validity_dur) {
-    ntn_node["ntn_ul_sync_validity_dur"] = config.ntn_ul_sync_validity_dur.value();
+    ntn_node["ntn_ul_sync_validity_dur"] = *config.ntn_ul_sync_validity_dur;
   }
 
   if (config.ta_info) {
-    YAML::Node       ta_info_node;
-    const ta_info_t& ta_info                = *config.ta_info;
-    ta_info_node["ta_common"]               = ta_info.ta_common;
-    ta_info_node["ta_common_drift"]         = ta_info.ta_common_drift;
-    ta_info_node["ta_common_drift_variant"] = ta_info.ta_common_drift_variant;
-    if (ta_info.ta_common_offset) {
-      ta_info_node["ta_common_offset"] = *ta_info.ta_common_offset;
-    }
-
-    ntn_node["ta_info"] = ta_info_node;
+    ntn_node["ta_info"] = build_ta_info_node(*config.ta_info);
   }
 
   if (config.epoch_timestamp) {
-    ntn_node["epoch_timestamp"] = timepoint_to_iso8601(config.epoch_timestamp.value());
+    ntn_node["epoch_timestamp"] = timepoint_to_iso8601(*config.epoch_timestamp);
   }
 
   if (config.feeder_link_info) {
     YAML::Node fl_node;
-    fl_node["enable_doppler_compensation"] = config.feeder_link_info.value().enable_doppler_compensation;
-    fl_node["dl_freq"]                     = config.feeder_link_info.value().dl_freq;
-    fl_node["ul_freq"]                     = config.feeder_link_info.value().ul_freq;
-
-    ntn_node["feeder_link_info"] = fl_node;
+    fl_node["enable_doppler_compensation"] = config.feeder_link_info->enable_doppler_compensation;
+    fl_node["dl_freq"]                     = config.feeder_link_info->dl_freq;
+    fl_node["ul_freq"]                     = config.feeder_link_info->ul_freq;
+    ntn_node["feeder_link_info"]           = fl_node;
   }
 
   if (config.ntn_gateway_location) {
-    YAML::Node gw_loc_node;
-    gw_loc_node["latitude"]  = config.ntn_gateway_location.value().latitude;
-    gw_loc_node["longitude"] = config.ntn_gateway_location.value().longitude;
-    gw_loc_node["altitude"]  = config.ntn_gateway_location.value().altitude;
-
-    ntn_node["ntn_gateway_location"] = gw_loc_node;
+    ntn_node["ntn_gateway_location"] = build_geodetic_node(*config.ntn_gateway_location);
   }
 
-  if (config.epoch_time.has_value()) {
+  if (config.epoch_time) {
     YAML::Node epoch_node;
-    epoch_node["sfn"]             = config.epoch_time.value().sfn;
-    epoch_node["subframe_number"] = config.epoch_time.value().subframe_number;
-
-    ntn_node["epoch_time"] = epoch_node;
+    epoch_node["sfn"]             = config.epoch_time->sfn;
+    epoch_node["subframe_number"] = config.epoch_time->subframe_number;
+    ntn_node["epoch_time"]        = epoch_node;
   }
 
   if (config.epoch_sfn_offset) {
-    ntn_node["epoch_sfn_offset"] = config.epoch_sfn_offset.value();
+    ntn_node["epoch_sfn_offset"] = *config.epoch_sfn_offset;
   }
 
   if (config.use_state_vector) {
-    ntn_node["use_state_vector"] = config.use_state_vector.value();
+    ntn_node["use_state_vector"] = *config.use_state_vector;
   }
 
   ntn_node["propagator_type"] =
       (config.propagator_type == ocudu_ntn::orbit_propagator_type::keplerian) ? "keplerian" : "rk4";
 
-  if (std::holds_alternative<ecef_coordinates_t>(config.ephemeris_info)) {
-    YAML::Node  ephemeris_node;
-    const auto& ephem       = std::get<ecef_coordinates_t>(config.ephemeris_info);
-    ephemeris_node["pos_x"] = ephem.position_x;
-    ephemeris_node["pos_y"] = ephem.position_y;
-    ephemeris_node["pos_z"] = ephem.position_z;
-    ephemeris_node["vel_x"] = ephem.velocity_vx;
-    ephemeris_node["vel_y"] = ephem.velocity_vy;
-    ephemeris_node["vel_z"] = ephem.velocity_vz;
+  fill_optional_ephemeris(ntn_node, config.ephemeris_info);
 
-    ntn_node["ephemeris_info_ecef"] = ephemeris_node;
+  if (config.polarization) {
+    ntn_node["polarization"] = build_polarization_node(*config.polarization);
   }
 
-  if (std::holds_alternative<orbital_coordinates_t>(config.ephemeris_info)) {
-    YAML::Node  orb_node;
-    const auto& orb             = std::get<orbital_coordinates_t>(config.ephemeris_info);
-    orb_node["semi_major_axis"] = orb.semi_major_axis;
-    orb_node["eccentricity"]    = orb.eccentricity;
-    orb_node["periapsis"]       = orb.periapsis;
-    orb_node["longitude"]       = orb.longitude;
-    orb_node["inclination"]     = orb.inclination;
-    orb_node["mean_anomaly"]    = orb.mean_anomaly;
-
-    ntn_node["ephemeris_orbital"] = orb_node;
+  if (config.ta_report) {
+    ntn_node["ta_report"] = *config.ta_report;
   }
 
-  if (config.polarization.has_value()) {
-    const auto& pol = config.polarization.value();
-    YAML::Node  pol_node;
-    auto        pol_type_to_str = [](ntn_polarization_t::polarization_type t) -> const char* {
-      switch (t) {
-        case ntn_polarization_t::polarization_type::rhcp:
-          return "rhcp";
-        case ntn_polarization_t::polarization_type::lhcp:
-          return "lhcp";
-        default:
-          return "linear";
-      }
-    };
-    if (pol.dl) {
-      pol_node["dl"] = pol_type_to_str(pol.dl.value());
-    }
-    if (pol.ul) {
-      pol_node["ul"] = pol_type_to_str(pol.ul.value());
-    }
-    ntn_node["polarization"] = pol_node;
+  if (config.reference_location) {
+    ntn_node["reference_location"] = build_geodetic_node(*config.reference_location, false);
   }
 
-  if (config.ta_report.has_value()) {
-    ntn_node["ta_report"] = config.ta_report.value();
+  if (config.distance_threshold) {
+    ntn_node["distance_threshold"] = *config.distance_threshold;
   }
 
-  if (config.reference_location.has_value()) {
-    YAML::Node ref_loc_node;
-    ref_loc_node["latitude"]       = config.reference_location.value().latitude;
-    ref_loc_node["longitude"]      = config.reference_location.value().longitude;
-    ntn_node["reference_location"] = ref_loc_node;
-  }
-  if (config.distance_threshold.has_value()) {
-    ntn_node["distance_threshold"] = config.distance_threshold.value();
+  if (config.t_service) {
+    ntn_node["t_service"] = timepoint_to_iso8601(*config.t_service);
   }
 
-  if (config.t_service.has_value()) {
-    ntn_node["t_service"] = timepoint_to_iso8601(config.t_service.value());
-  }
-
-  // Moving reference location (R18 extension).
-  if (config.moving_ref_location.has_value()) {
-    YAML::Node mov_ref_node;
-    mov_ref_node["latitude"]        = config.moving_ref_location.value().latitude;
-    mov_ref_node["longitude"]       = config.moving_ref_location.value().longitude;
-    ntn_node["moving_ref_location"] = mov_ref_node;
+  if (config.moving_ref_location) {
+    ntn_node["moving_ref_location"] = build_geodetic_node(*config.moving_ref_location, false);
   }
 
   // NTN neighbor cells.
@@ -169,11 +177,11 @@ void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_
     YAML::Node ncells_node;
     for (const auto& ncell : config.ncells) {
       YAML::Node ncell_node;
-      if (ncell.phys_cell_id.has_value()) {
-        ncell_node["pci"] = static_cast<unsigned>(ncell.phys_cell_id.value());
+      if (ncell.phys_cell_id) {
+        ncell_node["pci"] = static_cast<unsigned>(*ncell.phys_cell_id);
       }
-      if (ncell.carrier_freq.has_value()) {
-        ncell_node["carrier_freq"] = ncell.carrier_freq.value().value();
+      if (ncell.carrier_freq) {
+        ncell_node["carrier_freq"] = ncell.carrier_freq->value();
       }
       ncells_node.push_back(ncell_node);
     }
