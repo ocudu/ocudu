@@ -277,6 +277,44 @@ static void configure_cli11_ephemeris_info_orbital(CLI::App& app, orbital_coordi
       ->check(CLI::Range(0.0, 6.28407400155));
 }
 
+static CLI::Option* add_timestamp_option(CLI::App&                                             app,
+                                         const std::string&                                    name,
+                                         std::optional<std::chrono::system_clock::time_point>& dest,
+                                         const std::string&                                    desc)
+{
+  return app
+      .add_option_function<std::string>(
+          name,
+          [&dest, name](const std::string& value) {
+            if (is_number(value)) {
+              const auto ms_since_epoch = parse_int<int64_t>(value);
+              report_fatal_error_if_not(ms_since_epoch.has_value(),
+                                        fmt::format("Invalid {} value '{}'", name, value).c_str());
+              dest = std::chrono::system_clock::time_point(std::chrono::milliseconds(*ms_since_epoch));
+            } else {
+              dest = parse_timestamp_ms(value).value();
+            }
+          },
+          desc)
+      ->check([](const std::string& input) -> std::string {
+        return (!is_number(input) && !is_valid_timestamp(input)) ? "Invalid timestamp format" : std::string{};
+      });
+}
+
+template <typename Dest>
+static void add_ephemeris_subcommands(CLI::App& app, Dest& dest)
+{
+  static ecef_coordinates_t ecef_coords;
+  CLI::App*                 ecef_subcmd = add_subcommand(app, "ephemeris_info_ecef", "ECEF ephemeris");
+  configure_cli11_ephemeris_info_ecef(*ecef_subcmd, ecef_coords);
+  ecef_subcmd->parse_complete_callback([&dest]() { dest = ecef_coords; });
+
+  static orbital_coordinates_t orbital_coords;
+  CLI::App*                    orb_subcmd = add_subcommand(app, "ephemeris_orbital", "Orbital ephemeris");
+  configure_cli11_ephemeris_info_orbital(*orb_subcmd, orbital_coords);
+  orb_subcmd->parse_complete_callback([&dest]() { dest = orbital_coords; });
+}
+
 static void configure_cli11_ntn_polarization(CLI::App& app, ntn_polarization_t& polarization)
 {
   add_option_function<std::string>(
@@ -352,27 +390,7 @@ void ocudu::configure_cli11_ntn_config_args(CLI::App& app, ntn_config& config)
     }
   });
 
-  // Ephemeris configuration: ECEF state vector.
-  static ecef_coordinates_t ecef_coordinates;
-  CLI::App*                 ephem_subcmd_ecef =
-      add_subcommand(app, "ephemeris_info_ecef", "Ephermeris information of the satellite in ecef coordinates");
-  configure_cli11_ephemeris_info_ecef(*ephem_subcmd_ecef, ecef_coordinates);
-  ephem_subcmd_ecef->parse_complete_callback([&]() {
-    if (app.get_subcommand("ephemeris_info_ecef")->count() != 0) {
-      config.ephemeris_info = ecef_coordinates;
-    }
-  });
-
-  // Ephemeris configuration: Orbital parameters.
-  static orbital_coordinates_t orbital_coordinates;
-  CLI::App*                    ephem_subcmd_orbital =
-      add_subcommand(app, "ephemeris_orbital", "Ephermeris information of the satellite in orbital coordinates");
-  configure_cli11_ephemeris_info_orbital(*ephem_subcmd_orbital, orbital_coordinates);
-  ephem_subcmd_orbital->parse_complete_callback([&]() {
-    if (app.get_subcommand("ephemeris_orbital")->count() != 0) {
-      config.ephemeris_info = orbital_coordinates;
-    }
-  });
+  add_ephemeris_subcommands(app, config.ephemeris_info);
 
   app.add_option_function<bool>(
       "--ta_report",
@@ -422,27 +440,7 @@ static void configure_cli11_ntn_args(CLI::App& app, du_high_unit_cell_ntn_config
     }
   });
 
-  // Ephemeris configuration: ECEF state vector.
-  static ecef_coordinates_t ecef_coordinates;
-  CLI::App*                 ephem_subcmd_ecef =
-      add_subcommand(app, "ephemeris_info_ecef", "Ephermeris information of the satellite in ecef coordinates");
-  configure_cli11_ephemeris_info_ecef(*ephem_subcmd_ecef, ecef_coordinates);
-  ephem_subcmd_ecef->parse_complete_callback([&]() {
-    if (app.get_subcommand("ephemeris_info_ecef")->count() != 0) {
-      config.ephemeris_info = ecef_coordinates;
-    }
-  });
-
-  // Ephemeris configuration: Orbital parameters.
-  static orbital_coordinates_t orbital_coordinates;
-  CLI::App*                    ephem_subcmd_orbital =
-      add_subcommand(app, "ephemeris_orbital", "Ephermeris information of the satellite in orbital coordinates");
-  configure_cli11_ephemeris_info_orbital(*ephem_subcmd_orbital, orbital_coordinates);
-  ephem_subcmd_orbital->parse_complete_callback([&]() {
-    if (app.get_subcommand("ephemeris_orbital")->count() != 0) {
-      config.ephemeris_info = orbital_coordinates;
-    }
-  });
+  add_ephemeris_subcommands(app, config.ephemeris_info);
 
   // Distance from the serving cell reference location.
   app.add_option(
@@ -453,33 +451,12 @@ static void configure_cli11_ntn_args(CLI::App& app, du_high_unit_cell_ntn_config
       ->check(CLI::Range(0, 3276250));
 
   // T-Service.
-  app.add_option_function<std::string>(
-         "--t_service",
-         [&config](const std::string& value) {
-           if (is_number(value)) {
-             // Parse Unix timestamp in milliseconds and convert to timepoint.
-             const auto ms_since_epoch = parse_int<int64_t>(value);
-
-             report_fatal_error_if_not(ms_since_epoch.has_value(),
-                                       fmt::format("Invalid --t_service value '" + value + "'").c_str());
-
-             config.t_service = std::chrono::system_clock::time_point(std::chrono::milliseconds(*ms_since_epoch));
-           } else {
-             // Parse as UTC time string.
-             config.t_service = parse_timestamp_ms(value).value();
-           }
-         },
-         "Indicates end of service for the current cell, in ms unit of Unix time or as UTC time string "
-         "(YYYY-MM-DDTHH:MM:SS[.mmm])")
-      ->capture_default_str()
-      ->check([](const std::string& input) {
-        if (!is_number(input)) {
-          if (!is_valid_timestamp(input)) {
-            return std::string("Invalid timestamp format. Expected YYYY-MM-DDTHH:MM:SS[.mmm]");
-          }
-        }
-        return std::string();
-      });
+  add_timestamp_option(app,
+                       "--t_service",
+                       config.t_service,
+                       "Indicates end of service for the current cell, in ms unit of Unix time or as UTC time string "
+                       "(YYYY-MM-DDTHH:MM:SS[.mmm])")
+      ->capture_default_str();
 
   // TA-report.
   app.add_option("--ta_report",
@@ -495,33 +472,13 @@ static void configure_cli11_ntn_args(CLI::App& app, du_high_unit_cell_ntn_config
       ->capture_default_str();
 
   // Epoch timestamp.
-  app.add_option_function<std::string>(
-         "--epoch_timestamp",
-         [&config](const std::string& value) {
-           if (is_number(value)) {
-             // Parse Unix timestamp in milliseconds and convert to timepoint.
-             const auto ms_since_epoch = parse_int<int64_t>(value);
-
-             report_fatal_error_if_not(ms_since_epoch.has_value(),
-                                       fmt::format("Invalid --epoch_timestamp value '" + value + "'").c_str());
-
-             config.epoch_timestamp = std::chrono::system_clock::time_point(std::chrono::milliseconds(*ms_since_epoch));
-           } else {
-             // Parse as UTC time string.
-             config.epoch_timestamp = parse_timestamp_ms(value).value();
-           }
-         },
-         "Epoch timestamp for the NTN assistance information in ms unit of Unix time or as UTC time string "
-         "(YYYY-MM-DDTHH:MM:SS[.mmm])")
-      ->capture_default_str()
-      ->check([](const std::string& input) {
-        if (!is_number(input)) {
-          if (!is_valid_timestamp(input)) {
-            return std::string("Invalid timestamp format. Expected YYYY-MM-DDTHH:MM:SS[.mmm]");
-          }
-        }
-        return std::string();
-      });
+  add_timestamp_option(
+      app,
+      "--epoch_timestamp",
+      config.epoch_timestamp,
+      "Epoch timestamp for the NTN assistance information in ms unit of Unix time or as UTC time string "
+      "(YYYY-MM-DDTHH:MM:SS[.mmm])")
+      ->capture_default_str();
 
   // Epoch time offset in nof SFNs.
   app.add_option("--epoch_sfn_offset",
