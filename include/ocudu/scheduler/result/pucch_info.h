@@ -64,8 +64,6 @@ struct pucch_info {
     uint16_t                 n_id_0_scrambling;
   };
 
-  /// Used internally by the scheduler to mark a previously-allocated PDU that must be removed. Not passed to the PHY.
-  bool                                                                to_be_removed = false;
   rnti_t                                                              crnti;
   const bwp_configuration*                                            bwp_cfg;
   const pucch_resource*                                               res;
