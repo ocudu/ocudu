@@ -34,6 +34,12 @@ struct ra_frequency_type1_configuration {
   unsigned start_vrb;
   /// Length in terms of contiguously allocated resource blocks \f$L_{RBs}\f$.
   unsigned length_vrb;
+
+  bool operator==(const ra_frequency_type1_configuration& rhs) const
+  {
+    return N_bwp_size == rhs.N_bwp_size && start_vrb == rhs.start_vrb && length_vrb == rhs.length_vrb;
+  }
+  bool operator!=(const ra_frequency_type1_configuration& rhs) const { return !(*this == rhs); }
 };
 
 /// \brief Calculates the resource indication value \f$RIV\f$ as per TS38.214 Section 5.1.2.2.2 for

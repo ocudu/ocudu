@@ -8,7 +8,7 @@
 #include "ocudu/adt/static_vector.h"
 #include "ocudu/ran/dmrs/dmrs_uplink_config.h"
 #include "ocudu/ran/pusch/pusch_configuration.h"
-#include "ocudu/ran/resource_allocation/rb_interval.h"
+#include "ocudu/ran/resource_allocation/resource_allocation_frequency.h"
 #include "ocudu/ran/rnti.h"
 #include "ocudu/ran/uci/uci_configuration.h"
 #include <optional>
@@ -92,9 +92,10 @@ struct cg_configuration {
     uint16_t time_domain_offset;
     /// Index into the PUSCH time-domain resource allocation table. Values {0,...,15}.
     uint8_t time_domain_allocation;
-    /// VRBs for this configured grant, which map to "Frequency domain resource assignment", as per TS 38.212,
-    /// Section 7.3.1.1.2 for the bit-field definition.
-    vrb_interval vrbs;
+    /// Frequency domain resource allocation for this configured grant.
+    /// Currently only Type 1 (contiguous VRBs) is supported; the variant eases future addition of Type 0.
+    /// \remark Maps to "Frequency domain resource assignment" as per TS 38.212, Section 7.3.1.1.2.
+    std::variant<ra_frequency_type1_configuration> freq_domain_res;
     /// DMRS antenna port index and associated parameters. Values {0,...,31}.
     uint8_t antenna_port;
     /// DMRS sequence initialization value. Values {0, 1}.
@@ -115,7 +116,7 @@ struct cg_configuration {
     bool operator==(const rrc_configured_ul_grant& rhs) const
     {
       return time_domain_offset == rhs.time_domain_offset && time_domain_allocation == rhs.time_domain_allocation &&
-             vrbs == rhs.vrbs && antenna_port == rhs.antenna_port &&
+             freq_domain_res == rhs.freq_domain_res && antenna_port == rhs.antenna_port &&
              dmrs_seq_initialization == rhs.dmrs_seq_initialization &&
              precoding_and_nof_layers == rhs.precoding_and_nof_layers &&
              srs_resource_indicator == rhs.srs_resource_indicator && mcs == rhs.mcs &&
@@ -162,11 +163,7 @@ struct cg_configuration {
   /// RRC-level resource grant (Type 1 CG). When absent, the grant is activated via DCI (Type 2 CG).
   /// \remark Type 2 CG is not currently supported.
   std::optional<rrc_configured_ul_grant> rrc_configured_ul_grant_cfg;
-  /// Number of PRBs in the UL BWP this configured grant belongs to.
-  /// \remark Not a protocol-level field; required for RIV computation when encoding \c frequencyDomainAllocation.
-  unsigned bwp_nof_prbs = 0;
-
-  bool operator==(const cg_configuration& rhs) const
+  bool                                   operator==(const cg_configuration& rhs) const
   {
     return cs_rnti == rhs.cs_rnti && frequency_hopping == rhs.frequency_hopping && cg_dmrs_cfg == rhs.cg_dmrs_cfg &&
            mcs_table == rhs.mcs_table && trans_precoder == rhs.trans_precoder &&

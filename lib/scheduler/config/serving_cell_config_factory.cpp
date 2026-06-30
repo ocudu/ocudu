@@ -301,7 +301,7 @@ static cg_configuration make_default_cg_config(const cg_builder_params& cg_param
   grant.time_domain_offset     = 0;
   grant.time_domain_allocation = 0;
   grant.mcs                    = static_cast<uint8_t>(cg_params.mcs);
-  grant.vrbs                   = vrb_interval{10, 10U + cg_params.nof_rbs};
+  grant.freq_domain_res        = ra_frequency_type1_configuration{0, 10, cg_params.nof_rbs};
   cfg.rrc_configured_ul_grant_cfg.emplace(grant);
 
   return cfg;
@@ -328,8 +328,11 @@ static uplink_config make_default_ue_uplink_config(const ran_cell_config&     ce
 
   // > CG-PUSCH config.
   if (cell_cfg.init_bwp.cg_cfg.has_value()) {
-    auto cg_cfg         = make_default_cg_config(*cell_cfg.init_bwp.cg_cfg);
-    cg_cfg.bwp_nof_prbs = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
+    auto cg_cfg = make_default_cg_config(*cell_cfg.init_bwp.cg_cfg);
+    if (cg_cfg.rrc_configured_ul_grant_cfg.has_value()) {
+      std::get<ra_frequency_type1_configuration>(cg_cfg.rrc_configured_ul_grant_cfg->freq_domain_res).N_bwp_size =
+          cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
+    }
     ul_config.init_ul_bwp.cg_cfg.emplace(cg_cfg);
   }
 

@@ -2812,9 +2812,7 @@ static void make_asn1_rrc_cfg_grant_cfg(asn1::rrc_nr::cfg_grant_cfg_s& out, cons
     asn1_grant.time_domain_alloc  = grant.time_domain_allocation;
 
     // Frequency domain allocation: RIV encoding for resource allocation type 1 (TS 38.214, clause 6.1.2.2).
-    ocudu_assert(cfg.bwp_nof_prbs > 0, "CG bwp_nof_prbs must be set before RRC encoding");
-    const unsigned riv = ra_frequency_type1_get_riv(
-        ra_frequency_type1_configuration{cfg.bwp_nof_prbs, grant.vrbs.start(), grant.vrbs.length()});
+    const unsigned riv = ra_frequency_type1_get_riv(std::get<ra_frequency_type1_configuration>(grant.freq_domain_res));
     asn1_grant.freq_domain_alloc.from_number(riv);
 
     asn1_grant.ant_port = grant.antenna_port;

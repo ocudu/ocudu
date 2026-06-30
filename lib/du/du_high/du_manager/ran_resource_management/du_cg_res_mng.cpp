@@ -6,6 +6,7 @@
 #include "du_ue_resource_config.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/prach/prach_time_mapping.h"
+#include "ocudu/ran/resource_allocation/resource_allocation_frequency.h"
 #include "ocudu/ran/serv_cell_index.h"
 #include "ocudu/scheduler/config/pucch_guardbands.h"
 #include "ocudu/scheduler/config/pucch_resource_generator.h"
@@ -193,7 +194,10 @@ bool du_cg_type1_res_mng::alloc_resources(cell_group_config& cell_grp_cfg)
   // Set the per-UE parameters.
   ue_cg_cfg.rrc_configured_ul_grant_cfg.value().time_domain_offset     = offset_val;
   ue_cg_cfg.rrc_configured_ul_grant_cfg.value().time_domain_allocation = cg_td_res_idx;
-  ue_cg_cfg.rrc_configured_ul_grant_cfg.value().vrbs                   = cell_cfg_ded.init_bwp().ul.cg.vrbs;
+  ue_cg_cfg.rrc_configured_ul_grant_cfg.value().freq_domain_res =
+      ra_frequency_type1_configuration{cell_cfg.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
+                                       cell_cfg_ded.init_bwp().ul.cg.vrbs.start(),
+                                       cell_cfg_ded.init_bwp().ul.cg.vrbs.length()};
 
   // > Common parameters: fill serving_cell_cfg with the full CG configuration.
   cell_cfg_ded.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.emplace(ue_cg_cfg);
