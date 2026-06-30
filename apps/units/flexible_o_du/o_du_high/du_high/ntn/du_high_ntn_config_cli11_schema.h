@@ -17,11 +17,6 @@ struct du_high_unit_cell_ntn_config;
 /// \param config NTN config to populate.
 void configure_cli11_ntn_config_args(CLI::App& app, ntn_config& config);
 
-/// Configures advanced/enterprise NTN CLI11 options.
-/// \param app The CLI11 application or subcommand to configure.
-/// \param config The NTN configuration structure to populate with advanced NTN parameters.
-void configure_cli11_advanced_ntn_args(CLI::App& app, du_high_unit_cell_ntn_config& config);
-
 /// Configures per-cell NTN CLI11 options. Allows overriding NTN parameters on a per-cell basis.
 /// \param app The CLI11 application or subcommand to configure.
 /// \param cell_ntn_params Optional NTN configuration for the cell; will be populated if NTN options are specified.
