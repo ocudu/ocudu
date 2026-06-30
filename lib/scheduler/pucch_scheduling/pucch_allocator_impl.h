@@ -209,22 +209,6 @@ private:
   /// Returns whether there is space for new PUCCH grants in the given scheduler result.
   bool is_there_space_for_new_pucch_grants(const sched_result& slot_result, unsigned nof_grants_to_allocate) const;
 
-  /// \brief Fills the PUCCH PDU for common HARQ-ACK resources.
-  /// \param[out] pucch_pdu PUCCH PDU to be filled.
-  /// \param[in] pucch_res PUCCH resource configuration.
-  /// \param[in] rnti RNTI of the UE.
-  void fill_common_pdu(pucch_info& pucch_pdu, const pucch_resource& common_res, rnti_t rnti) const;
-
-  /// \brief Fills the PUCCH PDU for dedicated resources.
-  // \param[out] pucch_pdu PUCCH PDU to be filled.
-  // \param[in] pucch_res PUCCH resource configuration.
-  // \param[in] uci_bits UCI bits to be sent in the PUCCH.
-  // \param[in] rnti RNTI of the UE.
-  void fill_ded_pdu(pucch_info&           pucch_pdu,
-                    const pucch_resource& pucch_res,
-                    const pucch_uci_bits& uci_bits,
-                    rnti_t                rnti) const;
-
   // \brief Ring of PUCCH allocations indexed by slot.
   circular_vector<slot_context> slots_ctx;
 
@@ -236,15 +220,6 @@ private:
   const std::optional<csi_report_configuration> csi_report_cfg;
   slot_point                                    last_sl_ind;
   pucch_collision_manager                       resource_manager;
-
-  // \brief Get \f$n_{ID}\f$ as per Sections 6.3.2.5.1 and 6.3.2.6.1, TS 38.211.
-  //
-  // Since we don't set the parameter dataScramblingIdentityPUSCH, it is always set to the cell ID.
-  uint16_t n_id_scrambling() const { return cell_cfg.params.pci; }
-  // \brief Get \f$N_{ID}^0\f$ as per Sections 6.4.1.3.2.1 and 6.4.1.3.3.1, TS 38.211.
-  //
-  // Since we don't set the parameter scramblingID0, it is always set to the cell ID.
-  uint16_t n_id_0_scrambling() const { return cell_cfg.params.pci; }
 
   ocudulog::basic_logger& logger;
 };

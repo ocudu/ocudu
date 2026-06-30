@@ -21,7 +21,6 @@
 #include <algorithm>
 #include <fmt/format.h>
 #include <string>
-#include <variant>
 
 using namespace ocudu;
 
@@ -255,7 +254,8 @@ std::optional<unsigned> pucch_allocator_impl::alloc_common_harq_ack(cell_resourc
 
   // Fill scheduler output.
   pucch_info& common_pdu = pucch_slot_alloc.result.ul.pucchs[*grants.common];
-  fill_common_pdu(common_pdu, pucch_helper::get_common_resource(cell_cfg, dci_info.ctx, *d_pri), tcrnti);
+  pucch_helper::fill_common_pdu(
+      common_pdu, cell_cfg, pucch_helper::get_common_resource(cell_cfg, dci_info.ctx, *d_pri), tcrnti);
 
   // Allocate the resources in the resource manager.
   for (auto pdu_idx : grants.pdu_indices()) {
@@ -333,7 +333,8 @@ std::optional<unsigned> pucch_allocator_impl::alloc_common_and_ded_harq_ack(cell
 
   // Fill scheduler output.
   pucch_info& common_pdu = pucch_slot_alloc.result.ul.pucchs[*new_grants->common];
-  fill_common_pdu(common_pdu, pucch_helper::get_common_resource(cell_cfg, dci_info.ctx, *d_pri), rnti);
+  pucch_helper::fill_common_pdu(
+      common_pdu, cell_cfg, pucch_helper::get_common_resource(cell_cfg, dci_info.ctx, *d_pri), rnti);
 
   // Allocate the resources in the resource manager.
   for (auto pdu_idx : new_grants->pdu_indices()) {
@@ -991,7 +992,8 @@ pucch_allocator_impl::allocate_grants(cell_slot_resource_allocator& pucch_slot_a
   auto     alloc_grant   = [&](const pucch_grant& grant) -> stable_id_t {
     const stable_id_t pdu_idx = pdu_indices[nof_used_pdus++];
     auto&             pdu     = pucch_pdus[pdu_idx];
-    fill_ded_pdu(pdu, *grant.res, grant.bits, alloc_ctx.rnti);
+    pucch_helper::fill_ded_pdu(
+        pdu, cell_cfg, *grant.res, grant.bits, csi_report_cfg.has_value() ? &*csi_report_cfg : nullptr, alloc_ctx.rnti);
     return pdu_idx;
   };
 
@@ -1085,138 +1087,4 @@ bool pucch_allocator_impl::is_there_space_for_new_pucch_grants(const sched_resul
 
   const int nof_total_pucchs = slot_result.ul.pucchs.size() + nof_grants_to_allocate;
   return nof_total_pucchs <= max_nof_pucch_grants;
-}
-
-void pucch_allocator_impl::fill_common_pdu(pucch_info& pucch_pdu, const pucch_resource& common_res, rnti_t rnti) const
-{
-  pucch_pdu.crnti   = rnti;
-  pucch_pdu.bwp_cfg = &cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params;
-  pucch_pdu.res     = &common_res;
-
-  const pucch_config_common& pucch_cmn = *cell_cfg.params.ul_cfg_common.init_ul_bwp.pucch_cfg_common;
-  const unsigned             n_id_hop =
-      pucch_cmn.hopping_id.has_value() ? *pucch_cmn.hopping_id : static_cast<unsigned>(cell_cfg.params.pci);
-
-  switch (common_res.format()) {
-    case pucch_format::FORMAT_0: {
-      auto& f0         = pucch_pdu.format_params.emplace<pucch_info::f0_config>();
-      f0.group_hopping = pucch_cmn.group_hopping;
-      f0.n_id_hopping  = n_id_hop;
-      // SR cannot be reported using common PUCCH resources.
-      pucch_pdu.uci_bits.sr_bits = sr_nof_bits::no_sr;
-      // [Implementation-defined] For the default PUCCH resources, we assume only 1 HARQ-ACK process needs to be
-      // reported.
-      pucch_pdu.uci_bits.harq_ack_nof_bits = 1;
-      break;
-    }
-    case pucch_format::FORMAT_1: {
-      auto& format_1         = pucch_pdu.format_params.emplace<pucch_info::f1_config>();
-      format_1.group_hopping = pucch_cmn.group_hopping;
-      format_1.n_id_hopping  = n_id_hop;
-      // SR cannot be reported using common PUCCH resources.
-      pucch_pdu.uci_bits.sr_bits = sr_nof_bits::no_sr;
-      // [Implementation-defined] For the default PUCCH resources, we assume only 1 HARQ-ACK process needs to be
-      // reported.
-      pucch_pdu.uci_bits.harq_ack_nof_bits = 1;
-      // This option can be configured with Dedicated PUCCH resources.
-      format_1.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
-      break;
-    }
-    default:
-      ocudu_assertion_failure("Only PUCCH Format 0 and 1 can be used for PUCCH common resources");
-  }
-}
-
-void pucch_allocator_impl::fill_ded_pdu(pucch_info&           pucch_pdu,
-                                        const pucch_resource& pucch_res,
-                                        const pucch_uci_bits& uci_bits,
-                                        rnti_t                rnti) const
-{
-  pucch_pdu.bwp_cfg = &cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params;
-  pucch_pdu.res     = &pucch_res;
-
-  pucch_pdu.crnti   = rnti;
-  pucch_pdu.bwp_cfg = &cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params;
-
-  if (pucch_res.format() == pucch_format::FORMAT_0 or pucch_res.format() == pucch_format::FORMAT_1) {
-    ocudu_assert(pucch_pdu.uci_bits.harq_ack_nof_bits <= 2, "PUCCH F0/1 can carry 2 HARQ-ACK bits at most");
-    ocudu_assert(pucch_pdu.uci_bits.sr_bits == sr_nof_bits::no_sr or pucch_pdu.uci_bits.sr_bits == sr_nof_bits::one,
-                 "PUCCH F0/1 can carry 1 SR bit at most");
-    ocudu_assert(pucch_pdu.uci_bits.csi_part1_nof_bits == 0, "PUCCH F0/1 can't carry CSI bits");
-  }
-  pucch_pdu.uci_bits = uci_bits;
-  // Generate CSI report configuration if there are CSI bits in UCI.
-  if (pucch_pdu.uci_bits.csi_part1_nof_bits != 0U) {
-    pucch_pdu.csi_rep_cfg = csi_report_cfg.value();
-  }
-
-  switch (pucch_res.format()) {
-    case pucch_format::FORMAT_0: {
-      auto& format_0 = pucch_pdu.format_params.emplace<pucch_info::f0_config>();
-
-      // \c pucch-GroupHopping and \c hoppingId are set as per TS 38.211, Section 6.3.2.2.1.
-      format_0.group_hopping = cell_cfg.params.ul_cfg_common.init_ul_bwp.pucch_cfg_common->group_hopping;
-      format_0.n_id_hopping  = cell_cfg.params.ul_cfg_common.init_ul_bwp.pucch_cfg_common->hopping_id.has_value()
-                                   ? cell_cfg.params.ul_cfg_common.init_ul_bwp.pucch_cfg_common->hopping_id.value()
-                                   : cell_cfg.params.pci;
-    } break;
-    case pucch_format::FORMAT_1: {
-      auto& format_1 = pucch_pdu.format_params.emplace<pucch_info::f1_config>();
-
-      // \c pucch-GroupHopping and \c hoppingId are set as per TS 38.211, Section 6.3.2.2.1.
-      format_1.group_hopping = cell_cfg.params.ul_cfg_common.init_ul_bwp.pucch_cfg_common->group_hopping;
-      format_1.n_id_hopping  = cell_cfg.params.ul_cfg_common.init_ul_bwp.pucch_cfg_common->hopping_id.has_value()
-                                   ? cell_cfg.params.ul_cfg_common.init_ul_bwp.pucch_cfg_common->hopping_id.value()
-                                   : cell_cfg.params.pci;
-      // [Implementation-defined] We do not implement PUCCH over several slots.
-      format_1.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
-    } break;
-    case pucch_format::FORMAT_2: {
-      auto& f2 = pucch_pdu.format_params.emplace<pucch_info::f2_config>();
-
-      f2.n_id_scrambling    = n_id_scrambling();
-      f2.n_id_0_scrambling  = n_id_0_scrambling();
-      const auto max_c_rate = to_float(cell_cfg.params.init_bwp.pucch.resources.max_code_rate_234());
-      f2.nof_prbs           = uci_bits.harq_ack_nof_bits != 0U
-                                  ? get_pucch_format2_nof_prbs(
-                              uci_bits.get_total_bits(), pucch_res.prbs().length(), pucch_res.syms.length(), max_c_rate)
-                                  : pucch_res.prbs().length();
-    } break;
-    case pucch_format::FORMAT_3: {
-      const auto& res_f3 = std::get<pucch_resource::f3_config>(pucch_res.format_params);
-      auto&       f3     = pucch_pdu.format_params.emplace<pucch_info::f3_config>();
-
-      f3.group_hopping = cell_cfg.params.ul_cfg_common.init_ul_bwp.pucch_cfg_common->group_hopping;
-      f3.n_id_hopping  = cell_cfg.params.ul_cfg_common.init_ul_bwp.pucch_cfg_common->hopping_id.has_value()
-                             ? cell_cfg.params.ul_cfg_common.init_ul_bwp.pucch_cfg_common->hopping_id.value()
-                             : cell_cfg.params.pci;
-      // [Implementation-defined] We do not implement PUCCH over several slots.
-      f3.slot_repetition    = pucch_repetition_tx_slot::no_multi_slot;
-      f3.n_id_scrambling    = n_id_scrambling();
-      f3.n_id_0_scrambling  = n_id_0_scrambling();
-      const auto max_c_rate = to_float(cell_cfg.params.init_bwp.pucch.resources.max_code_rate_234());
-      f3.nof_prbs           = uci_bits.harq_ack_nof_bits != 0U ? get_pucch_format3_nof_prbs(uci_bits.get_total_bits(),
-                                                                                  pucch_res.prbs().length(),
-                                                                                  pucch_res.syms.length(),
-                                                                                  max_c_rate,
-                                                                                  pucch_res.second_hop_prb.has_value(),
-                                                                                  res_f3.additional_dmrs,
-                                                                                  res_f3.pi_2_bpsk)
-                                                               : pucch_res.prbs().length();
-    } break;
-    case pucch_format::FORMAT_4: {
-      auto& f4 = pucch_pdu.format_params.emplace<pucch_info::f4_config>();
-
-      f4.group_hopping = cell_cfg.params.ul_cfg_common.init_ul_bwp.pucch_cfg_common->group_hopping;
-      f4.n_id_hopping  = cell_cfg.params.ul_cfg_common.init_ul_bwp.pucch_cfg_common->hopping_id.has_value()
-                             ? cell_cfg.params.ul_cfg_common.init_ul_bwp.pucch_cfg_common->hopping_id.value()
-                             : cell_cfg.params.pci;
-      // [Implementation-defined] We do not implement PUCCH over several slots.
-      f4.slot_repetition   = pucch_repetition_tx_slot::no_multi_slot;
-      f4.n_id_scrambling   = n_id_scrambling();
-      f4.n_id_0_scrambling = n_id_0_scrambling();
-    } break;
-    default:
-      ocudu_assertion_failure("Invalid PUCCH format");
-  }
 }
