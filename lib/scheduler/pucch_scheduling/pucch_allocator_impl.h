@@ -176,6 +176,12 @@ private:
                                                           span<const pucch_grant>      resources_to_merge,
                                                           unsigned                     d_pri);
 
+  // Fast path for an additional HARQ-ACK bit that doesn't change the multiplexing outcome (see \c alloc_ded_harq_ack).
+  std::optional<unsigned> update_harq_ack_bits(cell_slot_resource_allocator& pucch_slot_alloc,
+                                               const ue_grants&              grants,
+                                               unsigned                      harq_ack_nof_bits,
+                                               const alloc_context&          alloc_ctx);
+
   // Allocate the PUCCH PDUs in the scheduler output, depending on the new PUCCH grants to be transmitted, and depending
   // on the PUCCH PDUs currently allocated.
   std::optional<ue_grants> allocate_grants(cell_slot_resource_allocator& pucch_slot_alloc,

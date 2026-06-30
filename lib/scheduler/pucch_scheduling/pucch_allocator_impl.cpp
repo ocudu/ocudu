@@ -280,12 +280,27 @@ std::optional<unsigned> pucch_allocator_impl::alloc_ded_harq_ack(cell_resource_a
   ue_grants old_grants{};
   if (existing_grants != nullptr) {
     old_grants = *existing_grants;
-    // Release resources previously allocated to this UE from the resource manager.
-    free_resources(pucch_slot_alloc, old_grants, crnti);
   }
 
   pucch_uci_bits new_bits = old_grants.uci_bits(pucch_slot_alloc.result.ul.pucchs);
   ++new_bits.harq_ack_nof_bits;
+
+  // From TS 38.213, Section 9.2.1:
+  // > "If the UE transmits O_UCI UCI information bits, that include HARQ-ACK information bits, the UE determines a
+  //    PUCCH resource set to be ..."
+  // We can infer that we only need to run the multiplexing algorithm in the following cases:
+  // - the first allocated HARQ-ACK bit (to multiplex the new HARQ-ACK resource with the existing grants)
+  // - the third allocated HARQ-ACK bit (to promote from Resource Set ID 0 to Resource Set ID 1)
+  // In all other cases, the multiplexing algorithm would yield the same result as in the previous allocation of this
+  // UE, so we skip it.
+  if (existing_grants != nullptr and new_bits.harq_ack_nof_bits != 1U and new_bits.harq_ack_nof_bits != 3U) {
+    return update_harq_ack_bits(pucch_slot_alloc, old_grants, new_bits.harq_ack_nof_bits, alloc_ctx);
+  }
+
+  if (existing_grants != nullptr) {
+    // Release resources previously allocated to this UE from the resource manager before re-running the multiplexing.
+    free_resources(pucch_slot_alloc, old_grants, crnti);
+  }
 
   std::optional<unsigned> d_pri;
   if (new_bits.harq_ack_nof_bits == 1U) {
@@ -837,6 +852,32 @@ pucch_allocator_impl::merge_pucch_resources(const ue_cell_configuration& ue_cell
 
   ocudu_assertion_failure("Invalid combination of resources to merge");
   return std::nullopt;
+}
+
+std::optional<unsigned> pucch_allocator_impl::update_harq_ack_bits(cell_slot_resource_allocator& pucch_slot_alloc,
+                                                                   const ue_grants&              grants,
+                                                                   unsigned                      harq_ack_nof_bits,
+                                                                   const alloc_context&          alloc_ctx)
+{
+  auto& pucch_pdus = pucch_slot_alloc.result.ul.pucchs;
+
+  for (auto pdu_idx : grants.pdu_indices(false)) {
+    pucch_info& pdu = pucch_pdus[pdu_idx];
+    ocudu_assert(pdu.uci_bits.harq_ack_nof_bits != 0U, "The PUCCH PDU should carry HARQ-ACK bits");
+
+    // Verify that the resource can fit the UCI bits.
+    pucch_uci_bits bits = pdu.uci_bits;
+    ++bits.harq_ack_nof_bits;
+    if (pdu.format() >= pucch_format::FORMAT_2 and bits.get_total_bits() > res_params.max_payload_234()) {
+      alloc_ctx.log_skipped_alloc(logger.debug, "UCI bits exceed PUCCH payload");
+      return std::nullopt;
+    }
+
+    pucch_helper::fill_ded_pdu(
+        pdu, cell_cfg, *pdu.res, bits, csi_report_cfg.has_value() ? &*csi_report_cfg : nullptr, alloc_ctx.rnti);
+  }
+
+  return grants.d_pri;
 }
 
 std::optional<pucch_allocator_impl::ue_grants>
