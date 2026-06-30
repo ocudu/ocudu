@@ -17,8 +17,8 @@ dl_msg_alloc make_dummy_ue_pdsch_info()
   pdsch_information& pdsch = msg.pdsch_cfg;
   pdsch.rnti               = to_rnti(0x4601);
   pdsch.harq_id            = to_harq_id(0);
+  pdsch.mcs_table          = ocudu::pdsch_mcs_table::qam64;
   pdsch.codewords.resize(1);
-  pdsch.codewords[0].mcs_table     = ocudu::pdsch_mcs_table::qam64;
   pdsch.codewords[0].mcs_index     = 10;
   pdsch.codewords[0].tb_size_bytes = units::bytes{10000};
   pdsch.rbs                        = vrb_interval{5, 10};
@@ -269,7 +269,7 @@ TEST_F(single_harq_process_test, when_harq_is_allocated_then_harq_params_have_co
 TEST_F(single_harq_process_test, when_harq_is_allocated_then_harq_grant_params_have_correct_values)
 {
   ASSERT_EQ(h_dl.get_grant_params().mcs, ue_pdsch.pdsch_cfg.codewords[0].mcs_index);
-  ASSERT_EQ(h_dl.get_grant_params().mcs_table, ue_pdsch.pdsch_cfg.codewords[0].mcs_table);
+  ASSERT_EQ(h_dl.get_grant_params().mcs_table, ue_pdsch.pdsch_cfg.mcs_table);
   ASSERT_EQ(h_dl.get_grant_params().tbs, ue_pdsch.pdsch_cfg.codewords[0].tb_size_bytes);
   ASSERT_EQ(h_dl.get_grant_params().rbs.type1(), ue_pdsch.pdsch_cfg.rbs.type1());
   ASSERT_EQ(h_dl.get_grant_params().dci_cfg_type, dci_dl_rnti_config_type::c_rnti_f1_0);

@@ -23,8 +23,8 @@ static void validate_pdsch_information(const pdsch_information& pdsch_cfg, const
   // Codewords.
   const auto& fapi_cw = fapi_pdu.cws.front();
   const auto& mac_cw  = pdsch_cfg.codewords.front();
+  ASSERT_EQ(pdsch_cfg.mcs_table, fapi_cw.mcs_table);
   ASSERT_EQ(mac_cw.rv_index, fapi_cw.rv_index);
-  ASSERT_EQ(mac_cw.mcs_table, fapi_cw.mcs_table);
   ASSERT_EQ(mac_cw.mcs_index, fapi_cw.mcs_index);
   ASSERT_EQ(mac_cw.mcs_descr.modulation, fapi_cw.qam_mod_order);
   ASSERT_EQ(mac_cw.tb_size_bytes, fapi_cw.tb_size);

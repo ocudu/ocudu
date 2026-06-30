@@ -41,8 +41,6 @@ struct pdsch_codeword {
   /// \brief MCS index, range {0, ..., 31} (See TS38.214 Section 5.1.3.1).
   /// \note Should match value sent in DCI.
   sch_mcs_index mcs_index;
-  /// MCS table (See TS38.214 Section 5.1.3.1).
-  pdsch_mcs_table mcs_table;
   /// Redundancy version index (see TS38.212 Table 5.4.2.1-2, and TS38.214 Table 5.1.2.1-2).
   uint8_t rv_index;
   /// Transport block size, in bytes (see TS38.214 Section 5.1.3.2).
@@ -69,6 +67,7 @@ struct pdsch_information {
   const coreset_configuration*                           coreset_cfg;
   vrb_alloc                                              rbs;
   ofdm_symbol_range                                      symbols;
+  pdsch_mcs_table                                        mcs_table;
   static_vector<pdsch_codeword, MAX_CODEWORDS_PER_PDSCH> codewords;
   dmrs_information                                       dmrs;
   /// Parameter n_ID, used for scrambling, as per TS 38.211, Section 7.3.1.1.

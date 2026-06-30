@@ -264,8 +264,8 @@ static pdsch_information fill_valid_pdsch_information(coreset_configuration& cor
   info.harq_id         = to_harq_id(4);
   info.ss_set_type     = search_space_set_type::type0;
   info.dci_fmt         = dci_dl_format::f1_0;
-  info.codewords.push_back(
-      pdsch_codeword{{modulation_scheme::QAM16, 220.F}, 5, pdsch_mcs_table::qam64, 2, units::bytes{128}});
+  info.mcs_table       = pdsch_mcs_table::qam64;
+  info.codewords.push_back(pdsch_codeword{{modulation_scheme::QAM16, 220.F}, 5, 2, units::bytes{128}});
 
   if (nof_ports == 2) {
     pdsch_precoding_info& pm               = info.precoding.emplace();

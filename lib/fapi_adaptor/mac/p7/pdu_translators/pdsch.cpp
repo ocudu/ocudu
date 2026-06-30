@@ -20,13 +20,14 @@ static crb_interval get_crb_interval(const pdsch_information& pdsch_cfg)
   return pdsch_cfg.bwp_cfg->crbs;
 }
 
-static void fill_codewords(fapi::dl_pdsch_pdu_builder& builder, span<const pdsch_codeword> codewords)
+static void
+fill_codewords(fapi::dl_pdsch_pdu_builder& builder, span<const pdsch_codeword> codewords, pdsch_mcs_table mcs_table)
 {
   ocudu_assert(codewords.size() == 1, "Current FAPI implementation only supports 1 transport block per PDU");
   for (const auto& cw : codewords) {
     fapi::dl_pdsch_codeword_builder cw_builder = builder.add_codeword();
     cw_builder.set_codeword_parameters(
-        cw.mcs_descr.modulation, cw.mcs_index, cw.mcs_table, cw.rv_index, units::bytes{cw.tb_size_bytes});
+        cw.mcs_descr.modulation, cw.mcs_index, mcs_table, cw.rv_index, units::bytes{cw.tb_size_bytes});
   }
 
   const pdsch_codeword& cw = codewords.front();
@@ -112,7 +113,7 @@ static void fill_pdsch_information(fapi::dl_pdsch_pdu_builder& builder, const pd
   builder.set_ue_specific_parameters(pdsch_cfg.rnti);
 
   // Codewords.
-  fill_codewords(builder, pdsch_cfg.codewords);
+  fill_codewords(builder, pdsch_cfg.codewords, pdsch_cfg.mcs_table);
 
   // DMRS.
   fill_dmrs(builder, pdsch_cfg.dmrs);

@@ -195,11 +195,12 @@ void ocudu::build_pdsch_f1_0_si_rnti(pdsch_information&                   pdsch,
   pdsch.n_id       = cell_cfg.params.pci;
   pdsch.nof_layers = 1;
 
+  pdsch.mcs_table = pdsch_mcs_table::qam64;
+
   pdsch_codeword& cw    = pdsch.codewords.emplace_back();
   cw.rv_index           = dci_cfg.redundancy_version;
   cw.mcs_index          = dci_cfg.modulation_coding_scheme;
-  cw.mcs_table          = pdsch_mcs_table::qam64;
-  cw.mcs_descr          = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
+  cw.mcs_descr          = pdsch_mcs_get_config(pdsch.mcs_table, cw.mcs_index);
   cw.tb_size_bytes      = tbs_bytes;
   pdsch.dmrs            = dmrs_info;
   pdsch.vrb_prb_mapping = vrb_to_prb::mapping_type::non_interleaved;
@@ -243,10 +244,11 @@ void ocudu::build_pdsch_f1_0_p_rnti(pdsch_information&                  pdsch,
   pdsch.n_id       = cell_cfg.params.pci;
   pdsch.nof_layers = 1;
 
+  pdsch.mcs_table = pdsch_mcs_table::qam64;
+
   pdsch_codeword& cw    = pdsch.codewords.emplace_back();
   cw.mcs_index          = dci_cfg.modulation_coding_scheme;
-  cw.mcs_table          = pdsch_mcs_table::qam64;
-  cw.mcs_descr          = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
+  cw.mcs_descr          = pdsch_mcs_get_config(pdsch.mcs_table, cw.mcs_index);
   cw.tb_size_bytes      = tbs_bytes;
   pdsch.dmrs            = dmrs_info;
   pdsch.vrb_prb_mapping = vrb_to_prb::mapping_type::non_interleaved;
@@ -289,12 +291,14 @@ void ocudu::build_pdsch_f1_0_ra_rnti(pdsch_information&                   pdsch,
   pdsch.rbs         = vrbs;
   pdsch.symbols     = pdsch_td_res_alloc_list[dci_cfg.time_resource].symbols;
 
+  pdsch.mcs_table = pdsch_mcs_table::qam64;
+
   pdsch_codeword& cw = pdsch.codewords.emplace_back();
-  cw.mcs_table       = pdsch_mcs_table::qam64;
   cw.mcs_index       = dci_cfg.modulation_coding_scheme;
-  cw.rv_index        = 0; // Implementation-defined.
-  cw.mcs_descr       = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
+  cw.mcs_descr       = pdsch_mcs_get_config(pdsch.mcs_table, cw.mcs_index);
   cw.tb_size_bytes   = tbs_bytes;
+  // Implementation-defined.
+  cw.rv_index = 0;
 
   pdsch.dmrs = dmrs_info;
   // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID for RA-RNTI.
@@ -360,13 +364,14 @@ void ocudu::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch,
     }
   }
 
+  pdsch.mcs_table = pdsch_cfg.mcs_table;
+
   // One Codeword.
   pdsch_codeword& cw = pdsch.codewords.emplace_back();
   cw.new_data        = is_new_data;
   cw.rv_index        = dci_cfg.redundancy_version;
   cw.mcs_index       = dci_cfg.modulation_coding_scheme;
-  cw.mcs_table       = pdsch_cfg.mcs_table;
-  cw.mcs_descr       = pdsch_mcs_get_config(pdsch_cfg.mcs_table, cw.mcs_index);
+  cw.mcs_descr       = pdsch_mcs_get_config(pdsch.mcs_table, cw.mcs_index);
   cw.tb_size_bytes   = tbs_bytes;
 }
 
@@ -411,13 +416,14 @@ void ocudu::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
     }
   }
 
+  pdsch.mcs_table = pdsch_cfg.mcs_table;
+
   // One Codeword.
   pdsch_codeword& cw = pdsch.codewords.emplace_back();
   cw.new_data        = is_new_data;
   cw.rv_index        = dci_cfg.redundancy_version;
   cw.mcs_index       = dci_cfg.modulation_coding_scheme;
-  cw.mcs_table       = pdsch_cfg.mcs_table;
-  cw.mcs_descr       = pdsch_mcs_get_config(pdsch_cfg.mcs_table, cw.mcs_index);
+  cw.mcs_descr       = pdsch_mcs_get_config(pdsch.mcs_table, cw.mcs_index);
   cw.tb_size_bytes   = tbs_bytes;
 }
 
@@ -457,14 +463,15 @@ void ocudu::build_pdsch_f1_1_c_rnti(pdsch_information&              pdsch,
       get_pdsch_n_id(cell_cfg.params.pci, active_bwp, dci_dl_format::f1_1, ss_info.cfg->is_common_search_space());
   pdsch.nof_layers = pdsch_cfg.nof_layers;
 
+  pdsch.mcs_table = pdsch_cfg.mcs_table;
+
   // TODO: Add second Codeword when supported.
   // One Codeword.
   pdsch_codeword& cw = pdsch.codewords.emplace_back();
   cw.new_data        = is_new_data;
   cw.rv_index        = dci_cfg.tb1_redundancy_version;
   cw.mcs_index       = dci_cfg.tb1_modulation_coding_scheme;
-  cw.mcs_table       = pdsch_cfg.mcs_table;
-  cw.mcs_descr       = pdsch_mcs_get_config(pdsch_cfg.mcs_table, cw.mcs_index);
+  cw.mcs_descr       = pdsch_mcs_get_config(pdsch.mcs_table, cw.mcs_index);
   cw.tb_size_bytes   = mcs_tbs_info.tbs;
 
   // Beamforming and precoding.

@@ -276,7 +276,7 @@ void ocudu::test_pdsch_sib_consistency(const cell_configuration& cell_cfg, span<
       ASSERT_TRUE(sib.si_msg_index.has_value());
     }
     ASSERT_EQ(sib.pdsch_cfg.codewords.size(), 1);
-    ASSERT_EQ(sib.pdsch_cfg.codewords[0].mcs_table, pdsch_mcs_table::qam64);
+    ASSERT_EQ(sib.pdsch_cfg.mcs_table, pdsch_mcs_table::qam64);
     vrb_interval vrbs = sib.pdsch_cfg.rbs.type1();
     ASSERT_LE(vrbs.stop(), effective_init_bwp_cfg.crbs.length())
         << fmt::format("PRB grant falls outside CORESET#0 RB boundaries");
@@ -301,7 +301,7 @@ void ocudu::test_pdsch_rar_consistency(const cell_configuration& cell_cfg, span<
     ASSERT_EQ(rar.pdsch_cfg.coreset_cfg->get_id(), ss_cfg.get_coreset_id());
     ASSERT_EQ(rar.pdsch_cfg.ss_set_type, search_space_set_type::type1);
     ASSERT_EQ(rar.pdsch_cfg.codewords.size(), 1);
-    ASSERT_EQ(rar.pdsch_cfg.codewords[0].mcs_table, pdsch_mcs_table::qam64);
+    ASSERT_EQ(rar.pdsch_cfg.mcs_table, pdsch_mcs_table::qam64);
 
     const prb_interval rar_vrbs = {
         rar.pdsch_cfg.rbs.type1().start() + rar.pdsch_cfg.coreset_cfg->get_coreset_start_crb(),

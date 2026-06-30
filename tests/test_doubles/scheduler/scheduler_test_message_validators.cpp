@@ -65,7 +65,7 @@ static bool is_pdsch_info_valid(const pdsch_information& pdsch, const std::optio
     case dci_dl_format::f1_0: {
       TRUE_OR_RETURN(pdsch.nof_layers == 1);
       TRUE_OR_RETURN(pdsch.codewords.size() == 1);
-      TRUE_OR_RETURN(pdsch.codewords[0].mcs_table == pdsch_mcs_table::qam64);
+      TRUE_OR_RETURN(pdsch.mcs_table == pdsch_mcs_table::qam64);
     } break;
     case dci_dl_format::f1_1: {
       TRUE_OR_RETURN(pdsch.coreset_cfg->get_id() != to_coreset_id(0));

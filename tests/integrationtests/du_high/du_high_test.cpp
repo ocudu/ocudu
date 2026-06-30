@@ -437,7 +437,7 @@ TEST_F(du_high_tester, when_reestablishment_takes_place_then_previous_ue_capabil
   ASSERT_TRUE(this->run_until(
       [this, rnti1]() {
         auto* pdsch = find_ue_pdsch_with_lcid(rnti1, LCID_MIN_DRB, phy.cells[0].last_dl_res.value().dl_res->ue_grants);
-        return pdsch != nullptr and pdsch->pdsch_cfg.codewords[0].mcs_table == pdsch_mcs_table::qam256;
+        return pdsch != nullptr and pdsch->pdsch_cfg.mcs_table == pdsch_mcs_table::qam256;
       },
       nof_slots_test));
 
@@ -456,7 +456,7 @@ TEST_F(du_high_tester, when_reestablishment_takes_place_then_previous_ue_capabil
   ASSERT_TRUE(this->run_until(
       [this, rnti2]() {
         auto* pdsch = find_ue_pdsch_with_lcid(rnti2, LCID_MIN_DRB, phy.cells[0].last_dl_res.value().dl_res->ue_grants);
-        return pdsch != nullptr and pdsch->pdsch_cfg.codewords[0].mcs_table == pdsch_mcs_table::qam256;
+        return pdsch != nullptr and pdsch->pdsch_cfg.mcs_table == pdsch_mcs_table::qam256;
       },
       nof_slots_test));
 }

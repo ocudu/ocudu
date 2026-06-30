@@ -791,7 +791,7 @@ void dl_harq_process_handle::save_grant_params(const dl_harq_alloc_context& ctx,
     ocudu_assert(prev_params.nof_layers == pdsch.nof_layers, "Number of layers cannot change during HARQ retxs");
     ocudu_assert(prev_params.is_fallback == ctx.is_fallback, "Fallback state cannot change across DL HARQ retxs");
   }
-  prev_params.mcs_table   = cw.mcs_table;
+  prev_params.mcs_table   = pdsch.mcs_table;
   prev_params.mcs         = cw.mcs_index;
   prev_params.rbs         = pdsch.rbs;
   prev_params.nof_symbols = pdsch.symbols.length();

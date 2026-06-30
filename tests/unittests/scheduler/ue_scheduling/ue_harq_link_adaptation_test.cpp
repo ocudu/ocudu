@@ -65,16 +65,14 @@ protected:
     dl_harq_process_handle h_dl = ue_cc->harqs.alloc_dl_harq(next_slot, k1, 4, 0).value();
 
     // Create dummy PDSCH grant.
-    const pdsch_codeword    cw{sch_mcs_description{modulation_scheme::QAM256, 0.9},
-                            sch_mcs_index{5},
-                            pdsch_mcs_table::qam64,
-                            0,
-                            units::bytes{128}};
+    const pdsch_codeword cw{
+        sch_mcs_description{modulation_scheme::QAM256, 0.9}, sch_mcs_index{5}, 0, units::bytes{128}};
     const pdsch_information pdsch{ue_ptr->crnti,
                                   &ss.bwp->dl.cfg(),
                                   &ss.coreset->cfg(),
                                   vrb_alloc{vrb_interval{0, 5}},
                                   ss.pdsch_time_domain_list[0].symbols,
+                                  pdsch_mcs_table::qam64,
                                   {cw},
                                   {},
                                   ue_cc->cfg().cell_cfg_common.params.pci,
