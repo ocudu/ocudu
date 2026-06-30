@@ -53,7 +53,7 @@ using str_map  = segmented_circular_map<unsigned, std::string, 4>;
 TEST(segmented_circular_map_test, test_basic_operations)
 {
   str_pool pool(2);
-  str_map  mymap(2, pool);
+  str_map  mymap(8, pool);
 
   ASSERT_EQ(0U, mymap.size());
   ASSERT_TRUE(mymap.empty() and not mymap.full());
@@ -97,7 +97,7 @@ TEST(segmented_circular_map_test, test_basic_operations)
 TEST(segmented_circular_map_test, test_segment_lifecycle)
 {
   str_pool pool(2);
-  str_map  mymap(2, pool);
+  str_map  mymap(8, pool);
 
   ASSERT_EQ(2U, pool.available());
 
@@ -117,7 +117,7 @@ TEST(segmented_circular_map_test, test_segment_lifecycle)
 TEST(segmented_circular_map_test, test_clear_returns_all_segments)
 {
   str_pool pool(2);
-  str_map  mymap(2, pool);
+  str_map  mymap(8, pool);
 
   mymap.insert(0, "a");
   mymap.insert(4, "b");
@@ -131,7 +131,7 @@ TEST(segmented_circular_map_test, test_pool_exhaustion)
 {
   // Pool with capacity for only 1 segment.
   str_pool pool(1);
-  str_map  mymap(2, pool);
+  str_map  mymap(8, pool);
 
   ASSERT_TRUE(mymap.insert(0, "a"));
   ASSERT_FALSE(mymap.insert(4, "b"));
@@ -142,7 +142,7 @@ TEST(segmented_circular_map_test, test_pool_exhaustion)
 TEST(segmented_circular_map_test, test_collision)
 {
   str_pool pool(2);
-  str_map  mymap(2, pool);
+  str_map  mymap(8, pool);
 
   ASSERT_TRUE(mymap.insert(0, "a"));
   // key 8 maps to flat index 8%8=0, same slot as key 0 -> collision
@@ -154,7 +154,7 @@ TEST(segmented_circular_map_test, test_collision)
 TEST(segmented_circular_map_test, test_overwrite)
 {
   str_pool pool(2);
-  str_map  mymap(2, pool);
+  str_map  mymap(8, pool);
 
   mymap.insert(0, "old");
   mymap.overwrite(8, "new"); // key 8 collides with key 0; old entry erased first
@@ -166,7 +166,7 @@ TEST(segmented_circular_map_test, test_overwrite)
 TEST(segmented_circular_map_test, test_find_absent)
 {
   str_pool pool(2);
-  str_map  mymap(2, pool);
+  str_map  mymap(8, pool);
 
   ASSERT_TRUE(mymap.find(42) == mymap.end());
   mymap.insert(1, "x");
@@ -177,7 +177,7 @@ TEST(segmented_circular_map_test, test_find_absent)
 TEST(segmented_circular_map_test, test_rvalue_insert)
 {
   str_pool pool(2);
-  str_map  mymap(2, pool);
+  str_map  mymap(8, pool);
 
   std::string val = "hello";
   auto        res = mymap.insert(0, std::move(val));
@@ -194,7 +194,7 @@ TEST(segmented_circular_map_test, test_rvalue_insert)
 TEST(segmented_circular_map_test, test_erase_by_iterator)
 {
   str_pool pool(2);
-  str_map  mymap(2, pool);
+  str_map  mymap(8, pool);
 
   mymap.insert(0, "a");
   mymap.insert(1, "b");
@@ -210,7 +210,7 @@ TEST(segmented_circular_map_test, test_erase_by_iterator)
 TEST(segmented_circular_map_test, test_iterator_skips_null_segments)
 {
   str_pool pool(3);
-  str_map  mymap(3, pool); // capacity = 12
+  str_map  mymap(12, pool); // capacity = 12
 
   // Insert only in segment 2 (slots 8..11)
   mymap.insert(8, "x");
@@ -229,7 +229,7 @@ TEST(segmented_circular_map_test, test_iterator_skips_null_segments)
 TEST(segmented_circular_map_test, test_emplace)
 {
   str_pool pool(2);
-  str_map  mymap(2, pool);
+  str_map  mymap(8, pool);
 
   ASSERT_TRUE(mymap.emplace(3, "emplace_val"));
   ASSERT_TRUE(mymap.contains(3));
@@ -240,7 +240,7 @@ TEST(segmented_circular_map_test, test_destructor_returns_segments)
 {
   str_pool pool(2);
   {
-    str_map mymap(2, pool);
+    str_map mymap(8, pool);
     mymap.insert(0, "a");
     mymap.insert(4, "b");
     ASSERT_EQ(0U, pool.available());
@@ -268,7 +268,7 @@ TEST(segmented_circular_map_test, test_correct_destruction)
   ASSERT_EQ(0U, C::count);
 
   {
-    c_map mymap(2, pool);
+    c_map mymap(8, pool);
     ASSERT_TRUE(mymap.insert(0, C{}));
     ASSERT_TRUE(mymap.insert(1, C{}));
     ASSERT_TRUE(mymap.insert(2, C{}));
@@ -282,6 +282,62 @@ TEST(segmented_circular_map_test, test_correct_destruction)
   }
   ASSERT_EQ(0U, C::count);
   ASSERT_EQ(2U, pool.available());
+}
+
+// ---- non-multiple-of-L size tests -----------------------------------------
+
+TEST(segmented_circular_map_test, non_multiple_size_capacity)
+{
+  // size=6 is not a multiple of L=4; total_capacity() must report 6, not 8.
+  str_pool pool(2);
+  str_map  mymap(6, pool);
+
+  ASSERT_EQ(6U, mymap.capacity());
+}
+
+TEST(segmented_circular_map_test, non_multiple_size_collision)
+{
+  // With size=6, key 6 wraps to flat 0 and must collide with key 0.
+  str_pool pool(2);
+  str_map  mymap(6, pool);
+
+  ASSERT_TRUE(mymap.insert(0, "a"));
+  ASSERT_FALSE(mymap.insert(6, "b")); // 6 % 6 == 0 → collision
+  ASSERT_TRUE(mymap.contains(0));
+  ASSERT_FALSE(mymap.contains(6));
+  ASSERT_EQ(1U, mymap.size());
+}
+
+TEST(segmented_circular_map_test, non_multiple_size_no_spurious_collision)
+{
+  // Keys 5 and 6 must NOT collide: 5 % 6 == 5, 6 % 6 == 0 (different slots).
+  str_pool pool(2);
+  str_map  mymap(6, pool);
+
+  ASSERT_TRUE(mymap.insert(5, "a"));
+  ASSERT_TRUE(mymap.insert(6, "b")); // 6 % 6 == 0 → different slot from 5
+  ASSERT_EQ(2U, mymap.size());
+}
+
+TEST(segmented_circular_map_test, size_smaller_than_segment)
+{
+  // size=3 < L=4: one segment allocated, only slots 0-2 reachable.
+  str_pool pool(1);
+  str_map  mymap(3, pool);
+
+  ASSERT_EQ(3U, mymap.capacity());
+  ASSERT_TRUE(mymap.insert(0, "a"));
+  ASSERT_TRUE(mymap.insert(1, "b"));
+  ASSERT_TRUE(mymap.insert(2, "c"));
+  ASSERT_FALSE(mymap.insert(3, "d")); // 3 % 3 == 0 → collision with key 0
+  ASSERT_EQ(3U, mymap.size());
+
+  size_t count = 0;
+  for (const auto& kv : mymap) {
+    (void)kv;
+    ++count;
+  }
+  ASSERT_EQ(3U, count);
 }
 
 // ---- shared_map_segment_pool tests ----------------------------------------
@@ -315,7 +371,7 @@ using int_smap       = segmented_circular_map<unsigned, int, 4>;
 TEST(shared_map_segment_pool_test, basic_single_type)
 {
   shared_map_segment_pool<unsigned, 4, std::string> pool(2);
-  str_smap                                          mymap(2, pool.get_pool_of_type<std::string>());
+  str_smap                                          mymap(8, pool.get_pool_of_type<std::string>());
 
   ASSERT_TRUE(mymap.insert(0, "a"));
   ASSERT_TRUE(mymap.insert(4, "b"));
@@ -331,8 +387,8 @@ TEST(shared_map_segment_pool_test, maps_share_capacity)
 {
   // 2-slot pool shared between a str_smap and an int_smap.
   shared_pool_2t pool(2);
-  str_smap       smap(2, pool.get_pool_of_type<std::string>());
-  int_smap       imap(2, pool.get_pool_of_type<int>());
+  str_smap       smap(8, pool.get_pool_of_type<std::string>());
+  int_smap       imap(8, pool.get_pool_of_type<int>());
 
   // Consume both slots.
   ASSERT_TRUE(smap.insert(0, "x")); // acquires slot 0
@@ -348,8 +404,8 @@ TEST(shared_map_segment_pool_test, cross_type_slot_reuse)
 {
   // 1-slot pool: a segment freed by a str_smap must be reusable by an int_smap.
   shared_pool_2t pool(1);
-  str_smap       smap(2, pool.get_pool_of_type<std::string>());
-  int_smap       imap(2, pool.get_pool_of_type<int>());
+  str_smap       smap(8, pool.get_pool_of_type<std::string>());
+  int_smap       imap(8, pool.get_pool_of_type<int>());
 
   ASSERT_TRUE(smap.insert(0, "held"));
   ASSERT_FALSE(imap.insert(0, 1)); // pool exhausted
@@ -363,8 +419,8 @@ TEST(shared_map_segment_pool_test, cross_type_slot_reuse)
 TEST(shared_map_segment_pool_test, clear_restores_shared_capacity)
 {
   shared_pool_2t pool(2);
-  str_smap       smap(2, pool.get_pool_of_type<std::string>());
-  int_smap       imap(2, pool.get_pool_of_type<int>());
+  str_smap       smap(8, pool.get_pool_of_type<std::string>());
+  int_smap       imap(8, pool.get_pool_of_type<int>());
 
   smap.insert(0, "a");
   smap.insert(4, "b"); // both pool slots taken
@@ -381,8 +437,8 @@ TEST(shared_map_segment_pool_test, clear_restores_shared_capacity)
 TEST(shared_map_segment_pool_test, values_stored_independently)
 {
   shared_pool_2t pool(4);
-  str_smap       smap(2, pool.get_pool_of_type<std::string>());
-  int_smap       imap(2, pool.get_pool_of_type<int>());
+  str_smap       smap(8, pool.get_pool_of_type<std::string>());
+  int_smap       imap(8, pool.get_pool_of_type<int>());
 
   smap.insert(0, "hello");
   smap.insert(1, "world");
@@ -411,7 +467,7 @@ TEST(shared_map_segment_pool_test, correct_object_destruction)
   pool_t pool(2);
 
   {
-    a_map mymap(2, pool.get_pool_of_type<Ca>());
+    a_map mymap(8, pool.get_pool_of_type<Ca>());
     mymap.emplace(0); // default-constructs Ca in-place
     mymap.emplace(1);
     ASSERT_EQ(2, Ca::live);
@@ -425,7 +481,7 @@ TEST(shared_map_segment_pool_test, correct_object_destruction)
 
   // Pool slots freed; now reuse them for Cb.
   {
-    b_map mymap(2, pool.get_pool_of_type<Cb>());
+    b_map mymap(8, pool.get_pool_of_type<Cb>());
     mymap.emplace(0);
     mymap.emplace(1);
     ASSERT_EQ(2, Cb::live);

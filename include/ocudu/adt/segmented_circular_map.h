@@ -308,10 +308,10 @@ public:
     size_t                        flat_idx = 0;
   };
 
-  segmented_circular_map(size_t num_segments, map_segment_pool_interface<K, V, L>& pool_) :
-    entries(num_segments), pool(pool_)
+  segmented_circular_map(size_t size, map_segment_pool_interface<K, V, L>& pool_) :
+    map_size(size), entries((size + L - 1) / L), pool(pool_)
   {
-    ocudu_assert(num_segments > 0, "segmented_circular_map requires at least one segment slot");
+    ocudu_assert(size > 0, "segmented_circular_map requires at least one segment slot");
   }
 
   ~segmented_circular_map() { clear(); }
@@ -320,7 +320,10 @@ public:
   segmented_circular_map& operator=(const segmented_circular_map&) = delete;
 
   segmented_circular_map(segmented_circular_map&& other) noexcept :
-    entries(std::move(other.entries)), pool(other.pool), elem_count(std::exchange(other.elem_count, 0U))
+    map_size(other.map_size),
+    entries(std::move(other.entries)),
+    pool(other.pool),
+    elem_count(std::exchange(other.elem_count, 0U))
   {
   }
 
@@ -523,8 +526,8 @@ public:
   }
 
 private:
-  size_t total_capacity() const noexcept { return entries.size() * L; }
-  size_t get_flat_idx(K key) const noexcept { return static_cast<size_t>(key) % total_capacity(); }
+  size_t total_capacity() const noexcept { return map_size; }
+  size_t get_flat_idx(K key) const noexcept { return static_cast<size_t>(key) % map_size; }
 
   obj_t&       get_obj(size_t primary, size_t slot) { return *entries[primary].segment->data[slot]; }
   const obj_t& get_obj(size_t primary, size_t slot) const { return *entries[primary].segment->data[slot]; }
@@ -545,6 +548,7 @@ private:
     }
   }
 
+  size_t                               map_size;
   std::vector<segment_entry<K, V, L>>  entries;
   map_segment_pool_interface<K, V, L>& pool;
   size_t                               elem_count = 0;
