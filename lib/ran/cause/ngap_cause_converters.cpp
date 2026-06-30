@@ -23,21 +23,21 @@ static constexpr uint8_t ngap_to_f1ap_cause_radio_network[] = {
     (uint8_t)f1ap_cause_radio_network_t::unspecified, // unknown_target_id
     (uint8_t)f1ap_cause_radio_network_t::unspecified, // no_radio_res_available_in_target_cell
     (uint8_t)f1ap_cause_radio_network_t::unspecified, // unknown_local_ue_ngap_id
-    (uint8_t)f1ap_cause_radio_network_t::unspecified, // inconsistent_remote_ue_ngap_id
-    (uint8_t)f1ap_cause_radio_network_t::unspecified, // ho_desirable_for_radio_reason
-    (uint8_t)f1ap_cause_radio_network_t::unspecified, // time_crit_ho
-    (uint8_t)f1ap_cause_radio_network_t::unspecified, // res_optim_ho
-    (uint8_t)f1ap_cause_radio_network_t::unspecified, // reduce_load_in_serving_cell
-    (uint8_t)f1ap_cause_radio_network_t::unspecified, // user_inactivity
-    (uint8_t)f1ap_cause_radio_network_t::unspecified, // radio_conn_with_ue_lost
-    (uint8_t)f1ap_cause_radio_network_t::unspecified, // radio_res_not_available
-    (uint8_t)f1ap_cause_radio_network_t::unspecified, // invalid_qos_combination
-    (uint8_t)f1ap_cause_radio_network_t::unspecified, // fail_in_radio_interface_proc
-    (uint8_t)f1ap_cause_radio_network_t::unspecified, // interaction_with_other_proc
-    (uint8_t)f1ap_cause_radio_network_t::unspecified, // unknown_pdu_session_id
-    (uint8_t)f1ap_cause_radio_network_t::unspecified, // unkown_qos_flow_id
-    (uint8_t)f1ap_cause_radio_network_t::unspecified, // multiple_pdu_session_id_instances
-    (uint8_t)f1ap_cause_radio_network_t::unspecified, // multiple_qos_flow_id_instances
+    (uint8_t)f1ap_cause_radio_network_t::amf_initiated_abnormal_release, // inconsistent_remote_ue_ngap_id
+    (uint8_t)f1ap_cause_radio_network_t::unspecified,                    // ho_desirable_for_radio_reason
+    (uint8_t)f1ap_cause_radio_network_t::unspecified,                    // time_crit_ho
+    (uint8_t)f1ap_cause_radio_network_t::unspecified,                    // res_optim_ho
+    (uint8_t)f1ap_cause_radio_network_t::unspecified,                    // reduce_load_in_serving_cell
+    (uint8_t)f1ap_cause_radio_network_t::unspecified,                    // user_inactivity
+    (uint8_t)f1ap_cause_radio_network_t::unspecified,                    // radio_conn_with_ue_lost
+    (uint8_t)f1ap_cause_radio_network_t::unspecified,                    // radio_res_not_available
+    (uint8_t)f1ap_cause_radio_network_t::unspecified,                    // invalid_qos_combination
+    (uint8_t)f1ap_cause_radio_network_t::unspecified,                    // fail_in_radio_interface_proc
+    (uint8_t)f1ap_cause_radio_network_t::unspecified,                    // interaction_with_other_proc
+    (uint8_t)f1ap_cause_radio_network_t::unspecified,                    // unknown_pdu_session_id
+    (uint8_t)f1ap_cause_radio_network_t::unspecified,                    // unkown_qos_flow_id
+    (uint8_t)f1ap_cause_radio_network_t::unspecified,                    // multiple_pdu_session_id_instances
+    (uint8_t)f1ap_cause_radio_network_t::unspecified,                    // multiple_qos_flow_id_instances
     (uint8_t)f1ap_cause_radio_network_t::unspecified, // encryption_and_or_integrity_protection_algorithms_not_supported
     (uint8_t)f1ap_cause_radio_network_t::unspecified, // ng_intra_sys_ho_triggered
     (uint8_t)f1ap_cause_radio_network_t::unspecified, // ng_inter_sys_ho_triggered

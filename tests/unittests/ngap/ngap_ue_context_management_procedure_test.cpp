@@ -241,8 +241,9 @@ TEST_F(ngap_ue_context_management_procedure_test,
       generate_valid_initial_context_setup_request_message(ue1.amf_ue_id.value(), ue2.ran_ue_id.value());
   ngap->handle_message(init_context_setup_request);
 
-  // Check that release of old UE has been requested.
-  ASSERT_TRUE(was_ue_release_requested(ue1));
+  // Check that both UEs are released: per TS 38.413 section 10.6, when the received IDs exist in
+  // context but belong to different UEs, both connections must be locally released.
+  ASSERT_TRUE(was_ue_removed());
 
   // Check that error indication has been sent to AMF.
   ASSERT_TRUE(was_error_indication_sent());
@@ -526,8 +527,9 @@ TEST_F(ngap_ue_context_management_procedure_test,
       generate_valid_ue_context_release_command_with_ue_ngap_id_pair(ue1.amf_ue_id.value(), ue2.ran_ue_id.value());
   ngap->handle_message(ue_context_release_cmd);
 
-  // Check that release of old UE has been requested.
-  ASSERT_TRUE(was_ue_release_requested(ue1));
+  // Check that both UEs are released: per TS 38.413 section 10.6, when the received IDs exist in
+  // context but belong to different UEs, both connections must be locally released.
+  ASSERT_TRUE(was_ue_removed());
 
   // Check that error indication has been sent to AMF.
   ASSERT_TRUE(was_error_indication_sent());
