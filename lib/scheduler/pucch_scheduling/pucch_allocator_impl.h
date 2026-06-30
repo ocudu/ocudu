@@ -70,16 +70,6 @@ public:
 private:
   /// ////////////  Helper struct and classes   //////////////
 
-  struct pucch_common_params {
-    unsigned pucch_res_indicator;
-    unsigned r_pucch;
-  };
-
-  struct harq_res_id {
-    pucch_res_set_id pucch_set_idx = pucch_res_set_id::set_0;
-    uint8_t          pucch_res_ind = 0;
-  };
-
   /// \brief Defines the type of PUCCH resource.
   /// - harq_ack indicates the HAR-ACK resource (it can carry HARQ-ACK and/or SR and/or CSI bits).
   /// - sr indicates the resource dedicated for SR (it can carry SR and HARQ-ACK bits).
@@ -208,6 +198,12 @@ private:
 
   /// Returns whether there is space for new PUCCH grants in the given scheduler result.
   bool is_there_space_for_new_pucch_grants(const sched_result& slot_result, unsigned nof_grants_to_allocate) const;
+
+  /// Allocates the PUCCH resources for a given UE in the resource manager.
+  void alloc_resources(cell_slot_resource_allocator& slot_alloc, const ue_grants& grants, rnti_t rnti);
+
+  /// Frees the PUCCH resources for a given UE in the resource manager.
+  void free_resources(cell_slot_resource_allocator& slot_alloc, const ue_grants& grants, rnti_t rnti);
 
   // \brief Ring of PUCCH allocations indexed by slot.
   circular_vector<slot_context> slots_ctx;
