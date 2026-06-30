@@ -1159,3 +1159,42 @@ f1ap_message ocudu::test_helpers::generate_positioning_measurement_failure(lmf_m
 
   return pdu;
 }
+
+f1ap_message ocudu::test_helpers::generate_f1ap_write_replace_warning_request(unsigned transaction_id)
+{
+  f1ap_message pdu = {};
+
+  pdu.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_WRITE_REPLACE_WARNING);
+  auto& req = pdu.pdu.init_msg().value.write_replace_warning_request();
+
+  req->transaction_id        = transaction_id;
+  req->pws_sys_info.sib_type = 6;
+  req->pws_sys_info.sib_msg.from_string("deadbeef");
+  req->repeat_period           = 4;
+  req->numof_broadcast_request = 2;
+
+  return pdu;
+}
+
+f1ap_message ocudu::test_helpers::generate_f1ap_write_replace_warning_response(
+    unsigned                                transaction_id,
+    const std::vector<nr_cell_global_id_t>& completed_cells)
+{
+  f1ap_message pdu = {};
+
+  pdu.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_WRITE_REPLACE_WARNING);
+  auto& resp = pdu.pdu.successful_outcome().value.write_replace_warning_resp();
+
+  resp->transaction_id = transaction_id;
+
+  if (not completed_cells.empty()) {
+    resp->cells_broadcast_completed_list_present = true;
+    for (const auto& cgi : completed_cells) {
+      asn1::protocol_ie_single_container_s<cells_broadcast_completed_list_item_ies_o> item;
+      item->cells_broadcast_completed_item().nr_cgi = cgi_to_asn1(cgi);
+      resp->cells_broadcast_completed_list.push_back(item);
+    }
+  }
+
+  return pdu;
+}
