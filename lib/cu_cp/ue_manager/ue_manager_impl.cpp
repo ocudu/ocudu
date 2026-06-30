@@ -217,6 +217,18 @@ std::vector<cu_cp_ue*> ue_manager::find_ues(plmn_identity plmn)
   return found_ues;
 }
 
+std::vector<cu_cp_ue*> ue_manager::find_ues(cu_cp_du_index_t du_index, pci_t pci)
+{
+  std::vector<cu_cp_ue*> found_ues;
+  for (auto& ue : ues) {
+    if (ue.second.get_du_index() == du_index && ue.second.get_pci() == pci) {
+      found_ues.push_back(&ue.second);
+    }
+  }
+
+  return found_ues;
+}
+
 cu_cp_ue_index_t ue_manager::get_ue_index(pci_t pci, rnti_t rnti)
 {
   if (pci_rnti_to_ue_index.find(std::make_tuple(pci, rnti)) != pci_rnti_to_ue_index.end()) {

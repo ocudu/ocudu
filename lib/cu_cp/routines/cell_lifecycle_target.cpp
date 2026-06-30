@@ -89,3 +89,31 @@ std::vector<cu_cp_ue_index_t> ocudu::ocucp::collect_ues_for_plmns(ue_manager&   
   }
   return ue_indexes;
 }
+
+std::vector<cu_cp_ue_index_t> ocudu::ocucp::collect_ues_on_cell(du_processor_repository&   du_db,
+                                                                ue_manager&                ue_mng,
+                                                                cu_cp_du_index_t           du_index,
+                                                                const nr_cell_global_id_t& cgi)
+{
+  std::vector<cu_cp_ue_index_t> ue_indexes;
+
+  du_processor* du_proc = du_db.find_du_processor(du_index);
+  if (du_proc == nullptr) {
+    return ue_indexes;
+  }
+  const du_configuration_context* du_ctxt = du_proc->get_context();
+  if (du_ctxt == nullptr) {
+    return ue_indexes;
+  }
+  const du_cell_configuration* cell = du_ctxt->find_cell_any_state(cgi);
+  if (cell == nullptr) {
+    return ue_indexes;
+  }
+
+  for (cu_cp_ue* ue : ue_mng.find_ues(du_index, cell->pci)) {
+    if (ue != nullptr) {
+      ue_indexes.push_back(ue->get_ue_index());
+    }
+  }
+  return ue_indexes;
+}

@@ -43,4 +43,10 @@ std::vector<cell_lifecycle_target> resolve_deactivation_targets(du_processor_rep
 /// \brief Collect the CU-CP UEs whose PLMN is among the given PLMNs, so they can be released before deactivation.
 std::vector<cu_cp_ue_index_t> collect_ues_for_plmns(ue_manager& ue_mng, const std::vector<plmn_identity>& plmns);
 
+/// \brief Collect the CU-CP UEs whose primary cell is the given cell, so they can be released before deactivation.
+std::vector<cu_cp_ue_index_t> collect_ues_on_cell(du_processor_repository&   du_db,
+                                                  ue_manager&                ue_mng,
+                                                  cu_cp_du_index_t           du_index,
+                                                  const nr_cell_global_id_t& cgi);
+
 } // namespace ocudu::ocucp

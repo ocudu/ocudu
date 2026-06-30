@@ -67,6 +67,12 @@ public:
   /// \return Vector of pointers to the found UEs.
   std::vector<cu_cp_ue*> find_ues(plmn_identity plmn);
 
+  /// \brief Find the UEs whose primary cell is the given cell (identified by serving DU and PCI).
+  /// \param[in] du_index Index of the DU serving the cell.
+  /// \param[in] pci PCI of the cell.
+  /// \return Vector of pointers to the found UEs.
+  std::vector<cu_cp_ue*> find_ues(cu_cp_du_index_t du_index, pci_t pci);
+
   /// \brief Get the UE index of the UE.
   /// \param[in] pci The PCI of the cell the UE is/was connected to.
   /// \param[in] c_rnti The RNTI of the UE.

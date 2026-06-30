@@ -4,6 +4,7 @@
 
 #include "cu_cp_test_environment.h"
 #include "test_helpers.h"
+#include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "ocudu/asn1/f1ap/common.h"
 #include "ocudu/asn1/f1ap/f1ap.h"
@@ -184,4 +185,41 @@ TEST_F(cu_cp_cell_command_handler_test, when_activate_follows_deactivate_then_de
   ASSERT_TRUE(tick_until(std::chrono::milliseconds{500}, [&]() { return act_launcher.ready(); }, false));
   ASSERT_TRUE(act_launcher.result.has_value());
   EXPECT_TRUE(act_launcher.result.value().success);
+}
+
+TEST_F(cu_cp_cell_command_handler_test, when_deactivate_cell_with_attached_ue_then_cu_releases_ue_before_deactivating)
+{
+  // A UE camped on the served cell.
+  auto cu_up_idx = connect_new_cu_up();
+  ASSERT_TRUE(cu_up_idx.has_value());
+  ASSERT_TRUE(run_e1_setup(cu_up_idx.value()));
+
+  gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(0);
+  ASSERT_TRUE(connect_new_ue(du_idx, du_ue_id, to_rnti(0x4601)));
+
+  cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
+
+  async_task<cu_cp_cell_command_response>         resp_task = cell_cmd.deactivate_cell(served_cgi);
+  lazy_task_launcher<cu_cp_cell_command_response> launcher(resp_task);
+
+  // The CU-CP releases the cell's UE itself (rather than relying on the DU to drain it): an F1AP UE Context Release
+  // Command goes out first, and no gNB-CU Configuration Update is emitted until the release completes.
+  f1ap_message release_cmd;
+  ASSERT_TRUE(wait_for_f1ap_tx_pdu(du_idx, release_cmd));
+  ASSERT_TRUE(test_helpers::is_valid_ue_context_release_command(release_cmd))
+      << "CU-CP should release the cell's UE before deactivating the cell";
+
+  // The DU acknowledges the UE release; only then should the deactivation cfg update be emitted.
+  get_du(du_idx).push_ul_pdu(test_helpers::generate_ue_context_release_complete(release_cmd));
+
+  f1ap_message cu_cfg_upd;
+  ASSERT_TRUE(pop_cu_cfg_upd(cu_cfg_upd)) << "Deactivation cfg update should follow the UE release";
+  const auto& upd_ies = cu_cfg_upd.pdu.init_msg().value.gnb_cu_cfg_upd();
+  ASSERT_TRUE(upd_ies->cells_to_be_deactiv_list_present);
+  ASSERT_EQ(upd_ies->cells_to_be_deactiv_list.size(), 1U);
+
+  get_du(du_idx).push_ul_pdu(make_ack_for(cu_cfg_upd));
+  ASSERT_TRUE(tick_until(std::chrono::milliseconds{500}, [&]() { return launcher.ready(); }, false));
+  ASSERT_TRUE(launcher.result.has_value());
+  EXPECT_TRUE(launcher.result.value().success);
 }
