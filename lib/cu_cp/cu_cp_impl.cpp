@@ -7,6 +7,8 @@
 #include "metrics_handler/metrics_handler_impl.h"
 #include "routines/amf_connection_loss_routine.h"
 #include "routines/cell_activation_routine.h"
+#include "routines/cell_deactivation_routine.h"
+#include "routines/cell_lifecycle_target.h"
 #include "routines/initial_context_setup_routine.h"
 #include "routines/mobility/conditional_handover_cancellation_routine.h"
 #include "routines/mobility/conditional_handover_coordinator_routine.h"
@@ -1650,7 +1652,15 @@ void cu_cp_impl::handle_amf_reconnection(cu_cp_amf_index_t amf_index)
 
   std::vector<plmn_identity> served_plmns = ngap_db.find_ngap(amf_index)->get_ngap_context().get_supported_plmns();
 
-  common_task_sched.schedule(launch_async<cell_activation_routine>(cfg, served_plmns, du_db, logger));
+  // The common task scheduler takes a void task, so wrap the bool-returning activation routine.
+  common_task_sched.schedule(launch_async(
+      [this, targets = resolve_activation_targets(du_db, served_plmns)](coro_context<async_task<void>>& ctx) mutable {
+        CORO_BEGIN(ctx);
+        CORO_AWAIT_VALUE(bool cells_activated,
+                         launch_async<cell_activation_routine>(cfg, std::move(targets), du_db, logger));
+        (void)cells_activated;
+        CORO_RETURN();
+      }));
 }
 
 void cu_cp_impl::initialize_handover_ue_release_timer(
@@ -1951,88 +1961,57 @@ void cu_cp_impl::on_statistics_report_timer_expired()
   statistics_report_timer.run();
 }
 
-// Helper that builds and dispatches an F1AP gNB-CU Configuration Update for a single-cell activation or
-// deactivation. Encapsulated here to avoid variable declarations crossing CORO_AWAIT case labels.
-namespace {
-
-/// Builds a single-cell F1AP gNB-CU Configuration Update listing the cell for activation or deactivation.
-static f1ap_gnb_cu_configuration_update
-build_single_cell_cfg_update(const std::string& gnb_cu_name, const nr_cell_global_id_t& cgi, bool activate)
-{
-  f1ap_gnb_cu_configuration_update req;
-  req.gnb_cu_name = gnb_cu_name;
-  if (activate) {
-    f1ap_cell_to_activate cell_req{};
-    cell_req.cgi = cgi;
-    req.cells_to_be_activated_list.push_back(cell_req);
-  } else {
-    req.cells_to_be_deactivated_list.push_back(f1ap_cell_to_deactivate{cgi});
-  }
-  return req;
-}
-
-/// Finds the DU processor serving the cell, or an error string if none does. For activate, also
-/// matches a cell currently in the deactivated list (find_du searches only served cells, which
-/// excludes locked cells); deactivate keeps the stricter served-only lookup.
-static expected<du_processor*, std::string>
-find_serving_du(du_processor_repository& du_db, const nr_cell_global_id_t& cgi, bool activate)
-{
-  cu_cp_du_index_t du_idx = activate ? du_db.find_du_any_state(cgi) : du_db.find_du(cgi);
-  if (du_idx == cu_cp_du_index_t::invalid) {
-    return make_unexpected(
-        fmt::format("No DU found serving NR-CGI plmn={} nci={:#x}", cgi.plmn_id.to_string(), cgi.nci.value()));
-  }
-  du_processor* du_proc = du_db.find_du_processor(du_idx);
-  if (du_proc == nullptr) {
-    return make_unexpected(fmt::format("DU processor not found for du_index={}", fmt::underlying(du_idx)));
-  }
-  return du_proc;
-}
-
-} // namespace
-
 async_task<cu_cp_cell_command_response> cu_cp_impl::deactivate_cell(const nr_cell_global_id_t& cgi)
 {
-  expected<du_processor*, std::string> du = find_serving_du(du_db, cgi, /* activate */ false);
-  if (not du.has_value()) {
-    logger.warning("deactivate_cell rejected. Cause: {}", du.error());
+  // Strict served-cells lookup: a cell that is already deactivated cannot be deactivated again.
+  cu_cp_du_index_t du_index = du_db.find_du(cgi);
+  if (du_index == cu_cp_du_index_t::invalid) {
+    logger.warning("deactivate_cell rejected. Cause: No DU found serving NR-CGI plmn={} nci={:#x}",
+                   cgi.plmn_id.to_string(),
+                   cgi.nci.value());
     return launch_no_op_task(cu_cp_cell_command_response{});
   }
 
-  return launch_async([du_proc  = du.value(),
-                       f1ap_req = build_single_cell_cfg_update(cfg.node.ran_node_name, cgi, /* activate */ false),
-                       &logger  = logger](coro_context<async_task<cu_cp_cell_command_response>>& ctx) mutable {
+  std::vector<cell_lifecycle_target> targets = {cell_lifecycle_target{du_index, cgi, std::nullopt, {}}};
+  // Layer 1: UE handling is left to the DU (empty list). Layer 2 resolves the cell's UEs here so the CU-CP
+  // releases them itself instead of relying on the DU autonomously draining them.
+  std::vector<cu_cp_ue_index_t> ues_to_release;
+
+  return launch_async([this, targets = std::move(targets), ues_to_release = std::move(ues_to_release)](
+                          coro_context<async_task<cu_cp_cell_command_response>>& ctx) mutable {
     CORO_BEGIN(ctx);
-    CORO_AWAIT_VALUE(f1ap_gnb_cu_configuration_update_response f1ap_resp,
-                     du_proc->handle_configuration_update(f1ap_req));
-    if (!f1ap_resp.success) {
-      logger.warning("deactivate_cell failed at DU. Cause: {}",
-                     f1ap_resp.cause.has_value() ? fmt::to_string(f1ap_resp.cause.value())
-                                                 : "gNB-CU Configuration Update failed");
-    }
-    CORO_RETURN(cu_cp_cell_command_response{f1ap_resp.success});
+    CORO_AWAIT_VALUE(
+        bool success,
+        launch_async<cell_deactivation_routine>(cfg,
+                                                std::move(targets),
+                                                std::move(ues_to_release),
+                                                ngap_cause_t{ngap_cause_radio_network_t::cell_not_available},
+                                                du_db,
+                                                *this,
+                                                ue_mng,
+                                                logger));
+    CORO_RETURN(cu_cp_cell_command_response{success});
   });
 }
 
 async_task<cu_cp_cell_command_response> cu_cp_impl::activate_cell(const nr_cell_global_id_t& cgi)
 {
-  expected<du_processor*, std::string> du = find_serving_du(du_db, cgi, /* activate */ true);
-  if (not du.has_value()) {
-    logger.warning("activate_cell rejected. Cause: {}", du.error());
+  // Any-state lookup: the cell to activate is currently in the DU's deactivated list, which the strict
+  // served-cells lookup would miss.
+  cu_cp_du_index_t du_index = du_db.find_du_any_state(cgi);
+  if (du_index == cu_cp_du_index_t::invalid) {
+    logger.warning("activate_cell rejected. Cause: No DU found serving NR-CGI plmn={} nci={:#x}",
+                   cgi.plmn_id.to_string(),
+                   cgi.nci.value());
     return launch_no_op_task(cu_cp_cell_command_response{});
   }
 
-  return launch_async([du_proc  = du.value(),
-                       f1ap_req = build_single_cell_cfg_update(cfg.node.ran_node_name, cgi, /* activate */ true),
-                       &logger  = logger](coro_context<async_task<cu_cp_cell_command_response>>& ctx) mutable {
-    CORO_BEGIN(ctx);
-    CORO_AWAIT_VALUE(f1ap_gnb_cu_configuration_update_response f1ap_resp,
-                     du_proc->handle_configuration_update(f1ap_req));
-    if (!f1ap_resp.success) {
-      logger.warning("activate_cell failed at DU. Cause: {}",
-                     f1ap_resp.cause.has_value() ? fmt::to_string(f1ap_resp.cause.value())
-                                                 : "gNB-CU Configuration Update failed");
-    }
-    CORO_RETURN(cu_cp_cell_command_response{f1ap_resp.success});
-  });
+  std::vector<cell_lifecycle_target> targets = {cell_lifecycle_target{du_index, cgi, std::nullopt, {}}};
+
+  return launch_async(
+      [this, targets = std::move(targets)](coro_context<async_task<cu_cp_cell_command_response>>& ctx) mutable {
+        CORO_BEGIN(ctx);
+        CORO_AWAIT_VALUE(bool success, launch_async<cell_activation_routine>(cfg, std::move(targets), du_db, logger));
+        CORO_RETURN(cu_cp_cell_command_response{success});
+      });
 }

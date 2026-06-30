@@ -6,46 +6,52 @@
 
 #include "../du_processor/du_processor.h"
 #include "../ue_manager/ue_manager_impl.h"
+#include "cell_lifecycle_target.h"
 #include "ocudu/adt/expected.h"
 #include "ocudu/cu_cp/cu_cp_configuration.h"
 #include "ocudu/f1ap/cu_cp/f1ap_cu_configuration_update.h"
+#include "ocudu/ran/cause/ngap_cause.h"
 #include "ocudu/support/async/eager_async_task.h"
-#include <unordered_set>
+#include <utility>
 
 namespace ocudu::ocucp {
 
-/// \brief Handles the release of the connected UEs and the deactivation of the cell.
+/// \brief Releases a caller-selected set of UEs and deactivates a caller-selected set of cells.
+///
+/// The CU-CP releases the UEs (so the operation does not rely on the DU autonomously draining them) before sending
+/// the per-DU gNB-CU Configuration Updates that deactivate the cells. Pass an empty UE list to leave UE handling to
+/// the DU.
 class cell_deactivation_routine
 {
 public:
-  cell_deactivation_routine(const cu_cp_configuration&        cu_cp_cfg_,
-                            const std::vector<plmn_identity>& plmns_,
-                            du_processor_repository&          du_db_,
-                            cu_cp_ue_context_release_handler& ue_release_handler_,
-                            ue_manager&                       ue_mng_,
-                            ocudulog::basic_logger&           logger_);
+  cell_deactivation_routine(const cu_cp_configuration&         cu_cp_cfg_,
+                            std::vector<cell_lifecycle_target> targets,
+                            std::vector<cu_cp_ue_index_t>      ues_to_release_,
+                            ngap_cause_t                       release_cause_,
+                            du_processor_repository&           du_db_,
+                            cu_cp_ue_context_release_handler&  ue_release_handler_,
+                            ue_manager&                        ue_mng_,
+                            ocudulog::basic_logger&            logger_);
   ~cell_deactivation_routine() = default;
 
-  void operator()(coro_context<async_task<void>>& ctx);
+  void operator()(coro_context<async_task<bool>>& ctx);
 
   static const char* name() { return "Cell Deactivation Routine"; }
 
-  void trigger_context_release_for_all_ues();
-
-  void get_remaining_plmns(const du_cell_configuration& cell_cfg);
-
-  bool generate_gnb_cu_configuration_update();
+  void trigger_context_release();
 
 private:
-  const cu_cp_configuration&        cu_cp_cfg;
-  const std::vector<plmn_identity>  plmns;
   du_processor_repository&          du_db;
   cu_cp_ue_context_release_handler& ue_release_handler;
   ue_manager&                       ue_mng;
   ocudulog::basic_logger&           logger;
 
-  // (Sub-)Routine requests.
-  f1ap_gnb_cu_configuration_update f1ap_cu_cfg_update;
+  std::vector<cu_cp_ue_index_t> ues_to_release;
+  const ngap_cause_t            release_cause;
+
+  // One gNB-CU Configuration Update per DU, built from the caller-provided targets.
+  std::vector<std::pair<cu_cp_du_index_t, f1ap_gnb_cu_configuration_update>>           du_updates;
+  std::vector<std::pair<cu_cp_du_index_t, f1ap_gnb_cu_configuration_update>>::iterator du_update_it;
 
   // (Sub-)Routine results.
   f1ap_gnb_cu_configuration_update_response f1ap_cu_cfg_update_response;
@@ -55,13 +61,9 @@ private:
   std::vector<ue_release_task_t>           ue_release_tasks;
   std::vector<ue_release_task_t>::iterator ue_release_task_it;
 
-  std::unordered_set<plmn_identity>       remaining_plmns;
-  std::vector<cu_cp_du_index_t>           du_indexes;
-  std::vector<cu_cp_du_index_t>::iterator du_idx_it;
-  du_processor*                           du_proc = nullptr;
+  du_processor* du_proc = nullptr;
 
   std::chrono::steady_clock::time_point proc_start_tp;
-  std::chrono::steady_clock::time_point ue_release_finish_tp;
 };
 
 } // namespace ocudu::ocucp

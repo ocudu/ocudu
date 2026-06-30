@@ -4,6 +4,8 @@
 
 #include "amf_connection_loss_routine.h"
 #include "cell_deactivation_routine.h"
+#include "cell_lifecycle_target.h"
+#include "ocudu/ran/cause/ngap_cause.h"
 #include "ocudu/support/async/coroutine.h"
 
 using namespace ocudu;
@@ -40,8 +42,21 @@ void amf_connection_loss_routine::operator()(coro_context<async_task<void>>& ctx
   // Stop accepting new UEs for the given PLMNs.
   ue_mng.add_blocked_plmns(plmns);
 
-  // Deactivate the cells served by the disconnected AMF.
-  CORO_AWAIT(launch_async<cell_deactivation_routine>(cu_cp_cfg, plmns, du_db, ue_release_handler, ue_mng, logger));
+  // Deactivate the cells served by the disconnected AMF, releasing their UEs from the CU-CP first (the core is
+  // gone, so they are dropped with a transport cause).
+  CORO_AWAIT_VALUE(
+      bool cells_deactivated,
+      launch_async<cell_deactivation_routine>(cu_cp_cfg,
+                                              resolve_deactivation_targets(du_db, plmns),
+                                              collect_ues_for_plmns(ue_mng, plmns),
+                                              ngap_cause_t{ngap_cause_transport_t::transport_res_unavailable},
+                                              du_db,
+                                              ue_release_handler,
+                                              ue_mng,
+                                              logger));
+  if (!cells_deactivated) {
+    logger.warning("\"{}\" cell deactivation finished with errors", name());
+  }
 
   // Try to reconnect to AMF.
   controller.amf_connection_handler().reconnect_to_amf(amf_index, &ue_mng, cu_cp_cfg.ngap.amf_reconnection_retry_time);

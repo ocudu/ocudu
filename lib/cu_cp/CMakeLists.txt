@@ -36,6 +36,7 @@ set(SOURCES
         routines/amf_reconnection_routine.cpp
         routines/cell_activation_routine.cpp
         routines/cell_deactivation_routine.cpp
+        routines/cell_lifecycle_target.cpp
         routines/pws_sib_encoder.cpp
         routines/write_replace_warning_routine.cpp
         routines/initial_context_setup_routine.cpp
