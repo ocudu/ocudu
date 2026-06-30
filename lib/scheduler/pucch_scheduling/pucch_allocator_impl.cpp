@@ -427,7 +427,7 @@ std::optional<unsigned> pucch_allocator_impl::alloc_ded_harq_ack(cell_resource_a
   return new_grants->d_pri;
 }
 
-void pucch_allocator_impl::alloc_sr_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
+bool pucch_allocator_impl::alloc_sr_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
                                                 rnti_t                        crnti,
                                                 const ue_cell_configuration&  ue_cell_cfg)
 {
@@ -436,14 +436,14 @@ void pucch_allocator_impl::alloc_sr_opportunity(cell_slot_resource_allocator& pu
 
   ue_grants* existing_grants = slot_ctx.find_ue_grants(crnti);
   if (not can_allocate_pucch(pucch_slot_alloc, existing_grants, alloc_ctx)) {
-    return;
+    return false;
   }
 
   if (existing_grants != nullptr and cell_cfg.is_pucch_f0_and_f2() and existing_grants->harq_ack.has_value()) {
     // In the F0+F2 case, the PRI used for the HARQ-ACK is restricted if CSI or SR is multiplexed with it.
     // If HARQ-ACK has already been allocated in this slot, the PRI has already been set and could be incompatible.
     alloc_ctx.log_skipped_alloc(logger.info, "existing HARQ-ACK grant");
-    return;
+    return false;
   }
 
   ue_grants old_grants{};
@@ -471,7 +471,7 @@ void pucch_allocator_impl::alloc_sr_opportunity(cell_slot_resource_allocator& pu
         resource_manager.do_alloc(pucch_slot_alloc, res, alloc_ctx.rnti);
       }
     }
-    return;
+    return false;
   }
 
   // Update the UE grants and allocate the resources in the resource manager.
@@ -480,9 +480,11 @@ void pucch_allocator_impl::alloc_sr_opportunity(cell_slot_resource_allocator& pu
     const auto& res = *pucch_slot_alloc.result.ul.pucchs[pdu_idx].res;
     resource_manager.do_alloc(pucch_slot_alloc, res, alloc_ctx.rnti);
   }
+
+  return true;
 }
 
-void pucch_allocator_impl::alloc_csi_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
+bool pucch_allocator_impl::alloc_csi_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
                                                  rnti_t                        crnti,
                                                  const ue_cell_configuration&  ue_cell_cfg,
                                                  unsigned                      csi_part1_nof_bits)
@@ -492,14 +494,14 @@ void pucch_allocator_impl::alloc_csi_opportunity(cell_slot_resource_allocator& p
 
   ue_grants* existing_grants = slot_ctx.find_ue_grants(crnti);
   if (not can_allocate_pucch(pucch_slot_alloc, existing_grants, alloc_ctx)) {
-    return;
+    return false;
   }
 
   if (existing_grants != nullptr and cell_cfg.is_pucch_f0_and_f2() and existing_grants->harq_ack.has_value()) {
     // In the F0+F2 case, the PRI used for the HARQ-ACK is restricted if CSI or SR is multiplexed with it.
     // If HARQ-ACK has already been allocated in this slot, the PRI has already been set and could be incompatible.
     alloc_ctx.log_skipped_alloc(logger.info, "existing HARQ-ACK grant");
-    return;
+    return false;
   }
 
   ue_grants old_grants{};
@@ -527,7 +529,7 @@ void pucch_allocator_impl::alloc_csi_opportunity(cell_slot_resource_allocator& p
         resource_manager.do_alloc(pucch_slot_alloc, res, alloc_ctx.rnti);
       }
     }
-    return;
+    return false;
   }
 
   // Update the UE grants and allocate the resources in the resource manager.
@@ -536,6 +538,8 @@ void pucch_allocator_impl::alloc_csi_opportunity(cell_slot_resource_allocator& p
     const auto& res = *pucch_slot_alloc.result.ul.pucchs[pdu_idx].res;
     resource_manager.do_alloc(pucch_slot_alloc, res, alloc_ctx.rnti);
   }
+
+  return true;
 }
 
 pucch_uci_bits pucch_allocator_impl::remove_ue_uci_from_pucch(cell_slot_resource_allocator& slot_alloc,

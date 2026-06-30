@@ -40,6 +40,13 @@ struct pucch_uci_bits {
   {
     return harq_ack_nof_bits + sr_nof_bits_to_uint(sr_bits) + csi_part1_nof_bits;
   }
+
+  bool operator==(const pucch_uci_bits& other) const
+  {
+    return harq_ack_nof_bits == other.harq_ack_nof_bits and sr_bits == other.sr_bits and
+           csi_part1_nof_bits == other.csi_part1_nof_bits;
+  }
+  bool operator!=(const pucch_uci_bits& other) const { return not(*this == other); }
 };
 
 } // namespace ocudu

@@ -69,7 +69,7 @@ protected:
 
 TEST_F(pucch_alloc_format_0_test, test_sr_allocation_only)
 {
-  alloc_sr_opportunity(t_bench.get_main_ue());
+  ASSERT_TRUE(alloc_sr_opportunity(t_bench.get_main_ue()));
 
   ASSERT_EQ(1U, default_slot_grid.result.ul.pucchs.size());
   ASSERT_TRUE(
@@ -114,7 +114,7 @@ TEST_F(pucch_alloc_format_0_test, alloc_ded_harq_ack_with_existing_sr_succeeds_u
   const unsigned max_payload_f2 = t_bench.params.pucch_ded_params.max_payload_234();
 
   // Add HARQ grants to reach the max_payload.
-  alloc_sr_opportunity(t_bench.get_main_ue());
+  ASSERT_TRUE(alloc_sr_opportunity(t_bench.get_main_ue()));
   for (unsigned n = 0; n != (max_payload_f2 - 1); ++n) {
     // These grants should be allocated successfully, as we are below the max payload.
     auto pri = alloc_ded_harq_ack(t_bench.get_main_ue());
@@ -161,7 +161,7 @@ TEST_F(pucch_alloc_format_0_test, alloc_ded_harq_ack_with_existing_csi_succeeds_
   const unsigned max_payload_f2 = t_bench.params.pucch_ded_params.max_payload_234();
 
   // Add HARQ grants to reach the max_payload.
-  alloc_csi_opportunity(t_bench.get_main_ue(), default_csi_part1_bits);
+  ASSERT_TRUE(alloc_csi_opportunity(t_bench.get_main_ue(), default_csi_part1_bits));
   for (unsigned n = 0; n != (max_payload_f2 - default_csi_part1_bits); ++n) {
     // These grants should be allocated successfully, as we are below the max payload.
     auto pri = alloc_ded_harq_ack(t_bench.get_main_ue());

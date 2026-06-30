@@ -27,15 +27,16 @@ protected:
   const cell_slot_resource_allocator& default_slot_grid = t_bench.res_grid[t_bench.k0 + default_k1];
 
   // Helper for adding a SR grant to a given UE.
-  void alloc_sr_opportunity(const ue& ue)
+  bool alloc_sr_opportunity(const ue& ue)
   {
-    t_bench.pucch_alloc.alloc_sr_opportunity(t_bench.res_grid[t_bench.k0 + default_k1], ue.crnti, ue.get_pcell().cfg());
+    return t_bench.pucch_alloc.alloc_sr_opportunity(
+        t_bench.res_grid[t_bench.k0 + default_k1], ue.crnti, ue.get_pcell().cfg());
   }
 
   // Helper for adding a SR grant to a given UE.
-  void alloc_csi_opportunity(const ue& ue, unsigned csi_part1_bits)
+  bool alloc_csi_opportunity(const ue& ue, unsigned csi_part1_bits)
   {
-    t_bench.pucch_alloc.alloc_csi_opportunity(
+    return t_bench.pucch_alloc.alloc_csi_opportunity(
         t_bench.res_grid[t_bench.k0 + default_k1], ue.crnti, ue.get_pcell().cfg(), csi_part1_bits);
   }
 

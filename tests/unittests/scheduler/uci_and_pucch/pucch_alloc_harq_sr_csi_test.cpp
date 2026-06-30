@@ -47,7 +47,7 @@ protected:
 
 TEST_F(pucch_alloc_multiple_rbs_test, test_prb_allocation_csi_only)
 {
-  alloc_csi_opportunity(t_bench.get_main_ue(), default_csi_part1_bits);
+  ASSERT_TRUE(alloc_csi_opportunity(t_bench.get_main_ue(), default_csi_part1_bits));
 
   // Expect 1 PUCCH grant with CSI.
   ASSERT_EQ(1U, default_slot_grid.result.ul.pucchs.size());
@@ -61,8 +61,8 @@ TEST_F(pucch_alloc_multiple_rbs_test, test_prb_allocation_csi_sr)
 {
   pucch_expected_csi_only.uci_bits.sr_bits = sr_nof_bits::one;
 
-  alloc_sr_opportunity(t_bench.get_main_ue());
-  alloc_csi_opportunity(t_bench.get_main_ue(), default_csi_part1_bits);
+  ASSERT_TRUE(alloc_sr_opportunity(t_bench.get_main_ue()));
+  ASSERT_TRUE(alloc_csi_opportunity(t_bench.get_main_ue(), default_csi_part1_bits));
 
   ASSERT_EQ(1U, default_slot_grid.result.ul.pucchs.size());
   ASSERT_TRUE(find_pucch_pdu(default_slot_grid.result.ul.pucchs.unsorted(),
@@ -74,7 +74,7 @@ TEST_F(pucch_alloc_multiple_rbs_test, test_prb_allocation_csi_sr)
 TEST_F(pucch_alloc_multiple_rbs_test, test_prb_allocation_harq_only)
 {
   for (unsigned i = 0; i != 5; ++i) {
-    alloc_ded_harq_ack(t_bench.get_main_ue());
+    ASSERT_TRUE(alloc_ded_harq_ack(t_bench.get_main_ue()));
   }
 
   ASSERT_EQ(1U, default_slot_grid.result.ul.pucchs.size());
@@ -85,9 +85,9 @@ TEST_F(pucch_alloc_multiple_rbs_test, test_prb_allocation_harq_only)
 
 TEST_F(pucch_alloc_multiple_rbs_test, test_prb_allocation_harq_csi_only)
 {
-  alloc_csi_opportunity(t_bench.get_main_ue(), default_csi_part1_bits);
+  ASSERT_TRUE(alloc_csi_opportunity(t_bench.get_main_ue(), default_csi_part1_bits));
   for (unsigned i = 0; i != 2; ++i) {
-    alloc_ded_harq_ack(t_bench.get_main_ue());
+    ASSERT_TRUE(alloc_ded_harq_ack(t_bench.get_main_ue()));
   }
 
   ASSERT_TRUE(find_pucch_pdu(
@@ -112,19 +112,19 @@ protected:
 
 TEST_F(pucch_alloc_reach_ul_grant_limits_test, test_max_pucch_allocation_reached)
 {
-  alloc_csi_opportunity(t_bench.get_main_ue(), default_csi_part1_bits);
+  ASSERT_TRUE(alloc_csi_opportunity(t_bench.get_main_ue(), default_csi_part1_bits));
   ASSERT_EQ(1U, default_slot_grid.result.ul.pucchs.size());
 
   t_bench.add_ue();
-  alloc_ded_harq_ack(t_bench.get_ue(t_bench.last_added_ue_idx));
+  ASSERT_TRUE(alloc_ded_harq_ack(t_bench.get_ue(t_bench.last_added_ue_idx)));
   ASSERT_EQ(2U, default_slot_grid.result.ul.pucchs.size());
 
   t_bench.add_ue();
-  alloc_ded_harq_ack(t_bench.get_ue(t_bench.last_added_ue_idx));
+  ASSERT_TRUE(alloc_ded_harq_ack(t_bench.get_ue(t_bench.last_added_ue_idx)));
   ASSERT_EQ(3U, default_slot_grid.result.ul.pucchs.size());
 
   t_bench.add_ue();
-  alloc_ded_harq_ack(t_bench.get_ue(t_bench.last_added_ue_idx));
+  ASSERT_FALSE(alloc_ded_harq_ack(t_bench.get_ue(t_bench.last_added_ue_idx)));
   ASSERT_EQ(3U, default_slot_grid.result.ul.pucchs.size());
 }
 
@@ -136,19 +136,19 @@ TEST_F(pucch_alloc_reach_ul_grant_limits_test, test_max_ul_allocations_reached)
   slot_grid.result.ul.puschs.emplace_back();
   slot_grid.result.ul.puschs.emplace_back();
 
-  alloc_csi_opportunity(t_bench.get_main_ue(), default_csi_part1_bits);
+  ASSERT_TRUE(alloc_csi_opportunity(t_bench.get_main_ue(), default_csi_part1_bits));
   ASSERT_EQ(1U, slot_grid.result.ul.pucchs.size());
 
   t_bench.add_ue();
-  alloc_ded_harq_ack(t_bench.get_ue(t_bench.last_added_ue_idx));
+  ASSERT_TRUE(alloc_ded_harq_ack(t_bench.get_ue(t_bench.last_added_ue_idx)));
   ASSERT_EQ(2U, slot_grid.result.ul.pucchs.size());
 
   t_bench.add_ue();
-  alloc_ded_harq_ack(t_bench.get_ue(t_bench.last_added_ue_idx));
+  ASSERT_TRUE(alloc_ded_harq_ack(t_bench.get_ue(t_bench.last_added_ue_idx)));
   ASSERT_EQ(3U, slot_grid.result.ul.pucchs.size());
 
   t_bench.add_ue();
-  alloc_ded_harq_ack(t_bench.get_ue(t_bench.last_added_ue_idx));
+  ASSERT_FALSE(alloc_ded_harq_ack(t_bench.get_ue(t_bench.last_added_ue_idx)));
   ASSERT_EQ(3U, slot_grid.result.ul.pucchs.size());
 }
 
@@ -160,7 +160,7 @@ TEST_F(pucch_alloc_reach_ul_grant_limits_test, test_sr_max_ul_allocations_reache
     slot_grid.result.ul.puschs.emplace_back();
   }
 
-  alloc_sr_opportunity(t_bench.get_main_ue());
+  ASSERT_FALSE(alloc_sr_opportunity(t_bench.get_main_ue()));
   ASSERT_EQ(0U, slot_grid.result.ul.pucchs.size());
 }
 
@@ -172,6 +172,6 @@ TEST_F(pucch_alloc_reach_ul_grant_limits_test, test_csi_max_ul_allocations_reach
     slot_grid.result.ul.puschs.emplace_back();
   }
 
-  alloc_csi_opportunity(t_bench.get_main_ue(), default_csi_part1_bits);
+  ASSERT_FALSE(alloc_csi_opportunity(t_bench.get_main_ue(), default_csi_part1_bits));
   ASSERT_EQ(0U, slot_grid.result.ul.pucchs.size());
 }

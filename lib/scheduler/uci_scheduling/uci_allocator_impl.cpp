@@ -240,7 +240,7 @@ std::optional<uci_allocation> uci_allocator_impl::alloc_harq_ack(cell_resource_a
   return {};
 }
 
-void uci_allocator_impl::alloc_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
+bool uci_allocator_impl::alloc_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
                                               rnti_t                        crnti,
                                               const ue_cell_configuration&  ue_cell_cfg)
 {
@@ -255,13 +255,13 @@ void uci_allocator_impl::alloc_sr_opportunity(cell_slot_resource_allocator& slot
   // If there is a PUSCH allocated for this UE, do not allocate any PUCCH SR grants.
   if (has_pusch_grants) {
     logger.debug("rnti={}: SR allocation skipped due to PUSCH grant allocated.", crnti);
-    return;
+    return false;
   }
 
-  pucch_alloc.alloc_sr_opportunity(slot_alloc, crnti, ue_cell_cfg);
+  return pucch_alloc.alloc_sr_opportunity(slot_alloc, crnti, ue_cell_cfg);
 }
 
-void uci_allocator_impl::alloc_csi_opportunity(cell_slot_resource_allocator& slot_alloc,
+bool uci_allocator_impl::alloc_csi_opportunity(cell_slot_resource_allocator& slot_alloc,
                                                rnti_t                        crnti,
                                                const ue_cell_configuration&  ue_cell_cfg)
 {
@@ -282,12 +282,12 @@ void uci_allocator_impl::alloc_csi_opportunity(cell_slot_resource_allocator& slo
     existing_pusch->uci.value().alpha = ue_cell_cfg.init_bwp().ul.ded()->pusch_cfg.value().uci_cfg.value().scaling;
 
     add_csi_to_uci_on_pusch(existing_pusch->uci.value().csi.emplace(uci_info::csi_info()), ue_cell_cfg);
-    return;
+    return false;
   }
 
   // Else, allocate the CSI on the PUCCH.
   const auto& csi_report_cfg = create_csi_report_configuration(*ue_cell_cfg.csi_meas_cfg());
-  pucch_alloc.alloc_csi_opportunity(
+  return pucch_alloc.alloc_csi_opportunity(
       slot_alloc, crnti, ue_cell_cfg, get_csi_report_pucch_size(csi_report_cfg).part1_size.value());
 }
 

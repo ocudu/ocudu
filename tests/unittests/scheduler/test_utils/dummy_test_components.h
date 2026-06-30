@@ -44,7 +44,7 @@ public:
         &*slot_alloc.cfg.params.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0;
     slot_alloc.result.dl.dl_pdcchs.back().ctx.cces          = {get_ncce(slot_alloc.slot), ocudu::aggregation_level::n4};
     slot_alloc.result.dl.dl_pdcchs.back().ctx.context.ss_id = ss_id;
-    return &slot_alloc.result.dl.dl_pdcchs[0];
+    return &slot_alloc.result.dl.dl_pdcchs.back();
   }
 
   pdcch_dl_information* alloc_dl_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
@@ -122,16 +122,18 @@ public:
   {
   }
 
-  void alloc_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
+  bool alloc_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
                             rnti_t                        crnti,
                             const ue_cell_configuration&  ue_cell_cfg) override
   {
+    return true;
   }
 
-  void alloc_csi_opportunity(cell_slot_resource_allocator& slot_alloc,
+  bool alloc_csi_opportunity(cell_slot_resource_allocator& slot_alloc,
                              rnti_t                        crnti,
                              const ue_cell_configuration&  ue_cell_cfg) override
   {
+    return true;
   }
 
   uint8_t get_scheduled_pdsch_counter_in_ue_uci(slot_point uci_slot, rnti_t crnti) override { return 0; }

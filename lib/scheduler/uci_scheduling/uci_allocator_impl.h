@@ -30,11 +30,11 @@ public:
                                                unsigned                     k0,
                                                span<const uint8_t>          k1_list) override;
 
-  void alloc_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
+  bool alloc_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
                             rnti_t                        crnti,
                             const ue_cell_configuration&  ue_cell_cfg) override;
 
-  void alloc_csi_opportunity(cell_slot_resource_allocator& slot_alloc,
+  bool alloc_csi_opportunity(cell_slot_resource_allocator& slot_alloc,
                              rnti_t                        crnti,
                              const ue_cell_configuration&  ue_cell_cfg) override;
 

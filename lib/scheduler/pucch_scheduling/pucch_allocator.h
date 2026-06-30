@@ -74,7 +74,8 @@ public:
   /// \param[out,in] pucch_slot_alloc struct with scheduling results.
   /// \param[in] crnti C-RNTI of the UE.
   /// \param[in] ue_cell_cfg user configuration.
-  virtual void alloc_sr_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
+  /// \return True if the allocation was successful; false otherwise.
+  virtual bool alloc_sr_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
                                     rnti_t                        crnti,
                                     const ue_cell_configuration&  ue_cell_cfg) = 0;
 
@@ -83,7 +84,8 @@ public:
   /// \param[in] crnti C-RNTI of the UE.
   /// \param[in] ue_cell_cfg user configuration.
   /// \param[in] csi_part1_nof_bits Number of CSI Part 1 bits that need to be reported.
-  virtual void alloc_csi_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
+  /// \return True if the allocation was successful; false otherwise.
+  virtual bool alloc_csi_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
                                      rnti_t                        crnti,
                                      const ue_cell_configuration&  ue_cell_cfg,
                                      unsigned                      csi_part1_nof_bits) = 0;

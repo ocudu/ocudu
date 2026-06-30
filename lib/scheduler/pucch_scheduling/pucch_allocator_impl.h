@@ -52,11 +52,11 @@ public:
                                              unsigned                     k0,
                                              unsigned                     k1) override;
 
-  void alloc_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
+  bool alloc_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
                             rnti_t                        crnti,
                             const ue_cell_configuration&  ue_cell_cfg) override;
 
-  void alloc_csi_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
+  bool alloc_csi_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
                              rnti_t                        crnti,
                              const ue_cell_configuration&  ue_cell_cfg,
                              unsigned                      csi_part1_nof_bits) override;
