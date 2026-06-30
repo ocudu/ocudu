@@ -8,6 +8,8 @@
 .image-build-common:
   extends: .docker-builder
   stage: publish
+  timeout: 3 hours
+  retry: 1 # self-retry because they are long jobs that run in the nightly
   variables:
     DOCKER_UHD_VERSION: "4.6.0.0"
     DOCKER_DPDK_VERSION: "25.11.2"

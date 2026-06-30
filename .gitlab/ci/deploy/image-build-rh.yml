@@ -15,7 +15,6 @@
 # ---------------------------------------------------------------------------
 .image-build-rh:
   extends: .image-build-common
-  timeout: 3 hours
   tags:
     - ocudu-rhel-${TARGETARCH}
   image: ${OCUDU_REGISTRY_URI}/rh-tool-cli:$RH_TOOL_CLI_VERSION

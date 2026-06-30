@@ -79,7 +79,6 @@ stages:
     - .docker-builder
     - .matrix-legacy-image
   stage: publish
-  timeout: 3 hours
   variables:
     REGISTRY_URI: ${OCUDU_REGISTRY_URI}
     CONTEXT: ${CI_PROJECT_DIR}
