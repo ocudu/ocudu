@@ -209,23 +209,23 @@ generate_ntn_configuration_manager_config(const gnb_id_t& gnb_id, span<const du_
       // Build sat-switch target satellite (if configured).
       if (ntn_cfg.sat_switch_with_resync) {
         const auto& sat_sw = *ntn_cfg.sat_switch_with_resync;
-        if (sat_sw.epoch_timestamp && sat_sw.ntn_cfg.ephemeris_info) {
+        if (sat_sw.epoch_timestamp && sat_sw.ephemeris_info) {
           unsigned sw_sat_idx = add_satellite_config(out_cfg,
                                                      next_satellite_idx,
                                                      sat_sw.epoch_timestamp,
-                                                     *sat_sw.ntn_cfg.ephemeris_info,
-                                                     sat_sw.ntn_gateway_location,
+                                                     *sat_sw.ephemeris_info,
+                                                     sat_sw.gateway_location,
                                                      std::nullopt,
                                                      ntn_cfg.propagator_type);
           out_cell.sat_switch = {
               sw_sat_idx,
               sat_sw.t_service_start,
               sat_sw.ssb_time_offset_sf,
-              sat_sw.ntn_cfg.ntn_ul_sync_validity_dur,
-              sat_sw.ntn_cfg.cell_specific_koffset,
-              sat_sw.ntn_cfg.k_mac,
-              sat_sw.ntn_cfg.polarization,
-              sat_sw.ntn_cfg.ta_report,
+              sat_sw.ntn_ul_sync_validity_dur,
+              sat_sw.cell_specific_koffset,
+              sat_sw.k_mac,
+              sat_sw.polarization,
+              sat_sw.ta_report,
           };
         }
       }

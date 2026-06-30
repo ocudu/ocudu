@@ -92,88 +92,6 @@ configure_cli11_geodetic_coordinates(CLI::App& app, geodetic_coordinates_t& loca
   }
 }
 
-static void configure_cli11_sat_switch_with_resync(CLI::App& app, sat_switch_with_resync_t& sat_switch_config)
-{
-  // epoch_timestamp (reference epoch for assistance info provided in config file).
-  app.add_option_function<std::string>(
-         "--epoch_timestamp",
-         [&sat_switch_config](const std::string& value) {
-           if (is_number(value)) {
-             const auto ms_since_epoch = parse_int<int64_t>(value);
-
-             report_fatal_error_if_not(ms_since_epoch.has_value(),
-                                       fmt::format("Invalid --epoch_timestamp value '" + value + "'").c_str());
-
-             sat_switch_config.epoch_timestamp =
-                 std::chrono::system_clock::time_point(std::chrono::milliseconds(*ms_since_epoch));
-           } else {
-             sat_switch_config.epoch_timestamp = parse_timestamp_ms(value).value();
-           }
-         },
-         "Epoch timestamp for NTN assistance info (Unix time in ms or ISO 8601: YYYY-MM-DDTHH:MM:SS[.mmm])")
-      ->check([](const std::string& input) {
-        if (!is_number(input) && !is_valid_timestamp(input)) {
-          return std::string("Invalid timestamp format. Expected Unix time (ms) or YYYY-MM-DDTHH:MM:SS[.mmm]");
-        }
-        return std::string();
-      });
-
-  // ntn_gateway_location.
-  static geodetic_coordinates_t ntn_gateway_location;
-  CLI::App*                     gateway_location_subcmd =
-      add_subcommand(app, "ntn_gateway_location", "Geodetic coordinates of NTN gateway location");
-  configure_cli11_geodetic_coordinates(*gateway_location_subcmd, ntn_gateway_location);
-  gateway_location_subcmd->parse_complete_callback([&]() {
-    if (app.get_subcommand("ntn_gateway_location")->count() != 0) {
-      sat_switch_config.ntn_gateway_location = ntn_gateway_location;
-    }
-  });
-
-  // t_service_start (time when target satellite starts serving).
-  app.add_option_function<std::string>(
-         "--t_service_start",
-         [&sat_switch_config](const std::string& value) {
-           if (is_number(value)) {
-             const auto ms_since_epoch = parse_int<int64_t>(value);
-
-             report_fatal_error_if_not(ms_since_epoch.has_value(),
-                                       fmt::format("Invalid --t_service_start value '" + value + "'").c_str());
-
-             sat_switch_config.t_service_start =
-                 std::chrono::system_clock::time_point(std::chrono::milliseconds(*ms_since_epoch));
-           } else {
-             sat_switch_config.t_service_start = parse_timestamp_ms(value).value();
-           }
-         },
-         "Time when target satellite starts serving (Unix time in ms or ISO 8601: YYYY-MM-DDTHH:MM:SS[.mmm])")
-      ->check([](const std::string& input) {
-        if (!is_number(input) && !is_valid_timestamp(input)) {
-          return std::string("Invalid timestamp format. Expected Unix time (ms) or YYYY-MM-DDTHH:MM:SS[.mmm]");
-        }
-        return std::string();
-      });
-
-  // ssb_time_offset_sf (0-159 subframes).
-  app.add_option_function<unsigned>(
-         "--ssb_time_offset_sf",
-         [&sat_switch_config](unsigned value) {
-           sat_switch_config.ssb_time_offset_sf =
-               sat_switch_with_resync_t::ssb_time_offset_t{static_cast<uint8_t>(value)};
-         },
-         "SSB time offset in subframes (0-159)")
-      ->check(CLI::Range(0, 159));
-
-  // Nested NTN config for sat-switch.
-  static ntn_config sat_switch_ntn_cfg;
-  CLI::App*         ntn_cfg_subcmd = add_subcommand(app, "ntn_cfg", "NTN config for satellite switch");
-  configure_cli11_ntn_config_args(*ntn_cfg_subcmd, sat_switch_ntn_cfg);
-  ntn_cfg_subcmd->parse_complete_callback([&]() {
-    if (app.get_subcommand("ntn_cfg")->count() != 0) {
-      sat_switch_config.ntn_cfg = sat_switch_ntn_cfg;
-    }
-  });
-}
-
 static void configure_cli11_ncells(CLI::App& app, std::vector<neighbor_ntn_cell>& ncells)
 {
   add_option_cell(
@@ -346,6 +264,71 @@ static void configure_cli11_ntn_polarization(CLI::App& app, ntn_polarization_t& 
       },
       "Polarization information for downlink transmission on service link")
       ->check(CLI::IsMember({"lhcp", "rhcp", "linear"}, CLI::ignore_case));
+}
+
+static void configure_cli11_sat_switch_with_resync(CLI::App& app, du_high_unit_sat_switch_config& sat_switch_config)
+{
+  add_timestamp_option(
+      app,
+      "--epoch_timestamp",
+      sat_switch_config.epoch_timestamp,
+      "Epoch timestamp for NTN assistance info (Unix time in ms or ISO 8601: YYYY-MM-DDTHH:MM:SS[.mmm])");
+
+  add_ephemeris_subcommands(app, sat_switch_config.ephemeris_info);
+
+  static geodetic_coordinates_t ntn_gateway_location;
+  CLI::App*                     gateway_location_subcmd =
+      add_subcommand(app, "ntn_gateway_location", "Geodetic coordinates of NTN gateway location");
+  configure_cli11_geodetic_coordinates(*gateway_location_subcmd, ntn_gateway_location);
+  gateway_location_subcmd->parse_complete_callback([&]() {
+    if (app.get_subcommand("ntn_gateway_location")->count() != 0) {
+      sat_switch_config.gateway_location = ntn_gateway_location;
+    }
+  });
+
+  static ta_info_t ta_info;
+  CLI::App*        ta_info_subcmd = add_subcommand(app, "ta_info", "TA info for the switch target satellite");
+  configure_cli11_ta_info(*ta_info_subcmd, ta_info);
+  ta_info_subcmd->parse_complete_callback([&]() {
+    if (app.get_subcommand("ta_info")->count() != 0) {
+      sat_switch_config.ta_info = ta_info;
+    }
+  });
+
+  add_timestamp_option(
+      app,
+      "--t_service_start",
+      sat_switch_config.t_service_start,
+      "Time when target satellite starts serving (Unix time in ms or ISO 8601: YYYY-MM-DDTHH:MM:SS[.mmm])");
+
+  app.add_option("--ssb_time_offset_sf", sat_switch_config.ssb_time_offset_sf, "SSB time offset in subframes (0-159)")
+      ->check(CLI::Range(0U, 159U));
+
+  app.add_option("--ntn_ul_sync_validity_dur",
+                 sat_switch_config.ntn_ul_sync_validity_dur,
+                 "UL sync validity duration after switch")
+      ->check(CLI::IsMember({5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 120, 180, 240, 900}));
+
+  app.add_option_function<unsigned>(
+         "--cell_specific_koffset",
+         [&sat_switch_config](unsigned value) {
+           sat_switch_config.cell_specific_koffset = std::chrono::milliseconds(value);
+         },
+         "Cell-specific k-offset after switch [ms]")
+      ->check(CLI::Range(1U, 1023U));
+
+  app.add_option("--k_mac", sat_switch_config.k_mac, "K_mac offset after switch");
+
+  static ntn_polarization_t polarization;
+  CLI::App*                 pol_subcmd = add_subcommand(app, "polarization", "Polarization after switch");
+  configure_cli11_ntn_polarization(*pol_subcmd, polarization);
+  pol_subcmd->parse_complete_callback([&]() {
+    if (app.get_subcommand("polarization")->count() != 0) {
+      sat_switch_config.polarization = polarization;
+    }
+  });
+
+  app.add_option("--ta_report", sat_switch_config.ta_report, "Enable TA reporting after switch");
 }
 
 void ocudu::configure_cli11_ntn_config_args(CLI::App& app, ntn_config& config)
@@ -547,8 +530,8 @@ static void configure_cli11_ntn_args(CLI::App& app, du_high_unit_cell_ntn_config
   configure_cli11_ncells(app, config.ncells);
 
   // Satellite switch with resynchronization (SIB19, R18 extension).
-  static sat_switch_with_resync_t sat_switch_config;
-  CLI::App*                       sat_switch_subcmd =
+  static du_high_unit_sat_switch_config sat_switch_config;
+  CLI::App*                             sat_switch_subcmd =
       add_subcommand(app, "sat_switch_with_resync", "Satellite switch with resynchronization parameters");
   configure_cli11_sat_switch_with_resync(*sat_switch_subcmd, sat_switch_config);
   sat_switch_subcmd->parse_complete_callback([&]() {

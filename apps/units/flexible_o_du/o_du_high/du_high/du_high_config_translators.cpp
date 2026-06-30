@@ -240,14 +240,10 @@ static sib16_info create_sib16_info(const du_high_unit_sib_config::sib16_config&
 static sib19_info create_sib19_info(const du_high_unit_cell_ntn_config& config)
 {
   sib19_info sib19;
-  sib19.t_service      = config.t_service;
-  sib19.ref_location   = config.reference_location;
-  sib19.distance_thres = config.distance_threshold;
-  for (const auto& ncell : config.ncells) {
-    sib19.ncells.push_back(ncell);
-  }
-  sib19.moving_ref_location    = config.moving_ref_location;
-  sib19.sat_switch_with_resync = config.sat_switch_with_resync;
+  sib19.t_service           = config.t_service;
+  sib19.ref_location        = config.reference_location;
+  sib19.distance_thres      = config.distance_threshold;
+  sib19.moving_ref_location = config.moving_ref_location;
 
   sib19.ntn_cfg.emplace();
   sib19.ntn_cfg->cell_specific_koffset    = config.cell_specific_koffset;
@@ -258,6 +254,31 @@ static sib19_info create_sib19_info(const du_high_unit_cell_ntn_config& config)
   sib19.ntn_cfg->ntn_ul_sync_validity_dur = config.ntn_ul_sync_validity_dur;
   sib19.ntn_cfg->polarization             = config.polarization;
   sib19.ntn_cfg->ta_report                = config.ta_report;
+
+  if (config.sat_switch_with_resync) {
+    const auto&              sw_cfg = *config.sat_switch_with_resync;
+    sat_switch_with_resync_t sw;
+    sw.epoch_timestamp      = sw_cfg.epoch_timestamp;
+    sw.ntn_gateway_location = sw_cfg.gateway_location;
+    sw.t_service_start      = sw_cfg.t_service_start;
+    if (sw_cfg.ssb_time_offset_sf) {
+      sw.ssb_time_offset_sf =
+          sat_switch_with_resync_t::ssb_time_offset_t{static_cast<uint8_t>(*sw_cfg.ssb_time_offset_sf)};
+    }
+    sw.ntn_cfg.ta_info                  = sw_cfg.ta_info;
+    sw.ntn_cfg.ephemeris_info           = sw_cfg.ephemeris_info;
+    sw.ntn_cfg.ntn_ul_sync_validity_dur = sw_cfg.ntn_ul_sync_validity_dur;
+    sw.ntn_cfg.cell_specific_koffset    = sw_cfg.cell_specific_koffset;
+    sw.ntn_cfg.k_mac                    = sw_cfg.k_mac;
+    sw.ntn_cfg.polarization             = sw_cfg.polarization;
+    sw.ntn_cfg.ta_report                = sw_cfg.ta_report;
+    sib19.sat_switch_with_resync        = sw;
+  }
+
+  for (const auto& ncell : config.ncells) {
+    sib19.ncells.push_back(ncell);
+  }
+
   return sib19;
 }
 

@@ -189,18 +189,37 @@ void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_
   }
 
   // Satellite switch with resynchronization (R18 extension).
-  if (config.sat_switch_with_resync.has_value()) {
-    const auto& sat_sw = config.sat_switch_with_resync.value();
+  if (config.sat_switch_with_resync) {
+    const auto& sw = *config.sat_switch_with_resync;
     YAML::Node  sat_sw_node;
 
-    // TODO: add ntn-config dump.
-
-    if (sat_sw.t_service_start.has_value()) {
-      sat_sw_node["t_service_start"] = timepoint_to_iso8601(sat_sw.t_service_start.value());
+    if (sw.epoch_timestamp) {
+      sat_sw_node["epoch_timestamp"] = timepoint_to_iso8601(*sw.epoch_timestamp);
     }
-
-    if (sat_sw.ssb_time_offset_sf.has_value()) {
-      sat_sw_node["ssb_time_offset_sf"] = static_cast<unsigned>(sat_sw.ssb_time_offset_sf->value());
+    fill_optional_ephemeris(sat_sw_node, sw.ephemeris_info);
+    if (sw.gateway_location) {
+      sat_sw_node["gateway_location"] = build_geodetic_node(*sw.gateway_location);
+    }
+    if (sw.ta_info) {
+      sat_sw_node["ta_info"] = build_ta_info_node(*sw.ta_info);
+    }
+    if (sw.t_service_start) {
+      sat_sw_node["t_service_start"] = timepoint_to_iso8601(*sw.t_service_start);
+    }
+    if (sw.ssb_time_offset_sf) {
+      sat_sw_node["ssb_time_offset_sf"] = *sw.ssb_time_offset_sf;
+    }
+    if (sw.ntn_ul_sync_validity_dur) {
+      sat_sw_node["ntn_ul_sync_validity_dur"] = *sw.ntn_ul_sync_validity_dur;
+    }
+    if (sw.cell_specific_koffset) {
+      sat_sw_node["cell_specific_koffset"] = static_cast<unsigned>(sw.cell_specific_koffset->count());
+    }
+    if (sw.k_mac) {
+      sat_sw_node["k_mac"] = *sw.k_mac;
+    }
+    if (sw.ta_report) {
+      sat_sw_node["ta_report"] = *sw.ta_report;
     }
 
     ntn_node["sat_switch_with_resync"] = sat_sw_node;

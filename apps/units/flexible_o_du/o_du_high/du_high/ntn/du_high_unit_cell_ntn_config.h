@@ -13,6 +13,31 @@
 
 namespace ocudu {
 
+/// Application-level sat_switch_with_resync configuration.
+/// satellite_idx is mutually exclusive with inline ephemeris fields (epoch_timestamp, ephemeris_info,
+/// gateway_location, ta_info).
+struct du_high_unit_sat_switch_config {
+  /// Reference to a globally-defined satellite for the switch target.
+  std::optional<unsigned> satellite_idx;
+
+  /// Inline satellite definition (mutually exclusive with satellite_idx).
+  std::optional<std::chrono::system_clock::time_point>                   epoch_timestamp;
+  std::optional<std::variant<ecef_coordinates_t, orbital_coordinates_t>> ephemeris_info;
+  std::optional<geodetic_coordinates_t>                                  gateway_location;
+  std::optional<ta_info_t>                                               ta_info;
+
+  /// Switch timing.
+  std::optional<std::chrono::system_clock::time_point> t_service_start;
+  std::optional<unsigned>                              ssb_time_offset_sf;
+
+  /// Target cell NTN parameters after switch.
+  std::optional<unsigned>                  ntn_ul_sync_validity_dur;
+  std::optional<std::chrono::milliseconds> cell_specific_koffset;
+  std::optional<unsigned>                  k_mac;
+  std::optional<ntn_polarization_t>        polarization;
+  std::optional<bool>                      ta_report;
+};
+
 struct du_high_unit_cell_ntn_config {
   /// Reference location of the serving cell in geodetic coordinates format (in degrees).
   std::optional<geodetic_coordinates_t> reference_location;
@@ -64,7 +89,7 @@ struct du_high_unit_cell_ntn_config {
   /// Moving reference location for NTN Earth-moving cell (R18).
   std::optional<geodetic_coordinates_t> moving_ref_location;
   /// Satellite switch with resynchronization parameters (R18).
-  std::optional<sat_switch_with_resync_t> sat_switch_with_resync;
+  std::optional<du_high_unit_sat_switch_config> sat_switch_with_resync;
   /// List of NTN neighbor cells.
   std::vector<neighbor_ntn_cell> ncells;
   /// Orbit propagator to use for ephemeris propagation. Allowed values: "rk4", "keplerian".
