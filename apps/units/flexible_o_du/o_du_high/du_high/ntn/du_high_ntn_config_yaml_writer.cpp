@@ -37,11 +37,14 @@ void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_
   }
 
   if (config.ta_info) {
-    YAML::Node ta_info_node;
-    ta_info_node["ta_common"]               = config.ta_info.value().ta_common;
-    ta_info_node["ta_common_drift"]         = config.ta_info.value().ta_common_drift;
-    ta_info_node["ta_common_drift_variant"] = config.ta_info.value().ta_common_drift_variant;
-    ta_info_node["ta_common_offset"]        = config.ta_info.value().ta_common_offset;
+    YAML::Node       ta_info_node;
+    const ta_info_t& ta_info                = *config.ta_info;
+    ta_info_node["ta_common"]               = ta_info.ta_common;
+    ta_info_node["ta_common_drift"]         = ta_info.ta_common_drift;
+    ta_info_node["ta_common_drift_variant"] = ta_info.ta_common_drift_variant;
+    if (ta_info.ta_common_offset) {
+      ta_info_node["ta_common_offset"] = *ta_info.ta_common_offset;
+    }
 
     ntn_node["ta_info"] = ta_info_node;
   }

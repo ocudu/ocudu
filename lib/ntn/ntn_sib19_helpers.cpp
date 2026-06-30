@@ -39,7 +39,7 @@ sib19_info ocudu_ntn::generate_sib19_info(const ntn_cell_config&        cell_cfg
     if (!sib19.ntn_cfg->ta_info) {
       sib19.ntn_cfg->ta_info.emplace();
     }
-    sib19.ntn_cfg->ta_info->ta_common_offset = *cell_cfg.ntn_cfg.ta_common_offset;
+    sib19.ntn_cfg->ta_info->ta_common_offset = cell_cfg.ntn_cfg.ta_common_offset;
   }
 
   // Populate sat-switch target ntn_cfg with propagated ephemeris from the sat-switch OCM.

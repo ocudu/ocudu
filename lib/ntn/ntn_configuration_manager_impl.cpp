@@ -39,7 +39,7 @@ static double compute_doppler_shift_rate_hz_per_s(double ta_common_drift_variant
 static void merge_cell_config_update(ntn_cell_config& cfg, const ntn_cell_config_update_info& update)
 {
   cfg.ntn_cfg.ntn_ul_sync_validity_dur = update.ntn_ul_sync_validity_duration;
-  if (update.ta_info && update.ta_info->ta_common_offset != 0.0) {
+  if (update.ta_info && update.ta_info->ta_common_offset) {
     cfg.ntn_cfg.ta_common_offset = update.ta_info->ta_common_offset;
   }
   if (update.reference_location) {

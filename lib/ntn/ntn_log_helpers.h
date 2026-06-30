@@ -55,7 +55,9 @@ struct formatter<ocudu::ocudu_ntn::assistance_info_wrapper> {
       helper.format_if_verbose(ctx, "ta_common={:.3f}us", info.ta_info->ta_common);
       helper.format_if_verbose(ctx, "ta_common_drift={:.3f}us/s", info.ta_info->ta_common_drift);
       helper.format_if_verbose(ctx, "ta_common_drift_variant={:.3f}us/s2", info.ta_info->ta_common_drift_variant);
-      helper.format_if_verbose(ctx, "ta_common_offset={:.3f}us", info.ta_info->ta_common_offset);
+      if (info.ta_info->ta_common_offset) {
+        helper.format_if_verbose(ctx, "ta_common_offset={:.3f}us", *info.ta_info->ta_common_offset);
+      }
     }
 
     // Format ephemeris information.

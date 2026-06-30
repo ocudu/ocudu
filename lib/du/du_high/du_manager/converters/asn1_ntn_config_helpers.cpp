@@ -101,7 +101,9 @@ ntn_cfg_r17_s ocudu::odu::make_asn1_rrc_cell_ntn_cfg(const ntn_config& ntn_cfg)
     ta_info.ta_common_r17                       = static_cast<uint32_t>(ntn_cfg.ta_info->ta_common / 0.004072);
     ta_info.ta_common_drift_r17                 = static_cast<int32_t>(ntn_cfg.ta_info->ta_common_drift / 0.0002);
     ta_info.ta_common_drift_variant_r17 = static_cast<uint16_t>(ntn_cfg.ta_info->ta_common_drift_variant / 0.00002);
-    ta_info.ta_common_r17 += static_cast<int32_t>(ntn_cfg.ta_info->ta_common_offset / 0.004072);
+    if (ntn_cfg.ta_info->ta_common_offset) {
+      ta_info.ta_common_r17 += static_cast<int32_t>(*ntn_cfg.ta_info->ta_common_offset / 0.004072);
+    }
   }
 
   if (ntn_cfg.polarization.has_value()) {

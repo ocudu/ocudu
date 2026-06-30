@@ -132,7 +132,7 @@ convert_ntn_config_to_serving_cell_config(const du_high_unit_cell_ntn_config& cf
 
   // SIB19 fields exempt from valuetag.
   info.moving_reference_location = cfg.moving_ref_location;
-  if (cfg.ta_info && cfg.ta_info->ta_common_offset != 0.0) {
+  if (cfg.ta_info) {
     info.ta_common_offset = cfg.ta_info->ta_common_offset;
   }
   info.epoch_time               = cfg.epoch_time;
