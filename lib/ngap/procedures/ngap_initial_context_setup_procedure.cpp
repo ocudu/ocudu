@@ -38,16 +38,16 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
 {
   CORO_BEGIN(ctx);
 
-  logger.log_debug("\"{}\" started...", name());
+  logger.log_info("\"{}\" started...", name());
 
   CORO_AWAIT_VALUE(init_ctxt_setup_routine_outcome, cu_cp_notifier.on_new_initial_context_setup_request(request));
 
   if (not init_ctxt_setup_routine_outcome.has_value()) {
     send_initial_context_setup_failure(init_ctxt_setup_routine_outcome.error(), ue_ids.amf_ue_id, ue_ids.ran_ue_id);
-    logger.log_debug("\"{}\" failed", name());
+    logger.log_warning("\"{}\" failed", name());
   } else {
     send_initial_context_setup_response(init_ctxt_setup_routine_outcome.value(), ue_ids.amf_ue_id, ue_ids.ran_ue_id);
-    logger.log_debug("\"{}\" finished successfully", name());
+    logger.log_info("\"{}\" finished successfully", name());
   }
 
   CORO_RETURN();

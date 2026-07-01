@@ -47,7 +47,7 @@ void ngap_pdu_session_resource_setup_procedure::operator()(coro_context<async_ta
     CORO_EARLY_RETURN();
   }
 
-  ue_ctxt->logger.log_debug("\"{}\" started...", name());
+  ue_ctxt->logger.log_info("\"{}\" started...", name());
 
   if (!ue_ctxt->get_cu_cp_ue()->is_security_enabled()) {
     ue_ctxt->logger.log_warning("Dropping PDUSessionResourceSetupRequest. Security context is not activated");
@@ -80,9 +80,9 @@ void ngap_pdu_session_resource_setup_procedure::operator()(coro_context<async_ta
   }
 
   if (send_pdu_session_resource_setup_response()) {
-    ue_ctxt->logger.log_debug("\"{}\" finished successfully", name());
+    ue_ctxt->logger.log_info("\"{}\" finished successfully", name());
   } else {
-    ue_ctxt->logger.log_debug("\"{}\" failed", name());
+    ue_ctxt->logger.log_warning("\"{}\" failed", name());
   }
 
   CORO_RETURN();

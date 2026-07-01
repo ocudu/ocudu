@@ -25,7 +25,7 @@ void ng_reset_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("\"{}\" started...", name());
+  logger.info("\"{}\" started...", name());
 
   // Subscribe to respective publisher to receive NG RESET ACKNOWLEDGE message.
   transaction_sink.subscribe_to(ev_mng.ng_reset_outcome, context.procedure_timeout);
@@ -41,7 +41,7 @@ void ng_reset_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   // TODO: Handle NG RESET ACKNOWLEDGE message.
 
-  logger.debug("\"{}\" finished successfully", name());
+  logger.info("\"{}\" finished successfully", name());
 
   CORO_RETURN();
 }

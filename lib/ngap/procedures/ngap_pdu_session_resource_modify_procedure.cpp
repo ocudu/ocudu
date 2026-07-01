@@ -34,7 +34,7 @@ void ngap_pdu_session_resource_modify_procedure::operator()(coro_context<async_t
 {
   CORO_BEGIN(ctx);
 
-  logger.log_debug("\"{}\" started...", name());
+  logger.log_info("\"{}\" started...", name());
 
   // Verify PDU Session Resource Modify Request.
   verification_outcome = verify_pdu_session_resource_modify_request(request, asn1_request, logger);
@@ -64,9 +64,9 @@ void ngap_pdu_session_resource_modify_procedure::operator()(coro_context<async_t
       CORO_AWAIT(ngap_ctrl_handler.handle_ue_context_release_request(ue_context_release_request));
     }
 
-    logger.log_debug("\"{}\" finished successfully", name());
+    logger.log_info("\"{}\" finished successfully", name());
   } else {
-    logger.log_debug("\"{}\" failed", name());
+    logger.log_warning("\"{}\" failed", name());
   }
 
   CORO_RETURN();

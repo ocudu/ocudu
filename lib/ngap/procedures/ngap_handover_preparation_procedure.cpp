@@ -37,7 +37,7 @@ ngap_handover_preparation_procedure::ngap_handover_preparation_procedure(
 void ngap_handover_preparation_procedure::operator()(coro_context<async_task<ngap_handover_preparation_response>>& ctx)
 {
   CORO_BEGIN(ctx);
-  logger.log_debug("\"{}\" started...", name());
+  logger.log_info("\"{}\" started...", name());
 
   if (ue_ids.amf_ue_id == amf_ue_id_t::invalid || ue_ids.ran_ue_id == ran_ue_id_t::invalid) {
     logger.log_error("\"{}\" failed. Cause: Invalid NGAP id pair");
@@ -100,7 +100,7 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
       CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
     }
 
-    logger.log_debug("\"{}\" finished successfully", name());
+    logger.log_info("\"{}\" finished successfully", name());
   }
 
   // Forward procedure result to DU manager.

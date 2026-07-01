@@ -34,7 +34,7 @@ void ng_setup_procedure::operator()(coro_context<async_task<ngap_ng_setup_result
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("\"{}\" started...", name());
+  logger.info("\"{}\" started...", name());
 
   while (true) {
     // Subscribe to respective publisher to receive NG SETUP RESPONSE/FAILURE message.
@@ -131,8 +131,7 @@ ngap_ng_setup_result ng_setup_procedure::create_ng_setup_result()
   // Validate response content.
   auto msgerr = validate_ng_setup_response(transaction_sink.response());
   if (not msgerr.has_value()) {
-    logger.warning("Received invalid NG Setup Response. Cause: {}", msgerr.error().second);
-    logger.debug("\"{}\" failed", name());
+    logger.warning("\"{}\" failed. Cause: {}", name(), msgerr.error().second);
     return ngap_ng_setup_failure{ngap_cause_misc_t::unspecified};
   }
 
@@ -168,7 +167,7 @@ ngap_ng_setup_result ng_setup_procedure::create_ng_setup_result()
     }
   }
 
-  logger.debug("\"{}\" finished successfully", name());
+  logger.info("\"{}\" finished successfully", name());
 
   return response;
 }

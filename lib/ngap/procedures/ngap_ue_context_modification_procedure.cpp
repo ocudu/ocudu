@@ -26,7 +26,7 @@ void ngap_ue_context_modification_procedure::operator()(coro_context<async_task<
 {
   CORO_BEGIN(ctx);
 
-  logger.log_debug("\"{}\" started...", name());
+  logger.log_info("\"{}\" started...", name());
 
   CORO_AWAIT_VALUE(ue_ctxt_modification_routine_outcome,
                    cu_cp_notifier.on_new_ue_context_modification_request(request));
@@ -34,11 +34,11 @@ void ngap_ue_context_modification_procedure::operator()(coro_context<async_task<
   if (not ue_ctxt_modification_routine_outcome.has_value()) {
     send_ue_context_modification_failure(
         ue_ctxt_modification_routine_outcome.error(), ue_ids.amf_ue_id, ue_ids.ran_ue_id);
-    logger.log_debug("\"{}\" failed", name());
+    logger.log_warning("\"{}\" failed", name());
   } else {
     send_ue_context_modification_response(
         ue_ctxt_modification_routine_outcome.value(), ue_ids.amf_ue_id, ue_ids.ran_ue_id);
-    logger.log_debug("\"{}\" finished successfully", name());
+    logger.log_info("\"{}\" finished successfully", name());
   }
 
   CORO_RETURN();

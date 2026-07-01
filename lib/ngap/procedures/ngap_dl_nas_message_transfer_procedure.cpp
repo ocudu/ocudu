@@ -22,7 +22,7 @@ void ngap_dl_nas_message_transfer_procedure::operator()(coro_context<async_task<
 {
   CORO_BEGIN(ctx);
 
-  logger.log_debug("\"{}\" initialized", name());
+  logger.log_info("\"{}\" started...", name());
 
   send_pdu_to_rrc_ue();
 
@@ -32,7 +32,7 @@ void ngap_dl_nas_message_transfer_procedure::operator()(coro_context<async_task<
     send_ue_radio_capability_info_indication();
   }
 
-  logger.log_debug("\"{}\" finalized", name());
+  logger.log_info("\"{}\" finished successfully", name());
 
   CORO_RETURN();
 }

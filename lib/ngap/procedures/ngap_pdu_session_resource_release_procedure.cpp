@@ -27,7 +27,7 @@ void ngap_pdu_session_resource_release_procedure::operator()(coro_context<async_
 {
   CORO_BEGIN(ctx);
 
-  logger.log_debug("\"{}\" started...", name());
+  logger.log_info("\"{}\" started...", name());
 
   // Handle mandatory IEs.
   CORO_AWAIT_VALUE(response, cu_cp_notifier.on_new_pdu_session_resource_release_command(command));
@@ -35,9 +35,9 @@ void ngap_pdu_session_resource_release_procedure::operator()(coro_context<async_
   // TODO: Handle optional IEs.
 
   if (validate_and_send_response()) {
-    logger.log_debug("\"{}\" finished successfully", name());
+    logger.log_info("\"{}\" finished successfully", name());
   } else {
-    logger.log_debug("\"{}\" failed", name());
+    logger.log_warning("\"{}\" failed", name());
   }
 
   CORO_RETURN();

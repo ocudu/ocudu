@@ -28,7 +28,7 @@ ngap_path_switch_procedure::ngap_path_switch_procedure(const cu_cp_path_switch_r
 void ngap_path_switch_procedure::operator()(coro_context<async_task<cu_cp_path_switch_response>>& ctx)
 {
   CORO_BEGIN(ctx);
-  ue_ctxt.logger.log_debug("\"{}\" started...", name());
+  ue_ctxt.logger.log_info("\"{}\" started...", name());
 
   // Subscribe to respective publisher to receive PATH SWITCH REQUEST ACK/FAILURE message.
   transaction_sink.subscribe_to(ue_ctxt.ev_mng.path_switch_outcome, std::chrono::milliseconds{5000});
@@ -47,7 +47,7 @@ void ngap_path_switch_procedure::operator()(coro_context<async_task<cu_cp_path_s
   }
 
   if (not transaction_sink.successful()) {
-    ue_ctxt.logger.log_debug("\"{}\" failed", name());
+    ue_ctxt.logger.log_warning("\"{}\" failed", name());
     // Convert procedure outcome to procedure response and return.
     CORO_EARLY_RETURN(asn1_to_path_switch_request_failure(transaction_sink.failure()));
   }
@@ -56,9 +56,9 @@ void ngap_path_switch_procedure::operator()(coro_context<async_task<cu_cp_path_s
   procedure_response = handle_successful_outcome(transaction_sink.response());
 
   if (std::holds_alternative<cu_cp_path_switch_request_failure>(procedure_response)) {
-    ue_ctxt.logger.log_debug("\"{}\" failed. Cause: Failure at response handling", name());
+    ue_ctxt.logger.log_warning("\"{}\" failed. Cause: Failure at response handling", name());
   } else {
-    ue_ctxt.logger.log_debug("\"{}\" finished successfully", name());
+    ue_ctxt.logger.log_info("\"{}\" finished successfully", name());
   }
 
   CORO_RETURN(procedure_response);

@@ -17,7 +17,7 @@ ngap_dl_ran_status_transfer_procedure::ngap_dl_ran_status_transfer_procedure(nga
 void ngap_dl_ran_status_transfer_procedure::operator()(coro_context<async_task<expected<cu_cp_status_transfer>>>& ctx)
 {
   CORO_BEGIN(ctx);
-  logger.log_debug("\"{}\" started...", name());
+  logger.log_info("\"{}\" started...", name());
   transaction_sink.subscribe_to(ev_mng.dl_ran_status_transfer_outcome, std::chrono::milliseconds{5000});
 
   CORO_AWAIT(transaction_sink);
@@ -28,16 +28,16 @@ void ngap_dl_ran_status_transfer_procedure::operator()(coro_context<async_task<e
   }
 
   if (not transaction_sink.successful()) {
-    logger.log_debug("\"{}\" failed", name());
+    logger.log_warning("\"{}\" failed", name());
     CORO_EARLY_RETURN(make_unexpected(default_error_t{}));
   }
 
   if (not fill_ngap_dl_ran_status_transfer()) {
-    logger.log_debug("\"{}\" failed", name());
+    logger.log_warning("\"{}\" failed", name());
     CORO_EARLY_RETURN(make_unexpected(default_error_t{}));
   }
 
-  logger.log_debug("\"{}\" finished successfully", name());
+  logger.log_info("\"{}\" finished successfully", name());
   CORO_RETURN(dl_ran_status_transfer);
 }
 
