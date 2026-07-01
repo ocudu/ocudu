@@ -17,6 +17,9 @@ if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
     list(APPEND SOURCES modulation_mapper_avx512_impl.cpp)
     set_source_files_properties(modulation_mapper_avx512_impl.cpp PROPERTIES
             COMPILE_OPTIONS "-mavx512f;-mavx512bw;-mavx512vbmi;")
+    list(APPEND SOURCES modulation_mapper_avx2_impl.cpp)
+    set_source_files_properties(modulation_mapper_avx2_impl.cpp PROPERTIES
+            COMPILE_OPTIONS "-mavx2;")
 endif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
 if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
     list(APPEND SOURCES modulation_mapper_neon_impl.cpp)

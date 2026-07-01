@@ -9,6 +9,7 @@
 #include "ocudu/support/cpu_features.h"
 
 #ifdef __x86_64__
+#include "modulation_mapper_avx2_impl.h"
 #include "modulation_mapper_avx512_impl.h"
 #endif // __x86_64__
 #ifdef __aarch64__
@@ -28,6 +29,10 @@ public:
     if (cpu_supports_feature(cpu_feature::avx512f) && cpu_supports_feature(cpu_feature::avx512bw) &&
         cpu_supports_feature(cpu_feature::avx512vbmi)) {
       return std::make_unique<modulation_mapper_avx512_impl>();
+    }
+
+    if (cpu_supports_feature(cpu_feature::avx2)) {
+      return std::make_unique<modulation_mapper_avx2_impl>();
     }
 #endif // __x86_64__
 #ifdef __ARM_NEON
