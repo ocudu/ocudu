@@ -69,7 +69,7 @@ module "settings" {
   only_allow_merge_if_all_discussions_are_resolved = false
   remove_source_branch_after_merge                 = true
   resolve_outdated_diff_discussions                = false
-  squash_option                                    = "default_off" # never, always, default_on, default_off
+  squash_option                                    = "never" # never, always, default_on, default_off
   allow_merge_on_skipped_pipeline                  = false
 
   # =============================================================================
