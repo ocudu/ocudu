@@ -25,23 +25,19 @@ public:
   ~uci_allocator_impl() override;
 
   std::optional<uci_allocation> alloc_harq_ack(cell_resource_allocator&     res_alloc,
-                                               rnti_t                       crnti,
                                                const ue_cell_configuration& ue_cell_cfg,
                                                unsigned                     k0,
                                                span<const uint8_t>          k1_list) override;
 
   bool alloc_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
-                            rnti_t                        crnti,
                             const ue_cell_configuration&  ue_cell_cfg) override;
 
   bool alloc_csi_opportunity(cell_slot_resource_allocator& slot_alloc,
-                             rnti_t                        crnti,
                              const ue_cell_configuration&  ue_cell_cfg) override;
 
   void multiplex_uci_on_pusch(ul_sched_info&                pusch_grant,
                               cell_slot_resource_allocator& slot_alloc,
                               const ue_cell_configuration&  ue_cell_cfg,
-                              rnti_t                        crnti,
                               bool                          include_aperiodic_csi) override;
 
   uint8_t get_scheduled_pdsch_counter_in_ue_uci(slot_point uci_slot, rnti_t crnti) override;

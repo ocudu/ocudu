@@ -40,29 +40,23 @@ public:
                                                 const pdcch_dl_information& dci_info) override;
 
   std::optional<unsigned> alloc_common_and_ded_harq_ack(cell_resource_allocator&     res_alloc,
-                                                        rnti_t                       rnti,
                                                         const ue_cell_configuration& ue_cell_cfg,
                                                         unsigned                     k0,
                                                         unsigned                     k1,
                                                         const pdcch_dl_information&  dci_info) override;
 
   std::optional<unsigned> alloc_ded_harq_ack(cell_resource_allocator&     res_alloc,
-                                             rnti_t                       crnti,
                                              const ue_cell_configuration& ue_cell_cfg,
                                              unsigned                     k0,
                                              unsigned                     k1) override;
 
   bool alloc_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
-                            rnti_t                        crnti,
                             const ue_cell_configuration&  ue_cell_cfg) override;
 
   bool alloc_csi_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
-                             rnti_t                        crnti,
-                             const ue_cell_configuration&  ue_cell_cfg,
-                             unsigned                      csi_part1_nof_bits) override;
+                             const ue_cell_configuration&  ue_cell_cfg) override;
 
   pucch_uci_bits remove_ue_uci_from_pucch(cell_slot_resource_allocator& slot_alloc,
-                                          rnti_t                        crnti,
                                           const ue_cell_configuration&  ue_cell_cfg) override;
 
   [[nodiscard]] bool has_common_pucch_grant(rnti_t rnti, slot_point sl_tx) const override;

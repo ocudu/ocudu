@@ -497,7 +497,7 @@ static std::optional<uci_allocation> allocate_ue_fallback_pucch(ue&             
   if (not common_alloc and ded_alloc) {
     // UE dedicated-only PUCCH allocation.
     std::optional<uci_allocation> uci =
-        uci_alloc.alloc_harq_ack(res_alloc, u.crnti, u.get_pcell().cfg(), pdsch_delay, k1_values);
+        uci_alloc.alloc_harq_ack(res_alloc, u.get_pcell().cfg(), pdsch_delay, k1_values);
     return uci;
   }
 
@@ -517,7 +517,7 @@ static std::optional<uci_allocation> allocate_ue_fallback_pucch(ue&             
     std::optional<unsigned> pucch_res_indicator;
     if (ded_alloc) {
       pucch_res_indicator = pucch_alloc.alloc_common_and_ded_harq_ack(
-          res_alloc, u.crnti, u.get_pcell().cfg(), pdsch_delay, k1_candidate, pdcch_info);
+          res_alloc, u.get_pcell().cfg(), pdsch_delay, k1_candidate, pdcch_info);
     } else {
       pucch_res_indicator =
           pucch_alloc.alloc_common_harq_ack(res_alloc, u.crnti, pdsch_delay, k1_candidate, pdcch_info);
@@ -1245,7 +1245,7 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
     // If the PUCCH needs to be removed, it implies the UE has the dedicated config. This is because the only
     // case in which we remove the PUCCH is when the UCI bits only have SR (see explanation in the calling function).
     ocudu_assert(u.ue_cfg_dedicated() != nullptr, "UE has no dedicated configuration");
-    pucch_alloc.remove_ue_uci_from_pucch(pusch_alloc, u.crnti, u.get_pcell().cfg());
+    pucch_alloc.remove_ue_uci_from_pucch(pusch_alloc, u.get_pcell().cfg());
   }
 
   // Mark resources as occupied in the ResourceGrid.

@@ -8,6 +8,7 @@
 #include "ocudu/ocudulog/log_channel.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/csi_report/csi_report_config_helpers.h"
+#include "ocudu/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "ocudu/ran/pucch/pucch_configuration.h"
 #include "ocudu/ran/pucch/pucch_uci_bits.h"
 #include "ocudu/ran/resource_allocation/ofdm_symbol_range.h"
@@ -185,7 +186,6 @@ std::optional<unsigned> pucch_allocator_impl::alloc_common_harq_ack(cell_resourc
 }
 
 std::optional<unsigned> pucch_allocator_impl::alloc_common_and_ded_harq_ack(cell_resource_allocator&     res_alloc,
-                                                                            rnti_t                       rnti,
                                                                             const ue_cell_configuration& ue_cell_cfg,
                                                                             unsigned                     k0,
                                                                             unsigned                     k1,
@@ -194,9 +194,9 @@ std::optional<unsigned> pucch_allocator_impl::alloc_common_and_ded_harq_ack(cell
   // Get the slot allocation grid considering the PDSCH delay (k0) and the PUCCH delay wrt PDSCH (k1).
   cell_slot_resource_allocator& pucch_slot_alloc = res_alloc[k0 + k1 + res_alloc.cfg.ntn_cs_koffset];
   auto&                         slot_ctx         = slots_ctx[pucch_slot_alloc.slot.to_uint()];
-  alloc_context alloc_ctx{alloc_context::alloc_type::common_and_ded_harq_ack, rnti, pucch_slot_alloc.slot};
+  alloc_context alloc_ctx{alloc_context::alloc_type::common_and_ded_harq_ack, ue_cell_cfg.crnti, pucch_slot_alloc.slot};
 
-  ue_grants* existing_grants = slot_ctx.find_ue_grants(rnti);
+  ue_grants* existing_grants = slot_ctx.find_ue_grants(ue_cell_cfg.crnti);
   if (not can_allocate_pucch(pucch_slot_alloc, existing_grants, alloc_ctx)) {
     return std::nullopt;
   }
@@ -209,7 +209,7 @@ std::optional<unsigned> pucch_allocator_impl::alloc_common_and_ded_harq_ack(cell
   if (existing_grants != nullptr) {
     old_grants = *existing_grants;
     // Release resources previously allocated to this UE from the resource manager.
-    free_resources(pucch_slot_alloc, old_grants, rnti);
+    free_resources(pucch_slot_alloc, old_grants, ue_cell_cfg.crnti);
   }
 
   pucch_uci_bits uci_bits = old_grants.uci_bits(pucch_slot_alloc.result.ul.pucchs);
@@ -220,7 +220,7 @@ std::optional<unsigned> pucch_allocator_impl::alloc_common_and_ded_harq_ack(cell
   if (not d_pri.has_value()) {
     if (existing_grants != nullptr) {
       // Restore the previous allocation in the resource manager, since the new allocation failed.
-      alloc_resources(pucch_slot_alloc, old_grants, rnti);
+      alloc_resources(pucch_slot_alloc, old_grants, ue_cell_cfg.crnti);
     }
     alloc_ctx.log_skipped_alloc(logger.debug, "no PRI available for both common and dedicated resources");
     return std::nullopt;
@@ -230,28 +230,27 @@ std::optional<unsigned> pucch_allocator_impl::alloc_common_and_ded_harq_ack(cell
   if (not new_grants.has_value()) {
     if (existing_grants != nullptr) {
       // Restore the previous allocation in the resource manager, since the new allocation failed.
-      alloc_resources(pucch_slot_alloc, old_grants, rnti);
+      alloc_resources(pucch_slot_alloc, old_grants, ue_cell_cfg.crnti);
     }
     return std::nullopt;
   }
 
   // Update the UE grants.
-  new_grants->common           = pucch_slot_alloc.result.ul.pucchs.emplace();
-  slot_ctx.ue_grants_map[rnti] = *new_grants;
+  new_grants->common                        = pucch_slot_alloc.result.ul.pucchs.emplace();
+  slot_ctx.ue_grants_map[ue_cell_cfg.crnti] = *new_grants;
 
   // Fill scheduler output.
   pucch_info& common_pdu = pucch_slot_alloc.result.ul.pucchs[*new_grants->common];
   pucch_helper::fill_common_pdu(
-      common_pdu, cell_cfg, pucch_helper::get_common_resource(cell_cfg, dci_info.ctx, *d_pri), rnti);
+      common_pdu, cell_cfg, pucch_helper::get_common_resource(cell_cfg, dci_info.ctx, *d_pri), ue_cell_cfg.crnti);
 
   // Allocate the resources in the resource manager.
-  alloc_resources(pucch_slot_alloc, *new_grants, rnti);
+  alloc_resources(pucch_slot_alloc, *new_grants, ue_cell_cfg.crnti);
 
   return d_pri;
 }
 
 std::optional<unsigned> pucch_allocator_impl::alloc_ded_harq_ack(cell_resource_allocator&     res_alloc,
-                                                                 rnti_t                       crnti,
                                                                  const ue_cell_configuration& ue_cell_cfg,
                                                                  unsigned                     k0,
                                                                  unsigned                     k1)
@@ -262,9 +261,9 @@ std::optional<unsigned> pucch_allocator_impl::alloc_ded_harq_ack(cell_resource_a
   // Get the slot allocation grid considering the PDSCH delay (k0) and the PUCCH delay wrt PDSCH (k1).
   cell_slot_resource_allocator& pucch_slot_alloc = res_alloc[k0 + k1 + res_alloc.cfg.ntn_cs_koffset];
   auto&                         slot_ctx         = slots_ctx[pucch_slot_alloc.slot.to_uint()];
-  alloc_context                 alloc_ctx{alloc_context::alloc_type::ded_harq_ack, crnti, pucch_slot_alloc.slot};
+  alloc_context alloc_ctx{alloc_context::alloc_type::ded_harq_ack, ue_cell_cfg.crnti, pucch_slot_alloc.slot};
 
-  ue_grants* existing_grants = slot_ctx.find_ue_grants(crnti);
+  ue_grants* existing_grants = slot_ctx.find_ue_grants(ue_cell_cfg.crnti);
   if (not can_allocate_pucch(pucch_slot_alloc, existing_grants, alloc_ctx)) {
     return std::nullopt;
   }
@@ -299,7 +298,7 @@ std::optional<unsigned> pucch_allocator_impl::alloc_ded_harq_ack(cell_resource_a
 
   if (existing_grants != nullptr) {
     // Release resources previously allocated to this UE from the resource manager before re-running the multiplexing.
-    free_resources(pucch_slot_alloc, old_grants, crnti);
+    free_resources(pucch_slot_alloc, old_grants, ue_cell_cfg.crnti);
   }
 
   std::optional<unsigned> d_pri;
@@ -309,7 +308,7 @@ std::optional<unsigned> pucch_allocator_impl::alloc_ded_harq_ack(cell_resource_a
     if (not d_pri.has_value()) {
       if (existing_grants != nullptr) {
         // Restore the previous allocation in the resource manager, since the new allocation failed.
-        alloc_resources(pucch_slot_alloc, old_grants, crnti);
+        alloc_resources(pucch_slot_alloc, old_grants, ue_cell_cfg.crnti);
       }
       alloc_ctx.log_skipped_alloc(logger.debug, "no resource indicator available for dedicated PUCCH resource");
       return std::nullopt;
@@ -322,26 +321,25 @@ std::optional<unsigned> pucch_allocator_impl::alloc_ded_harq_ack(cell_resource_a
   if (not new_grants.has_value()) {
     if (existing_grants != nullptr) {
       // Restore the previous allocation in the resource manager, since the new allocation failed.
-      alloc_resources(pucch_slot_alloc, old_grants, crnti);
+      alloc_resources(pucch_slot_alloc, old_grants, ue_cell_cfg.crnti);
     }
     return std::nullopt;
   }
 
   // Update the UE grants and allocate the resources in the resource manager.
-  slot_ctx.ue_grants_map[crnti] = *new_grants;
-  alloc_resources(pucch_slot_alloc, *new_grants, crnti);
+  slot_ctx.ue_grants_map[ue_cell_cfg.crnti] = *new_grants;
+  alloc_resources(pucch_slot_alloc, *new_grants, ue_cell_cfg.crnti);
 
   return new_grants->d_pri;
 }
 
 bool pucch_allocator_impl::alloc_sr_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
-                                                rnti_t                        crnti,
                                                 const ue_cell_configuration&  ue_cell_cfg)
 {
   auto&         slot_ctx = slots_ctx[pucch_slot_alloc.slot.to_uint()];
-  alloc_context alloc_ctx{alloc_context::alloc_type::sr, crnti, pucch_slot_alloc.slot};
+  alloc_context alloc_ctx{alloc_context::alloc_type::sr, ue_cell_cfg.crnti, pucch_slot_alloc.slot};
 
-  ue_grants* existing_grants = slot_ctx.find_ue_grants(crnti);
+  ue_grants* existing_grants = slot_ctx.find_ue_grants(ue_cell_cfg.crnti);
   if (not can_allocate_pucch(pucch_slot_alloc, existing_grants, alloc_ctx)) {
     return false;
   }
@@ -357,7 +355,7 @@ bool pucch_allocator_impl::alloc_sr_opportunity(cell_slot_resource_allocator& pu
   if (existing_grants != nullptr) {
     old_grants = *existing_grants;
     // Release resources previously allocated to this UE from the resource manager.
-    free_resources(pucch_slot_alloc, old_grants, crnti);
+    free_resources(pucch_slot_alloc, old_grants, ue_cell_cfg.crnti);
   }
 
   pucch_uci_bits uci_bits = old_grants.uci_bits(pucch_slot_alloc.result.ul.pucchs);
@@ -369,27 +367,25 @@ bool pucch_allocator_impl::alloc_sr_opportunity(cell_slot_resource_allocator& pu
   if (not new_grants.has_value()) {
     if (existing_grants != nullptr) {
       // Restore the previous allocation in the resource manager, since the new allocation failed.
-      alloc_resources(pucch_slot_alloc, old_grants, crnti);
+      alloc_resources(pucch_slot_alloc, old_grants, ue_cell_cfg.crnti);
     }
     return false;
   }
 
   // Update the UE grants and allocate the resources in the resource manager.
-  slot_ctx.ue_grants_map[crnti] = *new_grants;
-  alloc_resources(pucch_slot_alloc, *new_grants, crnti);
+  slot_ctx.ue_grants_map[ue_cell_cfg.crnti] = *new_grants;
+  alloc_resources(pucch_slot_alloc, *new_grants, ue_cell_cfg.crnti);
 
   return true;
 }
 
 bool pucch_allocator_impl::alloc_csi_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
-                                                 rnti_t                        crnti,
-                                                 const ue_cell_configuration&  ue_cell_cfg,
-                                                 unsigned                      csi_part1_nof_bits)
+                                                 const ue_cell_configuration&  ue_cell_cfg)
 {
   auto&         slot_ctx = slots_ctx[pucch_slot_alloc.slot.to_uint()];
-  alloc_context alloc_ctx{alloc_context::alloc_type::csi, crnti, pucch_slot_alloc.slot};
+  alloc_context alloc_ctx{alloc_context::alloc_type::csi, ue_cell_cfg.crnti, pucch_slot_alloc.slot};
 
-  ue_grants* existing_grants = slot_ctx.find_ue_grants(crnti);
+  ue_grants* existing_grants = slot_ctx.find_ue_grants(ue_cell_cfg.crnti);
   if (not can_allocate_pucch(pucch_slot_alloc, existing_grants, alloc_ctx)) {
     return false;
   }
@@ -405,42 +401,42 @@ bool pucch_allocator_impl::alloc_csi_opportunity(cell_slot_resource_allocator& p
   if (existing_grants != nullptr) {
     old_grants = *existing_grants;
     // Release resources previously allocated to this UE from the resource manager.
-    free_resources(pucch_slot_alloc, old_grants, crnti);
+    free_resources(pucch_slot_alloc, old_grants, ue_cell_cfg.crnti);
   }
 
   pucch_uci_bits uci_bits = old_grants.uci_bits(pucch_slot_alloc.result.ul.pucchs);
   ocudu_assert(uci_bits.csi_part1_nof_bits == 0U, "CSI has already been allocated");
-  uci_bits.csi_part1_nof_bits = csi_part1_nof_bits;
+  uci_bits.csi_part1_nof_bits = get_csi_report_pucch_size(*csi_report_cfg).part1_size.value();
 
   auto new_grants =
       multiplex_and_allocate_pucch(pucch_slot_alloc, uci_bits, old_grants, ue_cell_cfg, std::nullopt, alloc_ctx);
   if (not new_grants.has_value()) {
     if (existing_grants != nullptr) {
       // Restore the previous allocation in the resource manager, since the new allocation failed.
-      alloc_resources(pucch_slot_alloc, old_grants, crnti);
+      alloc_resources(pucch_slot_alloc, old_grants, ue_cell_cfg.crnti);
     }
     return false;
   }
 
   // Update the UE grants and allocate the resources in the resource manager.
-  slot_ctx.ue_grants_map[crnti] = *new_grants;
-  alloc_resources(pucch_slot_alloc, *new_grants, crnti);
+  slot_ctx.ue_grants_map[ue_cell_cfg.crnti] = *new_grants;
+  alloc_resources(pucch_slot_alloc, *new_grants, ue_cell_cfg.crnti);
 
   return true;
 }
 
 pucch_uci_bits pucch_allocator_impl::remove_ue_uci_from_pucch(cell_slot_resource_allocator& slot_alloc,
-                                                              rnti_t                        crnti,
                                                               const ue_cell_configuration&  ue_cell_cfg)
 {
   // Get the PUCCH grants for the slot.
   auto&      slot_ctx           = slots_ctx[slot_alloc.slot.to_uint()];
-  ue_grants* existing_ue_grants = slot_ctx.find_ue_grants(crnti);
+  ue_grants* existing_ue_grants = slot_ctx.find_ue_grants(ue_cell_cfg.crnti);
   if (existing_ue_grants == nullptr) {
     // No PUCCH grants found for the UE in this slot.
     return pucch_uci_bits{};
   }
-  ocudu_assert(not existing_ue_grants->common.has_value(), "Unexpected common PUCCH grant found for rnti={}", crnti);
+  ocudu_assert(
+      not existing_ue_grants->common.has_value(), "Unexpected common PUCCH grant found for rnti={}", ue_cell_cfg.crnti);
 
   // Get the UCI bits that were allocated for the UE in this slot.
   pucch_uci_bits removed_uci_info = existing_ue_grants->uci_bits(slot_alloc.result.ul.pucchs);
@@ -449,23 +445,23 @@ pucch_uci_bits pucch_allocator_impl::remove_ue_uci_from_pucch(cell_slot_resource
   bool all_found = true;
   if (existing_ue_grants->harq_ack.has_value()) {
     const auto& pdu = slot_alloc.result.ul.pucchs[*existing_ue_grants->harq_ack];
-    all_found &= col_manager.free(slot_alloc, *pdu.res, crnti);
+    all_found &= col_manager.free(slot_alloc, *pdu.res, ue_cell_cfg.crnti);
     slot_alloc.result.ul.pucchs.erase(*existing_ue_grants->harq_ack);
   }
   if (existing_ue_grants->sr.has_value()) {
     const auto& pdu = slot_alloc.result.ul.pucchs[*existing_ue_grants->sr];
-    all_found &= col_manager.free(slot_alloc, *pdu.res, crnti);
+    all_found &= col_manager.free(slot_alloc, *pdu.res, ue_cell_cfg.crnti);
     slot_alloc.result.ul.pucchs.erase(*existing_ue_grants->sr);
   }
   if (existing_ue_grants->csi.has_value()) {
     const auto& pdu = slot_alloc.result.ul.pucchs[*existing_ue_grants->csi];
-    all_found &= col_manager.free(slot_alloc, *pdu.res, crnti);
+    all_found &= col_manager.free(slot_alloc, *pdu.res, ue_cell_cfg.crnti);
     slot_alloc.result.ul.pucchs.erase(*existing_ue_grants->csi);
   }
-  ocudu_assert(all_found, "Failed to free all PUCCH resources for UE with RNTI {}", crnti);
+  ocudu_assert(all_found, "Failed to free all PUCCH resources for UE with RNTI {}", ue_cell_cfg.crnti);
 
   // Erase the UE grants from the slot context.
-  slot_ctx.ue_grants_map.erase(crnti);
+  slot_ctx.ue_grants_map.erase(ue_cell_cfg.crnti);
   return removed_uci_info;
 }
 

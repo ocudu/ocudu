@@ -29,15 +29,13 @@ protected:
   // Helper for adding a SR grant to a given UE.
   bool alloc_sr_opportunity(const ue& ue)
   {
-    return t_bench.pucch_alloc.alloc_sr_opportunity(
-        t_bench.res_grid[t_bench.k0 + default_k1], ue.crnti, ue.get_pcell().cfg());
+    return t_bench.pucch_alloc.alloc_sr_opportunity(t_bench.res_grid[t_bench.k0 + default_k1], ue.get_pcell().cfg());
   }
 
   // Helper for adding a SR grant to a given UE.
-  bool alloc_csi_opportunity(const ue& ue, unsigned csi_part1_bits)
+  bool alloc_csi_opportunity(const ue& ue)
   {
-    return t_bench.pucch_alloc.alloc_csi_opportunity(
-        t_bench.res_grid[t_bench.k0 + default_k1], ue.crnti, ue.get_pcell().cfg(), csi_part1_bits);
+    return t_bench.pucch_alloc.alloc_csi_opportunity(t_bench.res_grid[t_bench.k0 + default_k1], ue.get_pcell().cfg());
   }
 
   std::optional<unsigned> alloc_common_harq_ack(const ue& ue)
@@ -48,20 +46,19 @@ protected:
 
   std::optional<unsigned> alloc_ded_harq_ack(const ue& ue)
   {
-    return t_bench.pucch_alloc.alloc_ded_harq_ack(
-        t_bench.res_grid, ue.crnti, ue.get_pcell().cfg(), t_bench.k0, default_k1);
+    return t_bench.pucch_alloc.alloc_ded_harq_ack(t_bench.res_grid, ue.get_pcell().cfg(), t_bench.k0, default_k1);
   }
 
   std::optional<unsigned> alloc_common_and_ded_harq_ack(const ue& ue)
   {
     return t_bench.pucch_alloc.alloc_common_and_ded_harq_ack(
-        t_bench.res_grid, ue.crnti, ue.get_pcell().cfg(), t_bench.k0, default_k1, t_bench.dci_info);
+        t_bench.res_grid, ue.get_pcell().cfg(), t_bench.k0, default_k1, t_bench.dci_info);
   }
 
   pucch_uci_bits remove_ue_uci_from_pucch(const ue& ue)
   {
-    return t_bench.pucch_alloc.remove_ue_uci_from_pucch(
-        t_bench.res_grid[t_bench.k0 + default_k1], ue.crnti, ue.get_pcell().cfg());
+    return t_bench.pucch_alloc.remove_ue_uci_from_pucch(t_bench.res_grid[t_bench.k0 + default_k1],
+                                                        ue.get_pcell().cfg());
   }
 };
 

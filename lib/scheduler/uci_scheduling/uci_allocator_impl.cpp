@@ -132,7 +132,6 @@ void uci_allocator_impl::stop()
 }
 
 std::optional<uci_allocation> uci_allocator_impl::alloc_harq_ack(cell_resource_allocator&     res_alloc,
-                                                                 rnti_t                       crnti,
                                                                  const ue_cell_configuration& ue_cell_cfg,
                                                                  unsigned                     k0,
                                                                  span<const uint8_t>          k1_list)
@@ -146,7 +145,7 @@ std::optional<uci_allocation> uci_allocator_impl::alloc_harq_ack(cell_resource_a
   const cell_configuration& cell_cfg   = ue_cell_cfg.cell_cfg_common;
   const unsigned            min_pdsch_to_ack_slot_distance =
       get_min_pdsch_to_ack_slot_distance(pdsch_slot,
-                                         crnti,
+                                         ue_cell_cfg.crnti,
                                          *std::min_element(k1_list.begin(), k1_list.end()),
                                          *std::max_element(k1_list.begin(), k1_list.end()));
 
@@ -177,7 +176,7 @@ std::optional<uci_allocation> uci_allocator_impl::alloc_harq_ack(cell_resource_a
       logger.info(
           "rnti={}: UCI allocation for slot={} skipped due to UCI cache full. Attempting this allocation for the next "
           "k1 candidate, if any k1 available",
-          crnti,
+          ue_cell_cfg.crnti,
           slot_alloc.slot);
       continue;
     }
@@ -191,14 +190,14 @@ std::optional<uci_allocation> uci_allocator_impl::alloc_harq_ack(cell_resource_a
     const bool ue_has_pusch_in_slot =
         std::any_of(slot_alloc.result.ul.puschs.begin(),
                     slot_alloc.result.ul.puschs.end(),
-                    [crnti](const ul_sched_info& p) { return p.pusch_cfg.rnti == crnti; });
+                    [rnti = ue_cell_cfg.crnti](const ul_sched_info& p) { return p.pusch_cfg.rnti == rnti; });
     if (ue_has_pusch_in_slot) {
       continue;
     }
 
     const bool is_sr_opportunity = sr_helper::is_sr_opportunity_slot(
         *ue_cell_cfg.init_bwp().ul.ue_cfg(), cell_cfg.params.init_bwp.pucch.sr_period, uci_slot);
-    const unsigned scheduled_harq_bits     = get_scheduled_pdsch_counter_in_ue_uci(slot_alloc.slot, crnti);
+    const unsigned scheduled_harq_bits     = get_scheduled_pdsch_counter_in_ue_uci(slot_alloc.slot, ue_cell_cfg.crnti);
     unsigned       nof_available_harq_bits = 0U;
 
     if (ue_cell_cfg.init_bwp().ul.ue_cfg()->periodic_csi_report.has_value() and
@@ -220,14 +219,14 @@ std::optional<uci_allocation> uci_allocator_impl::alloc_harq_ack(cell_resource_a
     }
 
     // Step 2: Try to allocate UCI HARQ ACK for UE.
-    auto d_pri = pucch_alloc.alloc_ded_harq_ack(res_alloc, crnti, ue_cell_cfg, k0, k1_candidate);
+    auto d_pri = pucch_alloc.alloc_ded_harq_ack(res_alloc, ue_cell_cfg, k0, k1_candidate);
 
     // Register new UCI allocation in the respective grid slot entry and derive DAI.
     if (d_pri.has_value()) {
-      auto* uci = get_uci_alloc(slot_alloc.slot, crnti);
+      auto* uci = get_uci_alloc(slot_alloc.slot, ue_cell_cfg.crnti);
       if (uci == nullptr) {
         uci                             = &uci_alloc_grid[slot_alloc.slot.to_uint()].ucis.emplace_back();
-        uci->rnti                       = crnti;
+        uci->rnti                       = ue_cell_cfg.crnti;
         uci->scheduled_dl_pdcch_counter = 0;
       }
       uci_allocation res{.k1                  = k1_candidate,
@@ -241,33 +240,35 @@ std::optional<uci_allocation> uci_allocator_impl::alloc_harq_ack(cell_resource_a
 }
 
 bool uci_allocator_impl::alloc_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
-                                              rnti_t                        crnti,
                                               const ue_cell_configuration&  ue_cell_cfg)
 {
   // Retrieve the scheduling results for slot = k0 + k1;
-  auto&          puschs         = slot_alloc.result.ul.puschs;
-  ul_sched_info* existing_pusch = std::find_if(
-      puschs.begin(), puschs.end(), [crnti](const ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == crnti; });
+  auto&          puschs = slot_alloc.result.ul.puschs;
+  ul_sched_info* existing_pusch =
+      std::find_if(puschs.begin(), puschs.end(), [rnti = ue_cell_cfg.crnti](const ul_sched_info& pusch) {
+        return pusch.pusch_cfg.rnti == rnti;
+      });
 
   const bool has_pusch_grants =
       not slot_alloc.result.ul.puschs.empty() and existing_pusch != slot_alloc.result.ul.puschs.end();
 
   // If there is a PUSCH allocated for this UE, do not allocate any PUCCH SR grants.
   if (has_pusch_grants) {
-    logger.debug("rnti={}: SR allocation skipped due to PUSCH grant allocated.", crnti);
+    logger.debug("rnti={}: SR allocation skipped due to PUSCH grant allocated.", ue_cell_cfg.crnti);
     return false;
   }
 
-  return pucch_alloc.alloc_sr_opportunity(slot_alloc, crnti, ue_cell_cfg);
+  return pucch_alloc.alloc_sr_opportunity(slot_alloc, ue_cell_cfg);
 }
 
 bool uci_allocator_impl::alloc_csi_opportunity(cell_slot_resource_allocator& slot_alloc,
-                                               rnti_t                        crnti,
                                                const ue_cell_configuration&  ue_cell_cfg)
 {
-  auto&          puschs         = slot_alloc.result.ul.puschs;
-  ul_sched_info* existing_pusch = std::find_if(
-      puschs.begin(), puschs.end(), [crnti](const ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == crnti; });
+  auto&          puschs = slot_alloc.result.ul.puschs;
+  ul_sched_info* existing_pusch =
+      std::find_if(puschs.begin(), puschs.end(), [rnti = ue_cell_cfg.crnti](const ul_sched_info& pusch) {
+        return pusch.pusch_cfg.rnti == rnti;
+      });
 
   const bool has_pusch_grants =
       not slot_alloc.result.ul.puschs.empty() and existing_pusch != slot_alloc.result.ul.puschs.end();
@@ -286,19 +287,16 @@ bool uci_allocator_impl::alloc_csi_opportunity(cell_slot_resource_allocator& slo
   }
 
   // Else, allocate the CSI on the PUCCH.
-  const auto& csi_report_cfg = create_csi_report_configuration(*ue_cell_cfg.csi_meas_cfg());
-  return pucch_alloc.alloc_csi_opportunity(
-      slot_alloc, crnti, ue_cell_cfg, get_csi_report_pucch_size(csi_report_cfg).part1_size.value());
+  return pucch_alloc.alloc_csi_opportunity(slot_alloc, ue_cell_cfg);
 }
 
 void uci_allocator_impl::multiplex_uci_on_pusch(ul_sched_info&                pusch_grant,
                                                 cell_slot_resource_allocator& slot_alloc,
                                                 const ue_cell_configuration&  ue_cell_cfg,
-                                                rnti_t                        crnti,
                                                 bool                          include_aperiodic_csi)
 {
   // Move the bits that are carried by the PUCCH into the PUSCH.
-  const pucch_uci_bits pucch_uci = pucch_alloc.remove_ue_uci_from_pucch(slot_alloc, crnti, ue_cell_cfg);
+  const pucch_uci_bits pucch_uci = pucch_alloc.remove_ue_uci_from_pucch(slot_alloc, ue_cell_cfg);
 
   // If there are no UCI bits from PUCCH and no aperiodic CSI, then there is no UCI to be multiplexed on the PUSCH.
   if (not include_aperiodic_csi and pucch_uci.harq_ack_nof_bits + pucch_uci.csi_part1_nof_bits == 0) {

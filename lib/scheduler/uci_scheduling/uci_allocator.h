@@ -35,45 +35,37 @@ public:
 
   /// Allocate a dedicated PUCCH resource for HARQ-ACK for a given UE.
   /// \param[out,in] res_alloc struct with scheduling results.
-  /// \param[in] crnti RNTI of the UE.
   /// \param[in] ue_cell_cfg user configuration.
   /// \param[in] k0 k0 value, or delay (in slots) of PDSCH slot vs the corresponding PDCCH slot.
   /// \param[in] k1_list List of k1 candidates configured for UE.
   /// \return Returns the UCI allocation result if successful, std::nullopt otherwise.
   virtual std::optional<uci_allocation> alloc_harq_ack(cell_resource_allocator&     res_alloc,
-                                                       rnti_t                       crnti,
                                                        const ue_cell_configuration& ue_cell_cfg,
                                                        unsigned                     k0,
                                                        span<const uint8_t>          k1_list) = 0;
 
   /// Allocates the SR opportunities for a given UE.
   /// \param[out,in] slot_alloc struct with scheduling results.
-  /// \param[in] crnti C-RNTI of the UE.
   /// \param[in] ue_cell_cfg user configuration.
   /// \return Returns true if the SR allocation is successful, false otherwise.
   virtual bool alloc_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
-                                    rnti_t                        crnti,
                                     const ue_cell_configuration&  ue_cell_cfg) = 0;
 
   /// Allocates the CSI opportunities for a given UE.
   /// \param[out,in] slot_alloc struct with scheduling results.
-  /// \param[in] crnti C-RNTI of the UE.
   /// \param[in] ue_cell_cfg user configuration.
   /// \return Returns true if the CSI allocation is successful, false otherwise.
   virtual bool alloc_csi_opportunity(cell_slot_resource_allocator& slot_alloc,
-                                     rnti_t                        crnti,
                                      const ue_cell_configuration&  ue_cell_cfg) = 0;
 
   /// Multiplexes the UCI on PUSCH, by removing the UCI on the PUCCH (if present) and adding it to the PUSCH.
   /// \param[out,in] pusch_grant struct with PUSCH PDU where UCI need to be allocated.
   /// \param[out,in] slot_alloc struct with scheduling results.
   /// \param[in] ue_cell_cfg user configuration.
-  /// \param[in] crnti C-RNTI of the UE.
   /// \param[in] include_aperiodic_csi Whether to include an aperiodic CSI report in the PUSCH.
   virtual void multiplex_uci_on_pusch(ul_sched_info&                pusch_grant,
                                       cell_slot_resource_allocator& slot_alloc,
                                       const ue_cell_configuration&  ue_cell_cfg,
-                                      rnti_t                        crnti,
                                       bool                          include_aperiodic_csi) = 0;
 
   /// Get the number of PDSCHs currently scheduled for a given UE UCI.

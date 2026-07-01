@@ -106,7 +106,6 @@ public:
   void slot_indication(slot_point sl_tx) override { next_uci_allocation.reset(); }
 
   std::optional<uci_allocation> alloc_harq_ack(cell_resource_allocator&     res_alloc,
-                                               rnti_t                       crnti,
                                                const ue_cell_configuration& ue_cell_cfg,
                                                unsigned                     k0,
                                                span<const uint8_t>          k1_list) override
@@ -117,20 +116,16 @@ public:
   void multiplex_uci_on_pusch(ul_sched_info&                pusch_grant,
                               cell_slot_resource_allocator& slot_alloc,
                               const ue_cell_configuration&  ue_cell_cfg,
-                              rnti_t                        crnti,
                               bool                          aperiodic_csi_request) override
   {
   }
 
-  bool alloc_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
-                            rnti_t                        crnti,
-                            const ue_cell_configuration&  ue_cell_cfg) override
+  bool alloc_sr_opportunity(cell_slot_resource_allocator& slot_alloc, const ue_cell_configuration& ue_cell_cfg) override
   {
     return true;
   }
 
   bool alloc_csi_opportunity(cell_slot_resource_allocator& slot_alloc,
-                             rnti_t                        crnti,
                              const ue_cell_configuration&  ue_cell_cfg) override
   {
     return true;

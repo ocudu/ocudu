@@ -206,12 +206,12 @@ void uci_scheduler_impl::schedule_slot_ucis(cell_slot_resource_allocator& slot_a
     // NOTE: Allocating the CSI after the SR helps the PUCCH allocation to compute the number of allocated UCI bits and
     // the corresponding number of PRBs for the PUCCH Format 2 over a PUCCH F2 grant is within PUCCH capacity.
     if (uci_info.sr_counter > 0) {
-      uci_alloc.alloc_sr_opportunity(slot_alloc, uci_info.rnti, *ue_cfg);
+      uci_alloc.alloc_sr_opportunity(slot_alloc, *ue_cfg);
     }
 
     // Schedule CSI PUCCH.
     if (uci_info.csi_counter > 0) {
-      uci_alloc.alloc_csi_opportunity(slot_alloc, uci_info.rnti, *ue_cfg);
+      uci_alloc.alloc_csi_opportunity(slot_alloc, *ue_cfg);
     }
 
     ++it;
@@ -265,13 +265,13 @@ void uci_scheduler_impl::schedule_updated_ues_ucis(cell_resource_allocator& res_
             if (not existing_grants) {
               // Only allocate SR if there are no existing PUCCH grants for this UE in this slot, as the PUCCH allocator
               // doesn't support multiplexing SR over other UCI.
-              uci_alloc.alloc_sr_opportunity(res_alloc[n], rnti, *ue_cfg);
+              uci_alloc.alloc_sr_opportunity(res_alloc[n], *ue_cfg);
             }
           }
 
           // Schedule CSI
           if (uci_info.csi_counter > 0) {
-            uci_alloc.alloc_csi_opportunity(res_alloc[n], rnti, *ue_cfg);
+            uci_alloc.alloc_csi_opportunity(res_alloc[n], *ue_cfg);
           }
         }
       }

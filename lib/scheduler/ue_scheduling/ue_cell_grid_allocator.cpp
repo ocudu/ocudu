@@ -138,8 +138,7 @@ std::optional<uci_allocation> ue_cell_grid_allocator::alloc_uci(const ue_cell&  
                                         ? k1s_per_dl_slot_dci_1_0[k1_list_idx]
                                         : k1s_per_dl_slot[k1_list_idx];
 
-  std::optional<uci_allocation> uci =
-      uci_alloc.alloc_harq_ack(cell_alloc, ue_cc.rnti(), ue_cc.cfg(), pdsch_td_cfg.k0, k1_list);
+  std::optional<uci_allocation> uci = uci_alloc.alloc_harq_ack(cell_alloc, ue_cc.cfg(), pdsch_td_cfg.k0, k1_list);
   if (not uci.has_value()) {
     logger.debug("ue={} rnti={}: Failed to allocate PDSCH. Cause: UCI allocation failed.",
                  fmt::underlying(ue_cc.ue_index),
@@ -843,7 +842,7 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_in
 
   // Check if there is any UCI grant allocated on the PUCCH that can be moved to the PUSCH.
   uci_alloc.multiplex_uci_on_pusch(
-      msg, pusch_alloc, ue_cell_cfg, u.crnti, pusch_cfg.aperiodic_csi and pusch_cfg.nof_csi_part1_bits != 0);
+      msg, pusch_alloc, ue_cell_cfg, pusch_cfg.aperiodic_csi and pusch_cfg.nof_csi_part1_bits != 0);
 
   // Save set PDCCH and PUSCH PDU parameters in HARQ process.
   ul_harq_alloc_context pusch_sched_ctx;

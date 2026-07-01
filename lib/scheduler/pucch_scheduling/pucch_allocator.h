@@ -37,7 +37,6 @@ public:
 
   /// Allocate both common and dedicated PUCCH resources for HARQ-ACK for a given UE.
   /// \param[out,in] res_alloc struct with scheduling results.
-  /// \param[in] rnti RNTI of the UE.
   /// \param[in] ue_cell_cfg user configuration.
   /// \param[in] k0 k0 value, or delay (in slots) of PDSCH slot vs the corresponding PDCCH slot.
   /// \param[in] k1 delay in slots of the UE's PUCCH HARQ-ACK report with respect to the PDSCH.
@@ -47,7 +46,6 @@ public:
   /// and 1_1 as per TS 38.213, Section 9.2.1. It indicates the UE which PUCCH resource should be used for HACK-(N)ACK
   /// reporting.
   virtual std::optional<unsigned> alloc_common_and_ded_harq_ack(cell_resource_allocator&     res_alloc,
-                                                                rnti_t                       rnti,
                                                                 const ue_cell_configuration& ue_cell_cfg,
                                                                 unsigned                     k0,
                                                                 unsigned                     k1,
@@ -59,45 +57,35 @@ public:
   /// be performed by the caller.
   ///
   /// \param[out,in] res_alloc struct with scheduling results.
-  /// \param[in] crnti RNTI of the UE.
   /// \param[in] ue_cell_cfg user configuration.
   /// \param[in] k0 k0 value, or delay (in slots) of PDSCH slot vs the corresponding PDCCH slot.
   /// \param[in] k1 delay in slots of the UE's PUCCH HARQ-ACK report with respect to the PDSCH.
   /// \return The PUCCH resource indicator, if the allocation is successful; a \c std::nullopt otherwise.
   virtual std::optional<unsigned> alloc_ded_harq_ack(cell_resource_allocator&     res_alloc,
-                                                     rnti_t                       crnti,
                                                      const ue_cell_configuration& ue_cell_cfg,
                                                      unsigned                     k0,
                                                      unsigned                     k1) = 0;
 
   /// Allocate the PUCCH resource for a UE's SR opportunity.
   /// \param[out,in] pucch_slot_alloc struct with scheduling results.
-  /// \param[in] crnti C-RNTI of the UE.
   /// \param[in] ue_cell_cfg user configuration.
   /// \return True if the allocation was successful; false otherwise.
   virtual bool alloc_sr_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
-                                    rnti_t                        crnti,
                                     const ue_cell_configuration&  ue_cell_cfg) = 0;
 
   /// Allocate the PUCCH grant for a UE's CSI opportunity.
   /// \param[out,in] pucch_slot_alloc struct with scheduling results.
-  /// \param[in] crnti C-RNTI of the UE.
   /// \param[in] ue_cell_cfg user configuration.
-  /// \param[in] csi_part1_nof_bits Number of CSI Part 1 bits that need to be reported.
   /// \return True if the allocation was successful; false otherwise.
   virtual bool alloc_csi_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
-                                     rnti_t                        crnti,
-                                     const ue_cell_configuration&  ue_cell_cfg,
-                                     unsigned                      csi_part1_nof_bits) = 0;
+                                     const ue_cell_configuration&  ue_cell_cfg) = 0;
 
   /// Remove UCI allocations on PUCCH for a given UE.
   /// \param[out,in] slot_alloc struct with scheduling results.
-  /// \param[in] crnti RNTI of the UE.
   /// \param[in] ue_cell_cfg User configuration.
   /// \return struct with the number of HARQ-ACK and CSI info bits from the removed PUCCH grants. If there was no PUCCH
   /// to be removed, return 0 for both HARQ-ACK and CSI info bits.
   virtual pucch_uci_bits remove_ue_uci_from_pucch(cell_slot_resource_allocator& slot_alloc,
-                                                  rnti_t                        crnti,
                                                   const ue_cell_configuration&  ue_cell_cfg) = 0;
 
   /// Returns whether a PUCCH grant using common PUCCH resource already exists at a given slot for a UE.
