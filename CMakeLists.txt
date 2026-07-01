@@ -108,10 +108,6 @@ endif()
 # Set maximum time to wait for a clean exit.
 set(EXIT_TIMEOUT "AUTO" CACHE STRING "Timer to wait for a clean exit")
 
-# Overrides the 5G NR maximum number of physical resource blocks (PRBs). Enabling it disables the main applications,
-# all tests except for the physical layer tests and benchmarks, the third party plugins, and the ASN1 library.
-set(CUSTOM_MAX_NOF_PRBS "OFF" CACHE STRING "Sets a custom maximum number of Physical Resource Blocks (PRB)")
-
 if (ENABLE_WERROR)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
     # Disable gcc's maybe uninitialized analysis as it raises false positives
@@ -297,11 +293,6 @@ message(STATUS "Assertion level set to ${ASSERT_LEVEL_DERIVED}")
 if(NOT EXIT_TIMEOUT STREQUAL "AUTO")
     message(STATUS "Manually set exit timeout. timeout=${EXIT_TIMEOUT}s")
     add_compile_definitions(TERM_TIMEOUT_S=${EXIT_TIMEOUT})
-endif()
-
-if(CUSTOM_MAX_NOF_PRBS)
-    message(WARNING "Maximum number of PRBs set to ${CUSTOM_MAX_NOF_PRBS}. Main applications, plugins, and ASN1 library disabled. Only Physical layer tests and benchmarks are enabled.")
-    add_compile_definitions(MAX_NPRB=${CUSTOM_MAX_NOF_PRBS})
 endif()
 
 ########################################################################
@@ -673,10 +664,6 @@ add_subdirectory(utils)
 if (BUILD_TESTING)
     if (DISABLE_MBEDTLS OR DISABLE_SCTP)
         message(WARNING "Ignoring OCUDU project testing as DISABLE_MBEDTLS=${DISABLE_MBEDTLS} and/or DISABLE_SCTP=${DISABLE_SCTP} definitions are enabled")
-    elseif (CUSTOM_MAX_NOF_PRBS)
-        add_subdirectory(tests/benchmarks/phy)
-        add_subdirectory(tests/unittests/phy)
-        add_subdirectory(tests/integrationtests/phy)
     else ()
         add_subdirectory(tests/test_doubles)
         add_subdirectory(tests/unittests)
@@ -688,7 +675,7 @@ if (BUILD_TESTING)
     endif ()
 endif (BUILD_TESTING)
 
-if (ENABLE_PLUGINS AND NOT CUSTOM_MAX_NOF_PRBS)
+if (ENABLE_PLUGINS)
     # Discover all subdirectories in the plugin directory (but not recursively)
     file(GLOB SUBDIRS RELATIVE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/plugins/*)
 

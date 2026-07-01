@@ -23,7 +23,7 @@ struct vrb_tag {};
 constexpr std::size_t MAX_NOF_PRBS = MAX_NPRB;
 #else
 constexpr std::size_t MAX_NOF_PRBS = 275;
-#endif
+#endif // MAX_NPRB
 
 /// See TS 38.211, 4.4.4.1 - Resource Blocks, General.
 constexpr std::size_t NOF_SUBCARRIERS_PER_RB = 12;
