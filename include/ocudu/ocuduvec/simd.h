@@ -2549,7 +2549,7 @@ inline simd_cf_t ocudu_simd_load(const cbf16_t* ptr)
 {
   simd_cf_t ret;
 #ifdef __ARM_NEON
-  ocudu_simd_bf16_load(ret.val[0], ret.val[1], reinterpret_cast<const bf16_t*>(ptr));
+  ocudu_simd_bf16_loadu(ret.val[0], ret.val[1], reinterpret_cast<const bf16_t*>(ptr));
 #else // __ARM_NEON
   ocudu_simd_bf16_loadu(ret.re, ret.im, reinterpret_cast<const bf16_t*>(ptr));
 #endif
