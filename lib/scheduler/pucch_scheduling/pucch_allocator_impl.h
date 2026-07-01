@@ -221,7 +221,7 @@ private:
   const pucch_resource_builder_params&          res_params;
   const std::optional<csi_report_configuration> csi_report_cfg;
   slot_point                                    last_sl_ind;
-  pucch_collision_manager                       resource_manager;
+  pucch_collision_manager                       col_manager;
 
   ocudulog::basic_logger& logger;
 };
