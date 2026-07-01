@@ -21,7 +21,7 @@ xnap_sn_status_transfer_procedure::xnap_sn_status_transfer_procedure(
 void xnap_sn_status_transfer_procedure::operator()(coro_context<async_task<expected<cu_cp_status_transfer>>>& ctx)
 {
   CORO_BEGIN(ctx);
-  logger.log_debug("\"{}\" started...", name());
+  logger.log_info("\"{}\" started...", name());
   transaction_sink.subscribe_to(sn_status_transfer_outcome, procedure_timeout);
 
   CORO_AWAIT(transaction_sink);
@@ -32,16 +32,16 @@ void xnap_sn_status_transfer_procedure::operator()(coro_context<async_task<expec
   }
 
   if (not transaction_sink.successful()) {
-    logger.log_debug("\"{}\" failed", name());
+    logger.log_warning("\"{}\" failed", name());
     CORO_EARLY_RETURN(make_unexpected(default_error_t{}));
   }
 
   sn_status_transfer.ue_index = ue_index;
   if (not asn1_to_sn_status_transfer(sn_status_transfer, transaction_sink.response())) {
-    logger.log_debug("\"{}\" failed", name());
+    logger.log_warning("\"{}\" failed", name());
     CORO_EARLY_RETURN(make_unexpected(default_error_t{}));
   }
 
-  logger.log_debug("\"{}\" finished successfully", name());
+  logger.log_info("\"{}\" finished successfully", name());
   CORO_RETURN(sn_status_transfer);
 }

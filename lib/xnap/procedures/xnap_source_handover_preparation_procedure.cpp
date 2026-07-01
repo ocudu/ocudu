@@ -43,7 +43,7 @@ void xnap_source_handover_preparation_procedure::operator()(
     CORO_EARLY_RETURN(xnap_handover_preparation_response{false});
   }
 
-  ue_ctxt->logger.log_debug("\"{}\" started...", name());
+  ue_ctxt->logger.log_info("\"{}\" started...", name());
 
   if (ue_ctxt->ue_ids.local_xnap_ue_id == local_xnap_ue_id_t::invalid) {
     ue_ctxt->logger.log_error("\"{}\" failed. Cause: Invalid LOCAL XNAP UE ID", name());
@@ -119,7 +119,7 @@ void xnap_source_handover_preparation_procedure::operator()(
     response.peer_xnap_ue_id  = uint_to_peer_xnap_ue_id(transaction_sink.response()->target_ng_ra_nnode_ue_xn_ap_id);
   }
 
-  ue_ctxt->logger.log_debug("\"{}\" finished successfully", name());
+  ue_ctxt->logger.log_info("\"{}\" finished successfully", name());
 
   CORO_RETURN(response);
 }
