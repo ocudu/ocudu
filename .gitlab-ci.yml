@@ -53,6 +53,8 @@ trigger builder:
         paths:
           - .gitlab/ci/builders/**/*
           - docker/scripts/**/*
+  variables:
+    OCUDU_RUNNER_TAG: $OCUDU_RUNNER_TAG
   trigger:
     include: .gitlab/ci/builders/.gitlab-ci.yml
     strategy: mirror
@@ -74,6 +76,8 @@ trigger buildkit:
       changes:
         paths:
           - .gitlab/ci/buildkit-cli/**/*
+  variables:
+    OCUDU_RUNNER_TAG: $OCUDU_RUNNER_TAG
   trigger:
     include: .gitlab/ci/buildkit-cli/.gitlab-ci.yml
     strategy: mirror
@@ -91,6 +95,8 @@ trigger rh-tool-cli:
       changes:
         paths:
           - .gitlab/ci/rh-tool-cli/**/*
+  variables:
+    OCUDU_RUNNER_TAG: $OCUDU_RUNNER_TAG
   trigger:
     include: .gitlab/ci/rh-tool-cli/.gitlab-ci.yml
     strategy: mirror
@@ -110,6 +116,8 @@ trigger ui:
           - .gitlab/ci/ui/**/*
           - docker/grafana/**/*
           - docker/telegraf/**/*
+  variables:
+    OCUDU_RUNNER_TAG: $OCUDU_RUNNER_TAG
   trigger:
     include: .gitlab/ci/ui/.gitlab-ci.yml
     strategy: mirror
@@ -142,6 +150,8 @@ trigger deploy:
     - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
       variables:
         CI_PIPELINE_SCHEDULE_DESCRIPTION: Nightly
+  variables:
+    OCUDU_RUNNER_TAG: $OCUDU_RUNNER_TAG
   trigger:
     include: .gitlab/ci/deploy/.gitlab-ci.yml
     strategy: mirror
@@ -155,6 +165,7 @@ promote stable docker images:
   variables:
     PROMOTE_IMAGE_TAG: "$[[ inputs.promote-image-tag ]]"
     PFLT_SUBMIT: "$[[ inputs.pflt-submit ]]"
+    OCUDU_RUNNER_TAG: $OCUDU_RUNNER_TAG
   rules:
     - if: $SKIP_OCUDU_BUILDING_CONTAINERS_CI
       when: never
@@ -192,6 +203,8 @@ trigger doxygen:
       changes:
         paths:
           - .gitlab/ci/doxygen/**/*
+  variables:
+    OCUDU_RUNNER_TAG: $OCUDU_RUNNER_TAG
   trigger:
     include: .gitlab/ci/doxygen/.gitlab-ci.yml
     strategy: mirror
@@ -215,6 +228,8 @@ trigger static:
       changes:
         paths:
           - .gitlab/ci/static/**/*
+  variables:
+    OCUDU_RUNNER_TAG: $OCUDU_RUNNER_TAG
   trigger:
     include: .gitlab/ci/static/.gitlab-ci.yml
     strategy: mirror
