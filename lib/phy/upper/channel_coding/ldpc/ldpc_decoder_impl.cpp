@@ -192,37 +192,19 @@ void ldpc_decoder_impl::update_variable_to_check_messages(unsigned check_node)
   // Retrieve list of variable nodes connected to this check node.
   const BG_adjacency_row_t& current_var_indices = current_graph->get_adjacency_row(check_node);
 
-  // Find first NO_EDGE in current_var_indices.
-  const auto* this_var_index_end =
-      std::find_if(current_var_indices.cbegin(), current_var_indices.cend(), [this](auto& element) {
-        return (element == NO_EDGE) || (element >= bg_N_high_rate);
-      });
-
   // Iterate all variable nodes connected to this check node.
-  for (BG_adjacency_row_t::const_iterator this_var_index = current_var_indices.cbegin();
-       this_var_index != this_var_index_end;
+  for (BG_adjacency_row_t::const_iterator this_var_index = current_var_indices.cbegin(); *this_var_index != NO_EDGE;
        ++this_var_index) {
-    unsigned                         i_node   = *this_var_index;
-    span<const log_likelihood_ratio> soft     = get_soft_bits(i_node);
+    // For soft bits, we store all nodes and, then, the node index is given directly by *this_var_index.
+    // For messages, we only store those corresponding to the high-rate region (indices 0 to bg_N_high_rate - 1) and, if
+    // applicable, one single message for the extension region (recall that, from layer 4 onward, each layer is
+    // connected to only one node in the extension region). The high-rate region messages are spanned by
+    // *this_var_index, while the last message is always stored in position bg_N_high_rate.
+    unsigned                         i_node   = std::min(*this_var_index, bg_N_high_rate);
+    span<const log_likelihood_ratio> soft     = get_soft_bits(*this_var_index);
     span<const log_likelihood_ratio> c2v      = get_check_to_var(check_node, i_node);
     span<log_likelihood_ratio>       v2c      = get_var_to_check(i_node, 0);
     span<log_likelihood_ratio>       v2c_copy = get_var_to_check(i_node, lifting_size);
-    if (is_check_to_var_initialized[check_node]) {
-      compute_var_to_check_msgs(v2c, soft, c2v);
-    } else {
-      ocuduvec::copy(v2c, soft);
-    }
-    ocuduvec::copy(v2c_copy, v2c);
-  }
-
-  // Next, update the messages corresponding to the extension region, if applicable.
-  // From layer 4 onwards, each layer is connected to only one consecutive block of lifting_size bits.
-  if (check_node >= 4) {
-    unsigned                         i_node   = bg_N_high_rate + check_node - 4;
-    span<const log_likelihood_ratio> soft     = get_soft_bits(i_node);
-    span<const log_likelihood_ratio> c2v      = get_check_to_var(check_node, bg_N_high_rate);
-    span<log_likelihood_ratio>       v2c      = get_var_to_check(bg_N_high_rate, 0);
-    span<log_likelihood_ratio>       v2c_copy = get_var_to_check(bg_N_high_rate, lifting_size);
     if (is_check_to_var_initialized[check_node]) {
       compute_var_to_check_msgs(v2c, soft, c2v);
     } else {
@@ -235,9 +217,7 @@ void ldpc_decoder_impl::update_variable_to_check_messages(unsigned check_node)
 void ldpc_decoder_impl::update_soft_bits(unsigned check_node)
 {
   const BG_adjacency_row_t& current_var_indices = current_graph->get_adjacency_row(check_node);
-  for (BG_adjacency_row_t::const_iterator this_var_index = current_var_indices.cbegin(),
-                                          last_var_index = current_var_indices.cend();
-       (this_var_index != last_var_index) && (*this_var_index != NO_EDGE);
+  for (BG_adjacency_row_t::const_iterator this_var_index = current_var_indices.cbegin(); *this_var_index != NO_EDGE;
        ++this_var_index) {
     unsigned                         i_node            = std::min(*this_var_index, bg_N_high_rate);
     span<const log_likelihood_ratio> this_check_to_var = get_check_to_var(check_node, i_node);
@@ -366,9 +346,7 @@ bool ldpc_decoder_impl::check_syndrome() const
     const BG_adjacency_row_t& current_var_indices = current_graph->get_adjacency_row(i_check_node);
 
     // Iterate over all check nodes.
-    for (BG_adjacency_row_t::const_iterator this_var_index = current_var_indices.cbegin(),
-                                            last_var_index = current_var_indices.cend();
-         (this_var_index != last_var_index) && (*this_var_index != NO_EDGE);
+    for (BG_adjacency_row_t::const_iterator this_var_index = current_var_indices.cbegin(); *this_var_index != NO_EDGE;
          ++this_var_index) {
       // Get shift.
       unsigned shift = current_graph->get_lifted_node(i_check_node, *this_var_index);
