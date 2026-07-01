@@ -223,3 +223,124 @@ TEST_F(cu_cp_cell_command_handler_test, when_deactivate_cell_with_attached_ue_th
   ASSERT_TRUE(launcher.result.has_value());
   EXPECT_TRUE(launcher.result.value().success);
 }
+
+TEST_F(cu_cp_cell_command_handler_test,
+       when_deactivate_cell_with_multiple_ues_then_all_are_released_before_deactivating)
+{
+  auto cu_up_idx = connect_new_cu_up();
+  ASSERT_TRUE(cu_up_idx.has_value());
+  ASSERT_TRUE(run_e1_setup(cu_up_idx.value()));
+
+  // Several UEs camped on the served cell.
+  const unsigned nof_ues = 3;
+  for (unsigned i = 0; i != nof_ues; ++i) {
+    ASSERT_TRUE(connect_new_ue(du_idx, int_to_gnb_du_ue_f1ap_id(i), to_rnti(0x4601 + i)));
+  }
+
+  cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
+
+  async_task<cu_cp_cell_command_response>         resp_task = cell_cmd.deactivate_cell(served_cgi);
+  lazy_task_launcher<cu_cp_cell_command_response> launcher(resp_task);
+
+  // The CU-CP releases every UE on the cell (one F1AP UE Context Release Command each) before deactivating.
+  std::vector<f1ap_message> release_cmds(nof_ues);
+  for (unsigned i = 0; i != nof_ues; ++i) {
+    ASSERT_TRUE(wait_for_f1ap_tx_pdu(du_idx, release_cmds[i]))
+        << "expected a UE Context Release Command for UE " << i << " before deactivation";
+    ASSERT_TRUE(test_helpers::is_valid_ue_context_release_command(release_cmds[i]));
+  }
+  for (unsigned i = 0; i != nof_ues; ++i) {
+    get_du(du_idx).push_ul_pdu(test_helpers::generate_ue_context_release_complete(release_cmds[i]));
+  }
+
+  // Only once all UEs are released does the deactivation cfg update go out.
+  f1ap_message cu_cfg_upd;
+  ASSERT_TRUE(pop_cu_cfg_upd(cu_cfg_upd)) << "deactivation cfg update should follow all UE releases";
+
+  get_du(du_idx).push_ul_pdu(make_ack_for(cu_cfg_upd));
+  ASSERT_TRUE(tick_until(std::chrono::milliseconds{500}, [&]() { return launcher.ready(); }, false));
+  ASSERT_TRUE(launcher.result.has_value());
+  EXPECT_TRUE(launcher.result.value().success);
+}
+
+/// Fixture with two cells on a single DU, used to prove that deactivating one cell only releases that cell's UEs.
+class cu_cp_cell_command_multicell_test : public cu_cp_test_environment, public ::testing::Test
+{
+public:
+  cu_cp_cell_command_multicell_test() : cu_cp_test_environment(cu_cp_test_env_params{})
+  {
+    run_ng_setup();
+
+    auto ret = connect_new_du();
+    EXPECT_TRUE(ret.has_value());
+    du_idx = ret.value();
+
+    // The cell the simulated UE camps on: default CGI, which generate_init_ul_rrc_message_transfer targets.
+    test_helpers::served_cell_item_info camped_cell;
+    camped_cgi = nr_cell_global_id_t{camped_cell.plmn_id, camped_cell.nci};
+    // A second cell on the same DU with a distinct CGI/PCI: the one we will lock (no UEs on it).
+    test_helpers::served_cell_item_info other_cell;
+    other_cell.nci = nr_cell_identity::create(gnb_id_t{411, 22}, 1).value();
+    other_cell.pci = 7;
+    other_cgi      = nr_cell_global_id_t{other_cell.plmn_id, other_cell.nci};
+
+    EXPECT_TRUE(run_f1_setup(du_idx, int_to_gnb_du_id(0x11), {camped_cell, other_cell}));
+
+    auto cu_up_idx = connect_new_cu_up();
+    EXPECT_TRUE(cu_up_idx.has_value());
+    EXPECT_TRUE(run_e1_setup(cu_up_idx.value()));
+    EXPECT_TRUE(connect_new_ue(du_idx, int_to_gnb_du_ue_f1ap_id(0), to_rnti(0x4601)));
+  }
+
+  bool pop_cu_cfg_upd(f1ap_message& out)
+  {
+    if (!wait_for_f1ap_tx_pdu(du_idx, out)) {
+      return false;
+    }
+    if (out.pdu.type().value != asn1::f1ap::f1ap_pdu_c::types::init_msg) {
+      return false;
+    }
+    return out.pdu.init_msg().proc_code == ASN1_F1AP_ID_GNB_CU_CFG_UPD;
+  }
+
+  f1ap_message make_ack_for(const f1ap_message& request)
+  {
+    f1ap_message ack = test_helpers::generate_gnb_cu_configuration_update_acknowledgement({});
+    ack.pdu.successful_outcome().value.gnb_cu_cfg_upd_ack()->transaction_id =
+        request.pdu.init_msg().value.gnb_cu_cfg_upd()->transaction_id;
+    return ack;
+  }
+
+  unsigned            du_idx{0};
+  nr_cell_global_id_t camped_cgi;
+  nr_cell_global_id_t other_cgi;
+};
+
+TEST_F(cu_cp_cell_command_multicell_test, when_deactivate_cell_then_ues_on_other_cells_are_not_released)
+{
+  cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
+
+  // The UE is attached before we lock the other cell.
+  ASSERT_EQ(get_cu_cp().get_metrics_handler().request_metrics_report().ues.size(), 1U);
+
+  // Lock the cell that has no UEs. The UE on the camped cell must be left alone.
+  async_task<cu_cp_cell_command_response>         resp_task = cell_cmd.deactivate_cell(other_cgi);
+  lazy_task_launcher<cu_cp_cell_command_response> launcher(resp_task);
+
+  // No UE is released, so the very first F1AP PDU is the deactivation cfg update, carrying the locked cell only.
+  f1ap_message cu_cfg_upd;
+  ASSERT_TRUE(pop_cu_cfg_upd(cu_cfg_upd)) << "a UE was released when locking a different cell";
+  const auto& upd_ies = cu_cfg_upd.pdu.init_msg().value.gnb_cu_cfg_upd();
+  ASSERT_TRUE(upd_ies->cells_to_be_deactiv_list_present);
+  ASSERT_EQ(upd_ies->cells_to_be_deactiv_list.size(), 1U);
+  ASSERT_EQ(upd_ies->cells_to_be_deactiv_list[0].value().cells_to_be_deactiv_list_item().nr_cgi.nr_cell_id.to_number(),
+            other_cgi.nci.value());
+
+  get_du(du_idx).push_ul_pdu(make_ack_for(cu_cfg_upd));
+  ASSERT_TRUE(tick_until(std::chrono::milliseconds{500}, [&]() { return launcher.ready(); }, false));
+  ASSERT_TRUE(launcher.result.has_value());
+  EXPECT_TRUE(launcher.result.value().success);
+
+  // The UE on the camped cell survived the lock of the other cell.
+  EXPECT_EQ(get_cu_cp().get_metrics_handler().request_metrics_report().ues.size(), 1U);
+}
