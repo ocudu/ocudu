@@ -141,7 +141,7 @@ std::optional<unsigned> pucch_allocator_impl::alloc_common_harq_ack(cell_resourc
   }
 
   if (existing_ue_grants != nullptr) {
-    // Release resources previously allocated to this UE from the resource manager.
+    // Release resources previously allocated to this UE from the collision manager.
     free_resources(pucch_slot_alloc, *existing_ue_grants, tcrnti);
   }
 
@@ -160,7 +160,7 @@ std::optional<unsigned> pucch_allocator_impl::alloc_common_harq_ack(cell_resourc
 
   if (not d_pri.has_value()) {
     if (existing_ue_grants != nullptr) {
-      // Restore the previous allocation in the resource manager, since the new allocation failed.
+      // Restore the previous allocation in the collision manager, since the new allocation failed.
       alloc_resources(pucch_slot_alloc, *existing_ue_grants, tcrnti);
     }
 
@@ -179,7 +179,7 @@ std::optional<unsigned> pucch_allocator_impl::alloc_common_harq_ack(cell_resourc
   pucch_helper::fill_common_pdu(
       common_pdu, cell_cfg, pucch_helper::get_common_resource(cell_cfg, dci_info.ctx, *d_pri), tcrnti);
 
-  // Allocate the resources in the resource manager.
+  // Allocate the resources in the collision manager.
   alloc_resources(pucch_slot_alloc, grants, tcrnti);
 
   return d_pri;
@@ -208,7 +208,7 @@ std::optional<unsigned> pucch_allocator_impl::alloc_common_and_ded_harq_ack(cell
   ue_grants old_grants{};
   if (existing_grants != nullptr) {
     old_grants = *existing_grants;
-    // Release resources previously allocated to this UE from the resource manager.
+    // Release resources previously allocated to this UE from the collision manager.
     free_resources(pucch_slot_alloc, old_grants, ue_cell_cfg.crnti);
   }
 
@@ -219,7 +219,7 @@ std::optional<unsigned> pucch_allocator_impl::alloc_common_and_ded_harq_ack(cell
   auto d_pri = select_pri(pucch_slot_alloc, ue_cell_cfg, uci_bits, &dci_info.ctx);
   if (not d_pri.has_value()) {
     if (existing_grants != nullptr) {
-      // Restore the previous allocation in the resource manager, since the new allocation failed.
+      // Restore the previous allocation in the collision manager, since the new allocation failed.
       alloc_resources(pucch_slot_alloc, old_grants, ue_cell_cfg.crnti);
     }
     alloc_ctx.log_skipped_alloc(logger.debug, "no PRI available for both common and dedicated resources");
@@ -229,7 +229,7 @@ std::optional<unsigned> pucch_allocator_impl::alloc_common_and_ded_harq_ack(cell
   auto new_grants = multiplex_and_allocate_pucch(pucch_slot_alloc, uci_bits, old_grants, ue_cell_cfg, d_pri, alloc_ctx);
   if (not new_grants.has_value()) {
     if (existing_grants != nullptr) {
-      // Restore the previous allocation in the resource manager, since the new allocation failed.
+      // Restore the previous allocation in the collision manager, since the new allocation failed.
       alloc_resources(pucch_slot_alloc, old_grants, ue_cell_cfg.crnti);
     }
     return std::nullopt;
@@ -244,7 +244,7 @@ std::optional<unsigned> pucch_allocator_impl::alloc_common_and_ded_harq_ack(cell
   pucch_helper::fill_common_pdu(
       common_pdu, cell_cfg, pucch_helper::get_common_resource(cell_cfg, dci_info.ctx, *d_pri), ue_cell_cfg.crnti);
 
-  // Allocate the resources in the resource manager.
+  // Allocate the resources in the collision manager.
   alloc_resources(pucch_slot_alloc, *new_grants, ue_cell_cfg.crnti);
 
   return d_pri;
@@ -297,17 +297,18 @@ std::optional<unsigned> pucch_allocator_impl::alloc_ded_harq_ack(cell_resource_a
   }
 
   if (existing_grants != nullptr) {
-    // Release resources previously allocated to this UE from the resource manager before re-running the multiplexing.
+    // Release resources previously allocated to this UE from the collision manager before re-running the multiplexing.
     free_resources(pucch_slot_alloc, old_grants, ue_cell_cfg.crnti);
   }
 
   std::optional<unsigned> d_pri;
   if (new_bits.harq_ack_nof_bits == 1U) {
+    // First HARQ-ACK allocation for this UE in this slot, find an available PRI to use for the HARQ-ACK bits.
     d_pri = select_pri(pucch_slot_alloc, ue_cell_cfg, new_bits, nullptr);
 
     if (not d_pri.has_value()) {
       if (existing_grants != nullptr) {
-        // Restore the previous allocation in the resource manager, since the new allocation failed.
+        // Restore the previous allocation in the collision manager, since the new allocation failed.
         alloc_resources(pucch_slot_alloc, old_grants, ue_cell_cfg.crnti);
       }
       alloc_ctx.log_skipped_alloc(logger.debug, "no resource indicator available for dedicated PUCCH resource");
@@ -320,13 +321,13 @@ std::optional<unsigned> pucch_allocator_impl::alloc_ded_harq_ack(cell_resource_a
 
   if (not new_grants.has_value()) {
     if (existing_grants != nullptr) {
-      // Restore the previous allocation in the resource manager, since the new allocation failed.
+      // Restore the previous allocation in the collision manager, since the new allocation failed.
       alloc_resources(pucch_slot_alloc, old_grants, ue_cell_cfg.crnti);
     }
     return std::nullopt;
   }
 
-  // Update the UE grants and allocate the resources in the resource manager.
+  // Update the UE grants and allocate the resources in the collision manager.
   slot_ctx.ue_grants_map[ue_cell_cfg.crnti] = *new_grants;
   alloc_resources(pucch_slot_alloc, *new_grants, ue_cell_cfg.crnti);
 
@@ -354,7 +355,7 @@ bool pucch_allocator_impl::alloc_sr_opportunity(cell_slot_resource_allocator& pu
   ue_grants old_grants{};
   if (existing_grants != nullptr) {
     old_grants = *existing_grants;
-    // Release resources previously allocated to this UE from the resource manager.
+    // Release resources previously allocated to this UE from the collision manager.
     free_resources(pucch_slot_alloc, old_grants, ue_cell_cfg.crnti);
   }
 
@@ -366,13 +367,13 @@ bool pucch_allocator_impl::alloc_sr_opportunity(cell_slot_resource_allocator& pu
       multiplex_and_allocate_pucch(pucch_slot_alloc, uci_bits, old_grants, ue_cell_cfg, std::nullopt, alloc_ctx);
   if (not new_grants.has_value()) {
     if (existing_grants != nullptr) {
-      // Restore the previous allocation in the resource manager, since the new allocation failed.
+      // Restore the previous allocation in the collision manager, since the new allocation failed.
       alloc_resources(pucch_slot_alloc, old_grants, ue_cell_cfg.crnti);
     }
     return false;
   }
 
-  // Update the UE grants and allocate the resources in the resource manager.
+  // Update the UE grants and allocate the resources in the collision manager.
   slot_ctx.ue_grants_map[ue_cell_cfg.crnti] = *new_grants;
   alloc_resources(pucch_slot_alloc, *new_grants, ue_cell_cfg.crnti);
 
@@ -400,7 +401,7 @@ bool pucch_allocator_impl::alloc_csi_opportunity(cell_slot_resource_allocator& p
   ue_grants old_grants{};
   if (existing_grants != nullptr) {
     old_grants = *existing_grants;
-    // Release resources previously allocated to this UE from the resource manager.
+    // Release resources previously allocated to this UE from the collision manager.
     free_resources(pucch_slot_alloc, old_grants, ue_cell_cfg.crnti);
   }
 
@@ -412,13 +413,13 @@ bool pucch_allocator_impl::alloc_csi_opportunity(cell_slot_resource_allocator& p
       multiplex_and_allocate_pucch(pucch_slot_alloc, uci_bits, old_grants, ue_cell_cfg, std::nullopt, alloc_ctx);
   if (not new_grants.has_value()) {
     if (existing_grants != nullptr) {
-      // Restore the previous allocation in the resource manager, since the new allocation failed.
+      // Restore the previous allocation in the collision manager, since the new allocation failed.
       alloc_resources(pucch_slot_alloc, old_grants, ue_cell_cfg.crnti);
     }
     return false;
   }
 
-  // Update the UE grants and allocate the resources in the resource manager.
+  // Update the UE grants and allocate the resources in the collision manager.
   slot_ctx.ue_grants_map[ue_cell_cfg.crnti] = *new_grants;
   alloc_resources(pucch_slot_alloc, *new_grants, ue_cell_cfg.crnti);
 
@@ -547,6 +548,7 @@ std::optional<unsigned> pucch_allocator_impl::select_pri(const cell_slot_resourc
                                                          const dci_context_information*      dci_info)
 {
   if (cell_cfg.is_pucch_f0_and_f2() and (bits.csi_part1_nof_bits != 0U or bits.sr_bits != sr_nof_bits::no_sr)) {
+    // In the F0+F2 case, the PRI used for the HARQ-ACK is restricted if CSI or SR is multiplexed with it.
     unsigned d_pri =
         bits.sr_bits != sr_nof_bits::no_sr ? res_params.res_set_size.value() : res_params.res_set_size.value() + 1;
     if (dci_info != nullptr) {
@@ -600,10 +602,11 @@ pucch_allocator_impl::multiplex_and_allocate_pucch(cell_slot_resource_allocator&
   // contain more than 1 UCI bit type.
 
   // Find the grants/resources needed for the UCI bits to be reported, assuming the resources are not multiplexed.
-  pucch_grant_list candidate_grants =
+  const pucch_grant_list candidate_grants =
       get_resources_pre_multiplexing(ue_cell_cfg, new_bits, d_pri.has_value() ? d_pri : old_grants.d_pri);
 
-  pucch_grant_list new_grants = multiplex_resources(ue_cell_cfg, candidate_grants);
+  const pucch_grant_list new_grants =
+      candidate_grants.nof_grants() > 1 ? multiplex_resources(ue_cell_cfg, candidate_grants) : candidate_grants;
   if (new_grants.nof_grants() == 0U) {
     // Multiplexing failed.
     return std::nullopt;
@@ -611,8 +614,8 @@ pucch_allocator_impl::multiplex_and_allocate_pucch(cell_slot_resource_allocator&
 
   // Check that all of the resulting grants can be allocated.
   if (new_grants.harq_ack.has_value()) {
-    bool new_res = (not old_grants.harq_ack.has_value()) or
-                   (*pucch_slot_alloc.result.ul.pucchs[*old_grants.harq_ack].res != *new_grants.harq_ack->res);
+    const bool new_res = (not old_grants.harq_ack.has_value()) or
+                         (*pucch_slot_alloc.result.ul.pucchs[*old_grants.harq_ack].res != *new_grants.harq_ack->res);
     if (new_res and not col_manager.can_alloc(pucch_slot_alloc, *new_grants.harq_ack->res, alloc_ctx.rnti)) {
       alloc_ctx.log_skipped_alloc(logger.debug, "HARQ-ACK resource not available");
       return std::nullopt;
@@ -833,21 +836,16 @@ pucch_allocator_impl::merge_pucch_resources(const ue_cell_configuration& ue_cell
   }
 
   // HARQ-ACK + SR + CSI (Section 9.2.5.2).
-  if (harq_ack and sr and csi) {
-    pucch_grant grant             = *harq_ack;
-    grant.bits.sr_bits            = sr->bits.sr_bits;
-    grant.bits.csi_part1_nof_bits = csi->bits.csi_part1_nof_bits;
+  pucch_grant grant             = *harq_ack;
+  grant.bits.sr_bits            = sr->bits.sr_bits;
+  grant.bits.csi_part1_nof_bits = csi->bits.csi_part1_nof_bits;
 
-    if (grant.res->format() < pucch_format::FORMAT_2) {
-      // Promote to a HARQ-ACK resource from Resource Set ID 1, so it can carry the CSI bits.
-      const auto& set1_res = pucch_helper::get_harq_resource<1>(ue_cell_cfg, d_pri);
-      grant.res            = &set1_res;
-    }
-    return grant;
+  if (grant.res->format() < pucch_format::FORMAT_2) {
+    // Promote to a HARQ-ACK resource from Resource Set ID 1, so it can carry the CSI bits.
+    const auto& set1_res = pucch_helper::get_harq_resource<1>(ue_cell_cfg, d_pri);
+    grant.res            = &set1_res;
   }
-
-  ocudu_assertion_failure("Invalid combination of resources to merge");
-  return std::nullopt;
+  return grant;
 }
 
 std::optional<unsigned> pucch_allocator_impl::update_harq_ack_bits(cell_slot_resource_allocator& pucch_slot_alloc,

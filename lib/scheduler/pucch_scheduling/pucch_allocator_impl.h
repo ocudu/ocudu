@@ -118,9 +118,14 @@ private:
     // Only relevant if there is a HARQ-ACK grant.
     unsigned d_pri = 0U;
 
+    /// Returns the list of PUCCH PDU indices allocated to the UE, optionally including the common grant.
     [[nodiscard]] static_vector<stable_id_t, max_nof_ue_grants> pdu_indices(bool include_common = true) const;
-    [[nodiscard]] unsigned                                      nof_grants(bool include_common = true) const;
-    [[nodiscard]] pucch_uci_bits                                uci_bits(const stable_id_map<pucch_info>& pdus) const;
+
+    /// Returns the number of PUCCH grants allocated to the UE, optionally including the common grant.
+    [[nodiscard]] unsigned nof_grants(bool include_common = true) const;
+
+    /// Returns the total number of UCI bits allocated to the UE, based on the PUCCH PDUs currently allocated to the UE.
+    [[nodiscard]] pucch_uci_bits uci_bits(const stable_id_map<pucch_info>& pdus) const;
   };
 
   /// Keeps track of the PUCCH allocation context for a given slot.
@@ -143,6 +148,8 @@ private:
 
   ///////////////  Main private functions   //////////////
 
+  /// \brief Selects the d_pri to use for a given UE. based on the UCI bits to be sent and the PUCCH resources available
+  ///        in the given slot.
   std::optional<unsigned> select_pri(const cell_slot_resource_allocator& pucch_slot_alloc,
                                      const ue_cell_configuration&        ue_cell_cfg,
                                      const pucch_uci_bits&               bits,

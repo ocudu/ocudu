@@ -27,6 +27,7 @@ const pucch_resource&
 get_common_resource(const cell_configuration& cell_cfg, const dci_context_information& dci_info, unsigned d_pri);
 
 /// \brief Fills the PUCCH PDU for common HARQ-ACK resources.
+///
 /// \param[out] pucch_pdu PUCCH PDU to be filled.
 /// \param[in] cell_cfg Cell configuration.
 /// \param[in] pucch_res PUCCH resource configuration.
@@ -37,12 +38,13 @@ void fill_common_pdu(pucch_info&               pucch_pdu,
                      rnti_t                    rnti);
 
 /// \brief Fills the PUCCH PDU for dedicated resources.
-// \param[out] pucch_pdu PUCCH PDU to be filled.
+///
+/// \param[out] pucch_pdu PUCCH PDU to be filled.
 /// \param[in] cell_cfg Cell configuration.
-// \param[in] pucch_res PUCCH resource configuration.
-// \param[in] uci_bits UCI bits to be sent in the PUCCH.
-// \param[in] csi_cfg Optional CSI report configuration if CSI bits are present in the UCI.
-// \param[in] rnti RNTI of the UE.
+/// \param[in] pucch_res PUCCH resource configuration.
+/// \param[in] uci_bits UCI bits to be sent in the PUCCH.
+/// \param[in] csi_cfg Optional CSI report configuration if CSI bits are present in the UCI.
+/// \param[in] rnti RNTI of the UE.
 void fill_ded_pdu(pucch_info&                     pucch_pdu,
                   const cell_configuration&       cell_cfg,
                   const pucch_resource&           pucch_res,

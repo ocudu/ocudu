@@ -206,12 +206,22 @@ void uci_scheduler_impl::schedule_slot_ucis(cell_slot_resource_allocator& slot_a
     // NOTE: Allocating the CSI after the SR helps the PUCCH allocation to compute the number of allocated UCI bits and
     // the corresponding number of PRBs for the PUCCH Format 2 over a PUCCH F2 grant is within PUCCH capacity.
     if (uci_info.sr_counter > 0) {
-      uci_alloc.alloc_sr_opportunity(slot_alloc, *ue_cfg);
+      if (not uci_alloc.alloc_sr_opportunity(slot_alloc, *ue_cfg)) {
+        logger.warning("cell={} c-rnti={}: Failed to allocate SR PUCCH for slot={}",
+                       fmt::underlying(cell_cfg.cell_index),
+                       uci_info.rnti,
+                       slot_alloc.slot);
+      }
     }
 
     // Schedule CSI PUCCH.
     if (uci_info.csi_counter > 0) {
-      uci_alloc.alloc_csi_opportunity(slot_alloc, *ue_cfg);
+      if (not uci_alloc.alloc_csi_opportunity(slot_alloc, *ue_cfg)) {
+        logger.warning("cell={} c-rnti={}: Failed to allocate CSI PUCCH for slot={}",
+                       fmt::underlying(cell_cfg.cell_index),
+                       uci_info.rnti,
+                       slot_alloc.slot);
+      }
     }
 
     ++it;

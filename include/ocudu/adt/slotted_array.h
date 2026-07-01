@@ -204,7 +204,7 @@ public:
     }
     this->nof_elems += this->contains(idx) ? 0 : 1;
     this->vec[idx].emplace(std::forward<Args>(args)...);
-    ocudu_assert(this->vec[idx].has_value(), "Inserted object must be represent an optional with value");
+    ocudu_assert(this->vec[idx].has_value(), "Inserted object must represent an optional with value");
     return (*this)[idx];
   }
 
