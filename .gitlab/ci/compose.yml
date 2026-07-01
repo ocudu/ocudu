@@ -35,6 +35,7 @@ gnb docker compose:
     - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb which ru_emulator"
     - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb gnb cu_cp amf --no_core=true ru_sdr --device_driver uhd | grep 'Failed to open device with address'"
     - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb gnb cu_cp amf --no_core=true hal --eal_args='--help'"
+  needs: []
 
 # Manual only: validates gNB image on fedora:44 (dnf, GCC 15+). Run from the child pipeline when docker CI is included.
 gnb docker compose fedora 44 manual:
@@ -70,6 +71,7 @@ gnb docker compose fedora 44 manual:
   script:
     - docker compose -f docker/docker-compose.yml build --build-arg NUM_JOBS=${CPU_JOBS} 5gc
     - docker compose -f docker/docker-compose.yml run 5gc 5gc -v
+  needs: []
 
 grafana docker compose:
   extends: .docker compose
@@ -86,6 +88,7 @@ grafana docker compose:
     - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Weekly/
   script:
     - docker compose -f docker/docker-compose.ui.yml run --no-deps grafana --version
+  needs: []
 
 influxdb and telegraf docker compose:
   extends: .docker compose
@@ -111,3 +114,4 @@ influxdb and telegraf docker compose:
       fi
     - docker compose -f docker/docker-compose.ui.yml logs
     - docker compose -f docker/docker-compose.ui.yml down --volumes
+  needs: []
