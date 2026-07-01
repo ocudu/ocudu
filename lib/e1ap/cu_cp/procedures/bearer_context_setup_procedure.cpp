@@ -30,7 +30,7 @@ void bearer_context_setup_procedure::operator()(coro_context<async_task<e1ap_bea
 {
   CORO_BEGIN(ctx);
 
-  logger.log_debug("\"{}\" initialized", name());
+  logger.log_info("\"{}\" started...", name());
 
   // Subscribe to respective publisher to receive BEARER CONTEXT SETUP RESPONSE/FAILURE message.
   transaction_sink.subscribe_to(ev_mng.context_setup_outcome, e1ap_cfg.proc_timeout);
@@ -68,11 +68,10 @@ e1ap_bearer_context_setup_response bearer_context_setup_procedure::handle_bearer
     // Fill response.
     fill_e1ap_bearer_context_setup_response(res, resp);
 
-    logger.log_debug("\"{}\" finalized", name());
+    logger.log_info("\"{}\" finished successfully", name());
 
   } else if (transaction_sink.failed()) {
     const asn1::e1ap::bearer_context_setup_fail_s& fail = transaction_sink.failure();
-    logger.log_debug("Received BearerContextSetupFailure cause={}", get_cause_str(fail->cause));
 
     // Add CU-UP UE E1AP ID to UE context.
     ocudu_sanity_check(ue_ctxt_list.contains(int_to_gnb_cu_cp_ue_e1ap_id(fail->gnb_cu_cp_ue_e1ap_id)),
@@ -84,11 +83,11 @@ e1ap_bearer_context_setup_response bearer_context_setup_procedure::handle_bearer
     // Fill response with failure.
     fill_e1ap_bearer_context_setup_response(res, fail);
 
+    logger.log_warning("\"{}\" failed. Cause: {}", name(), get_cause_str(fail->cause));
   } else {
-    logger.log_warning("BearerContextSetupResponse timeout");
+    logger.log_warning(
+        "\"{}\" failed. Cause: BearerContextSetupResponse timeout after {} ms", name(), e1ap_cfg.proc_timeout.count());
     res.success = false;
-
-    logger.log_error("\"{}\" failed", name());
   }
 
   return res;

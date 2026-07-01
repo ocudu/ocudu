@@ -30,7 +30,7 @@ void cu_cp_e1_reset_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("\"{}\" started...", name());
+  logger.info("\"{}\" started...", name());
 
   // Create transaction.
   transaction = ev_mng.transactions.create_transaction(e1ap_cfg.proc_timeout);

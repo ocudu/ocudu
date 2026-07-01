@@ -34,7 +34,7 @@ void e1_release_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("\"{}\" started...", name());
+  logger.info("\"{}\" started...", name());
 
   // If there are still active UEs, release them.
   if (ue_list.size() > 0) {

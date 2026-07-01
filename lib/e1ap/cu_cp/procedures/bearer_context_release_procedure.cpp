@@ -24,7 +24,7 @@ void bearer_context_release_procedure::operator()(coro_context<async_task<void>>
 {
   CORO_BEGIN(ctx);
 
-  ue_ctxt_list[ue_index].logger.log_debug("\"{}\" initialized", name());
+  ue_ctxt_list[ue_index].logger.log_info("\"{}\" started...", name());
 
   // Subscribe to respective publisher to receive BEARER CONTEXT RELEASE COMPLETE message.
   transaction_sink.subscribe_to(ue_ctxt_list[ue_index].bearer_ev_mng.context_release_complete, e1ap_cfg.proc_timeout);
@@ -52,7 +52,7 @@ void bearer_context_release_procedure::send_bearer_context_release_command()
 void bearer_context_release_procedure::handle_bearer_context_release_complete()
 {
   if (transaction_sink.successful()) {
-    ue_ctxt_list[ue_index].logger.log_debug("\"{}\" finalized", name());
+    ue_ctxt_list[ue_index].logger.log_info("\"{}\" finished successfully", name());
 
   } else {
     ue_ctxt_list[ue_index].logger.log_warning("BearerContextReleaseComplete timeout");

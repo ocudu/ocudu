@@ -24,7 +24,7 @@ void bearer_context_modification_procedure::operator()(
 {
   CORO_BEGIN(ctx);
 
-  logger.log_debug("\"{}\" initialized", name());
+  logger.log_info("\"{}\" initialized", name());
 
   // Subscribe to respective publisher to receive BEARER CONTEXT MODIFICATION RESPONSE/FAILURE message.
   transaction_sink.subscribe_to(ev_mng.context_modification_outcome, e1ap_cfg.proc_timeout);
@@ -54,7 +54,7 @@ bearer_context_modification_procedure::create_bearer_context_modification_result
     const asn1::e1ap::bearer_context_mod_resp_s& resp = transaction_sink.response();
     fill_e1ap_bearer_context_modification_response(res, resp);
 
-    logger.log_debug("\"{}\" finalized", name());
+    logger.log_info("\"{}\" finished successfully", name());
   } else if (transaction_sink.failed()) {
     const asn1::e1ap::bearer_context_mod_fail_s& fail = transaction_sink.failure();
     fill_e1ap_bearer_context_modification_response(res, fail);
