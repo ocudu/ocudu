@@ -4,6 +4,7 @@
 
 #include "f1ap_trp_information_exchange_procedure.h"
 #include "asn1_helpers.h"
+#include "f1ap_asn1_utils.h"
 #include "ocudu/adt/expected.h"
 #include "ocudu/asn1/f1ap/common.h"
 #include "ocudu/asn1/f1ap/f1ap_ies.h"
@@ -71,7 +72,7 @@ void f1ap_trp_information_exchange_procedure::operator()(
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("\"{}\" initialized", name());
+  logger.info("\"{}\" started...", name());
 
   transaction = ev_mng.transactions.create_transaction(f1ap_cfg.proc_timeout);
 
@@ -107,7 +108,7 @@ f1ap_trp_information_exchange_procedure::handle_procedure_outcome()
 {
   if (transaction.aborted()) {
     // Timeout or cancellation case.
-    logger.debug("\"{}\" failed", name());
+    logger.warning("\"{}\" failed. Cause: Timeout or cancellation", name());
     return make_unexpected(create_trp_info_failure(f1ap_cause_radio_network_t::unspecified));
   }
 
@@ -116,10 +117,11 @@ f1ap_trp_information_exchange_procedure::handle_procedure_outcome()
   if (not du_pdu_response.has_value()) {
     procedure_outcome =
         make_unexpected(create_trp_info_failure(asn1_to_cause(du_pdu_response.error().value.trp_info_fail()->cause)));
-    logger.debug("\"{}\" failed", name());
+    logger.warning(
+        "\"{}\" failed. Cause: {}", name(), get_cause_str(du_pdu_response.error().value.trp_info_fail()->cause));
   } else {
     procedure_outcome = create_trp_info_response(du_pdu_response.value().value.trp_info_resp());
-    logger.debug("\"{}\" finished successfully", name());
+    logger.info("\"{}\" finished successfully", name());
   }
 
   // Send response to CU-CP.

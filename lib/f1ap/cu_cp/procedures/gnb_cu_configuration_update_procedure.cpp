@@ -48,7 +48,7 @@ void gnb_cu_configuration_update_procedure::operator()(
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("\"{}\": started...", name());
+  logger.info("\"{}\": started...", name());
 
   // Create transaction.
   transaction = ev_mng.transactions.create_transaction(f1ap_cfg.proc_timeout);
@@ -86,13 +86,13 @@ f1ap_gnb_cu_configuration_update_response gnb_cu_configuration_update_procedure:
 
   if (not transaction.valid()) {
     // Transaction could not be allocated.
-    logger.debug("\"{}\" cancelled. Cause: Failed to allocate transaction", name());
+    logger.warning("\"{}\" cancelled. Cause: Failed to allocate transaction", name());
     return response;
   }
 
   if (transaction.aborted()) {
     // Timeout or cancellation case.
-    logger.debug("\"{}\" cancelled. Cause: Timeout reached", name());
+    logger.warning("\"{}\" cancelled. Cause: Timeout reached", name());
     return response;
   }
 
@@ -102,13 +102,13 @@ f1ap_gnb_cu_configuration_update_response gnb_cu_configuration_update_procedure:
       const auto& asn1_resp = transaction.response().value().value.gnb_cu_cfg_upd_ack();
       fill_f1ap_gnb_cu_configuration_update_response(response, asn1_resp);
 
-      logger.debug("\"{}\": finished successfully", name());
+      logger.info("\"{}\": finished successfully", name());
     } else {
       // F1 GNB CU Configuration Update Failure case.
       const auto& asn1_fail = transaction.response().error().value.gnb_cu_cfg_upd_fail();
       fill_f1ap_gnb_cu_configuration_update_response(response, asn1_fail);
 
-      logger.debug("\"{}\": failed. Cause: {}", name(), get_cause_str(asn1_fail->cause));
+      logger.warning("\"{}\": failed. Cause: {}", name(), get_cause_str(asn1_fail->cause));
     }
   }
 
