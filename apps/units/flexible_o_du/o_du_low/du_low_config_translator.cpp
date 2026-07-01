@@ -10,6 +10,8 @@
 #include "ocudu/ran/duplex_mode.h"
 #include "ocudu/ran/prach/prach_configuration.h"
 #include "ocudu/ran/pusch/pusch_constants.h"
+#include "ocudu/support/cpu_architecture_info.h"
+#include <cmath>
 
 using namespace ocudu;
 
@@ -202,26 +204,58 @@ void ocudu::generate_o_du_low_config(odu::o_du_low_config&                      
   out_config.du_low_cfg = generate_du_low_config(du_low_unit_cfg, cells);
 }
 
-void ocudu::fill_du_low_worker_manager_config(worker_manager_config&    config,
-                                              const du_low_unit_config& unit_cfg,
-                                              unsigned                  is_blocking_mode_active,
-                                              span<const unsigned>      nof_dl_antennas,
-                                              span<const unsigned>      nof_ul_antennas)
+/// \brief Derives the required PUSCH and SRS concurrency level from the per-cell parameters.
+///
+/// Applies the formula: 12.5 cores for every 100MHz, layer and cell, scaled by the cell's UL slot ratio, aggregated
+/// across all cells, since PUSCH and SRS executors are shared globally rather than partitioned per cell. Unspecified
+/// fields use sensible defaults (1 antenna, 100MHz, 1 layer, FDD i.e. UL ratio of 1).
+static unsigned derive_pusch_and_srs_concurrency(span<const du_low_cell_config> cell_params)
 {
-  report_error_if_not(nof_dl_antennas.size() == nof_ul_antennas.size(),
-                      "The length of nof_dl_antennas ({}) must be equal to the length of nof_ul_antennas ({}), which "
-                      "should match the number of cells.",
-                      nof_dl_antennas.size(),
-                      nof_ul_antennas.size());
+  report_error_if_not(!cell_params.empty(),
+                      "At least one cell must be configured before auto-deriving PUSCH/SRS concurrency.");
 
+  // Number of CPU cores required per 100MHz of channel bandwidth, per PUSCH layer, per cell (at 2 LDPC iterations).
+  constexpr double cores_per_100mhz_layer_cell = 12.5;
+
+  unsigned nof_available_cpus = cpu_architecture_info::get().get_host_nof_available_cpus();
+
+  double required = 0.0;
+  for (const auto& c : cell_params) {
+    required += cores_per_100mhz_layer_cell * static_cast<double>(c.channel_bw_mhz) / 100.0 *
+                static_cast<double>(c.pusch_max_nof_layers) * c.ul_ratio;
+  }
+
+  unsigned required_concurrency = std::max(1U, static_cast<unsigned>(std::ceil(required)));
+
+  // A requirement that meets or exceeds the number of available cores is equivalent to no limitation.
+  if (required_concurrency >= nof_available_cpus) {
+    return du_low_unit_expert_threads_config::concurrency_unlimited;
+  }
+  return required_concurrency;
+}
+
+void ocudu::fill_du_low_worker_manager_config(worker_manager_config&         config,
+                                              const du_low_unit_config&      unit_cfg,
+                                              unsigned                       is_blocking_mode_active,
+                                              span<const du_low_cell_config> cell_params)
+{
   auto& du_low_cfg = config.du_low_cfg.emplace();
 
   du_low_cfg.is_sequential_mode_active = is_blocking_mode_active;
-  du_low_cfg.cell_nof_dl_antennas.assign(nof_dl_antennas.begin(), nof_dl_antennas.end());
-  du_low_cfg.cell_nof_ul_antennas.assign(nof_ul_antennas.begin(), nof_ul_antennas.end());
+
+  du_low_cfg.cell_nof_dl_antennas.reserve(cell_params.size());
+  du_low_cfg.cell_nof_ul_antennas.reserve(cell_params.size());
+  for (const auto& c : cell_params) {
+    du_low_cfg.cell_nof_dl_antennas.push_back(c.nof_dl_antennas);
+    du_low_cfg.cell_nof_ul_antennas.push_back(c.nof_ul_antennas);
+  }
 
   unsigned max_pdsch_concurrency         = unit_cfg.expert_execution_cfg.threads.max_pdsch_concurrency;
   unsigned max_pusch_and_srs_concurrency = unit_cfg.expert_execution_cfg.threads.max_pusch_and_srs_concurrency;
+
+  if (max_pusch_and_srs_concurrency == du_low_unit_expert_threads_config::concurrency_auto) {
+    max_pusch_and_srs_concurrency = derive_pusch_and_srs_concurrency(cell_params);
+  }
 
   // Override PDSCH and PUSCH maximum concurrency if hardware acceleration is present.
   if (unit_cfg.hal_config.has_value()) {

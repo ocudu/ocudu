@@ -95,6 +95,12 @@ public:
 
       const auto& flexible = std::get<du_low_executor_mapper_flexible_exec_config>(config.executors);
 
+      report_error_if_not(
+          flexible.max_pusch_and_srs_concurrency <= flexible.non_rt_medium_prio_exec.max_concurrency,
+          "Maximum PUSCH and SRS concurrency (i.e., {}) exceeds the number of main pool threads (i.e., {}).",
+          flexible.max_pusch_and_srs_concurrency,
+          flexible.non_rt_medium_prio_exec.max_concurrency);
+
       auto pdsch_executors = create_task_fork_limiter(
           flexible.rt_hi_prio_exec, flexible.max_pdsch_concurrency, pdsch_queue_sizes, max_pdsch_batch_size);
 

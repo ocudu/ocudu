@@ -21,7 +21,8 @@ static bool validate_upper_phy_threads_appconfig(const du_low_unit_expert_thread
     valid = false;
   }
 
-  if (!max_concurrency_range.contains(config.max_pusch_and_srs_concurrency)) {
+  if ((config.max_pusch_and_srs_concurrency != du_low_unit_expert_threads_config::concurrency_auto) &&
+      !max_concurrency_range.contains(config.max_pusch_and_srs_concurrency)) {
     fmt::print("Maximum joint PUSCH and SRS concurrency (i.e., {}) must be in range {}.\n",
                config.max_pusch_and_srs_concurrency,
                max_concurrency_range);

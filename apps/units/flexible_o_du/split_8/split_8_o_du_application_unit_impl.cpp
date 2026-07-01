@@ -11,8 +11,26 @@
 #include "split_8_o_du_unit_config_validator.h"
 #include "split_8_o_du_unit_config_yaml_writer.h"
 #include "split_8_o_du_unit_logger_registrator.h"
+#include "ocudu/ran/bs_channel_bandwidth.h"
 
 using namespace ocudu;
+
+/// Derives the ratio between the number of UL slots and the TDD period. Returns 1 (all slots are UL) for FDD.
+static double derive_ul_ratio(const std::optional<du_high_unit_tdd_ul_dl_config>& tdd_cfg)
+{
+  if (!tdd_cfg.has_value()) {
+    return 1.0;
+  }
+
+  unsigned period_slots = tdd_cfg->pattern1.dl_ul_period_slots;
+  unsigned nof_ul_slots = tdd_cfg->pattern1.nof_ul_slots + ((tdd_cfg->pattern1.nof_ul_symbols != 0) ? 1 : 0);
+  if (tdd_cfg->pattern2.has_value()) {
+    period_slots += tdd_cfg->pattern2->dl_ul_period_slots;
+    nof_ul_slots += tdd_cfg->pattern2->nof_ul_slots + ((tdd_cfg->pattern2->nof_ul_symbols != 0) ? 1 : 0);
+  }
+
+  return static_cast<double>(nof_ul_slots) / static_cast<double>(period_slots);
+}
 
 void split_8_o_du_application_unit_impl::on_loggers_registration()
 {
@@ -68,13 +86,20 @@ void split_8_o_du_application_unit_impl::fill_worker_manager_config(worker_manag
 {
   bool is_blocking_mode_enable = unit_cfg.ru_cfg.device_driver == "zmq";
   fill_du_high_worker_manager_config(config, unit_cfg.odu_high_cfg.du_high_cfg.config, is_blocking_mode_enable);
-  std::vector<unsigned> nof_dl_antennas;
-  std::vector<unsigned> nof_ul_antennas;
+  std::vector<du_low_cell_config> cell_params;
+  cell_params.reserve(unit_cfg.odu_high_cfg.du_high_cfg.config.cells_cfg.size());
   for (const auto& cell : unit_cfg.odu_high_cfg.du_high_cfg.config.cells_cfg) {
-    nof_dl_antennas.push_back(cell.cell.nof_antennas_dl);
-    nof_ul_antennas.push_back(cell.cell.nof_antennas_ul);
+    cell_params.push_back(du_low_cell_config{
+        .nof_dl_antennas = cell.cell.nof_antennas_dl,
+        .nof_ul_antennas = cell.cell.nof_antennas_ul,
+        .channel_bw_mhz  = bs_channel_bandwidth_to_MHz(cell.cell.channel_bw_mhz),
+        .pusch_max_nof_layers =
+            cell.cell.pusch_cfg.enable_transform_precoding
+                ? 1U
+                : std::min({cell.cell.nof_antennas_ul, pusch_constants::MAX_NOF_LAYERS, cell.cell.pusch_cfg.max_rank}),
+        .ul_ratio = derive_ul_ratio(cell.cell.tdd_ul_dl_cfg),
+    });
   }
-  fill_du_low_worker_manager_config(
-      config, unit_cfg.du_low_cfg, is_blocking_mode_enable, nof_dl_antennas, nof_ul_antennas);
+  fill_du_low_worker_manager_config(config, unit_cfg.du_low_cfg, is_blocking_mode_enable, cell_params);
   fill_sdr_worker_manager_config(config, unit_cfg.ru_cfg);
 }

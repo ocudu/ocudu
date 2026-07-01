@@ -78,13 +78,29 @@ static void configure_cli11_upper_phy_threads_args(CLI::App& app, du_low_unit_ex
     } else if (value == "synchronous") {
       pdsch_cb_batch_length = du_low_unit_expert_threads_config::synchronous_cb_batch_length;
     } else {
-      char* val             = nullptr;
-      pdsch_cb_batch_length = std::strtol(value.c_str(), &val, 10);
-      if (val != value.c_str() + value.length()) {
+      expected<unsigned, std::string> parsed_int = parse_int<unsigned>(value);
+      if (!parsed_int.has_value()) {
         return fmt::format("Invalid PDSCH CB batch size '{}'. Set to auto, synchronous, or an integer number.", value);
       }
+      pdsch_cb_batch_length = parsed_int.value();
     }
     return std::to_string(pdsch_cb_batch_length);
+  };
+
+  auto concurrency_transform = [](const std::string& value) -> std::string {
+    unsigned concurrency;
+    if (value == "unlimited") {
+      concurrency = du_low_unit_expert_threads_config::concurrency_unlimited;
+    } else if (value == "auto") {
+      concurrency = du_low_unit_expert_threads_config::concurrency_auto;
+    } else {
+      expected<unsigned, std::string> parsed_int = parse_int<unsigned>(value);
+      if (!parsed_int.has_value()) {
+        return fmt::format("Invalid concurrency value '{}'. Set to unlimited, auto, or an integer number.", value);
+      }
+      concurrency = parsed_int.value();
+    }
+    return std::to_string(concurrency);
   };
 
   add_option(
@@ -105,27 +121,28 @@ static void configure_cli11_upper_phy_threads_args(CLI::App& app, du_low_unit_ex
              config.max_pucch_concurrency,
              "Maximum PUCCH processing concurrency for all cells.\n"
              "Limits the maximum number of threads that can concurrently process Physical Uplink Control Channel\n"
-             "(PUCCH). Set it to zero for no limit of threads.")
+             "(PUCCH). Set it to 'unlimited' for no limit of threads.")
       ->capture_default_str()
-      ->check(CLI::Number);
+      ->transform(concurrency_transform);
   add_option(app,
              "--max_pusch_and_srs_concurrency",
              config.max_pusch_and_srs_concurrency,
              "Maximum PUSCH and SRS processing concurrency for all cells.\n"
              "Limits the maximum number of threads that can concurrently process Physical Uplink Shared Channel \n"
-             "(PUSCH) and Sounding Reference Signals (SRS). Set it to zero for no limitation. If hardware \n"
-             "acceleration is enabled, this parameter is set to the number of the accelerator queues.")
+             "(PUSCH) and Sounding Reference Signals (SRS). Set it to 'unlimited' for no limitation, or 'auto' to\n"
+             "automatically derive it from the cell bandwidth, number of cells and maximum number of layers. If\n"
+             "hardware acceleration is enabled, this parameter is set to the number of the accelerator queues.")
       ->capture_default_str()
-      ->check(CLI::Number);
+      ->transform(concurrency_transform);
   add_option(app,
              "--max_pdsch_concurrency",
              config.max_pdsch_concurrency,
              "Maximum concurrency level for PDSCH processing for all cells.\n"
              "Limits the number of threads that can concurrently process Physical Downlink Shared Channel (PDSCH).\n"
-             "Set to zero for no limitation. If hardware acceleration is enabled, this parameter is set to the\n"
-             "number of the accelerator queues.")
+             "Set to 'unlimited' for no limitation. If hardware acceleration is enabled, this parameter is set to\n"
+             "the number of the accelerator queues.")
       ->capture_default_str()
-      ->check(CLI::Number);
+      ->transform(concurrency_transform);
 }
 
 static void configure_cli11_expert_execution_args(CLI::App& app, du_low_unit_expert_execution_config& config)

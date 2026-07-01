@@ -79,12 +79,12 @@ void split6_o_du_low_application_unit_impl::fill_worker_manager_config(worker_ma
   plugin->fill_worker_manager_config(config);
 
   config.config_affinities.resize(split6_du_low::NOF_CELLS_SUPPORTED);
-  std::vector<unsigned> max_antennas_supported_per_cell = {split6_du_low::NOF_TX_ANTENNA_SUPPORTED};
-  fill_du_low_worker_manager_config(config,
-                                    unit_cfg.du_low_cfg,
-                                    is_blocking_mode_enable,
-                                    max_antennas_supported_per_cell,
-                                    max_antennas_supported_per_cell);
+  std::vector<du_low_cell_config> cell_params(
+      split6_du_low::NOF_CELLS_SUPPORTED,
+      du_low_cell_config{.nof_dl_antennas      = split6_du_low::NOF_TX_ANTENNA_SUPPORTED,
+                         .nof_ul_antennas      = split6_du_low::NOF_TX_ANTENNA_SUPPORTED,
+                         .pusch_max_nof_layers = split6_du_low::PUSCH_MAX_NOF_LAYERS});
+  fill_du_low_worker_manager_config(config, unit_cfg.du_low_cfg, is_blocking_mode_enable, cell_params);
 
   if (auto* ru_sdr = std::get_if<ru_sdr_unit_config>(&unit_cfg.ru_cfg)) {
     fill_sdr_worker_manager_config(config, *ru_sdr);

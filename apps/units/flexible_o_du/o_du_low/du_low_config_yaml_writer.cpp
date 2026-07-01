@@ -33,16 +33,30 @@ static void fill_du_low_trace_section(YAML::Node node, const du_low_unit_tracer_
   fill_du_low_tracer_layers_section(node["layers"], config);
 }
 
+/// Converts a concurrency value into its YAML representation, using the 'unlimited'/'auto' aliases for the
+/// respective sentinel values so that dumped configurations use the same vocabulary as the CLI11 parser.
+static std::string concurrency_to_yaml_value(unsigned concurrency)
+{
+  if (concurrency == du_low_unit_expert_threads_config::concurrency_unlimited) {
+    return "unlimited";
+  }
+  if (concurrency == du_low_unit_expert_threads_config::concurrency_auto) {
+    return "auto";
+  }
+  return std::to_string(concurrency);
+}
+
 static void fill_du_low_expert_execution_section(YAML::Node node, const du_low_unit_expert_execution_config& config)
 {
   {
-    YAML::Node threads_node                     = node["threads"];
-    YAML::Node upper_node                       = threads_node["upper_phy"];
-    upper_node["pdsch_processor_type"]          = config.threads.pdsch_processor_type;
-    upper_node["pdsch_cb_batch_length"]         = config.threads.pdsch_cb_batch_length;
-    upper_node["max_pucch_concurrency"]         = config.threads.max_pucch_concurrency;
-    upper_node["max_pusch_and_srs_concurrency"] = config.threads.max_pusch_and_srs_concurrency;
-    upper_node["max_pdsch_concurrency"]         = config.threads.max_pdsch_concurrency;
+    YAML::Node threads_node             = node["threads"];
+    YAML::Node upper_node               = threads_node["upper_phy"];
+    upper_node["pdsch_processor_type"]  = config.threads.pdsch_processor_type;
+    upper_node["pdsch_cb_batch_length"] = config.threads.pdsch_cb_batch_length;
+    upper_node["max_pucch_concurrency"] = concurrency_to_yaml_value(config.threads.max_pucch_concurrency);
+    upper_node["max_pusch_and_srs_concurrency"] =
+        concurrency_to_yaml_value(config.threads.max_pusch_and_srs_concurrency);
+    upper_node["max_pdsch_concurrency"] = concurrency_to_yaml_value(config.threads.max_pdsch_concurrency);
   }
 }
 

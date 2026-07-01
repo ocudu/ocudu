@@ -97,26 +97,14 @@ struct du_low_unit_tracer_config {
 
 /// Expert threads configuration of the gNB app.
 struct du_low_unit_expert_threads_config {
-  du_low_unit_expert_threads_config()
-  {
-    unsigned nof_threads = cpu_architecture_info::get().get_host_nof_available_cpus();
-
-    max_pucch_concurrency = 0;
-    if (nof_threads <= 4) {
-      max_pusch_and_srs_concurrency = 1;
-    } else if (nof_threads < 8) {
-      max_pusch_and_srs_concurrency = 2;
-    } else if (nof_threads < 16) {
-      max_pusch_and_srs_concurrency = 2;
-    } else {
-      max_pusch_and_srs_concurrency = 4;
-    }
-  }
-
   /// Codeblock batch length for ensuring synchronous processing within the flexible PDSCH processor implementation.
   static constexpr unsigned synchronous_cb_batch_length = std::numeric_limits<unsigned>::max();
   /// Codeblock default batch length.
   static constexpr unsigned default_cb_batch_length = 4;
+  /// Concurrency value that indicates no limitation on the number of threads.
+  static constexpr unsigned concurrency_unlimited = 0;
+  /// Concurrency value that indicates the number of threads must be automatically derived.
+  static constexpr unsigned concurrency_auto = std::numeric_limits<unsigned>::max();
 
   /// \brief PDSCH processor type.
   ///
@@ -133,14 +121,15 @@ struct du_low_unit_expert_threads_config {
   unsigned pdsch_cb_batch_length = default_cb_batch_length;
   /// \brief Maximum concurrency level for PUCCH.
   ///
-  /// Maximum number of threads that can concurrently process Physical Uplink Control Channel (PUCCH). Set to zero for
-  /// no limitation.
-  unsigned max_pucch_concurrency = 0;
+  /// Maximum number of threads that can concurrently process Physical Uplink Control Channel (PUCCH). Set to
+  /// \c concurrency_unlimited for no limitation.
+  unsigned max_pucch_concurrency = concurrency_unlimited;
   /// \brief Maximum joint concurrency level for PUSCH and SRS.
   ///
   /// Maximum number of threads that can concurrently process Physical Uplink Shared Channel (PUSCH) and Sounding
-  /// Reference Signals (SRS). Set to zero for no limitation.
-  unsigned max_pusch_and_srs_concurrency = 1;
+  /// Reference Signals (SRS). Set to \c concurrency_unlimited for no limitation, or to \c concurrency_auto to derive it
+  /// from the cell bandwidth, number of cells and maximum number of layers.
+  unsigned max_pusch_and_srs_concurrency = concurrency_auto;
   /// \brief Maximum concurrency level for PDSCH processing.
   ///
   /// Maximum number of threads that can concurrently process Physical Downlink Shared Channel (PDSCH). Set to zero for
@@ -148,7 +137,7 @@ struct du_low_unit_expert_threads_config {
   ///
   /// This parameter is necessary when hardware acceleration is used to limit the number of threads accessing the
   /// physical resources.
-  unsigned max_pdsch_concurrency = 0;
+  unsigned max_pdsch_concurrency = concurrency_unlimited;
 };
 
 /// Expert configuration of the gNB app.
