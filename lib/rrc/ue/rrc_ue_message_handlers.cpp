@@ -66,7 +66,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
 
   // Perform various checks to make sure we can serve the RRC Setup Request.
   if (not cu_cp_notifier.on_ue_setup_request()) {
-    logger.log_error("Sending Connection Reject. Cause: RRC connections not allowed");
+    logger.log_warning("Sending Connection Reject. Cause: RRC connections not allowed");
     metrics_notifier.on_failed_rrc_connection_establishment(establishment_fail_cause_t::network_reject);
     on_ue_release_required(ngap_cause_radio_network_t::unspecified);
     return;
@@ -75,7 +75,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
   if (du_to_cu_container.empty()) {
     // If the DU to CU container is missing, assume the DU can't serve the UE, so the CU-CP should reject the UE, see
     // TS 38.473 section 8.4.1.2.
-    logger.log_debug("Sending rrcReject. Cause: DU is not able to serve the UE");
+    logger.log_warning("Sending rrcReject. Cause: DU is not able to serve the UE");
     metrics_notifier.on_failed_rrc_connection_establishment(establishment_fail_cause_t::network_reject);
     on_ue_release_required(ngap_cause_radio_network_t::unspecified);
     return;
@@ -131,7 +131,7 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
         {.ue_index = old_ue_reest_context.ue_index, .cause = ngap_cause_radio_network_t::unspecified});
 
     // Reject and release the new UE.
-    logger.log_debug("Sending rrcReject. Cause: DU is not able to serve the UE");
+    logger.log_warning("Sending rrcReject. Cause: DU is not able to serve the UE");
     on_ue_release_required(ngap_cause_radio_network_t::unspecified);
     return;
   }
@@ -158,7 +158,7 @@ void rrc_ue_impl::handle_rrc_resume_request(const asn1::rrc_nr::rrc_resume_reque
   // TS 38.473 section 8.4.1.2.
   if (du_to_cu_container.empty()) {
     // Reject and release the UE.
-    logger.log_debug("Sending rrcReject. Cause: DU is not able to serve the UE");
+    logger.log_warning("Sending rrcReject. Cause: DU is not able to serve the UE");
     // Notify metrics about RRC connection resume followed by network release.
     metrics_notifier.on_rrc_connection_resume_followed_by_network_release(
         asn1_to_resume_cause(msg.rrc_resume_request.resume_cause));
@@ -803,7 +803,8 @@ bool rrc_ue_impl::store_ue_capabilities(byte_buffer ue_capabilities)
   asn1::rrc_nr::ue_cap_rat_container_list_l ue_cap_rat_container_list;
   asn1::cbit_ref                            bref2(
       {ue_radio_access_cap_info.crit_exts.c1().ue_radio_access_cap_info().ue_radio_access_cap_info.begin(),
-                                  ue_radio_access_cap_info.crit_exts.c1().ue_radio_access_cap_info().ue_radio_access_cap_info.end()});
+       ue_radio_access_cap_info.crit_exts.c1().ue_radio_access_cap_info().ue_radio_access_cap_info.end()});
+
   if (asn1::unpack_dyn_seq_of(ue_cap_rat_container_list, bref2, 0, 8) != asn1::OCUDUASN_SUCCESS) {
     logger.log_error("Couldn't unpack UE Capability RAT Container List RRC container");
     return false;
