@@ -75,7 +75,8 @@ int main(int argc, char** argv)
                                        modulation_scheme::QPSK,
                                        modulation_scheme::QAM16,
                                        modulation_scheme::QAM64,
-                                       modulation_scheme::QAM256}) {
+                                       modulation_scheme::QAM256,
+                                       modulation_scheme::QAM1024}) {
     for (unsigned nof_symbols : {38880}) {
       // Calculate number of bytes.
       unsigned nof_bits = nof_symbols * get_bits_per_symbol(modulation);
@@ -102,6 +103,10 @@ int main(int argc, char** argv)
       perf_meas.new_measure(to_string(modulation) + " mapper ci8_t " + std::to_string(nof_symbols), nof_bits, [&]() {
         modulator->modulate(ci8_symbols, packed_data, modulation);
       });
+
+      if (modulation >= modulation_scheme::QAM1024) {
+        continue;
+      }
 
       // Measure performance of the demodulation mapper.
       perf_meas.new_measure(to_string(modulation) + " demapper " + std::to_string(nof_symbols), nof_bits, [&]() {

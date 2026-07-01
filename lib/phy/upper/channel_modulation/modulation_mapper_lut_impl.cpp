@@ -110,6 +110,27 @@ struct modulator_table_s {
       }
     }
 
+    // Optimized version for 1024-QAM.
+    if (QM == 10) {
+      for (unsigned i_byte = 0, i_symbol_end = (symbols.size() / 4) * 4; i_symbol != i_symbol_end;) {
+        uint8_t byte0 = input_ptr[i_byte++];
+        uint8_t byte1 = input_ptr[i_byte++];
+        uint8_t byte2 = input_ptr[i_byte++];
+        uint8_t byte3 = input_ptr[i_byte++];
+        uint8_t byte4 = input_ptr[i_byte++];
+
+        uint16_t index0 = (static_cast<uint16_t>(byte0) << 2U) | (byte1 >> 6U);
+        uint16_t index1 = (static_cast<uint16_t>(byte1 & 0b111111U) << 4U) | (byte2 >> 4U);
+        uint16_t index2 = (static_cast<uint16_t>(byte2 & 0b1111U) << 6U) | (byte3 >> 2U);
+        uint16_t index3 = (static_cast<uint16_t>(byte3 & 0b11U) << 8U) | byte4;
+
+        symbols_ptr[i_symbol++] = table[index0];
+        symbols_ptr[i_symbol++] = table[index1];
+        symbols_ptr[i_symbol++] = table[index2];
+        symbols_ptr[i_symbol++] = table[index3];
+      }
+    }
+
     // Generic implementation.
     for (unsigned i_symbol_end = symbols.size(); i_symbol != i_symbol_end; ++i_symbol) {
       // Calculate modulation table index.
