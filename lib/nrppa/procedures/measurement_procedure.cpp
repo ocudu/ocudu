@@ -38,10 +38,10 @@ void measurement_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("\"{}\" initialized", name());
+  logger.info("\"{}\" started...", name());
 
   if (!prepare_du_measurement_information_requests() or !create_measurement_context()) {
-    logger.debug("\"{}\" failed", name());
+    logger.warning("\"{}\" failed", name());
     // Send failure to CU-CP.
     send_ul_nrppa_pdu(create_measurement_failure(nrppa_cause_protocol_t::msg_not_compatible_with_receiver_state));
     CORO_EARLY_RETURN();
@@ -61,7 +61,7 @@ void measurement_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   handle_procedure_outcome();
 
-  logger.debug("\"{}\" finished successfully", name());
+  logger.info("\"{}\" finished successfully", name());
 
   CORO_RETURN();
 }
@@ -156,10 +156,10 @@ void measurement_procedure::handle_procedure_outcome()
 {
   if (!procedure_outcome.has_value()) {
     meas_outcome = create_measurement_failure(nrppa_cause_radio_network_t::requested_item_not_supported);
-    logger.debug("\"{}\" failed", name());
+    logger.warning("\"{}\" failed", name());
   } else {
     meas_outcome = create_measurement_response();
-    logger.debug("\"{}\" finished successfully", name());
+    logger.info("\"{}\" finished successfully", name());
   }
 
   // Send response to CU-CP.

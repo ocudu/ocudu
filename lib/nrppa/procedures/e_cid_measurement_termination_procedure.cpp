@@ -26,12 +26,12 @@ void e_cid_measurement_termination_procedure::operator()(coro_context<async_task
 
   ue_ctxt = &ue_ctxt_list[ue_index];
 
-  ue_ctxt->logger.log_debug("\"{}\" initialized", name());
+  ue_ctxt->logger.log_info("\"{}\" started...", name());
 
   // Notify positioning manager about meas termination request.
   terminate_periodic_measurements();
 
-  ue_ctxt->logger.log_debug("\"{}\" finished successfully", name());
+  ue_ctxt->logger.log_info("\"{}\" finished successfully", name());
 
   CORO_RETURN();
 }

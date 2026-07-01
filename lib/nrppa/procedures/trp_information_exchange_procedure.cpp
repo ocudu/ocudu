@@ -42,7 +42,7 @@ void trp_information_exchange_procedure::operator()(coro_context<async_task<void
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("\"{}\" initialized", name());
+  logger.info("\"{}\" started...", name());
 
   // If the TRP list is empty or contains unknown TRP IDs, we forward the request to the CU-CP, as we need the
   // information about TRPs from all DUs.
@@ -52,8 +52,6 @@ void trp_information_exchange_procedure::operator()(coro_context<async_task<void
 
   handle_procedure_outcome();
 
-  logger.debug("\"{}\" finished successfully", name());
-
   CORO_RETURN();
 }
 
@@ -61,7 +59,7 @@ void trp_information_exchange_procedure::handle_procedure_outcome()
 {
   if (cu_cp_response.trp_info_responses.empty()) {
     trp_info_outcome = create_trp_info_failure(nrppa_cause_radio_network_t::unspecified);
-    logger.debug("\"{}\" failed", name());
+    logger.warning("\"{}\" failed", name());
   } else {
     for (const auto& [du_idx, trp_info_resp] : cu_cp_response.trp_info_responses) {
       for (const auto& trp_info_list_trp_resp_item : trp_info_resp.trp_info_list_trp_resp) {
@@ -79,7 +77,7 @@ void trp_information_exchange_procedure::handle_procedure_outcome()
     }
 
     trp_info_outcome = create_trp_info_response();
-    logger.debug("\"{}\" finished successfully", name());
+    logger.info("\"{}\" finished successfully", name());
   }
 
   // Send response to CU-CP.

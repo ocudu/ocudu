@@ -46,7 +46,7 @@ void e_cid_measurement_initiation_procedure::operator()(coro_context<async_task<
 
   ue_ctxt = &ue_ctxt_list[ue_index];
 
-  ue_ctxt->logger.log_debug("\"{}\" initialized", name());
+  ue_ctxt->logger.log_info("\"{}\" started...", name());
 
   if (e_cid_meas_init_request.report_characteristics == report_characteristics_t::periodic) {
     is_on_demand_measurement = false;
@@ -153,10 +153,10 @@ void e_cid_measurement_initiation_procedure::handle_procedure_outcome(bool on_de
   // If we are not in on-demand mode, we must have a measurement result.
   if (on_demand && !e_cid_meas_results.has_value()) {
     e_cid_meas_outcome = create_e_cid_measurement_initiation_failure(e_cid_meas_results.error());
-    ue_ctxt->logger.log_debug("\"{}\" failed", name());
+    ue_ctxt->logger.log_warning("\"{}\" failed", name());
   } else {
     e_cid_meas_outcome = create_e_cid_measurement_initiation_response(on_demand);
-    ue_ctxt->logger.log_debug("\"{}\" finished successfully", name());
+    ue_ctxt->logger.log_info("\"{}\" finished successfully", name());
   }
 
   // Send response to CU-CP.
