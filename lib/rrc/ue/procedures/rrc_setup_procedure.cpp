@@ -43,6 +43,8 @@ void rrc_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
 
+  logger.log_info("\"{}\" started...", name());
+
   // create SRB1
   create_srb1();
 
@@ -61,7 +63,7 @@ void rrc_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
       metrics_notifier.on_failed_rrc_connection_establishment(establishment_fail_cause_t::no_reply);
       rrc_ue.on_ue_release_required(cause_protocol_t::unspecified);
     } else {
-      logger.log_info("\"{}\" cancelled", name());
+      logger.log_warning("\"{}\" cancelled", name());
       // Do nothing. We are likely shutting down the DU processor.
     }
     CORO_EARLY_RETURN();
@@ -119,7 +121,7 @@ void rrc_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   send_initial_ue_msg();
 
-  logger.log_debug("\"{}\" finished successfully", name());
+  logger.log_info("\"{}\" finished successfully", name());
 
   CORO_RETURN();
 }

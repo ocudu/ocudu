@@ -803,7 +803,7 @@ bool rrc_ue_impl::store_ue_capabilities(byte_buffer ue_capabilities)
   asn1::rrc_nr::ue_cap_rat_container_list_l ue_cap_rat_container_list;
   asn1::cbit_ref                            bref2(
       {ue_radio_access_cap_info.crit_exts.c1().ue_radio_access_cap_info().ue_radio_access_cap_info.begin(),
-       ue_radio_access_cap_info.crit_exts.c1().ue_radio_access_cap_info().ue_radio_access_cap_info.end()});
+                                  ue_radio_access_cap_info.crit_exts.c1().ue_radio_access_cap_info().ue_radio_access_cap_info.end()});
 
   if (asn1::unpack_dyn_seq_of(ue_cap_rat_container_list, bref2, 0, 8) != asn1::OCUDUASN_SUCCESS) {
     logger.log_error("Couldn't unpack UE Capability RAT Container List RRC container");

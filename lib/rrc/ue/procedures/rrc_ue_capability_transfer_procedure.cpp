@@ -29,7 +29,7 @@ void rrc_ue_capability_transfer_procedure::operator()(coro_context<async_task<bo
     CORO_EARLY_RETURN(true);
   }
 
-  logger.log_debug("\"{}\" initialized", name());
+  logger.log_info("\"{}\" started...", name());
   // Create new transaction for RRCUeCapabilityEnquiry.
   transaction = event_mng.transactions.create_transaction(procedure_timeout);
 
@@ -72,7 +72,7 @@ void rrc_ue_capability_transfer_procedure::operator()(coro_context<async_task<bo
     logger.log_warning("\"{}\" timed out after {}ms", name(), procedure_timeout.count());
   }
 
-  logger.log_debug("\"{}\" finalized", name());
+  logger.log_info("\"{}\" finished successfully", name());
   CORO_RETURN(procedure_result);
 }
 

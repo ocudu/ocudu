@@ -35,7 +35,7 @@ void rrc_reconfiguration_procedure::operator()(coro_context<async_task<bool>>& c
     CORO_EARLY_RETURN(false);
   }
 
-  logger.log_debug("\"{}\" initialized", name());
+  logger.log_info("\"{}\" started...", name());
   // create new transaction for RRC Reconfiguration procedure
   transaction = event_mng.transactions.create_transaction(procedure_timeout);
 
@@ -52,13 +52,13 @@ void rrc_reconfiguration_procedure::operator()(coro_context<async_task<bool>>& c
   CORO_AWAIT(transaction);
 
   if (transaction.has_response()) {
-    logger.log_debug("\"{}\" finished successfully", name());
+    logger.log_info("\"{}\" finished successfully", name());
     procedure_result = true;
   } else {
     if (transaction.failure_cause() == protocol_transaction_failure::timeout) {
       logger.log_warning("\"{}\" timed out after {}ms", name(), procedure_timeout.count());
     } else {
-      logger.log_info("\"{}\" cancelled", name());
+      logger.log_warning("\"{}\" cancelled", name());
     }
   }
 

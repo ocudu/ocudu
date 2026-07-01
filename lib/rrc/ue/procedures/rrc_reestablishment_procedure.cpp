@@ -53,7 +53,7 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
   // Verify if we are in conditions for a Reestablishment, or should opt for RRC Setup as fallback.
   if (not is_reestablishment_accepted()) {
     CORO_AWAIT(handle_rrc_reestablishment_fallback());
-    logger.log_debug("\"{}\" finalized", name());
+    logger.log_info("\"{}\" finished successfully", name());
     CORO_EARLY_RETURN();
   }
 
@@ -112,9 +112,10 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
     }
 
   } else {
-    logger.log_warning(
-        "\"{}\" for old_ue={} timed out after {}ms", name(), old_ue_reest_context.ue_index, procedure_timeout.count());
-    logger.log_info("\"{}\" for old_ue={} failed", name(), old_ue_reest_context.ue_index);
+    logger.log_warning("\"{}\" for old_ue={} failed. Cause: timed out after {}ms",
+                       name(),
+                       old_ue_reest_context.ue_index,
+                       procedure_timeout.count());
   }
 
   // Notify CU-CP to remove the old UE.
