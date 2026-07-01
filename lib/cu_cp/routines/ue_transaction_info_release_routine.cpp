@@ -31,7 +31,7 @@ void ue_transaction_info_release_routine::operator()(coro_context<async_task<voi
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("\"{}\" started...", name());
+  logger.info("\"{}\" started...", name());
 
   // Prepare NG Reset messages for each PLMN.
   prepare_ng_reset_messages();
@@ -72,7 +72,7 @@ void ue_transaction_info_release_routine::operator()(coro_context<async_task<voi
     CORO_AWAIT(all_ues_reset);
   }
 
-  logger.debug("\"{}\" finished successfully", name());
+  logger.info("\"{}\" finished successfully", name());
 
   CORO_RETURN();
 }
