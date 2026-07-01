@@ -26,6 +26,27 @@ static long current_rss_kb()
   return -1;
 }
 
+/// Reads the total system memory (in kilobytes) from procfs. This value is constant for the lifetime of the process,
+/// so it is read from disk only once.
+static long total_system_memory_kb()
+{
+  static const long total_kb = [] {
+    std::ifstream status_file("/proc/meminfo");
+    std::string   line;
+    while (std::getline(status_file, line)) {
+      if (line.compare(0, 9, "MemTotal:") == 0) {
+        std::istringstream iss(line.substr(9));
+        long               kb = -1;
+        iss >> kb;
+        return kb;
+      }
+    }
+    return -1L;
+  }();
+
+  return total_kb;
+}
+
 /// Converts rusage struct to the snapshot.
 static cpu_snapshot to_snapshot(const ::rusage& rusg)
 {
@@ -71,5 +92,11 @@ resource_usage_metrics resource_usage_utils::res_usage_measurements_to_metrics(m
   metrics.cpu_stats.cpu_utilization_nof_cpus =
       static_cast<double>(total_cpu_time_used.count()) / static_cast<double>(measurements.duration.count());
   metrics.memory_stats.memory_usage = units::bytes(BYTES_IN_KB * measurements.current_rss);
+
+  long total_mem_kb = total_system_memory_kb();
+  metrics.memory_stats.memory_usage_percentage =
+      total_mem_kb > 0 ? static_cast<float>(measurements.current_rss) / static_cast<float>(total_mem_kb) * 100.0F
+                       : 0.0F;
+
   return metrics;
 }

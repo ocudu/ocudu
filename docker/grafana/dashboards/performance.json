@@ -477,7 +477,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT \"time\", \"memory_usage_mb\" FROM app_resource_usage WHERE \"time\" >= $__timeFrom AND \"time\" <= $__timeTo AND \"gnb_id\" = '$gnb_id' ORDER BY \"time\"",
+          "rawSql": "SELECT \"time\", \"mem_total_mb\" FROM app_resource_usage WHERE \"time\" >= $__timeFrom AND \"time\" <= $__timeTo AND \"gnb_id\" = '$gnb_id' ORDER BY \"time\"",
           "refId": "A",
           "sql": {
             "columns": [
@@ -559,7 +559,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT \"time\", \"memory_usage_mb\" FROM app_resource_usage WHERE \"time\" >= $__timeFrom AND \"time\" <= $__timeTo AND \"gnb_id\" = '$gnb_id' ORDER BY \"time\"",
+          "rawSql": "SELECT \"time\", \"mem_total_mb\" FROM app_resource_usage WHERE \"time\" >= $__timeFrom AND \"time\" <= $__timeTo AND \"gnb_id\" = '$gnb_id' ORDER BY \"time\"",
           "refId": "A",
           "sql": {
             "columns": [
@@ -676,7 +676,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT \"time\", \"memory_usage_mb\" FROM app_resource_usage WHERE \"time\" >= $__timeFrom AND \"time\" <= $__timeTo AND \"gnb_id\" = '$gnb_id' ORDER BY \"time\"",
+          "rawSql": "SELECT \"time\", \"mem_total_mb\" FROM app_resource_usage WHERE \"time\" >= $__timeFrom AND \"time\" <= $__timeTo AND \"gnb_id\" = '$gnb_id' ORDER BY \"time\"",
           "refId": "A",
           "sql": {
             "columns": [
@@ -767,7 +767,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT \"time\", \"memory_usage_mb\" FROM app_resource_usage WHERE \"time\" >= $__timeFrom AND \"time\" <= $__timeTo AND \"gnb_id\" = '$gnb_id' ORDER BY \"time\"",
+          "rawSql": "SELECT \"time\", \"mem_total_mb\" FROM app_resource_usage WHERE \"time\" >= $__timeFrom AND \"time\" <= $__timeTo AND \"gnb_id\" = '$gnb_id' ORDER BY \"time\"",
           "refId": "A",
           "sql": {
             "columns": [

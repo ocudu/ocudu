@@ -16,7 +16,10 @@ struct cpu_metrics {
 
 /// Memory consumption of a UNIX process.
 struct memory_metrics {
+  /// Current memory usage (RSS) of the process.
   units::bytes memory_usage;
+  /// Current memory usage of the process, as a percentage of the total system memory.
+  float memory_usage_percentage;
 };
 
 /// Aggregates CPU usage of a measured block and memory consumption of the UNIX process.

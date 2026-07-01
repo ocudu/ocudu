@@ -18,10 +18,11 @@ namespace ocudu {
 void to_json(nlohmann::json& json, const resource_usage_metrics& metrics)
 {
   // Convert used memory to Megabytes.
-  double mem_usage = validate_fp_value(static_cast<double>(metrics.memory_stats.memory_usage.value()) / BYTES_IN_MB);
+  double mem_total_mb = validate_fp_value(static_cast<double>(metrics.memory_stats.memory_usage.value()) / BYTES_IN_MB);
 
-  json["cpu_usage_percent"] = validate_fp_value(validate_fp_value(metrics.cpu_stats.cpu_usage_percentage * 100.0));
-  json["memory_usage_mb"]   = validate_fp_value(mem_usage);
+  json["cpu_usage_percent"]       = validate_fp_value(metrics.cpu_stats.cpu_usage_percentage * 100.0);
+  json["mem_total_mb"]            = mem_total_mb;
+  json["mem_usage_percent"]       = validate_fp_value(metrics.memory_stats.memory_usage_percentage);
   json["power_consumption_watts"] = validate_fp_value(metrics.power_usage_watts);
 }
 

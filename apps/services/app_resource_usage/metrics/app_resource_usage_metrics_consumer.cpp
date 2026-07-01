@@ -24,14 +24,16 @@ void resource_usage_metrics_consumer_log::handle_metric(const app_services::metr
   static constexpr double BYTES_IN_MB = (1 << 20);
 
   // Convert used memory to Megabytes.
-  double mem_usage = static_cast<double>(sys_metrics.memory_stats.memory_usage.value()) / BYTES_IN_MB;
+  double mem_total_mb = static_cast<double>(sys_metrics.memory_stats.memory_usage.value()) / BYTES_IN_MB;
 
   fmt::memory_buffer buffer;
-  fmt::format_to(std::back_inserter(buffer),
-                 "App resource usage: cpu_usage={:.2f}%, memory_usage={:.2f} MB, power_consumption={:.2f} Watts",
-                 sys_metrics.cpu_stats.cpu_usage_percentage * 100.0,
-                 mem_usage,
-                 sys_metrics.power_usage_watts);
+  fmt::format_to(
+      std::back_inserter(buffer),
+      "App resource usage: cpu_usage={:.2f}%, mem_total={:.2f} MB, mem_usage={:.2f}%, power_consumption={:.2f} Watts",
+      sys_metrics.cpu_stats.cpu_usage_percentage * 100.0,
+      mem_total_mb,
+      sys_metrics.memory_stats.memory_usage_percentage,
+      sys_metrics.power_usage_watts);
 
   // Flush buffer to the logger.
   log_chan("{}", to_c_str(buffer));
