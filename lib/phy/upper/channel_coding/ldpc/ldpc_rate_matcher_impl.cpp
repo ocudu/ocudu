@@ -130,25 +130,52 @@ void ldpc_rate_matcher_impl::select_bits(span<uint8_t> out, const ldpc_encoder_b
 template <unsigned Qm>
 static void interleave_bits_Qm(bit_buffer& out, span<const uint8_t> in)
 {
+  static_assert(Qm <= 16, "Generic interleave_bits_Qm supports up to Qm=16.");
+
   unsigned E = out.size();
   unsigned K = E / Qm;
 
-  for (unsigned out_index = 0, i = 0; i != K; ++i) {
-    uint8_t word = in[i];
+  if (Qm <= 8) {
+    // 8-bit word version for Qm <= 8.
+    for (unsigned out_index = 0, i = 0; i != K; ++i) {
+      uint8_t word = in[i];
 
-    for (unsigned j = 1; j != Qm; ++j) {
-      // Extract bit to pack.
-      uint8_t bit = in[K * j + i];
+      for (unsigned j = 1; j != Qm; ++j) {
+        // Extract bit to pack.
+        uint8_t bit = in[K * j + i];
 
-      // Append bit to the word.
-      word = (word << 1) | bit;
+        // Append bit to the word.
+        word = (word << 1) | bit;
+      }
+
+      // Insert word in the packed buffer.
+      out.insert(word, out_index, Qm);
+
+      // Increment the output index.
+      out_index += Qm;
     }
+  } else {
+    // 16-bit word version for 8 < Qm <= 16.
+    for (unsigned out_index = 0, i = 0; i != K; ++i) {
+      uint16_t word = in[i];
 
-    // Insert word in the packed buffer.
-    out.insert(word, out_index, Qm);
+      for (unsigned j = 1; j != Qm; ++j) {
+        // Extract bit to pack.
+        uint8_t bit = in[K * j + i];
 
-    // Increment the output index.
-    out_index += Qm;
+        // Append bit to the word.
+        word = (word << 1) | bit;
+      }
+
+      // Insert word in the packed buffer, split into two parts due to 8-bit insert limit.
+      // First 8 bits (high bits of word).
+      out.insert(static_cast<uint8_t>(word >> (Qm - 8)), out_index, 8);
+      // Remaining (Qm - 8) bits (low bits of word).
+      out.insert(static_cast<uint8_t>(word & ((1U << (Qm - 8)) - 1)), out_index + 8, Qm - 8);
+
+      // Increment the output index.
+      out_index += Qm;
+    }
   }
 }
 
@@ -267,8 +294,11 @@ void ldpc_rate_matcher_impl::interleave_bits(bit_buffer& out, span<const uint8_t
       interleave_bits_Qm<6>(out, in);
       break;
     case 8:
-    default:
       interleave_bits_Qm<8>(out, in);
+      break;
+    case 10:
+    default:
+      interleave_bits_Qm<10>(out, in);
       break;
   }
 }

@@ -113,7 +113,14 @@ struct modulator_table_s {
     // Generic implementation.
     for (unsigned i_symbol_end = symbols.size(); i_symbol != i_symbol_end; ++i_symbol) {
       // Calculate modulation table index.
-      unsigned index = input.extract(QM * i_symbol, QM);
+      unsigned index = 0;
+      if (QM == 10) {
+        // bit_buffer::extract supports up to 8 bits, so split 10 bits into 8+2.
+        unsigned bit_off = QM * i_symbol;
+        index            = (input.extract<unsigned>(bit_off, 8) << 2U) | input.extract<unsigned>(bit_off + 8U, 2);
+      } else {
+        index = input.extract<unsigned>(QM * i_symbol, QM);
+      }
 
       // Get the symbol from the table.
       symbols_ptr[i_symbol] = table[index];
@@ -198,6 +205,7 @@ static const modulator_table_s<2>      qpsk_modulator;
 static const modulator_table_s<4>      qam16_modulator;
 static const modulator_table_s<6>      qam64_modulator;
 static const modulator_table_s<8>      qam256_modulator;
+static const modulator_table_s<10>     qam1024_modulator;
 
 void modulation_mapper_lut_impl::modulate(span<cf_t> symbols, const bit_buffer& input, modulation_scheme scheme)
 {
@@ -226,6 +234,9 @@ void modulation_mapper_lut_impl::modulate(span<cf_t> symbols, const bit_buffer& 
     case modulation_scheme::QAM256:
       qam256_modulator.modulate(symbols, input);
       break;
+    case modulation_scheme::QAM1024:
+      qam1024_modulator.modulate(symbols, input);
+      break;
     default:
       ocudu_assertion_failure("Invalid modulation scheme.");
   }
@@ -245,8 +256,10 @@ float ocudu::modulation_mapper::get_modulation_scaling(modulation_scheme modulat
     case modulation_scheme::QAM64:
       return qam64_modulator.scaling;
     case modulation_scheme::QAM256:
-    default:
       return qam256_modulator.scaling;
+    case modulation_scheme::QAM1024:
+    default:
+      return qam1024_modulator.scaling;
   }
 }
 
@@ -278,6 +291,9 @@ float modulation_mapper_lut_impl::modulate(span<ci8_t> symbols, const bit_buffer
       break;
     case modulation_scheme::QAM256:
       scaling = qam256_modulator.modulate(symbols, input);
+      break;
+    case modulation_scheme::QAM1024:
+      scaling = qam1024_modulator.modulate(symbols, input);
       break;
     default:
       ocudu_assertion_failure("Invalid modulation scheme.");

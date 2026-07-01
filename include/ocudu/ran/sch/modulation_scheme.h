@@ -13,7 +13,7 @@
 namespace ocudu {
 
 /// Maximum number of bits per symbol.
-constexpr unsigned MODULATION_MAX_BITS_PER_SYMBOL = 8;
+constexpr unsigned MODULATION_MAX_BITS_PER_SYMBOL = 10;
 
 /// \brief Modulation schemes as described in TS38.211 Section 5.1.
 ///
@@ -30,7 +30,9 @@ enum class modulation_scheme {
   /// 64-point Quadrature Amplitude Modulation (64-QAM) described in TS38.211 Section 5.1.5.
   QAM64 = 6,
   /// 256-point Quadrature Amplitude Modulation (256-QAM) described in TS38.211 Section 5.1.6.
-  QAM256 = MODULATION_MAX_BITS_PER_SYMBOL
+  QAM256 = 8,
+  /// 1024-point Quadrature Amplitude Modulation (1024-QAM) described in TS38.211 Section 5.1.7 (from Release 17).
+  QAM1024 = MODULATION_MAX_BITS_PER_SYMBOL
 };
 
 inline std::string to_string(modulation_scheme mod)
@@ -47,8 +49,10 @@ inline std::string to_string(modulation_scheme mod)
     case modulation_scheme::QAM64:
       return "64QAM";
     case modulation_scheme::QAM256:
-    default:
       return "256QAM";
+    case modulation_scheme::QAM1024:
+    default:
+      return "1024QAM";
   }
 }
 
@@ -70,6 +74,8 @@ inline modulation_scheme modulation_scheme_from_string(const std::string& mod_sc
     mod_scheme = modulation_scheme::QAM64;
   } else if (mod_scheme_string == "256QAM") {
     mod_scheme = modulation_scheme::QAM256;
+  } else if (mod_scheme_string == "1024QAM") {
+    mod_scheme = modulation_scheme::QAM1024;
   } else {
     ocudu_assertion_failure("Invalid modulation scheme: {}", mod_scheme_string);
   }
