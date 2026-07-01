@@ -25,17 +25,17 @@ struct measurements {
   std::chrono::microseconds user_time;
   /// System CPU time.
   std::chrono::microseconds system_time;
-  /// Maximum resident set size (in kilobytes).
-  long max_rss = -1;
+  /// Current resident set size (in kilobytes).
+  long current_rss = -1;
   /// Resets measurements making them invalid.
   void reset()
   {
     user_time   = std::chrono::microseconds::zero();
     system_time = std::chrono::microseconds::zero();
-    max_rss     = -1;
+    current_rss = -1;
   }
   /// Returns true if the struct contains valid measurements, false otherwise.
-  bool valid() const { return max_rss >= 0; }
+  bool valid() const { return current_rss >= 0; }
 };
 
 /// Sums up two resource usage measurements.
@@ -49,8 +49,8 @@ struct cpu_snapshot {
   std::chrono::microseconds user_time = {};
   /// System CPU time.
   std::chrono::microseconds system_time = {};
-  /// Maximum resident set size (in kilobytes).
-  long max_rss;
+  /// Current resident set size (in kilobytes).
+  long current_rss;
 };
 
 /// On success returns a snapshot of the resource usage, otherwise returns an errno value.

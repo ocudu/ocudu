@@ -52,7 +52,7 @@ public:
     }
     meas.user_time   = (current_snapshot.value().user_time - start_snapshot.value().user_time);
     meas.system_time = (current_snapshot.value().system_time - start_snapshot.value().system_time);
-    meas.max_rss     = current_snapshot.value().max_rss;
+    meas.current_rss = current_snapshot.value().current_rss;
   }
 
 private:

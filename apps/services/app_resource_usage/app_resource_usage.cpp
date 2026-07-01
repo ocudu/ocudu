@@ -62,7 +62,7 @@ void app_resource_usage::update_cpu_usage_metric(const cpu_snapshot&     current
       current_cpu_snapshot.tp - last_snapshot->cpu_usage.tp);
   measurements.user_time   = (current_cpu_snapshot.user_time - last_snapshot->cpu_usage.user_time);
   measurements.system_time = (current_cpu_snapshot.system_time - last_snapshot->cpu_usage.system_time);
-  measurements.max_rss     = current_cpu_snapshot.max_rss;
+  measurements.current_rss = current_cpu_snapshot.current_rss;
 
   // Save current snapshot.
   last_snapshot->cpu_usage = current_cpu_snapshot;
