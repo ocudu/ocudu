@@ -404,9 +404,9 @@ public:
     return iterator(this, flat);
   }
 
-  /// Inserts a new element with the given key, overwriting any existing occupant at that slot.
-  template <typename U>
-  constexpr void overwrite(K key, U&& obj)
+  /// Inserts a new element with the given key, overwriting any existing occupant at that slot (lvalue version).
+  /// Returns false on pool exhaustion.
+  constexpr bool overwrite(K key, const V& obj)
   {
     size_t flat = get_flat_idx(key);
     size_t p    = flat / L;
@@ -414,7 +414,20 @@ public:
     if (entries[p].segment != nullptr and entries[p].segment->data[s]) {
       erase(get_obj(p, s).first);
     }
-    insert(key, std::forward<U>(obj));
+    return insert(key, obj);
+  }
+
+  /// Inserts a new element with the given key, overwriting any existing occupant at that slot (rvalue version).
+  /// Returns an iterator to the inserted element or the object back on pool exhaustion.
+  constexpr expected<iterator, V> overwrite(K key, V&& obj)
+  {
+    size_t flat = get_flat_idx(key);
+    size_t p    = flat / L;
+    size_t s    = flat % L;
+    if (entries[p].segment != nullptr and entries[p].segment->data[s]) {
+      erase(get_obj(p, s).first);
+    }
+    return insert(key, std::move(obj));
   }
 
   /// Removes the element with the given key. Returns false if not found.
