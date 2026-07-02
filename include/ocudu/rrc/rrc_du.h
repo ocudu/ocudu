@@ -119,10 +119,6 @@ public:
   /// metrics are increased. Otherwise the connection metrics are increased.
   virtual void handle_successful_rrc_setup(std::optional<establishment_cause_t> cause = std::nullopt) = 0;
 
-  /// \brief Add the successful RRC release to the metrics.
-  /// \param[in] is_inactive True if the released RRC connection was in inactive state, false otherwise.
-  virtual void handle_successful_rrc_release(bool is_inactive = false) = 0;
-
   /// \brief Add the RRC inactive transition to the metrics.
   virtual void handle_rrc_inactive() = 0;
 

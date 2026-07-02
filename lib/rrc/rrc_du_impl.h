@@ -22,13 +22,6 @@ public:
 
   void on_new_rrc_connection() override { metrics_handler.handle_successful_rrc_setup(); }
 
-  void on_successful_rrc_release(bool is_inactive = false) override
-  {
-    metrics_handler.handle_successful_rrc_release(is_inactive);
-  }
-
-  void on_rrc_inactive() override { metrics_handler.handle_rrc_inactive(); }
-
   void on_attempted_rrc_connection_establishment(establishment_cause_t cause) override
   {
     metrics_handler.handle_attempted_rrc_setup(cause);
@@ -57,11 +50,6 @@ public:
   void on_successful_rrc_connection_reestablishment_fallback() override
   {
     metrics_handler.handle_successful_rrc_reestablishment_fallback();
-  }
-
-  void on_attempted_rrc_connection_resume(resume_cause_t cause) override
-  {
-    metrics_handler.handle_attempted_rrc_resume(cause);
   }
 
   void on_successful_rrc_connection_resume(resume_cause_t cause) override
@@ -124,7 +112,6 @@ public:
 
   // rrc_du_connection_event_handler.
   void handle_successful_rrc_setup(std::optional<establishment_cause_t> cause) override;
-  void handle_successful_rrc_release(bool is_inactive = false) override;
   void handle_rrc_inactive() override;
   void handle_attempted_rrc_setup(establishment_cause_t cause) override;
   void handle_failed_rrc_connection_establishment(establishment_fail_cause_t cause) override;

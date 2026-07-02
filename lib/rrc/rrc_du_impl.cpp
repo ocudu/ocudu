@@ -357,11 +357,6 @@ void rrc_du_impl::handle_successful_rrc_setup(std::optional<establishment_cause_
   metrics_aggregator.aggregate_successful_rrc_setup();
 }
 
-void rrc_du_impl::handle_successful_rrc_release(bool is_inactive)
-{
-  metrics_aggregator.aggregate_successful_rrc_release(is_inactive);
-}
-
 void rrc_du_impl::handle_rrc_inactive()
 {
   metrics_aggregator.aggregate_successful_rrc_inactive();

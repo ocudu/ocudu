@@ -548,13 +548,6 @@ public:
   /// \brief Notify the RRC DU about a new RRC connection.
   virtual void on_new_rrc_connection() = 0;
 
-  /// \brief Notify the RRC DU about a successful RRC release.
-  /// \param[in] is_inactive True if the released RRC connection was in inactive state, false otherwise.
-  virtual void on_successful_rrc_release(bool is_inactive) = 0;
-
-  /// \brief Notify the RRC DU about the RRC inactive transition.
-  virtual void on_rrc_inactive() = 0;
-
   /// \brief Notify the RRC DU about a new RRC connection establishment attempt.
   /// \param[in] cause The establishment cause of the RRC connection.
   virtual void on_attempted_rrc_connection_establishment(establishment_cause_t cause) = 0;
@@ -574,9 +567,6 @@ public:
 
   /// \brief Notify the RRC DU about the successful RRC connection re-establishment fallback.
   virtual void on_successful_rrc_connection_reestablishment_fallback() = 0;
-
-  /// \brief Notify the RRC DU about the attempted RRC connection resume.
-  virtual void on_attempted_rrc_connection_resume(resume_cause_t cause) = 0;
 
   /// \brief Notify the RRC DU about the successful RRC connection resume.
   virtual void on_successful_rrc_connection_resume(resume_cause_t cause) = 0;
