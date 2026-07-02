@@ -53,6 +53,12 @@ void gnb_cu_configuration_update_procedure::operator()(
   // Create transaction.
   transaction = ev_mng.transactions.create_transaction(f1ap_cfg.proc_timeout);
 
+  // The transaction may already be aborted at this point, e.g. if the F1AP is being stopped. Skip sending the
+  // request in that case, since nothing will ever observe its response.
+  if (transaction.aborted()) {
+    CORO_EARLY_RETURN(handle_procedure_result());
+  }
+
   // Send command to DU.
   send_gnb_cu_configuration_update();
 
