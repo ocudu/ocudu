@@ -127,3 +127,18 @@ TEST_F(f1ap_cu_gnb_cu_configuration_update_test, when_ue_setup_procedure_timeout
   }
   ASSERT_TRUE(was_gnb_cu_configuration_update_failure_received());
 }
+
+/// If the F1AP is stopped (e.g. DU removal) before a GNB-CU Configuration Update procedure starts, the request
+/// must not be sent, since its transaction is cancelled before the procedure even gets to send it.
+TEST_F(f1ap_cu_gnb_cu_configuration_update_test, when_f1ap_already_stopped_then_request_is_not_sent)
+{
+  async_task<void>         stop_task = f1ap->stop();
+  lazy_task_launcher<void> stop_launcher(stop_task);
+  ASSERT_TRUE(stop_task.ready());
+
+  f1ap_gnb_cu_configuration_update req = create_gnb_cu_configuration_update();
+  this->start_procedure(req);
+
+  ASSERT_FALSE(was_gnb_cu_configuration_update_sent(req));
+  ASSERT_TRUE(was_gnb_cu_configuration_update_failure_received());
+}

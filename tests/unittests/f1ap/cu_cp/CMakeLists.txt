@@ -9,6 +9,8 @@ target_link_libraries(f1ap_cu_test_helpers ocudu_f1ap_du ocudu_f1ap_cu ocudu_sup
 
 set(SOURCES
         f1ap_cu_gnb_cu_configuration_update_procedure_test.cpp
+        f1ap_cu_positioning_measurement_procedure_test.cpp
+        f1ap_cu_trp_information_exchange_procedure_test.cpp
         f1ap_cu_ue_context_test.cpp
         f1ap_cu_ue_context_setup_procedure_test.cpp
         f1ap_cu_ue_context_modification_procedure_test.cpp

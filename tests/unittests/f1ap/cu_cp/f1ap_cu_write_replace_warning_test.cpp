@@ -97,3 +97,18 @@ TEST_F(f1ap_cu_write_replace_warning_test, when_timeout_reached_then_procedure_f
   ASSERT_TRUE(t.ready());
   EXPECT_FALSE(t.get().success);
 }
+
+/// If the F1AP is stopped (e.g. DU removal) before a Write-Replace Warning procedure starts, the request must not
+/// be sent, since its transaction is cancelled before the procedure even gets to send it.
+TEST_F(f1ap_cu_write_replace_warning_test, when_f1ap_already_stopped_then_request_is_not_sent)
+{
+  async_task<void>         stop_task = f1ap->stop();
+  lazy_task_launcher<void> stop_launcher(stop_task);
+  ASSERT_TRUE(stop_task.ready());
+
+  start_procedure(make_request());
+
+  ASSERT_FALSE(was_request_sent());
+  ASSERT_TRUE(t.ready());
+  EXPECT_FALSE(t.get().success);
+}
