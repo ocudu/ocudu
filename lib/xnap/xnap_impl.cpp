@@ -46,6 +46,10 @@ async_task<void> xnap_impl::stop()
 {
   // Stop XN setup procedure if in progress.
   xn_setup_outcome.stop();
+
+  // Cancel pending per-UE transactions (e.g. Handover Preparation, SN Status Transfer).
+  ue_ctxt_list.cancel_all_transactions();
+
   return launch_no_op_task();
 }
 

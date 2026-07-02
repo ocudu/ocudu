@@ -37,6 +37,13 @@ struct xnap_ue_context {
     sn_status_transfer_outcome(timer_db)
   {
   }
+
+  /// \brief Cancels all transactions pending for this UE, e.g. as part of XNAP shutdown.
+  void cancel_all_transactions()
+  {
+    xn_handover_outcome.stop();
+    sn_status_transfer_outcome.stop();
+  }
 };
 
 class xnap_ue_context_list
@@ -262,6 +269,14 @@ public:
   }
 
   size_t size() const { return ues.size(); }
+
+  /// \brief Cancels all transactions pending for all UEs, e.g. as part of XNAP shutdown.
+  void cancel_all_transactions()
+  {
+    for (auto& [id, ue] : ues) {
+      ue.cancel_all_transactions();
+    }
+  }
 
   /// \brief Get the next available LOCAL_XNAP_UE_ID.
   local_xnap_ue_id_t allocate_local_xnap_ue_id()

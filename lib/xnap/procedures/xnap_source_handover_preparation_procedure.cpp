@@ -85,6 +85,11 @@ void xnap_source_handover_preparation_procedure::operator()(
       ue_ctxt->logger.log_warning("\"{}\" failed. Cause: Received Handover Preparation Failure", name());
       CORO_EARLY_RETURN(xnap_handover_preparation_response{false});
     }
+
+    // Neither a HandoverPreparationFailure nor a timeout, e.g. the transaction was cancelled because XNAP is
+    // stopping.
+    ue_ctxt->logger.log_warning("\"{}\" failed. Cause: Transaction cancelled", name());
+    CORO_EARLY_RETURN(xnap_handover_preparation_response{false});
   }
 
   // Set Target XNAP UE ID.
