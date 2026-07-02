@@ -9,8 +9,7 @@
 #include "ocudu/support/async/event_signal.h"
 #include "ocudu/support/async/protocol_transaction_manager.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// Response type of a F1AP CU transaction.
 using f1ap_transaction_response = expected<asn1::f1ap::successful_outcome_s, asn1::f1ap::unsuccessful_outcome_s>;
@@ -44,5 +43,4 @@ public:
   explicit f1ap_event_manager(timer_factory timer_service) : transactions(MAX_NOF_TRANSACTIONS, timer_service) {}
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

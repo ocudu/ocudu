@@ -11,12 +11,15 @@ namespace ocucp {
 
 class f1ap_du_processor_notifier;
 class f1ap_ue_context_list;
+class f1ap_event_manager;
 
 /// Procedure called during the shutdown of the F1AP to clear up existing transactions.
 class f1ap_stop_procedure
 {
 public:
-  f1ap_stop_procedure(f1ap_du_processor_notifier& cu_cp_notifier_, f1ap_ue_context_list& ue_ctxt_list_);
+  f1ap_stop_procedure(f1ap_du_processor_notifier& cu_cp_notifier_,
+                      f1ap_ue_context_list&       ue_ctxt_list_,
+                      f1ap_event_manager&         ev_mng_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -25,6 +28,7 @@ private:
 
   f1ap_du_processor_notifier& cu_cp_notifier;
   f1ap_ue_context_list&       ue_ctxt_list;
+  f1ap_event_manager&         ev_mng;
 };
 
 } // namespace ocucp

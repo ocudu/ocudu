@@ -49,7 +49,7 @@ f1ap_cu_impl::~f1ap_cu_impl() {}
 
 async_task<void> f1ap_cu_impl::stop()
 {
-  return launch_async<f1ap_stop_procedure>(du_processor_notifier, ue_ctxt_list);
+  return launch_async<f1ap_stop_procedure>(du_processor_notifier, ue_ctxt_list, ev_mng);
 }
 
 const f1ap_du_context& f1ap_cu_impl::get_context() const

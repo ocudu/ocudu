@@ -4,13 +4,15 @@
 
 #include "f1ap_stop_procedure.h"
 #include "../ue_context/f1ap_cu_ue_context.h"
+#include "f1ap_cu_event_manager.h"
 
 using namespace ocudu;
 using namespace ocucp;
 
 f1ap_stop_procedure::f1ap_stop_procedure(f1ap_du_processor_notifier& cu_cp_notifier_,
-                                         f1ap_ue_context_list&       ue_ctxt_list_) :
-  cu_cp_notifier(cu_cp_notifier_), ue_ctxt_list(ue_ctxt_list_)
+                                         f1ap_ue_context_list&       ue_ctxt_list_,
+                                         f1ap_event_manager&         ev_mng_) :
+  cu_cp_notifier(cu_cp_notifier_), ue_ctxt_list(ue_ctxt_list_), ev_mng(ev_mng_)
 {
 }
 
@@ -23,8 +25,9 @@ void f1ap_stop_procedure::operator()(coro_context<async_task<void>>& ctx)
     CORO_AWAIT(handle_transaction_info_loss());
   }
 
-  // Stop all the common transactions.
-  // TODO
+  // Cancel all DU-wide (non-UE-associated) transactions, e.g. Write-Replace Warning, TRP information exchange,
+  // positioning measurement, gNB-CU configuration update.
+  ev_mng.transactions.stop();
 
   CORO_RETURN();
 }
