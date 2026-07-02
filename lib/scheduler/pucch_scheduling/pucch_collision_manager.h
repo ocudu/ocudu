@@ -42,9 +42,9 @@ mux_regions_matrix make_mux_regions_matrix(const cell_pucch_res_config& cell_res
 
 /// Reasons for a PUCCH allocation failure.
 enum class pucch_alloc_failure {
-  /// The resource is already allocated to this UE in this slot.
-  ALREADY_ALLOCATED,
-  /// The resource is already allocated to another UE in this slot.
+  /// The resource does not fall within the slot UL symbols.
+  INCOMPATIBLE_SLOT,
+  /// The resource has already been already allocated in this slot.
   RESOURCE_IN_USE,
   /// The resource collides with another PUCCH grant in this slot.
   PUCCH_COLLISION,

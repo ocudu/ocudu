@@ -934,8 +934,7 @@ bool pucch_allocator_impl::can_allocate_pucch(const cell_slot_resource_allocator
                                               const ue_grants*                    existing_ue_grants,
                                               const alloc_context&                alloc_ctx) const
 {
-  // [Implementation-defined] We only allocate PUCCH grants on fully UL slots.
-  if (not cell_cfg.is_fully_ul_enabled(pucch_slot_alloc.slot)) {
+  if (not cell_cfg.is_ul_enabled(pucch_slot_alloc.slot)) {
     return false;
   }
 

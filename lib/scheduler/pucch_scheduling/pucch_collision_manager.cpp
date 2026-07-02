@@ -9,6 +9,7 @@
 #include "ocudu/adt/expected.h"
 #include "ocudu/adt/static_vector.h"
 #include "ocudu/ran/pucch/pucch_constants.h"
+#include "ocudu/ran/resource_allocation/ofdm_symbol_range.h"
 #include "ocudu/ran/resource_allocation/rb_interval.h"
 #include "ocudu/scheduler/config/cell_bwp_res_config.h"
 #include "ocudu/scheduler/resource_grid_util.h"
@@ -175,11 +176,19 @@ error_type<pucch_alloc_failure> pucch_collision_manager::can_alloc(const cell_sl
   const auto&    bwp_cfg = cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params;
   const unsigned res_idx = get_res_idx(cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch, res.res_id);
 
+  // Check that the slot is UL enabled in the resource symbols.
+  if (cell_cfg.is_tdd()) {
+    const unsigned nof_syms    = get_nsymb_per_slot(bwp_cfg.cp);
+    const unsigned nof_ul_syms = cell_cfg.get_nof_ul_symbol_per_slot(slot_alloc.slot);
+    ocudu_assert(nof_ul_syms > 0, "PUCCH resource allocation attempted in a fully DL slot");
+    const ofdm_symbol_range slot_ul_syms = ofdm_symbol_range{nof_syms - nof_ul_syms, nof_syms};
+    if (not slot_ul_syms.contains(res.syms)) {
+      return make_unexpected(pucch_alloc_failure::INCOMPATIBLE_SLOT);
+    }
+  }
+
   // Check if the resource is already in use.
   if (ctx.owners[res_idx] != rnti_t::INVALID_RNTI) {
-    if (ctx.owners[res_idx] == rnti) {
-      return make_unexpected(pucch_alloc_failure::ALREADY_ALLOCATED);
-    }
     return make_unexpected(pucch_alloc_failure::RESOURCE_IN_USE);
   }
 

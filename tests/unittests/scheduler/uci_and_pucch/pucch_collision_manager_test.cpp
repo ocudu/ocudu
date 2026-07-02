@@ -7,6 +7,7 @@
 #include "lib/scheduler/config/du_cell_group_config_pool.h"
 #include "lib/scheduler/pucch_scheduling/pucch_collision_manager.h"
 #include "lib/scheduler/support/bwp_helpers.h"
+#include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "ocudu/ran/pucch/pucch_constants.h"
@@ -22,11 +23,12 @@ using namespace ocudu;
 
 static std::unique_ptr<du_cell_config_pool>
 make_test_cell_config_pool(const pucch_resource_builder_params& ded_resources         = pucch_resource_builder_params{},
-                           unsigned                             pucch_resource_common = 11)
+                           unsigned                             pucch_resource_common = 11,
+                           const cell_config_builder_params&    cell_params           = {})
 {
-  const auto expert_cfg                  = config_helpers::make_default_scheduler_expert_config();
-  auto       sched_req                   = sched_config_helper::make_default_sched_cell_configuration_request();
-  sched_req.ran.init_bwp.pucch.resources = ded_resources;
+  const auto expert_cfg = config_helpers::make_default_scheduler_expert_config();
+  auto       sched_req  = sched_config_helper::make_default_sched_cell_configuration_request(cell_params);
+  sched_req.ran.init_bwp.pucch.resources                                                 = ded_resources;
   sched_req.ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().pucch_resource_common = pucch_resource_common;
   return std::make_unique<du_cell_config_pool>(expert_cfg, sched_req);
 }
@@ -131,6 +133,31 @@ TEST(pucch_collision_manager_test, handles_max_dedicated_resources_with_mux_regi
   ASSERT_GT(mux_matrix.size(), 8U);
 }
 
+TEST(pucch_collision_manager_test, alloc_fails_if_slot_incompatible_with_resource_symbols)
+{
+  // DDDSU pattern: period of 5 slots, slot index 3 is the special slot, with only the last 2 symbols enabled for UL.
+  cell_config_builder_params cell_params = cell_config_builder_profiles::create(duplex_mode::TDD);
+  cell_params.tdd_ul_dl_cfg_common       = cell_config_builder_profiles::create_tdd_pattern(
+      cell_config_builder_profiles::tdd_pattern_profile_fr1_30khz::DDDSU);
+
+  auto        cfg_pool = make_test_cell_config_pool(pucch_resource_builder_params{}, 11, cell_params);
+  const auto& cell_cfg = cfg_pool->cell_cfg();
+  const auto& ded_res  = cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated;
+
+  pucch_collision_manager      col_manager(cell_cfg);
+  cell_slot_resource_allocator slot_alloc(cell_cfg);
+
+  const slot_point special_slot{subcarrier_spacing::kHz30, 3};
+  col_manager.slot_indication(special_slot);
+  slot_alloc.slot_indication(special_slot);
+
+  // The F1 resources span 14 symbols (the whole slot), which does not fit within the special slot's 2 UL symbols.
+  static constexpr rnti_t rnti = to_rnti(0x4601);
+  auto                    res  = col_manager.alloc(slot_alloc, ded_res[0], rnti);
+  ASSERT_FALSE(res.has_value());
+  ASSERT_EQ(pucch_alloc_failure::INCOMPATIBLE_SLOT, res.error());
+}
+
 class pucch_collision_manager_rg_test : public ::testing::Test
 {
 protected:
@@ -217,12 +244,12 @@ TEST_F(pucch_collision_manager_rg_test, alloc_fails_if_ul_res_grid_occupied)
   }
 }
 
-TEST_F(pucch_collision_manager_rg_test, alloc_fails_if_already_allocated)
+TEST_F(pucch_collision_manager_rg_test, alloc_fails_if_resource_in_use)
 {
   // Allocate the same resource twice.
   ASSERT_TRUE(col_manager.alloc(slot_alloc, ded_res[0], rnti).has_value());
   ASSERT_FALSE(col_manager.alloc(slot_alloc, ded_res[0], rnti).has_value());
-  ASSERT_EQ(pucch_alloc_failure::ALREADY_ALLOCATED, col_manager.alloc(slot_alloc, ded_res[0], rnti).error());
+  ASSERT_EQ(pucch_alloc_failure::RESOURCE_IN_USE, col_manager.alloc(slot_alloc, ded_res[0], rnti).error());
 }
 
 TEST_F(pucch_collision_manager_rg_test, alloc_fails_if_pucch_collision)
