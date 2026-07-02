@@ -274,6 +274,14 @@ void cu_cp_impl::handle_bearer_context_inactivity_notification(const e1ap_inacti
       return;
     }
 
+    if (ue->get_rrc_ue()->get_rrc_state() != rrc_state::connected) {
+      // The UE is already inactive or in the process of being suspended. A duplicate or late notification must not
+      // trigger a second RRC inactive transition, which would double-count the RRC connection metrics.
+      logger.debug("ue={}: Ignoring Bearer Context Inactivity Notification. Cause: UE is not in RRC connected state",
+                   msg.ue_index);
+      return;
+    }
+
     auto* ngap = ngap_db.find_ngap(ue->get_ue_context().plmn);
     if (ngap == nullptr) {
       logger.warning("ue={}: Dropping Bearer Context Inactivity Notification. NGAP not found for plmn={}",

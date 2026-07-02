@@ -332,13 +332,17 @@ void rrc_du_impl::remove_ue(cu_cp_ue_index_t ue_index)
     return;
   }
 
-  bool is_inactive = ue_it->second->get_rrc_state() == rrc_state::inactive;
+  rrc_state state = ue_it->second->get_rrc_state();
 
   // Delete RRC UE to RRC DU adapter.
   rrc_ue_rrc_du_adapters.erase(ue_index);
 
-  // Notify metrics.
-  metrics_aggregator.aggregate_successful_rrc_release(is_inactive);
+  // Notify metrics, unless the RRC connection never actually reached connected/inactive state (e.g. RRC setup,
+  // reestablishment or handover was rejected, timed out or was canceled before completion). Such UEs were never
+  // counted in the connection metrics in the first place, so releasing them must not decrement the counters.
+  if (state != rrc_state::idle) {
+    metrics_aggregator.aggregate_successful_rrc_release(state == rrc_state::inactive);
+  }
 
   // Delete RRC UE.
   ue_db.erase(ue_it);
