@@ -689,6 +689,41 @@ TEST_F(cu_cp_rrc_inactive_test, when_ue_level_inactivity_message_received_then_u
   ASSERT_EQ(report.dus[0].rrc_metrics.max_nof_inactive_rrc_connections, 1);
 }
 
+TEST_F(cu_cp_rrc_inactive_test, when_duplicate_ue_level_inactivity_message_is_received_then_it_is_ignored)
+{
+  // Connect UE with RRC Inactive support.
+  connect_ue_with_rrc_inactive_support();
+
+  // Inject Inactivity Notification and await Bearer Context Modification Request.
+  ASSERT_TRUE(send_ue_level_bearer_context_inactivity_notification_and_await_bearer_context_modification_request());
+
+  // Send Bearer Context Modification Response and await UE Context Release Command.
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_ue_context_release_command());
+
+  // Send F1AP UE Context Release Complete.
+  ASSERT_TRUE(send_f1ap_ue_context_release_complete());
+
+  // Check metrics after the (single) RRC inactive transition. max_nof_rrc_connections still reflects the UE being
+  // connected for part of this reporting window, so only the inactive counters are checked here.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.dus[0].rrc_metrics.mean_nof_inactive_rrc_connections, 1);
+  ASSERT_EQ(report.dus[0].rrc_metrics.max_nof_inactive_rrc_connections, 1);
+
+  // Inject a duplicate Inactivity Notification for the same, already inactive UE. It must be ignored, since the UE
+  // is no longer in RRC connected state. Otherwise the RRC inactive transition would be counted a second time,
+  // decrementing the already zero active connection count below zero.
+  ASSERT_TRUE(this->send_bearer_context_inactivity_notification(
+      generate_bearer_context_inactivity_notification_with_ue_level(ue_ctx->cu_cp_e1ap_id.value(), cu_up_e1ap_id)));
+  ASSERT_FALSE(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu, std::chrono::milliseconds{200}));
+
+  // Metrics must remain unchanged.
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.dus[0].rrc_metrics.mean_nof_rrc_connections, 0);
+  ASSERT_EQ(report.dus[0].rrc_metrics.max_nof_rrc_connections, 0);
+  ASSERT_EQ(report.dus[0].rrc_metrics.mean_nof_inactive_rrc_connections, 1);
+  ASSERT_EQ(report.dus[0].rrc_metrics.max_nof_inactive_rrc_connections, 1);
+}
+
 TEST_F(cu_cp_rrc_inactive_test,
        when_drb_level_inactivity_message_with_inactivity_for_all_drbs_received_then_ue_is_set_to_rrc_inactive)
 {
