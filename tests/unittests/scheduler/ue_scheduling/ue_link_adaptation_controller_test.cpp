@@ -151,3 +151,63 @@ TEST_F(ue_link_adaptation_controller_mcs_derivation_test,
 
   ASSERT_GT(controller.dl_cqi_offset(), 1.0F) << "MCS(CQI+offset) == MCS(CQI+1) if offset >= 1";
 }
+
+TEST(ue_link_adaptation_controller_pucch_rep_test, no_rep_config_always_returns_n1)
+{
+  scheduler_expert_config                 sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  test_helpers::test_sched_config_manager cfg_mng{sched_cfg};
+  const cell_configuration&               cell_cfg =
+      *cfg_mng.add_cell(sched_config_helper::make_default_sched_cell_configuration_request());
+  ue_channel_state_manager      ue_channel_state{sched_cfg.ue, 1};
+  ue_link_adaptation_controller controller{cell_cfg, ue_channel_state};
+
+  // No matter the SNR, if there is no repetition configuration, the recommended repetition factor is always n1.
+  for (const float snr : {-100.0F, -3.0F, 0.0F, 3.0F, 9.0F, 100.0F}) {
+    ue_channel_state.update_pusch_snr(snr);
+    ASSERT_EQ(controller.get_recommended_pucch_rep_factor(), pucch_repetition_factor::n1);
+  }
+}
+
+TEST(ue_link_adaptation_controller_pucch_rep_test, rep_factor_follows_sinr_thresholds)
+{
+  // SINR thresholds, in order [max SINR for n2, max SINR for n4, max SINR for n8].
+  constexpr float n2_thres = 9.0F;
+  constexpr float n4_thres = 3.0F;
+  constexpr float n8_thres = -3.0F;
+
+  scheduler_expert_config sched_cfg = config_helpers::make_default_scheduler_expert_config();
+
+  sched_cell_configuration_request_message req = sched_config_helper::make_default_sched_cell_configuration_request();
+  auto&                                    resources = req.ran.init_bwp.pucch.resources;
+  pucch_harq_ack_rep_params                rep_params{};
+  rep_params.sinr_thresholds = {n2_thres, n4_thres, n8_thres};
+  rep_params.factors_per_res.assign(resources.res_set_size.value(), pucch_repetition_factor::n8);
+  resources.harq_ack_rep = rep_params;
+
+  test_helpers::test_sched_config_manager cfg_mng{sched_cfg};
+  const cell_configuration&               cell_cfg = *cfg_mng.add_cell(req);
+  ue_channel_state_manager                ue_channel_state{sched_cfg.ue, 1};
+  ue_link_adaptation_controller           controller{cell_cfg, ue_channel_state};
+
+  // SINR at or above the n2 threshold does not warrant any repetition.
+  ue_channel_state.update_pusch_snr(n2_thres + 1.0F);
+  ASSERT_EQ(controller.get_recommended_pucch_rep_factor(), pucch_repetition_factor::n1);
+  ue_channel_state.update_pusch_snr(n2_thres);
+  ASSERT_EQ(controller.get_recommended_pucch_rep_factor(), pucch_repetition_factor::n1);
+
+  // SINR between the n4 and n2 thresholds warrants n2 repetitions.
+  ue_channel_state.update_pusch_snr((n2_thres + n4_thres) / 2.0F);
+  ASSERT_EQ(controller.get_recommended_pucch_rep_factor(), pucch_repetition_factor::n2);
+  ue_channel_state.update_pusch_snr(n4_thres);
+  ASSERT_EQ(controller.get_recommended_pucch_rep_factor(), pucch_repetition_factor::n2);
+
+  // SINR between the n8 and n4 thresholds warrants n4 repetitions.
+  ue_channel_state.update_pusch_snr((n4_thres + n8_thres) / 2.0F);
+  ASSERT_EQ(controller.get_recommended_pucch_rep_factor(), pucch_repetition_factor::n4);
+  ue_channel_state.update_pusch_snr(n8_thres);
+  ASSERT_EQ(controller.get_recommended_pucch_rep_factor(), pucch_repetition_factor::n4);
+
+  // SINR below the n8 threshold warrants n8 repetitions.
+  ue_channel_state.update_pusch_snr(n8_thres - 1.0F);
+  ASSERT_EQ(controller.get_recommended_pucch_rep_factor(), pucch_repetition_factor::n8);
+}

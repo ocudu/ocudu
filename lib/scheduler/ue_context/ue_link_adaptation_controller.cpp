@@ -143,6 +143,23 @@ sch_mcs_index ue_link_adaptation_controller::calculate_ul_mcs(pusch_mcs_table mc
   return mcs;
 }
 
+pucch_repetition_factor ue_link_adaptation_controller::get_recommended_pucch_rep_factor() const
+{
+  if (cell_cfg.params.init_bwp.pucch.resources.harq_ack_rep.has_value()) {
+    const auto& rep_params = cell_cfg.params.init_bwp.pucch.resources.harq_ack_rep.value();
+    const float eff_snr    = get_effective_snr();
+
+    for (unsigned i = rep_params.sinr_thresholds.size(); i > 0; --i) {
+      // Check if the effective SNR is below the threshold for the current repetition factor.
+      if (eff_snr < rep_params.sinr_thresholds[i - 1]) {
+        // 2 -> n8, 1 -> n4, 0 -> n2
+        return static_cast<pucch_repetition_factor>(2U << (i - 1));
+      }
+    }
+  }
+  return pucch_repetition_factor::n1;
+}
+
 void ue_link_adaptation_controller::update_dl_mcs_lims(pdsch_mcs_table mcs_table)
 {
   if (last_dl_mcs_table == mcs_table) {

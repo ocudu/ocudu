@@ -7,6 +7,7 @@
 #include "../config/cell_configuration.h"
 #include "../support/outer_loop_link_adaptation.h"
 #include "ue_channel_state_manager.h"
+#include "ocudu/ran/pucch/pucch_configuration.h"
 
 namespace ocudu {
 
@@ -35,6 +36,9 @@ public:
 
   /// \brief Derives an adequate MCS given the estimated UL SNR and experienced BLER.
   sch_mcs_index calculate_ul_mcs(pusch_mcs_table mcs_table, bool use_transform_precoder) const;
+
+  /// \brief Get the recommended PUCCH repetition factor based on the current channel state.
+  pucch_repetition_factor get_recommended_pucch_rep_factor() const;
 
   /// \brief Get the value of the DL CQI offset that the OLLA algorithm is currently using.
   float dl_cqi_offset() const { return dl_olla.has_value() ? dl_olla->offset_db() : 0.0f; }
