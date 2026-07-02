@@ -13,6 +13,7 @@ set(SOURCES
         e1ap_cu_cp_bearer_context_setup_procedure_test.cpp
         e1ap_cu_cp_bearer_context_modification_procedure_test.cpp
         e1ap_cu_cp_bearer_context_release_procedure_test.cpp
+        e1ap_cu_cp_reset_test.cpp
         e1ap_cu_cp_test.cpp)
 
 add_executable(e1ap_cu_cp_test ${SOURCES})
