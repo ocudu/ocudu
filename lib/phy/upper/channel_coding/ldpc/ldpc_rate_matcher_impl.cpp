@@ -278,6 +278,57 @@ void interleave_bits_Qm<8>(bit_buffer& out, span<const uint8_t> in)
   }
 }
 
+template <>
+void interleave_bits_Qm<10>(bit_buffer& out, span<const uint8_t> in)
+{
+  static constexpr unsigned Qm = 10;
+  const unsigned            E  = out.size();
+  const unsigned            K  = E / Qm;
+
+  const uint8_t* in_ptr  = in.data();
+  uint8_t*       out_ptr = out.get_buffer().data();
+
+  // Sequentially pack each 10-bit symbol and emit bytes as soon as they are complete.
+  // The phase repeats every four symbols: 4 * 10 bits = 5 bytes.
+  unsigned phase = 0;
+  uint8_t  carry = 0;
+
+  for (unsigned i = 0; i != K; ++i) {
+    uint16_t sym = static_cast<uint16_t>(
+        (in_ptr[0 * K + i] << 9) | (in_ptr[1 * K + i] << 8) | (in_ptr[2 * K + i] << 7) | (in_ptr[3 * K + i] << 6) |
+        (in_ptr[4 * K + i] << 5) | (in_ptr[5 * K + i] << 4) | (in_ptr[6 * K + i] << 3) | (in_ptr[7 * K + i] << 2) |
+        (in_ptr[8 * K + i] << 1) | (in_ptr[9 * K + i] << 0));
+
+    switch (phase) {
+      case 0:
+        *(out_ptr++) = static_cast<uint8_t>(sym >> 2);
+        carry        = static_cast<uint8_t>(sym << 6);
+        phase        = 1;
+        break;
+      case 1:
+        *(out_ptr++) = static_cast<uint8_t>(carry | (sym >> 4));
+        carry        = static_cast<uint8_t>(sym << 4);
+        phase        = 2;
+        break;
+      case 2:
+        *(out_ptr++) = static_cast<uint8_t>(carry | (sym >> 6));
+        carry        = static_cast<uint8_t>(sym << 2);
+        phase        = 3;
+        break;
+      default:
+        *(out_ptr++) = static_cast<uint8_t>(carry | (sym >> 8));
+        *(out_ptr++) = static_cast<uint8_t>(sym);
+        phase        = 0;
+        break;
+    }
+  }
+
+  // Tail for 1-3 remainder symbols: flush the partially-filled trailing byte.
+  if (phase != 0) {
+    *out_ptr = carry;
+  }
+}
+
 void ldpc_rate_matcher_impl::interleave_bits(bit_buffer& out, span<const uint8_t> in) const
 {
   switch (modulation_order) {

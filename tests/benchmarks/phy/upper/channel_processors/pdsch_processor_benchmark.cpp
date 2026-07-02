@@ -155,7 +155,8 @@ struct test_profile {
   std::vector<sch_mcs_description> mcs_set      = {{modulation_scheme::QPSK, 120.0F},
                                                    {modulation_scheme::QAM16, 658.0F},
                                                    {modulation_scheme::QAM64, 873.0F},
-                                                   {modulation_scheme::QAM256, 948.0F}};
+                                                   {modulation_scheme::QAM256, 948.0F},
+                                                   {modulation_scheme::QAM1024, 948.0F}};
 };
 
 // Profile selected during test execution.
@@ -188,6 +189,17 @@ static const std::vector<test_profile> profile_set = {
      12,
      {25},
      {{modulation_scheme::QAM256, 948.0F}}},
+
+    {"pdsch_scs15_5MHz_1024qam_max",
+     "Encodes PDSCH with 5 MHz of bandwidth and a 15 kHz SCS, 1024-QAM modulation at maximum code rate.",
+     subcarrier_spacing::kHz15,
+     {0},
+     cyclic_prefix::NORMAL,
+     0,
+     test_profile::mimo_topology::one_port_one_layer,
+     12,
+     {25},
+     {{modulation_scheme::QAM1024, 948.0F}}},
 
     {"pdsch_scs15_20MHz_qpsk_min",
      "Encodes PDSCH with 20 MHz of bandwidth and a 15 kHz SCS, QPSK modulation at minimum code rate.",
@@ -233,6 +245,17 @@ static const std::vector<test_profile> profile_set = {
      {106},
      {{modulation_scheme::QAM256, 948.0F}}},
 
+    {"pdsch_scs15_20MHz_1024qam_max",
+     "Encodes PDSCH with 20 MHz of bandwidth and a 15 kHz SCS, 1024-QAM modulation at maximum code rate.",
+     subcarrier_spacing::kHz15,
+     {0},
+     cyclic_prefix::NORMAL,
+     0,
+     test_profile::mimo_topology::one_port_one_layer,
+     12,
+     {106},
+     {{modulation_scheme::QAM1024, 948.0F}}},
+
     {"pdsch_scs15_50MHz_qpsk_min",
      "Encodes PDSCH with 50 MHz of bandwidth and a 15 kHz SCS, QPSK modulation at minimum code rate.",
      subcarrier_spacing::kHz15,
@@ -255,6 +278,17 @@ static const std::vector<test_profile> profile_set = {
      {270},
      {{modulation_scheme::QAM256, 948.0F}}},
 
+    {"pdsch_scs15_50MHz_1024qam_max",
+     "Encodes PDSCH with 50 MHz of bandwidth and a 15 kHz SCS, 1024-QAM modulation at maximum code rate.",
+     subcarrier_spacing::kHz15,
+     {0},
+     cyclic_prefix::NORMAL,
+     0,
+     test_profile::mimo_topology::one_port_one_layer,
+     12,
+     {270},
+     {{modulation_scheme::QAM1024, 948.0F}}},
+
     {"scs30_100MHz_256qam_max",
      "Encodes PDSCH with 100 MHz of bandwidth and a 30 kHz SCS, 256-QAM modulation at maximum code rate.",
      subcarrier_spacing::kHz30,
@@ -266,6 +300,17 @@ static const std::vector<test_profile> profile_set = {
      {270},
      {{modulation_scheme::QAM256, 948.0F}}},
 
+    {"scs30_100MHz_1024qam_max",
+     "Encodes PDSCH with 100 MHz of bandwidth and a 30 kHz SCS, 1024-QAM modulation at maximum code rate.",
+     subcarrier_spacing::kHz30,
+     {0},
+     cyclic_prefix::NORMAL,
+     0,
+     test_profile::mimo_topology::one_port_one_layer,
+     12,
+     {270},
+     {{modulation_scheme::QAM1024, 948.0F}}},
+
     {"2port_2layer_scs30_100MHz_256qam",
      "Encodes 2 layers of PDSCH with 100 MHz of bandwidth and a 30 kHz SCS, 256-QAM modulation at maximum code rate.",
      subcarrier_spacing::kHz30,
@@ -276,6 +321,17 @@ static const std::vector<test_profile> profile_set = {
      12,
      {270},
      {{modulation_scheme::QAM256, 948.0F}}},
+
+    {"2port_2layer_scs30_100MHz_1024qam",
+     "Encodes 2 layers of PDSCH with 100 MHz of bandwidth and a 30 kHz SCS, 1024-QAM modulation at maximum code rate.",
+     subcarrier_spacing::kHz30,
+     {0},
+     cyclic_prefix::NORMAL,
+     0,
+     test_profile::mimo_topology::two_port_two_layer,
+     12,
+     {270},
+     {{modulation_scheme::QAM1024, 948.0F}}},
 
     {"4port_4layer_scs30_100MHz",
      "Encodes 4 layers of PDSCH with 100 MHz of bandwidth and a 30 kHz SCS, 64-QAM and 256-QAM modulation at maximum "
@@ -299,6 +355,17 @@ static const std::vector<test_profile> profile_set = {
      12,
      {270},
      {{modulation_scheme::QAM256, 948.0F}}},
+
+    {"4port_4layer_scs30_100MHz_1024qam",
+     "Encodes 4 layers of PDSCH with 100 MHz of bandwidth and a 30 kHz SCS, 1024-QAM modulation at maximum code rate.",
+     subcarrier_spacing::kHz30,
+     {0},
+     cyclic_prefix::NORMAL,
+     0,
+     test_profile::mimo_topology::four_port_four_layer,
+     12,
+     {270},
+     {{modulation_scheme::QAM1024, 948.0F}}},
 
     {"8port_8layer_scs30_100MHz_256qam",
      "Encodes 8 layers of PDSCH with 100 MHz of bandwidth and a 30 kHz SCS, 256-QAM modulation at maximum code rate.",
