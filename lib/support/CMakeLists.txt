@@ -38,6 +38,7 @@ set(SOURCES
         resource_usage/power_consumption.cpp
         resource_usage/resource_usage_utils.cpp
         rate_limiting/token_bucket.cpp
+        rate_limiting/lockfree_token_bucket.cpp
         signal_handling.cpp
         sysinfo.cpp
         timers.cpp
