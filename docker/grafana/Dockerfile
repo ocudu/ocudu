@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 
-ARG GF_VERSION=12.0.2
+ARG GF_VERSION=13.0.2
 FROM grafana/grafana-oss:${GF_VERSION}
 
 ADD provisioning /etc/grafana/provisioning
