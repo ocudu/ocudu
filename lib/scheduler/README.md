@@ -111,6 +111,10 @@ All UEs live in a `ue_repository`.
 
 Configuration changes are never applied mid-slot; they are queued as events and applied at the start of the next `run_slot()` call.
 
+## Logging
+
+The scheduler writes to the `SCHED` logger via two loggers in `logging/`: a result logger (`Slot decisions` lines) and an event logger (`Processed slot events` lines). See [log_reference.md](log_reference.md) for the full format of every log line and field.
+
 ## Directory Layout
 
 ```
@@ -121,7 +125,7 @@ lib/scheduler/
 ├── cell/                       # Resource grid, HARQ entities, PRB tracking
 ├── common_scheduling/          # SSB, SI, CSI-RS, RA, PRACH, paging schedulers
 ├── config/                     # Cell/UE configuration management and validation
-├── logging/                    # Event logger, result logger, metrics handler
+├── logging/                    # Event logger, result logger, metrics handler ([log_reference.md](log_reference.md))
 ├── pdcch_scheduling/           # PDCCH/DCI allocation
 ├── policy/                     # Scheduling policy interface and implementations
 ├── pucch_scheduling/           # PUCCH resource allocation
