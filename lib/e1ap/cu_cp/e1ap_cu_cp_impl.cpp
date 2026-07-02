@@ -49,7 +49,7 @@ e1ap_cu_cp_impl::~e1ap_cu_cp_impl() {}
 async_task<void> e1ap_cu_cp_impl::stop()
 {
   e1ap_stopping = true;
-  return launch_async<e1ap_stop_procedure>(cu_cp_notifier, ue_ctxt_list);
+  return launch_async<e1ap_stop_procedure>(cu_cp_notifier, ue_ctxt_list, ev_mng);
 }
 
 async_task<void> e1ap_cu_cp_impl::handle_cu_cp_e1_reset_message(const cu_cp_reset& reset)

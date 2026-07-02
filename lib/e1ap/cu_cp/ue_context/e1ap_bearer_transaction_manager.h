@@ -4,14 +4,11 @@
 
 #pragma once
 
-#include "ocudu/adt/expected.h"
 #include "ocudu/asn1/e1ap/e1ap.h"
 #include "ocudu/asn1/e1ap/e1ap_pdu_contents.h"
-#include "ocudu/support/async/event_signal.h"
 #include "ocudu/support/async/protocol_transaction_manager.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 class e1ap_bearer_transaction_manager
 {
@@ -40,5 +37,4 @@ public:
   protocol_transaction_event_source<asn1::e1ap::bearer_context_release_complete_s> context_release_complete;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

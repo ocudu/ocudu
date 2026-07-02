@@ -4,13 +4,16 @@
 
 #include "e1ap_stop_procedure.h"
 #include "../ue_context/e1ap_cu_cp_ue_context.h"
+#include "e1ap_transaction_manager.h"
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp.h"
 
 using namespace ocudu;
 using namespace ocucp;
 
-e1ap_stop_procedure::e1ap_stop_procedure(e1ap_cu_cp_notifier& cu_cp_notifier_, e1ap_ue_context_list& ue_ctxt_list_) :
-  cu_cp_notifier(cu_cp_notifier_), ue_ctxt_list(ue_ctxt_list_)
+e1ap_stop_procedure::e1ap_stop_procedure(e1ap_cu_cp_notifier&      cu_cp_notifier_,
+                                         e1ap_ue_context_list&     ue_ctxt_list_,
+                                         e1ap_transaction_manager& ev_mng_) :
+  cu_cp_notifier(cu_cp_notifier_), ue_ctxt_list(ue_ctxt_list_), ev_mng(ev_mng_)
 {
 }
 
@@ -23,8 +26,8 @@ void e1ap_stop_procedure::operator()(coro_context<async_task<void>>& ctx)
     CORO_AWAIT(handle_transaction_info_loss());
   }
 
-  // Stop all the common transactions.
-  // TODO
+  // Cancel all CU-CP-wide (non-UE-associated) transactions, e.g. E1 Reset.
+  ev_mng.transactions.stop();
 
   CORO_RETURN();
 }
@@ -54,5 +57,5 @@ async_task<void> e1ap_stop_procedure::handle_transaction_info_loss()
                                    [this](cu_cp_ue_index_t ue_idx) { return ue_ctxt_list.find_ue(ue_idx) == nullptr; }),
                     ev.ues_lost.end());
 
-  return cu_cp_notifier.on_transaction_info_loss(std::move(ev));
+  return cu_cp_notifier.on_transaction_info_loss(ev);
 }

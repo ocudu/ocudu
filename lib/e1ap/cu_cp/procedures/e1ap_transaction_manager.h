@@ -6,12 +6,10 @@
 
 #include "ocudu/adt/expected.h"
 #include "ocudu/asn1/e1ap/e1ap.h"
-#include "ocudu/support/async/event_signal.h"
 #include "ocudu/support/async/protocol_transaction_manager.h"
 #include "ocudu/support/timers.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 using e1ap_outcome     = expected<asn1::e1ap::successful_outcome_s, asn1::e1ap::unsuccessful_outcome_s>;
 using e1ap_transaction = protocol_transaction<e1ap_outcome>;
@@ -26,5 +24,4 @@ public:
   explicit e1ap_transaction_manager(timer_factory timers) : transactions(MAX_NOF_TRANSACTIONS, timers) {}
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp
