@@ -137,6 +137,36 @@ TEST_F(xnap_handover_preparation_procedure_test, when_handover_preparation_times
   ASSERT_FALSE(t.get().success);
 }
 
+/// If XNAP is stopped while a handover preparation procedure is awaiting the peer's response, the procedure must
+/// fail gracefully rather than crash (transaction_sink.response() must not be called on a cancelled transaction).
+TEST_F(xnap_handover_preparation_procedure_test, when_xnap_stopped_then_pending_handover_preparation_fails)
+{
+  // Run XN setup.
+  run_xn_setup(xnap_peer_cfg);
+
+  // Create UE context.
+  cu_cp_ue_index_t ue_index = create_ue();
+
+  // Generate Security context for the UE.
+  security::security_context sec_ctxt = generate_security_context(ue_mng.find_ue(ue_index)->get_security_manager());
+  xnap_handover_request      request  = generate_handover_request(ue_index, sec_ctxt);
+
+  // Launch HO preparation procedure.
+  async_task<xnap_handover_preparation_response>         t = xnap->handle_handover_request_required(request);
+  lazy_task_launcher<xnap_handover_preparation_response> t_launcher(t);
+
+  ASSERT_FALSE(t.ready());
+
+  // Stop XNAP while the procedure is still awaiting the peer's response.
+  async_task<void>         stop_task = xnap->stop();
+  lazy_task_launcher<void> stop_launcher(stop_task);
+  ASSERT_TRUE(stop_task.ready());
+
+  // The pending procedure must have failed gracefully.
+  ASSERT_TRUE(t.ready());
+  ASSERT_FALSE(t.get().success);
+}
+
 /// Test successful handover preparation procedure.
 TEST_F(xnap_handover_preparation_procedure_test, when_handover_request_ack_received_then_procedure_succeeds)
 {
