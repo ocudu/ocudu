@@ -68,13 +68,15 @@ create_dft_processor_factory_fftw_slow(bool avoid_wisdom = false, const std::str
 inline std::shared_ptr<dft_processor_factory>
 create_dft_processor_factory_fftw_fast(bool avoid_wisdom = false, const std::string& wisdom_filename = "")
 {
-  std::string optimization_flag;
-#if !defined(BUILD_TYPE_RELEASE) || !defined(__x86_64__) || defined(__SANITIZE_THREAD__) || defined(__SANITIZE_MEMORY__)
-  return create_dft_processor_factory_fftw_slow(avoid_wisdom, wisdom_filename);
-#else
   return create_dft_processor_factory_fftw("measure", 5.0, avoid_wisdom, wisdom_filename);
-#endif
 }
+
+/// \brief Creates a DFT processor factory based on the FFTW library using a build-dependent optimization profile.
+///
+/// It uses a suboptimal FFTW plan in non-release builds, when building on architectures other than \c x86_64, or when
+/// thread or memory sanitizers are enabled.
+/// \return A valid pointer to a DFT processor factory if FFTW is available. Otherwise, \c nullptr.
+std::shared_ptr<dft_processor_factory> create_dft_processor_factory_fftw();
 
 /// \brief Factory helper that automatically selects the best available DFT processor.
 ///
@@ -87,7 +89,7 @@ inline std::shared_ptr<dft_processor_factory> create_dft_processor_factory()
 {
   std::shared_ptr<dft_processor_factory> dft_proc_factory;
 
-  if ((dft_proc_factory = create_dft_processor_factory_fftw_fast())) {
+  if ((dft_proc_factory = create_dft_processor_factory_fftw())) {
     return dft_proc_factory;
   }
 
@@ -95,11 +97,7 @@ inline std::shared_ptr<dft_processor_factory> create_dft_processor_factory()
     return dft_proc_factory;
   }
 
-  if ((dft_proc_factory = create_dft_processor_factory_generic())) {
-    return dft_proc_factory;
-  }
-
-  return nullptr;
+  return create_dft_processor_factory_generic();
 }
 
 /// Factory for the Discrete Fourier Transform (DFT) processor for 16-bit complex integer values.

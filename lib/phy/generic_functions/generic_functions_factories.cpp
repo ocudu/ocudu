@@ -141,3 +141,12 @@ std::shared_ptr<dft_processor_ci16_factory> ocudu::create_dft_processor_ci16_fac
 
   return nullptr;
 }
+
+std::shared_ptr<dft_processor_factory> ocudu::create_dft_processor_factory_fftw()
+{
+#if !defined(BUILD_TYPE_RELEASE) || !defined(__x86_64__) || defined(__SANITIZE_THREAD__) || defined(__SANITIZE_MEMORY__)
+  return create_dft_processor_factory_fftw_slow();
+#else
+  return create_dft_processor_factory_fftw_fast();
+#endif
+}
