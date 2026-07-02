@@ -4,6 +4,7 @@
 
 #include "ocudu/scheduler/config/time_domain_resource_helper.h"
 #include "ocudu/ran/pusch/pusch_constants.h"
+#include "ocudu/ran/tdd/tdd_ul_dl_config.h"
 #include "ocudu/scheduler/config/bwp_configuration.h"
 #include "ocudu/scheduler/config/serving_cell_config.h"
 #include "ocudu/scheduler/sched_consts.h"
@@ -36,8 +37,7 @@ static_vector<uint8_t, 8> time_domain_resource_helper::generate_k1_candidates(co
     for (unsigned idx = 0, dl_idx = 0; idx < tdd_period and result_set.size() < MAX_K1_CANDIDATES; ++idx) {
       if (has_active_tdd_dl_symbols(tdd_cfg, idx)) {
         for (unsigned k1 = next_k1_for_dl_slot[dl_idx]; k1 <= SCHEDULER_MAX_K1; ++k1) {
-          // TODO: Consider partial UL slots when scheduler supports it.
-          if (is_tdd_full_ul_slot(tdd_cfg, idx + k1)) {
+          if (has_active_tdd_ul_symbols(tdd_cfg, idx + k1)) {
             result_set.insert(k1);
             next_k1_for_dl_slot[dl_idx] = k1 + 1;
             break;
