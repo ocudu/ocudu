@@ -11,8 +11,9 @@
 #include "ocudu/ngap/ngap_handover.h"
 #include "ocudu/ngap/ngap_types.h"
 #include "ocudu/ran/cause/ngap_cause.h"
-#include "ocudu/ran/cu_cp_pdu_session.h"
 #include "ocudu/ran/gtpu/gtpu_teid.h"
+#include "ocudu/ran/nr_cgi.h"
+#include "ocudu/ran/tai.h"
 
 namespace ocudu::ocucp {
 
@@ -297,5 +298,24 @@ ngap_message generate_write_replace_warning_request();
 
 /// \brief Generate a WRITE-REPLACE WARNING REQUEST with optional IEs (warning type, msg contents, warning area list).
 ngap_message generate_write_replace_warning_request_with_optionals();
+
+/// \brief Generate a WRITE-REPLACE WARNING REQUEST with a specific NR CGI list as warning area.
+ngap_message generate_write_replace_warning_request_with_nr_cgi_list(const std::vector<nr_cell_global_id_t>& cgis);
+
+/// \brief Generate a WRITE-REPLACE WARNING REQUEST with a TAI list as warning area.
+ngap_message generate_write_replace_warning_request_with_tai_list(const std::vector<tai_t>& tais);
+
+/// \brief Generate a WRITE-REPLACE WARNING REQUEST with warning message contents present but without data coding
+/// scheme. Used to verify the spec compliance check: per TS 38.413 section 9.3.1.37, DCS shall be present when warning
+/// message contents is present; the CU-CP must not produce a SIB7/8 with content when DCS is absent.
+ngap_message generate_write_replace_warning_request_with_msg_no_dcs();
+
+/// \brief Generate a CMAS WRITE-REPLACE WARNING REQUEST: data coding scheme and warning message contents present,
+/// no warning type. The CU-CP must encode a SIB8 carrying the message content (TS 38.413 section 8.9.1).
+ngap_message generate_write_replace_warning_request_cmas();
+
+/// \brief Generate a full ETWS WRITE-REPLACE WARNING REQUEST: warning type, data coding scheme, and warning message
+/// contents all present. The CU-CP must produce both a SIB6 and a SIB7 (TS 38.413 section 8.9.1).
+ngap_message generate_write_replace_warning_request_etws_full();
 
 } // namespace ocudu::ocucp

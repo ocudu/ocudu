@@ -56,6 +56,7 @@ add_executable(cu_cp_test
                cu_cp_mocn_test.cpp
                cu_cp_nrppa_test.cpp
                cu_cp_paging_test.cpp
+               cu_cp_write_replace_warning_test.cpp
                cu_cp_pdu_session_resource_setup_test.cpp
                cu_cp_pdu_session_resource_release_test.cpp
                cu_cp_pdu_session_resource_modify_test.cpp

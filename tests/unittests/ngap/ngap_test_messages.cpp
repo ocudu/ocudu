@@ -1386,3 +1386,87 @@ ngap_message ocudu::ocucp::generate_write_replace_warning_request_with_optionals
 
   return ngap_msg;
 }
+
+ngap_message
+ocudu::ocucp::generate_write_replace_warning_request_with_nr_cgi_list(const std::vector<nr_cell_global_id_t>& cgis)
+{
+  ngap_message ngap_msg = generate_write_replace_warning_request();
+  auto&        req      = ngap_msg.pdu.init_msg().value.write_replace_warning_request();
+
+  req->warning_area_list_present = true;
+  auto& nr_cgi_list              = req->warning_area_list.set_nr_cgi_list_for_warning();
+  for (const auto& cgi : cgis) {
+    asn1::ngap::nr_cgi_s asn1_cgi;
+    asn1_cgi.nr_cell_id.from_number(cgi.nci.value(), 36);
+    asn1_cgi.plmn_id = cgi.plmn_id.to_bytes();
+    nr_cgi_list.push_back(asn1_cgi);
+  }
+
+  return ngap_msg;
+}
+
+ngap_message ocudu::ocucp::generate_write_replace_warning_request_with_tai_list(const std::vector<tai_t>& tais)
+{
+  ngap_message ngap_msg = generate_write_replace_warning_request();
+  auto&        req      = ngap_msg.pdu.init_msg().value.write_replace_warning_request();
+
+  req->warning_area_list_present = true;
+  auto& tai_list                 = req->warning_area_list.set_tai_list_for_warning();
+  for (const auto& tai : tais) {
+    asn1::ngap::tai_s asn1_tai;
+    asn1_tai.plmn_id = tai.plmn_id.to_bytes();
+    asn1_tai.tac.from_number(tai.tac);
+    tai_list.push_back(asn1_tai);
+  }
+
+  return ngap_msg;
+}
+
+ngap_message ocudu::ocucp::generate_write_replace_warning_request_with_msg_no_dcs()
+{
+  ngap_message ngap_msg = generate_write_replace_warning_request();
+  auto&        req      = ngap_msg.pdu.init_msg().value.write_replace_warning_request();
+
+  // Warning Message Contents present but Data Coding Scheme absent.
+  req->warning_msg_contents_present = true;
+  req->warning_msg_contents.resize(3);
+  req->warning_msg_contents[0] = 0xaa;
+  req->warning_msg_contents[1] = 0xbb;
+  req->warning_msg_contents[2] = 0xcc;
+
+  return ngap_msg;
+}
+
+ngap_message ocudu::ocucp::generate_write_replace_warning_request_cmas()
+{
+  ngap_message ngap_msg = generate_write_replace_warning_request();
+  auto&        req      = ngap_msg.pdu.init_msg().value.write_replace_warning_request();
+
+  req->data_coding_scheme_present = true;
+  req->data_coding_scheme.from_number(0x0f, 8);
+  req->warning_msg_contents_present = true;
+  req->warning_msg_contents.resize(3);
+  req->warning_msg_contents[0] = 0xaa;
+  req->warning_msg_contents[1] = 0xbb;
+  req->warning_msg_contents[2] = 0xcc;
+
+  return ngap_msg;
+}
+
+ngap_message ocudu::ocucp::generate_write_replace_warning_request_etws_full()
+{
+  ngap_message ngap_msg = generate_write_replace_warning_request();
+  auto&        req      = ngap_msg.pdu.init_msg().value.write_replace_warning_request();
+
+  req->warning_type_present = true;
+  req->warning_type.from_string("0180");
+  req->data_coding_scheme_present = true;
+  req->data_coding_scheme.from_number(0x0f, 8);
+  req->warning_msg_contents_present = true;
+  req->warning_msg_contents.resize(3);
+  req->warning_msg_contents[0] = 0xaa;
+  req->warning_msg_contents[1] = 0xbb;
+  req->warning_msg_contents[2] = 0xcc;
+
+  return ngap_msg;
+}
