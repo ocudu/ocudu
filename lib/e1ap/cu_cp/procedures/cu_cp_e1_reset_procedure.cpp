@@ -35,6 +35,13 @@ void cu_cp_e1_reset_procedure::operator()(coro_context<async_task<void>>& ctx)
   // Create transaction.
   transaction = ev_mng.transactions.create_transaction(e1ap_cfg.proc_timeout);
 
+  // The transaction may already be aborted at this point, e.g. if the E1AP is being stopped. Skip sending the
+  // request in that case, since nothing will ever observe its response.
+  if (transaction.aborted()) {
+    logger.warning("\"{}\" failed. Cause: Timeout reached for E1ResetAcknowledge reception", name());
+    CORO_EARLY_RETURN();
+  }
+
   // Forward message to CU-UP.
   if (not send_e1_reset()) {
     logger.debug("\"{}\" terminated early, as there are no UEs present at CU-UP", name());
