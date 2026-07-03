@@ -149,6 +149,13 @@ public:
   void handle_crc_for_pending_puschs(bool crc)
   {
     const auto& puschs = this->res_grid[0].result.ul.puschs;
+    for (const ul_sched_info& pusch : puschs) {
+      if (pusch.context.ue_index == INVALID_DU_UE_INDEX) {
+        // Msg3 PUSCH. "rapid" is a MsgA-only field; if set here, the PHY will wrongly apply the MsgA
+        // descrambling sequence (TS38.211 6.3.1.1) to a regular Msg3 PUSCH and fail to decode it.
+        ASSERT_FALSE(pusch.context.rapid.has_value()) << "Msg3 PUSCH context.rapid must not be set";
+      }
+    }
     if (not puschs.empty()) {
       handle_crc_indication(test_helper::create_crc_indication(this->res_grid[0].slot, puschs, crc));
     }
@@ -630,8 +637,22 @@ TEST_P(ra_scheduler_two_step_rach_test, when_msga_crc_ko_then_fallback_rar_and_m
   ASSERT_TRUE(run_slot_until([this]() { return tracker.nof_fallback_rars() > 0; }));
   ASSERT_EQ(tracker.nof_fallback_rars(), 1);
   ASSERT_EQ(tracker.nof_success_rars(), 0) << "No SuccessRAR expected for CRC=KO preamble";
-  ASSERT_TRUE(run_slot_until([this]() { return tracker.nof_msg3_newtxs() > 0; }));
+
+  std::optional<bool> msg3_rapid_set;
+  ASSERT_TRUE(run_slot_until([this, &msg3_rapid_set]() {
+    const auto& puschs = res_grid[0].result.ul.puschs;
+    auto        it     = std::find_if(
+        puschs.begin(), puschs.end(), [](const ul_sched_info& p) { return p.context.msg3_delay.has_value(); });
+    if (it != puschs.end()) {
+      msg3_rapid_set = it->context.rapid.has_value();
+    }
+    return tracker.nof_msg3_newtxs() > 0;
+  }));
   ASSERT_EQ(tracker.nof_msg3_newtxs(), 1) << "FallbackRAR must allocate a Msg3 PUSCH";
+  ASSERT_TRUE(msg3_rapid_set.has_value()) << "Msg3 PUSCH was never observed in the resource grid";
+  // "rapid" is a MsgA-only field; if set here, the PHY will wrongly apply the MsgA descrambling sequence
+  // (TS38.211 6.3.1.1) to this regular Msg3 PUSCH and fail to decode it.
+  ASSERT_FALSE(*msg3_rapid_set) << "FallbackRAR Msg3 PUSCH context.rapid must not be set";
 }
 
 /// While the MsgA PUSCH CRC indication has not yet arrived, MsgB scheduling must be postponed to allow

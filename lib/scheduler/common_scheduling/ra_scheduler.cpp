@@ -1277,7 +1277,6 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     pusch.context.ss_id      = init_dl_bwp.pdcch_common.ra_search_space_id;
     pusch.context.nof_retxs  = 0;
     pusch.context.msg3_delay = msg3_delay;
-    pusch.context.rapid      = pending_msg3.preamble.preamble_id;
     pusch.pusch_cfg          = msg3_data[msg3_candidate.pusch_td_res_index].pusch;
     pusch.pusch_cfg.rnti     = pending_msg3.preamble.tc_rnti;
     pusch.pusch_cfg.rbs      = vrbs;
@@ -1762,7 +1761,6 @@ void ra_scheduler::schedule_pending_msgbs(cell_resource_allocator& res_alloc, sl
         ul_info.context.ss_id      = init_dl_bwp.pdcch_common.ra_search_space_id;
         ul_info.context.nof_retxs  = 0;
         ul_info.context.msg3_delay = msg3_delay;
-        ul_info.context.rapid      = pctx.info.preamble_id;
         ul_info.pusch_cfg          = msg3_data[msg3_candidate.pusch_td_res_index].pusch;
         ul_info.pusch_cfg.rnti     = pctx.info.tc_rnti;
         ul_info.pusch_cfg.rbs      = vrbs;
