@@ -15,8 +15,7 @@ struct cg_builder_params {
   /// Normal CP (14 symbols/slot).
   /// For 14 symbols slots, values={1, 2, 4, 5, 8, 10, 16, 20, 32, 40, 64, 80, 128, 160, 256, 320, 512, 640, 1024, 1280,
   /// 2560, 5120}.
-  /// For 12 symbols slots, values={1, 2, 4, 5, 8, 10, 16, 20, 32, 40, 64, 80, 128, 160, 256, 320, 512, 640, 1280,
-  /// 5120}.
+  /// For 12 symbols slots, values={1024, 5120} are not allowed.
   std::optional<cg_configuration::periodicity_t> periodicity = cg_configuration::periodicity_t::sl40;
   /// Number of RBs that are configured for the UE configured grant.
   unsigned nof_rbs = 10;

@@ -1469,7 +1469,7 @@ static void configure_cli11_cg_args(CLI::App& app, du_high_configured_grants& cg
       ->check(CLI::Range(1U, 275U));
   add_option(app, "--mcs", cg_params.mcs, "MCS index for the CG PUSCH. Values: {0,...,27}")
       ->capture_default_str()
-      ->check(CLI::Range(0U, 28U));
+      ->check(CLI::Range(0U, 27U));
   add_option(app,
              "--nof_harq_processes",
              cg_params.nof_harq_processes,

@@ -154,10 +154,11 @@ bool du_cg_type1_res_mng::alloc_resources(cell_group_config& cell_grp_cfg)
   // After this point, the allocation cannot fail.
 
   // Update the BWP configuration for this UE with the allocated offset and RBs.
-  cell_cfg_ded.init_bwp().ul.cg.cg_offset = offset_val;
+  cell_cfg_ded.init_bwp().ul.cg.emplace();
+  cell_cfg_ded.init_bwp().ul.cg.value().cg_offset = offset_val;
 
-  const unsigned bwp_crb_start       = cell_cfg.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.start();
-  cell_cfg_ded.init_bwp().ul.cg.vrbs = rb_helper::crb_to_vrb_ul_non_interleaved(
+  const unsigned bwp_crb_start               = cell_cfg.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.start();
+  cell_cfg_ded.init_bwp().ul.cg.value().vrbs = rb_helper::crb_to_vrb_ul_non_interleaved(
       crb_interval{cg_rbs.start() + bwp_crb_start, cg_rbs.stop() + bwp_crb_start}, bwp_crb_start);
   // NOTE: CS-RNTI is allocated by the MAC layer's RNTI manager during UE reconfiguration and stored back via
   // set_cs_rnti().
@@ -185,7 +186,7 @@ bool du_cg_type1_res_mng::alloc_resources(cell_group_config& cell_grp_cfg)
   unsigned    cg_td_res_idx = 0U;
   // PUSCH time-domain resources are sorted by increasing k2 first, then by decreasing symbols .stop().
   for (unsigned n = 0, sz = td_res.size(); n != sz; ++n) {
-    if (td_res[n].symbols.stop() <= non_srs_symbols.start()) {
+    if (td_res[n].symbols.stop() <= non_srs_symbols.stop()) {
       cg_td_res_idx = n;
       break;
     }
@@ -196,8 +197,8 @@ bool du_cg_type1_res_mng::alloc_resources(cell_group_config& cell_grp_cfg)
   ue_cg_cfg.rrc_configured_ul_grant_cfg.value().time_domain_allocation = cg_td_res_idx;
   ue_cg_cfg.rrc_configured_ul_grant_cfg.value().freq_domain_res =
       ra_frequency_type1_configuration{cell_cfg.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
-                                       cell_cfg_ded.init_bwp().ul.cg.vrbs.start(),
-                                       cell_cfg_ded.init_bwp().ul.cg.vrbs.length()};
+                                       cell_cfg_ded.init_bwp().ul.cg.value().vrbs.start(),
+                                       cell_cfg_ded.init_bwp().ul.cg.value().vrbs.length()};
 
   // > Common parameters: fill serving_cell_cfg with the full CG configuration.
   cell_cfg_ded.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.emplace(ue_cg_cfg);
@@ -222,7 +223,8 @@ void du_cg_type1_res_mng::dealloc_resources(cell_group_config& cell_grp_cfg)
     return;
   }
   if (not cell_cfg_ded.serv_cell_cfg.ul_config.has_value() or
-      not cell_cfg_ded.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.has_value()) {
+      not cell_cfg_ded.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.has_value() or
+      not cell_cfg_ded.init_bwp().ul.cg.has_value()) {
     return;
   }
 
@@ -232,19 +234,21 @@ void du_cg_type1_res_mng::dealloc_resources(cell_group_config& cell_grp_cfg)
   // Recover the allocated CRBs from the UE BWP config.
   const auto&        ue_cg         = cell_cfg_ded.init_bwp().ul.cg;
   const unsigned     bwp_crb_start = cell_cfg.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.start();
-  const crb_interval cg_crbs       = rb_helper::vrb_to_crb_ul_non_interleaved(ue_cg.vrbs, bwp_crb_start);
+  const crb_interval cg_crbs       = rb_helper::vrb_to_crb_ul_non_interleaved(ue_cg.value().vrbs, bwp_crb_start);
   // Convert to BWP-relative indices used by the allocation grid.
   const unsigned crb_start = cg_crbs.start() - bwp_crb_start;
   const unsigned crb_stop  = cg_crbs.stop() - bwp_crb_start;
 
   // Remove the CRBs from the allocation grid and counters for every periodic repetition.
   const auto cg_period_sl = static_cast<unsigned>(cell_cfg.ran.init_bwp.cg_cfg.value().periodicity.value());
-  for (unsigned n = ue_cg.cg_offset, sz = cell.nof_rbs_allocated.size(); n < sz; n += cg_period_sl) {
+  for (unsigned n = ue_cg.value().cg_offset, sz = cell.nof_rbs_allocated.size(); n < sz; n += cg_period_sl) {
     cell.cg_alloc_grid[n].fill(crb_start, crb_stop, false);
-    ocudu_assert(cell.nof_rbs_allocated[n] >= ue_cg.vrbs.length(), "nof_rbs_allocated underflow at slot offset={}", n);
-    cell.nof_rbs_allocated[n] -= ue_cg.vrbs.length();
+    ocudu_assert(
+        cell.nof_rbs_allocated[n] >= ue_cg.value().vrbs.length(), "nof_rbs_allocated underflow at slot offset={}", n);
+    cell.nof_rbs_allocated[n] -= ue_cg.value().vrbs.length();
   }
 
   // Reset the CG configuration.
+  cell_cfg_ded.init_bwp().ul.cg.reset();
   cell_cfg_ded.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.reset();
 }

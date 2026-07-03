@@ -46,6 +46,8 @@ public:
 
   void set_cs_rnti(rnti_t cs_rnti) override;
 
+  void clear_cs_rnti() override;
+
   const std::optional<ue_capability_summary>& ue_capabilities() const override { return *ue_caps; }
 
 private:
@@ -82,6 +84,7 @@ public:
   /// \param upd_req UE Context Update Request received by the F1AP-DU from the CU.
   /// \param reestablished_context Optional parameter to provide the previous context of the UE, in case of an RRC
   /// Reestablishment.
+  /// \param reestablished_ue_caps Optional parameter to provide UE capabilities.
   /// \return Result of the context update.
   du_ue_resource_update_response update_context(du_ue_index_t                         ue_index,
                                                 du_cell_index_t                       pcell_idx,

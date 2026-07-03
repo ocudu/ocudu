@@ -95,8 +95,10 @@ mac_controller::handle_ue_reconfiguration_request(const mac_ue_reconfiguration_r
     }
   }
 
-  mac_ue_context*       ue_ctx      = find_ue(msg.ue_index);
-  bool                  had_cs_rnti = ue_ctx != nullptr and ue_ctx->cs_rnti != rnti_t::INVALID_RNTI;
+  mac_ue_context* ue_ctx = find_ue(msg.ue_index);
+  ocudu_assert(ue_ctx != nullptr, "Requested MAC UE reconfiguration for a UE that hasn't been found");
+
+  const bool            had_cs_rnti = ue_ctx->cs_rnti != rnti_t::INVALID_RNTI;
   std::optional<rnti_t> cs_rnti     = {};
 
   if (has_cg_in_request and not had_cs_rnti) {
@@ -111,10 +113,8 @@ mac_controller::handle_ue_reconfiguration_request(const mac_ue_reconfiguration_r
                        mac_log_prefix(msg.ue_index, msg.crnti, "MAC UE Reconfiguration"),
                        new_cs_rnti);
       } else {
-        cs_rnti = new_cs_rnti;
-        if (ue_ctx != nullptr) {
-          ue_ctx->cs_rnti = new_cs_rnti;
-        }
+        cs_rnti         = new_cs_rnti;
+        ue_ctx->cs_rnti = new_cs_rnti;
         logger.debug("{}: Allocated CS-RNTI={} for configured grant",
                      mac_log_prefix(msg.ue_index, msg.crnti, "MAC UE Reconfiguration"),
                      new_cs_rnti);
@@ -136,7 +136,10 @@ mac_controller::handle_ue_reconfiguration_request(const mac_ue_reconfiguration_r
       if (cell.serv_cell_cfg.ul_config.has_value() and cell.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.has_value()) {
         cell.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg->cs_rnti = cs_rnti.value();
         if (not cell.bwps.empty()) {
-          cell.init_bwp().ul.cg.cs_rnti = cs_rnti.value();
+          ocudu_assert(cell.init_bwp().ul.cg.has_value(),
+                       "Configured Grant config not present for UE while setting CS-RNTI for UE={}",
+                       fmt::underlying(ue_ctx->du_ue_index));
+          cell.init_bwp().ul.cg.value().cs_rnti = cs_rnti.value();
         }
       }
     }

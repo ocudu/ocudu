@@ -54,10 +54,22 @@ void du_ue_ran_resource_updater_impl::set_cs_rnti(rnti_t cs_rnti)
         cell_cfg_ded.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.has_value()) {
       cell_cfg_ded.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg->cs_rnti = cs_rnti;
     }
+    ocudu_assert(cell_cfg_ded.init_bwp().ul.cg.has_value(),
+                 "Configured Grant configuration missing from UE={} while setting CS-RNTI={}",
+                 fmt::underlying(ue_index),
+                 fmt::underlying(cs_rnti));
     if (not cell_cfg_ded.bwps.empty()) {
-      cell_cfg_ded.init_bwp().ul.cg.cs_rnti = cs_rnti;
+      cell_cfg_ded.init_bwp().ul.cg.value().cs_rnti = cs_rnti;
     }
   }
+}
+
+void du_ue_ran_resource_updater_impl::clear_cs_rnti()
+{
+  // Update CS-RNTI in the physical cell group config.
+  // NOTE: the equivalents fields in \ref set_cs_rnti need not be reset, as the CG config has been removed already
+  // by \ref du_cg_type1_res_mng::dealloc_resources.
+  cell_grp->cell_group.pcg_cfg.cs_rnti.reset();
 }
 
 ///////////////////////////
@@ -208,14 +220,16 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
   }
 
   // > Allocate resources for new or modified cells.
+  bool pcell_newly_allocated = false;
   if (not ue_mcg.cell_group.cells.contains(SERVING_PCELL_IDX) or
       ue_mcg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.cell_index != pcell_idx) {
     // >> PCell changed. Allocate new PCell resources.
-    error_type<std::string> outcome = allocate_cell_resources(ue_index, pcell_idx, SERVING_PCELL_IDX);
+    const error_type<std::string> outcome = allocate_cell_resources(ue_index, pcell_idx, SERVING_PCELL_IDX);
     if (not outcome.has_value()) {
       resp.procedure_error = outcome;
       return resp;
     }
+    pcell_newly_allocated = true;
   }
   for (const f1ap_scell_to_setup& sc : upd_req.scells_to_setup) {
     // >> SCells Added/Modified. Allocate new SCell resources.
@@ -264,6 +278,17 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
         ue_mcg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.has_value();
     if (has_drbs and not cg_active) {
       if (not cg_res_mng.alloc_resources(ue_mcg.cell_group)) {
+        // Deallocate previously allocated resources on PCell.
+        if (pcell_newly_allocated) {
+          deallocate_cell_resources(ue_index, SERVING_PCELL_IDX);
+        }
+        // >> Deallocate previously allocated resources on SCells (that didn't fail).
+        for (const f1ap_scell_to_setup& sc : upd_req.scells_to_setup) {
+          if (std::find(resp.failed_scells.begin(), resp.failed_scells.end(), sc.serv_cell_index) ==
+              resp.failed_scells.end()) {
+            deallocate_cell_resources(ue_index, sc.serv_cell_index);
+          }
+        }
         resp.procedure_error = make_unexpected(fmt::format("Unable to allocate CG resources for ue={} at cell={}",
                                                            fmt::underlying(ue_index),
                                                            fmt::underlying(pcell_idx)));
@@ -340,6 +365,8 @@ error_type<std::string> du_ran_resource_manager_impl::allocate_cell_resources(du
           fmt::format("Unable to allocate dedicated PUCCH resources for cell={}", fmt::underlying(cell_index)));
     }
 
+    pdsch_res_mng.alloc_resources(ue_res.cell_group);
+    pusch_res_mng.alloc_resources(ue_res.cell_group);
   } else {
     ocudu_assert(not ue_res.cell_group.cells.contains(serv_cell_index), "Reallocation of SCell detected");
     ue_res.cell_group.cells.emplace(serv_cell_index, ue_cell_config{});

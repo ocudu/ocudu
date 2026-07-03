@@ -70,7 +70,7 @@ struct ue_uplink_bwp_config {
   // Only present if periodic CSI reporting is enabled in the cell.
   std::optional<ue_periodic_csi_config> periodic_csi_report;
   ue_pusch_config                       pusch;
-  ue_cg_config                          cg;
+  std::optional<ue_cg_config>           cg;
   ue_srs_config                         srs;
 
   bool operator==(const ue_uplink_bwp_config& other) const

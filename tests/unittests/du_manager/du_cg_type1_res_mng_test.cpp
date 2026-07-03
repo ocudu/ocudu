@@ -88,7 +88,8 @@ struct ue_cg_alloc_params {
 ue_cg_alloc_params get_cg_alloc(const cell_group_config& cell_grp)
 {
   const auto& ue_cg = cell_grp.cells.at(SERVING_PCELL_IDX).bwps[0].ul.cg;
-  return {ue_cg.cg_offset, ue_cg.vrbs};
+  ocudu_assert(ue_cg.has_value(), "Configured Grant config not set");
+  return {ue_cg.value().cg_offset, ue_cg.value().vrbs};
 }
 
 // ---- Test fixture ----
@@ -139,10 +140,9 @@ protected:
   prach_helper::preamble_slot_mapping make_prach_mapper() const
   {
     const auto& ran = cell_cfg_list.front().ran;
-    return prach_helper::preamble_slot_mapping(
-        ran.dl_carrier.band,
-        ran.ul_cfg_common.init_ul_bwp.generic_params.scs,
-        ran.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.prach_config_index);
+    return {ran.dl_carrier.band,
+            ran.ul_cfg_common.init_ul_bwp.generic_params.scs,
+            ran.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.prach_config_index};
   }
 
   // Returns the PUCCH guardband CRBs bitmap (BWP-relative).
@@ -227,8 +227,9 @@ TEST_P(du_cg_type1_res_mng_test, single_ue_cg_config_is_fully_populated)
   // Verify the BWP-level CG config is set.
   ASSERT_FALSE(cell_cfg_ded.bwps.empty());
   const auto& bwp_cg = cell_cfg_ded.bwps[0].ul.cg;
-  EXPECT_EQ(bwp_cg.vrbs.length(), cg_params.nof_rbs);
-  EXPECT_EQ(bwp_cg.cg_offset, grant.time_domain_offset);
+  ASSERT_TRUE(bwp_cg.has_value());
+  EXPECT_EQ(bwp_cg.value().vrbs.length(), cg_params.nof_rbs);
+  EXPECT_EQ(bwp_cg.value().cg_offset, grant.time_domain_offset);
 }
 
 /// Test: CG offset does not fall on a PRACH slot.
@@ -330,7 +331,7 @@ TEST_P(du_cg_type1_res_mng_test, dealloc_and_realloc_succeeds)
   ASSERT_FALSE(add_ue(to_du_ue_index(nof_allocated)).has_value());
 
   // Remove a random UE.
-  const unsigned      rem_idx   = test_rng::uniform_int<unsigned>(0, nof_allocated - 1);
+  const auto          rem_idx   = test_rng::uniform_int<unsigned>(0, nof_allocated - 1);
   const du_ue_index_t ue_to_rem = to_du_ue_index(rem_idx);
   rem_ue(ue_to_rem);
 

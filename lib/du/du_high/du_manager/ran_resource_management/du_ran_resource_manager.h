@@ -48,6 +48,9 @@ public:
     /// Sets the CS-RNTI allocated by the MAC layer for configured grants.
     virtual void set_cs_rnti(rnti_t cs_rnti) = 0;
 
+    /// Clears the CS-RNTI previously allocated for Configured Grants.
+    virtual void clear_cs_rnti() = 0;
+
     /// Called to fetch the UE capabilities.
     virtual const std::optional<ue_capability_summary>& ue_capabilities() const = 0;
   };
@@ -84,7 +87,9 @@ public:
   void handle_ue_config_applied() { ue_res_impl->config_applied(); }
 
   /// \brief Sets the CS-RNTI allocated by the MAC layer into the UE resource configuration.
-  void set_cs_rnti(rnti_t cs_rnti) { ue_res_impl->set_cs_rnti(cs_rnti); }
+  void set_cs_rnti(rnti_t cs_rnti) const { ue_res_impl->set_cs_rnti(cs_rnti); }
+
+  void clear_cs_rnti() const { ue_res_impl->clear_cs_rnti(); }
 
   /// \brief Returns the configurator error, which non-empty string only if the procedure failed.
   std::string get_error() const { return configurator_error; }

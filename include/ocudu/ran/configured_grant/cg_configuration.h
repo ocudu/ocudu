@@ -68,7 +68,7 @@ struct cg_configuration {
     sl1024 = 1024,
     sl1280 = 1280,
     sl2560 = 2560,
-    sl5120 = 5160,
+    sl5120 = 5120,
   };
 
   struct repetitions_t {
@@ -103,24 +103,28 @@ struct cg_configuration {
     /// Precoding matrix indicator and number of layers, encoded jointly. Values {0,...,63}.
     uint8_t precoding_and_nof_layers;
     /// SRS resource indicator index for non-codebook-based transmission. Values {0,...,15}.
-    std::optional<uint8_t> srs_resource_indicator;
+    //  NOTE: SRS indicator not used in CG yet.
+    //  TODO: Remove "static constexpr" once freq. hopping will be supported.
+    static constexpr std::optional<uint8_t> srs_resource_indicator = std::nullopt;
     /// MCS for this Configured Grant. Values {0,...,31}.
     /// Values {28,...,31} are not supported in Rel.15.
     uint8_t mcs;
     /// Frequency hopping offset in PRBs. Values {1,...,274}.
     /// \remark See TS 38.214, clause 6.3.
-    std::optional<uint16_t> frequency_hopping_offset;
+    //  NOTE: Freq. hopping not supported yet.
+    //  TODO: Remove "static constexpr" once freq. hopping will be supported.
+    static constexpr std::optional<uint16_t> frequency_hopping_offset = std::nullopt;
     /// Index into the path loss reference RS set configured in PUSCH-PowerControl. Values {0,...,3}.
-    uint8_t pathloss_ref_index;
+    //  NOTE: Only one element in the set supported.
+    //  TODO: Remove "static constexpr" for future refactors.
+    static constexpr uint8_t pathloss_ref_index = 0;
 
     bool operator==(const rrc_configured_ul_grant& rhs) const
     {
       return time_domain_offset == rhs.time_domain_offset && time_domain_allocation == rhs.time_domain_allocation &&
              freq_domain_res == rhs.freq_domain_res && antenna_port == rhs.antenna_port &&
              dmrs_seq_initialization == rhs.dmrs_seq_initialization &&
-             precoding_and_nof_layers == rhs.precoding_and_nof_layers &&
-             srs_resource_indicator == rhs.srs_resource_indicator && mcs == rhs.mcs &&
-             frequency_hopping_offset == rhs.frequency_hopping_offset && pathloss_ref_index == rhs.pathloss_ref_index;
+             precoding_and_nof_layers == rhs.precoding_and_nof_layers && mcs == rhs.mcs;
     }
     bool operator!=(const rrc_configured_ul_grant& rhs) const { return !(rhs == *this); }
   };
@@ -129,7 +133,8 @@ struct cg_configuration {
   /// \remark CS-RNTI is present in \c PhysicalCellGroupConfig, TS 38.331, not in ConfiguredGrantConfig.
   rnti_t cs_rnti;
   /// Frequency hopping mode. When absent, frequency hopping is disabled.
-  freq_hopping frequency_hopping;
+  //  NOTE: Freq. hopping not supported yet. Remove "static constexpr" once freq. hopping will be supported.
+  static constexpr freq_hopping frequency_hopping = freq_hopping::disabled;
   /// DMRS configuration for CG PUSCH transmissions.
   dmrs_uplink_config cg_dmrs_cfg;
   /// MCS table override for CP-OFDM CG transmissions.
@@ -138,41 +143,43 @@ struct cg_configuration {
   /// If not set, \c msg3-transformPrecoder in \c RACH-ConfigCommon applies.
   std::optional<bool> trans_precoder;
   /// Defines the MCS table to be used with transform precoder.
-  pusch_mcs_table mcs_table_transform_precoder;
+  //  NOTE: trans. precorder not supported for CG. Remove "static constexpr" once trans. precorder will be supported.
+  static constexpr pusch_mcs_table mcs_table_transform_precoder = pusch_mcs_table::qam64;
   /// UCI-on-PUSCH beta offset configuration.
   /// \remark We reuse the same struct as for PUSCH-Config, although \ref alpha_scaling_opt is not used for Configured
   /// Grant.
   uci_on_pusch uci_on_pusch_cfg;
   /// Frequency domain resource allocation type.
-  res_allocation res_alloc;
+  //  NOTE: Freq. alloc. type 0 not supported. Remove "static constexpr" once type 0 will be supported.
+  static constexpr res_allocation res_alloc = res_allocation::type_1;
   /// Sets RBG size configuration 2 for PUSCH's RBG size; otherwise, UE defaults to RBG size configuration 1.
   /// \remark Applicable only when \c res_alloc is \c resourceAllocationType2.
-  bool enable_rbg_size_cfg_2;
+  //  NOTE: Only RBG size configuration 1 supported. Remove "static constexpr" once type 2 will be supported.
+  static constexpr bool enable_rbg_size_cfg_2 = false;
   /// Sets uplink power control closed loop n1; else, UE defaults to n0.
-  bool enable_pwr_ctrl_loop_n1;
+  //  NOTE: Feature not supported. Remove "static constexpr" this will be supported.
+  static constexpr bool enable_pwr_ctrl_loop_n1 = false;
   /// P0-PUSCH-Alpha set index for power control. Values {0,...,29}.
-  p0_pusch_alphaset_id p0_pusch_alpha;
+  //  NOTE: Only MIN_P0_PUSCH_ALPHASET_ID supported. Remove "static constexpr" in future refactors.
+  static constexpr p0_pusch_alphaset_id p0_pusch_alpha = MIN_P0_PUSCH_ALPHASET_ID;
   /// Number of HARQ processes for CG transmissions. Values {1,...,16}.
   uint8_t nof_harq_processes;
   /// Number of PUSCH repetitions per CG occasion and their RV sequence.
-  repetitions_t rep;
+  static constexpr repetitions_t rep =
+      cg_configuration::repetitions_t{.rep_k = rep_k_t::n1, .rv_seq = rep_k_rv::s1_0231};
   /// Periodicity of the CG resource.
   periodicity_t periodicity;
   /// Duration (in multiple of periodicity) of the configured-grant timer. Values {1,...,64}.
-  uint8_t configured_grant_timer;
+  //  NOTE: Value statically set. Remove "static constexpr" once interface allows setting this.
+  static constexpr uint8_t configured_grant_timer = 4U;
   /// RRC-level resource grant (Type 1 CG). When absent, the grant is activated via DCI (Type 2 CG).
   /// \remark Type 2 CG is not currently supported.
   std::optional<rrc_configured_ul_grant> rrc_configured_ul_grant_cfg;
   bool                                   operator==(const cg_configuration& rhs) const
   {
-    return cs_rnti == rhs.cs_rnti && frequency_hopping == rhs.frequency_hopping && cg_dmrs_cfg == rhs.cg_dmrs_cfg &&
-           mcs_table == rhs.mcs_table && trans_precoder == rhs.trans_precoder &&
-           mcs_table_transform_precoder == rhs.mcs_table_transform_precoder &&
-           uci_on_pusch_cfg == rhs.uci_on_pusch_cfg && res_alloc == rhs.res_alloc &&
-           enable_rbg_size_cfg_2 == rhs.enable_rbg_size_cfg_2 &&
-           enable_pwr_ctrl_loop_n1 == rhs.enable_pwr_ctrl_loop_n1 && p0_pusch_alpha == rhs.p0_pusch_alpha &&
-           nof_harq_processes == rhs.nof_harq_processes && rep == rhs.rep && periodicity == rhs.periodicity &&
-           configured_grant_timer == rhs.configured_grant_timer &&
+    return cs_rnti == rhs.cs_rnti && cg_dmrs_cfg == rhs.cg_dmrs_cfg && mcs_table == rhs.mcs_table &&
+           trans_precoder == rhs.trans_precoder && uci_on_pusch_cfg == rhs.uci_on_pusch_cfg &&
+           nof_harq_processes == rhs.nof_harq_processes && periodicity == rhs.periodicity &&
            rrc_configured_ul_grant_cfg == rhs.rrc_configured_ul_grant_cfg;
   }
   bool operator!=(const cg_configuration& rhs) const { return !(rhs == *this); }
