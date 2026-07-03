@@ -510,8 +510,14 @@ INSTANTIATE_TEST_SUITE_P(
   // {tdd_test_params}, nof_background_ues, nof_transient_ues, nof_waves, wave_period_in_tdd_periods
   // DL-heavy DDDDDDSUUU.
   multiue_tdd_test_params{tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}}},           8, 16, 10, 2},
+  // DL-heavy DDDDDDSUUU with tight HARQ timing (min_k=2).
+  multiue_tdd_test_params{tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}}, 2},        8, 16, 10, 2},
+  // Very DL-heavy DDDDDDDSUU (2 UL slots per period).
+  multiue_tdd_test_params{tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDDDDDSUU)}, 8, 16, 10, 2},
   // Balanced DDDSU.
   multiue_tdd_test_params{tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU)}, 8, 16, 10, 2},
+  // Balanced DDDSU, back-to-back waves and heavier transient load.
+  multiue_tdd_test_params{tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU)}, 12, 24, 12, 1},
   // UL-heavy DDDSUUUUUU.
   multiue_tdd_test_params{tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 3, 5, 6, 0}}},           8, 16, 10, 2}
 ));
@@ -560,8 +566,11 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Values(
         // clang-format off
   // {tdd_test_params}, nof_background_ues, nof_transient_ues, nof_waves, wave_period_in_tdd_periods
-  // DL-heavy pattern with small min_k: dedicated UL load reaches each full UL slot one PDCCH iteration before the
-  // fallback UE unless the fallback k2 alignment is correct.
-  multiue_tdd_test_params{tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 6, 6, 3, 4}}, 2},        16, 8, 6, 2}
+  // DDDDDDSUUU (6 DL symbols in special slot), min_k sweep across the k2-asymmetry boundary.
+  multiue_tdd_test_params{tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 6, 6, 3, 4}}, 1},        16, 8, 6, 2},
+  multiue_tdd_test_params{tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 6, 6, 3, 4}}, 2},        16, 8, 6, 2},
+  multiue_tdd_test_params{tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 6, 6, 3, 4}}, 3},        16, 8, 6, 2},
+  // DDDDDDSUUU with 5 DL symbols in the special slot.
+  multiue_tdd_test_params{tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}}, 2},        16, 8, 6, 2}
 ));
 // clang-format on
