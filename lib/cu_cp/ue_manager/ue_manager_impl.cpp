@@ -151,6 +151,15 @@ void ue_manager::remove_ue(cu_cp_ue_index_t ue_index)
     logger.debug("ue={}: PCI not found", ue_index);
   }
 
+  // Remove Full-I-RNTI and Short-I-RNTI from lookups, in case the UE was RRC_INACTIVE and is being removed without
+  // having gone through set_active() first (e.g. RNA update or RAN paging timeout).
+  for (auto it = full_i_rnti_to_ue_index.begin(); it != full_i_rnti_to_ue_index.end();) {
+    it = (it->second == ue_index) ? full_i_rnti_to_ue_index.erase(it) : std::next(it);
+  }
+  for (auto it = short_i_rnti_to_ue_index.begin(); it != short_i_rnti_to_ue_index.end();) {
+    it = (it->second == ue_index) ? short_i_rnti_to_ue_index.erase(it) : std::next(it);
+  }
+
   // Remove CU-CP UE from database.
   ues.erase(ue_index);
 
