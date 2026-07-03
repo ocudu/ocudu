@@ -425,8 +425,7 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
     return;
   }
 
-  if (cell_cfg.ntn_cfg.feeder_link_info && cell_cfg.ntn_cfg.feeder_link_info->enable_doppler_compensation &&
-      !serving_ntn_info.ta_info) {
+  if (cell_cfg.ntn_cfg.feeder_link_info && !serving_ntn_info.ta_info) {
     logger.error("Feeder link is configured for cell {} but TA-info was not computed at slot={}, epoch={:%T}",
                  nr_cgi.nci,
                  sl,

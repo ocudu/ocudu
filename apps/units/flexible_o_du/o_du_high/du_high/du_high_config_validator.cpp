@@ -460,6 +460,11 @@ static bool validate_ntn_config(const du_high_unit_cell_ntn_config& ntn_cfg)
     valid = false;
   }
 
+  if (ntn_cfg.feeder_link_info and not ntn_cfg.ntn_gateway_location and not ntn_cfg.ta_info) {
+    fmt::print("feeder_link requires gateway_location or ta_info to be set.\n");
+    valid = false;
+  }
+
   return valid;
 }
 
