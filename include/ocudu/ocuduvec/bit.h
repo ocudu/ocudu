@@ -89,5 +89,10 @@ void copy_offset(bit_buffer&       output,
                  unsigned          in_offset,
                  unsigned          nof_bits);
 
+/// \brief Reverses the order of the bits in each byte.
+/// \param[out] output Output buffer, containing the bytes in \c input with the reversed bit order.
+/// \param[in]  input  Input buffer.
+void reverse_bit_order_in_bytes(span<uint8_t> output, span<const uint8_t> input);
+
 } // namespace ocuduvec
 } // namespace ocudu

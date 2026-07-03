@@ -404,3 +404,57 @@ void ocudu::ocuduvec::copy_offset(ocudu::bit_buffer&       output,
     i_bit += bits_to_extract;
   }
 }
+
+void ocudu::ocuduvec::reverse_bit_order_in_bytes(span<uint8_t> output, span<const uint8_t> input)
+{
+  std::size_t nof_bytes = input.size();
+  ocudu_assert(output.size() == nof_bytes,
+               "The input number of bytes (i.e.{}) must be equal to the output number of bytes (i.e., {}).",
+               nof_bytes,
+               output.size());
+  std::size_t i_byte = 0U;
+
+// AVX2 implementation. It reverses the bytes in groups of 32.
+#if defined(__AVX__) && defined(__AVX2__)
+  static constexpr std::size_t avx2_nof_bytes = 32;
+
+  // Look-up table for reverting the bit order inside a nibble. It maps nibbles into other nibbles that contain the same
+  // bits with the opposite order.
+  __m256i nibble_reversal_lut = _mm256_setr_epi8(
+      // clang-format off
+      0x0,0x8,0x4,0xc,0x2,0xa,0x6,0xe,
+      0x1,0x9,0x5,0xd,0x3,0xb,0x7,0xf,
+      0x0,0x8,0x4,0xc,0x2,0xa,0x6,0xe,
+      0x1,0x9,0x5,0xd,0x3,0xb,0x7,0xf
+      // clang-format on
+  );
+
+  // Mask that selects the low nibble within each byte.
+  __m256i nibble_mask = _mm256_set1_epi8(0x0f);
+
+  for (std::size_t i_byte_end = nof_bytes / avx2_nof_bytes * avx2_nof_bytes; i_byte != i_byte_end;
+       i_byte += avx2_nof_bytes) {
+    // Load 32 bytes from the input.
+    __m256i in = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&input[i_byte]));
+
+    // Mask the low and high nibbles in each byte.
+    __m256i lo_nibbles = _mm256_and_si256(in, nibble_mask);
+    __m256i hi_nibbles = _mm256_and_si256(_mm256_srli_epi16(in, 4), nibble_mask);
+
+    // For each of the input nibbles, select its corresponding reversed entry in the LUT.
+    lo_nibbles = _mm256_shuffle_epi8(nibble_reversal_lut, lo_nibbles);
+    hi_nibbles = _mm256_shuffle_epi8(nibble_reversal_lut, hi_nibbles);
+
+    // Swap low and high nibble positions.
+    __m256i out = _mm256_or_si256(_mm256_slli_epi16(lo_nibbles, 4), hi_nibbles);
+
+    // Store the results.
+    _mm256_storeu_si256(reinterpret_cast<__m256i*>(&output[i_byte]), out);
+  }
+#endif // defined(__AVX__) && defined(__AVX2__)
+
+  // Process the remaining bytes using a LUT.
+  for (; i_byte != nof_bytes; ++i_byte) {
+    output[i_byte] = reverse_byte<uint8_t>(input[i_byte]);
+  }
+}

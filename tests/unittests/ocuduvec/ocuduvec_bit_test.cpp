@@ -28,10 +28,30 @@ protected:
     nbits       = size * 8;
     offset      = size;
   }
+
+  // Reverses the order of the bits in a byte.
+  static uint8_t bit_reverse_golden(uint8_t input)
+  {
+    uint8_t                   ret      = 0U;
+    static constexpr unsigned nof_bits = 8;
+    for (unsigned i_bit = 0; i_bit != nof_bits; ++i_bit) {
+      // Obtain the bit in the index position.
+      uint8_t bit = (input >> i_bit) & 0b1;
+      // Place the extracted bits starting from the MSB of the output.
+      ret |= bit << (nof_bits - i_bit - 1);
+    }
+
+    return ret;
+  }
 };
 
 TEST_P(OcuduvecBitFixture, OcuduvecBitTestUnpack)
 {
+  // Skip unsupported vector sizes.
+  if (size > 32) {
+    GTEST_SKIP();
+  }
+
   std::uniform_int_distribution<unsigned> dist(0, (1U << size) - 1U);
 
   // Create random value to unpack
@@ -80,6 +100,11 @@ TEST_P(OcuduvecBitFixture, OcuduvecBitTestUnpackVector)
 
 TEST_P(OcuduvecBitFixture, OcuduvecBitTestPack)
 {
+  // Skip unsupported vector sizes.
+  if (size > 32) {
+    GTEST_SKIP();
+  }
+
   std::uniform_int_distribution<uint8_t> dist(0, 1U);
 
   // Create unpacked data
@@ -128,6 +153,11 @@ TEST_P(OcuduvecBitFixture, OcuduvecBitTestPackVector)
 
 TEST_P(OcuduvecBitFixture, OcuduvecBitTestPackFullVector)
 {
+  // Skip unsupported vector sizes.
+  if (size > 32) {
+    GTEST_SKIP();
+  }
+
   std::uniform_int_distribution<unsigned> dist(0, 1U);
 
   // Create unpacked data
@@ -272,7 +302,6 @@ TEST_P(OcuduvecBitFixture, OcuduvecBitTestUnpackVectorWithRemainder)
 
 TEST_P(OcuduvecBitFixture, OcuduvecBitTestUnpackVectorOffset)
 {
-  // std::uniform_int_distribution<unsigned> dist(0, (1U << size) - 1U);
   std::uniform_int_distribution<unsigned> dist(0, 255U);
 
   // Create random value to unpack
@@ -295,6 +324,28 @@ TEST_P(OcuduvecBitFixture, OcuduvecBitTestUnpackVectorOffset)
   ASSERT_EQ(span<const uint8_t>(expected), span<const uint8_t>(unpacked));
 }
 
-INSTANTIATE_TEST_SUITE_P(OcuduvecBitTest, OcuduvecBitFixture, ::testing::Values(1, 5, 7, 19, 23, 32));
+TEST_P(OcuduvecBitFixture, OcuduBitTestReverseByte)
+{
+  std::uniform_int_distribution<unsigned> dist_byte(0, 255U);
+
+  // Create source and destination buffers.
+  std::vector<uint8_t> source(size);
+  std::vector<uint8_t> destination(size);
+
+  // Fill source buffer with random bits.
+  for (auto& byte : source) {
+    byte = dist_byte(rgen);
+  }
+
+  // Reverse bits.
+  ocuduvec::reverse_bit_order_in_bytes(destination, source);
+
+  // Assert each byte.
+  for (unsigned i_byte = 0; i_byte != size; ++i_byte) {
+    ASSERT_EQ(bit_reverse_golden(source[i_byte]), destination[i_byte]);
+  }
+}
+
+INSTANTIATE_TEST_SUITE_P(OcuduvecBitTest, OcuduvecBitFixture, ::testing::Values(1, 5, 7, 19, 23, 32, 65, 127));
 
 } // namespace
