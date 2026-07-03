@@ -292,6 +292,8 @@ private:
   early_drop_reason check_early_drop(const byte_buffer& buf);
   uint32_t          warn_on_drop_count = 0;
 
+  std::chrono::milliseconds compute_next_discard_timeout(tick_point_t oldest_pdu_arrival_tick_point);
+
   /// Crypto token manager. Used to wait for crypto engine to finish
   /// when destroying DRB.
   pdcp_crypto_token_manager token_mngr;

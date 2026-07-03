@@ -1342,10 +1342,10 @@ void pdcp_entity_tx::stop_discard_timer(uint32_t highest_count)
     ocudu_assert(window_elem.sdu_info.tick_point_of_arrival.has_value(),
                  "Cannot update discard timer for SDU without arrival time. count={}",
                  window_elem.sdu_info.count);
-    tick_point_t now = discard_timer.now();
-    unsigned     new_timeout =
-        window_elem.sdu_info.tick_point_of_arrival.value() + (unsigned)cfg.discard_timer.value() - now;
-    discard_timer.set(std::chrono::milliseconds(new_timeout), [this](timer_id_t timer_id) { discard_callback(); });
+    std::chrono::milliseconds new_timeout =
+        compute_next_discard_timeout(window_elem.sdu_info.tick_point_of_arrival.value());
+    logger.log_debug("Restarted discard timer. new_timeout={} {}", new_timeout, st);
+    discard_timer.set(new_timeout, [this](timer_id_t timer_id) { discard_callback(); });
     discard_timer.run();
   }
 }
@@ -1416,11 +1416,11 @@ void pdcp_entity_tx::discard_callback()
                  window_elem.sdu_info.count);
     if (window_elem.sdu_info.tick_point_of_arrival != oldest_timepoint) {
       // Restart timeout for any pending SDUs.
-      unsigned new_timeout = (window_elem.sdu_info.tick_point_of_arrival.value() - oldest_timepoint);
+      std::chrono::milliseconds new_timeout = compute_next_discard_timeout(oldest_timepoint);
       logger.log_debug("Finished discard callback. There are new PDUs with a new discard timer. new_timeout={}, st={}",
                        new_timeout,
                        st);
-      discard_timer.set(std::chrono::milliseconds(new_timeout), [this](timer_id_t timer_id) { discard_callback(); });
+      discard_timer.set(new_timeout, [this](timer_id_t timer_id) { discard_callback(); });
       discard_timer.run();
       break;
     }
@@ -1492,4 +1492,16 @@ pdcp_entity_tx::early_drop_reason pdcp_entity_tx::check_early_drop(const byte_bu
     return early_drop_reason::full_window;
   }
   return early_drop_reason::no_drop;
+}
+
+std::chrono::milliseconds pdcp_entity_tx::compute_next_discard_timeout(tick_point_t oldest_pdu_arrival_tick_point)
+{
+  ocudu_assert(cfg.discard_timer.value() != pdcp_discard_timer::infinity,
+               "Cannot compute next discard timeout with discard_timer={}",
+               cfg.discard_timer);
+  tick_point_t now = discard_timer.now();
+
+  unsigned expire_at_tick_point =
+      std::max(oldest_pdu_arrival_tick_point + static_cast<unsigned>(cfg.discard_timer.value()), now);
+  return std::chrono::milliseconds{expire_at_tick_point - now};
 }
