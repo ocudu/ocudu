@@ -349,3 +349,32 @@ TEST_F(ue_manager_test, when_ue_is_set_inactive_then_its_found_by_i_rnti)
   // Find by short-i-rnti.
   ASSERT_NE(ue_mng.get_ue_index(i_rntis->short_i_rnti), cu_cp_ue_index_t::invalid);
 }
+
+/// Test that removing a UE while it is RRC_INACTIVE (e.g. RNA update or RAN paging timeout, instead of a
+/// successful RRC Resume) also cleans up its I-RNTI lookup entries, instead of leaking them.
+TEST_F(ue_manager_test, when_inactive_ue_is_removed_then_i_rnti_lookups_are_cleared)
+{
+  cu_cp_du_index_t du_index    = cu_cp_du_index_t::min;
+  rnti_t           rnti        = to_rnti(0x4601);
+  du_cell_index_t  pcell_index = MIN_DU_CELL_INDEX;
+  cu_cp_ue_index_t ue_index    = ue_mng.add_ue(du_index);
+  ASSERT_NE(ue_index, cu_cp_ue_index_t::invalid);
+  ASSERT_TRUE(ue_mng.update_ue_context(ue_index, gnb_du_id_t::min, MIN_PCI, rnti, pcell_index));
+  ASSERT_TRUE(ue_mng.set_plmn(ue_index, plmn_identity::test_value()));
+  auto* ue = ue_mng.find_ue(ue_index);
+
+  dummy_rrc_ue rrc_ue;
+  ue->set_rrc_ue(rrc_ue);
+
+  std::optional<i_rntis_t> i_rntis = ue_mng.set_inactive(ue_index);
+  ASSERT_TRUE(i_rntis.has_value());
+  ASSERT_NE(ue_mng.get_ue_index(i_rntis->full_i_rnti), cu_cp_ue_index_t::invalid);
+  ASSERT_NE(ue_mng.get_ue_index(i_rntis->short_i_rnti), cu_cp_ue_index_t::invalid);
+
+  // UE never resumes (set_active() is never called) and is released directly, e.g. due to RNA update timeout.
+  ue_mng.remove_ue(ue_index);
+
+  // The I-RNTI lookup entries must not outlive the UE they pointed to.
+  ASSERT_EQ(ue_mng.get_ue_index(i_rntis->full_i_rnti), cu_cp_ue_index_t::invalid);
+  ASSERT_EQ(ue_mng.get_ue_index(i_rntis->short_i_rnti), cu_cp_ue_index_t::invalid);
+}
