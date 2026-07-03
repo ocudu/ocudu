@@ -132,7 +132,7 @@ TEST(test_band_duplexing, all_bands)
     if (b < nr_band::n29 or b == nr_band::n30 or b == nr_band::n65 or b == nr_band::n66 or
         (b >= ocudu::nr_band::n70 and b <= ocudu::nr_band::n74) or b == nr_band::n85 or
         (b >= ocudu::nr_band::n91 and b <= ocudu::nr_band::n94) or b == ocudu::nr_band::n100 or
-        (b >= ocudu::nr_band::n254 and b <= ocudu::nr_band::n256)) {
+        (b >= ocudu::nr_band::n247 and b <= ocudu::nr_band::n256)) {
       ASSERT_EQ(duplex_mode::FDD, get_duplex_mode(b));
     } else if ((b >= ocudu::nr_band::n34 and b <= ocudu::nr_band::n53) or
                (b >= ocudu::nr_band::n77 and b <= ocudu::nr_band::n79) or b == ocudu::nr_band::n90 or
@@ -192,7 +192,7 @@ TEST(test_is_paired_spectrum, unpaired)
 
 TEST(test_ssb_pattern, ssb_pattern_case_A)
 {
-  const std::array<nr_band, 14> case_c_bands{nr_band::n18,
+  const std::array<nr_band, 16> case_c_bands{nr_band::n18,
                                              nr_band::n38,
                                              nr_band::n40,
                                              nr_band::n46,
@@ -205,6 +205,8 @@ TEST(test_ssb_pattern, ssb_pattern_case_A)
                                              nr_band::n96,
                                              nr_band::n102,
                                              nr_band::n104,
+                                             nr_band::n247,
+                                             nr_band::n248,
                                              nr_band::n254};
 
   for (const auto band : all_nr_bands_fr1) {
@@ -220,7 +222,7 @@ TEST(test_ssb_pattern, ssb_pattern_case_A)
 
 TEST(test_ssb_pattern, ssb_pattern_case_B)
 {
-  const std::array<nr_band, 3> case_b_bands{nr_band::n5, nr_band::n24, nr_band::n66};
+  const std::array<nr_band, 5> case_b_bands{nr_band::n5, nr_band::n24, nr_band::n66, nr_band::n251, nr_band::n255};
 
   for (auto band : case_b_bands) {
     ASSERT_EQ(ssb_pattern_case::B, get_ssb_pattern(band, subcarrier_spacing::kHz30));
@@ -229,7 +231,7 @@ TEST(test_ssb_pattern, ssb_pattern_case_B)
 
 TEST(test_ssb_pattern, ssb_pattern_case_C)
 {
-  const std::array<nr_band, 17> case_c_bands{nr_band::n34,
+  const std::array<nr_band, 19> case_c_bands{nr_band::n34,
                                              nr_band::n38,
                                              nr_band::n39,
                                              nr_band::n40,
@@ -245,6 +247,8 @@ TEST(test_ssb_pattern, ssb_pattern_case_C)
                                              nr_band::n101,
                                              nr_band::n102,
                                              nr_band::n104,
+                                             nr_band::n247,
+                                             nr_band::n248,
                                              nr_band::n254};
   for (auto band : case_c_bands) {
     ASSERT_EQ(ssb_pattern_case::C, get_ssb_pattern(band, subcarrier_spacing::kHz30));
@@ -539,6 +543,32 @@ TEST(test_get_min_channel_bw, invalid_cases)
   ASSERT_EQ(min_channel_bandwidth::MHz20, get_min_channel_bw(nr_band::n102, subcarrier_spacing::kHz30));
   ASSERT_EQ(min_channel_bandwidth::MHz20, get_min_channel_bw(nr_band::n102, subcarrier_spacing::kHz60));
   ASSERT_EQ(min_channel_bandwidth::invalid, get_min_channel_bw(nr_band::n102, subcarrier_spacing::kHz120));
+
+  ASSERT_EQ(min_channel_bandwidth::MHz10, get_min_channel_bw(nr_band::n247, subcarrier_spacing::kHz15));
+  ASSERT_EQ(min_channel_bandwidth::MHz10, get_min_channel_bw(nr_band::n247, subcarrier_spacing::kHz30));
+  ASSERT_EQ(min_channel_bandwidth::invalid, get_min_channel_bw(nr_band::n247, subcarrier_spacing::kHz60));
+
+  ASSERT_EQ(min_channel_bandwidth::MHz10, get_min_channel_bw(nr_band::n248, subcarrier_spacing::kHz15));
+  ASSERT_EQ(min_channel_bandwidth::MHz10, get_min_channel_bw(nr_band::n248, subcarrier_spacing::kHz30));
+  ASSERT_EQ(min_channel_bandwidth::invalid, get_min_channel_bw(nr_band::n248, subcarrier_spacing::kHz60));
+
+  ASSERT_EQ(min_channel_bandwidth::MHz5, get_min_channel_bw(nr_band::n250, subcarrier_spacing::kHz15));
+  ASSERT_EQ(min_channel_bandwidth::MHz10, get_min_channel_bw(nr_band::n250, subcarrier_spacing::kHz30));
+  ASSERT_EQ(min_channel_bandwidth::MHz10, get_min_channel_bw(nr_band::n250, subcarrier_spacing::kHz60));
+  ASSERT_EQ(min_channel_bandwidth::invalid, get_min_channel_bw(nr_band::n250, subcarrier_spacing::kHz120));
+
+  ASSERT_EQ(min_channel_bandwidth::MHz5, get_min_channel_bw(nr_band::n251, subcarrier_spacing::kHz15));
+  ASSERT_EQ(min_channel_bandwidth::MHz10, get_min_channel_bw(nr_band::n251, subcarrier_spacing::kHz30));
+  ASSERT_EQ(min_channel_bandwidth::MHz10, get_min_channel_bw(nr_band::n251, subcarrier_spacing::kHz60));
+  ASSERT_EQ(min_channel_bandwidth::invalid, get_min_channel_bw(nr_band::n251, subcarrier_spacing::kHz120));
+
+  ASSERT_EQ(min_channel_bandwidth::MHz5, get_min_channel_bw(nr_band::n252, subcarrier_spacing::kHz15));
+  ASSERT_EQ(min_channel_bandwidth::MHz10, get_min_channel_bw(nr_band::n252, subcarrier_spacing::kHz30));
+  ASSERT_EQ(min_channel_bandwidth::MHz10, get_min_channel_bw(nr_band::n252, subcarrier_spacing::kHz60));
+  ASSERT_EQ(min_channel_bandwidth::invalid, get_min_channel_bw(nr_band::n252, subcarrier_spacing::kHz120));
+
+  ASSERT_EQ(min_channel_bandwidth::MHz5, get_min_channel_bw(nr_band::n253, subcarrier_spacing::kHz15));
+  ASSERT_EQ(min_channel_bandwidth::invalid, get_min_channel_bw(nr_band::n253, subcarrier_spacing::kHz30));
 
   ASSERT_EQ(min_channel_bandwidth::MHz5, get_min_channel_bw(nr_band::n254, subcarrier_spacing::kHz15));
   ASSERT_EQ(min_channel_bandwidth::MHz10, get_min_channel_bw(nr_band::n254, subcarrier_spacing::kHz30));

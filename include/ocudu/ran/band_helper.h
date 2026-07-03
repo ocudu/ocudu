@@ -30,7 +30,7 @@ enum class min_channel_bandwidth;
 
 struct ssb_freq_location;
 
-const std::array<nr_band, 63> all_nr_bands_fr1 = {
+const std::array<nr_band, 69> all_nr_bands_fr1{
     nr_band::n1,   nr_band::n2,   nr_band::n3,   nr_band::n5,   nr_band::n7,   nr_band::n8,   nr_band::n12,
     nr_band::n13,  nr_band::n14,  nr_band::n18,  nr_band::n20,  nr_band::n24,  nr_band::n25,  nr_band::n26,
     nr_band::n28,  nr_band::n29,  nr_band::n30,  nr_band::n34,  nr_band::n38,  nr_band::n39,  nr_band::n40,
@@ -39,7 +39,8 @@ const std::array<nr_band, 63> all_nr_bands_fr1 = {
     nr_band::n77,  nr_band::n78,  nr_band::n79,  nr_band::n80,  nr_band::n81,  nr_band::n82,  nr_band::n83,
     nr_band::n84,  nr_band::n85,  nr_band::n86,  nr_band::n89,  nr_band::n90,  nr_band::n91,  nr_band::n92,
     nr_band::n93,  nr_band::n94,  nr_band::n95,  nr_band::n96,  nr_band::n97,  nr_band::n98,  nr_band::n99,
-    nr_band::n100, nr_band::n101, nr_band::n102, nr_band::n104, nr_band::n254, nr_band::n255, nr_band::n256};
+    nr_band::n100, nr_band::n101, nr_band::n102, nr_band::n104, nr_band::n247, nr_band::n248, nr_band::n250,
+    nr_band::n251, nr_band::n252, nr_band::n253, nr_band::n254, nr_band::n255, nr_band::n256};
 
 constexpr uint16_t nr_band_to_uint(nr_band band)
 {
@@ -53,7 +54,7 @@ constexpr nr_band uint_to_nr_band(unsigned band)
 
 namespace band_helper {
 
-/// Possible values of delta f_raster as per TS 38.104 Tables 5.4.2.3-1 and 5.4.2.3-2.
+/// Possible values of delta f_raster as per TS 38.104 Tables 5.4.2.3-1 and 5.4.2.3-2 and TS 38.108 5.4.2.3-1.
 enum class delta_freq_raster {
   /// For bands with 2 possible values for delta_f_raster (e.g. 15 and 30 kHz), the lowest is chosen.
   DEFAULT = 0,
@@ -112,9 +113,13 @@ error_type<std::string> is_dl_arfcn_valid_given_band(nr_band              band,
 /// \param[in] band Given NR band.
 /// \param[in] arfcn_f_ref Given Uplink ARFCN of \c F_REF, as per TS 38.104, Section 5.4.2.1.
 /// \param[in] bw Channel Bandwidth in MHz, which is required only to validate n28.
+/// \param[in] scs is the subcarrier spacing of reference for \f$N_{RB}\f$, as per TS 38.104, Table 5.3.2-1. Only used
+/// for bands n247, n248.
 /// \return    If the UL ARFCN is invalid for the band, a std::string value is returned with the reason.
-error_type<std::string>
-is_ul_arfcn_valid_given_band(nr_band band, arfcn_t arfcn_f_ref, bs_channel_bandwidth bw = bs_channel_bandwidth::MHz10);
+error_type<std::string> is_ul_arfcn_valid_given_band(nr_band              band,
+                                                     arfcn_t              arfcn_f_ref,
+                                                     bs_channel_bandwidth bw  = bs_channel_bandwidth::MHz10,
+                                                     subcarrier_spacing   scs = subcarrier_spacing::kHz15);
 
 /// @brief Get the respective UL ARFCN of a DL ARFCN.
 ///
@@ -250,8 +255,10 @@ unsigned get_n_rbs_from_bw(bs_channel_bandwidth bw, subcarrier_spacing scs, freq
 /// \brief Returns the minimum BS Channel Bandwidth for a given band and SCS from Table 5.3.5-1, TS 38.104, for FR1.
 ///
 /// \param[in] bw is the <em>BS channel bandwidth<\em>, defined in TS 38.104, Section 5.3.
-/// \param[in] scs is the subcarrier spacing of reference for \f$N_{RB}\f$, as per TS 38.104, Table 5.3.2-1.
-/// \return The minimum BS channel BW for the given band and SCS, as per TS 38.104, Table 5.3.5-1.
+/// \param[in] scs is the subcarrier spacing of reference for \f$N_{RB}\f$, as per TS 38.104, Table 5.3.2-1 and
+/// TS 38.108, Table 5.3.5-1, version 19.4.0.
+/// \return The minimum BS channel BW for the given band and SCS, as per TS 38.104, Table 5.3.5-1 and TS 38.108,
+/// Table 5.3.5-1, version 19.4.0.
 min_channel_bandwidth get_min_channel_bw(nr_band nr_band, subcarrier_spacing scs);
 
 /// Contains the parameters that are returned by the DU config generator.
@@ -260,7 +267,8 @@ struct ssb_coreset0_freq_location {
   ssb_offset_to_pointA offset_to_point_A;
   /// \f$k_{SSB}\f$, as per Section 7.4.3.1, TS 38.211.
   ssb_subcarrier_offset k_ssb;
-  /// NR-ARFCN corresponding to SSB central frequency, or \f$SS_{ref}\f$, as per TS 38.104, Section 5.4.3.1.
+  /// NR-ARFCN corresponding to SSB central frequency, or \f$SS_{ref}\f$, as per TS 38.104, Section 5.4.3.1 and
+  /// TS 38.108, Section 5.4.3.3 (for NTN bands).
   arfcn_t ssb_arfcn;
   /// <em>controlResourceSetZero<\em>, as per Section 13, TS 38.213.
   coreset0_index coreset0_idx;
