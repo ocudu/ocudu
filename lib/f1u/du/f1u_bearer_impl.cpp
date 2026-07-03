@@ -83,11 +83,6 @@ void f1u_bearer_impl::stop()
 void f1u_bearer_impl::handle_pdu_impl(nru_dl_message msg)
 {
   logger.log_debug("F1-U bearer received PDU");
-  // handle T-PDU
-  if (!msg.t_pdu.empty()) {
-    logger.log_debug("Delivering T-PDU. size={}", msg.t_pdu.length());
-    rx_sdu_notifier.on_new_sdu(std::move(msg.t_pdu), msg.dl_user_data.retransmission_flag);
-  }
   // handle polling of delivery status report
   if (msg.dl_user_data.report_polling) {
     if (send_data_delivery_status(/* force = */ true)) {
@@ -108,6 +103,11 @@ void f1u_bearer_impl::handle_pdu_impl(nru_dl_message msg)
         rx_sdu_notifier.on_discard_sdu(pdcp_sn);
       }
     }
+  }
+  // handle T-PDU
+  if (!msg.t_pdu.empty()) {
+    logger.log_debug("Delivering T-PDU. size={}", msg.t_pdu.length());
+    rx_sdu_notifier.on_new_sdu(std::move(msg.t_pdu), msg.dl_user_data.retransmission_flag);
   }
 }
 
