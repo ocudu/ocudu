@@ -180,7 +180,7 @@ error_type<pucch_alloc_failure> pucch_collision_manager::can_alloc(const cell_sl
   if (cell_cfg.is_tdd()) {
     const unsigned nof_syms    = get_nsymb_per_slot(bwp_cfg.cp);
     const unsigned nof_ul_syms = cell_cfg.get_nof_ul_symbol_per_slot(slot_alloc.slot);
-    ocudu_assert(nof_ul_syms > 0, "PUCCH resource allocation attempted in a fully DL slot");
+    ocudu_assert(nof_ul_syms > 0, "PUCCH resource allocation attempted in a non-UL slot");
     const ofdm_symbol_range slot_ul_syms = ofdm_symbol_range{nof_syms - nof_ul_syms, nof_syms};
     if (not slot_ul_syms.contains(res.syms)) {
       return make_unexpected(pucch_alloc_failure::INCOMPATIBLE_SLOT);

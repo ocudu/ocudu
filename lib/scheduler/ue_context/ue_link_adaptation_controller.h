@@ -11,8 +11,8 @@
 
 namespace ocudu {
 
-/// \brief Component that handles the derivation of the MCS for a UE, given its CSI, PHY estimates, and experienced
-/// channel BLER.
+/// \brief Component that handles the derivation of link adaptation parameters (MCS and PUCCH repetition factor), given
+/// its CSI, PHY estimates, and experienced channel BLER.
 class ue_link_adaptation_controller
 {
 public:

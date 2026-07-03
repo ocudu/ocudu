@@ -9,6 +9,7 @@
 #include "ocudu/ran/pucch/pucch_configuration.h"
 #include "ocudu/ran/resource_allocation/ofdm_symbol_range.h"
 #include "ocudu/ran/serv_cell_index.h"
+#include "ocudu/ran/tdd/tdd_ul_dl_config.h"
 #include "ocudu/scheduler/config/cell_bwp_res_config.h"
 #include "ocudu/scheduler/config/csi_helper.h"
 #include "ocudu/scheduler/config/pucch_resource_builder_params.h"
@@ -55,9 +56,17 @@ void du_pucch_resource_manager::add_cell(du_cell_index_t cell_idx, const ran_cel
       if (cell_cfg.tdd_cfg.has_value()) {
         const tdd_ul_dl_config_common& tdd_cfg = *cell_cfg.tdd_cfg;
         const unsigned slot_index = offset % (NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(tdd_cfg.ref_scs));
-        if (get_active_tdd_ul_symbols(tdd_cfg, slot_index, cyclic_prefix::NORMAL).length() !=
-            NOF_OFDM_SYM_PER_SLOT_NORMAL_CP) {
+        if (not has_active_tdd_ul_symbols(tdd_cfg, slot_index)) {
           // UL disabled for this slot.
+          continue;
+        }
+
+        const pucch_resource& sr_res = cell_ctx.cell_bwp_cfg.ul.pucch.get_ded(
+            cell_ctx.cell_params.init_bwp.pucch.resources.sr_res_id(pucch_sr_resource_id(res)));
+        const auto slot_ul_syms = get_active_tdd_ul_symbols(
+            tdd_cfg, slot_index, cell_ctx.cell_params.ul_cfg_common.init_ul_bwp.generic_params.cp);
+        if (not slot_ul_syms.contains(sr_res.syms)) {
+          // The UL symbols in this slot do not contain the symbols for the resource.
           continue;
         }
       }
@@ -76,9 +85,17 @@ void du_pucch_resource_manager::add_cell(du_cell_index_t cell_idx, const ran_cel
         if (cell_cfg.tdd_cfg.has_value()) {
           const tdd_ul_dl_config_common& tdd_cfg = *cell_cfg.tdd_cfg;
           const unsigned slot_index = offset % (NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(tdd_cfg.ref_scs));
-          if (get_active_tdd_ul_symbols(tdd_cfg, slot_index, cyclic_prefix::NORMAL).length() !=
-              NOF_OFDM_SYM_PER_SLOT_NORMAL_CP) {
+          if (not has_active_tdd_ul_symbols(tdd_cfg, slot_index)) {
             // UL disabled for this slot.
+            continue;
+          }
+
+          const pucch_resource& csi_res = cell_ctx.cell_bwp_cfg.ul.pucch.get_ded(
+              cell_ctx.cell_params.init_bwp.pucch.resources.csi_res_id(pucch_csi_resource_id(res)));
+          const auto slot_ul_syms = get_active_tdd_ul_symbols(
+              tdd_cfg, slot_index, cell_ctx.cell_params.ul_cfg_common.init_ul_bwp.generic_params.cp);
+          if (not slot_ul_syms.contains(csi_res.syms)) {
+            // The UL symbols in this slot do not contain the symbols for the resource.
             continue;
           }
         }
