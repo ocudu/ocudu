@@ -256,8 +256,9 @@ public:
                           get_nof_slots_per_subframe(cell_cfg().scs_common());
     wave_period_slots = p.wave_period_in_tdd_periods * tdd_period_slots;
 
-    // Slots to wait after Msg4 delivery before releasing a UE, so the ConRes/Msg4 HARQ is auto-ACKed first.
-    ack_margin_slots = std::max(40U, 4U * tdd_period_slots);
+    // Slots to wait after Msg4 delivery before releasing a UE, so the ConRes/Msg4 HARQ is auto-ACKed first. The
+    // fallback common PUCCH lands at most max_k1 (=7, see ue_fallback_scheduler) slots after the PDSCH.
+    ack_margin_slots = 8;
 
     // Bound the per-wave size so that, at worst-case dwell (a full ConRes window), the concurrent transient UEs never
     // exceed the pool capacity.
@@ -273,21 +274,32 @@ public:
   }
 
 protected:
-  // Add persistent UEs with a random traffic direction, each with a large buffer so they saturate the grid.
+  enum class background_traffic_direction { dl_only, ul_only, bidir };
+
+  // Add persistent UEs, each assigned a fixed random traffic direction, and give them a large buffer to saturate the
+  // grid.
   void add_background_ues()
+  {
+    background_ues.resize(GetParam().nof_background_ues);
+    for (unsigned i = 0; i != GetParam().nof_background_ues; ++i) {
+      const du_ue_index_t idx  = to_du_ue_index(i);
+      const rnti_t        rnti = to_rnti(fmt::underlying(base_rnti) + i);
+      add_ue(create_ue_request(idx, rnti, {LCID_MIN_DRB}), false);
+      background_ues[i] = static_cast<background_traffic_direction>(test_rng::uniform_int<unsigned>(0, 2));
+    }
+    push_huge_buffers_to_background_ues();
+  }
+
+  void push_huge_buffers_to_background_ues()
   {
     for (unsigned i = 0; i != GetParam().nof_background_ues; ++i) {
       const du_ue_index_t idx  = to_du_ue_index(i);
       const rnti_t        rnti = to_rnti(fmt::underlying(base_rnti) + i);
 
-      add_ue(create_ue_request(idx, rnti, {LCID_MIN_DRB}), false);
-
-      // 0: DL-only, 1: UL-only, 2: bidirectional.
-      const unsigned dir = test_rng::uniform_int<unsigned>(0, 2);
-      if (dir != 1) {
+      if (background_ues[i] != background_traffic_direction::ul_only) {
         push_dl_buffer_state(dl_buffer_state_indication_message{idx, LCID_MIN_DRB, huge_buffer});
       }
-      if (dir != 0) {
+      if (background_ues[i] != background_traffic_direction::dl_only) {
         push_bsr(ul_bsr_indication_message{to_du_cell_index(0),
                                            idx,
                                            rnti,
@@ -309,6 +321,9 @@ protected:
       transient_pool.pop_back();
       schedule_task(launch_transient_ue_task(idx));
     }
+
+    // Just keep feeling the background UE buffers, so they don't deplete.
+    push_huge_buffers_to_background_ues();
   }
 
   // Async lifecycle of a transient UE: attach in fallback, complete contention resolution before the ConRes timer
@@ -334,13 +349,12 @@ protected:
       schedule_task(launch_msg4_push_task(idx, msg4_delay));
 
       // ConRes CE must be scheduled within the ConRes timer window.
-      CORO_AWAIT_VALUE(ce_ok, launch_run_until(conres_ce_condition(rnti), conres_window_slots));
-      EXPECT_TRUE(ce_ok) << fmt::format("UE rnti={:#x} did not schedule its ConRes CE before the timer expired",
-                                        fmt::underlying(rnti));
+      CORO_AWAIT_VALUE(ce_ok, launch_run_until(conres_ce_scheduled(rnti), conres_window_slots));
+      EXPECT_TRUE(ce_ok) << fmt::format("UE rnti={} did not schedule its ConRes CE before the timer expired", rnti);
 
       // Wait for Msg4 to be delivered, confirming the contention resolution completed.
-      CORO_AWAIT_VALUE(msg4_ok, launch_run_until(msg4_condition(rnti), conres_window_slots));
-      EXPECT_TRUE(msg4_ok) << fmt::format("UE rnti={:#x} did not get its Msg4 scheduled", fmt::underlying(rnti));
+      CORO_AWAIT_VALUE(msg4_ok, launch_run_until(srb0_scheduled(rnti), conres_window_slots));
+      EXPECT_TRUE(msg4_ok) << fmt::format("UE rnti={} did not get its Msg4 scheduled", rnti);
 
       // Let the ConRes/Msg4 HARQ be auto-ACKed, then release the UE.
       CORO_AWAIT(launch_run_until(false_until_slots(ack_margin_slots)));
@@ -370,40 +384,16 @@ protected:
     return [nof_slots, count = 0U]() mutable { return count++ >= nof_slots; };
   }
 
-  unique_function<bool()> conres_ce_condition(rnti_t rnti)
+  unique_function<bool()> conres_ce_scheduled(rnti_t rnti) const
   {
-    return [this, rnti]() { return conres_ce_scheduled(rnti); };
+    return [this, rnti]() {
+      return find_ue_pdsch_with_lcid(rnti, lcid_dl_sch_t::UE_CON_RES_ID, *last_sched_result()) != nullptr;
+    };
   }
 
-  unique_function<bool()> msg4_condition(rnti_t rnti)
+  unique_function<bool()> srb0_scheduled(rnti_t rnti)
   {
-    return [this, rnti]() { return msg4_scheduled(rnti); };
-  }
-
-  bool conres_ce_scheduled(rnti_t rnti) const
-  {
-    const pdcch_dl_information* dl_pdcch = find_ue_dl_pdcch(rnti);
-    if (dl_pdcch == nullptr or dl_pdcch->dci.type() != dci_dl_rnti_config_type::tc_rnti_f1_0) {
-      return false;
-    }
-    const dl_msg_alloc* pdsch = find_ue_pdsch(rnti, *last_sched_result());
-    if (pdsch == nullptr or pdsch->tb_list.empty()) {
-      return false;
-    }
-    return std::any_of(pdsch->tb_list[0].lc_chs_to_sched.begin(),
-                       pdsch->tb_list[0].lc_chs_to_sched.end(),
-                       [](const auto& lc) { return lc.lcid == lcid_dl_sch_t::UE_CON_RES_ID; });
-  }
-
-  bool msg4_scheduled(rnti_t rnti) const
-  {
-    const dl_msg_alloc* pdsch = find_ue_pdsch(rnti, *last_sched_result());
-    if (pdsch == nullptr or pdsch->tb_list.empty()) {
-      return false;
-    }
-    return std::any_of(pdsch->tb_list[0].lc_chs_to_sched.begin(),
-                       pdsch->tb_list[0].lc_chs_to_sched.end(),
-                       [](const auto& lc) { return lc.lcid == LCID_SRB0; });
+    return [this, rnti]() { return find_ue_pdsch_with_lcid(rnti, LCID_SRB0, *last_sched_result()) != nullptr; };
   }
 
   unsigned tdd_period_slots    = 0;
@@ -413,6 +403,8 @@ protected:
   unsigned ack_margin_slots    = 0;
 
   std::vector<du_ue_index_t> transient_pool;
+
+  std::vector<background_traffic_direction> background_ues;
 };
 
 TEST_P(scheduler_multiue_tdd_test, all_ues_schedule_conres_before_timeout)
@@ -425,17 +417,13 @@ TEST_P(scheduler_multiue_tdd_test, all_ues_schedule_conres_before_timeout)
   }
 
   // Launch overlapping waves at a fixed phase; each transient UE runs its own async lifecycle task.
-  unsigned launched_waves = 0;
-  unsigned n              = 0;
-  unsigned next_wave_at   = 0;
-  while (launched_waves < p.nof_waves) {
-    if (n == next_wave_at) {
+  for (unsigned slot_count = 0, launched_waves = 0, next_wave_count = 0; launched_waves < p.nof_waves; ++slot_count) {
+    if (slot_count == next_wave_count) {
       launch_wave();
       ++launched_waves;
-      next_wave_at += wave_period_slots;
+      next_wave_count += wave_period_slots;
     }
     run_slot();
-    ++n;
   }
 
   // Drain all in-flight transient UE tasks (contention resolution, Msg4 and confirmed removal).
