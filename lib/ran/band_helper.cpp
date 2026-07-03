@@ -304,7 +304,7 @@ static constexpr std::array<nr_band_ssb_scs_case, nof_nr_ssb_bands> nr_ssb_band_
     {nr_band::n102, subcarrier_spacing::kHz30, ssb_pattern_case::C},
     {nr_band::n104, subcarrier_spacing::kHz30, ssb_pattern_case::C},
     {nr_band::n254, subcarrier_spacing::kHz15, ssb_pattern_case::A},
-    {nr_band::n254, subcarrier_spacing::kHz30, ssb_pattern_case::B},
+    {nr_band::n254, subcarrier_spacing::kHz30, ssb_pattern_case::C},
     {nr_band::n255, subcarrier_spacing::kHz15, ssb_pattern_case::A},
     {nr_band::n255, subcarrier_spacing::kHz30, ssb_pattern_case::B},
     {nr_band::n256, subcarrier_spacing::kHz15, ssb_pattern_case::A},
@@ -1326,7 +1326,7 @@ min_channel_bandwidth ocudu::band_helper::get_min_channel_bw(nr_band nr_band, su
       if (scs == subcarrier_spacing::kHz15) {
         return min_channel_bandwidth::MHz5;
       }
-      if (scs == subcarrier_spacing::kHz30) {
+      if (scs <= subcarrier_spacing::kHz60) {
         return min_channel_bandwidth::MHz10;
       }
       return min_channel_bandwidth::invalid;

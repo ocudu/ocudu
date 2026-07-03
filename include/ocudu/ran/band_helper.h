@@ -30,15 +30,16 @@ enum class min_channel_bandwidth;
 
 struct ssb_freq_location;
 
-const std::array<nr_band, 60> all_nr_bands_fr1 = std::array<nr_band, 60>{
-    {nr_band::n1,   nr_band::n2,   nr_band::n3,   nr_band::n5,  nr_band::n7,  nr_band::n8,  nr_band::n12, nr_band::n13,
-     nr_band::n14,  nr_band::n18,  nr_band::n20,  nr_band::n24, nr_band::n25, nr_band::n26, nr_band::n28, nr_band::n29,
-     nr_band::n30,  nr_band::n34,  nr_band::n38,  nr_band::n39, nr_band::n40, nr_band::n41, nr_band::n46, nr_band::n48,
-     nr_band::n50,  nr_band::n51,  nr_band::n53,  nr_band::n65, nr_band::n66, nr_band::n67, nr_band::n70, nr_band::n71,
-     nr_band::n74,  nr_band::n75,  nr_band::n76,  nr_band::n77, nr_band::n78, nr_band::n79, nr_band::n80, nr_band::n81,
-     nr_band::n82,  nr_band::n83,  nr_band::n84,  nr_band::n85, nr_band::n86, nr_band::n89, nr_band::n90, nr_band::n91,
-     nr_band::n92,  nr_band::n93,  nr_band::n94,  nr_band::n95, nr_band::n96, nr_band::n97, nr_band::n98, nr_band::n99,
-     nr_band::n100, nr_band::n101, nr_band::n102, nr_band::n104}};
+const std::array<nr_band, 63> all_nr_bands_fr1 = {
+    nr_band::n1,   nr_band::n2,   nr_band::n3,   nr_band::n5,   nr_band::n7,   nr_band::n8,   nr_band::n12,
+    nr_band::n13,  nr_band::n14,  nr_band::n18,  nr_band::n20,  nr_band::n24,  nr_band::n25,  nr_band::n26,
+    nr_band::n28,  nr_band::n29,  nr_band::n30,  nr_band::n34,  nr_band::n38,  nr_band::n39,  nr_band::n40,
+    nr_band::n41,  nr_band::n46,  nr_band::n48,  nr_band::n50,  nr_band::n51,  nr_band::n53,  nr_band::n65,
+    nr_band::n66,  nr_band::n67,  nr_band::n70,  nr_band::n71,  nr_band::n74,  nr_band::n75,  nr_band::n76,
+    nr_band::n77,  nr_band::n78,  nr_band::n79,  nr_band::n80,  nr_band::n81,  nr_band::n82,  nr_band::n83,
+    nr_band::n84,  nr_band::n85,  nr_band::n86,  nr_band::n89,  nr_band::n90,  nr_band::n91,  nr_band::n92,
+    nr_band::n93,  nr_band::n94,  nr_band::n95,  nr_band::n96,  nr_band::n97,  nr_band::n98,  nr_band::n99,
+    nr_band::n100, nr_band::n101, nr_band::n102, nr_band::n104, nr_band::n254, nr_band::n255, nr_band::n256};
 
 constexpr uint16_t nr_band_to_uint(nr_band band)
 {
