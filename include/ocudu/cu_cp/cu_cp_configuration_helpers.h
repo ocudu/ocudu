@@ -9,7 +9,7 @@
 namespace ocudu::config_helpers {
 
 /// Generates default QoS configuration used by gNB CU-CP. The default configuration should be valid.
-/// The default values are picked to try to acheive the QoS requirements defined in
+/// The default values are picked to try to achieve the QoS requirements defined in
 /// TS 23.501 -- System architecture for the 5G System, table 5.7.4-1.
 ///
 /// Dependencies between timers should be considered:
@@ -193,6 +193,126 @@ inline std::map<five_qi_t, ocucp::cu_cp_qos_config> make_default_cu_cp_qos_confi
 
     cfg.pdcp                      = pdcp_cfg;
     qos_list[uint_to_five_qi(67)] = cfg;
+  }
+  {
+    // 5QI = 71 e.g "Live" Uplink Streaming
+    // PDB = 150ms PER = 10^-6
+    ocucp::cu_cp_qos_config cfg{};
+    pdcp_config             pdcp_cfg{};
+
+    pdcp_cfg.rb_type                       = pdcp_rb_type::drb;
+    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::am;
+    pdcp_cfg.ciphering_required            = true;
+    pdcp_cfg.integrity_protection_required = false;
+
+    // > Tx
+    pdcp_cfg.tx.sn_size                = pdcp_sn_size::size18bits;
+    pdcp_cfg.tx.discard_timer          = pdcp_discard_timer::ms150;
+    pdcp_cfg.tx.status_report_required = false;
+
+    // > Rx
+    pdcp_cfg.rx.sn_size               = pdcp_sn_size::size18bits;
+    pdcp_cfg.rx.out_of_order_delivery = false;
+    pdcp_cfg.rx.t_reordering          = pdcp_t_reordering::ms80;
+
+    cfg.pdcp                      = pdcp_cfg;
+    qos_list[uint_to_five_qi(71)] = cfg;
+  }
+  {
+    // 5QI = 72 e.g "Live" Uplink Streaming
+    // PDB = 300ms PER = 10^-4
+    ocucp::cu_cp_qos_config cfg{};
+    pdcp_config             pdcp_cfg{};
+
+    pdcp_cfg.rb_type                       = pdcp_rb_type::drb;
+    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::am;
+    pdcp_cfg.ciphering_required            = true;
+    pdcp_cfg.integrity_protection_required = false;
+
+    // > Tx
+    pdcp_cfg.tx.sn_size                = pdcp_sn_size::size18bits;
+    pdcp_cfg.tx.discard_timer          = pdcp_discard_timer::ms300;
+    pdcp_cfg.tx.status_report_required = false;
+
+    // > Rx
+    pdcp_cfg.rx.sn_size               = pdcp_sn_size::size18bits;
+    pdcp_cfg.rx.out_of_order_delivery = false;
+    pdcp_cfg.rx.t_reordering          = pdcp_t_reordering::ms140;
+
+    cfg.pdcp                      = pdcp_cfg;
+    qos_list[uint_to_five_qi(72)] = cfg;
+  }
+  {
+    // 5QI = 73 e.g "Live" Uplink Streaming
+    // PDB = 300ms PER = 10^-8
+    ocucp::cu_cp_qos_config cfg{};
+    pdcp_config             pdcp_cfg{};
+
+    pdcp_cfg.rb_type                       = pdcp_rb_type::drb;
+    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::am;
+    pdcp_cfg.ciphering_required            = true;
+    pdcp_cfg.integrity_protection_required = false;
+
+    // > Tx
+    pdcp_cfg.tx.sn_size                = pdcp_sn_size::size18bits;
+    pdcp_cfg.tx.discard_timer          = pdcp_discard_timer::ms300;
+    pdcp_cfg.tx.status_report_required = false;
+
+    // > Rx
+    pdcp_cfg.rx.sn_size               = pdcp_sn_size::size18bits;
+    pdcp_cfg.rx.out_of_order_delivery = false;
+    pdcp_cfg.rx.t_reordering          = pdcp_t_reordering::ms140;
+
+    cfg.pdcp                      = pdcp_cfg;
+    qos_list[uint_to_five_qi(73)] = cfg;
+  }
+  {
+    // 5QI = 74 e.g "Live" Uplink Streaming
+    // PDB = 500ms PER = 10^-8
+    ocucp::cu_cp_qos_config cfg{};
+    pdcp_config             pdcp_cfg{};
+
+    pdcp_cfg.rb_type                       = pdcp_rb_type::drb;
+    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::am;
+    pdcp_cfg.ciphering_required            = true;
+    pdcp_cfg.integrity_protection_required = false;
+
+    // > Tx
+    pdcp_cfg.tx.sn_size                = pdcp_sn_size::size18bits;
+    pdcp_cfg.tx.discard_timer          = pdcp_discard_timer::ms500;
+    pdcp_cfg.tx.status_report_required = false;
+
+    // > Rx
+    pdcp_cfg.rx.sn_size               = pdcp_sn_size::size18bits;
+    pdcp_cfg.rx.out_of_order_delivery = false;
+    pdcp_cfg.rx.t_reordering          = pdcp_t_reordering::ms220;
+
+    cfg.pdcp                      = pdcp_cfg;
+    qos_list[uint_to_five_qi(74)] = cfg;
+  }
+  {
+    // 5QI = 76 e.g "Live" Uplink Streaming
+    // PDB = 500ms PER = 10^-4
+    ocucp::cu_cp_qos_config cfg{};
+    pdcp_config             pdcp_cfg{};
+
+    pdcp_cfg.rb_type                       = pdcp_rb_type::drb;
+    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::am;
+    pdcp_cfg.ciphering_required            = true;
+    pdcp_cfg.integrity_protection_required = false;
+
+    // > Tx
+    pdcp_cfg.tx.sn_size                = pdcp_sn_size::size18bits;
+    pdcp_cfg.tx.discard_timer          = pdcp_discard_timer::ms500;
+    pdcp_cfg.tx.status_report_required = false;
+
+    // > Rx
+    pdcp_cfg.rx.sn_size               = pdcp_sn_size::size18bits;
+    pdcp_cfg.rx.out_of_order_delivery = false;
+    pdcp_cfg.rx.t_reordering          = pdcp_t_reordering::ms220;
+
+    cfg.pdcp                      = pdcp_cfg;
+    qos_list[uint_to_five_qi(76)] = cfg;
   }
   //
   // Non-Guaranteed Bitrate 5QIs
@@ -388,6 +508,30 @@ inline std::map<five_qi_t, ocucp::cu_cp_qos_config> make_default_cu_cp_qos_confi
 
     cfg.pdcp                      = pdcp_cfg;
     qos_list[uint_to_five_qi(70)] = cfg;
+  }
+  {
+    // 5QI = 79 e.g V2X messages
+    // PDB = 50ms PER = 10^-2
+    ocucp::cu_cp_qos_config cfg{};
+    pdcp_config             pdcp_cfg{};
+
+    pdcp_cfg.rb_type                       = pdcp_rb_type::drb;
+    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::um;
+    pdcp_cfg.ciphering_required            = true;
+    pdcp_cfg.integrity_protection_required = false;
+
+    // > Tx
+    pdcp_cfg.tx.sn_size                = pdcp_sn_size::size18bits;
+    pdcp_cfg.tx.discard_timer          = pdcp_discard_timer::ms50;
+    pdcp_cfg.tx.status_report_required = false;
+
+    // > Rx
+    pdcp_cfg.rx.sn_size               = pdcp_sn_size::size18bits;
+    pdcp_cfg.rx.out_of_order_delivery = false;
+    pdcp_cfg.rx.t_reordering          = pdcp_t_reordering::ms1;
+
+    cfg.pdcp                      = pdcp_cfg;
+    qos_list[uint_to_five_qi(79)] = cfg;
   }
   {
     // 5QI = 80 e.g Low Latency eMBB Applications

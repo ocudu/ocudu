@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 
-# Quality of Service (QoS) example configurations for 5QI 1, 2, 5, 7 and 9
+# Quality of Service (QoS) example configurations for the standardized 5QIs
 # Based on 5QI characteristics in TS 23.501 table 5.7.4-1
 
 # This is a supplementary configuration to modify the RLC and PDCP radio bearers on
@@ -209,6 +209,166 @@ qos:
         rx:
           sn: 12
           t-reassembly: 50
+  -
+    # 5QI = 71 e.g "Live" Uplink Streaming
+    # PDB = 150ms PER = 10^-6
+    five_qi: 71
+    pdcp:
+      tx:
+        sn: 18
+        discard_timer: 150
+        status_report_required: false
+      rx:
+        sn: 18
+        t_reordering: 80
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 5
+    f1u_du:
+      backoff_timer: 5
+    rlc:
+      mode: am
+      am:
+        tx:
+          sn: 18
+          t-poll-retransmit: 40
+          max-retx-threshold: 4
+          poll-pdu: 64
+          poll-byte: 125
+          queue-size: 16384
+          queue-bytes: 6172672
+        rx:
+          sn: 18
+          t-reassembly: 40
+          t-status-prohibit: 10
+  -
+    # 5QI = 72 e.g "Live" Uplink Streaming
+    # PDB = 300ms PER = 10^-4
+    five_qi: 72
+    pdcp:
+      tx:
+        sn: 18
+        discard_timer: 300
+        status_report_required: false
+      rx:
+        sn: 18
+        t_reordering: 140
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 5
+    f1u_du:
+      backoff_timer: 5
+    rlc:
+      mode: am
+      am:
+        tx:
+          sn: 18
+          t-poll-retransmit: 80
+          max-retx-threshold: 4
+          poll-pdu: 64
+          poll-byte: 125
+          queue-size: 16384
+          queue-bytes: 6172672
+        rx:
+          sn: 18
+          t-reassembly: 80
+          t-status-prohibit: 10
+  -
+    # 5QI = 73 e.g "Live" Uplink Streaming
+    # PDB = 300ms PER = 10^-8
+    five_qi: 73
+    pdcp:
+      tx:
+        sn: 18
+        discard_timer: 300
+        status_report_required: false
+      rx:
+        sn: 18
+        t_reordering: 140
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 5
+    f1u_du:
+      backoff_timer: 5
+    rlc:
+      mode: am
+      am:
+        tx:
+          sn: 18
+          t-poll-retransmit: 30
+          max-retx-threshold: 8
+          poll-pdu: 64
+          poll-byte: 125
+          queue-size: 16384
+          queue-bytes: 6172672
+        rx:
+          sn: 18
+          t-reassembly: 80
+          t-status-prohibit: 10
+  -
+    # 5QI = 74 e.g "Live" Uplink Streaming
+    # PDB = 500ms PER = 10^-8
+    five_qi: 74
+    pdcp:
+      tx:
+        sn: 18
+        discard_timer: 500
+        status_report_required: false
+      rx:
+        sn: 18
+        t_reordering: 220
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 5
+    f1u_du:
+      backoff_timer: 5
+    rlc:
+      mode: am
+      am:
+        tx:
+          sn: 18
+          t-poll-retransmit: 60
+          max-retx-threshold: 8
+          poll-pdu: 64
+          poll-byte: 125
+          queue-size: 16384
+          queue-bytes: 6172672
+        rx:
+          sn: 18
+          t-reassembly: 80
+          t-status-prohibit: 10
+  -
+    # 5QI = 76 e.g "Live" Uplink Streaming
+    # PDB = 500ms PER = 10^-4
+    five_qi: 76
+    pdcp:
+      tx:
+        sn: 18
+        discard_timer: 500
+        status_report_required: false
+      rx:
+        sn: 18
+        t_reordering: 220
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 5
+    f1u_du:
+      backoff_timer: 5
+    rlc:
+      mode: am
+      am:
+        tx:
+          sn: 18
+          t-poll-retransmit: 80
+          max-retx-threshold: 4
+          poll-pdu: 64
+          poll-byte: 125
+          queue-size: 16384
+          queue-bytes: 6172672
+        rx:
+          sn: 18
+          t-reassembly: 80
+          t-status-prohibit: 10
   #
   # Non-Guaranteed Bitrate 5QIs
   #
@@ -490,6 +650,33 @@ qos:
         rx:
           sn: 12
           t-reassembly: 5
+  -
+    # 5QI = 79 e.g V2X messages
+    # PDB = 50ms PER = 10^-2
+    five_qi: 79
+    pdcp:
+      tx:
+        sn: 18
+        discard_timer: 50
+        status_report_required: false
+      rx:
+        sn: 18
+        t_reordering: 1
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 5
+    f1u_du:
+      backoff_timer: 5
+    rlc:
+      mode: um-bidir
+      um-bidir:
+        tx:
+          sn: 12
+          queue-size: 16384
+          queue-bytes: 6172672
+        rx:
+          sn: 12
+          t-reassembly: 35
   #
   # Delay-critical Guaranteed Bitrate 5QIs
   #

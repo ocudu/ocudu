@@ -62,6 +62,26 @@ make_default_cu_up_qos_config_list(bool warn_on_drop, timer_duration metrics_per
     // 5QI=67
     qos_list[uint_to_five_qi(67)] = make_default_cu_up_custom_cfg_item(warn_on_drop, metrics_period, test_mode);
   }
+  {
+    // 5QI=71
+    qos_list[uint_to_five_qi(71)] = make_default_cu_up_custom_cfg_item(warn_on_drop, metrics_period, test_mode);
+  }
+  {
+    // 5QI=72
+    qos_list[uint_to_five_qi(72)] = make_default_cu_up_custom_cfg_item(warn_on_drop, metrics_period, test_mode);
+  }
+  {
+    // 5QI=73
+    qos_list[uint_to_five_qi(73)] = make_default_cu_up_custom_cfg_item(warn_on_drop, metrics_period, test_mode);
+  }
+  {
+    // 5QI=74
+    qos_list[uint_to_five_qi(74)] = make_default_cu_up_custom_cfg_item(warn_on_drop, metrics_period, test_mode);
+  }
+  {
+    // 5QI=76
+    qos_list[uint_to_five_qi(76)] = make_default_cu_up_custom_cfg_item(warn_on_drop, metrics_period, test_mode);
+  }
   //
   // Non-Guaranteed Bitrate 5QIs
   //
@@ -96,6 +116,10 @@ make_default_cu_up_qos_config_list(bool warn_on_drop, timer_duration metrics_per
   {
     // 5QI=70
     qos_list[uint_to_five_qi(70)] = make_default_cu_up_custom_cfg_item(warn_on_drop, metrics_period, test_mode);
+  }
+  {
+    // 5QI=79
+    qos_list[uint_to_five_qi(79)] = make_default_cu_up_custom_cfg_item(warn_on_drop, metrics_period, test_mode);
   }
   {
     // 5QI=80

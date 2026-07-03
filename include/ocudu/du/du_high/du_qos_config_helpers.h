@@ -11,7 +11,7 @@
 namespace ocudu::config_helpers {
 
 /// Generates default QoS configuration used by gNB DU. The default configuration should be valid.
-/// The default values are picked to try to acheive the QoS requirements defined in
+/// The default values are picked to try to achieve the QoS requirements defined in
 /// TS 23.501 -- System architecture for the 5G System, table 5.7.4-1.
 ///
 /// Dependencies between RLC timers should be considered:
@@ -190,6 +190,131 @@ inline std::map<five_qi_t, odu::du_qos_config> make_default_du_qos_config_list(b
     cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
 
     qos_list[uint_to_five_qi(67)] = cfg;
+  }
+  {
+    // 5QI = 71 e.g "Live" Uplink Streaming
+    // PDB = 150ms PER = 10^-6
+    odu::du_qos_config cfg{};
+    // RLC
+    cfg.rlc.mode                    = rlc_mode::am;
+    cfg.rlc.am.tx.sn_field_length   = rlc_am_sn_size::size18bits;
+    cfg.rlc.am.tx.t_poll_retx       = 40;
+    cfg.rlc.am.tx.poll_pdu          = 64;
+    cfg.rlc.am.tx.poll_byte         = 125;
+    cfg.rlc.am.tx.max_retx_thresh   = 4;
+    cfg.rlc.am.tx.max_window        = 0;
+    cfg.rlc.am.tx.queue_size        = default_rlc_queue_size_sdus;
+    cfg.rlc.am.tx.queue_size_bytes  = default_rlc_queue_size_bytes;
+    cfg.rlc.am.rx.sn_field_length   = rlc_am_sn_size::size18bits;
+    cfg.rlc.am.rx.t_reassembly      = 40;
+    cfg.rlc.am.rx.t_status_prohibit = 10;
+    cfg.rlc.am.rx.max_sn_per_status = {};
+    cfg.rlc.metrics_period          = std::chrono::milliseconds(rlc_metrics_report);
+    // F1-U
+    cfg.f1u.ul_t_notif_timer      = std::chrono::milliseconds{default_f1u_backoff_timer};
+    cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
+
+    qos_list[uint_to_five_qi(71)] = cfg;
+  }
+  {
+    // 5QI = 72 e.g "Live" Uplink Streaming
+    // PDB = 300ms PER = 10^-4
+    odu::du_qos_config cfg{};
+    // RLC
+    cfg.rlc.mode                    = rlc_mode::am;
+    cfg.rlc.am.tx.sn_field_length   = rlc_am_sn_size::size18bits;
+    cfg.rlc.am.tx.t_poll_retx       = 80;
+    cfg.rlc.am.tx.poll_pdu          = 64;
+    cfg.rlc.am.tx.poll_byte         = 125;
+    cfg.rlc.am.tx.max_retx_thresh   = 4;
+    cfg.rlc.am.tx.max_window        = 0;
+    cfg.rlc.am.tx.queue_size        = default_rlc_queue_size_sdus;
+    cfg.rlc.am.tx.queue_size_bytes  = default_rlc_queue_size_bytes;
+    cfg.rlc.am.rx.sn_field_length   = rlc_am_sn_size::size18bits;
+    cfg.rlc.am.rx.t_reassembly      = 80;
+    cfg.rlc.am.rx.t_status_prohibit = 10;
+    cfg.rlc.am.rx.max_sn_per_status = {};
+    cfg.rlc.metrics_period          = std::chrono::milliseconds(rlc_metrics_report);
+    // F1-U
+    cfg.f1u.ul_t_notif_timer      = std::chrono::milliseconds{default_f1u_backoff_timer};
+    cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
+
+    qos_list[uint_to_five_qi(72)] = cfg;
+  }
+  {
+    // 5QI = 73 e.g "Live" Uplink Streaming
+    // PDB = 300ms PER = 10^-8
+    odu::du_qos_config cfg{};
+    // RLC
+    cfg.rlc.mode                    = rlc_mode::am;
+    cfg.rlc.am.tx.sn_field_length   = rlc_am_sn_size::size18bits;
+    cfg.rlc.am.tx.t_poll_retx       = 30;
+    cfg.rlc.am.tx.poll_pdu          = 64;
+    cfg.rlc.am.tx.poll_byte         = 125;
+    cfg.rlc.am.tx.max_retx_thresh   = 8;
+    cfg.rlc.am.tx.max_window        = 0;
+    cfg.rlc.am.tx.queue_size        = default_rlc_queue_size_sdus;
+    cfg.rlc.am.tx.queue_size_bytes  = default_rlc_queue_size_bytes;
+    cfg.rlc.am.rx.sn_field_length   = rlc_am_sn_size::size18bits;
+    cfg.rlc.am.rx.t_reassembly      = 80;
+    cfg.rlc.am.rx.t_status_prohibit = 10;
+    cfg.rlc.am.rx.max_sn_per_status = {};
+    cfg.rlc.metrics_period          = std::chrono::milliseconds(rlc_metrics_report);
+    // F1-U
+    cfg.f1u.ul_t_notif_timer      = std::chrono::milliseconds{default_f1u_backoff_timer};
+    cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
+
+    qos_list[uint_to_five_qi(73)] = cfg;
+  }
+  {
+    // 5QI = 74 e.g "Live" Uplink Streaming
+    // PDB = 500ms PER = 10^-8
+    odu::du_qos_config cfg{};
+    // RLC
+    cfg.rlc.mode                    = rlc_mode::am;
+    cfg.rlc.am.tx.sn_field_length   = rlc_am_sn_size::size18bits;
+    cfg.rlc.am.tx.t_poll_retx       = 60;
+    cfg.rlc.am.tx.poll_pdu          = 64;
+    cfg.rlc.am.tx.poll_byte         = 125;
+    cfg.rlc.am.tx.max_retx_thresh   = 8;
+    cfg.rlc.am.tx.max_window        = 0;
+    cfg.rlc.am.tx.queue_size        = default_rlc_queue_size_sdus;
+    cfg.rlc.am.tx.queue_size_bytes  = default_rlc_queue_size_bytes;
+    cfg.rlc.am.rx.sn_field_length   = rlc_am_sn_size::size18bits;
+    cfg.rlc.am.rx.t_reassembly      = 80;
+    cfg.rlc.am.rx.t_status_prohibit = 10;
+    cfg.rlc.am.rx.max_sn_per_status = {};
+    cfg.rlc.metrics_period          = std::chrono::milliseconds(rlc_metrics_report);
+    // F1-U
+    cfg.f1u.ul_t_notif_timer      = std::chrono::milliseconds{default_f1u_backoff_timer};
+    cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
+
+    qos_list[uint_to_five_qi(74)] = cfg;
+  }
+  {
+    // 5QI = 76 e.g "Live" Uplink Streaming
+    // PDB = 500ms PER = 10^-4
+    odu::du_qos_config cfg{};
+    // RLC
+    cfg.rlc.mode                    = rlc_mode::am;
+    cfg.rlc.am.tx.sn_field_length   = rlc_am_sn_size::size18bits;
+    cfg.rlc.am.tx.t_poll_retx       = 80;
+    cfg.rlc.am.tx.poll_pdu          = 64;
+    cfg.rlc.am.tx.poll_byte         = 125;
+    cfg.rlc.am.tx.max_retx_thresh   = 4;
+    cfg.rlc.am.tx.max_window        = 0;
+    cfg.rlc.am.tx.queue_size        = default_rlc_queue_size_sdus;
+    cfg.rlc.am.tx.queue_size_bytes  = default_rlc_queue_size_bytes;
+    cfg.rlc.am.rx.sn_field_length   = rlc_am_sn_size::size18bits;
+    cfg.rlc.am.rx.t_reassembly      = 80;
+    cfg.rlc.am.rx.t_status_prohibit = 10;
+    cfg.rlc.am.rx.max_sn_per_status = {};
+    cfg.rlc.metrics_period          = std::chrono::milliseconds(rlc_metrics_report);
+    // F1-U
+    cfg.f1u.ul_t_notif_timer      = std::chrono::milliseconds{default_f1u_backoff_timer};
+    cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
+
+    qos_list[uint_to_five_qi(76)] = cfg;
   }
   {
     // 5QI = 5 e.g IMS signaling
@@ -389,6 +514,25 @@ inline std::map<five_qi_t, odu::du_qos_config> make_default_du_qos_config_list(b
     cfg.f1u.warn_on_drop          = warn_on_drop;
 
     qos_list[uint_to_five_qi(70)] = cfg;
+  }
+  {
+    // 5QI = 79 e.g V2X messages
+    // PDB = 50ms PER = 10^-2
+    odu::du_qos_config cfg{};
+    // RLC
+    cfg.rlc.mode                   = rlc_mode::um_bidir;
+    cfg.rlc.um.tx.sn_field_length  = rlc_um_sn_size::size12bits;
+    cfg.rlc.um.rx.sn_field_length  = rlc_um_sn_size::size12bits;
+    cfg.rlc.um.rx.t_reassembly     = 35;
+    cfg.rlc.um.tx.queue_size       = default_rlc_queue_size_sdus;
+    cfg.rlc.um.tx.queue_size_bytes = default_rlc_queue_size_bytes;
+    cfg.rlc.metrics_period         = std::chrono::milliseconds(rlc_metrics_report);
+    // F1-U
+    cfg.f1u.ul_t_notif_timer      = std::chrono::milliseconds{default_f1u_backoff_timer};
+    cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
+    cfg.f1u.warn_on_drop          = warn_on_drop;
+
+    qos_list[uint_to_five_qi(79)] = cfg;
   }
   {
     // 5QI = 80 e.g Low Latency eMBB Applications
