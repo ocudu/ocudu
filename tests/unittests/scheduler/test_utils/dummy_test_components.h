@@ -10,6 +10,7 @@
 #include "lib/scheduler/uci_scheduling/uci_allocator.h"
 #include "ocudu/scheduler/scheduler_metrics.h"
 #include "ocudu/support/ocudu_test.h"
+#include <set>
 
 namespace ocudu {
 
@@ -145,8 +146,27 @@ public:
   std::optional<du_ue_index_t>   last_ue_index_cfg;
   std::optional<du_ue_index_t>   last_ue_index_deleted;
 
-  void on_ue_config_complete(du_ue_index_t ue_index, bool ue_creation_result) override { last_ue_index_cfg = ue_index; }
-  void on_ue_deletion_completed(du_ue_index_t ue_index) override { last_ue_index_deleted = ue_index; }
+  void on_ue_config_complete(du_ue_index_t ue_index, bool ue_creation_result) override
+  {
+    last_ue_index_cfg = ue_index;
+    completed_deletions.erase(ue_index);
+    completed_creations.insert(ue_index);
+  }
+  void on_ue_deletion_completed(du_ue_index_t ue_index) override
+  {
+    last_ue_index_deleted = ue_index;
+    completed_creations.erase(ue_index);
+    completed_deletions.insert(ue_index);
+  }
+
+  // Per-UE completion state that, unlike the "last_*" fields, does not lose events when several UEs complete
+  // concurrently.
+  bool ue_creation_completed(du_ue_index_t ue_index) const { return completed_creations.count(ue_index) > 0; }
+  bool ue_deletion_completed(du_ue_index_t ue_index) const { return completed_deletions.count(ue_index) > 0; }
+
+private:
+  std::set<du_ue_index_t> completed_creations;
+  std::set<du_ue_index_t> completed_deletions;
 };
 
 class scheduler_ue_metrics_dummy_notifier : public scheduler_metrics_notifier

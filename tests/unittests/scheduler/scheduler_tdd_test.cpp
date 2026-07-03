@@ -243,19 +243,6 @@ protected:
   static constexpr unsigned huge_buffer = 10000000;
   static constexpr rnti_t   base_rnti   = to_rnti(0x4601);
 
-  enum class conres_state { wait_ce, wait_msg4, wait_ack, done };
-
-  struct transient_ue {
-    du_ue_index_t ue_index;
-    rnti_t        rnti;
-    // ConRes CE must be scheduled at or before this slot count.
-    unsigned     deadline_at;
-    unsigned     msg4_push_at;
-    bool         msg4_pushed     = false;
-    unsigned     ack_deadline_at = 0;
-    conres_state state           = conres_state::wait_ce;
-  };
-
 public:
   scheduler_multiue_tdd_test() : base_scheduler_tdd_tester(GetParam().base)
   {
@@ -269,9 +256,8 @@ public:
                           get_nof_slots_per_subframe(cell_cfg().scs_common());
     wave_period_slots = p.wave_period_in_tdd_periods * tdd_period_slots;
 
-    // A removed UE index cannot be reused until the scheduler has fully drained the UE (pending CSI/SR). This is safely
-    // above the observed removal latency.
-    removal_cooldown_slots = std::max(64U, 6U * tdd_period_slots);
+    // Slots to wait after Msg4 delivery before releasing a UE, so the ConRes/Msg4 HARQ is auto-ACKed first.
+    ack_margin_slots = std::max(40U, 4U * tdd_period_slots);
 
     // Bound the per-wave size so that, at worst-case dwell (a full ConRes window), the concurrent transient UEs never
     // exceed the pool capacity.
@@ -311,8 +297,8 @@ protected:
     }
   }
 
-  // Attach up to \c wave_size transient UEs at slot \c sl_tx (slot count \c n), drawing from the shared pool.
-  void launch_wave(std::vector<transient_ue>& ues, slot_point sl_tx, unsigned n)
+  // Launch a wave of up to \c wave_size transient UEs, each driven by its own async task drawn from the shared pool.
+  void launch_wave()
   {
     const unsigned to_launch = std::min<unsigned>(wave_size, transient_pool.size());
     if (to_launch < wave_size) {
@@ -321,21 +307,77 @@ protected:
     for (unsigned i = 0; i != to_launch; ++i) {
       const du_ue_index_t idx = transient_pool.back();
       transient_pool.pop_back();
-      const rnti_t rnti = to_rnti(fmt::underlying(base_rnti) + fmt::underlying(idx));
-
-      auto ue_cfg               = create_ue_request(idx, rnti, {});
-      ue_cfg.starts_in_fallback = true;
-      ue_cfg.ul_ccch_slot_rx    = sl_tx;
-      add_ue(ue_cfg, false);
-
-      transient_ue u;
-      u.ue_index    = idx;
-      u.rnti        = rnti;
-      u.deadline_at = n + conres_window_slots;
-      // Random Msg4 arrival to exercise both ConRes-CE-multiplexed-with-Msg4 and bare-ConRes-CE paths.
-      u.msg4_push_at = n + test_rng::uniform_int<unsigned>(0, conres_window_slots - 1);
-      ues.push_back(u);
+      schedule_task(launch_transient_ue_task(idx));
     }
+  }
+
+  // Async lifecycle of a transient UE: attach in fallback, complete contention resolution before the ConRes timer
+  // expires, exchange Msg4, and detach; the index is returned to the pool only once the removal is confirmed.
+  async_task<void> launch_transient_ue_task(du_ue_index_t idx)
+  {
+    const rnti_t     rnti      = to_rnti(fmt::underlying(base_rnti) + fmt::underlying(idx));
+    const slot_point ccch_slot = next_slot.without_hyper_sfn();
+    // Random Msg4 arrival to exercise both ConRes-CE-multiplexed-with-Msg4 and bare-ConRes-CE paths.
+    const unsigned msg4_delay = test_rng::uniform_int<unsigned>(0, 2 * tdd_period_slots);
+
+    auto req               = create_ue_request(idx, rnti, {});
+    req.starts_in_fallback = true;
+    req.ul_ccch_slot_rx    = ccch_slot;
+
+    return launch_async([this, idx, rnti, msg4_delay, req = std::move(req), ce_ok = false, msg4_ok = false](
+                            coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+
+      CORO_AWAIT(launch_add_ue_task(std::move(req)));
+
+      // Push Msg4 concurrently after a random delay, so it may be multiplexed with the ConRes CE or sent separately.
+      schedule_task(launch_msg4_push_task(idx, msg4_delay));
+
+      // ConRes CE must be scheduled within the ConRes timer window.
+      CORO_AWAIT_VALUE(ce_ok, launch_run_until(conres_ce_condition(rnti), conres_window_slots));
+      EXPECT_TRUE(ce_ok) << fmt::format("UE rnti={:#x} did not schedule its ConRes CE before the timer expired",
+                                        fmt::underlying(rnti));
+
+      // Wait for Msg4 to be delivered, confirming the contention resolution completed.
+      CORO_AWAIT_VALUE(msg4_ok, launch_run_until(msg4_condition(rnti), conres_window_slots));
+      EXPECT_TRUE(msg4_ok) << fmt::format("UE rnti={:#x} did not get its Msg4 scheduled", fmt::underlying(rnti));
+
+      // Let the ConRes/Msg4 HARQ be auto-ACKed, then release the UE.
+      CORO_AWAIT(launch_run_until(false_until_slots(ack_margin_slots)));
+      CORO_AWAIT(launch_rem_ue_task(idx));
+      transient_pool.push_back(idx);
+
+      CORO_RETURN();
+    });
+  }
+
+  // Enqueue a Msg4 SRB0 buffer for \c idx after \c delay slots.
+  async_task<void> launch_msg4_push_task(du_ue_index_t idx, unsigned delay)
+  {
+    return launch_async([this, idx, delay, count = 0U](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      for (count = 0; count != delay; ++count) {
+        CORO_AWAIT(next_slot_signal);
+      }
+      push_dl_buffer_state(dl_buffer_state_indication_message{idx, LCID_SRB0, msg4_size});
+      CORO_RETURN();
+    });
+  }
+
+  // Condition that stays false for \c nof_slots slots, used to wait a fixed number of slots inside a task.
+  static unique_function<bool()> false_until_slots(unsigned nof_slots)
+  {
+    return [nof_slots, count = 0U]() mutable { return count++ >= nof_slots; };
+  }
+
+  unique_function<bool()> conres_ce_condition(rnti_t rnti)
+  {
+    return [this, rnti]() { return conres_ce_scheduled(rnti); };
+  }
+
+  unique_function<bool()> msg4_condition(rnti_t rnti)
+  {
+    return [this, rnti]() { return msg4_scheduled(rnti); };
   }
 
   bool conres_ce_scheduled(rnti_t rnti) const
@@ -364,15 +406,13 @@ protected:
                        [](const auto& lc) { return lc.lcid == LCID_SRB0; });
   }
 
-  unsigned tdd_period_slots       = 0;
-  unsigned conres_window_slots    = 0;
-  unsigned wave_period_slots      = 0;
-  unsigned wave_size              = 0;
-  unsigned removal_cooldown_slots = 0;
+  unsigned tdd_period_slots    = 0;
+  unsigned conres_window_slots = 0;
+  unsigned wave_period_slots   = 0;
+  unsigned wave_size           = 0;
+  unsigned ack_margin_slots    = 0;
 
   std::vector<du_ue_index_t> transient_pool;
-  // Indices of removed UEs pending cooldown, with the slot count at which they may be reused.
-  std::vector<std::pair<du_ue_index_t, unsigned>> cooldown;
 };
 
 TEST_P(scheduler_multiue_tdd_test, all_ues_schedule_conres_before_timeout)
@@ -384,84 +424,22 @@ TEST_P(scheduler_multiue_tdd_test, all_ues_schedule_conres_before_timeout)
     run_slot();
   }
 
-  // Slots to wait after Msg4 delivery before detaching, so the auto-ACK is processed and no PUCCH remains pending for
-  // the removed UE.
-  const unsigned ack_margin = std::max(40U, 4U * tdd_period_slots);
-  const unsigned max_slots  = p.nof_waves * wave_period_slots + conres_window_slots + ack_margin + 4 * tdd_period_slots;
-
-  std::vector<transient_ue> ues;
-  unsigned                  launched_waves = 0;
-  unsigned                  next_wave_at   = 0;
-  unsigned                  n              = 0;
-
-  while ((launched_waves < p.nof_waves or not ues.empty()) and n < max_slots) {
-    const slot_point sl_tx = next_slot.without_hyper_sfn();
-
-    // Return indices whose removal cooldown elapsed back to the pool for reuse.
-    for (auto it = cooldown.begin(); it != cooldown.end();) {
-      if (n >= it->second) {
-        transient_pool.push_back(it->first);
-        it = cooldown.erase(it);
-      } else {
-        ++it;
-      }
-    }
-
-    if (launched_waves < p.nof_waves and n == next_wave_at) {
-      launch_wave(ues, sl_tx, n);
+  // Launch overlapping waves at a fixed phase; each transient UE runs its own async lifecycle task.
+  unsigned launched_waves = 0;
+  unsigned n              = 0;
+  unsigned next_wave_at   = 0;
+  while (launched_waves < p.nof_waves) {
+    if (n == next_wave_at) {
+      launch_wave();
       ++launched_waves;
       next_wave_at += wave_period_slots;
     }
-
-    // Enqueue Msg4 buffers whose random delay has elapsed, before scheduling this slot.
-    for (auto& u : ues) {
-      if (not u.msg4_pushed and n >= u.msg4_push_at) {
-        push_dl_buffer_state(dl_buffer_state_indication_message{u.ue_index, LCID_SRB0, msg4_size});
-        u.msg4_pushed = true;
-      }
-    }
-
     run_slot();
-
-    for (auto& u : ues) {
-      if (u.state == conres_state::wait_ce) {
-        if (conres_ce_scheduled(u.rnti)) {
-          EXPECT_LE(n, u.deadline_at) << fmt::format(
-              "UE rnti={:#x} scheduled ConRes CE at slot count {} beyond its deadline {}",
-              fmt::underlying(u.rnti),
-              n,
-              u.deadline_at);
-          u.state = conres_state::wait_msg4;
-        } else if (n > u.deadline_at) {
-          ADD_FAILURE() << fmt::format("UE rnti={:#x} did not schedule its ConRes CE before deadline slot count {}",
-                                       fmt::underlying(u.rnti),
-                                       u.deadline_at);
-          u.state           = conres_state::wait_ack;
-          u.ack_deadline_at = n;
-        }
-      }
-      if (u.state == conres_state::wait_msg4 and msg4_scheduled(u.rnti)) {
-        u.state           = conres_state::wait_ack;
-        u.ack_deadline_at = n + ack_margin;
-      }
-    }
-
-    for (auto& u : ues) {
-      if (u.state == conres_state::wait_ack and n >= u.ack_deadline_at) {
-        rem_ue(u.ue_index);
-        cooldown.emplace_back(u.ue_index, n + removal_cooldown_slots);
-        u.state = conres_state::done;
-      }
-    }
-    ues.erase(
-        std::remove_if(ues.begin(), ues.end(), [](const transient_ue& u) { return u.state == conres_state::done; }),
-        ues.end());
-
     ++n;
   }
 
-  ASSERT_EQ(launched_waves, p.nof_waves) << "Not all transient UE waves were launched";
-  ASSERT_TRUE(ues.empty()) << "Some transient UEs did not complete contention resolution within the slot budget";
+  // Drain all in-flight transient UE tasks (contention resolution, Msg4 and confirmed removal).
+  run_until_all_pending_tasks_completion();
 
   // Backstop: the scheduler must not have flagged any ConRes timer expiry over the whole run.
   request_metrics_on_next_slot();

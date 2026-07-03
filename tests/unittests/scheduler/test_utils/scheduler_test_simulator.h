@@ -9,8 +9,13 @@
 #include "result_test_helpers.h"
 #include "scheduler_test_suite.h"
 #include "tests/test_doubles/scheduler/dummy_scheduler_ue_metric_notifier.h"
+#include "ocudu/adt/unique_function.h"
 #include "ocudu/scheduler/config/scheduler_expert_config_factory.h"
 #include "ocudu/scheduler/mac_scheduler.h"
+#include "ocudu/support/async/async_task.h"
+#include "ocudu/support/async/eager_async_task.h"
+#include "ocudu/support/async/event_signal.h"
+#include <list>
 
 namespace ocudu {
 
@@ -66,6 +71,21 @@ public:
 
   bool run_slot_until(const std::function<bool()>& cond_func, unsigned slot_timeout = 1000);
 
+  /// Schedule an async task that is driven forward on every \ref run_slot call.
+  void schedule_task(async_task<void> task);
+
+  /// Run slots until all scheduled async tasks have completed.
+  void run_until_all_pending_tasks_completion();
+
+  /// Launch a task that polls \c condition once per slot until it holds or the slot budget is exhausted.
+  async_task<bool> launch_run_until(unique_function<bool()> condition, unsigned max_slot_count = 1000);
+
+  /// Launch a task that adds a UE and completes once the scheduler confirms its creation.
+  async_task<void> launch_add_ue_task(sched_ue_creation_request_message ue_request);
+
+  /// Launch a task that removes a UE and completes only once the scheduler confirms the removal.
+  async_task<void> launch_rem_ue_task(du_ue_index_t ue_index);
+
   const pdcch_dl_information* find_ue_dl_pdcch(rnti_t rnti, du_cell_index_t cell_idx = to_du_cell_index(0)) const
   {
     return ocudu::find_ue_dl_pdcch(rnti, *last_sched_result(cell_idx));
@@ -91,6 +111,10 @@ public:
   std::unique_ptr<mac_scheduler>          sched;
 
   slot_point_extended next_slot;
+
+  /// Signalled at the end of every \ref run_slot, used to resume async tasks awaiting the next slot.
+  event_signal_flag                 next_slot_signal;
+  std::list<eager_async_task<void>> pending_tasks;
 
   bool contains(du_cell_index_t cell_idx) const
   {
