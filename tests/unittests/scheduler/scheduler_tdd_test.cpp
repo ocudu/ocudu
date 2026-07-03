@@ -8,6 +8,7 @@
 #include "test_utils/scheduler_test_simulator.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
+#include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/ran/tdd/tdd_ul_dl_config_formatters.h"
 #include <gtest/gtest.h>
 
@@ -47,22 +48,24 @@ protected:
     std::get<pucch_f2_params>(cell_req.ran.init_bwp.pucch.resources.f2_or_f3_or_f4_params).max_code_rate =
         max_pucch_code_rate::dot_35;
     this->add_cell(cell_req);
+  }
 
-    // Add UE
-    auto ue_cfg     = sched_config_helper::create_default_sched_ue_creation_request(cell_req.ran, {ue_drb_lcid});
-    ue_cfg.ue_index = ue_idx;
-    ue_cfg.crnti    = ue_rnti;
-    // Increase PUCCH Format 2 code rate to support TDD configuration of DDDDDDDDSU.
+  // Build a UE creation request for this cell, validating the PUCCH Format 2 resource the TDD config relies on.
+  sched_ue_creation_request_message
+  create_ue_request(du_ue_index_t ue_index, rnti_t rnti, const std::initializer_list<lcid_t>& lcids)
+  {
+    auto ue_cfg     = sched_config_helper::create_default_sched_ue_creation_request(cell_cfg().params, lcids);
+    ue_cfg.ue_index = ue_index;
+    ue_cfg.crnti    = rnti;
     ocudu_assert((*ue_cfg.cfg.cells)[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.has_value(),
                  "The PUCCH config is not set");
-    auto&          pucch_cfg     = (*ue_cfg.cfg.cells)[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value();
+    const auto&    pucch_cfg     = (*ue_cfg.cfg.cells)[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value();
     pucch_res_id_t any_res_f2_id = pucch_cfg.pucch_res_set[1].resources.front();
-    auto*          res_f2        = std::find_if(pucch_cfg.pucch_res_list.begin(),
-                                pucch_cfg.pucch_res_list.end(),
-                                [any_res_f2_id](const auto& res) { return res.res_id == any_res_f2_id; });
+    const auto*    res_f2        = std::find_if(pucch_cfg.pucch_res_list.begin(),
+                                      pucch_cfg.pucch_res_list.end(),
+                                      [any_res_f2_id](const auto& res) { return res.res_id == any_res_f2_id; });
     ocudu_assert(res_f2 != pucch_cfg.pucch_res_list.end(), "PUCCH resource F2 not found");
-
-    this->add_ue(ue_cfg);
+    return ue_cfg;
   }
 
   const du_ue_index_t ue_idx      = to_du_ue_index(0);
@@ -82,7 +85,10 @@ void PrintTo(const tdd_test_params& value, ::std::ostream* os)
 class scheduler_dl_tdd_tester : public base_scheduler_tdd_tester, public ::testing::TestWithParam<tdd_test_params>
 {
 public:
-  scheduler_dl_tdd_tester() : base_scheduler_tdd_tester(GetParam()) {}
+  scheduler_dl_tdd_tester() : base_scheduler_tdd_tester(GetParam())
+  {
+    this->add_ue(create_ue_request(ue_idx, ue_rnti, {ue_drb_lcid}));
+  }
 };
 
 TEST_P(scheduler_dl_tdd_tester, all_dl_slots_are_scheduled)
@@ -109,6 +115,8 @@ class scheduler_ul_tdd_tester : public base_scheduler_tdd_tester, public ::testi
 public:
   scheduler_ul_tdd_tester() : base_scheduler_tdd_tester(GetParam())
   {
+    this->add_ue(create_ue_request(ue_idx, ue_rnti, {ue_drb_lcid}));
+
     // Enqueue enough bytes for continuous UL tx.
     ul_bsr_indication_message bsr{
         to_du_cell_index(0), ue_idx, ue_rnti, bsr_format::SHORT_BSR, {ul_bsr_lcg_report{uint_to_lcg_id(0), 10000000}}};
@@ -199,5 +207,280 @@ INSTANTIATE_TEST_SUITE_P(
   tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 2,  6, 7, 4}}, 2},
   tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 2,  6, 7, 4}}},
   tdd_test_params{true, {subcarrier_spacing::kHz30, {5,  1, 10, 3, 0}}, 2}
+));
+// clang-format on
+
+// Parameters for the multi-UE TDD stress test.
+struct multiue_tdd_test_params {
+  tdd_test_params base;
+  // Number of persistent UEs with constant DL/UL/bidir traffic used to saturate the grid.
+  unsigned nof_background_ues;
+  // Maximum number of concurrent transient UEs (pool capacity shared across overlapping waves).
+  unsigned nof_transient_ues;
+  // Number of transient UE waves launched over the test.
+  unsigned nof_waves;
+  // Spacing between consecutive waves, expressed in TDD periods to keep the attach phase fixed.
+  unsigned wave_period_in_tdd_periods;
+};
+
+void PrintTo(const multiue_tdd_test_params& value, ::std::ostream* os)
+{
+  *os << fmt::format("tdd={} bg_ues={} transient_ues={} waves={} wave_period_periods={}",
+                     value.base.tdd_cfg,
+                     value.nof_background_ues,
+                     value.nof_transient_ues,
+                     value.nof_waves,
+                     value.wave_period_in_tdd_periods);
+}
+
+/// \brief Stress test that saturates the grid with background traffic while overlapping waves of UEs attach, complete
+/// contention resolution and detach, verifying no ConRes CE times out.
+class scheduler_multiue_tdd_test : public base_scheduler_tdd_tester,
+                                   public ::testing::TestWithParam<multiue_tdd_test_params>
+{
+protected:
+  static constexpr unsigned msg4_size   = 128;
+  static constexpr unsigned huge_buffer = 10000000;
+  static constexpr rnti_t   base_rnti   = to_rnti(0x4601);
+
+  enum class conres_state { wait_ce, wait_msg4, wait_ack, done };
+
+  struct transient_ue {
+    du_ue_index_t ue_index;
+    rnti_t        rnti;
+    // ConRes CE must be scheduled at or before this slot count.
+    unsigned     deadline_at;
+    unsigned     msg4_push_at;
+    bool         msg4_pushed     = false;
+    unsigned     ack_deadline_at = 0;
+    conres_state state           = conres_state::wait_ce;
+  };
+
+public:
+  scheduler_multiue_tdd_test() : base_scheduler_tdd_tester(GetParam().base)
+  {
+    ocudulog::fetch_basic_logger("SCHED", true).set_level(ocudulog::basic_levels::warning);
+
+    const multiue_tdd_test_params& p = GetParam();
+
+    // Derive timing quantities from the cell configuration.
+    tdd_period_slots    = nof_slots_per_tdd_period(*cell_cfg().params.tdd_cfg);
+    conres_window_slots = cell_cfg().params.ul_cfg_common.init_ul_bwp.rach_cfg_common->ra_con_res_timer.count() *
+                          get_nof_slots_per_subframe(cell_cfg().scs_common());
+    wave_period_slots = p.wave_period_in_tdd_periods * tdd_period_slots;
+
+    // A removed UE index cannot be reused until the scheduler has fully drained the UE (pending CSI/SR). This is safely
+    // above the observed removal latency.
+    removal_cooldown_slots = std::max(64U, 6U * tdd_period_slots);
+
+    // Bound the per-wave size so that, at worst-case dwell (a full ConRes window), the concurrent transient UEs never
+    // exceed the pool capacity.
+    const unsigned overlap_depth = (conres_window_slots + wave_period_slots - 1) / wave_period_slots;
+    wave_size                    = std::max(1U, p.nof_transient_ues / std::max(1U, overlap_depth));
+
+    // Transient UE indices/RNTIs occupy the range right after the background UEs.
+    for (unsigned i = 0; i != p.nof_transient_ues; ++i) {
+      transient_pool.push_back(to_du_ue_index(p.nof_background_ues + i));
+    }
+
+    add_background_ues();
+  }
+
+protected:
+  // Add persistent UEs with a random traffic direction, each with a large buffer so they saturate the grid.
+  void add_background_ues()
+  {
+    for (unsigned i = 0; i != GetParam().nof_background_ues; ++i) {
+      const du_ue_index_t idx  = to_du_ue_index(i);
+      const rnti_t        rnti = to_rnti(fmt::underlying(base_rnti) + i);
+
+      add_ue(create_ue_request(idx, rnti, {LCID_MIN_DRB}), false);
+
+      // 0: DL-only, 1: UL-only, 2: bidirectional.
+      const unsigned dir = test_rng::uniform_int<unsigned>(0, 2);
+      if (dir != 1) {
+        push_dl_buffer_state(dl_buffer_state_indication_message{idx, LCID_MIN_DRB, huge_buffer});
+      }
+      if (dir != 0) {
+        push_bsr(ul_bsr_indication_message{to_du_cell_index(0),
+                                           idx,
+                                           rnti,
+                                           bsr_format::SHORT_BSR,
+                                           {ul_bsr_lcg_report{uint_to_lcg_id(0), huge_buffer}}});
+      }
+    }
+  }
+
+  // Attach up to \c wave_size transient UEs at slot \c sl_tx (slot count \c n), drawing from the shared pool.
+  void launch_wave(std::vector<transient_ue>& ues, slot_point sl_tx, unsigned n)
+  {
+    const unsigned to_launch = std::min<unsigned>(wave_size, transient_pool.size());
+    if (to_launch < wave_size) {
+      test_logger.info("Transient UE pool exhausted: launched {}/{} UEs in this wave", to_launch, wave_size);
+    }
+    for (unsigned i = 0; i != to_launch; ++i) {
+      const du_ue_index_t idx = transient_pool.back();
+      transient_pool.pop_back();
+      const rnti_t rnti = to_rnti(fmt::underlying(base_rnti) + fmt::underlying(idx));
+
+      auto ue_cfg               = create_ue_request(idx, rnti, {});
+      ue_cfg.starts_in_fallback = true;
+      ue_cfg.ul_ccch_slot_rx    = sl_tx;
+      add_ue(ue_cfg, false);
+
+      transient_ue u;
+      u.ue_index    = idx;
+      u.rnti        = rnti;
+      u.deadline_at = n + conres_window_slots;
+      // Random Msg4 arrival to exercise both ConRes-CE-multiplexed-with-Msg4 and bare-ConRes-CE paths.
+      u.msg4_push_at = n + test_rng::uniform_int<unsigned>(0, conres_window_slots - 1);
+      ues.push_back(u);
+    }
+  }
+
+  bool conres_ce_scheduled(rnti_t rnti) const
+  {
+    const pdcch_dl_information* dl_pdcch = find_ue_dl_pdcch(rnti);
+    if (dl_pdcch == nullptr or dl_pdcch->dci.type() != dci_dl_rnti_config_type::tc_rnti_f1_0) {
+      return false;
+    }
+    const dl_msg_alloc* pdsch = find_ue_pdsch(rnti, *last_sched_result());
+    if (pdsch == nullptr or pdsch->tb_list.empty()) {
+      return false;
+    }
+    return std::any_of(pdsch->tb_list[0].lc_chs_to_sched.begin(),
+                       pdsch->tb_list[0].lc_chs_to_sched.end(),
+                       [](const auto& lc) { return lc.lcid == lcid_dl_sch_t::UE_CON_RES_ID; });
+  }
+
+  bool msg4_scheduled(rnti_t rnti) const
+  {
+    const dl_msg_alloc* pdsch = find_ue_pdsch(rnti, *last_sched_result());
+    if (pdsch == nullptr or pdsch->tb_list.empty()) {
+      return false;
+    }
+    return std::any_of(pdsch->tb_list[0].lc_chs_to_sched.begin(),
+                       pdsch->tb_list[0].lc_chs_to_sched.end(),
+                       [](const auto& lc) { return lc.lcid == LCID_SRB0; });
+  }
+
+  unsigned tdd_period_slots       = 0;
+  unsigned conres_window_slots    = 0;
+  unsigned wave_period_slots      = 0;
+  unsigned wave_size              = 0;
+  unsigned removal_cooldown_slots = 0;
+
+  std::vector<du_ue_index_t> transient_pool;
+  // Indices of removed UEs pending cooldown, with the slot count at which they may be reused.
+  std::vector<std::pair<du_ue_index_t, unsigned>> cooldown;
+};
+
+TEST_P(scheduler_multiue_tdd_test, all_ues_schedule_conres_before_timeout)
+{
+  const multiue_tdd_test_params& p = GetParam();
+
+  // Warmup so that the background traffic reaches steady-state saturation before waves start.
+  for (unsigned i = 0; i != 2 * tdd_period_slots; ++i) {
+    run_slot();
+  }
+
+  // Slots to wait after Msg4 delivery before detaching, so the auto-ACK is processed and no PUCCH remains pending for
+  // the removed UE.
+  const unsigned ack_margin = std::max(40U, 4U * tdd_period_slots);
+  const unsigned max_slots  = p.nof_waves * wave_period_slots + conres_window_slots + ack_margin + 4 * tdd_period_slots;
+
+  std::vector<transient_ue> ues;
+  unsigned                  launched_waves = 0;
+  unsigned                  next_wave_at   = 0;
+  unsigned                  n              = 0;
+
+  while ((launched_waves < p.nof_waves or not ues.empty()) and n < max_slots) {
+    const slot_point sl_tx = next_slot.without_hyper_sfn();
+
+    // Return indices whose removal cooldown elapsed back to the pool for reuse.
+    for (auto it = cooldown.begin(); it != cooldown.end();) {
+      if (n >= it->second) {
+        transient_pool.push_back(it->first);
+        it = cooldown.erase(it);
+      } else {
+        ++it;
+      }
+    }
+
+    if (launched_waves < p.nof_waves and n == next_wave_at) {
+      launch_wave(ues, sl_tx, n);
+      ++launched_waves;
+      next_wave_at += wave_period_slots;
+    }
+
+    // Enqueue Msg4 buffers whose random delay has elapsed, before scheduling this slot.
+    for (auto& u : ues) {
+      if (not u.msg4_pushed and n >= u.msg4_push_at) {
+        push_dl_buffer_state(dl_buffer_state_indication_message{u.ue_index, LCID_SRB0, msg4_size});
+        u.msg4_pushed = true;
+      }
+    }
+
+    run_slot();
+
+    for (auto& u : ues) {
+      if (u.state == conres_state::wait_ce) {
+        if (conres_ce_scheduled(u.rnti)) {
+          EXPECT_LE(n, u.deadline_at) << fmt::format(
+              "UE rnti={:#x} scheduled ConRes CE at slot count {} beyond its deadline {}",
+              fmt::underlying(u.rnti),
+              n,
+              u.deadline_at);
+          u.state = conres_state::wait_msg4;
+        } else if (n > u.deadline_at) {
+          ADD_FAILURE() << fmt::format("UE rnti={:#x} did not schedule its ConRes CE before deadline slot count {}",
+                                       fmt::underlying(u.rnti),
+                                       u.deadline_at);
+          u.state           = conres_state::wait_ack;
+          u.ack_deadline_at = n;
+        }
+      }
+      if (u.state == conres_state::wait_msg4 and msg4_scheduled(u.rnti)) {
+        u.state           = conres_state::wait_ack;
+        u.ack_deadline_at = n + ack_margin;
+      }
+    }
+
+    for (auto& u : ues) {
+      if (u.state == conres_state::wait_ack and n >= u.ack_deadline_at) {
+        rem_ue(u.ue_index);
+        cooldown.emplace_back(u.ue_index, n + removal_cooldown_slots);
+        u.state = conres_state::done;
+      }
+    }
+    ues.erase(
+        std::remove_if(ues.begin(), ues.end(), [](const transient_ue& u) { return u.state == conres_state::done; }),
+        ues.end());
+
+    ++n;
+  }
+
+  ASSERT_EQ(launched_waves, p.nof_waves) << "Not all transient UE waves were launched";
+  ASSERT_TRUE(ues.empty()) << "Some transient UEs did not complete contention resolution within the slot budget";
+
+  // Backstop: the scheduler must not have flagged any ConRes timer expiry over the whole run.
+  request_metrics_on_next_slot();
+  run_slot();
+  ASSERT_TRUE(last_metrics().has_value());
+  ASSERT_EQ(last_metrics()->nof_conres_timer_expired, 0U) << "A ConRes timer expired during the test";
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    scheduler_tdd_test,
+    scheduler_multiue_tdd_test,
+    testing::Values(
+        // clang-format off
+  // {tdd_test_params}, nof_background_ues, nof_transient_ues, nof_waves, wave_period_in_tdd_periods
+  // DL-heavy DDDDDDSUUU.
+  multiue_tdd_test_params{tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}}},       8, 16, 10, 2},
+  // Balanced DDDSU.
+  multiue_tdd_test_params{tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU)}, 8, 16, 10, 2},
+  // UL-heavy DDDSUUUUUU.
+  multiue_tdd_test_params{tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 3, 5, 6, 0}}},       8, 16, 10, 2}
 ));
 // clang-format on
