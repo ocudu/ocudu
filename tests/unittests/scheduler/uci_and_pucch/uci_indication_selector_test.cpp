@@ -36,6 +36,11 @@ protected:
   static constexpr rnti_t   first_rnti    = to_rnti(0x4601);
   static constexpr rnti_t   second_rnti   = to_rnti(0x4602);
 
+  explicit uci_indication_selector_test(std::optional<float> pucch_sinr_threshold_dB = std::nullopt) :
+    selector(timeout_notifier, timeout_slots, MAX_PUCCH_PDUS_PER_SLOT, pucch_sinr_threshold_dB)
+  {
+  }
+
   static sched_result make_sched_result(std::initializer_list<pucch_info> pucchs)
   {
     sched_result result{};
@@ -117,7 +122,7 @@ protected:
   }
 
   test_timeout_notifier   timeout_notifier;
-  uci_indication_selector selector{timeout_notifier, timeout_slots, MAX_PUCCH_PDUS_PER_SLOT};
+  uci_indication_selector selector;
 
   slot_point next_sl_tx{
       subcarrier_spacing::kHz30,
@@ -536,6 +541,85 @@ TEST_F(uci_indication_selector_test, on_slot_discard_multiple_ucis_timeout)
     }
   }
   ASSERT_TRUE(visited_rntis.all());
+}
+
+class uci_indication_selector_sinr_threshold_test : public uci_indication_selector_test
+{
+protected:
+  static constexpr float sinr_threshold_dB = 0.0F;
+
+  uci_indication_selector_sinr_threshold_test() : uci_indication_selector_test(sinr_threshold_dB) {}
+
+  /// Schedules a PUCCH grant with one HARQ-ACK bit plus SR and processes an ACK+SR UCI PDU with the given SINR.
+  std::optional<uci_action> handle_harq_sr_pdu_with_sinr(std::optional<float> sinr_dB)
+  {
+    selector.handle_result(next_sl_tx,
+                           make_sched_result({make_pucch_grant(first_rnti, pucch_format::FORMAT_1, 1, true)}));
+    return selector.handle_uci_ind_pdu(next_sl_tx,
+                                       make_f0_or_f1_pdu(first_rnti, {mac_harq_ack_report_status::ack}, true, sinr_dB));
+  }
+};
+
+TEST_F(uci_indication_selector_sinr_threshold_test, pdu_with_sinr_below_threshold_is_invalidated)
+{
+  auto action = handle_harq_sr_pdu_with_sinr(sinr_threshold_dB - 1.0F);
+
+  // Test: The UCI is treated as if nothing was detected.
+  ASSERT_TRUE(action.has_value());
+  ASSERT_FALSE(action->uci_valid);
+  ASSERT_FALSE(action->sr_detected);
+  ASSERT_TRUE(action->harq_ack_bits.none());
+}
+
+TEST_F(uci_indication_selector_sinr_threshold_test, pdu_with_sinr_at_threshold_is_valid)
+{
+  auto action = handle_harq_sr_pdu_with_sinr(sinr_threshold_dB);
+
+  ASSERT_TRUE(action.has_value());
+  ASSERT_TRUE(action->uci_valid);
+  ASSERT_TRUE(action->sr_detected);
+  ASSERT_TRUE(action->harq_ack_bits.test(0));
+}
+
+TEST_F(uci_indication_selector_sinr_threshold_test, pdu_without_sinr_is_not_filtered)
+{
+  auto action = handle_harq_sr_pdu_with_sinr(std::nullopt);
+
+  ASSERT_TRUE(action.has_value());
+  ASSERT_TRUE(action->uci_valid);
+  ASSERT_TRUE(action->sr_detected);
+  ASSERT_TRUE(action->harq_ack_bits.test(0));
+}
+
+TEST_F(uci_indication_selector_sinr_threshold_test, csi_pdu_with_sinr_below_threshold_is_discarded)
+{
+  // Note: CSI-only PUCCHs are not registered for timeout tracking, so no grant needs to be scheduled.
+  auto action =
+      selector.handle_uci_ind_pdu(next_sl_tx, make_f2_pdu(first_rnti, {}, {false}, true, sinr_threshold_dB - 1.0F));
+
+  ASSERT_TRUE(action.has_value());
+  ASSERT_FALSE(action->uci_valid);
+  ASSERT_FALSE(action->csi.has_value());
+}
+
+TEST_F(uci_indication_selector_sinr_threshold_test, below_threshold_pdu_does_not_override_valid_pdu)
+{
+  // Event: Two PUCCH grants (HARQ and HARQ+SR) got scheduled for the same RNTI. The first UCI arrives with an SINR
+  // above the threshold, the second one below.
+  selector.handle_result(next_sl_tx,
+                         make_sched_result({make_pucch_grant(first_rnti, pucch_format::FORMAT_1, 1),
+                                            make_pucch_grant(first_rnti, pucch_format::FORMAT_1, 1, true)}));
+  auto first_action = selector.handle_uci_ind_pdu(
+      next_sl_tx, make_f0_or_f1_pdu(first_rnti, {mac_harq_ack_report_status::ack}, false, sinr_threshold_dB + 1.0F));
+  auto second_action = selector.handle_uci_ind_pdu(
+      next_sl_tx, make_f0_or_f1_pdu(first_rnti, {mac_harq_ack_report_status::nack}, true, sinr_threshold_dB - 1.0F));
+
+  // Test: The action is derived from the valid UCI PDU only.
+  ASSERT_FALSE(first_action.has_value());
+  ASSERT_TRUE(second_action.has_value());
+  ASSERT_TRUE(second_action->uci_valid);
+  ASSERT_TRUE(second_action->harq_ack_bits.test(0));
+  ASSERT_FALSE(second_action->sr_detected);
 }
 
 } // namespace

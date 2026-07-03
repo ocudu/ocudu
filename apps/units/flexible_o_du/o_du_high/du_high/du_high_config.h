@@ -476,6 +476,10 @@ struct du_high_unit_pucch_config {
   /// Maximum number of consecutive undecoded PUCCH Format 2 for CSI before an RLF is reported.
   unsigned max_consecutive_kos = 100;
 
+  /// \brief SINR threshold, in dB, below which PUCCH UCI indications reported by the PHY are considered invalid.
+  /// If not set, no SINR-based filtering of PUCCH UCI indications is applied.
+  std::optional<float> sinr_threshold_dB;
+
   /// Enable closed-loop PUCCH power control.
   bool enable_closed_loop_pw_control = false;
   /// Target PUSCH SINR to be achieved with close-loop power control, in dB. Only relevant if \c
@@ -525,6 +529,8 @@ struct du_high_unit_pucch_config {
            f4_intraslot_freq_hopping == rhs.f4_intraslot_freq_hopping && f4_additional_dmrs == rhs.f4_additional_dmrs &&
            f4_pi2_bpsk == rhs.f4_pi2_bpsk && f4_enable_occ == rhs.f4_enable_occ && f4_occ_length == rhs.f4_occ_length &&
            min_k1 == rhs.min_k1 && max_consecutive_kos == rhs.max_consecutive_kos &&
+           sinr_threshold_dB.has_value() == rhs.sinr_threshold_dB.has_value() &&
+           (!sinr_threshold_dB.has_value() || almost_equal<float>(*sinr_threshold_dB, *rhs.sinr_threshold_dB)) &&
            enable_closed_loop_pw_control == rhs.enable_closed_loop_pw_control &&
            almost_equal<float>(pucch_f0_sinr_target_dB, rhs.pucch_f0_sinr_target_dB) &&
            almost_equal<float>(pucch_f2_sinr_target_dB, rhs.pucch_f2_sinr_target_dB) &&

@@ -58,7 +58,8 @@ public:
 
   uci_indication_selector(uci_indication_timeout_notifier& timeout_notifier,
                           unsigned                         ack_timeout_slots         = DEFAULT_ACK_TIMEOUT_SLOTS,
-                          unsigned                         max_pucch_grants_per_slot = MAX_PUCCH_PDUS_PER_SLOT);
+                          unsigned                         max_pucch_grants_per_slot = MAX_PUCCH_PDUS_PER_SLOT,
+                          std::optional<float>             pucch_sinr_threshold_dB   = std::nullopt);
 
   std::optional<uci_action> handle_uci_ind_pdu(slot_point sl_rx, const uci_indication::uci_pdu& pdu);
 
@@ -96,6 +97,9 @@ private:
   /// Handle a received UCI indication PDU and generate an action.
   std::optional<uci_action> handle_uci_pdu(const uci_indication::uci_pdu& pdu, uci_entry& entry);
 
+  /// Convert a UCI indication PDU to an action.
+  uci_action create_action(const uci_indication::uci_pdu& pdu) const;
+
   /// Called when a timeout occurs for a given pending UCI.
   void handle_timeout_pending_uci_entry(stable_id_t id, slot_point sl_rx);
 
@@ -103,7 +107,10 @@ private:
   void handle_large_slot_jump(unsigned slot_jump);
 
   /// Timeout to receive HARQ-ACK feedback.
-  const unsigned                   ack_timeout_slots;
+  const unsigned ack_timeout_slots;
+  /// SINR threshold, in dB, below which PUCCH PDUs are considered invalid.
+  /// If not set, no SINR-based filtering is applied.
+  const std::optional<float>       pucch_sinr_threshold_dB;
   uci_indication_timeout_notifier& timeout_notifier;
   ocudulog::basic_logger&          logger;
 

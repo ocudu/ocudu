@@ -193,7 +193,10 @@ ue_scheduler_impl::cell_context::cell_context(ue_scheduler_impl&                
                     ocudulog::fetch_basic_logger("SCHED")),
   srs_sched(params.cell_res_alloc->cfg, parent.ue_db),
   trig_ul_sched(parent.ue_db, params.cell_res_alloc->cfg.cell_index, params.cell_res_alloc->cfg.scs_common()),
-  uci_selector(*this)
+  uci_selector(*this,
+               uci_indication_selector::DEFAULT_ACK_TIMEOUT_SLOTS,
+               MAX_PUCCH_PDUS_PER_SLOT,
+               parent.expert_cfg.pucch_sinr_threshold_dB)
 {
 }
 

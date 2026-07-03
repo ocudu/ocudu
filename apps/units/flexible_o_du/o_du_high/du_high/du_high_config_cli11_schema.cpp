@@ -1296,6 +1296,13 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
              pucch_params.max_consecutive_kos,
              "Maximum number of consecutive undecoded PUCCH F2 for CSI before an Radio Link Failure is reported")
       ->capture_default_str();
+  add_option(app,
+             "--sinr_threshold",
+             pucch_params.sinr_threshold_dB,
+             "SINR threshold in dB below which PUCCH PDUs are always considered invalid. If not set, no SINR-based "
+             "filtering is applied.")
+      ->capture_default_str()
+      ->check(CLI::Range(-50.0, 50.0));
   app.add_option("--enable_cl_loop_pw_control",
                  pucch_params.enable_closed_loop_pw_control,
                  "Enable closed-loop power control for PUCCH")

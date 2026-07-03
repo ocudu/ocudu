@@ -204,6 +204,9 @@ struct scheduler_ue_expert_config {
   crb_interval pusch_crb_limits{0, MAX_NOF_PRBS};
   /// Minimum distance between PUCCH and PUSCH in number of PRBs.
   unsigned min_pucch_pusch_prb_distance = 1;
+  /// \brief SINR threshold, in dB, below which PUCCH PDUs are always considered invalid.
+  /// If not set, no SINR-based filtering of PUCCH UCI indications is applied.
+  std::optional<float> pucch_sinr_threshold_dB;
   /// Configuration of the scheduler policy. Currently, time-domain round-robin and time-domain QoS-aware are supported.
   scheduler_policy_config policy_cfg = time_qos_scheduler_config{};
   /// \brief Size of the group of UEs that is considered for newTx allocation in a given slot. The groups of UEs

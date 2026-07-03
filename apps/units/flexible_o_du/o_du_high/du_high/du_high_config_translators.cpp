@@ -1269,6 +1269,7 @@ static scheduler_expert_config generate_scheduler_expert_config(const du_high_un
   out_cfg.ue.max_pucchs_per_slot                              = cell.ul_common_cfg.max_pucchs_per_slot;
   out_cfg.ue.min_pucch_pusch_prb_distance                     = cell.ul_common_cfg.min_pucch_pusch_prb_distance;
   const du_high_unit_pucch_config& pucch                      = cell.pucch_cfg;
+  out_cfg.ue.pucch_sinr_threshold_dB                          = pucch.sinr_threshold_dB;
   out_cfg.ue.ul_power_ctrl.enable_pucch_cl_pw_control         = pucch.enable_closed_loop_pw_control;
   out_cfg.ue.ul_power_ctrl.pucch_f0_sinr_target_dB            = pucch.pucch_f0_sinr_target_dB;
   out_cfg.ue.ul_power_ctrl.pucch_f2_sinr_target_dB            = pucch.pucch_f2_sinr_target_dB;

@@ -9,8 +9,10 @@ using namespace ocudu;
 
 uci_indication_selector::uci_indication_selector(uci_indication_timeout_notifier& timeout_notifier_,
                                                  unsigned                         uci_ack_timeout,
-                                                 unsigned                         max_pucch_grants_per_slot) :
+                                                 unsigned                         max_pucch_grants_per_slot,
+                                                 std::optional<float>             pucch_sinr_threshold_dB_) :
   ack_timeout_slots(uci_ack_timeout),
+  pucch_sinr_threshold_dB(pucch_sinr_threshold_dB_),
   timeout_notifier(timeout_notifier_),
   logger(ocudulog::fetch_basic_logger("SCHED")),
   uci_wheel(ack_timeout_slots),
@@ -22,8 +24,7 @@ uci_indication_selector::uci_indication_selector(uci_indication_timeout_notifier
   report_fatal_error_if_not(uci_ack_timeout > SHORT_PUCCH_TIMEOUT_SLOTS, "Invalid UCI ACK timeout");
 }
 
-/// Convert UCI indication to an action.
-static uci_action create_action(const uci_indication::uci_pdu& pdu)
+uci_action uci_indication_selector::create_action(const uci_indication::uci_pdu& pdu) const
 {
   uci_action ret;
   bool       is_dtx = false;
@@ -64,6 +65,17 @@ static uci_action create_action(const uci_indication::uci_pdu& pdu)
     }
     ret.csi = pusch.csi;
   }
+
+  // PUCCH PDUs whose estimated SINR is below the configured threshold are treated as if nothing was detected.
+  const bool is_pucch = ret.type == uci_action::pdu_type::pucch_f0f1 or ret.type == uci_action::pdu_type::pucch_f2f3f4;
+  if (is_pucch and pucch_sinr_threshold_dB.has_value() and ret.ul_sinr_dB.has_value() and
+      ret.ul_sinr_dB.value() < pucch_sinr_threshold_dB.value()) {
+    ret.sr_detected = false;
+    ret.csi.reset();
+    ret.uci_valid = false;
+    return ret;
+  }
+
   ret.uci_valid =
       (ret.sr_detected or (not ret.harq_ack_bits.empty() and not is_dtx) or (ret.csi.has_value() and ret.csi->valid));
   return ret;
