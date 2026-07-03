@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "e2ap_removal_procedure.h"
+#include "../common/e2ap_asn1_utils.h"
 #include "ocudu/asn1/asn1_ap_utils.h"
 
 using namespace ocudu;
@@ -28,6 +29,9 @@ void e2ap_removal_procedure::operator()(coro_context<async_task<void>>& ctx)
     logger.warning("E2 Removal procedure timed out waiting for RIC response. Proceeding with disconnection.");
   } else if (transaction_sink.protocol_transaction_failed()) {
     logger.warning("E2 Removal procedure was cancelled. Proceeding with disconnection.");
+  } else if (not transaction_id_matches(transaction_sink, expected_transaction_id)) {
+    logger.warning("E2 Removal procedure received a response with unexpected transaction id. Proceeding with "
+                   "disconnection.");
   } else if (transaction_sink.successful()) {
     logger.info("E2 Removal procedure successful.");
   } else {
@@ -45,7 +49,7 @@ void e2ap_removal_procedure::send_e2_removal_request()
   auto& rem_req = msg.pdu.init_msg().value.e2_removal_request();
 
   asn1::protocol_ie_field_s<e2_removal_request_ies_o> ie;
-  ie.value().transaction_id() = 0;
+  ie.value().transaction_id() = expected_transaction_id;
   rem_req->push_back(ie);
 
   notifier.on_new_message(msg);

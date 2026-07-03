@@ -149,6 +149,29 @@ TEST_F(e2_test, when_e2_setup_response_received_then_e2_connected)
   ASSERT_TRUE(t.get().success);
 }
 
+/// A response carrying a transaction id different from the one sent in the request must not be treated as a valid
+/// completion of the E2 Setup procedure.
+TEST_F(e2_test, when_e2_setup_response_has_mismatched_transaction_id_then_e2_setup_failed)
+{
+  report_fatal_error_if_not(e2->handle_e2_tnl_connection_request(), "Unable to establish dummy SCTP connection");
+  test_logger.info("Launch e2 setup request procedure...");
+  e2_setup_request_message                      request;
+  async_task<e2_setup_response_message>         t = e2->handle_e2_setup_request(request);
+  lazy_task_launcher<e2_setup_response_message> t_launcher(t);
+
+  ASSERT_FALSE(t.ready());
+
+  // Response carries a transaction id that does not match the one used in the request.
+  unsigned   sent_transaction_id  = get_transaction_id(e2_client->last_tx_e2_pdu.pdu).value();
+  unsigned   wrong_transaction_id = sent_transaction_id + 1;
+  e2_message e2_setup_response    = generate_e2_setup_response(wrong_transaction_id);
+  test_logger.info("Injecting E2SetupResponse with mismatched transaction id");
+  e2->handle_message(e2_setup_response);
+
+  ASSERT_TRUE(t.ready());
+  ASSERT_FALSE(t.get().success);
+}
+
 TEST_F(e2_test, when_e2_setup_failure_received_then_e2_setup_failed)
 {
   report_fatal_error_if_not(e2->handle_e2_tnl_connection_request(), "Unable to establish dummy SCTP connection");

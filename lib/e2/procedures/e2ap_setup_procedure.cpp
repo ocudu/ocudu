@@ -58,13 +58,17 @@ void e2ap_setup_procedure::send_e2_setup_request()
   msg.pdu.init_msg().load_info_obj(ASN1_E2AP_ID_E2SETUP);
   msg.pdu.init_msg().value.e2setup_request() = request.request;
   auto& setup_req                            = msg.pdu.init_msg().value.e2setup_request();
-  setup_req->transaction_id                  = transaction_id++;
+  setup_req->transaction_id                  = transaction_id;
   notifier.on_new_message(msg);
 }
 
 bool e2ap_setup_procedure::retry_required()
 {
   if (not transaction_sink.failed()) {
+    return false;
+  }
+  if (not transaction_id_matches(transaction_sink, transaction_id)) {
+    logger.warning("\"{}\" received a failure with unexpected transaction id. Discarding.", name());
     return false;
   }
 
@@ -97,6 +101,8 @@ bool e2ap_setup_procedure::retry_required()
              time_to_wait.count(),
              e2_setup_retry_no,
              request.max_setup_retries);
+  // Use a fresh transaction id for the retry attempt.
+  transaction_id++;
   return true;
 }
 
@@ -104,13 +110,17 @@ e2_setup_response_message e2ap_setup_procedure::create_e2_setup_result()
 {
   e2_setup_response_message res{};
 
-  if (transaction_sink.successful()) {
+  if (transaction_sink.successful() and transaction_id_matches(transaction_sink, transaction_id)) {
     res.success  = true;
     res.response = transaction_sink.response();
     logger.info("E2 Setup procedure successful.");
   } else {
     res.success = false;
-    logger.error("E2 Setup procedure failed.");
+    if (transaction_sink.successful()) {
+      logger.error("E2 Setup procedure failed: received response with unexpected transaction id.");
+    } else {
+      logger.error("E2 Setup procedure failed.");
+    }
   }
   return res;
 }

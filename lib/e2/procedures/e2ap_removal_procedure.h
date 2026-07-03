@@ -29,6 +29,7 @@ private:
   ocudulog::basic_logger& logger;
 
   protocol_transaction_outcome_observer<asn1::e2ap::e2_removal_resp_s, asn1::e2ap::e2_removal_fail_s> transaction_sink;
+  static constexpr uint8_t expected_transaction_id = 0;
 };
 
 } // namespace ocudu

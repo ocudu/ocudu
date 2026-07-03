@@ -6,6 +6,7 @@
 
 #include "ocudu/adt/expected.h"
 #include "ocudu/asn1/e2ap/e2ap.h"
+#include "ocudu/support/async/protocol_transaction_manager.h"
 #include "ocudu/support/error_handling.h"
 
 namespace ocudu {
@@ -75,6 +76,22 @@ inline expected<uint8_t> get_transaction_id(const asn1::e2ap::e2ap_pdu_c& pdu)
       break;
   }
   return make_unexpected(default_error_t{});
+}
+
+/// Checks whether the response/failure message received by a protocol transaction sink carries the expected
+/// transaction id. Returns false if no message has been received (e.g. still pending, or completed via timeout,
+/// cancellation or an abnormal condition), since there is no transaction id to compare against in those cases.
+template <typename SuccessResp, typename FailureResp>
+inline bool transaction_id_matches(const protocol_transaction_outcome_observer<SuccessResp, FailureResp>& sink,
+                                   uint8_t expected_transaction_id)
+{
+  if (sink.successful()) {
+    return sink.response()->transaction_id == expected_transaction_id;
+  }
+  if (sink.failed()) {
+    return sink.failure()->transaction_id == expected_transaction_id;
+  }
+  return false;
 }
 
 /// Returns a human-readable string for an E2AP cause value.
