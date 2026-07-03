@@ -18,7 +18,7 @@ namespace ocudu {
 class lockfree_token_bucket
 {
 public:
-  lockfree_token_bucket(uint32_t rate, uint32_t capacity);
+  lockfree_token_bucket(uint64_t rate, uint64_t capacity, timer_manager& timer_mng_);
 
   /// Consume tokens from the bucket.
   /// \return False if there were not enough available tokens, true otherwise.
@@ -30,10 +30,10 @@ private:
   /// Virtual time of emptiness. Represents how long ago in the past
   /// the bucket would have been empty so that we have the current amount of tokens
   /// given the rate.
-  std::atomic<tick_point_t> empty_time;
-  unsigned                  time_per_token;
-  unsigned                  time_to_fill_from_empty;
+  std::atomic<signed>      empty_time              = {};
+  std::chrono::nanoseconds time_per_token          = {};
+  std::chrono::nanoseconds time_to_fill_from_empty = {};
 
-  timer_manager timer_mng; // TODO make ref.
+  timer_manager& timer_mng;
 };
 } // namespace ocudu
