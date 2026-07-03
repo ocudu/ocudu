@@ -16,7 +16,8 @@ public:
   integrity_engine_generic(sec_128_key         k_128_int_,
                            uint8_t             bearer_id_,
                            security_direction  direction_,
-                           integrity_algorithm integ_algo_);
+                           integrity_algorithm integ_algo_,
+                           bool                allow_unprotected_);
   ~integrity_engine_generic() = default;
 
   security_status protect_integrity(byte_buffer& buf, uint32_t count) override;
@@ -29,6 +30,7 @@ private:
   integrity_algorithm integ_algo;
 
   ocudulog::basic_logger& logger;
+  bool                    allow_unprotected = false;
 };
 
 } // namespace security

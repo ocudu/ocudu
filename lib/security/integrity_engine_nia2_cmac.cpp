@@ -13,8 +13,13 @@ using namespace security;
 
 integrity_engine_nia2_cmac::integrity_engine_nia2_cmac(sec_128_key        k_128_int_,
                                                        uint8_t            bearer_id_,
-                                                       security_direction direction_) :
-  k_128_int(k_128_int_), bearer_id(bearer_id_), direction(direction_), logger(ocudulog::fetch_basic_logger("SEC"))
+                                                       security_direction direction_,
+                                                       bool               allow_unprotected_) :
+  k_128_int(k_128_int_),
+  bearer_id(bearer_id_),
+  direction(direction_),
+  logger(ocudulog::fetch_basic_logger("SEC")),
+  allow_unprotected(allow_unprotected_)
 {
   cipher_info = mbedtls_cipher_info_from_type(MBEDTLS_CIPHER_AES_128_ECB);
   if (cipher_info == nullptr) {
@@ -119,7 +124,7 @@ security_status integrity_engine_nia2_cmac::verify_integrity(byte_buffer& buf, u
   byte_buffer_view v{buf, 0, buf.length() - sec_mac_len};
   byte_buffer_view m{buf, buf.length() - sec_mac_len, sec_mac_len};
 
-  // compute MAC
+  // Compute MAC-I.
   security::sec_mac mac    = {};
   security_status   status = compute_mac(mac, v, count);
 
@@ -127,8 +132,23 @@ security_status integrity_engine_nia2_cmac::verify_integrity(byte_buffer& buf, u
     return status;
   }
 
-  // verify MAC-I
+  // Verify MAC-I.
   if (!std::equal(mac.begin(), mac.end(), m.begin(), m.end())) {
+    if (allow_unprotected) {
+      // Unprotected PDUs are expected to fail the integrity check but must have zero MAC-I.
+      static constexpr security::sec_mac zero_mac = {};
+      if (std::equal(zero_mac.begin(), zero_mac.end(), m.begin(), m.end())) {
+        // Integrity passed (as unprotected).
+        logger.debug("Integrity check passed as unprotected with zero MAC-I. count={}", count);
+        logger.debug("K_int: {}", k_128_int);
+        logger.debug(v.begin(), v.end(), "Message input:");
+
+        // Trim MAC-I from PDU.
+        buf.trim_tail(sec_mac_len);
+        return security_status::success_unprotected;
+      }
+    }
+    // Integrity failure.
     security::sec_mac mac_rx;
     std::copy(m.begin(), m.end(), mac_rx.begin());
     logger.warning("Integrity check failed. count={}", count);
@@ -138,14 +158,14 @@ security_status integrity_engine_nia2_cmac::verify_integrity(byte_buffer& buf, u
     logger.warning(v.begin(), v.end(), "Message input:");
     return security_status::integrity_failure;
   }
+  // Integrity passed (as protected).
   logger.debug("Integrity check passed. count={}", count);
   logger.debug("K_int: {}", k_128_int);
   logger.debug("MAC-I: {}", mac);
   logger.debug(v.begin(), v.end(), "Message input:");
 
-  // trim MAC-I from PDU
+  // Trim MAC-I from PDU.
   buf.trim_tail(sec_mac_len);
-
   return security_status::success;
 }
 

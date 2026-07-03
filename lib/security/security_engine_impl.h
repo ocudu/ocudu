@@ -29,7 +29,6 @@ private:
   std::unique_ptr<ciphering_engine> cipher_eng;
 
   ocudulog::basic_logger& logger;
-  bool                    allow_unprotected = false;
 };
 
 } // namespace ocudu::security

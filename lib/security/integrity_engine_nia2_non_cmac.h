@@ -14,7 +14,10 @@ namespace security {
 class integrity_engine_nia2_non_cmac final : public integrity_engine
 {
 public:
-  integrity_engine_nia2_non_cmac(sec_128_key k_128_int_, uint8_t bearer_id_, security_direction direction_);
+  integrity_engine_nia2_non_cmac(sec_128_key        k_128_int_,
+                                 uint8_t            bearer_id_,
+                                 security_direction direction_,
+                                 bool               allow_unprotected_);
   ~integrity_engine_nia2_non_cmac();
 
   security_status protect_integrity(byte_buffer& buf, uint32_t count) override;
@@ -35,6 +38,7 @@ private:
   static constexpr std::array<uint8_t, 16> zeros = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
   ocudulog::basic_logger& logger;
+  bool                    allow_unprotected = false;
 };
 
 } // namespace security

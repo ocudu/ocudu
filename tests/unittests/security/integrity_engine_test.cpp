@@ -113,7 +113,7 @@ TEST_P(fxt_nia1, integrity_engine_generic_nia1)
 
   // Create integrity engine
   std::unique_ptr<integrity_engine> nia =
-      std::make_unique<integrity_engine_generic>(key, param.bearer, dir, integrity_algorithm::nia1);
+      std::make_unique<integrity_engine_generic>(key, param.bearer, dir, integrity_algorithm::nia1, false);
 
   // Apply integrity and compare results
   for (unsigned i = 0; i < 2; i++) {
@@ -150,7 +150,7 @@ TEST_P(fxt_nia2, integrity_engine_nia2_cmac)
   ASSERT_TRUE(prot_buf.append(mact_buf));
 
   // Create integrity engine
-  std::unique_ptr<integrity_engine> nia = std::make_unique<integrity_engine_nia2_cmac>(key, param.bearer, dir);
+  std::unique_ptr<integrity_engine> nia = std::make_unique<integrity_engine_nia2_cmac>(key, param.bearer, dir, false);
 
   // Apply integrity and compare results
   for (unsigned i = 0; i < 2; i++) {
@@ -187,7 +187,8 @@ TEST_P(fxt_nia2, integrity_engine_nia2_non_cmac)
   ASSERT_TRUE(prot_buf.append(mact_buf));
 
   // Create integrity engine
-  std::unique_ptr<integrity_engine> nia = std::make_unique<integrity_engine_nia2_non_cmac>(key, param.bearer, dir);
+  std::unique_ptr<integrity_engine> nia =
+      std::make_unique<integrity_engine_nia2_non_cmac>(key, param.bearer, dir, false);
 
   // Apply integrity and compare results
   for (unsigned i = 0; i < 2; i++) {
@@ -224,7 +225,7 @@ TEST_P(fxt_nia2, integrity_engine_generic_nia2)
 
   // Create integrity engine
   std::unique_ptr<integrity_engine> nia =
-      std::make_unique<integrity_engine_generic>(key, param.bearer, dir, integrity_algorithm::nia2);
+      std::make_unique<integrity_engine_generic>(key, param.bearer, dir, integrity_algorithm::nia2, false);
 
   // Apply integrity and compare results
   for (unsigned i = 0; i < 2; i++) {
@@ -261,7 +262,7 @@ TEST_P(fxt_nia3, integrity_engine_generic_nia3)
 
   // Create integrity engine
   std::unique_ptr<integrity_engine> nia =
-      std::make_unique<integrity_engine_generic>(key, param.bearer, dir, integrity_algorithm::nia3);
+      std::make_unique<integrity_engine_generic>(key, param.bearer, dir, integrity_algorithm::nia3, false);
 
   // Apply integrity and compare results
   for (unsigned i = 0; i < 2; i++) {
