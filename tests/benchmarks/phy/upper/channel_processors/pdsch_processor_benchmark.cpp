@@ -64,6 +64,42 @@ benchmark_modes to_benchmark_mode(const char* string)
   return benchmark_modes::invalid;
 }
 
+static bool adjust_precoding_for_two_codewords(precoding_configuration& precoding)
+{
+  unsigned nof_layers = precoding.get_nof_layers();
+  unsigned nof_ports  = precoding.get_nof_ports();
+
+  // If the number of layers is less than four, only one codeword is transmitted.
+  if (nof_layers <= 4) {
+    return false;
+  }
+
+  // For two codewords, the number of ports must be at least eight to allow more than four layers.
+  if (nof_ports < 8) {
+    return false;
+  }
+
+  // Number of layers for the first codeword as per TS38.211 Table 7.3.1.3-1.
+  unsigned nof_layers_cw0 = nof_layers / 2;
+
+  // Half the number of ports.
+  unsigned nof_half_ports = nof_ports / 2;
+
+  // Check the upper-left diagonal subset of coefficients for the first codeword.
+  for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
+    for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+      bool is_upper_left  = (i_port < nof_half_ports) && (i_layer < nof_layers_cw0);
+      bool is_lower_right = (i_port >= nof_half_ports) && (i_layer >= nof_layers_cw0);
+
+      if (!is_upper_left && !is_lower_right) {
+        precoding.set_coefficient(cf_t(0.0f, 0.0f), i_layer, i_port, 0);
+      }
+    }
+  }
+
+  return true;
+}
+
 // Maximum number of threads given the CPU hardware.
 static const unsigned max_nof_threads = std::thread::hardware_concurrency();
 
@@ -84,8 +120,10 @@ static benchmark_modes                    benchmark_mode        = benchmark_mode
 static std::string                        tracing_filename;
 static dmrs_config_type                   dmrs                        = dmrs_config_type::type1;
 static unsigned                           nof_cdm_groups_without_data = 2;
-static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_mask =
+static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_single_mask =
     {false, false, true, false, false, false, false, true, false, false, false, true, false, false};
+static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_double_mask =
+    {false, false, true, true, false, false, false, false, false, false, false, false, false, false};
 static unsigned                                                 nof_pdsch_processor_concurrent_threads = 0;
 static unsigned                                                 cb_batch_length = std::numeric_limits<unsigned>::max();
 static std::unique_ptr<task_worker_pool<queue_policy>>          cb_worker_pool  = nullptr;
@@ -103,7 +141,7 @@ static std::string            eal_arguments   = "";
 
 // Test profile structure, initialized with default profile values.
 struct test_profile {
-  enum class mimo_topology { one_port_one_layer = 0, two_port_two_layer, four_port_four_layer };
+  enum class mimo_topology { one_port_one_layer = 0, two_port_two_layer, four_port_four_layer, eight_port_eight_layer };
 
   std::string                      name         = "default";
   std::string                      description  = "Runs all combinations.";
@@ -261,6 +299,28 @@ static const std::vector<test_profile> profile_set = {
      12,
      {270},
      {{modulation_scheme::QAM256, 948.0F}}},
+
+    {"8port_8layer_scs30_100MHz_256qam",
+     "Encodes 8 layers of PDSCH with 100 MHz of bandwidth and a 30 kHz SCS, 256-QAM modulation at maximum code rate.",
+     subcarrier_spacing::kHz30,
+     {0},
+     cyclic_prefix::NORMAL,
+     0,
+     test_profile::mimo_topology::eight_port_eight_layer,
+     12,
+     {270},
+     {{modulation_scheme::QAM256, 948.0F}}},
+
+    {"8port_8layer_scs30_100MHz_1024qam",
+     "Encodes 8 layers of PDSCH with 100 MHz of bandwidth and a 30 kHz SCS, 1024-QAM modulation at maximum code rate.",
+     subcarrier_spacing::kHz30,
+     {0},
+     cyclic_prefix::NORMAL,
+     0,
+     test_profile::mimo_topology::eight_port_eight_layer,
+     12,
+     {270},
+     {{modulation_scheme::QAM1024, 948.0F}}},
 };
 
 static void usage(const char* prog)
@@ -435,14 +495,19 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
 {
   std::vector<test_case_type> test_case_set;
 
-  // Select precoding configuration.
+  // Precoding configuration selected from profile.
   precoding_configuration precoding_config;
+  // DM-RS symbol mask selected from profile.
+  static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_mask;
+
   switch (profile.mimo) {
     case test_profile::mimo_topology::one_port_one_layer:
       precoding_config = precoding_configuration::make_wideband(make_single_port());
+      dmrs_mask        = dmrs_single_mask;
       break;
     case test_profile::mimo_topology::two_port_two_layer:
       precoding_config = precoding_configuration::make_wideband(make_two_layer_two_ports(0));
+      dmrs_mask        = dmrs_single_mask;
       break;
     case test_profile::mimo_topology::four_port_four_layer:
       precoding_config = precoding_configuration::make_wideband(make_type1_sp_mode1(
@@ -452,47 +517,81 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
                                  std::nullopt,
                                  0},
           4));
+      dmrs_mask        = dmrs_single_mask;
+      break;
+    case test_profile::mimo_topology::eight_port_eight_layer:
+      precoding_config = precoding_configuration::make_wideband(make_type1_sp_mode1(
+          pmi_typeI_single_panel{{pmi_codebook_single_panel_config::four_one, pmi_codebook_typeI_mode::one},
+                                 0,
+                                 std::nullopt,
+                                 std::nullopt,
+                                 0},
+          8));
+
+      // Adjust precoding for two codeword transmission.
+      bool succ = adjust_precoding_for_two_codewords(precoding_config);
+      TESTASSERT(succ, "Could not adjust {}-layer precoding for two codewords.", precoding_config.get_nof_layers());
+
+      // Transmissions with more than four layers require time-domain OCC. This requires a double-symbol DM-RS, so a
+      // front-loaded pair of adjacent DM-RS symbols is used in that case.
+      dmrs_mask = dmrs_double_mask;
       break;
   }
 
   for (sch_mcs_description mcs : profile.mcs_set) {
     for (unsigned nof_prb : profile.nof_prb_set) {
       for (unsigned i_rv : profile.rv_set) {
+        // Extract the number of layers from precoding configuration.
+        unsigned nof_layers = precoding_config.get_nof_layers();
+        // Calculate the number of layers per codeword. Assume that the profile for two transport blocks is eight layers
+        // and both transport block have equal size.
+        unsigned nof_layers_per_cw = (nof_layers > 4) ? (nof_layers / 2) : nof_layers;
+
         // Determine the Transport Block Size.
         tbs_calculator_configuration tbs_config = {};
         tbs_config.mcs_descr                    = mcs;
         tbs_config.n_prb                        = nof_prb;
-        tbs_config.nof_layers                   = precoding_config.get_nof_layers();
+        tbs_config.nof_layers                   = nof_layers_per_cw;
         tbs_config.nof_symb_sh                  = profile.nof_symbols;
         tbs_config.nof_dmrs_prb = get_nof_re_per_prb(dmrs) * dmrs_mask.count() * nof_cdm_groups_without_data;
         units::bits tbs         = tbs_calculator_calculate(tbs_config).to_bits();
 
+        ldpc_base_graph_type ldpc_base_graph =
+            get_ldpc_base_graph(mcs.get_normalised_target_code_rate(), units::bits(tbs));
+
+        static_vector<pdsch_processor::codeword_description, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>
+            codeword_descriptions;
+        codeword_descriptions.push_back(pdsch_processor::codeword_description{mcs.modulation, i_rv, ldpc_base_graph});
+
+        if (precoding_config.get_nof_layers() > 4) {
+          // Add a second transport block for more than four layers.
+          codeword_descriptions.push_back(pdsch_processor::codeword_description{mcs.modulation, i_rv, ldpc_base_graph});
+        }
+
         // Build the PDSCH PDU configuration.
-        pdsch_processor::pdu_t config = {
-            .context                     = std::nullopt,
-            .slot                        = slot_point(to_numerology_value(profile.scs), 0),
-            .rnti                        = to_rnti(1),
-            .bwp_size_rb                 = nof_prb,
-            .bwp_start_rb                = 0,
-            .cp                          = profile.cp,
-            .codewords                   = {pdsch_processor::codeword_description{
-                mcs.modulation, i_rv, get_ldpc_base_graph(mcs.get_normalised_target_code_rate(), units::bits(tbs))}},
-            .n_id                        = 0,
-            .ref_point                   = pdsch_processor::pdu_t::CRB0,
-            .dmrs_symbol_mask            = dmrs_mask,
-            .dmrs                        = dmrs_config_type::type1,
-            .scrambling_id               = 0,
-            .n_scid                      = false,
-            .nof_cdm_groups_without_data = nof_cdm_groups_without_data,
-            .freq_alloc                  = rb_allocation::make_type1(config.bwp_start_rb, nof_prb),
-            .start_symbol_index          = profile.start_symbol,
-            .nof_symbols                 = profile.nof_symbols,
-            .tbs_lbrm                    = units::bits(ldpc::MAX_CODEBLOCK_SIZE).truncate_to_bytes(),
-            .reserved                    = {},
-            .ptrs                        = std::nullopt,
-            .ratio_pdsch_dmrs_to_sss_dB  = 0.0,
-            .ratio_pdsch_data_to_sss_dB  = 0.0,
-            .precoding                   = precoding_config};
+        pdsch_processor::pdu_t config = {.context                     = std::nullopt,
+                                         .slot                        = slot_point(to_numerology_value(profile.scs), 0),
+                                         .rnti                        = to_rnti(1),
+                                         .bwp_size_rb                 = nof_prb,
+                                         .bwp_start_rb                = 0,
+                                         .cp                          = profile.cp,
+                                         .codewords                   = std::move(codeword_descriptions),
+                                         .n_id                        = 0,
+                                         .ref_point                   = pdsch_processor::pdu_t::CRB0,
+                                         .dmrs_symbol_mask            = dmrs_mask,
+                                         .dmrs                        = dmrs_config_type::type1,
+                                         .scrambling_id               = 0,
+                                         .n_scid                      = false,
+                                         .nof_cdm_groups_without_data = nof_cdm_groups_without_data,
+                                         .freq_alloc         = rb_allocation::make_type1(config.bwp_start_rb, nof_prb),
+                                         .start_symbol_index = profile.start_symbol,
+                                         .nof_symbols        = profile.nof_symbols,
+                                         .tbs_lbrm = units::bits(ldpc::MAX_CODEBLOCK_SIZE).truncate_to_bytes(),
+                                         .reserved = {},
+                                         .ptrs     = std::nullopt,
+                                         .ratio_pdsch_dmrs_to_sss_dB = 0.0,
+                                         .ratio_pdsch_data_to_sss_dB = 0.0,
+                                         .precoding                  = precoding_config};
         test_case_set.emplace_back(std::tuple<pdsch_processor::pdu_t, unsigned>(config, tbs.value()));
       }
     }
@@ -680,15 +779,14 @@ static pdsch_processor_factory& get_processor_factory()
   // Create PDSCH concurrent pool for asynchronous codeblock processing.
   cb_worker_pool = std::make_unique<task_worker_pool<queue_policy>>(
       "pdsch_proc", std::max(1U, nof_pdsch_processor_concurrent_threads), 1024, sleep_duration);
-  cb_executor = std::make_unique<task_worker_pool_executor<queue_policy>>(*cb_worker_pool);
 
   // Initialize task executors for asynchronous PDSCH processors only.
   unsigned nof_concurrent_pdsch = nof_threads;
   if (nof_pdsch_processor_concurrent_threads > 0) {
     nof_concurrent_pdsch += nof_pdsch_processor_concurrent_threads;
-  } else {
-    cb_worker_pool = std::make_unique<task_worker_pool<queue_policy>>("pdsch_proc", 1, 1024);
   }
+
+  cb_executor = std::make_unique<task_worker_pool_executor<queue_policy>>(*cb_worker_pool);
 
   // Create flexible PDSCH processor.
   pdsch_proc_factory = create_pdsch_flexible_processor_factory_sw(ldpc_segm_tx_factory,
@@ -826,10 +924,24 @@ int main(int argc, char** argv)
     // Update data reference.
     span<const uint8_t> data = data_vector;
 
+    static_vector<shared_transport_block, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> transport_blocks;
+    transport_blocks.push_back(shared_transport_block(data));
+
+    // Add a second transport block for more than four layers.
+    std::vector<uint8_t> data_vector_2tb;
+    if (config.precoding.get_nof_layers() > 4) {
+      data_vector_2tb.resize(tbs / 8);
+      std::generate(
+          data_vector_2tb.begin(), data_vector_2tb.end(), [&rgen]() { return static_cast<uint8_t>(rgen() & 0xff); });
+      transport_blocks.push_back(shared_transport_block(data_vector_2tb));
+      tbs *= 2;
+    }
+
     std::unique_ptr<pdsch_pdu_validator> validator = create_validator();
 
     // Make sure the configuration is valid.
-    TESTASSERT(validator->is_valid(config));
+    error_type<std::string> validator_result = validator->is_valid(config);
+    TESTASSERT(validator_result.has_value(), "{}", validator_result.error());
 
     // Calculate the peak throughput, considering that the number of bits is for a slot.
     double slot_duration_us     = 1e3 / static_cast<double>(pow2(config.slot.numerology()));
@@ -847,46 +959,53 @@ int main(int argc, char** argv)
     std::atomic<unsigned> completion_counter = 0;
 
     // Create benchmark routine.
-    auto benchmark_task =
-        [&notifiers, &grids, &data, &config, &proc, &completion_counter]() noexcept OCUDU_RTSAN_NONBLOCKING {
-          // Reset counter.
-          completion_counter = 0;
+    auto benchmark_task = [&notifiers,
+                           &grids,
+                           transport_blocks = std::move(transport_blocks),
+                           &config,
+                           &proc,
+                           &completion_counter]() noexcept OCUDU_RTSAN_NONBLOCKING {
+      // Reset counter.
+      completion_counter = 0;
 
-          // Spawn tasks for each therad.
-          for (unsigned i_thread = 0; i_thread != nof_threads; ++i_thread) {
-            // Select notifier.
-            pdsch_processor_notifier_spy& notifier = notifiers[i_thread];
+      // Spawn tasks for each therad.
+      for (unsigned i_thread = 0; i_thread != nof_threads; ++i_thread) {
+        // Select notifier.
+        pdsch_processor_notifier_spy& notifier = notifiers[i_thread];
 
-            bool success = pdsch_executor->execute(
-                [&notifier, &grids, &data, &config, &proc, &completion_counter]() noexcept OCUDU_RTSAN_NONBLOCKING {
-                  // Get a resource grid.
-                  auto grid = grids.get();
-                  report_fatal_error_if_not(grid, "Failed to retrieve resource grid.");
+        bool success = pdsch_executor->execute([&notifier,
+                                                &grids,
+                                                &transport_blocks,
+                                                &config,
+                                                &proc,
+                                                &completion_counter]() noexcept OCUDU_RTSAN_NONBLOCKING {
+          // Get a resource grid.
+          auto grid = grids.get();
+          report_fatal_error_if_not(grid, "Failed to retrieve resource grid.");
 
-                  // Repeat PDSCH transmission.
-                  for (unsigned i_pdsch = 0; i_pdsch != batch_size_per_thread; ++i_pdsch) {
-                    // Reset notifier.
-                    notifier.reset();
+          // Repeat PDSCH transmission.
+          for (unsigned i_pdsch = 0; i_pdsch != batch_size_per_thread; ++i_pdsch) {
+            // Reset notifier.
+            notifier.reset();
 
-                    // Process PDSCH transmission.
-                    proc->process(grid->get_writer(), notifier, {shared_transport_block(data)}, config);
+            // Process PDSCH transmission.
+            proc->process(grid->get_writer(), notifier, transport_blocks, config);
 
-                    // Wait for notifier before starting next PDSCH transmission.
-                    notifier.wait_for_finished();
-                  }
-
-                  // Count the completion of the thread.
-                  ++completion_counter;
-                });
-
-            report_fatal_error_if_not(success, "Failed to execute.");
+            // Wait for notifier before starting next PDSCH transmission.
+            notifier.wait_for_finished();
           }
+          // Count the completion of the thread.
+          ++completion_counter;
+        });
 
-          // Wait for completion.
-          while (completion_counter != nof_threads) {
-            std::this_thread::sleep_for(sleep_duration);
-          }
-        };
+        report_fatal_error_if_not(success, "Failed to execute.");
+      }
+
+      // Wait for completion.
+      while (completion_counter != nof_threads) {
+        std::this_thread::sleep_for(sleep_duration);
+      }
+    };
 
     // Run the benchmark.
     perf_meas.new_measure(to_string(meas_description), nof_threads * batch_size_per_thread * tbs, benchmark_task);

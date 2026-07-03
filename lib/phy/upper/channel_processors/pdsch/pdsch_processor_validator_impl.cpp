@@ -82,6 +82,35 @@ error_type<std::string> pdsch_processor_validator_impl::is_valid(const pdsch_pro
     return make_unexpected("Only DM-RS Type 1 is currently supported.");
   }
 
+  // Transmissions with more than four layers require DM-RS time-domain OCC, as per TS38.211 Table 7.4.1.1.2-1.
+  if (pdu.precoding.get_nof_layers() > 4) {
+    for (unsigned i_symbol = 0, e = pdu.dmrs_symbol_mask.size(); i_symbol != e;) {
+      if (!pdu.dmrs_symbol_mask.test(i_symbol)) {
+        ++i_symbol;
+        continue;
+      }
+
+      // The DM-RS symbol must be immediately followed by another DM-RS symbol to form a double-symbol pair.
+      if ((i_symbol + 1 >= e) || !pdu.dmrs_symbol_mask.test(i_symbol + 1)) {
+        return make_unexpected(fmt::format(
+            "A transmission with {} layers requires double-symbol DM-RS, but the DM-RS symbol mask (i.e., {}) "
+            "is not composed of adjacent symbol pairs.",
+            pdu.precoding.get_nof_layers(),
+            pdu.dmrs_symbol_mask));
+      }
+
+      // Skip the pair.
+      i_symbol += 2;
+    }
+  }
+
+  if (pdu.precoding.get_nof_ports() % pdu.codewords.size() != 0) {
+    return make_unexpected(
+        fmt::format("The number of ports (i.e., {}) must be divisible by the number of codewords (i.e., {}).",
+                    pdu.precoding.get_nof_ports(),
+                    pdu.codewords.size()));
+  }
+
   // The number of CDM groups without data must not exceed the maximum supported by the DM-RS type.
   if (pdu.nof_cdm_groups_without_data > get_max_nof_cdm_groups_without_data(dmrs_config)) {
     return make_unexpected(fmt::format(

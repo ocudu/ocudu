@@ -34,10 +34,6 @@ void pdsch_processor_flexible_impl::process(resource_grid_writer&               
   [[maybe_unused]] std::string msg;
   ocudu_assert(handle_validation(msg, pdsch_processor_validator_impl().is_valid(pdu_)), "{}", msg);
 
-  // Only one codeword is currently supported in the flexible processor.
-  ocudu_assert((data_.size() == 1) && (pdu_.codewords.size() == 1),
-               "The flexible PDSCH processor only support one codeword.");
-
   // Initialize transmission and save inputs.
   initialize_new_transmission(grid_, notifier_, std::move(data_), pdu_);
 
@@ -49,14 +45,6 @@ void pdsch_processor_flexible_impl::process(resource_grid_writer&               
 
     l1_dl_tracer << trace_event("sync_pdsch_cb_processing", process_pdsch_tp);
   } else {
-    // Calculate modulation scaling.
-    float scaling = convert_dB_to_amplitude(-config.ratio_pdsch_data_to_sss_dB);
-
-    // Apply modulation mapper scaling to the precoding matrix.
-    scaling *= modulation_mapper::get_modulation_scaling(config.codewords.front().modulation);
-    precoding = config.precoding;
-    precoding *= scaling;
-
     // Set the number of asynchronous tasks. It counts as CB processing and DM-RS generation.
     async_task_counter = 2;
 
@@ -114,7 +102,139 @@ void pdsch_processor_flexible_impl::process(resource_grid_writer&               
     }
 
     // Fork codeblock processing tasks.
-    fork_cb_batches();
+    for (unsigned i_cw = 0; i_cw != nof_codewords; ++i_cw) {
+      fork_codeword_processing(i_cw);
+    }
+  }
+}
+
+void pdsch_processor_flexible_impl::initialize_codeword(unsigned i_cw, shared_transport_block& data, const pdu_t& pdu)
+{
+  // Get the PDSCH processor context for this codeword.
+  pdsch_processor_cw_context& codeword_context = processor_context[i_cw];
+
+  // Set the transport block data.
+  codeword_context.data = std::move(data);
+
+  // Get the codeword LDPC base graph.
+  ldpc_base_graph_type ldpc_base_graph = config.codewords[i_cw].ldpc_base_graph;
+
+  // Calculate transport block size.
+  units::bits tbs = units::bytes(codeword_context.data.get_buffer().size()).to_bits();
+
+  // Calculate number of codeblocks.
+  codeword_context.nof_cb = compute_nof_codeblocks(tbs, ldpc_base_graph);
+
+  // Number of tasks, or codeblock batches, that the codeword will spawn.
+  codeword_context.nof_cb_batches = divide_ceil(codeword_context.nof_cb, nof_cb_per_batch);
+
+  // If the number of codeblocks per batch is very big (e.g., UINT_MAX), the result of the division is zero - ensure
+  // at least one codeblock batch is processed.
+  if (codeword_context.nof_cb_batches == 0) {
+    codeword_context.nof_cb_batches = 1;
+  }
+
+  // If only one codeword is transmitted, the processing is asynchronous if the number of codeblocks for the codeword is
+  // larger than the maximum number of codeblocks per batch.
+  if (!async_proc) {
+    async_proc = (codeword_context.nof_cb > max_nof_codeblocks_per_batch);
+  }
+
+  // Extract the modulation scheme.
+  modulation_scheme modulation = config.codewords[i_cw].modulation;
+
+  // Number of ports for precoding - in case of two codewords, each is mapped to a different half.
+  unsigned nof_ports = ports.size() / nof_codewords;
+
+  // Number of transmission layers from precoding configuration.
+  unsigned nof_layers = pdu.precoding.get_nof_layers();
+
+  // The layer mapping per codeword is defined in TS38.211 Table 7.3.1.3-1.
+  unsigned base_layers = nof_layers / nof_codewords;
+
+  // Number of layers that each codeword is mapped into.
+  std::array<unsigned, MAX_NOF_TRANSPORT_BLOCKS> nof_layers_per_cw = {base_layers, nof_layers - base_layers};
+
+  // Number of layers that this codeword is mapped into.
+  unsigned nof_layers_cw      = nof_layers_per_cw[i_cw];
+  codeword_context.nof_layers = nof_layers_cw;
+
+  // Get a view of the list of ports where the codeword is being mapped to.
+  codeword_context.ports = span<const uint8_t>(ports.data(), ports.size()).subspan(i_cw * nof_ports, nof_ports);
+
+  // Extract the codeword-specific precoding.
+  codeword_context.precoding =
+      config.precoding.slice(interval<uint8_t>::start_and_len(i_cw * nof_layers_per_cw[0], nof_layers_cw),
+                             interval<uint8_t>::start_and_len(i_cw * nof_ports, nof_ports));
+
+  // Apply scaling
+  float scaling = convert_dB_to_amplitude(-config.ratio_pdsch_data_to_sss_dB);
+  scaling *= modulation_mapper::get_modulation_scaling(modulation);
+  codeword_context.precoding *= scaling;
+
+  // Extract redundancy version.
+  unsigned rv = config.codewords[i_cw].rv;
+
+  // Calculate rate match buffer size.
+  units::bits Nref = ldpc::compute_N_ref(config.tbs_lbrm, codeword_context.nof_cb);
+
+  // Derive block processor configuration.
+  codeword_context.block_config = pdsch_block_processor::configuration{.rnti            = config.rnti,
+                                                                       .modulation      = modulation,
+                                                                       .rv              = rv,
+                                                                       .n_id            = config.n_id,
+                                                                       .scrambling_id   = config.scrambling_id,
+                                                                       .ldpc_base_graph = ldpc_base_graph,
+                                                                       .nof_re_pdsch    = nof_re_pdsch,
+                                                                       .Nref            = Nref,
+                                                                       .nof_layers      = nof_layers_cw};
+
+  // Initialize the segmenter.
+  segmenter_config segmenter_cfg = {.transport_block_size = units::bytes(codeword_context.data.get_buffer().size()),
+                                    .base_graph           = ldpc_base_graph,
+                                    .rv                   = rv,
+                                    .mod                  = modulation,
+                                    .Nref                 = Nref.value(),
+                                    .nof_layers           = nof_layers_cw,
+                                    .nof_ch_symbols       = nof_layers_cw * nof_re_pdsch};
+
+  const ldpc_segmenter_buffer& segment_buffer = segmenters[i_cw]->new_transmission(segmenter_cfg);
+  codeword_context.segment_buffer             = &segment_buffer;
+
+  // If the processing is asynchronous, calculate the starting RE offset for each codeblock in the codeword.
+  if (async_proc) {
+    // Add the codeword contribution to the total task counter.
+    cb_task_counter += codeword_context.nof_cb_batches;
+
+    // Number of segments that will have a short rate-matched length. In TS38.212 Section 5.4.2.1, these correspond to
+    // codeblocks whose length E_r is computed by rounding down - floor. For the remaining codewords, the length is
+    // rounded up.
+    unsigned nof_short_segments = segment_buffer.get_nof_short_segments();
+
+    // Calculate RE offset for each codeblock.
+    codeword_context.re_offset.resize(codeword_context.nof_cb);
+    unsigned re_count_sum = 0;
+    for (unsigned i_cb = 0; i_cb != codeword_context.nof_cb; ++i_cb) {
+      // Calculate RM length in RE.
+      unsigned rm_length_re = divide_ceil(nof_re_pdsch, codeword_context.nof_cb);
+      if (i_cb < nof_short_segments) {
+        rm_length_re = nof_re_pdsch / codeword_context.nof_cb;
+      }
+
+      // Set RE offset for the resource mapper.
+      codeword_context.re_offset[i_cb] = re_count_sum;
+
+      // Increment RE count.
+      re_count_sum += rm_length_re;
+    }
+
+    // Make sure the codeword length is consistent with the number of REs for data.
+    [[maybe_unused]] units::bits bits_per_symbol(get_bits_per_symbol(config.codewords[i_cw].modulation));
+    [[maybe_unused]] units::bits cw_length = segment_buffer.get_cw_length();
+    ocudu_assert(re_count_sum * nof_layers_cw * bits_per_symbol == cw_length,
+                 "RM length sum (i.e., {}) must be equal to the codeword length (i.e., {}).",
+                 units::bits(re_count_sum * nof_layers_cw * bits_per_symbol),
+                 cw_length);
   }
 }
 
@@ -127,97 +247,30 @@ void pdsch_processor_flexible_impl::initialize_new_transmission(
   using namespace units::literals;
 
   // Save process parameter inputs.
-  grid     = &grid_;
-  notifier = &notifier_;
-  data     = std::move(data_.front());
-  config   = pdu;
+  grid          = &grid_;
+  notifier      = &notifier_;
+  config        = pdu;
+  nof_codewords = data_.size();
 
-  // Get the number of layers from the precoding configuration.
-  unsigned nof_layers = config.precoding.get_nof_layers();
+  // Ensure the number of ports is valid.
+  ocudu_assert(config.precoding.get_nof_ports() % nof_codewords == 0,
+               "The number of ports must be divisible by the number of codewords.");
 
   // Calculate the number of resource elements used to map PDSCH on the grid. Common for all codewords.
-  unsigned nof_re_pdsch = pdsch_compute_nof_data_re(config);
+  nof_re_pdsch = pdsch_compute_nof_data_re(config);
 
-  // Calculate transport block size.
-  units::bits tbs = units::bytes(data.get_buffer().size()).to_bits();
+  // Populate the full list of resource grid ports.
+  ports.resize(config.precoding.get_nof_ports());
+  std::iota(ports.begin(), ports.end(), 0);
 
-  // LDPC base graph for the codeword.
-  ldpc_base_graph_type ldpc_base_graph = config.codewords.front().ldpc_base_graph;
-
-  // Calculate number of codeblocks.
-  nof_cb = compute_nof_codeblocks(tbs, ldpc_base_graph);
-
-  modulation_scheme modulation = config.codewords.front().modulation;
-
-  // Calculate rate match buffer size.
-  units::bits Nref = ldpc::compute_N_ref(config.tbs_lbrm, nof_cb);
-
-  // Derive block processor configuration.
-  block_config = pdsch_block_processor::configuration{.rnti            = config.rnti,
-                                                      .modulation      = config.codewords.front().modulation,
-                                                      .rv              = config.codewords.front().rv,
-                                                      .n_id            = config.n_id,
-                                                      .scrambling_id   = config.scrambling_id,
-                                                      .ldpc_base_graph = ldpc_base_graph,
-                                                      .nof_re_pdsch    = nof_re_pdsch,
-                                                      .Nref            = Nref,
-                                                      .nof_layers      = nof_layers};
-
-  // Initialize the segmenter.
-  segmenter_config segmenter_cfg = {.transport_block_size = units::bytes(data.get_buffer().size()),
-                                    .base_graph           = ldpc_base_graph,
-                                    .rv                   = config.codewords.front().rv,
-                                    .mod                  = modulation,
-                                    .Nref                 = Nref.value(),
-                                    .nof_layers           = nof_layers,
-                                    .nof_ch_symbols       = nof_layers * nof_re_pdsch};
-  segment_buffer                 = &segmenter->new_transmission(segmenter_cfg);
-
-  // The processing of this transmission is synchronous if the number of codeblocks is smaller than the batch size.
-  async_proc = (nof_cb > max_nof_codeblocks_per_batch);
-
-  if (async_proc) {
-    units::bits bits_per_symbol(get_bits_per_symbol(modulation));
-
-    // Number of segments that will have a short rate-matched length. In TS38.212 Section 5.4.2.1, these correspond to
-    // codeblocks whose length E_r is computed by rounding down - floor. For the remaining codewords, the length is
-    // rounded up.
-    unsigned nof_short_segments = segment_buffer->get_nof_short_segments();
-
-    units::bits cw_length = segment_buffer->get_cw_length();
-
-    // Calculate RE offset for each codeblock.
-    re_offset.resize(nof_cb);
-    unsigned re_count_sum = 0;
-    for (unsigned i_cb = 0; i_cb != nof_cb; ++i_cb) {
-      // Calculate RM length in RE.
-      unsigned rm_length_re = divide_ceil(nof_re_pdsch, nof_cb);
-      if (i_cb < nof_short_segments) {
-        rm_length_re = nof_re_pdsch / nof_cb;
-      }
-
-      // Set RE offset for the resource mapper.
-      re_offset[i_cb] = re_count_sum;
-
-      // Increment RE count.
-      re_count_sum += rm_length_re;
-    }
-    ocudu_assert(re_count_sum * nof_layers * bits_per_symbol == cw_length,
-                 "RM length sum (i.e., {}) must be equal to the codeword length (i.e., {}).",
-                 units::bits(re_count_sum * nof_layers * bits_per_symbol),
-                 cw_length);
-  }
+  // If two codewords are transmitted, the processing is asynchronous.
+  async_proc = (nof_codewords > 1);
 
   // First symbol used in this transmission.
   unsigned start_symbol_index = config.start_symbol_index;
 
   // Calculate the end symbol index (excluded) and assert it does not exceed the slot boundary.
   unsigned end_symbol_index = config.start_symbol_index + config.nof_symbols;
-
-  ocudu_assert(end_symbol_index <= MAX_NSYMB_PER_SLOT,
-               "The time allocation of the transmission ({}:{}) exceeds the slot boundary.",
-               start_symbol_index,
-               end_symbol_index);
 
   // PDSCH OFDM symbol mask.
   symbol_slot_mask symbols;
@@ -240,14 +293,27 @@ void pdsch_processor_flexible_impl::initialize_new_transmission(
 
   // Merge DM-RS RE pattern into the reserved RE patterns.
   reserved.merge(dmrs_pattern);
+
+  // Initialize the processor for each codeword.
+  for (unsigned i_cw = 0; i_cw != nof_codewords; ++i_cw) {
+    initialize_codeword(i_cw, data_[i_cw], pdu);
+  }
 }
 
 void pdsch_processor_flexible_impl::sync_pdsch_cb_processing()
 {
+  // Synchronous PDSCH processing is only allowed when only one codeword is transmitted.
+  ocudu_assert(nof_codewords == 1, "Synchronous processing is only allowed for one codeword.");
+
+  // Get codeword processing context and description.
+  pdsch_processor_cw_context& codeword_context = processor_context.front();
+
+  // Get actual codeword data.
+  shared_transport_block data = codeword_context.data;
+
   auto execute_on_exit = make_scope_exit([this]() {
     // No more code block tasks pending to execute, it is now safe to discard the TB buffer.
-    data.release();
-
+    processor_context.front().data.release();
     // Notify end of the processing.
     notifier->on_finish_processing();
   });
@@ -259,24 +325,15 @@ void pdsch_processor_flexible_impl::sync_pdsch_cb_processing()
     return;
   }
 
-  // Calculate modulation scaling.
-  float scaling = convert_dB_to_amplitude(-config.ratio_pdsch_data_to_sss_dB);
-
-  // Apply scaling to the precoding matrix.
-  scaling *= modulation_mapper::get_modulation_scaling(config.codewords.front().modulation);
-  precoding = config.precoding;
-  precoding *= scaling;
+  // Get the LDPC segmenter buffer of the codeword.
+  const ldpc_segmenter_buffer* segment_buffer = codeword_context.segment_buffer;
 
   // Configure the new transmission. Codeword index, start CB index and CB batch length are fixed.
-  resource_grid_mapper::symbol_buffer& grid_buffer =
-      block_processor->configure_new_transmission(data.get_buffer(), 0, block_config, *segment_buffer, 0, nof_cb);
-
-  // Create resource grid port list.
-  static_vector<uint8_t, precoding_constants::MAX_NOF_PORTS> port_list(config.precoding.get_nof_ports());
-  std::iota(port_list.begin(), port_list.end(), 0);
+  resource_grid_mapper::symbol_buffer& grid_buffer = block_processor->configure_new_transmission(
+      data.get_buffer(), 0, codeword_context.block_config, *segment_buffer, 0, codeword_context.nof_cb);
 
   // Map PDSCH.
-  mapper->map(*grid, grid_buffer, allocation, reserved, port_list, precoding);
+  mapper->map(*grid, grid_buffer, allocation, reserved, codeword_context.ports, codeword_context.precoding);
 
   // Prepare PT-RS configuration and generate.
   if (config.ptrs) {
@@ -301,39 +358,28 @@ void pdsch_processor_flexible_impl::sync_pdsch_cb_processing()
   }
 }
 
-void pdsch_processor_flexible_impl::fork_cb_batches()
+void pdsch_processor_flexible_impl::fork_codeword_processing(unsigned i_cw)
 {
-  // Codeword index is fix.
-  static constexpr unsigned i_cw = 0;
+  // Get the codeword processing context.
+  pdsch_processor_cw_context& codeword_ctx = processor_context[i_cw];
+  // Get the number of codeblock batches that the codeword is divided into.
+  unsigned nof_cb_batches_cw = codeword_ctx.nof_cb_batches;
 
-  // Homogeneous batches of CBs will be processed per thread, unless otherwise specified.
-  unsigned nof_cb_per_batch = std::max(1U, max_nof_codeblocks_per_batch);
-
-  // Limit the number of tasks to the number of codeblock batches.
-  unsigned nof_cb_batches = divide_ceil(nof_cb, nof_cb_per_batch);
-
-  // Set number of codeblock batches.
-  cb_task_counter = nof_cb_batches;
-
-  // Create resource grid port list.
-  static_vector<uint8_t, precoding_constants::MAX_NOF_PORTS> port_list(config.precoding.get_nof_ports());
-  std::iota(port_list.begin(), port_list.end(), 0);
-
-  // Spawn a task for each codeblock bactch.
-  for (unsigned i_task = 0; i_task != nof_cb_batches; ++i_task) {
-    // Queue batches in reverse order.
-    unsigned i_batch = nof_cb_batches - 1 - i_task;
+  // Spawn a task for each codeblock batch.
+  for (unsigned i_task = 0; i_task != nof_cb_batches_cw; ++i_task) {
+    unsigned i_batch = nof_cb_batches_cw - 1 - i_task;
 
     // Create asynchronous task for the codeblock batch.
-    auto async_task = [this, nof_cb_per_batch, i_batch, port_list]() noexcept OCUDU_RTSAN_NONBLOCKING {
+    auto async_task = [this, i_batch, i_cw, &codeword_ctx]() noexcept OCUDU_RTSAN_NONBLOCKING {
       // Start PDSCH codeblock batch tracing.
       trace_point cb_batch_pdsch_tp = l1_dl_tracer.now();
 
       // Code to execute when returning.
-      auto exec_at_exit = make_scope_exit([this]() { // Decrement code block batch counter.
+      auto exec_at_exit = make_scope_exit([this, &codeword_ctx]() {
+        // Decrement code block batch counter.
         if (cb_task_counter.fetch_sub(1) == 1) {
           // No more code block tasks pending to execute, it is now safe to discard the TB buffer.
-          data.release();
+          codeword_ctx.data.release();
           // Decrement asynchronous task counter.
           if (async_task_counter.fetch_sub(1) == 1) {
             // Notify end of the processing.
@@ -353,14 +399,28 @@ void pdsch_processor_flexible_impl::fork_cb_batches()
       unsigned first_cb_index = i_batch * nof_cb_per_batch;
 
       // Limit batch size for the last batch.
-      unsigned next_cb_batch_length = std::min(nof_cb - first_cb_index, nof_cb_per_batch);
+      unsigned next_cb_batch_length = std::min(codeword_ctx.nof_cb - first_cb_index, nof_cb_per_batch);
+
+      // Get the LDPC segmenter buffer for this codeword.
+      const ldpc_segmenter_buffer* segmenter_buffer = codeword_ctx.segment_buffer;
 
       // Configure new transmission.
-      resource_grid_mapper::symbol_buffer& grid_buffer = block_processor->configure_new_transmission(
-          data.get_buffer(), i_cw, block_config, *segment_buffer, first_cb_index, next_cb_batch_length);
+      resource_grid_mapper::symbol_buffer& grid_buffer =
+          block_processor->configure_new_transmission(codeword_ctx.data.get_buffer(),
+                                                      i_cw,
+                                                      codeword_ctx.block_config,
+                                                      *segmenter_buffer,
+                                                      first_cb_index,
+                                                      next_cb_batch_length);
 
       // Map PDSCH.
-      mapper->map(*grid, grid_buffer, allocation, reserved, port_list, precoding, re_offset[first_cb_index]);
+      mapper->map(*grid,
+                  grid_buffer,
+                  allocation,
+                  reserved,
+                  codeword_ctx.ports,
+                  codeword_ctx.precoding,
+                  codeword_ctx.re_offset[first_cb_index]);
 
       // Trace PDSCH.
       l1_dl_tracer << trace_event("CB batch", cb_batch_pdsch_tp);
@@ -368,7 +428,7 @@ void pdsch_processor_flexible_impl::fork_cb_batches()
 
     // Try to execute task asynchronously.
     bool successful = false;
-    if (nof_cb_batches > 1) {
+    if (codeword_ctx.nof_cb_batches > 1) {
       successful = executor.defer(async_task);
     }
 

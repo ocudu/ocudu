@@ -110,10 +110,16 @@ void ocudu::dmrs_pdsch_processor_impl::map(resource_grid_writer& grid, const con
   unsigned nof_symbols = config.symbols_mask.size();
 
   // CDM group size in number of DM-RS ports.
-  static constexpr unsigned cdm_group_size = 2;
+  const unsigned cdm_group_size = (nof_dmrs_ports > 4) ? 4 : 2;
 
   // Calculate number of CDM groups.
   unsigned nof_cdm_groups = divide_ceil(nof_dmrs_ports, cdm_group_size);
+
+  // List of DM-RS port identifiers per CDM group, as per TS38.211 Table 7.4.1.1.2-1.
+  static constexpr std::array<std::array<uint8_t, 4>, 2> dmrs_cdm_ports = {{
+      {0, 1, 4, 5},
+      {2, 3, 6, 7},
+  }};
 
   // Iterate each CDM group.
   for (unsigned i_cdm_group = 0; i_cdm_group != nof_cdm_groups; ++i_cdm_group) {
@@ -145,7 +151,7 @@ void ocudu::dmrs_pdsch_processor_impl::map(resource_grid_writer& grid, const con
     }
 
     ocudu_assert((i_gen_dmrs_symbols == nof_dmrs_re_slot),
-                 "The number of generated DM-RS seymbols (i.e., {}) does not match the expected (i.e., {})",
+                 "The number of generated DM-RS symbols (i.e., {}) does not match the expected (i.e., {})",
                  i_gen_dmrs_symbols,
                  nof_dmrs_re_slot);
 
@@ -158,7 +164,7 @@ void ocudu::dmrs_pdsch_processor_impl::map(resource_grid_writer& grid, const con
     // Iterate each port within the CDM group
     for (unsigned i_cdm_port = 0; i_cdm_port != nof_dmrs_ports_cdm; ++i_cdm_port) {
       // Current DM-RS port.
-      unsigned i_dmrs_port = (cdm_group_size * i_cdm_group) + i_cdm_port;
+      unsigned i_dmrs_port = dmrs_cdm_ports[i_cdm_group][i_cdm_port];
 
       // Load the port coefficients for the CDM port.
       for (unsigned i_ant_port = 0, i_port_end = nof_antenna_ports; i_ant_port != i_port_end; ++i_ant_port) {
