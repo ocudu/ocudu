@@ -30,6 +30,8 @@ TEST(test_get_band_from_arfcn, mix_bands)
   ASSERT_EQ(nr_band::n51, get_band_from_dl_arfcn(285500U));
   ASSERT_EQ(nr_band::n70, get_band_from_dl_arfcn(400000U));
   ASSERT_EQ(nr_band::n77, get_band_from_dl_arfcn(630500U));
+  ASSERT_EQ(nr_band::n247, get_band_from_dl_arfcn(1130000U));
+  ASSERT_EQ(nr_band::n250, get_band_from_dl_arfcn(304000U));
 }
 
 TEST(test_arfcn_freq_conversion, arfcn_to_freq)
@@ -75,6 +77,16 @@ TEST(test_arfcn_freq_conversion, arfcn_to_freq)
 
   // n78
   ASSERT_DOUBLE_EQ(3513.6e6, nr_arfcn_to_freq(634240));
+
+  // n247, n248
+  ASSERT_DOUBLE_EQ(10800.0e6, nr_arfcn_to_freq(1120000));
+  ASSERT_DOUBLE_EQ(10950.0e6, nr_arfcn_to_freq(1130000));
+  // n250, n251
+  ASSERT_DOUBLE_EQ(1520.0e6, nr_arfcn_to_freq(304000));
+  ASSERT_DOUBLE_EQ(1538.5e6, nr_arfcn_to_freq(307700));
+  // n252, n253
+  ASSERT_DOUBLE_EQ(2190.0e6, nr_arfcn_to_freq(438000));
+  ASSERT_DOUBLE_EQ(1523.0e6, nr_arfcn_to_freq(304600));
 }
 
 TEST(test_arfcn_freq_conversion, freq_to_arfcn)
@@ -106,7 +118,7 @@ TEST(get_ul_arfcn_from_dl_arfcn, mixed_frequencies)
   ASSERT_EQ(142600, get_ul_arfcn_from_dl_arfcn(153600, nr_band::n28));
   ASSERT_EQ(144608, get_ul_arfcn_from_dl_arfcn(155608, nr_band::n28));
 
-  // For n66, n70, n92, n94, the UL spectrum is smaller than the DL spectrum. When we convert the DL ARFCN
+  // For n66, n70, n92, n94, n247, n248 the UL spectrum is smaller than the DL spectrum. When we convert the DL ARFCN
   // to the corresponding UL ARFCN, if the UL ARFCN exceeds the band upper-bound, we return 0.
   ASSERT_EQ(356000, get_ul_arfcn_from_dl_arfcn(436000, nr_band::n66));
   ASSERT_EQ(0, get_ul_arfcn_from_dl_arfcn(440000, nr_band::n66));
@@ -116,6 +128,10 @@ TEST(get_ul_arfcn_from_dl_arfcn, mixed_frequencies)
   ASSERT_EQ(0, get_ul_arfcn_from_dl_arfcn(303400, nr_band::n92));
   ASSERT_EQ(183000, get_ul_arfcn_from_dl_arfcn(293400, nr_band::n94));
   ASSERT_EQ(0, get_ul_arfcn_from_dl_arfcn(303400, nr_band::n94));
+  ASSERT_EQ(1333333, get_ul_arfcn_from_dl_arfcn(1130000, nr_band::n247));
+  ASSERT_EQ(0, get_ul_arfcn_from_dl_arfcn(1130001, nr_band::n247));
+  ASSERT_EQ(1366666, get_ul_arfcn_from_dl_arfcn(1146666, nr_band::n248));
+  ASSERT_EQ(0, get_ul_arfcn_from_dl_arfcn(1146667, nr_band::n248));
 }
 
 TEST(test_arfcn_freq_conversion, arfcn_to_freq_corner_cases)
@@ -965,6 +981,52 @@ TEST(test_dl_arfcn_validator, test_tdd_bands_with_scs_dependent_raster)
                    .has_value());
 }
 
+TEST(test_dl_arfcn_validator, test_fdd_bands_with_scs_dependent_raster)
+{
+  // Get a random raster point from the band raster. If outside_raster is true, the function returns a point outside the
+  // raster.
+  auto get_rnd_raster_point = [](span<const uint32_t> raster, bool outside_raster = false) -> uint32_t {
+    const uint32_t raster_step = raster[1];
+    if (outside_raster) {
+      return test_rng::bernoulli(0.5) ? raster.front() - raster_step : raster.back() + raster_step;
+    }
+    const unsigned nof_raster_points = (raster.back() - raster.front()) / raster_step + 1;
+    return test_rng::uniform_int<unsigned>(0, nof_raster_points - 1) * raster_step + raster.front();
+  };
+
+  // n247 and n248 use a non-standard 15/30 kHz channel raster (like n41/n48/n77/n78/n79/n104) instead of the
+  // default 100 kHz raster.
+  constexpr std::array<uint32_t, 3> n247_raster_scs_15 = {1113334, 1, 1250000};
+  constexpr std::array<uint32_t, 3> n247_raster_scs_30 = {1113334, 2, 1250000};
+  constexpr std::array<uint32_t, 3> n248_raster_scs_15 = {1113334, 1, 1250000};
+  constexpr std::array<uint32_t, 3> n248_raster_scs_30 = {1113334, 2, 1250000};
+
+  ASSERT_TRUE(
+      is_dl_arfcn_valid_given_band(nr_band::n247, get_rnd_raster_point(n247_raster_scs_15), subcarrier_spacing::kHz15)
+          .has_value());
+  ASSERT_FALSE(is_dl_arfcn_valid_given_band(
+                   nr_band::n247, get_rnd_raster_point(n247_raster_scs_15, true), subcarrier_spacing::kHz15)
+                   .has_value());
+  ASSERT_TRUE(
+      is_dl_arfcn_valid_given_band(nr_band::n247, get_rnd_raster_point(n247_raster_scs_30), subcarrier_spacing::kHz30)
+          .has_value());
+  ASSERT_FALSE(is_dl_arfcn_valid_given_band(
+                   nr_band::n247, get_rnd_raster_point(n247_raster_scs_30, true), subcarrier_spacing::kHz30)
+                   .has_value());
+  ASSERT_TRUE(
+      is_dl_arfcn_valid_given_band(nr_band::n248, get_rnd_raster_point(n248_raster_scs_15), subcarrier_spacing::kHz15)
+          .has_value());
+  ASSERT_FALSE(is_dl_arfcn_valid_given_band(
+                   nr_band::n248, get_rnd_raster_point(n248_raster_scs_15, true), subcarrier_spacing::kHz15)
+                   .has_value());
+  ASSERT_TRUE(
+      is_dl_arfcn_valid_given_band(nr_band::n248, get_rnd_raster_point(n248_raster_scs_30), subcarrier_spacing::kHz30)
+          .has_value());
+  ASSERT_FALSE(is_dl_arfcn_valid_given_band(
+                   nr_band::n248, get_rnd_raster_point(n248_raster_scs_30, true), subcarrier_spacing::kHz30)
+                   .has_value());
+}
+
 TEST(test_ul_arfcn_validator, test_different_bands)
 {
   // Get a random raster point from the band raster. If outside_raster is true, the function returns a point outside the
@@ -999,6 +1061,47 @@ TEST(test_ul_arfcn_validator, test_different_bands)
   ASSERT_TRUE(is_ul_arfcn_valid_given_band(nr_band::n28, 144608, bs_channel_bandwidth::MHz40).has_value());
   // Let's provide a n14 frequency to n28.
   ASSERT_FALSE(is_ul_arfcn_valid_given_band(nr_band::n28, 157600).has_value());
+}
+
+TEST(test_ul_arfcn_validator, test_fdd_bands_with_scs_dependent_raster)
+{
+  // Get a random raster point from the band raster. If outside_raster is true, the function returns a point outside the
+  // raster.
+  auto get_rnd_raster_point = [](span<const uint32_t> raster, bool outside_raster = false) -> uint32_t {
+    const uint32_t raster_step = raster[1];
+    if (outside_raster) {
+      return test_rng::bernoulli(0.5) ? raster.front() - raster_step : raster.back() + raster_step;
+    }
+    const unsigned nof_raster_points = (raster.back() - raster.front()) / raster_step + 1;
+    return test_rng::uniform_int<unsigned>(0, nof_raster_points - 1) * raster_step + raster.front();
+  };
+
+  // n247, n248 use a non-standard 15/30 kHz UL raster.
+  constexpr std::array<uint32_t, 3> n247_raster_scs_15 = {1316667, 1, 1333333};
+  constexpr std::array<uint32_t, 3> n247_raster_scs_30 = {1316668, 2, 1333332};
+  constexpr std::array<uint32_t, 3> n248_raster_scs_15 = {1333334, 1, 1366666};
+  constexpr std::array<uint32_t, 3> n248_raster_scs_30 = {1333334, 2, 1366666};
+
+  ASSERT_TRUE(is_ul_arfcn_valid_given_band(nr_band::n247,
+                                           get_rnd_raster_point(n247_raster_scs_15),
+                                           bs_channel_bandwidth::MHz10,
+                                           subcarrier_spacing::kHz15)
+                  .has_value());
+  ASSERT_TRUE(is_ul_arfcn_valid_given_band(nr_band::n247,
+                                           get_rnd_raster_point(n247_raster_scs_30),
+                                           bs_channel_bandwidth::MHz10,
+                                           subcarrier_spacing::kHz30)
+                  .has_value());
+  ASSERT_TRUE(is_ul_arfcn_valid_given_band(nr_band::n248,
+                                           get_rnd_raster_point(n248_raster_scs_15),
+                                           bs_channel_bandwidth::MHz10,
+                                           subcarrier_spacing::kHz15)
+                  .has_value());
+  ASSERT_TRUE(is_ul_arfcn_valid_given_band(nr_band::n248,
+                                           get_rnd_raster_point(n248_raster_scs_30),
+                                           bs_channel_bandwidth::MHz10,
+                                           subcarrier_spacing::kHz30)
+                  .has_value());
 }
 
 class custom_band_test : public ::testing::Test
