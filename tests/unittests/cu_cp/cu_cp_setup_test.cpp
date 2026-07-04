@@ -457,6 +457,14 @@ TEST_F(cu_cp_setup_admission_limit_test, when_initial_ul_rrc_message_is_rejected
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ues.size(), 1);
 
+  // Evaluate that metrics were updated correctly.
+  ASSERT_FALSE(report.dus.empty());
+  ASSERT_EQ(report.dus[0].rrc_metrics.attempted_rrc_connection_establishments.get_count(establishment_cause_t::unknown),
+            1u);
+  ASSERT_EQ(report.dus[0].rrc_metrics.failed_rrc_connection_establishments.get_count(
+                establishment_fail_cause_t::network_reject),
+            1u);
+
   auto rel_complete = test_helpers::generate_ue_context_release_complete(cu_ue_id.value(), du_ue_f1ap_id);
   get_du(du_idx).push_ul_pdu(rel_complete);
 

@@ -337,6 +337,11 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
     // Check that UE can be served by this CU.
     if (ue_mng.ue_admission_limit_reached()) {
       logger.warning("ue={}: UE admission limit reached", req.ue_index);
+      // Update the RRC connection establishment attempt cause as unknown, since the real cause isn't known at this
+      // stage
+      rrc->handle_attempted_rrc_setup(establishment_cause_t::unknown);
+      // Update the RRC connection establishment fail cause
+      rrc->handle_failed_rrc_connection_establishment(establishment_fail_cause_t::network_reject);
       // Schedule UE context release and return error response.
       release_ue(req.ue_index);
       return make_unexpected(default_error_t{});
