@@ -10,6 +10,7 @@
 #include "tests/test_doubles/scheduler/pucch_res_test_builder_helper.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/test_doubles/utils/test_rng.h"
+#include "ocudu/du/du_update_config_helpers.h"
 #include "ocudu/ran/tdd/tdd_ul_dl_config_formatters.h"
 #include <gtest/gtest.h>
 
@@ -36,14 +37,14 @@ protected:
     return expert_cfg;
   }
 
-  explicit base_scheduler_tdd_tester(const tdd_test_params& testparams) :
+  base_scheduler_tdd_tester(const tdd_test_params& testparams, bs_channel_bandwidth bw = bs_channel_bandwidth::MHz20) :
     scheduler_test_simulator(scheduler_test_sim_config{.sched_cfg = default_expert_cfg(),
                                                        .max_scs   = testparams.tdd_cfg.ref_scs,
                                                        .auto_uci  = true,
                                                        .auto_crc  = true})
   {
     ocudu_assert(testparams.tdd_cfg.ref_scs == subcarrier_spacing::kHz30, "Only 30kHz SCS is supported in this test");
-    params                      = cell_config_builder_profiles::create(duplex_mode::TDD);
+    params                      = cell_config_builder_profiles::create(duplex_mode::TDD, frequency_range::FR1, bw);
     params.csi_rs_enabled       = testparams.csi_rs_enabled;
     params.tdd_ul_dl_cfg_common = testparams.tdd_cfg;
     params.min_k1               = testparams.min_k;
@@ -63,6 +64,11 @@ protected:
     // Increase PUCCH Format 2 code rate to support DL-heavy TDD configurations.
     std::get<pucch_f2_params>(pucch_params.f2_or_f3_or_f4_params).max_code_rate = max_pucch_code_rate::dot_35;
     cell_req.ran.init_bwp.pucch.resources                                       = pucch_params;
+    // Place PRACH clear of the PUCCH resource pool (as the DU does), so a large PUCCH pool does not overlap the PRACH
+    // occasion.
+    cell_req.ran.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start =
+        config_helpers::compute_prach_frequency_start(
+            pucch_params, cell_req.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), false);
     this->add_cell(cell_req);
   }
 
@@ -259,11 +265,14 @@ protected:
   static constexpr unsigned huge_buffer    = 10000000;
   static constexpr unsigned sr_grant_bytes = 512;
   static constexpr rnti_t   base_rnti      = to_rnti(0x4601);
+  // Slots to wait after Msg4 delivery before releasing a UE, so the ConRes/Msg4 HARQ is auto-ACKed first. The
+  // fallback common PUCCH lands at most max_k1 (=7, see ue_fallback_scheduler) slots after the PDSCH.
+  static const unsigned ack_margin_slots = 8;
 
   enum class background_traffic_direction { dl_only, ul_only, bidir };
 
   explicit base_scheduler_multiue_tdd_test(const multiue_tdd_test_params& params_) :
-    base_scheduler_tdd_tester(params_.base), test_params(params_)
+    base_scheduler_tdd_tester(params_.base, bs_channel_bandwidth::MHz100), test_params(params_)
   {
     pucch_builder.setup(cell_cfg().params);
 
@@ -272,10 +281,6 @@ protected:
     conres_window_slots = cell_cfg().params.ul_cfg_common.init_ul_bwp.rach_cfg_common->ra_con_res_timer.count() *
                           get_nof_slots_per_subframe(cell_cfg().scs_common());
     wave_period_slots = test_params.wave_period_in_tdd_periods * tdd_period_slots;
-
-    // Slots to wait after Msg4 delivery before releasing a UE, so the ConRes/Msg4 HARQ is auto-ACKed first. The
-    // fallback common PUCCH lands at most max_k1 (=7, see ue_fallback_scheduler) slots after the PDSCH.
-    ack_margin_slots = 8;
 
     // Bound the per-wave size so that, at worst-case dwell (a full ConRes window), the concurrent transient UEs never
     // exceed the pool capacity.
@@ -493,7 +498,6 @@ protected:
   unsigned conres_window_slots = 0;
   unsigned wave_period_slots   = 0;
   unsigned wave_size           = 0;
-  unsigned ack_margin_slots    = 0;
 
   std::vector<du_ue_index_t>                transient_pool;
   std::vector<background_traffic_direction> background_ues;
@@ -559,10 +563,11 @@ INSTANTIATE_TEST_SUITE_P(
   multiue_tdd_test_params{tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 3, 5, 6, 0}}},           8, 16, 10, 2},
   // DDSU with min_k=4.
   multiue_tdd_test_params{tdd_test_params{true, {subcarrier_spacing::kHz30, {4, 2, 9, 1, 0}}, 4},         8, 16, 10, 2},
-  // High-scale DDDSU: hundreds of dedicated UEs (each with its own PUCCH) load the single UL slot's PUCCH
-  // (SR/CSI/HARQ) while fallback UEs must still complete contention resolution. The long run (many waves) lets the
-  // periodic CSI/SR reports build up the PUCCH load. Kept below the PUCCH-saturation cliff (~600-750 UEs here).
-  multiue_tdd_test_params{tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU)}, 500, 8, 40, 2}
+  // High-scale DDDSU: 100 dedicated UEs load the single UL slot while, in each wave, 50 fallback UEs attach
+  // simultaneously and all must complete contention resolution. This stresses the common PUCCH that the fallback
+  // ConRes ACKs share; kept below the cliff (~60-80 simultaneous fallback UEs here) where the common PUCCH can no
+  // longer serve the burst in time and ConRes CEs start timing out.
+  multiue_tdd_test_params{tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU)}, 100, 50, 3, 26}
 ));
 // clang-format on
 
