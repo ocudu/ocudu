@@ -5,6 +5,7 @@
 /// \file
 /// \brief Unit test for scheduler using different TDD patterns.
 
+#include "test_utils/indication_generators.h"
 #include "test_utils/scheduler_test_simulator.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/pucch_res_test_builder_helper.h"
@@ -243,16 +244,20 @@ struct multiue_tdd_test_params {
   unsigned nof_waves;
   // Spacing between consecutive waves, expressed in TDD periods to keep the attach phase fixed.
   unsigned wave_period_in_tdd_periods;
+  // When set, each transient UE arrives via the full RACH procedure (RAR + Msg3) before entering fallback, so the
+  // RAR/Msg3 load competes with the ConRes CE for the same slots (as in a real deployment).
+  bool rach_driven = false;
 };
 
 void PrintTo(const multiue_tdd_test_params& value, ::std::ostream* os)
 {
-  *os << fmt::format("tdd={} bg_ues={} transient_ues={} waves={} wave_period_periods={}",
+  *os << fmt::format("tdd={} bg_ues={} transient_ues={} waves={} wave_period_periods={} rach_driven={}",
                      value.base.tdd_cfg,
                      value.nof_background_ues,
                      value.nof_transient_ues,
                      value.nof_waves,
-                     value.wave_period_in_tdd_periods);
+                     value.wave_period_in_tdd_periods,
+                     value.rach_driven);
 }
 
 /// \brief Base fixture that saturates the grid with background traffic while overlapping waves of UEs attach in
@@ -332,6 +337,7 @@ protected:
     request_metrics_on_next_slot();
     run_slot();
     ASSERT_TRUE(last_metrics().has_value());
+    test_logger.info("Peak concurrent transient UEs in contention resolution: {}", peak_in_conres);
     ASSERT_EQ(last_metrics()->nof_conres_timer_expired, 0U) << "A ConRes timer expired during the test";
   }
 
@@ -390,14 +396,40 @@ protected:
     if (to_launch < wave_size) {
       test_logger.info("Transient UE pool exhausted: launched {}/{} UEs in this wave", to_launch, wave_size);
     }
+    std::vector<du_ue_index_t> wave_ues;
+    wave_ues.reserve(to_launch);
     for (unsigned i = 0; i != to_launch; ++i) {
-      const du_ue_index_t idx = transient_pool.back();
+      wave_ues.push_back(transient_pool.back());
       transient_pool.pop_back();
+    }
+
+    // Inject the RACH for the whole wave in one occasion, so its RAR + Msg3 load lands together (as when a burst of UEs
+    // ramps up at once). Each transient UE's task then waits for its own Msg3 before entering fallback.
+    if (test_params.rach_driven) {
+      push_wave_rach(wave_ues);
+    }
+    for (du_ue_index_t idx : wave_ues) {
       schedule_task(launch_transient_ue_task(idx));
     }
 
     // Just keep feeding the background UE buffers, so they don't deplete.
     push_huge_buffers_to_background_ues();
+  }
+
+  // Push a single RACH indication carrying one distinct preamble (TC-RNTI) per transient UE in the wave. The scheduler
+  // answers with a RAR and a Msg3 PUSCH per preamble, loading the DL common search space and the (single) UL slot.
+  void push_wave_rach(span<const du_ue_index_t> wave_ues)
+  {
+    ocudu_assert(wave_ues.size() <= MAX_PREAMBLES_PER_PRACH_OCCASION,
+                 "Wave size {} exceeds the preambles available in one PRACH occasion",
+                 wave_ues.size());
+    std::vector<rach_indication_message::preamble> preambles;
+    preambles.reserve(wave_ues.size());
+    for (unsigned i = 0, e = wave_ues.size(); i != e; ++i) {
+      preambles.push_back(
+          test_helper::create_preamble(i, to_rnti(fmt::underlying(base_rnti) + fmt::underlying(wave_ues[i]))));
+    }
+    sched->handle_rach_indication(test_helper::create_rach_indication(next_slot_rx(), preambles));
   }
 
   // Async lifecycle of a transient UE: attach in fallback, complete contention resolution before the ConRes timer
@@ -408,29 +440,40 @@ protected:
     const rnti_t rnti      = to_rnti(fmt::underlying(base_rnti) + fmt::underlying(idx));
     auto         req       = build_ue_request(idx, rnti, {});
     req.starts_in_fallback = true;
-    req.ul_ccch_slot_rx    = next_slot.without_hyper_sfn();
 
-    return launch_async(
-        [this, idx, rnti, req = std::move(req), ce_ok = false](coro_context<async_task<void>>& ctx) mutable {
-          CORO_BEGIN(ctx);
+    return launch_async([this, idx, rnti, req = std::move(req), ce_ok = false, msg3_ok = false](
+                            coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
 
-          CORO_AWAIT(launch_add_ue_task(std::move(req)));
+      // In the RACH-driven scenario, wait for the RA scheduler to grant this UE's Msg3 PUSCH (its RAR was sent after
+      // the wave's RACH). The UE only enters fallback once its Msg3 CCCH is "decoded".
+      if (test_params.rach_driven) {
+        CORO_AWAIT_VALUE(msg3_ok, launch_run_until(msg3_scheduled(rnti), conres_window_slots));
+        EXPECT_TRUE(msg3_ok) << fmt::format("UE rnti={} did not get its Msg3 PUSCH granted", rnti);
+      }
 
-          start_transient_traffic(idx, rnti);
+      // Create the UE in fallback (Msg3 CCCH decoded); the scheduler auto-injects the ConRes CE.
+      req.ul_ccch_slot_rx = next_slot.without_hyper_sfn();
+      CORO_AWAIT(launch_add_ue_task(std::move(req)));
+      ++cur_in_conres;
+      peak_in_conres = std::max(peak_in_conres, cur_in_conres);
 
-          // ConRes CE must be scheduled within the ConRes timer window.
-          CORO_AWAIT_VALUE(ce_ok, launch_run_until(conres_ce_scheduled(rnti), conres_window_slots));
-          EXPECT_TRUE(ce_ok) << fmt::format("UE rnti={} did not schedule its ConRes CE before the timer expired", rnti);
+      start_transient_traffic(idx, rnti);
 
-          CORO_AWAIT(verify_transient_traffic(idx, rnti));
+      // ConRes CE must be scheduled within the ConRes timer window.
+      CORO_AWAIT_VALUE(ce_ok, launch_run_until(conres_ce_scheduled(rnti), conres_window_slots));
+      --cur_in_conres;
+      EXPECT_TRUE(ce_ok) << fmt::format("UE rnti={} did not schedule its ConRes CE before the timer expired", rnti);
 
-          // Let the ConRes HARQ be auto-ACKed, then release the UE.
-          CORO_AWAIT(launch_run_until(false_until_slots(ack_margin_slots)));
-          CORO_AWAIT(launch_rem_ue_task(idx));
-          transient_pool.push_back(idx);
+      CORO_AWAIT(verify_transient_traffic(idx, rnti));
 
-          CORO_RETURN();
-        });
+      // Let the ConRes HARQ be auto-ACKed, then release the UE.
+      CORO_AWAIT(launch_run_until(false_until_slots(ack_margin_slots)));
+      CORO_AWAIT(launch_rem_ue_task(idx));
+      transient_pool.push_back(idx);
+
+      CORO_RETURN();
+    });
   }
 
   // Re-arm a small UL buffer (one SR's worth) each slot until the UE gets a UL grant, keeping the fallback UE's UL
@@ -473,6 +516,12 @@ protected:
     return [nof_slots, count = 0U]() mutable { return count++ >= nof_slots; };
   }
 
+  // True once the RA scheduler has granted a Msg3 PUSCH for this TC-RNTI (its rnti matches the transient UE's rnti).
+  unique_function<bool()> msg3_scheduled(rnti_t rnti) const
+  {
+    return [this, rnti]() { return find_ue_pusch(rnti, *last_sched_result()) != nullptr; };
+  }
+
   unique_function<bool()> conres_ce_scheduled(rnti_t rnti) const
   {
     return [this, rnti]() {
@@ -498,6 +547,10 @@ protected:
   unsigned conres_window_slots = 0;
   unsigned wave_period_slots   = 0;
   unsigned wave_size           = 0;
+
+  // Instrumentation: peak number of transient UEs concurrently between fallback creation and ConRes-CE scheduling.
+  unsigned cur_in_conres  = 0;
+  unsigned peak_in_conres = 0;
 
   std::vector<du_ue_index_t>                transient_pool;
   std::vector<background_traffic_direction> background_ues;
@@ -567,7 +620,12 @@ INSTANTIATE_TEST_SUITE_P(
   // simultaneously and all must complete contention resolution. This stresses the common PUCCH that the fallback
   // ConRes ACKs share; kept below the cliff (~60-80 simultaneous fallback UEs here) where the common PUCCH can no
   // longer serve the burst in time and ConRes CEs start timing out.
-  multiue_tdd_test_params{tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU)}, 100, 50, 3, 26}
+  multiue_tdd_test_params{tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU)}, 100, 50, 3, 26},
+  // High-scale DDDSU, RACH-driven: fallback UEs arrive via the full RACH procedure (RAR + Msg3) at a sustained rate (one
+  // per TDD period) under a 100-UE load. Because arrivals are staggered, every UL slot carries a mix of Msg3 PUSCH,
+  // ConRes-ACK common PUCCH and dedicated SR/CSI/HARQ, so contention resolution breaks at a far lower concurrent UE
+  // count than the simultaneous-burst case above (matching a real deployment). Kept just below that (much lower) cliff.
+  multiue_tdd_test_params{tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU)}, 100, 50, 40, 1, true}
 ));
 // clang-format on
 
