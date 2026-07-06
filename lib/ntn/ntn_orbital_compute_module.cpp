@@ -111,24 +111,19 @@ orbit_ephemeris_info* ntn_orbital_compute_module::get_ephemeris_info(time_point 
     orbit_ephemeris_info& first = *ephemeris_info_queue.begin();
 
     if (ephemeris_info_queue.size() == 1) {
-      if (t >= first.reference_time()) {
-        return &first;
-      }
-      return nullptr;
+      // No later entry to fall back on; propagators support propagating backward in time, so serve it regardless of
+      // whether t precedes the reference time already reached by a previous (in-place) alignment.
+      return &first;
     }
 
     orbit_ephemeris_info& second = *(ephemeris_info_queue.begin() + 1);
 
-    if (t >= first.reference_time() && t < second.reference_time()) {
+    if (t < second.reference_time()) {
       return &first;
     }
 
-    // If we're past the second element, discard the first
-    if (t >= second.reference_time()) {
-      ephemeris_info_queue.pop();
-    } else {
-      return nullptr;
-    }
+    // We're past the second element's reference time; discard the first and re-check.
+    ephemeris_info_queue.pop();
   }
   return nullptr;
 }
