@@ -62,10 +62,9 @@ void ocudu::convert_i12_to_ci16(span<ci16_t> out, span<const uint32_t> in)
     iq_values[6] = static_cast<int16_t>((word2 >> 8U) & 0xfff0);
     iq_values[7] = static_cast<int16_t>((word2 << 4U) & 0xfff0);
 
-    // Convert int16 to cf.
-    float* dst = reinterpret_cast<float*>(&out[i_sample]);
-    for (unsigned i = 0; i != 8; ++i) {
-      dst[i] = static_cast<float>(iq_values[i]) * i12_to_cf_scaling_factor;
+    // Store as ci16_t complex int16 pairs (real, imag).
+    for (unsigned i = 0; i < 4; ++i) {
+      out[i_sample + i] = ci16_t{iq_values[2 * i], iq_values[2 * i + 1]};
     }
 #endif // HAVE_AVX
   }
@@ -84,12 +83,17 @@ void ocudu::convert_ci16_to_i12(span<uint32_t> out, span<const ci16_t> in)
     // Load input.
     __m128i i16_vec = _mm_loadu_si128(reinterpret_cast<const __m128i_u*>(in.data() + i_sample));
 
+    // Drop the 4 least significant bits.
+    i16_vec = _mm_and_si128(i16_vec, _mm_set1_epi16(0xfff0));
+
+    // 4-bit shifted registers.
+    __m128i shifted = _mm_srli_epi16(i16_vec, 4);
+
     // Pack eight 16-bit words in three 32-bit words.
-    __m128i shifted = _mm_slli_epi16(i16_vec, 4);
     __m128i i16_low =
-        _mm_shuffle_epi8(i16_vec, _mm_setr_epi8(-1, 2, 3, -1, 11, -1, 6, 7, 14, 15, -1, 10, -1, -1, -1, -1));
+        _mm_shuffle_epi8(i16_vec, _mm_setr_epi8(5, -1, 0, 1, 8, 9, -1, 4, -1, 12, 13, -1, -1, -1, -1, -1));
     __m128i i16_high =
-        _mm_shuffle_epi8(shifted, _mm_setr_epi8(5, -1, 0, 1, 8, 9, -1, 4, -1, 12, 13, -1, -1, -1, -1, -1));
+        _mm_shuffle_epi8(shifted, _mm_setr_epi8(-1, 2, 3, -1, 11, -1, 6, 7, 14, 15, -1, 10, -1, -1, -1, -1));
     __m128i combined = _mm_or_si128(i16_low, i16_high);
 
     // Extract 32-bit words.
