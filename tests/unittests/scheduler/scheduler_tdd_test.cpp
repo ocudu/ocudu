@@ -18,34 +18,51 @@
 using namespace ocudu;
 using namespace cell_config_builder_profiles;
 
-struct tdd_test_params {
-  bool                    csi_rs_enabled;
+namespace {
+
+// Test parameters for both single-UE and multi-UE TDD tests.
+struct base_scheduler_tdd_tester_params {
+  enum class coreset_type { auto_derived, dur2 };
+
+  bool                    csi_rs_enabled = true;
   tdd_ul_dl_config_common tdd_cfg;
   unsigned                min_k = 4;
+  bs_channel_bandwidth    bw    = bs_channel_bandwidth::MHz20;
+  // CORESET profile. "dur2" forces CORESET#0 index 13 (duration 2 symbols) and reduces the SS#1/SS#2 PDCCH candidate
+  // counts to keep the monitored candidates per slot within limits; "auto_derived" leaves the auto-derived defaults
+  // untouched.
+  coreset_type cs_type = coreset_type::auto_derived;
+  // PUCCH Format 1 multiplexing for the dedicated SR/HARQ resources.
+  pucch_nof_cyclic_shifts f1_nof_cyc_shifts = pucch_nof_cyclic_shifts::twelve;
+  bool                    f1_occ_supported  = true;
 };
+
+// Default scheduler expert config for the TDD testers: remove the PRACH guardbands so PUSCH can fill the UL slot, and
+// raise the per-slot PUCCH / UL-grant ceilings so many UEs can be served in the single UL slot.
+scheduler_expert_config default_expert_cfg()
+{
+  auto expert_cfg                        = config_helpers::make_default_scheduler_expert_config();
+  expert_cfg.ra.nof_prach_guardbands_rbs = 0;
+  expert_cfg.ue.max_pucchs_per_slot      = 120;
+  expert_cfg.ue.max_ul_grants_per_slot   = 140;
+  return expert_cfg;
+}
 
 class base_scheduler_tdd_tester : public scheduler_test_simulator
 {
 protected:
-  // Default scheduler expert config for the TDD testers: remove the PRACH guardbands so PUSCH can fill the UL slot, and
-  // raise the per-slot PUCCH / UL-grant ceilings so many UEs can be served in the single UL slot.
-  static scheduler_expert_config default_expert_cfg()
-  {
-    auto expert_cfg                        = config_helpers::make_default_scheduler_expert_config();
-    expert_cfg.ra.nof_prach_guardbands_rbs = 0;
-    expert_cfg.ue.max_pucchs_per_slot      = 120;
-    expert_cfg.ue.max_ul_grants_per_slot   = 140;
-    return expert_cfg;
-  }
-
-  base_scheduler_tdd_tester(const tdd_test_params& testparams, bs_channel_bandwidth bw = bs_channel_bandwidth::MHz20) :
+  explicit base_scheduler_tdd_tester(const base_scheduler_tdd_tester_params& testparams) :
     scheduler_test_simulator(scheduler_test_sim_config{.sched_cfg = default_expert_cfg(),
                                                        .max_scs   = testparams.tdd_cfg.ref_scs,
                                                        .auto_uci  = true,
                                                        .auto_crc  = true})
   {
     ocudu_assert(testparams.tdd_cfg.ref_scs == subcarrier_spacing::kHz30, "Only 30kHz SCS is supported in this test");
-    params                      = cell_config_builder_profiles::create(duplex_mode::TDD, frequency_range::FR1, bw);
+    params = cell_config_builder_profiles::create(duplex_mode::TDD, frequency_range::FR1, testparams.bw);
+    if (testparams.cs_type == base_scheduler_tdd_tester_params::coreset_type::dur2) {
+      params.cs0_index             = 13;
+      params.max_coreset0_duration = 2;
+    }
     params.csi_rs_enabled       = testparams.csi_rs_enabled;
     params.tdd_ul_dl_cfg_common = testparams.tdd_cfg;
     params.min_k1               = testparams.min_k;
@@ -60,66 +77,104 @@ protected:
     pucch_params.nof_cell_sr_resources    = 90;
     pucch_params.nof_cell_csi_resources   = 90;
     auto& f1                              = pucch_params.f0_or_f1_params.emplace<pucch_f1_params>();
-    f1.nof_cyc_shifts                     = pucch_nof_cyclic_shifts::twelve;
-    f1.occ_supported                      = true;
+    f1.nof_cyc_shifts                     = testparams.f1_nof_cyc_shifts;
+    f1.occ_supported                      = testparams.f1_occ_supported;
     // Increase PUCCH Format 2 code rate to support DL-heavy TDD configurations.
     std::get<pucch_f2_params>(pucch_params.f2_or_f3_or_f4_params).max_code_rate = max_pucch_code_rate::dot_35;
     cell_req.ran.init_bwp.pucch.resources                                       = pucch_params;
+    // A duration-2 CORESET#0 doubles the PDCCH candidate cost per aggregation level, so reduce the common SS#1
+    // (RA/paging) and dedicated SS#2 candidate counts to keep the monitored candidates per slot within limits.
+    if (testparams.cs_type == base_scheduler_tdd_tester_params::coreset_type::dur2) {
+      for (auto& ss : cell_req.ran.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces) {
+        if (ss.get_id() == to_search_space_id(1)) {
+          ss.set_non_ss0_nof_candidates({0, 0, 8, 0, 0});
+        }
+      }
+      if (cell_req.ran.init_bwp.pdcch_cfg.has_value()) {
+        for (auto& ss : cell_req.ran.init_bwp.pdcch_cfg->search_spaces) {
+          if (ss.get_id() == to_search_space_id(2)) {
+            ss.set_non_ss0_nof_candidates({0, 2, 2, 0, 0});
+          }
+        }
+      }
+    }
     // Place PRACH clear of the PUCCH resource pool (as the DU does), so a large PUCCH pool does not overlap the PRACH
     // occasion.
     cell_req.ran.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start =
         config_helpers::compute_prach_frequency_start(
             pucch_params, cell_req.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), false);
     this->add_cell(cell_req);
+
+    // Setup PUCCH resource builder.
+    pucch_builder.setup(cell_cfg().params);
   }
 
-  // Build a UE creation request for this cell, validating the PUCCH Format 2 resource the TDD config relies on.
+  // Build a UE creation request, allocating a distinct dedicated PUCCH config (SR/CSI/HARQ) from the cell resource pool
+  // so many UEs can coexist on the single UL slot (as a real DU does).
   sched_ue_creation_request_message
-  create_ue_request(du_ue_index_t ue_index, rnti_t rnti, const std::initializer_list<lcid_t>& lcids)
+  build_ue_request(du_ue_index_t idx, rnti_t rnti, std::initializer_list<lcid_t> lcids)
   {
     auto ue_cfg     = sched_config_helper::create_default_sched_ue_creation_request(cell_cfg().params, lcids);
-    ue_cfg.ue_index = ue_index;
+    ue_cfg.ue_index = idx;
     ue_cfg.crnti    = rnti;
-    ocudu_assert((*ue_cfg.cfg.cells)[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.has_value(),
-                 "The PUCCH config is not set");
-    const auto&    pucch_cfg     = (*ue_cfg.cfg.cells)[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value();
-    pucch_res_id_t any_res_f2_id = pucch_cfg.pucch_res_set[1].resources.front();
-    const auto*    res_f2        = std::find_if(pucch_cfg.pucch_res_list.begin(),
-                                      pucch_cfg.pucch_res_list.end(),
-                                      [any_res_f2_id](const auto& res) { return res.res_id == any_res_f2_id; });
-    ocudu_assert(res_f2 != pucch_cfg.pucch_res_list.end(), "PUCCH resource F2 not found");
+    report_fatal_error_if_not(pucch_builder.add_build_new_ue_pucch_cfg((*ue_cfg.cfg.cells)[0]),
+                              "Failed to allocate PUCCH resources for UE {}",
+                              fmt::underlying(idx));
     return ue_cfg;
+  }
+
+  cell_config_builder_params params;
+  // Builds a distinct per-UE dedicated PUCCH config from the cell pool for every UE created by these tests.
+  pucch_res_builder_test_helper pucch_builder{120};
+};
+
+// ------------------------------------ single-UE case --------------------------------------------
+
+struct singleue_tdd_test_params {
+  bool                    csi_rs_enabled;
+  tdd_ul_dl_config_common tdd_cfg;
+  unsigned                min_k = 4;
+};
+
+/// \brief Base fixture for the single-UE TDD tests. Builds a default MHz20 cell from \ref singleue_tdd_test_params and
+/// provides a helper to build the (single) UE's creation request.
+class base_scheduler_single_ue_tdd_tester : public base_scheduler_tdd_tester
+{
+protected:
+  explicit base_scheduler_single_ue_tdd_tester(const singleue_tdd_test_params& testparams) :
+    base_scheduler_tdd_tester(base_scheduler_tdd_tester_params{.csi_rs_enabled = testparams.csi_rs_enabled,
+                                                               .tdd_cfg        = testparams.tdd_cfg,
+                                                               .min_k          = testparams.min_k})
+  {
+    this->add_ue(build_ue_request(ue_idx, ue_rnti, {ue_drb_lcid}));
   }
 
   const du_ue_index_t ue_idx      = to_du_ue_index(0);
   const rnti_t        ue_rnti     = to_rnti(0x4601);
   const lcid_t        ue_drb_lcid = LCID_MIN_DRB;
-
-  cell_config_builder_params params;
 };
 
 /// Formatter for test params.
-void PrintTo(const tdd_test_params& value, ::std::ostream* os)
+void PrintTo(const singleue_tdd_test_params& value, ::std::ostream* os)
 {
   *os << fmt::format(
       "csi={} tdd={} min_k={}", value.csi_rs_enabled ? "enabled" : "disabled", value.tdd_cfg, value.min_k);
 }
 
-class scheduler_dl_tdd_tester : public base_scheduler_tdd_tester, public ::testing::TestWithParam<tdd_test_params>
+class scheduler_dl_tdd_tester : public base_scheduler_single_ue_tdd_tester,
+                                public ::testing::TestWithParam<singleue_tdd_test_params>
 {
 public:
-  scheduler_dl_tdd_tester() : base_scheduler_tdd_tester(GetParam())
+  scheduler_dl_tdd_tester() : base_scheduler_single_ue_tdd_tester(GetParam())
   {
-    this->add_ue(create_ue_request(ue_idx, ue_rnti, {ue_drb_lcid}));
+    // Enqueue enough bytes for continuous DL tx.
+    dl_buffer_state_indication_message dl_buf_st{ue_idx, ue_drb_lcid, 10000000};
+    this->push_dl_buffer_state(dl_buf_st);
   }
 };
 
 TEST_P(scheduler_dl_tdd_tester, all_dl_slots_are_scheduled)
 {
-  // Enqueue enough bytes for continuous DL tx.
-  dl_buffer_state_indication_message dl_buf_st{ue_idx, ue_drb_lcid, 10000000};
-  this->push_dl_buffer_state(dl_buf_st);
-
   static constexpr unsigned MAX_COUNT = 1000;
   for (unsigned count = 0; count != MAX_COUNT; ++count) {
     this->run_slot();
@@ -133,13 +188,12 @@ TEST_P(scheduler_dl_tdd_tester, all_dl_slots_are_scheduled)
   }
 }
 
-class scheduler_ul_tdd_tester : public base_scheduler_tdd_tester, public ::testing::TestWithParam<tdd_test_params>
+class scheduler_ul_tdd_tester : public base_scheduler_single_ue_tdd_tester,
+                                public ::testing::TestWithParam<singleue_tdd_test_params>
 {
 public:
-  scheduler_ul_tdd_tester() : base_scheduler_tdd_tester(GetParam())
+  scheduler_ul_tdd_tester() : base_scheduler_single_ue_tdd_tester(GetParam())
   {
-    this->add_ue(create_ue_request(ue_idx, ue_rnti, {ue_drb_lcid}));
-
     // Enqueue enough bytes for continuous UL tx.
     ul_bsr_indication_message bsr{
         to_du_cell_index(0), ue_idx, ue_rnti, bsr_format::SHORT_BSR, {ul_bsr_lcg_report{uint_to_lcg_id(0), 10000000}}};
@@ -169,33 +223,35 @@ TEST_P(scheduler_ul_tdd_tester, all_ul_slots_are_scheduled)
   }
 }
 
-INSTANTIATE_TEST_SUITE_P(scheduler_tdd_test,
-                         scheduler_dl_tdd_tester,
-                         testing::Values(
-                             // clang-format off
+INSTANTIATE_TEST_SUITE_P(
+    scheduler_tdd_test,
+    scheduler_dl_tdd_tester,
+    testing::Values(
+        // clang-format off
   // csi_enabled, {ref_scs, pattern1={slot_period, DL_slots, DL_symbols, UL_slots, UL_symbols}, pattern2={...}, min_k}
-  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}}}, // DDDDDDSUUU
+  singleue_tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}}}, // DDDDDDSUUU
   // > TS 38.101-4, Table A.1.2-2: TDD UL-DL configuration for SCS 30kHz.
-  tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDDDDDSUU)},
-  tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDDDDDSUU), 2},
-  tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU)},
-  tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 2},
-  tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSUDDSUU)},
-  tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSUUDDDD)},
-  tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DSUU)},
-  tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DSSU)},
+  singleue_tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDDDDDSUU)},
+  singleue_tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDDDDDSUU), 2},
+  singleue_tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU)},
+  singleue_tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 2},
+  singleue_tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSUDDSUU)},
+  // CSI disabled: the DL burst's HARQ-ACKs can only reach the two UL slots after the special slot, and a periodic CSI
+  // on one of them exhausts the shared Format 2 resource, leaving the hardest DL slot without a HARQ-ACK opportunity.
+  singleue_tdd_test_params{false, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSUUDDDD)},
+  singleue_tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DSUU)},
+  singleue_tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DSSU)},
   // > Other DL-heavy patterns.
-  tdd_test_params{false, {subcarrier_spacing::kHz30, {10, 8, 0, 1, 0}}},
-  tdd_test_params{false, {subcarrier_spacing::kHz30, {10, 8, 0, 1, 0}}, 1},
+  singleue_tdd_test_params{false, {subcarrier_spacing::kHz30, {10, 8, 0, 1, 0}}},
+  singleue_tdd_test_params{false, {subcarrier_spacing::kHz30, {10, 8, 0, 1, 0}}, 1},
   // >> DDDSUUUUDD
-  tdd_test_params{true, {subcarrier_spacing::kHz30, {8,  3, 6, 4, 4}, tdd_ul_dl_pattern{2, 2, 0, 0, 0}}},
-  tdd_test_params{true,  {subcarrier_spacing::kHz30, {4,  2, 9, 1, 0}}},
-  tdd_test_params{true,  {subcarrier_spacing::kHz30, {4,  2, 9, 1, 0}}, 1},
-  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 6, 13, 3, 0}}, 4} // DDDDDDSUUU, with 13 DL symbols in special slot
-  // TODO: Support more TDD patterns.
+  singleue_tdd_test_params{true, {subcarrier_spacing::kHz30, {8,  3, 6, 4, 4}, tdd_ul_dl_pattern{2, 2, 0, 0, 0}}},
+  singleue_tdd_test_params{true,  {subcarrier_spacing::kHz30, {4,  2, 9, 1, 0}}},
+  singleue_tdd_test_params{true,  {subcarrier_spacing::kHz30, {4,  2, 9, 1, 0}}, 1},
+  singleue_tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 6, 13, 3, 0}}, 4} // DDDDDDSUUU, with 13 DL symbols in special slot
 // Note: The params below lead to a failure due to "Not enough space in PUCCH". However, I don't think there is no valid
 // k1 candidate list that accommodates all DL slots.
-  //tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 8, 5, 1, 4}}}
+  //singleue_tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 8, 5, 1, 4}}}
 ));
 // clang-format on
 
@@ -205,37 +261,59 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Values(
         // clang-format off
   // csi_enabled, {ref_scs, pattern1={slot_period, DL_slots, DL_symbols, UL_slots, UL_symbols}, pattern2={...}}
-  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}}}, // DDDDDDSUUU
+  singleue_tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}}}, // DDDDDDSUUU
   // > TS 38.101-4, Table A.1.2-2: TDD UL-DL configuration for SCS 30kHz.
-  tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDDDDDSUU)},
-  tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDDDDDSUU), 2},
-  tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU)},
-  tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSUDDSUU), 2},
-  tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSUUDDDD)},
-  tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DSUU), 2},
-  tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DSSU)},
+  singleue_tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDDDDDSUU)},
+  singleue_tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDDDDDSUU), 2},
+  singleue_tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU)},
+  singleue_tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSUDDSUU), 2},
+  singleue_tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSUUDDDD)},
+  singleue_tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DSUU), 2},
+  singleue_tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DSSU)},
   // > Other DL heavy patterns
-  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 8, 5, 1, 4}}}, // DDDDDDDDSU
+  singleue_tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 8, 5, 1, 4}}}, // DDDDDDDDSU
   // >> DDDSUUUUDD
-  tdd_test_params{true, {subcarrier_spacing::kHz30, {8,  3, 6, 4, 4}, tdd_ul_dl_pattern{2, 2, 0, 0, 0}}},
-  tdd_test_params{true,  {subcarrier_spacing::kHz30, {4,  2, 9, 1, 0}}},  // DDSU
-  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 4, 5, 5, 0}}, 5}, // DDDDSUUUUU
-  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 6, 13, 3, 0}}, 4}, // DDDDDDSUUU, with 13 DL symbols in special slot
+  singleue_tdd_test_params{true, {subcarrier_spacing::kHz30, {8,  3, 6, 4, 4}, tdd_ul_dl_pattern{2, 2, 0, 0, 0}}},
+  singleue_tdd_test_params{true,  {subcarrier_spacing::kHz30, {4,  2, 9, 1, 0}}},  // DDSU
+  singleue_tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 4, 5, 5, 0}}, 5}, // DDDDSUUUUU
+  singleue_tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 6, 13, 3, 0}}, 4}, // DDDDDDSUUU, with 13 DL symbols in special slot
   // UL heavy
-  tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 3,  5, 6, 0}}},
-  tdd_test_params{true, {subcarrier_spacing::kHz30, {5,  1, 10, 3, 0}, tdd_ul_dl_pattern{5, 1, 10, 3, 0}}, 2},
-  tdd_test_params{true, {subcarrier_spacing::kHz30, {6,  2, 10, 3, 0}, tdd_ul_dl_pattern{4, 1, 0, 3, 0}}, 2},
-  tdd_test_params{true, {subcarrier_spacing::kHz30, {4,  1, 10, 2, 0}, tdd_ul_dl_pattern{6, 1, 10, 4, 0}}, 2},
-  tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 2, 10, 7, 0}}, 2},
-  tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 2,  6, 7, 4}}, 2},
-  tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 2,  6, 7, 4}}},
-  tdd_test_params{true, {subcarrier_spacing::kHz30, {5,  1, 10, 3, 0}}, 2}
+  singleue_tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 3,  5, 6, 0}}},
+  singleue_tdd_test_params{true, {subcarrier_spacing::kHz30, {5,  1, 10, 3, 0}, tdd_ul_dl_pattern{5, 1, 10, 3, 0}}, 2},
+  singleue_tdd_test_params{true, {subcarrier_spacing::kHz30, {6,  2, 10, 3, 0}, tdd_ul_dl_pattern{4, 1, 0, 3, 0}}, 2},
+  singleue_tdd_test_params{true, {subcarrier_spacing::kHz30, {4,  1, 10, 2, 0}, tdd_ul_dl_pattern{6, 1, 10, 4, 0}}, 2},
+  singleue_tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 2, 10, 7, 0}}, 2},
+  singleue_tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 2,  6, 7, 4}}, 2},
+  singleue_tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 2,  6, 7, 4}}},
+  singleue_tdd_test_params{true, {subcarrier_spacing::kHz30, {5,  1, 10, 3, 0}}, 2}
 ));
 // clang-format on
 
+// ------------------------------------ multi-UE case --------------------------------------------
+
+// Background traffic profile for the persistent UEs of the multi-UE TDD tests. \c mixed assigns each background UE a
+// random direction; the others force the same direction for all of them.
+enum class multiue_bg_traffic { dl_only, ul_only, bidir, mixed };
+
+const char* to_string(multiue_bg_traffic t)
+{
+  switch (t) {
+    case multiue_bg_traffic::dl_only:
+      return "dl_only";
+    case multiue_bg_traffic::ul_only:
+      return "ul_only";
+    case multiue_bg_traffic::bidir:
+      return "bidir";
+    default:
+      return "mixed";
+  }
+}
+
 // Parameters for the multi-UE TDD stress test.
 struct multiue_tdd_test_params {
-  tdd_test_params base;
+  // Base cell configuration; the multi-UE fixture forces the deployment-matched PUCCH/PDCCH cell config on top of it,
+  // so only its TDD fields (csi_rs_enabled, tdd_cfg, min_k) are meaningful at the instantiation site.
+  base_scheduler_tdd_tester_params base;
   // Number of persistent UEs with constant traffic used to saturate the grid.
   unsigned nof_background_ues;
   // Maximum number of concurrent transient UEs (pool capacity shared across overlapping waves).
@@ -247,17 +325,20 @@ struct multiue_tdd_test_params {
   // When set, each transient UE arrives via the full RACH procedure (RAR + Msg3) before entering fallback, so the
   // RAR/Msg3 load competes with the ConRes CE for the same slots (as in a real deployment).
   bool rach_driven = false;
+  // Direction of the persistent background UEs' traffic.
+  multiue_bg_traffic background_traffic = multiue_bg_traffic::mixed;
 };
 
 void PrintTo(const multiue_tdd_test_params& value, ::std::ostream* os)
 {
-  *os << fmt::format("tdd={} bg_ues={} transient_ues={} waves={} wave_period_periods={} rach_driven={}",
+  *os << fmt::format("tdd={} bg_ues={} transient_ues={} waves={} wave_period_periods={} rach_driven={} bg_traffic={}",
                      value.base.tdd_cfg,
                      value.nof_background_ues,
                      value.nof_transient_ues,
                      value.nof_waves,
                      value.wave_period_in_tdd_periods,
-                     value.rach_driven);
+                     value.rach_driven,
+                     to_string(value.background_traffic));
 }
 
 /// \brief Base fixture that saturates the grid with background traffic while overlapping waves of UEs attach in
@@ -276,11 +357,22 @@ protected:
 
   enum class background_traffic_direction { dl_only, ul_only, bidir };
 
-  explicit base_scheduler_multiue_tdd_test(const multiue_tdd_test_params& params_) :
-    base_scheduler_tdd_tester(params_.base, bs_channel_bandwidth::MHz100), test_params(params_)
+  // Force the reference deployment's cell config on top of the base params: 100 MHz, CORESET#0 index 13 (48 RB x 2
+  // symbols), PUCCH F1 with 2 cyclic shifts and no OCC (so SR/HARQ F1 spread across the band edges), common SS#1 with 8
+  // AL4 candidates, and the dedicated SS#2 trimmed so the monitored PDCCH candidates per slot stay within the 36 limit
+  // for the 2-symbol CORESET#0.
+  static base_scheduler_tdd_tester_params deployment_cell_params(base_scheduler_tdd_tester_params p)
   {
-    pucch_builder.setup(cell_cfg().params);
+    p.bw                = bs_channel_bandwidth::MHz100;
+    p.cs_type           = base_scheduler_tdd_tester_params::coreset_type::dur2;
+    p.f1_nof_cyc_shifts = pucch_nof_cyclic_shifts::two;
+    p.f1_occ_supported  = false;
+    return p;
+  }
 
+  explicit base_scheduler_multiue_tdd_test(const multiue_tdd_test_params& params_) :
+    base_scheduler_tdd_tester(deployment_cell_params(params_.base)), test_params(params_)
+  {
     // Derive timing quantities from the cell configuration.
     tdd_period_slots    = nof_slots_per_tdd_period(*cell_cfg().params.tdd_cfg);
     conres_window_slots = cell_cfg().params.ul_cfg_common.init_ul_bwp.rach_cfg_common->ra_con_res_timer.count() *
@@ -300,8 +392,21 @@ protected:
 
   virtual ~base_scheduler_multiue_tdd_test() = default;
 
-  // Traffic direction assigned to each background UE (called once per background UE).
-  virtual background_traffic_direction background_direction() = 0;
+  // Traffic direction assigned to each background UE (called once per background UE), derived from the test parameter.
+  // \c mixed draws a random direction per UE; the others force the configured direction.
+  background_traffic_direction background_direction()
+  {
+    switch (test_params.background_traffic) {
+      case multiue_bg_traffic::dl_only:
+        return background_traffic_direction::dl_only;
+      case multiue_bg_traffic::ul_only:
+        return background_traffic_direction::ul_only;
+      case multiue_bg_traffic::bidir:
+        return background_traffic_direction::bidir;
+      default:
+        return static_cast<background_traffic_direction>(test_rng::uniform_int<unsigned>(0, 2));
+    }
+  }
 
   // Begin the transient UE's scenario-specific traffic right after it attaches (Msg4 or pending UL).
   virtual void start_transient_traffic(du_ue_index_t idx, rnti_t rnti) = 0;
@@ -339,22 +444,6 @@ protected:
     ASSERT_TRUE(last_metrics().has_value());
     test_logger.info("Peak concurrent transient UEs in contention resolution: {}", peak_in_conres);
     ASSERT_EQ(last_metrics()->nof_conres_timer_expired, 0U) << "A ConRes timer expired during the test";
-  }
-
-  // Build a UE creation request, allocating a distinct dedicated PUCCH config (SR/CSI/HARQ) from the cell resource pool
-  // so many UEs can coexist on the single UL slot.
-  // Note: the builder never releases resources (the test helper exposes no dealloc), so the total number of UEs created
-  // over a run (background + one per transient wave slot) must stay below the cell PUCCH pool capacity.
-  sched_ue_creation_request_message
-  build_ue_request(du_ue_index_t idx, rnti_t rnti, std::initializer_list<lcid_t> lcids)
-  {
-    auto ue_cfg     = sched_config_helper::create_default_sched_ue_creation_request(cell_cfg().params, lcids);
-    ue_cfg.ue_index = idx;
-    ue_cfg.crnti    = rnti;
-    report_fatal_error_if_not(pucch_builder.add_build_new_ue_pucch_cfg((*ue_cfg.cfg.cells)[0]),
-                              "Failed to allocate PUCCH resources for UE {}",
-                              fmt::underlying(idx));
-    return ue_cfg;
   }
 
   // Add persistent UEs, each with a fixed traffic direction and a large buffer, to saturate the grid.
@@ -440,40 +529,46 @@ protected:
     const rnti_t rnti      = to_rnti(fmt::underlying(base_rnti) + fmt::underlying(idx));
     auto         req       = build_ue_request(idx, rnti, {});
     req.starts_in_fallback = true;
+    // Keep the built cell config (with the allocated PUCCH resources) so they can be released back to the cell pool
+    // once the UE detaches, letting transient UEs recycle the pool as the DU does.
+    ue_cell_config ue_pucch_cfg = (*req.cfg.cells)[0];
 
-    return launch_async([this, idx, rnti, req = std::move(req), ce_ok = false, msg3_ok = false](
-                            coro_context<async_task<void>>& ctx) mutable {
-      CORO_BEGIN(ctx);
+    return launch_async(
+        [this, idx, rnti, req = std::move(req), ue_pucch_cfg = std::move(ue_pucch_cfg), ce_ok = false, msg3_ok = false](
+            coro_context<async_task<void>>& ctx) mutable {
+          CORO_BEGIN(ctx);
 
-      // In the RACH-driven scenario, wait for the RA scheduler to grant this UE's Msg3 PUSCH (its RAR was sent after
-      // the wave's RACH). The UE only enters fallback once its Msg3 CCCH is "decoded".
-      if (test_params.rach_driven) {
-        CORO_AWAIT_VALUE(msg3_ok, launch_run_until(msg3_scheduled(rnti), conres_window_slots));
-        EXPECT_TRUE(msg3_ok) << fmt::format("UE rnti={} did not get its Msg3 PUSCH granted", rnti);
-      }
+          // In the RACH-driven scenario, wait for the RA scheduler to grant this UE's Msg3 PUSCH (its RAR was sent
+          // after the wave's RACH). The UE only enters fallback once its Msg3 CCCH is "decoded".
+          if (test_params.rach_driven) {
+            CORO_AWAIT_VALUE(msg3_ok, launch_run_until(msg3_scheduled(rnti), conres_window_slots));
+            EXPECT_TRUE(msg3_ok) << fmt::format("UE rnti={} did not get its Msg3 PUSCH granted", rnti);
+          }
 
-      // Create the UE in fallback (Msg3 CCCH decoded); the scheduler auto-injects the ConRes CE.
-      req.ul_ccch_slot_rx = next_slot.without_hyper_sfn();
-      CORO_AWAIT(launch_add_ue_task(std::move(req)));
-      ++cur_in_conres;
-      peak_in_conres = std::max(peak_in_conres, cur_in_conres);
+          // Create the UE in fallback (Msg3 CCCH decoded); the scheduler auto-injects the ConRes CE.
+          req.ul_ccch_slot_rx = next_slot.without_hyper_sfn();
+          CORO_AWAIT(launch_add_ue_task(std::move(req)));
+          ++cur_in_conres;
+          peak_in_conres = std::max(peak_in_conres, cur_in_conres);
 
-      start_transient_traffic(idx, rnti);
+          start_transient_traffic(idx, rnti);
 
-      // ConRes CE must be scheduled within the ConRes timer window.
-      CORO_AWAIT_VALUE(ce_ok, launch_run_until(conres_ce_scheduled(rnti), conres_window_slots));
-      --cur_in_conres;
-      EXPECT_TRUE(ce_ok) << fmt::format("UE rnti={} did not schedule its ConRes CE before the timer expired", rnti);
+          // ConRes CE must be scheduled within the ConRes timer window.
+          CORO_AWAIT_VALUE(ce_ok, launch_run_until(conres_ce_scheduled(rnti), conres_window_slots));
+          --cur_in_conres;
+          EXPECT_TRUE(ce_ok) << fmt::format("UE rnti={} did not schedule its ConRes CE before the timer expired", rnti);
 
-      CORO_AWAIT(verify_transient_traffic(idx, rnti));
+          CORO_AWAIT(verify_transient_traffic(idx, rnti));
 
-      // Let the ConRes HARQ be auto-ACKed, then release the UE.
-      CORO_AWAIT(launch_run_until(false_until_slots(ack_margin_slots)));
-      CORO_AWAIT(launch_rem_ue_task(idx));
-      transient_pool.push_back(idx);
+          // Let the ConRes HARQ be auto-ACKed, then release the UE.
+          CORO_AWAIT(launch_run_until(false_until_slots(ack_margin_slots)));
+          CORO_AWAIT(launch_rem_ue_task(idx));
+          // Free the UE's PUCCH resources so the next transient UE reusing this index gets a fresh allocation.
+          pucch_builder.remove_ue_pucch_cfg(ue_pucch_cfg);
+          transient_pool.push_back(idx);
 
-      CORO_RETURN();
-    });
+          CORO_RETURN();
+        });
   }
 
   // Re-arm a small UL buffer (one SR's worth) each slot until the UE gets a UL grant, keeping the fallback UE's UL
@@ -554,9 +649,6 @@ protected:
 
   std::vector<du_ue_index_t>                transient_pool;
   std::vector<background_traffic_direction> background_ues;
-
-  // Builds a distinct per-UE dedicated PUCCH config from the cell pool for every UE created by these tests.
-  pucch_res_builder_test_helper pucch_builder{120};
 };
 
 /// \brief Contention-resolution stress: transient UEs exchange Msg4 (DL) under a mixed DL/UL background load, and must
@@ -568,12 +660,6 @@ public:
   scheduler_multiue_conres_tdd_test() : base_scheduler_multiue_tdd_test(GetParam()) {}
 
 protected:
-  background_traffic_direction background_direction() override
-  {
-    // Background UEs are a random combination of bi-dir, DL-only, UL-only.
-    return static_cast<background_traffic_direction>(test_rng::uniform_int<unsigned>(0, 2));
-  }
-
   void start_transient_traffic(du_ue_index_t idx, rnti_t /* rnti */) override
   {
     // Push Msg4 after a random delay, so it may be multiplexed with the ConRes CE or sent separately.
@@ -601,31 +687,31 @@ INSTANTIATE_TEST_SUITE_P(
     scheduler_multiue_conres_tdd_test,
     testing::Values(
         // clang-format off
-  // {tdd_test_params}, nof_background_ues, nof_transient_ues, nof_waves, wave_period_in_tdd_periods
+  // {base_scheduler_tdd_tester_params}, nof_background_ues, nof_transient_ues, nof_waves, wave_period_in_tdd_periods
   // DL-heavy DDDDDDSUUU.
-  multiue_tdd_test_params{tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}}},           8, 16, 10, 2},
+  multiue_tdd_test_params{base_scheduler_tdd_tester_params{true, {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}}},           8, 16, 10, 2},
   // DL-heavy DDDDDDSUUU with tight HARQ timing (min_k=2).
-  multiue_tdd_test_params{tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}}, 2},        8, 16, 10, 2},
+  multiue_tdd_test_params{base_scheduler_tdd_tester_params{true, {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}}, 2},        8, 16, 10, 2},
   // Very DL-heavy DDDDDDDSUU (2 UL slots per period).
-  multiue_tdd_test_params{tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDDDDDSUU)}, 8, 16, 10, 2},
+  multiue_tdd_test_params{base_scheduler_tdd_tester_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDDDDDSUU)}, 8, 16, 10, 2},
   // Balanced DDDSU.
-  multiue_tdd_test_params{tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU)}, 8, 16, 10, 2},
+  multiue_tdd_test_params{base_scheduler_tdd_tester_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU)}, 8, 16, 10, 2},
   // Balanced DDDSU, back-to-back waves and heavier transient load.
-  multiue_tdd_test_params{tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU)}, 12, 24, 12, 1},
+  multiue_tdd_test_params{base_scheduler_tdd_tester_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU)}, 12, 24, 12, 1},
   // UL-heavy DDDSUUUUUU.
-  multiue_tdd_test_params{tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 3, 5, 6, 0}}},           8, 16, 10, 2},
+  multiue_tdd_test_params{base_scheduler_tdd_tester_params{true, {subcarrier_spacing::kHz30, {10, 3, 5, 6, 0}}},           8, 16, 10, 2},
   // DDSU with min_k=4.
-  multiue_tdd_test_params{tdd_test_params{true, {subcarrier_spacing::kHz30, {4, 2, 9, 1, 0}}, 4},         8, 16, 10, 2},
-  // High-scale DDDSU: 100 dedicated UEs load the single UL slot while, in each wave, 50 fallback UEs attach
-  // simultaneously and all must complete contention resolution. This stresses the common PUCCH that the fallback
-  // ConRes ACKs share; kept below the cliff (~60-80 simultaneous fallback UEs here) where the common PUCCH can no
-  // longer serve the burst in time and ConRes CEs start timing out.
-  multiue_tdd_test_params{tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU)}, 100, 50, 3, 26},
+  multiue_tdd_test_params{base_scheduler_tdd_tester_params{true, {subcarrier_spacing::kHz30, {4, 2, 9, 1, 0}}, 4},         8, 16, 10, 2},
+  // High-scale DDDSU: 100 dedicated UEs load the single UL slot while, in each wave, 20 fallback UEs attach
+  // simultaneously and all must complete contention resolution. With the deployment-matched PUCCH layout (F1 with 2
+  // cyclic shifts and no OCC), the dedicated SR/HARQ F1 spread across the band edges and collide with the common
+  // ConRes-ACK resources, so the burst cliff is low (~30-40 here); kept just below it.
+  multiue_tdd_test_params{base_scheduler_tdd_tester_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU)}, 100, 20, 3, 26},
   // High-scale DDDSU, RACH-driven: fallback UEs arrive via the full RACH procedure (RAR + Msg3) at a sustained rate (one
   // per TDD period) under a 100-UE load. Because arrivals are staggered, every UL slot carries a mix of Msg3 PUSCH,
   // ConRes-ACK common PUCCH and dedicated SR/CSI/HARQ, so contention resolution breaks at a far lower concurrent UE
   // count than the simultaneous-burst case above (matching a real deployment). Kept just below that (much lower) cliff.
-  multiue_tdd_test_params{tdd_test_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU)}, 100, 50, 40, 1, true}
+  multiue_tdd_test_params{base_scheduler_tdd_tester_params{true, create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU)}, 100, 50, 40, 1, true}
 ));
 // clang-format on
 
@@ -640,9 +726,6 @@ public:
 
 protected:
   static constexpr unsigned max_slots_until_fallback_ul = 40;
-
-  // Saturate only the UL (as the dedicated UEs do), leaving the DL free for the transient UEs' ConRes CE.
-  background_traffic_direction background_direction() override { return background_traffic_direction::ul_only; }
 
   void start_transient_traffic(du_ue_index_t idx, rnti_t rnti) override
   {
@@ -671,14 +754,16 @@ INSTANTIATE_TEST_SUITE_P(
     scheduler_multiue_ul_starvation_tdd_test,
     testing::Values(
         // clang-format off
-  // {tdd_test_params}, nof_background_ues, nof_transient_ues, nof_waves, wave_period_in_tdd_periods
+  // {base_scheduler_tdd_tester_params}, nof_background_ues, nof_transient_ues, nof_waves, wave_period_in_tdd_periods
   // DDDDDDSUUU (6 DL symbols in special slot), min_k sweep across the k2-asymmetry boundary.
-  multiue_tdd_test_params{tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 6, 6, 3, 4}}, 1},        16, 8, 6, 2},
-  multiue_tdd_test_params{tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 6, 6, 3, 4}}, 2},        16, 8, 6, 2},
-  multiue_tdd_test_params{tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 6, 6, 3, 4}}, 3},        16, 8, 6, 2},
+  multiue_tdd_test_params{base_scheduler_tdd_tester_params{true, {subcarrier_spacing::kHz30, {10, 6, 6, 3, 4}}, 1},        16, 8, 6, 2, false, multiue_bg_traffic::ul_only},
+  multiue_tdd_test_params{base_scheduler_tdd_tester_params{true, {subcarrier_spacing::kHz30, {10, 6, 6, 3, 4}}, 2},        16, 8, 6, 2, false, multiue_bg_traffic::ul_only},
+  multiue_tdd_test_params{base_scheduler_tdd_tester_params{true, {subcarrier_spacing::kHz30, {10, 6, 6, 3, 4}}, 3},        16, 8, 6, 2, false, multiue_bg_traffic::ul_only},
   // DDDDDDSUUU with 5 DL symbols in the special slot.
-  multiue_tdd_test_params{tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}}, 2},        16, 8, 6, 2},
+  multiue_tdd_test_params{base_scheduler_tdd_tester_params{true, {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}}, 2},        16, 8, 6, 2, false, multiue_bg_traffic::ul_only},
   // DDSU (single full-UL slot per period) with min_k=4.
-  multiue_tdd_test_params{tdd_test_params{true, {subcarrier_spacing::kHz30, {4, 2, 9, 1, 0}}, 4},         16, 8, 6, 2}
+  multiue_tdd_test_params{base_scheduler_tdd_tester_params{true, {subcarrier_spacing::kHz30, {4, 2, 9, 1, 0}}, 4},         16, 8, 6, 2, false, multiue_bg_traffic::ul_only}
 ));
 // clang-format on
+
+} // namespace

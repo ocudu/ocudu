@@ -37,3 +37,12 @@ bool pucch_res_builder_test_helper::add_build_new_ue_pucch_cfg(ue_cell_config& u
   ue_cell_cfg = cell_group_cfg.cells.at(SERVING_PCELL_IDX);
   return true;
 }
+
+void pucch_res_builder_test_helper::remove_ue_pucch_cfg(ue_cell_config& ue_cell_cfg)
+{
+  ocudu_assert(pucch_res_mgr.contains(ue_cell_cfg.serv_cell_cfg.cell_index),
+               "PUCCH Resource Manager does not contain the cell index of the UE's serving cell configuration");
+  odu::cell_group_config cell_group_cfg;
+  cell_group_cfg.cells.emplace(SERVING_PCELL_IDX, ue_cell_cfg);
+  pucch_res_mgr.dealloc_resources(cell_group_cfg);
+}

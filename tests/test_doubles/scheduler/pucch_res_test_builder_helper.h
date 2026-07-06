@@ -24,6 +24,10 @@ public:
   /// \ref du_pucch_resource_manager to keep track of which cell PUCCH resources have been used.
   bool add_build_new_ue_pucch_cfg(ue_cell_config& ue_cell_cfg);
 
+  /// Release the cell PUCCH resources previously allocated to a UE (via \ref add_build_new_ue_pucch_cfg), so they
+  /// return to the free pool and can be reused by later UEs (mirrors the DU freeing resources on UE detach).
+  void remove_ue_pucch_cfg(ue_cell_config& ue_cell_cfg);
+
 private:
   // Build the \ref du_pucch_resource_manager with the given configuration. This function is called only once, at the
   // time the firt UE is added.
