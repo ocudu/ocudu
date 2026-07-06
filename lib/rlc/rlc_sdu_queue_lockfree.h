@@ -60,7 +60,7 @@ public:
   {
     // first check if we do not exeed the byte limit
     state_t st = get_state();
-    if (sdu.buf.length() + st.n_bytes >= byte_limit) {
+    if (sdu.buf.length() + st.n_bytes > byte_limit) {
       return false;
     }
 

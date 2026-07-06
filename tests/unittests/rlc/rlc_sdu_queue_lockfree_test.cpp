@@ -115,6 +115,54 @@ TEST_F(rlc_sdu_queue_test, full_capacity)
   ASSERT_EQ(0, state.n_bytes);
 }
 
+TEST_F(rlc_sdu_queue_test, full_capacity_bytes)
+{
+  unsigned sdu_len        = 1;
+  unsigned capacity_bytes = 5;
+
+  rlc_sdu_queue_lockfree tx_queue(default_rlc_queue_size_sdus, capacity_bytes, rlc_logger);
+
+  // Write Capacity + 1 SDUs
+  unsigned written_bytes = 0;
+  unsigned written_sdus  = 0;
+  for (unsigned i = 0; i < capacity_bytes / sdu_len + 1; i++) {
+    byte_buffer buf = {};
+    ASSERT_TRUE(buf.append(static_cast<uint8_t>(i)));
+    rlc_sdu write_sdu = {std::move(buf), written_sdus};
+    bool    write_ok  = tx_queue.write(std::move(write_sdu));
+    written_bytes += sdu_len;
+    written_sdus += 1;
+
+    if (written_bytes <= capacity_bytes) {
+      ASSERT_TRUE(write_ok) << "Write to queue failed before reaching full capacity";
+    } else {
+      ASSERT_FALSE(write_ok) << "Write to queue succeeded beyond reaching full capacity";
+    }
+  }
+  rlc_sdu_queue_lockfree::state_t state = tx_queue.get_state();
+  ASSERT_EQ(written_sdus, capacity_bytes / sdu_len + 1); // Tried to write one extra SDU beyond capacity.
+  ASSERT_EQ(state.n_sdus, capacity_bytes / sdu_len);     // Actually wrote only those who fit the capacity.
+  ASSERT_EQ(written_bytes, capacity_bytes + sdu_len);    // Tried to write one SDU length beyond capacity.
+  ASSERT_EQ(state.n_bytes, capacity_bytes);              // Actually wrote up to the full capacity.
+
+  // Read all SDUs and try to read on SDU over capacity
+  for (unsigned i = 0; i < capacity_bytes / sdu_len + 1; i++) {
+    byte_buffer expected_msg = {};
+    ASSERT_TRUE(expected_msg.append(static_cast<uint8_t>(i)));
+    rlc_sdu read_sdu = {};
+    if (i < capacity_bytes / sdu_len) {
+      ASSERT_TRUE(tx_queue.read(read_sdu));
+      ASSERT_EQ(expected_msg, read_sdu.buf);
+    } else {
+      ASSERT_FALSE(tx_queue.read(read_sdu));
+    }
+  }
+
+  state = tx_queue.get_state();
+  ASSERT_EQ(0, state.n_sdus);
+  ASSERT_EQ(0, state.n_bytes);
+}
+
 TEST_F(rlc_sdu_queue_test, discard)
 {
   unsigned       capacity          = 10;
