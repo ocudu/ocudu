@@ -278,8 +278,8 @@ void channel_precoder_avx512::apply_layer_map_and_precoding(re_buffer_writer<cbf
   unsigned nof_ports  = precoding.get_nof_ports();
   unsigned i_re       = 0;
 
-  simd_cf_t     weights[4][4];
-  span<cbf16_t> outputs[4];
+  simd_cf_t     weights[precoding_constants::MAX_NOF_PORTS][precoding_constants::MAX_NOF_LAYERS];
+  span<cbf16_t> outputs[precoding_constants::MAX_NOF_PORTS];
   for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
     span<const cf_t> port_coeff = precoding.get_port_coefficients(i_port);
     outputs[i_port]             = output.get_slice(i_port);

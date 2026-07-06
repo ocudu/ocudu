@@ -6,7 +6,7 @@
 namespace ocudu {
 
 /// Maximum number of channels per stream in a radio baseband unit.
-constexpr unsigned RADIO_MAX_NOF_CHANNELS = 4;
+constexpr unsigned RADIO_MAX_NOF_CHANNELS = 8;
 
 /// Maximum number of streams that a radio baseband unit can support.
 constexpr unsigned RADIO_MAX_NOF_STREAMS = 8;
