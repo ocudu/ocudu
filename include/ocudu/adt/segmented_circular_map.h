@@ -327,8 +327,6 @@ public:
   {
   }
 
-  segmented_circular_map& operator=(segmented_circular_map&&) = delete;
-
   /// Checks if there is an element with the given key in the container.
   constexpr bool contains(K key) const noexcept
   {
