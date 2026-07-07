@@ -40,7 +40,7 @@ struct mac_cell_config_dependencies {
   /// \brief Pointer to the MAC cell metric notifier.
   mac_cell_metric_notifier* notifier = nullptr;
   /// \brief Optional PHY cell operation controller. When set, mac_cell_processor::start/stop propagates the
-  /// activation/deactivation down to the PHY (via FAPI STOP/START on the P5 plane). If null, only the MAC state
+  /// activation/deactivation down to the PHY through this operation controller. If null, only the MAC state
   /// is toggled and the PHY continues to transmit.
   phy_cell_operation_controller* phy_cell_op_controller = nullptr;
 };

@@ -93,8 +93,8 @@ struct du_manager_params {
     /// \brief Optional per-cell PHY operation controllers, indexed by du_cell_index.
     ///
     /// Forwarded by du_setup_procedure into mac_cell_creation_request.phy_cell_op_controller
-    /// when adding cells, so MAC cell start/stop drives FAPI P5 START/STOP. Empty leaves the
-    /// pointer null and the PHY untouched on MAC cell stop.
+    /// when adding cells, so MAC cell start/stop drives the PHY operation controller. Empty leaves
+    /// the pointer null and the PHY untouched on MAC cell stop.
     std::vector<phy_cell_operation_controller*> phy_cell_op_controllers;
   };
 

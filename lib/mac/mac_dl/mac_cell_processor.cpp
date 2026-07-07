@@ -69,9 +69,9 @@ async_task<void> mac_cell_processor::start()
   return launch_async([this](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
 
-    // Start PHY cell (FAPI P5 START.request) if a controller is configured.
+    // Start the PHY cell through the operation controller if one is configured.
     // The PHY must be ready to receive DL grants before the MAC scheduler begins issuing them. The
-    // FAPI P5 START procedure completes on the first slot indication; the RU is started before the DU
+    // PHY start completes on the first slot indication; the RU is started before the DU
     // (see flexible_o_du_impl::start()) so slot indications are already flowing when the first cell is
     // activated at startup and the handshake completes without stalling.
     if (phy_cell_op_controller != nullptr) {
@@ -126,8 +126,9 @@ async_task<void> mac_cell_processor::stop()
     // Switch back to respective ctrl executor context.
     CORO_AWAIT(defer_on_blocking(ctrl_exec, timers));
 
-    // Stop PHY cell (FAPI P5 STOP.request) if a controller is configured. This halts RF transmission for this cell.
-    // Without it the MAC stops scheduling but the PHY keeps transmitting the cell's SSB on its configured cadence.
+    // Stop the PHY cell through the operation controller if one is configured. This halts RF transmission for this
+    // cell. Without it the MAC stops scheduling but the PHY keeps transmitting the cell's SSB on its configured
+    // cadence.
     if (phy_cell_op_controller != nullptr) {
       CORO_AWAIT_VALUE(bool phy_ok, phy_cell_op_controller->stop());
       if (!phy_ok) {

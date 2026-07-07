@@ -126,8 +126,9 @@ private:
   enum class cell_state { inactive, active } state = cell_state::inactive;
   manual_event_flag stop_completed;
 
-  /// \brief Optional PHY cell operation controller. When set, start()/stop() propagate to the PHY via FAPI P5
-  /// START/STOP procedures. When null, MAC toggles its own state only and the PHY is not notified.
+  /// \brief Optional PHY cell operation controller. When set, start()/stop() propagate to the PHY
+  /// through this operation controller. When null, MAC toggles its own state only and the PHY is
+  /// not notified.
   phy_cell_operation_controller* phy_cell_op_controller = nullptr;
 
   mac_cell_pcap_writer pcap_writer;
