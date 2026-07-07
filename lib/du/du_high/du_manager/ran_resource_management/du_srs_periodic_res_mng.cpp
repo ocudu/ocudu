@@ -50,23 +50,28 @@ du_srs_policy_max_ul_rate::du_srs_policy_max_ul_rate(span<const du_cell_config> 
     }
 
     // If the C_SRS is not set as an input parameter, then we compute C_SRS so that the SRS uses the maximum allowed
-    // number of RBs and is located at the center of the UL BWP.
+    // number of RBs and is located at the center of the RB interval available for the SRS (see below).
     if (cell.cell_cfg.ran.init_bwp.srs_cfg.c_srs.has_value()) {
       cell.srs_common_params.c_srs      = cell.cell_cfg.ran.init_bwp.srs_cfg.c_srs.value();
       cell.srs_common_params.freq_shift = cell.cell_cfg.ran.init_bwp.srs_cfg.freq_domain_shift.value();
     } else {
-      const std::optional<unsigned> c_srs =
-          du_srs_mng_details::compute_c_srs(cell.cell_cfg.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
+      // Restrict the SRS bandwidth to the RBs in between the 2 common PUCCH resource blocks, so that the SRS
+      // doesn't starve the common PUCCH resources of RBs.
+      const crb_interval srs_avail_crbs = du_srs_mng_details::compute_srs_available_crbs(
+          cell.cell_cfg.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs,
+          cell.cell_cfg.ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common);
+      // \c compute_c_srs() picks the C_SRS whose corresponding \f$m_{SRS,0}\f$ (i.e., the SRS bandwidth in RBs) is
+      // the largest value that still fits within \c srs_avail_crbs, instead of the whole UL BWP; this is what caps
+      // the SRS bandwidth to the gap between the 2 common PUCCH resource blocks.
+      const std::optional<unsigned> c_srs = du_srs_mng_details::compute_c_srs(srs_avail_crbs.length());
       ocudu_assert(c_srs.has_value(), "SRS parameters didn't provide a valid C_SRS value");
       cell.srs_common_params.c_srs = c_srs.value();
-      // When computed automatically, \c freqDomainShift is set so that the SRS is placed at the center of the UL BWP.
-      // As per TS 38.211, Section 6.4.1.4.3, if \f$n_{shift} >= BWP_RB_start\f$, the reference point for the SRS
-      // subcarriers is the CRB idx 0, else it's the BWP_RB_start; in here, we implicitly assume \f$n_{shift} >=
-      // BWP_RB_start\f$.
+      // When computed automatically, \c freqDomainShift is set so that the SRS is placed at the center of the
+      // available RB interval. As per TS 38.211, Section 6.4.1.4.3, if \f$n_{shift} >= BWP_RB_start\f$, the reference
+      // point for the SRS subcarriers is the CRB idx 0, else it's the BWP_RB_start; in here, we implicitly assume
+      // \f$n_{shift} >= BWP_RB_start\f$.
       cell.srs_common_params.freq_shift =
-          du_srs_mng_details::compute_srs_rb_start(
-              c_srs.value(), cell.cell_cfg.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length()) +
-          cell.cell_cfg.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.start();
+          du_srs_mng_details::compute_srs_rb_start(c_srs.value(), srs_avail_crbs.length()) + srs_avail_crbs.start();
     }
 
     cell.srs_common_params.p0 = cell.cell_cfg.ran.init_bwp.srs_cfg.p0;

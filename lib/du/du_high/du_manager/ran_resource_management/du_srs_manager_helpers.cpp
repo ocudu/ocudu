@@ -4,6 +4,7 @@
 
 #include "du_srs_manager_helpers.h"
 #include "ocudu/ran/srs/srs_bandwidth_configuration.h"
+#include "ocudu/scheduler/config/pucch_guardbands.h"
 #include <ocudu/support/ocudu_assert.h>
 #include <utility>
 
@@ -11,10 +12,10 @@ using namespace ocudu;
 using namespace odu;
 using namespace du_srs_mng_details;
 
-std::optional<unsigned> ocudu::odu::du_srs_mng_details::compute_c_srs(unsigned nof_ul_bwp_rbs)
+std::optional<unsigned> ocudu::odu::du_srs_mng_details::compute_c_srs(unsigned nof_avail_rbs)
 {
   // Iterate over Table 6.4.1.4.3-1, TS 38.211, and find the minimum \f$C_{SRS}\f$ value that maximizes \f$m_{SRS,0}\f$
-  // under the constraint \f$m_{SRS,0}\f$ <= UL RBs.
+  // under the constraint \f$m_{SRS,0}\f$ <= nof_avail_rbs.
 
   // As per Table 6.4.1.4.3-1, TS 38.211, the maximum value of \f$C_{SRS}\f$ is 63.
   constexpr unsigned max_non_valid_c_srs = 64;
@@ -37,25 +38,44 @@ std::optional<unsigned> ocudu::odu::du_srs_mng_details::compute_c_srs(unsigned n
     }
     // NOTE: the condition srs_params.value().m_srs > candidate_c_srs->second is used to find the minimum C_SRS value
     // that maximizes m_SRS.
-    else if (srs_params.value().m_srs <= nof_ul_bwp_rbs and srs_params.value().m_srs > candidate_c_srs->second) {
+    else if (srs_params.value().m_srs <= nof_avail_rbs and srs_params.value().m_srs > candidate_c_srs->second) {
       candidate_c_srs = pair_c_srs_m_srs{c_srs, srs_params.value().m_srs};
     }
     // If we reach this point, no need to keep looking for a valid C_SRS value.
-    if (srs_params.value().m_srs > nof_ul_bwp_rbs) {
+    if (srs_params.value().m_srs > nof_avail_rbs) {
       break;
     }
   }
   return candidate_c_srs.value().first;
 }
 
-unsigned ocudu::odu::du_srs_mng_details::compute_srs_rb_start(unsigned c_srs, unsigned nof_ul_bwp_rbs)
+unsigned ocudu::odu::du_srs_mng_details::compute_srs_rb_start(unsigned c_srs, unsigned nof_avail_rbs)
 {
   // As per Section 6.4.1.4.3, the parameter \f$m_{SRS}\f$ = 0 is an index that, along with \f$C_{SRS}\f$, maps to the
   // bandwidth of the SRS resources.
   constexpr uint8_t                      b_srs_0    = 0;
   const std::optional<srs_configuration> srs_params = srs_configuration_get(c_srs, b_srs_0);
-  ocudu_sanity_check(srs_params.has_value() and nof_ul_bwp_rbs >= srs_params.value().m_srs,
+  ocudu_sanity_check(srs_params.has_value() and nof_avail_rbs >= srs_params.value().m_srs,
                      "The SRS configuration is not valid");
 
-  return (nof_ul_bwp_rbs - srs_params.value().m_srs) / 2;
+  return (nof_avail_rbs - srs_params.value().m_srs) / 2;
+}
+
+crb_interval ocudu::odu::du_srs_mng_details::compute_srs_available_crbs(crb_interval ul_bwp_crbs,
+                                                                        unsigned     pucch_res_common)
+{
+  // Common PUCCH resources occupy 2 blocks of RBs, one at the low edge and one at the high edge of the UL BWP; the
+  // SRS bandwidth is automatically confined to the gap in between these 2 blocks.
+  const crb_bitmap pucch_crbs          = compute_pucch_crbs(ul_bwp_crbs, pucch_res_common, {});
+  const unsigned   nof_rbs             = pucch_crbs.size();
+  const int        low_edge_last_crb   = pucch_crbs.find_highest(0, nof_rbs / 2, true);
+  const int        high_edge_first_crb = pucch_crbs.find_lowest(nof_rbs / 2, nof_rbs, true);
+  ocudu_sanity_check(low_edge_last_crb >= 0 and high_edge_first_crb >= 0,
+                     "The common PUCCH resource is expected to occupy both edges of the UL BWP");
+
+  const unsigned gap_start = static_cast<unsigned>(low_edge_last_crb) + 1;
+  const unsigned gap_stop  = static_cast<unsigned>(high_edge_first_crb);
+  ocudu_sanity_check(gap_stop > gap_start, "No RBs available for SRS in between the common PUCCH resource blocks");
+
+  return crb_interval{ul_bwp_crbs.start() + gap_start, ul_bwp_crbs.start() + gap_stop};
 }

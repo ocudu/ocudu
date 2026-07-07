@@ -5,6 +5,7 @@
 #include "srs_scheduler_impl.h"
 #include "../cell/resource_grid.h"
 #include "ocudu/ocudulog/ocudulog.h"
+#include "ocudu/ran/srs/srs_bandwidth_configuration.h"
 
 using namespace ocudu;
 
@@ -426,12 +427,16 @@ bool srs_scheduler_impl::allocate_srs_opportunity(cell_slot_resource_allocator& 
   const bwp_configuration& ul_bwp_cfg         = cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params;
   const unsigned           nof_symbs_per_slot = get_nsymb_per_slot(ul_bwp_cfg.cp);
   const unsigned           starting_symb      = nof_symbs_per_slot - srs_res->res_mapping.start_pos - 1;
-  // Fill all the RBs in UL BW grid, even though the SRS is configured as narrowband; if there are SRS grants allocated,
-  // the scheduler is not yet capable of allocating PUSCH on any of the symbols that are used by the SRS.
+  // Fill only the RBs actually used by the SRS resource; this avoids the SRS symbols spuriously colliding with the
+  // common PUCCH resources located at the edges of the UL BWP.
+  const std::optional<srs_configuration> srs_bw_cfg =
+      srs_configuration_get(srs_res->freq_hop.c_srs, srs_res->freq_hop.b_srs);
+  ocudu_assert(srs_bw_cfg.has_value(), "Invalid SRS bandwidth configuration");
+  const crb_interval srs_crbs{srs_res->freq_domain_shift, srs_res->freq_domain_shift + srs_bw_cfg.value().m_srs};
   slot_alloc.ul_res_grid.fill(
       grant_info(ul_bwp_cfg.scs,
                  ofdm_symbol_range{starting_symb, starting_symb + static_cast<unsigned>(srs_res->res_mapping.nof_symb)},
-                 ul_bwp_cfg.crbs));
+                 srs_crbs));
 
   // Add SRS PDU into results.
   slot_alloc.result.ul.srss.emplace_back(
