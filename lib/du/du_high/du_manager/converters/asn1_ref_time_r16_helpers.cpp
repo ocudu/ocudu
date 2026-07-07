@@ -4,6 +4,7 @@
 
 #include "asn1_ref_time_r16_helpers.h"
 #include "ocudu/asn1/rrc_nr/sys_info.h"
+#include "ocudu/ran/time/gps_time_constants.h"
 #include "ocudu/support/ocudu_assert.h"
 
 using namespace ocudu;
@@ -11,10 +12,8 @@ using namespace asn1::rrc_nr;
 
 byte_buffer ocudu::odu::pack_ref_time_r16(std::chrono::system_clock::time_point time_point, bool is_local_clock)
 {
-  constexpr int64_t gps_epoch_offset_ns = 315964800LL * 1'000'000'000LL;
-
   int64_t total_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(time_point.time_since_epoch()).count();
-  int64_t gps_ns   = is_local_clock ? total_ns : (total_ns - gps_epoch_offset_ns);
+  int64_t gps_ns   = is_local_clock ? total_ns : (total_ns - GPS_EPOCH_OFFSET_NS);
 
   int64_t  total_10ns           = gps_ns / 10;
   uint32_t ref_ten_nano_seconds = static_cast<uint32_t>(total_10ns % 100000);
