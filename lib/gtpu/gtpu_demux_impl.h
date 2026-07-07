@@ -11,6 +11,7 @@
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/pcap/dlt_pcap.h"
 #include "ocudu/support/executors/task_executor.h"
+#include "ocudu/support/rate_limiting/lockfree_token_bucket.h"
 #include "fmt/format.h"
 #include <mutex>
 #include <random>
@@ -28,7 +29,8 @@ class gtpu_demux_impl final : public gtpu_demux
 public:
   explicit gtpu_demux_impl(gtpu_demux_cfg_t               cfg_,
                            gtpu_teid_lingering_interface& teid_linger_checker_,
-                           dlt_pcap&                      gtpu_pcap_);
+                           dlt_pcap&                      gtpu_pcap_,
+                           lockfree_token_bucket*         rate_limiter_ = nullptr);
   ~gtpu_demux_impl() override = default;
 
   // gtpu_demux_rx_upper_layer_interface
@@ -71,6 +73,9 @@ private:
   // and the modified by UE executors when setting up/tearing down.
   std::mutex                                                                   map_mutex;
   std::unordered_map<gtpu_teid_t, gtpu_demux_tunnel_ctx_t, gtpu_teid_hasher_t> teid_to_tunnel;
+
+  // Rate limiting. Lockfree, as to support parallel tunnel executors.
+  lockfree_token_bucket* rate_limiter;
 
   // TEID(s) used for test mode operation and helpers
   // to randomly pick TEIDs from the available values.

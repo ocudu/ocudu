@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
-///
-/// This file
-///
+/// This file implements a lockfree token buffer. Based on https://github.com/rigtorp/TokenBucket.
+/// The algorithm was adapt to use the time from the timer manager, so that it can be driven
+/// by system time or the radio time.
 
 #pragma once
 
@@ -27,10 +27,21 @@ public:
   void stop();
 
 private:
+  /// Type to represent the virtual empty time. It must have sufficient resolution
+  /// so that consuming a PDU worth of tokens does not get quantized. In this implementation
+  /// it is represented in nanoseconds.
+  using tick_t = uint64_t;
+
+  tick_t get_now()
+  {
+    // Return in nanoseconds the current tick time.
+    return static_cast<tick_t>(timer_mng.now()) * 1000000ULL;
+  }
+
   /// Virtual time of emptiness. Represents how long ago in the past
   /// the bucket would have been empty so that we have the current amount of tokens
   /// given the rate.
-  std::atomic<signed>      empty_time              = {};
+  std::atomic<tick_t>      empty_time              = {};
   std::chrono::nanoseconds time_per_token          = {};
   std::chrono::nanoseconds time_to_fill_from_empty = {};
 

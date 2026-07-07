@@ -12,10 +12,12 @@ using namespace ocudu;
 
 gtpu_demux_impl::gtpu_demux_impl(gtpu_demux_cfg_t               cfg_,
                                  gtpu_teid_lingering_interface& teid_linger_checker_,
-                                 dlt_pcap&                      gtpu_pcap_) :
+                                 dlt_pcap&                      gtpu_pcap_,
+                                 lockfree_token_bucket*         rate_limiter_) :
   cfg(std::move(cfg_)),
   teid_linger_checker(teid_linger_checker_),
   gtpu_pcap(gtpu_pcap_),
+  rate_limiter(rate_limiter_),
   gen(rd()),
   logger(ocudulog::fetch_basic_logger("GTPU"))
 {
@@ -135,6 +137,16 @@ void gtpu_demux_impl::handle_pdu_impl(gtpu_teid_t teid, gtpu_demux_pdu_ctx_t pdu
   if (stopped.load(std::memory_order_relaxed)) {
     return;
   }
+
+  if (rate_limiter != nullptr && !rate_limiter->consume(pdu_ctx.pdu.length())) {
+    if (not cfg.warn_on_drop) {
+      logger.info("Dropped GTP-U PDU, over global throughput limit. teid={}", teid);
+    } else {
+      logger.warning("Dropped GTP-U PDU, over global throughput limit. teid={}", teid);
+    }
+    return;
+  }
+
   write_pcap(pdu_ctx.pdu);
   logger.debug(
       pdu_ctx.pdu.begin(), pdu_ctx.pdu.end(), "Forwarding PDU. pdu_len={} teid={}", pdu_ctx.pdu.length(), teid);

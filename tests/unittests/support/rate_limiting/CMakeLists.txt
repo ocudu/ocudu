@@ -5,9 +5,9 @@
 add_executable(token_bucket_test token_bucket_test.cpp)
 target_link_libraries(token_bucket_test ocudu_support ocudulog gtest GTest::gtest_main)
 target_include_directories(token_bucket_test PRIVATE ${CMAKE_SOURCE_DIR})
-add_test(token_bucket_test rate_limiting_test)
+add_test(token_bucket_test token_bucket_test)
 
 add_executable(lockfree_token_bucket_test lockfree_token_bucket_test.cpp)
 target_link_libraries(lockfree_token_bucket_test ocudu_support ocudulog gtest GTest::gtest_main)
-target_include_directories(token_bucket_test PRIVATE ${CMAKE_SOURCE_DIR})
-add_test(token_bucket_test rate_limiting_test)
+target_include_directories(lockfree_token_bucket_test PRIVATE ${CMAKE_SOURCE_DIR})
+add_test(lockfree_token_bucket_test lockfree_token_bucket_test)

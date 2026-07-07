@@ -26,17 +26,17 @@ TEST(lockfree_token_bucket_test, consume_and_refill_test)
 
   lockfree_token_bucket bucket{rate, capacity, timers};
 
-  // Tick until bucket full.
-  tick_all(timers, 5);
-
+  // Consume all tokens. Next token consumption will fail.
   ASSERT_TRUE(bucket.consume(24000));
   ASSERT_FALSE(bucket.consume(1));
 
+  // Tick once. This will refresh 20k tokens.
   tick_all(timers, 1);
   ASSERT_TRUE(bucket.consume(20000));
   ASSERT_FALSE(bucket.consume(1));
 
   // Fully refresh the bucket.
+  // This will be limited by the capacity, so 24k tokens.
   tick_all(timers, 2);
   ASSERT_TRUE(bucket.consume(10000));
   ASSERT_TRUE(bucket.consume(10000));
