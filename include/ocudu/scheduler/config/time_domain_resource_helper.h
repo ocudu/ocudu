@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "ocudu/adt/span.h"
 #include "ocudu/adt/static_vector.h"
 #include "ocudu/ran/pdsch/pdsch_time_domain_resource.h"
 #include "ocudu/ran/pusch/pusch_time_domain_resource.h"
@@ -25,6 +26,10 @@ static_vector<uint8_t, MAX_K1_CANDIDATES> generate_k1_candidates(const tdd_ul_dl
                                                                  uint8_t                        min_k1);
 static_vector<uint8_t, MAX_K1_CANDIDATES> generate_k1_candidates(const std::optional<tdd_ul_dl_config_common>& tdd_cfg,
                                                                  uint8_t                                       min_k1);
+
+/// \brief Generate the common (fallback) k1 candidates for PDSCH-to-HARQ timing, as per TS38.213, 9.1.2.1.
+/// \remark The returned values are the fixed set {min_k1,...,8}, independent of the cell configuration.
+span<const uint8_t> generate_common_k1_candidates(uint8_t min_k1);
 
 /// \brief Computes the minimum symbol available for PDSCH, considering that they won't collide with the symbols
 /// reserved for PDCCH in the slot.

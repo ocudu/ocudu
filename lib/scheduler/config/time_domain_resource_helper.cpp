@@ -8,6 +8,7 @@
 #include "ocudu/scheduler/config/bwp_configuration.h"
 #include "ocudu/scheduler/config/serving_cell_config.h"
 #include "ocudu/scheduler/sched_consts.h"
+#include <array>
 #include <set>
 
 using namespace ocudu;
@@ -61,6 +62,12 @@ time_domain_resource_helper::generate_k1_candidates(const std::optional<tdd_ul_d
     return generate_k1_candidates(*tdd_cfg, min_k1);
   }
   return {min_k1};
+}
+
+span<const uint8_t> time_domain_resource_helper::generate_common_k1_candidates(uint8_t min_k1)
+{
+  static constexpr std::array<uint8_t, MAX_K1_CANDIDATES> pool = {1, 2, 3, 4, 5, 6, 7, 8};
+  return span<const uint8_t>(pool.data() + (min_k1 - 1), pool.size() - (min_k1 - 1));
 }
 
 /// Helper function to determine the start of the PDSCH symbols, considering a CORESET config.

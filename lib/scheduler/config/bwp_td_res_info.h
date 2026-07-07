@@ -11,25 +11,35 @@
 #include "ocudu/ran/tdd/tdd_ul_dl_config.h"
 #include "ocudu/scheduler/config/time_domain_resource_helper.h"
 #include <optional>
+#include <variant>
 
 namespace ocudu {
 
 /// Parameters for building TD resource info.
 struct bwp_td_res_info_builder_params {
+  struct auto_resources {
+    /// Max duration in symbols of all CORESETs.
+    uint8_t coreset_max_dur = 2;
+    /// Minimum k1 value to consider when generating the list of k1 values.
+    uint8_t min_k1 = 4;
+    /// Minimum k2 value to consider when generating the list of PUSCH time-domain resource allocations.
+    uint8_t min_k2 = 4;
+    /// Maximum number of symbols an SRS resource can occupy at the end of the slot. Zero disables SRS-aware generation.
+    uint8_t max_srs_symbols = 0;
+    /// Number of symbols of a single SRS resource.
+    uint8_t symbols_per_srs = 0;
+  };
+  struct explicit_resources {
+    std::vector<pdsch_time_domain_resource_allocation> pdsch_td_res_list;
+    std::vector<pusch_time_domain_resource_allocation> pusch_td_res_list;
+    std::vector<uint8_t>                               k1_candidates;
+  };
+
   /// Cyclic prefix used in the BWP.
   cyclic_prefix cp = cyclic_prefix::NORMAL;
   /// TDD configuration common to all UEs in the cell/BWP.
-  std::optional<tdd_ul_dl_config_common> tdd_cfg;
-  /// Max duration in symbols of all CORESETs.
-  uint8_t coreset_max_dur = 2;
-  /// Minimum k1 value to consider when generating the list of k1 values.
-  uint8_t min_k1 = 4;
-  /// Minimum k2 value to consider when generating the list of PUSCH time-domain resource allocations.
-  uint8_t min_k2 = 4;
-  /// Maximum number of symbols an SRS resource can occupy at the end of the slot. Zero disables SRS-aware generation.
-  uint8_t max_srs_symbols = 0;
-  /// Number of symbols of a single SRS resource.
-  uint8_t symbols_per_srs = 0;
+  std::optional<tdd_ul_dl_config_common>           tdd_cfg;
+  std::variant<auto_resources, explicit_resources> params;
 };
 
 /// Descriptor of time-domain resources in a given BWP.
@@ -60,9 +70,9 @@ struct bwp_td_res_info {
   }
 
   /// \brief Get the list of PUSCH TD resource candidates for a given slot index.
-  span<const pusch_time_domain_resource_allocation> get_pusch_td_res_list(unsigned slot_index) const
+  span<const pusch_time_domain_resource_allocation> get_pusch_td_res_list(unsigned pdcch_slot_index) const
   {
-    return pusch_td_res_per_slot[slot_index % pusch_td_res_per_slot.size()];
+    return pusch_td_res_per_slot[pdcch_slot_index % pusch_td_res_per_slot.size()];
   }
 
   /// \brief Get the PDSCH TD resource candidates for a PDSCH scheduled by a PDCCH in the given slot index.
