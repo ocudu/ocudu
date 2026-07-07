@@ -93,15 +93,17 @@ du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_co
         cell.ran.init_bwp.csi.has_value() and cell.ran.init_bwp.csi->csi_report_slot_offset.has_value();
     const bool is_periodic_srs = cell.ran.init_bwp.srs_cfg.srs_type_enabled == srs_type::periodic;
 
-    logger.info("The upper-bound on the number of UEs supported by cell {{pci={}, du_cell_index={}}} is {} (the actual "
-                "number might be lower than that). This is determined by the lowest of the following limits: SR ({}), "
-                "CSI ({}) and SRS ({}).",
-                cell.ran.pci,
-                fmt::underlying(cell_idx),
-                get_max_nof_setup_ues(cell_idx),
-                pucch_res_mng.get_nof_free_sr_configs(cell_idx),
-                is_periodic_csi_report ? fmt::to_string(pucch_res_mng.get_nof_free_csi_configs(cell_idx)) : "n/a",
-                is_periodic_srs ? fmt::to_string(srs_res_mng->get_nof_srs_free_res_offsets(cell_idx)) : "n/a");
+    auto& config_logger = ocudulog::fetch_basic_logger("CONFIG");
+    config_logger.info(
+        "The upper-bound on the number of UEs supported by cell {{pci={}, du_cell_index={}}} is {} (the actual "
+        "number might be lower than that). This is determined by the lowest of the following limits: SR ({}), "
+        "CSI ({}) and SRS ({}).",
+        cell.ran.pci,
+        fmt::underlying(cell_idx),
+        get_max_nof_setup_ues(cell_idx),
+        pucch_res_mng.get_nof_free_sr_configs(cell_idx),
+        is_periodic_csi_report ? fmt::to_string(pucch_res_mng.get_nof_free_csi_configs(cell_idx)) : "n/a",
+        is_periodic_srs ? fmt::to_string(srs_res_mng->get_nof_srs_free_res_offsets(cell_idx)) : "n/a");
   }
 }
 
