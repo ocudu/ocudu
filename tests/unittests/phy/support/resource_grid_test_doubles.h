@@ -16,6 +16,7 @@
 #include "ocudu/support/ocudu_test.h"
 #include "fmt/std.h"
 #include <algorithm>
+#include <cmath>
 #include <complex>
 #include <map>
 #include <tuple>
@@ -268,6 +269,28 @@ public:
   unsigned get_nof_symbols() const override { return max_symb; }
 
   bool is_empty(unsigned port) const override { return entries.empty(); }
+
+  crb_interval get_allocation_range(unsigned port, unsigned symbol) const override
+  {
+    if (grid.empty()) {
+      return {};
+    }
+
+    // Find the first and last non-NaN resource element for the given port and symbol.
+    span<const cbf16_t> re          = grid.get_view({symbol, port});
+    auto                func_is_nan = [](cbf16_t value) { return is_nan(value.real) && is_nan(value.imag); };
+
+    auto first_it = std::find_if_not(re.begin(), re.end(), func_is_nan);
+    if (first_it == re.end()) {
+      return {};
+    }
+    auto last_it = std::find_if_not(re.rbegin(), re.rend(), func_is_nan);
+
+    unsigned first_subc = static_cast<unsigned>(std::distance(re.begin(), first_it));
+    unsigned last_subc  = static_cast<unsigned>(re.size() - 1 - std::distance(re.rbegin(), last_it));
+
+    return {first_subc / NOF_SUBCARRIERS_PER_RB, divide_ceil(last_subc + 1, NOF_SUBCARRIERS_PER_RB)};
+  }
 
   bool is_empty() const override { return entries.empty(); }
 

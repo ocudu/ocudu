@@ -72,4 +72,13 @@ inline int16_t to_int16(bf16_t value, float scale)
   return static_cast<int16_t>(std::round(temp * scale));
 }
 
+/// \brief Checks whether a \c bfloat16 value is NaN.
+///
+/// A \c bfloat16 value is NaN when its exponent is all 1s and its mantissa is non-zero. This is a pure bit-check — no
+/// float conversion or FPU instruction is involved.
+constexpr bool is_nan(bf16_t value)
+{
+  return (value.value() & 0x7fff) > 0x7f80;
+}
+
 } // namespace ocudu

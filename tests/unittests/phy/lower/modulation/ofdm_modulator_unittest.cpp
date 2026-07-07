@@ -92,7 +92,7 @@ int main()
 
           // Generate random data in the resource grid.
           unsigned                 nsymb = get_nsymb_per_slot(cp);
-          resource_grid_reader_spy rg;
+          resource_grid_reader_spy rg(MAX_PORTS, nsymb, ofdm_config.bw_rb);
           for (unsigned symbol_idx = 0; symbol_idx != nsymb; ++symbol_idx) {
             for (unsigned subc_idx = 0; subc_idx != nsubc; ++subc_idx) {
               resource_grid_reader_spy::expected_entry_t entry = {};

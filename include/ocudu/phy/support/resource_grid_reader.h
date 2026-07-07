@@ -8,6 +8,7 @@
 #include "ocudu/adt/complex.h"
 #include "ocudu/adt/span.h"
 #include "ocudu/phy/support/resource_grid_base.h"
+#include "ocudu/ran/resource_allocation/rb_interval.h"
 #include "ocudu/ran/resource_block.h"
 
 namespace ocudu {
@@ -39,6 +40,16 @@ public:
   ///
   /// \return \c true if the resource grid is empty. Otherwise, \c false.
   virtual bool is_empty() const = 0;
+
+  /// \brief Gets the allocated common resource block range for a given OFDM symbol at a given port.
+  ///
+  /// The range spans the minimum and maximum CRB written by a \c put method since the last zero set. An empty
+  /// interval indicates that the given (port, symbol) pair is empty.
+  ///
+  /// \param[in] port   Port index.
+  /// \param[in] symbol OFDM symbol index.
+  /// \return The allocated CRB range, or an empty interval if the given symbol is empty.
+  virtual crb_interval get_allocation_range(unsigned port, unsigned symbol) const = 0;
 
   /// \brief Gets a number of resource elements in the resource grid at the given port and symbol using a bounded bitset
   /// to indicate which subcarriers are allocated and which are not.

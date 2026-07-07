@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "resource_grid_allocation_info.h"
 #include "resource_grid_mapper_impl.h"
 #include "resource_grid_reader_impl.h"
 #include "resource_grid_writer_impl.h"
@@ -20,10 +21,12 @@ class resource_grid_impl : public resource_grid
 {
 private:
   std::array<cbf16_t, MAX_NOF_SUBCARRIERS> temp;
-  std::atomic<unsigned>                    empty = {};
   unsigned                                 nof_ports;
   unsigned                                 nof_symb;
   unsigned                                 nof_subc;
+
+  /// Per-port, per-symbol allocation tracking.
+  resource_grid_allocation_info alloc_mask;
 
   /// \brief Stores the resource grid data.
   ///

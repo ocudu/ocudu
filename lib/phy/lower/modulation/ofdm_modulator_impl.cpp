@@ -64,8 +64,8 @@ void ofdm_symbol_modulator_impl::modulate(span<cf_t>                  output,
                cp_len + dft_size,
                scs_to_khz(scs));
 
-  // Skip modulator if the grid is empty for the given port.
-  if (grid.is_empty(port_index)) {
+  // Skip modulator if the grid is empty for the given port and symbol.
+  if (grid.get_allocation_range(port_index, symbol_index % nsymb).empty()) {
     ocuduvec::zero(output);
     return;
   }

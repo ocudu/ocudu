@@ -26,7 +26,14 @@ unsigned resource_grid_reader_impl::get_nof_symbols() const
 bool resource_grid_reader_impl::is_empty(unsigned port) const
 {
   ocudu_assert(port < get_nof_ports(), "Port index {} is out of range (max {})", port, get_nof_ports());
-  return is_port_empty(port);
+  return alloc_mask.is_port_empty(port);
+}
+
+crb_interval resource_grid_reader_impl::get_allocation_range(unsigned port, unsigned l) const
+{
+  ocudu_assert(port < get_nof_ports(), "Port index {} is out of range (max {})", port, get_nof_ports());
+  ocudu_assert(l < get_nof_symbols(), "Symbol index {} is out of range (max {})", l, get_nof_symbols());
+  return alloc_mask.get_allocation_range(port, l);
 }
 
 bool resource_grid_reader_impl::is_empty() const

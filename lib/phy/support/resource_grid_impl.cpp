@@ -9,25 +9,31 @@
 using namespace ocudu;
 
 resource_grid_impl::resource_grid_impl(unsigned nof_ports_, unsigned nof_symb_, unsigned nof_subc_) :
-  nof_ports(nof_ports_), nof_symb(nof_symb_), nof_subc(nof_subc_), writer(rg_buffer, empty), reader(rg_buffer, empty)
+  nof_ports(nof_ports_),
+  nof_symb(nof_symb_),
+  nof_subc(nof_subc_),
+  alloc_mask(nof_ports_, nof_symb_, divide_ceil(nof_subc, NOF_SUBCARRIERS_PER_RB)),
+  writer(rg_buffer, alloc_mask),
+  reader(rg_buffer, alloc_mask)
 {
   // Reserve memory for the internal buffer.
   rg_buffer.reserve({nof_subc, nof_symb, nof_ports});
 
   // Set all the resource elements to zero.
   ocuduvec::zero(rg_buffer.get_data());
-  empty = (1U << nof_ports) - 1;
 }
 
 void resource_grid_impl::set_all_zero()
 {
-  // For each non-empty port, set the underlying resource elements to zero.
+  // Zero data for all allocated port-symbol pairs and clear the mask.
   for (unsigned port = 0; port != nof_ports; ++port) {
-    if (!reader.is_port_empty(port)) {
-      ocuduvec::zero(rg_buffer.get_view<static_cast<unsigned>(resource_grid_dimensions::port)>({port}));
+    for (unsigned l = 0; l != nof_symb; ++l) {
+      if (alloc_mask.is_allocated(port, l)) {
+        ocuduvec::zero(rg_buffer.get_view({l, port}));
+      }
     }
   }
-  empty.store((1U << nof_ports) - 1, std::memory_order_release);
+  alloc_mask.reset_all();
 }
 
 resource_grid_writer& resource_grid_impl::get_writer()

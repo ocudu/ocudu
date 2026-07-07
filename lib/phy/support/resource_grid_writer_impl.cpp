@@ -7,8 +7,15 @@
 #include "ocudu/ocuduvec/conversion.h"
 #include "ocudu/ocuduvec/copy.h"
 #include "ocudu/phy/support/resource_grid.h"
+#include "ocudu/support/math/math_utils.h"
 
 using namespace ocudu;
+
+/// Converts a subcarrier range \c [start_subc, stop_subc) into the CRB range that fully contains it.
+static crb_interval subc_range_to_crb_range(unsigned start_subc, unsigned stop_subc)
+{
+  return {start_subc / NOF_SUBCARRIERS_PER_RB, divide_ceil(stop_subc, NOF_SUBCARRIERS_PER_RB)};
+}
 
 unsigned resource_grid_writer_impl::get_nof_ports() const
 {
@@ -42,9 +49,12 @@ span<const cf_t> resource_grid_writer_impl::put(unsigned                        
   // Get view of the OFDM symbol subcarriers.
   span<cbf16_t> symb = data.get_view({l, port}).subspan(k_init, mask.size());
 
-  clear_empty(port);
-
   unsigned mask_count = mask.count();
+  if (mask_count != 0) {
+    alloc_mask.update_crb_range(
+        port, l, subc_range_to_crb_range(k_init + mask.find_lowest(), k_init + mask.find_highest() + 1));
+  }
+
   ocudu_assert(mask_count <= symbols.size(),
                "The number of active subcarriers (i.e., {}) exceeds the number of symbols (i.e., {}).",
                mask_count,
@@ -81,9 +91,12 @@ span<const cbf16_t> resource_grid_writer_impl::put(unsigned                     
   // Get view of the OFDM symbol subcarriers.
   span<cbf16_t> symb = data.get_view({l, port}).subspan(k_init, mask.size());
 
-  clear_empty(port);
-
   unsigned mask_count = mask.count();
+  if (mask_count != 0) {
+    alloc_mask.update_crb_range(
+        port, l, subc_range_to_crb_range(k_init + mask.find_lowest(), k_init + mask.find_highest() + 1));
+  }
+
   ocudu_assert(mask_count <= symbols.size(),
                "The number of active subcarriers (i.e., {}) exceeds the number of symbols (i.e., {}).",
                mask_count,
@@ -125,7 +138,9 @@ void resource_grid_writer_impl::put(unsigned port, unsigned l, unsigned k_init, 
 
   // Copy resource elements.
   ocuduvec::convert(rg_symbol.subspan(k_init, symbols.size()), symbols);
-  clear_empty(port);
+  if (!symbols.empty()) {
+    alloc_mask.update_crb_range(port, l, subc_range_to_crb_range(k_init, k_init + symbols.size()));
+  }
 }
 
 void resource_grid_writer_impl::put(unsigned            port,
@@ -157,7 +172,10 @@ void resource_grid_writer_impl::put(unsigned            port,
     i_re += stride;
   }
 
-  clear_empty(port);
+  if (nof_symbols != 0) {
+    unsigned last_subc = k_init + ((nof_symbols - 1) * stride);
+    alloc_mask.update_crb_range(port, l, subc_range_to_crb_range(k_init, last_subc + 1));
+  }
 }
 
 span<cbf16_t> resource_grid_writer_impl::get_view(unsigned port, unsigned l)
@@ -170,6 +188,6 @@ span<cbf16_t> resource_grid_writer_impl::get_view(unsigned port, unsigned l)
                "Port index (i.e., {}) exceeds the maximum number of ports (i.e., {})",
                port,
                get_nof_ports());
-  clear_empty(port);
+  alloc_mask.update_crb_range(port, l);
   return data.get_view({l, port});
 }

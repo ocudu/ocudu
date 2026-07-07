@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "resource_grid_allocation_info.h"
 #include "ocudu/phy/support/resource_grid_dimensions.h"
 #include "ocudu/phy/support/resource_grid_reader.h"
 
@@ -15,8 +16,9 @@ class resource_grid_reader_impl : public resource_grid_reader
 public:
   using storage_type = tensor<static_cast<unsigned>(resource_grid_dimensions::all), cbf16_t, resource_grid_dimensions>;
 
-  /// Constructs a resource grid reader implementation from a tensor.
-  resource_grid_reader_impl(const storage_type& data_, const std::atomic<unsigned>& empty_) : data(data_), empty(empty_)
+  /// Constructs a resource grid reader implementation from a tensor and allocation mask.
+  resource_grid_reader_impl(const storage_type& data_, const resource_grid_allocation_info& alloc_mask_) :
+    data(data_), alloc_mask(alloc_mask_)
   {
   }
 
@@ -31,6 +33,9 @@ public:
 
   // See interface for documentation.
   bool is_empty(unsigned port) const override;
+
+  // See interface for documentation.
+  crb_interval get_allocation_range(unsigned port, unsigned l) const override;
 
   // See interface for documentation.
   bool is_empty() const override;
@@ -58,12 +63,9 @@ public:
   // See interface for documentation.
   span<const cbf16_t> get_view(unsigned port, unsigned l) const override;
 
-  /// Checks if a port is empty.
-  bool is_port_empty(unsigned i_port) const { return (empty.load(std::memory_order_acquire) & (1U << i_port)) != 0; }
-
 private:
-  const storage_type&          data;
-  const std::atomic<unsigned>& empty;
+  const storage_type&                  data;
+  const resource_grid_allocation_info& alloc_mask;
 };
 
 } // namespace ocudu
