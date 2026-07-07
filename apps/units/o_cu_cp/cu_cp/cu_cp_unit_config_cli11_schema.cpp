@@ -492,6 +492,12 @@ static void configure_cli11_rrc_args(CLI::App& app, cu_cp_unit_rrc_config& confi
              config.rrc_procedure_guard_time_ms,
              "Guard time in ms used for RRC message exchange with UE. This is added to the RRC procedure timeout.")
       ->capture_default_str();
+  add_option(app,
+             "--rrc_reject_wait_time_s",
+             config.rrc_reject_wait_time_s,
+             "Optional: WaitTime [s] (1..16) signalled in the RRC Reject waitTime IE. "
+             "If not provided, no waitTime will be sent with RRC Reject.")
+      ->check(CLI::Range(1, 16));
 }
 
 static void configure_cli11_security_args(CLI::App& app, cu_cp_unit_security_config& config)

@@ -305,6 +305,10 @@ static YAML::Node build_cu_cp_rrc_section(const cu_cp_unit_rrc_config& config)
   node["force_reestablishment_fallback"] = config.force_reestablishment_fallback;
   node["force_resume_fallback"]          = config.force_resume_fallback;
   node["rrc_procedure_guard_time_ms"]    = config.rrc_procedure_guard_time_ms;
+  /// Only set rrc_reject_wait_time_s when provided.
+  if (config.rrc_reject_wait_time_s.has_value()) {
+    node["rrc_reject_wait_time_s"] = config.rrc_reject_wait_time_s.value();
+  }
 
   return node;
 }

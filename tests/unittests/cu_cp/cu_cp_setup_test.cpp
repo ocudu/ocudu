@@ -260,6 +260,30 @@ public:
     return true;
   }
 
+  // Extracts the waitTime IE from the RRC Reject carried in the last received
+  // F1AP UE context release command. Returns nullopt if the IE is absent.
+  [[nodiscard]] std::optional<uint8_t> get_wait_time_from_last_rrc_reject()
+  {
+    const auto& ue_rel = f1ap_pdu.pdu.init_msg().value.ue_context_release_cmd();
+    report_fatal_error_if_not(ue_rel->rrc_container_present, "RRC container not present");
+
+    // Check that the UE Context Release command contains an RRC Reject.
+    asn1::rrc_nr::dl_ccch_msg_s ccch;
+    {
+      asn1::cbit_ref bref{f1ap_pdu.pdu.init_msg().value.ue_context_release_cmd()->rrc_container};
+      report_fatal_error_if_not(ccch.unpack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to unpack RRC container");
+    }
+    report_fatal_error_if_not(ccch.msg.c1().type().value ==
+                                  asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::rrc_reject,
+                              "Unexpected RRC message type");
+
+    const auto& reject = ccch.msg.c1().rrc_reject().crit_exts.rrc_reject();
+    if (not reject.wait_time_present) {
+      return std::nullopt;
+    }
+    return reject.wait_time;
+  }
+
 protected:
   unsigned du_idx    = 0;
   unsigned cu_up_idx = 0;
@@ -470,4 +494,47 @@ TEST_F(cu_cp_setup_admission_limit_test, when_initial_ul_rrc_message_is_rejected
 
   report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_TRUE(report.ues.empty());
+}
+
+TEST_F(cu_cp_setup_admission_limit_test,
+       when_rrc_reject_wait_time_is_not_configured_then_rrc_reject_has_no_wait_time_ie)
+{
+  // rrc_reject_wait_time is optional and left unset in the default configuration.
+  ASSERT_FALSE(get_cu_cp_cfg().rrc.rrc_reject_wait_time.has_value());
+
+  ASSERT_TRUE(send_initial_ul_rrc_message_and_await_ue_context_release_command());
+
+  // The RRC Reject does not carry the waitTime IE.
+  ASSERT_FALSE(get_wait_time_from_last_rrc_reject().has_value());
+}
+
+class cu_cp_setup_wait_time_test : public cu_cp_setup_test
+{
+public:
+  static constexpr uint8_t reject_wait_time_s = 8;
+  cu_cp_setup_wait_time_test() :
+    cu_cp_setup_test(cu_cp_test_env_params{/*max_nof_cu_ups*/ 8,
+                                           /*max_nof_dus*/ 8,
+                                           /*max_nof_ues*/ 0,
+                                           /*max_nof_drbs_per_ue*/ 8,
+                                           /*amf_config*/ {{default_supported_tracking_area}},
+                                           /*trigger_ho_from_measurements*/ true,
+                                           /*enable_rrc_inactive*/ false,
+                                           /*enable_xnc_peer*/ false,
+                                           /*rrc_reject_wait_time*/ std::chrono::seconds{reject_wait_time_s}})
+  {
+  }
+};
+
+TEST_F(cu_cp_setup_wait_time_test, when_rrc_reject_wait_time_is_configured_then_rrc_reject_carries_wait_time_ie)
+{
+  // Check the configuratin matches with the provided value.
+  ASSERT_EQ(get_cu_cp_cfg().rrc.rrc_reject_wait_time, std::chrono::seconds{reject_wait_time_s});
+
+  ASSERT_TRUE(send_initial_ul_rrc_message_and_await_ue_context_release_command());
+
+  // The RRC Reject carries the configured waitTime value.
+  auto wait_time = get_wait_time_from_last_rrc_reject();
+  ASSERT_TRUE(wait_time.has_value());
+  ASSERT_EQ(wait_time.value(), reject_wait_time_s);
 }

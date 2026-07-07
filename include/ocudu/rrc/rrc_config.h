@@ -30,6 +30,10 @@ struct rrc_cfg_t {
   bool force_resume_fallback = false;
   /// Guard time for RRC procedures.
   std::chrono::milliseconds rrc_procedure_guard_time_ms{500};
+  /// Configure rrc reject waitTime.
+  /// Default RRC Reject wait time [s], used when none is configured.
+  /// TS 38.331 RejectWaitTime = integer(1..16)
+  std::optional<std::chrono::seconds> rrc_reject_wait_time;
 };
 
 } // namespace ocudu::ocucp

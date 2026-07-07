@@ -27,6 +27,8 @@ static rrc_cfg_t create_rrc_config(const cu_cp_configuration& cu_cp_cfg)
   rrc_cfg.enc_algo_pref_list             = cu_cp_cfg.security.enc_algo_pref_list;
   rrc_cfg.srb2_cfg                       = cu_cp_cfg.bearers.srb2_cfg;
   rrc_cfg.drb_config                     = cu_cp_cfg.bearers.drb_config;
+  /// Pass the value through layers.
+  rrc_cfg.rrc_reject_wait_time = cu_cp_cfg.rrc.rrc_reject_wait_time;
   return rrc_cfg;
 }
 

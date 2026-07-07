@@ -155,6 +155,10 @@ struct cu_cp_unit_rrc_config {
   /// NOTE: Guard time needs to be larger then SRB max retx thres * t-PollRetransmit.
   /// (2 * default SRB maxRetxThreshold * t-PollRetransmit = 2 * 8 * 45ms = 720ms, see TS 38.331 Sec 9.2.1)
   unsigned rrc_procedure_guard_time_ms = 1000;
+  /// waitTime [s] (1..16) for the RRC Reject waitTime IE.
+  /// waitTime is Optional, -- Need N.
+  /// If not provided, no waitTime field will be sent with RRC Reject.
+  std::optional<unsigned> rrc_reject_wait_time_s;
 };
 
 /// Security configuration parameters.

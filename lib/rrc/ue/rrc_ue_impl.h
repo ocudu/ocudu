@@ -161,9 +161,6 @@ private:
 
   // RRC procedures handling
   std::unique_ptr<rrc_ue_event_manager> event_mng;
-
-  /// RRC timer constants
-  const unsigned rrc_reject_max_wait_time_s = 16;
 };
 
 } // namespace ocudu::ocucp

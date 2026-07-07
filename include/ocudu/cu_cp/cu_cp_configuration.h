@@ -107,6 +107,8 @@ struct cu_cp_configuration {
     std::chrono::milliseconds rrc_procedure_guard_time_ms{1000};
     /// Version of the RRC.
     unsigned rrc_version = 2;
+    /// Optional: rrc_reject_wait_time
+    std::optional<std::chrono::seconds> rrc_reject_wait_time;
   };
 
   struct security_params {

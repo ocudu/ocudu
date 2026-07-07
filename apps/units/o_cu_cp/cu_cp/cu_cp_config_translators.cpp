@@ -440,6 +440,12 @@ ocucp::cu_cp_configuration ocudu::generate_cu_cp_config(const cu_cp_unit_config&
   out_cfg.rrc.force_reestablishment_fallback = cu_cfg.rrc_config.force_reestablishment_fallback;
   out_cfg.rrc.force_resume_fallback          = cu_cfg.rrc_config.force_resume_fallback;
   out_cfg.rrc.rrc_procedure_guard_time_ms    = std::chrono::milliseconds{cu_cfg.rrc_config.rrc_procedure_guard_time_ms};
+  /// Pass the waitTime IE at the translator.
+  if (cu_cfg.rrc_config.rrc_reject_wait_time_s.has_value()) {
+    out_cfg.rrc.rrc_reject_wait_time = std::chrono::seconds{cu_cfg.rrc_config.rrc_reject_wait_time_s.value()};
+  } else {
+    out_cfg.rrc.rrc_reject_wait_time.reset();
+  }
 
   out_cfg.bearers.drb_config = generate_cu_cp_qos_config(cu_cfg);
 

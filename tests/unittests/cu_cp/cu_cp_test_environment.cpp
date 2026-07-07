@@ -236,6 +236,9 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
   cu_cp_cfg.rrc.rrc_procedure_guard_time_ms =
       std::chrono::milliseconds(10000); // procedure timeouts should only occur intentionally
 
+  // Fill RRC Reject waitTime value.
+  cu_cp_cfg.rrc.rrc_reject_wait_time = params.rrc_reject_wait_time;
+
   // Fill F1AP config.
   cu_cp_cfg.f1ap.proc_timeout = std::chrono::milliseconds(10000); // procedure timeouts should only occur intentionally
 

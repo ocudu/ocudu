@@ -192,7 +192,16 @@ byte_buffer rrc_du_impl::get_rrc_reject()
 {
   // Pack RRC Reconfig.
   dl_ccch_msg_s dl_ccch_msg;
-  dl_ccch_msg.msg.set_c1().set_rrc_reject().crit_exts.set_rrc_reject();
+  if (cfg.rrc_reject_wait_time.has_value()) {
+    //  Send RRCReject including waitTime IE with the provided rrc_reject_wait_time value.
+    //  SRB1 was not created, so we create a RRC Container with RRCReject.
+    rrc_reject_ies_s& reject = dl_ccch_msg.msg.set_c1().set_rrc_reject().crit_exts.set_rrc_reject();
+    // Add waitTime field
+    reject.wait_time_present = true;
+    reject.wait_time         = cfg.rrc_reject_wait_time.value().count();
+  } else {
+    dl_ccch_msg.msg.set_c1().set_rrc_reject().crit_exts.set_rrc_reject();
+  }
   return pack_into_pdu(dl_ccch_msg, "RRCReject");
 }
 
@@ -307,6 +316,7 @@ rrc_ue_interface* rrc_du_impl::add_ue(const rrc_ue_creation_message& msg)
   ue_cfg.force_resume_fallback          = cfg.force_resume_fallback;
   ue_cfg.rrc_procedure_guard_time_ms    = cfg.rrc_procedure_guard_time_ms;
   ue_cfg.meas_timings                   = cell_info_db.at(msg.cell.cgi.nci).meas_timings;
+  ue_cfg.rrc_reject_wait_time           = cfg.rrc_reject_wait_time;
 
   // Copy RRC cell and add SSB ARFCN.
   // Defensive check: freq_and_timing must be present.

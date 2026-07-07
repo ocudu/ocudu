@@ -848,10 +848,11 @@ rrc_ue_impl::get_rrc_ue_release_context(bool                                    
       dl_ccch_msg_s dl_ccch_msg;
       // SRB1 was not created, so we create a RRC Container with RRCReject.
       rrc_reject_ies_s& reject = dl_ccch_msg.msg.set_c1().set_rrc_reject().crit_exts.set_rrc_reject();
-
       // See TS 38.331, RejectWaitTime.
-      reject.wait_time_present = true;
-      reject.wait_time         = rrc_reject_max_wait_time_s;
+      if (context.cfg.rrc_reject_wait_time.has_value()) {
+        reject.wait_time_present = true;
+        reject.wait_time         = context.cfg.rrc_reject_wait_time.value().count();
+      }
 
       // Pack DL CCCH msg.
       release_context.rrc_pdu = pack_into_pdu(dl_ccch_msg, "RRCReject");

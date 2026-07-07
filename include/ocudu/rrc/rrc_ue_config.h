@@ -18,10 +18,11 @@ struct srb_pdcp_config {
 /// RRC UE configuration.
 struct rrc_ue_cfg_t {
   /// PDCP configuration for SRB1.
-  srb_pdcp_config              srb1_pdcp_cfg;
-  std::vector<rrc_meas_timing> meas_timings;
-  bool                         force_reestablishment_fallback = false;
-  bool                         force_resume_fallback          = false;
+  srb_pdcp_config                     srb1_pdcp_cfg;
+  std::vector<rrc_meas_timing>        meas_timings;
+  bool                                force_reestablishment_fallback = false;
+  bool                                force_resume_fallback          = false;
+  std::optional<std::chrono::seconds> rrc_reject_wait_time           = std::nullopt;
   /// \brief Guard time used for RRC message exchange with UE.
   std::chrono::milliseconds rrc_procedure_guard_time_ms{500};
 };
