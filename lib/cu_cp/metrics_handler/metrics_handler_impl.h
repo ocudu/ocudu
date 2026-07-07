@@ -16,15 +16,20 @@
 
 namespace ocudu::ocucp {
 
+struct metrics_handler_impl_dependencies {
+  task_executor&                    cu_cp_exec;
+  timer_manager&                    timers;
+  ue_metrics_handler&               ue_handler;
+  du_repository_metrics_handler&    du_handler;
+  ngap_repository_metrics_handler&  ngap_handler;
+  mobility_manager_metrics_handler& mobility_handler;
+  ocudulog::basic_logger&           logger;
+};
+
 class metrics_handler_impl final : public metrics_handler
 {
 public:
-  metrics_handler_impl(task_executor&                    cu_cp_exec_,
-                       timer_manager&                    timers,
-                       ue_metrics_handler&               ue_handler_,
-                       du_repository_metrics_handler&    du_handler_,
-                       ngap_repository_metrics_handler&  ngap_handler_,
-                       mobility_manager_metrics_handler& mobility_handler_);
+  explicit metrics_handler_impl(const metrics_handler_impl_dependencies& dependencies);
 
   std::unique_ptr<metrics_report_session>
   create_periodic_report_session(const periodic_metric_report_request& request) override;

@@ -11,7 +11,7 @@ using namespace ocucp;
 
 #define LOG_CHAN ("CU-CP")
 
-void ocudu::ocucp::log_cells(const ocudulog::basic_logger& logger, const cell_meas_manager_cfg& cfg)
+void ocudu::ocucp::log_cells(const ocudulog::basic_logger& logger, const cell_meas_manager_config& cfg)
 {
   if (!cfg.cells.empty()) {
     logger.debug("Configured cells:");
@@ -48,7 +48,7 @@ bool ocudu::ocucp::is_complete(const serving_cell_meas_config& cfg)
 }
 
 bool ocudu::ocucp::is_valid_configuration(
-    const cell_meas_manager_cfg&                                cfg,
+    const cell_meas_manager_config&                             cfg,
     const std::unordered_map<ssb_frequency_t, rrc_meas_obj_nr>& ssb_freq_to_meas_object)
 {
   std::vector<nr_cell_identity> ncis;
@@ -118,7 +118,7 @@ bool ocudu::ocucp::is_valid_configuration(
   return true;
 }
 
-bool ocudu::ocucp::is_complete(const cell_meas_manager_cfg& cfg)
+bool ocudu::ocucp::is_complete(const cell_meas_manager_config& cfg)
 {
   if (!is_valid_configuration(cfg)) {
     return false;
@@ -162,8 +162,8 @@ void ocudu::ocucp::add_old_meas_config_to_rem_list(const rrc_meas_cfg& old_cfg, 
   }
 }
 
-std::vector<ssb_frequency_t> ocudu::ocucp::generate_measurement_object_list(const cell_meas_manager_cfg& cfg,
-                                                                            nr_cell_identity             serving_nci)
+std::vector<ssb_frequency_t> ocudu::ocucp::generate_measurement_object_list(const cell_meas_manager_config& cfg,
+                                                                            nr_cell_identity                serving_nci)
 {
   ocudu_assert(cfg.cells.find(serving_nci) != cfg.cells.end(), "No cell config for nci={:#x}", serving_nci);
 
@@ -189,7 +189,7 @@ std::vector<ssb_frequency_t> ocudu::ocucp::generate_measurement_object_list(cons
   return ssb_freqs;
 }
 
-std::vector<ssb_frequency_t> ocudu::ocucp::generate_cho_measurement_object_list(const cell_meas_manager_cfg& cfg,
+std::vector<ssb_frequency_t> ocudu::ocucp::generate_cho_measurement_object_list(const cell_meas_manager_config& cfg,
                                                                                 nr_cell_identity  serving_nci,
                                                                                 span<const pci_t> candidate_pcis)
 {
@@ -223,11 +223,11 @@ std::vector<ssb_frequency_t> ocudu::ocucp::generate_cho_measurement_object_list(
   return {freqs.begin(), freqs.end()};
 }
 
-void ocudu::ocucp::generate_report_config(const cell_meas_manager_cfg&  cfg,
-                                          const nr_cell_identity        nci,
-                                          const report_cfg_id_t         report_cfg_id,
-                                          rrc_meas_cfg&                 meas_cfg,
-                                          cell_meas_manager_ue_context& ue_meas_context)
+void ocudu::ocucp::generate_report_config(const cell_meas_manager_config& cfg,
+                                          const nr_cell_identity          nci,
+                                          const report_cfg_id_t           report_cfg_id,
+                                          rrc_meas_cfg&                   meas_cfg,
+                                          cell_meas_manager_ue_context&   ue_meas_context)
 {
   // Add report cfg to add mod
   if (cfg.report_config_ids.find(report_cfg_id) == cfg.report_config_ids.end()) {
@@ -313,8 +313,8 @@ void ocudu::ocucp::log_meas_objects(const ocudulog::basic_logger&               
   }
 }
 
-std::vector<report_cfg_id_t> ocudu::ocucp::collect_cond_trigger_report_configs(const cell_meas_manager_cfg& cfg,
-                                                                               rrc_meas_cfg&                meas_cfg,
+std::vector<report_cfg_id_t> ocudu::ocucp::collect_cond_trigger_report_configs(const cell_meas_manager_config& cfg,
+                                                                               rrc_meas_cfg&                   meas_cfg,
                                                                                const rrc_ue_capability_handler& ue_caps,
                                                                                ocudulog::basic_logger&          logger)
 {
@@ -361,10 +361,10 @@ std::vector<report_cfg_id_t> ocudu::ocucp::collect_cond_trigger_report_configs(c
   return cond_trigger_ids;
 }
 
-bool ocudu::ocucp::generate_cho_meas_ids(const cell_meas_manager_cfg&  cfg,
-                                         span<const report_cfg_id_t>   cond_trigger_ids,
-                                         rrc_meas_cfg&                 meas_cfg,
-                                         cell_meas_manager_ue_context& ue_meas_context)
+bool ocudu::ocucp::generate_cho_meas_ids(const cell_meas_manager_config& cfg,
+                                         span<const report_cfg_id_t>     cond_trigger_ids,
+                                         rrc_meas_cfg&                   meas_cfg,
+                                         cell_meas_manager_ue_context&   ue_meas_context)
 {
   for (const auto& mo : meas_cfg.meas_obj_to_add_mod_list) {
     for (const auto& report_cfg_id : cond_trigger_ids) {

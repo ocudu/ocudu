@@ -29,13 +29,17 @@ public:
                                               std::optional<tac_t> neighbor_tac = std::nullopt) = 0;
 };
 
+struct cell_meas_manager_dependencies {
+  cell_meas_mobility_manager_notifier& mobility_mng_notifier;
+  ue_manager&                          ue_mng;
+  ocudulog::basic_logger&              logger;
+};
+
 /// Basic cell manager implementation
 class cell_meas_manager
 {
 public:
-  cell_meas_manager(const cell_meas_manager_cfg&         cfg_,
-                    cell_meas_mobility_manager_notifier& mobility_mng_notifier_,
-                    ue_manager&                          ue_mng_);
+  cell_meas_manager(const cell_meas_manager_config& cfg_, const cell_meas_manager_dependencies& dependencies);
   ~cell_meas_manager() = default;
 
   std::optional<rrc_meas_cfg>
@@ -59,7 +63,7 @@ private:
 
   void store_measurement_results(cu_cp_ue_index_t ue_index, const rrc_meas_results& meas_results);
 
-  cell_meas_manager_cfg                cfg;
+  cell_meas_manager_config             cfg;
   cell_meas_mobility_manager_notifier& mobility_mng_notifier;
   ue_manager&                          ue_mng;
 

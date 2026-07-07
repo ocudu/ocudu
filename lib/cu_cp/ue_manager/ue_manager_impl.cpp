@@ -3,7 +3,6 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ue_manager_impl.h"
-#include "ocudu/cu_cp/cu_cp_configuration.h"
 #include "ocudu/cu_cp/security_manager_config.h"
 
 using namespace ocudu;
@@ -14,15 +13,19 @@ void cu_cp_ue::stop()
   task_sched.stop();
 }
 
-ue_manager::ue_manager(const cu_cp_configuration& cu_cp_cfg) :
-  next_i_rntis({short_i_rnti_t{cu_cp_cfg.node.gnb_id.id, 0, cu_cp_cfg.ue.nof_i_rnti_ue_bits},
-                full_i_rnti_t{cu_cp_cfg.node.gnb_id.id, 0, cu_cp_cfg.ue.nof_i_rnti_ue_bits}}),
-  cu_cp_config(cu_cp_cfg),
-  ue_config(cu_cp_cfg.ue),
-  up_config(up_resource_manager_cfg{cu_cp_cfg.bearers.drb_config, cu_cp_cfg.admission.max_nof_drbs_per_ue}),
-  sec_config(security_manager_config{cu_cp_cfg.security.int_algo_pref_list, cu_cp_cfg.security.enc_algo_pref_list}),
-  max_nof_ues(cu_cp_cfg.admission.max_nof_ues),
-  ue_task_scheds(*cu_cp_cfg.services.timers, *cu_cp_cfg.services.cu_cp_executor, logger)
+ue_manager::ue_manager(const ue_manager_config& cfg, const ue_manager_dependencies& dependencies) :
+  next_i_rntis({short_i_rnti_t{cfg.gnb_id.id, 0, cfg.ue.nof_i_rnti_ue_bits},
+                full_i_rnti_t{cfg.gnb_id.id, 0, cfg.ue.nof_i_rnti_ue_bits}}),
+  gnb_id(cfg.gnb_id),
+  enable_rrc_metrics(cfg.enable_rrc_metrics),
+  ue_config(cfg.ue),
+  up_config(up_resource_manager_cfg{cfg.drb_config, cfg.max_nof_drbs_per_ue}),
+  sec_config(security_manager_config{cfg.int_algo_pref_list, cfg.enc_algo_pref_list}),
+  max_nof_ues(cfg.max_nof_ues),
+  timers(dependencies.timers),
+  cu_cp_executor(dependencies.cu_cp_executor),
+  logger(dependencies.logger),
+  ue_task_scheds(timers, dependencies.cu_cp_executor, logger)
 {
 }
 
@@ -48,15 +51,10 @@ cu_cp_ue_index_t ue_manager::add_ue(cu_cp_du_index_t du_index)
   ue_task_scheduler_impl ue_sched = ue_task_scheds.create_ue_task_sched(ue_index);
 
   // Create UE object.
-  ues.emplace(std::piecewise_construct,
-              std::forward_as_tuple(ue_index),
-              std::forward_as_tuple(ue_index,
-                                    du_index,
-                                    *cu_cp_config.services.timers,
-                                    *cu_cp_config.services.cu_cp_executor,
-                                    up_config,
-                                    sec_config,
-                                    std::move(ue_sched)));
+  ues.emplace(
+      std::piecewise_construct,
+      std::forward_as_tuple(ue_index),
+      std::forward_as_tuple(ue_index, du_index, timers, cu_cp_executor, up_config, sec_config, std::move(ue_sched)));
 
   logger.info("ue={} du_index={}: Created new CU-CP UE", ue_index, du_index);
 
@@ -373,7 +371,7 @@ size_t ue_manager::get_nof_du_ues(cu_cp_du_index_t du_index)
 
 std::vector<cu_cp_metrics_report::ue_info> ue_manager::handle_ue_metrics_report_request() const
 {
-  if (!cu_cp_config.metrics.layers_cfg.enable_rrc) {
+  if (!enable_rrc_metrics) {
     return {};
   }
 

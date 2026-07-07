@@ -655,7 +655,7 @@ inline ocucp::cu_cp_configuration make_default_cu_cp_config()
 
 inline bool is_valid_configuration(const ocucp::mobility_configuration& config)
 {
-  if (!is_valid_configuration(config.meas_manager_config)) {
+  if (!is_valid_configuration(config.meas_mgr_config)) {
     fmt::print("Invalid meas manager configuration.\n");
     return false;
   }

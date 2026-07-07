@@ -94,7 +94,7 @@ std::map<cu_cp_amf_index_t, ngap_interface*> ngap_repository::get_ngaps()
 
 std::vector<ngap_info> ngap_repository::handle_ngap_metrics_report_request() const
 {
-  if (!cfg.cu_cp.metrics.layers_cfg.enable_ngap) {
+  if (!cfg.cu_cp.metrics.layers_cfg.enable_ngap_metrics) {
     return {};
   }
   std::vector<ngap_info> ngap_reports;

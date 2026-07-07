@@ -15,21 +15,16 @@
 using namespace ocudu;
 using namespace ocucp;
 
-mobility_manager::mobility_manager(const mobility_manager_cfg&      cfg_,
-                                   mobility_manager_cu_cp_notifier& cu_cp_notifier_,
-                                   ngap_repository&                 ngap_db_,
-                                   du_processor_repository&         du_db_,
-                                   xnap_repository&                 xnap_db_,
-                                   ue_manager&                      ue_mng_,
-                                   cell_meas_manager&               cell_meas_mng_) :
+mobility_manager::mobility_manager(const mobility_manager_config&       cfg_,
+                                   const mobility_manager_dependencies& dependencies) :
   cfg(cfg_),
-  cu_cp_notifier(cu_cp_notifier_),
-  ngap_db(ngap_db_),
-  du_db(du_db_),
-  xnap_db(xnap_db_),
-  ue_mng(ue_mng_),
-  cell_meas_mng(cell_meas_mng_),
-  logger(ocudulog::fetch_basic_logger("CU-CP"))
+  cu_cp_notifier(dependencies.cu_cp_notifier),
+  ngap_db(dependencies.ngap_db),
+  du_db(dependencies.du_db),
+  xnap_db(dependencies.xnap_db),
+  ue_mng(dependencies.ue_mng),
+  cell_meas_mng(dependencies.cell_meas_mng),
+  logger(dependencies.logger)
 {
 }
 

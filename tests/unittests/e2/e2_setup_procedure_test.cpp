@@ -6,6 +6,7 @@
 #include "lib/e2/common/e2ap_asn1_helpers.h"
 #include "lib/e2/common/e2ap_asn1_utils.h"
 #include "tests/unittests/e2/common/e2_test_helpers.h"
+#include "ocudu/e2/e2_cu_up_factory.h"
 #include "ocudu/support/async/async_test_utils.h"
 #include <gtest/gtest.h>
 

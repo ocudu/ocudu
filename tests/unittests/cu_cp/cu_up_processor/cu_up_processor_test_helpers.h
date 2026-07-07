@@ -26,8 +26,10 @@ protected:
   dummy_e1ap_message_notifier e1ap_notifier;
   manual_task_worker          ctrl_worker{128};
   cu_cp_configuration         cu_cp_cfg;
+  ue_manager_config           ue_cfg;
+  ue_manager_dependencies     ue_dependencies;
 
-  ue_manager                            ue_mng{cu_cp_cfg};
+  ue_manager                            ue_mng{ue_cfg, ue_dependencies};
   dummy_e1ap_cu_cp_notifier             cu_cp_notifier{ue_mng};
   std::unique_ptr<async_task_scheduler> common_task_sched;
   std::unique_ptr<cu_up_processor>      cu_up_processor_obj;

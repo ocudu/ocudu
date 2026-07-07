@@ -50,8 +50,8 @@ protected:
     cu_cfg.services.timers            = &timers;
     cu_cfg.ngap.ngaps.push_back(ocucp::cu_cp_configuration::ngap_config{
         &*amf, {{7, {{plmn_identity::test_value(), {{slice_service_type{1}}}}}}}});
-    cu_cfg.metrics.layers_cfg.enable_ngap = true;
-    cu_cfg.metrics.layers_cfg.enable_rrc  = true;
+    cu_cfg.metrics.layers_cfg.enable_ngap_metrics = true;
+    cu_cfg.metrics.layers_cfg.enable_rrc_metrics  = true;
 
     // create CU-CP.
     cu_cp_obj = create_cu_cp(cu_cfg);

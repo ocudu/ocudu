@@ -387,9 +387,9 @@ static void fill_cu_cp_pcap_section(YAML::Node node, const cu_cp_unit_pcap_confi
 
 static void fill_cu_cp_metrics_layers_section(YAML::Node node, const cu_cp_unit_metrics_layer_config& config)
 {
-  node["enable_ngap"] = config.enable_ngap;
-  node["enable_pdcp"] = config.enable_pdcp;
-  node["enable_rrc"]  = config.enable_rrc;
+  node["enable_ngap"] = config.enable_ngap_metrics;
+  node["enable_pdcp"] = config.enable_pdcp_metrics;
+  node["enable_rrc"]  = config.enable_rrc_metrics;
 }
 
 static void fill_cu_cp_metrics_section(YAML::Node node, const cu_cp_unit_metrics_config& config)

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "tests/unittests/cu_cp/test_helpers.h"
 #include "ue_manager_test_helpers.h"
 #include "ocudu/ran/plmn_identity.h"
 #include <gtest/gtest.h>

@@ -83,8 +83,23 @@ extract_supported_tas(const std::vector<cu_cp_configuration::ngap_config>& ngap_
 
 cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cfg(config_),
-  ue_mng(cfg),
-  cell_meas_mng(cfg.mobility.meas_manager_config, cell_meas_mobility_notifier, ue_mng),
+  cu_cp_executor(*cfg.services.cu_cp_executor),
+  timers(*cfg.services.timers),
+  ue_mng(ue_manager_config{.gnb_id              = cfg.node.gnb_id,
+                           .max_nof_ues         = cfg.admission.max_nof_ues,
+                           .drb_config          = cfg.bearers.drb_config,
+                           .max_nof_drbs_per_ue = cfg.admission.max_nof_drbs_per_ue,
+                           .int_algo_pref_list  = cfg.security.int_algo_pref_list,
+                           .enc_algo_pref_list  = cfg.security.enc_algo_pref_list,
+                           .enable_rrc_metrics  = cfg.metrics.layers_cfg.enable_rrc_metrics,
+                           .ue                  = cfg.ue},
+         ue_manager_dependencies{.timers         = *cfg.services.timers,
+                                 .cu_cp_executor = *cfg.services.cu_cp_executor,
+                                 .logger         = ocudulog::fetch_basic_logger("CU-UEMNG")}),
+  cell_meas_mng(cfg.mobility.meas_mgr_config,
+                cell_meas_manager_dependencies{.mobility_mng_notifier = cell_meas_mobility_notifier,
+                                               .ue_mng                = ue_mng,
+                                               .logger                = logger}),
   du_db(du_repository_config{cfg,
                              *this,
                              get_cu_cp_measurement_config_handler(),
@@ -98,13 +113,14 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   paging_handler(du_db),
   ngap_db(ngap_repository_config{cfg, get_cu_cp_ngap_handler(), paging_handler, ocudulog::fetch_basic_logger("CU-CP")}),
   xnap_db(xnap_repository_config{cfg, get_cu_cp_xnap_handler(), ocudulog::fetch_basic_logger("CU-CP")}),
-  mobility_mng(cfg.mobility.mobility_manager_config,
-               mobility_manager_ev_notifier,
-               ngap_db,
-               du_db,
-               xnap_db,
-               ue_mng,
-               cell_meas_mng),
+  mobility_mng(cfg.mobility.mobility_mgr_config,
+               mobility_manager_dependencies{.cu_cp_notifier = mobility_manager_ev_notifier,
+                                             .ngap_db        = ngap_db,
+                                             .du_db          = du_db,
+                                             .xnap_db        = xnap_db,
+                                             .ue_mng         = ue_mng,
+                                             .cell_meas_mng  = cell_meas_mng,
+                                             .logger         = logger}),
   controller(cfg,
              get_cu_cp_amf_reconnection_handler(),
              common_task_sched,
@@ -113,12 +129,13 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
              du_db,
              xnap_db,
              *cfg.services.cu_cp_executor),
-  metrics_hdlr(std::make_unique<metrics_handler_impl>(*cfg.services.cu_cp_executor,
-                                                      *cfg.services.timers,
-                                                      ue_mng,
-                                                      du_db,
-                                                      ngap_db,
-                                                      mobility_mng)),
+  metrics_hdlr(metrics_handler_impl_dependencies{.cu_cp_exec       = cu_cp_executor,
+                                                 .timers           = timers,
+                                                 .ue_handler       = ue_mng,
+                                                 .du_handler       = du_db,
+                                                 .ngap_handler     = ngap_db,
+                                                 .mobility_handler = mobility_mng,
+                                                 .logger           = logger}),
   cu_cp_cfgtr(mobility_manager_ev_notifier, du_db, ngap_db, ue_mng)
 {
   assert_cu_cp_configuration_valid(cfg);
@@ -156,7 +173,7 @@ bool cu_cp_impl::start()
         statistics_report_timer.run();
         if (cfg.metrics_notifier != nullptr and cfg.metrics.metrics_report_period.count() != 0) {
           periodic_metric_report_request metric_cfg{cfg.metrics.metrics_report_period, cfg.metrics_notifier};
-          metrics_session = metrics_hdlr->create_periodic_report_session(metric_cfg);
+          metrics_session = metrics_hdlr.create_periodic_report_session(metric_cfg);
         }
 
         // Start AMF connection procedure.

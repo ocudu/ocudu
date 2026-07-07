@@ -14,13 +14,12 @@
 using namespace ocudu;
 using namespace ocucp;
 
-cell_meas_manager::cell_meas_manager(const cell_meas_manager_cfg&         cfg_,
-                                     cell_meas_mobility_manager_notifier& mobility_mng_notifier_,
-                                     ue_manager&                          ue_mng_) :
+cell_meas_manager::cell_meas_manager(const cell_meas_manager_config&       cfg_,
+                                     const cell_meas_manager_dependencies& dependencies) :
   cfg(cfg_),
-  mobility_mng_notifier(mobility_mng_notifier_),
-  ue_mng(ue_mng_),
-  logger(ocudulog::fetch_basic_logger("CU-CP"))
+  mobility_mng_notifier(dependencies.mobility_mng_notifier),
+  ue_mng(dependencies.ue_mng),
+  logger(dependencies.logger)
 {
   ocudu_assert(is_valid_configuration(cfg, ssb_freq_to_meas_object), "Invalid cell measurement configuration");
   generate_measurement_objects_for_serving_cells();
@@ -216,7 +215,7 @@ std::vector<pci_t> cell_meas_manager::get_neighbor_pcis(nr_cell_identity serving
 bool cell_meas_manager::update_cell_config(nr_cell_identity nci, const serving_cell_meas_config& serv_cell_cfg)
 {
   // Store old config to revert if new config is invalid.
-  cell_meas_manager_cfg tmp_cfg = cfg;
+  cell_meas_manager_config tmp_cfg = cfg;
 
   if (cfg.cells.find(nci) == cfg.cells.end()) {
     logger.debug("No configuration to update for nci={:#x}. Adding configuration", nci);
@@ -438,7 +437,7 @@ expected<std::pair<unsigned, nr_cell_identity>> cell_meas_manager::find_neighbou
   return make_unexpected(default_error_t{});
 }
 
-static expected<nr_cell_identity, std::string> find_nci(const cell_meas_manager_cfg& meas_mng_cfg, pci_t pci)
+static expected<nr_cell_identity, std::string> find_nci(const cell_meas_manager_config& meas_mng_cfg, pci_t pci)
 {
   for (const auto& [nci, cell_cfg] : meas_mng_cfg.cells) {
     if (cell_cfg.serving_cell_cfg.pci == pci) {
@@ -451,7 +450,7 @@ static expected<nr_cell_identity, std::string> find_nci(const cell_meas_manager_
 static expected<cell_measurement_positioning_info, std::string> generate_measurement_objects_for_positioning(
     cu_cp_ue_index_t                                            ue_index,
     ue_manager&                                                 ue_mng,
-    const cell_meas_manager_cfg&                                cfg,
+    const cell_meas_manager_config&                             cfg,
     const std::map<nr_cell_identity, serving_cell_meas_config>& nci_to_serving_cell_meas_config,
     const rrc_meas_results&                                     meas_results,
     ocudulog::basic_logger&                                     logger)

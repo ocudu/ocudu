@@ -5,6 +5,7 @@
 #include "lib/cu_cp/xnap_repository.h"
 #include "tests/unittests/cu_cp/cu_cp_test_environment.h"
 #include "tests/unittests/cu_cp/test_helpers.h"
+#include "ocudu/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -22,11 +23,31 @@ public:
                             /* trigger ho from measurements */ true,
                             /* enable rrc inactive */ false,
                             /* enable xnc peer */ true}),
+    ue_cfg([this]() {
+      auto cfg = get_cu_cp_cfg();
+      return ue_manager_config{.gnb_id              = cfg.node.gnb_id,
+                               .max_nof_ues         = cfg.admission.max_nof_ues,
+                               .drb_config          = cfg.bearers.drb_config,
+                               .max_nof_drbs_per_ue = cfg.admission.max_nof_drbs_per_ue,
+                               .int_algo_pref_list  = cfg.security.int_algo_pref_list,
+                               .enc_algo_pref_list  = cfg.security.enc_algo_pref_list,
+                               .enable_rrc_metrics  = cfg.metrics.layers_cfg.enable_rrc_metrics,
+                               .ue                  = cfg.ue};
+    }()),
+    ue_dependencies([this]() {
+      return ue_manager_dependencies{
+          .timers = timers, .cu_cp_executor = ctrl_worker, .logger = ocudulog::fetch_basic_logger("CU-CP")};
+    }()),
+    ue_mng(ue_cfg, ue_dependencies),
     xnap_db(xnap_repository_config{get_cu_cp_cfg(), cu_cp_xnap_handler, test_logger})
   {
   }
 
-  ue_manager               ue_mng{get_cu_cp_cfg()};
+  timer_manager            timers;
+  manual_task_worker       ctrl_worker{128};
+  ue_manager_config        ue_cfg;
+  ue_manager_dependencies  ue_dependencies;
+  ue_manager               ue_mng;
   dummy_cu_cp_xnap_handler cu_cp_xnap_handler{ue_mng};
   xnap_repository          xnap_db;
 

@@ -28,11 +28,13 @@ protected:
   ocudulog::basic_logger& test_logger  = ocudulog::fetch_basic_logger("TEST");
   ocudulog::basic_logger& cu_cp_logger = ocudulog::fetch_basic_logger("CU-CP");
 
-  timer_manager       timers;
-  manual_task_worker  ctrl_worker{128};
-  cu_cp_configuration cu_cp_cfg;
+  timer_manager           timers;
+  manual_task_worker      ctrl_worker{128};
+  cu_cp_configuration     cu_cp_cfg;
+  ue_manager_config       ue_cfg;
+  ue_manager_dependencies ue_dependencies;
 
-  ue_manager                              ue_mng{cu_cp_cfg};
+  ue_manager                              ue_mng{ue_cfg, ue_dependencies};
   dummy_du_processor_cu_cp_notifier       cu_cp_notifier{&ue_mng};
   dummy_du_connection_notifier            du_conn_notifier;
   dummy_f1ap_pdu_notifier                 f1ap_pdu_notifier;

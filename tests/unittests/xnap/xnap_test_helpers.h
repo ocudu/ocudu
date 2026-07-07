@@ -6,6 +6,7 @@
 
 #include "lib/cu_cp/ue_manager/ue_manager_impl.h"
 #include "lib/xnap/xnap_impl.h"
+#include "ocudu/cu_cp/cu_cp_configuration.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/cause/xnap_cause.h"
 #include "ocudu/support/async/async_no_op_task.h"
@@ -216,8 +217,10 @@ protected:
   timer_manager           timers;
   manual_task_worker      ctrl_worker{128};
   cu_cp_configuration     cu_cp_cfg;
+  ue_manager_config       ue_cfg;
+  ue_manager_dependencies ue_dependencies;
 
-  ue_manager                 ue_mng{cu_cp_cfg};
+  ue_manager                 ue_mng{ue_cfg, ue_dependencies};
   dummy_xnc_gateway          xnc_gw;
   dummy_xnap_cu_cp_notifier  cu_cp_notifier{ue_mng};
   std::unique_ptr<xnap_impl> xnap = nullptr;

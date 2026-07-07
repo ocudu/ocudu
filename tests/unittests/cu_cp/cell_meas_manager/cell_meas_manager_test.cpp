@@ -34,13 +34,13 @@ TEST_F(cell_meas_manager_test, when_valid_cell_config_is_used_validation_succeed
 
 TEST_F(cell_meas_manager_test, when_empty_config_is_used_validation_succeeds)
 {
-  cell_meas_manager_cfg cfg = {};
+  cell_meas_manager_config cfg = {};
   ASSERT_TRUE(is_valid_configuration(cfg));
 }
 
 TEST_F(cell_meas_manager_test, when_periodic_report_cfg_id_is_unknown_validation_fails)
 {
-  cell_meas_manager_cfg cfg;
+  cell_meas_manager_config cfg;
 
   cell_meas_config cell_cfg;
   cell_cfg.serving_cell_cfg.nci               = nr_cell_identity::create(0x19b0).value();
@@ -54,7 +54,7 @@ TEST_F(cell_meas_manager_test, when_periodic_report_cfg_id_is_unknown_validation
 
 TEST_F(cell_meas_manager_test, when_neighbor_report_cfg_id_is_unknown_validation_fails)
 {
-  cell_meas_manager_cfg cfg;
+  cell_meas_manager_config cfg;
 
   nr_cell_identity nci1 = nr_cell_identity::create(0x19b0).value();
   nr_cell_identity nci2 = nr_cell_identity::create(0x19b1).value();

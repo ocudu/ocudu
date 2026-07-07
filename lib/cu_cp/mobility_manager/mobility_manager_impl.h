@@ -5,6 +5,7 @@
 #pragma once
 
 #include "../cell_meas_manager/cell_meas_manager_impl.h"
+#include "../mobility_manager_cu_cp_notifier.h"
 #include "../ngap_repository.h"
 #include "../ue_manager/ue_manager_impl.h"
 #include "../xnap_repository.h"
@@ -14,8 +15,6 @@
 #include "ocudu/ran/cu_cp_types.h"
 
 namespace ocudu::ocucp {
-
-class du_processor_repository;
 
 /// Handler for measurement related events.
 class mobility_manager_measurement_handler
@@ -42,19 +41,24 @@ public:
   virtual mobility_management_metrics handle_mobility_metrics_report_request() const = 0;
 };
 
+/// Dependencies of the mobility manager.
+struct mobility_manager_dependencies {
+  mobility_manager_cu_cp_notifier& cu_cp_notifier;
+  ngap_repository&                 ngap_db;
+  du_processor_repository&         du_db;
+  xnap_repository&                 xnap_db;
+  ue_manager&                      ue_mng;
+  cell_meas_manager&               cell_meas_mng;
+  ocudulog::basic_logger&          logger;
+};
+
 /// Basic mobility manager implementation.
 class mobility_manager final : public mobility_manager_measurement_handler,
                                public cu_cp_mobility_command_handler,
                                public mobility_manager_metrics_handler
 {
 public:
-  mobility_manager(const mobility_manager_cfg&      cfg,
-                   mobility_manager_cu_cp_notifier& cu_cp_notifier_,
-                   ngap_repository&                 ngap_db_,
-                   du_processor_repository&         du_db_,
-                   xnap_repository&                 xnap_db_,
-                   ue_manager&                      ue_mng_,
-                   cell_meas_manager&               cell_meas_mng_);
+  mobility_manager(const mobility_manager_config& cfg_, const mobility_manager_dependencies& dependencies);
 
   void trigger_handover(pci_t         source_pci,
                         rnti_t        rnti,
@@ -121,7 +125,7 @@ private:
                                    std::chrono::milliseconds                            timeout,
                                    std::optional<std::chrono::system_clock::time_point> t1_thres_override);
 
-  mobility_manager_cfg             cfg;
+  mobility_manager_config          cfg;
   mobility_manager_cu_cp_notifier& cu_cp_notifier;
   ngap_repository&                 ngap_db;
   du_processor_repository&         du_db;

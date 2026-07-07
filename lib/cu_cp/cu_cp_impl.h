@@ -14,6 +14,7 @@
 #include "cu_cp_impl_interface.h"
 #include "cu_up_processor/cu_up_processor_repository.h"
 #include "du_processor/du_processor_repository.h"
+#include "metrics_handler/metrics_handler_impl.h"
 #include "ngap_repository.h"
 #include "routines/mobility/inter_cu_handover_target_routine.h"
 #include "ue_manager/ue_manager_impl.h"
@@ -25,7 +26,6 @@
 #include "ocudu/ran/inter_cu_handover_messages.h"
 #include "ocudu/ran/plmn_identity.h"
 #include "ocudu/support/async/async_task_scheduler.h"
-#include <dlfcn.h>
 #include <memory>
 
 namespace ocudu::ocucp {
@@ -181,7 +181,7 @@ public:
 
   cu_cp_mobility_command_handler&   get_mobility_command_handler() override { return mobility_mng; }
   cu_cp_ue_release_command_handler& get_ue_release_command_handler() override { return *this; }
-  metrics_handler&                  get_metrics_handler() override { return *metrics_hdlr; }
+  metrics_handler&                  get_metrics_handler() override { return metrics_hdlr; }
 
   // cu_cp_amf_reconnection_handler.
   void handle_amf_reconnection(cu_cp_amf_index_t amf_index) override;
@@ -246,6 +246,9 @@ private:
   // Logger.
   ocudulog::basic_logger& logger = ocudulog::fetch_basic_logger("CU-CP");
 
+  task_executor& cu_cp_executor;
+  timer_manager& timers;
+
   // Components.
   // UE manager.
   ue_manager ue_mng;
@@ -297,7 +300,7 @@ private:
   // Handler of the CU-CP connections to other remote nodes (e.g. AMF, CU-UPs, DUs).
   cu_cp_controller controller;
 
-  std::unique_ptr<metrics_handler> metrics_hdlr;
+  metrics_handler_impl metrics_hdlr;
 
   unique_timer statistics_report_timer;
 

@@ -7,6 +7,7 @@
 #include "../common/test_helpers.h"
 #include "e1_test_local_gateway.h"
 #include "lib/cu_cp/ue_manager/ue_manager_impl.h"
+#include "ocudu/cu_cp/cu_cp_configuration.h"
 #include "ocudu/e1ap/common/e1ap_common.h"
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "ocudu/support/executors/manual_task_worker.h"
@@ -165,8 +166,10 @@ protected:
   dummy_e1ap_cu_up_processor_notifier cu_up_processor_notifier;
   manual_task_worker                  ctrl_worker{128};
   cu_cp_configuration                 cu_cp_cfg;
+  ue_manager_config                   ue_cfg;
+  ue_manager_dependencies             ue_dependencies;
 
-  ue_manager                  ue_mng{cu_cp_cfg};
+  ue_manager                  ue_mng{ue_cfg, ue_dependencies};
   dummy_e1ap_cu_cp_notifier   cu_cp_notifier{ue_mng};
   std::unique_ptr<e1ap_cu_cp> e1ap;
 };

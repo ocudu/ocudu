@@ -48,7 +48,13 @@ TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
   manual_task_worker       worker{16};
   timer_manager            timers{2};
   dummy_ue_metrics_handler metrics_hdlr;
-  metrics_handler_impl     metrics{worker, timers, metrics_hdlr, metrics_hdlr, metrics_hdlr, metrics_hdlr};
+  metrics_handler_impl     metrics{metrics_handler_impl_dependencies{.cu_cp_exec       = worker,
+                                                                     .timers           = timers,
+                                                                     .ue_handler       = metrics_hdlr,
+                                                                     .du_handler       = metrics_hdlr,
+                                                                     .ngap_handler     = metrics_hdlr,
+                                                                     .mobility_handler = metrics_hdlr,
+                                                                     .logger = ocudulog::fetch_basic_logger("TEST")}};
 
   std::chrono::milliseconds period{5};
   dummy_metrics_notifier    metrics_notifier;

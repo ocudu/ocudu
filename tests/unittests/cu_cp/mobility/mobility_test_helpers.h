@@ -5,6 +5,7 @@
 #pragma once
 
 #include "tests/unittests/cu_cp/test_helpers.h"
+#include "ocudu/cu_cp/cu_cp_configuration.h"
 #include "ocudu/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
@@ -23,11 +24,13 @@ protected:
   ocudulog::basic_logger& test_logger  = ocudulog::fetch_basic_logger("TEST");
   ocudulog::basic_logger& cu_cp_logger = ocudulog::fetch_basic_logger("CU-CP");
 
-  manual_task_worker  ctrl_worker{128};
-  timer_manager       timers;
-  cu_cp_configuration cu_cp_cfg;
+  manual_task_worker      ctrl_worker{128};
+  timer_manager           timers;
+  cu_cp_configuration     cu_cp_cfg;
+  ue_manager_config       ue_cfg;
+  ue_manager_dependencies ue_dependencies;
 
-  ue_manager                                  ue_mng{cu_cp_cfg};
+  ue_manager                                  ue_mng{ue_cfg, ue_dependencies};
   dummy_cu_cp_ue_context_manipulation_handler cu_cp_handler;
 };
 

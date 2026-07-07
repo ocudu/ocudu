@@ -10,7 +10,6 @@
 #include "cu_cp_ue_impl.h"
 #include "ue_metrics_handler.h"
 #include "ue_task_scheduler_impl.h"
-#include "ocudu/cu_cp/cu_cp_configuration.h"
 #include "ocudu/cu_cp/security_manager_config.h"
 #include "ocudu/cu_cp/ue_configuration.h"
 #include "ocudu/ran/cu_cp_types.h"
@@ -22,10 +21,29 @@
 
 namespace ocudu::ocucp {
 
+/// Configuration of the UE manager.
+struct ue_manager_config {
+  gnb_id_t                                 gnb_id;
+  uint32_t                                 max_nof_ues;
+  std::map<five_qi_t, cu_cp_qos_config>    drb_config;
+  uint8_t                                  max_nof_drbs_per_ue;
+  security::preferred_integrity_algorithms int_algo_pref_list;
+  security::preferred_ciphering_algorithms enc_algo_pref_list;
+  bool                                     enable_rrc_metrics;
+  ue_configuration                         ue;
+};
+
+/// Dependencies of the UE manager.
+struct ue_manager_dependencies {
+  timer_manager&          timers;
+  task_executor&          cu_cp_executor;
+  ocudulog::basic_logger& logger;
+};
+
 class ue_manager : public ue_metrics_handler
 {
 public:
-  explicit ue_manager(const cu_cp_configuration& cu_cp_cfg);
+  explicit ue_manager(const ue_manager_config& cfg, const ue_manager_dependencies& dependencies);
 
   /// Stop UE activity.
   void stop();
@@ -199,11 +217,11 @@ private:
   {
     if (full_i_rnti.value() == full_i_rnti.max()) {
       // Reset Full-I-RNTI counter.
-      full_i_rnti = full_i_rnti_t{cu_cp_config.node.gnb_id.id, 0, ue_config.nof_i_rnti_ue_bits};
+      full_i_rnti = full_i_rnti_t{gnb_id.id, 0, ue_config.nof_i_rnti_ue_bits};
     } else {
       // Increase Full-I-RNTI counter.
-      uint32_t next_ue_id = (full_i_rnti.value() - (cu_cp_config.node.gnb_id.id >> ue_config.nof_i_rnti_ue_bits)) + 1;
-      full_i_rnti         = full_i_rnti_t{cu_cp_config.node.gnb_id.id, next_ue_id, ue_config.nof_i_rnti_ue_bits};
+      uint32_t next_ue_id = (full_i_rnti.value() - (gnb_id.id >> ue_config.nof_i_rnti_ue_bits)) + 1;
+      full_i_rnti         = full_i_rnti_t{gnb_id.id, next_ue_id, ue_config.nof_i_rnti_ue_bits};
     }
   }
 
@@ -211,20 +229,24 @@ private:
   {
     if (short_i_rnti.value() == short_i_rnti.max()) {
       // Reset Short-I-RNTI counter.
-      short_i_rnti = short_i_rnti_t{cu_cp_config.node.gnb_id.id, 0, ue_config.nof_i_rnti_ue_bits};
+      short_i_rnti = short_i_rnti_t{gnb_id.id, 0, ue_config.nof_i_rnti_ue_bits};
     } else {
       // Increase Short-I-RNTI counter.
-      uint32_t next_ue_id = (short_i_rnti.value() - (cu_cp_config.node.gnb_id.id >> ue_config.nof_i_rnti_ue_bits)) + 1;
-      short_i_rnti        = short_i_rnti_t{cu_cp_config.node.gnb_id.id, next_ue_id, ue_config.nof_i_rnti_ue_bits};
+      uint32_t next_ue_id = (short_i_rnti.value() - (gnb_id.id >> ue_config.nof_i_rnti_ue_bits)) + 1;
+      short_i_rnti        = short_i_rnti_t{gnb_id.id, next_ue_id, ue_config.nof_i_rnti_ue_bits};
     }
   }
 
-  ocudulog::basic_logger&       logger = ocudulog::fetch_basic_logger("CU-UEMNG");
-  const cu_cp_configuration     cu_cp_config;
+  const gnb_id_t                gnb_id;
+  const bool                    enable_rrc_metrics;
   const ue_configuration        ue_config;
   const up_resource_manager_cfg up_config;
   const security_manager_config sec_config;
   const uint32_t                max_nof_ues;
+
+  timer_manager&          timers;
+  task_executor&          cu_cp_executor;
+  ocudulog::basic_logger& logger;
 
   // Manager of UE task schedulers.
   ue_task_scheduler_manager ue_task_scheds;

@@ -7,6 +7,7 @@
 #include "../du_processor/du_processor.h"
 #include "../ue_manager/ue_manager_impl.h"
 #include "ocudu/adt/expected.h"
+#include "ocudu/cu_cp/cu_cp_configuration.h"
 #include "ocudu/f1ap/cu_cp/f1ap_cu_configuration_update.h"
 #include "ocudu/support/async/eager_async_task.h"
 #include <unordered_set>

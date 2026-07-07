@@ -99,16 +99,16 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
                                            security::ciphering_algorithm::nea3};
 
   // Fill logging and metrics config.
-  cu_cp_cfg.f1ap.json_log_enabled          = true;
-  cu_cp_cfg.e1ap.json_log_enabled          = true;
-  cu_cp_cfg.metrics.layers_cfg.enable_ngap = true;
-  cu_cp_cfg.metrics.layers_cfg.enable_rrc  = true;
+  cu_cp_cfg.f1ap.json_log_enabled                  = true;
+  cu_cp_cfg.e1ap.json_log_enabled                  = true;
+  cu_cp_cfg.metrics.layers_cfg.enable_ngap_metrics = true;
+  cu_cp_cfg.metrics.layers_cfg.enable_rrc_metrics  = true;
 
   // Fill mobility config.
-  cu_cp_cfg.mobility.mobility_manager_config.trigger_handover_from_measurements = params.trigger_ho_from_measurements;
+  cu_cp_cfg.mobility.mobility_mgr_config.trigger_handover_from_measurements = params.trigger_ho_from_measurements;
   {
     // Fill meas manager config.
-    cell_meas_manager_cfg meas_mng_cfg;
+    cell_meas_manager_config meas_mng_cfg;
     {
       // Generate NCIs.
       gnb_id_t         gnb_id1 = cu_cp_cfg.node.gnb_id;
@@ -229,7 +229,7 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
         meas_mng_cfg.report_config_ids.emplace(uint_to_report_cfg_id(2), rrc_report_cfg_nr{event_trigger_cfg});
       }
     }
-    cu_cp_cfg.mobility.meas_manager_config = meas_mng_cfg;
+    cu_cp_cfg.mobility.meas_mgr_config = meas_mng_cfg;
   }
 
   // Fill RRC config.

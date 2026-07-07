@@ -60,12 +60,26 @@ class rrc_ue_test_helper
 {
 protected:
   rrc_ue_test_helper() :
-    cu_cp_cfg([this]() {
+    cu_cp_cfg([]() {
       cu_cp_configuration cucfg             = config_helpers::make_default_cu_cp_config();
-      cucfg.services.timers                 = &timers;
-      cucfg.services.cu_cp_executor         = &ctrl_worker;
       cucfg.rrc.rrc_procedure_guard_time_ms = std::chrono::milliseconds{10000};
       return cucfg;
+    }()),
+    ue_cfg([this]() {
+      return ue_manager_config{
+          .gnb_id              = cu_cp_cfg.node.gnb_id,
+          .max_nof_ues         = cu_cp_cfg.admission.max_nof_ues,
+          .drb_config          = cu_cp_cfg.bearers.drb_config,
+          .max_nof_drbs_per_ue = cu_cp_cfg.admission.max_nof_drbs_per_ue,
+          .int_algo_pref_list  = cu_cp_cfg.security.int_algo_pref_list,
+          .enc_algo_pref_list  = cu_cp_cfg.security.enc_algo_pref_list,
+          .enable_rrc_metrics  = cu_cp_cfg.metrics.layers_cfg.enable_rrc_metrics,
+          .ue                  = cu_cp_cfg.ue,
+      };
+    }()),
+    ue_dependencies([this]() {
+      return ue_manager_dependencies{
+          .timers = timers, .cu_cp_executor = ctrl_worker, .logger = ocudulog::fetch_basic_logger("CU-CP")};
     }())
   {
   }
@@ -91,7 +105,7 @@ protected:
     rrc_ue_create_msg.cell.bands.push_back(nr_band::n78);
     rrc_ue_create_msg.cell.plmn_identity_list.push_back(plmn_identity::test_value());
 
-    rrc_ue_cfg_t ue_cfg;
+    rrc_ue_cfg_t rrc_ue_cfg;
     // Add meas timing.
     rrc_meas_timing meas_timing;
     meas_timing.freq_and_timing.emplace();
@@ -102,8 +116,8 @@ protected:
         rrc_periodicity_and_offset::periodicity_t::sf10;
     meas_timing.freq_and_timing.value().ssb_meas_timing_cfg.periodicity_and_offset.offset = 0;
 
-    ue_cfg.meas_timings.push_back(meas_timing);
-    ue_cfg.rrc_procedure_guard_time_ms = cu_cp_cfg.rrc.rrc_procedure_guard_time_ms;
+    rrc_ue_cfg.meas_timings.push_back(meas_timing);
+    rrc_ue_cfg.rrc_procedure_guard_time_ms = cu_cp_cfg.rrc.rrc_procedure_guard_time_ms;
 
     // Create PDCP context for the UE (mirrors what du_processor_impl does in production).
     pdcp_ctx =
@@ -119,7 +133,7 @@ protected:
                                            rrc_ue_create_msg.ue_index,
                                            rrc_ue_create_msg.c_rnti,
                                            rrc_ue_create_msg.cell,
-                                           ue_cfg,
+                                           rrc_ue_cfg,
                                            std::move(rrc_ue_create_msg.du_to_cu_container),
                                            std::optional<rrc_ue_transfer_context>{});
 
@@ -441,8 +455,10 @@ protected:
   dummy_rrc_ue_cu_cp_adapter  rrc_ue_cu_cp_notifier;
   dummy_rrc_ue_rrc_du_adapter rrc_ue_rrc_du_notifier;
   cu_cp_configuration         cu_cp_cfg;
+  ue_manager_config           ue_cfg;
+  ue_manager_dependencies     ue_dependencies;
 
-  ue_manager ue_mng{cu_cp_cfg};
+  ue_manager ue_mng{ue_cfg, ue_dependencies};
 
   std::unique_ptr<srb_pdcp_ue_context> pdcp_ctx;
   std::unique_ptr<rrc_ue_interface>    rrc_ue;

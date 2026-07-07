@@ -3,7 +3,6 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "metrics_handler_impl.h"
-#include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/support/executors/sync_task_executor.h"
 #include "ocudu/support/ocudu_assert.h"
 #include <thread>
@@ -11,19 +10,14 @@
 using namespace ocudu;
 using namespace ocucp;
 
-metrics_handler_impl::metrics_handler_impl(task_executor&                    cu_cp_exec_,
-                                           timer_manager&                    timers_,
-                                           ue_metrics_handler&               ue_handler_,
-                                           du_repository_metrics_handler&    du_handler_,
-                                           ngap_repository_metrics_handler&  ngap_handler_,
-                                           mobility_manager_metrics_handler& mobility_handler_) :
-  cu_cp_exec(cu_cp_exec_),
-  timers(timers_),
-  ue_handler(ue_handler_),
-  du_handler(du_handler_),
-  ngap_handler(ngap_handler_),
-  mobility_handler(mobility_handler_),
-  logger(ocudulog::fetch_basic_logger("CU-CP"))
+metrics_handler_impl::metrics_handler_impl(const metrics_handler_impl_dependencies& dependencies) :
+  cu_cp_exec(dependencies.cu_cp_exec),
+  timers(dependencies.timers),
+  ue_handler(dependencies.ue_handler),
+  du_handler(dependencies.du_handler),
+  ngap_handler(dependencies.ngap_handler),
+  mobility_handler(dependencies.mobility_handler),
+  logger(dependencies.logger)
 {
 }
 

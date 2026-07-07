@@ -16,6 +16,20 @@ xnap_test::xnap_test() :
     cucfg.services.timers         = &timers;
     cucfg.services.cu_cp_executor = &ctrl_worker;
     return cucfg;
+  }()),
+  ue_cfg([this]() {
+    return ue_manager_config{.gnb_id              = cu_cp_cfg.node.gnb_id,
+                             .max_nof_ues         = cu_cp_cfg.admission.max_nof_ues,
+                             .drb_config          = cu_cp_cfg.bearers.drb_config,
+                             .max_nof_drbs_per_ue = cu_cp_cfg.admission.max_nof_drbs_per_ue,
+                             .int_algo_pref_list  = cu_cp_cfg.security.int_algo_pref_list,
+                             .enc_algo_pref_list  = cu_cp_cfg.security.enc_algo_pref_list,
+                             .enable_rrc_metrics  = cu_cp_cfg.metrics.layers_cfg.enable_rrc_metrics,
+                             .ue                  = cu_cp_cfg.ue};
+  }()),
+  ue_dependencies([this]() {
+    return ue_manager_dependencies{
+        .timers = timers, .cu_cp_executor = ctrl_worker, .logger = ocudulog::fetch_basic_logger("CU-CP")};
   }())
 {
   // Init test's loggers.

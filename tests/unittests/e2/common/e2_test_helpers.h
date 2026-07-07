@@ -5,6 +5,7 @@
 #pragma once
 
 #include "e2ap_asn1_packer.h"
+#include "lib/cu_cp/mobility_manager_cu_cp_notifier.h"
 #include "lib/e2/common/e2_impl.h"
 #include "lib/e2/common/e2_subscription_manager_impl.h"
 #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_asn1_packer.h"
@@ -17,11 +18,9 @@
 #include "ocudu/asn1/e2ap/e2ap.h"
 #include "ocudu/asn1/e2sm/e2sm_rc_ies.h"
 #include "ocudu/cu_cp/cu_configurator.h"
-#include "ocudu/cu_cp/mobility_manager_config.h"
 #include "ocudu/e2/e2.h"
 #include "ocudu/e2/e2_cu.h"
 #include "ocudu/e2/e2_cu_cp_factory.h"
-#include "ocudu/e2/e2_cu_up_factory.h"
 #include "ocudu/e2/e2_du_factory.h"
 #include "ocudu/e2/e2_node_component_config_collector.h"
 #include "ocudu/e2/e2ap_configuration_helpers.h"

@@ -6,6 +6,7 @@
 
 #include "lib/cu_cp/ue_manager/ue_manager_impl.h"
 #include "test_helpers.h"
+#include "ocudu/cu_cp/cu_cp_configuration.h"
 #include "ocudu/ngap/ngap.h"
 #include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/ran/cu_types.h"
@@ -73,11 +74,13 @@ protected:
 
   std::unordered_map<cu_cp_ue_index_t, test_ue> test_ues;
 
-  timer_manager       timers;
-  manual_task_worker  ctrl_worker{128};
-  cu_cp_configuration cu_cp_cfg;
+  timer_manager           timers;
+  manual_task_worker      ctrl_worker{128};
+  cu_cp_configuration     cu_cp_cfg;
+  ue_manager_config       ue_cfg;
+  ue_manager_dependencies ue_dependencies;
 
-  ue_manager                      ue_mng{cu_cp_cfg};
+  ue_manager                      ue_mng{ue_cfg, ue_dependencies};
   dummy_n2_gateway                n2_gw;
   dummy_ngap_message_handler      dummy_amf;
   dummy_ngap_cu_cp_notifier       cu_cp_notifier{ue_mng};

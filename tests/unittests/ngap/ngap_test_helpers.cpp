@@ -20,16 +20,30 @@ using namespace ocucp;
 
 ngap_test::ngap_test() :
   cu_cp_cfg([this]() {
-    cu_cp_configuration cucfg     = config_helpers::make_default_cu_cp_config();
-    cucfg.services.timers         = &timers;
-    cucfg.services.cu_cp_executor = &ctrl_worker;
-    cucfg.ngap.ngaps.push_back(cu_cp_configuration::ngap_config{
+    cu_cp_configuration conf     = config_helpers::make_default_cu_cp_config();
+    conf.services.timers         = &timers;
+    conf.services.cu_cp_executor = &ctrl_worker;
+    conf.ngap.ngaps.push_back(cu_cp_configuration::ngap_config{
         &n2_gw,
         {supported_tracking_area{
             7,
             {plmn_item{plmn_identity::test_value(),
                        std::vector<s_nssai_t>{s_nssai_t{slice_service_type{1}, slice_differentiator{}}}}}}}});
-    return cucfg;
+    return conf;
+  }()),
+  ue_cfg([this]() {
+    return ue_manager_config{.gnb_id              = cu_cp_cfg.node.gnb_id,
+                             .max_nof_ues         = cu_cp_cfg.admission.max_nof_ues,
+                             .drb_config          = cu_cp_cfg.bearers.drb_config,
+                             .max_nof_drbs_per_ue = cu_cp_cfg.admission.max_nof_drbs_per_ue,
+                             .int_algo_pref_list  = cu_cp_cfg.security.int_algo_pref_list,
+                             .enc_algo_pref_list  = cu_cp_cfg.security.enc_algo_pref_list,
+                             .enable_rrc_metrics  = cu_cp_cfg.metrics.layers_cfg.enable_rrc_metrics,
+                             .ue                  = cu_cp_cfg.ue};
+  }()),
+  ue_dependencies([this]() {
+    return ue_manager_dependencies{
+        .timers = timers, .cu_cp_executor = ctrl_worker, .logger = ocudulog::fetch_basic_logger("CU-CP")};
   }())
 {
   test_logger.set_level(ocudulog::basic_levels::debug);

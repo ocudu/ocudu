@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "mobility_manager_cu_cp_notifier.h"
 #include "ngap_repository.h"
 #include "ue_manager/ue_manager_impl.h"
 #include "ocudu/cu_cp/cu_configurator.h"

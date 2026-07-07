@@ -42,6 +42,20 @@ cell_meas_manager_test::cell_meas_manager_test() :
     cucfg.services.timers         = &timers;
     cucfg.services.cu_cp_executor = &ctrl_worker;
     return cucfg;
+  }()),
+  ue_cfg([this]() {
+    return ue_manager_config{.gnb_id              = cu_cp_cfg.node.gnb_id,
+                             .max_nof_ues         = cu_cp_cfg.admission.max_nof_ues,
+                             .drb_config          = cu_cp_cfg.bearers.drb_config,
+                             .max_nof_drbs_per_ue = cu_cp_cfg.admission.max_nof_drbs_per_ue,
+                             .int_algo_pref_list  = cu_cp_cfg.security.int_algo_pref_list,
+                             .enc_algo_pref_list  = cu_cp_cfg.security.enc_algo_pref_list,
+                             .enable_rrc_metrics  = cu_cp_cfg.metrics.layers_cfg.enable_rrc_metrics,
+                             .ue                  = cu_cp_cfg.ue};
+  }()),
+  ue_dependencies([this]() {
+    return ue_manager_dependencies{
+        .timers = timers, .cu_cp_executor = ctrl_worker, .logger = ocudulog::fetch_basic_logger("CU-CP")};
   }())
 {
   cu_cp_logger.set_level(ocudulog::basic_levels::debug);
@@ -58,14 +72,17 @@ cell_meas_manager_test::~cell_meas_manager_test()
 
 void cell_meas_manager_test::create_empty_manager()
 {
-  cell_meas_manager_cfg cfg = {};
-  manager                   = std::make_unique<cell_meas_manager>(cfg, mobility_manager, ue_mng);
+  manager = std::make_unique<cell_meas_manager>(
+      cell_meas_manager_config{.cells = {}, .report_config_ids = {}},
+      cell_meas_manager_dependencies{.mobility_mng_notifier = mobility_manager,
+                                     .ue_mng                = ue_mng,
+                                     .logger                = ocudulog::fetch_basic_logger("CU-CP")});
   ASSERT_NE(manager, nullptr);
 }
 
 void cell_meas_manager_test::create_default_manager(std::optional<unsigned> t312)
 {
-  cell_meas_manager_cfg cfg;
+  cell_meas_manager_config cfg;
 
   // Add 2 cells - one being the neighbor of the other one
   gnb_id_t         gnb_id{0x19b, 32};
@@ -165,13 +182,17 @@ void cell_meas_manager_test::create_default_manager(std::optional<unsigned> t312
   a3_report_cfg = event_trigger_cfg;
   cfg.report_config_ids.emplace(uint_to_report_cfg_id(2), a3_report_cfg);
 
-  manager = std::make_unique<cell_meas_manager>(cfg, mobility_manager, ue_mng);
+  manager = std::make_unique<cell_meas_manager>(
+      cfg,
+      cell_meas_manager_dependencies{.mobility_mng_notifier = mobility_manager,
+                                     .ue_mng                = ue_mng,
+                                     .logger                = ocudulog::fetch_basic_logger("CU-CP")});
   ASSERT_NE(manager, nullptr);
 }
 
 void cell_meas_manager_test::create_manager_with_incomplete_cells_and_periodic_report_at_target_cell()
 {
-  cell_meas_manager_cfg cfg;
+  cell_meas_manager_config cfg;
 
   // Add 2 cells - one being the neighbor of the other one
   gnb_id_t         gnb_id{0x19b, 32};
@@ -246,13 +267,17 @@ void cell_meas_manager_test::create_manager_with_incomplete_cells_and_periodic_r
   a3_report_cfg = event_trigger_cfg;
   cfg.report_config_ids.emplace(uint_to_report_cfg_id(2), a3_report_cfg);
 
-  manager = std::make_unique<cell_meas_manager>(cfg, mobility_manager, ue_mng);
+  manager = std::make_unique<cell_meas_manager>(
+      cfg,
+      cell_meas_manager_dependencies{.mobility_mng_notifier = mobility_manager,
+                                     .ue_mng                = ue_mng,
+                                     .logger                = ocudulog::fetch_basic_logger("CU-CP")});
   ASSERT_NE(manager, nullptr);
 }
 
 void cell_meas_manager_test::create_manager_without_ncells_and_periodic_report()
 {
-  cell_meas_manager_cfg cfg;
+  cell_meas_manager_config cfg;
 
   // Add serving cell
   gnb_id_t         gnb_id{411, 32};
@@ -303,13 +328,17 @@ void cell_meas_manager_test::create_manager_without_ncells_and_periodic_report()
   a3_report_cfg = event_trigger_cfg = {};
   cfg.report_config_ids.emplace(uint_to_report_cfg_id(1), a3_report_cfg);
 
-  manager = std::make_unique<cell_meas_manager>(cfg, mobility_manager, ue_mng);
+  manager = std::make_unique<cell_meas_manager>(
+      cfg,
+      cell_meas_manager_dependencies{.mobility_mng_notifier = mobility_manager,
+                                     .ue_mng                = ue_mng,
+                                     .logger                = ocudulog::fetch_basic_logger("CU-CP")});
   ASSERT_NE(manager, nullptr);
 }
 
 void cell_meas_manager_test::create_manager_inter_freq_without_periodic_report()
 {
-  cell_meas_manager_cfg cfg;
+  cell_meas_manager_config cfg;
 
   // Serving cell and neighbor on different frequencies, with only an event-based (A3) report on the neighbor and
   // no periodic report on the serving cell (inter-frequency handover setup).
@@ -346,7 +375,11 @@ void cell_meas_manager_test::create_manager_inter_freq_without_periodic_report()
   a3_report_cfg                                                      = event_trigger_cfg;
   cfg.report_config_ids.emplace(uint_to_report_cfg_id(1), a3_report_cfg);
 
-  manager = std::make_unique<cell_meas_manager>(cfg, mobility_manager, ue_mng);
+  manager = std::make_unique<cell_meas_manager>(
+      cfg,
+      cell_meas_manager_dependencies{.mobility_mng_notifier = mobility_manager,
+                                     .ue_mng                = ue_mng,
+                                     .logger                = ocudulog::fetch_basic_logger("CU-CP")});
   ASSERT_NE(manager, nullptr);
 }
 
@@ -406,7 +439,7 @@ void cell_meas_manager_test::verify_empty_meas_cfg(const std::optional<rrc_meas_
 
 void cell_meas_manager_test::create_cho_manager_single_frequency()
 {
-  cell_meas_manager_cfg cfg;
+  cell_meas_manager_config cfg;
 
   // Add serving cell and 2 target cells on the SAME frequency
   gnb_id_t         gnb_id{0x19b, 32};
@@ -448,13 +481,17 @@ void cell_meas_manager_test::create_cho_manager_single_frequency()
   cho_trigger_cfg                                               = cond_trigger;
   cfg.report_config_ids.emplace(uint_to_report_cfg_id(1), cho_trigger_cfg);
 
-  manager = std::make_unique<cell_meas_manager>(cfg, mobility_manager, ue_mng);
+  manager = std::make_unique<cell_meas_manager>(
+      cfg,
+      cell_meas_manager_dependencies{.mobility_mng_notifier = mobility_manager,
+                                     .ue_mng                = ue_mng,
+                                     .logger                = ocudulog::fetch_basic_logger("CU-CP")});
   ASSERT_NE(manager, nullptr);
 }
 
 void cell_meas_manager_test::create_cho_manager_multi_frequency()
 {
-  cell_meas_manager_cfg cfg;
+  cell_meas_manager_config cfg;
 
   // Add serving cell and 2 target cells on DIFFERENT frequencies
   gnb_id_t         gnb_id{0x19b, 32};
@@ -496,13 +533,17 @@ void cell_meas_manager_test::create_cho_manager_multi_frequency()
   cho_trigger_cfg                                               = cond_trigger;
   cfg.report_config_ids.emplace(uint_to_report_cfg_id(1), cho_trigger_cfg);
 
-  manager = std::make_unique<cell_meas_manager>(cfg, mobility_manager, ue_mng);
+  manager = std::make_unique<cell_meas_manager>(
+      cfg,
+      cell_meas_manager_dependencies{.mobility_mng_notifier = mobility_manager,
+                                     .ue_mng                = ue_mng,
+                                     .logger                = ocudulog::fetch_basic_logger("CU-CP")});
   ASSERT_NE(manager, nullptr);
 }
 
 void cell_meas_manager_test::create_cho_manager_multi_trigger()
 {
-  cell_meas_manager_cfg cfg;
+  cell_meas_manager_config cfg;
 
   // Add serving cell and 1 target cell with MULTIPLE conditional triggers
   gnb_id_t         gnb_id{0x19b, 32};
@@ -554,13 +595,17 @@ void cell_meas_manager_test::create_cho_manager_multi_trigger()
   cho_trigger_a5                                        = cond_trigger_a5;
   cfg.report_config_ids.emplace(uint_to_report_cfg_id(2), cho_trigger_a5);
 
-  manager = std::make_unique<cell_meas_manager>(cfg, mobility_manager, ue_mng);
+  manager = std::make_unique<cell_meas_manager>(
+      cfg,
+      cell_meas_manager_dependencies{.mobility_mng_notifier = mobility_manager,
+                                     .ue_mng                = ue_mng,
+                                     .logger                = ocudulog::fetch_basic_logger("CU-CP")});
   ASSERT_NE(manager, nullptr);
 }
 
 void cell_meas_manager_test::create_cho_manager_a5_inter_frequency()
 {
-  cell_meas_manager_cfg cfg;
+  cell_meas_manager_config cfg;
 
   // Serving cell and target cell on DIFFERENT frequencies to exercise inter-frequency A5 CHO.
   gnb_id_t         gnb_id{0x19b, 32};
@@ -592,6 +637,10 @@ void cell_meas_manager_test::create_cho_manager_a5_inter_frequency()
   cho_trigger_cfg                                       = cond_trigger;
   cfg.report_config_ids.emplace(uint_to_report_cfg_id(1), cho_trigger_cfg);
 
-  manager = std::make_unique<cell_meas_manager>(cfg, mobility_manager, ue_mng);
+  manager = std::make_unique<cell_meas_manager>(
+      cfg,
+      cell_meas_manager_dependencies{.mobility_mng_notifier = mobility_manager,
+                                     .ue_mng                = ue_mng,
+                                     .logger                = ocudulog::fetch_basic_logger("CU-CP")});
   ASSERT_NE(manager, nullptr);
 }

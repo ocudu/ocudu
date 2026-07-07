@@ -48,20 +48,20 @@ struct cell_meas_config {
 /// \brief Verifies required parameters are set. Returns true if config is valid, false otherwise.
 bool is_complete(const serving_cell_meas_config& cfg);
 
-/// \brief Cell manager configuration.
-struct cell_meas_manager_cfg {
+/// Cell manager configuration.
+struct cell_meas_manager_config {
   std::map<nr_cell_identity, cell_meas_config> cells; // Measurement related configs for all known cells.
   std::map<report_cfg_id_t, rrc_report_cfg_nr> report_config_ids;
 };
 
 /// \brief Validates configuration but doesn't verify if all provided cells have complete configuration (yet). Returns
 /// true if config is valid, false otherwise.
-bool is_valid_configuration(const cell_meas_manager_cfg&                                cfg,
+bool is_valid_configuration(const cell_meas_manager_config&                             cfg,
                             const std::unordered_map<ssb_frequency_t, rrc_meas_obj_nr>& ssb_freq_to_meas_object = {});
 
 /// \brief Same as config validation but additionally verfies that the measurement related parameters are present for
 /// all cells.
-bool is_complete(const cell_meas_manager_cfg& cfg);
+bool is_complete(const cell_meas_manager_config& cfg);
 
 } // namespace ocudu::ocucp
 

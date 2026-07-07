@@ -36,8 +36,8 @@ struct ran_node_configuration {
 };
 
 struct mobility_configuration {
-  cell_meas_manager_cfg meas_manager_config;
-  mobility_manager_cfg  mobility_manager_config;
+  cell_meas_manager_config meas_mgr_config;
+  mobility_manager_config  mobility_mgr_config;
 };
 
 /// Configuration passed to CU-CP.
@@ -128,9 +128,9 @@ struct cu_cp_configuration {
 
   struct metrics_layers_config {
     /// Enable NGAP metrics.
-    bool enable_ngap = false;
+    bool enable_ngap_metrics = false;
     /// Enable RRC metrics.
-    bool enable_rrc = false;
+    bool enable_rrc_metrics = false;
   };
 
   struct metrics_params {

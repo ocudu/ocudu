@@ -145,7 +145,7 @@ std::vector<cu_cp_du_index_t> du_processor_repository::get_du_processor_indexes(
 
 std::vector<cu_cp_metrics_report::du_info> du_processor_repository::handle_du_metrics_report_request() const
 {
-  if (!cfg.cu_cp.metrics.layers_cfg.enable_rrc) {
+  if (!cfg.cu_cp.metrics.layers_cfg.enable_rrc_metrics) {
     return {};
   }
 
