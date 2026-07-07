@@ -61,6 +61,14 @@ struct bwp_td_res_info {
     return pusch_td_res_per_slot[slot_index % pusch_td_res_per_slot.size()];
   }
 
+  /// \brief Get the PDSCH TD resource candidates for a PDSCH scheduled by a PDCCH in the given slot index.
+  /// \remark Each resource ends at the last DL symbol of the slot: the number of symbols per slot in a full DL slot,
+  /// or the last DL symbol in a special slot.
+  span<const pdsch_time_domain_resource_allocation> get_pdsch_td_res_list(unsigned pdcch_slot_index) const
+  {
+    return pdsch_td_res_per_slot[pdcch_slot_index % pdsch_td_res_per_slot.size()];
+  }
+
 private:
   /// \brief List of available PDSCH time-domain resource allocations for the BWP.
   std::vector<pdsch_time_domain_resource_allocation> pdsch_td_res_list;
@@ -75,6 +83,9 @@ private:
   /// List of PUSCH TD resource candidates for each slot within the TDD period.
   /// Note: Only used when TDD is enabled.
   std::vector<std::vector<pusch_time_domain_resource_allocation>> pusch_td_res_per_slot;
+
+  /// List of PDSCH TD resource candidates for a PDSCH scheduled in each slot within the TDD period.
+  std::vector<std::vector<pdsch_time_domain_resource_allocation>> pdsch_td_res_per_slot;
 
   /// List of common (fallback) k1 candidates valid for a PDSCH transmitted in each slot within the TDD period.
   std::vector<static_vector<uint8_t, time_domain_resource_helper::MAX_K1_CANDIDATES>> common_k1_per_slot;
