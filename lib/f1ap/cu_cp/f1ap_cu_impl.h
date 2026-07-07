@@ -167,8 +167,6 @@ private:
   tx_pdu_notifier_with_logging tx_pdu_notifier;
   f1ap_event_manager           ev_mng;
 
-  // Store current F1AP transaction ID.
-  unsigned current_transaction_id = 0;
   // Counter used to allocate transaction IDs for CU-initiated Reference Time Information Reporting Control messages.
   uint8_t next_ref_time_transaction_id = 0;
 };

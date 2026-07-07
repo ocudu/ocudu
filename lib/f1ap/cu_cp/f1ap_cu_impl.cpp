@@ -313,8 +313,6 @@ void f1ap_cu_impl::handle_du_cfg_update(const asn1::f1ap::gnb_du_cfg_upd_s& requ
 
 void f1ap_cu_impl::handle_f1_setup_request(const asn1::f1ap::f1_setup_request_s& request)
 {
-  current_transaction_id = request->transaction_id;
-
   handle_f1_setup_procedure(request, du_ctxt, tx_pdu_notifier, du_processor_notifier, logger);
 }
 
