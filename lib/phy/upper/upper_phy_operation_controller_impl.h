@@ -47,24 +47,28 @@ private:
     // See interface for documentation.
     void on_tti_boundary(const upper_phy_timing_context& context) override
     {
-      if (active.load(std::memory_order_relaxed)) {
-        notifier->on_tti_boundary(context);
-      }
+      active_notifier.load(std::memory_order_relaxed)->on_tti_boundary(context);
     }
 
     /// Enables or disables forwarding. The new state takes effect on the next slot boundary.
-    void set_active(bool active_state) { active.store(active_state, std::memory_order_relaxed); }
+    void set_active(bool active_state);
 
     /// Connects the notifier that receives the forwarded events.
-    void connect(upper_phy_timing_notifier& notif) { notifier = &notif; }
+    void connect(upper_phy_timing_notifier& notif)
+    {
+      connected_notifier = &notif;
+      active_notifier.store(&notif, std::memory_order_relaxed);
+    }
 
   private:
-    /// Forwarding state. Read on the cell executor on every slot boundary; written on the control
-    /// executor by the FAPI P5 START and STOP procedures, hence atomic.
-    std::atomic<bool> active{true};
-    /// Connected notifier. Points to a dummy until \ref connect is called, so it is never null and no
-    /// per-slot check is needed. Connected once at init before the slot path runs, hence not atomic.
-    upper_phy_timing_notifier* notifier;
+    /// Downstream notifier connected at init. Points to a dummy until \ref connect runs, so it is
+    /// never null. Written once before the slot path runs, hence not atomic.
+    upper_phy_timing_notifier* connected_notifier;
+    /// Effective notifier on the slot path: the connected notifier while started, the dummy while
+    /// stopped. Swapped on the control executor by the FAPI P5 START and STOP procedures and read on
+    /// the cell executor every slot boundary, hence atomic; dereferenced unconditionally, so no
+    /// per-slot branch is needed.
+    std::atomic<upper_phy_timing_notifier*> active_notifier;
   };
 
   timing_notifier_proxy proxy;
