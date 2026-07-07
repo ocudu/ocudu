@@ -183,6 +183,27 @@ TEST_F(default_slice_scheduler_test, when_candidate_instance_goes_out_of_scope_t
   ASSERT_EQ(next_dl_slice->id(), SRB_RAN_SLICE_ID);
 }
 
+TEST_F(default_slice_scheduler_test, when_deactivated_ue_gets_config_applied_then_no_channels_are_re_added_to_slices)
+{
+  // Regression for issue #573: a stale config-applied on a UE that was already deactivated (bearers cleared) but not
+  // yet erased must not attempt to re-map its logical channels to slices.
+  const du_ue_index_t ue_idx = to_du_ue_index(0);
+  ASSERT_NE(this->add_ue(ue_idx), nullptr);
+  run_slot();
+  ASSERT_TRUE(slice_sched.get_next_dl_candidate().has_value());
+
+  // Deactivation clears the UE bearers in the logical channel system while leaving the UE (and its dedicated config)
+  // in the repository.
+  this->ues[ue_idx].deactivate();
+  ASSERT_TRUE(this->ues[ue_idx].logical_channels().cfg().logical_channels().empty());
+
+  // Re-driving the slice add path must be a no-op instead of asserting on an unconfigured LCID.
+  slice_sched.config_applied(ue_idx);
+
+  // Scheduler remains healthy on the following slots.
+  run_slot();
+}
+
 TEST_F(default_slice_scheduler_test, when_grant_gets_allocated_then_number_of_available_rbs_decreases)
 {
   ASSERT_NE(this->add_ue(to_du_ue_index(0)), nullptr);

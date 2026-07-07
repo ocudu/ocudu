@@ -234,8 +234,9 @@ void inter_slice_scheduler::config_applied(du_ue_index_t ue_idx)
 
 void inter_slice_scheduler::add_impl(ue& u)
 {
-  const ue_configuration& ue_cfg = *u.ue_cfg_dedicated();
-  for (logical_channel_config_ptr lc_cfg : *ue_cfg.logical_channels()) {
+  // Iterate the logical channels tracked by the logical channel system rather than the UE dedicated config, as the
+  // latter also tracks deactivated logical channels.
+  for (logical_channel_config_ptr lc_cfg : u.logical_channels().cfg()) {
     ran_slice_instance& sl_inst = get_slice(*lc_cfg);
     if (lc_cfg->lcid != LCID_SRB0 and not sl_inst.get_ues().contains(u.ue_index)) {
       get_policy(sl_inst.id).add_ue(u.ue_index);
