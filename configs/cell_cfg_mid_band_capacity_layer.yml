@@ -1,0 +1,63 @@
+# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+# This file contains a reference cell config for a mid-band capacity layer:
+# - Focus on high throughput and capacity, not coverage.
+# - Purpose is to provide a starting point for lab evaluation of high-load scenarios, not a field-deployable configuration.
+# - n78 TDD 100 MHz @ 30 kHz SCS (273 PRB), 4T4R, single SSB beam.
+# - TDD: DDDSU 2.5 ms, special slot 6D:4F:4U (~74% DL / 20% UL).
+# - PRACH: short format @ 30 kHz (index 159), 64 preambles all CBRA, no CFRA - standalone cell, storm-test oriented.
+# - UL control sized for high connected-UE counts: 80 SR / 80 CSI resources @ SR 40 ms (~thousands of UEs),
+#   4 PUCCH resource-set configs, up to 120 PUCCHs + 16 PUSCHs vs 128 UL grants/slot.
+# - Relaxed per-UE periodic cost: BSR 2560 ms, PHR prohibit 1000 ms, CSI-RS 80 ms.
+# - Scheduler caps: 16 PDSCH/PUSCH per slot; relaxed timing floors (min k1/k2 = 4); DL+UL 256QAM.
+# - PDCCH: CORESET0 index 13 (48 PRB x 2 symbols), SS1 candidates 4xAL4, 2xAL8.
+#
+# Tested with testmode with 1024 UEs, 4T4R, RI=4, CQI=15, PUSCH active, PDSCH active.
+
+cell_cfg:
+  dl_arfcn: 636666
+  band: 78
+  channel_bandwidth_MHz: 100
+  common_scs: 30
+  nof_antennas_dl: 4
+  nof_antennas_ul: 4
+  pci: 1
+  tac: 7
+  tdd_ul_dl_cfg:
+    dl_ul_tx_period: 5
+    nof_dl_slots: 3
+    nof_dl_symbols: 6
+    nof_ul_slots: 1
+    nof_ul_symbols: 4
+  ssb:
+    ssb_period: 20
+  prach:
+    prach_config_index: 159
+    zero_correlation_zone: 12
+    total_nof_ra_preambles: 64
+    nof_cb_preambles_per_ssb: 64
+  mac_cell_group:
+    bsr_cfg:
+      periodic_bsr_timer: 2560
+    phr_cfg:
+      phr_prohibit_timer: 1000
+  pucch:
+    sr_period_ms: 40
+    resource_set_size: 8
+    nof_cell_res_set_configs: 4
+    nof_cell_sr_res: 80
+    nof_cell_csi_res: 80
+    min_k1: 4
+  ul_common:
+    max_ul_grants_per_slot: 128
+    max_pucchs_per_slot: 120
+  pusch:
+    min_k2: 4
+  csi:
+    csi_rs_period: 80
+  pdcch:
+    common:
+      ss1_n_candidates: [0, 0, 4, 2, 0]
+      coreset0_index: 13 # 48 RB x 2 symbols  (range 0-15)
+      max_coreset0_duration: 2

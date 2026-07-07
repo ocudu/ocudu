@@ -1,0 +1,50 @@
+# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+# This file contains a reference cell config for a low-band coverage layer:
+# - n28, 10 MHz, 2T2R passive, single wide SSB beam.
+# - Role: coverage/anchor layer, optimized for link budget, cell-edge UL and idle-mode camping, not throughput.
+# - PRACH: long format 0,
+# - UL control sized for ~200-300 connected UEs (12 SR / 12 CSI res, SR 80 ms) to minimize PUCCH overhead on the 52 PRBs.
+# - DL 256QAM / UL 64QAM; CSI-RS 80 ms (wideband link adaptation only, no beam refinement).
+#
+# Tested with testmode with 256 UEs, 2T2R, RI=2, CQI=15, PUSCH active, PDSCH active.
+
+cell_cfg:
+  dl_arfcn: 152600
+  band: 28
+  channel_bandwidth_MHz: 10
+  common_scs: 15
+  nof_antennas_dl: 2
+  nof_antennas_ul: 2
+  pci: 1
+  tac: 7
+  ssb:
+    ssb_period: 20
+    ssb_block_power_dbm: 15
+  prach:
+    prach_config_index: 14
+    zero_correlation_zone: 12
+    prach_root_sequence_index: 1
+    total_nof_ra_preambles: 64
+    ra_resp_window: 10
+  csi:
+    csi_rs_period: 80
+  srs:
+    type_enabled: periodic
+    period_ms: 160
+  ul_common:
+    max_ul_grants_per_slot: 40
+    max_pucchs_per_slot: 31
+  pusch:
+    mcs_table: qam64
+    max_puschs_per_slot: 8
+  pucch:
+    sr_period_ms: 80
+    resource_set_size: 8
+    nof_cell_res_set_configs: 2
+    nof_cell_sr_res: 12
+    nof_cell_csi_res: 12
+    p0_nominal: -90
+  paging:
+    default_pg_cycle_in_rf: 128
