@@ -81,7 +81,7 @@ generate_pdsch_td_res_per_tdd_slot(const tdd_ul_dl_config_common& tdd_cfg, cycli
 // Compute HARQ-ACK timing values available for DCI format 1_0, considering the min_k1, and as per TS38.213, 9.1.2.1.
 static span<const uint8_t> common_k1_candidate_pool(uint8_t min_k1)
 {
-  static std::array<uint8_t, time_domain_resource_helper::MAX_K1_CANDIDATES> pool = {1, 2, 3, 4, 5, 6, 7, 8};
+  static constexpr std::array<uint8_t, time_domain_resource_helper::MAX_K1_CANDIDATES> pool = {1, 2, 3, 4, 5, 6, 7, 8};
   return span<const uint8_t>(pool.data() + (min_k1 - 1), pool.size() - (min_k1 - 1));
 }
 
@@ -94,8 +94,8 @@ bwp_td_res_info::bwp_td_res_info(const bwp_td_res_info_builder_params& params)
   if (not params.tdd_cfg.has_value()) {
     // In FDD mode, only one k1 and k2 value exist.
     dedicated_k1_candidates.push_back(params.min_k1);
-    pusch_td_res_list     = {pusch_time_domain_resource_allocation{
-        params.min_k2, sch_mapping_type::typeA, ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP}}};
+    pusch_td_res_list = time_domain_resource_helper::generate_dedicated_pusch_td_res_list(
+        params.tdd_cfg, params.cp, params.min_k2, params.max_srs_symbols, params.symbols_per_srs);
     pusch_td_res_per_slot = std::vector<std::vector<pusch_time_domain_resource_allocation>>{1, pusch_td_res_list};
     // In FDD every slot is a full DL slot, so the PDSCH spans up to the number of symbols per slot.
     pdsch_td_res_per_slot = {pdsch_td_res_list};
@@ -114,8 +114,8 @@ bwp_td_res_info::bwp_td_res_info(const bwp_td_res_info_builder_params& params)
   // first entry of list. This way PDSCH(s) are scheduled before PUSCH and all DL slots are filled with PDSCH and
   // all UL slots are filled with PUSCH under heavy load. It also ensures that correct DAI value goes in the UL
   // PDCCH of DCI Format 0_1.
-  pusch_td_res_list =
-      time_domain_resource_helper::generate_dedicated_pusch_td_res_list(*params.tdd_cfg, params.cp, params.min_k2);
+  pusch_td_res_list = time_domain_resource_helper::generate_dedicated_pusch_td_res_list(
+      *params.tdd_cfg, params.cp, params.min_k2, params.max_srs_symbols, params.symbols_per_srs);
 
   // Generate PUSCH candidates for each slot within a TDD period.
   pusch_td_res_per_slot = generate_all_k2_candidates_per_tdd_slot(pusch_td_res_list, *params.tdd_cfg);

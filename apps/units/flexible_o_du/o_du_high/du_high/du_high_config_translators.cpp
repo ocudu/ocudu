@@ -1008,11 +1008,14 @@ std::vector<odu::du_cell_config> ocudu::generate_du_cell_config(const du_high_un
         auto& f4_params    = std::get<pucch_f4_params>(du_pucch_cfg.f2_or_f3_or_f4_params);
         f4_params.nof_syms = std::min(du_pucch_cfg.max_nof_symbols.value(), f4_params.nof_syms.value());
       }
-      // Add extra PUSCH time-domain resources to enable PUSCH on symbols not used by the SRS.
-      config_helpers::recompute_pusch_time_domain_resources(
-          out_cell.ran.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list,
-          du_srs_cfg,
-          out_cell.ran.tdd_cfg);
+      // Regenerate the PUSCH time-domain resources, adding extra ones to enable PUSCH on symbols not used by the SRS.
+      out_cell.ran.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list =
+          time_domain_resource_helper::generate_dedicated_pusch_td_res_list(
+              out_cell.ran.tdd_cfg,
+              out_cell.ran.ul_cfg_common.init_ul_bwp.generic_params.cp,
+              base_cell.pusch_cfg.min_k2,
+              du_srs_cfg.max_nof_symbols.value(),
+              static_cast<uint8_t>(du_srs_cfg.nof_symbols));
     }
 
     // Parameters for csiMeasConfig.

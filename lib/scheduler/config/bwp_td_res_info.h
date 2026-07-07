@@ -26,6 +26,10 @@ struct bwp_td_res_info_builder_params {
   uint8_t min_k1 = 4;
   /// Minimum k2 value to consider when generating the list of PUSCH time-domain resource allocations.
   uint8_t min_k2 = 4;
+  /// Maximum number of symbols an SRS resource can occupy at the end of the slot. Zero disables SRS-aware generation.
+  uint8_t max_srs_symbols = 0;
+  /// Number of symbols of a single SRS resource.
+  uint8_t symbols_per_srs = 0;
 };
 
 /// Descriptor of time-domain resources in a given BWP.

@@ -50,13 +50,23 @@ generate_dedicated_pdsch_td_res_list(const std::optional<tdd_ul_dl_config_common
                                      uint8_t                                       min_pdsch_symbol);
 
 /// \brief Generate the list of available UE dedicated PUSCH time-domain resource allocations for TDD operation.
-/// \remark The algorithm to choose the candidates is implementation defined.
+/// \param[in] max_srs_symbols Maximum number of symbols an SRS resource can occupy at the end of the slot. Zero
+/// disables SRS-aware generation.
+/// \param[in] symbols_per_srs Number of symbols of a single SRS resource, used as the step to add extra resources.
+/// \remark The algorithm to choose the candidates is implementation defined. When SRS is enabled, extra shorter
+/// resources are added so that PUSCH can be scheduled on the symbols not used by the SRS.
 std::vector<pusch_time_domain_resource_allocation>
-generate_dedicated_pusch_td_res_list(const tdd_ul_dl_config_common& tdd_cfg, cyclic_prefix cp, uint8_t min_k2);
+generate_dedicated_pusch_td_res_list(const tdd_ul_dl_config_common& tdd_cfg,
+                                     cyclic_prefix                  cp,
+                                     uint8_t                        min_k2,
+                                     uint8_t                        max_srs_symbols = 0,
+                                     uint8_t                        symbols_per_srs = 0);
 std::vector<pusch_time_domain_resource_allocation>
 generate_dedicated_pusch_td_res_list(const std::optional<tdd_ul_dl_config_common>& tdd_cfg,
                                      cyclic_prefix                                 cp,
-                                     uint8_t                                       min_k2);
+                                     uint8_t                                       min_k2,
+                                     uint8_t                                       max_srs_symbols = 0,
+                                     uint8_t                                       symbols_per_srs = 0);
 
 } // namespace time_domain_resource_helper
 
