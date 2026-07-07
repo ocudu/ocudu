@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
-#include "bwp_td_res_info.h"
+#include "bwp_time_domain_mapper.h"
 #include "ocudu/support/ocudu_assert.h"
 
 using namespace ocudu;
@@ -94,9 +94,9 @@ generate_pdsch_td_res_per_tdd_slot(span<const pdsch_time_domain_resource_allocat
   return result;
 }
 
-bwp_td_res_info::bwp_td_res_info(const bwp_td_res_info_builder_params& params)
+bwp_time_domain_mapper::bwp_time_domain_mapper(const bwp_time_domain_builder_params& params)
 {
-  using builder_params = bwp_td_res_info_builder_params;
+  using builder_params = bwp_time_domain_builder_params;
 
   // Obtain the base TD resource lists and dedicated k1 candidates, either by generation or from explicit values. The
   // per-slot structures below are derived from these in both cases.

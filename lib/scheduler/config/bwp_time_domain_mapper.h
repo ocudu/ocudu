@@ -16,7 +16,7 @@
 namespace ocudu {
 
 /// Parameters for building TD resource info.
-struct bwp_td_res_info_builder_params {
+struct bwp_time_domain_builder_params {
   struct auto_resources {
     /// Max duration in symbols of all CORESETs.
     uint8_t coreset_max_dur = 2;
@@ -43,11 +43,11 @@ struct bwp_td_res_info_builder_params {
 };
 
 /// Descriptor of time-domain resources in a given BWP.
-struct bwp_td_res_info {
-  bwp_td_res_info() = default;
+struct bwp_time_domain_mapper {
+  bwp_time_domain_mapper() = default;
 
   /// Build dedicated BWP TD resource info from builder parameters.
-  explicit bwp_td_res_info(const bwp_td_res_info_builder_params& params);
+  explicit bwp_time_domain_mapper(const bwp_time_domain_builder_params& params);
 
   /// Retrieve the list of available PUSCH time-domain resource allocations for the BWP.
   span<const pusch_time_domain_resource_allocation> get_pusch_td_res_list() const { return pusch_td_res_list; }
