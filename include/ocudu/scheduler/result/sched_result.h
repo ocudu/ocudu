@@ -60,6 +60,8 @@ struct failed_alloc_attempts {
   unsigned common_ul_pdcch = 0;
   /// Number of failed UCI allocation attempts.
   unsigned uci = 0;
+  /// Number of fallback DL grants dropped because the common HARQ-ACK PUCCH collided on every candidate k1.
+  unsigned fallback_uci_allocs = 0;
 };
 
 /// Scheduler decision made for DL and UL in a given slot.

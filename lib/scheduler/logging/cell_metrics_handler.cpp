@@ -154,6 +154,14 @@ void cell_metrics_handler::handle_conres_timer_expired()
   data.nof_conres_timer_expired++;
 }
 
+void cell_metrics_handler::handle_conres_ce_never_acked()
+{
+  if (not enabled()) {
+    return;
+  }
+  data.nof_conres_ce_never_acked++;
+}
+
 void cell_metrics_handler::handle_crc_indication(slot_point                   sl_rx,
                                                  const ul_crc_pdu_indication& crc_pdu,
                                                  units::bytes                 tbs)
@@ -431,23 +439,25 @@ void cell_metrics_handler::report_metrics()
   next_report->nof_error_indications = data.error_indication_counter;
   next_report->average_decision_latency =
       next_report->nof_slots > 0 ? data.decision_latency_sum / next_report->nof_slots : std::chrono::microseconds{0};
-  next_report->max_decision_latency      = data.max_decision_latency;
-  next_report->max_decision_latency_slot = data.max_decision_latency_slot;
-  next_report->latency_histogram         = data.decision_latency_hist;
-  next_report->nof_prbs                  = cell_cfg.nof_dl_prbs; // TODO: to be removed from the report.
-  next_report->nof_dl_slots              = data.nof_dl_slots;
-  next_report->nof_ul_slots              = data.nof_ul_slots;
-  next_report->nof_prach_preambles       = data.nof_prach_preambles;
-  next_report->dl_grants_count           = data.nof_ue_pdsch_grants;
-  next_report->ul_grants_count           = data.nof_ue_pusch_grants;
-  next_report->failed_dl_pdcch           = data.failed_dl_pdcch;
-  next_report->failed_ul_pdcch           = data.failed_ul_pdcch;
-  next_report->failed_common_dl_pdcch    = data.failed_common_dl_pdcch;
-  next_report->failed_common_ul_pdcch    = data.failed_common_ul_pdcch;
-  next_report->nof_failed_uci_allocs     = data.nof_failed_uci_allocs;
-  next_report->nof_msg3_ok               = data.nof_msg3_ok;
-  next_report->nof_msg3_nok              = data.nof_msg3_nok;
-  next_report->nof_conres_timer_expired  = data.nof_conres_timer_expired;
+  next_report->max_decision_latency       = data.max_decision_latency;
+  next_report->max_decision_latency_slot  = data.max_decision_latency_slot;
+  next_report->latency_histogram          = data.decision_latency_hist;
+  next_report->nof_prbs                   = cell_cfg.nof_dl_prbs; // TODO: to be removed from the report.
+  next_report->nof_dl_slots               = data.nof_dl_slots;
+  next_report->nof_ul_slots               = data.nof_ul_slots;
+  next_report->nof_prach_preambles        = data.nof_prach_preambles;
+  next_report->dl_grants_count            = data.nof_ue_pdsch_grants;
+  next_report->ul_grants_count            = data.nof_ue_pusch_grants;
+  next_report->failed_dl_pdcch            = data.failed_dl_pdcch;
+  next_report->failed_ul_pdcch            = data.failed_ul_pdcch;
+  next_report->failed_common_dl_pdcch     = data.failed_common_dl_pdcch;
+  next_report->failed_common_ul_pdcch     = data.failed_common_ul_pdcch;
+  next_report->nof_failed_uci_allocs      = data.nof_failed_uci_allocs;
+  next_report->failed_fallback_uci_allocs = data.failed_fallback_uci_allocs;
+  next_report->nof_msg3_ok                = data.nof_msg3_ok;
+  next_report->nof_msg3_nok               = data.nof_msg3_nok;
+  next_report->nof_conres_timer_expired   = data.nof_conres_timer_expired;
+  next_report->nof_conres_ce_never_acked  = data.nof_conres_ce_never_acked;
   next_report->avg_prach_delay_slots =
       data.nof_prach_preambles > 0
           ? std::optional{static_cast<float>(data.sum_prach_delay_slots) / static_cast<float>(data.nof_prach_preambles)}
@@ -608,6 +618,7 @@ void cell_metrics_handler::handle_slot_result(slot_point_extended       sl_tx,
   data.failed_common_dl_pdcch += slot_result.failed_attempts.common_dl_pdcch;
   data.failed_common_ul_pdcch += slot_result.failed_attempts.common_ul_pdcch;
   data.nof_failed_uci_allocs += slot_result.failed_attempts.uci;
+  data.failed_fallback_uci_allocs += slot_result.failed_attempts.fallback_uci_allocs;
 }
 
 void cell_metrics_handler::push_result(slot_point_extended       sl_tx,

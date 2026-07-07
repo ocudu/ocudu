@@ -444,8 +444,11 @@ protected:
     request_metrics_on_next_slot();
     run_slot();
     ASSERT_TRUE(last_metrics().has_value());
-    test_logger.info("Peak concurrent transient UEs in contention resolution: {}", peak_in_conres);
-    ASSERT_EQ(last_metrics()->nof_conres_timer_expired, 0U) << "A ConRes timer expired during the test";
+    test_logger.info("Peak concurrent transient UEs in contention resolution: {}, failed fallback UCI allocs: {}",
+                     peak_in_conres,
+                     last_metrics()->failed_fallback_uci_allocs);
+    ASSERT_EQ(last_metrics()->nof_conres_timer_expired, 0U) << "A ConRes timer expired before its ConRes CE";
+    ASSERT_EQ(last_metrics()->nof_conres_ce_never_acked, 0U) << "A ConRes CE was scheduled but never ACKed";
   }
 
   // Add persistent UEs, each with a fixed traffic direction and a large buffer, to saturate the grid.

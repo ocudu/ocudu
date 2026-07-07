@@ -152,12 +152,16 @@ struct scheduler_cell_metrics {
   unsigned failed_common_ul_pdcch = 0;
   /// Number of failed UCI allocation attempts.
   unsigned nof_failed_uci_allocs = 0;
+  /// Number of fallback DL grants dropped because the common HARQ-ACK PUCCH collided on every candidate k1.
+  unsigned failed_fallback_uci_allocs = 0;
   /// Number of MSG3s.
   unsigned nof_msg3_ok = 0;
   /// Number of MSG3 KOs.
   unsigned nof_msg3_nok = 0;
   /// Number of ra-ContentionResolutionTimer expiries that occurred before the ConRes CE could be scheduled.
   unsigned nof_conres_timer_expired = 0;
+  /// Number of ra-ContentionResolutionTimer expiries where the ConRes CE was scheduled but never positively ACKed.
+  unsigned nof_conres_ce_never_acked = 0;
   /// Average PRACH delay in slots.
   std::optional<float> avg_prach_delay_slots;
   /// Number of failed PDSCH allocations due to late HARQs.

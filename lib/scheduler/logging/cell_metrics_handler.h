@@ -151,12 +151,16 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
     unsigned failed_common_ul_pdcch = 0;
     // Number of failed UCI allocation attempts.
     unsigned nof_failed_uci_allocs = 0;
+    // Number of fallback DL grants dropped because the common HARQ-ACK PUCCH collided on every candidate.
+    unsigned failed_fallback_uci_allocs = 0;
     // Number of MSG3 OKs.
     unsigned nof_msg3_ok = 0;
     // Number of MSG3 KOs.
     unsigned nof_msg3_nok = 0;
     // Number of ra-ContentionResolutionTimer expiries that occurred before the ConRes CE could be scheduled.
     unsigned nof_conres_timer_expired = 0;
+    // Number of ra-ContentionResolutionTimer expiries where the ConRes CE was scheduled but never positively ACKed.
+    unsigned nof_conres_ce_never_acked = 0;
     // Total PRACH delay in slots.
     unsigned sum_prach_delay_slots = 0;
     // Number of failed PDSCH allocations due to late HARQs.
@@ -214,6 +218,10 @@ public:
 
   /// \brief Register a ra-ContentionResolutionTimer expiry that occurred before the ConRes CE could be scheduled.
   void handle_conres_timer_expired();
+
+  /// \brief Register a ra-ContentionResolutionTimer expiry where the ConRes CE was scheduled but never positively
+  /// ACKed.
+  void handle_conres_ce_never_acked();
 
   /// \brief Register CRC indication.
   void handle_crc_indication(slot_point sl_rx, const ul_crc_pdu_indication& crc_pdu, units::bytes tbs);

@@ -699,6 +699,8 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
                                                                  use_dedicated);
   if (not uci.has_value() or not uci.value().pucch_res_indicator.has_value()) {
     if (uci.has_value() and not uci.value().pucch_res_indicator.has_value()) {
+      // A valid k1 candidate existed but the common HARQ-ACK PUCCH collided on every candidate: PUCCH contention.
+      ++pdcch_alloc.result.failed_attempts.fallback_uci_allocs;
       // Note: Only log if there was at least one valid k1 candidate for this PDSCH slot.
       logger.debug("rnti={}: Failed to allocate fallback PDSCH for slot={}. Cause: No space in PUCCH",
                    u.crnti,
@@ -1457,6 +1459,7 @@ bool ue_fallback_scheduler::handle_conres_expiry(ue& u, slot_point sl_tx)
               make_formattable([k = ntn_cs_koffset](auto& ctx) {
                 return k ? fmt::format_to(ctx.out(), " + RTT: {}ms", k) : ctx.out();
               }));
+  metrics.handle_conres_ce_never_acked();
   ues.handle_conres_ce_outcome(u.ue_index, false);
   return true;
 }
