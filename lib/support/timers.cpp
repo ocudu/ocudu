@@ -193,7 +193,7 @@ class frontend_handle : public frontend_state
 {
 public:
   /// Callback triggered when timer expires. Callback updates are protected by backend lock.
-  unique_function<void(timer_id_t)> timeout_callback;
+  unique_function<void()> timeout_callback;
   /// Task executor used to dispatch expiry callback. When set to nullptr, the timer is not allocated.
   task_executor* exec = nullptr;
   /// Pending commands to be handled by the backend.
@@ -222,7 +222,7 @@ public:
     }
   }
 
-  void set(timer_duration dur, unique_function<void(timer_id_t)> callback_)
+  void set(timer_duration dur, unique_function<void()> callback_)
   {
     set(dur);
     // Note: we can set the timeout_callback after pushing the cmd to the backend, because the callback is going to be
@@ -506,7 +506,7 @@ bool timer_manager::manager_impl::trigger_timeout_handling(timer_handle& timer)
 
       // Run callback if configured.
       if (not frontend->timeout_callback.is_empty()) {
-        frontend->timeout_callback(frontend->id);
+        frontend->timeout_callback();
       }
     }
   });
@@ -633,7 +633,7 @@ void unique_timer::reset()
   }
 }
 
-void unique_timer::set(timer_duration duration, unique_function<void(timer_id_t)> callback)
+void unique_timer::set(timer_duration duration, unique_function<void()> callback)
 {
   ocudu_assert(is_valid(), "Trying to setup empty timer pimpl");
   static_cast<frontend_handle*>(handle)->set(duration, std::move(callback));

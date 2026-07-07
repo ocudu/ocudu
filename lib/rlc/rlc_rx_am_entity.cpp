@@ -40,13 +40,12 @@ rlc_rx_am_entity::rlc_rx_am_entity(gnb_du_id_t                       gnb_du_id,
   // configure status_prohibit_timer
   if (cfg.t_status_prohibit > 0) {
     status_prohibit_timer.set(std::chrono::milliseconds{cfg.t_status_prohibit},
-                              [this](timer_id_t tid) { on_expired_status_prohibit_timer(); });
+                              [this]() { on_expired_status_prohibit_timer(); });
   }
 
   // configure reassembly_timer
   if (cfg.t_reassembly > 0) {
-    reassembly_timer.set(std::chrono::milliseconds{cfg.t_reassembly},
-                         [this](timer_id_t tid) { on_expired_reassembly_timer(); });
+    reassembly_timer.set(std::chrono::milliseconds{cfg.t_reassembly}, [this]() { on_expired_reassembly_timer(); });
   }
 
   // configure status report limits

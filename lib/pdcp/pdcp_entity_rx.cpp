@@ -39,7 +39,7 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
 {
   if (metrics_agg.get_metrics_period().count()) {
     metrics_timer = ue_ul_timer_factory.create_timer();
-    metrics_timer.set(std::chrono::milliseconds(metrics_agg.get_metrics_period().count()), [this](timer_id_t tid) {
+    metrics_timer.set(std::chrono::milliseconds(metrics_agg.get_metrics_period().count()), [this]() {
       if (stopped) {
         return;
       }
@@ -847,7 +847,7 @@ void pdcp_entity_rx::handle_t_reordering_expire()
 }
 
 // Reordering Timer Callback (t-reordering)
-void pdcp_entity_rx::reordering_callback::operator()(timer_id_t /*timer_id*/)
+void pdcp_entity_rx::reordering_callback::operator()()
 {
   if (parent->stopped) {
     parent->logger.log_debug("Re-ordering timer expired after bearer was stopped.");

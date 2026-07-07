@@ -13,14 +13,9 @@ using namespace ocudu;
 struct callback_flag_setter {
   callback_flag_setter(bool& flag_) : flag(flag_) { flag = false; }
 
-  void operator()(timer_id_t tid)
-  {
-    flag          = true;
-    last_timer_id = tid;
-  }
+  void operator()() { flag = true; }
 
-  bool&      flag;
-  timer_id_t last_timer_id = timer_id_t::invalid;
+  bool& flag;
 };
 
 class unique_timer_manual_tester : public ::testing::Test
@@ -384,7 +379,7 @@ TEST_F(unique_timer_timeout_dispatch_fail_tester,
 
   for (unsigned i = 0; i != timers.size(); ++i) {
     timers[i] = this->create_timer();
-    timers[i].set(dur, [&timeout_counter](timer_id_t tid) mutable { timeout_counter++; });
+    timers[i].set(dur, [&timeout_counter]() mutable { timeout_counter++; });
     timers[i].run();
   }
 
@@ -428,7 +423,7 @@ protected:
   void run_timer_creation()
   {
     unique_timer t = timer_mng.create_unique_timer(frontend_exec);
-    t.set(timer_duration{100}, [th_id = std::this_thread::get_id(), this](timer_id_t tid) {
+    t.set(timer_duration{100}, [th_id = std::this_thread::get_id(), this]() {
       expiry_counter++;
       EXPECT_EQ(std::this_thread::get_id(), th_id);
     });

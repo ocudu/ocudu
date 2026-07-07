@@ -49,7 +49,7 @@ TEST_F(io_timer_source_test, timer_gets_ticked_when_source_starts)
 
   unique_timer          t = timers.create_unique_timer(worker);
   std::atomic<unsigned> count{0};
-  t.set(timer_period, [&count, &t](timer_id_t tid) {
+  t.set(timer_period, [&count, &t]() {
     count++;
     t.run();
   });

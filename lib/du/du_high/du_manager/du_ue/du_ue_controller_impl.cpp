@@ -169,7 +169,7 @@ public:
                    timeout_val.count());
 
     // Start timer.
-    release_timer.set(timeout_val, [this](timer_id_t tid) { trigger_ue_release(); });
+    release_timer.set(timeout_val, [this]() { trigger_ue_release(); });
     release_timer.run();
 
     // Stop traffic in case of RLC-initiated RLF.

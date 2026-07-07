@@ -174,9 +174,8 @@ void ngap_impl::handle_initial_ue_message(const cu_cp_initial_ue_message& msg)
   fill_asn1_initial_ue_message(init_ue_msg, msg, context);
 
   // Start PDU session setup timer.
-  ue_ctxt.request_pdu_session_timer.set(context.request_pdu_session_timeout, [this, msg](timer_id_t /*tid*/) {
-    on_request_pdu_session_timer_expired(msg.ue_index);
-  });
+  ue_ctxt.request_pdu_session_timer.set(context.request_pdu_session_timeout,
+                                        [this, msg]() { on_request_pdu_session_timer_expired(msg.ue_index); });
   ue_ctxt.request_pdu_session_timer.run();
 
   ue_ctxt.logger.log_debug("Starting PDU session creation timer (timeout={}ms)...",

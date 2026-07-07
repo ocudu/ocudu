@@ -34,11 +34,10 @@ protected:
     metrics_coll(metrics_coll_)
   {
     if (metrics_coll.get_metrics_period().count()) {
-      high_metrics_timer.set(std::chrono::milliseconds(metrics_coll.get_metrics_period().count()),
-                             [this](timer_id_t tid) {
-                               metrics_coll.push_rx_high_metrics(metrics.get_and_reset_metrics());
-                               high_metrics_timer.run();
-                             });
+      high_metrics_timer.set(std::chrono::milliseconds(metrics_coll.get_metrics_period().count()), [this]() {
+        metrics_coll.push_rx_high_metrics(metrics.get_and_reset_metrics());
+        high_metrics_timer.run();
+      });
       high_metrics_timer.run();
     }
   }

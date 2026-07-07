@@ -48,7 +48,7 @@ split6_o_du_low_metrics_collector_impl::split6_o_du_low_metrics_collector_impl(
   }
 
   ocudu_assert(timer.is_valid(), "Invalid timer passed to metrics controller");
-  timer.set(report_period, [this](timer_id_t tid) { collect_metrics(); });
+  timer.set(report_period, [this]() { collect_metrics(); });
 
   stopped.store(false, std::memory_order_relaxed);
   timer.run();
@@ -78,7 +78,7 @@ split6_o_du_low_metrics_collector_impl::operator=(split6_o_du_low_metrics_collec
   }
 
   // Configure and start timer again.
-  timer.set(report_period, [this](timer_id_t tid) { collect_metrics(); });
+  timer.set(report_period, [this]() { collect_metrics(); });
 
   stopped.store(false, std::memory_order_relaxed);
   timer.run();

@@ -42,7 +42,7 @@ pdcp_entity_tx::pdcp_entity_tx(uint32_t                        ue_index,
 {
   if (metrics_agg.get_metrics_period().count()) {
     metrics_timer = ue_ctrl_timer_factory.create_timer();
-    metrics_timer.set(std::chrono::milliseconds(metrics_agg.get_metrics_period().count()), [this](timer_id_t tid) {
+    metrics_timer.set(std::chrono::milliseconds(metrics_agg.get_metrics_period().count()), [this]() {
       if (stopped) {
         return;
       }
@@ -90,7 +90,7 @@ pdcp_entity_tx::pdcp_entity_tx(uint32_t                        ue_index,
   crypto_reordering_timer = ue_ctrl_timer_factory.create_timer();
 
   crypto_reordering_timer.set(std::chrono::milliseconds{pdcp_tx_crypto_reordering_timeout_ms},
-                              [this](timer_id_t /*timer_id*/) { crypto_reordering_timeout(); });
+                              [this]() { crypto_reordering_timeout(); });
 
   // Populate null security engines
   sec_engine_pool.reserve(max_nof_crypto_workers);
@@ -307,7 +307,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
       sdu_info.tick_point_of_arrival = discard_timer.now();
       if (not discard_timer.is_running()) {
         discard_timer.set(std::chrono::milliseconds(static_cast<unsigned>(cfg.discard_timer.value())),
-                          [this](timer_id_t timer_id) { discard_callback(); });
+                          [this]() { discard_callback(); });
         discard_timer.run();
       }
     }
@@ -1345,7 +1345,7 @@ void pdcp_entity_tx::stop_discard_timer(uint32_t highest_count)
     std::chrono::milliseconds new_timeout =
         compute_next_discard_timeout(window_elem.sdu_info.tick_point_of_arrival.value());
     logger.log_debug("Restarted discard timer. new_timeout={} {}", new_timeout, st);
-    discard_timer.set(new_timeout, [this](timer_id_t timer_id) { discard_callback(); });
+    discard_timer.set(new_timeout, [this]() { discard_callback(); });
     discard_timer.run();
   }
 }
@@ -1420,7 +1420,7 @@ void pdcp_entity_tx::discard_callback()
       logger.log_debug("Finished discard callback. There are new PDUs with a new discard timer. new_timeout={}, st={}",
                        new_timeout,
                        st);
-      discard_timer.set(new_timeout, [this](timer_id_t timer_id) { discard_callback(); });
+      discard_timer.set(new_timeout, [this]() { discard_callback(); });
       discard_timer.run();
       break;
     }

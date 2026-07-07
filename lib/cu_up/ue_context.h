@@ -97,8 +97,7 @@ public:
             "Failed to create UE context. Activity notification level is UE, but no UE inactivity timer configured\n");
       }
       ue_inactivity_timer = ue_ctrl_timer_factory.create_timer();
-      ue_inactivity_timer.set(*cfg.ue_inactivity_timeout,
-                              [this](timer_id_t /*tid*/) { on_ue_inactivity_timer_expired(); });
+      ue_inactivity_timer.set(*cfg.ue_inactivity_timeout, [this]() { on_ue_inactivity_timer_expired(); });
       ue_inactivity_timer.run();
     }
   }

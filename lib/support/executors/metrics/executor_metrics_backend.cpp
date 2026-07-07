@@ -22,7 +22,7 @@ void executor_metrics_backend::start(std::chrono::milliseconds  period_,
 
   stop_control.reset();
 
-  timer.set(period, [this](timer_id_t tid) { fetch_metrics(); });
+  timer.set(period, [this]() { fetch_metrics(); });
   timer.run();
 
   ocudulog::fetch_basic_logger("METRICS").info("Started the executor metrics backend worker");

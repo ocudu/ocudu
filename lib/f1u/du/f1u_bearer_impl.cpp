@@ -28,7 +28,7 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
   notif_desired_buffer_size_for_data_radio_bearer(
       0) // make sure that we send an initial buffer report, even if there is no data
 {
-  ul_notif_timer.set(cfg.ul_t_notif_timer, [this](timer_id_t tid) { on_expired_ul_notif_timer(); });
+  ul_notif_timer.set(cfg.ul_t_notif_timer, [this]() { on_expired_ul_notif_timer(); });
   ul_notif_timer.run();
 
   logger.log_info("F1-U bearer configured. {} {}", cfg, dl_tnl_info);

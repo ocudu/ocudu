@@ -225,7 +225,7 @@ public:
       // Create timer, set timeout and callback, and start running it.
       unique_timer& timer = ret.first->second.timer;
       timer               = timer_service.create_timer();
-      timer.set(time_to_cancel, [this, transaction_id](timer_id_t /*unused*/) {
+      timer.set(time_to_cancel, [this, transaction_id]() {
         if (not set_transaction_outcome(transaction_id, protocol_transaction_failure::timeout)) {
           ocudulog::fetch_basic_logger("ALL").warning("Transaction id={} timeout but transaction is already completed",
                                                       transaction_id);

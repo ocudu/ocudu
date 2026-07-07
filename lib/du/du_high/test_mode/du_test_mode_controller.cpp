@@ -28,10 +28,9 @@ public:
     if (parent.cfg.attach_detach_duration.has_value()) {
       // In case attach-detach cycling is enabled.
       attach_detach_timer = timers_.create_unique_timer(ctrl_exec_);
-      attach_detach_timer.set(*parent.cfg.attach_detach_duration,
-                              [this](timer_id_t) { this->handle_attach_detach_timer(); });
+      attach_detach_timer.set(*parent.cfg.attach_detach_duration, [this]() { this->handle_attach_detach_timer(); });
       guard_timer = timers_.create_unique_timer(ctrl_exec_);
-      guard_timer.set(parent.cfg.attach_detach_guard_duration, [this](timer_id_t) { this->handle_guard_timer(); });
+      guard_timer.set(parent.cfg.attach_detach_guard_duration, [this]() { this->handle_guard_timer(); });
     }
 
     free_list_rnti.reserve(ues.size());

@@ -302,7 +302,7 @@ void cu_up_manager_impl::trigger_enable_test_mode()
   if (test_mode_cfg.attach_detach_period.count() != 0) {
     test_mode_ue_timer = timers.create_unique_timer(exec_mapper.ctrl_executor());
     test_mode_ue_timer.set(test_mode_cfg.attach_detach_period,
-                           [this](timer_id_t /**/) { schedule_cu_up_async_task(enable_test_mode()); });
+                           [this]() { schedule_cu_up_async_task(enable_test_mode()); });
     test_mode_ue_timer.run();
   }
 }
@@ -312,7 +312,7 @@ void cu_up_manager_impl::trigger_disable_test_mode()
   if (test_mode_cfg.attach_detach_period.count() != 0) {
     test_mode_ue_timer = timers.create_unique_timer(exec_mapper.ctrl_executor());
     test_mode_ue_timer.set(test_mode_cfg.attach_detach_period,
-                           [this](timer_id_t /**/) { schedule_cu_up_async_task(disable_test_mode()); });
+                           [this]() { schedule_cu_up_async_task(disable_test_mode()); });
     test_mode_ue_timer.run();
   }
 }
@@ -322,7 +322,7 @@ void cu_up_manager_impl::trigger_reestablish_test_mode()
   if (test_mode_cfg.reestablish_period.count() != 0) {
     test_mode_ue_timer = timers.create_unique_timer(exec_mapper.ctrl_executor());
     test_mode_ue_timer.set(test_mode_cfg.reestablish_period,
-                           [this](timer_id_t /**/) { schedule_cu_up_async_task(reestablish_test_mode()); });
+                           [this]() { schedule_cu_up_async_task(reestablish_test_mode()); });
     test_mode_ue_timer.run();
   }
 }

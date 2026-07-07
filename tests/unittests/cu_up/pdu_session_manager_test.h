@@ -36,7 +36,7 @@ protected:
 
     // create DUT object
     ue_inactivity_timer = timers_factory.create_timer();
-    ue_inactivity_timer.set(std::chrono::milliseconds(10000), [](timer_id_t) {});
+    ue_inactivity_timer.set(std::chrono::milliseconds(10000), []() {});
     std::map<five_qi_t, ocuup::cu_up_qos_config> qos;
     qos[uint_to_five_qi(9)] = {};
 

@@ -64,9 +64,8 @@ private:
   {
     set_observer(sub_);
     // Setup timeout.
-    running_timer.set(time_to_cancel, [this, c = std::forward<U>(cancelled_value)](timer_id_t /**/) mutable {
-      set(std::forward<U>(c));
-    });
+    running_timer.set(time_to_cancel,
+                      [this, c = std::forward<U>(cancelled_value)]() mutable { set(std::forward<U>(c)); });
     running_timer.run();
   }
 

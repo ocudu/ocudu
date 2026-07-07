@@ -163,8 +163,7 @@ cu_up::cu_up(const cu_up_config& config_, const cu_up_dependencies& dependencies
   // Start statistics report timer
   if (cfg.statistics_report_period.count() > 0) {
     statistics_report_timer = dependencies.timers->create_unique_timer(dependencies.exec_mapper->ctrl_executor());
-    statistics_report_timer.set(cfg.statistics_report_period,
-                                [this](timer_id_t /*tid*/) { on_statistics_report_timer_expired(); });
+    statistics_report_timer.set(cfg.statistics_report_period, [this]() { on_statistics_report_timer_expired(); });
     statistics_report_timer.run();
   }
 }
@@ -310,7 +309,6 @@ void cu_up::on_statistics_report_timer_expired()
   logger.debug("num_e1ap_ues={} num_cu_up_ues={}", e1aps[0]->get_nof_ues(), cu_up_mng->get_nof_ues());
 
   // Restart timer
-  statistics_report_timer.set(cfg.statistics_report_period,
-                              [this](timer_id_t /*tid*/) { on_statistics_report_timer_expired(); });
+  statistics_report_timer.set(cfg.statistics_report_period, [this]() { on_statistics_report_timer_expired(); });
   statistics_report_timer.run();
 }

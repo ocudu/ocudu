@@ -76,8 +76,7 @@ void nrppa_impl::initialize_meas_report_timer(cu_cp_ue_index_t ue_index, std::ch
   }
 
   // Start timer.
-  ue_ctxt.meas_report_timer.set(meas_periodicity_ms,
-                                [this, ue_index](timer_id_t /*tid*/) { on_meas_report_timer_expired(ue_index); });
+  ue_ctxt.meas_report_timer.set(meas_periodicity_ms, [this, ue_index]() { on_meas_report_timer_expired(ue_index); });
   ue_ctxt.meas_report_timer.run();
 }
 
@@ -124,7 +123,7 @@ void nrppa_impl::on_meas_report_timer_expired(cu_cp_ue_index_t ue_index)
 
   // Restart timer.
   ue_ctxt.meas_report_timer.set(ue_ctxt.meas_periodicity_ms.value(),
-                                [this, ue_index](timer_id_t /*tid*/) { on_meas_report_timer_expired(ue_index); });
+                                [this, ue_index]() { on_meas_report_timer_expired(ue_index); });
   ue_ctxt.meas_report_timer.run();
 
   std::optional<cell_measurement_positioning_info>& ue_measurement_results = ue->on_measurement_results_required();

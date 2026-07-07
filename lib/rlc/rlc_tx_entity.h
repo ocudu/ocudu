@@ -50,13 +50,12 @@ protected:
     metrics_coll(metrics_coll_)
   {
     if (metrics_coll.get_metrics_period().count()) {
-      high_metrics_timer.set(std::chrono::milliseconds(metrics_coll.get_metrics_period().count()),
-                             [this](timer_id_t tid) {
-                               metrics_coll.push_tx_high_metrics(metrics_high.get_and_reset_metrics());
-                               high_metrics_timer.run();
-                             });
+      high_metrics_timer.set(std::chrono::milliseconds(metrics_coll.get_metrics_period().count()), [this]() {
+        metrics_coll.push_tx_high_metrics(metrics_high.get_and_reset_metrics());
+        high_metrics_timer.run();
+      });
       low_metrics_timer.set(std::chrono::milliseconds(metrics_coll.get_metrics_period().count()),
-                            [this](timer_id_t tid) noexcept OCUDU_RTSAN_NONBLOCKING {
+                            [this]() noexcept OCUDU_RTSAN_NONBLOCKING {
                               metrics_coll.push_tx_low_metrics(metrics_low.get_and_reset_metrics());
                               low_metrics_timer.run();
                             });

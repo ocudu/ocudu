@@ -38,7 +38,7 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
 {
   if (metrics_agg.get_metrics_period().count()) {
     metrics_timer = ue_ctrl_timer_factory.create_timer();
-    metrics_timer.set(std::chrono::milliseconds(metrics_agg.get_metrics_period().count()), [this](timer_id_t tid) {
+    metrics_timer.set(std::chrono::milliseconds(metrics_agg.get_metrics_period().count()), [this]() {
       if (stopped) {
         return;
       }
@@ -49,8 +49,7 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
     metrics_timer.run();
   }
 
-  dl_notif_timer.set(std::chrono::milliseconds(config.dl_t_notif_timer),
-                     [this](timer_id_t tid) { on_expired_dl_notif_timer(); });
+  dl_notif_timer.set(std::chrono::milliseconds(config.dl_t_notif_timer), [this]() { on_expired_dl_notif_timer(); });
 
   auto dispatch_fn = [this](span<nru_ul_message> msg_span) {
     for (nru_ul_message& msg : msg_span) {

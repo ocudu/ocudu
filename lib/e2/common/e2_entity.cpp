@@ -49,7 +49,7 @@ void e2_entity::start()
   // Start a 5-second timeout so that the setup coroutine is not blocked indefinitely waiting for
   // interface-setup bytes that may never arrive (e.g. if no F1/NG/E1 setup is performed).
   // Dispatch the callback body to task_exec so the aggregator event is only accessed on the E2 thread.
-  node_cfg_timeout.set(std::chrono::milliseconds(5000), [this](timer_id_t) {
+  node_cfg_timeout.set(std::chrono::milliseconds(5000), [this]() {
     if (!task_exec.execute([this]() { node_component_config_provider->on_timeout(); })) {
       logger.warning("Failed to dispatch node config timeout to E2 executor");
     }

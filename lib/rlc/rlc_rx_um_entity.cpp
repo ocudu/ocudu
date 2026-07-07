@@ -30,8 +30,7 @@ rlc_rx_um_entity::rlc_rx_um_entity(gnb_du_id_t                       gnb_du_id,
 
   // configure reassembly_timer
   if (cfg.t_reassembly > 0) {
-    reassembly_timer.set(std::chrono::milliseconds(cfg.t_reassembly),
-                         [this](timer_id_t tid) { on_expired_reassembly_timer(); });
+    reassembly_timer.set(std::chrono::milliseconds(cfg.t_reassembly), [this]() { on_expired_reassembly_timer(); });
   }
   logger.log_info("RLC UM configured. {}", cfg);
 }

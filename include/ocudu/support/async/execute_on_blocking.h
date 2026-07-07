@@ -43,7 +43,7 @@ template <bool IsExecute, typename TaskExecutor, typename OnFailureToDispatch>
       // Note: Even if the timer expiry fails to invoke task in executor, it keeps trying on every tick.
       retry_timer = timers.create_unique_timer(exec);
       retry_timer.set(std::chrono::milliseconds{1},
-                      [suspending_awaitable](timer_id_t tid) mutable { suspending_awaitable.resume(); });
+                      [suspending_awaitable]() mutable { suspending_awaitable.resume(); });
       retry_timer.run();
     }
 

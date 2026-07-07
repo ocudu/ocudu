@@ -68,7 +68,7 @@ TEST_F(du_high_time_source_test, time_ticks_when_no_cells_were_added)
 {
   auto                  timer = timers.create_unique_timer(timer_worker);
   std::atomic<unsigned> count{0};
-  timer.set(std::chrono::milliseconds(1), [&](timer_id_t /* unused */) { count++; });
+  timer.set(std::chrono::milliseconds(1), [&]() { count++; });
   auto prev = timers.now();
 
   // Timer is not running yet.

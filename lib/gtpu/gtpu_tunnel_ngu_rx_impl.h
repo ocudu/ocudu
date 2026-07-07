@@ -326,7 +326,7 @@ private:
   {
   public:
     explicit reordering_callback(gtpu_tunnel_ngu_rx_impl* parent_) : parent(parent_) {}
-    void operator()(timer_id_t timer_id)
+    void operator()()
     {
       if (not parent->config.warn_on_drop) {
         parent->logger.log_info("reordering timer expired after {}ms. rx_state=[{}]",

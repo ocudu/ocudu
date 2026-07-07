@@ -89,7 +89,7 @@ protected:
     tester              = std::make_unique<f1u_cu_up_test_frame>();
     drb_id_t drb_id     = drb_id_t::drb1;
     ue_inactivity_timer = ue_timer_factory.create_timer();
-    ue_inactivity_timer.set(std::chrono::milliseconds(inactivity_time_ms), [this](timer_id_t) {
+    ue_inactivity_timer.set(std::chrono::milliseconds(inactivity_time_ms), [this]() {
       // Text
       ue_inactivity_triggered = true;
     });

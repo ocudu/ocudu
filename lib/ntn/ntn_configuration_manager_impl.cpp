@@ -175,7 +175,7 @@ ntn_configuration_manager_impl::ntn_configuration_manager_impl(const ntn_configu
     // Create per-cell timer for SIB19 updating task.
     auto si_period_ms = cell_config.si_period_rf * 10;
     ctx.timer         = timers.create_unique_timer(executor);
-    ctx.timer.set(std::chrono::milliseconds(si_period_ms), [this, nr_cgi = cell_config.nr_cgi](timer_id_t tid) {
+    ctx.timer.set(std::chrono::milliseconds(si_period_ms), [this, nr_cgi = cell_config.nr_cgi]() {
       // Check if cell context still exists before processing.
       auto ctx_it = cells.find(nr_cgi);
       if (ctx_it == cells.end()) {

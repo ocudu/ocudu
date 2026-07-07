@@ -86,7 +86,7 @@ void f1ap_du_ref_time_info_report_procedure::start_periodic(uint16_t transaction
   periodic_transaction_id = transaction_id;
   // 1 radio frame = 10 ms.
   const std::chrono::milliseconds period{static_cast<int64_t>(period_rf) * 10};
-  periodic_timer.set(period, [this](timer_id_t /*tid*/) {
+  periodic_timer.set(period, [this]() {
     send_report(periodic_transaction_id);
     periodic_timer.run();
   });

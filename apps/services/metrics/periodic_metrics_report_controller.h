@@ -30,7 +30,7 @@ public:
     producers(std::move(producers_))
   {
     ocudu_assert(timer.is_valid(), "Invalid timer passed to metrics controller");
-    timer.set(report_period, [this](timer_id_t tid) { report_metrics(); });
+    timer.set(report_period, [this]() { report_metrics(); });
   }
 
   /// Starts the metrics report timer.

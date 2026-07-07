@@ -29,7 +29,7 @@ template <typename UniqueTimer>
 
     void await_suspend(coro_handle<> suspending_awaitable)
     {
-      timer.set(duration, [ch = suspending_awaitable](timer_id_t tid) mutable { ch.resume(); });
+      timer.set(duration, [ch = suspending_awaitable]() mutable { ch.resume(); });
       timer.run();
     }
 

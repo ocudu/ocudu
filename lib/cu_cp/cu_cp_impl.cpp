@@ -169,7 +169,7 @@ bool cu_cp_impl::start()
         // Start statistics report timer.
         statistics_report_timer = cfg.services.timers->create_unique_timer(*cfg.services.cu_cp_executor);
         statistics_report_timer.set(cfg.metrics.statistics_report_period,
-                                    [this](timer_id_t /*tid*/) { on_statistics_report_timer_expired(); });
+                                    [this]() { on_statistics_report_timer_expired(); });
         statistics_report_timer.run();
         if (cfg.metrics_notifier != nullptr and cfg.metrics.metrics_report_period.count() != 0) {
           periodic_metric_report_request metric_cfg{cfg.metrics.metrics_report_period, cfg.metrics_notifier};
@@ -1633,11 +1633,10 @@ void cu_cp_impl::initialize_handover_ue_release_timer(
 
   // Start timer.
   logger.debug("ue={}: Setting handover UE release timer to {}ms", ue_index, handover_ue_release_timeout.count());
-  ue->get_handover_ue_release_timer().set(
-      handover_ue_release_timeout, [this, ue, ue_context_release_request](timer_id_t /*tid*/) {
-        logger.debug("ue={}: Handover UE release timer expired", ue_context_release_request.ue_index);
-        ue->get_task_sched().schedule_async_task(handle_ue_context_release(ue_context_release_request));
-      });
+  ue->get_handover_ue_release_timer().set(handover_ue_release_timeout, [this, ue, ue_context_release_request]() {
+    logger.debug("ue={}: Handover UE release timer expired", ue_context_release_request.ue_index);
+    ue->get_task_sched().schedule_async_task(handle_ue_context_release(ue_context_release_request));
+  });
   ue->get_handover_ue_release_timer().run();
 }
 
@@ -1665,7 +1664,7 @@ void cu_cp_impl::initialize_rna_update_timer(cu_cp_ue_index_t ue_index)
                rna_guard_time.count());
   unique_timer& rna_update_timer = ue->get_rna_update_timer();
   rna_update_timer.set(cfg.ue.t380 + rna_guard_time,
-                       [this, ue_idx = ue_index](timer_id_t /*tid*/) { request_release_of_inactive_ue(ue_idx); });
+                       [this, ue_idx = ue_index]() { request_release_of_inactive_ue(ue_idx); });
   rna_update_timer.run();
 }
 
@@ -1686,7 +1685,7 @@ void cu_cp_impl::initialize_cho_execution_timer(cu_cp_ue_index_t ue_index, std::
   }
 
   ue->get_cho_context()->cho_execution_timer = ue->get_task_sched().create_timer();
-  ue->get_cho_context()->cho_execution_timer.set(timeout, [this, ue_index](timer_id_t /*tid*/) {
+  ue->get_cho_context()->cho_execution_timer.set(timeout, [this, ue_index]() {
     cu_cp_ue* ue2 = ue_mng.find_du_ue(ue_index);
     if (ue2 == nullptr || !ue2->get_cho_context().has_value()) {
       return;
@@ -1841,8 +1840,7 @@ void cu_cp_impl::send_ran_paging(cu_cp_ue_index_t ue_index, full_i_rnti_t full_i
       hyper_frames{1} + (cu_cp_paging_msg.paging_edrx_info.has_value()
                              ? cu_cp_paging_msg.paging_edrx_info->nr_paging_edrx_cycle * hyper_frames{1}
                              : hyper_frames{0}));
-  ran_paging_timer.set(ran_paging_timeout,
-                       [this, ue_idx = ue_index](timer_id_t /*tid*/) { request_release_of_inactive_ue(ue_idx); });
+  ran_paging_timer.set(ran_paging_timeout, [this, ue_idx = ue_index]() { request_release_of_inactive_ue(ue_idx); });
   ran_paging_timer.run();
 }
 
@@ -1910,7 +1908,6 @@ void cu_cp_impl::on_statistics_report_timer_expired()
                nof_cu_cp_ues);
 
   // Restart timer.
-  statistics_report_timer.set(cfg.metrics.statistics_report_period,
-                              [this](timer_id_t /*tid*/) { on_statistics_report_timer_expired(); });
+  statistics_report_timer.set(cfg.metrics.statistics_report_period, [this]() { on_statistics_report_timer_expired(); });
   statistics_report_timer.run();
 }

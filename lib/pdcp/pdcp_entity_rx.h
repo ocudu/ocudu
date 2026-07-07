@@ -284,7 +284,7 @@ class pdcp_entity_rx::reordering_callback
 {
 public:
   explicit reordering_callback(pdcp_entity_rx* parent_) : parent(parent_) {}
-  void operator()(timer_id_t timer_id);
+  void operator()();
 
 private:
   pdcp_entity_rx* parent;

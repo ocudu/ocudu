@@ -216,7 +216,7 @@ mac_metrics_aggregator::mac_metrics_aggregator(const mac_control_config::metrics
   cfg(cfg_), ctrl_exec(ctrl_exec_), timers(timers_), logger(logger_)
 {
   aggr_timer = timers_.create_unique_timer(ctrl_exec);
-  aggr_timer.set(aggregation_timeout, [this](timer_id_t /* unused */) { handle_pending_reports(); });
+  aggr_timer.set(aggregation_timeout, [this]() { handle_pending_reports(); });
 }
 
 mac_metrics_aggregator::~mac_metrics_aggregator() = default;

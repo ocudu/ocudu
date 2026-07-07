@@ -124,7 +124,7 @@ public:
   timer_duration duration() const { return is_valid() ? handle->duration : timer_detail::INVALID_DURATION; }
 
   /// Configures the duration of the timer calling the provided callback upon timer expiration.
-  void set(timer_duration duration, unique_function<void(timer_id_t)> callback);
+  void set(timer_duration duration, unique_function<void()> callback);
 
   /// Configures the duration of the timer.
   void set(timer_duration duration);

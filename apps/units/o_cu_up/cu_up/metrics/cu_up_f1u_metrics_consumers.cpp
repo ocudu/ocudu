@@ -29,7 +29,7 @@ cu_up_f1u_metrics_consumer_json::cu_up_f1u_metrics_consumer_json(ocudulog::basic
   ocudu_assert(timer.is_valid(), "Invalid timer passed to metrics controller");
 
   // Shift the timer a little.
-  timer.set(std::chrono::milliseconds(report_period_ms / 10), [this](timer_id_t tid) { initialize_timer(); });
+  timer.set(std::chrono::milliseconds(report_period_ms / 10), [this]() { initialize_timer(); });
   timer.run();
 }
 
@@ -73,7 +73,7 @@ void cu_up_f1u_metrics_consumer_json::print_metrics()
 
 void cu_up_f1u_metrics_consumer_json::initialize_timer()
 {
-  timer.set(std::chrono::milliseconds(report_period_ms), [this](timer_id_t tid) {
+  timer.set(std::chrono::milliseconds(report_period_ms), [this]() {
     if (!executor.execute([this]() {
           print_metrics();
           timer.run();

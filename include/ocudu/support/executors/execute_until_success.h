@@ -20,7 +20,7 @@ void execute_until_success(TaskExecutor& exec, timer_manager& timers, CopyableTa
   if (not exec.execute(task)) {
     // If it fails, resort to timers.
     auto timer = timers.create_unique_timer(exec);
-    timer.set(timer_duration{0}, [task](timer_id_t tid) mutable { task(); });
+    timer.set(timer_duration{0}, [task]() mutable { task(); });
     timer.run();
   }
 }
@@ -37,7 +37,7 @@ void defer_until_success(TaskExecutor& exec, timer_manager& timers, CopyableTask
   if (not exec.defer(task)) {
     // If it fails, resort to timers.
     auto timer = timers.create_unique_timer(exec);
-    timer.set(timer_duration{0}, [task](timer_id_t tid) mutable { task(); });
+    timer.set(timer_duration{0}, [task]() mutable { task(); });
     timer.run();
   }
 }

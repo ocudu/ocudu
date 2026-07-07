@@ -17,8 +17,7 @@ token_bucket::token_bucket(token_bucket_config cfg) : max_tokens(cfg.max_tokens)
                cfg.refill_token,
                cfg.max_tokens);
   refill_timer = cfg.timer_f.create_timer();
-  refill_timer.set(cfg.refill_period,
-                   [this, refill_token = cfg.refill_token](timer_id_t /*timer_id*/) { refill(refill_token); });
+  refill_timer.set(cfg.refill_period, [this, refill_token = cfg.refill_token]() { refill(refill_token); });
   refill_timer.run();
 }
 

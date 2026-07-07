@@ -106,7 +106,7 @@ unsigned metrics_handler_impl::create_periodic_session(const periodic_metric_rep
 
   // Setup session timer and handler.
   sessions[session_id].report_notifier = request.report_notifier;
-  sessions[session_id].timer.set(request.period, [this, session_id](timer_id_t tid) {
+  sessions[session_id].timer.set(request.period, [this, session_id]() {
     // Generate a report.
     cu_cp_metrics_report report = create_report();
 

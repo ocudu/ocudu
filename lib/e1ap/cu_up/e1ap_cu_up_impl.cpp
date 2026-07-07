@@ -56,7 +56,7 @@ e1ap_cu_up_impl::e1ap_cu_up_impl(cu_up_e1_index_t             e1_index_,
 {
   if (e1ap_cfg.metrics_period.count()) {
     metrics_timer = timers.create_unique_timer(cu_up_exec);
-    metrics_timer.set(std::chrono::milliseconds(e1ap_cfg.metrics_period), [this](timer_id_t tid) {
+    metrics_timer.set(std::chrono::milliseconds(e1ap_cfg.metrics_period), [this]() {
       // TODO push metrics to notifier.
       auto  m        = metrics.get_metrics_and_reset();
       auto& m_logger = ocudulog::fetch_basic_logger("METRICS");
