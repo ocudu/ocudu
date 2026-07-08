@@ -262,10 +262,6 @@ private:
 
   std::vector<dl_grant_info> dl_grants;
   std::vector<ul_grant_info> ul_grants;
-
-  // Vector of k1 values to be used for DL slot (for DCI 1_1 and 1_0, respectively). For FDD, this vector has size 1.
-  std::vector<static_vector<uint8_t, 8>> k1s_per_dl_slot;
-  std::vector<static_vector<uint8_t, 8>> k1s_per_dl_slot_dci_1_0;
 };
 
 } // namespace ocudu

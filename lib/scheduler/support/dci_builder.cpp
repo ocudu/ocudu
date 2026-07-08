@@ -5,7 +5,6 @@
 #include "dci_builder.h"
 #include "../cell/cell_harq_manager.h"
 #include "../config/time_domain_mapper.h"
-#include "pucch/pucch_k1_helper.h"
 #include "ocudu/ran/pdcch/dci_packing.h"
 #include "ocudu/ran/pdcch/search_space.h"
 #include "ocudu/ran/pdsch/pdsch_antenna_ports_mapping.h"
