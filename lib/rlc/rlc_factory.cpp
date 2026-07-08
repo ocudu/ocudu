@@ -6,6 +6,7 @@
 #include "rlc_am_entity.h"
 #include "rlc_tm_entity.h"
 #include "rlc_um_entity.h"
+#include "rlc_window_seg_pools.h"
 
 using namespace ocudu;
 
@@ -43,7 +44,8 @@ std::unique_ptr<rlc_entity> ocudu::create_rlc_entity(const rlc_entity_creation_m
                                              *msg.pcap_writer,
                                              *msg.pcell_executor,
                                              *msg.ue_executor,
-                                             *msg.timers);
+                                             *msg.timers,
+                                             get_rlc_rx_um_window_seg_pool());
     case rlc_mode::am:
       return std::make_unique<rlc_am_entity>(msg.gnb_du_id,
                                              msg.ue_index,
@@ -58,7 +60,9 @@ std::unique_ptr<rlc_entity> ocudu::create_rlc_entity(const rlc_entity_creation_m
                                              *msg.pcap_writer,
                                              *msg.pcell_executor,
                                              *msg.ue_executor,
-                                             *msg.timers);
+                                             *msg.timers,
+                                             get_rlc_rx_am_window_seg_pool(),
+                                             get_rlc_tx_am_window_seg_pool());
     default:
       ocudu_terminate("RLC mode not supported.");
   }

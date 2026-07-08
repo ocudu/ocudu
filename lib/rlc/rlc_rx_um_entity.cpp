@@ -14,12 +14,13 @@ rlc_rx_um_entity::rlc_rx_um_entity(gnb_du_id_t                       gnb_du_id,
                                    rlc_bearer_metrics_collector&     metrics_coll_,
                                    rlc_pcap&                         pcap_,
                                    task_executor&                    ue_executor,
-                                   timer_manager&                    timers) :
+                                   timer_manager&                    timers,
+                                   rlc_rx_um_window_seg_pool&        window_seg_pool) :
   rlc_rx_entity(gnb_du_id, ue_index, rb_id, upper_dn_, metrics_coll_, pcap_, ue_executor, timers),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),
   um_window_size(window_size(to_number(cfg.sn_field_length))),
-  rx_window(logger, window_size(to_number(cfg.sn_field_length)), get_rlc_rx_um_window_seg_pool()),
+  rx_window(logger, window_size(to_number(cfg.sn_field_length)), window_seg_pool),
   reassembly_timer(ue_timer_factory.create_timer()),
   pcap_context(ue_index, rb_id, config)
 {

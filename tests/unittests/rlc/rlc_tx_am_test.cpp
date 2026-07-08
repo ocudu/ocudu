@@ -131,7 +131,8 @@ protected:
                                              pcap,
                                              pcell_worker,
                                              ue_worker,
-                                             timers);
+                                             timers,
+                                             get_rlc_tx_am_window_seg_pool());
 
     // Bind AM Rx/Tx interconnect
     rlc->set_status_provider(tester.get());

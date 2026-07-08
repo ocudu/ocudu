@@ -141,7 +141,8 @@ public:
                    rlc_bearer_metrics_collector&     metrics_coll_,
                    rlc_pcap&                         pcap_,
                    task_executor&                    ue_executor_,
-                   timer_manager&                    timers);
+                   timer_manager&                    timers,
+                   rlc_rx_am_window_seg_pool&        window_seg_pool);
 
   void stop() final
   {

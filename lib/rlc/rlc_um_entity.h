@@ -26,7 +26,8 @@ public:
                 rlc_pcap&                            pcap,
                 task_executor&                       pcell_executor,
                 task_executor&                       ue_executor,
-                timer_manager&                       timers) :
+                timer_manager&                       timers,
+                rlc_rx_um_window_seg_pool&           rx_window_seg_pool) :
     rlc_base_entity(gnb_du_id_, ue_index_, rb_id_, metrics_period_, rlc_metrics_notifier_, ue_executor)
   {
     tx = std::make_unique<rlc_tx_um_entity>(gnb_du_id_,
@@ -41,8 +42,16 @@ public:
                                             pcell_executor,
                                             ue_executor,
                                             timers);
-    rx = std::make_unique<rlc_rx_um_entity>(
-        gnb_du_id_, ue_index_, rb_id_, config.rx, rx_upper_dn, metrics_coll, pcap, ue_executor, timers);
+    rx = std::make_unique<rlc_rx_um_entity>(gnb_du_id_,
+                                            ue_index_,
+                                            rb_id_,
+                                            config.rx,
+                                            rx_upper_dn,
+                                            metrics_coll,
+                                            pcap,
+                                            ue_executor,
+                                            timers,
+                                            rx_window_seg_pool);
   }
 };
 

@@ -24,7 +24,8 @@ rlc_tx_am_entity::rlc_tx_am_entity(gnb_du_id_t                          gnb_du_i
                                    rlc_pcap&                            pcap_,
                                    task_executor&                       pcell_executor_,
                                    task_executor&                       ue_executor_,
-                                   timer_manager&                       timers) :
+                                   timer_manager&                       timers,
+                                   rlc_tx_am_window_seg_pool&           window_seg_pool) :
   rlc_tx_entity(gnb_du_id,
                 ue_index,
                 rb_id_,
@@ -41,7 +42,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(gnb_du_id_t                          gnb_du_i
   retx_queue(window_size(to_number(cfg.sn_field_length))),
   mod(cardinality(to_number(cfg.sn_field_length))),
   am_window_size(window_size(to_number(cfg.sn_field_length))),
-  tx_window(logger, window_size(to_number(cfg.sn_field_length)), get_rlc_tx_am_window_seg_pool()),
+  tx_window(logger, window_size(to_number(cfg.sn_field_length)), window_seg_pool),
   pdu_recycler(window_size(to_number(cfg.sn_field_length)), logger),
   head_min_size(rlc_am_pdu_header_min_size(cfg.sn_field_length)),
   head_max_size(rlc_am_pdu_header_max_size(cfg.sn_field_length)),

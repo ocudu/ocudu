@@ -160,7 +160,8 @@ public:
                    rlc_pcap&                            pcap_,
                    task_executor&                       pcell_executor_,
                    task_executor&                       ue_executor_,
-                   timer_manager&                       timers);
+                   timer_manager&                       timers,
+                   rlc_tx_am_window_seg_pool&           window_seg_pool);
 
   void stop() final
   {

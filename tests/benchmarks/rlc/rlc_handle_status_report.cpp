@@ -133,7 +133,8 @@ void benchmark_status_pdu_handling(rlc_am_status_pdu status, const bench_params&
                                              pcap,
                                              pcell_worker,
                                              ue_worker,
-                                             timers);
+                                             timers,
+                                             get_rlc_tx_am_window_seg_pool());
 
     // Bind AM Rx/Tx interconnect
     rlc->set_status_provider(tester.get());
