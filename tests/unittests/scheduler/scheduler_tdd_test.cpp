@@ -769,7 +769,10 @@ INSTANTIATE_TEST_SUITE_P(
   // DDDDDDSUUU with 5 DL symbols in the special slot.
   multiue_tdd_test_params{ {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}}, 2,        16, 8, 1, 20, false, multiue_bg_traffic::ul_only},
   // DDSU (single full-UL slot per period) with min_k=4.
-  multiue_tdd_test_params{ {subcarrier_spacing::kHz30, {4, 2, 9, 1, 0}}, 4,         16, 8, 1, 8, false, multiue_bg_traffic::ul_only}
+  multiue_tdd_test_params{ {subcarrier_spacing::kHz30, {4, 2, 9, 1, 0}}, 4,         16, 8, 1, 8, false, multiue_bg_traffic::ul_only},
+  // DDDSU (single full-UL slot per period) with min_k=1. Considering it is a DL-heavy scenario, only k2=1 will be
+  // used and PUSCHs will be scheduled from the special slot.
+  multiue_tdd_test_params{ create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 1, 16, 8, 1, 8, false, multiue_bg_traffic::ul_only}
 ));
 // clang-format on
 

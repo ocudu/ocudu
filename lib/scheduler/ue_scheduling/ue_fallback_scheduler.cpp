@@ -982,22 +982,16 @@ ue_fallback_scheduler::ul_srb_sched_outcome ue_fallback_scheduler::schedule_ul_u
   }
 
   // Fetch applicable PUSCH Time Domain resource index list.
-  // NOTE: We run cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.has_value() sanity check in the constructor.
-  constexpr bool                                                       is_fallback = true;
-  static_vector<uint8_t, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS> pusch_td_res_index_list =
-      get_pusch_td_resource_indices(
-          pdcch_slot,
-          cell_cfg.params.tdd_cfg,
-          cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list,
-          cell_cfg.init_bwp.ul.td_mapper().dedicated_k1_candidates()[0],
-          is_fallback);
+  auto pusch_td_res_index_list = cell_cfg.init_bwp.ul.td_mapper().pusch_td_res_indices(pdcch_slot.count());
 
   if (is_retx) {
     ocudu_sanity_check(h_ul_retx->get_grant_params().dci_cfg_type == dci_ul_rnti_config_type::c_rnti_f0_0,
                        "Invalid DCI type for UL retransmission for fallback UE");
   }
+
+  auto&                                                                 ue_cell = u.get_pcell();
   static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> search_spaces =
-      u.get_pcell().get_active_ul_search_spaces(pdcch_slot, dci_ul_rnti_config_type::c_rnti_f0_0);
+      ue_cell.get_active_ul_search_spaces(pdcch_slot, dci_ul_rnti_config_type::c_rnti_f0_0);
 
   for (const auto* ss : search_spaces) {
     for (uint8_t pusch_td_res_idx : pusch_td_res_index_list) {
@@ -1005,21 +999,14 @@ ue_fallback_scheduler::ul_srb_sched_outcome ue_fallback_scheduler::schedule_ul_u
       cell_slot_resource_allocator&                pusch_alloc = res_alloc[pusch_td.k2 + cell_cfg.ntn_cs_koffset];
       const slot_point                             pusch_slot  = pusch_alloc.slot;
 
-      if (not cell_cfg.is_ul_enabled(pusch_slot)) {
+      // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
+      // the first transmission.
+      if (is_retx and pusch_td.symbols.length() != h_ul_retx->get_grant_params().nof_symbols) {
         continue;
       }
 
-      const unsigned start_ul_symbols =
-          NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg.get_nof_ul_symbol_per_slot(pusch_slot);
-
-      // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
-      // the first transmission.
-      const bool sym_length_match_prev_grant_for_retx =
-          is_retx ? pusch_td.symbols.length() == h_ul_retx->get_grant_params().nof_symbols : true;
-      if (pusch_td.symbols.start() < start_ul_symbols or
-          pusch_td.symbols.stop() > (start_ul_symbols + cell_cfg.get_nof_ul_symbol_per_slot(pusch_slot)) or
-          !sym_length_match_prev_grant_for_retx) {
-        // Try next PUSCH time domain resource value.
+      if (not ue_cell.is_pusch_enabled(pdcch_slot, pusch_slot)) {
+        // Skip PUSCH as the UE is not in conditions to receive it in this slot.
         continue;
       }
 
