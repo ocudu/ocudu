@@ -615,6 +615,7 @@ void ra_scheduler::handle_msga_occasion(const rach_indication_message::occasion&
   // Derive MsgB-RNTI.
   const unsigned slot_idx  = prach_format_is_long ? prach_slot_rx.subframe_index() : prach_slot_rx.slot_index();
   const rnti_t   msgb_rnti = ra_helper::get_msgb_rnti(slot_idx, occ.start_symbol, occ.frequency_index);
+  const rnti_t   ra_rnti   = ra_helper::get_ra_rnti(slot_idx, occ.start_symbol, occ.frequency_index);
 
   // Search for a pending MsgB entry matching in MsgB-RNTI and PRACH slot.
   auto msgb_it = std::find_if(pending_msgbs.begin(), pending_msgbs.end(), [&](const pending_msgb_alloc& msgb) {
@@ -632,6 +633,7 @@ void ra_scheduler::handle_msga_occasion(const rach_indication_message::occasion&
     msgb_req                = &pending_msgbs.emplace_back();
     msgb_it                 = pending_msgbs.end() - 1;
     msgb_req->msgb_rnti     = msgb_rnti;
+    msgb_req->ra_rnti       = ra_rnti;
     msgb_req->prach_slot_rx = prach_slot_rx;
 
     // Set MsgB response window. First slot after PRACH with active DL slot is the window start.
@@ -758,7 +760,7 @@ void ra_scheduler::handle_msga_occasion(const rach_indication_message::occasion&
     ul_info.context.rapid      = preamble.preamble_id;
 
     pusch_information& pusch      = ul_info.pusch_cfg;
-    pusch.rnti                    = preamble.tc_rnti;
+    pusch.rnti                    = ra_rnti;
     pusch.bwp_cfg                 = &ul_bwp.generic_params;
     pusch.rbs                     = ul_crb_to_vrb(cell_cfg, preamble_crbs);
     pusch.symbols                 = td_alloc.symbols;
@@ -774,7 +776,7 @@ void ra_scheduler::handle_msga_occasion(const rach_indication_message::occasion&
     pusch.harq_id                 = to_harq_id(0);
     pusch.tb_size_bytes           = tbs;
     pusch.num_cb                  = 0;
-    pusch.transform_precoding     = false;
+    pusch.transform_precoding     = cell_cfg.use_msg3_transform_precoder();
     pusch.intra_slot_freq_hopping = false;
     pusch.tx_direct_current_location =
         dc_offset_helper::pack(cell_cfg.expert_cfg.ue.initial_ul_dc_offset, cell_cfg.nof_ul_prbs);
@@ -842,10 +844,13 @@ bool ra_scheduler::can_allocate_rar_ul_grant(rnti_t crnti, const cell_slot_resou
 void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& res_alloc)
 {
   // Helper to mark MsgA PUSCH CRC outcome in pending_msgbs.
-  auto mark_msga_crc = [this](rnti_t tc_rnti, bool success) {
+  auto mark_msga_crc = [this](rnti_t crc_rnti, bool success) {
     for (auto& msgb : pending_msgbs) {
+      if (msgb.ra_rnti != crc_rnti) {
+        continue;
+      }
       for (auto& p : msgb.preambles) {
-        if (p.info.tc_rnti == tc_rnti) {
+        if (!p.crc_result.has_value()) {
           p.crc_result = success;
           return true;
         }

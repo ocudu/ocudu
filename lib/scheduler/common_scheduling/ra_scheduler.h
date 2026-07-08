@@ -109,6 +109,7 @@ private:
     };
 
     rnti_t        msgb_rnti = rnti_t::INVALID_RNTI;
+    rnti_t        ra_rnti   = rnti_t::INVALID_RNTI;
     slot_point    prach_slot_rx;
     slot_interval msgb_window;
     /// Last slot at which the scheduler attempted to allocate this MsgB grant.
