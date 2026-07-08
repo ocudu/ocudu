@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/rlc/rlc_rx_am_entity.h"
+#include "lib/rlc/rlc_window_seg_pools.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "ocudu/support/executors/manual_task_worker.h"
 #include "ocudu/support/test_utils.h"
@@ -115,7 +116,7 @@ protected:
                                              pcap,
                                              ue_worker,
                                              timers,
-                                             get_rlc_rx_am_window_seg_pool());
+                                             get_window_pool());
 
     // Bind AM Tx/Rx interconnect
     rlc->set_status_handler(tester.get());
@@ -428,6 +429,8 @@ protected:
     ue_worker.run_pending_tasks();
   }
 
+  virtual rlc_rx_am_window_seg_pool& get_window_pool() { return get_rlc_rx_am_window_seg_pool(); }
+
   ocudulog::basic_logger&                       logger  = ocudulog::fetch_basic_logger("TEST", false);
   rlc_rx_am_config                              config  = GetParam();
   rlc_am_sn_size                                sn_size = config.sn_field_length;
@@ -441,6 +444,25 @@ protected:
 
 class rlc_rx_am_test_with_limit : public rlc_rx_am_test
 {};
+
+class rlc_rx_am_test_no_window_segments : public rlc_rx_am_test
+{
+protected:
+  rlc_rx_am_window_seg_pool& get_window_pool() override { return dummy_pool; }
+
+private:
+  class rlc_rx_am_window_seg_pool_dummy : public rlc_rx_am_window_seg_pool
+  {
+  public:
+    map_segment<uint32_t, rlc_rx_am_sdu_info, rlc_rx_am_um_shared_window_seg_size>* get_segment() override
+    {
+      return nullptr;
+    }
+    void return_segment(map_segment<uint32_t, rlc_rx_am_sdu_info, rlc_rx_am_um_shared_window_seg_size>* seg) override {}
+  };
+
+  rlc_rx_am_window_seg_pool_dummy dummy_pool = {};
+};
 
 /// Test the instantiation of a new entity
 TEST_P(rlc_rx_am_test, create_new_entity)
@@ -1500,6 +1522,39 @@ TEST_P(rlc_rx_am_test, rx_reverse_with_reversed_segmentation)
   rx_sdu_segments(sn, n_sdus, 8, 3, /* reverse_sdus = */ true, /* reverse_segments = */ true);
 }
 
+TEST_P(rlc_rx_am_test_no_window_segments, rx_data_pdu)
+{
+  uint32_t sn_state = 0;
+  uint32_t sdu_size = 10;
+  uint32_t pdu_size = 7;
+
+  // Create SDU and PDUs with SDU segments.
+  std::list<std::vector<uint8_t>> pdu_list = {};
+  byte_buffer                     sdu;
+  ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, pdu_size, sn_state));
+
+  // Push PDUs into RLC.
+  for (std::vector<uint8_t>& pdu_buf : pdu_list) {
+    // write PDU into lower end
+    byte_buffer_slice pdu = byte_buffer_slice::create(pdu_buf).value();
+    rlc->handle_pdu(std::move(pdu));
+  }
+
+  // Errors shall be logged.
+  EXPECT_EQ(test_spy.get_warning_counter(), 0);
+  EXPECT_EQ(test_spy.get_error_counter(), 4);
+
+  // Check status report.
+  rlc_am_status_pdu& status_report = rlc->get_status_pdu();
+  EXPECT_EQ(status_report.ack_sn, 0);
+  EXPECT_EQ(status_report.get_nacks().size(), 0);
+  EXPECT_EQ(status_report.get_packed_size(), 3);
+  EXPECT_EQ(rlc->get_status_pdu_length(), 3);
+
+  EXPECT_EQ(tester->sdu_queue.size(), 0);
+  EXPECT_EQ(tester->status_trigger_counter, 0);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size
 ///////////////////////////////////////////////////////////////////////////////
@@ -1512,6 +1567,11 @@ std::string test_param_info_to_string(const ::testing::TestParamInfo<rlc_rx_am_c
 
 INSTANTIATE_TEST_SUITE_P(rlc_rx_am_test_each_sn_size,
                          rlc_rx_am_test,
+                         ::testing::Values(cfg_12bit, cfg_18bit),
+                         test_param_info_to_string);
+
+INSTANTIATE_TEST_SUITE_P(rlc_rx_am_test_each_sn_size_no_window_segments,
+                         rlc_rx_am_test_no_window_segments,
                          ::testing::Values(cfg_12bit, cfg_18bit),
                          test_param_info_to_string);
 
