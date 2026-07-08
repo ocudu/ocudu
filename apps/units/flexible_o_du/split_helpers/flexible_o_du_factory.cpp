@@ -183,7 +183,7 @@ generate_ntn_configuration_manager_config(const gnb_id_t&                       
     auto& sat                = out_cfg.satellites.emplace_back();
     sat.satellite_index      = global_sat.satellite_idx;
     sat.epoch_timestamp      = global_sat.epoch_timestamp;
-    sat.ephemeris_info       = global_sat.ephemeris_info;
+    sat.ephemeris_info       = *global_sat.ephemeris_info;
     sat.ntn_gateway_location = global_sat.gateway_location;
     sat.ta_info              = global_sat.ta_info;
     sat.propagator_type      = global_sat.propagator_type;

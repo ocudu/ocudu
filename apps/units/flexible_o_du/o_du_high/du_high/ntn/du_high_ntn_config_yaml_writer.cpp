@@ -280,14 +280,7 @@ void ocudu::fill_ntn_satellites_in_yaml_schema(YAML::Node&                      
       sat_node["epoch_timestamp"] = timepoint_to_iso8601(*sat.epoch_timestamp);
     }
 
-    if (const auto* ecef = std::get_if<ecef_coordinates_t>(&sat.ephemeris_info)) {
-      if (ecef->position_x != 0 || ecef->position_y != 0 || ecef->position_z != 0 || ecef->velocity_vx != 0 ||
-          ecef->velocity_vy != 0 || ecef->velocity_vz != 0) {
-        sat_node["ephemeris_info_ecef"] = build_ecef_node(*ecef);
-      }
-    } else if (const auto* orb = std::get_if<orbital_coordinates_t>(&sat.ephemeris_info)) {
-      sat_node["ephemeris_orbital"] = build_orbital_node(*orb);
-    }
+    fill_optional_ephemeris(sat_node, sat.ephemeris_info);
 
     if (sat.gateway_location) {
       sat_node["gateway_location"] = build_geodetic_node(*sat.gateway_location);

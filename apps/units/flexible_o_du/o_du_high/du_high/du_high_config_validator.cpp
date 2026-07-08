@@ -455,12 +455,11 @@ static bool validate_global_ntn_config(const std::vector<du_high_unit_ntn_satell
       fmt::print("ntn.satellites[{}]: gateway_location and ta_info are mutually exclusive.\n", sat.satellite_idx);
       valid = false;
     }
-    if (const auto* ecef = std::get_if<ecef_coordinates_t>(&sat.ephemeris_info)) {
-      if (ecef->position_x == 0 && ecef->position_y == 0 && ecef->position_z == 0 && ecef->velocity_vx == 0 &&
-          ecef->velocity_vy == 0 && ecef->velocity_vz == 0) {
-        fmt::print("ntn.satellites[{}]: ephemeris_info must be provided.\n", sat.satellite_idx);
-        valid = false;
-      }
+    if (!sat.ephemeris_info) {
+      fmt::print("ntn.satellites[{}]: Ephemeris info has to be provided (in ECEF State Vector or ECI Orbital "
+                 "Elements format).\n",
+                 sat.satellite_idx);
+      valid = false;
     }
   }
   return valid;

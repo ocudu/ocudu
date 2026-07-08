@@ -18,7 +18,7 @@ namespace ocudu {
 struct du_high_unit_ntn_satellite_config {
   unsigned                                             satellite_idx = 0;
   std::optional<std::chrono::system_clock::time_point> epoch_timestamp;
-  ntn_ephemeris_info_t                                 ephemeris_info;
+  std::optional<ntn_ephemeris_info_t>                  ephemeris_info;
   std::optional<geodetic_coordinates_t>                gateway_location;
   std::optional<ta_info_t>                             ta_info;
   ocudu_ntn::orbit_propagator_type                     propagator_type = ocudu_ntn::orbit_propagator_type::rk4;
