@@ -7,7 +7,6 @@
 #include "ue/rrc_asn1_helpers.h"
 #include "ocudu/asn1/rrc_nr/dl_dcch_msg.h"
 #include "ocudu/asn1/rrc_nr/nr_ue_variables.h"
-#include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/security/integrity.h"
 #include "ocudu/support/async/coroutine.h"
 
@@ -45,8 +44,7 @@ void rrc_resume_procedure::operator()(coro_context<async_task<void>>& ctx)
   // Verify security context.
   if (not verify_and_update_security_context()) {
     // Request UE release due to invalid security context.
-    logger.log_warning("Rejecting RRC Resume UE. Cause: UE does not have valid security context");
-    logger.log_info("\"{}\" failed. Requesting UE context release", name());
+    logger.log_warning("\"{}\" failed. Requesting UE context release", name());
     CORO_AWAIT(handle_rrc_resume_failure());
     CORO_EARLY_RETURN();
   }
@@ -59,7 +57,7 @@ void rrc_resume_procedure::operator()(coro_context<async_task<void>>& ctx)
   CORO_AWAIT_VALUE(rrc_resume_context, cu_cp_notifier.on_rrc_resume_request(request));
 
   if (!rrc_resume_context.success) {
-    logger.log_info("\"{}\" failed. Requesting UE context release", name());
+    logger.log_warning("\"{}\" failed. Requesting UE context release", name());
     CORO_AWAIT(handle_rrc_resume_failure());
     CORO_EARLY_RETURN();
   }
@@ -99,8 +97,7 @@ void rrc_resume_procedure::operator()(coro_context<async_task<void>>& ctx)
     logger.log_info("\"{}\" finished successfully", name());
 
   } else {
-    logger.log_warning("\"{}\" timed out after {}ms", name(), procedure_timeout.count());
-    logger.log_info("\"{}\" failed", name());
+    logger.log_warning("\"{}\" failed. Cause: Timeout after {}ms", name(), procedure_timeout.count());
   }
 
   CORO_RETURN();
@@ -156,6 +153,13 @@ bool rrc_resume_procedure::verify_and_update_security_context()
     security::sec_as_config source_as_config = sec_context.get_as_config(security::sec_domain::rrc);
     valid = security::verify_short_mac(resume_mac, var_resume_mac_input_packed, source_as_config);
     logger.log_debug("Received RRC resume request. resume_mac_valid={}", valid);
+  }
+
+  if (not valid) {
+    logger.log_warning("Invalid ResumeMAC-I in resume request. Source pci={}, target cell-id=0x{:x}, source c-rnti={}",
+                       var_resume_mac_input.source_pci,
+                       var_resume_mac_input.target_cell_id.to_number(),
+                       to_rnti(var_resume_mac_input.source_c_rnti));
   }
 
   // Update the security keys and reestablish the SRBs. This must be done directly after validating the RRC Resume
