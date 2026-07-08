@@ -240,7 +240,7 @@ async_task<mac_ue_create_response> ue_creation_procedure::create_mac_ue()
     // the scheduler HARQ entity is extended up to max_harq_procs (e.g. 32). The MAC buffer must
     // already be large enough at that point to avoid an out-of-bounds assertion.
     mac_ue_create_msg.pdsch_harqs_per_cell =
-        cell_ran.ntn_params.has_value()
+        cell_ran.ntn_params.has_value() and cell_ran.ntn_params->is_enabled()
             ? cell_ran.init_bwp.pdsch.max_harq_procs
             : static_cast<unsigned>(ue_pcell.serv_cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc);
   } else {

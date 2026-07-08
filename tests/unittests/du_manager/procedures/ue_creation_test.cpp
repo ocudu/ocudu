@@ -8,6 +8,7 @@
 #include "ocudu/asn1/rrc_nr/cell_group_config.h"
 #include "ocudu/du/du_cell_config_helpers.h"
 #include "ocudu/ntn/ntn_cell_params.h"
+#include <chrono>
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -215,8 +216,9 @@ protected:
 
   static du_cell_config make_ntn_du_cell_config()
   {
-    du_cell_config cell                    = config_helpers::make_default_du_cell_config();
-    cell.ran.ntn_params                    = ntn_cell_params{};
+    du_cell_config cell = config_helpers::make_default_du_cell_config();
+    cell.ran.ntn_params = ntn_cell_params{};
+    cell.ran.ntn_params->ntn_cfg.cell_specific_koffset.emplace(std::chrono::milliseconds(260));
     cell.ran.init_bwp.pdsch.max_harq_procs = 32;
     return cell;
   }
