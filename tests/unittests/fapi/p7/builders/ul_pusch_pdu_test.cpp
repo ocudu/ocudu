@@ -226,3 +226,20 @@ TEST(ul_pusch_pdu_builder, valid_rapid_parameter_passes)
   ASSERT_TRUE(pdu.rapid.has_value());
   ASSERT_EQ(pdu.rapid, rapid);
 }
+
+TEST(ul_pusch_pdu_builder, valid_tti_bundling_parameters)
+{
+  uint8_t tb_over_ms_num_total_slots = 11;
+  uint8_t tb_over_ms_remaining_slots = 12;
+
+  ul_pusch_pdu         pdu;
+  ul_pusch_pdu_builder builder(pdu);
+
+  ASSERT_FALSE(pdu.repetitions.has_value());
+
+  builder.add_tti_bundling_parameters(tb_over_ms_num_total_slots, tb_over_ms_remaining_slots);
+
+  ASSERT_TRUE(pdu.repetitions.has_value());
+  ASSERT_EQ(pdu.repetitions->tb_over_ms_num_total_slots, tb_over_ms_num_total_slots);
+  ASSERT_EQ(pdu.repetitions->tb_over_ms_remaining_slots, tb_over_ms_remaining_slots);
+}

@@ -194,6 +194,18 @@ public:
     return *this;
   }
 
+  /// \brief Adds optional TTI Bundling parameters to the PUSCH PDU and returns a reference to the builder.
+  ///
+  /// These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table 3.4.3.2-10.
+  ul_pusch_pdu_builder& add_tti_bundling_parameters(uint8_t tb_over_ms_num_total_slots,
+                                                    uint8_t tb_over_ms_remaining_slots)
+  {
+    pdu.repetitions.emplace(ul_pusch_pdu::tti_bundling{.tb_over_ms_num_total_slots = tb_over_ms_num_total_slots,
+                                                       .tb_over_ms_remaining_slots = tb_over_ms_remaining_slots});
+
+    return *this;
+  }
+
   /// Sets the PUSCH context as vendor specific.
   ul_pusch_pdu_builder& set_context_vendor_specific(rnti_t rnti, harq_id_t harq_id)
   {

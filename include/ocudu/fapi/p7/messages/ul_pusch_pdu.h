@@ -53,6 +53,12 @@ struct ul_pusch_pdu {
 
   using transform_precoding_config = std::variant<transform_precoding_enabled, transform_precoding_disabled>;
 
+  /// Holds the parameters required for TTI bundling.
+  struct tti_bundling {
+    uint8_t tb_over_ms_num_total_slots;
+    uint8_t tb_over_ms_remaining_slots;
+  };
+
   rnti_t                                           rnti;
   uint32_t                                         handle = 0;
   crb_interval                                     bwp;
@@ -79,6 +85,7 @@ struct ul_pusch_pdu {
   units::bytes                                     tb_size_lbrm_bytes;
   std::optional<uci_part1_to_part2_correspondence> uci_correspondence;
   std::optional<uint8_t>                           rapid;
+  std::optional<tti_bundling>                      repetitions;
   /// Vendor specific parameters.
   std::optional<pusch_context> context;
 };
