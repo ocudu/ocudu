@@ -73,6 +73,11 @@ void ue_resume_routine::operator()(coro_context<async_task<rrc_resume_request_re
       // Set UE as active.
       ue_mng.set_active(request.ue_index);
 
+      // Update UE context with the new C-RNTI to make sure the C-RNTI is available for the ResumeMAC-I verification of
+      // the next resume attempt.
+      ue->get_ue_context().crnti = request.new_c_rnti;
+      ue->get_rrc_ue()->update_c_rnti(request.new_c_rnti);
+
       // Set UE as inactive to allocate new I-RNTIs.
       i_rntis = ue_mng.set_inactive(request.ue_index);
       if (i_rntis.has_value()) {
