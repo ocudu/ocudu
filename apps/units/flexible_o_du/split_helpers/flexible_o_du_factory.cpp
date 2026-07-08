@@ -268,7 +268,10 @@ generate_ntn_configuration_manager_config(const gnb_id_t&                       
                                             ncell.ta_info,
                                             ntn_cfg.propagator_type);
         } else {
-          nc_sat_idx = sat_idx;
+          report_error("cells[{}].ntn.ncells[pci={}]: either satellite_idx or inline ephemeris definition "
+                       "(epoch_timestamp and ephemeris_info) must be provided",
+                       phy_sector_idx,
+                       ncell.phys_cell_id ? static_cast<unsigned>(*ncell.phys_cell_id) : 0U);
         }
         auto& nc_cfg                    = out_cell.ncells.emplace_back();
         nc_cfg.satellite_index          = nc_sat_idx;

@@ -493,17 +493,10 @@ static bool validate_ntn_satellite_refs(const std::vector<du_high_unit_cell_conf
     }
     for (unsigned j = 0, e = ntn.ncells.size(); j != e; ++j) {
       const auto& ncell = ntn.ncells[j];
-      if (ncell.satellite_idx) {
-        if (available.count(*ncell.satellite_idx) == 0) {
-          fmt::print(
-              "cells[{}].ntn.ncells[{}].satellite_idx={} not found in ntn.satellites.\n", i, j, *ncell.satellite_idx);
-          valid = false;
-        }
-        if (ncell.epoch_timestamp || ncell.ephemeris_info || ncell.gateway_location || ncell.ta_info) {
-          fmt::print(
-              "cells[{}].ntn.ncells[{}]: satellite_idx is mutually exclusive with inline ephemeris fields.\n", i, j);
-          valid = false;
-        }
+      if (ncell.satellite_idx and available.count(*ncell.satellite_idx) == 0) {
+        fmt::print(
+            "cells[{}].ntn.ncells[{}].satellite_idx={} not found in ntn.satellites.\n", i, j, *ncell.satellite_idx);
+        valid = false;
       }
     }
   }
@@ -577,6 +570,23 @@ static bool validate_ntn_config(const du_high_unit_cell_ntn_config& ntn_cfg)
       }
       if (!sw.ephemeris_info) {
         fmt::print("sat_switch_with_resync: ephemeris_info is required when satellite_idx is not set.\n");
+        valid = false;
+      }
+    }
+  }
+
+  for (unsigned j = 0, e = ntn_cfg.ncells.size(); j != e; ++j) {
+    const auto& ncell = ntn_cfg.ncells[j];
+    if (ncell.satellite_idx) {
+      if (ncell.epoch_timestamp || ncell.ephemeris_info || ncell.gateway_location || ncell.ta_info) {
+        fmt::print("ntn.ncells[{}]: satellite_idx is mutually exclusive with inline ephemeris fields.\n", j);
+        valid = false;
+      }
+    } else {
+      if (!ncell.epoch_timestamp || !ncell.ephemeris_info) {
+        fmt::print("ntn.ncells[{}]: either satellite_idx or inline ephemeris definition (epoch_timestamp and "
+                   "ephemeris_info) must be provided.\n",
+                   j);
         valid = false;
       }
     }

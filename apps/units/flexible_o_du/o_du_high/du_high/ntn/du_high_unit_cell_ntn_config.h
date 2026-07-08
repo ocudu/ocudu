@@ -14,8 +14,9 @@
 namespace ocudu {
 
 /// Application-level per-neighbor NTN cell configuration.
-/// satellite_idx is mutually exclusive with inline ephemeris fields (epoch_timestamp, ephemeris_info,
-/// gateway_location, ta_info). If none of these are set, the serving cell's satellite is reused.
+/// Each neighbor must either reference a globally-defined satellite_idx or provide an inline satellite definition
+/// with epoch_timestamp and ephemeris_info. satellite_idx is mutually exclusive with inline ephemeris fields
+/// (epoch_timestamp, ephemeris_info, gateway_location, ta_info).
 struct du_high_unit_ntn_neighbor_cell_config {
   /// Reference to a globally-defined satellite for this neighbor.
   std::optional<unsigned> satellite_idx;
