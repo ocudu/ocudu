@@ -314,7 +314,11 @@ TEST_F(ul_mcs_tbs_prbs_calculator_error, two_bit_harq_ack_and_dc_overhead)
   bwp_uplink_dedicated bwp_ded        = *active_bwp_cfg.ul.ded();
   std::get<uci_on_pusch::beta_offsets_semi_static>(bwp_ded.pusch_cfg->uci_cfg->beta_offsets_cfg.value())
       .beta_offset_ack_idx_1 = 15;
-  active_bwp_cfg.ul          = sched_bwp_ul_config{active_bwp_cfg.ul.common(), std::move(bwp_ded)};
+  active_bwp_cfg.ul          = sched_bwp_ul_config{active_bwp_cfg.ul.common(),
+                                          std::move(bwp_ded),
+                                          std::nullopt,
+                                          active_bwp_cfg.ul.pusch_td_mapper(),
+                                          active_bwp_cfg.ul.pucch_td_mapper()};
 
   pusch_cfg.nof_csi_part1_bits = 11;
   pusch_cfg.nof_harq_ack_bits  = 2;

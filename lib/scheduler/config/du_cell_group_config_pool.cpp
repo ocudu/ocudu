@@ -5,23 +5,69 @@
 #include "du_cell_group_config_pool.h"
 #include "cell_configuration.h"
 #include "ocudu/ran/bwp/bwp_id.h"
+#include "ocudu/scheduler/config/time_domain_resource_helper.h"
 #include "ocudu/scheduler/config/ue_bwp_config.h"
 #include "ocudu/scheduler/scheduler_configurator.h"
 
 using namespace ocudu;
 
-bwp_config_pool::bwp_config_pool(pci_t                      pci,
+static pdsch_time_domain_mapper make_pdsch_td_mapper(const ran_cell_config& cfg)
+{
+  pdsch_time_domain_builder_params params;
+  params.cp      = cfg.dl_cfg_common.init_dl_bwp.generic_params.cp;
+  params.tdd_cfg = cfg.tdd_cfg;
+
+  pdsch_time_domain_builder_params::explicit_resources explicit_res;
+  explicit_res.pdsch_td_res_list = cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
+  params.params                  = std::move(explicit_res);
+
+  return pdsch_time_domain_mapper(params);
+}
+
+static pusch_time_domain_mapper make_pusch_td_mapper(const ran_cell_config& cfg)
+{
+  pusch_time_domain_builder_params params;
+  params.cp      = cfg.ul_cfg_common.init_ul_bwp.generic_params.cp;
+  params.tdd_cfg = cfg.tdd_cfg;
+
+  pusch_time_domain_builder_params::explicit_resources explicit_res;
+  explicit_res.pusch_td_res_list =
+      cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.has_value()
+          ? cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list
+          : time_domain_resource_helper::generate_dedicated_pusch_td_res_list(
+                cfg.tdd_cfg, cfg.ul_cfg_common.init_ul_bwp.generic_params.cp, cfg.init_bwp.pusch.min_k2);
+  params.params = std::move(explicit_res);
+
+  return pusch_time_domain_mapper(params);
+}
+
+static pucch_time_domain_mapper make_pucch_td_mapper(const ran_cell_config& cfg)
+{
+  pucch_time_domain_builder_params params;
+  params.tdd_cfg = cfg.tdd_cfg;
+
+  pucch_time_domain_builder_params::explicit_resources explicit_res;
+  const auto                                           dl_data_to_ul_ack =
+      time_domain_resource_helper::generate_k1_candidates(cfg.tdd_cfg, cfg.init_bwp.pucch.min_k1);
+  explicit_res.k1_candidates.assign(dl_data_to_ul_ack.begin(), dl_data_to_ul_ack.end());
+  params.params = std::move(explicit_res);
+
+  return pucch_time_domain_mapper(params);
+}
+
+bwp_config_pool::bwp_config_pool(const ran_cell_config&     cell_ran_cfg,
                                  bwp_id_t                   bwpid,
-                                 const bwp_downlink_common& bwp_dl,
-                                 const bwp_uplink_common&   bwp_ul,
                                  const cell_bwp_res_config& bwp_ded_res) :
   bwp_id(bwpid),
-  bwp_dl_cmn(bwp_dl),
-  bwp_ul_cmn(bwp_ul),
-  pdcch_pool(pci, bwp_dl_cmn.generic_params, bwp_dl_cmn.pdcch_common, bwp_ded_res.dl),
+  bwp_dl_cmn(cell_ran_cfg.dl_cfg_common.init_dl_bwp),
+  bwp_ul_cmn(cell_ran_cfg.ul_cfg_common.init_ul_bwp),
+  pdsch_td_mapper(make_pdsch_td_mapper(cell_ran_cfg)),
+  pusch_td_mapper(make_pusch_td_mapper(cell_ran_cfg)),
+  pucch_td_mapper(make_pucch_td_mapper(cell_ran_cfg)),
+  pdcch_pool(cell_ran_cfg.pci, bwp_dl_cmn.generic_params, bwp_dl_cmn.pdcch_common, bwp_ded_res.dl),
   common_bwp_cfg{bwp_id,
-                 sched_bwp_dl_config{bwp_dl_cmn, nullptr, pdcch_pool.init_cfg()},
-                 sched_bwp_ul_config{bwp_ul_cmn, std::nullopt}}
+                 sched_bwp_dl_config{bwp_dl_cmn, nullptr, pdcch_pool.init_cfg(), pdsch_td_mapper},
+                 sched_bwp_ul_config{bwp_ul_cmn, std::nullopt, std::nullopt, pusch_td_mapper, pucch_td_mapper}}
 {
 }
 
@@ -40,13 +86,14 @@ sched_bwp_config bwp_config_pool::add_ded_cfg(const bwp_downlink_dedicated* dl_d
     ul_owned = *ul_ded;
   }
 
-  return sched_bwp_config{bwp_id,
-                          sched_bwp_dl_config{bwp_dl_cmn,
-                                              dl_ptr.get(),
-                                              dl_ptr.has_value() and dl_ptr->pdcch_cfg.has_value()
-                                                  ? pdcch_pool.ded_cfgs()[0]
-                                                  : pdcch_pool.init_cfg()},
-                          sched_bwp_ul_config{bwp_ul_cmn, std::move(ul_owned), ue_bwp_cfg.ul}};
+  return sched_bwp_config{
+      bwp_id,
+      sched_bwp_dl_config{bwp_dl_cmn,
+                          dl_ptr.get(),
+                          dl_ptr.has_value() and dl_ptr->pdcch_cfg.has_value() ? pdcch_pool.ded_cfgs()[0]
+                                                                               : pdcch_pool.init_cfg(),
+                          pdsch_td_mapper},
+      sched_bwp_ul_config{bwp_ul_cmn, std::move(ul_owned), ue_bwp_cfg.ul, pusch_td_mapper, pucch_td_mapper}};
 }
 
 static std::vector<std::unique_ptr<bwp_config_pool>>
@@ -54,11 +101,7 @@ make_cell_bwp_pools(const sched_cell_configuration_request_message& req)
 {
   std::vector<std::unique_ptr<bwp_config_pool>> bwps;
   // Note: Create a pool for a single BWP for now.
-  bwps.push_back(std::make_unique<bwp_config_pool>(req.ran.pci,
-                                                   to_bwp_id(0),
-                                                   req.ran.dl_cfg_common.init_dl_bwp,
-                                                   req.ran.ul_cfg_common.init_ul_bwp,
-                                                   make_cell_bwp_res_config(req.ran)));
+  bwps.push_back(std::make_unique<bwp_config_pool>(req.ran, to_bwp_id(0), make_cell_bwp_res_config(req.ran)));
   return bwps;
 }
 

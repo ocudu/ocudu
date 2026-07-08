@@ -11,6 +11,10 @@
 
 namespace ocudu {
 
+struct pdsch_time_domain_mapper;
+struct pusch_time_domain_mapper;
+struct pucch_time_domain_mapper;
+
 /// PDSCH configuration of a BWP.
 class sched_pdsch_config
 {
@@ -34,12 +38,14 @@ class sched_bwp_dl_config
 {
 public:
   sched_bwp_dl_config() = default;
-  sched_bwp_dl_config(const bwp_downlink_common&    common,
-                      const bwp_downlink_dedicated* ded,
-                      const sched_pdcch_config&     pdcch_cfg_) :
+  sched_bwp_dl_config(const bwp_downlink_common&      common,
+                      const bwp_downlink_dedicated*   ded,
+                      const sched_pdcch_config&       pdcch_cfg_,
+                      const pdsch_time_domain_mapper& pdsch_td_mapper_) :
     bwp_dl_common(&common),
     bwp_dl_ded(ded),
     pdcch_cfg(&pdcch_cfg_),
+    pdsch_td_mapper_ptr(&pdsch_td_mapper_),
     pdsch_cfg(common.pdsch_common, ded != nullptr and ded->pdsch_cfg.has_value() ? &*ded->pdsch_cfg : nullptr)
   {
   }
@@ -50,6 +56,8 @@ public:
 
   const sched_pdcch_config& pdcch() const { return *pdcch_cfg; }
   const sched_pdsch_config& pdsch() const { return pdsch_cfg; }
+
+  const pdsch_time_domain_mapper& pdsch_td_mapper() const { return *pdsch_td_mapper_ptr; }
 
   const radio_link_monitoring_config* rlm() const
   {
@@ -63,10 +71,11 @@ public:
   }
 
 private:
-  const bwp_downlink_common*    bwp_dl_common = nullptr;
-  const bwp_downlink_dedicated* bwp_dl_ded    = nullptr;
-  const sched_pdcch_config*     pdcch_cfg     = nullptr;
-  sched_pdsch_config            pdsch_cfg;
+  const bwp_downlink_common*      bwp_dl_common       = nullptr;
+  const bwp_downlink_dedicated*   bwp_dl_ded          = nullptr;
+  const sched_pdcch_config*       pdcch_cfg           = nullptr;
+  const pdsch_time_domain_mapper* pdsch_td_mapper_ptr = nullptr;
+  sched_pdsch_config              pdsch_cfg;
 };
 
 /// Configuration of an Uplink Bandwidth Part (BWP) including the common config and optionally the dedicated config.
@@ -76,8 +85,14 @@ public:
   sched_bwp_ul_config() = default;
   sched_bwp_ul_config(const bwp_uplink_common&                   common,
                       const std::optional<bwp_uplink_dedicated>& ded,
-                      const std::optional<ue_uplink_bwp_config>& ue_cfg = std::nullopt) :
-    bwp_ul_common(&common), bwp_ul_ded(ded), ue_ul_bwp_cfg(ue_cfg)
+                      const std::optional<ue_uplink_bwp_config>& ue_cfg,
+                      const pusch_time_domain_mapper&            pusch_td_mapper_,
+                      const pucch_time_domain_mapper&            pucch_td_mapper_) :
+    bwp_ul_common(&common),
+    bwp_ul_ded(ded),
+    ue_ul_bwp_cfg(ue_cfg),
+    pusch_td_mapper_ptr(&pusch_td_mapper_),
+    pucch_td_mapper_ptr(&pucch_td_mapper_)
   {
   }
 
@@ -113,6 +128,9 @@ public:
 
   const ue_uplink_bwp_config* ue_cfg() const { return ue_ul_bwp_cfg.has_value() ? &*ue_ul_bwp_cfg : nullptr; }
 
+  const pusch_time_domain_mapper& pusch_td_mapper() const { return *pusch_td_mapper_ptr; }
+  const pucch_time_domain_mapper& pucch_td_mapper() const { return *pucch_td_mapper_ptr; }
+
   bool operator==(const sched_bwp_ul_config& other) const
   {
     return *bwp_ul_common == *other.bwp_ul_common and bwp_ul_ded == other.bwp_ul_ded and
@@ -125,6 +143,8 @@ private:
   // \note Owned by value (per-UE, high-cardinality: not worth interning in a shared pool).
   std::optional<bwp_uplink_dedicated> bwp_ul_ded;
   std::optional<ue_uplink_bwp_config> ue_ul_bwp_cfg;
+  const pusch_time_domain_mapper*     pusch_td_mapper_ptr = nullptr;
+  const pucch_time_domain_mapper*     pucch_td_mapper_ptr = nullptr;
 };
 
 /// Configuration of a Bandwidth Part (BWP) including the common config and optionally the dedicated config.

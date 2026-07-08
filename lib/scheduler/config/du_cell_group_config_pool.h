@@ -8,6 +8,7 @@
 #include "logical_channel_config_pool.h"
 #include "pdcch_config_pool.h"
 #include "sched_config_params.h"
+#include "time_domain_mapper.h"
 #include "ocudu/ran/du_types.h"
 #include "ocudu/scheduler/config/bwp_configuration.h"
 #include "ocudu/scheduler/config/serving_cell_config.h"
@@ -26,11 +27,7 @@ struct serving_cell_config;
 class bwp_config_pool
 {
 public:
-  bwp_config_pool(pci_t                      pci,
-                  bwp_id_t                   bwpid,
-                  const bwp_downlink_common& bwp_dl,
-                  const bwp_uplink_common&   bwp_ul,
-                  const cell_bwp_res_config& bwp_ded_res);
+  bwp_config_pool(const ran_cell_config& cell_ran_cfg, bwp_id_t bwpid, const cell_bwp_res_config& bwp_ded_res);
   bwp_config_pool(const bwp_config_pool&)            = delete;
   bwp_config_pool& operator=(const bwp_config_pool&) = delete;
 
@@ -47,6 +44,9 @@ private:
   const bwp_id_t                             bwp_id;
   const bwp_downlink_common                  bwp_dl_cmn;
   const bwp_uplink_common                    bwp_ul_cmn;
+  pdsch_time_domain_mapper                   pdsch_td_mapper;
+  pusch_time_domain_mapper                   pusch_td_mapper;
+  pucch_time_domain_mapper                   pucch_td_mapper;
   pdcch_config_pool                          pdcch_pool;
   sched_bwp_config                           common_bwp_cfg;
   config_object_pool<bwp_downlink_dedicated> dl_ded_config_pool;
