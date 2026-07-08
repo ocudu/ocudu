@@ -527,7 +527,7 @@ static bool validate_ntn_satellite_refs(const std::vector<du_high_unit_cell_conf
   return valid;
 }
 
-static bool validate_ntn_config(const du_high_unit_cell_ntn_config& ntn_cfg)
+static bool validate_ntn_config(const du_high_unit_cell_ntn_config& ntn_cfg, nr_band band)
 {
   bool valid = true;
 
@@ -535,7 +535,8 @@ static bool validate_ntn_config(const du_high_unit_cell_ntn_config& ntn_cfg)
     // No global satellite reference: require inline ephemeris.
     if (!ntn_cfg.epoch_timestamp || !ntn_cfg.ephemeris_info) {
       fmt::print("ntn: either satellite_idx or inline ephemeris definition (epoch_timestamp and ephemeris_info) must "
-                 "be provided.\n");
+                 "be provided for NTN band {}.\n",
+                 fmt::underlying(band));
       valid = false;
     }
   } else {
@@ -623,7 +624,8 @@ static bool validate_ntn_config(const du_high_unit_cell_ntn_config& ntn_cfg)
 static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&                config,
                                             subcarrier_spacing                                  scs_common,
                                             unsigned                                            nof_crbs,
-                                            const std::optional<du_high_unit_tdd_ul_dl_config>& tdd_cfg)
+                                            const std::optional<du_high_unit_tdd_ul_dl_config>& tdd_cfg,
+                                            bool                                                is_ntn_band)
 {
   const du_high_unit_pucch_config& pucch_cfg = config.pucch_cfg;
   const du_high_unit_csi_config&   csi_cfg   = config.csi_cfg;
@@ -674,7 +676,7 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
       return false;
     }
   }
-  if (!config.ntn_cfg.has_value()) {
+  if (!is_ntn_band) {
     span<const unsigned> valid_sr_period_slots = mu_to_valid_sr_period_slots_lookup.at(to_numerology_value(scs_common));
     if (std::find(valid_sr_period_slots.begin(), valid_sr_period_slots.end(), sr_period_slots) ==
         valid_sr_period_slots.end()) {
@@ -682,10 +684,6 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
                  pucch_cfg.sr_period_msec,
                  sr_period_slots,
                  scs_to_khz(scs_common));
-      return false;
-    }
-  } else {
-    if (!validate_ntn_config(*config.ntn_cfg)) {
       return false;
     }
   }
@@ -1532,6 +1530,11 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
       band_helper::get_n_rbs_from_bw(config.channel_bw_mhz, config.common_scs, band_helper::get_freq_range(band));
 
   const bool is_ntn_band = band_helper::is_ntn_band(band);
+  if (config.ntn_cfg) {
+    if (!validate_ntn_config(*config.ntn_cfg, band)) {
+      return false;
+    }
+  }
   if (!validate_pdsch_cell_unit_config(config.pdsch_cfg, nof_crbs, config.nof_antennas_dl, is_ntn_band)) {
     return false;
   }
@@ -1544,7 +1547,7 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
     return false;
   }
 
-  if (!validate_pucch_cell_unit_config(config, config.common_scs, nof_crbs, config.tdd_ul_dl_cfg)) {
+  if (!validate_pucch_cell_unit_config(config, config.common_scs, nof_crbs, config.tdd_ul_dl_cfg, is_ntn_band)) {
     return false;
   }
 
