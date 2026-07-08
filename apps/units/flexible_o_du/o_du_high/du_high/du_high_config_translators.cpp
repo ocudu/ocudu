@@ -1228,10 +1228,7 @@ static scheduler_expert_config generate_scheduler_expert_config(const du_high_un
   out_cfg.ue.olla_dl_target_bler               = pdsch.olla_target_bler;
   out_cfg.ue.olla_cqi_inc                      = pdsch.olla_cqi_inc;
   out_cfg.ue.olla_max_cqi_offset               = pdsch.olla_max_cqi_offset;
-  if (cell.ntn_cfg.has_value()) {
-    out_cfg.ue.auto_ack_harq = true;
-  }
-  out_cfg.ue.ul_mcs = {pusch.min_ue_mcs, pusch.max_ue_mcs};
+  out_cfg.ue.ul_mcs                            = {pusch.min_ue_mcs, pusch.max_ue_mcs};
   out_cfg.ue.pusch_rv_sequence.assign(pusch.rv_sequence.begin(), pusch.rv_sequence.end());
   out_cfg.ue.enable_csi_rs_pdsch_multiplexing = pdsch.enable_csi_rs_pdsch_multiplexing;
   out_cfg.ue.initial_ul_dc_offset             = pusch.dc_offset;

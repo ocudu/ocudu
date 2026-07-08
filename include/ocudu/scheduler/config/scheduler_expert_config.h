@@ -194,8 +194,6 @@ struct scheduler_ue_expert_config {
   uint8_t dl_harq_la_cqi_drop_threshold{2};
   /// Threshold for drop in nof. layers of the first HARQ transmission above which HARQ retransmission is cancelled.
   uint8_t dl_harq_la_ri_drop_threshold{1};
-  /// Automatic HARQ acknowledgement (used for NTN cases with no HARQ feedback)
-  bool auto_ack_harq{false};
   /// Boundaries in RB interval for resource allocation of UE PDSCHs.
   crb_interval pdsch_crb_limits{0, MAX_NOF_PRBS};
   /// Bundle size used for interleaving. Possible values: {0, 2, 4}. When set to 0, interleaving is disabled.
