@@ -502,6 +502,17 @@ static bool validate_ntn_satellite_refs(const std::vector<du_high_unit_cell_conf
       if (available.count(sw_idx) == 0) {
         fmt::print("cells[{}].ntn.sat_switch_with_resync.satellite_idx={} not found in ntn.satellites.\n", i, sw_idx);
         valid = false;
+      } else {
+        const auto sat_it = std::find_if(ntn_satellites.begin(), ntn_satellites.end(), [sw_idx](const auto& sat) {
+          return sat.satellite_idx == sw_idx;
+        });
+        if (not sat_it->gateway_location and not sat_it->ta_info) {
+          fmt::print("cells[{}].ntn.sat_switch_with_resync: referenced satellite (satellite_idx={}) must have "
+                     "gateway_location or ta_info set.\n",
+                     i,
+                     sw_idx);
+          valid = false;
+        }
       }
     }
     for (unsigned j = 0, e = ntn.ncells.size(); j != e; ++j) {
