@@ -480,9 +480,22 @@ static bool validate_ntn_satellite_refs(const std::vector<du_high_unit_cell_conf
       continue;
     }
     const auto& ntn = *cell_cfg.ntn_cfg;
-    if (ntn.satellite_idx && available.count(*ntn.satellite_idx) == 0) {
-      fmt::print("cells[{}].ntn.satellite_idx={} not found in ntn.satellites.\n", i, *ntn.satellite_idx);
-      valid = false;
+    if (ntn.satellite_idx) {
+      if (available.count(*ntn.satellite_idx) == 0) {
+        fmt::print("cells[{}].ntn.satellite_idx={} not found in ntn.satellites.\n", i, *ntn.satellite_idx);
+        valid = false;
+      } else if (ntn.feeder_link_info) {
+        const auto sat_it = std::find_if(ntn_satellites.begin(), ntn_satellites.end(), [&ntn](const auto& sat) {
+          return sat.satellite_idx == *ntn.satellite_idx;
+        });
+        if (not sat_it->gateway_location and not sat_it->ta_info) {
+          fmt::print("cells[{}].ntn: feeder_link_info requires the referenced satellite (satellite_idx={}) to have "
+                     "gateway_location or ta_info set.\n",
+                     i,
+                     *ntn.satellite_idx);
+          valid = false;
+        }
+      }
     }
     if (ntn.sat_switch_with_resync && ntn.sat_switch_with_resync->satellite_idx) {
       unsigned sw_idx = *ntn.sat_switch_with_resync->satellite_idx;
