@@ -16,8 +16,8 @@
 
 namespace ocudu {
 
-/// Parameters for building PDSCH TD resource info.
-struct pdsch_time_domain_builder_params {
+/// Parameters for building DL (PDSCH) TD resource info.
+struct dl_time_domain_builder_params {
   struct auto_resources {
     /// Max duration in symbols of all CORESETs.
     uint8_t coreset_max_dur = 2;
@@ -33,12 +33,12 @@ struct pdsch_time_domain_builder_params {
   std::variant<auto_resources, explicit_resources> params{auto_resources{}};
 };
 
-/// Descriptor of PDSCH time-domain resources in a given BWP.
-struct pdsch_time_domain_mapper {
-  pdsch_time_domain_mapper() = default;
+/// Descriptor of DL (PDSCH) time-domain resources in a given BWP.
+struct dl_time_domain_mapper {
+  dl_time_domain_mapper() = default;
 
   /// Build dedicated BWP PDSCH TD resource info from builder parameters.
-  explicit pdsch_time_domain_mapper(const pdsch_time_domain_builder_params& params);
+  explicit dl_time_domain_mapper(const dl_time_domain_builder_params& params);
 
   span<const pdsch_time_domain_resource_allocation> resources() const { return pdsch_td_res_list; }
 
@@ -58,9 +58,9 @@ private:
   std::vector<std::vector<pdsch_time_domain_resource_allocation>> pdsch_td_res_per_slot;
 };
 
-/// Parameters for building PUSCH TD resource info.
-struct pusch_time_domain_builder_params {
-  struct auto_resources {
+/// Parameters for building UL (PUSCH and PUCCH dl-DataToUL-ACK / k1) TD resource info.
+struct ul_time_domain_builder_params {
+  struct pusch_auto_resources {
     /// Minimum k2 value to consider when generating the list of PUSCH time-domain resource allocations.
     uint8_t min_k2 = 4;
     /// Maximum number of symbols an SRS resource can occupy at the end of the slot. Zero disables SRS-aware generation.
@@ -68,70 +68,51 @@ struct pusch_time_domain_builder_params {
     /// Number of symbols of a single SRS resource.
     uint8_t symbols_per_srs = 0;
   };
-  struct explicit_resources {
+  struct pusch_explicit_resources {
     std::vector<pusch_time_domain_resource_allocation> pusch_td_res_list;
+  };
+  struct pucch_auto_resources {
+    /// Minimum k1 value to consider when generating the list of k1 values.
+    uint8_t min_k1 = 4;
+  };
+  struct pucch_explicit_resources {
+    std::vector<uint8_t> k1_candidates;
   };
 
   /// Cyclic prefix used in the BWP.
   cyclic_prefix cp = cyclic_prefix::NORMAL;
   /// TDD configuration common to all UEs in the cell/BWP.
-  std::optional<tdd_ul_dl_config_common>           tdd_cfg;
-  std::variant<auto_resources, explicit_resources> params{auto_resources{}};
+  std::optional<tdd_ul_dl_config_common>                       tdd_cfg;
+  std::variant<pusch_auto_resources, pusch_explicit_resources> pusch_params{pusch_auto_resources{}};
+  std::variant<pucch_auto_resources, pucch_explicit_resources> pucch_params{pucch_auto_resources{}};
 };
 
-/// Descriptor of PUSCH time-domain resources in a given BWP.
-struct pusch_time_domain_mapper {
-  pusch_time_domain_mapper() = default;
+/// Descriptor of UL (PUSCH and PUCCH dl-DataToUL-ACK / k1) time-domain resources in a given BWP.
+struct ul_time_domain_mapper {
+  ul_time_domain_mapper() = default;
 
-  /// Build dedicated BWP PUSCH TD resource info from builder parameters.
-  explicit pusch_time_domain_mapper(const pusch_time_domain_builder_params& params);
+  /// Build dedicated BWP UL TD resource info from builder parameters.
+  explicit ul_time_domain_mapper(const ul_time_domain_builder_params& params);
 
   /// Retrieve the list of available PUSCH time-domain resource allocations for the BWP.
-  span<const pusch_time_domain_resource_allocation> resources() const { return pusch_td_res_list; }
+  span<const pusch_time_domain_resource_allocation> pusch_resources() const { return pusch_td_res_list; }
 
   /// \brief Get the list of PUSCH TD resource candidates for a given slot index.
-  span<const pusch_time_domain_resource_allocation> resources(unsigned pdcch_slot_index) const
+  span<const pusch_time_domain_resource_allocation> pusch_resources(unsigned pdcch_slot_index) const
   {
     return pusch_td_res_per_slot[pdcch_slot_index % pusch_td_res_per_slot.size()];
   }
 
-private:
-  /// \brief List of available PUSCH time-domain resource allocations for the BWP.
-  /// Max size is pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS.
-  std::vector<pusch_time_domain_resource_allocation> pusch_td_res_list;
-
-  /// List of PUSCH TD resource candidates for each slot within the TDD period.
-  /// Note: Only used when TDD is enabled.
-  std::vector<std::vector<pusch_time_domain_resource_allocation>> pusch_td_res_per_slot;
-};
-
-/// Parameters for building PUCCH (dl-DataToUL-ACK / k1) TD resource info.
-struct pucch_time_domain_builder_params {
-  struct auto_resources {
-    /// Minimum k1 value to consider when generating the list of k1 values.
-    uint8_t min_k1 = 4;
-  };
-  struct explicit_resources {
-    std::vector<uint8_t> k1_candidates;
-  };
-
-  /// TDD configuration common to all UEs in the cell/BWP.
-  std::optional<tdd_ul_dl_config_common>           tdd_cfg;
-  std::variant<auto_resources, explicit_resources> params{auto_resources{}};
-};
-
-/// Descriptor of PUCCH (dl-DataToUL-ACK / k1) time-domain resources in a given BWP.
-struct pucch_time_domain_mapper {
-  pucch_time_domain_mapper() = default;
-
-  /// Build dedicated BWP PUCCH TD resource info from builder parameters.
-  explicit pucch_time_domain_mapper(const pucch_time_domain_builder_params& params);
-
   /// Retrieve the list of k1 candidates for PDSCH-to-HARQ timing used with UE-dedicated DCI.
   span<const uint8_t> dedicated_k1_candidates() const { return dedicated_k1_list; }
 
-  /// \brief Retrieve the k1 candidates for PDSCH-to-HARQ timing appropriate for the given DCI DL format.
+  /// \brief Retrieve the k1 candidates for PDSCH-to-HARQ timing appropriate for the given DCI DL format, as per
+  /// TS 38.213, clause 9.2.3.
+  ///
+  /// - For DCI format 1_0, the PDSCH-to-HARQ-timing-indicator field values map to {min_k1, ..., 8}.
+  /// - For DCI format 1_1 (if present), they map to the values configured via dl-DataToUL-ACK (Table 9.2.3-1).
   /// \remark Returns the common (fallback) candidates for DCI format 1_0, and the dedicated ones otherwise.
+  /// \param dci_format         DCI format that will schedule the PDSCH whose HARQ-ACK is being placed.
   span<const uint8_t> k1_candidates(dci_dl_format dci_format) const
   {
     return dci_format == dci_dl_format::f1_0 ? common_k1_candidates() : dedicated_k1_candidates();
@@ -165,6 +146,14 @@ struct pucch_time_domain_mapper {
   }
 
 private:
+  /// \brief List of available PUSCH time-domain resource allocations for the BWP.
+  /// Max size is pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS.
+  std::vector<pusch_time_domain_resource_allocation> pusch_td_res_list;
+
+  /// List of PUSCH TD resource candidates for each slot within the TDD period.
+  /// Note: Only used when TDD is enabled.
+  std::vector<std::vector<pusch_time_domain_resource_allocation>> pusch_td_res_per_slot;
+
   /// List of k1 candidates for PDSCH-to-HARQ timing used with UE-dedicated DCI.
   static_vector<uint8_t, pucch_td_helper::MAX_K1_CANDIDATES> dedicated_k1_list;
 

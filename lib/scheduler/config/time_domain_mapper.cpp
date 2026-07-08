@@ -35,9 +35,9 @@ generate_pdsch_td_res_per_tdd_slot(span<const pdsch_time_domain_resource_allocat
   return result;
 }
 
-pdsch_time_domain_mapper::pdsch_time_domain_mapper(const pdsch_time_domain_builder_params& params)
+dl_time_domain_mapper::dl_time_domain_mapper(const dl_time_domain_builder_params& params)
 {
-  using builder_params = pdsch_time_domain_builder_params;
+  using builder_params = dl_time_domain_builder_params;
 
   if (const auto* auto_res = std::get_if<builder_params::auto_resources>(&params.params)) {
     // Derive PDSCH TD resources assuming CORESETs start at symbol 0, so PDSCH starts after the CORESET.
@@ -82,28 +82,6 @@ generate_pusch_td_res_per_tdd_slot(span<const pusch_time_domain_resource_allocat
   return result;
 }
 
-pusch_time_domain_mapper::pusch_time_domain_mapper(const pusch_time_domain_builder_params& params)
-{
-  using builder_params = pusch_time_domain_builder_params;
-
-  if (const auto* auto_res = std::get_if<builder_params::auto_resources>(&params.params)) {
-    // Derive PUSCH TD resources.
-    // - [Implementation-defined] Ensure a k2 value less than or equal to the minimum k1 configured for the BWP exists
-    // as the first entry of the list. This way PDSCH(s) are scheduled before PUSCH and all DL slots are filled with
-    // PDSCH and all UL slots are filled with PUSCH under heavy load. It also ensures that correct DAI value goes in
-    // the UL PDCCH of DCI Format 0_1.
-    pusch_td_res_list = time_domain_resource_helper::generate_dedicated_pusch_td_res_list(
-        params.tdd_cfg, params.cp, auto_res->min_k2, auto_res->max_srs_symbols, auto_res->symbols_per_srs);
-  } else {
-    const auto& explicit_res = std::get<builder_params::explicit_resources>(params.params);
-    ocudu_assert(not explicit_res.pusch_td_res_list.empty(), "Explicit PUSCH TD resource list must not be empty.");
-    pusch_td_res_list = explicit_res.pusch_td_res_list;
-  }
-
-  // Generate the PUSCH candidates for each slot (handles both FDD and TDD).
-  pusch_td_res_per_slot = generate_pusch_td_res_per_tdd_slot(pusch_td_res_list, params.tdd_cfg);
-}
-
 /// \brief Computes the list of valid PUCCH k1 values that can be used for each PDSCH slot.
 ///
 /// For TDD, the returned vector is circularly indexed by slot within the TDD period (size = TDD period length).
@@ -140,17 +118,36 @@ generate_k1_candidates_per_tdd_slot(span<const uint8_t>                         
   return result;
 }
 
-pucch_time_domain_mapper::pucch_time_domain_mapper(const pucch_time_domain_builder_params& params)
+ul_time_domain_mapper::ul_time_domain_mapper(const ul_time_domain_builder_params& params)
 {
-  using builder_params = pucch_time_domain_builder_params;
+  using builder_params = ul_time_domain_builder_params;
 
+  // PUSCH.
+  if (const auto* auto_res = std::get_if<builder_params::pusch_auto_resources>(&params.pusch_params)) {
+    // Derive PUSCH TD resources.
+    // - [Implementation-defined] Ensure a k2 value less than or equal to the minimum k1 configured for the BWP exists
+    // as the first entry of the list. This way PDSCH(s) are scheduled before PUSCH and all DL slots are filled with
+    // PDSCH and all UL slots are filled with PUSCH under heavy load. It also ensures that correct DAI value goes in
+    // the UL PDCCH of DCI Format 0_1.
+    pusch_td_res_list = time_domain_resource_helper::generate_dedicated_pusch_td_res_list(
+        params.tdd_cfg, params.cp, auto_res->min_k2, auto_res->max_srs_symbols, auto_res->symbols_per_srs);
+  } else {
+    const auto& explicit_res = std::get<builder_params::pusch_explicit_resources>(params.pusch_params);
+    ocudu_assert(not explicit_res.pusch_td_res_list.empty(), "Explicit PUSCH TD resource list must not be empty.");
+    pusch_td_res_list = explicit_res.pusch_td_res_list;
+  }
+
+  // Generate the PUSCH candidates for each slot (handles both FDD and TDD).
+  pusch_td_res_per_slot = generate_pusch_td_res_per_tdd_slot(pusch_td_res_list, params.tdd_cfg);
+
+  // PUCCH / k1.
   // Minimum k1 for the common (fallback) candidate pool; defaults to the full {1,...,8} set.
   uint8_t common_min_k1 = 1;
-  if (const auto* auto_res = std::get_if<builder_params::auto_resources>(&params.params)) {
+  if (const auto* auto_res = std::get_if<builder_params::pucch_auto_resources>(&params.pucch_params)) {
     dedicated_k1_list = time_domain_resource_helper::generate_k1_candidates(params.tdd_cfg, auto_res->min_k1);
     common_min_k1     = auto_res->min_k1;
   } else {
-    const auto& explicit_res = std::get<builder_params::explicit_resources>(params.params);
+    const auto& explicit_res = std::get<builder_params::pucch_explicit_resources>(params.pucch_params);
     ocudu_assert(not explicit_res.k1_candidates.empty(), "Explicit k1 candidate list must not be empty.");
     ocudu_assert(explicit_res.k1_candidates.size() <= pucch_td_helper::MAX_K1_CANDIDATES,
                  "Number of explicit k1 candidates ({}) exceeds the maximum ({}).",

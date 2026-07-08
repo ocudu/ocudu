@@ -218,7 +218,7 @@ void ocudu::build_dci_f1_1_c_rnti(dci_dl_info&                  dci,
   static constexpr bool are_both_cws_enabled = false;
 
   const bwp_configuration& active_dl_bwp = ss_info.bwp->dl.cfg();
-  const auto               k1_candidates = ss_info.bwp->ul.pucch_td_mapper().dedicated_k1_candidates();
+  const auto               k1_candidates = ss_info.bwp->ul.td_mapper().dedicated_k1_candidates();
 
   dci_1_1_configuration& f1_1 = dci.set_c_rnti_f1_1();
 

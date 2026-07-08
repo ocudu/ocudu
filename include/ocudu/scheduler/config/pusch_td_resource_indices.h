@@ -6,6 +6,7 @@
 
 #include "ocudu/adt/span.h"
 #include "ocudu/adt/static_vector.h"
+#include "ocudu/ran/pdcch/dci_format.h"
 #include "ocudu/ran/pusch/pusch_constants.h"
 #include "ocudu/ran/slot_point.h"
 #include "ocudu/ran/tdd/tdd_ul_dl_config.h"
@@ -25,19 +26,17 @@ struct pusch_time_domain_resource_allocation;
 ///
 /// \param[in] pdcch_slot Slot at which the PDCCH is supposed to be scheduled.
 /// \param[in] tdd_cfg_common TDD configuration, if present.
-/// \param[in] pusch_cfg_common PUSCH common configuration.
-/// \param[in] dl_data_to_ul_ack List of viable k1 values.
-/// \param[in] ss_info SearchSpace information.
-/// \param[in] is_fallback whether it's for fallback scheduler.
+/// \param[in] pusch_td_list List of applicable PUSCH Time Domain resource allocations (cell-common or UE-dedicated).
+/// \param[in] min_k1 Minimum k1 value applicable for the PDCCH slot.
+/// \param[in] dci_format UL DCI format that will schedule the PUSCH. DCI format 0_0 identifies the fallback scheduler,
+/// which does not multiplex UCI on PUSCH.
 /// \return List of PUSCH Time Domain resource indexes.
-/// \remark If \c ss_info is nullptr, then minimum k1 is taken from \c cell_cfg.
 static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>
-get_pusch_td_resource_indices(slot_point                                    pdcch_slot,
-                              const std::optional<tdd_ul_dl_config_common>& tdd_cfg_common,
-                              const pusch_config_common&                    pusch_cfg_common,
-                              span<const uint8_t>                           dl_data_to_ul_ack,
-                              const search_space_info*                      ss_info     = nullptr,
-                              bool                                          is_fallback = false);
+get_pusch_td_resource_indices(slot_point                                        pdcch_slot,
+                              const std::optional<tdd_ul_dl_config_common>&     tdd_cfg_common,
+                              span<const pusch_time_domain_resource_allocation> pusch_td_list,
+                              unsigned                                          min_k1,
+                              dci_ul_format                                     dci_format = dci_ul_format::f0_1);
 
 /// Returns the list circularly indexed by slot containing the list of applicable PUSCH Time Domain resource indexes per
 /// slot.

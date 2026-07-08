@@ -983,14 +983,13 @@ ue_fallback_scheduler::ul_srb_sched_outcome ue_fallback_scheduler::schedule_ul_u
 
   // Fetch applicable PUSCH Time Domain resource index list.
   // NOTE: We run cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.has_value() sanity check in the constructor.
-  constexpr bool                                                        is_fallback = true;
   static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS> pusch_td_res_index_list =
-      get_pusch_td_resource_indices(pdcch_slot,
-                                    cell_cfg.params.tdd_cfg,
-                                    cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value(),
-                                    cell_cfg.dl_data_to_ul_ack,
-                                    /* ss_info */ nullptr,
-                                    is_fallback);
+      get_pusch_td_resource_indices(
+          pdcch_slot,
+          cell_cfg.params.tdd_cfg,
+          cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list,
+          cell_cfg.init_bwp.ul.td_mapper().dedicated_k1_candidates()[0],
+          dci_ul_format::f0_0);
 
   if (is_retx) {
     ocudu_sanity_check(h_ul_retx->get_grant_params().dci_cfg_type == dci_ul_rnti_config_type::c_rnti_f0_0,

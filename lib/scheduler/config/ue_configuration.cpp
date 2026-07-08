@@ -270,7 +270,7 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
   dci_sz_cfg.nof_aperiodic_zp_csi      = 0;
   dci_sz_cfg.nof_pdsch_ack_timings     = ss_info.get_dl_dci_format() == dci_dl_format::f1_0
                                              ? pucch_td_helper::get_common_k1_candidates().size()
-                                             : active_bwp.ul.pucch_td_mapper().dedicated_k1_candidates().size();
+                                             : active_bwp.ul.td_mapper().dedicated_k1_candidates().size();
   dci_sz_cfg.dynamic_prb_bundling      = false;
   dci_sz_cfg.rm_pattern_group1         = false;
   dci_sz_cfg.rm_pattern_group2         = false;

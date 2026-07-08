@@ -44,9 +44,8 @@ private:
   const bwp_id_t                             bwp_id;
   const bwp_downlink_common                  bwp_dl_cmn;
   const bwp_uplink_common                    bwp_ul_cmn;
-  pdsch_time_domain_mapper                   pdsch_td_mapper;
-  pusch_time_domain_mapper                   pusch_td_mapper;
-  pucch_time_domain_mapper                   pucch_td_mapper;
+  dl_time_domain_mapper                      dl_td_mapper;
+  ul_time_domain_mapper                      ul_td_mapper;
   pdcch_config_pool                          pdcch_pool;
   sched_bwp_config                           common_bwp_cfg;
   config_object_pool<bwp_downlink_dedicated> dl_ded_config_pool;

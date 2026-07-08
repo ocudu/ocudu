@@ -16,18 +16,6 @@ namespace ocudu {
 struct tdd_ul_dl_config_common;
 struct pusch_time_domain_resource_allocation;
 
-/// \brief Returns the PDSCH-to-HARQ-timing-indicator candidate list to use for scheduling PUCCH HARQ-ACK feedback,
-/// as per TS 38.213, clause 9.2.3.
-///
-/// - For DCI format 1_0, the PDSCH-to-HARQ-timing-indicator field values map to {1, 2, 3, 4, 5, 6, 7, 8}.
-/// - For DCI format 1_1 (if present), they map to the values configured via dl-DataToUL-ACK (Table 9.2.3-1).
-///
-/// Note: tested UEs do not support k1 < 4, so the default list returned for DCI format 1_0 starts at 4 instead of 1.
-///
-/// \param dci_format         DCI format that will schedule the PDSCH whose HARQ-ACK is being placed.
-/// \param dl_data_to_ul_ack  Configured dl-DataToUL-ACK list, used when \p dci_format is not 1_0.
-span<const uint8_t> get_k1_candidates(dci_dl_format dci_format, span<const uint8_t> dl_data_to_ul_ack);
-
 /// \brief Computes the list of valid PUCCH k1 values that can be used for a given DL slot.
 ///
 /// For TDD, the returned vector is circularly indexed by slot within the TDD period (size = TDD period length). For

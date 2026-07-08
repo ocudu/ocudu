@@ -8,12 +8,6 @@
 
 using namespace ocudu;
 
-span<const uint8_t> ocudu::get_k1_candidates(dci_dl_format dci_format, span<const uint8_t> dl_data_to_ul_ack)
-{
-  static constexpr std::array<uint8_t, 5> f1_0_list = {4, 5, 6, 7, 8};
-  return dci_format == dci_dl_format::f1_0 ? span<const uint8_t>{f1_0_list} : dl_data_to_ul_ack;
-}
-
 std::vector<static_vector<uint8_t, 8>> ocudu::get_pucch_k1_list_per_slot(
     span<const uint8_t>                                       dl_data_to_ul_ack,
     const std::optional<tdd_ul_dl_config_common>&             tdd_cfg_common,
