@@ -97,6 +97,10 @@ make_default_cu_up_qos_config_list(bool warn_on_drop, timer_duration metrics_per
     // 5QI=70
     qos_list[uint_to_five_qi(70)] = make_default_cu_up_custom_cfg_item(warn_on_drop, metrics_period, test_mode);
   }
+  {
+    // 5QI=80
+    qos_list[uint_to_five_qi(80)] = make_default_cu_up_custom_cfg_item(warn_on_drop, metrics_period, test_mode);
+  }
   //
   // Delay-critical Guaranteed Bitrate 5QIs
   //

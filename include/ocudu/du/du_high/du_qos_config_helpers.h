@@ -390,6 +390,25 @@ inline std::map<five_qi_t, odu::du_qos_config> make_default_du_qos_config_list(b
 
     qos_list[uint_to_five_qi(70)] = cfg;
   }
+  {
+    // 5QI = 80 e.g Low Latency eMBB Applications
+    // PDB = 10ms PER = 10^-6
+    odu::du_qos_config cfg{};
+    // RLC
+    cfg.rlc.mode                   = rlc_mode::um_bidir;
+    cfg.rlc.um.tx.sn_field_length  = rlc_um_sn_size::size12bits;
+    cfg.rlc.um.rx.sn_field_length  = rlc_um_sn_size::size12bits;
+    cfg.rlc.um.rx.t_reassembly     = 5;
+    cfg.rlc.um.tx.queue_size       = default_rlc_queue_size_sdus;
+    cfg.rlc.um.tx.queue_size_bytes = default_rlc_queue_size_bytes;
+    cfg.rlc.metrics_period         = std::chrono::milliseconds(rlc_metrics_report);
+    // F1-U
+    cfg.f1u.ul_t_notif_timer      = std::chrono::milliseconds{default_f1u_backoff_timer};
+    cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
+    cfg.f1u.warn_on_drop          = warn_on_drop;
+
+    qos_list[uint_to_five_qi(80)] = cfg;
+  }
   //
   // Delay-critical Guaranteed Bitrate 5QIs
   //

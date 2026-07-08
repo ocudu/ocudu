@@ -8,7 +8,7 @@
 # This is a supplementary configuration to modify the RLC and PDCP radio bearers on
 # a per 5QI basis.
 
-# The default values are picked to try to acheive the QoS requirements defined in
+# The default values are picked to try to achieve the QoS requirements defined in
 # TS 23.501 -- System architecture for the 5G System, table 5.7.4-1.
 
 qos:
@@ -155,6 +155,7 @@ qos:
         rx:
           sn: 12
           t-reassembly: 50
+  -
     # 5QI = 66 e.g. Non-Mission-Critical user plane Push To Talk voice
     # PDB = 100ms PER = 10^-2
     five_qi: 66
@@ -181,6 +182,7 @@ qos:
         rx:
           sn: 12
           t-reassembly: 50
+  -
     # 5QI = 67 e.g. Mission Critical Video user plane
     # PDB = 100ms PER = 10^-3
     five_qi: 67
@@ -461,6 +463,33 @@ qos:
           sn: 18
           t-reassembly: 20
           t-status-prohibit: 10
+  -
+    # 5QI = 80 e.g Low latency eMBB applications
+    # PDB = 10ms PER = 10^-6
+    five_qi: 80
+    pdcp:
+      tx:
+        sn: 12
+        discard_timer: 10
+        status_report_required: false
+      rx:
+        sn: 12
+        t_reordering: 1
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 5
+    f1u_du:
+      backoff_timer: 5
+    rlc:
+      mode: um-bidir
+      um-bidir:
+        tx:
+          sn: 12
+          queue-size: 16384
+          queue-bytes: 6172672
+        rx:
+          sn: 12
+          t-reassembly: 5
   #
   # Delay-critical Guaranteed Bitrate 5QIs
   #

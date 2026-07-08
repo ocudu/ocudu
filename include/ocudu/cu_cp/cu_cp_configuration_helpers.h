@@ -389,6 +389,30 @@ inline std::map<five_qi_t, ocucp::cu_cp_qos_config> make_default_cu_cp_qos_confi
     cfg.pdcp                      = pdcp_cfg;
     qos_list[uint_to_five_qi(70)] = cfg;
   }
+  {
+    // 5QI = 80 e.g Low Latency eMBB Applications
+    // PDB = 10ms PER = 10^-6
+    ocucp::cu_cp_qos_config cfg{};
+    pdcp_config             pdcp_cfg{};
+
+    pdcp_cfg.rb_type                       = pdcp_rb_type::drb;
+    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::um;
+    pdcp_cfg.ciphering_required            = true;
+    pdcp_cfg.integrity_protection_required = false;
+
+    // > Tx
+    pdcp_cfg.tx.sn_size                = pdcp_sn_size::size12bits;
+    pdcp_cfg.tx.discard_timer          = pdcp_discard_timer::ms10;
+    pdcp_cfg.tx.status_report_required = false;
+
+    // > Rx
+    pdcp_cfg.rx.sn_size               = pdcp_sn_size::size12bits;
+    pdcp_cfg.rx.out_of_order_delivery = false;
+    pdcp_cfg.rx.t_reordering          = pdcp_t_reordering::ms1;
+
+    cfg.pdcp                      = pdcp_cfg;
+    qos_list[uint_to_five_qi(80)] = cfg;
+  }
   //
   // Delay-critical Guaranteed Bitrate 5QIs
   //
