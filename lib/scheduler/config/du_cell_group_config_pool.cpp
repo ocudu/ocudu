@@ -27,6 +27,7 @@ static dl_time_domain_mapper make_dl_td_mapper(const ran_cell_config& cfg)
 static ul_time_domain_mapper make_ul_td_mapper(const ran_cell_config& cfg)
 {
   ul_time_domain_builder_params params;
+  params.scs     = cfg.ul_cfg_common.init_ul_bwp.generic_params.scs;
   params.cp      = cfg.ul_cfg_common.init_ul_bwp.generic_params.cp;
   params.tdd_cfg = cfg.tdd_cfg;
 
@@ -38,11 +39,9 @@ static ul_time_domain_mapper make_ul_td_mapper(const ran_cell_config& cfg)
                 cfg.tdd_cfg, cfg.ul_cfg_common.init_ul_bwp.generic_params.cp, cfg.init_bwp.pusch.min_k2);
   params.pusch_params = std::move(pusch_explicit_res);
 
-  ul_time_domain_builder_params::pucch_explicit_resources pucch_explicit_res;
-  const auto                                              dl_data_to_ul_ack =
-      time_domain_resource_helper::generate_k1_candidates(cfg.tdd_cfg, cfg.init_bwp.pucch.min_k1);
-  pucch_explicit_res.k1_candidates.assign(dl_data_to_ul_ack.begin(), dl_data_to_ul_ack.end());
-  params.pucch_params = std::move(pucch_explicit_res);
+  ul_time_domain_builder_params::pucch_auto_resources pucch_auto_res;
+  pucch_auto_res.min_k1 = cfg.init_bwp.pucch.min_k1;
+  params.pucch_params   = pucch_auto_res;
 
   return ul_time_domain_mapper(params);
 }

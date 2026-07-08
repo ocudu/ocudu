@@ -40,11 +40,11 @@ protected:
     }()),
     ues(cell_cfg.expert_cfg.ue)
   {
-    pusch_td_list_per_slot =
-        get_pusch_td_resource_indices_per_slot(cell_cfg.scs_common(),
-                                               cell_cfg.params.tdd_cfg,
-                                               cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value(),
-                                               cell_cfg.dl_data_to_ul_ack);
+    pusch_td_list_per_slot = get_pusch_td_resource_indices_per_slot(
+        cell_cfg.scs_common(),
+        cell_cfg.params.tdd_cfg,
+        cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list,
+        cell_cfg.dl_data_to_ul_ack.front());
     logger.set_level(ocudulog::basic_levels::debug);
     ocudulog::init();
 
@@ -74,9 +74,9 @@ protected:
 
   ue_repository ues;
 
-  cell_resource_allocator                                                            dummy_alloc{cell_cfg};
-  inter_slice_scheduler                                                              slice_sched{cell_cfg, ues};
-  std::vector<static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>> pusch_td_list_per_slot;
+  cell_resource_allocator                                                           dummy_alloc{cell_cfg};
+  inter_slice_scheduler                                                             slice_sched{cell_cfg, ues};
+  std::vector<static_vector<uint8_t, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>> pusch_td_list_per_slot;
 
 public:
   slot_point next_slot{to_numerology_value(cell_cfg.params.dl_cfg_common.freq_info_dl.scs_carrier_list.back().scs), 0};

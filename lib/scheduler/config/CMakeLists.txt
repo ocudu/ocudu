@@ -17,7 +17,8 @@ add_library(sched_config STATIC
         pucch_resource_generator.cpp
         time_domain_resource_helper.cpp
         rlm_helper.cpp
-        time_domain_mapper.cpp)
+        time_domain_mapper.cpp
+        ../support/pusch/pusch_td_resource_indices.cpp)
 target_link_libraries(sched_config ocudu_ran du_resource_manager)
 
 add_library(sched_config_manager OBJECT

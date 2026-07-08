@@ -12,7 +12,7 @@ std::vector<static_vector<uint8_t, 8>> ocudu::get_pucch_k1_list_per_slot(
     span<const uint8_t>                                       dl_data_to_ul_ack,
     const std::optional<tdd_ul_dl_config_common>&             tdd_cfg_common,
     const std::vector<pusch_time_domain_resource_allocation>& pusch_td_alloc_list,
-    const std::vector<static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>>&
+    const std::vector<static_vector<uint8_t, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>>&
         pusch_td_resource_indices_per_slot)
 {
   ocudu_assert(not dl_data_to_ul_ack.empty(), "dl_data_to_ul_ack cannot be empty");

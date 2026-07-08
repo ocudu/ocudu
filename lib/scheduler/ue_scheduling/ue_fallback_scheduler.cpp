@@ -983,13 +983,14 @@ ue_fallback_scheduler::ul_srb_sched_outcome ue_fallback_scheduler::schedule_ul_u
 
   // Fetch applicable PUSCH Time Domain resource index list.
   // NOTE: We run cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.has_value() sanity check in the constructor.
-  static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS> pusch_td_res_index_list =
+  constexpr bool                                                       is_fallback = true;
+  static_vector<uint8_t, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS> pusch_td_res_index_list =
       get_pusch_td_resource_indices(
           pdcch_slot,
           cell_cfg.params.tdd_cfg,
           cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list,
           cell_cfg.init_bwp.ul.td_mapper().dedicated_k1_candidates()[0],
-          dci_ul_format::f0_0);
+          is_fallback);
 
   if (is_retx) {
     ocudu_sanity_check(h_ul_retx->get_grant_params().dci_cfg_type == dci_ul_rnti_config_type::c_rnti_f0_0,
@@ -999,7 +1000,7 @@ ue_fallback_scheduler::ul_srb_sched_outcome ue_fallback_scheduler::schedule_ul_u
       u.get_pcell().get_active_ul_search_spaces(pdcch_slot, dci_ul_rnti_config_type::c_rnti_f0_0);
 
   for (const auto* ss : search_spaces) {
-    for (unsigned pusch_td_res_idx : pusch_td_res_index_list) {
+    for (uint8_t pusch_td_res_idx : pusch_td_res_index_list) {
       const pusch_time_domain_resource_allocation& pusch_td    = ss->pusch_time_domain_list[pusch_td_res_idx];
       cell_slot_resource_allocator&                pusch_alloc = res_alloc[pusch_td.k2 + cell_cfg.ntn_cs_koffset];
       const slot_point                             pusch_slot  = pusch_alloc.slot;

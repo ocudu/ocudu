@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 # Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
-
 add_subdirectory(config)
 add_subdirectory(support)
 add_subdirectory(logging)
@@ -31,7 +30,6 @@ set(SOURCES
         scheduler_factory.cpp
         scheduler_impl.cpp
         support/csi_rs_helper.cpp
-        support/pusch/pusch_td_resource_indices.cpp
         srs/srs_allocator_impl.cpp)
 
 add_library(ocudu_sched STATIC ${SOURCES}

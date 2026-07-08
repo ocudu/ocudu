@@ -8,6 +8,7 @@
 #include "ocudu/adt/static_vector.h"
 #include "ocudu/ran/pdcch/dci_format.h"
 #include "ocudu/ran/pdsch/pdsch_time_domain_resource.h"
+#include "ocudu/ran/pusch/pusch_constants.h"
 #include "ocudu/ran/pusch/pusch_time_domain_resource.h"
 #include "ocudu/ran/tdd/tdd_ul_dl_config.h"
 #include "ocudu/scheduler/config/time_domain_resource_helper.h"
@@ -40,22 +41,24 @@ struct dl_time_domain_mapper {
   /// Build dedicated BWP PDSCH TD resource info from builder parameters.
   explicit dl_time_domain_mapper(const dl_time_domain_builder_params& params);
 
-  span<const pdsch_time_domain_resource_allocation> resources() const { return pdsch_td_res_list; }
+  /// Retrieve the list of available PDSCH time-domain resource allocations for the BWP.
+  span<const pdsch_time_domain_resource_allocation> pdsch_td_resources() const { return pdsch_td_res_list; }
 
-  /// \brief Get the PDSCH TD resource candidates for a PDSCH scheduled by a PDCCH in the given slot index.
+  /// \brief Get the list of indices into \ref pdsch_td_resources() that are applicable PDSCH TD resource candidates
+  /// for a PDSCH scheduled by a PDCCH in the given slot index.
   /// \remark Each resource ends at the last DL symbol of the slot: the number of symbols per slot in a full DL slot,
   /// or the last DL symbol in a special slot.
-  span<const pdsch_time_domain_resource_allocation> resources(unsigned pdcch_slot_index) const
+  span<const uint8_t> pdsch_td_res_indices(unsigned pdcch_slot_index) const
   {
-    return pdsch_td_res_per_slot[pdcch_slot_index % pdsch_td_res_per_slot.size()];
+    return pdsch_td_res_indices_per_slot[pdcch_slot_index % pdsch_td_res_indices_per_slot.size()];
   }
 
 private:
   /// \brief List of available PDSCH time-domain resource allocations for the BWP.
   std::vector<pdsch_time_domain_resource_allocation> pdsch_td_res_list;
 
-  /// List of PDSCH TD resource candidates for a PDSCH scheduled in each slot within the TDD period.
-  std::vector<std::vector<pdsch_time_domain_resource_allocation>> pdsch_td_res_per_slot;
+  /// List of indices into \c pdsch_td_res_list applicable for a PDSCH scheduled in each slot within the TDD period.
+  std::vector<std::vector<uint8_t>> pdsch_td_res_indices_per_slot;
 };
 
 /// Parameters for building UL (PUSCH and PUCCH dl-DataToUL-ACK / k1) TD resource info.
@@ -79,6 +82,8 @@ struct ul_time_domain_builder_params {
     std::vector<uint8_t> k1_candidates;
   };
 
+  /// SCS used in the BWP.
+  subcarrier_spacing scs = subcarrier_spacing::kHz15;
   /// Cyclic prefix used in the BWP.
   cyclic_prefix cp = cyclic_prefix::NORMAL;
   /// TDD configuration common to all UEs in the cell/BWP.
@@ -95,12 +100,13 @@ struct ul_time_domain_mapper {
   explicit ul_time_domain_mapper(const ul_time_domain_builder_params& params);
 
   /// Retrieve the list of available PUSCH time-domain resource allocations for the BWP.
-  span<const pusch_time_domain_resource_allocation> pusch_resources() const { return pusch_td_res_list; }
+  span<const pusch_time_domain_resource_allocation> pusch_td_resources() const { return pusch_td_res_list; }
 
-  /// \brief Get the list of PUSCH TD resource candidates for a given slot index.
-  span<const pusch_time_domain_resource_allocation> pusch_resources(unsigned pdcch_slot_index) const
+  /// \brief Get the list of indices into \ref pusch_td_resources() that are applicable PUSCH TD resource candidates for
+  /// a given PDCCH slot index.
+  span<const uint8_t> pusch_td_res_indices(unsigned pdcch_slot_index) const
   {
-    return pusch_td_res_per_slot[pdcch_slot_index % pusch_td_res_per_slot.size()];
+    return pusch_td_res_indices_per_slot[pdcch_slot_index % pusch_td_res_indices_per_slot.size()];
   }
 
   /// Retrieve the list of k1 candidates for PDSCH-to-HARQ timing used with UE-dedicated DCI.
@@ -150,9 +156,9 @@ private:
   /// Max size is pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS.
   std::vector<pusch_time_domain_resource_allocation> pusch_td_res_list;
 
-  /// List of PUSCH TD resource candidates for each slot within the TDD period.
+  /// List of indices into \c pusch_td_res_list applicable for each slot within the TDD period.
   /// Note: Only used when TDD is enabled.
-  std::vector<std::vector<pusch_time_domain_resource_allocation>> pusch_td_res_per_slot;
+  std::vector<static_vector<uint8_t, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>> pusch_td_res_indices_per_slot;
 
   /// List of k1 candidates for PDSCH-to-HARQ timing used with UE-dedicated DCI.
   static_vector<uint8_t, pucch_td_helper::MAX_K1_CANDIDATES> dedicated_k1_list;

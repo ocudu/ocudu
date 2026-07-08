@@ -32,11 +32,11 @@ ue_cell_grid_allocator::ue_cell_grid_allocator(const scheduler_ue_expert_config&
   dl_grants.reserve(MAX_UE_PDUS_PER_SLOT);
   ul_grants.reserve(MAX_PUSCH_PDUS_PER_SLOT);
 
-  const auto pusch_list =
-      get_pusch_td_resource_indices_per_slot(cell_alloc.cfg.scs_common(),
-                                             cell_alloc.cfg.params.tdd_cfg,
-                                             cell_alloc.cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value(),
-                                             cell_alloc.cfg.dl_data_to_ul_ack);
+  const auto pusch_list = get_pusch_td_resource_indices_per_slot(
+      cell_alloc.cfg.scs_common(),
+      cell_alloc.cfg.params.tdd_cfg,
+      cell_alloc.cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list,
+      cell_alloc.cfg.dl_data_to_ul_ack.front());
   k1s_per_dl_slot = get_pucch_k1_list_per_slot(
       cell_alloc.cfg.dl_data_to_ul_ack,
       cell_alloc.cfg.params.tdd_cfg,

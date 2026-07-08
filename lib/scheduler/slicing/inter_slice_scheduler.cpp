@@ -59,11 +59,11 @@ inter_slice_scheduler::inter_slice_scheduler(const cell_configuration& cell_cfg_
 
   // Generate the slot ring context.
   ocudu_assert(cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.has_value(), "Expected PUSCH config common");
-  auto pusch_list =
-      get_pusch_td_resource_indices_per_slot(cell_cfg.scs_common(),
-                                             cell_cfg.params.tdd_cfg,
-                                             cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value(),
-                                             cell_cfg.dl_data_to_ul_ack);
+  auto pusch_list = get_pusch_td_resource_indices_per_slot(
+      cell_cfg.scs_common(),
+      cell_cfg.params.tdd_cfg,
+      cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list,
+      cell_cfg.dl_data_to_ul_ack.front());
   slot_ring.resize(pusch_list.size());
   for (unsigned i = 0, sz = pusch_list.size(); i != sz; ++i) {
     slot_ring[i].valid_pusch_td_list.assign(pusch_list[i].begin(), pusch_list[i].end());

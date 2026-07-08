@@ -22,13 +22,13 @@ static unsigned compute_slot_offset(const du_cell_config& cell_cfg)
   auto dl_data_to_ul_ack =
       time_domain_resource_helper::generate_k1_candidates(cell_cfg.ran.tdd_cfg, cell_cfg.ran.init_bwp.pucch.min_k1);
 
-  std::vector<static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>> pusch_td_list_per_slot =
+  const auto& pusch_td_alloc_list = cell_cfg.ran.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
+
+  std::vector<static_vector<uint8_t, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>> pusch_td_list_per_slot =
       get_pusch_td_resource_indices_per_slot(cell_cfg.ran.dl_cfg_common.init_dl_bwp.generic_params.scs,
                                              cell_cfg.ran.tdd_cfg,
-                                             cell_cfg.ran.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value(),
-                                             dl_data_to_ul_ack);
-
-  const auto& pusch_td_alloc_list = cell_cfg.ran.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
+                                             pusch_td_alloc_list,
+                                             dl_data_to_ul_ack.front());
 
   // Find the maximum k2 used for UL scheduling.
   unsigned max_used_k2 = 0;

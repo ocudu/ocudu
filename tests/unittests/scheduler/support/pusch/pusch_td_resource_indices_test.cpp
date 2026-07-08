@@ -46,11 +46,11 @@ protected:
     // Generate the list to verify.
     ocudu_assert(cell_cfg->params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.has_value(),
                  "PUSCH Config Common expected");
-    pusch_td_res_indxes_list_per_slot =
-        get_pusch_td_resource_indices_per_slot(cell_cfg->scs_common(),
-                                               cell_cfg->params.tdd_cfg,
-                                               cell_cfg->params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value(),
-                                               cell_cfg->dl_data_to_ul_ack);
+    pusch_td_res_indxes_list_per_slot = get_pusch_td_resource_indices_per_slot(
+        cell_cfg->scs_common(),
+        cell_cfg->params.tdd_cfg,
+        cell_cfg->params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list,
+        cell_cfg->dl_data_to_ul_ack.front());
 
     // Populate slot indexes.
     if (cell_cfg->is_tdd()) {
@@ -81,7 +81,7 @@ protected:
   std::vector<unsigned> ul_slot_indexes;
 
   // List circularly indexed by slot with the list of applicable PUSCH Time Domain resource indexes per slot.
-  std::vector<static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>> pusch_td_res_indxes_list_per_slot;
+  std::vector<static_vector<uint8_t, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>> pusch_td_res_indxes_list_per_slot;
 };
 
 // This test is only for DL-heavy TDD pattern.
@@ -150,7 +150,7 @@ TEST_P(pusch_td_resource_indices_test, all_ul_slots_have_one_pdcch_slot_to_sched
   while (ul_slot_idx_it != ul_slot_indexes.end()) {
     bool pdcch_slot_found = false;
     for (const auto dl_slot_idx : dl_slot_indexes) {
-      span<const unsigned> pusch_td_res_indxes_list = pusch_td_res_indxes_list_per_slot[dl_slot_idx];
+      span<const uint8_t> pusch_td_res_indxes_list = pusch_td_res_indxes_list_per_slot[dl_slot_idx];
       pdcch_slot_found =
           std::any_of(pusch_td_res_indxes_list.begin(),
                       pusch_td_res_indxes_list.end(),
