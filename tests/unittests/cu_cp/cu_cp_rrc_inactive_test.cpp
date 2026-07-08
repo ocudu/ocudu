@@ -1120,6 +1120,47 @@ TEST_F(cu_cp_rrc_inactive_test, when_rrc_resume_request_with_cause_rna_upd_is_re
   ASSERT_EQ(report.dus[0].rrc_metrics.max_nof_inactive_rrc_connections, 1);
 }
 
+TEST_F(cu_cp_rrc_inactive_test, when_ue_resumes_after_rna_update_resume_then_second_resume_succeeds)
+{
+  // Connect UE with RRC Inactive support.
+  connect_ue_with_rrc_inactive_support();
+
+  // Inject Inactivity Notification and await Bearer Context Modification Request.
+  ASSERT_TRUE(send_ue_level_bearer_context_inactivity_notification_and_await_bearer_context_modification_request());
+
+  // Send Bearer Context Modification Response and await UE Context Release Command.
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_ue_context_release_command());
+
+  // Send F1AP UE Context Release Complete.
+  ASSERT_TRUE(send_f1ap_ue_context_release_complete());
+
+  // Resume the UE with cause RNA Update. The UE is assigned crnti_2 for this resume attempt, even though no F1AP
+  // UE Context Setup is performed for this resume cause.
+  ASSERT_TRUE(send_init_ul_rrc_message_transfer_with_rna_upd_and_await_ue_context_release_command());
+
+  // Send F1AP UE Context Release Complete.
+  ASSERT_TRUE(send_f1ap_ue_context_release_complete(int_to_gnb_du_ue_f1ap_id(1)));
+
+  // Check metrics for RRC inactive transition.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.dus[0].rrc_metrics.mean_nof_inactive_rrc_connections, 1);
+  ASSERT_EQ(report.dus[0].rrc_metrics.max_nof_inactive_rrc_connections, 1);
+
+  // Resume the UE again, this time with cause mo_data. The UE computes its ResumeMAC-I using the C-RNTI it was
+  // assigned during the RNA update resume above (crnti_2). If the CU-CP did not update its record of the UE's
+  // C-RNTI after the RNA update resume, this ResumeMAC-I verification would incorrectly fail.
+  gnb_du_ue_f1ap_id_t du_ue_id_3 = int_to_gnb_du_ue_f1ap_id(2);
+  rnti_t              crnti_3    = to_rnti(0x4603);
+  ASSERT_TRUE(
+      resume_ue(du_ue_id_3, crnti_3, 0x36001, "1010101010011111", make_byte_buffer("00002040001dca1c36").value()));
+
+  // Check metrics for successful RRC resume.
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.dus[0].rrc_metrics.attempted_rrc_connection_resumes.get_count(resume_cause_t::rna_upd), 1);
+  ASSERT_EQ(report.dus[0].rrc_metrics.attempted_rrc_connection_resumes.get_count(resume_cause_t::mo_data), 1);
+  ASSERT_EQ(report.dus[0].rrc_metrics.successful_rrc_connection_resumes.get_count(resume_cause_t::mo_data), 1);
+}
+
 //----------------------------------------------------------------------------------//
 // RAN paging                                                                       //
 //----------------------------------------------------------------------------------//
