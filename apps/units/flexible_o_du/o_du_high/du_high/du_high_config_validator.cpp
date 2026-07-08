@@ -516,12 +516,10 @@ static bool validate_ntn_config(const du_high_unit_cell_ntn_config& ntn_cfg)
 
   if (!ntn_cfg.satellite_idx) {
     // No global satellite reference: require inline ephemeris.
-    if (const auto* ecef = std::get_if<ecef_coordinates_t>(&ntn_cfg.ephemeris_info)) {
-      if (ecef->position_x == 0 and ecef->position_y == 0 and ecef->position_z == 0 and ecef->velocity_vx == 0 and
-          ecef->velocity_vy == 0 and ecef->velocity_vz == 0) {
-        fmt::print("Ephemeris info has to be provided (in ECEF State Vector or ECI Orbital Elements format).\n");
-        valid = false;
-      }
+    if (!ntn_cfg.epoch_timestamp || !ntn_cfg.ephemeris_info) {
+      fmt::print("ntn: either satellite_idx or inline ephemeris definition (epoch_timestamp and ephemeris_info) must "
+                 "be provided.\n");
+      valid = false;
     }
   } else {
     // satellite_idx set: forbid inline satellite data.

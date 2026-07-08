@@ -206,7 +206,7 @@ generate_ntn_configuration_manager_config(const gnb_id_t&                       
         sat_idx = add_satellite_config(out_cfg,
                                        next_satellite_idx,
                                        ntn_cfg.epoch_timestamp,
-                                       ntn_cfg.ephemeris_info,
+                                       *ntn_cfg.ephemeris_info,
                                        ntn_cfg.ntn_gateway_location,
                                        ntn_cfg.ta_info,
                                        ntn_cfg.propagator_type);

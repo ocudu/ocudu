@@ -99,7 +99,7 @@ struct du_high_unit_cell_ntn_config {
   std::optional<bool> use_state_vector;
   /// This field provides satellite ephemeris either in format of position and velocity state vector or in format of
   /// orbital parameters.
-  ntn_ephemeris_info_t ephemeris_info;
+  std::optional<ntn_ephemeris_info_t> ephemeris_info;
   /// Network-controlled common timing advanced value, and it may include any timing offset considered necessary by the
   /// network.
   std::optional<ta_info_t> ta_info;
