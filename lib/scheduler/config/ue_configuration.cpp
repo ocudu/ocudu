@@ -5,10 +5,10 @@
 #include "ue_configuration.h"
 #include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
-#include "../support/pucch/pucch_k1_helper.h"
 #include "../support/pusch/pusch_default_time_allocation.h"
 #include "../support/pusch/pusch_resource_allocation.h"
 #include "sched_config_params.h"
+#include "time_domain_mapper.h"
 #include "ocudu/ran/pdcch/dci_format.h"
 #include "ocudu/ran/resource_allocation/vrb_to_prb.h"
 #include "ocudu/support/math/math_utils.h"
@@ -265,11 +265,12 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
   }
 
   // Fill out parameters for Format 1_1.
-  dci_sz_cfg.nof_dl_bwp_rrc         = ue_cell_cfg.bwps().size() - (ue_cell_cfg.has_bwp_id(to_bwp_id(0)) ? 1 : 0);
-  dci_sz_cfg.nof_dl_time_domain_res = ue_cell_cfg.search_space(ss_id).pdsch_time_domain_list.size();
-  dci_sz_cfg.nof_aperiodic_zp_csi   = 0;
-  dci_sz_cfg.nof_pdsch_ack_timings =
-      get_k1_candidates(ss_info.get_dl_dci_format(), ue_cell_cfg.cell_cfg_common.dl_data_to_ul_ack).size();
+  dci_sz_cfg.nof_dl_bwp_rrc            = ue_cell_cfg.bwps().size() - (ue_cell_cfg.has_bwp_id(to_bwp_id(0)) ? 1 : 0);
+  dci_sz_cfg.nof_dl_time_domain_res    = ue_cell_cfg.search_space(ss_id).pdsch_time_domain_list.size();
+  dci_sz_cfg.nof_aperiodic_zp_csi      = 0;
+  dci_sz_cfg.nof_pdsch_ack_timings     = ss_info.get_dl_dci_format() == dci_dl_format::f1_0
+                                             ? pucch_td_helper::get_common_k1_candidates().size()
+                                             : active_bwp.ul.pucch_td_mapper().dedicated_k1_candidates().size();
   dci_sz_cfg.dynamic_prb_bundling      = false;
   dci_sz_cfg.rm_pattern_group1         = false;
   dci_sz_cfg.rm_pattern_group2         = false;

@@ -39,26 +39,6 @@ get_pusch_td_resource_indices(slot_point                                    pdcc
                               const search_space_info*                      ss_info     = nullptr,
                               bool                                          is_fallback = false);
 
-/// \brief Returns the list circularly indexed by slot containing the list of applicable PUSCH Time Domain resource
-/// indexes per slot, only for TDD UL-heavy pattern.
-///
-/// This function ensures that UL PDCCH scheduling the PUSCH are fairly distributed across DL slots.
-///
-/// \param[in] scs SCS common value.
-/// \param[in] tdd_cfg_common TDD configuration.
-/// \param[in] pusch_cfg_common PUSCH common configuration.
-/// \param[in] dl_data_to_ul_ack List of viable k1 values.
-/// \param[in] ss_info SearchSpace information.
-///
-/// \remark The list of applicable PUSCH Time Domain resources would be empty for UL slots as UL PDCCHs are scheduled
-/// only over DL slots.
-std::vector<static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>>
-get_fairly_distributed_pusch_td_resource_indices(subcarrier_spacing             scs,
-                                                 const tdd_ul_dl_config_common& tdd_cfg_common,
-                                                 const pusch_config_common&     pusch_cfg_common,
-                                                 span<const uint8_t>            dl_data_to_ul_ack,
-                                                 const search_space_info*       ss_info = nullptr);
-
 /// Returns the list circularly indexed by slot containing the list of applicable PUSCH Time Domain resource indexes per
 /// slot.
 ///

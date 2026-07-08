@@ -7,6 +7,7 @@
 #include "ocudu/adt/span.h"
 #include "ocudu/adt/static_vector.h"
 #include "ocudu/ran/pdsch/pdsch_time_domain_resource.h"
+#include "ocudu/ran/pucch/pucch_td_helper.h"
 #include "ocudu/ran/pusch/pusch_time_domain_resource.h"
 #include "ocudu/ran/tdd/tdd_ul_dl_config.h"
 #include <vector>
@@ -18,14 +19,11 @@ struct pdcch_config;
 
 namespace time_domain_resource_helper {
 
-/// Maximum K1 candidates in a dl-DataToUL-ACK list.
-static constexpr unsigned MAX_K1_CANDIDATES = 8;
-
 /// \brief Generate the list of available k1 candidates for PDSCH-to-HARQ timing for TDD operation.
-static_vector<uint8_t, MAX_K1_CANDIDATES> generate_k1_candidates(const tdd_ul_dl_config_common& tdd_cfg,
-                                                                 uint8_t                        min_k1);
-static_vector<uint8_t, MAX_K1_CANDIDATES> generate_k1_candidates(const std::optional<tdd_ul_dl_config_common>& tdd_cfg,
-                                                                 uint8_t                                       min_k1);
+static_vector<uint8_t, pucch_td_helper::MAX_K1_CANDIDATES>
+generate_k1_candidates(const tdd_ul_dl_config_common& tdd_cfg, uint8_t min_k1);
+static_vector<uint8_t, pucch_td_helper::MAX_K1_CANDIDATES>
+generate_k1_candidates(const std::optional<tdd_ul_dl_config_common>& tdd_cfg, uint8_t min_k1);
 
 /// \brief Generate the common (fallback) k1 candidates for PDSCH-to-HARQ timing, as per TS38.213, 9.1.2.1.
 /// \remark The returned values are the fixed set {min_k1,...,8}, independent of the cell configuration.

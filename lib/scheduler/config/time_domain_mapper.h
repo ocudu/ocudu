@@ -6,6 +6,7 @@
 
 #include "ocudu/adt/span.h"
 #include "ocudu/adt/static_vector.h"
+#include "ocudu/ran/pdcch/dci_format.h"
 #include "ocudu/ran/pdsch/pdsch_time_domain_resource.h"
 #include "ocudu/ran/pusch/pusch_time_domain_resource.h"
 #include "ocudu/ran/tdd/tdd_ul_dl_config.h"
@@ -127,7 +128,18 @@ struct pucch_time_domain_mapper {
   explicit pucch_time_domain_mapper(const pucch_time_domain_builder_params& params);
 
   /// Retrieve the list of k1 candidates for PDSCH-to-HARQ timing used with UE-dedicated DCI.
-  span<const uint8_t> k1_candidates() const { return dedicated_k1_list; }
+  span<const uint8_t> dedicated_k1_candidates() const { return dedicated_k1_list; }
+
+  /// \brief Retrieve the k1 candidates for PDSCH-to-HARQ timing appropriate for the given DCI DL format.
+  /// \remark Returns the common (fallback) candidates for DCI format 1_0, and the dedicated ones otherwise.
+  span<const uint8_t> k1_candidates(dci_dl_format dci_format) const
+  {
+    return dci_format == dci_dl_format::f1_0 ? common_k1_candidates() : dedicated_k1_candidates();
+  }
+
+  /// \brief Retrieve the common (fallback) k1 candidates for PDSCH-to-HARQ timing, as per TS38.213, 9.1.2.1.
+  /// \remark Unlike \ref common_k1_candidates(unsigned) const, this is not filtered per slot.
+  span<const uint8_t> common_k1_candidates() const { return common_k1_list; }
 
   /// \brief Get the common (fallback) k1 candidates valid for a PDSCH transmitted in the given slot index.
   /// \remark The returned k1 values point to full UL slots where the corresponding HARQ-ACK can be sent.
@@ -143,16 +155,28 @@ struct pucch_time_domain_mapper {
     return dedicated_k1_per_slot[pdsch_slot_index % dedicated_k1_per_slot.size()];
   }
 
+  /// \brief Retrieve the k1 candidates for PDSCH-to-HARQ timing appropriate for the given DCI DL format in the given
+  /// slot index.
+  /// \remark Returns the common (fallback) candidates for DCI format 1_0, and the dedicated ones otherwise.
+  span<const uint8_t> k1_candidates(dci_dl_format dci_format, unsigned pdsch_slot_index) const
+  {
+    return dci_format == dci_dl_format::f1_0 ? common_k1_candidates(pdsch_slot_index)
+                                             : dedicated_k1_candidates(pdsch_slot_index);
+  }
+
 private:
   /// List of k1 candidates for PDSCH-to-HARQ timing used with UE-dedicated DCI.
-  static_vector<uint8_t, time_domain_resource_helper::MAX_K1_CANDIDATES> dedicated_k1_list;
+  static_vector<uint8_t, pucch_td_helper::MAX_K1_CANDIDATES> dedicated_k1_list;
+
+  /// List of common (fallback) k1 candidates for PDSCH-to-HARQ timing, as per TS38.213, 9.1.2.1.
+  span<const uint8_t> common_k1_list;
 
   /// List of common (fallback) k1 candidates valid for a PDSCH transmitted in each slot within the TDD period.
-  std::vector<static_vector<uint8_t, time_domain_resource_helper::MAX_K1_CANDIDATES>> common_k1_per_slot;
+  std::vector<static_vector<uint8_t, pucch_td_helper::MAX_K1_CANDIDATES>> common_k1_per_slot;
 
   /// List of dedicated k1 candidates valid for a PDSCH transmitted in each slot within the TDD period.
   /// Note: Only used when TDD is enabled.
-  std::vector<static_vector<uint8_t, time_domain_resource_helper::MAX_K1_CANDIDATES>> dedicated_k1_per_slot;
+  std::vector<static_vector<uint8_t, pucch_td_helper::MAX_K1_CANDIDATES>> dedicated_k1_per_slot;
 };
 
 } // namespace ocudu

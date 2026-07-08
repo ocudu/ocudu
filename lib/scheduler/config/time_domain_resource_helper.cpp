@@ -34,7 +34,8 @@ static_vector<uint8_t, 8> time_domain_resource_helper::generate_k1_candidates(co
   unsigned             prev_size = 0;
   do {
     prev_size = result_set.size();
-    for (unsigned idx = 0, dl_idx = 0; idx < tdd_period and result_set.size() < MAX_K1_CANDIDATES; ++idx) {
+    for (unsigned idx = 0, dl_idx = 0; idx < tdd_period and result_set.size() < pucch_td_helper::MAX_K1_CANDIDATES;
+         ++idx) {
       if (has_active_tdd_dl_symbols(tdd_cfg, idx)) {
         for (unsigned k1 = next_k1_for_dl_slot[dl_idx]; k1 <= SCHEDULER_MAX_K1; ++k1) {
           if (has_active_tdd_ul_symbols(tdd_cfg, idx + k1)) {
@@ -62,12 +63,6 @@ time_domain_resource_helper::generate_k1_candidates(const std::optional<tdd_ul_d
     return generate_k1_candidates(*tdd_cfg, min_k1);
   }
   return {min_k1};
-}
-
-span<const uint8_t> time_domain_resource_helper::generate_common_k1_candidates(uint8_t min_k1)
-{
-  static constexpr std::array<uint8_t, MAX_K1_CANDIDATES> pool = {1, 2, 3, 4, 5, 6, 7, 8};
-  return span<const uint8_t>(pool.data() + (min_k1 - 1), pool.size() - (min_k1 - 1));
 }
 
 /// Helper function to determine the start of the PDSCH symbols, considering a CORESET config.

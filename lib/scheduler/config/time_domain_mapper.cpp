@@ -104,19 +104,25 @@ pusch_time_domain_mapper::pusch_time_domain_mapper(const pusch_time_domain_build
   pusch_td_res_per_slot = generate_pusch_td_res_per_tdd_slot(pusch_td_res_list, params.tdd_cfg);
 }
 
-static std::vector<static_vector<uint8_t, time_domain_resource_helper::MAX_K1_CANDIDATES>>
+/// \brief Computes the list of valid PUCCH k1 values that can be used for each PDSCH slot.
+///
+/// For TDD, the returned vector is circularly indexed by slot within the TDD period (size = TDD period length).
+/// For FDD, the vector contains a single entry (list) that applies to every PDSCH slot.
+///
+/// \param[in] k1_candidates List of candidate k1 values (dl-DataToUL-ACK), in ascending order.
+/// \param[in] tdd_cfg       TDD UL/DL configuration. If absent, the cell operates in FDD mode.
+static std::vector<static_vector<uint8_t, pucch_td_helper::MAX_K1_CANDIDATES>>
 generate_k1_candidates_per_tdd_slot(span<const uint8_t>                           k1_candidates,
                                     const std::optional<tdd_ul_dl_config_common>& tdd_cfg)
 {
   if (not tdd_cfg.has_value()) {
     // In FDD every slot is UL, so all candidates are valid.
-    return {static_vector<uint8_t, time_domain_resource_helper::MAX_K1_CANDIDATES>(k1_candidates.begin(),
-                                                                                   k1_candidates.end())};
+    return {static_vector<uint8_t, pucch_td_helper::MAX_K1_CANDIDATES>(k1_candidates.begin(), k1_candidates.end())};
   }
 
   const tdd_ul_dl_config_common& tdd              = *tdd_cfg;
   const unsigned                 tdd_period_slots = nof_slots_per_tdd_period(tdd);
-  std::vector<static_vector<uint8_t, time_domain_resource_helper::MAX_K1_CANDIDATES>> result(tdd_period_slots);
+  std::vector<static_vector<uint8_t, pucch_td_helper::MAX_K1_CANDIDATES>> result(tdd_period_slots);
 
   for (unsigned slot_idx = 0; slot_idx < tdd_period_slots; ++slot_idx) {
     if (not has_active_tdd_dl_symbols(tdd, slot_idx)) {
@@ -146,15 +152,15 @@ pucch_time_domain_mapper::pucch_time_domain_mapper(const pucch_time_domain_build
   } else {
     const auto& explicit_res = std::get<builder_params::explicit_resources>(params.params);
     ocudu_assert(not explicit_res.k1_candidates.empty(), "Explicit k1 candidate list must not be empty.");
-    ocudu_assert(explicit_res.k1_candidates.size() <= time_domain_resource_helper::MAX_K1_CANDIDATES,
+    ocudu_assert(explicit_res.k1_candidates.size() <= pucch_td_helper::MAX_K1_CANDIDATES,
                  "Number of explicit k1 candidates ({}) exceeds the maximum ({}).",
                  explicit_res.k1_candidates.size(),
-                 time_domain_resource_helper::MAX_K1_CANDIDATES);
+                 pucch_td_helper::MAX_K1_CANDIDATES);
     dedicated_k1_list.assign(explicit_res.k1_candidates.begin(), explicit_res.k1_candidates.end());
   }
 
   // Generate the dedicated and common k1 candidates valid for a PDSCH transmitted in each slot.
-  const auto common_k1s = time_domain_resource_helper::generate_common_k1_candidates(common_min_k1);
+  common_k1_list        = pucch_td_helper::get_common_k1_candidates(common_min_k1);
   dedicated_k1_per_slot = generate_k1_candidates_per_tdd_slot(dedicated_k1_list, params.tdd_cfg);
-  common_k1_per_slot    = generate_k1_candidates_per_tdd_slot(common_k1s, params.tdd_cfg);
+  common_k1_per_slot    = generate_k1_candidates_per_tdd_slot(common_k1_list, params.tdd_cfg);
 }

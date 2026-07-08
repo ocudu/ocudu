@@ -3,12 +3,12 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "cell_configuration.h"
+#include "time_domain_mapper.h"
 #include "ocudu/ran/band_helper.h"
 #include "ocudu/ran/resource_block.h"
 #include "ocudu/scheduler/config/csi_helper.h"
 #include "ocudu/scheduler/config/ran_cell_config_helper.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
-#include "ocudu/scheduler/config/time_domain_resource_helper.h"
 
 using namespace ocudu;
 
@@ -48,8 +48,8 @@ cell_configuration::cell_configuration(const scheduler_expert_config&           
   nof_slots_per_frame(get_nof_slots_per_subframe(scs_common()) * NOF_SUBFRAMES_PER_FRAME),
   zp_csi_rs_list(make_zp_csi_rs_list(params)),
   nzp_csi_rs_list(make_nzp_csi_rs_list(params)),
-  dl_data_to_ul_ack(time_domain_resource_helper::generate_k1_candidates(params.tdd_cfg, params.init_bwp.pucch.min_k1)),
   init_bwp(init_bwp_),
+  dl_data_to_ul_ack(init_bwp.ul.pucch_td_mapper().dedicated_k1_candidates()),
   // NTN parameters.
   ntn_cs_koffset(params.ntn_params.has_value()
                      ? params.ntn_params->ntn_cfg.cell_specific_koffset.value_or(std::chrono::milliseconds{0}).count() *

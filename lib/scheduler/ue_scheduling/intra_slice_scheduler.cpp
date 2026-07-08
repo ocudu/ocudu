@@ -842,6 +842,8 @@ void intra_slice_scheduler::update_used_dl_vrbs(const dl_ran_slice_candidate& sl
 
   // [Implementation defined] We use the common PDSCH TD resources as a reference for the computation of RBs
   // unavailable for PDSCH. This assumes that these resources are not colliding with PDCCH.
+  // Note: It is not a problem if the symbols go beyond the DL symbols in the special slot, because UL is reserved in
+  // a separate grid.
   const auto&              init_dl_bwp      = cell_alloc.cfg.params.dl_cfg_common.init_dl_bwp;
   const ofdm_symbol_range& symbols_to_check = init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].symbols;
 

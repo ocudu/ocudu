@@ -4,6 +4,7 @@
 
 #include "dci_builder.h"
 #include "../cell/cell_harq_manager.h"
+#include "../config/time_domain_mapper.h"
 #include "pucch/pucch_k1_helper.h"
 #include "ocudu/ran/pdcch/dci_packing.h"
 #include "ocudu/ran/pdcch/search_space.h"
@@ -211,13 +212,13 @@ void ocudu::build_dci_f1_1_c_rnti(dci_dl_info&                  dci,
 {
   const search_space_info& ss_info = ue_cell_cfg.search_space(ss_id);
   ocudu_assert(not ss_info.cfg->is_common_search_space(), "SearchSpace must be of type UE-Specific SearchSpace");
+  ocudu_sanity_check(ss_info.get_dl_dci_format() == dci_dl_format::f1_1, "Invalid DCI format");
 
   // TODO: Update the value based on nof. CWs enabled.
   static constexpr bool are_both_cws_enabled = false;
 
   const bwp_configuration& active_dl_bwp = ss_info.bwp->dl.cfg();
-  const auto               k1_candidates =
-      get_k1_candidates(ss_info.get_dl_dci_format(), ue_cell_cfg.cell_cfg_common.dl_data_to_ul_ack);
+  const auto               k1_candidates = ss_info.bwp->ul.pucch_td_mapper().dedicated_k1_candidates();
 
   dci_1_1_configuration& f1_1 = dci.set_c_rnti_f1_1();
 
