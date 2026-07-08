@@ -193,108 +193,134 @@ generate_ntn_configuration_manager_config(const gnb_id_t&                       
     }
   }
 
+  // Resolve satellite_idx for every serving cell, sat-switch target and neighbor cell: reuse the global satellite
+  // if satellite_idx is set, else create one inline (1-to-1). After this loop, satellite_idx is guaranteed set
+  // wherever an NTN config is present.
+  std::vector<std::optional<du_high_unit_cell_ntn_config>> resolved_ntn_cfgs(du_hi_cells.size());
   for (unsigned phy_sector_idx = 0; phy_sector_idx != du_hi_cells.size(); ++phy_sector_idx) {
     const auto& cell_cfg = du_hi_cells[phy_sector_idx].cell;
-    if (cell_cfg.ntn_cfg) {
-      const auto& ntn_cfg = *cell_cfg.ntn_cfg;
+    if (!cell_cfg.ntn_cfg) {
+      continue;
+    }
+    du_high_unit_cell_ntn_config ntn_cfg = *cell_cfg.ntn_cfg;
 
-      // Build satellite config: reuse global satellite if satellite_idx is set, else create inline (1-to-1).
-      unsigned sat_idx;
-      if (ntn_cfg.satellite_idx) {
-        sat_idx = *ntn_cfg.satellite_idx;
+    if (!ntn_cfg.satellite_idx) {
+      if (ntn_cfg.epoch_timestamp && ntn_cfg.ephemeris_info) {
+        ntn_cfg.satellite_idx = add_satellite_config(out_cfg,
+                                                     next_satellite_idx,
+                                                     ntn_cfg.epoch_timestamp,
+                                                     *ntn_cfg.ephemeris_info,
+                                                     ntn_cfg.ntn_gateway_location,
+                                                     ntn_cfg.ta_info,
+                                                     ntn_cfg.propagator_type);
       } else {
-        sat_idx = add_satellite_config(out_cfg,
-                                       next_satellite_idx,
-                                       ntn_cfg.epoch_timestamp,
-                                       *ntn_cfg.ephemeris_info,
-                                       ntn_cfg.ntn_gateway_location,
-                                       ntn_cfg.ta_info,
-                                       ntn_cfg.propagator_type);
+        report_error("cells[{}].ntn: either satellite_idx or inline ephemeris definition (epoch_timestamp and "
+                     "ephemeris_info) must be provided",
+                     phy_sector_idx);
       }
+    }
 
-      // Build cell config.
-      auto&                      out_cell = out_cfg.cells.emplace_back();
-      expected<plmn_identity>    plmn     = plmn_identity::parse(cell_cfg.plmn);
-      expected<nr_cell_identity> nci      = nr_cell_identity::create(gnb_id, cell_cfg.sector_id.value());
-      if (not plmn) {
-        report_error("Invalid PLMN: {}", cell_cfg.plmn);
-      }
-      if (not nci) {
-        report_error("Invalid NR-NCI");
-      }
-      out_cell.sector_id       = phy_sector_idx;
-      out_cell.nr_cgi.plmn_id  = plmn.value();
-      out_cell.nr_cgi.nci      = nci.value();
-      out_cell.satellite_index = sat_idx;
-      out_cell.ntn_cfg         = convert_ntn_config_to_serving_cell_config(ntn_cfg);
-
-      // Build sat-switch target satellite (if configured).
-      if (ntn_cfg.sat_switch_with_resync) {
-        const auto& sat_sw = *ntn_cfg.sat_switch_with_resync;
-        unsigned    sw_sat_idx;
-        if (sat_sw.satellite_idx) {
-          sw_sat_idx = *sat_sw.satellite_idx;
+    if (ntn_cfg.sat_switch_with_resync) {
+      auto& sat_sw = *ntn_cfg.sat_switch_with_resync;
+      if (!sat_sw.satellite_idx) {
+        if (sat_sw.epoch_timestamp && sat_sw.ephemeris_info) {
+          sat_sw.satellite_idx = add_satellite_config(out_cfg,
+                                                      next_satellite_idx,
+                                                      sat_sw.epoch_timestamp,
+                                                      *sat_sw.ephemeris_info,
+                                                      sat_sw.gateway_location,
+                                                      std::nullopt,
+                                                      ntn_cfg.propagator_type);
         } else {
-          sw_sat_idx = add_satellite_config(out_cfg,
-                                            next_satellite_idx,
-                                            sat_sw.epoch_timestamp,
-                                            *sat_sw.ephemeris_info,
-                                            sat_sw.gateway_location,
-                                            std::nullopt,
-                                            ntn_cfg.propagator_type);
+          report_error("cells[{}].ntn.sat_switch_with_resync: either satellite_idx or inline ephemeris definition "
+                       "(epoch_timestamp and ephemeris_info) must be provided",
+                       phy_sector_idx);
         }
-
-        out_cell.sat_switch = {sw_sat_idx,
-                               sat_sw.t_service_start,
-                               sat_sw.ssb_time_offset_sf,
-                               sat_sw.ntn_ul_sync_validity_dur,
-                               sat_sw.cell_specific_koffset,
-                               sat_sw.k_mac,
-                               sat_sw.polarization,
-                               sat_sw.ta_report};
       }
+    }
 
-      // Build neighbors' satellite configs.
-      for (const auto& ncell : ntn_cfg.ncells) {
-        unsigned nc_sat_idx;
-        if (ncell.satellite_idx) {
-          nc_sat_idx = *ncell.satellite_idx;
-        } else if (ncell.epoch_timestamp && ncell.ephemeris_info) {
-          nc_sat_idx = add_satellite_config(out_cfg,
-                                            next_satellite_idx,
-                                            ncell.epoch_timestamp,
-                                            *ncell.ephemeris_info,
-                                            ncell.gateway_location,
-                                            ncell.ta_info,
-                                            ntn_cfg.propagator_type);
+    for (auto& ncell : ntn_cfg.ncells) {
+      if (!ncell.satellite_idx) {
+        if (ncell.epoch_timestamp && ncell.ephemeris_info) {
+          ncell.satellite_idx = add_satellite_config(out_cfg,
+                                                     next_satellite_idx,
+                                                     ncell.epoch_timestamp,
+                                                     *ncell.ephemeris_info,
+                                                     ncell.gateway_location,
+                                                     ncell.ta_info,
+                                                     ntn_cfg.propagator_type);
         } else {
           report_error("cells[{}].ntn.ncells[pci={}]: either satellite_idx or inline ephemeris definition "
                        "(epoch_timestamp and ephemeris_info) must be provided",
                        phy_sector_idx,
                        ncell.phys_cell_id ? static_cast<unsigned>(*ncell.phys_cell_id) : 0U);
         }
-        auto& nc_cfg                    = out_cell.ncells.emplace_back();
-        nc_cfg.satellite_index          = nc_sat_idx;
-        nc_cfg.carrier_freq             = ncell.carrier_freq;
-        nc_cfg.phys_cell_id             = ncell.phys_cell_id;
-        nc_cfg.cell_specific_koffset    = ncell.cell_specific_koffset;
-        nc_cfg.ntn_ul_sync_validity_dur = ncell.ntn_ul_sync_validity_dur;
-        nc_cfg.k_mac                    = ncell.k_mac;
-        nc_cfg.polarization             = ncell.polarization;
-        nc_cfg.ta_report                = ncell.ta_report;
       }
+    }
 
-      // SIB19 Scheduling info.
-      const auto& sib_cfg = cell_cfg.sib_cfg;
-      for (unsigned i = 0, ie = sib_cfg.si_sched_info.size(); i != ie; ++i) {
-        const auto& si_msg = sib_cfg.si_sched_info[i];
-        for (unsigned j = 0, je = si_msg.sib_mapping_info.size(); j != je; ++j) {
-          if (si_msg.sib_mapping_info[j] == 19) {
-            out_cell.si_msg_idx          = i;
-            out_cell.si_period_rf        = si_msg.si_period_rf;
-            out_cell.si_window_len_slots = sib_cfg.si_window_len_slots;
-            out_cell.si_window_position  = si_msg.si_window_position.value();
-          }
+    resolved_ntn_cfgs[phy_sector_idx] = std::move(ntn_cfg);
+  }
+
+  // Build the cell configs from the resolved NTN configs (satellite_idx guaranteed set).
+  for (unsigned phy_sector_idx = 0; phy_sector_idx != du_hi_cells.size(); ++phy_sector_idx) {
+    if (!resolved_ntn_cfgs[phy_sector_idx]) {
+      continue;
+    }
+    const auto& cell_cfg = du_hi_cells[phy_sector_idx].cell;
+    const auto& ntn_cfg  = *resolved_ntn_cfgs[phy_sector_idx];
+
+    // Build cell config.
+    auto&                      out_cell = out_cfg.cells.emplace_back();
+    expected<plmn_identity>    plmn     = plmn_identity::parse(cell_cfg.plmn);
+    expected<nr_cell_identity> nci      = nr_cell_identity::create(gnb_id, cell_cfg.sector_id.value());
+    if (not plmn) {
+      report_error("Invalid PLMN: {}", cell_cfg.plmn);
+    }
+    if (not nci) {
+      report_error("Invalid NR-NCI");
+    }
+    out_cell.sector_id       = phy_sector_idx;
+    out_cell.nr_cgi.plmn_id  = plmn.value();
+    out_cell.nr_cgi.nci      = nci.value();
+    out_cell.satellite_index = *ntn_cfg.satellite_idx;
+    out_cell.ntn_cfg         = convert_ntn_config_to_serving_cell_config(ntn_cfg);
+
+    // Build sat-switch target satellite (if configured).
+    if (ntn_cfg.sat_switch_with_resync) {
+      const auto& sat_sw  = *ntn_cfg.sat_switch_with_resync;
+      out_cell.sat_switch = {*sat_sw.satellite_idx,
+                             sat_sw.t_service_start,
+                             sat_sw.ssb_time_offset_sf,
+                             sat_sw.ntn_ul_sync_validity_dur,
+                             sat_sw.cell_specific_koffset,
+                             sat_sw.k_mac,
+                             sat_sw.polarization,
+                             sat_sw.ta_report};
+    }
+
+    // Build neighbors' cell configs.
+    for (const auto& ncell : ntn_cfg.ncells) {
+      auto& nc_cfg                    = out_cell.ncells.emplace_back();
+      nc_cfg.satellite_index          = *ncell.satellite_idx;
+      nc_cfg.carrier_freq             = ncell.carrier_freq;
+      nc_cfg.phys_cell_id             = ncell.phys_cell_id;
+      nc_cfg.cell_specific_koffset    = ncell.cell_specific_koffset;
+      nc_cfg.ntn_ul_sync_validity_dur = ncell.ntn_ul_sync_validity_dur;
+      nc_cfg.k_mac                    = ncell.k_mac;
+      nc_cfg.polarization             = ncell.polarization;
+      nc_cfg.ta_report                = ncell.ta_report;
+    }
+
+    // SIB19 Scheduling info.
+    const auto& sib_cfg = cell_cfg.sib_cfg;
+    for (unsigned i = 0, ie = sib_cfg.si_sched_info.size(); i != ie; ++i) {
+      const auto& si_msg = sib_cfg.si_sched_info[i];
+      for (unsigned j = 0, je = si_msg.sib_mapping_info.size(); j != je; ++j) {
+        if (si_msg.sib_mapping_info[j] == 19) {
+          out_cell.si_msg_idx          = i;
+          out_cell.si_period_rf        = si_msg.si_period_rf;
+          out_cell.si_window_len_slots = sib_cfg.si_window_len_slots;
+          out_cell.si_window_position  = si_msg.si_window_position.value();
         }
       }
     }
