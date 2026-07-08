@@ -17,13 +17,13 @@ namespace ocudu_ntn {
 /// NTN Config update for a single cell.
 struct ntn_cell_config_update_info {
   using time_point = std::chrono::system_clock::time_point;
-  nr_cell_global_id_t                                     nr_cgi;
-  time_point                                              epoch_time;
-  unsigned                                                ntn_ul_sync_validity_duration;
-  std::variant<ecef_coordinates_t, orbital_coordinates_t> ephemeris_info;
-  std::optional<ta_info_t>                                ta_info;
-  std::optional<feeder_link_info_t>                       feeder_link_info;
-  std::optional<geodetic_coordinates_t>                   ntn_gateway_location;
+  nr_cell_global_id_t                   nr_cgi;
+  time_point                            epoch_time;
+  unsigned                              ntn_ul_sync_validity_duration;
+  ntn_ephemeris_info_t                  ephemeris_info;
+  std::optional<ta_info_t>              ta_info;
+  std::optional<feeder_link_info_t>     feeder_link_info;
+  std::optional<geodetic_coordinates_t> ntn_gateway_location;
   // SIB19 value-tag-tracked fields (changes require SIB1 systemInfoValueTag increment).
   std::optional<geodetic_coordinates_t> reference_location;
   std::optional<unsigned>               distance_threshold;

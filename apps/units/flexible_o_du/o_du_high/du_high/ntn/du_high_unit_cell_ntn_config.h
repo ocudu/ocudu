@@ -21,10 +21,10 @@ struct du_high_unit_ntn_neighbor_cell_config {
   std::optional<unsigned> satellite_idx;
 
   /// Inline satellite definition (mutually exclusive with satellite_idx).
-  std::optional<std::chrono::system_clock::time_point>                   epoch_timestamp;
-  std::optional<std::variant<ecef_coordinates_t, orbital_coordinates_t>> ephemeris_info;
-  std::optional<geodetic_coordinates_t>                                  gateway_location;
-  std::optional<ta_info_t>                                               ta_info;
+  std::optional<std::chrono::system_clock::time_point> epoch_timestamp;
+  std::optional<ntn_ephemeris_info_t>                  ephemeris_info;
+  std::optional<geodetic_coordinates_t>                gateway_location;
+  std::optional<ta_info_t>                             ta_info;
 
   /// Per-neighbor identity.
   std::optional<pci_t>   phys_cell_id;
@@ -46,10 +46,10 @@ struct du_high_unit_sat_switch_config {
   std::optional<unsigned> satellite_idx;
 
   /// Inline satellite definition (mutually exclusive with satellite_idx).
-  std::optional<std::chrono::system_clock::time_point>                   epoch_timestamp;
-  std::optional<std::variant<ecef_coordinates_t, orbital_coordinates_t>> ephemeris_info;
-  std::optional<geodetic_coordinates_t>                                  gateway_location;
-  std::optional<ta_info_t>                                               ta_info;
+  std::optional<std::chrono::system_clock::time_point> epoch_timestamp;
+  std::optional<ntn_ephemeris_info_t>                  ephemeris_info;
+  std::optional<geodetic_coordinates_t>                gateway_location;
+  std::optional<ta_info_t>                             ta_info;
 
   /// Switch timing.
   std::optional<std::chrono::system_clock::time_point> t_service_start;
@@ -99,7 +99,7 @@ struct du_high_unit_cell_ntn_config {
   std::optional<bool> use_state_vector;
   /// This field provides satellite ephemeris either in format of position and velocity state vector or in format of
   /// orbital parameters.
-  std::variant<ecef_coordinates_t, orbital_coordinates_t> ephemeris_info;
+  ntn_ephemeris_info_t ephemeris_info;
   /// Network-controlled common timing advanced value, and it may include any timing offset considered necessary by the
   /// network.
   std::optional<ta_info_t> ta_info;

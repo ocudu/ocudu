@@ -156,13 +156,13 @@ convert_ntn_config_to_serving_cell_config(const du_high_unit_cell_ntn_config& cf
 }
 
 /// \brief Appends a new satellite config and returns its assigned index.
-static unsigned add_satellite_config(ocudu_ntn::ntn_configuration_manager_config&                   out_cfg,
-                                     unsigned&                                                      next_satellite_idx,
-                                     std::optional<std::chrono::system_clock::time_point>           epoch_timestamp,
-                                     const std::variant<ecef_coordinates_t, orbital_coordinates_t>& ephemeris_info,
-                                     const std::optional<geodetic_coordinates_t>& ntn_gateway_location,
-                                     const std::optional<ta_info_t>&              ta_info,
-                                     ocudu_ntn::orbit_propagator_type             propagator_type)
+static unsigned add_satellite_config(ocudu_ntn::ntn_configuration_manager_config&         out_cfg,
+                                     unsigned&                                            next_satellite_idx,
+                                     std::optional<std::chrono::system_clock::time_point> epoch_timestamp,
+                                     const ntn_ephemeris_info_t&                          ephemeris_info,
+                                     const std::optional<geodetic_coordinates_t>&         ntn_gateway_location,
+                                     const std::optional<ta_info_t>&                      ta_info,
+                                     ocudu_ntn::orbit_propagator_type                     propagator_type)
 {
   unsigned sat_idx = next_satellite_idx++;
   out_cfg.satellites.push_back(

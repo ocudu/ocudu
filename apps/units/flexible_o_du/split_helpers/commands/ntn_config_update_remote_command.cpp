@@ -310,8 +310,7 @@ static expected<std::optional<std::vector<neighbor_ntn_cell>>, std::string> pars
   return ncells;
 }
 
-static expected<std::variant<ecef_coordinates_t, orbital_coordinates_t>, std::string>
-parse_ephemeris_info(const nlohmann::json& json)
+static expected<ntn_ephemeris_info_t, std::string> parse_ephemeris_info(const nlohmann::json& json)
 {
   auto ephemeris_info_it = json.find("ephemeris_info");
   if (ephemeris_info_it == json.end()) {

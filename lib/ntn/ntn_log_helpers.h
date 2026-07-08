@@ -15,12 +15,12 @@ namespace ocudu_ntn {
 
 /// Structure containing assistance information for formatting.
 struct assistance_info_wrapper {
-  slot_point                                              si_window_start;
-  slot_point                                              si_window_end;
-  slot_point                                              epoch_slot;
-  std::chrono::system_clock::time_point                   epoch_time;
-  std::optional<ta_info_t>                                ta_info;
-  std::variant<ecef_coordinates_t, orbital_coordinates_t> ephemeris_info;
+  slot_point                            si_window_start;
+  slot_point                            si_window_end;
+  slot_point                            epoch_slot;
+  std::chrono::system_clock::time_point epoch_time;
+  std::optional<ta_info_t>              ta_info;
+  ntn_ephemeris_info_t                  ephemeris_info;
 };
 
 } // namespace ocudu_ntn

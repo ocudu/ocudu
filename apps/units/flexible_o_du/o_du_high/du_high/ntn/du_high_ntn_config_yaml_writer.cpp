@@ -87,8 +87,7 @@ static YAML::Node build_polarization_node(const ntn_polarization_t& pol)
   return node;
 }
 
-static void fill_optional_ephemeris(YAML::Node&                                                                   node,
-                                    const std::optional<std::variant<ecef_coordinates_t, orbital_coordinates_t>>& ephem)
+static void fill_optional_ephemeris(YAML::Node& node, const std::optional<ntn_ephemeris_info_t>& ephem)
 {
   if (!ephem) {
     return;

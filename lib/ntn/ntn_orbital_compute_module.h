@@ -22,7 +22,7 @@ struct ephemeris_info_update {
   /// Indicates when the ephemeris_info is valid.
   time_point epoch_time;
   /// Ephemeris info as ECEF state vector or orbital parameters.
-  std::variant<ecef_coordinates_t, orbital_coordinates_t> ephemeris_info;
+  ntn_ephemeris_info_t ephemeris_info;
 };
 
 /// Contains information about the NTN gateway location and its service time window.
@@ -46,7 +46,7 @@ struct ntn_orbital_state {
   /// Epoch time for which the computation was performed.
   time_point epoch_time;
   /// Propagated ephemeris in the requested format. Valid only when success is true.
-  std::variant<ecef_coordinates_t, orbital_coordinates_t> ephemeris_info;
+  ntn_ephemeris_info_t ephemeris_info;
   /// TA-info, present when gateway location or TA override is available. Valid only when success is true.
   std::optional<ta_info_t> ta_info;
 };

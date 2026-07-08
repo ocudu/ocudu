@@ -44,6 +44,9 @@ struct orbital_coordinates_t {
   double inclination;
 };
 
+/// Satellite ephemeris, either as an ECEF state vector or as ECI orbital parameters.
+using ntn_ephemeris_info_t = std::variant<ecef_coordinates_t, orbital_coordinates_t>;
+
 /// Timing advance information for NTN.
 struct ta_info_t {
   /// Network-controlled common timing advanced value and it may include any timing offset considered necessary by the
@@ -136,7 +139,7 @@ struct ntn_config {
   std::optional<ntn_polarization_t> polarization;
   /// This field provides satellite ephemeris either in format of position and velocity state vector or in format of
   /// orbital parameters.
-  std::optional<std::variant<ecef_coordinates_t, orbital_coordinates_t>> ephemeris_info;
+  std::optional<ntn_ephemeris_info_t> ephemeris_info;
   /// When this field is included in SIB19, it indicates reporting of timing advanced is enabled.
   std::optional<bool> ta_report;
 };

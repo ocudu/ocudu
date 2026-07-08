@@ -75,7 +75,7 @@ struct ntn_assistance_info_update {
   /// Moving reference location for NTN Earth-moving cell.
   std::optional<geodetic_coordinates_t> moving_reference_location;
   /// Ephemeris info.
-  std::variant<ecef_coordinates_t, orbital_coordinates_t> ephemeris_info;
+  ntn_ephemeris_info_t ephemeris_info;
   /// Timing advance info (ta-Common, ta-CommonDrift, ta-CommonDriftVariant).
   std::optional<ta_info_t> ta_info;
   /// Epoch time for NTN assistance info.

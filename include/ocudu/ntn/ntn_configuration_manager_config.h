@@ -105,7 +105,7 @@ struct ntn_satellite_config {
   /// Epoch timestamp (UTC timepoint) for ephemeris information.
   std::optional<std::chrono::system_clock::time_point> epoch_timestamp;
   /// Satellite ephemeris: ECEF state vector or ECI orbital parameters.
-  std::variant<ecef_coordinates_t, orbital_coordinates_t> ephemeris_info;
+  ntn_ephemeris_info_t ephemeris_info;
   /// Geodetic coordinates (in degrees) of the NTN Gateway. Used by the orbital propagation module to compute TA-Info.
   std::optional<geodetic_coordinates_t> ntn_gateway_location;
   /// If present, overrides the TA info computed by the orbital propagation module (transparent architecture).
