@@ -1980,7 +1980,7 @@ static bool validate_rlc_um_appconfig(five_qi_t five_qi, const du_high_unit_rlc_
   return true;
 }
 
-static bool validate_rlc_unit_config(five_qi_t five_qi, const du_high_unit_rlc_config& config)
+static bool validate_rlc_unit_config(five_qi_t five_qi, const du_high_unit_rlc_bearer_config& config)
 {
   // Check mode.
   if (config.mode != "am" && config.mode != "um-bidir") {
@@ -2051,6 +2051,19 @@ static bool validate_custom_freq_bands(const std::vector<du_high_unit_custom_ban
 }
 
 /// Validates the given QoS configuration. Returns true on success, otherwise false.
+static bool validate_rlc_config(const du_high_unit_rlc_config& config)
+{
+  if (config.rx_window_seg_pool_size == 0) {
+    fmt::print("Invalid RLC configuration: rx_window_seg_pool_size must be greater than 0\n");
+    return false;
+  }
+  if (config.tx_window_seg_pool_size == 0) {
+    fmt::print("Invalid RLC configuration: tx_window_seg_pool_size must be greater than 0\n");
+    return false;
+  }
+  return true;
+}
+
 static bool validate_qos_config(span<const du_high_unit_qos_config> config)
 {
   for (const auto& qos : config) {
@@ -2071,6 +2084,10 @@ static bool validate_qos_config(span<const du_high_unit_qos_config> config)
 
 bool ocudu::validate_du_high_config(const du_high_unit_config& config)
 {
+  if (!validate_rlc_config(config.rlc_cfg)) {
+    return false;
+  }
+
   if (!validate_custom_freq_bands(config.custom_freq_bands)) {
     return false;
   }

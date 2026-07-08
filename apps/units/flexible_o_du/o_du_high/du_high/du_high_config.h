@@ -1392,7 +1392,7 @@ struct du_high_unit_rlc_um_config {
 };
 
 /// RLC configuration
-struct du_high_unit_rlc_config {
+struct du_high_unit_rlc_bearer_config {
   std::string                mode = "am";
   du_high_unit_rlc_um_config um;
   du_high_unit_rlc_am_config am;
@@ -1413,10 +1413,10 @@ struct du_high_unit_mac_config {
 
 /// QoS configuration
 struct du_high_unit_qos_config {
-  five_qi_t                  five_qi = uint_to_five_qi(9);
-  du_high_unit_rlc_config    rlc;
-  du_high_unit_f1u_du_config f1u_du;
-  du_high_unit_mac_config    mac;
+  five_qi_t                      five_qi = uint_to_five_qi(9);
+  du_high_unit_rlc_bearer_config rlc;
+  du_high_unit_f1u_du_config     f1u_du;
+  du_high_unit_mac_config        mac;
 };
 
 /// User-defined NR frequency band.
@@ -1438,6 +1438,12 @@ struct du_high_unit_custom_band_config {
   /// GSCN step for SSB candidate search. Valid values: 1, 3, 7, 16. Default = 1.
   uint8_t delta_gscn = 1;
   bool    ntn        = false;
+};
+
+/// RLC configuration.
+struct du_high_unit_rlc_config {
+  std::size_t rx_window_seg_pool_size = 2048;
+  std::size_t tx_window_seg_pool_size = 2048;
 };
 
 /// DU high configuration.
@@ -1471,6 +1477,8 @@ struct du_high_unit_config {
   std::map<srb_id_t, du_high_unit_srb_config> srb_cfg;
   /// Globally-defined satellites, referenced by satellite_idx in per-cell NTN configs.
   std::vector<du_high_unit_ntn_satellite_config> ntn_satellites;
+  /// RLC configuration.
+  du_high_unit_rlc_config rlc_cfg;
 
   /// Returns true if testmode is enabled, false otherwise.
   bool is_testmode_enabled() const { return test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI; }

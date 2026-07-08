@@ -453,11 +453,24 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
       ->capture_default_str();
 }
 
-static void configure_cli11_du_args(CLI::App& app, bool& warn_on_drop)
+static void configure_cli11_du_rlc_args(CLI::App& app, du_high_unit_rlc_config& rlc_cfg)
 {
-  add_option(
-      app, "--warn_on_drop", warn_on_drop, "Log a warning for dropped packets in F1-U, RLC and MAC due to full queues")
+  add_option(app, "--rx_window_seg_pool_size", rlc_cfg.rx_window_seg_pool_size, "RLC RX window segment pool size")
       ->capture_default_str();
+  add_option(app, "--tx_window_seg_pool_size", rlc_cfg.tx_window_seg_pool_size, "RLC TX window segment pool size")
+      ->capture_default_str();
+}
+
+static void configure_cli11_du_args(CLI::App& app, du_high_unit_config& du_high_params)
+{
+  add_option(app,
+             "--warn_on_drop",
+             du_high_params.warn_on_drop,
+             "Log a warning for dropped packets in F1-U, RLC and MAC due to full queues")
+      ->capture_default_str();
+
+  CLI::App* rlc_subcmd = add_subcommand(app, "rlc", "RLC configuration")->configurable();
+  configure_cli11_du_rlc_args(*rlc_subcmd, du_high_params.rlc_cfg);
 }
 
 static void configure_cli11_mac_bsr_args(CLI::App& app, mac_bsr_unit_config& bsr_params)
@@ -2844,7 +2857,7 @@ static void configure_cli11_rlc_um_args(CLI::App& app, du_high_unit_rlc_um_confi
       ->capture_default_str();
 }
 
-static void configure_cli11_rlc_args(CLI::App& app, du_high_unit_rlc_config& rlc_params)
+static void configure_cli11_rlc_args(CLI::App& app, du_high_unit_rlc_bearer_config& rlc_params)
 {
   add_option(app, "--mode", rlc_params.mode, "RLC mode")->capture_default_str();
 
@@ -2965,7 +2978,7 @@ void ocudu::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_pa
 
   // DU section.
   CLI::App* du_subcmd = app.add_subcommand("du", "DU parameters")->configurable();
-  configure_cli11_du_args(*du_subcmd, parsed_cfg.config.warn_on_drop);
+  configure_cli11_du_args(*du_subcmd, parsed_cfg.config);
 
   // Expert execution section.
   CLI::App* expert_subcmd = add_subcommand(app, "expert_execution", "Expert execution configuration")->configurable();

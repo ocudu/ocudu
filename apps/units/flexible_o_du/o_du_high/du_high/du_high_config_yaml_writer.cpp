@@ -81,6 +81,11 @@ static YAML::Node build_du_section(const du_high_unit_config& config)
 
   node["warn_on_drop"] = config.warn_on_drop;
 
+  YAML::Node rlc_node;
+  rlc_node["rx_window_seg_pool_size"] = config.rlc_cfg.rx_window_seg_pool_size;
+  rlc_node["tx_window_seg_pool_size"] = config.rlc_cfg.tx_window_seg_pool_size;
+  node["rlc"]                         = rlc_node;
+
   return node;
 }
 
@@ -763,7 +768,7 @@ static void fill_du_high_um_bidir_section(YAML::Node node, const du_high_unit_rl
   }
 }
 
-static void fill_du_high_rlc_qos_section(YAML::Node node, const du_high_unit_rlc_config& config)
+static void fill_du_high_rlc_qos_section(YAML::Node node, const du_high_unit_rlc_bearer_config& config)
 {
   node["mode"] = config.mode;
   if (config.mode == "am") {
