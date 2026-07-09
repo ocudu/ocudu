@@ -203,6 +203,9 @@ void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_
       if (sw.ta_report) {
         sat_sw_node["ta_report"] = *sw.ta_report;
       }
+      if (sw.use_state_vector) {
+        sat_sw_node["use_state_vector"] = *sw.use_state_vector;
+      }
 
       ntn_node["sat_switch_with_resync"] = sat_sw_node;
     }
@@ -234,6 +237,9 @@ void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_
       }
       if (ncell.ta_report) {
         ncell_node["ta_report"] = *ncell.ta_report;
+      }
+      if (ncell.use_state_vector) {
+        ncell_node["use_state_vector"] = *ncell.use_state_vector;
       }
       ncells_node.push_back(ncell_node);
     }

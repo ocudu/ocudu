@@ -289,6 +289,11 @@ static void configure_cli11_ntn_neighbor_cell_args(CLI::App& app, du_high_unit_n
   pol_subcmd->parse_complete_callback([&ncell]() { ncell.polarization = polarization; });
 
   app.add_option("--ta_report", ncell.ta_report, "Enable TA reporting");
+
+  app.add_option(
+      "--use_state_vector",
+      ncell.use_state_vector,
+      "Whether to broadcast EphemerisInfo as ECEF state vectors (if true) or ECI Orbital parameters (if false)");
 }
 
 static void configure_cli11_sat_switch_with_resync(CLI::App& app, du_high_unit_sat_switch_config& sat_switch_config)
@@ -329,6 +334,11 @@ static void configure_cli11_sat_switch_with_resync(CLI::App& app, du_high_unit_s
   });
 
   app.add_option("--ta_report", sat_switch_config.ta_report, "Enable TA reporting after switch");
+
+  app.add_option("--use_state_vector",
+                 sat_switch_config.use_state_vector,
+                 "Whether to broadcast EphemerisInfo as ECEF state vectors (if true) or ECI Orbital parameters (if "
+                 "false) after switch");
 }
 
 static void configure_cli11_ntn_args(CLI::App&                             app,

@@ -29,6 +29,7 @@ struct du_high_unit_ntn_neighbor_cell_config {
   std::optional<unsigned>                  k_mac;
   std::optional<ntn_polarization_t>        polarization;
   std::optional<bool>                      ta_report;
+  std::optional<bool>                      use_state_vector;
 };
 
 /// Application-level sat_switch_with_resync configuration.
@@ -46,6 +47,7 @@ struct du_high_unit_sat_switch_config {
   std::optional<unsigned>                  k_mac;
   std::optional<ntn_polarization_t>        polarization;
   std::optional<bool>                      ta_report;
+  std::optional<bool>                      use_state_vector;
 };
 
 /// Application-level NTN configuration for an NTN serving cell (NTN band). Absent for a TN-band serving cell

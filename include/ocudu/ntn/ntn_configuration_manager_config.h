@@ -65,6 +65,7 @@ struct ntn_neighbor_cell_config {
   std::optional<unsigned>                  k_mac;
   std::optional<ntn_polarization_t>        polarization;
   std::optional<bool>                      ta_report;
+  std::optional<bool>                      use_state_vector;
 };
 
 /// Satellite-switch configuration: static (non-satellite-computed) fields only.
@@ -78,6 +79,7 @@ struct ntn_sat_switch_config {
   std::optional<unsigned>                                    k_mac;
   std::optional<ntn_polarization_t>                          polarization;
   std::optional<bool>                                        ta_report;
+  std::optional<bool>                                        use_state_vector;
 };
 
 /// NTN Cell configuration.
