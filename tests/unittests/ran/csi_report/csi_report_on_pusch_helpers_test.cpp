@@ -392,8 +392,8 @@ private:
       // Set PMI values.
       pmi_typeI_single_panel type{codebook,
                                   i_1_1,
-                                  i_1_2 > 0 ? std::make_optional(i_1_2) : std::nullopt,
-                                  i_1_3 > 0 ? std::make_optional(i_1_3) : std::nullopt,
+                                  sizes.i_1_2 > 0 ? std::make_optional(i_1_2) : std::nullopt,
+                                  sizes.i_1_3 > 0 ? std::make_optional(i_1_3) : std::nullopt,
                                   i_2};
 
       precoding_matrix_indicator pmi;
