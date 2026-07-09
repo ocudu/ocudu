@@ -107,3 +107,14 @@ TEST_F(f1ap_cu_ue_context_setup_test, when_ue_setup_procedure_timeouts_then_proc
   }
   ASSERT_TRUE(was_ue_context_setup_failure_received());
 }
+
+TEST_F(f1ap_cu_ue_context_setup_test, when_f1ap_stopped_while_ue_context_setup_in_flight_then_teardown_does_not_crash)
+{
+  this->start_procedure(create_ue_context_setup_request({drb_id_t::drb1}));
+  ASSERT_FALSE(t.ready());
+
+  async_task<void>         stop_task = f1ap->stop();
+  lazy_task_launcher<void> stop_launcher(stop_task);
+
+  ASSERT_TRUE(stop_task.ready());
+}
