@@ -26,6 +26,7 @@
 #include "ocudu/fapi_adaptor/phy/phy_fapi_fastpath_adaptor.h"
 #include "ocudu/fapi_adaptor/phy/phy_fapi_sector_fastpath_adaptor.h"
 #include "ocudu/ntn/ntn_configuration_manager_config.h"
+#include <algorithm>
 
 using namespace ocudu;
 
@@ -124,10 +125,44 @@ generate_o_du_ru_config(span<const odu::du_cell_config> cells, unsigned max_proc
   return out_cfg;
 }
 
+/// Returns the ephemeris_info of the satellite with the given index, or nullptr if not found.
+static const ntn_ephemeris_info_t* find_satellite_ephemeris_info(unsigned satellite_index,
+                                                                 span<const ocudu_ntn::ntn_satellite_config> satellites)
+{
+  auto it = std::find_if(satellites.begin(), satellites.end(), [satellite_index](const auto& sat) {
+    return sat.satellite_index == satellite_index;
+  });
+  return it != satellites.end() ? &it->ephemeris_info : nullptr;
+}
+
+/// Derives the broadcast ephemeris format (ECEF state vector vs ECI orbital parameters) for an NTN entity (serving
+/// cell, sat-switch target, or neighbor cell): the explicit override if set, else the variant of its own inline
+/// ephemeris_info, else (if it references a shared satellite_idx) the variant of the referenced satellite's
+/// ephemeris_info.
+static std::optional<bool> derive_use_state_vector(std::optional<bool>                         configured_value,
+                                                   const std::optional<ntn_ephemeris_info_t>&  own_ephemeris_info,
+                                                   unsigned                                    satellite_index,
+                                                   span<const ocudu_ntn::ntn_satellite_config> resolved_satellites)
+{
+  if (configured_value.has_value()) {
+    return configured_value;
+  }
+  if (own_ephemeris_info.has_value()) {
+    return std::holds_alternative<ecef_coordinates_t>(*own_ephemeris_info);
+  }
+  if (const ntn_ephemeris_info_t* ephemeris_info =
+          find_satellite_ephemeris_info(satellite_index, resolved_satellites)) {
+    return std::holds_alternative<ecef_coordinates_t>(*ephemeris_info);
+  }
+  return std::nullopt;
+}
+
 /// Converts app-level ntn_config to library-level ntn_serving_cell_config. Returns std::nullopt for a TN-band cell
-/// that only reports NTN neighbor cells.
+/// that only reports NTN neighbor cells. \p resolved_satellites must already contain an entry for the cell's
+/// satellite_idx (resolved, including any inline satellite definitions, before this is called).
 static std::optional<ocudu_ntn::ntn_serving_cell_config>
-convert_ntn_config_to_serving_cell_config(const du_high_unit_cell_ntn_config& cfg)
+convert_ntn_config_to_serving_cell_config(const du_high_unit_cell_ntn_config&         cfg,
+                                          span<const ocudu_ntn::ntn_satellite_config> resolved_satellites)
 {
   if (!cfg.serving) {
     return std::nullopt;
@@ -157,8 +192,10 @@ convert_ntn_config_to_serving_cell_config(const du_high_unit_cell_ntn_config& cf
 
   // Metadata fields.
   info.epoch_sfn_offset = serving.epoch_sfn_offset;
-  info.use_state_vector = serving.use_state_vector;
   info.feeder_link_info = serving.feeder_link_info;
+
+  info.use_state_vector = derive_use_state_vector(
+      serving.use_state_vector, serving.sat_ref.ephemeris_info, info.satellite_index, resolved_satellites);
 
   return info;
 }
@@ -297,7 +334,7 @@ generate_ntn_configuration_manager_config(const gnb_id_t&                       
     out_cell.sector_id      = phy_sector_idx;
     out_cell.nr_cgi.plmn_id = plmn.value();
     out_cell.nr_cgi.nci     = nci.value();
-    out_cell.ntn_cfg        = convert_ntn_config_to_serving_cell_config(ntn_cfg);
+    out_cell.ntn_cfg        = convert_ntn_config_to_serving_cell_config(ntn_cfg, out_cfg.satellites);
 
     // Build sat-switch target satellite (if configured).
     if (ntn_cfg.serving && ntn_cfg.serving->sat_switch_with_resync) {
