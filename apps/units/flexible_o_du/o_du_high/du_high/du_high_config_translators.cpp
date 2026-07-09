@@ -250,10 +250,10 @@ static sib19_info create_sib19_info(const du_high_unit_cell_ntn_config& config)
 
     sib19.ntn_cfg.emplace();
     sib19.ntn_cfg->cell_specific_koffset    = serving.cell_specific_koffset;
-    sib19.ntn_cfg->ephemeris_info           = serving.ephemeris_info;
+    sib19.ntn_cfg->ephemeris_info           = serving.sat_ref.ephemeris_info;
     sib19.ntn_cfg->epoch_time               = serving.epoch_time;
     sib19.ntn_cfg->k_mac                    = serving.k_mac;
-    sib19.ntn_cfg->ta_info                  = serving.ta_info;
+    sib19.ntn_cfg->ta_info                  = serving.sat_ref.ta_info;
     sib19.ntn_cfg->ntn_ul_sync_validity_dur = serving.ntn_ul_sync_validity_dur;
     sib19.ntn_cfg->polarization             = serving.polarization;
     sib19.ntn_cfg->ta_report                = serving.ta_report;
@@ -261,15 +261,15 @@ static sib19_info create_sib19_info(const du_high_unit_cell_ntn_config& config)
     if (serving.sat_switch_with_resync) {
       const auto&              sw_cfg = *serving.sat_switch_with_resync;
       sat_switch_with_resync_t sw;
-      sw.epoch_timestamp      = sw_cfg.epoch_timestamp;
-      sw.ntn_gateway_location = sw_cfg.gateway_location;
+      sw.epoch_timestamp      = sw_cfg.sat_ref.epoch_timestamp;
+      sw.ntn_gateway_location = sw_cfg.sat_ref.gateway_location;
       sw.t_service_start      = sw_cfg.t_service_start;
       if (sw_cfg.ssb_time_offset_sf) {
         sw.ssb_time_offset_sf =
             sat_switch_with_resync_t::ssb_time_offset_t{static_cast<uint8_t>(*sw_cfg.ssb_time_offset_sf)};
       }
-      sw.ntn_cfg.ta_info                  = sw_cfg.ta_info;
-      sw.ntn_cfg.ephemeris_info           = sw_cfg.ephemeris_info;
+      sw.ntn_cfg.ta_info                  = sw_cfg.sat_ref.ta_info;
+      sw.ntn_cfg.ephemeris_info           = sw_cfg.sat_ref.ephemeris_info;
       sw.ntn_cfg.ntn_ul_sync_validity_dur = sw_cfg.ntn_ul_sync_validity_dur;
       sw.ntn_cfg.cell_specific_koffset    = sw_cfg.cell_specific_koffset;
       sw.ntn_cfg.k_mac                    = sw_cfg.k_mac;
@@ -289,8 +289,8 @@ static sib19_info create_sib19_info(const du_high_unit_cell_ntn_config& config)
     ncell_ntn_cfg.k_mac                    = ncell.k_mac;
     ncell_ntn_cfg.polarization             = ncell.polarization;
     ncell_ntn_cfg.ta_report                = ncell.ta_report;
-    ncell_ntn_cfg.ta_info                  = ncell.ta_info;
-    ncell_ntn_cfg.ephemeris_info           = ncell.ephemeris_info;
+    ncell_ntn_cfg.ta_info                  = ncell.sat_ref.ta_info;
+    ncell_ntn_cfg.ephemeris_info           = ncell.sat_ref.ephemeris_info;
     ntn_ncell.ntn_cfg                      = ncell_ntn_cfg;
     sib19.ncells.push_back(ntn_ncell);
   }
@@ -399,10 +399,10 @@ static ntn_cell_params make_ntn_cell_params(const du_high_unit_ntn_serving_cell_
   ntn.ntn_cfg.k_mac                    = cfg.k_mac;
   ntn.ntn_cfg.ntn_ul_sync_validity_dur = cfg.ntn_ul_sync_validity_dur;
   ntn.ntn_cfg.epoch_time               = cfg.epoch_time;
-  ntn.ntn_cfg.ta_info                  = cfg.ta_info;
+  ntn.ntn_cfg.ta_info                  = cfg.sat_ref.ta_info;
   ntn.ntn_cfg.polarization             = cfg.polarization;
   ntn.ntn_cfg.ta_report                = cfg.ta_report;
-  ntn.ntn_cfg.ephemeris_info           = cfg.ephemeris_info;
+  ntn.ntn_cfg.ephemeris_info           = cfg.sat_ref.ephemeris_info;
 
   // Derived from PUSCH config.
   ntn.ul_harq_mode_b = ul_harq_mode_b;

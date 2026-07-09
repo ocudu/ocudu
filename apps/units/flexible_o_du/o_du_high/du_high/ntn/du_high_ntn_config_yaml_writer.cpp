@@ -99,6 +99,29 @@ static void fill_optional_ephemeris(YAML::Node& node, const std::optional<ntn_ep
   }
 }
 
+static void fill_ntn_satellite_in_yaml_schema(YAML::Node& node, const du_high_unit_ntn_satellite_config& config)
+{
+  if (config.satellite_idx) {
+    node["satellite_idx"] = *config.satellite_idx;
+  }
+
+  if (config.epoch_timestamp) {
+    node["epoch_timestamp"] = timepoint_to_iso8601(*config.epoch_timestamp);
+  }
+
+  fill_optional_ephemeris(node, config.ephemeris_info);
+
+  if (config.gateway_location) {
+    node["gateway_location"] = build_geodetic_node(*config.gateway_location);
+  }
+
+  if (config.ta_info) {
+    node["ta_info"] = build_ta_info_node(*config.ta_info);
+  }
+  node["propagator_type"] =
+      (config.propagator_type == ocudu_ntn::orbit_propagator_type::keplerian) ? "keplerian" : "rk4";
+}
+
 void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_cell_ntn_config& config)
 {
   auto ntn_node = node["ntn"];
@@ -106,22 +129,12 @@ void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_
   if (config.serving) {
     const auto& serving = *config.serving;
 
-    if (serving.satellite_idx) {
-      ntn_node["satellite_idx"] = *serving.satellite_idx;
-    }
+    fill_ntn_satellite_in_yaml_schema(ntn_node, serving.sat_ref);
 
     ntn_node["cell_specific_koffset"] = static_cast<unsigned>(serving.cell_specific_koffset.count());
 
     if (serving.ntn_ul_sync_validity_dur) {
       ntn_node["ntn_ul_sync_validity_dur"] = *serving.ntn_ul_sync_validity_dur;
-    }
-
-    if (serving.ta_info) {
-      ntn_node["ta_info"] = build_ta_info_node(*serving.ta_info);
-    }
-
-    if (serving.epoch_timestamp) {
-      ntn_node["epoch_timestamp"] = timepoint_to_iso8601(*serving.epoch_timestamp);
     }
 
     if (serving.feeder_link_info) {
@@ -130,10 +143,6 @@ void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_
       fl_node["dl_freq"]                     = serving.feeder_link_info->dl_freq;
       fl_node["ul_freq"]                     = serving.feeder_link_info->ul_freq;
       ntn_node["feeder_link_info"]           = fl_node;
-    }
-
-    if (serving.ntn_gateway_location) {
-      ntn_node["ntn_gateway_location"] = build_geodetic_node(*serving.ntn_gateway_location);
     }
 
     if (serving.epoch_time) {
@@ -150,11 +159,6 @@ void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_
     if (serving.use_state_vector) {
       ntn_node["use_state_vector"] = *serving.use_state_vector;
     }
-
-    ntn_node["propagator_type"] =
-        (serving.propagator_type == ocudu_ntn::orbit_propagator_type::keplerian) ? "keplerian" : "rk4";
-
-    fill_optional_ephemeris(ntn_node, serving.ephemeris_info);
 
     if (serving.polarization) {
       ntn_node["polarization"] = build_polarization_node(*serving.polarization);
@@ -179,6 +183,34 @@ void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_
     if (serving.moving_ref_location) {
       ntn_node["moving_ref_location"] = build_geodetic_node(*serving.moving_ref_location, false);
     }
+
+    // Satellite switch with resynchronization (R18 extension).
+    if (serving.sat_switch_with_resync) {
+      const auto& sw = *serving.sat_switch_with_resync;
+      YAML::Node  sat_sw_node;
+
+      fill_ntn_satellite_in_yaml_schema(sat_sw_node, sw.sat_ref);
+      if (sw.t_service_start) {
+        sat_sw_node["t_service_start"] = timepoint_to_iso8601(*sw.t_service_start);
+      }
+      if (sw.ssb_time_offset_sf) {
+        sat_sw_node["ssb_time_offset_sf"] = *sw.ssb_time_offset_sf;
+      }
+      if (sw.ntn_ul_sync_validity_dur) {
+        sat_sw_node["ntn_ul_sync_validity_dur"] = *sw.ntn_ul_sync_validity_dur;
+      }
+      if (sw.cell_specific_koffset) {
+        sat_sw_node["cell_specific_koffset"] = static_cast<unsigned>(sw.cell_specific_koffset->count());
+      }
+      if (sw.k_mac) {
+        sat_sw_node["k_mac"] = *sw.k_mac;
+      }
+      if (sw.ta_report) {
+        sat_sw_node["ta_report"] = *sw.ta_report;
+      }
+
+      ntn_node["sat_switch_with_resync"] = sat_sw_node;
+    }
   }
 
   // NTN neighbor cells.
@@ -186,19 +218,7 @@ void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_
     YAML::Node ncells_node;
     for (const auto& ncell : config.ncells) {
       YAML::Node ncell_node;
-      if (ncell.satellite_idx) {
-        ncell_node["satellite_idx"] = *ncell.satellite_idx;
-      }
-      if (ncell.epoch_timestamp) {
-        ncell_node["epoch_timestamp"] = timepoint_to_iso8601(*ncell.epoch_timestamp);
-      }
-      fill_optional_ephemeris(ncell_node, ncell.ephemeris_info);
-      if (ncell.gateway_location) {
-        ncell_node["gateway_location"] = build_geodetic_node(*ncell.gateway_location);
-      }
-      if (ncell.ta_info) {
-        ncell_node["ta_info"] = build_ta_info_node(*ncell.ta_info);
-      }
+      fill_ntn_satellite_in_yaml_schema(ncell_node, ncell.sat_ref);
       if (ncell.phys_cell_id) {
         ncell_node["pci"] = static_cast<unsigned>(*ncell.phys_cell_id);
       }
@@ -224,46 +244,6 @@ void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_
     }
     ntn_node["ncells"] = ncells_node;
   }
-
-  // Satellite switch with resynchronization (R18 extension).
-  if (config.serving && config.serving->sat_switch_with_resync) {
-    const auto& sw = *config.serving->sat_switch_with_resync;
-    YAML::Node  sat_sw_node;
-
-    if (sw.satellite_idx) {
-      sat_sw_node["satellite_idx"] = *sw.satellite_idx;
-    }
-    if (sw.epoch_timestamp) {
-      sat_sw_node["epoch_timestamp"] = timepoint_to_iso8601(*sw.epoch_timestamp);
-    }
-    fill_optional_ephemeris(sat_sw_node, sw.ephemeris_info);
-    if (sw.gateway_location) {
-      sat_sw_node["gateway_location"] = build_geodetic_node(*sw.gateway_location);
-    }
-    if (sw.ta_info) {
-      sat_sw_node["ta_info"] = build_ta_info_node(*sw.ta_info);
-    }
-    if (sw.t_service_start) {
-      sat_sw_node["t_service_start"] = timepoint_to_iso8601(*sw.t_service_start);
-    }
-    if (sw.ssb_time_offset_sf) {
-      sat_sw_node["ssb_time_offset_sf"] = *sw.ssb_time_offset_sf;
-    }
-    if (sw.ntn_ul_sync_validity_dur) {
-      sat_sw_node["ntn_ul_sync_validity_dur"] = *sw.ntn_ul_sync_validity_dur;
-    }
-    if (sw.cell_specific_koffset) {
-      sat_sw_node["cell_specific_koffset"] = static_cast<unsigned>(sw.cell_specific_koffset->count());
-    }
-    if (sw.k_mac) {
-      sat_sw_node["k_mac"] = *sw.k_mac;
-    }
-    if (sw.ta_report) {
-      sat_sw_node["ta_report"] = *sw.ta_report;
-    }
-
-    ntn_node["sat_switch_with_resync"] = sat_sw_node;
-  }
 }
 
 void ocudu::fill_ntn_satellites_in_yaml_schema(YAML::Node&                                           node,
@@ -278,24 +258,7 @@ void ocudu::fill_ntn_satellites_in_yaml_schema(YAML::Node&                      
 
   for (const auto& sat : satellites) {
     YAML::Node sat_node;
-    if (sat.satellite_idx) {
-      sat_node["satellite_idx"] = *sat.satellite_idx;
-    }
-
-    if (sat.epoch_timestamp) {
-      sat_node["epoch_timestamp"] = timepoint_to_iso8601(*sat.epoch_timestamp);
-    }
-
-    fill_optional_ephemeris(sat_node, sat.ephemeris_info);
-
-    if (sat.gateway_location) {
-      sat_node["gateway_location"] = build_geodetic_node(*sat.gateway_location);
-    }
-
-    if (sat.ta_info) {
-      sat_node["ta_info"] = build_ta_info_node(*sat.ta_info);
-    }
-
+    fill_ntn_satellite_in_yaml_schema(sat_node, sat);
     sats_node.push_back(sat_node);
   }
 

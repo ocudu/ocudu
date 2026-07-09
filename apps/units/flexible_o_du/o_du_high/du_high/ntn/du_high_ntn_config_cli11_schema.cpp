@@ -256,29 +256,11 @@ static void configure_cli11_ntn_polarization(CLI::App& app, ntn_polarization_t& 
       ->check(CLI::IsMember({"lhcp", "rhcp", "linear"}, CLI::ignore_case));
 }
 
+static void configure_cli11_ntn_satellite_args(CLI::App& app, du_high_unit_ntn_satellite_config& sat);
+
 static void configure_cli11_ntn_neighbor_cell_args(CLI::App& app, du_high_unit_ntn_neighbor_cell_config& ncell)
 {
-  app.add_option("--satellite_idx",
-                 ncell.satellite_idx,
-                 "Reference to a globally-defined satellite. "
-                 "Mutually exclusive with epoch_timestamp, ephemeris_info, gateway_location and ta_info.");
-
-  add_timestamp_option(app,
-                       "--epoch_timestamp",
-                       ncell.epoch_timestamp,
-                       "Epoch timestamp (Unix ms or ISO 8601: YYYY-MM-DDTHH:MM:SS[.mmm])");
-
-  add_ephemeris_subcommands(app, ncell.ephemeris_info);
-
-  static geodetic_coordinates_t gateway_loc;
-  CLI::App*                     gw_subcmd = add_subcommand(app, "gateway_location", "NTN gateway geodetic coordinates");
-  configure_cli11_geodetic_coordinates(*gw_subcmd, gateway_loc);
-  gw_subcmd->parse_complete_callback([&ncell]() { ncell.gateway_location = gateway_loc; });
-
-  static ta_info_t ta_info_val;
-  CLI::App*        ta_subcmd = add_subcommand(app, "ta_info", "TA info for this neighbor satellite");
-  configure_cli11_ta_info(*ta_subcmd, ta_info_val);
-  ta_subcmd->parse_complete_callback([&ncell]() { ncell.ta_info = ta_info_val; });
+  configure_cli11_ntn_satellite_args(app, ncell.sat_ref);
 
   app.add_option_function<unsigned>(
          "--pci", [&ncell](unsigned val) { ncell.phys_cell_id = static_cast<pci_t>(val); }, "Physical Cell ID")
@@ -311,38 +293,7 @@ static void configure_cli11_ntn_neighbor_cell_args(CLI::App& app, du_high_unit_n
 
 static void configure_cli11_sat_switch_with_resync(CLI::App& app, du_high_unit_sat_switch_config& sat_switch_config)
 {
-  // Optional reference to a globally-defined satellite.
-  app.add_option("--satellite_idx",
-                 sat_switch_config.satellite_idx,
-                 "Reference to a globally-defined satellite by its satellite_idx. "
-                 "Mutually exclusive with epoch_timestamp, ephemeris_info, gateway_location and ta_info.");
-
-  add_timestamp_option(
-      app,
-      "--epoch_timestamp",
-      sat_switch_config.epoch_timestamp,
-      "Epoch timestamp for NTN assistance info (Unix time in ms or ISO 8601: YYYY-MM-DDTHH:MM:SS[.mmm])");
-
-  add_ephemeris_subcommands(app, sat_switch_config.ephemeris_info);
-
-  static geodetic_coordinates_t ntn_gateway_location;
-  CLI::App*                     gateway_location_subcmd =
-      add_subcommand(app, "ntn_gateway_location", "Geodetic coordinates of NTN gateway location");
-  configure_cli11_geodetic_coordinates(*gateway_location_subcmd, ntn_gateway_location);
-  gateway_location_subcmd->parse_complete_callback([&]() {
-    if (app.get_subcommand("ntn_gateway_location")->count() != 0) {
-      sat_switch_config.gateway_location = ntn_gateway_location;
-    }
-  });
-
-  static ta_info_t ta_info;
-  CLI::App*        ta_info_subcmd = add_subcommand(app, "ta_info", "TA info for the switch target satellite");
-  configure_cli11_ta_info(*ta_info_subcmd, ta_info);
-  ta_info_subcmd->parse_complete_callback([&]() {
-    if (app.get_subcommand("ta_info")->count() != 0) {
-      sat_switch_config.ta_info = ta_info;
-    }
-  });
+  configure_cli11_ntn_satellite_args(app, sat_switch_config.sat_ref);
 
   add_timestamp_option(
       app,
@@ -395,22 +346,8 @@ static void configure_cli11_ntn_args(CLI::App&                             app,
       ->capture_default_str()
       ->check(CLI::IsMember({5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 120, 180, 240, 900}));
 
-  add_option_function<std::string>(
-      app,
-      "--propagator_type",
-      [&serv_cell_ntn_config](const std::string& value) {
-        serv_cell_ntn_config.propagator_type = (value == "keplerian") ? ocudu_ntn::orbit_propagator_type::keplerian
-                                                                      : ocudu_ntn::orbit_propagator_type::rk4;
-      },
-      "Orbit propagator for ephemeris propagation. Allowed: rk4, keplerian.")
-      ->default_str("rk4")
-      ->check(CLI::IsMember({"rk4", "keplerian"}));
-
-  // Optional reference to a globally-defined satellite.
-  app.add_option("--satellite_idx",
-                 serv_cell_ntn_config.satellite_idx,
-                 "Reference to a globally-defined satellite by its satellite_idx. "
-                 "Mutually exclusive with epoch_timestamp, ephemeris_info, gateway_location and ta_info.");
+  // Satellite reference (satellite_idx or inline ephemeris/gateway_location/ta_info).
+  configure_cli11_ntn_satellite_args(app, serv_cell_ntn_config.sat_ref);
 
   // Epoch time.
   static epoch_time_t epoch_time;
@@ -421,18 +358,6 @@ static void configure_cli11_ntn_args(CLI::App&                             app,
       serv_cell_ntn_config.epoch_time = epoch_time;
     }
   });
-
-  // TA-info
-  static ta_info_t ta_info;
-  CLI::App*        ta_info_subcmd = add_subcommand(app, "ta_info", "TA Info for the NTN assistance information");
-  configure_cli11_ta_info(*ta_info_subcmd, ta_info);
-  ta_info_subcmd->parse_complete_callback([&]() {
-    if (app.get_subcommand("ta_info")->count() != 0) {
-      serv_cell_ntn_config.ta_info = ta_info;
-    }
-  });
-
-  add_ephemeris_subcommands(app, serv_cell_ntn_config.ephemeris_info);
 
   // Distance from the serving cell reference location.
   app.add_option(
@@ -463,15 +388,6 @@ static void configure_cli11_ntn_args(CLI::App&                             app,
          "Whether to broadcast EphemerisInfo as ECEF state vectors (if true) or ECI Orbital parameters (if false)")
       ->capture_default_str();
 
-  // Epoch timestamp.
-  add_timestamp_option(
-      app,
-      "--epoch_timestamp",
-      serv_cell_ntn_config.epoch_timestamp,
-      "Epoch timestamp for the NTN assistance information in ms unit of Unix time or as UTC time string "
-      "(YYYY-MM-DDTHH:MM:SS[.mmm])")
-      ->capture_default_str();
-
   // Epoch time offset in nof SFNs.
   app.add_option("--epoch_sfn_offset",
                  serv_cell_ntn_config.epoch_sfn_offset,
@@ -486,17 +402,6 @@ static void configure_cli11_ntn_args(CLI::App&                             app,
   feeder_link_subcmd->parse_complete_callback([&]() {
     if (app.get_subcommand("feeder_link")->count() != 0) {
       serv_cell_ntn_config.feeder_link_info = feeder_link_info;
-    }
-  });
-
-  // NTN-Gateway Location info.
-  static geodetic_coordinates_t ntn_gateway_location;
-  CLI::App*                     gateway_location_subcmd =
-      add_subcommand(app, "gateway_location", "Geoderic coordinates of the NTN Gateway location");
-  configure_cli11_geodetic_coordinates(*gateway_location_subcmd, ntn_gateway_location);
-  gateway_location_subcmd->parse_complete_callback([&]() {
-    if (app.get_subcommand("gateway_location")->count() != 0) {
-      serv_cell_ntn_config.ntn_gateway_location = ntn_gateway_location;
     }
   });
 
@@ -535,9 +440,6 @@ static void configure_cli11_ntn_args(CLI::App&                             app,
     }
   });
 
-  // NTN neighbor cells (carrier_freq and pci only).
-  configure_cli11_ncells(app, config.ncells);
-
   // Satellite switch with resynchronization (SIB19, R18 extension).
   static du_high_unit_sat_switch_config sat_switch_config;
   CLI::App*                             sat_switch_subcmd =
@@ -548,11 +450,18 @@ static void configure_cli11_ntn_args(CLI::App&                             app,
       serv_cell_ntn_config.sat_switch_with_resync = sat_switch_config;
     }
   });
+
+  // NTN neighbor cells.
+  configure_cli11_ncells(app, config.ncells);
 }
 
 static void configure_cli11_ntn_satellite_args(CLI::App& app, du_high_unit_ntn_satellite_config& sat)
 {
-  app.add_option("--satellite_idx", sat.satellite_idx, "User-defined satellite index (must be unique)")->required();
+  app.add_option("--satellite_idx",
+                 sat.satellite_idx,
+                 "Satellite index. Required when defining a satellite object; optional when referencing or "
+                 "inline-defining a satellite, in which case it is mutually exclusive with epoch_timestamp, "
+                 "ephemeris_info, gateway_location and ta_info.");
 
   add_timestamp_option(app,
                        "--epoch_timestamp",

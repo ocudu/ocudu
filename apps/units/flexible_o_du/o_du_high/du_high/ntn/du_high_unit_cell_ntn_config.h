@@ -4,28 +4,20 @@
 
 #pragma once
 
-#include "ocudu/ntn/orbit_propagator_type.h"
+#include "du_high_unit_ntn_satellite_config.h"
 #include "ocudu/ran/ntn.h"
 #include <chrono>
 #include <optional>
-#include <variant>
 #include <vector>
 
 namespace ocudu {
 
 /// Application-level per-neighbor NTN cell configuration.
 /// Each neighbor must either reference a globally-defined satellite_idx or provide an inline satellite definition
-/// with epoch_timestamp and ephemeris_info. satellite_idx is mutually exclusive with inline ephemeris fields
-/// (epoch_timestamp, ephemeris_info, gateway_location, ta_info).
+/// with epoch_timestamp and ephemeris_info.
 struct du_high_unit_ntn_neighbor_cell_config {
-  /// Reference to a globally-defined satellite for this neighbor.
-  std::optional<unsigned> satellite_idx;
-
-  /// Inline satellite definition (mutually exclusive with satellite_idx).
-  std::optional<std::chrono::system_clock::time_point> epoch_timestamp;
-  std::optional<ntn_ephemeris_info_t>                  ephemeris_info;
-  std::optional<geodetic_coordinates_t>                gateway_location;
-  std::optional<ta_info_t>                             ta_info;
+  /// Reference to the neighbor's satellite (global reference or inline definition).
+  du_high_unit_ntn_satellite_config sat_ref;
 
   /// Per-neighbor identity.
   std::optional<pci_t>   phys_cell_id;
@@ -40,17 +32,9 @@ struct du_high_unit_ntn_neighbor_cell_config {
 };
 
 /// Application-level sat_switch_with_resync configuration.
-/// satellite_idx is mutually exclusive with inline ephemeris fields (epoch_timestamp, ephemeris_info,
-/// gateway_location, ta_info).
 struct du_high_unit_sat_switch_config {
-  /// Reference to a globally-defined satellite for the switch target.
-  std::optional<unsigned> satellite_idx;
-
-  /// Inline satellite definition (mutually exclusive with satellite_idx).
-  std::optional<std::chrono::system_clock::time_point> epoch_timestamp;
-  std::optional<ntn_ephemeris_info_t>                  ephemeris_info;
-  std::optional<geodetic_coordinates_t>                gateway_location;
-  std::optional<ta_info_t>                             ta_info;
+  /// Reference to the switch target's satellite (global reference or inline definition).
+  du_high_unit_ntn_satellite_config sat_ref;
 
   /// Switch timing.
   std::optional<std::chrono::system_clock::time_point> t_service_start;
@@ -67,6 +51,9 @@ struct du_high_unit_sat_switch_config {
 /// Application-level NTN configuration for an NTN serving cell (NTN band). Absent for a TN-band serving cell
 /// that only reports NTN neighbor cells (see du_high_unit_cell_ntn_config::serving).
 struct du_high_unit_ntn_serving_cell_config {
+  /// Reference to the serving cell's satellite (global reference or inline definition).
+  du_high_unit_ntn_satellite_config sat_ref;
+
   /// Reference location of the serving cell in geodetic coordinates format (in degrees).
   std::optional<geodetic_coordinates_t> reference_location;
   /// Distance from the serving cell reference location, as defined in TS 38.304. Each step represents 50m.
@@ -74,8 +61,6 @@ struct du_high_unit_ntn_serving_cell_config {
   /// Indicates the time information on when a cell provided via NTN is going to stop serving the area it is currently
   /// covering. UTC timepoint.
   std::optional<std::chrono::system_clock::time_point> t_service;
-  /// Indicate the epoch time for the NTN assistance information passed in the config file. UTC timepoint.
-  std::optional<std::chrono::system_clock::time_point> epoch_timestamp;
   /// Optional offset (in SFN) between the SIB19 transmission slot and the epoch time (EpochTime IE) of the NTN
   /// assistance info. Allows sending NTN assistance information that will become valid epoch_sfn_offset number of
   /// system frames after SIB19 Tx slot.
@@ -99,16 +84,8 @@ struct du_high_unit_ntn_serving_cell_config {
   /// If not provided, the value is derived from the variant of ephemeris_info.
   /// If provided and does not match the variant of ephemeris_info, the ephemeris_info is converted accordingly.
   std::optional<bool> use_state_vector;
-  /// This field provides satellite ephemeris either in format of position and velocity state vector or in format of
-  /// orbital parameters.
-  std::optional<ntn_ephemeris_info_t> ephemeris_info;
-  /// Network-controlled common timing advanced value, and it may include any timing offset considered necessary by the
-  /// network.
-  std::optional<ta_info_t> ta_info;
   /// Parameters of the feeder link used to compute the Doppler shifts.
   std::optional<feeder_link_info_t> feeder_link_info;
-  /// Geodetic coordinates (in degrees) of the NTN Gateway location.
-  std::optional<geodetic_coordinates_t> ntn_gateway_location;
   /// Indicates polarization information for downlink/uplink transmission on service link.
   std::optional<ntn_polarization_t> polarization;
   /// When this field is included in SIB19, it indicates reporting of timing advanced is enabled.
@@ -117,11 +94,6 @@ struct du_high_unit_ntn_serving_cell_config {
   std::optional<geodetic_coordinates_t> moving_ref_location;
   /// Satellite switch with resynchronization parameters (R18).
   std::optional<du_high_unit_sat_switch_config> sat_switch_with_resync;
-  /// Reference to a globally-defined satellite by user-facing satellite_idx.
-  /// When set, ephemeris_info, epoch_timestamp, ntn_gateway_location and ta_info must not be provided.
-  std::optional<unsigned> satellite_idx;
-  /// Orbit propagator to use for ephemeris propagation. Allowed values: "rk4", "keplerian".
-  ocudu_ntn::orbit_propagator_type propagator_type = ocudu_ntn::orbit_propagator_type::rk4;
 };
 
 /// Application-level per-cell NTN configuration. Valid both for an NTN serving cell (NTN band, \c serving
