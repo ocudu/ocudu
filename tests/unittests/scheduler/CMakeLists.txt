@@ -47,6 +47,7 @@ target_link_libraries(scheduler_test
         sched_config
         scheduler_test_suite
         sched_test_doubles
+        ocudu_du_config_validators
         gtest
         ocudu_gtest_main)
 add_test(scheduler_test scheduler_test)

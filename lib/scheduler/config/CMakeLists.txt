@@ -19,7 +19,7 @@ add_library(sched_config STATIC
         rlm_helper.cpp
         time_domain_mapper.cpp
 		pusch_td_resource_indices.cpp)
-target_link_libraries(sched_config ocudu_ran du_resource_manager)
+target_link_libraries(sched_config ocudu_ran sched_support sched_config_manager)
 
 add_library(sched_config_manager OBJECT
 		cell_bwp_res_config.cpp

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
-#include "lib/du/du_high/du_manager/ran_resource_management/du_pucch_resource_manager.h"
 #include "scheduler_test_doubles.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
@@ -12,6 +11,7 @@
 #include "ocudu/scheduler/config/sched_cell_config_helpers.h"
 #include "ocudu/scheduler/config/scheduler_expert_config_factory.h"
 #include "ocudu/scheduler/result/sched_result.h"
+#include "ocudu/scheduler/rrm/pucch_resource_manager.h"
 #include "ocudu/scheduler/scheduler_factory.h"
 #include "ocudu/support/benchmark_utils.h"
 #include <getopt.h>
@@ -222,13 +222,13 @@ private:
   const unsigned dl_pipeline_delay = 4;
   const unsigned uci_process_delay = 2;
 
-  sched_cfg_dummy_notifier       cfg_notif;
-  sched_dummy_metric_notifier    metric_notif;
-  scheduler_expert_config        expert_cfg;
-  cell_config_builder_params     builder_params;
-  std::vector<ran_cell_config>   cell_cfgs;
-  ocudulog::basic_logger&        logger;
-  odu::du_pucch_resource_manager pucch_res_mng;
+  sched_cfg_dummy_notifier     cfg_notif;
+  sched_dummy_metric_notifier  metric_notif;
+  scheduler_expert_config      expert_cfg;
+  cell_config_builder_params   builder_params;
+  std::vector<ran_cell_config> cell_cfgs;
+  ocudulog::basic_logger&      logger;
+  pucch_resource_manager       pucch_res_mng;
 
   std::unique_ptr<mac_scheduler> sch;
 

@@ -4,14 +4,14 @@
 
 #pragma once
 
-#include "../lib/du/du_high/du_manager/ran_resource_management/du_pucch_resource_manager.h"
 #include "ocudu/scheduler/config/ran_cell_config.h"
+#include "ocudu/scheduler/rrm/pucch_resource_manager.h"
 
 namespace ocudu {
 
 class cell_configuration;
 
-/// Provides a wrapper for \ref du_pucch_resource_manager to build the PUCCH dedicated configuration for UEs to be used
+/// Provides a wrapper for \ref pucch_resource_manager to build the PUCCH dedicated configuration for UEs to be used
 /// in tests.
 class pucch_res_builder_test_helper
 {
@@ -21,7 +21,7 @@ public:
   void setup(const ran_cell_config& cell_cfg);
 
   /// Build a new UE's PUCCH config (embedded in \ref ue_cell_config) and add this to the
-  /// \ref du_pucch_resource_manager to keep track of which cell PUCCH resources have been used.
+  /// \ref pucch_resource_manager to keep track of which cell PUCCH resources have been used.
   bool add_build_new_ue_pucch_cfg(ue_cell_config& ue_cell_cfg);
 
   /// Release the cell PUCCH resources previously allocated to a UE (via \ref add_build_new_ue_pucch_cfg), so they
@@ -29,11 +29,11 @@ public:
   void remove_ue_pucch_cfg(ue_cell_config& ue_cell_cfg);
 
 private:
-  // Build the \ref du_pucch_resource_manager with the given configuration. This function is called only once, at the
+  // Build the \ref pucch_resource_manager with the given configuration. This function is called only once, at the
   // time the firt UE is added.
   void init_pucch_res_mgr(const serving_cell_config& base_ue_cfg);
 
-  odu::du_pucch_resource_manager pucch_res_mgr;
+  pucch_resource_manager pucch_res_mgr;
 };
 
 } // namespace ocudu

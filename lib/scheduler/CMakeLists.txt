@@ -3,6 +3,7 @@
 # Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 add_subdirectory(config)
+add_subdirectory(rrm)
 add_subdirectory(support)
 add_subdirectory(logging)
 add_subdirectory(cell)

@@ -21,3 +21,4 @@ add_library(sched_support STATIC
         csi_report_helpers.cpp
         pusch_power_controller.cpp
         pucch_power_controller.cpp)
+target_link_libraries(sched_support ocudu_ran)

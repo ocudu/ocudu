@@ -4,30 +4,20 @@
 
 #pragma once
 
-#include "ocudu/adt/flat_map.h"
 #include "ocudu/adt/slotted_array.h"
 #include "ocudu/adt/slotted_vector.h"
 #include "ocudu/f1u/du/f1u_config.h"
-#include "ocudu/mac/mac_cell_group_config.h"
 #include "ocudu/mac/mac_lc_config.h"
 #include "ocudu/ran/logical_channel/lcid.h"
 #include "ocudu/ran/meas_gap_config.h"
-#include "ocudu/ran/physical_cell_group.h"
 #include "ocudu/ran/qos/qos_parameters.h"
 #include "ocudu/ran/rb_id.h"
 #include "ocudu/ran/s_nssai.h"
 #include "ocudu/rlc/rlc_config.h"
-#include "ocudu/scheduler/scheduler_configurator.h"
+#include "ocudu/scheduler/config/cell_group_config.h"
 
 namespace ocudu {
 namespace odu {
-
-/// This struct stores the accumulated CellGroupConfig.
-struct cell_group_config {
-  mac_cell_group_config                       mcg_cfg;
-  physical_cell_group_config                  pcg_cfg;
-  flat_map<serv_cell_index_t, ue_cell_config> cells;
-};
 
 /// Parameters of an SRB of the DU UE context.
 struct du_ue_srb_config {

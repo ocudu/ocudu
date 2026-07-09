@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
-#include "du_pucch_resource_manager.h"
+#include "ocudu/scheduler/rrm/pucch_resource_manager.h"
 #include "ocudu/ran/csi_report/csi_report_config_helpers.h"
 #include "ocudu/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "ocudu/ran/csi_rs/csi_meas_config.h"
@@ -24,16 +24,15 @@
 #include <utility>
 
 using namespace ocudu;
-using namespace odu;
 
-du_pucch_resource_manager::du_pucch_resource_manager(unsigned max_pucch_grants_per_slot_) :
+pucch_resource_manager::pucch_resource_manager(unsigned max_pucch_grants_per_slot_) :
   // Leave 1 PUCCH grant for HARQ ACKs.
   max_pucch_grants_per_slot(max_pucch_grants_per_slot_ - 1U)
 {
   ocudu_assert(max_pucch_grants_per_slot_ > 0, "At least one PUCCH grant per slot is required");
 }
 
-void du_pucch_resource_manager::add_cell(du_cell_index_t cell_idx, const ran_cell_config& cell_cfg)
+void pucch_resource_manager::add_cell(du_cell_index_t cell_idx, const ran_cell_config& cell_cfg)
 {
   ocudu_assert(not cells.contains(cell_idx), "Cell index={} already configured", cell_idx);
 
@@ -111,14 +110,14 @@ void du_pucch_resource_manager::add_cell(du_cell_index_t cell_idx, const ran_cel
   cells.emplace(cell_idx, std::move(cell_ctx));
 }
 
-void du_pucch_resource_manager::rem_cell(du_cell_index_t cell_idx)
+void pucch_resource_manager::rem_cell(du_cell_index_t cell_idx)
 {
   ocudu_assert(cells.contains(cell_idx), "Cell index={} has not been configured", cell_idx);
 
   cells.erase(cell_idx);
 }
 
-bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
+bool pucch_resource_manager::alloc_resources(odu::cell_group_config& cell_grp_cfg)
 {
   auto& cell_cfg         = cell_grp_cfg.cells.at(SERVING_PCELL_IDX);
   auto& serv_cell_cfg    = cell_cfg.serv_cell_cfg;
@@ -202,7 +201,7 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
   return true;
 }
 
-void du_pucch_resource_manager::dealloc_resources(cell_group_config& cell_grp_cfg)
+void pucch_resource_manager::dealloc_resources(odu::cell_group_config& cell_grp_cfg)
 {
   auto&       serv_cell_cfg = cell_grp_cfg.cells.at(SERVING_PCELL_IDX).serv_cell_cfg;
   const auto& ul_bwp        = cell_grp_cfg.cells.at(SERVING_PCELL_IDX).init_bwp().ul;
@@ -241,11 +240,11 @@ void du_pucch_resource_manager::dealloc_resources(cell_group_config& cell_grp_cf
   disable_pucch_cfg(serv_cell_cfg, cell_ctx);
 }
 
-std::vector<du_pucch_resource_manager::periodic_pucch_config>::const_iterator
-du_pucch_resource_manager::get_compatible_csi_cfg(const cell_resource_context&              cell_ctx,
-                                                  const periodic_pucch_config&              sr_cfg,
-                                                  const std::vector<periodic_pucch_config>& free_csi_list,
-                                                  unsigned                                  csi_report_size) const
+std::vector<pucch_resource_manager::periodic_pucch_config>::const_iterator
+pucch_resource_manager::get_compatible_csi_cfg(const cell_resource_context&              cell_ctx,
+                                               const periodic_pucch_config&              sr_cfg,
+                                               const std::vector<periodic_pucch_config>& free_csi_list,
+                                               unsigned                                  csi_report_size) const
 {
   const pucch_resource& sr_res = cell_ctx.cell_bwp_cfg.ul.pucch.get_ded(
       cell_ctx.cell_params.init_bwp.pucch.resources.sr_res_id(pucch_sr_resource_id(sr_cfg.res)));
@@ -313,9 +312,9 @@ du_pucch_resource_manager::get_compatible_csi_cfg(const cell_resource_context&  
   return best;
 }
 
-bool du_pucch_resource_manager::offset_exceeds_limit(const cell_resource_context& cell_ctx,
-                                                     unsigned                     offset,
-                                                     bool                         csi) const
+bool pucch_resource_manager::offset_exceeds_limit(const cell_resource_context& cell_ctx,
+                                                  unsigned                     offset,
+                                                  bool                         csi) const
 {
   for (unsigned off = offset, period = csi ? cell_ctx.csi_period_slots : cell_ctx.sr_period_slots;
        off < cell_ctx.lcm_csi_sr_period;
@@ -329,9 +328,9 @@ bool du_pucch_resource_manager::offset_exceeds_limit(const cell_resource_context
   return false;
 }
 
-std::set<unsigned> du_pucch_resource_manager::compute_periodic_uci_slot_offsets(const cell_resource_context& cell_ctx,
-                                                                                unsigned                     sr_offset,
-                                                                                unsigned                     csi_offset)
+std::set<unsigned> pucch_resource_manager::compute_periodic_uci_slot_offsets(const cell_resource_context& cell_ctx,
+                                                                             unsigned                     sr_offset,
+                                                                             unsigned                     csi_offset)
 {
   std::set<unsigned> slot_offsets;
   for (unsigned off = sr_offset; off < cell_ctx.lcm_csi_sr_period; off += cell_ctx.sr_period_slots) {
@@ -346,8 +345,8 @@ std::set<unsigned> du_pucch_resource_manager::compute_periodic_uci_slot_offsets(
   return slot_offsets;
 }
 
-void du_pucch_resource_manager::disable_pucch_cfg(serving_cell_config&         serv_cell_cfg,
-                                                  const cell_resource_context& cell_ctx)
+void pucch_resource_manager::disable_pucch_cfg(serving_cell_config&         serv_cell_cfg,
+                                               const cell_resource_context& cell_ctx)
 {
   serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.reset();
   if (cell_ctx.default_csi_report_cfg.has_value()) {

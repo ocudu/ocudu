@@ -8,13 +8,13 @@
 #include "du_drx_resource_manager.h"
 #include "du_meas_config_manager.h"
 #include "du_pdsch_resource_manager.h"
-#include "du_pucch_resource_manager.h"
 #include "du_pusch_resource_manager.h"
 #include "du_ran_resource_manager.h"
 #include "du_srs_resource_manager.h"
 #include "ra_resource_manager.h"
 #include "ue_capability_manager.h"
 #include "ocudu/ran/qos/five_qi.h"
+#include "ocudu/scheduler/rrm/pucch_resource_manager.h"
 
 namespace ocudu {
 namespace odu {
@@ -116,7 +116,7 @@ private:
   slotted_array<ue_resource_context, MAX_NOF_DU_UES, false> ue_res_pool;
 
   // Allocator of UE PUCCH resources.
-  du_pucch_resource_manager pucch_res_mng;
+  pucch_resource_manager pucch_res_mng;
 
   // Manager of UE PDSCH configuration.
   du_pdsch_resource_manager pdsch_res_mng;

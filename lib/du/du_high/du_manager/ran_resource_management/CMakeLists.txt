@@ -5,7 +5,6 @@
 add_library(du_resource_manager
         du_bearer_resource_manager.cpp
         du_pdsch_resource_manager.cpp
-        du_pucch_resource_manager.cpp
         du_pusch_resource_manager.cpp
         du_ran_resource_manager_impl.cpp
         du_srs_periodic_res_mng.cpp
@@ -22,4 +21,5 @@ target_link_libraries(du_resource_manager
         ocudu_du_config_validators
         mac_configuration_helpers
         sched_config
-        sched_config_manager)
+        sched_config_manager
+        sched_rrm)

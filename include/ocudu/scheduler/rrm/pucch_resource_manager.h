@@ -4,27 +4,27 @@
 
 #pragma once
 
-#include "du_ue_resource_config.h"
+#include "ocudu/adt/slotted_array.h"
 #include "ocudu/scheduler/config/cell_bwp_res_config.h"
+#include "ocudu/scheduler/config/cell_group_config.h"
 #include "ocudu/scheduler/config/serving_cell_config.h"
 #include <optional>
 #include <set>
 
 namespace ocudu {
-namespace odu {
 
 /// \brief This class manages the allocation of RAN PUCCH Resources to DU UEs. For instance, this class ensures that
 /// UEs do not collide in the usage of the PUCCH for SRs and CSI. For HARQ-ACKs, we rely on the MAC scheduler to ensure
 /// no collisions take place in the PUCCH.
 /// \remark No PUCCH resources for CSI will be managed for cells configured with aperiodic CSI reporting.
-class du_pucch_resource_manager
+class pucch_resource_manager
 {
 public:
-  explicit du_pucch_resource_manager(unsigned max_pucch_grants_per_slot_);
-  du_pucch_resource_manager(const du_pucch_resource_manager&)            = delete;
-  du_pucch_resource_manager(du_pucch_resource_manager&&)                 = default;
-  du_pucch_resource_manager& operator=(const du_pucch_resource_manager&) = delete;
-  du_pucch_resource_manager& operator=(du_pucch_resource_manager&&)      = delete;
+  explicit pucch_resource_manager(unsigned max_pucch_grants_per_slot_);
+  pucch_resource_manager(const pucch_resource_manager&)            = delete;
+  pucch_resource_manager(pucch_resource_manager&&)                 = default;
+  pucch_resource_manager& operator=(const pucch_resource_manager&) = delete;
+  pucch_resource_manager& operator=(pucch_resource_manager&&)      = delete;
 
   /// Add resources for a new DU cell.
   void add_cell(du_cell_index_t cell_idx, const ran_cell_config& cell_cfg);
@@ -34,10 +34,10 @@ public:
 
   /// \brief Allocate PUCCH resources for a given UE. The resources are stored in the UE's cell group config.
   /// \return true if allocation was successful.
-  bool alloc_resources(cell_group_config& cell_grp_cfg);
+  bool alloc_resources(odu::cell_group_config& cell_grp_cfg);
 
   /// \brief Deallocate PUCCH resources previously given to a UE. The resources are returned back to a pool.
-  void dealloc_resources(cell_group_config& cell_grp_cfg);
+  void dealloc_resources(odu::cell_group_config& cell_grp_cfg);
 
   /// Gets the current number of free SR configurations for a given cell.
   unsigned get_nof_free_sr_configs(du_cell_index_t cell_idx) const { return cells[cell_idx].free_sr_configs.size(); }
@@ -106,5 +106,4 @@ private:
   static void disable_pucch_cfg(serving_cell_config& serv_cell_cfg, const cell_resource_context& cell_ctx);
 };
 
-} // namespace odu
 } // namespace ocudu
