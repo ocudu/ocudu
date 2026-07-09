@@ -194,7 +194,7 @@ ul_time_domain_mapper::ul_time_domain_mapper(const ul_time_domain_builder_params
 
   // Generate the PUSCH TD resource index candidates for each slot (handles both FDD and TDD).
   pusch_td_res_indices_per_slot =
-      get_pusch_td_resource_indices_per_slot(params.scs, params.tdd_cfg, pusch_td_res_list, dedicated_k1_list.front());
+      get_pusch_td_resource_indices_per_slot(params.scs, params.tdd_cfg, pusch_td_res_list, min_k1_val);
 
   // Generate the dedicated and common k1 candidates valid for a PDSCH transmitted in each slot.
   common_k1_list = pucch_td_helper::get_common_k1_candidates(min_k1_val);

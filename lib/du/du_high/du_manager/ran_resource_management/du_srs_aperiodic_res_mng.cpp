@@ -9,7 +9,6 @@
 #include "ocudu/ran/srs/srs_constants.h"
 #include "ocudu/scheduler/config/pusch_td_resource_indices.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
-#include "ocudu/scheduler/config/time_domain_resource_helper.h"
 
 using namespace ocudu;
 using namespace odu;
@@ -19,16 +18,13 @@ using namespace odu;
 // transmissions. This means that only 1 offset can be chosen.
 static unsigned compute_slot_offset(const du_cell_config& cell_cfg)
 {
-  auto dl_data_to_ul_ack =
-      time_domain_resource_helper::generate_k1_candidates(cell_cfg.ran.tdd_cfg, cell_cfg.ran.init_bwp.pucch.min_k1);
-
   const auto& pusch_td_alloc_list = cell_cfg.ran.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
 
   std::vector<static_vector<uint8_t, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>> pusch_td_list_per_slot =
       get_pusch_td_resource_indices_per_slot(cell_cfg.ran.dl_cfg_common.init_dl_bwp.generic_params.scs,
                                              cell_cfg.ran.tdd_cfg,
                                              pusch_td_alloc_list,
-                                             dl_data_to_ul_ack.front());
+                                             cell_cfg.ran.init_bwp.pucch.min_k1);
 
   // Find the maximum k2 used for UL scheduling.
   unsigned max_used_k2 = 0;
@@ -45,9 +41,7 @@ static unsigned compute_slot_offset(const du_cell_config& cell_cfg)
   // latency constraints.
   // - If at a given PDCCH slot we trigger an SRS with a given slot_offset, there won't be any PUSCH yet allocated at
   // PDCCH slot + slot_offset.
-  const auto* min_k1_it = std::min_element(dl_data_to_ul_ack.begin(), dl_data_to_ul_ack.end());
-  ocudu_assert(min_k1_it != dl_data_to_ul_ack.end(), "Min k1 must exist");
-  const unsigned min_k1                  = *min_k1_it;
+  const unsigned min_k1                  = cell_cfg.ran.init_bwp.pucch.min_k1;
   const int      slot_offset_lower_bound = static_cast<int>(std::max(min_k1, max_used_k2));
 
   // FDD Case.
