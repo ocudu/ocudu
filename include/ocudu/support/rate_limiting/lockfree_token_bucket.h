@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "ocudu/ocudulog/logger.h"
 #include "ocudu/support/timers.h"
 #include <cstdint>
 
@@ -46,5 +47,7 @@ private:
   std::chrono::nanoseconds time_to_fill_from_empty = {};
 
   timer_manager& timer_mng;
+
+  ocudulog::basic_logger& logger;
 };
 } // namespace ocudu

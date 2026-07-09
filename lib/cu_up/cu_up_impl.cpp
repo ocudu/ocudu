@@ -141,11 +141,11 @@ cu_up::cu_up(const cu_up_config& config_, const cu_up_dependencies& dependencies
     e1ap_cu_up_mng_adapters.emplace_back();
     e1ap_cu_up_manager_adapter&     e1ap_cu_up_mng_adapter = e1ap_cu_up_mng_adapters.back();
     std::unique_ptr<e1ap_interface> e1ap                   = create_e1ap(cu_up_e1_index_t{e1_index},
-                                                                         cfg.e1ap,
-                                                                         *e1_gw,
-                                                                         e1ap_cu_up_mng_adapter,
-                                                                         *dependencies.timers,
-                                                                         dependencies.exec_mapper->ctrl_executor());
+                                                       cfg.e1ap,
+                                                       *e1_gw,
+                                                       e1ap_cu_up_mng_adapter,
+                                                       *dependencies.timers,
+                                                       dependencies.exec_mapper->ctrl_executor());
     e1ap_refs.emplace_back(*e1ap);
     e1aps.push_back(std::move(e1ap));
   }

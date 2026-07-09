@@ -10,8 +10,12 @@ using namespace ocudu;
 lockfree_token_bucket::lockfree_token_bucket(uint64_t rate_, uint64_t capacity_, timer_manager& timer_mng_) :
   time_per_token(std::chrono::nanoseconds(std::chrono::seconds(1)) / rate_),
   time_to_fill_from_empty(time_per_token * capacity_),
-  timer_mng(timer_mng_)
+  timer_mng(timer_mng_),
+  logger(ocudulog::fetch_basic_logger("ALL"))
 {
+  if (not empty_time.is_lock_free()) {
+    logger.warning("Rate limiter is not lock free");
+  }
 }
 
 bool lockfree_token_bucket::consume(uint32_t tokens)
