@@ -10,60 +10,122 @@
 
 using namespace ocudu;
 
-static std::size_t                                          rx_pool_size_val = 0;
-static std::unique_ptr<rlc_rx_am_um_shared_window_seg_pool> rx_pool_inst;
-static std::size_t                                          tx_pool_size_val = 0;
-static std::unique_ptr<rlc_tx_am_shared_window_seg_pool>    tx_pool_inst;
+namespace {
 
-void ocudu::init_rlc_window_seg_pools(size_t rx_pool_size, size_t tx_pool_size)
+std::size_t                                 drb_rx_pool_size_val = 0;
+std::unique_ptr<rlc_drb_rx_window_seg_pool> drb_rx_pool_inst;
+std::size_t                                 drb_tx_pool_size_val = 0;
+std::unique_ptr<rlc_drb_tx_window_seg_pool> drb_tx_pool_inst;
+
+std::size_t                                 srb_rx_pool_size_val = 0;
+std::unique_ptr<rlc_srb_rx_window_seg_pool> srb_rx_pool_inst;
+std::size_t                                 srb_tx_pool_size_val = 0;
+std::unique_ptr<rlc_srb_tx_window_seg_pool> srb_tx_pool_inst;
+
+} // namespace
+
+void ocudu::init_rlc_window_seg_pools(std::size_t drb_rx_pool_size,
+                                      std::size_t drb_tx_pool_size,
+                                      std::size_t srb_rx_pool_size,
+                                      std::size_t srb_tx_pool_size)
 {
-  if (rx_pool_inst == nullptr) {
-    rx_pool_size_val = rx_pool_size;
-    rx_pool_inst     = std::make_unique<rlc_rx_am_um_shared_window_seg_pool>(rx_pool_size);
+  if (drb_rx_pool_inst == nullptr) {
+    drb_rx_pool_size_val = drb_rx_pool_size;
+    drb_rx_pool_inst     = std::make_unique<rlc_drb_rx_window_seg_pool>(drb_rx_pool_size);
   } else {
     report_fatal_error_if_not(
-        rx_pool_size_val >= rx_pool_size,
+        drb_rx_pool_size_val >= drb_rx_pool_size,
         "RLC RX window segment pool already initialized with size {} which is less than the requested {}",
-        rx_pool_size_val,
-        rx_pool_size);
+        drb_rx_pool_size_val,
+        drb_rx_pool_size);
   }
 
-  if (tx_pool_inst == nullptr) {
-    tx_pool_size_val = tx_pool_size;
-    tx_pool_inst     = std::make_unique<rlc_tx_am_shared_window_seg_pool>(tx_pool_size);
+  if (drb_tx_pool_inst == nullptr) {
+    drb_tx_pool_size_val = drb_tx_pool_size;
+    drb_tx_pool_inst     = std::make_unique<rlc_drb_tx_window_seg_pool>(drb_tx_pool_size);
   } else {
     report_fatal_error_if_not(
-        tx_pool_size_val >= tx_pool_size,
+        drb_tx_pool_size_val >= drb_tx_pool_size,
         "RLC TX window segment pool already initialized with size {} which is less than the requested {}",
-        tx_pool_size_val,
-        tx_pool_size);
+        drb_tx_pool_size_val,
+        drb_tx_pool_size);
+  }
+
+  if (srb_rx_pool_inst == nullptr) {
+    srb_rx_pool_size_val = srb_rx_pool_size;
+    srb_rx_pool_inst     = std::make_unique<rlc_srb_rx_window_seg_pool>(srb_rx_pool_size);
+  } else {
+    report_fatal_error_if_not(
+        srb_rx_pool_size_val >= srb_rx_pool_size,
+        "RLC RX window segment pool already initialized with size {} which is less than the requested {}",
+        srb_rx_pool_size_val,
+        srb_rx_pool_size);
+  }
+
+  if (srb_tx_pool_inst == nullptr) {
+    srb_tx_pool_size_val = srb_tx_pool_size;
+    srb_tx_pool_inst     = std::make_unique<rlc_srb_tx_window_seg_pool>(srb_tx_pool_size);
+  } else {
+    report_fatal_error_if_not(
+        srb_tx_pool_size_val >= srb_tx_pool_size,
+        "RLC TX window segment pool already initialized with size {} which is less than the requested {}",
+        srb_tx_pool_size_val,
+        srb_tx_pool_size);
   }
 }
 
-rlc_rx_am_um_shared_window_seg_pool& ocudu::get_rlc_rx_am_um_shared_window_seg_pool()
+rlc_drb_rx_window_seg_pool& ocudu::get_rlc_drb_rx_window_seg_pool()
 {
-  if (rx_pool_inst == nullptr) {
-    rx_pool_size_val = rlc_rx_am_um_shared_window_seg_pool_size;
-    rx_pool_inst     = std::make_unique<rlc_rx_am_um_shared_window_seg_pool>(rx_pool_size_val);
+  if (drb_rx_pool_inst == nullptr) {
+    drb_rx_pool_size_val = rlc_drb_rx_window_seg_pool_size;
+    drb_rx_pool_inst     = std::make_unique<rlc_drb_rx_window_seg_pool>(drb_rx_pool_size_val);
   }
-  return *rx_pool_inst;
+  return *drb_rx_pool_inst;
 }
 
-rlc_rx_am_window_seg_pool& ocudu::get_rlc_rx_am_window_seg_pool()
+rlc_drb_am_rx_window_seg_pool& ocudu::get_rlc_drb_am_rx_window_seg_pool()
 {
-  return get_rlc_rx_am_um_shared_window_seg_pool().get_pool_of_type<rlc_rx_am_sdu_info>();
+  return get_rlc_drb_rx_window_seg_pool().get_pool_of_type<rlc_rx_am_sdu_info>();
 }
 
-rlc_rx_um_window_seg_pool& ocudu::get_rlc_rx_um_window_seg_pool()
+rlc_drb_um_rx_window_seg_pool& ocudu::get_rlc_drb_um_rx_window_seg_pool()
 {
-  return get_rlc_rx_am_um_shared_window_seg_pool().get_pool_of_type<rlc_rx_um_sdu_info>();
+  return get_rlc_drb_rx_window_seg_pool().get_pool_of_type<rlc_rx_um_sdu_info>();
 }
 
-rlc_tx_am_window_seg_pool& ocudu::get_rlc_tx_am_window_seg_pool()
+rlc_drb_am_tx_window_seg_pool& ocudu::get_rlc_drb_am_tx_window_seg_pool()
 {
-  if (tx_pool_inst == nullptr) {
-    tx_pool_size_val = rlc_tx_am_window_seg_pool_size;
-    tx_pool_inst     = std::make_unique<rlc_tx_am_shared_window_seg_pool>(tx_pool_size_val);
+  if (drb_tx_pool_inst == nullptr) {
+    drb_tx_pool_size_val = rlc_drb_tx_window_seg_pool_size;
+    drb_tx_pool_inst     = std::make_unique<rlc_drb_tx_window_seg_pool>(drb_tx_pool_size_val);
   }
-  return tx_pool_inst->get_pool_of_type<rlc_tx_am_sdu_info>();
+  return drb_tx_pool_inst->get_pool_of_type<rlc_tx_am_sdu_info>();
+}
+
+rlc_srb_rx_window_seg_pool& ocudu::get_rlc_srb_rx_window_seg_pool()
+{
+  if (srb_rx_pool_inst == nullptr) {
+    srb_rx_pool_size_val = rlc_srb_rx_window_seg_pool_size;
+    srb_rx_pool_inst     = std::make_unique<rlc_srb_rx_window_seg_pool>(srb_rx_pool_size_val);
+  }
+  return *srb_rx_pool_inst;
+}
+
+rlc_srb_am_rx_window_seg_pool& ocudu::get_rlc_srb_am_rx_window_seg_pool()
+{
+  return get_rlc_srb_rx_window_seg_pool().get_pool_of_type<rlc_rx_am_sdu_info>();
+}
+
+rlc_srb_um_rx_window_seg_pool& ocudu::get_rlc_srb_um_rx_window_seg_pool()
+{
+  return get_rlc_srb_rx_window_seg_pool().get_pool_of_type<rlc_rx_um_sdu_info>();
+}
+
+rlc_srb_am_tx_window_seg_pool& ocudu::get_rlc_srb_am_tx_window_seg_pool()
+{
+  if (srb_tx_pool_inst == nullptr) {
+    srb_tx_pool_size_val = rlc_srb_tx_window_seg_pool_size;
+    srb_tx_pool_inst     = std::make_unique<rlc_srb_tx_window_seg_pool>(srb_tx_pool_size_val);
+  }
+  return srb_tx_pool_inst->get_pool_of_type<rlc_tx_am_sdu_info>();
 }

@@ -368,7 +368,7 @@ protected:
     pcell_worker.run_pending_tasks();
   }
 
-  virtual rlc_tx_am_window_seg_pool& get_window_pool() { return get_rlc_tx_am_window_seg_pool(); }
+  virtual rlc_drb_am_tx_window_seg_pool& get_window_pool() { return get_rlc_drb_am_tx_window_seg_pool(); }
 
   ocudulog::basic_logger&                       logger  = ocudulog::fetch_basic_logger("TEST", false);
   rlc_am_sn_size                                sn_size = GetParam();
@@ -385,14 +385,14 @@ protected:
 class rlc_tx_am_test_no_window_segments : public rlc_tx_am_test
 {
 protected:
-  rlc_tx_am_window_seg_pool& get_window_pool() override { return dummy_pool; }
+  rlc_drb_am_tx_window_seg_pool& get_window_pool() override { return dummy_pool; }
 
 private:
-  class rlc_tx_am_window_seg_pool_dummy : public rlc_tx_am_window_seg_pool
+  class rlc_tx_am_window_seg_pool_dummy : public rlc_drb_am_tx_window_seg_pool
   {
   public:
-    map_segment<uint32_t, rlc_tx_am_sdu_info, rlc_tx_am_window_seg_size>* get_segment() override { return nullptr; }
-    void return_segment(map_segment<uint32_t, rlc_tx_am_sdu_info, rlc_tx_am_window_seg_size>* seg) override {}
+    map_segment<uint32_t, rlc_tx_am_sdu_info, rlc_drb_tx_window_seg_size>* get_segment() override { return nullptr; }
+    void return_segment(map_segment<uint32_t, rlc_tx_am_sdu_info, rlc_drb_tx_window_seg_size>* seg) override {}
   };
 
   rlc_tx_am_window_seg_pool_dummy dummy_pool = {};

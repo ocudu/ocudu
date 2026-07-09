@@ -146,7 +146,7 @@ void benchmark_tx_pdu(const bench_params& params)
                                                    pcell_worker,
                                                    ue_worker,
                                                    timers,
-                                                   get_rlc_tx_am_window_seg_pool());
+                                                   get_rlc_drb_am_tx_window_seg_pool());
 
   // Bind AM Rx/Tx interconnect
   rlc_tx->set_status_provider(tester.get());

@@ -9,45 +9,61 @@
 
 namespace ocudu {
 
+// DRBs
+static constexpr unsigned rlc_drb_rx_window_seg_size      = 256;
+static constexpr unsigned rlc_drb_rx_window_seg_pool_size = 2048;
+static constexpr unsigned rlc_drb_tx_window_seg_size      = 256;
+static constexpr unsigned rlc_drb_tx_window_seg_pool_size = 2048;
+
+// SRBs
+static constexpr unsigned rlc_srb_rx_window_seg_size      = 256; // TODO: Should be 8.
+static constexpr unsigned rlc_srb_rx_window_seg_pool_size = 2048;
+static constexpr unsigned rlc_srb_tx_window_seg_size      = 256; // TODO: Should be 8.
+static constexpr unsigned rlc_srb_tx_window_seg_pool_size = 2048;
+
 struct rlc_rx_am_sdu_info;
 struct rlc_rx_um_sdu_info;
-
-constexpr unsigned rlc_rx_am_um_shared_window_seg_size      = 256;
-constexpr unsigned rlc_rx_am_um_shared_window_seg_pool_size = 2048;
-
-using rlc_rx_am_um_shared_window_seg_pool =
-    shared_map_segment_pool<uint32_t, rlc_rx_am_um_shared_window_seg_size, rlc_rx_am_sdu_info, rlc_rx_um_sdu_info>;
-
-rlc_rx_am_um_shared_window_seg_pool& get_rlc_rx_am_um_shared_window_seg_pool();
-
-using rlc_rx_am_window_seg_pool =
-    map_segment_pool_interface<uint32_t, rlc_rx_am_sdu_info, rlc_rx_am_um_shared_window_seg_size>;
-rlc_rx_am_window_seg_pool& get_rlc_rx_am_window_seg_pool();
-
-using rlc_rx_um_window_seg_pool =
-    map_segment_pool_interface<uint32_t, rlc_rx_um_sdu_info, rlc_rx_am_um_shared_window_seg_size>;
-rlc_rx_um_window_seg_pool& get_rlc_rx_um_window_seg_pool();
-
 struct rlc_tx_am_sdu_info;
 
-constexpr unsigned rlc_tx_am_window_seg_size      = 256;
-constexpr unsigned rlc_tx_am_window_seg_pool_size = 2048;
+using rlc_drb_rx_window_seg_pool =
+    shared_map_segment_pool<uint32_t, rlc_drb_rx_window_seg_size, rlc_rx_am_sdu_info, rlc_rx_um_sdu_info>;
+rlc_drb_rx_window_seg_pool& get_rlc_drb_rx_window_seg_pool();
 
-using rlc_tx_am_shared_window_seg_pool =
-    shared_map_segment_pool<uint32_t, rlc_tx_am_window_seg_size, rlc_tx_am_sdu_info>;
+using rlc_drb_am_rx_window_seg_pool =
+    map_segment_pool_interface<uint32_t, rlc_rx_am_sdu_info, rlc_drb_rx_window_seg_size>;
+rlc_drb_am_rx_window_seg_pool& get_rlc_drb_am_rx_window_seg_pool();
 
-using rlc_tx_am_window_seg_pool = map_segment_pool_interface<uint32_t, rlc_tx_am_sdu_info, rlc_tx_am_window_seg_size>;
+using rlc_drb_um_rx_window_seg_pool =
+    map_segment_pool_interface<uint32_t, rlc_rx_um_sdu_info, rlc_drb_rx_window_seg_size>;
+rlc_drb_um_rx_window_seg_pool& get_rlc_drb_um_rx_window_seg_pool();
 
-rlc_tx_am_window_seg_pool& get_rlc_tx_am_window_seg_pool();
+using rlc_drb_tx_window_seg_pool = shared_map_segment_pool<uint32_t, rlc_drb_tx_window_seg_size, rlc_tx_am_sdu_info>;
 
-/// \brief Initializes the static RLC window segment pools application-wide.
-///
-/// Initializes the application-wide static RLC window segment pools with given sizes.
-/// If this function was not called explicitly before first access to any pool,
-/// it will be invoked automatically using the defined default values.
-///
-/// \param rx_pool_size Size of the window segment pool for RLC RX side (AM/UM).
-/// \param tx_pool_size Size of the window segment pool for RLC TX side (AM).
-void init_rlc_window_seg_pools(size_t rx_pool_size, size_t tx_pool_size);
+using rlc_drb_am_tx_window_seg_pool =
+    map_segment_pool_interface<uint32_t, rlc_tx_am_sdu_info, rlc_drb_tx_window_seg_size>;
+rlc_drb_am_tx_window_seg_pool& get_rlc_drb_am_tx_window_seg_pool();
+
+using rlc_srb_rx_window_seg_pool =
+    shared_map_segment_pool<uint32_t, rlc_srb_rx_window_seg_size, rlc_rx_am_sdu_info, rlc_rx_um_sdu_info>;
+rlc_srb_rx_window_seg_pool& get_rlc_srb_rx_window_seg_pool();
+
+using rlc_srb_am_rx_window_seg_pool =
+    map_segment_pool_interface<uint32_t, rlc_rx_am_sdu_info, rlc_srb_rx_window_seg_size>;
+rlc_srb_am_rx_window_seg_pool& get_rlc_srb_am_rx_window_seg_pool();
+
+using rlc_srb_um_rx_window_seg_pool =
+    map_segment_pool_interface<uint32_t, rlc_rx_um_sdu_info, rlc_srb_rx_window_seg_size>;
+rlc_srb_um_rx_window_seg_pool& get_rlc_srb_um_rx_window_seg_pool();
+
+using rlc_srb_tx_window_seg_pool = shared_map_segment_pool<uint32_t, rlc_srb_tx_window_seg_size, rlc_tx_am_sdu_info>;
+
+using rlc_srb_am_tx_window_seg_pool =
+    map_segment_pool_interface<uint32_t, rlc_tx_am_sdu_info, rlc_srb_tx_window_seg_size>;
+rlc_srb_am_tx_window_seg_pool& get_rlc_srb_am_tx_window_seg_pool();
+
+void init_rlc_window_seg_pools(std::size_t drb_rx_pool_size,
+                               std::size_t drb_tx_pool_size,
+                               std::size_t srb_rx_pool_size,
+                               std::size_t srb_tx_pool_size);
 
 } // namespace ocudu

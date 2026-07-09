@@ -2050,15 +2050,23 @@ static bool validate_custom_freq_bands(const std::vector<du_high_unit_custom_ban
   return true;
 }
 
-/// Validates the given QoS configuration. Returns true on success, otherwise false.
+/// Validates the given RLC configuration. Returns true on success, otherwise false.
 static bool validate_rlc_config(const du_high_unit_rlc_config& config)
 {
-  if (config.rx_window_seg_pool_size == 0) {
-    fmt::print("Invalid RLC configuration: rx_window_seg_pool_size must be greater than 0\n");
+  if (config.drb_rx_window_seg_pool_size == 0) {
+    fmt::print("Invalid RLC configuration: drb_rx_window_seg_pool_size must be greater than 0\n");
     return false;
   }
-  if (config.tx_window_seg_pool_size == 0) {
-    fmt::print("Invalid RLC configuration: tx_window_seg_pool_size must be greater than 0\n");
+  if (config.drb_tx_window_seg_pool_size == 0) {
+    fmt::print("Invalid RLC configuration: drb_tx_window_seg_pool_size must be greater than 0\n");
+    return false;
+  }
+  if (config.srb_rx_window_seg_pool_size == 0) {
+    fmt::print("Invalid RLC configuration: srb_rx_window_seg_pool_size must be greater than 0\n");
+    return false;
+  }
+  if (config.srb_tx_window_seg_pool_size == 0) {
+    fmt::print("Invalid RLC configuration: srb_tx_window_seg_pool_size must be greater than 0\n");
     return false;
   }
   return true;

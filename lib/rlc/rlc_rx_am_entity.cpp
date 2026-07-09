@@ -17,7 +17,7 @@ rlc_rx_am_entity::rlc_rx_am_entity(gnb_du_id_t                       gnb_du_id,
                                    rlc_pcap&                         pcap_,
                                    task_executor&                    ue_executor_,
                                    timer_manager&                    timers,
-                                   rlc_rx_am_window_seg_pool&        window_seg_pool) :
+                                   rlc_drb_am_rx_window_seg_pool&    window_seg_pool) :
   rlc_rx_entity(gnb_du_id, ue_index, rb_id, upper_dn_, metrics_coll_, pcap_, ue_executor_, timers),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),

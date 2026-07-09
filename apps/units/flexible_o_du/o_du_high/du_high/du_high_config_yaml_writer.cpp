@@ -82,9 +82,11 @@ static YAML::Node build_du_section(const du_high_unit_config& config)
   node["warn_on_drop"] = config.warn_on_drop;
 
   YAML::Node rlc_node;
-  rlc_node["rx_window_seg_pool_size"] = config.rlc_cfg.rx_window_seg_pool_size;
-  rlc_node["tx_window_seg_pool_size"] = config.rlc_cfg.tx_window_seg_pool_size;
-  node["rlc"]                         = rlc_node;
+  rlc_node["drb_rx_window_seg_pool_size"] = config.rlc_cfg.drb_rx_window_seg_pool_size;
+  rlc_node["drb_tx_window_seg_pool_size"] = config.rlc_cfg.drb_tx_window_seg_pool_size;
+  rlc_node["srb_rx_window_seg_pool_size"] = config.rlc_cfg.srb_rx_window_seg_pool_size;
+  rlc_node["srb_tx_window_seg_pool_size"] = config.rlc_cfg.srb_tx_window_seg_pool_size;
+  node["rlc"]                             = rlc_node;
 
   return node;
 }

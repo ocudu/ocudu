@@ -25,7 +25,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(gnb_du_id_t                          gnb_du_i
                                    task_executor&                       pcell_executor_,
                                    task_executor&                       ue_executor_,
                                    timer_manager&                       timers,
-                                   rlc_tx_am_window_seg_pool&           window_seg_pool) :
+                                   rlc_drb_am_tx_window_seg_pool&       window_seg_pool) :
   rlc_tx_entity(gnb_du_id,
                 ue_index,
                 rb_id_,

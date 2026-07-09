@@ -27,8 +27,8 @@ public:
                 task_executor&                       pcell_executor,
                 task_executor&                       ue_executor,
                 timer_manager&                       timers,
-                rlc_rx_am_window_seg_pool&           rx_window_seg_pool,
-                rlc_tx_am_window_seg_pool&           tx_window_seg_pool) :
+                rlc_drb_am_rx_window_seg_pool&       rx_window_seg_pool,
+                rlc_drb_am_tx_window_seg_pool&       tx_window_seg_pool) :
     rlc_base_entity(gnb_du_id_, ue_index_, rb_id_, metrics_period_, rlc_metrics_notifier_, ue_executor)
   {
     // Create AM entities

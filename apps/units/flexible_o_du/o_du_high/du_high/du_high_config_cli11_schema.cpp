@@ -455,9 +455,17 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
 
 static void configure_cli11_du_rlc_args(CLI::App& app, du_high_unit_rlc_config& rlc_cfg)
 {
-  add_option(app, "--rx_window_seg_pool_size", rlc_cfg.rx_window_seg_pool_size, "RLC RX window segment pool size")
+  add_option(
+      app, "--drb_rx_window_seg_pool_size", rlc_cfg.drb_rx_window_seg_pool_size, "DRB RX window segment pool size")
       ->capture_default_str();
-  add_option(app, "--tx_window_seg_pool_size", rlc_cfg.tx_window_seg_pool_size, "RLC TX window segment pool size")
+  add_option(
+      app, "--drb_tx_window_seg_pool_size", rlc_cfg.drb_tx_window_seg_pool_size, "DRB TX window segment pool size")
+      ->capture_default_str();
+  add_option(
+      app, "--srb_rx_window_seg_pool_size", rlc_cfg.srb_rx_window_seg_pool_size, "SRB RX window segment pool size")
+      ->capture_default_str();
+  add_option(
+      app, "--srb_tx_window_seg_pool_size", rlc_cfg.srb_tx_window_seg_pool_size, "SRB TX window segment pool size")
       ->capture_default_str();
 }
 

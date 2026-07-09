@@ -169,7 +169,7 @@ static std::vector<byte_buffer> generate_pdus(bench_params params, rx_order orde
                                               pcell_worker,
                                               ue_worker,
                                               timers,
-                                              get_rlc_tx_am_window_seg_pool());
+                                              get_rlc_drb_am_tx_window_seg_pool());
 
   // Bind AM Rx/Tx interconnect
   rlc_tx->set_status_provider(tester.get());
@@ -252,7 +252,7 @@ static void benchmark_rx_pdu(const bench_params& params, rx_order order, timer_m
                                                                                 pcap,
                                                                                 ue_worker,
                                                                                 timers,
-                                                                                get_rlc_rx_am_window_seg_pool());
+                                                                                get_rlc_drb_am_rx_window_seg_pool());
 
   // Bind AM Rx/Tx interconnect
   rlc_rx->set_status_notifier(tester.get());

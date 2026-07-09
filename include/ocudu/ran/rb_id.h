@@ -96,8 +96,8 @@ public:
   rb_id_t(srb_id_t srb_id_) : rb_type(rb_type_t::srb), srb_id(srb_id_) {}
   rb_id_t(drb_id_t drb_id_) : rb_type(rb_type_t::drb), drb_id(drb_id_) {}
 
-  bool is_srb() { return rb_type == rb_type_t::srb; }
-  bool is_drb() { return rb_type == rb_type_t::drb; }
+  bool is_srb() const { return rb_type == rb_type_t::srb; }
+  bool is_drb() const { return rb_type == rb_type_t::drb; }
 
   srb_id_t get_srb_id() const { return srb_id; }
   drb_id_t get_drb_id() const { return drb_id; }
