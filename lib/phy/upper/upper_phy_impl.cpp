@@ -50,7 +50,7 @@ upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
   ocudu_assert(rx_symbol_handler, "Invalid Rx symbol handler");
 
   // Interpose the operation controller's timing proxy between the timing handler and the external
-  // notifier, so the FAPI P5 start and stop procedures control the propagation of slot boundary
+  // notifier, so the controller's start and stop operations control the propagation of slot boundary
   // events towards higher layers. The proxy is a stable object owned by the operation controller;
   // only the downstream notifier is connected later, in set_timing_notifier().
   timing_handler.set_upper_phy_notifier(operation_controller.get_timing_notifier_proxy());

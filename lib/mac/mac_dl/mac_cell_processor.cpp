@@ -71,9 +71,9 @@ async_task<void> mac_cell_processor::start()
 
     // Start the PHY cell through the operation controller if one is configured.
     // The PHY must be ready to receive DL grants before the MAC scheduler begins issuing them. The
-    // PHY start completes on the first slot indication; the RU is started before the DU
-    // (see flexible_o_du_impl::start()) so slot indications are already flowing when the first cell is
-    // activated at startup and the handshake completes without stalling.
+    // PHY start completes on the first slot indication, so the startup sequence ensures slot
+    // indications are already flowing when the first cell is activated and the handshake completes
+    // without stalling.
     if (phy_cell_op_controller != nullptr) {
       CORO_AWAIT_VALUE(bool phy_ok, phy_cell_op_controller->start());
       if (!phy_ok) {
@@ -246,7 +246,7 @@ void mac_cell_processor::handle_error_indication(slot_point sl_tx, error_event e
 void mac_cell_processor::handle_stop_indication() noexcept
 {
   defer_until_success(cell_exec, timers, [this]() {
-    // Signal the cell stop procedure that the FAPI completed the FAPI STOP procedure.
+    // Signal the cell stop procedure that the DU low completed its stop.
     stop_completed.set();
   });
 }

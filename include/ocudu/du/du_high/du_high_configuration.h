@@ -28,13 +28,12 @@
 
 namespace ocudu {
 
+class phy_cell_operation_controller;
 class timer_manager;
 
 namespace ocudu_ntn {
 class ntn_doppler_compensation_handler;
 }
-
-class phy_cell_operation_controller;
 
 namespace odu {
 
@@ -113,11 +112,11 @@ struct du_high_dependencies {
   ocudu_ntn::ntn_doppler_compensation_handler* ntn_doppler_handler = nullptr;
   /// \brief Optional per-cell PHY operation controllers, indexed by du_cell_index.
   ///
-  /// Supplied by the layer that owns the PHY operation controllers (typically o_du_high). When
-  /// non-empty, each entry must be either a valid pointer or null; the DU forwards the pointer for
-  /// cell index i into mac_cell_creation_request.phy_cell_op_controller, which lets MAC cell
-  /// start/stop drive the PHY operation controller. An empty vector preserves the legacy behaviour
-  /// (no PHY notification on MAC cell stop).
+  /// Supplied by the layer that owns the PHY operation controllers. When non-empty, each entry must
+  /// be either a valid pointer or null; the DU forwards the pointer for cell index i into
+  /// mac_cell_creation_request.phy_cell_op_controller, which lets MAC cell start/stop drive the PHY
+  /// operation controller. An empty vector preserves the legacy behaviour (no PHY notification on
+  /// MAC cell stop).
   std::vector<phy_cell_operation_controller*> phy_cell_op_controllers;
 };
 

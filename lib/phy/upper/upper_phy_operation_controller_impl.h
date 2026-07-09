@@ -14,13 +14,13 @@ namespace ocudu {
 ///
 /// Gates the propagation of timing notifications towards higher layers: a private proxy
 /// implementing \ref upper_phy_timing_notifier sits between the upper PHY timing handler and the
-/// external notifier, forwarding slot boundary events only while the controller is started. As the
-/// FAPI P5 procedures drive start() and stop(), this provides full control over when slot
-/// indications are generated for the MAC without extending the FAPI or PHY interfaces.
+/// external notifier, forwarding slot boundary events only while the controller is started. As
+/// start() and stop() drive the proxy, this provides full control over when slot indications are
+/// generated for the MAC without extending any existing interface.
 ///
-/// The proxy starts in the forwarding state so cells that never exercise the FAPI P5 lifecycle
+/// The proxy starts in the forwarding state so cells that never exercise the start/stop lifecycle
 /// observe no behaviour change, and the first activation of each cell at DU init (which cannot
-/// complete the START handshake while the control executors are not yet running) finds slot
+/// complete the start handshake while the control executors are not yet running) finds slot
 /// indications already flowing.
 class upper_phy_operation_controller_impl : public upper_phy_operation_controller
 {
@@ -65,8 +65,8 @@ private:
     /// never null. Written once before the slot path runs, hence not atomic.
     upper_phy_timing_notifier* connected_notifier;
     /// Effective notifier on the slot path: the connected notifier while started, the dummy while
-    /// stopped. Swapped on the control executor by the FAPI P5 START and STOP procedures and read on
-    /// the cell executor every slot boundary, hence atomic; dereferenced unconditionally, so no
+    /// stopped. Swapped on the control executor by the start and stop operations and read on the
+    /// cell executor every slot boundary, hence atomic; dereferenced unconditionally, so no
     /// per-slot branch is needed.
     std::atomic<upper_phy_timing_notifier*> active_notifier;
   };
