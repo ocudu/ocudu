@@ -89,3 +89,21 @@ TEST_F(e1ap_cu_cp_bearer_context_release_test, when_bearer_release_complete_rece
   // The BEARER CONTEXT RELEASE RESPONSE was received and the CU-CP completed the procedure.
   ASSERT_TRUE(was_bearer_context_release_complete_received());
 }
+
+TEST_F(e1ap_cu_cp_bearer_context_release_test,
+       when_e1ap_stopped_while_bearer_release_in_flight_then_teardown_does_not_crash)
+{
+  // Test Preamble.
+  auto command = generate_bearer_context_release_command(uint_to_ue_index(test_rng::uniform_int<uint64_t>(
+      cu_cp_ue_index_to_uint(cu_cp_ue_index_t::min), cu_cp_ue_index_to_uint(cu_cp_ue_index_t::max))));
+
+  // Start BEARER CONTEXT RELEASE procedure, leaving its transaction unanswered.
+  this->start_procedure(command);
+
+  // Stop E1AP while the Bearer Context Release transaction is still in flight.
+  async_task<void>         stop_task = e1ap->stop();
+  lazy_task_launcher<void> stop_launcher(stop_task);
+
+  ASSERT_TRUE(stop_task.ready());
+  ASSERT_TRUE(t.ready());
+}

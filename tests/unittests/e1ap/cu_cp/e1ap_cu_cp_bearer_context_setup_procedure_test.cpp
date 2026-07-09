@@ -113,3 +113,22 @@ TEST_F(e1ap_cu_cp_bearer_context_setup_test, when_failure_received_then_procedur
   // The BEARER CONTEXT SETUP FAILURE was received and the CU-CP completed the procedure with failure.
   ASSERT_FALSE(was_bearer_context_setup_successful());
 }
+
+TEST_F(e1ap_cu_cp_bearer_context_setup_test,
+       when_e1ap_stopped_while_bearer_setup_in_flight_then_teardown_does_not_crash)
+{
+  // Test Preamble.
+  auto request = generate_bearer_context_setup_request(uint_to_ue_index(test_rng::uniform_int<uint64_t>(
+      cu_cp_ue_index_to_uint(cu_cp_ue_index_t::min), cu_cp_ue_index_to_uint(cu_cp_ue_index_t::max))));
+
+  // Start BEARER CONTEXT SETUP procedure, leaving its transaction unanswered.
+  this->start_procedure(request);
+
+  // Stop E1AP while the Bearer Context Setup transaction is still in flight.
+  async_task<void>         stop_task = e1ap->stop();
+  lazy_task_launcher<void> stop_launcher(stop_task);
+
+  ASSERT_TRUE(stop_task.ready());
+  ASSERT_TRUE(t.ready());
+  ASSERT_FALSE(was_bearer_context_setup_successful());
+}
