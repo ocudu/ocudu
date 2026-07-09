@@ -220,7 +220,7 @@ test_bench::test_bench(const test_bench_params& params_) :
   uci_sched{cell_cfg, uci_alloc, ues},
   sl_tx{to_numerology_value(cell_cfg.params.dl_cfg_common.init_dl_bwp.generic_params.scs), 0}
 {
-  pucch_builder.setup(cell_cfg.params);
+  pucch_builder.add_cell(to_du_cell_index(0), cell_cfg.params);
 
   // Add main UE.
   add_ue();
@@ -253,7 +253,7 @@ void test_bench::add_ue()
     ue_req.crnti = to_rnti(static_cast<std::underlying_type_t<rnti_t>>(ue_ded_cfgs.back()->crnti) + 1);
   }
 
-  const bool success = pucch_builder.add_build_new_ue_pucch_cfg(ue_req.cfg.cells->back());
+  const bool success = pucch_builder.alloc_resources(ue_req.cfg.cells->back());
   ocudu_assert(success, "UE PUCCH configuration couldn't be built");
 
   // TODO: rewrite this test, we should never modify the UE cell config like this in unittests.

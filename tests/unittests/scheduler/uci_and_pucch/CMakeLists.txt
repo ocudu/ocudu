@@ -22,6 +22,7 @@ target_link_libraries(uci_pucch_sched_test
         sched_config
         mac_configuration_helpers
         sched_test_doubles
+        sched_rrm
         gtest
         ocudu_gtest_main)
 gtest_discover_tests(uci_pucch_sched_test)

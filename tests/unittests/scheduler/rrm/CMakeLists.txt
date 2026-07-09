@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+# Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
+
+add_executable(pucch_resource_manager_test pucch_resource_manager_test.cpp)
+target_link_libraries(pucch_resource_manager_test
+        ocudu_sched
+        sched_config
+        scheduler_test_suite
+        sched_test_doubles
+        sched_rrm
+        gtest
+        gtest_main)
+gtest_discover_tests(pucch_resource_manager_test)

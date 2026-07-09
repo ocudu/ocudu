@@ -8,7 +8,6 @@
 #include "ocudu/ran/csi_rs/csi_meas_config.h"
 #include "ocudu/ran/pucch/pucch_configuration.h"
 #include "ocudu/ran/resource_allocation/ofdm_symbol_range.h"
-#include "ocudu/ran/serv_cell_index.h"
 #include "ocudu/ran/tdd/tdd_ul_dl_config.h"
 #include "ocudu/scheduler/config/cell_bwp_res_config.h"
 #include "ocudu/scheduler/config/csi_helper.h"
@@ -117,9 +116,8 @@ void pucch_resource_manager::rem_cell(du_cell_index_t cell_idx)
   cells.erase(cell_idx);
 }
 
-bool pucch_resource_manager::alloc_resources(odu::cell_group_config& cell_grp_cfg)
+bool pucch_resource_manager::alloc_resources(ue_cell_config& cell_cfg)
 {
-  auto& cell_cfg         = cell_grp_cfg.cells.at(SERVING_PCELL_IDX);
   auto& serv_cell_cfg    = cell_cfg.serv_cell_cfg;
   auto& cell_ctx         = cells[serv_cell_cfg.cell_index];
   auto& free_sr_configs  = cell_ctx.free_sr_configs;
@@ -201,10 +199,10 @@ bool pucch_resource_manager::alloc_resources(odu::cell_group_config& cell_grp_cf
   return true;
 }
 
-void pucch_resource_manager::dealloc_resources(odu::cell_group_config& cell_grp_cfg)
+void pucch_resource_manager::dealloc_resources(ue_cell_config& cell_cfg)
 {
-  auto&       serv_cell_cfg = cell_grp_cfg.cells.at(SERVING_PCELL_IDX).serv_cell_cfg;
-  const auto& ul_bwp        = cell_grp_cfg.cells.at(SERVING_PCELL_IDX).init_bwp().ul;
+  auto&       serv_cell_cfg = cell_cfg.serv_cell_cfg;
+  const auto& ul_bwp        = cell_cfg.init_bwp().ul;
   auto&       cell_ctx      = cells[serv_cell_cfg.cell_index];
 
   if (not serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.has_value()) {

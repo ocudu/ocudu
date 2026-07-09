@@ -8,11 +8,11 @@
 #include "test_utils/indication_generators.h"
 #include "test_utils/scheduler_test_simulator.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
-#include "tests/test_doubles/scheduler/pucch_res_test_builder_helper.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/du/du_update_config_helpers.h"
 #include "ocudu/ran/tdd/tdd_ul_dl_config_formatters.h"
+#include "ocudu/scheduler/rrm/pucch_resource_manager.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -106,7 +106,7 @@ protected:
     this->add_cell(cell_req);
 
     // Setup PUCCH resource builder.
-    pucch_builder.setup(cell_cfg().params);
+    pucch_builder.add_cell(to_du_cell_index(0), cell_cfg().params);
   }
 
   // Build a UE creation request, allocating a distinct dedicated PUCCH config (SR/CSI/HARQ) from the cell resource pool
@@ -117,7 +117,7 @@ protected:
     auto ue_cfg     = sched_config_helper::create_default_sched_ue_creation_request(cell_cfg().params, lcids);
     ue_cfg.ue_index = idx;
     ue_cfg.crnti    = rnti;
-    report_fatal_error_if_not(pucch_builder.add_build_new_ue_pucch_cfg((*ue_cfg.cfg.cells)[0]),
+    report_fatal_error_if_not(pucch_builder.alloc_resources((*ue_cfg.cfg.cells)[0]),
                               "Failed to allocate PUCCH resources for UE {}",
                               fmt::underlying(idx));
     return ue_cfg;
@@ -125,7 +125,7 @@ protected:
 
   cell_config_builder_params params;
   // Builds a distinct per-UE dedicated PUCCH config from the cell pool for every UE created by these tests.
-  pucch_res_builder_test_helper pucch_builder{120};
+  pucch_resource_manager pucch_builder{120};
 };
 
 // ------------------------------------ single-UE case --------------------------------------------
@@ -569,7 +569,7 @@ protected:
           CORO_AWAIT(launch_run_until(false_until_slots(ack_margin_slots)));
           CORO_AWAIT(launch_rem_ue_task(idx));
           // Free the UE's PUCCH resources so the next transient UE reusing this index gets a fresh allocation.
-          pucch_builder.remove_ue_pucch_cfg(ue_pucch_cfg);
+          pucch_builder.dealloc_resources(ue_pucch_cfg);
           transient_pool.push_back(idx);
 
           CORO_RETURN();

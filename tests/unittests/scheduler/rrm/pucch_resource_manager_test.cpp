@@ -2,26 +2,26 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
-#include "../tests/test_doubles/scheduler/pucch_res_test_builder_helper.h"
 #include "lib/scheduler/config/cell_configuration.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "ocudu/scheduler/config/scheduler_expert_config_factory.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
+#include "ocudu/scheduler/rrm/pucch_resource_manager.h"
 #include "ocudu/scheduler/scheduler_configurator.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
 
-class sched_pucch_res_builder_tester : public ::testing::Test
+class pucch_resource_manager_tester : public ::testing::Test
 {
 protected:
-  sched_pucch_res_builder_tester() :
+  pucch_resource_manager_tester() :
     cfg_mng{config_helpers::make_default_scheduler_expert_config()},
     cell_cfg(*cfg_mng.add_cell(sched_config_helper::make_default_sched_cell_configuration_request())),
     cell_cfg_dedicated(ocudu::config_helpers::make_default_ue_cell_config(cell_cfg.params))
   {
-    pucch_builder.setup(cell_cfg.params);
+    pucch_res_mng.add_cell(to_du_cell_index(0), cell_cfg.params);
   }
 
   struct ue_info {
@@ -32,7 +32,7 @@ protected:
   const ue_info* add_ue()
   {
     ues.push_back(ue_info{ue_cnt++, ocudu::config_helpers::make_default_ue_cell_config(cell_cfg.params)});
-    pucch_builder.add_build_new_ue_pucch_cfg(ues.back().ue_cell_cfg);
+    pucch_res_mng.alloc_resources(ues.back().ue_cell_cfg);
     return &ues.back();
   }
 
@@ -42,10 +42,10 @@ protected:
   pucch_resource_builder_params           pucch_params;
   std::vector<ue_info>                    ues;
   unsigned                                ue_cnt = 0;
-  pucch_res_builder_test_helper           pucch_builder;
+  pucch_resource_manager                  pucch_res_mng{64};
 };
 
-TEST_F(sched_pucch_res_builder_tester, when_ues_are_added_their_cfg_have_different_csi_and_sr)
+TEST_F(pucch_resource_manager_tester, when_ues_are_added_their_cfg_have_different_csi_and_sr)
 {
   std::set<std::pair<unsigned, unsigned>> sr_offsets;
   std::set<std::pair<unsigned, unsigned>> csi_offsets;

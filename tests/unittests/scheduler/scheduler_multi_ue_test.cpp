@@ -4,10 +4,10 @@
 
 #include "test_utils/scheduler_test_simulator.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
-#include "tests/test_doubles/scheduler/pucch_res_test_builder_helper.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/scheduler/config/sched_cell_config_helpers.h"
+#include "ocudu/scheduler/rrm/pucch_resource_manager.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -64,7 +64,7 @@ public:
     this->add_cell(cell_cfg_req);
 
     // Create PUCCH builder that will be used to add UEs.
-    pucch_cfg_builder.setup(cell_cfg().params);
+    pucch_cfg_builder.add_cell(to_du_cell_index(0), cell_cfg().params);
 
     // Add UEs.
     for (unsigned i = 0, sz = test_params.nof_ues; i != sz; ++i) {
@@ -98,7 +98,7 @@ public:
                                                                                 {LCID_MIN_DRB});
     ue_cfg.ue_index = to_du_ue_index((unsigned)rnti - 0x4601);
     ue_cfg.crnti    = rnti;
-    report_fatal_error_if_not(pucch_cfg_builder.add_build_new_ue_pucch_cfg(ue_cfg.cfg.cells.value()[0]),
+    report_fatal_error_if_not(pucch_cfg_builder.alloc_resources(ue_cfg.cfg.cells.value()[0]),
                               "Failed to allocate PUCCH resources");
     csi_period = std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
                      ue_cfg.cfg.cells.value()[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list[0].report_cfg_type)
@@ -152,11 +152,11 @@ public:
     scheduler_test_simulator::run_slot();
   }
 
-  multi_ue_test_params          test_params;
-  cell_config_builder_params    params;
-  pucch_res_builder_test_helper pucch_cfg_builder;
-  unsigned                      bsr_offset = 0;
-  csi_report_periodicity        csi_period = csi_report_periodicity::slots320;
+  multi_ue_test_params       test_params;
+  cell_config_builder_params params;
+  pucch_resource_manager     pucch_cfg_builder{64};
+  unsigned                   bsr_offset = 0;
+  csi_report_periodicity     csi_period = csi_report_periodicity::slots320;
 
   std::set<rnti_t> no_traffic_ues;
 };

@@ -10,10 +10,10 @@
 #include "lib/scheduler/uci_scheduling/uci_scheduler_impl.h"
 #include "lib/scheduler/ue_context/ue.h"
 #include "lib/scheduler/ue_context/ue_repository.h"
-#include "tests/test_doubles/scheduler/pucch_res_test_builder_helper.h"
 #include "ocudu/ran/csi_rs/csi_meas_config.h"
 #include "ocudu/ran/pucch/pucch_configuration.h"
 #include "ocudu/scheduler/config/pucch_resource_builder_params.h"
+#include "ocudu/scheduler/rrm/pucch_resource_manager.h"
 
 namespace ocudu {
 
@@ -80,10 +80,10 @@ public:
   ue_cell_repository&                     cell_ues;
 
   // Other dependencies.
-  pucch_res_builder_test_helper pucch_builder;
-  cell_resource_allocator       res_grid;
-  ocudulog::basic_logger&       mac_logger  = ocudulog::fetch_basic_logger("SCHED", true);
-  ocudulog::basic_logger&       test_logger = ocudulog::fetch_basic_logger("TEST");
+  pucch_resource_manager  pucch_builder;
+  cell_resource_allocator res_grid;
+  ocudulog::basic_logger& mac_logger  = ocudulog::fetch_basic_logger("SCHED", true);
+  ocudulog::basic_logger& test_logger = ocudulog::fetch_basic_logger("TEST");
 
   // Constants.
   const unsigned                 k0;

@@ -15,6 +15,7 @@ target_link_libraries(sched_ue_context_test
         sched_support
         sched_ue_context
         sched_test_doubles
+        sched_rrm
         scheduler_test_utils
         ocudu_support
         ocudulog

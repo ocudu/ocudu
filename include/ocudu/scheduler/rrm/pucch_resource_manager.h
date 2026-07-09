@@ -6,16 +6,15 @@
 
 #include "ocudu/adt/slotted_array.h"
 #include "ocudu/scheduler/config/cell_bwp_res_config.h"
-#include "ocudu/scheduler/config/cell_group_config.h"
 #include "ocudu/scheduler/config/serving_cell_config.h"
+#include "ocudu/scheduler/scheduler_configurator.h"
 #include <optional>
 #include <set>
 
 namespace ocudu {
 
-/// \brief This class manages the allocation of RAN PUCCH Resources to DU UEs. For instance, this class ensures that
-/// UEs do not collide in the usage of the PUCCH for SRs and CSI. For HARQ-ACKs, we rely on the MAC scheduler to ensure
-/// no collisions take place in the PUCCH.
+/// \brief This class manages the allocation of RAN PUCCH Resources to DU UEs.
+///
 /// \remark No PUCCH resources for CSI will be managed for cells configured with aperiodic CSI reporting.
 class pucch_resource_manager
 {
@@ -32,12 +31,12 @@ public:
   /// Remove all resources for a DU cell.
   void rem_cell(du_cell_index_t cell_idx);
 
-  /// \brief Allocate PUCCH resources for a given UE. The resources are stored in the UE's cell group config.
+  /// \brief Allocate PUCCH resources for a given UE. The resources are stored in the UE's cell configuration.
   /// \return true if allocation was successful.
-  bool alloc_resources(odu::cell_group_config& cell_grp_cfg);
+  bool alloc_resources(ue_cell_config& ue_cell_cfg);
 
   /// \brief Deallocate PUCCH resources previously given to a UE. The resources are returned back to a pool.
-  void dealloc_resources(odu::cell_group_config& cell_grp_cfg);
+  void dealloc_resources(ue_cell_config& ue_cell_cfg);
 
   /// Gets the current number of free SR configurations for a given cell.
   unsigned get_nof_free_sr_configs(du_cell_index_t cell_idx) const { return cells[cell_idx].free_sr_configs.size(); }

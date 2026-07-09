@@ -4,9 +4,9 @@
 
 #include "test_utils/scheduler_test_simulator.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
-#include "tests/test_doubles/scheduler/pucch_res_test_builder_helper.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "ocudu/ran/du_types.h"
+#include "ocudu/scheduler/rrm/pucch_resource_manager.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -41,7 +41,7 @@ protected:
     add_cell(sched_cell_cfg_req);
 
     // Create PUCCH builder that will be used to add UEs.
-    pucch_cfg_builder.setup(cell_cfg(to_du_cell_index(0)).params);
+    pucch_cfg_builder.add_cell(to_du_cell_index(0), cell_cfg(to_du_cell_index(0)).params);
   }
 
   void add_ue()
@@ -52,7 +52,7 @@ protected:
                                                                                 {LCID_MIN_DRB});
     ue_cfg.ue_index = next_ue_idx;
     ue_cfg.crnti    = to_rnti(0x4601 + (unsigned)next_ue_idx);
-    report_fatal_error_if_not(pucch_cfg_builder.add_build_new_ue_pucch_cfg(ue_cfg.cfg.cells.value()[0]),
+    report_fatal_error_if_not(pucch_cfg_builder.alloc_resources(ue_cfg.cfg.cells.value()[0]),
                               "Failed to allocate PUCCH resources");
     ue_cfg.starts_in_fallback = false;
     scheduler_test_simulator::add_ue(ue_cfg);
@@ -72,9 +72,9 @@ protected:
     this->push_bsr(bsr);
   }
 
-  cell_config_builder_params    params;
-  pucch_res_builder_test_helper pucch_cfg_builder;
-  unsigned                      nof_ues = 0;
+  cell_config_builder_params params;
+  pucch_resource_manager     pucch_cfg_builder{64};
+  unsigned                   nof_ues = 0;
 };
 
 } // namespace

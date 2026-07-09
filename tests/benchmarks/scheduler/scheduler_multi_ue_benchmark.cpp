@@ -106,11 +106,8 @@ public:
     auto& pcell = (*ue_cfg_msg.cfg.cells)[0];
 
     // Generate PUCCH resources for the UE.
-    odu::cell_group_config cell_group;
-    cell_group.cells.emplace(SERVING_PCELL_IDX, pcell);
-    bool success = pucch_res_mng.alloc_resources(cell_group);
+    bool success = pucch_res_mng.alloc_resources(pcell);
     ocudu_assert(success, "Failed to allocate resources for UE={}", ue_count);
-    pcell = cell_group.cells.at(SERVING_PCELL_IDX);
 
     sch->handle_ue_creation_request(ue_cfg_msg);
     ue_count++;
