@@ -2451,6 +2451,114 @@ static void configure_cli11_rlm_args(CLI::App& app, du_high_unit_rlm_config& rlm
       ->check(CLI::IsMember({"default_type", "ssb", "csi_rs", "ssb_and_csi_rs"}, CLI::ignore_case));
 }
 
+static void configure_cli11_geo_coordinates_normal_args(CLI::App&                                        app,
+                                                        du_high_unit_cell_geo_coordinates_normal_config& cfg)
+{
+  add_option(app, "--latitude", cfg.latitude, "Latitude of the antenna position [degree]")
+      ->capture_default_str()
+      ->check(CLI::Range(-90.0, 90.0));
+  add_option(app, "--longitude", cfg.longitude, "Longitude of the antenna position [degree]")
+      ->capture_default_str()
+      ->check(CLI::Range(-180.0, 180.0));
+  add_option(app, "--altitude", cfg.altitude, "Altitude of the antenna position [m]")->capture_default_str();
+  add_option(app,
+             "--uncertainty_semi_major",
+             cfg.uncertainty_semi_major,
+             "Uncertainty semi-major axis, as an uncertainty code")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 127));
+  add_option(app,
+             "--uncertainty_semi_minor",
+             cfg.uncertainty_semi_minor,
+             "Uncertainty semi-minor axis, as an uncertainty code")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 127));
+  add_option(app,
+             "--orientation_of_major_axis",
+             cfg.orientation_of_major_axis,
+             "Orientation of the major axis of the uncertainty ellipse [degree]")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 179));
+  add_option(app, "--uncertainty_altitude", cfg.uncertainty_altitude, "Uncertainty altitude, as an uncertainty code")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 127));
+  add_option(app, "--confidence", cfg.confidence, "Confidence [%]")->capture_default_str()->check(CLI::Range(0, 100));
+}
+
+static void configure_cli11_geo_coordinates_ha_args(CLI::App& app, du_high_unit_cell_geo_coordinates_ha_config& cfg)
+{
+  add_option(app, "--latitude", cfg.latitude, "Latitude of the antenna position [degree]")
+      ->capture_default_str()
+      ->check(CLI::Range(-90.0, 90.0));
+  add_option(app, "--longitude", cfg.longitude, "Longitude of the antenna position [degree]")
+      ->capture_default_str()
+      ->check(CLI::Range(-180.0, 180.0));
+  add_option(app, "--altitude", cfg.altitude, "Altitude of the antenna position [m]")
+      ->capture_default_str()
+      ->check(CLI::Range(-500.0, 10000.0));
+  add_option(app,
+             "--uncertainty_semi_major",
+             cfg.uncertainty_semi_major,
+             "Uncertainty semi-major axis, as an uncertainty code")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 255));
+  add_option(app,
+             "--uncertainty_semi_minor",
+             cfg.uncertainty_semi_minor,
+             "Uncertainty semi-minor axis, as an uncertainty code")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 255));
+  add_option(app,
+             "--orientation_of_major_axis",
+             cfg.orientation_of_major_axis,
+             "Orientation of the major axis of the uncertainty ellipse [degree]")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 179));
+  add_option(app, "--horizontal_confidence", cfg.horizontal_confidence, "Horizontal confidence [%]")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 100));
+  add_option(app, "--uncertainty_altitude", cfg.uncertainty_altitude, "Uncertainty altitude, as an uncertainty code")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 255));
+  add_option(app, "--vertical_confidence", cfg.vertical_confidence, "Vertical confidence [%]")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 100));
+}
+
+static void configure_cli11_geo_coordinates_args(CLI::App&                                                app,
+                                                 std::optional<du_high_unit_cell_geo_coordinates_config>& geo_cfg)
+{
+  static du_high_unit_cell_geo_coordinates_normal_config normal_cfg;
+  CLI::App* normal_subcmd = add_subcommand(app, "normal", "Normal-accuracy TRP position");
+  configure_cli11_geo_coordinates_normal_args(*normal_subcmd, normal_cfg);
+
+  static du_high_unit_cell_geo_coordinates_ha_config ha_cfg;
+  CLI::App*                                          ha_subcmd =
+      add_subcommand(app, "high_accuracy", "High-accuracy TRP position, TS 38.473, Section 9.3.1.190");
+  configure_cli11_geo_coordinates_ha_args(*ha_subcmd, ha_cfg);
+
+  // Collapse the two mutually exclusive branches into the variant, failing fast if the user picked zero or both.
+  app.parse_complete_callback([&app, &geo_cfg]() {
+    if (app.count() == 0) {
+      // "geo_coordinates" itself was not exercised in this parse.
+      return;
+    }
+
+    const bool normal_set = app.get_subcommand("normal")->count() != 0;
+    const bool ha_set     = app.get_subcommand("high_accuracy")->count() != 0;
+
+    if (normal_set and ha_set) {
+      report_error("geo_coordinates: normal and high_accuracy are mutually exclusive.\n");
+    }
+    if (not normal_set and not ha_set) {
+      report_error("geo_coordinates: either normal or high_accuracy must be set.\n");
+    }
+
+    geo_cfg = normal_set ? du_high_unit_cell_geo_coordinates_config{normal_cfg}
+                         : du_high_unit_cell_geo_coordinates_config{ha_cfg};
+  });
+}
+
 static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_cell_config& cell_params)
 {
   add_option(app, "--pci", cell_params.pci, "PCI")->capture_default_str()->check(CLI::Range(0, 1007));
@@ -2575,6 +2683,11 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
              "p-nr-fr1, maximum total TX power to be used by the UE in this NR cell group across in FR1")
       ->capture_default_str()
       ->check(CLI::Range(-30, 23));
+
+  // Geographical coordinates of the cell/TRP antenna.
+  CLI::App* geo_coordinates_subcmd = add_subcommand(
+      app, "geo_coordinates", "Geographical coordinates of the cell/TRP antenna, TS 38.473, Section 9.3.1.184");
+  configure_cli11_geo_coordinates_args(*geo_coordinates_subcmd, cell_params.geo_coordinates_cfg);
 
   // MAC Cell group parameters.
   CLI::App* mcg_subcmd = add_subcommand(app, "mac_cell_group", "MAC Cell Group parameters")->configurable();

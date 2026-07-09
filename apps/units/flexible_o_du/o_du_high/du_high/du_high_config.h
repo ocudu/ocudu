@@ -37,6 +37,7 @@
 #include <chrono>
 #include <map>
 #include <string>
+#include <variant>
 #include <vector>
 
 namespace ocudu {
@@ -628,6 +629,71 @@ struct du_high_unit_phy_cell_group_config {
   std::optional<int> p_nr_fr1;
 };
 
+/// \brief Normal-accuracy geographical position of the cell/TRP antenna, i.e. the NG-RAN Access Point Position IE.
+/// See TS 38.473, Section 9.3.1.174.
+struct du_high_unit_cell_geo_coordinates_normal_config {
+  /// Latitude of the antenna position, in degrees [-90, 90].
+  double latitude = 0.0;
+  /// Longitude of the antenna position, in degrees [-180, 180].
+  double longitude = 0.0;
+  /// Altitude of the antenna position, in metres.
+  double altitude = 0.0;
+  /// Uncertainty semi-major axis, as an "uncertainty code" per TS 38.473, Section 9.3.1.174. Values: {0,...,127}.
+  /// \remark Defaults to the maximum code (largest uncertainty): K=0 would encode a literal 0 metre uncertainty
+  /// (perfect precision), which is a misleading claim to make by default rather than an "unset" sentinel.
+  uint8_t uncertainty_semi_major = 127;
+  /// Uncertainty semi-minor axis, as an "uncertainty code" per TS 38.473, Section 9.3.1.174. Values: {0,...,127}.
+  /// \remark Defaults to the maximum code (largest uncertainty); see \c uncertainty_semi_major.
+  uint8_t uncertainty_semi_minor = 127;
+  /// Orientation of the major axis of the uncertainty ellipse, in degrees. Values: {0,...,179}.
+  uint8_t orientation_of_major_axis = 0;
+  /// Uncertainty altitude, as an "uncertainty code" per TS 38.473, Section 9.3.1.174. Values: {0,...,127}.
+  /// \remark Defaults to the maximum code (largest uncertainty); see \c uncertainty_semi_major.
+  uint8_t uncertainty_altitude = 127;
+  /// Confidence, in percentage. Values: {0,...,100}.
+  /// \remark Defaults to 0, which TS 23.032, Section 6.5 defines as the "no information" sentinel value.
+  uint8_t confidence = 0;
+};
+
+/// \brief High-accuracy geographical position of the cell/TRP antenna, i.e. the NG-RAN High Accuracy Access Point
+/// Position IE. See TS 38.473, Section 9.3.1.190.
+/// \remark Latitude, longitude and altitude are given in real-world units and converted to their IE-encoded values
+/// using the High Accuracy Point/Altitude scale factors defined in TS 23.032, Sections 6.1a and 6.3a. The
+/// uncertainty and uncertainty altitude fields are left as raw "uncertainty code" values (TS 23.032, Sections 6.2a
+/// and 6.4), as for the normal-accuracy NG-RAN Access Point Position.
+struct du_high_unit_cell_geo_coordinates_ha_config {
+  /// Latitude of the antenna position, in degrees [-90, 90].
+  double latitude = 0.0;
+  /// Longitude of the antenna position, in degrees [-180, 180].
+  double longitude = 0.0;
+  /// Altitude of the antenna position, in metres [-500, 10000].
+  double altitude = 0.0;
+  /// Uncertainty semi-major axis, as an "uncertainty code" per TS 23.032, Section 6.2a. Values: {0,...,255}.
+  /// \remark Defaults to the maximum code (largest uncertainty): K=0 would encode a literal 0 metre uncertainty
+  /// (perfect precision), which is a misleading claim to make by default rather than an "unset" sentinel.
+  uint16_t uncertainty_semi_major = 255;
+  /// Uncertainty semi-minor axis, as an "uncertainty code" per TS 23.032, Section 6.2a. Values: {0,...,255}.
+  /// \remark Defaults to the maximum code (largest uncertainty); see \c uncertainty_semi_major.
+  uint16_t uncertainty_semi_minor = 255;
+  /// Orientation of the major axis of the uncertainty ellipse, in degrees. Values: {0,...,179}.
+  uint8_t orientation_of_major_axis = 0;
+  /// Horizontal confidence, in percentage. Values: {0,...,100}.
+  /// \remark Defaults to 0, which TS 23.032, Section 6.5 defines as the "no information" sentinel value.
+  uint8_t horizontal_confidence = 0;
+  /// Uncertainty altitude, as an "uncertainty code" per TS 23.032, Section 6.4. Values: {0,...,255}.
+  /// \remark Defaults to the maximum code (largest uncertainty); see \c uncertainty_semi_major.
+  uint16_t uncertainty_altitude = 255;
+  /// Vertical confidence, in percentage. Values: {0,...,100}.
+  /// \remark Defaults to 0, which TS 23.032, Section 6.5 defines as the "no information" sentinel value.
+  uint8_t vertical_confidence = 0;
+};
+
+/// \brief Geographical coordinates of the cell/TRP antenna, reported to the CU in the F1AP TRP Information Response
+/// procedure. See TS 38.473, Section 9.3.1.184 (Direct definition): either the normal- or the high-accuracy
+/// position, never both.
+using du_high_unit_cell_geo_coordinates_config =
+    std::variant<du_high_unit_cell_geo_coordinates_normal_config, du_high_unit_cell_geo_coordinates_ha_config>;
+
 /// TDD pattern configuration. See TS 38.331, \c TDD-UL-DL-Pattern.
 struct tdd_ul_dl_pattern_unit_config {
   /// Periodicity of the DL-UL pattern in slots. Values {2,...,80}.
@@ -1194,6 +1260,8 @@ struct du_high_unit_base_cell_config {
   du_high_configured_grants cg_cfg;
   /// Physical Cell Group parameters.
   du_high_unit_phy_cell_group_config pcg_cfg;
+  /// Geographical coordinates of the cell/TRP antenna, reported in the F1AP TRP Information Response.
+  std::optional<du_high_unit_cell_geo_coordinates_config> geo_coordinates_cfg;
   /// MAC Cell Gropup parameters.
   du_high_unit_mac_cell_group_config mcg_cfg;
   /// TDD slot configuration.

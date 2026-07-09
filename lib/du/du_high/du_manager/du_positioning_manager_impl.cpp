@@ -57,6 +57,11 @@ void du_positioning_manager_impl::update_trp_info()
     trp.pci    = cell_cfg.ran.pci;
     trp.cgi    = cell_cfg.nr_cgi;
     trp.arfcn  = cell_cfg.ran.ul_cfg_common.freq_info_ul.absolute_freq_point_a;
+    if (cell_cfg.trp_geo_coordinates.has_value()) {
+      geographical_coordinates_t geo_coords;
+      geo_coords.trp_position_definition_type = trp_position_direct_t{cell_cfg.trp_geo_coordinates.value()};
+      trp.geo_coords                          = geo_coords;
+    }
     trps.insert(std::make_pair(trp.trp_id, trp));
   }
 }

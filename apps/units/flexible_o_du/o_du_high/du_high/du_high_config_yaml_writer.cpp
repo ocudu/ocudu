@@ -694,6 +694,32 @@ static YAML::Node build_cell_entry(const du_high_unit_base_cell_config& config)
   if (config.pcg_cfg.p_nr_fr1.has_value()) {
     node["pcg_p_nr_fr1"] = config.pcg_cfg.p_nr_fr1.value();
   }
+  if (config.geo_coordinates_cfg.has_value()) {
+    const auto& geo_cfg              = config.geo_coordinates_cfg.value();
+    YAML::Node  geo_coordinates_node = node["geo_coordinates"];
+    if (const auto* cfg = std::get_if<du_high_unit_cell_geo_coordinates_normal_config>(&geo_cfg)) {
+      YAML::Node normal_node                   = geo_coordinates_node["normal"];
+      normal_node["latitude"]                  = cfg->latitude;
+      normal_node["longitude"]                 = cfg->longitude;
+      normal_node["altitude"]                  = cfg->altitude;
+      normal_node["uncertainty_semi_major"]    = static_cast<unsigned>(cfg->uncertainty_semi_major);
+      normal_node["uncertainty_semi_minor"]    = static_cast<unsigned>(cfg->uncertainty_semi_minor);
+      normal_node["orientation_of_major_axis"] = static_cast<unsigned>(cfg->orientation_of_major_axis);
+      normal_node["uncertainty_altitude"]      = static_cast<unsigned>(cfg->uncertainty_altitude);
+      normal_node["confidence"]                = static_cast<unsigned>(cfg->confidence);
+    } else if (const auto* ha_cfg = std::get_if<du_high_unit_cell_geo_coordinates_ha_config>(&geo_cfg)) {
+      YAML::Node ha_node                   = geo_coordinates_node["high_accuracy"];
+      ha_node["latitude"]                  = ha_cfg->latitude;
+      ha_node["longitude"]                 = ha_cfg->longitude;
+      ha_node["altitude"]                  = ha_cfg->altitude;
+      ha_node["uncertainty_semi_major"]    = ha_cfg->uncertainty_semi_major;
+      ha_node["uncertainty_semi_minor"]    = ha_cfg->uncertainty_semi_minor;
+      ha_node["orientation_of_major_axis"] = static_cast<unsigned>(ha_cfg->orientation_of_major_axis);
+      ha_node["horizontal_confidence"]     = static_cast<unsigned>(ha_cfg->horizontal_confidence);
+      ha_node["uncertainty_altitude"]      = ha_cfg->uncertainty_altitude;
+      ha_node["vertical_confidence"]       = static_cast<unsigned>(ha_cfg->vertical_confidence);
+    }
+  }
   if (config.band.has_value()) {
     node["band"] = static_cast<unsigned>(config.band.value());
   }

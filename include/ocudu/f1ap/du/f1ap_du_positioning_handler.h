@@ -10,6 +10,7 @@
 #include "ocudu/ran/nr_cgi.h"
 #include "ocudu/ran/pci.h"
 #include "ocudu/ran/positioning/positioning_ids.h"
+#include "ocudu/ran/positioning/trp_information_exchange.h"
 #include "ocudu/ran/scs_specific_carrier.h"
 #include "ocudu/ran/slot_point.h"
 #include "ocudu/ran/srs/srs_configuration.h"
@@ -22,6 +23,8 @@ struct du_trp_info {
   std::optional<pci_t>               pci;
   std::optional<nr_cell_global_id_t> cgi;
   std::optional<arfcn_t>             arfcn;
+  /// Geographical coordinates of the TRP antenna, as per TS 38.473, Section 9.3.1.184.
+  std::optional<geographical_coordinates_t> geo_coords;
 };
 
 struct du_trp_info_response {

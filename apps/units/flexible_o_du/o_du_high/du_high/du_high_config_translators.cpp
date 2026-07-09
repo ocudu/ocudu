@@ -28,8 +28,56 @@
 #include "ocudu/scheduler/config/scheduler_expert_config_validator.h"
 #include "ocudu/scheduler/config/time_domain_resource_helper.h"
 #include <algorithm>
+#include <cmath>
 
 using namespace ocudu;
+
+static ng_ran_high_accuracy_access_point_position_t
+make_trp_geo_coordinates_ha(const du_high_unit_cell_geo_coordinates_ha_config& cfg)
+{
+  ng_ran_high_accuracy_access_point_position_t position;
+  // TS 23.032, Section 6.1a: N = floor((X/90)*2^31), X being the latitude in degrees [-90, 90].
+  position.latitude = static_cast<int64_t>(std::floor((cfg.latitude / 90.0) * 2147483648.0));
+  // TS 23.032, Section 6.1a: N = floor((X/180)*2^31), X being the longitude in degrees [-180, 180].
+  position.longitude = static_cast<int64_t>(std::floor((cfg.longitude / 180.0) * 2147483648.0));
+  // TS 23.032, Section 6.3a: a = N*2^-7, a being the altitude in metres [-500, 10000].
+  position.altitude                  = static_cast<int32_t>(std::lround(cfg.altitude * 128.0));
+  position.uncertainty_semi_major    = cfg.uncertainty_semi_major;
+  position.uncertainty_semi_minor    = cfg.uncertainty_semi_minor;
+  position.orientation_of_major_axis = cfg.orientation_of_major_axis;
+  position.horizontal_confidence     = cfg.horizontal_confidence;
+  position.uncertainty_altitude      = cfg.uncertainty_altitude;
+  position.vertical_confidence       = cfg.vertical_confidence;
+  return position;
+}
+
+static ng_ran_access_point_position_t
+make_trp_geo_coordinates_normal(const du_high_unit_cell_geo_coordinates_normal_config& cfg)
+{
+  ng_ran_access_point_position_t position;
+  position.latitude_sign = cfg.latitude >= 0.0 ? latitude_sign_t::north : latitude_sign_t::south;
+  // TS 38.473, Section 9.3.1.174: N<=2^23*X/90<N+1, X being the latitude in degrees [0, 90].
+  position.latitude = static_cast<uint32_t>(std::floor(std::abs(cfg.latitude) * 8388607.0 / 90.0));
+  // TS 38.473, Section 9.3.1.174: N<=2^24*X/360<N+1, X being the longitude in degrees [-180, 180].
+  position.longitude = static_cast<int32_t>(std::floor(cfg.longitude * 16777215.0 / 360.0));
+  position.direction_of_altitude =
+      cfg.altitude >= 0.0 ? direction_of_altitude_t::height : direction_of_altitude_t::depth;
+  position.altitude               = static_cast<uint16_t>(std::clamp(std::floor(std::abs(cfg.altitude)), 0.0, 32767.0));
+  position.uncertainty_semi_major = cfg.uncertainty_semi_major;
+  position.uncertainty_semi_minor = cfg.uncertainty_semi_minor;
+  position.orientation_of_major_axis = cfg.orientation_of_major_axis;
+  position.uncertainty_altitude      = cfg.uncertainty_altitude;
+  position.confidence                = cfg.confidence;
+  return position;
+}
+
+static trp_position_direct_accuracy_t make_trp_geo_coordinates(const du_high_unit_cell_geo_coordinates_config& geo_cfg)
+{
+  if (const auto* cfg = std::get_if<du_high_unit_cell_geo_coordinates_normal_config>(&geo_cfg)) {
+    return make_trp_geo_coordinates_normal(*cfg);
+  }
+  return make_trp_geo_coordinates_ha(std::get<du_high_unit_cell_geo_coordinates_ha_config>(geo_cfg));
+}
 
 static tdd_ul_dl_config_common generate_tdd_pattern(subcarrier_spacing scs, const du_high_unit_tdd_ul_dl_config& config)
 {
@@ -696,6 +744,11 @@ std::vector<odu::du_cell_config> ocudu::generate_du_cell_config(const du_high_un
     // PhysicalCellGroup Config parameters.
     if (base_cell.pcg_cfg.p_nr_fr1.has_value()) {
       out_cell.pcg_params.p_nr_fr1 = base_cell.pcg_cfg.p_nr_fr1.value();
+    }
+
+    // Geographical coordinates of the cell/TRP antenna.
+    if (base_cell.geo_coordinates_cfg.has_value()) {
+      out_cell.trp_geo_coordinates = make_trp_geo_coordinates(base_cell.geo_coordinates_cfg.value());
     }
 
     // MAC Cell Group Config parameters.
