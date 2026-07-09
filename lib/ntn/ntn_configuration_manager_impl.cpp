@@ -166,7 +166,7 @@ ntn_configuration_manager_impl::ntn_configuration_manager_impl(const ntn_configu
   for (const auto& cell_config : config.cells) {
     auto [it, inserted] = cells.try_emplace(cell_config.nr_cgi);
     if (!inserted) {
-      logger.error("Duplicate nr_cgi {} in NTN configuration, skipping", cell_config.nr_cgi.nci);
+      logger.error("Duplicate cell={:#x} in NTN configuration, skipping", cell_config.nr_cgi.nci);
       continue;
     }
     auto& ctx = it->second;
@@ -185,7 +185,7 @@ ntn_configuration_manager_impl::ntn_configuration_manager_impl(const ntn_configu
 
       auto cur_tp_sl = time_provider->get_last_mapping(subcarrier_spacing::kHz15);
       if (cur_tp_sl and cur_tp_sl->slot_tx.valid()) {
-        logger.debug("Run periodic config update task for cell {} at slot={}, time={:%T}",
+        logger.debug("Run periodic config update task cell={:#x} slot={} time={:%T}",
                      nr_cgi.nci,
                      cur_tp_sl->slot_tx,
                      cur_tp_sl->time_point);
@@ -242,11 +242,11 @@ bool ntn_configuration_manager_impl::handle_ntn_cell_config_update(const ntn_cel
 {
   auto it = cells.find(cell_req.nr_cgi);
   if (it == cells.end()) {
-    logger.warning("Received NTN config update for unknown cell: {}", cell_req.nr_cgi.nci);
+    logger.warning("Received NTN config update for unknown cell={:#x}", cell_req.nr_cgi.nci);
     return false;
   }
 
-  logger.debug("Received config update for cell {} - epoch time={:%T}, format={}",
+  logger.debug("Received config update cell={:#x} epoch_time={:%T} format={}",
                cell_req.nr_cgi.nci,
                cell_req.epoch_time,
                std::holds_alternative<ecef_coordinates_t>(cell_req.ephemeris_info) ? "ecef" : "orbital");
@@ -257,20 +257,20 @@ bool ntn_configuration_manager_impl::handle_ntn_cell_config_update(const ntn_cel
   ntn_cell_config merged_cfg = ctx.cell_cfg_queue[ctx.cell_cfg_queue.size() - 1].config;
   merge_cell_config_update(merged_cfg, cell_req);
   if (!ctx.cell_cfg_queue.try_push(cell_config_snapshot{cell_req.epoch_time, std::move(merged_cfg)})) {
-    logger.warning("Cell config queue full for cell {}, dropping update", cell_req.nr_cgi.nci);
+    logger.warning("Cell config queue full, cell={:#x}, dropping update", cell_req.nr_cgi.nci);
     return false;
   }
 
   const ntn_cell_config& base_cfg = ctx.cell_cfg_queue[ctx.cell_cfg_queue.size() - 1].config;
 
   if (!base_cfg.ntn_cfg) {
-    logger.debug("Skipping serving satellite ephemeris update for TN cell {}", cell_req.nr_cgi.nci);
+    logger.debug("Skipping serving satellite ephemeris update, TN cell={:#x}", cell_req.nr_cgi.nci);
     return true;
   }
 
   per_satellite_context* sat_ctx = find_satellite_context(base_cfg.ntn_cfg->satellite_index);
   if (sat_ctx == nullptr) {
-    logger.warning("Satellite index {} not found for cell {}", base_cfg.ntn_cfg->satellite_index, cell_req.nr_cgi.nci);
+    logger.warning("Satellite index {} not found, cell={:#x}", base_cfg.ntn_cfg->satellite_index, cell_req.nr_cgi.nci);
     return false;
   }
 
@@ -291,7 +291,7 @@ bool ntn_configuration_manager_impl::handle_ntn_cell_config_update(const ntn_cel
     const sat_switch_with_resync_t& sat_sw     = *cell_req.sat_switch_with_resync;
     per_satellite_context*          sat_sw_ctx = find_satellite_context(base_cfg.sat_switch->satellite_index);
     if (sat_sw_ctx == nullptr) {
-      logger.warning("Sat-switch satellite index {} not found for cell {}",
+      logger.warning("Sat-switch satellite index {} not found, cell={:#x}",
                      base_cfg.sat_switch->satellite_index,
                      cell_req.nr_cgi.nci);
       return false;
@@ -299,14 +299,14 @@ bool ntn_configuration_manager_impl::handle_ntn_cell_config_update(const ntn_cel
     if (sat_sw.epoch_timestamp && sat_sw.ntn_cfg.ephemeris_info) {
       if (!sat_sw_ctx->ocm.enqueue_ephemeris_info(
               ephemeris_info_update{*sat_sw.epoch_timestamp, *sat_sw.ntn_cfg.ephemeris_info})) {
-        logger.warning("Failed to enqueue sat-switch ephemeris for cell {}", cell_req.nr_cgi.nci);
+        logger.warning("Failed to enqueue sat-switch ephemeris, cell={:#x}", cell_req.nr_cgi.nci);
         return false;
       }
       if (sat_sw.ntn_gateway_location) {
         ntn_gateway_location_info gw_location{
             *sat_sw.epoch_timestamp, std::nullopt, *sat_sw.ntn_gateway_location, std::nullopt};
         if (!sat_sw_ctx->ocm.enqueue_ntn_gw_location(gw_location)) {
-          logger.warning("Failed to enqueue sat-switch gateway location for cell {}", cell_req.nr_cgi.nci);
+          logger.warning("Failed to enqueue sat-switch gateway location, cell={:#x}", cell_req.nr_cgi.nci);
           return false;
         }
       }
@@ -342,7 +342,7 @@ bool ntn_configuration_manager_impl::send_cfo_compensation_request(const ntn_cel
 
   // Check if sector_id is configured, warn if missing.
   if (!cell_cfg.sector_id) {
-    logger.warning("Cell {} has no sector_id configured, using default value 0 for Doppler compensation",
+    logger.warning("No sector_id configured, cell={:#x}, using default value 0 for Doppler compensation",
                    cell_cfg.nr_cgi.nci);
   }
   unsigned sector_id = cell_cfg.sector_id.value_or(0);
@@ -359,8 +359,8 @@ bool ntn_configuration_manager_impl::send_cfo_compensation_request(const ntn_cel
   ul_cfo_reqs.cfo_drift_hz_s  = doppler_ul_rate;
   ul_cfo_reqs.start_timestamp = doppler_update_time;
 
-  logger.debug("Apply feeder link Doppler compensation for cell {} at time={:%T}, dl_doppler={:.1f}Hz, "
-               "dl_doppler_drift={:.1f}Hz/s, ul_doppler={:.1f}Hz, ul_doppler_drift={:.1f}Hz/s",
+  logger.debug("Apply feeder link Doppler compensation cell={:#x} time={:%T} dl_doppler={:.1f}Hz "
+               "dl_doppler_drift={:.1f}Hz/s ul_doppler={:.1f}Hz ul_doppler_drift={:.1f}Hz/s",
                cell_cfg.nr_cgi.nci,
                doppler_update_time,
                doppler_dl,
@@ -400,7 +400,7 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
 {
   auto it = cells.find(nr_cgi);
   if (it == cells.end()) {
-    logger.error("Timer fired for unknown cell: {}", nr_cgi.nci);
+    logger.error("Timer fired for unknown cell={:#x}", nr_cgi.nci);
     return;
   }
 
@@ -431,7 +431,7 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
 
     per_satellite_context* sat_ctx = find_satellite_context(ntn_cfg.satellite_index);
     if (sat_ctx == nullptr) {
-      logger.error("Satellite index {} not found for cell {}", ntn_cfg.satellite_index, nr_cgi.nci);
+      logger.error("Satellite index {} not found, cell={:#x}", ntn_cfg.satellite_index, nr_cgi.nci);
       return;
     }
     serving_ntn_info =
@@ -439,12 +439,12 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
 
     if (not serving_ntn_info.success) {
       logger.warning(
-          "Failed to generate propagated NTN config for cell {} at slot={}, epoch={:%T}", nr_cgi.nci, sl, epoch_time);
+          "Failed to generate propagated NTN config, cell={:#x} slot={} epoch={:%T}", nr_cgi.nci, sl, epoch_time);
       return;
     }
 
     if (ntn_cfg.feeder_link_info && !serving_ntn_info.ta_info) {
-      logger.error("Feeder link is configured for cell {} but TA-info was not computed at slot={}, epoch={:%T}",
+      logger.error("Feeder link is configured, cell={:#x}, but TA-info was not computed at slot={} epoch={:%T}",
                    nr_cgi.nci,
                    sl,
                    epoch_time);
@@ -458,14 +458,14 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
     per_satellite_context* sat_sw_ctx = find_satellite_context(cell_cfg.sat_switch->satellite_index);
     if (sat_sw_ctx == nullptr) {
       logger.warning(
-          "Sat-switch satellite index {} not found for cell {}", cell_cfg.sat_switch->satellite_index, nr_cgi.nci);
+          "Sat-switch satellite index {} not found, cell={:#x}", cell_cfg.sat_switch->satellite_index, nr_cgi.nci);
     } else {
       const unsigned ntn_ul_sync_validity_dur = cell_cfg.sat_switch->ntn_ul_sync_validity_dur.value_or(5);
       sat_sw_ntn_info =
           compute_orbital_state(*sat_sw_ctx, epoch_time, epoch_slot, ntn_ul_sync_validity_dur, use_state_vector);
       if (!sat_sw_ntn_info->success) {
         sat_sw_ntn_info.reset();
-        logger.warning("Failed to generate sat-switch propagated config for cell {}.", nr_cgi.nci);
+        logger.warning("Failed to generate sat-switch propagated config, cell={:#x}", nr_cgi.nci);
       }
     }
   }
@@ -476,14 +476,14 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
     const auto&            nc         = cell_cfg.ncells[i];
     per_satellite_context* nc_sat_ctx = find_satellite_context(nc.satellite_index);
     if (nc_sat_ctx == nullptr) {
-      logger.warning("Satellite index {} not found for neighbor of cell {}", nc.satellite_index, nr_cgi.nci);
+      logger.warning("Satellite index {} not found for neighbor, cell={:#x}", nc.satellite_index, nr_cgi.nci);
       continue;
     }
     const unsigned ntn_ul_sync_validity_dur = nc.ntn_ul_sync_validity_dur.value_or(5);
     ncell_ntn_info[i] =
         compute_orbital_state(*nc_sat_ctx, epoch_time, epoch_slot, ntn_ul_sync_validity_dur, use_state_vector);
     if (!ncell_ntn_info[i].success) {
-      logger.warning("Failed to generate neighbor OCM for cell {}, sat_idx={}", nr_cgi.nci, nc.satellite_index);
+      logger.warning("Failed to generate neighbor OCM, cell={:#x} sat_idx={}", nr_cgi.nci, nc.satellite_index);
     }
   }
 
@@ -497,10 +497,10 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
                                              epoch_time,
                                              serving_ntn_info.ta_info,
                                              serving_ntn_info.ephemeris_info};
-        logger.debug("SIB19 msg update for NTN serving cell {:#x}: {}", nr_cgi.nci, serving_info);
+        logger.debug("SIB19 msg update, NTN serving cell={:#x}: {}", nr_cgi.nci, serving_info);
       } else {
         logger.debug(
-            "SIB19 msg update for TN cell {:#x}: si_window={}-{} epoch_slot={} epoch_time={:%T} nof_ntn_neighbors={}",
+            "SIB19 msg update, TN cell={:#x}: si_window={}-{} epoch_slot={} epoch_time={:%T} nof_ntn_neighbors={}",
             nr_cgi.nci,
             next_si_win_start,
             next_si_win_end,
@@ -526,7 +526,7 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
 
     ntn_req.si_valuetag_change = sib19_tracked_fields_changed(ctx.last_sib19, ntn_req.sib19);
     if (ntn_req.si_valuetag_change) {
-      logger.debug("SIB19 tracked fields changed for cell {} - triggering SIB1 value tag increment", nr_cgi.nci);
+      logger.debug("SIB19 tracked fields changed, cell={:#x}, triggering SIB1 value tag increment", nr_cgi.nci);
     }
     ctx.last_sib19 = ntn_req.sib19;
 
