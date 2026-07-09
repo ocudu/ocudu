@@ -595,16 +595,18 @@ public:
     return true;
   }
 
-  [[nodiscard]] bool send_nrppa_measurement_request(lmf_meas_id_t                meas_id,
-                                                    const std::vector<trp_id_t>& trp_ids = {uint_to_trp_id(1),
-                                                                                            uint_to_trp_id(2),
-                                                                                            uint_to_trp_id(3),
-                                                                                            uint_to_trp_id(4),
-                                                                                            uint_to_trp_id(5),
-                                                                                            uint_to_trp_id(6),
-                                                                                            uint_to_trp_id(7),
-                                                                                            uint_to_trp_id(8),
-                                                                                            uint_to_trp_id(9)})
+  [[nodiscard]] bool send_nrppa_measurement_request(
+      lmf_meas_id_t                                       meas_id,
+      const std::vector<trp_id_t>&                        trp_ids             = {uint_to_trp_id(1),
+                                                                                 uint_to_trp_id(2),
+                                                                                 uint_to_trp_id(3),
+                                                                                 uint_to_trp_id(4),
+                                                                                 uint_to_trp_id(5),
+                                                                                 uint_to_trp_id(6),
+                                                                                 uint_to_trp_id(7),
+                                                                                 uint_to_trp_id(8),
+                                                                                 uint_to_trp_id(9)},
+      const std::vector<trp_meas_quantities_list_item_t>& trp_meas_quantities = {{trp_meas_quantities_item_t::ul_rtoa}})
   {
     report_fatal_error_if_not(not this->get_amf().try_pop_rx_pdu(ngap_pdu),
                               "there are still NGAP messages to pop from AMF");
@@ -625,7 +627,7 @@ public:
 
     // Inject NRPPa Measurement Request.
     get_amf().push_tx_pdu(generate_valid_dl_non_ue_associated_nrppa_transport_message(
-        generate_valid_nrppa_measurement_request(meas_id, trp_meas_request_list)));
+        generate_valid_nrppa_measurement_request(meas_id, trp_meas_request_list, trp_meas_quantities)));
 
     return true;
   }
@@ -664,6 +666,31 @@ public:
     // Inject F1AP Positioning Measurement Response.
     get_du(du_id).push_ul_pdu(
         test_helpers::generate_positioning_measurement_response(lmf_meas, ran_meas, trp_ids, transaction_id));
+
+    return true;
+  }
+
+  [[nodiscard]] bool send_f1ap_positioning_measurement_response_with_aoa(unsigned                     du_id,
+                                                                         lmf_meas_id_t                lmf_meas,
+                                                                         ran_meas_id_t                ran_meas,
+                                                                         const std::vector<trp_id_t>& trp_ids,
+                                                                         uint16_t                     azimuth_ao_a,
+                                                                         unsigned transaction_id = 1)
+  {
+    report_fatal_error_if_not(not this->get_amf().try_pop_rx_pdu(ngap_pdu),
+                              "there are still NGAP messages to pop from AMF");
+    report_fatal_error_if_not(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu),
+                              "there are still F1AP DL messages to pop from DU");
+    report_fatal_error_if_not(not this->get_du(du_idx2).try_pop_dl_pdu(f1ap_pdu2),
+                              "there are still F1AP DL messages to pop from DU2");
+    report_fatal_error_if_not(not this->get_du(du_idx3).try_pop_dl_pdu(f1ap_pdu3),
+                              "there are still F1AP DL messages to pop from DU3");
+    report_fatal_error_if_not(not this->get_cu_up(cu_up_idx).try_pop_rx_pdu(e1ap_pdu),
+                              "there are still E1AP messages to pop from CU-UP");
+
+    // Inject F1AP Positioning Measurement Response containing a UL Angle of Arrival measurement result.
+    get_du(du_id).push_ul_pdu(test_helpers::generate_positioning_measurement_response_with_aoa(
+        lmf_meas, ran_meas, trp_ids, azimuth_ao_a, transaction_id));
 
     return true;
   }
@@ -1363,6 +1390,58 @@ TEST_F(
 
   // Await NRPPa measurement response.
   ASSERT_TRUE(await_nrppa_measurement_response(3));
+}
+
+TEST_F(cu_cp_nrppa_test,
+       when_valid_ul_angle_of_arrival_measurement_response_is_received_from_the_du_then_response_is_forwarded_to_lmf)
+{
+  // Handle TRP information procedure.
+  ASSERT_TRUE(run_successful_trp_information_procedure());
+
+  // Attach UE.
+  ASSERT_TRUE(attach_ue(du_ue_id, crnti, amf_ue_id, cu_up_e1ap_id));
+
+  // Inject positioning information request and await F1AP positioning information request.
+  ASSERT_TRUE(
+      send_nrppa_positioning_information_request_and_await_f1ap_positioning_information_request(test_ues.at(du_ue_id)));
+
+  // Inject F1AP positioning information response and await NRPPa positioning information response.
+  ASSERT_TRUE(send_f1ap_positioning_information_response_and_await_nrppa_positioning_information_response(
+      test_ues.at(du_ue_id)));
+
+  // Inject positioning activation request and await F1AP positioning activation request.
+  ASSERT_TRUE(
+      send_nrppa_positioning_activation_request_and_await_f1ap_positioning_activation_request(test_ues.at(du_ue_id)));
+
+  // Inject F1AP positioning activation response and await NRPPa positioning activation response.
+  ASSERT_TRUE(
+      send_f1ap_positioning_activation_response_and_await_nrppa_positioning_activation_response(test_ues.at(du_ue_id)));
+
+  // Inject measurement request, requesting UL Angle of Arrival for the TRPs hosted by DU 1.
+  ASSERT_TRUE(send_nrppa_measurement_request(
+      lmf_meas_id, {uint_to_trp_id(1), uint_to_trp_id(2), uint_to_trp_id(3)}, {{trp_meas_quantities_item_t::ul_aoa}}));
+
+  // Await F1AP positioning measurement request.
+  ASSERT_TRUE(await_f1ap_positioning_measurement_request(du_idx, f1ap_pdu));
+
+  // Inject F1AP positioning measurement response with a UL Angle of Arrival measurement result.
+  constexpr uint16_t azimuth_ao_a = 1800;
+  ASSERT_TRUE(send_f1ap_positioning_measurement_response_with_aoa(
+      du_idx, lmf_meas_id, ran_meas_id, {uint_to_trp_id(1), uint_to_trp_id(2), uint_to_trp_id(3)}, azimuth_ao_a));
+
+  // Await NRPPa measurement response.
+  ASSERT_TRUE(await_nrppa_measurement_response(3));
+
+  // Verify that the UL Angle of Arrival measurement result was correctly forwarded to the LMF.
+  const auto& trp_meas_resp_list = get_nrppa_pdu(ngap_pdu).successful_outcome().value.meas_resp()->trp_meas_resp_list;
+  ASSERT_EQ(trp_meas_resp_list.size(), 3);
+  for (const auto& trp_meas_resp_item : trp_meas_resp_list) {
+    ASSERT_EQ(trp_meas_resp_item.meas_result.size(), 1);
+    const auto& meas_result = trp_meas_resp_item.meas_result[0];
+    ASSERT_EQ(meas_result.measured_results_value.type(),
+              asn1::nrppa::trp_measured_results_value_c::types_opts::ul_angle_of_arrival);
+    ASSERT_EQ(meas_result.measured_results_value.ul_angle_of_arrival().azimuth_ao_a, azimuth_ao_a);
+  }
 }
 
 TEST_F(cu_cp_nrppa_test, when_trp_information_is_not_available_then_measurement_failure_is_sent)

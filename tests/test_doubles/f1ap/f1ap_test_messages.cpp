@@ -1143,6 +1143,48 @@ f1ap_message ocudu::test_helpers::generate_positioning_measurement_response(lmf_
   return pdu;
 }
 
+f1ap_message
+ocudu::test_helpers::generate_positioning_measurement_response_with_aoa(lmf_meas_id_t                lmf_meas_id,
+                                                                        ran_meas_id_t                ran_meas_id,
+                                                                        const std::vector<trp_id_t>& trp_ids,
+                                                                        uint16_t                     azimuth_ao_a,
+                                                                        unsigned                     transaction_id)
+{
+  f1ap_message pdu = {};
+
+  pdu.pdu.set_successful_outcome();
+  pdu.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_POSITIONING_MEAS_EXCHANGE);
+
+  auto& pos_meas_resp           = pdu.pdu.successful_outcome().value.positioning_meas_resp();
+  pos_meas_resp->transaction_id = transaction_id;
+  pos_meas_resp->lmf_meas_id    = lmf_meas_id_to_uint(lmf_meas_id);
+  pos_meas_resp->ran_meas_id    = ran_meas_id_to_uint(ran_meas_id);
+
+  for (const auto& trp_id : trp_ids) {
+    // Create positioning measurement result item for each TRP ID.
+    asn1::f1ap::pos_meas_result_list_item_s meas_resp_item;
+    meas_resp_item.trp_id = trp_id_to_uint(trp_id);
+
+    // Add positioning measurement result item.
+    asn1::f1ap::pos_meas_result_item_s pos_meas_result_item;
+
+    // > Add UL Angle of Arrival measurement result.
+    asn1::f1ap::ul_ao_a_s& ul_aoa = pos_meas_result_item.measured_results_value.set_ul_angle_of_arrival();
+    ul_aoa.azimuth_ao_a           = azimuth_ao_a;
+
+    // Add time stamp.
+    pos_meas_result_item.time_stamp.sys_frame_num         = 25;
+    pos_meas_result_item.time_stamp.slot_idx.set_scs_30() = 0;
+
+    meas_resp_item.pos_meas_result.push_back(pos_meas_result_item);
+
+    pos_meas_resp->pos_meas_result_list_present = true;
+    pos_meas_resp->pos_meas_result_list.push_back(meas_resp_item);
+  }
+
+  return pdu;
+}
+
 f1ap_message ocudu::test_helpers::generate_positioning_measurement_failure(lmf_meas_id_t lmf_meas_id,
                                                                            ran_meas_id_t ran_meas_id)
 {
