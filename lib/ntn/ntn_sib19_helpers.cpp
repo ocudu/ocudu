@@ -82,14 +82,17 @@ sib19_info ocudu_ntn::generate_sib19_info(const ntn_cell_config&        cell_cfg
   // cell's, which is optional and can be inherited), so the whole block is only broadcast when the serving cell is
   // NTN and the sat-switch OCM lookup actually succeeded -- never with an empty ntn-Config, and never in a TN cell.
   if (cell_cfg.ntn_cfg && cell_cfg.sat_switch && sat_sw_reply != nullptr && sat_sw_reply->success) {
-    const auto&              sw_cfg = *cell_cfg.sat_switch;
-    sat_switch_with_resync_t sat_sw;
-    sat_sw.t_service_start               = sw_cfg.t_service_start;
-    sat_sw.ssb_time_offset_sf            = sw_cfg.ssb_time_offset_sf;
-    sat_sw.ntn_cfg.cell_specific_koffset = sw_cfg.cell_specific_koffset;
-    sat_sw.ntn_cfg.k_mac                 = sw_cfg.k_mac;
-    sat_sw.ntn_cfg.polarization          = sw_cfg.polarization;
-    sat_sw.ntn_cfg.ta_report             = sw_cfg.ta_report;
+    const auto&                    sw_cfg      = *cell_cfg.sat_switch;
+    const ntn_serving_cell_config& serving_cfg = *cell_cfg.ntn_cfg;
+    sat_switch_with_resync_t       sat_sw;
+    sat_sw.t_service_start    = sw_cfg.t_service_start;
+    sat_sw.ssb_time_offset_sf = sw_cfg.ssb_time_offset_sf;
+    // Unset fields are broadcast with the serving cell value: to the UE, absence means 0/released/disabled per
+    // TS 38.331 -- not the serving values that the promotion inherits (see derive_post_switch_config()).
+    sat_sw.ntn_cfg.cell_specific_koffset = sw_cfg.cell_specific_koffset.value_or(serving_cfg.cell_specific_koffset);
+    sat_sw.ntn_cfg.k_mac                 = sw_cfg.k_mac ? sw_cfg.k_mac : serving_cfg.k_mac;
+    sat_sw.ntn_cfg.polarization          = sw_cfg.polarization ? sw_cfg.polarization : serving_cfg.polarization;
+    sat_sw.ntn_cfg.ta_report             = sw_cfg.ta_report ? sw_cfg.ta_report : serving_cfg.ta_report;
     if (!matches_serving_ntn_epoch_time(cell_cfg, sib19, epoch_slot)) {
       sat_sw.ntn_cfg.epoch_time.emplace();
       sat_sw.ntn_cfg.epoch_time->sfn             = epoch_slot.sfn();

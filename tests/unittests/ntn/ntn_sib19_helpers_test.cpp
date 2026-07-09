@@ -381,3 +381,31 @@ TEST(sib19_sat_switch_test, ntn_ul_sync_validity_dur_filled_when_it_differs_from
   ASSERT_TRUE(sib19.sat_switch_with_resync->ntn_cfg.ntn_ul_sync_validity_dur.has_value());
   EXPECT_EQ(*sib19.sat_switch_with_resync->ntn_cfg.ntn_ul_sync_validity_dur, 60U);
 }
+
+TEST(sib19_sat_switch_test, fields_left_unset_in_sat_switch_config_are_broadcast_with_the_serving_cell_values)
+{
+  ntn_cell_config cell_cfg                = make_cell_config(/*serving_is_ntn=*/true, /*serving_sync_dur=*/30U);
+  cell_cfg.ntn_cfg->cell_specific_koffset = std::chrono::milliseconds{25};
+  cell_cfg.ntn_cfg->k_mac                 = 2U;
+  cell_cfg.ntn_cfg->ta_report             = true;
+
+  // Sat-switch config with koffset, k_mac, polarization and ta_report left unset.
+  ntn_sat_switch_config sw{};
+  sw.satellite_index          = 1;
+  sw.ntn_ul_sync_validity_dur = 30U;
+  cell_cfg.sat_switch         = sw;
+
+  std::vector<ntn_orbital_state> replies;
+  ntn_orbital_state              serving_reply = make_reply(true);
+  ntn_orbital_state              sat_sw_reply  = make_reply(true);
+
+  sib19_info sib19 = generate_sib19_info(cell_cfg, test_epoch_slot, serving_reply, &sat_sw_reply, replies);
+
+  ASSERT_TRUE(sib19.sat_switch_with_resync.has_value());
+  const auto& sw_ntn_cfg = sib19.sat_switch_with_resync->ntn_cfg;
+  EXPECT_EQ(sw_ntn_cfg.cell_specific_koffset, std::chrono::milliseconds{25})
+      << "an absent koffset makes the UE assume 0, not the serving value the promotion inherits";
+  EXPECT_EQ(sw_ntn_cfg.k_mac, 2U);
+  EXPECT_EQ(sw_ntn_cfg.ta_report, true);
+  EXPECT_FALSE(sw_ntn_cfg.polarization.has_value()) << "absent in both sat-switch and serving config stays absent";
+}
