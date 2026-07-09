@@ -1491,6 +1491,19 @@ static bool validate_cell_slicing_config(const du_high_unit_cell_slice_config& s
   return true;
 }
 
+/// Validates NTN config for TN bands: only ncells may be configured. Returns true on success, otherwise false.
+static bool validate_ntn_tn_cell_config(const du_high_unit_cell_ntn_config& ntn, nr_band band)
+{
+  // TN band: only ncells may be configured; all serving-cell NTN fields must be absent.
+  if (ntn.serving.has_value()) {
+    fmt::print("ntn: serving-cell NTN fields (e.g. cell_specific_koffset) must not be set for TN band {}. Only "
+               "ncells may be configured.\n",
+               fmt::underlying(band));
+    return false;
+  }
+  return true;
+}
+
 /// Validates the given cell application configuration. Returns true on success, otherwise false.
 static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& config)
 {
@@ -1549,8 +1562,14 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
 
   const bool is_ntn_band = band_helper::is_ntn_band(band);
   if (config.ntn_cfg) {
-    if (!validate_ntn_config(*config.ntn_cfg, band)) {
-      return false;
+    if (is_ntn_band) {
+      if (!validate_ntn_config(*config.ntn_cfg, band)) {
+        return false;
+      }
+    } else {
+      if (!validate_ntn_tn_cell_config(*config.ntn_cfg, band)) {
+        return false;
+      }
     }
   }
   if (!validate_pdsch_cell_unit_config(config.pdsch_cfg, nof_crbs, config.nof_antennas_dl, is_ntn_band)) {
