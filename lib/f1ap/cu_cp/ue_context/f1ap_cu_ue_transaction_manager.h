@@ -27,9 +27,12 @@ public:
   {
     context_setup_outcome.stop();
     context_modification_outcome.stop();
-    context_release_complete.stop();
     positioning_information_outcome.stop();
     positioning_activation_outcome.stop();
+    // Must run last. Stopping this transaction synchronously resumes, in-line, the UE Context Release Routine that
+    // is awaiting it, which runs to completion up to removing this very UE context (freeing "this"). No member of
+    // this object may be accessed after this call.
+    context_release_complete.stop();
   }
 
   /// F1AP UE Context Setup Response/Failure Event Source.
