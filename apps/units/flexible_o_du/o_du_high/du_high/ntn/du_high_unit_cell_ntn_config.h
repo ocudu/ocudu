@@ -91,8 +91,10 @@ struct du_high_unit_ntn_serving_cell_config {
   std::optional<feeder_link_info_t> feeder_link_info;
   /// Indicates polarization information for downlink/uplink transmission on service link.
   std::optional<ntn_polarization_t> polarization;
-  /// When this field is included in SIB19, it indicates reporting of timing advanced is enabled.
-  std::optional<bool> ta_report;
+  /// Indicates reporting of timing advance is enabled. Per TS 38.331, ta-Report is mandatory present for the
+  /// serving cell in SIB19 (unlike for neighbor cells or SatSwitchWithReSync, where it is optional), so this field
+  /// is not optional and defaults to disabled.
+  bool ta_report = false;
   /// Moving reference location for NTN Earth-moving cell (R18).
   std::optional<geodetic_coordinates_t> moving_ref_location;
   /// Satellite switch with resynchronization parameters (R18).

@@ -161,9 +161,7 @@ void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_
       ntn_node["polarization"] = build_polarization_node(*serving.polarization);
     }
 
-    if (serving.ta_report) {
-      ntn_node["ta_report"] = *serving.ta_report;
-    }
+    ntn_node["ta_report"] = serving.ta_report;
 
     if (serving.reference_location) {
       ntn_node["reference_location"] = build_geodetic_node(*serving.reference_location, false);
