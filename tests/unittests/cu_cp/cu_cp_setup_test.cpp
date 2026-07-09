@@ -497,6 +497,22 @@ TEST_F(cu_cp_setup_admission_limit_test, when_initial_ul_rrc_message_is_rejected
 }
 
 TEST_F(cu_cp_setup_admission_limit_test,
+       when_du_disconnects_while_ue_context_release_is_in_flight_then_teardown_does_not_crash)
+{
+  ASSERT_TRUE(send_initial_ul_rrc_message_and_await_ue_context_release_command());
+
+  // Do not inject the F1AP UE Context Release Complete: the release transaction is left in flight.
+
+  // The DU disconnects while the release procedure is still awaiting a response from it. This drives the F1AP
+  // stop procedure to cancel a per-UE transaction whose completion synchronously runs the UE removal cascade.
+  ASSERT_TRUE(drop_du_connection(du_idx));
+
+  // The UE is removed as part of the DU teardown, despite the release response never arriving.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_TRUE(report.ues.empty());
+}
+
+TEST_F(cu_cp_setup_admission_limit_test,
        when_rrc_reject_wait_time_is_not_configured_then_rrc_reject_has_no_wait_time_ie)
 {
   // rrc_reject_wait_time is optional and left unset in the default configuration.
