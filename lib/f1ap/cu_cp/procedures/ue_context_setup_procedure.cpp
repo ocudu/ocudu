@@ -61,7 +61,7 @@ void ue_context_setup_procedure::operator()(coro_context<async_task<f1ap_ue_cont
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("ue={} proc=\"{}\": started...", request.ue_index, name());
+  logger.info("ue={}: \"{}\" started...", request.ue_index, name());
 
   // Create F1AP UE context if it doesn't exist.
   if (not find_or_create_f1ap_ue_context()) {
@@ -172,7 +172,7 @@ f1ap_ue_context_setup_response ue_context_setup_procedure::handle_procedure_resu
   resp.success  = false;
 
   if (ue_ctxt == nullptr) {
-    logger.warning("ue={} proc=\"{}\" failed", request.ue_index, name());
+    logger.warning("ue={}: \"{}\" failed", request.ue_index, name());
     return resp;
   }
 
@@ -192,7 +192,7 @@ f1ap_ue_context_setup_response ue_context_setup_procedure::handle_procedure_resu
     // Create UE RRC context in CU-CP, if required.
     resp.success = create_ue_rrc_context(resp);
 
-    logger.debug("ue={} proc=\"{}\": finished successfully", request.ue_index, name());
+    logger.info("ue={}: \"{}\" finished successfully", request.ue_index, name());
 
     return resp;
   }
@@ -200,15 +200,22 @@ f1ap_ue_context_setup_response ue_context_setup_procedure::handle_procedure_resu
   // Procedure failed.
 
   if (transaction_sink.failed()) {
-    logger.warning("{}: Procedure failed. Cause: {}",
+    logger.warning("{} failed. Cause: {}",
                    f1ap_ue_log_prefix{ue_ctxt->ue_ids, name()},
                    get_cause_str(transaction_sink.failure()->cause));
 
     // Fill response to the UE context setup procedure.
     fill_f1ap_ue_context_setup_response(resp, request.ue_index, transaction_sink.failure());
 
+  } else if (transaction_sink.cancelled()) {
+    // The transaction was cancelled because the F1AP UE context is being torn down (e.g. F1AP/DU stop). The
+    // standard UE removal path already owns cleaning up this UE context; removing it here too would erase the
+    // very object whose transaction manager is still unwinding its own cancel_all() call.
+    logger.warning("{} cancelled. Cause: F1AP UE context is being torn down",
+                   f1ap_ue_log_prefix{ue_ctxt->ue_ids, name()});
+    return resp;
   } else {
-    logger.warning("{}: Procedure failed. Cause: Timeout reached while waiting for DU response, timeout={}ms",
+    logger.warning("{} failed. Cause: Timeout reached while waiting for DU response, timeout={}ms",
                    f1ap_ue_log_prefix{ue_ctxt->ue_ids, name()},
                    f1ap_cfg.proc_timeout.count());
   }

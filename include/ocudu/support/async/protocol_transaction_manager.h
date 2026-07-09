@@ -398,6 +398,13 @@ public:
            std::get<protocol_transaction_failure>(observer.result()) == protocol_transaction_failure::timeout;
   }
 
+  /// Checks whether the transaction was cancelled, e.g. due to its event source being stopped.
+  bool cancelled() const
+  {
+    return protocol_transaction_failed() and
+           std::get<protocol_transaction_failure>(observer.result()) == protocol_transaction_failure::cancel;
+  }
+
   /// Result set by event source.
   const success_response_type& response() const
   {
