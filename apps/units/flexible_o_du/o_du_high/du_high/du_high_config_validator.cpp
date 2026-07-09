@@ -614,6 +614,12 @@ static bool validate_ntn_config(const du_high_unit_cell_ntn_config& ntn_cfg, nr_
 
   if (serving.sat_switch_with_resync) {
     const auto& sw = *serving.sat_switch_with_resync;
+    if (!sw.t_service_start.has_value()) {
+      // Per TS 38.331, t-ServiceStart has no documented behavior for absence, and it's the only field in
+      // SatSwitchWithReSync that tells the UE *when* to use the target satellite's parameters.
+      fmt::print("sat_switch_with_resync: t_service_start is required.\n");
+      valid = false;
+    }
     if (sw.ssb_time_offset_sf && *sw.ssb_time_offset_sf % 5 != 0) {
       fmt::print("sat_switch_with_resync: ssb_time_offset_sf must be 0 or a multiple of 5 subframes, got {}.\n",
                  *sw.ssb_time_offset_sf);
