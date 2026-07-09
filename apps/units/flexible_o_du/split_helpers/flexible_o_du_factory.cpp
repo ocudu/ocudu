@@ -92,8 +92,8 @@ static o_du_low_unit_config generate_o_du_low_config(const du_low_unit_config&  
     du_low_cell.max_puschs_per_slot  = du_hi_cell.cell.pusch_cfg.max_puschs_per_slot;
     du_low_cell.pusch_max_nof_layers = cell.ran.init_bwp.pusch.max_nof_layers;
     du_low_cell.tdd_pattern          = cell.ran.tdd_cfg;
-    if (du_hi_cell.cell.ntn_cfg) {
-      du_low_cell.ntn_cs_koffset = du_hi_cell.cell.ntn_cfg->cell_specific_koffset;
+    if (du_hi_cell.cell.ntn_cfg && du_hi_cell.cell.ntn_cfg->serving) {
+      du_low_cell.ntn_cs_koffset = du_hi_cell.cell.ntn_cfg->serving->cell_specific_koffset;
     }
   }
 
@@ -128,29 +128,31 @@ generate_o_du_ru_config(span<const odu::du_cell_config> cells, unsigned max_proc
 static ocudu_ntn::ntn_serving_cell_config
 convert_ntn_config_to_serving_cell_config(const du_high_unit_cell_ntn_config& cfg)
 {
+  const auto& serving = *cfg.serving;
+
   ocudu_ntn::ntn_serving_cell_config info = {};
 
   // SIB19 fields exempt from valuetag.
-  info.moving_reference_location = cfg.moving_ref_location;
-  if (cfg.ta_info) {
-    info.ta_common_offset = cfg.ta_info->ta_common_offset;
+  info.moving_reference_location = serving.moving_ref_location;
+  if (serving.ta_info) {
+    info.ta_common_offset = serving.ta_info->ta_common_offset;
   }
-  info.epoch_time               = cfg.epoch_time;
-  info.ntn_ul_sync_validity_dur = cfg.ntn_ul_sync_validity_dur;
+  info.epoch_time               = serving.epoch_time;
+  info.ntn_ul_sync_validity_dur = serving.ntn_ul_sync_validity_dur;
 
   // SIB19 fields tracked by valuetag.
-  info.reference_location    = cfg.reference_location;
-  info.distance_threshold    = cfg.distance_threshold;
-  info.t_service             = cfg.t_service;
-  info.cell_specific_koffset = cfg.cell_specific_koffset;
-  info.k_mac                 = cfg.k_mac;
-  info.polarization          = cfg.polarization;
-  info.ta_report             = cfg.ta_report;
+  info.reference_location    = serving.reference_location;
+  info.distance_threshold    = serving.distance_threshold;
+  info.t_service             = serving.t_service;
+  info.cell_specific_koffset = serving.cell_specific_koffset;
+  info.k_mac                 = serving.k_mac;
+  info.polarization          = serving.polarization;
+  info.ta_report             = serving.ta_report;
 
   // Metadata fields.
-  info.epoch_sfn_offset = cfg.epoch_sfn_offset;
-  info.use_state_vector = cfg.use_state_vector;
-  info.feeder_link_info = cfg.feeder_link_info;
+  info.epoch_sfn_offset = serving.epoch_sfn_offset;
+  info.use_state_vector = serving.use_state_vector;
+  info.feeder_link_info = serving.feeder_link_info;
 
   return info;
 }
@@ -198,7 +200,8 @@ generate_ntn_configuration_manager_config(const gnb_id_t&                       
 
   // Resolve satellite_idx for every serving cell, sat-switch target and neighbor cell: reuse the global satellite
   // if satellite_idx is set, else create one inline (1-to-1). After this loop, satellite_idx is guaranteed set
-  // wherever an NTN config is present.
+  // wherever a satellite reference is present. Neighbor cells are resolved regardless of whether this is an
+  // NTN serving cell or a TN-band cell that only reports NTN neighbor cells.
   std::vector<std::optional<du_high_unit_cell_ntn_config>> resolved_ntn_cfgs(du_hi_cells.size());
   for (unsigned phy_sector_idx = 0; phy_sector_idx != du_hi_cells.size(); ++phy_sector_idx) {
     const auto& cell_cfg = du_hi_cells[phy_sector_idx].cell;
@@ -207,37 +210,40 @@ generate_ntn_configuration_manager_config(const gnb_id_t&                       
     }
     du_high_unit_cell_ntn_config ntn_cfg = *cell_cfg.ntn_cfg;
 
-    if (!ntn_cfg.satellite_idx) {
-      if (ntn_cfg.epoch_timestamp && ntn_cfg.ephemeris_info) {
-        ntn_cfg.satellite_idx = add_satellite_config(out_cfg,
-                                                     next_satellite_idx,
-                                                     ntn_cfg.epoch_timestamp,
-                                                     *ntn_cfg.ephemeris_info,
-                                                     ntn_cfg.ntn_gateway_location,
-                                                     ntn_cfg.ta_info,
-                                                     ntn_cfg.propagator_type);
-      } else {
-        report_error("cells[{}].ntn: either satellite_idx or inline ephemeris definition (epoch_timestamp and "
-                     "ephemeris_info) must be provided",
-                     phy_sector_idx);
-      }
-    }
-
-    if (ntn_cfg.sat_switch_with_resync) {
-      auto& sat_sw = *ntn_cfg.sat_switch_with_resync;
-      if (!sat_sw.satellite_idx) {
-        if (sat_sw.epoch_timestamp && sat_sw.ephemeris_info) {
-          sat_sw.satellite_idx = add_satellite_config(out_cfg,
-                                                      next_satellite_idx,
-                                                      sat_sw.epoch_timestamp,
-                                                      *sat_sw.ephemeris_info,
-                                                      sat_sw.gateway_location,
-                                                      std::nullopt,
-                                                      ntn_cfg.propagator_type);
+    if (ntn_cfg.serving) {
+      auto& serving = *ntn_cfg.serving;
+      if (!serving.satellite_idx) {
+        if (serving.epoch_timestamp && serving.ephemeris_info) {
+          serving.satellite_idx = add_satellite_config(out_cfg,
+                                                       next_satellite_idx,
+                                                       serving.epoch_timestamp,
+                                                       *serving.ephemeris_info,
+                                                       serving.ntn_gateway_location,
+                                                       serving.ta_info,
+                                                       serving.propagator_type);
         } else {
-          report_error("cells[{}].ntn.sat_switch_with_resync: either satellite_idx or inline ephemeris definition "
-                       "(epoch_timestamp and ephemeris_info) must be provided",
+          report_error("cells[{}].ntn: either satellite_idx or inline ephemeris definition (epoch_timestamp and "
+                       "ephemeris_info) must be provided",
                        phy_sector_idx);
+        }
+      }
+
+      if (serving.sat_switch_with_resync) {
+        auto& sat_sw = *serving.sat_switch_with_resync;
+        if (!sat_sw.satellite_idx) {
+          if (sat_sw.epoch_timestamp && sat_sw.ephemeris_info) {
+            sat_sw.satellite_idx = add_satellite_config(out_cfg,
+                                                        next_satellite_idx,
+                                                        sat_sw.epoch_timestamp,
+                                                        *sat_sw.ephemeris_info,
+                                                        sat_sw.gateway_location,
+                                                        std::nullopt,
+                                                        serving.propagator_type);
+          } else {
+            report_error("cells[{}].ntn.sat_switch_with_resync: either satellite_idx or inline ephemeris definition "
+                         "(epoch_timestamp and ephemeris_info) must be provided",
+                         phy_sector_idx);
+          }
         }
       }
     }
@@ -251,7 +257,7 @@ generate_ntn_configuration_manager_config(const gnb_id_t&                       
                                                      *ncell.ephemeris_info,
                                                      ncell.gateway_location,
                                                      ncell.ta_info,
-                                                     ntn_cfg.propagator_type);
+                                                     ntn_cfg.serving->propagator_type);
         } else {
           report_error("cells[{}].ntn.ncells[pci={}]: either satellite_idx or inline ephemeris definition "
                        "(epoch_timestamp and ephemeris_info) must be provided",
@@ -285,12 +291,12 @@ generate_ntn_configuration_manager_config(const gnb_id_t&                       
     out_cell.sector_id       = phy_sector_idx;
     out_cell.nr_cgi.plmn_id  = plmn.value();
     out_cell.nr_cgi.nci      = nci.value();
-    out_cell.satellite_index = *ntn_cfg.satellite_idx;
+    out_cell.satellite_index = *ntn_cfg.serving->satellite_idx;
     out_cell.ntn_cfg         = convert_ntn_config_to_serving_cell_config(ntn_cfg);
 
     // Build sat-switch target satellite (if configured).
-    if (ntn_cfg.sat_switch_with_resync) {
-      const auto& sat_sw  = *ntn_cfg.sat_switch_with_resync;
+    if (ntn_cfg.serving && ntn_cfg.serving->sat_switch_with_resync) {
+      const auto& sat_sw  = *ntn_cfg.serving->sat_switch_with_resync;
       out_cell.sat_switch = {*sat_sw.satellite_idx,
                              sat_sw.t_service_start,
                              sat_sw.ssb_time_offset_sf,

@@ -13,21 +13,25 @@ using namespace ocudu;
 
 static void ntn_augment_rlc_config(const du_high_unit_cell_ntn_config& ntn_cfg, rlc_config& rlc)
 {
-  if (ntn_cfg.cell_specific_koffset.count() > 1000) {
+  if (!ntn_cfg.serving) {
+    return;
+  }
+  const auto koffset_ms = ntn_cfg.serving->cell_specific_koffset.count();
+  if (koffset_ms > 1000) {
     rlc.am.tx.t_poll_retx = std::max(rlc.am.tx.t_poll_retx, 4000);
-  } else if (ntn_cfg.cell_specific_koffset.count() > 800) {
+  } else if (koffset_ms > 800) {
     rlc.am.tx.t_poll_retx = std::max(rlc.am.tx.t_poll_retx, 2000);
-  } else if (ntn_cfg.cell_specific_koffset.count() > 500) {
+  } else if (koffset_ms > 500) {
     rlc.am.tx.t_poll_retx = std::max(rlc.am.tx.t_poll_retx, 2000);
-  } else if (ntn_cfg.cell_specific_koffset.count() > 300) {
+  } else if (koffset_ms > 300) {
     rlc.am.tx.t_poll_retx = std::max(rlc.am.tx.t_poll_retx, 1000);
-  } else if (ntn_cfg.cell_specific_koffset.count() > 200) {
+  } else if (koffset_ms > 200) {
     rlc.am.tx.t_poll_retx = std::max(rlc.am.tx.t_poll_retx, 800);
-  } else if (ntn_cfg.cell_specific_koffset.count() > 100) {
+  } else if (koffset_ms > 100) {
     rlc.am.tx.t_poll_retx = std::max(rlc.am.tx.t_poll_retx, 400);
-  } else if (ntn_cfg.cell_specific_koffset.count() > 50) {
+  } else if (koffset_ms > 50) {
     rlc.am.tx.t_poll_retx = std::max(rlc.am.tx.t_poll_retx, 200);
-  } else if (ntn_cfg.cell_specific_koffset.count() > 10) {
+  } else if (koffset_ms > 10) {
     rlc.am.tx.t_poll_retx = std::max(rlc.am.tx.t_poll_retx, 100);
   } else {
     rlc.am.tx.t_poll_retx = std::max(rlc.am.tx.t_poll_retx, 50);

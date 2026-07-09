@@ -103,78 +103,82 @@ void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_
 {
   auto ntn_node = node["ntn"];
 
-  if (config.satellite_idx) {
-    ntn_node["satellite_idx"] = *config.satellite_idx;
-  }
+  if (config.serving) {
+    const auto& serving = *config.serving;
 
-  ntn_node["cell_specific_koffset"] = config.cell_specific_koffset.count();
+    if (serving.satellite_idx) {
+      ntn_node["satellite_idx"] = *serving.satellite_idx;
+    }
 
-  if (config.ntn_ul_sync_validity_dur) {
-    ntn_node["ntn_ul_sync_validity_dur"] = *config.ntn_ul_sync_validity_dur;
-  }
+    ntn_node["cell_specific_koffset"] = static_cast<unsigned>(serving.cell_specific_koffset.count());
 
-  if (config.ta_info) {
-    ntn_node["ta_info"] = build_ta_info_node(*config.ta_info);
-  }
+    if (serving.ntn_ul_sync_validity_dur) {
+      ntn_node["ntn_ul_sync_validity_dur"] = *serving.ntn_ul_sync_validity_dur;
+    }
 
-  if (config.epoch_timestamp) {
-    ntn_node["epoch_timestamp"] = timepoint_to_iso8601(*config.epoch_timestamp);
-  }
+    if (serving.ta_info) {
+      ntn_node["ta_info"] = build_ta_info_node(*serving.ta_info);
+    }
 
-  if (config.feeder_link_info) {
-    YAML::Node fl_node;
-    fl_node["enable_doppler_compensation"] = config.feeder_link_info->enable_doppler_compensation;
-    fl_node["dl_freq"]                     = config.feeder_link_info->dl_freq;
-    fl_node["ul_freq"]                     = config.feeder_link_info->ul_freq;
-    ntn_node["feeder_link_info"]           = fl_node;
-  }
+    if (serving.epoch_timestamp) {
+      ntn_node["epoch_timestamp"] = timepoint_to_iso8601(*serving.epoch_timestamp);
+    }
 
-  if (config.ntn_gateway_location) {
-    ntn_node["ntn_gateway_location"] = build_geodetic_node(*config.ntn_gateway_location);
-  }
+    if (serving.feeder_link_info) {
+      YAML::Node fl_node;
+      fl_node["enable_doppler_compensation"] = serving.feeder_link_info->enable_doppler_compensation;
+      fl_node["dl_freq"]                     = serving.feeder_link_info->dl_freq;
+      fl_node["ul_freq"]                     = serving.feeder_link_info->ul_freq;
+      ntn_node["feeder_link_info"]           = fl_node;
+    }
 
-  if (config.epoch_time) {
-    YAML::Node epoch_node;
-    epoch_node["sfn"]             = config.epoch_time->sfn;
-    epoch_node["subframe_number"] = config.epoch_time->subframe_number;
-    ntn_node["epoch_time"]        = epoch_node;
-  }
+    if (serving.ntn_gateway_location) {
+      ntn_node["ntn_gateway_location"] = build_geodetic_node(*serving.ntn_gateway_location);
+    }
 
-  if (config.epoch_sfn_offset) {
-    ntn_node["epoch_sfn_offset"] = *config.epoch_sfn_offset;
-  }
+    if (serving.epoch_time) {
+      YAML::Node epoch_node;
+      epoch_node["sfn"]             = serving.epoch_time->sfn;
+      epoch_node["subframe_number"] = serving.epoch_time->subframe_number;
+      ntn_node["epoch_time"]        = epoch_node;
+    }
 
-  if (config.use_state_vector) {
-    ntn_node["use_state_vector"] = *config.use_state_vector;
-  }
+    if (serving.epoch_sfn_offset) {
+      ntn_node["epoch_sfn_offset"] = *serving.epoch_sfn_offset;
+    }
 
-  ntn_node["propagator_type"] =
-      (config.propagator_type == ocudu_ntn::orbit_propagator_type::keplerian) ? "keplerian" : "rk4";
+    if (serving.use_state_vector) {
+      ntn_node["use_state_vector"] = *serving.use_state_vector;
+    }
 
-  fill_optional_ephemeris(ntn_node, config.ephemeris_info);
+    ntn_node["propagator_type"] =
+        (serving.propagator_type == ocudu_ntn::orbit_propagator_type::keplerian) ? "keplerian" : "rk4";
 
-  if (config.polarization) {
-    ntn_node["polarization"] = build_polarization_node(*config.polarization);
-  }
+    fill_optional_ephemeris(ntn_node, serving.ephemeris_info);
 
-  if (config.ta_report) {
-    ntn_node["ta_report"] = *config.ta_report;
-  }
+    if (serving.polarization) {
+      ntn_node["polarization"] = build_polarization_node(*serving.polarization);
+    }
 
-  if (config.reference_location) {
-    ntn_node["reference_location"] = build_geodetic_node(*config.reference_location, false);
-  }
+    if (serving.ta_report) {
+      ntn_node["ta_report"] = *serving.ta_report;
+    }
 
-  if (config.distance_threshold) {
-    ntn_node["distance_threshold"] = *config.distance_threshold;
-  }
+    if (serving.reference_location) {
+      ntn_node["reference_location"] = build_geodetic_node(*serving.reference_location, false);
+    }
 
-  if (config.t_service) {
-    ntn_node["t_service"] = timepoint_to_iso8601(*config.t_service);
-  }
+    if (serving.distance_threshold) {
+      ntn_node["distance_threshold"] = *serving.distance_threshold;
+    }
 
-  if (config.moving_ref_location) {
-    ntn_node["moving_ref_location"] = build_geodetic_node(*config.moving_ref_location, false);
+    if (serving.t_service) {
+      ntn_node["t_service"] = timepoint_to_iso8601(*serving.t_service);
+    }
+
+    if (serving.moving_ref_location) {
+      ntn_node["moving_ref_location"] = build_geodetic_node(*serving.moving_ref_location, false);
+    }
   }
 
   // NTN neighbor cells.
@@ -222,8 +226,8 @@ void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_
   }
 
   // Satellite switch with resynchronization (R18 extension).
-  if (config.sat_switch_with_resync) {
-    const auto& sw = *config.sat_switch_with_resync;
+  if (config.serving && config.serving->sat_switch_with_resync) {
+    const auto& sw = *config.serving->sat_switch_with_resync;
     YAML::Node  sat_sw_node;
 
     if (sw.satellite_idx) {

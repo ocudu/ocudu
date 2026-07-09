@@ -485,38 +485,41 @@ static bool validate_ntn_satellite_refs(const std::vector<du_high_unit_cell_conf
       continue;
     }
     const auto& ntn = *cell_cfg.ntn_cfg;
-    if (ntn.satellite_idx) {
-      if (available.count(*ntn.satellite_idx) == 0) {
-        fmt::print("cells[{}].ntn.satellite_idx={} not found in ntn.satellites.\n", i, *ntn.satellite_idx);
-        valid = false;
-      } else if (ntn.feeder_link_info) {
-        const auto sat_it = std::find_if(ntn_satellites.begin(), ntn_satellites.end(), [&ntn](const auto& sat) {
-          return sat.satellite_idx == *ntn.satellite_idx;
-        });
-        if (not sat_it->gateway_location and not sat_it->ta_info) {
-          fmt::print("cells[{}].ntn: feeder_link_info requires the referenced satellite (satellite_idx={}) to have "
-                     "gateway_location or ta_info set.\n",
-                     i,
-                     *ntn.satellite_idx);
+    if (ntn.serving) {
+      const auto& serving = *ntn.serving;
+      if (serving.satellite_idx) {
+        if (available.count(*serving.satellite_idx) == 0) {
+          fmt::print("cells[{}].ntn.satellite_idx={} not found in ntn.satellites.\n", i, *serving.satellite_idx);
           valid = false;
+        } else if (serving.feeder_link_info) {
+          const auto sat_it = std::find_if(ntn_satellites.begin(), ntn_satellites.end(), [&serving](const auto& sat) {
+            return sat.satellite_idx == *serving.satellite_idx;
+          });
+          if (not sat_it->gateway_location and not sat_it->ta_info) {
+            fmt::print("cells[{}].ntn: feeder_link_info requires the referenced satellite (satellite_idx={}) to have "
+                       "gateway_location or ta_info set.\n",
+                       i,
+                       *serving.satellite_idx);
+            valid = false;
+          }
         }
       }
-    }
-    if (ntn.sat_switch_with_resync && ntn.sat_switch_with_resync->satellite_idx) {
-      unsigned sw_idx = *ntn.sat_switch_with_resync->satellite_idx;
-      if (available.count(sw_idx) == 0) {
-        fmt::print("cells[{}].ntn.sat_switch_with_resync.satellite_idx={} not found in ntn.satellites.\n", i, sw_idx);
-        valid = false;
-      } else {
-        const auto sat_it = std::find_if(ntn_satellites.begin(), ntn_satellites.end(), [sw_idx](const auto& sat) {
-          return sat.satellite_idx == sw_idx;
-        });
-        if (not sat_it->gateway_location and not sat_it->ta_info) {
-          fmt::print("cells[{}].ntn.sat_switch_with_resync: referenced satellite (satellite_idx={}) must have "
-                     "gateway_location or ta_info set.\n",
-                     i,
-                     sw_idx);
+      if (serving.sat_switch_with_resync && serving.sat_switch_with_resync->satellite_idx) {
+        unsigned sw_idx = *serving.sat_switch_with_resync->satellite_idx;
+        if (available.count(sw_idx) == 0) {
+          fmt::print("cells[{}].ntn.sat_switch_with_resync.satellite_idx={} not found in ntn.satellites.\n", i, sw_idx);
           valid = false;
+        } else {
+          const auto sat_it = std::find_if(ntn_satellites.begin(), ntn_satellites.end(), [sw_idx](const auto& sat) {
+            return sat.satellite_idx == sw_idx;
+          });
+          if (not sat_it->gateway_location and not sat_it->ta_info) {
+            fmt::print("cells[{}].ntn.sat_switch_with_resync: referenced satellite (satellite_idx={}) must have "
+                       "gateway_location or ta_info set.\n",
+                       i,
+                       sw_idx);
+            valid = false;
+          }
         }
       }
     }
@@ -534,11 +537,22 @@ static bool validate_ntn_satellite_refs(const std::vector<du_high_unit_cell_conf
 
 static bool validate_ntn_config(const du_high_unit_cell_ntn_config& ntn_cfg, nr_band band)
 {
+  if (!ntn_cfg.serving) {
+    fmt::print("ntn: NTN parameters must be set for a cell in NTN band {}.\n", fmt::underlying(band));
+    return false;
+  }
+
   bool valid = true;
 
-  if (!ntn_cfg.satellite_idx) {
+  if (ntn_cfg.serving->cell_specific_koffset.count() == 0) {
+    fmt::print("ntn.cell_specific_koffset is required for NTN band {}.\n", fmt::underlying(band));
+    valid = false;
+  }
+  const auto& serving = *ntn_cfg.serving;
+
+  if (!serving.satellite_idx) {
     // No global satellite reference: require inline ephemeris.
-    if (!ntn_cfg.epoch_timestamp || !ntn_cfg.ephemeris_info) {
+    if (!serving.epoch_timestamp || !serving.ephemeris_info) {
       fmt::print("ntn: either satellite_idx or inline ephemeris definition (epoch_timestamp and ephemeris_info) must "
                  "be provided for NTN band {}.\n",
                  fmt::underlying(band));
@@ -546,21 +560,21 @@ static bool validate_ntn_config(const du_high_unit_cell_ntn_config& ntn_cfg, nr_
     }
   } else {
     // satellite_idx set: forbid inline satellite data.
-    if (ntn_cfg.epoch_timestamp) {
+    if (serving.epoch_timestamp) {
       fmt::print("ntn: satellite_idx and epoch_timestamp are mutually exclusive.\n");
       valid = false;
     }
-    if (ntn_cfg.ntn_gateway_location) {
+    if (serving.ntn_gateway_location) {
       fmt::print("ntn: satellite_idx and gateway_location are mutually exclusive.\n");
       valid = false;
     }
-    if (ntn_cfg.ta_info) {
+    if (serving.ta_info) {
       fmt::print("ntn: satellite_idx and ta_info are mutually exclusive.\n");
       valid = false;
     }
   }
 
-  if (ntn_cfg.ntn_gateway_location and ntn_cfg.ta_info) {
+  if (serving.ntn_gateway_location and serving.ta_info) {
     fmt::print("ntn_gateway_location and ta_info are mutually exclusive. When ntn_gateway_location is set, "
                "TA-Common/Drift/DriftVariation are computed automatically from the satellite ephemeris and gateway "
                "position. ta_info is only required when ntn_gateway_location is absent, to force fixed "
@@ -568,14 +582,14 @@ static bool validate_ntn_config(const du_high_unit_cell_ntn_config& ntn_cfg, nr_
     valid = false;
   }
 
-  if (not ntn_cfg.satellite_idx and ntn_cfg.feeder_link_info and not ntn_cfg.ntn_gateway_location and
-      not ntn_cfg.ta_info) {
+  if (not serving.satellite_idx and serving.feeder_link_info and not serving.ntn_gateway_location and
+      not serving.ta_info) {
     fmt::print("feeder_link requires gateway_location or ta_info to be set.\n");
     valid = false;
   }
 
-  if (ntn_cfg.sat_switch_with_resync) {
-    const auto& sw = *ntn_cfg.sat_switch_with_resync;
+  if (serving.sat_switch_with_resync) {
+    const auto& sw = *serving.sat_switch_with_resync;
     if (sw.satellite_idx) {
       if (sw.epoch_timestamp) {
         fmt::print("sat_switch_with_resync: satellite_idx and epoch_timestamp are mutually exclusive.\n");

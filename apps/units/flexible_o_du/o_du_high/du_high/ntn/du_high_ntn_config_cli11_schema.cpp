@@ -380,23 +380,27 @@ static void configure_cli11_sat_switch_with_resync(CLI::App& app, du_high_unit_s
   app.add_option("--ta_report", sat_switch_config.ta_report, "Enable TA reporting after switch");
 }
 
-static void configure_cli11_ntn_args(CLI::App& app, du_high_unit_cell_ntn_config& config)
+static void configure_cli11_ntn_args(CLI::App&                             app,
+                                     du_high_unit_cell_ntn_config&         config,
+                                     du_high_unit_ntn_serving_cell_config& serv_cell_ntn_config)
 {
-  add_option(
-      app, "--cell_specific_koffset", config.cell_specific_koffset, "Cell-specific k-offset to be used for NTN [ms].")
+  app.add_option("--cell_specific_koffset",
+                 serv_cell_ntn_config.cell_specific_koffset,
+                 "Cell-specific k-offset to be used for NTN [ms].")
       ->capture_default_str()
       ->check(CLI::Range(1, 1023));
 
-  app.add_option("--ntn_ul_sync_validity_dur", config.ntn_ul_sync_validity_dur, "An UL sync validity duration")
+  app.add_option(
+         "--ntn_ul_sync_validity_dur", serv_cell_ntn_config.ntn_ul_sync_validity_dur, "An UL sync validity duration")
       ->capture_default_str()
       ->check(CLI::IsMember({5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 120, 180, 240, 900}));
 
   add_option_function<std::string>(
       app,
       "--propagator_type",
-      [&config](const std::string& value) {
-        config.propagator_type = (value == "keplerian") ? ocudu_ntn::orbit_propagator_type::keplerian
-                                                        : ocudu_ntn::orbit_propagator_type::rk4;
+      [&serv_cell_ntn_config](const std::string& value) {
+        serv_cell_ntn_config.propagator_type = (value == "keplerian") ? ocudu_ntn::orbit_propagator_type::keplerian
+                                                                      : ocudu_ntn::orbit_propagator_type::rk4;
       },
       "Orbit propagator for ephemeris propagation. Allowed: rk4, keplerian.")
       ->default_str("rk4")
@@ -404,7 +408,7 @@ static void configure_cli11_ntn_args(CLI::App& app, du_high_unit_cell_ntn_config
 
   // Optional reference to a globally-defined satellite.
   app.add_option("--satellite_idx",
-                 config.satellite_idx,
+                 serv_cell_ntn_config.satellite_idx,
                  "Reference to a globally-defined satellite by its satellite_idx. "
                  "Mutually exclusive with epoch_timestamp, ephemeris_info, gateway_location and ta_info.");
 
@@ -414,7 +418,7 @@ static void configure_cli11_ntn_args(CLI::App& app, du_high_unit_cell_ntn_config
   configure_cli11_epoch_time(*epoch_time_subcmd, epoch_time);
   epoch_time_subcmd->parse_complete_callback([&]() {
     if (app.get_subcommand("epoch_time")->count() != 0) {
-      config.epoch_time = epoch_time;
+      serv_cell_ntn_config.epoch_time = epoch_time;
     }
   });
 
@@ -424,16 +428,16 @@ static void configure_cli11_ntn_args(CLI::App& app, du_high_unit_cell_ntn_config
   configure_cli11_ta_info(*ta_info_subcmd, ta_info);
   ta_info_subcmd->parse_complete_callback([&]() {
     if (app.get_subcommand("ta_info")->count() != 0) {
-      config.ta_info = ta_info;
+      serv_cell_ntn_config.ta_info = ta_info;
     }
   });
 
-  add_ephemeris_subcommands(app, config.ephemeris_info);
+  add_ephemeris_subcommands(app, serv_cell_ntn_config.ephemeris_info);
 
   // Distance from the serving cell reference location.
   app.add_option(
          "--distance_threshold",
-         config.distance_threshold,
+         serv_cell_ntn_config.distance_threshold,
          "Distance from the serving cell reference location and is used in location-based measurement. Unit is meters.")
       ->capture_default_str()
       ->check(CLI::Range(0, 3276250));
@@ -441,21 +445,21 @@ static void configure_cli11_ntn_args(CLI::App& app, du_high_unit_cell_ntn_config
   // T-Service.
   add_timestamp_option(app,
                        "--t_service",
-                       config.t_service,
+                       serv_cell_ntn_config.t_service,
                        "Indicates end of service for the current cell, in ms unit of Unix time or as UTC time string "
                        "(YYYY-MM-DDTHH:MM:SS[.mmm])")
       ->capture_default_str();
 
   // TA-report.
   app.add_option("--ta_report",
-                 config.ta_report,
+                 serv_cell_ntn_config.ta_report,
                  " When this field is included in SIB19, it indicates reporting of timing advanced is enabled")
       ->capture_default_str();
 
   // Broadcast Ephemeris Info type in SIB19.
   app.add_option(
          "--use_state_vector",
-         config.use_state_vector,
+         serv_cell_ntn_config.use_state_vector,
          "Whether to broadcast EphemerisInfo as ECEF state vectors (if true) or ECI Orbital parameters (if false)")
       ->capture_default_str();
 
@@ -463,14 +467,14 @@ static void configure_cli11_ntn_args(CLI::App& app, du_high_unit_cell_ntn_config
   add_timestamp_option(
       app,
       "--epoch_timestamp",
-      config.epoch_timestamp,
+      serv_cell_ntn_config.epoch_timestamp,
       "Epoch timestamp for the NTN assistance information in ms unit of Unix time or as UTC time string "
       "(YYYY-MM-DDTHH:MM:SS[.mmm])")
       ->capture_default_str();
 
   // Epoch time offset in nof SFNs.
   app.add_option("--epoch_sfn_offset",
-                 config.epoch_sfn_offset,
+                 serv_cell_ntn_config.epoch_sfn_offset,
                  "Optional offset (in SFN) between the SIB19 tx slot and the epoch time of the NTN assistance info")
       ->capture_default_str();
 
@@ -481,7 +485,7 @@ static void configure_cli11_ntn_args(CLI::App& app, du_high_unit_cell_ntn_config
   configure_cli11_feeder_link(*feeder_link_subcmd, feeder_link_info);
   feeder_link_subcmd->parse_complete_callback([&]() {
     if (app.get_subcommand("feeder_link")->count() != 0) {
-      config.feeder_link_info = feeder_link_info;
+      serv_cell_ntn_config.feeder_link_info = feeder_link_info;
     }
   });
 
@@ -492,7 +496,7 @@ static void configure_cli11_ntn_args(CLI::App& app, du_high_unit_cell_ntn_config
   configure_cli11_geodetic_coordinates(*gateway_location_subcmd, ntn_gateway_location);
   gateway_location_subcmd->parse_complete_callback([&]() {
     if (app.get_subcommand("gateway_location")->count() != 0) {
-      config.ntn_gateway_location = ntn_gateway_location;
+      serv_cell_ntn_config.ntn_gateway_location = ntn_gateway_location;
     }
   });
 
@@ -503,7 +507,7 @@ static void configure_cli11_ntn_args(CLI::App& app, du_high_unit_cell_ntn_config
   configure_cli11_geodetic_coordinates(*cell_reference_location_subcmd, cell_reference_location, false);
   cell_reference_location_subcmd->parse_complete_callback([&]() {
     if (app.get_subcommand("reference_location")->count() != 0) {
-      config.reference_location = cell_reference_location;
+      serv_cell_ntn_config.reference_location = cell_reference_location;
     }
   });
 
@@ -516,7 +520,7 @@ static void configure_cli11_ntn_args(CLI::App& app, du_high_unit_cell_ntn_config
   configure_cli11_ntn_polarization(*ntn_polarization_subcmd, ntn_polarization);
   ntn_polarization_subcmd->parse_complete_callback([&]() {
     if (app.get_subcommand("polarization")->count() != 0) {
-      config.polarization = ntn_polarization;
+      serv_cell_ntn_config.polarization = ntn_polarization;
     }
   });
 
@@ -527,7 +531,7 @@ static void configure_cli11_ntn_args(CLI::App& app, du_high_unit_cell_ntn_config
   configure_cli11_geodetic_coordinates(*moving_ref_subcmd, moving_ref_location, false);
   moving_ref_subcmd->parse_complete_callback([&]() {
     if (app.get_subcommand("moving_ref_location")->count() != 0) {
-      config.moving_ref_location = moving_ref_location;
+      serv_cell_ntn_config.moving_ref_location = moving_ref_location;
     }
   });
 
@@ -541,7 +545,7 @@ static void configure_cli11_ntn_args(CLI::App& app, du_high_unit_cell_ntn_config
   configure_cli11_sat_switch_with_resync(*sat_switch_subcmd, sat_switch_config);
   sat_switch_subcmd->parse_complete_callback([&]() {
     if (app.get_subcommand("sat_switch_with_resync")->count() != 0) {
-      config.sat_switch_with_resync = sat_switch_config;
+      serv_cell_ntn_config.sat_switch_with_resync = sat_switch_config;
     }
   });
 }
@@ -599,20 +603,36 @@ void ocudu::configure_cli11_ntn_satellites_args(CLI::App&                       
 
 void ocudu::configure_cli11_cell_ntn_args(CLI::App& app, std::optional<du_high_unit_cell_ntn_config>& cell_ntn_params)
 {
-  static du_high_unit_cell_ntn_config ntn_cfg;
-  CLI::App*                           ntn_subcmd = add_subcommand(app, "ntn", "NTN configuration")->configurable();
+  static du_high_unit_cell_ntn_config         ntn_cfg;
+  static du_high_unit_ntn_serving_cell_config serving_cfg;
+  CLI::App* ntn_subcmd = add_subcommand(app, "ntn", "NTN configuration")->configurable();
 
+  // An NTN serving cell always has a cell_specific_koffset; a TN-band cell that only reports NTN neighbor
+  // cells does not, so this is used to decide whether \c serving should be populated.
   if (not cell_ntn_params.has_value()) {
     // Configure NTN options.
-    configure_cli11_ntn_args(*ntn_subcmd, ntn_cfg);
+    configure_cli11_ntn_args(*ntn_subcmd, ntn_cfg, serving_cfg);
     auto ntn_verify_callback = [&]() {
       CLI::App* ntn_sub_cmd = app.get_subcommand("ntn");
       if (ntn_sub_cmd->count() != 0) {
+        if (serving_cfg.cell_specific_koffset.count() != 0) {
+          ntn_cfg.serving = serving_cfg;
+        }
         cell_ntn_params = ntn_cfg;
       }
     };
     ntn_subcmd->parse_complete_callback(ntn_verify_callback);
   } else {
-    configure_cli11_ntn_args(*ntn_subcmd, *cell_ntn_params);
+    // Seed the scratch serving-cell config from any value already loaded from YAML, so CLI options only override
+    // the fields they explicitly set.
+    if (cell_ntn_params->serving) {
+      serving_cfg = *cell_ntn_params->serving;
+    }
+    configure_cli11_ntn_args(*ntn_subcmd, *cell_ntn_params, serving_cfg);
+    ntn_subcmd->parse_complete_callback([&cell_ntn_params]() {
+      if (serving_cfg.cell_specific_koffset.count() != 0) {
+        cell_ntn_params->serving = serving_cfg;
+      }
+    });
   }
 }

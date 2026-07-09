@@ -240,39 +240,43 @@ static sib16_info create_sib16_info(const du_high_unit_sib_config::sib16_config&
 static sib19_info create_sib19_info(const du_high_unit_cell_ntn_config& config)
 {
   sib19_info sib19;
-  sib19.t_service           = config.t_service;
-  sib19.ref_location        = config.reference_location;
-  sib19.distance_thres      = config.distance_threshold;
-  sib19.moving_ref_location = config.moving_ref_location;
 
-  sib19.ntn_cfg.emplace();
-  sib19.ntn_cfg->cell_specific_koffset    = config.cell_specific_koffset;
-  sib19.ntn_cfg->ephemeris_info           = config.ephemeris_info;
-  sib19.ntn_cfg->epoch_time               = config.epoch_time;
-  sib19.ntn_cfg->k_mac                    = config.k_mac;
-  sib19.ntn_cfg->ta_info                  = config.ta_info;
-  sib19.ntn_cfg->ntn_ul_sync_validity_dur = config.ntn_ul_sync_validity_dur;
-  sib19.ntn_cfg->polarization             = config.polarization;
-  sib19.ntn_cfg->ta_report                = config.ta_report;
+  if (config.serving) {
+    const auto& serving       = *config.serving;
+    sib19.t_service           = serving.t_service;
+    sib19.ref_location        = serving.reference_location;
+    sib19.distance_thres      = serving.distance_threshold;
+    sib19.moving_ref_location = serving.moving_ref_location;
 
-  if (config.sat_switch_with_resync) {
-    const auto&              sw_cfg = *config.sat_switch_with_resync;
-    sat_switch_with_resync_t sw;
-    sw.epoch_timestamp      = sw_cfg.epoch_timestamp;
-    sw.ntn_gateway_location = sw_cfg.gateway_location;
-    sw.t_service_start      = sw_cfg.t_service_start;
-    if (sw_cfg.ssb_time_offset_sf) {
-      sw.ssb_time_offset_sf =
-          sat_switch_with_resync_t::ssb_time_offset_t{static_cast<uint8_t>(*sw_cfg.ssb_time_offset_sf)};
+    sib19.ntn_cfg.emplace();
+    sib19.ntn_cfg->cell_specific_koffset    = serving.cell_specific_koffset;
+    sib19.ntn_cfg->ephemeris_info           = serving.ephemeris_info;
+    sib19.ntn_cfg->epoch_time               = serving.epoch_time;
+    sib19.ntn_cfg->k_mac                    = serving.k_mac;
+    sib19.ntn_cfg->ta_info                  = serving.ta_info;
+    sib19.ntn_cfg->ntn_ul_sync_validity_dur = serving.ntn_ul_sync_validity_dur;
+    sib19.ntn_cfg->polarization             = serving.polarization;
+    sib19.ntn_cfg->ta_report                = serving.ta_report;
+
+    if (serving.sat_switch_with_resync) {
+      const auto&              sw_cfg = *serving.sat_switch_with_resync;
+      sat_switch_with_resync_t sw;
+      sw.epoch_timestamp      = sw_cfg.epoch_timestamp;
+      sw.ntn_gateway_location = sw_cfg.gateway_location;
+      sw.t_service_start      = sw_cfg.t_service_start;
+      if (sw_cfg.ssb_time_offset_sf) {
+        sw.ssb_time_offset_sf =
+            sat_switch_with_resync_t::ssb_time_offset_t{static_cast<uint8_t>(*sw_cfg.ssb_time_offset_sf)};
+      }
+      sw.ntn_cfg.ta_info                  = sw_cfg.ta_info;
+      sw.ntn_cfg.ephemeris_info           = sw_cfg.ephemeris_info;
+      sw.ntn_cfg.ntn_ul_sync_validity_dur = sw_cfg.ntn_ul_sync_validity_dur;
+      sw.ntn_cfg.cell_specific_koffset    = sw_cfg.cell_specific_koffset;
+      sw.ntn_cfg.k_mac                    = sw_cfg.k_mac;
+      sw.ntn_cfg.polarization             = sw_cfg.polarization;
+      sw.ntn_cfg.ta_report                = sw_cfg.ta_report;
+      sib19.sat_switch_with_resync        = sw;
     }
-    sw.ntn_cfg.ta_info                  = sw_cfg.ta_info;
-    sw.ntn_cfg.ephemeris_info           = sw_cfg.ephemeris_info;
-    sw.ntn_cfg.ntn_ul_sync_validity_dur = sw_cfg.ntn_ul_sync_validity_dur;
-    sw.ntn_cfg.cell_specific_koffset    = sw_cfg.cell_specific_koffset;
-    sw.ntn_cfg.k_mac                    = sw_cfg.k_mac;
-    sw.ntn_cfg.polarization             = sw_cfg.polarization;
-    sw.ntn_cfg.ta_report                = sw_cfg.ta_report;
-    sib19.sat_switch_with_resync        = sw;
   }
 
   for (const auto& ncell : config.ncells) {
@@ -388,7 +392,7 @@ generate_du_slicing_rrm_policy_config(span<const std::string>                   
   return rrm_policy_cfgs;
 }
 
-static ntn_cell_params make_ntn_cell_params(const du_high_unit_cell_ntn_config& cfg, bool ul_harq_mode_b)
+static ntn_cell_params make_ntn_cell_params(const du_high_unit_ntn_serving_cell_config& cfg, bool ul_harq_mode_b)
 {
   ntn_cell_params ntn;
   ntn.ntn_cfg.cell_specific_koffset    = cfg.cell_specific_koffset;
@@ -769,9 +773,11 @@ std::vector<odu::du_cell_config> ocudu::generate_du_cell_config(const du_high_un
     out_cell.ran.init_bwp.rach.cfra_enabled   = base_cell.prach_cfg.cfra_enabled;
     out_cell.ran.init_bwp.paging.edrx_enabled = base_cell.paging_cfg.edrx_enabled;
     out_cell.ran.init_bwp.rlm.type            = base_cell.rlm_cfg.resource_type;
-    // > NTN.
-    if (base_cell.ntn_cfg.has_value()) {
-      out_cell.ran.ntn_params = make_ntn_cell_params(base_cell.ntn_cfg.value(), base_cell.pusch_cfg.harq_mode_b.any());
+    // NTN. Only a NTN serving cell gets ran.ntn_params; a TN-band cell that only reports NTN neighbor
+    // cells in SIB19 must not be treated as NTN downstream (e.g. for MAC HARQ buffer sizing).
+    if (base_cell.ntn_cfg.has_value() and base_cell.ntn_cfg->serving.has_value()) {
+      out_cell.ran.ntn_params =
+          make_ntn_cell_params(*base_cell.ntn_cfg->serving, base_cell.pusch_cfg.harq_mode_b.any());
     }
 
     // UE-dedicated PDCCH config.

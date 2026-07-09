@@ -64,7 +64,9 @@ struct du_high_unit_sat_switch_config {
   std::optional<bool>                      ta_report;
 };
 
-struct du_high_unit_cell_ntn_config {
+/// Application-level NTN configuration for an NTN serving cell (NTN band). Absent for a TN-band serving cell
+/// that only reports NTN neighbor cells (see du_high_unit_cell_ntn_config::serving).
+struct du_high_unit_ntn_serving_cell_config {
   /// Reference location of the serving cell in geodetic coordinates format (in degrees).
   std::optional<geodetic_coordinates_t> reference_location;
   /// Distance from the serving cell reference location, as defined in TS 38.304. Each step represents 50m.
@@ -72,7 +74,6 @@ struct du_high_unit_cell_ntn_config {
   /// Indicates the time information on when a cell provided via NTN is going to stop serving the area it is currently
   /// covering. UTC timepoint.
   std::optional<std::chrono::system_clock::time_point> t_service;
-  /// NTN-config values
   /// Indicate the epoch time for the NTN assistance information passed in the config file. UTC timepoint.
   std::optional<std::chrono::system_clock::time_point> epoch_timestamp;
   /// Optional offset (in SFN) between the SIB19 transmission slot and the epoch time (EpochTime IE) of the NTN
@@ -116,13 +117,21 @@ struct du_high_unit_cell_ntn_config {
   std::optional<geodetic_coordinates_t> moving_ref_location;
   /// Satellite switch with resynchronization parameters (R18).
   std::optional<du_high_unit_sat_switch_config> sat_switch_with_resync;
-  /// List of NTN neighbor cells.
-  std::vector<du_high_unit_ntn_neighbor_cell_config> ncells;
   /// Reference to a globally-defined satellite by user-facing satellite_idx.
   /// When set, ephemeris_info, epoch_timestamp, ntn_gateway_location and ta_info must not be provided.
   std::optional<unsigned> satellite_idx;
   /// Orbit propagator to use for ephemeris propagation. Allowed values: "rk4", "keplerian".
   ocudu_ntn::orbit_propagator_type propagator_type = ocudu_ntn::orbit_propagator_type::rk4;
+};
+
+/// Application-level per-cell NTN configuration. Valid both for an NTN serving cell (NTN band, \c serving
+/// populated) and for a TN-band serving cell that only reports NTN neighbor cells in SIB19 (\c serving absent).
+struct du_high_unit_cell_ntn_config {
+  /// NTN serving cell configuration. Present only when this cell is an NTN serving cell (NTN band); absent
+  /// for a TN-band serving cell that only configures \c ncells.
+  std::optional<du_high_unit_ntn_serving_cell_config> serving;
+  /// List of NTN neighbor cells. Valid for both TN and NTN serving cells.
+  std::vector<du_high_unit_ntn_neighbor_cell_config> ncells;
 };
 
 } // namespace ocudu
