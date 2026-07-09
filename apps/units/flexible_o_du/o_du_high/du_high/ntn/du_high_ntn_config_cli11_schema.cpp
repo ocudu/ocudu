@@ -281,7 +281,7 @@ static void configure_cli11_ntn_neighbor_cell_args(CLI::App& app, du_high_unit_n
   app.add_option("--ntn_ul_sync_validity_dur", ncell.ntn_ul_sync_validity_dur, "UL sync validity duration [s]")
       ->check(CLI::IsMember({5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 120, 180, 240, 900}));
 
-  app.add_option("--k_mac", ncell.k_mac, "K_mac offset");
+  app.add_option("--k_mac", ncell.k_mac, "K_mac offset")->check(CLI::Range(1U, 512U));
 
   static ntn_polarization_t polarization;
   CLI::App*                 pol_subcmd = add_subcommand(app, "polarization", "Polarization for this neighbor");
@@ -323,7 +323,8 @@ static void configure_cli11_sat_switch_with_resync(CLI::App& app, du_high_unit_s
       ->check(CLI::Range(1U, 1023U));
 
   app.add_option(
-      "--k_mac", sat_switch_config.k_mac, "K_mac offset after switch. If not set, the serving cell value is used");
+         "--k_mac", sat_switch_config.k_mac, "K_mac offset after switch. If not set, the serving cell value is used")
+      ->check(CLI::Range(1U, 512U));
 
   static ntn_polarization_t polarization;
   CLI::App*                 pol_subcmd =
