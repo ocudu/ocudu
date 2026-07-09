@@ -50,6 +50,7 @@ public:
     }
     stopped = true;
     dl_notif_timer.stop();
+    ul_batched_queue->stop();
   }
 
   void handle_pdu(nru_ul_message msg) override;

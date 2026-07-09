@@ -65,6 +65,9 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
 
 void f1u_bearer_impl::handle_pdu(nru_ul_message msg)
 {
+  if (stopped) {
+    return;
+  }
   if (not ul_batched_queue->try_push(std::move(msg))) {
     if (!cfg.warn_on_drop) {
       logger.log_info("Dropped F1-U PDU, queue is full.");
