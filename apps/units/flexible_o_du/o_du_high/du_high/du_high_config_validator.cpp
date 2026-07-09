@@ -447,18 +447,23 @@ static bool validate_global_ntn_config(const std::vector<du_high_unit_ntn_satell
   std::set<unsigned> seen_indices;
 
   for (const auto& sat : ntn_satellites) {
-    if (!seen_indices.insert(sat.satellite_idx).second) {
-      fmt::print("ntn.satellites: duplicate satellite_idx {}.\n", sat.satellite_idx);
+    if (!sat.satellite_idx) {
+      fmt::print("ntn.satellites: satellite_idx has to be provided.\n");
+      valid = false;
+      continue;
+    }
+    if (!seen_indices.insert(*sat.satellite_idx).second) {
+      fmt::print("ntn.satellites: duplicate satellite_idx {}.\n", *sat.satellite_idx);
       valid = false;
     }
     if (sat.gateway_location && sat.ta_info) {
-      fmt::print("ntn.satellites[{}]: gateway_location and ta_info are mutually exclusive.\n", sat.satellite_idx);
+      fmt::print("ntn.satellites[{}]: gateway_location and ta_info are mutually exclusive.\n", *sat.satellite_idx);
       valid = false;
     }
     if (!sat.ephemeris_info) {
       fmt::print("ntn.satellites[{}]: Ephemeris info has to be provided (in ECEF State Vector or ECI Orbital "
                  "Elements format).\n",
-                 sat.satellite_idx);
+                 *sat.satellite_idx);
       valid = false;
     }
   }
@@ -470,7 +475,7 @@ static bool validate_ntn_satellite_refs(const std::vector<du_high_unit_cell_conf
 {
   std::set<unsigned> available;
   for (const auto& sat : ntn_satellites) {
-    available.insert(sat.satellite_idx);
+    available.insert(*sat.satellite_idx);
   }
 
   bool valid = true;

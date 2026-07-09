@@ -16,7 +16,7 @@ namespace ocudu {
 /// Application-level global satellite configuration entry.
 /// Defines orbital state for one satellite, identified by a user-chosen satellite_idx.
 struct du_high_unit_ntn_satellite_config {
-  unsigned                                             satellite_idx = 0;
+  std::optional<unsigned>                              satellite_idx;
   std::optional<std::chrono::system_clock::time_point> epoch_timestamp;
   std::optional<ntn_ephemeris_info_t>                  ephemeris_info;
   std::optional<geodetic_coordinates_t>                gateway_location;

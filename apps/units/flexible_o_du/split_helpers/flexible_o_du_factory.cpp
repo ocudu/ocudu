@@ -180,16 +180,19 @@ generate_ntn_configuration_manager_config(const gnb_id_t&                       
 
   // Add globally-defined satellites first. Use user-defined satellite_idx as internal satellite_index.
   for (const auto& global_sat : ntn_satellites) {
+    if (!global_sat.satellite_idx) {
+      report_error("ntn.satellites: satellite_idx has to be provided for a global satellite definition");
+    }
     auto& sat                = out_cfg.satellites.emplace_back();
-    sat.satellite_index      = global_sat.satellite_idx;
+    sat.satellite_index      = *global_sat.satellite_idx;
     sat.epoch_timestamp      = global_sat.epoch_timestamp;
     sat.ephemeris_info       = *global_sat.ephemeris_info;
     sat.ntn_gateway_location = global_sat.gateway_location;
     sat.ta_info              = global_sat.ta_info;
     sat.propagator_type      = global_sat.propagator_type;
     // Ensure auto-assigned indices for inline cells don't collide with global ones.
-    if (global_sat.satellite_idx >= next_satellite_idx) {
-      next_satellite_idx = global_sat.satellite_idx + 1;
+    if (*global_sat.satellite_idx >= next_satellite_idx) {
+      next_satellite_idx = *global_sat.satellite_idx + 1;
     }
   }
 

@@ -274,7 +274,9 @@ void ocudu::fill_ntn_satellites_in_yaml_schema(YAML::Node&                      
 
   for (const auto& sat : satellites) {
     YAML::Node sat_node;
-    sat_node["satellite_idx"] = sat.satellite_idx;
+    if (sat.satellite_idx) {
+      sat_node["satellite_idx"] = *sat.satellite_idx;
+    }
 
     if (sat.epoch_timestamp) {
       sat_node["epoch_timestamp"] = timepoint_to_iso8601(*sat.epoch_timestamp);
