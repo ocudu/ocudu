@@ -42,3 +42,8 @@ add_executable(ntn_assistance_info_gen_test ntn_assistance_info_gen_test.cpp)
 target_include_directories(ntn_assistance_info_gen_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(ntn_assistance_info_gen_test ocudu_ntn_lib ocudu_support ocudulog gtest gtest_main)
 gtest_discover_tests(ntn_assistance_info_gen_test)
+
+add_executable(ntn_sib19_helpers_test ntn_sib19_helpers_test.cpp)
+target_include_directories(ntn_sib19_helpers_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(ntn_sib19_helpers_test ocudu_ntn_lib ocudu_support ocudulog gtest gtest_main)
+gtest_discover_tests(ntn_sib19_helpers_test)

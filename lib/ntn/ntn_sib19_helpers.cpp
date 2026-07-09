@@ -3,9 +3,43 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ntn_sib19_helpers.h"
+#include "ocudu/adt/static_vector.h"
 
 using namespace ocudu;
 using namespace ocudu_ntn;
+
+/// Two neighbor cell configs yield an identical ntn-Config: same satellite (same ephemeris_info) and same
+/// ntn_ul_sync_validity_dur (this also feeds the OCM call and can otherwise change the computed ephemeris_info/
+/// ta_info), plus the remaining per-cell static fields.
+static bool ntn_cfg_would_be_identical(const ntn_neighbor_cell_config& a, const ntn_neighbor_cell_config& b)
+{
+  if (a.satellite_index != b.satellite_index || a.ntn_ul_sync_validity_dur != b.ntn_ul_sync_validity_dur ||
+      a.cell_specific_koffset != b.cell_specific_koffset || a.k_mac != b.k_mac || a.ta_report != b.ta_report) {
+    return false;
+  }
+  if (a.polarization.has_value() != b.polarization.has_value()) {
+    return false;
+  }
+  return !a.polarization.has_value() ||
+         (a.polarization->dl == b.polarization->dl && a.polarization->ul == b.polarization->ul);
+}
+
+/// Per TS 38.331, an absent epochTime within an otherwise explicit ntn-Config provided via NTN-NeighCellConfig or
+/// SatSwitchWithReSync falls back to the serving NTN cell's own epoch time. sib19 must already have its serving
+/// ntn_cfg populated.
+static bool
+matches_serving_ntn_epoch_time(const ntn_cell_config& cell_cfg, const sib19_info& sib19, slot_point epoch_slot)
+{
+  return cell_cfg.ntn_cfg.has_value() && sib19.ntn_cfg->epoch_time->sfn == epoch_slot.sfn() &&
+         sib19.ntn_cfg->epoch_time->subframe_number == epoch_slot.subframe_index();
+}
+
+/// Per TS 38.331, an absent ntn-UlSyncValidityDuration within an otherwise explicit ntn-Config provided via
+/// NTN-NeighCellConfig or SatSwitchWithReSync falls back to the serving NTN cell's own validity duration.
+static bool matches_serving_ntn_ul_sync_validity_dur(const ntn_cell_config& cell_cfg, std::optional<unsigned> value)
+{
+  return cell_cfg.ntn_cfg.has_value() && value == cell_cfg.ntn_cfg->ntn_ul_sync_validity_dur;
+}
 
 sib19_info ocudu_ntn::generate_sib19_info(const ntn_cell_config&        cell_cfg,
                                           slot_point                    epoch_slot,
@@ -65,31 +99,54 @@ sib19_info ocudu_ntn::generate_sib19_info(const ntn_cell_config&        cell_cfg
   }
 
   // Populate each neighbor NTN cell entry and fill OCM result.
-  // Per TS 38.331 SIB19: if ntn-Config is absent, the UE reuses the previous entry's ntn-Config.
-  // Omit ntn_cfg for consecutive entries on the same satellite — ephemeris and static fields are identical.
+  //
+  // The first MAX_NOF_NTN_NEIGHBORS_BASE_LIST entries of sib19.ncells are broadcast in ntn-NeighCellConfigList
+  // and the rest in ntn-NeighCellConfigListExt. Per TS 38.331 SIB19 field descriptions, the two lists have
+  // different omission rules:
+  //  - ntn-NeighCellConfigList: ntn-Config is mandatory for the first entry. If absent for any other entry, the
+  //    ntn-Config of the previous entry in that same list applies.
+  //  - ntn-NeighCellConfigListExt: if ntn-Config is absent, the ntn-Config provided in the entry at the same
+  //    position in ntn-NeighCellConfigList applies (not the previous ext entry). Since the spec refers to the
+  //    ntn-Config provided in that base entry, an ext entry only omits its ntn-Config when the same-position base
+  //    entry carries an explicit one, not when the base entry itself omitted it.
+  // Entries whose orbital state computation failed carry no valid ephemeris/TA-info and are dropped rather than
+  // broadcast with an absent or stale ntn-Config, so they can never be inherited from either.
+  static_vector<size_t, MAX_NOF_NTN_NEIGHBORS> included_idx;
   for (size_t i = 0, e = cell_cfg.ncells.size(); i != e; ++i) {
-    const auto&       nc_cfg = cell_cfg.ncells[i];
+    if (!ncell_replies[i].success) {
+      continue;
+    }
+    const auto&  nc_cfg = cell_cfg.ncells[i];
+    const size_t pos    = sib19.ncells.size();
+    const bool   can_inherit =
+        pos < MAX_NOF_NTN_NEIGHBORS_BASE_LIST
+              ? (pos > 0 && ntn_cfg_would_be_identical(nc_cfg, cell_cfg.ncells[included_idx[pos - 1]]))
+              : (sib19.ncells[pos - MAX_NOF_NTN_NEIGHBORS_BASE_LIST].ntn_cfg.has_value() &&
+               ntn_cfg_would_be_identical(nc_cfg,
+                                          cell_cfg.ncells[included_idx[pos - MAX_NOF_NTN_NEIGHBORS_BASE_LIST]]));
+
     neighbor_ntn_cell ncell;
     ncell.carrier_freq = nc_cfg.carrier_freq;
     ncell.phys_cell_id = nc_cfg.phys_cell_id;
-    if (ncell_replies[i].success) {
-      const bool can_inherit =
-          i > 0 && sib19.ncells.back().ntn_cfg && nc_cfg.satellite_index == cell_cfg.ncells[i - 1].satellite_index;
-      if (!can_inherit) {
-        ncell.ntn_cfg.emplace();
-        ncell.ntn_cfg->cell_specific_koffset    = nc_cfg.cell_specific_koffset;
-        ncell.ntn_cfg->ntn_ul_sync_validity_dur = nc_cfg.ntn_ul_sync_validity_dur;
-        ncell.ntn_cfg->k_mac                    = nc_cfg.k_mac;
-        ncell.ntn_cfg->polarization             = nc_cfg.polarization;
-        ncell.ntn_cfg->ta_report                = nc_cfg.ta_report;
+    if (!can_inherit) {
+      ncell.ntn_cfg.emplace();
+      ncell.ntn_cfg->cell_specific_koffset = nc_cfg.cell_specific_koffset;
+      ncell.ntn_cfg->k_mac                 = nc_cfg.k_mac;
+      ncell.ntn_cfg->polarization          = nc_cfg.polarization;
+      ncell.ntn_cfg->ta_report             = nc_cfg.ta_report;
+      if (!matches_serving_ntn_epoch_time(cell_cfg, sib19, epoch_slot)) {
         ncell.ntn_cfg->epoch_time.emplace();
         ncell.ntn_cfg->epoch_time->sfn             = epoch_slot.sfn();
         ncell.ntn_cfg->epoch_time->subframe_number = epoch_slot.subframe_index();
-        ncell.ntn_cfg->ephemeris_info              = ncell_replies[i].ephemeris_info;
-        ncell.ntn_cfg->ta_info                     = ncell_replies[i].ta_info;
       }
+      if (!matches_serving_ntn_ul_sync_validity_dur(cell_cfg, nc_cfg.ntn_ul_sync_validity_dur)) {
+        ncell.ntn_cfg->ntn_ul_sync_validity_dur = nc_cfg.ntn_ul_sync_validity_dur;
+      }
+      ncell.ntn_cfg->ephemeris_info = ncell_replies[i].ephemeris_info;
+      ncell.ntn_cfg->ta_info        = ncell_replies[i].ta_info;
     }
     sib19.ncells.push_back(ncell);
+    included_idx.push_back(i);
   }
 
   return sib19;

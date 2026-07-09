@@ -258,17 +258,17 @@ sib19_r17_s ocudu::odu::make_asn1_rrc_cell_sib19(const sib19_info& sib19_params)
                  sib19_params.ncells.size(),
                  MAX_NOF_NTN_NEIGHBORS);
 
-    // Pack first 4 neighbors into base list
-    size_t base_count = std::min(sib19_params.ncells.size(), size_t(4));
+    // Pack first MAX_NOF_NTN_NEIGHBORS_BASE_LIST neighbors into base list
+    size_t base_count = std::min(sib19_params.ncells.size(), MAX_NOF_NTN_NEIGHBORS_BASE_LIST);
     for (size_t i = 0; i != base_count; ++i) {
       sib19.ntn_neigh_cell_cfg_list_r17.push_back(make_asn1_ntn_neighbor_cell(sib19_params.ncells[i]));
     }
 
-    // Pack remaining neighbors (5-8) into extension list (R17 extension).
-    if (sib19_params.ncells.size() > 4) {
+    // Pack remaining neighbors into extension list (R17 extension).
+    if (sib19_params.ncells.size() > MAX_NOF_NTN_NEIGHBORS_BASE_LIST) {
       sib19.ext = true;
       sib19.ntn_neigh_cell_cfg_list_ext_v1720.set_present();
-      for (size_t i = 4, e = sib19_params.ncells.size(); i != e; ++i) {
+      for (size_t i = MAX_NOF_NTN_NEIGHBORS_BASE_LIST, e = sib19_params.ncells.size(); i != e; ++i) {
         sib19.ntn_neigh_cell_cfg_list_ext_v1720->push_back(make_asn1_ntn_neighbor_cell(sib19_params.ncells[i]));
       }
     }

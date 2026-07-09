@@ -173,10 +173,13 @@ struct sat_switch_with_resync_t {
   std::optional<ssb_time_offset_t> ssb_time_offset_sf;
 };
 
+/// Max number of NTN neighbour cells carried in the base ntn-NeighCellConfigList (maxCellNTN-r17), TS 38.331.
+constexpr size_t MAX_NOF_NTN_NEIGHBORS_BASE_LIST = 4U;
+
 /// Max number of neighboring NTN cells.
 /// Derived from ASN.1: ntn-NeighCellConfigList and ntn-NeighCellConfigListExt each hold up to 4 entries, giving 8
 /// total.
-constexpr size_t MAX_NOF_NTN_NEIGHBORS = 8U;
+constexpr size_t MAX_NOF_NTN_NEIGHBORS = 2 * MAX_NOF_NTN_NEIGHBORS_BASE_LIST;
 
 /// Neighbor NTN cell configuration.
 struct neighbor_ntn_cell {
