@@ -533,6 +533,32 @@ static bool validate_ntn_satellite_refs(const std::vector<du_high_unit_cell_conf
   return valid;
 }
 
+/// Validates the ncells list of an NTN cell config. Valid for both NTN-band and TN-band serving cells, since
+/// neighbor cells may be configured regardless of the serving cell's own band. Returns true on success, otherwise
+/// false.
+static bool validate_ntn_neighbor_cells(const du_high_unit_cell_ntn_config& ntn_cfg)
+{
+  bool valid = true;
+  for (unsigned j = 0, e = ntn_cfg.ncells.size(); j != e; ++j) {
+    const auto& ncell = ntn_cfg.ncells[j];
+    if (ncell.sat_ref.satellite_idx) {
+      if (ncell.sat_ref.epoch_timestamp || ncell.sat_ref.ephemeris_info || ncell.sat_ref.gateway_location ||
+          ncell.sat_ref.ta_info) {
+        fmt::print("ntn.ncells[{}]: satellite_idx is mutually exclusive with inline ephemeris fields.\n", j);
+        valid = false;
+      }
+    } else {
+      if (!ncell.sat_ref.epoch_timestamp || !ncell.sat_ref.ephemeris_info) {
+        fmt::print("ntn.ncells[{}]: either satellite_idx or inline ephemeris definition (epoch_timestamp and "
+                   "ephemeris_info) must be provided.\n",
+                   j);
+        valid = false;
+      }
+    }
+  }
+  return valid;
+}
+
 static bool validate_ntn_config(const du_high_unit_cell_ntn_config& ntn_cfg, nr_band band)
 {
   if (!ntn_cfg.serving) {
@@ -617,22 +643,8 @@ static bool validate_ntn_config(const du_high_unit_cell_ntn_config& ntn_cfg, nr_
     }
   }
 
-  for (unsigned j = 0, e = ntn_cfg.ncells.size(); j != e; ++j) {
-    const auto& ncell = ntn_cfg.ncells[j];
-    if (ncell.sat_ref.satellite_idx) {
-      if (ncell.sat_ref.epoch_timestamp || ncell.sat_ref.ephemeris_info || ncell.sat_ref.gateway_location ||
-          ncell.sat_ref.ta_info) {
-        fmt::print("ntn.ncells[{}]: satellite_idx is mutually exclusive with inline ephemeris fields.\n", j);
-        valid = false;
-      }
-    } else {
-      if (!ncell.sat_ref.epoch_timestamp || !ncell.sat_ref.ephemeris_info) {
-        fmt::print("ntn.ncells[{}]: either satellite_idx or inline ephemeris definition (epoch_timestamp and "
-                   "ephemeris_info) must be provided.\n",
-                   j);
-        valid = false;
-      }
-    }
+  if (!validate_ntn_neighbor_cells(ntn_cfg)) {
+    valid = false;
   }
 
   return valid;
@@ -1501,7 +1513,7 @@ static bool validate_ntn_tn_cell_config(const du_high_unit_cell_ntn_config& ntn,
                fmt::underlying(band));
     return false;
   }
-  return true;
+  return validate_ntn_neighbor_cells(ntn);
 }
 
 /// Validates the given cell application configuration. Returns true on success, otherwise false.
