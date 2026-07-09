@@ -49,7 +49,6 @@ cell_configuration::cell_configuration(const scheduler_expert_config&           
   zp_csi_rs_list(make_zp_csi_rs_list(params)),
   nzp_csi_rs_list(make_nzp_csi_rs_list(params)),
   init_bwp(init_bwp_),
-  dl_data_to_ul_ack(init_bwp.ul.td_mapper().dedicated_k1_candidates()),
   // NTN parameters.
   ntn_cs_koffset(params.ntn_params.has_value()
                      ? params.ntn_params->ntn_cfg.cell_specific_koffset.value_or(std::chrono::milliseconds{0}).count() *

@@ -51,8 +51,6 @@ public:
   const std::vector<nzp_csi_rs_resource> nzp_csi_rs_list;
   /// Initial BWP configuration for this cell.
   const sched_bwp_config& init_bwp;
-  /// List of dl-DataToUL-ACK values sent to UE in its dedicated configuration.
-  span<const uint8_t> dl_data_to_ul_ack;
   /// List of BWP config resources handled by this cell.
   slotted_id_vector<bwp_id_t, bwp_config_res_pool> bwp_res;
 

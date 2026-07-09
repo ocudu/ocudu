@@ -99,6 +99,9 @@ struct ul_time_domain_mapper {
   /// Build dedicated BWP UL TD resource info from builder parameters.
   explicit ul_time_domain_mapper(const ul_time_domain_builder_params& params);
 
+  /// Minimum k1 used to derive k1 candidates.
+  uint8_t min_k1() const { return min_k1_val; }
+
   /// Retrieve the list of available PUSCH time-domain resource allocations for the BWP.
   span<const pusch_time_domain_resource_allocation> pusch_td_resources() const { return pusch_td_res_list; }
 
@@ -152,6 +155,9 @@ struct ul_time_domain_mapper {
   }
 
 private:
+  /// Minimum k1 value used to derive candidates.
+  uint8_t min_k1_val = 1;
+
   /// \brief List of available PUSCH time-domain resource allocations for the BWP.
   /// Max size is pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS.
   std::vector<pusch_time_domain_resource_allocation> pusch_td_res_list;

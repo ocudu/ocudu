@@ -46,11 +46,11 @@ protected:
     // Generate the list to verify.
     ocudu_assert(cell_cfg->params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.has_value(),
                  "PUSCH Config Common expected");
-    pusch_td_res_indxes_list_per_slot = get_pusch_td_resource_indices_per_slot(
-        cell_cfg->scs_common(),
-        cell_cfg->params.tdd_cfg,
-        cell_cfg->params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list,
-        cell_cfg->dl_data_to_ul_ack.front());
+    pusch_td_res_indxes_list_per_slot =
+        get_pusch_td_resource_indices_per_slot(cell_cfg->scs_common(),
+                                               cell_cfg->params.tdd_cfg,
+                                               cell_cfg->init_bwp.ul.td_mapper().pusch_td_resources(),
+                                               cell_cfg->init_bwp.ul.td_mapper().min_k1());
 
     // Populate slot indexes.
     if (cell_cfg->is_tdd()) {

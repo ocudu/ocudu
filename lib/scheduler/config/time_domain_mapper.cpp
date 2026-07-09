@@ -178,10 +178,9 @@ ul_time_domain_mapper::ul_time_domain_mapper(const ul_time_domain_builder_params
 
   // PUCCH / k1.
   // Minimum k1 for the common (fallback) candidate pool; defaults to the full {1,...,8} set.
-  uint8_t common_min_k1 = 1;
   if (const auto* auto_res = std::get_if<builder_params::pucch_auto_resources>(&params.pucch_params)) {
     dedicated_k1_list = time_domain_resource_helper::generate_k1_candidates(params.tdd_cfg, auto_res->min_k1);
-    common_min_k1     = auto_res->min_k1;
+    min_k1_val        = auto_res->min_k1;
   } else {
     const auto& explicit_res = std::get<builder_params::pucch_explicit_resources>(params.pucch_params);
     ocudu_assert(not explicit_res.k1_candidates.empty(), "Explicit k1 candidate list must not be empty.");
@@ -190,6 +189,7 @@ ul_time_domain_mapper::ul_time_domain_mapper(const ul_time_domain_builder_params
                  explicit_res.k1_candidates.size(),
                  pucch_td_helper::MAX_K1_CANDIDATES);
     dedicated_k1_list.assign(explicit_res.k1_candidates.begin(), explicit_res.k1_candidates.end());
+    min_k1_val = *std::min_element(explicit_res.k1_candidates.begin(), explicit_res.k1_candidates.end());
   }
 
   // Generate the PUSCH TD resource index candidates for each slot (handles both FDD and TDD).
@@ -197,7 +197,7 @@ ul_time_domain_mapper::ul_time_domain_mapper(const ul_time_domain_builder_params
       get_pusch_td_resource_indices_per_slot(params.scs, params.tdd_cfg, pusch_td_res_list, dedicated_k1_list.front());
 
   // Generate the dedicated and common k1 candidates valid for a PDSCH transmitted in each slot.
-  common_k1_list = pucch_td_helper::get_common_k1_candidates(common_min_k1);
+  common_k1_list = pucch_td_helper::get_common_k1_candidates(min_k1_val);
   dedicated_k1_per_slot =
       get_pucch_k1_list_per_slot(dedicated_k1_list, params.tdd_cfg, pusch_td_res_list, pusch_td_res_indices_per_slot);
   common_k1_per_slot =
