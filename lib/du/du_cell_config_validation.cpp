@@ -766,6 +766,15 @@ static check_outcome check_ntn_config(const du_cell_config& cell_cfg)
     CHECK_EQ_OR_BELOW(ntn.k_mac.value(), 512, "k_mac");
   }
 
+  // ta_common and ta_common_offset are summed into the single taCommon-r17 field
+  // (see make_asn1_rrc_cell_ntn_cfg), constrained to 0..66485757, i.e. <= 270730 us.
+  // The two are bounded individually at the CLI but their sum is not.
+  if (ntn.ta_info.has_value()) {
+    const double ta_common_total = ntn.ta_info->ta_common + ntn.ta_info->ta_common_offset.value_or(0.0);
+    CHECK_EQ_OR_ABOVE(ta_common_total, 0.0, "ta_common + ta_common_offset");
+    CHECK_EQ_OR_BELOW(ta_common_total, 270730.0, "ta_common + ta_common_offset");
+  }
+
   if (ntn.ntn_ul_sync_validity_dur.has_value()) {
     const bool valid_sync_dur = is_valid_enum_number<asn1::rrc_nr::ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_e_>(
         ntn.ntn_ul_sync_validity_dur.value());
