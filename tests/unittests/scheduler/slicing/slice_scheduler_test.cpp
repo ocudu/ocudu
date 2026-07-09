@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "lib/scheduler/config/time_domain_mapper.h"
 #include "lib/scheduler/slicing/inter_slice_scheduler.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/scheduler/config/logical_channel_config_factory.h"
-#include "ocudu/scheduler/config/pusch_td_resource_indices.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -40,11 +40,6 @@ protected:
     }()),
     ues(cell_cfg.expert_cfg.ue)
   {
-    pusch_td_list_per_slot = get_pusch_td_resource_indices_per_slot(
-        cell_cfg.scs_common(),
-        cell_cfg.params.tdd_cfg,
-        cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list,
-        cell_cfg.dl_data_to_ul_ack.front());
     logger.set_level(ocudulog::basic_levels::debug);
     ocudulog::init();
 
@@ -74,9 +69,8 @@ protected:
 
   ue_repository ues;
 
-  cell_resource_allocator                                                           dummy_alloc{cell_cfg};
-  inter_slice_scheduler                                                             slice_sched{cell_cfg, ues};
-  std::vector<static_vector<uint8_t, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>> pusch_td_list_per_slot;
+  cell_resource_allocator dummy_alloc{cell_cfg};
+  inter_slice_scheduler   slice_sched{cell_cfg, ues};
 
 public:
   slot_point next_slot{to_numerology_value(cell_cfg.params.dl_cfg_common.freq_info_dl.scs_carrier_list.back().scs), 0};
@@ -109,7 +103,7 @@ TEST_F(default_slice_scheduler_test, when_no_lcid_exists_then_default_slice_is_n
 
   // Progress with the slots until there are valid k2 values for UL scheduling. If not, the UL slice candidate list will
   // be trivially empty.
-  while (pusch_td_list_per_slot[(next_slot - 1).count() % pusch_td_list_per_slot.size()].empty()) {
+  while (cell_cfg.init_bwp.ul.td_mapper().pusch_td_res_indices((next_slot - 1).count()).empty()) {
     run_slot();
   }
 
@@ -123,7 +117,7 @@ TEST_F(default_slice_scheduler_test, when_lcid_is_part_of_default_slice_then_def
 
   for (unsigned count = 0, e = 10; count != e; ++count) {
     const bool is_dl_active = has_active_tdd_dl_symbols(cell_cfg.params.tdd_cfg.value(), next_slot.slot_index());
-    const bool dl_slot_has_k2_values = not pusch_td_list_per_slot[count].empty();
+    const bool dl_slot_has_k2_values = not cell_cfg.init_bwp.ul.td_mapper().pusch_td_res_indices(count).empty();
     run_slot();
 
     auto next_dl_slice = slice_sched.get_next_dl_candidate();
@@ -562,7 +556,7 @@ TEST_F(prioritised_slice_scheduler_test,
 
   for (unsigned count = 0, e = 10; count != e; ++count) {
     const bool is_pdcch_active = has_active_tdd_dl_symbols(cell_cfg.params.tdd_cfg.value(), next_slot.slot_index());
-    const bool dl_slot_has_k2_values = not pusch_td_list_per_slot[count].empty();
+    const bool dl_slot_has_k2_values = not cell_cfg.init_bwp.ul.td_mapper().pusch_td_res_indices(count).empty();
     run_slot();
 
     if (is_pdcch_active) {
@@ -646,7 +640,7 @@ TEST_F(dedicated_slice_scheduler_test, when_dedicated_resources_not_filled_then_
 
   for (unsigned count = 0, e = 10; count != e; ++count) {
     const bool is_pdcch_active = has_active_tdd_dl_symbols(cell_cfg.params.tdd_cfg.value(), next_slot.slot_index());
-    const bool dl_slot_has_k2_values = not pusch_td_list_per_slot[count].empty();
+    const bool dl_slot_has_k2_values = not cell_cfg.init_bwp.ul.td_mapper().pusch_td_res_indices(count).empty();
     run_slot();
 
     if (is_pdcch_active) {
@@ -761,7 +755,7 @@ TEST_F(dedicated_slice_scheduler_test_2nd, with_candidates_with_min_lim_remainin
 
   for (unsigned count = 0, e = 10; count != e; ++count) {
     const bool is_pdcch_active = has_active_tdd_dl_symbols(cell_cfg.params.tdd_cfg.value(), next_slot.slot_index());
-    const bool dl_slot_has_k2_values = not pusch_td_list_per_slot[count].empty();
+    const bool dl_slot_has_k2_values = not cell_cfg.init_bwp.ul.td_mapper().pusch_td_res_indices(count).empty();
     run_slot();
 
     if (is_pdcch_active) {
@@ -865,7 +859,7 @@ TEST_F(dedicated_empty_slice_scheduler_test, when_slice_has_no_ues_its_rbs_will_
 
   for (unsigned count = 0, e = 10; count != e; ++count) {
     const bool is_pdcch_active = has_active_tdd_dl_symbols(cell_cfg.params.tdd_cfg.value(), next_slot.slot_index());
-    const bool dl_slot_has_k2_values = not pusch_td_list_per_slot[count].empty();
+    const bool dl_slot_has_k2_values = not cell_cfg.init_bwp.ul.td_mapper().pusch_td_res_indices(count).empty();
     run_slot();
 
     if (is_pdcch_active) {

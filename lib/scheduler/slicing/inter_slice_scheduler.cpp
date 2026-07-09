@@ -3,10 +3,10 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "inter_slice_scheduler.h"
+#include "../config/time_domain_mapper.h"
 #include "../policy/scheduler_policy_factory.h"
 #include "../ue_scheduling/ue_cell_grid_allocator.h"
 #include "ocudu/ocudulog/ocudulog.h"
-#include "ocudu/scheduler/config/pusch_td_resource_indices.h"
 
 using namespace ocudu;
 
@@ -55,18 +55,6 @@ inter_slice_scheduler::inter_slice_scheduler(const cell_configuration& cell_cfg_
     slices.emplace_back(
         id_count, cell_cfg, rrm_adjusted, create_scheduler_strategy(rrm.policy_sched_cfg, cell_cfg), ues);
     ++id_count;
-  }
-
-  // Generate the slot ring context.
-  ocudu_assert(cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.has_value(), "Expected PUSCH config common");
-  auto pusch_list = get_pusch_td_resource_indices_per_slot(
-      cell_cfg.scs_common(),
-      cell_cfg.params.tdd_cfg,
-      cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list,
-      cell_cfg.dl_data_to_ul_ack.front());
-  slot_ring.resize(pusch_list.size());
-  for (unsigned i = 0, sz = pusch_list.size(); i != sz; ++i) {
-    slot_ring[i].valid_pusch_td_list.assign(pusch_list[i].begin(), pusch_list[i].end());
   }
 }
 
@@ -127,7 +115,7 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
       cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list;
   for (const auto& slice : slices) {
     std::optional<unsigned> allocated_k2;
-    for (const unsigned pusch_td_res_idx : slot_ring[slot_tx.count() % slot_ring.size()].valid_pusch_td_list) {
+    for (const uint8_t pusch_td_res_idx : cell_cfg.init_bwp.ul.td_mapper().pusch_td_res_indices(slot_tx.count())) {
       unsigned pusch_delay = pusch_time_domain_list[pusch_td_res_idx].k2 + cell_cfg.ntn_cs_koffset;
       const cell_slot_resource_allocator& pusch_alloc = res_grid[pusch_delay];
       slot_point                          pusch_slot  = slot_tx + pusch_delay;

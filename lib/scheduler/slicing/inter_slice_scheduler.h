@@ -117,12 +117,6 @@ private:
     unsigned                             next_pop = 0;
   };
 
-  struct slot_context {
-    /// \brief List of valid PUSCH time domain resources for a given DL slot.
-    /// Note: This list will be empty for UL slots.
-    std::vector<unsigned> valid_pusch_td_list;
-  };
-
   ran_slice_instance& get_slice(const logical_channel_config& lc_cfg);
 
   // Fetch UE if it is in a state to be added/reconfigured.
@@ -140,10 +134,6 @@ private:
   slot_point current_slot;
 
   ue_repository& ues;
-
-  /// Vector circularly indexed by slot with the list of applicable PUSCH time domain resources per slot.
-  /// NOTE: The list would be empty for UL slots.
-  std::vector<slot_context> slot_ring;
 
   std::vector<ran_slice_sched_context> slices;
 
