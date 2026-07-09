@@ -124,13 +124,19 @@ generate_o_du_ru_config(span<const odu::du_cell_config> cells, unsigned max_proc
   return out_cfg;
 }
 
-/// Converts app-level ntn_config to library-level ntn_serving_cell_config.
-static ocudu_ntn::ntn_serving_cell_config
+/// Converts app-level ntn_config to library-level ntn_serving_cell_config. Returns std::nullopt for a TN-band cell
+/// that only reports NTN neighbor cells.
+static std::optional<ocudu_ntn::ntn_serving_cell_config>
 convert_ntn_config_to_serving_cell_config(const du_high_unit_cell_ntn_config& cfg)
 {
+  if (!cfg.serving) {
+    return std::nullopt;
+  }
   const auto& serving = *cfg.serving;
 
   ocudu_ntn::ntn_serving_cell_config info = {};
+
+  info.satellite_index = *serving.sat_ref.satellite_idx;
 
   // SIB19 fields exempt from valuetag.
   info.moving_reference_location = serving.moving_ref_location;
@@ -288,11 +294,10 @@ generate_ntn_configuration_manager_config(const gnb_id_t&                       
     if (not nci) {
       report_error("Invalid NR-NCI");
     }
-    out_cell.sector_id       = phy_sector_idx;
-    out_cell.nr_cgi.plmn_id  = plmn.value();
-    out_cell.nr_cgi.nci      = nci.value();
-    out_cell.satellite_index = *ntn_cfg.serving->sat_ref.satellite_idx;
-    out_cell.ntn_cfg         = convert_ntn_config_to_serving_cell_config(ntn_cfg);
+    out_cell.sector_id      = phy_sector_idx;
+    out_cell.nr_cgi.plmn_id = plmn.value();
+    out_cell.nr_cgi.nci     = nci.value();
+    out_cell.ntn_cfg        = convert_ntn_config_to_serving_cell_config(ntn_cfg);
 
     // Build sat-switch target satellite (if configured).
     if (ntn_cfg.serving && ntn_cfg.serving->sat_switch_with_resync) {

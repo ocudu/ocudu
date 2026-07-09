@@ -48,13 +48,15 @@ void du_high_ntn_sib19_update_handler_impl::handle_sib19_msg_update(const ocudu_
   cell_req.si_slot_period = req.si_slot_period;
   cell_req.si_messages    = span<byte_buffer>(msgs);
 
-  // Populate NTN assistance info.
-  ntn_assistance_info_update ntn_info;
-  ntn_info.ephemeris_info           = req.sib19.ntn_cfg->ephemeris_info.value();
-  ntn_info.ta_info                  = req.sib19.ntn_cfg->ta_info;
-  ntn_info.epoch_time               = req.sib19.ntn_cfg->epoch_time;
-  ntn_info.ntn_ul_sync_validity_dur = req.sib19.ntn_cfg->ntn_ul_sync_validity_dur;
-  cell_req.ntn_assistance_info      = ntn_info;
+  // Populate NTN assistance info. Absent for TN serving cells reporting only NTN neighbor cells.
+  if (req.sib19.ntn_cfg.has_value()) {
+    ntn_assistance_info_update ntn_info;
+    ntn_info.ephemeris_info           = req.sib19.ntn_cfg->ephemeris_info.value();
+    ntn_info.ta_info                  = req.sib19.ntn_cfg->ta_info;
+    ntn_info.epoch_time               = req.sib19.ntn_cfg->epoch_time;
+    ntn_info.ntn_ul_sync_validity_dur = req.sib19.ntn_cfg->ntn_ul_sync_validity_dur;
+    cell_req.ntn_assistance_info      = ntn_info;
+  }
 
   // When tracked SIB19 fields have changed, set sib19 to trigger SIB1 systemInfoValueTag increment.
   if (req.si_valuetag_change) {
