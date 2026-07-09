@@ -135,10 +135,25 @@ public:
 
   du_trp_info_response request_trp_info() override
   {
+    ng_ran_access_point_position_t position;
+    position.latitude_sign             = latitude_sign_t::north;
+    position.latitude                  = 6791812;
+    position.longitude                 = 1288490;
+    position.direction_of_altitude     = direction_of_altitude_t::height;
+    position.altitude                  = 35;
+    position.uncertainty_semi_major    = 10;
+    position.uncertainty_semi_minor    = 8;
+    position.orientation_of_major_axis = 45;
+    position.uncertainty_altitude      = 5;
+    position.confidence                = 90;
+    geographical_coordinates_t geo_coords;
+    geo_coords.trp_position_definition_type = trp_position_direct_t{position};
+
     return du_trp_info_response{
         {{.trp_id = trp_id_t{1}, .pci = MIN_PCI},
          {.trp_id = trp_id_t{1}, .cgi = nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::min()}},
-         {.trp_id = trp_id_t{1}, .arfcn = 368500}}};
+         {.trp_id = trp_id_t{1}, .arfcn = 368500},
+         {.trp_id = trp_id_t{1}, .geo_coords = geo_coords}}};
   }
 
   async_task<du_positioning_info_response> request_positioning_info(const du_positioning_info_request& req) override
