@@ -506,6 +506,14 @@ TEST_F(cu_cp_setup_admission_limit_test,
 
   // The RRC Reject does not carry the waitTime IE.
   ASSERT_FALSE(get_wait_time_from_last_rrc_reject().has_value());
+
+  // Injects F1AP UE Context Release Complete.
+  auto rel_complete = test_helpers::generate_ue_context_release_complete(cu_ue_id.value(), du_ue_f1ap_id);
+  get_du(du_idx).push_ul_pdu(rel_complete);
+
+  // TEST: UE context removed from CU-CP.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_TRUE(report.ues.empty());
 }
 
 class cu_cp_setup_wait_time_test : public cu_cp_setup_test
@@ -537,4 +545,12 @@ TEST_F(cu_cp_setup_wait_time_test, when_rrc_reject_wait_time_is_configured_then_
   auto wait_time = get_wait_time_from_last_rrc_reject();
   ASSERT_TRUE(wait_time.has_value());
   ASSERT_EQ(wait_time.value(), reject_wait_time_s);
+
+  // Injects F1AP UE Context Release Complete.
+  auto rel_complete = test_helpers::generate_ue_context_release_complete(cu_ue_id.value(), du_ue_f1ap_id);
+  get_du(du_idx).push_ul_pdu(rel_complete);
+
+  // TEST: UE context removed from CU-CP.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_TRUE(report.ues.empty());
 }
