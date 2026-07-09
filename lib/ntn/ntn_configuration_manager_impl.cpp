@@ -4,6 +4,7 @@
 
 #include "ntn_configuration_manager_impl.h"
 #include "ntn_log_helpers.h"
+#include "ntn_sat_switch_helpers.h"
 #include "ntn_sib19_helpers.h"
 #include "ocudu/ntn/ntn_doppler_compensation_handler.h"
 #include "ocudu/ntn/ntn_sib19_update_handler.h"
@@ -172,6 +173,20 @@ ntn_configuration_manager_impl::ntn_configuration_manager_impl(const ntn_configu
     auto& ctx = it->second;
     ctx.cell_cfg_queue.push(cell_config_snapshot{time_point{}, cell_config});
 
+    if (auto derived_cfg = derive_post_switch_config(cell_config)) {
+      if (!ctx.cell_cfg_queue.try_push(
+              cell_config_snapshot{*cell_config.ntn_cfg->t_service, std::move(*derived_cfg)})) {
+        logger.warning("Cell config queue full, cell={:#x}, dropping initial sat-switch snapshot",
+                       cell_config.nr_cgi.nci);
+      } else {
+        logger.info("Sat-switch promotion scheduled, cell={:#x} serving satellite {} -> {} at t_service={:%T}",
+                    cell_config.nr_cgi.nci,
+                    cell_config.ntn_cfg->satellite_index,
+                    cell_config.sat_switch->satellite_index,
+                    *cell_config.ntn_cfg->t_service);
+      }
+    }
+
     // Create per-cell timer for SIB19 updating task.
     auto si_period_ms = cell_config.si_period_rf * 10;
     ctx.timer         = timers.create_unique_timer(executor);
@@ -206,6 +221,14 @@ const ntn_cell_config& ntn_configuration_manager_impl::get_cell_config(per_cell_
 {
   auto& q = ctx.cell_cfg_queue;
   while (q.size() > 1 && t >= q[1].epoch_time) {
+    if (q[0].config.ntn_cfg && q[1].config.ntn_cfg &&
+        q[0].config.ntn_cfg->satellite_index != q[1].config.ntn_cfg->satellite_index) {
+      logger.info("Sat-switch promotion applied, cell={:#x} serving satellite {} -> {} time={:%T}",
+                  q[1].config.nr_cgi.nci,
+                  q[0].config.ntn_cfg->satellite_index,
+                  q[1].config.ntn_cfg->satellite_index,
+                  t);
+    }
     q.pop();
   }
   return q[0].config;
