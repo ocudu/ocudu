@@ -17,12 +17,14 @@ install_dpdk_dependencies_debian_ubuntu() {
     local -a build_pkgs=(
         curl apt-transport-https ca-certificates xz-utils
         python3-pip ninja-build g++ build-essential pkg-config libnuma-dev libfdt-dev pciutils
+        libibverbs-dev
     )
     local -a extra_pkgs=(
         libatomic1 iproute2
     )
     local -a run_pkgs=(
         python3-pip libnuma-dev pciutils libfdt-dev libatomic1 iproute2
+        libibverbs1 ibverbs-providers
     )
     local -a pip_build_pkgs=(meson pyelftools)
     local -a pip_run_pkgs=(pyelftools)
@@ -59,12 +61,14 @@ install_dpdk_dependencies_fedora() {
     local -a build_pkgs=(
         curl ca-certificates xz
         python3-pip ninja-build gcc gcc-c++ make pkgconf-pkg-config numactl-devel libfdt-devel pciutils
+        rdma-core-devel
     )
     local -a extra_pkgs=(
         libatomic iproute
     )
     local -a run_pkgs=(
         python3-pip numactl-libs pciutils libfdt libatomic iproute
+        libibverbs
     )
     local -a pip_build_pkgs=(meson pyelftools)
     local -a pip_run_pkgs=(pyelftools)
@@ -100,12 +104,14 @@ install_dpdk_dependencies_arch() {
     local -a build_pkgs=(
         curl ca-certificates xz
         python-pip ninja base-devel pkgconf numactl dtc pciutils
+        rdma-core
     )
     local -a extra_pkgs=(
         iproute2
     )
     local -a run_pkgs=(
         python-pip numactl dtc pciutils iproute2
+        rdma-core
     )
     local -a pip_build_pkgs=(meson pyelftools)
     local -a pip_run_pkgs=(pyelftools)
@@ -141,12 +147,14 @@ install_dpdk_dependencies_rhel() {
     local -a build_pkgs=(
         ca-certificates xz
         python3-pip ninja-build gcc gcc-c++ make pkgconf-pkg-config numactl-devel libfdt-devel pciutils
+        rdma-core-devel
     )
     local -a extra_pkgs=(
         libatomic iproute
     )
     local -a run_pkgs=(
         python3-pip numactl-libs pciutils libfdt libatomic iproute
+        libibverbs
     )
     local -a pip_build_pkgs=(meson pyelftools)
     local -a pip_run_pkgs=(pyelftools)
