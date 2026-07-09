@@ -53,6 +53,17 @@ ntn_cell_config make_cell_config(bool serving_is_ntn, unsigned serving_sync_dur 
   return cell_cfg;
 }
 
+ntn_sat_switch_config make_sat_switch(unsigned satellite_index, std::optional<unsigned> ntn_ul_sync_validity_dur = 30U)
+{
+  ntn_sat_switch_config cfg{};
+  cfg.satellite_index          = satellite_index;
+  cfg.ntn_ul_sync_validity_dur = ntn_ul_sync_validity_dur;
+  cfg.cell_specific_koffset    = std::chrono::milliseconds{15};
+  cfg.k_mac                    = 3U;
+  cfg.ta_report                = true;
+  return cfg;
+}
+
 const slot_point test_epoch_slot{0, 100};
 
 } // namespace
@@ -309,4 +320,64 @@ TEST(sib19_ncells_test, ext_list_entry_is_explicit_when_it_only_matches_the_prev
   ASSERT_EQ(sib19.ncells.size(), 5);
   EXPECT_TRUE(sib19.ncells[4].ntn_cfg.has_value())
       << "ext entry must not inherit from the previous entry; it only compares against the same-position base entry";
+}
+
+TEST(sib19_sat_switch_test, not_broadcast_when_reply_is_null)
+{
+  ntn_cell_config cell_cfg = make_cell_config(/*serving_is_ntn=*/true);
+  cell_cfg.sat_switch      = make_sat_switch(/*satellite_index=*/1);
+
+  std::vector<ntn_orbital_state> replies;
+  ntn_orbital_state              serving_reply = make_reply(true);
+
+  sib19_info sib19 = generate_sib19_info(cell_cfg, test_epoch_slot, serving_reply, /*sat_sw_reply=*/nullptr, replies);
+
+  EXPECT_FALSE(sib19.sat_switch_with_resync.has_value());
+}
+
+TEST(sib19_sat_switch_test, not_broadcast_when_ocm_lookup_failed)
+{
+  ntn_cell_config cell_cfg = make_cell_config(/*serving_is_ntn=*/true);
+  cell_cfg.sat_switch      = make_sat_switch(/*satellite_index=*/1);
+
+  std::vector<ntn_orbital_state> replies;
+  ntn_orbital_state              serving_reply = make_reply(true);
+  ntn_orbital_state              sat_sw_reply  = make_reply(false);
+
+  sib19_info sib19 = generate_sib19_info(cell_cfg, test_epoch_slot, serving_reply, &sat_sw_reply, replies);
+
+  EXPECT_FALSE(sib19.sat_switch_with_resync.has_value())
+      << "ntn-Config is mandatory within SatSwitchWithReSync, so it must never be broadcast empty";
+}
+
+TEST(sib19_sat_switch_test, epoch_time_and_validity_dur_omitted_when_they_match_the_serving_ntn_cell)
+{
+  ntn_cell_config cell_cfg = make_cell_config(/*serving_is_ntn=*/true, /*serving_sync_dur=*/30U);
+  cell_cfg.sat_switch      = make_sat_switch(/*satellite_index=*/1, /*ntn_ul_sync_validity_dur=*/30U);
+
+  std::vector<ntn_orbital_state> replies;
+  ntn_orbital_state              serving_reply = make_reply(true);
+  ntn_orbital_state              sat_sw_reply  = make_reply(true);
+
+  sib19_info sib19 = generate_sib19_info(cell_cfg, test_epoch_slot, serving_reply, &sat_sw_reply, replies);
+
+  ASSERT_TRUE(sib19.sat_switch_with_resync.has_value());
+  EXPECT_FALSE(sib19.sat_switch_with_resync->ntn_cfg.epoch_time.has_value());
+  EXPECT_FALSE(sib19.sat_switch_with_resync->ntn_cfg.ntn_ul_sync_validity_dur.has_value());
+}
+
+TEST(sib19_sat_switch_test, ntn_ul_sync_validity_dur_filled_when_it_differs_from_the_serving_ntn_cell)
+{
+  ntn_cell_config cell_cfg = make_cell_config(/*serving_is_ntn=*/true, /*serving_sync_dur=*/30U);
+  cell_cfg.sat_switch      = make_sat_switch(/*satellite_index=*/1, /*ntn_ul_sync_validity_dur=*/60U);
+
+  std::vector<ntn_orbital_state> replies;
+  ntn_orbital_state              serving_reply = make_reply(true);
+  ntn_orbital_state              sat_sw_reply  = make_reply(true);
+
+  sib19_info sib19 = generate_sib19_info(cell_cfg, test_epoch_slot, serving_reply, &sat_sw_reply, replies);
+
+  ASSERT_TRUE(sib19.sat_switch_with_resync.has_value());
+  ASSERT_TRUE(sib19.sat_switch_with_resync->ntn_cfg.ntn_ul_sync_validity_dur.has_value());
+  EXPECT_EQ(*sib19.sat_switch_with_resync->ntn_cfg.ntn_ul_sync_validity_dur, 60U);
 }

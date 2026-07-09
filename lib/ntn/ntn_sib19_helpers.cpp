@@ -77,25 +77,30 @@ sib19_info ocudu_ntn::generate_sib19_info(const ntn_cell_config&        cell_cfg
     }
   }
 
-  // Populate sat-switch target ntn_cfg with propagated ephemeris from the sat-switch OCM.
-  if (cell_cfg.sat_switch) {
+  // Populate sat-switch target ntn_cfg with propagated ephemeris from the sat-switch OCM. Per TS 38.331,
+  // satSwitchWithReSync is only present in an NTN cell, and ntn-Config is mandatory within it (unlike a neighbor
+  // cell's, which is optional and can be inherited), so the whole block is only broadcast when the serving cell is
+  // NTN and the sat-switch OCM lookup actually succeeded -- never with an empty ntn-Config, and never in a TN cell.
+  if (cell_cfg.ntn_cfg && cell_cfg.sat_switch && sat_sw_reply != nullptr && sat_sw_reply->success) {
     const auto&              sw_cfg = *cell_cfg.sat_switch;
     sat_switch_with_resync_t sat_sw;
-    sat_sw.t_service_start    = sw_cfg.t_service_start;
-    sat_sw.ssb_time_offset_sf = sw_cfg.ssb_time_offset_sf;
-    if (sat_sw_reply != nullptr && sat_sw_reply->success) {
-      sat_sw.ntn_cfg.cell_specific_koffset    = sw_cfg.cell_specific_koffset;
-      sat_sw.ntn_cfg.ntn_ul_sync_validity_dur = sw_cfg.ntn_ul_sync_validity_dur;
-      sat_sw.ntn_cfg.k_mac                    = sw_cfg.k_mac;
-      sat_sw.ntn_cfg.polarization             = sw_cfg.polarization;
-      sat_sw.ntn_cfg.ta_report                = sw_cfg.ta_report;
+    sat_sw.t_service_start               = sw_cfg.t_service_start;
+    sat_sw.ssb_time_offset_sf            = sw_cfg.ssb_time_offset_sf;
+    sat_sw.ntn_cfg.cell_specific_koffset = sw_cfg.cell_specific_koffset;
+    sat_sw.ntn_cfg.k_mac                 = sw_cfg.k_mac;
+    sat_sw.ntn_cfg.polarization          = sw_cfg.polarization;
+    sat_sw.ntn_cfg.ta_report             = sw_cfg.ta_report;
+    if (!matches_serving_ntn_epoch_time(cell_cfg, sib19, epoch_slot)) {
       sat_sw.ntn_cfg.epoch_time.emplace();
       sat_sw.ntn_cfg.epoch_time->sfn             = epoch_slot.sfn();
       sat_sw.ntn_cfg.epoch_time->subframe_number = epoch_slot.subframe_index();
-      sat_sw.ntn_cfg.ephemeris_info              = sat_sw_reply->ephemeris_info;
-      sat_sw.ntn_cfg.ta_info                     = sat_sw_reply->ta_info;
     }
-    sib19.sat_switch_with_resync = sat_sw;
+    if (!matches_serving_ntn_ul_sync_validity_dur(cell_cfg, sw_cfg.ntn_ul_sync_validity_dur)) {
+      sat_sw.ntn_cfg.ntn_ul_sync_validity_dur = sw_cfg.ntn_ul_sync_validity_dur;
+    }
+    sat_sw.ntn_cfg.ephemeris_info = sat_sw_reply->ephemeris_info;
+    sat_sw.ntn_cfg.ta_info        = sat_sw_reply->ta_info;
+    sib19.sat_switch_with_resync  = sat_sw;
   }
 
   // Populate each neighbor NTN cell entry and fill OCM result.

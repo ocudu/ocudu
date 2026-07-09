@@ -25,7 +25,10 @@ struct ntn_serving_cell_config {
   /// If present, overrides the epoch time SFN/subframe broadcast in SIB19. Usually not needed.
   std::optional<epoch_time_t> epoch_time;
   /// Validity duration for UL sync assistance info in seconds. Exempt from SI change determination.
-  std::optional<unsigned> ntn_ul_sync_validity_dur;
+  /// Per TS 38.331, ntn-UlSyncValidityDuration is mandatory present for the serving cell in SIB19 (Cond SIB19), so
+  /// this field is not optional.
+  /// [Implementation-defined] Defaults to the smallest allowed value.
+  unsigned ntn_ul_sync_validity_dur = 5;
 
   /// SIB19 fields tracked by SIB1 valuetag (changes require valuetag modification).
   /// Reference location for NTN quasi-Earth fixed cell (in degrees).

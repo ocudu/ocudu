@@ -418,7 +418,7 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
   ntn_orbital_state serving_ntn_info;
   if (cell_cfg.ntn_cfg) {
     const ntn_serving_cell_config& ntn_cfg                  = *cell_cfg.ntn_cfg;
-    const unsigned                 ntn_ul_sync_validity_dur = ntn_cfg.ntn_ul_sync_validity_dur.value_or(5);
+    const unsigned                 ntn_ul_sync_validity_dur = ntn_cfg.ntn_ul_sync_validity_dur;
     const bool                     serving_use_state_vector = ntn_cfg.use_state_vector.value_or(false);
 
     // Recompute epoch_time if an offset provided then with the offset.
