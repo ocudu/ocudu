@@ -286,6 +286,18 @@ bool ntn_configuration_manager_impl::handle_ntn_cell_config_update(const ntn_cel
 
   const ntn_cell_config& base_cfg = ctx.cell_cfg_queue[ctx.cell_cfg_queue.size() - 1].config;
 
+  if (auto derived_cfg = derive_post_switch_config(base_cfg)) {
+    if (!ctx.cell_cfg_queue.try_push(cell_config_snapshot{*base_cfg.ntn_cfg->t_service, std::move(*derived_cfg)})) {
+      logger.warning("Cell config queue full, cell={:#x}, dropping derived post-switch snapshot", cell_req.nr_cgi.nci);
+    } else {
+      logger.info("Sat-switch promotion scheduled, cell={:#x} serving satellite {} -> {} at t_service={:%T}",
+                  cell_req.nr_cgi.nci,
+                  base_cfg.ntn_cfg->satellite_index,
+                  base_cfg.sat_switch->satellite_index,
+                  *base_cfg.ntn_cfg->t_service);
+    }
+  }
+
   if (!base_cfg.ntn_cfg) {
     logger.debug("Skipping serving satellite ephemeris update, TN cell={:#x}", cell_req.nr_cgi.nci);
     return true;
