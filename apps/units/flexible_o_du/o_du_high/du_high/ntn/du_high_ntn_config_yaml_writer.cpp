@@ -131,11 +131,8 @@ void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_
 
     fill_ntn_satellite_in_yaml_schema(ntn_node, serving.sat_ref);
 
-    ntn_node["cell_specific_koffset"] = static_cast<unsigned>(serving.cell_specific_koffset.count());
-
-    if (serving.ntn_ul_sync_validity_dur) {
-      ntn_node["ntn_ul_sync_validity_dur"] = *serving.ntn_ul_sync_validity_dur;
-    }
+    ntn_node["cell_specific_koffset"]    = static_cast<unsigned>(serving.cell_specific_koffset.count());
+    ntn_node["ntn_ul_sync_validity_dur"] = serving.ntn_ul_sync_validity_dur;
 
     if (serving.feeder_link_info) {
       YAML::Node fl_node;

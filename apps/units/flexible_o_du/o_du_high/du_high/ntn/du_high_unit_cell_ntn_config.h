@@ -79,7 +79,10 @@ struct du_high_unit_ntn_serving_cell_config {
   /// A validity duration configured by the network for assistance information which indicates the maximum time duration
   /// (from epochTime) during which the UE can apply assistance information without having acquired new assistance
   /// information. Values {5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 120, 180, 240, 900} seconds.
-  std::optional<unsigned> ntn_ul_sync_validity_dur;
+  /// Per TS 38.331, an absent ntn-UlSyncValidityDuration for the NTN serving cell has no defined fallback (unlike
+  /// the TN-cell case, which is explicitly left to UE implementation), and neighbor cells/sat-switch may inherit
+  /// this value when they omit their own.
+  unsigned ntn_ul_sync_validity_dur = 5;
   /// Whether to broadcast Ephemeris information as ECEF state vectors (if true) or ECI Orbital parameters (if false).
   /// If not provided, the value is derived from the variant of ephemeris_info.
   /// If provided and does not match the variant of ephemeris_info, the ephemeris_info is converted accordingly.

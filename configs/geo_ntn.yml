@@ -6,6 +6,7 @@
 cell_cfg:
   ntn:
     cell_specific_koffset: 150 # sets the maximum possible channel delay
+    ntn_ul_sync_validity_dur: 900 # GEO ephemeris barely changes, so the assistance info stays valid the longest
     ta_common: 0
     ephemeris_info: # ecef ephemeris information for the satellite
       pos_x: 20922195
