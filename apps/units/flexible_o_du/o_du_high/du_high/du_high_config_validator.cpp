@@ -614,6 +614,11 @@ static bool validate_ntn_config(const du_high_unit_cell_ntn_config& ntn_cfg, nr_
 
   if (serving.sat_switch_with_resync) {
     const auto& sw = *serving.sat_switch_with_resync;
+    if (sw.ssb_time_offset_sf && *sw.ssb_time_offset_sf % 5 != 0) {
+      fmt::print("sat_switch_with_resync: ssb_time_offset_sf must be 0 or a multiple of 5 subframes, got {}.\n",
+                 *sw.ssb_time_offset_sf);
+      valid = false;
+    }
     if (sw.sat_ref.satellite_idx) {
       if (sw.sat_ref.epoch_timestamp) {
         fmt::print("sat_switch_with_resync: satellite_idx and epoch_timestamp are mutually exclusive.\n");
