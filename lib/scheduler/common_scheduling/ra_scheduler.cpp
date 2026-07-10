@@ -198,6 +198,18 @@ static span<const pusch_time_domain_resource_allocation> get_pusch_td_list(const
   return get_pusch_time_domain_resource_table(*cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common);
 }
 
+/// \brief First OFDM symbol used by an SRS already allocated in the given UL slot.
+/// \return The start symbol of the earliest SRS grant in \c ul_alloc, or the number of symbols per slot if no SRS is
+/// allocated, meaning the whole slot is available for PUSCH.
+static unsigned get_min_srs_symbol(const cell_slot_resource_allocator& ul_alloc)
+{
+  unsigned min_srs_symbol = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+  for (const auto& srs : ul_alloc.result.ul.srss) {
+    min_srs_symbol = std::min(static_cast<unsigned>(srs.symbols.start()), min_srs_symbol);
+  }
+  return min_srs_symbol;
+}
+
 class ra_scheduler::cached_bwp_info
 {
 public:
@@ -1126,6 +1138,11 @@ auto ra_scheduler::schedule_rar(std::vector<pending_rar_alloc>::iterator rar_it,
       continue;
     }
 
+    // >> Avoid allocating Msg3 PUSCH over symbols already used by SRS in this slot.
+    if (pusch_list[pusch_idx].symbols.stop() > get_min_srs_symbol(msg3_alloc)) {
+      continue;
+    }
+
     unsigned pusch_res_max_grants =
         std::min<unsigned>(msg3_candidates.capacity(), max_nof_allocs) - msg3_candidates.size();
 
@@ -1377,6 +1394,11 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
       continue;
     }
 
+    // Avoid allocating Msg3 reTx PUSCH over symbols already used by SRS in this slot.
+    if (pusch_td_cfg.symbols.stop() > get_min_srs_symbol(pusch_alloc)) {
+      continue;
+    }
+
     // For a CFRA UE, avoid slots where it already has a PUCCH: it would multiplex its UCI onto the RAR UL grant,
     // which the RA scheduler builds without UCI.
     if (not can_allocate_rar_ul_grant(msg3_ctx.preamble.tc_rnti, pusch_alloc)) {
@@ -1624,6 +1646,11 @@ void ra_scheduler::schedule_pending_msgbs(cell_resource_allocator& res_alloc, sl
       const unsigned                      start_ul_sym =
           NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg.get_nof_ul_symbol_per_slot(msg3_alloc.slot);
       if (not cell_cfg.is_ul_enabled(msg3_alloc.slot) or pusch_td_list[pusch_idx].symbols.start() < start_ul_sym) {
+        continue;
+      }
+
+      // Avoid allocating Msg3 PUSCH over symbols already used by SRS in this slot.
+      if (pusch_td_list[pusch_idx].symbols.stop() > get_min_srs_symbol(msg3_alloc)) {
         continue;
       }
 
