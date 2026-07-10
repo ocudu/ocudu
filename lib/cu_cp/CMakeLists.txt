@@ -27,6 +27,7 @@ set(SOURCES
         du_processor/du_processor_factory.cpp
         du_processor/du_processor_repository.cpp
         metrics_handler/metrics_handler_impl.cpp
+        ntn/cu_cp_ntn_ref_time_store.cpp
         ngap_repository.cpp
         paging/paging_message_handler.cpp
         routines/amf_connection_loss_routine.cpp
@@ -90,6 +91,7 @@ target_link_libraries(ocudu_cu_cp
         ocudu_support
         ocudu_security
         ocudu_e2
+        ocudu_ntn_lib
         ${CMAKE_DL_LIBS}
 )
 

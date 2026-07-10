@@ -12,12 +12,14 @@
 #include "ocudu/cu_cp/ue_configuration.h"
 #include "ocudu/e1ap/cu_cp/e1ap_configuration.h"
 #include "ocudu/f1ap/cu_cp/f1ap_configuration.h"
+#include "ocudu/ntn/ntn_configuration_manager_config.h"
 #include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/ran/supported_tracking_area.h"
 #include "ocudu/rrc/rrc_ue_config.h"
 #include "ocudu/support/executors/task_executor.h"
 #include <chrono>
 #include <map>
+#include <optional>
 
 namespace ocudu {
 
@@ -178,7 +180,12 @@ struct cu_cp_configuration {
   service_params services;
   /// CU-CP metrics notifier.
   cu_cp_metrics_report_notifier* metrics_notifier = nullptr;
-  /// Optional notifier invoked when a DU reports Reference Time Information (used e.g. for NTN).
+  /// Optional NTN configuration. When present with at least one cell, the CU-CP creates an NTN configuration manager
+  /// that periodically refreshes the NTN neighbour cell info of the measurement configuration, fed by DU reference
+  /// time reports.
+  std::optional<ocudu_ntn::ntn_configuration_manager_config> ntn;
+  /// Notifier invoked when a DU reports Reference Time Information (used e.g. for NTN). Wired internally by the CU-CP
+  /// to its NTN reference time store when \c ntn is configured; left unset otherwise.
   cu_cp_ref_time_report_notifier* ref_time_report_notifier = nullptr;
 };
 

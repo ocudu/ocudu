@@ -32,9 +32,11 @@
 #include "routines/ue_suspend_routine.h"
 #include "routines/ue_transaction_info_release_routine.h"
 #include "routines/write_replace_warning_routine.h"
+#include "ocudu/cu_cp/cu_cp_ntn_ref_time_store.h"
 #include "ocudu/f1ap/cu_cp/f1ap_cu.h"
 #include "ocudu/nrppa/nrppa.h"
 #include "ocudu/nrppa/nrppa_factory.h"
+#include "ocudu/ntn/ntn_configuration_manager.h"
 #include "ocudu/ran/cause/common.h"
 #include "ocudu/ran/cause/e1ap_cause_converters.h"
 #include "ocudu/ran/cause/ngap_cause.h"
@@ -153,6 +155,22 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cell_meas_mobility_notifier.connect_mobility_manager(mobility_mng);
 
   conn_notifier.connect_node_connection_handler(controller);
+
+  // Create the NTN components when the configuration carries NTN cells. The reference time store is wired as the
+  // CU-CP reference time notifier (read by the DU processors when a DU reports Reference Time Information), and the
+  // configuration manager periodically refreshes the NTN neighbour cell info of the measurement configuration.
+  if (cfg.ntn.has_value() && !cfg.ntn->cells.empty()) {
+    std::vector<nr_cell_identity> ntn_cell_ids;
+    ntn_cell_ids.reserve(cfg.ntn->cells.size());
+    for (const ocudu_ntn::ntn_cell_config& ntn_cell : cfg.ntn->cells) {
+      ntn_cell_ids.push_back(ntn_cell.nr_cgi.nci);
+    }
+    ntn_ref_time_store           = std::make_unique<cu_cp_ntn_ref_time_store>(ntn_cell_ids);
+    cfg.ref_time_report_notifier = ntn_ref_time_store.get();
+
+    ntn_config_manager = create_cu_cp_ntn_configuration_manager(
+        *cfg.ntn, *ntn_ref_time_store, get_ntn_meas_update_handler(), timers, cu_cp_executor);
+  }
 }
 
 cu_cp_impl::~cu_cp_impl()

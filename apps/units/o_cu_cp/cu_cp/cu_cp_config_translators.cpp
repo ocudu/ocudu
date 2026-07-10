@@ -4,10 +4,12 @@
 
 #include "cu_cp_config_translators.h"
 #include "apps/helpers/network/sctp_config_translators.h"
+#include "apps/helpers/ntn/ntn_config_translators.h"
 #include "apps/services/worker_manager/worker_manager_config.h"
 #include "cu_cp_unit_config.h"
 #include "ocudu/cu_cp/cu_cp_configuration_helpers.h"
 #include "ocudu/ran/plmn_identity.h"
+#include "fmt/format.h"
 #include <sstream>
 
 using namespace ocudu;
@@ -571,6 +573,12 @@ ocucp::cu_cp_configuration ocudu::generate_cu_cp_config(const cu_cp_unit_config&
     report_error("Invalid CU-CP configuration.\n");
   }
 
+  // Populate the NTN configuration manager config only when at least one neighbour cell configures NTN, so that the
+  // optional reflects whether NTN is actually configured.
+  if (auto ntn_cfg = generate_cu_cp_ntn_configuration_manager_config(cu_cfg); !ntn_cfg.cells.empty()) {
+    out_cfg.ntn = std::move(ntn_cfg);
+  }
+
   return out_cfg;
 }
 
@@ -619,4 +627,66 @@ void ocudu::fill_cu_cp_worker_manager_config(worker_manager_config& config, cons
   if (unit_cfg.pcap_cfg.xnap.enabled) {
     pcap_cfg.is_xnap_enabled = true;
   }
+}
+
+ocudu_ntn::ntn_configuration_manager_config
+ocudu::generate_cu_cp_ntn_configuration_manager_config(const cu_cp_unit_config& cu_cfg)
+{
+  ocudu_ntn::ntn_configuration_manager_config out_cfg = {};
+
+  // Add globally-defined satellites first. Use user-defined satellite_idx as internal satellite_index.
+  unsigned next_satellite_idx = add_global_ntn_satellites(cu_cfg.ntn_satellites, out_cfg.satellites);
+
+  // Look up a cell definition by its NR cell id. The NTN configuration lives on the cell itself, so a neighbour's
+  // NTN info is taken from that neighbour's own cell entry.
+  auto find_cell = [&cu_cfg](uint64_t nr_cell_id) -> const cu_cp_unit_cell_config_item* {
+    for (const cu_cp_unit_cell_config_item& c : cu_cfg.mobility_config.cells) {
+      if (c.nr_cell_id == nr_cell_id) {
+        return &c;
+      }
+    }
+    return nullptr;
+  };
+
+  for (const cu_cp_unit_cell_config_item& cell : cu_cfg.mobility_config.cells) {
+    ocudu_ntn::ntn_cell_config out_cell;
+
+    for (const cu_cp_unit_neighbor_cell_config_item& ncell : cell.ncells) {
+      const cu_cp_unit_cell_config_item* ncell_def = find_cell(ncell.nr_cell_id);
+      if (ncell_def == nullptr || !ncell_def->ntn_cfg.has_value()) {
+        continue;
+      }
+      // Work on a copy: the resolution sets satellite_idx for inline satellite definitions.
+      cu_cp_unit_cell_ntn_config ntn_cfg = *ncell_def->ntn_cfg;
+      resolve_ntn_satellite_ref(ntn_cfg.sat_ref,
+                                out_cfg.satellites,
+                                next_satellite_idx,
+                                ntn_cfg.sat_ref.ta_info,
+                                fmt::format("cells[nci={:#x}].ntn", ncell.nr_cell_id));
+
+      ocudu_ntn::ntn_neighbor_cell_config& nc = out_cell.ncells.emplace_back();
+      nc.satellite_index                      = *ntn_cfg.sat_ref.satellite_idx;
+      nc.nci                                  = nr_cell_identity::create(ncell.nr_cell_id).value();
+      nc.reference_location                   = ntn_cfg.reference_location;
+      nc.polarization                         = ntn_cfg.polarization;
+      nc.use_state_vector =
+          derive_use_state_vector(std::nullopt, ntn_cfg.sat_ref.ephemeris_info, nc.satellite_index, out_cfg.satellites);
+    }
+
+    // Skip cells whose neighbours carry no NTN configuration.
+    if (out_cell.ncells.empty()) {
+      continue;
+    }
+
+    out_cell.nr_cgi.nci    = nr_cell_identity::create(cell.nr_cell_id).value();
+    out_cell.update_period = std::chrono::milliseconds(cu_cfg.mobility_config.ntn_update_period_ms);
+    // Identity within the manager is by NCI alone; the serving PLMN is unused in the CU-CP path, so nr_cgi.plmn_id is
+    // left at its default. The manager keys its cell map by NCI, forwards updates by NCI, and DU reference-time reports
+    // are matched by NCI. The real PLMN that reaches RRC is resolved downstream by the cell measurement manager from
+    // the DU's F1 data, not from here.
+
+    out_cfg.cells.push_back(std::move(out_cell));
+  }
+
+  return out_cfg;
 }

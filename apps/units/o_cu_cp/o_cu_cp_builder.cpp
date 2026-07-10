@@ -13,6 +13,7 @@
 #include "e2/o_cu_cp_e2_config_translators.h"
 #include "o_cu_cp_unit_config.h"
 #include "o_cu_cp_unit_impl.h"
+#include "ocudu/cu_cp/cu_cp_command_handler.h"
 #include "ocudu/cu_cp/cu_cp_executor_mapper.h"
 #include "ocudu/cu_cp/o_cu_cp_config.h"
 #include "ocudu/cu_cp/o_cu_cp_factory.h"
