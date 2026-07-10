@@ -1467,6 +1467,18 @@ bool cu_cp_impl::handle_cell_config_update_request(nr_cell_identity nci, const s
   return cell_meas_mng.update_cell_config(nci, serv_cell_cfg);
 }
 
+void cu_cp_impl::update_ntn_neighbour_info(nr_cell_identity                              serving_nci,
+                                           std::vector<rrc_ntn_neighbour_cell_info_item> ncells)
+{
+  // Called from an external execution context (e.g. the NTN configuration manager timer), so dispatch to the CU-CP
+  // executor before touching the cell measurement manager.
+  if (not cu_cp_executor.execute([this, serving_nci, ncells = std::move(ncells)]() {
+        cell_meas_mng.update_ntn_neighbour_info(serving_nci, ncells);
+      })) {
+    logger.warning("Failed to dispatch NTN neighbour info update for serving cell nci={:#x}", serving_nci);
+  }
+}
+
 async_task<cu_cp_intra_cu_handover_response>
 cu_cp_impl::handle_intra_cu_handover_request(const cu_cp_intra_cu_handover_request& request,
                                              cu_cp_du_index_t&                      source_du_index,

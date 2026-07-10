@@ -218,6 +218,13 @@ struct rrc_ntn_neighbour_cell_info {
   std::optional<rrc_geo_location> ref_location; ///< 2-D reference location
 };
 
+/// Pairs a neighbour cell identity with its NTN neighbour cell info, used to update measurement configurations.
+struct rrc_ntn_neighbour_cell_info_item {
+  nr_cell_identity                  nci;
+  rrc_ntn_neighbour_cell_info       info;
+  std::optional<ntn_polarization_t> polarization;
+};
+
 struct rrc_cells_to_add_mod {
   pci_t                   pci;
   rrc_q_offset_range_list cell_individual_offset;

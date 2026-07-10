@@ -6,11 +6,13 @@
 
 #include "ocudu/adt/span.h"
 #include "ocudu/ran/cu_cp_ue_context_release.h"
+#include "ocudu/ran/meas_types.h"
 #include "ocudu/ran/pci.h"
 #include "ocudu/ran/plmn_identity.h"
 #include "ocudu/ran/rnti.h"
 #include <chrono>
 #include <optional>
+#include <vector>
 
 namespace ocudu::ocucp {
 
@@ -63,6 +65,23 @@ public:
                                std::optional<cu_cp_release_redirect_nr_info> redirect_info = std::nullopt) = 0;
 };
 
+/// Handler for external NTN neighbour cell measurement info updates to the CU-CP.
+class cu_cp_ntn_meas_update_handler
+{
+public:
+  virtual ~cu_cp_ntn_meas_update_handler() = default;
+
+  /// \brief Update the NTN neighbour cell info used when building measurement configurations.
+  ///
+  /// The epoch time of each entry is expressed in the SFN timeline of the serving cell, so updates apply per
+  /// (serving cell, neighbour cell) pair.
+  ///
+  /// \param[in] serving_nci Serving cell whose neighbour measurement info is updated.
+  /// \param[in] ncells Updated NTN neighbour cell info items.
+  virtual void update_ntn_neighbour_info(nr_cell_identity                              serving_nci,
+                                         std::vector<rrc_ntn_neighbour_cell_info_item> ncells) = 0;
+};
+
 /// Handler for external commands to the CU-CP.
 class cu_cp_command_handler
 {
@@ -74,6 +93,9 @@ public:
 
   /// Get handler for UE release commands.
   virtual cu_cp_ue_release_command_handler& get_ue_release_command_handler() = 0;
+
+  /// Get handler for NTN neighbour cell measurement info updates.
+  virtual cu_cp_ntn_meas_update_handler& get_ntn_meas_update_handler() = 0;
 };
 
 } // namespace ocudu::ocucp

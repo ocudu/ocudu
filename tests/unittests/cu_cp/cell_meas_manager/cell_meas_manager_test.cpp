@@ -5,6 +5,7 @@
 #include "cell_meas_manager_test_helpers.h"
 #include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/ran/plmn_identity.h"
+#include <variant>
 
 using namespace ocudu;
 using namespace ocucp;
@@ -594,4 +595,141 @@ TEST_F(cell_meas_manager_test, cho_a5_inter_frequency_includes_serving_cell_meas
 
   // Serving NCI must not appear as a CHO candidate target.
   ASSERT_EQ(cho_result->nci_to_meas_ids.find(nci_serving), cho_result->nci_to_meas_ids.end());
+}
+
+// ===================== NTN Neighbour Cell Info Tests =====================
+
+static rrc_ntn_neighbour_cell_info make_test_ntn_neighbour_info()
+{
+  rrc_ntn_neighbour_cell_info info;
+  info.epoch_time.sfn             = 100;
+  info.epoch_time.subframe_number = 5;
+
+  ecef_coordinates_t ecef;
+  ecef.position_x  = -3621225.25;
+  ecef.position_y  = -5839350.24;
+  ecef.position_z  = 101120.52;
+  ecef.velocity_vx = 3498.87;
+  ecef.velocity_vy = -2055.89;
+  ecef.velocity_vz = 6104.62;
+  info.ephemeris   = ecef;
+
+  info.ref_location = rrc_geo_location{12.3, 45.6};
+  return info;
+}
+
+TEST_F(cell_meas_manager_test, when_no_ntn_neighbour_info_then_meas_config_has_no_cells_to_add_mod)
+{
+  create_default_manager();
+
+  cu_cp_ue_index_t ue_index = ue_mng.add_ue(uint_to_cu_cp_du_index(0));
+  ASSERT_NE(ue_index, cu_cp_ue_index_t::invalid);
+  ASSERT_TRUE(ue_mng.set_plmn(ue_index, plmn_identity::test_value()));
+
+  gnb_id_t         gnb_id{0x19b, 32};
+  nr_cell_identity nci1 = nr_cell_identity::create(gnb_id, 0).value();
+
+  std::optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(ue_index, nci1);
+  ASSERT_TRUE(meas_cfg.has_value());
+  for (const auto& meas_obj : meas_cfg->meas_obj_to_add_mod_list) {
+    ASSERT_TRUE(meas_obj.meas_obj_nr.has_value());
+    EXPECT_TRUE(meas_obj.meas_obj_nr->cells_to_add_mod_list.empty());
+  }
+}
+
+TEST_F(cell_meas_manager_test, when_ntn_neighbour_info_updated_then_meas_config_contains_it)
+{
+  create_default_manager();
+
+  gnb_id_t         gnb_id{0x19b, 32};
+  nr_cell_identity nci1 = nr_cell_identity::create(gnb_id, 0).value();
+  nr_cell_identity nci2 = nr_cell_identity::create(gnb_id, 1).value();
+
+  std::vector<rrc_ntn_neighbour_cell_info_item> items = {{nci2, make_test_ntn_neighbour_info()}};
+  ASSERT_TRUE(manager->update_ntn_neighbour_info(nci1, items));
+
+  cu_cp_ue_index_t ue_index = ue_mng.add_ue(uint_to_cu_cp_du_index(0));
+  ASSERT_NE(ue_index, cu_cp_ue_index_t::invalid);
+  ASSERT_TRUE(ue_mng.set_plmn(ue_index, plmn_identity::test_value()));
+
+  std::optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(ue_index, nci1);
+  ASSERT_TRUE(meas_cfg.has_value());
+
+  // The neighbour cell must be added to cells_to_add_mod_list with the NTN info attached.
+  unsigned nof_ntn_cells = 0;
+  for (const auto& meas_obj : meas_cfg->meas_obj_to_add_mod_list) {
+    ASSERT_TRUE(meas_obj.meas_obj_nr.has_value());
+    for (const auto& cell : meas_obj.meas_obj_nr->cells_to_add_mod_list) {
+      ASSERT_TRUE(cell.ntn_neighbour_info.has_value());
+      EXPECT_EQ(cell.ntn_neighbour_info->epoch_time.sfn, 100U);
+      EXPECT_EQ(cell.ntn_neighbour_info->epoch_time.subframe_number, 5U);
+      EXPECT_TRUE(std::holds_alternative<ecef_coordinates_t>(cell.ntn_neighbour_info->ephemeris));
+      ASSERT_TRUE(cell.ntn_neighbour_info->ref_location.has_value());
+      EXPECT_DOUBLE_EQ(cell.ntn_neighbour_info->ref_location->latitude, 12.3);
+      EXPECT_DOUBLE_EQ(cell.ntn_neighbour_info->ref_location->longitude, 45.6);
+      ++nof_ntn_cells;
+    }
+  }
+  EXPECT_EQ(nof_ntn_cells, 1U);
+}
+
+TEST_F(cell_meas_manager_test, when_ntn_update_refers_to_unknown_serving_cell_then_update_fails)
+{
+  create_default_manager();
+
+  gnb_id_t         gnb_id{0x19b, 32};
+  nr_cell_identity unknown_nci = nr_cell_identity::create(gnb_id, 5).value();
+  nr_cell_identity nci2        = nr_cell_identity::create(gnb_id, 1).value();
+
+  std::vector<rrc_ntn_neighbour_cell_info_item> items = {{nci2, make_test_ntn_neighbour_info()}};
+  ASSERT_FALSE(manager->update_ntn_neighbour_info(unknown_nci, items));
+}
+
+TEST_F(cell_meas_manager_test, when_ntn_update_refers_to_unknown_neighbour_then_update_fails)
+{
+  create_default_manager();
+
+  gnb_id_t         gnb_id{0x19b, 32};
+  nr_cell_identity nci1        = nr_cell_identity::create(gnb_id, 0).value();
+  nr_cell_identity unknown_nci = nr_cell_identity::create(gnb_id, 5).value();
+
+  std::vector<rrc_ntn_neighbour_cell_info_item> items = {{unknown_nci, make_test_ntn_neighbour_info()}};
+  ASSERT_FALSE(manager->update_ntn_neighbour_info(nci1, items));
+}
+
+TEST_F(cell_meas_manager_test, when_cho_meas_config_requested_then_ntn_neighbour_info_is_included)
+{
+  create_cho_manager_single_frequency();
+
+  gnb_id_t         gnb_id{0x19b, 32};
+  nr_cell_identity nci_serving = nr_cell_identity::create(gnb_id, 0).value();
+  nr_cell_identity nci_target1 = nr_cell_identity::create(gnb_id, 1).value();
+
+  std::vector<rrc_ntn_neighbour_cell_info_item> items = {{nci_target1, make_test_ntn_neighbour_info()}};
+  ASSERT_TRUE(manager->update_ntn_neighbour_info(nci_serving, items));
+
+  cu_cp_ue_index_t ue_index = ue_mng.add_ue(uint_to_cu_cp_du_index(0));
+  ASSERT_NE(ue_index, cu_cp_ue_index_t::invalid);
+  ASSERT_TRUE(ue_mng.set_plmn(ue_index, plmn_identity::test_value()));
+  attach_rrc_ue(ue_index);
+
+  std::vector<pci_t> candidate_pcis = {2, 3}; // PCIs of target cells 1 and 2
+  auto cho_result = manager->get_measurement_config(ue_index, nci_serving, std::nullopt, true, candidate_pcis);
+  ASSERT_TRUE(cho_result.has_value());
+
+  // Target 1 (pci=2) carries the NTN info, target 2 (pci=3) does not.
+  unsigned nof_cells = 0;
+  for (const auto& meas_obj : cho_result->meas_obj_to_add_mod_list) {
+    ASSERT_TRUE(meas_obj.meas_obj_nr.has_value());
+    for (const auto& cell : meas_obj.meas_obj_nr->cells_to_add_mod_list) {
+      if (cell.pci == 2) {
+        ASSERT_TRUE(cell.ntn_neighbour_info.has_value());
+        EXPECT_EQ(cell.ntn_neighbour_info->epoch_time.sfn, 100U);
+      } else {
+        EXPECT_FALSE(cell.ntn_neighbour_info.has_value());
+      }
+      ++nof_cells;
+    }
+  }
+  EXPECT_GT(nof_cells, 0U);
 }

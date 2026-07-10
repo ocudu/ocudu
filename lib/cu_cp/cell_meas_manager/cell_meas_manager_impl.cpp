@@ -273,6 +273,37 @@ bool cell_meas_manager::update_cell_config(nr_cell_identity nci, const serving_c
   return true;
 }
 
+bool cell_meas_manager::update_ntn_neighbour_info(nr_cell_identity                             serving_nci,
+                                                  span<const rrc_ntn_neighbour_cell_info_item> ncells)
+{
+  auto cell_it = cfg.cells.find(serving_nci);
+  if (cell_it == cfg.cells.end()) {
+    logger.warning("Received NTN neighbour info update for unknown serving cell nci={:#x}", serving_nci);
+    return false;
+  }
+
+  bool updated = false;
+  for (const rrc_ntn_neighbour_cell_info_item& item : ncells) {
+    auto ncell_it = std::find_if(cell_it->second.ncells.begin(),
+                                 cell_it->second.ncells.end(),
+                                 [&item](const neighbor_cell_meas_config& nc) { return nc.nci == item.nci; });
+    if (ncell_it == cell_it->second.ncells.end()) {
+      logger.warning("Received NTN neighbour info update for unknown neighbour nci={:#x} of serving cell nci={:#x}",
+                     item.nci,
+                     serving_nci);
+      continue;
+    }
+    ncell_it->ntn_neighbour_info = item.info;
+    ncell_it->ntn_polarization   = item.polarization;
+    updated                      = true;
+  }
+
+  if (updated) {
+    logger.debug("Updated NTN neighbour info for serving cell nci={:#x}", serving_nci);
+  }
+  return updated;
+}
+
 static std::optional<uint8_t> get_ssb_rsrp(const rrc_meas_result_nr& meas_result)
 {
   std::optional<uint8_t> rsrp;

@@ -46,7 +46,8 @@ class cu_cp_impl final : public cu_cp,
                          public cu_cp_impl_interface,
                          public cu_cp_ng_handler,
                          public cu_cp_command_handler,
-                         public cu_cp_ue_release_command_handler
+                         public cu_cp_ue_release_command_handler,
+                         public cu_cp_ntn_meas_update_handler
 {
 public:
   explicit cu_cp_impl(const cu_cp_configuration& config_);
@@ -179,8 +180,13 @@ public:
                        rnti_t                                        rnti,
                        std::optional<cu_cp_release_redirect_nr_info> redirect_info = std::nullopt) override;
 
+  // cu_cp_ntn_meas_update_handler.
+  void update_ntn_neighbour_info(nr_cell_identity                              serving_nci,
+                                 std::vector<rrc_ntn_neighbour_cell_info_item> ncells) override;
+
   cu_cp_mobility_command_handler&   get_mobility_command_handler() override { return mobility_mng; }
   cu_cp_ue_release_command_handler& get_ue_release_command_handler() override { return *this; }
+  cu_cp_ntn_meas_update_handler&    get_ntn_meas_update_handler() override { return *this; }
   metrics_handler&                  get_metrics_handler() override { return metrics_hdlr; }
 
   // cu_cp_amf_reconnection_handler.

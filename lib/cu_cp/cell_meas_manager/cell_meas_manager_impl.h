@@ -51,6 +51,7 @@ public:
   std::optional<cell_meas_config> get_cell_config(nr_cell_identity nci);
   std::vector<pci_t>              get_neighbor_pcis(nr_cell_identity serving_nci) const;
   bool update_cell_config(nr_cell_identity nci, const serving_cell_meas_config& serv_cell_cfg);
+  bool update_ntn_neighbour_info(nr_cell_identity serving_nci, span<const rrc_ntn_neighbour_cell_info_item> ncells);
   void report_measurement(cu_cp_ue_index_t ue_index, const rrc_meas_results& meas_results);
 
   expected<std::pair<unsigned, nr_cell_identity>> find_neighbour_nci(pci_t pci);
