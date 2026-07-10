@@ -45,22 +45,33 @@ pusch_information make_dummy_pusch_info()
 class dummy_harq_timeout_handler
 {
 public:
+  enum class last_event_t { none, feedback_timeout, retx_timeout, feedback_disabled_timeout };
+
   du_ue_index_t last_ue_index  = INVALID_DU_UE_INDEX;
   bool          last_dir_is_dl = false;
   bool          last_was_ack   = false;
   units::bytes  last_tbs{0};
+  last_event_t  last_event = last_event_t::none;
 
   void handle_harq_timeout(du_ue_index_t ue_index, bool is_dl, bool ack)
   {
     last_ue_index  = ue_index;
     last_dir_is_dl = is_dl;
     last_was_ack   = ack;
+    last_event     = last_event_t::feedback_timeout;
+  }
+  void handle_harq_retx_timeout(du_ue_index_t ue_index, bool is_dl)
+  {
+    last_ue_index  = ue_index;
+    last_dir_is_dl = is_dl;
+    last_event     = last_event_t::retx_timeout;
   }
   void handle_harq_no_feedback_timeout(du_ue_index_t ue_index, bool is_dl, units::bytes tbs)
   {
     last_ue_index  = ue_index;
     last_dir_is_dl = is_dl;
     last_tbs       = tbs;
+    last_event     = last_event_t::feedback_disabled_timeout;
   }
 
   std::unique_ptr<harq_timeout_notifier> make_notifier()
@@ -76,7 +87,7 @@ public:
       }
       void on_retx_timeout(du_ue_index_t ue_index, bool is_dl) override
       {
-        parent.handle_harq_timeout(ue_index, is_dl, false);
+        parent.handle_harq_retx_timeout(ue_index, is_dl);
       }
       void on_feedback_disabled_harq_timeout(du_ue_index_t ue_index, bool is_dl, units::bytes tbs) override
       {
@@ -586,6 +597,37 @@ TEST_F(single_ue_harq_entity_test, after_max_ack_wait_timeout_dl_harqs_are_avail
     ASSERT_TRUE(h_dl.has_value());
     ASSERT_TRUE(h_ul.has_value());
   }
+  ASSERT_EQ(timeout_handler.last_event, dummy_harq_timeout_handler::last_event_t::feedback_timeout);
+}
+
+TEST_F(single_ue_harq_entity_test, when_pending_retx_harq_is_never_rescheduled_then_on_retx_timeout_is_notified)
+{
+  auto h_ul = harq_ent.alloc_ul_harq(current_slot + k2, max_retxs);
+  ASSERT_TRUE(h_ul.has_value());
+
+  // NACK the HARQ so it enters pending_retx state, but never actually schedule a retransmission for it.
+  ASSERT_EQ(h_ul.value().ul_crc_info(false), units::bytes{0});
+  ASSERT_TRUE(h_ul.value().has_pending_retx());
+
+  // Let time pass without ever granting a retx; the HARQ must eventually be force-discarded.
+  unsigned i = 0;
+  for (; i != this->max_harq_retx_timeout and harq_ent.find_pending_ul_retx().has_value(); ++i) {
+    ASSERT_EQ(timeout_handler.last_event, dummy_harq_timeout_handler::last_event_t::none);
+    run_slot();
+  }
+  ASSERT_LT(i, this->max_harq_retx_timeout) << "the pending-retx HARQ was never timed out";
+  ASSERT_EQ(harq_ent.find_pending_ul_retx(), std::nullopt);
+
+  // The retx-starved HARQ must be reported via on_retx_timeout (and not on_feedback_timeout), and the UE/direction
+  // must be identifiable so that any parallel bookkeeping keyed on them (e.g. ra_scheduler's pending_msg3s) can be
+  // released too.
+  ASSERT_EQ(timeout_handler.last_event, dummy_harq_timeout_handler::last_event_t::retx_timeout);
+  ASSERT_EQ(timeout_handler.last_ue_index, ue_index);
+  ASSERT_FALSE(timeout_handler.last_dir_is_dl);
+
+  // The HARQ resource must be available again for a new Tx.
+  auto h_ul2 = harq_ent.alloc_ul_harq(current_slot + k2, max_retxs);
+  ASSERT_TRUE(h_ul2.has_value());
 }
 
 TEST_F(single_ue_harq_entity_harq_5bit_tester, when_5_harq_bits_are_acks_then_all_5_active_harqs_are_updated)

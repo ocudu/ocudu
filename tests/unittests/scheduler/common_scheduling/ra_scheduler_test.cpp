@@ -805,6 +805,63 @@ TEST_F(ra_scheduler_cfra_test, cfra_msg3_crc_ko_causes_retx_then_ok_completes)
   ASSERT_EQ(tracker.nof_msg3_acked(), 1);
 }
 
+/// Verify that, when a NACKed Msg3 HARQ is never rescheduled for retransmission (starved until the retx timeout
+/// fires), its pending_msg3s ring entry is released -- so a later PRACH reusing the same TC-RNTI is accepted
+/// instead of being rejected as "already under use".
+TEST_F(ra_scheduler_cfra_test, when_msg3_retx_starves_then_tc_rnti_is_released_for_reuse)
+{
+  const rnti_t tc_rnti = to_rnti(0x4601);
+  ra_sch.handle_cfra_mapping_update(cfra_ue_index, tc_rnti);
+  handle_rach_indication(create_cfra_rach_indication(tc_rnti));
+
+  // NACK the first Msg3 new-tx, putting its HARQ into pending_retx state.
+  for (unsigned slot_count = 0, max_slots = 1000; slot_count < max_slots and tracker.nof_msg3_newtxs() == 0;
+       ++slot_count) {
+    run_slot();
+    if (not res_grid[0].result.ul.puschs.empty()) {
+      send_cfra_crc(tc_rnti, false);
+    }
+  }
+  ASSERT_GE(tracker.nof_msg3_newtxs(), 1);
+
+  // Block all UL resources so the scheduler can never grant the Msg3 retransmission, until the retx timeout fires
+  // and the HARQ (and its pending_msg3s ring entry) is force-discarded.
+  const grant_info marked_res{cell_cfg.scs_common(),
+                              ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP},
+                              crb_interval{0, cell_cfg.nof_ul_prbs}};
+  const unsigned   lookahead_ul_rbs = res_grid.max_ul_slot_alloc_delay;
+  for (unsigned i = 0; i != lookahead_ul_rbs; ++i) {
+    if (cell_cfg.is_ul_enabled(res_grid[i].slot)) {
+      res_grid[i].ul_res_grid.fill(marked_res);
+    }
+  }
+  const unsigned nof_retxs_before_block = tracker.nof_msg3_retxs();
+  for (unsigned i = 0, max_slots = 500; i != max_slots; ++i) {
+    if (cell_cfg.is_ul_enabled(res_grid[lookahead_ul_rbs].slot)) {
+      res_grid[lookahead_ul_rbs].ul_res_grid.fill(marked_res);
+    }
+    run_slot();
+  }
+  ASSERT_EQ(tracker.nof_msg3_retxs(), nof_retxs_before_block)
+      << "No retx grant should have been possible while UL resources were blocked";
+
+  // Drain the lookahead window of already-blocked slots (without refilling) before probing with a new preamble.
+  for (unsigned i = 0; i != lookahead_ul_rbs; ++i) {
+    run_slot();
+  }
+
+  // A new preamble reusing the SAME TC-RNTI must now be accepted. If pending_msg3s still held a stale entry for
+  // this TC-RNTI, ra_scheduler's ring-collision check would silently drop this preamble instead.
+  ra_sch.handle_cfra_mapping_update(cfra_ue_index, tc_rnti);
+  handle_rach_indication(create_cfra_rach_indication(tc_rnti));
+  for (unsigned slot_count = 0, max_slots = 1000; slot_count < max_slots and tracker.nof_msg3_newtxs() < 2;
+       ++slot_count) {
+    run_slot();
+  }
+  ASSERT_GE(tracker.nof_msg3_newtxs(), 2)
+      << "TC-RNTI reuse after the retx timeout was rejected -- pending_msg3s leaked";
+}
+
 /// Verify that a CRC with a valid but unregistered UE index is filtered by the RA scheduler.
 ///
 /// Because the RNTI is not in pending_cfra_ues for that ue_index, is_ra_crc() returns false and
