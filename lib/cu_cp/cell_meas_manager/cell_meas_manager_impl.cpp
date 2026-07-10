@@ -8,6 +8,7 @@
 #include "ocudu/ran/meas_types.h"
 #include "ocudu/ran/plmn_identity.h"
 #include "ocudu/support/ocudu_assert.h"
+#include <algorithm>
 #include <set>
 #include <utility>
 
@@ -100,11 +101,33 @@ cell_meas_manager::get_measurement_config(cu_cp_ue_index_t                   ue_
         continue;
       }
       ue_meas_context.nci_to_meas_obj_id.emplace(nci, meas_obj_to_add.meas_obj_id);
+
+      // Find this NCI in the serving cell's neighbour list to retrieve NTN info.
+      const auto ncell_it = std::find_if(cell_config.ncells.begin(),
+                                         cell_config.ncells.end(),
+                                         [nci](const neighbor_cell_meas_config& nc) { return nc.nci == nci; });
+
       if (cond_meas) {
         const auto&          ncell_cfg = cfg.cells.at(nci);
         rrc_cells_to_add_mod cell_to_add;
         cell_to_add.pci = ncell_cfg.serving_cell_cfg.pci.value();
+        if (ncell_it != cell_config.ncells.end()) {
+          cell_to_add.ntn_neighbour_info = ncell_it->ntn_neighbour_info;
+          cell_to_add.ntn_polarization   = ncell_it->ntn_polarization;
+        }
         meas_obj_to_add.meas_obj_nr->cells_to_add_mod_list.push_back(cell_to_add);
+      } else if (ncell_it != cell_config.ncells.end() &&
+                 (ncell_it->ntn_neighbour_info.has_value() || ncell_it->ntn_polarization.has_value())) {
+        // For non-CHO: add cell to cells_to_add_mod_list only when NTN info is present (needed for
+        // cells_to_add_mod_list_ext_v1800/v1710 in MeasObjectNR).
+        const auto& ncell_cfg = cfg.cells.at(nci);
+        if (ncell_cfg.serving_cell_cfg.pci.has_value()) {
+          rrc_cells_to_add_mod cell_to_add;
+          cell_to_add.pci                = ncell_cfg.serving_cell_cfg.pci.value();
+          cell_to_add.ntn_neighbour_info = ncell_it->ntn_neighbour_info;
+          cell_to_add.ntn_polarization   = ncell_it->ntn_polarization;
+          meas_obj_to_add.meas_obj_nr->cells_to_add_mod_list.push_back(cell_to_add);
+        }
       }
     }
     new_cfg.meas_obj_to_add_mod_list.push_back(std::move(meas_obj_to_add));

@@ -33,8 +33,10 @@ struct serving_cell_meas_config {
 };
 
 struct neighbor_cell_meas_config {
-  nr_cell_identity             nci;            ///< The NR cell identifier.
-  std::vector<report_cfg_id_t> report_cfg_ids; ///< The configured report configs
+  nr_cell_identity                           nci;                ///< The NR cell identifier.
+  std::vector<report_cfg_id_t>               report_cfg_ids;     ///< The configured report configs
+  std::optional<rrc_ntn_neighbour_cell_info> ntn_neighbour_info; ///< NTN-NeighbourCellInfo-r18 (optional)
+  std::optional<ntn_polarization_t>          ntn_polarization;   ///< ntn-PolarizationDL/UL-r17 (optional)
 };
 
 /// \brief Essential parameters required to configure serving and neighbor cell measurements in the UE.

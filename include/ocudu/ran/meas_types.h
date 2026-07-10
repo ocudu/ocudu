@@ -6,6 +6,7 @@
 
 #include "ocudu/adt/slotted_vector.h"
 #include "ocudu/ran/nr_cell_identity.h"
+#include "ocudu/ran/ntn.h"
 #include "ocudu/ran/pci.h"
 #include "ocudu/ran/subcarrier_spacing.h"
 #include <map>
@@ -204,9 +205,26 @@ struct rrc_q_offset_range_list {
   std::optional<int8_t> sinr_offset_csi_rs;
 };
 
+/// Geographic location (lat/lon only) for CHO distance-based conditional events.
+struct rrc_geo_location {
+  double latitude;  ///< degrees [-90..90]
+  double longitude; ///< degrees [-180..180]
+};
+
+/// NTN neighbour cell info for ntn-NeighbourCellInfo-r18 in MeasObjectNR (TS 38.331).
+struct rrc_ntn_neighbour_cell_info {
+  epoch_time_t                    epoch_time;   ///< SFN+subframe epoch, in the serving cell timeline
+  ntn_ephemeris_info_t            ephemeris;    ///< Satellite ephemeris
+  std::optional<rrc_geo_location> ref_location; ///< 2-D reference location
+};
+
 struct rrc_cells_to_add_mod {
   pci_t                   pci;
   rrc_q_offset_range_list cell_individual_offset;
+  /// NTN neighbour cell info for ntn-NeighbourCellInfo-r18.
+  std::optional<rrc_ntn_neighbour_cell_info> ntn_neighbour_info;
+  /// NTN DL/UL polarization (ntn-PolarizationDL/UL-r17 in CellsToAddModExt-v1710, both optional).
+  std::optional<ntn_polarization_t> ntn_polarization;
 };
 
 struct rrc_pci_range {
@@ -370,12 +388,6 @@ struct rrc_meas_trigger_quant {
 };
 
 using rrc_meas_trigger_quant_offset = rrc_meas_trigger_quant;
-
-/// Geographic location (lat/lon only) for CHO distance-based conditional events.
-struct rrc_geo_location {
-  double latitude;  ///< degrees [-90..90]
-  double longitude; ///< degrees [-180..180]
-};
 
 struct rrc_event_id {
   enum class event_id_t : uint8_t { a1, a2, a3, a4, a5, a6, d1, t1, d2 };

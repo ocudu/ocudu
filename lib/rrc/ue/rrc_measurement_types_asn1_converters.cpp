@@ -5,6 +5,7 @@
 #include "rrc_measurement_types_asn1_converters.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/support/error_handling.h"
+#include <algorithm>
 #include <cmath>
 
 using namespace ocudu;
@@ -38,6 +39,64 @@ static ocudu::byte_buffer pack_ellipsoid_point(const rrc_geo_location& loc)
     bits >>= 8u;
   }
   return byte_buffer::create(raw, raw + 6).value();
+}
+
+static void fill_asn1_ephemeris_info(asn1::rrc_nr::ephemeris_info_r17_c& out, const ntn_ephemeris_info_t& ephemeris)
+{
+  if (const auto* ecef = std::get_if<ecef_coordinates_t>(&ephemeris)) {
+    out.set_position_velocity_r17();
+    asn1::rrc_nr::position_velocity_r17_s& rv = out.position_velocity_r17();
+    rv.position_x_r17                         = static_cast<int32_t>(ecef->position_x / 1.3);
+    rv.position_y_r17                         = static_cast<int32_t>(ecef->position_y / 1.3);
+    rv.position_z_r17                         = static_cast<int32_t>(ecef->position_z / 1.3);
+    rv.velocity_vx_r17                        = static_cast<int32_t>(ecef->velocity_vx / 0.06);
+    rv.velocity_vy_r17                        = static_cast<int32_t>(ecef->velocity_vy / 0.06);
+    rv.velocity_vz_r17                        = static_cast<int32_t>(ecef->velocity_vz / 0.06);
+  } else {
+    const auto& orb = std::get<orbital_coordinates_t>(ephemeris);
+    out.set_orbital_r17();
+    asn1::rrc_nr::orbital_r17_s& orbit = out.orbital_r17();
+    orbit.semi_major_axis_r17          = static_cast<uint64_t>((orb.semi_major_axis - 6500000) / 0.004249);
+    orbit.eccentricity_r17             = static_cast<uint32_t>(orb.eccentricity / 0.00000001431);
+    orbit.inclination_r17              = static_cast<int32_t>(orb.inclination / 0.00000002341);
+    orbit.longitude_r17                = static_cast<uint32_t>(orb.longitude / 0.00000002341);
+    orbit.periapsis_r17                = static_cast<uint32_t>(orb.periapsis / 0.00000002341);
+    orbit.mean_anomaly_r17             = static_cast<uint32_t>(orb.mean_anomaly / 0.00000002341);
+  }
+}
+
+// Fills ntn-PolarizationDL/UL-r17 in a CellsToAddModExt-v1710 entry. Both directions are optional.
+static void fill_asn1_ntn_polarization(asn1::rrc_nr::cells_to_add_mod_ext_v1710_s& out, const ntn_polarization_t& pol)
+{
+  using ext_s = asn1::rrc_nr::cells_to_add_mod_ext_v1710_s;
+  if (pol.dl.has_value()) {
+    out.ntn_polarization_dl_r17_present = true;
+    switch (*pol.dl) {
+      case ntn_polarization_t::polarization_type::rhcp:
+        out.ntn_polarization_dl_r17 = ext_s::ntn_polarization_dl_r17_opts::rhcp;
+        break;
+      case ntn_polarization_t::polarization_type::lhcp:
+        out.ntn_polarization_dl_r17 = ext_s::ntn_polarization_dl_r17_opts::lhcp;
+        break;
+      case ntn_polarization_t::polarization_type::linear:
+        out.ntn_polarization_dl_r17 = ext_s::ntn_polarization_dl_r17_opts::linear;
+        break;
+    }
+  }
+  if (pol.ul.has_value()) {
+    out.ntn_polarization_ul_r17_present = true;
+    switch (*pol.ul) {
+      case ntn_polarization_t::polarization_type::rhcp:
+        out.ntn_polarization_ul_r17 = ext_s::ntn_polarization_ul_r17_opts::rhcp;
+        break;
+      case ntn_polarization_t::polarization_type::lhcp:
+        out.ntn_polarization_ul_r17 = ext_s::ntn_polarization_ul_r17_opts::lhcp;
+        break;
+      case ntn_polarization_t::polarization_type::linear:
+        out.ntn_polarization_ul_r17 = ext_s::ntn_polarization_ul_r17_opts::linear;
+        break;
+    }
+  }
 }
 
 rrc_ssb_mtc ocudu::ocucp::asn1_to_ssb_mtc(const asn1::rrc_nr::ssb_mtc_s& asn1_ssb_mtc)
@@ -568,6 +627,62 @@ asn1::rrc_nr::meas_obj_nr_s ocudu::ocucp::meas_obj_nr_to_rrc_asn1(const rrc_meas
     asn1_meas_obj_nr.t312_r16.set_present();
     asn1_meas_obj_nr.t312_r16->set_setup();
     asn1::number_to_enum(asn1_meas_obj_nr.t312_r16->setup(), meas_obj_nr.t312.value());
+  }
+
+  // Fill extension addition groups in release order (v1710 before v1800), matching the ASN.1 field layout.
+
+  // Fill cells_to_add_mod_list_ext_v1710 (ntn-PolarizationDL/UL-r17).
+  // The extension list must be parallel to cells_to_add_mod_list (one entry per cell).
+  // Cells without polarization contribute an empty entry.
+  const bool has_ntn_polarization =
+      std::any_of(meas_obj_nr.cells_to_add_mod_list.begin(),
+                  meas_obj_nr.cells_to_add_mod_list.end(),
+                  [](const rrc_cells_to_add_mod& c) { return c.ntn_polarization.has_value(); });
+  if (has_ntn_polarization) {
+    asn1_meas_obj_nr.ext = true;
+    asn1_meas_obj_nr.cells_to_add_mod_list_ext_v1710.set_present();
+    auto& ext_list_v1710 = *asn1_meas_obj_nr.cells_to_add_mod_list_ext_v1710;
+    for (const auto& cell : meas_obj_nr.cells_to_add_mod_list) {
+      asn1::rrc_nr::cells_to_add_mod_ext_v1710_s ext_cell;
+      if (cell.ntn_polarization.has_value()) {
+        fill_asn1_ntn_polarization(ext_cell, *cell.ntn_polarization);
+      }
+      ext_list_v1710.push_back(ext_cell);
+    }
+  }
+
+  // Fill cells_to_add_mod_list_ext_v1800 (ntn-NeighbourCellInfo-r18).
+  // Like the v1710 list, this extension must be parallel to cells_to_add_mod_list (one entry per cell).
+  // Cells that lack NTN info contribute an empty entry. Only epochTime and ephemerisInfo are mandatory in the IE;
+  // referenceLocation is OPTIONAL (Need R, TS 38.331), so the IE is emitted whenever NTN info is present and the
+  // reference location is filled in only when available.
+  const bool has_ntn_cells =
+      std::any_of(meas_obj_nr.cells_to_add_mod_list.begin(),
+                  meas_obj_nr.cells_to_add_mod_list.end(),
+                  [](const rrc_cells_to_add_mod& c) { return c.ntn_neighbour_info.has_value(); });
+  if (has_ntn_cells) {
+    asn1_meas_obj_nr.ext = true;
+    asn1_meas_obj_nr.cells_to_add_mod_list_ext_v1800.set_present();
+    auto& ext_list = *asn1_meas_obj_nr.cells_to_add_mod_list_ext_v1800;
+    for (const auto& cell : meas_obj_nr.cells_to_add_mod_list) {
+      asn1::rrc_nr::cells_to_add_mod_ext_v1800_s ext_cell;
+      if (cell.ntn_neighbour_info.has_value()) {
+        const auto& ntn                              = *cell.ntn_neighbour_info;
+        ext_cell.ntn_neighbour_cell_info_r18_present = true;
+        auto& ntn_asn1                               = ext_cell.ntn_neighbour_cell_info_r18;
+        ntn_asn1.epoch_time_r18.sfn_r17              = ntn.epoch_time.sfn;
+        ntn_asn1.epoch_time_r18.sub_frame_nr_r17     = ntn.epoch_time.subframe_number;
+        fill_asn1_ephemeris_info(ntn_asn1.ephemeris_info_r18, ntn.ephemeris);
+        // referenceLocation is optional: leave ref_location_r18 empty when absent (encoded as not present).
+        if (ntn.ref_location.has_value()) {
+          auto ref_buf = pack_ellipsoid_point(*ntn.ref_location);
+          if (ntn_asn1.ref_location_r18.resize(ref_buf.length())) {
+            std::copy(ref_buf.begin(), ref_buf.end(), ntn_asn1.ref_location_r18.begin());
+          }
+        }
+      }
+      ext_list.push_back(ext_cell);
+    }
   }
 
   return asn1_meas_obj_nr;
