@@ -12,8 +12,8 @@ namespace ocudu {
 struct rlc_rx_am_sdu_info;
 struct rlc_rx_um_sdu_info;
 
-static constexpr unsigned rlc_rx_am_um_shared_window_seg_size      = 256;
-static constexpr unsigned rlc_rx_am_um_shared_window_seg_pool_size = 2048;
+constexpr unsigned rlc_rx_am_um_shared_window_seg_size      = 256;
+constexpr unsigned rlc_rx_am_um_shared_window_seg_pool_size = 2048;
 
 using rlc_rx_am_um_shared_window_seg_pool =
     shared_map_segment_pool<uint32_t, rlc_rx_am_um_shared_window_seg_size, rlc_rx_am_sdu_info, rlc_rx_um_sdu_info>;
@@ -30,8 +30,8 @@ rlc_rx_um_window_seg_pool& get_rlc_rx_um_window_seg_pool();
 
 struct rlc_tx_am_sdu_info;
 
-static constexpr unsigned rlc_tx_am_window_seg_size      = 256;
-static constexpr unsigned rlc_tx_am_window_seg_pool_size = 2048;
+constexpr unsigned rlc_tx_am_window_seg_size      = 256;
+constexpr unsigned rlc_tx_am_window_seg_pool_size = 2048;
 
 using rlc_tx_am_window_seg_pool = map_segment_pool_interface<uint32_t, rlc_tx_am_sdu_info, rlc_tx_am_window_seg_size>;
 rlc_tx_am_window_seg_pool& get_rlc_tx_am_window_seg_pool();
