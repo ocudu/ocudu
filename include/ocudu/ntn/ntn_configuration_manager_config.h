@@ -83,6 +83,15 @@ struct ntn_sat_switch_config {
   std::optional<ntn_polarization_t>                          polarization;
   std::optional<bool>                                        ta_report;
   std::optional<bool>                                        use_state_vector;
+  /// Whether this sat-switch's target-satellite parameters get promoted to become the serving cell's NTN config at
+  /// the serving cell's t_service -- the moment the source satellite stops serving and the UE executes the switch
+  /// per TS 38.331 clause 5.7.19 -- in addition to being advertised in SIB19's SatSwitchWithReSync up to that
+  /// point. Requires ntn_cfg->t_service to be set. See derive_post_switch_config().
+  bool promote_to_serving = false;
+  /// When promote_to_serving is enabled, whether the pre-switch neighbor cell list (ncells) is kept unchanged in
+  /// the promoted config (true) or cleared (false), since neighbor relations from before the switch may not hold
+  /// for the new serving satellite. Has no effect when promote_to_serving is disabled.
+  bool promote_neighbors = false;
 };
 
 /// NTN Cell configuration.

@@ -44,8 +44,9 @@ ntn_cell_config make_base_config()
 ntn_sat_switch_config make_sat_switch(unsigned satellite_index)
 {
   ntn_sat_switch_config sw{};
-  sw.satellite_index = satellite_index;
-  sw.t_service_start = std::chrono::system_clock::time_point{std::chrono::seconds{1000}};
+  sw.satellite_index    = satellite_index;
+  sw.t_service_start    = std::chrono::system_clock::time_point{std::chrono::seconds{1000}};
+  sw.promote_to_serving = true;
   return sw;
 }
 
@@ -156,10 +157,11 @@ TEST(derive_post_switch_config_test, falls_back_to_current_value_when_sat_switch
   EXPECT_EQ(*derived->ntn_cfg->use_state_vector, true);
 }
 
-TEST(derive_post_switch_config_test, preserves_ncells_and_non_sat_switch_fields)
+TEST(derive_post_switch_config_test, preserves_ncells_when_promote_neighbors_enabled)
 {
-  ntn_cell_config cfg = make_base_config();
-  cfg.sat_switch      = make_sat_switch(9);
+  ntn_cell_config cfg               = make_base_config();
+  cfg.sat_switch                    = make_sat_switch(9);
+  cfg.sat_switch->promote_neighbors = true;
 
   auto derived = derive_post_switch_config(cfg);
   ASSERT_TRUE(derived.has_value());
@@ -167,6 +169,24 @@ TEST(derive_post_switch_config_test, preserves_ncells_and_non_sat_switch_fields)
   EXPECT_EQ(derived->ncells[0].satellite_index, 5U);
   ASSERT_TRUE(derived->ntn_cfg->reference_location.has_value());
   EXPECT_DOUBLE_EQ(derived->ntn_cfg->reference_location->latitude, 1.0);
+}
+
+TEST(derive_post_switch_config_test, returns_nullopt_when_promote_to_serving_is_false)
+{
+  ntn_cell_config cfg                = make_base_config();
+  cfg.sat_switch                     = make_sat_switch(9);
+  cfg.sat_switch->promote_to_serving = false;
+  EXPECT_FALSE(derive_post_switch_config(cfg).has_value());
+}
+
+TEST(derive_post_switch_config_test, clears_ncells_by_default)
+{
+  ntn_cell_config cfg = make_base_config();
+  cfg.sat_switch      = make_sat_switch(9); // promote_neighbors left at its default (false)
+
+  auto derived = derive_post_switch_config(cfg);
+  ASSERT_TRUE(derived.has_value());
+  EXPECT_TRUE(derived->ncells.empty());
 }
 
 TEST(sat_switch_apply_integration_test, promotes_switch_target_at_t_service_not_before)
@@ -199,9 +219,10 @@ TEST(sat_switch_apply_integration_test, promotes_switch_target_at_t_service_not_
   cell.ntn_cfg                     = serving;
 
   ntn_sat_switch_config sat_switch{};
-  sat_switch.satellite_index = 9;
-  sat_switch.t_service_start = t0 + std::chrono::milliseconds(5); // overlap window opens before the 1st firing
-  cell.sat_switch            = sat_switch;
+  sat_switch.satellite_index    = 9;
+  sat_switch.t_service_start    = t0 + std::chrono::milliseconds(5); // overlap window opens before the 1st firing
+  sat_switch.promote_to_serving = true;
+  cell.sat_switch               = sat_switch;
 
   cfg.cells.push_back(cell);
 
@@ -238,4 +259,69 @@ TEST(sat_switch_apply_integration_test, promotes_switch_target_at_t_service_not_
   EXPECT_FALSE(sib19_ptr->requests.back().sib19.sat_switch_with_resync.has_value());
   EXPECT_FALSE(sib19_ptr->requests.back().sib19.t_service.has_value())
       << "the source satellite's t_service must not be broadcast after the switch";
+}
+
+TEST(sat_switch_apply_integration_test, does_not_promote_when_promote_to_serving_is_false)
+{
+  const auto t0 = std::chrono::system_clock::time_point{std::chrono::seconds{1000}};
+
+  ntn_configuration_manager_config cfg{};
+
+  ntn_satellite_config sat0{};
+  sat0.satellite_index = 1;
+  sat0.epoch_timestamp = t0;
+  sat0.ephemeris_info  = ecef_coordinates_t{7000000, 0, 0, 0, 7500, 0};
+  cfg.satellites.push_back(sat0);
+
+  ntn_satellite_config sat1 = sat0;
+  sat1.satellite_index      = 9;
+  cfg.satellites.push_back(sat1);
+
+  ntn_cell_config cell{};
+  cell.si_msg_idx          = 0;
+  cell.si_period_rf        = 1;
+  cell.si_window_len_slots = 1;
+  cell.si_window_position  = 1;
+
+  ntn_serving_cell_config serving{};
+  serving.satellite_index          = 1;
+  serving.cell_specific_koffset    = std::chrono::milliseconds{10};
+  serving.ntn_ul_sync_validity_dur = 30U;
+  serving.t_service                = t0 + std::chrono::milliseconds(15);
+  cell.ntn_cfg                     = serving;
+
+  ntn_sat_switch_config sat_switch{};
+  sat_switch.satellite_index    = 9;
+  sat_switch.t_service_start    = t0 + std::chrono::milliseconds(5);
+  sat_switch.promote_to_serving = false; // explicitly disabled
+  cell.sat_switch               = sat_switch;
+
+  cfg.cells.push_back(cell);
+
+  timer_manager      timers;
+  manual_task_worker executor{16};
+
+  auto  sib19_handler = std::make_unique<fake_sib19_update_handler>();
+  auto* sib19_ptr     = sib19_handler.get();
+
+  ntn_configuration_manager_dependencies deps{
+      std::move(sib19_handler), std::make_unique<fake_ntn_time_provider>(t0), nullptr, timers, executor};
+
+  ntn_configuration_manager_impl manager(cfg, std::move(deps));
+
+  for (int i = 0; i != 10; ++i) {
+    timers.tick();
+  }
+  executor.run_pending_tasks();
+  ASSERT_GE(sib19_ptr->requests.size(), 1U);
+  EXPECT_TRUE(sib19_ptr->requests.back().sib19.sat_switch_with_resync.has_value());
+
+  // Past t_service: with promote_to_serving disabled, the switch stays advertised and the serving
+  // satellite never changes -- there's no automatic transition into a "post-switch" state.
+  for (int i = 0; i != 10; ++i) {
+    timers.tick();
+  }
+  executor.run_pending_tasks();
+  ASSERT_GE(sib19_ptr->requests.size(), 2U);
+  EXPECT_TRUE(sib19_ptr->requests.back().sib19.sat_switch_with_resync.has_value());
 }

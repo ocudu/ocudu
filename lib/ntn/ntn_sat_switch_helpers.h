@@ -15,9 +15,11 @@ namespace ocudu_ntn {
 /// satSwitchWithReSync must stay broadcast.
 ///
 /// The result is a copy of \p current with the serving satellite switched to the sat-switch target, sat-switch
-/// overrides applied where set (serving values otherwise), and sat_switch and the now-stale t_service cleared.
+/// overrides applied where set (serving values otherwise), ncells cleared unless sat_switch->promote_neighbors is
+/// set, and sat_switch and the now-stale t_service cleared.
 ///
-/// \return std::nullopt if the switch does not apply: no sat_switch, TN cell, or no ntn_cfg->t_service.
+/// \return std::nullopt if the switch does not apply: no sat_switch, TN cell, no ntn_cfg->t_service, or
+/// sat_switch->promote_to_serving disabled (promotion is opt-in; the switch is still advertised in SIB19).
 std::optional<ntn_cell_config> derive_post_switch_config(const ntn_cell_config& current);
 
 } // namespace ocudu_ntn
