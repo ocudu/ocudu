@@ -30,25 +30,15 @@ trp_information_exchange_procedure::trp_information_exchange_procedure(
 {
 }
 
-static bool all_trp_ids_known(const std::vector<trp_id_t>&                trp_list,
-                              const std::map<trp_id_t, cu_cp_du_index_t>& trp_id_to_du_idx)
-{
-  return std::all_of(trp_list.begin(), trp_list.end(), [&](const trp_id_t& trp_id) {
-    return trp_id_to_du_idx.find(trp_id) != trp_id_to_du_idx.end();
-  });
-}
-
 void trp_information_exchange_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
 
   logger.info("\"{}\" started...", name());
 
-  // If the TRP list is empty or contains unknown TRP IDs, we forward the request to the CU-CP, as we need the
-  // information about TRPs from all DUs.
-  if (trp_info_request.trp_list.empty() or !all_trp_ids_known(trp_info_request.trp_list, trp_id_to_du_idx)) {
-    CORO_AWAIT_VALUE(cu_cp_response, cu_cp_notifier.on_trp_information_request(trp_info_request));
-  }
+  // The CU-CP only caches the TRP ID to DU mapping, not the TRP information content itself, so every request
+  // must be forwarded to the CU-CP to query the DUs.
+  CORO_AWAIT_VALUE(cu_cp_response, cu_cp_notifier.on_trp_information_request(trp_info_request));
 
   handle_procedure_outcome();
 
