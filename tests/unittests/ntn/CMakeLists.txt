@@ -52,3 +52,8 @@ add_executable(ntn_sat_switch_apply_test ntn_sat_switch_apply_test.cpp)
 target_include_directories(ntn_sat_switch_apply_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(ntn_sat_switch_apply_test ocudu_ntn_lib ocudu_support ocudulog gtest gtest_main)
 gtest_discover_tests(ntn_sat_switch_apply_test)
+
+add_executable(ntn_configuration_manager_test ntn_configuration_manager_test.cpp)
+target_include_directories(ntn_configuration_manager_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(ntn_configuration_manager_test ocudu_ntn_lib ocudu_support ocudulog gtest gtest_main)
+gtest_discover_tests(ntn_configuration_manager_test)
