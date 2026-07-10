@@ -3436,7 +3436,7 @@ bool ocudu::odu::calculate_reconfig_with_sync_diff(asn1::rrc_nr::recfg_with_sync
 
   // n-TimingAdvanceOffset only covers FR1 offsets, FR2 value n13792 is not present in this enum and should be skipped.
   if (band_helper::get_freq_range(du_cell_cfg.ran.dl_carrier.band) == frequency_range::FR1) {
-    const n_ta_offset ta_offset = band_helper::get_ta_offset(du_cell_cfg.ran.dl_carrier.band);
+    const n_ta_offset ta_offset = band_helper::get_ta_offset(du_cell_cfg.ran.dl_carrier.band, false /* 5G-SA mode */);
     out.sp_cell_cfg_common.n_timing_advance_offset_present = true;
     if (ta_offset == n_ta_offset::n0) {
       out.sp_cell_cfg_common.n_timing_advance_offset.value =

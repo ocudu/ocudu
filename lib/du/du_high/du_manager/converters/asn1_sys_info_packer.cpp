@@ -276,7 +276,7 @@ static asn1::rrc_nr::serving_cell_cfg_common_sib_s make_asn1_rrc_cell_serving_ce
   asn1::number_to_enum(cell.ssb_periodicity_serving_cell, to_value(du_cfg.ran.ssb_cfg.ssb_period));
   cell.ss_pbch_block_pwr = du_cfg.ran.ssb_cfg.ssb_block_power;
 
-  const n_ta_offset ta_offset = band_helper::get_ta_offset(du_cfg.ran.dl_carrier.band);
+  const n_ta_offset ta_offset = band_helper::get_ta_offset(du_cfg.ran.dl_carrier.band, false /* 5G-SA mode */);
   switch (ta_offset) {
     case n_ta_offset::n0:
       cell.n_timing_advance_offset_present = true;

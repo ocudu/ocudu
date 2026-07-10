@@ -358,11 +358,9 @@ unsigned get_nof_coreset0_rbs_not_intersecting_ssb(coreset0_index        cset0_i
 
 /// \brief Returns the n_ta_offset for a given band.
 /// \param[in] band is <em>NR operating band<\em>, as per TS 38.104, Table 5.2-1. Only FR1 values are supported.
+/// \param[in] eutra_coexistence indicates if cell is coexisting with E-UTRA.
 /// \return Value of n_ta_offset.
-n_ta_offset get_ta_offset(nr_band band);
-
-/// Returns the n_ta_offset for a given frequency range.
-n_ta_offset get_ta_offset(frequency_range freq_range);
+n_ta_offset get_ta_offset(nr_band band, bool eutra_coexistence);
 
 /// \brief Returns SSB ARFCN for a given cell configuration.
 /// \param[in] dl_arfcn is <em>DL-ARFCN<\em> corresponding to \f$F_{REF}\f$, as per TS 38.104, Section 5.4.2.1.

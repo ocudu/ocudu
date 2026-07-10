@@ -34,7 +34,8 @@ static lower_phy_configuration generate_lower_phy_config(const flexible_o_du_ru_
   out_cfg.dft_window_offset          = 0.5F;
   out_cfg.max_processing_delay_slots = max_processing_delay_slot;
   out_cfg.srate                      = sampling_rate::from_MHz(ru_cfg.srate_MHz);
-  out_cfg.ta_offset                  = band_helper::get_ta_offset(config.freq_range);
+  out_cfg.ta_offset =
+      band_helper::get_ta_offset(band_helper::get_band_from_dl_arfcn(config.dl_arfcn), false /* 5G SA mode */);
 
   if (ru_cfg.time_alignment_calibration.has_value()) {
     // Selects the user specific value.
