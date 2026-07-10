@@ -10,16 +10,12 @@
 
 using namespace ocudu;
 
-namespace {
+static std::size_t                                          rx_pool_size_val = 0;
+static std::unique_ptr<rlc_rx_am_um_shared_window_seg_pool> rx_pool_inst;
+static std::size_t                                          tx_pool_size_val = 0;
+static std::unique_ptr<rlc_tx_am_shared_window_seg_pool>    tx_pool_inst;
 
-std::size_t                                                                                       rx_pool_size_val = 0;
-std::unique_ptr<rlc_rx_am_um_shared_window_seg_pool>                                              rx_pool_inst;
-std::size_t                                                                                       tx_pool_size_val = 0;
-std::unique_ptr<shared_map_segment_pool<uint32_t, rlc_tx_am_window_seg_size, rlc_tx_am_sdu_info>> tx_pool_inst;
-
-} // namespace
-
-void ocudu::init_rlc_window_seg_pools(std::size_t rx_pool_size, std::size_t tx_pool_size)
+void ocudu::init_rlc_window_seg_pools(size_t rx_pool_size, size_t tx_pool_size)
 {
   if (rx_pool_inst == nullptr) {
     rx_pool_size_val = rx_pool_size;
@@ -34,8 +30,7 @@ void ocudu::init_rlc_window_seg_pools(std::size_t rx_pool_size, std::size_t tx_p
 
   if (tx_pool_inst == nullptr) {
     tx_pool_size_val = tx_pool_size;
-    tx_pool_inst = std::make_unique<shared_map_segment_pool<uint32_t, rlc_tx_am_window_seg_size, rlc_tx_am_sdu_info>>(
-        tx_pool_size);
+    tx_pool_inst     = std::make_unique<rlc_tx_am_shared_window_seg_pool>(tx_pool_size);
   } else {
     report_fatal_error_if_not(
         tx_pool_size_val >= tx_pool_size,
@@ -68,8 +63,7 @@ rlc_tx_am_window_seg_pool& ocudu::get_rlc_tx_am_window_seg_pool()
 {
   if (tx_pool_inst == nullptr) {
     tx_pool_size_val = rlc_tx_am_window_seg_pool_size;
-    tx_pool_inst = std::make_unique<shared_map_segment_pool<uint32_t, rlc_tx_am_window_seg_size, rlc_tx_am_sdu_info>>(
-        tx_pool_size_val);
+    tx_pool_inst     = std::make_unique<rlc_tx_am_shared_window_seg_pool>(tx_pool_size_val);
   }
   return tx_pool_inst->get_pool_of_type<rlc_tx_am_sdu_info>();
 }
