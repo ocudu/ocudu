@@ -40,7 +40,9 @@ void measurement_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   logger.info("\"{}\" started...", name());
 
-  if (!prepare_du_measurement_information_requests() or !create_measurement_context()) {
+  // NOTE: create_measurement_context() must run first, as it allocates the RAN Meas ID that
+  // prepare_du_measurement_information_requests() stamps onto every per-DU request.
+  if (!create_measurement_context() or !prepare_du_measurement_information_requests()) {
     logger.warning("\"{}\" failed", name());
     // Send failure to CU-CP.
     send_ul_nrppa_pdu(logger,
@@ -347,7 +349,7 @@ asn1::nrppa::nr_ppa_pdu_c measurement_procedure::create_measurement_response()
   asn1::nrppa::meas_resp_s& asn1_meas_resp = asn1_resp.successful_outcome().value.meas_resp();
 
   asn1_meas_resp->lmf_meas_id = lmf_meas_id_to_uint(procedure_outcome->lmf_meas_id);
-  asn1_meas_resp->ran_meas_id = ran_meas_id_to_uint(procedure_outcome->ran_meas_id);
+  asn1_meas_resp->ran_meas_id = ran_meas_id_to_uint(ran_meas_id);
 
   if (!procedure_outcome->trp_meas_resp_list.empty()) {
     asn1_meas_resp->trp_meas_resp_list_present = true;
