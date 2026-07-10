@@ -7,6 +7,7 @@
 #include "ntn_sat_switch_helpers.h"
 #include "ntn_sib19_helpers.h"
 #include "ocudu/ntn/ntn_doppler_compensation_handler.h"
+#include "ocudu/ntn/ntn_meas_info_update_handler.h"
 #include "ocudu/ntn/ntn_sib19_update_handler.h"
 #include "ocudu/ran/sib/system_info_config.h"
 #include "ocudu/support/ocudu_assert.h"
@@ -136,6 +137,7 @@ ntn_configuration_manager_impl::ntn_configuration_manager_impl(const ntn_configu
   sib19_pdu_update_handler(std::move(dependencies.sib19_msg_update_handler)),
   time_provider(std::move(dependencies.time_provider)),
   doppler_handler(std::move(dependencies.doppler_handler)),
+  meas_info_update_handler(std::move(dependencies.meas_info_update_handler)),
   timers(dependencies.timers),
   executor(dependencies.executor)
 {
@@ -597,5 +599,31 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
   // Send CFO compensation request to PHY.
   if (doppler_handler and serving_ntn_info.ta_info) {
     send_cfo_compensation_request(cell_cfg, epoch_time, *serving_ntn_info.ta_info);
+  }
+
+  // Publish measurement-related NTN neighbour info (e.g. to the CU-CP cell measurement manager).
+  if (meas_info_update_handler) {
+    ntn_meas_info_update_request meas_req;
+    meas_req.serving_cgi = cell_cfg.nr_cgi;
+    for (size_t i = 0; i != cell_cfg.ncells.size(); ++i) {
+      const ntn_neighbor_cell_config& nc = cell_cfg.ncells[i];
+      if (not nc.nci or not ncell_ntn_info[i].success) {
+        continue;
+      }
+      ntn_neighbour_meas_info& info = meas_req.ncells.emplace_back();
+      info.nci                      = *nc.nci;
+      info.epoch_time               = epoch_time_t{epoch_slot.sfn(), epoch_slot.subframe_index()};
+      info.ephemeris                = ncell_ntn_info[i].ephemeris_info;
+      info.ref_location             = nc.reference_location;
+      info.polarization             = nc.polarization;
+    }
+    if (not meas_req.ncells.empty()) {
+      logger.debug("NTN neighbour meas info update, cell={:#x} epoch_slot={} epoch_time={:%T} nof_ncells={}",
+                   nr_cgi.nci,
+                   epoch_slot,
+                   epoch_time,
+                   meas_req.ncells.size());
+      meas_info_update_handler->handle_ntn_meas_info_update(meas_req);
+    }
   }
 }

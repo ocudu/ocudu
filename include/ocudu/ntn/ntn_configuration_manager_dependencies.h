@@ -5,6 +5,7 @@
 #pragma once
 
 #include "ocudu/ntn/ntn_doppler_compensation_handler.h"
+#include "ocudu/ntn/ntn_meas_info_update_handler.h"
 #include "ocudu/ntn/ntn_sib19_update_handler.h"
 #include "ocudu/ntn/ntn_time_provider.h"
 
@@ -20,6 +21,7 @@ struct ntn_configuration_manager_dependencies {
   std::unique_ptr<ntn_sib19_update_handler>         sib19_msg_update_handler;
   std::unique_ptr<ntn_time_provider>                time_provider;
   std::unique_ptr<ntn_doppler_compensation_handler> doppler_handler;
+  std::unique_ptr<ntn_meas_info_update_handler>     meas_info_update_handler;
   timer_manager&                                    timers;
   task_executor&                                    executor;
 };

@@ -25,6 +25,7 @@ namespace ocudu_ntn {
 
 class ntn_sib19_update_handler;
 class ntn_doppler_compensation_handler;
+class ntn_meas_info_update_handler;
 class ntn_time_provider;
 
 /// Class that updates NTN Configuration based on the information provided by O&M.
@@ -126,6 +127,7 @@ private:
   std::unique_ptr<ntn_sib19_update_handler>         sib19_pdu_update_handler;
   std::unique_ptr<ntn_time_provider>                time_provider;
   std::unique_ptr<ntn_doppler_compensation_handler> doppler_handler;
+  std::unique_ptr<ntn_meas_info_update_handler>     meas_info_update_handler;
   timer_manager&                                    timers;
   task_executor&                                    executor;
   std::map<unsigned, per_satellite_context>         satellite_contexts;

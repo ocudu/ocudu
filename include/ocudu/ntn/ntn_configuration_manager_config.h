@@ -60,7 +60,13 @@ struct ntn_serving_cell_config {
 /// Neighbor NTN cell configuration: static (non-satellite-computed) fields only.
 /// Dynamic fields (ephemeris, ta_info, epoch_time) are filled by the generator from the orbital state.
 struct ntn_neighbor_cell_config {
-  unsigned                                 satellite_index;
+  unsigned satellite_index;
+  /// NR cell identity of the neighbour cell. Required to publish measurement-related NTN neighbour info
+  /// (ntn-NeighbourCellInfo-r18); ignored by the SIB19 path.
+  std::optional<nr_cell_identity> nci;
+  /// 2-D reference location of the neighbour cell (in degrees). Only used for measurement-related NTN neighbour info;
+  /// ignored by the SIB19 path.
+  std::optional<geodetic_coordinates_t>    reference_location;
   std::optional<arfcn_t>                   carrier_freq;
   std::optional<pci_t>                     phys_cell_id;
   std::optional<std::chrono::milliseconds> cell_specific_koffset;

@@ -25,8 +25,12 @@ ocudu::create_ntn_configuration_manager(const ntn_configuration_manager_config& 
   auto sib19_msg_update_handler = create_ntn_sib19_update_handler(du_cfgtr);
   auto time_provider            = create_du_high_ntn_time_provider(du_time_mapper);
 
-  ntn_configuration_manager_dependencies dependencies{
-      std::move(sib19_msg_update_handler), std::move(time_provider), std::move(doppler_handler), timers, executor};
+  ntn_configuration_manager_dependencies dependencies{std::move(sib19_msg_update_handler),
+                                                      std::move(time_provider),
+                                                      std::move(doppler_handler),
+                                                      /*meas_info_update_handler=*/nullptr,
+                                                      timers,
+                                                      executor};
 
   return ocudu::ocudu_ntn::create_ntn_configuration_manager(ntn_config, std::move(dependencies));
 }

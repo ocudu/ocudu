@@ -234,8 +234,12 @@ TEST(sat_switch_apply_integration_test, promotes_switch_target_at_t_service_not_
   auto  sib19_handler = std::make_unique<fake_sib19_update_handler>();
   auto* sib19_ptr     = sib19_handler.get();
 
-  ntn_configuration_manager_dependencies deps{
-      std::move(sib19_handler), std::make_unique<fake_ntn_time_provider>(t0), nullptr, timers, executor};
+  ntn_configuration_manager_dependencies deps{std::move(sib19_handler),
+                                              std::make_unique<fake_ntn_time_provider>(t0),
+                                              /*doppler_handler=*/nullptr,
+                                              /*meas_info_update_handler=*/nullptr,
+                                              timers,
+                                              executor};
 
   ntn_configuration_manager_impl manager(cfg, std::move(deps));
 
@@ -306,8 +310,12 @@ TEST(sat_switch_apply_integration_test, does_not_promote_when_promote_to_serving
   auto  sib19_handler = std::make_unique<fake_sib19_update_handler>();
   auto* sib19_ptr     = sib19_handler.get();
 
-  ntn_configuration_manager_dependencies deps{
-      std::move(sib19_handler), std::make_unique<fake_ntn_time_provider>(t0), nullptr, timers, executor};
+  ntn_configuration_manager_dependencies deps{std::move(sib19_handler),
+                                              std::make_unique<fake_ntn_time_provider>(t0),
+                                              /*doppler_handler=*/nullptr,
+                                              /*meas_info_update_handler=*/nullptr,
+                                              timers,
+                                              executor};
 
   ntn_configuration_manager_impl manager(cfg, std::move(deps));
 
