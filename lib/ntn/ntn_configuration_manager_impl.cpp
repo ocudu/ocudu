@@ -9,13 +9,14 @@
 #include "ocudu/ntn/ntn_doppler_compensation_handler.h"
 #include "ocudu/ntn/ntn_sib19_update_handler.h"
 #include "ocudu/ran/sib/system_info_config.h"
+#include "ocudu/support/ocudu_assert.h"
 #include "fmt/chrono.h"
 
 using namespace ocudu;
 using namespace ocudu_ntn;
 
 /// \brief Compute current Doppler shift in Hz based on TA drift.
-/// \param ta_common_drift_us_per_s Timing advance drift [µs/s]
+/// \param ta_common_drift_us_per_s Timing advance drift [us/s]
 /// \param carrier_freq_hz Carrier frequency [Hz]
 /// \return Doppler shift in Hz
 static double compute_doppler_hz(double ta_common_drift_us_per_s, double carrier_freq_hz)
@@ -24,7 +25,7 @@ static double compute_doppler_hz(double ta_common_drift_us_per_s, double carrier
 }
 
 /// \brief Doppler shift rate in Hz/s based on TA drift derivative.
-/// \param ta_common_drift_variant_us_per_s2 Timing advance drift rate [µs/s²]
+/// \param ta_common_drift_variant_us_per_s2 Timing advance drift rate [us/s^2]
 /// \param carrier_freq_hz Carrier frequency [Hz]
 /// \return Doppler frequency rate (derivative) in Hz/s
 static double compute_doppler_shift_rate_hz_per_s(double ta_common_drift_variant_us_per_s2, double carrier_freq_hz)
@@ -102,7 +103,7 @@ static void merge_cell_config_update(ntn_cell_config& cfg, const ntn_cell_config
 static slot_point get_next_si_win_start(const ntn_si_scheduling_info& si_sched, slot_point cur_sl)
 {
   // 2> The concerned SI message is configured in the schedulingInfoList2.
-  // 3> Determine the integer value x = (si-WindowPosition -1) × w, where w is
+  // 3> Determine the integer value x = (si-WindowPosition -1) * w, where w is
   // the si-WindowLength. See TS 38 331 V17.0.0.
   unsigned x = (si_sched.si_window_position - 1) * si_sched.si_window_len_slots;
 
@@ -165,6 +166,10 @@ ntn_configuration_manager_impl::ntn_configuration_manager_impl(const ntn_configu
   }
 
   for (const auto& cell_config : config.cells) {
+    // Enforced at config creation (see generate_ntn_configuration_manager_config).
+    ocudu_assert(cell_config.si_sched.has_value() != cell_config.update_period.has_value(),
+                 "Cell={:#x} must configure exactly one of SI scheduling info or update period",
+                 cell_config.nr_cgi.nci);
     auto [it, inserted] = cells.try_emplace(cell_config.nr_cgi);
     if (!inserted) {
       logger.error("Duplicate cell={:#x} in NTN configuration, skipping", cell_config.nr_cgi.nci);
@@ -187,10 +192,11 @@ ntn_configuration_manager_impl::ntn_configuration_manager_impl(const ntn_configu
       }
     }
 
-    // Create per-cell timer for SIB19 updating task.
-    auto si_period_ms = cell_config.si_sched.si_period_rf * 10;
-    ctx.timer         = timers.create_unique_timer(executor);
-    ctx.timer.set(std::chrono::milliseconds(si_period_ms), [this, nr_cgi = cell_config.nr_cgi]() {
+    // Create per-cell timer for the periodic update task, aligned to the SI period when SIB19 is scheduled.
+    auto period_ms = cell_config.si_sched ? std::chrono::milliseconds(cell_config.si_sched->si_period_rf * 10)
+                                          : *cell_config.update_period;
+    ctx.timer      = timers.create_unique_timer(executor);
+    ctx.timer.set(period_ms, [this, nr_cgi = cell_config.nr_cgi]() {
       // Check if cell context still exists before processing.
       auto ctx_it = cells.find(nr_cgi);
       if (ctx_it == cells.end()) {
@@ -441,11 +447,25 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
 
   auto& ctx = it->second;
 
-  const ntn_cell_config& cell_cfg          = get_cell_config(ctx, tp);
-  slot_point             next_si_win_start = get_next_si_win_start(cell_cfg.si_sched, sl);
-  slot_point             next_si_win_end   = next_si_win_start + cell_cfg.si_sched.si_window_len_slots;
-  // If absent for the NTN serving cell, the epoch time is the end of SI window where this SIB19 is scheduled.
-  slot_point epoch_slot = next_si_win_end + 1;
+  const ntn_cell_config& cell_cfg = get_cell_config(ctx, tp);
+
+  // Derive the epoch slot: from the SI windows when SIB19 is scheduled for this cell, otherwise the current slot.
+  slot_point next_si_win_start;
+  slot_point next_si_win_end;
+  slot_point epoch_slot;
+  if (cell_cfg.si_sched) {
+    next_si_win_start = get_next_si_win_start(*cell_cfg.si_sched, sl);
+    next_si_win_end   = next_si_win_start + cell_cfg.si_sched->si_window_len_slots;
+    // If absent for the NTN serving cell, the epoch time is the end of SI window where this SIB19 is scheduled.
+    epoch_slot = next_si_win_end + 1;
+  } else {
+    // No SIB19 broadcast: this feeds NTN-NeighbourCellInfo-r18, whose EpochTime is delivered asynchronously via
+    // dedicated RRC (only on a UE-triggered reconfiguration). Per TS 38.331 the neighbour epoch is the SFN nearest to
+    // the frame where the message is received, so anchor it to the current slot rather than an update_period ahead;
+    // the update period drives only the regeneration cadence. Keeping it near "now" also stays well within the 10-bit
+    // SFN wrap (+/-5.12 s) regardless of the configured period.
+    epoch_slot = sl;
+  }
   auto       slot_diff  = epoch_slot - sl;
   time_point epoch_time = tp + std::chrono::milliseconds(slot_diff);
 
@@ -458,7 +478,7 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
 
     // Recompute epoch_time if an offset provided then with the offset.
     if (ntn_cfg.epoch_sfn_offset) {
-      epoch_slot += *ntn_cfg.epoch_sfn_offset * next_si_win_start.nof_slots_per_frame();
+      epoch_slot += *ntn_cfg.epoch_sfn_offset * sl.nof_slots_per_frame();
       slot_diff  = epoch_slot - sl;
       epoch_time = tp + std::chrono::milliseconds(slot_diff);
     }
@@ -529,7 +549,7 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
   }
 
   // Send SIB19 PDU to DU.
-  if (sib19_pdu_update_handler) {
+  if (sib19_pdu_update_handler and cell_cfg.si_sched) {
     if (OCUDU_UNLIKELY(logger.debug.enabled())) {
       if (cell_cfg.ntn_cfg) {
         assistance_info_wrapper serving_info{next_si_win_start,
@@ -553,10 +573,10 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
 
     ntn_sib19_update_request ntn_req;
     ntn_req.nr_cgi         = cell_cfg.nr_cgi;
-    ntn_req.si_msg_idx     = cell_cfg.si_sched.si_msg_idx;
+    ntn_req.si_msg_idx     = cell_cfg.si_sched->si_msg_idx;
     ntn_req.sib_idx        = 19;
     ntn_req.slot           = next_si_win_start;
-    ntn_req.si_slot_period = cell_cfg.si_sched.si_period_rf * next_si_win_start.nof_slots_per_frame();
+    ntn_req.si_slot_period = cell_cfg.si_sched->si_period_rf * next_si_win_start.nof_slots_per_frame();
     ntn_req.epoch_time     = epoch_time;
 
     ntn_req.sib19 = generate_sib19_info(cell_cfg,

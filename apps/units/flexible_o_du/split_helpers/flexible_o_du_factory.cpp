@@ -381,6 +381,12 @@ generate_ntn_configuration_manager_config(const gnb_id_t&                       
         }
       }
     }
+
+    // Each NTN cell must configure exactly one of SIB19 scheduling info or an explicit update period.
+    if (out_cell.si_sched.has_value() == out_cell.update_period.has_value()) {
+      report_error("NTN cell={:#x} must configure exactly one of SIB19 scheduling info or an explicit update period",
+                   out_cell.nr_cgi.nci);
+    }
   }
   return out_cfg;
 }

@@ -108,8 +108,14 @@ struct ntn_cell_config {
   nr_cell_global_id_t nr_cgi;
   /// Sector Id (4-14 bits).
   std::optional<unsigned> sector_id;
-  /// SIB19 scheduling information.
-  ntn_si_scheduling_info si_sched;
+  /// SIB19 scheduling information. Present when the manager broadcasts SIB19 for this cell (DU); the update period and
+  /// epoch time are then derived from the SI windows. Mutually exclusive with update_period.
+  std::optional<ntn_si_scheduling_info> si_sched;
+  /// Regeneration period, used when no SIB19 is scheduled for this cell (e.g. measurement-related NTN neighbour info
+  /// generation in the CU-CP). The epoch time is anchored to the current slot at each regeneration. Mutually exclusive
+  /// with si_sched. Keep well below 5.12 s (default 1 s): the info is delivered asynchronously via dedicated RRC, so a
+  /// stale epoch beyond that aliases to the wrong window given the 10-bit (10.24 s) EpochTime SFN wrap.
+  std::optional<std::chrono::milliseconds> update_period;
   /// NTN serving cell configuration (SIB19 fields and generation metadata). Absent for TN serving cells.
   std::optional<ntn_serving_cell_config> ntn_cfg;
   /// Satellite-switch target configuration. Absent if sat-switch is not configured and in TN serving cells.
