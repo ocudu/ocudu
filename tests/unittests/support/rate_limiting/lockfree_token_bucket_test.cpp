@@ -14,6 +14,13 @@ static void tick_all(timer_manager& timers, uint32_t nof_ticks)
   }
 }
 
+/// \brief Test if token bucket is lockfree.
+TEST(lockfree_token_bucket_test, is_lock_free)
+{
+  std::atomic<lockfree_token_bucket::tick_t> empty_time;
+  ASSERT_TRUE(empty_time.is_lock_free());
+}
+
 /// \brief Test token bucket consume and re-fill.
 TEST(lockfree_token_bucket_test, consume_and_refill_test)
 {

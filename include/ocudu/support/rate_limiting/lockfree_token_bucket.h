@@ -27,12 +27,12 @@ public:
 
   void stop();
 
-private:
   /// Type to represent the virtual empty time. It must have sufficient resolution
   /// so that consuming a PDU worth of tokens does not get quantized. In this implementation
   /// it is represented in nanoseconds.
   using tick_t = uint64_t;
 
+private:
   tick_t get_now()
   {
     // Return in nanoseconds the current tick time.

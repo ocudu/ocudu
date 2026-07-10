@@ -13,16 +13,14 @@ lockfree_token_bucket::lockfree_token_bucket(uint64_t rate_, uint64_t capacity_,
   timer_mng(timer_mng_),
   logger(ocudulog::fetch_basic_logger("ALL"))
 {
-  if (not empty_time.is_lock_free()) {
-    logger.warning("Rate limiter is not lock free");
-  }
 }
 
 bool lockfree_token_bucket::consume(uint32_t tokens)
 {
   tick_t                         now         = get_now();
   const std::chrono::nanoseconds time_needed = time_per_token * tokens;
-  tick_t                         min_time    = now - time_to_fill_from_empty.count(); // clamp to capacity.
+  // Clamp time to bucket capacity.
+  tick_t min_time = now - time_to_fill_from_empty.count();
 
   tick_t old_time = empty_time.load(std::memory_order_relaxed);
 
