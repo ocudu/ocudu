@@ -236,5 +236,28 @@ struct formatter<ocudu::resume_cause_t> {
     return format_to(ctx.out(), "unknown");
   }
 };
+template <>
+struct formatter<ocudu::establishment_fail_cause_t> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
+  {
+    return ctx.begin();
+  }
 
+  template <typename FormatContext>
+  auto format(ocudu::establishment_fail_cause_t o, FormatContext& ctx) const
+  {
+    if (o == ocudu::establishment_fail_cause_t::network_reject) {
+      return format_to(ctx.out(), "network reject");
+    }
+    if (o == ocudu::establishment_fail_cause_t::no_reply) {
+      return format_to(ctx.out(), "no reply");
+    }
+    if (o == ocudu::establishment_fail_cause_t::other) {
+      return format_to(ctx.out(), "other");
+    }
+
+    return format_to(ctx.out(), "unknown");
+  }
+};
 } // namespace fmt

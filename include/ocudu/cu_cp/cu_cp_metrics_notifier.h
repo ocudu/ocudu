@@ -97,6 +97,17 @@ inline std::string format_rrc_metrics(const std::vector<cu_cp_metrics_report::du
     }
     fmt::format_to(std::back_inserter(buffer), " ]");
 
+    fmt::format_to(std::back_inserter(buffer), " failed_rrc_connection_establishments=[");
+    cause_index = 0;
+    for (const auto& cause_count : du_info.rrc_metrics.failed_rrc_connection_establishments) {
+      fmt::format_to(std::back_inserter(buffer),
+                     " {}={}",
+                     du_info.rrc_metrics.failed_rrc_connection_establishments.get_cause(cause_index),
+                     cause_count);
+      ++cause_index;
+    }
+    fmt::format_to(std::back_inserter(buffer), " ]");
+
     fmt::format_to(
         std::back_inserter(buffer),
         " attempted_rrc_connection_reestablishments={} successful_rrc_connection_reestablishments_with_ue_context={} "
