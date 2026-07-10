@@ -845,7 +845,7 @@ void intra_slice_scheduler::update_used_dl_vrbs(const dl_ran_slice_candidate& sl
   // Note: It is not a problem if the symbols go beyond the DL symbols in the special slot, because UL is reserved in
   // a separate grid.
   const auto&              init_dl_bwp      = cell_alloc.cfg.params.dl_cfg_common.init_dl_bwp;
-  const ofdm_symbol_range& symbols_to_check = init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].symbols;
+  const ofdm_symbol_range& symbols_to_check = cell_alloc.cfg.init_bwp.dl.td_mapper().pdsch_td_resources()[0].symbols;
 
   enable_pdsch_interleaving = ss_info.interleaved_mapping.has_value();
   if (enable_pdsch_interleaving) {

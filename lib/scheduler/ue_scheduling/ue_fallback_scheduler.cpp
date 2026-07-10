@@ -1327,7 +1327,7 @@ void ue_fallback_scheduler::fill_ul_srb_grant(ue&                               
 
 const pdsch_time_domain_resource_allocation& ue_fallback_scheduler::get_pdsch_td_cfg(unsigned pdsch_time_res_idx) const
 {
-  return cell_cfg.params.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[pdsch_time_res_idx];
+  return cell_cfg.init_bwp.dl.td_mapper().pdsch_td_resources()[pdsch_time_res_idx];
 }
 
 std::optional<unsigned>
@@ -1336,17 +1336,9 @@ ue_fallback_scheduler::get_pdsch_time_res_idx(const pdsch_config_common&        
                                               const std::optional<dl_harq_process_handle>& h_dl_retx) const
 {
   std::optional<unsigned> candidate_pdsch_time_res_idx;
-  for (unsigned time_res_idx = 0; time_res_idx != pdsch_cfg.pdsch_td_alloc_list.size(); ++time_res_idx) {
+  auto                    pdsch_td_res_indices = cell_cfg.init_bwp.dl.td_mapper().pdsch_td_res_indices(sl_tx.count());
+  for (uint8_t time_res_idx : pdsch_td_res_indices) {
     const pdsch_time_domain_resource_allocation& pdsch_td_cfg = get_pdsch_td_cfg(time_res_idx);
-    // Check whether PDSCH time domain resource does not overlap with CORESET.
-    if (pdsch_td_cfg.symbols.start() < ss_cfg.get_first_symbol_index() + cs_cfg.duration()) {
-      continue;
-    }
-
-    // Check whether PDSCH time domain resource fits in DL symbols of the slot.
-    if (pdsch_td_cfg.symbols.stop() > cell_cfg.get_nof_dl_symbol_per_slot(sl_tx)) {
-      continue;
-    }
 
     // For retransmissions, we want to make sure we use the same number of symbols as the original transmission.
     if (h_dl_retx.has_value()) {
@@ -1356,6 +1348,7 @@ ue_fallback_scheduler::get_pdsch_time_res_idx(const pdsch_config_common&        
       candidate_pdsch_time_res_idx = time_res_idx;
       return candidate_pdsch_time_res_idx;
     }
+
     // For new transmissions, we want to search for the PDSCH time domain resource with the largest number of symbols.
     if (candidate_pdsch_time_res_idx.has_value() and
         pdsch_td_cfg.symbols.length() < get_pdsch_td_cfg(candidate_pdsch_time_res_idx.value()).symbols.length()) {

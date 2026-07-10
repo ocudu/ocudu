@@ -54,6 +54,14 @@ struct dl_time_domain_mapper {
     return pdsch_td_res_indices_per_slot[pdcch_slot_index % pdsch_td_res_indices_per_slot.size()];
   }
 
+  /// \brief Get the index into \ref pdsch_td_resources() of the best-matching PDSCH TD resource candidate for a PDCCH
+  /// in \c pdcch_slot, whose k0 leads to \c pdsch_slot and whose symbols are fully contained within \c
+  /// usable_symbols. "Best" means the candidate with the largest \c symbols.length() among those that qualify; ties
+  /// keep the first one encountered.
+  /// \return The matching index, or \c std::nullopt if no candidate qualifies.
+  std::optional<uint8_t>
+  find_pdsch_td_res_index(slot_point pdcch_slot, slot_point pdsch_slot, ofdm_symbol_range usable_symbols) const;
+
 private:
   /// \brief List of available PDSCH time-domain resource allocations for the BWP.
   std::vector<pdsch_time_domain_resource_allocation> pdsch_td_res_list;

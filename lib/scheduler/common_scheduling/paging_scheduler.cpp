@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "paging_scheduler.h"
+#include "../config/time_domain_mapper.h"
 #include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/pdsch/pdsch_default_time_allocation.h"
@@ -61,9 +62,7 @@ paging_scheduler::paging_scheduler(const cell_configuration& cell_cfg_,
 
   // See TS 38.214, Table 5.1.2.1.1-1.
   // TODO: Select PDSCH time domain resource allocation to apply based on SS/PBCH and CORESET mux. pattern.
-  pdsch_td_alloc_list = cell_cfg.params.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.empty()
-                            ? pdsch_default_time_allocations_default_A_table(bwp_cfg.cp, cell_cfg.params.dmrs_typeA_pos)
-                            : cell_cfg.params.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
+  pdsch_td_alloc_list = cell_cfg.init_bwp.dl.td_mapper().pdsch_td_resources();
 
   // Generate an empty vector for each element of pdsch_time_res_idx_to_scheduled_ues_lookup; only then we can reserve
   // the capacity.

@@ -62,6 +62,26 @@ dl_time_domain_mapper::dl_time_domain_mapper(const dl_time_domain_builder_params
       generate_pdsch_td_res_indices_per_tdd_slot(pdsch_td_res_list, params.tdd_cfg, params.cp);
 }
 
+std::optional<uint8_t> dl_time_domain_mapper::find_pdsch_td_res_index(slot_point        pdcch_slot,
+                                                                      slot_point        pdsch_slot,
+                                                                      ofdm_symbol_range usable_symbols) const
+{
+  std::optional<uint8_t> best;
+  for (uint8_t idx : pdsch_td_res_indices(pdcch_slot.count())) {
+    const pdsch_time_domain_resource_allocation& pdsch_td_res = pdsch_td_res_list[idx];
+    if (pdcch_slot + pdsch_td_res.k0 != pdsch_slot) {
+      continue;
+    }
+    if (not usable_symbols.contains(pdsch_td_res.symbols)) {
+      continue;
+    }
+    if (not best.has_value() or pdsch_td_res_list[*best].symbols.length() < pdsch_td_res.symbols.length()) {
+      best = idx;
+    }
+  }
+  return best;
+}
+
 /// \brief Computes the list of valid PUCCH k1 values that can be used for a given DL slot.
 ///
 /// For TDD, the returned vector is circularly indexed by slot within the TDD period (size = TDD period length). For
