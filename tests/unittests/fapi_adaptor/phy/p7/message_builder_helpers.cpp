@@ -770,6 +770,7 @@ ul_pusch_pdu unittest::build_valid_ul_pusch_pdu()
 
   pdu.pusch_data = std::make_optional(ul_pusch_data{
       .rv_index = 2, .harq_process_id = to_harq_id(2), .new_data = false, .tb_size = units::bytes{213131}});
+  pdu.harq_id    = to_harq_id(2);
 
   pdu.pusch_uci = std::make_optional(ul_pusch_uci{.harq_ack_bit         = units::bits(3),
                                                   .csi_part1_bit        = units::bits(4),

@@ -21,8 +21,6 @@ class uplink_pdu_slot_repository
 public:
   /// PUSCH PDU configuration.
   struct pusch_pdu {
-    /// HARQ process number.
-    harq_id_t harq_id;
     /// Transport block size.
     units::bytes tb_size;
     /// PUSCH processor PDU.

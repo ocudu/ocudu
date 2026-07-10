@@ -280,7 +280,7 @@ void uplink_processor_impl::process_pusch(const uplink_pdu_slot_repository::pusc
   ocudu_assert(proc_pdu.codeword.has_value(), "PUSCH PDU doesn't contain data. Currently, that mode is not supported.");
 
   // Create buffer identifier.
-  trx_buffer_identifier id(proc_pdu.rnti, pdu.harq_id);
+  trx_buffer_identifier id(proc_pdu.rnti, pdu.pdu.harq_id);
 
   // Determine the number of codeblocks from the TBS and base graph.
   unsigned nof_codeblocks = compute_nof_codeblocks(pdu.tb_size.to_bits(), proc_pdu.codeword->ldpc_base_graph);
@@ -304,7 +304,7 @@ void uplink_processor_impl::process_pusch(const uplink_pdu_slot_repository::pusc
                    pdu.pdu.slot.slot_index(),
                    "UL rnti={} h_id={}: insufficient available payload data in the buffer pool for TB of size {}",
                    pdu.pdu.rnti,
-                   pdu.harq_id,
+                   pdu.pdu.harq_id,
                    pdu.tb_size);
     notify_discard_pusch(pdu);
     return;
@@ -316,7 +316,7 @@ void uplink_processor_impl::process_pusch(const uplink_pdu_slot_repository::pusc
     // Assume that count_pusch_adaptors will not exceed MAX_PUSCH_PDUS_PER_SLOT.
     unsigned                         notifier_adaptor_id = count_pusch_adaptors.fetch_add(1, std::memory_order_acq_rel);
     pusch_processor_result_notifier& processor_notifier  = pusch_adaptors[notifier_adaptor_id].configure(
-        notifier, pdu.pdu.rnti, pdu.pdu.slot, to_harq_id(pdu.harq_id), data, pdu.pdu.n_rapid, [this]() {
+        notifier, pdu.pdu.rnti, pdu.pdu.slot, pdu.pdu.harq_id, data, pdu.pdu.n_rapid, [this]() {
           state_machine.on_finish_processing_pdu();
         });
 
@@ -482,7 +482,7 @@ void uplink_processor_impl::notify_discard_pusch(const uplink_pdu_slot_repositor
   // Report data-related discarded result if shared channel data is present.
   if (pdu.pdu.codeword.has_value()) {
     ul_pusch_results_data discarded_results =
-        ul_pusch_results_data::create_discarded(pdu.pdu.rnti, pdu.pdu.slot, pdu.harq_id);
+        ul_pusch_results_data::create_discarded(pdu.pdu.rnti, pdu.pdu.slot, pdu.pdu.harq_id);
     notifier.on_new_pusch_results_data(discarded_results);
   }
 

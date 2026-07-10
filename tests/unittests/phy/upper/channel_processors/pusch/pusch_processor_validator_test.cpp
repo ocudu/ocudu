@@ -5,7 +5,6 @@
 #include "ocudu/phy/upper/channel_processors/pusch/factories.h"
 #include "ocudu/phy/upper/channel_processors/pusch/formatters.h"
 #include "ocudu/phy/upper/equalization/equalization_factories.h"
-#include "ocudu/ran/uci/uci_constants.h"
 #include "ocudu/support/executors/inline_task_executor.h"
 #include "fmt/ostream.h"
 #include "gtest/gtest.h"
@@ -21,7 +20,7 @@ constexpr unsigned max_supported_nof_layers = 2;
 const symbol_slot_mask dmrs_symbol_mask =
     {false, false, true, false, false, false, false, false, false, false, false, true, false, false};
 /// Default valid PUSCH processor configuration.
-const pusch_processor::pdu_t base_pdu = {.context          = std::nullopt,
+const pusch_processor::pdu_t base_pdu = {.harq_id          = INVALID_HARQ_ID,
                                          .slot             = {0, 9},
                                          .rnti             = to_rnti(8323),
                                          .bwp_size_rb      = 25,

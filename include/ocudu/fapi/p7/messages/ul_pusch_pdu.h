@@ -9,10 +9,10 @@
 #include "ocudu/ran/cyclic_prefix.h"
 #include "ocudu/ran/dmrs/dmrs.h"
 #include "ocudu/ran/harq_id.h"
-#include "ocudu/ran/pusch/pusch_context.h"
 #include "ocudu/ran/pusch/pusch_mcs.h"
 #include "ocudu/ran/resource_allocation/ofdm_symbol_range.h"
 #include "ocudu/ran/resource_allocation/rb_interval.h"
+#include "ocudu/ran/rnti.h"
 #include "ocudu/ran/sch/ldpc_base_graph.h"
 #include "ocudu/ran/subcarrier_spacing.h"
 #include "ocudu/ran/uci/uci_configuration.h"
@@ -86,8 +86,7 @@ struct ul_pusch_pdu {
   std::optional<uci_part1_to_part2_correspondence> uci_correspondence;
   std::optional<uint8_t>                           rapid;
   std::optional<tti_bundling>                      repetitions;
-  /// Vendor specific parameters.
-  std::optional<pusch_context> context;
+  harq_id_t                                        harq_id = INVALID_HARQ_ID;
 };
 
 } // namespace fapi
@@ -161,6 +160,15 @@ struct formatter<ocudu::fapi::ul_pusch_pdu> {
                 pdu.pusch_uci->beta_offset_csi1,
                 pdu.pusch_uci->beta_offset_csi2);
     }
+
+    if (pdu.repetitions.has_value()) {
+      format_to(ctx.out(),
+                " tb_over_ms_num_total_slots={} tb_over_ms_remaining_slots={}",
+                pdu.repetitions->tb_over_ms_num_total_slots,
+                pdu.repetitions->tb_over_ms_remaining_slots);
+    }
+
+    format_to(ctx.out(), " harq_id={}", pdu.harq_id);
 
     return ctx.out();
   }

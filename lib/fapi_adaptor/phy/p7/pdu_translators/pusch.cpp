@@ -20,7 +20,6 @@ static void fill_codeword(uplink_pdu_slot_repository::pusch_pdu& pdu, const fapi
   cw.ldpc_base_graph = fapi_pdu.ldpc_base_graph;
   cw.new_data        = fapi_pdu.pusch_data->new_data;
 
-  pdu.harq_id = fapi_pdu.pusch_data->harq_process_id;
   pdu.tb_size = fapi_pdu.pusch_data->tb_size;
 
   pdu.pdu.codeword = std::optional<pusch_processor::codeword_description>(cw);
@@ -122,7 +121,7 @@ void ocudu::fapi_adaptor::convert_pusch_fapi_to_phy(uplink_pdu_slot_repository::
 
   fill_uci(proc_pdu, fapi_pdu, part2_repo);
 
-  proc_pdu.context = fapi_pdu.context;
+  proc_pdu.harq_id = fapi_pdu.harq_id;
 
   // Fill the antenna port indices starting from 0.
   proc_pdu.rx_ports.resize(num_rx_ant);

@@ -206,10 +206,10 @@ public:
     return *this;
   }
 
-  /// Sets the PUSCH context as vendor specific.
-  ul_pusch_pdu_builder& set_context_vendor_specific(rnti_t rnti, harq_id_t harq_id)
+  /// Sets the PUSCH HARQ identifier.
+  ul_pusch_pdu_builder& set_harq_id(harq_id_t harq_id)
   {
-    pdu.context = pusch_context(rnti, harq_id);
+    pdu.harq_id = harq_id;
     return *this;
   }
 };

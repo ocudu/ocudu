@@ -11,7 +11,8 @@
 #include "ocudu/phy/support/rb_allocation.h"
 #include "ocudu/ran/cyclic_prefix.h"
 #include "ocudu/ran/dmrs/dmrs.h"
-#include "ocudu/ran/pusch/pusch_context.h"
+#include "ocudu/ran/harq_id.h"
+#include "ocudu/ran/rnti.h"
 #include "ocudu/ran/sch/ldpc_base_graph.h"
 #include "ocudu/ran/sch/sch_mcs.h"
 #include "ocudu/ran/slot_point.h"
@@ -100,8 +101,8 @@ public:
   ///
   /// For a valid PUSCH transmission the codeword, the UCI information or both must be present.
   struct pdu_t {
-    /// Context information.
-    std::optional<pusch_context> context;
+    /// HARQ identifier.
+    harq_id_t harq_id = INVALID_HARQ_ID;
     /// Indicates the slot and numerology.
     slot_point slot;
     /// Provides \f$n_{RNTI}\f$ from TS38.211 Section 6.3.1.1 Scrambling.

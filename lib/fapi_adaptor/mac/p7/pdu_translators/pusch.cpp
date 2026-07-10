@@ -111,6 +111,6 @@ void ocudu::fapi_adaptor::convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu_builder& 
     builder.add_optional_rapid(*mac_pdu.context.rapid);
   }
 
-  // Set PUSCH context for logging.
-  builder.set_context_vendor_specific(pusch_pdu.rnti, pusch_pdu.harq_id);
+  // Set PUSCH HARQ identifier for logging.
+  builder.set_harq_id(pusch_pdu.harq_id);
 }

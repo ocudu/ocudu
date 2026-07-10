@@ -8,7 +8,6 @@
 #include "ocudu/phy/upper/channel_processors/pusch/pusch_processor.h"
 #include "ocudu/phy/upper/channel_processors/pusch/pusch_processor_result_notifier.h"
 #include "ocudu/phy/upper/channel_state_information_formatters.h"
-#include "ocudu/ran/pusch/pusch_context_formatter.h"
 #include "ocudu/ran/uci/uci_formatters.h"
 #include <fmt/std.h>
 
@@ -111,11 +110,8 @@ struct formatter<ocudu::pusch_processor::pdu_t> {
   template <typename FormatContext>
   auto format(const ocudu::pusch_processor::pdu_t& pdu, FormatContext& ctx) const
   {
-    if (pdu.context.has_value()) {
-      helper.format_always(ctx, *pdu.context);
-    } else {
-      helper.format_always(ctx, "rnti={}", pdu.rnti);
-    }
+    helper.format_always(ctx, "rnti={}", pdu.rnti);
+    helper.format_always(ctx, "harq_id={}", underlying(pdu.harq_id));
     helper.format_if_verbose(ctx, "bwp=[{}, {})", pdu.bwp_start_rb, pdu.bwp_start_rb + pdu.bwp_size_rb);
     helper.format_always(ctx, "prb={}", pdu.freq_alloc);
     helper.format_always(ctx, "symb=[{}, {})", pdu.start_symbol_index, pdu.start_symbol_index + pdu.nof_symbols);

@@ -299,7 +299,7 @@ private:
     std::iota(rx_ports.begin(), rx_ports.end(), 0U);
 
     // Prepare PUSCH processor configuration.
-    pusch_config.context            = std::nullopt;
+    pusch_config.harq_id            = INVALID_HARQ_ID;
     pusch_config.slot               = slot_point(to_numerology_value(scs), 0);
     pusch_config.rnti               = rnti;
     pusch_config.bwp_size_rb        = bwp_size_rb;
