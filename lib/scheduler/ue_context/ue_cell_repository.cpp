@@ -14,7 +14,12 @@ class harq_manager_timeout_notifier : public harq_timeout_notifier
 public:
   explicit harq_manager_timeout_notifier(cell_metrics_handler& metrics_handler_) : metrics_handler(metrics_handler_) {}
 
-  void on_harq_timeout(du_ue_index_t ue_idx, bool is_dl, bool ack) override
+  void on_feedback_timeout(du_ue_index_t ue_idx, bool is_dl, bool ack) override
+  {
+    metrics_handler.handle_harq_timeout(ue_idx, is_dl);
+  }
+
+  void on_retx_timeout(du_ue_index_t ue_idx, bool is_dl) override
   {
     metrics_handler.handle_harq_timeout(ue_idx, is_dl);
   }

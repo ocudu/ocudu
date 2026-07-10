@@ -70,9 +70,13 @@ public:
     public:
       dummy_notifier(dummy_harq_timeout_handler& parent_) : parent(parent_) {}
 
-      void on_harq_timeout(du_ue_index_t ue_index, bool is_dl, bool ack) override
+      void on_feedback_timeout(du_ue_index_t ue_index, bool is_dl, bool ack) override
       {
         parent.handle_harq_timeout(ue_index, is_dl, ack);
+      }
+      void on_retx_timeout(du_ue_index_t ue_index, bool is_dl) override
+      {
+        parent.handle_harq_timeout(ue_index, is_dl, false);
       }
       void on_feedback_disabled_harq_timeout(du_ue_index_t ue_index, bool is_dl, units::bytes tbs) override
       {

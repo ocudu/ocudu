@@ -16,7 +16,10 @@ namespace {
 class noop_harq_timeout_notifier : public harq_timeout_notifier
 {
 public:
-  void on_harq_timeout(du_ue_index_t ue_idx, bool is_dl, bool ack) override
+  void on_feedback_timeout(du_ue_index_t ue_idx, bool is_dl, bool ack) override
+  { // Do nothing.
+  }
+  void on_retx_timeout(du_ue_index_t ue_idx, bool is_dl) override
   { // Do nothing.
   }
   void on_feedback_disabled_harq_timeout(du_ue_index_t ue_idx, bool is_dl, units::bytes tbs) override
@@ -239,6 +242,9 @@ void cell_harq_repository<IsDl>::handle_harq_ack_timeout(harq_type& h, slot_poin
                 fmt::underlying(h.h_id),
                 IsDl ? std::string_view{"DL"} : std::string_view{"UL"},
                 h.slot_timeout - h.slot_ack);
+
+    // Report the retx timeout after we delete the HARQ to avoid reentrancy.
+    timeout_notifier.on_retx_timeout(h.ue_idx, IsDl);
   } else {
     // The UCI outcome was never propagated to the HARQ.
     logger.warning("rnti={} h_id={}: Discarding {} HARQ. Cause: Timeout was reached ({} slots) to receive the "
@@ -250,7 +256,7 @@ void cell_harq_repository<IsDl>::handle_harq_ack_timeout(harq_type& h, slot_poin
                    h.slot_ack);
 
     // Report timeout with NACK after we delete the HARQ to avoid reentrancy.
-    timeout_notifier.on_harq_timeout(h.ue_idx, IsDl, false);
+    timeout_notifier.on_feedback_timeout(h.ue_idx, IsDl, false);
   }
 
   // Deallocate HARQ.
