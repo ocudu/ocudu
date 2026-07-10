@@ -31,15 +31,14 @@ using crb_index_list = static_vector<uint16_t, pdcch_constants::MAX_NOF_RB_PDCCH
 
 /// \brief Grouping of common and UE-dedicated information associated with a given search space.
 struct search_space_info {
-  const search_space_configuration*                 cfg     = nullptr;
-  const sched_coreset_config*                       coreset = nullptr;
-  const sched_bwp_config*                           bwp     = nullptr;
-  crb_interval                                      dl_crb_lims;
-  crb_interval                                      ul_crb_lims;
-  span<const pdsch_time_domain_resource_allocation> pdsch_time_domain_list;
-  std::optional<vrb_to_prb::interleaved_mapping>    interleaved_mapping;
-  dci_size_config                                   dci_sz_cfg;
-  dci_sizes                                         dci_sz;
+  const search_space_configuration*              cfg     = nullptr;
+  const sched_coreset_config*                    coreset = nullptr;
+  const sched_bwp_config*                        bwp     = nullptr;
+  crb_interval                                   dl_crb_lims;
+  crb_interval                                   ul_crb_lims;
+  std::optional<vrb_to_prb::interleaved_mapping> interleaved_mapping;
+  dci_size_config                                dci_sz_cfg;
+  dci_sizes                                      dci_sz;
 
   /// \brief Gets DL DCI format type to use based on SearchSpace configuration.
   /// \return DL DCI format.

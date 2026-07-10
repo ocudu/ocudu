@@ -39,8 +39,7 @@ void search_space_info::update_pdcch_candidates(
 
 void search_space_info::update_pdsch_time_domain_list(const ue_cell_configuration& ue_cell_cfg)
 {
-  pdsch_time_domain_list =
-      get_c_rnti_pdsch_time_domain_list(*cfg, *bwp, ue_cell_cfg.cell_cfg_common.params.dmrs_typeA_pos);
+  span<const pdsch_time_domain_resource_allocation> pdsch_time_domain_list = bwp->dl.td_mapper().pdsch_td_resources();
 
   pdsch_cfg_list.resize(pdsch_time_domain_list.size());
   for (unsigned i = 0; i != pdsch_time_domain_list.size(); ++i) {
@@ -266,7 +265,7 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
 
   // Fill out parameters for Format 1_1.
   dci_sz_cfg.nof_dl_bwp_rrc            = ue_cell_cfg.bwps().size() - (ue_cell_cfg.has_bwp_id(to_bwp_id(0)) ? 1 : 0);
-  dci_sz_cfg.nof_dl_time_domain_res    = ue_cell_cfg.search_space(ss_id).pdsch_time_domain_list.size();
+  dci_sz_cfg.nof_dl_time_domain_res    = active_bwp.dl.td_mapper().pdsch_td_resources().size();
   dci_sz_cfg.nof_aperiodic_zp_csi      = 0;
   dci_sz_cfg.nof_pdsch_ack_timings     = ss_info.get_dl_dci_format() == dci_dl_format::f1_0
                                              ? pucch_td_helper::get_common_k1_candidates().size()
