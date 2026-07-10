@@ -108,7 +108,7 @@ public:
                                     std::variant<cu_cp_ue_index_t, cu_cp_amf_index_t> ue_or_amf_index) = 0;
 };
 
-/// Handle ue context removal.
+/// Handle UE context removal and index updates.
 class nrppa_ue_context_removal_handler
 {
 public:
@@ -117,6 +117,15 @@ public:
   /// \brief Remove the context of an UE.
   /// \param[in] ue_index The index of the UE to remove.
   virtual void remove_ue_context(cu_cp_ue_index_t ue_index) = 0;
+
+  /// \brief Transfer the NRPPA context of a UE (if any) to a new UE index, e.g. following RRC re-establishment or
+  /// handover. A no-op if the UE has no NRPPA context.
+  /// \param[in] new_ue_index The new index of the UE.
+  /// \param[in] old_ue_index The old index of the UE.
+  /// \param[in] new_ue_notifier The notifier of the new UE.
+  virtual void update_ue_index(cu_cp_ue_index_t         new_ue_index,
+                               cu_cp_ue_index_t         old_ue_index,
+                               nrppa_cu_cp_ue_notifier& new_ue_notifier) = 0;
 };
 
 /// Combined entry point for the NRPPA object.

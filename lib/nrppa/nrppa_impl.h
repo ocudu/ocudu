@@ -32,6 +32,9 @@ public:
 
   // See nrppa_ue_context_removal_handler for documentation.
   void remove_ue_context(cu_cp_ue_index_t ue_index) override;
+  void update_ue_index(cu_cp_ue_index_t         new_ue_index,
+                       cu_cp_ue_index_t         old_ue_index,
+                       nrppa_cu_cp_ue_notifier& new_ue_notifier) override;
 
   /// \brief Initialize the measurement report timer for the UE.
   /// \param[in] ue_index The UE index.

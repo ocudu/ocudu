@@ -600,6 +600,10 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(cu_cp_ue_index_t ue_inde
     // Transfer E1AP UE Context to new UE and remove old context.
     cu_up_db.find_cu_up_processor(source_ue->get_cu_up_index())->update_ue_index(ue_index, old_ue_index);
 
+    // Transfer NRPPA UE Context (if any) to new UE and remove old context.
+    nrppa_entity->get_nrppa_ue_context_removal_handler().update_ue_index(
+        ue_index, old_ue_index, ue_mng.find_ue(ue_index)->get_nrppa_cu_cp_ue_notifier());
+
     // Transfer location reporting configuration from source UE to new UE.
     ue->get_location_manager().set_config(source_ue->get_location_manager().get_config());
 
@@ -696,6 +700,10 @@ void cu_cp_impl::handle_handover_ue_context_push(cu_cp_ue_index_t source_ue_inde
   }
   // Transfer E1AP UE Context to new UE and remove old context.
   cu_up_db.find_cu_up_processor(ue->get_cu_up_index())->update_ue_index(target_ue_index, source_ue_index);
+
+  // Transfer NRPPA UE Context (if any) to new UE and remove old context.
+  nrppa_entity->get_nrppa_ue_context_removal_handler().update_ue_index(
+      target_ue_index, source_ue_index, ue->get_nrppa_cu_cp_ue_notifier());
 
   // Transfer location reporting configuration and UE AMBR from source UE to target UE.
   auto* source_ue = ue_mng.find_ue(source_ue_index);
