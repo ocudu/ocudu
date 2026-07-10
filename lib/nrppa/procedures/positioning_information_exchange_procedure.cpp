@@ -158,12 +158,13 @@ asn1::nrppa::nr_ppa_pdu_c positioning_information_exchange_procedure::create_pos
 
       asn1_srs_carrier_item.active_ul_bwp.tx_direct_current_location =
           srs_carrier_item.active_ul_bwp.tx_direct_current_location;
-      if (srs_carrier_item.active_ul_bwp.shift7dot5k_hz.has_value()) {
+      // Shift7dot5kHz is encoded as a presence-implies-true ENUMERATED{true} OPTIONAL: only mark it present when
+      // the value is true, since there is no way to encode "false" other than absence.
+      if (srs_carrier_item.active_ul_bwp.shift7dot5k_hz.has_value() &&
+          srs_carrier_item.active_ul_bwp.shift7dot5k_hz.value()) {
         asn1_srs_carrier_item.active_ul_bwp.shift7dot5k_hz_present = true;
-        if (srs_carrier_item.active_ul_bwp.shift7dot5k_hz.value()) {
-          asn1_srs_carrier_item.active_ul_bwp.shift7dot5k_hz =
-              asn1::nrppa::active_ul_bwp_s::shift7dot5k_hz_opts::options::true_value;
-        }
+        asn1_srs_carrier_item.active_ul_bwp.shift7dot5k_hz =
+            asn1::nrppa::active_ul_bwp_s::shift7dot5k_hz_opts::options::true_value;
       }
       // > Fill SRS configuration.
       // >> Fill SRS res list.

@@ -283,8 +283,11 @@ inline void fill_trp_information_request(trp_information_request_t&             
 
   // Fill TRP information type list TRP request.
   for (const auto& asn1_trp_info_type_item_container : asn1_request->trp_info_type_list_trp_req) {
-    request.trp_info_type_list_trp_req.push_back(
-        asn1_to_trp_info_type_item(asn1_trp_info_type_item_container->trp_info_type_item()));
+    std::optional<trp_information_type_item_t> trp_info_type_item =
+        asn1_to_trp_info_type_item(asn1_trp_info_type_item_container->trp_info_type_item());
+    if (trp_info_type_item.has_value()) {
+      request.trp_info_type_list_trp_req.push_back(trp_info_type_item.value());
+    }
   }
 }
 
@@ -440,7 +443,11 @@ inline void fill_measurement_request(measurement_request_t& request, const asn1:
 
   // Fill TRP meas quantities.
   for (const auto& asn1_trp_meas_quantities_item : asn1_request->trp_meas_quantities) {
-    request.trp_meas_quantities.push_back(asn1_to_trp_meas_quantities_list_item(asn1_trp_meas_quantities_item));
+    std::optional<trp_meas_quantities_list_item_t> trp_meas_quantities_list_item =
+        asn1_to_trp_meas_quantities_list_item(asn1_trp_meas_quantities_item);
+    if (trp_meas_quantities_list_item.has_value()) {
+      request.trp_meas_quantities.push_back(trp_meas_quantities_list_item.value());
+    }
   }
 
   // Fill SFN Initialization time.

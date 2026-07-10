@@ -7,6 +7,7 @@
 #include "ocudu/asn1/asn1_utils.h"
 #include "ocudu/asn1/nrppa/nrppa_ies.h"
 #include "ocudu/nrppa/nrppa_e_cid.h"
+#include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/cyclic_prefix.h"
 #include "ocudu/ran/nr_cell_identity.h"
 #include "ocudu/ran/nr_cgi.h"
@@ -412,7 +413,7 @@ inline asn1::nrppa::cause_c cause_to_asn1(nrppa_cause_t cause)
   return asn1_cause;
 }
 
-inline trp_information_type_item_t
+inline std::optional<trp_information_type_item_t>
 asn1_to_trp_info_type_item(const asn1::nrppa::trp_info_type_item_e& asn1_trp_info_type_item)
 {
   trp_information_type_item_t trp_info_type_item;
@@ -454,7 +455,9 @@ asn1_to_trp_info_type_item(const asn1::nrppa::trp_info_type_item_e& asn1_trp_inf
       trp_info_type_item = trp_information_type_item_t::beam_ant_info;
       break;
     default:
-      report_fatal_error("Unsupported NRPPa TRP info type item");
+      ocudulog::fetch_basic_logger("NRPPA").debug("Unsupported NRPPa TRP info type item ({}). Ignoring it",
+                                                  asn1_trp_info_type_item.to_string());
+      return std::nullopt;
   }
 
   return trp_info_type_item;
@@ -1064,9 +1067,10 @@ inline ssb_info_t asn1_to_ssb_info(const asn1::nrppa::ssb_info_s& asn1_ssb_info)
     ssb_info_item.ssb_cfg.ssb_freq = asn1_ssb_info_item.ssb_cfg.ssb_freq;
     ssb_info_item.ssb_cfg.ssb_subcarrier_spacing =
         to_subcarrier_spacing(std::to_string(asn1_ssb_info_item.ssb_cfg.ssb_subcarrier_spacing.to_number()));
-    ssb_info_item.ssb_cfg.ssb_tx_pwr     = asn1_ssb_info_item.ssb_cfg.ssb_tx_pwr;
-    ssb_info_item.ssb_cfg.ssb_period     = ssb_periodicity(asn1_ssb_info_item.ssb_cfg.ssb_periodicity.to_number());
-    ssb_info_item.ssb_cfg.ssb_sfn_offset = asn1_ssb_info_item.ssb_cfg.ssb_sfn_offset;
+    ssb_info_item.ssb_cfg.ssb_tx_pwr = asn1_ssb_info_item.ssb_cfg.ssb_tx_pwr;
+    ssb_info_item.ssb_cfg.ssb_period = ssb_periodicity(asn1_ssb_info_item.ssb_cfg.ssb_periodicity.to_number());
+    ssb_info_item.ssb_cfg.ssb_half_frame_offset = asn1_ssb_info_item.ssb_cfg.ssb_half_frame_offset;
+    ssb_info_item.ssb_cfg.ssb_sfn_offset        = asn1_ssb_info_item.ssb_cfg.ssb_sfn_offset;
     if (asn1_ssb_info_item.ssb_cfg.ssb_burst_position_present) {
       ssb_burst_position_t burst_position;
       // short bitmap
@@ -1134,7 +1138,7 @@ inline spatial_relation_info_t::reference_signal asn1_to_ref_sig(const asn1::nrp
   return ref_sig;
 }
 
-inline requested_srs_tx_characteristics_t
+inline std::optional<requested_srs_tx_characteristics_t>
 asn1_to_requested_srs_tx_characteristics(const asn1::nrppa::requested_srs_tx_characteristics_s& asn1_req)
 {
   requested_srs_tx_characteristics_t req;
@@ -1154,8 +1158,14 @@ asn1_to_requested_srs_tx_characteristics(const asn1::nrppa::requested_srs_tx_cha
 
   if (asn1_req.bw.type() == asn1::nrppa::bw_srs_c::types_opts::options::fr1) {
     req.bw = asn1_req.bw.fr1().to_number();
-  } else {
+  } else if (asn1_req.bw.type() == asn1::nrppa::bw_srs_c::types_opts::options::fr2) {
     req.bw = asn1_req.bw.fr2().to_number();
+  } else {
+    // BandwidthSRS is mandatory, so an unrecognized choice leaves the whole RequestedSRSTransmissionCharacteristics
+    // without a well-defined bandwidth, and it is dropped.
+    ocudulog::fetch_basic_logger("NRPPA").warning("Unsupported BandwidthSRS choice ({}). Ignoring the request",
+                                                  asn1_req.bw.type().to_string());
+    return std::nullopt;
   }
 
   for (const auto& asn1_srs_res_set_item : asn1_req.list_of_srs_res_set) {
@@ -1239,10 +1249,16 @@ inline srs_configuration_t asn1_to_srs_configuration(const asn1::nrppa::srs_conf
         srs_res.tx_comb.size                 = tx_comb_size::n2;
         srs_res.tx_comb.tx_comb_offset       = asn1_srs_res.tx_comb.n2().comb_offset_n2;
         srs_res.tx_comb.tx_comb_cyclic_shift = asn1_srs_res.tx_comb.n2().cyclic_shift_n2;
-      } else {
+      } else if (asn1_srs_res.tx_comb.type() == asn1::nrppa::tx_comb_c::types_opts::options::n4) {
         srs_res.tx_comb.size                 = tx_comb_size::n4;
         srs_res.tx_comb.tx_comb_offset       = asn1_srs_res.tx_comb.n4().comb_offset_n4;
         srs_res.tx_comb.tx_comb_cyclic_shift = asn1_srs_res.tx_comb.n4().cyclic_shift_n4;
+      } else {
+        // TxComb is mandatory for the SRS resource, so an unrecognized choice leaves its comb configuration
+        // without a well-defined value, and the resource is dropped.
+        ocudulog::fetch_basic_logger("NRPPA").warning("Unsupported TxComb choice ({}). Dropping the SRS resource",
+                                                      asn1_srs_res.tx_comb.type().to_string());
+        continue;
       }
       srs_res.res_mapping.start_pos   = asn1_srs_res.start_position;
       srs_res.res_mapping.nof_symb    = (srs_nof_symbols)asn1_srs_res.nrof_symbols.to_number();
@@ -1271,8 +1287,14 @@ inline srs_configuration_t asn1_to_srs_configuration(const asn1::nrppa::srs_conf
         srs_res.periodicity_and_offset->period =
             (srs_periodicity)asn1_srs_res.res_type.semi_persistent().periodicity.to_number();
         srs_res.periodicity_and_offset->offset = asn1_srs_res.res_type.semi_persistent().offset;
-      } else {
+      } else if (asn1_srs_res.res_type.type() == asn1::nrppa::res_type_c::types_opts::options::aperiodic) {
         srs_res.res_type = srs_resource_type::aperiodic;
+      } else {
+        // ResourceType is mandatory for the SRS resource, so an unrecognized choice leaves its resource type
+        // without a well-defined value, and the resource is dropped.
+        ocudulog::fetch_basic_logger("NRPPA").warning("Unsupported ResourceType choice ({}). Dropping the SRS resource",
+                                                      asn1_srs_res.res_type.type().to_string());
+        continue;
       }
       srs_res.sequence_id = asn1_srs_res.seq_id;
 
@@ -1288,9 +1310,16 @@ inline srs_configuration_t asn1_to_srs_configuration(const asn1::nrppa::srs_conf
       } else if (asn1_pos_srs_res.tx_comb_pos.type() == asn1::nrppa::tx_comb_pos_c::types_opts::options::n4) {
         pos_srs_res.tx_comb.tx_comb_pos_offset       = asn1_pos_srs_res.tx_comb_pos.n4().comb_offset_n4;
         pos_srs_res.tx_comb.tx_comb_pos_cyclic_shift = asn1_pos_srs_res.tx_comb_pos.n4().cyclic_shift_n4;
-      } else {
+      } else if (asn1_pos_srs_res.tx_comb_pos.type() == asn1::nrppa::tx_comb_pos_c::types_opts::options::n8) {
         pos_srs_res.tx_comb.tx_comb_pos_offset       = asn1_pos_srs_res.tx_comb_pos.n8().comb_offset_n8;
         pos_srs_res.tx_comb.tx_comb_pos_cyclic_shift = asn1_pos_srs_res.tx_comb_pos.n8().cyclic_shift_n8;
+      } else {
+        // TxCombPos is mandatory for the positioning SRS resource, so an unrecognized choice leaves its comb
+        // configuration without a well-defined value, and the resource is dropped.
+        ocudulog::fetch_basic_logger("NRPPA").warning(
+            "Unsupported TxCombPos choice ({}). Dropping the positioning SRS resource",
+            asn1_pos_srs_res.tx_comb_pos.type().to_string());
+        continue;
       }
       pos_srs_res.res_mapping.start_pos = asn1_pos_srs_res.start_position;
       pos_srs_res.res_mapping.nof_symb  = (srs_nof_symbols)asn1_pos_srs_res.nrof_symbols.to_number();
@@ -1318,14 +1347,20 @@ inline srs_configuration_t asn1_to_srs_configuration(const asn1::nrppa::srs_conf
         pos_srs_res.periodicity_and_offset->period =
             (srs_periodicity)asn1_pos_srs_res.res_type_pos.semi_persistent().srs_periodicity.to_number();
         pos_srs_res.periodicity_and_offset->offset = asn1_pos_srs_res.res_type_pos.semi_persistent().offset;
-      } else {
+      } else if (asn1_pos_srs_res.res_type_pos.type() == asn1::nrppa::res_type_pos_c::types_opts::options::aperiodic) {
         pos_srs_res.res_type    = srs_resource_type::aperiodic;
         pos_srs_res.slot_offset = asn1_pos_srs_res.res_type_pos.aperiodic().slot_offset;
+      } else {
+        // ResourceTypePos is mandatory for the positioning SRS resource, so an unrecognized choice leaves its
+        // resource type without a well-defined value, and the resource is dropped.
+        ocudulog::fetch_basic_logger("NRPPA").warning(
+            "Unsupported ResourceTypePos choice ({}). Dropping the positioning SRS resource",
+            asn1_pos_srs_res.res_type_pos.type().to_string());
+        continue;
       }
       pos_srs_res.sequence_id = asn1_pos_srs_res.seq_id;
 
       if (asn1_pos_srs_res.spatial_relation_pos_present) {
-        pos_srs_res.spatial_relation_info.emplace();
         if (asn1_pos_srs_res.spatial_relation_pos.type() ==
             asn1::nrppa::spatial_relation_pos_c::types_opts::options::ssb_pos) {
           srs_config::srs_pos_resource::srs_spatial_relation_pos::ssb ssb;
@@ -1333,15 +1368,21 @@ inline srs_configuration_t asn1_to_srs_configuration(const asn1::nrppa::srs_conf
           if (asn1_pos_srs_res.spatial_relation_pos.ssb_pos().ssb_idx_present) {
             ssb.ssb_idx = asn1_pos_srs_res.spatial_relation_pos.ssb_pos().ssb_idx;
           }
+          pos_srs_res.spatial_relation_info.emplace();
           pos_srs_res.spatial_relation_info->reference_signal = ssb;
-        } else {
+        } else if (asn1_pos_srs_res.spatial_relation_pos.type() ==
+                   asn1::nrppa::spatial_relation_pos_c::types_opts::options::pr_si_nformation_pos) {
           srs_config::srs_pos_resource::srs_spatial_relation_pos::prs prs;
           prs.id             = asn1_pos_srs_res.spatial_relation_pos.pr_si_nformation_pos().prs_id_pos;
           prs.prs_res_set_id = asn1_pos_srs_res.spatial_relation_pos.pr_si_nformation_pos().prs_res_set_id_pos;
           if (asn1_pos_srs_res.spatial_relation_pos.pr_si_nformation_pos().prs_res_id_pos_present) {
             prs.prs_res_id = asn1_pos_srs_res.spatial_relation_pos.pr_si_nformation_pos().prs_res_id_pos;
           }
+          pos_srs_res.spatial_relation_info.emplace();
           pos_srs_res.spatial_relation_info->reference_signal = prs;
+        } else {
+          ocudulog::fetch_basic_logger("NRPPA").warning("Unsupported SpatialRelationPos choice ({}). Ignoring it",
+                                                        asn1_pos_srs_res.spatial_relation_pos.type().to_string());
         }
       }
 
@@ -1360,11 +1401,18 @@ inline srs_configuration_t asn1_to_srs_configuration(const asn1::nrppa::srs_conf
       } else if (asn1_srs_res_set.res_set_type.type() ==
                  asn1::nrppa::res_set_type_c::types_opts::options::semi_persistent) {
         srs_res_set.res_type = srs_config::srs_resource_set::semi_persistent_resource_type{};
-      } else {
+      } else if (asn1_srs_res_set.res_set_type.type() == asn1::nrppa::res_set_type_c::types_opts::options::aperiodic) {
         srs_config::srs_resource_set::aperiodic_resource_type aperiodic;
         aperiodic.aperiodic_srs_res_trigger = asn1_srs_res_set.res_set_type.aperiodic().srs_res_trigger;
         aperiodic.slot_offset               = asn1_srs_res_set.res_set_type.aperiodic().slotoffset;
         srs_res_set.res_type                = aperiodic;
+      } else {
+        // ResourceSetType is mandatory for the SRS resource set, so an unrecognized choice leaves its resource
+        // type without a well-defined value, and the resource set is dropped.
+        ocudulog::fetch_basic_logger("NRPPA").warning(
+            "Unsupported ResourceSetType choice ({}). Dropping the SRS resource set",
+            asn1_srs_res_set.res_set_type.type().to_string());
+        continue;
       }
 
       srs_carrier_list_item.active_ul_bwp.srs_cfg.srs_res_set_list.push_back(srs_res_set);
@@ -1383,10 +1431,18 @@ inline srs_configuration_t asn1_to_srs_configuration(const asn1::nrppa::srs_conf
       } else if (asn1_pos_srs_res_set.posres_set_type.type() ==
                  asn1::nrppa::pos_res_set_type_c::types_opts::options::semi_persistent) {
         pos_srs_res_set.res_type = srs_config::srs_resource_set::semi_persistent_resource_type{};
-      } else {
+      } else if (asn1_pos_srs_res_set.posres_set_type.type() ==
+                 asn1::nrppa::pos_res_set_type_c::types_opts::options::aperiodic) {
         srs_config::srs_resource_set::aperiodic_resource_type aperiodic;
         aperiodic.aperiodic_srs_res_trigger = asn1_pos_srs_res_set.posres_set_type.aperiodic().srs_res_trigger;
         pos_srs_res_set.res_type            = aperiodic;
+      } else {
+        // PosResourceSetType is mandatory for the positioning SRS resource set, so an unrecognized choice leaves
+        // its resource type without a well-defined value, and the resource set is dropped.
+        ocudulog::fetch_basic_logger("NRPPA").warning(
+            "Unsupported PosResourceSetType choice ({}). Dropping the positioning SRS resource set",
+            asn1_pos_srs_res_set.posres_set_type.type().to_string());
+        continue;
       }
 
       srs_carrier_list_item.active_ul_bwp.srs_cfg.pos_srs_res_set_list.push_back(pos_srs_res_set);
@@ -1580,7 +1636,7 @@ trp_meas_request_item_to_asn1(const trp_meas_request_item_t& trp_meas_request_it
   return asn1_trp_meas_request_item;
 }
 
-inline trp_meas_quantities_list_item_t asn1_to_trp_meas_quantities_list_item(
+inline std::optional<trp_meas_quantities_list_item_t> asn1_to_trp_meas_quantities_list_item(
     const asn1::nrppa::trp_meas_quantities_list_item_s& asn1_trp_meas_quantities_list_item)
 {
   trp_meas_quantities_list_item_t trp_meas_quantities_list_item;
@@ -1605,8 +1661,10 @@ inline trp_meas_quantities_list_item_t asn1_to_trp_meas_quantities_list_item(
       trp_meas_quantities_list_item.trp_meas_quantities_item = trp_meas_quantities_item_t::ul_srs_rsrp_p;
       break;
     default:
-      report_fatal_error("Unsupported NRPPa TRP meas quantities item. NRPPa TRP meas quantities item={}",
-                         asn1_trp_meas_quantities_list_item.trp_meas_quantities_item.to_string());
+      ocudulog::fetch_basic_logger("NRPPA").debug(
+          "Unsupported NRPPa TRP meas quantities item ({}). Ignoring it",
+          asn1_trp_meas_quantities_list_item.trp_meas_quantities_item.to_string());
+      return std::nullopt;
   }
 
   if (asn1_trp_meas_quantities_list_item.timing_report_granularity_factor_present) {

@@ -11,10 +11,10 @@
 namespace ocudu::ocucp {
 
 // Logging
-typedef enum { Rx = 0, Tx } direction_t;
+enum direction_t { Rx = 0, Tx };
 
 void log_nrppa_message(ocudulog::basic_logger&          logger,
-                       const direction_t                dir,
+                       direction_t                      dir,
                        byte_buffer_view                 pdu,
                        const asn1::nrppa::nr_ppa_pdu_c& nrppa_pdu);
 
