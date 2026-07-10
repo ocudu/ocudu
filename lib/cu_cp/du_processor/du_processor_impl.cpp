@@ -4,6 +4,7 @@
 
 #include "du_processor_impl.h"
 #include "ocudu/adt/expected.h"
+#include "ocudu/cu_cp/cu_cp_ref_time_report_notifier.h"
 #include "ocudu/f1ap/cu_cp/f1ap_cu_factory.h"
 #include "ocudu/ran/cause/f1ap_cause.h"
 #include "ocudu/ran/cause/f1ap_cause_converters.h"
@@ -76,12 +77,27 @@ public:
       return;
     }
 
-    // TODO: forward to upper layers when a consumer is registered
     parent.logger.debug("du={}: Received Reference Time Information Report: sfn={} time={:%T} is_local_clock={}",
                         parent.cfg.du_index,
                         info.ref_slot.sfn(),
                         *time_point,
                         info.is_local_clock);
+
+    cu_cp_ref_time_report_notifier* notifier = parent.cfg.cu_cp_cfg.ref_time_report_notifier;
+    if (notifier == nullptr) {
+      return;
+    }
+    const du_configuration_context* du_ctx = parent.get_context();
+    if (du_ctx == nullptr) {
+      return;
+    }
+    std::vector<nr_cell_global_id_t> served_cells;
+    served_cells.reserve(du_ctx->served_cells.size());
+    for (const du_cell_configuration& cell : du_ctx->served_cells) {
+      served_cells.push_back(cell.cgi);
+    }
+    notifier->on_ref_time_info_report(
+        served_cells, cu_cp_ref_time_report{info.ref_slot, *time_point, info.uncertainty, info.is_local_clock});
   }
 
 private:

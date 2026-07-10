@@ -27,6 +27,7 @@ namespace ocucp {
 class n2_connection_client;
 class ngap_repository;
 class xnc_connection_gateway;
+class cu_cp_ref_time_report_notifier;
 
 /// Parameters of the CU-CP that will reported to the 5G core.
 struct ran_node_configuration {
@@ -177,6 +178,8 @@ struct cu_cp_configuration {
   service_params services;
   /// CU-CP metrics notifier.
   cu_cp_metrics_report_notifier* metrics_notifier = nullptr;
+  /// Optional notifier invoked when a DU reports Reference Time Information (used e.g. for NTN).
+  cu_cp_ref_time_report_notifier* ref_time_report_notifier = nullptr;
 };
 
 } // namespace ocucp
