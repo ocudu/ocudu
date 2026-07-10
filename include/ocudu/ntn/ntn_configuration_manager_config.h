@@ -94,6 +94,14 @@ struct ntn_sat_switch_config {
   bool promote_neighbors = false;
 };
 
+/// SIB19 scheduling information of a cell.
+struct ntn_si_scheduling_info {
+  unsigned si_msg_idx;
+  unsigned si_period_rf;
+  unsigned si_window_len_slots;
+  unsigned si_window_position;
+};
+
 /// NTN Cell configuration.
 struct ntn_cell_config {
   /// NR-CGI.
@@ -101,10 +109,7 @@ struct ntn_cell_config {
   /// Sector Id (4-14 bits).
   std::optional<unsigned> sector_id;
   /// SIB19 scheduling information.
-  unsigned si_msg_idx;
-  unsigned si_period_rf;
-  unsigned si_window_len_slots;
-  unsigned si_window_position;
+  ntn_si_scheduling_info si_sched;
   /// NTN serving cell configuration (SIB19 fields and generation metadata). Absent for TN serving cells.
   std::optional<ntn_serving_cell_config> ntn_cfg;
   /// Satellite-switch target configuration. Absent if sat-switch is not configured and in TN serving cells.

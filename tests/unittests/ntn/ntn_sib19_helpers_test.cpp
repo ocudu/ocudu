@@ -39,10 +39,10 @@ ntn_neighbor_cell_config make_ncell(unsigned                satellite_index,
 ntn_cell_config make_cell_config(bool serving_is_ntn, unsigned serving_sync_dur = 5U)
 {
   ntn_cell_config cell_cfg{};
-  cell_cfg.si_msg_idx          = 0;
-  cell_cfg.si_period_rf        = 1;
-  cell_cfg.si_window_len_slots = 1;
-  cell_cfg.si_window_position  = 0;
+  cell_cfg.si_sched = ntn_si_scheduling_info{/*si_msg_idx=*/0,
+                                             /*si_period_rf=*/1,
+                                             /*si_window_len_slots=*/1,
+                                             /*si_window_position=*/0};
   if (serving_is_ntn) {
     ntn_serving_cell_config serving{};
     serving.satellite_index          = 0;

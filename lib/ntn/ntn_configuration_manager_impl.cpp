@@ -98,20 +98,20 @@ static void merge_cell_config_update(ntn_cell_config& cfg, const ntn_cell_config
   }
 }
 
-/// Returns the start slot of the next SI window for the given cell config, strictly after cur_sl.
-static slot_point get_next_si_win_start(const ntn_cell_config& ntn_cell_cfg, slot_point cur_sl)
+/// Returns the start slot of the next SI window for the given SI scheduling info, strictly after cur_sl.
+static slot_point get_next_si_win_start(const ntn_si_scheduling_info& si_sched, slot_point cur_sl)
 {
   // 2> The concerned SI message is configured in the schedulingInfoList2.
   // 3> Determine the integer value x = (si-WindowPosition -1) × w, where w is
   // the si-WindowLength. See TS 38 331 V17.0.0.
-  unsigned x = (ntn_cell_cfg.si_window_position - 1) * ntn_cell_cfg.si_window_len_slots;
+  unsigned x = (si_sched.si_window_position - 1) * si_sched.si_window_len_slots;
 
   // 3> The SI-window starts at the slot #a, where a = x mod N, in the radio
   // frame for which SFN mod T = FLOOR(x/N), where T is the si-Periodicity of
   // the concerned SI message and N is the number of slots in a radio frame as
   // specified in TS 38.213.
   const unsigned N = cur_sl.nof_slots_per_frame();
-  const unsigned T = ntn_cell_cfg.si_period_rf;
+  const unsigned T = si_sched.si_period_rf;
   const unsigned a = x % N;
 
   // Compute the difference (delta) needed to reach the target slot reminders.
@@ -188,7 +188,7 @@ ntn_configuration_manager_impl::ntn_configuration_manager_impl(const ntn_configu
     }
 
     // Create per-cell timer for SIB19 updating task.
-    auto si_period_ms = cell_config.si_period_rf * 10;
+    auto si_period_ms = cell_config.si_sched.si_period_rf * 10;
     ctx.timer         = timers.create_unique_timer(executor);
     ctx.timer.set(std::chrono::milliseconds(si_period_ms), [this, nr_cgi = cell_config.nr_cgi]() {
       // Check if cell context still exists before processing.
@@ -442,8 +442,8 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
   auto& ctx = it->second;
 
   const ntn_cell_config& cell_cfg          = get_cell_config(ctx, tp);
-  slot_point             next_si_win_start = get_next_si_win_start(cell_cfg, sl);
-  slot_point             next_si_win_end   = next_si_win_start + cell_cfg.si_window_len_slots;
+  slot_point             next_si_win_start = get_next_si_win_start(cell_cfg.si_sched, sl);
+  slot_point             next_si_win_end   = next_si_win_start + cell_cfg.si_sched.si_window_len_slots;
   // If absent for the NTN serving cell, the epoch time is the end of SI window where this SIB19 is scheduled.
   slot_point epoch_slot = next_si_win_end + 1;
   auto       slot_diff  = epoch_slot - sl;
@@ -553,10 +553,10 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
 
     ntn_sib19_update_request ntn_req;
     ntn_req.nr_cgi         = cell_cfg.nr_cgi;
-    ntn_req.si_msg_idx     = cell_cfg.si_msg_idx;
+    ntn_req.si_msg_idx     = cell_cfg.si_sched.si_msg_idx;
     ntn_req.sib_idx        = 19;
     ntn_req.slot           = next_si_win_start;
-    ntn_req.si_slot_period = cell_cfg.si_period_rf * next_si_win_start.nof_slots_per_frame();
+    ntn_req.si_slot_period = cell_cfg.si_sched.si_period_rf * next_si_win_start.nof_slots_per_frame();
     ntn_req.epoch_time     = epoch_time;
 
     ntn_req.sib19 = generate_sib19_info(cell_cfg,

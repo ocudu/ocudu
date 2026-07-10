@@ -376,10 +376,8 @@ generate_ntn_configuration_manager_config(const gnb_id_t&                       
       const auto& si_msg = sib_cfg.si_sched_info[i];
       for (unsigned j = 0, je = si_msg.sib_mapping_info.size(); j != je; ++j) {
         if (si_msg.sib_mapping_info[j] == 19) {
-          out_cell.si_msg_idx          = i;
-          out_cell.si_period_rf        = si_msg.si_period_rf;
-          out_cell.si_window_len_slots = sib_cfg.si_window_len_slots;
-          out_cell.si_window_position  = si_msg.si_window_position.value();
+          out_cell.si_sched = ocudu_ntn::ntn_si_scheduling_info{
+              i, si_msg.si_period_rf, sib_cfg.si_window_len_slots, si_msg.si_window_position.value()};
         }
       }
     }
