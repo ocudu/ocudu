@@ -36,6 +36,14 @@ static constexpr unsigned rlc_tx_am_window_seg_pool_size = 2048;
 using rlc_tx_am_window_seg_pool = map_segment_pool_interface<uint32_t, rlc_tx_am_sdu_info, rlc_tx_am_window_seg_size>;
 rlc_tx_am_window_seg_pool& get_rlc_tx_am_window_seg_pool();
 
+/// \brief Initializes the static RLC window segment pools application-wide.
+///
+/// Initializes the application-wide static RLC window segment pools with given sizes.
+/// If this function was not called explicitly before first access to any pool,
+/// it will be invoked automatically using the defined default values.
+///
+/// \param rx_pool_size Size of the window segment pool for RLC RX side (AM/UM).
+/// \param tx_pool_size Size of the window segment pool for RLC TX side (AM).
 void init_rlc_window_seg_pools(std::size_t rx_pool_size, std::size_t tx_pool_size);
 
 } // namespace ocudu
