@@ -206,6 +206,8 @@ void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_
       if (sw.use_state_vector) {
         sat_sw_node["use_state_vector"] = *sw.use_state_vector;
       }
+      sat_sw_node["promote_to_serving"] = sw.promote_to_serving;
+      sat_sw_node["promote_neighbors"]  = sw.promote_neighbors;
 
       ntn_node["sat_switch_with_resync"] = sat_sw_node;
     }

@@ -642,6 +642,16 @@ static bool validate_ntn_config(const du_high_unit_cell_ntn_config& ntn_cfg, nr_
       fmt::print("sat_switch_with_resync: t_service_start is required.\n");
       valid = false;
     }
+    if (!serving.t_service.has_value()) {
+      // Per TS 38.331 clause 5.7.19, the UE only initiates satellite switch with resynchronization when both
+      // SatSwitchWithReSync and t-Service are included in SIB19; t-Service is also the instant the switch executes.
+      fmt::print("sat_switch_with_resync: t_service is required in the serving cell NTN config.\n");
+      valid = false;
+    }
+    if (sw.promote_neighbors && !sw.promote_to_serving) {
+      fmt::print("sat_switch_with_resync: promote_neighbors has no effect unless promote_to_serving is enabled.\n");
+      valid = false;
+    }
     if (sw.ssb_time_offset_sf && *sw.ssb_time_offset_sf % 5 != 0) {
       fmt::print("sat_switch_with_resync: ssb_time_offset_sf must be 0 or a multiple of 5 subframes, got {}.\n",
                  *sw.ssb_time_offset_sf);

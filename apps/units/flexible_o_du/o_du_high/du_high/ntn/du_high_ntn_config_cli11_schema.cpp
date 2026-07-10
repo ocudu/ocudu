@@ -339,6 +339,16 @@ static void configure_cli11_sat_switch_with_resync(CLI::App& app, du_high_unit_s
                  sat_switch_config.use_state_vector,
                  "Whether to broadcast EphemerisInfo as ECEF state vectors (if true) or ECI Orbital parameters (if "
                  "false) after switch");
+
+  app.add_option("--promote_to_serving",
+                 sat_switch_config.promote_to_serving,
+                 "Promote this sat-switch's target parameters to become the serving cell config at t_service")
+      ->capture_default_str();
+
+  app.add_option("--promote_neighbors",
+                 sat_switch_config.promote_neighbors,
+                 "When promote_to_serving is enabled, keep the pre-switch neighbor cell list instead of clearing it")
+      ->capture_default_str();
 }
 
 static void configure_cli11_ntn_args(CLI::App&                             app,

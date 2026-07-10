@@ -350,7 +350,9 @@ generate_ntn_configuration_manager_config(const gnb_id_t&                       
                              derive_use_state_vector(sat_sw.use_state_vector,
                                                      sat_sw.sat_ref.ephemeris_info,
                                                      *sat_sw.sat_ref.satellite_idx,
-                                                     out_cfg.satellites)};
+                                                     out_cfg.satellites),
+                             sat_sw.promote_to_serving,
+                             sat_sw.promote_neighbors};
     }
 
     // Build neighbors' cell configs.

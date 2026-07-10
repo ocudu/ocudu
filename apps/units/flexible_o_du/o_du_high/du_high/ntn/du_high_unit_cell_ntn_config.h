@@ -48,6 +48,14 @@ struct du_high_unit_sat_switch_config {
   std::optional<ntn_polarization_t>        polarization;
   std::optional<bool>                      ta_report;
   std::optional<bool>                      use_state_vector;
+
+  /// Whether to promote this sat-switch's target parameters to become the serving cell's NTN config at the serving
+  /// cell's t_service (when the source satellite stops serving, per TS 38.331 clause 5.7.19), on top of advertising
+  /// it in SIB19 up to that point. Requires t_service to be set in the serving cell NTN config.
+  bool promote_to_serving = false;
+  /// When promote_to_serving is enabled, whether to keep the pre-switch neighbor cell list (ncells) unchanged
+  /// (true) or clear it (false) in the promoted config.
+  bool promote_neighbors = false;
 };
 
 /// Application-level NTN configuration for an NTN serving cell (NTN band). Absent for a TN-band serving cell
