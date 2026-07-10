@@ -161,7 +161,11 @@ private:
   /// Tracks a 2-step RACH preamble from PRACH detection through MsgA PUSCH and MsgB scheduling.
   struct msga_preamble_context {
     rnti_t msgb_rnti;
-    rnti_t tc_rnti;
+    /// RA-RNTI the MsgA PUSCH is scheduled and decoded with, as per TS 38.211, 6.3.1.1.
+    rnti_t ra_rnti;
+    /// RAPID of the preamble that originated this MsgA. Disambiguates preambles sharing the same RA-RNTI.
+    unsigned preamble_id;
+    rnti_t   tc_rnti;
     /// Expected MsgA PUSCH slot (prach_slot + td_offset).
     slot_point pusch_slot;
     /// End of the MsgB response window.

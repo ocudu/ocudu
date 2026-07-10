@@ -32,6 +32,8 @@ struct mac_crc_pdu {
   std::optional<float> ul_rsrp_dBFS;
   /// Time alignment.
   std::optional<phy_time_unit> time_advance_offset;
+  /// Index of the RA preamble that originated this PDU, set only for MsgA PUSCH receptions.
+  std::optional<uint8_t> rapid;
 };
 
 /// List of Uplink CRC indication PDUs for a given slot.

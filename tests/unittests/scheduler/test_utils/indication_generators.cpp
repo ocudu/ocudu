@@ -3,6 +3,10 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "indication_generators.h"
+#include "lib/scheduler/config/cell_configuration.h"
+#include "ocudu/ran/band_helper.h"
+#include "ocudu/ran/prach/prach_configuration.h"
+#include "ocudu/ran/prach/ra_helper.h"
 #include "ocudu/scheduler/result/pucch_info.h"
 
 using namespace ocudu;
@@ -14,6 +18,22 @@ rach_indication_message::preamble ocudu::test_helper::create_preamble(unsigned p
   preamble.time_advance = phy_time_unit::from_seconds(0);
   preamble.tc_rnti      = tc_rnti;
   return preamble;
+}
+
+rnti_t ocudu::test_helper::compute_ra_rnti(const cell_configuration& cell_cfg,
+                                           slot_point                prach_slot_rx,
+                                           unsigned                  start_symbol,
+                                           unsigned                  frequency_index)
+{
+  const prach_configuration prach_cfg = prach_configuration_get(
+      band_helper::get_freq_range(cell_cfg.band()),
+      band_helper::get_duplex_mode(cell_cfg.band()),
+      cell_cfg.params.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index);
+  // As per TS 38.321, 5.1.3, and TS 38.211, 5.3.2, slot_idx uses 15kHz numerology (subframe index) for long PRACH
+  // formats, and the SCS common numerology (actual slot index) for short formats.
+  const unsigned slot_idx =
+      is_long_preamble(prach_cfg.format) ? prach_slot_rx.subframe_index() : prach_slot_rx.slot_index();
+  return ra_helper::get_ra_rnti(slot_idx, start_symbol, frequency_index);
 }
 
 rach_indication_message
@@ -105,9 +125,10 @@ ul_crc_pdu_indication ocudu::test_helper::create_crc_pdu_indication(const ul_sch
 {
   ul_crc_pdu_indication pdu{};
 
-  pdu.rnti           = ul_grant.pusch_cfg.rnti;
-  pdu.ue_index       = ul_grant.context.ue_index;
-  pdu.harq_id        = ul_grant.pusch_cfg.harq_id;
+  pdu.rnti     = ul_grant.pusch_cfg.rnti;
+  pdu.ue_index = ul_grant.context.ue_index;
+  pdu.harq_id  = ul_grant.pusch_cfg.harq_id;
+  pdu.rapid    = ul_grant.context.rapid.has_value() ? std::optional<uint8_t>(*ul_grant.context.rapid) : std::nullopt;
   pdu.tb_crc_success = true;
   pdu.ul_sinr_dB     = 100;
 

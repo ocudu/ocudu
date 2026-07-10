@@ -11,6 +11,7 @@
 #include "ocudu/ran/rnti.h"
 #include "ocudu/ran/slot_pdu_capacity_constants.h"
 #include "ocudu/ran/slot_point.h"
+#include <optional>
 
 namespace ocudu {
 
@@ -22,6 +23,8 @@ struct mac_rx_pdu {
   rnti_t         rnti;
   harq_pid_value harq_id;
   byte_buffer    pdu;
+  /// Index of the RA preamble that originated this PDU, set only for MsgA PUSCH receptions.
+  std::optional<uint8_t> rapid;
 };
 using mac_rx_pdu_list = static_vector<mac_rx_pdu, MAX_PUSCH_PDUS_PER_SLOT>;
 

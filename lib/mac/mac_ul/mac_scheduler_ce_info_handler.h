@@ -10,6 +10,7 @@
 #include "ocudu/ran/logical_channel/phr_report.h"
 #include "ocudu/ran/rnti.h"
 #include "ocudu/ran/slot_point.h"
+#include <optional>
 
 namespace ocudu {
 
@@ -67,6 +68,13 @@ public:
 
   /// \brief Forward to scheduler any notification of a received MAC CRNTI CE.
   virtual void handle_crnti_ce_indication(du_ue_index_t old_ue_index, du_cell_index_t cell_index) = 0;
+
+  /// \brief Resolves the TC-RNTI allocated to a 2-step RACH (MsgA) PUSCH transmission, given the RA-RNTI it was
+  /// scheduled with -- as per TS 38.211, 6.3.1.1, MsgA PUSCH is decoded using the RA-RNTI, not the UE's TC-RNTI --
+  /// and the RAPID of the preamble that originated it.
+  /// \return The TC-RNTI, if a matching, non-expired entry exists; std::nullopt otherwise.
+  virtual std::optional<rnti_t>
+  resolve_msga_tc_rnti(du_cell_index_t cell_index, rnti_t ra_rnti, uint8_t rapid, slot_point sl_rx) = 0;
 };
 
 } // namespace ocudu

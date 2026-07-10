@@ -843,14 +843,14 @@ bool ra_scheduler::can_allocate_rar_ul_grant(rnti_t crnti, const cell_slot_resou
 
 void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& res_alloc)
 {
-  // Helper to mark MsgA PUSCH CRC outcome in pending_msgbs.
-  auto mark_msga_crc = [this](rnti_t crc_rnti, bool success) {
+  // Helper to mark MsgA PUSCH CRC outcome in pending_msgbs, matching on the exact preamble that originated it.
+  auto mark_msga_crc = [this](rnti_t ra_rnti, uint8_t rapid, bool success) {
     for (auto& msgb : pending_msgbs) {
-      if (msgb.ra_rnti != crc_rnti) {
+      if (msgb.ra_rnti != ra_rnti) {
         continue;
       }
       for (auto& p : msgb.preambles) {
-        if (!p.crc_result.has_value()) {
+        if (p.info.preamble_id == rapid) {
           p.crc_result = success;
           return true;
         }
@@ -865,7 +865,7 @@ void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& 
     for (const ul_crc_pdu_indication& crc : crc_ind.crcs) {
       auto crc_it = pending_msg3s.find(get_msg3_ring_key(crc.rnti));
       if (crc_it == pending_msg3s.end()) {
-        if (not mark_msga_crc(crc.rnti, crc.tb_crc_success)) {
+        if (not crc.rapid.has_value() or not mark_msga_crc(crc.rnti, *crc.rapid, crc.tb_crc_success)) {
           logger.warning("pci={} rnti={}: Invalid UL CRC PDU indication. Cause: Nonexistent tc-rnti",
                          cell_cfg.params.pci,
                          crc.rnti);

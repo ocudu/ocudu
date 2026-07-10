@@ -57,6 +57,8 @@ struct ul_crc_pdu_indication {
   std::optional<float> ul_rsrp_dBFS;
   /// Timing Advance Offset measured for the UE.
   std::optional<phy_time_unit> time_advance_offset;
+  /// Index of the RA preamble that originated this PDU, set only for MsgA PUSCH receptions.
+  std::optional<uint8_t> rapid;
 };
 
 /// UL HARQ CRC indication for a given UE PDU.

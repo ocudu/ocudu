@@ -383,6 +383,7 @@ void ocudu_scheduler_adapter::cell_handler::handle_crc(const mac_crc_indication_
     pdu.rnti                       = mac_pdu.rnti;
     pdu.ue_index                   = parent.rnti_mng[mac_pdu.rnti];
     pdu.harq_id                    = to_harq_id(mac_pdu.harq_id);
+    pdu.rapid                      = mac_pdu.rapid;
     pdu.tb_crc_success             = mac_pdu.tb_crc_success;
     pdu.ul_sinr_dB                 = mac_pdu.ul_sinr_dB;
     pdu.ul_rsrp_dBFS               = mac_pdu.ul_rsrp_dBFS;

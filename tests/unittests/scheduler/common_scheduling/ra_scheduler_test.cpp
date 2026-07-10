@@ -688,19 +688,44 @@ public:
     return test_helper::create_rach_indication(next_slot_rx(), {preambles.begin(), preambles.end()});
   }
 
-  /// Inject a CRC result for a MsgA PUSCH by TC-RNTI.
-  void send_msga_crc(rnti_t tc_rnti, bool success)
+  /// \brief Builds and forwards a MsgA RACH indication, and records the actual PRACH slot it lands on.
+  ///
+  /// \c handle_rach_indication() (from \c ra_scheduler_setup) advances the simulator to the next slot with a valid
+  /// PRACH occasion and overwrites the indication's slot_rx accordingly, so the slot passed to
+  /// \c create_msga_rach_indication is not necessarily the one actually used. \c last_prach_slot_rx is captured
+  /// right after, while \c next_slot_rx() still reflects that same (unadvanced) slot.
+  void send_msga_rach(std::initializer_list<rach_indication_message::preamble> preambles)
   {
+    handle_rach_indication(create_msga_rach_indication(preambles));
+    last_prach_slot_rx = next_slot_rx();
+  }
+
+  /// \brief Inject a CRC result for a MsgA PUSCH by preamble index (as passed to \c make_msga_preamble).
+  ///
+  /// The MsgA PUSCH grant is scheduled and decoded using the (shared, per-occasion) RA-RNTI, not the preamble's
+  /// TC-RNTI (TS 38.211, 6.3.1.1). The RA-RNTI is recomputed from the original PRACH occasion (rather than looked
+  /// up in the current resource grid) so this also works after the grid has slid past the MsgA PUSCH slot.
+  void send_msga_crc(unsigned preamble_idx, bool success)
+  {
+    const rnti_t ra_rnti = test_helper::compute_ra_rnti(cell_cfg,
+                                                        last_prach_slot_rx,
+                                                        /*start_symbol=*/0,
+                                                        /*frequency_index=*/0);
+
     ul_crc_indication crc_ind;
     crc_ind.cell_index = cell_cfg.cell_index;
     crc_ind.sl_rx      = res_grid[0].slot;
     auto& pdu          = crc_ind.crcs.emplace_back();
-    pdu.rnti           = tc_rnti;
+    pdu.rnti           = ra_rnti;
     pdu.ue_index       = INVALID_DU_UE_INDEX;
     pdu.harq_id        = to_harq_id(0);
+    pdu.rapid          = static_cast<uint8_t>(MSGA_PREAMBLE_OFFSET + preamble_idx);
     pdu.tb_crc_success = success;
     handle_crc_indication(crc_ind);
   }
+
+  /// PRACH slot of the last MsgA RACH indication created via \c create_msga_rach_indication.
+  slot_point last_prach_slot_rx;
 
   /// Returns true if the current slot result contains at least one MsgB grant of either type.
   bool has_msgb_grant() const
@@ -772,11 +797,11 @@ TEST_P(ra_scheduler_two_step_rach_test, when_msga_crc_ok_then_msgb_with_success_
 {
   // Event: Enqueue RACH indication with two-step RACH preamble.
   const rnti_t tc_rnti = to_rnti(to_value(rnti_t::MIN_CRNTI));
-  handle_rach_indication(create_msga_rach_indication({make_msga_preamble(0, tc_rnti)}));
+  send_msga_rach({make_msga_preamble(0, tc_rnti)});
 
   // Event: MsgA PUSCH scheduled and forward CRC=OK.
   ASSERT_TRUE(run_slot_until([this]() { return not res_grid[0].result.ul.puschs.empty(); }));
-  send_msga_crc(tc_rnti, true);
+  send_msga_crc(0, true);
 
   // Test: MsgB with SuccessRAR scheduled.
   ASSERT_TRUE(run_slot_until([this]() { return tracker.nof_success_rars() > 0; }));
@@ -793,12 +818,12 @@ TEST_P(ra_scheduler_two_step_rach_test, when_msga_crc_ok_then_msgb_with_success_
 TEST_P(ra_scheduler_two_step_rach_test, when_msga_crc_ko_then_fallback_rar_and_msg3_scheduled)
 {
   const rnti_t tc_rnti = to_rnti(to_value(rnti_t::MIN_CRNTI));
-  handle_rach_indication(create_msga_rach_indication({make_msga_preamble(0, tc_rnti)}));
+  send_msga_rach({make_msga_preamble(0, tc_rnti)});
   run_slot();
 
   // Event: MsgA PUSCH scheduled and forward CRC=KO.
   ASSERT_TRUE(run_slot_until([this]() { return not res_grid[0].result.ul.puschs.empty(); }));
-  send_msga_crc(tc_rnti, false);
+  send_msga_crc(0, false);
 
   ASSERT_TRUE(run_slot_until([this]() { return tracker.nof_fallback_rars() > 0; }));
   ASSERT_EQ(tracker.nof_fallback_rars(), 1);
@@ -826,14 +851,14 @@ TEST_P(ra_scheduler_two_step_rach_test, when_msga_crc_ko_then_fallback_rar_and_m
 TEST_P(ra_scheduler_two_step_rach_test, when_crc_pending_then_msgb_scheduling_is_postponed)
 {
   const rnti_t tc_rnti = to_rnti(to_value(rnti_t::MIN_CRNTI));
-  handle_rach_indication(create_msga_rach_indication({make_msga_preamble(0, tc_rnti)}));
+  send_msga_rach({make_msga_preamble(0, tc_rnti)});
   run_slot();
 
   // Run several slots without a CRC indication; MsgB must not be scheduled.
   ASSERT_FALSE(run_slot_until([this]() { return not res_grid[0].result.dl.rar_grants.empty(); }, 5));
 
   // CRC=OK arrives; MsgB must now be scheduled.
-  send_msga_crc(tc_rnti, true);
+  send_msga_crc(0, true);
   ASSERT_TRUE(run_slot_until([this]() { return tracker.nof_success_rars() > 0; }));
   ASSERT_EQ(tracker.nof_success_rars(), 1);
 }
@@ -845,12 +870,11 @@ TEST_P(ra_scheduler_two_step_rach_test, when_mixed_crc_outcomes_both_rar_types_s
 {
   const rnti_t tc_rnti_ok = to_rnti(to_value(rnti_t::MIN_CRNTI));
   const rnti_t tc_rnti_ko = to_rnti(to_value(rnti_t::MIN_CRNTI) + 1);
-  handle_rach_indication(
-      create_msga_rach_indication({make_msga_preamble(0, tc_rnti_ok), make_msga_preamble(1, tc_rnti_ko)}));
+  send_msga_rach({make_msga_preamble(0, tc_rnti_ok), make_msga_preamble(1, tc_rnti_ko)});
 
   ASSERT_TRUE(run_slot_until([this]() { return not res_grid[0].result.ul.puschs.empty(); }));
-  send_msga_crc(tc_rnti_ok, true);
-  send_msga_crc(tc_rnti_ko, false);
+  send_msga_crc(0, true);
+  send_msga_crc(1, false);
 
   ASSERT_TRUE(run_slot_until([this]() { return tracker.nof_success_rars() > 0 and tracker.nof_fallback_rars() > 0; }));
   ASSERT_EQ(tracker.nof_success_rars(), 1);

@@ -794,6 +794,8 @@ void test_helper::ra_scheduler_tracker::on_new_rach_ind(const rach_indication_me
         const rach_config_common_two_step& two_step_cfg = *rach_cfg.two_step_rach_cfg;
         msga_preamble_context              ctxt;
         ctxt.msgb_rnti        = ra_helper::get_msgb_rnti(slot_idx, occ.start_symbol, occ.frequency_index);
+        ctxt.ra_rnti          = ra_helper::get_ra_rnti(slot_idx, occ.start_symbol, occ.frequency_index);
+        ctxt.preamble_id      = preamb.preamble_id;
         ctxt.tc_rnti          = preamb.tc_rnti;
         ctxt.pusch_slot       = ind.slot_rx + two_step_cfg.pusch.td_offset;
         ctxt.msgb_window_stop = ind.slot_rx + prach_duration_slots + two_step_cfg.msgB_response_window_slots;
@@ -956,10 +958,14 @@ void test_helper::ra_scheduler_tracker::on_new_result(slot_point sl_tx, const sc
     }
 
     if (not pusch.context.msg3_delay.has_value() and pusch.context.nof_retxs == 0) {
-      // MsgA PUSCH (2-step RACH): find in pending_msga_preambles.
-      auto it = std::find_if(pending_msga_preambles.begin(),
-                             pending_msga_preambles.end(),
-                             [&pusch](const msga_preamble_context& p) { return p.tc_rnti == pusch.pusch_cfg.rnti; });
+      // MsgA PUSCH (2-step RACH): find in pending_msga_preambles. As per TS 38.211, 6.3.1.1, MsgA PUSCH is scheduled
+      // and decoded using the RA-RNTI, not the preamble's TC-RNTI. Multiple preambles in the same PRACH occasion
+      // share the same RA-RNTI, so the RAPID is also needed to disambiguate.
+      ASSERT_TRUE(pusch.context.rapid.has_value()) << "MsgA PUSCH context is missing its RAPID";
+      auto it = std::find_if(
+          pending_msga_preambles.begin(), pending_msga_preambles.end(), [&pusch](const msga_preamble_context& p) {
+            return p.ra_rnti == pusch.pusch_cfg.rnti and p.preamble_id == *pusch.context.rapid;
+          });
       ASSERT_NE(it, pending_msga_preambles.end()) << "MsgA PUSCH has no associated MsgA preamble";
       ASSERT_EQ(it->pusch_slot, sl_tx) << "MsgA PUSCH scheduled in slot not matching the TD offset";
       it->pusch_sched = true;

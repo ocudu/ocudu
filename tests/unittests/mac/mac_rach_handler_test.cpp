@@ -8,6 +8,9 @@
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "ocudu/ocudulog/ocudulog.h"
+#include "ocudu/ran/band_helper.h"
+#include "ocudu/ran/prach/prach_configuration.h"
+#include "ocudu/ran/prach/ra_helper.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -123,4 +126,147 @@ TEST_F(mac_rach_handler_test, when_same_cf_preamble_is_allocated_multiple_times_
   uint8_t cfra_preamble = create_cf_preamble();
   ASSERT_TRUE(cell_handler.handle_cfra_allocation(cfra_preamble, to_du_ue_index(0), to_rnti(0x5555)));
   ASSERT_FALSE(cell_handler.handle_cfra_allocation(cfra_preamble, to_du_ue_index(1), to_rnti(0x5556)));
+}
+
+/// \brief Tests for the (RA-RNTI, RAPID) -> TC-RNTI resolution used to correctly identify the UE that sent a 2-step
+/// RACH (MsgA) CCCH message.
+///
+/// Per TS 38.211, 6.3.1.1, MsgA PUSCH is decoded by the lower layers using the RA-RNTI of its PRACH occasion, not
+/// the TC-RNTI mac_rach_handler allocated for the preamble. Since the RA-RNTI recurs periodically (it only depends
+/// on the occasion's slot/symbol/frequency index), MAC must resolve it back to the real TC-RNTI before treating an
+/// incoming CCCH message as coming from a specific UE -- see pdu_rx_handler::handle_ccch_msg.
+class mac_rach_handler_msga_test : public ::testing::Test
+{
+protected:
+  static constexpr unsigned MSGA_CB_PREAMBLES = 4;
+
+  mac_rach_handler_msga_test() :
+    logger(ocudulog::fetch_basic_logger("MAC")),
+    params(cell_config_builder_profiles::create(duplex_mode::TDD)),
+    sched_cfg([this]() {
+      auto  cfg  = sched_config_helper::make_default_sched_cell_configuration_request(params);
+      auto& rach = *cfg.ran.ul_cfg_common.init_ul_bwp.rach_cfg_common;
+      // Reserve preambles [56, 60) for 2-step CB RACH, leaving [60, 64) for CFRA.
+      rach.nof_cb_preambles_per_ssb = 56;
+      rach.two_step_rach_cfg.emplace();
+      rach.two_step_rach_cfg->cb_preambles_per_ssb_per_shared_ro = MSGA_CB_PREAMBLES;
+      return cfg;
+    }()),
+    handler(sched, rnti_mng, logger),
+    cell_handler(handler.add_cell(sched_cfg))
+  {
+  }
+
+  /// First preamble ID reserved for 2-step CB RACH, as configured above.
+  static constexpr uint8_t MSGA_PREAMBLE_ID = 56;
+
+  mac_rach_indication make_msga_rach_indication(slot_point slot_rx, uint8_t preamble_id) const
+  {
+    mac_rach_indication rach;
+    rach.slot_rx                                 = slot_rx;
+    mac_rach_indication::rach_occasion& occ      = rach.occasions.emplace_back();
+    occ.frequency_index                          = 0;
+    occ.slot_index                               = 0;
+    occ.start_symbol                             = 0;
+    mac_rach_indication::rach_preamble& preamble = occ.preambles.emplace_back();
+    preamble.index                               = preamble_id;
+    return rach;
+  }
+
+  /// Computes the RA-RNTI expected for a RACH occasion at (slot_rx, start_symbol=0, frequency_index=0), mirroring
+  /// the exact same logic used by mac_cell_rach_handler_impl.
+  rnti_t expected_ra_rnti(slot_point slot_rx) const
+  {
+    const auto&               rach_cfg = *sched_cfg.ran.ul_cfg_common.init_ul_bwp.rach_cfg_common;
+    const prach_configuration prach_cfg =
+        prach_configuration_get(band_helper::get_freq_range(sched_cfg.ran.dl_carrier.band),
+                                band_helper::get_duplex_mode(sched_cfg.ran.dl_carrier.band),
+                                rach_cfg.rach_cfg_generic.prach_config_index);
+    const unsigned slot_idx = is_long_preamble(prach_cfg.format) ? slot_rx.subframe_index() : slot_rx.slot_index();
+    return ra_helper::get_ra_rnti(slot_idx, /*symbol_index=*/0, /*frequency_index=*/0);
+  }
+
+  ocudulog::basic_logger&                  logger;
+  test_helpers::dummy_mac_scheduler        sched;
+  rnti_manager                             rnti_mng;
+  cell_config_builder_params               params;
+  sched_cell_configuration_request_message sched_cfg;
+
+  mac_rach_handler            handler;
+  mac_cell_rach_handler_impl& cell_handler;
+};
+
+TEST_F(mac_rach_handler_msga_test, when_msga_preamble_detected_then_tc_rnti_resolves_via_ra_rnti_and_rapid)
+{
+  const slot_point    slot_rx = {to_numerology_value(params.scs_common), 0};
+  mac_rach_indication rach    = make_msga_rach_indication(slot_rx, MSGA_PREAMBLE_ID);
+  cell_handler.handle_rach_indication(rach);
+
+  ASSERT_TRUE(sched.last_rach_ind.has_value());
+  const rnti_t alloc_tc_rnti = sched.last_rach_ind.value().occasions[0].preambles[0].tc_rnti;
+
+  const rnti_t                ra_rnti  = expected_ra_rnti(slot_rx);
+  const std::optional<rnti_t> resolved = cell_handler.resolve_msga_tc_rnti(ra_rnti, MSGA_PREAMBLE_ID, slot_rx);
+  ASSERT_TRUE(resolved.has_value());
+  ASSERT_EQ(*resolved, alloc_tc_rnti);
+}
+
+TEST_F(mac_rach_handler_msga_test, when_tc_rnti_is_resolved_then_it_can_be_resolved_again_before_expiry)
+{
+  const slot_point slot_rx = {to_numerology_value(params.scs_common), 0};
+  cell_handler.handle_rach_indication(make_msga_rach_indication(slot_rx, MSGA_PREAMBLE_ID));
+
+  const rnti_t                ra_rnti = expected_ra_rnti(slot_rx);
+  const std::optional<rnti_t> first   = cell_handler.resolve_msga_tc_rnti(ra_rnti, MSGA_PREAMBLE_ID, slot_rx);
+  ASSERT_TRUE(first.has_value());
+  // Resolution is a plain atomic read (not a consuming operation, to keep this latency-critical path lock-free and
+  // wait-free), so a second lookup for the same, still-valid entry returns the same result.
+  const std::optional<rnti_t> second = cell_handler.resolve_msga_tc_rnti(ra_rnti, MSGA_PREAMBLE_ID, slot_rx);
+  ASSERT_TRUE(second.has_value());
+  ASSERT_EQ(*first, *second);
+}
+
+TEST_F(mac_rach_handler_msga_test, when_non_msga_preamble_detected_then_it_is_never_resolvable)
+{
+  // Preamble 0 is a 4-step CB preamble, outside the 2-step CB range [56, 60).
+  const slot_point slot_rx = {to_numerology_value(params.scs_common), 0};
+  cell_handler.handle_rach_indication(make_msga_rach_indication(slot_rx, 0));
+
+  const rnti_t ra_rnti = expected_ra_rnti(slot_rx);
+  ASSERT_FALSE(cell_handler.resolve_msga_tc_rnti(ra_rnti, 0, slot_rx).has_value())
+      << "A 4-step preamble must never populate the MsgA TC-RNTI table -- its FAPI indications never carry rapid "
+         "in the first place, so nothing should ever be looked up for it";
+}
+
+/// \brief Reproduces the exact scenario behind GitLab issue #575: two 2-step RACH attempts land on the same
+/// recurring PRACH occasion (same slot/symbol/frequency index -> same RA-RNTI) before the first is resolved.
+///
+/// Without last-writer-wins semantics, the first (now-stale) TC-RNTI would still be returned, and the real UE that
+/// most recently transmitted MsgA would never get its C-RNTI, while a second, later 2-step attempt reusing the same
+/// RA-RNTI would silently resolve to the wrong (evicted) UE.
+TEST_F(mac_rach_handler_msga_test, when_same_ra_rnti_and_rapid_recur_before_resolution_then_latest_tc_rnti_wins)
+{
+  const slot_point slot_rx = {to_numerology_value(params.scs_common), 0};
+
+  cell_handler.handle_rach_indication(make_msga_rach_indication(slot_rx, MSGA_PREAMBLE_ID));
+  ASSERT_TRUE(sched.last_rach_ind.has_value());
+  const rnti_t first_tc_rnti = sched.last_rach_ind.value().occasions[0].preambles[0].tc_rnti;
+
+  // A second, independent 2-step RACH attempt lands on the exact same PRACH occasion (e.g. the next recurrence of
+  // the same time/frequency resource) and picks the same preamble, before the first is ever resolved.
+  cell_handler.handle_rach_indication(make_msga_rach_indication(slot_rx, MSGA_PREAMBLE_ID));
+  ASSERT_TRUE(sched.last_rach_ind.has_value());
+  const rnti_t second_tc_rnti = sched.last_rach_ind.value().occasions[0].preambles[0].tc_rnti;
+  ASSERT_NE(first_tc_rnti, second_tc_rnti) << "Test setup error: rnti_manager should allocate a fresh TC-RNTI";
+
+  const rnti_t                ra_rnti  = expected_ra_rnti(slot_rx);
+  const std::optional<rnti_t> resolved = cell_handler.resolve_msga_tc_rnti(ra_rnti, MSGA_PREAMBLE_ID, slot_rx);
+  ASSERT_TRUE(resolved.has_value());
+  ASSERT_EQ(*resolved, second_tc_rnti) << "The most recent 2-step attempt on this RA-RNTI must win";
+
+  // The stale first attempt's TC-RNTI must never resurface: the single slot for this RAPID was overwritten, not
+  // appended to, so there is no leftover entry to (mis)resolve.
+  const std::optional<rnti_t> resolved_again = cell_handler.resolve_msga_tc_rnti(ra_rnti, MSGA_PREAMBLE_ID, slot_rx);
+  ASSERT_TRUE(resolved_again.has_value());
+  ASSERT_EQ(*resolved_again, second_tc_rnti);
 }

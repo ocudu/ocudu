@@ -281,9 +281,26 @@ bool pdu_rx_handler::handle_ccch_msg(const decoded_mac_rx_pdu& ctx, const mac_ul
   ocudu_assert(ctx.ue_index == INVALID_DU_UE_INDEX,
                "This function should only be called for Msg3, when UE context has not been created yet");
 
+  rnti_t tc_rnti = ctx.pdu_rx.rnti;
+  if (ctx.pdu_rx.rapid.has_value()) {
+    // This CCCH message was carried in a 2-step RACH (MsgA) PUSCH. Per TS 38.211, 6.3.1.1, MsgA PUSCH is decoded
+    // using the RA-RNTI, not the UE's TC-RNTI, so ctx.pdu_rx.rnti is the (periodically recurring) RA-RNTI here, not
+    // the TC-RNTI mac_rach_handler allocated for this preamble. Resolve it back to the real TC-RNTI.
+    std::optional<rnti_t> resolved =
+        sched.resolve_msga_tc_rnti(ctx.cell_index_rx, ctx.pdu_rx.rnti, *ctx.pdu_rx.rapid, ctx.slot_rx);
+    if (not resolved.has_value()) {
+      logger.warning("{}: Discarding CCCH message. Cause: No TC-RNTI found for ra-rnti={} rapid={}",
+                     create_prefix(ctx, sdu),
+                     ctx.pdu_rx.rnti,
+                     *ctx.pdu_rx.rapid);
+      return false;
+    }
+    tc_rnti = resolved.value();
+  }
+
   // Notify DU manager of received CCCH message.
   ul_ccch_indication_message msg{};
-  msg.tc_rnti    = ctx.pdu_rx.rnti;
+  msg.tc_rnti    = tc_rnti;
   msg.cell_index = ctx.cell_index_rx;
   msg.slot_rx    = ctx.slot_rx;
 

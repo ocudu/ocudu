@@ -4,21 +4,47 @@
 
 #include "mac_rach_handler.h"
 #include "../rnti_manager.h"
+#include "ocudu/ran/band_helper.h"
+#include "ocudu/ran/prach/prach_configuration.h"
+#include "ocudu/ran/prach/ra_helper.h"
 #include "ocudu/scheduler/scheduler_configurator.h"
 #include "ocudu/scheduler/scheduler_rach_handler.h"
 
 using namespace ocudu;
+
+static bool compute_prach_format_is_long(const rach_config_common& rach_cfg, const ran_cell_config& ran_cfg)
+{
+  const prach_configuration prach_cfg = prach_configuration_get(band_helper::get_freq_range(ran_cfg.dl_carrier.band),
+                                                                band_helper::get_duplex_mode(ran_cfg.dl_carrier.band),
+                                                                rach_cfg.rach_cfg_generic.prach_config_index);
+  return is_long_preamble(prach_cfg.format);
+}
 
 mac_cell_rach_handler_impl::mac_cell_rach_handler_impl(mac_rach_handler&                               parent_,
                                                        const sched_cell_configuration_request_message& sched_cfg) :
   parent(parent_),
   cell_index(sched_cfg.cell_index),
   cfra_preambles(ra_helper::get_cfra_preambles(*sched_cfg.ran.ul_cfg_common.init_ul_bwp.rach_cfg_common)),
+  msga_cb_preambles(ra_helper::get_msga_cb_preambles(*sched_cfg.ran.ul_cfg_common.init_ul_bwp.rach_cfg_common)),
+  prach_format_is_long(
+      compute_prach_format_is_long(*sched_cfg.ran.ul_cfg_common.init_ul_bwp.rach_cfg_common, sched_cfg.ran)),
+  msga_tc_rnti_ttl_slots(
+      sched_cfg.ran.ul_cfg_common.init_ul_bwp.rach_cfg_common->two_step_rach_cfg.has_value()
+          ? static_cast<unsigned>(
+                sched_cfg.ran.ul_cfg_common.init_ul_bwp.rach_cfg_common->two_step_rach_cfg->pusch.td_offset) +
+                sched_cfg.ran.ul_cfg_common.init_ul_bwp.rach_cfg_common->two_step_rach_cfg->msgB_response_window_slots
+          : 0U),
   // Preambles above the CB (4-step) and MsgA (2-step CB) ranges are reserved for CFRA.
-  preambles(cfra_preambles.length())
+  preambles(cfra_preambles.length()),
+  msga_tc_rntis(msga_cb_preambles.length())
 {
   for (auto& preamble : preambles) {
     preamble.store(rnti_t::INVALID_RNTI, std::memory_order_relaxed);
+  }
+  for (auto& entry : msga_tc_rntis) {
+    // Zero-initialized entry decodes to ra_rnti()==INVALID_RNTI (0x0), which no real RA-RNTI ever equals, so it is
+    // naturally treated as "no entry" on lookup.
+    entry.store(0, std::memory_order_relaxed);
   }
 }
 
@@ -38,6 +64,10 @@ void mac_cell_rach_handler_impl::handle_rach_indication(const mac_rach_indicatio
     auto& sched_occasion           = sched_rach.occasions.emplace_back();
     sched_occasion.start_symbol    = occasion.start_symbol;
     sched_occasion.frequency_index = occasion.frequency_index;
+    const unsigned ra_rnti_slot_idx =
+        prach_format_is_long ? rach_ind.slot_rx.subframe_index() : rach_ind.slot_rx.slot_index();
+    const rnti_t occasion_ra_rnti =
+        ra_helper::get_ra_rnti(ra_rnti_slot_idx, occasion.start_symbol, occasion.frequency_index);
     for (const auto& preamble : occasion.preambles) {
       rnti_t selected_rnti = rnti_t::INVALID_RNTI;
       if (cfra_preambles.contains(preamble.index)) {
@@ -58,6 +88,12 @@ void mac_cell_rach_handler_impl::handle_rach_indication(const mac_rach_indicatio
               "cell={} preamble id={}: Ignoring PRACH. Cause: Failed to allocate TC-RNTI.", cell_index, preamble.index);
           continue;
         }
+        if (msga_cb_preambles.contains(preamble.index)) {
+          // This is a 2-step RACH (MsgA) preamble. The MsgA PUSCH carrying its CCCH payload will be decoded and
+          // reported by the lower layers using the RA-RNTI (as per TS 38.211, 6.3.1.1), not this TC-RNTI. Register
+          // the mapping so it can be later resolved back to the real TC-RNTI.
+          add_msga_tc_rnti(occasion_ra_rnti, static_cast<uint8_t>(preamble.index), selected_rnti, rach_ind.slot_rx);
+        }
       }
       auto& sched_preamble        = sched_occasion.preambles.emplace_back();
       sched_preamble.preamble_id  = preamble.index;
@@ -75,6 +111,32 @@ void mac_cell_rach_handler_impl::handle_rach_indication(const mac_rach_indicatio
   if (not sched_rach.occasions.empty()) {
     parent.sched.handle_rach_indication(sched_rach);
   }
+}
+
+void mac_cell_rach_handler_impl::add_msga_tc_rnti(rnti_t ra_rnti, uint8_t rapid, rnti_t tc_rnti, slot_point sl_rx)
+{
+  ocudu_assert(msga_cb_preambles.contains(rapid), "Invalid MsgA preamble id={}", rapid);
+  const slot_point expiry = sl_rx + msga_tc_rnti_ttl_slots;
+  const unsigned   idx    = rapid - msga_cb_preambles.start();
+
+  // Unconditional last-writer-wins overwrite. The RA-RNTI recurs periodically, so only the most recent occasion
+  // that used a given RAPID is relevant; a single atomic store keeps this update wait-free and lock-free, as this
+  // runs on a latency-critical path.
+  msga_tc_rntis[idx].store(msga_tc_rnti_entry(ra_rnti, tc_rnti, expiry).to_word(), std::memory_order_release);
+}
+
+std::optional<rnti_t>
+mac_cell_rach_handler_impl::resolve_msga_tc_rnti(rnti_t ra_rnti, uint8_t rapid, slot_point sl_rx) const
+{
+  if (not msga_cb_preambles.contains(rapid)) {
+    return std::nullopt;
+  }
+  const unsigned           idx = rapid - msga_cb_preambles.start();
+  const msga_tc_rnti_entry entry(msga_tc_rntis[idx].load(std::memory_order_acquire));
+  if (entry.ra_rnti() != ra_rnti or entry.expiry() <= sl_rx) {
+    return std::nullopt;
+  }
+  return entry.tc_rnti();
 }
 
 bool mac_cell_rach_handler_impl::handle_cfra_allocation(uint8_t preamble_id, du_ue_index_t ue_idx, rnti_t crnti)

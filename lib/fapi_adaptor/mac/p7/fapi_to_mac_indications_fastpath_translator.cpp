@@ -111,6 +111,7 @@ void fapi_to_mac_indications_fastpath_translator::on_rx_data_indication(const fa
       mac_rx_pdu& pdu = indication.pdus.emplace_back();
       pdu.harq_id     = msg.pdu.harq_id;
       pdu.rnti        = msg.pdu.rnti;
+      pdu.rapid       = msg.pdu.rapid;
       pdu.pdu         = std::move(pdu_buffer.value());
 
       if (OCUDU_UNLIKELY(logger.debug.enabled())) {
@@ -133,6 +134,7 @@ void fapi_to_mac_indications_fastpath_translator::on_crc_indication(const fapi::
 
   pdu.harq_id             = msg.pdu.harq_id;
   pdu.rnti                = msg.pdu.rnti;
+  pdu.rapid               = msg.pdu.rapid;
   pdu.tb_crc_success      = msg.pdu.tb_crc_status_ok;
   pdu.ul_sinr_dB          = convert_fapi_to_mac_ul_sinr(msg.pdu.ul_sinr_metric);
   pdu.ul_rsrp_dBFS        = convert_fapi_to_mac_rsrp(msg.pdu.rsrp);

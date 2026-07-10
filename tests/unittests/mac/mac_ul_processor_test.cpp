@@ -67,6 +67,12 @@ public:
     last_crnti_ce = old_ue_index;
   }
 
+  std::optional<rnti_t>
+  resolve_msga_tc_rnti(du_cell_index_t cell_index, rnti_t ra_rnti, uint8_t rapid, slot_point sl_rx) override
+  {
+    return std::nullopt;
+  }
+
   /// Compare verify_phr_msg with a test message passed to the function.
   // TODO: Handle verification of Multiple Entry PHR.
   void verify_phr_msg(const mac_phr_ce_info& phr_info)

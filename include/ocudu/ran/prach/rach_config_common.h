@@ -163,6 +163,16 @@ inline interval<unsigned> get_cfra_preambles(const rach_config_common& rach_cfg)
   return {cfra_start, rach_cfg.total_nof_ra_preambles};
 }
 
+/// Determines range of RA preambles associated with 2-step (MsgA) contention-based RA.
+inline interval<unsigned> get_msga_cb_preambles(const rach_config_common& rach_cfg)
+{
+  const auto nof_cb_preambles = rach_cfg.nof_cb_preambles_per_ssb;
+  const auto nof_msga_preambles =
+      rach_cfg.two_step_rach_cfg.has_value() ? rach_cfg.two_step_rach_cfg->cb_preambles_per_ssb_per_shared_ro : 0U;
+
+  return {nof_cb_preambles, nof_cb_preambles + nof_msga_preambles};
+}
+
 } // namespace ra_helper
 
 } // namespace ocudu
