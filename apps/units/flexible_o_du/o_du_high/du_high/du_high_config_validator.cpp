@@ -464,7 +464,7 @@ static bool validate_pusch_cell_unit_config(const du_high_unit_pusch_config& con
   return true;
 }
 
-static bool validate_global_ntn_config(const std::vector<du_high_unit_ntn_satellite_config>& ntn_satellites)
+static bool validate_global_ntn_config(const std::vector<ntn_satellite_config>& ntn_satellites)
 {
   bool               valid = true;
   std::set<unsigned> seen_indices;
@@ -493,10 +493,10 @@ static bool validate_global_ntn_config(const std::vector<du_high_unit_ntn_satell
   return valid;
 }
 
-static bool validate_ntn_satellite_refs(const std::vector<du_high_unit_cell_config>&          cells,
-                                        const std::vector<du_high_unit_ntn_satellite_config>& ntn_satellites)
+static bool validate_ntn_satellite_refs(const std::vector<du_high_unit_cell_config>& cells,
+                                        const std::vector<ntn_satellite_config>&     ntn_satellites)
 {
-  std::unordered_map<unsigned, const du_high_unit_ntn_satellite_config*> available;
+  std::unordered_map<unsigned, const ntn_satellite_config*> available;
   for (const auto& sat : ntn_satellites) {
     available.emplace(*sat.satellite_idx, &sat);
   }

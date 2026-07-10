@@ -21,4 +21,5 @@ target_link_libraries(ocudu_flexible_o_du_helpers
         ocudu_o_du_low_unit_helpers
         ocudu_o_du_high_unit_helpers
         ocudu_flexible_o_du_unit_metrics_helpers
-        ocudu_ntn_lib)
+        ocudu_ntn_lib
+        ocudu_ntn_app_helpers)

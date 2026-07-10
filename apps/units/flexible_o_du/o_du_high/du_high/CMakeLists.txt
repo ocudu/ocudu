@@ -21,6 +21,7 @@ set(SOURCES
 add_library(ocudu_du_high_unit_helpers STATIC ${SOURCES})
 target_include_directories(ocudu_du_high_unit_helpers PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(ocudu_du_high_unit_helpers
+        ocudu_ntn_app_helpers
         sched_config
         ocudu_app_helpers
         ocudu_cpu_affinities_helper

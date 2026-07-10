@@ -5,8 +5,8 @@
 #pragma once
 
 #include "apps/helpers/metrics/metrics_config.h"
+#include "apps/helpers/ntn/ntn_satellite_config.h"
 #include "ntn/du_high_unit_cell_ntn_config.h"
-#include "ntn/du_high_unit_ntn_satellite_config.h"
 #include "ocudu/ocudulog/logger.h"
 #include "ocudu/ran/band_helper.h"
 #include "ocudu/ran/bs_channel_bandwidth.h"
@@ -1478,7 +1478,7 @@ struct du_high_unit_config {
   /// SRB configuration.
   std::map<srb_id_t, du_high_unit_srb_config> srb_cfg;
   /// Globally-defined satellites, referenced by satellite_idx in per-cell NTN configs.
-  std::vector<du_high_unit_ntn_satellite_config> ntn_satellites;
+  std::vector<ntn_satellite_config> ntn_satellites;
   /// RLC configuration.
   du_high_unit_rlc_config rlc_cfg;
 

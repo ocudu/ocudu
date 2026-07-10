@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "du_high_unit_ntn_satellite_config.h"
+#include "apps/helpers/ntn/ntn_satellite_config.h"
 #include "ocudu/ran/ntn.h"
 #include <chrono>
 #include <optional>
@@ -17,7 +17,7 @@ namespace ocudu {
 /// with epoch_timestamp and ephemeris_info.
 struct du_high_unit_ntn_neighbor_cell_config {
   /// Reference to the neighbor's satellite (global reference or inline definition).
-  du_high_unit_ntn_satellite_config sat_ref;
+  ntn_satellite_config sat_ref;
 
   /// Per-neighbor identity.
   std::optional<pci_t>   phys_cell_id;
@@ -35,7 +35,7 @@ struct du_high_unit_ntn_neighbor_cell_config {
 /// Application-level sat_switch_with_resync configuration.
 struct du_high_unit_sat_switch_config {
   /// Reference to the switch target's satellite (global reference or inline definition).
-  du_high_unit_ntn_satellite_config sat_ref;
+  ntn_satellite_config sat_ref;
 
   /// Switch timing.
   std::optional<std::chrono::system_clock::time_point> t_service_start;
@@ -62,7 +62,7 @@ struct du_high_unit_sat_switch_config {
 /// that only reports NTN neighbor cells (see du_high_unit_cell_ntn_config::serving).
 struct du_high_unit_ntn_serving_cell_config {
   /// Reference to the serving cell's satellite (global reference or inline definition).
-  du_high_unit_ntn_satellite_config sat_ref;
+  ntn_satellite_config sat_ref;
 
   /// Reference location of the serving cell in geodetic coordinates format (in degrees).
   std::optional<geodetic_coordinates_t> reference_location;

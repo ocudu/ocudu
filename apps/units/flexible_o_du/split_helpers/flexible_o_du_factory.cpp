@@ -4,6 +4,7 @@
 
 #include "flexible_o_du_factory.h"
 #include "apps/helpers/e2/e2_metric_connector_manager.h"
+#include "apps/helpers/ntn/ntn_config_translators.h"
 #include "apps/services/worker_manager/worker_manager.h"
 #include "apps/units/flexible_o_du/flexible_o_du_commands.h"
 #include "apps/units/flexible_o_du/o_du_high/du_high/du_high_config_translators.h"
@@ -26,6 +27,7 @@
 #include "ocudu/fapi_adaptor/phy/phy_fapi_fastpath_adaptor.h"
 #include "ocudu/fapi_adaptor/phy/phy_fapi_sector_fastpath_adaptor.h"
 #include "ocudu/ntn/ntn_configuration_manager_config.h"
+#include "fmt/format.h"
 #include <algorithm>
 
 using namespace ocudu;
@@ -125,38 +127,6 @@ generate_o_du_ru_config(span<const odu::du_cell_config> cells, unsigned max_proc
   return out_cfg;
 }
 
-/// Returns the ephemeris_info of the satellite with the given index, or nullptr if not found.
-static const ntn_ephemeris_info_t* find_satellite_ephemeris_info(unsigned satellite_index,
-                                                                 span<const ocudu_ntn::ntn_satellite_config> satellites)
-{
-  auto it = std::find_if(satellites.begin(), satellites.end(), [satellite_index](const auto& sat) {
-    return sat.satellite_index == satellite_index;
-  });
-  return it != satellites.end() ? &it->ephemeris_info : nullptr;
-}
-
-/// Derives the broadcast ephemeris format (ECEF state vector vs ECI orbital parameters) for an NTN entity (serving
-/// cell, sat-switch target, or neighbor cell): the explicit override if set, else the variant of its own inline
-/// ephemeris_info, else (if it references a shared satellite_idx) the variant of the referenced satellite's
-/// ephemeris_info.
-static std::optional<bool> derive_use_state_vector(std::optional<bool>                         configured_value,
-                                                   const std::optional<ntn_ephemeris_info_t>&  own_ephemeris_info,
-                                                   unsigned                                    satellite_index,
-                                                   span<const ocudu_ntn::ntn_satellite_config> resolved_satellites)
-{
-  if (configured_value.has_value()) {
-    return configured_value;
-  }
-  if (own_ephemeris_info.has_value()) {
-    return std::holds_alternative<ecef_coordinates_t>(*own_ephemeris_info);
-  }
-  if (const ntn_ephemeris_info_t* ephemeris_info =
-          find_satellite_ephemeris_info(satellite_index, resolved_satellites)) {
-    return std::holds_alternative<ecef_coordinates_t>(*ephemeris_info);
-  }
-  return std::nullopt;
-}
-
 /// Converts app-level ntn_config to library-level ntn_serving_cell_config. Returns std::nullopt for a TN-band cell
 /// that only reports NTN neighbor cells. \p resolved_satellites must already contain an entry for the cell's
 /// satellite_idx (resolved, including any inline satellite definitions, before this is called).
@@ -200,46 +170,15 @@ convert_ntn_config_to_serving_cell_config(const du_high_unit_cell_ntn_config&   
   return info;
 }
 
-/// \brief Appends a new satellite config and returns its assigned index.
-static unsigned add_satellite_config(ocudu_ntn::ntn_configuration_manager_config&         out_cfg,
-                                     unsigned&                                            next_satellite_idx,
-                                     std::optional<std::chrono::system_clock::time_point> epoch_timestamp,
-                                     const ntn_ephemeris_info_t&                          ephemeris_info,
-                                     const std::optional<geodetic_coordinates_t>&         ntn_gateway_location,
-                                     const std::optional<ta_info_t>&                      ta_info,
-                                     ocudu_ntn::orbit_propagator_type                     propagator_type)
-{
-  unsigned sat_idx = next_satellite_idx++;
-  out_cfg.satellites.push_back(
-      {sat_idx, epoch_timestamp, ephemeris_info, ntn_gateway_location, ta_info, propagator_type});
-  return sat_idx;
-}
-
 static ocudu_ntn::ntn_configuration_manager_config
-generate_ntn_configuration_manager_config(const gnb_id_t&                                       gnb_id,
-                                          span<const du_high_unit_cell_config>                  du_hi_cells,
-                                          const std::vector<du_high_unit_ntn_satellite_config>& ntn_satellites)
+generate_ntn_configuration_manager_config(const gnb_id_t&                          gnb_id,
+                                          span<const du_high_unit_cell_config>     du_hi_cells,
+                                          const std::vector<ntn_satellite_config>& ntn_satellites)
 {
-  ocudu_ntn::ntn_configuration_manager_config out_cfg            = {};
-  unsigned                                    next_satellite_idx = 0;
+  ocudu_ntn::ntn_configuration_manager_config out_cfg = {};
 
   // Add globally-defined satellites first. Use user-defined satellite_idx as internal satellite_index.
-  for (const auto& global_sat : ntn_satellites) {
-    if (!global_sat.satellite_idx) {
-      report_error("ntn.satellites: satellite_idx has to be provided for a global satellite definition");
-    }
-    auto& sat                = out_cfg.satellites.emplace_back();
-    sat.satellite_index      = *global_sat.satellite_idx;
-    sat.epoch_timestamp      = global_sat.epoch_timestamp;
-    sat.ephemeris_info       = *global_sat.ephemeris_info;
-    sat.ntn_gateway_location = global_sat.gateway_location;
-    sat.ta_info              = global_sat.ta_info;
-    sat.propagator_type      = global_sat.propagator_type;
-    // Ensure auto-assigned indices for inline cells don't collide with global ones.
-    if (*global_sat.satellite_idx >= next_satellite_idx) {
-      next_satellite_idx = *global_sat.satellite_idx + 1;
-    }
-  }
+  unsigned next_satellite_idx = add_global_ntn_satellites(ntn_satellites, out_cfg.satellites);
 
   // Resolve satellite_idx for every serving cell, sat-switch target and neighbor cell: reuse the global satellite
   // if satellite_idx is set, else create one inline (1-to-1). After this loop, satellite_idx is guaranteed set
@@ -255,59 +194,30 @@ generate_ntn_configuration_manager_config(const gnb_id_t&                       
 
     if (ntn_cfg.serving) {
       auto& serving = *ntn_cfg.serving;
-      if (!serving.sat_ref.satellite_idx) {
-        if (serving.sat_ref.epoch_timestamp && serving.sat_ref.ephemeris_info) {
-          serving.sat_ref.satellite_idx = add_satellite_config(out_cfg,
-                                                               next_satellite_idx,
-                                                               serving.sat_ref.epoch_timestamp,
-                                                               *serving.sat_ref.ephemeris_info,
-                                                               serving.sat_ref.gateway_location,
-                                                               serving.sat_ref.ta_info,
-                                                               serving.sat_ref.propagator_type);
-        } else {
-          report_error("cells[{}].ntn: either satellite_idx or inline ephemeris definition (epoch_timestamp and "
-                       "ephemeris_info) must be provided",
-                       phy_sector_idx);
-        }
-      }
+      resolve_ntn_satellite_ref(serving.sat_ref,
+                                out_cfg.satellites,
+                                next_satellite_idx,
+                                serving.sat_ref.ta_info,
+                                fmt::format("cells[{}].ntn", phy_sector_idx));
 
       if (serving.sat_switch_with_resync) {
         auto& sat_sw = *serving.sat_switch_with_resync;
-        if (!sat_sw.sat_ref.satellite_idx) {
-          if (sat_sw.sat_ref.epoch_timestamp && sat_sw.sat_ref.ephemeris_info) {
-            sat_sw.sat_ref.satellite_idx = add_satellite_config(out_cfg,
-                                                                next_satellite_idx,
-                                                                sat_sw.sat_ref.epoch_timestamp,
-                                                                *sat_sw.sat_ref.ephemeris_info,
-                                                                sat_sw.sat_ref.gateway_location,
-                                                                std::nullopt,
-                                                                sat_sw.sat_ref.propagator_type);
-          } else {
-            report_error("cells[{}].ntn.sat_switch_with_resync: either satellite_idx or inline ephemeris definition "
-                         "(epoch_timestamp and ephemeris_info) must be provided",
-                         phy_sector_idx);
-          }
-        }
+        resolve_ntn_satellite_ref(sat_sw.sat_ref,
+                                  out_cfg.satellites,
+                                  next_satellite_idx,
+                                  std::nullopt,
+                                  fmt::format("cells[{}].ntn.sat_switch_with_resync", phy_sector_idx));
       }
     }
 
     for (auto& ncell : ntn_cfg.ncells) {
-      if (!ncell.sat_ref.satellite_idx) {
-        if (ncell.sat_ref.epoch_timestamp && ncell.sat_ref.ephemeris_info) {
-          ncell.sat_ref.satellite_idx = add_satellite_config(out_cfg,
-                                                             next_satellite_idx,
-                                                             ncell.sat_ref.epoch_timestamp,
-                                                             *ncell.sat_ref.ephemeris_info,
-                                                             ncell.sat_ref.gateway_location,
-                                                             ncell.sat_ref.ta_info,
-                                                             ncell.sat_ref.propagator_type);
-        } else {
-          report_error("cells[{}].ntn.ncells[pci={}]: either satellite_idx or inline ephemeris definition "
-                       "(epoch_timestamp and ephemeris_info) must be provided",
-                       phy_sector_idx,
-                       ncell.phys_cell_id ? static_cast<unsigned>(*ncell.phys_cell_id) : 0U);
-        }
-      }
+      resolve_ntn_satellite_ref(ncell.sat_ref,
+                                out_cfg.satellites,
+                                next_satellite_idx,
+                                ncell.sat_ref.ta_info,
+                                fmt::format("cells[{}].ntn.ncells[pci={}]",
+                                            phy_sector_idx,
+                                            ncell.phys_cell_id ? static_cast<unsigned>(*ncell.phys_cell_id) : 0U));
     }
 
     resolved_ntn_cfgs[phy_sector_idx] = std::move(ntn_cfg);

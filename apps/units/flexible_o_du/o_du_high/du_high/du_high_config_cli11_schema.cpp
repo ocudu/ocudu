@@ -5,6 +5,7 @@
 #include "du_high_config_cli11_schema.h"
 #include "apps/helpers/logger/logger_appconfig_cli11_utils.h"
 #include "apps/helpers/metrics/metrics_config_cli11_schema.h"
+#include "apps/helpers/ntn/ntn_config_cli11_schema.h"
 #include "du_high_config.h"
 #include "ntn/du_high_ntn_config_cli11_schema.h"
 #include "ocudu/adt/ranges/transform.h"

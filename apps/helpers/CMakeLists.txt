@@ -20,3 +20,6 @@ target_link_libraries(ocudu_app_helpers INTERFACE  ocudu_e2_app_helpers
                                                     ocudu_metrics_app_helpers
                                                     ocudu_network_app_helpers
                                                     ocudu_tracing_app_helpers)
+
+# Reusable NTN config helpers shared across app units. Added after ocudu_app_helpers since it links against it.
+add_subdirectory(ntn)

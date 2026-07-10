@@ -4,6 +4,7 @@
 
 #include "du_high_config_yaml_writer.h"
 #include "apps/helpers/metrics/metrics_config_yaml_writer.h"
+#include "apps/helpers/ntn/ntn_config_yaml_writer.h"
 #include "du_high_config.h"
 #include "ntn/du_high_ntn_config_yaml_writer.h"
 #include "ocudu/adt/span.h"
