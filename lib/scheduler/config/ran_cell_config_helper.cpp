@@ -174,7 +174,8 @@ static ul_config_common make_default_ul_config_common(const config_helpers::cell
       band_helper::nr_arfcn_to_freq(ul_arfcn), params.cell_nof_crbs, params.scs_common);
   // \c absolute_freq_point_a needs to be expressed as in ARFCN, as per \c absoluteFrequencyPointA definition in
   // TS 38.211, Section 4.4.4.2.
-  cfg.freq_info_ul.absolute_freq_point_a = band_helper::freq_to_nr_arfcn(ul_absolute_freq_point_a);
+  cfg.freq_info_ul.absolute_freq_point_a     = band_helper::freq_to_nr_arfcn(ul_absolute_freq_point_a);
+  cfg.freq_info_ul.freq_shift_7p5khz_present = params.freq_shift_7p5khz;
   cfg.freq_info_ul.scs_carrier_list.resize(1);
   cfg.freq_info_ul.scs_carrier_list[0].scs               = params.scs_common;
   cfg.freq_info_ul.scs_carrier_list[0].offset_to_carrier = 0;

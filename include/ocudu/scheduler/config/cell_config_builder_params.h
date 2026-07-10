@@ -53,6 +53,8 @@ struct cell_config_builder_params {
   std::optional<unsigned> max_nof_layers;
   /// SSB subcarrier spacing.
   std::optional<subcarrier_spacing> scs_ssb;
+  /// Whether UL frequency shift of 7.5 kHz is enabled.
+  bool freq_shift_7p5khz = false;
 
   /// \brief Helper builder method to auto-derive dependent parameters, namely band, SSB SCS, nof DL layers,
   /// offset-to-pointA, k_SSB and coreset0 index.

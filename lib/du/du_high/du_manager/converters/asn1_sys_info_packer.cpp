@@ -226,6 +226,9 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
     out.freq_info_ul.p_max_present = true;
     out.freq_info_ul.p_max         = cfg.freq_info_ul.p_max->value();
   }
+  if (cfg.freq_info_ul.freq_shift_7p5khz_present) {
+    out.freq_info_ul.freq_shift7p5khz_present = true;
+  }
   out.freq_info_ul.scs_specific_carrier_list =
       odu::make_asn1_rrc_scs_specific_carrier_list(cfg.freq_info_ul.scs_carrier_list);
 
@@ -276,8 +279,7 @@ static asn1::rrc_nr::serving_cell_cfg_common_sib_s make_asn1_rrc_cell_serving_ce
   asn1::number_to_enum(cell.ssb_periodicity_serving_cell, to_value(du_cfg.ran.ssb_cfg.ssb_period));
   cell.ss_pbch_block_pwr = du_cfg.ran.ssb_cfg.ssb_block_power;
 
-  const n_ta_offset ta_offset = band_helper::get_ta_offset(du_cfg.ran.dl_carrier.band, false /* 5G-SA mode */);
-  switch (ta_offset) {
+  switch (du_cfg.ran.ta_offset) {
     case n_ta_offset::n0:
       cell.n_timing_advance_offset_present = true;
       cell.n_timing_advance_offset.value =

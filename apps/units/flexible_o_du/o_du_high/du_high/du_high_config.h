@@ -147,6 +147,9 @@ struct du_high_unit_ul_common_config {
   unsigned max_ul_grants_per_slot = 32U;
   /// Minimum distance in PRBs between PUCCH and UE-dedicated PUSCH grants.
   unsigned min_pucch_pusch_prb_distance = 1U;
+  /// UL frequency shift of 7.5 kHz (TS 38.211, Section 6.3.3.2): if true, subcarriers are shifted by 7.5 kHz for
+  /// LTE/NR coexistence on FDD bands.
+  bool freq_shift_7p5khz = false;
 };
 
 /// PDSCH application configuration.
@@ -1120,6 +1123,8 @@ struct du_high_unit_base_cell_config {
   bool enabled = true;
   /// MIB cellBarred field (TS 38.331): if true, UEs cannot camp on this cell.
   bool cell_barred = false;
+  /// Coexistence with E-UTRA/NB-IoT (TS 38.331): if true, LTE-style UL frequency shift is enabled.
+  bool eutra_coexistence = false;
   /// MIB intraFreqReselection field (TS 38.331): if true, intra-frequency cell reselection is allowed when barred.
   bool intra_freq_reselection = true;
   /// \c q-RxLevMin, part of \c cellSelectionInfo, \c SIB1, TS 38.331, in dBm.

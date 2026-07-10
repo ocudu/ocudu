@@ -916,6 +916,9 @@ static asn1::rrc_nr::ul_cfg_common_s make_asn1_rrc_ul_cfg_common(const ul_config
     out.freq_info_ul.p_max_present = true;
     out.freq_info_ul.p_max         = cfg.freq_info_ul.p_max->value();
   }
+  if (cfg.freq_info_ul.freq_shift_7p5khz_present) {
+    out.freq_info_ul.freq_shift7p5khz_present = true;
+  }
   out.freq_info_ul.scs_specific_carrier_list =
       make_asn1_rrc_scs_specific_carrier_list(cfg.freq_info_ul.scs_carrier_list);
 
@@ -3436,15 +3439,14 @@ bool ocudu::odu::calculate_reconfig_with_sync_diff(asn1::rrc_nr::recfg_with_sync
 
   // n-TimingAdvanceOffset only covers FR1 offsets, FR2 value n13792 is not present in this enum and should be skipped.
   if (band_helper::get_freq_range(du_cell_cfg.ran.dl_carrier.band) == frequency_range::FR1) {
-    const n_ta_offset ta_offset = band_helper::get_ta_offset(du_cell_cfg.ran.dl_carrier.band, false /* 5G-SA mode */);
     out.sp_cell_cfg_common.n_timing_advance_offset_present = true;
-    if (ta_offset == n_ta_offset::n0) {
+    if (du_cell_cfg.ran.ta_offset == n_ta_offset::n0) {
       out.sp_cell_cfg_common.n_timing_advance_offset.value =
           serving_cell_cfg_common_s::n_timing_advance_offset_opts::n0;
-    } else if (ta_offset == n_ta_offset::n25600) {
+    } else if (du_cell_cfg.ran.ta_offset == n_ta_offset::n25600) {
       out.sp_cell_cfg_common.n_timing_advance_offset.value =
           serving_cell_cfg_common_s::n_timing_advance_offset_opts::n25600;
-    } else if (ta_offset == n_ta_offset::n39936) {
+    } else if (du_cell_cfg.ran.ta_offset == n_ta_offset::n39936) {
       out.sp_cell_cfg_common.n_timing_advance_offset.value =
           serving_cell_cfg_common_s::n_timing_advance_offset_opts::n39936;
     }

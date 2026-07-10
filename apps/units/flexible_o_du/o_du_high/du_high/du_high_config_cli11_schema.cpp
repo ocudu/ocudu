@@ -833,6 +833,11 @@ static void configure_cli11_ul_common_args(CLI::App& app, du_high_unit_ul_common
              "Minimum PRB distance between PUCCH and UE-dedicated PUSCH grants")
       ->capture_default_str()
       ->check(CLI::Range(0U, (unsigned)MAX_NOF_PRBS / 2U));
+  add_option(app,
+             "--freq_shift_7p5khz",
+             ul_common_params.freq_shift_7p5khz,
+             "Enable UL frequency shift of 7.5 kHz (TS 38.211, Section 6.3.3.2) for LTE/NR coexistence on FDD bands")
+      ->capture_default_str();
 }
 
 static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config& pusch_params)
@@ -2449,6 +2454,11 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
   add_option(app, "--enabled", cell_params.enabled, "Automatically activate the cell on startup")
       ->capture_default_str();
   add_option(app, "--cell_barred", cell_params.cell_barred, "MIB cellBarred: if true, UEs cannot camp on this cell")
+      ->capture_default_str();
+  add_option(app,
+             "--eutra_coexistence",
+             cell_params.eutra_coexistence,
+             "EUTRA coexistence: set to true if cell is deployed in conjunction with EUTRA")
       ->capture_default_str();
   add_option(app,
              "--intra_freq_reselection",

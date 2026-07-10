@@ -11,6 +11,7 @@
 #include "ocudu/du/du_high/du_high_configuration.h"
 #include "ocudu/du/du_high/du_qos_config_helpers.h"
 #include "ocudu/du/du_update_config_helpers.h"
+#include "ocudu/ran/band_helper.h"
 #include "ocudu/ran/duplex_mode.h"
 #include "ocudu/ran/pdcch/pdcch_candidates.h"
 #include "ocudu/ran/prach/prach_configuration.h"
@@ -609,6 +610,9 @@ std::vector<odu::du_cell_config> ocudu::generate_du_cell_config(const du_high_un
     out_cell.tac            = base_cell.tac;
     out_cell.enabled        = base_cell.enabled;
 
+    // > TA offset.
+    out_cell.ran.ta_offset = band_helper::get_ta_offset(band, base_cell.eutra_coexistence);
+
     // > SSB.
     out_cell.ran.ssb_cfg.ssb_period      = static_cast<ssb_periodicity>(base_cell.ssb_cfg.ssb_period_msec);
     out_cell.ran.ssb_cfg.ssb_block_power = base_cell.ssb_cfg.ssb_block_power;
@@ -628,6 +632,7 @@ std::vector<odu::du_cell_config> ocudu::generate_du_cell_config(const du_high_un
     if (base_cell.ul_common_cfg.p_max.has_value()) {
       out_cell.ran.ul_cfg_common.freq_info_ul.p_max = base_cell.ul_common_cfg.p_max.value();
     }
+    out_cell.ran.ul_cfg_common.freq_info_ul.freq_shift_7p5khz_present = base_cell.ul_common_cfg.freq_shift_7p5khz;
 
     // DL common config.
     out_cell.ran.dl_cfg_common.freq_info_dl.scs_carrier_list.back().tx_direct_current_location =

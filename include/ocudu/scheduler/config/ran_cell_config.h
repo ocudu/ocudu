@@ -7,6 +7,7 @@
 #include "ocudu/ntn/ntn_cell_params.h"
 #include "ocudu/ran/carrier_configuration.h"
 #include "ocudu/ran/dmrs/dmrs.h"
+#include "ocudu/ran/n_ta_offset.h"
 #include "ocudu/ran/pci.h"
 #include "ocudu/ran/ssb/ssb_configuration.h"
 #include "ocudu/ran/tdd/tdd_ul_dl_config.h"
@@ -38,6 +39,8 @@ struct ran_cell_config {
   bwp_builder_params init_bwp;
   /// NTN configuration for this cell. When empty, the cell operates in terrestrial mode.
   std::optional<ntn_cell_params> ntn_params;
+  /// Cell time advance offset - parameter \f$N_{TA,offset}\f$ in TS38.211 Section 4.3.3.
+  n_ta_offset ta_offset = n_ta_offset::n0;
 };
 
 } // namespace ocudu
