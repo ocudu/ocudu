@@ -5,6 +5,7 @@
 #include "cu_cp_unit_config_yaml_writer.h"
 #include "apps/helpers/metrics/metrics_config_yaml_writer.h"
 #include "apps/helpers/network/sctp_config_yaml_writer.h"
+#include "apps/helpers/ntn/ntn_config_yaml_writer.h"
 #include "cu_cp_unit_config.h"
 #include "ocudu/adt/span.h"
 
@@ -134,7 +135,6 @@ static YAML::Node build_cu_cp_mobility_ncells_section(const cu_cp_unit_neighbor_
   for (auto report_id : config.report_cfg_ids) {
     node["report_configs"] = report_id;
   }
-
   node["report_configs"].SetStyle(YAML::EmitterStyle::Flow);
 
   return node;
@@ -175,6 +175,18 @@ static YAML::Node build_cu_cp_mobility_cells_section(const cu_cp_unit_cell_confi
   }
   if (config.ssb_duration) {
     node["ssb_duration"] = config.ssb_duration.value();
+  }
+
+  if (config.ntn_cfg.has_value()) {
+    YAML::Node ntn_node;
+    fill_ntn_satellite_in_yaml_schema(ntn_node, config.ntn_cfg->sat_ref);
+    if (config.ntn_cfg->reference_location.has_value()) {
+      ntn_node["reference_location"] = build_geodetic_yaml_node(*config.ntn_cfg->reference_location, false);
+    }
+    if (config.ntn_cfg->polarization.has_value()) {
+      ntn_node["polarization"] = build_ntn_polarization_yaml_node(*config.ntn_cfg->polarization);
+    }
+    node["ntn"] = ntn_node;
   }
 
   for (const auto& ncell : config.ncells) {
@@ -288,6 +300,7 @@ static YAML::Node build_cu_cp_mobility_section(const cu_cp_unit_mobility_config&
   node["trigger_handover_from_measurements"] = config.trigger_handover_from_measurements;
   node["trigger_cho_on_ue_setup"]            = config.trigger_cho_on_ue_setup;
   node["cho_timeout_ms"]                     = config.cho_timeout_ms;
+  node["ntn_update_period_ms"]               = config.ntn_update_period_ms;
   for (const auto& cell : config.cells) {
     node["cells"].push_back(build_cu_cp_mobility_cells_section(cell));
   }
@@ -531,4 +544,5 @@ void ocudu::fill_cu_cp_config_in_yaml_schema(YAML::Node& node, const cu_cp_unit_
   fill_cu_cp_pcap_section(node["pcap"], config.pcap_cfg);
   fill_cu_cp_metrics_section(node["metrics"], config.metrics);
   fill_cu_cp_qos_section(node, config.qos_cfg);
+  fill_ntn_satellites_in_yaml_schema(node, config.ntn_satellites);
 }

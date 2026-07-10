@@ -6,6 +6,7 @@
 #include "apps/helpers/logger/logger_appconfig_cli11_utils.h"
 #include "apps/helpers/metrics/metrics_config_cli11_schema.h"
 #include "apps/helpers/network/sctp_cli11_schema.h"
+#include "apps/helpers/ntn/ntn_config_cli11_schema.h"
 #include "cu_cp_unit_config.h"
 #include "cu_cp_unit_config_helpers.h"
 #include "ocudu/ran/nr_cell_identity.h"
@@ -404,6 +405,32 @@ static void configure_cli11_cells_args(CLI::App& app, cu_cp_unit_cell_config_ite
   add_option(app, "--ssb_offset", config.ssb_offset, "SSB offset");
   add_option(app, "--ssb_duration", config.ssb_duration, "SSB duration")->check(CLI::IsMember({1, 2, 3, 4, 5}));
 
+  // NTN configuration (ntn-NeighbourCellInfo-r18): satellite reference (globally-defined satellite_idx or inline
+  // definition, same options as in the DU NTN cell config) plus an optional 2-D reference location. Each cell is
+  // parsed immediately by its own subapp, so the static buffers are copied out before the next cell is parsed.
+  static cu_cp_unit_cell_ntn_config ntn_buf;
+  ntn_buf              = {};
+  CLI::App* ntn_subcmd = add_subcommand(app, "ntn", "NTN configuration of this cell");
+  configure_cli11_ntn_satellite_args(*ntn_subcmd, ntn_buf.sat_ref);
+
+  static geodetic_coordinates_t ntn_ref_loc_buf;
+  ntn_ref_loc_buf      = {};
+  CLI::App* ref_subcmd = add_subcommand(*ntn_subcmd, "reference_location", "2-D reference location of the cell");
+  configure_cli11_geodetic_coordinates(*ref_subcmd, ntn_ref_loc_buf, false);
+  ref_subcmd->parse_complete_callback([]() { ntn_buf.reference_location = ntn_ref_loc_buf; });
+
+  static ntn_polarization_t ntn_pol_buf;
+  ntn_pol_buf          = {};
+  CLI::App* pol_subcmd = add_subcommand(*ntn_subcmd, "polarization", "Service link DL/UL polarization of the cell");
+  configure_cli11_ntn_polarization(*pol_subcmd, ntn_pol_buf);
+  pol_subcmd->parse_complete_callback([]() { ntn_buf.polarization = ntn_pol_buf; });
+
+  ntn_subcmd->parse_complete_callback([&config, ntn_subcmd]() {
+    if (ntn_subcmd->count() != 0) {
+      config.ntn_cfg = ntn_buf;
+    }
+  });
+
   // report configuration parameters.
   app.add_option_function<std::vector<std::string>>(
       "--ncells",
@@ -440,6 +467,12 @@ static void configure_cli11_mobility_args(CLI::App& app, cu_cp_unit_mobility_con
              "Timeout in milliseconds used for auto-triggered CHO and as default timeout for manual CHO command")
       ->capture_default_str()
       ->check(CLI::Range(1, 600000));
+  add_option(app,
+             "--ntn_update_period_ms",
+             config.ntn_update_period_ms,
+             "Period in milliseconds of the NTN neighbour cell info updates in the measurement configuration")
+      ->capture_default_str()
+      ->check(CLI::Range(100, 2000));
 
   // Cell map parameters.
   app.add_option_function<std::vector<std::string>>(
@@ -872,6 +905,11 @@ void ocudu::configure_cli11_with_cu_cp_unit_config_schema(CLI::App& app, cu_cp_u
     }
   };
   add_option_cell(app, "--qos", qos_lambda, "Configures RLC and PDCP radio bearers on a per 5QI basis.");
+
+  // Global NTN section (shared satellite definitions referenced by satellite_idx in neighbor cell NTN configs).
+  // In the gnb application this reuses the same section as the DU, so the satellites are defined once.
+  CLI::App* global_ntn_subcmd = add_subcommand(app, "ntn", "Global NTN configuration");
+  configure_cli11_ntn_satellites_args(*global_ntn_subcmd, unit_cfg.ntn_satellites);
 }
 
 void ocudu::autoderive_cu_cp_parameters_after_parsing(CLI::App& app, cu_cp_unit_config& unit_cfg)

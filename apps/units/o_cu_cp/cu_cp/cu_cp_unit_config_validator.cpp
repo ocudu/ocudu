@@ -741,6 +741,37 @@ static bool validate_xnap_appconfig(const cu_cp_unit_xnap_config& config)
 }
 
 /// Validates the given CU-CP configuration. Returns true on success, otherwise false.
+/// Validates the NTN configuration of the cells. Returns true on success, otherwise false.
+static bool validate_ntn_appconfig(const cu_cp_unit_config& config)
+{
+  bool has_ntn_cells = false;
+  for (const auto& cell : config.mobility_config.cells) {
+    if (!cell.ntn_cfg.has_value()) {
+      continue;
+    }
+    has_ntn_cells = true;
+    // Satellite must be a global reference or an inline definition.
+    const auto& sat_ref = cell.ntn_cfg->sat_ref;
+    if (!sat_ref.satellite_idx && !(sat_ref.epoch_timestamp && sat_ref.ephemeris_info)) {
+      fmt::print("cell={:#x} ntn: either satellite_idx or inline ephemeris definition "
+                 "(epoch_timestamp and ephemeris_info) must be provided\n",
+                 cell.nr_cell_id);
+      return false;
+    }
+  }
+
+  // The NTN neighbour info epoch time is derived from the DU reference time reports, so periodic reference time
+  // reporting must be enabled when NTN cells are configured.
+  if (has_ntn_cells && (!config.f1ap_config.ref_time_reporting_enabled ||
+                        config.f1ap_config.ref_time_reporting_event_type != "periodic")) {
+    fmt::print("NTN cells are configured, but periodic reference time reporting is disabled. Enable it via "
+               "cu_cp.f1ap.ref_time_reporting.\n");
+    return false;
+  }
+
+  return true;
+}
+
 static bool validate_cu_cp_appconfig(const gnb_id_t gnb_id, const cu_cp_unit_config& config)
 {
   // validate AMF config
@@ -750,6 +781,11 @@ static bool validate_cu_cp_appconfig(const gnb_id_t gnb_id, const cu_cp_unit_con
 
   // validate mobility config
   if (!validate_mobility_appconfig(gnb_id, config.mobility_config)) {
+    return false;
+  }
+
+  // validate NTN neighbor cell config
+  if (!validate_ntn_appconfig(config)) {
     return false;
   }
 

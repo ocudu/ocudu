@@ -6,12 +6,14 @@
 
 #include "apps/helpers/metrics/metrics_config.h"
 #include "apps/helpers/network/sctp_appconfig.h"
+#include "apps/helpers/ntn/ntn_satellite_config.h"
 #include "apps/units/o_cu_cp/cu_cp/cu_cp_unit_pcap_config.h"
 #include "cu_cp_unit_logger_config.h"
 #include "ocudu/ran/arfcn.h"
 #include "ocudu/ran/gnb_id.h"
 #include "ocudu/ran/meas_types.h"
 #include "ocudu/ran/nr_band.h"
+#include "ocudu/ran/ntn.h"
 #include "ocudu/ran/pci.h"
 #include "ocudu/ran/qos/five_qi.h"
 #include "ocudu/ran/s_nssai.h"
@@ -94,6 +96,18 @@ struct cu_cp_unit_report_config {
       duration; ///< T1: duration in seconds (each step=100ms, range [0.1..600])
 };
 
+/// NTN configuration of a cell. When this cell is listed as a neighbour of another cell, it is used to periodically
+/// generate ntn-NeighbourCellInfo-r18 in that cell's MeasObjectNR. The satellite is either a reference to a
+/// globally-defined satellite_idx or an inline definition, the same way as in the DU NTN cell configuration.
+struct cu_cp_unit_cell_ntn_config {
+  /// Reference to the cell's satellite (global reference or inline definition).
+  ntn_satellite_config sat_ref;
+  /// 2-D reference location of the cell (lat/lon degrees). Optional.
+  std::optional<geodetic_coordinates_t> reference_location;
+  /// Service link DL/UL polarization (ntn-PolarizationDL/UL-r17). Optional.
+  std::optional<ntn_polarization_t> polarization;
+};
+
 struct cu_cp_unit_neighbor_cell_config_item {
   /// Cell id.
   uint64_t nr_cell_id;
@@ -128,6 +142,8 @@ struct cu_cp_unit_cell_config_item {
   std::optional<unsigned> ssb_offset;
   /// SSB duration.
   std::optional<unsigned> ssb_duration;
+  /// NTN configuration of this cell (ntn-NeighbourCellInfo-r18 generated when this cell is a neighbour). Optional.
+  std::optional<cu_cp_unit_cell_ntn_config> ntn_cfg;
   /// Vector of cells that are a neighbor of this cell.
   std::vector<cu_cp_unit_neighbor_cell_config_item> ncells;
   // TODO: Add optional SSB parameters.
@@ -145,6 +161,8 @@ struct cu_cp_unit_mobility_config {
   bool trigger_cho_on_ue_setup = false;
   /// Timeout used for auto-triggered CHO and as default timeout for manual CHO command in milliseconds.
   unsigned cho_timeout_ms = 10000;
+  /// Period, in milliseconds, of the NTN neighbour cell info updates in the measurement configuration.
+  unsigned ntn_update_period_ms = 1000;
 };
 
 /// RRC specific configuration parameters.
@@ -427,6 +445,10 @@ struct cu_cp_unit_config {
   std::vector<cu_cp_unit_qos_config> qos_cfg;
   /// Network slice configuration.
   std::vector<s_nssai_t> slice_cfg = {s_nssai_t{slice_service_type{1}}};
+  /// Globally-defined NTN satellites, referenced by satellite_idx from the neighbor cell NTN configs. In the gnb
+  /// application this list is shared with the DU (parsed once from the global ntn section); the standalone CU-CP
+  /// application parses it from its own ntn section.
+  std::vector<ntn_satellite_config> ntn_satellites;
 };
 
 } // namespace ocudu
