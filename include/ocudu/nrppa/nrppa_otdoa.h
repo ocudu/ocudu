@@ -66,9 +66,4 @@ struct nrppa_otdoa_information_failure {
   std::optional<crit_diagnostics_t> crit_diagnostics;
 };
 
-struct nrppa_error_indication {
-  nrppa_cause_t                     cause;
-  std::optional<crit_diagnostics_t> crit_diagnostics;
-};
-
 } // namespace ocudu::ocucp
