@@ -427,75 +427,67 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
     return std::nullopt;
   }
 
-  for (const uint8_t pusch_td_index : bwp_cfg.ul.td_mapper().pusch_td_res_indices(pdcch_slot.count())) {
-    const pusch_time_domain_resource_allocation& pusch_td_res =
-        bwp_cfg.ul.td_mapper().pusch_td_resources()[pusch_td_index];
+  // Make sure the PUSCH time resource symbols fit within the UL symbols available in this slot; this is to avoid
+  // allocating the PUSCH over SRS resource symbols, if any.
+  const std::optional<uint8_t> pusch_td_index =
+      bwp_cfg.ul.td_mapper().find_pusch_td_res_index(pdcch_slot, pusch_slot, allowed_symbols, cell_cfg.ntn_cs_koffset);
+  if (not pusch_td_index.has_value()) {
+    return std::nullopt;
+  }
+  const pusch_time_domain_resource_allocation& pusch_td_res =
+      bwp_cfg.ul.td_mapper().pusch_td_resources()[*pusch_td_index];
 
-    // Check that k2 matches the chosen PUSCH slot.
-    if (pdcch_slot + pusch_td_res.k2 + cell_cfg.ntn_cs_koffset != pusch_slot) {
-      continue;
+  // Compute recommended number of layers, MCS and PRBs.
+
+  bool include_csi = false;
+  if (ue_cell_cfg.csi_meas_cfg() != nullptr) {
+    // TODO: pass this through the scheduler config instead.
+    auto aperiodic_csi_prohibit_time_slots =
+        static_cast<unsigned>(ue_cell_cfg.csi_meas_cfg()->nzp_csi_rs_res_list[0].csi_res_period.value());
+    if (std::holds_alternative<csi_report_config::aperiodic_report>(
+            ue_cell_cfg.csi_meas_cfg()->csi_report_cfg_list[0].report_cfg_type) and
+        ue_cc.channel_state_manager().is_aperiodic_csi_allowed(pusch_slot, aperiodic_csi_prohibit_time_slots)) {
+      include_csi = true;
+    } else if (std::holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+                   ue_cell_cfg.csi_meas_cfg()->csi_report_cfg_list[0].report_cfg_type) and
+               csi_helper::is_csi_reporting_slot(*ue_cell_cfg.init_bwp().ul.ue_cfg()->periodic_csi_report,
+                                                 cell_cfg.params.init_bwp.csi->csi_rs_period,
+                                                 pusch_slot)) {
+      include_csi = true;
     }
-
-    // Make sure the PUSCH time resource symbols fit within the UL symbols available in this slot; this is to avoid
-    // allocating the PUSCH over SRS resource symbols, if any.
-    if (not allowed_symbols.contains(pusch_td_res.symbols)) {
-      continue;
-    }
-
-    // Compute recommended number of layers, MCS and PRBs.
-
-    bool include_csi = false;
-    if (ue_cell_cfg.csi_meas_cfg() != nullptr) {
-      // TODO: pass this through the scheduler config instead.
-      auto aperiodic_csi_prohibit_time_slots =
-          static_cast<unsigned>(ue_cell_cfg.csi_meas_cfg()->nzp_csi_rs_res_list[0].csi_res_period.value());
-      if (std::holds_alternative<csi_report_config::aperiodic_report>(
-              ue_cell_cfg.csi_meas_cfg()->csi_report_cfg_list[0].report_cfg_type) and
-          ue_cc.channel_state_manager().is_aperiodic_csi_allowed(pusch_slot, aperiodic_csi_prohibit_time_slots)) {
-        include_csi = true;
-      } else if (std::holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
-                     ue_cell_cfg.csi_meas_cfg()->csi_report_cfg_list[0].report_cfg_type) and
-                 csi_helper::is_csi_reporting_slot(*ue_cell_cfg.init_bwp().ul.ue_cfg()->periodic_csi_report,
-                                                   cell_cfg.params.init_bwp.csi->csi_rs_period,
-                                                   pusch_slot)) {
-        include_csi = true;
-      }
-    }
-
-    pusch_config_params               pusch_cfg;
-    std::optional<mcs_prbs_selection> mcs_prbs_sel;
-    if (h_ul == nullptr) {
-      // NewTx Case.
-      dci_ul_rnti_config_type dci_type = ss.get_ul_dci_format() == dci_ul_format::f0_0
-                                             ? dci_ul_rnti_config_type::c_rnti_f0_0
-                                             : dci_ul_rnti_config_type::c_rnti_f0_1;
-      // Note: We assume k2 <= k1, which means that all the HARQ bits are set at this point for this UL slot and UE.
-      pusch_cfg    = compute_newtx_pusch_config_params(ue_cc, dci_type, pusch_td_res, uci_nof_harq_bits, include_csi);
-      mcs_prbs_sel = compute_newtx_required_mcs_and_prbs(pusch_cfg, ue_cc, pending_bytes, nof_rb_lims);
-    } else {
-      // ReTx Case.
-      // Compute if effective code rate does not go over the limit for this reTx, for instance, due to presence of UCI.
-      pusch_cfg    = compute_retx_pusch_config_params(ue_cc, *h_ul, pusch_td_res, uci_nof_harq_bits, include_csi);
-      mcs_prbs_sel = compute_retx_nof_rbs_mcs(pusch_cfg, h_ul->get_grant_params(), ue_cc, nof_rb_lims);
-    }
-    if (not mcs_prbs_sel.has_value()) {
-      continue;
-    }
-
-    // Successful selection of grant parameters.
-    ul_sched_context ctxt;
-    ctxt.ss_id              = ss.cfg->get_id();
-    ctxt.pusch_td_res_index = pusch_td_index;
-    ctxt.vrb_lims           = vrb_lims;
-    ctxt.nof_rb_lims        = nof_rb_lims;
-    ctxt.recommended_mcs    = mcs_prbs_sel->mcs;
-    ctxt.expected_nof_rbs   = mcs_prbs_sel->nof_prbs;
-    ctxt.pending_bytes      = units::bytes{pending_bytes};
-    ctxt.pusch_cfg          = pusch_cfg;
-    return ctxt;
   }
 
-  return std::nullopt;
+  pusch_config_params               pusch_cfg;
+  std::optional<mcs_prbs_selection> mcs_prbs_sel;
+  if (h_ul == nullptr) {
+    // NewTx Case.
+    dci_ul_rnti_config_type dci_type = ss.get_ul_dci_format() == dci_ul_format::f0_0
+                                           ? dci_ul_rnti_config_type::c_rnti_f0_0
+                                           : dci_ul_rnti_config_type::c_rnti_f0_1;
+    // Note: We assume k2 <= k1, which means that all the HARQ bits are set at this point for this UL slot and UE.
+    pusch_cfg    = compute_newtx_pusch_config_params(ue_cc, dci_type, pusch_td_res, uci_nof_harq_bits, include_csi);
+    mcs_prbs_sel = compute_newtx_required_mcs_and_prbs(pusch_cfg, ue_cc, pending_bytes, nof_rb_lims);
+  } else {
+    // ReTx Case.
+    // Compute if effective code rate does not go over the limit for this reTx, for instance, due to presence of UCI.
+    pusch_cfg    = compute_retx_pusch_config_params(ue_cc, *h_ul, pusch_td_res, uci_nof_harq_bits, include_csi);
+    mcs_prbs_sel = compute_retx_nof_rbs_mcs(pusch_cfg, h_ul->get_grant_params(), ue_cc, nof_rb_lims);
+  }
+  if (not mcs_prbs_sel.has_value()) {
+    return std::nullopt;
+  }
+
+  // Successful selection of grant parameters.
+  ul_sched_context ctxt;
+  ctxt.ss_id              = ss.cfg->get_id();
+  ctxt.pusch_td_res_index = *pusch_td_index;
+  ctxt.vrb_lims           = vrb_lims;
+  ctxt.nof_rb_lims        = nof_rb_lims;
+  ctxt.recommended_mcs    = mcs_prbs_sel->mcs;
+  ctxt.expected_nof_rbs   = mcs_prbs_sel->nof_prbs;
+  ctxt.pending_bytes      = units::bytes{pending_bytes};
+  ctxt.pusch_cfg          = pusch_cfg;
+  return ctxt;
 }
 
 std::optional<ul_sched_context> sched_helper::get_newtx_ul_sched_context(const slice_ue&   u,

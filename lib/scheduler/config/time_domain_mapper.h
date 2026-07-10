@@ -10,6 +10,7 @@
 #include "ocudu/ran/pdsch/pdsch_time_domain_resource.h"
 #include "ocudu/ran/pusch/pusch_constants.h"
 #include "ocudu/ran/pusch/pusch_time_domain_resource.h"
+#include "ocudu/ran/slot_point.h"
 #include "ocudu/ran/tdd/tdd_ul_dl_config.h"
 #include "ocudu/scheduler/config/time_domain_resource_helper.h"
 #include <optional>
@@ -111,6 +112,16 @@ struct ul_time_domain_mapper {
   {
     return pusch_td_res_indices_per_slot[pdcch_slot_index % pusch_td_res_indices_per_slot.size()];
   }
+
+  /// \brief Get the index into \ref pusch_td_resources() of the best-matching PUSCH TD resource candidate for a PDCCH
+  /// in \c pdcch_slot, whose k2 (plus \c ntn_cs_koffset) leads to \c pusch_slot and whose symbols are fully contained
+  /// within \c usable_symbols. "Best" means the candidate with the largest \c symbols.length() among those that
+  /// qualify; ties keep the first one encountered.
+  /// \return The matching index, or \c std::nullopt if no candidate qualifies.
+  std::optional<uint8_t> find_pusch_td_res_index(slot_point        pdcch_slot,
+                                                 slot_point        pusch_slot,
+                                                 ofdm_symbol_range usable_symbols,
+                                                 unsigned          ntn_cs_koffset) const;
 
   /// Retrieve the list of k1 candidates for PDSCH-to-HARQ timing used with UE-dedicated DCI.
   span<const uint8_t> dedicated_k1_candidates() const { return dedicated_k1_list; }

@@ -203,3 +203,24 @@ ul_time_domain_mapper::ul_time_domain_mapper(const ul_time_domain_builder_params
   common_k1_per_slot =
       get_pucch_k1_list_per_slot(common_k1_list, params.tdd_cfg, pusch_td_res_list, pusch_td_res_indices_per_slot);
 }
+
+std::optional<uint8_t> ul_time_domain_mapper::find_pusch_td_res_index(slot_point        pdcch_slot,
+                                                                      slot_point        pusch_slot,
+                                                                      ofdm_symbol_range usable_symbols,
+                                                                      unsigned          ntn_cs_koffset) const
+{
+  std::optional<uint8_t> best;
+  for (uint8_t idx : pusch_td_res_indices(pdcch_slot.count())) {
+    const pusch_time_domain_resource_allocation& pusch_td_res = pusch_td_res_list[idx];
+    if (pdcch_slot + pusch_td_res.k2 + ntn_cs_koffset != pusch_slot) {
+      continue;
+    }
+    if (not usable_symbols.contains(pusch_td_res.symbols)) {
+      continue;
+    }
+    if (not best.has_value() or pusch_td_res_list[*best].symbols.length() < pusch_td_res.symbols.length()) {
+      best = idx;
+    }
+  }
+  return best;
+}
