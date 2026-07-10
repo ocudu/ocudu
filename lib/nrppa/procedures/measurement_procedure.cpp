@@ -43,7 +43,12 @@ void measurement_procedure::operator()(coro_context<async_task<void>>& ctx)
   if (!prepare_du_measurement_information_requests() or !create_measurement_context()) {
     logger.warning("\"{}\" failed", name());
     // Send failure to CU-CP.
-    send_ul_nrppa_pdu(create_measurement_failure(nrppa_cause_protocol_t::msg_not_compatible_with_receiver_state));
+    send_ul_nrppa_pdu(logger,
+                      cu_cp_notifier,
+                      create_measurement_failure(nrppa_cause_protocol_t::msg_not_compatible_with_receiver_state),
+                      "MeasResponse",
+                      "MeasFailure",
+                      amf_index);
     CORO_EARLY_RETURN();
   }
 
@@ -162,22 +167,12 @@ void measurement_procedure::handle_procedure_outcome()
     logger.info("\"{}\" finished successfully", name());
   }
 
-  // Send response to CU-CP.
-  send_ul_nrppa_pdu(meas_outcome);
-}
-
-void measurement_procedure::send_ul_nrppa_pdu(const asn1::nrppa::nr_ppa_pdu_c& pdu)
-{
-  // Pack into PDU.
-  ul_nrppa_pdu = pack_into_pdu(
-      pdu,
-      pdu.type().value == asn1::nrppa::nr_ppa_pdu_c::types_opts::successful_outcome ? "MeasResponse" : "MeasFailure");
-
-  // Log Tx message.
-  log_nrppa_message(logger, Tx, ul_nrppa_pdu, pdu);
+  // The measurement context only exists to correlate the DU response(s) with this one-shot query; release it now
+  // that the procedure has completed, freeing up its RAN Meas ID for reuse.
+  meas_ctxt_list.remove_measurement_context(meas_request.lmf_meas_id);
 
   // Send response to CU-CP.
-  cu_cp_notifier.on_ul_nrppa_pdu(ul_nrppa_pdu, amf_index);
+  send_ul_nrppa_pdu(logger, cu_cp_notifier, meas_outcome, "MeasResponse", "MeasFailure", amf_index);
 }
 
 asn1::nrppa::nr_ppa_pdu_c measurement_procedure::create_measurement_failure(nrppa_cause_t cause) const

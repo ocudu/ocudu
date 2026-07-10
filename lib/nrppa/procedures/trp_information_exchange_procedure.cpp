@@ -69,7 +69,7 @@ void trp_information_exchange_procedure::handle_procedure_outcome()
       if (cu_cp_response.f1ap_notifiers.find(du_idx) == cu_cp_response.f1ap_notifiers.end()) {
         logger.error("F1AP notifier not found for DU {}", du_idx);
         trp_info_outcome = create_trp_info_failure(nrppa_cause_protocol_t::unspecified);
-        send_ul_nrppa_pdu(trp_info_outcome);
+        send_ul_nrppa_pdu(logger, cu_cp_notifier, trp_info_outcome, "TRPInfoResponse", "TRPInfoFailure", amf_index);
         return;
       }
 
@@ -81,21 +81,7 @@ void trp_information_exchange_procedure::handle_procedure_outcome()
   }
 
   // Send response to CU-CP.
-  send_ul_nrppa_pdu(trp_info_outcome);
-}
-
-void trp_information_exchange_procedure::send_ul_nrppa_pdu(const asn1::nrppa::nr_ppa_pdu_c& pdu)
-{
-  // Pack into PDU.
-  ul_nrppa_pdu =
-      pack_into_pdu(pdu,
-                    pdu.type().value == asn1::nrppa::nr_ppa_pdu_c::types_opts::successful_outcome ? "TRPInfoResponse"
-                                                                                                  : "TRPInfoFailure");
-
-  // Log Tx message.
-  log_nrppa_message(logger, Tx, ul_nrppa_pdu, pdu);
-  // Send response to CU-CP.
-  cu_cp_notifier.on_ul_nrppa_pdu(ul_nrppa_pdu, amf_index);
+  send_ul_nrppa_pdu(logger, cu_cp_notifier, trp_info_outcome, "TRPInfoResponse", "TRPInfoFailure", amf_index);
 }
 
 asn1::nrppa::nr_ppa_pdu_c trp_information_exchange_procedure::create_trp_info_failure(nrppa_cause_t cause) const

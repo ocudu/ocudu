@@ -43,9 +43,6 @@ private:
   /// \brief Fill the procedure result, log it and forward it to the CU-CP.
   void handle_procedure_outcome();
 
-  /// \brief Send the TRP info outcome to the CU-CP.
-  void send_ul_nrppa_pdu(const asn1::nrppa::nr_ppa_pdu_c& pdu);
-
   cu_cp_amf_index_t                     amf_index;
   const trp_information_request_t       trp_info_request;
   uint16_t                              transaction_id;
@@ -56,7 +53,6 @@ private:
 
   trp_information_cu_cp_response_t cu_cp_response;
   asn1::nrppa::nr_ppa_pdu_c        trp_info_outcome;
-  byte_buffer                      ul_nrppa_pdu;
 };
 
 } // namespace ocudu::ocucp

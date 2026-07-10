@@ -51,9 +51,6 @@ private:
   /// \brief Fill the procedure result, log it and forward it to the CU-CP.
   void handle_procedure_outcome(bool on_demand);
 
-  /// \brief Send the E-CID measurement outcome to the CU-CP.
-  void send_ul_nrppa_pdu(const asn1::nrppa::nr_ppa_pdu_c& pdu);
-
   cu_cp_ue_index_t                          ue_index;
   const nrppa_e_cid_meas_initiation_request e_cid_meas_init_request;
   uint16_t                                  transaction_id;
@@ -70,7 +67,6 @@ private:
   expected<nrppa_e_cid_meas_result, nrppa_cause_t> e_cid_meas_results;
 
   asn1::nrppa::nr_ppa_pdu_c e_cid_meas_outcome;
-  byte_buffer               ul_nrppa_pdu;
 };
 
 } // namespace ocudu::ocucp

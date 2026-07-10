@@ -57,7 +57,28 @@ void e_cid_measurement_initiation_procedure::operator()(coro_context<async_task<
 
       // Send E-CID measurement initiation failure to CU-CP.
       send_ul_nrppa_pdu(
-          create_e_cid_measurement_initiation_failure(nrppa_cause_protocol_t::msg_not_compatible_with_receiver_state));
+          logger,
+          cu_cp_notifier,
+          create_e_cid_measurement_initiation_failure(nrppa_cause_protocol_t::msg_not_compatible_with_receiver_state),
+          "ECIDMeasInitiationResponse",
+          "ECIDMeasInitiationFailure",
+          ue_ctxt->ue_ids.ue_index);
+
+      CORO_EARLY_RETURN();
+    }
+
+    // Reject the request if periodic reporting was requested without the mandatory Measurement Periodicity IE.
+    if (!e_cid_meas_init_request.meas_periodicity.has_value()) {
+      ue_ctxt->logger.log_warning("Stopping \"{}\". Periodic reporting requested without Measurement Periodicity",
+                                  name());
+
+      // Send E-CID measurement initiation failure to CU-CP.
+      send_ul_nrppa_pdu(logger,
+                        cu_cp_notifier,
+                        create_e_cid_measurement_initiation_failure(nrppa_cause_protocol_t::semantic_error),
+                        "ECIDMeasInitiationResponse",
+                        "ECIDMeasInitiationFailure",
+                        ue_ctxt->ue_ids.ue_index);
 
       CORO_EARLY_RETURN();
     }
@@ -160,22 +181,12 @@ void e_cid_measurement_initiation_procedure::handle_procedure_outcome(bool on_de
   }
 
   // Send response to CU-CP.
-  send_ul_nrppa_pdu(e_cid_meas_outcome);
-}
-
-void e_cid_measurement_initiation_procedure::send_ul_nrppa_pdu(const asn1::nrppa::nr_ppa_pdu_c& pdu)
-{
-  // Pack into PDU.
-  ul_nrppa_pdu = pack_into_pdu(pdu,
-                               pdu.type().value == asn1::nrppa::nr_ppa_pdu_c::types_opts::successful_outcome
-                                   ? "ECIDMeasInitiationResponse"
-                                   : "ECIDMeasInitiationFailure");
-
-  // Log Tx message.
-  log_nrppa_message(ocudulog::fetch_basic_logger("NRPPA"), Tx, ul_nrppa_pdu, pdu);
-
-  // Send response to CU-CP.
-  cu_cp_notifier.on_ul_nrppa_pdu(ul_nrppa_pdu, ue_ctxt->ue_ids.ue_index);
+  send_ul_nrppa_pdu(logger,
+                    cu_cp_notifier,
+                    e_cid_meas_outcome,
+                    "ECIDMeasInitiationResponse",
+                    "ECIDMeasInitiationFailure",
+                    ue_ctxt->ue_ids.ue_index);
 }
 
 asn1::nrppa::nr_ppa_pdu_c

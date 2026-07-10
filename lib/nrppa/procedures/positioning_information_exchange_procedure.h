@@ -42,9 +42,6 @@ private:
   /// \brief Fill the procedure result, log it and forward it to the CU-CP.
   void handle_procedure_outcome();
 
-  /// \brief Send the positioning information exchange outcome to the CU-CP.
-  void send_ul_nrppa_pdu(const asn1::nrppa::nr_ppa_pdu_c& pos_info_outcome);
-
   const positioning_information_request_t pos_info_request;
   uint16_t                                transaction_id;
   cu_cp_du_index_t                        du_index;
@@ -55,7 +52,6 @@ private:
   expected<positioning_information_response_t, positioning_information_failure_t> procedure_outcome;
 
   asn1::nrppa::nr_ppa_pdu_c asn1_pos_info_outcome;
-  byte_buffer               ul_nrppa_pdu;
 };
 
 } // namespace ocudu::ocucp

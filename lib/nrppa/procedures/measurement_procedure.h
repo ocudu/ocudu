@@ -56,9 +56,6 @@ private:
   /// \brief Fill the procedure result, log it and forward it to the CU-CP.
   void handle_procedure_outcome();
 
-  /// \brief Send the measurement outcome to the CU-CP.
-  void send_ul_nrppa_pdu(const asn1::nrppa::nr_ppa_pdu_c& pdu);
-
   cu_cp_amf_index_t                           amf_index;
   const measurement_request_t                 meas_request;
   uint16_t                                    transaction_id;
@@ -79,7 +76,6 @@ private:
   std::optional<measurement_response_t> procedure_outcome = std::nullopt;
 
   asn1::nrppa::nr_ppa_pdu_c meas_outcome;
-  byte_buffer               ul_nrppa_pdu;
 };
 
 } // namespace ocudu::ocucp
