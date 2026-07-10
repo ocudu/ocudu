@@ -723,7 +723,7 @@ ue_configuration::ue_configuration(du_ue_index_t                         ue_inde
 }
 
 ue_configuration::ue_configuration(const ue_configuration& other) :
-  ue_index(other.ue_index), crnti(other.crnti), lc_list(other.lc_list)
+  ue_index(other.ue_index), crnti(other.crnti), lc_list(other.lc_list), cs_rnti(other.cs_rnti)
 {
   // Update UE dedicated cell config.
   for (const std::unique_ptr<ue_cell_configuration>& cell_cfg : other.du_cells) {
@@ -739,6 +739,11 @@ void ue_configuration::update(const cell_common_configuration_list& common_cells
   // Update UE logical channels.
   if (params.lc_ch_list.has_value()) {
     lc_list = params.lc_ch_list.value();
+  }
+
+  // Update CS-RNTI.
+  if (params.cs_rnti.has_value()) {
+    cs_rnti = params.cs_rnti;
   }
 
   // Update DRX config.

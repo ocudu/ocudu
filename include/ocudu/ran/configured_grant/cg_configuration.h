@@ -129,9 +129,6 @@ struct cg_configuration {
     bool operator!=(const rrc_configured_ul_grant& rhs) const { return !(rhs == *this); }
   };
 
-  /// \c CS-RNTI of the UE, common to all CellGroupConfig cells.
-  /// \remark CS-RNTI is present in \c PhysicalCellGroupConfig, TS 38.331, not in ConfiguredGrantConfig.
-  rnti_t cs_rnti;
   /// Frequency hopping mode. When absent, frequency hopping is disabled.
   //  NOTE: Freq. hopping not supported yet. Remove "static constexpr" once freq. hopping will be supported.
   static constexpr freq_hopping frequency_hopping = freq_hopping::disabled;
@@ -177,10 +174,9 @@ struct cg_configuration {
   std::optional<rrc_configured_ul_grant> rrc_configured_ul_grant_cfg;
   bool                                   operator==(const cg_configuration& rhs) const
   {
-    return cs_rnti == rhs.cs_rnti && cg_dmrs_cfg == rhs.cg_dmrs_cfg && mcs_table == rhs.mcs_table &&
-           trans_precoder == rhs.trans_precoder && uci_on_pusch_cfg == rhs.uci_on_pusch_cfg &&
-           nof_harq_processes == rhs.nof_harq_processes && periodicity == rhs.periodicity &&
-           rrc_configured_ul_grant_cfg == rhs.rrc_configured_ul_grant_cfg;
+    return cg_dmrs_cfg == rhs.cg_dmrs_cfg && mcs_table == rhs.mcs_table && trans_precoder == rhs.trans_precoder &&
+           uci_on_pusch_cfg == rhs.uci_on_pusch_cfg && nof_harq_processes == rhs.nof_harq_processes &&
+           periodicity == rhs.periodicity && rrc_configured_ul_grant_cfg == rhs.rrc_configured_ul_grant_cfg;
   }
   bool operator!=(const cg_configuration& rhs) const { return !(rhs == *this); }
 };

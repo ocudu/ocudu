@@ -18,6 +18,7 @@ struct du_ue_resource_update_response {
   error_type<std::string>        procedure_error;
   std::vector<drb_id_t>          failed_drbs;
   std::vector<serv_cell_index_t> failed_scells;
+  bool                           cs_rnti_requested = false;
 
   bool failed() const { return not procedure_error.has_value(); }
 };

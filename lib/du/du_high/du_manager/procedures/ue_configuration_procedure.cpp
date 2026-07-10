@@ -66,7 +66,7 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   update_ue_context();
 
   // > Update MAC bearers.
-  CORO_AWAIT_VALUE(mac_res, update_mac_and_sched());
+  CORO_AWAIT_VALUE(mac_res, update_mac_and_sched(ue_res_cfg_resp.cs_rnti_requested));
 
   // > Store CS-RNTI allocated by MAC back into the UE resource configuration, so that it is included in the
   // > RRC cellGroupConfig sent to the CU in the F1AP response.
@@ -238,7 +238,7 @@ void ue_configuration_procedure::clear_old_ue_context()
   }
 }
 
-async_task<mac_ue_reconfiguration_response> ue_configuration_procedure::update_mac_and_sched()
+async_task<mac_ue_reconfiguration_response> ue_configuration_procedure::update_mac_and_sched(bool cs_rnti_requested)
 {
   // Create Request to MAC to reconfigure existing UE.
   mac_ue_reconfiguration_request mac_ue_reconf_req;
@@ -292,6 +292,8 @@ async_task<mac_ue_reconfiguration_response> ue_configuration_procedure::update_m
   mac_ue_reconf_req.sched_cfg.cause = ue->reestablished_cfg_pending != nullptr
                                           ? sched_ue_config_request::causes::rrc_reconf_after_reest
                                           : sched_ue_config_request::causes::other_rrc_proc;
+
+  mac_ue_reconf_req.cs_rnti_requested = cs_rnti_requested;
 
   return du_params.mac.mgr.get_ue_configurator().handle_ue_reconfiguration_request(mac_ue_reconf_req);
 }

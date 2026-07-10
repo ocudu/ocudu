@@ -45,7 +45,6 @@ struct ue_pusch_config {
 };
 
 struct ue_cg_config {
-  rnti_t       cs_rnti;
   unsigned     cg_offset;
   vrb_interval vrbs;
 

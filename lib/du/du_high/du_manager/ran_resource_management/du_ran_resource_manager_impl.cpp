@@ -46,22 +46,6 @@ void du_ue_ran_resource_updater_impl::set_cs_rnti(rnti_t cs_rnti)
 {
   // Update CS-RNTI in the physical cell group config.
   cell_grp->cell_group.pcg_cfg.cs_rnti = cs_rnti;
-
-  // Update CS-RNTI in the PCell's serving cell CG config and scheduler BWP config.
-  if (cell_grp->cell_group.cells.contains(SERVING_PCELL_IDX)) {
-    auto& cell_cfg_ded = cell_grp->cell_group.cells.at(SERVING_PCELL_IDX);
-    if (cell_cfg_ded.serv_cell_cfg.ul_config.has_value() and
-        cell_cfg_ded.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.has_value()) {
-      cell_cfg_ded.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg->cs_rnti = cs_rnti;
-    }
-    ocudu_assert(cell_cfg_ded.init_bwp().ul.cg.has_value(),
-                 "Configured Grant configuration missing from UE={} while setting CS-RNTI={}",
-                 fmt::underlying(ue_index),
-                 fmt::underlying(cs_rnti));
-    if (not cell_cfg_ded.bwps.empty()) {
-      cell_cfg_ded.init_bwp().ul.cg.value().cs_rnti = cs_rnti;
-    }
-  }
 }
 
 void du_ue_ran_resource_updater_impl::clear_cs_rnti()
@@ -273,16 +257,19 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
   // > Allocate or deallocate Configured Grant resources based on DRB presence.
   if (ue_mcg.cell_group.cells.contains(SERVING_PCELL_IDX)) {
     const bool has_drbs = not ue_mcg.drbs.empty();
-    const bool cg_active =
+    const bool cg_was_active =
         ue_mcg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.ul_config.has_value() and
         ue_mcg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.has_value();
-    if (has_drbs and not cg_active) {
+    if (has_drbs and not cg_was_active) {
+      // NOTE: cg_res_mng.alloc_resources returns true if allocation is successful or if the Configured grant resource
+      // allocation was not requested (i.e., not set in by the user).
       if (not cg_res_mng.alloc_resources(ue_mcg.cell_group)) {
+        // NOTE: This is ONLY IF CG allocation was requested and failed.
         // Deallocate previously allocated resources on PCell.
         if (pcell_newly_allocated) {
           deallocate_cell_resources(ue_index, SERVING_PCELL_IDX);
         }
-        // >> Deallocate previously allocated resources on SCells (that didn't fail).
+        // Deallocate previously allocated resources on SCells (that didn't fail).
         for (const f1ap_scell_to_setup& sc : upd_req.scells_to_setup) {
           if (std::find(resp.failed_scells.begin(), resp.failed_scells.end(), sc.serv_cell_index) ==
               resp.failed_scells.end()) {
@@ -293,7 +280,17 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
                                                            fmt::underlying(ue_index),
                                                            fmt::underlying(pcell_idx)));
       }
-    } else if (not has_drbs and cg_active) {
+      // After this point, allocation succeeded (either CG resources were allocated or allocation was skipped due to CG
+      // config not requested).
+      else if (ue_mcg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.ul_config.has_value() and
+               ue_mcg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.has_value()) {
+        // CG was actually allocated; if CG was not requested, the DU do not enter this else-if block
+        resp.cs_rnti_requested = true;
+      }
+      // NOTE: no-op for case with CG config not requested.
+    }
+    // Remove old CG config when DRBs are removed.
+    else if (not has_drbs and cg_was_active) {
       cg_res_mng.dealloc_resources(ue_mcg.cell_group);
     }
   }

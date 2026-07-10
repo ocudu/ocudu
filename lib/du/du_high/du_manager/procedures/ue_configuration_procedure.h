@@ -37,7 +37,7 @@ private:
 
   /// \brief Update MAC MUX and DEMUX tables of the respective UE, given the newly added/modified/removed bearers and
   /// the scheduler with the new UE config.
-  async_task<mac_ue_reconfiguration_response> update_mac_and_sched();
+  async_task<mac_ue_reconfiguration_response> update_mac_and_sched(bool cs_rnti_requested = false);
 
   f1ap_ue_context_update_response        make_ue_config_response();
   static f1ap_ue_context_update_response make_empty_ue_config_response();

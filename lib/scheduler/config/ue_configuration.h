@@ -251,6 +251,8 @@ public:
   /// Number of configured cells in the UE cell group config.
   size_t nof_cells() const { return ue_cell_to_du_cell_index.size(); }
 
+  std::optional<rnti_t> get_cs_rnti() const { return cs_rnti; }
+
   /// Get the configuration of a cell that is common to all UEs.
   const cell_configuration& common_cell_cfg(du_cell_index_t cell_index) const
   {
@@ -301,6 +303,9 @@ private:
 
   // DRX config for the UE cell group.
   std::optional<drx_config> ue_drx_cfg;
+
+  // CS-RNTI for Configured Grants
+  std::optional<rnti_t> cs_rnti;
 };
 
 } // namespace ocudu

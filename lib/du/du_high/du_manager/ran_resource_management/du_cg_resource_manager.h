@@ -27,7 +27,8 @@ public:
 
   /// \brief Allocate Configured Grant resources for a given UE. The resources are stored in the UE's cell group config.
   /// The function allocates the UE the resources from a common pool.
-  /// \return true if allocation was successful.
+  /// \return true if allocation is successful or if the Configured grant resource allocation was not requested (i.e.,
+  /// not set in by the user).
   virtual bool alloc_resources(cell_group_config& cell_grp_cfg) = 0;
 
   /// \brief Deallocate the Configured Grant resources for a given UE and return the used resource to the common pool.

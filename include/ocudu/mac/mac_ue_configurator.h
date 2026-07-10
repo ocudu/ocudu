@@ -87,6 +87,8 @@ struct mac_ue_reconfiguration_request {
   du_ue_index_t                             ue_index;
   du_cell_index_t                           pcell_index;
   rnti_t                                    crnti;
+  bool                                      cs_rnti_requested = false;
+  std::optional<rnti_t>                     cs_rnti;
   std::vector<mac_logical_channel_config>   bearers_to_addmod;
   std::vector<lcid_t>                       bearers_to_rem;
   std::optional<mac_cell_group_config>      mac_cell_group_cfg;

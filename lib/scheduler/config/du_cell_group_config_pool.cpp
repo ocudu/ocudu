@@ -210,5 +210,5 @@ ue_reconfig_params du_cell_group_config_pool::reconf_ue(const sched_ue_reconfigu
     }
   }
 
-  return ue_reconfig_params{ue_reconf_req.cfg, lc_ch_list, cell_cfgs};
+  return ue_reconfig_params{ue_reconf_req.cfg, lc_ch_list, cell_cfgs, ue_reconf_req.cs_rnti};
 }

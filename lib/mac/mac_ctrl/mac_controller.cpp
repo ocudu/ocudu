@@ -85,15 +85,7 @@ async_task<mac_ue_reconfiguration_response>
 mac_controller::handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request& msg)
 {
   // Detect whether configured grant (CG) is present in the new configuration.
-  bool has_cg_in_request = false;
-  if (msg.sched_cfg.cells.has_value()) {
-    for (const auto& cell : msg.sched_cfg.cells.value()) {
-      if (cell.serv_cell_cfg.ul_config.has_value() and cell.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.has_value()) {
-        has_cg_in_request = true;
-        break;
-      }
-    }
-  }
+  bool has_cg_in_request = msg.cs_rnti_requested;
 
   mac_ue_context* ue_ctx = find_ue(msg.ue_index);
   ocudu_assert(ue_ctx != nullptr, "Requested MAC UE reconfiguration for a UE that hasn't been found");
@@ -132,17 +124,7 @@ mac_controller::handle_ue_reconfiguration_request(const mac_ue_reconfiguration_r
   if (cs_rnti.has_value()) {
     // Patch the CS-RNTI into the request copy before forwarding to the scheduler.
     mac_ue_reconfiguration_request patched_msg = msg;
-    for (auto& cell : patched_msg.sched_cfg.cells.value()) {
-      if (cell.serv_cell_cfg.ul_config.has_value() and cell.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.has_value()) {
-        cell.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg->cs_rnti = cs_rnti.value();
-        if (not cell.bwps.empty()) {
-          ocudu_assert(cell.init_bwp().ul.cg.has_value(),
-                       "Configured Grant config not present for UE while setting CS-RNTI for UE={}",
-                       fmt::underlying(ue_ctx->du_ue_index));
-          cell.init_bwp().ul.cg.value().cs_rnti = cs_rnti.value();
-        }
-      }
-    }
+    patched_msg.cs_rnti                        = cs_rnti;
     if (patched_msg.phy_cell_group_cfg.has_value()) {
       patched_msg.phy_cell_group_cfg->cs_rnti = cs_rnti.value();
     }

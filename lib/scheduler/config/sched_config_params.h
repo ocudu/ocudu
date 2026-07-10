@@ -88,6 +88,7 @@ struct ue_reconfig_params {
   const sched_ue_config_request&                         cfg_req;
   std::optional<logical_channel_config_list_ptr>         lc_ch_list;
   slotted_id_vector<du_cell_index_t, ue_cell_config_ptr> cells;
+  const std::optional<rnti_t>                            cs_rnti;
 };
 
 } // namespace ocudu

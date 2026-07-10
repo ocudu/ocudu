@@ -118,6 +118,7 @@ struct sched_ue_reconfiguration_message {
   du_ue_index_t           ue_index;
   rnti_t                  crnti;
   sched_ue_config_request cfg;
+  std::optional<rnti_t>   cs_rnti;
 };
 
 /// UE Delete Request.
