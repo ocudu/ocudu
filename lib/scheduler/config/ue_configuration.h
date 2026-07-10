@@ -37,7 +37,6 @@ struct search_space_info {
   crb_interval                                      dl_crb_lims;
   crb_interval                                      ul_crb_lims;
   span<const pdsch_time_domain_resource_allocation> pdsch_time_domain_list;
-  span<const pusch_time_domain_resource_allocation> pusch_time_domain_list;
   std::optional<vrb_to_prb::interleaved_mapping>    interleaved_mapping;
   dci_size_config                                   dci_sz_cfg;
   dci_sizes                                         dci_sz;

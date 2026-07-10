@@ -989,92 +989,93 @@ ue_fallback_scheduler::ul_srb_sched_outcome ue_fallback_scheduler::schedule_ul_u
                        "Invalid DCI type for UL retransmission for fallback UE");
   }
 
-  auto&                                                                 ue_cell = u.get_pcell();
-  static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> search_spaces =
-      ue_cell.get_active_ul_search_spaces(pdcch_slot, dci_ul_rnti_config_type::c_rnti_f0_0);
+  auto& ue_cell = u.get_pcell();
+  if (ue_cell.get_active_ul_search_spaces(pdcch_slot, dci_ul_rnti_config_type::c_rnti_f0_0).empty()) {
+    // No active UL SearchSpace found for this UE in this slot.
+    return ul_srb_sched_outcome::next_ue;
+  }
 
-  for (const auto* ss : search_spaces) {
-    for (uint8_t pusch_td_res_idx : pusch_td_res_index_list) {
-      const pusch_time_domain_resource_allocation& pusch_td    = ss->pusch_time_domain_list[pusch_td_res_idx];
-      cell_slot_resource_allocator&                pusch_alloc = res_alloc[pusch_td.k2 + cell_cfg.ntn_cs_koffset];
-      const slot_point                             pusch_slot  = pusch_alloc.slot;
+  for (uint8_t pusch_td_res_idx : pusch_td_res_index_list) {
+    const pusch_time_domain_resource_allocation& pusch_td =
+        cell_cfg.init_bwp.ul.td_mapper().pusch_td_resources()[pusch_td_res_idx];
+    cell_slot_resource_allocator& pusch_alloc = res_alloc[pusch_td.k2 + cell_cfg.ntn_cs_koffset];
+    const slot_point              pusch_slot  = pusch_alloc.slot;
 
-      // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
-      // the first transmission.
-      if (is_retx and pusch_td.symbols.length() != h_ul_retx->get_grant_params().nof_symbols) {
-        continue;
-      }
+    // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
+    // the first transmission.
+    if (is_retx and pusch_td.symbols.length() != h_ul_retx->get_grant_params().nof_symbols) {
+      continue;
+    }
 
-      if (not ue_cell.is_pusch_enabled(pdcch_slot, pusch_slot)) {
-        // Skip PUSCH as the UE is not in conditions to receive it in this slot.
-        continue;
-      }
+    if (not ue_cell.is_pusch_enabled(pdcch_slot, pusch_slot)) {
+      // Skip PUSCH as the UE is not in conditions to receive it in this slot.
+      continue;
+    }
 
-      // When checking the number of remaining grants for PUSCH, take into account that the PUCCH grants for this UE
-      // will be removed when multiplexing the UCI on PUSCH.
-      const auto max_puschs = std::min<unsigned>(
-          {static_cast<unsigned>(pusch_alloc.result.ul.puschs.capacity()),
-           expert_cfg.max_puschs_per_slot,
-           expert_cfg.max_ul_grants_per_slot - static_cast<unsigned>(pusch_alloc.result.ul.pucchs.size())});
-      if (pusch_alloc.result.ul.puschs.size() >= max_puschs) {
-        logger.info("ue={} rnti={}: Failed to allocate fallback PUSCH grant in slot={}. Cause: Max number of UL "
-                    "grants per slot {} was reached.",
-                    u.ue_index,
-                    u.crnti,
-                    pusch_alloc.slot,
-                    max_puschs);
-        continue;
-      }
+    // When checking the number of remaining grants for PUSCH, take into account that the PUCCH grants for this UE
+    // will be removed when multiplexing the UCI on PUSCH.
+    const auto max_puschs = std::min<unsigned>(
+        {static_cast<unsigned>(pusch_alloc.result.ul.puschs.capacity()),
+         expert_cfg.max_puschs_per_slot,
+         expert_cfg.max_ul_grants_per_slot - static_cast<unsigned>(pusch_alloc.result.ul.pucchs.size())});
+    if (pusch_alloc.result.ul.puschs.size() >= max_puschs) {
+      logger.info("ue={} rnti={}: Failed to allocate fallback PUSCH grant in slot={}. Cause: Max number of UL "
+                  "grants per slot {} was reached.",
+                  u.ue_index,
+                  u.crnti,
+                  pusch_alloc.slot,
+                  max_puschs);
+      continue;
+    }
 
-      const bool existing_pusch =
-          pusch_alloc.result.ul.puschs.end() !=
-          std::find_if(pusch_alloc.result.ul.puschs.begin(),
-                       pusch_alloc.result.ul.puschs.end(),
-                       [rnti = u.crnti](const ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == rnti; });
+    const bool existing_pusch =
+        pusch_alloc.result.ul.puschs.end() !=
+        std::find_if(pusch_alloc.result.ul.puschs.begin(),
+                     pusch_alloc.result.ul.puschs.end(),
+                     [rnti = u.crnti](const ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == rnti; });
 
-      if (existing_pusch) {
-        // Only one PUSCH per UE per slot.
-        continue;
-      }
+    if (existing_pusch) {
+      // Only one PUSCH per UE per slot.
+      continue;
+    }
 
-      span<const pucch_info> pucchs         = pusch_alloc.result.ul.pucchs.unsorted();
-      const auto*            existing_pucch = std::find_if(
+    span<const pucch_info> pucchs         = pusch_alloc.result.ul.pucchs.unsorted();
+    const auto*            existing_pucch = std::find_if(
+        pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) { return pucch.crnti == rnti; });
+
+    bool remove_pucch = false;
+    if (existing_pucch != pucchs.end()) {
+      auto existing_pucch_count = std::count_if(
           pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) { return pucch.crnti == rnti; });
 
-      bool remove_pucch = false;
-      if (existing_pucch != pucchs.end()) {
-        auto existing_pucch_count = std::count_if(
-            pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) { return pucch.crnti == rnti; });
-
-        // [Implementation-defined]
-        // Given that we don't support multiplexing of UCI on PUSCH at this point, removal of an existing PUCCH grant
-        // requires careful consideration since we can have multiple PUCCH grants. Following are the possible options:
-        //
-        // - PUCCH common only (very unlikely, but a possibility)
-        // - PUCCH common (1 HARQ bit) + 1 PUCCH F1 dedicated (1 HARQ bit)
-        // - PUCCH common (1 HARQ bit) + 2 PUCCH F1 dedicated (1 HARQ bit, 1 HARQ bit + SR bit)
-        // - PUCCH common (1 HARQ bit) + 1 PUCCH F2 dedicated (with CSI + HARQ bit)
-        // - PUCCH F1 dedicated only (SR bit)
-        // - PUCCH F2 dedicated only (CSI)
-        //
-        // We remove PUCCH grant only if there exists only ONE PUCCH grant, and it's a PUCCH F1 dedicated with only SR
-        // bit.
-        if (existing_pucch_count > 0) {
-          if (existing_pucch_count == 1 and existing_pucch->format() == pucch_format::FORMAT_1 and
-              existing_pucch->uci_bits.sr_bits != sr_nof_bits::no_sr and
-              existing_pucch->uci_bits.harq_ack_nof_bits == 0) {
-            // No PUSCH in slots with PUCCH. We cannot remove the PUCCH here, as we need to make sure the PUSCH will be
-            // allocated. If not, we risk removing a PUCCH with SR opportunity.
-            remove_pucch = true;
-          } else {
-            continue;
-          }
+      // [Implementation-defined]
+      // Given that we don't support multiplexing of UCI on PUSCH at this point, removal of an existing PUCCH grant
+      // requires careful consideration since we can have multiple PUCCH grants. Following are the possible options:
+      //
+      // - PUCCH common only (very unlikely, but a possibility)
+      // - PUCCH common (1 HARQ bit) + 1 PUCCH F1 dedicated (1 HARQ bit)
+      // - PUCCH common (1 HARQ bit) + 2 PUCCH F1 dedicated (1 HARQ bit, 1 HARQ bit + SR bit)
+      // - PUCCH common (1 HARQ bit) + 1 PUCCH F2 dedicated (with CSI + HARQ bit)
+      // - PUCCH F1 dedicated only (SR bit)
+      // - PUCCH F2 dedicated only (CSI)
+      //
+      // We remove PUCCH grant only if there exists only ONE PUCCH grant, and it's a PUCCH F1 dedicated with only SR
+      // bit.
+      if (existing_pucch_count > 0) {
+        if (existing_pucch_count == 1 and existing_pucch->format() == pucch_format::FORMAT_1 and
+            existing_pucch->uci_bits.sr_bits != sr_nof_bits::no_sr and
+            existing_pucch->uci_bits.harq_ack_nof_bits == 0) {
+          // No PUSCH in slots with PUCCH. We cannot remove the PUCCH here, as we need to make sure the PUSCH will be
+          // allocated. If not, we risk removing a PUCCH with SR opportunity.
+          remove_pucch = true;
+        } else {
+          continue;
         }
       }
-      ul_srb_sched_outcome outcome = schedule_ul_srb(u, res_alloc, pusch_td_res_idx, pusch_td, h_ul_retx, remove_pucch);
-      if (outcome != ul_srb_sched_outcome::next_slot) {
-        return outcome;
-      }
+    }
+    ul_srb_sched_outcome outcome = schedule_ul_srb(u, res_alloc, pusch_td_res_idx, pusch_td, h_ul_retx, remove_pucch);
+    if (outcome != ul_srb_sched_outcome::next_slot) {
+      return outcome;
     }
   }
   return ul_srb_sched_outcome::next_ue;

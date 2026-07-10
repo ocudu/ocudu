@@ -147,7 +147,7 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
   // Fill out parameters for Format 0_1.
   // TODO: Once additional UL BWPs are added to uplinkConfig, populate below field from configs.
   dci_sz_cfg.nof_ul_bwp_rrc         = 0;
-  dci_sz_cfg.nof_ul_time_domain_res = ue_cell_cfg.search_space(ss_id).pusch_time_domain_list.size();
+  dci_sz_cfg.nof_ul_time_domain_res = active_bwp.ul.td_mapper().pusch_td_resources().size();
   dci_sz_cfg.report_trigger_size    = 0;
   if (opt_csi_meas_cfg != nullptr and opt_csi_meas_cfg->report_trigger_size.has_value()) {
     dci_sz_cfg.report_trigger_size = opt_csi_meas_cfg->report_trigger_size.value();
@@ -685,7 +685,6 @@ void ue_cell_configuration::configure_bwp_cfg(bwp_id_t bwpid, const sched_bwp_co
         ss.get_dl_dci_format(), cell_cfg_common.init_bwp.dl.common(), bwp.dl.cfg(), *ss.cfg, ss.coreset->cfg());
     ss.update_pdsch_mappings(cell_cfg_common.expert_cfg.ue.pdsch_interleaving_bundle_size);
     // UL
-    ss.pusch_time_domain_list                    = get_c_rnti_pusch_time_domain_list(ss_cfg->cfg(), bwp);
     const dci_ul_rnti_config_type crnti_dci_type = ss.get_ul_dci_format() == dci_ul_format::f0_0
                                                        ? dci_ul_rnti_config_type::c_rnti_f0_0
                                                        : dci_ul_rnti_config_type::c_rnti_f0_1;

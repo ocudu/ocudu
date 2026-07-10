@@ -533,8 +533,9 @@ ue_cell_grid_allocator::setup_ul_grant_builder(const slice_ue&                  
   const search_space_info&                     ss_info            = ue_cell_cfg.search_space(params.ss_id);
   const search_space_configuration&            ss_cfg             = *ss_info.cfg;
   const uint8_t                                pusch_td_res_index = params.pusch_td_res_index;
-  const pusch_time_domain_resource_allocation& pusch_td_cfg       = ss_info.pusch_time_domain_list[pusch_td_res_index];
-  const bool                                   is_retx            = h_ul.has_value();
+  const pusch_time_domain_resource_allocation& pusch_td_cfg =
+      ss_info.bwp->ul.td_mapper().pusch_td_resources()[pusch_td_res_index];
+  const bool is_retx = h_ul.has_value();
 
   // Fetch PDCCH and PUSCH resource grid allocators.
   cell_slot_resource_allocator& pdcch_alloc = cell_alloc[0];
@@ -617,9 +618,10 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_in
                                                                         ? dci_ul_rnti_config_type::c_rnti_f0_0
                                                                         : dci_ul_rnti_config_type::c_rnti_f0_1;
   uint8_t                                      pusch_td_res_index = grant.cfg.pusch_td_res_index;
-  const pusch_time_domain_resource_allocation& pusch_td_cfg       = ss_info.pusch_time_domain_list[pusch_td_res_index];
-  const pusch_config_params&                   pusch_cfg          = grant.cfg.pusch_cfg;
-  const bool                                   is_retx            = grant.h_ul.nof_retxs() != 0;
+  const pusch_time_domain_resource_allocation& pusch_td_cfg =
+      ss_info.bwp->ul.td_mapper().pusch_td_resources()[pusch_td_res_index];
+  const pusch_config_params& pusch_cfg = grant.cfg.pusch_cfg;
+  const bool                 is_retx   = grant.h_ul.nof_retxs() != 0;
 
   // Fetch PDCCH and PUSCH resource grid allocators.
   cell_slot_resource_allocator& pdcch_alloc = cell_alloc[0];
