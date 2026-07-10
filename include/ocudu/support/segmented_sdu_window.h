@@ -35,7 +35,7 @@ public:
     }
     auto ret = window.overwrite(sn, T());
     if (!ret) {
-      logger.log_error("Cannot add sn={} to window, pool of segments is exhausted.", sn);
+      logger.log_info("Cannot add sn={} to window, pool of segments is exhausted.", sn);
       return false;
     }
     return true;

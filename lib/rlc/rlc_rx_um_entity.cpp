@@ -276,7 +276,7 @@ bool rlc_rx_um_entity::handle_segment_data_sdu(const rlc_um_pdu_header& header, 
   if (!rx_window.has_sn(header.sn)) {
     new_sdu_added = rx_window.add_sn(header.sn);
     if (!new_sdu_added) {
-      logger.log_error("Dropped SDU segment, adding to RX window failed. sn={}", header.sn);
+      logger.log_warning("Dropped SDU segment, adding to RX window failed. sn={}", header.sn);
       metrics.metrics_add_lost_pdus(1);
       return false;
     }

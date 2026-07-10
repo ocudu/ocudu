@@ -1540,9 +1540,9 @@ TEST_P(rlc_rx_am_test_no_window_segments, rx_data_pdu)
     rlc->handle_pdu(std::move(pdu));
   }
 
-  // Errors shall be logged.
-  EXPECT_EQ(test_spy.get_warning_counter(), 0);
-  EXPECT_EQ(test_spy.get_error_counter(), 4);
+  // Warnings shall be logged.
+  EXPECT_EQ(test_spy.get_warning_counter(), 2);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 
   // Check status report.
   rlc_am_status_pdu& status_report = rlc->get_status_pdu();

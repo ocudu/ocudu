@@ -1506,9 +1506,9 @@ TEST_P(rlc_um_test_no_window_segments, rx_with_segmentation)
   // No SDUs are expected at RLC2's upper layer.
   ASSERT_EQ(tester2.sdu_counter, 0);
 
-  // Errors shall be logged.
-  EXPECT_EQ(test_spy.get_warning_counter(), 0);
-  EXPECT_EQ(test_spy.get_error_counter(), 10);
+  // Warnings shall be logged.
+  EXPECT_EQ(test_spy.get_warning_counter(), 5);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

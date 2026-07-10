@@ -2315,9 +2315,9 @@ TEST_P(rlc_tx_am_test_no_window_segments, tx_pdu)
     EXPECT_EQ(pdu_len, 0);
   }
 
-  // Errors shall be logged.
+  // Warnings shall be logged.
   EXPECT_EQ(test_spy.get_warning_counter(), 2);
-  EXPECT_EQ(test_spy.get_error_counter(), 2);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
