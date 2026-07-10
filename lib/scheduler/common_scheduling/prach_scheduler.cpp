@@ -43,11 +43,11 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
                 to_ra_subcarrier_spacing(cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.scs),
                 is_last_prach_occasion);
 
-  // This is a safety margin that prevents PUSCH REs to be decoded by the PRACH decoder with short PRACH formats; we
-  // apply it to both side of the PRACH RBs, i.e., in both [0, prb_start) and [prb_stop, crbs_stop) intervals.
+  // This is a safety margin that prevents PUSCH REs to be decoded by the PRACH decoder with short PRACH formats, or
+  // that prevents PUSCH KOs from interference with adjacent PRACH long formats; we apply it to both side of the
+  // PRACH RBs, i.e., in both [0, prb_start) and [prb_stop, crbs_stop) intervals.
   // TODO: remove them when the PHY is supports short PRACH with adjacent PUCCH/PUSCH.
-  const unsigned prach_to_pusch_guardband =
-      is_short_preamble(prach_cfg.format) ? cell_cfg.expert_cfg.ra.nof_prach_guardbands_rbs : 0U;
+  const unsigned prach_to_pusch_guardband = cell_cfg.expert_cfg.ra.nof_prach_guardbands_rbs;
 
   for (unsigned id_fd_ra = 0; id_fd_ra != rach_cfg_common().rach_cfg_generic.msg1_fdm; ++id_fd_ra) {
     cached_prach_occasion& cached_prach = cached_prachs.emplace_back();

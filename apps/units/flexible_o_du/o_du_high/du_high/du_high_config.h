@@ -1047,8 +1047,7 @@ struct du_high_unit_rach_config {
   /// RA-Response (MSG2) window length in number of slots. Values: {1, 2, 4, 8, 10, 20, 40, 80}.  If not specified, it
   /// is automatically derived to be equal to 10ms.
   std::optional<unsigned> ra_resp_window;
-  /// Number of RBs that are used as guardband on each side of the PRACH RBs dedicated interval for short PRACH
-  /// formats.
+  /// Number of RBs that are used as guardband on each side of the PRACH RBs dedicated interval.
   unsigned nof_prach_guardbands_rbs = 3;
   /// Configuration of slice-specific RACH configurations.
   std::vector<ra_prioritization_slice_info> ra_prio_slice_info_list;

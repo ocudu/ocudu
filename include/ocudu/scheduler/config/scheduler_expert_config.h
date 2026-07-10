@@ -241,7 +241,7 @@ struct scheduler_ra_expert_config {
   sch_mcs_index msg3_mcs_index = 0;
   /// Maximum number of Msg3 PUSCH retransmissions.
   unsigned max_nof_msg3_harq_retxs = 4;
-  /// Number of RBs that are used as guardband on each side of the PRACH RBs dedicated interval for short PRACH formats.
+  /// Number of RBs that are used as guardband on each side of the PRACH RBs dedicated interval.
   unsigned nof_prach_guardbands_rbs = 3;
 };
 
