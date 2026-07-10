@@ -67,7 +67,8 @@ class fake_ntn_time_provider : public ntn_time_provider
 public:
   explicit fake_ntn_time_provider(std::chrono::system_clock::time_point start_time) : cur_time(start_time) {}
 
-  std::optional<ntn_time_slot_mapping> get_last_mapping(subcarrier_spacing scs) override
+  std::optional<ntn_time_slot_mapping> get_last_mapping(const nr_cell_global_id_t& nr_cgi,
+                                                        subcarrier_spacing         scs) override
   {
     slot_count += 10;
     cur_time += std::chrono::milliseconds(10);

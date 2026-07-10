@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "ocudu/ran/nr_cgi.h"
 #include "ocudu/ran/slot_point.h"
 #include <chrono>
 #include <optional>
@@ -25,12 +26,16 @@ class ntn_time_provider
 public:
   virtual ~ntn_time_provider() = default;
 
-  /// \brief Get the last time slot mapping.
+  /// \brief Get the last time slot mapping for the timeline of the given cell.
   ///
   /// This function provides access to the most recent time slot mapping for time synchronization operations in NTN
-  /// context.
+  /// context. Implementations serving a single SFN timeline (e.g. one DU) may ignore the cell key; implementations
+  /// spanning multiple DUs (e.g. the CU-CP) use it to select the timeline of the DU serving the cell.
+  /// \param nr_cgi NR Cell Global ID identifying the timeline to query.
+  /// \param scs Subcarrier spacing of the returned slot point.
   /// \return Optional containing the time slot mapping if available.
-  virtual std::optional<ntn_time_slot_mapping> get_last_mapping(subcarrier_spacing scs) = 0;
+  virtual std::optional<ntn_time_slot_mapping> get_last_mapping(const nr_cell_global_id_t& nr_cgi,
+                                                                subcarrier_spacing         scs) = 0;
 };
 
 } // namespace ocudu_ntn

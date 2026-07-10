@@ -12,7 +12,8 @@ du_high_ntn_time_provider_impl::du_high_ntn_time_provider_impl(mac_subframe_time
 {
 }
 
-std::optional<ocudu_ntn::ntn_time_slot_mapping> du_high_ntn_time_provider_impl::get_last_mapping(subcarrier_spacing scs)
+std::optional<ocudu_ntn::ntn_time_slot_mapping>
+du_high_ntn_time_provider_impl::get_last_mapping(const nr_cell_global_id_t& nr_cgi, subcarrier_spacing scs)
 {
   auto mac_mapping = subframe_time_mapper.get_last_mapping(scs);
 

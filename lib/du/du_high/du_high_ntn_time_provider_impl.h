@@ -19,9 +19,10 @@ public:
   /// \brief Get the last time slot mapping.
   ///
   /// This function provides access to the most recent time slot mapping for time synchronization operations in NTN
-  /// context.
+  /// context. All cells of the DU share the same timeline, so the cell key is ignored.
   /// \return Optional containing the time slot mapping if available.
-  std::optional<ocudu_ntn::ntn_time_slot_mapping> get_last_mapping(subcarrier_spacing scs) override;
+  std::optional<ocudu_ntn::ntn_time_slot_mapping> get_last_mapping(const nr_cell_global_id_t& nr_cgi,
+                                                                   subcarrier_spacing         scs) override;
 
 private:
   mac_subframe_time_mapper& subframe_time_mapper;

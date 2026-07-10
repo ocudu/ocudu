@@ -204,7 +204,7 @@ ntn_configuration_manager_impl::ntn_configuration_manager_impl(const ntn_configu
         return;
       }
 
-      auto cur_tp_sl = time_provider->get_last_mapping(subcarrier_spacing::kHz15);
+      auto cur_tp_sl = time_provider->get_last_mapping(nr_cgi, subcarrier_spacing::kHz15);
       if (cur_tp_sl and cur_tp_sl->slot_tx.valid()) {
         logger.debug("Run periodic config update task cell={:#x} slot={} time={:%T}",
                      nr_cgi.nci,
