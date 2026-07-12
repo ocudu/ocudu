@@ -471,6 +471,7 @@ static YAML::Node build_du_high_prach_section(const du_high_unit_rach_config& co
     node["backoff_indicator_snr_threshold"] = config.backoff_indicator_snr_threshold.value();
   }
   node["backoff_indicator_max_preambles"] = config.backoff_indicator_max_preambles;
+  node["backoff_indicator_duration_ms"]   = config.backoff_indicator_duration_ms;
   node["preamble_rx_target_pw"]           = config.preamble_rx_target_pw;
   node["preamble_trans_max"]              = static_cast<unsigned>(config.preamble_trans_max);
   node["power_ramping_step_db"]           = static_cast<unsigned>(config.power_ramping_step_db);

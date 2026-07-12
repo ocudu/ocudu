@@ -251,6 +251,9 @@ struct scheduler_ra_expert_config {
   /// SNR first) are excluded from the RAR/Msg3 grant and trigger the inclusion of a Backoff Indicator subheader in
   /// the RAR. Defaults to MAX_PREAMBLES_PER_PRACH_OCCASION, i.e. no filtering.
   unsigned backoff_indicator_max_preambles = MAX_PREAMBLES_PER_PRACH_OCCASION;
+  /// \brief Requested Backoff Indicator duration, in ms, signalled in the RAR when congestion control is triggered.
+  /// Mapped by the RA scheduler to the closest value in TS38.321, Table 7.2-1.
+  unsigned backoff_indicator_duration_ms = 40;
 };
 
 /// \brief Paging scheduling statically configurable expert parameters.

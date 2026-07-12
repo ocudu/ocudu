@@ -1607,6 +1607,13 @@ static void configure_cli11_prach_args(CLI::App& app, du_high_unit_rach_config& 
       ->capture_default_str()
       ->check(CLI::Range(1, 64));
   add_option(app,
+             "--backoff_indicator_duration_ms",
+             prach_params.backoff_indicator_duration_ms,
+             "Requested Backoff Indicator duration, in ms, signalled in the RAR when a Backoff Indicator is "
+             "triggered. Mapped to the closest value in TS38.321, Table 7.2-1")
+      ->capture_default_str()
+      ->check(CLI::Range(5, 1920));
+  add_option(app,
              "--total_nof_ra_preambles",
              prach_params.total_nof_ra_preambles,
              "Number of different contention-based PRACH preambles per occasion. If less than 64 preambles are used, "

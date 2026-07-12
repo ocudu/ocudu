@@ -1051,6 +1051,9 @@ struct du_high_unit_rach_config {
   /// excluded from the RAR/Msg3 grant and trigger a Backoff Indicator in the RAR. Defaults to the maximum number of
   /// preambles per occasion, i.e. no filtering.
   unsigned backoff_indicator_max_preambles = MAX_PREAMBLES_PER_PRACH_OCCASION;
+  /// \brief Requested Backoff Indicator duration, in ms, signalled in the RAR when congestion control is triggered.
+  /// Mapped to the closest value in TS38.321, Table 7.2-1.
+  unsigned backoff_indicator_duration_ms = 40;
   /// \c preambleReceivedTargetPower, target power at the network rx side, in dBm. Only values multiple of 2 are
   /// valid.
   int preamble_rx_target_pw = -100;

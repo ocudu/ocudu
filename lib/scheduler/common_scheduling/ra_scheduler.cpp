@@ -120,6 +120,24 @@ static unsigned get_harq_retx_timeout_slots(const cell_configuration& cell_cfg)
   return conres_timer_slots;
 }
 
+/// Maps a requested Backoff Indicator duration, in ms, to the index of the closest value in TS38.321, Table 7.2-1.
+static uint8_t backoff_ms_to_indicator(unsigned backoff_ms)
+{
+  // See TS38.321, Table 7.2-1. Indices 14 and 15 are reserved and not used.
+  static constexpr unsigned backoff_table[] = {5, 10, 20, 30, 40, 60, 80, 120, 160, 240, 320, 480, 960, 1920};
+
+  unsigned best_idx  = 0;
+  unsigned best_diff = std::numeric_limits<unsigned>::max();
+  for (unsigned i = 0; i != sizeof(backoff_table) / sizeof(backoff_table[0]); ++i) {
+    const unsigned diff = backoff_table[i] > backoff_ms ? backoff_table[i] - backoff_ms : backoff_ms - backoff_table[i];
+    if (diff < best_diff) {
+      best_diff = diff;
+      best_idx  = i;
+    }
+  }
+  return static_cast<uint8_t>(best_idx);
+}
+
 // (Implementation-defined) limit for maximum number of concurrent Msg3s or MsgBs.
 static constexpr size_t MAX_CONCURRENT_MSG3_OR_MSGB = 512;
 
@@ -275,6 +293,7 @@ ra_scheduler::ra_scheduler(const cell_configuration& cellcfg_,
           cell_cfg.params.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index)
           .format)),
   prach_occasion_duration_slots(compute_prach_occasion_duration_slots(cell_cfg)),
+  backoff_indicator_value(backoff_ms_to_indicator(sched_cfg.backoff_indicator_duration_ms)),
   pucch_crbs(compute_pucch_crbs(cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.crbs,
                                 cell_cfg.params.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common,
                                 cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated)),
@@ -1367,9 +1386,6 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
                                   span<const msg3_alloc_candidate> msg3_candidates,
                                   bool                             send_backoff_indicator)
 {
-  // Backoff Indicator (BI) value included in the RAR, as per TS38.321 Table 7.2-1 (index 4 = 40ms).
-  static constexpr uint8_t default_backoff_indicator = 4;
-
   const auto& init_dl_bwp             = cell_cfg.params.dl_cfg_common.init_dl_bwp;
   const auto  pdsch_td_res_alloc_list = get_ra_pdsch_td_list(cell_cfg);
 
@@ -1386,7 +1402,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
 
   // Fill RAR PDSCH.
   rar_information& rar  = rar_alloc.result.dl.rar_grants.emplace_back();
-  rar.backoff_indicator = send_backoff_indicator ? std::optional<uint8_t>{default_backoff_indicator} : std::nullopt;
+  rar.backoff_indicator = send_backoff_indicator ? std::optional<uint8_t>{backoff_indicator_value} : std::nullopt;
   build_pdsch_f1_0_ra_rnti(
       rar.pdsch_cfg,
       get_nof_pdsch_prbs_required(pdsch_time_res_index, msg3_candidates.size(), send_backoff_indicator).tbs_bytes,

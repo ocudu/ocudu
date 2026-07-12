@@ -475,16 +475,19 @@ class ra_scheduler_backoff_indicator_test : public ra_scheduler_setup, public ::
 {
 public:
   ra_scheduler_backoff_indicator_test(std::optional<float> snr_threshold_dB,
-                                      unsigned             max_preambles = MAX_PREAMBLES_PER_PRACH_OCCASION) :
-    ra_scheduler_setup(make_sched_cfg(snr_threshold_dB, max_preambles), get_sched_req(), false, false)
+                                      unsigned             max_preambles = MAX_PREAMBLES_PER_PRACH_OCCASION,
+                                      unsigned             duration_ms   = 40) :
+    ra_scheduler_setup(make_sched_cfg(snr_threshold_dB, max_preambles, duration_ms), get_sched_req(), false, false)
   {
   }
 
-  static scheduler_expert_config make_sched_cfg(std::optional<float> snr_threshold_dB, unsigned max_preambles)
+  static scheduler_expert_config
+  make_sched_cfg(std::optional<float> snr_threshold_dB, unsigned max_preambles, unsigned duration_ms)
   {
     scheduler_expert_config cfg               = config_helpers::make_default_scheduler_expert_config();
     cfg.ra.backoff_indicator_snr_threshold_dB = snr_threshold_dB;
     cfg.ra.backoff_indicator_max_preambles    = max_preambles;
+    cfg.ra.backoff_indicator_duration_ms      = duration_ms;
     return cfg;
   }
 
@@ -524,6 +527,18 @@ class ra_scheduler_backoff_only_test : public ra_scheduler_backoff_indicator_tes
 {
 public:
   ra_scheduler_backoff_only_test() : ra_scheduler_backoff_indicator_test(/* snr_threshold_dB */ -5.0F) {}
+};
+
+class ra_scheduler_backoff_duration_test : public ra_scheduler_backoff_indicator_test
+{
+public:
+  ra_scheduler_backoff_duration_test() :
+    ra_scheduler_backoff_indicator_test(
+        /* snr_threshold_dB */ -5.0F,
+        /* max_preambles */ MAX_PREAMBLES_PER_PRACH_OCCASION,
+        /* duration_ms */ 45U)
+  {
+  }
 };
 
 /// This test verifies that a preamble with SNR below the configured threshold is excluded from the RAR/Msg3 grant,
@@ -594,6 +609,30 @@ TEST_F(ra_scheduler_backoff_only_test, all_preambles_below_threshold_yields_back
   ASSERT_NE(backoff_rar, nullptr);
   EXPECT_TRUE(backoff_rar->grants.empty());
   ASSERT_EQ(tracker.nof_msg3_newtxs(), 0U) << "No preamble should have been granted a Msg3";
+}
+
+/// This test verifies that the configured Backoff Indicator duration, in ms, is mapped to the closest value in
+/// TS38.321, Table 7.2-1. 45ms is closest to the table entry for index 4 (40ms).
+TEST_F(ra_scheduler_backoff_duration_test, duration_is_mapped_to_closest_table_index)
+{
+  rach_indication_message::preamble weak = create_preamble_with_snr(-10.0F);
+
+  handle_rach_indication(test_helper::create_rach_indication(next_slot_rx(), {weak}));
+
+  const rar_information* backoff_rar = nullptr;
+  const bool             found       = run_slot_until([this, &backoff_rar]() {
+    for (const rar_information& rar : res_grid[0].result.dl.rar_grants) {
+      if (rar.backoff_indicator.has_value()) {
+        backoff_rar = &rar;
+        return true;
+      }
+    }
+    return false;
+  });
+
+  ASSERT_TRUE(found);
+  ASSERT_NE(backoff_rar, nullptr);
+  EXPECT_EQ(*backoff_rar->backoff_indicator, 4U);
 }
 
 struct two_step_test_params {
