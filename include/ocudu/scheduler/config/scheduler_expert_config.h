@@ -243,6 +243,14 @@ struct scheduler_ra_expert_config {
   unsigned max_nof_msg3_harq_retxs = 4;
   /// Number of RBs that are used as guardband on each side of the PRACH RBs dedicated interval.
   unsigned nof_prach_guardbands_rbs = 3;
+  /// \brief SNR threshold, in dB, below which a detected PRACH preamble is excluded from the RAR/Msg3 grant and
+  /// triggers the inclusion of a Backoff Indicator subheader in the RAR.
+  /// If not set, no SNR-based filtering of PRACH preambles is applied.
+  std::optional<float> backoff_indicator_snr_threshold_dB;
+  /// \brief Maximum number of preambles accepted per PRACH occasion. Preambles in excess of this number (weakest by
+  /// SNR first) are excluded from the RAR/Msg3 grant and trigger the inclusion of a Backoff Indicator subheader in
+  /// the RAR. Defaults to MAX_PREAMBLES_PER_PRACH_OCCASION, i.e. no filtering.
+  unsigned backoff_indicator_max_preambles = MAX_PREAMBLES_PER_PRACH_OCCASION;
 };
 
 /// \brief Paging scheduling statically configurable expert parameters.

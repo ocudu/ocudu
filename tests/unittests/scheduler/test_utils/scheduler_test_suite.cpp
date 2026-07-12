@@ -295,7 +295,8 @@ void ocudu::test_pdsch_rar_consistency(const cell_configuration& cell_cfg, span<
 
   for (const rar_information& rar : rars) {
     rnti_t ra_rnti = rar.pdsch_cfg.rnti;
-    ASSERT_FALSE(rar.grants.empty()) << fmt::format("RAR with RA-rnti={} has no corresponding MSG3 grants", ra_rnti);
+    ASSERT_TRUE(not rar.grants.empty() or rar.backoff_indicator.has_value())
+        << fmt::format("RAR with RA-rnti={} has no corresponding MSG3 grants and no Backoff Indicator", ra_rnti);
     ASSERT_EQ(rar.pdsch_cfg.dci_fmt, dci_dl_format::f1_0);
     ASSERT_TRUE(rar.pdsch_cfg.rbs.is_type1()) << "Invalid allocation type for RAR";
     ASSERT_EQ(rar.pdsch_cfg.coreset_cfg->get_id(), ss_cfg.get_coreset_id());

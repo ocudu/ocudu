@@ -24,6 +24,9 @@ private:
   /// \brief Encodes RAR subPDU subheader as per TS38.321 6.1.5 and 6.2.2.
   void encode_rapid_subheader(uint16_t rapid, bool is_last_subpdu);
 
+  /// \brief Encodes Backoff Indicator (BI) subheader as per TS38.321 6.1.5 and 6.2.2. This subPDU has no payload.
+  void encode_bi_subheader(uint8_t backoff_indicator, bool is_last_subpdu);
+
   /// Encodes RAR UL Grant into provided payload as per TS38.321 6.2.3. and TS38.213 8.2.
   void encode_rar_grant_payload(const rar_ul_grant& grant);
 
@@ -37,10 +40,16 @@ void rar_pdu_encoder::encode(span<uint8_t> output_buf)
 {
   // See TS38.321, Section 6.2.3.
   static constexpr unsigned MAC_RAR_SUBHEADER_AND_PAYLOAD_LENGTH = 8;
-  ocudu_assert(output_buf.size() >= MAC_RAR_SUBHEADER_AND_PAYLOAD_LENGTH * rar_info.grants.size(),
-               "Output buffer is too small to fit encoded RAR");
+  // See TS38.321, Section 6.2.2. The Backoff Indicator subPDU only has a subheader, no payload.
+  static constexpr unsigned MAC_BI_SUBHEADER_LENGTH = 1;
+  const unsigned            expected_len            = MAC_RAR_SUBHEADER_AND_PAYLOAD_LENGTH * rar_info.grants.size() +
+                                (rar_info.backoff_indicator.has_value() ? MAC_BI_SUBHEADER_LENGTH : 0);
+  ocudu_assert(output_buf.size() >= expected_len, "Output buffer is too small to fit encoded RAR");
   ptr = output_buf.data();
 
+  if (rar_info.backoff_indicator.has_value()) {
+    encode_bi_subheader(*rar_info.backoff_indicator, rar_info.grants.empty());
+  }
   for (unsigned i = 0; i != rar_info.grants.size(); ++i) {
     encode_rar_subpdu(rar_info.grants[i], i == rar_info.grants.size() - 1);
   }
@@ -65,6 +74,15 @@ void rar_pdu_encoder::encode_rapid_subheader(uint16_t rapid, bool is_last_subpdu
 
   // write E/T/RAPID MAC subheader.
   *ptr = (uint8_t)((not is_last_subpdu ? 1U : 0U) << 7U) | (RAPID_FLAG << 6U) | ((uint8_t)rapid & 0x3fU);
+  ptr++;
+}
+
+void rar_pdu_encoder::encode_bi_subheader(uint8_t backoff_indicator, bool is_last_subpdu)
+{
+  static constexpr unsigned BI_FLAG = 0;
+
+  // write E/T/R/R/BI MAC subheader. The two R bits are reserved and set to 0.
+  *ptr = (uint8_t)((not is_last_subpdu ? 1U : 0U) << 7U) | (BI_FLAG << 6U) | (backoff_indicator & 0xfU);
   ptr++;
 }
 
@@ -109,7 +127,8 @@ rar_pdu_assembler::rar_pdu_assembler(ticking_ring_buffer_pool& pdu_pool_) : pdu_
 
 span<const uint8_t> rar_pdu_assembler::encode_rar_pdu(const rar_information& rar)
 {
-  ocudu_assert(not rar.grants.empty(), "Cannot encode RAR without UL grants");
+  ocudu_assert(not rar.grants.empty() or rar.backoff_indicator.has_value(),
+               "Cannot encode RAR without UL grants or a Backoff Indicator");
   ocudu_assert(rar.pdsch_cfg.codewords.size() == 1, "RAR grants always carry exactly one codeword");
 
   // Fetch PDU buffer where RAR grant payload is going to be encoded.

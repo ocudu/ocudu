@@ -63,6 +63,7 @@ void mac_cell_rach_handler_impl::handle_rach_indication(const mac_rach_indicatio
       sched_preamble.preamble_id  = preamble.index;
       sched_preamble.tc_rnti      = selected_rnti;
       sched_preamble.time_advance = preamble.time_advance;
+      sched_preamble.snr_dB       = preamble.snr_dB;
     }
     if (sched_occasion.preambles.empty()) {
       // No preamble was added. Remove occasion.

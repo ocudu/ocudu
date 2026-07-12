@@ -19,6 +19,7 @@
 #include "ocudu/scheduler/result/dmrs_info.h"
 #include "ocudu/scheduler/result/vrb_alloc.h"
 #include "ocudu/support/units.h"
+#include <optional>
 
 namespace ocudu {
 
@@ -169,6 +170,9 @@ struct rar_ul_grant {
 struct rar_information {
   pdsch_information                                  pdsch_cfg;
   static_vector<rar_ul_grant, MAX_RAR_PDUS_PER_SLOT> grants;
+  /// \brief Backoff Indicator (BI) value included as the first MAC subPDU of the RAR, as per TS38.321, Section
+  /// 6.2.2 and Table 7.2-1. Unset if no Backoff Indicator subPDU is included.
+  std::optional<uint8_t> backoff_indicator;
 };
 
 /// Stores the information associated with an SSB.

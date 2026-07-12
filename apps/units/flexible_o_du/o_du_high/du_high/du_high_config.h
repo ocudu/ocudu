@@ -1044,6 +1044,13 @@ struct du_high_unit_rach_config {
   unsigned zero_correlation_zone = 0;
   unsigned fixed_msg3_mcs        = 0;
   unsigned max_msg3_harq_retx    = 4;
+  /// \brief SNR threshold, in dB, below which a detected PRACH preamble is excluded from the RAR/Msg3 grant and
+  /// triggers a Backoff Indicator in the RAR. Disabled if not set.
+  std::optional<float> backoff_indicator_snr_threshold;
+  /// \brief Maximum number of preambles accepted per PRACH occasion. Excess preambles (weakest by SNR first) are
+  /// excluded from the RAR/Msg3 grant and trigger a Backoff Indicator in the RAR. Defaults to the maximum number of
+  /// preambles per occasion, i.e. no filtering.
+  unsigned backoff_indicator_max_preambles = MAX_PREAMBLES_PER_PRACH_OCCASION;
   /// \c preambleReceivedTargetPower, target power at the network rx side, in dBm. Only values multiple of 2 are
   /// valid.
   int preamble_rx_target_pw = -100;

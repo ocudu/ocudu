@@ -73,6 +73,10 @@ private:
     static_vector<rnti_t, MAX_PREAMBLES_PER_PRACH_OCCASION> tc_rntis;
     /// Attempts at scheduling a RAR and associated Msg3 grants.
     pending_rar_failed_attempts_t failed_attempts;
+    /// \brief Set when at least one detected preamble in this occasion was excluded due to congestion control (SNR
+    /// below threshold or occasion preamble count above threshold). Causes a Backoff Indicator subheader to be
+    /// included in the RAR.
+    bool send_backoff_indicator = false;
   };
 
   /// State of Msg3 grant pending to be scheduled and/or positive ACKed.
@@ -166,6 +170,12 @@ private:
                                                         cell_resource_allocator&                 res_alloc,
                                                         slot_point                               pdcch_slot);
 
+  /// \brief Schedule a RAR PDU containing only a Backoff Indicator subheader (no RAPID subPDUs), used to signal
+  /// congestion to UEs whose preambles were all excluded by congestion control.
+  std::vector<pending_rar_alloc>::iterator schedule_backoff_only_rar(std::vector<pending_rar_alloc>::iterator rar_it,
+                                                                     cell_resource_allocator&                 res_alloc,
+                                                                     slot_point pdcch_slot);
+
   /// Returns true if an RAR UL grant can be scheduled for the given UE in the given slot.
   bool can_allocate_rar_ul_grant(rnti_t crnti, const cell_slot_resource_allocator& slot_alloc) const;
 
@@ -180,7 +190,8 @@ private:
                       slot_point                       pdcch_slot,
                       crb_interval                     rar_crbs,
                       unsigned                         pdsch_time_res_index,
-                      span<const msg3_alloc_candidate> msg3_candidates);
+                      span<const msg3_alloc_candidate> msg3_candidates,
+                      bool                             send_backoff_indicator = false);
 
   /// Schedule retransmission of Msg3.
   void schedule_msg3_retx(cell_resource_allocator& res_alloc, pending_msg3_alloc& msg3_ctx) const;
@@ -191,7 +202,7 @@ private:
   /// Try scheduling pending MsgBs for the provided slot.
   void schedule_pending_msgbs(cell_resource_allocator& res_alloc, slot_point pdcch_slot);
 
-  sch_prbs_tbs get_nof_pdsch_prbs_required(unsigned time_res_idx, unsigned nof_ul_grants) const;
+  sch_prbs_tbs get_nof_pdsch_prbs_required(unsigned time_res_idx, unsigned nof_ul_grants, bool has_bi = false) const;
 
   /// Reserve space in the resource grid for the MsgA PUSCH so it is not taken by other UL grants.
   void reserve_msga_pusch_rbs(cell_resource_allocator& res_alloc);
@@ -226,6 +237,9 @@ private:
     dmrs_information dmrs_info;
     /// Number of PRBs and TBS required for different numbers of grants. Index=0 corresponds to 1 grant.
     std::vector<sch_prbs_tbs> prbs_tbs_per_nof_grants;
+    /// \brief Number of PRBs and TBS required for different numbers of grants, when a Backoff Indicator subheader is
+    /// also included in the RAR. Index=0 corresponds to 0 grants (Backoff Indicator only, no RAPID subPDUs).
+    std::vector<sch_prbs_tbs> prbs_tbs_per_nof_grants_with_bi;
   };
   std::vector<rar_param_cached_data> rar_data;
 

@@ -469,6 +469,133 @@ INSTANTIATE_TEST_SUITE_P(ra_scheduler,
                              test_params{frequency_range::FR1, 2, create_tdd_pattern(tdd_fr1_30khz::DDDDDDDSUU)},
                              test_params{frequency_range::FR1, 2, create_tdd_pattern(tdd_fr1_30khz::DDDSU)}));
 
+/// Test class for congestion-control-driven Backoff Indicator (BI) scheduling. Preamble SNR/count thresholds are set
+/// via the scheduler_ra_expert_config passed to the constructor.
+class ra_scheduler_backoff_indicator_test : public ra_scheduler_setup, public ::testing::Test
+{
+public:
+  ra_scheduler_backoff_indicator_test(std::optional<float> snr_threshold_dB,
+                                      unsigned             max_preambles = MAX_PREAMBLES_PER_PRACH_OCCASION) :
+    ra_scheduler_setup(make_sched_cfg(snr_threshold_dB, max_preambles), get_sched_req(), false, false)
+  {
+  }
+
+  static scheduler_expert_config make_sched_cfg(std::optional<float> snr_threshold_dB, unsigned max_preambles)
+  {
+    scheduler_expert_config cfg               = config_helpers::make_default_scheduler_expert_config();
+    cfg.ra.backoff_indicator_snr_threshold_dB = snr_threshold_dB;
+    cfg.ra.backoff_indicator_max_preambles    = max_preambles;
+    return cfg;
+  }
+
+  static sched_cell_configuration_request_message get_sched_req()
+  {
+    cell_config_builder_params builder_params = create(duplex_mode::FDD, frequency_range::FR1);
+    builder_params.min_k1                     = 2;
+    builder_params.min_k2                     = 2;
+    return sched_config_helper::make_default_sched_cell_configuration_request(builder_params);
+  }
+
+  /// Creates a random preamble with an explicit SNR value.
+  rach_indication_message::preamble create_preamble_with_snr(float snr_dB)
+  {
+    rach_indication_message::preamble p = create_random_preamble();
+    p.snr_dB                            = snr_dB;
+    return p;
+  }
+};
+
+class ra_scheduler_snr_backoff_test : public ra_scheduler_backoff_indicator_test
+{
+public:
+  ra_scheduler_snr_backoff_test() : ra_scheduler_backoff_indicator_test(/* snr_threshold_dB */ -5.0F) {}
+};
+
+class ra_scheduler_count_backoff_test : public ra_scheduler_backoff_indicator_test
+{
+public:
+  ra_scheduler_count_backoff_test() :
+    ra_scheduler_backoff_indicator_test(/* snr_threshold_dB */ std::nullopt, /* max_preambles */ 2U)
+  {
+  }
+};
+
+class ra_scheduler_backoff_only_test : public ra_scheduler_backoff_indicator_test
+{
+public:
+  ra_scheduler_backoff_only_test() : ra_scheduler_backoff_indicator_test(/* snr_threshold_dB */ -5.0F) {}
+};
+
+/// This test verifies that a preamble with SNR below the configured threshold is excluded from the RAR/Msg3 grant,
+/// while a preamble with SNR above the threshold is still granted, and that the RAR carries a Backoff Indicator.
+TEST_F(ra_scheduler_snr_backoff_test, weak_preamble_excluded_and_backoff_indicator_set)
+{
+  rach_indication_message::preamble strong = create_preamble_with_snr(0.0F);
+  rach_indication_message::preamble weak   = create_preamble_with_snr(-10.0F);
+
+  handle_rach_indication(test_helper::create_rach_indication(next_slot_rx(), {strong, weak}));
+
+  const bool found = run_slot_until([this]() { return not res_grid[0].result.dl.rar_grants.empty(); });
+  ASSERT_TRUE(found);
+
+  const rar_information& rar = res_grid[0].result.dl.rar_grants.front();
+  ASSERT_TRUE(rar.backoff_indicator.has_value());
+  ASSERT_EQ(rar.grants.size(), 1U);
+  EXPECT_EQ(rar.grants.front().temp_crnti, strong.tc_rnti);
+}
+
+/// This test verifies that, when more preambles are detected in an occasion than the configured maximum, only the
+/// strongest-SNR preambles are granted a Msg3, and that the RAR carries a Backoff Indicator.
+TEST_F(ra_scheduler_count_backoff_test, excess_preambles_excluded_and_backoff_indicator_set)
+{
+  const float                                    snrs[] = {-2.0F, 10.0F, 3.0F, -8.0F};
+  std::vector<rach_indication_message::preamble> preambles;
+  for (float snr : snrs) {
+    preambles.push_back(create_preamble_with_snr(snr));
+  }
+
+  handle_rach_indication(test_helper::create_rach_indication(next_slot_rx(), preambles));
+
+  bool bi_seen = false;
+  for (unsigned slot_count = 0, max_slots = 1000; slot_count != max_slots and tracker.has_pending_ra(); ++slot_count) {
+    run_slot();
+    for (const rar_information& rar : res_grid[0].result.dl.rar_grants) {
+      bi_seen |= rar.backoff_indicator.has_value();
+    }
+    handle_crc_for_pending_puschs(true);
+  }
+
+  EXPECT_TRUE(bi_seen);
+  ASSERT_EQ(tracker.nof_msg3_newtxs(), 2U) << "Only the 2 strongest preambles should have been granted a Msg3";
+}
+
+/// This test verifies that, when every detected preamble in an occasion is excluded by congestion control, the RA
+/// scheduler still transmits a RAR containing only a Backoff Indicator subheader (no RAPID subPDUs), and no Msg3 is
+/// granted.
+TEST_F(ra_scheduler_backoff_only_test, all_preambles_below_threshold_yields_backoff_only_rar)
+{
+  rach_indication_message::preamble weak1 = create_preamble_with_snr(-10.0F);
+  rach_indication_message::preamble weak2 = create_preamble_with_snr(-20.0F);
+
+  handle_rach_indication(test_helper::create_rach_indication(next_slot_rx(), {weak1, weak2}));
+
+  const rar_information* backoff_rar = nullptr;
+  const bool             found       = run_slot_until([this, &backoff_rar]() {
+    for (const rar_information& rar : res_grid[0].result.dl.rar_grants) {
+      if (rar.backoff_indicator.has_value()) {
+        backoff_rar = &rar;
+        return true;
+      }
+    }
+    return false;
+  });
+
+  ASSERT_TRUE(found);
+  ASSERT_NE(backoff_rar, nullptr);
+  EXPECT_TRUE(backoff_rar->grants.empty());
+  ASSERT_EQ(tracker.nof_msg3_newtxs(), 0U) << "No preamble should have been granted a Msg3";
+}
+
 struct two_step_test_params {
   /// MsgA PUSCH TD offset.
   uint8_t                                td_offset;

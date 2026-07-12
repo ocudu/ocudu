@@ -467,12 +467,16 @@ static YAML::Node build_du_high_prach_section(const du_high_unit_rach_config& co
   node["zero_correlation_zone"]     = config.zero_correlation_zone;
   node["fixed_msg3_mcs"]            = config.fixed_msg3_mcs;
   node["max_msg3_harq_retx"]        = config.max_msg3_harq_retx;
-  node["preamble_rx_target_pw"]     = config.preamble_rx_target_pw;
-  node["preamble_trans_max"]        = static_cast<unsigned>(config.preamble_trans_max);
-  node["power_ramping_step_db"]     = static_cast<unsigned>(config.power_ramping_step_db);
-  node["nof_ssb_per_ro"]            = static_cast<unsigned>(ssb_per_rach_occ_to_float(config.nof_ssb_per_ro));
-  node["nof_cb_preambles_per_ssb"]  = static_cast<unsigned>(config.nof_cb_preambles_per_ssb);
-  node["nof_prach_guardbands_rbs"]  = config.nof_prach_guardbands_rbs;
+  if (config.backoff_indicator_snr_threshold.has_value()) {
+    node["backoff_indicator_snr_threshold"] = config.backoff_indicator_snr_threshold.value();
+  }
+  node["backoff_indicator_max_preambles"] = config.backoff_indicator_max_preambles;
+  node["preamble_rx_target_pw"]           = config.preamble_rx_target_pw;
+  node["preamble_trans_max"]              = static_cast<unsigned>(config.preamble_trans_max);
+  node["power_ramping_step_db"]           = static_cast<unsigned>(config.power_ramping_step_db);
+  node["nof_ssb_per_ro"]                  = static_cast<unsigned>(ssb_per_rach_occ_to_float(config.nof_ssb_per_ro));
+  node["nof_cb_preambles_per_ssb"]        = static_cast<unsigned>(config.nof_cb_preambles_per_ssb);
+  node["nof_prach_guardbands_rbs"]        = config.nof_prach_guardbands_rbs;
   for (auto id : config.ports) {
     node["ports"].push_back(static_cast<unsigned>(id));
   }

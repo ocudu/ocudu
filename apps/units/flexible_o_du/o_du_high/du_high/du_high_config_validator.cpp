@@ -1210,6 +1210,11 @@ validate_prach_cell_unit_config(const du_high_unit_rach_config& config, nr_band 
     }
   }
 
+  if (config.backoff_indicator_max_preambles == 0) {
+    fmt::print("backoff_indicator_max_preambles must be greater than 0.\n");
+    return false;
+  }
+
   return true;
 }
 

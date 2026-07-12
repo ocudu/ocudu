@@ -10,6 +10,7 @@
 #include "ocudu/ran/rnti.h"
 #include "ocudu/ran/slot_pdu_capacity_constants.h"
 #include "ocudu/ran/slot_point.h"
+#include <optional>
 
 namespace ocudu {
 
@@ -23,6 +24,8 @@ struct rach_indication_message {
     /// Allocated TC-RNTI, for Contention-based RACH, or C-RNTI, for Contention-free RACH.
     rnti_t        tc_rnti;
     phy_time_unit time_advance;
+    /// Average SNR value in dB, if available.
+    std::optional<float> snr_dB;
   };
 
   struct occasion {

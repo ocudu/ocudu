@@ -23,6 +23,7 @@ std::uniform_int_distribution<unsigned> ta_dist(0, 63);
 std::uniform_int_distribution<unsigned> freq_hop_dist(0, 1);
 std::uniform_int_distribution<uint8_t>  tpc_dist(0, 7);
 std::uniform_int_distribution<unsigned> nof_ul_grants_per_rar(1, MAX_RAR_PDUS_PER_SLOT - 1);
+std::uniform_int_distribution<unsigned> bi_dist(0, 15);
 
 // Check TS38.321 6.2.2 and 6.2.3.
 static const unsigned RAR_PDU_SIZE = 8;
@@ -65,6 +66,12 @@ static bool is_last_subpdu(span<const uint8_t> rar_pdu)
 static bool is_rapid_subpdu(span<const uint8_t> rar_pdu)
 {
   return (rar_pdu[0] & (1U << 6U)) > 0;
+}
+
+/// Decode Backoff Indicator subPDU as per TS38.321, Section 6.2.2. This subPDU has no payload.
+static uint8_t decode_bi(span<const uint8_t> rar_pdu)
+{
+  return rar_pdu[0] & 0xfU;
 }
 
 /// Decode RAR UL PDU as per TS 38.321, Section 6.2.2 and 6.2.3.
@@ -117,6 +124,50 @@ void test_encoded_rar(const rar_information& original_rar, span<const uint8_t> r
     rar_ul_grant grant2 = decode_ul_grant(subpdu);
     TESTASSERT(original_rar.grants[i] == grant2);
   }
+}
+
+TEST(rar_assembler_test, backoff_indicator_only)
+{
+  test_delimit_logger test_delim{"MAC assembler for Backoff Indicator only RAR"};
+
+  rar_information rar_info{};
+  rar_info.pdsch_cfg.codewords.resize(1);
+  rar_info.pdsch_cfg.codewords[0].tb_size_bytes = units::bytes{1};
+  rar_info.backoff_indicator                    = static_cast<uint8_t>(bi_dist(gen));
+
+  static constexpr size_t  MAX_RAR_GRANT_SIZE = 64;
+  ticking_ring_buffer_pool pdu_pool(MAX_DL_PDUS_PER_SLOT * MAX_GRANTS_PER_RAR * MAX_RAR_GRANT_SIZE, 1, 10240);
+  rar_pdu_assembler        assembler(pdu_pool);
+  span<const uint8_t>      bytes = assembler.encode_rar_pdu(rar_info);
+
+  ASSERT_EQ(1U, bytes.size());
+  EXPECT_TRUE(is_last_subpdu(bytes));
+  EXPECT_FALSE(is_rapid_subpdu(bytes));
+  EXPECT_EQ(*rar_info.backoff_indicator, decode_bi(bytes));
+}
+
+TEST(rar_assembler_test, backoff_indicator_with_ul_grants)
+{
+  test_delimit_logger test_delim{"MAC assembler for Backoff Indicator plus UL grants"};
+
+  rar_information rar_info                      = make_random_rar_info(nof_ul_grants_per_rar(gen));
+  rar_info.backoff_indicator                    = static_cast<uint8_t>(bi_dist(gen));
+  const unsigned nof_grants                     = rar_info.grants.size();
+  rar_info.pdsch_cfg.codewords[0].tb_size_bytes = units::bytes{1U + nof_grants * RAR_PDU_SIZE};
+
+  static constexpr size_t  MAX_RAR_GRANT_SIZE = 64;
+  ticking_ring_buffer_pool pdu_pool(MAX_DL_PDUS_PER_SLOT * MAX_GRANTS_PER_RAR * MAX_RAR_GRANT_SIZE, 1, 10240);
+  rar_pdu_assembler        assembler(pdu_pool);
+  span<const uint8_t>      bytes = assembler.encode_rar_pdu(rar_info);
+
+  ASSERT_EQ(1U + RAR_PDU_SIZE * nof_grants, bytes.size());
+
+  span<const uint8_t> bi_subpdu = bytes.subspan(0, 1);
+  EXPECT_FALSE(is_last_subpdu(bi_subpdu));
+  EXPECT_FALSE(is_rapid_subpdu(bi_subpdu));
+  EXPECT_EQ(*rar_info.backoff_indicator, decode_bi(bi_subpdu));
+
+  test_encoded_rar(rar_info, bytes.subspan(1, RAR_PDU_SIZE * nof_grants));
 }
 
 TEST(rar_assembler_test, multiple_random_ul_grants)

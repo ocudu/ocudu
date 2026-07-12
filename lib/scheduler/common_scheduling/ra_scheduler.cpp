@@ -22,6 +22,7 @@
 #include "ocudu/scheduler/config/pucch_guardbands.h"
 #include "ocudu/scheduler/support/rb_helper.h"
 #include "ocudu/support/compiler.h"
+#include <limits>
 
 using namespace ocudu;
 
@@ -325,6 +326,8 @@ void ra_scheduler::precompute_rar_fields()
   // RAR payload size in bytes as per TS38.321, 6.1.5 and 6.2.3.
   static constexpr unsigned rar_payload_size_bytes   = 7;
   static constexpr unsigned rar_subheader_size_bytes = 1;
+  // Backoff Indicator subPDU has a subheader only, no payload, as per TS38.321, 6.1.5 and 6.2.2.
+  static constexpr unsigned bi_subheader_size_bytes = 1;
   // As per TS 38.214, Section 5.1.3.2, nof_oh_prb = 0 if PDSCH is scheduled by PDCCH with a CRC scrambled by RA-RNTI.
   static constexpr unsigned nof_oh_prb = 0;
   static constexpr unsigned nof_layers = 1;
@@ -350,6 +353,14 @@ void ra_scheduler::precompute_rar_fields()
     for (unsigned ngrant = 0; ngrant != MAX_RAR_PDUS_PER_SLOT; ++ngrant) {
       prbs_cfg.payload_size_bytes = (rar_payload_size_bytes + rar_subheader_size_bytes) * (ngrant + 1);
       rar_data[td_idx].prbs_tbs_per_nof_grants.push_back(get_nof_prbs(prbs_cfg));
+    }
+
+    // > Compute and cache #PRBs and TBS information for RARs that also carry a Backoff Indicator subPDU. Index=0
+    // corresponds to 0 grants (Backoff Indicator only).
+    for (unsigned ngrant = 0; ngrant != MAX_RAR_PDUS_PER_SLOT + 1; ++ngrant) {
+      prbs_cfg.payload_size_bytes =
+          bi_subheader_size_bytes + (rar_payload_size_bytes + rar_subheader_size_bytes) * ngrant;
+      rar_data[td_idx].prbs_tbs_per_nof_grants_with_bi.push_back(get_nof_prbs(prbs_cfg));
     }
   }
 }
@@ -505,7 +516,47 @@ void ra_scheduler::handle_msg1_occasion(const rach_indication_message::occasion&
                            rar_req->prach_slot_rx + prach_occasion_duration_slots + ra_win_nof_slots};
   }
 
-  for (const auto& preamble : preambles) {
+  // Determine which preambles are excluded due to congestion control (SNR below threshold, or occasion preamble
+  // count above threshold), and whether the RAR must carry a Backoff Indicator subheader as a result.
+  static_vector<bool, MAX_PREAMBLES_PER_PRACH_OCCASION> keep_preamble(preambles.size(), true);
+  bool                                                  congestion_detected = false;
+
+  if (sched_cfg.backoff_indicator_snr_threshold_dB.has_value()) {
+    for (unsigned i = 0; i != preambles.size(); ++i) {
+      if (preambles[i].snr_dB.has_value() and *preambles[i].snr_dB < *sched_cfg.backoff_indicator_snr_threshold_dB) {
+        keep_preamble[i]    = false;
+        congestion_detected = true;
+      }
+    }
+  }
+
+  static_vector<unsigned, MAX_PREAMBLES_PER_PRACH_OCCASION> kept_indices;
+  for (unsigned i = 0; i != preambles.size(); ++i) {
+    if (keep_preamble[i]) {
+      kept_indices.push_back(i);
+    }
+  }
+  const unsigned max_preambles = sched_cfg.backoff_indicator_max_preambles;
+  if (kept_indices.size() > max_preambles) {
+    congestion_detected = true;
+    // Keep the preambles with the strongest SNR. Preambles with unknown SNR are treated as lowest priority.
+    std::sort(kept_indices.begin(), kept_indices.end(), [&preambles](unsigned lhs, unsigned rhs) {
+      const float lhs_snr = preambles[lhs].snr_dB.value_or(-std::numeric_limits<float>::infinity());
+      const float rhs_snr = preambles[rhs].snr_dB.value_or(-std::numeric_limits<float>::infinity());
+      return lhs_snr > rhs_snr;
+    });
+    for (unsigned k = max_preambles; k != kept_indices.size(); ++k) {
+      keep_preamble[kept_indices[k]] = false;
+    }
+  }
+
+  if (congestion_detected) {
+    rar_req->send_backoff_indicator = true;
+  }
+
+  for (unsigned idx = 0; idx != preambles.size(); ++idx) {
+    const auto& preamble = preambles[idx];
+
     // Log event.
     ev_logger.enqueue(scheduler_event_logger::prach_event{
         prach_slot_rx,
@@ -515,6 +566,11 @@ void ra_scheduler::handle_msg1_occasion(const rach_indication_message::occasion&
         preamble.tc_rnti,
         preamble.time_advance.to_Ta(cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.scs),
         false});
+
+    if (not keep_preamble[idx]) {
+      // Preamble excluded due to congestion control. The UE will get no RAPID match in the RAR and will retry.
+      continue;
+    }
 
     // Check if TC-RNTI value to be scheduled is already under use.
     const uint16_t msg3_ring_idx = get_msg3_ring_key(preamble.tc_rnti);
@@ -1016,11 +1072,17 @@ void ra_scheduler::schedule_pending_rars(cell_resource_allocator& res_alloc, slo
       break;
     }
     if (rar_req.tc_rntis.empty()) {
-      // This should never happen, unless there was some corruption of the queue.
-      logger.warning(
-          "ra-rnti={}: Discarding RAR scheduling request. Cause: There are no TC-RNTIs associated with this RAR",
-          rar_req.ra_rnti);
-      it = pending_rars.erase(it);
+      if (not rar_req.send_backoff_indicator) {
+        // This should never happen, unless there was some corruption of the queue.
+        logger.warning(
+            "ra-rnti={}: Discarding RAR scheduling request. Cause: There are no TC-RNTIs associated with this RAR",
+            rar_req.ra_rnti);
+        it = pending_rars.erase(it);
+        continue;
+      }
+      // All detected preambles were excluded by congestion control (e.g. SNR below threshold). Schedule a RAR
+      // containing only a Backoff Indicator subheader.
+      it = schedule_backoff_only_rar(it, res_alloc, pdcch_slot);
       continue;
     }
 
@@ -1083,7 +1145,8 @@ auto ra_scheduler::schedule_rar(std::vector<pending_rar_alloc>::iterator rar_it,
     }
 
     // > Find available RBs in PDSCH for RAR grant.
-    const unsigned          nof_rar_rbs    = get_nof_pdsch_prbs_required(time_resource, rar.tc_rntis.size()).nof_prbs;
+    const unsigned nof_rar_rbs =
+        get_nof_pdsch_prbs_required(time_resource, rar.tc_rntis.size(), rar.send_backoff_indicator).nof_prbs;
     const ofdm_symbol_range symbols        = pdsch_td_res.symbols;
     const crb_bitmap        used_crbs      = pdsch_alloc.dl_res_grid.used_crbs(dl_scs, ra_crb_lims, symbols);
     const auto              available_crbs = rb_helper::find_empty_interval_of_length(used_crbs, nof_rar_rbs);
@@ -1091,8 +1154,9 @@ auto ra_scheduler::schedule_rar(std::vector<pending_rar_alloc>::iterator rar_it,
     // Note: we have to call \c get_nof_pdsch_prbs_required for every nof_allocs because the number of PRBs is not
     // linear w.r.t. the payload size (all RARs are sent in the same PDSCH grant). See \ref ocudu::get_nof_prbs.
     unsigned nof_allocs = rar.tc_rntis.size();
-    while (nof_allocs != 0 &&
-           get_nof_pdsch_prbs_required(time_resource, nof_allocs).nof_prbs > available_crbs.length()) {
+    while (nof_allocs != 0 and
+           get_nof_pdsch_prbs_required(time_resource, nof_allocs, rar.send_backoff_indicator).nof_prbs >
+               available_crbs.length()) {
       --nof_allocs;
     }
 
@@ -1201,7 +1265,8 @@ auto ra_scheduler::schedule_rar(std::vector<pending_rar_alloc>::iterator rar_it,
     ++rar.failed_attempts.pusch;
     return std::next(rar_it);
   }
-  rar_crbs.resize(get_nof_pdsch_prbs_required(pdsch_time_res_index, max_nof_allocs).nof_prbs);
+  rar_crbs.resize(
+      get_nof_pdsch_prbs_required(pdsch_time_res_index, max_nof_allocs, rar.send_backoff_indicator).nof_prbs);
 
   // > Find space in PDCCH for RAR.
   static constexpr aggregation_level aggr_lvl = aggregation_level::n4;
@@ -1216,7 +1281,7 @@ auto ra_scheduler::schedule_rar(std::vector<pending_rar_alloc>::iterator rar_it,
   // Status: RAR allocation is successful.
 
   // > Fill RAR and Msg3 PDSCH, PUSCH and DCI.
-  fill_rar_grant(res_alloc, pdcch_slot, rar_crbs, pdsch_time_res_index, msg3_candidates);
+  fill_rar_grant(res_alloc, pdcch_slot, rar_crbs, pdsch_time_res_index, msg3_candidates, rar.send_backoff_indicator);
 
   // The UEs left in remaining_ues are those whose Msg3 was not allocated; they stay pending in the RAR. Reverse
   // back so tc_rntis keeps its original order (remaining_ues is held in reverse order).
@@ -1228,12 +1293,83 @@ auto ra_scheduler::schedule_rar(std::vector<pending_rar_alloc>::iterator rar_it,
   return rar.tc_rntis.empty() ? pending_rars.erase(rar_it) : std::next(rar_it);
 }
 
+auto ra_scheduler::schedule_backoff_only_rar(std::vector<pending_rar_alloc>::iterator rar_it,
+                                             cell_resource_allocator&                 res_alloc,
+                                             slot_point pdcch_slot) -> std::vector<pending_rar_alloc>::iterator
+{
+  pending_rar_alloc&            rar         = *rar_it;
+  cell_slot_resource_allocator& pdcch_alloc = res_alloc[pdcch_slot];
+
+  const subcarrier_spacing dl_scs = cell_cfg.params.dl_cfg_common.init_dl_bwp.generic_params.scs;
+  span<const pdsch_time_domain_resource_allocation> pdsch_td_res_alloc_list = get_ra_pdsch_td_list(cell_cfg);
+  const search_space_configuration&                 ss_cfg                  = get_ra_ss_cfg(cell_cfg);
+  const unsigned coreset_duration = cell_cfg.get_common_coreset(ss_cfg.get_coreset_id()).duration();
+
+  // Find PDSCH time-domain resource and CRBs that fit a Backoff Indicator-only RAR (1-byte payload, no RAPID
+  // subPDUs).
+  unsigned     pdsch_time_res_index = pdsch_td_res_alloc_list.size();
+  crb_interval rar_crbs{};
+  for (const auto& pdsch_td_res : pdsch_td_res_alloc_list) {
+    const unsigned                      time_resource = std::distance(pdsch_td_res_alloc_list.begin(), &pdsch_td_res);
+    const cell_slot_resource_allocator& pdsch_alloc   = res_alloc[pdcch_slot + pdsch_td_res.k0];
+
+    if (pdsch_alloc.result.dl.rar_grants.full() or not cell_cfg.is_dl_enabled(pdsch_alloc.slot)) {
+      continue;
+    }
+    if (pdsch_td_res.symbols.stop() > cell_cfg.get_nof_dl_symbol_per_slot(pdsch_alloc.slot)) {
+      continue;
+    }
+    if (pdsch_td_res.symbols.start() < ss_cfg.get_first_symbol_index() + coreset_duration) {
+      continue;
+    }
+    if (csi_helper::is_csi_rs_slot(cell_cfg, pdsch_alloc.slot)) {
+      continue;
+    }
+
+    const unsigned          nof_rar_rbs    = get_nof_pdsch_prbs_required(time_resource, 0, true).nof_prbs;
+    const ofdm_symbol_range symbols        = pdsch_td_res.symbols;
+    const crb_bitmap        used_crbs      = pdsch_alloc.dl_res_grid.used_crbs(dl_scs, ra_crb_lims, symbols);
+    const auto              available_crbs = rb_helper::find_empty_interval_of_length(used_crbs, nof_rar_rbs);
+    if (available_crbs.length() >= nof_rar_rbs) {
+      rar_crbs             = crb_interval{available_crbs.start(), available_crbs.start() + nof_rar_rbs};
+      pdsch_time_res_index = time_resource;
+      break;
+    }
+  }
+
+  if (pdsch_time_res_index == pdsch_td_res_alloc_list.size()) {
+    log_postponed_rar(rar, "No PDSCH resources available for Backoff Indicator-only RAR", pdcch_slot);
+    ++rar.failed_attempts.pdsch;
+    return std::next(rar_it);
+  }
+
+  // > Find space in PDCCH for RAR.
+  static constexpr aggregation_level aggr_lvl = aggregation_level::n4;
+  const search_space_id              ss_id = cell_cfg.params.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id;
+  pdcch_dl_information*              pdcch = pdcch_sch.alloc_dl_pdcch_common(pdcch_alloc, rar.ra_rnti, ss_id, aggr_lvl);
+  if (pdcch == nullptr) {
+    log_postponed_rar(rar, "No PDCCH space for Backoff Indicator-only RAR", pdcch_slot);
+    ++rar.failed_attempts.pdcch;
+    return std::next(rar_it);
+  }
+
+  // Status: Backoff Indicator-only RAR allocation is successful.
+  static_vector<msg3_alloc_candidate, MAX_GRANTS_PER_RAR> no_msg3_candidates;
+  fill_rar_grant(res_alloc, pdcch_slot, rar_crbs, pdsch_time_res_index, no_msg3_candidates, true);
+
+  return pending_rars.erase(rar_it);
+}
+
 void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
                                   slot_point                       pdcch_slot,
                                   crb_interval                     rar_crbs,
                                   unsigned                         pdsch_time_res_index,
-                                  span<const msg3_alloc_candidate> msg3_candidates)
+                                  span<const msg3_alloc_candidate> msg3_candidates,
+                                  bool                             send_backoff_indicator)
 {
+  // Backoff Indicator (BI) value included in the RAR, as per TS38.321 Table 7.2-1 (index 4 = 40ms).
+  static constexpr uint8_t default_backoff_indicator = 4;
+
   const auto& init_dl_bwp             = cell_cfg.params.dl_cfg_common.init_dl_bwp;
   const auto  pdsch_td_res_alloc_list = get_ra_pdsch_td_list(cell_cfg);
 
@@ -1249,14 +1385,16 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
       grant_info{init_dl_bwp.generic_params.scs, pdsch_td_res_alloc_list[pdsch_time_res_index].symbols, rar_crbs});
 
   // Fill RAR PDSCH.
-  rar_information& rar = rar_alloc.result.dl.rar_grants.emplace_back();
-  build_pdsch_f1_0_ra_rnti(rar.pdsch_cfg,
-                           get_nof_pdsch_prbs_required(pdsch_time_res_index, msg3_candidates.size()).tbs_bytes,
-                           pdcch.ctx.rnti,
-                           cell_cfg,
-                           pdcch.dci.as_ra_rnti_f1_0(),
-                           rar_crbs,
-                           rar_data[pdsch_time_res_index].dmrs_info);
+  rar_information& rar  = rar_alloc.result.dl.rar_grants.emplace_back();
+  rar.backoff_indicator = send_backoff_indicator ? std::optional<uint8_t>{default_backoff_indicator} : std::nullopt;
+  build_pdsch_f1_0_ra_rnti(
+      rar.pdsch_cfg,
+      get_nof_pdsch_prbs_required(pdsch_time_res_index, msg3_candidates.size(), send_backoff_indicator).tbs_bytes,
+      pdcch.ctx.rnti,
+      cell_cfg,
+      pdcch.dci.as_ra_rnti_f1_0(),
+      rar_crbs,
+      rar_data[pdsch_time_res_index].dmrs_info);
 
   const auto& init_ul_bwp         = cell_cfg.params.ul_cfg_common.init_ul_bwp;
   const auto  pusch_td_alloc_list = get_pusch_td_list(cell_cfg);
@@ -1857,9 +1995,14 @@ void ra_scheduler::reserve_msga_pusch_rbs(cell_resource_allocator& res_alloc)
   fill_grid_in_slot(res_alloc.max_ul_slot_alloc_delay);
 }
 
-sch_prbs_tbs ra_scheduler::get_nof_pdsch_prbs_required(unsigned time_res_idx, unsigned nof_ul_grants) const
+sch_prbs_tbs ra_scheduler::get_nof_pdsch_prbs_required(unsigned time_res_idx, unsigned nof_ul_grants, bool has_bi) const
 {
-  ocudu_assert(nof_ul_grants > 0, "Invalid number of UL grants");
+  ocudu_assert(nof_ul_grants > 0 or has_bi, "Invalid number of UL grants");
+
+  if (has_bi) {
+    const auto& tbl = rar_data[time_res_idx].prbs_tbs_per_nof_grants_with_bi;
+    return tbl[std::min(nof_ul_grants, static_cast<unsigned>(tbl.size()) - 1)];
+  }
 
   return rar_data[time_res_idx].prbs_tbs_per_nof_grants
       [std::min(nof_ul_grants, static_cast<unsigned>(rar_data[time_res_idx].prbs_tbs_per_nof_grants.size())) - 1];

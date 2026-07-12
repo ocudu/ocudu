@@ -1302,10 +1302,12 @@ static scheduler_expert_config generate_scheduler_expert_config(const du_high_un
   // RA parameters.
   const du_high_unit_rach_config& prach = cell.prach_cfg;
 
-  out_cfg.ra.rar_mcs_index            = pdsch.fixed_rar_mcs;
-  out_cfg.ra.max_nof_msg3_harq_retxs  = prach.max_msg3_harq_retx;
-  out_cfg.ra.msg3_mcs_index           = prach.fixed_msg3_mcs;
-  out_cfg.ra.nof_prach_guardbands_rbs = prach.nof_prach_guardbands_rbs;
+  out_cfg.ra.rar_mcs_index                      = pdsch.fixed_rar_mcs;
+  out_cfg.ra.max_nof_msg3_harq_retxs            = prach.max_msg3_harq_retx;
+  out_cfg.ra.msg3_mcs_index                     = prach.fixed_msg3_mcs;
+  out_cfg.ra.nof_prach_guardbands_rbs           = prach.nof_prach_guardbands_rbs;
+  out_cfg.ra.backoff_indicator_snr_threshold_dB = prach.backoff_indicator_snr_threshold;
+  out_cfg.ra.backoff_indicator_max_preambles    = prach.backoff_indicator_max_preambles;
 
   // SI parameters.
   out_cfg.si.sib1_mcs_index    = pdsch.fixed_sib1_mcs;

@@ -1594,6 +1594,19 @@ static void configure_cli11_prach_args(CLI::App& app, du_high_unit_rach_config& 
       ->capture_default_str()
       ->check(CLI::Range(0, 4));
   add_option(app,
+             "--backoff_indicator_snr_threshold",
+             prach_params.backoff_indicator_snr_threshold,
+             "SNR threshold in dB below which a detected PRACH preamble is excluded from the RAR and triggers a "
+             "Backoff Indicator. Disabled if not set")
+      ->capture_default_str();
+  add_option(app,
+             "--backoff_indicator_max_preambles",
+             prach_params.backoff_indicator_max_preambles,
+             "Maximum number of preambles accepted per PRACH occasion. Excess preambles (weakest by SNR first) are "
+             "excluded from the RAR and trigger a Backoff Indicator")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 64));
+  add_option(app,
              "--total_nof_ra_preambles",
              prach_params.total_nof_ra_preambles,
              "Number of different contention-based PRACH preambles per occasion. If less than 64 preambles are used, "
