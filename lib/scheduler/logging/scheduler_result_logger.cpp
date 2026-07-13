@@ -209,28 +209,42 @@ static auto make_rar_info_log_entry(const rar_information& rar_info)
 
 static auto make_ue_dl_msg_info_log_entry(const dl_msg_alloc& ue_msg)
 {
-  return make_formattable([ue_msg](auto& ctx) {
-    const auto& pdsch = ue_msg.pdsch_cfg;
+  // Capture only the fields needed for formatting instead of the entire dl_msg_alloc struct (~2.5 KiB),
+  // which exceeds the type_list_buffer_stream segment size (2048 bytes) and would be silently dropped.
+  const auto& pdsch   = ue_msg.pdsch_cfg;
+  const bool  has_cw1 = pdsch.codewords.size() > 1;
+
+  return make_formattable([ue_idx   = ue_msg.context.ue_index,
+                           rnti     = pdsch.rnti,
+                           h_id     = pdsch.harq_id,
+                           ss_id    = ue_msg.context.ss_id,
+                           rb       = pdsch.rbs,
+                           k1       = ue_msg.context.k1,
+                           new_data = pdsch.codewords[0].new_data,
+                           rv       = pdsch.codewords[0].rv_index,
+                           tbs      = pdsch.codewords[0].tb_size_bytes,
+                           has_cw1,
+                           new_data_cw1 = has_cw1 && pdsch.codewords[1].new_data,
+                           rv_cw1       = has_cw1 ? pdsch.codewords[1].rv_index : uint8_t{0},
+                           tbs_cw1      = has_cw1 ? pdsch.codewords[1].tb_size_bytes : units::bytes{0},
+                           nof_layers   = pdsch.nof_layers,
+                           dl_bo        = ue_msg.context.buffer_occupancy](auto& ctx) {
     fmt::format_to(ctx.out(),
                    "DL: ue={} c-rnti={} h_id={} ss_id={} rb={} k1={} cw[0]: newtx={} rv={} tbs={}",
-                   fmt::underlying(ue_msg.context.ue_index),
-                   pdsch.rnti,
-                   fmt::underlying(pdsch.harq_id),
-                   fmt::underlying(ue_msg.context.ss_id),
-                   pdsch.rbs,
-                   ue_msg.context.k1,
-                   pdsch.codewords[0].new_data,
-                   pdsch.codewords[0].rv_index,
-                   pdsch.codewords[0].tb_size_bytes);
-    if (pdsch.codewords.size() > 1) {
-      fmt::format_to(ctx.out(),
-                     " cw[1]: newtx={} rv={} tbs={}",
-                     pdsch.codewords[1].new_data,
-                     pdsch.codewords[1].rv_index,
-                     pdsch.codewords[1].tb_size_bytes);
+                   fmt::underlying(ue_idx),
+                   rnti,
+                   fmt::underlying(h_id),
+                   fmt::underlying(ss_id),
+                   rb,
+                   k1,
+                   new_data,
+                   rv,
+                   tbs);
+    if (has_cw1) {
+      fmt::format_to(ctx.out(), " cw[1]: newtx={} rv={} tbs={}", new_data_cw1, rv_cw1, tbs_cw1);
     }
-    if (pdsch.codewords[0].new_data or (pdsch.codewords.size() > 1 and pdsch.codewords[1].new_data)) {
-      fmt::format_to(ctx.out(), " ri={} dl_bo={}", pdsch.nof_layers, ue_msg.context.buffer_occupancy);
+    if (new_data or new_data_cw1) {
+      fmt::format_to(ctx.out(), " ri={} dl_bo={}", nof_layers, dl_bo);
     }
     return ctx.out();
   });
