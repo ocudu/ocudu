@@ -713,11 +713,15 @@ INSTANTIATE_TEST_SUITE_P(
   // re-sweep and update this value to keep it just below the new one.
   multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 4, 100, 30, 30, 5},
   multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 2, 100, 85, 85, 5},
+  multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDDDDSUUU), 4, 100, 40, 40, 5},
+  multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDDDDSUUU), 2, 100, 60, 60, 5},
   // Sustained-stream arrivals (~waves of fallback UEs per TDD period): ues_per_wave is derived from measured
   // performance, not the 3GPP spec. If a scheduler change shifts either cliff, re-sweep (across several
   // --gtest_random_seed values) and update these values to keep them just below the new one.
   multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 4, 100, 100, 1, 5},
   multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 2, 100, 100, 18, 5},
+  multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDDDDSUUU), 4, 100, 100, 2, 5},
+  multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDDDDSUUU), 2, 100, 100, 6, 5},
   multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 4, 100, 100, 1, 5, true}
 ));
 // clang-format on

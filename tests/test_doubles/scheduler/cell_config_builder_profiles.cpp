@@ -126,6 +126,10 @@ tdd_ul_dl_config_common cell_config_builder_profiles::create_tdd_pattern(tdd_pat
       cfg.pattern1 = {2, 1, 10, 0, 2};
       cfg.pattern2 = {2, 0, 12, 1, 0};
       break;
+    case tdd_pattern_profile_fr1_30khz::DDDDDDSUUU:
+      // custom.
+      cfg.pattern1 = {10, 6, 5, 3, 4};
+      break;
     default:
       report_fatal_error("Unrecognized pattern profile");
   }
