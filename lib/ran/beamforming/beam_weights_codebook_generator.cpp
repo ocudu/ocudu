@@ -24,7 +24,7 @@ beam_weights_codebook ocudu::generate_beam_weights_codebook(antenna_topology top
 
   // Iterate over single antennas.
   for (unsigned i_antenna = 0; i_antenna != nof_total_antennas; ++i_antenna) {
-    beam_weights.set_coefficient(1.0, single_port_to_beam_id(topology, i_antenna), i_antenna);
+    beam_weights.set_coefficient(1.0, get_beam_id(topology, i_antenna), i_antenna);
   }
 
   // Calculate the beamforming coefficient normalization by the number of transmit antenna ports.
@@ -39,7 +39,7 @@ beam_weights_codebook ocudu::generate_beam_weights_codebook(antenna_topology top
         // Iterate over the second dimension beams.
         for (unsigned i_beam_dim2 = 0; i_beam_dim2 != nof_beams_dim2; ++i_beam_dim2) {
           // Get beam identifier.
-          beam_identifier beam_id = pmi_codebook_beam_to_beam_id(topology, i_panel, i_pol, i_beam_dim1, i_beam_dim2);
+          beam_identifier beam_id = get_beam_id(topology, i_panel, i_pol, i_beam_dim1, i_beam_dim2);
 
           // Calculate starting antenna port index:
           unsigned i_port = nof_elements_dim1 * nof_elements_dim2 * (nof_polarizations * i_panel + i_pol);

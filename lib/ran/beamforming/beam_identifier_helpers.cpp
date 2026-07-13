@@ -7,7 +7,7 @@
 
 using namespace ocudu;
 
-beam_identifier ocudu::single_port_to_beam_id(antenna_topology topology, uint8_t i_port)
+beam_identifier ocudu::get_beam_id(antenna_topology topology, uint8_t i_port)
 {
   ocudu_assert(i_port < get_total_nof_ports(topology),
                "The port index (i.e., {}) exceeds the maximum (i.e., {}) for the topology {}",
@@ -18,11 +18,8 @@ beam_identifier ocudu::single_port_to_beam_id(antenna_topology topology, uint8_t
   return to_beam_id(i_port);
 }
 
-beam_identifier ocudu::pmi_codebook_beam_to_beam_id(antenna_topology topology,
-                                                    uint8_t          i_panel,
-                                                    uint8_t          i_pol,
-                                                    uint8_t          i_beam_dim1,
-                                                    uint8_t          i_beam_dim2)
+beam_identifier
+ocudu::get_beam_id(antenna_topology topology, uint8_t i_panel, uint8_t i_pol, uint8_t i_beam_dim1, uint8_t i_beam_dim2)
 {
   [[maybe_unused]] unsigned nof_panels         = get_nof_antenna_panels(topology);
   unsigned                  nof_polarizations  = get_nof_antenna_polarizations(topology);

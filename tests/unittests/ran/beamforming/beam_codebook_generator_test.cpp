@@ -50,7 +50,7 @@ TEST_P(BeamCodebookGeneratorFixture, Generate)
         // Iterate over the second dimension beams.
         for (unsigned i_beam_dim2 = 0; i_beam_dim2 != nof_beams_dim2; ++i_beam_dim2) {
           // Get beam identifier.
-          beam_identifier beam_id = pmi_codebook_beam_to_beam_id(topology, i_panel, i_pol, i_beam_dim1, i_beam_dim2);
+          beam_identifier beam_id = get_beam_id(topology, i_panel, i_pol, i_beam_dim1, i_beam_dim2);
 
           // Calculate starting antenna port index.
           unsigned i_port = nof_elements_dim1 * nof_elements_dim2 * (nof_polarizations * i_panel + i_pol);

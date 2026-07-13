@@ -126,3 +126,25 @@ gtest_discover_tests(meas_gap_config_test)
 add_executable(precoding_codebooks_test precoding/precoding_codebooks_test.cpp)
 target_link_libraries(precoding_codebooks_test ocudu_ran GTest::gtest ocudu_gtest_main)
 add_test(precoding_codebooks_test precoding_codebooks_test)
+
+add_executable(precoding_matrix_factorization_test precoding/precoding_matrix_factorization_test.cpp)
+target_link_libraries(precoding_matrix_factorization_test
+        ocudu_ran
+        ocuduvec
+        ocudu_phy_support
+        ocudu_channel_precoder
+        ocudulog
+        GTest::gtest
+        ocudu_gtest_main)
+add_test(precoding_matrix_factorization_test precoding_matrix_factorization_test)
+
+add_executable(precoding_matrix_resource_grid_test precoding/precoding_matrix_resource_grid_test.cpp)
+target_link_libraries(precoding_matrix_resource_grid_test
+        ocudu_ran
+        ocuduvec
+        ocudu_phy_support
+        ocudu_channel_precoder
+        ocudulog
+        GTest::gtest
+        ocudu_gtest_main)
+add_test(precoding_matrix_resource_grid_test precoding_matrix_resource_grid_test)
