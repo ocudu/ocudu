@@ -22,6 +22,7 @@ namespace odu {
 class du_manager_impl final : public du_manager,
                               public du_manager_mac_event_handler,
                               public du_manager_f1ap_event_handler,
+                              public du_manager_pws_handler,
                               public du_configurator
 {
 public:
@@ -37,6 +38,11 @@ public:
 
   // Task scheduling interface.
   du_manager_f1ap_event_handler& get_f1ap_event_handler() override { return *this; }
+
+  // PWS (Write-Replace Warning) handling interface.
+  du_manager_pws_handler& get_pws_handler() override { return *this; }
+  async_task<std::vector<du_cell_index_t>>
+       handle_write_replace_warning(const write_replace_warning_information& req) override;
   void schedule_async_task(async_task<void>&& task) override { main_ctrl_loop.schedule(std::move(task)); }
   void schedule_async_task(du_ue_index_t ue_index, async_task<void>&& task) override
   {

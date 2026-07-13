@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "ocudu/adt/byte_buffer.h"
 #include "ocudu/f1ap/du/f1ap_du_connection_manager.h"
 #include "ocudu/f1ap/du/f1ap_du_metrics_collector.h"
 #include "ocudu/f1ap/du/f1ap_du_time_provider.h"
@@ -224,6 +225,32 @@ public:
 
   /// \brief Forward the F1AP Paging to DU.
   virtual void on_paging_received(const paging_information& msg) = 0;
+};
+
+/// \brief Write-Replace Warning Request as per TS 38.473 Section 8.5.1, resolved to local DU cell indexes.
+struct write_replace_warning_information {
+  /// SIB type carried by \c sib_msg (6, 7 or 8).
+  uint8_t sib_type;
+  /// CU-encoded SIB6/7/8 PDU, as per TS 38.331.
+  byte_buffer sib_msg;
+  /// Repetition Period.
+  std::chrono::seconds repeat_period;
+  /// Number of Broadcasts Requested.
+  uint32_t nof_broadcasts_requested;
+  /// Cells targeted by this request, already resolved to local DU cell indexes.
+  std::vector<du_cell_index_t> cells;
+};
+
+/// \brief The F1AP uses this interface to notify the DU of a Write-Replace Warning request (TS 38.473 Section 8.5.1).
+class f1ap_du_pws_notifier
+{
+public:
+  virtual ~f1ap_du_pws_notifier() = default;
+
+  /// \brief Forward the F1AP Write-Replace Warning Request to the DU.
+  /// \return Subset of \c write_replace_warning_information::cells that accepted the broadcast.
+  virtual async_task<std::vector<du_cell_index_t>>
+  on_write_replace_warning_received(const write_replace_warning_information& msg) = 0;
 };
 
 /// Combined entry point for F1AP handling.

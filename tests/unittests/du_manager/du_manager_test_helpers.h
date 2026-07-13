@@ -282,7 +282,7 @@ public:
     async_task<mac_cell_reconfig_response> reconfigure(const mac_cell_reconfig_request& request) override
     {
       last_cell_recfg_req = request;
-      return launch_no_op_task(mac_cell_reconfig_response{true});
+      return launch_no_op_task(mac_cell_reconfig_response{true, true});
     }
   };
 

@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 # Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
-
 set_directory_properties(PROPERTIES LABELS "du_manager;du_high")
 
 include_directories(../../..)
@@ -61,6 +60,7 @@ gtest_discover_tests(du_ue_config_test)
 
 add_executable(du_manager_procedure_test
         procedures/du_param_config_procedure_test.cpp
+        procedures/du_pws_broadcast_procedure_test.cpp
 )
 target_include_directories(du_manager_procedure_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(du_manager_procedure_test du_manager_test_helpers gtest ocudu_gtest_main)
