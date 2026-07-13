@@ -80,28 +80,27 @@ public:
   {
   }
 
-  void on_feedback_timeout(du_ue_index_t ue_idx, bool is_dl, bool ack) override
-  {
-    release(ue_idx, is_dl, "Discarding Msg3 HARQ process. Cause: HARQ-ACK/CRC feedback was not received in time.");
-  }
+  void on_feedback_timeout(du_ue_index_t ue_idx, bool is_dl, bool ack) override { release(ue_idx, is_dl, true); }
 
-  void on_retx_timeout(du_ue_index_t ue_idx, bool is_dl) override
-  {
-    release(ue_idx, is_dl, "Discarding Msg3 retransmission HARQ process. Cause: Retransmission period timed out.");
-  }
+  void on_retx_timeout(du_ue_index_t ue_idx, bool is_dl) override { release(ue_idx, is_dl, false); }
 
   void on_feedback_disabled_harq_timeout(du_ue_index_t ue_idx, bool is_dl, units::bytes tbs) override {}
 
 private:
   // Common to both timeout causes: the Msg3 HARQ is gone either way, so its pending_msg3s ring entry must be
   // released too, or the ring slot leaks forever.
-  void release(du_ue_index_t ue_idx, bool is_dl, const char* cause)
+  void release(du_ue_index_t ue_idx, bool is_dl, bool is_feedback_timeout)
   {
     ocudu_sanity_check(not is_dl, "Only UL HARQs are managed in the RA scheduler");
     auto it = pending_msg3s.find(static_cast<uint16_t>(ue_idx));
     ocudu_sanity_check(it != pending_msg3s.end(), "timeout called but HARQ entity does not exist");
 
-    logger.warning("pci={} tc-rnti={}: {}", pci, it->second.preamble.tc_rnti, cause);
+    logger.warning("pci={} tc-rnti={}: {}",
+                   pci,
+                   it->second.preamble.tc_rnti,
+                   is_feedback_timeout
+                       ? "Discarding Msg3 HARQ process. Cause: HARQ-ACK/CRC feedback was not received in time."
+                       : "Discarding Msg3 retransmission HARQ process. Cause: Retransmission period timed out.");
 
     // Erase the entry to make the slot available again.
     pending_msg3s.erase(it);

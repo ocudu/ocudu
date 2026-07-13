@@ -243,7 +243,7 @@ void cell_harq_repository<IsDl>::handle_harq_ack_timeout(harq_type& h, slot_poin
                 IsDl ? std::string_view{"DL"} : std::string_view{"UL"},
                 h.slot_timeout - h.slot_ack);
 
-    // Report the retx timeout after we delete the HARQ to avoid reentrancy.
+    // Report the retx timeout.
     timeout_notifier.on_retx_timeout(h.ue_idx, IsDl);
   } else {
     // The UCI outcome was never propagated to the HARQ.
@@ -255,7 +255,7 @@ void cell_harq_repository<IsDl>::handle_harq_ack_timeout(harq_type& h, slot_poin
                    h.slot_timeout - h.slot_ack,
                    h.slot_ack);
 
-    // Report timeout with NACK after we delete the HARQ to avoid reentrancy.
+    // Report timeout with NACK.
     timeout_notifier.on_feedback_timeout(h.ue_idx, IsDl, false);
   }
 
