@@ -708,16 +708,16 @@ INSTANTIATE_TEST_SUITE_P(
   multiue_tdd_test_params{{subcarrier_spacing::kHz30, {10, 3, 5, 6, 0}}, 4,     8, 16, 2, 20},
   // DDSU with min_k=4.
   multiue_tdd_test_params{{subcarrier_spacing::kHz30, {4, 2, 9, 1, 0}}, 4,      8, 16, 1, 8},
-  // High-scale DDDSU: 100 background UEs saturate the single UL slot; fallback UEs contend for the ConRes-ACK common
-  // PUCCH against the UE-dedicated HARQ, with min_k=4 (single reachable UL slot for the ConRes ACK) vs min_k=2 (wider
-  // k1 range).
-  // Single-burst arrivals:
-  multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 4, 100, 20, 20, 5},
-  multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 2, 100, 55, 55, 5},
-  // Sustained-stream arrivals (~waves of fallback UEs per TDD period):
+  // Single-burst arrivals: ues_per_wave is derived from measured performance, not the 3GPP spec. It was raised as
+  // high as it would go without the ConRes timer starting to expire; if a scheduler change shifts that cliff,
+  // re-sweep and update this value to keep it just below the new one.
+  multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 4, 100, 30, 30, 5},
+  multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 2, 100, 85, 85, 5},
+  // Sustained-stream arrivals (~waves of fallback UEs per TDD period): ues_per_wave is derived from measured
+  // performance, not the 3GPP spec. If a scheduler change shifts either cliff, re-sweep (across several
+  // --gtest_random_seed values) and update these values to keep them just below the new one.
   multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 4, 100, 100, 1, 5},
-  multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 2, 100, 100, 4, 5},
-  // Sustained stream, but fallback UEs arrive via the full RACH procedure (RAR + Msg3):
+  multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 2, 100, 100, 18, 5},
   multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 4, 100, 100, 1, 5, true}
 ));
 // clang-format on
