@@ -44,15 +44,11 @@ void du_ue_ran_resource_updater_impl::config_applied()
 
 void du_ue_ran_resource_updater_impl::set_cs_rnti(rnti_t cs_rnti)
 {
-  // Update CS-RNTI in the physical cell group config.
   cell_grp->cell_group.pcg_cfg.cs_rnti = cs_rnti;
 }
 
 void du_ue_ran_resource_updater_impl::clear_cs_rnti()
 {
-  // Update CS-RNTI in the physical cell group config.
-  // NOTE: the equivalents fields in \ref set_cs_rnti need not be reset, as the CG config has been removed already
-  // by \ref du_cg_type1_res_mng::dealloc_resources.
   cell_grp->cell_group.pcg_cfg.cs_rnti.reset();
 }
 
@@ -284,7 +280,7 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
       // config not requested).
       else if (ue_mcg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.ul_config.has_value() and
                ue_mcg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.has_value()) {
-        // CG was actually allocated; if CG was not requested, the DU do not enter this else-if block
+        // CG was actually allocated; if CG was not requested, the DU res. manager does not enter this else-if block.
         resp.cs_rnti_requested = true;
       }
       // NOTE: no-op for case with CG config not requested.

@@ -95,12 +95,12 @@ mac_controller::handle_ue_reconfiguration_request(const mac_ue_reconfiguration_r
 
   if (has_cg_in_request and not had_cs_rnti) {
     // CG activation: allocate a new CS-RNTI.
-    rnti_t new_cs_rnti = rnti_table.allocate();
+    rnti_t new_cs_rnti = rnti_table.allocate(/* is_cs_rnti */ true);
     if (new_cs_rnti == rnti_t::INVALID_RNTI) {
       logger.warning("{}: Failed to allocate CS-RNTI for configured grant",
                      mac_log_prefix(msg.ue_index, msg.crnti, "MAC UE Reconfiguration"));
     } else {
-      if (not rnti_table.add_ue(new_cs_rnti, msg.ue_index)) {
+      if (not rnti_table.add_ue(new_cs_rnti, msg.ue_index, /* is_cs_rnti */ true)) {
         logger.warning("{}: CS-RNTI={} collided in RNTI table",
                        mac_log_prefix(msg.ue_index, msg.crnti, "MAC UE Reconfiguration"),
                        new_cs_rnti);
@@ -117,14 +117,14 @@ mac_controller::handle_ue_reconfiguration_request(const mac_ue_reconfiguration_r
     logger.debug("{}: Deallocating CS-RNTI={} (configured grant deactivated)",
                  mac_log_prefix(msg.ue_index, msg.crnti, "MAC UE Reconfiguration"),
                  ue_ctx->cs_rnti);
-    rnti_table.rem_ue(ue_ctx->cs_rnti);
+    rnti_table.rem_ue(ue_ctx->cs_rnti, /* is_cs_rnti */ true);
     ue_ctx->cs_rnti = rnti_t::INVALID_RNTI;
   }
 
   if (cs_rnti.has_value()) {
     // Patch the CS-RNTI into the request copy before forwarding to the scheduler.
     mac_ue_reconfiguration_request patched_msg = msg;
-    patched_msg.cs_rnti                        = cs_rnti;
+    patched_msg.assigned_cs_rnti               = cs_rnti;
     if (patched_msg.phy_cell_group_cfg.has_value()) {
       patched_msg.phy_cell_group_cfg->cs_rnti = cs_rnti.value();
     }
@@ -188,7 +188,7 @@ void mac_controller::remove_ue(du_ue_index_t ue_index)
 
   // Remove CS-RNTI from the RNTI table, if allocated for configured grants.
   if (ue_db[ue_index].cs_rnti != rnti_t::INVALID_RNTI) {
-    rnti_table.rem_ue(ue_db[ue_index].cs_rnti);
+    rnti_table.rem_ue(ue_db[ue_index].cs_rnti, /* is_cs_rnti */ true);
   }
 
   ue_db.erase(ue_index);

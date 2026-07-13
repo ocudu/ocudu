@@ -34,3 +34,28 @@ TEST(rnti_manager_test, when_ue_added_then_allocate_rnti_does_not_repeat_rnti)
 
   ASSERT_EQ(rnti_db.nof_ues(), 1);
 }
+
+TEST(rnti_manager_test, when_cs_rnti_added_then_nof_ues_is_not_incremented)
+{
+  rnti_manager rnti_db;
+
+  // Add a regular C-RNTI.
+  rnti_t crnti = rnti_db.allocate();
+  ASSERT_TRUE(rnti_db.add_ue(crnti, to_du_ue_index(0)));
+  ASSERT_EQ(rnti_db.nof_ues(), 1);
+
+  // Add a CS-RNTI for the same UE. The counter should not increase.
+  rnti_t cs_rnti = rnti_db.allocate(true);
+  ASSERT_NE(cs_rnti, rnti_t::INVALID_RNTI);
+  ASSERT_TRUE(rnti_db.add_ue(cs_rnti, to_du_ue_index(0), true));
+  ASSERT_EQ(rnti_db.nof_ues(), 1) << "CS-RNTI should not increase the C-RNTI count";
+
+  // Remove the CS-RNTI. The counter should remain unchanged.
+  rnti_db.rem_ue(cs_rnti, true);
+  ASSERT_EQ(rnti_db.nof_ues(), 1) << "Removing CS-RNTI should not decrease the C-RNTI count";
+  ASSERT_FALSE(rnti_db.has_rnti(cs_rnti));
+
+  // Remove the C-RNTI. The counter should decrease.
+  rnti_db.rem_ue(crnti);
+  ASSERT_EQ(rnti_db.nof_ues(), 0);
+}

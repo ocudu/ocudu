@@ -84,11 +84,14 @@ struct mac_ue_create_response {
 
 /// Input parameters used to reconfigure a UE in the scheduler.
 struct mac_ue_reconfiguration_request {
-  du_ue_index_t                             ue_index;
-  du_cell_index_t                           pcell_index;
-  rnti_t                                    crnti;
-  bool                                      cs_rnti_requested = false;
-  std::optional<rnti_t>                     cs_rnti;
+  du_ue_index_t   ue_index;
+  du_cell_index_t pcell_index;
+  rnti_t          crnti;
+  /// When true, requests the MAC controller to generate a CS-RNTI for this UE.
+  bool cs_rnti_requested = false;
+  /// When set, carries the generated CS-RNTI for this UE that needs to be passed to the scheduler.
+  /// If not set, the scheduler won't associate any CS-RNTI with this UE.
+  std::optional<rnti_t>                     assigned_cs_rnti;
   std::vector<mac_logical_channel_config>   bearers_to_addmod;
   std::vector<lcid_t>                       bearers_to_rem;
   std::optional<mac_cell_group_config>      mac_cell_group_cfg;
@@ -99,9 +102,11 @@ struct mac_ue_reconfiguration_request {
 
 /// \brief Outcome of a MAC UE reconfiguration request procedure.
 struct mac_ue_reconfiguration_response {
-  du_ue_index_t         ue_index;
-  bool                  result;
-  std::optional<rnti_t> cs_rnti;
+  du_ue_index_t ue_index;
+  bool          result;
+  /// When set, indicates the CS-RNTI that has been allocated to this UE.
+  /// If not set, no CS-RNTi has been allocated.
+  std::optional<rnti_t> cs_rnti_allocated;
 };
 
 /// Input parameters used to delete a UE in the scheduler.

@@ -82,8 +82,8 @@ mac_ue_reconfiguration_response mac_ue_reconfiguration_procedure::handle_result(
 
   // Respond back to DU manager with result
   mac_ue_reconfiguration_response resp{};
-  resp.ue_index = req.ue_index;
-  resp.result   = result;
-  resp.cs_rnti  = allocated_cs_rnti;
+  resp.ue_index          = req.ue_index;
+  resp.result            = result;
+  resp.cs_rnti_allocated = allocated_cs_rnti;
   return resp;
 }

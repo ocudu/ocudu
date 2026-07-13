@@ -557,11 +557,10 @@ struct du_high_unit_pucch_config {
 };
 
 struct du_high_configured_grants {
-  /// If presents, enables Configured Grants Type1 and sets its periodicity in slots.
+  /// If present, enables Configured Grants Type1 and sets its periodicity in slots.
   /// For 14-symbol slots, values: {1, 2, 4, 5, 8, 10, 16, 20, 32, 40, 64, 80, 128, 160, 256, 320, 512, 640, 1024, 1280,
   /// 2560, 5120}.
-  /// For 12 symbol slots, values: {1, 2, 4, 5, 8, 10, 16, 20, 32, 40, 64, 80, 128, 160, 256, 320, 512, 640, 1280,
-  /// 2560}.
+  /// For 12 symbol slots, all values above except {1014, 5120}.
   /// \remark Only 14-symbol slot is currently supported.
   std::optional<unsigned> periodicity_slots = 40;
   /// Number of RBs that are configured for the UE configured grant.

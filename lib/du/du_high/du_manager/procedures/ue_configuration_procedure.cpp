@@ -71,8 +71,8 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   // > Store CS-RNTI allocated by MAC back into the UE resource configuration, so that it is included in the
   // > RRC cellGroupConfig sent to the CU in the F1AP response.
   if (mac_res.result) {
-    if (mac_res.cs_rnti.has_value()) {
-      ue->resources.set_cs_rnti(mac_res.cs_rnti.value());
+    if (mac_res.cs_rnti_allocated.has_value()) {
+      ue->resources.set_cs_rnti(mac_res.cs_rnti_allocated.value());
     } else {
       ue->resources.clear_cs_rnti();
     }

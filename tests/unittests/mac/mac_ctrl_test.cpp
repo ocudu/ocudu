@@ -51,6 +51,114 @@ protected:
   std::optional<lazy_task_launcher<mac_ue_create_response>> t_launcher;
 };
 
+TEST_F(mac_controller_test, when_cg_cs_rnti_deallocated_then_rnti_value_is_reused)
+{
+  // Step 1: Create a UE directly via mac_ctrl_configurator::add_ue (bypasses async procedure).
+  auto&  ctrl_cfg = static_cast<mac_ctrl_configurator&>(mac_ctrl);
+  rnti_t ue_crnti = ctrl_cfg.add_ue(to_du_ue_index(0), to_du_cell_index(0), rnti_t::INVALID_RNTI);
+  ASSERT_NE(ue_crnti, rnti_t::INVALID_RNTI);
+  ASSERT_NE(mac_ctrl.find_ue(to_du_ue_index(0)), nullptr);
+  ASSERT_EQ(mac_ctrl.find_ue(to_du_ue_index(0))->cs_rnti, rnti_t::INVALID_RNTI);
+
+  // Step 2: Reconfigure UE with configured grant (cs_rnti_requested = true) → allocates CS-RNTI.
+  mac_ue_reconfiguration_request reconfig_cg{};
+  reconfig_cg.ue_index          = to_du_ue_index(0);
+  reconfig_cg.pcell_index       = to_du_cell_index(0);
+  reconfig_cg.crnti             = ue_crnti;
+  reconfig_cg.cs_rnti_requested = true;
+
+  async_task<mac_ue_reconfiguration_response>         t_cg = mac_ctrl.handle_ue_reconfiguration_request(reconfig_cg);
+  lazy_task_launcher<mac_ue_reconfiguration_response> launcher_cg(t_cg);
+  ASSERT_TRUE(t_cg.ready());
+  ASSERT_TRUE(t_cg.get().result);
+  ASSERT_TRUE(t_cg.get().cs_rnti_allocated.has_value());
+  rnti_t saved_cs_rnti = t_cg.get().cs_rnti_allocated.value();
+  ASSERT_NE(saved_cs_rnti, rnti_t::INVALID_RNTI);
+  ASSERT_EQ(mac_ctrl.find_ue(to_du_ue_index(0))->cs_rnti, saved_cs_rnti);
+
+  // Step 3: Reconfigure UE without configured grant (cs_rnti_requested = false) → deallocates CS-RNTI.
+  mac_ue_reconfiguration_request reconfig_no_cg{};
+  reconfig_no_cg.ue_index          = to_du_ue_index(0);
+  reconfig_no_cg.pcell_index       = to_du_cell_index(0);
+  reconfig_no_cg.crnti             = ue_crnti;
+  reconfig_no_cg.cs_rnti_requested = false;
+
+  async_task<mac_ue_reconfiguration_response> t_no_cg = mac_ctrl.handle_ue_reconfiguration_request(reconfig_no_cg);
+  lazy_task_launcher<mac_ue_reconfiguration_response> launcher_no_cg(t_no_cg);
+  ASSERT_TRUE(t_no_cg.ready());
+  ASSERT_TRUE(t_no_cg.get().result);
+  ASSERT_FALSE(t_no_cg.get().cs_rnti_allocated.has_value());
+  ASSERT_EQ(mac_ctrl.find_ue(to_du_ue_index(0))->cs_rnti, rnti_t::INVALID_RNTI);
+
+  // Step 4: Loop add/remove UEs until the freed CS-RNTI value is reused as a C-RNTI. To ensure having a reuse of the
+  // CS-RNTI, we need to add/remove more than 65519 UEs, which is the C-RNTI range of the RNTI manager.
+  bool found_reuse = false;
+  for (unsigned i = 0; i != 70000; ++i) {
+    rnti_t new_rnti = ctrl_cfg.add_ue(to_du_ue_index(1), to_du_cell_index(0), rnti_t::INVALID_RNTI);
+    ASSERT_NE(new_rnti, rnti_t::INVALID_RNTI);
+    ctrl_cfg.remove_ue(to_du_ue_index(1));
+    if (new_rnti == saved_cs_rnti) {
+      found_reuse = true;
+      break;
+    }
+  }
+  ASSERT_TRUE(found_reuse);
+}
+
+TEST_F(mac_controller_test, when_cg_cs_rnti_deallocated_then_nof_crnti_counter_is_correct)
+{
+  // Step 1: Create a UE directly via mac_ctrl_configurator::add_ue (bypasses async procedure).
+  auto&  ctrl_cfg = static_cast<mac_ctrl_configurator&>(mac_ctrl);
+  rnti_t ue_crnti = ctrl_cfg.add_ue(to_du_ue_index(0), to_du_cell_index(0), rnti_t::INVALID_RNTI);
+  ASSERT_NE(ue_crnti, rnti_t::INVALID_RNTI);
+  ASSERT_NE(mac_ctrl.find_ue(to_du_ue_index(0)), nullptr);
+  ASSERT_EQ(mac_ctrl.find_ue(to_du_ue_index(0))->cs_rnti, rnti_t::INVALID_RNTI);
+
+  // Step 2: Reconfigure UE with configured grant (cs_rnti_requested = true) → allocates CS-RNTI.
+  mac_ue_reconfiguration_request reconfig_cg{};
+  reconfig_cg.ue_index          = to_du_ue_index(0);
+  reconfig_cg.pcell_index       = to_du_cell_index(0);
+  reconfig_cg.crnti             = ue_crnti;
+  reconfig_cg.cs_rnti_requested = true;
+
+  async_task<mac_ue_reconfiguration_response>         t_cg = mac_ctrl.handle_ue_reconfiguration_request(reconfig_cg);
+  lazy_task_launcher<mac_ue_reconfiguration_response> launcher_cg(t_cg);
+  ASSERT_TRUE(t_cg.ready());
+  ASSERT_TRUE(t_cg.get().result);
+  ASSERT_TRUE(t_cg.get().cs_rnti_allocated.has_value());
+  rnti_t saved_cs_rnti = t_cg.get().cs_rnti_allocated.value();
+  ASSERT_NE(saved_cs_rnti, rnti_t::INVALID_RNTI);
+  ASSERT_EQ(mac_ctrl.find_ue(to_du_ue_index(0))->cs_rnti, saved_cs_rnti);
+
+  // Step 3: Reconfigure UE without configured grant (cs_rnti_requested = false) → deallocates CS-RNTI.
+  mac_ue_reconfiguration_request reconfig_no_cg{};
+  reconfig_no_cg.ue_index          = to_du_ue_index(0);
+  reconfig_no_cg.pcell_index       = to_du_cell_index(0);
+  reconfig_no_cg.crnti             = ue_crnti;
+  reconfig_no_cg.cs_rnti_requested = false;
+
+  async_task<mac_ue_reconfiguration_response> t_no_cg = mac_ctrl.handle_ue_reconfiguration_request(reconfig_no_cg);
+  lazy_task_launcher<mac_ue_reconfiguration_response> launcher_no_cg(t_no_cg);
+  ASSERT_TRUE(t_no_cg.ready());
+  ASSERT_TRUE(t_no_cg.get().result);
+  ASSERT_FALSE(t_no_cg.get().cs_rnti_allocated.has_value());
+  ASSERT_EQ(mac_ctrl.find_ue(to_du_ue_index(0))->cs_rnti, rnti_t::INVALID_RNTI);
+
+  // Step 4: Loop add (without removing) UEs until total number of MAX_NOF_DU_UES are added. If the mac_controller
+  // incorrectly called rnti_table.add_ue() without is_cs_rnti=true for the CS-RNTI, the nof_crnti_ counter would be
+  // inflated, causing an early RNTI allocation failure before all du_ue_indices are filled. Equivalently, if the
+  // mac_controller incorrectly called rnti_table.rem_ue() without is_cs_rnti=true for the CS-RNTI, the nof_crnti_
+  // counter would be incorrectly decreased, allowing an extra RNTI beyond its MAX_NOF_DU_UES capacity.
+  for (unsigned i = 1; i != MAX_NOF_DU_UES; ++i) {
+    rnti_t new_rnti = ctrl_cfg.add_ue(to_du_ue_index(i), to_du_cell_index(0), rnti_t::INVALID_RNTI);
+    ASSERT_NE(new_rnti, rnti_t::INVALID_RNTI) << "Failed to add UE at du_ue_index=" << i;
+  }
+
+  // Verify that adding one more UE is rejected (all du_ue_indices and RNTIs are exhausted).
+  rnti_t rejected_rnti = ctrl_cfg.add_ue(to_du_ue_index(0), to_du_cell_index(0), rnti_t::INVALID_RNTI);
+  ASSERT_EQ(rejected_rnti, rnti_t::INVALID_RNTI);
+}
+
 TEST_F(mac_controller_test, ue_procedures)
 {
   // Action 1: Create UE

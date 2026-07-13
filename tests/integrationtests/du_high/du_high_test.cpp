@@ -592,3 +592,126 @@ TEST_F(du_high_rrm_policy_tester, when_rrm_policy_remote_command_is_received_the
   // 2-C. Run the scheduler and assess RBs are according to the RRM config.
   run_sched_and_assess_rbs(max_rbs);
 }
+
+class du_high_cg_tester : public du_high_env_simulator, public testing::Test
+{
+protected:
+  du_high_cg_tester() :
+    du_high_env_simulator([]() {
+      du_high_configuration du_cfg            = create_du_high_configuration();
+      du_cfg.ran.cells[0].ran.init_bwp.cg_cfg = cg_builder_params{};
+      return du_cfg;
+    }())
+  {
+  }
+};
+
+TEST_F(du_high_cg_tester, when_ue_context_setup_with_drb_and_cg_enabled_then_cs_rnti_is_allocated)
+{
+  // Create UE.
+  rnti_t rnti = to_rnti(0x4601);
+  ASSERT_TRUE(add_ue(rnti));
+  ASSERT_TRUE(run_rrc_setup(rnti));
+
+  auto& u = ues[rnti];
+
+  // DU receives UE Context Setup Request (inlined from run_ue_context_setup to capture the response).
+  cu_notifier.f1ap_ul_msgs.clear();
+  f1ap_message msg = test_helpers::generate_ue_context_setup_request(
+      *u.cu_ue_id,
+      u.du_ue_id,
+      u.srbs[LCID_SRB1].next_pdcp_sn++,
+      {drb_id_t::drb1},
+      {plmn_identity::test_value(), nr_cell_identity::create(0).value()});
+  asn1::f1ap::ue_context_setup_request_s& cmd      = msg.pdu.init_msg().value.ue_context_setup_request();
+  auto&                                   drb_item = cmd->drbs_to_be_setup_list[0].value().drbs_to_be_setup_item();
+  auto&                                   drb_info = drb_item.qos_info.choice_ext().value().drb_info();
+  drb_info.drb_qos.qos_characteristics.non_dyn_5qi().five_qi = 7U;
+  drb_item.rlc_mode.value                                    = asn1::f1ap::rlc_mode_opts::rlc_um_bidirectional;
+  // UE supports 256QAM.
+  cmd->cu_to_du_rrc_info.ue_cap_rat_container_list =
+      byte_buffer::create({0x10, 0xc9, 0x83, 0x40, 0x67, 0x40, 0x8e, 0x8c, 0xb4, 0x04, 0xbf, 0x1b, 0x07, 0x0a, 0x40,
+                           0x00, 0x2c, 0x12, 0x62, 0xe0, 0x00, 0x30, 0x7e, 0x16, 0x00, 0x31, 0xbf, 0xf0, 0x01, 0x70,
+                           0x00, 0x98, 0xa0, 0x51, 0x00, 0x00, 0x00, 0x04, 0x40, 0x02, 0xc6, 0x80, 0x30, 0x03, 0xd0,
+                           0x38, 0xf2, 0x1c, 0xf8, 0x00, 0x01, 0x20, 0x20, 0x07, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x08,
+                           0x05, 0x03, 0x60, 0x00, 0x03, 0x80, 0x40, 0x4a, 0xf8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                           0x39, 0x51, 0x40, 0x00, 0x40, 0x00, 0x02, 0x59, 0x65, 0x40, 0x0d, 0x2a, 0xaa, 0x1e, 0x00,
+                           0x0e, 0x00, 0x1e, 0x00, 0x00, 0x00, 0x08, 0x01, 0x00, 0x20, 0x48, 0x14})
+          .value();
+  this->du_hi->get_f1ap_pdu_handler().handle_message(msg);
+
+  // Wait until DU sends UE Context Setup Response and the whole RRC container is scheduled.
+  constexpr unsigned MAX_SLOT_COUNT   = 1000;
+  const unsigned     srb1_pdu_size    = cmd->rrc_container.size();
+  unsigned           srb1_bytes_sched = 0;
+  for (unsigned i = 0; i != MAX_SLOT_COUNT and (srb1_bytes_sched < srb1_pdu_size or cu_notifier.f1ap_ul_msgs.empty());
+       ++i) {
+    run_slot();
+
+    const dl_msg_alloc* pdsch =
+        find_ue_pdsch_with_lcid(rnti, LCID_SRB1, phy.cells[0].last_dl_res.value().dl_res->ue_grants);
+    if (pdsch != nullptr) {
+      for (const dl_msg_lc_info& lc_grant : pdsch->tb_list[0].lc_chs_to_sched) {
+        if (lc_grant.lcid == LCID_SRB1) {
+          srb1_bytes_sched += lc_grant.sched_bytes;
+        }
+      }
+    }
+  }
+  ASSERT_EQ(cu_notifier.f1ap_ul_msgs.size(), 1);
+  ASSERT_TRUE(test_helpers::is_valid_ue_context_setup_response(cu_notifier.f1ap_ul_msgs.rbegin()->second, msg));
+
+  // Decode CellGroupConfig from the UE Context Setup Response and verify CS-RNTI is allocated.
+  const auto& resp = cu_notifier.f1ap_ul_msgs.rbegin()->second.pdu.successful_outcome().value.ue_context_setup_resp();
+  ASSERT_FALSE(resp->du_to_cu_rrc_info.cell_group_cfg.empty());
+  {
+    asn1::cbit_ref                 bref{resp->du_to_cu_rrc_info.cell_group_cfg};
+    asn1::rrc_nr::cell_group_cfg_s cell_grp_cfg;
+    ASSERT_EQ(cell_grp_cfg.unpack(bref), asn1::OCUDUASN_SUCCESS);
+    ASSERT_TRUE(cell_grp_cfg.phys_cell_group_cfg_present) << "PhysCellGroupConfig should be present";
+    ASSERT_TRUE(cell_grp_cfg.phys_cell_group_cfg.cs_rnti_present) << "CS-RNTI should be allocated when CG is enabled";
+    ASSERT_EQ(cell_grp_cfg.phys_cell_group_cfg.cs_rnti.type(), asn1::setup_release_opts::setup)
+        << "CS-RNTI should be set to 'setup'";
+  }
+
+  // Complete Reconfiguration Complete.
+  cu_notifier.f1ap_ul_msgs.clear();
+  u.sim->enqueue_ul_mac_sdu(LCID_SRB1, byte_buffer::create({0x1, 0x2, 0x3}).value());
+  ASSERT_TRUE(run_until([this]() { return not cu_notifier.f1ap_ul_msgs.empty(); }));
+  ASSERT_TRUE(test_helpers::is_ul_rrc_msg_transfer_valid(cu_notifier.f1ap_ul_msgs.rbegin()->second, srb_id_t::srb1));
+}
+
+TEST_F(du_high_cg_tester, when_all_drbs_removed_then_cs_rnti_is_deallocated)
+{
+  // Create UE with DRB.
+  rnti_t rnti = to_rnti(0x4601);
+  ASSERT_TRUE(add_ue(rnti));
+  ASSERT_TRUE(run_rrc_setup(rnti));
+  ASSERT_TRUE(run_ue_context_setup(rnti));
+
+  // DU receives UE Context Modification removing DRB1.
+  cu_notifier.f1ap_ul_msgs.clear();
+  auto&        u   = ues[rnti];
+  f1ap_message msg = test_helpers::generate_ue_context_modification_request(
+      u.du_ue_id.value(), u.cu_ue_id.value(), {}, {}, {drb_id_t::drb1}, {});
+  this->du_hi->get_f1ap_pdu_handler().handle_message(msg);
+
+  // Wait for UE Context Modification Response.
+  ASSERT_TRUE(this->run_until([this]() { return not cu_notifier.f1ap_ul_msgs.empty(); }));
+
+  // Decode CellGroupConfig and verify CS-RNTI is deallocated.
+  const f1ap_message& f1ap_pdu = cu_notifier.f1ap_ul_msgs.rbegin()->second;
+  ASSERT_EQ(f1ap_pdu.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types::options::successful_outcome);
+  ASSERT_EQ(f1ap_pdu.pdu.successful_outcome().proc_code, ASN1_F1AP_ID_UE_CONTEXT_MOD);
+  const asn1::f1ap::ue_context_mod_resp_s& resp = f1ap_pdu.pdu.successful_outcome().value.ue_context_mod_resp();
+  ASSERT_TRUE(resp->du_to_cu_rrc_info_present);
+  ASSERT_FALSE(resp->du_to_cu_rrc_info.cell_group_cfg.empty());
+  {
+    asn1::cbit_ref                 bref{resp->du_to_cu_rrc_info.cell_group_cfg};
+    asn1::rrc_nr::cell_group_cfg_s cell_grp_cfg;
+    ASSERT_EQ(cell_grp_cfg.unpack(bref), asn1::OCUDUASN_SUCCESS);
+    ASSERT_TRUE(cell_grp_cfg.phys_cell_group_cfg_present) << "PhysCellGroupConfig should be present";
+    ASSERT_FALSE(cell_grp_cfg.phys_cell_group_cfg.cs_rnti_present)
+        << "CS-RNTI should be deallocated when all DRBs are removed";
+  }
+}

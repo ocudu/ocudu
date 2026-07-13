@@ -14,6 +14,9 @@
 namespace ocudu {
 
 /// Table used by the MAC layer to convert from RNTI to a value in a thread-safe manner.
+/// \remark We assume (i) each C-RNTI maps to one and only one UE and (ii) each CS-RNTI maps to a unique UE. Therefore,
+/// a UE is associated with 1 RNTI and can be optionally associated with 1 CS-RNTI. We also assume that, for each
+/// CS-RNTI that is added to the table, the corresponding UE must have been already added to the table with its C-RNTI.
 template <typename T, T SentinelValue>
 class rnti_value_table
 {
@@ -39,8 +42,9 @@ public:
   ///
   /// \param crnti RNTI value.
   /// \param value Value to associate with an RNTI.
+  /// \param is_cs_rnti Whether this request is for CS-RNTI.
   /// \return Returns true if the RNTI does not yet exist, otherwise false.
-  bool add_ue(rnti_t crnti, T value)
+  bool add_ue(rnti_t crnti, T value, bool is_cs_rnti = false)
   {
     ocudu_assert(is_crnti(crnti), "Invalid c-rnti={}", crnti);
     ocudu_assert(value != SentinelValue, "Invalid rnti_value_table value={}", fmt::underlying(value));
@@ -48,7 +52,10 @@ public:
     std::atomic<T>& ue_pos      = get(crnti);
     T               prev_ue_idx = ue_pos.exchange(value, std::memory_order_relaxed);
     if (prev_ue_idx == SentinelValue) {
-      nof_ues_.fetch_add(1, std::memory_order_relaxed);
+      // With CS-RNTI, do not increase the counter; as the corresponding C-RNTI has been counted already.
+      if (not is_cs_rnti) {
+        nof_ues_.fetch_add(1, std::memory_order_relaxed);
+      }
       return true;
     }
 
@@ -56,12 +63,16 @@ public:
   }
 
   /// Removes the given RNTI from the table.
-  void rem_ue(rnti_t crnti)
+  void rem_ue(rnti_t crnti, bool is_cs_rnti = false)
   {
     ocudu_assert(is_crnti(crnti), "Invalid c-rnti={}", crnti);
 
     std::atomic<T>& ue_pos      = get(crnti);
     T               prev_ue_idx = ue_pos.exchange(SentinelValue, std::memory_order_relaxed);
+    // With CS-RNTI, the counter wasn't increased; thus, no need to decrease it now.
+    if (is_cs_rnti) {
+      return;
+    }
     if (prev_ue_idx != SentinelValue) {
       nof_ues_.fetch_sub(1, std::memory_order_relaxed);
       ocudu_assert(nof_ues_.load(std::memory_order_relaxed) <= RNTI_RANGE, "Invalid rnti_table state");
@@ -69,6 +80,8 @@ public:
   }
 
   /// Get an estimate of the current number of UEs present in the table.
+  /// \remark Each UE is associated with one and only C-RNTI; however, a UE can be also associated with an optional
+  /// CS-RNTI.
   size_t nof_ues() const { return nof_ues_.load(std::memory_order_relaxed); }
 
   /// Checks whether the passed RNTI is registered as a UE.

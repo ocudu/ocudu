@@ -23,13 +23,18 @@ public:
   }
 
   /// \brief Allocates new unique TC-RNTI.
-  rnti_t allocate()
+  rnti_t allocate(bool is_cs_rnti = false)
   {
-    if (this->nof_ues() >= MAX_NOF_DU_UES) {
-      // If the number of UEs is already maximum, ignore RACH.
+    // For C-RNTI allocation, we assume 1 C-RNTI per UE.
+    // If the allocation is for CS-RNTI, the nof_ues() counter won't be increased.
+    const uint16_t max_supported_nof_ues = is_cs_rnti ? MAX_NOF_DU_UES + 1 : MAX_NOF_DU_UES;
+    if (this->nof_ues() >= max_supported_nof_ues) {
+      ocudu_sanity_check(not is_cs_rnti,
+                         "This event should not happen. This UE should have been rejected at C-RNTI allocation");
+      // [For CRNTI only] If the number of CRNTIs is already maximum, ignore RACH.
       return rnti_t::INVALID_RNTI;
     }
-    // Increments rnti counter until it finds an available temp C-RNTI.
+    // Increments RNTI counter until it finds an available temp C-RNTI.
     rnti_t temp_crnti;
     do {
       uint16_t prev_counter = rnti_counter.fetch_add(1, std::memory_order_relaxed) % CRNTI_RANGE;

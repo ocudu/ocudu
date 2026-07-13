@@ -31,7 +31,7 @@ make_scheduler_ue_reconfiguration_request(const mac_ue_reconfiguration_request& 
   ret.ue_index = request.ue_index;
   ret.crnti    = request.crnti;
   ret.cfg      = request.sched_cfg;
-  ret.cs_rnti  = request.cs_rnti;
+  ret.cs_rnti  = request.assigned_cs_rnti;
   return ret;
 }
 
