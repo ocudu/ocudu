@@ -182,6 +182,9 @@ variables:
         if [ "${GRYPE_SKIP}" != "true" ]; then
           echo "=== Running grype CVE scan on ${IMAGE_NAME_VERSION} ==="
           grype registry:${IMAGE_NAME_VERSION} --fail-on critical -o json > grype-report.json
+          echo "=== Vulnerability summary ==="
+          jq -r '.matches[] | .vulnerability.severity' grype-report.json | sort | uniq -c | awk '{printf "  %s: %d\n", $2, $1}'
+          echo "  Total: $(jq '.matches | length' grype-report.json)"
           echo "=== Attesting grype report ==="
           cosign attest --predicate grype-report.json --type vuln ${IMAGE_DIGEST}
         fi
