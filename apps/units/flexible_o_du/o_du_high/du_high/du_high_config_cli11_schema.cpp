@@ -2162,7 +2162,7 @@ static void configure_cli11_sib16_config_args(CLI::App& app, du_high_unit_sib_co
       app, "--freq_prio_list_slicing", parse_freq_prio_list_slicing, "Frequency priority slicing list entries");
 }
 
-static void configure_cli11_etws_args(CLI::App& app, du_high_unit_sib_config::etws_config& sib_params)
+static void configure_cli11_etws_args(CLI::App& app, du_high_unit_test_mode_warning_config::etws_config& sib_params)
 {
   add_option(app, "--message_id", sib_params.message_id, "ETWS message ID.")
       ->capture_default_str()
@@ -2187,7 +2187,7 @@ static void configure_cli11_etws_args(CLI::App& app, du_high_unit_sib_config::et
       ->capture_default_str();
 }
 
-static void configure_cli11_cmas_args(CLI::App& app, du_high_unit_sib_config::cmas_config& sib_params)
+static void configure_cli11_cmas_args(CLI::App& app, du_high_unit_test_mode_warning_config::cmas_config& sib_params)
 {
   add_option(app, "--message_id", sib_params.message_id, "CMAS message ID.")
       ->capture_default_str()
@@ -2301,32 +2301,6 @@ static void configure_cli11_sib_args(CLI::App& app, du_high_unit_sib_config& sib
     }
   };
   sib16_subcmd->parse_complete_callback(sib16_verify_callback);
-
-  CLI::App* etws_subcmd = add_subcommand(app, "etws", "ETWS configuration parameters");
-  static du_high_unit_sib_config::etws_config etws_cfg;
-  configure_cli11_etws_args(*etws_subcmd, etws_cfg);
-  auto etws_verify_callback = [&]() {
-    CLI::App* etws_sub_cmd = app.get_subcommand("etws");
-    if (etws_sub_cmd->count() != 0) {
-      sib_params.etws_cfg.emplace(etws_cfg);
-    } else {
-      etws_sub_cmd->disabled();
-    }
-  };
-  etws_subcmd->parse_complete_callback(etws_verify_callback);
-
-  static du_high_unit_sib_config::cmas_config cmas_cfg;
-  CLI::App* cmas_subcmd = add_subcommand(app, "cmas", "CMAS configuration parameters");
-  configure_cli11_cmas_args(*cmas_subcmd, cmas_cfg);
-  auto cmas_verify_callback = [&]() {
-    CLI::App* cmas_sub_cmd = app.get_subcommand("cmas");
-    if (cmas_sub_cmd->count() != 0) {
-      sib_params.cmas_cfg.emplace(cmas_cfg);
-    } else {
-      cmas_sub_cmd->disabled();
-    }
-  };
-  cmas_subcmd->parse_complete_callback(cmas_verify_callback);
 
   add_option(app,
              "--t300",
@@ -2754,10 +2728,42 @@ static void configure_cli11_test_ue_mode_args(CLI::App& app, du_high_unit_test_m
       ->check(CLI::Range(0, 3));
 }
 
+static void configure_cli11_test_mode_warning_args(CLI::App& app, du_high_unit_test_mode_warning_config& warning_params)
+{
+  CLI::App* etws_subcmd = add_subcommand(app, "etws", "ETWS configuration parameters");
+  static du_high_unit_test_mode_warning_config::etws_config etws_cfg;
+  configure_cli11_etws_args(*etws_subcmd, etws_cfg);
+  auto etws_verify_callback = [&]() {
+    CLI::App* etws_sub_cmd = app.get_subcommand("etws");
+    if (etws_sub_cmd->count() != 0) {
+      warning_params.etws_cfg.emplace(etws_cfg);
+    } else {
+      etws_sub_cmd->disabled();
+    }
+  };
+  etws_subcmd->parse_complete_callback(etws_verify_callback);
+
+  static du_high_unit_test_mode_warning_config::cmas_config cmas_cfg;
+  CLI::App* cmas_subcmd = add_subcommand(app, "cmas", "CMAS configuration parameters");
+  configure_cli11_cmas_args(*cmas_subcmd, cmas_cfg);
+  auto cmas_verify_callback = [&]() {
+    CLI::App* cmas_sub_cmd = app.get_subcommand("cmas");
+    if (cmas_sub_cmd->count() != 0) {
+      warning_params.cmas_cfg.emplace(cmas_cfg);
+    } else {
+      cmas_sub_cmd->disabled();
+    }
+  };
+  cmas_subcmd->parse_complete_callback(cmas_verify_callback);
+}
+
 static void configure_cli11_test_mode_args(CLI::App& app, du_high_unit_test_mode_config& test_params)
 {
   CLI::App* test_ue = add_subcommand(app, "test_ue", "automatically created UE for testing purposes");
   configure_cli11_test_ue_mode_args(*test_ue, test_params.test_ue);
+
+  CLI::App* warning_subcmd = add_subcommand(app, "warning", "Public Warning System (PWS) test configuration");
+  configure_cli11_test_mode_warning_args(*warning_subcmd, test_params.warning);
 }
 
 static void configure_cli11_pcap_args(CLI::App& app, du_high_unit_pcap_config& pcap_params)

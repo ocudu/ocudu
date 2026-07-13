@@ -167,7 +167,7 @@ static sib5_info create_sib5_info(const du_high_unit_sib_config::sib5_config& co
   return sib5;
 }
 
-static sib6_info create_sib6_info(const du_high_unit_sib_config::etws_config& etws_cfg)
+static sib6_info create_sib6_info(const du_high_unit_test_mode_warning_config::etws_config& etws_cfg)
 {
   sib6_info sib6;
 
@@ -178,7 +178,7 @@ static sib6_info create_sib6_info(const du_high_unit_sib_config::etws_config& et
   return sib6;
 }
 
-static sib7_info create_sib7_info(const du_high_unit_sib_config::etws_config& etws_cfg)
+static sib7_info create_sib7_info(const du_high_unit_test_mode_warning_config::etws_config& etws_cfg)
 {
   if (!etws_cfg.warning_message.has_value()) {
     report_error("Scheduled SIB-7 but no ETWS warning message is configured.");
@@ -197,7 +197,7 @@ static sib7_info create_sib7_info(const du_high_unit_sib_config::etws_config& et
   return sib7;
 }
 
-static sib8_info create_sib8_info(const du_high_unit_sib_config::cmas_config& cmas_cfg)
+static sib8_info create_sib8_info(const du_high_unit_test_mode_warning_config::cmas_config& cmas_cfg)
 {
   if (cmas_cfg.warning_message.empty()) {
     report_error("Scheduled SIB-8 but CMAS warning message is empty.");
@@ -412,7 +412,9 @@ static ntn_cell_params make_ntn_cell_params(const du_high_unit_ntn_serving_cell_
 }
 
 /// Fill SI-Scheduling Information.
-static std::optional<si_scheduling_info_config> make_si_sched_info_config(const du_high_unit_base_cell_config& cell_cfg)
+static std::optional<si_scheduling_info_config>
+make_si_sched_info_config(const du_high_unit_base_cell_config& cell_cfg,
+                          const du_high_unit_test_mode_config& test_mode_cfg)
 {
   const auto& sib_cfg = cell_cfg.sib_cfg;
   if (sib_cfg.si_sched_info.empty()) {
@@ -467,25 +469,25 @@ static std::optional<si_scheduling_info_config> make_si_sched_info_config(const 
         item = create_sib5_info(sib_cfg.sib5_cfg.value());
       } break;
       case 6: {
-        if (!sib_cfg.etws_cfg.has_value()) {
-          report_error("SIB-6 cannot be scheduled without ETWS config. Set the ETWS config or remove SIB-6 from "
-                       "the si_sched_info list");
+        if (!test_mode_cfg.warning.etws_cfg.has_value()) {
+          report_error("SIB-6 cannot be scheduled without test_mode ETWS config. Set the test_mode ETWS config or "
+                       "remove SIB-6 from the si_sched_info list");
         }
-        item = create_sib6_info(sib_cfg.etws_cfg.value());
+        item = create_sib6_info(test_mode_cfg.warning.etws_cfg.value());
       } break;
       case 7: {
-        if (!sib_cfg.etws_cfg.has_value()) {
-          report_error("SIB-7 cannot be scheduled without ETWS config. Set the ETWS config or remove SIB-7 from "
-                       "the si_sched_info list");
+        if (!test_mode_cfg.warning.etws_cfg.has_value()) {
+          report_error("SIB-7 cannot be scheduled without test_mode ETWS config. Set the test_mode ETWS config or "
+                       "remove SIB-7 from the si_sched_info list");
         }
-        item = create_sib7_info(sib_cfg.etws_cfg.value());
+        item = create_sib7_info(test_mode_cfg.warning.etws_cfg.value());
       } break;
       case 8: {
-        if (!sib_cfg.cmas_cfg.has_value()) {
-          report_error("SIB-8 cannot be scheduled without CMAS config. Set the CMAS config or remove SIB-8 from "
-                       "the si_sched_info list");
+        if (!test_mode_cfg.warning.cmas_cfg.has_value()) {
+          report_error("SIB-8 cannot be scheduled without test_mode CMAS config. Set the test_mode CMAS config or "
+                       "remove SIB-8 from the si_sched_info list");
         }
-        item = create_sib8_info(sib_cfg.cmas_cfg.value());
+        item = create_sib8_info(test_mode_cfg.warning.cmas_cfg.value());
       } break;
       case 16: {
         if (!sib_cfg.sib16_cfg.has_value()) {
@@ -536,7 +538,9 @@ static mac_cell_group_params make_mac_cell_group_params(const du_high_unit_base_
   return mcg_params;
 }
 
-static void fill_si_acquisition_info(si_acquisition_info& si, const du_high_unit_base_cell_config& cli_cfg)
+static void fill_si_acquisition_info(si_acquisition_info&                 si,
+                                     const du_high_unit_base_cell_config& cli_cfg,
+                                     const du_high_unit_test_mode_config& test_mode_cfg)
 {
   // Cell selection parameters.
   si.cell_sel_info.q_rx_lev_min = cli_cfg.q_rx_lev_min;
@@ -546,7 +550,7 @@ static void fill_si_acquisition_info(si_acquisition_info& si, const du_high_unit
     si.cell_acc_rel_info.additional_plmns.push_back(plmn_identity::parse(plmn).value());
   }
   // SI message config.
-  si.si_config = make_si_sched_info_config(cli_cfg);
+  si.si_config = make_si_sched_info_config(cli_cfg, test_mode_cfg);
   // UE timers and constants config.
   si.ue_timers_and_constants.t300 = std::chrono::milliseconds(cli_cfg.sib_cfg.ue_timers_and_constants.t300);
   si.ue_timers_and_constants.t301 = std::chrono::milliseconds(cli_cfg.sib_cfg.ue_timers_and_constants.t301);
@@ -622,7 +626,7 @@ std::vector<odu::du_cell_config> ocudu::generate_du_cell_config(const du_high_un
     out_cell.ran.dl_carrier.nof_ant = base_cell.nof_antennas_dl;
     out_cell.ran.ul_carrier.nof_ant = base_cell.nof_antennas_ul;
     // > System Information.
-    fill_si_acquisition_info(out_cell.si, base_cell);
+    fill_si_acquisition_info(out_cell.si, base_cell, config.test_mode_cfg);
     if (out_cell.si.si_config.has_value()) {
       // Enable otherSI search space.
       out_cell.ran.dl_cfg_common.init_dl_bwp.pdcch_common.other_si_search_space_id = to_search_space_id(1);
