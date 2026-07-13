@@ -335,6 +335,7 @@ static YAML::Node build_du_high_pusch_section(const du_high_unit_pusch_config& c
   node["max_rank"]                     = config.max_rank;
   node["msg3_delta_preamble"]          = config.msg3_delta_preamble;
   node["p0_nominal_with_grant"]        = config.p0_nominal_with_grant;
+  node["p0_nominal_without_grant"]     = config.p0_nominal_without_grant;
   node["max_puschs_per_slot"]          = config.max_puschs_per_slot;
   node["beta_offset_ack_idx_1"]        = config.beta_offset_ack_idx_1;
   node["beta_offset_ack_idx_2"]        = config.beta_offset_ack_idx_2;

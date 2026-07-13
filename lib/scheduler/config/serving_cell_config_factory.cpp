@@ -160,11 +160,12 @@ static pusch_config make_default_pusch_config(const ran_cell_config& cell_cfg, c
   }
 
   // > PUSCH power control config.
-  cfg.pusch_pwr_ctrl = pusch_config::pusch_power_control{.msg3_alpha               = alpha::alpha1,
-                                                         .p0_nominal_without_grant = -76,
-                                                         .p0_alphasets             = {},
-                                                         .pathloss_ref_rs          = {},
-                                                         .sri_pusch_mapping        = {}};
+  cfg.pusch_pwr_ctrl =
+      pusch_config::pusch_power_control{.msg3_alpha               = alpha::alpha1,
+                                        .p0_nominal_without_grant = cell_pusch_cfg.p0_nominal_without_grant,
+                                        .p0_alphasets             = {},
+                                        .pathloss_ref_rs          = {},
+                                        .sri_pusch_mapping        = {}};
   cfg.pusch_pwr_ctrl->p0_alphasets.emplace_back(pusch_config::pusch_power_control::p0_pusch_alphaset{
       .id = static_cast<p0_pusch_alphaset_id>(0), .p0 = 0, .p0_pusch_alpha = alpha::alpha1});
   cfg.pusch_pwr_ctrl->pathloss_ref_rs.emplace_back(pusch_config::pusch_power_control::pusch_pathloss_ref_rs{

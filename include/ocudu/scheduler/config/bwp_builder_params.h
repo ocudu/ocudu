@@ -75,6 +75,8 @@ struct pusch_builder_params {
   std::optional<uci_on_pusch::beta_offsets_semi_static> uci_beta_offsets;
   /// P0-PUSCH-AlphaSet alpha for PUSCH power control.
   std::optional<alpha> p0_pusch_alpha;
+  /// \c p0-NominalWithoutGrant for PUSCH power control.
+  int p0_nominal_without_grant = -76;
   /// A bit set to one identifies a HARQ process in modeA and a bit set to zero identifies a HARQ process in modeB.
   /// \remark See TS 38.331, \c uplinkHARQ-mode.
   harq_ul_mode_mask ul_harq_mode = ~harq_ul_mode_mask(MAX_NOF_HARQS);

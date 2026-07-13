@@ -995,6 +995,24 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
       "within the [-202, 24] interval.  Default: -76");
   add_option_function<std::string>(
       app,
+      "--p0_nominal_without_grant",
+      [&pusch_params](const std::string& value) {
+        auto pw = parse_int<int>(value);
+
+        report_fatal_error_if_not(pw.has_value(),
+                                  fmt::format("Invalid --p0_nominal_without_grant value '" + value + "'").c_str());
+
+        const std::string& error_message = "Must be a multiple of 2 and within the [-202, 24] interval";
+        if (*pw < -202 || *pw > 24 || *pw % 2 != 0) {
+          report_fatal_error(error_message.c_str());
+        }
+
+        pusch_params.p0_nominal_without_grant = *pw;
+      },
+      "P0 value for PUSCH without grant. Value in dBm. Valid values must be multiple of 2 and "
+      "within the [-202, 24] interval.  Default: -76");
+  add_option_function<std::string>(
+      app,
       "--msg3_delta_power",
       [&pusch_params](const std::string& value) {
         auto pw = parse_int<int>(value);

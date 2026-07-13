@@ -269,6 +269,9 @@ struct du_high_unit_pusch_config {
   int msg3_delta_preamble = 6;
   /// \c p0-NominalWithGrant, TS 38.331. Value in dBm. Only even values allowed within {-202,...,24}.
   int p0_nominal_with_grant = -76;
+  /// \c p0-NominalWithoutGrant, TS 38.331. Value in dBm. Only even values allowed within {-202,...,24}.
+  /// Default -76 keeps parity with \c p0_nominal_with_grant.
+  int p0_nominal_without_grant = -76;
 
   /// \defgroup betaoffsets
   /// \brief Beta offsets for uplink control information multiplexed in PUSCH.

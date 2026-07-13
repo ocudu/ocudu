@@ -822,8 +822,9 @@ std::vector<odu::du_cell_config> ocudu::generate_du_cell_config(const du_high_un
     b_offsets.beta_offset_csi_p2_idx_2           = base_cell.pusch_cfg.beta_offset_csi_p2_idx_2;
     out_cell.ran.init_bwp.pusch.uci_beta_offsets = b_offsets;
     out_cell.ran.init_bwp.pusch.p0_pusch_alpha   = float_to_alpha(base_cell.pusch_cfg.path_loss_compensation_factor);
-    out_cell.ran.init_bwp.pusch.max_harq_procs   = static_cast<uint8_t>(base_cell.pusch_cfg.nof_harqs);
-    out_cell.ran.init_bwp.pusch.ul_harq_mode     = ~base_cell.pusch_cfg.harq_mode_b;
+    out_cell.ran.init_bwp.pusch.p0_nominal_without_grant = base_cell.pusch_cfg.p0_nominal_without_grant;
+    out_cell.ran.init_bwp.pusch.max_harq_procs           = static_cast<uint8_t>(base_cell.pusch_cfg.nof_harqs);
+    out_cell.ran.init_bwp.pusch.ul_harq_mode             = ~base_cell.pusch_cfg.harq_mode_b;
     // > PUCCH
     out_cell.ran.init_bwp.pucch.min_k1    = base_cell.pucch_cfg.min_k1;
     out_cell.ran.init_bwp.pucch.sr_period = static_cast<sr_periodicity>(

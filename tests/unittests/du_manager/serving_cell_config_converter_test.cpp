@@ -577,6 +577,27 @@ TEST(serving_cell_config_converter_test, test_initial_pusch_cfg_conversion)
   }
 }
 
+// Verifies a non-default p0_nominal_without_grant is carried into the packed dedicated PUSCH power control.
+TEST(serving_cell_config_converter_test, test_pusch_p0_nominal_without_grant_override_conversion)
+{
+  auto dest_cfg                                             = make_initial_du_ue_resource_config();
+  auto pusch_cfg                                            = make_initial_pusch_config();
+  pusch_cfg.pusch_pwr_ctrl.value().p0_nominal_without_grant = -90;
+  dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg = pusch_cfg;
+
+  asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cfg);
+
+  ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg_present);
+  ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded_present);
+
+  auto& rrc_sp_cell_cfg_ded = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded;
+
+  ASSERT_TRUE(rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pusch_cfg.setup().pusch_pwr_ctrl_present);
+  ASSERT_TRUE(rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pusch_cfg.setup().pusch_pwr_ctrl.p0_nominal_without_grant_present);
+  ASSERT_EQ(rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pusch_cfg.setup().pusch_pwr_ctrl.p0_nominal_without_grant, -90);
+}
+
 TEST(serving_cell_config_converter_test, test_ue_custom_pusch_cfg_conversion)
 {
   auto src_cfg = make_initial_du_ue_resource_config();
