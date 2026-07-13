@@ -28,23 +28,23 @@ gnb docker compose:
       fi
       export CPU_JOBS
     - docker compose -f docker/docker-compose.yml build --build-arg NUM_JOBS=${CPU_JOBS} --build-arg UHD_VERSION=${DOCKER_UHD_VERSION} --build-arg DPDK_VERSION=${DOCKER_DPDK_VERSION} gnb
-    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb command -v ocu"
-    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb command -v ocucp"
-    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb command -v ocuup"
-    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb command -v odu"
-    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb command -v odu_split_8"
-    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb command -v odu_split_7_2"
-    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb command -v odu_low"
-    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb command -v gnb"
-    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb command -v gnb_split_8"
-    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb command -v gnb_split_7_2"
-    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb command -v ru_emulator"
+    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps --entrypoint sh gnb -c 'command -v ocu'"
+    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps --entrypoint sh gnb -c 'command -v ocucp'"
+    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps --entrypoint sh gnb -c 'command -v ocuup'"
+    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps --entrypoint sh gnb -c 'command -v odu'"
+    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps --entrypoint sh gnb -c 'command -v odu_split_8'"
+    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps --entrypoint sh gnb -c 'command -v odu_split_7_2'"
+    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps --entrypoint sh gnb -c 'command -v odu_low'"
+    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps --entrypoint sh gnb -c 'command -v gnb'"
+    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps --entrypoint sh gnb -c 'command -v gnb_split_8'"
+    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps --entrypoint sh gnb -c 'command -v gnb_split_7_2'"
+    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps --entrypoint sh gnb -c 'command -v ru_emulator'"
     - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb gnb cu_cp amf --no_core=true ru_sdr --device_driver uhd | grep 'Failed to open device with address'"
     - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb gnb cu_cp amf --no_core=true hal --eal_args='--help'"
   needs: []
 
-# Manual only: validates gNB image on fedora:44 (dnf, GCC 15+). Run from the child pipeline when docker CI is included.
-gnb docker compose fedora 44 manual:
+# validates gNB image on fedora:44 (dnf, GCC 15+). Run from the child pipeline when docker CI is included.
+gnb docker compose fedora 44:
   extends: gnb docker compose
   variables:
     OS: fedora
