@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+// The purpose of this application is measurement of memory consumption of RLC entities using external monitoring tool.
+
 #include "lib/rlc/rlc_rx_am_entity.h"
 #include "lib/rlc/rlc_rx_tm_entity.h"
 #include "lib/rlc/rlc_rx_um_entity.h"

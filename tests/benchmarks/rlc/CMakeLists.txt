@@ -17,9 +17,9 @@ add_executable(rlc_am_tx_benchmark rlc_am_tx_benchmark.cpp)
 target_link_libraries(rlc_am_tx_benchmark ocudu_rlc ocudulog pdcp_test_doubles)
 add_test(rlc_am_tx_benchmark rlc_am_tx_benchmark)
 
-add_executable(rlc_instances rlc_instances.cpp)
-target_link_libraries(rlc_instances ocudu_rlc ocudulog)
-add_test(rlc_instances rlc_instances)
+add_executable(rlc_memory_measurement rlc_memory_measurement.cpp)
+target_link_libraries(rlc_memory_measurement ocudu_rlc ocudulog)
+add_test(rlc_memory_measurement rlc_memory_measurement)
 
 set_tests_properties(
   rlc_am_tx_benchmark
@@ -29,6 +29,6 @@ set_tests_properties(
 
 set_tests_properties(
   rlc_handle_status_report
-  rlc_instances
+  rlc_memory_measurement
   PROPERTIES LABELS "rlc"
 )
