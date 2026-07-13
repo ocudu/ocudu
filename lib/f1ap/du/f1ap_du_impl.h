@@ -29,6 +29,7 @@ public:
                task_executor&           ctrl_exec,
                f1ap_ue_executor_mapper& ue_exec_mapper,
                f1ap_du_paging_notifier& paging_notifier_,
+               f1ap_du_pws_notifier&    pws_notifier_,
                timer_manager&           timers_);
   ~f1ap_du_impl() override;
 
@@ -118,6 +119,9 @@ private:
   /// \brief Handle Paging as per TS38.473, Section 8.7.
   void handle_paging_request(const asn1::f1ap::paging_s& msg);
 
+  /// \brief Handle WRITE-REPLACE WARNING REQUEST as per TS 38.473, Section 8.5.1.
+  void handle_write_replace_warning_request(const asn1::f1ap::write_replace_warning_request_s& msg);
+
   /// \brief Handle POSITIONING MEASUREMENT REQUEST as per TS 38.473, Section 8.13.3.
   void handle_positioning_measurement_request(const asn1::f1ap::positioning_meas_request_s& msg);
 
@@ -137,6 +141,7 @@ private:
   task_executor&           ctrl_exec;
   f1ap_du_configurator&    du_mng;
   f1ap_du_paging_notifier& paging_notifier;
+  f1ap_du_pws_notifier&    pws_notifier;
   timer_manager&           timers;
 
   f1ap_du_connection_handler connection_handler;

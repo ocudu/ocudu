@@ -19,6 +19,7 @@
 #include "procedures/f1ap_du_setup_procedure.h"
 #include "procedures/f1ap_du_ue_context_release_procedure.h"
 #include "procedures/f1ap_du_ue_context_setup_procedure.h"
+#include "procedures/f1ap_du_write_replace_warning_procedure.h"
 #include "procedures/gnb_cu_configuration_update_procedure.h"
 #include "ue_context/f1ap_du_ue_config_update.h"
 #include "ocudu/asn1/f1ap/common.h"
@@ -58,11 +59,13 @@ f1ap_du_impl::f1ap_du_impl(f1c_connection_client&   f1c_client_handler_,
                            task_executor&           ctrl_exec_,
                            f1ap_ue_executor_mapper& ue_exec_mapper_,
                            f1ap_du_paging_notifier& paging_notifier_,
+                           f1ap_du_pws_notifier&    pws_notifier_,
                            timer_manager&           timers_) :
   logger(ocudulog::fetch_basic_logger("DU-F1")),
   ctrl_exec(ctrl_exec_),
   du_mng(du_mng_),
   paging_notifier(paging_notifier_),
+  pws_notifier(pws_notifier_),
   timers(timers_),
   connection_handler(f1c_client_handler_, *this, du_mng, ctxt, ctrl_exec),
   ues(du_mng, ctrl_exec, ue_exec_mapper_, timers_),
@@ -433,6 +436,9 @@ void f1ap_du_impl::handle_initiating_message(const init_msg_s& msg)
     case msg_types::paging:
       handle_paging_request(msg.value.paging());
       break;
+    case msg_types::write_replace_warning_request:
+      handle_write_replace_warning_request(msg.value.write_replace_warning_request());
+      break;
     case msg_types::positioning_meas_request:
       handle_positioning_measurement_request(msg.value.positioning_meas_request());
       break;
@@ -552,6 +558,12 @@ void f1ap_du_impl::handle_paging_request(const asn1::f1ap::paging_s& msg)
     cause.set_misc().value = asn1::f1ap::cause_misc_opts::unspecified;
     send_error_indication(cause, std::nullopt, std::nullopt, std::nullopt);
   }
+}
+
+void f1ap_du_impl::handle_write_replace_warning_request(const write_replace_warning_request_s& msg)
+{
+  du_mng.schedule_async_task(
+      launch_async<f1ap_du_write_replace_warning_procedure>(msg, ctxt, pws_notifier, *tx_pdu_notifier));
 }
 
 void f1ap_du_impl::handle_positioning_measurement_request(const positioning_meas_request_s& msg)

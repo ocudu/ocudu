@@ -63,7 +63,7 @@ private:
   mac_subframe_time_mapper* mapper = nullptr;
 };
 
-class f1ap_du_configurator_adapter : public f1ap_du_configurator
+class f1ap_du_configurator_adapter : public f1ap_du_configurator, public f1ap_du_pws_notifier
 {
 public:
   explicit f1ap_du_configurator_adapter(timer_factory timers_) : timers(timers_)
@@ -73,9 +73,10 @@ public:
     }
   }
 
-  void connect(du_manager_f1ap_event_handler& du_mng_)
+  void connect(du_manager& du_mng_)
   {
-    du_mng = &du_mng_;
+    du_mng     = &du_mng_.get_f1ap_event_handler();
+    pws_du_mng = &du_mng_.get_pws_handler();
     for (unsigned i = 0; i != MAX_NOF_DU_UES; ++i) {
       ues[i].connect(*du_mng);
     }
@@ -137,9 +138,16 @@ public:
 
   f1ap_du_time_provider& get_time_provider() override { return time_provider_adapter; }
 
+  async_task<std::vector<du_cell_index_t>>
+  on_write_replace_warning_received(const write_replace_warning_information& msg) override
+  {
+    return pws_du_mng->handle_write_replace_warning(msg);
+  }
+
 private:
   timer_factory                                                 timers;
-  du_manager_f1ap_event_handler*                                du_mng = nullptr;
+  du_manager_f1ap_event_handler*                                du_mng     = nullptr;
+  du_manager_pws_handler*                                       pws_du_mng = nullptr;
   f1ap_du_mac_time_provider_adapter                             time_provider_adapter;
   slotted_array<f1ap_ue_task_scheduler_adapter, MAX_NOF_DU_UES> ues;
 };

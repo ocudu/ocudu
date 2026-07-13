@@ -167,7 +167,8 @@ f1ap_du_test::f1ap_du_test()
   ocudulog::fetch_basic_logger("TEST").set_level(ocudulog::basic_levels::debug);
   ocudulog::init();
 
-  f1ap = create_f1ap(f1c_gw, f1ap_du_cfg_handler, ctrl_worker, ue_exec_mapper, paging_handler, timer_service);
+  f1ap =
+      create_f1ap(f1c_gw, f1ap_du_cfg_handler, ctrl_worker, ue_exec_mapper, paging_handler, pws_handler, timer_service);
   f1ap_du_cfg_handler.connect(*f1ap);
 }
 

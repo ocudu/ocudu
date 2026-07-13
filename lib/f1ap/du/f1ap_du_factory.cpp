@@ -13,9 +13,10 @@ std::unique_ptr<f1ap_du> odu::create_f1ap(f1c_connection_client&   f1c_client_ha
                                           task_executor&           ctrl_exec,
                                           f1ap_ue_executor_mapper& ue_exec_mapper,
                                           f1ap_du_paging_notifier& paging_notifier,
+                                          f1ap_du_pws_notifier&    pws_notifier,
                                           timer_manager&           timers)
 {
-  auto f1ap_du =
-      std::make_unique<f1ap_du_impl>(f1c_client_handler, du_mng, ctrl_exec, ue_exec_mapper, paging_notifier, timers);
+  auto f1ap_du = std::make_unique<f1ap_du_impl>(
+      f1c_client_handler, du_mng, ctrl_exec, ue_exec_mapper, paging_notifier, pws_notifier, timers);
   return f1ap_du;
 }

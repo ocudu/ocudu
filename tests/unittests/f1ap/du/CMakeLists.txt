@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 # Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
-
 include_directories(../../..)
 
 set_directory_properties(PROPERTIES LABELS "f1ap;f1ap_du")
@@ -27,6 +26,7 @@ set(SOURCES f1ap_du_setup_procedure_test.cpp
             f1ap_du_trp_information_exchange_procedure_test.cpp
             f1ap_du_positioning_measurement_procedure_test.cpp
             f1ap_du_paging_test.cpp
+            f1ap_du_write_replace_warning_test.cpp
             f1ap_du_ref_time_info_report_test.cpp
 )
 

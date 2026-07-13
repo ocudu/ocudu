@@ -264,6 +264,20 @@ private:
   mac_paging_information_handler* mac = nullptr;
 };
 
+class dummy_du_manager_f1ap_pws_handler : public f1ap_du_pws_notifier
+{
+public:
+  std::optional<write_replace_warning_information> last_pws_info;
+  std::vector<du_cell_index_t>                     cells_to_accept;
+
+  async_task<std::vector<du_cell_index_t>>
+  on_write_replace_warning_received(const write_replace_warning_information& msg) override
+  {
+    last_pws_info = msg;
+    return launch_no_op_task(cells_to_accept);
+  }
+};
+
 /// Fixture class for F1AP
 class f1ap_du_test : public ::testing::Test
 {
@@ -320,13 +334,14 @@ protected:
   /// Dummy F1-C gateway to connect to CU-CP and send F1AP PDUs.
   dummy_f1c_connection_client f1c_gw;
 
-  timer_manager                 timer_service;
-  timer_factory                 f1ap_timers{timer_service, ctrl_worker};
-  dummy_f1ap_du_configurator    f1ap_du_cfg_handler{f1ap_timers};
-  manual_task_worker            ctrl_worker{128};
-  dummy_ue_executor_mapper      ue_exec_mapper{ctrl_worker};
-  dummy_mac_f1ap_paging_handler paging_handler;
-  std::unique_ptr<f1ap_du>      f1ap;
+  timer_manager                     timer_service;
+  timer_factory                     f1ap_timers{timer_service, ctrl_worker};
+  dummy_f1ap_du_configurator        f1ap_du_cfg_handler{f1ap_timers};
+  manual_task_worker                ctrl_worker{128};
+  dummy_ue_executor_mapper          ue_exec_mapper{ctrl_worker};
+  dummy_mac_f1ap_paging_handler     paging_handler;
+  dummy_du_manager_f1ap_pws_handler pws_handler;
+  std::unique_ptr<f1ap_du>          f1ap;
 
   /// Storage of UE context related to the current unit test.
   slotted_array<ue_test_context, MAX_NOF_DU_UES> test_ues;

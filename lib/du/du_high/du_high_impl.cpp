@@ -30,7 +30,7 @@ public:
   void connect(du_manager& du_mng_, mac_interface& mac_inst)
   {
     mac_ev_notifier.connect(du_mng_.get_mac_event_handler(), du_mng_.get_metrics_aggregator());
-    f1_to_du_notifier.connect(du_mng_.get_f1ap_event_handler());
+    f1_to_du_notifier.connect(du_mng_);
     f1_to_du_notifier.connect_time_mapper(mac_inst.get_subframe_time_mapper());
     f1ap_paging_notifier.connect(mac_inst.get_cell_paging_info_handler());
   }
@@ -38,7 +38,7 @@ public:
   /// Notifier MAC -> DU manager.
   du_manager_mac_event_indicator mac_ev_notifier;
 
-  /// Notifier F1AP -> DU manager
+  /// Notifier F1AP -> DU manager.
   f1ap_du_configurator_adapter f1_to_du_notifier;
 
   /// Notifier F1AP -> MAC for paging PDUs.
@@ -65,6 +65,7 @@ du_high_impl::du_high_impl(const du_high_configuration& config_, const du_high_d
                      dependencies.exec_mapper->du_control_executor(),
                      dependencies.exec_mapper->ue_mapper(),
                      adapters->f1ap_paging_notifier,
+                     adapters->f1_to_du_notifier,
                      timers);
 
   mac = create_mac(mac_config{adapters->mac_ev_notifier,

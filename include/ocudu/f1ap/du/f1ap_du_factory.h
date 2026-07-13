@@ -22,6 +22,7 @@ std::unique_ptr<f1ap_du> create_f1ap(f1c_connection_client&   f1c_client_handler
                                      task_executor&           ctrl_exec,
                                      f1ap_ue_executor_mapper& ue_exec_mapper,
                                      f1ap_du_paging_notifier& paging_notifier,
+                                     f1ap_du_pws_notifier&    pws_notifier,
                                      timer_manager&           timers);
 
 } // namespace odu
