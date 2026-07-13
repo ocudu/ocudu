@@ -145,9 +145,10 @@ variables:
     - launch_tests_ocudu_extended
   timeout: 3 hours
   after_script:
-    - mv ${CI_PROJECT_DIR}/${OCUDU_BUILD_DIR}/coverage_1.xml   ${CI_PROJECT_DIR}/${CI_JOB_ID}_coverage_1.xml           || true
-    - mv ${CI_PROJECT_DIR}/${OCUDU_BUILD_DIR}/coverage_2.xml   ${CI_PROJECT_DIR}/${CI_JOB_ID}_coverage_2.xml           || true
-    - mv ${CI_PROJECT_DIR}/${OCUDU_BUILD_DIR}/xunit.xml        ${CI_PROJECT_DIR}/${CI_JOB_ID}_${CTEST_XUNIT_NAME}.xml  || true
+    - mv ${CI_PROJECT_DIR}/${OCUDU_BUILD_DIR}/coverage_1.xml    ${CI_PROJECT_DIR}/${CI_JOB_ID}_coverage_1.xml           || true
+    - mv ${CI_PROJECT_DIR}/${OCUDU_BUILD_DIR}/coverage_2.xml    ${CI_PROJECT_DIR}/${CI_JOB_ID}_coverage_2.xml           || true
+    - mv ${CI_PROJECT_DIR}/${OCUDU_BUILD_DIR}/xunit.xml         ${CI_PROJECT_DIR}/${CI_JOB_ID}_${CTEST_XUNIT_NAME}.xml  || true
+    - mv ${CI_PROJECT_DIR}/${OCUDU_BUILD_DIR}/ctest_output.log  ${CI_PROJECT_DIR}/${CI_JOB_ID}_ctest_output.log         || true
   artifacts:
     when: always
     reports:
@@ -158,6 +159,7 @@ variables:
     paths:
       - ${CI_JOB_ID}_coverage*.xml
       - ${CI_JOB_ID}_${CTEST_XUNIT_NAME}.xml
+      - ${CI_JOB_ID}_ctest_output.log
       - ${OCUDU_BUILD_DIR}/Testing/Temporary/MemoryChecker.*.log
     expire_in: 5 days
 
