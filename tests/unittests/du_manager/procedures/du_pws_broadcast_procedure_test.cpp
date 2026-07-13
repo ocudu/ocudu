@@ -63,7 +63,8 @@ TEST_F(du_pws_broadcast_procedure_test, when_cell_not_provisioned_for_sib_type_t
   req.cells                    = {du_cell_index_t::MIN_DU_CELL_INDEX};
 
   // The default cell config has no static SI window for SIB6/7/8 (no etws_cfg/cmas_cfg provisioned).
-  async_task<std::vector<du_cell_index_t>>         t = du_mng->get_pws_handler().handle_write_replace_warning(req);
+  async_task<std::vector<du_cell_index_t>> t =
+      du_mng->get_f1ap_event_handler().get_pws_handler().handle_write_replace_warning(req);
   lazy_task_launcher<std::vector<du_cell_index_t>> launcher{t};
 
   ASSERT_TRUE(t.ready());

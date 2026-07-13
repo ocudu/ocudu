@@ -73,10 +73,9 @@ public:
     }
   }
 
-  void connect(du_manager& du_mng_)
+  void connect(du_manager_f1ap_event_handler& du_mng_)
   {
-    du_mng     = &du_mng_.get_f1ap_event_handler();
-    pws_du_mng = &du_mng_.get_pws_handler();
+    du_mng = &du_mng_;
     for (unsigned i = 0; i != MAX_NOF_DU_UES; ++i) {
       ues[i].connect(*du_mng);
     }
@@ -141,13 +140,12 @@ public:
   async_task<std::vector<du_cell_index_t>>
   on_write_replace_warning_received(const write_replace_warning_information& msg) override
   {
-    return pws_du_mng->handle_write_replace_warning(msg);
+    return du_mng->get_pws_handler().handle_write_replace_warning(msg);
   }
 
 private:
   timer_factory                                                 timers;
-  du_manager_f1ap_event_handler*                                du_mng     = nullptr;
-  du_manager_pws_handler*                                       pws_du_mng = nullptr;
+  du_manager_f1ap_event_handler*                                du_mng = nullptr;
   f1ap_du_mac_time_provider_adapter                             time_provider_adapter;
   slotted_array<f1ap_ue_task_scheduler_adapter, MAX_NOF_DU_UES> ues;
 };
