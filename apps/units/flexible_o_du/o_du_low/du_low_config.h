@@ -5,7 +5,7 @@
 #pragma once
 
 #include "apps/helpers/metrics/metrics_config.h"
-#include "apps/services/worker_manager/os_sched_affinity_manager.h"
+#include "ocudu/ocudulog/logger.h"
 #include <optional>
 #include <string>
 
@@ -19,6 +19,13 @@ struct du_low_unit_expert_upper_phy_config {
   /// demanding cell configurations, such as using large bandwidths or higher order MIMO. Higher values also increase
   /// the round trip latency of the radio link.
   unsigned max_processing_delay_slots = 5U;
+  /// \brief Correction factor for the PRACH detection threshold.
+  ///
+  /// Scales the default PRACH detection threshold for the current configuration by the given value. For instance,
+  /// setting prach_th_correction_factor to 0.8 implies that the detector will use a threshold value that is 80% of
+  /// the default value for the given PRACH configuration: as a result, both the detection probability and the false
+  /// alarm probability will increase.
+  float prach_th_correction_factor = 1.0F;
   /// Number of PUSCH LDPC decoder iterations.
   unsigned pusch_decoder_max_iterations = 6;
   /// Set to true to enable the PUSCH LDPC decoder early stop.
@@ -68,7 +75,7 @@ struct du_low_unit_expert_upper_phy_config {
   /// Enables the PHY tap plugin if present.
   bool enable_phy_tap = false;
   /// PHY tap plugin arguments.
-  std::string phy_tap_arguments = "";
+  std::string phy_tap_arguments;
 };
 
 /// DU low logging functionalities.

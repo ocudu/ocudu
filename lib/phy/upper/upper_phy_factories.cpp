@@ -593,8 +593,12 @@ create_ul_processor_factory(const upper_phy_factory_configuration& config,
   std::shared_ptr<prach_generator_factory> prach_gen_factory = create_prach_generator_factory_sw();
   report_fatal_error_if_not(prach_gen_factory, "Invalid PRACH generator factory.");
 
+  // PRACH detector factory configuration: we keep the DFT sizes at the default values and we only set the threshold
+  // scaling factor to the configured value.
+  prach_detector_factory_sw_configuration prach_detector_factory_cfg;
+  prach_detector_factory_cfg.threshold_scaling = config.prach_th_correction_factor;
   std::shared_ptr<prach_detector_factory> prach_factory =
-      create_prach_detector_factory_sw(dft_factory, prach_gen_factory);
+      create_prach_detector_factory_sw(dft_factory, prach_gen_factory, prach_detector_factory_cfg);
   report_fatal_error_if_not(prach_factory, "Invalid PRACH detector factory.");
 
   // Create PRACH detector pool factory if more than one thread is used.

@@ -190,6 +190,12 @@ static void configure_cli11_expert_phy_args(CLI::App& app, du_low_unit_expert_up
       ->capture_default_str()
       ->check(CLI::Range(1, 30));
   add_option(app,
+             "--prach_th_correction_factor",
+             expert_phy_params.prach_th_correction_factor,
+             "Correction factor of the PRACH detection threshold")
+      ->capture_default_str()
+      ->check(CLI::NonNegativeNumber);
+  add_option(app,
              "--pusch_dec_max_iterations",
              expert_phy_params.pusch_decoder_max_iterations,
              "Maximum number of PUSCH LDPC decoder iterations")

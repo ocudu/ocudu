@@ -30,7 +30,9 @@ error_type<std::string> prach_detector_validator_impl::is_valid(const prach_dete
 
 prach_detector_generic_impl::prach_detector_generic_impl(std::unique_ptr<dft_processor>   idft_long_,
                                                          std::unique_ptr<dft_processor>   idft_short_,
-                                                         std::unique_ptr<prach_generator> generator_) :
+                                                         std::unique_ptr<prach_generator> generator_,
+                                                         float                            th_scaling) :
+  threshold_scaling(th_scaling),
   temp(),
   temp2(),
   idft_long(std::move(idft_long_)),
@@ -55,6 +57,10 @@ prach_detector_generic_impl::prach_detector_generic_impl(std::unique_ptr<dft_pro
                "IDFT size for short preambles (i.e., {}) must be in range {}.",
                idft_short->get_size(),
                idft_long_sz_range);
+
+  ocudu_assert(threshold_scaling >= 0,
+               "The PRACH threshold scaling factor should be a nonnegative number, given {}.",
+               threshold_scaling);
 }
 
 prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& input, const configuration& config)
@@ -141,6 +147,9 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
                "format (i.e., {}).",
                config.nof_rx_ports,
                to_string(config.format));
+
+  // Scale the threshold (scaling factor is 1 by default but it can be configured).
+  threshold *= threshold_scaling;
 
   // Calculate maximum delay.
   unsigned max_delay_samples = (N_cs == 0) ? cp_prach : std::min(std::max(N_cs, 1U) - 1U, cp_prach);

@@ -45,6 +45,7 @@ static odu::du_low_config generate_du_low_config(const du_low_unit_config&      
   upper_phy_factory_config.ldpc_decoder_type          = "auto";
   upper_phy_factory_config.ldpc_rate_dematcher_type   = "auto";
   upper_phy_factory_config.crc_calculator_type        = "auto";
+  upper_phy_factory_config.prach_th_correction_factor = du_low.expert_phy_cfg.prach_th_correction_factor;
   upper_phy_factory_config.pusch_channel_estimator_fd_strategy =
       du_low.expert_phy_cfg.pusch_channel_estimator_fd_strategy;
   upper_phy_factory_config.pusch_channel_estimator_td_strategy =

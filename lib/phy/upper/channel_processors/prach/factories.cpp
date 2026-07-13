@@ -20,6 +20,7 @@ private:
   std::shared_ptr<prach_generator_factory> prach_gen_factory;
   unsigned                                 idft_long_size;
   unsigned                                 idft_short_size;
+  float                                    threshold_scaling;
 
 public:
   prach_detector_factory_sw(std::shared_ptr<dft_processor_factory>         dft_factory_,
@@ -28,7 +29,8 @@ public:
     dft_factory(std::move(dft_factory_)),
     prach_gen_factory(std::move(prach_gen_factory_)),
     idft_long_size(config.idft_long_size),
-    idft_short_size(config.idft_short_size)
+    idft_short_size(config.idft_short_size),
+    threshold_scaling(config.threshold_scaling)
   {
     ocudu_assert(dft_factory, "Invalid DFT factory.");
     ocudu_assert(prach_gen_factory, "Invalid PRACH generator factory.");
@@ -42,8 +44,10 @@ public:
     dft_processor::configuration idft_short_config;
     idft_short_config.size = idft_short_size;
     idft_short_config.dir  = dft_processor::direction::INVERSE;
-    return std::make_unique<prach_detector_generic_impl>(
-        dft_factory->create(idft_long_config), dft_factory->create(idft_short_config), prach_gen_factory->create());
+    return std::make_unique<prach_detector_generic_impl>(dft_factory->create(idft_long_config),
+                                                         dft_factory->create(idft_short_config),
+                                                         prach_gen_factory->create(),
+                                                         threshold_scaling);
   }
 
   std::unique_ptr<prach_detector_validator> create_validator() override

@@ -5,6 +5,7 @@
 #pragma once
 
 #include "du_low_config.h"
+#include "ocudu/adt/span.h"
 #include "ocudu/ran/prach/prach_format_type.h"
 #include "ocudu/ran/prach/prach_subcarrier_spacing.h"
 

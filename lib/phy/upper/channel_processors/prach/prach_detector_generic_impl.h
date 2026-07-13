@@ -31,11 +31,13 @@ public:
   /// \param[in] idft_long_       Inverse DFT processor for long preambles.
   /// \param[in] idft_short_      Inverse DFT processor for short preambles.
   /// \param[in] generator_       PRACH frequency-domain sequence generator.
+  /// \param[in] th_scaling       PRACH threshold scaling factor.
   /// \remark Assertions are triggered if the IDFT sizes are smaller than their sequences or greater than \ref
   /// MAX_IDFT_SIZE.
   prach_detector_generic_impl(std::unique_ptr<dft_processor>   idft_long_,
                               std::unique_ptr<dft_processor>   idft_short_,
-                              std::unique_ptr<prach_generator> generator_);
+                              std::unique_ptr<prach_generator> generator_,
+                              float                            th_scaling);
 
   // See interface for documentation.
   prach_detection_result detect(const prach_buffer& input, const configuration& config) override;
@@ -74,6 +76,11 @@ private:
     /// Total number of dimensions.
     all
   };
+
+  /// \brief Detection threshold correction factor.
+  ///
+  /// The actual detection threshold is given by the default value multiplied by this scaling factor.
+  float threshold_scaling = 1.0F;
 
   /// Metric global numerator.
   static_tensor<static_cast<unsigned>(metric_global_dims::all), float, MAX_IDFT_SIZE, metric_global_dims>

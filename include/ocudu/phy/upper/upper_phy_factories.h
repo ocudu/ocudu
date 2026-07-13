@@ -319,6 +319,10 @@ struct upper_phy_factory_configuration {
   /// - \c lut: for using a look-up table CRC calculator, or
   /// - \c clmul: for using a look-up table CRC calculator (x86_64 CPUs only).
   std::string crc_calculator_type;
+  /// \brief Correction factor for the PRACH detection threshold.
+  ///
+  /// Scales the default PRACH detection threshold for the current configuration by the given value.
+  float prach_th_correction_factor;
   /// \brief PUSCH channel estimator frequency-domain smoothing strategy.
   ///
   /// Use one of these options:
