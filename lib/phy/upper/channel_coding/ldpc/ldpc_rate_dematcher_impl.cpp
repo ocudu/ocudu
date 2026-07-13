@@ -6,6 +6,7 @@
 #include "ldpc_graph_impl.h"
 #include "ldpc_luts_impl.h"
 #include "ocudu/ocuduvec/copy.h"
+#include "ocudu/ocuduvec/fill.h"
 #include "ocudu/ocuduvec/zero.h"
 #include "ocudu/support/ocudu_assert.h"
 
@@ -60,18 +61,17 @@ void ldpc_rate_dematcher_impl::rate_dematch(span<log_likelihood_ratio>       out
   span<const double> shift_factor;
   unsigned           BG_N_short = 0;
   unsigned           BG_K       = 0;
-  if ((block_length % BG1_N_SHORT) == 0) {
-    // input is a BG1 codeblock
+  if (block_length % BG1_N_SHORT == 0) {
+    // The input is a BG1 codeblock.
     shift_factor = shift_factor_bg1;
     BG_N_short   = BG1_N_SHORT;
     BG_K         = BG1_N_FULL - BG1_M;
-  } else if ((block_length % BG2_N_SHORT) == 0) {
-    // input is a BG2 codeblock
+  } else {
+    ocudu_assert(block_length % BG2_N_SHORT == 0, "LDPC rate dematching: invalid input length.");
+    // The input is a BG2 codeblock.
     shift_factor = shift_factor_bg2;
     BG_N_short   = BG2_N_SHORT;
     BG_K         = BG2_N_FULL - BG2_M;
-  } else {
-    ocudu_assert(false, "LDPC rate dematching: invalid input length.");
   }
   uint16_t lifting_size = block_length / BG_N_short;
   ocudu_assert(get_lifting_index(static_cast<lifting_size_t>(lifting_size)) != VOID_LIFTSIZE,
@@ -114,6 +114,9 @@ void ldpc_rate_dematcher_impl::allot_llrs(span<log_likelihood_ratio> out, span<c
   // Set to true for copy, false to combine.
   bool is_copy_mode = is_new_data;
 
+  // Make sure filler bits are always set to infinity.
+  ocuduvec::fill(out.subspan(nof_info_bits, nof_filler_bits), log_likelihood_ratio::infinity());
+
   unsigned tmp_idx = shift_k0;
   while (!in.empty()) {
     // Process consecutive bits before filler bits.
@@ -138,13 +141,15 @@ void ldpc_rate_dematcher_impl::allot_llrs(span<log_likelihood_ratio> out, span<c
       in = in.last(in.size() - nbits_systematic);
     } else if (is_copy_mode) {
       ocuduvec::zero(out.first(nof_info_bits));
+      // When k0 starts past the filler bits, the parity bits before it are not written in this pass.
+      if (tmp_idx > nof_systematic_bits) {
+        ocuduvec::zero(out.subspan(nof_systematic_bits, tmp_idx - nof_systematic_bits));
+      }
     }
 
-    // Set filler bits if it is copying data.
-    if (is_copy_mode) {
-      // Filler bits are counted as fixed, logical zeros by the decoder. Set the corresponding LLR to +inf.
-      span<log_likelihood_ratio> filler_bits = out.subspan(nof_info_bits, nof_filler_bits);
-      std::fill(filler_bits.begin(), filler_bits.end(), LLR_INFINITY);
+    // Zero any remaining unwritten systematic bits that fall before the filler region when all input has been placed.
+    if (is_copy_mode && (tmp_idx < nof_info_bits)) {
+      ocuduvec::zero(out.subspan(tmp_idx, nof_info_bits - tmp_idx));
     }
 
     // Skip filler bits.
@@ -178,7 +183,13 @@ void ldpc_rate_dematcher_impl::allot_llrs(span<log_likelihood_ratio> out, span<c
 
   // If the data is new and the buffer has not been completely filled, then set the remaining bits to zero.
   if ((is_copy_mode) && (tmp_idx != 0)) {
-    ocuduvec::zero(out.last(buffer_length - tmp_idx));
+    ocuduvec::zero(out.subspan(tmp_idx, buffer_length - tmp_idx));
+  }
+
+  // When the buffer length is limited by N_ref, the positions beyond it are never transmitted. Clear them on new data,
+  // as the buffer may hold soft bits of a previous transmission.
+  if (is_new_data && (buffer_length < out.size())) {
+    ocuduvec::zero(out.subspan(buffer_length, out.size() - buffer_length));
   }
 }
 
