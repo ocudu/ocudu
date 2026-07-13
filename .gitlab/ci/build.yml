@@ -861,6 +861,9 @@ sanitizers avx2:
       start_in: 1 hour
   variables:
     MARCH: x86-64-v3
+  tags:
+    - ${OCUDU_RUNNER_TAG}-amd64
+    - sctp
   parallel:
     matrix:
       # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
