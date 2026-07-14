@@ -5,7 +5,7 @@
 #pragma once
 
 #include "apps/units/flexible_o_du/o_du_high/du_high/du_high_config.h"
-#include "lib/rlc/rlc_window_seg_pools.h"
+#include "ocudu/rlc/rlc_window_seg_pools.h"
 
 namespace ocudu {
 

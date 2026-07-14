@@ -6,7 +6,7 @@
 #include "rlc_am_entity.h"
 #include "rlc_tm_entity.h"
 #include "rlc_um_entity.h"
-#include "rlc_window_seg_pools.h"
+#include "ocudu/rlc/rlc_window_seg_pools.h"
 
 using namespace ocudu;
 

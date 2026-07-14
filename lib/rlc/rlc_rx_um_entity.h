@@ -6,8 +6,8 @@
 
 #include "rlc_rx_entity.h"
 #include "rlc_um_pdu.h"
-#include "rlc_window_seg_pools.h"
 #include "ocudu/adt/expected.h"
+#include "ocudu/rlc/rlc_window_seg_pools.h"
 #include "ocudu/support/executors/task_executor.h"
 #include "ocudu/support/segmented_sdu_window.h"
 #include "ocudu/support/timers.h"

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
-#include "rlc_window_seg_pools.h"
+#include "ocudu/rlc/rlc_window_seg_pools.h"
 #include "rlc_rx_am_entity.h"
 #include "rlc_rx_um_entity.h"
 #include "rlc_tx_am_entity.h"
