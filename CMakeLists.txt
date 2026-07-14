@@ -375,6 +375,18 @@ if(ROHC_FOUND)
     )
 endif()
 
+# OpenSSL for DTLS support
+find_package(OpenSSLWithDTLS)
+if(OPENSSL_HAS_DTLS_SCTP)
+    sbom_add(
+	PACKAGE            "OpenSSL library"
+        DOWNLOAD_LOCATION  "https://www.openssl.org/"
+        SUPPLIER           "OpenSSL Software Foundation"
+        LICENSE            "Apache-2.0"
+        VERSION            ${OPENSSL_VERSION}
+    )
+endif()
+
 # FFTW
 if (ENABLE_FFTW)
     find_package(FFTW3F)

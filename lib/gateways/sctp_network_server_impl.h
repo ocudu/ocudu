@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "sctp_dtls.h"
 #include "sctp_network_gateway_common_impl.h"
 #include "ocudu/gateways/sctp_network_server.h"
 #include "ocudu/support/async/manual_event.h"
@@ -109,6 +110,9 @@ private:
 
   association_map            associations;
   std::list<pending_connect> pending_connects;
+
+  /// DTLS Context
+  std::unique_ptr<dtls_context> dtls_ctxt;
 };
 
 } // namespace ocudu

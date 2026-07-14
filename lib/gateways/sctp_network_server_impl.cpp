@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "sctp_network_server_impl.h"
+#include "sctp_dtls.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/support/synchronization/sync_event.h"
 #include <netinet/sctp.h>
@@ -133,6 +134,12 @@ sctp_network_server_impl::sctp_network_server_impl(const ocudu::sctp_network_gat
   assoc_factory(assoc_factory_),
   keepalive_token(std::make_shared<bool>(true))
 {
+  if (OCUDU_DTLS_SCTP_SUPPORT) {
+    dtls_ctxt = create_dtls_context();
+    if (not dtls_ctxt->init(node_cfg.if_name)) {
+      report_error("Could not initialize DTLS context in SCTP gateway. if={}", node_cfg.if_name);
+    }
+  }
 }
 
 sctp_network_server_impl::~sctp_network_server_impl()
