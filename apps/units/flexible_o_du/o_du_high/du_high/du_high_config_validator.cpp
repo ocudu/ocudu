@@ -648,6 +648,14 @@ static bool validate_ntn_config(const du_high_unit_cell_ntn_config& ntn_cfg, nr_
       fmt::print("sat_switch_with_resync: t_service is required in the serving cell NTN config.\n");
       valid = false;
     }
+    if ((sw.cell_specific_koffset && *sw.cell_specific_koffset != serving.cell_specific_koffset) ||
+        (sw.k_mac && sw.k_mac != serving.k_mac)) {
+      // The gNB cannot reconfigure the scheduling offsets at runtime, so they cannot change across a satellite
+      // switch.
+      fmt::print("sat_switch_with_resync: cell_specific_koffset and k_mac must match the serving cell values; "
+                 "changing them across a satellite switch is not supported.\n");
+      valid = false;
+    }
     if (sw.promote_neighbors && !sw.promote_to_serving) {
       fmt::print("sat_switch_with_resync: promote_neighbors has no effect unless promote_to_serving is enabled.\n");
       valid = false;

@@ -311,7 +311,7 @@ static void configure_cli11_sat_switch_with_resync(CLI::App& app, du_high_unit_s
 
   app.add_option("--ntn_ul_sync_validity_dur",
                  sat_switch_config.ntn_ul_sync_validity_dur,
-                 "UL sync validity duration after switch")
+                 "UL sync validity duration after switch. If not set, the serving cell value is used")
       ->check(CLI::IsMember({5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 120, 180, 240, 900}));
 
   app.add_option_function<unsigned>(
@@ -319,13 +319,15 @@ static void configure_cli11_sat_switch_with_resync(CLI::App& app, du_high_unit_s
          [&sat_switch_config](unsigned value) {
            sat_switch_config.cell_specific_koffset = std::chrono::milliseconds(value);
          },
-         "Cell-specific k-offset after switch [ms]")
+         "Cell-specific k-offset after switch [ms]. If not set, the serving cell value is used")
       ->check(CLI::Range(1U, 1023U));
 
-  app.add_option("--k_mac", sat_switch_config.k_mac, "K_mac offset after switch");
+  app.add_option(
+      "--k_mac", sat_switch_config.k_mac, "K_mac offset after switch. If not set, the serving cell value is used");
 
   static ntn_polarization_t polarization;
-  CLI::App*                 pol_subcmd = add_subcommand(app, "polarization", "Polarization after switch");
+  CLI::App*                 pol_subcmd =
+      add_subcommand(app, "polarization", "Polarization after switch. If not set, the serving cell value is used");
   configure_cli11_ntn_polarization(*pol_subcmd, polarization);
   pol_subcmd->parse_complete_callback([&]() {
     if (app.get_subcommand("polarization")->count() != 0) {
@@ -333,7 +335,9 @@ static void configure_cli11_sat_switch_with_resync(CLI::App& app, du_high_unit_s
     }
   });
 
-  app.add_option("--ta_report", sat_switch_config.ta_report, "Enable TA reporting after switch");
+  app.add_option("--ta_report",
+                 sat_switch_config.ta_report,
+                 "Enable TA reporting after switch. If not set, the serving cell setting is used");
 
   app.add_option("--use_state_vector",
                  sat_switch_config.use_state_vector,
