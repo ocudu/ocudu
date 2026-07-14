@@ -2,7 +2,12 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "lib/ntn/ntn_configuration_manager_impl.h"
 #include "lib/ntn/ntn_sat_switch_helpers.h"
+#include "ocudu/ntn/ntn_sib19_update_handler.h"
+#include "ocudu/ntn/ntn_time_provider.h"
+#include "ocudu/support/executors/manual_task_worker.h"
+#include "ocudu/support/timers.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -43,6 +48,38 @@ ntn_sat_switch_config make_sat_switch(unsigned satellite_index)
   sw.t_service_start = std::chrono::system_clock::time_point{std::chrono::seconds{1000}};
   return sw;
 }
+
+class fake_sib19_update_handler : public ntn_sib19_update_handler
+{
+public:
+  std::vector<ntn_sib19_update_request> requests;
+
+  void handle_sib19_msg_update(const ntn_sib19_update_request& req) override { requests.push_back(req); }
+};
+
+/// Returns an advancing (slot, time) pair on each call: each call moves 10ms/10 slots forward from start_time,
+/// mirroring the 10 ticks that elapse between successive periodic-task timer firings (si_period_rf == 1 -> 10ms
+/// period). The time/slot are advanced before being returned so that the Nth call reflects N*10ms of elapsed real
+/// timer_manager ticks, matching when the per-cell timer actually fires.
+class fake_ntn_time_provider : public ntn_time_provider
+{
+public:
+  explicit fake_ntn_time_provider(std::chrono::system_clock::time_point start_time) : cur_time(start_time) {}
+
+  std::optional<ntn_time_slot_mapping> get_last_mapping(subcarrier_spacing scs) override
+  {
+    slot_count += 10;
+    cur_time += std::chrono::milliseconds(10);
+    ntn_time_slot_mapping mapping;
+    mapping.slot_tx    = slot_point(0, slot_count); // numerology 0 == 15kHz SCS, 1 slot == 1ms
+    mapping.time_point = cur_time;
+    return mapping;
+  }
+
+private:
+  unsigned                              slot_count = 0;
+  std::chrono::system_clock::time_point cur_time;
+};
 
 } // namespace
 
@@ -130,4 +167,75 @@ TEST(derive_post_switch_config_test, preserves_ncells_and_non_sat_switch_fields)
   EXPECT_EQ(derived->ncells[0].satellite_index, 5U);
   ASSERT_TRUE(derived->ntn_cfg->reference_location.has_value());
   EXPECT_DOUBLE_EQ(derived->ntn_cfg->reference_location->latitude, 1.0);
+}
+
+TEST(sat_switch_apply_integration_test, promotes_switch_target_at_t_service_not_before)
+{
+  const auto t0 = std::chrono::system_clock::time_point{std::chrono::seconds{1000}};
+
+  ntn_configuration_manager_config cfg{};
+
+  ntn_satellite_config sat0{};
+  sat0.satellite_index = 1;
+  sat0.epoch_timestamp = t0;
+  sat0.ephemeris_info  = ecef_coordinates_t{7000000, 0, 0, 0, 7500, 0};
+  cfg.satellites.push_back(sat0);
+
+  ntn_satellite_config sat1 = sat0;
+  sat1.satellite_index      = 9;
+  cfg.satellites.push_back(sat1);
+
+  ntn_cell_config cell{};
+  cell.si_msg_idx          = 0;
+  cell.si_period_rf        = 1; // 10ms period -> one timer firing per 10 ticks
+  cell.si_window_len_slots = 1;
+  cell.si_window_position  = 1;
+
+  ntn_serving_cell_config serving{};
+  serving.satellite_index          = 1;
+  serving.cell_specific_koffset    = std::chrono::milliseconds{10};
+  serving.ntn_ul_sync_validity_dur = 30U;
+  serving.t_service                = t0 + std::chrono::milliseconds(15); // between the 1st and 2nd firing
+  cell.ntn_cfg                     = serving;
+
+  ntn_sat_switch_config sat_switch{};
+  sat_switch.satellite_index = 9;
+  sat_switch.t_service_start = t0 + std::chrono::milliseconds(5); // overlap window opens before the 1st firing
+  cell.sat_switch            = sat_switch;
+
+  cfg.cells.push_back(cell);
+
+  timer_manager      timers;
+  manual_task_worker executor{16};
+
+  auto  sib19_handler = std::make_unique<fake_sib19_update_handler>();
+  auto* sib19_ptr     = sib19_handler.get();
+
+  ntn_configuration_manager_dependencies deps{
+      std::move(sib19_handler), std::make_unique<fake_ntn_time_provider>(t0), nullptr, timers, executor};
+
+  ntn_configuration_manager_impl manager(cfg, std::move(deps));
+
+  // First firing (10 ticks == 10ms): inside the overlap window (past t_service_start at 5ms, before t_service at
+  // 15ms) -- per TS 38.331 clause 5.7.19 the switch executes at t-Service, so the source satellite must still be
+  // serving and the switch must still be advertised.
+  // The timer's expiry callback is dispatched via task_executor::defer(), which manual_task_worker always enqueues
+  // rather than running inline, so it must be pumped explicitly.
+  for (int i = 0; i != 10; ++i) {
+    timers.tick();
+  }
+  executor.run_pending_tasks();
+  ASSERT_GE(sib19_ptr->requests.size(), 1U);
+  EXPECT_TRUE(sib19_ptr->requests.back().sib19.sat_switch_with_resync.has_value())
+      << "switch must stay advertised through the overlap window, until t_service";
+
+  // Second firing (10 more ticks, 20ms total): past t_service (15ms), switch applied.
+  for (int i = 0; i != 10; ++i) {
+    timers.tick();
+  }
+  executor.run_pending_tasks();
+  ASSERT_GE(sib19_ptr->requests.size(), 2U);
+  EXPECT_FALSE(sib19_ptr->requests.back().sib19.sat_switch_with_resync.has_value());
+  EXPECT_FALSE(sib19_ptr->requests.back().sib19.t_service.has_value())
+      << "the source satellite's t_service must not be broadcast after the switch";
 }
