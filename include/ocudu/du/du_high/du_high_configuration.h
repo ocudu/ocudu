@@ -19,6 +19,7 @@
 #include "ocudu/pcap/rlc_pcap.h"
 #include "ocudu/ran/gnb_du_id.h"
 #include "ocudu/rlc/rlc_metrics.h"
+#include "ocudu/rlc/rlc_window_seg_pools.h"
 #include "ocudu/scheduler/config/scheduler_expert_config.h"
 #include "ocudu/scheduler/scheduler_metrics.h"
 #include <map>
@@ -45,6 +46,13 @@ struct du_high_ran_config {
 
 /// Configuration passed to DU-High.
 struct du_high_configuration {
+  struct rlc_config {
+    std::size_t drb_rx_window_seg_pool_size = rlc_drb_rx_window_seg_pool_size;
+    std::size_t drb_tx_window_seg_pool_size = rlc_drb_tx_window_seg_pool_size;
+    std::size_t srb_rx_window_seg_pool_size = rlc_srb_rx_window_seg_pool_size;
+    std::size_t srb_tx_window_seg_pool_size = rlc_srb_tx_window_seg_pool_size;
+  };
+
   struct metrics_config {
     bool                      enable_sched    = false;
     bool                      enable_sched_ue = true;
@@ -56,6 +64,7 @@ struct du_high_configuration {
     unsigned                  max_nof_sched_ue_events = 64;
   };
 
+  rlc_config          rlc;
   du_high_ran_config  ran;
   metrics_config      metrics;
   du_test_mode_config test_cfg;

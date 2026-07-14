@@ -24,7 +24,7 @@ rlc_entity_creation_message make_rlc_entity_creation_message(gnb_du_id_t        
                                                              const rlc_config&                        rlc_cfg,
                                                              const du_manager_params::service_params& du_services,
                                                              rlc_tx_upper_layer_control_notifier&     rlc_rlf_notifier,
-                                                             rlc_pcap&                                rlc_pcap);
+                                                             const du_manager_params::rlc_config_params& rlc_params);
 
 /// \brief Create configuration for RLC DRB entity.
 rlc_entity_creation_message make_rlc_entity_creation_message(gnb_du_id_t                              du_id,
@@ -34,8 +34,7 @@ rlc_entity_creation_message make_rlc_entity_creation_message(gnb_du_id_t        
                                                              const rlc_config&                        rlc_cfg,
                                                              const du_manager_params::service_params& du_services,
                                                              rlc_tx_upper_layer_control_notifier&     rlc_rlf_notifier,
-                                                             rlc_metrics_notifier*                    rlc_metrics_notif,
-                                                             rlc_pcap&                                rlc_pcap);
+                                                             const du_manager_params::rlc_config_params& rlc_params);
 
 } // namespace odu
 } // namespace ocudu

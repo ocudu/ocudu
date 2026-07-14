@@ -100,11 +100,26 @@ protected:
   null_rlc_pcap       rlc_pcap;
   dummy_ue_resource_configurator_factory cell_res_alloc;
 
+  rlc_drb_am_rx_window_seg_pool_dummy drb_am_rx_pool_dummy;
+  rlc_drb_am_tx_window_seg_pool_dummy drb_am_tx_pool_dummy;
+  rlc_drb_um_rx_window_seg_pool_dummy drb_um_rx_pool_dummy;
+  rlc_srb_am_rx_window_seg_pool_dummy srb_am_rx_pool_dummy;
+  rlc_srb_am_tx_window_seg_pool_dummy srb_am_tx_pool_dummy;
+
   du_manager_params params{{"ocudu", (gnb_du_id_t)1, 1, cells},
                            {timers, worker, ue_execs, cell_execs},
                            {f1ap_dummy, f1ap_dummy, f1ap_dummy},
                            {f1u_teid_allocator, f1u_dummy},
-                           {mac_dummy, f1ap_dummy, f1ap_dummy, rlc_pcap},
+                           {mac_dummy,
+                            f1ap_dummy,
+                            f1ap_dummy,
+                            rlc_pcap,
+                            nullptr,
+                            drb_am_rx_pool_dummy,
+                            drb_am_tx_pool_dummy,
+                            drb_um_rx_pool_dummy,
+                            srb_am_rx_pool_dummy,
+                            srb_am_tx_pool_dummy},
                            {mac_dummy}};
 
   du_cell_manager                cell_mng{params};

@@ -15,7 +15,6 @@
 #include "apps/services/metrics/metrics_manager.h"
 #include "apps/services/metrics/metrics_notifier_proxy.h"
 #include "apps/services/remote_control/remote_server.h"
-#include "apps/services/rlc/rlc_window_seg_pools_manager.h"
 #include "apps/services/worker_manager/worker_manager.h"
 #include "apps/units/flexible_o_du/flexible_o_du_application_unit.h"
 #include "apps/units/flexible_o_du/o_du_high/du_high/du_high_config.h"
@@ -243,9 +242,6 @@ int main(int argc, char** argv)
 
   // Setup size of byte buffer pool.
   app_services::buffer_pool_manager buffer_pool_service(du_cfg.buffer_pool_config);
-
-  // RLC window segment pool service.
-  rlc_window_seg_pools_manager rlc_pools_service(o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config.rlc_cfg);
 
   // Log CPU architecture.
   cpu_architecture_info::get().print_cpu_info(du_logger);

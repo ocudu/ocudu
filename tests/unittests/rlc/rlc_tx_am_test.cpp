@@ -368,7 +368,9 @@ protected:
     pcell_worker.run_pending_tasks();
   }
 
-  virtual rlc_drb_am_tx_window_seg_pool& get_window_pool() { return get_rlc_drb_am_tx_window_seg_pool(); }
+  virtual rlc_drb_am_tx_window_seg_pool& get_window_pool() { return pool.get_pool_of_type<rlc_tx_am_sdu_info>(); }
+
+  rlc_drb_tx_window_seg_pool pool{rlc_drb_tx_window_seg_pool_size};
 
   ocudulog::basic_logger&                       logger  = ocudulog::fetch_basic_logger("TEST", false);
   rlc_am_sn_size                                sn_size = GetParam();

@@ -184,7 +184,7 @@ void ue_creation_procedure::create_rlc_srbs()
                                                                        make_default_srb0_rlc_config(),
                                                                        du_params.services,
                                                                        ue_ctx->get_rlc_rlf_notifier(),
-                                                                       du_params.rlc.pcap_writer));
+                                                                       du_params.rlc));
 
   // Create SRB1 RLC entity.
   if (ue_ctx->bearers.srbs().contains(srb_id_t::srb1)) {
@@ -197,7 +197,7 @@ void ue_creation_procedure::create_rlc_srbs()
                                                            ue_ctx->resources->srbs[srb_id_t::srb1].rlc_cfg,
                                                            du_params.services,
                                                            ue_ctx->get_rlc_rlf_notifier(),
-                                                           du_params.rlc.pcap_writer));
+                                                           du_params.rlc));
   }
 }
 

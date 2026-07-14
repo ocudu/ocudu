@@ -6,7 +6,7 @@
 #include "rlc_am_entity.h"
 #include "rlc_tm_entity.h"
 #include "rlc_um_entity.h"
-#include "ocudu/rlc/rlc_window_seg_pools.h"
+#include "ocudu/support/ocudu_assert.h"
 
 using namespace ocudu;
 
@@ -45,25 +45,24 @@ std::unique_ptr<rlc_entity> ocudu::create_rlc_entity(const rlc_entity_creation_m
                                              *msg.pcell_executor,
                                              *msg.ue_executor,
                                              *msg.timers,
-                                             get_rlc_drb_um_rx_window_seg_pool());
+                                             *msg.drb_um_rx_pool);
     case rlc_mode::am:
-      return std::make_unique<rlc_am_entity>(
-          msg.gnb_du_id,
-          msg.ue_index,
-          msg.rb_id,
-          msg.config.am,
-          msg.config.metrics_period,
-          msg.rlc_metrics_notif,
-          *msg.rx_upper_dn,
-          *msg.tx_upper_dn,
-          *msg.tx_upper_cn,
-          *msg.tx_lower_dn,
-          *msg.pcap_writer,
-          *msg.pcell_executor,
-          *msg.ue_executor,
-          *msg.timers,
-          msg.rb_id.is_srb() ? get_rlc_srb_am_rx_window_seg_pool() : get_rlc_drb_am_rx_window_seg_pool(),
-          msg.rb_id.is_srb() ? get_rlc_srb_am_tx_window_seg_pool() : get_rlc_drb_am_tx_window_seg_pool());
+      return std::make_unique<rlc_am_entity>(msg.gnb_du_id,
+                                             msg.ue_index,
+                                             msg.rb_id,
+                                             msg.config.am,
+                                             msg.config.metrics_period,
+                                             msg.rlc_metrics_notif,
+                                             *msg.rx_upper_dn,
+                                             *msg.tx_upper_dn,
+                                             *msg.tx_upper_cn,
+                                             *msg.tx_lower_dn,
+                                             *msg.pcap_writer,
+                                             *msg.pcell_executor,
+                                             *msg.ue_executor,
+                                             *msg.timers,
+                                             msg.rb_id.is_srb() ? *msg.srb_am_rx_pool : *msg.drb_am_rx_pool,
+                                             msg.rb_id.is_srb() ? *msg.srb_am_tx_pool : *msg.drb_am_tx_pool);
     default:
       ocudu_terminate("RLC mode not supported.");
   }

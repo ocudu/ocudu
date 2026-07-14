@@ -92,6 +92,11 @@ stress_stack::stress_stack(const stress_test_args& args_, uint32_t id, rb_id_t r
   rlc_msg.pcell_executor              = pcell_executor.get();
   rlc_msg.ue_executor                 = ue_executor.get();
   rlc_msg.pcap_writer                 = &pcap;
+  rlc_msg.drb_am_rx_pool              = &drb_rx_seg_pool->get_pool_of_type<rlc_rx_am_sdu_info>();
+  rlc_msg.drb_am_tx_pool              = &drb_tx_seg_pool->get_pool_of_type<rlc_tx_am_sdu_info>();
+  rlc_msg.drb_um_rx_pool              = &drb_rx_seg_pool->get_pool_of_type<rlc_rx_um_sdu_info>();
+  rlc_msg.srb_am_rx_pool              = &srb_rx_seg_pool->get_pool_of_type<rlc_rx_am_sdu_info>();
+  rlc_msg.srb_am_tx_pool              = &srb_tx_seg_pool->get_pool_of_type<rlc_tx_am_sdu_info>();
   rlc                                 = create_rlc_entity(rlc_msg);
   f1ap->set_rlc_tx_upper_data(rlc->get_tx_upper_layer_data_interface());
 

@@ -13,6 +13,7 @@
 #include "ran_resource_management/du_ran_resource_manager_impl.h"
 #include "ocudu/du/du_high/du_manager/du_manager.h"
 #include "ocudu/du/du_high/du_manager/du_manager_params.h"
+#include "ocudu/rlc/rlc_window_seg_pool_factory.h"
 
 namespace ocudu {
 namespace odu {

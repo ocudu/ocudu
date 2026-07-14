@@ -4,6 +4,7 @@
 
 #include "lib/rlc/rlc_rx_am_entity.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
+#include "ocudu/rlc/rlc_window_seg_pool_factory.h"
 #include "ocudu/rlc/rlc_window_seg_pools.h"
 #include "ocudu/support/executors/manual_task_worker.h"
 #include "ocudu/support/test_utils.h"
@@ -429,7 +430,10 @@ protected:
     ue_worker.run_pending_tasks();
   }
 
-  virtual rlc_drb_am_rx_window_seg_pool& get_window_pool() { return get_rlc_drb_am_rx_window_seg_pool(); }
+  virtual rlc_drb_am_rx_window_seg_pool& get_window_pool() { return pool->get_pool_of_type<rlc_rx_am_sdu_info>(); }
+
+  std::unique_ptr<rlc_drb_rx_window_seg_pool, rlc_pool_deleter> pool =
+      make_rlc_drb_rx_window_seg_pool(rlc_drb_rx_window_seg_pool_size);
 
   ocudulog::basic_logger&                       logger  = ocudulog::fetch_basic_logger("TEST", false);
   rlc_rx_am_config                              config  = GetParam();

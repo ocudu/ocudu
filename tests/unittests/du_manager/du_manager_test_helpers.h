@@ -15,6 +15,7 @@
 #include "ocudu/mac/mac_positioning_measurement_handler.h"
 #include "ocudu/mac/mac_subframe_time_mapper.h"
 #include "ocudu/ocudulog/ocudulog.h"
+#include "ocudu/rlc/rlc_window_seg_pool_factory.h"
 #include "ocudu/support/async/async_task.h"
 #include "ocudu/support/async/async_test_utils.h"
 #include "ocudu/support/executors/manual_task_worker.h"
@@ -396,6 +397,41 @@ public:
   unsigned get_max_nof_setup_ues(du_cell_index_t cell_index) const override { return MAX_NOF_DU_UES_PER_CELL; }
 };
 
+class rlc_drb_am_rx_window_seg_pool_dummy : public rlc_drb_am_rx_window_seg_pool
+{
+public:
+  map_segment<uint32_t, rlc_rx_am_sdu_info, rlc_drb_rx_window_seg_size>* get_segment() override { return nullptr; }
+  void return_segment(map_segment<uint32_t, rlc_rx_am_sdu_info, rlc_drb_rx_window_seg_size>* seg) override {}
+};
+
+class rlc_drb_um_rx_window_seg_pool_dummy : public rlc_drb_um_rx_window_seg_pool
+{
+public:
+  map_segment<uint32_t, rlc_rx_um_sdu_info, rlc_drb_rx_window_seg_size>* get_segment() override { return nullptr; }
+  void return_segment(map_segment<uint32_t, rlc_rx_um_sdu_info, rlc_drb_rx_window_seg_size>* seg) override {}
+};
+
+class rlc_drb_am_tx_window_seg_pool_dummy : public rlc_drb_am_tx_window_seg_pool
+{
+public:
+  map_segment<uint32_t, rlc_tx_am_sdu_info, rlc_drb_tx_window_seg_size>* get_segment() override { return nullptr; }
+  void return_segment(map_segment<uint32_t, rlc_tx_am_sdu_info, rlc_drb_tx_window_seg_size>* seg) override {}
+};
+
+class rlc_srb_am_rx_window_seg_pool_dummy : public rlc_srb_am_rx_window_seg_pool
+{
+public:
+  map_segment<uint32_t, rlc_rx_am_sdu_info, rlc_srb_rx_window_seg_size>* get_segment() override { return nullptr; }
+  void return_segment(map_segment<uint32_t, rlc_rx_am_sdu_info, rlc_srb_rx_window_seg_size>* seg) override {}
+};
+
+class rlc_srb_am_tx_window_seg_pool_dummy : public rlc_srb_am_tx_window_seg_pool
+{
+public:
+  map_segment<uint32_t, rlc_tx_am_sdu_info, rlc_drb_tx_window_seg_size>* get_segment() override { return nullptr; }
+  void return_segment(map_segment<uint32_t, rlc_tx_am_sdu_info, rlc_drb_tx_window_seg_size>* seg) override {}
+};
+
 f1ap_ue_context_update_request create_f1ap_ue_context_update_request(du_ue_index_t                   ue_idx,
                                                                      std::initializer_list<srb_id_t> srbs_to_addmod,
                                                                      std::initializer_list<drb_id_t> drbs_to_add,
@@ -417,10 +453,14 @@ public:
   f1u_gateway_dummy   f1u_gw;
   mac_test_dummy      mac;
   null_rlc_pcap       rlc_pcap;
-  du_manager_params   params;
-  du_cell_manager     cell_mng;
-  dummy_ue_resource_configurator_factory cell_res_alloc;
-  ocudulog::basic_logger&                logger;
+  std::unique_ptr<rlc_drb_rx_window_seg_pool, rlc_pool_deleter> drb_rx_seg_pool;
+  std::unique_ptr<rlc_drb_tx_window_seg_pool, rlc_pool_deleter> drb_tx_seg_pool;
+  std::unique_ptr<rlc_srb_rx_window_seg_pool, rlc_pool_deleter> srb_rx_seg_pool;
+  std::unique_ptr<rlc_srb_tx_window_seg_pool, rlc_pool_deleter> srb_tx_seg_pool;
+  du_manager_params                                             params;
+  du_cell_manager                                               cell_mng;
+  dummy_ue_resource_configurator_factory                        cell_res_alloc;
+  ocudulog::basic_logger&                                       logger;
 };
 
 } // namespace odu

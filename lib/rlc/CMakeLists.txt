@@ -7,13 +7,13 @@ set(SOURCES
   rlc_am_pdu.cpp
   rlc_bearer_metrics_collector.cpp
   rlc_factory.cpp
+  rlc_window_seg_pool_factory.cpp
   rlc_tx_am_entity.cpp
   rlc_tx_tm_entity.cpp
   rlc_tx_um_entity.cpp
   rlc_rx_am_entity.cpp
   rlc_rx_tm_entity.cpp
   rlc_rx_um_entity.cpp
-  rlc_window_seg_pools.cpp
 )
 
 add_library(ocudu_rlc STATIC ${SOURCES})

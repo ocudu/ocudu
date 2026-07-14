@@ -5,6 +5,8 @@
 #include "lib/rlc/rlc_rx_am_entity.h"
 #include "lib/rlc/rlc_tx_am_entity.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
+#include "ocudu/rlc/rlc_window_seg_pool_factory.h"
+#include "ocudu/rlc/rlc_window_seg_pools.h"
 #include "ocudu/support/benchmark_utils.h"
 #include "ocudu/support/executors/inline_task_executor.h"
 #include "ocudu/support/executors/manual_task_worker.h"
@@ -143,14 +145,17 @@ static std::vector<byte_buffer> generate_pdus(bench_params params, rx_order orde
   manual_task_worker pcell_worker{128};
   manual_task_worker ue_worker{128};
 
+  std::unique_ptr<rlc_drb_tx_window_seg_pool, rlc_pool_deleter> drb_tx_pool =
+      make_rlc_drb_tx_window_seg_pool(rlc_drb_tx_window_seg_pool_size);
+
+  null_rlc_pcap pcap;
+
   // Create RLC AM TX entity
   std::unique_ptr<rlc_tx_am_entity>             rlc_tx       = nullptr;
   std::unique_ptr<rlc_bearer_metrics_collector> metrics_coll = nullptr;
 
   auto& logger = ocudulog::fetch_basic_logger("RLC");
   logger.set_level(ocudulog::basic_levels::warning);
-
-  null_rlc_pcap pcap;
 
   metrics_coll = std::make_unique<rlc_bearer_metrics_collector>(
       gnb_du_id_t{}, du_ue_index_t{}, rb_id_t{}, timer_duration{0}, tester.get(), ue_worker);
@@ -169,7 +174,7 @@ static std::vector<byte_buffer> generate_pdus(bench_params params, rx_order orde
                                               pcell_worker,
                                               ue_worker,
                                               timers,
-                                              get_rlc_drb_am_tx_window_seg_pool());
+                                              drb_tx_pool->get_pool_of_type<rlc_tx_am_sdu_info>());
 
   // Bind AM Rx/Tx interconnect
   rlc_tx->set_status_provider(tester.get());
@@ -242,17 +247,21 @@ static void benchmark_rx_pdu(const bench_params& params, rx_order order, timer_m
   auto metrics_agg = std::make_unique<rlc_bearer_metrics_collector>(
       gnb_du_id_t{}, du_ue_index_t{}, rb_id_t{}, timer_duration{0}, tester.get(), ue_worker);
 
+  std::unique_ptr<rlc_drb_rx_window_seg_pool, rlc_pool_deleter> drb_rx_pool =
+      make_rlc_drb_rx_window_seg_pool(rlc_drb_rx_window_seg_pool_size);
+
   // Create RLC AM RX entity
-  std::unique_ptr<rlc_rx_am_entity> rlc_rx = std::make_unique<rlc_rx_am_entity>(gnb_du_id_t::min,
-                                                                                du_ue_index_t::MIN_DU_UE_INDEX,
-                                                                                drb_id_t::drb1,
-                                                                                config,
-                                                                                *tester,
-                                                                                *metrics_agg,
-                                                                                pcap,
-                                                                                ue_worker,
-                                                                                timers,
-                                                                                get_rlc_drb_am_rx_window_seg_pool());
+  std::unique_ptr<rlc_rx_am_entity> rlc_rx =
+      std::make_unique<rlc_rx_am_entity>(gnb_du_id_t::min,
+                                         du_ue_index_t::MIN_DU_UE_INDEX,
+                                         drb_id_t::drb1,
+                                         config,
+                                         *tester,
+                                         *metrics_agg,
+                                         pcap,
+                                         ue_worker,
+                                         timers,
+                                         drb_rx_pool->get_pool_of_type<rlc_rx_am_sdu_info>());
 
   // Bind AM Rx/Tx interconnect
   rlc_rx->set_status_notifier(tester.get());

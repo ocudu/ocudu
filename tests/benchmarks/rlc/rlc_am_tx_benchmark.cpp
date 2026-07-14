@@ -4,6 +4,7 @@
 
 #include "lib/rlc/rlc_tx_am_entity.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
+#include "ocudu/rlc/rlc_window_seg_pools.h"
 #include "ocudu/support/benchmark_utils.h"
 #include "ocudu/support/executors/manual_task_worker.h"
 #include <getopt.h>
@@ -130,6 +131,8 @@ void benchmark_tx_pdu(const bench_params& params)
 
   null_rlc_pcap pcap;
 
+  rlc_drb_tx_window_seg_pool drb_tx_pool{rlc_drb_tx_window_seg_pool_size};
+
   auto metrics_coll = std::make_unique<rlc_bearer_metrics_collector>(
       gnb_du_id_t{}, du_ue_index_t{}, rb_id_t{}, timer_duration{1}, tester.get(), ue_worker);
 
@@ -146,7 +149,7 @@ void benchmark_tx_pdu(const bench_params& params)
                                                    pcell_worker,
                                                    ue_worker,
                                                    timers,
-                                                   get_rlc_drb_am_tx_window_seg_pool());
+                                                   drb_tx_pool.get_pool_of_type<rlc_tx_am_sdu_info>());
 
   // Bind AM Rx/Tx interconnect
   rlc_tx->set_status_provider(tester.get());

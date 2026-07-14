@@ -191,8 +191,7 @@ std::unique_ptr<du_ue_drb> ocudu::odu::create_drb(const drb_creation_info& drb_i
                                                                        drb_info.rlc_cfg,
                                                                        drb_info.du_params.services,
                                                                        drb_info.rlc_rlf_notifier,
-                                                                       drb_info.du_params.rlc.rlc_metrics_notif,
-                                                                       drb_info.du_params.rlc.pcap_writer));
+                                                                       drb_info.du_params.rlc));
   if (drb->rlc_bearer == nullptr) {
     // Failed to create RLC DRB entity.
     f1u_gw.remove_du_bearer(drb->dluptnl_info_list[0]);

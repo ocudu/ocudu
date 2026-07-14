@@ -27,43 +27,30 @@ struct rlc_tx_am_sdu_info;
 
 using rlc_drb_rx_window_seg_pool =
     shared_map_segment_pool<uint32_t, rlc_drb_rx_window_seg_size, rlc_rx_am_sdu_info, rlc_rx_um_sdu_info>;
-rlc_drb_rx_window_seg_pool& get_rlc_drb_rx_window_seg_pool();
 
 using rlc_drb_am_rx_window_seg_pool =
     map_segment_pool_interface<uint32_t, rlc_rx_am_sdu_info, rlc_drb_rx_window_seg_size>;
-rlc_drb_am_rx_window_seg_pool& get_rlc_drb_am_rx_window_seg_pool();
 
 using rlc_drb_um_rx_window_seg_pool =
     map_segment_pool_interface<uint32_t, rlc_rx_um_sdu_info, rlc_drb_rx_window_seg_size>;
-rlc_drb_um_rx_window_seg_pool& get_rlc_drb_um_rx_window_seg_pool();
 
 using rlc_drb_tx_window_seg_pool = shared_map_segment_pool<uint32_t, rlc_drb_tx_window_seg_size, rlc_tx_am_sdu_info>;
 
 using rlc_drb_am_tx_window_seg_pool =
     map_segment_pool_interface<uint32_t, rlc_tx_am_sdu_info, rlc_drb_tx_window_seg_size>;
-rlc_drb_am_tx_window_seg_pool& get_rlc_drb_am_tx_window_seg_pool();
 
 using rlc_srb_rx_window_seg_pool =
     shared_map_segment_pool<uint32_t, rlc_srb_rx_window_seg_size, rlc_rx_am_sdu_info, rlc_rx_um_sdu_info>;
-rlc_srb_rx_window_seg_pool& get_rlc_srb_rx_window_seg_pool();
 
 using rlc_srb_am_rx_window_seg_pool =
     map_segment_pool_interface<uint32_t, rlc_rx_am_sdu_info, rlc_srb_rx_window_seg_size>;
-rlc_srb_am_rx_window_seg_pool& get_rlc_srb_am_rx_window_seg_pool();
 
 using rlc_srb_um_rx_window_seg_pool =
     map_segment_pool_interface<uint32_t, rlc_rx_um_sdu_info, rlc_srb_rx_window_seg_size>;
-rlc_srb_um_rx_window_seg_pool& get_rlc_srb_um_rx_window_seg_pool();
 
 using rlc_srb_tx_window_seg_pool = shared_map_segment_pool<uint32_t, rlc_srb_tx_window_seg_size, rlc_tx_am_sdu_info>;
 
 using rlc_srb_am_tx_window_seg_pool =
     map_segment_pool_interface<uint32_t, rlc_tx_am_sdu_info, rlc_srb_tx_window_seg_size>;
-rlc_srb_am_tx_window_seg_pool& get_rlc_srb_am_tx_window_seg_pool();
-
-void init_rlc_window_seg_pools(std::size_t drb_rx_pool_size,
-                               std::size_t drb_tx_pool_size,
-                               std::size_t srb_rx_pool_size,
-                               std::size_t srb_tx_pool_size);
 
 } // namespace ocudu

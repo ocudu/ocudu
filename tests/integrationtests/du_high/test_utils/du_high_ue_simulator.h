@@ -7,6 +7,8 @@
 #include "ocudu/du/du_high/du_high_configuration.h"
 #include "ocudu/ran/rnti.h"
 #include "ocudu/rlc/rlc_entity.h"
+#include "ocudu/rlc/rlc_window_seg_pool_factory.h"
+#include "ocudu/rlc/rlc_window_seg_pools.h"
 
 namespace ocudu {
 
@@ -45,6 +47,11 @@ private:
 
   du_high_ue_simulator_config cfg;
   task_executor&              test_exec;
+
+  std::unique_ptr<rlc_srb_rx_window_seg_pool, rlc_pool_deleter> srb_rx_seg_pool =
+      make_rlc_srb_rx_window_seg_pool(rlc_srb_rx_window_seg_pool_size);
+  std::unique_ptr<rlc_srb_tx_window_seg_pool, rlc_pool_deleter> srb_tx_seg_pool =
+      make_rlc_srb_tx_window_seg_pool(rlc_srb_tx_window_seg_pool_size);
 
   std::map<lcid_t, bearer_context> bearers;
 

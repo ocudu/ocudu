@@ -10,6 +10,7 @@
 #include "lib/rlc/rlc_tx_am_entity.h"
 #include "lib/rlc/rlc_tx_tm_entity.h"
 #include "lib/rlc/rlc_tx_um_entity.h"
+#include "ocudu/rlc/rlc_window_seg_pools.h"
 #include "ocudu/support/executors/manual_task_worker.h"
 #include <cstdio>
 #include <fstream>
@@ -338,6 +339,9 @@ void rlc_instances(const bench_params& params)
 
   null_rlc_pcap pcap;
 
+  rlc_drb_rx_window_seg_pool drb_rx_pool{rlc_drb_rx_window_seg_pool_size};
+  rlc_drb_tx_window_seg_pool drb_tx_pool{rlc_drb_tx_window_seg_pool_size};
+
   auto                                           rx_am_12_tester = std::make_unique<rlc_rx_am_test_frame>(ue_worker);
   std::vector<std::unique_ptr<rlc_rx_am_entity>> rx_am_12_instances;
   if (params.nof_rlc_rx_am_12 > 0) {
@@ -352,7 +356,7 @@ void rlc_instances(const bench_params& params)
                                                          pcap,
                                                          ue_worker,
                                                          timers,
-                                                         get_rlc_drb_am_rx_window_seg_pool());
+                                                         drb_rx_pool.get_pool_of_type<rlc_rx_am_sdu_info>());
       rx_am_12_instances.push_back(std::move(rx_am_12));
     }
   }
@@ -371,7 +375,7 @@ void rlc_instances(const bench_params& params)
                                                          pcap,
                                                          ue_worker,
                                                          timers,
-                                                         get_rlc_drb_am_rx_window_seg_pool());
+                                                         drb_rx_pool.get_pool_of_type<rlc_rx_am_sdu_info>());
       rx_am_18_instances.push_back(std::move(rx_am_18));
     }
   }
@@ -408,7 +412,7 @@ void rlc_instances(const bench_params& params)
                                                         pcap,
                                                         ue_worker,
                                                         timers,
-                                                        get_rlc_drb_um_rx_window_seg_pool());
+                                                        drb_rx_pool.get_pool_of_type<rlc_rx_um_sdu_info>());
       rx_um_6_instances.push_back(std::move(rx_um_6));
     }
   }
@@ -427,7 +431,7 @@ void rlc_instances(const bench_params& params)
                                                          pcap,
                                                          ue_worker,
                                                          timers,
-                                                         get_rlc_drb_um_rx_window_seg_pool());
+                                                         drb_rx_pool.get_pool_of_type<rlc_rx_um_sdu_info>());
       rx_um_12_instances.push_back(std::move(rx_um_12));
     }
   }
@@ -449,7 +453,7 @@ void rlc_instances(const bench_params& params)
                                                          pcell_worker,
                                                          ue_worker,
                                                          timers,
-                                                         get_rlc_drb_am_tx_window_seg_pool());
+                                                         drb_tx_pool.get_pool_of_type<rlc_tx_am_sdu_info>());
       tx_am_12->set_status_provider(tx_am_12_tester.get());
       tx_am_12_instances.push_back(std::move(tx_am_12));
     }
@@ -471,7 +475,7 @@ void rlc_instances(const bench_params& params)
                                                          pcell_worker,
                                                          ue_worker,
                                                          timers,
-                                                         get_rlc_drb_am_tx_window_seg_pool());
+                                                         drb_tx_pool.get_pool_of_type<rlc_tx_am_sdu_info>());
       tx_am_18->set_status_provider(tx_am_18_tester.get());
       tx_am_18_instances.push_back(std::move(tx_am_18));
     }

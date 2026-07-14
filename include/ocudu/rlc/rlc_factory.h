@@ -10,6 +10,7 @@
 #include "ocudu/rlc/rlc_entity.h"
 #include "ocudu/rlc/rlc_rx.h"
 #include "ocudu/rlc/rlc_tx.h"
+#include "ocudu/rlc/rlc_window_seg_pools.h"
 #include "ocudu/support/executors/task_executor.h"
 #include "ocudu/support/timers.h"
 #include <memory>
@@ -30,6 +31,11 @@ struct rlc_entity_creation_message {
   task_executor*                       ue_executor;
   rlc_metrics_notifier*                rlc_metrics_notif;
   rlc_pcap*                            pcap_writer;
+  rlc_drb_am_rx_window_seg_pool*       drb_am_rx_pool = nullptr;
+  rlc_drb_am_tx_window_seg_pool*       drb_am_tx_pool = nullptr;
+  rlc_drb_um_rx_window_seg_pool*       drb_um_rx_pool = nullptr;
+  rlc_srb_am_rx_window_seg_pool*       srb_am_rx_pool = nullptr;
+  rlc_srb_am_tx_window_seg_pool*       srb_am_tx_pool = nullptr;
 };
 
 /// Creates an instance of a RLC bearer

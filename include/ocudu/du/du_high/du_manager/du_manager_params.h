@@ -17,6 +17,7 @@
 #include "ocudu/pcap/rlc_pcap.h"
 #include "ocudu/ran/gnb_du_id.h"
 #include "ocudu/rlc/rlc_metrics.h"
+#include "ocudu/rlc/rlc_window_seg_pools.h"
 #include "ocudu/scheduler/config/scheduler_expert_config.h"
 #include <map>
 
@@ -65,6 +66,11 @@ struct du_manager_params {
     f1ap_rrc_message_transfer_procedure_handler& f1ap_rx_proc_handler;
     rlc_pcap&                                    pcap_writer;
     rlc_metrics_notifier*                        rlc_metrics_notif = nullptr;
+    rlc_drb_am_rx_window_seg_pool&               drb_am_rx_pool;
+    rlc_drb_am_tx_window_seg_pool&               drb_am_tx_pool;
+    rlc_drb_um_rx_window_seg_pool&               drb_um_rx_pool;
+    rlc_srb_am_rx_window_seg_pool&               srb_am_rx_pool;
+    rlc_srb_am_tx_window_seg_pool&               srb_am_tx_pool;
   };
 
   struct mac_config_params {
