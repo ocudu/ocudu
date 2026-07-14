@@ -430,7 +430,8 @@ int main(int argc, char** argv)
                                                          du_cfg.log_cfg.filename == "stdout" ? std::string_view()
                                                                                              : du_cfg.log_cfg.filename,
                                                          gnb_logger,
-                                                         du_cfg.log_cfg.all_level);
+                                                         du_cfg.log_cfg.all_level,
+                                                         du_cfg.log_cfg.flush_app_banner);
 
     auto exec_metrics_session = exec_metrics_service.service
                                     ? exec_metrics_service.service->create_session(workers.get_metrics_executor())

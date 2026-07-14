@@ -449,7 +449,8 @@ int main(int argc, char** argv)
         app_name,
         cu_up_cfg.log_cfg.filename == "stdout" ? std::string_view() : cu_up_cfg.log_cfg.filename,
         ocudulog::fetch_basic_logger("CU-UP"),
-        cu_up_cfg.log_cfg.all_level);
+        cu_up_cfg.log_cfg.all_level,
+        cu_up_cfg.log_cfg.flush_app_banner);
 
     auto exec_metrics_session = exec_metrics_service.service
                                     ? exec_metrics_service.service->create_session(workers.get_metrics_executor())

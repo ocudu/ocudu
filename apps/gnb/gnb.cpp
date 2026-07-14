@@ -623,7 +623,8 @@ int main(int argc, char** argv)
         app_name,
         gnb_cfg.log_cfg.filename == "stdout" ? std::string_view() : gnb_cfg.log_cfg.filename,
         gnb_logger,
-        gnb_cfg.log_cfg.all_level);
+        gnb_cfg.log_cfg.all_level,
+        gnb_cfg.log_cfg.flush_app_banner);
 
     auto exec_metrics_session = exec_metrics_service.service
                                     ? exec_metrics_service.service->create_session(workers.get_metrics_executor())

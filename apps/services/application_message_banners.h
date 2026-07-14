@@ -22,8 +22,9 @@ public:
   application_message_banners(std::string_view        app_name,
                               std::string_view        log_filename_,
                               ocudulog::basic_logger& logger_,
-                              ocudulog::basic_levels  original_level_) :
-    log_filename(log_filename_), logger(logger_), original_level(original_level_)
+                              ocudulog::basic_levels  original_level_,
+                              bool                    flush_banner_ = false) :
+    log_filename(log_filename_), logger(logger_), original_level(original_level_), flush_banner(flush_banner_)
   {
     fmt::memory_buffer buffer;
     fmt::format_to(std::back_inserter(buffer), "==== {} started ===", app_name);
@@ -65,7 +66,9 @@ private:
   {
     logger.set_level(ocudulog::basic_levels::info);
     logger.info("{}", to_c_str(buffer));
-    ocudulog::flush();
+    if (flush_banner) {
+      ocudulog::flush();
+    }
     logger.set_level(original_level);
 
     fmt::println("{}", to_c_str(buffer));
@@ -75,6 +78,7 @@ private:
   std::string                  log_filename;
   ocudulog::basic_logger&      logger;
   const ocudulog::basic_levels original_level;
+  const bool                   flush_banner;
 };
 
 } // namespace app_services

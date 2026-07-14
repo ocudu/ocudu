@@ -38,6 +38,11 @@ static void configure_cli11_log_args(CLI::App& app, logger_appconfig& log_params
              "Maximum number of bytes to print in hex (zero for no hex dumps, -1 for unlimited bytes)")
       ->capture_default_str()
       ->check(CLI::Range(-1, 1024));
+  add_option(app,
+             "--flush_app_banner",
+             log_params.flush_app_banner,
+             "Flush the logger when writing the application start and stop banners (not applicable to du_low)")
+      ->capture_default_str();
   // Post-parsing callback. This allows us to set the log level to "all" level, if no level is provided.
   app.callback([&]() {
     // Do nothing when all_level is not defined or it is defined as warning.

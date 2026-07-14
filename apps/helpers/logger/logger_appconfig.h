@@ -22,6 +22,9 @@ struct logger_appconfig {
 
   /// Maximum number of bytes to write when dumping hex arrays.
   int hex_max_size = 0;
+
+  /// Flush the logger when the application start and stop banners are written.
+  bool flush_app_banner = false;
 };
 
 } // namespace ocudu
