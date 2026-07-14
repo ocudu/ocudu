@@ -1115,12 +1115,13 @@ ngap_handover_preparation_request ocudu::ocucp::generate_handover_preparation_re
     cu_cp_ue_index_t                                          ue_index,
     const std::map<pdu_session_id_t, up_pdu_session_context>& pdu_sessions,
     nr_cell_identity                                          nci,
-    uint32_t                                                  gnb_id_bit_length)
+    uint32_t                                                  gnb_id_bit_length,
+    plmn_identity                                             target_plmn)
 {
   ngap_handover_preparation_request request = {};
   request.ue_index                          = ue_index;
   request.target_id.gnb_id                  = nci.gnb_id(gnb_id_bit_length);
-  request.target_id.plmn = plmn_identity::test_value(), request.target_id.tac = 7;
+  request.target_id.plmn = target_plmn, request.target_id.tac = 7;
   request.nci = nci;
   // Fill create a map of all PDU sessions and their associated QoS flows.
   for (const auto& pdu_session : pdu_sessions) {

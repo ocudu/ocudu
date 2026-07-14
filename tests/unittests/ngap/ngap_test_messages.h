@@ -253,7 +253,8 @@ ngap_handover_preparation_request
 generate_handover_preparation_request(cu_cp_ue_index_t                                          ue_index,
                                       const std::map<pdu_session_id_t, up_pdu_session_context>& pdu_sessions,
                                       nr_cell_identity nci               = nr_cell_identity::create({1, 22}, 1).value(),
-                                      uint32_t         gnb_id_bit_length = 22);
+                                      uint32_t         gnb_id_bit_length = 22,
+                                      plmn_identity    target_plmn       = plmn_identity::test_value());
 
 /// \brief Generate a valid dummy Handover Cancel Acknowledgement message.
 ngap_message generate_handover_cancel_ack(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
