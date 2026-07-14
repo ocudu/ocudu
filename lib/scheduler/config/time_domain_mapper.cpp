@@ -224,10 +224,11 @@ ul_time_domain_mapper::ul_time_domain_mapper(const ul_time_domain_builder_params
       get_pucch_k1_list_per_slot(common_k1_list, params.tdd_cfg, pusch_td_res_list, pusch_td_res_indices_per_slot);
 }
 
-std::optional<uint8_t> ul_time_domain_mapper::find_pusch_td_res_index(slot_point        pdcch_slot,
-                                                                      slot_point        pusch_slot,
-                                                                      ofdm_symbol_range usable_symbols,
-                                                                      unsigned          ntn_cs_koffset) const
+std::optional<uint8_t> ul_time_domain_mapper::find_pusch_td_res_index(slot_point             pdcch_slot,
+                                                                      slot_point             pusch_slot,
+                                                                      ofdm_symbol_range      usable_symbols,
+                                                                      unsigned               ntn_cs_koffset,
+                                                                      std::optional<uint8_t> retx_symbols) const
 {
   std::optional<uint8_t> best;
   for (uint8_t idx : pusch_td_res_indices(pdcch_slot.count())) {
@@ -237,6 +238,12 @@ std::optional<uint8_t> ul_time_domain_mapper::find_pusch_td_res_index(slot_point
     }
     if (not usable_symbols.contains(pusch_td_res.symbols)) {
       continue;
+    }
+    if (retx_symbols.has_value()) {
+      if (pusch_td_res.symbols.length() != *retx_symbols) {
+        continue;
+      }
+      return idx;
     }
     if (not best.has_value() or pusch_td_res_list[*best].symbols.length() < pusch_td_res.symbols.length()) {
       best = idx;

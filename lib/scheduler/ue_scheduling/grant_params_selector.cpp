@@ -428,9 +428,12 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
   }
 
   // Make sure the PUSCH time resource symbols fit within the UL symbols available in this slot; this is to avoid
-  // allocating the PUSCH over SRS resource symbols, if any.
-  const std::optional<uint8_t> pusch_td_index =
-      bwp_cfg.ul.td_mapper().find_pusch_td_res_index(pdcch_slot, pusch_slot, allowed_symbols, cell_cfg.ntn_cs_koffset);
+  // allocating the PUSCH over SRS resource symbols, if any. For a reTx, the time resource must also match the
+  // number of symbols used by the original transmission.
+  const std::optional<uint8_t> retx_symbols =
+      h_ul != nullptr ? std::optional<uint8_t>{h_ul->get_grant_params().nof_symbols} : std::nullopt;
+  const std::optional<uint8_t> pusch_td_index = bwp_cfg.ul.td_mapper().find_pusch_td_res_index(
+      pdcch_slot, pusch_slot, allowed_symbols, cell_cfg.ntn_cs_koffset, retx_symbols);
   if (not pusch_td_index.has_value()) {
     return std::nullopt;
   }

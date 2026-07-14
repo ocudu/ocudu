@@ -125,11 +125,14 @@ struct ul_time_domain_mapper {
   /// in \c pdcch_slot, whose k2 (plus \c ntn_cs_koffset) leads to \c pusch_slot and whose symbols are fully contained
   /// within \c usable_symbols. "Best" means the candidate with the largest \c symbols.length() among those that
   /// qualify; ties keep the first one encountered.
+  /// \param retx_symbols For a retransmission, the number of symbols used by the original transmission; only
+  /// candidates with a matching \c symbols.length() qualify. Empty for a new transmission.
   /// \return The matching index, or \c std::nullopt if no candidate qualifies.
-  std::optional<uint8_t> find_pusch_td_res_index(slot_point        pdcch_slot,
-                                                 slot_point        pusch_slot,
-                                                 ofdm_symbol_range usable_symbols,
-                                                 unsigned          ntn_cs_koffset) const;
+  std::optional<uint8_t> find_pusch_td_res_index(slot_point             pdcch_slot,
+                                                 slot_point             pusch_slot,
+                                                 ofdm_symbol_range      usable_symbols,
+                                                 unsigned               ntn_cs_koffset,
+                                                 std::optional<uint8_t> retx_symbols = std::nullopt) const;
 
   /// Retrieve the list of k1 candidates for PDSCH-to-HARQ timing used with UE-dedicated DCI.
   span<const uint8_t> dedicated_k1_candidates() const { return dedicated_k1_list; }
