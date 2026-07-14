@@ -362,3 +362,76 @@ TEST_F(sib_pdu_assembler_pws_test, when_unrelated_si_reconfiguration_occurs_then
   }
   ASSERT_EQ(sched.nof_pws_broadcast_indications, 3);
 }
+
+/// Fixture with a single SI-message pre-provisioned at index 0, marked both requires_activation and
+/// test_mode_auto_broadcast, mirroring a cell whose test_mode.warning ETWS/CMAS config is set -- the content is
+/// already present in si_messages[0] at construction time (built by the DU-manager translators from the test_mode
+/// config), and the assembler must broadcast it right away, indefinitely.
+class sib_pdu_assembler_test_mode_auto_broadcast_test : public ::testing::Test
+{
+public:
+  sib_pdu_assembler_test_mode_auto_broadcast_test() :
+    assembler(to_du_cell_index(0), sys_info_cfg, timer_factory{timers, task_worker}, sched)
+  {
+  }
+
+  static mac_cell_sys_info_config make_sys_info_cfg()
+  {
+    mac_cell_sys_info_config cfg;
+    cfg.sib1 = make_random_pdu();
+    cfg.si_messages.push_back(make_random_segmented_pdu(50, 2));
+    si_message_scheduling_config& si_msg_cfg = cfg.si_sched_cfg.si_sched_cfg.si_messages.emplace_back();
+    si_msg_cfg.requires_activation           = true;
+    si_msg_cfg.test_mode_auto_broadcast      = true;
+    return cfg;
+  }
+
+  manual_task_worker                        task_worker{128};
+  timer_manager                             timers;
+  test_helpers::dummy_mac_scheduler_adapter sched;
+
+  mac_cell_sys_info_config sys_info_cfg = make_sys_info_cfg();
+  sib_pdu_assembler        assembler;
+
+  slot_point_extended current_slot{subcarrier_spacing::kHz30, 0};
+};
+
+TEST_F(sib_pdu_assembler_test_mode_auto_broadcast_test,
+       when_assembler_is_constructed_then_scheduler_is_signalled_for_indefinite_broadcast)
+{
+  ASSERT_EQ(sched.nof_pws_broadcast_indications, 1);
+  ASSERT_EQ(sched.last_pws_si_msg_idx, 0);
+  ASSERT_FALSE(sched.last_pws_nof_segments.has_value()) << "test_mode auto-broadcast must never auto-deactivate";
+}
+
+TEST_F(sib_pdu_assembler_test_mode_auto_broadcast_test, when_content_is_encoded_then_it_matches_configured_si_message)
+{
+  const auto& segments = sys_info_cfg.si_messages[0];
+
+  units::bytes    tbs{static_cast<unsigned>(segments[0].length())};
+  sib_information si_info = make_sib_pdu(0, 0, tbs);
+
+  si_info.is_repetition    = false;
+  span<const uint8_t> pdu0 = assembler.encode_si_pdu(current_slot, si_info);
+  ASSERT_EQ(byte_buffer::create(pdu0).value(), segments[0]);
+
+  ++si_info.nof_txs;
+  span<const uint8_t> pdu1 = assembler.encode_si_pdu(current_slot, si_info);
+  ASSERT_EQ(byte_buffer::create(pdu1).value(), segments[1]);
+}
+
+TEST_F(sib_pdu_assembler_test_mode_auto_broadcast_test,
+       when_real_write_replace_warning_arrives_then_it_overrides_the_test_mode_broadcast)
+{
+  std::vector<byte_buffer>     segments = make_random_segmented_pdu(50, 1);
+  mac_cell_sys_info_pdu_update req;
+  req.si_msg_idx    = 0;
+  req.sib_idx       = 6;
+  req.si_messages   = span<byte_buffer>(segments);
+  req.pws_broadcast = pws_broadcast_indication{std::chrono::seconds{1}, 1};
+
+  ASSERT_TRUE(assembler.handle_si_message_pdu_updates(req));
+  ASSERT_EQ(sched.nof_pws_broadcast_indications, 2);
+  ASSERT_TRUE(sched.last_pws_nof_segments.has_value());
+  ASSERT_EQ(sched.last_pws_nof_segments, 1);
+}

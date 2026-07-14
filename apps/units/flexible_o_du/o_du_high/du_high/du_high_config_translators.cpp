@@ -170,10 +170,9 @@ static sib5_info create_sib5_info(const du_high_unit_sib_config::sib5_config& co
 /// \brief Builds the placeholder content for a SIB6/7/8 entry that has a reserved occasion in the cell's
 /// si_sched_info but no active PWS broadcast (yet). This content is never actually transmitted -- the scheduler
 /// keeps the entry dormant until a real F1AP Write-Replace Warning activates it -- so any content is acceptable.
-static sib6_info create_sib6_info(const std::optional<du_high_unit_test_mode_warning_config::etws_config>& etws_cfg)
+static sib6_info create_sib6_info(const std::optional<du_high_unit_sib_config::etws_config>& etws_cfg)
 {
-  const du_high_unit_test_mode_warning_config::etws_config& cfg =
-      etws_cfg.value_or(du_high_unit_test_mode_warning_config::etws_config{});
+  const du_high_unit_sib_config::etws_config& cfg = etws_cfg.value_or(du_high_unit_sib_config::etws_config{});
 
   sib6_info sib6;
 
@@ -184,25 +183,23 @@ static sib6_info create_sib6_info(const std::optional<du_high_unit_test_mode_war
   return sib6;
 }
 
-static sib7_info create_sib7_info(const std::optional<du_high_unit_test_mode_warning_config::etws_config>& etws_cfg)
+static sib7_info create_sib7_info(const std::optional<du_high_unit_sib_config::etws_config>& etws_cfg)
 {
-  const du_high_unit_test_mode_warning_config::etws_config& cfg =
-      etws_cfg.value_or(du_high_unit_test_mode_warning_config::etws_config{});
+  const du_high_unit_sib_config::etws_config& cfg = etws_cfg.value_or(du_high_unit_sib_config::etws_config{});
 
   sib7_info sib7;
 
   sib7.message_id              = cfg.message_id;
   sib7.serial_number           = cfg.serial_num;
   sib7.data_coding_scheme      = cfg.data_coding_scheme;
-  sib7.warning_message_segment = cfg.warning_message.value_or(std::string{});
+  sib7.warning_message_segment = cfg.warning_message;
 
   return sib7;
 }
 
-static sib8_info create_sib8_info(const std::optional<du_high_unit_test_mode_warning_config::cmas_config>& cmas_cfg)
+static sib8_info create_sib8_info(const std::optional<du_high_unit_sib_config::cmas_config>& cmas_cfg)
 {
-  const du_high_unit_test_mode_warning_config::cmas_config& cfg =
-      cmas_cfg.value_or(du_high_unit_test_mode_warning_config::cmas_config{});
+  const du_high_unit_sib_config::cmas_config& cfg = cmas_cfg.value_or(du_high_unit_sib_config::cmas_config{});
 
   sib8_info sib8;
 
@@ -413,9 +410,7 @@ static ntn_cell_params make_ntn_cell_params(const du_high_unit_ntn_serving_cell_
 }
 
 /// Fill SI-Scheduling Information.
-static std::optional<si_scheduling_info_config>
-make_si_sched_info_config(const du_high_unit_base_cell_config& cell_cfg,
-                          const du_high_unit_test_mode_config& test_mode_cfg)
+static std::optional<si_scheduling_info_config> make_si_sched_info_config(const du_high_unit_base_cell_config& cell_cfg)
 {
   const auto& sib_cfg = cell_cfg.sib_cfg;
   if (sib_cfg.si_sched_info.empty()) {
@@ -432,8 +427,22 @@ make_si_sched_info_config(const du_high_unit_base_cell_config& cell_cfg,
     out_si.sib_mapping_info.resize(sib_cfg.si_sched_info[i].sib_mapping_info.size());
     out_si.si_window_position = sib_cfg.si_sched_info[i].si_window_position;
     for (unsigned j = 0; j != sib_cfg.si_sched_info[i].sib_mapping_info.size(); ++j) {
-      sibs_included.push_back(sib_cfg.si_sched_info[i].sib_mapping_info[j]);
-      out_si.sib_mapping_info[j] = static_cast<sib_type>(sibs_included.back());
+      const uint8_t sib_id = sib_cfg.si_sched_info[i].sib_mapping_info[j];
+      sibs_included.push_back(sib_id);
+      out_si.sib_mapping_info[j] = static_cast<sib_type>(sib_id);
+      // If the SIB6/7/8 config is explicitly set, broadcast the SI-message right away, indefinitely, instead of
+      // staying dormant until an F1AP Write-Replace Warning activates it.
+      switch (sib_id) {
+        case 6:
+        case 7:
+          out_si.auto_broadcast |= sib_cfg.etws_cfg.has_value();
+          break;
+        case 8:
+          out_si.auto_broadcast |= sib_cfg.cmas_cfg.has_value();
+          break;
+        default:
+          break;
+      }
     }
   }
 
@@ -471,16 +480,17 @@ make_si_sched_info_config(const du_high_unit_base_cell_config& cell_cfg,
       } break;
       case 6: {
         // SIB6 keeps a permanently reserved SI-message occasion; the scheduler leaves it dormant until an actual
-        // F1AP Write-Replace Warning activates it, so a missing test_mode ETWS config is not an error.
-        item = create_sib6_info(test_mode_cfg.warning.etws_cfg);
+        // F1AP Write-Replace Warning activates it, so a missing ETWS config is not an error. If etws_cfg is set, it
+        // is broadcast right away instead, indefinitely (see si_message_sched_info::auto_broadcast).
+        item = create_sib6_info(sib_cfg.etws_cfg);
       } break;
       case 7: {
         // See SIB6 comment above -- SIB7 is likewise dormant until a real warning is activated.
-        item = create_sib7_info(test_mode_cfg.warning.etws_cfg);
+        item = create_sib7_info(sib_cfg.etws_cfg);
       } break;
       case 8: {
         // See SIB6 comment above -- SIB8 is likewise dormant until a real warning is activated.
-        item = create_sib8_info(test_mode_cfg.warning.cmas_cfg);
+        item = create_sib8_info(sib_cfg.cmas_cfg);
       } break;
       case 16: {
         if (!sib_cfg.sib16_cfg.has_value()) {
@@ -531,9 +541,7 @@ static mac_cell_group_params make_mac_cell_group_params(const du_high_unit_base_
   return mcg_params;
 }
 
-static void fill_si_acquisition_info(si_acquisition_info&                 si,
-                                     const du_high_unit_base_cell_config& cli_cfg,
-                                     const du_high_unit_test_mode_config& test_mode_cfg)
+static void fill_si_acquisition_info(si_acquisition_info& si, const du_high_unit_base_cell_config& cli_cfg)
 {
   // Cell selection parameters.
   si.cell_sel_info.q_rx_lev_min = cli_cfg.q_rx_lev_min;
@@ -543,7 +551,7 @@ static void fill_si_acquisition_info(si_acquisition_info&                 si,
     si.cell_acc_rel_info.additional_plmns.push_back(plmn_identity::parse(plmn).value());
   }
   // SI message config.
-  si.si_config = make_si_sched_info_config(cli_cfg, test_mode_cfg);
+  si.si_config = make_si_sched_info_config(cli_cfg);
   // UE timers and constants config.
   si.ue_timers_and_constants.t300 = std::chrono::milliseconds(cli_cfg.sib_cfg.ue_timers_and_constants.t300);
   si.ue_timers_and_constants.t301 = std::chrono::milliseconds(cli_cfg.sib_cfg.ue_timers_and_constants.t301);
@@ -619,7 +627,7 @@ std::vector<odu::du_cell_config> ocudu::generate_du_cell_config(const du_high_un
     out_cell.ran.dl_carrier.nof_ant = base_cell.nof_antennas_dl;
     out_cell.ran.ul_carrier.nof_ant = base_cell.nof_antennas_ul;
     // > System Information.
-    fill_si_acquisition_info(out_cell.si, base_cell, config.test_mode_cfg);
+    fill_si_acquisition_info(out_cell.si, base_cell);
     if (out_cell.si.si_config.has_value()) {
       // Enable otherSI search space.
       out_cell.ran.dl_cfg_common.init_dl_bwp.pdcch_common.other_si_search_space_id = to_search_space_id(1);

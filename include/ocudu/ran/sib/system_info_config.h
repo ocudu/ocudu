@@ -269,6 +269,10 @@ struct si_message_sched_info {
   /// entry of schedulingInfoList2. See TS 38.331, \c SchedulingInfo2-r17. Values: {1,...,256}.
   /// \remark This field is only applicable for release 17 \c SI-SchedulingInfo.
   std::optional<unsigned> si_window_position;
+  /// \brief Whether this SI-message (carrying SIB6/7/8) should be broadcast right away, indefinitely, instead of
+  /// staying dormant until an actual F1AP Write-Replace Warning activates it. Only meaningful when the SI-message
+  /// exclusively carries SIB6/7/8 (see \c si_message_scheduling_config::requires_activation).
+  bool auto_broadcast = false;
 };
 
 /// This struct contains the information required for the generation of the SI messages sent by the network and the

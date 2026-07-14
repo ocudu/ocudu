@@ -67,7 +67,7 @@ void si_message_scheduler::handle_si_message_update_indication(unsigned         
   }
 }
 
-void si_message_scheduler::activate_si_message(unsigned si_msg_idx, unsigned nof_segments)
+void si_message_scheduler::activate_si_message(unsigned si_msg_idx, std::optional<unsigned> nof_segments)
 {
   ocudu_assert(si_msg_idx < pending_messages.size(), "Invalid SI-message index");
 
@@ -161,9 +161,10 @@ void si_message_scheduler::schedule_pending_si_messages(cell_slot_resource_alloc
       ++si_ctxt.nof_tx_in_current_window;
       ++si_ctxt.total_nof_tx;
 
-      if (si_sched_cfg.si_messages[i].requires_activation) {
+      if (si_sched_cfg.si_messages[i].requires_activation and si_ctxt.nof_segments.has_value()) {
         // Once all segments of the current activation have been transmitted, go back to dormant.
-        if (++si_ctxt.nof_tx >= si_ctxt.nof_segments) {
+        // Note: If nof_segments is nullopt, the activation broadcasts indefinitely and never goes back to dormant.
+        if (++si_ctxt.nof_tx >= si_ctxt.nof_segments.value()) {
           si_ctxt.active = false;
         }
       }

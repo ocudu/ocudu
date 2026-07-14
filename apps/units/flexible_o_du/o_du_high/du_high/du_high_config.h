@@ -830,6 +830,74 @@ struct du_high_unit_sib_config {
     std::vector<freq_priority_slicing_config> freq_prio_list_slicing;
   };
 
+  /// \brief Earthquake and Tsunami Warning System (ETWS) message parameters, for testing purposes.
+  ///
+  /// ETWS messages are broadcasted over SIB 6 and SIB 7. SIB 6 carries the ETWS primary notification, while SIB-7
+  /// carries the secondary notification.
+  ///
+  /// \remark Only used by cells that schedule SIB6/7 in their \ref si_sched_info. This is a testing aid, not part of
+  /// the real Write-Replace Warning feature: if set, SIB6/7 immediately and permanently broadcast this fixed content,
+  /// instead of staying dormant until an actual F1AP Write-Replace Warning is received.
+  struct etws_config {
+    /// \brief ETWS message ID (see \ref sib6_info::message_id). Values: {0, ..., 0xffff}
+    /// \remark See TS23.041 Section 9.4.1.2.2 for a list of meaningful values.
+    unsigned message_id = 0x1104;
+    /// \brief ETWS message serial number (see \ref sib6_info::serial_number). Values: {0, ..., 0xffff}
+    /// \remark See TS23.041 Section 9.4.1.2.1 for a list of meaningful values.
+    unsigned serial_num = 0x3000;
+    /// \brief ETWS warning type (see \ref sib6_info::warning_type). Values: {0, ..., 0xffff}
+    /// \remark See TS23.041 Section 9.3.24 for a list of meaningful values.
+    unsigned warning_type = 0x0980;
+    /// \brief CBS Coding scheme used for the warning message. Values: {0, ..., 0xff}.
+    ///
+    /// Supported coding schemes:
+    ///   - 0x00..0x0f: Languages using GSM-7 default alphabet.
+    ///   - 0x40..0x4f: General data coding indication (uncompressed text, no message class meaning).
+    ///     Set bits 3..2 to 0b00 for GSM-7 or 0b10 for UCS-2. Other character sets are not supported.
+    ///   - 0x50..0x5f: General data coding indication (uncompressed text, message class meaning).
+    ///     Set bits 3..2 to 0b00 for GSM-7 or 0b10 for UCS-2. Other character sets are not supported.
+    ///   - 0xf0..0xff: Data coding / message handling.
+    ///     Bit 2 must be set to 0 (GSM-7 encoding).
+    ///
+    /// \remark See TS23.038 Section 5 for a list of meaningful values.
+    unsigned data_coding_scheme = 0x00;
+    /// \brief ETWS warning message.
+    /// \remark Character support depends on the chosen coding scheme (see \ref data_coding_scheme).
+    std::string warning_message;
+  };
+
+  /// \brief Commercial Mobile Alert Service (CMAS) message parameters, for testing purposes.
+  ///
+  /// CMAS messages are broadcasted over SIB 8.
+  ///
+  /// \remark Only used by cells that schedule SIB8 in their \ref si_sched_info. This is a testing aid, not part of the
+  /// real Write-Replace Warning feature: if set, SIB8 immediately and permanently broadcasts this fixed content,
+  /// instead of staying dormant until an actual F1AP Write-Replace Warning is received.
+  struct cmas_config {
+    /// \brief CMAS message ID (see \ref sib8_info::message_id). Values: {0, ..., 0xffff}
+    /// \remark See TS23.041 Section 9.4.1.2.2 for a list of meaningful values.
+    unsigned message_id = 0x1112;
+    /// \brief CMAS message serial number (see \ref sib8_info::serial_number). Values: {0, ..., 0xffff}
+    /// \remark See TS23.041 Section 9.4.1.2.1 for a list of meaningful values.
+    unsigned serial_num = 0x3003;
+    /// \brief CBS Coding scheme used for the warning message Values: {0, ..., 0xff}.
+    ///
+    /// Supported coding schemes:
+    ///   - 0x00..0x0f: Languages using GSM-7 default alphabet.
+    ///   - 0x40..0x4f: General data coding indication (uncompressed text, no message class meaning).
+    ///     Set bits 3..2 to 0b00 for GSM-7 or 0b10 for UCS-2. Other character sets are not supported.
+    ///   - 0x50..0x5f: General data coding indication (uncompressed text, message class meaning).
+    ///     Set bits 3..2 to 0b00 for GSM-7 or 0b10 for UCS-2. Other character sets are not supported.
+    ///   - 0xf0..0xff: Data coding / message handling.
+    ///     Bit 2 must be set to 0 (GSM-7 encoding).
+    ///
+    /// \remark See TS23.038 Section 5 for a list of meaningful values.
+    unsigned data_coding_scheme = 0x00;
+    /// \brief CMAS warning message.
+    /// \remark Character support depends on the chosen coding scheme (see \ref data_coding_scheme).
+    std::string warning_message;
+  };
+
   struct sib_ue_timers_and_constants {
     /// t300
     /// Values (in ms): {100, 200, 300, 400, 600, 1000, 1500, 2000}
@@ -873,6 +941,10 @@ struct du_high_unit_sib_config {
   std::optional<sib16_config> sib16_cfg;
   /// Parameters of the SIB19.
   sib19_info sib19;
+  /// ETWS configuration parameters.
+  std::optional<etws_config> etws_cfg;
+  /// CMAS configuration parameters.
+  std::optional<cmas_config> cmas_cfg;
 };
 
 struct du_high_unit_csi_config {
@@ -1175,87 +1247,10 @@ struct du_high_unit_test_mode_ue_config {
   unsigned i_2   = 0;
 };
 
-/// gNB app Test Mode Public Warning System (PWS) configuration.
-struct du_high_unit_test_mode_warning_config {
-  /// \brief Earthquake and Tsunami Warning System (ETWS) message parameters.
-  ///
-  /// ETWS messages are broadcasted over SIB 6 and SIB 7. SIB 6 carries the ETWS primary notification, while SIB-7
-  /// carries the secondary notification.
-  ///
-  /// \remark Only used by cells that schedule SIB6/7 in their \ref du_high_unit_sib_config::si_sched_info.
-  struct etws_config {
-    /// \brief ETWS message ID (see \ref sib6_info::message_id). Values: {0, ..., 0xffff}
-    /// \remark See TS23.041 Section 9.4.1.2.2 for a list of meaningful values.
-    unsigned message_id = 0x1104;
-    /// \brief ETWS message serial number (see \ref sib6_info::serial_number). Values: {0, ..., 0xffff}
-    /// \remark See TS23.041 Section 9.4.1.2.1 for a list of meaningful values.
-    unsigned serial_num = 0x3000;
-    /// \brief ETWS warning type (see \ref sib6_info::warning_type). Values: {0, ..., 0xffff}
-    /// \remark See TS23.041 Section 9.3.24 for a list of meaningful values.
-    unsigned warning_type = 0x0980;
-    /// \brief CBS Coding scheme used for the warning message. Values: {0, ..., 0xff}.
-    ///
-    /// Supported coding schemes:
-    ///   - 0x00..0x0f: Languages using GSM-7 default alphabet.
-    ///   - 0x40..0x4f: General data coding indication (uncompressed text, no message class meaning).
-    ///     Set bits 3..2 to 0b00 for GSM-7 or 0b10 for UCS-2. Other character sets are not supported.
-    ///   - 0x50..0x5f: General data coding indication (uncompressed text, message class meaning).
-    ///     Set bits 3..2 to 0b00 for GSM-7 or 0b10 for UCS-2. Other character sets are not supported.
-    ///   - 0xf0..0xff: Data coding / message handling.
-    ///     Bit 2 must be set to 0 (GSM-7 encoding).
-    ///
-    /// \remark See TS23.038 Section 5 for a list of meaningful values.
-    unsigned data_coding_scheme = 0x00;
-    /// \brief ETWS warning message.
-    ///
-    /// Character support depends on the chosen coding scheme (see \ref data_coding_scheme).
-    ///
-    /// \remark Required if SIB-7 is scheduled by any cell, otherwise leave unset.
-    std::optional<std::string> warning_message;
-  };
-
-  /// \brief Commercial Mobile Alert Service (CMAS) message parameters.
-  ///
-  /// CMAS messages are broadcasted over SIB 8.
-  ///
-  /// \remark Only used by cells that schedule SIB8 in their \ref du_high_unit_sib_config::si_sched_info.
-  struct cmas_config {
-    /// \brief CMAS message ID (see \ref sib8_info::message_id). Values: {0, ..., 0xffff}
-    /// \remark See TS23.041 Section 9.4.1.2.2 for a list of meaningful values.
-    unsigned message_id = 0x1112;
-    /// \brief CMAS message serial number (see \ref sib8_info::serial_number). Values: {0, ..., 0xffff}
-    /// \remark See TS23.041 Section 9.4.1.2.1 for a list of meaningful values.
-    unsigned serial_num = 0x3003;
-    /// \brief CBS Coding scheme used for the warning message Values: {0, ..., 0xff}.
-    ///
-    /// Supported coding schemes:
-    ///   - 0x00..0x0f: Languages using GSM-7 default alphabet.
-    ///   - 0x40..0x4f: General data coding indication (uncompressed text, no message class meaning).
-    ///     Set bits 3..2 to 0b00 for GSM-7 or 0b10 for UCS-2. Other character sets are not supported.
-    ///   - 0x50..0x5f: General data coding indication (uncompressed text, message class meaning).
-    ///     Set bits 3..2 to 0b00 for GSM-7 or 0b10 for UCS-2. Other character sets are not supported.
-    ///   - 0xf0..0xff: Data coding / message handling.
-    ///     Bit 2 must be set to 0 (GSM-7 encoding).
-    ///
-    /// \remark See TS23.038 Section 5 for a list of meaningful values.
-    unsigned data_coding_scheme = 0x00;
-    /// \brief CMAS warning message.
-    /// \remark Character support depends on the chosen coding scheme (see \ref data_coding_scheme).
-    std::string warning_message;
-  };
-
-  /// ETWS configuration parameters.
-  std::optional<etws_config> etws_cfg;
-  /// CMAS configuration parameters.
-  std::optional<cmas_config> cmas_cfg;
-};
-
 /// gNB app Test Mode configuration.
 struct du_high_unit_test_mode_config {
   /// Creates a UE with the given the given params for testing purposes.
   du_high_unit_test_mode_ue_config test_ue;
-  /// Public Warning System (PWS) test configuration.
-  du_high_unit_test_mode_warning_config warning;
 };
 
 /// Cell configuration

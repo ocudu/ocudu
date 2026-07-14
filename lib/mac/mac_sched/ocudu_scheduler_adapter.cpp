@@ -313,9 +313,9 @@ void ocudu_scheduler_adapter::handle_si_change_indication(const si_scheduling_up
   sched_impl->handle_si_update_request(request);
 }
 
-void ocudu_scheduler_adapter::handle_pws_broadcast_indication(du_cell_index_t cell_idx,
-                                                              unsigned        si_msg_idx,
-                                                              unsigned        nof_segments)
+void ocudu_scheduler_adapter::handle_pws_broadcast_indication(du_cell_index_t         cell_idx,
+                                                              unsigned                si_msg_idx,
+                                                              std::optional<unsigned> nof_segments)
 {
   sched_impl->handle_pws_broadcast_indication({cell_idx, si_msg_idx, nof_segments});
 }

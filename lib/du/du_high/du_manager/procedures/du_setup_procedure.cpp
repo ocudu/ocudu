@@ -24,8 +24,7 @@ using namespace odu;
 /// Derives MAC Cell Configuration from DU Cell Configuration.
 static mac_cell_creation_request make_mac_cell_config(du_cell_index_t                                 cell_index,
                                                       const du_cell_config&                           du_cfg,
-                                                      const byte_buffer&                              sib1,
-                                                      span<const bcch_dl_sch_payload_type>            si_messages,
+                                                      const mac_cell_sys_info_config&                 sys_info,
                                                       const sched_cell_configuration_request_message& sched_cell_cfg,
                                                       unsigned                                        max_nof_setup_ues)
 {
@@ -40,11 +39,15 @@ static mac_cell_creation_request make_mac_cell_config(du_cell_index_t           
   ocudu_assert(cs0_idx.has_value(), "CORESET#0 index not found in common PDCCH configuration");
   mac_cfg.cs0_index     = cs0_idx.value();
   mac_cfg.ss0_index     = du_cfg.ran.dl_cfg_common.init_dl_bwp.pdcch_common.get_searchspace0().value();
-  mac_cfg.sys_info.sib1 = sib1.copy();
-  for (auto& msg : si_messages) {
-    mac_cfg.sys_info.si_messages.push_back(msg);
+  mac_cfg.sys_info.sib1 = sys_info.sib1.copy();
+  for (const auto& msg : sys_info.si_messages) {
+    auto& copied_msg = mac_cfg.sys_info.si_messages.emplace_back();
+    for (const byte_buffer& segment : msg) {
+      copied_msg.push_back(segment.copy());
+    }
   }
-  mac_cfg.sys_info.sib1_contains_hypersfn = du_cfg.ran.init_bwp.paging.edrx_enabled;
+  mac_cfg.sys_info.sib1_contains_hypersfn = sys_info.sib1_contains_hypersfn;
+  mac_cfg.sys_info.si_sched_cfg           = sys_info.si_sched_cfg;
   mac_cfg.sched_req                       = sched_cell_cfg;
   mac_cfg.cell_barred                     = du_cfg.cell_barred;
   mac_cfg.intra_freq_reselection          = du_cfg.intra_freq_reselection;
@@ -178,12 +181,7 @@ void du_setup_procedure::configure_du_cells()
 
     // Forward config to MAC.
     ctxt.params.mac.mgr.get_cell_manager().add_cell(
-        make_mac_cell_config(cell_index,
-                             du_cfg,
-                             sys_info.sib1,
-                             sys_info.si_messages,
-                             sched_cfg,
-                             ctxt.res_mng.get_max_nof_setup_ues(cell_index)));
+        make_mac_cell_config(cell_index, du_cfg, sys_info, sched_cfg, ctxt.res_mng.get_max_nof_setup_ues(cell_index)));
   }
 }
 

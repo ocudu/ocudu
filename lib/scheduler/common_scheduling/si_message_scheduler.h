@@ -7,6 +7,7 @@
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "ocudu/ocudulog/logger.h"
 #include "ocudu/support/units.h"
+#include <optional>
 
 namespace ocudu {
 
@@ -25,10 +26,13 @@ public:
   /// \brief Update the SI messages.
   void handle_si_message_update_indication(unsigned version, const si_scheduling_config& new_si_sched_cfg);
 
-  /// \brief Activates an SI-message that requires explicit activation (see \c si_message_scheduling_config) for
-  /// exactly \c nof_segments consecutive window transmissions, after which it automatically goes back to dormant
-  /// until the next activation.
-  void activate_si_message(unsigned si_msg_idx, unsigned nof_segments);
+  /// \brief Activates an SI-message that requires explicit activation (see \c si_message_scheduling_config).
+  ///
+  /// If \c nof_segments has a value, the SI-message is activated for exactly that many consecutive window
+  /// transmissions, after which it automatically goes back to dormant until the next activation. If \c nof_segments
+  /// is \c std::nullopt, the SI-message is activated indefinitely and never automatically deactivates (used for
+  /// test_mode-configured content that should broadcast forever).
+  void activate_si_message(unsigned si_msg_idx, std::optional<unsigned> nof_segments);
 
   /// Called when cell is deactivated.
   void stop();
@@ -44,8 +48,9 @@ private:
     /// \brief Whether this SI-message is currently active (i.e. allowed to be scheduled).
     /// \remark Always true for SI-messages that do not require explicit activation.
     bool active = false;
-    /// Number of segments to transmit before the on-going activation goes back to dormant.
-    unsigned nof_segments = 0;
+    /// \brief Number of segments to transmit before the on-going activation goes back to dormant.
+    /// \remark If \c std::nullopt, the activation never automatically goes back to dormant (broadcast forever).
+    std::optional<unsigned> nof_segments;
     /// Number of window transmissions completed since the current activation.
     unsigned nof_tx = 0;
   };

@@ -33,9 +33,9 @@ public:
 private:
   /// Request written into \c pending_pws_req, tagged with a locally-generated version for newness detection.
   struct pws_pending_request {
-    si_version_type version;
-    unsigned        si_msg_idx;
-    unsigned        nof_segments;
+    si_version_type         version;
+    unsigned                si_msg_idx;
+    std::optional<unsigned> nof_segments;
   };
 
   void try_handle_pending_request(cell_resource_allocator& res_alloc);
@@ -73,7 +73,7 @@ private:
 
   si_version_type                             next_pws_version = 1;
   si_version_type                             last_pws_version = 0;
-  lockfree_triple_buffer<pws_pending_request> pending_pws_req{pws_pending_request{0, 0, 0}};
+  lockfree_triple_buffer<pws_pending_request> pending_pws_req{pws_pending_request{0, 0, std::nullopt}};
   /// Whether a PWS (ETWS/CMAS) short-message notification is still pending transmission at a paging occasion.
   bool pws_short_msg_pending = false;
 

@@ -6,6 +6,7 @@
 
 #include "ocudu/ran/du_types.h"
 #include "ocudu/scheduler/config/si_scheduling_config.h"
+#include <optional>
 
 namespace ocudu {
 
@@ -23,18 +24,21 @@ struct si_scheduling_update_request {
 };
 
 /// \brief Requests the scheduler to broadcast a PWS (ETWS/CMAS) short-message notification and activate the target
-/// SI-message for one complete broadcast (i.e. \c nof_segments consecutive SI-message window transmissions).
+/// SI-message.
 ///
-/// Repetition (TS 38.473, Section 8.5.1 "Repetition Period"/"Number of Broadcasts Requested") is entirely handled by
-/// the MAC layer, which re-issues this request once per broadcast occurrence.
+/// If \c nof_segments has a value, the SI-message is activated for one complete broadcast (i.e. \c nof_segments
+/// consecutive SI-message window transmissions), after which it automatically goes back to dormant. Repetition (TS
+/// 38.473, Section 8.5.1 "Repetition Period"/"Number of Broadcasts Requested") is entirely handled by the MAC layer,
+/// which re-issues this request once per broadcast occurrence. If \c nof_segments is \c std::nullopt, the SI-message
+/// is activated indefinitely and broadcasts forever (used for test_mode-configured content).
 struct pws_broadcast_request {
   /// Cell index specific to this PWS broadcast indication.
   du_cell_index_t cell_index;
   /// Index of the SI-message carrying the SIB6/7/8 to activate.
   unsigned si_msg_idx;
   /// Number of segments composing the warning message, i.e. the number of consecutive SI-message window
-  /// transmissions needed to complete one broadcast.
-  unsigned nof_segments;
+  /// transmissions needed to complete one broadcast. \c std::nullopt means broadcast indefinitely.
+  std::optional<unsigned> nof_segments;
 };
 
 /// Interface used to notify new SIB1 or SI message updates to the scheduler.

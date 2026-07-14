@@ -9,6 +9,7 @@
 #include "ocudu/mac/mac_ue_control_information_handler.h"
 #include "ocudu/ran/du_types.h"
 #include "ocudu/ran/slot_point_extended.h"
+#include <optional>
 
 namespace ocudu {
 
@@ -49,13 +50,15 @@ public:
   virtual void handle_si_change_indication(const si_scheduling_update_request& request) = 0;
 
   /// \brief Request the scheduler to broadcast a PWS (ETWS/CMAS) short-message notification and activate the target
-  /// SI-message for one complete broadcast. Repetition is handled entirely by the MAC layer, which re-issues this
-  /// request once per broadcast occurrence.
+  /// SI-message. If \c nof_segments has a value, the SI-message is activated for one complete broadcast (repetition
+  /// is handled entirely by the MAC layer, which re-issues this request once per broadcast occurrence); if
+  /// \c std::nullopt, the SI-message broadcasts indefinitely.
   /// \param[in] cell_idx DU-specific index of the cell for which the indication is directed.
   /// \param[in] si_msg_idx Index of the SI-message carrying the SIB6/7/8 to activate.
-  /// \param[in] nof_segments Number of segments composing the warning message.
-  virtual void
-  handle_pws_broadcast_indication(du_cell_index_t cell_idx, unsigned si_msg_idx, unsigned nof_segments) = 0;
+  /// \param[in] nof_segments Number of segments composing the warning message, or \c std::nullopt for indefinite.
+  virtual void handle_pws_broadcast_indication(du_cell_index_t         cell_idx,
+                                               unsigned                si_msg_idx,
+                                               std::optional<unsigned> nof_segments) = 0;
 
   /// \brief Handle request to update the slice configuration of a cell.
   /// \param[in] cell_index Index of the cell for which the measurement is directed.

@@ -217,6 +217,26 @@ public:
     return true;
   }
 
+  /// \brief Activates this SI-message index once, unconditionally, using the given content, and never
+  /// auto-deactivates it. Used to seed a test_mode-configured PWS SI-message at cell startup, broadcasting the
+  /// configured ETWS/CMAS content indefinitely. No repeat timer is involved -- the scheduler is asked to broadcast
+  /// forever, so there is no need to ever re-signal it.
+  void activate_forever(span<const byte_buffer> segments)
+  {
+    ++ctrl.version;
+
+    // Publish the content to the real-time path.
+    content_snapshot snap;
+    snap.version = ctrl.version;
+    for (const byte_buffer& segment : segments) {
+      snap.segments.append_segment(
+          bcch_segment{make_linear_buffer(segment), units::bytes{static_cast<unsigned>(segment.length())}});
+    }
+    pending.write_and_commit(snap);
+
+    sched.handle_pws_broadcast_indication(cell_index, si_msg_idx, std::nullopt);
+  }
+
   expected<span<const uint8_t>, units::bytes> encode(slot_point_extended /*sl_tx*/,
                                                      const sib_information& si_info) override
   {
@@ -287,7 +307,7 @@ private:
     }
     --ctrl.nof_broadcasts_remaining;
 
-    sched.handle_pws_broadcast_indication(cell_index, si_msg_idx, ctrl.nof_segments);
+    sched.handle_pws_broadcast_indication(cell_index, si_msg_idx, std::optional<unsigned>{ctrl.nof_segments});
 
     if (ctrl.nof_broadcasts_remaining == 0) {
       return;
@@ -329,6 +349,11 @@ sib_pdu_assembler::sib_pdu_assembler(du_cell_index_t                  cell_index
   for (unsigned i = 0, e = req.si_messages.size(); i != e; ++i) {
     if (i < si_sched_messages.size() and si_sched_messages[i].requires_activation) {
       pws_encoders[i] = std::make_shared<pws_si_msg_encoder>(i, timers, sched, cell_index);
+      if (si_sched_messages[i].test_mode_auto_broadcast) {
+        // test_mode ETWS/CMAS config was set for this SI-message. Broadcast its (already encoded) content right
+        // away, indefinitely, instead of waiting for a real Write-Replace Warning.
+        pws_encoders[i]->activate_forever(req.si_messages[i]);
+      }
     }
   }
 

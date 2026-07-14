@@ -28,6 +28,11 @@ struct si_message_scheduling_config {
   /// scheduled until activated (see \c si_message_scheduler::activate_si_message). Used e.g. for SI-messages that
   /// only carry PWS (ETWS/CMAS) SIBs (SIB6/7/8), which stay dormant until a Write-Replace Warning is received.
   bool requires_activation = false;
+  /// \brief Whether this SI-message should be activated at cell startup and broadcast indefinitely, rather than
+  /// waiting for a Write-Replace Warning.
+  ///
+  /// Only meaningful when \c requires_activation is true. Used for test_mode-configured ETWS/CMAS content.
+  bool test_mode_auto_broadcast = false;
 };
 
 /// \brief Configuration of the SI message scheduling.

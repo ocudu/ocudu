@@ -41,6 +41,8 @@ si_scheduling_config ocudu::odu::make_si_scheduling_info_config(const du_cell_co
           std::all_of(sib_mapping_info.begin(), sib_mapping_info.end(), [](sib_type t) {
             return t == sib_type::sib6 || t == sib_type::sib7 || t == sib_type::sib8;
           });
+      // See si_message_sched_info::auto_broadcast.
+      sched_req.si_messages[i].test_mode_auto_broadcast = du_cfg.si.si_config->si_sched_info[i].auto_broadcast;
     }
   }
 
