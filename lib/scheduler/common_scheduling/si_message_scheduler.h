@@ -25,6 +25,11 @@ public:
   /// \brief Update the SI messages.
   void handle_si_message_update_indication(unsigned version, const si_scheduling_config& new_si_sched_cfg);
 
+  /// \brief Activates an SI-message that requires explicit activation (see \c si_message_scheduling_config) for
+  /// exactly \c nof_segments consecutive window transmissions, after which it automatically goes back to dormant
+  /// until the next activation.
+  void activate_si_message(unsigned si_msg_idx, unsigned nof_segments);
+
   /// Called when cell is deactivated.
   void stop();
 
@@ -36,6 +41,13 @@ private:
     unsigned nof_tx_in_current_window = 0;
     /// Total number of SI message transmissions.
     unsigned long total_nof_tx = 0;
+    /// \brief Whether this SI-message is currently broadcasting (i.e. allowed to be scheduled).
+    /// \remark Always true for SI-messages that do not require explicit activation.
+    bool broadcasting = false;
+    /// Number of segments to transmit before the on-going activation goes back to dormant.
+    unsigned nof_segments = 0;
+    /// Number of window transmissions completed since the current activation.
+    unsigned nof_tx = 0;
   };
 
   void update_si_message_windows(slot_point sl_tx);

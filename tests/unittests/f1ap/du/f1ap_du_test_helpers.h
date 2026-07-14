@@ -273,7 +273,7 @@ public:
   async_task<std::vector<du_cell_index_t>>
   on_write_replace_warning_received(const write_replace_warning_information& msg) override
   {
-    last_pws_info = msg;
+    last_pws_info.emplace(msg);
     return launch_no_op_task(cells_to_accept);
   }
 };

@@ -25,6 +25,9 @@ si_message_scheduler::si_message_scheduler(const cell_configuration&   cfg_,
   logger(ocudulog::fetch_basic_logger("SCHED"))
 {
   pending_messages.resize(si_sched_cfg.si_messages.size());
+  for (unsigned i = 0, e = pending_messages.size(); i != e; ++i) {
+    pending_messages[i].broadcasting = not si_sched_cfg.si_messages[i].requires_activation;
+  }
 }
 
 void si_message_scheduler::run_slot(cell_slot_resource_allocator& res_grid)
@@ -44,7 +47,8 @@ void si_message_scheduler::stop()
 {
   // Clear all windows.
   for (unsigned i = 0; i != pending_messages.size(); ++i) {
-    pending_messages[i] = {};
+    pending_messages[i]              = {};
+    pending_messages[i].broadcasting = not si_sched_cfg.si_messages[i].requires_activation;
   }
 }
 
@@ -57,9 +61,20 @@ void si_message_scheduler::handle_si_message_update_indication(unsigned         
   pending_messages.resize(si_sched_cfg.si_messages.size());
 
   // Reset window and transmission counters.
-  std::fill(pending_messages.begin(),
-            pending_messages.end(),
-            message_window_context{.window = {}, .nof_tx_in_current_window = 0, .total_nof_tx = 0});
+  std::fill(pending_messages.begin(), pending_messages.end(), message_window_context{});
+  for (unsigned i = 0, e = pending_messages.size(); i != e; ++i) {
+    pending_messages[i].broadcasting = not si_sched_cfg.si_messages[i].requires_activation;
+  }
+}
+
+void si_message_scheduler::activate_si_message(unsigned si_msg_idx, unsigned nof_segments)
+{
+  ocudu_assert(si_msg_idx < pending_messages.size(), "Invalid SI-message index");
+
+  message_window_context& ctxt = pending_messages[si_msg_idx];
+  ctxt.broadcasting            = true;
+  ctxt.nof_segments            = nof_segments;
+  ctxt.nof_tx                  = 0;
 }
 
 void si_message_scheduler::update_si_message_windows(slot_point sl_tx)
@@ -78,6 +93,11 @@ void si_message_scheduler::update_si_message_windows(slot_point sl_tx)
         pending_messages[i].window                   = {};
         pending_messages[i].nof_tx_in_current_window = 0;
       }
+      continue;
+    }
+
+    if (not pending_messages[i].broadcasting) {
+      // SI-message requires activation and is currently dormant. Do not open a new window until it is activated.
       continue;
     }
 
@@ -140,6 +160,13 @@ void si_message_scheduler::schedule_pending_si_messages(cell_slot_resource_alloc
       // Increment the transmission counters.
       ++si_ctxt.nof_tx_in_current_window;
       ++si_ctxt.total_nof_tx;
+
+      if (si_sched_cfg.si_messages[i].requires_activation) {
+        // Once all segments of the current activation have been transmitted, go back to dormant.
+        if (++si_ctxt.nof_tx >= si_ctxt.nof_segments) {
+          si_ctxt.broadcasting = false;
+        }
+      }
     }
   }
 }

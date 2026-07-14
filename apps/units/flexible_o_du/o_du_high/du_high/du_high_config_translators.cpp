@@ -167,48 +167,49 @@ static sib5_info create_sib5_info(const du_high_unit_sib_config::sib5_config& co
   return sib5;
 }
 
-static sib6_info create_sib6_info(const du_high_unit_test_mode_warning_config::etws_config& etws_cfg)
+/// \brief Builds the placeholder content for a SIB6/7/8 entry that has a reserved occasion in the cell's
+/// si_sched_info but no active PWS broadcast (yet). This content is never actually transmitted -- the scheduler
+/// keeps the entry dormant until a real F1AP Write-Replace Warning activates it -- so any content is acceptable.
+static sib6_info create_sib6_info(const std::optional<du_high_unit_test_mode_warning_config::etws_config>& etws_cfg)
 {
+  const du_high_unit_test_mode_warning_config::etws_config& cfg =
+      etws_cfg.value_or(du_high_unit_test_mode_warning_config::etws_config{});
+
   sib6_info sib6;
 
-  sib6.message_id    = etws_cfg.message_id;
-  sib6.serial_number = etws_cfg.serial_num;
-  sib6.warning_type  = etws_cfg.warning_type;
+  sib6.message_id    = cfg.message_id;
+  sib6.serial_number = cfg.serial_num;
+  sib6.warning_type  = cfg.warning_type;
 
   return sib6;
 }
 
-static sib7_info create_sib7_info(const du_high_unit_test_mode_warning_config::etws_config& etws_cfg)
+static sib7_info create_sib7_info(const std::optional<du_high_unit_test_mode_warning_config::etws_config>& etws_cfg)
 {
-  if (!etws_cfg.warning_message.has_value()) {
-    report_error("Scheduled SIB-7 but no ETWS warning message is configured.");
-  }
-  if (etws_cfg.warning_message.value().empty()) {
-    report_error("Scheduled SIB-7 but ETWS warning message is empty.");
-  }
+  const du_high_unit_test_mode_warning_config::etws_config& cfg =
+      etws_cfg.value_or(du_high_unit_test_mode_warning_config::etws_config{});
 
   sib7_info sib7;
 
-  sib7.message_id              = etws_cfg.message_id;
-  sib7.serial_number           = etws_cfg.serial_num;
-  sib7.data_coding_scheme      = etws_cfg.data_coding_scheme;
-  sib7.warning_message_segment = etws_cfg.warning_message.value();
+  sib7.message_id              = cfg.message_id;
+  sib7.serial_number           = cfg.serial_num;
+  sib7.data_coding_scheme      = cfg.data_coding_scheme;
+  sib7.warning_message_segment = cfg.warning_message.value_or(std::string{});
 
   return sib7;
 }
 
-static sib8_info create_sib8_info(const du_high_unit_test_mode_warning_config::cmas_config& cmas_cfg)
+static sib8_info create_sib8_info(const std::optional<du_high_unit_test_mode_warning_config::cmas_config>& cmas_cfg)
 {
-  if (cmas_cfg.warning_message.empty()) {
-    report_error("Scheduled SIB-8 but CMAS warning message is empty.");
-  }
+  const du_high_unit_test_mode_warning_config::cmas_config& cfg =
+      cmas_cfg.value_or(du_high_unit_test_mode_warning_config::cmas_config{});
 
   sib8_info sib8;
 
-  sib8.message_id              = cmas_cfg.message_id;
-  sib8.serial_number           = cmas_cfg.serial_num;
-  sib8.data_coding_scheme      = cmas_cfg.data_coding_scheme;
-  sib8.warning_message_segment = cmas_cfg.warning_message;
+  sib8.message_id              = cfg.message_id;
+  sib8.serial_number           = cfg.serial_num;
+  sib8.data_coding_scheme      = cfg.data_coding_scheme;
+  sib8.warning_message_segment = cfg.warning_message;
   return sib8;
 }
 
@@ -469,25 +470,17 @@ make_si_sched_info_config(const du_high_unit_base_cell_config& cell_cfg,
         item = create_sib5_info(sib_cfg.sib5_cfg.value());
       } break;
       case 6: {
-        if (!test_mode_cfg.warning.etws_cfg.has_value()) {
-          report_error("SIB-6 cannot be scheduled without test_mode ETWS config. Set the test_mode ETWS config or "
-                       "remove SIB-6 from the si_sched_info list");
-        }
-        item = create_sib6_info(test_mode_cfg.warning.etws_cfg.value());
+        // SIB6 keeps a permanently reserved SI-message occasion; the scheduler leaves it dormant until an actual
+        // F1AP Write-Replace Warning activates it, so a missing test_mode ETWS config is not an error.
+        item = create_sib6_info(test_mode_cfg.warning.etws_cfg);
       } break;
       case 7: {
-        if (!test_mode_cfg.warning.etws_cfg.has_value()) {
-          report_error("SIB-7 cannot be scheduled without test_mode ETWS config. Set the test_mode ETWS config or "
-                       "remove SIB-7 from the si_sched_info list");
-        }
-        item = create_sib7_info(test_mode_cfg.warning.etws_cfg.value());
+        // See SIB6 comment above -- SIB7 is likewise dormant until a real warning is activated.
+        item = create_sib7_info(test_mode_cfg.warning.etws_cfg);
       } break;
       case 8: {
-        if (!test_mode_cfg.warning.cmas_cfg.has_value()) {
-          report_error("SIB-8 cannot be scheduled without test_mode CMAS config. Set the test_mode CMAS config or "
-                       "remove SIB-8 from the si_sched_info list");
-        }
-        item = create_sib8_info(test_mode_cfg.warning.cmas_cfg.value());
+        // See SIB6 comment above -- SIB8 is likewise dormant until a real warning is activated.
+        item = create_sib8_info(test_mode_cfg.warning.cmas_cfg);
       } break;
       case 16: {
         if (!sib_cfg.sib16_cfg.has_value()) {

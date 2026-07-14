@@ -37,8 +37,13 @@ void f1ap_du_write_replace_warning_procedure::operator()(coro_context<async_task
 write_replace_warning_information f1ap_du_write_replace_warning_procedure::build_request() const
 {
   write_replace_warning_information info;
-  info.sib_type                 = request->pws_sys_info.sib_type;
-  info.sib_msg                  = request->pws_sys_info.sib_msg.copy();
+  info.sib_type = request->pws_sys_info.sib_type;
+  info.sib_msgs.push_back(request->pws_sys_info.sib_msg.copy());
+  if (request->pws_sys_info.ie_exts_present and request->pws_sys_info.ie_exts.add_sib_msg_list_present) {
+    for (const auto& item : request->pws_sys_info.ie_exts.add_sib_msg_list) {
+      info.sib_msgs.push_back(item.add_sib.copy());
+    }
+  }
   info.repeat_period            = std::chrono::seconds{request->repeat_period};
   info.nof_broadcasts_requested = request->numof_broadcast_request;
 

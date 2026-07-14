@@ -10,6 +10,7 @@
 #include "ocudu/ran/qos/five_qi_qos_mapping.h"
 #include "ocudu/scheduler/config/logical_channel_config_factory.h"
 #include "ocudu/scheduler/config/sched_cell_config_helpers.h"
+#include <algorithm>
 
 using namespace ocudu;
 using namespace odu;
@@ -29,9 +30,17 @@ si_scheduling_config ocudu::odu::make_si_scheduling_info_config(const du_cell_co
     sched_req.si_window_len_slots = du_cfg.si.si_config->si_window_len_slots;
     sched_req.si_messages.resize(du_cfg.si.si_config->si_sched_info.size());
     for (unsigned i = 0, sz = du_cfg.si.si_config->si_sched_info.size(); i != sz; ++i) {
+      const auto& sib_mapping_info = du_cfg.si.si_config->si_sched_info[i].sib_mapping_info;
+
       sched_req.si_messages[i].period_radio_frames = du_cfg.si.si_config->si_sched_info[i].si_period_radio_frames;
       sched_req.si_messages[i].msg_len             = si_message_lens[i];
       sched_req.si_messages[i].si_window_position  = du_cfg.si.si_config->si_sched_info[i].si_window_position;
+      // SI-messages carrying only PWS (ETWS/CMAS) SIBs stay dormant until a Write-Replace Warning activates them.
+      sched_req.si_messages[i].requires_activation =
+          not sib_mapping_info.empty() and
+          std::all_of(sib_mapping_info.begin(), sib_mapping_info.end(), [](sib_type t) {
+            return t == sib_type::sib6 || t == sib_type::sib7 || t == sib_type::sib8;
+          });
     }
   }
 

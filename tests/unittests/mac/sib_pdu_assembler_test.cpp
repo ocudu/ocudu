@@ -3,7 +3,9 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/mac/mac_dl/sib_pdu_assembler.h"
+#include "mac_test_helpers.h"
 #include "tests/test_doubles/utils/test_rng.h"
+#include "ocudu/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -47,7 +49,11 @@ static sib_information make_sib_pdu(std::optional<unsigned> si_msg_index, si_ver
 class sib_pdu_assembler_test : public ::testing::Test
 {
 public:
-  sib_pdu_assembler_test() : sys_info_cfg({make_random_pdu()}), assembler(sys_info_cfg) {}
+  sib_pdu_assembler_test() :
+    sys_info_cfg({make_random_pdu()}),
+    assembler(to_du_cell_index(0), sys_info_cfg, timer_factory{timers, task_worker}, sched)
+  {
+  }
 
   byte_buffer update_si_pdus(const byte_buffer& sib1, span<const bcch_dl_sch_payload_type> si_msgs = {})
   {
@@ -64,6 +70,10 @@ public:
     assembler.handle_si_change_request(req);
     return old_pdu;
   }
+
+  manual_task_worker                        task_worker{128};
+  timer_manager                             timers;
+  test_helpers::dummy_mac_scheduler_adapter sched;
 
   mac_cell_sys_info_config       sys_info_cfg;
   sib_pdu_assembler              assembler;
@@ -160,39 +170,195 @@ TEST_F(sib_pdu_assembler_test, when_si_message_is_added_then_encoding_matched_ad
                                           byte_buffer::create(pdu).value());
 }
 
-TEST_F(sib_pdu_assembler_test, when_segmented_si_message_is_added_then_encoding_matched_added_si_message)
+TEST_F(sib_pdu_assembler_test, when_si_message_does_not_require_activation_then_pws_broadcast_is_rejected)
 {
-  // Generate a PDU with multiple segments.
-  auto new_msg = make_random_segmented_pdu();
+  // sys_info_cfg's SI-message index 0 does not mark requires_activation, so no PWS broadcast state was allocated
+  // for it -- a Write-Replace Warning targeting it must be rejected rather than silently misbehave.
+  std::vector<byte_buffer>     segments = make_random_segmented_pdu(50, 1);
+  mac_cell_sys_info_pdu_update req;
+  req.si_msg_idx    = 0;
+  req.sib_idx       = 6;
+  req.si_messages   = span<byte_buffer>(segments);
+  req.pws_broadcast = pws_broadcast_indication{std::chrono::seconds{1}, 1};
 
-  this->update_si_pdus(sys_info_cfg.sib1, std::vector<bcch_dl_sch_payload_type>{{new_msg}});
-  ASSERT_EQ(last_version, 1);
+  ASSERT_FALSE(assembler.handle_si_message_pdu_updates(req));
+  ASSERT_EQ(sched.nof_pws_broadcast_indications, 0);
+}
 
-  units::bytes padding_len{test_rng::uniform_int<unsigned>(0, 20)};
-  units::bytes tbs = units::bytes{static_cast<unsigned>(new_msg[0].length())} + padding_len;
-
-  sib_information new_si_info = make_sib_pdu(0, 1, tbs);
-  for (unsigned i_segment = 0, nof_segments = new_msg.size(); i_segment != nof_segments; ++i_segment) {
-    // Encode the PDU. If it has been transmitted before, and it is the first time it is transmitted within the
-    // repetition period, the next SI message segment will be selected.
-    new_si_info.is_repetition = false;
-    span<const uint8_t> pdu   = assembler.encode_si_pdu(current_slot, new_si_info);
-
-    // Encode the PDU again. Since it is a repetition, the returned segment should stay the same.
-    new_si_info.is_repetition          = true;
-    span<const uint8_t> pdu_repetition = assembler.encode_si_pdu(current_slot, new_si_info);
-
-    auto expected = make_pdu_with_padding(new_msg[i_segment], tbs);
-    ASSERT_EQ(expected, pdu) << fmt::format("Incorrect SI-message payload returned.\n> expected=[{}]\n> result = [{}])",
-                                            expected,
-                                            byte_buffer::create(pdu).value());
-    ASSERT_EQ(pdu, pdu_repetition) << fmt::format(
-        "SI-message payload does not match its repetition.\n> expected=[{}]\n> result = [{}])",
-        byte_buffer::create(pdu).value(),
-        byte_buffer::create(pdu_repetition).value());
-
-    // Increment the number of transmissions of the current payload (required to encode segments other than the first
-    // one).
-    ++new_si_info.nof_txs;
+/// Fixture with a single SI-message pre-provisioned at index 0, mirroring a cell configured with a reserved
+/// SIB6/7/8 occasion (the PWS broadcast per-index state in \c sib_pdu_assembler is sized once, at construction,
+/// from the initial number of SI-messages).
+class sib_pdu_assembler_pws_test : public ::testing::Test
+{
+public:
+  sib_pdu_assembler_pws_test() : assembler(to_du_cell_index(0), sys_info_cfg, timer_factory{timers, task_worker}, sched)
+  {
   }
+
+  static mac_cell_sys_info_config make_sys_info_cfg()
+  {
+    mac_cell_sys_info_config cfg;
+    cfg.sib1 = make_random_pdu();
+    cfg.si_messages.push_back(bcch_dl_sch_payload_type{make_random_pdu()});
+    // Mark SI-message index 0 as requiring activation, mirroring a cell configured with a reserved SIB6/7/8
+    // occasion -- sib_pdu_assembler only allocates PWS broadcast state for such indices.
+    si_message_scheduling_config& si_msg_cfg = cfg.si_sched_cfg.si_sched_cfg.si_messages.emplace_back();
+    si_msg_cfg.requires_activation           = true;
+    return cfg;
+  }
+
+  manual_task_worker                        task_worker{128};
+  timer_manager                             timers;
+  test_helpers::dummy_mac_scheduler_adapter sched;
+
+  mac_cell_sys_info_config sys_info_cfg = make_sys_info_cfg();
+  sib_pdu_assembler        assembler;
+
+  slot_point_extended current_slot{subcarrier_spacing::kHz30, 0};
+};
+
+TEST_F(sib_pdu_assembler_pws_test, when_pws_broadcast_is_pushed_then_scheduler_is_signalled_immediately_for_one_burst)
+{
+  std::vector<byte_buffer>     segments = make_random_segmented_pdu(50, 2);
+  mac_cell_sys_info_pdu_update req;
+  req.si_msg_idx    = 0;
+  req.sib_idx       = 7;
+  req.si_messages   = span<byte_buffer>(segments);
+  req.pws_broadcast = pws_broadcast_indication{std::chrono::seconds{1}, 3};
+
+  ASSERT_TRUE(assembler.handle_si_message_pdu_updates(req));
+  ASSERT_EQ(sched.nof_pws_broadcast_indications, 1);
+  ASSERT_EQ(sched.last_pws_si_msg_idx, 0);
+  ASSERT_EQ(sched.last_pws_nof_segments, 2);
+}
+
+TEST_F(sib_pdu_assembler_pws_test, when_pws_broadcast_content_is_encoded_then_segments_cycle_in_order)
+{
+  std::vector<byte_buffer>     segments = make_random_segmented_pdu(50, 2);
+  mac_cell_sys_info_pdu_update req;
+  req.si_msg_idx    = 0;
+  req.sib_idx       = 7;
+  req.si_messages   = span<byte_buffer>(segments);
+  req.pws_broadcast = pws_broadcast_indication{std::chrono::seconds{1}, 1};
+  assembler.handle_si_message_pdu_updates(req);
+
+  units::bytes    tbs{static_cast<unsigned>(segments[0].length())};
+  sib_information si_info = make_sib_pdu(0, 0, tbs);
+
+  si_info.is_repetition    = false;
+  span<const uint8_t> pdu0 = assembler.encode_si_pdu(current_slot, si_info);
+  ASSERT_EQ(byte_buffer::create(pdu0).value(), segments[0]);
+
+  ++si_info.nof_txs;
+  span<const uint8_t> pdu1 = assembler.encode_si_pdu(current_slot, si_info);
+  ASSERT_EQ(byte_buffer::create(pdu1).value(), segments[1]);
+
+  ++si_info.nof_txs;
+  span<const uint8_t> pdu0_again = assembler.encode_si_pdu(current_slot, si_info);
+  ASSERT_EQ(byte_buffer::create(pdu0_again).value(), segments[0])
+      << "Segment cycle must wrap back to segment 0 to start the next broadcast";
+}
+
+TEST_F(sib_pdu_assembler_pws_test, when_multiple_broadcasts_requested_then_timer_re_triggers_scheduler_until_exhausted)
+{
+  auto                         segment = make_random_pdu();
+  std::vector<byte_buffer>     segments{segment.copy()};
+  mac_cell_sys_info_pdu_update req;
+  req.si_msg_idx                = 0;
+  req.sib_idx                   = 6;
+  req.si_messages               = span<byte_buffer>(segments);
+  const unsigned nof_broadcasts = 3;
+  req.pws_broadcast             = pws_broadcast_indication{std::chrono::seconds{1}, nof_broadcasts};
+
+  assembler.handle_si_message_pdu_updates(req);
+  ASSERT_EQ(sched.nof_pws_broadcast_indications, 1);
+
+  const unsigned ticks_per_broadcast = 1000; // repeat_period == 1 second == 1000 ms ticks.
+  for (unsigned b = 1; b != nof_broadcasts; ++b) {
+    for (unsigned t = 0; t != ticks_per_broadcast; ++t) {
+      timers.tick();
+      task_worker.run_pending_tasks();
+    }
+    ASSERT_EQ(sched.nof_pws_broadcast_indications, b + 1) << "Broadcast #" << (b + 1) << " was not signalled";
+  }
+
+  // No further broadcasts should be signalled once the requested count has been exhausted.
+  for (unsigned t = 0; t != ticks_per_broadcast * 2; ++t) {
+    timers.tick();
+    task_worker.run_pending_tasks();
+  }
+  ASSERT_EQ(sched.nof_pws_broadcast_indications, nof_broadcasts);
+}
+
+TEST_F(sib_pdu_assembler_pws_test, when_new_pws_broadcast_replaces_previous_then_content_and_timer_are_reset)
+{
+  auto                         segment_a = make_random_pdu();
+  std::vector<byte_buffer>     segments_a{segment_a.copy()};
+  mac_cell_sys_info_pdu_update req_a;
+  req_a.si_msg_idx    = 0;
+  req_a.sib_idx       = 6;
+  req_a.si_messages   = span<byte_buffer>(segments_a);
+  req_a.pws_broadcast = pws_broadcast_indication{std::chrono::seconds{1}, 10};
+  assembler.handle_si_message_pdu_updates(req_a);
+  ASSERT_EQ(sched.nof_pws_broadcast_indications, 1);
+
+  auto                         segment_b = make_random_pdu();
+  std::vector<byte_buffer>     segments_b{segment_b.copy()};
+  mac_cell_sys_info_pdu_update req_b;
+  req_b.si_msg_idx    = 0;
+  req_b.sib_idx       = 6;
+  req_b.si_messages   = span<byte_buffer>(segments_b);
+  req_b.pws_broadcast = pws_broadcast_indication{std::chrono::seconds{1}, 1};
+  assembler.handle_si_message_pdu_updates(req_b);
+  ASSERT_EQ(sched.nof_pws_broadcast_indications, 2);
+
+  units::bytes        tbs{static_cast<unsigned>(segment_b.length())};
+  sib_information     si_info = make_sib_pdu(0, 0, tbs);
+  span<const uint8_t> pdu     = assembler.encode_si_pdu(current_slot, si_info);
+  ASSERT_EQ(byte_buffer::create(pdu).value(), segment_b)
+      << "Replacement content must be served from segment 0, not the superseded warning";
+
+  // The old (10-broadcast) timer must not keep firing after being replaced by the new (1-broadcast) one.
+  for (unsigned t = 0; t != 3000; ++t) {
+    timers.tick();
+    task_worker.run_pending_tasks();
+  }
+  ASSERT_EQ(sched.nof_pws_broadcast_indications, 2);
+}
+
+TEST_F(sib_pdu_assembler_pws_test, when_unrelated_si_reconfiguration_occurs_then_active_pws_broadcast_is_unaffected)
+{
+  // Start a multi-broadcast PWS sequence.
+  auto                         segment = make_random_pdu();
+  std::vector<byte_buffer>     segments{segment.copy()};
+  mac_cell_sys_info_pdu_update pws_req;
+  pws_req.si_msg_idx    = 0;
+  pws_req.sib_idx       = 6;
+  pws_req.si_messages   = span<byte_buffer>(segments);
+  pws_req.pws_broadcast = pws_broadcast_indication{std::chrono::seconds{1}, 3};
+  assembler.handle_si_message_pdu_updates(pws_req);
+  ASSERT_EQ(sched.nof_pws_broadcast_indications, 1);
+
+  // An unrelated SI reconfiguration arrives (e.g. a SIB2 content update), rebuilding all SI-messages, including a
+  // placeholder for index 0 that has nothing to do with the active warning.
+  mac_cell_sys_info_config unrelated_req;
+  unrelated_req.sib1 = make_random_pdu();
+  unrelated_req.si_messages.push_back(bcch_dl_sch_payload_type{make_random_pdu()});
+  unrelated_req.si_sched_cfg.version = 1;
+  assembler.handle_si_change_request(unrelated_req);
+
+  // The active PWS broadcast's content must still be served, not the unrelated placeholder.
+  units::bytes        tbs{static_cast<unsigned>(segment.length())};
+  sib_information     si_info = make_sib_pdu(0, 1, tbs);
+  span<const uint8_t> pdu     = assembler.encode_si_pdu(current_slot, si_info);
+  ASSERT_EQ(byte_buffer::create(pdu).value(), segment)
+      << "Unrelated SI reconfiguration must not disrupt the active PWS broadcast";
+
+  // The repeat timer must still fire the remaining broadcasts.
+  const unsigned ticks_per_broadcast = 1000;
+  for (unsigned t = 0; t != ticks_per_broadcast * 2; ++t) {
+    timers.tick();
+    task_worker.run_pending_tasks();
+  }
+  ASSERT_EQ(sched.nof_pws_broadcast_indications, 3);
 }

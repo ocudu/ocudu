@@ -48,10 +48,14 @@ public:
   /// \param[in] request Request to change SI sched info and messages.
   virtual void handle_si_change_indication(const si_scheduling_update_request& request) = 0;
 
-  /// \brief Request the scheduler to repeat a PWS (ETWS/CMAS) short-message broadcast indication.
+  /// \brief Request the scheduler to broadcast a PWS (ETWS/CMAS) short-message notification and activate the target
+  /// SI-message for one complete broadcast. Repetition is handled entirely by the MAC layer, which re-issues this
+  /// request once per broadcast occurrence.
   /// \param[in] cell_idx DU-specific index of the cell for which the indication is directed.
-  /// \param[in] req Repeat/count parameters of the PWS broadcast indication.
-  virtual void handle_pws_broadcast_indication(du_cell_index_t cell_idx, const pws_broadcast_indication& req) = 0;
+  /// \param[in] si_msg_idx Index of the SI-message carrying the SIB6/7/8 to activate.
+  /// \param[in] nof_segments Number of segments composing the warning message.
+  virtual void
+  handle_pws_broadcast_indication(du_cell_index_t cell_idx, unsigned si_msg_idx, unsigned nof_segments) = 0;
 
   /// \brief Handle request to update the slice configuration of a cell.
   /// \param[in] cell_index Index of the cell for which the measurement is directed.

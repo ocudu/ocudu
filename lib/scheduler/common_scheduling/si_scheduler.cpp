@@ -76,8 +76,8 @@ void si_scheduler::try_handle_pending_request(cell_resource_allocator& res_alloc
   // Handle any request to change the SI sched info.
   const bool si_modification_due = try_handle_si_mod_request(res_alloc.slot_tx(), res_alloc.max_dl_slot_alloc_delay);
 
-  // Determine whether a PWS (ETWS/CMAS) repeat broadcast indication is due this slot.
-  const bool pws_notif_due = try_handle_pending_pws_request(res_alloc.max_dl_slot_alloc_delay);
+  // Determine whether a PWS (ETWS/CMAS) short-message notification is due this slot.
+  const bool pws_notif_due = try_handle_pending_pws_request();
 
   if (si_modification_due or pws_notif_due) {
     try_schedule_short_message(res_alloc[slot_sched], si_modification_due, pws_notif_due);
@@ -146,33 +146,22 @@ void si_scheduler::handle_si_update_request(const si_scheduling_update_request& 
 
 void si_scheduler::handle_pws_broadcast_indication(const pws_broadcast_request& req)
 {
-  pending_pws_req.write_and_commit(
-      pws_pending_request{next_pws_version++, req.repeat_period, req.nof_broadcasts_requested});
+  pending_pws_req.write_and_commit(pws_pending_request{next_pws_version++, req.si_msg_idx, req.nof_segments});
 }
 
-bool si_scheduler::try_handle_pending_pws_request(unsigned max_dl_slot_alloc_delay)
+bool si_scheduler::try_handle_pending_pws_request()
 {
-  const unsigned slot_count_sched = slot_count + max_dl_slot_alloc_delay;
-
   const auto& next = pending_pws_req.read();
   if (next.version == last_pws_version) {
-    return pws_state.has_value() and slot_count_sched >= pws_state->next_broadcast_slot_count;
+    return pws_short_msg_pending;
   }
-  // New request. Fully replaces any in-flight repeat state.
+  // New request. Activate the target SI-message for one broadcast and queue a short-message notification.
   last_pws_version = next.version;
 
-  if (next.nof_broadcasts_requested == 0) {
-    pws_state.reset();
-    return false;
-  }
+  si_msg_sched.activate_si_message(next.si_msg_idx, next.nof_segments);
+  pws_short_msg_pending = true;
 
-  const unsigned slots_per_sec =
-      get_nof_slots_per_subframe(scs_common) * 1000 / radio_frame_constants::SUBFRAME_DURATION_MSEC;
-  pws_state = pws_repeat_state{static_cast<unsigned>(next.repeat_period.count()) * slots_per_sec,
-                               next.nof_broadcasts_requested,
-                               slot_count_sched};
-
-  return pws_state.has_value() and slot_count_sched >= pws_state->next_broadcast_slot_count;
+  return true;
 }
 
 void si_scheduler::try_schedule_short_message(cell_slot_resource_allocator& slot_alloc,
@@ -255,11 +244,7 @@ void si_scheduler::allocate_short_message(cell_slot_resource_allocator& slot_all
   build_dci_f1_0_p_rnti(pdcch->dci, cell_cfg.params.dl_cfg_common.init_dl_bwp, short_message);
 
   if (include_pws_indication) {
-    // Consume one PWS broadcast occasion.
-    if (--pws_state->broadcasts_remaining == 0) {
-      pws_state.reset();
-    } else {
-      pws_state->next_broadcast_slot_count += pws_state->repeat_period_slots;
-    }
+    // Short message has been sent. The MAC layer will re-signal for the next broadcast, if any.
+    pws_short_msg_pending = false;
   }
 }

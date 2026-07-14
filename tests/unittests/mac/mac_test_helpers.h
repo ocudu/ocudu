@@ -167,7 +167,16 @@ public:
 
   void handle_si_change_indication(const si_scheduling_update_request& request) override {}
 
-  void handle_pws_broadcast_indication(du_cell_index_t cell_idx, const pws_broadcast_indication& req) override {}
+  unsigned nof_pws_broadcast_indications = 0;
+  unsigned last_pws_si_msg_idx           = 0;
+  unsigned last_pws_nof_segments         = 0;
+
+  void handle_pws_broadcast_indication(du_cell_index_t cell_idx, unsigned si_msg_idx, unsigned nof_segments) override
+  {
+    ++nof_pws_broadcast_indications;
+    last_pws_si_msg_idx   = si_msg_idx;
+    last_pws_nof_segments = nof_segments;
+  }
 
   void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req) override {}
 };

@@ -56,8 +56,8 @@ protected:
 TEST_F(du_pws_broadcast_procedure_test, when_cell_not_provisioned_for_sib_type_then_it_is_not_accepted)
 {
   write_replace_warning_information req;
-  req.sib_type                 = 6;
-  req.sib_msg                  = byte_buffer::create({0x1, 0x2, 0x3}).value();
+  req.sib_type = 6;
+  req.sib_msgs.push_back(byte_buffer::create({0x1, 0x2, 0x3}).value());
   req.repeat_period            = std::chrono::seconds{60};
   req.nof_broadcasts_requested = 4;
   req.cells                    = {du_cell_index_t::MIN_DU_CELL_INDEX};

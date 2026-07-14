@@ -31,18 +31,11 @@ public:
   void stop();
 
 private:
-  /// Repeat/count state of an on-going PWS (ETWS/CMAS) short-message broadcast indication.
-  struct pws_repeat_state {
-    unsigned repeat_period_slots;
-    unsigned broadcasts_remaining;
-    unsigned next_broadcast_slot_count;
-  };
-
   /// Request written into \c pending_pws_req, tagged with a locally-generated version for newness detection.
   struct pws_pending_request {
-    si_version_type      version;
-    std::chrono::seconds repeat_period;
-    uint32_t             nof_broadcasts_requested;
+    si_version_type version;
+    unsigned        si_msg_idx;
+    unsigned        nof_segments;
   };
 
   void try_handle_pending_request(cell_resource_allocator& res_alloc);
@@ -50,9 +43,9 @@ private:
   /// \return Returns true if a short message is due for transmission.
   bool try_handle_si_mod_request(slot_point sl_tx, unsigned max_dl_slot_alloc_delay);
 
-  /// Checks for a new PWS broadcast request and, if found, (re)starts the repeat state, replacing any previous one.
+  /// \brief Checks for a new PWS broadcast request and, if found, activates the target SI-message for one broadcast.
   /// \return Returns true if a short message is due for transmission.
-  bool try_handle_pending_pws_request(unsigned max_dl_slot_alloc_delay);
+  bool try_handle_pending_pws_request();
 
   void try_schedule_short_message(cell_slot_resource_allocator& slot_alloc,
                                   bool                          include_si_modification,
@@ -80,8 +73,9 @@ private:
 
   si_version_type                             next_pws_version = 1;
   si_version_type                             last_pws_version = 0;
-  lockfree_triple_buffer<pws_pending_request> pending_pws_req{pws_pending_request{0, std::chrono::seconds{0}, 0}};
-  std::optional<pws_repeat_state>             pws_state;
+  lockfree_triple_buffer<pws_pending_request> pending_pws_req{pws_pending_request{0, 0, 0}};
+  /// Whether a PWS (ETWS/CMAS) short-message notification is still pending transmission at a paging occasion.
+  bool pws_short_msg_pending = false;
 
   // Note: We use counts instead of slot_points because SI periods can be longer that 1024 * 10 msec.
   unsigned   slot_count = 0;

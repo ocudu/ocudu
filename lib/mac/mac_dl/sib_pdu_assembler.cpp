@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "sib_pdu_assembler.h"
+#include "segmented_sib_list.h"
 #include "ocudu/asn1/rrc_nr/bcch_dl_sch_msg.h"
 #include "ocudu/asn1/rrc_nr/sys_info.h"
 #include "ocudu/ocudulog/ocudulog.h"
@@ -41,10 +42,12 @@ public:
       copy_segments(buffer, current_payload);
     }
 
-    expected<span<const uint8_t>, units::bytes> encode(slot_point_extended /*sl_tx*/, units::bytes tbs) override
+    expected<span<const uint8_t>, units::bytes> encode(slot_point_extended /*sl_tx*/,
+                                                       const sib_information& si_info) override
     {
-      if (OCUDU_LIKELY(tbs >= len)) {
-        return span<const uint8_t>(current_payload.data(), tbs.value());
+      const unsigned tbs = si_info.pdsch_cfg.codewords[0].tb_size_bytes.value();
+      if (OCUDU_LIKELY(tbs >= len.value())) {
+        return span<const uint8_t>(current_payload.data(), tbs);
       }
       return make_unexpected(len);
     }
@@ -81,9 +84,11 @@ public:
       build_bcch_dl_sch_payload(0);
     }
 
-    expected<span<const uint8_t>, units::bytes> encode(slot_point_extended sl_tx, units::bytes tbs) override
+    expected<span<const uint8_t>, units::bytes> encode(slot_point_extended    sl_tx,
+                                                       const sib_information& si_info) override
     {
-      if (OCUDU_UNLIKELY(tbs < current_len)) {
+      const unsigned tbs = si_info.pdsch_cfg.codewords[0].tb_size_bytes.value();
+      if (OCUDU_UNLIKELY(tbs < current_len.value())) {
         return make_unexpected(current_len);
       }
 
@@ -92,7 +97,7 @@ public:
         // HyperSFN has changed, re-encode payload.
         build_bcch_dl_sch_payload(new_hyper_sfn);
       }
-      return span<const uint8_t>(current_payload.data(), tbs.value());
+      return span<const uint8_t>(current_payload.data(), tbs);
     }
 
   private:
@@ -151,9 +156,182 @@ private:
   std::shared_ptr<bcch_dl_sch_msg_encoder> last_encoder;
 };
 
-sib_pdu_assembler::sib_pdu_assembler(const mac_cell_sys_info_config& req) :
-  logger(ocudulog::fetch_basic_logger("MAC")), sib1_hdlr(std::make_unique<sib1_assembler>())
+/// Encoder for a static (non-PWS) SI-message. Static SI-messages are never segmented -- only PWS (SIB6/7/8) content
+/// segments across multiple SI-message windows (see \c pws_si_msg_encoder).
+class sib_pdu_assembler::static_si_msg_encoder final : public sib_pdu_assembler::bcch_dl_sch_msg_encoder
 {
+public:
+  explicit static_si_msg_encoder(const byte_buffer& si_msg) :
+    segment{make_linear_buffer(si_msg), units::bytes{static_cast<unsigned>(si_msg.length())}}
+  {
+  }
+
+  expected<span<const uint8_t>, units::bytes> encode(slot_point_extended /*sl_tx*/,
+                                                     const sib_information& si_info) override
+  {
+    const unsigned tbs = si_info.pdsch_cfg.codewords[0].tb_size_bytes.value();
+    if (OCUDU_UNLIKELY(tbs < segment.len.value())) {
+      return make_unexpected(segment.len);
+    }
+    return span<const uint8_t>(segment.buffer->data(), tbs);
+  }
+
+private:
+  bcch_segment segment;
+};
+
+/// Encoder owning the repeat/count timing and content of an on-going PWS broadcast sequence. See class doc in the
+/// header.
+class sib_pdu_assembler::pws_si_msg_encoder final : public sib_pdu_assembler::bcch_dl_sch_msg_encoder
+{
+public:
+  pws_si_msg_encoder(unsigned                         si_msg_idx_,
+                     timer_factory                    timers_,
+                     mac_scheduler_cell_info_handler& sched_,
+                     du_cell_index_t                  cell_index_) :
+    si_msg_idx(si_msg_idx_), timers(timers_), sched(sched_), cell_index(cell_index_)
+  {
+  }
+
+  /// Handles a new Write-Replace Warning content push, called from the control executor. A new warning for this
+  /// index replaces any in-flight one outright.
+  bool handle_pws_broadcast(const mac_cell_sys_info_pdu_update& req)
+  {
+    ctrl.timer.stop();
+    ++ctrl.version;
+    ctrl.nof_segments             = req.si_messages.size();
+    ctrl.nof_broadcasts_remaining = req.pws_broadcast->nof_broadcasts_requested;
+    ctrl.repeat_period            = req.pws_broadcast->repeat_period;
+
+    // Publish the new content to the real-time path.
+    content_snapshot snap;
+    snap.version = ctrl.version;
+    for (const byte_buffer& segment : req.si_messages) {
+      snap.segments.append_segment(
+          bcch_segment{make_linear_buffer(segment), units::bytes{static_cast<unsigned>(segment.length())}});
+    }
+    pending.write_and_commit(snap);
+
+    start_one_broadcast();
+
+    return true;
+  }
+
+  expected<span<const uint8_t>, units::bytes> encode(slot_point_extended /*sl_tx*/,
+                                                     const sib_information& si_info) override
+  {
+    const content_snapshot& latest = pending.read();
+    if (latest.version != rt.version) {
+      rt.version            = latest.version;
+      rt.segments           = latest.segments;
+      rt.force_segment_zero = true;
+    }
+
+    if (rt.segments.get_nof_segments() == 0) {
+      // No PWS content was ever pushed for this index.
+      return make_unexpected(units::bytes{0});
+    }
+
+    if (rt.force_segment_zero) {
+      rt.force_segment_zero = false;
+    } else if (rt.segments.get_nof_segments() > 1 and !si_info.is_repetition and (si_info.nof_txs > 0)) {
+      // SIB6 is never segmented; advancing only applies to segmented SIB7/8 content.
+      rt.segments.advance_current_segment();
+    }
+
+    const bcch_segment& seg = rt.segments.get_current_segment();
+    const unsigned      tbs = si_info.pdsch_cfg.codewords[0].tb_size_bytes.value();
+    if (OCUDU_UNLIKELY(tbs < seg.len.value())) {
+      return make_unexpected(seg.len);
+    }
+    return span<const uint8_t>(seg.buffer->data(), tbs);
+  }
+
+private:
+  /// Content snapshot published from the control executor to the real-time path.
+  struct content_snapshot {
+    /// Monotonically increasing version, bumped every time new content is pushed for this index.
+    unsigned version = 0;
+    /// Segments of the on-going (or last) warning message. Empty if no warning was ever pushed for this index.
+    segmented_sib_list<bcch_segment> segments;
+  };
+
+  /// Control-executor-owned repeat/count state for an active PWS broadcast sequence.
+  struct ctrl_state {
+    /// Version of the current warning, incremented every time a new Write-Replace Warning replaces it.
+    unsigned version = 0;
+    /// Number of segments in the current warning message.
+    unsigned nof_segments = 0;
+    /// Number of remaining broadcasts (including the on-going/next one) for the current warning.
+    unsigned nof_broadcasts_remaining = 0;
+    /// Period between successive broadcasts.
+    std::chrono::seconds repeat_period{0};
+    /// Timer used to trigger successive broadcasts. Only running while \c nof_broadcasts_remaining > 0.
+    unique_timer timer;
+  };
+
+  /// Real-time-path-owned segment cursor state.
+  struct rt_state {
+    unsigned                         version = 0;
+    segmented_sib_list<bcch_segment> segments;
+    /// Whether the next call must serve segment 0 unconditionally, ignoring \c is_repetition/nof_txs.
+    bool force_segment_zero = true;
+  };
+
+  /// Starts (or continues) the broadcast sequence: signals the scheduler for one burst, and arms the timer for the
+  /// next one if any broadcasts remain.
+  void start_one_broadcast()
+  {
+    if (ctrl.nof_broadcasts_remaining == 0) {
+      return;
+    }
+    --ctrl.nof_broadcasts_remaining;
+
+    sched.handle_pws_broadcast_indication(cell_index, si_msg_idx, ctrl.nof_segments);
+
+    if (ctrl.nof_broadcasts_remaining == 0) {
+      return;
+    }
+
+    if (not ctrl.timer.is_valid()) {
+      ctrl.timer = timers.create_timer();
+    }
+    ctrl.timer.set(std::chrono::duration_cast<timer_duration>(ctrl.repeat_period), [this]() { start_one_broadcast(); });
+    ctrl.timer.run();
+  }
+
+  unsigned                         si_msg_idx;
+  timer_factory                    timers;
+  mac_scheduler_cell_info_handler& sched;
+  du_cell_index_t                  cell_index;
+
+  ctrl_state                               ctrl;
+  lockfree_triple_buffer<content_snapshot> pending;
+  rt_state                                 rt;
+};
+
+sib_pdu_assembler::sib_pdu_assembler(du_cell_index_t                  cell_index_,
+                                     const mac_cell_sys_info_config&  req,
+                                     timer_factory                    timers_,
+                                     mac_scheduler_cell_info_handler& sched_) :
+  logger(ocudulog::fetch_basic_logger("MAC")),
+  cell_index(cell_index_),
+  timers(timers_),
+  sched(sched_),
+  sib1_hdlr(std::make_unique<sib1_assembler>())
+{
+  // Set up PWS encoders, one entry per SI-message index. Only SI-messages that require activation (i.e. can
+  // actually carry a PWS broadcast) get a real encoder; this decision is made once here, before any concurrent
+  // access starts, so it is safe for the real-time path -- and save_buffers() -- to check the resulting null/non-null
+  // pointers without further synchronization.
+  const auto& si_sched_messages = req.si_sched_cfg.si_sched_cfg.si_messages;
+  pws_encoders.resize(req.si_messages.size());
+  for (unsigned i = 0, e = req.si_messages.size(); i != e; ++i) {
+    if (i < si_sched_messages.size() and si_sched_messages[i].requires_activation) {
+      pws_encoders[i] = std::make_shared<pws_si_msg_encoder>(i, timers, sched, cell_index);
+    }
+  }
+
   // Version starts at 0.
   last_cfg_buffers.version = 0;
   save_buffers(0, req);
@@ -177,12 +355,29 @@ void sib_pdu_assembler::handle_si_change_request(const mac_cell_sys_info_config&
   pending.write_and_commit(last_cfg_buffers);
 }
 
+bool sib_pdu_assembler::handle_si_message_pdu_updates(const mac_cell_sys_info_pdu_update& req)
+{
+  if (req.pws_broadcast.has_value()) {
+    return handle_pws_broadcast(req);
+  }
+  return enqueue_si_message_pdu_updates(req);
+}
+
 bool sib_pdu_assembler::enqueue_si_message_pdu_updates(const mac_cell_sys_info_pdu_update& req)
 {
   if (message_ext_handler) {
     return message_ext_handler->enqueue_si_pdu_updates(req);
   }
   return false;
+}
+
+bool sib_pdu_assembler::handle_pws_broadcast(const mac_cell_sys_info_pdu_update& req)
+{
+  if (not req.pws_broadcast.has_value() or req.si_msg_idx >= pws_encoders.size() or not pws_encoders[req.si_msg_idx]) {
+    // SI-message index does not exist, or does not require activation (see sib_pdu_assembler constructor).
+    return false;
+  }
+  return pws_encoders[req.si_msg_idx]->handle_pws_broadcast(req);
 }
 
 void sib_pdu_assembler::save_buffers(si_version_type si_version, const mac_cell_sys_info_config& req)
@@ -195,48 +390,23 @@ void sib_pdu_assembler::save_buffers(si_version_type si_version, const mac_cell_
   last_cfg_buffers.sib1 = sib1_hdlr->handle_si_change_request(req.sib1, req.sib1_contains_hypersfn);
 
   // Check if SI messages have changed.
-  last_cfg_buffers.si_msg_buffers.resize(req.si_messages.size());
+  last_cfg_buffers.si_msg_encoders.resize(req.si_messages.size());
   for (unsigned i = 0, e = req.si_messages.size(); i != e; ++i) {
+    if (i < pws_encoders.size() and pws_encoders[i] != nullptr) {
+      // This SI-message index is exclusively managed by its PWS encoder. Its content flows through
+      // handle_pws_broadcast, not through this (possibly unrelated) SI reconfiguration. Leave it untouched.
+      last_cfg_buffers.si_msg_encoders[i] = pws_encoders[i];
+      continue;
+    }
+
     if (last_si_messages.size() <= i) {
       last_si_messages.resize(i + 1);
     }
     if (req.si_messages[i] != last_si_messages[i]) {
-      // Resize according to the number of message segments in the new SI message.
-      last_si_messages[i].resize(req.si_messages[i].size());
-      // Check if the request contains a segmented SI message.
-      if (req.si_messages[i].size() > 1) {
-        const auto& new_si_cfg = req.si_messages[i];
-
-        // Copy the last configuration request (perform a shallow copy of each segment).
-        auto& last_si_cfg_buf = last_si_messages[i];
-        last_si_cfg_buf.resize(new_si_cfg.size());
-        for (unsigned i_segment = 0, nof_segments = new_si_cfg.size(); i_segment != nof_segments; ++i_segment) {
-          last_si_cfg_buf[i_segment] = new_si_cfg[i_segment].copy();
-        }
-
-        // Set the SI message size.
-        size_t si_msg_len = new_si_cfg.front().length();
-        ocudu_assert(std::all_of(last_si_cfg_buf.begin(),
-                                 last_si_cfg_buf.end(),
-                                 [si_msg_len](const byte_buffer& si_msg) { return si_msg.length() == si_msg_len; }),
-                     "All segments of an SI message must have the same length.");
-        last_cfg_buffers.si_msg_buffers[i].first = units::bytes{static_cast<unsigned>(si_msg_len)};
-
-        // Copy the contents of the request into a linear buffer (deep copy each segment).
-        auto& si_messsage_buf =
-            last_cfg_buffers.si_msg_buffers[i].second.emplace<segmented_sib_list<bcch_dl_sch_buffer>>();
-        for (unsigned i_segment = 0, nof_segments = new_si_cfg.size(); i_segment != nof_segments; ++i_segment) {
-          si_messsage_buf.append_segment(make_linear_buffer(new_si_cfg[i_segment]));
-        }
-
-      } else {
-        // Do the same for a configuration request carrying a single SI message segment.
-        auto&       last_si_cfg_buf               = last_si_messages[i].front();
-        const auto& new_si_cfg                    = req.si_messages[i].front();
-        last_si_cfg_buf                           = new_si_cfg.copy();
-        last_cfg_buffers.si_msg_buffers[i].first  = units::bytes{static_cast<unsigned>(new_si_cfg.length())};
-        last_cfg_buffers.si_msg_buffers[i].second = make_linear_buffer(new_si_cfg);
-      }
+      ocudu_assert(req.si_messages[i].size() == 1, "Static SI-messages must not be segmented");
+      last_si_messages[i].resize(1);
+      last_si_messages[i].front()         = req.si_messages[i].front().copy();
+      last_cfg_buffers.si_msg_encoders[i] = std::make_shared<static_si_msg_encoder>(req.si_messages[i].front());
     }
   }
 
@@ -256,13 +426,13 @@ span<const uint8_t> sib_pdu_assembler::encode_si_pdu(slot_point_extended sl_tx, 
     if (current_buffers.version != si_info.version) {
       // Versions do not match.
       logger.error("SI message version mismatch. Expected: {}, got: {}", si_info.version, current_buffers.version);
-      // We force the version to avoid more than one warning.
+      // We force the version to avoid more than one error log message.
       current_buffers.version = si_info.version;
     }
   }
 
   if (si_info.si_indicator == sib_information::si_indicator_type::sib1) {
-    auto payload = current_buffers.sib1->encode(sl_tx, units::bytes{tbs});
+    auto payload = current_buffers.sib1->encode(sl_tx, si_info);
     if (not payload.has_value()) {
       units::bytes sib1_len = payload.error();
       logger.warning(
@@ -274,7 +444,7 @@ span<const uint8_t> sib_pdu_assembler::encode_si_pdu(slot_point_extended sl_tx, 
 
   ocudu_assert(si_info.si_msg_index.has_value(), "Invalid SI message index");
   const unsigned idx = si_info.si_msg_index.value();
-  if (idx >= current_buffers.si_msg_buffers.size()) {
+  if (idx >= current_buffers.si_msg_encoders.size() or not current_buffers.si_msg_encoders[idx]) {
     logger.error("Failed to encode SI-message in PDSCH. Cause: SI message index {} does not exist", idx);
     return span<const uint8_t>{zeros_payload}.first(tbs);
   }
@@ -286,25 +456,15 @@ span<const uint8_t> sib_pdu_assembler::encode_si_pdu(slot_point_extended sl_tx, 
     }
   }
 
-  if (current_buffers.si_msg_buffers[idx].first.value() > tbs) {
+  auto payload = current_buffers.si_msg_encoders[idx]->encode(sl_tx, si_info);
+  if (not payload.has_value()) {
+    units::bytes min_len = payload.error();
     logger.warning(
         "Failed to encode SI-message {} PDSCH. Cause: PDSCH TB size {} is smaller than the SI-message length {}",
         idx,
         tbs,
-        current_buffers.si_msg_buffers[idx].first.value());
+        min_len.value());
     return span<const uint8_t>{zeros_payload}.first(tbs);
   }
-
-  // If the message is segmented, return the current segment.
-  if (auto* segmented_msg =
-          std::get_if<segmented_sib_list<bcch_dl_sch_buffer>>(&current_buffers.si_msg_buffers[idx].second)) {
-    // If the SI message has not been scheduled previously within the repetition period, and has been previously
-    // transmitted, advance to the next message segment.
-    if (!si_info.is_repetition && (si_info.nof_txs > 0)) {
-      segmented_msg->advance_current_segment();
-    }
-    return span<const uint8_t>(segmented_msg->get_current_segment()->data(), tbs);
-  }
-
-  return span<const uint8_t>(std::get<bcch_dl_sch_buffer>(current_buffers.si_msg_buffers[idx].second)->data(), tbs);
+  return payload.value();
 }

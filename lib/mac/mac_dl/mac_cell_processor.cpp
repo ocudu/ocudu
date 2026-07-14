@@ -52,7 +52,7 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
            MAX_K0_DELAY,
            get_nof_slots_per_subframe(cell_cfg.scs_common) * NOF_SFNS * NOF_SUBFRAMES_PER_FRAME),
   ssb_helper(cell_cfg_req_),
-  sib_assembler(cell_cfg_req_.sys_info),
+  sib_assembler(cell_cfg_req_.cell_index, cell_cfg_req_.sys_info, timer_factory{timers_, ctrl_exec_}, sched_),
   rar_assembler(pdu_pool),
   dlsch_assembler(ue_mng, dl_harq_buffers),
   paging_assembler(pdu_pool),
@@ -156,13 +156,8 @@ async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac
     }
 
     if (request.new_si_pdu_info.has_value()) {
-      // SI message update without SI change notifications nor SIB1 valueTag update.
-      sib_assembler.enqueue_si_message_pdu_updates(*request.new_si_pdu_info);
-      resp.si_pdus_enqueued = true;
-
-      if (request.new_si_pdu_info->pws_broadcast.has_value()) {
-        sched.handle_pws_broadcast_indication(cell_cfg.cell_index, *request.new_si_pdu_info->pws_broadcast);
-      }
+      // SI message update without SIB1 valueTag update.
+      resp.si_pdus_enqueued = sib_assembler.handle_si_message_pdu_updates(*request.new_si_pdu_info);
     }
 
     if (request.slice_reconf_req.has_value()) {

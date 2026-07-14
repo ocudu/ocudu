@@ -224,16 +224,14 @@ TEST_F(si_scheduler_test, when_si_is_updated_all_ues_in_rrc_idle_get_notified_ex
   ASSERT_TRUE(notified_ue_ids.all());
 }
 
-TEST_F(si_scheduler_test, when_pws_broadcast_indication_received_then_short_message_repeats_requested_nof_times)
+TEST_F(si_scheduler_test, when_pws_broadcast_indication_received_then_one_short_message_is_sent)
 {
-  const unsigned             nof_broadcasts = 3;
-  const std::chrono::seconds repeat_period_sec{1};
+  // Repetition is no longer handled inside the scheduler -- the MAC layer re-issues one indication per broadcast.
+  // A single indication should therefore result in exactly one short message.
+  si_sched.handle_pws_broadcast_indication(pws_broadcast_request{to_du_cell_index(0), 0, 1});
 
-  si_sched.handle_pws_broadcast_indication(
-      pws_broadcast_request{to_du_cell_index(0), repeat_period_sec, nof_broadcasts});
-
-  const unsigned slots_per_sec  = get_nof_slots_per_subframe(cell_cfg.scs_common()) * NOF_SUBFRAMES_PER_FRAME * 100;
-  const unsigned nof_test_slots = (nof_broadcasts + 2) * repeat_period_sec.count() * slots_per_sec;
+  const unsigned drx_cycle_rfs  = static_cast<unsigned>(cell_cfg.params.dl_cfg_common.pcch_cfg.default_paging_cycle);
+  const unsigned nof_test_slots = 2 * drx_cycle_rfs * next_slot.nof_slots_per_frame();
   unsigned       nof_pws_notifs = 0;
 
   for (unsigned i = 0; i != nof_test_slots; ++i) {
@@ -254,21 +252,20 @@ TEST_F(si_scheduler_test, when_pws_broadcast_indication_received_then_short_mess
     }
   }
 
-  ASSERT_EQ(nof_pws_notifs, nof_broadcasts);
+  ASSERT_EQ(nof_pws_notifs, 1);
 }
 
 TEST_F(si_scheduler_test, when_new_pws_broadcast_indication_received_then_it_replaces_the_previous_one)
 {
   // Submit an initial request, then immediately supersede it with a second one before any slot is processed.
   // Since the pending request is only consumed on the next run_slot(), only the second (last-committed) request
-  // should ever take effect -- verifying that a new request fully replaces any previous one.
-  si_sched.handle_pws_broadcast_indication(pws_broadcast_request{to_du_cell_index(0), std::chrono::seconds{1}, 10});
-  const unsigned nof_broadcasts = 1;
-  si_sched.handle_pws_broadcast_indication(
-      pws_broadcast_request{to_du_cell_index(0), std::chrono::seconds{1}, nof_broadcasts});
+  // should ever take effect -- verifying that a new request fully replaces any previous one, and only one short
+  // message is sent in total.
+  si_sched.handle_pws_broadcast_indication(pws_broadcast_request{to_du_cell_index(0), 0, 10});
+  si_sched.handle_pws_broadcast_indication(pws_broadcast_request{to_du_cell_index(0), 0, 1});
 
-  const unsigned slots_per_sec  = get_nof_slots_per_subframe(cell_cfg.scs_common()) * NOF_SUBFRAMES_PER_FRAME * 100;
-  const unsigned nof_test_slots = 3 * slots_per_sec;
+  const unsigned drx_cycle_rfs  = static_cast<unsigned>(cell_cfg.params.dl_cfg_common.pcch_cfg.default_paging_cycle);
+  const unsigned nof_test_slots = 2 * drx_cycle_rfs * next_slot.nof_slots_per_frame();
   unsigned       nof_pws_notifs = 0;
   for (unsigned i = 0; i != nof_test_slots; ++i) {
     run_slot();
@@ -287,7 +284,54 @@ TEST_F(si_scheduler_test, when_new_pws_broadcast_indication_received_then_it_rep
     }
   }
 
-  ASSERT_EQ(nof_pws_notifs, nof_broadcasts);
+  ASSERT_EQ(nof_pws_notifs, 1);
+}
+
+const si_scheduling_config ACTIVATION_REQUIRED_SI_SCHED_CFG{
+    DEFAULT_SIB1_PAYLOAD_SIZE,
+    {{si_message_scheduling_config{units::bytes{64}, 16, std::nullopt, true}}},
+    10};
+
+class si_msg_scheduler_activation_test : public si_scheduler_test_environment, public testing::Test
+{
+protected:
+  si_msg_scheduler_activation_test() :
+    si_scheduler_test_environment(make_sched_configuration_request(ACTIVATION_REQUIRED_SI_SCHED_CFG))
+  {
+  }
+};
+
+TEST_F(si_msg_scheduler_activation_test, when_message_is_not_activated_then_it_is_never_scheduled)
+{
+  const unsigned nof_test_slots =
+      2 * ACTIVATION_REQUIRED_SI_SCHED_CFG.si_messages[0].period_radio_frames * next_slot.nof_slots_per_frame();
+  for (unsigned i = 0; i != nof_test_slots; ++i) {
+    run_slot();
+    for (const auto& sib : res_grid[0].result.dl.bc.sibs) {
+      ASSERT_NE(sib.si_indicator, sib_information::other_si)
+          << "SI-message requiring activation must not be scheduled while dormant";
+    }
+  }
+}
+
+TEST_F(si_msg_scheduler_activation_test,
+       when_activation_indication_received_then_it_is_scheduled_for_exactly_nof_segments_occasions)
+{
+  const unsigned nof_segments = 3;
+  si_sched.handle_pws_broadcast_indication(pws_broadcast_request{to_du_cell_index(0), 0, nof_segments});
+
+  const unsigned nof_test_slots =
+      6 * ACTIVATION_REQUIRED_SI_SCHED_CFG.si_messages[0].period_radio_frames * next_slot.nof_slots_per_frame();
+  unsigned nof_tx = 0;
+  for (unsigned i = 0; i != nof_test_slots; ++i) {
+    run_slot();
+    for (const auto& sib : res_grid[0].result.dl.bc.sibs) {
+      if (sib.si_indicator == sib_information::other_si) {
+        ++nof_tx;
+      }
+    }
+  }
+  ASSERT_EQ(nof_tx, nof_segments);
 }
 
 class si_msg_scheduler_tdra_test : public si_scheduler_test_environment, public testing::Test

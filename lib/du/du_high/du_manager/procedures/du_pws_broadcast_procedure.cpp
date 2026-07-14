@@ -31,11 +31,15 @@ std::optional<unsigned> find_si_msg_idx_for_sib(const du_cell_config& cell_cfg, 
   return std::nullopt;
 }
 
-/// \brief Packs the ASN.1 PER-encoded SIB6/7/8 PDU \c sib_msg into a full BCCH-DL-SCH-Message envelope.
+/// \brief Packs a single ASN.1 PER-encoded SIB6/7/8 segment \c sib_msg into a full BCCH-DL-SCH-Message envelope.
 ///
 /// SIB6/7/8 are root (non-extension) CHOICE alternatives in SystemInformation-IEs.sib-TypeAndInfo, so, unlike
 /// Rel-16+ SIBs, they are not open-type wrapped and cannot be spliced into the envelope as raw bytes -- they must
 /// first be unpacked into their generated ASN.1 object so it can be re-packed in place by the envelope's own pack().
+///
+/// \remark SIB6 is never segmented (always exactly one segment). SIB7/8 may be split into multiple segments by the
+/// CU (see \c write_replace_warning_information::sib_msgs); this function must be called once per segment, and each
+/// resulting BCCH-DL-SCH-Message is transmitted in its own SI-message window occasion, in order.
 expected<byte_buffer> pack_warning_bcch_dl_sch_msg(uint8_t sib_type, const byte_buffer& sib_msg)
 {
   using namespace asn1::rrc_nr;
@@ -109,15 +113,17 @@ async_task<mac_cell_reconfig_response> du_pws_broadcast_procedure::handle_cell_b
     return launch_no_op_task(mac_cell_reconfig_response{});
   }
 
-  expected<byte_buffer> pdu = pack_warning_bcch_dl_sch_msg(request.sib_type, request.sib_msg);
-  if (not pdu.has_value()) {
-    logger.warning(
-        "cell={}: Discarding Write-Replace Warning. Cause: Failed to pack SIB{}", cell_index, request.sib_type);
-    return launch_no_op_task(mac_cell_reconfig_response{});
-  }
-
   si_messages.clear();
-  si_messages.push_back(std::move(pdu.value()));
+  si_messages.reserve(request.sib_msgs.size());
+  for (const byte_buffer& segment : request.sib_msgs) {
+    expected<byte_buffer> pdu = pack_warning_bcch_dl_sch_msg(request.sib_type, segment);
+    if (not pdu.has_value()) {
+      logger.warning(
+          "cell={}: Discarding Write-Replace Warning. Cause: Failed to pack SIB{}", cell_index, request.sib_type);
+      return launch_no_op_task(mac_cell_reconfig_response{});
+    }
+    si_messages.push_back(std::move(pdu.value()));
+  }
 
   mac_cell_reconfig_request req;
   req.new_si_pdu_info = mac_cell_sys_info_pdu_update{
