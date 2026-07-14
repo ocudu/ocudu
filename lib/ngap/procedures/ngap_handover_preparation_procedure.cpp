@@ -14,7 +14,6 @@ constexpr std::chrono::milliseconds ng_cancel_ack_timeout{5000};
 
 ngap_handover_preparation_procedure::ngap_handover_preparation_procedure(
     const ngap_handover_preparation_request& request_,
-    const plmn_identity&                     serving_plmn_,
     const ngap_ue_ids&                       ue_ids_,
     ngap_message_notifier&                   amf_notifier_,
     ngap_rrc_ue_notifier&                    rrc_ue_notifier_,
@@ -23,7 +22,6 @@ ngap_handover_preparation_procedure::ngap_handover_preparation_procedure(
     timer_factory                            timers,
     ngap_ue_logger&                          logger_) :
   request(request_),
-  serving_plmn(serving_plmn_),
   ue_ids(ue_ids_),
   amf_notifier(amf_notifier_),
   rrc_ue_notifier(rrc_ue_notifier_),
@@ -173,7 +171,7 @@ void ngap_handover_preparation_procedure::fill_asn1_target_ran_node_id(target_id
   auto& target_node = target_id.set_target_ran_node_id();
   target_node.global_ran_node_id.set(global_ran_node_id_c::types::global_gnb_id);
   auto& global_gnb   = target_node.global_ran_node_id.global_gnb_id();
-  global_gnb.plmn_id = serving_plmn.to_bytes();
+  global_gnb.plmn_id = request.target_id.plmn.to_bytes();
   global_gnb.gnb_id.set_gnb_id();
   global_gnb.gnb_id.gnb_id().from_number(request.target_id.gnb_id.id, request.target_id.gnb_id.bit_length);
   target_node.sel_tai.plmn_id = request.target_id.plmn.to_bytes();
@@ -217,7 +215,7 @@ byte_buffer ngap_handover_preparation_procedure::fill_asn1_source_to_target_tran
   }
   nr_cgi_s& target_nr_cgi = transparent_container.target_cell_id.set_nr_cgi();
 
-  target_nr_cgi.plmn_id = serving_plmn.to_bytes();
+  target_nr_cgi.plmn_id = request.target_id.plmn.to_bytes();
   target_nr_cgi.nr_cell_id.from_number(request.nci.value());
 
   last_visited_cell_item_s        last_visited_cell_item;

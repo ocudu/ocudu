@@ -15,7 +15,6 @@ class ngap_handover_preparation_procedure
 {
 public:
   ngap_handover_preparation_procedure(const ngap_handover_preparation_request& request_,
-                                      const plmn_identity&                     serving_plmn_,
                                       const ngap_ue_ids&                       ue_ids_,
                                       ngap_message_notifier&                   amf_notifier_,
                                       ngap_rrc_ue_notifier&                    rrc_ue_notifier_,
@@ -29,7 +28,6 @@ public:
   static const char* name() { return "Handover Preparation Procedure"; }
 
   const ngap_handover_preparation_request request;
-  const plmn_identity&                    serving_plmn;
   const ngap_ue_ids                       ue_ids;
   ngap_message_notifier&                  amf_notifier;
   ngap_rrc_ue_notifier&                   rrc_ue_notifier;

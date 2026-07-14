@@ -1435,7 +1435,6 @@ ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_r
   ue_ctxt.logger.log_info("Starting HO preparation");
 
   return launch_async<ngap_handover_preparation_procedure>(msg,
-                                                           ue_ctxt.serving_guami.plmn,
                                                            ue_ctxt.ue_ids,
                                                            tx_pdu_notifier,
                                                            ue->get_ngap_rrc_ue_notifier(),
