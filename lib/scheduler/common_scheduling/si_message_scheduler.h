@@ -41,9 +41,9 @@ private:
     unsigned nof_tx_in_current_window = 0;
     /// Total number of SI message transmissions.
     unsigned long total_nof_tx = 0;
-    /// \brief Whether this SI-message is currently broadcasting (i.e. allowed to be scheduled).
+    /// \brief Whether this SI-message is currently active (i.e. allowed to be scheduled).
     /// \remark Always true for SI-messages that do not require explicit activation.
-    bool broadcasting = false;
+    bool active = false;
     /// Number of segments to transmit before the on-going activation goes back to dormant.
     unsigned nof_segments = 0;
     /// Number of window transmissions completed since the current activation.
