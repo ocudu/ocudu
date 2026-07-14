@@ -486,6 +486,10 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
     }
   }
 
+  // Sat-switch/neighbor entries without their own validity duration fall back to the serving cell value, which the
+  // UE applies when the field is absent (TS 38.331). In a TN cell there is no serving value; use the smallest one.
+  const unsigned fallback_ul_sync_validity_dur = cell_cfg.ntn_cfg ? cell_cfg.ntn_cfg->ntn_ul_sync_validity_dur : 5;
+
   // Optionally propagate sat-switch target satellite using its own OCM.
   std::optional<ntn_orbital_state> sat_sw_ntn_info;
   if (cell_cfg.sat_switch) {
@@ -494,8 +498,9 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
       logger.warning(
           "Sat-switch satellite index {} not found, cell={:#x}", cell_cfg.sat_switch->satellite_index, nr_cgi.nci);
     } else {
-      const unsigned ntn_ul_sync_validity_dur = cell_cfg.sat_switch->ntn_ul_sync_validity_dur.value_or(5);
-      const bool     sat_sw_use_state_vector  = cell_cfg.sat_switch->use_state_vector.value_or(false);
+      const unsigned ntn_ul_sync_validity_dur =
+          cell_cfg.sat_switch->ntn_ul_sync_validity_dur.value_or(fallback_ul_sync_validity_dur);
+      const bool sat_sw_use_state_vector = cell_cfg.sat_switch->use_state_vector.value_or(false);
       sat_sw_ntn_info =
           compute_orbital_state(*sat_sw_ctx, epoch_time, epoch_slot, ntn_ul_sync_validity_dur, sat_sw_use_state_vector);
       if (!sat_sw_ntn_info->success) {
@@ -514,7 +519,7 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
       logger.warning("Satellite index {} not found for neighbor, cell={:#x}", nc.satellite_index, nr_cgi.nci);
       continue;
     }
-    const unsigned ntn_ul_sync_validity_dur = nc.ntn_ul_sync_validity_dur.value_or(5);
+    const unsigned ntn_ul_sync_validity_dur = nc.ntn_ul_sync_validity_dur.value_or(fallback_ul_sync_validity_dur);
     const bool     nc_use_state_vector      = nc.use_state_vector.value_or(false);
     ncell_ntn_info[i] =
         compute_orbital_state(*nc_sat_ctx, epoch_time, epoch_slot, ntn_ul_sync_validity_dur, nc_use_state_vector);
