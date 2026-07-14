@@ -1433,7 +1433,8 @@ TEST_F(cu_cp_nrppa_test,
   ASSERT_TRUE(await_nrppa_measurement_response(3));
 
   // Verify that the UL Angle of Arrival measurement result was correctly forwarded to the LMF.
-  const auto& trp_meas_resp_list = get_nrppa_pdu(ngap_pdu).successful_outcome().value.meas_resp()->trp_meas_resp_list;
+  asn1::nrppa::nr_ppa_pdu_c nrppa_pdu          = get_nrppa_pdu(ngap_pdu);
+  const auto&               trp_meas_resp_list = nrppa_pdu.successful_outcome().value.meas_resp()->trp_meas_resp_list;
   ASSERT_EQ(trp_meas_resp_list.size(), 3);
   for (const auto& trp_meas_resp_item : trp_meas_resp_list) {
     ASSERT_EQ(trp_meas_resp_item.meas_result.size(), 1);
