@@ -161,8 +161,7 @@ private:
   const pdsch_time_domain_resource_allocation& get_pdsch_td_cfg(unsigned pdsch_time_res_idx) const;
 
   // Returns the PDSCH time resource index that is suitable for a given PDSCH configuration.
-  std::optional<unsigned> get_pdsch_time_res_idx(const pdsch_config_common&                   pdsch_cfg,
-                                                 slot_point                                   sl_tx,
+  std::optional<unsigned> get_pdsch_time_res_idx(slot_point                                   sl_tx,
                                                  const std::optional<dl_harq_process_handle>& h_dl_retx) const;
 
   /// Class that keeps track of the UEs' that are waiting for the SRB HARQ processes to be ACKed or retransmitted.

@@ -343,7 +343,6 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res
                                        ue&                                   u,
                                        std::optional<dl_harq_process_handle> h_dl_retx)
 {
-  const auto& bwp_cfg_common = cell_cfg.params.dl_cfg_common.init_dl_bwp;
   // Search valid PDSCH time domain resource.
 
   const bool is_retx = h_dl_retx.has_value();
@@ -409,8 +408,7 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res
 
     // Instead of looping through all pdsch_time_res_idx values, pick the one with the largest number of symbols that
     // fits within the current DL slots.
-    std::optional<unsigned> time_res_idx =
-        get_pdsch_time_res_idx(bwp_cfg_common.pdsch_common, pdsch_alloc.slot, h_dl_retx);
+    std::optional<unsigned> time_res_idx = get_pdsch_time_res_idx(pdsch_alloc.slot, h_dl_retx);
     if (not time_res_idx.has_value()) {
       continue;
     }
@@ -1331,8 +1329,7 @@ const pdsch_time_domain_resource_allocation& ue_fallback_scheduler::get_pdsch_td
 }
 
 std::optional<unsigned>
-ue_fallback_scheduler::get_pdsch_time_res_idx(const pdsch_config_common&                   pdsch_cfg,
-                                              slot_point                                   sl_tx,
+ue_fallback_scheduler::get_pdsch_time_res_idx(slot_point                                   sl_tx,
                                               const std::optional<dl_harq_process_handle>& h_dl_retx) const
 {
   std::optional<unsigned> candidate_pdsch_time_res_idx;
