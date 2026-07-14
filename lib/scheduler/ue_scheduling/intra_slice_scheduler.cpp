@@ -304,8 +304,10 @@ unsigned intra_slice_scheduler::schedule_dl_retx_candidates(dl_ran_slice_candida
     }
 
     // Perform DL grant allocation, including PDCCH, PDSCH and UCI.
+    // Use the slice's live remaining budget, not its static config max, which can be stale once other slices have
+    // already used some of the slot's PRBs.
     auto result = ue_alloc.allocate_dl_grant(
-        ue_retx_dl_grant_request{u, pdsch_slot, h, used_dl_vrbs, enable_pdsch_interleaving, slice.cfg().rbs.max()});
+        ue_retx_dl_grant_request{u, pdsch_slot, h, used_dl_vrbs, enable_pdsch_interleaving, slice.remaining_rbs()});
     if (not result.has_value() and result.error() == dl_alloc_failure_cause::skip_slot) {
       // Received signal to stop allocations in the slot.
       break;
@@ -355,8 +357,10 @@ unsigned intra_slice_scheduler::schedule_ul_retx_candidates(ul_ran_slice_candida
     // Allocate PDCCH and PUSCH.
     // NOTE: the symbols passed to the grant are the symbols that are available for PUSCH and for which the used VRBs
     // have been computed.
+    // Use the slice's live remaining budget, not its static config max, which can be stale once PUCCH or other
+    // slices have already used some of the slot's PRBs.
     auto result = ue_alloc.allocate_ul_grant(ue_retx_ul_grant_request{
-        u, pusch_slot, h, used_ul_vrbs, ofdm_symbol_range{0, min_srs_symbol}, slice.cfg().rbs.max()});
+        u, pusch_slot, h, used_ul_vrbs, ofdm_symbol_range{0, min_srs_symbol}, slice.remaining_rbs()});
     if (not result.has_value() and result.error() == alloc_status::skip_slot) {
       // Received signal to stop allocations in the slot.
       break;

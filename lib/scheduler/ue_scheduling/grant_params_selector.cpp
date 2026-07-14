@@ -233,7 +233,7 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
   const auto crb_lims = (cell_cfg.expert_cfg.ue.pdsch_crb_limits & ss.dl_crb_lims).convert_to<crb_interval>();
   // For reTx, additionally cap by the slice's max RB budget to prevent overflowing the slice allocation.
   const interval<unsigned> slice_max_lims =
-      (h_dl != nullptr) ? interval<unsigned>{0, max_rbs + 1} : interval<unsigned>{0, MAX_NOF_PRBS};
+      (h_dl != nullptr) ? interval<unsigned>{0, max_rbs} : interval<unsigned>{0, MAX_NOF_PRBS};
   const interval<unsigned> nof_rb_lims =
       cell_cfg.expert_cfg.ue.pdsch_nof_rbs &
       ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits.convert_to<interval<unsigned>>() &
@@ -414,7 +414,7 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
   // Determine RB allocation limits.
   // For reTx, additionally cap by the slice's max RB budget to prevent overflowing the slice allocation.
   const interval<unsigned> slice_max_lims =
-      (h_ul != nullptr) ? interval<unsigned>{0, max_rbs + 1} : interval<unsigned>{0, MAX_NOF_PRBS};
+      (h_ul != nullptr) ? interval<unsigned>{0, max_rbs} : interval<unsigned>{0, MAX_NOF_PRBS};
   interval<unsigned> nof_rb_lims = cell_cfg.expert_cfg.ue.pusch_nof_rbs &
                                    ue_cell_cfg.rrm_cfg().pusch_grant_size_limits.convert_to<interval<unsigned>>() &
                                    slice_max_lims;

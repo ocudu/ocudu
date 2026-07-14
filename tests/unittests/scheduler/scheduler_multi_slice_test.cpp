@@ -5,6 +5,7 @@
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/test_doubles/utils/test_rng.h"
+#include "tests/unittests/scheduler/test_utils/indication_generators.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_simulator.h"
 #include "ocudu/adt/ranges/transform.h"
 #include "ocudu/ran/du_types.h"
@@ -437,4 +438,52 @@ TEST_F(multi_slice_dedicated_ul_rbs_test, ul_dedicated_rbs_ratio_is_respected)
   // When both UEs have data, the scheduler should fully utilise the UL slot.
   EXPECT_NEAR(avg_ul_prbs_per_slot, cell_ul_prbs, cell_ul_prbs * tolerance)
       << "UL slot underutilised: avg=" << avg_ul_prbs_per_slot << " expected=" << cell_ul_prbs;
+}
+
+// Regression test: UL retx allocation used to cap each grant by the slice's static cfg().rbs.max() instead of the
+// live slice.remaining_rbs() for the current scheduling opportunity. When several UL retxs for the same slice land
+// in the same slot, each was (wrongly) allowed up to the static max regardless of how much the others already
+// consumed this loop, so their combined size could exceed the slice's actual remaining budget and trip the sanity
+// check in common_ran_slice_candidate::remaining_rbs().
+TEST_F(multi_slice_dedicated_ul_rbs_test, ul_retx_does_not_overflow_slice_rb_budget)
+{
+  // Take manual control of CRC feedback so we can force simultaneous UL retxs.
+  auto_crc = false;
+
+  // Several UEs sharing the 75% slice so multiple UL retxs can be pending for it at the same time.
+  static constexpr unsigned nof_ues_75 = 12;
+  std::vector<rnti_t>       rntis_75;
+  for (unsigned i = 0; i < nof_ues_75; ++i) {
+    rnti_t rnti = this->add_ue_to_slice(i, nssai_75());
+    rntis_75.push_back(rnti);
+    push_bsr_for_ue(to_du_ue_index(i), rnti);
+  }
+  // One UE in the 25% slice, keeping both slices covering the full cell BW.
+  rnti_t rnti_25 = this->add_ue_to_slice(nof_ues_75, nssai_25());
+  push_bsr_for_ue(to_du_ue_index(nof_ues_75), rnti_25);
+
+  for (unsigned i = 0; i != 3000; ++i) {
+    run_slot();
+    const sched_result* res = last_sched_result();
+    if (not res->ul.puschs.empty()) {
+      // Unconditionally NACK every UL transmission to keep forcing retransmissions across all UEs.
+      ul_crc_indication crc_ind = test_helper::create_crc_indication(last_result_slot(), res->ul.puschs, false);
+      sched->handle_crc_indication(crc_ind);
+
+      // No matter how many simultaneous retxs land in this slot, a slice must never be granted, in total, more RBs
+      // than its configured maximum.
+      unsigned rbs_75 = 0;
+      unsigned rbs_25 = 0;
+      for (const ul_sched_info& pusch : res->ul.puschs) {
+        unsigned nof_rbs = pusch.pusch_cfg.rbs.type1().length();
+        if (std::find(rntis_75.begin(), rntis_75.end(), pusch.pusch_cfg.rnti) != rntis_75.end()) {
+          rbs_75 += nof_rbs;
+        } else if (pusch.pusch_cfg.rnti == rnti_25) {
+          rbs_25 += nof_rbs;
+        }
+      }
+      ASSERT_LE(rbs_75, slice_75_rbs) << "slot=" << i << ": 75% slice granted more RBs than its configured max";
+      ASSERT_LE(rbs_25, slice_25_rbs) << "slot=" << i << ": 25% slice granted more RBs than its configured max";
+    }
+  }
 }
