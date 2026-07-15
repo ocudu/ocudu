@@ -25,6 +25,10 @@ static auto make_dl_dci_log_entry(const dci_dl_info& dci)
   std::optional<uint8_t> dai;
   std::optional<bool>    vrb_prb;
 
+  dci_1_0_p_rnti_configuration::payload_info short_messages_indicator =
+      dci_1_0_p_rnti_configuration::payload_info::scheduling_information;
+  uint8_t short_messages = 0;
+
   switch (dci.type()) {
     case dci_dl_rnti_config_type::c_rnti_f1_0: {
       const auto& dci1_0 = dci.as_c_rnti_f1_0();
@@ -56,12 +60,49 @@ static auto make_dl_dci_log_entry(const dci_dl_info& dci)
         dai = dci.as_c_rnti_f1_1().downlink_assignment_index;
       }
     } break;
+    case dci_dl_rnti_config_type::p_rnti_f1_0: {
+      const auto& dci1_0       = dci.as_p_rnti_f1_0();
+      short_messages_indicator = dci1_0.short_messages_indicator;
+      short_messages           = dci1_0.short_messages;
+    } break;
     default:
       is_formattable = false;
       break;
   }
-  return make_formattable([is_formattable, h_id, ndi, rv, mcs, pucch_res_id, dai, tpc_cmd, vrb_prb](auto& ctx) {
-    if (is_formattable) {
+  return make_formattable([is_formattable,
+                           dci_rnti_type = dci.type(),
+                           h_id,
+                           ndi,
+                           rv,
+                           mcs,
+                           pucch_res_id,
+                           dai,
+                           tpc_cmd,
+                           vrb_prb,
+                           short_messages_indicator,
+                           short_messages](auto& ctx) {
+    if (dci_rnti_type == dci_dl_rnti_config_type::p_rnti_f1_0) {
+      // Short Message bit positions, as per TS 38.331, Table 6.5-1.
+      static constexpr unsigned si_modification_short_message = 0b10000000;
+      static constexpr unsigned etws_cmas_short_message       = 0b01000000;
+
+      const bool has_paging_info =
+          short_messages_indicator != dci_1_0_p_rnti_configuration::payload_info::short_messages;
+      const bool has_short_message =
+          short_messages_indicator != dci_1_0_p_rnti_configuration::payload_info::scheduling_information;
+
+      fmt::format_to(ctx.out(),
+                     "dci: paging_ind={} short_msg_ind={}",
+                     has_paging_info ? "yes" : "no",
+                     has_short_message ? "yes" : "no");
+      if (has_short_message) {
+        fmt::format_to(ctx.out(),
+                       " short_msg=0x{:02x} (sysInfoMod={} etwsCmas={})",
+                       short_messages,
+                       (short_messages & si_modification_short_message) != 0 ? "yes" : "no",
+                       (short_messages & etws_cmas_short_message) != 0 ? "yes" : "no");
+      }
+    } else if (is_formattable) {
       fmt::format_to(
           ctx.out(), "dci: h_id={} ndi={} rv={} mcs={} res_ind={}", h_id, ndi ? 1 : 0, rv, mcs, pucch_res_id);
       if (tpc_cmd.has_value()) {

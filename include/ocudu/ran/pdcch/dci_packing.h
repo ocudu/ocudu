@@ -650,7 +650,7 @@ dci_payload dci_1_0_c_rnti_pack(const dci_1_0_c_rnti_configuration& config);
 /// \remark Defined in TS38.212 Section 7.3.1.2.1.
 struct dci_1_0_p_rnti_configuration {
   /// Indicates the content of the DCI format 1_0 payload when scrambled by P-RNTI.
-  enum class payload_info {
+  enum class payload_info : uint8_t {
     /// Indicates that only scheduling information for paging is present in the DCI.
     scheduling_information = 1,
     /// Indicates that only short message is present in the DCI.
@@ -664,7 +664,7 @@ struct dci_1_0_p_rnti_configuration {
   payload_info short_messages_indicator;
   /// \brief Short Messages - 8 bits as per TS38.331 Section 6.5 and Table 6.5-1.
   /// \remark If only the scheduling information for paging is carried, this bit field is reserved.
-  unsigned short_messages;
+  uint8_t short_messages;
   /// \brief Frequency domain resource assignment - \f$\Bigl \lceil \log_2(N_{RB}^{DL,BWP}(N_{RB}^{DL,BWP}+1)/2) \Bigr
   /// \rceil\f$ bits as per TS38.214 Section 5.1.2.2.2.
   /// \remark If only the short message is carried, this bit field is reserved.
