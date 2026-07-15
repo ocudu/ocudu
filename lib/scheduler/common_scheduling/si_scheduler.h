@@ -37,6 +37,7 @@ private:
   struct pws_pending_request {
     si_version_type         version = 0;
     std::optional<unsigned> nof_segments;
+    units::bytes            msg_len{0};
   };
 
   /// \brief Per-SI-message pending-request slot, keyed by SI-message index.

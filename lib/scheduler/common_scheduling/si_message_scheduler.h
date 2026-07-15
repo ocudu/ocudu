@@ -32,7 +32,8 @@ public:
   /// transmissions, after which it automatically goes back to dormant until the next activation. If \c nof_segments
   /// is \c std::nullopt, the SI-message is activated indefinitely and never automatically deactivates (used for
   /// test_mode-configured content that should broadcast forever).
-  void activate_si_message(unsigned si_msg_idx, std::optional<unsigned> nof_segments);
+  /// \param msg_len Length, in bytes, of the largest segment of the content being activated.
+  void activate_si_message(unsigned si_msg_idx, std::optional<unsigned> nof_segments, units::bytes msg_len);
 
   /// Called when cell is deactivated.
   void stop();
@@ -53,6 +54,10 @@ private:
     std::optional<unsigned> nof_segments;
     /// Number of window transmissions completed since the current activation.
     unsigned nof_tx = 0;
+    /// \brief Length, in bytes, used to size the PDSCH grant for this SI-message.
+    /// \remark Initialized from \c si_message_scheduling_config::msg_len, and overridden by \c activate_si_message
+    /// while a PWS activation is on-going, since real content length is only known at activation time.
+    units::bytes msg_len{0};
   };
 
   void update_si_message_windows(slot_point sl_tx);

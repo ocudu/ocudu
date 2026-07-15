@@ -230,6 +230,9 @@ TEST_F(sib_pdu_assembler_pws_test, when_pws_broadcast_is_pushed_then_scheduler_i
   ASSERT_EQ(sched.nof_pws_broadcast_indications, 1);
   ASSERT_EQ(sched.last_pws_si_msg_idx, 0);
   ASSERT_EQ(sched.last_pws_nof_segments, 2);
+  // Regression test: the scheduler must be signalled with the real (activation-time) content length, not whatever
+  // was configured/encoded for this SI-message at cell startup.
+  ASSERT_EQ(sched.last_pws_msg_len, units::bytes{50});
 }
 
 TEST_F(sib_pdu_assembler_pws_test, when_pws_broadcast_content_is_encoded_then_segments_cycle_in_order)
@@ -270,8 +273,11 @@ TEST_F(sib_pdu_assembler_pws_test, when_multiple_broadcasts_requested_then_timer
   const unsigned nof_broadcasts = 3;
   req.pws_broadcast             = pws_broadcast_indication{std::chrono::seconds{1}, nof_broadcasts};
 
+  const units::bytes seg_len{static_cast<unsigned>(segment.length())};
+
   assembler.handle_si_message_pdu_updates(req);
   ASSERT_EQ(sched.nof_pws_broadcast_indications, 1);
+  ASSERT_EQ(sched.last_pws_msg_len, seg_len);
 
   const unsigned ticks_per_broadcast = 1000; // repeat_period == 1 second == 1000 ms ticks.
   for (unsigned b = 1; b != nof_broadcasts; ++b) {
@@ -280,6 +286,9 @@ TEST_F(sib_pdu_assembler_pws_test, when_multiple_broadcasts_requested_then_timer
       task_worker.run_pending_tasks();
     }
     ASSERT_EQ(sched.nof_pws_broadcast_indications, b + 1) << "Broadcast #" << (b + 1) << " was not signalled";
+    // Regression test: repeats re-triggered by the timer must keep signalling the same content length as the
+    // original activation, not reset it to zero.
+    ASSERT_EQ(sched.last_pws_msg_len, seg_len);
   }
 
   // No further broadcasts should be signalled once the requested count has been exhausted.
@@ -402,6 +411,7 @@ TEST_F(sib_pdu_assembler_test_mode_auto_broadcast_test,
   ASSERT_EQ(sched.nof_pws_broadcast_indications, 1);
   ASSERT_EQ(sched.last_pws_si_msg_idx, 0);
   ASSERT_FALSE(sched.last_pws_nof_segments.has_value()) << "test_mode auto-broadcast must never auto-deactivate";
+  ASSERT_EQ(sched.last_pws_msg_len, units::bytes{50});
 }
 
 TEST_F(sib_pdu_assembler_test_mode_auto_broadcast_test, when_content_is_encoded_then_it_matches_configured_si_message)
@@ -434,4 +444,5 @@ TEST_F(sib_pdu_assembler_test_mode_auto_broadcast_test,
   ASSERT_EQ(sched.nof_pws_broadcast_indications, 2);
   ASSERT_TRUE(sched.last_pws_nof_segments.has_value());
   ASSERT_EQ(sched.last_pws_nof_segments, 1);
+  ASSERT_EQ(sched.last_pws_msg_len, units::bytes{50});
 }

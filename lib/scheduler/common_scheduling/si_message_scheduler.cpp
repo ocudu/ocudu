@@ -26,7 +26,8 @@ si_message_scheduler::si_message_scheduler(const cell_configuration&   cfg_,
 {
   pending_messages.resize(si_sched_cfg.si_messages.size());
   for (unsigned i = 0, e = pending_messages.size(); i != e; ++i) {
-    pending_messages[i].active = not si_sched_cfg.si_messages[i].requires_activation;
+    pending_messages[i].active  = not si_sched_cfg.si_messages[i].requires_activation;
+    pending_messages[i].msg_len = si_sched_cfg.si_messages[i].msg_len;
   }
 }
 
@@ -47,8 +48,9 @@ void si_message_scheduler::stop()
 {
   // Clear all windows.
   for (unsigned i = 0; i != pending_messages.size(); ++i) {
-    pending_messages[i]        = {};
-    pending_messages[i].active = not si_sched_cfg.si_messages[i].requires_activation;
+    pending_messages[i]         = {};
+    pending_messages[i].active  = not si_sched_cfg.si_messages[i].requires_activation;
+    pending_messages[i].msg_len = si_sched_cfg.si_messages[i].msg_len;
   }
 }
 
@@ -63,11 +65,14 @@ void si_message_scheduler::handle_si_message_update_indication(unsigned         
   // Reset window and transmission counters.
   std::fill(pending_messages.begin(), pending_messages.end(), message_window_context{});
   for (unsigned i = 0, e = pending_messages.size(); i != e; ++i) {
-    pending_messages[i].active = not si_sched_cfg.si_messages[i].requires_activation;
+    pending_messages[i].active  = not si_sched_cfg.si_messages[i].requires_activation;
+    pending_messages[i].msg_len = si_sched_cfg.si_messages[i].msg_len;
   }
 }
 
-void si_message_scheduler::activate_si_message(unsigned si_msg_idx, std::optional<unsigned> nof_segments)
+void si_message_scheduler::activate_si_message(unsigned                si_msg_idx,
+                                               std::optional<unsigned> nof_segments,
+                                               units::bytes            msg_len)
 {
   ocudu_assert(si_msg_idx < pending_messages.size(), "Invalid SI-message index");
 
@@ -75,6 +80,7 @@ void si_message_scheduler::activate_si_message(unsigned si_msg_idx, std::optiona
   ctxt.active                  = true;
   ctxt.nof_segments            = nof_segments;
   ctxt.nof_tx                  = 0;
+  ctxt.msg_len                 = msg_len;
 }
 
 void si_message_scheduler::update_si_message_windows(slot_point sl_tx)
@@ -179,7 +185,8 @@ bool si_message_scheduler::allocate_si_message(unsigned si_message, cell_slot_re
   // As per Section 5.1.3.2, TS 38.214, nof_oh_prb = 0 if PDSCH is scheduled by PDCCH with a CRC scrambled by SI-RNTI.
   static constexpr unsigned nof_oh_prb = 0;
 
-  const units::bytes si_msg_payload_size = si_sched_cfg.si_messages[si_message].msg_len;
+  // Note: For SI-messages currently PWS-activated, this reflects the real (activation-time) content length.
+  const units::bytes si_msg_payload_size = pending_messages[si_message].msg_len;
 
   const auto& pdsch_td_res_alloc_list =
       get_si_rnti_type0A_common_pdsch_time_domain_list(cell_cfg.params.dl_cfg_common.init_dl_bwp.pdsch_common,

@@ -9,6 +9,7 @@
 #include "ocudu/mac/mac_ue_control_information_handler.h"
 #include "ocudu/ran/du_types.h"
 #include "ocudu/ran/slot_point_extended.h"
+#include "ocudu/support/units.h"
 #include <optional>
 
 namespace ocudu {
@@ -56,9 +57,12 @@ public:
   /// \param[in] cell_idx DU-specific index of the cell for which the indication is directed.
   /// \param[in] si_msg_idx Index of the SI-message carrying the SIB6/7/8 to activate.
   /// \param[in] nof_segments Number of segments composing the warning message, or \c std::nullopt for indefinite.
+  /// \param[in] msg_len Length, in bytes, of the largest segment of the warning message being activated. Used to
+  /// size the PDSCH grant for this SI-message while active.
   virtual void handle_pws_broadcast_indication(du_cell_index_t         cell_idx,
                                                unsigned                si_msg_idx,
-                                               std::optional<unsigned> nof_segments) = 0;
+                                               std::optional<unsigned> nof_segments,
+                                               units::bytes            msg_len) = 0;
 
   /// \brief Handle request to update the slice configuration of a cell.
   /// \param[in] cell_index Index of the cell for which the measurement is directed.

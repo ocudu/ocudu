@@ -242,7 +242,8 @@ TEST_F(si_msg_scheduler_activation_test, when_pws_broadcast_indication_received_
 {
   // Repetition is no longer handled inside the scheduler -- the MAC layer re-issues one indication per broadcast.
   // A single indication should therefore result in exactly one short message.
-  si_sched.handle_pws_broadcast_indication(pws_broadcast_request{to_du_cell_index(0), 0, 1});
+  si_sched.handle_pws_broadcast_indication(
+      pws_broadcast_request{to_du_cell_index(0), 0, 1, ACTIVATION_REQUIRED_SI_SCHED_CFG.si_messages[0].msg_len});
 
   const unsigned drx_cycle_rfs  = static_cast<unsigned>(cell_cfg.params.dl_cfg_common.pcch_cfg.default_paging_cycle);
   const unsigned nof_test_slots = 2 * drx_cycle_rfs * next_slot.nof_slots_per_frame();
@@ -275,8 +276,9 @@ TEST_F(si_msg_scheduler_activation_test, when_new_pws_broadcast_indication_recei
   // Since the pending request is only consumed on the next run_slot(), only the second (last-committed) request
   // should ever take effect -- verifying that a new request fully replaces any previous one, and only one short
   // message is sent in total.
-  si_sched.handle_pws_broadcast_indication(pws_broadcast_request{to_du_cell_index(0), 0, 10});
-  si_sched.handle_pws_broadcast_indication(pws_broadcast_request{to_du_cell_index(0), 0, 1});
+  const units::bytes msg_len = ACTIVATION_REQUIRED_SI_SCHED_CFG.si_messages[0].msg_len;
+  si_sched.handle_pws_broadcast_indication(pws_broadcast_request{to_du_cell_index(0), 0, 10, msg_len});
+  si_sched.handle_pws_broadcast_indication(pws_broadcast_request{to_du_cell_index(0), 0, 1, msg_len});
 
   const unsigned drx_cycle_rfs  = static_cast<unsigned>(cell_cfg.params.dl_cfg_common.pcch_cfg.default_paging_cycle);
   const unsigned nof_test_slots = 2 * drx_cycle_rfs * next_slot.nof_slots_per_frame();
@@ -318,7 +320,8 @@ TEST_F(si_msg_scheduler_activation_test,
        when_activation_indication_received_then_it_is_scheduled_for_exactly_nof_segments_occasions)
 {
   const unsigned nof_segments = 3;
-  si_sched.handle_pws_broadcast_indication(pws_broadcast_request{to_du_cell_index(0), 0, nof_segments});
+  si_sched.handle_pws_broadcast_indication(pws_broadcast_request{
+      to_du_cell_index(0), 0, nof_segments, ACTIVATION_REQUIRED_SI_SCHED_CFG.si_messages[0].msg_len});
 
   const unsigned nof_test_slots =
       6 * ACTIVATION_REQUIRED_SI_SCHED_CFG.si_messages[0].period_radio_frames * next_slot.nof_slots_per_frame();
@@ -332,6 +335,30 @@ TEST_F(si_msg_scheduler_activation_test,
     }
   }
   ASSERT_EQ(nof_tx, nof_segments);
+}
+
+TEST_F(si_msg_scheduler_activation_test, when_activation_msg_len_exceeds_static_config_then_pdsch_grant_is_sized_for_it)
+{
+  // Regression test: real PWS content is only known at activation time and can be much larger than whatever
+  // (placeholder/test-mode) content was configured/encoded for this SI-message at cell startup. The scheduler must
+  // size the PDSCH grant off the activation-time msg_len, not the static si_message_scheduling_config::msg_len.
+  const units::bytes static_msg_len    = ACTIVATION_REQUIRED_SI_SCHED_CFG.si_messages[0].msg_len;
+  const units::bytes activated_msg_len = static_msg_len + units::bytes{64U};
+  si_sched.handle_pws_broadcast_indication(pws_broadcast_request{to_du_cell_index(0), 0, 1, activated_msg_len});
+
+  const unsigned nof_test_slots =
+      2 * ACTIVATION_REQUIRED_SI_SCHED_CFG.si_messages[0].period_radio_frames * next_slot.nof_slots_per_frame();
+  bool found = false;
+  for (unsigned i = 0; i != nof_test_slots; ++i) {
+    run_slot();
+    for (const auto& sib : res_grid[0].result.dl.bc.sibs) {
+      if (sib.si_indicator == sib_information::other_si) {
+        ASSERT_GE(sib.pdsch_cfg.codewords[0].tb_size_bytes, activated_msg_len);
+        found = true;
+      }
+    }
+  }
+  ASSERT_TRUE(found) << "SI-message was not scheduled within the expected window";
 }
 
 // SI-message 1 is given an explicit si_window_position (rather than the natural per-index offset) so that its
@@ -357,9 +384,10 @@ TEST_F(si_msg_scheduler_multi_activation_test,
 {
   // Regression test: activating two distinct SI-message indices before any slot is processed must not let the
   // second activation clobber the first in a shared pending-request slot.
-  const unsigned nof_segments = 3;
-  si_sched.handle_pws_broadcast_indication(pws_broadcast_request{to_du_cell_index(0), 0, nof_segments});
-  si_sched.handle_pws_broadcast_indication(pws_broadcast_request{to_du_cell_index(0), 1, nof_segments});
+  const unsigned     nof_segments = 3;
+  const units::bytes msg_len      = MULTI_ACTIVATION_REQUIRED_SI_SCHED_CFG.si_messages[0].msg_len;
+  si_sched.handle_pws_broadcast_indication(pws_broadcast_request{to_du_cell_index(0), 0, nof_segments, msg_len});
+  si_sched.handle_pws_broadcast_indication(pws_broadcast_request{to_du_cell_index(0), 1, nof_segments, msg_len});
 
   const unsigned nof_test_slots =
       6 * MULTI_ACTIVATION_REQUIRED_SI_SCHED_CFG.si_messages[0].period_radio_frames * next_slot.nof_slots_per_frame();

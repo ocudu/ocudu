@@ -90,7 +90,8 @@ public:
 
   void handle_pws_broadcast_indication(du_cell_index_t         cell_idx,
                                        unsigned                si_msg_idx,
-                                       std::optional<unsigned> nof_segments) override;
+                                       std::optional<unsigned> nof_segments,
+                                       units::bytes            msg_len) override;
 
   mac_positioning_measurement_handler& get_positioning_handler() override { return *pos_handler; }
 

@@ -9,6 +9,7 @@
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/slot_point_extended.h"
 #include "ocudu/support/units.h"
+#include <algorithm>
 
 using namespace ocudu;
 
@@ -202,13 +203,17 @@ public:
     ctrl.nof_segments             = req.si_messages.size();
     ctrl.nof_broadcasts_remaining = req.pws_broadcast->nof_broadcasts_requested;
     ctrl.repeat_period            = req.pws_broadcast->repeat_period;
+    ctrl.msg_len                  = units::bytes{0};
 
     // Publish the new content to the real-time path.
     content_snapshot snap;
     snap.version = ctrl.version;
     for (const byte_buffer& segment : req.si_messages) {
-      snap.segments.append_segment(
-          bcch_segment{make_linear_buffer(segment), units::bytes{static_cast<unsigned>(segment.length())}});
+      const units::bytes seg_len{static_cast<unsigned>(segment.length())};
+      snap.segments.append_segment(bcch_segment{make_linear_buffer(segment), seg_len});
+      // The scheduler sizes the PDSCH grant for this SI-message off the largest segment, since segments may not
+      // all be the same length (e.g. a shorter final segment).
+      ctrl.msg_len = std::max(ctrl.msg_len, seg_len);
     }
     pending.write_and_commit(snap);
 
@@ -228,13 +233,15 @@ public:
     // Publish the content to the real-time path.
     content_snapshot snap;
     snap.version = ctrl.version;
+    units::bytes max_len{0};
     for (const byte_buffer& segment : segments) {
-      snap.segments.append_segment(
-          bcch_segment{make_linear_buffer(segment), units::bytes{static_cast<unsigned>(segment.length())}});
+      const units::bytes seg_len{static_cast<unsigned>(segment.length())};
+      snap.segments.append_segment(bcch_segment{make_linear_buffer(segment), seg_len});
+      max_len = std::max(max_len, seg_len);
     }
     pending.write_and_commit(snap);
 
-    sched.handle_pws_broadcast_indication(cell_index, si_msg_idx, std::nullopt);
+    sched.handle_pws_broadcast_indication(cell_index, si_msg_idx, std::nullopt, max_len);
   }
 
   expected<span<const uint8_t>, units::bytes> encode(slot_point_extended /*sl_tx*/,
@@ -288,6 +295,9 @@ private:
     std::chrono::seconds repeat_period{0};
     /// Timer used to trigger successive broadcasts. Only running while \c nof_broadcasts_remaining > 0.
     unique_timer timer;
+    /// Length, in bytes, of the largest segment of the current warning message. Passed to the scheduler on every
+    /// (re-)activation so it sizes the PDSCH grant for the real content.
+    units::bytes msg_len{0};
   };
 
   /// Real-time-path-owned segment cursor state.
@@ -307,7 +317,8 @@ private:
     }
     --ctrl.nof_broadcasts_remaining;
 
-    sched.handle_pws_broadcast_indication(cell_index, si_msg_idx, std::optional<unsigned>{ctrl.nof_segments});
+    sched.handle_pws_broadcast_indication(
+        cell_index, si_msg_idx, std::optional<unsigned>{ctrl.nof_segments}, ctrl.msg_len);
 
     if (ctrl.nof_broadcasts_remaining == 0) {
       return;

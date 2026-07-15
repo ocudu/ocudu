@@ -154,7 +154,8 @@ void si_scheduler::handle_si_update_request(const si_scheduling_update_request& 
 void si_scheduler::handle_pws_broadcast_indication(const pws_broadcast_request& req)
 {
   ocudu_assert(pending_pws_reqs.contains(req.si_msg_idx), "SI-message {} does not require activation", req.si_msg_idx);
-  pending_pws_reqs[req.si_msg_idx].buffer->write_and_commit(pws_pending_request{next_pws_version++, req.nof_segments});
+  pending_pws_reqs[req.si_msg_idx].buffer->write_and_commit(
+      pws_pending_request{next_pws_version++, req.nof_segments, req.msg_len});
 }
 
 bool si_scheduler::try_handle_pending_pws_request()
@@ -168,7 +169,7 @@ bool si_scheduler::try_handle_pending_pws_request()
     // New request. Activate the target SI-message for one broadcast and queue a short-message notification.
     pws_entry.last_seen_version = next.version;
 
-    si_msg_sched.activate_si_message(pws_entry.si_msg_idx, next.nof_segments);
+    si_msg_sched.activate_si_message(pws_entry.si_msg_idx, next.nof_segments, next.msg_len);
     pws_short_msg_pending = true;
   }
 

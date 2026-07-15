@@ -39,6 +39,10 @@ struct pws_broadcast_request {
   /// Number of segments composing the warning message, i.e. the number of consecutive SI-message window
   /// transmissions needed to complete one broadcast. \c std::nullopt means broadcast indefinitely.
   std::optional<unsigned> nof_segments;
+  /// \brief Length, in bytes, of the largest segment of the warning message being activated.
+  ///
+  /// Real Write-Replace Warning content (and its segmentation) is only known at activation time.
+  units::bytes msg_len;
 };
 
 /// Interface used to notify new SIB1 or SI message updates to the scheduler.
