@@ -19,6 +19,20 @@
 #include "dft_processor_ci16_avx2.h"
 #endif // __x86_64__
 
+// Check if any Clang sanitizer is enabled.
+#ifdef __has_feature
+#if __has_feature(thread_sanitizer) || __has_feature(memory_sanitizer) || __has_feature(realtime_sanitizer) ||         \
+    __has_feature(address_sanitizer)
+#define ANY_SANITIZER
+#endif
+
+// Check if any GCC sanitizer is enabled.
+#else
+#if defined(__SANITIZE_THREAD__) || defined(__SANITIZE_ADDRESS__)
+#define ANY_SANITIZER
+#endif
+#endif
+
 using namespace ocudu;
 
 namespace {
@@ -144,7 +158,7 @@ std::shared_ptr<dft_processor_ci16_factory> ocudu::create_dft_processor_ci16_fac
 
 std::shared_ptr<dft_processor_factory> ocudu::create_dft_processor_factory_fftw()
 {
-#if !defined(BUILD_TYPE_RELEASE) || !defined(__x86_64__) || defined(__SANITIZE_THREAD__) || defined(__SANITIZE_MEMORY__)
+#if !defined(BUILD_TYPE_RELEASE) || !defined(__x86_64__) || defined(ANY_SANITIZER)
   return create_dft_processor_factory_fftw_slow();
 #else
   return create_dft_processor_factory_fftw_fast();
