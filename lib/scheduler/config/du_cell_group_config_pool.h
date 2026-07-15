@@ -42,11 +42,7 @@ public:
   const sched_bwp_config& cell_cfg() const { return common_bwp_cfg; }
 
 private:
-  /// \brief Retrieve the DL TD resource mapper to use for a UE with the given (pooled) dedicated DL BWP config.
-  /// \remark Returns the cell-wide \c dl_td_mapper when the UE has no dedicated PDSCH TD resource list configured;
-  /// otherwise builds (or reuses a cached) mapper augmented with the UE's dedicated list. The cache is keyed by the
-  /// address of the pooled \c bwp_downlink_dedicated, which \c dl_ded_config_pool guarantees is stable and unique per
-  /// distinct dedicated config content.
+  /// \brief Retrieve the DL TD resource mapper to use for a UE with the given dedicated DL BWP config.
   const dl_time_domain_mapper& get_dl_td_mapper(const bwp_downlink_dedicated* dl_ded);
 
   const bwp_id_t                             bwp_id;
@@ -58,10 +54,7 @@ private:
   pdcch_config_pool                          pdcch_pool;
   sched_bwp_config                           common_bwp_cfg;
   config_object_pool<bwp_downlink_dedicated> dl_ded_config_pool;
-
-  /// Cache of UE-dedicated DL TD resource mappers, keyed by the address of the pooled dedicated DL BWP config that
-  /// they were built from.
-  std::vector<std::pair<const bwp_downlink_dedicated*, std::unique_ptr<dl_time_domain_mapper>>> ded_dl_td_mapper_cache;
+  config_object_pool<dl_time_domain_mapper>  dl_ded_td_mapper_pool;
 };
 
 class du_cell_config_pool

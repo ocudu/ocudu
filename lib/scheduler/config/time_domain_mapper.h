@@ -101,6 +101,15 @@ struct dl_time_domain_mapper {
                                                  slot_point        pdsch_slot,
                                                  ofdm_symbol_range usable_symbols) const;
 
+  /// \brief Compares the underlying common and dedicated PDSCH TD resource lists, from which everything else in this
+  /// class is derived.
+  bool operator==(const dl_time_domain_mapper& rhs) const
+  {
+    return common_pdsch_td_res_list == rhs.common_pdsch_td_res_list and
+           dedicated_pdsch_td_res_list == rhs.dedicated_pdsch_td_res_list;
+  }
+  bool operator!=(const dl_time_domain_mapper& rhs) const { return not(*this == rhs); }
+
 private:
   /// \brief Common (fallback) PDSCH time-domain resource allocations for the BWP, used with DCI format 1_0.
   std::vector<pdsch_time_domain_resource_allocation> common_pdsch_td_res_list;

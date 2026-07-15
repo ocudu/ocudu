@@ -94,17 +94,10 @@ const dl_time_domain_mapper& bwp_config_pool::get_dl_td_mapper(const bwp_downlin
     return dl_td_mapper;
   }
 
-  for (const auto& [ded_cfg, mapper] : ded_dl_td_mapper_cache) {
-    if (ded_cfg == dl_ded) {
-      return *mapper;
-    }
-  }
-
   dl_time_domain_builder_params params = dl_td_params;
   std::get<dl_time_domain_builder_params::explicit_resources>(params.params).dedicated_pdsch_td_res_list =
       dl_ded->pdsch_cfg->pdsch_td_alloc_list;
-  ded_dl_td_mapper_cache.emplace_back(dl_ded, std::make_unique<dl_time_domain_mapper>(params));
-  return *ded_dl_td_mapper_cache.back().second;
+  return *dl_ded_td_mapper_pool.create(dl_time_domain_mapper{params});
 }
 
 static std::vector<std::unique_ptr<bwp_config_pool>>
