@@ -5,6 +5,7 @@
 #include "si_scheduler.h"
 #include "../support/dci_builder.h"
 #include "ocudu/ran/pdcch/dci_packing.h"
+#include <algorithm>
 
 using namespace ocudu;
 
@@ -84,7 +85,7 @@ void si_scheduler::try_handle_pending_request(cell_resource_allocator& res_alloc
   const bool si_modification_due = try_handle_si_mod_request(res_alloc.slot_tx(), res_alloc.max_dl_slot_alloc_delay);
 
   // Determine whether a PWS (ETWS/CMAS) short-message notification is due this slot.
-  const bool pws_notif_due = try_handle_pending_pws_request();
+  const bool pws_notif_due = try_handle_pending_pws_request(res_alloc.max_dl_slot_alloc_delay);
 
   if (si_modification_due or pws_notif_due) {
     try_schedule_short_message(res_alloc[slot_sched], si_modification_due, pws_notif_due);
@@ -158,22 +159,28 @@ void si_scheduler::handle_pws_broadcast_indication(const pws_broadcast_request& 
       pws_pending_request{next_pws_version++, req.nof_segments, req.msg_len});
 }
 
-bool si_scheduler::try_handle_pending_pws_request()
+bool si_scheduler::try_handle_pending_pws_request(unsigned max_dl_slot_alloc_delay)
 {
+  const unsigned slot_count_sched = slot_count + max_dl_slot_alloc_delay;
+  const unsigned slots_per_frame  = get_nof_slots_per_subframe(scs_common) * NOF_SUBFRAMES_PER_FRAME;
+
   // Check every SI-message slot for a new request.
   for (auto& pws_entry : pending_pws_reqs) {
     const auto& next = pws_entry.buffer->read();
     if (next.version == pws_entry.last_seen_version) {
       continue;
     }
-    // New request. Activate the target SI-message for one broadcast and queue a short-message notification.
+    // New request. Activate the target SI-message for one broadcast.
     pws_entry.last_seen_version = next.version;
-
     si_msg_sched.activate_si_message(pws_entry.si_msg_idx, next.nof_segments, next.msg_len);
-    pws_short_msg_pending = true;
+
+    // As per TS 38.304, ETWS/CMAS-capable UEs monitor for this notification only in their own paging occasion, once
+    // per DRX cycle. Since we don't know a given UE's UE_ID (hence its exact paging occasion), extend the
+    // notification window to cover at least one full default paging cycle from now.
+    pws_notif_until_count = std::max(pws_notif_until_count, slot_count_sched + default_paging_cycle * slots_per_frame);
   }
 
-  return pws_short_msg_pending;
+  return slot_count_sched < pws_notif_until_count;
 }
 
 void si_scheduler::try_schedule_short_message(cell_slot_resource_allocator& slot_alloc,
@@ -254,9 +261,4 @@ void si_scheduler::allocate_short_message(cell_slot_resource_allocator& slot_all
     short_message |= etws_cmas_short_message;
   }
   build_dci_f1_0_p_rnti(pdcch->dci, cell_cfg.params.dl_cfg_common.init_dl_bwp, short_message);
-
-  if (include_pws_indication) {
-    // Short message has been sent. The MAC layer will re-signal for the next broadcast, if any.
-    pws_short_msg_pending = false;
-  }
 }

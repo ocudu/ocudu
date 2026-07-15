@@ -238,18 +238,23 @@ protected:
   }
 };
 
-TEST_F(si_msg_scheduler_activation_test, when_pws_broadcast_indication_received_then_one_short_message_is_sent)
+TEST_F(si_msg_scheduler_activation_test,
+       when_pws_broadcast_indication_received_then_all_ues_in_rrc_idle_get_notified_at_least_once)
 {
-  // Repetition is no longer handled inside the scheduler -- the MAC layer re-issues one indication per broadcast.
-  // A single indication should therefore result in exactly one short message.
+  // As per TS 38.304, ETWS/CMAS-capable UEs in RRC_IDLE/RRC_INACTIVE monitor for the PWS short-message notification
+  // only in their own paging occasion, once per DRX cycle. Since the network does not know a UE's UE_ID (hence its
+  // exact paging occasion), the notification must be repeated across a full default paging cycle -- not sent once.
+  const paging_slot_helper slot_helper(cell_cfg);
   si_sched.handle_pws_broadcast_indication(
       pws_broadcast_request{to_du_cell_index(0), 0, 1, ACTIVATION_REQUIRED_SI_SCHED_CFG.si_messages[0].msg_len});
 
   const unsigned drx_cycle_rfs  = static_cast<unsigned>(cell_cfg.params.dl_cfg_common.pcch_cfg.default_paging_cycle);
   const unsigned nof_test_slots = 2 * drx_cycle_rfs * next_slot.nof_slots_per_frame();
-  unsigned       nof_pws_notifs = 0;
 
+  static constexpr unsigned        total_nof_ue_ids = 1024;
+  bounded_bitset<total_nof_ue_ids> notified_ue_ids(total_nof_ue_ids);
   for (unsigned i = 0; i != nof_test_slots; ++i) {
+    slot_point current_slot = next_slot;
     run_slot();
 
     for (const auto& pdcch : res_grid[0].result.dl.dl_pdcchs) {
@@ -261,46 +266,57 @@ TEST_F(si_msg_scheduler_activation_test, when_pws_broadcast_indication_received_
         continue;
       }
       // etwsAndCmasIndication bit, as per TS 38.331 Table 6.5-1.
-      if ((dci.short_messages & 0x40U) != 0) {
-        ++nof_pws_notifs;
+      if ((dci.short_messages & 0x40U) == 0) {
+        continue;
+      }
+
+      const unsigned paging_frame_offset = cell_cfg.params.dl_cfg_common.pcch_cfg.paging_frame_offset;
+      const auto     drx_cycle = static_cast<unsigned>(cell_cfg.params.dl_cfg_common.pcch_cfg.default_paging_cycle);
+      const auto     nof_pf_per_drx_cycle = static_cast<unsigned>(cell_cfg.params.dl_cfg_common.pcch_cfg.nof_pf);
+      const auto     nof_po_per_pf        = static_cast<unsigned>(cell_cfg.params.dl_cfg_common.pcch_cfg.ns);
+      const unsigned N                    = drx_cycle / nof_pf_per_drx_cycle;
+      const unsigned t_div_n              = drx_cycle / N;
+      for (unsigned ue_id = 0; ue_id < total_nof_ue_ids; ++ue_id) {
+        // Check for paging frame. (SFN + PF_offset) mod T = (T div N)*(UE_ID mod N). See TS 38.304, clause 7.1.
+        const unsigned ue_id_mod_n = ue_id % N;
+        if (((current_slot.sfn() + paging_frame_offset) % drx_cycle) != (t_div_n * ue_id_mod_n)) {
+          continue;
+        }
+
+        // Index (i_s), indicating the index of the PO. i_s = floor (UE_ID/N) mod Ns.
+        const unsigned i_s = (ue_id / N) % nof_po_per_pf;
+        if (slot_helper.is_paging_slot(current_slot, i_s)) {
+          notified_ue_ids.set(ue_id);
+        }
       }
     }
   }
 
-  ASSERT_EQ(nof_pws_notifs, 1);
+  ASSERT_TRUE(notified_ue_ids.all());
 }
 
 TEST_F(si_msg_scheduler_activation_test, when_new_pws_broadcast_indication_received_then_it_replaces_the_previous_one)
 {
   // Submit an initial request, then immediately supersede it with a second one before any slot is processed.
   // Since the pending request is only consumed on the next run_slot(), only the second (last-committed) request
-  // should ever take effect -- verifying that a new request fully replaces any previous one, and only one short
-  // message is sent in total.
+  // should ever take effect -- verifying that a new request fully replaces any previous one, i.e. the SI-message is
+  // scheduled for the second request's nof_segments (1), not the first's (10).
   const units::bytes msg_len = ACTIVATION_REQUIRED_SI_SCHED_CFG.si_messages[0].msg_len;
   si_sched.handle_pws_broadcast_indication(pws_broadcast_request{to_du_cell_index(0), 0, 10, msg_len});
   si_sched.handle_pws_broadcast_indication(pws_broadcast_request{to_du_cell_index(0), 0, 1, msg_len});
 
-  const unsigned drx_cycle_rfs  = static_cast<unsigned>(cell_cfg.params.dl_cfg_common.pcch_cfg.default_paging_cycle);
-  const unsigned nof_test_slots = 2 * drx_cycle_rfs * next_slot.nof_slots_per_frame();
-  unsigned       nof_pws_notifs = 0;
+  const unsigned nof_test_slots =
+      6 * ACTIVATION_REQUIRED_SI_SCHED_CFG.si_messages[0].period_radio_frames * next_slot.nof_slots_per_frame();
+  unsigned nof_tx = 0;
   for (unsigned i = 0; i != nof_test_slots; ++i) {
     run_slot();
-
-    for (const auto& pdcch : res_grid[0].result.dl.dl_pdcchs) {
-      if (pdcch.dci.type() != ocudu::dci_dl_rnti_config_type::p_rnti_f1_0) {
-        continue;
-      }
-      const auto& dci = pdcch.dci.as_p_rnti_f1_0();
-      if (dci.short_messages_indicator != ocudu::dci_1_0_p_rnti_configuration::payload_info::short_messages) {
-        continue;
-      }
-      if ((dci.short_messages & 0x40U) != 0) {
-        ++nof_pws_notifs;
+    for (const auto& sib : res_grid[0].result.dl.bc.sibs) {
+      if (sib.si_indicator == sib_information::other_si) {
+        ++nof_tx;
       }
     }
   }
-
-  ASSERT_EQ(nof_pws_notifs, 1);
+  ASSERT_EQ(nof_tx, 1) << "Only the second (last-committed) request should take effect";
 }
 
 TEST_F(si_msg_scheduler_activation_test, when_message_is_not_activated_then_it_is_never_scheduled)

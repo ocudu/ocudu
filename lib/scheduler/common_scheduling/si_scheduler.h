@@ -59,7 +59,7 @@ private:
 
   /// \brief Checks for a new PWS broadcast request and, if found, activates the target SI-message for one broadcast.
   /// \return Returns true if a short message is due for transmission.
-  bool try_handle_pending_pws_request();
+  bool try_handle_pending_pws_request(unsigned max_dl_slot_alloc_delay);
 
   void try_schedule_short_message(cell_slot_resource_allocator& slot_alloc,
                                   bool                          include_si_modification,
@@ -88,8 +88,13 @@ private:
   si_version_type next_pws_version = 1;
   /// One pending-request slot per SI-message that requires activation, keyed by SI-message index.
   slotted_vector<pws_pending_entry> pending_pws_reqs;
-  /// Whether a PWS (ETWS/CMAS) short-message notification is still pending transmission at a paging occasion.
-  bool pws_short_msg_pending = false;
+  /// \brief Slot count (see \c slot_count) up to which the PWS (ETWS/CMAS) short-message notification must keep
+  /// being transmitted at every paging occasion.
+  /// \remark As per TS 38.304, ETWS/CMAS-capable UEs in RRC_IDLE/RRC_INACTIVE monitor for this notification only in
+  /// their own paging occasion, once per DRX cycle; since the network does not know a given UE's UE_ID (hence its
+  /// exact paging occasion), the notification must be repeated across a full default paging cycle to guarantee every
+  /// UE is covered -- mirroring the systemInfoModification window (see \c si_change_start_count).
+  unsigned pws_notif_until_count = 0;
 
   // Note: We use counts instead of slot_points because SI periods can be longer that 1024 * 10 msec.
   unsigned   slot_count = 0;
