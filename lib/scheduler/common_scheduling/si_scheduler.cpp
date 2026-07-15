@@ -23,6 +23,13 @@ si_scheduler::si_scheduler(const cell_configuration&                       cfg_,
   si_msg_sched(cell_cfg, pdcch_sch, msg.si_scheduling),
   pending_req(si_scheduling_update_request{INVALID_DU_CELL_INDEX, last_version, {}})
 {
+  // One slot per SI-message that requires activation (i.e. may carry PWS content).
+  const unsigned nof_si_messages = msg.si_scheduling.si_messages.size();
+  for (unsigned i = 0; i != nof_si_messages; ++i) {
+    if (msg.si_scheduling.si_messages[i].requires_activation) {
+      pending_pws_reqs.emplace(i, i);
+    }
+  }
 }
 
 void si_scheduler::run_slot(cell_resource_allocator& res_alloc)
@@ -146,22 +153,26 @@ void si_scheduler::handle_si_update_request(const si_scheduling_update_request& 
 
 void si_scheduler::handle_pws_broadcast_indication(const pws_broadcast_request& req)
 {
-  pending_pws_req.write_and_commit(pws_pending_request{next_pws_version++, req.si_msg_idx, req.nof_segments});
+  ocudu_assert(pending_pws_reqs.contains(req.si_msg_idx), "SI-message {} does not require activation", req.si_msg_idx);
+  pending_pws_reqs[req.si_msg_idx].buffer->write_and_commit(pws_pending_request{next_pws_version++, req.nof_segments});
 }
 
 bool si_scheduler::try_handle_pending_pws_request()
 {
-  const auto& next = pending_pws_req.read();
-  if (next.version == last_pws_version) {
-    return pws_short_msg_pending;
+  // Check every SI-message slot for a new request.
+  for (auto& pws_entry : pending_pws_reqs) {
+    const auto& next = pws_entry.buffer->read();
+    if (next.version == pws_entry.last_seen_version) {
+      continue;
+    }
+    // New request. Activate the target SI-message for one broadcast and queue a short-message notification.
+    pws_entry.last_seen_version = next.version;
+
+    si_msg_sched.activate_si_message(pws_entry.si_msg_idx, next.nof_segments);
+    pws_short_msg_pending = true;
   }
-  // New request. Activate the target SI-message for one broadcast and queue a short-message notification.
-  last_pws_version = next.version;
 
-  si_msg_sched.activate_si_message(next.si_msg_idx, next.nof_segments);
-  pws_short_msg_pending = true;
-
-  return true;
+  return pws_short_msg_pending;
 }
 
 void si_scheduler::try_schedule_short_message(cell_slot_resource_allocator& slot_alloc,

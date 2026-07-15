@@ -224,7 +224,21 @@ TEST_F(si_scheduler_test, when_si_is_updated_all_ues_in_rrc_idle_get_notified_ex
   ASSERT_TRUE(notified_ue_ids.all());
 }
 
-TEST_F(si_scheduler_test, when_pws_broadcast_indication_received_then_one_short_message_is_sent)
+const si_scheduling_config ACTIVATION_REQUIRED_SI_SCHED_CFG{
+    DEFAULT_SIB1_PAYLOAD_SIZE,
+    {{si_message_scheduling_config{units::bytes{64}, 16, std::nullopt, true}}},
+    10};
+
+class si_msg_scheduler_activation_test : public si_scheduler_test_environment, public testing::Test
+{
+protected:
+  si_msg_scheduler_activation_test() :
+    si_scheduler_test_environment(make_sched_configuration_request(ACTIVATION_REQUIRED_SI_SCHED_CFG))
+  {
+  }
+};
+
+TEST_F(si_msg_scheduler_activation_test, when_pws_broadcast_indication_received_then_one_short_message_is_sent)
 {
   // Repetition is no longer handled inside the scheduler -- the MAC layer re-issues one indication per broadcast.
   // A single indication should therefore result in exactly one short message.
@@ -255,7 +269,7 @@ TEST_F(si_scheduler_test, when_pws_broadcast_indication_received_then_one_short_
   ASSERT_EQ(nof_pws_notifs, 1);
 }
 
-TEST_F(si_scheduler_test, when_new_pws_broadcast_indication_received_then_it_replaces_the_previous_one)
+TEST_F(si_msg_scheduler_activation_test, when_new_pws_broadcast_indication_received_then_it_replaces_the_previous_one)
 {
   // Submit an initial request, then immediately supersede it with a second one before any slot is processed.
   // Since the pending request is only consumed on the next run_slot(), only the second (last-committed) request
@@ -286,20 +300,6 @@ TEST_F(si_scheduler_test, when_new_pws_broadcast_indication_received_then_it_rep
 
   ASSERT_EQ(nof_pws_notifs, 1);
 }
-
-const si_scheduling_config ACTIVATION_REQUIRED_SI_SCHED_CFG{
-    DEFAULT_SIB1_PAYLOAD_SIZE,
-    {{si_message_scheduling_config{units::bytes{64}, 16, std::nullopt, true}}},
-    10};
-
-class si_msg_scheduler_activation_test : public si_scheduler_test_environment, public testing::Test
-{
-protected:
-  si_msg_scheduler_activation_test() :
-    si_scheduler_test_environment(make_sched_configuration_request(ACTIVATION_REQUIRED_SI_SCHED_CFG))
-  {
-  }
-};
 
 TEST_F(si_msg_scheduler_activation_test, when_message_is_not_activated_then_it_is_never_scheduled)
 {
@@ -332,6 +332,50 @@ TEST_F(si_msg_scheduler_activation_test,
     }
   }
   ASSERT_EQ(nof_tx, nof_segments);
+}
+
+// SI-message 1 is given an explicit si_window_position (rather than the natural per-index offset) so that its
+// window lands on a slot where the (SSB-periodicity-driven) common search space is actually monitored, matching
+// SI-message 0's occasion parity.
+const si_scheduling_config MULTI_ACTIVATION_REQUIRED_SI_SCHED_CFG{
+    DEFAULT_SIB1_PAYLOAD_SIZE,
+    {si_message_scheduling_config{units::bytes{64}, 16, std::nullopt, true},
+     si_message_scheduling_config{units::bytes{64}, 16, 3, true}},
+    10};
+
+class si_msg_scheduler_multi_activation_test : public si_scheduler_test_environment, public testing::Test
+{
+protected:
+  si_msg_scheduler_multi_activation_test() :
+    si_scheduler_test_environment(make_sched_configuration_request(MULTI_ACTIVATION_REQUIRED_SI_SCHED_CFG))
+  {
+  }
+};
+
+TEST_F(si_msg_scheduler_multi_activation_test,
+       when_two_distinct_si_messages_are_activated_back_to_back_then_both_get_scheduled)
+{
+  // Regression test: activating two distinct SI-message indices before any slot is processed must not let the
+  // second activation clobber the first in a shared pending-request slot.
+  const unsigned nof_segments = 3;
+  si_sched.handle_pws_broadcast_indication(pws_broadcast_request{to_du_cell_index(0), 0, nof_segments});
+  si_sched.handle_pws_broadcast_indication(pws_broadcast_request{to_du_cell_index(0), 1, nof_segments});
+
+  const unsigned nof_test_slots =
+      6 * MULTI_ACTIVATION_REQUIRED_SI_SCHED_CFG.si_messages[0].period_radio_frames * next_slot.nof_slots_per_frame();
+  std::array<unsigned, 2> nof_tx{0, 0};
+  for (unsigned i = 0; i != nof_test_slots; ++i) {
+    run_slot();
+    for (const auto& sib : res_grid[0].result.dl.bc.sibs) {
+      if (sib.si_indicator == sib_information::other_si) {
+        ASSERT_TRUE(sib.si_msg_index.has_value());
+        ++nof_tx[sib.si_msg_index.value()];
+      }
+    }
+  }
+
+  ASSERT_EQ(nof_tx[0], nof_segments);
+  ASSERT_EQ(nof_tx[1], nof_segments);
 }
 
 class si_msg_scheduler_tdra_test : public si_scheduler_test_environment, public testing::Test

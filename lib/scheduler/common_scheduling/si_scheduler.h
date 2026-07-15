@@ -8,7 +8,9 @@
 #include "si_message_scheduler.h"
 #include "sib1_scheduler.h"
 #include "ocudu/adt/lockfree_triple_buffer.h"
+#include "ocudu/adt/slotted_vector.h"
 #include "ocudu/scheduler/scheduler_sys_info_handler.h"
+#include <memory>
 
 namespace ocudu {
 
@@ -31,11 +33,22 @@ public:
   void stop();
 
 private:
-  /// Request written into \c pending_pws_req, tagged with a locally-generated version for newness detection.
+  /// Request written into a \c pending_pws_reqs slot, tagged with a locally-generated version for newness detection.
   struct pws_pending_request {
-    si_version_type         version;
-    unsigned                si_msg_idx;
+    si_version_type         version = 0;
     std::optional<unsigned> nof_segments;
+  };
+
+  /// \brief Per-SI-message pending-request slot, keyed by SI-message index.
+  /// \remark \c buffer is stored as \c unique_ptr because \c lockfree_triple_buffer is non-movable, and slot values
+  /// must be movable to live inside a \c slotted_vector.
+  struct pws_pending_entry {
+    unsigned                                                     si_msg_idx        = 0;
+    si_version_type                                              last_seen_version = 0;
+    std::unique_ptr<lockfree_triple_buffer<pws_pending_request>> buffer =
+        std::make_unique<lockfree_triple_buffer<pws_pending_request>>();
+
+    explicit pws_pending_entry(unsigned si_msg_idx_) : si_msg_idx(si_msg_idx_) {}
   };
 
   void try_handle_pending_request(cell_resource_allocator& res_alloc);
@@ -71,9 +84,9 @@ private:
   std::optional<si_scheduling_update_request> on_going_req;
   unsigned                                    si_change_start_count = 0;
 
-  si_version_type                             next_pws_version = 1;
-  si_version_type                             last_pws_version = 0;
-  lockfree_triple_buffer<pws_pending_request> pending_pws_req{pws_pending_request{0, 0, std::nullopt}};
+  si_version_type next_pws_version = 1;
+  /// One pending-request slot per SI-message that requires activation, keyed by SI-message index.
+  slotted_vector<pws_pending_entry> pending_pws_reqs;
   /// Whether a PWS (ETWS/CMAS) short-message notification is still pending transmission at a paging occasion.
   bool pws_short_msg_pending = false;
 
