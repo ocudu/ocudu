@@ -49,25 +49,35 @@ dl_time_domain_mapper::dl_time_domain_mapper(const dl_time_domain_builder_params
 
   if (const auto* auto_res = std::get_if<builder_params::auto_resources>(&params.params)) {
     // Derive PDSCH TD resources assuming CORESETs start at symbol 0, so PDSCH starts after the CORESET.
-    pdsch_td_res_list = time_domain_resource_helper::generate_dedicated_pdsch_td_res_list(
+    common_pdsch_td_res_list = time_domain_resource_helper::generate_dedicated_pdsch_td_res_list(
         params.tdd_cfg, params.cp, auto_res->coreset_max_dur);
   } else {
     const auto& explicit_res = std::get<builder_params::explicit_resources>(params.params);
-    ocudu_assert(not explicit_res.pdsch_td_res_list.empty(), "Explicit PDSCH TD resource list must not be empty.");
-    pdsch_td_res_list = explicit_res.pdsch_td_res_list;
+    ocudu_assert(not explicit_res.common_pdsch_td_res_list.empty(), "Common PDSCH TD resource list must not be empty.");
+    common_pdsch_td_res_list = explicit_res.common_pdsch_td_res_list;
   }
+  // A UE without a dedicated PDSCH-TimeDomainAllocationList falls back to the common list for DCI format 1_1.
+  const auto* explicit_res    = std::get_if<builder_params::explicit_resources>(&params.params);
+  dedicated_pdsch_td_res_list = explicit_res != nullptr and not explicit_res->dedicated_pdsch_td_res_list.empty()
+                                    ? explicit_res->dedicated_pdsch_td_res_list
+                                    : common_pdsch_td_res_list;
 
   // Generate the PDSCH TD resource index candidates for a PDSCH scheduled in each slot (handles both FDD and TDD).
-  pdsch_td_res_indices_per_slot =
-      generate_pdsch_td_res_indices_per_tdd_slot(pdsch_td_res_list, params.tdd_cfg, params.cp);
+  common_pdsch_td_res_indices_per_slot =
+      generate_pdsch_td_res_indices_per_tdd_slot(common_pdsch_td_res_list, params.tdd_cfg, params.cp);
+  dedicated_pdsch_td_res_indices_per_slot =
+      generate_pdsch_td_res_indices_per_tdd_slot(dedicated_pdsch_td_res_list, params.tdd_cfg, params.cp);
 }
 
-std::optional<uint8_t> dl_time_domain_mapper::find_pdsch_td_res_index(slot_point        pdcch_slot,
+std::optional<uint8_t> dl_time_domain_mapper::find_pdsch_td_res_index(dci_dl_format     dci_format,
+                                                                      slot_point        pdcch_slot,
                                                                       slot_point        pdsch_slot,
                                                                       ofdm_symbol_range usable_symbols) const
 {
+  span<const pdsch_time_domain_resource_allocation> pdsch_td_res_list = pdsch_td_resources(dci_format);
+
   std::optional<uint8_t> best;
-  for (uint8_t idx : pdsch_td_res_indices(pdcch_slot.count())) {
+  for (uint8_t idx : pdsch_td_res_indices(dci_format, pdcch_slot.count())) {
     const pdsch_time_domain_resource_allocation& pdsch_td_res = pdsch_td_res_list[idx];
     if (pdcch_slot + pdsch_td_res.k0 != pdsch_slot) {
       continue;

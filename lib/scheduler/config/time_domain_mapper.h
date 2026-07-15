@@ -25,7 +25,11 @@ struct dl_time_domain_builder_params {
     uint8_t coreset_max_dur = 2;
   };
   struct explicit_resources {
-    std::vector<pdsch_time_domain_resource_allocation> pdsch_td_res_list;
+    /// PDSCH TD resource list used with DCI format 1_0, derived from PDSCH-ConfigCommon.
+    std::vector<pdsch_time_domain_resource_allocation> common_pdsch_td_res_list;
+    /// \brief PDSCH TD resource list used with DCI format 1_1, derived from a UE's dedicated PDSCH-Config.
+    /// \remark When empty, DCI format 1_1 falls back to \c common_pdsch_td_res_list.
+    std::vector<pdsch_time_domain_resource_allocation> dedicated_pdsch_td_res_list;
   };
 
   /// Cyclic prefix used in the BWP.
@@ -42,32 +46,76 @@ struct dl_time_domain_mapper {
   /// Build dedicated BWP PDSCH TD resource info from builder parameters.
   explicit dl_time_domain_mapper(const dl_time_domain_builder_params& params);
 
-  /// Retrieve the list of available PDSCH time-domain resource allocations for the BWP.
-  span<const pdsch_time_domain_resource_allocation> pdsch_td_resources() const { return pdsch_td_res_list; }
-
-  /// \brief Get the list of indices into \ref pdsch_td_resources() that are applicable PDSCH TD resource candidates
-  /// for a PDSCH scheduled by a PDCCH in the given slot index.
-  /// \remark Each resource ends at the last DL symbol of the slot: the number of symbols per slot in a full DL slot,
-  /// or the last DL symbol in a special slot.
-  span<const uint8_t> pdsch_td_res_indices(unsigned pdcch_slot_index) const
+  /// Retrieve the common (fallback) PDSCH TD resources, used with DCI format 1_0.
+  span<const pdsch_time_domain_resource_allocation> common_pdsch_td_resources() const
   {
-    return pdsch_td_res_indices_per_slot[pdcch_slot_index % pdsch_td_res_indices_per_slot.size()];
+    return common_pdsch_td_res_list;
   }
 
-  /// \brief Get the index into \ref pdsch_td_resources() of the best-matching PDSCH TD resource candidate for a PDCCH
-  /// in \c pdcch_slot, whose k0 leads to \c pdsch_slot and whose symbols are fully contained within \c
-  /// usable_symbols. "Best" means the candidate with the largest \c symbols.length() among those that qualify; ties
-  /// keep the first one encountered.
+  /// \brief Retrieve the dedicated PDSCH TD resources, used with DCI format 1_1.
+  /// \remark Falls back to \ref common_pdsch_td_resources() if no dedicated list was configured.
+  span<const pdsch_time_domain_resource_allocation> dedicated_pdsch_td_resources() const
+  {
+    return dedicated_pdsch_td_res_list;
+  }
+
+  /// \brief Retrieve the list of available PDSCH time-domain resource allocations applicable for the given DCI DL
+  /// format, as per TS38.214, clause 5.1.2.1.
+  /// \remark Returns the common (fallback) resources for DCI format 1_0, and the dedicated ones otherwise.
+  span<const pdsch_time_domain_resource_allocation> pdsch_td_resources(dci_dl_format dci_format) const
+  {
+    return dci_format == dci_dl_format::f1_0 ? common_pdsch_td_resources() : dedicated_pdsch_td_resources();
+  }
+
+  /// \brief Get the list of indices into \ref common_pdsch_td_resources() that are applicable PDSCH TD resource
+  /// candidates for a PDSCH scheduled by a PDCCH in the given slot index.
+  /// \remark Each resource ends at the last DL symbol of the slot: the number of symbols per slot in a full DL slot,
+  /// or the last DL symbol in a special slot.
+  span<const uint8_t> common_pdsch_td_res_indices(unsigned pdcch_slot_index) const
+  {
+    return common_pdsch_td_res_indices_per_slot[pdcch_slot_index % common_pdsch_td_res_indices_per_slot.size()];
+  }
+
+  /// \brief Get the list of indices into \ref dedicated_pdsch_td_resources() that are applicable PDSCH TD resource
+  /// candidates for a PDSCH scheduled by a PDCCH in the given slot index.
+  span<const uint8_t> dedicated_pdsch_td_res_indices(unsigned pdcch_slot_index) const
+  {
+    return dedicated_pdsch_td_res_indices_per_slot[pdcch_slot_index % dedicated_pdsch_td_res_indices_per_slot.size()];
+  }
+
+  /// \brief Get the list of indices into \ref pdsch_td_resources(dci_dl_format) const that are applicable PDSCH TD
+  /// resource candidates for a PDSCH scheduled by a PDCCH in the given slot index, for the given DCI DL format.
+  span<const uint8_t> pdsch_td_res_indices(dci_dl_format dci_format, unsigned pdcch_slot_index) const
+  {
+    return dci_format == dci_dl_format::f1_0 ? common_pdsch_td_res_indices(pdcch_slot_index)
+                                             : dedicated_pdsch_td_res_indices(pdcch_slot_index);
+  }
+
+  /// \brief Get the index into \ref pdsch_td_resources(dci_dl_format) const of the best-matching PDSCH TD resource
+  /// candidate for a PDCCH in \c pdcch_slot, whose k0 leads to \c pdsch_slot and whose symbols are fully contained
+  /// within \c usable_symbols. "Best" means the candidate with the largest \c symbols.length() among those that
+  /// qualify; ties keep the first one encountered.
   /// \return The matching index, or \c std::nullopt if no candidate qualifies.
-  std::optional<uint8_t>
-  find_pdsch_td_res_index(slot_point pdcch_slot, slot_point pdsch_slot, ofdm_symbol_range usable_symbols) const;
+  std::optional<uint8_t> find_pdsch_td_res_index(dci_dl_format     dci_format,
+                                                 slot_point        pdcch_slot,
+                                                 slot_point        pdsch_slot,
+                                                 ofdm_symbol_range usable_symbols) const;
 
 private:
-  /// \brief List of available PDSCH time-domain resource allocations for the BWP.
-  std::vector<pdsch_time_domain_resource_allocation> pdsch_td_res_list;
+  /// \brief Common (fallback) PDSCH time-domain resource allocations for the BWP, used with DCI format 1_0.
+  std::vector<pdsch_time_domain_resource_allocation> common_pdsch_td_res_list;
 
-  /// List of indices into \c pdsch_td_res_list applicable for a PDSCH scheduled in each slot within the TDD period.
-  std::vector<std::vector<uint8_t>> pdsch_td_res_indices_per_slot;
+  /// \brief Dedicated PDSCH time-domain resource allocations for the BWP, used with DCI format 1_1. Falls back to
+  /// \c common_pdsch_td_res_list if no dedicated list was configured.
+  std::vector<pdsch_time_domain_resource_allocation> dedicated_pdsch_td_res_list;
+
+  /// List of indices into \c common_pdsch_td_res_list applicable for a PDSCH scheduled in each slot within the TDD
+  /// period.
+  std::vector<std::vector<uint8_t>> common_pdsch_td_res_indices_per_slot;
+
+  /// List of indices into \c dedicated_pdsch_td_res_list applicable for a PDSCH scheduled in each slot within the
+  /// TDD period.
+  std::vector<std::vector<uint8_t>> dedicated_pdsch_td_res_indices_per_slot;
 };
 
 /// Parameters for building UL (PUSCH and PUCCH dl-DataToUL-ACK / k1) TD resource info.

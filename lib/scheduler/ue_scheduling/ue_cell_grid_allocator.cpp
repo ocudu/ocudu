@@ -106,7 +106,7 @@ std::optional<uci_allocation> ue_cell_grid_allocator::alloc_uci(const ue_cell&  
                                                                 uint8_t                  pdsch_td_res_index) const
 {
   const pdsch_time_domain_resource_allocation& pdsch_td_cfg =
-      ss_info.bwp->dl.td_mapper().pdsch_td_resources()[pdsch_td_res_index];
+      ss_info.bwp->dl.td_mapper().pdsch_td_resources(ss_info.get_dl_dci_format())[pdsch_td_res_index];
 
   // Allocate UCI. UCI destination (i.e., PUCCH or PUSCH) depends on whether there exist a PUSCH grant for the UE.
   const slot_point    pdsch_slot = cell_alloc[pdsch_td_cfg.k0].slot;
@@ -159,7 +159,7 @@ ue_cell_grid_allocator::setup_dl_grant_builder(const slice_ue&                  
   const ue_cell_configuration&                 ue_cell_cfg = ue_cc.cfg();
   const search_space_info&                     ss_info     = ue_cell_cfg.search_space(ss_id);
   const pdsch_time_domain_resource_allocation& pdsch_td_cfg =
-      ss_info.bwp->dl.td_mapper().pdsch_td_resources()[pdsch_td_res_index];
+      ss_info.bwp->dl.td_mapper().pdsch_td_resources(ss_info.get_dl_dci_format())[pdsch_td_res_index];
 
   // Fetch PDCCH and PDSCH resource grid allocators.
   cell_slot_resource_allocator& pdcch_alloc = cell_alloc[0];
@@ -238,7 +238,7 @@ void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&                    
   const search_space_info&                     ss_info            = ue_cell_cfg.search_space(grant.cfg.ss_id);
   uint8_t                                      pdsch_td_res_index = grant.cfg.pdsch_td_res_index;
   const pdsch_time_domain_resource_allocation& pdsch_td_cfg =
-      ss_info.bwp->dl.td_mapper().pdsch_td_resources()[pdsch_td_res_index];
+      ss_info.bwp->dl.td_mapper().pdsch_td_resources(ss_info.get_dl_dci_format())[pdsch_td_res_index];
   const subcarrier_spacing  scs        = ss_info.bwp->dl.cfg().scs;
   const cell_configuration& cell_cfg   = ue_cell_cfg.cell_cfg_common;
   const bool                is_retx    = grant.h_dl.nof_retxs() != 0;

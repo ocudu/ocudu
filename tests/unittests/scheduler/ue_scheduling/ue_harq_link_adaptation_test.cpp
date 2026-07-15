@@ -71,7 +71,7 @@ protected:
                                   &ss.bwp->dl.cfg(),
                                   &ss.coreset->cfg(),
                                   vrb_alloc{vrb_interval{0, 5}},
-                                  ss.bwp->dl.td_mapper().pdsch_td_resources()[0].symbols,
+                                  ss.bwp->dl.td_mapper().pdsch_td_resources(ss.get_dl_dci_format())[0].symbols,
                                   pdsch_mcs_table::qam64,
                                   {cw},
                                   {},

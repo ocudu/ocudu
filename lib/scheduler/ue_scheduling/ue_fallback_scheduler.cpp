@@ -1325,7 +1325,8 @@ void ue_fallback_scheduler::fill_ul_srb_grant(ue&                               
 
 const pdsch_time_domain_resource_allocation& ue_fallback_scheduler::get_pdsch_td_cfg(unsigned pdsch_time_res_idx) const
 {
-  return cell_cfg.init_bwp.dl.td_mapper().pdsch_td_resources()[pdsch_time_res_idx];
+  // Fallback scheduling always relies on DCI format 1_0, so only the common PDSCH TD resource list applies.
+  return cell_cfg.init_bwp.dl.td_mapper().common_pdsch_td_resources()[pdsch_time_res_idx];
 }
 
 std::optional<unsigned>
@@ -1333,7 +1334,7 @@ ue_fallback_scheduler::get_pdsch_time_res_idx(slot_point                        
                                               const std::optional<dl_harq_process_handle>& h_dl_retx) const
 {
   std::optional<unsigned> candidate_pdsch_time_res_idx;
-  auto                    pdsch_td_res_indices = cell_cfg.init_bwp.dl.td_mapper().pdsch_td_res_indices(sl_tx.count());
+  auto pdsch_td_res_indices = cell_cfg.init_bwp.dl.td_mapper().common_pdsch_td_res_indices(sl_tx.count());
   for (uint8_t time_res_idx : pdsch_td_res_indices) {
     const pdsch_time_domain_resource_allocation& pdsch_td_cfg = get_pdsch_td_cfg(time_res_idx);
 

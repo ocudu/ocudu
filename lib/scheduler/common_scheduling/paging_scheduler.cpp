@@ -62,7 +62,8 @@ paging_scheduler::paging_scheduler(const cell_configuration& cell_cfg_,
 
   // See TS 38.214, Table 5.1.2.1.1-1.
   // TODO: Select PDSCH time domain resource allocation to apply based on SS/PBCH and CORESET mux. pattern.
-  pdsch_td_alloc_list = cell_cfg.init_bwp.dl.td_mapper().pdsch_td_resources();
+  // Paging always relies on DCI format 1_0, so only the common PDSCH TD resource list applies.
+  pdsch_td_alloc_list = cell_cfg.init_bwp.dl.td_mapper().common_pdsch_td_resources();
 
   // Generate an empty vector for each element of pdsch_time_res_idx_to_scheduled_ues_lookup; only then we can reserve
   // the capacity.

@@ -11,17 +11,17 @@
 
 using namespace ocudu;
 
-static dl_time_domain_mapper make_dl_td_mapper(const ran_cell_config& cfg)
+static dl_time_domain_builder_params make_dl_td_params(const ran_cell_config& cfg)
 {
   dl_time_domain_builder_params params;
   params.cp      = cfg.dl_cfg_common.init_dl_bwp.generic_params.cp;
   params.tdd_cfg = cfg.tdd_cfg;
 
   dl_time_domain_builder_params::explicit_resources explicit_res;
-  explicit_res.pdsch_td_res_list = cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
-  params.params                  = std::move(explicit_res);
+  explicit_res.common_pdsch_td_res_list = cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
+  params.params                         = std::move(explicit_res);
 
-  return dl_time_domain_mapper(params);
+  return params;
 }
 
 static ul_time_domain_mapper make_ul_td_mapper(const ran_cell_config& cfg)
@@ -52,7 +52,8 @@ bwp_config_pool::bwp_config_pool(const ran_cell_config&     cell_ran_cfg,
   bwp_id(bwpid),
   bwp_dl_cmn(cell_ran_cfg.dl_cfg_common.init_dl_bwp),
   bwp_ul_cmn(cell_ran_cfg.ul_cfg_common.init_ul_bwp),
-  dl_td_mapper(make_dl_td_mapper(cell_ran_cfg)),
+  dl_td_params(make_dl_td_params(cell_ran_cfg)),
+  dl_td_mapper(dl_td_params),
   ul_td_mapper(make_ul_td_mapper(cell_ran_cfg)),
   pdcch_pool(cell_ran_cfg.pci, bwp_dl_cmn.generic_params, bwp_dl_cmn.pdcch_common, bwp_ded_res.dl),
   common_bwp_cfg{bwp_id,
@@ -82,8 +83,28 @@ sched_bwp_config bwp_config_pool::add_ded_cfg(const bwp_downlink_dedicated* dl_d
                                               dl_ptr.has_value() and dl_ptr->pdcch_cfg.has_value()
                                                   ? pdcch_pool.ded_cfgs()[0]
                                                   : pdcch_pool.init_cfg(),
-                                              dl_td_mapper},
+                                              get_dl_td_mapper(dl_ptr.get())},
                           sched_bwp_ul_config{bwp_ul_cmn, std::move(ul_owned), ue_bwp_cfg.ul, ul_td_mapper}};
+}
+
+const dl_time_domain_mapper& bwp_config_pool::get_dl_td_mapper(const bwp_downlink_dedicated* dl_ded)
+{
+  if (dl_ded == nullptr or not dl_ded->pdsch_cfg.has_value() or dl_ded->pdsch_cfg->pdsch_td_alloc_list.empty()) {
+    // No UE-dedicated PDSCH TD resource list configured; DCI format 1_1 falls back to the common list.
+    return dl_td_mapper;
+  }
+
+  for (const auto& [ded_cfg, mapper] : ded_dl_td_mapper_cache) {
+    if (ded_cfg == dl_ded) {
+      return *mapper;
+    }
+  }
+
+  dl_time_domain_builder_params params = dl_td_params;
+  std::get<dl_time_domain_builder_params::explicit_resources>(params.params).dedicated_pdsch_td_res_list =
+      dl_ded->pdsch_cfg->pdsch_td_alloc_list;
+  ded_dl_td_mapper_cache.emplace_back(dl_ded, std::make_unique<dl_time_domain_mapper>(params));
+  return *ded_dl_td_mapper_cache.back().second;
 }
 
 static std::vector<std::unique_ptr<bwp_config_pool>>
