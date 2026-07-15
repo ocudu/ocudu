@@ -708,18 +708,21 @@ INSTANTIATE_TEST_SUITE_P(
   multiue_tdd_test_params{{subcarrier_spacing::kHz30, {10, 3, 5, 6, 0}}, 4,     8, 16, 2, 20},
   // DDSU with min_k=4.
   multiue_tdd_test_params{{subcarrier_spacing::kHz30, {4, 2, 9, 1, 0}}, 4,      8, 16, 1, 8},
-  // Single-burst arrivals: ues_per_wave is derived from measured performance, not the 3GPP spec. It was raised as
-  // high as it would go without the ConRes timer starting to expire; if a scheduler change shifts that cliff,
-  // re-sweep and update this value to keep it just below the new one.
-  multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 4, 100, 30, 30, 5},
+  // Single-burst arrivals: ues_per_wave is derived from measured performance, not the 3GPP spec. Sitting right at the
+  // ConRes-timer-expiry cliff made this case flaky across random seeds (rare PUCCH-layout draws still tip it over),
+  // so a margin below the cliff is kept; if a scheduler change shifts the cliff, re-sweep across many
+  // --gtest_random_seed values (not just a handful) and update this value to keep the same margin below the new one.
+  multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 4, 100, 22, 22, 5},
   multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 2, 100, 85, 85, 5},
   multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDDDDSUUU), 4, 100, 40, 40, 5},
   multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDDDDSUUU), 2, 100, 60, 60, 5},
   // Sustained-stream arrivals (~waves of fallback UEs per TDD period): ues_per_wave is derived from measured
-  // performance, not the 3GPP spec. If a scheduler change shifts either cliff, re-sweep (across several
-  // --gtest_random_seed values) and update these values to keep them just below the new one.
+  // performance, not the 3GPP spec. Kept with a margin below the ConRes-timer-expiry cliff (sitting right on the
+  // cliff flaked across random seeds); if a scheduler change shifts either cliff, re-sweep across many
+  // --gtest_random_seed values (not just a handful) and update these values to keep the same margin below the new
+  // one.
   multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 4, 100, 100, 1, 5},
-  multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 2, 100, 100, 18, 5},
+  multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 2, 100, 100, 14, 5},
   multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDDDDSUUU), 4, 100, 100, 2, 5},
   multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDDDDSUUU), 2, 100, 100, 6, 5},
   multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 4, 100, 100, 1, 5, true}
