@@ -7,6 +7,7 @@
 #include "ocudu/du/du_high/du_manager/du_configurator.h"
 #include "ocudu/e2/e2.h"
 #include "ocudu/e2/e2sm/e2sm.h"
+#include "ocudu/support/executors/task_executor.h"
 
 namespace ocudu {
 
@@ -18,7 +19,9 @@ class e2sm_ccc_control_action_du_executor_base : public e2sm_control_action_exec
 {
 public:
   e2sm_ccc_control_action_du_executor_base() = delete;
-  e2sm_ccc_control_action_du_executor_base(odu::du_configurator& du_configurator_, uint32_t action_id_);
+  e2sm_ccc_control_action_du_executor_base(odu::du_configurator& du_configurator_,
+                                           task_executor&        continuation_exec_,
+                                           uint32_t              action_id_);
   ~e2sm_ccc_control_action_du_executor_base() override = default;
 
   asn1::e2sm::ran_function_definition_ctrl_action_item_s get_control_action_definition() override;
@@ -35,12 +38,14 @@ protected:
   std::string              ran_cfg_structure_name;
   std::vector<std::string> attributes;
   odu::du_configurator&    du_param_configurator;
+  task_executor&           continuation_exec;
 };
 
 class e2sm_ccc_control_o_rrm_policy_ratio_executor : public e2sm_ccc_control_action_du_executor_base
 {
 public:
-  e2sm_ccc_control_o_rrm_policy_ratio_executor(odu::du_configurator& du_configurator_);
+  e2sm_ccc_control_o_rrm_policy_ratio_executor(odu::du_configurator& du_configurator_,
+                                               task_executor&        continuation_exec_);
   ~e2sm_ccc_control_o_rrm_policy_ratio_executor() override = default;
 
   /// e2sm_control_request_executor functions.

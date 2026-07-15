@@ -73,7 +73,7 @@ ocudu::create_e2_du_agent(const e2ap_configuration&                          e2a
     std::unique_ptr<e2sm_control_service> ccc_control_service_style =
         std::make_unique<e2sm_ccc_control_service_style_2>();
     std::unique_ptr<e2sm_control_action_executor> ccc_control_action_executor =
-        std::make_unique<e2sm_ccc_control_o_rrm_policy_ratio_executor>(*du_configurator_);
+        std::make_unique<e2sm_ccc_control_o_rrm_policy_ratio_executor>(*du_configurator_, e2_exec_);
     ccc_control_service_style->add_e2sm_rc_control_action_executor(std::move(ccc_control_action_executor));
     e2sm_ccc_packer->add_e2sm_control_service(ccc_control_service_style.get());
     e2sm_ccc_iface->add_e2sm_control_service(std::move(ccc_control_service_style));

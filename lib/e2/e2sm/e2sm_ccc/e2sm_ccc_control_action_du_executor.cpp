@@ -12,8 +12,12 @@ using namespace ocudu;
 
 e2sm_ccc_control_action_du_executor_base::e2sm_ccc_control_action_du_executor_base(
     odu::du_configurator& du_configurator_,
+    task_executor&        continuation_exec_,
     uint32_t              action_id_) :
-  logger(ocudulog::fetch_basic_logger("E2SM-CCC")), action_id(action_id_), du_param_configurator(du_configurator_)
+  logger(ocudulog::fetch_basic_logger("E2SM-CCC")),
+  action_id(action_id_),
+  du_param_configurator(du_configurator_),
+  continuation_exec(continuation_exec_)
 {
 }
 
@@ -218,8 +222,9 @@ static e2sm_ric_control_response convert_to_e2sm_response(const e2sm_ric_control
 }
 
 e2sm_ccc_control_o_rrm_policy_ratio_executor::e2sm_ccc_control_o_rrm_policy_ratio_executor(
-    odu::du_configurator& du_configurator_) :
-  e2sm_ccc_control_action_du_executor_base(du_configurator_, 6)
+    odu::du_configurator& du_configurator_,
+    task_executor&        continuation_exec_) :
+  e2sm_ccc_control_action_du_executor_base(du_configurator_, continuation_exec_, 6)
 {
   // RAN Configuration Structure description:
   ran_cfg_structure_name = "O-RRMPolicyRatio";
@@ -286,11 +291,16 @@ e2sm_ccc_control_o_rrm_policy_ratio_executor::execute_ric_control_action(const e
   // Log received control request.
   log_du_config_request(logger, du_ctrl_config_req);
 
-  return launch_async([this, &req, ctrl_config = std::move(du_ctrl_config_req)](
-                          coro_context<async_task<e2sm_ric_control_response>>& ctx) {
-    CORO_BEGIN(ctx);
-    odu::du_param_config_response ctrl_response = du_param_configurator.handle_sync_operator_config(ctrl_config);
-    e2sm_ric_control_response     e2_resp       = convert_to_e2sm_response(req, ctrl_config, ctrl_response);
-    CORO_RETURN(e2_resp);
-  });
+  return launch_async(
+      [this, req, ctrl_config = std::move(du_ctrl_config_req), ctrl_response = odu::du_param_config_response{}](
+          coro_context<async_task<e2sm_ric_control_response>>& ctx) mutable {
+        CORO_BEGIN(ctx);
+        // Use the non-blocking variant to avoid stalling the E2 agent's execution context (and therefore its ability
+        // to keep receiving/processing further RIC Control Requests) while the DU manager applies the configuration.
+        // The blocking "handle_sync_operator_config" must not be called from here.
+        // Note: "req" is captured by value, not by reference, because the coroutine genuinely suspends here, and the
+        // caller-owned request object is not guaranteed to outlive the suspension.
+        CORO_AWAIT_VALUE(ctrl_response, du_param_configurator.handle_operator_config(ctrl_config, continuation_exec));
+        CORO_RETURN(convert_to_e2sm_response(req, ctrl_config, ctrl_response));
+      });
 }
