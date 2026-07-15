@@ -14,6 +14,7 @@
 #include "ocudu/ran/band_helper.h"
 #include "ocudu/ran/sib/system_info_config.h"
 #include "ocudu/support/enum_utils.h"
+#include <algorithm>
 
 using namespace ocudu;
 using namespace odu;
@@ -389,58 +390,66 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
         }
 
         for (const sib_type mapping_info : cfg_si.sib_mapping_info) {
-          // For each entry in the mapping info, find the matching SIB.
-          auto sib_id = static_cast<unsigned>(mapping_info);
-          for (const auto& sib : du_cfg.si.si_config->sibs) {
-            sib_type type = get_sib_info_type(sib.content);
-            if (type == mapping_info) {
-              switch (type) {
-                case sib_type::sib2:
-                case sib_type::sib3:
-                case sib_type::sib4:
-                case sib_type::sib5:
-                case sib_type::sib6:
-                case sib_type::sib7:
-                case sib_type::sib8: {
-                  // If the mapping info entry is for a regular SIB, append the SIB type to the schedulingInfo element.
-                  sib_type_info_s type_info;
-                  ret = asn1::number_to_enum(type_info.type, sib_id);
-                  if (sib.value_tag.valid()) {
-                    type_info.value_tag_present = true;
-                    type_info.value_tag         = sib.value_tag.value();
-                  }
+          // For each entry in the mapping info, find the matching SIB, if it currently has content configured.
+          auto       sib_id       = static_cast<unsigned>(mapping_info);
+          const auto matching_sib = std::find_if(
+              du_cfg.si.si_config->sibs.begin(),
+              du_cfg.si.si_config->sibs.end(),
+              [mapping_info](const sib_type_info& sib) { return get_sib_info_type(sib.content) == mapping_info; });
+          const bool is_pws_sib =
+              mapping_info == sib_type::sib6 or mapping_info == sib_type::sib7 or mapping_info == sib_type::sib8;
+          if (matching_sib == du_cfg.si.si_config->sibs.end() and not is_pws_sib) {
+            // No content configured for this SIB and it cannot be a dormant PWS SIB (see requires_activation
+            // handling in du_high_config_translators.cpp) -- nothing to advertise.
+            continue;
+          }
 
-                  if (ret) {
-                    asn1_si.sib_map_info.push_back(type_info);
-                  }
-                } break;
-                case sib_type::sib16: {
-                  sib_type_info_v1700_s type_info2;
-                  type_info2.sib_type_r17.set_type1_r17().value =
-                      sib_type_info_v1700_s::sib_type_r17_c_::type1_r17_opts::sib_type16;
-                  if (sib.value_tag.valid()) {
-                    type_info2.value_tag_r17_present = true;
-                    type_info2.value_tag_r17         = sib.value_tag.value();
-                  }
-                  asn1_si_r17.sib_map_info_r17.push_back(type_info2);
-                } break;
-                case sib_type::sib19: {
-                  sib_type_info_v1700_s type_info2;
-                  type_info2.sib_type_r17.set_type1_r17().value =
-                      sib_type_info_v1700_s::sib_type_r17_c_::type1_r17_opts::sib_type19;
-                  if (sib.value_tag.valid()) {
-                    type_info2.value_tag_r17_present = true;
-                    type_info2.value_tag_r17         = sib.value_tag.value();
-                  }
-                  asn1_si_r17.sib_map_info_r17.push_back(type_info2);
-                } break;
-                case sib_type::sib1:
-                case sib_type::sib_invalid:
-                default:
-                  ocudu_assertion_failure("Invalid SIB type (i.e., {}) for an SI message", fmt::underlying(type));
+          switch (mapping_info) {
+            case sib_type::sib2:
+            case sib_type::sib3:
+            case sib_type::sib4:
+            case sib_type::sib5:
+            case sib_type::sib6:
+            case sib_type::sib7:
+            case sib_type::sib8: {
+              // Append the SIB type to the schedulingInfo element. A dormant, unconfigured PWS SIB (SIB6/7/8) has no
+              // matching content entry and, therefore, no value tag -- it is still advertised so the UE knows to
+              // look for it once a Write-Replace Warning activates it.
+              sib_type_info_s type_info;
+              ret = asn1::number_to_enum(type_info.type, sib_id);
+              if (matching_sib != du_cfg.si.si_config->sibs.end() and matching_sib->value_tag.valid()) {
+                type_info.value_tag_present = true;
+                type_info.value_tag         = matching_sib->value_tag.value();
               }
-              break;
-            }
+
+              if (ret) {
+                asn1_si.sib_map_info.push_back(type_info);
+              }
+            } break;
+            case sib_type::sib16: {
+              sib_type_info_v1700_s type_info2;
+              type_info2.sib_type_r17.set_type1_r17().value =
+                  sib_type_info_v1700_s::sib_type_r17_c_::type1_r17_opts::sib_type16;
+              if (matching_sib->value_tag.valid()) {
+                type_info2.value_tag_r17_present = true;
+                type_info2.value_tag_r17         = matching_sib->value_tag.value();
+              }
+              asn1_si_r17.sib_map_info_r17.push_back(type_info2);
+            } break;
+            case sib_type::sib19: {
+              sib_type_info_v1700_s type_info2;
+              type_info2.sib_type_r17.set_type1_r17().value =
+                  sib_type_info_v1700_s::sib_type_r17_c_::type1_r17_opts::sib_type19;
+              if (matching_sib->value_tag.valid()) {
+                type_info2.value_tag_r17_present = true;
+                type_info2.value_tag_r17         = matching_sib->value_tag.value();
+              }
+              asn1_si_r17.sib_map_info_r17.push_back(type_info2);
+            } break;
+            case sib_type::sib1:
+            case sib_type::sib_invalid:
+            default:
+              ocudu_assertion_failure("Invalid SIB type (i.e., {}) for an SI message", fmt::underlying(mapping_info));
           }
         }
 

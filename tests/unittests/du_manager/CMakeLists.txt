@@ -109,3 +109,8 @@ add_executable(sib19_value_tag_test sib19_value_tag_test.cpp)
 target_include_directories(sib19_value_tag_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(sib19_value_tag_test ocudu_du_high du_manager_converters ocudu_du_manager ocudu_support ocudulog gtest gtest_main)
 gtest_discover_tests(sib19_value_tag_test)
+
+add_executable(asn1_sib1_sched_info_test asn1_sib1_sched_info_test.cpp)
+target_include_directories(asn1_sib1_sched_info_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(asn1_sib1_sched_info_test du_manager_converters ocudu_du_manager ocudu_support ocudulog gtest gtest_main)
+gtest_discover_tests(asn1_sib1_sched_info_test)
