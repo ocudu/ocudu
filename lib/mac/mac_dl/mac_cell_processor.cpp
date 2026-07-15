@@ -562,14 +562,20 @@ void mac_cell_processor::write_tx_pdu_pcap(slot_point                sl_tx,
 
   for (unsigned i = 0, e = dl_res.si_pdus.size(); i != e; ++i) {
     const sib_information& dl_alloc = sl_res.dl.bc.sibs[i];
+
+    // Whether this SI-message's dedup should be bypassed altogether. PWS (ETWS/CMAS) SI-messages cycle through
+    // multiple content segments and repetitions without bumping "version" (which only tracks SI scheduling info
+    // updates), so version-based dedup would wrongly suppress genuinely different payloads.
+    bool      is_pws_si_message = false;
+    unsigned* dumped_version    = &sib1_pcap_dumped_version;
     if (dl_alloc.si_indicator != sib_information::sib1) {
       ocudu_assert(dl_alloc.si_msg_index.has_value() and *dl_alloc.si_msg_index < si_pcap_dumped_version.size(),
                    "Invalid SI message index");
+      is_pws_si_message = cell_cfg.sched_req.si_scheduling.si_messages[*dl_alloc.si_msg_index].requires_activation;
+      dumped_version    = &si_pcap_dumped_version[*dl_alloc.si_msg_index];
     }
-    unsigned& dumped_version = (dl_alloc.si_indicator == sib_information::sib1)
-                                   ? sib1_pcap_dumped_version
-                                   : si_pcap_dumped_version[*dl_alloc.si_msg_index];
-    if (dumped_version != dl_alloc.version) {
+
+    if (is_pws_si_message or *dumped_version != dl_alloc.version) {
       const mac_dl_data_result::dl_pdu& sib1_pdu = dl_res.si_pdus[i];
       mac_nr_context_info               context  = {};
       context.radioType           = cell_cfg.sched_req.ran.tdd_cfg.has_value() ? PCAP_TDD_RADIO : PCAP_FDD_RADIO;
@@ -580,7 +586,7 @@ void mac_cell_processor::write_tx_pdu_pcap(slot_point                sl_tx,
       context.sub_frame_number    = sl_tx.subframe_index();
       context.length              = sib1_pdu.pdu.get_buffer().size();
       pcap.push_pdu(context, sib1_pdu.pdu.get_buffer());
-      dumped_version = dl_alloc.version;
+      *dumped_version = dl_alloc.version;
     }
   }
 
