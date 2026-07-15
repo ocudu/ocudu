@@ -1417,6 +1417,15 @@ static bool validate_cell_sib_config(const du_high_unit_base_cell_config& cell_c
       fmt::print("SIB19 cannot be included in the SI messages together with other SIBs.\n");
       return false;
     }
+
+    // Check if SIB6/7/8 (PWS) are included together with any other SIB, which is not allowed.
+    const bool any_pws_sib = std::any_of(si_msg.sib_mapping_info.begin(), si_msg.sib_mapping_info.end(), [](uint8_t t) {
+      return t == 6 || t == 7 || t == 8;
+    });
+    if (any_pws_sib && si_msg.sib_mapping_info.size() > 1) {
+      fmt::print("SIB6/7/8 cannot be included in the SI messages together with other SIBs.\n");
+      return false;
+    }
   }
 
   std::vector<uint8_t>  sibs_included;

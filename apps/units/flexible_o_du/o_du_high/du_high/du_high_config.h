@@ -862,8 +862,9 @@ struct du_high_unit_sib_config {
     /// \remark See TS23.038 Section 5 for a list of meaningful values.
     unsigned data_coding_scheme = 0x00;
     /// \brief ETWS warning message.
-    /// \remark Character support depends on the chosen coding scheme (see \ref data_coding_scheme).
-    std::string warning_message;
+    /// \remark Character support depends on the chosen coding scheme (see \ref data_coding_scheme). Must not be
+    /// empty.
+    std::string warning_message = "Test ETWS warning message.";
   };
 
   /// \brief Commercial Mobile Alert Service (CMAS) message parameters, for testing purposes.
@@ -894,8 +895,9 @@ struct du_high_unit_sib_config {
     /// \remark See TS23.038 Section 5 for a list of meaningful values.
     unsigned data_coding_scheme = 0x00;
     /// \brief CMAS warning message.
-    /// \remark Character support depends on the chosen coding scheme (see \ref data_coding_scheme).
-    std::string warning_message;
+    /// \remark Character support depends on the chosen coding scheme (see \ref data_coding_scheme). Must not be
+    /// empty.
+    std::string warning_message = "Test CMAS warning message.";
   };
 
   struct sib_ue_timers_and_constants {

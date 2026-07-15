@@ -167,13 +167,8 @@ static sib5_info create_sib5_info(const du_high_unit_sib_config::sib5_config& co
   return sib5;
 }
 
-/// \brief Builds the placeholder content for a SIB6/7/8 entry that has a reserved occasion in the cell's
-/// si_sched_info but no active PWS broadcast (yet). This content is never actually transmitted -- the scheduler
-/// keeps the entry dormant until a real F1AP Write-Replace Warning activates it -- so any content is acceptable.
-static sib6_info create_sib6_info(const std::optional<du_high_unit_sib_config::etws_config>& etws_cfg)
+static sib6_info create_sib6_info(const du_high_unit_sib_config::etws_config& cfg)
 {
-  const du_high_unit_sib_config::etws_config& cfg = etws_cfg.value_or(du_high_unit_sib_config::etws_config{});
-
   sib6_info sib6;
 
   sib6.message_id    = cfg.message_id;
@@ -183,10 +178,8 @@ static sib6_info create_sib6_info(const std::optional<du_high_unit_sib_config::e
   return sib6;
 }
 
-static sib7_info create_sib7_info(const std::optional<du_high_unit_sib_config::etws_config>& etws_cfg)
+static sib7_info create_sib7_info(const du_high_unit_sib_config::etws_config& cfg)
 {
-  const du_high_unit_sib_config::etws_config& cfg = etws_cfg.value_or(du_high_unit_sib_config::etws_config{});
-
   sib7_info sib7;
 
   sib7.message_id              = cfg.message_id;
@@ -197,10 +190,8 @@ static sib7_info create_sib7_info(const std::optional<du_high_unit_sib_config::e
   return sib7;
 }
 
-static sib8_info create_sib8_info(const std::optional<du_high_unit_sib_config::cmas_config>& cmas_cfg)
+static sib8_info create_sib8_info(const du_high_unit_sib_config::cmas_config& cfg)
 {
-  const du_high_unit_sib_config::cmas_config& cfg = cmas_cfg.value_or(du_high_unit_sib_config::cmas_config{});
-
   sib8_info sib8;
 
   sib8.message_id              = cfg.message_id;
@@ -421,28 +412,29 @@ static std::optional<si_scheduling_info_config> make_si_sched_info_config(const 
   // Set SIB mapping info.
   out.si_sched_info.resize(sib_cfg.si_sched_info.size());
   std::vector<uint8_t> sibs_included;
+  auto                 is_pws_sib = [](uint8_t t) { return t >= 6 && t <= 8; };
   for (unsigned i = 0; i != sib_cfg.si_sched_info.size(); ++i) {
     auto& out_si                  = out.si_sched_info[i];
     out_si.si_period_radio_frames = sib_cfg.si_sched_info[i].si_period_rf;
     out_si.sib_mapping_info.resize(sib_cfg.si_sched_info[i].sib_mapping_info.size());
     out_si.si_window_position = sib_cfg.si_sched_info[i].si_window_position;
-    for (unsigned j = 0; j != sib_cfg.si_sched_info[i].sib_mapping_info.size(); ++j) {
-      const uint8_t sib_id = sib_cfg.si_sched_info[i].sib_mapping_info[j];
+
+    const auto& sib_mapping_info = sib_cfg.si_sched_info[i].sib_mapping_info;
+    // An SI-message that carries SIB6/7/8 requires explicit activation before being scheduled: it keeps a reserved
+    // occasion in schedulingInfoList, but has no real content until an F1AP Write-Replace Warning activates it.
+    // Unless its (testing-only) content is explicitly configured, in which case it is broadcast right away,
+    // indefinitely.
+    out_si.requires_activation = std::any_of(sib_mapping_info.begin(), sib_mapping_info.end(), is_pws_sib);
+    if (out_si.requires_activation) {
+      out_si.auto_broadcast = std::any_of(sib_mapping_info.begin(), sib_mapping_info.end(), [&sib_cfg](uint8_t t) {
+        return t == 8 ? sib_cfg.cmas_cfg.has_value() : sib_cfg.etws_cfg.has_value();
+      });
+    }
+
+    for (unsigned j = 0; j != sib_mapping_info.size(); ++j) {
+      const uint8_t sib_id = sib_mapping_info[j];
       sibs_included.push_back(sib_id);
       out_si.sib_mapping_info[j] = static_cast<sib_type>(sib_id);
-      // If the SIB6/7/8 config is explicitly set, broadcast the SI-message right away, indefinitely, instead of
-      // staying dormant until an F1AP Write-Replace Warning activates it.
-      switch (sib_id) {
-        case 6:
-        case 7:
-          out_si.auto_broadcast |= sib_cfg.etws_cfg.has_value();
-          break;
-        case 8:
-          out_si.auto_broadcast |= sib_cfg.cmas_cfg.has_value();
-          break;
-        default:
-          break;
-      }
     }
   }
 
@@ -480,17 +472,27 @@ static std::optional<si_scheduling_info_config> make_si_sched_info_config(const 
       } break;
       case 6: {
         // SIB6 keeps a permanently reserved SI-message occasion; the scheduler leaves it dormant until an actual
-        // F1AP Write-Replace Warning activates it, so a missing ETWS config is not an error. If etws_cfg is set, it
-        // is broadcast right away instead, indefinitely (see si_message_sched_info::auto_broadcast).
-        item = create_sib6_info(sib_cfg.etws_cfg);
+        // F1AP Write-Replace Warning activates it, so a missing ETWS config is not an error -- no content is built
+        // for it at all (see requires_activation handling in asn1_sys_info_packer.cpp). If etws_cfg is set, it is
+        // broadcast right away instead, indefinitely (see si_message_sched_info::auto_broadcast).
+        if (!sib_cfg.etws_cfg.has_value()) {
+          continue;
+        }
+        item = create_sib6_info(sib_cfg.etws_cfg.value());
       } break;
       case 7: {
         // See SIB6 comment above -- SIB7 is likewise dormant until a real warning is activated.
-        item = create_sib7_info(sib_cfg.etws_cfg);
+        if (!sib_cfg.etws_cfg.has_value()) {
+          continue;
+        }
+        item = create_sib7_info(sib_cfg.etws_cfg.value());
       } break;
       case 8: {
         // See SIB6 comment above -- SIB8 is likewise dormant until a real warning is activated.
-        item = create_sib8_info(sib_cfg.cmas_cfg);
+        if (!sib_cfg.cmas_cfg.has_value()) {
+          continue;
+        }
+        item = create_sib8_info(sib_cfg.cmas_cfg.value());
       } break;
       case 16: {
         if (!sib_cfg.sib16_cfg.has_value()) {

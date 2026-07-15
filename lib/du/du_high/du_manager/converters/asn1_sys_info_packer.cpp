@@ -1033,8 +1033,25 @@ asn1_packer::pack_all_bcch_dl_sch_msgs(const du_cell_config& du_cfg, std::vector
         auto     it     = std::find_if(sibs.begin(), sibs.end(), [sib_id](const sib_type_info& sib) {
           return get_sib_info_type(sib.content) == sib_id;
         });
-        ocudu_assert(
-            it != sibs.end(), "SIB{} in SIB mapping info has no defined config", static_cast<unsigned>(sib_id));
+
+        if (it == sibs.end()) {
+          // A dormant SIB6/7/8 SI-message with no explicitly configured (testing-only) content has no sibs entry at
+          // all (see requires_activation handling in du_high_config_translators.cpp) -- the scheduler never
+          // actually schedules it until an F1AP Write-Replace Warning activates it, so its content is irrelevant.
+          // Use a trivial placeholder instead of ASN.1/CBS-encoding anything.
+          ocudu_assert(si_sched.requires_activation and not si_sched.auto_broadcast,
+                       "SIB{} in SIB mapping info has no defined config",
+                       static_cast<unsigned>(sib_id));
+
+          bcch_dl_sch_payload_type packed_sib(1);
+          packed_sib.front() = byte_buffer::create({0x00}).value();
+          msgs.emplace_back(std::move(packed_sib));
+
+          if (bcch_dl_sch_json_msgs != nullptr) {
+            bcch_dl_sch_json_msgs->emplace_back("\"dormant PWS placeholder\"");
+          }
+          continue;
+        }
 
         // Buffer to hold the packed message. It may be necessary to store multiple SI messages (one for each segment).
         bcch_dl_sch_payload_type packed_sib;
