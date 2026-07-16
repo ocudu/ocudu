@@ -1726,7 +1726,8 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
     }
   }
 
-  if (!validate_cell_cg_config(config.cg_cfg, nof_crbs, config.pusch_cfg.nof_harqs)) {
+  if (config.cg_cfg.periodicity_slots.has_value() and
+      !validate_cell_cg_config(config.cg_cfg, nof_crbs, config.pusch_cfg.nof_harqs)) {
     return false;
   }
 

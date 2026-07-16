@@ -562,7 +562,7 @@ struct du_high_configured_grants {
   /// 2560, 5120}.
   /// For 12 symbol slots, all values above except {1014, 5120}.
   /// \remark Only 14-symbol slot is currently supported.
-  std::optional<unsigned> periodicity_slots = 40;
+  std::optional<unsigned> periodicity_slots;
   /// Number of RBs that are configured for the UE configured grant.
   unsigned nof_rbs = 10;
   /// MCS configured for the UE configured grant. Values: {1,...,27}.
