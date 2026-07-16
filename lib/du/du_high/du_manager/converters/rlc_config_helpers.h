@@ -5,8 +5,8 @@
 #pragma once
 
 #include "../du_ue/du_bearer.h"
+#include "ocudu/du/du_high/du_manager/du_manager_mem_resources.h"
 #include "ocudu/du/du_high/du_manager/du_manager_params.h"
-#include "ocudu/du/du_high/du_manager/du_manager_resources.h"
 #include "ocudu/f1ap/du/f1ap_du_ue_config.h"
 #include "ocudu/mac/mac_lc_config.h"
 #include "ocudu/ran/du_types.h"
@@ -26,26 +26,28 @@ struct rlc_window_segment_pools {
 };
 
 /// \brief Create configuration for RLC SRB entity.
-rlc_entity_creation_message make_rlc_entity_creation_message(gnb_du_id_t                              du_id,
-                                                             du_ue_index_t                            ue_index,
-                                                             du_cell_index_t                          pcell_index,
-                                                             du_ue_srb&                               bearer,
-                                                             const rlc_config&                        rlc_cfg,
-                                                             const du_manager_params::service_params& du_services,
-                                                             rlc_tx_upper_layer_control_notifier&     rlc_rlf_notifier,
-                                                             const du_manager_params::rlc_config_params& rlc_params,
-                                                             const du_manager_resources::rlc_resources&  rlc_resources);
+rlc_entity_creation_message
+make_rlc_entity_creation_message(gnb_du_id_t                                    du_id,
+                                 du_ue_index_t                                  ue_index,
+                                 du_cell_index_t                                pcell_index,
+                                 du_ue_srb&                                     bearer,
+                                 const rlc_config&                              rlc_cfg,
+                                 const du_manager_params::service_params&       du_services,
+                                 rlc_tx_upper_layer_control_notifier&           rlc_rlf_notifier,
+                                 const du_manager_params::rlc_config_params&    rlc_params,
+                                 const du_manager_mem_resources::rlc_resources& rlc_resources);
 
 /// \brief Create configuration for RLC DRB entity.
-rlc_entity_creation_message make_rlc_entity_creation_message(gnb_du_id_t                              du_id,
-                                                             du_ue_index_t                            ue_index,
-                                                             du_cell_index_t                          pcell_index,
-                                                             du_ue_drb&                               bearer,
-                                                             const rlc_config&                        rlc_cfg,
-                                                             const du_manager_params::service_params& du_services,
-                                                             rlc_tx_upper_layer_control_notifier&     rlc_rlf_notifier,
-                                                             const du_manager_params::rlc_config_params& rlc_params,
-                                                             const du_manager_resources::rlc_resources&  rlc_resources);
+rlc_entity_creation_message
+make_rlc_entity_creation_message(gnb_du_id_t                                    du_id,
+                                 du_ue_index_t                                  ue_index,
+                                 du_cell_index_t                                pcell_index,
+                                 du_ue_drb&                                     bearer,
+                                 const rlc_config&                              rlc_cfg,
+                                 const du_manager_params::service_params&       du_services,
+                                 rlc_tx_upper_layer_control_notifier&           rlc_rlf_notifier,
+                                 const du_manager_params::rlc_config_params&    rlc_params,
+                                 const du_manager_mem_resources::rlc_resources& rlc_resources);
 
 } // namespace odu
 } // namespace ocudu

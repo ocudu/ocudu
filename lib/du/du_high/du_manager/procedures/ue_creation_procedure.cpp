@@ -17,13 +17,13 @@ using namespace odu;
 ue_creation_procedure::ue_creation_procedure(const du_ue_creation_request&   req_,
                                              du_ue_manager_repository&       ue_mng_,
                                              const du_manager_params&        du_params_,
-                                             const du_manager_resources&     du_resources_,
+                                             const du_manager_mem_resources& du_mem_resources_,
                                              du_ran_resource_manager&        cell_res_alloc_,
                                              du_procedure_metrics_collector& metrics_) :
   req(req_),
   ue_mng(ue_mng_),
   du_params(du_params_),
-  du_resources(du_resources_),
+  du_mem_resources(du_mem_resources_),
   du_res_alloc(cell_res_alloc_),
   metrics(metrics_),
   proc_logger(ocudulog::fetch_basic_logger("DU-MNG"), name(), req.ue_index, req.tc_rnti)
@@ -187,7 +187,7 @@ void ue_creation_procedure::create_rlc_srbs()
                                                                        du_params.services,
                                                                        ue_ctx->get_rlc_rlf_notifier(),
                                                                        du_params.rlc,
-                                                                       du_resources.rlc));
+                                                                       du_mem_resources.rlc));
 
   // Create SRB1 RLC entity.
   if (ue_ctx->bearers.srbs().contains(srb_id_t::srb1)) {
@@ -201,7 +201,7 @@ void ue_creation_procedure::create_rlc_srbs()
                                                            du_params.services,
                                                            ue_ctx->get_rlc_rlf_notifier(),
                                                            du_params.rlc,
-                                                           du_resources.rlc));
+                                                           du_mem_resources.rlc));
   }
 }
 

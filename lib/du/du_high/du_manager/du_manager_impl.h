@@ -12,8 +12,8 @@
 #include "procedures/du_proc_context_view.h"
 #include "ran_resource_management/du_ran_resource_manager_impl.h"
 #include "ocudu/du/du_high/du_manager/du_manager.h"
+#include "ocudu/du/du_high/du_manager/du_manager_mem_resources.h"
 #include "ocudu/du/du_high/du_manager/du_manager_params.h"
-#include "ocudu/du/du_high/du_manager/du_manager_resources.h"
 #include "ocudu/rlc/rlc_window_seg_pool_factory.h"
 
 namespace ocudu {
@@ -86,7 +86,7 @@ private:
   ocudulog::basic_logger& logger;
 
   // Resources owned by the DU manager, available to its procedures and sub-structures.
-  du_manager_resources resources;
+  du_manager_mem_resources mem_resources;
 
   // Handler for DU tasks.
   fifo_async_task_scheduler main_ctrl_loop;

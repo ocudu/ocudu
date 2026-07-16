@@ -8,16 +8,16 @@ using namespace ocudu;
 using namespace odu;
 
 template <typename Bearer>
-static void fill_rlc_entity_creation_message_common(rlc_entity_creation_message&                msg,
-                                                    gnb_du_id_t                                 du_id,
-                                                    du_ue_index_t                               ue_index,
-                                                    du_cell_index_t                             pcell_index,
-                                                    Bearer&                                     bearer,
-                                                    const rlc_config&                           rlc_cfg,
-                                                    const du_manager_params::service_params&    du_services,
-                                                    rlc_tx_upper_layer_control_notifier&        rlc_rlf_notifier,
-                                                    const du_manager_params::rlc_config_params& rlc_params,
-                                                    const du_manager_resources::rlc_resources&  rlc_resources)
+static void fill_rlc_entity_creation_message_common(rlc_entity_creation_message&                   msg,
+                                                    gnb_du_id_t                                    du_id,
+                                                    du_ue_index_t                                  ue_index,
+                                                    du_cell_index_t                                pcell_index,
+                                                    Bearer&                                        bearer,
+                                                    const rlc_config&                              rlc_cfg,
+                                                    const du_manager_params::service_params&       du_services,
+                                                    rlc_tx_upper_layer_control_notifier&           rlc_rlf_notifier,
+                                                    const du_manager_params::rlc_config_params&    rlc_params,
+                                                    const du_manager_mem_resources::rlc_resources& rlc_resources)
 {
   msg.gnb_du_id      = du_id;
   msg.ue_index       = ue_index;
@@ -39,15 +39,15 @@ static void fill_rlc_entity_creation_message_common(rlc_entity_creation_message&
 
 // for SRBs
 rlc_entity_creation_message
-ocudu::odu::make_rlc_entity_creation_message(gnb_du_id_t                                 gnb_du_id,
-                                             du_ue_index_t                               ue_index,
-                                             du_cell_index_t                             pcell_index,
-                                             du_ue_srb&                                  bearer,
-                                             const rlc_config&                           rlc_cfg,
-                                             const du_manager_params::service_params&    du_services,
-                                             rlc_tx_upper_layer_control_notifier&        rlc_rlf_notifier,
-                                             const du_manager_params::rlc_config_params& rlc_params,
-                                             const du_manager_resources::rlc_resources&  rlc_resources)
+ocudu::odu::make_rlc_entity_creation_message(gnb_du_id_t                                    gnb_du_id,
+                                             du_ue_index_t                                  ue_index,
+                                             du_cell_index_t                                pcell_index,
+                                             du_ue_srb&                                     bearer,
+                                             const rlc_config&                              rlc_cfg,
+                                             const du_manager_params::service_params&       du_services,
+                                             rlc_tx_upper_layer_control_notifier&           rlc_rlf_notifier,
+                                             const du_manager_params::rlc_config_params&    rlc_params,
+                                             const du_manager_mem_resources::rlc_resources& rlc_resources)
 {
   rlc_entity_creation_message msg;
   fill_rlc_entity_creation_message_common(
@@ -59,15 +59,15 @@ ocudu::odu::make_rlc_entity_creation_message(gnb_du_id_t                        
 
 // for DRBs
 rlc_entity_creation_message
-ocudu::odu::make_rlc_entity_creation_message(gnb_du_id_t                                 gnb_du_id,
-                                             du_ue_index_t                               ue_index,
-                                             du_cell_index_t                             pcell_index,
-                                             du_ue_drb&                                  bearer,
-                                             const rlc_config&                           rlc_cfg,
-                                             const du_manager_params::service_params&    du_services,
-                                             rlc_tx_upper_layer_control_notifier&        rlc_rlf_notifier,
-                                             const du_manager_params::rlc_config_params& rlc_params,
-                                             const du_manager_resources::rlc_resources&  rlc_resources)
+ocudu::odu::make_rlc_entity_creation_message(gnb_du_id_t                                    gnb_du_id,
+                                             du_ue_index_t                                  ue_index,
+                                             du_cell_index_t                                pcell_index,
+                                             du_ue_drb&                                     bearer,
+                                             const rlc_config&                              rlc_cfg,
+                                             const du_manager_params::service_params&       du_services,
+                                             rlc_tx_upper_layer_control_notifier&           rlc_rlf_notifier,
+                                             const du_manager_params::rlc_config_params&    rlc_params,
+                                             const du_manager_mem_resources::rlc_resources& rlc_resources)
 {
   rlc_entity_creation_message msg;
   fill_rlc_entity_creation_message_common(

@@ -3,7 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "du_manager_impl.h"
-#include "du_manager_resources_factory.h"
+#include "du_manager_mem_resources_factory.h"
 #include "du_positioning_handler_factory.h"
 #include "procedures/cu_configuration_procedure.h"
 #include "procedures/du_cell_stop_procedure.h"
@@ -24,12 +24,12 @@ using namespace odu;
 du_manager_impl::du_manager_impl(const du_manager_params& params_) :
   params(params_),
   logger(ocudulog::fetch_basic_logger("DU-MNG")),
-  resources(create_du_manager_resources(params)),
+  mem_resources(create_du_manager_mem_resources(params)),
   main_ctrl_loop(128),
   cell_mng(params),
   cell_res_alloc(params.ran.cells, params.mac.sched_cfg, params.ran.srbs, params.ran.qos, params.test_cfg),
   metrics(params.metrics, params.services.du_mng_exec, params.services.timers, params.f1ap.metrics),
-  ue_mng(params, resources, cell_res_alloc, cell_mng, metrics.get_proc_collector()),
+  ue_mng(params, mem_resources, cell_res_alloc, cell_mng, metrics.get_proc_collector()),
   positioning_handler(create_du_positioning_handler(params, cell_mng, ue_mng, logger)),
   proc_ctxt{params, ctxt, cell_mng, ue_mng, cell_res_alloc, metrics, logger},
   controller(proc_ctxt, main_ctrl_loop)

@@ -15,12 +15,12 @@ using namespace ocudu;
 using namespace odu;
 
 du_ue_manager::du_ue_manager(du_manager_params&              cfg_,
-                             const du_manager_resources&     resources_,
+                             const du_manager_mem_resources& mem_resources_,
                              du_ran_resource_manager&        cell_res_alloc_,
                              const du_cell_manager&          cell_mng_,
                              du_procedure_metrics_collector& metrics_) :
   cfg(cfg_),
-  resources(resources_),
+  mem_resources(mem_resources_),
   cell_res_alloc(cell_res_alloc_),
   cell_mng(cell_mng_),
   metrics(metrics_),
@@ -63,7 +63,7 @@ void du_ue_manager::handle_ue_create_request(const ul_ccch_indication_message& m
       du_ue_creation_request{ue_idx_candidate, msg.cell_index, msg.tc_rnti, msg.subpdu.copy(), msg.slot_rx},
       *this,
       cfg,
-      resources,
+      mem_resources,
       cell_res_alloc,
       metrics);
 }
@@ -88,7 +88,7 @@ du_ue_manager::handle_ue_create_request(const f1ap_ue_context_creation_request& 
         du_ue_creation_request{req.ue_index, req.pcell_index, rnti_t::INVALID_RNTI, {}},
         *this,
         cfg,
-        resources,
+        mem_resources,
         cell_res_alloc,
         metrics));
 
@@ -100,7 +100,7 @@ du_ue_manager::handle_ue_create_request(const f1ap_ue_context_creation_request& 
 async_task<f1ap_ue_context_update_response>
 du_ue_manager::handle_ue_config_request(const f1ap_ue_context_update_request& req)
 {
-  return launch_async<ue_configuration_procedure>(req, *this, cell_mng, cfg, resources);
+  return launch_async<ue_configuration_procedure>(req, *this, cell_mng, cfg, mem_resources);
 }
 
 async_task<void> du_ue_manager::handle_ue_delete_request(const f1ap_ue_delete_request& req)

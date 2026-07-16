@@ -6,7 +6,7 @@
 
 #include "du_ue_adapters.h"
 #include "ocudu/adt/slotted_array.h"
-#include "ocudu/du/du_high/du_manager/du_manager_resources.h"
+#include "ocudu/du/du_high/du_manager/du_manager_mem_resources.h"
 #include "ocudu/f1u/du/f1u_config.h"
 #include "ocudu/mac/mac_lc_config.h"
 #include "ocudu/ran/logical_channel/lcid.h"
@@ -117,7 +117,7 @@ struct drb_creation_info {
   span<const up_transport_layer_info>  uluptnl_info_list;
   gtpu_teid_pool&                      teid_pool;
   const du_manager_params&             du_params;
-  const du_manager_resources&          du_resources;
+  const du_manager_mem_resources&      du_mem_resources;
   rlc_tx_upper_layer_control_notifier& rlc_rlf_notifier;
 };
 

@@ -55,7 +55,7 @@ protected:
       new_drb.f1u.warn_on_drop     = false;
     }
 
-    proc = launch_async<ue_configuration_procedure>(req, ue_mng, cell_mng, params, resources);
+    proc = launch_async<ue_configuration_procedure>(req, ue_mng, cell_mng, params, mem_resources);
     proc_launcher.emplace(proc);
   }
 

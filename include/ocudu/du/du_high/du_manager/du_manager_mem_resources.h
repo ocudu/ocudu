@@ -11,7 +11,7 @@
 namespace ocudu::odu {
 
 /// \brief Resources owned and managed by the DU manager, available to its procedures and sub-structures.
-struct du_manager_resources {
+struct du_manager_mem_resources {
   struct rlc_resources {
     rlc_resources(std::unique_ptr<rlc_drb_rx_window_seg_pool, rlc_pool_deleter>              drb_rx_window_seg_pool_,
                   std::vector<std::unique_ptr<rlc_drb_tx_window_seg_pool, rlc_pool_deleter>> drb_tx_window_seg_pools_,

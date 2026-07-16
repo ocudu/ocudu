@@ -43,7 +43,7 @@ du_ue& du_manager_proc_tester::create_ue(du_ue_index_t ue_index)
       du_ue_creation_request{ue_index, ul_ccch_msg.cell_index, ul_ccch_msg.tc_rnti, ul_ccch_msg.subpdu.copy()},
       ue_mng,
       params,
-      resources,
+      mem_resources,
       cell_res_alloc,
       proc_metrics);
 
@@ -107,7 +107,7 @@ f1ap_ue_context_update_response du_manager_proc_tester::configure_ue(const f1ap_
 
   // Run Procedure.
   async_task<f1ap_ue_context_update_response> t =
-      launch_async<ue_configuration_procedure>(req, ue_mng, cell_mng, params, resources);
+      launch_async<ue_configuration_procedure>(req, ue_mng, cell_mng, params, mem_resources);
   lazy_task_launcher<f1ap_ue_context_update_response> launcher{t};
   ocudu_assert(launcher.ready(), "The UE creation procedure should have completed by now");
 

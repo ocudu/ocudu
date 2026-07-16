@@ -4,12 +4,12 @@
 
 #pragma once
 
-#include "ocudu/du/du_high/du_manager/du_manager_resources.h"
+#include "ocudu/du/du_high/du_manager/du_manager_mem_resources.h"
 
 namespace ocudu::odu {
 
 struct du_manager_params;
 
-du_manager_resources create_du_manager_resources(const du_manager_params& du_params);
+du_manager_mem_resources create_du_manager_mem_resources(const du_manager_params& du_params);
 
 } // namespace ocudu::odu

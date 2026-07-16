@@ -17,12 +17,12 @@ ue_configuration_procedure::ue_configuration_procedure(const f1ap_ue_context_upd
                                                        du_ue_manager_repository&             ue_mng_,
                                                        const du_cell_manager&                cell_mng_,
                                                        const du_manager_params&              du_params_,
-                                                       const du_manager_resources&           du_resources_) :
+                                                       const du_manager_mem_resources&       du_mem_resources_) :
   request(request_),
   ue_mng(ue_mng_),
   cell_mng(cell_mng_),
   du_params(du_params_),
-  du_resources(du_resources_),
+  du_mem_resources(du_mem_resources_),
   ue(ue_mng.find_ue(request.ue_index)),
   proc_logger(logger, name(), request.ue_index, ue != nullptr ? ue->rnti : rnti_t::INVALID_RNTI)
 {
@@ -117,7 +117,7 @@ void ue_configuration_procedure::update_ue_context()
                                                                         du_params.services,
                                                                         ue->get_rlc_rlf_notifier(),
                                                                         du_params.rlc,
-                                                                        du_resources.rlc));
+                                                                        du_mem_resources.rlc));
   }
 
   // > Create F1-C bearers.
@@ -178,7 +178,7 @@ void ue_configuration_procedure::update_ue_context()
                                                                   drbtoadd.uluptnl_info_list,
                                                                   ue_mng.get_f1u_teid_pool(),
                                                                   du_params,
-                                                                  du_resources,
+                                                                  du_mem_resources,
                                                                   ue->get_rlc_rlf_notifier()});
     if (drb == nullptr) {
       failed_drbs.push_back(drbtoadd.drb_id);
@@ -215,7 +215,7 @@ void ue_configuration_procedure::update_ue_context()
                                                                     drbtomod.uluptnl_info_list,
                                                                     ue_mng.get_f1u_teid_pool(),
                                                                     du_params,
-                                                                    du_resources,
+                                                                    du_mem_resources,
                                                                     ue->get_rlc_rlf_notifier()});
       if (drb == nullptr) {
         proc_logger.log_proc_warning("Failed to create {}. Cause: Failed to allocate DU UE resources.",
