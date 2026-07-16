@@ -599,6 +599,17 @@ static void configure_cli11_f1ap_args(CLI::App& app, cu_cp_unit_f1ap_config& f1a
   configure_cli11_ref_time_reporting_args(*rtr_subcmd, f1ap_params);
 }
 
+static void configure_cli11_pws_args(CLI::App& app, cu_cp_unit_pws_config& pws_params)
+{
+  add_option(app,
+             "--max_warning_message_segment_size",
+             pws_params.max_warning_message_segment_size,
+             "Maximum bytes per SIB7/SIB8 warning message segment. The warning message contents (up to 9600 bytes) is "
+             "split into chunks of this size, each encoded as a separate SIB.")
+      ->capture_default_str()
+      ->check(CLI::PositiveNumber);
+}
+
 static void configure_cli11_e1ap_args(CLI::App& app, cu_cp_unit_e1ap_config& e1ap_params)
 {
   add_option(app,
@@ -702,6 +713,9 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_unit_config& cu_cp_p
 
   CLI::App* e1ap_subcmd = add_subcommand(app, "e1ap", "E1AP configuration parameters");
   configure_cli11_e1ap_args(*e1ap_subcmd, cu_cp_params.e1ap_config);
+
+  CLI::App* pws_subcmd = add_subcommand(app, "pws", "Public Warning System configuration");
+  configure_cli11_pws_args(*pws_subcmd, cu_cp_params.pws_config);
 }
 
 static void configure_cli11_rlc_um_args(CLI::App& app, cu_cp_unit_rlc_um_config& rlc_um_params)

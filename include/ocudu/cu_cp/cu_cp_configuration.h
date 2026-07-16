@@ -140,6 +140,13 @@ struct cu_cp_configuration {
     metrics_layers_config     layers_cfg = {};
   };
 
+  struct pws_params {
+    /// Maximum number of bytes per SIB7/SIB8 warning message segment (TS 38.473 section 9.3.1.86).
+    /// The Warning Message Contents (up to 9600 bytes per TS 38.413 section 9.3.1.37) is split into
+    /// chunks of this size; each chunk is encoded as a separate SIB. Must be >= 1.
+    uint32_t max_warning_message_segment_size = 150;
+  };
+
   /// NG-RAN node parameters.
   ran_node_configuration node;
   /// Parameters to determine the admission of new CU-UP, DU and UE connections.
@@ -164,6 +171,8 @@ struct cu_cp_configuration {
   mobility_configuration mobility;
   /// Parameters related with CU-CP metrics.
   metrics_params metrics;
+  /// Public Warning System parameters.
+  pws_params pws;
   /// Timers, executors, and other services used by the CU-CP.
   service_params services;
   /// CU-CP metrics notifier.

@@ -13,8 +13,9 @@ using namespace ocudu::ocucp;
 cu_cp_write_replace_warning_routine::cu_cp_write_replace_warning_routine(
     const ngap_write_replace_warning_request& request_,
     du_processor_repository&                  du_db_,
+    uint32_t                                  max_segment_size_,
     ocudulog::basic_logger&                   logger_) :
-  request(request_), du_db(du_db_), logger(logger_)
+  request(request_), du_db(du_db_), max_segment_size(max_segment_size_), logger(logger_)
 {
 }
 
@@ -133,18 +134,22 @@ bool cu_cp_write_replace_warning_routine::build_f1ap_requests()
   if (request.warning_msg_contents.has_value() && request.data_coding_scheme.has_value()) {
     const uint8_t sib_type = request.warning_type.has_value() ? 7U : 8U;
     const uint8_t dcs      = *request.data_coding_scheme;
-    auto          sib_buf  = (sib_type == 7)
-                                 ? encode_sib7(request.msg_id, request.serial_num, dcs, *request.warning_msg_contents)
-                                 : encode_sib8(request.msg_id, request.serial_num, dcs, *request.warning_msg_contents);
-    if (!sib_buf) {
+    auto          sib_bufs =
+        (sib_type == 7)
+                     ? encode_sib7(request.msg_id, request.serial_num, dcs, *request.warning_msg_contents, max_segment_size)
+                     : encode_sib8(request.msg_id, request.serial_num, dcs, *request.warning_msg_contents, max_segment_size);
+    if (!sib_bufs) {
       logger.warning("\"{}\" failed to encode SIB{}", name(), sib_type);
       return false;
     }
     f1ap_write_replace_warning_request seg_req;
     seg_req.pws_sys_info.sib_type    = sib_type;
-    seg_req.pws_sys_info.sib_msg     = std::move(*sib_buf);
+    seg_req.pws_sys_info.sib_msg     = std::move((*sib_bufs)[0]);
     seg_req.repeat_period            = request.repeat_period;
     seg_req.nof_broadcasts_requested = request.nof_broadcasts_requested;
+    for (size_t i = 1; i < sib_bufs->size(); ++i) {
+      seg_req.pws_sys_info.additional_sib_msgs.push_back(std::move((*sib_bufs)[i]));
+    }
     f1ap_requests.push_back(std::move(seg_req));
   }
 

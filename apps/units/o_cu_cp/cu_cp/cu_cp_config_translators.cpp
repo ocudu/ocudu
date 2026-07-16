@@ -502,6 +502,9 @@ ocucp::cu_cp_configuration ocudu::generate_cu_cp_config(const cu_cp_unit_config&
   out_cfg.e1ap.proc_timeout     = std::chrono::milliseconds{cu_cfg.e1ap_config.procedure_timeout};
   out_cfg.e1ap.json_log_enabled = cu_cfg.loggers.e1ap_json_enabled;
 
+  // PWS config.
+  out_cfg.pws.max_warning_message_segment_size = cu_cfg.pws_config.max_warning_message_segment_size;
+
   // Convert appconfig's cell list into cell manager type.
   for (const auto& app_cfg_item : cu_cfg.mobility_config.cells) {
     nr_cell_identity        nci = nr_cell_identity::create(app_cfg_item.nr_cell_id).value();

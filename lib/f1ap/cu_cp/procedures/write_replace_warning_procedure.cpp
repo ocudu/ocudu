@@ -55,6 +55,17 @@ void write_replace_warning_procedure::send_write_replace_warning_request()
   const std::vector<uint8_t> sib_bytes(request.pws_sys_info.sib_msg.begin(), request.pws_sys_info.sib_msg.end());
   req->pws_sys_info.sib_msg.from_bytes(sib_bytes);
 
+  if (!request.pws_sys_info.additional_sib_msgs.empty()) {
+    req->pws_sys_info.ie_exts_present                  = true;
+    req->pws_sys_info.ie_exts.add_sib_msg_list_present = true;
+    for (const auto& seg_buf : request.pws_sys_info.additional_sib_msgs) {
+      asn1::f1ap::add_sib_msg_list_item_s item;
+      const std::vector<uint8_t>          seg_bytes(seg_buf.begin(), seg_buf.end());
+      item.add_sib.from_bytes(seg_bytes);
+      req->pws_sys_info.ie_exts.add_sib_msg_list.push_back(item);
+    }
+  }
+
   req->repeat_period           = request.repeat_period;
   req->numof_broadcast_request = request.nof_broadcasts_requested;
 

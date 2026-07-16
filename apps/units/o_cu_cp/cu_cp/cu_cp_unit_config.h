@@ -205,6 +205,15 @@ struct cu_cp_unit_e1ap_config {
   unsigned procedure_timeout = 1000;
 };
 
+/// Public Warning System (PWS) configuration parameters.
+struct cu_cp_unit_pws_config {
+  /// Maximum number of bytes carried in a single SIB7 or SIB8 warning message segment.
+  /// The Warning Message Contents (up to 9600 bytes per TS 38.413 section 9.3.1.42) is split into chunks of this
+  /// size; each chunk is encoded as a separate SIB and carried in the Additional SIB Message List IE
+  /// (TS 38.473 section 9.3.1.86). Must be >= 1.
+  uint32_t max_warning_message_segment_size = 150;
+};
+
 /// XnAP peer configuration parameters.
 struct cu_cp_unit_xnap_peer_config {
   std::vector<std::string> peer_addrs;
@@ -441,6 +450,8 @@ struct cu_cp_unit_config {
   cu_cp_unit_f1ap_config f1ap_config;
   /// E1AP configuration.
   cu_cp_unit_e1ap_config e1ap_config;
+  /// Public Warning System configuration.
+  cu_cp_unit_pws_config pws_config;
   /// QoS configuration.
   std::vector<cu_cp_unit_qos_config> qos_cfg;
   /// Network slice configuration.

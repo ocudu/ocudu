@@ -1443,7 +1443,8 @@ void cu_cp_impl::handle_n2_disconnection(cu_cp_amf_index_t amf_index)
 async_task<ngap_write_replace_warning_response>
 cu_cp_impl::handle_write_replace_warning_request(const ngap_write_replace_warning_request& request)
 {
-  return launch_async<cu_cp_write_replace_warning_routine>(request, du_db, logger);
+  return launch_async<cu_cp_write_replace_warning_routine>(
+      request, du_db, cfg.pws.max_warning_message_segment_size, logger);
 }
 
 std::optional<rrc_meas_cfg>

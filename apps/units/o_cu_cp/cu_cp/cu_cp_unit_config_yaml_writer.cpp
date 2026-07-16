@@ -368,6 +368,8 @@ static void fill_cu_cp_section(YAML::Node node, const cu_cp_unit_config& config)
   node["f1ap"]["ref_time_reporting"]["periodicity_rf"] = config.f1ap_config.ref_time_reporting_periodicity_rf;
 
   node["e1ap"]["procedure_timeout"] = config.e1ap_config.procedure_timeout;
+
+  node["pws"]["max_warning_message_segment_size"] = config.pws_config.max_warning_message_segment_size;
 }
 
 static void fill_cu_cp_log_section(YAML::Node node, const cu_cp_unit_logger_config& config)

@@ -24,6 +24,7 @@ class cu_cp_write_replace_warning_routine
 public:
   cu_cp_write_replace_warning_routine(const ngap_write_replace_warning_request& request_,
                                       du_processor_repository&                  du_db_,
+                                      uint32_t                                  max_segment_size_,
                                       ocudulog::basic_logger&                   logger_);
 
   void operator()(coro_context<async_task<ngap_write_replace_warning_response>>& ctx);
@@ -36,6 +37,7 @@ private:
 
   const ngap_write_replace_warning_request request;
   du_processor_repository&                 du_db;
+  const uint32_t                           max_segment_size;
   ocudulog::basic_logger&                  logger;
 
   // NR CGI filter extracted from the NGAP warning area list (absent = send to all cells of all DUs).
