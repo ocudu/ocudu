@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "du_manager_impl.h"
+#include "du_manager_resources_factory.h"
 #include "du_positioning_handler_factory.h"
 #include "procedures/cu_configuration_procedure.h"
 #include "procedures/du_cell_stop_procedure.h"
@@ -23,10 +24,7 @@ using namespace odu;
 du_manager_impl::du_manager_impl(const du_manager_params& params_) :
   params(params_),
   logger(ocudulog::fetch_basic_logger("DU-MNG")),
-  resources{{make_rlc_drb_rx_window_seg_pool(params.rlc.drb_rx_window_seg_pool_size),
-             make_rlc_drb_tx_window_seg_pool(params.rlc.drb_tx_window_seg_pool_size),
-             make_rlc_srb_rx_window_seg_pool(params.rlc.srb_rx_window_seg_pool_size),
-             make_rlc_srb_tx_window_seg_pool(params.rlc.srb_tx_window_seg_pool_size)}},
+  resources(create_du_manager_resources(params)),
   main_ctrl_loop(128),
   cell_mng(params),
   cell_res_alloc(params.ran.cells, params.mac.sched_cfg, params.ran.srbs, params.ran.qos, params.test_cfg),

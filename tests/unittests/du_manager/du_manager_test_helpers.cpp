@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "du_manager_test_helpers.h"
+#include "lib/du/du_high/du_manager/du_manager_resources_factory.h"
 #include "ocudu/du/du_high/du_qos_config_helpers.h"
 #include "ocudu/mac/config/mac_cell_group_config_factory.h"
 #include "ocudu/mac/config/mac_config_helpers.h"
@@ -132,10 +133,7 @@ du_manager_test_bench::du_manager_test_bench(span<const du_cell_config> cells) :
           rlc_srb_rx_window_seg_pool_size,
           rlc_srb_tx_window_seg_pool_size},
          {mac}},
-  resources{{make_rlc_drb_rx_window_seg_pool(params.rlc.drb_rx_window_seg_pool_size),
-             make_rlc_drb_tx_window_seg_pool(params.rlc.drb_tx_window_seg_pool_size),
-             make_rlc_srb_rx_window_seg_pool(params.rlc.srb_rx_window_seg_pool_size),
-             make_rlc_srb_tx_window_seg_pool(params.rlc.srb_tx_window_seg_pool_size)}},
+  resources(create_du_manager_resources(params)),
   cell_mng(params),
   logger(ocudulog::fetch_basic_logger("DU-MNG"))
 {

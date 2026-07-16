@@ -31,10 +31,10 @@ static void fill_rlc_entity_creation_message_common(rlc_entity_creation_message&
   msg.ue_executor    = &du_services.ue_execs.ctrl_executor(ue_index);
   msg.pcap_writer    = &rlc_params.pcap_writer;
   msg.drb_am_rx_pool = &rlc_resources.drb_rx_window_seg_pool->get_pool_of_type<rlc_rx_am_sdu_info>();
-  msg.drb_am_tx_pool = &rlc_resources.drb_tx_window_seg_pool->get_pool_of_type<rlc_tx_am_sdu_info>();
+  msg.drb_am_tx_pool = &rlc_resources.drb_tx_window_seg_pools[pcell_index]->get_pool_of_type<rlc_tx_am_sdu_info>();
   msg.drb_um_rx_pool = &rlc_resources.drb_rx_window_seg_pool->get_pool_of_type<rlc_rx_um_sdu_info>();
   msg.srb_am_rx_pool = &rlc_resources.srb_rx_window_seg_pool->get_pool_of_type<rlc_rx_am_sdu_info>();
-  msg.srb_am_tx_pool = &rlc_resources.srb_tx_window_seg_pool->get_pool_of_type<rlc_tx_am_sdu_info>();
+  msg.srb_am_tx_pool = &rlc_resources.srb_tx_window_seg_pools[pcell_index]->get_pool_of_type<rlc_tx_am_sdu_info>();
 }
 
 // for SRBs

@@ -12,6 +12,7 @@ set(SOURCES
         du_cell_manager.cpp
         du_manager_factory.cpp
         du_manager_impl.cpp
+        du_manager_resources_factory.cpp
         du_positioning_handler_factory.cpp
         metrics/du_metrics_aggregator_impl.cpp
         du_positioning_manager_impl.cpp

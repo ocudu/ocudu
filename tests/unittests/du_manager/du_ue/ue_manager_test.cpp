@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/du/du_high/du_manager/du_cell_manager.h"
+#include "lib/du/du_high/du_manager/du_manager_resources_factory.h"
 #include "lib/du/du_high/du_manager/du_ue/du_ue_manager.h"
 #include "lib/du/du_high/du_manager/metrics/du_procedure_metrics_collector.h"
 #include "tests/test_doubles/utils/test_rng.h"
@@ -115,10 +116,7 @@ protected:
                             rlc_srb_tx_window_seg_pool_size},
                            {mac_dummy}};
 
-  du_manager_resources resources{{make_rlc_drb_rx_window_seg_pool(params.rlc.drb_rx_window_seg_pool_size),
-                                  make_rlc_drb_tx_window_seg_pool(params.rlc.drb_tx_window_seg_pool_size),
-                                  make_rlc_srb_rx_window_seg_pool(params.rlc.srb_rx_window_seg_pool_size),
-                                  make_rlc_srb_tx_window_seg_pool(params.rlc.srb_tx_window_seg_pool_size)}};
+  du_manager_resources resources{create_du_manager_resources(params)};
 
   du_cell_manager                cell_mng{params};
   du_procedure_metrics_collector proc_metrics{false};
