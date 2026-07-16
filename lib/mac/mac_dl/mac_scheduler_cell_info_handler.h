@@ -48,6 +48,11 @@ public:
   /// \param[in] request Request to change SI sched info and messages.
   virtual void handle_si_change_indication(const si_scheduling_update_request& request) = 0;
 
+  /// \brief Request the scheduler to repeat a PWS (ETWS/CMAS) short-message broadcast indication.
+  /// \param[in] cell_idx DU-specific index of the cell for which the indication is directed.
+  /// \param[in] req Repeat/count parameters of the PWS broadcast indication.
+  virtual void handle_pws_broadcast_indication(du_cell_index_t cell_idx, const pws_broadcast_indication& req) = 0;
+
   /// \brief Handle request to update the slice configuration of a cell.
   /// \param[in] cell_index Index of the cell for which the measurement is directed.
   /// \param[in] req Request to update the RRM policies.

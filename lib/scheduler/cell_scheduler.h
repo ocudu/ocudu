@@ -50,6 +50,8 @@ public:
 
   void handle_si_update_request(const si_scheduling_update_request& msg);
 
+  void handle_pws_broadcast_indication(const pws_broadcast_request& req);
+
   void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& slice_reconf_req);
 
   void handle_cfra_mapping(du_ue_index_t ue_index, rnti_t crnti) { ra_sch.handle_cfra_mapping_update(ue_index, crnti); }

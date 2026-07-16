@@ -313,6 +313,12 @@ void ocudu_scheduler_adapter::handle_si_change_indication(const si_scheduling_up
   sched_impl->handle_si_update_request(request);
 }
 
+void ocudu_scheduler_adapter::handle_pws_broadcast_indication(du_cell_index_t                 cell_idx,
+                                                              const pws_broadcast_indication& req)
+{
+  sched_impl->handle_pws_broadcast_indication({cell_idx, req.repeat_period, req.nof_broadcasts_requested});
+}
+
 void ocudu_scheduler_adapter::handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req)
 {
   // Update RRM policies in the scheduler.

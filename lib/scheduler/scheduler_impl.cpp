@@ -71,6 +71,12 @@ void scheduler_impl::handle_si_update_request(const si_scheduling_update_request
   cells[req.cell_index]->handle_si_update_request(req);
 }
 
+void scheduler_impl::handle_pws_broadcast_indication(const pws_broadcast_request& req)
+{
+  ocudu_assert(cells.contains(req.cell_index), "cell={} does not exist", fmt::underlying(req.cell_index));
+  cells[req.cell_index]->handle_pws_broadcast_indication(req);
+}
+
 void scheduler_impl::handle_ue_creation_request(const sched_ue_creation_request_message& ue_request)
 {
   // Validate the UE creation request and create a configuration of the UE that is internal to the scheduler.

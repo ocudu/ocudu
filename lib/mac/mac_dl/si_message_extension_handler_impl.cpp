@@ -33,9 +33,10 @@ class si_message_extension_handler_impl : public sib_pdu_assembler::message_hand
   using time_point         = std::chrono::system_clock::time_point;
   using bcch_dl_sch_buffer = std::shared_ptr<const std::vector<uint8_t>>;
   struct si_pdu_update {
-    slot_point         slot;
-    units::bytes       len;
-    bcch_dl_sch_buffer pdu_buffer;
+    /// Slot at which this update becomes active. If std::nullopt, it becomes active immediately.
+    std::optional<slot_point> slot;
+    units::bytes              len;
+    bcch_dl_sch_buffer        pdu_buffer;
   };
 
 public:
@@ -74,7 +75,8 @@ public:
     }
 
     // Check if we need to move to the SI next version.
-    if (sl_tx >= si_msg_queues[idx]->front()->slot) {
+    const std::optional<slot_point>& front_slot = si_msg_queues[idx]->front()->slot;
+    if (not front_slot.has_value() or sl_tx >= *front_slot) {
       // Pop the current SI PDU.
       if (not si_msg_queues[idx]->try_pop(cur_si_msg[idx])) {
         logger.warning("SI-message idx={} try_pop failed despite non-empty queue", idx);
@@ -109,11 +111,14 @@ public:
     }
 
     for (unsigned idx = 0, e = req.si_messages.size(); idx != e; ++idx) {
-      slot_point   tx_slot = req.slot + idx * req.si_slot_period.value_or(0);
-      byte_buffer& pdu     = req.si_messages[idx];
+      std::optional<slot_point> tx_slot;
+      if (req.slot.has_value()) {
+        tx_slot = *req.slot + idx * req.si_slot_period.value_or(0);
+      }
+      byte_buffer& pdu = req.si_messages[idx];
       logger.debug("New SIB{} PDU enqueued for tx_slot: {}, si_msg_idx: {} size: {}",
                    req.sib_idx,
-                   tx_slot,
+                   tx_slot.has_value() ? fmt::to_string(*tx_slot) : "asap",
                    req.si_msg_idx,
                    static_cast<unsigned>(pdu.length()));
       si_pdu_update sib_pdu_update{tx_slot, units::bytes{static_cast<unsigned>(pdu.length())}, make_linear_buffer(pdu)};

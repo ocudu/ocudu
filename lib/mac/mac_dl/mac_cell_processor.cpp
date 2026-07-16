@@ -159,6 +159,10 @@ async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac
       // SI message update without SI change notifications nor SIB1 valueTag update.
       sib_assembler.enqueue_si_message_pdu_updates(*request.new_si_pdu_info);
       resp.si_pdus_enqueued = true;
+
+      if (request.new_si_pdu_info->pws_broadcast.has_value()) {
+        sched.handle_pws_broadcast_indication(cell_cfg.cell_index, *request.new_si_pdu_info->pws_broadcast);
+      }
     }
 
     if (request.slice_reconf_req.has_value()) {

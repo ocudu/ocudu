@@ -224,6 +224,72 @@ TEST_F(si_scheduler_test, when_si_is_updated_all_ues_in_rrc_idle_get_notified_ex
   ASSERT_TRUE(notified_ue_ids.all());
 }
 
+TEST_F(si_scheduler_test, when_pws_broadcast_indication_received_then_short_message_repeats_requested_nof_times)
+{
+  const unsigned             nof_broadcasts = 3;
+  const std::chrono::seconds repeat_period_sec{1};
+
+  si_sched.handle_pws_broadcast_indication(
+      pws_broadcast_request{to_du_cell_index(0), repeat_period_sec, nof_broadcasts});
+
+  const unsigned slots_per_sec  = get_nof_slots_per_subframe(cell_cfg.scs_common()) * NOF_SUBFRAMES_PER_FRAME * 100;
+  const unsigned nof_test_slots = (nof_broadcasts + 2) * repeat_period_sec.count() * slots_per_sec;
+  unsigned       nof_pws_notifs = 0;
+
+  for (unsigned i = 0; i != nof_test_slots; ++i) {
+    run_slot();
+
+    for (const auto& pdcch : res_grid[0].result.dl.dl_pdcchs) {
+      if (pdcch.dci.type() != ocudu::dci_dl_rnti_config_type::p_rnti_f1_0) {
+        continue;
+      }
+      const auto& dci = pdcch.dci.as_p_rnti_f1_0();
+      if (dci.short_messages_indicator != ocudu::dci_1_0_p_rnti_configuration::payload_info::short_messages) {
+        continue;
+      }
+      // etwsAndCmasIndication bit, as per TS 38.331 Table 6.5-1.
+      if ((dci.short_messages & 0x40U) != 0) {
+        ++nof_pws_notifs;
+      }
+    }
+  }
+
+  ASSERT_EQ(nof_pws_notifs, nof_broadcasts);
+}
+
+TEST_F(si_scheduler_test, when_new_pws_broadcast_indication_received_then_it_replaces_the_previous_one)
+{
+  // Submit an initial request, then immediately supersede it with a second one before any slot is processed.
+  // Since the pending request is only consumed on the next run_slot(), only the second (last-committed) request
+  // should ever take effect -- verifying that a new request fully replaces any previous one.
+  si_sched.handle_pws_broadcast_indication(pws_broadcast_request{to_du_cell_index(0), std::chrono::seconds{1}, 10});
+  const unsigned nof_broadcasts = 1;
+  si_sched.handle_pws_broadcast_indication(
+      pws_broadcast_request{to_du_cell_index(0), std::chrono::seconds{1}, nof_broadcasts});
+
+  const unsigned slots_per_sec  = get_nof_slots_per_subframe(cell_cfg.scs_common()) * NOF_SUBFRAMES_PER_FRAME * 100;
+  const unsigned nof_test_slots = 3 * slots_per_sec;
+  unsigned       nof_pws_notifs = 0;
+  for (unsigned i = 0; i != nof_test_slots; ++i) {
+    run_slot();
+
+    for (const auto& pdcch : res_grid[0].result.dl.dl_pdcchs) {
+      if (pdcch.dci.type() != ocudu::dci_dl_rnti_config_type::p_rnti_f1_0) {
+        continue;
+      }
+      const auto& dci = pdcch.dci.as_p_rnti_f1_0();
+      if (dci.short_messages_indicator != ocudu::dci_1_0_p_rnti_configuration::payload_info::short_messages) {
+        continue;
+      }
+      if ((dci.short_messages & 0x40U) != 0) {
+        ++nof_pws_notifs;
+      }
+    }
+  }
+
+  ASSERT_EQ(nof_pws_notifs, nof_broadcasts);
+}
+
 class si_msg_scheduler_tdra_test : public si_scheduler_test_environment, public testing::Test
 {
 protected:
