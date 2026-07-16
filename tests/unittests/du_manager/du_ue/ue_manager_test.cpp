@@ -100,12 +100,6 @@ protected:
   null_rlc_pcap       rlc_pcap;
   dummy_ue_resource_configurator_factory cell_res_alloc;
 
-  rlc_drb_am_rx_window_seg_pool_dummy drb_am_rx_pool_dummy;
-  rlc_drb_am_tx_window_seg_pool_dummy drb_am_tx_pool_dummy;
-  rlc_drb_um_rx_window_seg_pool_dummy drb_um_rx_pool_dummy;
-  rlc_srb_am_rx_window_seg_pool_dummy srb_am_rx_pool_dummy;
-  rlc_srb_am_tx_window_seg_pool_dummy srb_am_tx_pool_dummy;
-
   du_manager_params params{{"ocudu", (gnb_du_id_t)1, 1, cells},
                            {timers, worker, ue_execs, cell_execs},
                            {f1ap_dummy, f1ap_dummy, f1ap_dummy},
@@ -115,16 +109,20 @@ protected:
                             f1ap_dummy,
                             rlc_pcap,
                             nullptr,
-                            drb_am_rx_pool_dummy,
-                            drb_am_tx_pool_dummy,
-                            drb_um_rx_pool_dummy,
-                            srb_am_rx_pool_dummy,
-                            srb_am_tx_pool_dummy},
+                            rlc_drb_rx_window_seg_pool_size,
+                            rlc_drb_tx_window_seg_pool_size,
+                            rlc_srb_rx_window_seg_pool_size,
+                            rlc_srb_tx_window_seg_pool_size},
                            {mac_dummy}};
+
+  du_manager_resources resources{{make_rlc_drb_rx_window_seg_pool(params.rlc.drb_rx_window_seg_pool_size),
+                                  make_rlc_drb_tx_window_seg_pool(params.rlc.drb_tx_window_seg_pool_size),
+                                  make_rlc_srb_rx_window_seg_pool(params.rlc.srb_rx_window_seg_pool_size),
+                                  make_rlc_srb_tx_window_seg_pool(params.rlc.srb_tx_window_seg_pool_size)}};
 
   du_cell_manager                cell_mng{params};
   du_procedure_metrics_collector proc_metrics{false};
-  du_ue_manager                  ue_mng{params, cell_res_alloc, cell_mng, proc_metrics};
+  du_ue_manager                  ue_mng{params, resources, cell_res_alloc, cell_mng, proc_metrics};
 };
 
 TEST_F(du_ue_manager_tester, when_ue_create_request_is_received_du_manager_requests_f1ap_and_mac_to_create_ue)

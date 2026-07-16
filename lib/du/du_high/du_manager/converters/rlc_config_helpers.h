@@ -6,6 +6,7 @@
 
 #include "../du_ue/du_bearer.h"
 #include "ocudu/du/du_high/du_manager/du_manager_params.h"
+#include "ocudu/du/du_high/du_manager/du_manager_resources.h"
 #include "ocudu/f1ap/du/f1ap_du_ue_config.h"
 #include "ocudu/mac/mac_lc_config.h"
 #include "ocudu/ran/du_types.h"
@@ -16,6 +17,14 @@
 namespace ocudu {
 namespace odu {
 
+struct rlc_window_segment_pools {
+  rlc_drb_am_rx_window_seg_pool* drb_am_rx_pool = nullptr;
+  rlc_drb_am_tx_window_seg_pool* drb_am_tx_pool = nullptr;
+  rlc_drb_um_rx_window_seg_pool* drb_um_rx_pool = nullptr;
+  rlc_srb_am_rx_window_seg_pool* srb_am_rx_pool = nullptr;
+  rlc_srb_am_tx_window_seg_pool* srb_am_tx_pool = nullptr;
+};
+
 /// \brief Create configuration for RLC SRB entity.
 rlc_entity_creation_message make_rlc_entity_creation_message(gnb_du_id_t                              du_id,
                                                              du_ue_index_t                            ue_index,
@@ -24,7 +33,8 @@ rlc_entity_creation_message make_rlc_entity_creation_message(gnb_du_id_t        
                                                              const rlc_config&                        rlc_cfg,
                                                              const du_manager_params::service_params& du_services,
                                                              rlc_tx_upper_layer_control_notifier&     rlc_rlf_notifier,
-                                                             const du_manager_params::rlc_config_params& rlc_params);
+                                                             const du_manager_params::rlc_config_params& rlc_params,
+                                                             const du_manager_resources::rlc_resources&  rlc_resources);
 
 /// \brief Create configuration for RLC DRB entity.
 rlc_entity_creation_message make_rlc_entity_creation_message(gnb_du_id_t                              du_id,
@@ -34,7 +44,8 @@ rlc_entity_creation_message make_rlc_entity_creation_message(gnb_du_id_t        
                                                              const rlc_config&                        rlc_cfg,
                                                              const du_manager_params::service_params& du_services,
                                                              rlc_tx_upper_layer_control_notifier&     rlc_rlf_notifier,
-                                                             const du_manager_params::rlc_config_params& rlc_params);
+                                                             const du_manager_params::rlc_config_params& rlc_params,
+                                                             const du_manager_resources::rlc_resources&  rlc_resources);
 
 } // namespace odu
 } // namespace ocudu

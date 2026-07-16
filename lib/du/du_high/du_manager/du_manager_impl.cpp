@@ -23,11 +23,15 @@ using namespace odu;
 du_manager_impl::du_manager_impl(const du_manager_params& params_) :
   params(params_),
   logger(ocudulog::fetch_basic_logger("DU-MNG")),
+  resources{{make_rlc_drb_rx_window_seg_pool(params.rlc.drb_rx_window_seg_pool_size),
+             make_rlc_drb_tx_window_seg_pool(params.rlc.drb_tx_window_seg_pool_size),
+             make_rlc_srb_rx_window_seg_pool(params.rlc.srb_rx_window_seg_pool_size),
+             make_rlc_srb_tx_window_seg_pool(params.rlc.srb_tx_window_seg_pool_size)}},
   main_ctrl_loop(128),
   cell_mng(params),
   cell_res_alloc(params.ran.cells, params.mac.sched_cfg, params.ran.srbs, params.ran.qos, params.test_cfg),
   metrics(params.metrics, params.services.du_mng_exec, params.services.timers, params.f1ap.metrics),
-  ue_mng(params, cell_res_alloc, cell_mng, metrics.get_proc_collector()),
+  ue_mng(params, resources, cell_res_alloc, cell_mng, metrics.get_proc_collector()),
   positioning_handler(create_du_positioning_handler(params, cell_mng, ue_mng, logger)),
   proc_ctxt{params, ctxt, cell_mng, ue_mng, cell_res_alloc, metrics, logger},
   controller(proc_ctxt, main_ctrl_loop)

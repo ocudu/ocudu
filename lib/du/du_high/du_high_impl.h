@@ -9,7 +9,6 @@
 #include "ocudu/du/du_high/du_manager/du_manager.h"
 #include "ocudu/f1ap/du/f1ap_du.h"
 #include "ocudu/mac/mac.h"
-#include "ocudu/rlc/rlc_window_seg_pool_factory.h"
 #include "ocudu/scheduler/scheduler_metrics.h"
 #include <memory>
 
@@ -69,12 +68,6 @@ private:
   std::unique_ptr<du_manager>    du_mng;
   std::unique_ptr<f1ap_du>       f1ap;
   std::unique_ptr<mac_interface> mac;
-
-  // RLC window segment pools.
-  std::unique_ptr<rlc_drb_rx_window_seg_pool, rlc_pool_deleter> drb_rx_window_seg_pool;
-  std::unique_ptr<rlc_drb_tx_window_seg_pool, rlc_pool_deleter> drb_tx_window_seg_pool;
-  std::unique_ptr<rlc_srb_rx_window_seg_pool, rlc_pool_deleter> srb_rx_window_seg_pool;
-  std::unique_ptr<rlc_srb_tx_window_seg_pool, rlc_pool_deleter> srb_tx_window_seg_pool;
 };
 
 } // namespace odu

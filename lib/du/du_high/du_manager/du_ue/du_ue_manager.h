@@ -24,6 +24,7 @@ class du_ue_manager final : public du_ue_manager_repository
 {
 public:
   explicit du_ue_manager(du_manager_params&              cfg_,
+                         const du_manager_resources&     resources_,
                          du_ran_resource_manager&        cell_res_alloc,
                          const du_cell_manager&          cell_mng,
                          du_procedure_metrics_collector& metrics);
@@ -80,6 +81,7 @@ private:
   void                          remove_ue(du_ue_index_t ue_index) override;
 
   du_manager_params&              cfg;
+  const du_manager_resources&     resources;
   du_ran_resource_manager&        cell_res_alloc;
   const du_cell_manager&          cell_mng;
   du_procedure_metrics_collector& metrics;

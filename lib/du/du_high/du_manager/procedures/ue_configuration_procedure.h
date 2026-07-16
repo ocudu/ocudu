@@ -8,6 +8,7 @@
 #include "../du_ue/du_ue_manager_repository.h"
 #include "procedure_logger.h"
 #include "ocudu/du/du_high/du_manager/du_manager_params.h"
+#include "ocudu/du/du_high/du_manager/du_manager_resources.h"
 #include "ocudu/mac/mac_ue_configurator.h"
 
 namespace ocudu {
@@ -19,7 +20,8 @@ public:
   ue_configuration_procedure(const f1ap_ue_context_update_request& request_,
                              du_ue_manager_repository&             ue_mng_,
                              const du_cell_manager&                cell_mng_,
-                             const du_manager_params&              du_params_);
+                             const du_manager_params&              du_params_,
+                             const du_manager_resources&           du_resources_);
 
   void operator()(coro_context<async_task<f1ap_ue_context_update_response>>& ctx);
 
@@ -49,6 +51,7 @@ private:
   du_ue_manager_repository&            ue_mng;
   const du_cell_manager&               cell_mng;
   const du_manager_params&             du_params;
+  const du_manager_resources&          du_resources;
 
   ocudulog::basic_logger& logger = ocudulog::fetch_basic_logger("DU-MNG");
   du_ue*                  ue     = nullptr;

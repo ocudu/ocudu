@@ -88,11 +88,6 @@ du_high_impl::du_high_impl(const du_high_configuration& config_, const du_high_d
     mac = test_mode_ctrl->decorate(std::move(mac));
   }
 
-  drb_rx_window_seg_pool = make_rlc_drb_rx_window_seg_pool(cfg.rlc.drb_rx_window_seg_pool_size);
-  drb_tx_window_seg_pool = make_rlc_drb_tx_window_seg_pool(cfg.rlc.drb_tx_window_seg_pool_size);
-  srb_rx_window_seg_pool = make_rlc_srb_rx_window_seg_pool(cfg.rlc.srb_rx_window_seg_pool_size);
-  srb_tx_window_seg_pool = make_rlc_srb_tx_window_seg_pool(cfg.rlc.srb_tx_window_seg_pool_size);
-
   du_mng = create_du_manager(
       du_manager_params{{cfg.ran.gnb_du_name, cfg.ran.gnb_du_id, 1, cfg.ran.cells, cfg.ran.srbs, cfg.ran.qos},
                         {timers,
@@ -106,11 +101,10 @@ du_high_impl::du_high_impl(const du_high_configuration& config_, const du_high_d
                          *f1ap,
                          *dependencies.rlc_p,
                          dependencies.rlc_metrics_notif,
-                         drb_rx_window_seg_pool->get_pool_of_type<rlc_rx_am_sdu_info>(),
-                         drb_tx_window_seg_pool->get_pool_of_type<rlc_tx_am_sdu_info>(),
-                         drb_rx_window_seg_pool->get_pool_of_type<rlc_rx_um_sdu_info>(),
-                         srb_rx_window_seg_pool->get_pool_of_type<rlc_rx_am_sdu_info>(),
-                         srb_tx_window_seg_pool->get_pool_of_type<rlc_tx_am_sdu_info>()},
+                         cfg.rlc.drb_rx_window_seg_pool_size,
+                         cfg.rlc.drb_tx_window_seg_pool_size,
+                         cfg.rlc.srb_rx_window_seg_pool_size,
+                         cfg.rlc.srb_tx_window_seg_pool_size},
                         {*mac, cfg.ran.sched_cfg},
                         {cfg.metrics.period,
                          dependencies.du_notifier,

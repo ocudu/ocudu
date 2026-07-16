@@ -69,6 +69,7 @@ protected:
                                         ul_tnls,
                                         teid_pool,
                                         du_mng->params,
+                                        du_mng->resources,
                                         rlf_notifier});
   }
 };

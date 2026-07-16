@@ -65,12 +65,11 @@ struct du_manager_params {
     f1ap_message_handler&                        f1ap_rx_msg_handler;
     f1ap_rrc_message_transfer_procedure_handler& f1ap_rx_proc_handler;
     rlc_pcap&                                    pcap_writer;
-    rlc_metrics_notifier*                        rlc_metrics_notif = nullptr;
-    rlc_drb_am_rx_window_seg_pool&               drb_am_rx_pool;
-    rlc_drb_am_tx_window_seg_pool&               drb_am_tx_pool;
-    rlc_drb_um_rx_window_seg_pool&               drb_um_rx_pool;
-    rlc_srb_am_rx_window_seg_pool&               srb_am_rx_pool;
-    rlc_srb_am_tx_window_seg_pool&               srb_am_tx_pool;
+    rlc_metrics_notifier*                        rlc_metrics_notif           = nullptr;
+    std::size_t                                  drb_rx_window_seg_pool_size = rlc_drb_rx_window_seg_pool_size;
+    std::size_t                                  drb_tx_window_seg_pool_size = rlc_drb_tx_window_seg_pool_size;
+    std::size_t                                  srb_rx_window_seg_pool_size = rlc_srb_rx_window_seg_pool_size;
+    std::size_t                                  srb_tx_window_seg_pool_size = rlc_srb_tx_window_seg_pool_size;
   };
 
   struct mac_config_params {
