@@ -12,6 +12,7 @@
 #include "ocudu/ran/drx_config.h"
 #include "ocudu/ran/du_types.h"
 #include "ocudu/ran/duplex_mode.h"
+#include "ocudu/ran/prach/ra_helper.h"
 #include "ocudu/ran/pucch/pucch_mapping.h"
 #include "ocudu/ran/slot_point_extended.h"
 #include "ocudu/scheduler/config/scheduler_expert_config.h"
@@ -1570,6 +1571,8 @@ static void configure_cli11_two_step_rach_args(CLI::App& app, du_high_unit_rach_
 
 static void configure_cli11_prach_args(CLI::App& app, du_high_unit_rach_config& prach_params)
 {
+  auto to_uint = [](std::chrono::milliseconds msec) -> unsigned { return msec.count(); };
+
   add_option(app,
              "--prach_config_index",
              prach_params.prach_config_index,
@@ -1609,10 +1612,9 @@ static void configure_cli11_prach_args(CLI::App& app, du_high_unit_rach_config& 
   add_option(app,
              "--backoff_indicator_duration_ms",
              prach_params.backoff_indicator_duration_ms,
-             "Requested Backoff Indicator duration, in ms, signalled in the RAR when a Backoff Indicator is "
-             "triggered. Mapped to the closest value in TS38.321, Table 7.2-1")
+             "Backoff Indicator duration, in ms, signalled in the RAR when a Backoff Indicator is triggered")
       ->capture_default_str()
-      ->check(CLI::Range(5, 1920));
+      ->check(CLI::IsMember(views::transform(ra_helper::get_backoff_indicator_values(), to_uint)));
   add_option(app,
              "--total_nof_ra_preambles",
              prach_params.total_nof_ra_preambles,

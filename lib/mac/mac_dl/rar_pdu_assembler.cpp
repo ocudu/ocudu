@@ -18,16 +18,16 @@ public:
   void encode(span<uint8_t> output_buf);
 
 private:
-  /// Encodes RAR UL Grant into provided payload as per TS38.321 6.1.5 and 6.2.
+  /// Encodes RAR UL Grant into provided payload as per TS 38.321 6.1.5 and 6.2.
   void encode_rar_subpdu(const rar_ul_grant& grant, bool is_last_subpdu);
 
-  /// \brief Encodes RAR subPDU subheader as per TS38.321 6.1.5 and 6.2.2.
+  /// \brief Encodes RAR subPDU subheader as per TS 38.321 6.1.5 and 6.2.2.
   void encode_rapid_subheader(uint16_t rapid, bool is_last_subpdu);
 
-  /// \brief Encodes Backoff Indicator (BI) subheader as per TS38.321 6.1.5 and 6.2.2. This subPDU has no payload.
+  /// \brief Encodes Backoff Indicator (BI) subheader as per TS 38.321 6.1.5 and 6.2.2. This subPDU has no payload.
   void encode_bi_subheader(uint8_t backoff_indicator, bool is_last_subpdu);
 
-  /// Encodes RAR UL Grant into provided payload as per TS38.321 6.2.3. and TS38.213 8.2.
+  /// Encodes RAR UL Grant into provided payload as per TS 38.321 6.2.3. and TS 38.213 8.2.
   void encode_rar_grant_payload(const rar_ul_grant& grant);
 
   const rar_information& rar_info;
@@ -38,9 +38,9 @@ private:
 
 void rar_pdu_encoder::encode(span<uint8_t> output_buf)
 {
-  // See TS38.321, Section 6.2.3.
+  // See TS 38.321, Section 6.2.3.
   static constexpr unsigned MAC_RAR_SUBHEADER_AND_PAYLOAD_LENGTH = 8;
-  // See TS38.321, Section 6.2.2. The Backoff Indicator subPDU only has a subheader, no payload.
+  // See TS 38.321, Section 6.2.2. The Backoff Indicator subPDU only has a subheader, no payload.
   static constexpr unsigned MAC_BI_SUBHEADER_LENGTH = 1;
   const unsigned            expected_len            = MAC_RAR_SUBHEADER_AND_PAYLOAD_LENGTH * rar_info.grants.size() +
                                 (rar_info.backoff_indicator.has_value() ? MAC_BI_SUBHEADER_LENGTH : 0);
@@ -74,7 +74,7 @@ void rar_pdu_encoder::encode_rapid_subheader(uint16_t rapid, bool is_last_subpdu
 
   // write E/T/RAPID MAC subheader.
   *ptr = (uint8_t)((not is_last_subpdu ? 1U : 0U) << 7U) | (RAPID_FLAG << 6U) | ((uint8_t)rapid & 0x3fU);
-  ptr++;
+  ++ptr;
 }
 
 void rar_pdu_encoder::encode_bi_subheader(uint8_t backoff_indicator, bool is_last_subpdu)
@@ -83,7 +83,7 @@ void rar_pdu_encoder::encode_bi_subheader(uint8_t backoff_indicator, bool is_las
 
   // write E/T/R/R/BI MAC subheader. The two R bits are reserved and set to 0.
   *ptr = (uint8_t)((not is_last_subpdu ? 1U : 0U) << 7U) | (BI_FLAG << 6U) | (backoff_indicator & 0xfU);
-  ptr++;
+  ++ptr;
 }
 
 void rar_pdu_encoder::encode_rar_grant_payload(const rar_ul_grant& grant)
@@ -91,10 +91,10 @@ void rar_pdu_encoder::encode_rar_grant_payload(const rar_ul_grant& grant)
   // Encode TA (12 bits).
   // high 7 bits of TA go into first octet.
   *ptr = ((grant.ta >> 5U) & 0x7fU);
-  ptr++;
+  ++ptr;
   *ptr = ((grant.ta & 0x1fU) << 3U);
 
-  // Encode UL grant (27 bits) as per TS38.213 Table 8.2-1.
+  // Encode UL grant (27 bits) as per TS 38.213 Table 8.2-1.
   // encode Frequency hopping flag (1 bit).
   *ptr |= ((grant.freq_hop_flag ? 1U : 0U) << 2U);
   // encode PUSCH frequency resource allocation (14 bits).

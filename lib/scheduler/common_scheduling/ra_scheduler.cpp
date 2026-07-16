@@ -120,22 +120,13 @@ static unsigned get_harq_retx_timeout_slots(const cell_configuration& cell_cfg)
   return conres_timer_slots;
 }
 
-/// Maps a requested Backoff Indicator duration, in ms, to the index of the closest value in TS38.321, Table 7.2-1.
-static uint8_t backoff_ms_to_indicator(unsigned backoff_ms)
+/// Maps a requested Backoff Indicator duration to its index in TS 38.321, Table 7.2-1.
+static uint8_t backoff_ms_to_indicator(std::chrono::milliseconds backoff_duration)
 {
-  // See TS38.321, Table 7.2-1. Indices 14 and 15 are reserved and not used.
-  static constexpr unsigned backoff_table[] = {5, 10, 20, 30, 40, 60, 80, 120, 160, 240, 320, 480, 960, 1920};
-
-  unsigned best_idx  = 0;
-  unsigned best_diff = std::numeric_limits<unsigned>::max();
-  for (unsigned i = 0; i != sizeof(backoff_table) / sizeof(backoff_table[0]); ++i) {
-    const unsigned diff = backoff_table[i] > backoff_ms ? backoff_table[i] - backoff_ms : backoff_ms - backoff_table[i];
-    if (diff < best_diff) {
-      best_diff = diff;
-      best_idx  = i;
-    }
-  }
-  return static_cast<uint8_t>(best_idx);
+  const span<const std::chrono::milliseconds> table = ra_helper::get_backoff_indicator_values();
+  const auto                                  it    = std::find(table.begin(), table.end(), backoff_duration);
+  ocudu_assert(it != table.end(), "Invalid Backoff Indicator duration={}ms", backoff_duration.count());
+  return static_cast<uint8_t>(std::distance(table.begin(), it));
 }
 
 // (Implementation-defined) limit for maximum number of concurrent Msg3s or MsgBs.
@@ -293,7 +284,7 @@ ra_scheduler::ra_scheduler(const cell_configuration& cellcfg_,
           cell_cfg.params.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index)
           .format)),
   prach_occasion_duration_slots(compute_prach_occasion_duration_slots(cell_cfg)),
-  backoff_indicator_value(backoff_ms_to_indicator(sched_cfg.backoff_indicator_duration_ms)),
+  backoff_indicator_value(backoff_ms_to_indicator(sched_cfg.backoff_indicator_duration)),
   pucch_crbs(compute_pucch_crbs(cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.crbs,
                                 cell_cfg.params.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common,
                                 cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated)),
@@ -342,10 +333,10 @@ ra_scheduler::~ra_scheduler() = default;
 
 void ra_scheduler::precompute_rar_fields()
 {
-  // RAR payload size in bytes as per TS38.321, 6.1.5 and 6.2.3.
+  // RAR payload size in bytes as per TS 38.321, 6.1.5 and 6.2.3.
   static constexpr unsigned rar_payload_size_bytes   = 7;
   static constexpr unsigned rar_subheader_size_bytes = 1;
-  // Backoff Indicator subPDU has a subheader only, no payload, as per TS38.321, 6.1.5 and 6.2.2.
+  // Backoff Indicator subPDU has a subheader only, no payload, as per TS 38.321, 6.1.5 and 6.2.2.
   static constexpr unsigned bi_subheader_size_bytes = 1;
   // As per TS 38.214, Section 5.1.3.2, nof_oh_prb = 0 if PDSCH is scheduled by PDCCH with a CRC scrambled by RA-RNTI.
   static constexpr unsigned nof_oh_prb = 0;
@@ -386,7 +377,7 @@ void ra_scheduler::precompute_rar_fields()
 
 void ra_scheduler::precompute_msg3_pdus()
 {
-  // Msg3 UL CCCH message size is up to 64bits (8 octets), and its subheader has 1 octet as per TS38.321.
+  // Msg3 UL CCCH message size is up to 64bits (8 octets), and its subheader has 1 octet as per TS 38.321.
   static constexpr unsigned max_msg3_sdu_payload_size_bytes = 8;
   static constexpr unsigned msg3_subheader_size_bytes       = 1;
   // As per TS 38.214, Section 5.1.3.2, nof_oh_prb = 0 if PDSCH is scheduled by PDCCH with a CRC scrambled by RA-RNTI.
@@ -878,7 +869,7 @@ void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& 
       }
       auto& pending_msg3 = crc_it->second;
 
-      // See TS38.321, 5.4.2.1 - "For UL transmission with UL grant in RA Response, HARQ process identifier 0 is used."
+      // See TS 38.321, 5.4.2.1 - "For UL transmission with UL grant in RA Response, HARQ process identifier 0 is used."
       harq_id_t                             h_id = to_harq_id(0);
       std::optional<ul_harq_process_handle> h_ul = pending_msg3.harq_ent.ul_harq(h_id, crc_ind.sl_rx);
       if (not h_ul.has_value() or crc.harq_id != h_id) {

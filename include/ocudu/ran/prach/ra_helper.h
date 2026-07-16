@@ -4,8 +4,11 @@
 
 #pragma once
 
+#include "ocudu/adt/span.h"
 #include "ocudu/ran/rnti.h"
 #include "ocudu/ran/subcarrier_spacing.h"
+#include <array>
+#include <chrono>
 
 namespace ocudu {
 
@@ -71,6 +74,26 @@ inline bool is_valid_ra_rnti(rnti_t ra_rnti)
 inline bool is_valid_msgb_rnti(rnti_t msgb_rnti)
 {
   return msgb_rnti >= rnti_t::MIN_MSGB_RNTI and msgb_rnti <= rnti_t::MAX_MSGB_RNTI;
+}
+
+/// \brief Valid Backoff Indicator (BI) duration values, as per TS 38.321, Table 7.2-1.
+inline span<const std::chrono::milliseconds> get_backoff_indicator_values()
+{
+  static constexpr std::array<std::chrono::milliseconds, 14> values = {std::chrono::milliseconds{5},
+                                                                       std::chrono::milliseconds{10},
+                                                                       std::chrono::milliseconds{20},
+                                                                       std::chrono::milliseconds{30},
+                                                                       std::chrono::milliseconds{40},
+                                                                       std::chrono::milliseconds{60},
+                                                                       std::chrono::milliseconds{80},
+                                                                       std::chrono::milliseconds{120},
+                                                                       std::chrono::milliseconds{160},
+                                                                       std::chrono::milliseconds{240},
+                                                                       std::chrono::milliseconds{320},
+                                                                       std::chrono::milliseconds{480},
+                                                                       std::chrono::milliseconds{960},
+                                                                       std::chrono::milliseconds{1920}};
+  return values;
 }
 
 } // namespace ra_helper

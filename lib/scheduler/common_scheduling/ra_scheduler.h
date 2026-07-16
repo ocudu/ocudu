@@ -230,7 +230,7 @@ private:
   /// Duration of a single PRACH occasion in slots.
   const unsigned prach_occasion_duration_slots;
   /// Backoff Indicator value included in the RAR, as per TS38.321 Table 7.2-1, mapped from
-  /// \c scheduler_ra_expert_config::backoff_indicator_duration_ms.
+  /// \c scheduler_ra_expert_config::backoff_indicator_duration.
   const uint8_t backoff_indicator_value;
   /// Bitmap of CRBs that might be used for PUCCH transmissions, to avoid scheduling MSG3-PUSCH over them.
   crb_bitmap pucch_crbs;
