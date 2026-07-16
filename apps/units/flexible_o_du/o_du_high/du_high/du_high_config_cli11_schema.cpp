@@ -25,6 +25,7 @@
 #include "CLI/CLI11.hpp"
 #include <charconv>
 #include <cmath>
+#include <memory>
 
 using namespace ocudu;
 
@@ -2528,17 +2529,22 @@ static void configure_cli11_geo_coordinates_ha_args(CLI::App& app, du_high_unit_
 static void configure_cli11_geo_coordinates_args(CLI::App&                                                app,
                                                  std::optional<du_high_unit_cell_geo_coordinates_config>& geo_cfg)
 {
-  static du_high_unit_cell_geo_coordinates_normal_config normal_cfg;
+  // This function is called once per cell, and CLI11 needs the parsed config objects to outlive the call (until
+  // parsing actually happens). A plain local would dangle by then, and a single static instance would be shared
+  // and leak values across cells. Instead, heap-allocate a fresh instance per cell and capture it by value (as a
+  // shared_ptr) in the parse_complete_callback below, tying its lifetime to the callback's own (owned by "app"),
+  // with no extra pool/container needed.
+  auto      normal_cfg    = std::make_shared<du_high_unit_cell_geo_coordinates_normal_config>();
   CLI::App* normal_subcmd = add_subcommand(app, "normal", "Normal-accuracy TRP position");
-  configure_cli11_geo_coordinates_normal_args(*normal_subcmd, normal_cfg);
+  configure_cli11_geo_coordinates_normal_args(*normal_subcmd, *normal_cfg);
 
-  static du_high_unit_cell_geo_coordinates_ha_config ha_cfg;
-  CLI::App*                                          ha_subcmd =
+  auto      ha_cfg = std::make_shared<du_high_unit_cell_geo_coordinates_ha_config>();
+  CLI::App* ha_subcmd =
       add_subcommand(app, "high_accuracy", "High-accuracy TRP position, TS 38.473, Section 9.3.1.190");
-  configure_cli11_geo_coordinates_ha_args(*ha_subcmd, ha_cfg);
+  configure_cli11_geo_coordinates_ha_args(*ha_subcmd, *ha_cfg);
 
   // Collapse the two mutually exclusive branches into the variant, failing fast if the user picked zero or both.
-  app.parse_complete_callback([&app, &geo_cfg]() {
+  app.parse_complete_callback([&app, &geo_cfg, normal_cfg, ha_cfg]() {
     if (app.count() == 0) {
       // "geo_coordinates" itself was not exercised in this parse.
       return;
@@ -2554,8 +2560,8 @@ static void configure_cli11_geo_coordinates_args(CLI::App&                      
       report_error("geo_coordinates: either normal or high_accuracy must be set.\n");
     }
 
-    geo_cfg = normal_set ? du_high_unit_cell_geo_coordinates_config{normal_cfg}
-                         : du_high_unit_cell_geo_coordinates_config{ha_cfg};
+    geo_cfg = normal_set ? du_high_unit_cell_geo_coordinates_config{*normal_cfg}
+                         : du_high_unit_cell_geo_coordinates_config{*ha_cfg};
   });
 }
 
