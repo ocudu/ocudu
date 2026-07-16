@@ -11,19 +11,6 @@
 
 using namespace ocudu;
 
-static dl_time_domain_builder_params make_dl_td_params(const ran_cell_config& cfg)
-{
-  dl_time_domain_builder_params params;
-  params.cp      = cfg.dl_cfg_common.init_dl_bwp.generic_params.cp;
-  params.tdd_cfg = cfg.tdd_cfg;
-
-  dl_time_domain_builder_params::explicit_resources explicit_res;
-  explicit_res.common_pdsch_td_res_list = cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
-  params.params                         = std::move(explicit_res);
-
-  return params;
-}
-
 static ul_time_domain_mapper make_ul_td_mapper(const ran_cell_config& cfg)
 {
   ul_time_domain_builder_params params;
@@ -52,12 +39,11 @@ bwp_config_pool::bwp_config_pool(const ran_cell_config&     cell_ran_cfg,
   bwp_id(bwpid),
   bwp_dl_cmn(cell_ran_cfg.dl_cfg_common.init_dl_bwp),
   bwp_ul_cmn(cell_ran_cfg.ul_cfg_common.init_ul_bwp),
-  dl_td_params(make_dl_td_params(cell_ran_cfg)),
-  dl_td_mapper(dl_td_params),
+  tdd_cfg(cell_ran_cfg.tdd_cfg),
   ul_td_mapper(make_ul_td_mapper(cell_ran_cfg)),
   pdcch_pool(cell_ran_cfg.pci, bwp_dl_cmn.generic_params, bwp_dl_cmn.pdcch_common, bwp_ded_res.dl),
   common_bwp_cfg{bwp_id,
-                 sched_bwp_dl_config{bwp_dl_cmn, nullptr, pdcch_pool.init_cfg(), dl_td_mapper},
+                 sched_bwp_dl_config{bwp_dl_cmn, nullptr, pdcch_pool.init_cfg(), get_dl_td_mapper(nullptr)},
                  sched_bwp_ul_config{bwp_ul_cmn, std::nullopt, std::nullopt, ul_td_mapper}}
 {
 }
@@ -89,15 +75,33 @@ sched_bwp_config bwp_config_pool::add_ded_cfg(const bwp_downlink_dedicated* dl_d
 
 const dl_time_domain_mapper& bwp_config_pool::get_dl_td_mapper(const bwp_downlink_dedicated* dl_ded)
 {
-  if (dl_ded == nullptr or not dl_ded->pdsch_cfg.has_value() or dl_ded->pdsch_cfg->pdsch_td_alloc_list.empty()) {
-    // No UE-dedicated PDSCH TD resource list configured; DCI format 1_1 falls back to the common list.
-    return dl_td_mapper;
+  // Get TDRA dedicated list, resolved to the common list if absent, matching dl_time_domain_mapper's own fallback
+  // behavior for DCI format 1_1 (see time_domain_mapper.cpp).
+  span<const pdsch_time_domain_resource_allocation> ded_res = bwp_dl_cmn.pdsch_common.pdsch_td_alloc_list;
+  if (dl_ded != nullptr and dl_ded->pdsch_cfg.has_value() and not dl_ded->pdsch_cfg->pdsch_td_alloc_list.empty()) {
+    ded_res = dl_ded->pdsch_cfg->pdsch_td_alloc_list;
   }
 
-  dl_time_domain_builder_params params = dl_td_params;
-  std::get<dl_time_domain_builder_params::explicit_resources>(params.params).dedicated_pdsch_td_res_list =
-      dl_ded->pdsch_cfg->pdsch_td_alloc_list;
-  return *dl_ded_td_mapper_pool.create(dl_time_domain_mapper{params});
+  // Check if mapper already exists in the pool in an efficient manner, without creating a full dl_time_domain_mapper.
+  auto obj = dl_td_mapper_pool.find_if(
+      [ded_res](const dl_time_domain_mapper& mapper) { return mapper.dedicated_pdsch_td_resources() == ded_res; });
+  if (obj.has_value()) {
+    return *obj;
+  }
+
+  // Build unique TDRA mapper.
+  dl_time_domain_builder_params params;
+  params.cp      = bwp_dl_cmn.generic_params.cp;
+  params.tdd_cfg = tdd_cfg;
+  dl_time_domain_builder_params::explicit_resources explicit_res;
+  explicit_res.common_pdsch_td_res_list = bwp_dl_cmn.pdsch_common.pdsch_td_alloc_list;
+  if (dl_ded != nullptr and dl_ded->pdsch_cfg.has_value()) {
+    // If empty, DCI format 1_1 falls back to the common list.
+    explicit_res.dedicated_pdsch_td_res_list = dl_ded->pdsch_cfg->pdsch_td_alloc_list;
+  }
+  params.params = std::move(explicit_res);
+
+  return *dl_td_mapper_pool.create(dl_time_domain_mapper{params});
 }
 
 static std::vector<std::unique_ptr<bwp_config_pool>>

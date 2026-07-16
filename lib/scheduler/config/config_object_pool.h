@@ -5,6 +5,7 @@
 #pragma once
 
 #include "config_ptr.h"
+#include <algorithm>
 #include <deque>
 
 namespace ocudu {
@@ -31,6 +32,16 @@ public:
     }
     objs.push_back(obj);
     return config_ptr<T>{objs.back()};
+  }
+
+  template <typename Equals>
+  config_ptr<T> find_if(const Equals& eq) const
+  {
+    auto it = std::find_if(objs.begin(), objs.end(), eq);
+    if (it == objs.end()) {
+      return config_ptr<T>{};
+    }
+    return config_ptr<T>{*it};
   }
 
 private:
