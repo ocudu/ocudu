@@ -34,7 +34,7 @@ public:
   }
   ~si_scheduler_test_environment() override { flush_events(); }
 
-  void do_run_slot() override { si_sched.run_slot(res_grid); }
+  void do_run_slot() override { si_sched.run_slot(res_grid, next_slot.hyper_sfn()); }
 
   si_scheduler si_sched;
 };
@@ -111,7 +111,7 @@ TEST_F(si_scheduler_test, when_si_is_updated_then_new_version_is_applied_at_si_c
   unsigned                last_version   = 0;
   std::optional<unsigned> window_version;
   for (unsigned i = 0; i != nof_test_slots; ++i) {
-    slot_point current_slot = next_slot;
+    slot_point current_slot = next_slot.without_hyper_sfn();
     run_slot();
 
     if (current_slot.sfn() % si_ch_wind_len_rfs == 0 and current_slot.slot_index() == 0) {
@@ -172,7 +172,7 @@ TEST_F(si_scheduler_test, when_si_is_updated_all_ues_in_rrc_idle_get_notified_ex
   static constexpr unsigned        total_nof_ue_ids    = 1024;
   bounded_bitset<total_nof_ue_ids> notified_ue_ids(total_nof_ue_ids);
   for (unsigned i = 0; i != nof_test_slots; ++i) {
-    slot_point current_slot = next_slot;
+    slot_point current_slot = next_slot.without_hyper_sfn();
     run_slot();
 
     for (const auto& sib : res_grid[0].result.dl.bc.sibs) {
@@ -254,7 +254,7 @@ TEST_F(si_msg_scheduler_activation_test,
   static constexpr unsigned        total_nof_ue_ids = 1024;
   bounded_bitset<total_nof_ue_ids> notified_ue_ids(total_nof_ue_ids);
   for (unsigned i = 0; i != nof_test_slots; ++i) {
-    slot_point current_slot = next_slot;
+    slot_point current_slot = next_slot.without_hyper_sfn();
     run_slot();
 
     for (const auto& pdcch : res_grid[0].result.dl.dl_pdcchs) {
@@ -299,14 +299,23 @@ TEST_F(si_msg_scheduler_activation_test, when_new_pws_broadcast_indication_recei
 {
   // Submit an initial request, then immediately supersede it with a second one before any slot is processed.
   // Since the pending request is only consumed on the next run_slot(), only the second (last-committed) request
-  // should ever take effect -- verifying that a new request fully replaces any previous one, i.e. the SI-message is
-  // scheduled for the second request's nof_segments (1), not the first's (10).
-  const units::bytes msg_len = ACTIVATION_REQUIRED_SI_SCHED_CFG.si_messages[0].msg_len;
+  // should ever take effect -- verifying that a new request fully replaces any previous one, i.e. the SI-message's
+  // active window is sized off the second request's nof_segments (1), not the first's (10).
+  const units::bytes msg_len             = ACTIVATION_REQUIRED_SI_SCHED_CFG.si_messages[0].msg_len;
+  const unsigned     period_radio_frames = ACTIVATION_REQUIRED_SI_SCHED_CFG.si_messages[0].period_radio_frames;
+  const unsigned     default_paging_cycle_rfs =
+      static_cast<unsigned>(cell_cfg.params.dl_cfg_common.pcch_cfg.default_paging_cycle);
+
   si_sched.handle_pws_broadcast_indication(pws_broadcast_request{to_du_cell_index(0), 0, 10, msg_len});
   si_sched.handle_pws_broadcast_indication(pws_broadcast_request{to_du_cell_index(0), 0, 1, msg_len});
 
+  // Run long enough to cover even the FIRST (superseded) request's full active window (default paging cycle plus
+  // one full segment cycle), so that if it had incorrectly taken effect instead of the second, its much larger
+  // transmission count would be observed here.
+  const unsigned first_active_duration_rfs = default_paging_cycle_rfs + 10 * period_radio_frames;
   const unsigned nof_test_slots =
-      6 * ACTIVATION_REQUIRED_SI_SCHED_CFG.si_messages[0].period_radio_frames * next_slot.nof_slots_per_frame();
+      (first_active_duration_rfs + 2 * period_radio_frames) * next_slot.nof_slots_per_frame();
+
   unsigned nof_tx = 0;
   for (unsigned i = 0; i != nof_test_slots; ++i) {
     run_slot();
@@ -316,7 +325,12 @@ TEST_F(si_msg_scheduler_activation_test, when_new_pws_broadcast_indication_recei
       }
     }
   }
-  ASSERT_EQ(nof_tx, 1) << "Only the second (last-committed) request should take effect";
+
+  const unsigned second_active_duration_rfs = default_paging_cycle_rfs + 1 * period_radio_frames;
+  // +1 window of slack to account for the window's start not necessarily being frame-aligned to the activation
+  // instant.
+  const unsigned expected_max_nof_tx = second_active_duration_rfs / period_radio_frames + 1;
+  ASSERT_LE(nof_tx, expected_max_nof_tx) << "Only the second (last-committed) request should take effect";
 }
 
 TEST_F(si_msg_scheduler_activation_test, when_message_is_not_activated_then_it_is_never_scheduled)
@@ -333,15 +347,25 @@ TEST_F(si_msg_scheduler_activation_test, when_message_is_not_activated_then_it_i
 }
 
 TEST_F(si_msg_scheduler_activation_test,
-       when_activation_indication_received_then_it_is_scheduled_for_exactly_nof_segments_occasions)
+       when_activation_indication_received_then_it_stays_active_beyond_nof_segments_occasions)
 {
-  const unsigned nof_segments = 3;
+  // Regression test: single-round PWS delivery must reach UEs that are only notified (via the P-RNTI short
+  // message) near the end of the notification window, so the SI-message must stay active well beyond exactly
+  // nof_segments occasions -- for a full default paging cycle plus one extra segment cycle (see
+  // si_message_scheduler::activate_si_message).
+  const unsigned nof_segments        = 3;
+  const unsigned period_radio_frames = ACTIVATION_REQUIRED_SI_SCHED_CFG.si_messages[0].period_radio_frames;
+  const unsigned default_paging_cycle_rfs =
+      static_cast<unsigned>(cell_cfg.params.dl_cfg_common.pcch_cfg.default_paging_cycle);
+  const unsigned active_duration_rfs = default_paging_cycle_rfs + nof_segments * period_radio_frames;
+
   si_sched.handle_pws_broadcast_indication(pws_broadcast_request{
       to_du_cell_index(0), 0, nof_segments, ACTIVATION_REQUIRED_SI_SCHED_CFG.si_messages[0].msg_len});
 
-  const unsigned nof_test_slots =
-      6 * ACTIVATION_REQUIRED_SI_SCHED_CFG.si_messages[0].period_radio_frames * next_slot.nof_slots_per_frame();
-  unsigned nof_tx = 0;
+  // Run long enough to observe the full active window plus a margin, so we can confirm the message eventually
+  // goes back to dormant instead of just capturing however many transmissions fit in an arbitrarily-sized window.
+  const unsigned nof_test_slots = (active_duration_rfs + 2 * period_radio_frames) * next_slot.nof_slots_per_frame();
+  unsigned       nof_tx         = 0;
   for (unsigned i = 0; i != nof_test_slots; ++i) {
     run_slot();
     for (const auto& sib : res_grid[0].result.dl.bc.sibs) {
@@ -350,7 +374,12 @@ TEST_F(si_msg_scheduler_activation_test,
       }
     }
   }
-  ASSERT_EQ(nof_tx, nof_segments);
+
+  // +1 window of slack to account for the window's start not necessarily being frame-aligned to the activation
+  // instant.
+  const unsigned expected_max_nof_tx = active_duration_rfs / period_radio_frames + 1;
+  ASSERT_GT(nof_tx, nof_segments) << "Active window was not extended beyond the old exact-count behavior";
+  ASSERT_LE(nof_tx, expected_max_nof_tx);
 }
 
 TEST_F(si_msg_scheduler_activation_test, when_activation_msg_len_exceeds_static_config_then_pdsch_grant_is_sized_for_it)
@@ -400,13 +429,19 @@ TEST_F(si_msg_scheduler_multi_activation_test,
 {
   // Regression test: activating two distinct SI-message indices before any slot is processed must not let the
   // second activation clobber the first in a shared pending-request slot.
-  const unsigned     nof_segments = 3;
-  const units::bytes msg_len      = MULTI_ACTIVATION_REQUIRED_SI_SCHED_CFG.si_messages[0].msg_len;
+  const unsigned     nof_segments        = 3;
+  const unsigned     period_radio_frames = MULTI_ACTIVATION_REQUIRED_SI_SCHED_CFG.si_messages[0].period_radio_frames;
+  const units::bytes msg_len             = MULTI_ACTIVATION_REQUIRED_SI_SCHED_CFG.si_messages[0].msg_len;
+  const unsigned     default_paging_cycle_rfs =
+      static_cast<unsigned>(cell_cfg.params.dl_cfg_common.pcch_cfg.default_paging_cycle);
+  const unsigned active_duration_rfs = default_paging_cycle_rfs + nof_segments * period_radio_frames;
+
   si_sched.handle_pws_broadcast_indication(pws_broadcast_request{to_du_cell_index(0), 0, nof_segments, msg_len});
   si_sched.handle_pws_broadcast_indication(pws_broadcast_request{to_du_cell_index(0), 1, nof_segments, msg_len});
 
-  const unsigned nof_test_slots =
-      6 * MULTI_ACTIVATION_REQUIRED_SI_SCHED_CFG.si_messages[0].period_radio_frames * next_slot.nof_slots_per_frame();
+  // Run long enough to observe the full active window (default paging cycle plus one segment cycle) for both
+  // SI-messages, not just however many transmissions fit in an arbitrarily-sized window.
+  const unsigned nof_test_slots = (active_duration_rfs + 2 * period_radio_frames) * next_slot.nof_slots_per_frame();
   std::array<unsigned, 2> nof_tx{0, 0};
   for (unsigned i = 0; i != nof_test_slots; ++i) {
     run_slot();
@@ -418,8 +453,13 @@ TEST_F(si_msg_scheduler_multi_activation_test,
     }
   }
 
-  ASSERT_EQ(nof_tx[0], nof_segments);
-  ASSERT_EQ(nof_tx[1], nof_segments);
+  // +1 window of slack to account for the window's start not necessarily being frame-aligned to the activation
+  // instant.
+  const unsigned expected_max_nof_tx = active_duration_rfs / period_radio_frames + 1;
+  ASSERT_GT(nof_tx[0], nof_segments);
+  ASSERT_LE(nof_tx[0], expected_max_nof_tx);
+  ASSERT_GT(nof_tx[1], nof_segments);
+  ASSERT_LE(nof_tx[1], expected_max_nof_tx);
 }
 
 class si_msg_scheduler_tdra_test : public si_scheduler_test_environment, public testing::Test

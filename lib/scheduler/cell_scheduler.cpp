@@ -94,7 +94,7 @@ void cell_scheduler::run_slot(slot_point_extended sl_tx_ext)
   csi_sch.run_slot(res_grid[0]);
 
   // > Schedule SIB1 and SI-message signalling.
-  si_sch.run_slot(res_grid);
+  si_sch.run_slot(res_grid, sl_tx_ext.hyper_sfn());
 
   // > Schedule PRACH PDUs.
   prach_sch.run_slot(res_grid);

@@ -9,6 +9,7 @@
 #include "sib1_scheduler.h"
 #include "ocudu/adt/lockfree_triple_buffer.h"
 #include "ocudu/adt/slotted_vector.h"
+#include "ocudu/ran/slot_point_extended.h"
 #include "ocudu/scheduler/scheduler_sys_info_handler.h"
 #include <memory>
 
@@ -24,7 +25,8 @@ public:
                pdcch_resource_allocator&                       pdcch_sch,
                const sched_cell_configuration_request_message& msg);
 
-  void run_slot(cell_resource_allocator& res_alloc);
+  /// \param hyper_sfn_tx HyperSFN for the slot provided in the current slot indication.
+  void run_slot(cell_resource_allocator& res_alloc, uint32_t hyper_sfn_tx);
 
   void handle_si_update_request(const si_scheduling_update_request& req);
 
@@ -52,14 +54,18 @@ private:
     explicit pws_pending_entry(unsigned si_msg_idx_) : si_msg_idx(si_msg_idx_) {}
   };
 
-  void try_handle_pending_request(cell_resource_allocator& res_alloc);
+  void try_handle_pending_request(cell_resource_allocator& res_alloc, slot_point_extended sl_tx_ext);
 
+  /// \param slot_sched Slot at which the SI change, if any, would take effect (already offset by
+  /// max_dl_slot_alloc_delay).
   /// \return Returns true if a short message is due for transmission.
-  bool try_handle_si_mod_request(slot_point sl_tx, unsigned max_dl_slot_alloc_delay);
+  bool try_handle_si_mod_request(slot_point_extended slot_sched);
 
   /// \brief Checks for a new PWS broadcast request and, if found, activates the target SI-message for one broadcast.
+  /// \param slot_sched Slot at which the SI-message activation, if any, is being processed (already offset by
+  /// max_dl_slot_alloc_delay).
   /// \return Returns true if a short message is due for transmission.
-  bool try_handle_pending_pws_request(unsigned max_dl_slot_alloc_delay);
+  bool try_handle_pending_pws_request(slot_point_extended slot_sched);
 
   void try_schedule_short_message(cell_slot_resource_allocator& slot_alloc,
                                   bool                          include_si_modification,
@@ -83,21 +89,22 @@ private:
   lockfree_triple_buffer<si_scheduling_update_request> pending_req;
 
   std::optional<si_scheduling_update_request> on_going_req;
-  unsigned                                    si_change_start_count = 0;
+  /// Slot at which the on-going SI change modification window starts. Only meaningful while \c on_going_req has a
+  /// value.
+  slot_point_extended si_change_start_slot;
 
   si_version_type next_pws_version = 1;
   /// One pending-request slot per SI-message that requires activation, keyed by SI-message index.
   slotted_vector<pws_pending_entry> pending_pws_reqs;
-  /// \brief Slot count (see \c slot_count) up to which the PWS (ETWS/CMAS) short-message notification must keep
-  /// being transmitted at every paging occasion.
+  /// \brief Slot up to which the PWS (ETWS/CMAS) short-message notification must keep being transmitted at every
+  /// paging occasion. \c std::nullopt if no notification is currently pending.
   /// \remark As per TS 38.304, ETWS/CMAS-capable UEs in RRC_IDLE/RRC_INACTIVE monitor for this notification only in
   /// their own paging occasion, once per DRX cycle; since the network does not know a given UE's UE_ID (hence its
   /// exact paging occasion), the notification must be repeated across a full default paging cycle to guarantee every
-  /// UE is covered -- mirroring the systemInfoModification window (see \c si_change_start_count).
-  unsigned pws_notif_until_count = 0;
+  /// UE is covered -- mirroring the systemInfoModification window (see \c si_change_start_slot).
+  /// \remark Cleared back to \c std::nullopt once the deadline passes, rather than left as a stale value.
+  std::optional<slot_point_extended> pws_notif_until_slot;
 
-  // Note: We use counts instead of slot_points because SI periods can be longer that 1024 * 10 msec.
-  unsigned   slot_count = 0;
   slot_point last_sl_tx;
 };
 

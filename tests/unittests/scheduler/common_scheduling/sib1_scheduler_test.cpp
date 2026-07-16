@@ -86,7 +86,7 @@ public:
     sib1_sched(cell_cfg, *pdcch_alloc, cell_req.si_scheduling.sib1_payload_size)
   {
     // SIB1 n0 values are pre-computed relative to SFN 0 — override the random base start.
-    next_slot = slot_point{to_numerology_value(cell_cfg.scs_common()), 0};
+    next_slot = slot_point_extended{slot_point{to_numerology_value(cell_cfg.scs_common()), 0}};
   }
   ~sib1_scheduler_setup() override { flush_events(); }
 

@@ -10,9 +10,10 @@
 #include "lib/scheduler/logging/scheduler_event_logger.h"
 #include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator.h"
-#include "tests/test_doubles/utils/test_rng.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
+#include "tests/unittests/scheduler/test_utils/sched_random_utils.h"
 #include "ocudu/ocudulog/ocudulog.h"
+#include "ocudu/ran/slot_point_extended.h"
 #include "ocudu/scheduler/config/scheduler_expert_config_factory.h"
 
 namespace ocudu {
@@ -64,8 +65,8 @@ public:
   }
   virtual ~sub_scheduler_test_environment() = default;
 
-  slot_point          last_slot_tx() const { return next_slot - 1; }
-  slot_point          next_slot_rx() const { return next_slot - delay_tx_rx_slots; }
+  slot_point          last_slot_tx() const { return next_slot.without_hyper_sfn() - 1; }
+  slot_point          next_slot_rx() const { return next_slot.without_hyper_sfn() - delay_tx_rx_slots; }
   const sched_result& last_sched_result() const { return res_grid[0].result; }
 
   void run_slot();
@@ -111,11 +112,10 @@ public:
 
   // -- State
 
-  // Slot of the next call to the scheduler.
-  slot_point next_slot{to_numerology_value(cell_cfg.scs_common()),
-                       test_rng::uniform_int<unsigned>(
-                           0,
-                           ((NOF_SFNS * NOF_SUBFRAMES_PER_FRAME) << to_numerology_value(cell_cfg.scs_common())) - 1)};
+  // Slot of the next call to the scheduler. Extended (HyperSFN-aware) so tests that run long enough to cross the
+  // SFN wrap-around (1023 -> 0) -- e.g. from the random starting point below -- still see a correctly incrementing
+  // HyperSFN, matching what a real DU provides.
+  slot_point_extended next_slot{test_helper::generate_random_slot_point(cell_cfg.scs_common())};
 
 private:
   /// Type erased run_slot for pdcch_allocator.

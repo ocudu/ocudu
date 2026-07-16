@@ -31,14 +31,14 @@ si_message_scheduler::si_message_scheduler(const cell_configuration&   cfg_,
   }
 }
 
-void si_message_scheduler::run_slot(cell_slot_resource_allocator& res_grid)
+void si_message_scheduler::run_slot(cell_slot_resource_allocator& res_grid, slot_point_extended sl_tx_ext)
 {
   if (si_sched_cfg.si_messages.empty()) {
     return;
   }
 
   // Check for SI message updates
-  update_si_message_windows(res_grid.slot);
+  update_si_message_windows(sl_tx_ext);
 
   // Schedule SI messages that are within the window for tx.
   schedule_pending_si_messages(res_grid);
@@ -71,6 +71,7 @@ void si_message_scheduler::handle_si_message_update_indication(unsigned         
 }
 
 void si_message_scheduler::activate_si_message(unsigned                si_msg_idx,
+                                               slot_point_extended     activation_slot,
                                                std::optional<unsigned> nof_segments,
                                                units::bytes            msg_len)
 {
@@ -78,14 +79,33 @@ void si_message_scheduler::activate_si_message(unsigned                si_msg_id
 
   message_window_context& ctxt = pending_messages[si_msg_idx];
   ctxt.active                  = true;
-  ctxt.nof_segments            = nof_segments;
-  ctxt.nof_tx                  = 0;
   ctxt.msg_len                 = msg_len;
+
+  if (not nof_segments.has_value()) {
+    // Broadcast indefinitely (test_mode-configured content); never auto-deactivates.
+    ctxt.active_until.reset();
+    return;
+  }
+
+  // Ensure single-round PWS delivery reaches every UE, not just the ones whose paging occasion happens to land
+  // early within the notification window. As per TS 38.304, idle/inactive UEs only monitor their own paging
+  // occasion once per DRX cycle, so the etwsAndCmasIndication short message is repeated across a full default
+  // paging cycle (see si_scheduler::try_handle_pending_pws_request). A UE notified near the end of that window
+  // must still get a full cycle of segments afterwards, so keep broadcasting for the notification window's
+  // duration plus one extra full segment cycle.
+  const unsigned default_paging_cycle_rfs =
+      static_cast<unsigned>(cell_cfg.params.dl_cfg_common.pcch_cfg.default_paging_cycle);
+  const unsigned one_segment_cycle_rfs =
+      nof_segments.value() * si_sched_cfg.si_messages[si_msg_idx].period_radio_frames;
+  const unsigned active_duration_rfs = default_paging_cycle_rfs + one_segment_cycle_rfs;
+
+  ctxt.active_until = activation_slot + active_duration_rfs * activation_slot.nof_slots_per_frame();
 }
 
-void si_message_scheduler::update_si_message_windows(slot_point sl_tx)
+void si_message_scheduler::update_si_message_windows(slot_point_extended sl_tx_ext)
 {
-  const unsigned sfn = sl_tx.sfn();
+  const slot_point sl_tx = sl_tx_ext.without_hyper_sfn();
+  const unsigned   sfn   = sl_tx.sfn();
 
   for (unsigned i = 0; i != pending_messages.size(); ++i) {
     const si_message_scheduling_config& si_msg = si_sched_cfg.si_messages[i];
@@ -104,6 +124,13 @@ void si_message_scheduler::update_si_message_windows(slot_point sl_tx)
 
     if (not pending_messages[i].active) {
       // SI-message requires activation and is currently dormant. Do not open a new window until it is activated.
+      continue;
+    }
+
+    if (pending_messages[i].active_until.has_value() and pending_messages[i].active_until.value() <= sl_tx_ext) {
+      // The activation's deadline has passed. Go back to dormant; any window already in-flight (handled above)
+      // is left to complete normally.
+      pending_messages[i].active = false;
       continue;
     }
 
@@ -166,14 +193,6 @@ void si_message_scheduler::schedule_pending_si_messages(cell_slot_resource_alloc
       // Increment the transmission counters.
       ++si_ctxt.nof_tx_in_current_window;
       ++si_ctxt.total_nof_tx;
-
-      if (si_sched_cfg.si_messages[i].requires_activation and si_ctxt.nof_segments.has_value()) {
-        // Once all segments of the current activation have been transmitted, go back to dormant.
-        // Note: If nof_segments is nullopt, the activation broadcasts indefinitely and never goes back to dormant.
-        if (++si_ctxt.nof_tx >= si_ctxt.nof_segments.value()) {
-          si_ctxt.active = false;
-        }
-      }
     }
   }
 }

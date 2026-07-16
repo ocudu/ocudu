@@ -101,7 +101,7 @@ protected:
   paging_scheduler pg_sch;
 
 private:
-  void do_run_slot() override { pg_sch.run_slot(res_grid, 0); }
+  void do_run_slot() override { pg_sch.run_slot(res_grid, next_slot.hyper_sfn()); }
 };
 
 // Parameters to be passed to test.

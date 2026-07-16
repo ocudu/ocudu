@@ -136,7 +136,7 @@ protected:
   {
   }
 
-  void do_run_slot() override { ssb_sched.run_slot(res_grid, next_slot); }
+  void do_run_slot() override { ssb_sched.run_slot(res_grid, next_slot.without_hyper_sfn()); }
 
   static arfcn_t compute_cutoff_freq(ssb_pattern_case ssb_case, nr_band band)
   {

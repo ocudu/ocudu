@@ -6,6 +6,7 @@
 
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "ocudu/ocudulog/logger.h"
+#include "ocudu/ran/slot_point_extended.h"
 #include "ocudu/support/units.h"
 #include <optional>
 
@@ -21,19 +22,29 @@ public:
   /// \brief Performs broadcast SI message scheduling.
   ///
   /// \param[out,in] res_grid Resource grid with current allocations and scheduling results.
-  void run_slot(cell_slot_resource_allocator& res_grid);
+  /// \param sl_tx_ext Extended (HyperSFN-aware) representation of \c res_grid.slot.
+  void run_slot(cell_slot_resource_allocator& res_grid, slot_point_extended sl_tx_ext);
 
   /// \brief Update the SI messages.
   void handle_si_message_update_indication(unsigned version, const si_scheduling_config& new_si_sched_cfg);
 
   /// \brief Activates an SI-message that requires explicit activation (see \c si_message_scheduling_config).
   ///
-  /// If \c nof_segments has a value, the SI-message is activated for exactly that many consecutive window
-  /// transmissions, after which it automatically goes back to dormant until the next activation. If \c nof_segments
-  /// is \c std::nullopt, the SI-message is activated indefinitely and never automatically deactivates (used for
+  /// If \c nof_segments has a value, the SI-message is kept active for at least one full default paging cycle plus
+  /// one full segment cycle (see \c message_window_context::active_until), after which it automatically goes back
+  /// to dormant until the next activation. This -- rather than deactivating after exactly \c nof_segments window
+  /// transmissions -- ensures single-round PWS delivery reaches UEs that are only notified (via the P-RNTI short
+  /// message) near the end of the notification window (see \c si_scheduler::try_handle_pending_pws_request), since
+  /// such UEs must still have a chance to observe a full cycle of segments afterwards. If \c nof_segments is
+  /// \c std::nullopt, the SI-message is activated indefinitely and never automatically deactivates (used for
   /// test_mode-configured content that should broadcast forever).
+  /// \param activation_slot Slot at which this activation is being processed, used as the origin for the
+  /// aforementioned deadline.
   /// \param msg_len Length, in bytes, of the largest segment of the content being activated.
-  void activate_si_message(unsigned si_msg_idx, std::optional<unsigned> nof_segments, units::bytes msg_len);
+  void activate_si_message(unsigned                si_msg_idx,
+                           slot_point_extended     activation_slot,
+                           std::optional<unsigned> nof_segments,
+                           units::bytes            msg_len);
 
   /// Called when cell is deactivated.
   void stop();
@@ -49,18 +60,17 @@ private:
     /// \brief Whether this SI-message is currently active (i.e. allowed to be scheduled).
     /// \remark Always true for SI-messages that do not require explicit activation.
     bool active = false;
-    /// \brief Number of segments to transmit before the on-going activation goes back to dormant.
-    /// \remark If \c std::nullopt, the activation never automatically goes back to dormant (broadcast forever).
-    std::optional<unsigned> nof_segments;
-    /// Number of window transmissions completed since the current activation.
-    unsigned nof_tx = 0;
+    /// \brief Slot at which the on-going activation must go back to dormant.
+    /// \remark If \c std::nullopt, the activation never automatically goes back to dormant (broadcast forever). Not
+    /// used for SI-messages that do not require explicit activation.
+    std::optional<slot_point_extended> active_until;
     /// \brief Length, in bytes, used to size the PDSCH grant for this SI-message.
     /// \remark Initialized from \c si_message_scheduling_config::msg_len, and overridden by \c activate_si_message
     /// while a PWS activation is on-going, since real content length is only known at activation time.
     units::bytes msg_len{0};
   };
 
-  void update_si_message_windows(slot_point sl_tx);
+  void update_si_message_windows(slot_point_extended sl_tx_ext);
 
   void schedule_pending_si_messages(cell_slot_resource_allocator& res_grid);
 

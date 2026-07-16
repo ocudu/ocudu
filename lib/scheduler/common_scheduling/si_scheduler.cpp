@@ -5,7 +5,6 @@
 #include "si_scheduler.h"
 #include "../support/dci_builder.h"
 #include "ocudu/ran/pdcch/dci_packing.h"
-#include <algorithm>
 
 using namespace ocudu;
 
@@ -33,26 +32,23 @@ si_scheduler::si_scheduler(const cell_configuration&                       cfg_,
   }
 }
 
-void si_scheduler::run_slot(cell_resource_allocator& res_alloc)
+void si_scheduler::run_slot(cell_resource_allocator& res_alloc, uint32_t hyper_sfn_tx)
 {
+  const slot_point_extended sl_tx_ext{res_alloc[0].slot, hyper_sfn_tx};
+
   if (OCUDU_UNLIKELY(not last_sl_tx.valid())) {
     // First call to run_slot.
-    slot_count = 0;
 
     // Fill resource grid up to max_dl_slot_alloc_delay - 1, which corresponds to the grid DL size.
     for (unsigned i = 0, e = res_alloc.max_dl_slot_alloc_delay; i != e; ++i) {
       sib1_sched.run_slot(res_alloc[i]);
-      si_msg_sched.run_slot(res_alloc[i]);
+      si_msg_sched.run_slot(res_alloc[i], sl_tx_ext + i);
     }
-  } else {
-    // Note: Detect slot skips.
-    unsigned nof_slots_elapsed = res_alloc[0].slot - last_sl_tx;
-    slot_count += nof_slots_elapsed;
   }
   last_sl_tx = res_alloc[0].slot;
 
   // If no on-going request is being handled, try to fetch a new request.
-  try_handle_pending_request(res_alloc);
+  try_handle_pending_request(res_alloc, sl_tx_ext);
 
   auto& slot_res_alloc = res_alloc[res_alloc.max_dl_slot_alloc_delay];
 
@@ -60,7 +56,7 @@ void si_scheduler::run_slot(cell_resource_allocator& res_alloc)
   sib1_sched.run_slot(slot_res_alloc);
 
   // Run SI-message scheduling.
-  si_msg_sched.run_slot(slot_res_alloc);
+  si_msg_sched.run_slot(slot_res_alloc, sl_tx_ext + res_alloc.max_dl_slot_alloc_delay);
 }
 
 void si_scheduler::stop()
@@ -76,27 +72,25 @@ void si_scheduler::stop()
   si_msg_sched.stop();
 }
 
-void si_scheduler::try_handle_pending_request(cell_resource_allocator& res_alloc)
+void si_scheduler::try_handle_pending_request(cell_resource_allocator& res_alloc, slot_point_extended sl_tx_ext)
 {
   // The SI is scheduled ahead of time.
-  slot_point slot_sched = res_alloc.slot_tx() + res_alloc.max_dl_slot_alloc_delay;
+  slot_point_extended slot_sched = sl_tx_ext + res_alloc.max_dl_slot_alloc_delay;
 
   // Handle any request to change the SI sched info.
-  const bool si_modification_due = try_handle_si_mod_request(res_alloc.slot_tx(), res_alloc.max_dl_slot_alloc_delay);
+  const bool si_modification_due = try_handle_si_mod_request(slot_sched);
 
   // Determine whether a PWS (ETWS/CMAS) short-message notification is due this slot.
-  const bool pws_notif_due = try_handle_pending_pws_request(res_alloc.max_dl_slot_alloc_delay);
+  const bool pws_notif_due = try_handle_pending_pws_request(slot_sched);
 
   if (si_modification_due or pws_notif_due) {
-    try_schedule_short_message(res_alloc[slot_sched], si_modification_due, pws_notif_due);
+    try_schedule_short_message(res_alloc[slot_sched.without_hyper_sfn()], si_modification_due, pws_notif_due);
   }
 }
 
-bool si_scheduler::try_handle_si_mod_request(slot_point sl_tx, unsigned max_dl_slot_alloc_delay)
+bool si_scheduler::try_handle_si_mod_request(slot_point_extended slot_sched)
 {
-  slot_point     slot_sched       = sl_tx + max_dl_slot_alloc_delay;
-  unsigned       slot_count_sched = slot_count + max_dl_slot_alloc_delay;
-  const unsigned slots_per_frame  = get_nof_slots_per_subframe(scs_common) * NOF_SUBFRAMES_PER_FRAME;
+  const unsigned slots_per_frame = get_nof_slots_per_subframe(scs_common) * NOF_SUBFRAMES_PER_FRAME;
 
   if (not on_going_req.has_value()) {
     // Not handling any new request at the moment. Check if there is any pending SI change request to handle.
@@ -108,12 +102,12 @@ bool si_scheduler::try_handle_si_mod_request(slot_point sl_tx, unsigned max_dl_s
 
       // Determine the start of SI change modification window.
       const unsigned nof_sfns_until_mod_window = si_change_mod_period - (slot_sched.sfn() % si_change_mod_period);
-      si_change_start_count = slot_count_sched + nof_sfns_until_mod_window * slots_per_frame - slot_sched.slot_index();
-      if (si_change_start_count < slot_count_sched + default_paging_cycle * slots_per_frame) {
+      si_change_start_slot = slot_sched + nof_sfns_until_mod_window * slots_per_frame - slot_sched.slot_index();
+      if (si_change_start_slot < slot_sched + default_paging_cycle * slots_per_frame) {
         // The next modification window is too close to the current slot to leave enough time to broadcast short
         // messages to all UEs (assuming that we need at least one full default paging cycle to notify all UEs). Thus,
         // we delay the SI change by one full SI change period.
-        si_change_start_count += si_change_mod_period * slots_per_frame;
+        si_change_start_slot += si_change_mod_period * slots_per_frame;
       }
     }
   }
@@ -124,12 +118,12 @@ bool si_scheduler::try_handle_si_mod_request(slot_point sl_tx, unsigned max_dl_s
     return false;
   }
 
-  if (slot_count_sched < si_change_start_count - default_paging_cycle * slots_per_frame) {
+  if (slot_sched < si_change_start_slot - default_paging_cycle * slots_per_frame) {
     // The SI change indication (short message) signalling window has not started yet.
     return false;
   }
 
-  if (slot_count_sched < si_change_start_count) {
+  if (slot_sched < si_change_start_slot) {
     // We are inside the SI change indication signalling window. Short message is due.
     return true;
   }
@@ -159,10 +153,9 @@ void si_scheduler::handle_pws_broadcast_indication(const pws_broadcast_request& 
       pws_pending_request{next_pws_version++, req.nof_segments, req.msg_len});
 }
 
-bool si_scheduler::try_handle_pending_pws_request(unsigned max_dl_slot_alloc_delay)
+bool si_scheduler::try_handle_pending_pws_request(slot_point_extended slot_sched)
 {
-  const unsigned slot_count_sched = slot_count + max_dl_slot_alloc_delay;
-  const unsigned slots_per_frame  = get_nof_slots_per_subframe(scs_common) * NOF_SUBFRAMES_PER_FRAME;
+  const unsigned slots_per_frame = get_nof_slots_per_subframe(scs_common) * NOF_SUBFRAMES_PER_FRAME;
 
   // Check every SI-message slot for a new request.
   for (auto& pws_entry : pending_pws_reqs) {
@@ -172,15 +165,26 @@ bool si_scheduler::try_handle_pending_pws_request(unsigned max_dl_slot_alloc_del
     }
     // New request. Activate the target SI-message for one broadcast.
     pws_entry.last_seen_version = next.version;
-    si_msg_sched.activate_si_message(pws_entry.si_msg_idx, next.nof_segments, next.msg_len);
+    si_msg_sched.activate_si_message(pws_entry.si_msg_idx, slot_sched, next.nof_segments, next.msg_len);
 
     // As per TS 38.304, ETWS/CMAS-capable UEs monitor for this notification only in their own paging occasion, once
     // per DRX cycle. Since we don't know a given UE's UE_ID (hence its exact paging occasion), extend the
     // notification window to cover at least one full default paging cycle from now.
-    pws_notif_until_count = std::max(pws_notif_until_count, slot_count_sched + default_paging_cycle * slots_per_frame);
+    const slot_point_extended new_until = slot_sched + default_paging_cycle * slots_per_frame;
+    if (not pws_notif_until_slot.has_value() or pws_notif_until_slot.value() < new_until) {
+      pws_notif_until_slot = new_until;
+    }
   }
 
-  return slot_count_sched < pws_notif_until_count;
+  if (not pws_notif_until_slot.has_value()) {
+    return false;
+  }
+  if (slot_sched < pws_notif_until_slot.value()) {
+    return true;
+  }
+  // Deadline has passed. Clear it rather than leave a stale value behind.
+  pws_notif_until_slot.reset();
+  return false;
 }
 
 void si_scheduler::try_schedule_short_message(cell_slot_resource_allocator& slot_alloc,

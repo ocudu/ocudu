@@ -70,10 +70,10 @@ void sub_scheduler_test_environment::run_slot()
   mac_logger.set_context(next_slot.sfn(), next_slot.slot_index());
   test_logger.set_context(next_slot.sfn(), next_slot.slot_index());
 
-  res_grid.slot_indication(next_slot);
+  res_grid.slot_indication(next_slot.without_hyper_sfn());
 
   // pdcch allocator slot indication.
-  pdcch_alloc_slot_ind_fn(next_slot);
+  pdcch_alloc_slot_ind_fn(next_slot.without_hyper_sfn());
 
   // Run slot for the derived class.
   do_run_slot();
