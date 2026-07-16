@@ -361,5 +361,6 @@ variable "schedules" {
     ref         = string # "refs/heads/main"
     active      = optional(bool, true)
     variables   = optional(map(string), {})
+    inputs      = optional(map(string), {})
   }))
 }
