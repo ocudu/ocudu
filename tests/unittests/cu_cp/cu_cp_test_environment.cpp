@@ -98,6 +98,9 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
                                            security::ciphering_algorithm::nea1,
                                            security::ciphering_algorithm::nea3};
 
+  // Fill PWS config.
+  cu_cp_cfg.pws.max_warning_message_segment_size = params.pws_max_warning_message_segment_size;
+
   // Fill logging and metrics config.
   cu_cp_cfg.f1ap.json_log_enabled                  = true;
   cu_cp_cfg.e1ap.json_log_enabled                  = true;

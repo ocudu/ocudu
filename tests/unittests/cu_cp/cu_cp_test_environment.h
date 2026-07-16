@@ -70,6 +70,7 @@ struct cu_cp_test_env_params {
   bool                                                enable_rrc_inactive;
   std::map<unsigned, std::unique_ptr<mock_xnc_cu_cp>> peer_xnc_configs;
   std::optional<std::chrono::seconds>                 rrc_reject_wait_time;
+  uint32_t                                            pws_max_warning_message_segment_size = 150;
 };
 
 class cu_cp_test_environment
