@@ -10,6 +10,7 @@
 #include "ocudu/ran/sib/system_info_config.h"
 #include "ocudu/support/executors/task_worker.h"
 #include <chrono>
+#include <cmath>
 #include <gtest/gtest.h>
 #include <string>
 #include <utility>
@@ -90,6 +91,40 @@ ntn_config make_test_ntn_config(unsigned koffset_ms       = 260,
   cfg.ta_report = enable_ta_report;
 
   return cfg;
+}
+
+TEST(srs_sib19_ntn_test, orbital_ephemeris_retrograde_inclination_packs)
+{
+  const double sun_sync_inclination = 1.7104;
+
+  sib19_info sib19;
+  sib19.ntn_cfg.emplace();
+  auto& orbit         = sib19.ntn_cfg->ephemeris_info.emplace(orbital_coordinates_t{});
+  auto& orb           = std::get<orbital_coordinates_t>(orbit);
+  orb.semi_major_axis = 6900000.0;
+  orb.eccentricity    = 0.001;
+  orb.periapsis       = 1.0;
+  orb.longitude       = 2.0;
+  orb.mean_anomaly    = 3.0;
+  orb.inclination     = sun_sync_inclination;
+
+  std::string js_str;
+  auto        buf = asn1_packer::pack_sib19(sib19, &js_str);
+  EXPECT_FALSE(buf.empty());
+
+  asn1::cbit_ref            bref(buf);
+  asn1::rrc_nr::sib19_r17_s sib19_decoded;
+  ASSERT_EQ(sib19_decoded.unpack(bref), asn1::OCUDUASN_SUCCESS);
+
+  ASSERT_TRUE(sib19_decoded.ntn_cfg_r17_present);
+  ASSERT_EQ(sib19_decoded.ntn_cfg_r17.ephemeris_info_r17.type(),
+            asn1::rrc_nr::ephemeris_info_r17_c::types::orbital_r17);
+  const auto& decoded_orbit = sib19_decoded.ntn_cfg_r17.ephemeris_info_r17.orbital_r17();
+
+  // Negative branch is used and decodes back to the original inclination via field * step + pi.
+  EXPECT_LT(decoded_orbit.inclination_r17, 0);
+  const double decoded_inclination = decoded_orbit.inclination_r17 * 0.00000002341 + M_PI;
+  EXPECT_NEAR(decoded_inclination, sun_sync_inclination, 1e-6);
 }
 
 TEST(srs_sib19_ntn_test, distance_thresh_encoding)

@@ -4,6 +4,7 @@
 
 #include "asn1_ntn_config_helpers.h"
 #include "ocudu/asn1/lpp/lpp.h"
+#include <cmath>
 
 using namespace ocudu;
 using namespace asn1::rrc_nr;
@@ -148,10 +149,14 @@ ntn_cfg_r17_s ocudu::odu::make_asn1_rrc_cell_ntn_cfg(const ntn_config& ntn_cfg)
       orbital_r17_s& orbit      = out_ntn_cfg.ephemeris_info_r17.orbital_r17();
       orbit.semi_major_axis_r17 = static_cast<uint64_t>((orbital_elem.semi_major_axis - 6500000) / 0.004249);
       orbit.eccentricity_r17    = static_cast<uint32_t>(orbital_elem.eccentricity / 0.00000001431);
-      orbit.inclination_r17     = static_cast<int32_t>(orbital_elem.inclination / 0.00000002341);
-      orbit.longitude_r17       = static_cast<uint32_t>(orbital_elem.longitude / 0.00000002341);
-      orbit.periapsis_r17       = static_cast<uint32_t>(orbital_elem.periapsis / 0.00000002341);
-      orbit.mean_anomaly_r17    = static_cast<uint32_t>(orbital_elem.mean_anomaly / 0.00000002341);
+      // Per TS 38.331, inclination-r17 is signed: positive field maps to [0, pi/2], negative field maps to [pi/2, pi]
+      // via actual value = field value * step + pi.
+      const double incl =
+          (orbital_elem.inclination <= M_PI / 2) ? orbital_elem.inclination : orbital_elem.inclination - M_PI;
+      orbit.inclination_r17  = static_cast<int32_t>(incl / 0.00000002341);
+      orbit.longitude_r17    = static_cast<uint32_t>(orbital_elem.longitude / 0.00000002341);
+      orbit.periapsis_r17    = static_cast<uint32_t>(orbital_elem.periapsis / 0.00000002341);
+      orbit.mean_anomaly_r17 = static_cast<uint32_t>(orbital_elem.mean_anomaly / 0.00000002341);
     }
   }
 

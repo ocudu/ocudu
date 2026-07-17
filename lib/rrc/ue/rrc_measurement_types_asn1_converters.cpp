@@ -58,10 +58,13 @@ static void fill_asn1_ephemeris_info(asn1::rrc_nr::ephemeris_info_r17_c& out, co
     asn1::rrc_nr::orbital_r17_s& orbit = out.orbital_r17();
     orbit.semi_major_axis_r17          = static_cast<uint64_t>((orb.semi_major_axis - 6500000) / 0.004249);
     orbit.eccentricity_r17             = static_cast<uint32_t>(orb.eccentricity / 0.00000001431);
-    orbit.inclination_r17              = static_cast<int32_t>(orb.inclination / 0.00000002341);
-    orbit.longitude_r17                = static_cast<uint32_t>(orb.longitude / 0.00000002341);
-    orbit.periapsis_r17                = static_cast<uint32_t>(orb.periapsis / 0.00000002341);
-    orbit.mean_anomaly_r17             = static_cast<uint32_t>(orb.mean_anomaly / 0.00000002341);
+    // Per TS 38.331, inclination-r17 is signed: positive field maps to [0, pi/2], negative field maps to [pi/2, pi]
+    // via actual value = field value * step + pi.
+    const double incl      = (orb.inclination <= M_PI / 2) ? orb.inclination : orb.inclination - M_PI;
+    orbit.inclination_r17  = static_cast<int32_t>(incl / 0.00000002341);
+    orbit.longitude_r17    = static_cast<uint32_t>(orb.longitude / 0.00000002341);
+    orbit.periapsis_r17    = static_cast<uint32_t>(orb.periapsis / 0.00000002341);
+    orbit.mean_anomaly_r17 = static_cast<uint32_t>(orb.mean_anomaly / 0.00000002341);
   }
 }
 
