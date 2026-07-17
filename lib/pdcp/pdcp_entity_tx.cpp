@@ -389,7 +389,7 @@ void pdcp_entity_tx::apply_reordering(pdcp_tx_buffer_info buf_info)
 
   // Drop PDU if TX window has advanced and COUNT is no longer inside the TX window.
   if (buf_info.count < st.tx_next_ack) {
-    logger.log_warning("Dropping PDU, COUNT no longer inside TX window. count={} st={}", buf_info.count, st);
+    logger.log_info("Dropping PDU, COUNT no longer inside TX window. count={} st={}", buf_info.count, st);
     return;
   }
 
@@ -412,13 +412,26 @@ void pdcp_entity_tx::apply_reordering(pdcp_tx_buffer_info buf_info)
     logger.log_debug("Buffered PDU and awaiting reordering. count={} st={}", buf_info.count, st);
   }
 
-  // Deliver in order PDUs. Break and update TX_TRANS_CRYPTO when we find a missing PDU.
-  for (uint32_t count = st.tx_trans_crypto; count < st.tx_next && not tx_window[count].pdu.empty(); count++) {
+  // Deliver in order PDUs and break at first missing PDU. Skip any discarded PDUs.
+  for (uint32_t count = st.tx_trans_crypto; count < st.tx_next; count++) {
+    // Skip any PDUs that were already discarded.
+    if (!tx_window.has_sn(count)) {
+      st.tx_trans_crypto = count + 1;
+      continue;
+    }
+
+    // Break at first missing PDU.
+    if (tx_window[count].pdu.empty()) {
+      break;
+    }
+
+    // Deliver the PDU.
     pdcp_tx_pdu_info pdu_info{
         .pdu = std::move(tx_window[count].pdu), .count = count, .sdu_toa = tx_window[count].sdu_info.time_of_arrival};
     write_data_pdu_to_lower_layers(std::move(pdu_info), buf_info.is_retx);
     st.tx_trans_crypto = count + 1;
-    // Automatically trigger delivery notifications when using test mode
+
+    // Automatically trigger delivery notifications when using test mode.
     if (cfg.custom.test_mode) {
       handle_transmit_notification(SN(count));
     }

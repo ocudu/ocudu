@@ -391,6 +391,83 @@ TEST_P(pdcp_tx_test, discard_timer_and_expiry)
   EXPECT_EQ(pdcp_rohc_factory->get_nof_decompressors(), 0);
 }
 
+/// Test correct start of PDCP discard timers
+/// and expiry of PDUs while applying security.
+TEST_P(pdcp_tx_test_manual_crypto, discard_timer_and_expiry_while_applying_security)
+{
+  init(GetParam());
+  unsigned exp_nof_compressors = header_compression.has_value() ? 1 : 0;
+  EXPECT_EQ(pdcp_rohc_factory->get_nof_compressors(), exp_nof_compressors);
+  EXPECT_EQ(pdcp_rohc_factory->get_nof_decompressors(), 0);
+
+  auto test_discard_timer_expiry = [this](uint32_t tx_next) {
+    // Set state of PDCP entiy
+    pdcp_tx_state st = {tx_next, tx_next, 0, tx_next, tx_next};
+    pdcp_tx->set_state(st);
+    pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
+
+    // Write first SDU
+    {
+      byte_buffer sdu = byte_buffer::create(sdu1).value();
+      pdcp_tx->handle_sdu(std::move(sdu));
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next, sn_size));
+
+      FLUSH_AND_ASSERT_EQ(1, pdcp_tx->nof_pdus_in_window());
+    }
+    // Write second SDU
+    {
+      byte_buffer sdu = byte_buffer::create(sdu1).value();
+      pdcp_tx->handle_sdu(std::move(sdu));
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + 1, sn_size));
+    }
+    timers.tick(); // add one tick
+    // Write third SDU after a tick.
+    {
+      byte_buffer sdu = byte_buffer::create(sdu1).value();
+      pdcp_tx->handle_sdu(std::move(sdu));
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + 2, sn_size));
+    }
+    FLUSH_AND_ASSERT_EQ(3, pdcp_tx->nof_pdus_in_window());
+
+    // Let timer for the first two PDUs expire
+    for (int i = 0; i < 9; i++) {
+      timers.tick();
+      worker.run_pending_tasks();
+    }
+
+    // Wait for crypto and reordering
+    wait_pending_crypto();
+    worker.run_pending_tasks();
+
+    // Timers should have expired now for the first two SDUs.
+    // Third should still be in the window.
+    ASSERT_EQ(1, pdcp_tx->nof_pdus_in_window());
+
+    ASSERT_EQ(test_frame.pdu_queue.size(), 1);
+    test_frame.pdu_queue.pop();
+
+    // Tick one more time. All timers should have expired now.
+    timers.tick();
+    worker.run_pending_tasks();
+    FLUSH_AND_ASSERT_EQ(0, pdcp_tx->nof_pdus_in_window());
+  };
+
+  if (config.sn_size == pdcp_sn_size::size12bits) {
+    test_discard_timer_expiry(0);
+    test_discard_timer_expiry(2047);
+    test_discard_timer_expiry(4095);
+  } else if (config.sn_size == pdcp_sn_size::size18bits) {
+    test_discard_timer_expiry(0);
+    test_discard_timer_expiry(131071);
+    test_discard_timer_expiry(262143);
+  } else {
+    FAIL();
+  }
+
+  EXPECT_EQ(pdcp_rohc_factory->get_nof_compressors(), exp_nof_compressors);
+  EXPECT_EQ(pdcp_rohc_factory->get_nof_decompressors(), 0);
+}
+
 /// Test correct start of PDCP discard timers and stop from lower layers
 TEST_P(pdcp_tx_test, discard_timer_and_stop)
 {
@@ -750,6 +827,14 @@ test_param_info_to_string(const ::testing::TestParamInfo<std::tuple<pdcp_sn_size
 INSTANTIATE_TEST_SUITE_P(
     pdcp_tx_test_all_sn_sizes,
     pdcp_tx_test,
+    ::testing::Combine(::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
+                       ::testing::Values(1, 2, 3),
+                       ::testing::Values(cfg_rohc_disabled, cfg_rohc_uncompressed, cfg_rohc_compressed)),
+    test_param_info_to_string);
+
+INSTANTIATE_TEST_SUITE_P(
+    pdcp_tx_test_all_sn_sizes,
+    pdcp_tx_test_manual_crypto,
     ::testing::Combine(::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
                        ::testing::Values(1, 2, 3),
                        ::testing::Values(cfg_rohc_disabled, cfg_rohc_uncompressed, cfg_rohc_compressed)),
