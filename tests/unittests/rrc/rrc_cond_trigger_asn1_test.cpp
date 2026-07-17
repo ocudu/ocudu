@@ -122,9 +122,9 @@ TEST(cond_trigger_asn1, cond_event_d1_encodes_correctly)
   EXPECT_EQ(ev.time_to_trigger_r17.to_number(), 100u);
 }
 
-/// Verifies the Ellipsoid-Point byte encoding used by cond_trigger_cfg_to_rrc_asn1():
-///   lat_enc = floor(|lat| * 8388607 / 90) clamped to [0..8388607], unsigned 23-bit
-///   lon_raw = floor( lon  * 16777215 / 360) clamped to [-8388608..8388607]
+/// Verifies the TS 23.032 sec. 6.1 Ellipsoid-Point byte encoding used by cond_trigger_cfg_to_rrc_asn1():
+///   lat_enc = floor(|lat| * 2^23 / 90) clamped to [0..8388607], unsigned 23-bit
+///   lon_raw = floor( lon  * 2^24 / 360) clamped to [-8388608..8388607]
 ///   lon_enc = lon_raw - (-8388608) = lon_raw + 8388608, packed on 24 bits
 /// Layout (6 bytes, MSB first): [1-bit sign][23-bit lat][24-bit lon_enc]
 TEST(cond_trigger_asn1, cond_event_d1_ref_location_bytes)
@@ -145,9 +145,9 @@ TEST(cond_trigger_asn1, cond_event_d1_ref_location_bytes)
       {{-90.0,    0.0}, {0xff, 0xff, 0xff, 0x80, 0x00, 0x00}, "South Pole"},
       // lon=-180 deg: lon_raw=-8388608 -> lon_enc=0x000000.
       {{  0.0, -180.0}, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, "lon=-180"},
-      // lat=45, lon=90: lat_enc=floor(45*8388607/90)=0x3fffff,
-      //                 lon_raw=floor(90*16777215/360)=0x3fffff, lon_enc=0xbfffff.
-      {{ 45.0,   90.0}, {0x3f, 0xff, 0xff, 0xbf, 0xff, 0xff}, "lat=45 lon=90"},
+      // lat=45, lon=90 (exact mid-scale): lat_enc=floor(45*2^23/90)=0x400000,
+      //                 lon_raw=floor(90*2^24/360)=0x400000, lon_enc=0xc00000.
+      {{ 45.0,   90.0}, {0x40, 0x00, 0x00, 0xc0, 0x00, 0x00}, "lat=45 lon=90"},
   };
   // clang-format on
 

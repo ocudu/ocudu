@@ -121,14 +121,14 @@ TEST(ntn_meas_asn1, epoch_and_ecef_ephemeris_encode_correctly)
 
   // Reference location: 6-byte packed EllipsoidPoint, lat=45 deg north, lon=90 deg east.
   ASSERT_EQ(ntn_asn1.ref_location_r18.size(), 6U);
-  // latitudeSign=north(0), degreesLatitude=floor(45 * 8388607 / 90)=4194303 -> top 24 bits = 0x3fffff.
-  EXPECT_EQ(ntn_asn1.ref_location_r18[0], 0x3fU);
-  EXPECT_EQ(ntn_asn1.ref_location_r18[1], 0xffU);
-  EXPECT_EQ(ntn_asn1.ref_location_r18[2], 0xffU);
-  // degreesLongitude=floor(90 * 16777215 / 360)=4194303, offset-encoded: +8388608 = 0xbfffff.
-  EXPECT_EQ(ntn_asn1.ref_location_r18[3], 0xbfU);
-  EXPECT_EQ(ntn_asn1.ref_location_r18[4], 0xffU);
-  EXPECT_EQ(ntn_asn1.ref_location_r18[5], 0xffU);
+  // latitudeSign=north(0), degreesLatitude=floor(45 * 2^23 / 90)=4194304 -> top 24 bits = 0x400000.
+  EXPECT_EQ(ntn_asn1.ref_location_r18[0], 0x40U);
+  EXPECT_EQ(ntn_asn1.ref_location_r18[1], 0x00U);
+  EXPECT_EQ(ntn_asn1.ref_location_r18[2], 0x00U);
+  // degreesLongitude=floor(90 * 2^24 / 360)=4194304, offset-encoded: +8388608 = 0xc00000.
+  EXPECT_EQ(ntn_asn1.ref_location_r18[3], 0xc0U);
+  EXPECT_EQ(ntn_asn1.ref_location_r18[4], 0x00U);
+  EXPECT_EQ(ntn_asn1.ref_location_r18[5], 0x00U);
 }
 
 /// Orbital ephemeris quantization per TS 38.331.

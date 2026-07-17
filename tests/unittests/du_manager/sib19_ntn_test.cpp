@@ -34,11 +34,12 @@ static std::pair<double, double> decode_ellipsoid_point_to_lat_lon_deg(const asn
   uint32_t lon_enc = static_cast<uint32_t>(bits & 0xffffffu);
   int32_t  lon_raw = static_cast<int32_t>(lon_enc) - 8388608;
 
-  double lat_deg = static_cast<double>(lat_enc) * 90.0 / 8388607.0;
+  // Inverse of the TS 23.032 sec. 6.1 encoding: latitude scale 2^23/90, longitude scale 2^24/360.
+  double lat_deg = static_cast<double>(lat_enc) * 90.0 / 8388608.0;
   if (south) {
     lat_deg = -lat_deg;
   }
-  double lon_deg = static_cast<double>(lon_raw) * 360.0 / 16777215.0;
+  double lon_deg = static_cast<double>(lon_raw) * 360.0 / 16777216.0;
 
   return {lat_deg, lon_deg};
 }
