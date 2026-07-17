@@ -9,6 +9,21 @@
 
 namespace ocudu {
 
+ocudu::log_sink_spy& test_spy = []() -> ocudu::log_sink_spy& {
+  if (!ocudulog::install_custom_sink(
+          ocudu::log_sink_spy::name(),
+          std::unique_ptr<ocudu::log_sink_spy>(new ocudu::log_sink_spy(ocudulog::get_default_log_formatter())))) {
+    report_fatal_error("Unable to create logger spy");
+  }
+  auto* spy = static_cast<ocudu::log_sink_spy*>(ocudulog::find_sink(ocudu::log_sink_spy::name()));
+  if (spy == nullptr) {
+    report_fatal_error("Unable to create logger spy");
+  }
+
+  ocudulog::fetch_basic_logger("PDCP", *spy, true);
+  return *spy;
+}();
+
 /// Fixture class for PDCP TX tests
 /// It requires TEST_P() and INSTANTIATE_TEST_SUITE_P() to create/spawn tests for each supported SN size
 class pdcp_tx_test : public pdcp_tx_test_helper_default_crypto,
@@ -18,18 +33,21 @@ class pdcp_tx_test : public pdcp_tx_test_helper_default_crypto,
 protected:
   void SetUp() override
   {
-    // init test's logger
+    // Init test's logger.
     ocudulog::init();
     logger.set_level(ocudulog::basic_levels::debug);
 
-    // init RLC logger
+    // Reset log spy.
+    test_spy.reset_counters();
+
+    // Init PDCP logger.
     ocudulog::fetch_basic_logger("PDCP", false).set_level(ocudulog::basic_levels::debug);
     ocudulog::fetch_basic_logger("PDCP", false).set_hex_dump_max_size(100);
   }
 
   void TearDown() override
   {
-    // flush logger after each test
+    // Flush logger after each test.
     ocudulog::flush();
   }
 };
@@ -44,18 +62,21 @@ class pdcp_tx_test_manual_crypto
 protected:
   void SetUp() override
   {
-    // init test's logger
+    // Init test's logger.
     ocudulog::init();
     logger.set_level(ocudulog::basic_levels::debug);
 
-    // init RLC logger
+    // Reset log spy.
+    test_spy.reset_counters();
+
+    // Init PDCP logger.
     ocudulog::fetch_basic_logger("PDCP", false).set_level(ocudulog::basic_levels::debug);
     ocudulog::fetch_basic_logger("PDCP", false).set_hex_dump_max_size(100);
   }
 
   void TearDown() override
   {
-    // flush logger after each test
+    // Flush logger after each test.
     ocudulog::flush();
   }
 };

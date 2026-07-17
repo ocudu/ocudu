@@ -21,6 +21,9 @@ TEST_P(pdcp_tx_test, create_new_entity)
   EXPECT_EQ(pdcp_rohc_factory->get_last_compressor_config(), header_compression);
 
   ASSERT_NE(pdcp_tx, nullptr);
+  // No warnings or errors during construction.
+  EXPECT_EQ(test_spy.get_warning_counter(), 0);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 /// \brief Test correct packing of PDCP data PDU headers
@@ -60,6 +63,10 @@ TEST_P(pdcp_tx_test, sn_pack)
 
   EXPECT_EQ(pdcp_rohc_factory->get_nof_compressors(), exp_nof_compressors);
   EXPECT_EQ(pdcp_rohc_factory->get_nof_decompressors(), 0);
+
+  // No warnings or errors.
+  EXPECT_EQ(test_spy.get_warning_counter(), 0);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 /// \brief Test correct generation of PDCP PDUs
@@ -114,6 +121,10 @@ TEST_P(pdcp_tx_test, pdu_gen)
 
   EXPECT_EQ(pdcp_rohc_factory->get_nof_compressors(), exp_nof_compressors);
   EXPECT_EQ(pdcp_rohc_factory->get_nof_decompressors(), 0);
+
+  // No warnings or errors.
+  EXPECT_EQ(test_spy.get_warning_counter(), 0);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 /// \brief Test correct stalling of PDCP if RLC SDU queue is full; then continue via delivery notification
@@ -217,6 +228,10 @@ TEST_P(pdcp_tx_test, pdu_stall_then_continue_via_deliv_notif)
 
   EXPECT_EQ(pdcp_rohc_factory->get_nof_compressors(), exp_nof_compressors);
   EXPECT_EQ(pdcp_rohc_factory->get_nof_decompressors(), 0);
+
+  // No warnings or errors.
+  EXPECT_EQ(test_spy.get_warning_counter(), 0);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 /// \brief Test correct stalling of PDCP if RLC SDU queue is full; then continue via delivery retransmitted notification
@@ -304,6 +319,10 @@ TEST_P(pdcp_tx_test, pdu_stall_then_continue_via_deliv_retx_notif)
 
   EXPECT_EQ(pdcp_rohc_factory->get_nof_compressors(), exp_nof_compressors);
   EXPECT_EQ(pdcp_rohc_factory->get_nof_decompressors(), 0);
+
+  // No warnings or errors.
+  EXPECT_EQ(test_spy.get_warning_counter(), 0);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 /// Test correct start of PDCP discard timers
@@ -325,24 +344,24 @@ TEST_P(pdcp_tx_test, discard_timer_and_expiry)
     {
       byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
-      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next, sn_size));
 
       // Wait for crypto and reordering
       wait_pending_crypto();
       worker.run_pending_tasks();
 
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next, sn_size));
       FLUSH_AND_ASSERT_EQ(1, pdcp_tx->nof_pdus_in_window());
     }
     // Write second SDU
     {
       byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
-      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + 1, sn_size));
 
       // Wait for crypto and reordering
       wait_pending_crypto();
       worker.run_pending_tasks();
 
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + 1, sn_size));
       FLUSH_AND_ASSERT_EQ(2, pdcp_tx->nof_pdus_in_window());
     }
     timers.tick(); // add one tick
@@ -350,12 +369,12 @@ TEST_P(pdcp_tx_test, discard_timer_and_expiry)
     {
       byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
-      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + 2, sn_size));
 
       // Wait for crypto and reordering
       wait_pending_crypto();
       worker.run_pending_tasks();
 
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + 2, sn_size));
       FLUSH_AND_ASSERT_EQ(3, pdcp_tx->nof_pdus_in_window());
     }
 
@@ -389,6 +408,10 @@ TEST_P(pdcp_tx_test, discard_timer_and_expiry)
 
   EXPECT_EQ(pdcp_rohc_factory->get_nof_compressors(), exp_nof_compressors);
   EXPECT_EQ(pdcp_rohc_factory->get_nof_decompressors(), 0);
+
+  // No warnings or errors.
+  EXPECT_EQ(test_spy.get_warning_counter(), 0);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 /// Test correct start of PDCP discard timers
@@ -410,7 +433,6 @@ TEST_P(pdcp_tx_test_manual_crypto, discard_timer_and_expiry_while_applying_secur
     {
       byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
-      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next, sn_size));
 
       FLUSH_AND_ASSERT_EQ(1, pdcp_tx->nof_pdus_in_window());
     }
@@ -418,14 +440,14 @@ TEST_P(pdcp_tx_test_manual_crypto, discard_timer_and_expiry_while_applying_secur
     {
       byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
-      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + 1, sn_size));
+
+      FLUSH_AND_ASSERT_EQ(2, pdcp_tx->nof_pdus_in_window());
     }
     timers.tick(); // add one tick
     // Write third SDU after a tick.
     {
       byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
-      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + 2, sn_size));
     }
     FLUSH_AND_ASSERT_EQ(3, pdcp_tx->nof_pdus_in_window());
 
@@ -438,6 +460,8 @@ TEST_P(pdcp_tx_test_manual_crypto, discard_timer_and_expiry_while_applying_secur
     // Wait for crypto and reordering
     wait_pending_crypto();
     worker.run_pending_tasks();
+
+    pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + 2, sn_size));
 
     // Timers should have expired now for the first two SDUs.
     // Third should still be in the window.
@@ -466,6 +490,10 @@ TEST_P(pdcp_tx_test_manual_crypto, discard_timer_and_expiry_while_applying_secur
 
   EXPECT_EQ(pdcp_rohc_factory->get_nof_compressors(), exp_nof_compressors);
   EXPECT_EQ(pdcp_rohc_factory->get_nof_decompressors(), 0);
+
+  // No warnings or errors.
+  EXPECT_EQ(test_spy.get_warning_counter(), 0);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 /// Test correct start of PDCP discard timers and stop from lower layers
@@ -577,6 +605,10 @@ TEST_P(pdcp_tx_test, discard_timer_and_stop)
 
   EXPECT_EQ(pdcp_rohc_factory->get_nof_compressors(), exp_nof_compressors);
   EXPECT_EQ(pdcp_rohc_factory->get_nof_decompressors(), 0);
+
+  // No warnings or errors.
+  EXPECT_EQ(test_spy.get_warning_counter(), 0);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 /// \brief Test correct generation of PDCP PDUs
@@ -695,6 +727,10 @@ TEST_P(pdcp_tx_test, pdu_stall_with_discard)
 
   EXPECT_EQ(pdcp_rohc_factory->get_nof_compressors(), exp_nof_compressors);
   EXPECT_EQ(pdcp_rohc_factory->get_nof_decompressors(), 0);
+
+  // No warnings or errors.
+  EXPECT_EQ(test_spy.get_warning_counter(), 0);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 /// Test COUNT wrap-around protection systems
@@ -724,7 +760,9 @@ TEST_P(pdcp_tx_test, count_wraparound)
       wait_pending_crypto();
       worker.run_pending_tasks();
 
-      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(st.tx_next + i, sn_size));
+      if (st.tx_next + i < config.custom.max_count.hard) {
+        pdcp_tx->handle_transmit_notification(pdcp_compute_sn(st.tx_next + i, sn_size));
+      }
     }
     // check nof max_count reached and max protocol failures.
     ASSERT_EQ(11, test_frame.pdu_queue.size());
@@ -742,6 +780,11 @@ TEST_P(pdcp_tx_test, count_wraparound)
 
   EXPECT_EQ(pdcp_rohc_factory->get_nof_compressors(), exp_nof_compressors);
   EXPECT_EQ(pdcp_rohc_factory->get_nof_decompressors(), 0);
+
+  // One warning expected: "Approaching count wrap-around..."
+  EXPECT_EQ(test_spy.get_warning_counter(), 1);
+  // One error expected: "Reached maximum count, refusing to transmit further..."
+  EXPECT_EQ(test_spy.get_error_counter(), 1);
 }
 
 /// Test TX SDU buffering.
@@ -806,6 +849,10 @@ TEST_P(pdcp_tx_test, tx_buffer)
 
   EXPECT_EQ(pdcp_rohc_factory->get_nof_compressors(), exp_nof_compressors);
   EXPECT_EQ(pdcp_rohc_factory->get_nof_decompressors(), 0);
+
+  // No warnings or errors.
+  EXPECT_EQ(test_spy.get_warning_counter(), 0);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 ///////////////////////////////////////////////////////////////////
