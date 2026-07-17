@@ -7,6 +7,7 @@
 #include "ocudu/adt/type_list_buffer.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/csi_report/csi_report_formatters.h"
+#include "ocudu/ran/prach/ra_helper.h"
 #include "ocudu/scheduler/result/sched_result.h"
 #include "ocudu/support/format/custom_formattable.h"
 #include "ocudu/support/format/fmt_to_c_str.h"
@@ -240,11 +241,19 @@ static auto make_sib_info_log_entry(const sib_information& sib_info)
 
 static auto make_rar_info_log_entry(const rar_information& rar_info)
 {
-  // RAR grants always carry exactly one codeword.
+  // RAR grants always carry exactly one codeword. The RNTI space disambiguates a 4-step RAR (keyed by RA-RNTI) from
+  // a 2-step MsgB (keyed by MsgB-RNTI), as per TS 38.321, Sections 5.1.3 and 5.1.4.
   return make_formattable([rnti = rar_info.pdsch_cfg.rnti,
                            rb   = rar_info.pdsch_cfg.rbs,
                            tbs  = rar_info.pdsch_cfg.codewords[0].tb_size_bytes](auto& ctx) {
-    return fmt::format_to(ctx.out(), "RAR: ra-rnti={} rb={} tbs={}", rnti, rb, tbs);
+    const bool is_msgb = ra_helper::is_valid_msgb_rnti(rnti);
+    return fmt::format_to(ctx.out(),
+                          "{}: {}={} rb={} tbs={}",
+                          is_msgb ? "MsgB" : "RAR",
+                          is_msgb ? "msgb-rnti" : "ra-rnti",
+                          rnti,
+                          rb,
+                          tbs);
   });
 }
 
@@ -486,6 +495,8 @@ static auto make_rar_debug_log_entry(const rar_information& rar_info)
         });
   };
 
+  // The RNTI space disambiguates a 4-step RAR (keyed by RA-RNTI) from a 2-step MsgB (keyed by MsgB-RNTI), as per
+  // TS 38.321, Sections 5.1.3 and 5.1.4.
   return make_formattable([rnti       = rar_info.pdsch_cfg.rnti,
                            rb         = rar_info.pdsch_cfg.rbs,
                            symbols    = rar_info.pdsch_cfg.symbols,
@@ -494,8 +505,11 @@ static auto make_rar_debug_log_entry(const rar_information& rar_info)
                            rv         = rar_info.pdsch_cfg.codewords[0].rv_index,
                            nof_grants = rar_info.grants.size(),
                            grants     = format_each(rar_info.grants, make_rar_grant_debug_entry)](auto& ctx) {
+    const bool is_msgb = ra_helper::is_valid_msgb_rnti(rnti);
     return fmt::format_to(ctx.out(),
-                          "\n- RAR PDSCH: ra-rnti={} rb={} symb={} tbs={} mcs={} rv={} grants ({}): {}",
+                          "\n- {} PDSCH: {}={} rb={} symb={} tbs={} mcs={} rv={} grants ({}): {}",
+                          is_msgb ? "MsgB" : "RAR",
+                          is_msgb ? "msgb-rnti" : "ra-rnti",
                           rnti,
                           rb,
                           symbols,

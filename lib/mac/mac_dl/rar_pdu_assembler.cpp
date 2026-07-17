@@ -106,7 +106,7 @@ void rar_pdu_encoder::encode_rapid_subheader(uint16_t rapid, bool is_last_subpdu
   static constexpr unsigned RAPID_FLAG = 1;
 
   // write E/T/RAPID MAC subheader.
-  *ptr = (uint8_t)((not is_last_subpdu ? 1U : 0U) << 7U) | (RAPID_FLAG << 6U) | ((uint8_t)rapid & 0x3fU);
+  *ptr = (uint8_t)((not is_last_subpdu ? 1U : 0U) << 7U) | (RAPID_FLAG << 6U) | (static_cast<uint8_t>(rapid) & 0x3fU);
   ++ptr;
 }
 
@@ -115,7 +115,7 @@ void rar_pdu_encoder::encode_bi_subheader(uint8_t backoff_indicator, bool is_las
   static constexpr unsigned BI_FLAG = 0;
 
   // write E/T/R/R/BI MAC subheader. The two R bits are reserved and set to 0.
-  *ptr = (uint8_t)((not is_last_subpdu ? 1U : 0U) << 7U) | (BI_FLAG << 6U) | (backoff_indicator & 0xfU);
+  *ptr = static_cast<uint8_t>((not is_last_subpdu ? 1U : 0U) << 7U) | (BI_FLAG << 6U) | (backoff_indicator & 0xfU);
   ++ptr;
 }
 
@@ -162,7 +162,8 @@ void rar_pdu_encoder::encode_successrar_subheader(bool is_last_subpdu)
   static constexpr unsigned T1_FLAG = 0;
   static constexpr unsigned T2_FLAG = 1;
   static constexpr unsigned S_FLAG  = 0;
-  *ptr = (uint8_t)((not is_last_subpdu ? 1U : 0U) << 7U) | (T1_FLAG << 6U) | (T2_FLAG << 5U) | (S_FLAG << 4U);
+  *ptr =
+      static_cast<uint8_t>((not is_last_subpdu ? 1U : 0U) << 7U) | (T1_FLAG << 6U) | (T2_FLAG << 5U) | (S_FLAG << 4U);
   ++ptr;
 }
 
@@ -178,20 +179,21 @@ void rar_pdu_encoder::encode_successrar_payload(const rar_ul_grant& grant)
         "rapid={}: successRAR encoded with a zero-filled UE Contention Resolution Identity. Cause: MsgA CCCH SDU "
         "not yet decoded",
         grant.rapid);
+    // Set zero-filled UEConRes.
+    con_res_id = ue_con_res_id_t{};
   }
-  const ue_con_res_id_t zero_con_res_id{};
-  for (uint8_t byte : con_res_id.has_value() ? *con_res_id : zero_con_res_id) {
+  for (uint8_t byte : *con_res_id) {
     *ptr = byte;
     ++ptr;
   }
 
   // Encode R(1) + ChannelAccess-CPext(2, reserved: shared spectrum channel access is not supported) + TPC(2) +
   // HARQ Feedback Timing Indicator(3).
-  *ptr = (uint8_t)((grant.tpc & 0x3U) << 3U) | (info.harq_feedback_timing_indicator & 0x7U);
+  *ptr = static_cast<uint8_t>((grant.tpc & 0x3U) << 3U) | (info.harq_feedback_timing_indicator & 0x7U);
   ++ptr;
 
   // Encode PUCCH Resource Indicator (4 bits) + high 4 bits of TA.
-  *ptr = (uint8_t)((info.pucch_resource_indicator & 0xfU) << 4U) | ((grant.ta >> 8U) & 0xfU);
+  *ptr = static_cast<uint8_t>((info.pucch_resource_indicator & 0xfU) << 4U) | ((grant.ta >> 8U) & 0xfU);
   ++ptr;
 
   // Encode low 8 bits of TA.
