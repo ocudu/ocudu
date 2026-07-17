@@ -45,7 +45,7 @@ gtest_discover_tests(ntn_assistance_info_gen_test)
 
 add_executable(ntn_sib19_helpers_test ntn_sib19_helpers_test.cpp)
 target_include_directories(ntn_sib19_helpers_test PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(ntn_sib19_helpers_test ocudu_ntn_lib ocudu_support ocudulog gtest gtest_main)
+target_link_libraries(ntn_sib19_helpers_test ocudu_ntn_lib du_manager_converters ocudu_pcap ocudu_support ocudulog gtest)
 gtest_discover_tests(ntn_sib19_helpers_test)
 
 add_executable(ntn_sat_switch_apply_test ntn_sat_switch_apply_test.cpp)

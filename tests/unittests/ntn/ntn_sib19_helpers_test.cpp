@@ -2,10 +2,20 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "lib/du/du_high/du_manager/converters/asn1_ntn_config_helpers.h"
 #include "lib/ntn/ntn_sib19_helpers.h"
+#include "ocudu/asn1/rrc_nr/bcch_dl_sch_msg.h"
+#include "ocudu/asn1/rrc_nr/sys_info.h"
+#include "ocudu/ocudulog/ocudulog.h"
+#include "ocudu/pcap/mac_pcap.h"
 #include "ocudu/ran/ntn.h"
 #include "ocudu/ran/slot_point.h"
+#include "ocudu/support/error_handling.h"
+#include "ocudu/support/executors/task_worker.h"
+#include <array>
+#include <cstdio>
 #include <gtest/gtest.h>
+#include <memory>
 
 using namespace ocudu;
 using namespace ocudu_ntn;
@@ -408,4 +418,211 @@ TEST(sib19_sat_switch_test, fields_left_unset_in_sat_switch_config_are_broadcast
   EXPECT_EQ(sw_ntn_cfg.k_mac, 2U);
   EXPECT_EQ(sw_ntn_cfg.ta_report, true);
   EXPECT_FALSE(sw_ntn_cfg.polarization.has_value()) << "absent in both sat-switch and serving config stays absent";
+}
+
+namespace {
+
+// ===== SIB19 PCAP generation =====
+// These globals and helpers let the test emit a Wireshark-loadable MAC-NR PCAP holding fully populated SIB19
+// messages. Pass `--enable_pcap` to write the file; without it the test still packs and round-trips every SIB19.
+bool             g_enable_pcap = false;
+ocudu::mac_pcap* g_pcap        = nullptr;
+
+/// Builds a fully populated ntn_config. When \p use_orbital is true the ephemeris is expressed as ECI orbital
+/// parameters, otherwise as an ECEF position/velocity state vector.
+ntn_config make_full_ntn_config(bool use_orbital)
+{
+  ntn_config cfg;
+  cfg.epoch_time.emplace();
+  cfg.epoch_time->sfn             = 100;
+  cfg.epoch_time->subframe_number = 5;
+  cfg.ntn_ul_sync_validity_dur    = 60U;
+  cfg.cell_specific_koffset.emplace(std::chrono::milliseconds(260));
+  cfg.k_mac = 512U;
+
+  cfg.ta_info.emplace();
+  cfg.ta_info->ta_common               = 500.0;
+  cfg.ta_info->ta_common_drift         = 0.5;
+  cfg.ta_info->ta_common_drift_variant = 0.01;
+  cfg.ta_info->ta_common_offset        = 50.0;
+
+  cfg.polarization.emplace();
+  cfg.polarization->dl = ntn_polarization_t::polarization_type::rhcp;
+  cfg.polarization->ul = ntn_polarization_t::polarization_type::lhcp;
+
+  if (use_orbital) {
+    orbital_coordinates_t orb{};
+    orb.semi_major_axis = 6900000.0;
+    orb.eccentricity    = 0.001;
+    orb.periapsis       = 1.0;
+    orb.longitude       = 2.0;
+    orb.mean_anomaly    = 3.0;
+    orb.inclination     = 0.9;
+    cfg.ephemeris_info  = orb;
+  } else {
+    ecef_coordinates_t ecef{};
+    ecef.position_x    = 1300.0;
+    ecef.position_y    = 2600.0;
+    ecef.position_z    = 3900.0;
+    ecef.velocity_vx   = 0.26;
+    ecef.velocity_vy   = 0.52;
+    ecef.velocity_vz   = 0.78;
+    cfg.ephemeris_info = ecef;
+  }
+
+  cfg.ta_report = true;
+  return cfg;
+}
+
+/// Builds a SIB19 with every field populated, varying the serving ephemeris format and the (possibly edge-case)
+/// reference locations. The sat-switch target uses the opposite ephemeris format to exercise both encoders at once.
+sib19_info make_full_sib19(bool serving_orbital, geodetic_coordinates_t ref_loc, geodetic_coordinates_t moving_loc)
+{
+  sib19_info sib19;
+  sib19.ntn_cfg             = make_full_ntn_config(serving_orbital);
+  sib19.t_service           = std::chrono::system_clock::time_point(std::chrono::milliseconds(1000000000));
+  sib19.ref_location        = ref_loc;
+  sib19.distance_thres      = 10000; // 10 km
+  sib19.moving_ref_location = moving_loc;
+
+  sib19.coverage_enhancements.emplace();
+  sib19.coverage_enhancements->nof_msg4_harq_ack_rep    = 4;
+  sib19.coverage_enhancements->rsrp_thres_msg4_harq_ack = 60;
+
+  sib19.sat_switch_with_resync.emplace();
+  sib19.sat_switch_with_resync->ntn_cfg = make_full_ntn_config(!serving_orbital);
+  sib19.sat_switch_with_resync->t_service_start =
+      std::chrono::system_clock::time_point(std::chrono::milliseconds(123456789));
+  sib19.sat_switch_with_resync->ssb_time_offset_sf.emplace(50);
+
+  // Two neighbor cells, one carrying its own explicit NTN config.
+  neighbor_ntn_cell ncell0;
+  ncell0.phys_cell_id = 100;
+  ncell0.carrier_freq = arfcn_t{650000};
+  ncell0.ntn_cfg      = make_full_ntn_config(serving_orbital);
+  sib19.ncells.push_back(ncell0);
+
+  neighbor_ntn_cell ncell1;
+  ncell1.phys_cell_id = 200;
+  ncell1.carrier_freq = arfcn_t{651000};
+  sib19.ncells.push_back(ncell1);
+
+  return sib19;
+}
+
+/// Packs a sib19_info into a BCCH-DL-SCH SystemInformation message, exactly as it is broadcast over the air.
+byte_buffer pack_sib19_bcch_dl_sch(const sib19_info& sib19)
+{
+  asn1::rrc_nr::bcch_dl_sch_msg_s si_msg;
+  asn1::rrc_nr::sys_info_ies_s&   si_ies = si_msg.msg.set_c1().set_sys_info().crit_exts.set_sys_info();
+  si_ies.sib_type_and_info.resize(1);
+  si_ies.sib_type_and_info[0].set_sib19_v1700() = odu::make_asn1_rrc_cell_sib19(sib19);
+
+  byte_buffer         buf;
+  asn1::bit_ref       bref{buf};
+  asn1::OCUDUASN_CODE ret = si_msg.pack(bref);
+  ocudu_assert(ret == asn1::OCUDUASN_SUCCESS, "Failed to pack BCCH-DL-SCH SIB19");
+  return buf;
+}
+
+/// Writes an encoded BCCH-DL-SCH buffer to the PCAP under SI-RNTI at the given SFN/subframe.
+void write_sib19_to_pcap(const byte_buffer& bcch_buf, unsigned sfn, unsigned subframe)
+{
+  if (!g_enable_pcap || g_pcap == nullptr) {
+    return;
+  }
+  mac_nr_context_info context = {};
+  context.radioType           = PCAP_FDD_RADIO;
+  context.direction           = PCAP_DIRECTION_DOWNLINK;
+  context.rntiType            = PCAP_SI_RNTI;
+  context.rnti                = 0xffff; // SI-RNTI
+  context.system_frame_number = static_cast<uint16_t>(sfn);
+  context.sub_frame_number    = static_cast<uint8_t>(subframe);
+  context.length              = static_cast<uint16_t>(bcch_buf.length());
+  g_pcap->push_pdu(context, bcch_buf.deep_copy().value());
+}
+
+} // namespace
+
+TEST(sib19_pcap_test, generate_full_sib19_pcap_with_edge_case_locations)
+{
+  struct sib19_variant {
+    const char*            label;
+    bool                   serving_orbital;
+    geodetic_coordinates_t ref_location;
+    geodetic_coordinates_t moving_ref_location;
+  };
+
+  // Edge-case reference locations: origin (equator/prime-meridian), both poles, both antimeridians, near-limit
+  // coordinates and typical mid-latitude points. Each is emitted once with an ECEF state vector and once with ECI
+  // orbital ephemeris, so both ephemeris encoders are covered.
+  const std::array<sib19_variant, 8> variants = {{
+      {"ecef_origin_0_0", false, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}},
+      {"orbital_origin_0_0", true, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}},
+      {"ecef_north_pole", false, {90.0, 0.0, 0.0}, {89.9999, 179.9999, 0.0}},
+      {"orbital_south_pole", true, {-90.0, 0.0, 0.0}, {-89.9999, -179.9999, 0.0}},
+      {"ecef_antimeridian_pos", false, {0.0, 180.0, 0.0}, {12.34, 179.5, 0.0}},
+      {"orbital_antimeridian_neg", true, {0.0, -180.0, 0.0}, {-12.34, -179.5, 0.0}},
+      {"ecef_mid_latitude", false, {37.7749, -122.4194, 0.0}, {-45.5, 12.3, 0.0}},
+      {"orbital_mid_latitude", true, {48.135, 11.582, 0.0}, {51.5074, -0.1278, 0.0}},
+  }};
+
+  unsigned sfn = 0;
+  for (const auto& v : variants) {
+    SCOPED_TRACE(v.label);
+    sib19_info  sib19    = make_full_sib19(v.serving_orbital, v.ref_location, v.moving_ref_location);
+    byte_buffer bcch_buf = pack_sib19_bcch_dl_sch(sib19);
+    ASSERT_FALSE(bcch_buf.empty());
+
+    // Each message must round-trip through the ASN.1 decoder, i.e. be a valid BCCH-DL-SCH SystemInformation PDU.
+    asn1::cbit_ref                  bref(bcch_buf);
+    asn1::rrc_nr::bcch_dl_sch_msg_s decoded;
+    ASSERT_EQ(decoded.unpack(bref), asn1::OCUDUASN_SUCCESS);
+    ASSERT_TRUE(decoded.msg.c1().type() == asn1::rrc_nr::bcch_dl_sch_msg_type_c::c1_c_::types::sys_info);
+
+    write_sib19_to_pcap(bcch_buf, sfn, /*subframe=*/5);
+    sfn += 10;
+  }
+
+  if (g_enable_pcap && g_pcap != nullptr) {
+    printf("\n=== %zu full SIB19 messages written to /tmp/ntn_sib19_helpers.pcap ===\n", variants.size());
+    printf("Open in Wireshark (>= 4.6.3) and filter with: mac-nr.rnti == 0xffff\n");
+  }
+}
+
+int main(int argc, char** argv)
+{
+  // Check for '--enable_pcap' cmd line argument; do not use getopt as it interferes with gtest.
+  for (int i = 1; i < argc; ++i) {
+    if (std::string(argv[i]) == "--enable_pcap") {
+      g_enable_pcap = true;
+    }
+  }
+
+  ocudulog::init();
+
+  std::unique_ptr<task_worker>          pcap_worker;
+  std::unique_ptr<task_worker_executor> pcap_exec;
+  std::unique_ptr<mac_pcap>             pcap_writer;
+  if (g_enable_pcap) {
+    pcap_worker = std::make_unique<task_worker>("pcap_worker", 128);
+    pcap_exec   = std::make_unique<task_worker_executor>(*pcap_worker);
+    pcap_writer = create_mac_pcap("/tmp/ntn_sib19_helpers.pcap", mac_pcap_type::udp, *pcap_exec);
+    g_pcap      = pcap_writer.get();
+    printf("\n=== PCAP enabled: /tmp/ntn_sib19_helpers.pcap ===\n\n");
+  }
+
+  ::testing::InitGoogleTest(&argc, argv);
+  int result = RUN_ALL_TESTS();
+
+  if (pcap_writer) {
+    pcap_writer->close();
+    pcap_writer.reset();
+  }
+  if (pcap_worker) {
+    pcap_worker->wait_pending_tasks();
+    pcap_worker->stop();
+  }
+
+  return result;
 }
