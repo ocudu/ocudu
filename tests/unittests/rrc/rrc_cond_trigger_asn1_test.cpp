@@ -104,8 +104,8 @@ TEST(cond_trigger_asn1, cond_event_d1_encodes_correctly)
   cfg.cond_event_id.id                        = rrc_event_id::event_id_t::d1;
   cfg.cond_event_id.distance_thresh_from_ref1 = 5000; // 5000 m / 50 = 100 ASN1 steps
   cfg.cond_event_id.distance_thresh_from_ref2 = 3000; // 3000 m / 50 = 60  ASN1 steps
-  cfg.cond_event_id.ref_location1             = rrc_geo_location{48.135, 11.582};
-  cfg.cond_event_id.ref_location2             = rrc_geo_location{48.200, 11.650};
+  cfg.cond_event_id.ref_location1             = reference_location{48.135, 11.582};
+  cfg.cond_event_id.ref_location2             = reference_location{48.200, 11.650};
   cfg.cond_event_id.hysteresis_location       = 100; // 100 m / 10 = 10 ASN1 steps
   cfg.cond_event_id.time_to_trigger           = 100;
 
@@ -130,7 +130,7 @@ TEST(cond_trigger_asn1, cond_event_d1_encodes_correctly)
 TEST(cond_trigger_asn1, cond_event_d1_ref_location_bytes)
 {
   struct test_vector {
-    rrc_geo_location       loc;
+    reference_location     loc;
     std::array<uint8_t, 6> expected;
     const char*            label;
   };

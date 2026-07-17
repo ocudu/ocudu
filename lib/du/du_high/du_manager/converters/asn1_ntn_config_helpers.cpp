@@ -3,7 +3,8 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "asn1_ntn_config_helpers.h"
-#include "ocudu/asn1/lpp/lpp.h"
+#include "ocudu/lpp/reference_location.h"
+#include "ocudu/support/error_handling.h"
 #include <cmath>
 
 using namespace ocudu;
@@ -170,18 +171,7 @@ ntn_cfg_r17_s ocudu::odu::make_asn1_rrc_cell_ntn_cfg(const ntn_config& ntn_cfg)
 
 static byte_buffer pack_asn1_ellipsoid_point(const geodetic_coordinates_t& location)
 {
-  using namespace asn1::lpp;
-  ellipsoid_point_s ref_loc;
-  ref_loc.latitude_sign     = (location.latitude >= 0) ? ellipsoid_point_s::latitude_sign_opts::north
-                                                       : ellipsoid_point_s::latitude_sign_opts::south;
-  ref_loc.degrees_latitude  = static_cast<uint32_t>(std::floor(std::abs(location.latitude) * 8388607 / 90));
-  ref_loc.degrees_longitude = static_cast<int32_t>(std::floor(location.longitude * 16777215 / 360));
-
-  byte_buffer         buf;
-  asn1::bit_ref       bref{buf};
-  asn1::OCUDUASN_CODE ret = ref_loc.pack(bref);
-  ocudu_assert(ret == asn1::OCUDUASN_SUCCESS, "Failed to pack reference location for SIB19");
-  return buf;
+  return lpp::pack_reference_location(reference_location{location.latitude, location.longitude});
 }
 
 /// \brief Encodes a neighbor NTN cell configuration to ASN.1 format.

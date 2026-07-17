@@ -13,6 +13,7 @@
 /f1u/
 /gtpu/
 /hal/dpdk/bbdev/ldpc/
+/lpp/
 /mac/
 /ngap/
 /nrppa/

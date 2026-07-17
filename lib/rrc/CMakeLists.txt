@@ -23,6 +23,6 @@ set(SOURCES
 )
 
 add_library(ocudu_rrc STATIC ${SOURCES})
-target_link_libraries(ocudu_rrc ocudu_up_resource_manager ocudu_ue_security_manager ocudu_security ocudu_pdcp rrc_nr_asn1)
+target_link_libraries(ocudu_rrc ocudu_up_resource_manager ocudu_ue_security_manager ocudu_security ocudu_pdcp rrc_nr_asn1 ocudu_lpp_lib)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

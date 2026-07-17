@@ -3,43 +3,12 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "rrc_measurement_types_asn1_converters.h"
+#include "ocudu/lpp/reference_location.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/support/error_handling.h"
-#include <algorithm>
-#include <cmath>
 
 using namespace ocudu;
 using namespace ocucp;
-
-/// Pack a 3GPP TS 23.032 Ellipsoid-Point into a 6-byte buffer.
-/// Bit layout: [1-bit N/S | 23-bit latitude | 24-bit longitude]
-/// Encodes a geographic point into the 6-byte Ellipsoid-Point format required by TS 38.331, TS 37.355 sec. 5.1,
-/// TS 23.032 sec. 6.1. for the ReferenceLocation-r17 IE (condEventD1-r17 / condEventD2-r18).
-static ocudu::byte_buffer pack_ellipsoid_point(const rrc_geo_location& loc)
-{
-  constexpr uint32_t lat_max   = 8388607u;
-  constexpr int32_t  lon_min   = -8388608;
-  constexpr int32_t  lon_max   = 8388607;
-  constexpr uint32_t lon_shift = 8388608u;
-
-  const bool south = loc.latitude < 0.0;
-  const auto lat_enc =
-      std::clamp(static_cast<uint32_t>(std::floor(std::abs(loc.latitude) * lat_max / 90.0)), 0u, lat_max);
-  const auto lon_raw =
-      std::clamp(static_cast<int32_t>(std::floor(loc.longitude * 16777215.0 / 360.0)), lon_min, lon_max);
-
-  // Keep manual packing byte-for-byte compatible with ASN.1 constrained INTEGER encoding.
-  const auto lon_enc = static_cast<uint32_t>(lon_raw + static_cast<int32_t>(lon_shift));
-  uint64_t   bits    = (static_cast<uint64_t>(south) << 47u) | (static_cast<uint64_t>(lat_enc) << 24u) |
-                  static_cast<uint64_t>(lon_enc & 0xffffffu);
-
-  uint8_t raw[6];
-  for (int i = 5; i >= 0; --i) {
-    raw[i] = static_cast<uint8_t>(bits & 0xffu);
-    bits >>= 8u;
-  }
-  return byte_buffer::create(raw, raw + 6).value();
-}
 
 static void fill_asn1_ephemeris_info(asn1::rrc_nr::ephemeris_info_r17_c& out, const ntn_ephemeris_info_t& ephemeris)
 {
@@ -678,7 +647,7 @@ asn1::rrc_nr::meas_obj_nr_s ocudu::ocucp::meas_obj_nr_to_rrc_asn1(const rrc_meas
         fill_asn1_ephemeris_info(ntn_asn1.ephemeris_info_r18, ntn.ephemeris);
         // referenceLocation is optional: leave ref_location_r18 empty when absent (encoded as not present).
         if (ntn.ref_location.has_value()) {
-          auto ref_buf = pack_ellipsoid_point(*ntn.ref_location);
+          auto ref_buf = lpp::pack_reference_location(*ntn.ref_location);
           if (ntn_asn1.ref_location_r18.resize(ref_buf.length())) {
             std::copy(ref_buf.begin(), ref_buf.end(), ntn_asn1.ref_location_r18.begin());
           }
@@ -1122,8 +1091,8 @@ ocudu::ocucp::cond_trigger_cfg_to_rrc_asn1(const rrc_cond_trigger_cfg& cond_trig
     // Convert meters with 50 m steps (round-down).
     ev.distance_thresh_from_ref1_r17 = static_cast<uint16_t>(cond_event.distance_thresh_from_ref1.value() / 50);
     ev.distance_thresh_from_ref2_r17 = static_cast<uint16_t>(cond_event.distance_thresh_from_ref2.value() / 50);
-    ev.ref_location1_r17             = pack_ellipsoid_point(cond_event.ref_location1.value());
-    ev.ref_location2_r17             = pack_ellipsoid_point(cond_event.ref_location2.value());
+    ev.ref_location1_r17             = lpp::pack_reference_location(cond_event.ref_location1.value());
+    ev.ref_location2_r17             = lpp::pack_reference_location(cond_event.ref_location2.value());
     // Convert meters with 10 m steps (round-down).
     ev.hysteresis_location_r17 = static_cast<uint16_t>(cond_event.hysteresis_location.value() / 10);
     asn1::number_to_enum(ev.time_to_trigger_r17, cond_event.time_to_trigger);

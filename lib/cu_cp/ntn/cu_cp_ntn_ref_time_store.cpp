@@ -78,7 +78,7 @@ public:
       item.info.epoch_time                          = ncell.epoch_time;
       item.info.ephemeris                           = ncell.ephemeris;
       if (ncell.ref_location) {
-        item.info.ref_location = ocucp::rrc_geo_location{ncell.ref_location->latitude, ncell.ref_location->longitude};
+        item.info.ref_location = reference_location{ncell.ref_location->latitude, ncell.ref_location->longitude};
       }
       item.polarization = ncell.polarization;
     }

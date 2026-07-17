@@ -84,11 +84,11 @@ struct cu_cp_unit_report_config {
           ///< E.g. putting a value of -6 here results in -3dB offset.
 
   // D1/D2 conditional event fields
-  std::optional<double> distance_thresh_from_ref1_km;            ///< D1/D2: distance threshold 1 in km [0..3276.75]
-  std::optional<double> distance_thresh_from_ref2_km;            ///< D1/D2: distance threshold 2 in km [0..3276.75]
-  std::optional<ocucp::rrc_geo_location> ref_location1;          ///< D1: reference location for serving cell
-  std::optional<ocucp::rrc_geo_location> ref_location2;          ///< D1: reference location for target cell
-  std::optional<double>                  hysteresis_location_km; ///< D1/D2: hysteresis in km (10m steps, max 327.68)
+  std::optional<double>             distance_thresh_from_ref1_km; ///< D1/D2: distance threshold 1 in km [0..3276.75]
+  std::optional<double>             distance_thresh_from_ref2_km; ///< D1/D2: distance threshold 2 in km [0..3276.75]
+  std::optional<reference_location> ref_location1;                ///< D1: reference location for serving cell
+  std::optional<reference_location> ref_location2;                ///< D1: reference location for target cell
+  std::optional<double>             hysteresis_location_km;       ///< D1/D2: hysteresis in km (10m steps, max 327.68)
 
   // T1 conditional event fields
   std::optional<std::chrono::system_clock::time_point> t1_thres; ///< T1: UTC time threshold

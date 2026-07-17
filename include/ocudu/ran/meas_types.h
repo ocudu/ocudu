@@ -8,6 +8,7 @@
 #include "ocudu/ran/nr_cell_identity.h"
 #include "ocudu/ran/ntn.h"
 #include "ocudu/ran/pci.h"
+#include "ocudu/ran/reference_location.h"
 #include "ocudu/ran/subcarrier_spacing.h"
 #include <map>
 #include <string>
@@ -205,17 +206,11 @@ struct rrc_q_offset_range_list {
   std::optional<int8_t> sinr_offset_csi_rs;
 };
 
-/// Geographic location (lat/lon only) for CHO distance-based conditional events.
-struct rrc_geo_location {
-  double latitude;  ///< degrees [-90..90]
-  double longitude; ///< degrees [-180..180]
-};
-
 /// NTN neighbour cell info for ntn-NeighbourCellInfo-r18 in MeasObjectNR (TS 38.331).
 struct rrc_ntn_neighbour_cell_info {
-  epoch_time_t                    epoch_time;   ///< SFN+subframe epoch, in the serving cell timeline
-  ntn_ephemeris_info_t            ephemeris;    ///< Satellite ephemeris
-  std::optional<rrc_geo_location> ref_location; ///< 2-D reference location
+  epoch_time_t                      epoch_time;   ///< SFN+subframe epoch, in the serving cell timeline
+  ntn_ephemeris_info_t              ephemeris;    ///< Satellite ephemeris
+  std::optional<reference_location> ref_location; ///< 2-D reference location
 };
 
 /// Pairs a neighbour cell identity with its NTN neighbour cell info, used to update measurement configurations.
@@ -415,11 +410,11 @@ struct rrc_event_id {
   std::optional<bool> use_allowed_cell_list; ///< For event A3/A4/A5/A6
 
   // D1/D2: distance-based fields
-  std::optional<uint32_t>         distance_thresh_from_ref1; ///< in meters (D1:[0..65535*50] D2:[0..65535*50])
-  std::optional<uint32_t>         distance_thresh_from_ref2; ///< in meters
-  std::optional<rrc_geo_location> ref_location1;             ///< D1: reference location for serving cell
-  std::optional<rrc_geo_location> ref_location2;             ///< D1: reference location for target cell
-  std::optional<uint32_t>         hysteresis_location; ///< D1/D2: in meters [0..327680] (ASN.1 encodes in 10m steps)
+  std::optional<uint32_t>           distance_thresh_from_ref1; ///< in meters (D1:[0..65535*50] D2:[0..65535*50])
+  std::optional<uint32_t>           distance_thresh_from_ref2; ///< in meters
+  std::optional<reference_location> ref_location1;             ///< D1: reference location for serving cell
+  std::optional<reference_location> ref_location2;             ///< D1: reference location for target cell
+  std::optional<uint32_t>           hysteresis_location; ///< D1/D2: in meters [0..327680] (ASN.1 encodes in 10m steps)
 
   // T1: time-based fields
   std::optional<std::chrono::system_clock::time_point> t1_thres; ///< UTC time threshold

@@ -38,7 +38,7 @@ static rrc_ntn_neighbour_cell_info make_ntn_info(bool with_ref_location = true)
   info.ephemeris   = ecef;
 
   if (with_ref_location) {
-    info.ref_location = rrc_geo_location{45.0, 90.0};
+    info.ref_location = reference_location{45.0, 90.0};
   }
   return info;
 }

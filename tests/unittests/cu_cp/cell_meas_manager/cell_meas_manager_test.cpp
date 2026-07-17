@@ -614,7 +614,7 @@ static rrc_ntn_neighbour_cell_info make_test_ntn_neighbour_info()
   ecef.velocity_vz = 6104.62;
   info.ephemeris   = ecef;
 
-  info.ref_location = rrc_geo_location{12.3, 45.6};
+  info.ref_location = reference_location{12.3, 45.6};
   return info;
 }
 

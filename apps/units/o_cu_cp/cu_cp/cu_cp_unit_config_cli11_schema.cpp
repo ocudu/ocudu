@@ -17,7 +17,7 @@
 using namespace ocudu;
 
 /// Registers CLI11 lat/lon options on \p app bound to \p loc.
-static void configure_cli11_geo_location(CLI::App& app, ocucp::rrc_geo_location& loc)
+static void configure_cli11_reference_location(CLI::App& app, reference_location& loc)
 {
   add_option(app, "--latitude", loc.latitude, "Latitude [degrees, -90..90]")->check(CLI::Range(-90.0, 90.0));
   add_option(app, "--longitude", loc.longitude, "Longitude [degrees, -180..180]")->check(CLI::Range(-180.0, 180.0));
@@ -327,20 +327,20 @@ static void configure_cli11_report_args(CLI::App& app, cu_cp_unit_report_config&
       ->check(CLI::Range(0.0, 327.68));
 
   // D1 reference locations (nested subcommands for lat/lon).
-  static ocucp::rrc_geo_location ref_location1;
-  CLI::App*                      ref_loc1_sub =
+  static reference_location ref_location1;
+  CLI::App*                 ref_loc1_sub =
       app.add_subcommand("ref_location1", "D1: reference location 1 (serving cell)")->configurable();
-  configure_cli11_geo_location(*ref_loc1_sub, ref_location1);
+  configure_cli11_reference_location(*ref_loc1_sub, ref_location1);
   ref_loc1_sub->parse_complete_callback([&]() {
     if (app.get_subcommand("ref_location1")->count() != 0) {
       report_params.ref_location1 = ref_location1;
     }
   });
 
-  static ocucp::rrc_geo_location ref_location2;
-  CLI::App*                      ref_loc2_sub =
+  static reference_location ref_location2;
+  CLI::App*                 ref_loc2_sub =
       app.add_subcommand("ref_location2", "D1: reference location 2 (target cell)")->configurable();
-  configure_cli11_geo_location(*ref_loc2_sub, ref_location2);
+  configure_cli11_reference_location(*ref_loc2_sub, ref_location2);
   ref_loc2_sub->parse_complete_callback([&]() {
     if (app.get_subcommand("ref_location2")->count() != 0) {
       report_params.ref_location2 = ref_location2;
