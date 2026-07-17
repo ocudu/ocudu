@@ -14,32 +14,40 @@
 
 namespace ocudu::ocucp {
 
-class cu_cp_routine_manager;
-struct cu_cp_configuration;
+/// XNC connection manager dependencies.
+struct xnc_connection_manager_dependencies {
+  xnap_repository&                     xnaps;
+  std::vector<xnc_connection_gateway*> xnc_gws;
+  timer_manager&                       timers;
+  task_executor&                       cu_cp_exec;
+  async_task_scheduler&                common_task_sched;
+  ocudulog::basic_logger&              logger;
+};
 
 class xnc_connection_manager : public cu_cp_xnc_handler
 {
 public:
-  xnc_connection_manager(xnap_repository&                            xnaps_,
-                         const std::vector<xnc_connection_gateway*>& xnc_gws_,
-                         timer_manager&                              timers_,
-                         task_executor&                              cu_cp_exec_,
-                         async_task_scheduler&                       common_task_sched_);
+  explicit xnc_connection_manager(const xnc_connection_manager_dependencies& dependencies);
 
+  /// Starts the connection manager.
   void start(const xnap_configuration& xnap_cfg);
 
   /// Register the XnAP gateway used for outbound connect/reconnect to the given peer.
-  void register_peer_gateway(xnc_peer_index_t xnc_idx, xnc_connection_gateway* gateway);
+  void register_peer_gateway(xnc_peer_index_t xnc_idx, xnc_gateway_index_t gw_index);
 
+  // See interface for documentation.
   std::unique_ptr<xnap_message_notifier>
   handle_new_xnc_cu_cp_connection(std::unique_ptr<xnap_message_notifier> xnap_tx_pdu_notifier,
                                   const sctp_association_info&           assoc_info) override;
 
+  /// Handles an XNC gateway connection close event for the given XNC index.
   void handle_xnc_gw_connection_closed(xnc_peer_index_t xnc_idx);
 
+  /// stops the connection manager.
   void stop();
 
 private:
+  /// Reconnects the peer.
   void reconnect_peer(xnc_peer_index_t                            xnc_idx,
                       const std::vector<transport_layer_address>& peer_addrs,
                       xnc_connection_gateway*                     xnc_gw);

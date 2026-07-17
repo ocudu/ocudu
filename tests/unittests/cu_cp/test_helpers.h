@@ -226,7 +226,7 @@ private:
 class dummy_du_connection_notifier : public du_connection_notifier
 {
 public:
-  bool on_du_setup_request(cu_cp_du_index_t du_index, const std::set<plmn_identity>& plmn_ids) override { return true; }
+  bool on_du_setup_request(const std::set<plmn_identity>& plmn_ids) override { return true; }
 };
 
 class dummy_cu_cp_ref_time_report_notifier : public cu_cp_ref_time_report_notifier

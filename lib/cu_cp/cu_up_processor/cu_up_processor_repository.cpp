@@ -6,24 +6,31 @@
 #include "cu_up_processor_config.h"
 #include "cu_up_processor_factory.h"
 #include "ocudu/adt/format.h"
-#include "ocudu/cu_cp/cu_cp_configuration.h"
 #include "ocudu/ran/cu_cp_types.h"
 
 using namespace ocudu;
 using namespace ocucp;
 
-cu_up_processor_repository::cu_up_processor_repository(cu_up_repository_config cfg_) : cfg(cfg_), logger(cfg.logger) {}
+cu_up_processor_repository::cu_up_processor_repository(const cu_up_repository_config&       cfg_,
+                                                       const cu_up_repository_dependencies& dependencies) :
+  cfg(cfg_),
+  cu_cp_executor(dependencies.cu_cp_executor),
+  timers(dependencies.timers),
+  e1ap_ev_notifier(dependencies.e1ap_ev_notifier),
+  common_task_sched(dependencies.common_task_sched),
+  logger(dependencies.logger)
+{
+}
 
 cu_cp_cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier)
 {
   cu_cp_cu_up_index_t cu_up_index = allocate_cu_up_index();
   if (cu_up_index == cu_cp_cu_up_index_t::invalid) {
-    logger.warning("CU-UP connection failed. Cause: Maximum number of CU-UPs connected ({})",
-                   cfg.cu_cp.admission.max_nof_cu_ups);
+    logger.warning("CU-UP connection failed. Cause: Maximum number of CU-UPs connected ({})", cfg.max_nof_cu_ups);
     fmt::print(
         "CU-UP connection failed. Cause: Maximum number of CU-UPs connected ({}). To increase the number of allowed "
         "CU-UPs change the \"--max_nof_cu_ups\" in the CU-CP configuration\n",
-        cfg.cu_cp.admission.max_nof_cu_ups);
+        cfg.max_nof_cu_ups);
     return cu_cp_cu_up_index_t::invalid;
   }
 
@@ -34,9 +41,14 @@ cu_cp_cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_m
   cu_up_ctxt.e1ap_tx_pdu_notifier = std::move(e1ap_tx_pdu_notifier);
 
   // TODO: use real config
-  cu_up_processor_config_t         cu_up_cfg = {"ocucp", cu_up_index, cfg.cu_cp, logger};
-  std::unique_ptr<cu_up_processor> cu_up     = create_cu_up_processor(
-      std::move(cu_up_cfg), *cu_up_ctxt.e1ap_tx_pdu_notifier, cfg.e1ap_ev_notifier, cfg.common_task_sched);
+  auto cu_up_cfg = cu_up_processor_config{
+      .name = "ocucp", .cu_up_index = cu_up_index, .e1ap = cfg.e1ap, .max_nof_ues = cfg.max_nof_ues};
+  auto                             cu_up_deps = cu_up_processor_dependencies{.cu_cp_executor = cu_cp_executor,
+                                                                             .timers         = timers,
+                                                                             .e1ap_notifier = *cu_up_ctxt.e1ap_tx_pdu_notifier,
+                                                                             .cu_cp_notifier    = e1ap_ev_notifier,
+                                                                             .common_task_sched = common_task_sched};
+  std::unique_ptr<cu_up_processor> cu_up      = create_cu_up_processor(cu_up_cfg, cu_up_deps);
 
   ocudu_assert(cu_up != nullptr, "Failed to create CU-UP processor");
   cu_up_ctxt.processor = std::move(cu_up);
@@ -46,9 +58,9 @@ cu_cp_cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_m
 
 cu_cp_cu_up_index_t cu_up_processor_repository::allocate_cu_up_index()
 {
-  for (unsigned cu_up_index_int = cu_cp_cu_up_index_to_uint(cu_cp_cu_up_index_t::min);
-       cu_up_index_int < cfg.cu_cp.admission.max_nof_cu_ups;
-       cu_up_index_int++) {
+  for (unsigned cu_up_index_int = cu_cp_cu_up_index_to_uint(cu_cp_cu_up_index_t::min), e = cfg.max_nof_cu_ups;
+       cu_up_index_int != e;
+       ++cu_up_index_int) {
     cu_cp_cu_up_index_t cu_up_index = uint_to_cu_cp_cu_up_index(cu_up_index_int);
     if (cu_up_db.find(cu_up_index) == cu_up_db.end()) {
       return cu_up_index;
@@ -118,10 +130,10 @@ cu_cp_cu_up_index_t cu_up_processor_repository::select_cu_up()
   return selected_cu_up;
 }
 
-size_t cu_up_processor_repository::get_nof_e1ap_ues()
+size_t cu_up_processor_repository::get_nof_e1ap_ues() const
 {
   size_t nof_ues = 0;
-  for (auto& cu_up : cu_up_db) {
+  for (const auto& cu_up : cu_up_db) {
     nof_ues += cu_up.second.processor->get_e1ap_statistics_handler().get_nof_ues();
   }
   return nof_ues;

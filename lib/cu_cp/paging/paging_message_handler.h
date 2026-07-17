@@ -12,6 +12,7 @@ namespace ocudu::ocucp {
 class du_processor_repository;
 struct cu_cp_paging_message;
 
+/// Paging message handler dependencies.
 struct paging_message_handler_dependencies {
   du_processor_repository& dus;
   ocudulog::basic_logger&  logger;

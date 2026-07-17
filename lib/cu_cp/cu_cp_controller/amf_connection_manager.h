@@ -4,36 +4,45 @@
 
 #pragma once
 
-#include "../ngap_repository.h"
 #include "../ue_manager/ue_manager_impl.h"
-#include "ocudu/cu_cp/cu_cp_ng_setup_notifier.h"
 #include "ocudu/ran/plmn_identity.h"
-#include "ocudu/support/async/async_task_scheduler.h"
 #include <future>
 
-namespace ocudu::ocucp {
+namespace ocudu {
 
-class cu_cp_routine_manager;
-struct cu_cp_configuration;
+class async_task_scheduler;
 
+namespace ocucp {
+
+class cu_cp_ng_setup_complete_notifier;
+class ngap_repository;
+
+/// AMF connection manager dependencies.
+struct amf_connection_manager_dependencies {
+  ngap_repository&                  ngaps;
+  cu_cp_amf_reconnection_handler&   cu_cp_notifier;
+  timer_manager&                    timers;
+  task_executor&                    cu_cp_exec;
+  async_task_scheduler&             common_task_sched;
+  ocudulog::basic_logger&           logger;
+  cu_cp_ng_setup_complete_notifier* ng_setup_notifier = nullptr;
+};
+
+/// AMF connection manager.
 class amf_connection_manager
 {
 public:
-  amf_connection_manager(ngap_repository&                  ngaps_,
-                         cu_cp_amf_reconnection_handler&   cu_cp_notifier_,
-                         timer_manager&                    timers_,
-                         task_executor&                    cu_cp_exec_,
-                         async_task_scheduler&             common_task_sched_,
-                         cu_cp_ng_setup_complete_notifier* ng_setup_notifier_ = nullptr);
+  explicit amf_connection_manager(const amf_connection_manager_dependencies& dependencies);
 
   /// \brief Initiates the connection to the AMF.
+  ///
   /// A promise is passed as a parameter to enable blocking synchronization between the completion of the scheduled
   /// async task and the caller side.
   /// \param[in] completion_signal Promise signalled with the result of the connection setup.
   /// \param[in] retry_time The time to wait between attempts of the AMFs that are reconnected in the background.
   void connect_to_amf(std::promise<bool>* completion_signal, std::chrono::milliseconds retry_time);
 
-  /// \brief Initiate procedure to disconnect from the N2 interface.
+  /// Initiate procedure to disconnect from the N2 interface.
   async_task<void> disconnect_amf();
 
   /// \brief Handles the loss of connection to the AMF.
@@ -49,16 +58,23 @@ public:
                         ue_manager*               ue_mng,
                         std::chrono::milliseconds amf_reconnection_retry_time);
 
+  /// Stops the AMF connection manager.
   void stop();
 
-  /// Checks whether the CU-CP is connected to the AMF.
+  /// Checks whether the CU-CP is connected to the AMF with the given PLMN identity.
   bool is_amf_connected(plmn_identity plmn) const;
+
+  /// Checks whether the CU-CP is connected to the AMF with the given CU_CP AMF index.
   bool is_amf_connected(cu_cp_amf_index_t amf_index) const;
 
+  /// Returns the number of AMFs.
   size_t nof_amfs() const { return amfs_connected.size(); }
 
 private:
-  void              handle_connection_setup_result(cu_cp_amf_index_t amf_index, bool success);
+  /// Handles the connection setup result.
+  void handle_connection_setup_result(cu_cp_amf_index_t amf_index, bool success);
+
+  /// Converts the given PLMN identity into a CU_CP AMF index.
   cu_cp_amf_index_t plmn_to_amf_index(plmn_identity plmn) const;
 
   /// \brief Schedules a background reconnection for every AMF whose N2 TNL association could not be established.
@@ -78,4 +94,5 @@ private:
   std::atomic<bool> stopped{false};
 };
 
-} // namespace ocudu::ocucp
+} // namespace ocucp
+} // namespace ocudu

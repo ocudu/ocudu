@@ -37,7 +37,7 @@ public:
   /// Deletes the associated XNC repository, if it exists.
   void disconnect()
   {
-    if (not connected()) {
+    if (!connected()) {
       // XNC was never allocated or was already removed.
       return;
     }
@@ -52,7 +52,7 @@ public:
   /// Handle XNAP message coming from the SCTP GW.
   void handle_message(const xnap_message& msg)
   {
-    if (not connected()) {
+    if (!connected()) {
       parent.logger.warning("Discarding Rx XNAP message. Cause: CU-CP Xn-C connection has been closed");
       return;
     }
@@ -82,7 +82,7 @@ public:
     // Note: We make a copy of the shared_ptr of the context to extend its lifetime to when the defer callback actually
     // gets executed.
     // Note: We don't use move because the defer may fail.
-    while (not parent.cu_cp_exec.defer([ctxt_cpy = ctxt]() { ctxt_cpy->disconnect(); })) {
+    while (!parent.cu_cp_exec.defer([ctxt_cpy = ctxt]() { ctxt_cpy->disconnect(); })) {
       parent.logger.error("Failed to schedule XNC CU-CP removal task. Retrying...");
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
@@ -91,7 +91,7 @@ public:
   bool on_new_message(const xnap_message& msg) override
   {
     // Dispatch the XNAP Rx message handling to the CU-CP executor.
-    while (not parent.cu_cp_exec.execute([this, msg]() { ctxt->handle_message(msg); })) {
+    while (!parent.cu_cp_exec.execute([this, msg]() { ctxt->handle_message(msg); })) {
       parent.logger.error("Failed to dispatch XNAP message to CU-CP. Retrying...");
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
@@ -103,23 +103,23 @@ private:
   std::shared_ptr<shared_xnc_connection_context> ctxt;
 };
 
-xnc_connection_manager::xnc_connection_manager(xnap_repository&                            xnaps_,
-                                               const std::vector<xnc_connection_gateway*>& xnc_gws_,
-                                               timer_manager&                              timers_,
-                                               task_executor&                              cu_cp_exec_,
-                                               async_task_scheduler&                       common_task_sched_) :
-  xnaps(xnaps_),
-  xnc_gws(xnc_gws_),
-  timers(timers_),
-  cu_cp_exec(cu_cp_exec_),
-  common_task_sched(common_task_sched_),
-  logger(ocudulog::fetch_basic_logger("CU-CP"))
+xnc_connection_manager::xnc_connection_manager(const xnc_connection_manager_dependencies& dependencies) :
+  xnaps(dependencies.xnaps),
+  xnc_gws(dependencies.xnc_gws),
+  timers(dependencies.timers),
+  cu_cp_exec(dependencies.cu_cp_exec),
+  common_task_sched(dependencies.common_task_sched),
+  logger(dependencies.logger)
 {
 }
 
-void xnc_connection_manager::register_peer_gateway(xnc_peer_index_t xnc_idx, xnc_connection_gateway* gateway)
+void xnc_connection_manager::register_peer_gateway(xnc_peer_index_t xnc_idx, xnc_gateway_index_t gw_index)
 {
-  xnc_gateways[xnc_idx] = gateway;
+  if (xnc_gateway_index_to_uint(gw_index) >= xnc_gws.size()) {
+    return;
+  }
+
+  xnc_gateways[xnc_idx] = xnc_gws[xnc_gateway_index_to_uint(gw_index)];
 }
 
 void xnc_connection_manager::start(const xnap_configuration& xnap_cfg_)
@@ -179,7 +179,7 @@ void xnc_connection_manager::stop()
   stop_completed = false;
   stopped        = true;
 
-  while (not cu_cp_exec.execute([this]() mutable {
+  while (!cu_cp_exec.execute([this]() mutable {
     if (xnc_connections.empty()) {
       // No XNAPs connected. Notify completion.
       std::unique_lock<std::mutex> lock(stop_mutex);
@@ -231,8 +231,8 @@ xnc_connection_manager::handle_new_xnc_cu_cp_connection(std::unique_ptr<xnap_mes
   auto rx_pdu_notifier = std::make_unique<xnc_gw_to_cu_cp_pdu_adapter>(*this, shared_ctxt);
 
   // Find XNAP neighbour. This needs to be done over the CU-CP execution context, so
-  // we dispatch the task to find the correct XNAP and "attach" it to the notifier
-  while (not cu_cp_exec.execute(
+  // we dispatch the task to find the correct XNAP and "attach" it to the notifier.
+  while (!cu_cp_exec.execute(
       [this, shared_ctxt, sender_notifier = std::move(xnap_tx_pdu_notifier), addr = assoc_info.peer_addr]() mutable {
         // Find XNAP based on address of peer.
         xnc_peer_index_t xnc_index = xnaps.find_xnap(addr);
@@ -344,7 +344,7 @@ void xnc_connection_manager::reconnect_peer(xnc_peer_index_t                    
         CORO_AWAIT(async_wait_for(retry_timer, xnap_cfg.reconnect_timer));
 
         // Skip if shutting down or peer was already reconnected (e.g. by an inbound connection).
-        if (stopped or xnc_connections.count(xnc_idx) > 0) {
+        if (stopped || xnc_connections.count(xnc_idx) > 0) {
           CORO_EARLY_RETURN();
         }
 

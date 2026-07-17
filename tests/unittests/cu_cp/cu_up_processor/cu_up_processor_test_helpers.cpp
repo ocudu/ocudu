@@ -48,10 +48,16 @@ cu_up_processor_test::cu_up_processor_test() :
   cu_cp_logger.set_level(ocudulog::basic_levels::debug);
   ocudulog::init();
 
-  // create and start CU-UP processor
-  cu_up_processor_config_t cu_up_cfg = {"ocucp", cu_cp_cu_up_index_t::min, cu_cp_cfg, cu_cp_logger};
-
-  cu_up_processor_obj = create_cu_up_processor(std::move(cu_up_cfg), e1ap_notifier, cu_cp_notifier, *common_task_sched);
+  // Create and start CU-UP processor.
+  cu_up_processor_obj = create_cu_up_processor(cu_up_processor_config{.name        = "ocucp",
+                                                                      .cu_up_index = cu_cp_cu_up_index_t::min,
+                                                                      .e1ap        = cu_cp_cfg.e1ap,
+                                                                      .max_nof_ues = cu_cp_cfg.admission.max_nof_ues},
+                                               cu_up_processor_dependencies{.cu_cp_executor    = ctrl_worker,
+                                                                            .timers            = timers,
+                                                                            .e1ap_notifier     = e1ap_notifier,
+                                                                            .cu_cp_notifier    = cu_cp_notifier,
+                                                                            .common_task_sched = *common_task_sched});
 }
 
 cu_up_processor_test::~cu_up_processor_test()

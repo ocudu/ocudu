@@ -43,7 +43,7 @@ struct ue_manager_dependencies {
 class ue_manager : public ue_metrics_handler
 {
 public:
-  explicit ue_manager(const ue_manager_config& cfg, const ue_manager_dependencies& dependencies);
+  ue_manager(const ue_manager_config& cfg, const ue_manager_dependencies& dependencies);
 
   /// Stop UE activity.
   void stop();
@@ -137,7 +137,6 @@ public:
 
   /// \brief Update the context of the UE.
   /// \param[in] ue_index Index of the UE.
-  /// \param[in] du_index Index of the DU the UE is connected to.
   /// \param[in] du_id The gNB-DU ID of the DU the UE is connected to.
   /// \param[in] pci The PCI of the cell the UE is connected to.
   /// \param[in] rnti The RNTI of the UE.
@@ -146,7 +145,7 @@ public:
   bool
   update_ue_context(cu_cp_ue_index_t ue_index, gnb_du_id_t du_id, pci_t pci, rnti_t rnti, du_cell_index_t pcell_index);
 
-  /// \brief Find the UE with the given UE index, thats DU context is set up.
+  /// \brief Find the UE with the given UE index, that DU context is set up.
   /// \param[in] ue_index Index of the UE to be found.
   /// \return Pointer to the DU UE if found, nullptr otherwise.
   cu_cp_ue* find_du_ue(cu_cp_ue_index_t ue_index);
@@ -167,6 +166,7 @@ public:
     return ues.at(ue_index).get_ngap_rrc_ue_adapter();
   }
 
+  /// Gets the RRC UE NGAP adapter for the given UE index.
   rrc_ue_ngap_adapter& get_rrc_ue_ngap_adapter(cu_cp_ue_index_t ue_index)
   {
     ocudu_assert(ue_index != cu_cp_ue_index_t::invalid, "Invalid ue_index={}", ue_index);
@@ -175,6 +175,7 @@ public:
     return ues.at(ue_index).get_rrc_ue_ngap_adapter();
   }
 
+  /// Gets the RRC UE CU-CP adapter for the given UE index.
   rrc_ue_cu_cp_adapter& get_rrc_ue_cu_cp_adapter(cu_cp_ue_index_t ue_index)
   {
     ocudu_assert(ue_index != cu_cp_ue_index_t::invalid, "Invalid ue_index={}", ue_index);
@@ -183,10 +184,13 @@ public:
     return ues.at(ue_index).get_rrc_ue_cu_cp_adapter();
   }
 
+  // See interface for documentation.
   std::vector<cu_cp_metrics_report::ue_info> handle_ue_metrics_report_request() const override;
 
+  /// Returns the UE task scheduler manager.
   ue_task_scheduler_manager& get_task_sched() { return ue_task_scheds; }
 
+  /// Gets the cell MEAS manager UE context for the given UE index.
   cell_meas_manager_ue_context& get_measurement_context(cu_cp_ue_index_t ue_index)
   {
     ocudu_assert(ue_index != cu_cp_ue_index_t::invalid, "Invalid ue_index={}", ue_index);
@@ -204,6 +208,7 @@ private:
   /// \return The UE index.
   cu_cp_ue_index_t allocate_ue_index();
 
+  /// Increases the next UE index.
   void increase_next_ue_index()
   {
     if (next_ue_index == cu_cp_ue_index_t::max) {
@@ -228,6 +233,7 @@ private:
     full_i_rnti = full_i_rnti_t{full_i_rnti.profile(), full_i_rnti.node_id(), next_ue_ref};
   }
 
+  /// Increases the given short I-RNTI.
   void increase_short_i_rnti(short_i_rnti_t& short_i_rnti) const
   {
     const uint32_t next_ue_ref =
@@ -245,16 +251,19 @@ private:
   task_executor&          cu_cp_executor;
   ocudulog::basic_logger& logger;
 
-  // Manager of UE task schedulers.
+  /// Manager of UE task schedulers.
   ue_task_scheduler_manager ue_task_scheds;
 
-  // Container of UE contexts handled by the CU-CP.
+  /// Container of UE contexts handled by the CU-CP.
   std::unordered_map<cu_cp_ue_index_t, cu_cp_ue> ues;
 
-  // UE index lookups.
-  std::map<std::tuple<pci_t, rnti_t>, cu_cp_ue_index_t> pci_rnti_to_ue_index;     // ue_indexes indexed by pci and rnti
-  std::map<short_i_rnti_t, cu_cp_ue_index_t>            short_i_rnti_to_ue_index; // ue_indexes indexed by short_i_rnti
-  std::map<full_i_rnti_t, cu_cp_ue_index_t>             full_i_rnti_to_ue_index;  // ue_indexes indexed by full_i_rnti
+  /// UE index lookups.
+  /// ue_indexes indexed by pci and rnti.
+  std::map<std::tuple<pci_t, rnti_t>, cu_cp_ue_index_t> pci_rnti_to_ue_index;
+  /// ue_indexes indexed by short_i_rnti.
+  std::map<short_i_rnti_t, cu_cp_ue_index_t> short_i_rnti_to_ue_index;
+  /// ue_indexes indexed by full_i_rnti.
+  std::map<full_i_rnti_t, cu_cp_ue_index_t> full_i_rnti_to_ue_index;
 
   std::set<plmn_identity> blocked_plmns;
 };

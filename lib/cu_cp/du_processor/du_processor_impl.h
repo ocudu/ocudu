@@ -30,38 +30,57 @@ public:
   du_processor_impl(const du_processor_config& cfg_, du_processor_dependencies dependencies);
   ~du_processor_impl() override = default;
 
-  // Getter functions.
-
+  // See interface for documentation.
   f1ap_cu& get_f1ap_handler() override { return *f1ap; }
 
+  // See interface for documentation.
   rrc_du& get_rrc_du_handler() override { return *rrc; }
 
+  /// Returns the number of UEs.
   size_t get_nof_ues() const { return ue_mng.get_nof_du_ues(cfg.du_index); }
 
-  // du_processor_mobility_manager_interface
+  // See interface for documentation.
   std::optional<nr_cell_global_id_t> get_cgi(pci_t pci) override;
-  byte_buffer                        get_packed_sib1(nr_cell_global_id_t cgi) override;
 
-  // du_processor_cell_info_interface
-  bool                            has_cell(pci_t pci) override;
-  bool                            has_cell(nr_cell_global_id_t cgi) override;
-  bool                            has_cell_any_state(nr_cell_global_id_t cgi) override;
-  bool                            has_cell_any_state(pci_t pci) override;
+  // See interface for documentation.
+  byte_buffer get_packed_sib1(nr_cell_global_id_t cgi) override;
+
+  // See interface for documentation.
+  bool has_cell(pci_t pci) override;
+
+  // See interface for documentation.
+  bool has_cell(nr_cell_global_id_t cgi) override;
+
+  // See interface for documentation.
+  bool has_cell_any_state(nr_cell_global_id_t cgi) override;
+
+  // See interface for documentation.
+  bool has_cell_any_state(pci_t pci) override;
+
+  // See interface for documentation.
   const du_configuration_context* get_context() const override
   {
     return du_cfg_hdlr->has_context() ? &du_cfg_hdlr->get_context() : nullptr;
   }
 
-  // du_processor_configuration_update_interface
+  // See interface for documentation.
   async_task<f1ap_gnb_cu_configuration_update_response>
   handle_configuration_update(const f1ap_gnb_cu_configuration_update& request) override;
 
+  // See interface for documentation.
   cu_cp_metrics_report::du_info handle_du_metrics_report_request() const override;
 
-  pdcp_ue_context_removal_handler&         get_pdcp_ue_removal_handler() override { return pdcp_removal; }
+  // See interface for documentation.
+  pdcp_ue_context_removal_handler& get_pdcp_ue_removal_handler() override { return pdcp_removal; }
+
+  // See interface for documentation.
   du_processor_ue_context_removal_handler& get_du_processor_ue_removal_handler() override { return *this; }
-  du_processor_mobility_handler&           get_mobility_handler() override { return *this; }
-  du_metrics_handler&                      get_metrics_handler() override { return *this; }
+
+  // See interface for documentation.
+  du_processor_mobility_handler& get_mobility_handler() override { return *this; }
+
+  // See interface for documentation.
+  du_metrics_handler& get_metrics_handler() override { return *this; }
 
 private:
   class f1ap_du_processor_adapter;
@@ -72,6 +91,8 @@ private:
   {
   public:
     explicit pdcp_removal_handler_impl(du_processor_impl& parent_) : parent(&parent_) {}
+
+    // See interface for documentation.
     void remove_ue_context(cu_cp_ue_index_t ue_index) override;
 
   private:
@@ -109,18 +130,18 @@ private:
                      std::optional<rrc_ue_transfer_context> rrc_context,
                      std::optional<rrc_resume_context_t>    remote_resume_context = std::nullopt);
 
-  // du_processor_ue_context_removal_handler
+  // See interface for documentation.
   void remove_ue_context(cu_cp_ue_index_t ue_index) override;
 
   du_processor_config cfg;
 
   du_connection_notifier&                   du_setup_notif;
   std::unique_ptr<du_configuration_handler> du_cfg_hdlr;
+  ocudulog::basic_logger&                   logger;
   du_processor_cu_cp_notifier&              cu_cp_notifier;
   f1ap_message_notifier&                    f1ap_pdu_notifier;
   ue_manager&                               ue_mng;
   cu_cp_ref_time_report_notifier&           ref_time_report_notifier;
-  ocudulog::basic_logger&                   logger;
 
   pdcp_removal_handler_impl pdcp_removal{*this};
 

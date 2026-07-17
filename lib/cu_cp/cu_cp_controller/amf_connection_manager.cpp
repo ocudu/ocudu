@@ -18,19 +18,14 @@
 using namespace ocudu;
 using namespace ocucp;
 
-amf_connection_manager::amf_connection_manager(ngap_repository&                  ngaps_,
-                                               cu_cp_amf_reconnection_handler&   cu_cp_notifier_,
-                                               timer_manager&                    timers_,
-                                               task_executor&                    cu_cp_exec_,
-                                               async_task_scheduler&             common_task_sched_,
-                                               cu_cp_ng_setup_complete_notifier* ng_setup_notifier_) :
-  ngaps(ngaps_),
-  cu_cp_notifier(cu_cp_notifier_),
-  timers(timers_),
-  cu_cp_exec(cu_cp_exec_),
-  common_task_sched(common_task_sched_),
-  logger(ocudulog::fetch_basic_logger("CU-CP")),
-  ng_setup_notifier(ng_setup_notifier_)
+amf_connection_manager::amf_connection_manager(const amf_connection_manager_dependencies& dependencies) :
+  ngaps(dependencies.ngaps),
+  cu_cp_notifier(dependencies.cu_cp_notifier),
+  timers(dependencies.timers),
+  cu_cp_exec(dependencies.cu_cp_exec),
+  common_task_sched(dependencies.common_task_sched),
+  logger(dependencies.logger),
+  ng_setup_notifier(dependencies.ng_setup_notifier)
 {
 }
 
@@ -86,7 +81,7 @@ void amf_connection_manager::reconnect_to_amf(cu_cp_amf_index_t         amf_inde
 
   ngaps.get_ngap_task_scheduler().handle_amf_async_task(
       amf_index,
-      launch_async([this, amf_index, success = bool{false}, ue_mng, amf_reconnection_retry_time](
+      launch_async([this, amf_index, success = false, ue_mng, amf_reconnection_retry_time](
                        coro_context<async_task<void>>& ctx) mutable {
         CORO_BEGIN(ctx);
 
@@ -102,7 +97,7 @@ void amf_connection_manager::reconnect_to_amf(cu_cp_amf_index_t         amf_inde
             ue_mng->remove_blocked_plmns(ngaps.find_ngap(amf_index)->get_ngap_context().get_supported_plmns());
           }
           amfs_connected.emplace(amf_index, true);
-          // Notrify CU-CP about the successful reconnection.
+          // Notify CU-CP about the successful reconnection.
           cu_cp_notifier.handle_amf_reconnection(amf_index);
         } else {
           logger.info("Failed to reconnect to AMF index {}", amf_index);
@@ -118,7 +113,7 @@ void amf_connection_manager::stop()
     return;
   }
 
-  // Stop event used to block while AMF disconnection routine is on-going.
+  // Stop event used to block while AMF disconnection routine is ongoing.
   // We pass the token to the routines by value, to make sure that there is no use after-move within
   // the defer retry loops.
   sync_event stop_control;

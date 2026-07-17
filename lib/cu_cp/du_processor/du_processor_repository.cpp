@@ -6,7 +6,6 @@
 #include "du_processor_config.h"
 #include "du_processor_factory.h"
 #include "ocudu/adt/format.h"
-#include "ocudu/cu_cp/cu_cp_configuration.h"
 #include "ocudu/cu_cp/cu_cp_configuration_helpers.h"
 #include "ocudu/rrc/rrc_config.h"
 #include "ocudu/support/executors/sync_task_executor.h"
@@ -236,7 +235,7 @@ std::vector<cu_cp_metrics_report::du_info> du_processor_repository::handle_du_me
 size_t du_processor_repository::get_nof_f1ap_ues() const
 {
   size_t nof_ues = 0;
-  for (auto& du : du_db) {
+  for (const auto& du : du_db) {
     nof_ues += du.second.processor->get_f1ap_handler().get_nof_ues();
   }
   return nof_ues;
@@ -245,7 +244,7 @@ size_t du_processor_repository::get_nof_f1ap_ues() const
 size_t du_processor_repository::get_nof_rrc_ues() const
 {
   size_t nof_ues = 0;
-  for (auto& du : du_db) {
+  for (const auto& du : du_db) {
     nof_ues += du.second.processor->get_rrc_du_handler().get_nof_ues();
   }
   return nof_ues;

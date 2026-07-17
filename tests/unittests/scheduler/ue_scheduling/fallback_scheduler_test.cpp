@@ -601,7 +601,7 @@ TEST_P(fallback_scheduler_tester, when_conres_and_msg4_srb1_scheduled_separately
   const unsigned            max_test_run_slots = 10U * (1U << current_slot.numerology());
   for (; sl_idx != max_test_run_slots; ++sl_idx) {
     // Set DL grid at slot 1 (the first slot, where the PDSCH will be allocated) busy from RB 3 until the end of the bw;
-    // this will force the scheduler to allocate Conres in isolation. Avoid the first symbols of teh slot to allow the
+    // this will force the scheduler to allocate Conres in isolation. Avoid the first symbols of the slot to allow the
     // PDCCH to be allocated.
     static constexpr unsigned first_dl_allocable_slot = 1U;
     bench->res_grid[first_dl_allocable_slot].dl_res_grid.fill(

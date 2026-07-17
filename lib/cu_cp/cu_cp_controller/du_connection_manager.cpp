@@ -15,7 +15,7 @@ using namespace ocucp;
 class du_connection_manager::shared_du_connection_context
 {
 public:
-  shared_du_connection_context(du_connection_manager& parent_) : parent(parent_) {}
+  explicit shared_du_connection_context(du_connection_manager& parent_) : parent(parent_) {}
   shared_du_connection_context(const shared_du_connection_context&)            = delete;
   shared_du_connection_context(shared_du_connection_context&&)                 = delete;
   shared_du_connection_context& operator=(const shared_du_connection_context&) = delete;
@@ -35,7 +35,7 @@ public:
   /// Deletes the associated DU repository, if it exists.
   void disconnect()
   {
-    if (not connected()) {
+    if (!connected()) {
       // DU was never allocated or was already removed.
       return;
     }
@@ -50,7 +50,7 @@ public:
   /// Handle F1AP message coming from the DU.
   void handle_message(const f1ap_message& msg)
   {
-    if (not connected()) {
+    if (!connected()) {
       parent.logger.warning("Discarding DU F1AP message. Cause: DU connection has been closed.");
     }
 
@@ -84,7 +84,7 @@ public:
     // Note: We make a copy of the shared_ptr of the context to extend its lifetime to when the defer callback actually
     // gets executed.
     // Note: We don't use move because the defer may fail.
-    while (not parent.cu_cp_exec.defer([ctxt_cpy = ctxt]() { ctxt_cpy->disconnect(); })) {
+    while (!parent.cu_cp_exec.defer([ctxt_cpy = ctxt]() { ctxt_cpy->disconnect(); })) {
       parent.logger.error("Failed to schedule DU removal task. Retrying...");
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
@@ -93,7 +93,7 @@ public:
   void on_new_message(const f1ap_message& msg) override
   {
     // Dispatch the F1AP Rx message handling to the CU-CP executor.
-    while (not parent.cu_cp_exec.execute([this, msg]() { ctxt->handle_message(msg); })) {
+    while (!parent.cu_cp_exec.execute([this, msg]() { ctxt->handle_message(msg); })) {
       parent.logger.error("Failed to dispatch F1AP message to CU-CP. Retrying...");
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
@@ -104,15 +104,13 @@ private:
   std::shared_ptr<shared_du_connection_context> ctxt;
 };
 
-du_connection_manager::du_connection_manager(unsigned                 max_nof_dus_,
-                                             du_processor_repository& dus_,
-                                             task_executor&           cu_cp_exec_,
-                                             async_task_scheduler&    common_task_sched_) :
-  max_nof_dus(max_nof_dus_),
-  dus(dus_),
-  cu_cp_exec(cu_cp_exec_),
-  common_task_sched(common_task_sched_),
-  logger(ocudulog::fetch_basic_logger("CU-CP"))
+du_connection_manager::du_connection_manager(const du_connection_manager_config&       cfg,
+                                             const du_connection_manager_dependencies& dependencies) :
+  max_nof_dus(cfg.max_nof_dus),
+  dus(dependencies.dus),
+  cu_cp_exec(dependencies.cu_cp_exec),
+  common_task_sched(dependencies.common_task_sched),
+  logger(dependencies.logger)
 {
 }
 
@@ -139,8 +137,8 @@ du_connection_manager::handle_new_du_connection(std::unique_ptr<f1ap_message_not
   auto shared_ctxt     = std::make_shared<shared_du_connection_context>(*this);
   auto rx_pdu_notifier = std::make_unique<f1_gw_to_cu_cp_pdu_adapter>(*this, shared_ctxt);
 
-  // We dispatch the task to allocate a DU processor and "attach" it to the notifier
-  while (not cu_cp_exec.execute([this, shared_ctxt, sender_notifier = std::move(f1ap_tx_pdu_notifier)]() mutable {
+  // We dispatch the task to allocate a DU processor and "attach" it to the notifier.
+  while (!cu_cp_exec.execute([this, shared_ctxt, sender_notifier = std::move(f1ap_tx_pdu_notifier)]() mutable {
     // Create a new DU processor.
     cu_cp_du_index_t du_index = dus.add_du(std::move(sender_notifier));
     if (du_index == cu_cp_du_index_t::invalid) {
@@ -151,7 +149,7 @@ du_connection_manager::handle_new_du_connection(std::unique_ptr<f1ap_message_not
     // Register the allocated DU processor index in the DU connection context.
     shared_ctxt->connect_du(du_index);
 
-    if (not du_connections.insert(std::make_pair(du_index, std::move(shared_ctxt))).second) {
+    if (!du_connections.insert(std::make_pair(du_index, std::move(shared_ctxt))).second) {
       logger.error("Failed to store new DU connection {}", du_index);
       return;
     }
@@ -183,7 +181,7 @@ void du_connection_manager::handle_f1c_gw_connection_closed(cu_cp_du_index_t du_
     du_connections.erase(du_idx);
 
     // Flag that all DUs got removed.
-    if (stopped and du_connections.empty()) {
+    if (stopped && du_connections.empty()) {
       std::unique_lock<std::mutex> lock(stop_mutex);
       stop_completed = true;
       stop_cvar.notify_one();
@@ -199,7 +197,7 @@ void du_connection_manager::stop()
   stop_completed = false;
   stopped        = true;
 
-  while (not cu_cp_exec.execute([this]() mutable {
+  while (!cu_cp_exec.execute([this]() mutable {
     if (du_connections.empty()) {
       // No DUs connected. Notify completion.
       std::unique_lock<std::mutex> lock(stop_mutex);

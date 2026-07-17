@@ -5,6 +5,7 @@
 #include "cu_up_connection_manager.h"
 #include "../cu_up_processor/cu_up_processor_repository.h"
 #include "ocudu/e1ap/common/e1ap_message.h"
+#include "ocudu/support/async/async_task_scheduler.h"
 #include <thread>
 
 using namespace ocudu;
@@ -14,7 +15,7 @@ using namespace ocucp;
 class cu_up_connection_manager::shared_cu_up_connection_context
 {
 public:
-  shared_cu_up_connection_context(cu_up_connection_manager& parent_) : parent(parent_) {}
+  explicit shared_cu_up_connection_context(cu_up_connection_manager& parent_) : parent(parent_) {}
   shared_cu_up_connection_context(const shared_cu_up_connection_context&)            = delete;
   shared_cu_up_connection_context(shared_cu_up_connection_context&&)                 = delete;
   shared_cu_up_connection_context& operator=(const shared_cu_up_connection_context&) = delete;
@@ -34,7 +35,7 @@ public:
   /// Deletes the associated CU-UP repository, if it exists.
   void disconnect()
   {
-    if (not connected()) {
+    if (!connected()) {
       // CU-UP was never allocated or was already removed.
       return;
     }
@@ -49,7 +50,7 @@ public:
   /// Handle E1AP message coming from the CU-UP.
   void handle_message(const e1ap_message& msg)
   {
-    if (not connected()) {
+    if (!connected()) {
       parent.logger.warning("Discarding CU-UP E1AP message. Cause: CU-UP connection has been closed.");
     }
 
@@ -84,7 +85,7 @@ public:
     // Note: We make a copy of the shared_ptr of the context to extend its lifetime to when the defer callback actually
     // gets executed.
     // Note: We don't use move because the defer may fail.
-    while (not parent.cu_cp_exec.defer([ctxt_cpy = ctxt]() { ctxt_cpy->disconnect(); })) {
+    while (!parent.cu_cp_exec.defer([ctxt_cpy = ctxt]() { ctxt_cpy->disconnect(); })) {
       parent.logger.error("Failed to schedule CU-UP removal task. Retrying...");
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
@@ -93,7 +94,7 @@ public:
   void on_new_message(const e1ap_message& msg) override
   {
     // Dispatch the E1AP Rx message handling to the CU-CP executor.
-    while (not parent.cu_cp_exec.execute([this, msg]() { ctxt->handle_message(msg); })) {
+    while (!parent.cu_cp_exec.execute([this, msg]() { ctxt->handle_message(msg); })) {
       parent.logger.error("Failed to dispatch E1AP message to CU-CP. Retrying...");
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
@@ -104,15 +105,13 @@ private:
   std::shared_ptr<shared_cu_up_connection_context> ctxt;
 };
 
-cu_up_connection_manager::cu_up_connection_manager(unsigned                    max_nof_cu_ups_,
-                                                   cu_up_processor_repository& cu_ups_,
-                                                   task_executor&              cu_cp_exec_,
-                                                   async_task_scheduler&       common_task_sched_) :
-  max_nof_cu_ups(max_nof_cu_ups_),
-  cu_ups(cu_ups_),
-  cu_cp_exec(cu_cp_exec_),
-  common_task_sched(common_task_sched_),
-  logger(ocudulog::fetch_basic_logger("CU-CP"))
+cu_up_connection_manager::cu_up_connection_manager(const cu_up_connection_manager_config&       cfg,
+                                                   const cu_up_connection_manager_dependencies& dependencies) :
+  max_nof_cu_ups(cfg.max_nof_cu_ups),
+  cu_ups(dependencies.cu_ups),
+  cu_cp_exec(dependencies.cu_cp_exec),
+  common_task_sched(dependencies.common_task_sched),
+  logger(dependencies.logger)
 {
 }
 
@@ -136,8 +135,8 @@ cu_up_connection_manager::handle_new_cu_up_connection(std::unique_ptr<e1ap_messa
   auto shared_ctxt     = std::make_shared<shared_cu_up_connection_context>(*this);
   auto rx_pdu_notifier = std::make_unique<e1_gw_to_cu_cp_pdu_adapter>(*this, shared_ctxt);
 
-  // We dispatch the task to allocate a CU-UP processor and "attach" it to the notifier
-  while (not cu_cp_exec.execute([this, shared_ctxt, sender_notifier = std::move(e1ap_tx_pdu_notifier)]() mutable {
+  // We dispatch the task to allocate a CU-UP processor and "attach" it to the notifier.
+  while (!cu_cp_exec.execute([this, shared_ctxt, sender_notifier = std::move(e1ap_tx_pdu_notifier)]() mutable {
     // Create a new CU-UP processor.
     cu_cp_cu_up_index_t cu_up_index = cu_ups.add_cu_up(std::move(sender_notifier));
     if (cu_up_index == cu_cp_cu_up_index_t::invalid) {
@@ -148,7 +147,7 @@ cu_up_connection_manager::handle_new_cu_up_connection(std::unique_ptr<e1ap_messa
     // Register the allocated CU-UP processor index in the CU-UP connection context.
     shared_ctxt->connect_cu_up(cu_up_index);
 
-    if (not cu_up_connections.insert(std::make_pair(cu_up_index, std::move(shared_ctxt))).second) {
+    if (!cu_up_connections.insert(std::make_pair(cu_up_index, std::move(shared_ctxt))).second) {
       logger.error("Failed to store new CU-UP connection {}", cu_up_index);
       return;
     }
@@ -180,7 +179,7 @@ void cu_up_connection_manager::handle_e1_gw_connection_closed(cu_cp_cu_up_index_
     cu_up_connections.erase(cu_up_idx);
 
     // Flag that all CU-UPs got removed.
-    if (stopped and cu_up_connections.empty()) {
+    if (stopped && cu_up_connections.empty()) {
       std::unique_lock<std::mutex> lock(stop_mutex);
       stop_completed = true;
       stop_cvar.notify_one();
@@ -196,7 +195,7 @@ void cu_up_connection_manager::stop()
   stop_completed = false;
   stopped        = true;
 
-  while (not cu_cp_exec.execute([this]() mutable {
+  while (!cu_cp_exec.execute([this]() mutable {
     if (cu_up_connections.empty()) {
       // No CU-UPs connected. Notify completion.
       std::unique_lock<std::mutex> lock(stop_mutex);

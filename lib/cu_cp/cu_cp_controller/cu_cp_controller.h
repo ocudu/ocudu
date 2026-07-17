@@ -10,13 +10,29 @@
 #include "cu_up_connection_manager.h"
 #include "du_connection_manager.h"
 #include "xnc_connection_manager.h"
-#include "ocudu/cu_cp/cu_cp_configuration.h"
-#include "ocudu/support/async/async_task_scheduler.h"
 
 namespace ocudu::ocucp {
 
-class cu_up_processor_repository;
-class ue_manager;
+/// CU-CP controller configuration.
+struct cu_cp_controller_config {
+  unsigned max_nof_dus;
+  unsigned max_nof_cu_ups;
+};
+
+/// CU-CP controller dependencies.
+struct cu_cp_controller_dependencies {
+  cu_cp_amf_reconnection_handler&      cu_cp_notifier;
+  async_task_scheduler&                common_task_sched;
+  ngap_repository&                     ngaps;
+  cu_up_processor_repository&          cu_ups;
+  du_processor_repository&             dus;
+  xnap_repository&                     xncs;
+  std::vector<xnc_connection_gateway*> xnc_gws;
+  task_executor&                       ctrl_exec;
+  timer_manager&                       timers;
+  ocudulog::basic_logger&              logger;
+  cu_cp_ng_setup_complete_notifier*    ng_setup_notifier = nullptr;
+};
 
 /// \brief Entity responsible for managing the CU-CP connections to remote nodes and determining whether the CU-CP
 /// is in a state to accept new connections.
@@ -29,37 +45,38 @@ class ue_manager;
 class cu_cp_controller : public cu_cp_ue_admission_controller
 {
 public:
-  cu_cp_controller(const cu_cp_configuration&      config_,
-                   cu_cp_amf_reconnection_handler& cu_cp_notifier,
-                   async_task_scheduler&           common_task_sched_,
-                   ngap_repository&                ngaps_,
-                   cu_up_processor_repository&     cu_ups_,
-                   du_processor_repository&        dus_,
-                   xnap_repository&                xncs_,
-                   task_executor&                  ctrl_exec);
+  cu_cp_controller(const cu_cp_controller_config& configuration, cu_cp_controller_dependencies dependencies);
 
+  /// Stops the CU-CP controller.
   void stop();
 
+  /// Gets the AMF connection handler.
   amf_connection_manager& amf_connection_handler() { return amf_mng; }
 
+  /// Gets the XNC connection handler.
   xnc_connection_manager& xnc_connection_handler() { return xnc_mng; }
 
-  bool handle_du_setup_request(cu_cp_du_index_t du_idx, const std::set<plmn_identity>& plmn_ids);
+  /// Handles a DU setup request for the given PLMN identifiers. Returns true on success, false otherwise.
+  bool handle_du_setup_request(const std::set<plmn_identity>& plmn_ids);
 
-  /// \brief Determines whether the CU-CP should accept new UE connections.
+  /// Determines whether the CU-CP should accept new UE connections.
   bool request_ue_setup() const override;
 
-  /// \brief Determines whether the CU-CP should accept a new UE connection based on its PLMN.
+  /// Determines whether the CU-CP should accept a new UE connection based on its PLMN.
   bool is_supported_plmn(const plmn_identity& plmn) const;
 
+  /// Gets the F1C handler.
   cu_cp_f1c_handler& get_f1c_handler() { return du_mng; }
-  cu_cp_e1_handler&  get_e1_handler() { return cu_up_mng; }
+
+  /// Gets the E1 handler.
+  cu_cp_e1_handler& get_e1_handler() { return cu_up_mng; }
+
+  /// Gets the XNC handler.
   cu_cp_xnc_handler& get_xnc_handler() { return xnc_mng; }
 
 private:
-  const cu_cp_configuration& cfg;
-  task_executor&             ctrl_exec;
-  ocudulog::basic_logger&    logger;
+  task_executor&          ctrl_exec;
+  ocudulog::basic_logger& logger;
 
   amf_connection_manager   amf_mng;
   du_connection_manager    du_mng;

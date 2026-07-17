@@ -35,10 +35,10 @@ public:
   /// CU-UP task scheduler.
   bool handle_amf_async_task(cu_cp_amf_index_t amf_index, async_task<void>&& task);
 
-  /// MAkes an unique timer and returns it.
+  /// Makes a unique timer and returns it.
   unique_timer make_unique_timer() const;
 
-  /// Gets the tiemr manager.
+  /// Gets the timer manager.
   timer_manager& get_timer_manager() const;
 
 private:
@@ -46,7 +46,7 @@ private:
   task_executor&          exec;
   ocudulog::basic_logger& logger;
 
-  // task event loops indexed by amf_index
+  // Task event loops indexed by amf_index.
   std::map<cu_cp_amf_index_t, fifo_async_task_scheduler> amf_ctrl_loop;
 };
 

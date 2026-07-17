@@ -157,7 +157,14 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                                    .du_conn_notif            = conn_notifier,
                                    .ref_time_report_notifier = ntn_ref_time_store,
                                    .logger                   = logger}),
-  cu_up_db(cu_up_repository_config{cfg, e1ap_ev_notifier, common_task_sched, ocudulog::fetch_basic_logger("CU-CP")}),
+  cu_up_db(cu_up_repository_config{.e1ap           = cfg.e1ap,
+                                   .max_nof_cu_ups = cfg.admission.max_nof_cu_ups,
+                                   .max_nof_ues    = cfg.admission.max_nof_ues},
+           cu_up_repository_dependencies{.cu_cp_executor    = *cfg.services.cu_cp_executor,
+                                         .timers            = *cfg.services.timers,
+                                         .e1ap_ev_notifier  = e1ap_ev_notifier,
+                                         .common_task_sched = common_task_sched,
+                                         .logger            = logger}),
   paging_handler(paging_message_handler_dependencies{.dus = du_db, .logger = logger}),
   ngap_db(ngap_repository_config{.gnb_id                      = cfg.node.gnb_id,
                                  .ran_node_name               = cfg.node.ran_node_name,
@@ -180,14 +187,19 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                                              .ue_mng         = ue_mng,
                                              .cell_meas_mng  = cell_meas_mng,
                                              .logger         = logger}),
-  controller(cfg,
-             get_cu_cp_amf_reconnection_handler(),
-             common_task_sched,
-             ngap_db,
-             cu_up_db,
-             du_db,
-             xnap_db,
-             *cfg.services.cu_cp_executor),
+  controller(
+      cu_cp_controller_config{.max_nof_dus = cfg.admission.max_nof_dus, .max_nof_cu_ups = cfg.admission.max_nof_cu_ups},
+      cu_cp_controller_dependencies{.cu_cp_notifier    = get_cu_cp_amf_reconnection_handler(),
+                                    .common_task_sched = common_task_sched,
+                                    .ngaps             = ngap_db,
+                                    .cu_ups            = cu_up_db,
+                                    .dus               = du_db,
+                                    .xncs              = xnap_db,
+                                    .xnc_gws           = cfg.xnap.xnc_gws,
+                                    .ctrl_exec         = *cfg.services.cu_cp_executor,
+                                    .timers            = timers,
+                                    .logger            = logger,
+                                    .ng_setup_notifier = cfg.ngap.ng_setup_notifier}),
   metrics_hdlr(metrics_handler_impl_dependencies{.cu_cp_exec       = cu_cp_executor,
                                                  .timers           = timers,
                                                  .ue_handler       = ue_mng,
@@ -285,8 +297,7 @@ bool cu_cp_impl::start()
           auto gw_it = cfg.xnap.peer_to_gateway.find(peer_idx);
           if (gw_it != cfg.xnap.peer_to_gateway.end() &&
               xnc_gateway_index_to_uint(gw_it->second) < cfg.xnap.xnc_gws.size()) {
-            controller.xnc_connection_handler().register_peer_gateway(
-                peer_idx, cfg.xnap.xnc_gws[xnc_gateway_index_to_uint(gw_it->second)]);
+            controller.xnc_connection_handler().register_peer_gateway(peer_idx, gw_it->second);
           }
           ++xnc_idx;
         }

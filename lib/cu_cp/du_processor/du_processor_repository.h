@@ -51,6 +51,7 @@ struct du_repository_dependencies {
   ocudulog::basic_logger&                logger;
 };
 
+/// DU processor repository.
 class du_processor_repository : public du_repository_metrics_handler
 {
 public:
@@ -91,6 +92,7 @@ public:
   /// \brief Get the NR cells currently served by the connected DUs.
   std::vector<cu_cp_served_cell_info> get_served_cells();
 
+  // See interface for documentation.
   std::vector<cu_cp_metrics_report::du_info> handle_du_metrics_report_request() const override;
 
   /// Gets the number of F1AP UEs.
@@ -112,10 +114,12 @@ public:
   size_t get_nof_dus() const { return du_db.size(); }
 
 private:
+  /// Holds the DU context.
   struct du_context {
     // CU-CP handler of DU processor events.
     du_processor_cu_cp_adapter du_to_cu_cp_notifier;
 
+    /// DU processor.
     std::unique_ptr<du_processor> processor;
 
     /// Notifier used by the CU-CP to push F1AP Tx messages to the respective DU.

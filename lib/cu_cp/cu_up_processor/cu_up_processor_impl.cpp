@@ -19,11 +19,13 @@ public:
   {
   }
 
+  // See interface for documentation.
   void on_cu_up_e1_setup_request_received(const cu_up_e1_setup_request& msg) override
   {
     parent.handle_cu_up_e1_setup_request(msg);
   }
 
+  // See interface for documentation.
   bool schedule_async_task(async_task<void> task) override { return common_task_sched->schedule(std::move(task)); }
 
 private:
@@ -31,27 +33,25 @@ private:
   async_task_scheduler* common_task_sched = nullptr;
 };
 
-cu_up_processor_impl::cu_up_processor_impl(const cu_up_processor_config_t cu_up_processor_config_,
-                                           e1ap_message_notifier&         e1ap_notifier_,
-                                           e1ap_cu_cp_notifier&           cu_cp_notifier_,
-                                           async_task_scheduler&          common_task_sched_) :
-  cfg(cu_up_processor_config_),
-  e1ap_notifier(e1ap_notifier_),
-  cu_cp_notifier(cu_cp_notifier_),
-  e1ap_ev_notifier(std::make_unique<e1ap_cu_up_processor_adapter>(*this, common_task_sched_))
+cu_up_processor_impl::cu_up_processor_impl(const cu_up_processor_config&       cfg_,
+                                           const cu_up_processor_dependencies& dependencies) :
+  cfg(cfg_),
+  e1ap_notifier(dependencies.e1ap_notifier),
+  cu_cp_notifier(dependencies.cu_cp_notifier),
+  e1ap_ev_notifier(std::make_unique<e1ap_cu_up_processor_adapter>(*this, dependencies.common_task_sched))
 {
   context.cu_cp_name  = cfg.name;
   context.cu_up_index = cfg.cu_up_index;
 
   // create e1
-  e1ap = create_e1ap(cfg.cu_cp_cfg.e1ap,
+  e1ap = create_e1ap(cfg.e1ap,
                      context.cu_up_index,
                      e1ap_notifier,
                      *e1ap_ev_notifier,
                      cu_cp_notifier,
-                     *cfg.cu_cp_cfg.services.timers,
-                     *cfg.cu_cp_cfg.services.cu_cp_executor,
-                     cfg.cu_cp_cfg.admission.max_nof_ues);
+                     dependencies.timers,
+                     dependencies.cu_cp_executor,
+                     cfg.max_nof_ues);
 }
 
 void cu_up_processor_impl::stop(cu_cp_ue_index_t ue_idx)

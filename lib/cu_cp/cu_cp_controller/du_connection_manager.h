@@ -15,24 +15,36 @@
 namespace ocudu::ocucp {
 
 class du_processor_repository;
-struct du_setup_request;
+
+/// DU connection manager configuration.
+struct du_connection_manager_config {
+  unsigned max_nof_dus;
+};
+
+/// DU connection manager dependencies.
+struct du_connection_manager_dependencies {
+  du_processor_repository& dus;
+  task_executor&           cu_cp_exec;
+  async_task_scheduler&    common_task_sched;
+  ocudulog::basic_logger&  logger;
+};
 
 /// \brief This class is responsible for allocating the resources in the CU-CP required to handle the establishment
 /// or drop of F1-C GW connections.
 ///
-/// This class acts as a facade, hiding the details associated with the dispatching of F1-C GW events to the
-/// the CU-CP through the appropriate task executors.
+/// This class acts as a facade, hiding the details associated with the dispatching of F1-C GW events to the CU-CP
+/// through the appropriate task executors.
 class du_connection_manager : public cu_cp_f1c_handler
 {
 public:
-  du_connection_manager(unsigned                 max_nof_dus,
-                        du_processor_repository& dus_,
-                        task_executor&           cu_cp_exec_,
-                        async_task_scheduler&    common_task_sched_);
+  du_connection_manager(const du_connection_manager_config&       cfg,
+                        const du_connection_manager_dependencies& dependencies);
 
+  // See interface for documentation.
   std::unique_ptr<f1ap_message_notifier>
   handle_new_du_connection(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier) override;
 
+  /// Stops the connection manager.
   void stop();
 
 private:

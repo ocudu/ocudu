@@ -7,14 +7,30 @@
 #include "ocudu/e1ap/cu_cp/cu_cp_e1_handler.h"
 #include "ocudu/ocudulog/logger.h"
 #include "ocudu/ran/cu_cp_types.h"
-#include "ocudu/support/async/async_task_scheduler.h"
 #include "ocudu/support/executors/task_executor.h"
 #include <condition_variable>
 #include <map>
 
-namespace ocudu::ocucp {
+namespace ocudu {
+
+class async_task_scheduler;
+
+namespace ocucp {
 
 class cu_up_processor_repository;
+
+/// CU-UP connection manager configuration.
+struct cu_up_connection_manager_config {
+  unsigned max_nof_cu_ups;
+};
+
+/// CU-UP connection manager dependencies.
+struct cu_up_connection_manager_dependencies {
+  cu_up_processor_repository& cu_ups;
+  task_executor&              cu_cp_exec;
+  async_task_scheduler&       common_task_sched;
+  ocudulog::basic_logger&     logger;
+};
 
 /// \brief This class is responsible for allocating the resources in the CU-CP required to handle the establishment
 /// or drop of E1 GW connections.
@@ -24,16 +40,17 @@ class cu_up_processor_repository;
 class cu_up_connection_manager : public cu_cp_e1_handler
 {
 public:
-  cu_up_connection_manager(unsigned                    max_nof_cu_ups_,
-                           cu_up_processor_repository& cu_ups_,
-                           task_executor&              cu_cp_exec_,
-                           async_task_scheduler&       common_task_sched_);
+  cu_up_connection_manager(const cu_up_connection_manager_config&       cfg,
+                           const cu_up_connection_manager_dependencies& dependencies);
 
+  // See interface for documentation.
   std::unique_ptr<e1ap_message_notifier>
   handle_new_cu_up_connection(std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier) override;
 
+  /// Stops the CU-CP connection manager.
   void stop();
 
+  /// Returns the number of CU-UPs.
   size_t nof_cu_ups() const { return cu_up_count.load(std::memory_order_relaxed); }
 
 private:
@@ -58,4 +75,5 @@ private:
   bool                    stop_completed = false;
 };
 
-} // namespace ocudu::ocucp
+} // namespace ocucp
+} // namespace ocudu

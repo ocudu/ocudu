@@ -13,7 +13,7 @@
 
 namespace ocudu::ocucp {
 
-/// Adapter between DU processor and CU-CP
+/// Adapter between DU processor and CU-CP.
 class du_processor_cu_cp_adapter : public du_processor_cu_cp_notifier
 {
 public:
@@ -73,6 +73,7 @@ public:
 
   async_task<void> on_transaction_info_loss(const ue_transaction_info_loss_event& ev) override
   {
+    ocudu_assert(cu_cp_handler != nullptr, "CU-CP handler must not be nullptr");
     return cu_cp_handler->handle_transaction_info_loss(ev);
   }
 
@@ -94,10 +95,10 @@ class du_processor_cu_cp_connection_adapter final : public du_connection_notifie
 public:
   void connect_node_connection_handler(cu_cp_controller& cu_ctrl_) { cu_ctrl = &cu_ctrl_; }
 
-  bool on_du_setup_request(cu_cp_du_index_t du_index, const std::set<plmn_identity>& plmn_ids) override
+  bool on_du_setup_request(const std::set<plmn_identity>& plmn_ids) override
   {
     ocudu_assert(cu_ctrl != nullptr, "CU-CP controller must not be nullptr");
-    return cu_ctrl->handle_du_setup_request(du_index, plmn_ids);
+    return cu_ctrl->handle_du_setup_request(plmn_ids);
   }
 
 private:

@@ -26,38 +26,46 @@ public:
   {
   }
 
+  // See interface for documentation.
   du_setup_result on_new_du_setup_request(const du_setup_request& msg) override
   {
     return parent.handle_du_setup_request(msg);
   }
 
+  // See interface for documentation.
   cu_cp_ue_index_t request_new_ue_creation() override { return parent.ue_mng.add_ue(parent.cfg.du_index); }
 
+  // See interface for documentation.
   ue_rrc_context_creation_outcome
   on_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) override
   {
     return parent.handle_ue_rrc_context_creation_request(req);
   }
 
+  // See interface for documentation.
   void on_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& req) override
   {
     parent.handle_du_initiated_ue_context_release_request(req);
   }
 
+  // See interface for documentation.
   void on_access_success(const f1ap_access_success& msg) override { parent.handle_access_success(msg); }
 
+  // See interface for documentation.
   bool schedule_async_task(async_task<void> task) override { return common_task_sched->schedule(std::move(task)); }
 
+  // See interface for documentation.
   async_task<void> on_transaction_info_loss(const ue_transaction_info_loss_event& ev) override
   {
     return parent.cu_cp_notifier.on_transaction_info_loss(ev);
   }
 
+  // See interface for documentation.
   void on_ref_time_info_report(const f1ap_time_ref_info& info) override
   {
     std::optional<std::chrono::system_clock::time_point> time_point =
         parent.rrc->get_ref_time_r16(info.ref_time_r16, info.is_local_clock);
-    if (not time_point) {
+    if (!time_point) {
       parent.logger.warning("du={}: Failed to unpack Reference Time Information Report", parent.cfg.du_index);
       return;
     }
@@ -93,26 +101,23 @@ du_processor_impl::du_processor_impl(const du_processor_config& cfg_, du_process
   cfg(cfg_),
   du_setup_notif(dependencies.du_setup_notif),
   du_cfg_hdlr(std::move(dependencies.du_cfg_hdlr)),
+  logger(dependencies.logger),
   cu_cp_notifier(dependencies.cu_cp_notifier),
   f1ap_pdu_notifier(dependencies.f1ap_pdu_notifier),
   ue_mng(dependencies.ue_mng),
   ref_time_report_notifier(dependencies.ref_time_report_notifier),
-  logger(dependencies.logger),
-  f1ap_ev_notifier(std::make_unique<f1ap_du_processor_adapter>(*this, dependencies.common_task_sched))
+  f1ap_ev_notifier(std::make_unique<f1ap_du_processor_adapter>(*this, dependencies.common_task_sched)),
+  f1ap(create_f1ap(cfg.f1ap, f1ap_pdu_notifier, *f1ap_ev_notifier, dependencies.timers, dependencies.cu_cp_executor)),
+  rrc(create_rrc_du(rrc_cfg_t{.gnb_id                         = cfg.gnb_id,
+                              .srb2_cfg                       = cfg.srb2_cfg,
+                              .drb_config                     = cfg.drb_config,
+                              .int_algo_pref_list             = cfg.int_algo_pref_list,
+                              .enc_algo_pref_list             = cfg.enc_algo_pref_list,
+                              .force_reestablishment_fallback = cfg.force_reestablishment_fallback,
+                              .force_resume_fallback          = cfg.force_resume_fallback,
+                              .rrc_procedure_guard_time_ms    = cfg.rrc_procedure_guard_time_ms,
+                              .rrc_reject_wait_time           = cfg.rrc_reject_wait_time}))
 {
-  // Create F1AP.
-  f1ap = create_f1ap(cfg.f1ap, f1ap_pdu_notifier, *f1ap_ev_notifier, dependencies.timers, dependencies.cu_cp_executor);
-
-  // Create RRC DU.
-  rrc = create_rrc_du(rrc_cfg_t{.gnb_id                         = cfg.gnb_id,
-                                .srb2_cfg                       = cfg.srb2_cfg,
-                                .drb_config                     = cfg.drb_config,
-                                .int_algo_pref_list             = cfg.int_algo_pref_list,
-                                .enc_algo_pref_list             = cfg.enc_algo_pref_list,
-                                .force_reestablishment_fallback = cfg.force_reestablishment_fallback,
-                                .force_resume_fallback          = cfg.force_resume_fallback,
-                                .rrc_procedure_guard_time_ms    = cfg.rrc_procedure_guard_time_ms,
-                                .rrc_reject_wait_time           = cfg.rrc_reject_wait_time});
 }
 
 du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_request& request)
@@ -154,7 +159,7 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
   }
 
   // Check if CU-CP can accept a new DU connection.
-  if (!du_setup_notif.on_du_setup_request(cfg.du_index, plmn_ids)) {
+  if (!du_setup_notif.on_du_setup_request(plmn_ids)) {
     res.result = du_setup_result::rejected{f1ap_cause_radio_network_t::plmn_not_served_by_the_gnb_cu,
                                            "One or more PLMNs are not served by the GNB CU-CP"};
     return res;
@@ -388,9 +393,9 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
     if (ue_mng.ue_admission_limit_reached()) {
       logger.warning("ue={}: UE admission limit reached", req.ue_index);
       // Update the RRC connection establishment attempt cause as unknown, since the real cause isn't known at this
-      // stage
+      // stage.
       rrc->handle_attempted_rrc_setup(establishment_cause_t::unknown);
-      // Update the RRC connection establishment fail cause
+      // Update the RRC connection establishment fail cause.
       rrc->handle_failed_rrc_connection_establishment(establishment_fail_cause_t::network_reject);
       // Schedule UE context release and return error response.
       release_ue(req.ue_index);

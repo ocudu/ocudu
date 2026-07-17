@@ -494,7 +494,7 @@ static std::string normalize_algo_pref_list(std::string value)
   return value;
 }
 
-/// Splits teh given string into a vector of strings splitting the items with ",".
+/// Splits the given string into a vector of strings splitting the items with ",".
 static std::vector<std::string> split_algo_pref_list(const std::string& value)
 {
   std::vector<std::string> tokens;
@@ -529,7 +529,7 @@ static void configure_cli11_security_args(CLI::App& app, cu_cp_unit_security_con
       "--confidentiality",
       [&config](const std::string& value) {
         std::optional<confidentiality_protection_indication_t> confidentiality_protection = from_string(value);
-        report_error_if_not(confidentiality_protection, "Invalid --confidenciality argument.");
+        report_error_if_not(confidentiality_protection, "Invalid --confidentiality argument.");
         config.confidentiality_protection = *confidentiality_protection;
       },
       "Default confidentiality protection indication for DRBs")
@@ -566,8 +566,7 @@ static void configure_cli11_security_args(CLI::App& app, cu_cp_unit_security_con
         for (const std::string& algo : tokens) {
           if (algo != "nea0" && algo != "nea1" && algo != "nea2" && algo != "nea3") {
             return fmt::format(
-                "Invalid ciphering algorithm. Valid values are \"nea0\", \"nea1\", \"nea2\" and \"nea3\". algo={}",
-                algo);
+                R"(Invalid ciphering algorithm. Valid values are "nea0", "nea1", "nea2" and "nea3". algo={})", algo);
           }
         }
         return {};
@@ -604,7 +603,7 @@ static void configure_cli11_security_args(CLI::App& app, cu_cp_unit_security_con
             return "NIA0 cannot be selected in the algorithm preferences.";
           }
           if (algo != "nia1" && algo != "nia2" && algo != "nia3") {
-            return fmt::format("Invalid integrity algorithm. Valid values are \"nia1\", \"nia2\" and \"nia3\". algo={}",
+            return fmt::format(R"(Invalid integrity algorithm. Valid values are "nia1", "nia2" and "nia3". algo={})",
                                algo);
           }
         }
@@ -623,7 +622,7 @@ static void configure_cli11_ref_time_reporting_args(CLI::App& app, cu_cp_unit_f1
   add_option(app,
              "--event_type",
              f1ap_params.ref_time_reporting_event_type,
-             "Reporting mode: \"on_demand\" (single report) or \"periodic\" (recurring reports)")
+             R"(Reporting mode: "on_demand" (single report) or "periodic" (recurring reports))")
       ->capture_default_str()
       ->enum_values({"on_demand", "periodic"});
   add_option(app,
@@ -659,6 +658,7 @@ static void configure_cli11_pws_args(CLI::App& app, cu_cp_unit_pws_config& pws_p
       ->positive();
 }
 
+/// Configures the CLI11 E1AP arguments.
 static void configure_cli11_e1ap_args(CLI::App& app, cu_cp_unit_e1ap_config& e1ap_params)
 {
   add_option(app,
