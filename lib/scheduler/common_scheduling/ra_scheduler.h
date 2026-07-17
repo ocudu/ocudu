@@ -205,6 +205,14 @@ private:
 
   sch_prbs_tbs get_nof_pdsch_prbs_required(unsigned time_res_idx, unsigned nof_ul_grants, bool has_bi = false) const;
 
+  /// \brief Computes the number of PRBs and TBS required for a MsgB PDSCH carrying a mix of fallbackRAR and
+  /// successRAR subPDUs. Unlike \c get_nof_pdsch_prbs_required, this is not backed by a precomputed table, since a
+  /// successRAR subPDU (TS38.321, 6.1.5a/6.2.3a) is larger than a fallbackRAR subPDU, so the required size depends
+  /// on the split between the two, not just the total grant count.
+  sch_prbs_tbs get_nof_msgb_pdsch_prbs_required(unsigned time_res_idx,
+                                                unsigned nof_fallback_grants,
+                                                unsigned nof_success_grants) const;
+
   /// Reserve space in the resource grid for the MsgA PUSCH so it is not taken by other UL grants.
   void reserve_msga_pusch_rbs(cell_resource_allocator& res_alloc);
 

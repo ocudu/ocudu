@@ -5,6 +5,7 @@
 #pragma once
 
 #include "ocudu/mac/mac_cell_manager.h"
+#include "ocudu/mac/mac_cell_rach_handler.h"
 #include "ocudu/mac/mac_cell_slot_handler.h"
 #include "ocudu/mac/mac_ue_control_information_handler.h"
 #include "ocudu/ran/du_types.h"
@@ -66,6 +67,11 @@ public:
   /// \param[in] cell_index Index of the cell for which the measurement is directed.
   /// \param[in] req Request to update the RRM policies.
   virtual void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req) = 0;
+
+  /// \brief Gets the RACH handler for a given cell.
+  /// \param cell_index DU-specific index of the cell for which a RACH handler is being retrieved.
+  /// \return Cell-specific RACH handler.
+  virtual mac_cell_rach_handler& get_cell_rach_handler(du_cell_index_t cell_index) = 0;
 };
 
 } // namespace ocudu

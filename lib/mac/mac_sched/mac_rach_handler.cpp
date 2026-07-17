@@ -9,6 +9,7 @@
 #include "ocudu/ran/prach/ra_helper.h"
 #include "ocudu/scheduler/scheduler_configurator.h"
 #include "ocudu/scheduler/scheduler_rach_handler.h"
+#include <algorithm>
 
 using namespace ocudu;
 
@@ -36,13 +37,19 @@ mac_cell_rach_handler_impl::mac_cell_rach_handler_impl(mac_rach_handler&        
           : 0U),
   // Preambles above the CB (4-step) and MsgA (2-step CB) ranges are reserved for CFRA.
   preambles(cfra_preambles.length()),
-  msga_tc_rntis(msga_cb_preambles.length())
+  msga_tc_rntis(msga_cb_preambles.length()),
+  msga_con_res_ids(msga_cb_preambles.length())
 {
   for (auto& preamble : preambles) {
     preamble.store(rnti_t::INVALID_RNTI, std::memory_order_relaxed);
   }
   for (auto& entry : msga_tc_rntis) {
     // Zero-initialized entry decodes to ra_rnti()==INVALID_RNTI (0x0), which no real RA-RNTI ever equals, so it is
+    // naturally treated as "no entry" on lookup.
+    entry.store(0, std::memory_order_relaxed);
+  }
+  for (auto& entry : msga_con_res_ids) {
+    // Zero-initialized entry decodes to a tag of INVALID_RNTI (0), which no real TC-RNTI ever equals, so it is
     // naturally treated as "no entry" on lookup.
     entry.store(0, std::memory_order_relaxed);
   }
@@ -137,6 +144,68 @@ mac_cell_rach_handler_impl::resolve_msga_tc_rnti(rnti_t ra_rnti, uint8_t rapid, 
     return std::nullopt;
   }
   return entry.tc_rnti();
+}
+
+std::optional<rnti_t> mac_cell_rach_handler_impl::handle_msga_ccch_sdu(rnti_t                 ra_rnti,
+                                                                       uint8_t                rapid,
+                                                                       slot_point             sl_rx,
+                                                                       const ue_con_res_id_t& con_res_id)
+{
+  std::optional<rnti_t> tc_rnti = resolve_msga_tc_rnti(ra_rnti, rapid, sl_rx);
+  if (tc_rnti.has_value()) {
+    add_msga_con_res_id(*tc_rnti, con_res_id);
+  }
+  return tc_rnti;
+}
+
+/// Packs a msga_con_res_ids word: bits [0, 48) hold the Contention Resolution Id bytes, bits [48, 64) hold the
+/// owning TC-RNTI, used as a collision-detection tag on resolution.
+static uint64_t pack_con_res_id(rnti_t tc_rnti, const ue_con_res_id_t& con_res_id)
+{
+  uint64_t word = static_cast<uint64_t>(to_value(tc_rnti)) << 48U;
+  for (unsigned i = 0; i != UE_CON_RES_ID_LEN; ++i) {
+    word |= static_cast<uint64_t>(con_res_id[i]) << (8U * i);
+  }
+  return word;
+}
+
+static rnti_t unpack_con_res_id_tag(uint64_t word)
+{
+  return to_rnti(static_cast<uint16_t>(word >> 48U));
+}
+
+static ue_con_res_id_t unpack_con_res_id(uint64_t word)
+{
+  ue_con_res_id_t con_res_id;
+  for (unsigned i = 0; i != UE_CON_RES_ID_LEN; ++i) {
+    con_res_id[i] = static_cast<uint8_t>(word >> (8U * i));
+  }
+  return con_res_id;
+}
+
+unsigned mac_cell_rach_handler_impl::get_con_res_id_index(rnti_t tc_rnti) const
+{
+  ocudu_assert(is_crnti(tc_rnti), "Invalid TC-RNTI={}", tc_rnti);
+  return to_value(tc_rnti) % msga_con_res_ids.size();
+}
+
+void mac_cell_rach_handler_impl::add_msga_con_res_id(rnti_t tc_rnti, const ue_con_res_id_t& con_res_id)
+{
+  msga_con_res_ids[get_con_res_id_index(tc_rnti)].store(pack_con_res_id(tc_rnti, con_res_id),
+                                                        std::memory_order_release);
+}
+
+std::optional<ue_con_res_id_t> mac_cell_rach_handler_impl::resolve_msga_con_res_id(rnti_t tc_rnti)
+{
+  ocudu_assert(msga_cb_preambles.length() > 0, "No MsgA CB preambles available");
+  const unsigned idx  = get_con_res_id_index(tc_rnti);
+  const uint64_t word = msga_con_res_ids[idx].load(std::memory_order_acquire);
+  if (unpack_con_res_id_tag(word) != tc_rnti) {
+    return std::nullopt;
+  }
+  // Consume the entry, since a successRAR is only ever encoded once per preamble detection.
+  msga_con_res_ids[idx].store(0, std::memory_order_release);
+  return unpack_con_res_id(word);
 }
 
 bool mac_cell_rach_handler_impl::handle_cfra_allocation(uint8_t preamble_id, du_ue_index_t ue_idx, rnti_t crnti)

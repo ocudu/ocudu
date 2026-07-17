@@ -6,6 +6,7 @@
 
 #include "ocudu/adt/slotted_vector.h"
 #include "ocudu/mac/mac_cell_rach_handler.h"
+#include "ocudu/mac/ue_con_res_id.h"
 #include "ocudu/ocudulog/logger.h"
 #include "ocudu/ran/du_types.h"
 #include "ocudu/ran/rnti.h"
@@ -35,14 +36,27 @@ public:
   void handle_cfra_deallocation(du_ue_index_t ue_idx);
 
   /// \brief Resolves the TC-RNTI allocated during 2-step RACH, given the RA-RNTI MsgA PUSCH was
-  /// scheduled with and the RAPID of the preamble that originated it.
-  ///
-  /// The RA-RNTI recurs periodically (it only depends on the PRACH occasion's slot/symbol/frequency index), so
-  /// entries are keyed by RAPID alone and overwritten on every new detection of that RAPID (last-writer-wins); the
-  /// stored RA-RNTI and an expiry slot are used to reject a lookup for a stale or unrelated occasion.
-  ///
+  /// scheduled with and the RAPID of the preamble that originated it. If resolved, also registers the UE ConResId
+  /// decoded from the same CCCH SDU.
+  /// \return The TC-RNTI, if a matching, non-expired entry exists; std::nullopt otherwise.
+  std::optional<rnti_t>
+  handle_msga_ccch_sdu(rnti_t ra_rnti, uint8_t rapid, slot_point sl_rx, const ue_con_res_id_t& con_res_id) override;
+
+  /// \brief Resolves and consumes the UE ContResId registered for a TC-RNTI.
+  /// The entry is cleared upon a successful resolution, since a successRAR is only ever encoded once per preamble
+  /// detection.
+  /// \return The Contention Resolution Identity, if a matching entry exists; std::nullopt otherwise.
+  std::optional<ue_con_res_id_t> resolve_msga_con_res_id(rnti_t tc_rnti) override;
+
+  /// \brief Resolves the TC-RNTI allocated during 2-step RACH, given the RA-RNTI MsgA PUSCH was scheduled with and
+  /// the RAPID of the preamble that originated it.
   /// \return The TC-RNTI, if a matching, non-expired entry exists; std::nullopt otherwise.
   std::optional<rnti_t> resolve_msga_tc_rnti(rnti_t ra_rnti, uint8_t rapid, slot_point sl_rx) const;
+
+  /// \brief Registers the UE ConResId (first 48 bits of the CCCH SDU carried in a MsgA PUSCH),
+  /// decoded by the MAC UL PDU executor, so it can later be echoed back by the MAC DL RAR PDU assembler in the
+  /// successRAR MAC subPDU acknowledging this preamble.
+  void add_msga_con_res_id(rnti_t tc_rnti, const ue_con_res_id_t& con_res_id);
 
 private:
   /// \brief Packs (RA-RNTI, TC-RNTI, expiry slot) into a single 64-bit word, so that a MsgA TC-RNTI mapping entry
@@ -81,6 +95,11 @@ private:
   /// Registers the TC-RNTI allocated to a MsgA preamble, so it can later be resolved from its (RA-RNTI, RAPID).
   void add_msga_tc_rnti(rnti_t ra_rnti, uint8_t rapid, rnti_t tc_rnti, slot_point sl_rx);
 
+  /// \brief Maps a TC-RNTI to its slot in \c msga_con_res_ids. As the table is much smaller than the TC-RNTI value
+  /// range, this is a hash (modulo), not a direct index; \c msga_con_res_ids entries are tagged with their owning
+  /// TC-RNTI to detect collisions.
+  unsigned get_con_res_id_index(rnti_t tc_rnti) const;
+
   mac_rach_handler&        parent;
   const du_cell_index_t    cell_index;
   const interval<unsigned> cfra_preambles;
@@ -92,11 +111,24 @@ private:
   std::vector<std::atomic<rnti_t>> preambles;
 
   /// \brief Pending RAPID -> (RA-RNTI, TC-RNTI) mappings for ongoing 2-step RACH attempts, indexed by
-  /// <tt>rapid - msga_cb_preambles.start()</tt>.
+  /// rapid - msga_cb_preambles.start().
   ///
   /// Written from the RACH indication executor and read from the UL PDU executor that decodes the MsgA PUSCH CCCH
   /// payload; each slot is a single atomic word, so no mutex is needed to synchronize the two.
   std::vector<std::atomic<uint64_t>> msga_tc_rntis;
+
+  /// \brief Pending TC-RNTI -> UE ConResId mappings, hash-indexed by TC-RNTI value (see get_con_res_id_index()).
+  /// Packed as [0:48) for the ConResId bytes and [48:64) for the owning TC-RNTI, used as a collision-detection tag
+  /// (a zero tag, i.e. \c INVALID_RNTI, marks an empty slot, since a TC-RNTI is never 0).
+  ///
+  /// Sized to the number of MsgA CB preambles rather than the full TC-RNTI value range, since at most that many
+  /// 2-step RACH attempts can be pending at once (one per RAPID slot in \c msga_tc_rntis); two concurrently pending
+  /// attempts that hash to the same slot will evict each other, causing the older one's resolution to miss.
+  ///
+  /// Written from the UL PDU executor that decodes the MsgA PUSCH CCCH payload and read (and consumed) from the DL
+  /// executor that assembles the successRAR MAC subPDU; each slot is a single atomic word, so no mutex is needed to
+  /// synchronize the two.
+  std::vector<std::atomic<uint64_t>> msga_con_res_ids;
 };
 
 /// Handler of RACH indications for multiple cells.

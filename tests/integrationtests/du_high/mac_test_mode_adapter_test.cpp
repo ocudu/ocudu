@@ -79,9 +79,15 @@ public:
   mac_paging_information_handler&       get_cell_paging_info_handler() override { return *this; }
 
   void handle_rach_indication(const mac_rach_indication& rach_ind) override {}
-  void handle_crc(const mac_crc_indication_message& msg) override { events.last_crc = msg; }
-  void handle_uci(const mac_uci_indication_message& msg) override { events.last_uci = msg; }
-  void handle_srs(const mac_srs_indication_message& msg) override
+  std::optional<rnti_t>
+  handle_msga_ccch_sdu(rnti_t ra_rnti, uint8_t rapid, slot_point sl_rx, const ue_con_res_id_t& con_res_id) override
+  {
+    return std::nullopt;
+  }
+  std::optional<ue_con_res_id_t> resolve_msga_con_res_id(rnti_t tc_rnti) override { return std::nullopt; }
+  void                           handle_crc(const mac_crc_indication_message& msg) override { events.last_crc = msg; }
+  void                           handle_uci(const mac_uci_indication_message& msg) override { events.last_uci = msg; }
+  void                           handle_srs(const mac_srs_indication_message& msg) override
   {
     // TODO: Implement this.
   }

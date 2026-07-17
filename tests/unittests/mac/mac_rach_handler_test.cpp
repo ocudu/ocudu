@@ -270,3 +270,76 @@ TEST_F(mac_rach_handler_msga_test, when_same_ra_rnti_and_rapid_recur_before_reso
   ASSERT_TRUE(resolved_again.has_value());
   ASSERT_EQ(*resolved_again, second_tc_rnti);
 }
+
+/// \brief Tests for the TC-RNTI -> UE Contention Resolution Identity registration used to echo the MsgA CCCH SDU
+/// back in a successRAR (see rar_pdu_assembler::encode_successrar_payload).
+///
+/// Storage is direct-indexed by TC-RNTI rather than RAPID: unlike RAPID or RA-RNTI, a TC-RNTI is allocated fresh per
+/// preamble detection and not reused while the attempt is in flight, so it alone is an unambiguous key: no RAPID
+/// cross-check is needed, even if two attempts share the same, recurring RAPID.
+class mac_rach_handler_con_res_id_test : public mac_rach_handler_msga_test
+{
+protected:
+  static ue_con_res_id_t make_con_res_id(uint8_t seed)
+  {
+    ue_con_res_id_t id;
+    for (unsigned i = 0; i != id.size(); ++i) {
+      id[i] = static_cast<uint8_t>(seed + i);
+    }
+    return id;
+  }
+};
+
+TEST_F(mac_rach_handler_con_res_id_test, when_con_res_id_registered_then_it_resolves_with_matching_tc_rnti)
+{
+  const slot_point slot_rx = {to_numerology_value(params.scs_common), 0};
+  cell_handler.handle_rach_indication(make_msga_rach_indication(slot_rx, MSGA_PREAMBLE_ID));
+  const rnti_t tc_rnti = sched.last_rach_ind.value().occasions[0].preambles[0].tc_rnti;
+
+  const ue_con_res_id_t con_res_id = make_con_res_id(0x10);
+  cell_handler.add_msga_con_res_id(tc_rnti, con_res_id);
+
+  const std::optional<ue_con_res_id_t> resolved = cell_handler.resolve_msga_con_res_id(tc_rnti);
+  ASSERT_TRUE(resolved.has_value());
+  ASSERT_EQ(*resolved, con_res_id);
+}
+
+TEST_F(mac_rach_handler_con_res_id_test, when_con_res_id_resolved_then_entry_is_consumed)
+{
+  const slot_point slot_rx = {to_numerology_value(params.scs_common), 0};
+  cell_handler.handle_rach_indication(make_msga_rach_indication(slot_rx, MSGA_PREAMBLE_ID));
+  const rnti_t tc_rnti = sched.last_rach_ind.value().occasions[0].preambles[0].tc_rnti;
+
+  cell_handler.add_msga_con_res_id(tc_rnti, make_con_res_id(0x20));
+
+  ASSERT_TRUE(cell_handler.resolve_msga_con_res_id(tc_rnti).has_value());
+  // A successRAR is only ever encoded once per preamble detection, so a repeated resolution must not find the
+  // entry again.
+  ASSERT_FALSE(cell_handler.resolve_msga_con_res_id(tc_rnti).has_value());
+}
+
+TEST_F(mac_rach_handler_con_res_id_test, when_two_attempts_share_the_same_rapid_then_con_res_ids_never_cross_over)
+{
+  const slot_point slot_rx = {to_numerology_value(params.scs_common), 0};
+
+  cell_handler.handle_rach_indication(make_msga_rach_indication(slot_rx, MSGA_PREAMBLE_ID));
+  const rnti_t          first_tc_rnti    = sched.last_rach_ind.value().occasions[0].preambles[0].tc_rnti;
+  const ue_con_res_id_t first_con_res_id = make_con_res_id(0x30);
+  cell_handler.add_msga_con_res_id(first_tc_rnti, first_con_res_id);
+
+  // A second, unrelated preamble detection reuses the same RAPID (its recurring PRACH occasion) before the first
+  // UE's successRAR is ever encoded.
+  cell_handler.handle_rach_indication(make_msga_rach_indication(slot_rx, MSGA_PREAMBLE_ID));
+  const rnti_t second_tc_rnti = sched.last_rach_ind.value().occasions[0].preambles[0].tc_rnti;
+  ASSERT_NE(first_tc_rnti, second_tc_rnti) << "Test setup error: rnti_manager should allocate a fresh TC-RNTI";
+  const ue_con_res_id_t second_con_res_id = make_con_res_id(0x40);
+  cell_handler.add_msga_con_res_id(second_tc_rnti, second_con_res_id);
+
+  // Each attempt resolves only its own Contention Resolution Id, since storage is keyed by TC-RNTI, not RAPID.
+  const std::optional<ue_con_res_id_t> first_resolved  = cell_handler.resolve_msga_con_res_id(first_tc_rnti);
+  const std::optional<ue_con_res_id_t> second_resolved = cell_handler.resolve_msga_con_res_id(second_tc_rnti);
+  ASSERT_TRUE(first_resolved.has_value());
+  ASSERT_EQ(*first_resolved, first_con_res_id);
+  ASSERT_TRUE(second_resolved.has_value());
+  ASSERT_EQ(*second_resolved, second_con_res_id);
+}

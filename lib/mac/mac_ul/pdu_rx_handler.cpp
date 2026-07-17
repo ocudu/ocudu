@@ -285,9 +285,16 @@ bool pdu_rx_handler::handle_ccch_msg(const decoded_mac_rx_pdu& ctx, const mac_ul
   if (ctx.pdu_rx.rapid.has_value()) {
     // This CCCH message was carried in a 2-step RACH (MsgA) PUSCH. Per TS 38.211, 6.3.1.1, MsgA PUSCH is decoded
     // using the RA-RNTI, not the UE's TC-RNTI, so ctx.pdu_rx.rnti is the (periodically recurring) RA-RNTI here, not
-    // the TC-RNTI mac_rach_handler allocated for this preamble. Resolve it back to the real TC-RNTI.
+    // the TC-RNTI mac_rach_handler allocated for this preamble. Resolve it back to the real TC-RNTI, and register
+    // the UE Contention Resolution Identity so the DU-MAC can echo it back in the successRAR MAC subPDU (see
+    // TS 38.321, 6.2.3a).
+    ue_con_res_id_t        con_res_id{};
+    const byte_buffer_view payload = sdu.payload();
+    std::copy(
+        payload.begin(), payload.begin() + std::min<size_t>(payload.length(), UE_CON_RES_ID_LEN), con_res_id.begin());
+
     std::optional<rnti_t> resolved =
-        sched.resolve_msga_tc_rnti(ctx.cell_index_rx, ctx.pdu_rx.rnti, *ctx.pdu_rx.rapid, ctx.slot_rx);
+        sched.handle_msga_ccch_sdu(ctx.cell_index_rx, ctx.pdu_rx.rnti, *ctx.pdu_rx.rapid, ctx.slot_rx, con_res_id);
     if (not resolved.has_value()) {
       logger.warning("{}: Discarding CCCH message. Cause: No TC-RNTI found for ra-rnti={} rapid={}",
                      create_prefix(ctx, sdu),

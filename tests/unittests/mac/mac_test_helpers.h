@@ -143,11 +143,29 @@ public:
   void handle_slot_indication(const mac_cell_timing_context& context) override {}
 };
 
+class dummy_mac_cell_rach_handler : public mac_cell_rach_handler
+{
+public:
+  std::optional<ue_con_res_id_t> con_res_id;
+
+  void handle_rach_indication(const mac_rach_indication& rach_ind) override {}
+
+  std::optional<rnti_t>
+  handle_msga_ccch_sdu(rnti_t ra_rnti, uint8_t rapid, slot_point sl_rx, const ue_con_res_id_t& con_res_id_) override
+  {
+    con_res_id = con_res_id_;
+    return ra_rnti;
+  }
+
+  std::optional<ue_con_res_id_t> resolve_msga_con_res_id(rnti_t tc_rnti) override { return con_res_id; }
+};
+
 class dummy_mac_scheduler_adapter : public mac_scheduler_cell_info_handler
 {
 public:
-  bool         active            = false;
-  sched_result next_sched_result = {};
+  bool                        active            = false;
+  sched_result                next_sched_result = {};
+  dummy_mac_cell_rach_handler rach_handler;
 
   void handle_dl_buffer_state_update(const mac_dl_buffer_state_indication_message& dl_bs) override {}
 
@@ -184,6 +202,8 @@ public:
   }
 
   void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req) override {}
+
+  mac_cell_rach_handler& get_cell_rach_handler(du_cell_index_t cell_index) override { return rach_handler; }
 };
 
 class dummy_mac_cell_result_notifier : public mac_cell_result_notifier

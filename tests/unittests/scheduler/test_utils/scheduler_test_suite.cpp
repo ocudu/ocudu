@@ -484,10 +484,8 @@ static void assert_rar_grant_msg3_pusch_consistency(const cell_configuration&   
       tc_rntis.emplace(rar_grant.temp_crnti);
 
       // 2-step RACH SuccessRAR: UE's MsgA PUSCH was decoded; no Msg3 is required.
-      if (const auto* two_step = std::get_if<rar_ul_grant::two_step_info>(&rar_grant.type)) {
-        if (two_step->is_success) {
-          continue;
-        }
+      if (std::holds_alternative<rar_ul_grant::two_step_success_info>(rar_grant.type)) {
+        continue;
       }
 
       // 4-step RAR and 2-step FallbackRAR: a Msg3 PUSCH must be scheduled.
@@ -874,7 +872,9 @@ void test_helper::ra_scheduler_tracker::on_new_result(slot_point sl_tx, const sc
     const auto pusch_td_list =
         get_pusch_time_domain_resource_table(*cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common);
     for (const auto& ul_grant : rar.grants) {
-      if (const auto* two_step = std::get_if<rar_ul_grant::two_step_info>(&ul_grant.type)) {
+      const bool is_two_step_success  = std::holds_alternative<rar_ul_grant::two_step_success_info>(ul_grant.type);
+      const bool is_two_step_fallback = std::holds_alternative<rar_ul_grant::two_step_fallback_info>(ul_grant.type);
+      if (is_two_step_success or is_two_step_fallback) {
         // 2-step RACH MsgB grant (SuccessRAR or FallbackRAR).
         auto msga_it =
             std::find_if(pending_msga_preambles.begin(),
@@ -886,7 +886,7 @@ void test_helper::ra_scheduler_tracker::on_new_result(slot_point sl_tx, const sc
         ASSERT_LE(sl_tx, msga_it->msgb_window_stop) << "MsgB scheduled outside of MsgB window";
         msga_it->msgb_sched = true;
 
-        if (two_step->is_success) {
+        if (is_two_step_success) {
           ++success_rar_counter;
         } else {
           // FallbackRAR: set up Msg3 tracking in pending_preambles so the rest of the Msg3 logic applies.

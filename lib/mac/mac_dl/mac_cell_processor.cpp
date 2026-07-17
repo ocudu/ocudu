@@ -53,7 +53,7 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
            get_nof_slots_per_subframe(cell_cfg.scs_common) * NOF_SFNS * NOF_SUBFRAMES_PER_FRAME),
   ssb_helper(cell_cfg_req_),
   sib_assembler(cell_cfg_req_.cell_index, cell_cfg_req_.sys_info, timer_factory{timers_, ctrl_exec_}, sched_),
-  rar_assembler(pdu_pool),
+  rar_assembler(pdu_pool, sched_.get_cell_rach_handler(cell_cfg_req_.cell_index)),
   dlsch_assembler(ue_mng, dl_harq_buffers),
   paging_assembler(pdu_pool),
   sched(sched_),

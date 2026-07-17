@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ra_scheduler.h"
+#include "../config/time_domain_mapper.h"
 #include "../logging/cell_metrics_handler.h"
 #include "../logging/scheduler_event_logger.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator_impl.h"
@@ -14,6 +15,7 @@
 #include "../support/sch_pdu_builder.h"
 #include "ocudu/adt/scope_exit.h"
 #include "ocudu/ran/band_helper.h"
+#include "ocudu/ran/pdcch/dci_format.h"
 #include "ocudu/ran/prach/prach_preamble_information.h"
 #include "ocudu/ran/prach/prach_time_mapping.h"
 #include "ocudu/ran/prach/ra_helper.h"
@@ -1852,7 +1854,12 @@ void ra_scheduler::schedule_pending_msgbs(cell_resource_allocator& res_alloc, sl
     }
 
     // -- Fill DCI and PDSCH --
-    msgb_crbs.resize(get_nof_pdsch_prbs_required(pdsch_time_res_index, effective_nof_sched).nof_prbs);
+    // Note: a successRAR subPDU (TS38.321, 6.1.5a/6.2.3a) is larger than a fallbackRAR subPDU, so the two counts are
+    // sized separately rather than through get_nof_pdsch_prbs_required, which assumes uniformly-sized fallbackRAR
+    // subPDUs.
+    const auto msgb_prbs_tbs =
+        get_nof_msgb_pdsch_prbs_required(pdsch_time_res_index, nof_fallback_to_sched, nof_success_to_sched);
+    msgb_crbs.resize(msgb_prbs_tbs.nof_prbs);
     cell_slot_resource_allocator& pdsch_alloc = res_alloc[pdcch_slot + pdsch_td_list[pdsch_time_res_index].k0];
 
     build_dci_f1_0_ra_rnti(pdcch->dci, init_dl_bwp, msgb_crbs, pdsch_time_res_index, sched_cfg.rar_mcs_index);
@@ -1860,7 +1867,7 @@ void ra_scheduler::schedule_pending_msgbs(cell_resource_allocator& res_alloc, sl
 
     rar_information& msgb_rar = pdsch_alloc.result.dl.rar_grants.emplace_back();
     build_pdsch_f1_0_ra_rnti(msgb_rar.pdsch_cfg,
-                             get_nof_pdsch_prbs_required(pdsch_time_res_index, effective_nof_sched).tbs_bytes,
+                             msgb_prbs_tbs.tbs_bytes,
                              msgb.msgb_rnti,
                              cell_cfg,
                              pdcch->dci.as_ra_rnti_f1_0(),
@@ -1881,15 +1888,25 @@ void ra_scheduler::schedule_pending_msgbs(cell_resource_allocator& res_alloc, sl
                        pctx.info.tc_rnti);
           break;
         }
-        rar_ul_grant& g     = msgb_rar.grants.emplace_back();
-        g.rapid             = pctx.info.preamble_id;
-        g.ta                = pctx.info.time_advance.to_Ta(init_ul_bwp.generic_params.scs);
-        g.temp_crnti        = pctx.info.tc_rnti;
-        g.freq_hop_flag     = false;
-        g.mcs               = sched_cfg.msg3_mcs_index;
-        g.tpc               = 0;
-        g.csi_req           = false;
-        g.type              = rar_ul_grant::two_step_info{true};
+        rar_ul_grant& g = msgb_rar.grants.emplace_back();
+        g.rapid         = pctx.info.preamble_id;
+        g.ta            = pctx.info.time_advance.to_Ta(init_ul_bwp.generic_params.scs);
+        g.temp_crnti    = pctx.info.tc_rnti;
+        g.freq_hop_flag = false;
+        g.mcs           = sched_cfg.msg3_mcs_index;
+        g.tpc           = 0;
+        g.csi_req       = false;
+
+        // Sanity-check that a UL slot exists for the MsgB HARQ-ACK feedback implied by
+        // two_step_success_info::harq_feedback_timing_indicator/pucch_resource_indicator below.
+        const span<const uint8_t> msgb_k1_candidates =
+            cell_cfg.init_bwp.ul.td_mapper().k1_candidates(dci_dl_format::f1_0, pdsch_alloc.slot.count());
+        ocudu_sanity_check(not msgb_k1_candidates.empty(),
+                           "No valid k1 candidate exists for the MsgB HARQ-ACK feedback of successRAR");
+        // \todo harq_feedback_timing_indicator/pucch_resource_indicator are left at their placeholder value (0),
+        // chosen above to land on a valid UL slot; no PUCCH resource is actually reserved for this feedback yet.
+        g.type = rar_ul_grant::two_step_success_info{};
+
         pctx.msgb_scheduled = true;
         ++success_count;
 
@@ -1939,7 +1956,7 @@ void ra_scheduler::schedule_pending_msgbs(cell_resource_allocator& res_alloc, sl
         // Determine TPC command based on Table 8.2-2, TS 38.213.
         g.tpc     = (init_ul_bwp.pusch_cfg_common->msg3_delta_power.value() + 6) / 2;
         g.csi_req = false;
-        g.type    = rar_ul_grant::two_step_info{false};
+        g.type    = rar_ul_grant::two_step_fallback_info{};
 
         // Allocate Msg3 RBs.
         msg3_alloc.ul_res_grid.fill(grant_info{init_ul_bwp.generic_params.scs,
@@ -2018,6 +2035,29 @@ sch_prbs_tbs ra_scheduler::get_nof_pdsch_prbs_required(unsigned time_res_idx, un
 
   return rar_data[time_res_idx].prbs_tbs_per_nof_grants
       [std::min(nof_ul_grants, static_cast<unsigned>(rar_data[time_res_idx].prbs_tbs_per_nof_grants.size())) - 1];
+}
+
+sch_prbs_tbs ra_scheduler::get_nof_msgb_pdsch_prbs_required(unsigned time_res_idx,
+                                                            unsigned nof_fallback_grants,
+                                                            unsigned nof_success_grants) const
+{
+  // subPDU sizes (subheader + payload) as per TS38.321, 6.1.5a and 6.2.3a.
+  static constexpr unsigned fallback_rar_subpdu_size_bytes = 8;
+  static constexpr unsigned success_rar_subpdu_size_bytes  = 12;
+  static constexpr unsigned nof_oh_prb                     = 0;
+  static constexpr unsigned nof_layers                     = 1;
+
+  ocudu_assert(nof_fallback_grants + nof_success_grants > 0, "Invalid number of MsgB UL grants");
+
+  const span<const pdsch_time_domain_resource_allocation> pdsch_td_list = get_ra_pdsch_td_list(cell_cfg);
+  const prbs_calculator_sch_config prbs_cfg{nof_fallback_grants * fallback_rar_subpdu_size_bytes +
+                                                nof_success_grants * success_rar_subpdu_size_bytes,
+                                            pdsch_td_list[time_res_idx].symbols.length(),
+                                            calculate_nof_dmrs_per_rb(rar_data[time_res_idx].dmrs_info),
+                                            nof_oh_prb,
+                                            rar_mcs_config,
+                                            nof_layers};
+  return get_nof_prbs(prbs_cfg);
 }
 
 void ra_scheduler::log_postponed_rar(const pending_rar_alloc&  rar,

@@ -67,8 +67,11 @@ public:
     last_crnti_ce = old_ue_index;
   }
 
-  std::optional<rnti_t>
-  resolve_msga_tc_rnti(du_cell_index_t cell_index, rnti_t ra_rnti, uint8_t rapid, slot_point sl_rx) override
+  std::optional<rnti_t> handle_msga_ccch_sdu(du_cell_index_t        cell_index,
+                                             rnti_t                 ra_rnti,
+                                             uint8_t                rapid,
+                                             slot_point             sl_rx,
+                                             const ue_con_res_id_t& con_res_id) override
   {
     return std::nullopt;
   }

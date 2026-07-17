@@ -734,7 +734,8 @@ public:
                        res_grid[0].result.dl.rar_grants.end(),
                        [](const rar_information& rar) {
                          return std::any_of(rar.grants.begin(), rar.grants.end(), [](const rar_ul_grant& g) {
-                           return std::holds_alternative<rar_ul_grant::two_step_info>(g.type);
+                           return std::holds_alternative<rar_ul_grant::two_step_success_info>(g.type) or
+                                  std::holds_alternative<rar_ul_grant::two_step_fallback_info>(g.type);
                          });
                        });
   }

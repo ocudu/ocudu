@@ -18,6 +18,14 @@ class mac_cell_rach_handler_dummy : public mac_cell_rach_handler
 public:
   void handle_rach_indication(const mac_rach_indication& rach_ind) override { indication = rach_ind; }
 
+  std::optional<rnti_t>
+  handle_msga_ccch_sdu(rnti_t ra_rnti, uint8_t rapid, slot_point sl_rx, const ue_con_res_id_t& con_res_id) override
+  {
+    return std::nullopt;
+  }
+
+  std::optional<ue_con_res_id_t> resolve_msga_con_res_id(rnti_t tc_rnti) override { return std::nullopt; }
+
   const mac_rach_indication& get_indication() const { return indication; }
 };
 } // namespace

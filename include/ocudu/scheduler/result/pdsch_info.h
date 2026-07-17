@@ -157,13 +157,17 @@ struct rar_ul_grant {
 
   /// Grant type discriminator.
   /// four_step_info — standard 4-step RAR UL grant (MAC RAR subPDU).
-  /// two_step_info — 2-step MsgB grant; is_success selects SuccessRAR (LCID=1) vs FallbackRAR (LCID=0).
+  /// two_step_success_info — 2-step MsgB successRAR (LCID=1); MsgA PUSCH was successfully decoded.
+  /// two_step_fallback_info — 2-step MsgB fallbackRAR (LCID=0); UE falls back to 4-step RAR (Msg3).
   struct four_step_info {};
-  struct two_step_info {
-    /// Whether the MsgA PUSCH was successfully decoded or the UE should fallback to 4-step RAR.
-    bool is_success;
+  struct two_step_success_info {
+    /// HARQ Feedback Timing Indicator for the MsgB HARQ-ACK, as per TS38.321, 6.2.3a.
+    uint8_t harq_feedback_timing_indicator = 0;
+    /// PUCCH Resource Indicator for the MsgB HARQ-ACK, as per TS38.321, 6.2.3a.
+    uint8_t pucch_resource_indicator = 0;
   };
-  std::variant<four_step_info, two_step_info> type = four_step_info{};
+  struct two_step_fallback_info {};
+  std::variant<four_step_info, two_step_success_info, two_step_fallback_info> type = four_step_info{};
 };
 
 /// Stores the information associated with a RAR.

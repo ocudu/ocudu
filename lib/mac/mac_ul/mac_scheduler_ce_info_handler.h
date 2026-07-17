@@ -5,6 +5,7 @@
 #pragma once
 
 #include "ul_bsr.h"
+#include "ocudu/mac/ue_con_res_id.h"
 #include "ocudu/ran/du_types.h"
 #include "ocudu/ran/logical_channel/lcid_dl_sch.h"
 #include "ocudu/ran/logical_channel/phr_report.h"
@@ -69,12 +70,15 @@ public:
   /// \brief Forward to scheduler any notification of a received MAC CRNTI CE.
   virtual void handle_crnti_ce_indication(du_ue_index_t old_ue_index, du_cell_index_t cell_index) = 0;
 
-  /// \brief Resolves the TC-RNTI allocated to a 2-step RACH (MsgA) PUSCH transmission, given the RA-RNTI it was
-  /// scheduled with -- as per TS 38.211, 6.3.1.1, MsgA PUSCH is decoded using the RA-RNTI, not the UE's TC-RNTI --
-  /// and the RAPID of the preamble that originated it.
+  /// \brief Resolves the TC-RNTI allocated to a 2-step RACH (MsgA) PUSCH transmission, given its RA-RNTI and RAPID.
+  /// If resolved, also registers the UE Contention Resolution Identity decoded from the same CCCH SDU, so it is
+  /// later echoed back in the successRAR MAC subPDU when this preamble's MsgB is scheduled.
   /// \return The TC-RNTI, if a matching, non-expired entry exists; std::nullopt otherwise.
-  virtual std::optional<rnti_t>
-  resolve_msga_tc_rnti(du_cell_index_t cell_index, rnti_t ra_rnti, uint8_t rapid, slot_point sl_rx) = 0;
+  virtual std::optional<rnti_t> handle_msga_ccch_sdu(du_cell_index_t        cell_index,
+                                                     rnti_t                 ra_rnti,
+                                                     uint8_t                rapid,
+                                                     slot_point             sl_rx,
+                                                     const ue_con_res_id_t& con_res_id) = 0;
 };
 
 } // namespace ocudu

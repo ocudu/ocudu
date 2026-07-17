@@ -469,8 +469,12 @@ static auto make_rar_debug_log_entry(const rar_information& rar_info)
 {
   // RAR grants always carry exactly one codeword.
   auto make_rar_grant_debug_entry = [](const rar_ul_grant& grant) {
-    const auto* ts     = std::get_if<rar_ul_grant::two_step_info>(&grant.type);
-    const auto  result = ts != nullptr ? std::optional<bool>{ts->is_success} : std::nullopt;
+    std::optional<bool> result;
+    if (std::holds_alternative<rar_ul_grant::two_step_success_info>(grant.type)) {
+      result = true;
+    } else if (std::holds_alternative<rar_ul_grant::two_step_fallback_info>(grant.type)) {
+      result = false;
+    }
     return make_formattable(
         [tcrnti = grant.temp_crnti, rapid = grant.rapid, ta = grant.ta, td = grant.time_resource_assignment, result](
             auto& ctx) {

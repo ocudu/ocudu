@@ -5,6 +5,7 @@
 #include "lib/mac/mac_dl/rar_pdu_assembler.h"
 #include "mac_test_helpers.h"
 #include "ocudu/adt/circular_array.h"
+#include "ocudu/mac/ue_con_res_id.h"
 #include "ocudu/support/bit_encoding.h"
 #include "ocudu/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -110,6 +111,58 @@ bool operator==(const rar_ul_grant& lhs, const rar_ul_grant& rhs)
          lhs.csi_req == rhs.csi_req and lhs.temp_crnti == rhs.temp_crnti;
 }
 
+/// Checks whether the MAC subPDU is a successRAR subPDU (T1=0, T2=1), as per TS38.321 Figure 6.1.5a-3.
+static bool is_successrar_subpdu(span<const uint8_t> rar_pdu)
+{
+  return (rar_pdu[0] & (1U << 6U)) == 0 and (rar_pdu[0] & (1U << 5U)) != 0;
+}
+
+// Check TS38.321 6.1.5a and 6.2.3a.
+static const unsigned SUCCESS_RAR_PDU_SIZE = 12;
+
+/// Decoded content of a successRAR subPDU payload, as per TS38.321, Figure 6.2.3a-2.
+struct success_rar_content {
+  ue_con_res_id_t con_res_id;
+  uint8_t         tpc;
+  uint8_t         harq_feedback_timing_indicator;
+  uint8_t         pucch_resource_indicator;
+  uint16_t        ta;
+  rnti_t          crnti;
+};
+
+/// Decode successRAR subPDU (subheader + payload) as per TS38.321, Figure 6.1.5a-3 and 6.2.3a-2.
+success_rar_content decode_success_rar(span<const uint8_t> rar_subpdu)
+{
+  TESTASSERT_EQ(SUCCESS_RAR_PDU_SIZE, rar_subpdu.size());
+  success_rar_content ret{};
+  std::copy(rar_subpdu.begin() + 1, rar_subpdu.begin() + 1 + UE_CON_RES_ID_LEN, ret.con_res_id.begin());
+
+  const uint8_t byte6                = rar_subpdu[7];
+  ret.tpc                            = (byte6 >> 3U) & 0x3U;
+  ret.harq_feedback_timing_indicator = byte6 & 0x7U;
+
+  const uint8_t byte7          = rar_subpdu[8];
+  ret.pucch_resource_indicator = (byte7 >> 4U) & 0xfU;
+  ret.ta                       = static_cast<uint16_t>(((byte7 & 0xfU) << 8U) | rar_subpdu[9]);
+
+  ret.crnti = to_rnti(static_cast<uint16_t>((rar_subpdu[10] << 8U) | rar_subpdu[11]));
+
+  return ret;
+}
+
+/// Generates a random successRAR grant.
+rar_ul_grant make_random_success_rar_grant()
+{
+  rar_ul_grant grant{};
+  grant.rapid      = rapid_dist(gen);
+  grant.temp_crnti = to_rnti(rnti_dist(gen));
+  grant.ta         = ta_dist(gen);
+  grant.tpc        = static_cast<int8_t>(tpc_dist(gen) & 0x3U);
+  grant.type = rar_ul_grant::two_step_success_info{.harq_feedback_timing_indicator = static_cast<uint8_t>(gen() % 8),
+                                                   .pucch_resource_indicator       = static_cast<uint8_t>(gen() % 16)};
+  return grant;
+}
+
 /// Tests if the encoded RAR PDU matches the content in the original RAR.
 void test_encoded_rar(const rar_information& original_rar, span<const uint8_t> rar_pdu)
 {
@@ -137,8 +190,9 @@ TEST(rar_assembler_test, backoff_indicator_only)
 
   static constexpr size_t  MAX_RAR_GRANT_SIZE = 64;
   ticking_ring_buffer_pool pdu_pool(MAX_DL_PDUS_PER_SLOT * MAX_GRANTS_PER_RAR * MAX_RAR_GRANT_SIZE, 1, 10240);
-  rar_pdu_assembler        assembler(pdu_pool);
-  span<const uint8_t>      bytes = assembler.encode_rar_pdu(rar_info);
+  test_helpers::dummy_mac_cell_rach_handler rach_handler;
+  rar_pdu_assembler                         assembler(pdu_pool, rach_handler);
+  span<const uint8_t>                       bytes = assembler.encode_rar_pdu(rar_info);
 
   ASSERT_EQ(1U, bytes.size());
   EXPECT_TRUE(is_last_subpdu(bytes));
@@ -157,8 +211,9 @@ TEST(rar_assembler_test, backoff_indicator_with_ul_grants)
 
   static constexpr size_t  MAX_RAR_GRANT_SIZE = 64;
   ticking_ring_buffer_pool pdu_pool(MAX_DL_PDUS_PER_SLOT * MAX_GRANTS_PER_RAR * MAX_RAR_GRANT_SIZE, 1, 10240);
-  rar_pdu_assembler        assembler(pdu_pool);
-  span<const uint8_t>      bytes = assembler.encode_rar_pdu(rar_info);
+  test_helpers::dummy_mac_cell_rach_handler rach_handler;
+  rar_pdu_assembler                         assembler(pdu_pool, rach_handler);
+  span<const uint8_t>                       bytes = assembler.encode_rar_pdu(rar_info);
 
   ASSERT_EQ(1U + RAR_PDU_SIZE * nof_grants, bytes.size());
 
@@ -178,8 +233,9 @@ TEST(rar_assembler_test, multiple_random_ul_grants)
   rar_information          rar_info = make_random_rar_info(nof_ul_grants_per_rar(gen));
   ticking_ring_buffer_pool pdu_pool(MAX_DL_PDUS_PER_SLOT * MAX_GRANTS_PER_RAR * MAX_RAR_GRANT_SIZE, 1, 10240);
 
-  rar_pdu_assembler   assembler(pdu_pool);
-  span<const uint8_t> bytes = assembler.encode_rar_pdu(rar_info);
+  test_helpers::dummy_mac_cell_rach_handler rach_handler;
+  rar_pdu_assembler                         assembler(pdu_pool, rach_handler);
+  span<const uint8_t>                       bytes = assembler.encode_rar_pdu(rar_info);
 
   test_encoded_rar(rar_info, bytes);
 }
@@ -194,7 +250,8 @@ TEST(rar_assembler_test, rar_assembler_maintains_old_results)
 
   ticking_ring_buffer_pool pdu_pool(
       MAX_DL_PDUS_PER_SLOT * MAX_GRANTS_PER_RAR * MAX_RAR_GRANT_SIZE, NOF_SUBFRAMES_PER_FRAME, 10240);
-  rar_pdu_assembler assembler(pdu_pool);
+  test_helpers::dummy_mac_cell_rach_handler rach_handler;
+  rar_pdu_assembler                         assembler(pdu_pool, rach_handler);
 
   // The RAR assembler has to internally store previous slot results. This variable defines a reasonable slot duration
   // that the RAR assembler has to keep these results stored.
@@ -213,4 +270,92 @@ TEST(rar_assembler_test, rar_assembler_maintains_old_results)
     previous_rars[i] = make_random_rar_info(nof_ul_grants_per_rar(gen));
     previous_pdus[i] = assembler.encode_rar_pdu(previous_rars[i]);
   }
+}
+
+TEST(rar_assembler_test, success_rar_grant_zero_fills_unresolved_con_res_id)
+{
+  test_delimit_logger test_delim{"MAC assembler for successRAR grant with unresolved Contention Resolution Id"};
+
+  rar_information rar_info{};
+  rar_info.pdsch_cfg.codewords.resize(1);
+  rar_info.pdsch_cfg.codewords[0].tb_size_bytes = units::bytes{SUCCESS_RAR_PDU_SIZE};
+  rar_info.grants.resize(1);
+  rar_info.grants[0] = make_random_success_rar_grant();
+
+  static constexpr size_t  MAX_RAR_GRANT_SIZE = 64;
+  ticking_ring_buffer_pool pdu_pool(MAX_DL_PDUS_PER_SLOT * MAX_GRANTS_PER_RAR * MAX_RAR_GRANT_SIZE, 1, 10240);
+  // dummy_mac_cell_rach_handler::resolve_msga_con_res_id returns nullopt unless a Contention Resolution Id was
+  // registered via add_msga_con_res_id.
+  test_helpers::dummy_mac_cell_rach_handler rach_handler;
+  rar_pdu_assembler                         assembler(pdu_pool, rach_handler);
+  span<const uint8_t>                       bytes = assembler.encode_rar_pdu(rar_info);
+
+  ASSERT_EQ(SUCCESS_RAR_PDU_SIZE, bytes.size());
+  EXPECT_TRUE(is_last_subpdu(bytes));
+  EXPECT_FALSE(is_rapid_subpdu(bytes));
+  EXPECT_TRUE(is_successrar_subpdu(bytes));
+
+  const rar_ul_grant&       grant   = rar_info.grants[0];
+  const auto&               info    = std::get<rar_ul_grant::two_step_success_info>(grant.type);
+  const success_rar_content decoded = decode_success_rar(bytes);
+
+  EXPECT_EQ(decoded.con_res_id, ue_con_res_id_t{});
+  EXPECT_EQ(decoded.tpc, static_cast<uint8_t>(grant.tpc) & 0x3U);
+  EXPECT_EQ(decoded.harq_feedback_timing_indicator, info.harq_feedback_timing_indicator);
+  EXPECT_EQ(decoded.pucch_resource_indicator, info.pucch_resource_indicator);
+  EXPECT_EQ(decoded.ta, grant.ta);
+  EXPECT_EQ(decoded.crnti, grant.temp_crnti);
+}
+
+TEST(rar_assembler_test, success_rar_grant_encodes_resolved_con_res_id)
+{
+  test_delimit_logger test_delim{"MAC assembler for successRAR grant with resolved Contention Resolution Id"};
+
+  rar_information rar_info{};
+  rar_info.pdsch_cfg.codewords.resize(1);
+  rar_info.pdsch_cfg.codewords[0].tb_size_bytes = units::bytes{SUCCESS_RAR_PDU_SIZE};
+  rar_info.grants.resize(1);
+  rar_info.grants[0] = make_random_success_rar_grant();
+
+  static constexpr size_t  MAX_RAR_GRANT_SIZE = 64;
+  ticking_ring_buffer_pool pdu_pool(MAX_DL_PDUS_PER_SLOT * MAX_GRANTS_PER_RAR * MAX_RAR_GRANT_SIZE, 1, 10240);
+
+  test_helpers::dummy_mac_cell_rach_handler rach_handler;
+  rach_handler.con_res_id = ue_con_res_id_t{0x11, 0x22, 0x33, 0x44, 0x55, 0x66};
+
+  rar_pdu_assembler   assembler(pdu_pool, rach_handler);
+  span<const uint8_t> bytes = assembler.encode_rar_pdu(rar_info);
+
+  const success_rar_content decoded = decode_success_rar(bytes);
+  EXPECT_EQ(decoded.con_res_id, *rach_handler.con_res_id);
+}
+
+TEST(rar_assembler_test, mixed_fallback_and_success_rar_grants)
+{
+  test_delimit_logger test_delim{"MAC assembler for mixed fallbackRAR and successRAR grants"};
+
+  rar_information rar_info{};
+  rar_info.grants.resize(2);
+  rar_info.grants[0] = make_random_ul_grant();          // fallbackRAR (four_step_info, the default grant type).
+  rar_info.grants[1] = make_random_success_rar_grant(); // successRAR.
+  rar_info.pdsch_cfg.codewords.resize(1);
+  rar_info.pdsch_cfg.codewords[0].tb_size_bytes = units::bytes{RAR_PDU_SIZE + SUCCESS_RAR_PDU_SIZE};
+
+  static constexpr size_t  MAX_RAR_GRANT_SIZE = 64;
+  ticking_ring_buffer_pool pdu_pool(MAX_DL_PDUS_PER_SLOT * MAX_GRANTS_PER_RAR * MAX_RAR_GRANT_SIZE, 1, 10240);
+  test_helpers::dummy_mac_cell_rach_handler rach_handler;
+  rar_pdu_assembler                         assembler(pdu_pool, rach_handler);
+  span<const uint8_t>                       bytes = assembler.encode_rar_pdu(rar_info);
+
+  ASSERT_EQ(RAR_PDU_SIZE + SUCCESS_RAR_PDU_SIZE, bytes.size());
+
+  span<const uint8_t> fallback_subpdu = bytes.subspan(0, RAR_PDU_SIZE);
+  EXPECT_FALSE(is_last_subpdu(fallback_subpdu));
+  EXPECT_TRUE(is_rapid_subpdu(fallback_subpdu));
+  EXPECT_TRUE(rar_info.grants[0] == decode_ul_grant(fallback_subpdu));
+
+  span<const uint8_t> success_subpdu = bytes.subspan(RAR_PDU_SIZE, SUCCESS_RAR_PDU_SIZE);
+  EXPECT_TRUE(is_last_subpdu(success_subpdu));
+  EXPECT_FALSE(is_rapid_subpdu(success_subpdu));
+  EXPECT_TRUE(is_successrar_subpdu(success_subpdu));
 }

@@ -5,7 +5,9 @@
 #pragma once
 
 #include "ocudu/adt/static_vector.h"
+#include "ocudu/mac/ue_con_res_id.h"
 #include "ocudu/ran/phy_time_unit.h"
+#include "ocudu/ran/rnti.h"
 #include "ocudu/ran/slot_pdu_capacity_constants.h"
 #include "ocudu/ran/slot_point.h"
 #include <optional>
@@ -57,6 +59,18 @@ public:
   ///
   /// \param rach_ind Received RACH indication.
   virtual void handle_rach_indication(const mac_rach_indication& rach_ind) = 0;
+
+  /// \brief Resolves the TC-RNTI allocated to a 2-step RACH (MsgA) PUSCH transmission, given its RA-RNTI and RAPID.
+  /// If resolved, also registers the UE ConResId decoded from the same CCCH SDU, so it is
+  /// later encoded in the successRAR MAC subPDU when this preamble's MsgB is scheduled.
+  /// \return The TC-RNTI, if a matching, non-expired entry exists; std::nullopt otherwise.
+  virtual std::optional<rnti_t>
+  handle_msga_ccch_sdu(rnti_t ra_rnti, uint8_t rapid, slot_point sl_rx, const ue_con_res_id_t& con_res_id) = 0;
+
+  /// \brief Resolves and consumes the UE ConResId registered for a TC-RNTI.
+  /// \param tc_rnti TC-RNTI (echoed as the successRAR's C-RNTI) that the entry was registered with.
+  /// \return The ConResId, if a matching entry exists; std::nullopt otherwise.
+  virtual std::optional<ue_con_res_id_t> resolve_msga_con_res_id(rnti_t tc_rnti) = 0;
 };
 
 } // namespace ocudu
