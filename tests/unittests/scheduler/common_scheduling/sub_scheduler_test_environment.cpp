@@ -58,6 +58,7 @@ sub_scheduler_test_environment::sub_scheduler_test_environment(
   cell_cfg(*cfg_mng.add_cell(cell_req)),
   pdcch_alloc(custom_pdcch_alloc == nullptr ? std::make_unique<pdcch_resource_allocator_impl>(cell_cfg)
                                             : std::move(custom_pdcch_alloc)),
+  pucch_alloc(cell_cfg, sched_cfg.ue.max_pucchs_per_slot, sched_cfg.ue.max_ul_grants_per_slot),
   delay_tx_rx_slots(delay_tx_rx_slots_),
   max_k_value(derive_max_k_value(cell_cfg)),
   pdcch_alloc_slot_ind_fn(std::move(pdcch_alloc_sl_ind_task))
@@ -74,6 +75,9 @@ void sub_scheduler_test_environment::run_slot()
 
   // pdcch allocator slot indication.
   pdcch_alloc_slot_ind_fn(next_slot.without_hyper_sfn());
+
+  // pucch allocator slot indication.
+  pucch_alloc.slot_indication(next_slot.without_hyper_sfn());
 
   // Run slot for the derived class.
   do_run_slot();

@@ -20,6 +20,7 @@ namespace ocudu {
 
 class scheduler_event_logger;
 class cell_metrics_handler;
+class pucch_allocator;
 struct ul_crc_indication;
 
 /// Scheduler for RAR PDSCHs and Msg3 PUSCH grants and handler of RACH indications.
@@ -28,6 +29,7 @@ class ra_scheduler
 public:
   explicit ra_scheduler(const cell_configuration& cfg_,
                         pdcch_resource_allocator& pdcch_sched_,
+                        pucch_allocator&          pucch_alloc_,
                         scheduler_event_logger&   ev_logger_,
                         cell_metrics_handler&     metrics_handler_);
   ~ra_scheduler();
@@ -213,6 +215,16 @@ private:
                                                 unsigned nof_fallback_grants,
                                                 unsigned nof_success_grants) const;
 
+  /// \brief Allocates a common PUCCH resource for a successRAR's MsgB HARQ-ACK feedback, trying each of the
+  /// provided k1 candidates in turn.
+  /// \return The successRAR HARQ feedback fields to use in the RAR grant, if a PUCCH resource was allocated;
+  /// \c std::nullopt if no PUCCH resource is available for any of the k1 candidates.
+  std::optional<rar_ul_grant::two_step_success_info> alloc_msgb_harq_ack_pucch(cell_resource_allocator& res_alloc,
+                                                                               rnti_t                   tc_rnti,
+                                                                               unsigned                 pdsch_delay,
+                                                                               span<const uint8_t>      k1_candidates,
+                                                                               const pdcch_dl_information& pdcch) const;
+
   /// Reserve space in the resource grid for the MsgA PUSCH so it is not taken by other UL grants.
   void reserve_msga_pusch_rbs(cell_resource_allocator& res_alloc);
 
@@ -225,6 +237,7 @@ private:
   const scheduler_ra_expert_config& sched_cfg;
   const cell_configuration&         cell_cfg;
   pdcch_resource_allocator&         pdcch_sch;
+  pucch_allocator&                  pucch_alloc;
   scheduler_event_logger&           ev_logger;
   cell_metrics_handler&             metrics_hdlr;
   ocudulog::basic_logger&           logger = ocudulog::fetch_basic_logger("SCHED");

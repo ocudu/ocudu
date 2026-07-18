@@ -7,6 +7,7 @@
 #include "../logging/cell_metrics_handler.h"
 #include "../logging/scheduler_event_logger.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator_impl.h"
+#include "../pucch_scheduling/pucch_allocator.h"
 #include "../support/csi_rs_helpers.h"
 #include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
@@ -267,11 +268,13 @@ private:
 
 ra_scheduler::ra_scheduler(const cell_configuration& cellcfg_,
                            pdcch_resource_allocator& pdcch_sch_,
+                           pucch_allocator&          pucch_alloc_,
                            scheduler_event_logger&   ev_logger_,
                            cell_metrics_handler&     metrics_hdlr_) :
   sched_cfg(cellcfg_.expert_cfg.ra),
   cell_cfg(cellcfg_),
   pdcch_sch(pdcch_sch_),
+  pucch_alloc(pucch_alloc_),
   ev_logger(ev_logger_),
   metrics_hdlr(metrics_hdlr_),
   ra_win_nof_slots(cell_cfg.params.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window),
@@ -1865,6 +1868,12 @@ void ra_scheduler::schedule_pending_msgbs(cell_resource_allocator& res_alloc, sl
     build_dci_f1_0_ra_rnti(pdcch->dci, init_dl_bwp, msgb_crbs, pdsch_time_res_index, sched_cfg.rar_mcs_index);
     pdsch_alloc.dl_res_grid.fill(grant_info{dl_scs, pdsch_td_list[pdsch_time_res_index].symbols, msgb_crbs});
 
+    // Candidate k1 values for the MsgB HARQ-ACK feedback (successRAR only), and the resulting PDSCH-to-PUCCH delay
+    // reference slot. All successRAR grants in this MsgB share the same PDSCH, so these are computed once.
+    const span<const uint8_t> msgb_k1_candidates =
+        cell_cfg.init_bwp.ul.td_mapper().k1_candidates(dci_dl_format::f1_0, pdsch_alloc.slot.count());
+    const unsigned msgb_pdsch_delay = pdsch_alloc.slot - res_alloc.slot_tx();
+
     rar_information& msgb_rar = pdsch_alloc.result.dl.rar_grants.emplace_back();
     build_pdsch_f1_0_ra_rnti(msgb_rar.pdsch_cfg,
                              msgb_prbs_tbs.tbs_bytes,
@@ -1888,6 +1897,23 @@ void ra_scheduler::schedule_pending_msgbs(cell_resource_allocator& res_alloc, sl
                        pctx.info.tc_rnti);
           break;
         }
+        ocudu_sanity_check(not msgb_k1_candidates.empty(),
+                           "No valid k1 candidate exists for the MsgB HARQ-ACK feedback of successRAR");
+
+        // Allocate a common PUCCH resource for the MsgB HARQ-ACK feedback, trying each k1 candidate in turn.
+        std::optional<rar_ul_grant::two_step_success_info> msgb_harq_ack =
+            alloc_msgb_harq_ack_pucch(res_alloc, pctx.info.tc_rnti, msgb_pdsch_delay, msgb_k1_candidates, *pdcch);
+        if (not msgb_harq_ack.has_value()) {
+          // No common PUCCH resource available for any k1 candidate this attempt. Leave this preamble pending, so
+          // a later slot within the MsgB window can retry, instead of granting a successRAR without HARQ-ACK
+          // feedback.
+          logger.debug("msgb-rnti={} tc-rnti={}: SuccessRAR postponed. Cause: No PUCCH resources available for "
+                       "the MsgB HARQ-ACK feedback",
+                       msgb.msgb_rnti,
+                       pctx.info.tc_rnti);
+          continue;
+        }
+
         rar_ul_grant& g = msgb_rar.grants.emplace_back();
         g.rapid         = pctx.info.preamble_id;
         g.ta            = pctx.info.time_advance.to_Ta(init_ul_bwp.generic_params.scs);
@@ -1896,16 +1922,7 @@ void ra_scheduler::schedule_pending_msgbs(cell_resource_allocator& res_alloc, sl
         g.mcs           = sched_cfg.msg3_mcs_index;
         g.tpc           = 0;
         g.csi_req       = false;
-
-        // Sanity-check that a UL slot exists for the MsgB HARQ-ACK feedback implied by
-        // two_step_success_info::harq_feedback_timing_indicator/pucch_resource_indicator below.
-        const span<const uint8_t> msgb_k1_candidates =
-            cell_cfg.init_bwp.ul.td_mapper().k1_candidates(dci_dl_format::f1_0, pdsch_alloc.slot.count());
-        ocudu_sanity_check(not msgb_k1_candidates.empty(),
-                           "No valid k1 candidate exists for the MsgB HARQ-ACK feedback of successRAR");
-        // \todo harq_feedback_timing_indicator/pucch_resource_indicator are left at their placeholder value (0),
-        // chosen above to land on a valid UL slot; no PUCCH resource is actually reserved for this feedback yet.
-        g.type = rar_ul_grant::two_step_success_info{};
+        g.type          = *msgb_harq_ack;
 
         pctx.msgb_scheduled = true;
         ++success_count;
@@ -2058,6 +2075,25 @@ sch_prbs_tbs ra_scheduler::get_nof_msgb_pdsch_prbs_required(unsigned time_res_id
                                             rar_mcs_config,
                                             nof_layers};
   return get_nof_prbs(prbs_cfg);
+}
+
+std::optional<rar_ul_grant::two_step_success_info>
+ra_scheduler::alloc_msgb_harq_ack_pucch(cell_resource_allocator&    res_alloc,
+                                        rnti_t                      tc_rnti,
+                                        unsigned                    pdsch_delay,
+                                        span<const uint8_t>         k1_candidates,
+                                        const pdcch_dl_information& pdcch) const
+{
+  for (unsigned k1_idx = 0; k1_idx != k1_candidates.size(); ++k1_idx) {
+    const std::optional<unsigned> pucch_res_indicator =
+        pucch_alloc.alloc_common_harq_ack(res_alloc, tc_rnti, pdsch_delay, k1_candidates[k1_idx], pdcch);
+    if (pucch_res_indicator.has_value()) {
+      return rar_ul_grant::two_step_success_info{.harq_feedback_timing_indicator = static_cast<uint8_t>(k1_idx),
+                                                 .pucch_resource_indicator =
+                                                     static_cast<uint8_t>(*pucch_res_indicator)};
+    }
+  }
+  return std::nullopt;
 }
 
 void ra_scheduler::log_postponed_rar(const pending_rar_alloc&  rar,
