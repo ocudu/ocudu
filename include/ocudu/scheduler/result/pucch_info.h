@@ -21,6 +21,11 @@ struct pucch_info {
     pucch_group_hopping group_hopping;
     /// \f$n_{ID}\f$ as per Section 6.3.2.2.1, TS 38.211.
     unsigned n_id_hopping;
+
+    bool operator==(const f0_config& rhs) const
+    {
+      return group_hopping == rhs.group_hopping && n_id_hopping == rhs.n_id_hopping;
+    }
   };
 
   /// Format 1 specific parameters for a PUCCH transmission.
@@ -30,6 +35,12 @@ struct pucch_info {
     /// \f$n_{ID}\f$ as per Section 6.3.2.2.1, TS 38.211.
     unsigned                 n_id_hopping;
     pucch_repetition_tx_slot slot_repetition;
+
+    bool operator==(const f1_config& rhs) const
+    {
+      return group_hopping == rhs.group_hopping && n_id_hopping == rhs.n_id_hopping &&
+             slot_repetition == rhs.slot_repetition;
+    }
   };
 
   /// Format 2 specific parameters for a PUCCH transmission.
@@ -39,6 +50,12 @@ struct pucch_info {
     /// \f$N_{ID}^0\f$ as per TS 38.211, Section 6.4.1.3.2.1.
     uint16_t n_id_0_scrambling;
     uint8_t  nof_prbs;
+
+    bool operator==(const f2_config& rhs) const
+    {
+      return n_id_scrambling == rhs.n_id_scrambling && n_id_0_scrambling == rhs.n_id_0_scrambling &&
+             nof_prbs == rhs.nof_prbs;
+    }
   };
 
   /// Format 3 specific parameters for a PUCCH transmission.
@@ -51,6 +68,13 @@ struct pucch_info {
     uint16_t                 n_id_scrambling;
     uint16_t                 n_id_0_scrambling;
     uint8_t                  nof_prbs;
+
+    bool operator==(const f3_config& rhs) const
+    {
+      return group_hopping == rhs.group_hopping && n_id_hopping == rhs.n_id_hopping &&
+             slot_repetition == rhs.slot_repetition && n_id_scrambling == rhs.n_id_scrambling &&
+             n_id_0_scrambling == rhs.n_id_0_scrambling && nof_prbs == rhs.nof_prbs;
+    }
   };
 
   /// Format 4 specific parameters for a PUCCH transmission.
@@ -62,6 +86,13 @@ struct pucch_info {
     pucch_repetition_tx_slot slot_repetition;
     uint16_t                 n_id_scrambling;
     uint16_t                 n_id_0_scrambling;
+
+    bool operator==(const f4_config& rhs) const
+    {
+      return group_hopping == rhs.group_hopping && n_id_hopping == rhs.n_id_hopping &&
+             slot_repetition == rhs.slot_repetition && n_id_scrambling == rhs.n_id_scrambling &&
+             n_id_0_scrambling == rhs.n_id_0_scrambling;
+    }
   };
 
   rnti_t                                                              crnti;
