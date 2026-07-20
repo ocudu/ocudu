@@ -232,10 +232,6 @@ struct write_replace_warning_information {
   /// SIB type carried by \c sib_msgs (6, 7 or 8).
   uint8_t sib_type;
   /// \brief CU-encoded SIB6/7/8 PDU segments, as per TS 38.331.
-  ///
-  /// The CU decides segmentation (SIB6 is never segmented; SIB7/8 may be split into multiple segments if the
-  /// warning message does not fit in a single PDU). The first entry is the "SIB Message" F1AP IE; any further
-  /// entries come from the "Additional SIB Message List" F1AP IE, in order.
   std::vector<byte_buffer> sib_msgs;
   /// Repetition Period.
   std::chrono::seconds repeat_period;

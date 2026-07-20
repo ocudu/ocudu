@@ -112,9 +112,6 @@ public:
 
   // -- State
 
-  // Slot of the next call to the scheduler. Extended (HyperSFN-aware) so tests that run long enough to cross the
-  // SFN wrap-around (1023 -> 0) -- e.g. from the random starting point below -- still see a correctly incrementing
-  // HyperSFN, matching what a real DU provides.
   slot_point_extended next_slot{test_helper::generate_random_slot_point(cell_cfg.scs_common())};
 
 private:

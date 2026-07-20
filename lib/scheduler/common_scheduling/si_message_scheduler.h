@@ -28,18 +28,11 @@ public:
   /// \brief Update the SI messages.
   void handle_si_message_update_indication(unsigned version, const si_scheduling_config& new_si_sched_cfg);
 
-  /// \brief Activates an SI-message that requires explicit activation (see \c si_message_scheduling_config).
-  ///
-  /// If \c nof_segments has a value, the SI-message is kept active for at least one full default paging cycle plus
-  /// one full segment cycle (see \c message_window_context::active_until), after which it automatically goes back
-  /// to dormant until the next activation. This -- rather than deactivating after exactly \c nof_segments window
-  /// transmissions -- ensures single-round PWS delivery reaches UEs that are only notified (via the P-RNTI short
-  /// message) near the end of the notification window (see \c si_scheduler::try_handle_pending_pws_request), since
-  /// such UEs must still have a chance to observe a full cycle of segments afterwards. If \c nof_segments is
-  /// \c std::nullopt, the SI-message is activated indefinitely and never automatically deactivates (used for
-  /// test_mode-configured content that should broadcast forever).
+  /// \brief Activates an SI-message that requires explicit activation.
   /// \param activation_slot Slot at which this activation is being processed, used as the origin for the
   /// aforementioned deadline.
+  /// \param nof_segments Number of segments that should reach the UE for this SI-message activation. If equal to
+  /// \c std::nullopt, the SI-message should remain active indefinitely.
   /// \param msg_len Length, in bytes, of the largest segment of the content being activated.
   void activate_si_message(unsigned                si_msg_idx,
                            slot_point_extended     activation_slot,

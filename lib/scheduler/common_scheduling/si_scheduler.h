@@ -98,11 +98,6 @@ private:
   slotted_vector<pws_pending_entry> pending_pws_reqs;
   /// \brief Slot up to which the PWS (ETWS/CMAS) short-message notification must keep being transmitted at every
   /// paging occasion. \c std::nullopt if no notification is currently pending.
-  /// \remark As per TS 38.304, ETWS/CMAS-capable UEs in RRC_IDLE/RRC_INACTIVE monitor for this notification only in
-  /// their own paging occasion, once per DRX cycle; since the network does not know a given UE's UE_ID (hence its
-  /// exact paging occasion), the notification must be repeated across a full default paging cycle to guarantee every
-  /// UE is covered -- mirroring the systemInfoModification window (see \c si_change_start_slot).
-  /// \remark Cleared back to \c std::nullopt once the deadline passes, rather than left as a stale value.
   std::optional<slot_point_extended> pws_notif_until_slot;
 
   slot_point last_sl_tx;

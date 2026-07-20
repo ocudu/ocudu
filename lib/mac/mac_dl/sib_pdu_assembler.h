@@ -90,17 +90,13 @@ private:
   class sib1_assembler;
 
   /// \brief Encoder for a static (non-PWS) SI-message, replaced wholesale whenever its content changes.
-  ///
-  /// Static SI-messages are never segmented -- only PWS (SIB6/7/8) content segments across multiple SI-message
-  /// windows (see \c pws_si_msg_encoder).
   class static_si_msg_encoder;
 
   /// \brief Encoder owning the repeat/count timing and content of an on-going PWS (Write-Replace Warning) broadcast
   /// sequence for a single SI-message index.
   ///
-  /// Unlike \c static_si_msg_encoder, this object is created once (for SI-message indices that require activation,
-  /// see \c si_message_scheduling_config::requires_activation) and persists across unrelated SI reconfigurations --
-  /// it is mutated in place by \c handle_pws_broadcast rather than being replaced, since it owns a live repeat timer
+  /// Unlike \c static_si_msg_encoder, this object is created once and persists across unrelated SI reconfigurations.
+  /// It is mutated in place by \c handle_pws_broadcast rather than being replaced, since it owns a live repeat timer
   /// that must survive across CU-driven Write-Replace Warning content pushes.
   class pws_si_msg_encoder;
 
@@ -138,9 +134,8 @@ private:
   std::unique_ptr<message_handler> message_ext_handler;
 
   // PWS encoders, one entry per SI-message index. Only indices that require activation (see
-  // si_message_scheduling_config::requires_activation) have a non-null entry -- this is decided once at
+  // si_message_scheduling_config::requires_activation) have a non-null entry. This is decided once at
   // construction time, so checking for null is safe from the real-time path without further synchronization.
-  // save_buffers() checks this to leave PWS-owned indices untouched during unrelated SI reconfigurations.
   std::vector<std::shared_ptr<pws_si_msg_encoder>> pws_encoders;
 };
 

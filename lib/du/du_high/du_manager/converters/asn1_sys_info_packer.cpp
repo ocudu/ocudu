@@ -399,8 +399,7 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
           const bool is_pws_sib =
               mapping_info == sib_type::sib6 or mapping_info == sib_type::sib7 or mapping_info == sib_type::sib8;
           if (matching_sib == du_cfg.si.si_config->sibs.end() and not is_pws_sib) {
-            // No content configured for this SIB and it cannot be a dormant PWS SIB (see requires_activation
-            // handling in du_high_config_translators.cpp) -- nothing to advertise.
+            // No content configured for this SIB and is not a dormant SIB (e.g. PWS).
             continue;
           }
 
@@ -413,7 +412,7 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
             case sib_type::sib7:
             case sib_type::sib8: {
               // Append the SIB type to the schedulingInfo element. A dormant, unconfigured PWS SIB (SIB6/7/8) has no
-              // matching content entry and, therefore, no value tag -- it is still advertised so the UE knows to
+              // matching content entry and, therefore, no value tag. However, it is still advertised so the UE knows to
               // look for it once a Write-Replace Warning activates it.
               sib_type_info_s type_info;
               ret = asn1::number_to_enum(type_info.type, sib_id);
@@ -1044,9 +1043,7 @@ asn1_packer::pack_all_bcch_dl_sch_msgs(const du_cell_config& du_cfg, std::vector
         });
 
         if (it == sibs.end()) {
-          // A dormant SIB6/7/8 SI-message with no explicitly configured (testing-only) content has no sibs entry at
-          // all (see requires_activation handling in du_high_config_translators.cpp) -- the scheduler never
-          // actually schedules it until an F1AP Write-Replace Warning activates it, so its content is irrelevant.
+          // Dormant SIB6/7/8 SI-message with no explicitly configured (testing-only) content.
           // Use a trivial placeholder instead of ASN.1/CBS-encoding anything.
           ocudu_assert(si_sched.requires_activation and not si_sched.auto_broadcast,
                        "SIB{} in SIB mapping info has no defined config",

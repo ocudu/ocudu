@@ -31,11 +31,9 @@ si_scheduling_config ocudu::odu::make_si_scheduling_info_config(const du_cell_co
     for (unsigned i = 0, sz = du_cfg.si.si_config->si_sched_info.size(); i != sz; ++i) {
       const auto& si_sched = du_cfg.si.si_config->si_sched_info[i];
 
-      sched_req.si_messages[i].period_radio_frames = si_sched.si_period_radio_frames;
-      sched_req.si_messages[i].msg_len             = si_message_lens[i];
-      sched_req.si_messages[i].si_window_position  = si_sched.si_window_position;
-      // SI-messages carrying only PWS (ETWS/CMAS) SIBs stay dormant until a Write-Replace Warning activates them.
-      // See si_message_sched_info::requires_activation/auto_broadcast.
+      sched_req.si_messages[i].period_radio_frames      = si_sched.si_period_radio_frames;
+      sched_req.si_messages[i].msg_len                  = si_message_lens[i];
+      sched_req.si_messages[i].si_window_position       = si_sched.si_window_position;
       sched_req.si_messages[i].requires_activation      = si_sched.requires_activation;
       sched_req.si_messages[i].test_mode_auto_broadcast = si_sched.auto_broadcast;
     }

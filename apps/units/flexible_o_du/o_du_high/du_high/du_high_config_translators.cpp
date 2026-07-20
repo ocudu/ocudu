@@ -471,24 +471,18 @@ static std::optional<si_scheduling_info_config> make_si_sched_info_config(const 
         item = create_sib5_info(sib_cfg.sib5_cfg.value());
       } break;
       case 6: {
-        // SIB6 keeps a permanently reserved SI-message occasion; the scheduler leaves it dormant until an actual
-        // F1AP Write-Replace Warning activates it, so a missing ETWS config is not an error -- no content is built
-        // for it at all (see requires_activation handling in asn1_sys_info_packer.cpp). If etws_cfg is set, it is
-        // broadcast right away instead, indefinitely (see si_message_sched_info::auto_broadcast).
         if (!sib_cfg.etws_cfg.has_value()) {
           continue;
         }
         item = create_sib6_info(sib_cfg.etws_cfg.value());
       } break;
       case 7: {
-        // See SIB6 comment above -- SIB7 is likewise dormant until a real warning is activated.
         if (!sib_cfg.etws_cfg.has_value()) {
           continue;
         }
         item = create_sib7_info(sib_cfg.etws_cfg.value());
       } break;
       case 8: {
-        // See SIB6 comment above -- SIB8 is likewise dormant until a real warning is activated.
         if (!sib_cfg.cmas_cfg.has_value()) {
           continue;
         }

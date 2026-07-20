@@ -34,7 +34,7 @@ std::optional<unsigned> find_si_msg_idx_for_sib(const du_cell_config& cell_cfg, 
 /// \brief Packs a single ASN.1 PER-encoded SIB6/7/8 segment \c sib_msg into a full BCCH-DL-SCH-Message envelope.
 ///
 /// SIB6/7/8 are root (non-extension) CHOICE alternatives in SystemInformation-IEs.sib-TypeAndInfo, so, unlike
-/// Rel-16+ SIBs, they are not open-type wrapped and cannot be spliced into the envelope as raw bytes -- they must
+/// Rel-16+ SIBs, they are not open-type wrapped and cannot be spliced into the envelope as raw bytes. They must
 /// first be unpacked into their generated ASN.1 object so it can be re-packed in place by the envelope's own pack().
 ///
 /// \remark SIB6 is never segmented (always exactly one segment). SIB7/8 may be split into multiple segments by the

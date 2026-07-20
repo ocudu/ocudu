@@ -351,10 +351,7 @@ sib_pdu_assembler::sib_pdu_assembler(du_cell_index_t                  cell_index
   sched(sched_),
   sib1_hdlr(std::make_unique<sib1_assembler>())
 {
-  // Set up PWS encoders, one entry per SI-message index. Only SI-messages that require activation (i.e. can
-  // actually carry a PWS broadcast) get a real encoder; this decision is made once here, before any concurrent
-  // access starts, so it is safe for the real-time path -- and save_buffers() -- to check the resulting null/non-null
-  // pointers without further synchronization.
+  // Set up PWS encoders, one entry per SI-message index.
   const auto& si_sched_messages = req.si_sched_cfg.si_sched_cfg.si_messages;
   pws_encoders.resize(req.si_messages.size());
   for (unsigned i = 0, e = req.si_messages.size(); i != e; ++i) {

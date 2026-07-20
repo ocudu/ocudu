@@ -26,7 +26,7 @@ struct mac_slice_configuration {
   // TODO: Fill remaining fields
 };
 
-/// \brief Requests the scheduler to repeat a PWS (ETWS/CMAS) short-message broadcast indication a given number of
+/// \brief Requests the MAC/scheduler to repeat a PWS (ETWS/CMAS) short-message broadcast indication a given number of
 /// times at a given cadence, as per TS 38.473, Section 8.5.1 "Repetition Period"/"Number of Broadcasts Requested".
 struct pws_broadcast_indication {
   /// Repetition Period.

@@ -22,11 +22,7 @@ struct si_message_scheduling_config {
   /// SI window position of the associated SI-message. See TS 38.331, \c SchedulingInfo2-r17. Values: {1,...,256}.
   /// \remark This field is only applicable for release 17 \c SI-SchedulingInfo.
   std::optional<unsigned> si_window_position;
-  /// \brief Whether this SI-message requires explicit activation before it is actually scheduled.
-  ///
-  /// An SI-message that requires activation keeps its reserved occasion in schedulingInfoList, but is not actually
-  /// scheduled until activated (see \c si_message_scheduler::activate_si_message). Used e.g. for SI-messages that
-  /// only carry PWS (ETWS/CMAS) SIBs (SIB6/7/8), which stay dormant until a Write-Replace Warning is received.
+  /// \brief Whether this SI-message requires explicit activation before it is actually scheduled (e.g. PWS).
   bool requires_activation = false;
   /// \brief Whether this SI-message should be activated at cell startup and broadcast indefinitely, rather than
   /// waiting for a Write-Replace Warning.

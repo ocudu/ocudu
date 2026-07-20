@@ -21,7 +21,7 @@ struct sched_result;
 class mac_scheduler_cell_info_handler : public mac_ue_control_information_handler
 {
 public:
-  virtual ~mac_scheduler_cell_info_handler() override = default;
+  ~mac_scheduler_cell_info_handler() override = default;
 
   /// \brief Start scheduling for a given cell. If cell was already activated, this operation has no effect.
   /// \param cell_idx DU-specific index of the cell for which the slot is being processed.
@@ -51,9 +51,7 @@ public:
   virtual void handle_si_change_indication(const si_scheduling_update_request& request) = 0;
 
   /// \brief Request the scheduler to broadcast a PWS (ETWS/CMAS) short-message notification and activate the target
-  /// SI-message. If \c nof_segments has a value, the SI-message is activated for one complete broadcast (repetition
-  /// is handled entirely by the MAC layer, which re-issues this request once per broadcast occurrence); if
-  /// \c std::nullopt, the SI-message broadcasts indefinitely.
+  /// SI-message.
   /// \param[in] cell_idx DU-specific index of the cell for which the indication is directed.
   /// \param[in] si_msg_idx Index of the SI-message carrying the SIB6/7/8 to activate.
   /// \param[in] nof_segments Number of segments composing the warning message, or \c std::nullopt for indefinite.
