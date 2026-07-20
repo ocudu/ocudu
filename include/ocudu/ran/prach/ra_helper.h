@@ -14,24 +14,32 @@ namespace ocudu {
 
 namespace ra_helper {
 
+/// \brief Processing delta (\f$\Delta\f$), as per TS 38.214, Table 6.1.2.1.1-5, indexed by numerology. Used both
+/// for Msg3 PUSCH timing (TS 38.213, Section 8.3) and for the successRAR PUCCH HARQ-ACK timing (TS 38.213,
+/// Section 8.2A).
+/// \param[in] scs Subcarrier spacing.
+/// \return Delta, in number of slots.
+inline uint8_t get_pusch_delay_delta(subcarrier_spacing scs)
+{
+  // In TS 38.214, Table 6.1.2.1.1-5, Delta is only defined for SCS within [kHz15, kHz120].
+  ocudu_sanity_check(to_numerology_value(scs) <= to_numerology_value(subcarrier_spacing::kHz120),
+                     "Subcarrier spacing not supported for Delta lookup");
+
+  // The array represents Table 6.1.2.1.1-5, in TS 38.214.
+  static constexpr std::array<uint8_t, 4> DELTAS{2, 3, 4, 6};
+  return DELTAS[to_numerology_value(scs)];
+}
+
 /// Get Msg3 Delay when PDCCH SCS is the same as PUSCH SCS, as per TS 38.214.
 /// \param[in] pdcch_and_pusch_scs SCS used by PDCCH and PUSCH.
 /// \param[in] k2 delay used for a given PUSCH.
 /// \return Msg3 delay in number of slots.
 inline uint8_t get_msg3_delay(subcarrier_spacing pdcch_and_pusch_scs, uint8_t k2)
 {
-  // In TS 38.214, Table 6.1.2.1.1-5, Delta is only defined for PUSCH SCS within [kHz15, kHz120kHz].
-  ocudu_sanity_check(to_numerology_value(pdcch_and_pusch_scs) <= to_numerology_value(subcarrier_spacing::kHz120),
-                     "PUSCH subcarrier spacing not supported for MSG3 delay");
-
-  // The array represents Table 6.1.2.1.1-5, in TS 38.214.
-  static constexpr std::array<uint8_t, 4> DELTAS{2, 3, 4, 6};
-
   // The MSG3 slot is defined as MSG3_slot = floor( n * (2^(mu_PUSCH) ) / (2^(mu_PDCCH) ) ) + k2 + Delta.
   // Given the assumption mu_PUSCH == mu_PDCCH, MSG3_delay simplifies to MSG3_delay =  k2 + Delta
   // [TS 38.214, Section 6.1.2.1 and 6.1.2.1.1].
-
-  return k2 + DELTAS[to_numerology_value(pdcch_and_pusch_scs)];
+  return k2 + get_pusch_delay_delta(pdcch_and_pusch_scs);
 }
 
 /// \brief Computes the RA-RNTI based on PRACH parameters, as per TS 38.321, Section 5.1.3.

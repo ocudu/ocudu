@@ -22,6 +22,7 @@
 #include "ocudu/ran/prach/ra_helper.h"
 #include "ocudu/ran/resource_allocation/resource_allocation_frequency.h"
 #include "ocudu/ran/sch/tbs_calculator.h"
+#include "ocudu/scheduler/config/pucch_default_resource.h"
 #include "ocudu/scheduler/config/pucch_guardbands.h"
 #include "ocudu/scheduler/support/rb_helper.h"
 #include "ocudu/support/compiler.h"
@@ -2084,13 +2085,24 @@ ra_scheduler::alloc_msgb_harq_ack_pucch(cell_resource_allocator&    res_alloc,
                                         span<const uint8_t>         k1_candidates,
                                         const pdcch_dl_information& pdcch) const
 {
-  for (unsigned k1_idx = 0; k1_idx != k1_candidates.size(); ++k1_idx) {
-    const std::optional<unsigned> pucch_res_indicator =
-        pucch_alloc.alloc_common_harq_ack(res_alloc, tc_rnti, pdsch_delay, k1_candidates[k1_idx], pdcch);
-    if (pucch_res_indicator.has_value()) {
-      return rar_ul_grant::two_step_success_info{.harq_feedback_timing_indicator = static_cast<uint8_t>(k1_idx),
-                                                 .pucch_resource_indicator =
-                                                     static_cast<uint8_t>(*pucch_res_indicator)};
+  // TS 38.213, Section 8.2A: the successRAR's PUCCH slot is n + k + Delta (+ K_cell,offset,
+  // already added internally by alloc_common_harq_ack()), where Delta is the same processing delta already
+  // applied to Msg3 PUSCH timing, as per TS 38.214, Table 6.1.2.1.1-5.
+  const unsigned delta = ra_helper::get_pusch_delay_delta(cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.scs);
+  for (unsigned k1_idx = 0, sz = k1_candidates.size(); k1_idx != sz; ++k1_idx) {
+    const std::optional<unsigned> delta_pri =
+        pucch_alloc.alloc_common_harq_ack(res_alloc, tc_rnti, pdsch_delay, k1_candidates[k1_idx] + delta, pdcch);
+    if (delta_pri.has_value()) {
+      // TS 38.213, Section 8.2A: unlike the regular DCI 1_0/1_1 HARQ-ACK PUCCH resource indicator (which carries
+      // Delta_PRI), the successRAR's HARQ Feedback Timing Indicator field value V maps to k1 = V + 1, and its
+      // PUCCH Resource Indicator field directly carries r_PUCCH, not Delta_PRI. r_PUCCH is derived here with the
+      // same (CCE position, Delta_PRI) inputs pucch_alloc used internally to pick the actual reserved resource, so
+      // this always matches what was allocated.
+      const unsigned r_pucch =
+          get_pucch_default_resource_index(pdcch.ctx.cces.ncce, pdcch.ctx.coreset_cfg->get_nof_cces(), *delta_pri);
+      return rar_ul_grant::two_step_success_info{.harq_feedback_timing_indicator =
+                                                     static_cast<uint8_t>(k1_candidates[k1_idx] - 1),
+                                                 .pucch_resource_indicator = static_cast<uint8_t>(r_pucch)};
     }
   }
   return std::nullopt;
