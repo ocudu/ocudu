@@ -585,20 +585,21 @@ static auto make_ue_dl_msg_debug_log_entry(const dl_msg_alloc& ue_grant)
 
 static auto make_paging_debug_log_entry(const dl_paging_allocation& pg)
 {
-  // Paging grants always carry exactly one codeword.
-  return make_formattable([pg](auto& ctx) {
-    fmt::format_to(ctx.out(),
-                   "\n- PCCH: rb={} symb={} tbs={} mcs={} rv={}",
-                   pg.pdsch_cfg.rbs,
-                   pg.pdsch_cfg.symbols,
-                   pg.pdsch_cfg.codewords[0].tb_size_bytes,
-                   pg.pdsch_cfg.codewords[0].mcs_index,
-                   pg.pdsch_cfg.codewords[0].rv_index);
+  // Capture only the fields needed for formatting instead of the entire dl_paging_allocation struct, which exceeds
+  // the type_list_buffer_stream segment size (2048 bytes) and would be silently dropped.
+  return make_formattable([rb             = pg.pdsch_cfg.rbs,
+                           symbols        = pg.pdsch_cfg.symbols,
+                           tbs            = pg.pdsch_cfg.codewords[0].tb_size_bytes,
+                           mcs            = pg.pdsch_cfg.codewords[0].mcs_index,
+                           rv             = pg.pdsch_cfg.codewords[0].rv_index,
+                           paging_ue_list = pg.paging_ue_list](auto& ctx) {
+    // Paging grants always carry exactly one codeword.
+    fmt::format_to(ctx.out(), "\n- PCCH: rb={} symb={} tbs={} mcs={} rv={}", rb, symbols, tbs, mcs, rv);
 
-    for (const paging_ue_info& ue : pg.paging_ue_list) {
+    for (const paging_ue_info& ue : paging_ue_list) {
       fmt::format_to(ctx.out(),
                      "{}{}-pg-id={:#x}",
-                     (&ue == &pg.paging_ue_list.front()) ? " ues: " : ", ",
+                     (&ue == &paging_ue_list.front()) ? " ues: " : ", ",
                      ue.paging_type_indicator == paging_ue_info::paging_identity_type::cn_ue_paging_identity ? "cn"
                                                                                                              : "ran",
                      ue.paging_identity);
