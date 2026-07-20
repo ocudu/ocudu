@@ -39,12 +39,12 @@ struct pdsch_precoding_info {
 struct pdsch_codeword {
   /// Modulation and coding scheme.
   sch_mcs_description mcs_descr;
-  /// \brief MCS index, range {0, ..., 31} (See TS38.214 Section 5.1.3.1).
+  /// \brief MCS index, range {0, ..., 31} (See TS 38.214 Section 5.1.3.1).
   /// \note Should match value sent in DCI.
   sch_mcs_index mcs_index;
-  /// Redundancy version index (see TS38.212 Table 5.4.2.1-2, and TS38.214 Table 5.1.2.1-2).
+  /// Redundancy version index (see TS 38.212 Table 5.4.2.1-2, and TS 38.214 Table 5.1.2.1-2).
   uint8_t rv_index;
-  /// Transport block size, in bytes (see TS38.214 Section 5.1.3.2).
+  /// Transport block size, in bytes (see TS 38.214 Section 5.1.3.2).
   units::bytes tb_size_bytes;
   /// Whether this is the first Tx or retx of the HARQ codeword.
   bool new_data;
@@ -79,7 +79,7 @@ struct pdsch_information {
   vrb_to_prb::mapping_type vrb_prb_mapping;
   search_space_set_type    ss_set_type;
   dci_dl_format            dci_fmt;
-  /// HARQ process number as per TS38.212 Section 7.3.1.1. Values: {0,...,15}.
+  /// HARQ process number as per TS 38.212 Section 7.3.1.1. Values: {0,...,15}.
   harq_id_t harq_id;
   /// Precoding information for the PDSCH. This field is empty in case of 1-antenna port setups.
   std::optional<pdsch_precoding_info> precoding;
@@ -137,8 +137,8 @@ struct dl_msg_alloc {
   } context;
 };
 
-/// \brief RAR grant composed of subheader as per TS38.321 6.2.2, payload as per TS38.321 6.2.3,
-/// with UL grant as per TS38.213, Table 8.2-1.
+/// \brief RAR grant composed of subheader as per TS 38.321 6.2.2, payload as per TS 38.321 6.2.3,
+/// with UL grant as per TS 38.213, Table 8.2-1.
 struct rar_ul_grant {
   // MAC subheader.
   uint16_t rapid;
@@ -161,9 +161,9 @@ struct rar_ul_grant {
   /// two_step_fallback_info — 2-step MsgB fallbackRAR (LCID=0); UE falls back to 4-step RAR (Msg3).
   struct four_step_info {};
   struct two_step_success_info {
-    /// HARQ Feedback Timing Indicator for the MsgB HARQ-ACK, as per TS38.321, 6.2.3a.
+    /// HARQ Feedback Timing Indicator for the MsgB HARQ-ACK, as per TS 38.321, 6.2.3a.
     uint8_t harq_feedback_timing_indicator = 0;
-    /// PUCCH Resource Indicator for the MsgB HARQ-ACK, as per TS38.321, 6.2.3a.
+    /// PUCCH Resource Indicator for the MsgB HARQ-ACK, as per TS 38.321, 6.2.3a.
     uint8_t pucch_resource_indicator = 0;
   };
   struct two_step_fallback_info {};
@@ -174,7 +174,7 @@ struct rar_ul_grant {
 struct rar_information {
   pdsch_information                                  pdsch_cfg;
   static_vector<rar_ul_grant, MAX_RAR_PDUS_PER_SLOT> grants;
-  /// \brief Backoff Indicator (BI) value included as the first MAC subPDU of the RAR, as per TS38.321, Section
+  /// \brief Backoff Indicator (BI) value included as the first MAC subPDU of the RAR, as per TS 38.321, Section
   /// 6.2.2 and Table 7.2-1. Unset if no Backoff Indicator subPDU is included.
   std::optional<uint8_t> backoff_indicator;
 };

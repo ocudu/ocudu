@@ -1858,7 +1858,7 @@ void ra_scheduler::schedule_pending_msgbs(cell_resource_allocator& res_alloc, sl
     }
 
     // -- Fill DCI and PDSCH --
-    // Note: a successRAR subPDU (TS38.321, 6.1.5a/6.2.3a) is larger than a fallbackRAR subPDU, so the two counts are
+    // Note: a successRAR subPDU (TS 38.321, 6.1.5a/6.2.3a) is larger than a fallbackRAR subPDU, so the two counts are
     // sized separately rather than through get_nof_pdsch_prbs_required, which assumes uniformly-sized fallbackRAR
     // subPDUs.
     const auto msgb_prbs_tbs =
@@ -2059,7 +2059,7 @@ sch_prbs_tbs ra_scheduler::get_nof_msgb_pdsch_prbs_required(unsigned time_res_id
                                                             unsigned nof_fallback_grants,
                                                             unsigned nof_success_grants) const
 {
-  // subPDU sizes (subheader + payload) as per TS38.321, 6.1.5a and 6.2.3a.
+  // subPDU sizes (subheader + payload) as per TS 38.321, 6.1.5a and 6.2.3a.
   static constexpr unsigned fallback_rar_subpdu_size_bytes = 8;
   static constexpr unsigned success_rar_subpdu_size_bytes  = 12;
   static constexpr unsigned nof_oh_prb                     = 0;

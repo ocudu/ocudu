@@ -26,7 +26,7 @@ std::uniform_int_distribution<uint8_t>  tpc_dist(0, 7);
 std::uniform_int_distribution<unsigned> nof_ul_grants_per_rar(1, MAX_RAR_PDUS_PER_SLOT - 1);
 std::uniform_int_distribution<unsigned> bi_dist(0, 15);
 
-// Check TS38.321 6.2.2 and 6.2.3.
+// Check TS 38.321 6.2.2 and 6.2.3.
 static const unsigned RAR_PDU_SIZE = 8;
 
 rar_ul_grant make_random_ul_grant()
@@ -57,19 +57,19 @@ rar_information make_random_rar_info(unsigned nof_ul_grants = 1, unsigned paddin
 }
 
 /// \brief Checks whether it is the last subPDU of a MAC RAR PDU. The Extension field "E" should flag this information
-/// according to TS38.321 6.2.2.
+/// according to TS 38.321 6.2.2.
 static bool is_last_subpdu(span<const uint8_t> rar_pdu)
 {
   return (rar_pdu[0] & (1U << 7U)) == 0;
 }
 
-/// \brief Checks whether the MAC RAR PDU contains a RAPID field as per TS38.321 6.2.2.
+/// \brief Checks whether the MAC RAR PDU contains a RAPID field as per TS 38.321 6.2.2.
 static bool is_rapid_subpdu(span<const uint8_t> rar_pdu)
 {
   return (rar_pdu[0] & (1U << 6U)) > 0;
 }
 
-/// Decode Backoff Indicator subPDU as per TS38.321, Section 6.2.2. This subPDU has no payload.
+/// Decode Backoff Indicator subPDU as per TS 38.321, Section 6.2.2. This subPDU has no payload.
 static uint8_t decode_bi(span<const uint8_t> rar_pdu)
 {
   return rar_pdu[0] & 0xfU;
@@ -111,16 +111,16 @@ bool operator==(const rar_ul_grant& lhs, const rar_ul_grant& rhs)
          lhs.csi_req == rhs.csi_req and lhs.temp_crnti == rhs.temp_crnti;
 }
 
-/// Checks whether the MAC subPDU is a successRAR subPDU (T1=0, T2=1), as per TS38.321 Figure 6.1.5a-3.
+/// Checks whether the MAC subPDU is a successRAR subPDU (T1=0, T2=1), as per TS 38.321 Figure 6.1.5a-3.
 static bool is_successrar_subpdu(span<const uint8_t> rar_pdu)
 {
   return (rar_pdu[0] & (1U << 6U)) == 0 and (rar_pdu[0] & (1U << 5U)) != 0;
 }
 
-// Check TS38.321 6.1.5a and 6.2.3a.
+// Check TS 38.321 6.1.5a and 6.2.3a.
 static const unsigned SUCCESS_RAR_PDU_SIZE = 12;
 
-/// Decoded content of a successRAR subPDU payload, as per TS38.321, Figure 6.2.3a-2.
+/// Decoded content of a successRAR subPDU payload, as per TS 38.321, Figure 6.2.3a-2.
 struct success_rar_content {
   ue_con_res_id_t con_res_id;
   uint8_t         tpc;
@@ -130,7 +130,7 @@ struct success_rar_content {
   rnti_t          crnti;
 };
 
-/// Decode successRAR subPDU (subheader + payload) as per TS38.321, Figure 6.1.5a-3 and 6.2.3a-2.
+/// Decode successRAR subPDU (subheader + payload) as per TS 38.321, Figure 6.1.5a-3 and 6.2.3a-2.
 success_rar_content decode_success_rar(span<const uint8_t> rar_subpdu)
 {
   TESTASSERT_EQ(SUCCESS_RAR_PDU_SIZE, rar_subpdu.size());
@@ -336,8 +336,10 @@ TEST(rar_assembler_test, mixed_fallback_and_success_rar_grants)
 
   rar_information rar_info{};
   rar_info.grants.resize(2);
-  rar_info.grants[0] = make_random_ul_grant();          // fallbackRAR (four_step_info, the default grant type).
-  rar_info.grants[1] = make_random_success_rar_grant(); // successRAR.
+  // fallbackRAR (four_step_info, the default grant type).
+  rar_info.grants[0] = make_random_ul_grant();
+  // successRAR.
+  rar_info.grants[1] = make_random_success_rar_grant();
   rar_info.pdsch_cfg.codewords.resize(1);
   rar_info.pdsch_cfg.codewords[0].tb_size_bytes = units::bytes{RAR_PDU_SIZE + SUCCESS_RAR_PDU_SIZE};
 

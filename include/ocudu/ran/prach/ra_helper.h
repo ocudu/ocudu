@@ -14,9 +14,9 @@ namespace ocudu {
 
 namespace ra_helper {
 
-/// \brief Processing delta (\f$\Delta\f$), as per TS 38.214, Table 6.1.2.1.1-5, indexed by numerology. Used both
-/// for Msg3 PUSCH timing (TS 38.213, Section 8.3) and for the successRAR PUCCH HARQ-ACK timing (TS 38.213,
-/// Section 8.2A).
+/// \brief Processing delta (\f$\Delta\f$), as per TS 38.214, Table 6.1.2.1.1-5, indexed by numerology.
+/// Used both for Msg3 PUSCH timing (TS 38.213, Section 8.3) and for the successRAR PUCCH HARQ-ACK timing
+/// (TS 38.213, Section 8.2A).
 /// \param[in] scs Subcarrier spacing.
 /// \return Delta, in number of slots.
 inline uint8_t get_pusch_delay_delta(subcarrier_spacing scs)

@@ -156,8 +156,8 @@ void rar_pdu_encoder::encode_rar_grant_payload(const rar_ul_grant& grant)
 
 void rar_pdu_encoder::encode_successrar_subheader(bool is_last_subpdu)
 {
-  // write E/T1/T2/S/R/R/R/R MAC subheader, as per Figure 6.1.5a-3. T1=0 indicates the T2 field is present (as
-  // opposed to RAPID); T2=1 indicates the S field is present (as opposed to a Backoff Indicator); S=0, as no MAC
+  // write E/T1/T2/S/R/R/R/R MAC subheader, as per TS 38.321 Figure 6.1.5a-3. T1=0 indicates the T2 field is present
+  // (as opposed to RAPID); T2=1 indicates the S field is present (as opposed to a Backoff Indicator); S=0, as no MAC
   // subPDU(s) for MAC SDU are appended after this successRAR yet.
   static constexpr unsigned T1_FLAG = 0;
   static constexpr unsigned T2_FLAG = 1;
