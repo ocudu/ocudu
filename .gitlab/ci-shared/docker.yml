@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 variables:
-  BUILDKIT_CLI_VERSION: "0.28.0"
-  RH_TOOL_CLI_VERSION: "1.0.3"
+  BUILDKIT_CLI_VERSION: "0.31.2"
+  RH_TOOL_CLI_VERSION: "1.0.4"
 
 .docker-builder:
   tags:
@@ -177,6 +177,7 @@ variables:
           echo "=== Attesting ${ATTESTATION_FILE} ==="
           regctl image get-file ${IMAGE_NAME_VERSION} ${ATTESTATION_FILE} > build.spdx
           attest_spdx build.spdx
+          echo ""
         fi
 
         if [ "${GRYPE_SKIP}" != "true" ]; then

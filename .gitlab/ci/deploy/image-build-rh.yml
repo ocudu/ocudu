@@ -19,7 +19,7 @@
     - ocudu-rhel-${TARGETARCH}
   image: ${OCUDU_REGISTRY_URI}/rh-tool-cli:$RH_TOOL_CLI_VERSION
   variables:
-    RH_TOOL_CLI_VERSION: "1.0.3"
+    RH_TOOL_CLI_VERSION: "1.0.4"
     OS: registry.access.redhat.com/ubi9/ubi
     OS_VERSION: "9.6"
     IMAGE_TAG_OS: ubi9

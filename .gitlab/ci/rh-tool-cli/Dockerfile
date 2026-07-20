@@ -1,15 +1,15 @@
 # SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
-ARG BUILDKIT_CLI_VERSION=0.28.0
-ARG PREFLIGHT_VERSION=1.19.0
-ARG COSIGN_VERSION=v2.5.2
-ARG REGCLIENT_VERSION=v0.9.0
-ARG SYFT_VERSION=v1.26.1
-ARG GRYPE_VERSION=v0.88.0
+ARG BUILDKIT_CLI_VERSION=0.31.2
+ARG PREFLIGHT_VERSION=1.19.1
+ARG COSIGN_VERSION=v2.6.4
+ARG REGCLIENT_VERSION=v0.11.5
+ARG SYFT_VERSION=v1.48.0
+ARG GRYPE_VERSION=v0.115.0
 
 FROM moby/buildkit:v${BUILDKIT_CLI_VERSION} AS buildkit
-FROM docker:27 AS docker-cli
+FROM docker:29.6.1 AS docker-cli
 FROM ghcr.io/sigstore/cosign/cosign:${COSIGN_VERSION} AS cosign
 FROM ghcr.io/regclient/regctl:${REGCLIENT_VERSION} AS regclient
 FROM anchore/syft:${SYFT_VERSION} AS syft

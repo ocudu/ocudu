@@ -20,7 +20,7 @@ build-and-publish:
     BUILD_ARGS: "BUILDKIT_CLI_VERSION=${BUILDKIT_CLI_VERSION};PREFLIGHT_VERSION=${PREFLIGHT_VERSION}"
     MULTI_ARCH_BUILD: "true"
     MODE: publish
-    PREFLIGHT_VERSION: "1.19.0"
+    PREFLIGHT_VERSION: "1.19.1"
     GRYPE_SKIP: "true"
   parallel:
     matrix:
