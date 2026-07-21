@@ -153,6 +153,62 @@ TEST(cu_cp_cell_unlock_remote_command_test, cu_cp_rejects_dispatch_returns_error
       << "Unexpected error message: " << result.error();
 }
 
+TEST(cu_cp_cell_bar_remote_command_test, valid_payload_dispatches_bar_with_the_provided_cgi)
+{
+  fake_cu_cp_command_handler cu_cp;
+  cell_bar_remote_command    cmd(cu_cp);
+
+  error_type<std::string> result = cmd.execute(make_valid_payload());
+
+  ASSERT_TRUE(result.has_value()) << "execute returned error: " << result.error();
+  ASSERT_TRUE(cu_cp.cell_cmd.last_bar_cgi.has_value()) << "dispatch_bar_cell was not invoked";
+  EXPECT_EQ(cu_cp.cell_cmd.last_bar_cgi->nci.value(), 6733824U);
+  ASSERT_TRUE(cu_cp.cell_cmd.last_bar_value.has_value());
+  EXPECT_TRUE(cu_cp.cell_cmd.last_bar_value.value()) << "cell_bar must dispatch barred=true";
+  EXPECT_FALSE(cu_cp.cell_cmd.last_deactivate_cgi.has_value())
+      << "dispatch_deactivate_cell should not be invoked from cell_bar";
+}
+
+TEST(cu_cp_cell_bar_remote_command_test, cu_cp_rejects_dispatch_returns_error)
+{
+  fake_cu_cp_command_handler cu_cp;
+  cu_cp.cell_cmd.next_dispatch_result = false;
+  cell_bar_remote_command cmd(cu_cp);
+
+  error_type<std::string> result = cmd.execute(make_valid_payload());
+
+  ASSERT_FALSE(result.has_value());
+  EXPECT_NE(result.error().find("CU-CP rejected cell_bar"), std::string::npos)
+      << "Unexpected error message: " << result.error();
+}
+
+TEST(cu_cp_cell_unbar_remote_command_test, valid_payload_dispatches_unbar_with_the_provided_cgi)
+{
+  fake_cu_cp_command_handler cu_cp;
+  cell_unbar_remote_command  cmd(cu_cp);
+
+  error_type<std::string> result = cmd.execute(make_valid_payload());
+
+  ASSERT_TRUE(result.has_value()) << "execute returned error: " << result.error();
+  ASSERT_TRUE(cu_cp.cell_cmd.last_bar_cgi.has_value()) << "dispatch_bar_cell was not invoked";
+  EXPECT_EQ(cu_cp.cell_cmd.last_bar_cgi->nci.value(), 6733824U);
+  ASSERT_TRUE(cu_cp.cell_cmd.last_bar_value.has_value());
+  EXPECT_FALSE(cu_cp.cell_cmd.last_bar_value.value()) << "cell_unbar must dispatch barred=false";
+}
+
+TEST(cu_cp_cell_unbar_remote_command_test, cu_cp_rejects_dispatch_returns_error)
+{
+  fake_cu_cp_command_handler cu_cp;
+  cu_cp.cell_cmd.next_dispatch_result = false;
+  cell_unbar_remote_command cmd(cu_cp);
+
+  error_type<std::string> result = cmd.execute(make_valid_payload());
+
+  ASSERT_FALSE(result.has_value());
+  EXPECT_NE(result.error().find("CU-CP rejected cell_unbar"), std::string::npos)
+      << "Unexpected error message: " << result.error();
+}
+
 // ── Shared JSON parsing error paths (cell_lock used as the representative; cell_unlock shares the
 // same parser so identical coverage would be redundant) ──
 

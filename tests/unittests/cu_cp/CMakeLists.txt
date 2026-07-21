@@ -46,7 +46,8 @@ target_link_libraries(cu_cp_test_helpers
 
 
 add_executable(cu_cp_cell_command_test
-               cu_cp_cell_command_handler_test.cpp)
+               cu_cp_cell_command_handler_test.cpp
+               cu_cp_logical_cell_test.cpp)
 target_include_directories(cu_cp_cell_command_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(cu_cp_cell_command_test
         cu_cp_test_helpers

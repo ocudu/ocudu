@@ -255,6 +255,9 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
       std::chrono::seconds(10); // procedure timeouts should only occur intentionally
   cu_cp_cfg.ue.enable_rrc_inactive = params.enable_rrc_inactive;
 
+  // Fill declared logical cells.
+  cu_cp_cfg.cells = params.logical_cells;
+
   // Create CU-CP instance.
   cu_cp_inst = create_cu_cp(cu_cp_cfg);
 }
