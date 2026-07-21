@@ -44,6 +44,22 @@ struct mobility_configuration {
   mobility_manager_config  mobility_mgr_config;
 };
 
+/// Operator-declared configuration of one CU-CP logical cell.
+///
+/// A logical cell is the CU-CP-side managed object for a cell: it carries the operator's administrative
+/// intent and exists independently of any DU connection. It is realized when a connected DU reports the
+/// corresponding NR Cell Identity in the F1 Setup procedure, and the intent below survives DU restarts.
+struct cu_cp_logical_cell_config {
+  /// NR Cell Identity of the cell.
+  nr_cell_identity nci;
+  /// Administrative state: when locked, the CU-CP does not activate the cell (neither at F1 setup nor on
+  /// AMF reconnection) until it is unlocked by command.
+  bool admin_locked = false;
+  /// Intended MIB cellBarred state: when true, the CU-CP bars the cell (TS 38.473 Cells to be Barred List)
+  /// whenever it is active.
+  bool barred = false;
+};
+
 /// Configuration passed to CU-CP.
 struct cu_cp_configuration {
   struct admission_params {
@@ -176,6 +192,9 @@ struct cu_cp_configuration {
   ue_configuration ue;
   /// Parameters related with the mobility of UEs.
   mobility_configuration mobility;
+  /// Operator-declared logical cells (see \ref cu_cp_logical_cell_config). Cells reported by DUs that are
+  /// not declared here are added dynamically with default (unlocked, unbarred) intent.
+  std::vector<cu_cp_logical_cell_config> cells;
   /// Parameters related with CU-CP metrics.
   metrics_params metrics;
   /// Public Warning System parameters.
