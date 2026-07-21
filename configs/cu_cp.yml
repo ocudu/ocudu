@@ -14,6 +14,12 @@ cu_cp:
           - plmn: "00101"
             tai_slice_support_list:
               - sst: 1
+  # Logical cells declared to the CU-CP. When present, the list acts as the activation whitelist: cells
+  # reported by a DU with a sector ID not declared here are not activated. Omit the list to accept and
+  # activate every reported cell. Optional per-cell keys: admin_state (locked|unlocked, default unlocked)
+  # and cell_barred (default false).
+  # logical_cells:
+  #   - sector_id: 0
   e1ap:
     bind_addrs: 127.0.20.1
   f1ap:

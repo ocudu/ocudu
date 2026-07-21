@@ -531,6 +531,18 @@ static void fill_cu_cp_qos_section(YAML::Node node, span<const cu_cp_unit_qos_co
   }
 }
 
+static void fill_cu_cp_cells_section(YAML::Node node, span<const cu_cp_unit_logical_cell_config> cells_cfg)
+{
+  auto cells_node = node["logical_cells"];
+  for (const auto& cell : cells_cfg) {
+    YAML::Node cell_node;
+    cell_node["sector_id"]   = cell.sector_id;
+    cell_node["admin_state"] = cell.admin_state;
+    cell_node["cell_barred"] = cell.cell_barred;
+    cells_node.push_back(cell_node);
+  }
+}
+
 void ocudu::fill_cu_cp_config_in_yaml_schema(YAML::Node& node, const cu_cp_unit_config& config)
 {
   node["gnb_id"]            = config.gnb_id.id;
@@ -545,4 +557,5 @@ void ocudu::fill_cu_cp_config_in_yaml_schema(YAML::Node& node, const cu_cp_unit_
   fill_cu_cp_metrics_section(node["metrics"], config.metrics);
   fill_cu_cp_qos_section(node, config.qos_cfg);
   fill_ntn_satellites_in_yaml_schema(node, config.ntn_satellites);
+  fill_cu_cp_cells_section(node["cu_cp"], config.cells_cfg);
 }

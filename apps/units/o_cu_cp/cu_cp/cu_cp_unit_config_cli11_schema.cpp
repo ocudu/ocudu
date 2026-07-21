@@ -669,6 +669,26 @@ static void configure_cli11_e1ap_args(CLI::App& app, cu_cp_unit_e1ap_config& e1a
       ->capture_default_str();
 }
 
+/// Configures the CLI11 logical cell arguments.
+static void configure_cli11_logical_cell_args(CLI::App& app, cu_cp_unit_logical_cell_config& cell_params)
+{
+  add_option(app,
+             "--sector_id",
+             cell_params.sector_id,
+             "Sector ID (4-14 bits). This value is concatenated with the gNB Id to form the NR Cell Identity "
+             "(NCI) of the logical cell, and must match the sector ID of the corresponding DU cell")
+      ->required()
+      ->check(CLI::Range(0U, (1U << 14) - 1U));
+  add_option(app,
+             "--admin_state",
+             cell_params.admin_state,
+             "Administrative state of the cell: locked cells are not activated by the CU-CP until unlocked by command")
+      ->capture_default_str()
+      ->transform(CLI::IsMember({"locked", "unlocked"}, CLI::ignore_case));
+  add_option(app, "--cell_barred", cell_params.cell_barred, "Intended MIB cellBarred state of the cell")
+      ->capture_default_str();
+}
+
 /// Configues the CLI11 CU-CP arguments.
 static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_unit_config& cu_cp_params)
 {
@@ -732,6 +752,24 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_unit_config& cu_cp_p
              "Timeout for requesting a PDU session after the InitialUeMessage was sent to the core, in "
              "seconds. The timeout must be larger than T310. If the value is reached, the UE will be released.")
       ->capture_default_str();
+
+  // Logical cells: the CU-CP-side declaration of cells (administrative intent), addressed by sector ID.
+  // Distinct from the DU's top-level cells section, which carries the radio configuration.
+  app.add_option_function<std::vector<std::string>>(
+      "--logical_cells",
+      [&cu_cp_params](const std::vector<std::string>& values) {
+        cu_cp_params.cells_cfg.resize(values.size());
+
+        for (unsigned i = 0, e = values.size(); i != e; ++i) {
+          CLI::App subapp("CU-CP logical cell list");
+          subapp.config_formatter(create_yaml_config_parser());
+          subapp.allow_config_extras(CLI::config_extras_mode::error);
+          configure_cli11_logical_cell_args(subapp, cu_cp_params.cells_cfg[i]);
+          std::istringstream ss(values[i]);
+          subapp.parse_from_stream(ss);
+        }
+      },
+      "Sets the list of logical cells declared to the CU-CP (sector_id, admin_state, cell_barred)");
 
   CLI::App* amf_subcmd = add_subcommand(app, "amf", "AMF configuration");
   configure_cli11_amf_args(*amf_subcmd, cu_cp_params.amf_config);

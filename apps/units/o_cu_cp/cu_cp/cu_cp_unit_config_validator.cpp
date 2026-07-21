@@ -713,6 +713,28 @@ static bool validate_ntn_appconfig(const cu_cp_unit_config& config)
   return true;
 }
 
+/// Validates the logical cell configuration. Returns true on success, false otherwise.
+static bool validate_cells_appconfig(const gnb_id_t gnb_id, span<const cu_cp_unit_logical_cell_config> cells)
+{
+  // The NCI is 36 bits: the gNB Id occupies the upper bit_length bits, the sector ID the rest.
+  const unsigned     nof_sector_id_bits = 36U - gnb_id.bit_length;
+  std::set<unsigned> used_sector_ids;
+  for (const cu_cp_unit_logical_cell_config& cell : cells) {
+    if (cell.sector_id >= (1U << nof_sector_id_bits)) {
+      fmt::print("Cell sector ID {} does not fit in the {} bits left by a gNB Id of {} bits\n",
+                 cell.sector_id,
+                 nof_sector_id_bits,
+                 gnb_id.bit_length);
+      return false;
+    }
+    if (!used_sector_ids.insert(cell.sector_id).second) {
+      fmt::print("Duplicated cell sector ID {}\n", cell.sector_id);
+      return false;
+    }
+  }
+  return true;
+}
+
 static bool validate_cu_cp_appconfig(const gnb_id_t gnb_id, const cu_cp_unit_config& config)
 {
   // validate AMF config
@@ -746,6 +768,10 @@ static bool validate_cu_cp_appconfig(const gnb_id_t gnb_id, const cu_cp_unit_con
   }
   if (!from_string(short_profile, config.short_i_rnti_profile)) {
     fmt::print("Invalid short_i_rnti_profile={}.\n", config.short_i_rnti_profile);
+    return false;
+  }
+
+  if (!validate_cells_appconfig(gnb_id, config.cells_cfg)) {
     return false;
   }
 

@@ -695,6 +695,16 @@ ocucp::cu_cp_configuration ocudu::generate_cu_cp_config(const cu_cp_unit_config&
                                             .services         = generate_services_conf(),
                                             .metrics_notifier = nullptr};
 
+  // Logical cells: derive the NCI from the gNB Id and the sector ID, matching the DU's NCI derivation, so
+  // the entry addresses the DU cell with the same sector ID.
+  for (const cu_cp_unit_logical_cell_config& cell : cu_cfg.cells_cfg) {
+    ocucp::cu_cp_logical_cell_config out_cell;
+    out_cell.nci          = nr_cell_identity::create(cu_cfg.gnb_id, cell.sector_id).value();
+    out_cell.admin_locked = cell.admin_state == "locked";
+    out_cell.barred       = cell.cell_barred;
+    out_cfg.cells.push_back(out_cell);
+  }
+
   if (!config_helpers::is_valid_configuration(out_cfg)) {
     report_error("Invalid CU-CP configuration.\n");
   }
