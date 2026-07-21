@@ -54,15 +54,15 @@ struct du_low_unit_expert_upper_phy_config {
   ///
   /// The \c average strategy is more robust against noise and interference while \c interpolate is more robust for
   /// fast fading channels.
-  std::string pusch_channel_estimator_td_strategy = "average";
+  std::string pusch_channel_estimator_td_strategy = "interpolate";
   /// PUSCH channel estimator CFO compensation.
-  bool pusch_channel_estimator_cfo_compensation = true;
+  bool pusch_channel_estimator_cfo_compensation = false;
   /// \brief PUSCH channel equalizer algorithm.
   ///
   /// Use one of these options:
   /// - \c zf: use zero-forcing algorithm, or
   /// - \c mmse: use minimum mean square error algorithm.
-  std::string pusch_channel_equalizer_algorithm = "zf";
+  std::string pusch_channel_equalizer_algorithm = "mmse";
   /// \brief Request headroom size in slots.
   ///
   /// The request headroom size is the number of delayed slots that the upper physical layer will accept, ie, if the
