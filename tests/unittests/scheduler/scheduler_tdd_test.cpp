@@ -11,6 +11,7 @@
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/du/du_update_config_helpers.h"
+#include "ocudu/ran/srs/srs_configuration.h"
 #include "ocudu/ran/tdd/tdd_ul_dl_config_formatters.h"
 #include "ocudu/scheduler/rrm/pucch_resource_manager.h"
 #include <gtest/gtest.h>
@@ -35,6 +36,8 @@ struct common_tdd_tester_params {
   // PUCCH Format 1 multiplexing for the dedicated SR/HARQ resources.
   pucch_nof_cyclic_shifts f1_nof_cyc_shifts = pucch_nof_cyclic_shifts::twelve;
   bool                    f1_occ_supported  = true;
+  // When set, every UE of the cell gets a periodic SRS resource with this periodicity, in slots.
+  std::optional<srs_periodicity> srs_period;
 };
 
 // Default scheduler expert config for the TDD testers: remove the PRACH guardbands so PUSCH can fill the UL slot, and
@@ -103,10 +106,26 @@ protected:
     cell_req.ran.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start =
         config_helpers::compute_prach_frequency_start(
             pucch_params, cell_req.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), false);
+    if (testparams.srs_period.has_value()) {
+      cell_req.ran.init_bwp.srs_cfg.srs_type_enabled       = srs_type::periodic;
+      cell_req.ran.init_bwp.srs_cfg.srs_period_prohib_time = *testparams.srs_period;
+    }
     this->add_cell(cell_req);
 
     // Setup PUCCH resource builder.
     pucch_builder.add_cell(to_du_cell_index(0), cell_cfg().params);
+
+    // Precompute, among the slots of the SRS period, those that contain some UL symbols; per-UE periodic SRS
+    // occasions are round-robined over this list so they land on a valid UL slot.
+    if (testparams.srs_period.has_value()) {
+      srs_period = testparams.srs_period;
+      for (uint16_t i = 0, e = static_cast<uint16_t>(*srs_period); i != e; ++i) {
+        if (has_active_tdd_ul_symbols(*cell_cfg().params.tdd_cfg, i)) {
+          srs_ul_offsets.push_back(i);
+        }
+      }
+      ocudu_assert(not srs_ul_offsets.empty(), "SRS period does not contain any UL slot");
+    }
   }
 
   // Build a UE creation request, allocating a distinct dedicated PUCCH config (SR/CSI/HARQ) from the cell resource pool
@@ -120,12 +139,37 @@ protected:
     report_fatal_error_if_not(pucch_builder.alloc_resources((*ue_cfg.cfg.cells)[0]),
                               "Failed to allocate PUCCH resources for UE {}",
                               fmt::underlying(idx));
+    if (srs_period.has_value()) {
+      configure_ue_srs((*ue_cfg.cfg.cells)[0]);
+    }
     return ue_cfg;
+  }
+
+  // Turn the UE's default (aperiodic) SRS resource into a periodic one, round-robining its offset over \c
+  // srs_ul_offsets so each UE gets a distinct periodic occasion, spread across the UL slots of the SRS period, as in
+  // a real deployment. All UEs keep the same (default) PRB placement: since this test's resource grid does not model
+  // the tx-comb/cyclic-shift sub-carrier multiplexing that lets several UEs share a PRB in a real cell, two UEs
+  // active at the same time must never land on the same offset — \c srs_ul_offsets must have strictly more entries
+  // than the peak number of concurrently active SRS-configured UEs for the test scenario at hand.
+  void configure_ue_srs(ue_cell_config& ue_cell_cfg)
+  {
+    srs_config& ue_srs_cfg = ue_cell_cfg.serv_cell_cfg.ul_config.value().init_ul_bwp.srs_cfg.value();
+    ue_srs_cfg.srs_res_set_list.front().res_type.emplace<srs_config::srs_resource_set::periodic_resource_type>();
+    srs_config::srs_resource& res = ue_srs_cfg.srs_res_list.front();
+    res.res_type                  = srs_resource_type::periodic;
+    const uint16_t offset         = srs_ul_offsets[srs_ue_count++ % srs_ul_offsets.size()];
+    res.periodicity_and_offset.emplace(srs_config::srs_periodicity_and_offset{*srs_period, offset});
   }
 
   cell_config_builder_params params;
   // Builds a distinct per-UE dedicated PUCCH config from the cell pool for every UE created by these tests.
   pucch_resource_manager pucch_builder{120};
+
+  // Periodicity of the per-UE periodic SRS resource, in slots; unset when SRS is disabled.
+  std::optional<srs_periodicity> srs_period;
+  // Slot offsets, within the SRS period, that contain some UL symbols; used to round-robin the per-UE SRS offset.
+  std::vector<uint16_t> srs_ul_offsets;
+  unsigned              srs_ue_count = 0;
 };
 
 // ------------------------------------ single-UE case --------------------------------------------
@@ -327,19 +371,24 @@ struct multiue_tdd_test_params {
   bool rach_driven = false;
   // Direction of the persistent background UEs' traffic.
   multiue_bg_traffic background_traffic = multiue_bg_traffic::mixed;
+  // When set, every UE (background and transient) gets a periodic SRS resource with this periodicity, in slots.
+  // Periodic SRS occasions are placed at the end of the UL slot, so on UL-scarce TDD patterns they narrow the
+  // symbol window available for Msg3/retx PUSCH and other UL grants on the same (few) UL slots.
+  std::optional<srs_periodicity> srs_period;
 };
 
 void PrintTo(const multiue_tdd_test_params& value, ::std::ostream* os)
 {
   *os << fmt::format(
-      "tdd={} bg_ues={} transient_ues={} ues_per_wave={} wave_period_slots={} rach_driven={} bg_traffic={}",
+      "tdd={} bg_ues={} transient_ues={} ues_per_wave={} wave_period_slots={} rach_driven={} bg_traffic={} srs={}",
       value.tdd_cfg,
       value.nof_background_ues,
       value.nof_transient_ues,
       value.ues_per_wave,
       value.wave_period_in_slots,
       value.rach_driven,
-      to_string(value.background_traffic));
+      to_string(value.background_traffic),
+      value.srs_period.has_value() ? fmt::format("{}", static_cast<unsigned>(*value.srs_period)) : "disabled");
 }
 
 /// \brief Base fixture that saturates the grid with background traffic while overlapping waves of UEs attach in
@@ -371,6 +420,7 @@ protected:
     out.cs_type           = common_tdd_tester_params::coreset_type::dur2;
     out.f1_nof_cyc_shifts = pucch_nof_cyclic_shifts::two;
     out.f1_occ_supported  = false;
+    out.srs_period        = p.srs_period;
     return out;
   }
 
@@ -725,7 +775,27 @@ INSTANTIATE_TEST_SUITE_P(
   multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 2, 100, 100, 14, 5},
   multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDDDDSUUU), 4, 100, 100, 2, 5},
   multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDDDDSUUU), 2, 100, 100, 6, 5},
-  multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 4, 100, 100, 1, 5, true}
+  multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 4, 100, 100, 1, 5, true},
+  // SRS enabled on the UL-scarce DDDSU pattern (single full-UL slot per period), RACH-driven Msg3, as in the
+  // deployment that reported ConRes-CE starvation: periodic SRS carves into the tail of the sole UL slot, narrowing
+  // the symbol window left for Msg3/retx PUSCH (see ra_scheduler.cpp get_min_srs_symbol()). srs_period=sl640 keeps
+  // enough distinct valid-UL-slot offsets (256, see base_scheduler_tdd_tester::configure_ue_srs) above the peak
+  // number of concurrently active UEs (at most nof_background_ues + nof_transient_ues) so every UE gets its own
+  // offset.
+  // Known failing: reproduces the reported bug (some UEs never get their Msg3 PUSCH granted before the ConRes timer
+  // expires). The 100-background-UE case below fails on most random seeds; this lighter case fails intermittently.
+  // Expected to pass once the Msg3/retx-vs-SRS scheduling conflict in ra_scheduler.cpp is fixed.
+  multiue_tdd_test_params{
+      create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 4, 8, 16, 1, 10, true, multiue_bg_traffic::mixed, srs_periodicity::sl640},
+  multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU),
+                          4,
+                          100,
+                          40,
+                          40,
+                          5,
+                          true,
+                          multiue_bg_traffic::mixed,
+                          srs_periodicity::sl640}
 ));
 // clang-format on
 
@@ -779,7 +849,11 @@ INSTANTIATE_TEST_SUITE_P(
   multiue_tdd_test_params{ {subcarrier_spacing::kHz30, {4, 2, 9, 1, 0}}, 4,         16, 8, 1, 8, false, multiue_bg_traffic::ul_only},
   // DDDSU (single full-UL slot per period) with min_k=1. Considering it is a DL-heavy scenario, only k2=1 will be
   // used and PUSCHs will be scheduled from the special slot.
-  multiue_tdd_test_params{ create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 1, 16, 8, 1, 8, false, multiue_bg_traffic::ul_only}
+  multiue_tdd_test_params{ create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 1, 16, 8, 1, 8, false, multiue_bg_traffic::ul_only},
+  // SRS enabled on the UL-scarce patterns above: periodic SRS carves into the tail of the sole full-UL slot,
+  // narrowing the symbol window left for the fallback UE's UL grant.
+  multiue_tdd_test_params{ create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 1, 16, 8, 1, 8, false, multiue_bg_traffic::ul_only, srs_periodicity::sl640},
+  multiue_tdd_test_params{ {subcarrier_spacing::kHz30, {4, 2, 9, 1, 0}}, 4, 16, 8, 1, 8, false, multiue_bg_traffic::ul_only, srs_periodicity::sl640}
 ));
 // clang-format on
 
