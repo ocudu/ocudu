@@ -420,6 +420,7 @@ int main(int argc, char** argv)
 
   // Configure the remote commands and start the service.
   if (remote_control_server) {
+    remote_control_server->add_commands(o_cucp_unit.commands.remote);
     remote_control_server->get_operation_controller().start();
   }
 

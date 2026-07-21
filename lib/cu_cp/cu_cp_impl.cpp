@@ -2250,3 +2250,42 @@ async_task<cu_cp_cell_command_response> cu_cp_impl::activate_cell(const nr_cell_
         CORO_RETURN(cu_cp_cell_command_response{success});
       });
 }
+
+bool cu_cp_impl::dispatch_deactivate_cell(const nr_cell_global_id_t& cgi)
+{
+  // Pre-validate the CGI synchronously so the WS/O1 handler can surface an immediate error to the caller
+  // without waiting for the async procedure. Strict served-cells lookup, mirroring deactivate_cell(): a cell
+  // that is already deactivated cannot be deactivated again.
+  if (du_db.find_du(cgi) == cu_cp_du_index_t::invalid) {
+    logger.warning("Dispatch deactivate_cell rejected. Cause: No DU found serving NR-CGI plmn={} nci={:#x}",
+                   cgi.plmn_id.to_string(),
+                   cgi.nci.value());
+    return false;
+  }
+
+  async_task<cu_cp_cell_command_response> task = deactivate_cell(cgi);
+  return common_task_sched.schedule(launch_async([t = std::move(task)](coro_context<async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+    CORO_AWAIT(t);
+    CORO_RETURN();
+  }));
+}
+
+bool cu_cp_impl::dispatch_activate_cell(const nr_cell_global_id_t& cgi)
+{
+  // Any-state lookup, mirroring activate_cell(): the cell to activate is currently in the DU's deactivated
+  // list, which the strict served-cells lookup would miss.
+  if (du_db.find_du_any_state(cgi) == cu_cp_du_index_t::invalid) {
+    logger.warning("Dispatch activate_cell rejected. Cause: No DU found serving NR-CGI plmn={} nci={:#x}",
+                   cgi.plmn_id.to_string(),
+                   cgi.nci.value());
+    return false;
+  }
+
+  async_task<cu_cp_cell_command_response> task = activate_cell(cgi);
+  return common_task_sched.schedule(launch_async([t = std::move(task)](coro_context<async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+    CORO_AWAIT(t);
+    CORO_RETURN();
+  }));
+}

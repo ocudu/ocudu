@@ -212,6 +212,8 @@ public:
   // cu_cp_cell_command_handler.
   async_task<cu_cp_cell_command_response> deactivate_cell(const nr_cell_global_id_t& cgi) override;
   async_task<cu_cp_cell_command_response> activate_cell(const nr_cell_global_id_t& cgi) override;
+  bool                                    dispatch_deactivate_cell(const nr_cell_global_id_t& cgi) override;
+  bool                                    dispatch_activate_cell(const nr_cell_global_id_t& cgi) override;
 
   // cu_cp_amf_reconnection_handler.
   void handle_amf_reconnection(cu_cp_amf_index_t amf_index) override;

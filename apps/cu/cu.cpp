@@ -517,6 +517,11 @@ int main(int argc, char** argv)
   app_services::cmdline_command_dispatcher command_parser(
       *epoll_broker, workers.get_cmd_line_executor(), o_cucp_unit.commands.cmdline.commands);
 
+  // Register the CU-CP remote WS commands.
+  if (remote_control_server) {
+    remote_control_server->add_commands(o_cucp_unit.commands.remote);
+  }
+
   // Connect E1AP to O-CU-CP.
   e1_gw->attach_cu_cp(o_cucp_obj.get_cu_cp().get_e1_handler());
 

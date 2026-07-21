@@ -32,6 +32,10 @@ public:
   /// cells_to_be_deactivated_list. Connected UEs on the cell are released by the CU-CP before the update is sent,
   /// since the gNB-CU Configuration Update procedure itself does not affect existing UE-related contexts
   /// (TS 38.473 section 8.2.5.1).
+  ///
+  /// The returned task completes once the DU has acknowledged the F1AP update. Callers that do not need
+  /// to await completion (e.g. fire-and-forget from a WS/O1 handler) should use dispatch_deactivate_cell
+  /// instead.
   /// \param[in] cgi NR Cell Global ID of the cell to deactivate.
   virtual async_task<cu_cp_cell_command_response> deactivate_cell(const nr_cell_global_id_t& cgi) = 0;
 
@@ -41,6 +45,18 @@ public:
   /// cells_to_be_activated_list. The DU brings the MAC and PHY online for the cell.
   /// \param[in] cgi NR Cell Global ID of the cell to activate.
   virtual async_task<cu_cp_cell_command_response> activate_cell(const nr_cell_global_id_t& cgi) = 0;
+
+  /// \brief Fire-and-forget synchronous variant of deactivate_cell.
+  ///
+  /// Schedules the deactivation on the CU-CP task scheduler and returns immediately. Intended for
+  /// callers that cannot block (e.g. WebSocket/O1 command handlers running on the IO broker thread).
+  /// Returns true if the command was accepted (CGI resolved to a served DU) and scheduled; false if
+  /// the CGI is unknown or scheduling failed. The actual deactivation, including UE drain and PHY
+  /// stop, completes asynchronously.
+  virtual bool dispatch_deactivate_cell(const nr_cell_global_id_t& cgi) = 0;
+
+  /// Fire-and-forget synchronous variant of activate_cell. See dispatch_deactivate_cell for the rationale.
+  virtual bool dispatch_activate_cell(const nr_cell_global_id_t& cgi) = 0;
 };
 
 } // namespace ocudu::ocucp

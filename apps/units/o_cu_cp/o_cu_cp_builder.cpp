@@ -8,6 +8,7 @@
 #include "apps/units/o_cu_cp/cu_cp/metrics/cu_cp_metrics.h"
 #include "apps/units/o_cu_cp/cu_cp/metrics/cu_cp_metrics_consumers.h"
 #include "apps/units/o_cu_cp/cu_cp/metrics/cu_cp_metrics_producer.h"
+#include "cu_cp/commands/cu_cp_remote_commands.h"
 #include "cu_cp/cu_cp_cmdline_commands.h"
 #include "cu_cp/cu_cp_config_translators.h"
 #include "e2/o_cu_cp_e2_config_translators.h"
@@ -195,6 +196,12 @@ o_cu_cp_unit ocudu::build_o_cu_cp(const o_cu_cp_unit_config& unit_cfg, const o_c
                                         std::chrono::milliseconds{cucp_unit_cfg.mobility_config.cho_timeout_ms}));
   ocucp.commands.cmdline.commands.push_back(
       std::make_unique<release_app_command>(ocucp.unit->get_cu_cp().get_command_handler()));
+
+  // Add the remote WS commands.
+  ocucp.commands.remote.push_back(
+      std::make_unique<cell_lock_remote_command>(ocucp.unit->get_cu_cp().get_command_handler()));
+  ocucp.commands.remote.push_back(
+      std::make_unique<cell_unlock_remote_command>(ocucp.unit->get_cu_cp().get_command_handler()));
 
   return ocucp;
 }
