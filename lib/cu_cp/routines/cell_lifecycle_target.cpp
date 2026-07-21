@@ -5,6 +5,7 @@
 #include "cell_lifecycle_target.h"
 #include "../du_processor/du_processor.h"
 #include "../du_processor/du_processor_repository.h"
+#include "../logical_cell_manager.h"
 #include "../ue_manager/ue_manager_impl.h"
 #include "ocudu/adt/format.h"
 #include <algorithm>
@@ -13,7 +14,8 @@
 using namespace ocudu;
 using namespace ocudu::ocucp;
 
-std::vector<cell_lifecycle_target> ocudu::ocucp::resolve_activation_targets(du_processor_repository&          du_db,
+std::vector<cell_lifecycle_target> ocudu::ocucp::resolve_activation_targets(du_processor_repository&    du_db,
+                                                                            const logical_cell_manager& logical_cells,
                                                                             const std::vector<plmn_identity>& plmns)
 {
   std::vector<cell_lifecycle_target> targets;
@@ -31,6 +33,12 @@ std::vector<cell_lifecycle_target> ocudu::ocucp::resolve_activation_targets(du_p
 
     // A deactivated cell is reactivated for whichever of its deactivated PLMNs are in the requested set.
     for (const du_cell_configuration& cell : du_ctxt->deactivated_cells) {
+      // Skip administratively locked cells: a fault-recovery activation must not override an operator lock.
+      const logical_cell* lc = logical_cells.find_cell(cell.cgi.nci);
+      if (lc != nullptr && lc->admin_locked) {
+        continue;
+      }
+
       std::vector<plmn_identity> plmns_to_activate;
       for (const plmn_identity& plmn : cell.deactivated_plmns) {
         if (requested.count(plmn) != 0) {

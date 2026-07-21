@@ -53,6 +53,12 @@ public:
     return true;
   }
 
+  std::vector<bool> on_du_cells_reported(cu_cp_du_index_t du_index, span<const du_reported_cell> cells) override
+  {
+    // Accept and activate every reported cell, preserving the pre-logical-cell behaviour of these tests.
+    return std::vector<bool>(cells.size(), true);
+  }
+
   void on_rrc_ue_created(cu_cp_ue_index_t ue_index, rrc_ue_interface& rrc_ue) override
   {
     logger.info("ue={}: Received a RRC UE creation notification", ue_index);

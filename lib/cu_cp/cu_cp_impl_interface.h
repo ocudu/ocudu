@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "du_processor/du_reported_cell.h"
 #include "ocudu/cu_cp/cell_meas_manager_config.h"
 #include "ocudu/cu_cp/cu_cp_intra_cu_ho_types.h"
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
@@ -219,6 +220,17 @@ public:
   /// \param[in] ue_index The index of the UE.
   /// \param[in] rrc_ue The interface of the created RRC UE.
   virtual void handle_rrc_ue_creation(cu_cp_ue_index_t ue_index, rrc_ue_interface& rrc_ue) = 0;
+
+  /// \brief Handle the cells reported by a DU in the F1 Setup procedure.
+  ///
+  /// Realizes the corresponding logical cells (creating dynamic ones for undeclared NCIs) and decides, per
+  /// reported cell, whether the CU-CP activates it.
+  /// \return One flag per reported cell, in order: true if the cell shall be included in the F1 Setup
+  /// Response Cells to be Activated List, false if it shall stay dormant (admin-locked).
+  virtual std::vector<bool> handle_du_cells_reported(cu_cp_du_index_t du_index, span<const du_reported_cell> cells) = 0;
+
+  /// \brief Handle the removal of a DU, de-realizing its logical cells while keeping operator intent.
+  virtual void handle_du_removed(cu_cp_du_index_t du_index) = 0;
 
   /// \brief Handle a SIB1 request for a given cell.
   /// \param[in] du_index The index of the DU the cell is connected to.

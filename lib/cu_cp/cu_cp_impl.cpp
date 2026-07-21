@@ -7,6 +7,7 @@
 #include "metrics_handler/metrics_handler_impl.h"
 #include "routines/amf_connection_loss_routine.h"
 #include "routines/cell_activation_routine.h"
+#include "routines/cell_barring_routine.h"
 #include "routines/cell_deactivation_routine.h"
 #include "routines/cell_lifecycle_target.h"
 #include "routines/initial_context_setup_routine.h"
@@ -52,6 +53,7 @@
 #include "ocudu/ran/plmn_identity.h"
 #include "ocudu/ran/time/radio_frame.h"
 #include "ocudu/support/async/async_no_op_task.h"
+#include "ocudu/support/async/async_timer.h"
 #include "ocudu/support/async/coroutine.h"
 #include "ocudu/support/synchronization/sync_event.h"
 #include "ocudu/xnap/xnap.h"
@@ -123,6 +125,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
          ue_manager_dependencies{.timers         = *cfg.services.timers,
                                  .cu_cp_executor = *cfg.services.cu_cp_executor,
                                  .logger         = ocudulog::fetch_basic_logger("CU-UEMNG")}),
+  logical_cells(cfg.cells),
   cell_meas_mng(cfg.mobility.meas_mgr_config,
                 cell_meas_manager_dependencies{.mobility_mng_notifier = cell_meas_mobility_notifier,
                                                .ue_mng                = ue_mng,
@@ -1881,14 +1884,32 @@ void cu_cp_impl::handle_amf_reconnection(cu_cp_amf_index_t amf_index)
   std::vector<plmn_identity> served_plmns = ngap_db.find_ngap(amf_index)->get_ngap_context().get_supported_plmns();
 
   // The common task scheduler takes a void task, so wrap the bool-returning activation routine.
-  common_task_sched.schedule(launch_async(
-      [this, targets = resolve_activation_targets(du_db, served_plmns)](coro_context<async_task<void>>& ctx) mutable {
+  // Administratively locked cells are filtered by the resolver: an AMF reconnection must not unlock them.
+  // Cells with barred intent are re-barred after the reactivation: the DU restores its configured
+  // cellBarred on cell restart, which would otherwise discard the runtime CU-commanded bar.
+  std::vector<cell_lifecycle_target> activation_targets =
+      resolve_activation_targets(du_db, logical_cells, served_plmns);
+  std::vector<cell_lifecycle_target> bar_targets;
+  for (const cell_lifecycle_target& target : activation_targets) {
+    if (const logical_cell* cell = logical_cells.find_cell(target.cgi.nci); cell != nullptr && cell->barred) {
+      bar_targets.push_back(cell_lifecycle_target{target.du_index, target.cgi, target.pci, {}});
+    }
+  }
+
+  bool scheduled = common_task_sched.schedule(launch_async(
+      [this, targets = std::move(activation_targets), bars = std::move(bar_targets), cells_activated = false](
+          coro_context<async_task<void>>& ctx) mutable {
         CORO_BEGIN(ctx);
-        CORO_AWAIT_VALUE(bool cells_activated,
+        CORO_AWAIT_VALUE(cells_activated,
                          launch_async<cell_activation_routine>(cfg, std::move(targets), du_db, logger));
-        (void)cells_activated;
+        if (cells_activated && !bars.empty()) {
+          CORO_AWAIT(launch_async<cell_barring_routine>(cfg, std::move(bars), /* barred = */ true, du_db, logger));
+        }
         CORO_RETURN();
       }));
+  if (!scheduled) {
+    logger.warning("Failed to schedule cell reactivation after AMF reconnection. Cause: task queue is full");
+  }
 }
 
 void cu_cp_impl::initialize_handover_ue_release_timer(
@@ -2211,9 +2232,15 @@ async_task<cu_cp_cell_command_response> cu_cp_impl::deactivate_cell(const nr_cel
   // handling (which is not mandated by F1AP).
   std::vector<cu_cp_ue_index_t> ues_to_release = collect_ues_on_cell(du_db, ue_mng, du_index, cgi);
 
-  return launch_async([this, targets = std::move(targets), ues_to_release = std::move(ues_to_release)](
+  return launch_async([this, cgi, targets = std::move(targets), ues_to_release = std::move(ues_to_release)](
                           coro_context<async_task<cu_cp_cell_command_response>>& ctx) mutable {
     CORO_BEGIN(ctx);
+    // Record the operator's lock intent on the logical cell when the command actually runs, so it survives
+    // DU restarts and AMF reconnections. Recorded inside the task: a command that is never scheduled must
+    // not leave intent behind.
+    if (logical_cell* cell = logical_cells.find_cell(cgi.nci); cell != nullptr) {
+      cell->admin_locked = true;
+    }
     CORO_AWAIT_VALUE(
         bool success,
         launch_async<cell_deactivation_routine>(cfg,
@@ -2241,51 +2268,204 @@ async_task<cu_cp_cell_command_response> cu_cp_impl::activate_cell(const nr_cell_
     return launch_no_op_task(cu_cp_cell_command_response{});
   }
 
+  // Restore the PLMNs that were parked when the cell was deactivated, and carry the recorded PCI, so the
+  // activation brings the cell back with the same parameters the DU originally reported.
+  std::optional<pci_t>       pci;
+  std::vector<plmn_identity> plmns_to_activate;
+  if (du_processor* du_proc = du_db.find_du_processor(du_index); du_proc != nullptr) {
+    if (const du_configuration_context* du_ctxt = du_proc->get_context(); du_ctxt != nullptr) {
+      if (const du_cell_configuration* cell_record = du_ctxt->find_cell_any_state(cgi); cell_record != nullptr) {
+        pci               = cell_record->pci;
+        plmns_to_activate = cell_record->deactivated_plmns;
+      }
+    }
+  }
+
+  std::vector<cell_lifecycle_target> targets = {
+      cell_lifecycle_target{du_index, cgi, pci, std::move(plmns_to_activate)}};
+
+  return launch_async([this, cgi, du_index, targets = std::move(targets), reapply_bar = false, success = false](
+                          coro_context<async_task<cu_cp_cell_command_response>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+    // Clear the operator's lock intent when the command actually runs (a command that is never scheduled
+    // must not mutate intent), and check whether barred intent has to be re-applied after the activation.
+    if (logical_cell* cell = logical_cells.find_cell(cgi.nci); cell != nullptr) {
+      cell->admin_locked = false;
+      reapply_bar        = cell->barred;
+    }
+    CORO_AWAIT_VALUE(success, launch_async<cell_activation_routine>(cfg, std::move(targets), du_db, logger));
+    if (success && reapply_bar) {
+      // Re-apply the logical cell's barred intent now that the cell is active again. The command reports
+      // failure when the re-bar fails, so operator intent and reported outcome stay consistent.
+      CORO_AWAIT_VALUE(success,
+                       launch_async<cell_barring_routine>(
+                           cfg,
+                           std::vector<cell_lifecycle_target>{cell_lifecycle_target{du_index, cgi, std::nullopt, {}}},
+                           /* barred = */ true,
+                           du_db,
+                           logger));
+    }
+    CORO_RETURN(cu_cp_cell_command_response{success});
+  });
+}
+
+async_task<cu_cp_cell_command_response> cu_cp_impl::bar_cell(const nr_cell_global_id_t& cgi, bool barred)
+{
+  // Any-state lookup: barred intent can also be recorded for a currently deactivated cell.
+  cu_cp_du_index_t du_index = du_db.find_du_any_state(cgi);
+  if (du_index == cu_cp_du_index_t::invalid) {
+    logger.warning("bar_cell rejected. Cause: No DU found serving NR-CGI plmn={} nci={:#x}",
+                   cgi.plmn_id.to_string(),
+                   cgi.nci.value());
+    return launch_no_op_task(cu_cp_cell_command_response{});
+  }
+
+  // Whether the cell is currently active: a dormant cell transmits no MIB to bar, so only the intent is
+  // recorded (it is re-applied when the cell is activated).
+  const bool cell_is_active = du_db.find_du(cgi) != cu_cp_du_index_t::invalid;
+
   std::vector<cell_lifecycle_target> targets = {cell_lifecycle_target{du_index, cgi, std::nullopt, {}}};
 
-  return launch_async(
-      [this, targets = std::move(targets)](coro_context<async_task<cu_cp_cell_command_response>>& ctx) mutable {
-        CORO_BEGIN(ctx);
-        CORO_AWAIT_VALUE(bool success, launch_async<cell_activation_routine>(cfg, std::move(targets), du_db, logger));
-        CORO_RETURN(cu_cp_cell_command_response{success});
-      });
+  return launch_async([this, cgi, barred, cell_is_active, targets = std::move(targets)](
+                          coro_context<async_task<cu_cp_cell_command_response>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+    // Record the operator's barred intent when the command actually runs, so it survives DU restarts and a
+    // command that is never scheduled leaves no intent behind.
+    if (logical_cell* cell = logical_cells.find_cell(cgi.nci); cell != nullptr) {
+      cell->barred = barred;
+    }
+    if (!cell_is_active) {
+      logger.info("Cell nci={:#x} is deactivated. Barred intent ({}) recorded and applied on activation",
+                  cgi.nci.value(),
+                  barred);
+      CORO_EARLY_RETURN(cu_cp_cell_command_response{true});
+    }
+    CORO_AWAIT_VALUE(bool success, launch_async<cell_barring_routine>(cfg, std::move(targets), barred, du_db, logger));
+    CORO_RETURN(cu_cp_cell_command_response{success});
+  });
+}
+
+bool cu_cp_impl::dispatch_cell_command(const char* name, std::function<bool()> validate_and_schedule)
+{
+  // The WS/O1 command handlers run on their own IO thread: marshal both the validation and the scheduling
+  // onto the CU-CP executor (the same pattern start()/stop() use), blocking only until the synchronous
+  // validation result is known. This way every CU-CP structure (DU repository, logical cells, UE manager,
+  // task queue) is touched exclusively from the CU-CP execution context.
+  std::promise<bool> p;
+  std::future<bool>  fut = p.get_future();
+
+  if (not cfg.services.cu_cp_executor->execute(
+          [&p, &validate_and_schedule]() { p.set_value(validate_and_schedule()); })) {
+    logger.warning("Dispatch {} failed. Cause: CU-CP executor queue is full", name);
+    return false;
+  }
+  return fut.get();
 }
 
 bool cu_cp_impl::dispatch_deactivate_cell(const nr_cell_global_id_t& cgi)
 {
-  // Pre-validate the CGI synchronously so the WS/O1 handler can surface an immediate error to the caller
-  // without waiting for the async procedure. Strict served-cells lookup, mirroring deactivate_cell(): a cell
-  // that is already deactivated cannot be deactivated again.
-  if (du_db.find_du(cgi) == cu_cp_du_index_t::invalid) {
-    logger.warning("Dispatch deactivate_cell rejected. Cause: No DU found serving NR-CGI plmn={} nci={:#x}",
-                   cgi.plmn_id.to_string(),
-                   cgi.nci.value());
-    return false;
-  }
+  return dispatch_cell_command("deactivate_cell", [this, cgi]() {
+    // Pre-validate the CGI synchronously so the WS/O1 handler can surface an immediate error to the caller
+    // without waiting for the async procedure. Strict served-cells lookup, mirroring deactivate_cell(): a
+    // cell that is already deactivated cannot be deactivated again.
+    if (du_db.find_du(cgi) == cu_cp_du_index_t::invalid) {
+      logger.warning("Dispatch deactivate_cell rejected. Cause: No DU found serving NR-CGI plmn={} nci={:#x}",
+                     cgi.plmn_id.to_string(),
+                     cgi.nci.value());
+      return false;
+    }
 
-  async_task<cu_cp_cell_command_response> task = deactivate_cell(cgi);
-  return common_task_sched.schedule(launch_async([t = std::move(task)](coro_context<async_task<void>>& ctx) mutable {
-    CORO_BEGIN(ctx);
-    CORO_AWAIT(t);
-    CORO_RETURN();
-  }));
+    async_task<cu_cp_cell_command_response> task = deactivate_cell(cgi);
+    return common_task_sched.schedule(launch_async([t = std::move(task)](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_AWAIT(t);
+      CORO_RETURN();
+    }));
+  });
 }
 
 bool cu_cp_impl::dispatch_activate_cell(const nr_cell_global_id_t& cgi)
 {
-  // Any-state lookup, mirroring activate_cell(): the cell to activate is currently in the DU's deactivated
-  // list, which the strict served-cells lookup would miss.
-  if (du_db.find_du_any_state(cgi) == cu_cp_du_index_t::invalid) {
-    logger.warning("Dispatch activate_cell rejected. Cause: No DU found serving NR-CGI plmn={} nci={:#x}",
-                   cgi.plmn_id.to_string(),
-                   cgi.nci.value());
-    return false;
+  return dispatch_cell_command("activate_cell", [this, cgi]() {
+    // Any-state lookup, mirroring activate_cell(): the cell to activate is currently in the DU's deactivated
+    // list, which the strict served-cells lookup would miss.
+    if (du_db.find_du_any_state(cgi) == cu_cp_du_index_t::invalid) {
+      logger.warning("Dispatch activate_cell rejected. Cause: No DU found serving NR-CGI plmn={} nci={:#x}",
+                     cgi.plmn_id.to_string(),
+                     cgi.nci.value());
+      return false;
+    }
+
+    async_task<cu_cp_cell_command_response> task = activate_cell(cgi);
+    return common_task_sched.schedule(launch_async([t = std::move(task)](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_AWAIT(t);
+      CORO_RETURN();
+    }));
+  });
+}
+
+bool cu_cp_impl::dispatch_bar_cell(const nr_cell_global_id_t& cgi, bool barred)
+{
+  return dispatch_cell_command("bar_cell", [this, cgi, barred]() {
+    // Any-state lookup, mirroring bar_cell(): barred intent can also be recorded for a deactivated cell.
+    if (du_db.find_du_any_state(cgi) == cu_cp_du_index_t::invalid) {
+      logger.warning("Dispatch bar_cell rejected. Cause: No DU found serving NR-CGI plmn={} nci={:#x}",
+                     cgi.plmn_id.to_string(),
+                     cgi.nci.value());
+      return false;
+    }
+
+    async_task<cu_cp_cell_command_response> task = bar_cell(cgi, barred);
+    return common_task_sched.schedule(launch_async([t = std::move(task)](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_AWAIT(t);
+      CORO_RETURN();
+    }));
+  });
+}
+
+std::vector<bool> cu_cp_impl::handle_du_cells_reported(cu_cp_du_index_t du_index, span<const du_reported_cell> cells)
+{
+  std::vector<bool>                  activate;
+  std::vector<cell_lifecycle_target> cells_to_bar;
+  activate.reserve(cells.size());
+  for (const du_reported_cell& reported : cells) {
+    logical_cell& cell = logical_cells.realize_cell(reported.cgi.nci, du_index);
+    activate.push_back(!cell.admin_locked);
+    if (!cell.admin_locked && cell.barred) {
+      cells_to_bar.push_back(cell_lifecycle_target{du_index, reported.cgi, reported.pci, {}});
+    }
   }
 
-  async_task<cu_cp_cell_command_response> task = activate_cell(cgi);
-  return common_task_sched.schedule(launch_async([t = std::move(task)](coro_context<async_task<void>>& ctx) mutable {
-    CORO_BEGIN(ctx);
-    CORO_AWAIT(t);
-    CORO_RETURN();
-  }));
+  // Re-apply the barred intent to the activated cells. The task must not start inline: the FIFO task
+  // scheduler begins executing a scheduled task immediately when idle, which would emit the bar-carrying
+  // configuration update before the F1 Setup Response is sent. A minimal timer wait defers it until the
+  // setup exchange has completed; in-order F1AP delivery then guarantees the DU processes the setup first.
+  if (!cells_to_bar.empty()) {
+    unique_timer defer_timer = cfg.services.timers->create_unique_timer(*cfg.services.cu_cp_executor);
+    bool         scheduled   = common_task_sched.schedule(launch_async(
+        [this, targets = std::move(cells_to_bar), defer_timer = std::move(defer_timer), cells_barred = false](
+            coro_context<async_task<void>>& ctx) mutable {
+          CORO_BEGIN(ctx);
+          CORO_AWAIT(async_wait_for(defer_timer, std::chrono::milliseconds{1}));
+          CORO_AWAIT_VALUE(
+              cells_barred,
+              launch_async<cell_barring_routine>(cfg, std::move(targets), /* barred = */ true, du_db, logger));
+          (void)cells_barred;
+          CORO_RETURN();
+        }));
+    if (!scheduled) {
+      logger.warning("du={}: Failed to schedule the barred-intent re-application after F1 setup. Cause: task "
+                     "queue is full",
+                     fmt::underlying(du_index));
+    }
+  }
+
+  return activate;
+}
+
+void cu_cp_impl::handle_du_removed(cu_cp_du_index_t du_index)
+{
+  logical_cells.derealize_du_cells(du_index);
 }

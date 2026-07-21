@@ -7,6 +7,7 @@
 #include "../pdcp/pdcp_ue_context_removal_handler.h"
 #include "du_configuration_handler.h"
 #include "du_metrics_handler.h"
+#include "du_reported_cell.h"
 #include "ocudu/cu_cp/cell_meas_manager_config.h"
 #include "ocudu/f1ap/cu_cp/f1ap_cu.h"
 #include "ocudu/ran/nr_cgi.h"
@@ -96,6 +97,12 @@ public:
   /// \param[in] nci The cell id of the serving cell to update.
   /// \param[in] serv_cell_cfg_ The serving cell meas config to update.
   virtual bool on_cell_config_update_request(nr_cell_identity nci, const serving_cell_meas_config& serv_cell_cfg_) = 0;
+
+  /// \brief Notify the CU-CP about the cells reported by the DU in the F1 Setup procedure, so the
+  /// corresponding logical cells are realized.
+  /// \return One flag per reported cell, in order: true if the cell shall be activated, false if it shall
+  /// stay dormant (admin-locked).
+  virtual std::vector<bool> on_du_cells_reported(cu_cp_du_index_t du_index, span<const du_reported_cell> cells) = 0;
 
   /// \brief Notifies about a successful RRC UE creation.
   /// \param[in] ue_index The index of the UE.

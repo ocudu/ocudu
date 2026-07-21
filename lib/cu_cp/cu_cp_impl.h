@@ -14,6 +14,7 @@
 #include "cu_cp_impl_interface.h"
 #include "cu_up_processor/cu_up_processor_repository.h"
 #include "du_processor/du_processor_repository.h"
+#include "logical_cell_manager.h"
 #include "metrics_handler/metrics_handler_impl.h"
 #include "ngap_repository.h"
 #include "routines/mobility/inter_cu_handover_target_routine.h"
@@ -212,8 +213,13 @@ public:
   // cu_cp_cell_command_handler.
   async_task<cu_cp_cell_command_response> deactivate_cell(const nr_cell_global_id_t& cgi) override;
   async_task<cu_cp_cell_command_response> activate_cell(const nr_cell_global_id_t& cgi) override;
+  async_task<cu_cp_cell_command_response> bar_cell(const nr_cell_global_id_t& cgi, bool barred) override;
   bool                                    dispatch_deactivate_cell(const nr_cell_global_id_t& cgi) override;
   bool                                    dispatch_activate_cell(const nr_cell_global_id_t& cgi) override;
+  bool                                    dispatch_bar_cell(const nr_cell_global_id_t& cgi, bool barred) override;
+
+  /// Run a cell command's validation+scheduling on the CU-CP executor, blocking for the validation result.
+  bool dispatch_cell_command(const char* name, std::function<bool()> validate_and_schedule);
 
   // cu_cp_amf_reconnection_handler.
   void handle_amf_reconnection(cu_cp_amf_index_t amf_index) override;
@@ -243,6 +249,10 @@ private:
   void handle_rrc_ue_creation(cu_cp_ue_index_t ue_index, rrc_ue_interface& rrc_ue) override;
 
   byte_buffer handle_target_cell_sib1_required(cu_cp_du_index_t du_index, nr_cell_global_id_t cgi) override;
+
+  std::vector<bool> handle_du_cells_reported(cu_cp_du_index_t du_index, span<const du_reported_cell> cells) override;
+
+  void handle_du_removed(cu_cp_du_index_t du_index) override;
 
   async_task<void> handle_transaction_info_loss(const ue_transaction_info_loss_event& ev) override;
 
@@ -286,6 +296,10 @@ private:
   // Components.
   // UE manager.
   ue_manager ue_mng;
+
+  // Registry of the CU-CP's logical cells (operator intent + realization by connected DUs). Declared before
+  // du_db, whose event handler reads and mutates it.
+  logical_cell_manager logical_cells;
 
   // Cell measurement manager.
   cell_meas_manager cell_meas_mng;

@@ -14,6 +14,7 @@
 namespace ocudu::ocucp {
 
 class du_processor_repository;
+class logical_cell_manager;
 class ue_manager;
 
 /// \brief A single cell, already resolved to its serving DU, targeted by a cell lifecycle routine.
@@ -33,7 +34,11 @@ struct cell_lifecycle_target {
 };
 
 /// \brief Resolve the deactivated cells (across all DUs) that serve any of the given PLMNs, i.e. the cells to activate.
+///
+/// Cells whose logical cell is administratively locked are skipped: a fault-recovery activation (e.g. AMF
+/// reconnection) must not override an operator lock.
 std::vector<cell_lifecycle_target> resolve_activation_targets(du_processor_repository&          du_db,
+                                                              const logical_cell_manager&       logical_cells,
                                                               const std::vector<plmn_identity>& plmns);
 
 /// \brief Resolve the served cells (across all DUs) that lose any of the given PLMNs, i.e. the cells to deactivate.

@@ -33,6 +33,12 @@ public:
     return meas_config_handler->handle_cell_config_update_request(nci, serv_cell_cfg);
   }
 
+  std::vector<bool> on_du_cells_reported(cu_cp_du_index_t du_index, span<const du_reported_cell> cells) override
+  {
+    ocudu_assert(cu_cp_handler != nullptr, "CU-CP handler must not be nullptr");
+    return cu_cp_handler->handle_du_cells_reported(du_index, cells);
+  }
+
   void on_rrc_ue_created(cu_cp_ue_index_t ue_index, rrc_ue_interface& rrc_ue) override
   {
     ocudu_assert(cu_cp_handler != nullptr, "CU-CP handler must not be nullptr");

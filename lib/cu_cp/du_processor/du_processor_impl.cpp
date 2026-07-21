@@ -181,16 +181,49 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
   // Notify the CU-CP that the cells served by this DU changed.
   cu_cp_notifier.on_served_cells_updated();
 
+  // Realize the reported cells as CU-CP logical cells and let the CU-CP decide, per cell, whether it may be
+  // activated (admin-locked cells stay dormant).
+  std::vector<du_reported_cell> reported_cells;
+  reported_cells.reserve(request.gnb_du_served_cells_list.size());
+  for (const auto& served_cell : request.gnb_du_served_cells_list) {
+    reported_cells.push_back({served_cell.served_cell_info.nr_cgi, served_cell.served_cell_info.nr_pci});
+  }
+  std::vector<bool> cells_to_activate = cu_cp_notifier.on_du_cells_reported(cfg.du_index, reported_cells);
+  ocudu_assert(cells_to_activate.size() == reported_cells.size(),
+               "One activation decision per reported cell is required");
+
+  // Record the dormant (admin-locked) cells as deactivated in the DU configuration records, reusing the
+  // same bookkeeping as a command deactivation, so lifecycle lookups treat them exactly like
+  // command-deactivated cells (e.g. the unlock command finds them via the any-state lookup). No F1AP
+  // message is sent here: the update struct is only the vehicle for the configuration handler's records.
+  {
+    f1ap_gnb_cu_configuration_update dormant_cells_update;
+    for (unsigned i = 0; i != reported_cells.size(); ++i) {
+      if (!cells_to_activate[i]) {
+        dormant_cells_update.cells_to_be_deactivated_list.push_back({reported_cells[i].cgi});
+      }
+    }
+    if (!dormant_cells_update.cells_to_be_deactivated_list.empty()) {
+      du_cfg_hdlr->handle_gnb_cu_configuration_update(dormant_cells_update);
+    }
+  }
+
   // Prepare DU response with accepted setup.
   auto& accepted              = res.result.emplace<du_setup_result::accepted>();
   accepted.gnb_cu_name        = cfg.ran_node_name;
   accepted.gnb_cu_rrc_version = cfg.rrc_version;
 
-  // Accept all cells.
-  accepted.cells_to_be_activ_list.resize(request.gnb_du_served_cells_list.size());
-  for (unsigned i = 0; i != accepted.cells_to_be_activ_list.size(); ++i) {
-    accepted.cells_to_be_activ_list[i].nr_cgi = request.gnb_du_served_cells_list[i].served_cell_info.nr_cgi;
-    accepted.cells_to_be_activ_list[i].nr_pci = request.gnb_du_served_cells_list[i].served_cell_info.nr_pci;
+  // Accept all cells; activate the ones not administratively locked. Cells omitted from the Cells to be
+  // Activated List remain configured-but-dormant at the DU, and can be activated later via the gNB-CU
+  // Configuration Update procedure (unlock command).
+  accepted.cells_to_be_activ_list.reserve(request.gnb_du_served_cells_list.size());
+  for (unsigned i = 0; i != request.gnb_du_served_cells_list.size(); ++i) {
+    if (!cells_to_activate[i]) {
+      continue;
+    }
+    auto& activ_item  = accepted.cells_to_be_activ_list.emplace_back();
+    activ_item.nr_cgi = request.gnb_du_served_cells_list[i].served_cell_info.nr_cgi;
+    activ_item.nr_pci = request.gnb_du_served_cells_list[i].served_cell_info.nr_pci;
   }
 
   return res;

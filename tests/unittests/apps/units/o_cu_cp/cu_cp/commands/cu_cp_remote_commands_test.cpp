@@ -20,6 +20,8 @@ class capturing_cell_command_handler : public ocucp::cu_cp_cell_command_handler
 public:
   std::optional<nr_cell_global_id_t> last_deactivate_cgi;
   std::optional<nr_cell_global_id_t> last_activate_cgi;
+  std::optional<nr_cell_global_id_t> last_bar_cgi;
+  std::optional<bool>                last_bar_value;
   bool                               next_dispatch_result = true;
 
   async_task<ocucp::cu_cp_cell_command_response> deactivate_cell(const nr_cell_global_id_t&) override
@@ -38,9 +40,24 @@ public:
     });
   }
 
+  async_task<ocucp::cu_cp_cell_command_response> bar_cell(const nr_cell_global_id_t&, bool) override
+  {
+    return launch_async([](coro_context<async_task<ocucp::cu_cp_cell_command_response>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(ocucp::cu_cp_cell_command_response{});
+    });
+  }
+
   bool dispatch_deactivate_cell(const nr_cell_global_id_t& cgi) override
   {
     last_deactivate_cgi = cgi;
+    return next_dispatch_result;
+  }
+
+  bool dispatch_bar_cell(const nr_cell_global_id_t& cgi, bool barred) override
+  {
+    last_bar_cgi   = cgi;
+    last_bar_value = barred;
     return next_dispatch_result;
   }
 
