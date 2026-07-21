@@ -2,5 +2,4 @@
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 
-add_subdirectory(flexible_du)
-add_subdirectory(o_cu_cp)
+add_subdirectory(cu_cp)
