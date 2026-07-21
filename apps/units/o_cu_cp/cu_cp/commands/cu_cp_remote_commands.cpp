@@ -82,3 +82,31 @@ error_type<std::string> cell_unlock_remote_command::execute(const nlohmann::json
   }
   return {};
 }
+
+error_type<std::string> cell_bar_remote_command::execute(const nlohmann::json& json)
+{
+  nr_cell_global_id_t     cgi;
+  error_type<std::string> cgi_result = parse_cgi(json, cgi);
+  if (not cgi_result.has_value()) {
+    return cgi_result;
+  }
+
+  if (not cu_cp.get_cell_command_handler().dispatch_bar_cell(cgi, /* barred = */ true)) {
+    return make_unexpected("CU-CP rejected cell_bar: no served DU matches the provided CGI, or scheduling failed");
+  }
+  return {};
+}
+
+error_type<std::string> cell_unbar_remote_command::execute(const nlohmann::json& json)
+{
+  nr_cell_global_id_t     cgi;
+  error_type<std::string> cgi_result = parse_cgi(json, cgi);
+  if (not cgi_result.has_value()) {
+    return cgi_result;
+  }
+
+  if (not cu_cp.get_cell_command_handler().dispatch_bar_cell(cgi, /* barred = */ false)) {
+    return make_unexpected("CU-CP rejected cell_unbar: no served DU matches the provided CGI, or scheduling failed");
+  }
+  return {};
+}
