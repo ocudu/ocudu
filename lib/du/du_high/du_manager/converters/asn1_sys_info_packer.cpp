@@ -367,6 +367,17 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
   sib1.conn_est_fail_ctrl.conn_est_fail_offset         = 1;
 
   if (du_cfg.si.si_config.has_value()) {
+    // A cell is an NTN serving cell only if its own SIB19 carries the serving-cell ntn-Config; a TN cell may
+    // still broadcast SIB19 solely to advertise NTN neighbour cells (ntn-NeighCellConfigList), see TS 38.331
+    // "ntn-Config" field description.
+    bool cell_has_ntn_serving_cfg = false;
+    for (const auto& sib : du_cfg.si.si_config->sibs) {
+      if (get_sib_info_type(sib.content) == sib_type::sib19) {
+        cell_has_ntn_serving_cfg = std::get<sib19_info>(sib.content).ntn_cfg.has_value();
+        break;
+      }
+    }
+
     // Populate the SI Scheduling info list.
     if (!du_cfg.si.si_config->si_sched_info.empty()) {
       bool ret = asn1::number_to_enum(sib1.si_sched_info.si_win_len, du_cfg.si.si_config.value().si_window_len_slots);
@@ -467,9 +478,15 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
           sib1.non_crit_ext.non_crit_ext_present                                  = true;
           sib1.non_crit_ext.non_crit_ext.non_crit_ext_present                     = true;
           sib1.non_crit_ext.non_crit_ext.non_crit_ext.si_sched_info_v1700_present = true;
-          sib1.non_crit_ext.non_crit_ext.non_crit_ext.cell_barred_ntn_r17_present = true;
-          sib1.non_crit_ext.non_crit_ext.non_crit_ext.cell_barred_ntn_r17 =
-              sib1_v1700_ies_s::cell_barred_ntn_r17_opts::not_barred;
+          // TS 38.300, clause 16.14.3.1: the UE determines the network type (TN or NTN) implicitly from the
+          // presence of cellBarredNTN in SIB1. If the serving cell has no ntn-Config of its own (i.e. it is a TN
+          // cell, possibly broadcasting SIB19 solely for ntn-NeighCellConfigList, see TS 38.331 "ntn-Config" field
+          // description), cellBarredNTN must be left absent (scheduling SIB19 alone does not make this an  NTN cell.
+          if (cell_has_ntn_serving_cfg) {
+            sib1.non_crit_ext.non_crit_ext.non_crit_ext.cell_barred_ntn_r17_present = true;
+            sib1.non_crit_ext.non_crit_ext.non_crit_ext.cell_barred_ntn_r17 =
+                sib1_v1700_ies_s::cell_barred_ntn_r17_opts::not_barred;
+          }
           auto& si_sched_info_r17 = sib1.non_crit_ext.non_crit_ext.non_crit_ext.si_sched_info_v1700;
           si_sched_info_r17.sched_info_list2_r17.push_back(asn1_si_r17);
         }
