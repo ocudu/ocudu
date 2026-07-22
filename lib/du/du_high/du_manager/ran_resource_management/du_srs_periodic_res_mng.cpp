@@ -5,8 +5,7 @@
 #include "du_srs_periodic_res_mng.h"
 #include "du_srs_manager_helpers.h"
 #include "du_ue_resource_config.h"
-#include "ocudu/ocudulog/ocudulog.h"
-#include "ocudu/ran/srs/srs_bandwidth_configuration.h"
+#include "ocudu/scheduler/config/pucch_guardbands.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
 
 using namespace ocudu;
@@ -56,28 +55,10 @@ du_srs_policy_max_ul_rate::du_srs_policy_max_ul_rate(span<const du_cell_config> 
     if (cell.cell_cfg.ran.init_bwp.srs_cfg.c_srs.has_value()) {
       cell.srs_common_params.c_srs      = cell.cell_cfg.ran.init_bwp.srs_cfg.c_srs.value();
       cell.srs_common_params.freq_shift = cell.cell_cfg.ran.init_bwp.srs_cfg.freq_domain_shift.value();
-
-      // The user has manually configured the SRS bandwidth; warn if it overlaps with the common PUCCH resources, as
-      // this would starve those resources of RBs.
-      const crb_interval srs_avail_crbs = du_srs_mng_details::compute_srs_available_crbs(
-          cell.cell_cfg.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs,
-          cell.cell_cfg.ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common);
-      constexpr uint8_t                      b_srs_0    = 0;
-      const std::optional<srs_configuration> srs_bw_cfg = srs_configuration_get(cell.srs_common_params.c_srs, b_srs_0);
-      ocudu_assert(srs_bw_cfg.has_value(), "Invalid SRS bandwidth configuration");
-      const crb_interval srs_crbs{cell.srs_common_params.freq_shift,
-                                  cell.srs_common_params.freq_shift + srs_bw_cfg.value().m_srs};
-      if (not srs_avail_crbs.contains(srs_crbs)) {
-        ocudulog::fetch_basic_logger("DU-MNG").warning(
-            "The manually configured SRS bandwidth crbs={} overlaps with the common PUCCH resources; this may "
-            "starve the common PUCCH resources of RBs. Consider restricting the SRS to crbs={}",
-            srs_crbs,
-            srs_avail_crbs);
-      }
     } else {
       // Restrict the SRS bandwidth to the RBs in between the 2 common PUCCH resource blocks, so that the SRS
       // doesn't starve the common PUCCH resources of RBs.
-      const crb_interval srs_avail_crbs = du_srs_mng_details::compute_srs_available_crbs(
+      const crb_interval srs_avail_crbs = compute_srs_available_crbs(
           cell.cell_cfg.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs,
           cell.cell_cfg.ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common);
       // \c compute_c_srs() picks the C_SRS whose corresponding \f$m_{SRS,0}\f$ (i.e., the SRS bandwidth in RBs) is

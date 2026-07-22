@@ -4,7 +4,6 @@
 
 #include "du_srs_manager_helpers.h"
 #include "ocudu/ran/srs/srs_bandwidth_configuration.h"
-#include "ocudu/scheduler/config/pucch_guardbands.h"
 #include <ocudu/support/ocudu_assert.h>
 #include <utility>
 
@@ -59,23 +58,4 @@ unsigned ocudu::odu::du_srs_mng_details::compute_srs_rb_start(unsigned c_srs, un
                      "The SRS configuration is not valid");
 
   return (nof_avail_rbs - srs_params.value().m_srs) / 2;
-}
-
-crb_interval ocudu::odu::du_srs_mng_details::compute_srs_available_crbs(crb_interval ul_bwp_crbs,
-                                                                        unsigned     pucch_res_common)
-{
-  // Common PUCCH resources occupy 2 blocks of RBs, one at the low edge and one at the high edge of the UL BWP; the
-  // SRS bandwidth is automatically confined to the gap in between these 2 blocks.
-  const crb_bitmap pucch_crbs          = compute_pucch_crbs(ul_bwp_crbs, pucch_res_common, {});
-  const unsigned   nof_rbs             = pucch_crbs.size();
-  const int        low_edge_last_crb   = pucch_crbs.find_highest(0, nof_rbs / 2, true);
-  const int        high_edge_first_crb = pucch_crbs.find_lowest(nof_rbs / 2, nof_rbs, true);
-  ocudu_sanity_check(low_edge_last_crb >= 0 and high_edge_first_crb >= 0,
-                     "The common PUCCH resource is expected to occupy both edges of the UL BWP");
-
-  const unsigned gap_start = static_cast<unsigned>(low_edge_last_crb) + 1;
-  const unsigned gap_stop  = static_cast<unsigned>(high_edge_first_crb);
-  ocudu_sanity_check(gap_stop > gap_start, "No RBs available for SRS in between the common PUCCH resource blocks");
-
-  return crb_interval{ul_bwp_crbs.start() + gap_start, ul_bwp_crbs.start() + gap_stop};
 }

@@ -5,13 +5,16 @@
 #include "ocudu/du/du_cell_config_validation.h"
 #include "ocudu/asn1/rrc_nr/sys_info.h"
 #include "ocudu/du/du_update_config_helpers.h"
+#include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/band_helper.h"
 #include "ocudu/ran/pdcch/pdcch_candidates.h"
 #include "ocudu/ran/pdcch/pdcch_type0_css_occasions.h"
 #include "ocudu/ran/prach/prach_configuration.h"
 #include "ocudu/ran/prach/prach_frequency_mapping.h"
 #include "ocudu/ran/prach/prach_preamble_information.h"
+#include "ocudu/ran/srs/srs_bandwidth_configuration.h"
 #include "ocudu/ran/ssb/ssb_mapping.h"
+#include "ocudu/scheduler/config/pucch_guardbands.h"
 #include "ocudu/scheduler/config/pucch_resource_generator.h"
 #include "ocudu/scheduler/config/sched_cell_config_helpers.h"
 #include "ocudu/scheduler/config/serving_cell_config.h"
@@ -746,6 +749,35 @@ static check_outcome check_prach_config(const du_cell_config& cell_cfg)
   return {};
 }
 
+/// Warns if a manually configured SRS bandwidth overlaps with the common PUCCH resources, as this would starve those
+/// resources of RBs. This is not a hard failure, as the scheduler tolerates the overlap; it is intended to help
+/// operators catch a likely misconfiguration early, rather than deep inside the DU manager's logs.
+static check_outcome check_srs_config(const du_cell_config& cell_cfg)
+{
+  const auto& srs_cfg = cell_cfg.ran.init_bwp.srs_cfg;
+  if (srs_cfg.srs_type_enabled == srs_type::disabled or not srs_cfg.c_srs.has_value()) {
+    return {};
+  }
+
+  const crb_interval srs_avail_crbs =
+      compute_srs_available_crbs(cell_cfg.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs,
+                                 cell_cfg.ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common);
+  constexpr uint8_t                      b_srs_0    = 0;
+  const std::optional<srs_configuration> srs_bw_cfg = srs_configuration_get(srs_cfg.c_srs.value(), b_srs_0);
+  ocudu_assert(srs_bw_cfg.has_value(), "Invalid SRS bandwidth configuration");
+  const crb_interval srs_crbs{srs_cfg.freq_domain_shift.value(),
+                              srs_cfg.freq_domain_shift.value() + srs_bw_cfg.value().m_srs};
+  if (not srs_avail_crbs.contains(srs_crbs)) {
+    ocudulog::fetch_basic_logger("DU-MNG").warning(
+        "The manually configured SRS bandwidth crbs={} overlaps with the common PUCCH resources; this may starve "
+        "the common PUCCH resources of RBs. Consider restricting the SRS to crbs={}",
+        srs_crbs,
+        srs_avail_crbs);
+  }
+
+  return {};
+}
+
 /// Validates NTN cell configuration parameters.
 static check_outcome check_ntn_config(const du_cell_config& cell_cfg)
 {
@@ -803,6 +835,7 @@ check_outcome odu::is_du_cell_config_valid(const du_cell_config& cell_cfg)
   HANDLE_ERROR(config_helpers::pucch_parameters_validator(
       cell_cfg.ran.init_bwp.pucch.resources, cell_cfg.ran.dl_cfg_common.init_dl_bwp.generic_params.crbs.length()));
   HANDLE_ERROR(check_prach_config(cell_cfg));
+  HANDLE_ERROR(check_srs_config(cell_cfg));
   const serving_cell_config ue_serv_cell_cfg = config_helpers::make_default_ue_cell_config(cell_cfg.ran).serv_cell_cfg;
   HANDLE_ERROR(
       config_validators::validate_csi_meas_cfg(ue_serv_cell_cfg, cell_cfg.ran.tdd_cfg, cell_cfg.ran.ul_cfg_common));

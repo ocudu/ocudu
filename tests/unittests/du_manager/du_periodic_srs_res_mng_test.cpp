@@ -9,6 +9,7 @@
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/du/du_cell_config_helpers.h"
 #include "ocudu/ran/srs/srs_bandwidth_configuration.h"
+#include "ocudu/scheduler/config/pucch_guardbands.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
@@ -281,7 +282,7 @@ protected:
   // Helper that computes the CRB interval, within the UL BWP, that is free of common PUCCH resources.
   crb_interval compute_srs_available_crbs() const
   {
-    return du_srs_mng_details::compute_srs_available_crbs(
+    return ocudu::compute_srs_available_crbs(
         cell_cfg_list[0].ran.ul_cfg_common.init_ul_bwp.generic_params.crbs,
         cell_cfg_list[0].ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common);
   }
