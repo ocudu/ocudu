@@ -351,9 +351,19 @@ docker run --rm --privileged \
             -DCMAKE_C_COMPILER=afl-clang-fast \
             -DCMAKE_CXX_COMPILER=afl-clang-fast++ \
             -DCMAKE_BUILD_TYPE=Debug \
-            -DENABLE_FUZZTESTS=ON -DENABLE_ASAN=ON \
-            -DBUILD_TESTING=OFF -DENABLE_UHD=OFF \
-            -DENABLE_ZEROMQ=OFF -DENABLE_DPDK=OFF
+            -DENABLE_FUZZTESTS=ON \
+            -DENABLE_ASAN=ON \
+            -DBUILD_TESTING=OFF \
+            -DENABLE_UHD=OFF \
+            -DENABLE_ZEROMQ=OFF \
+            -DENABLE_FFTW=OFF \
+            -DENABLE_MKL=OFF \
+            -DENABLE_FFTZ=OFF \
+            -DENABLE_ARMPL=OFF \
+            -DENABLE_DPDK=OFF \
+            -DENABLE_LIBNUMA=OFF \
+            -DENABLE_BACKWARD=OFF \
+            -DENABLE_WERROR=OFF
         ninja -C /build fuzz_targets
         mkdir -p /tmp/corpus/ngap_cu_cp
         cp -r tests/fuzz/ofh/corpus/* /tmp/corpus/

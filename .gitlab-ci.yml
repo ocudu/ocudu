@@ -622,20 +622,20 @@ promotion:
 # fuzz targets are compiled at job time so this image only needs rebuilding
 # when the Dockerfile itself changes.
 build-fuzz-image:
-  stage: .post
-  image: docker:latest
-  services:
-    - docker:dind
+  extends: .docker-builder
+  stage: deploy
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push"'
       changes:
         - tests/fuzz/Dockerfile
     - when: manual
       allow_failure: true
-  script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -f tests/fuzz/Dockerfile -t $CI_REGISTRY_IMAGE/fuzz-deps:$FUZZ_IMAGE_VERSION .
-    - docker push $CI_REGISTRY_IMAGE/fuzz-deps:$FUZZ_IMAGE_VERSION
+  variables:
+    NAME: fuzz-deps
+    CONTEXT: ${CI_PROJECT_DIR}
+    DOCKERFILE: ${CI_PROJECT_DIR}/tests/fuzz
+    VERSION: $FUZZ_IMAGE_VERSION
+    MODE: publish
   dependencies: []
 
 # Run all fuzz targets for FUZZ_TIMEOUT_EACH seconds each.
