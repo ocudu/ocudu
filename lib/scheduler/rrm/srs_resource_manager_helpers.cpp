@@ -2,16 +2,15 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
-#include "du_srs_manager_helpers.h"
+#include "srs_resource_manager_helpers.h"
 #include "ocudu/ran/srs/srs_bandwidth_configuration.h"
 #include <ocudu/support/ocudu_assert.h>
 #include <utility>
 
 using namespace ocudu;
-using namespace odu;
-using namespace du_srs_mng_details;
+using namespace srs_res_mng_details;
 
-std::optional<unsigned> ocudu::odu::du_srs_mng_details::compute_c_srs(unsigned nof_avail_rbs)
+std::optional<unsigned> ocudu::srs_res_mng_details::compute_c_srs(unsigned nof_avail_rbs)
 {
   // Iterate over Table 6.4.1.4.3-1, TS 38.211, and find the minimum \f$C_{SRS}\f$ value that maximizes \f$m_{SRS,0}\f$
   // under the constraint \f$m_{SRS,0}\f$ <= nof_avail_rbs.
@@ -48,7 +47,7 @@ std::optional<unsigned> ocudu::odu::du_srs_mng_details::compute_c_srs(unsigned n
   return candidate_c_srs.value().first;
 }
 
-unsigned ocudu::odu::du_srs_mng_details::compute_srs_rb_start(unsigned c_srs, unsigned nof_avail_rbs)
+unsigned ocudu::srs_res_mng_details::compute_srs_rb_start(unsigned c_srs, unsigned nof_avail_rbs)
 {
   // As per Section 6.4.1.4.3, the parameter \f$m_{SRS}\f$ = 0 is an index that, along with \f$C_{SRS}\f$, maps to the
   // bandwidth of the SRS resources.

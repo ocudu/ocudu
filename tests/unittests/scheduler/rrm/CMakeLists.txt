@@ -12,3 +12,18 @@ target_link_libraries(pucch_resource_manager_test
         gtest
         gtest_main)
 gtest_discover_tests(pucch_resource_manager_test)
+
+add_executable(srs_resource_generator_test srs_resource_generator_test.cpp)
+target_include_directories(srs_resource_generator_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(srs_resource_generator_test sched_rrm sched_config du_manager_test_helpers gtest ocudu_gtest_main)
+gtest_discover_tests(srs_resource_generator_test)
+
+add_executable(srs_resource_manager_periodic_test srs_resource_manager_periodic_test.cpp)
+target_include_directories(srs_resource_manager_periodic_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(srs_resource_manager_periodic_test sched_rrm sched_config du_manager_test_helpers sched_test_doubles gtest ocudu_gtest_main)
+gtest_discover_tests(srs_resource_manager_periodic_test)
+
+add_executable(srs_resource_manager_aperiodic_test srs_resource_manager_aperiodic_test.cpp)
+target_include_directories(srs_resource_manager_aperiodic_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(srs_resource_manager_aperiodic_test sched_rrm sched_config du_manager_test_helpers sched_test_doubles gtest ocudu_gtest_main)
+gtest_discover_tests(srs_resource_manager_aperiodic_test)

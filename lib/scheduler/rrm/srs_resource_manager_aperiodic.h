@@ -4,34 +4,33 @@
 
 #pragma once
 
-#include "du_srs_resource_manager.h"
-#include "srs_resource_generator.h"
-#include "ocudu/du/du_cell_config.h"
+#include "ocudu/adt/slotted_array.h"
 #include "ocudu/ran/srs/srs_bandwidth_configuration.h"
+#include "ocudu/scheduler/config/ran_cell_config.h"
+#include "ocudu/scheduler/config/serving_cell_config.h"
+#include "ocudu/scheduler/rrm/du_srs_resource.h"
+#include "ocudu/scheduler/rrm/srs_resource_manager.h"
 
 namespace ocudu {
-namespace odu {
 
-struct cell_group_config;
-
-/// \brief This class implements the DU SRS manager for aperiodic SRS-resources.
+/// \brief This class implements the SRS resource manager for aperiodic SRS-resources.
 /// It computes:
 /// - The list of cell SRS resources.
 /// - The \c slot_offset (as per \c slotOffset, SRS-Config, TS 38.331) values that are used to build the SRS-Config for
 ///   a given UE.
 /// and it allocates an SRS resource to any new UE that are added to the DU.
-class du_srs_aperiodic_res_mng : public du_srs_resource_manager
+class srs_resource_manager_aperiodic : public srs_resource_manager
 {
 public:
-  explicit du_srs_aperiodic_res_mng(span<const du_cell_config> cell_cfg_list_);
+  void add_cell(du_cell_index_t cell_idx, const ran_cell_config& cell_cfg) override;
 
   /// The SRS resources are allocate according to the following policy:
   /// - Allocate an SRS resource that has not been allocated to any UE.
   /// - If all SRS resources have been allocated to at least a UE, allocates the one that has been assigned to the
   /// smaller number of UEs.
-  bool alloc_resources(cell_group_config& cell_grp_cfg) override;
+  bool alloc_resources(ue_cell_config& ue_cell_cfg) override;
 
-  void dealloc_resources(cell_group_config& cell_grp_cfg) override;
+  void dealloc_resources(ue_cell_config& ue_cell_cfg) override;
 
   unsigned get_nof_srs_free_res_offsets(du_cell_index_t cell_idx) const override
   {
@@ -41,17 +40,10 @@ public:
 
 private:
   struct cell_context {
-    cell_context(const du_cell_config& cfg);
+    cell_context(const ran_cell_config& cfg);
 
     // Returns the DU SRS resource with the given cell resource ID from the cell list of resources.
-    std::vector<du_srs_resource>::const_iterator get_du_srs_res_cfg(unsigned cell_res_id)
-    {
-      if (cell_res_id >= cell_srs_res_list.size() or cell_srs_res_list[cell_res_id].cell_res_id != cell_res_id) {
-        ocudu_assertion_failure("Cell resource ID out of range or invalid");
-        return cell_srs_res_list.end();
-      }
-      return cell_srs_res_list.cbegin() + cell_res_id;
-    }
+    std::vector<du_srs_resource>::const_iterator get_du_srs_res_cfg(unsigned cell_res_id);
 
     // Fills the unique SRS resource in SRS resource list for a UE SRS-Config.
     void fill_srs_res_parameters(srs_config::srs_resource& res_out, const du_srs_resource& res_in) const;
@@ -71,7 +63,7 @@ private:
     // Maximum number of SRS resources that can be generated in a cell.
     // [Implementation-defined] We assume each UE has one and only one resource.
     static constexpr unsigned                    max_nof_srs_res = MAX_NOF_DU_UES;
-    const du_cell_config&                        cell_cfg;
+    const ran_cell_config                        cell_cfg;
     const std::optional<tdd_ul_dl_config_common> tdd_ul_dl_cfg_common;
     // Default SRS configuration for the cell.
     const srs_config default_srs_cfg;
@@ -86,8 +78,7 @@ private:
   };
 
   // Contains the resources for the different cells of the DU.
-  static_vector<cell_context, MAX_NOF_DU_CELLS> cells;
+  slotted_id_table<du_cell_index_t, cell_context, MAX_NOF_DU_CELLS> cells;
 };
 
-} // namespace odu
 } // namespace ocudu

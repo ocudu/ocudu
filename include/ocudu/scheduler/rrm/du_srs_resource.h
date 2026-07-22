@@ -4,9 +4,10 @@
 
 #pragma once
 
-#include "ocudu/du/du_cell_config.h"
+#include "ocudu/adt/bounded_integer.h"
+#include "ocudu/ran/resource_allocation/ofdm_symbol_range.h"
 
-namespace ocudu::odu {
+namespace ocudu {
 
 /// Contains the parameters for the SRS resources of a cell.
 struct du_srs_resource {
@@ -24,15 +25,4 @@ struct du_srs_resource {
   unsigned cs = 0;
 };
 
-/// \brief Generates the list of orthogonal SRS resources available in a cell.
-/// The resources of this cells are meant to be used by the UEs; the same resources can be reused by different UEs over
-/// different slots. Note that this function does not allocate the resources to the UEs, it only creates the cell
-/// resource list.
-/// \param[in] du_cell_cfg Cell configuration parameters.
-/// \param[in] use_special_slot_only If true, use the special slot only to derive the symbols for SRS resources. Only
-/// applicable for aperiodic SRS.
-/// \return List of orthogonal SRS resources.
-std::vector<du_srs_resource> generate_cell_srs_list(const du_cell_config& du_cell_cfg,
-                                                    bool                  use_special_slot_only = false);
-
-} // namespace ocudu::odu
+} // namespace ocudu

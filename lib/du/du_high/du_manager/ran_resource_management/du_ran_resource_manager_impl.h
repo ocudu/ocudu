@@ -11,11 +11,11 @@
 #include "du_pdsch_resource_manager.h"
 #include "du_pusch_resource_manager.h"
 #include "du_ran_resource_manager.h"
-#include "du_srs_resource_manager.h"
 #include "ra_resource_manager.h"
 #include "ue_capability_manager.h"
 #include "ocudu/ran/qos/five_qi.h"
 #include "ocudu/scheduler/rrm/pucch_resource_manager.h"
+#include "ocudu/scheduler/rrm/srs_resource_manager.h"
 
 namespace ocudu {
 namespace odu {
@@ -133,7 +133,7 @@ private:
   // Allocator of UE bearer resources.
   du_bearer_resource_manager bearer_res_mng;
 
-  std::unique_ptr<du_srs_resource_manager> srs_res_mng;
+  std::unique_ptr<srs_resource_manager> srs_res_mng;
 
   // Allocator of Configured Grant resources.
   du_cg_type1_res_mng cg_res_mng;

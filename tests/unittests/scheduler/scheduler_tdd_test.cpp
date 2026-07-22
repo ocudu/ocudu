@@ -9,12 +9,12 @@
 #include "test_utils/scheduler_test_simulator.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
-#include "tests/test_doubles/scheduler/srs_resource_manager.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/du/du_update_config_helpers.h"
 #include "ocudu/ran/tdd/tdd_ul_dl_config_formatters.h"
 #include "ocudu/scheduler/config/time_domain_resource_helper.h"
 #include "ocudu/scheduler/rrm/pucch_resource_manager.h"
+#include "ocudu/scheduler/rrm/srs_resource_manager_factory.h"
 #include "ocudu/support/enum_utils.h"
 #include <gtest/gtest.h>
 
@@ -138,7 +138,8 @@ protected:
     // Setup PUCCH and SRS resource builders.
     pucch_builder.add_cell(to_du_cell_index(0), cell_cfg().params);
     if (srs_enabled) {
-      srs_builder.emplace(cell_cfg().params);
+      srs_builder = create_srs_resource_manager(cell_cfg().params);
+      srs_builder->add_cell(to_du_cell_index(0), cell_cfg().params);
     }
   }
 
@@ -153,7 +154,10 @@ protected:
     ue_cfg.crnti    = rnti;
     report_fatal_error_if_not(
         pucch_builder.alloc_resources((*ue_cfg.cfg.cells)[0]), "Failed to allocate PUCCH resources for UE {}", idx);
-    if (srs_builder.has_value()) {
+    if (srs_builder != nullptr) {
+      // The SRS resource manager expects the SRS config to be unset before allocating, mirroring the DU manager's own
+      // reset_serv_cell_cfg() call ahead of its own srs_res_mng->alloc_resources() call.
+      (*ue_cfg.cfg.cells)[0].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.reset();
       report_fatal_error_if_not(
           srs_builder->alloc_resources((*ue_cfg.cfg.cells)[0]), "Failed to allocate SRS resources for UE {}", idx);
     }
@@ -163,8 +167,8 @@ protected:
   cell_config_builder_params params;
   // Builds a distinct per-UE dedicated PUCCH config from the cell pool for every UE created by these tests.
   pucch_resource_manager pucch_builder{120};
-  // Builds a distinct per-UE periodic SRS occasion from the cell pool; unset when SRS is disabled for the test.
-  std::optional<srs_resource_manager> srs_builder;
+  // Builds a distinct per-UE periodic SRS occasion from the cell pool. Null when SRS is disabled for the test.
+  std::unique_ptr<srs_resource_manager> srs_builder;
 };
 
 // ------------------------------------ single-UE case --------------------------------------------
@@ -610,7 +614,7 @@ protected:
       CORO_AWAIT(launch_rem_ue_task(idx));
       // Free the UE's PUCCH/SRS resources so the next transient UE reusing this index gets a fresh allocation.
       pucch_builder.dealloc_resources(req.cfg.cells.value()[0]);
-      if (srs_builder.has_value()) {
+      if (srs_builder != nullptr) {
         srs_builder->dealloc_resources(req.cfg.cells.value()[0]);
       }
       transient_pool.push_back(idx);
@@ -772,7 +776,7 @@ INSTANTIATE_TEST_SUITE_P(
   // SRS enabled, RACH-driven Msg3: periodic SRS carves into the tail of the sole UL slot, narrowing the symbol window
   // left for Msg3 and UE PUSCHs.
   multiue_tdd_test_params{
-      create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 2, 8, 16, 1, 10, true, multiue_bg_traffic::mixed, srs_periodicity::sl640}
+      create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 2, 8, 16, 1, 10, true, multiue_bg_traffic::mixed, srs_periodicity::sl5}
 ));
 // clang-format on
 
@@ -829,8 +833,8 @@ INSTANTIATE_TEST_SUITE_P(
   multiue_tdd_test_params{ create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 1, 16, 8, 1, 8, false, multiue_bg_traffic::ul_only},
   // SRS enabled on the UL-scarce patterns above: periodic SRS carves into the tail of the sole full-UL slot,
   // narrowing the symbol window left for the fallback UE's UL grant.
-  multiue_tdd_test_params{ create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 1, 16, 8, 1, 8, false, multiue_bg_traffic::ul_only, srs_periodicity::sl640},
-  multiue_tdd_test_params{ {subcarrier_spacing::kHz30, {4, 2, 9, 1, 0}}, 4, 16, 8, 1, 8, false, multiue_bg_traffic::ul_only, srs_periodicity::sl640}
+  multiue_tdd_test_params{ create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 1, 16, 8, 1, 8, false, multiue_bg_traffic::ul_only, srs_periodicity::sl10},
+  multiue_tdd_test_params{ {subcarrier_spacing::kHz30, {4, 2, 9, 1, 0}}, 4, 16, 8, 1, 8, false, multiue_bg_traffic::ul_only, srs_periodicity::sl16}
 ));
 // clang-format on
 

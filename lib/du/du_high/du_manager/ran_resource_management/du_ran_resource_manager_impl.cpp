@@ -4,12 +4,11 @@
 
 #include "du_ran_resource_manager_impl.h"
 #include "du_cg_res_mng.h"
-#include "du_srs_aperiodic_res_mng.h"
-#include "du_srs_periodic_res_mng.h"
 #include "ocudu/mac/config/mac_cell_group_config_factory.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/csi_report/csi_report_config_helpers.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
+#include "ocudu/scheduler/rrm/srs_resource_manager_factory.h"
 #include "ocudu/scheduler/scheduler_configurator.h"
 
 using namespace ocudu;
@@ -71,14 +70,6 @@ static void reset_serv_cell_cfg(serving_cell_config& serv_cell_cfg)
   serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.reset();
 }
 
-static std::unique_ptr<du_srs_resource_manager> build_srs_res_mng(span<const du_cell_config> cell_cfg_list)
-{
-  if (cell_cfg_list[0].ran.init_bwp.srs_cfg.srs_type_enabled == srs_type::aperiodic) {
-    return std::make_unique<du_srs_aperiodic_res_mng>(cell_cfg_list);
-  }
-  return std::make_unique<du_srs_policy_max_ul_rate>(cell_cfg_list);
-}
-
 du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_config>                cell_cfg_list_,
                                                            const scheduler_expert_config&            scheduler_cfg,
                                                            const std::map<srb_id_t, du_srb_config>&  srbs,
@@ -91,7 +82,7 @@ du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_co
   pdsch_res_mng(cell_cfg_list, test_cfg),
   pusch_res_mng(cell_cfg_list, test_cfg),
   bearer_res_mng(srbs, qos, logger),
-  srs_res_mng(build_srs_res_mng(cell_cfg_list)),
+  srs_res_mng(create_srs_resource_manager(cell_cfg_list_[0].ran)),
   meas_cfg_mng(cell_cfg_list),
   drx_res_mng(cell_cfg_list),
   ra_res_alloc(cell_cfg_list)
@@ -100,6 +91,7 @@ du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_co
     const auto&           cell     = cell_cfg_list[cell_idx_uint];
     const du_cell_index_t cell_idx = to_du_cell_index(cell_idx_uint);
     pucch_res_mng.add_cell(cell_idx, cell.ran);
+    srs_res_mng->add_cell(cell_idx, cell.ran);
     if (cell.ran.init_bwp.cg_cfg.has_value()) {
       cg_res_mng.add_cell(cell_idx, cell);
     }
@@ -344,7 +336,7 @@ error_type<std::string> du_ran_resource_manager_impl::allocate_cell_resources(du
     // path.
     reset_serv_cell_cfg(ue_res.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg);
 
-    if (not srs_res_mng->alloc_resources(ue_res.cell_group)) {
+    if (not srs_res_mng->alloc_resources(ue_res.cell_group.cells.at(SERVING_PCELL_IDX))) {
       // Clear dedicated PDCCH config so the UE falls back to common search spaces only.
       ue_res.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.init_dl_bwp.pdcch_cfg.reset();
       return make_unexpected(fmt::format("Unable to allocate SRS resources for cell={}", fmt::underlying(cell_index)));
@@ -352,7 +344,7 @@ error_type<std::string> du_ran_resource_manager_impl::allocate_cell_resources(du
 
     if (not pucch_res_mng.alloc_resources(ue_res.cell_group.cells.at(SERVING_PCELL_IDX))) {
       // Deallocate previously allocated SRS resources and clear dedicated PDCCH config.
-      srs_res_mng->dealloc_resources(ue_res.cell_group);
+      srs_res_mng->dealloc_resources(ue_res.cell_group.cells.at(SERVING_PCELL_IDX));
       ue_res.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.init_dl_bwp.pdcch_cfg.reset();
       return make_unexpected(
           fmt::format("Unable to allocate dedicated PUCCH resources for cell={}", fmt::underlying(cell_index)));
@@ -381,7 +373,7 @@ void du_ran_resource_manager_impl::deallocate_cell_resources(du_ue_index_t ue_in
                      ue_res.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.cell_index != INVALID_DU_CELL_INDEX,
                  "Double deallocation of same UE cell resources detected");
     pucch_res_mng.dealloc_resources(ue_res.cell_group.cells.at(SERVING_PCELL_IDX));
-    srs_res_mng->dealloc_resources(ue_res.cell_group);
+    srs_res_mng->dealloc_resources(ue_res.cell_group.cells.at(SERVING_PCELL_IDX));
     pdsch_res_mng.dealloc_resources(ue_res.cell_group);
     pusch_res_mng.dealloc_resources(ue_res.cell_group);
     cg_res_mng.dealloc_resources(ue_res.cell_group);

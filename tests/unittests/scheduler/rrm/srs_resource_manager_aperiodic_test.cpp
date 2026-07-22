@@ -2,18 +2,17 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
-#include "lib/du/du_high/du_manager/ran_resource_management/du_srs_aperiodic_res_mng.h"
-#include "lib/du/du_high/du_manager/ran_resource_management/du_srs_manager_helpers.h"
-#include "lib/du/du_high/du_manager/ran_resource_management/du_ue_resource_config.h"
+#include "lib/scheduler/rrm/srs_resource_generator.h"
+#include "lib/scheduler/rrm/srs_resource_manager_helpers.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/du/du_cell_config_helpers.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
+#include "lib/scheduler/rrm/srs_resource_manager_aperiodic.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
-using namespace odu;
 
 namespace {
 
@@ -137,11 +136,11 @@ static cell_config_builder_params make_cell_cfg_params(const srs_params& params 
   return cell_params;
 }
 
-static du_cell_config make_srs_base_du_cell_config(const cell_config_builder_params& params)
+static ran_cell_config make_srs_base_cell_config(const cell_config_builder_params& params)
 {
   // This function generates a configuration which potentially allows for a very large number of SRS resources.
-  du_cell_config du_cfg  = config_helpers::make_default_du_cell_config(params);
-  auto&          srs_cfg = du_cfg.ran.init_bwp.srs_cfg;
+  ran_cell_config cell_cfg = config_helpers::make_default_du_cell_config(params).ran;
+  auto&           srs_cfg  = cell_cfg.init_bwp.srs_cfg;
 
   srs_cfg.srs_type_enabled = srs_type::aperiodic;
 
@@ -151,8 +150,8 @@ static du_cell_config make_srs_base_du_cell_config(const cell_config_builder_par
   constexpr std::array<srs_nof_symbols, 3> nof_symb_values = {
       srs_nof_symbols::n1, srs_nof_symbols::n2, srs_nof_symbols::n4};
   unsigned max_nof_symbols = srs_cfg.max_nof_symbols.value();
-  if (du_cfg.ran.tdd_cfg.has_value() and du_cfg.ran.tdd_cfg.value().pattern1.nof_ul_symbols != 0) {
-    max_nof_symbols = std::min(du_cfg.ran.tdd_cfg.value().pattern1.nof_ul_symbols, srs_cfg.max_nof_symbols.value());
+  if (cell_cfg.tdd_cfg.has_value() and cell_cfg.tdd_cfg.value().pattern1.nof_ul_symbols != 0) {
+    max_nof_symbols = std::min(cell_cfg.tdd_cfg.value().pattern1.nof_ul_symbols, srs_cfg.max_nof_symbols.value());
   }
   srs_cfg.nof_symbols = nof_symb_values[test_rng::uniform_int<unsigned>(0, nof_symb_values.size() - 1)];
   while (srs_cfg.nof_symbols > max_nof_symbols) {
@@ -182,43 +181,38 @@ static du_cell_config make_srs_base_du_cell_config(const cell_config_builder_par
 
   srs_cfg.srs_period_prohib_time = srs_periodicity::sl80;
 
-  return du_cfg;
+  return cell_cfg;
 }
 
-class du_periodic_srs_res_mng_base_tester
+class srs_resource_manager_aperiodic_base_tester
 {
 protected:
-  explicit du_periodic_srs_res_mng_base_tester(const cell_config_builder_params& params_) :
-    params(params_),
-    cell_cfg_list({make_srs_base_du_cell_config(params_)}),
-    srs_params(cell_cfg_list[0].ran.init_bwp.srs_cfg),
-    du_srs_res_mng(cell_cfg_list)
+  explicit srs_resource_manager_aperiodic_base_tester(const cell_config_builder_params& params_) :
+    params(params_), cell_cfg_list({make_srs_base_cell_config(params_)}), srs_params(cell_cfg_list[0].init_bwp.srs_cfg)
   {
+    srs_res_mng.add_cell(to_du_cell_index(0), cell_cfg_list[0]);
+
     // We only run the test for 1 cell.
     const auto& cell_cfg = cell_cfg_list.front();
     const bool  use_special_slot_only =
-        cell_cfg.ran.tdd_cfg.has_value() and (cell_cfg.ran.tdd_cfg.value().pattern1.nof_ul_symbols != 0);
+        cell_cfg.tdd_cfg.has_value() and (cell_cfg.tdd_cfg.value().pattern1.nof_ul_symbols != 0);
     max_nof_cell_srs_res = generate_cell_srs_list(cell_cfg, use_special_slot_only).size();
   }
 
-  std::optional<cell_group_config> add_ue(du_ue_index_t ue_idx)
+  std::optional<ue_cell_config> add_ue(du_ue_index_t ue_idx)
   {
     if (ue_idx >= MAX_NOF_DU_UES) {
       return std::nullopt;
     }
 
-    cell_group_config                  cell_grp_cfg;
-    std::unique_ptr<cell_group_config> cell_grp_cfg_ptr = std::make_unique<cell_group_config>();
-    cell_grp_cfg.cells.emplace(SERVING_PCELL_IDX,
-                               config_helpers::make_default_ue_cell_config(cell_cfg_list.front().ran));
-    ues.insert(ue_idx, cell_grp_cfg);
+    ues.insert(ue_idx, config_helpers::make_default_ue_cell_config(cell_cfg_list.front()));
     auto& ue = ues[ue_idx];
     ues_bin.add_ue_to_repo(static_cast<unsigned>(ue_idx));
 
     // Reset the SRS config before allocating resources.
-    ue.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.reset();
+    ue.serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.reset();
 
-    if (du_srs_res_mng.alloc_resources(ue)) {
+    if (srs_res_mng.alloc_resources(ue)) {
       return ue;
     }
     // If the allocation was not possible, remove the UE.
@@ -231,8 +225,8 @@ protected:
   unsigned compute_freq_shift() const
   {
     // The function computes the frequency shift so that the SRS resources are placed in the center of the band.
-    const unsigned ul_bw_nof_rbs        = cell_cfg_list[0].ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
-    const std::optional<unsigned> c_srs = du_srs_mng_details::compute_c_srs(ul_bw_nof_rbs);
+    const unsigned ul_bw_nof_rbs        = cell_cfg_list[0].ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
+    const std::optional<unsigned> c_srs = srs_res_mng_details::compute_c_srs(ul_bw_nof_rbs);
     ocudu_assert(c_srs.has_value(), "C_SRS is required for this unittest");
     const auto srs_cfg = srs_configuration_get(c_srs.value(), 0U);
     ocudu_assert(srs_cfg.has_value(), "SRS config is required for this unittest");
@@ -240,21 +234,21 @@ protected:
   }
 
   cell_config_builder_params  params;
-  std::vector<du_cell_config> cell_cfg_list;
+  std::vector<ran_cell_config> cell_cfg_list;
   // This is a reference to the first element of cell_cfg_list's SRS config.
-  const srs_builder_params&                        srs_params;
-  du_srs_aperiodic_res_mng                         du_srs_res_mng;
-  unsigned                                         max_nof_cell_srs_res;
-  slotted_array<cell_group_config, MAX_NOF_DU_UES> ues;
-  ue_random_generator                              ues_bin;
+  const srs_builder_params&                     srs_params;
+  srs_resource_manager_aperiodic                srs_res_mng;
+  unsigned                                      max_nof_cell_srs_res;
+  slotted_array<ue_cell_config, MAX_NOF_DU_UES> ues;
+  ue_random_generator                           ues_bin;
 };
 
-class du_aperiodic_srs_res_mng_tester : public du_periodic_srs_res_mng_base_tester,
-                                        public ::testing::TestWithParam<srs_params>
+class srs_resource_manager_aperiodic_tester : public srs_resource_manager_aperiodic_base_tester,
+                                              public ::testing::TestWithParam<srs_params>
 {
 protected:
-  explicit du_aperiodic_srs_res_mng_tester() :
-    du_periodic_srs_res_mng_base_tester(make_cell_cfg_params(GetParam())), res_counter(max_nof_cell_srs_res, 0U)
+  explicit srs_resource_manager_aperiodic_tester() :
+    srs_resource_manager_aperiodic_base_tester(make_cell_cfg_params(GetParam())), res_counter(max_nof_cell_srs_res, 0U)
   {
   }
 
@@ -263,15 +257,14 @@ protected:
   std::vector<unsigned> res_counter;
 };
 
-TEST_P(du_aperiodic_srs_res_mng_tester, when_ues_are_added_the_srs_res_with_min_counter_is_assigned)
+TEST_P(srs_resource_manager_aperiodic_tester, when_ues_are_added_the_srs_res_with_min_counter_is_assigned)
 {
   for (unsigned i = 0; i != MAX_NOF_DU_UES_TO_TEST; ++i) {
-    std::optional<cell_group_config> ue = add_ue(to_du_ue_index(i));
+    std::optional<ue_cell_config> ue = add_ue(to_du_ue_index(i));
     ASSERT_TRUE(ue.has_value());
 
     // Check if the SRS has been assigned to the UE.
-    const auto& srs_res_list =
-        ue.value().cells.at(SERVING_PCELL_IDX).serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg->srs_res_list;
+    const auto& srs_res_list = ue.value().serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg->srs_res_list;
     ASSERT_FALSE(srs_res_list.empty());
     const auto& srs_res = srs_res_list[0];
     ASSERT_LT(srs_res.id.cell_res_id, max_nof_cell_srs_res);
@@ -284,16 +277,15 @@ TEST_P(du_aperiodic_srs_res_mng_tester, when_ues_are_added_the_srs_res_with_min_
   }
 }
 
-TEST_P(du_aperiodic_srs_res_mng_tester, when_all_ues_are_removed_all_srs_resources_have_zero_counter)
+TEST_P(srs_resource_manager_aperiodic_tester, when_all_ues_are_removed_all_srs_resources_have_zero_counter)
 {
   // Add all UEs.
   for (unsigned i = 0; i != MAX_NOF_DU_UES_TO_TEST; ++i) {
-    std::optional<cell_group_config> ue = add_ue(to_du_ue_index(i));
+    std::optional<ue_cell_config> ue = add_ue(to_du_ue_index(i));
     ASSERT_TRUE(ue.has_value());
 
     // Check if the SRS has been assigned to the UE.
-    const auto& srs_res_list =
-        ue.value().cells.at(SERVING_PCELL_IDX).serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg->srs_res_list;
+    const auto& srs_res_list = ue.value().serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg->srs_res_list;
     ASSERT_FALSE(srs_res_list.empty());
     const auto& srs_res = srs_res_list[0];
     ASSERT_LT(srs_res.id.cell_res_id, max_nof_cell_srs_res);
@@ -308,8 +300,7 @@ TEST_P(du_aperiodic_srs_res_mng_tester, when_all_ues_are_removed_all_srs_resourc
     const du_ue_index_t ue_idx_to_rem    = to_du_ue_index(ue_to_rem.value());
     auto&               ue_to_be_removed = ues[ue_idx_to_rem];
 
-    const auto& srs_res_list =
-        ue_to_be_removed.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg->srs_res_list;
+    const auto& srs_res_list = ue_to_be_removed.serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg->srs_res_list;
     ASSERT_FALSE(srs_res_list.empty());
     const auto& srs_res = srs_res_list[0];
 
@@ -317,7 +308,7 @@ TEST_P(du_aperiodic_srs_res_mng_tester, when_all_ues_are_removed_all_srs_resourc
     ASSERT_GT(res_counter[srs_res.id.cell_res_id], 0);
     --res_counter[srs_res.id.cell_res_id];
 
-    du_srs_res_mng.dealloc_resources(ues[ue_idx_to_rem]);
+    srs_res_mng.dealloc_resources(ues[ue_idx_to_rem]);
     ues.erase(ue_idx_to_rem);
   }
 
@@ -325,16 +316,15 @@ TEST_P(du_aperiodic_srs_res_mng_tester, when_all_ues_are_removed_all_srs_resourc
   ASSERT_TRUE(std::all_of(res_counter.begin(), res_counter.end(), [](const unsigned cnt) { return cnt == 0; }));
 }
 
-TEST_P(du_aperiodic_srs_res_mng_tester, when_random_ues_are_removed_and_added_new_ues_are_assign_srs_with_min_counter)
+TEST_P(srs_resource_manager_aperiodic_tester, when_random_ues_are_removed_and_added_new_ues_are_assign_srs_with_min_counter)
 {
   // Lambda that adds a new UE, given that its index.
   // NOTE: This is the lambda that verifies the correct SRS resource is assigned to the UE.
   auto add_ues = [this](unsigned ue_idx) mutable {
-    std::optional<cell_group_config> ue = add_ue(to_du_ue_index(ue_idx));
+    std::optional<ue_cell_config> ue = add_ue(to_du_ue_index(ue_idx));
     ASSERT_TRUE(ue.has_value());
 
-    const auto& srs_res_list =
-        ue.value().cells.at(SERVING_PCELL_IDX).serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg->srs_res_list;
+    const auto& srs_res_list = ue.value().serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg->srs_res_list;
     ASSERT_FALSE(srs_res_list.empty());
     const auto& srs_res = srs_res_list[0];
     ASSERT_LT(srs_res.id.cell_res_id, max_nof_cell_srs_res);
@@ -352,8 +342,7 @@ TEST_P(du_aperiodic_srs_res_mng_tester, when_random_ues_are_removed_and_added_ne
     const du_ue_index_t ue_idx_to_rem    = to_du_ue_index(ue_to_rem.value());
     auto&               ue_to_be_removed = ues[ue_idx_to_rem];
 
-    const auto& srs_res_list =
-        ue_to_be_removed.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg->srs_res_list;
+    const auto& srs_res_list = ue_to_be_removed.serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg->srs_res_list;
     ASSERT_FALSE(srs_res_list.empty());
     const auto& srs_res = srs_res_list[0];
 
@@ -361,7 +350,7 @@ TEST_P(du_aperiodic_srs_res_mng_tester, when_random_ues_are_removed_and_added_ne
     ASSERT_GT(res_counter[srs_res.id.cell_res_id], 0);
     --res_counter[srs_res.id.cell_res_id];
 
-    du_srs_res_mng.dealloc_resources(ues[ue_idx_to_rem]);
+    srs_res_mng.dealloc_resources(ues[ue_idx_to_rem]);
     ues.erase(ue_idx_to_rem);
   };
 
@@ -389,8 +378,8 @@ TEST_P(du_aperiodic_srs_res_mng_tester, when_random_ues_are_removed_and_added_ne
   }
 }
 
-INSTANTIATE_TEST_SUITE_P(test_du_srs_res_mng_for_different_ul_symbols,
-                         du_aperiodic_srs_res_mng_tester,
+INSTANTIATE_TEST_SUITE_P(test_srs_res_mng_for_different_ul_symbols,
+                         srs_resource_manager_aperiodic_tester,
                          ::testing::Values(
                              // clang-format off
     // FDD.
@@ -401,31 +390,30 @@ INSTANTIATE_TEST_SUITE_P(test_du_srs_res_mng_for_different_ul_symbols,
                              // clang-format on
                              ));
 
-class du_aperiodic_srs_res_mng_param_tester : public du_periodic_srs_res_mng_base_tester,
-                                              public ::testing::TestWithParam<srs_params>
+class srs_resource_manager_aperiodic_param_tester : public srs_resource_manager_aperiodic_base_tester,
+                                                    public ::testing::TestWithParam<srs_params>
 {
 protected:
-  explicit du_aperiodic_srs_res_mng_param_tester() :
-    du_periodic_srs_res_mng_base_tester(make_cell_cfg_params(GetParam()))
+  explicit srs_resource_manager_aperiodic_param_tester() :
+    srs_resource_manager_aperiodic_base_tester(make_cell_cfg_params(GetParam()))
   {
   }
 
   static constexpr unsigned MAX_NOF_DU_UES_TO_TEST = 1024;
 };
 
-TEST_P(du_aperiodic_srs_res_mng_param_tester, when_ue_is_added_srs_resources_parameters_and_slot_offsets_are_valid)
+TEST_P(srs_resource_manager_aperiodic_param_tester, when_ue_is_added_srs_resources_parameters_and_slot_offsets_are_valid)
 {
   // > Created UEs.
   for (unsigned i = 0; i != MAX_NOF_DU_UES_TO_TEST; ++i) {
-    std::optional<cell_group_config> ue = add_ue(to_du_ue_index(i));
+    std::optional<ue_cell_config> ue = add_ue(to_du_ue_index(i));
     if (not ue.has_value()) {
       break;
     }
 
     // Verify all parameters of the SRS resource are as expected.
-    ASSERT_TRUE(ue.value().cells.at(SERVING_PCELL_IDX).serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.has_value());
-    const auto& ue_srs_config =
-        ue.value().cells.at(SERVING_PCELL_IDX).serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.value();
+    ASSERT_TRUE(ue.value().serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.has_value());
+    const auto& ue_srs_config = ue.value().serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.value();
     ASSERT_EQ(ue_srs_config.srs_res_set_list.size(), 1U);
     // Check all SRS resource sets.
     const auto srs_res_set = ue_srs_config.srs_res_set_list.front();
@@ -450,7 +438,7 @@ TEST_P(du_aperiodic_srs_res_mng_param_tester, when_ue_is_added_srs_resources_par
 
     // Verify that C_SRS corresponds to the maximum allowed BW.
     const std::optional<unsigned> c_srs =
-        du_srs_mng_details::compute_c_srs(cell_cfg_list[0].ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
+        srs_res_mng_details::compute_c_srs(cell_cfg_list[0].ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
     ASSERT_TRUE(c_srs.has_value());
     ASSERT_EQ(srs_res.freq_hop.c_srs, c_srs.value());
     ASSERT_EQ(srs_res.freq_domain_shift, compute_freq_shift());
@@ -460,9 +448,8 @@ TEST_P(du_aperiodic_srs_res_mng_param_tester, when_ue_is_added_srs_resources_par
 
     // Verify the symbols, depending on whether it's FDD, or TDD.
     ASSERT_EQ(srs_res.res_mapping.nof_symb, srs_params.nof_symbols);
-    if (cell_cfg_list[0].ran.tdd_cfg.has_value() and
-        cell_cfg_list[0].ran.tdd_cfg.value().pattern1.nof_ul_symbols != 0) {
-      ASSERT_LT(srs_res.res_mapping.start_pos, cell_cfg_list[0].ran.tdd_cfg.value().pattern1.nof_ul_symbols);
+    if (cell_cfg_list[0].tdd_cfg.has_value() and cell_cfg_list[0].tdd_cfg.value().pattern1.nof_ul_symbols != 0) {
+      ASSERT_LT(srs_res.res_mapping.start_pos, cell_cfg_list[0].tdd_cfg.value().pattern1.nof_ul_symbols);
     } else {
       ASSERT_LT(srs_res.res_mapping.start_pos, srs_params.max_nof_symbols.value());
     }
@@ -470,8 +457,8 @@ TEST_P(du_aperiodic_srs_res_mng_param_tester, when_ue_is_added_srs_resources_par
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    test_du_srs_res_mng_for_different_ul_symbols,
-    du_aperiodic_srs_res_mng_param_tester,
+    test_srs_res_mng_for_different_ul_symbols,
+    srs_resource_manager_aperiodic_param_tester,
     ::testing::Values(
         // clang-format off
     // FDD

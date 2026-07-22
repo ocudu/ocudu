@@ -4,23 +4,22 @@
 
 #pragma once
 
-#include "du_srs_resource_manager.h"
-#include "srs_resource_generator.h"
-#include "ocudu/du/du_cell_config.h"
+#include "ocudu/adt/slotted_array.h"
+#include "ocudu/scheduler/config/ran_cell_config.h"
+#include "ocudu/scheduler/config/serving_cell_config.h"
+#include "ocudu/scheduler/rrm/du_srs_resource.h"
+#include "ocudu/scheduler/rrm/srs_resource_manager.h"
 
 namespace ocudu {
-namespace odu {
-
-struct cell_group_config;
 
 /// This class implements the MAX UL throughput policy for the SRS allocation. The SRS resources are allocated with the
 /// objective to minimize the number of slots and symbols that contain the SRS resources, to reduce as much as possible
 /// the slots and symbols resources taken from the PUSCH. The drawback of this policy is that it can increase the
 /// inter-slot SRS interference among different UEs.
-class du_srs_policy_max_ul_rate : public du_srs_resource_manager
+class srs_resource_manager_periodic : public srs_resource_manager
 {
 public:
-  explicit du_srs_policy_max_ul_rate(span<const du_cell_config> cell_cfg_list_);
+  void add_cell(du_cell_index_t cell_idx, const ran_cell_config& cell_cfg) override;
 
   /// The SRS resources are allocate according to the following policy:
   /// - Give priority to resources that are placed on partially-UL slots, first.
@@ -28,9 +27,9 @@ public:
   /// SRS resource) closest to the end of the slot.
   /// - If a symbol interval on a particular slot is already used and not completely full, then give priority to this
   /// symbol interval over any other symbol intervals on the same or on different slots.
-  bool alloc_resources(cell_group_config& cell_grp_cfg) override;
+  bool alloc_resources(ue_cell_config& ue_cell_cfg) override;
 
-  void dealloc_resources(cell_group_config& cell_grp_cfg) override;
+  void dealloc_resources(ue_cell_config& ue_cell_cfg) override;
 
   unsigned get_nof_srs_free_res_offsets(du_cell_index_t cell_idx) const override
   {
@@ -39,17 +38,10 @@ public:
 
 private:
   struct cell_context {
-    cell_context(const du_cell_config& cfg);
+    cell_context(const ran_cell_config& cfg);
 
     // Returns the DU SRS resource with the given cell resource ID from the cell list of resources.
-    std::vector<du_srs_resource>::const_iterator get_du_srs_res_cfg(unsigned cell_res_id)
-    {
-      if (cell_res_id >= cell_srs_res_list.size() or cell_srs_res_list[cell_res_id].cell_res_id != cell_res_id) {
-        ocudu_assertion_failure("Cell resource ID out of range or invalid");
-        return cell_srs_res_list.end();
-      }
-      return cell_srs_res_list.cbegin() + cell_res_id;
-    }
+    std::vector<du_srs_resource>::const_iterator get_du_srs_res_cfg(unsigned cell_res_id);
 
     using pair_res_id_offset = std::pair<unsigned, unsigned>;
 
@@ -76,7 +68,7 @@ private:
       int      p0;
     };
 
-    const du_cell_config&                        cell_cfg;
+    const ran_cell_config                        cell_cfg;
     const std::optional<tdd_ul_dl_config_common> tdd_ul_dl_cfg_common;
     // Default SRS configuration for the cell.
     const srs_config default_srs_cfg;
@@ -92,8 +84,7 @@ private:
   };
 
   // Contains the resources for the different cells of the DU.
-  static_vector<cell_context, MAX_NOF_DU_CELLS> cells;
+  slotted_id_table<du_cell_index_t, cell_context, MAX_NOF_DU_CELLS> cells;
 };
 
-} // namespace odu
 } // namespace ocudu

@@ -2,13 +2,12 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
-#include "lib/du/du_high/du_manager/ran_resource_management/srs_resource_generator.h"
+#include "lib/scheduler/rrm/srs_resource_generator.h"
 #include "ocudu/du/du_cell_config_helpers.h"
 #include "ocudu/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
-using namespace odu;
 
 namespace {
 struct srs_cfg_builder_params {
@@ -39,17 +38,17 @@ protected:
                  "entire SRS area");
 
     // Default PCI.
-    du_cell_cfg.ran.pci = 1U;
+    cell_cfg.pci = 1U;
 
     // In the TDD configuration, the only parameter that matters is the number of UL symbols.
     if (GetParam().nof_ul_symbols.has_value()) {
       tdd_ul_dl_config_common tdd_cfg = {.ref_scs  = ocudu::subcarrier_spacing::kHz30,
                                          .pattern1 = tdd_ul_dl_pattern{10U, 6, 0, 3, GetParam().nof_ul_symbols.value()},
                                          .pattern2 = std::nullopt};
-      du_cell_cfg.ran.tdd_cfg.emplace(tdd_cfg);
+      cell_cfg.tdd_cfg.emplace(tdd_cfg);
     }
 
-    auto& srs_cfg                     = du_cell_cfg.ran.init_bwp.srs_cfg;
+    auto& srs_cfg                     = cell_cfg.init_bwp.srs_cfg;
     srs_cfg.srs_period_prohib_time    = srs_periodicity::sl20;
     srs_cfg.tx_comb                   = GetParam().tx_comb;
     srs_cfg.nof_symbols               = GetParam().nof_symbols;
@@ -57,9 +56,9 @@ protected:
     srs_cfg.sequence_id_reuse_factor  = GetParam().sequence_id_reuse_factor;
     srs_cfg.max_nof_symbols           = GetParam().max_nof_symbols;
 
-    nof_symbols_srs_area = du_cell_cfg.ran.init_bwp.srs_cfg.max_nof_symbols.value();
-    if (du_cell_cfg.ran.tdd_cfg.has_value()) {
-      const auto& tdd_cfg  = du_cell_cfg.ran.tdd_cfg.value();
+    nof_symbols_srs_area = cell_cfg.init_bwp.srs_cfg.max_nof_symbols.value();
+    if (cell_cfg.tdd_cfg.has_value()) {
+      const auto& tdd_cfg  = cell_cfg.tdd_cfg.value();
       nof_symbols_srs_area = std::max(nof_symbols_srs_area, tdd_cfg.pattern1.nof_ul_symbols);
       if (tdd_cfg.pattern2.has_value()) {
         nof_symbols_srs_area = std::max(nof_symbols_srs_area, tdd_cfg.pattern2.value().nof_ul_symbols);
@@ -67,21 +66,21 @@ protected:
       // The number of SRS symbols cannot be larger than 6.
       nof_symbols_srs_area = std::min(nof_symbols_srs_area, 6U);
     }
-    nof_symbol_intervals = nof_symbols_srs_area / static_cast<unsigned>(du_cell_cfg.ran.init_bwp.srs_cfg.nof_symbols);
+    nof_symbol_intervals = nof_symbols_srs_area / static_cast<unsigned>(cell_cfg.init_bwp.srs_cfg.nof_symbols);
   }
 
   unsigned compute_expected_srs_list_size() const
   {
-    return nof_symbol_intervals * static_cast<unsigned>(du_cell_cfg.ran.init_bwp.srs_cfg.tx_comb) *
-           static_cast<unsigned>(du_cell_cfg.ran.init_bwp.srs_cfg.cyclic_shift_reuse_factor) *
-           static_cast<unsigned>(du_cell_cfg.ran.init_bwp.srs_cfg.sequence_id_reuse_factor);
+    return nof_symbol_intervals * static_cast<unsigned>(cell_cfg.init_bwp.srs_cfg.tx_comb) *
+           static_cast<unsigned>(cell_cfg.init_bwp.srs_cfg.cyclic_shift_reuse_factor) *
+           static_cast<unsigned>(cell_cfg.init_bwp.srs_cfg.sequence_id_reuse_factor);
   }
 
   bool check_res_list_elements(span<const du_srs_resource> srs_res_list) const
   {
-    const unsigned max_cs = du_cell_cfg.ran.init_bwp.srs_cfg.tx_comb == ocudu::tx_comb_size::n2 ? 8U : 12U;
+    const unsigned max_cs = cell_cfg.init_bwp.srs_cfg.tx_comb == ocudu::tx_comb_size::n2 ? 8U : 12U;
     for (const auto& srs_res : srs_res_list) {
-      if (srs_res.tx_comb_offset >= static_cast<unsigned>(du_cell_cfg.ran.init_bwp.srs_cfg.tx_comb)) {
+      if (srs_res.tx_comb_offset >= static_cast<unsigned>(cell_cfg.init_bwp.srs_cfg.tx_comb)) {
         return false;
       }
       if (srs_res.cs >= max_cs) {
@@ -90,7 +89,7 @@ protected:
     }
 
     // Count the number of SRS resources for each TX comb offset.
-    const std::vector<unsigned> tx_comb_offsets = du_cell_cfg.ran.init_bwp.srs_cfg.tx_comb == ocudu::tx_comb_size::n2
+    const std::vector<unsigned> tx_comb_offsets = cell_cfg.init_bwp.srs_cfg.tx_comb == ocudu::tx_comb_size::n2
                                                       ? std::vector<unsigned>{0U, 1U}
                                                       : std::vector<unsigned>{0U, 1U, 2U, 3U};
     for (const auto& comb_offset : tx_comb_offsets) {
@@ -105,7 +104,7 @@ protected:
     }
 
     // Count the number of SRS resources for each cyclic shift value.
-    const unsigned cs_step = max_cs / static_cast<unsigned>(du_cell_cfg.ran.init_bwp.srs_cfg.cyclic_shift_reuse_factor);
+    const unsigned cs_step = max_cs / static_cast<unsigned>(cell_cfg.init_bwp.srs_cfg.cyclic_shift_reuse_factor);
     std::vector<unsigned> cs_values;
     for (unsigned cs = 0; cs < max_cs; cs += cs_step) {
       cs_values.push_back(cs);
@@ -121,10 +120,10 @@ protected:
     // Count the number of SRS resources for each Sequence Index.
     constexpr unsigned max_seq_id_values = 30U;
     const unsigned     seq_id_step =
-        max_seq_id_values / static_cast<unsigned>(du_cell_cfg.ran.init_bwp.srs_cfg.sequence_id_reuse_factor);
+        max_seq_id_values / static_cast<unsigned>(cell_cfg.init_bwp.srs_cfg.sequence_id_reuse_factor);
     std::vector<unsigned> seq_id_values;
     for (unsigned seq_id = 0; seq_id < max_seq_id_values; seq_id += seq_id_step) {
-      seq_id_values.push_back(static_cast<unsigned>(du_cell_cfg.ran.pci) + seq_id);
+      seq_id_values.push_back(static_cast<unsigned>(cell_cfg.pci) + seq_id);
     }
     for (auto seq_id : seq_id_values) {
       const auto nof_elements = static_cast<unsigned>(
@@ -137,14 +136,13 @@ protected:
     }
 
     // Count the number of SRS resources for each symbol interval.
-    for (unsigned sym_start =
-             NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - static_cast<unsigned>(du_cell_cfg.ran.init_bwp.srs_cfg.nof_symbols);
+    for (unsigned sym_start = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - static_cast<unsigned>(cell_cfg.init_bwp.srs_cfg.nof_symbols);
          sym_start >= NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - nof_symbols_srs_area;
-         sym_start -= static_cast<unsigned>(du_cell_cfg.ran.init_bwp.srs_cfg.nof_symbols)) {
+         sym_start -= static_cast<unsigned>(cell_cfg.init_bwp.srs_cfg.nof_symbols)) {
       const auto nof_elements = static_cast<unsigned>(std::count_if(
           srs_res_list.begin(),
           srs_res_list.end(),
-          [sym_start, srs_sym_length = du_cell_cfg.ran.init_bwp.srs_cfg.nof_symbols](const du_srs_resource& res) {
+          [sym_start, srs_sym_length = cell_cfg.init_bwp.srs_cfg.nof_symbols](const du_srs_resource& res) {
             return res.symbols == ofdm_symbol_range{sym_start, sym_start + static_cast<unsigned>(srs_sym_length)};
           }));
       if (nof_elements != compute_expected_srs_list_size() / nof_symbol_intervals) {
@@ -155,7 +153,7 @@ protected:
     return true;
   }
 
-  du_cell_config du_cell_cfg;
+  ran_cell_config cell_cfg;
   // Values that are used to check the SRS list.
   // Number of symbols that are reserved for SRS.
   unsigned nof_symbols_srs_area = 0;
@@ -164,7 +162,7 @@ protected:
 
 TEST_P(test_srs_res_list_builder, test_whether_list_is_generated_and_has_correct_size)
 {
-  auto srs_res_list = generate_cell_srs_list(du_cell_cfg);
+  auto srs_res_list = generate_cell_srs_list(cell_cfg);
   ASSERT_FALSE(srs_res_list.empty());
   ASSERT_EQ(compute_expected_srs_list_size(), srs_res_list.size());
   ASSERT_TRUE(check_res_list_elements(srs_res_list));

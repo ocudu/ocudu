@@ -7,8 +7,7 @@
 #include <optional>
 
 namespace ocudu {
-namespace odu {
-namespace du_srs_mng_details {
+namespace srs_res_mng_details {
 
 /// \brief Helper that computes the SRS bandwidth parameter \f$C_{SRS}\f$ that maximizes the SRS bandwidth
 /// \f$m_{SRS,0}\f$ subject to it fitting within \c nof_avail_rbs.
@@ -24,6 +23,5 @@ std::optional<unsigned> compute_c_srs(unsigned nof_avail_rbs);
 ///         value is computed in such a way that the SRS resources are placed at the center of that RB interval.
 unsigned compute_srs_rb_start(unsigned c_srs, unsigned nof_avail_rbs);
 
-} // namespace du_srs_mng_details
-} // namespace odu
+} // namespace srs_res_mng_details
 } // namespace ocudu
