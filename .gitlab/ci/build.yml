@@ -366,18 +366,32 @@ intermediate commits cached:
   script:
     - *script_functions
     - &fetch_branches |
+      cd $CI_PROJECT_DIR
       git config advice.detachedHead false
-      UNSHALLOW=$([ "$(git rev-parse --is-shallow-repository)" = "true" ] && echo --unshallow || true)
-      if [ "$CI_MERGE_REQUEST_SOURCE_PROJECT_PATH" != "$CI_PROJECT_PATH" ]; then
-        git fetch $UNSHALLOW origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME "refs/merge-requests/$CI_MERGE_REQUEST_IID/head:$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME"
-        git branch -f $CI_MERGE_REQUEST_TARGET_BRANCH_NAME origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+      unshallow_flag() {
+        if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
+          echo --unshallow
+        fi
+      }
+      if [ "$CI_PROJECT_PATH" = "$CI_MERGE_REQUEST_PROJECT_PATH" ]; then
+        # job on target
+        git fetch $(unshallow_flag) origin \
+          "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" \
+          "$CI_MERGE_REQUEST_REF_PATH:refs/mr-source-head"
+        git branch -f "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+        git branch -f "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" refs/mr-source-head
       else
-        git fetch $UNSHALLOW origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
-        git branch -f $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME origin/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
-        git branch -f $CI_MERGE_REQUEST_TARGET_BRANCH_NAME origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+        # job on the fork
+        git fetch $(unshallow_flag) origin "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME"
+        git branch -f "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" "origin/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME"
+        git remote get-url upstream >/dev/null 2>&1 || \
+          git remote add upstream "$CI_MERGE_REQUEST_PROJECT_URL"
+        git fetch $(unshallow_flag) upstream "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+        git branch -f "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" "upstream/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
       fi
-      FORK_POINT=$(git merge-base $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME $CI_MERGE_REQUEST_TARGET_BRANCH_NAME)
-      SOURCE_SHA=${CI_MERGE_REQUEST_SOURCE_BRANCH_SHA:-$CI_COMMIT_SHA}
+
+      SOURCE_SHA=$(git rev-parse "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME")
+      FORK_POINT=$(git merge-base "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME")
     - |
       for rev in $(git rev-list --reverse $FORK_POINT..$SOURCE_SHA)
       do
