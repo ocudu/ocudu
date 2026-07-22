@@ -1,6 +1,10 @@
 # Fuzz Test Harnesses
 
-Coverage-guided fuzz testing, targeting [AFL++](https://github.com/AFLplusplus/AFLplusplus). The harnesses use the `LLVMFuzzerTestOneInput` interface so they also run unmodified under [libFuzzer](https://llvm.org/docs/LibFuzzer.html).
+Coverage-guided fuzz testing for the OFH packet-parsing stack and the NGAP/CU-CP
+receive path, targeting [AFL++](https://github.com/AFLplusplus/AFLplusplus). The
+harnesses use the `LLVMFuzzerTestOneInput` interface so they also run unmodified
+under [libFuzzer](https://llvm.org/docs/LibFuzzer.html) and are compatible with
+[OSS-Fuzz](https://github.com/google/oss-fuzz).
 
 ---
 
@@ -79,8 +83,7 @@ safety bugs.
 ### libFuzzer (alternative, no AFL++ required)
 
 The same source files compile directly with libFuzzer if you do not have
-AFL++ installed.  Replace the compiler wrappers with plain `clang++` and add
-`-fsanitize=fuzzer` manually:
+AFL++ installed.  Replace the compiler wrappers with plain `clang++`:
 
 ```bash
 mkdir build_libfuzz && cd build_libfuzz
@@ -100,13 +103,11 @@ cd ..   # return to the repository root
 
 ---
 
-## Generating the seed corpus
+## Seed corpus
 
 > All commands from this point on are run from the **repository root**.
 
-The seed corpus is committed to the repository under
-`tests/fuzz/<layer>/corpus/` and is derived directly from the unit-test
-vectors.  If you need to regenerate it (e.g. after adding new unit tests):
+The seed corpus can be generated using:
 
 ```bash
 python3 tests/fuzz/ofh/gen_corpus.py
@@ -115,6 +116,22 @@ python3 tests/fuzz/ngap/gen_corpus.py
 
 Each script writes binary seed files into the corpus sub-directories of its
 own layer.
+
+### OSS-Fuzz zip format
+
+Both scripts accept an optional flag to write seeds as a zip file suitable
+for the `$OUT/<target>_seed_corpus.zip` convention expected by OSS-Fuzz:
+
+```bash
+# NGAP: one zip covers both NGAP targets
+python3 tests/fuzz/ngap/gen_corpus.py \
+    --zip $OUT/ngap_pdu_decoder_fuzzer_seed_corpus.zip
+cp $OUT/ngap_pdu_decoder_fuzzer_seed_corpus.zip \
+   $OUT/ngap_cu_cp_fuzzer_seed_corpus.zip
+
+# OFH: one zip per target
+python3 tests/fuzz/ofh/gen_corpus.py --zip-dir $OUT/
+```
 
 ---
 
@@ -165,8 +182,6 @@ afl-fuzz \
 ### NGAP PDU decoder fuzzer (ASN.1 only)
 
 ```bash
-python3 tests/fuzz/ngap/gen_corpus.py   # generate seeds (only needed once)
-mkdir -p findings/ngap
 afl-fuzz \
     -i tests/fuzz/ngap/corpus/ngap \
     -o findings/ngap \
@@ -176,8 +191,7 @@ afl-fuzz \
 ### NGAP full-stack CU-CP fuzzer
 
 ```bash
-mkdir -p findings/ngap_cu_cp
-# Recommended: persistent mode for higher throughput (CU-CP stays alive across iterations)
+# Recommended: AFL_FAST_CAL for higher throughput (CU-CP stays alive across iterations)
 AFL_FAST_CAL=1 afl-fuzz \
     -i tests/fuzz/ngap/corpus/ngap \
     -o findings/ngap_cu_cp \
@@ -203,18 +217,21 @@ AFL++ scales linearly with additional CPU cores.  Use one main instance
 directory:
 
 ```bash
-# Terminal 1 – main instance
+# Terminal 1 - main instance
 afl-fuzz -M main \
     -i tests/fuzz/ofh/corpus/uplane \
     -o findings/uplane \
     -- ./build_fuzz/tests/fuzz/ofh/ofh_uplane_decoder_fuzzer @@
 
-# Terminal 2 – secondary instance
+# Terminal 2 - secondary instance
 afl-fuzz -S worker1 \
     -i tests/fuzz/ofh/corpus/uplane \
     -o findings/uplane \
     -- ./build_fuzz/tests/fuzz/ofh/ofh_uplane_decoder_fuzzer @@
 ```
+
+In parallel mode, AFL++ writes each instance's findings to a named
+subdirectory: `findings/uplane/main/`, `findings/uplane/worker1/`, etc.
 
 ### Monitoring progress
 
@@ -230,48 +247,76 @@ afl-plot findings/uplane/main plot_dir && open plot_dir/index.html
 
 ## Triaging crashes
 
-Crashes are written to `findings/<target>/main/crashes/`.  To reproduce a
-crash outside of AFL++:
+### Locating crash files
+
+Crash inputs are written to `findings/<target>/crashes/` for single-instance
+runs and to `findings/<target>/<instance>/crashes/` for parallel runs (e.g.
+`findings/uplane/main/crashes/`).  To reproduce a crash:
 
 ```bash
 ./build_fuzz/tests/fuzz/ofh/ofh_uplane_decoder_fuzzer \
-    findings/uplane/main/crashes/id:000000,*
+    findings/uplane/crashes/id:000000,*
 ```
 
-To minimise a crashing input to its smallest reproducing form:
+### Minimising a crash
+
+Reduce a crashing input to its smallest reproducing form before filing a bug:
 
 ```bash
 afl-tmin \
-    -i findings/uplane/main/crashes/id:000000,* \
+    -i findings/uplane/crashes/id:000000,* \
     -o minimised_crash \
     -- ./build_fuzz/tests/fuzz/ofh/ofh_uplane_decoder_fuzzer @@
 ```
 
-ASAN will print a full stack trace and memory error report when the crash is
-reproduced.  Pipe through `llvm-symbolizer` if symbol names are missing:
+### Symbolising ASAN output
+
+ASAN prints a full stack trace when the crash is reproduced.  Pipe through
+`llvm-symbolizer` if symbol names are missing:
 
 ```bash
 ASAN_SYMBOLIZER_PATH=$(which llvm-symbolizer) \
     ./build_fuzz/tests/fuzz/ofh/ofh_uplane_decoder_fuzzer \
-    findings/uplane/main/crashes/id:000000,*
+    findings/uplane/crashes/id:000000,*
 ```
+
+### Converting a crash to a unit-test literal
+
+`crash_to_hex.py` converts AFL++ crash/hang input files into formats that can
+be pasted directly into a C++ unit test:
+
+```bash
+# Print a C array literal for a single crash file
+python3 tests/fuzz/crash_to_hex.py --format c \
+    findings/uplane/crashes/id:000000,*
+
+# Convert all crashes in a directory at once
+python3 tests/fuzz/crash_to_hex.py --format c \
+    findings/uplane/crashes/
+```
+
+Available formats: `hex` (default), `xxd` (annotated hex dump), `c` (C/C++
+`uint8_t` array literal).  Add the resulting literal to the appropriate unit
+test under `tests/unittests/` to prevent regressions.
 
 ---
 
 ## Updating the corpus
 
-After a fuzzing run, merge the newly discovered inputs back into the seed
+After a long local run, merge the newly discovered inputs back into the seed
 corpus so future runs start with a richer base:
 
 ```bash
-# Merge all queue entries into the seed corpus (deduplicates automatically)
+# Merge and deduplicate queue entries into the seed corpus
 afl-cmin \
-    -i findings/uplane/main/queue \
+    -i findings/uplane/queue \
     -o tests/fuzz/ofh/corpus/uplane \
     -- ./build_fuzz/tests/fuzz/ofh/ofh_uplane_decoder_fuzzer @@
 ```
 
-Commit the updated corpus alongside code changes.
+Commit the updated corpus alongside code changes.  In CI the corpus
+accumulates automatically across weekly runs via AFL++ resume mode — see
+[CI integration](#ci-integration) below.
 
 ---
 
@@ -292,12 +337,12 @@ docker build -f tests/fuzz/Dockerfile -t ocudu-fuzz .
 
 What the build does:
 
-1. Installs all system dependencies (AFL++, Clang, LLVM, cmake, the three
+1. Installs all system dependencies (AFL++, Clang, LLVM, cmake, and the
    mandatory project libraries).
 2. Configures a minimal CMake build with `afl-clang-fast++` and ASAN, with
    all optional subsystems disabled.
-3. Compiles only the three OFH fuzz binaries.
-4. Generates the seed corpus via `gen_corpus.py`.
+3. Compiles all five fuzz binaries.
+4. Generates the seed corpus via both `gen_corpus.py` scripts.
 5. Sets `run_fuzzers.sh` as the container entrypoint.
 
 ### Running the container
@@ -312,7 +357,7 @@ docker run --rm \
     ocudu-fuzz
 ```
 
-By default all three fuzzers run for **2 hours each**.  Override with
+By default all five fuzzers run for **2 hours each**.  Override with
 environment variables:
 
 | Variable | Default | Description |
@@ -320,7 +365,7 @@ environment variables:
 | `FUZZ_TIMEOUT_EACH` | `7200` | Seconds to run each fuzzer |
 | `FUZZ_OUTPUT_DIR` | `/findings` | AFL++ output root inside the container |
 | `FUZZ_CORPUS_DIR` | `/corpus` | Seed corpus root inside the container |
-| `FUZZ_TARGETS` | _(all three)_ | Space-separated list of targets to run |
+| `FUZZ_TARGETS` | _(all five)_ | Space-separated list of targets to run |
 
 ```bash
 # Run only the U-Plane fuzzer for 30 minutes
@@ -349,89 +394,90 @@ findings/
 ├── ofh_uplane_decoder_fuzzer.log   afl-fuzz stdout for this target
 ├── ofh_ecpri_decoder_fuzzer.log
 ├── ofh_vlan_frame_decoder_fuzzer.log
+├── ngap_pdu_decoder_fuzzer.log
+├── ngap_cu_cp_fuzzer.log
 ├── uplane/                         AFL++ output directory
 │   ├── crashes/                    inputs that caused a crash
 │   ├── hangs/                      inputs that caused a hang
 │   ├── queue/                      all corpus entries found
 │   └── fuzzer_stats                run statistics
 ├── ecpri/
-└── vlan/
+├── vlan/
+├── ngap/
+└── ngap_cu_cp/
 ```
 
 ---
 
 ## CI integration
 
-### Using the Docker image in GitLab CI
+Two jobs are defined in `.gitlab-ci.yml` and run on a weekly scheduled
+pipeline with the description **"Weekly fuzz"**:
 
-The recommended approach for CI is to build the Docker image once (e.g. in a
-scheduled pipeline or when the fuzz sources change) and then reference it in
-a dedicated weekly fuzz job.
+- **`build-fuzz-image`** — builds the fuzz Docker image and pushes it to the
+  project registry.
+- **`fuzz`** — pulls the image and runs all targets.  The `findings/`
+  directory is cached between pipeline runs so `run_fuzzers.sh` resumes from
+  the accumulated AFL++ queue rather than restarting from the seed corpus each
+  week.
+
+To activate: create a [GitLab scheduled pipeline](https://docs.gitlab.com/ee/ci/pipelines/schedules.html)
+on the default branch with the description `Weekly fuzz`.
+
+### Relevant `.gitlab-ci.yml` excerpt
 
 ```yaml
-# .gitlab-ci.yml excerpt
-
-variables:
-  FUZZ_IMAGE: $CI_REGISTRY_IMAGE/ocudu-fuzz:latest
-
-# Build and push the fuzz image when the fuzz sources change.
 build-fuzz-image:
-  stage: build
+  stage: .post
   image: docker:latest
   services:
     - docker:dind
   rules:
-    - changes:
-        - tests/fuzz/**/*
-        - lib/ofh/**/*
-        - lib/asn1/ngap/**/*
-        - lib/ngap/**/*
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Weekly fuzz/'
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -f tests/fuzz/Dockerfile -t $FUZZ_IMAGE .
-    - docker push $FUZZ_IMAGE
+    - docker build -f tests/fuzz/Dockerfile -t $CI_REGISTRY_IMAGE/fuzz:latest .
+    - docker push $CI_REGISTRY_IMAGE/fuzz:latest
+  dependencies: []
 
-# Weekly scheduled fuzz run – ~6 h total (2 h per target).
-fuzz-ofh:
-  stage: test
-  image: $FUZZ_IMAGE
+fuzz:
+  stage: .post
+  image: $CI_REGISTRY_IMAGE/fuzz:latest
+  needs: [build-fuzz-image]
   rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Weekly fuzz/'
   variables:
+    FUZZ_OUTPUT_DIR: $CI_PROJECT_DIR/findings
     FUZZ_TIMEOUT_EACH: "7200"
-    FUZZ_OUTPUT_DIR: "$CI_PROJECT_DIR/findings"
+  cache:
+    key: fuzz-corpus-$CI_DEFAULT_BRANCH
+    paths:
+      - findings/
   script:
     - /usr/local/bin/run_fuzzers.sh
   artifacts:
-    when: always          # collect findings even when the job fails (crash found)
+    when: always
     paths:
       - findings/
     expire_in: 4 weeks
+  dependencies: []
 ```
 
-> **Tip:** Create a [GitLab scheduled pipeline](https://docs.gitlab.com/ee/ci/pipelines/schedules.html)
-> to trigger `fuzz-ofh` once a week automatically.
+### Corpus accumulation
 
-### Running `run_fuzzers.sh` directly on the host
+`run_fuzzers.sh` detects a prior queue automatically: if
+`findings/<target>/queue/` exists when a run starts, AFL++ resumes from it
+(`-i -`); otherwise it starts from the seed corpus (`-i <corpus>`).  The
+GitLab CI cache restores `findings/` at the start of each weekly job, so
+coverage accumulates across runs without any manual intervention.
 
-If AFL++ is already installed, `run_fuzzers.sh` can be used without Docker.
-Set `FUZZ_CORPUS_DIR` to point at the in-tree corpus and build the targets
-first:
+---
 
-```bash
-# Build
-cmake -B build_fuzz -DENABLE_FUZZTESTS=ON -DENABLE_ASAN=ON \
-    -DCMAKE_CXX_COMPILER=afl-clang-fast++ -DCMAKE_BUILD_TYPE=Debug .
-cmake --build build_fuzz --target \
-    ofh_uplane_decoder_fuzzer ofh_ecpri_decoder_fuzzer ofh_vlan_frame_decoder_fuzzer \
-    ngap_pdu_decoder_fuzzer ngap_cu_cp_fuzzer
+## OSS-Fuzz
 
-# Copy binaries to PATH
-sudo cp build_fuzz/tests/fuzz/ofh/ofh_*_fuzzer /usr/local/bin/
-
-# Run
-FUZZ_CORPUS_DIR=tests/fuzz/ofh/corpus \
-FUZZ_OUTPUT_DIR=findings \
-FUZZ_TIMEOUT_EACH=7200 \
-    tests/fuzz/run_fuzzers.sh
-```
+The build is compatible with [OSS-Fuzz](https://github.com/google/oss-fuzz).
+When `$LIB_FUZZING_ENGINE` is set, `tests/fuzz/CMakeLists.txt` uses it as the
+link target instead of `-fsanitize=fuzzer`, and leaves compile flags empty so
+OSS-Fuzz's own instrumentation (injected via `$CXXFLAGS`) takes precedence.
+Seed corpus zips can be generated with the `--zip` / `--zip-dir` flags
+described in [Seed corpus](#seed-corpus).
