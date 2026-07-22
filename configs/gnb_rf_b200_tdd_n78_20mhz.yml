@@ -36,6 +36,12 @@ cell_cfg:
   tac: 7
   pci: 1
 
+# The USRP clock may introduce some CFO: configure the channel estimator to compensate for it.
+# With good clocks (e.g., external ones), the default setup may provide better performance.
+expert_phy:
+  pusch_channel_estimator_td_strategy: average
+  pusch_channel_estimator_cfo_compensation: true
+
 log:
   filename: /tmp/gnb.log
   all_level: warning
