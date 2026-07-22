@@ -4,17 +4,24 @@
 # ---------------------------------------------------------------------------
 # Fuzzer sanitizer flags
 #
-# Each fuzzer binary is compiled with -fsanitize=fuzzer which:
-#  - Embeds the AFL++ / libFuzzer driver (provides main() and the mutation
-#    engine when using libFuzzer, or integrates with AFL++ LLVM mode when
-#    compiling with afl-clang-fast++).
-#  - Enables coverage-guided instrumentation for the fuzzer engine.
+# When $LIB_FUZZING_ENGINE is set (OSS-Fuzz build environment), coverage
+# instrumentation is already injected via $CXXFLAGS and the engine library
+# is provided externally.  Use the env var for linking and leave the compile
+# flag empty to avoid conflicting with OSS-Fuzz's own instrumentation.
 #
-# ASAN is added when the project-level ENABLE_ASAN is ON so that memory
-# safety bugs are caught during fuzzing runs.
+# For local / CI builds (AFL++ via afl-clang-fast++ or plain libFuzzer),
+# -fsanitize=fuzzer embeds the driver and enables coverage instrumentation.
+#
+# ASAN / UBSan are appended when the project-level ENABLE_ASAN / ENABLE_UBSAN
+# options are ON so that memory safety bugs are caught during fuzzing runs.
 # ---------------------------------------------------------------------------
-set(FUZZ_SANITIZER_FLAGS_COMPILE "-fsanitize=fuzzer")
-set(FUZZ_SANITIZER_FLAGS_LINK    "-fsanitize=fuzzer")
+if(DEFINED ENV{LIB_FUZZING_ENGINE})
+    set(FUZZ_SANITIZER_FLAGS_COMPILE "")
+    set(FUZZ_SANITIZER_FLAGS_LINK    $ENV{LIB_FUZZING_ENGINE})
+else()
+    set(FUZZ_SANITIZER_FLAGS_COMPILE "-fsanitize=fuzzer")
+    set(FUZZ_SANITIZER_FLAGS_LINK    "-fsanitize=fuzzer")
+endif()
 
 if (ENABLE_ASAN)
     string(APPEND FUZZ_SANITIZER_FLAGS_COMPILE ",address")
