@@ -15,7 +15,9 @@ Seeds are written to:
     tests/fuzz/ngap/corpus/ngap/
 """
 
+import argparse
 import pathlib
+import zipfile
 
 SCRIPT_DIR = pathlib.Path(__file__).parent
 
@@ -64,9 +66,24 @@ def write_seeds(seeds: dict, subdir: str) -> None:
         print(f"  wrote {path} ({len(data)} bytes)")
 
 
+def write_zip(seeds: dict, zip_path: pathlib.Path) -> None:
+    zip_path.parent.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+        for name, data in seeds.items():
+            zf.writestr(name, data)
+    print(f"  wrote zip {zip_path} ({zip_path.stat().st_size} bytes)")
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--zip", metavar="PATH", type=pathlib.Path,
+                        help="also write seeds to a zip file (for OSS-Fuzz)")
+    args = parser.parse_args()
+
     print("Generating NGAP fuzz corpus seeds...")
     write_seeds(NGAP_SEEDS, "ngap")
+    if args.zip:
+        write_zip(NGAP_SEEDS, args.zip)
     print("Done.")
 
 

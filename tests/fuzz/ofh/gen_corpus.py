@@ -16,8 +16,9 @@ Seeds are written to the corpus sub-directories alongside this script:
     corpus/vlan/     - VLAN Ethernet frame decoder seeds
 """
 
-import os
+import argparse
 import pathlib
+import zipfile
 
 SCRIPT_DIR = pathlib.Path(__file__).parent
 
@@ -85,11 +86,28 @@ def write_seeds(seeds: dict, subdir: str) -> None:
         print(f"  wrote {path} ({len(data)} bytes)")
 
 
+def write_zip(seeds: dict, zip_path: pathlib.Path) -> None:
+    zip_path.parent.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+        for name, data in seeds.items():
+            zf.writestr(name, data)
+    print(f"  wrote zip {zip_path} ({zip_path.stat().st_size} bytes)")
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--zip-dir", metavar="DIR", type=pathlib.Path,
+                        help="directory to write per-target zips (for OSS-Fuzz)")
+    args = parser.parse_args()
+
     print("Generating OFH fuzz corpus seeds...")
     write_seeds(UPLANE_SEEDS, "uplane")
     write_seeds(ECPRI_SEEDS,  "ecpri")
     write_seeds(VLAN_SEEDS,   "vlan")
+    if args.zip_dir:
+        write_zip(UPLANE_SEEDS, args.zip_dir / "ofh_uplane_decoder_fuzzer_seed_corpus.zip")
+        write_zip(ECPRI_SEEDS,  args.zip_dir / "ofh_ecpri_decoder_fuzzer_seed_corpus.zip")
+        write_zip(VLAN_SEEDS,   args.zip_dir / "ofh_vlan_frame_decoder_fuzzer_seed_corpus.zip")
     print("Done.")
 
 
