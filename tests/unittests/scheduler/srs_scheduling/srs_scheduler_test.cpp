@@ -9,6 +9,7 @@
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "ocudu/ran/srs/srs_bandwidth_configuration.h"
 #include "ocudu/scheduler/config/scheduler_expert_config_factory.h"
+#include "ocudu/scheduler/sched_consts.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -284,13 +285,17 @@ TEST_P(srs_scheduler_tester, test_different_periods)
     }
 
     srs_sched.run_slot(res_grid);
-    // Only check the results once the UE has been added.
-    if (not ues.empty() and (current_sl_tx - get_offset()).to_uint() % srs_period_uint == 0) {
-      ASSERT_EQ(1, res_grid[0].result.ul.srss.size());
-      expected<bool, std::string> pdu_test = test_srs_pdu(res_grid[0].result.ul.srss.front());
-      ASSERT_TRUE(pdu_test.has_value()) << pdu_test.error();
-    } else {
-      ASSERT_TRUE(res_grid[0].result.ul.srss.empty());
+    // Only check the results once the UE has been added, and after SCHEDULER_MAX_K2 slots have elapsed since then.
+    // Slots closer than that to UE creation are deliberately skipped by the SRS scheduler, as UL grants for them may
+    // already have been scheduled before the UE (and its SRS resource) existed.
+    if (sl_cnt >= add_ue_slot + SCHEDULER_MAX_K2) {
+      if (not ues.empty() and (current_sl_tx - get_offset()).to_uint() % srs_period_uint == 0) {
+        ASSERT_EQ(1, res_grid[0].result.ul.srss.size());
+        expected<bool, std::string> pdu_test = test_srs_pdu(res_grid[0].result.ul.srss.front());
+        ASSERT_TRUE(pdu_test.has_value()) << pdu_test.error();
+      } else {
+        ASSERT_TRUE(res_grid[0].result.ul.srss.empty());
+      }
     }
 
     // Update the slot indicator.

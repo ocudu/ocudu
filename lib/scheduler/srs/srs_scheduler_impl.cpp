@@ -322,7 +322,7 @@ void srs_scheduler_impl::schedule_updated_ues_srs(cell_resource_allocator& cell_
     // Schedule SRS up to the farthest slot.
     for (unsigned n = 0; n != cell_alloc.max_ul_slot_alloc_delay; ++n) {
       cell_slot_resource_allocator& slot_alloc = cell_alloc[n];
-      auto& slot_srss = periodic_srs_slot_wheel[(cell_alloc.slot_tx() + n).to_uint() % periodic_srs_slot_wheel.size()];
+      auto& slot_srss = periodic_srs_slot_wheel[(cell_alloc.slot_tx() + n).count() % periodic_srs_slot_wheel.size()];
 
       // Positioning was requested/stopped. Set positioning flag for already allocated PDUs in the grid.
       for (const ue_update& ue_upd : updated_ues) {
@@ -334,24 +334,27 @@ void srs_scheduler_impl::schedule_updated_ues_srs(cell_resource_allocator& cell_
         }
       }
 
+      // Note: Allocations in slots closer than SCHEDULER_MAX_K2 are skipped, as UL grants for them may already have
+      // been scheduled in a previous slot_indication call (PUSCH k2 can be as large as SCHEDULER_MAX_K2), before this
+      // SRS resource existed. Allocating into them now would risk a resource collision with those already-committed
+      // grants.
+      if (n < SCHEDULER_MAX_K2) {
+        continue;
+      }
+
       // For all the periodic SRS info element at this slot, allocate only those that belong to the UE updated_ues.
-      // Note: Slots closer than SCHEDULER_MAX_K2 are skipped, as UL grants for them may already have been scheduled
-      // in a previous slot_indication call (PUSCH k2 can be as large as SCHEDULER_MAX_K2), before this SRS resource
-      // existed. Allocating into them now would risk a resource collision with those already-committed grants.
-      if (n >= SCHEDULER_MAX_K2) {
-        for (const periodic_srs_info& srs : slot_srss) {
-          auto ue_it = std::find_if(
-              updated_ues.begin(), updated_ues.end(), [&srs](const auto& u) { return u.rnti == srs.rnti; });
-          if (ue_it == updated_ues.end()) {
-            continue;
-          }
-          if (ue_it->type == ue_update::type_t::new_ue) {
-            // New UE was created. Add SRS PDUs to the grid.
-            allocate_srs_opportunity(slot_alloc, srs);
-          } else if (ue_it->type == ue_update::type_t::positioning_request and not is_crnti(ue_it->rnti)) {
-            // It is an SRS positioning request for a neighbor cell. Allocate SRS opportunities in the grid.
-            allocate_srs_opportunity(slot_alloc, srs);
-          }
+      for (const periodic_srs_info& srs : slot_srss) {
+        auto ue_it =
+            std::find_if(updated_ues.begin(), updated_ues.end(), [&srs](const auto& u) { return u.rnti == srs.rnti; });
+        if (ue_it == updated_ues.end()) {
+          continue;
+        }
+        if (ue_it->type == ue_update::type_t::new_ue) {
+          // New UE was created. Add SRS PDUs to the grid.
+          allocate_srs_opportunity(slot_alloc, srs);
+        } else if (ue_it->type == ue_update::type_t::positioning_request and not is_crnti(ue_it->rnti)) {
+          // It is an SRS positioning request for a neighbor cell. Allocate SRS opportunities in the grid.
+          allocate_srs_opportunity(slot_alloc, srs);
         }
       }
     }
@@ -439,10 +442,20 @@ bool srs_scheduler_impl::allocate_srs_opportunity(cell_slot_resource_allocator& 
       srs_configuration_get(srs_res->freq_hop.c_srs, srs_res->freq_hop.b_srs);
   ocudu_assert(srs_bw_cfg.has_value(), "Invalid SRS bandwidth configuration");
   const crb_interval srs_crbs{srs_res->freq_domain_shift, srs_res->freq_domain_shift + srs_bw_cfg.value().m_srs};
-  slot_alloc.ul_res_grid.fill(
-      grant_info(ul_bwp_cfg.scs,
-                 ofdm_symbol_range{starting_symb, starting_symb + static_cast<unsigned>(srs_res->res_mapping.nof_symb)},
-                 srs_crbs));
+  const grant_info   srs_grant{
+      ul_bwp_cfg.scs,
+      ofdm_symbol_range{starting_symb, starting_symb + static_cast<unsigned>(srs_res->res_mapping.nof_symb)},
+      srs_crbs};
+  if (slot_alloc.ul_res_grid.collides(srs_grant)) {
+    logger.warning("cell={} c-rnti={}: SRS resource id={} could not be allocated for slot={}. Cause: Resource grid "
+                   "collision",
+                   cell_cfg.cell_index,
+                   srs_opportunity.rnti,
+                   fmt::underlying(srs_opportunity.srs_res_id),
+                   sl_srs);
+    return false;
+  }
+  slot_alloc.ul_res_grid.fill(srs_grant);
 
   // Add SRS PDU into results.
   slot_alloc.result.ul.srss.emplace_back(
