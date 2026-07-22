@@ -6,6 +6,7 @@
 #include "../cell/resource_grid.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/srs/srs_bandwidth_configuration.h"
+#include "ocudu/scheduler/sched_consts.h"
 
 using namespace ocudu;
 
@@ -334,18 +335,23 @@ void srs_scheduler_impl::schedule_updated_ues_srs(cell_resource_allocator& cell_
       }
 
       // For all the periodic SRS info element at this slot, allocate only those that belong to the UE updated_ues.
-      for (const periodic_srs_info& srs : slot_srss) {
-        auto ue_it =
-            std::find_if(updated_ues.begin(), updated_ues.end(), [&srs](const auto& u) { return u.rnti == srs.rnti; });
-        if (ue_it == updated_ues.end()) {
-          continue;
-        }
-        if (ue_it->type == ue_update::type_t::new_ue) {
-          // New UE was created. Add SRS PDUs to the grid.
-          allocate_srs_opportunity(slot_alloc, srs);
-        } else if (ue_it->type == ue_update::type_t::positioning_request and not is_crnti(ue_it->rnti)) {
-          // It is an SRS positioning request for a neighbor cell. Allocate SRS opportunities in the grid.
-          allocate_srs_opportunity(slot_alloc, srs);
+      // Note: Slots closer than SCHEDULER_MAX_K2 are skipped, as UL grants for them may already have been scheduled
+      // in a previous slot_indication call (PUSCH k2 can be as large as SCHEDULER_MAX_K2), before this SRS resource
+      // existed. Allocating into them now would risk a resource collision with those already-committed grants.
+      if (n >= SCHEDULER_MAX_K2) {
+        for (const periodic_srs_info& srs : slot_srss) {
+          auto ue_it = std::find_if(
+              updated_ues.begin(), updated_ues.end(), [&srs](const auto& u) { return u.rnti == srs.rnti; });
+          if (ue_it == updated_ues.end()) {
+            continue;
+          }
+          if (ue_it->type == ue_update::type_t::new_ue) {
+            // New UE was created. Add SRS PDUs to the grid.
+            allocate_srs_opportunity(slot_alloc, srs);
+          } else if (ue_it->type == ue_update::type_t::positioning_request and not is_crnti(ue_it->rnti)) {
+            // It is an SRS positioning request for a neighbor cell. Allocate SRS opportunities in the grid.
+            allocate_srs_opportunity(slot_alloc, srs);
+          }
         }
       }
     }

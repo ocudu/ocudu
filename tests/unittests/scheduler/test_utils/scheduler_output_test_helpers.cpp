@@ -218,6 +218,7 @@ std::vector<test_grant_info> ocudu::get_ul_grants(const cell_configuration& cell
   for (const srs_info& srs : ul_res.srss) {
     grants.emplace_back();
     grants.back().type                                = test_grant_info::SRS;
+    grants.back().rnti                                = srs.crnti;
     const std::optional<srs_configuration> srs_bw_cfg = srs_configuration_get(srs.config_index, srs.bw_index);
     ocudu_assert(srs_bw_cfg.has_value(), "Invalid SRS c_srs={}/b_srs={} configuration", srs.config_index, srs.bw_index);
     const crb_interval srs_crbs{srs.bwp_cfg->crbs.start() + srs.freq_shift,
