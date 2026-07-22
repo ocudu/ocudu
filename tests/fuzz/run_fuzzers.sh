@@ -107,15 +107,27 @@ for binary in "${!TARGETS[@]}"; do
 
     mkdir -p "${outdir}"
 
+    # Use resume mode if a prior queue exists so accumulated corpus carries
+    # over between CI runs.  On first run (no prior output) start from the
+    # seed corpus instead.
+    if [[ -d "${outdir}/queue" ]]; then
+        afl_input="-i -"
+        mode="resume"
+    else
+        afl_input="-i ${corpus}"
+        mode="fresh start"
+    fi
+
     echo ""
     echo "--- [$(date -u '+%H:%M:%S')] Starting ${binary} ---"
     echo "    corpus : ${corpus}"
     echo "    output : ${outdir}"
     echo "    log    : ${logfile}"
+    echo "    mode   : ${mode}"
 
     timeout "${TIMEOUT_EACH}" \
         afl-fuzz \
-            -i "${corpus}" \
+            ${afl_input} \
             -o "${outdir}" \
             -- "${binary}" @@ \
         2>&1 | tee "${logfile}" || true

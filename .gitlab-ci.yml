@@ -609,3 +609,47 @@ promotion:
     - git rebase ${CI_COMMIT_SHA}
     - git push
   dependencies: []
+
+################################################################################
+# fuzz
+################################################################################
+
+# Build and push the fuzz Docker image on every weekly fuzz pipeline.
+# The image contains AFL++, all build dependencies, and the fuzz binaries.
+build-fuzz-image:
+  stage: .post
+  image: docker:latest
+  services:
+    - docker:dind
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Weekly fuzz/'
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -f tests/fuzz/Dockerfile -t $CI_REGISTRY_IMAGE/fuzz:latest .
+    - docker push $CI_REGISTRY_IMAGE/fuzz:latest
+  dependencies: []
+
+# Run all fuzz targets for FUZZ_TIMEOUT_EACH seconds each.
+# The findings/ directory is cached between runs so AFL++ resumes from its
+# accumulated queue rather than restarting from the seed corpus each week.
+fuzz:
+  stage: .post
+  image: $CI_REGISTRY_IMAGE/fuzz:latest
+  needs: [build-fuzz-image]
+  rules:
+    - if: '$CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Weekly fuzz/'
+  variables:
+    FUZZ_OUTPUT_DIR: $CI_PROJECT_DIR/findings
+    FUZZ_TIMEOUT_EACH: "7200"
+  cache:
+    key: fuzz-corpus-$CI_DEFAULT_BRANCH
+    paths:
+      - findings/
+  script:
+    - /usr/local/bin/run_fuzzers.sh
+  artifacts:
+    when: always
+    paths:
+      - findings/
+    expire_in: 4 weeks
+  dependencies: []
