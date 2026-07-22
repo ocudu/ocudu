@@ -81,7 +81,7 @@ public:
   async_task<bool> launch_run_until(unique_function<bool()> condition, unsigned max_slot_count = 1000);
 
   /// Launch a task that adds a UE and completes once the scheduler confirms its creation.
-  async_task<void> launch_add_ue_task(sched_ue_creation_request_message ue_request);
+  async_task<void> launch_add_ue_task(const sched_ue_creation_request_message& ue_request);
 
   /// Launch a task that removes a UE and completes only once the scheduler confirms the removal.
   async_task<void> launch_rem_ue_task(du_ue_index_t ue_index);

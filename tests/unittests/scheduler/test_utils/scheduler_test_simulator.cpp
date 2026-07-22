@@ -198,14 +198,14 @@ async_task<bool> scheduler_test_simulator::launch_run_until(unique_function<bool
   });
 }
 
-async_task<void> scheduler_test_simulator::launch_add_ue_task(sched_ue_creation_request_message ue_request)
+async_task<void> scheduler_test_simulator::launch_add_ue_task(const sched_ue_creation_request_message& ue_request)
 {
   const du_ue_index_t ue_index = ue_request.ue_index;
   // Note: the completion condition is built here (evaluated context) and moved into the coroutine frame, as the CORO_*
   // macros cannot take an expression containing a lambda literal.
-  return launch_async([this, ue_request = std::move(ue_request), cond = unique_function<bool()>([this, ue_index]() {
-                                                                   return notif.ue_creation_completed(ue_index);
-                                                                 })](coro_context<async_task<void>>& ctx) mutable {
+  return launch_async([this, ue_request, cond = unique_function<bool()>([this, ue_index]() {
+                                           return notif.ue_creation_completed(ue_index);
+                                         })](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
     add_ue(ue_request, false);
     CORO_AWAIT(launch_run_until(std::move(cond)));

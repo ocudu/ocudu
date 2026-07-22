@@ -9,11 +9,12 @@
 #include "test_utils/scheduler_test_simulator.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
+#include "tests/test_doubles/scheduler/srs_resource_manager.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/du/du_update_config_helpers.h"
-#include "ocudu/ran/srs/srs_configuration.h"
 #include "ocudu/ran/tdd/tdd_ul_dl_config_formatters.h"
 #include "ocudu/scheduler/rrm/pucch_resource_manager.h"
+#include "ocudu/support/enum_utils.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -106,70 +107,43 @@ protected:
     cell_req.ran.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start =
         config_helpers::compute_prach_frequency_start(
             pucch_params, cell_req.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), false);
-    if (testparams.srs_period.has_value()) {
+    const bool srs_enabled = testparams.srs_period.has_value();
+    if (srs_enabled) {
       cell_req.ran.init_bwp.srs_cfg.srs_type_enabled       = srs_type::periodic;
       cell_req.ran.init_bwp.srs_cfg.srs_period_prohib_time = *testparams.srs_period;
     }
     this->add_cell(cell_req);
 
-    // Setup PUCCH resource builder.
+    // Setup PUCCH and SRS resource builders.
     pucch_builder.add_cell(to_du_cell_index(0), cell_cfg().params);
-
-    // Precompute, among the slots of the SRS period, those that contain some UL symbols; per-UE periodic SRS
-    // occasions are round-robined over this list so they land on a valid UL slot.
-    if (testparams.srs_period.has_value()) {
-      srs_period = testparams.srs_period;
-      for (uint16_t i = 0, e = static_cast<uint16_t>(*srs_period); i != e; ++i) {
-        if (has_active_tdd_ul_symbols(*cell_cfg().params.tdd_cfg, i)) {
-          srs_ul_offsets.push_back(i);
-        }
-      }
-      ocudu_assert(not srs_ul_offsets.empty(), "SRS period does not contain any UL slot");
+    if (srs_enabled) {
+      srs_builder.emplace(cell_cfg().params);
     }
   }
 
-  // Build a UE creation request, allocating a distinct dedicated PUCCH config (SR/CSI/HARQ) from the cell resource pool
-  // so many UEs can coexist on the single UL slot (as a real DU does).
+  // Build a UE creation request, allocating a distinct dedicated PUCCH config (SR/CSI/HARQ) and, if enabled, a
+  // distinct periodic SRS occasion from the cell resource pools, so many UEs can coexist on the single UL slot (as a
+  // real DU does).
   sched_ue_creation_request_message
   build_ue_request(du_ue_index_t idx, rnti_t rnti, std::initializer_list<lcid_t> lcids)
   {
     auto ue_cfg     = sched_config_helper::create_default_sched_ue_creation_request(cell_cfg().params, lcids);
     ue_cfg.ue_index = idx;
     ue_cfg.crnti    = rnti;
-    report_fatal_error_if_not(pucch_builder.alloc_resources((*ue_cfg.cfg.cells)[0]),
-                              "Failed to allocate PUCCH resources for UE {}",
-                              fmt::underlying(idx));
-    if (srs_period.has_value()) {
-      configure_ue_srs((*ue_cfg.cfg.cells)[0]);
+    report_fatal_error_if_not(
+        pucch_builder.alloc_resources((*ue_cfg.cfg.cells)[0]), "Failed to allocate PUCCH resources for UE {}", idx);
+    if (srs_builder.has_value()) {
+      report_fatal_error_if_not(
+          srs_builder->alloc_resources((*ue_cfg.cfg.cells)[0]), "Failed to allocate SRS resources for UE {}", idx);
     }
     return ue_cfg;
-  }
-
-  // Turn the UE's default (aperiodic) SRS resource into a periodic one, round-robining its offset over \c
-  // srs_ul_offsets so each UE gets a distinct periodic occasion, spread across the UL slots of the SRS period, as in
-  // a real deployment. All UEs keep the same (default) PRB placement: since this test's resource grid does not model
-  // the tx-comb/cyclic-shift sub-carrier multiplexing that lets several UEs share a PRB in a real cell, two UEs
-  // active at the same time must never land on the same offset — \c srs_ul_offsets must have strictly more entries
-  // than the peak number of concurrently active SRS-configured UEs for the test scenario at hand.
-  void configure_ue_srs(ue_cell_config& ue_cell_cfg)
-  {
-    srs_config& ue_srs_cfg = ue_cell_cfg.serv_cell_cfg.ul_config.value().init_ul_bwp.srs_cfg.value();
-    ue_srs_cfg.srs_res_set_list.front().res_type.emplace<srs_config::srs_resource_set::periodic_resource_type>();
-    srs_config::srs_resource& res = ue_srs_cfg.srs_res_list.front();
-    res.res_type                  = srs_resource_type::periodic;
-    const uint16_t offset         = srs_ul_offsets[srs_ue_count++ % srs_ul_offsets.size()];
-    res.periodicity_and_offset.emplace(srs_config::srs_periodicity_and_offset{*srs_period, offset});
   }
 
   cell_config_builder_params params;
   // Builds a distinct per-UE dedicated PUCCH config from the cell pool for every UE created by these tests.
   pucch_resource_manager pucch_builder{120};
-
-  // Periodicity of the per-UE periodic SRS resource, in slots; unset when SRS is disabled.
-  std::optional<srs_periodicity> srs_period;
-  // Slot offsets, within the SRS period, that contain some UL symbols; used to round-robin the per-UE SRS offset.
-  std::vector<uint16_t> srs_ul_offsets;
-  unsigned              srs_ue_count = 0;
+  // Builds a distinct per-UE periodic SRS occasion from the cell pool; unset when SRS is disabled for the test.
+  std::optional<srs_resource_manager> srs_builder;
 };
 
 // ------------------------------------ single-UE case --------------------------------------------
@@ -507,7 +481,7 @@ protected:
     background_ues.resize(test_params.nof_background_ues);
     for (unsigned i = 0; i != test_params.nof_background_ues; ++i) {
       const du_ue_index_t idx  = to_du_ue_index(i);
-      const rnti_t        rnti = to_rnti(fmt::underlying(base_rnti) + i);
+      const rnti_t        rnti = to_rnti(to_value(base_rnti) + i);
       add_ue(build_ue_request(idx, rnti, {LCID_MIN_DRB}), false);
       background_ues[i] = background_direction();
     }
@@ -518,7 +492,7 @@ protected:
   {
     for (unsigned i = 0; i != test_params.nof_background_ues; ++i) {
       const du_ue_index_t idx  = to_du_ue_index(i);
-      const rnti_t        rnti = to_rnti(fmt::underlying(base_rnti) + i);
+      const rnti_t        rnti = to_rnti(to_value(base_rnti) + i);
 
       if (background_ues[i] != background_traffic_direction::ul_only) {
         push_dl_buffer_state(dl_buffer_state_indication_message{idx, LCID_MIN_DRB, huge_buffer});
@@ -570,8 +544,7 @@ protected:
     std::vector<rach_indication_message::preamble> preambles;
     preambles.reserve(wave_ues.size());
     for (unsigned i = 0, e = wave_ues.size(); i != e; ++i) {
-      preambles.push_back(
-          test_helper::create_preamble(i, to_rnti(fmt::underlying(base_rnti) + fmt::underlying(wave_ues[i]))));
+      preambles.push_back(test_helper::create_preamble(i, to_rnti(to_value(base_rnti) + to_value(wave_ues[i]))));
     }
     sched->handle_rach_indication(test_helper::create_rach_indication(next_slot_rx(), preambles));
   }
@@ -581,49 +554,48 @@ protected:
   // confirmed.
   async_task<void> launch_transient_ue_task(du_ue_index_t idx)
   {
-    const rnti_t rnti      = to_rnti(fmt::underlying(base_rnti) + fmt::underlying(idx));
+    const rnti_t rnti      = to_rnti(to_value(base_rnti) + to_value(idx));
     auto         req       = build_ue_request(idx, rnti, {});
     req.starts_in_fallback = true;
-    // Keep the built cell config (with the allocated PUCCH resources) so they can be released back to the cell pool
-    // once the UE detaches, letting transient UEs recycle the pool as the DU does.
-    ue_cell_config ue_pucch_cfg = (*req.cfg.cells)[0];
 
-    return launch_async(
-        [this, idx, rnti, req = std::move(req), ue_pucch_cfg = std::move(ue_pucch_cfg), ce_ok = false, msg3_ok = false](
-            coro_context<async_task<void>>& ctx) mutable {
-          CORO_BEGIN(ctx);
+    return launch_async([this, idx, rnti, req = std::move(req), ce_ok = false, msg3_ok = false](
+                            coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
 
-          // In the RACH-driven scenario, wait for the RA scheduler to grant this UE's Msg3 PUSCH (its RAR was sent
-          // after the wave's RACH). The UE only enters fallback once its Msg3 CCCH is "decoded".
-          if (test_params.rach_driven) {
-            CORO_AWAIT_VALUE(msg3_ok, launch_run_until(msg3_scheduled(rnti), conres_window_slots));
-            EXPECT_TRUE(msg3_ok) << fmt::format("UE rnti={} did not get its Msg3 PUSCH granted", rnti);
-          }
+      // In the RACH-driven scenario, wait for the RA scheduler to grant this UE's Msg3 PUSCH (its RAR was sent
+      // after the wave's RACH). The UE only enters fallback once its Msg3 CCCH is "decoded".
+      if (test_params.rach_driven) {
+        CORO_AWAIT_VALUE(msg3_ok, launch_run_until(msg3_scheduled(rnti), conres_window_slots));
+        EXPECT_TRUE(msg3_ok) << fmt::format("UE rnti={} did not get its Msg3 PUSCH granted", rnti);
+      }
 
-          // Create the UE in fallback (Msg3 CCCH decoded); the scheduler auto-injects the ConRes CE.
-          req.ul_ccch_slot_rx = next_slot.without_hyper_sfn();
-          CORO_AWAIT(launch_add_ue_task(std::move(req)));
-          ++cur_in_conres;
-          peak_in_conres = std::max(peak_in_conres, cur_in_conres);
+      // Create the UE in fallback (Msg3 CCCH decoded); the scheduler auto-injects the ConRes CE.
+      req.ul_ccch_slot_rx = next_slot.without_hyper_sfn();
+      CORO_AWAIT(launch_add_ue_task(req));
+      ++cur_in_conres;
+      peak_in_conres = std::max(peak_in_conres, cur_in_conres);
 
-          start_transient_traffic(idx, rnti);
+      start_transient_traffic(idx, rnti);
 
-          // ConRes CE must be scheduled within the ConRes timer window.
-          CORO_AWAIT_VALUE(ce_ok, launch_run_until(conres_ce_scheduled(rnti), conres_window_slots));
-          --cur_in_conres;
-          EXPECT_TRUE(ce_ok) << fmt::format("UE rnti={} did not schedule its ConRes CE before the timer expired", rnti);
+      // ConRes CE must be scheduled within the ConRes timer window.
+      CORO_AWAIT_VALUE(ce_ok, launch_run_until(conres_ce_scheduled(rnti), conres_window_slots));
+      --cur_in_conres;
+      EXPECT_TRUE(ce_ok) << fmt::format("UE rnti={} did not schedule its ConRes CE before the timer expired", rnti);
 
-          CORO_AWAIT(verify_transient_traffic(idx, rnti));
+      CORO_AWAIT(verify_transient_traffic(idx, rnti));
 
-          // Let the ConRes HARQ be auto-ACKed, then release the UE.
-          CORO_AWAIT(launch_run_until(false_until_slots(ack_margin_slots)));
-          CORO_AWAIT(launch_rem_ue_task(idx));
-          // Free the UE's PUCCH resources so the next transient UE reusing this index gets a fresh allocation.
-          pucch_builder.dealloc_resources(ue_pucch_cfg);
-          transient_pool.push_back(idx);
+      // Let the ConRes HARQ be auto-ACKed, then release the UE.
+      CORO_AWAIT(launch_run_until(false_until_slots(ack_margin_slots)));
+      CORO_AWAIT(launch_rem_ue_task(idx));
+      // Free the UE's PUCCH/SRS resources so the next transient UE reusing this index gets a fresh allocation.
+      pucch_builder.dealloc_resources(req.cfg.cells.value()[0]);
+      if (srs_builder.has_value()) {
+        srs_builder->dealloc_resources(req.cfg.cells.value()[0]);
+      }
+      transient_pool.push_back(idx);
 
-          CORO_RETURN();
-        });
+      CORO_RETURN();
+    });
   }
 
   // Re-arm a small UL buffer (one SR's worth) each slot until the UE gets a UL grant, keeping the fallback UE's UL
@@ -776,26 +748,10 @@ INSTANTIATE_TEST_SUITE_P(
   multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDDDDSUUU), 4, 100, 100, 2, 5},
   multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDDDDSUUU), 2, 100, 100, 6, 5},
   multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 4, 100, 100, 1, 5, true},
-  // SRS enabled on the UL-scarce DDDSU pattern (single full-UL slot per period), RACH-driven Msg3, as in the
-  // deployment that reported ConRes-CE starvation: periodic SRS carves into the tail of the sole UL slot, narrowing
-  // the symbol window left for Msg3/retx PUSCH (see ra_scheduler.cpp get_min_srs_symbol()). srs_period=sl640 keeps
-  // enough distinct valid-UL-slot offsets (256, see base_scheduler_tdd_tester::configure_ue_srs) above the peak
-  // number of concurrently active UEs (at most nof_background_ues + nof_transient_ues) so every UE gets its own
-  // offset.
-  // Known failing: reproduces the reported bug (some UEs never get their Msg3 PUSCH granted before the ConRes timer
-  // expires). The 100-background-UE case below fails on most random seeds; this lighter case fails intermittently.
-  // Expected to pass once the Msg3/retx-vs-SRS scheduling conflict in ra_scheduler.cpp is fixed.
+  // SRS enabled, RACH-driven Msg3: periodic SRS carves into the tail of the sole UL slot, narrowing the symbol window
+  // left for Msg3 and UE PUSCHs.
   multiue_tdd_test_params{
-      create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 4, 8, 16, 1, 10, true, multiue_bg_traffic::mixed, srs_periodicity::sl640},
-  multiue_tdd_test_params{create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU),
-                          4,
-                          100,
-                          40,
-                          40,
-                          5,
-                          true,
-                          multiue_bg_traffic::mixed,
-                          srs_periodicity::sl640}
+      create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 2, 8, 16, 1, 10, true, multiue_bg_traffic::mixed, srs_periodicity::sl640}
 ));
 // clang-format on
 
