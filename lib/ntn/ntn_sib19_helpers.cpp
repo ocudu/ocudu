@@ -14,7 +14,8 @@ using namespace ocudu_ntn;
 static bool ntn_cfg_would_be_identical(const ntn_neighbor_cell_config& a, const ntn_neighbor_cell_config& b)
 {
   if (a.satellite_index != b.satellite_index || a.ntn_ul_sync_validity_dur != b.ntn_ul_sync_validity_dur ||
-      a.cell_specific_koffset != b.cell_specific_koffset || a.k_mac != b.k_mac || a.ta_report != b.ta_report) {
+      a.cell_specific_koffset != b.cell_specific_koffset || a.k_mac != b.k_mac || a.ta_report != b.ta_report ||
+      a.has_feeder_link != b.has_feeder_link) {
     return false;
   }
   if (a.polarization.has_value() != b.polarization.has_value()) {
@@ -151,7 +152,11 @@ sib19_info ocudu_ntn::generate_sib19_info(const ntn_cell_config&        cell_cfg
         ncell.ntn_cfg->ntn_ul_sync_validity_dur = nc_cfg.ntn_ul_sync_validity_dur;
       }
       ncell.ntn_cfg->ephemeris_info = ncell_replies[i].ephemeris_info;
-      ncell.ntn_cfg->ta_info        = ncell_replies[i].ta_info;
+      // ta-Info carries the feeder-link common delay, so it is only broadcast for neighbours with a feeder link
+      // (transparent payload). Regenerative neighbours have no feeder-link delay to signal.
+      if (nc_cfg.has_feeder_link) {
+        ncell.ntn_cfg->ta_info = ncell_replies[i].ta_info;
+      }
     }
     sib19.ncells.push_back(ncell);
     included_idx.push_back(i);

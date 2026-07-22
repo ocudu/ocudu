@@ -75,6 +75,11 @@ struct ntn_neighbor_cell_config {
   std::optional<ntn_polarization_t>        polarization;
   std::optional<bool>                      ta_report;
   std::optional<bool>                      use_state_vector;
+  /// Whether this neighbour has a feeder link (transparent payload). When true, its computed ta-Info (the feeder-link
+  /// common delay) is broadcast in SIB19 (ntn-NeighCellConfig); when false (regenerative payload, gNB on-board the
+  /// satellite) there is no feeder-link delay to signal and ta-Info is omitted. Mirrors the serving cell's
+  /// feeder_link_info gate. Defaults to false.
+  bool has_feeder_link = false;
 };
 
 /// Satellite-switch configuration: static (non-satellite-computed) fields only.

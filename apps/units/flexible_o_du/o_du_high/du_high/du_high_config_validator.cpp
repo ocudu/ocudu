@@ -543,11 +543,25 @@ static bool validate_ntn_satellite_refs(const std::vector<du_high_unit_cell_conf
     }
     for (unsigned j = 0, e = ntn.ncells.size(); j != e; ++j) {
       const auto& ncell = ntn.ncells[j];
-      if (ncell.sat_ref.satellite_idx and available.count(*ncell.sat_ref.satellite_idx) == 0) {
-        fmt::print("cells[{}].ntn.ncells[{}].satellite_idx={} not found in ntn.satellites.\n",
-                   i,
-                   j,
-                   *ncell.sat_ref.satellite_idx);
+      if (ncell.sat_ref.satellite_idx) {
+        const auto it = available.find(*ncell.sat_ref.satellite_idx);
+        if (it == available.end()) {
+          fmt::print("cells[{}].ntn.ncells[{}].satellite_idx={} not found in ntn.satellites.\n",
+                     i,
+                     j,
+                     *ncell.sat_ref.satellite_idx);
+          valid = false;
+        } else if (ncell.has_feeder_link and not it->second->gateway_location and not it->second->ta_info) {
+          // A neighbour can only broadcast ta-Info (the feeder-link common delay) if its satellite can compute one.
+          fmt::print("cells[{}].ntn.ncells[{}]: has_feeder_link requires the referenced satellite (satellite_idx={}) "
+                     "to have gateway_location or ta_info set.\n",
+                     i,
+                     j,
+                     *ncell.sat_ref.satellite_idx);
+          valid = false;
+        }
+      } else if (ncell.has_feeder_link and not ncell.sat_ref.gateway_location and not ncell.sat_ref.ta_info) {
+        fmt::print("cells[{}].ntn.ncells[{}]: has_feeder_link requires gateway_location or ta_info to be set.\n", i, j);
         valid = false;
       }
     }

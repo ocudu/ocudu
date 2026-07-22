@@ -327,9 +327,11 @@ static sib19_info create_sib19_info(const du_high_unit_cell_ntn_config& config)
     ncell_ntn_cfg.k_mac                    = ncell.k_mac;
     ncell_ntn_cfg.polarization             = ncell.polarization;
     ncell_ntn_cfg.ta_report                = ncell.ta_report;
-    ncell_ntn_cfg.ta_info                  = ncell.sat_ref.ta_info;
-    ncell_ntn_cfg.ephemeris_info           = ncell.sat_ref.ephemeris_info;
-    ntn_ncell.ntn_cfg                      = ncell_ntn_cfg;
+    if (ncell.has_feeder_link) {
+      ncell_ntn_cfg.ta_info = ncell.sat_ref.ta_info;
+    }
+    ncell_ntn_cfg.ephemeris_info = ncell.sat_ref.ephemeris_info;
+    ntn_ncell.ntn_cfg            = ncell_ntn_cfg;
     sib19.ncells.push_back(ntn_ncell);
   }
 

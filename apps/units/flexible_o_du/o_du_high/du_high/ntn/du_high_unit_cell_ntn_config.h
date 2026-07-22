@@ -30,6 +30,9 @@ struct du_high_unit_ntn_neighbor_cell_config {
   std::optional<ntn_polarization_t>        polarization;
   std::optional<bool>                      ta_report;
   std::optional<bool>                      use_state_vector;
+  /// Whether this neighbour has a feeder link (transparent payload). When true, its ta-Info (the feeder-link common
+  /// delay) is broadcast in SIB19; when false (regenerative payload) it is omitted. Defaults to false.
+  bool has_feeder_link = false;
 };
 
 /// Application-level sat_switch_with_resync configuration.

@@ -131,6 +131,7 @@ void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_
       if (ncell.use_state_vector) {
         ncell_node["use_state_vector"] = *ncell.use_state_vector;
       }
+      ncell_node["has_feeder_link"] = ncell.has_feeder_link;
       ncells_node.push_back(ncell_node);
     }
     ntn_node["ncells"] = ncells_node;

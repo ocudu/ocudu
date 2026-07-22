@@ -30,12 +30,20 @@ ntn_orbital_state make_reply(bool success)
   return reply;
 }
 
+ntn_orbital_state make_reply_with_ta_info(bool success)
+{
+  ntn_orbital_state reply = make_reply(success);
+  reply.ta_info           = ta_info_t{/*ta_common=*/1000.0, /*ta_common_drift=*/1.0, /*ta_common_drift_variant=*/0.1};
+  return reply;
+}
+
 /// Builds a neighbor cell config. Two configs built with the same arguments are, by construction, identical in
 /// every field that ntn_cfg_would_be_identical() checks.
 ntn_neighbor_cell_config make_ncell(unsigned                satellite_index,
                                     std::optional<unsigned> ntn_ul_sync_validity_dur = 30U,
                                     unsigned                k_mac                    = 2U,
-                                    bool                    ta_report                = true)
+                                    bool                    ta_report                = true,
+                                    bool                    has_feeder_link          = false)
 {
   ntn_neighbor_cell_config cfg{};
   cfg.satellite_index          = satellite_index;
@@ -43,6 +51,7 @@ ntn_neighbor_cell_config make_ncell(unsigned                satellite_index,
   cfg.cell_specific_koffset    = std::chrono::milliseconds{10};
   cfg.k_mac                    = k_mac;
   cfg.ta_report                = ta_report;
+  cfg.has_feeder_link          = has_feeder_link;
   return cfg;
 }
 
@@ -210,6 +219,67 @@ TEST(sib19_ncells_test, second_entry_explicit_when_any_static_field_differs_even
     other.polarization             = ntn_polarization_t{ntn_polarization_t::polarization_type::rhcp, std::nullopt};
     expect_both_explicit(base, other);
   }
+  {
+    ntn_neighbor_cell_config other = base;
+    other.has_feeder_link          = true;
+    expect_both_explicit(base, other);
+  }
+}
+
+TEST(sib19_ncells_test, ta_info_is_omitted_for_regenerative_neighbour_even_when_computed)
+{
+  ntn_cell_config cell_cfg = make_cell_config(/*serving_is_ntn=*/false);
+  cell_cfg.ncells.push_back(make_ncell(/*satellite_index=*/1));
+
+  std::vector<ntn_orbital_state> replies       = {make_reply_with_ta_info(true)};
+  ntn_orbital_state              serving_reply = make_reply(true);
+
+  sib19_info sib19 = generate_sib19_info(cell_cfg, test_epoch_slot, serving_reply, nullptr, replies);
+
+  ASSERT_EQ(sib19.ncells.size(), 1);
+  ASSERT_TRUE(sib19.ncells[0].ntn_cfg.has_value());
+  EXPECT_FALSE(sib19.ncells[0].ntn_cfg->ta_info.has_value())
+      << "neighbour ta-Info must not be broadcast unless the neighbour has a feeder link";
+}
+
+TEST(sib19_ncells_test, ta_info_is_broadcast_for_neighbour_with_feeder_link)
+{
+  ntn_cell_config cell_cfg = make_cell_config(/*serving_is_ntn=*/false);
+  cell_cfg.ncells.push_back(make_ncell(/*satellite_index=*/1,
+                                       /*ntn_ul_sync_validity_dur=*/30U,
+                                       /*k_mac=*/2U,
+                                       /*ta_report=*/true,
+                                       /*has_feeder_link=*/true));
+
+  std::vector<ntn_orbital_state> replies       = {make_reply_with_ta_info(true)};
+  ntn_orbital_state              serving_reply = make_reply(true);
+
+  sib19_info sib19 = generate_sib19_info(cell_cfg, test_epoch_slot, serving_reply, nullptr, replies);
+
+  ASSERT_EQ(sib19.ncells.size(), 1);
+  ASSERT_TRUE(sib19.ncells[0].ntn_cfg.has_value());
+  ASSERT_TRUE(sib19.ncells[0].ntn_cfg->ta_info.has_value());
+  EXPECT_DOUBLE_EQ(sib19.ncells[0].ntn_cfg->ta_info->ta_common, 1000.0);
+}
+
+TEST(sib19_ncells_test, ta_info_with_feeder_link_but_not_computed_stays_absent)
+{
+  ntn_cell_config cell_cfg = make_cell_config(/*serving_is_ntn=*/false);
+  cell_cfg.ncells.push_back(make_ncell(/*satellite_index=*/1,
+                                       /*ntn_ul_sync_validity_dur=*/30U,
+                                       /*k_mac=*/2U,
+                                       /*ta_report=*/true,
+                                       /*has_feeder_link=*/true));
+
+  // The satellite does not produce ta-info (no gateway/override), so there is nothing to broadcast.
+  std::vector<ntn_orbital_state> replies       = {make_reply(true)};
+  ntn_orbital_state              serving_reply = make_reply(true);
+
+  sib19_info sib19 = generate_sib19_info(cell_cfg, test_epoch_slot, serving_reply, nullptr, replies);
+
+  ASSERT_EQ(sib19.ncells.size(), 1);
+  ASSERT_TRUE(sib19.ncells[0].ntn_cfg.has_value());
+  EXPECT_FALSE(sib19.ncells[0].ntn_cfg->ta_info.has_value());
 }
 
 TEST(sib19_ncells_test, run_of_identical_entries_fully_compresses_not_just_alternate_entries)

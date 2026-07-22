@@ -92,6 +92,11 @@ static void configure_cli11_ntn_neighbor_cell_args(CLI::App& app, du_high_unit_n
 
   app.add_option("--ta_report", ncell.ta_report, "Enable TA reporting");
 
+  app.add_option("--has_feeder_link",
+                 ncell.has_feeder_link,
+                 "Whether this neighbour has a feeder link (transparent payload); if so, its ta-Info is broadcast in "
+                 "SIB19");
+
   app.add_option(
       "--use_state_vector",
       ncell.use_state_vector,

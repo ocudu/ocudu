@@ -276,6 +276,7 @@ generate_ntn_configuration_manager_config(const gnb_id_t&                       
       nc_cfg.k_mac                    = ncell.k_mac;
       nc_cfg.polarization             = ncell.polarization;
       nc_cfg.ta_report                = ncell.ta_report;
+      nc_cfg.has_feeder_link          = ncell.has_feeder_link;
       nc_cfg.use_state_vector         = derive_use_state_vector(
           ncell.use_state_vector, ncell.sat_ref.ephemeris_info, nc_cfg.satellite_index, out_cfg.satellites);
     }
