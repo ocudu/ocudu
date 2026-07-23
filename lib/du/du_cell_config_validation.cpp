@@ -759,9 +759,9 @@ static check_outcome check_srs_config(const du_cell_config& cell_cfg)
     return {};
   }
 
-  const crb_interval srs_avail_crbs =
-      compute_srs_available_crbs(cell_cfg.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs,
-                                 cell_cfg.ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common);
+  const crb_interval srs_avail_crbs = compute_available_crbs_without_common_pucch(
+      cell_cfg.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs,
+      cell_cfg.ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common);
   constexpr uint8_t                      b_srs_0    = 0;
   const std::optional<srs_configuration> srs_bw_cfg = srs_configuration_get(srs_cfg.c_srs.value(), b_srs_0);
   ocudu_assert(srs_bw_cfg.has_value(), "Invalid SRS bandwidth configuration");

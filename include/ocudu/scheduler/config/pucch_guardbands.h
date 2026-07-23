@@ -26,6 +26,6 @@ compute_pucch_crbs(crb_interval ul_bwp_crbs, unsigned pucch_res_common, span<con
 /// \param[in] ul_bwp_crbs CRB interval of the initial UL BWP.
 /// \param[in] pucch_res_common Higher-layer parameter \e pucch-ResourceCommon (index into TS38.213 Table 9.2.1-1).
 /// \return CRB interval, within \c ul_bwp_crbs, that is free of common PUCCH resources.
-crb_interval compute_srs_available_crbs(crb_interval ul_bwp_crbs, unsigned pucch_res_common);
+crb_interval compute_available_crbs_without_common_pucch(crb_interval ul_bwp_crbs, unsigned pucch_res_common);
 
 } // namespace ocudu

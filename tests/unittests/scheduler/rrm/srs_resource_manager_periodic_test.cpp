@@ -274,9 +274,9 @@ protected:
   };
 
   // Helper that computes the CRB interval, within the UL BWP, that is free of common PUCCH resources.
-  crb_interval compute_srs_available_crbs() const
+  crb_interval compute_available_crbs_without_common_pucch() const
   {
-    return ocudu::compute_srs_available_crbs(
+    return ocudu::compute_available_crbs_without_common_pucch(
         cell_cfg_list[0].ul_cfg_common.init_ul_bwp.generic_params.crbs,
         cell_cfg_list[0].ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common);
   }
@@ -286,7 +286,7 @@ protected:
   {
     // The function computes the frequency shift so that the SRS resources are placed in the center of the RB
     // interval available for the SRS (i.e., excluding the common PUCCH resources).
-    const crb_interval            avail_crbs = compute_srs_available_crbs();
+    const crb_interval            avail_crbs = compute_available_crbs_without_common_pucch();
     const std::optional<unsigned> c_srs      = srs_res_mng_details::compute_c_srs(avail_crbs.length());
     ocudu_assert(c_srs.has_value(), "C_SRS is required for this unittest");
     const auto srs_cfg = srs_configuration_get(c_srs.value(), 0U);
@@ -397,14 +397,15 @@ TEST_P(srs_resource_manager_periodic_tester, srs_resources_parameters_are_valid)
     if (GetParam().use_max_bw) {
       // Verify that C_SRS corresponds to the maximum allowed BW within the RB interval available for the SRS (i.e.,
       // excluding the common PUCCH resources).
-      const std::optional<unsigned> c_srs = srs_res_mng_details::compute_c_srs(compute_srs_available_crbs().length());
+      const std::optional<unsigned> c_srs =
+          srs_res_mng_details::compute_c_srs(compute_available_crbs_without_common_pucch().length());
       ASSERT_TRUE(c_srs.has_value());
       ASSERT_EQ(srs_res.freq_hop.c_srs, c_srs);
       ASSERT_EQ(srs_res.freq_domain_shift, compute_freq_shift());
       // Verify that the SRS doesn't overlap with the common PUCCH resources.
       const auto srs_cfg_params = srs_configuration_get(c_srs.value(), 0U);
       ASSERT_TRUE(srs_cfg_params.has_value());
-      const crb_interval avail_crbs = compute_srs_available_crbs();
+      const crb_interval avail_crbs = compute_available_crbs_without_common_pucch();
       ASSERT_GE(srs_res.freq_domain_shift, avail_crbs.start());
       ASSERT_LE(srs_res.freq_domain_shift + srs_cfg_params.value().m_srs, avail_crbs.stop());
     } else {

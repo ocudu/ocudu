@@ -73,9 +73,9 @@ void srs_resource_manager_periodic::add_cell(du_cell_index_t cell_idx, const ran
   } else {
     // Restrict the SRS bandwidth to the RBs in between the 2 common PUCCH resource blocks, so that the SRS
     // doesn't starve the common PUCCH resources of RBs.
-    const crb_interval srs_avail_crbs =
-        compute_srs_available_crbs(cell_ctx.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs,
-                                   cell_ctx.cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common);
+    const crb_interval srs_avail_crbs = compute_available_crbs_without_common_pucch(
+        cell_ctx.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs,
+        cell_ctx.cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common);
     // \c compute_c_srs() picks the C_SRS whose corresponding \f$m_{SRS,0}\f$ (i.e., the SRS bandwidth in RBs) is
     // the largest value that still fits within \c srs_avail_crbs, instead of the whole UL BWP; this is what caps
     // the SRS bandwidth to the gap between the 2 common PUCCH resource blocks.
