@@ -3,12 +3,12 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/scheduler/rrm/srs_resource_generator.h"
+#include "lib/scheduler/rrm/srs_resource_manager_aperiodic.h"
 #include "lib/scheduler/rrm/srs_resource_manager_helpers.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/du/du_cell_config_helpers.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
-#include "lib/scheduler/rrm/srs_resource_manager_aperiodic.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
@@ -233,7 +233,7 @@ protected:
     return (ul_bw_nof_rbs - srs_cfg.value().m_srs) / 2U;
   }
 
-  cell_config_builder_params  params;
+  cell_config_builder_params   params;
   std::vector<ran_cell_config> cell_cfg_list;
   // This is a reference to the first element of cell_cfg_list's SRS config.
   const srs_builder_params&                     srs_params;
@@ -316,7 +316,8 @@ TEST_P(srs_resource_manager_aperiodic_tester, when_all_ues_are_removed_all_srs_r
   ASSERT_TRUE(std::all_of(res_counter.begin(), res_counter.end(), [](const unsigned cnt) { return cnt == 0; }));
 }
 
-TEST_P(srs_resource_manager_aperiodic_tester, when_random_ues_are_removed_and_added_new_ues_are_assign_srs_with_min_counter)
+TEST_P(srs_resource_manager_aperiodic_tester,
+       when_random_ues_are_removed_and_added_new_ues_are_assign_srs_with_min_counter)
 {
   // Lambda that adds a new UE, given that its index.
   // NOTE: This is the lambda that verifies the correct SRS resource is assigned to the UE.
@@ -402,7 +403,8 @@ protected:
   static constexpr unsigned MAX_NOF_DU_UES_TO_TEST = 1024;
 };
 
-TEST_P(srs_resource_manager_aperiodic_param_tester, when_ue_is_added_srs_resources_parameters_and_slot_offsets_are_valid)
+TEST_P(srs_resource_manager_aperiodic_param_tester,
+       when_ue_is_added_srs_resources_parameters_and_slot_offsets_are_valid)
 {
   // > Created UEs.
   for (unsigned i = 0; i != MAX_NOF_DU_UES_TO_TEST; ++i) {

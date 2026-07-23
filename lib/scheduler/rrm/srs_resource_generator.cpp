@@ -6,8 +6,7 @@
 
 using namespace ocudu;
 
-std::vector<du_srs_resource> ocudu::generate_cell_srs_list(const ran_cell_config& cell_cfg,
-                                                            bool                   use_special_slot_only)
+std::vector<du_srs_resource> ocudu::generate_cell_srs_list(const ran_cell_config& cell_cfg, bool use_special_slot_only)
 {
   std::vector<du_srs_resource> srs_res_list;
   // TX comb offsets values, depending on the TX comb value, as per TS 38.331, \c transmissionComb, \c SRS-Resource,
@@ -18,8 +17,8 @@ std::vector<du_srs_resource> ocudu::generate_cell_srs_list(const ran_cell_config
 
   // Cyclic Shifts values, depending on the TX comb value, as per TS 38.331, \c cyclicShift, \c SRS-Resource,
   // \c SRS-Config.
-  const unsigned max_cs  = cell_cfg.init_bwp.srs_cfg.tx_comb == ocudu::tx_comb_size::n2 ? 8U : 12U;
-  const unsigned cs_step = max_cs / static_cast<unsigned>(cell_cfg.init_bwp.srs_cfg.cyclic_shift_reuse_factor);
+  const unsigned        max_cs  = cell_cfg.init_bwp.srs_cfg.tx_comb == ocudu::tx_comb_size::n2 ? 8U : 12U;
+  const unsigned        cs_step = max_cs / static_cast<unsigned>(cell_cfg.init_bwp.srs_cfg.cyclic_shift_reuse_factor);
   std::vector<unsigned> cs_values;
   for (unsigned cs = 0; cs < max_cs; cs += cs_step) {
     cs_values.push_back(cs);
@@ -67,10 +66,12 @@ std::vector<du_srs_resource> ocudu::generate_cell_srs_list(const ran_cell_config
   }
   // Cap the starting symbol to the 6th last symbol of the slot (\c cell_cfg.srs_cfg.max_nof_symbols.max()), as per
   // TS 38.211, Section 6.4.1.4.1.
-  starting_sym = std::max(starting_sym, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg.init_bwp.srs_cfg.max_nof_symbols.max());
+  starting_sym =
+      std::max(starting_sym, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg.init_bwp.srs_cfg.max_nof_symbols.max());
   // We use the counter to define the cell resource ID.
   unsigned srs_res_cnt = 0;
-  for (unsigned sym_start = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - static_cast<unsigned>(cell_cfg.init_bwp.srs_cfg.nof_symbols);
+  for (unsigned sym_start =
+           NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - static_cast<unsigned>(cell_cfg.init_bwp.srs_cfg.nof_symbols);
        sym_start >= starting_sym;
        sym_start -= static_cast<unsigned>(cell_cfg.init_bwp.srs_cfg.nof_symbols)) {
     const ofdm_symbol_range srs_res_symbols{sym_start,

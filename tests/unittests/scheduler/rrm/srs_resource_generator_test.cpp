@@ -104,7 +104,7 @@ protected:
     }
 
     // Count the number of SRS resources for each cyclic shift value.
-    const unsigned cs_step = max_cs / static_cast<unsigned>(cell_cfg.init_bwp.srs_cfg.cyclic_shift_reuse_factor);
+    const unsigned        cs_step = max_cs / static_cast<unsigned>(cell_cfg.init_bwp.srs_cfg.cyclic_shift_reuse_factor);
     std::vector<unsigned> cs_values;
     for (unsigned cs = 0; cs < max_cs; cs += cs_step) {
       cs_values.push_back(cs);
@@ -136,7 +136,8 @@ protected:
     }
 
     // Count the number of SRS resources for each symbol interval.
-    for (unsigned sym_start = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - static_cast<unsigned>(cell_cfg.init_bwp.srs_cfg.nof_symbols);
+    for (unsigned sym_start =
+             NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - static_cast<unsigned>(cell_cfg.init_bwp.srs_cfg.nof_symbols);
          sym_start >= NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - nof_symbols_srs_area;
          sym_start -= static_cast<unsigned>(cell_cfg.init_bwp.srs_cfg.nof_symbols)) {
       const auto nof_elements = static_cast<unsigned>(std::count_if(
