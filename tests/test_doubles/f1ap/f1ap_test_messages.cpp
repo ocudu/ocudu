@@ -960,12 +960,15 @@ generate_srs_configuration(subcarrier_spacing scs = subcarrier_spacing::kHz15, u
       .comb_offset_n4  = 0,
       .cyclic_shift_n4 = 0,
   };
-  srs_res.start_position        = 0;
-  srs_res.nrof_symbols          = asn1::f1ap::srs_res_s::nrof_symbols_opts::options::n1;
-  srs_res.repeat_factor         = asn1::f1ap::srs_res_s::repeat_factor_opts::options::n1;
-  srs_res.freq_domain_position  = 0;
-  srs_res.freq_domain_shift     = 0;
-  srs_res.c_srs                 = 14;
+  srs_res.start_position       = 0;
+  srs_res.nrof_symbols         = asn1::f1ap::srs_res_s::nrof_symbols_opts::options::n1;
+  srs_res.repeat_factor        = asn1::f1ap::srs_res_s::repeat_factor_opts::options::n1;
+  srs_res.freq_domain_position = 0;
+  // Kept clear of the common PUCCH resources at the edges of the 52-CRB BWP configured above (CRBs [0, 4) and
+  // [48, 52)), matching the same (c_srs, freq_domain_shift) the DU's own SRS resource manager would auto-compute for
+  // this cell config; otherwise this (neighbor-cell) SRS-to-measure resource collides with the local common PUCCH.
+  srs_res.freq_domain_shift     = 6;
+  srs_res.c_srs                 = 11;
   srs_res.b_srs                 = 0;
   srs_res.b_hop                 = 0;
   srs_res.group_or_seq_hop      = asn1::f1ap::srs_res_s::group_or_seq_hop_opts::options::neither;

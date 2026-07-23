@@ -3,13 +3,13 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/scheduler/rrm/srs_resource_manager_helpers.h"
+#include "lib/scheduler/rrm/srs_resource_manager_periodic.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/du/du_cell_config_helpers.h"
 #include "ocudu/ran/srs/srs_bandwidth_configuration.h"
 #include "ocudu/scheduler/config/pucch_guardbands.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
-#include "lib/scheduler/rrm/srs_resource_manager_periodic.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
@@ -207,9 +207,11 @@ class srs_resource_manager_periodic_base_tester
 {
 protected:
   explicit srs_resource_manager_periodic_base_tester(const cell_config_builder_params& params_,
-                                                      bool                              test_optimality,
-                                                      bool                              use_max_bw) :
-    params(params_), cell_cfg_list({make_srs_cell_config(params_, test_optimality, use_max_bw)}), srs_params(cell_cfg_list[0].init_bwp.srs_cfg)
+                                                     bool                              test_optimality,
+                                                     bool                              use_max_bw) :
+    params(params_),
+    cell_cfg_list({make_srs_cell_config(params_, test_optimality, use_max_bw)}),
+    srs_params(cell_cfg_list[0].init_bwp.srs_cfg)
   {
     srs_res_mng.add_cell(to_du_cell_index(0), cell_cfg_list[0]);
   }
@@ -274,8 +276,9 @@ protected:
   // Helper that computes the CRB interval, within the UL BWP, that is free of common PUCCH resources.
   crb_interval compute_srs_available_crbs() const
   {
-    return ocudu::compute_srs_available_crbs(cell_cfg_list[0].ul_cfg_common.init_ul_bwp.generic_params.crbs,
-                                             cell_cfg_list[0].ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common);
+    return ocudu::compute_srs_available_crbs(
+        cell_cfg_list[0].ul_cfg_common.init_ul_bwp.generic_params.crbs,
+        cell_cfg_list[0].ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common);
   }
 
   // Helper that computes the Frequency Shift parameter (see Section 6.4.1.4.3, TS 38.211).
@@ -291,7 +294,7 @@ protected:
     return (avail_crbs.length() - srs_cfg.value().m_srs) / 2U + avail_crbs.start();
   }
 
-  cell_config_builder_params  params;
+  cell_config_builder_params   params;
   std::vector<ran_cell_config> cell_cfg_list;
   // This is a reference to the first element of cell_cfg_list's SRS config.
   const srs_builder_params&                     srs_params;
@@ -605,7 +608,7 @@ TEST_P(srs_resource_manager_periodic_tester_optimality, srs_are_assigned_accordi
     // Verify all parameters of the SRS resource are as expected.
     ASSERT_TRUE(ue.value().serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.has_value());
     const auto& ue_srs_config = ue.value().serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.value();
-    const auto& srs_res = ue_srs_config.srs_res_list[0];
+    const auto& srs_res       = ue_srs_config.srs_res_list[0];
 
     // Save the SRS resource allocation in the tracker.
     track_srs_res_alloc(srs_res);
