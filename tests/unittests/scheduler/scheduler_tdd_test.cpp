@@ -112,19 +112,8 @@ protected:
     if (srs_enabled) {
       cell_req.ran.init_bwp.srs_cfg.srs_type_enabled       = srs_type::periodic;
       cell_req.ran.init_bwp.srs_cfg.srs_period_prohib_time = *testparams.srs_period;
-      // Place SRS clear of the PUCCH resource pool, mirroring how PRACH is placed above. Without this, SRS falls
-      // back to CRB 0 (the smallest possible SRS bandwidth), which collides with the low-edge PUCCH resources.
-      // The far end of the PUCCH-free interval is used (rather than its start, like PRACH) to also stay clear of the
-      // PRACH/Msg3 occasion, which is placed at that interval's start.
-      static constexpr unsigned default_srs_bw_prbs = 4;
-      const prb_interval        pucch_free_prbs     = config_helpers::find_largest_prb_interval_without_pucch(
-          pucch_params, cell_req.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
-      cell_req.ran.init_bwp.srs_cfg.c_srs             = 0;
-      cell_req.ran.init_bwp.srs_cfg.freq_domain_shift = pucch_free_prbs.stop() - default_srs_bw_prbs;
       // Regenerate the common PUSCH time-domain-resource table with SRS awareness, adding a shortened candidate per
-      // slot so Msg3/RAR PUSCH can still be scheduled once SRS occupies the tail of the slot. The table built by
-      // make_default_sched_cell_configuration_request() above has no such candidate, since SRS was not yet enabled
-      // on the cell config at that point.
+      // slot so Msg3/RAR PUSCH can still be scheduled once SRS occupies the tail of the slot.
       cell_req.ran.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list =
           time_domain_resource_helper::generate_dedicated_pusch_td_res_list(
               cell_req.ran.tdd_cfg,
