@@ -40,6 +40,7 @@ add_library(ocudu_ran
         precoding/type1_sp/precoding_codebook_helpers.cpp
         precoding/type1_sp/precoding_codebooks.cpp
         precoding/type2/precoding_codebook_helpers.cpp
+        precoding/type2/precoding_codebooks.cpp
         ptrs/ptrs_pattern.cpp
         pucch/pucch_info.cpp
         pusch/pusch_antenna_port_mapping.cpp

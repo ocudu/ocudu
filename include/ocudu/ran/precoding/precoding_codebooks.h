@@ -81,6 +81,8 @@ precoding_weight_matrix make_two_layer_two_ports(unsigned i_codebook);
 /// \return A precoding weight matrix for the given number of layers and the given antenna panel distribution.
 precoding_weight_matrix make_type1_sp_mode1(const precoding_matrix_indicator& pmi, unsigned nof_layers);
 
+precoding_weight_matrix make_type2(const precoding_matrix_indicator& pmi, unsigned nof_layers);
+
 /// \brief Derives the MIMO precoding matrix and its beam list from the specified PMI for the given number of layers.
 ///
 /// Returns a \ref mimo_matrix, i.e., the precoding weight matrix together with the list of distinct beams it maps onto.
