@@ -3,11 +3,9 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 /// \file
-/// \brief Unit tests for du_cg_type1_res_mng. Verifies correct CG resource allocation, PRACH/PUCCH collision
+/// \brief Unit tests for cg_type1_res_mng. Verifies correct CG resource allocation, PRACH/PUCCH collision
 /// avoidance, multi-UE orthogonality, capacity exhaustion and resource reclamation.
 
-#include "lib/du/du_high/du_manager/ran_resource_management/du_cg_res_mng.h"
-#include "lib/du/du_high/du_manager/ran_resource_management/du_ue_resource_config.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/adt/format.h"
@@ -17,6 +15,7 @@
 #include "ocudu/scheduler/config/pucch_guardbands.h"
 #include "ocudu/scheduler/config/pucch_resource_generator.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
+#include "ocudu/scheduler/rrm/cg_res_mng.h"
 #include "ocudu/scheduler/support/rb_helper.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
@@ -85,45 +84,43 @@ struct ue_cg_alloc_params {
   bool operator==(const ue_cg_alloc_params& rhs) const { return offset == rhs.offset and vrbs == rhs.vrbs; }
 };
 
-// Extracts the CG allocation identifier (offset, VRBs) from a UE's cell group config.
-ue_cg_alloc_params get_cg_alloc(const cell_group_config& cell_grp)
+// Extracts the CG allocation identifier (offset, VRBs) from a UE's cell config.
+ue_cg_alloc_params get_cg_alloc(const ue_cell_config& ue_cell_cfg)
 {
-  const auto& ue_cg = cell_grp.cells.at(SERVING_PCELL_IDX).bwps[0].ul.cg;
+  const auto& ue_cg = ue_cell_cfg.bwps[0].ul.cg;
   ocudu_assert(ue_cg.has_value(), "Configured Grant config not set");
   return {ue_cg.value().cg_offset, ue_cg.value().vrbs};
 }
 
 // ---- Test fixture ----
 
-class du_cg_type1_res_mng_test : public ::testing::TestWithParam<cg_test_params>
+class cg_type1_res_mng_test : public ::testing::TestWithParam<cg_test_params>
 {
 protected:
-  explicit du_cg_type1_res_mng_test(const cg_builder_params& cg_params_ = {}) :
+  explicit cg_type1_res_mng_test(const cg_builder_params& cg_params_ = {}) :
     cg_params(cg_params_),
     cell_params(make_cell_cfg_params(GetParam())),
     cell_cfg_list({make_cg_du_cell_config(cell_params, cg_params)}),
     cg_res_mng()
   {
-    cg_res_mng.add_cell(to_du_cell_index(0), cell_cfg_list.front());
+    cg_res_mng.add_cell(to_du_cell_index(0), cell_cfg_list.front().ran);
   }
 
-  // Creates a cell_group_config for a new UE with a PCell, then calls alloc_resources.
-  // Return the cell_group_config if allocation succeeded, nullopt otherwise.
-  std::optional<cell_group_config> add_ue(du_ue_index_t ue_idx)
+  // Creates a ue_cell_config for a new UE PCell, then calls alloc_resources.
+  // Return the ue_cell_config if allocation succeeded, nullopt otherwise.
+  std::optional<ue_cell_config> add_ue(du_ue_index_t ue_idx)
   {
-    cell_group_config cell_grp_cfg;
-    cell_grp_cfg.cells.emplace(SERVING_PCELL_IDX,
-                               config_helpers::make_default_ue_cell_config(cell_cfg_list.front().ran));
+    ue_cell_config ue_cell_cfg = config_helpers::make_default_ue_cell_config(cell_cfg_list.front().ran);
 
     // Reset CG config so alloc_resources fills it fresh.
-    cell_grp_cfg.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.reset();
+    ue_cell_cfg.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.reset();
 
-    if (not cg_res_mng.alloc_resources(cell_grp_cfg)) {
+    if (not cg_res_mng.alloc_resources(ue_cell_cfg)) {
       return std::nullopt;
     }
 
-    ues.emplace(ue_idx, cell_grp_cfg);
-    return cell_grp_cfg;
+    ues.emplace(ue_idx, ue_cell_cfg);
+    return ue_cell_cfg;
   }
 
   // Deallocates CG resources for the given UE and removes it from the pool.
@@ -193,28 +190,26 @@ protected:
     return ue_1.vrbs.overlaps(ue_2.vrbs);
   }
 
-  cg_builder_params                                cg_params;
-  cell_config_builder_params                       cell_params;
-  std::vector<du_cell_config>                      cell_cfg_list;
-  du_cg_type1_res_mng                              cg_res_mng;
-  slotted_array<cell_group_config, MAX_NOF_DU_UES> ues;
+  cg_builder_params                             cg_params;
+  cell_config_builder_params                    cell_params;
+  std::vector<du_cell_config>                   cell_cfg_list;
+  cg_type1_res_mng                              cg_res_mng;
+  slotted_array<ue_cell_config, MAX_NOF_DU_UES> ues;
 };
 
 // ---- Tests ----
 
 /// Test: a single UE gets all CG parameters correctly populated.
-TEST_P(du_cg_type1_res_mng_test, single_ue_cg_config_is_fully_populated)
+TEST_P(cg_type1_res_mng_test, single_ue_cg_config_is_fully_populated)
 {
   auto ue = add_ue(to_du_ue_index(0));
   ASSERT_TRUE(ue.has_value()) << "CG allocation failed for a single UE";
 
-  const auto& cell_cfg_ded = ue->cells.at(SERVING_PCELL_IDX);
-
   // Verify the serving cell CG config is set.
-  ASSERT_TRUE(cell_cfg_ded.serv_cell_cfg.ul_config.has_value());
-  ASSERT_TRUE(cell_cfg_ded.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.has_value());
+  ASSERT_TRUE(ue->serv_cell_cfg.ul_config.has_value());
+  ASSERT_TRUE(ue->serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.has_value());
 
-  const auto& cg_cfg = cell_cfg_ded.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.value();
+  const auto& cg_cfg = ue->serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.value();
 
   // Verify cg_builder_params are reflected in the CG configuration.
   EXPECT_EQ(cg_cfg.periodicity, cg_params.periodicity.value());
@@ -226,15 +221,15 @@ TEST_P(du_cg_type1_res_mng_test, single_ue_cg_config_is_fully_populated)
   EXPECT_EQ(std::get<ra_frequency_type1_configuration>(grant.freq_domain_res).length_vrb, cg_params.nof_rbs);
 
   // Verify the BWP-level CG config is set.
-  ASSERT_FALSE(cell_cfg_ded.bwps.empty());
-  const auto& bwp_cg = cell_cfg_ded.bwps[0].ul.cg;
+  ASSERT_FALSE(ue->bwps.empty());
+  const auto& bwp_cg = ue->bwps[0].ul.cg;
   ASSERT_TRUE(bwp_cg.has_value());
   EXPECT_EQ(bwp_cg.value().vrbs.length(), cg_params.nof_rbs);
   EXPECT_EQ(bwp_cg.value().cg_offset, grant.time_domain_offset);
 }
 
 /// Test: CG offset does not fall on a PRACH slot.
-TEST_P(du_cg_type1_res_mng_test, cg_offset_does_not_collide_with_prach)
+TEST_P(cg_type1_res_mng_test, cg_offset_does_not_collide_with_prach)
 {
   auto ue = add_ue(to_du_ue_index(0));
   ASSERT_TRUE(ue.has_value());
@@ -254,7 +249,7 @@ TEST_P(du_cg_type1_res_mng_test, cg_offset_does_not_collide_with_prach)
 }
 
 /// Test: CG VRBs do not overlap with PUCCH guardband CRBs.
-TEST_P(du_cg_type1_res_mng_test, cg_rbs_do_not_collide_with_pucch)
+TEST_P(cg_type1_res_mng_test, cg_rbs_do_not_collide_with_pucch)
 {
   auto ue = add_ue(to_du_ue_index(0));
   ASSERT_TRUE(ue.has_value());
@@ -263,7 +258,7 @@ TEST_P(du_cg_type1_res_mng_test, cg_rbs_do_not_collide_with_pucch)
 }
 
 /// Test: multiple UEs get orthogonal CG resources (no collision in offset+VRBs).
-TEST_P(du_cg_type1_res_mng_test, multiple_ues_get_orthogonal_cg_resources)
+TEST_P(cg_type1_res_mng_test, multiple_ues_get_orthogonal_cg_resources)
 {
   std::vector<ue_cg_alloc_params> used_allocs;
 
@@ -294,7 +289,7 @@ TEST_P(du_cg_type1_res_mng_test, multiple_ues_get_orthogonal_cg_resources)
 }
 
 /// Test: allocation fails when resources are exhausted; all previous UEs remain valid.
-TEST_P(du_cg_type1_res_mng_test, allocation_fails_when_resources_exhausted)
+TEST_P(cg_type1_res_mng_test, allocation_fails_when_resources_exhausted)
 {
   unsigned nof_allocated = 0;
 
@@ -315,7 +310,7 @@ TEST_P(du_cg_type1_res_mng_test, allocation_fails_when_resources_exhausted)
 }
 
 /// Test: after removing a UE, a new UE can be allocated with the freed resources.
-TEST_P(du_cg_type1_res_mng_test, dealloc_and_realloc_succeeds)
+TEST_P(cg_type1_res_mng_test, dealloc_and_realloc_succeeds)
 {
   // Fill up all resources.
   unsigned nof_allocated = 0;
@@ -355,8 +350,8 @@ TEST_P(du_cg_type1_res_mng_test, dealloc_and_realloc_succeeds)
 
 // ---- Parameterization ----
 
-INSTANTIATE_TEST_SUITE_P(du_cg_type1_res_mng,
-                         du_cg_type1_res_mng_test,
+INSTANTIATE_TEST_SUITE_P(cg_type1_res_mng,
+                         cg_type1_res_mng_test,
                          ::testing::Values(
                              // FDD.
                              cg_test_params{},

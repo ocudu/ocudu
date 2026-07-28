@@ -13,6 +13,11 @@ target_link_libraries(pucch_resource_manager_test
         gtest_main)
 gtest_discover_tests(pucch_resource_manager_test)
 
+add_executable(cg_type1_res_mng_test cg_type1_res_mng_test.cpp)
+target_include_directories(cg_type1_res_mng_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(cg_type1_res_mng_test sched_rrm sched_config du_manager_test_helpers sched_test_doubles gtest ocudu_gtest_main)
+gtest_discover_tests(cg_type1_res_mng_test)
+
 add_executable(srs_resource_generator_test srs_resource_generator_test.cpp)
 target_include_directories(srs_resource_generator_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(srs_resource_generator_test sched_rrm sched_config du_manager_test_helpers gtest ocudu_gtest_main)

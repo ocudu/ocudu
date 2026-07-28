@@ -7,33 +7,31 @@
 #include "ocudu/ran/du_types.h"
 
 namespace ocudu {
-namespace odu {
 
-struct cell_group_config;
-struct du_cell_config;
+struct ran_cell_config;
+struct ue_cell_config;
 
-/// This abstract class defines the methods that the DU Configured Grant resource manager must implement. The
+/// This abstract class defines the methods that the Configured Grant resource manager must implement. The
 /// implementation of this class defines different policies for the CG resource allocation.
-class du_cg_resource_manager
+class cg_resource_manager
 {
 public:
-  virtual ~du_cg_resource_manager() = default;
+  virtual ~cg_resource_manager() = default;
 
   /// \brief Register a cell with the CG resource manager.
-  virtual void add_cell(du_cell_index_t cell_idx, const du_cell_config& cell_cfg) {}
+  virtual void add_cell(du_cell_index_t cell_idx, const ran_cell_config& cell_cfg) {}
 
   /// \brief Deregister a cell from the CG resource manager.
   virtual void rem_cell(du_cell_index_t cell_idx) {}
 
-  /// \brief Allocate Configured Grant resources for a given UE. The resources are stored in the UE's cell group config.
-  /// The function allocates the UE the resources from a common pool.
+  /// \brief Allocate Configured Grant resources for a given UE. The resources are stored in the UE's cell
+  /// configuration. The function allocates the UE the resources from a common pool.
   /// \return true if allocation is successful or if the Configured grant resource allocation was not requested (i.e.,
   /// not set in by the user).
-  virtual bool alloc_resources(cell_group_config& cell_grp_cfg) = 0;
+  virtual bool alloc_resources(ue_cell_config& ue_cell_cfg) = 0;
 
   /// \brief Deallocate the Configured Grant resources for a given UE and return the used resource to the common pool.
-  virtual void dealloc_resources(cell_group_config& cell_grp_cfg) = 0;
+  virtual void dealloc_resources(ue_cell_config& ue_cell_cfg) = 0;
 };
 
-} // namespace odu
 } // namespace ocudu

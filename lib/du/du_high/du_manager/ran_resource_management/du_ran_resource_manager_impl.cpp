@@ -3,7 +3,6 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "du_ran_resource_manager_impl.h"
-#include "du_cg_res_mng.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/mac/config/mac_cell_group_config_factory.h"
 #include "ocudu/ocudulog/ocudulog.h"
@@ -95,7 +94,7 @@ du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_co
     pucch_res_mng.add_cell(cell_idx, cell.ran);
     srs_res_mng->add_cell(cell_idx, cell.ran);
     if (cell.ran.init_bwp.cg_cfg.has_value()) {
-      cg_res_mng.add_cell(cell_idx, cell);
+      cg_res_mng.add_cell(cell_idx, cell.ran);
     }
 
     // The resource pools of a cell do not change during the lifetime of this class, so the capacity of the cell can be
@@ -343,7 +342,7 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
     if (has_drbs and not cg_was_active) {
       // NOTE: cg_res_mng.alloc_resources returns true if allocation is successful or if the Configured grant resource
       // allocation was not requested (i.e., not set in by the user).
-      if (not cg_res_mng.alloc_resources(ue_mcg.cell_group)) {
+      if (not cg_res_mng.alloc_resources(ue_mcg.cell_group.cells.at(SERVING_PCELL_IDX))) {
         // NOTE: This is ONLY IF CG allocation was requested and failed.
         // Deallocate previously allocated resources on PCell.
         if (pcell_newly_allocated) {
@@ -370,7 +369,7 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
     }
     // Remove old CG config when DRBs are removed.
     else if (not has_drbs and cg_was_active) {
-      cg_res_mng.dealloc_resources(ue_mcg.cell_group);
+      cg_res_mng.dealloc_resources(ue_mcg.cell_group.cells.at(SERVING_PCELL_IDX));
     }
   }
 
@@ -475,7 +474,7 @@ void du_ran_resource_manager_impl::deallocate_cell_resources(du_ue_index_t ue_in
     srs_res_mng->dealloc_resources(ue_res.cell_group.cells.at(SERVING_PCELL_IDX));
     pdsch_res_mng.dealloc_resources(ue_res.cell_group);
     pusch_res_mng.dealloc_resources(ue_res.cell_group);
-    cg_res_mng.dealloc_resources(ue_res.cell_group);
+    cg_res_mng.dealloc_resources(ue_res.cell_group.cells.at(SERVING_PCELL_IDX));
     ue_res.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.cell_index = INVALID_DU_CELL_INDEX;
   } else {
     // TODO: Remove of SCell params.

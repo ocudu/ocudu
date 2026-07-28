@@ -5,7 +5,6 @@
 #pragma once
 
 #include "du_bearer_resource_manager.h"
-#include "du_cg_res_mng.h"
 #include "du_drx_resource_manager.h"
 #include "du_meas_config_manager.h"
 #include "du_pdsch_resource_manager.h"
@@ -14,6 +13,7 @@
 #include "ra_resource_manager.h"
 #include "ue_capability_manager.h"
 #include "ocudu/ran/qos/five_qi.h"
+#include "ocudu/scheduler/rrm/cg_res_mng.h"
 #include "ocudu/scheduler/rrm/pucch_resource_manager.h"
 #include "ocudu/scheduler/rrm/srs_resource_manager.h"
 #include <vector>
@@ -164,7 +164,7 @@ private:
   std::unique_ptr<srs_resource_manager> srs_res_mng;
 
   // Allocator of Configured Grant resources.
-  du_cg_type1_res_mng cg_res_mng;
+  cg_type1_res_mng cg_res_mng;
 
   // measConfig resources.
   du_meas_config_manager meas_cfg_mng;

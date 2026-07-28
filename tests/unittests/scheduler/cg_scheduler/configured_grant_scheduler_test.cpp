@@ -62,7 +62,7 @@ class configured_grant_scheduler_test : public scheduler_test_simulator, public 
 {
 protected:
   static constexpr rnti_t ue_crnti = to_rnti(0x4601);
-  /// CS-RNTI assigned to the test UE. Matches the temporary value used in du_cg_res_mng.cpp.
+  /// CS-RNTI assigned to the test UE. Matches the temporary value used in cg_res_mng.cpp.
   static constexpr rnti_t cs_rnti = to_rnti(0xe0ef);
 
   cg_test_params                           cg_params;

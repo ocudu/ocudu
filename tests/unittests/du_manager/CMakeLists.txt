@@ -79,11 +79,6 @@ target_include_directories(du_ran_resource_manager_test PRIVATE ${CMAKE_SOURCE_D
 target_link_libraries(du_ran_resource_manager_test du_manager_test_helpers sched_test_doubles gtest ocudu_gtest_main)
 gtest_discover_tests(du_ran_resource_manager_test)
 
-add_executable(du_cg_type1_res_mng_test du_cg_type1_res_mng_test.cpp)
-target_include_directories(du_cg_type1_res_mng_test PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(du_cg_type1_res_mng_test du_manager_test_helpers sched_test_doubles gtest ocudu_gtest_main)
-gtest_discover_tests(du_cg_type1_res_mng_test)
-
 add_executable(cbs_encoder_test cbs/cbs_encoder_test.cpp)
 target_include_directories(cbs_encoder_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(cbs_encoder_test ocudu_cbs_encoder ocudu_support gtest ocudu_gtest_main)
