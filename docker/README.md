@@ -100,7 +100,7 @@ remote_control:
 
 ### Base image: `OS` and `OS_VERSION`
 
-The gNB image (`docker/Dockerfile`) is built from `${OS}:${OS_VERSION}`. Defaults are **ubuntu** and **24.04**. Override them when you run Compose so the build uses another base image (for example **debian:bookworm** or **fedora:43**).
+The gNB image (`docker/Dockerfile`) is built from `${OS}:${OS_VERSION}`. Defaults are **ubuntu** and **26.04**. Override them when you run Compose so the build uses another base image (for example **debian:bookworm**, **fedora:43**, or **registry.access.redhat.com/ubi10:latest**).
 
 **Using environment variables** (recommended; works with any `docker compose` command that builds `gnb`). Podman users can run the same commands with `podman compose` instead of `docker compose`.
 
@@ -113,6 +113,12 @@ OS=ubuntu OS_VERSION=22.04 docker compose -f docker/docker-compose.yml up --buil
 
 # Fedora 43 (matches Docker Hub tag fedora:43; install scripts use dnf and /etc/os-release ID=fedora)
 OS=fedora OS_VERSION=43 docker compose -f docker/docker-compose.yml build gnb
+
+# UBI 10 (requires a RHEL-entitled build host; see "Building on UBI 10" below)
+OS=registry.access.redhat.com/ubi10 OS_VERSION=latest docker compose -f docker/docker-compose.yml build gnb
+
+# UBI 10 minimal (microdnf; same entitlement requirements)
+OS=registry.access.redhat.com/ubi10-minimal OS_VERSION=latest docker compose -f docker/docker-compose.yml build gnb
 ```
 
 **Using a `.env` file** in the `docker/` directory (or project root, depending on where you run Compose from): add lines such as:
@@ -129,6 +135,13 @@ OS=fedora
 OS_VERSION=43
 ```
 
+or, for **UBI 10**:
+
+```dotenv
+OS=registry.access.redhat.com/ubi10
+OS_VERSION=latest
+```
+
 Then run `docker compose` as usual; Compose substitutes these into `docker-compose.yml` / `docker-compose.split.yml` build args.
 
 **Using `docker build` directly** (from the repository root):
@@ -142,6 +155,11 @@ docker build -f docker/Dockerfile \
 docker build -f docker/Dockerfile \
   --build-arg OS=fedora \
   --build-arg OS_VERSION=43 \
+  .
+
+docker build -f docker/Dockerfile \
+  --build-arg OS=registry.access.redhat.com/ubi10 \
+  --build-arg OS_VERSION=latest \
   .
 ```
 
@@ -157,7 +175,34 @@ OS=fedora OS_VERSION=43 docker compose -f docker/docker-compose.yml build --no-c
 
 The ROHC tarball’s **`autogen.sh`** locates **`aclocal`** and friends with the **`which`** command; minimal Fedora images do not ship **`which`** by default, so the Fedora package lists in the install scripts include it.
 
-The install scripts under `docker/scripts/` dispatch on `/etc/os-release` (for example `ID=debian`, `ID=ubuntu`, `ID=fedora`, `ID=rhel`, `ID=arch`). Choosing `OS`/`OS_VERSION` only selects the base image; the same script logic applies as long as the distribution is one of the supported families.
+### Building on UBI 10
+
+Use a UBI 10 base such as **`registry.access.redhat.com/ubi10:latest`** (or **`registry.redhat.io/ubi10:latest`** after a Red Hat Registry login). The image reports **`ID=rhel`** with **`PLATFORM_ID=platform:el10`**; the install scripts detect that via **`is_ubi10`** and enable el10 CRB/EPEL instead of the UBI 9 / RHEL 9 paths.
+
+**UBI minimal** (`registry.access.redhat.com/ubi10-minimal:latest`) is also supported. That image ships **`microdnf`** instead of **`dnf`** (see [Understanding the UBI minimal images](https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html-single/building_running_and_managing_containers/index#con_understanding-the-ubi-minimal-images_assembly_types-of-container-images)). The helpers select the tool with `DNF=$([[ -x /usr/bin/dnf ]] && echo dnf || echo "microdnf --setopt install_weak_deps=0 ${UBI10_MICRODNF_REPO_ARGS[*]}")` and run `${DNF} -y install …` / `${DNF} clean all`. UBI repos are enabled by default; `--enablerepo=codeready-builder-for-rhel-10-*-rpms` is folded into `DNF` only when that host CRB repo is present (subscribed build). The same RHEL entitlement requirements below still apply.
+
+**RHEL entitlement is required.** Several packages used at build and runtime (notably individual **`boost-*`** libraries for UHD) live in subscribed **RHEL 10 AppStream**, not in the free UBI-only repos. The build host must present a valid RHEL subscription to the container so those repos resolve. Typical options:
+
+- Build on a RHEL host that is already registered; Podman/Docker usually expose the host entitlement into the build (`subscription-manager` in the UBI image can then enable AppStream/CRB).
+- Or pass Red Hat entitlement files as BuildKit secrets (`rh_entitlement_cert`, `rh_entitlement_key`, `rh_rhsm_conf`, `rh_rhsm_ca`), as the RH image CI jobs do via **`BUILD_SECRETS`**. The Dockerfile already declares matching `--mount=type=secret,id=rh_*` mounts on the install `RUN` steps.
+
+Without entitlement, `dnf` cannot find packages such as **`boost-filesystem`**, and the gNB image build fails in the UHD/DPDK runtime stages.
+
+Example (Podman Compose on an entitled host):
+
+```bash
+OS=registry.access.redhat.com/ubi10 OS_VERSION=latest \
+  podman compose -f docker/docker-compose.yml build gnb
+```
+
+Prefer a clean rebuild when switching to UBI from another base family:
+
+```bash
+OS=registry.access.redhat.com/ubi10 OS_VERSION=latest \
+  docker compose -f docker/docker-compose.yml build --no-cache gnb
+```
+
+The install scripts under `docker/scripts/` dispatch on `/etc/os-release` (for example `ID=debian`, `ID=ubuntu`, `ID=fedora`, `ID=rhel`, `ID=centos`, `ID=arch`). Choosing `OS`/`OS_VERSION` only selects the base image; the same script logic applies as long as the distribution is one of the supported families.
 
 ### Customizations
 

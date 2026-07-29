@@ -370,10 +370,11 @@ RUN --mount=type=secret,id=rh_entitlement_cert,target=/etc/pki/entitlement/entit
     /usr/local/etc/install_rohc_dependencies.sh run && \
     /usr/local/etc/install_docker_dependencies.sh run
 
-# Register DPDK/UHD/ROHC library paths system-wide.
-# When the gnb binary has file capabilities (see next RUN), ld.so enters
-# secure-execution mode on execve() and STRIPS LD_LIBRARY_PATH. The runtime
-# libs must therefore be findable via /etc/ld.so.cache instead.
+# Register DPDK/UHD/ROHC library paths for the dynamic linker.
+# When binaries have file capabilities, ld.so enters secure-execution mode and
+# STRIPS LD_LIBRARY_PATH — libs must be in /etc/ld.so.cache instead.
+# Only write the conf here; ldconfig must run in each final runtime stage
+# AFTER /opt/{rohc,uhd,dpdk} are COPY'd (those trees do not exist yet).
 RUN printf '%s\n' \
     "/opt/rohc/lib" \
     "/opt/uhd/${UHD_VERSION}/lib" \
@@ -384,8 +385,7 @@ RUN printf '%s\n' \
     "/opt/dpdk/${DPDK_VERSION}/lib64" \
     "/opt/dpdk/${DPDK_VERSION}/lib/x86_64-linux-gnu" \
     "/opt/dpdk/${DPDK_VERSION}/lib/aarch64-linux-gnu" \
-    > /etc/ld.so.conf.d/ocudu.conf && \
-    ldconfig
+    > /etc/ld.so.conf.d/ocudu.conf
 
 # Stage 3b: runtime — all components. Last stage so docker-compose lands here.
 FROM runtime-base AS runtime
@@ -410,7 +410,8 @@ RUN --mount=type=secret,id=rh_entitlement_cert,target=/etc/pki/entitlement/entit
     --mount=type=secret,id=rh_rhsm_conf,target=/etc/rhsm/rhsm.conf \
     --mount=type=secret,id=rh_rhsm_ca,target=/etc/rhsm/ca/redhat-uep.pem \
     if [ "${ENABLE_UHD}" = "On" ]; then /usr/local/etc/install_uhd_dependencies.sh run; fi && \
-    if [ "${ENABLE_DPDK}" = "On" ]; then /usr/local/etc/install_dpdk_dependencies.sh run; fi
+    if [ "${ENABLE_DPDK}" = "On" ]; then /usr/local/etc/install_dpdk_dependencies.sh run; fi && \
+    ldconfig
 
 # Bake minimum-privilege Linux capabilities into the binaries that need to
 # run as a non-root uid in Kubernetes. Kubernetes' capabilities.add only
@@ -453,7 +454,8 @@ ARG COMPONENT
 COPY --from=builder-lean /opt/rohc  /opt/rohc
 COPY --from=builder-lean /opt/ocudu /usr/local
 
-RUN case "${COMPONENT}" in \
+RUN ldconfig && \
+    case "${COMPONENT}" in \
       cu)    setcap cap_sys_nice,cap_ipc_lock+ep             /usr/local/bin/ocu   && getcap /usr/local/bin/ocu ;; \
       cu-cp) setcap cap_sys_nice,cap_ipc_lock,cap_perfmon+ep /usr/local/bin/ocucp && getcap /usr/local/bin/ocucp ;; \
       cu-up) setcap cap_sys_nice,cap_ipc_lock,cap_perfmon+ep /usr/local/bin/ocuup && getcap /usr/local/bin/ocuup ;; \
@@ -476,7 +478,8 @@ RUN --mount=type=secret,id=rh_entitlement_cert,target=/etc/pki/entitlement/entit
     --mount=type=secret,id=rh_entitlement_key,target=/etc/pki/entitlement/entitlement-key.pem \
     --mount=type=secret,id=rh_rhsm_conf,target=/etc/rhsm/rhsm.conf \
     --mount=type=secret,id=rh_rhsm_ca,target=/etc/rhsm/ca/redhat-uep.pem \
-    /usr/local/etc/install_uhd_dependencies.sh run
+    /usr/local/etc/install_uhd_dependencies.sh run && \
+    ldconfig
 
 RUN case "${COMPONENT}" in \
       gnb) setcap cap_sys_nice,cap_ipc_lock,cap_perfmon+ep /usr/local/bin/gnb && getcap /usr/local/bin/gnb ;; \
@@ -500,7 +503,8 @@ RUN --mount=type=secret,id=rh_entitlement_cert,target=/etc/pki/entitlement/entit
     --mount=type=secret,id=rh_entitlement_key,target=/etc/pki/entitlement/entitlement-key.pem \
     --mount=type=secret,id=rh_rhsm_conf,target=/etc/rhsm/rhsm.conf \
     --mount=type=secret,id=rh_rhsm_ca,target=/etc/rhsm/ca/redhat-uep.pem \
-    /usr/local/etc/install_dpdk_dependencies.sh run
+    /usr/local/etc/install_dpdk_dependencies.sh run && \
+    ldconfig
 
 RUN case "${COMPONENT}" in \
       gnb)         setcap cap_sys_nice,cap_ipc_lock,cap_perfmon+ep /usr/local/bin/gnb && getcap /usr/local/bin/gnb ;; \

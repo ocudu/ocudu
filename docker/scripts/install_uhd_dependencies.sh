@@ -103,13 +103,13 @@ install_uhd_dependencies_arch() {
     fi
 }
 
-# Shared package lists for Fedora and CentOS Stream.
+# Shared package lists for Fedora, CentOS Stream, and UBI10.
 install_uhd_dependencies_rpm() {
     local mode="${1:?}"
     local -a pkgs=()
 
     local -a build_pkgs=(
-        curl ca-certificates xz cmake make boost-devel libusb1-devel
+        curl ca-certificates xz tar gzip cmake make boost-devel libusb1-devel
         python3-mako python3-numpy python3-setuptools python3-requests
     )
     local -a run_pkgs=(
@@ -208,7 +208,11 @@ main() {
             install_uhd_dependencies_rpm "$mode"
             ;;
         rhel)
-            install_uhd_dependencies_rhel "$mode"
+            if is_ubi10; then
+                install_uhd_dependencies_rpm "$mode"
+            else
+                install_uhd_dependencies_rhel "$mode"
+            fi
             ;;
         arch)
             install_uhd_dependencies_arch "$mode"

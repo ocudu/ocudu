@@ -110,6 +110,44 @@ install_rohc_dependencies_centos() {
     fi
 }
 
+install_rohc_dependencies_ubi10() {
+    local mode="${1:?}"
+    local -a pkgs=()
+
+    local -a build_pkgs=(
+        curl ca-certificates gcc gcc-c++ make which xz tar gzip diffutils
+        autoconf automake libtool libpcap-devel libcmocka-devel
+    )
+    local -a run_pkgs=()
+
+    case "$mode" in
+        all|build)
+            pkgs+=( "${build_pkgs[@]}" )
+            ;;
+        run)
+            pkgs+=( "${run_pkgs[@]}" )
+            ;;
+        *)
+            echo >&2 "Unsupported mode: $mode"
+            exit 1
+            ;;
+    esac
+
+    install_rpm_pkgs "${pkgs[@]}"
+
+    if [[ "$mode" != "run" ]]; then
+        local tool ver
+        for tool in aclocal automake; do
+            if ! command -v "${tool}" >/dev/null 2>&1; then
+                ver=$(compgen -G "/usr/bin/${tool}-*" | head -1)
+                if [[ -n "$ver" ]]; then
+                    ln -sf "${ver}" "/usr/bin/${tool}"
+                fi
+            fi
+        done
+    fi
+}
+
 install_rohc_dependencies_arch() {
     local mode="${1:?}"
     local -a pkgs=()
@@ -197,7 +235,11 @@ main() {
             install_rohc_dependencies_fedora "$mode"
             ;;
         rhel)
-            install_rohc_dependencies_rhel "$mode"
+            if is_ubi10; then
+                install_rohc_dependencies_ubi10 "$mode"
+            else
+                install_rohc_dependencies_rhel "$mode"
+            fi
             ;;
         centos)
             install_rohc_dependencies_centos "$mode"

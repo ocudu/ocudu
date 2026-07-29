@@ -169,6 +169,43 @@ install_dependencies_centos() {
     install_rpm_pkgs "${pkgs[@]}"
 }
 
+install_dependencies_ubi10() {
+    local mode="${1:?}"
+    local -a pkgs=()
+
+    local -a build_pkgs=(
+        cmake make libatomic fftw-devel lksctp-tools-devel yaml-cpp-devel mbedtls-devel gtest-devel
+    )
+    local -a run_pkgs=(
+        fftw-libs-single lksctp-tools yaml-cpp mbedtls
+    )
+    local -a extra_pkgs=(
+        boost-devel capnproto capnproto-devel cppzmq-devel dpdk-devel elfutils-devel elfutils-libelf-devel
+        libdwarf-devel libusb1-devel numactl-devel zeromq-devel
+    )
+
+    case "$mode" in
+        all)
+            pkgs+=( "${build_pkgs[@]}" "${extra_pkgs[@]}" )
+            ;;
+        build)
+            pkgs+=( "${build_pkgs[@]}" )
+            ;;
+        run)
+            pkgs+=( "${run_pkgs[@]}" )
+            ;;
+        extra)
+            pkgs+=( "${extra_pkgs[@]}" )
+            ;;
+        *)
+            echo >&2 "Unsupported mode: $mode"
+            exit 1
+            ;;
+    esac
+
+    install_rpm_pkgs "${pkgs[@]}"
+}
+
 install_dependencies_arch() {
     local mode="${1:?}"
     local -a pkgs=()
@@ -275,7 +312,11 @@ main() {
             install_dependencies_arch "$mode"
             ;;
         rhel)
-            install_dependencies_rhel "$mode"
+            if is_ubi10; then
+                install_dependencies_ubi10 "$mode"
+            else
+                install_dependencies_rhel "$mode"
+            fi
             ;;
         fedora)
             install_dependencies_fedora "$mode"

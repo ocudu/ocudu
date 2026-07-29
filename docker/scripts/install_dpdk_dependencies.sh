@@ -129,6 +129,44 @@ install_dpdk_dependencies_centos() {
     install_rpm_pkgs "${pkgs[@]}"
 }
 
+install_dpdk_dependencies_ubi10() {
+    local mode="${1:?}"
+
+    if [[ "$mode" == "run" ]] && rpm -q libfdt >/dev/null 2>&1; then
+        return 0
+    fi
+
+    local -a pkgs=()
+
+    local -a build_pkgs=(
+        curl ca-certificates xz tar gzip ninja-build make numactl-devel libfdt-devel pciutils python3-pyelftools meson
+    )
+    local -a extra_pkgs=(
+        libatomic iproute
+    )
+    local -a run_pkgs=(
+        numactl-libs pciutils libfdt libatomic iproute libibverbs
+    )
+
+    case "$mode" in
+        all)
+            pkgs+=( "${build_pkgs[@]}" "${extra_pkgs[@]}" )
+            ;;
+        build)
+            pkgs+=( "${build_pkgs[@]}" )
+            ;;
+        run)
+            pkgs+=( "${run_pkgs[@]}" )
+            ;;
+        *)
+            echo >&2 "Unsupported mode: $mode"
+            exit 1
+            ;;
+    esac
+
+    install_rpm_pkgs "${pkgs[@]}"
+}
+
 install_dpdk_dependencies_arch() {
     local mode="${1:?}"
     local -a pkgs=()
@@ -242,7 +280,11 @@ main() {
             install_dpdk_dependencies_fedora "$mode"
             ;;
         rhel)
-            install_dpdk_dependencies_rhel "$mode"
+            if is_ubi10; then
+                install_dpdk_dependencies_ubi10 "$mode"
+            else
+                install_dpdk_dependencies_rhel "$mode"
+            fi
             ;;
         centos)
             install_dpdk_dependencies_centos "$mode"
