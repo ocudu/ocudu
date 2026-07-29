@@ -8,6 +8,7 @@
 #include "ocudu/ran/pusch/pusch_configuration.h"
 #include "ocudu/ran/resource_allocation/resource_allocation_frequency.h"
 #include "ocudu/ran/uci/uci_configuration.h"
+#include "ocudu/support/units.h"
 #include <optional>
 #include <variant>
 
@@ -166,6 +167,9 @@ struct cg_configuration {
   /// Duration (in multiple of periodicity) of the configured-grant timer. Values {1,...,64}.
   //  NOTE: Value statically set. Remove "static constexpr" once interface allows setting this.
   static constexpr uint8_t configured_grant_timer = 4U;
+  /// Transport Block Size of the Configured Grant.
+  /// Only used internally in the scheduler, not present in the ASN1 message.
+  std::optional<units::bytes> tbs;
   /// RRC-level resource grant (Type 1 CG). When absent, the grant is activated via DCI (Type 2 CG).
   /// \remark Type 2 CG is not currently supported.
   std::optional<rrc_configured_ul_grant> rrc_configured_ul_grant_cfg;

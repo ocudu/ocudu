@@ -11,6 +11,8 @@
 namespace ocudu {
 
 struct cg_builder_params {
+  using rate_kbyte_ps = unsigned;
+
   /// If set, enables Configured Grants and sets its periodicity.
   /// Normal CP (14 symbols/slot).
   /// For 14 symbols slots, values={1, 2, 4, 5, 8, 10, 16, 20, 32, 40, 64, 80, 128, 160, 256, 320, 512, 640, 1024, 1280,
@@ -19,6 +21,8 @@ struct cg_builder_params {
   std::optional<cg_configuration::periodicity_t> periodicity = cg_configuration::periodicity_t::sl40;
   /// Number of RBs that are configured for the UE configured grant.
   unsigned nof_rbs = 10;
+  /// Grant size in bytes/bitrate in kBps requested for this Configured Grant.
+  std::variant<units::bytes, rate_kbyte_ps> grant_size_or_bitrate = units::bytes(512);
   /// MCS configured for the UE configured grant. Values: {1,...,27}.
   unsigned mcs = 5;
   /// Number of HARQ processes reserved for configured grant. Values: {1,...,16}.

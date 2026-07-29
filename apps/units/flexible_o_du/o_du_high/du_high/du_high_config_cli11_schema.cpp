@@ -1477,6 +1477,25 @@ static void configure_cli11_cg_args(CLI::App& app, du_high_configured_grants& cg
              "Maximum number of RBs that can be allocated to CG resources at cell-level. Values: {1,...,275}")
       ->capture_default_str()
       ->range(1U, 275U);
+  CLI::Option* grant_size_opt =
+      add_option(
+          app, "--grant_size", cg_params.grant_size, "CG grant size in bytes. Ignored when requested_bitrate is set.")
+          ->capture_default_str()
+          ->check(CLI::PositiveNumber);
+  CLI::Option* requested_bitrate_opt =
+      add_option(app,
+                 "--requested_bitrate",
+                 cg_params.requested_bitrate,
+                 "CG requested bitrate in KBps. When set, grant_size gets ignored. The periodicity does not change "
+                 "this bitrate, but it affects the auto-computed grant size per period.")
+          ->capture_default_str()
+          ->check(CLI::PositiveNumber);
+  // If the user sets grant_size but not requested_bitrate, drop the default bitrate so that grant_size applies.
+  app.parse_complete_callback([grant_size_opt, requested_bitrate_opt, &cg_params]() {
+    if (grant_size_opt->count() != 0 and requested_bitrate_opt->count() == 0) {
+      cg_params.requested_bitrate.reset();
+    }
+  });
 }
 
 static void configure_cli11_si_sched_info(CLI::App& app, du_high_unit_sib_config::si_sched_info_config& si_sched_info)

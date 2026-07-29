@@ -579,6 +579,13 @@ struct du_high_configured_grants {
   std::optional<unsigned> periodicity_slots;
   /// Number of RBs that are configured for the UE configured grant.
   unsigned nof_rbs = 10;
+  /// Configured Grant grant size in bytes.
+  /// When \ref requested_bitrate is set, \c grant_size gets ignored.
+  units::bytes grant_size{512};
+  /// Configured Grant requested bitrate in KBps.
+  /// Setting this automatically makes \ref grant_size be ignored.
+  /// \remark The periodicity doesn't change this bitrate, but it affects the auto-computed grant size per period.
+  std::optional<unsigned> requested_bitrate = 512;
   /// MCS configured for the UE configured grant. Values: {1,...,27}.
   unsigned mcs = 5;
   /// Number of HARQ processes reserved for configured grant. Values: {1,...,16}.

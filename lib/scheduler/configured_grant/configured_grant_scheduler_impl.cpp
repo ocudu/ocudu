@@ -321,9 +321,10 @@ bool configured_grant_scheduler_impl::allocate_cg_opportunity(cell_slot_resource
                                                          are_both_cws_enabled);
 
   // Build PUSCH configuration parameters for TBS computation.
-  pusch_params.dmrs               = dmrs;
-  pusch_params.mcs_table          = cg_cfg.mcs_table;
-  pusch_params.nof_layers         = nof_layers;
+  pusch_params.dmrs       = dmrs;
+  pusch_params.mcs_table  = cg_cfg.mcs_table;
+  pusch_params.nof_layers = nof_layers;
+  // TODO: Import p_pi2bpsk_present from PUSCH Config once it will have been added there.
   pusch_params.tp_pi2bpsk_present = false;
   // CG PUSCH uses CP-OFDM (no transform precoding). The mcs_table_transform_precoder field is separate.
   pusch_params.use_transform_precoder = false;
@@ -347,8 +348,6 @@ bool configured_grant_scheduler_impl::allocate_cg_opportunity(cell_slot_resource
 
   // Compute TBS from the configured MCS and VRB count.
   const sch_mcs_index mcs_idx{ul_grant.mcs};
-  // NOTE: the TBS should have been computed to be valid when the UE config was built.
-  const units::bytes tbs = compute_ul_tbs_unsafe(pusch_params, mcs_idx, cg_freq_alloc.length_vrb);
 
   // Fill UL scheduling result.
   ul_sched_info& sched_info = slot_alloc.result.ul.puschs.emplace_back();
@@ -358,7 +357,7 @@ bool configured_grant_scheduler_impl::allocate_cg_opportunity(cell_slot_resource
   build_pusch_cs_rnti(sched_info.pusch_cfg,
                       u->ue_cfg_dedicated()->get_cs_rnti().value(),
                       pusch_params,
-                      {mcs_idx, tbs},
+                      {mcs_idx, cg_cfg.tbs.value()},
                       ue_cfg,
                       ue_cc->active_bwp(),
                       cg_vrbs,

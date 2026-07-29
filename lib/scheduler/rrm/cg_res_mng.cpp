@@ -3,6 +3,8 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/scheduler/rrm/cg_res_mng.h"
+#include "../support/dmrs_helpers.h"
+#include "../support/prbs_calculator.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/prach/prach_time_mapping.h"
@@ -10,10 +12,113 @@
 #include "ocudu/scheduler/config/pucch_guardbands.h"
 #include "ocudu/scheduler/config/pucch_resource_generator.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
+#include "ocudu/scheduler/result/dmrs_info.h"
 #include "ocudu/scheduler/scheduler_configurator.h"
 #include "ocudu/scheduler/support/rb_helper.h"
 
 using namespace ocudu;
+
+static std::pair<unsigned, units::bytes> computed_nof_prbs_per_cg(const ran_cell_config&  cell_cfg,
+                                                                  const cg_configuration& default_cg_cfg)
+{
+  ocudu_assert(cell_cfg.init_bwp.cg_cfg.has_value(), "This function cannot be called if CG is not set");
+  ocudu_assert(default_cg_cfg.rrc_configured_ul_grant_cfg.has_value(),
+               "rrc_configured_ul_grant must be set for a Type 1 CG");
+
+  const auto& pusch_td_list = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
+  const pusch_time_domain_resource_allocation& pusch_td_cfg =
+      pusch_td_list[default_cg_cfg.rrc_configured_ul_grant_cfg.value().time_domain_allocation];
+
+  static constexpr unsigned nof_layers             = 1;
+  static constexpr bool     are_both_cws_enabled   = false;
+  const dmrs_information    dmrs                   = make_dmrs_info_dedicated(pusch_td_cfg,
+                                                         cell_cfg.pci,
+                                                         cell_cfg.dmrs_typeA_pos,
+                                                         default_cg_cfg.cg_dmrs_cfg,
+                                                         nof_layers,
+                                                         cell_cfg.ul_carrier.nof_ant,
+                                                         are_both_cws_enabled);
+  const unsigned            nof_dmrs_prb           = calculate_nof_dmrs_per_rb(dmrs);
+  constexpr bool            use_transform_precoder = false;
+  // TODO: Import p_pi2bpsk_present from PUSCH Config once it will have been added there.
+  constexpr bool            tp_pi2bpsk_present = false;
+  const sch_mcs_description mcs_info =
+      pusch_mcs_get_config(default_cg_cfg.mcs_table,
+                           sch_mcs_index{default_cg_cfg.rrc_configured_ul_grant_cfg.value().mcs},
+                           use_transform_precoder,
+                           tp_pi2bpsk_present);
+
+  x_overhead nof_oh_prb = cell_cfg.init_bwp.pusch.x_ov_head;
+  // As per TS 38.214, Section 5.1.3.2 and 6.1.4.2, and TS 38.212, Section 7.3.1.1 and 7.3.1.2, TB scaling filed is only
+  // used for DCI Format 1-0 (in the DL). Therefore, for the PUSCH this is set to 0.
+  constexpr unsigned tb_scaling_field = 0;
+
+  unsigned payload_bytes = 0;
+  if (std::holds_alternative<cg_builder_params::rate_kbyte_ps>(
+          cell_cfg.init_bwp.cg_cfg.value().grant_size_or_bitrate)) {
+    const unsigned slots_per_ms = 1U << to_numerology_value(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs);
+    payload_bytes =
+        static_cast<unsigned>(std::ceil(static_cast<float>(std::get<cg_builder_params::rate_kbyte_ps>(
+                                                               cell_cfg.init_bwp.cg_cfg.value().grant_size_or_bitrate) *
+                                                           static_cast<unsigned>(default_cg_cfg.periodicity)) /
+                                        static_cast<float>(slots_per_ms)));
+  } else {
+    payload_bytes = std::get<units::bytes>(cell_cfg.init_bwp.cg_cfg.value().grant_size_or_bitrate).value();
+  }
+
+  const sch_prbs_tbs prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{.payload_size_bytes = payload_bytes,
+                                                                        .nof_symb_sh  = pusch_td_cfg.symbols.length(),
+                                                                        .nof_dmrs_prb = nof_dmrs_prb,
+                                                                        .nof_oh_prb = static_cast<unsigned>(nof_oh_prb),
+                                                                        .mcs_descr  = mcs_info,
+                                                                        .nof_layers = nof_layers,
+                                                                        .tb_scaling_field = tb_scaling_field},
+                                             cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
+
+  return {prbs_tbs.nof_prbs, prbs_tbs.tbs_bytes};
+}
+
+static cg_configuration build_default_cg_config(const ran_cell_config& cell_cfg)
+{
+  ocudu_assert(cell_cfg.init_bwp.cg_cfg.has_value(), "This function cannot be called if CG is not set");
+
+  // Build the full CG configuration from the cell-level defaults. This populates all fields of cg_configuration,
+  // including rrc_configured_ul_grant_cfg, from the cg_builder_params stored in the cell config.
+  // NOTE: the DU cell index is not needed for the CG configuration.
+  cg_configuration default_cg_cfg = config_helpers::make_default_ue_cell_config(cell_cfg, to_du_cell_index(0U))
+                                        .serv_cell_cfg.ul_config.value()
+                                        .init_ul_bwp.cg_cfg.value();
+
+  ocudu_assert(default_cg_cfg.rrc_configured_ul_grant_cfg.has_value(),
+               "rrc_configured_ul_grant must be set for a Type 1 CG");
+
+  // Compute PUSCH symbols to avoid overlapping with SRS.
+  const ofdm_symbol_range non_srs_symbols =
+      cell_cfg.init_bwp.srs_cfg.srs_type_enabled != srs_type::disabled
+          ? ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg.init_bwp.srs_cfg.max_nof_symbols.value()}
+          : ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP};
+
+  ocudu_assert(cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.has_value(),
+               "PUSCH Config Common must be configured.");
+  const auto& td_res        = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list;
+  unsigned    cg_td_res_idx = 0U;
+  // PUSCH time-domain resources are sorted by increasing k2 first, then by decreasing symbols .stop().
+  for (unsigned n = 0, sz = td_res.size(); n != sz; ++n) {
+    if (td_res[n].symbols.stop() <= non_srs_symbols.stop()) {
+      cg_td_res_idx = n;
+      break;
+    }
+  }
+
+  // Set Beta_offset for UCI-on-CG.
+  if (cell_cfg.init_bwp.cg_cfg->uci_beta_offsets.has_value()) {
+    default_cg_cfg.uci_on_pusch_cfg.beta_offsets_cfg.emplace(cell_cfg.init_bwp.cg_cfg->uci_beta_offsets.value());
+  }
+
+  default_cg_cfg.rrc_configured_ul_grant_cfg.value().time_domain_allocation = cg_td_res_idx;
+
+  return default_cg_cfg;
+}
 
 static circular_vector<crb_bitmap> build_alloc_grid(const ran_cell_config& cell_cfg)
 {
@@ -63,6 +168,8 @@ static circular_vector<crb_bitmap> build_alloc_grid(const ran_cell_config& cell_
 cg_type1_res_mng::cell_context::cell_context(const ran_cell_config& cell_cfg_) :
   cell_cfg(cell_cfg_),
   tdd_ul_dl_cfg_common(cell_cfg_.tdd_cfg),
+  default_cg_config(build_default_cg_config(cell_cfg_)),
+  nof_rbs_tbs_per_ue(computed_nof_prbs_per_cg(cell_cfg_, default_cg_config)),
   cg_alloc_grid(build_alloc_grid(cell_cfg_)),
   nof_rbs_allocated(cg_alloc_grid.size(), 0U)
 {
@@ -79,7 +186,7 @@ std::optional<unsigned> cg_type1_res_mng::cell_context::find_optimal_cg_offset()
       return max_metric;
     }
     const auto& cg_cfg = cell_cfg.init_bwp.cg_cfg.value();
-    if (nof_rbs_allocated[offset] + cg_cfg.nof_rbs > cg_cfg.max_nof_cell_cg_rbs) {
+    if (nof_rbs_allocated[offset] + nof_rbs_tbs_per_ue.first > cg_cfg.max_nof_cell_cg_rbs) {
       return max_metric;
     }
 
@@ -120,8 +227,6 @@ void cg_type1_res_mng::rem_cell(du_cell_index_t cell_idx)
 // for CG. Once the offset is chosen, the class allocates a set of contiguous RBs to the UE.
 bool cg_type1_res_mng::alloc_resources(ue_cell_config& ue_cell_cfg)
 {
-  ocudulog::fetch_basic_logger("SCHED").debug("Allocating CG config");
-
   // Skip cells without CG configured (not registered in the CG resource manager).
   if (not cells.contains(ue_cell_cfg.serv_cell_cfg.cell_index)) {
     return true;
@@ -138,10 +243,10 @@ bool cg_type1_res_mng::alloc_resources(ue_cell_config& ue_cell_cfg)
   const unsigned offset_val = offset.value();
 
   // Choose RBs.
-  crb_interval cg_rbs = rb_helper::find_empty_interval_of_length(cell.cg_alloc_grid[offset_val],
-                                                                 cell_cfg.init_bwp.cg_cfg.value().nof_rbs);
+  crb_interval cg_rbs =
+      rb_helper::find_empty_interval_of_length(cell.cg_alloc_grid[offset_val], cell.nof_rbs_tbs_per_ue.first);
 
-  if (cg_rbs.length() < cell_cfg.init_bwp.cg_cfg.value().nof_rbs) {
+  if (cg_rbs.length() < cell.nof_rbs_tbs_per_ue.first) {
     return false;
   }
 
@@ -159,40 +264,15 @@ bool cg_type1_res_mng::alloc_resources(ue_cell_config& ue_cell_cfg)
 
   // Build the full CG configuration from the cell-level defaults. This populates all fields of cg_configuration,
   // including rrc_configured_ul_grant_cfg, from the cg_builder_params stored in the cell config.
-  cg_configuration ue_cg_cfg =
-      config_helpers::make_default_ue_cell_config(cell_cfg, ue_cell_cfg.serv_cell_cfg.cell_index)
-          .serv_cell_cfg.ul_config.value()
-          .init_ul_bwp.cg_cfg.value();
+  cg_configuration ue_cg_cfg = cell.default_cg_config;
+
+  ue_cg_cfg.tbs.emplace(cell.nof_rbs_tbs_per_ue.second);
 
   ocudu_assert(ue_cg_cfg.rrc_configured_ul_grant_cfg.has_value(),
                "rrc_configured_ul_grant must be set for a Type 1 CG");
 
-  // Compute PUSCH symbols to avoid overlapping with SRS.
-  const ofdm_symbol_range non_srs_symbols =
-      cell_cfg.init_bwp.srs_cfg.srs_type_enabled != srs_type::disabled
-          ? ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg.init_bwp.srs_cfg.max_nof_symbols.value()}
-          : ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP};
-
-  ocudu_assert(cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.has_value(),
-               "PUSCH Config Common must be configured.");
-  const auto& td_res        = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list;
-  unsigned    cg_td_res_idx = 0U;
-  // PUSCH time-domain resources are sorted by increasing k2 first, then by decreasing symbols .stop().
-  for (unsigned n = 0, sz = td_res.size(); n != sz; ++n) {
-    if (td_res[n].symbols.stop() <= non_srs_symbols.stop()) {
-      cg_td_res_idx = n;
-      break;
-    }
-  }
-
-  // Set Beta_offset for UCI-on-CG.
-  if (cell_cfg.init_bwp.cg_cfg->uci_beta_offsets.has_value()) {
-    ue_cg_cfg.uci_on_pusch_cfg.beta_offsets_cfg.emplace(cell_cfg.init_bwp.cg_cfg->uci_beta_offsets.value());
-  }
-
   // Set the per-UE parameters.
-  ue_cg_cfg.rrc_configured_ul_grant_cfg.value().time_domain_offset     = offset_val;
-  ue_cg_cfg.rrc_configured_ul_grant_cfg.value().time_domain_allocation = cg_td_res_idx;
+  ue_cg_cfg.rrc_configured_ul_grant_cfg.value().time_domain_offset = offset_val;
   ue_cg_cfg.rrc_configured_ul_grant_cfg.value().freq_domain_res =
       ra_frequency_type1_configuration{cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
                                        ue_cell_cfg.init_bwp().ul.cg.value().vrbs.start(),
