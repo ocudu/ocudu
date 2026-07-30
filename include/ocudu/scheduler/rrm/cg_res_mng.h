@@ -27,15 +27,15 @@ public:
 
 private:
   struct cell_context {
-    cell_context(const ran_cell_config& cell_cfg_);
+    explicit cell_context(const ran_cell_config& cell_cfg_);
 
     std::optional<unsigned> find_optimal_cg_offset();
 
     const ran_cell_config                        cell_cfg;
     const std::optional<tdd_ul_dl_config_common> tdd_ul_dl_cfg_common;
-    // Contains the default (per-cell) parameters for the Configured Grant configurtion.
-    const cg_configuration                  default_cg_config;
-    const std::pair<unsigned, units::bytes> nof_rbs_tbs_per_ue;
+    // Contains the default (per-cell) parameters for the Configured Grant configuration.
+    const cg_configuration default_cg_config;
+    const unsigned         nof_rbs_per_ue;
 
     // Ring vector that keeps track of the RB usage (for CG, PRACH and PUCCH) at a given slot within the "CG period".
     // NOTE: more precisely, we use the LCM of CG period and PRACH period as length of the ring.

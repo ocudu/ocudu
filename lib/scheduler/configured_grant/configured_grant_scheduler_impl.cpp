@@ -28,6 +28,13 @@ static harq_id_t get_harq_id(slot_point                      pusch_slot,
   return to_harq_id((current_symbol / periodicity_sym) % nof_harq_processes);
 }
 
+static vrb_interval compute_cg_vrbs(const cg_configuration::rrc_configured_ul_grant& ul_grant)
+{
+  // Compute VRBs: CG PUSCH uses non-interleaved VRB-to-PRB mapping, so VRBs = PRBs.
+  const auto& cg_freq_alloc = std::get<ra_frequency_type1_configuration>(ul_grant.freq_domain_res);
+  return vrb_interval::start_and_len(cg_freq_alloc.start_vrb, cg_freq_alloc.length_vrb);
+}
+
 configured_grant_scheduler_impl::configured_grant_scheduler_impl(const cell_configuration& cell_cfg_,
                                                                  uci_allocator&            uci_alloc_,
                                                                  ue_repository&            ues_) :
@@ -71,6 +78,12 @@ void configured_grant_scheduler_impl::update_harq_reservation(const ue_cell_conf
 
 void configured_grant_scheduler_impl::add_ue_to_wheel(const ue_cell_configuration& ue_cfg)
 {
+  auto* u = ues.find_by_rnti(ue_cfg.crnti);
+  if (u == nullptr) {
+    logger.error("rnti={}: UE not found in the CG scheduler UEs repo", ue_cfg.crnti);
+    return;
+  }
+
   if (ue_cfg.init_bwp().ul.ded() == nullptr or not ue_cfg.init_bwp().ul.ded()->cg_cfg.has_value()) {
     return;
   }
@@ -99,10 +112,23 @@ void configured_grant_scheduler_impl::add_ue_to_wheel(const ue_cell_configuratio
   // Register the UE in the list of recently updated UEs, so that its CG resources get pre-reserved over the whole
   // resource grid at the next run_slot().
   updated_ues.push_back(ue_cfg.crnti);
+
+  // Register the UE TBS in the TBS table.
+  pusch_config_params pusch_params = build_cg_pusch_cfg_params(ue_cfg);
+  const auto          cg_vrbs      = compute_cg_vrbs(ul_grant);
+  const units::bytes  tbs          = compute_ul_tbs_unsafe(pusch_params, sch_mcs_index{ul_grant.mcs}, cg_vrbs.length());
+  ocudu_assert(not ue_tbs_values.contains(u->ue_index), "UE={} already present in the TBS table", u->ue_index);
+  ue_tbs_values.emplace(u->ue_index, tbs);
 }
 
 void configured_grant_scheduler_impl::rem_ue(const ue_cell_configuration& ue_cfg)
 {
+  const auto* u = ues.find_by_rnti(ue_cfg.crnti);
+  if (u == nullptr) {
+    logger.error("rnti={}: UE not found in the CG scheduler UEs repo during UE removal", ue_cfg.crnti);
+    return;
+  }
+
   if (ue_cfg.init_bwp().ul.ded() == nullptr or not ue_cfg.init_bwp().ul.ded()->cg_cfg.has_value()) {
     return;
   }
@@ -130,6 +156,15 @@ void configured_grant_scheduler_impl::rem_ue(const ue_cell_configuration& ue_cfg
     std::swap(*it, slot_wheel.back());
     slot_wheel.pop_back();
   }
+
+  // Remove UE TBS from TBS table.
+  // TODO: The event manager skips cg_sched.add_reconf_ue/rem_ue when conres_st == pending_conres_crnti_ce. If a CG
+  //       config is added while contention resolution is pending (add skipped) and the UE is deleted after ConRes
+  //       completes, rem_ue runs for a UE never registered → wheel error logs plus the (mislabeled) assert at line
+  //       176 firing.  Pre-existing event-manager design, not introduced by this commit, but the new assert  turns it
+  //       from a log into a crash in debug builds.
+  ocudu_assert(ue_tbs_values.contains(u->ue_index), "UE={} not found in the TBS table", u->ue_index);
+  ue_tbs_values.erase(u->ue_index);
 }
 
 void configured_grant_scheduler_impl::add_reconf_ue(const ue_cell_configuration& new_ue_cfg,
@@ -235,6 +270,54 @@ void configured_grant_scheduler_impl::stop()
   for (auto& sl : periodic_pusch_slot_wheel) {
     sl.clear();
   }
+  ue_tbs_values.clear();
+}
+
+pusch_config_params
+configured_grant_scheduler_impl::build_cg_pusch_cfg_params(const ue_cell_configuration& ue_cell_cfg) const
+{
+  // TODO: add pusch_td_alloc_list.has_value() to validator.
+  const auto& pusch_td_list = cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
+
+  const auto* ul_ded   = ue_cell_cfg.init_bwp().ul.ded();
+  const auto& cg_cfg   = ul_ded->cg_cfg.value();
+  const auto& ul_grant = cg_cfg.rrc_configured_ul_grant_cfg.value();
+
+  const pusch_time_domain_resource_allocation& pusch_td_cfg = pusch_td_list[ul_grant.time_domain_allocation];
+  pusch_config_params                          pusch_params;
+  pusch_params.symbols = pusch_td_cfg.symbols;
+
+  // Build DMRS information from the CG-specific DMRS configuration.
+  static constexpr unsigned nof_layers           = 1;
+  static constexpr bool     are_both_cws_enabled = false;
+  const dmrs_information    dmrs                 = make_dmrs_info_dedicated(pusch_td_cfg,
+                                                         cell_cfg.params.pci,
+                                                         cell_cfg.params.dmrs_typeA_pos,
+                                                         cg_cfg.cg_dmrs_cfg,
+                                                         nof_layers,
+                                                         cell_cfg.params.ul_carrier.nof_ant,
+                                                         are_both_cws_enabled);
+
+  // Build PUSCH configuration parameters for TBS computation.
+  pusch_params.dmrs       = dmrs;
+  pusch_params.mcs_table  = cg_cfg.mcs_table;
+  pusch_params.nof_layers = nof_layers;
+  // TODO: Import p_pi2bpsk_present from PUSCH Config once it will have been added there.
+  pusch_params.tp_pi2bpsk_present = false;
+  // CG PUSCH uses CP-OFDM (no transform precoding). The mcs_table_transform_precoder field is separate.
+  pusch_params.use_transform_precoder = false;
+  // As per TS 38.214, Section 5.1.3.2 and 6.1.4.2, and TS 38.212, Section 7.3.1.1 and 7.3.1.2, TB scaling filed is only
+  // used for DCI Format 1-0 (in the DL). Therefore, for the PUSCH this is set to 0.
+  pusch_params.tb_scaling_field = 0;
+  // As per TS 38.214, Section 6.1.4.2, nof_oh_prb equals xOverhead when configured; otherwise 0.
+  pusch_params.nof_oh_prb = ue_cell_cfg.pusch_serving_cell_cfg() != nullptr
+                                ? static_cast<unsigned>(ue_cell_cfg.pusch_serving_cell_cfg()->x_ov_head)
+                                : static_cast<unsigned>(x_overhead::not_set);
+  // If aperiodic CSI is configured, it is assumed that it will be carried by dynamic grants.
+  pusch_params.aperiodic_csi = false;
+
+  // NOTE: pusch_params.nof_harq_ack_bits can only be built at scheduling time, as it needs the pusch slot.
+  return pusch_params;
 }
 
 void configured_grant_scheduler_impl::allocate_slot_cg_opportunities(cell_slot_resource_allocator& slot_alloc) const
@@ -245,8 +328,8 @@ void configured_grant_scheduler_impl::allocate_slot_cg_opportunities(cell_slot_r
   }
 }
 
-bool configured_grant_scheduler_impl::validate_cg_opportunity(cell_slot_resource_allocator& slot_alloc,
-                                                              rnti_t                        rnti) const
+bool configured_grant_scheduler_impl::validate_cg_opportunity(const cell_slot_resource_allocator& slot_alloc,
+                                                              rnti_t                              rnti) const
 {
   // Fetch UE and its cell context.
   auto* u = ues.find_by_rnti(rnti);
@@ -296,11 +379,9 @@ bool configured_grant_scheduler_impl::allocate_cg_opportunity(cell_slot_resource
   const auto&      cg_cfg     = ul_ded->cg_cfg.value();
   const auto&      ul_grant   = cg_cfg.rrc_configured_ul_grant_cfg.value();
 
-  const auto& pusch_td_list = cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
-
-  const pusch_time_domain_resource_allocation& pusch_td_cfg = pusch_td_list[ul_grant.time_domain_allocation];
-  pusch_config_params                          pusch_params;
-  pusch_params.symbols = pusch_td_cfg.symbols;
+  pusch_config_params pusch_params = build_cg_pusch_cfg_params(ue_cfg);
+  // The HARQ-ACK bits are the only element of pusch_params that need to be updated at scheduling time.
+  pusch_params.nof_harq_ack_bits = uci_alloc.get_scheduled_pdsch_counter_in_ue_uci(pusch_slot, u->crnti);
 
   static constexpr unsigned nof_harq_retx = 0;
   const harq_id_t           h_id =
@@ -309,45 +390,17 @@ bool configured_grant_scheduler_impl::allocate_cg_opportunity(cell_slot_resource
   auto h_ul = ue_cc->harqs.alloc_ul_harq(pusch_slot, nof_harq_retx, cg_harq_alloc_params{h_id, cg_harq_timeout});
   ocudu_assert(h_ul.has_value(), "Failed to allocate UL HARQ id={}", fmt::underlying(h_id));
 
-  // Build DMRS information from the CG-specific DMRS configuration.
-  static constexpr unsigned nof_layers           = 1;
-  static constexpr bool     are_both_cws_enabled = false;
-  const dmrs_information    dmrs                 = make_dmrs_info_dedicated(pusch_td_cfg,
-                                                         cell_cfg.params.pci,
-                                                         cell_cfg.params.dmrs_typeA_pos,
-                                                         cg_cfg.cg_dmrs_cfg,
-                                                         nof_layers,
-                                                         cell_cfg.params.ul_carrier.nof_ant,
-                                                         are_both_cws_enabled);
-
-  // Build PUSCH configuration parameters for TBS computation.
-  pusch_params.dmrs       = dmrs;
-  pusch_params.mcs_table  = cg_cfg.mcs_table;
-  pusch_params.nof_layers = nof_layers;
-  // TODO: Import p_pi2bpsk_present from PUSCH Config once it will have been added there.
-  pusch_params.tp_pi2bpsk_present = false;
-  // CG PUSCH uses CP-OFDM (no transform precoding). The mcs_table_transform_precoder field is separate.
-  pusch_params.use_transform_precoder = false;
-  // As per TS 38.214, Section 5.1.3.2 and 6.1.4.2, and TS 38.212, Section 7.3.1.1 and 7.3.1.2, TB scaling filed is only
-  // used for DCI Format 1-0 (in the DL). Therefore, for the PUSCH this is set to 0.
-  pusch_params.tb_scaling_field = 0;
-  // As per TS 38.214, Section 6.1.4.2, nof_oh_prb equals xOverhead when configured; otherwise 0.
-  pusch_params.nof_oh_prb = ue_cfg.pusch_serving_cell_cfg() != nullptr
-                                ? static_cast<unsigned>(ue_cfg.pusch_serving_cell_cfg()->x_ov_head)
-                                : static_cast<unsigned>(x_overhead::not_set);
-  // If aperiodic CSI is configured, it is assumed that it will be carried by dynamic grants.
-  pusch_params.aperiodic_csi     = false;
-  pusch_params.nof_harq_ack_bits = uci_alloc.get_scheduled_pdsch_counter_in_ue_uci(pusch_slot, u->crnti);
-
   // Compute VRBs: CG PUSCH uses non-interleaved VRB-to-PRB mapping, so VRBs = PRBs.
-  const auto& cg_freq_alloc = std::get<ra_frequency_type1_configuration>(ul_grant.freq_domain_res);
-  const auto  cg_vrbs       = vrb_interval::start_and_len(cg_freq_alloc.start_vrb, cg_freq_alloc.length_vrb);
+  const auto cg_vrbs = compute_cg_vrbs(ul_grant);
   // NOTE: the CG PUSCH RBs and symbols have already been pre-reserved in the UL resource grid, either by
   // reserve_slot_cg_resources() when this slot entered the resource grid, or by reserve_updated_ues_resources() right
   // after the UE was added; hence, no collision check nor grid fill is needed here.
 
   // Compute TBS from the configured MCS and VRB count.
   const sch_mcs_index mcs_idx{ul_grant.mcs};
+  // NOTE: the TBS should have been computed to be valid when the UE config was built.
+  ocudu_assert(ue_tbs_values.contains(u->ue_index), "UE={} not found in the TBS table", u->ue_index);
+  const units::bytes tbs = ue_tbs_values[u->ue_index];
 
   // Fill UL scheduling result.
   ul_sched_info& sched_info = slot_alloc.result.ul.puschs.emplace_back();
@@ -357,7 +410,7 @@ bool configured_grant_scheduler_impl::allocate_cg_opportunity(cell_slot_resource
   build_pusch_cs_rnti(sched_info.pusch_cfg,
                       u->ue_cfg_dedicated()->get_cs_rnti().value(),
                       pusch_params,
-                      {mcs_idx, cg_cfg.tbs.value()},
+                      {mcs_idx, tbs},
                       ue_cfg,
                       ue_cc->active_bwp(),
                       cg_vrbs,

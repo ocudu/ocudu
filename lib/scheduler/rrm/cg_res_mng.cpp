@@ -18,8 +18,7 @@
 
 using namespace ocudu;
 
-static std::pair<unsigned, units::bytes> computed_nof_prbs_per_cg(const ran_cell_config&  cell_cfg,
-                                                                  const cg_configuration& default_cg_cfg)
+static unsigned computed_nof_prbs_per_cg(const ran_cell_config& cell_cfg, const cg_configuration& default_cg_cfg)
 {
   ocudu_assert(cell_cfg.init_bwp.cg_cfg.has_value(), "This function cannot be called if CG is not set");
   ocudu_assert(default_cg_cfg.rrc_configured_ul_grant_cfg.has_value(),
@@ -54,14 +53,13 @@ static std::pair<unsigned, units::bytes> computed_nof_prbs_per_cg(const ran_cell
   constexpr unsigned tb_scaling_field = 0;
 
   unsigned payload_bytes = 0;
-  if (std::holds_alternative<cg_builder_params::rate_kbyte_ps>(
-          cell_cfg.init_bwp.cg_cfg.value().grant_size_or_bitrate)) {
-    const unsigned slots_per_ms = 1U << to_numerology_value(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs);
-    payload_bytes =
-        static_cast<unsigned>(std::ceil(static_cast<float>(std::get<cg_builder_params::rate_kbyte_ps>(
-                                                               cell_cfg.init_bwp.cg_cfg.value().grant_size_or_bitrate) *
-                                                           static_cast<unsigned>(default_cg_cfg.periodicity)) /
-                                        static_cast<float>(slots_per_ms)));
+  if (std::holds_alternative<units::byterate>(cell_cfg.init_bwp.cg_cfg.value().grant_size_or_bitrate)) {
+    const unsigned slots_per_sec =
+        1000U * (1U << to_numerology_value(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs));
+    // Accumulate the requested rate (in bytes per second) over the CG periodicity (given in slots).
+    payload_bytes = static_cast<unsigned>(
+        std::ceil(std::get<units::byterate>(cell_cfg.init_bwp.cg_cfg.value().grant_size_or_bitrate).value() *
+                  static_cast<unsigned>(default_cg_cfg.periodicity) / static_cast<double>(slots_per_sec)));
   } else {
     payload_bytes = std::get<units::bytes>(cell_cfg.init_bwp.cg_cfg.value().grant_size_or_bitrate).value();
   }
@@ -75,7 +73,7 @@ static std::pair<unsigned, units::bytes> computed_nof_prbs_per_cg(const ran_cell
                                                                         .tb_scaling_field = tb_scaling_field},
                                              cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
 
-  return {prbs_tbs.nof_prbs, prbs_tbs.tbs_bytes};
+  return prbs_tbs.nof_prbs;
 }
 
 static cg_configuration build_default_cg_config(const ran_cell_config& cell_cfg)
@@ -169,7 +167,7 @@ cg_type1_res_mng::cell_context::cell_context(const ran_cell_config& cell_cfg_) :
   cell_cfg(cell_cfg_),
   tdd_ul_dl_cfg_common(cell_cfg_.tdd_cfg),
   default_cg_config(build_default_cg_config(cell_cfg_)),
-  nof_rbs_tbs_per_ue(computed_nof_prbs_per_cg(cell_cfg_, default_cg_config)),
+  nof_rbs_per_ue(computed_nof_prbs_per_cg(cell_cfg_, default_cg_config)),
   cg_alloc_grid(build_alloc_grid(cell_cfg_)),
   nof_rbs_allocated(cg_alloc_grid.size(), 0U)
 {
@@ -186,7 +184,7 @@ std::optional<unsigned> cg_type1_res_mng::cell_context::find_optimal_cg_offset()
       return max_metric;
     }
     const auto& cg_cfg = cell_cfg.init_bwp.cg_cfg.value();
-    if (nof_rbs_allocated[offset] + nof_rbs_tbs_per_ue.first > cg_cfg.max_nof_cell_cg_rbs) {
+    if (nof_rbs_allocated[offset] + nof_rbs_per_ue > cg_cfg.max_nof_cell_cg_rbs) {
       return max_metric;
     }
 
@@ -216,6 +214,20 @@ std::optional<unsigned> cg_type1_res_mng::cell_context::find_optimal_cg_offset()
 void cg_type1_res_mng::add_cell(du_cell_index_t cell_idx, const ran_cell_config& cell_cfg)
 {
   cells.emplace(cell_idx, cell_cfg);
+
+  // Warn if the CG parameters are inconsistent, i.e. the number of RBs required per UE (derived from the CG grant
+  // size or bitrate and the MCS) exceeds the maximum number of RBs reserved for CG in the cell. In that case, no CG
+  // resources can ever be allocated to any UE.
+  const cell_context& cell_ctx   = cells[cell_idx];
+  const unsigned      max_cg_rbs = cell_ctx.cell_cfg.init_bwp.cg_cfg.value().max_nof_cell_cg_rbs;
+  if (cell_ctx.nof_rbs_per_ue > max_cg_rbs) {
+    ocudulog::fetch_basic_logger("SCHED").warning(
+        "cell={}: The Configured Grant size/bitrate requires {} RBs per UE at the configured MCS, which exceeds the "
+        "maximum of {} RBs reserved for CG in the cell. No CG resources can be allocated to any UE.",
+        fmt::underlying(cell_idx),
+        cell_ctx.nof_rbs_per_ue,
+        max_cg_rbs);
+  }
 }
 
 void cg_type1_res_mng::rem_cell(du_cell_index_t cell_idx)
@@ -243,10 +255,9 @@ bool cg_type1_res_mng::alloc_resources(ue_cell_config& ue_cell_cfg)
   const unsigned offset_val = offset.value();
 
   // Choose RBs.
-  crb_interval cg_rbs =
-      rb_helper::find_empty_interval_of_length(cell.cg_alloc_grid[offset_val], cell.nof_rbs_tbs_per_ue.first);
+  crb_interval cg_rbs = rb_helper::find_empty_interval_of_length(cell.cg_alloc_grid[offset_val], cell.nof_rbs_per_ue);
 
-  if (cg_rbs.length() < cell.nof_rbs_tbs_per_ue.first) {
+  if (cg_rbs.length() < cell.nof_rbs_per_ue) {
     return false;
   }
 
@@ -265,8 +276,6 @@ bool cg_type1_res_mng::alloc_resources(ue_cell_config& ue_cell_cfg)
   // Build the full CG configuration from the cell-level defaults. This populates all fields of cg_configuration,
   // including rrc_configured_ul_grant_cfg, from the cg_builder_params stored in the cell config.
   cg_configuration ue_cg_cfg = cell.default_cg_config;
-
-  ue_cg_cfg.tbs.emplace(cell.nof_rbs_tbs_per_ue.second);
 
   ocudu_assert(ue_cg_cfg.rrc_configured_ul_grant_cfg.has_value(),
                "rrc_configured_ul_grant must be set for a Type 1 CG");

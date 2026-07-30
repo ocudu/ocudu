@@ -23,14 +23,20 @@
 
 using namespace ocudu;
 
+namespace {
 /// Helper struct that holds parameters for a single CG test scenario.
 struct cg_test_params {
   cg_configuration::periodicity_t periodicity    = cg_configuration::periodicity_t::sl40;
   unsigned                        period_slots   = 40;
-  unsigned                        nof_rbs        = 10;
   unsigned                        mcs            = 5;
   unsigned                        nof_harq_procs = 4;
 };
+
+/// Default CG VRB allocation set by the config factory (see make_default_cg_config() in
+/// serving_cell_config_factory.cpp): start_vrb=10, length_vrb=10. The CG resource manager, which would overwrite these
+/// values, is not part of the scheduler config path exercised by this test.
+static constexpr unsigned default_cg_start_vrb = 10;
+static constexpr unsigned default_cg_nof_rbs   = 10;
 
 struct cg_duplex_test_params {
   std::string                            name;
@@ -45,6 +51,8 @@ void PrintTo(const cg_duplex_test_params& value, ::std::ostream* os)
 {
   *os << fmt::format("{}, default_cg_offset={}", value.name, value.default_cg_offset);
 }
+
+} // namespace
 
 /// Builds cell_config_builder_params from duplex test params.
 static cell_config_builder_params make_cell_builder_params(const cg_duplex_test_params& p)
@@ -79,7 +87,6 @@ protected:
     cell_req                     = sched_config_helper::make_default_sched_cell_configuration_request(builder_params);
     cell_req.ran.init_bwp.cg_cfg = cg_builder_params{
         .periodicity        = cg_params.periodicity,
-        .nof_rbs            = cg_params.nof_rbs,
         .mcs                = cg_params.mcs,
         .nof_harq_processes = cg_params.nof_harq_procs,
     };
@@ -254,15 +261,15 @@ TEST_P(cg_duplex_test, cg_pusch_symbols_match_td_alloc)
   EXPECT_EQ(grant->pusch_cfg.symbols, pusch_td_list[0].symbols);
 }
 
-/// Test: the VRBs in the CG PUSCH match the configured VRB allocation (start=10, length=nof_rbs).
+/// Test: the VRBs in the CG PUSCH match the configured VRB allocation (start=10, length=10).
 TEST_P(cg_duplex_test, cg_pusch_rbs_match_cg_config)
 {
   add_cg_ue();
   const ul_sched_info* grant = run_until_next_cg_pusch();
   ASSERT_NE(grant, nullptr);
 
-  // The CG config builder sets vrbs = {10, 10 + nof_rbs}.
-  const vrb_interval expected_vrbs{10, 10U + cg_params.nof_rbs};
+  // The CG config factory sets vrbs = {default_cg_start_vrb, default_cg_start_vrb + default_cg_nof_rbs}.
+  const vrb_interval expected_vrbs{default_cg_start_vrb, default_cg_start_vrb + default_cg_nof_rbs};
   ASSERT_TRUE(grant->pusch_cfg.rbs.is_type1()) << "Expected type-1 (contiguous) VRB allocation";
   EXPECT_EQ(grant->pusch_cfg.rbs.type1(), expected_vrbs);
 }
@@ -666,7 +673,6 @@ protected:
     configured_grant_scheduler_test(cg_test_params{
         .periodicity    = GetParam().periodicity,
         .period_slots   = GetParam().period_slots,
-        .nof_rbs        = 10,
         .mcs            = 5,
         .nof_harq_procs = 8,
     })
@@ -706,7 +712,6 @@ protected:
     configured_grant_scheduler_test(cg_test_params{
         .periodicity    = cg_configuration::periodicity_t::sl40,
         .period_slots   = 40,
-        .nof_rbs        = 10,
         .mcs            = 5,
         .nof_harq_procs = 1,
     })

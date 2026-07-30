@@ -97,6 +97,9 @@ ue_cg_alloc_params get_cg_alloc(const ue_cell_config& ue_cell_cfg)
 class cg_type1_res_mng_test : public ::testing::TestWithParam<cg_test_params>
 {
 protected:
+  // NOTE: the default cg_builder_params are expected to be self-consistent, i.e. the number of PRBs derived by the
+  // resource manager from grant_size_or_bitrate and MCS must not exceed max_nof_cell_cg_rbs, otherwise no CG
+  // allocation is possible.
   explicit cg_type1_res_mng_test(const cg_builder_params& cg_params_ = {}) :
     cg_params(cg_params_),
     cell_params(make_cell_cfg_params(GetParam())),
@@ -218,13 +221,17 @@ TEST_P(cg_type1_res_mng_test, single_ue_cg_config_is_fully_populated)
   ASSERT_TRUE(cg_cfg.rrc_configured_ul_grant_cfg.has_value());
   const auto& grant = cg_cfg.rrc_configured_ul_grant_cfg.value();
   EXPECT_EQ(grant.mcs, cg_params.mcs);
-  EXPECT_EQ(std::get<ra_frequency_type1_configuration>(grant.freq_domain_res).length_vrb, cg_params.nof_rbs);
+  // The number of VRBs is derived by the resource manager from grant_size_or_bitrate and MCS; verify it is set.
+  const auto& freq_res = std::get<ra_frequency_type1_configuration>(grant.freq_domain_res);
+  EXPECT_GT(freq_res.length_vrb, 0U);
+  EXPECT_LE(freq_res.length_vrb, cg_params.max_nof_cell_cg_rbs);
 
-  // Verify the BWP-level CG config is set.
+  // Verify the BWP-level CG config is set and consistent with the RRC configured UL grant.
   ASSERT_FALSE(ue->bwps.empty());
   const auto& bwp_cg = ue->bwps[0].ul.cg;
   ASSERT_TRUE(bwp_cg.has_value());
-  EXPECT_EQ(bwp_cg.value().vrbs.length(), cg_params.nof_rbs);
+  EXPECT_EQ(bwp_cg.value().vrbs.start(), freq_res.start_vrb);
+  EXPECT_EQ(bwp_cg.value().vrbs.length(), freq_res.length_vrb);
   EXPECT_EQ(bwp_cg.value().cg_offset, grant.time_domain_offset);
 }
 

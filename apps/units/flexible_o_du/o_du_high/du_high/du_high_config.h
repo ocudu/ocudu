@@ -577,15 +577,16 @@ struct du_high_configured_grants {
   /// For 12 symbol slots, all values above except {1014, 5120}.
   /// \remark Only 14-symbol slot is currently supported.
   std::optional<unsigned> periodicity_slots;
-  /// Number of RBs that are configured for the UE configured grant.
-  unsigned nof_rbs = 10;
   /// Configured Grant grant size in bytes.
   /// When \ref requested_bitrate is set, \c grant_size gets ignored.
-  units::bytes grant_size{512};
-  /// Configured Grant requested bitrate in KBps.
+  /// \remark The default of 120 bytes results in 10 PRBs at the default MCS 5, which fits within the default
+  /// \ref max_nof_cell_cg_rbs.
+  units::bytes grant_size{120};
+  /// Configured Grant requested bitrate. The CLI value is expressed in kBps, while this field stores it normalized in
+  /// bytes per second.
   /// Setting this automatically makes \ref grant_size be ignored.
   /// \remark The periodicity doesn't change this bitrate, but it affects the auto-computed grant size per period.
-  std::optional<unsigned> requested_bitrate = 512;
+  std::optional<units::byterate> requested_bitrate;
   /// MCS configured for the UE configured grant. Values: {1,...,27}.
   unsigned mcs = 5;
   /// Number of HARQ processes reserved for configured grant. Values: {1,...,16}.

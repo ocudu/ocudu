@@ -1459,9 +1459,6 @@ static void configure_cli11_cg_args(CLI::App& app, du_high_configured_grants& cg
       ->capture_default_str()
       ->enum_values({1U,  2U,   4U,   5U,   8U,   10U,  16U,  20U,   32U,   40U,   64U,
                      80U, 128U, 160U, 256U, 320U, 512U, 640U, 1024U, 1280U, 2560U, 5120U});
-  add_option(app, "--nof_rbs", cg_params.nof_rbs, "Number of PRBs allocated to the CG resource. Values: {1,...,275}")
-      ->capture_default_str()
-      ->range(1U, 275U);
   add_option(app, "--mcs", cg_params.mcs, "MCS index for the CG PUSCH. Values: {0,...,27}")
       ->capture_default_str()
       ->range(0U, 27U);

@@ -1623,14 +1623,6 @@ static bool validate_cell_cg_config(const du_high_configured_grants& cg_cfg, uns
     return false;
   }
 
-  if (cg_cfg.nof_rbs > cg_cfg.max_nof_cell_cg_rbs) {
-    fmt::print(
-        "Number of UE RBs {} for configured grant (CG) exceeds the max number of CG RBs {} allocated to the cell.\n",
-        cg_cfg.nof_rbs,
-        cg_cfg.max_nof_cell_cg_rbs);
-    return false;
-  }
-
   if (cg_cfg.nof_harq_processes >= max_nof_harqs) {
     fmt::print("Too many UE HARQ processes {} reserved for configured grant (CG). Its value shouldn't exceed the total"
                " maximum number of PUSCH HARQ processes {} - 1.\n",

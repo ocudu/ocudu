@@ -291,7 +291,9 @@ static cg_configuration make_default_cg_config(const cg_builder_params& cg_param
   grant.time_domain_offset     = 0;
   grant.time_domain_allocation = 0;
   grant.mcs                    = static_cast<uint8_t>(cg_params.mcs);
-  grant.freq_domain_res        = ra_frequency_type1_configuration{0, 10, cg_params.nof_rbs};
+  // This is only a default value, which is overwritten by the scheduler when the actual configuration is generated.
+  constexpr unsigned default_nof_rbs = 10U;
+  grant.freq_domain_res              = ra_frequency_type1_configuration{0, 10, default_nof_rbs};
   cfg.rrc_configured_ul_grant_cfg.emplace(grant);
 
   return cfg;

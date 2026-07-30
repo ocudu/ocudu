@@ -1070,13 +1070,12 @@ std::vector<odu::du_cell_config> ocudu::generate_du_cell_config(const du_high_un
     if (user_cg_cfg.periodicity_slots.has_value()) {
       cg_builder_params du_cg_params{};
       du_cg_params.periodicity = static_cast<cg_configuration::periodicity_t>(user_cg_cfg.periodicity_slots.value());
-      du_cg_params.nof_rbs     = user_cg_cfg.nof_rbs;
       du_cg_params.mcs         = user_cg_cfg.mcs;
       du_cg_params.nof_harq_processes  = user_cg_cfg.nof_harq_processes;
       du_cg_params.max_nof_cell_cg_rbs = user_cg_cfg.max_nof_cell_cg_rbs;
       // The requested bitrate, when set, takes precedence over the grant size.
       if (user_cg_cfg.requested_bitrate.has_value()) {
-        du_cg_params.grant_size_or_bitrate = cg_builder_params::rate_kbyte_ps{user_cg_cfg.requested_bitrate.value()};
+        du_cg_params.grant_size_or_bitrate = user_cg_cfg.requested_bitrate.value();
       } else {
         du_cg_params.grant_size_or_bitrate = user_cg_cfg.grant_size;
       }
