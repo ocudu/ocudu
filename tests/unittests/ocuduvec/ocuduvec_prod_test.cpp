@@ -12,6 +12,11 @@ static const float  ASSERT_MAX_ERROR            = 1e-6;
 static const float  ASSERT_MAX_ERROR_BF16       = 1e-2;
 static const float  ASSERT_MAX_ERROR_CEXP       = 1e-5;
 static const float  ASSERT_MAX_ERROR_CBF16_CEXP = ASSERT_MAX_ERROR_BF16;
+/// Note: SIMD and non-SIMD float-to-integer conversions may produce different results.
+/// For instance, Intel’s intrinsics round to the nearest integer with ties to even (2.5 -> 2), while std::round rounds
+/// halfway cases away from zero (2.5 -> 3). A +/-1 tolerance is applied to account for these differing rounding
+/// behaviors.
+static const float ASSERT_ROUNDING_MAX_ERROR = 1;
 
 using namespace ocudu;
 
@@ -174,6 +179,36 @@ TEST_P(OcuduVecProdFixture, ProdCfCbf16Cexp)
     phase *= osc;
     float err = std::abs(gold_z - to_cf(z[i]));
     ASSERT_LT(err, ASSERT_MAX_ERROR_CBF16_CEXP)
+        << fmt::format("Sample index {} do not match {} != {}.", i, gold_z, z[i]);
+  }
+}
+
+TEST_P(OcuduVecProdFixture, ProdCi16Cexp)
+{
+  std::uniform_real_distribution<float> dist(-1.0, 1.0);
+
+  float scale = 1000.0F;
+
+  std::vector<ci16_t> x(N);
+  for (ci16_t& v : x) {
+    v = to_ci16(cf_t(dist(rgen), dist(rgen)) * scale);
+  }
+
+  float cfo           = dist(rgen);
+  float initial_phase = M_PI * dist(rgen);
+
+  std::vector<ci16_t> z(N);
+
+  ocuduvec::prod_cexp(z, x, cfo, initial_phase);
+
+  cf_t osc   = std::exp(std::complex<float>(0.0F, TWOPI * cfo));
+  cf_t phase = std::polar(1.0F, initial_phase);
+  for (size_t i = 0; i != N; ++i) {
+    cf_t gold_z = to_cf(x[i]) * phase;
+    phase *= osc;
+    ASSERT_NEAR(std::round(gold_z.real()), z[i].real(), ASSERT_ROUNDING_MAX_ERROR)
+        << fmt::format("Sample index {} do not match {} != {}.", i, gold_z, z[i]);
+    ASSERT_NEAR(std::round(gold_z.imag()), z[i].imag(), ASSERT_ROUNDING_MAX_ERROR)
         << fmt::format("Sample index {} do not match {} != {}.", i, gold_z, z[i]);
   }
 }
