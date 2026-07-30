@@ -74,7 +74,7 @@ public:
   void advance(unsigned nof_samples) { sample_offset += nof_samples; }
 
   /// Applies carrier frequency offset in-place to a baseband buffer.
-  void process(span<cf_t> buffer) const
+  void process(span<ci16_t> buffer) const
   {
     // Skip CFO process if the current CFO is zero, NaN or infinity.
     if (!std::isnormal(current_cfo)) {

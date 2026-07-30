@@ -214,8 +214,6 @@ private:
   downlink_processor_notifier* notifier = nullptr;
   /// Temporal storage of baseband samples.
   detail::baseband_symbol_buffer temp_buffer;
-  /// Buffer to hold complex floating-point based samples.
-  dynamic_tensor<2, cf_t> cf_buffer;
   /// Carrier Frequency Offset processor.
   baseband_cfo_processor cfo_processor;
   /// Baseband buffer pool for transmitting zeros.

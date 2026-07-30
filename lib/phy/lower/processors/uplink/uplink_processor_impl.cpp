@@ -211,9 +211,7 @@ void lower_phy_uplink_processor_impl::process_collecting(const baseband_gateway_
     // single-precision complex floating-point samples.
     span<ci16_t> channel_buffer = temp_buffer.get_writer().get_channel_buffer(i_channel);
     view                        = temp_cf_buffer.get_view({i_channel}).subspan(0, channel_buffer.size());
-    ocuduvec::convert(view, channel_buffer, ocuduvec::scaling_factor_ci16_to_cf);
-    cfo_processor.process(view);
-    ocuduvec::convert(channel_buffer, view, ocuduvec::scaling_factor_cf_to_ci16);
+    cfo_processor.process(channel_buffer);
   }
 
   // Advance CFO processor number of samples.

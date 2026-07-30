@@ -27,7 +27,6 @@ downlink_processor_baseband_impl::downlink_processor_baseband_impl(
   nof_slots_per_subframe(get_nof_slots_per_subframe(config.scs)),
   nof_symbols_per_slot(get_nsymb_per_slot(config.cp)),
   temp_buffer(config.nof_tx_ports, 2 * config.rate.get_dft_size(config.scs)),
-  cf_buffer({config.rate.to_kHz(), config.nof_tx_ports}),
   cfo_processor(config.rate),
   buffer_pool(nof_slots_per_subframe * NOF_SUBFRAMES_PER_FRAME, config.nof_tx_ports, nof_samples_per_subframe)
 {
@@ -147,14 +146,8 @@ downlink_processor_baseband_impl::process(baseband_gateway_timestamp timestamp)
     cfo_processor.next_cfo_command();
     for (unsigned i_port = 0, i_port_end = pdxch_baseband_result.buffer->get_nof_channels(); i_port != i_port_end;
          ++i_port) {
-      // The CFO compensation is not currently supported for 16-bit complex integer samples. So, it must convert it to
-      // single-precision complex floating-point samples.
       span<ci16_t> channel_buffer = pdxch_baseband_result.buffer->get_writer().get_channel_buffer(i_port);
-      span<cf_t>   cf_buf         = cf_buffer.get_view({i_port}).first(channel_buffer.size());
-
-      ocuduvec::convert(cf_buf, channel_buffer, ocuduvec::scaling_factor_ci16_to_cf);
-      cfo_processor.process(cf_buf);
-      ocuduvec::convert(channel_buffer, cf_buf, ocuduvec::scaling_factor_cf_to_ci16);
+      cfo_processor.process(channel_buffer);
     }
 
     // Notify metrics.
