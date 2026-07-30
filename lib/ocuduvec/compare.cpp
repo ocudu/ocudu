@@ -153,7 +153,7 @@ std::pair<unsigned, float> ocudu::ocuduvec::max_abs_element(span<const ci16_t> x
 
   for (unsigned simd_end = OCUDU_SIMD_CI16_SIZE * (len / OCUDU_SIMD_CI16_SIZE); i != simd_end;
        i += OCUDU_SIMD_CI16_SIZE) {
-    simd_s_t   simd_v    = ocudu_simd_ci16_loadu(x.data() + i);
+    simd_i16_t simd_v    = ocudu_simd_ci16_loadu(x.data() + i);
     simd_i_t   simd_abs2 = ocudu_simd_ci16_norm_sq(simd_v);
     simd_sel_t res       = ocudu_simd_u32_max(simd_abs2, simd_max_values);
 

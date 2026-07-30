@@ -151,8 +151,8 @@ float ocudu::ocuduvec::average_power(span<const ci16_t> x, float scale)
 #if OCUDU_SIMD_CI16_SIZE
   for (unsigned simd_end = OCUDU_SIMD_CI16_SIZE * (len / OCUDU_SIMD_CI16_SIZE); i != simd_end;
        i += OCUDU_SIMD_CI16_SIZE) {
-    simd_s_t simd_v    = ocudu_simd_ci16_loadu(x.data() + i);
-    simd_i_t simd_abs2 = ocudu_simd_ci16_norm_sq(simd_v);
+    simd_i16_t simd_v    = ocudu_simd_ci16_loadu(x.data() + i);
+    simd_i_t   simd_abs2 = ocudu_simd_ci16_norm_sq(simd_v);
     energy_sum += ocudu_simd_i_accumulate(simd_abs2);
   }
 #endif // OCUDU_SIMD_CI16_SIZE

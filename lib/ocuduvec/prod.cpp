@@ -47,19 +47,19 @@ static void prod_sss_simd(const int16_t* x, const int16_t* y, int16_t* z, std::s
 #if OCUDU_SIMD_S_SIZE
   if (SIMD_IS_ALIGNED(x) && SIMD_IS_ALIGNED(y) && SIMD_IS_ALIGNED(z)) {
     for (; i + OCUDU_SIMD_S_SIZE < len + 1; i += OCUDU_SIMD_S_SIZE) {
-      simd_s_t a = ocudu_simd_s_load(x + i);
-      simd_s_t b = ocudu_simd_s_load(y + i);
+      simd_i16_t a = ocudu_simd_s_load(x + i);
+      simd_i16_t b = ocudu_simd_s_load(y + i);
 
-      simd_s_t r = ocudu_simd_s_mul(a, b);
+      simd_i16_t r = ocudu_simd_s_mul(a, b);
 
       ocudu_simd_s_store(z + i, r);
     }
   } else {
     for (; i + OCUDU_SIMD_S_SIZE < len + 1; i += OCUDU_SIMD_S_SIZE) {
-      simd_s_t a = ocudu_simd_s_loadu(x + i);
-      simd_s_t b = ocudu_simd_s_loadu(y + i);
+      simd_i16_t a = ocudu_simd_s_loadu(x + i);
+      simd_i16_t b = ocudu_simd_s_loadu(y + i);
 
-      simd_s_t r = ocudu_simd_s_mul(a, b);
+      simd_i16_t r = ocudu_simd_s_mul(a, b);
 
       ocudu_simd_s_storeu(z + i, r);
     }

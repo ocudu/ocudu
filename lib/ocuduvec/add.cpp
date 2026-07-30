@@ -65,19 +65,19 @@ static void add_sss_simd(const int16_t* x, const int16_t* y, int16_t* z, std::si
 #if OCUDU_SIMD_S_SIZE
   if (SIMD_IS_ALIGNED(x) && SIMD_IS_ALIGNED(y) && SIMD_IS_ALIGNED(z)) {
     for (std::size_t i_end = (len / OCUDU_SIMD_S_SIZE) * OCUDU_SIMD_S_SIZE; i != i_end; i += OCUDU_SIMD_S_SIZE) {
-      simd_s_t a = ocudu_simd_s_load(x + i);
-      simd_s_t b = ocudu_simd_s_load(y + i);
+      simd_i16_t a = ocudu_simd_s_load(x + i);
+      simd_i16_t b = ocudu_simd_s_load(y + i);
 
-      simd_s_t r = ocudu_simd_s_add(a, b);
+      simd_i16_t r = ocudu_simd_s_add(a, b);
 
       ocudu_simd_s_store(z + i, r);
     }
   } else {
     for (std::size_t i_end = (len / OCUDU_SIMD_S_SIZE) * OCUDU_SIMD_S_SIZE; i != i_end; i += OCUDU_SIMD_S_SIZE) {
-      simd_s_t a = ocudu_simd_s_loadu(x + i);
-      simd_s_t b = ocudu_simd_s_loadu(y + i);
+      simd_i16_t a = ocudu_simd_s_loadu(x + i);
+      simd_i16_t b = ocudu_simd_s_loadu(y + i);
 
-      simd_s_t r = ocudu_simd_s_add(a, b);
+      simd_i16_t r = ocudu_simd_s_add(a, b);
 
       ocudu_simd_s_storeu(z + i, r);
     }

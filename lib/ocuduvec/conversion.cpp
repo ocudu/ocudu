@@ -21,7 +21,7 @@ static void convert_fi_simd(const float* x, int16_t* z, float scale, unsigned le
       simd_f_t sa = ocudu_simd_f_mul(a, s);
       simd_f_t sb = ocudu_simd_f_mul(b, s);
 
-      simd_s_t i16 = ocudu_simd_convert_2f_s(sa, sb);
+      simd_i16_t i16 = ocudu_simd_convert_2f_s(sa, sb);
 
       ocudu_simd_s_store(z + i, i16);
     }
@@ -33,7 +33,7 @@ static void convert_fi_simd(const float* x, int16_t* z, float scale, unsigned le
       simd_f_t sa = ocudu_simd_f_mul(a, s);
       simd_f_t sb = ocudu_simd_f_mul(b, s);
 
-      simd_s_t i16 = ocudu_simd_convert_2f_s(sa, sb);
+      simd_i16_t i16 = ocudu_simd_convert_2f_s(sa, sb);
 
       ocudu_simd_s_storeu(z + i, i16);
     }
@@ -195,7 +195,7 @@ static void convert_bf16_to_int16_simd(int16_t* out, const bf16_t* in, float sca
     simd_f_t scaled_odd  = ocudu_simd_f_mul(temp_odd, s);
 
     // Convert float to int16.
-    simd_s_t i16 = ocudu_simd_convert_2f_interleaved_s(scaled_even, scaled_odd);
+    simd_i16_t i16 = ocudu_simd_convert_2f_interleaved_s(scaled_even, scaled_odd);
 
     // Store the resulting int16 vector.
     ocudu_simd_s_storeu(out + i, i16);
