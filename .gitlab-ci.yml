@@ -593,6 +593,21 @@ doxygen:
       optional: true
       artifacts: false
 
+pages:
+  stage: documentation
+  image: alpine:3.19
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  script:
+    - mkdir -p public
+    - echo "/ocudu https://docs.ocudu.org 301" > public/_redirects
+    - echo "/ocudu/* https://docs.ocudu.org/:splat 301" >> public/_redirects
+    - echo "/ https://docs.ocudu.org 301" >> public/_redirects
+    - echo "/* https://docs.ocudu.org/:splat 301" >> public/_redirects
+  artifacts:
+    paths:
+      - public
+
 ################################################################################
 # post
 ################################################################################
