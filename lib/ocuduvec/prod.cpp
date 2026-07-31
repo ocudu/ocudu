@@ -189,62 +189,6 @@ static void prod_cexp_simd(OutComplexType* out, const InComplexType* in, float c
   }
 }
 
-static void prod_cexp_simd(ci16_t* out, const ci16_t* in, float cfo, float initial_phase, unsigned len)
-{
-  // Phase increment for each sample.
-  cf_t osc = std::polar(1.0F, TWOPI * cfo);
-  // Current phase, initially with the initial phase.
-  cf_t phase = std::polar(1.0F, initial_phase);
-  // Current sample index.
-  unsigned i = 0;
-
-#if OCUDU_SIMD_CS16_SIZE
-  // Number of samples processed per iteration. OCUDU_SIMD_CS16_SIZE is the number of 16-bit integer components that fit
-  // in a SIMD register. Since each complex sample comprises two components, and the load converts the 16-bit complex
-  // samples into complex float, a single iteration processes half as many samples as components.
-  static constexpr unsigned nof_samples = OCUDU_SIMD_CS16_SIZE / 2;
-
-  if (len >= nof_samples) {
-    // Prepare current phase vector with the initial phases.
-    std::array<cf_t, nof_samples> temp_phase;
-    temp_phase[0] = phase;
-    for (unsigned k = 1; k != nof_samples; ++k) {
-      temp_phase[k] = temp_phase[k - 1] * osc;
-    }
-
-    // Load the current phase SIMD register with the initial phases;
-    simd_cf_t simd_phase = ocudu_simd_loadu(temp_phase.data());
-
-    // Prepare SIMD oscillator phase shift.
-    simd_cf_t simd_osc = ocudu_simd_cf_set1(std::polar(1.0F, nof_samples * TWOPI * cfo));
-
-    // Process in blocks of the SIMD register size.
-    for (unsigned end = (len / nof_samples) * nof_samples; i != end; i += nof_samples) {
-      // Load input.
-      simd_cf_t simd_in = ocudu_simd_loadu(&in[i]);
-
-      // Apply current phase to the input.
-      simd_cf_t simd_out = ocudu_simd_cf_prod(simd_in, simd_phase);
-
-      // Store result.
-      ocudu_simd_storeu(&out[i], simd_out);
-
-      // Increment current phase.
-      simd_phase = ocudu_simd_cf_prod(simd_phase, simd_osc);
-    }
-
-    // Store phase SIMD register and update the current phase with the next phase.
-    ocudu_simd_storeu(temp_phase.data(), simd_phase);
-    phase = temp_phase.front();
-  }
-#endif
-
-  for (; i != len; ++i) {
-    out[i] = to_cf(in[i]) * phase;
-    phase *= osc;
-  }
-}
-
 void ocudu::ocuduvec::prod(span<cf_t> z, span<const cf_t> x, span<const cf_t> y)
 {
   ocudu_ocuduvec_assert_size(x, y);

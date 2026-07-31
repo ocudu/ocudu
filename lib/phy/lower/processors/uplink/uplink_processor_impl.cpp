@@ -203,16 +203,8 @@ void lower_phy_uplink_processor_impl::process_collecting(const baseband_gateway_
     return;
   }
 
-  // View over the temporary float-based complex samples for CFO processor.
-  span<cf_t> view;
   // Perform carrier frequency offset compensation.
-  for (unsigned i_channel = 0; i_channel != temp_buffer.get_nof_channels(); ++i_channel) {
-    // The CFO compensation is not currently supported for 16-bit complex integer samples. So, it must convert it to
-    // single-precision complex floating-point samples.
-    span<ci16_t> channel_buffer = temp_buffer.get_writer().get_channel_buffer(i_channel);
-    view                        = temp_cf_buffer.get_view({i_channel}).subspan(0, channel_buffer.size());
-    cfo_processor.process(channel_buffer);
-  }
+  cfo_processor.process(temp_buffer.get_writer());
 
   // Advance CFO processor number of samples.
   cfo_processor.advance(temp_buffer.get_nof_samples());

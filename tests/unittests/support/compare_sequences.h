@@ -50,6 +50,29 @@ std::string format_mismatch_row(unsigned index, const cbf16_t& actual, const cf_
   return format_mismatch_row(index, actual_cf, expected, distance, tolerance);
 }
 
+/// Specialization for a 16-bit integer complex actual and a complex float expected.
+template <typename V>
+std::string format_mismatch_row(unsigned index, const ci16_t& actual, const cf_t& expected, V distance, V tolerance)
+{
+  const cf_t actual_cf = to_cf(actual);
+  return format_mismatch_row(index, actual_cf, expected, distance, tolerance);
+}
+
+/// Specialization for a complex float actual and a 16-bit integer complex expected.
+template <typename V>
+std::string format_mismatch_row(unsigned index, const cf_t& actual, const ci16_t& expected, V distance, V tolerance)
+{
+  const cf_t expected_cf = to_cf(expected);
+  return format_mismatch_row(index, actual, expected_cf, distance, tolerance);
+}
+
+/// Specialization for two 16-bit integer complex values.
+template <typename V>
+std::string format_mismatch_row(unsigned index, const ci16_t& actual, const ci16_t& expected, V distance, V tolerance)
+{
+  return format_mismatch_row(index, to_cf(actual), to_cf(expected), distance, tolerance);
+}
+
 /// Builds the header line of the mismatch table.
 template <typename T>
 std::string format_mismatch_header()

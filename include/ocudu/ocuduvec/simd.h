@@ -82,7 +82,6 @@ inline bool        SIMD_IS_ALIGNED(const void* ptr)
 #define OCUDU_SIMD_B_SIZE 64
 #define OCUDU_SIMD_S_SIZE 32
 #define OCUDU_SIMD_C16_SIZE 0
-#define OCUDU_SIMD_CS16_SIZE 32
 
 #else
 #ifdef __AVX2__
@@ -95,7 +94,6 @@ inline bool        SIMD_IS_ALIGNED(const void* ptr)
 #define OCUDU_SIMD_B_SIZE 32
 #define OCUDU_SIMD_S_SIZE 16
 #define OCUDU_SIMD_C16_SIZE 16
-#define OCUDU_SIMD_CS16_SIZE 16
 
 #else /* __AVX2__ */
 #ifdef __SSE4_1__
@@ -108,7 +106,6 @@ inline bool        SIMD_IS_ALIGNED(const void* ptr)
 #define OCUDU_SIMD_B_SIZE 16
 #define OCUDU_SIMD_S_SIZE 8
 #define OCUDU_SIMD_C16_SIZE 8
-#define OCUDU_SIMD_CS16_SIZE 8
 
 #else /* __SSE4_1__ */
 #ifdef __ARM_NEON
@@ -120,7 +117,6 @@ inline bool        SIMD_IS_ALIGNED(const void* ptr)
 #define OCUDU_SIMD_B_SIZE 16
 #define OCUDU_SIMD_S_SIZE 8
 #define OCUDU_SIMD_C16_SIZE 8
-#define OCUDU_SIMD_CS16_SIZE 8
 
 #else /* __ARM_NEON */
 #define OCUDU_SIMD_F_SIZE 0

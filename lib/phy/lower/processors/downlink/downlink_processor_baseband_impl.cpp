@@ -144,11 +144,7 @@ downlink_processor_baseband_impl::process(baseband_gateway_timestamp timestamp)
   if (pdxch_baseband_result.buffer) {
     // Apply carrier frequency offset for the entire transmit slot buffer.
     cfo_processor.next_cfo_command();
-    for (unsigned i_port = 0, i_port_end = pdxch_baseband_result.buffer->get_nof_channels(); i_port != i_port_end;
-         ++i_port) {
-      span<ci16_t> channel_buffer = pdxch_baseband_result.buffer->get_writer().get_channel_buffer(i_port);
-      cfo_processor.process(channel_buffer);
-    }
+    cfo_processor.process(pdxch_baseband_result.buffer->get_writer());
 
     // Notify metrics.
     ocudu_assert(notifier != nullptr, "Timing notifier is not connected.");

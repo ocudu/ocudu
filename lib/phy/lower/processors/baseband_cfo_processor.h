@@ -8,6 +8,7 @@
 #include "ocudu/adt/expected.h"
 #include "ocudu/adt/ring_buffer.h"
 #include "ocudu/adt/span.h"
+#include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_writer.h"
 #include "ocudu/ocuduvec/prod.h"
 #include "ocudu/phy/lower/processors/lower_phy_cfo_controller.h"
 #include "ocudu/phy/lower/sampling_rate.h"
@@ -74,7 +75,7 @@ public:
   void advance(unsigned nof_samples) { sample_offset += nof_samples; }
 
   /// Applies carrier frequency offset in-place to a baseband buffer.
-  void process(span<ci16_t> buffer) const
+  void process(baseband_gateway_buffer_writer& buffer) const
   {
     // Skip CFO process if the current CFO is zero, NaN or infinity.
     if (!std::isnormal(current_cfo)) {
@@ -84,8 +85,11 @@ public:
     // Calculate the initial phase of the block in radians.
     float initial_phase = TWOPI * current_cfo * static_cast<float>(sample_offset);
 
-    // Apply CFO.
-    ocuduvec::prod_cexp(buffer, buffer, current_cfo, initial_phase);
+    // Apply CFO to each channel.
+    for (unsigned i_port = 0, i_port_end = buffer.get_nof_channels(); i_port != i_port_end; ++i_port) {
+      span<ci16_t> buff = buffer.get_channel_buffer(i_port);
+      ocuduvec::prod_cexp(buff, buff, current_cfo, initial_phase);
+    }
   }
 
 private:
