@@ -1830,9 +1830,6 @@ inline simd_cf_t ocudu_simd_loadu(const ci16_t* ptr)
 {
   simd_cf_t ret;
 
-  // Scaling factor for converting from 16-bit complex integer to complex float.
-  static constexpr float scale = 1.0f / std::numeric_limits<int16_t>::max();
-
 #ifdef __AVX512F__
   // Load 16 int16-based complex numbers.
   __m512i in = _mm512_loadu_si512(ptr);
@@ -1852,10 +1849,9 @@ inline simd_cf_t ocudu_simd_loadu(const ci16_t* ptr)
   __m512i re = _mm512_cvtepi16_epi32(_mm512_castsi512_si256(d));
   __m512i im = _mm512_cvtepi16_epi32(_mm512_extracti64x4_epi64(d, 1));
 
-  // Convert int32 elements to float and scale.
-  __m512 simd_scale = _mm512_set1_ps(scale);
-  ret.re            = _mm512_mul_ps(_mm512_cvtepi32_ps(re), simd_scale);
-  ret.im            = _mm512_mul_ps(_mm512_cvtepi32_ps(im), simd_scale);
+  // Convert int32 elements to float.
+  ret.re = _mm512_cvtepi32_ps(re);
+  ret.im = _mm512_cvtepi32_ps(im);
 #else /* __AVX512F__ */
 #ifdef __AVX2__
   // Load 4 int16-based complex numbers.
@@ -1879,13 +1875,8 @@ inline simd_cf_t ocudu_simd_loadu(const ci16_t* ptr)
   __m256i im = _mm256_permute2x128_si256(e1, e2, 0x31);
 
   // Convert int32 elements to float.
-  __m256 re_f = _mm256_cvtepi32_ps(re);
-  __m256 im_f = _mm256_cvtepi32_ps(im);
-
-  // Scale vectors.
-  __m256 simd_scale = _mm256_set1_ps(scale);
-  ret.re            = _mm256_mul_ps(re_f, simd_scale);
-  ret.im            = _mm256_mul_ps(im_f, simd_scale);
+  ret.re = _mm256_cvtepi32_ps(re);
+  ret.im = _mm256_cvtepi32_ps(im);
 #else /* __AVX2__ */
 #ifdef __SSE4_1__
   // Load 4 int16-based complex numbers.
@@ -1901,18 +1892,17 @@ inline simd_cf_t ocudu_simd_loadu(const ci16_t* ptr)
   __m128i re = _mm_cvtepi16_epi32(s);
   __m128i im = _mm_cvtepi16_epi32(_mm_unpackhi_epi64(s, s));
 
-  // Convert int32 elements to float and scale.
-  __m128 simd_scale = _mm_set1_ps(scale);
-  ret.re            = _mm_mul_ps(_mm_cvtepi32_ps(re), simd_scale);
-  ret.im            = _mm_mul_ps(_mm_cvtepi32_ps(im), simd_scale);
+  // Convert int32 elements to float.
+  ret.re = _mm_cvtepi32_ps(re);
+  ret.im = _mm_cvtepi32_ps(im);
 #else /* __SSE4_1__ */
 #ifdef __ARM_NEON
   // Load and deinterleave 4 int16-based complex numbers.
   int16x4x2_t in = vld2_s16(reinterpret_cast<const int16_t*>(ptr));
 
-  // Expand the int16 elements to int32 while preserving the sign, convert to float and scale.
-  ret.val[0] = vmulq_n_f32(vcvtq_f32_s32(vmovl_s16(in.val[0])), scale);
-  ret.val[1] = vmulq_n_f32(vcvtq_f32_s32(vmovl_s16(in.val[1])), scale);
+  // Expand the int16 elements to int32 while preserving the sign and convert to float.
+  ret.val[0] = vcvtq_f32_s32(vmovl_s16(in.val[0]));
+  ret.val[1] = vcvtq_f32_s32(vmovl_s16(in.val[1]));
 #endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
@@ -1923,18 +1913,10 @@ inline simd_cf_t ocudu_simd_loadu(const ci16_t* ptr)
 
 inline void ocudu_simd_storeu(ci16_t* ptr, simd_cf_t simdreg)
 {
-  // Scaling factor for converting from complex float to 16-bit complex integer.
-  static constexpr float scale = std::numeric_limits<int16_t>::max();
-
 #ifdef __AVX512F__
-  // Scale vectors.
-  __m512 simd_scale = _mm512_set1_ps(scale);
-  __m512 re_f       = _mm512_mul_ps(simdreg.re, simd_scale);
-  __m512 im_f       = _mm512_mul_ps(simdreg.im, simd_scale);
-
   // Interleave the real and imaginary parts within each 128-bit lane.
-  __m512 lo = _mm512_unpacklo_ps(re_f, im_f);
-  __m512 hi = _mm512_unpackhi_ps(re_f, im_f);
+  __m512 lo = _mm512_unpacklo_ps(simdreg.re, simdreg.im);
+  __m512 hi = _mm512_unpackhi_ps(simdreg.re, simdreg.im);
 
   // Convert float elements to int32.
   __m512i lo_i = _mm512_cvtps_epi32(lo);
@@ -1948,14 +1930,9 @@ inline void ocudu_simd_storeu(ci16_t* ptr, simd_cf_t simdreg)
   _mm512_storeu_si512(ptr, out);
 #else /* __AVX512F__ */
 #ifdef __AVX2__
-  // Scale vectors.
-  __m256 simd_scale = _mm256_set1_ps(scale);
-  __m256 re_f       = _mm256_mul_ps(simdreg.re, simd_scale);
-  __m256 im_f       = _mm256_mul_ps(simdreg.im, simd_scale);
-
   // Interleave the real and imaginary parts within each 128-bit lane.
-  __m256 lo = _mm256_unpacklo_ps(re_f, im_f);
-  __m256 hi = _mm256_unpackhi_ps(re_f, im_f);
+  __m256 lo = _mm256_unpacklo_ps(simdreg.re, simdreg.im);
+  __m256 hi = _mm256_unpackhi_ps(simdreg.re, simdreg.im);
 
   // Convert float elements to int32.
   __m256i lo_i = _mm256_cvtps_epi32(lo);
@@ -1969,15 +1946,10 @@ inline void ocudu_simd_storeu(ci16_t* ptr, simd_cf_t simdreg)
   _mm256_storeu_si256(reinterpret_cast<__m256i*>(ptr), out);
 #else /* __AVX2__ */
 #ifdef __SSE4_1__
-  // Scale vectors.
-  __m128 simd_scale = _mm_set1_ps(scale);
-  __m128 re_f       = _mm_mul_ps(simdreg.re, simd_scale);
-  __m128 im_f       = _mm_mul_ps(simdreg.im, simd_scale);
-
   // Interleave the real and imaginary parts.
-  __m128 lo = _mm_unpacklo_ps(re_f, im_f);
+  __m128 lo = _mm_unpacklo_ps(simdreg.re, simdreg.im);
   // hi:   i2 q2 i3 q3
-  __m128 hi = _mm_unpackhi_ps(re_f, im_f);
+  __m128 hi = _mm_unpackhi_ps(simdreg.re, simdreg.im);
 
   // Convert float elements to int32 and narrow them to int16 with saturation.
   __m128i out = _mm_packs_epi32(_mm_cvtps_epi32(lo), _mm_cvtps_epi32(hi));
@@ -1986,10 +1958,10 @@ inline void ocudu_simd_storeu(ci16_t* ptr, simd_cf_t simdreg)
   _mm_storeu_si128(reinterpret_cast<__m128i*>(ptr), out);
 #else /* __SSE4_1__ */
 #ifdef __ARM_NEON
-  // Scale vectors, convert to int32 and narrow to int16 with saturation.
+  // Convert to int32 and narrow to int16 with saturation.
   int16x4x2_t out;
-  out.val[0] = vqmovn_s32(vcvtnq_s32_f32(vmulq_n_f32(simdreg.val[0], scale)));
-  out.val[1] = vqmovn_s32(vcvtnq_s32_f32(vmulq_n_f32(simdreg.val[1], scale)));
+  out.val[0] = vqmovn_s32(vcvtnq_s32_f32(simdreg.val[0]));
+  out.val[1] = vqmovn_s32(vcvtnq_s32_f32(simdreg.val[1]));
 
   // Interleave and store 4 int16-based complex numbers.
   vst2_s16(reinterpret_cast<int16_t*>(ptr), out);

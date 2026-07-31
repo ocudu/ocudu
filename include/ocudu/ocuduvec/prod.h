@@ -62,6 +62,8 @@ void prod_cexp(span<cbf16_t> out, span<const cf_t> in, float norm_freq, float in
 
 /// \brief Multiplies a given signal by a complex exponential.
 ///
+/// The actual arithmetics are performed with single-precision floating-point complex numbers.
+///
 /// \param[out] out           Resultant complex samples.
 /// \param[in]  in            Input complex samples.
 /// \param[in]  norm_freq     Normalized frequency.
