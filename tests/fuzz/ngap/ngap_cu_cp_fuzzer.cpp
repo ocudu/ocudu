@@ -225,21 +225,19 @@ struct fuzz_state {
     }
     worker.wait_pending_tasks();
   }
-
-  ~fuzz_state()
-  {
-    cu_cp_inst->stop();
-    worker.stop();
-  }
 };
 
 // ---------------------------------------------------------------------------
 // Global state – lazy, created inside the (post-fork) child process so that
 // the task_worker thread is never inherited across a fork().
+//
+// The state is deliberately leaked: the ocudulog singleton registers its exit handler before the
+// state exists, so it is torn down first and stopping the CU-CP at exit would log through a freed
+// logger. The OS reclaims everything when the process ends.
 // ---------------------------------------------------------------------------
 
-static std::unique_ptr<fuzz_state> g_state;
-static std::once_flag              g_init_flag;
+static fuzz_state*    g_state = nullptr;
+static std::once_flag g_init_flag;
 
 /// Number of 1ms timer ticks executed after each input.
 ///
@@ -250,7 +248,7 @@ constexpr unsigned nof_timer_ticks_per_input = 8;
 
 static void ensure_state()
 {
-  std::call_once(g_init_flag, []() { g_state = std::make_unique<fuzz_state>(); });
+  std::call_once(g_init_flag, []() { g_state = new fuzz_state(); });
 }
 
 } // namespace
@@ -280,15 +278,16 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
   // ------------------------------------------------------------------
   // Step 1 – decode the fuzz input into an ngap_message.
   //
-  // We attempt a best-effort PER decode.  Partial or failed decodes are
-  // deliberately allowed through: the CU-CP validators and procedure
-  // dispatchers are the target, not the ASN.1 layer (covered separately by
-  // ngap_pdu_decoder_fuzzer).
+  // Inputs that fail to decode are dropped, mirroring ngap_asn1_packer::handle_packed_pdu(): the
+  // CU-CP never sees them in production, so injecting them would only exercise unreachable states.
+  // The ASN.1 layer itself is covered by ngap_pdu_decoder_fuzzer.
   // ------------------------------------------------------------------
   byte_buffer    buf{byte_buffer::fallback_allocation_tag{}, span<const uint8_t>(data, size)};
   asn1::cbit_ref bref{buf};
   ngap_message   msg{};
-  (void)msg.pdu.unpack(bref);
+  if (msg.pdu.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+    return 0;
+  }
 
   // ------------------------------------------------------------------
   // Step 2 – inject the message into the CU-CP via the AMF stub.
