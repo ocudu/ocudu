@@ -17,7 +17,7 @@ class buffer_pool_manager
 public:
   explicit buffer_pool_manager(const buffer_pool_appconfig& config)
   {
-    init_byte_buffer_segment_pool(config.nof_segments, config.segment_size);
+    init_byte_buffer_segment_pool(config.nof_segments, config.segment_size, config.use_hugepages);
   }
 
   /// Returns current size of the segment pool central cache.

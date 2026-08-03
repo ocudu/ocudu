@@ -32,6 +32,7 @@ set(SOURCES
         byte_buffer.cpp
         byte_buffer_chain.cpp
         cpu_architecture_info.cpp
+        pool_memory_region.cpp
         resource_usage/perf_event_powercap_reader_impl.cpp
         resource_usage/powercap_energy_reader_impl.cpp
         resource_usage/rapl_msr_energy_reader_impl.cpp

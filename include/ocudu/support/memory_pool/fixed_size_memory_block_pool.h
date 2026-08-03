@@ -11,12 +11,12 @@
 #include "ocudu/adt/static_vector.h"
 #include "ocudu/support/error_handling.h"
 #include "ocudu/support/memory_pool/memory_block_list.h"
+#include "ocudu/support/memory_pool/pool_memory_region.h"
 #include "ocudu/support/ocudu_assert.h"
 #include <cmath>
 #include <mutex>
 #include <thread>
 #include <unordered_map>
-#include <vector>
 
 namespace ocudu {
 
@@ -76,7 +76,7 @@ class fixed_size_memory_block_pool
   static constexpr size_t OVER_DIM_CENTRAL_CACHE = 2 * 32 * 32;
 
   /// Ctor of the memory pool. It is set as private because the class works as a singleton.
-  explicit fixed_size_memory_block_pool(size_t nof_blocks_, size_t memory_block_size_) :
+  explicit fixed_size_memory_block_pool(size_t nof_blocks_, size_t memory_block_size_, bool use_hugepages) :
     // Make sure that there are no gaps between blocks when they are allocated as paret of a single array.
     mblock_size(align_next(memory_block_size_, alignof(std::max_align_t))),
     // Make sure all batches are filled with block_batch_size blocks.
@@ -86,7 +86,7 @@ class fixed_size_memory_block_pool
         std::min<size_t>(MAX_LOCAL_BATCH_CAPACITY, nof_blocks / block_batch_size / MAX_EXPECTED_WORKERS),
         2U)),
     // Allocate the required memory for the given number of segments and segment size.
-    allocated_memory(mblock_size * nof_blocks),
+    allocated_memory(mblock_size * nof_blocks, use_hugepages),
     // Pre-reserve space in the central cache to hold all batches and avoid reallocations.
     central_mem_cache(nof_total_batches() + OVER_DIM_CENTRAL_CACHE)
   {
@@ -138,9 +138,9 @@ public:
   }
 
   /// \brief Get instance of a memory pool singleton.
-  static pool_type& get_instance(size_t nof_blocks = 0, size_t mem_block_size = 0)
+  static pool_type& get_instance(size_t nof_blocks = 0, size_t mem_block_size = 0, bool use_hugepages = false)
   {
-    static pool_type& pool = *get_instance_ptr(nof_blocks, mem_block_size);
+    static pool_type& pool = *get_instance_ptr(nof_blocks, mem_block_size, use_hugepages);
     return pool;
   }
 
@@ -255,11 +255,12 @@ public:
   }
 
 private:
-  static std::shared_ptr<pool_type> get_instance_ptr(size_t nof_blocks = 0, size_t mem_block_size = 0)
+  static std::shared_ptr<pool_type>
+  get_instance_ptr(size_t nof_blocks = 0, size_t mem_block_size = 0, bool use_hugepages = false)
   {
     // We use a shared_ptr to keep the pool alive, because we have no control over the order of destruction of workers
     // and the pool. e.g. this static pool object in this function could be destroyed before the worker_ctxt objects.
-    static std::shared_ptr<pool_type> pool(new pool_type(nof_blocks, mem_block_size));
+    static std::shared_ptr<pool_type> pool(new pool_type(nof_blocks, mem_block_size, use_hugepages));
     return pool;
   }
 
@@ -363,7 +364,7 @@ private:
   const size_t nof_blocks;
   const size_t max_local_batches;
 
-  std::vector<uint8_t> allocated_memory;
+  pool_memory_region allocated_memory;
 
   moodycamel::ConcurrentQueue<free_memory_block_list> central_mem_cache;
 

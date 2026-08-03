@@ -9,6 +9,7 @@
 
 namespace ocudu {
 
+/// Represents a memory resource backed by the heap.
 class heap_memory_resource
 {
 public:

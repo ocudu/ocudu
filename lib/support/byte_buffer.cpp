@@ -25,9 +25,9 @@ detail::byte_buffer_segment_pool& ocudu::detail::get_default_byte_buffer_segment
   return pool;
 }
 
-void ocudu::init_byte_buffer_segment_pool(std::size_t nof_segments, std::size_t memory_block_size)
+void ocudu::init_byte_buffer_segment_pool(std::size_t nof_segments, std::size_t memory_block_size, bool use_hugepages)
 {
-  auto& pool = detail::byte_buffer_segment_pool::get_instance(nof_segments, memory_block_size);
+  auto& pool = detail::byte_buffer_segment_pool::get_instance(nof_segments, memory_block_size, use_hugepages);
   report_fatal_error_if_not(pool.nof_memory_blocks() >= nof_segments,
                             "The pool was already initialized with a lower number of segments ({} < {})",
                             pool.nof_memory_blocks(),

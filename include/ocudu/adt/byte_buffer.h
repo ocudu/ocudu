@@ -19,8 +19,10 @@ size_t byte_buffer_segment_pool_default_segment_size();
 /// \param nof_segments Number of byte_buffer_segments stored in the pool.
 /// \param memory_block_size Number, in bytes, for each memory block on which a buffer_byte_segment header and payload
 /// will be stored.
+/// \param use_hugepages Flag to enable huge page backing.
 void init_byte_buffer_segment_pool(std::size_t nof_segments,
-                                   std::size_t memory_block_size = byte_buffer_segment_pool_default_segment_size());
+                                   std::size_t memory_block_size = byte_buffer_segment_pool_default_segment_size(),
+                                   bool        use_hugepages     = false);
 
 /// \brief Get total capacity of the byte buffer segment pool in terms of segments.
 size_t get_byte_buffer_segment_pool_capacity();

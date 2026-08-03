@@ -20,8 +20,9 @@ struct buffer_pool_metrics_config {
 
 /// Buffer pool application configuration.
 struct buffer_pool_appconfig {
-  std::size_t nof_segments = 1048576;
-  std::size_t segment_size = byte_buffer_segment_pool_default_segment_size();
+  std::size_t nof_segments  = 1048576;
+  std::size_t segment_size  = byte_buffer_segment_pool_default_segment_size();
+  bool        use_hugepages = false;
   /// Metrics config.
   buffer_pool_metrics_config metrics_config;
 };

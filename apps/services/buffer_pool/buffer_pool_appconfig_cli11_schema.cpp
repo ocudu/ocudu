@@ -16,6 +16,7 @@ static void configure_cli11_buffer_pool_args(CLI::App& app, buffer_pool_appconfi
       ->capture_default_str();
   add_option(app, "--segment_size", config.segment_size, "Size of each buffer pool segment in bytes")
       ->capture_default_str();
+  app.add_option("--use_hugepages", config.use_hugepages, "Enable huge page backing")->always_capture_default();
 }
 
 static void configure_cli11_metrics_args(CLI::App& app, bool& enable_metrics)
