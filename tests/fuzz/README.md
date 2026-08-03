@@ -60,15 +60,14 @@ cmake .. \
     -DBUILD_TESTING=OFF \
     -DENABLE_DPDK=OFF
 
-make -j$(nproc) \
-    ofh_uplane_decoder_fuzzer \
-    ofh_ecpri_decoder_fuzzer \
-    ofh_vlan_frame_decoder_fuzzer \
-    ngap_pdu_decoder_fuzzer \
-    ngap_cu_cp_fuzzer
+make -j$(nproc) fuzz_targets
 
 cd ..   # return to the repository root
+
 ```
+
+`fuzz_targets` is an aggregate target that builds every fuzz binary, so no
+target list needs updating when a new harness is added.
 
 `ENABLE_ASAN=ON` adds `-fsanitize=address` on top of the fuzzer
 instrumentation, which is the recommended combination for catching memory
@@ -94,9 +93,10 @@ cmake .. \
     -DENABLE_ASAN=ON \
     -DBUILD_TESTING=OFF
 
-make -j$(nproc) ofh_uplane_decoder_fuzzer
+make -j$(nproc) fuzz_targets
 
 cd ..   # return to the repository root
+
 ```
 
 ---

@@ -41,3 +41,9 @@ target_link_libraries(ofh_vlan_frame_decoder_fuzzer
     ${FUZZ_SANITIZER_FLAGS_LINK}
 )
 target_compile_options(ofh_vlan_frame_decoder_fuzzer PRIVATE ${FUZZ_SANITIZER_FLAGS_COMPILE})
+
+add_dependencies(fuzz_targets
+    ofh_uplane_decoder_fuzzer
+    ofh_ecpri_decoder_fuzzer
+    ofh_vlan_frame_decoder_fuzzer
+)

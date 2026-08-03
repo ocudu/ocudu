@@ -34,3 +34,8 @@ target_link_libraries(ngap_cu_cp_fuzzer
     ${FUZZ_SANITIZER_FLAGS_LINK}
 )
 target_compile_options(ngap_cu_cp_fuzzer PRIVATE ${FUZZ_SANITIZER_FLAGS_COMPILE})
+
+add_dependencies(fuzz_targets
+    ngap_pdu_decoder_fuzzer
+    ngap_cu_cp_fuzzer
+)

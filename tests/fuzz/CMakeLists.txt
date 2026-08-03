@@ -28,5 +28,9 @@ endif ()
 
 message(STATUS "Fuzz sanitizer flags: ${FUZZ_SANITIZER_FLAGS_COMPILE}")
 
+# Aggregate target building every fuzz binary. Each sub-directory registers its own binaries, so
+# adding a layer does not require updating the build instructions.
+add_custom_target(fuzz_targets)
+
 add_subdirectory(ofh)
 add_subdirectory(ngap)
