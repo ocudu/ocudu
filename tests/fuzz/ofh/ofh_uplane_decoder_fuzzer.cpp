@@ -9,19 +9,7 @@
 /// is used so the fuzzer focuses on the parsing layer rather than the
 /// compression arithmetic.
 ///
-/// Build
-/// -----
-/// Configure with -DENABLE_FUZZTESTS=ON and compile with afl-clang-fast++:
-///
-///   CXX=afl-clang-fast++ cmake -DENABLE_FUZZTESTS=ON \
-///       -DENABLE_ASAN=ON -DCMAKE_BUILD_TYPE=Debug <src_dir>
-///   make ofh_uplane_decoder_fuzzer
-///
-/// Run
-/// ---
-///   mkdir findings
-///   afl-fuzz -i tests/fuzz/ofh/corpus/uplane -o findings -- \
-///       ./tests/fuzz/ofh/ofh_uplane_decoder_fuzzer @@
+/// See tests/fuzz/README.md for build instructions and run commands.
 
 #include "lib/ofh/serdes/ofh_uplane_message_decoder_static_compression_impl.h"
 #include "ocudu/ocudulog/logger.h"

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 # Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
-set_directory_properties(PROPERTIES LABELS "fuzz_ngap")
+set_directory_properties(PROPERTIES LABELS "fuzz|ngap")
 
 # ---------------------------------------------------------------------------
 # NGAP PDU decoder fuzzer
@@ -23,11 +23,6 @@ target_compile_options(ngap_pdu_decoder_fuzzer PRIVATE ${FUZZ_SANITIZER_FLAGS_CO
 # Spins up a complete CU-CP instance and injects fuzz inputs through the NGAP
 # message dispatcher so that all procedure state-machines, validators, and
 # response generators are exercised on every iteration.
-#
-# Note: AFL++ fork mode will recreate the CU-CP in each child process because
-# the state is lazily initialised inside LLVMFuzzerTestOneInput.  For higher
-# throughput use AFL++ persistent mode (AFL_FAST_CAL=1) or libFuzzer, both of
-# which keep the CU-CP alive across iterations.
 # ---------------------------------------------------------------------------
 add_executable(ngap_cu_cp_fuzzer ngap_cu_cp_fuzzer.cpp)
 target_include_directories(ngap_cu_cp_fuzzer PRIVATE ${CMAKE_SOURCE_DIR})

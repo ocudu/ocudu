@@ -7,9 +7,7 @@
 /// Targets VLAN frame header parsing including MAC address extraction and
 /// Ethertype field validation.
 ///
-/// Build / Run: see ofh_uplane_decoder_fuzzer.cpp for the pattern; replace
-/// target name with ofh_vlan_frame_decoder_fuzzer and corpus path with
-/// tests/fuzz/ofh/corpus/vlan.
+/// See tests/fuzz/README.md for build instructions and run commands.
 
 #include "ocudu/ocudulog/logger.h"
 #include "ocudu/ocudulog/ocudulog.h"

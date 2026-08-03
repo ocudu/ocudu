@@ -29,13 +29,10 @@ NGAP_SEEDS = {
     # NGSetupRequest (initiatingMessage / id-NGSetup).
     # Source: ng_setup_request_packed[] in ngap_test_messages.h
     # Contains: GlobalRANNodeID, RANNodeName, SupportedTAList, DefaultPagingDRX.
-    "ng_setup_request": bytes([
-        0x00, 0x15, 0x00, 0x33, 0x00, 0x00, 0x04, 0x00, 0x1b, 0x00, 0x08, 0x00,
-        0x00, 0xf1, 0x10, 0x00, 0x00, 0x06, 0x6c, 0x00, 0x52, 0x40, 0x0a, 0x03,
-        0x80, 0x74, 0x73, 0x74, 0x67, 0x6e, 0x62, 0x30, 0x31, 0x00, 0x66, 0x00,
-        0x0d, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0xf1, 0x10, 0x00, 0x00,
-        0x00, 0x08, 0x00, 0x15, 0x40, 0x01, 0x60,
-    ]),
+    "ng_setup_request": bytes.fromhex(
+        "00150033000004001b00080000f1100000066c0052400a03807473"
+        "74676e6230310066000d00000000070000f110000000080015400160"
+    ),
 
     # InitialContextSetupRequest (initiatingMessage / id-InitialContextSetup).
     # Source: ngap_init_ctx_req in ngap_asn1_packer_test.cpp
@@ -48,10 +45,10 @@ NGAP_SEEDS = {
     ),
 
     # PDU header only (triggers early-exit / truncated-input path).
-    "truncated_header": bytes([0x00, 0x15, 0x00]),
+    "truncated_header": bytes.fromhex("001500"),
 
     # Corrupt / non-NGAP payload (triggers unpack failure path).
-    "invalid_payload": bytes([0xde, 0xad, 0xbe, 0xef]),
+    "invalid_payload": bytes.fromhex("deadbeef"),
 }
 
 # ---------------------------------------------------------------------------

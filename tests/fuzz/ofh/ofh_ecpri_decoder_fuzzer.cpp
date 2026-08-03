@@ -7,9 +7,7 @@
 /// Exercises both decoder variants (honour-header and ignore-header payload
 /// size modes) on every input so a single corpus covers both code paths.
 ///
-/// Build / Run: see ofh_uplane_decoder_fuzzer.cpp for the pattern; replace
-/// target name with ofh_ecpri_decoder_fuzzer and corpus path with
-/// tests/fuzz/ofh/corpus/ecpri.
+/// See tests/fuzz/README.md for build instructions and run commands.
 
 #include "lib/ofh/ecpri/ecpri_packet_decoder_impl.h"
 #include "ocudu/ocudulog/logger.h"

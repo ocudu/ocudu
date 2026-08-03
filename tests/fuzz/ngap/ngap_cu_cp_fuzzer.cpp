@@ -9,46 +9,11 @@
 /// up a real CU-CP instance and injects decoded NGAP messages directly into the
 /// NGAP message dispatcher.  This exercises the complete receive stack:
 ///
-///   fuzz input → ASN.1 PER decode → NGAP validators → procedure dispatcher
-///               → procedure state-machine → response generation
+///   fuzz input -> ASN.1 PER decode -> NGAP validators -> procedure dispatcher
+///               -> procedure state-machine -> response generation
 ///
-/// Architecture
-/// ------------
-///
-///   fuzz_amf            Implements n2_connection_client.  Replaces SCTP:
-///     push_tx_pdu()   - injects a decoded ngap_message into the CU-CP
-///     try_pop_rx_pdu()- drains ngap_messages sent by the CU-CP
-///
-///   fuzz_xnc_gateway    No-op xnc_connection_gateway (XN-C not under test).
-///
-///   task_worker         Background thread serving as the CU-CP executor,
-///                       matching the production and unit-test setup exactly.
-///
-///   timer_manager       Driven from the fuzzer main thread (tick()) to cover
-///                       timer-expiry code paths.
-///
-/// Initialization
-/// --------------
-/// State is created lazily on the first call to LLVMFuzzerTestOneInput.  The
-/// lazy approach ensures that AFL++ can fork the harness process BEFORE any
-/// threads have been started; the task_worker is therefore always created
-/// inside the (post-fork) child process.  libFuzzer runs in-process without
-/// forking so the init happens exactly once regardless.
-///
-/// Build
-/// -----
-///   CXX=afl-clang-fast++ CC=afl-clang-fast \
-///   cmake -DENABLE_FUZZTESTS=ON -DENABLE_ASAN=ON \
-///         -DCMAKE_BUILD_TYPE=Debug <src_dir>
-///   make ngap_cu_cp_fuzzer
-///
-/// Run (AFL++ persistent mode – recommended for performance)
-/// ---------------------------------------------------------
-///   mkdir -p findings/ngap_cu_cp
-///   AFL_FAST_CAL=1 afl-fuzz \
-///       -i tests/fuzz/ngap/corpus/ngap \
-///       -o findings/ngap_cu_cp \
-///       -- ./tests/fuzz/ngap/ngap_cu_cp_fuzzer @@
+/// See tests/fuzz/README.md for build instructions, run commands, and the
+/// test double architecture (fuzz_amf, fuzz_xnc_gateway).
 
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/adt/mutexed_mpmc_queue.h"
@@ -202,7 +167,7 @@ public:
 // ---------------------------------------------------------------------------
 
 struct fuzz_state {
-  /// Background thread that runs CU-CP tasks (matches production/unit-test setup).
+  /// Background thread that executes CU-CP tasks.
   task_worker                    worker{"ngap_fuzz_workr", 1024};
   std::unique_ptr<task_executor> exec{std::make_unique<task_worker_executor>(worker)};
 
@@ -276,6 +241,13 @@ struct fuzz_state {
 static std::unique_ptr<fuzz_state> g_state;
 static std::once_flag              g_init_flag;
 
+/// Number of 1ms timer ticks executed after each input.
+///
+/// Advancing the clock lets timers armed while handling the input fire. Kept small on purpose: each
+/// tick costs throughput, and the long CU-CP guard timers are out of reach at this granularity by
+/// design.
+constexpr unsigned nof_timer_ticks_per_input = 8;
+
 static void ensure_state()
 {
   std::call_once(g_init_flag, []() { g_state = std::make_unique<fuzz_state>(); });
@@ -333,10 +305,10 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
   g_state->worker.wait_pending_tasks();
 
   // ------------------------------------------------------------------
-  // Step 4 – advance the timer to exercise timer-expiry code paths
-  // (e.g. NG Reset timer, RRC procedure guard timer, UE inactivity timer).
+  // Step 4 – advance the timer to exercise the expiry paths of the timers armed while handling this
+  // input.
   // ------------------------------------------------------------------
-  for (int i = 0; i < 8; ++i) {
+  for (unsigned i = 0; i != nof_timer_ticks_per_input; ++i) {
     g_state->worker.push_task_blocking([&]() { g_state->timers.tick(); });
     g_state->worker.wait_pending_tasks();
   }

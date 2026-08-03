@@ -11,20 +11,7 @@
 /// covers all three NGAP PDU types (initiatingMessage, successfulOutcome,
 /// unsuccessfulOutcome) as well as every IE parser reachable from them.
 ///
-/// Build
-/// -----
-/// Configure with -DENABLE_FUZZTESTS=ON and compile with afl-clang-fast++:
-///
-///   CXX=afl-clang-fast++ CC=afl-clang-fast \
-///   cmake -DENABLE_FUZZTESTS=ON -DENABLE_ASAN=ON \
-///         -DCMAKE_BUILD_TYPE=Debug <src_dir>
-///   make ngap_pdu_decoder_fuzzer
-///
-/// Run
-/// ---
-///   mkdir -p findings/ngap
-///   afl-fuzz -i tests/fuzz/ngap/corpus/ngap -o findings/ngap -- \
-///       ./tests/fuzz/ngap/ngap_pdu_decoder_fuzzer @@
+/// See tests/fuzz/README.md for build instructions and run commands.
 
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/asn1/asn1_utils.h"

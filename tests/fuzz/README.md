@@ -1,47 +1,6 @@
 # Fuzz Test Harnesses
 
-Coverage-guided fuzz testing for the Open Fronthaul (OFH) packet-parsing
-stack and the NGAP ASN.1 PDU decoder, targeting
-[AFL++](https://github.com/AFLplusplus/AFLplusplus).  The harnesses use the
-`LLVMFuzzerTestOneInput` interface so they also run unmodified under
-[libFuzzer](https://llvm.org/docs/LibFuzzer.html).
-
----
-
-## Contents
-
-```
-tests/fuzz/
-├── README.md                               (this file)
-├── CMakeLists.txt
-├── ofh/
-│   ├── CMakeLists.txt
-│   ├── ofh_uplane_decoder_fuzzer.cpp       targets: OFH U-Plane message decoder
-│   ├── ofh_ecpri_decoder_fuzzer.cpp        targets: eCPRI packet decoder
-│   ├── ofh_vlan_frame_decoder_fuzzer.cpp   targets: VLAN Ethernet frame decoder
-│   ├── gen_corpus.py                       generates initial seed corpus
-│   └── corpus/
-│       ├── uplane/   seed inputs for the U-Plane fuzzer
-│       ├── ecpri/    seed inputs for the eCPRI fuzzer
-│       └── vlan/     seed inputs for the VLAN fuzzer
-└── ngap/
-    ├── CMakeLists.txt
-    ├── ngap_pdu_decoder_fuzzer.cpp         targets: NGAP ASN.1 PDU decoder
-    ├── ngap_cu_cp_fuzzer.cpp               targets: full CU-CP NGAP receive stack
-    ├── gen_corpus.py                       generates initial seed corpus
-    └── corpus/
-        └── ngap/     seed inputs for both NGAP fuzzers
-```
-
-### What each harness covers
-
-| Binary | Entry point | Notes |
-|---|---|---|
-| `ofh_uplane_decoder_fuzzer` | `uplane_message_decoder_static_compression_impl::decode()` + peek helpers | No-op IQ decompressor keeps focus on parsing |
-| `ofh_ecpri_decoder_fuzzer` | Both `packet_decoder_use_header_payload_size` and `packet_decoder_ignore_header_payload_size` | Single corpus covers both code paths |
-| `ofh_vlan_frame_decoder_fuzzer` | `vlan_frame_decoder::decode()` | Exercises MAC address and Ethertype parsing |
-| `ngap_pdu_decoder_fuzzer` | `asn1::ngap::ngap_pdu_c::unpack()` | Mirrors `ngap_asn1_packer::handle_packed_pdu()`; covers all three PDU types and every reachable IE parser |
-| `ngap_cu_cp_fuzzer` | Full CU-CP NGAP receive path: decode → validate → procedure dispatch → response | Spins up a real CU-CP with stub AMF/XnC gateways; exercises procedure state-machines, validators and response generators |
+Coverage-guided fuzz testing, targeting [AFL++](https://github.com/AFLplusplus/AFLplusplus). The harnesses use the `LLVMFuzzerTestOneInput` interface so they also run unmodified under [libFuzzer](https://llvm.org/docs/LibFuzzer.html).
 
 ---
 
@@ -70,25 +29,8 @@ reports.
 
 > **Version note:** The `afl++` package in Ubuntu 22.04 LTS ships AFL++
 > 4.00c.  Ubuntu 24.04 LTS ships 4.09c.  Both work with these harnesses.
-> If you need the absolute latest, build from source instead (see below).
-
-#### Build AFL++ from source (optional)
-
-```bash
-sudo apt-get install -y \
-    build-essential \
-    clang \
-    llvm \
-    llvm-dev \
-    libssl-dev \
-    libglib2.0-dev \
-    python3-dev
-
-git clone https://github.com/AFLplusplus/AFLplusplus
-cd AFLplusplus
-make -j$(nproc)
-sudo make install
-```
+> If you need a newer release, see the
+> [AFL++ installation instructions](https://github.com/AFLplusplus/AFLplusplus/blob/stable/docs/INSTALL.md).
 
 ### Verify the installation
 
@@ -122,7 +64,10 @@ make -j$(nproc) \
     ofh_uplane_decoder_fuzzer \
     ofh_ecpri_decoder_fuzzer \
     ofh_vlan_frame_decoder_fuzzer \
-    ngap_pdu_decoder_fuzzer
+    ngap_pdu_decoder_fuzzer \
+    ngap_cu_cp_fuzzer
+
+cd ..   # return to the repository root
 ```
 
 `ENABLE_ASAN=ON` adds `-fsanitize=address` on top of the fuzzer
@@ -132,23 +77,6 @@ safety bugs.
 > **Note:** `BUILD_TESTING=OFF` is optional but speeds up the build by
 > skipping the full unit-test suite.  The fuzz targets have no dependency on
 > it.
-
-### Optional: UBSan variant
-
-Pair AddressSanitizer with UndefinedBehaviorSanitizer to catch integer
-overflows and other undefined behaviour:
-
-```bash
-CXX=afl-clang-fast++ CC=afl-clang-fast \
-cmake .. \
-    -DCMAKE_BUILD_TYPE=Debug \
-    -DENABLE_FUZZTESTS=ON \
-    -DENABLE_ASAN=ON \
-    -DENABLE_UBSAN=ON \
-    -DBUILD_TESTING=OFF
-
-make -j$(nproc) ofh_uplane_decoder_fuzzer
-```
 
 ### libFuzzer (alternative, no AFL++ required)
 
@@ -167,21 +95,27 @@ cmake .. \
     -DBUILD_TESTING=OFF
 
 make -j$(nproc) ofh_uplane_decoder_fuzzer
+
+cd ..   # return to the repository root
 ```
 
 ---
 
 ## Generating the seed corpus
 
-The seed corpus is committed to the repository under `tests/fuzz/ofh/corpus/`
-and is derived directly from the unit-test vectors.  If you need to
-regenerate it (e.g. after adding new unit tests):
+> All commands from this point on are run from the **repository root**.
+
+The seed corpus is committed to the repository under
+`tests/fuzz/<layer>/corpus/` and is derived directly from the unit-test
+vectors.  If you need to regenerate it (e.g. after adding new unit tests):
 
 ```bash
 python3 tests/fuzz/ofh/gen_corpus.py
+python3 tests/fuzz/ngap/gen_corpus.py
 ```
 
-The script writes binary seed files into the three corpus sub-directories.
+Each script writes binary seed files into the corpus sub-directories of its
+own layer.
 
 ---
 
@@ -190,10 +124,19 @@ The script writes binary seed files into the three corpus sub-directories.
 ### Prepare output directories
 
 ```bash
+# Default: findings/ inside the repository root
 mkdir -p findings/uplane findings/ecpri findings/vlan findings/ngap findings/ngap_cu_cp
+
+# Alternative: any absolute path
+export FUZZ_OUTPUT_DIR=/tmp/fuzz_findings
+mkdir -p $FUZZ_OUTPUT_DIR/uplane $FUZZ_OUTPUT_DIR/ecpri $FUZZ_OUTPUT_DIR/vlan \
+         $FUZZ_OUTPUT_DIR/ngap $FUZZ_OUTPUT_DIR/ngap_cu_cp
 ```
 
-### U-Plane decoder fuzzer
+`FUZZ_OUTPUT_DIR` is picked up automatically by `run_fuzzers.sh`.  For manual
+`afl-fuzz` invocations, pass the path directly via `-o`.
+
+### OFH U-Plane decoder fuzzer
 
 ```bash
 afl-fuzz \
@@ -202,7 +145,7 @@ afl-fuzz \
     -- ./build_fuzz/tests/fuzz/ofh/ofh_uplane_decoder_fuzzer @@
 ```
 
-### eCPRI decoder fuzzer
+### OFH eCPRI decoder fuzzer
 
 ```bash
 afl-fuzz \
@@ -211,7 +154,7 @@ afl-fuzz \
     -- ./build_fuzz/tests/fuzz/ofh/ofh_ecpri_decoder_fuzzer @@
 ```
 
-### VLAN frame decoder fuzzer
+### OFH VLAN frame decoder fuzzer
 
 ```bash
 afl-fuzz \
@@ -220,7 +163,7 @@ afl-fuzz \
     -- ./build_fuzz/tests/fuzz/ofh/ofh_vlan_frame_decoder_fuzzer @@
 ```
 
-### NGAP PDU decoder fuzzer
+### NGAP PDU decoder fuzzer (ASN.1 only)
 
 ```bash
 python3 tests/fuzz/ngap/gen_corpus.py   # generate seeds (only needed once)
@@ -242,10 +185,17 @@ AFL_FAST_CAL=1 afl-fuzz \
     -- ./build_fuzz/tests/fuzz/ngap/ngap_cu_cp_fuzzer @@
 ```
 
-> **Note:** The CU-CP state is initialised lazily on the first `LLVMFuzzerTestOneInput` call so
-> that AFL++ forking does not inherit live threads.  In standard fork mode each child re-runs the
-> NG Setup handshake before processing its input; `AFL_FAST_CAL=1` (persistent mode) or libFuzzer
-> are strongly recommended for throughput.
+> **Note:** Use `AFL_FAST_CAL=1` (persistent mode) or libFuzzer for throughput; in standard fork
+> mode each child re-runs the NG Setup handshake before processing its input.
+
+#### Test double architecture
+
+| Component | Role |
+|---|---|
+| `fuzz_amf` | `n2_connection_client` stub; `push_tx_pdu()` injects a decoded `ngap_message` into the CU-CP, `try_pop_rx_pdu()` drains responses sent by the CU-CP |
+| `fuzz_xnc_gateway` | No-op `xnc_connection_gateway`; the XN-C interface is not under test |
+| `task_worker` | Background thread that executes CU-CP tasks |
+| `timer_manager` | Driven from the fuzzer main thread via `tick()` to cover timer-expiry code paths |
 
 ### Running in parallel (recommended)
 
@@ -331,24 +281,6 @@ Commit the updated corpus alongside code changes.
 A `Dockerfile` and `run_fuzzers.sh` entrypoint are provided in `tests/fuzz/`
 so the entire build-and-fuzz workflow runs in an isolated, reproducible
 container without any local tool installation beyond Docker itself.
-
-### Installing Docker
-
-```bash
-# Ubuntu / Debian
-sudo apt-get update
-sudo apt-get install -y docker.io
-sudo systemctl enable --now docker
-
-# Add your user to the docker group (log out and back in afterwards)
-sudo usermod -aG docker $USER
-```
-
-Verify:
-
-```bash
-docker --version
-```
 
 ### Building the image
 

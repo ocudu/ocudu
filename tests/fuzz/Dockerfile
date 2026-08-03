@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
-# Single-stage image for OFH and NGAP/CU-CP fuzz testing with AFL++.
+# Single-stage image for fuzz testing with AFL++.
 #
 # A single stage is used so that the AFL++/clang ASAN runtime libraries are
 # always co-located with the compiled fuzz binaries.  Multi-stage builds risk
