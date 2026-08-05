@@ -168,6 +168,7 @@ void ue_repository::add_ue(const ue_configuration& ue_cfg, const ue_creation_con
                              ue_lc_mng.view(),
                              creation_ctx.ul_ccch_slot_rx,
                              logger);
+  ue_ta_report_trackers.emplace(ue_index);
   auto ue_ta_mgr = ta_mgr_sys.add_ue(
       ue_cfg.pcell_cfg().tag_id(), pcell_cmn.params.ul_cfg_common.init_ul_bwp.generic_params.scs, ue_lc_mng.view());
 
@@ -177,14 +178,23 @@ void ue_repository::add_ue(const ue_configuration& ue_cfg, const ue_creation_con
   for (unsigned i = 0, sz = ue_cfg.nof_cells(); i != sz; ++i) {
     const auto&           cell_cfg   = ue_cfg.ue_cell_cfg(static_cast<serv_cell_index_t>(i));
     const du_cell_index_t cell_index = cell_cfg.cell_cfg_common.cell_index;
-    auto&                 ue_cc      = cell_ues[cell_index]->add_ue(
-        ue_cfg, static_cast<serv_cell_index_t>(i), &ue_fsms[ue_index], ue_drx_controllers[ue_index]);
+    auto&                 ue_cc =
+        cell_ues[cell_index]->add_ue(ue_cfg,
+                                     static_cast<serv_cell_index_t>(i),
+                                     &ue_fsms[ue_index],
+                                     ue_shared_context{ue_drx_controllers[ue_index], ue_ta_report_trackers[ue_index]});
     cell_lookup.du_cells.emplace(cell_index, &ue_cc);
     cell_lookup.ue_cells.push_back(&ue_cc);
   }
 
   // Add UE in the repository.
-  ues.emplace(ue_index, ue_cfg, std::move(ue_lc_mng), ue_drx_controllers[ue_index], std::move(ue_ta_mgr), cell_lookup);
+  ues.emplace(ue_index,
+              ue_cfg,
+              std::move(ue_lc_mng),
+              ue_drx_controllers[ue_index],
+              ue_ta_report_trackers[ue_index],
+              std::move(ue_ta_mgr),
+              cell_lookup);
 
   // Update RNTI -> UE index lookup.
   auto res = rnti_to_ue_index_lookup.insert(std::make_pair(rnti, ue_index));
@@ -215,6 +225,12 @@ void ue_repository::reconfigure_ue(const ue_configuration& new_cfg, sched_ue_con
     u.drx_controller().reconfigure(new_cfg.drx_cfg());
   }
 
+  // The UE re-acquires its uplink timing through the random access that precedes a reestablishment, so a T_TA reported
+  // before it no longer describes the UE. Discarding it falls back to the cell estimate until the UE reports again.
+  if (cause == sched_ue_config_request::causes::rrc_reconf_after_reest) {
+    ue_ta_report_trackers[new_cfg.ue_index].reset();
+  }
+
   // Update UE cells.
   auto& prev_cell_lookup = ue_cell_lookups[new_cfg.ue_index];
   for (unsigned i = 0, sz = prev_cell_lookup.ue_cells.size(); i != sz; ++i) {
@@ -233,10 +249,11 @@ void ue_repository::reconfigure_ue(const ue_configuration& new_cfg, sched_ue_con
     const du_cell_index_t cell_index = ue_cc_cfg.cell_cfg_common.cell_index;
     if (not prev_cell_lookup.du_cells.contains(cell_index)) {
       // New cell being instantiated.
-      auto& ue_cc = cell_ues[cell_index]->add_ue(new_cfg,
-                                                 static_cast<serv_cell_index_t>(i),
-                                                 i == 0 ? &ue_fsms[new_cfg.ue_index] : nullptr,
-                                                 ue_drx_controllers[new_cfg.ue_index]);
+      auto& ue_cc = cell_ues[cell_index]->add_ue(
+          new_cfg,
+          static_cast<serv_cell_index_t>(i),
+          i == 0 ? &ue_fsms[new_cfg.ue_index] : nullptr,
+          ue_shared_context{ue_drx_controllers[new_cfg.ue_index], ue_ta_report_trackers[new_cfg.ue_index]});
       new_lookup.du_cells.emplace(cell_index, &ue_cc);
       new_lookup.ue_cells.push_back(&ue_cc);
     } else {
@@ -332,6 +349,7 @@ void ue_repository::rem_ue(const ue& u)
 
   // Remove UE components.
   ue_drx_controllers.erase(ue_idx);
+  ue_ta_report_trackers.erase(ue_idx);
   ue_fsms.erase(ue_idx);
 
   // Remove UE from RNTI->UE lookup.

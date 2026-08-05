@@ -198,6 +198,75 @@ TEST_F(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_l
   ASSERT_FALSE(u.logical_channels().has_dl_pending_bytes());
 }
 
+class ue_ul_meas_gap_test : public ue_configuration_test
+{
+protected:
+  /// 6ms gap every 80ms, starting at subframe 10. At 15kHz there is one slot per subframe.
+  static constexpr meas_gap_config test_gap{10, meas_gap_length::ms6, meas_gap_repetition_period::ms80};
+
+  /// Builds a slot whose position within the gap period is \c phase subframes after the gap offset.
+  static slot_point slot_at_gap_phase(unsigned phase)
+  {
+    const unsigned slot_idx = 70 * static_cast<unsigned>(test_gap.mgrp) + test_gap.offset + phase;
+    return slot_point{subcarrier_spacing::kHz15, slot_idx / 10, slot_idx % 10};
+  }
+
+  /// Absence of a UE Timing Advance Report, which \c ue_ta_report_tracker tracks outside the configuration.
+  static constexpr std::optional<std::chrono::microseconds> no_report{};
+
+  /// Creates a UE cell configuration with the measurement gap above, on a cell with the given reference location T_TA.
+  ue_cell_configuration make_ue_cfg(std::optional<std::chrono::microseconds> cell_ul_ta)
+  {
+    cell_configuration& cell_cfg = cfg_pool.add_cell(sched_cfg, msg);
+    cell_cfg_db.emplace(msg.cell_index, &cell_cfg);
+    cell_cfg.ntn_ref_location_ul_ta = cell_ul_ta;
+    return ue_cell_configuration{
+        to_rnti(0x4601), cell_cfg, cfg_pool.add_ue(ue_create_msg).cells[cell_cfg.cell_index], test_gap};
+  }
+};
+
+TEST_F(ue_ul_meas_gap_test, when_no_report_was_received_then_the_cell_estimate_places_the_window)
+{
+  // T_TA of 14 slots, as in an NTN cell with a feeder link. The window sits at the gap offset plus T_TA, guarded by one
+  // slot on each side, so at phases 13..21.
+  ue_cell_configuration ue_cfg = make_ue_cfg(std::chrono::microseconds{14600});
+
+  ASSERT_TRUE(ue_cfg.is_ul_enabled(slot_at_gap_phase(0), no_report))
+      << "the gap offset itself is usable, the UE transmits early";
+  ASSERT_FALSE(ue_cfg.is_ul_enabled(slot_at_gap_phase(14), no_report));
+  ASSERT_TRUE(ue_cfg.is_ul_enabled(slot_at_gap_phase(30), no_report));
+}
+
+TEST_F(ue_ul_meas_gap_test, when_the_cell_has_an_estimate_then_a_report_does_not_displace_it)
+{
+  // The cell estimate is recomputed as the satellite moves, while a UE report only refreshes while tar-Config is
+  // configured. Letting a report win would freeze the window at the value last reported, which ages at tens of
+  // microseconds per second.
+  //
+  // A T_TA of 14 slots blocks phases 13..21, one of 20 slots blocks 19..27. The phases that tell the two apart are
+  // those only one of them blocks: 14 for the estimate, 25 for the report.
+  ue_cell_configuration ue_cfg = make_ue_cfg(std::chrono::microseconds{14600});
+  ASSERT_FALSE(ue_cfg.is_ul_enabled(slot_at_gap_phase(14), no_report));
+  ASSERT_TRUE(ue_cfg.is_ul_enabled(slot_at_gap_phase(25), no_report));
+
+  const std::optional<std::chrono::microseconds> report{20000};
+  ASSERT_FALSE(ue_cfg.is_ul_enabled(slot_at_gap_phase(14), report)) << "the window must stay on the cell estimate";
+  ASSERT_TRUE(ue_cfg.is_ul_enabled(slot_at_gap_phase(25), report)) << "the report must not displace the cell estimate";
+}
+
+TEST_F(ue_ul_meas_gap_test, when_the_cell_does_not_track_the_timing_advance_then_a_report_still_places_the_window)
+{
+  // A cell without reference_location produces no estimate, so the window would stay unshifted at phases 0..6.
+  ue_cell_configuration ue_cfg = make_ue_cfg(std::nullopt);
+  ASSERT_FALSE(ue_cfg.is_ul_enabled(slot_at_gap_phase(0), no_report));
+  ASSERT_TRUE(ue_cfg.is_ul_enabled(slot_at_gap_phase(14), no_report));
+
+  // The UE report is then the only source of T_TA, and it is enough to place the window correctly.
+  const std::optional<std::chrono::microseconds> report{14600};
+  ASSERT_TRUE(ue_cfg.is_ul_enabled(slot_at_gap_phase(0), report));
+  ASSERT_FALSE(ue_cfg.is_ul_enabled(slot_at_gap_phase(14), report));
+}
+
 TEST_F(ue_configuration_test, search_spaces_pdcch_candidate_lists_does_not_surpass_limit)
 {
   cell_config_builder_params params{};

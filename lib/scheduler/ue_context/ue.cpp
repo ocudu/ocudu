@@ -10,6 +10,7 @@ using namespace ocudu;
 ue::ue(const ue_configuration&       cfg,
        ue_logical_channel_repository lch_repo,
        ue_drx_controller&            drx_ctrl,
+       ue_ta_report_tracker&         ta_report_tracker_,
        ue_ta_manager                 ta_mgr_,
        const ue_cell_lookup&         ue_cells_) :
   ue_index(cfg.ue_index),
@@ -20,6 +21,7 @@ ue::ue(const ue_configuration&       cfg,
   lc_ch_mgr(std::move(lch_repo)),
   ta_mgr(std::move(ta_mgr_)),
   drx(drx_ctrl),
+  ta_report(ta_report_tracker_),
   cells(ue_cells_)
 {
 }

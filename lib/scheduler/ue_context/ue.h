@@ -8,6 +8,7 @@
 #include "ta_management_system.h"
 #include "ue_cell.h"
 #include "ue_drx_controller.h"
+#include "ue_ta_report_tracker.h"
 #include "ocudu/ran/du_types.h"
 #include "ocudu/ran/serv_cell_index.h"
 #include "ocudu/scheduler/mac_scheduler.h"
@@ -31,6 +32,7 @@ public:
   ue(const ue_configuration&       cfg_,
      ue_logical_channel_repository dl_lch_repo,
      ue_drx_controller&            drx_ctrl,
+     ue_ta_report_tracker&         ta_report_tracker_,
      ue_ta_manager                 ta_mgr_,
      const ue_cell_lookup&         ue_cells);
   ue(const ue&)            = delete;
@@ -98,6 +100,9 @@ public:
   /// \brief Retrieves UE DRX controller.
   ue_drx_controller& drx_controller() { return drx; }
 
+  /// \brief Retrieves the tracker of the uplink timing advance reported by the UE.
+  ue_ta_report_tracker& ta_report_tracker() { return ta_report; }
+
   /// Retrieve UE logical channel manager.
   const ue_logical_channel_repository& logical_channels() const { return lc_ch_mgr; }
   ue_logical_channel_repository&       logical_channels() { return lc_ch_mgr; }
@@ -115,6 +120,8 @@ private:
   ue_ta_manager ta_mgr;
   /// Controller of DRX active timer.
   ue_drx_controller& drx;
+  /// Tracker of the uplink timing advance reported by the UE.
+  ue_ta_report_tracker& ta_report;
   /// Configured cells for the UE.
   const ue_cell_lookup& cells;
 

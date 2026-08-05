@@ -171,8 +171,13 @@ public:
     return true;
   }
 
-  /// Determines whether UL allocations are possible in the provided slot.
-  bool is_ul_enabled(slot_point ul_slot) const;
+  /// \brief Determines whether UL allocations are possible in the provided slot.
+  ///
+  /// \param ul_slot Slot for which the UE uplink is being tested.
+  /// \param reported_ul_ta T_TA last reported by the UE, if any. Tracked outside the configuration, in
+  /// \c ue_ta_report_tracker, and used to place the uplink measurement gap window when the cell has no estimate of its
+  /// own. Callers holding a \c ue_cell should use \c ue_cell::is_ul_enabled, which supplies it.
+  bool is_ul_enabled(slot_point ul_slot, std::optional<std::chrono::microseconds> reported_ul_ta) const;
 
   /// Get CSI-MeasConfig for the UE.
   const csi_meas_config* csi_meas_cfg() const

@@ -76,7 +76,7 @@ void ue_cell_repository::deactivate()
 ue_cell& ue_cell_repository::add_ue(const ue_configuration& ue_cfg,
                                     serv_cell_index_t       serv_cell_index,
                                     ue_pcell_state*         ue_pcell_fsm,
-                                    ue_drx_controller&      drx)
+                                    ue_shared_context       shared_ctx)
 {
   ocudu_assert(not ues.contains(ue_cfg.ue_index), "UE with duplicate index being added to the cell UE repository");
   const auto& ue_cell_cfg = ue_cfg.ue_cell_cfg(serv_cell_index);
@@ -97,14 +97,9 @@ ue_cell& ue_cell_repository::add_ue(const ue_configuration& ue_cfg,
   components.pucch_pwr_controller = pucch_pwr_controller_pool.get(ue_cell_cfg, logger);
 
   // Add UE in the repository.
-  ues.emplace(ue_cfg.ue_index,
-              ue_pool.get(ue_cfg.ue_index,
-                          ue_cfg.crnti,
-                          ue_cell_cfg,
-                          cell_harqs,
-                          ue_shared_context{drx},
-                          std::move(components),
-                          logger));
+  ues.emplace(
+      ue_cfg.ue_index,
+      ue_pool.get(ue_cfg.ue_index, ue_cfg.crnti, ue_cell_cfg, cell_harqs, shared_ctx, std::move(components), logger));
   auto res = rnti_to_ue_index_lookup.insert(std::make_pair(ue_cfg.crnti, ue_cfg.ue_index));
   ocudu_assert(res.second, "UE with duplicate RNTI being added to the cell UE repository");
   return *ues[ue_cfg.ue_index];

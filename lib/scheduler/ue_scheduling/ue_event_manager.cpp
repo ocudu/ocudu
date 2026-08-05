@@ -845,6 +845,8 @@ void ue_cell_event_manager::handle_ul_ta_report_indication(const ul_ta_report_in
                    estimate.has_value() ? estimate->count() : 0);
     }
 
+    u.ta_report_tracker().handle_ta_report(ta_report->ul_ta);
+
     return event_result::processed;
   };
 
