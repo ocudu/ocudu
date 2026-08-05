@@ -3679,8 +3679,28 @@ static bool calculate_mac_cell_group_config_diff(asn1::rrc_nr::mac_cell_group_cf
 
   out.skip_ul_tx_dyn = dest.skip_uplink_tx_dynamic;
 
+  // tar-Config, in the Rel-17 extension group. Only signalled on a change, like phr_cfg above.
+  if (dest.tar_cfg.has_value() and dest.tar_cfg != src.tar_cfg) {
+    out.tar_cfg_r17.set_present();
+    tar_cfg_r17_s& tar              = out.tar_cfg_r17->set_setup();
+    tar.offset_thres_ta_r17_present = true;
+    // The field is enumerated in milliseconds, with 0.5ms as the smallest step.
+    const float offset_thres_ms = static_cast<float>(dest.tar_cfg->offset_threshold_ta.count()) / 1000.0F;
+    if (not asn1::number_to_enum(tar.offset_thres_ta_r17, offset_thres_ms)) {
+      report_error("Invalid offsetThresholdTA={}ms in tar-Config\n", offset_thres_ms);
+    }
+    tar.timing_advance_sr_r17_present = dest.tar_cfg->sr_enabled;
+  } else if (src.tar_cfg.has_value() and not dest.tar_cfg.has_value()) {
+    out.tar_cfg_r17.set_present();
+    out.tar_cfg_r17->set_release();
+  } else {
+    // Either tar-Config is unchanged, or it was never configured. Nothing to signal.
+    out.tar_cfg_r17.reset();
+  }
+  out.ext = out.ext or out.tar_cfg_r17.is_present();
+
   return out.drx_cfg_present || out.sched_request_cfg_present || out.bsr_cfg_present || out.tag_cfg_present ||
-         out.phr_cfg_present;
+         out.phr_cfg_present || out.tar_cfg_r17.is_present();
 }
 
 static static_vector<rlc_bearer_config, MAX_NOF_RB_LCIDS> fill_rlc_bearers(const du_ue_resource_config& res)

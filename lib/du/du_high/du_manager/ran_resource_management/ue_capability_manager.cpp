@@ -270,6 +270,10 @@ expected<ue_capability_summary, std::string> odu::decode_ue_nr_cap_container(con
     ue_caps.long_drx_cycle_supported  = ue_cap.mac_params.mac_params_xdd_diff.long_drx_cycle_present;
     ue_caps.short_drx_cycle_supported = ue_cap.mac_params.mac_params_xdd_diff.short_drx_cycle_present;
   }
+  if (ue_cap.mac_params_present and ue_cap.mac_params.mac_params_common_present) {
+    ue_caps.sr_triggered_by_ta_report_supported =
+        ue_cap.mac_params.mac_params_common.sr_triggered_by_ta_report_r17_present;
+  }
   if (ue_cap.meas_and_mob_params_present and ue_cap.meas_and_mob_params.meas_and_mob_params_common_present) {
     const auto& meas_common = ue_cap.meas_and_mob_params.meas_and_mob_params_common;
     if (meas_common.supported_gap_pattern_present) {

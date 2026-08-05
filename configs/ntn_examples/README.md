@@ -97,7 +97,12 @@ cell_cfg:
     ntn_ul_sync_validity_dur: 5
     distance_threshold: 50000    # location-based measurement distance [meters]
     t_service: '...'             # time the serving cell stops serving (pass LOS)
-    ta_report: false             # enable timing-advance reporting in SIB19
+    ta_report: false             # enable timing-advance reporting in SIB19 (random access and handover)
+    ta_report_offset_threshold: 1 # optional; ms of T_TA drift that triggers a UE Timing Advance Report.
+                                 # The report resolves whole 15kHz slots (1ms), so values below 1 only add
+                                 # duplicate reports carrying a value the gNB already has.
+    ta_report_sr_enabled: false  # optional; let a triggered report raise an SR when no UL grant is available.
+                                 # Requires the UE to support sr-TriggeredBy-TA-Report-r17.
     reference_location:          # serving cell reference location (= cell center)
       latitude: ...
       longitude: ...

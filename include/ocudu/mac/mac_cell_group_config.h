@@ -9,7 +9,10 @@
 #include "ocudu/mac/phr_config.h"
 #include "ocudu/ran/drx_config.h"
 #include "ocudu/ran/sr_configuration.h"
+#include "ocudu/ran/tar_config.h"
 #include "ocudu/ran/time_alignment_config.h"
+#include <chrono>
+#include <optional>
 #include <vector>
 
 namespace ocudu {
@@ -28,6 +31,8 @@ struct mac_cell_group_config {
   std::optional<phr_config> phr_cfg;
   /// \c skipUplinkTxDynamic.
   bool skip_uplink_tx_dynamic = false;
+  /// \c tar-Config.
+  std::optional<tar_config> tar_cfg;
   // TODO: add remaining fields.
 };
 

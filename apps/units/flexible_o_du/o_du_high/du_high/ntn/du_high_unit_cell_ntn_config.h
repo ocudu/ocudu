@@ -102,6 +102,13 @@ struct du_high_unit_ntn_serving_cell_config {
   /// serving cell in SIB19 (unlike for neighbor cells or SatSwitchWithReSync, where it is optional), so this field
   /// is not optional and defaults to disabled.
   bool ta_report = false;
+  /// \brief Threshold of T_TA variation, in milliseconds, at which the UE sends a Timing Advance Report
+  /// (\c offsetThresholdTA, TS 38.321, 5.4.8). Enables tar-Config when set; absent leaves TA reporting to the
+  /// random-access and handover triggers governed by \c ta_report alone.
+  std::optional<float> ta_report_offset_threshold;
+  /// Lets a triggered Timing Advance Report raise a Scheduling Request when no UL grant is available
+  /// (\c timingAdvanceSR). Requires the UE to support sr-TriggeredBy-TA-Report-r17.
+  bool ta_report_sr_enabled = false;
   /// Moving reference location for NTN Earth-moving cell (R18).
   std::optional<geodetic_coordinates_t> moving_ref_location;
   /// Satellite switch with resynchronization parameters (R18).

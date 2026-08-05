@@ -18,6 +18,7 @@
 #include "ocudu/rlc/rlc_config.h"
 #include "ocudu/support/math/math_utils.h"
 #include <algorithm>
+#include <cmath>
 #include <set>
 #include <unordered_map>
 
@@ -654,6 +655,11 @@ static bool validate_ntn_config(const du_high_unit_cell_ntn_config& ntn_cfg, nr_
   if (not serving.sat_ref.satellite_idx and serving.feeder_link_info and not serving.sat_ref.gateway_location and
       not serving.sat_ref.ta_info) {
     fmt::print("feeder_link requires gateway_location or ta_info to be set.\n");
+    valid = false;
+  }
+
+  if (serving.ta_report_sr_enabled and not serving.ta_report_offset_threshold.has_value()) {
+    fmt::print("ntn.ta_report_sr_enabled requires ntn.ta_report_offset_threshold to be set.\n");
     valid = false;
   }
 

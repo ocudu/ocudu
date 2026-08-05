@@ -5,6 +5,7 @@
 #pragma once
 
 #include "ocudu/ran/ntn.h"
+#include "ocudu/ran/tar_config.h"
 #include <chrono>
 #include <optional>
 #include <variant>
@@ -18,6 +19,10 @@ struct ntn_cell_params {
 
   /// Whether UL HARQ Mode B is enabled for this NTN cell (if there is at least one UL HARQ process in mode B).
   bool ul_harq_mode_b = false;
+
+  /// \brief Timing Advance reporting configuration to signal to the UEs of this cell (\c tar-Config,
+  /// TS 38.321, 5.4.8). Absent when variation-triggered TA reporting is not configured.
+  std::optional<tar_config> tar_cfg;
 
   /// \brief Uplink timing advance T_TA of a UE at the cell reference location (TS 38.211, Section 4.3.1).
   ///

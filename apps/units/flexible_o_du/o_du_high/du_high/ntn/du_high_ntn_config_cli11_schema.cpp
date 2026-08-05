@@ -194,6 +194,19 @@ static void configure_cli11_ntn_args(CLI::App&                             app,
              " When this field is included in SIB19, it indicates reporting of timing advanced is enabled")
       ->capture_default_str();
 
+  // TA reporting on T_TA variation (tar-Config).
+  add_option(app,
+             "--ta_report_offset_threshold",
+             serv_cell_ntn_config.ta_report_offset_threshold,
+             "Threshold of T_TA variation [ms] at which the UE sends a Timing Advance Report. Enables tar-Config.")
+      ->capture_default_str()
+      ->enum_values({0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0});
+  add_option(app,
+             "--ta_report_sr_enabled",
+             serv_cell_ntn_config.ta_report_sr_enabled,
+             "Whether a triggered Timing Advance Report may issue a Scheduling Request")
+      ->capture_default_str();
+
   // Broadcast Ephemeris Info type in SIB19.
   add_option(app,
              "--use_state_vector",

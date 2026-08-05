@@ -110,6 +110,9 @@ struct ue_capability_summary {
   bool disabled_dl_harq_feedback_supported = false;
   /// Indicates whether the UE supports HARQ Mode B and the corresponding LCP restrictions for uplink transmission.
   bool ul_harq_mode_b_supported = false;
+  /// \brief Indicates whether the UE can raise a Scheduling Request when a Timing Advance Report is triggered and
+  /// no UL-SCH resource is available. Given by \e sr-TriggeredBy-TA-Report-r17 in \e MAC-Parameters.
+  bool sr_triggered_by_ta_report_supported = false;
   /// Measurement gap patterns supported by the UE, defaults to patterns 0 and 1 supported.
   supported_meas_gap_patterns supported_meas_gaps;
   /// \brief Indicates whether the UE supports transmission of a PUCCH format 1 or 3 or 4 over multiple slots.
@@ -134,6 +137,7 @@ struct ue_capability_summary {
         (ntn_supported != other.ntn_supported) ||
         (disabled_dl_harq_feedback_supported != other.disabled_dl_harq_feedback_supported) ||
         (ul_harq_mode_b_supported != other.ul_harq_mode_b_supported) ||
+        (sr_triggered_by_ta_report_supported != other.sr_triggered_by_ta_report_supported) ||
         (supported_meas_gaps != other.supported_meas_gaps) ||
         (pucch_repeat_f1_3_4_supported != other.pucch_repeat_f1_3_4_supported) ||
         (slot_based_dyn_pucch_rep_r17_supported != other.slot_based_dyn_pucch_rep_r17_supported)) {

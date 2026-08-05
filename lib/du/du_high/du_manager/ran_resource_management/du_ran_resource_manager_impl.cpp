@@ -123,6 +123,43 @@ du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_co
   }
 }
 
+/// \brief Configures tar-Config for a UE, enabling variation-triggered Timing Advance reporting.
+///
+/// Only an NTN cell configures it, and only for a UE that declares uplink-TA-Reporting-r17 for the band: signalling it
+/// otherwise asks for a procedure the UE does not implement. timingAdvanceSR is dropped separately when the UE cannot
+/// raise an SR for a report, as that is a distinct capability.
+static void update_tar_config(cell_group_config&           cell_grp_cfg,
+                              span<const du_cell_config>   cell_cfg_list,
+                              const ue_capability_summary& ue_caps,
+                              du_ue_index_t                ue_index,
+                              ocudulog::basic_logger&      logger)
+{
+  cell_grp_cfg.mcg_cfg.tar_cfg.reset();
+
+  if (not cell_grp_cfg.cells.contains(SERVING_PCELL_IDX)) {
+    return;
+  }
+
+  const du_cell_config& cell_cfg = cell_cfg_list[cell_grp_cfg.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.cell_index];
+  if (not cell_cfg.ran.ntn_params.has_value() or not cell_cfg.ran.ntn_params->tar_cfg.has_value()) {
+    return;
+  }
+
+  const auto band_it = ue_caps.bands.find(cell_cfg.ran.dl_carrier.band);
+  if (band_it == ue_caps.bands.end() or not band_it->second.ul_ta_reporting_supported) {
+    return;
+  }
+
+  tar_config tar = *cell_cfg.ran.ntn_params->tar_cfg;
+  if (tar.sr_enabled and not ue_caps.sr_triggered_by_ta_report_supported) {
+    // The UE would not raise the SR anyway, so dropping the field is the only correct outcome. Logged because the cell
+    // asked for it and the operator otherwise has no way to tell why the feature ended up off for this UE.
+    logger.info("ue={}: Not signalling timingAdvanceSR. Cause: UE does not support sr-TriggeredBy-TA-Report", ue_index);
+    tar.sr_enabled = false;
+  }
+  cell_grp_cfg.mcg_cfg.tar_cfg.emplace(tar);
+}
+
 unsigned du_ran_resource_manager_impl::get_max_nof_established_ue_contexts(du_cell_index_t cell_index) const
 {
   return cell_ue_ctxts[cell_index].max_nof_established;
@@ -284,6 +321,7 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
     if (ue_mcg.cell_group.cells.contains(SERVING_PCELL_IDX)) {
       pucch_res_mng.update_resources(ue_mcg.cell_group.cells.at(SERVING_PCELL_IDX), *u.ue_cap_manager.summary());
     }
+    update_tar_config(ue_mcg.cell_group, cell_cfg_list, *u.ue_cap_manager.summary(), ue_index, logger);
   }
 
   // > Update UE SRBs and DRBs.

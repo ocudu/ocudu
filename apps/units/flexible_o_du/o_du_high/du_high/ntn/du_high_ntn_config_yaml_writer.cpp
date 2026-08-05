@@ -39,6 +39,10 @@ void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_
     }
 
     ntn_node["ta_report"] = serving.ta_report;
+    if (serving.ta_report_offset_threshold) {
+      ntn_node["ta_report_offset_threshold"] = *serving.ta_report_offset_threshold;
+      ntn_node["ta_report_sr_enabled"]       = serving.ta_report_sr_enabled;
+    }
 
     if (serving.reference_location) {
       ntn_node["reference_location"] = build_geodetic_yaml_node(*serving.reference_location, false);

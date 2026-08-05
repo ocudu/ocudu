@@ -449,6 +449,12 @@ static ntn_cell_params make_ntn_cell_params(const du_high_unit_ntn_serving_cell_
   ntn.ntn_cfg.ta_report                = cfg.ta_report;
   ntn.ntn_cfg.ephemeris_info           = cfg.sat_ref.ephemeris_info;
 
+  if (cfg.ta_report_offset_threshold.has_value()) {
+    ntn.tar_cfg = tar_config{
+        std::chrono::microseconds{static_cast<int64_t>(std::lround(*cfg.ta_report_offset_threshold * 1000.0F))},
+        cfg.ta_report_sr_enabled};
+  }
+
   // Derived from PUSCH config.
   ntn.ul_harq_mode_b = ul_harq_mode_b;
 
