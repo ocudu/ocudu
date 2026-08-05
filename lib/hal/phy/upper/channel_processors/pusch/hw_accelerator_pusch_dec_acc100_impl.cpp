@@ -103,11 +103,9 @@ void hw_accelerator_pusch_dec_acc100_impl::hw_config(const hw_pusch_decoder_conf
   // Save configuration.
   dec_config = config;
 
-  // Reset the operation dropping control (first CB of the TB only).
-  if (cb_index == 0) {
-    drop_op.resize(config.nof_segments);
-    drop_op.reset();
-    harq_context_entries.resize(config.nof_segments);
+  // Reset the operation dropping control (in case of unexpected behaviour).
+  if (drop_op.test(cb_index)) {
+    drop_op.reset(cb_index);
   }
 
   // Get the HARQ buffer context entry of the CB or create a new one.
