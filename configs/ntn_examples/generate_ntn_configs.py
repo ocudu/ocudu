@@ -574,9 +574,18 @@ if __name__ == "__main__":
     parser.add_argument("--enable-sat-switch-with-resync", action="store_true", help="Include sat_switch_with_resync section with a phase-lagged target satellite (idx 1).")
     parser.add_argument("--ssb-time-offset-sf", type=int, default=0, help="SSB time offset [subframes] for the sat_switch_with_resync section.")
     parser.add_argument("--add-example-ncells", action="store_true", help="Add two example neighbor cells (ncells) to the cell NTN config.")
+    parser.add_argument("--ta-report", action="store_true", help="Broadcast ta-Report in SIB19, so that UEs report their timing advance at random-access, establishment, resume and handover.")
+    parser.add_argument("--ta-report-offset-threshold", type=float, default=None, help="Signal TAR-Config with this offsetThresholdTA [ms], so that UEs also report on timing advance variation. Allowed values are 0.5 and the integers 1 to 15.")
+    parser.add_argument("--ta-report-sr-enabled", action="store_true", help="Let UEs request an uplink grant for a timing advance report. Requires --ta-report-offset-threshold.")
     parser.add_argument("--gnb-id", type=lambda x: int(x, 0), default=411, help="gNB ID of this CU-CP, used to build the internal serving nr_cell_id (decimal or 0x hex).")
     parser.add_argument("--gnb-id-bit-length", type=int, default=22, help="gNB ID bit length (NR Cell Identity is 36 bits).")
     cfg = parser.parse_args()
+
+    if (cfg.ta_report_offset_threshold is not None and cfg.ta_report_offset_threshold != 0.5
+            and cfg.ta_report_offset_threshold not in range(1, 16)):
+        parser.error("--ta-report-offset-threshold must be 0.5 or an integer from 1 to 15.")
+    if (cfg.ta_report_sr_enabled and cfg.ta_report_offset_threshold is None):
+        parser.error("--ta-report-sr-enabled requires --ta-report-offset-threshold.")
 
     # Find real time NTN scenario.
     ts = load.timescale()
@@ -632,7 +641,7 @@ if __name__ == "__main__":
         "ntn_ul_sync_validity_dur": 5,
         "distance_threshold": 50000,
         "t_service": t_service,
-        "ta_report": False,
+        "ta_report": cfg.ta_report,
         "reference_location": {
             "latitude": round(ue_location.latitude.degrees, 6),
             "longitude": round(ue_location.longitude.degrees, 6),
@@ -642,6 +651,10 @@ if __name__ == "__main__":
             "ul": "rhcp",
         },
     }
+    if (cfg.ta_report_offset_threshold is not None):
+        threshold = cfg.ta_report_offset_threshold
+        cell_ntn["ta_report_offset_threshold"] = int(threshold) if threshold.is_integer() else threshold
+        cell_ntn["ta_report_sr_enabled"] = cfg.ta_report_sr_enabled
     if (cfg.use_state_vector is not None):
         cell_ntn["use_state_vector"] = cfg.use_state_vector
     if (cfg.feeder_link_enabled):

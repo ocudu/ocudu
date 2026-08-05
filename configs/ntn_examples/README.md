@@ -52,6 +52,9 @@ This will produce the required NTN configuration files (`sat.yml`, `ntn_du.yml`,
 | `--enable-sat-switch-with-resync` | Add a second (target) satellite and a `sat_switch_with_resync` block for handover. |
 | `--ssb-time-offset-sf` | SSB time offset [subframes] for the satellite switch (default 0). |
 | `--add-example-ncells` | Add two example neighbor cells to the DU config (`ntn_du.yml`) and the CU-CP config (`ntn_cu.yml`). |
+| `--ta-report` | Set `ta_report` in the cell NTN config, so that UEs report their timing advance at random access, establishment, resume and handover. |
+| `--ta-report-offset-threshold` | Add `ta_report_offset_threshold` [ms] so that UEs also report on timing advance variation (`0.5` or an integer from 1 to 15). |
+| `--ta-report-sr-enabled` | Set `ta_report_sr_enabled`, letting a triggered report raise an SR. Requires `--ta-report-offset-threshold`. |
 | `--gnb-id` | gNB ID of this CU-CP, used to build the internal serving `nr_cell_id` in `ntn_cu.yml` (default `411`; accepts `0x` hex). |
 | `--gnb-id-bit-length` | gNB ID bit length; the NR Cell Identity is 36 bits (default `22`). |
 
