@@ -81,6 +81,15 @@ precoding_weight_matrix make_two_layer_two_ports(unsigned i_codebook);
 /// \return A precoding weight matrix for the given number of layers and the given antenna panel distribution.
 precoding_weight_matrix make_type1_sp_mode1(const precoding_matrix_indicator& pmi, unsigned nof_layers);
 
+/// \brief Constructs a precoding weight matrix for a given number of layers for a Type II precoding codebook.
+///
+/// All weights are derived from TS38.214 Section 5.2.2.2.3, which describe CSI reporting using Type II codebook for one
+/// or two layers. The generated precoding weights for the first half of ports corresponds to the first polarization,
+/// while the second half of ports corresponds to the second polarization.
+///
+/// \param[in] pmi The Precoding Matrix Indicator (PMI) codebook parameters.
+/// \param[in] nof_layers The number of layers used for the transmission.
+/// \return A precoding weight matrix for the given number of layers and the given antenna panel distribution.
 precoding_weight_matrix make_type2(const precoding_matrix_indicator& pmi, unsigned nof_layers);
 
 /// \brief Derives the MIMO precoding matrix and its beam list from the specified PMI for the given number of layers.

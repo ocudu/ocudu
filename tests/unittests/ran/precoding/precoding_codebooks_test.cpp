@@ -4,8 +4,10 @@
 
 #include "ocudu/adt/format.h"
 #include "ocudu/ran/precoding/precoding_codebook_configuration.h"
+#include "ocudu/ran/precoding/precoding_codebook_helpers.h"
 #include "ocudu/ran/precoding/precoding_codebooks.h"
 #include <gtest/gtest.h>
+#include <vector>
 
 using namespace ocudu;
 
@@ -1135,6 +1137,423 @@ TEST(precoding_codebooks_test, Type1SinglePanelMode1_EightLayer_2x2)
           for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
             ASSERT_CF_EQ(precoding.get_coefficient(i_layer, i_port), expected_port_weights[i_port]);
           }
+        }
+      }
+    }
+  }
+}
+
+// Test the Type II precoding matrix generation for a transmission using one layer and four antenna ports.
+TEST(precoding_codebooks_test, Type2_OneLayerFourPorts)
+{
+  // Antenna configuration parameters, corresponding to N1 = 2, N2 = 1 (four CSI-RS ports).
+  static constexpr unsigned N1                = 2;
+  static constexpr unsigned N2                = 1;
+  static constexpr unsigned O1                = 4;
+  static constexpr unsigned O2                = 1;
+  static constexpr unsigned L                 = 2;
+  static constexpr unsigned nof_layers        = 1;
+  static constexpr unsigned nof_ports         = 2 * N1 * N2;
+  static constexpr unsigned N_psk             = 4;
+  static constexpr bool     subband_amplitude = false;
+  static constexpr unsigned nof_beam_groups   = 1;
+
+  pmi_codebook_typeII config{
+      pmi_codebook_single_panel_config::two_one, L, pmi_codebook_typeII_phase_size::qpsk, subband_amplitude};
+
+  for (unsigned i_1_1 = 0; i_1_1 != O1 * O2; ++i_1_1) {
+    for (unsigned i_1_2 = 0; i_1_2 != nof_beam_groups; ++i_1_2) {
+      pmi_typeII pmi;
+      pmi.config = config;
+      pmi.i_1_1  = i_1_1;
+      pmi.i_1_2  = i_1_2;
+      pmi.layers.push_back({/* i_1_3 */ 0, /* i_1_4 */ {7, 4, 3, 2}, /* i_2_1 */ {0, 1, 2, 3}, /* i_2_2 */ {}});
+
+      precoding_weight_matrix precoding = make_type2(pmi, nof_layers);
+      ASSERT_EQ(precoding.get_nof_ports(), nof_ports);
+      ASSERT_EQ(precoding.get_nof_layers(), nof_layers);
+
+      // Decode the beam selection (q1, q2) and the L selected beams (n1, n2).
+      pmi_typeII_beam_selection                                  sel   = get_typeII_beam_selection(i_1_1, O1, O2);
+      static_vector<pmi_typeII_beam_group, max_nof_typeII_beams> beams = get_typeII_beam_groups(i_1_2, N1, N2, L);
+
+      for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
+        const pmi_typeII::layer_coefficients& lc = pmi.layers[i_layer];
+
+        // Combining coefficients and the layer energy.
+        static_vector<cf_t, 2 * max_nof_typeII_beams> coeffs(2 * L);
+        float                                         energy = 0.0F;
+        for (unsigned i_beam = 0; i_beam != 2 * L; ++i_beam) {
+          float p1 = get_typeII_wideband_amplitude(lc.i_1_4[i_beam]);
+          float p2 = subband_amplitude ? get_typeII_subband_amplitude(lc.i_2_2[i_beam]) : 1.0F;
+          coeffs[i_beam] =
+              (p1 * p2) * std::polar(1.0F, TWOPI * static_cast<float>(lc.i_2_1[i_beam]) / static_cast<float>(N_psk));
+          energy += (p1 * p2) * (p1 * p2);
+        }
+        float scaling = 1.0F / std::sqrt(static_cast<float>(N1 * N2) * static_cast<float>(nof_layers) * energy);
+
+        // Expected layer weights, sum of the per-beam weights scaled.
+        std::vector<cf_t> expected(nof_ports, cf_t(0.0F, 0.0F));
+        for (unsigned beam = 0; beam != L; ++beam) {
+          unsigned          m1 = O1 * beams[beam].n1 + sel.q1;
+          unsigned          m2 = O2 * beams[beam].n2 + sel.q2;
+          std::vector<cf_t> beam_weights =
+              get_layer_port_weights({N1, N2, O1, O2, m1, m2}, {coeffs[beam] * scaling, coeffs[beam + L] * scaling});
+          for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+            expected[i_port] += beam_weights[i_port];
+          }
+        }
+
+        for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+          ASSERT_CF_EQ(precoding.get_coefficient(i_layer, i_port), expected[i_port]);
+        }
+      }
+    }
+  }
+}
+
+// Test the Type II precoding matrix generation for a transmission using two layers and four antenna ports.
+TEST(precoding_codebooks_test, Type2_TwoLayerFourPorts)
+{
+  // Antenna configuration parameters, corresponding to N1 = 2, N2 = 1 (four CSI-RS ports).
+  static constexpr unsigned N1                = 2;
+  static constexpr unsigned N2                = 1;
+  static constexpr unsigned O1                = 4;
+  static constexpr unsigned O2                = 1;
+  static constexpr unsigned L                 = 2;
+  static constexpr unsigned nof_layers        = 2;
+  static constexpr unsigned nof_ports         = 2 * N1 * N2;
+  static constexpr unsigned N_psk             = 8;
+  static constexpr bool     subband_amplitude = true;
+  static constexpr unsigned nof_beam_groups   = 1;
+
+  pmi_codebook_typeII config{
+      pmi_codebook_single_panel_config::two_one, L, pmi_codebook_typeII_phase_size::psk8, subband_amplitude};
+
+  for (unsigned i_1_1 = 0; i_1_1 != O1 * O2; ++i_1_1) {
+    for (unsigned i_1_2 = 0; i_1_2 != nof_beam_groups; ++i_1_2) {
+      pmi_typeII pmi;
+      pmi.config = config;
+      pmi.i_1_1  = i_1_1;
+      pmi.i_1_2  = i_1_2;
+      pmi.layers.push_back({1, {5, 7, 4, 2}, {3, 0, 5, 6}, {0, 1, 1, 0}});
+      pmi.layers.push_back({2, {4, 6, 7, 3}, {1, 7, 0, 4}, {1, 0, 1, 1}});
+
+      precoding_weight_matrix precoding = make_type2(pmi, nof_layers);
+      ASSERT_EQ(precoding.get_nof_ports(), nof_ports);
+      ASSERT_EQ(precoding.get_nof_layers(), nof_layers);
+
+      // Decode the beam selection (q1, q2) and the L selected beams (n1, n2).
+      pmi_typeII_beam_selection                                  sel   = get_typeII_beam_selection(i_1_1, O1, O2);
+      static_vector<pmi_typeII_beam_group, max_nof_typeII_beams> beams = get_typeII_beam_groups(i_1_2, N1, N2, L);
+
+      for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
+        const pmi_typeII::layer_coefficients& lc = pmi.layers[i_layer];
+
+        // Combining coefficients and the layer energy.
+        static_vector<cf_t, 2 * max_nof_typeII_beams> coeffs(2 * L);
+        float                                         energy = 0.0F;
+        for (unsigned i_beam = 0; i_beam != 2 * L; ++i_beam) {
+          float p1 = get_typeII_wideband_amplitude(lc.i_1_4[i_beam]);
+          float p2 = subband_amplitude ? get_typeII_subband_amplitude(lc.i_2_2[i_beam]) : 1.0F;
+          coeffs[i_beam] =
+              (p1 * p2) * std::polar(1.0F, TWOPI * static_cast<float>(lc.i_2_1[i_beam]) / static_cast<float>(N_psk));
+          energy += (p1 * p2) * (p1 * p2);
+        }
+        float scaling = 1.0F / std::sqrt(static_cast<float>(N1 * N2) * static_cast<float>(nof_layers) * energy);
+
+        // Expected layer weights, sum of the per-beam weights scaled.
+        std::vector<cf_t> expected(nof_ports, cf_t(0.0F, 0.0F));
+        for (unsigned beam = 0; beam != L; ++beam) {
+          unsigned          m1 = O1 * beams[beam].n1 + sel.q1;
+          unsigned          m2 = O2 * beams[beam].n2 + sel.q2;
+          std::vector<cf_t> beam_weights =
+              get_layer_port_weights({N1, N2, O1, O2, m1, m2}, {coeffs[beam] * scaling, coeffs[beam + L] * scaling});
+          for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+            expected[i_port] += beam_weights[i_port];
+          }
+        }
+
+        for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+          ASSERT_CF_EQ(precoding.get_coefficient(i_layer, i_port), expected[i_port]);
+        }
+      }
+    }
+  }
+}
+
+// Test the Type II precoding matrix generation for one layer and eight antenna ports with N1=4, N2=1.
+TEST(precoding_codebooks_test, Type2_OneLayer_4x1)
+{
+  // Antenna configuration parameters, corresponding to N1 = 4, N2 = 1 (eight CSI-RS ports).
+  static constexpr unsigned N1                = 4;
+  static constexpr unsigned N2                = 1;
+  static constexpr unsigned O1                = 4;
+  static constexpr unsigned O2                = 1;
+  static constexpr unsigned L                 = 4;
+  static constexpr unsigned nof_layers        = 1;
+  static constexpr unsigned nof_ports         = 2 * N1 * N2;
+  static constexpr unsigned N_psk             = 8;
+  static constexpr bool     subband_amplitude = false;
+  static constexpr unsigned nof_beam_groups   = 1;
+
+  pmi_codebook_typeII config{
+      pmi_codebook_single_panel_config::four_one, L, pmi_codebook_typeII_phase_size::psk8, subband_amplitude};
+
+  for (unsigned i_1_1 = 0; i_1_1 != O1 * O2; ++i_1_1) {
+    for (unsigned i_1_2 = 0; i_1_2 != nof_beam_groups; ++i_1_2) {
+      pmi_typeII pmi;
+      pmi.config = config;
+      pmi.i_1_1  = i_1_1;
+      pmi.i_1_2  = i_1_2;
+      pmi.layers.push_back({2, {2, 4, 7, 1, 3, 5, 6, 2}, {1, 2, 0, 3, 4, 5, 6, 7}, {}});
+
+      precoding_weight_matrix precoding = make_type2(pmi, nof_layers);
+      ASSERT_EQ(precoding.get_nof_ports(), nof_ports);
+      ASSERT_EQ(precoding.get_nof_layers(), nof_layers);
+
+      // Decode the beam selection (q1, q2) and the L selected beams (n1, n2).
+      pmi_typeII_beam_selection                                  sel   = get_typeII_beam_selection(i_1_1, O1, O2);
+      static_vector<pmi_typeII_beam_group, max_nof_typeII_beams> beams = get_typeII_beam_groups(i_1_2, N1, N2, L);
+
+      for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
+        const pmi_typeII::layer_coefficients& lc = pmi.layers[i_layer];
+
+        // Combining coefficients and the layer energy.
+        static_vector<cf_t, 2 * max_nof_typeII_beams> coeffs(2 * L);
+        float                                         energy = 0.0F;
+        for (unsigned i_beam = 0; i_beam != 2 * L; ++i_beam) {
+          float p1 = get_typeII_wideband_amplitude(lc.i_1_4[i_beam]);
+          float p2 = subband_amplitude ? get_typeII_subband_amplitude(lc.i_2_2[i_beam]) : 1.0F;
+          coeffs[i_beam] =
+              (p1 * p2) * std::polar(1.0F, TWOPI * static_cast<float>(lc.i_2_1[i_beam]) / static_cast<float>(N_psk));
+          energy += (p1 * p2) * (p1 * p2);
+        }
+        float scaling = 1.0F / std::sqrt(static_cast<float>(N1 * N2) * static_cast<float>(nof_layers) * energy);
+
+        // Expected layer weights, sum of the per-beam weights scaled.
+        std::vector<cf_t> expected(nof_ports, cf_t(0.0F, 0.0F));
+        for (unsigned beam = 0; beam != L; ++beam) {
+          unsigned          m1 = O1 * beams[beam].n1 + sel.q1;
+          unsigned          m2 = O2 * beams[beam].n2 + sel.q2;
+          std::vector<cf_t> beam_weights =
+              get_layer_port_weights({N1, N2, O1, O2, m1, m2}, {coeffs[beam] * scaling, coeffs[beam + L] * scaling});
+          for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+            expected[i_port] += beam_weights[i_port];
+          }
+        }
+
+        for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+          ASSERT_CF_EQ(precoding.get_coefficient(i_layer, i_port), expected[i_port]);
+        }
+      }
+    }
+  }
+}
+
+// Test the Type II precoding matrix generation for two layers and eight antenna ports with N1=4, N2=1.
+TEST(precoding_codebooks_test, Type2_TwoLayer_4x1)
+{
+  // Antenna configuration parameters, corresponding to N1 = 4, N2 = 1 (eight CSI-RS ports).
+  static constexpr unsigned N1                = 4;
+  static constexpr unsigned N2                = 1;
+  static constexpr unsigned O1                = 4;
+  static constexpr unsigned O2                = 1;
+  static constexpr unsigned L                 = 3;
+  static constexpr unsigned nof_layers        = 2;
+  static constexpr unsigned nof_ports         = 2 * N1 * N2;
+  static constexpr unsigned N_psk             = 4;
+  static constexpr bool     subband_amplitude = true;
+  static constexpr unsigned nof_beam_groups   = 4;
+
+  pmi_codebook_typeII config{
+      pmi_codebook_single_panel_config::four_one, L, pmi_codebook_typeII_phase_size::qpsk, subband_amplitude};
+
+  for (unsigned i_1_1 = 0; i_1_1 != O1 * O2; ++i_1_1) {
+    for (unsigned i_1_2 = 0; i_1_2 != nof_beam_groups; ++i_1_2) {
+      pmi_typeII pmi;
+      pmi.config = config;
+      pmi.i_1_1  = i_1_1;
+      pmi.i_1_2  = i_1_2;
+      pmi.layers.push_back({0, {7, 5, 4, 3, 2, 1}, {0, 1, 2, 3, 1, 2}, {0, 1, 0, 1, 1, 0}});
+      pmi.layers.push_back({4, {3, 4, 2, 5, 7, 6}, {2, 3, 1, 0, 3, 2}, {1, 0, 1, 1, 0, 1}});
+
+      precoding_weight_matrix precoding = make_type2(pmi, nof_layers);
+      ASSERT_EQ(precoding.get_nof_ports(), nof_ports);
+      ASSERT_EQ(precoding.get_nof_layers(), nof_layers);
+
+      // Decode the beam selection (q1, q2) and the L selected beams (n1, n2).
+      pmi_typeII_beam_selection                                  sel   = get_typeII_beam_selection(i_1_1, O1, O2);
+      static_vector<pmi_typeII_beam_group, max_nof_typeII_beams> beams = get_typeII_beam_groups(i_1_2, N1, N2, L);
+
+      for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
+        const pmi_typeII::layer_coefficients& lc = pmi.layers[i_layer];
+
+        // Combining coefficients and the layer energy.
+        static_vector<cf_t, 2 * max_nof_typeII_beams> coeffs(2 * L);
+        float                                         energy = 0.0F;
+        for (unsigned i_beam = 0; i_beam != 2 * L; ++i_beam) {
+          float p1 = get_typeII_wideband_amplitude(lc.i_1_4[i_beam]);
+          float p2 = subband_amplitude ? get_typeII_subband_amplitude(lc.i_2_2[i_beam]) : 1.0F;
+          coeffs[i_beam] =
+              (p1 * p2) * std::polar(1.0F, TWOPI * static_cast<float>(lc.i_2_1[i_beam]) / static_cast<float>(N_psk));
+          energy += (p1 * p2) * (p1 * p2);
+        }
+        float scaling = 1.0F / std::sqrt(static_cast<float>(N1 * N2) * static_cast<float>(nof_layers) * energy);
+
+        // Expected layer weights, sum of the per-beam weights scaled.
+        std::vector<cf_t> expected(nof_ports, cf_t(0.0F, 0.0F));
+        for (unsigned beam = 0; beam != L; ++beam) {
+          unsigned          m1 = O1 * beams[beam].n1 + sel.q1;
+          unsigned          m2 = O2 * beams[beam].n2 + sel.q2;
+          std::vector<cf_t> beam_weights =
+              get_layer_port_weights({N1, N2, O1, O2, m1, m2}, {coeffs[beam] * scaling, coeffs[beam + L] * scaling});
+          for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+            expected[i_port] += beam_weights[i_port];
+          }
+        }
+
+        for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+          ASSERT_CF_EQ(precoding.get_coefficient(i_layer, i_port), expected[i_port]);
+        }
+      }
+    }
+  }
+}
+
+// Test the Type II precoding matrix generation for one layer and eight antenna ports with N1=2, N2=2.
+TEST(precoding_codebooks_test, Type2_OneLayer_2x2)
+{
+  // Antenna configuration parameters, corresponding to N1 = 2, N2 = 2 (eight CSI-RS ports).
+  static constexpr unsigned N1                = 2;
+  static constexpr unsigned N2                = 2;
+  static constexpr unsigned O1                = 4;
+  static constexpr unsigned O2                = 4;
+  static constexpr unsigned L                 = 2;
+  static constexpr unsigned nof_layers        = 1;
+  static constexpr unsigned nof_ports         = 2 * N1 * N2;
+  static constexpr unsigned N_psk             = 8;
+  static constexpr bool     subband_amplitude = true;
+  static constexpr unsigned nof_beam_groups   = 6;
+
+  pmi_codebook_typeII config{
+      pmi_codebook_single_panel_config::two_two, L, pmi_codebook_typeII_phase_size::psk8, subband_amplitude};
+
+  for (unsigned i_1_1 = 0; i_1_1 != O1 * O2; ++i_1_1) {
+    for (unsigned i_1_2 = 0; i_1_2 != nof_beam_groups; ++i_1_2) {
+      pmi_typeII pmi;
+      pmi.config = config;
+      pmi.i_1_1  = i_1_1;
+      pmi.i_1_2  = i_1_2;
+      pmi.layers.push_back({1, {5, 7, 3, 6}, {3, 0, 5, 2}, {0, 1, 1, 0}});
+
+      precoding_weight_matrix precoding = make_type2(pmi, nof_layers);
+      ASSERT_EQ(precoding.get_nof_ports(), nof_ports);
+      ASSERT_EQ(precoding.get_nof_layers(), nof_layers);
+
+      // Decode the beam selection (q1, q2) and the L selected beams (n1, n2).
+      pmi_typeII_beam_selection                                  sel   = get_typeII_beam_selection(i_1_1, O1, O2);
+      static_vector<pmi_typeII_beam_group, max_nof_typeII_beams> beams = get_typeII_beam_groups(i_1_2, N1, N2, L);
+
+      for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
+        const pmi_typeII::layer_coefficients& lc = pmi.layers[i_layer];
+
+        // Combining coefficients and the layer energy.
+        static_vector<cf_t, 2 * max_nof_typeII_beams> coeffs(2 * L);
+        float                                         energy = 0.0F;
+        for (unsigned i_beam = 0; i_beam != 2 * L; ++i_beam) {
+          float p1 = get_typeII_wideband_amplitude(lc.i_1_4[i_beam]);
+          float p2 = subband_amplitude ? get_typeII_subband_amplitude(lc.i_2_2[i_beam]) : 1.0F;
+          coeffs[i_beam] =
+              (p1 * p2) * std::polar(1.0F, TWOPI * static_cast<float>(lc.i_2_1[i_beam]) / static_cast<float>(N_psk));
+          energy += (p1 * p2) * (p1 * p2);
+        }
+        float scaling = 1.0F / std::sqrt(static_cast<float>(N1 * N2) * static_cast<float>(nof_layers) * energy);
+
+        // Expected layer weights, sum of the per-beam weights scaled.
+        std::vector<cf_t> expected(nof_ports, cf_t(0.0F, 0.0F));
+        for (unsigned beam = 0; beam != L; ++beam) {
+          unsigned          m1 = O1 * beams[beam].n1 + sel.q1;
+          unsigned          m2 = O2 * beams[beam].n2 + sel.q2;
+          std::vector<cf_t> beam_weights =
+              get_layer_port_weights({N1, N2, O1, O2, m1, m2}, {coeffs[beam] * scaling, coeffs[beam + L] * scaling});
+          for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+            expected[i_port] += beam_weights[i_port];
+          }
+        }
+
+        for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+          ASSERT_CF_EQ(precoding.get_coefficient(i_layer, i_port), expected[i_port]);
+        }
+      }
+    }
+  }
+}
+
+// Test the Type II precoding matrix generation for two layers and eight antenna ports with N1=2, N2=2.
+TEST(precoding_codebooks_test, Type2_TwoLayer_2x2)
+{
+  // Antenna configuration parameters, corresponding to N1 = 2, N2 = 2 (eight CSI-RS ports).
+  static constexpr unsigned N1                = 2;
+  static constexpr unsigned N2                = 2;
+  static constexpr unsigned O1                = 4;
+  static constexpr unsigned O2                = 4;
+  static constexpr unsigned L                 = 4;
+  static constexpr unsigned nof_layers        = 2;
+  static constexpr unsigned nof_ports         = 2 * N1 * N2;
+  static constexpr unsigned N_psk             = 4;
+  static constexpr bool     subband_amplitude = false;
+  static constexpr unsigned nof_beam_groups   = 1;
+
+  pmi_codebook_typeII config{
+      pmi_codebook_single_panel_config::two_two, L, pmi_codebook_typeII_phase_size::qpsk, subband_amplitude};
+
+  for (unsigned i_1_1 = 0; i_1_1 != O1 * O2; ++i_1_1) {
+    for (unsigned i_1_2 = 0; i_1_2 != nof_beam_groups; ++i_1_2) {
+      pmi_typeII pmi;
+      pmi.config = config;
+      pmi.i_1_1  = i_1_1;
+      pmi.i_1_2  = i_1_2;
+      pmi.layers.push_back({2, {4, 5, 7, 1, 3, 6, 2, 4}, {1, 2, 0, 3, 2, 1, 3, 0}, {}});
+      pmi.layers.push_back({5, {3, 2, 4, 6, 5, 7, 1, 2}, {0, 3, 2, 1, 3, 0, 2, 1}, {}});
+
+      precoding_weight_matrix precoding = make_type2(pmi, nof_layers);
+      ASSERT_EQ(precoding.get_nof_ports(), nof_ports);
+      ASSERT_EQ(precoding.get_nof_layers(), nof_layers);
+
+      // Decode the beam selection (q1, q2) and the L selected beams (n1, n2).
+      pmi_typeII_beam_selection                                  sel   = get_typeII_beam_selection(i_1_1, O1, O2);
+      static_vector<pmi_typeII_beam_group, max_nof_typeII_beams> beams = get_typeII_beam_groups(i_1_2, N1, N2, L);
+
+      for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
+        const pmi_typeII::layer_coefficients& lc = pmi.layers[i_layer];
+
+        // Combining coefficients and the layer energy.
+        static_vector<cf_t, 2 * max_nof_typeII_beams> coeffs(2 * L);
+        float                                         energy = 0.0F;
+        for (unsigned i_beam = 0; i_beam != 2 * L; ++i_beam) {
+          float p1 = get_typeII_wideband_amplitude(lc.i_1_4[i_beam]);
+          float p2 = subband_amplitude ? get_typeII_subband_amplitude(lc.i_2_2[i_beam]) : 1.0F;
+          coeffs[i_beam] =
+              (p1 * p2) * std::polar(1.0F, TWOPI * static_cast<float>(lc.i_2_1[i_beam]) / static_cast<float>(N_psk));
+          energy += (p1 * p2) * (p1 * p2);
+        }
+        float scaling = 1.0F / std::sqrt(static_cast<float>(N1 * N2) * static_cast<float>(nof_layers) * energy);
+
+        // Expected layer weights, sum of the per-beam weights scaled.
+        std::vector<cf_t> expected(nof_ports, cf_t(0.0F, 0.0F));
+        for (unsigned beam = 0; beam != L; ++beam) {
+          unsigned          m1 = O1 * beams[beam].n1 + sel.q1;
+          unsigned          m2 = O2 * beams[beam].n2 + sel.q2;
+          std::vector<cf_t> beam_weights =
+              get_layer_port_weights({N1, N2, O1, O2, m1, m2}, {coeffs[beam] * scaling, coeffs[beam + L] * scaling});
+          for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+            expected[i_port] += beam_weights[i_port];
+          }
+        }
+
+        for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+          ASSERT_CF_EQ(precoding.get_coefficient(i_layer, i_port), expected[i_port]);
         }
       }
     }

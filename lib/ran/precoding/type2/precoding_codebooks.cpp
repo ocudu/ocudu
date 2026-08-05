@@ -11,16 +11,10 @@
 
 using namespace ocudu;
 
-/// Maximum number of layers supported by the Type II codebook (TS38.214 Section 5.2.2.2.3: the UE shall not report
-/// RI > 2).
+/// Maximum number of layers supported by the Type II codebook.
 static constexpr unsigned max_nof_typeII_layers = 2;
 
 /// \brief Accumulates the contribution of a single Type II beam into a layer of the precoding weight matrix.
-///
-/// The beam steering vector \f$v_{m_1,m_2}\f$ is built as the Kronecker product of horizontal and vertical phase-offset
-/// vectors, identically to the Type I Single-Panel codebook. For the antenna element at horizontal position \f$i_h\f$
-/// and vertical position \f$i_v\f$:
-/// \f[ v_{m_1,m_2}[i_h, i_v] = e^{j 2\pi m_1 i_h / (O_1 N_1)} \cdot e^{j 2\pi m_2 i_v / (O_2 N_2)}. \f]
 ///
 /// The beam is added to the two polarizations of the given layer, each scaled by its own combining coefficient. The
 /// first half of the ports corresponds to the first polarization and the second half to the second polarization.
@@ -95,7 +89,7 @@ precoding_weight_matrix ocudu::make_type2(const precoding_matrix_indicator& pmi,
                type2_pmi->layers.size(),
                nof_layers);
 
-  // Decode the wideband beam selection (q1, q2) and the L selected beam groups (n1, n2).
+  // Decode the wideband beam selection and the L selected beam groups.
   pmi_typeII_beam_selection beam_selection = get_typeII_beam_selection(type2_pmi->i_1_1, panel.o1, panel.o2);
   static_vector<pmi_typeII_beam_group, max_nof_typeII_beams> beam_groups =
       get_typeII_beam_groups(type2_pmi->i_1_2, panel.n1, panel.n2, L);
@@ -105,7 +99,7 @@ precoding_weight_matrix ocudu::make_type2(const precoding_matrix_indicator& pmi,
   for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
     const pmi_typeII::layer_coefficients& coefficients = type2_pmi->layers[i_layer];
 
-    // Validate the reported per-layer coefficient sizes. There are 2*L coefficients (L beams by two polarizations).
+    // Validate the reported per-layer coefficient sizes, L beams by two polarizations.
     ocudu_assert(coefficients.i_1_4.size() == 2 * L,
                  "The number of wideband amplitude indices (i.e., {}) must be 2*L (i.e., {}).",
                  coefficients.i_1_4.size(),
@@ -119,7 +113,7 @@ precoding_weight_matrix ocudu::make_type2(const precoding_matrix_indicator& pmi,
                  coefficients.i_2_2.size(),
                  config.subband_amplitude);
     ocudu_assert(coefficients.i_1_3 < 2 * L,
-                 "The strongest-coefficient index i_1_3 (i.e., {}) is out of range (2*L = {}).",
+                 "The strongest-coefficient index i_1_3 (i.e., {}) is out of range (i.e., {}).",
                  coefficients.i_1_3,
                  2 * L);
     // The strongest coefficient must carry the maximum wideband amplitude among the reported coefficients.
@@ -128,8 +122,7 @@ precoding_weight_matrix ocudu::make_type2(const precoding_matrix_indicator& pmi,
                  "The strongest beam i_1_3 (i.e., {}) must have the maximum wideband amplitude index.",
                  coefficients.i_1_3);
 
-    // Compute the 2L combining coefficients and the layer energy used for the
-    // per-layer normalization.
+    // Compute the 2L combining coefficients and the layer energy used for the per-layer normalization.
     static_vector<cf_t, 2 * max_nof_typeII_beams> coeffs(2 * L);
     float                                         energy = 0.0F;
     for (unsigned c = 0; c != 2 * L; ++c) {
@@ -152,16 +145,14 @@ precoding_weight_matrix ocudu::make_type2(const precoding_matrix_indicator& pmi,
       add_beam_type2(result, panel, i_layer, m1, m2, coeffs[i], coeffs[i + L]);
     }
 
-    // Per-layer coefficient normalization (TS38.214 Table 5.2.2.2.3-5): scale each layer column by
-    // 1/sqrt(sum((p1 * p2)^2)). The factor common to all layers is applied once after the loop.
+    // Per-layer coefficient normalization, as per TS38.214 Table 5.2.2.2.3-5.
     float layer_scaling = 1.0F / std::sqrt(energy);
     for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
       result.set_coefficient(result.get_coefficient(i_layer, i_port) * layer_scaling, i_layer, i_port);
     }
   }
 
-  // Apply the factor common to all layers (TS38.214 Table 5.2.2.2.3-5): 1/sqrt(N1 * N2) from the beam-vector
-  // normalization and 1/sqrt(nof_layers) for the equal-power split across layers.
+  // Common normalization factor for all layers.
   result *= 1.0F / std::sqrt(static_cast<float>(n1n2) * static_cast<float>(nof_layers));
 
   return result;
