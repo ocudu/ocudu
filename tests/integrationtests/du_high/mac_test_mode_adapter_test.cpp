@@ -119,7 +119,10 @@ public:
   {
     return launch_no_op_task(mac_ue_delete_response{});
   }
-  bool handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override { return true; }
+  bool handle_ul_ccch_msg(du_ue_index_t, du_cell_index_t, slot_point, byte_buffer, msg3_mac_ce_list) override
+  {
+    return true;
+  }
   void handle_ue_config_applied(du_ue_index_t ue_index) override {}
 
   void                                   handle_rx_data_indication(mac_rx_data_indication pdu) override {}

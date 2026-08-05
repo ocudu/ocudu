@@ -76,13 +76,22 @@ async_task<void> mac_ul_processor::remove_ue(const mac_ue_delete_request& msg)
       });
 }
 
-bool mac_ul_processor::flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ccch_pdu)
+bool mac_ul_processor::flush_ul_ccch_msg(du_ue_index_t    ue_index,
+                                         du_cell_index_t  cell_index,
+                                         slot_point       slot_rx,
+                                         byte_buffer      ul_ccch_msg,
+                                         msg3_mac_ce_list mac_ces)
 {
-  if (not cfg.ue_exec_mapper.ctrl_executor(ue_index).execute([this, ue_index, pdu = std::move(ccch_pdu)]() mutable {
-        pdu_handler.push_ul_ccch_msg(ue_index, std::move(pdu));
-      })) {
-    logger.warning("ue={}: Unable to forward UL-CCCH message to upper layers. Cause: task queue is full.",
-                   fmt::underlying(ue_index));
+  if (not cfg.ue_exec_mapper.ctrl_executor(ue_index).execute(
+          [this, ue_index, cell_index, slot_rx, pdu = std::move(ul_ccch_msg), mac_ces = std::move(mac_ces)]() mutable {
+            if (not pdu.empty()) {
+              pdu_handler.push_ul_ccch_msg(ue_index, std::move(pdu));
+            }
+            if (not mac_ces.empty()) {
+              pdu_handler.handle_msg3_mac_ces(ue_index, cell_index, slot_rx, mac_ces);
+            }
+          })) {
+    logger.warning("ue={}: Unable to forward the Msg3 content. Cause: task queue is full.", fmt::underlying(ue_index));
     // Note: The UE is not yet created in the CU, so there in no inactivity timer.
     return false;
   }

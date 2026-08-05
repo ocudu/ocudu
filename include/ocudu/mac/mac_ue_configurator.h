@@ -7,6 +7,7 @@
 #include "ocudu/mac/bsr_config.h"
 #include "ocudu/mac/mac_cell_group_config.h"
 #include "ocudu/mac/mac_sdu_handler.h"
+#include "ocudu/mac/msg3_mac_ce.h"
 #include "ocudu/mac/phr_config.h"
 #include "ocudu/ran/harq_id.h"
 #include "ocudu/ran/logical_channel/lcid.h"
@@ -144,8 +145,17 @@ public:
   /// \brief Deletes an existing UE context in the MAC.
   virtual async_task<mac_ue_delete_response> handle_ue_delete_request(const mac_ue_delete_request& cfg) = 0;
 
-  /// \brief Forward UL-CCCH message to upper layers.
-  virtual bool handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) = 0;
+  /// \brief Forwards the UL-CCCH message to upper layers and the MAC CEs of the same Msg3 to the scheduler.
+  ///
+  /// Both are decoded before the UE is created, but cannot be acted upon until the UE context exists.
+  ///
+  /// \return false if the Msg3 content could not be handed over to the MAC UL. Losing the MAC CEs alone is not
+  /// reported, as it is not fatal to UE creation.
+  virtual bool handle_ul_ccch_msg(du_ue_index_t    ue_index,
+                                  du_cell_index_t  cell_index,
+                                  slot_point       slot_rx,
+                                  byte_buffer      ul_ccch_msg,
+                                  msg3_mac_ce_list mac_ces) = 0;
 
   /// Handle the confirmation that the UE received the last UE dedicated RRC configuration.
   virtual void handle_ue_config_applied(du_ue_index_t ue_index) = 0;

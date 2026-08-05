@@ -81,10 +81,13 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   // > Assign C-RNTI allocated by MAC.
   ue_mng.update_crnti(req.ue_index, mac_resp.allocated_crnti);
 
-  // > Start Initial UL RRC Message Transfer by signalling MAC to notify CCCH to upper layers.
+  // > Start Initial UL RRC Message Transfer by signalling MAC to notify CCCH to upper layers, and to process the MAC
+  // CEs that came in the same Msg3, now that the UE context exists.
   if (not req.ul_ccch_msg.empty()) {
-    if (not du_params.mac.mgr.get_ue_configurator().handle_ul_ccch_msg(ue_ctx->ue_index, req.ul_ccch_msg.copy())) {
-      proc_logger.log_proc_failure("Failed to notify CCCH message to upper layers");
+    ocudu_assert(req.slot_rx.has_value(), "A Msg3 carrying a UL-CCCH SDU always has a reception slot");
+    if (not du_params.mac.mgr.get_ue_configurator().handle_ul_ccch_msg(
+            ue_ctx->ue_index, req.pcell_index, *req.slot_rx, req.ul_ccch_msg.copy(), req.msg3_mac_ces)) {
+      proc_logger.log_proc_failure("Failed to notify Msg3 content to upper layers");
       CORO_AWAIT(clear_ue());
       CORO_EARLY_RETURN();
     }

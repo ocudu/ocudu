@@ -33,7 +33,11 @@ protected:
   {
   }
 
-  void start_procedure(du_ue_index_t ue_index = to_du_ue_index(0), rnti_t rnti = to_rnti(0x4601), bool success = true)
+  void start_procedure(du_ue_index_t             ue_index     = to_du_ue_index(0),
+                       rnti_t                    rnti         = to_rnti(0x4601),
+                       bool                      success      = true,
+                       msg3_mac_ce_list          msg3_mac_ces = {},
+                       std::optional<slot_point> slot_rx      = std::nullopt)
   {
     f1ap.f1ap_ues.emplace(ue_index);
     f1ap.f1ap_ues[ue_index].f1c_bearers.emplace(srb_id_t::srb0);
@@ -44,9 +48,11 @@ protected:
     f1ap.next_ue_create_response.f1c_bearers_added[1] = &f1ap.f1ap_ues[ue_index].f1c_bearers[srb_id_t::srb1];
 
     ul_ccch_indication_message ul_ccch_msg = create_test_ul_ccch_message(rnti);
+    const slot_point           msg3_slot   = slot_rx.value_or(ul_ccch_msg.slot_rx);
 
     proc = launch_async<ue_creation_procedure>(
-        du_ue_creation_request{ue_index, ul_ccch_msg.cell_index, rnti, std::move(ul_ccch_msg.subpdu)},
+        du_ue_creation_request{
+            ue_index, ul_ccch_msg.cell_index, rnti, std::move(ul_ccch_msg.subpdu), std::move(msg3_mac_ces), msg3_slot},
         ue_mng,
         params,
         mem_resources,
@@ -126,6 +132,25 @@ TEST_F(du_manager_ue_creation_tester,
 
   // Check procedure has finished.
   ASSERT_TRUE(proc.ready());
+}
+
+TEST_F(du_manager_ue_creation_tester, when_ue_is_created_then_decoded_msg3_mac_ces_are_forwarded_to_mac)
+{
+  const du_ue_index_t ue_index = to_du_ue_index(0);
+  const rnti_t        rnti     = to_rnti(0x4601);
+  const slot_point    slot_rx{subcarrier_spacing::kHz15, 7};
+  msg3_mac_ce_list    msg3_mac_ces;
+  msg3_mac_ces.emplace_back(std::chrono::microseconds{7000});
+  start_procedure(ue_index, rnti, true, std::move(msg3_mac_ces), slot_rx);
+
+  mac.wait_ue_create.result.allocated_crnti = rnti;
+  mac.wait_ue_create.result.ue_index        = ue_index;
+  mac.wait_ue_create.result.cell_index      = to_du_cell_index(0);
+  mac.wait_ue_create.ready_ev.set();
+
+  ASSERT_TRUE(proc.ready());
+  ASSERT_EQ(1U, mac.last_msg3_mac_ces.size());
+  ASSERT_EQ(std::chrono::microseconds{7000}, std::get<std::chrono::microseconds>(mac.last_msg3_mac_ces.front()));
 }
 
 TEST_F(du_manager_ue_creation_tester,
@@ -238,7 +263,8 @@ protected:
     ul_ccch_indication_message ul_ccch_msg = create_test_ul_ccch_message(rnti);
 
     proc = launch_async<ue_creation_procedure>(
-        du_ue_creation_request{ue_index, ul_ccch_msg.cell_index, rnti, std::move(ul_ccch_msg.subpdu)},
+        du_ue_creation_request{
+            ue_index, ul_ccch_msg.cell_index, rnti, std::move(ul_ccch_msg.subpdu), {}, ul_ccch_msg.slot_rx},
         ue_mng,
         params,
         mem_resources,

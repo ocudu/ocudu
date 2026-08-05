@@ -78,6 +78,13 @@ public:
   /// Called to push stored UL CCCH to upper layers, once the UE has been created in the DU manager.
   bool push_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ul_ccch_msg);
 
+  /// \brief Processes decoded MAC CEs of a Msg3 that could not be handled when they arrived because the UE context
+  /// did not exist yet.
+  bool handle_msg3_mac_ces(du_ue_index_t           ue_index,
+                           du_cell_index_t         cell_index,
+                           slot_point              slot_rx,
+                           const msg3_mac_ce_list& mac_ces);
+
 private:
   /// Handle subPDUs contained in a MAC UL PDU.
   /// \param pdu MAC UL PDU being processed.
@@ -96,6 +103,20 @@ private:
   /// \param subpdu subPDU of PDU where CRNTI CE was detected.
   /// \return true if correctly handled.
   bool handle_mac_ce(const decoded_mac_rx_pdu& pdu, const mac_ul_sch_subpdu& subpdu);
+
+  /// Forward an already decoded PHR to the scheduler.
+  void forward_phr(du_ue_index_t     ue_index,
+                   du_cell_index_t   cell_index,
+                   rnti_t            rnti,
+                   slot_point        slot_rx,
+                   const phr_report& phr);
+
+  /// Forward an already decoded Timing Advance Report to the scheduler.
+  void forward_ta_report(du_ue_index_t             ue_index,
+                         du_cell_index_t           cell_index,
+                         rnti_t                    rnti,
+                         slot_point                slot_rx,
+                         std::chrono::microseconds ul_ta);
 
   /// Handle UL CCCH Message
   /// \param pdu MAC UL PDU being processed.

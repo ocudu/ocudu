@@ -55,9 +55,13 @@ public:
   async_task<mac_ue_reconfiguration_response>
   handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request& msg) override;
 
-  bool handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override
+  bool handle_ul_ccch_msg(du_ue_index_t    ue_index,
+                          du_cell_index_t  cell_index,
+                          slot_point       slot_rx,
+                          byte_buffer      ul_ccch_msg,
+                          msg3_mac_ce_list mac_ces) override
   {
-    return ul_unit.flush_ul_ccch_msg(ue_index, std::move(pdu));
+    return ul_unit.flush_ul_ccch_msg(ue_index, cell_index, slot_rx, std::move(ul_ccch_msg), std::move(mac_ces));
   }
 
   void handle_ue_config_applied(du_ue_index_t ue_index) override;

@@ -41,9 +41,15 @@ public:
                                   const std::vector<mac_logical_channel_config>& ul_logical_channels) override;
   async_task<bool> remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids_to_rem) override;
   async_task<void> remove_ue(const mac_ue_delete_request& msg) override;
-  bool             flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override
+  bool             flush_ul_ccch_msg(du_ue_index_t    ue_index,
+                                     du_cell_index_t  cell_index,
+                                     slot_point       slot_rx,
+                                     byte_buffer      ul_ccch_msg,
+                                     msg3_mac_ce_list mac_ces) override
   {
-    ul_ccch_forwarded = true;
+    if (not ul_ccch_msg.empty()) {
+      ul_ccch_forwarded = true;
+    }
     return true;
   }
   void handle_ue_config_applied(du_ue_index_t ue_index) override {}

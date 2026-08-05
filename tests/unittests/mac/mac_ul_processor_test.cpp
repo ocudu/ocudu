@@ -181,6 +181,19 @@ struct test_bench {
   // Call the dummy DU notifier to ensure no UL CCCH indication was forwarded.
   bool verify_no_ul_ccch_msg() { return du_mng_notifier.verify_no_ul_ccch_msg(); }
 
+  // Last UL CCCH indication forwarded to the DU, including any decoded MAC CEs deferred until UE creation.
+  const std::optional<ul_ccch_indication_message>& last_ul_ccch_msg() const { return du_mng_notifier.last_ccch_ind; }
+
+  // Hand decoded Msg3 MAC CEs back to MAC once the UE has been created.
+  bool flush_msg3_ces(du_ue_index_t ue_index, du_cell_index_t cell_index, slot_point slot_rx, msg3_mac_ce_list mac_ces)
+  {
+    const bool ret = mac_ul.flush_ul_ccch_msg(ue_index, cell_index, slot_rx, byte_buffer{}, std::move(mac_ces));
+    while (task_exec.has_pending_tasks()) {
+      task_exec.try_run_next();
+    }
+    return ret;
+  }
+
   const slotted_array<mac_test_ue, MAX_NOF_DU_UES, false>& get_test_ues() const { return test_ues; }
 
   void run_slot()
@@ -567,12 +580,13 @@ TEST(mac_ul_processor, verify_timing_advance_report)
 }
 
 // Test UL MAC processing of RX indication message with MAC PDU with UL-CCCH CE and Single Entry PHR CE.
-TEST(mac_ul_processor, when_ul_ccch_and_phr_are_received_then_phr_is_ignored)
+TEST(mac_ul_processor, when_ul_ccch_and_phr_are_received_then_phr_is_deferred)
 {
   // Define UE and create test_bench.
+  const du_ue_index_t   ue1_idx  = to_du_ue_index(1U);
   const du_cell_index_t cell_idx = to_du_cell_index(1U);
   test_bench            t_bench(cell_idx);
-  rnti_t                tc_rnti = t_bench.allocate_tc_rnti();
+  const rnti_t          tc_rnti = t_bench.allocate_tc_rnti();
 
   // Create PDU content.
   byte_buffer payload;
@@ -586,10 +600,104 @@ TEST(mac_ul_processor, when_ul_ccch_and_phr_are_received_then_phr_is_ignored)
   ASSERT_TRUE(payload.append(byte_buffer::create({0x39, 0x27, 0x2f}).value()));
 
   // Send RX data indication to MAC UL
+  t_bench.send_rx_indication_msg(create_rx_data_indication(cell_idx, tc_rnti, payload.copy()));
+
+  // The PHR is per-UE, so it is deferred rather than processed while only a TC-RNTI exists, and nothing about it
+  // reaches the scheduler yet - in particular it raises no SR.
+  ASSERT_TRUE(t_bench.verify_no_sr_notification(tc_rnti));
+  ASSERT_FALSE(t_bench.sched_ce_notifier().last_phr_msg.has_value());
+  ASSERT_TRUE(t_bench.last_ul_ccch_msg().has_value());
+  ASSERT_EQ(1U, t_bench.last_ul_ccch_msg()->msg3_mac_ces.size());
+  ASSERT_TRUE(std::holds_alternative<cell_ph_report>(t_bench.last_ul_ccch_msg()->msg3_mac_ces.front()));
+
+  // The DU creates the UE and returns the decoded CE to MAC.
+  msg3_mac_ce_list msg3_mac_ces = t_bench.last_ul_ccch_msg()->msg3_mac_ces;
+  t_bench.add_ue(tc_rnti, ue1_idx);
+  ASSERT_TRUE(
+      t_bench.flush_msg3_ces(ue1_idx, cell_idx, slot_point{subcarrier_spacing::kHz15, 0}, std::move(msg3_mac_ces)));
+
+  const std::optional<mac_phr_ce_info>& phr = t_bench.sched_ce_notifier().last_phr_msg;
+  ASSERT_TRUE(phr.has_value());
+  ASSERT_EQ(ue1_idx, phr->ue_index);
+  ASSERT_EQ(tc_rnti, phr->rnti);
+  ASSERT_EQ(ph_to_db_range(0x27U & 0x3fU), phr->phr.get_se_phr().ph);
+  ASSERT_EQ(p_cmax_to_dbm_range(0x2fU & 0x3fU), phr->phr.get_se_phr().p_cmax.value());
+}
+
+// Test UL MAC processing of RX indication message with MAC PDU with only a UL-CCCH SDU.
+TEST(mac_ul_processor, when_msg3_carries_only_the_ul_ccch_sdu_then_no_pdu_is_kept_for_later)
+{
+  const du_cell_index_t cell_idx = to_du_cell_index(1U);
+  test_bench            t_bench(cell_idx);
+  const rnti_t          tc_rnti = t_bench.allocate_tc_rnti();
+
+  // > MAC subPDU with UL-CCCH:
+  // R/LCID MAC subheader | MAC SDU (UL CCCH 48 bits)
+  // { 0x34  | 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06}  (Random 6B sequence)
+  byte_buffer payload = byte_buffer::create({0x34, 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06}).value();
+
   t_bench.send_rx_indication_msg(create_rx_data_indication(cell_idx, tc_rnti, std::move(payload)));
 
-  // Note: For now PHRs are ignored in this scenario.
-  ASSERT_TRUE(t_bench.verify_no_sr_notification(tc_rnti));
+  // There is nothing to process once the UE exists.
+  ASSERT_TRUE(t_bench.last_ul_ccch_msg().has_value());
+  ASSERT_TRUE(t_bench.last_ul_ccch_msg()->msg3_mac_ces.empty());
+}
+
+// Test UL MAC processing of RX indication message with MAC PDU with UL-CCCH SDU and a Timing Advance Report CE.
+TEST(mac_ul_processor, when_msg3_carries_a_mac_ce_then_it_is_processed_once_the_ue_exists)
+{
+  const du_ue_index_t   ue1_idx  = to_du_ue_index(1U);
+  const du_cell_index_t cell_idx = to_du_cell_index(1U);
+  test_bench            t_bench(cell_idx);
+  const rnti_t          tc_rnti = t_bench.allocate_tc_rnti();
+
+  // Create PDU content.
+  byte_buffer payload;
+  // > MAC subPDU with UL-CCCH:
+  // R/LCID MAC subheader | MAC SDU (UL CCCH 48 bits)
+  // { 0x34  | 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06}  (Random 6B sequence)
+  ASSERT_TRUE(payload.append(byte_buffer::create({0x34, 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06}).value()));
+  // > MAC subPDU with the Timing Advance Report:
+  // R/LCID MAC subheader = R|R|LCID = 0x2c or LCID=44
+  // MAC CE TA report = {0x00, 0x07}  ->  7 slots, i.e. 7ms
+  ASSERT_TRUE(payload.append(byte_buffer::create({0x2c, 0x00, 0x07}).value()));
+
+  const slot_point slot_rx{subcarrier_spacing::kHz15, 0};
+  t_bench.send_rx_indication_msg(create_rx_data_indication(cell_idx, tc_rnti, payload.copy()));
+
+  // The CE is per-UE, so it cannot be processed while only a TC-RNTI exists.
+  ASSERT_FALSE(t_bench.sched_ce_notifier().last_ta_report_msg.has_value());
+  // Only the decoded TA Report is retained; the UL-CCCH SDU is not part of the deferred data.
+  ASSERT_TRUE(t_bench.last_ul_ccch_msg().has_value());
+  ASSERT_EQ(1U, t_bench.last_ul_ccch_msg()->msg3_mac_ces.size());
+  ASSERT_EQ(std::chrono::microseconds{7000},
+            std::get<std::chrono::microseconds>(t_bench.last_ul_ccch_msg()->msg3_mac_ces.front()));
+
+  // The DU creates the UE and returns the decoded CE to MAC.
+  msg3_mac_ce_list msg3_mac_ces = t_bench.last_ul_ccch_msg()->msg3_mac_ces;
+  t_bench.add_ue(tc_rnti, ue1_idx);
+  ASSERT_TRUE(t_bench.flush_msg3_ces(ue1_idx, cell_idx, slot_rx, std::move(msg3_mac_ces)));
+
+  // Now the CE reaches the scheduler, attributed to the created UE.
+  const std::optional<mac_ta_report_ce_info>& ta_report = t_bench.sched_ce_notifier().last_ta_report_msg;
+  ASSERT_TRUE(ta_report.has_value());
+  ASSERT_EQ(ue1_idx, ta_report->ue_index);
+  ASSERT_EQ(tc_rnti, ta_report->rnti);
+  ASSERT_EQ(std::chrono::microseconds{7000}, ta_report->ul_ta);
+}
+
+// Test that a Msg3 handed back for a UE that no longer exists is discarded instead of crashing.
+TEST(mac_ul_processor, when_msg3_mac_ces_are_flushed_for_inexistent_ue_then_they_are_discarded)
+{
+  const du_cell_index_t cell_idx = to_du_cell_index(1U);
+  test_bench            t_bench(cell_idx);
+
+  msg3_mac_ce_list msg3_mac_ces;
+  msg3_mac_ces.emplace_back(std::chrono::microseconds{7000});
+  // The executor accepts the task, but the handler finds no UE context.
+  ASSERT_TRUE(t_bench.flush_msg3_ces(
+      to_du_ue_index(1U), cell_idx, slot_point{subcarrier_spacing::kHz15, 0}, std::move(msg3_mac_ces)));
+  ASSERT_FALSE(t_bench.sched_ce_notifier().last_ta_report_msg.has_value());
 }
 
 TEST(mac_ul_processor, when_pdu_is_filled_with_zerosfor_existing_ue_then_the_mac_pdu_is_discarded)

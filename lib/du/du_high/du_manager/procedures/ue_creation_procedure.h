@@ -25,6 +25,8 @@ struct du_ue_creation_request {
   rnti_t tc_rnti;
   /// \brief UL-CCCH message received from the UE in Msg3. Empty if the UE is created by upper layers.
   byte_buffer ul_ccch_msg;
+  /// Decoded per-UE MAC CEs carried in Msg3. Handed back to MAC for processing after UE creation.
+  msg3_mac_ce_list msg3_mac_ces;
   /// \brief If present, it represents the slot at which the UL-CCCH message was received in the PUSCH. Absent, when
   /// the UE is created by command from upper layers.
   std::optional<slot_point> slot_rx;

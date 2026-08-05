@@ -41,7 +41,8 @@ du_ue& du_manager_proc_tester::create_ue(du_ue_index_t ue_index)
   mac.wait_ue_create.ready_ev.set();
 
   async_task<void> t = launch_async<ue_creation_procedure>(
-      du_ue_creation_request{ue_index, ul_ccch_msg.cell_index, ul_ccch_msg.tc_rnti, ul_ccch_msg.subpdu.copy()},
+      du_ue_creation_request{
+          ue_index, ul_ccch_msg.cell_index, ul_ccch_msg.tc_rnti, ul_ccch_msg.subpdu.copy(), {}, ul_ccch_msg.slot_rx},
       ue_mng,
       params,
       mem_resources,

@@ -38,7 +38,11 @@ public:
 
   async_task<void> remove_ue(const mac_ue_delete_request& msg) override;
 
-  bool flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ccch_pdu) override;
+  bool flush_ul_ccch_msg(du_ue_index_t    ue_index,
+                         du_cell_index_t  cell_index,
+                         slot_point       slot_rx,
+                         byte_buffer      ul_ccch_msg,
+                         msg3_mac_ce_list mac_ces) override;
 
   void handle_ue_config_applied(du_ue_index_t ue_index) override;
 
