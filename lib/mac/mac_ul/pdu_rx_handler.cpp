@@ -267,6 +267,20 @@ bool pdu_rx_handler::handle_mac_ce(const decoded_mac_rx_pdu& ctx, const mac_ul_s
       phr_ind.phr        = decode_se_phr(subpdu.payload());
       sched.handle_ul_phr_indication(phr_ind);
     } break;
+    case lcid_ul_sch_t::TIMING_ADVANCE_REPORT: {
+      if (not is_du_ue_index_valid(ctx.ue_index)) {
+        logger.warning("{}: Discarding MAC CE. Cause: C-RNTI is not associated with any existing UE",
+                       create_prefix(ctx, subpdu));
+        return false;
+      }
+      mac_ta_report_ce_info ta_report_ind{};
+      ta_report_ind.cell_index = ctx.cell_index_rx;
+      ta_report_ind.ue_index   = ctx.ue_index;
+      ta_report_ind.rnti       = ctx.pdu_rx.rnti;
+      ta_report_ind.slot_rx    = ctx.slot_rx;
+      ta_report_ind.ul_ta      = decode_ta_report(subpdu.payload());
+      sched.handle_ul_ta_report_indication(ta_report_ind);
+    } break;
     case lcid_ul_sch_t::PADDING:
       break;
     default:

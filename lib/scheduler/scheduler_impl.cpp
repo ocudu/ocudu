@@ -176,6 +176,20 @@ void scheduler_impl::handle_ul_phr_indication(const ul_phr_indication_message& p
   cells[phr_ind.cell_index]->get_feedback_handler().handle_ul_phr_indication(phr_ind);
 }
 
+void scheduler_impl::handle_ul_ta_report_indication(const ul_ta_report_indication_message& ta_report_ind)
+{
+  ocudu_assert(
+      cells.contains(ta_report_ind.cell_index), "cell={} does not exist", fmt::underlying(ta_report_ind.cell_index));
+
+  // Early return if UE has not been created in the scheduler.
+  if (ta_report_ind.ue_index == INVALID_DU_UE_INDEX) {
+    logger.warning("ue={}: Discarding TA report. Cause: UE Id is not valid", fmt::underlying(INVALID_DU_UE_INDEX));
+    return;
+  }
+
+  cells[ta_report_ind.cell_index]->get_feedback_handler().handle_ul_ta_report_indication(ta_report_ind);
+}
+
 void scheduler_impl::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)
 {
   const du_cell_index_t pcell_index = cfg_mng.get_pcell_index(bs.ue_index);

@@ -20,6 +20,7 @@ class dummy_sched_ce_info_handler : public mac_scheduler_ce_info_handler
 {
 public:
   std::optional<mac_phr_ce_info>           last_phr_msg;
+  std::optional<mac_ta_report_ce_info>     last_ta_report_msg;
   std::optional<mac_bsr_ce_info>           last_bsr_msg;
   std::optional<mac_ul_scheduling_command> last_sched_cmd;
   std::optional<mac_ce_scheduling_command> last_ce_cmd;
@@ -61,6 +62,10 @@ public:
 
   /// \brief Forward to scheduler any decoded UL PHRs for a given UE.
   void handle_ul_phr_indication(const mac_phr_ce_info& phr) override { last_phr_msg = phr; }
+  void handle_ul_ta_report_indication(const mac_ta_report_ce_info& ta_report) override
+  {
+    last_ta_report_msg = ta_report;
+  }
 
   void handle_crnti_ce_indication(du_ue_index_t old_ue_index, du_cell_index_t cell_index) override
   {
@@ -530,6 +535,35 @@ TEST(mac_ul_processor, verify_single_entry_phr)
 
   // Test if notification sent to Scheduler has been received and it is correct.
   ASSERT_NO_FATAL_FAILURE(t_bench.verify_sched_phr_notification(phr_ind));
+}
+
+TEST(mac_ul_processor, verify_timing_advance_report)
+{
+  // Define UE and create test_bench.
+  const rnti_t          ue1_rnti = to_rnti(0x4601);
+  const du_ue_index_t   ue1_idx  = to_du_ue_index(1U);
+  const du_cell_index_t cell_idx = to_du_cell_index(1U);
+  test_bench            t_bench(ue1_rnti, ue1_idx, cell_idx);
+
+  // Create PDU content.
+  // MAC subPDU with:
+  // - 8-bit R/LCID MAC subheader, LCID=44.
+  // - MAC CE with the Timing Advance Report: 2 reserved bits and a 14-bit field of 15kHz slots.
+  //
+  // R/LCID MAC subheader = R|R|LCID = 0x2c
+  // MAC CE TA report = {0x00, 0x07}  ->  7 slots, i.e. 7ms
+  byte_buffer pdu = byte_buffer::create({0x2c, 0x00, 0x07}).value();
+
+  // Send RX data indication to MAC UL
+  t_bench.send_rx_indication_msg(ue1_rnti, pdu);
+
+  // Test if the notification sent to the scheduler has been received and it is correct.
+  const std::optional<mac_ta_report_ce_info>& ta_report = t_bench.sched_ce_notifier().last_ta_report_msg;
+  ASSERT_TRUE(ta_report.has_value());
+  ASSERT_EQ(cell_idx, ta_report->cell_index);
+  ASSERT_EQ(ue1_idx, ta_report->ue_index);
+  ASSERT_EQ(ue1_rnti, ta_report->rnti);
+  ASSERT_EQ(std::chrono::microseconds{7000}, ta_report->ul_ta);
 }
 
 // Test UL MAC processing of RX indication message with MAC PDU with UL-CCCH CE and Single Entry PHR CE.

@@ -271,6 +271,18 @@ void ocudu_scheduler_adapter::handle_ul_phr_indication(const mac_phr_ce_info& ph
   sched_impl->handle_ul_phr_indication(ind);
 }
 
+void ocudu_scheduler_adapter::handle_ul_ta_report_indication(const mac_ta_report_ce_info& ta_report)
+{
+  // Forward the Timing Advance Report to the scheduler.
+  ul_ta_report_indication_message ind{};
+  ind.cell_index = ta_report.cell_index;
+  ind.ue_index   = ta_report.ue_index;
+  ind.rnti       = ta_report.rnti;
+  ind.slot_rx    = ta_report.slot_rx;
+  ind.ul_ta      = ta_report.ul_ta;
+  sched_impl->handle_ul_ta_report_indication(ind);
+}
+
 void ocudu_scheduler_adapter::handle_crnti_ce_indication(du_ue_index_t old_ue_index, du_cell_index_t cell_index)
 {
   rlf_handler.handle_crnti_ce(old_ue_index);

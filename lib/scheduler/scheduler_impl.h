@@ -52,6 +52,7 @@ public:
   void handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce) override;
   void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override;
   void handle_ul_phr_indication(const ul_phr_indication_message& phr_ind) override;
+  void handle_ul_ta_report_indication(const ul_ta_report_indication_message& ta_report_ind) override;
   void handle_crnti_ce_received(du_ue_index_t ue_index) override;
 
   // PHY events.

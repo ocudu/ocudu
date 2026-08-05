@@ -5,6 +5,7 @@
 #include "ue_event_manager.h"
 #include "../cell/resource_grid.h"
 #include "../common_scheduling/ra_ue_repository.h"
+#include "../config/sched_config_manager.h"
 #include "../logging/cell_metrics_handler.h"
 #include "../logging/scheduler_event_logger.h"
 #include "../srs/srs_scheduler.h"
@@ -129,6 +130,11 @@ class ocudu::pdu_indication_pool
   static constexpr size_t BSR_INITIAL_POOL_SIZE      = MAX_PUSCH_PDUS_PER_SLOT * MAX_BSR_PHR_EXPECTED_SLOTS;
   static constexpr size_t POSITIONING_REQ_POOL_SIZE  = 1 * MAX_EXPECTED_SLOTS;
   static constexpr size_t SLICE_RECONF_POOL_SIZE     = 1 * MAX_EXPECTED_SLOTS;
+  // TA reports are event-triggered and rare in steady state, at most one per UE per offsetThresholdTA of drift, but
+  // every UE reports in Msg3 when ta-Report is configured, so simultaneous attaches produce one per UE within a couple
+  // of slots. They also reach the scheduler over the same per-UE MAC UL PDU executor as BSR/PHR, so they accumulate in
+  // flight the same way.
+  static constexpr size_t TA_REPORT_POOL_SIZE = MAX_PUSCH_PDUS_PER_SLOT * MAX_BSR_PHR_EXPECTED_SLOTS;
 
   using uci_pool          = bounded_object_pool<uci_indication::uci_pdu>;
   using phr_pool          = bounded_object_pool<ul_phr_indication_message>;
@@ -137,6 +143,7 @@ class ocudu::pdu_indication_pool
   using bsr_pool          = bounded_object_pool<ul_bsr_indication_message>;
   using pos_req_pool      = bounded_object_pool<positioning_measurement_request::cell_info>;
   using slice_reconf_pool = bounded_object_pool<du_cell_slice_reconfig_request>;
+  using ta_report_pool    = bounded_object_pool<ul_ta_report_indication_message>;
 
 public:
   pdu_indication_pool(ocudulog::basic_logger& logger_) :
@@ -147,7 +154,8 @@ public:
     pending_srss(SRS_INITIAL_POOL_SIZE),
     pending_bsrs(BSR_INITIAL_POOL_SIZE),
     pending_pos_reqs(POSITIONING_REQ_POOL_SIZE),
-    slice_reconf_reqs(SLICE_RECONF_POOL_SIZE)
+    slice_reconf_reqs(SLICE_RECONF_POOL_SIZE),
+    pending_ta_reports(TA_REPORT_POOL_SIZE)
   {
   }
 
@@ -169,6 +177,8 @@ public:
       return "positioning measurement request";
     } else if constexpr (std::is_same_v<PDUType, du_cell_slice_reconfig_request>) {
       return "slice reconfiguration request";
+    } else if constexpr (std::is_same_v<PDUType, ul_ta_report_indication_message>) {
+      return "TA report";
     } else {
       return "unknown";
     }
@@ -198,15 +208,17 @@ private:
   bsr_pool          pending_bsrs;
   pos_req_pool      pending_pos_reqs;
   slice_reconf_pool slice_reconf_reqs;
+  ta_report_pool    pending_ta_reports;
 
-  std::tuple<uci_pool*, phr_pool*, crc_pool*, srs_pool*, bsr_pool*, pos_req_pool*, slice_reconf_pool*> pools{
-      &pending_ucis,
-      &pending_phrs,
-      &pending_crcs,
-      &pending_srss,
-      &pending_bsrs,
-      &pending_pos_reqs,
-      &slice_reconf_reqs};
+  std::tuple<uci_pool*, phr_pool*, crc_pool*, srs_pool*, bsr_pool*, pos_req_pool*, slice_reconf_pool*, ta_report_pool*>
+      pools{&pending_ucis,
+            &pending_phrs,
+            &pending_crcs,
+            &pending_srss,
+            &pending_bsrs,
+            &pending_pos_reqs,
+            &slice_reconf_reqs,
+            &pending_ta_reports};
 };
 
 // Initial capacity for the common and cell event lists, in order to avoid std::vector reallocations. We use the max
@@ -794,6 +806,49 @@ void ue_cell_event_manager::handle_ul_phr_indication(const ul_phr_indication_mes
   };
 
   push_event(pcell_index, event_t{"PHR", ue_index, std::move(handle_phr_impl)});
+}
+
+void ue_cell_event_manager::handle_ul_ta_report_indication(const ul_ta_report_indication_message& ta_report_ind)
+{
+  auto ind_ptr = ind_pdu_pool->create_pdu(ta_report_ind);
+  if (ind_ptr == nullptr) {
+    return;
+  }
+  const du_cell_index_t pcell_index = ta_report_ind.cell_index;
+  const du_ue_index_t   ue_index    = ta_report_ind.ue_index;
+
+  auto handle_ta_report_impl = [this, ta_report = std::move(ind_ptr)]() {
+    if (not ue_db.contains(ta_report->ue_index)) {
+      return event_result::invalid_ue;
+    }
+    auto& u = ue_db[ta_report->ue_index];
+
+    // Cross-check of the cell reference-location estimate against the UE's own report. The scheduler maps the
+    // measurement gap onto the uplink grid with the estimate: the gap sits on the downlink frame timing, the UE
+    // transmits T_TA earlier (TS 38.211, Section 4.3.1) and drops whatever lands in it (TS 38.321, Section 5.14). A
+    // mismatch beyond the report's one-slot quantization (TS 38.321, Section 6.1.3.56) - e.g. wrong estimate inputs
+    // or a UE far from the reference location - means the mapping is off and the UE drops the affected grants.
+    constexpr std::chrono::milliseconds            max_ul_ta_deviation{1};
+    const std::optional<std::chrono::microseconds> estimate =
+        u.get_pcell().cfg().cell_cfg_common.ntn_ref_location_ul_ta;
+    if (estimate.has_value() and std::chrono::abs(ta_report->ul_ta - *estimate) > max_ul_ta_deviation) {
+      logger.warning("ue={} rnti={}: Reported T_TA={}us differs from the cell estimate={}us by more than a slot",
+                     fmt::underlying(ta_report->ue_index),
+                     ta_report->rnti,
+                     ta_report->ul_ta.count(),
+                     estimate->count());
+    } else {
+      logger.debug("ue={} rnti={}: Reported T_TA={}us (cell estimate={}us)",
+                   fmt::underlying(ta_report->ue_index),
+                   ta_report->rnti,
+                   ta_report->ul_ta.count(),
+                   estimate.has_value() ? estimate->count() : 0);
+    }
+
+    return event_result::processed;
+  };
+
+  push_event(pcell_index, event_t{"TA report", ue_index, std::move(handle_ta_report_impl)});
 }
 
 void ue_cell_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& ce)

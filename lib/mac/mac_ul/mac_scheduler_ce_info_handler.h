@@ -11,6 +11,7 @@
 #include "ocudu/ran/logical_channel/phr_report.h"
 #include "ocudu/ran/rnti.h"
 #include "ocudu/ran/slot_point.h"
+#include <chrono>
 #include <optional>
 
 namespace ocudu {
@@ -48,6 +49,16 @@ struct mac_phr_ce_info {
   phr_report      phr;
 };
 
+/// \brief Information and context relative to a decoded Timing Advance Report MAC CE.
+struct mac_ta_report_ce_info {
+  du_cell_index_t cell_index;
+  du_ue_index_t   ue_index;
+  rnti_t          rnti;
+  slot_point      slot_rx;
+  /// Uplink timing advance T_TA reported by the UE (TS 38.211, 4.3.1), rounded up to a whole 15kHz slot by the UE.
+  std::chrono::microseconds ul_ta;
+};
+
 /// \brief Interface between MAC and scheduler that is used by MAC to forward MAC CE information and force UL grants.
 class mac_scheduler_ce_info_handler
 {
@@ -66,6 +77,9 @@ public:
 
   /// \brief Forward to scheduler any decoded UL PHRs for a given UE.
   virtual void handle_ul_phr_indication(const mac_phr_ce_info& phr) = 0;
+
+  /// \brief Forward to scheduler a Timing Advance Report decoded for a given UE.
+  virtual void handle_ul_ta_report_indication(const mac_ta_report_ce_info& ta_report) = 0;
 
   /// \brief Forward to scheduler any notification of a received MAC CRNTI CE.
   virtual void handle_crnti_ce_indication(du_ue_index_t old_ue_index, du_cell_index_t cell_index) = 0;

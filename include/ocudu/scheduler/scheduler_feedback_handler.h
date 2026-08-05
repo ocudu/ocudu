@@ -19,6 +19,7 @@
 #include "ocudu/ran/srs/srs_channel_matrix.h"
 #include "ocudu/ran/uci/uci_constants.h"
 #include "ocudu/scheduler/config/logical_channel_group.h"
+#include <chrono>
 #include <variant>
 
 namespace ocudu {
@@ -258,6 +259,16 @@ struct ul_phr_indication_message {
   phr_report      phr;
 };
 
+/// Information and context relative to a Timing Advance Report forwarded by MAC.
+struct ul_ta_report_indication_message {
+  du_cell_index_t cell_index;
+  du_ue_index_t   ue_index;
+  rnti_t          rnti;
+  slot_point      slot_rx;
+  /// Uplink timing advance T_TA reported by the UE (TS 38.211, 4.3.1), rounded up to a whole 15kHz slot by the UE.
+  std::chrono::microseconds ul_ta;
+};
+
 class scheduler_feedback_handler
 {
 public:
@@ -271,6 +282,11 @@ public:
   ///
   /// \param phr PHR indication message sent by MAC.
   virtual void handle_ul_phr_indication(const ul_phr_indication_message& phr_ind) = 0;
+
+  /// \brief Handles a Timing Advance Report indication sent by MAC.
+  ///
+  /// The reported T_TA places this UE's uplink measurement gap window when the cell has no estimate of its own.
+  virtual void handle_ul_ta_report_indication(const ul_ta_report_indication_message& ta_report_ind) = 0;
 
   /// \brief Command scheduling of DL MAC CE for a given UE.
   ///
