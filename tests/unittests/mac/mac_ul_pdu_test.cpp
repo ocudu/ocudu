@@ -4,6 +4,7 @@
 
 #include "lib/mac/mac_ul/mac_ul_sch_pdu.h"
 #include "lib/mac/mac_ul/ul_phr.h"
+#include "lib/mac/mac_ul/ul_ta_report.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/ocudulog/ocudulog.h"
@@ -356,6 +357,79 @@ TEST(mac_ul_subpdu, decode_single_entry_phr)
   ASSERT_EQ(se_phr.get_se_phr().serv_cell_id, to_du_cell_index(0));
   ASSERT_EQ(se_phr.get_se_phr().ph_type, ph_field_type_t::type1);
   fmt::print("subPDU: {}\n", subpdu);
+}
+
+// Test that LCID 44 is treated as a fixed size MAC CE, even though it sits inside the reserved range.
+TEST(mac_ul_subpdu, timing_advance_report_lcid_is_a_fixed_size_ce)
+{
+  const lcid_ul_sch_t ta_report{lcid_ul_sch_t::TIMING_ADVANCE_REPORT};
+
+  ASSERT_TRUE(ta_report.is_valid_lcid()) << "LCID 44 must be carved out of the reserved range";
+  ASSERT_TRUE(ta_report.is_ce());
+  ASSERT_FALSE(ta_report.is_sdu());
+  ASSERT_FALSE(ta_report.is_ccch());
+  // The CE has a fixed size, so the subheader carries no length field.
+  ASSERT_FALSE(ta_report.has_length_field());
+  ASSERT_FALSE(ta_report.is_var_len_ce());
+  ASSERT_EQ(2, ta_report.sizeof_ce());
+
+  // The carve-out must not leak into the neighbouring reserved codepoints.
+  ASSERT_FALSE(lcid_ul_sch_t{43}.is_valid_lcid());
+  ASSERT_FALSE(lcid_ul_sch_t{45}.is_valid_lcid());
+  ASSERT_FALSE(lcid_ul_sch_t{43}.is_ce());
+  ASSERT_FALSE(lcid_ul_sch_t{45}.is_ce());
+}
+
+// Test the unpacking function for MAC subPDU with MAC CE (Timing Advance Report).
+TEST(mac_ul_subpdu, decode_timing_advance_report)
+{
+  mac_ul_sch_subpdu subpdu;
+
+  // MAC subPDU with:
+  // - 8-bit R/LCID MAC subheader.
+  // - MAC CE with Timing Advance Report.
+  //
+  // |   |   |   |   |   |   |   |   |
+  // | R | R |         LCID          |  Octet 1
+  // | R | R |     TA (MSB 6 bits)   |  Octet 2
+  // |         TA (LSB 8 bits)       |  Octet 3
+
+  // R/LCID MAC subheader = R|R|LCID = 0x2c or LCID=44
+  // MAC CE TA report = {0x00, 0x07}  ->  7 slots of 15kHz SCS
+  byte_buffer msg = byte_buffer::create({0x2c, 0x00, 0x07}).value();
+  ASSERT_TRUE(subpdu.unpack(msg));
+
+  // Test expected length.
+  ASSERT_EQ(2, subpdu.sdu_length()) << "Wrong SDU length for MAC CE TA report (2 bytes)";
+  ASSERT_EQ(3, subpdu.total_length()) << "Wrong subPDU length for MAC CE TA report (1 B header + 2B SDU)";
+  ASSERT_EQ(subpdu.payload(), byte_buffer_view(msg).view(1, subpdu.sdu_length()));
+
+  // Test Payload. One slot of 15kHz SCS is 1ms, whatever SCS the cell uses.
+  ASSERT_EQ(std::chrono::microseconds{7000}, decode_ta_report(subpdu.payload()));
+  fmt::print("subPDU: {}\n", subpdu);
+}
+
+// Test the decoding of the Timing Advance field at both ends of its range.
+TEST(mac_ul_subpdu, decode_timing_advance_report_boundary_values)
+{
+  struct test_case {
+    const char*               description;
+    std::vector<uint8_t>      ce;
+    std::chrono::microseconds expected;
+  };
+  const std::vector<test_case> test_cases = {
+      {"a UE that needs no advance at all reports zero", {0x00, 0x00}, std::chrono::microseconds{0}},
+      {"smallest non-zero report", {0x00, 0x01}, std::chrono::microseconds{1000}},
+      {"largest value the 14-bit field can carry, ample for a GEO cell",
+       {0x3f, 0xff},
+       std::chrono::microseconds{MAX_TA_REPORT_SLOTS * 1000}},
+      {"the two reserved bits must not reach the decoded value", {0xc0, 0x01}, std::chrono::microseconds{1000}},
+  };
+
+  for (const test_case& tc : test_cases) {
+    byte_buffer msg = byte_buffer::create(tc.ce.begin(), tc.ce.end()).value();
+    ASSERT_EQ(tc.expected, decode_ta_report(byte_buffer_view(msg))) << tc.description;
+  }
 }
 
 // Test the unpacking function for MAC subPDU with padding.

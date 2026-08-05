@@ -24,9 +24,12 @@ public:
     // ...
     LCID32 = 32,
 
-    /// Reserved
-    MIN_RESERVED = 33,
-    MAX_RESERVED = 51,
+    /// Codepoints this MAC does not handle: Reserved (37-42 and 47) or features not implemented.
+    MIN_UNSUPPORTED = 33,
+    MAX_UNSUPPORTED = 51,
+
+    /// Timing Advance Report (44), see TS 38.321, 6.1.3.56.
+    TIMING_ADVANCE_REPORT = 0b101100,
 
     /// CCCH of 48 bits
     CCCH_SIZE_48 = 0b110100,
@@ -63,13 +66,22 @@ public:
   bool is_ccch() const { return (lcid_val == CCCH_SIZE_48 || lcid_val == CCCH_SIZE_64); }
 
   /// Whether LCID is an MAC CE
-  bool is_ce() const { return lcid_val <= PADDING and lcid_val >= BIT_RATE_QUERY; }
+  bool is_ce() const
+  {
+    // The MAC CE codepoints are contiguous from BIT_RATE_QUERY upwards, except for the Timing Advance Report, which
+    // sits at 44 among the unsupported codepoints.
+    return (lcid_val <= PADDING and lcid_val >= BIT_RATE_QUERY) or lcid_val == TIMING_ADVANCE_REPORT;
+  }
 
   /// Whether LCID belongs to a Radio Bearer Logical Channel
   bool is_sdu() const { return lcid_val <= LCID32 and lcid_val >= LCID1; }
 
-  /// Returns false for all reserved values in Table 6.2.1-1 and 6.2.1-2
-  bool is_valid_lcid() const { return lcid_val <= PADDING and (lcid_val < MIN_RESERVED or lcid_val > MAX_RESERVED); }
+  /// Returns false for the LCID values this MAC does not accept, see \c MIN_UNSUPPORTED.
+  bool is_valid_lcid() const
+  {
+    return lcid_val == TIMING_ADVANCE_REPORT or
+           (lcid_val <= PADDING and (lcid_val < MIN_UNSUPPORTED or lcid_val > MAX_UNSUPPORTED));
+  }
 
   /// Whether LCID subPDU has associated length field
   bool has_length_field() const
@@ -105,6 +117,8 @@ public:
       case SHORT_TRUNC_BSR:
         return 1;
       case SE_PHR:
+        return 2;
+      case TIMING_ADVANCE_REPORT:
         return 2;
       // NOTE: LONG_BSR and LONG_TRUNC_BSR are variable-sized MAC CE, not fixed-sized. Right now this function is not
       // called for these two cases.

@@ -7,6 +7,7 @@
 #include "lcid_ul_sch.h"
 #include "ul_bsr.h"
 #include "ul_phr.h"
+#include "ul_ta_report.h"
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/adt/expected.h"
 #include "ocudu/adt/span.h"
@@ -141,6 +142,9 @@ struct formatter<ocudu::mac_ul_sch_subpdu> {
         format_to(ctx.out(), "SE_PHR: ph={}dB p_cmax={}dBm", phr.get_se_phr().ph, phr.get_se_phr().p_cmax);
         break;
       }
+      case lcid_ul_sch_t::TIMING_ADVANCE_REPORT:
+        format_to(ctx.out(), "TA_REPORT: t_ta={}us", decode_ta_report(subpdu.payload()).count());
+        break;
       case lcid_ul_sch_t::PADDING:
         format_to(ctx.out(), "PAD: len={}", subpdu.sdu_length());
         break;
