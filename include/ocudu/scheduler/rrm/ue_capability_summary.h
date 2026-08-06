@@ -8,6 +8,7 @@
 #include "ocudu/ran/nr_band.h"
 #include "ocudu/ran/pusch/tx_scheme_configuration.h"
 #include <cstdint>
+#include <optional>
 #include <unordered_map>
 
 namespace ocudu {
@@ -27,6 +28,26 @@ struct ue_capability_summary {
   /// Default maximum PDSCH TDRA repetition number.
   static constexpr unsigned default_max_pdsch_tdra_rep_number = 1;
   /// @}
+
+  /// \brief Type-II codebook parameters supported by the UE.
+  ///
+  /// It is given by field \e type2 of \e codebookParameters in Information Element \e MIMO-ParametersPerBand.
+  struct type2_codebook_params {
+    /// Maximum number of beams supported for linear combination, given by field \e parameterLx. Values: {2, 3, 4}.
+    uint8_t max_nof_beams = 2;
+    /// Set to true if the UE supports subband amplitude scaling, given by field \e amplitudeScalingType.
+    bool subband_amplitude_supported = false;
+    /// Maximum number of TX ports in a CSI-RS resource, given by field \e supportedCSI-RS-ResourceList.
+    uint8_t max_nof_tx_ports_per_resource = 2;
+
+    /// Equality operator.
+    bool operator==(const type2_codebook_params& other) const
+    {
+      return (max_nof_beams == other.max_nof_beams) &&
+             (subband_amplitude_supported == other.subband_amplitude_supported) &&
+             (max_nof_tx_ports_per_resource == other.max_nof_tx_ports_per_resource);
+    }
+  };
 
   /// Contains band specific parameters.
   struct supported_band {
@@ -65,23 +86,24 @@ struct ue_capability_summary {
     ///
     /// It is given by field \e pucch-Repetition-F0-2-r17 in Information Element \e BandNR.
     bool pucch_repeat_f0_2_r17_supported = false;
+    /// Type-II codebook parameters. It is empty if the UE does not support the Type-II codebook for CSI reporting.
+    std::optional<type2_codebook_params> type2_codebook;
 
     /// Equality operator.
     bool operator==(const supported_band& other) const
     {
-      if ((pusch_qam256_supported != other.pusch_qam256_supported) ||
-          (pusch_tx_coherence != other.pusch_tx_coherence) || (pusch_max_rank != other.pusch_max_rank) ||
-          (nof_srs_tx_ports != other.nof_srs_tx_ports) || (max_dl_harq_process_num != other.max_dl_harq_process_num) ||
-          (max_ul_harq_process_num != other.max_ul_harq_process_num) ||
-          (ul_pre_compensation_supported != other.ul_pre_compensation_supported) ||
-          (ul_ta_reporting_supported != other.ul_ta_reporting_supported) ||
-          (ue_specific_k_offset_supported != other.ue_specific_k_offset_supported) ||
-          (max_pdsch_tdra_rep_number != other.max_pdsch_tdra_rep_number) ||
-          (pusch_rep_type_a_avail_slot_supported != other.pusch_rep_type_a_avail_slot_supported) ||
-          (pucch_repeat_f0_2_r17_supported != other.pucch_repeat_f0_2_r17_supported)) {
-        return false;
-      }
-      return true;
+      return (pusch_qam256_supported == other.pusch_qam256_supported) &&
+             (pusch_tx_coherence == other.pusch_tx_coherence) && (pusch_max_rank == other.pusch_max_rank) &&
+             (nof_srs_tx_ports == other.nof_srs_tx_ports) &&
+             (max_dl_harq_process_num == other.max_dl_harq_process_num) &&
+             (max_ul_harq_process_num == other.max_ul_harq_process_num) &&
+             (ul_pre_compensation_supported == other.ul_pre_compensation_supported) &&
+             (ul_ta_reporting_supported == other.ul_ta_reporting_supported) &&
+             (ue_specific_k_offset_supported == other.ue_specific_k_offset_supported) &&
+             (max_pdsch_tdra_rep_number == other.max_pdsch_tdra_rep_number) &&
+             (pusch_rep_type_a_avail_slot_supported == other.pusch_rep_type_a_avail_slot_supported) &&
+             (pucch_repeat_f0_2_r17_supported == other.pucch_repeat_f0_2_r17_supported) &&
+             (type2_codebook == other.type2_codebook);
     }
   };
 
@@ -127,23 +149,20 @@ struct ue_capability_summary {
   /// Equality operator.
   bool operator==(const ue_capability_summary& other) const
   {
-    if ((pdsch_qam256_supported != other.pdsch_qam256_supported) ||
-        (pdsch_qam64lowse_supported != other.pdsch_qam64lowse_supported) ||
-        (pusch_qam64lowse_supported != other.pusch_qam64lowse_supported) ||
-        (pusch_rep_type_a_supported != other.pusch_rep_type_a_supported) || (bands != other.bands) ||
-        (long_drx_cycle_supported != other.long_drx_cycle_supported) ||
-        (short_drx_cycle_supported != other.short_drx_cycle_supported) ||
-        (pdsch_interleaving_vrb_to_prb_supported != other.pdsch_interleaving_vrb_to_prb_supported) ||
-        (ntn_supported != other.ntn_supported) ||
-        (disabled_dl_harq_feedback_supported != other.disabled_dl_harq_feedback_supported) ||
-        (ul_harq_mode_b_supported != other.ul_harq_mode_b_supported) ||
-        (sr_triggered_by_ta_report_supported != other.sr_triggered_by_ta_report_supported) ||
-        (supported_meas_gaps != other.supported_meas_gaps) ||
-        (pucch_repeat_f1_3_4_supported != other.pucch_repeat_f1_3_4_supported) ||
-        (slot_based_dyn_pucch_rep_r17_supported != other.slot_based_dyn_pucch_rep_r17_supported)) {
-      return false;
-    }
-    return true;
+    return (pdsch_qam256_supported == other.pdsch_qam256_supported) &&
+           (pdsch_qam64lowse_supported == other.pdsch_qam64lowse_supported) &&
+           (pusch_qam64lowse_supported == other.pusch_qam64lowse_supported) &&
+           (pusch_rep_type_a_supported == other.pusch_rep_type_a_supported) && (bands == other.bands) &&
+           (long_drx_cycle_supported == other.long_drx_cycle_supported) &&
+           (short_drx_cycle_supported == other.short_drx_cycle_supported) &&
+           (pdsch_interleaving_vrb_to_prb_supported == other.pdsch_interleaving_vrb_to_prb_supported) &&
+           (ntn_supported == other.ntn_supported) &&
+           (disabled_dl_harq_feedback_supported == other.disabled_dl_harq_feedback_supported) &&
+           (ul_harq_mode_b_supported == other.ul_harq_mode_b_supported) &&
+           (sr_triggered_by_ta_report_supported == other.sr_triggered_by_ta_report_supported) &&
+           (supported_meas_gaps == other.supported_meas_gaps) &&
+           (pucch_repeat_f1_3_4_supported == other.pucch_repeat_f1_3_4_supported) &&
+           (slot_based_dyn_pucch_rep_r17_supported == other.slot_based_dyn_pucch_rep_r17_supported);
   }
 };
 

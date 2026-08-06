@@ -381,3 +381,115 @@ TEST(decode_ue_nr_cap_container_repetitions_test, absent_repetition_caps_fall_ba
 
   ASSERT_EQ(*caps, expected_caps);
 }
+
+/// Type-II codebook capabilities used to build a UE-NR-Capability container for band n78.
+struct type2_codebook_caps_builder_params {
+  /// Adds field \e type2 to \e codebookParameters when true.
+  bool type2_supported = false;
+  /// Sets field \e parameterLx.
+  uint8_t param_lx = 2;
+  /// Sets field \e amplitudeScalingType to \e wideband-AndSubband when true, to \e wideband otherwise.
+  bool subband_amplitude = false;
+  /// Sets field \e maxNumberTxPortsPerResource of the supported CSI-RS resource.
+  asn1::rrc_nr::supported_csi_rs_res_s::max_num_tx_ports_per_res_opts::options max_nof_tx_ports =
+      asn1::rrc_nr::supported_csi_rs_res_s::max_num_tx_ports_per_res_opts::p8;
+};
+
+/// Packs a UE-NR-Capability container advertising band n78 with the given Type-II codebook capabilities.
+static byte_buffer pack_ue_cap_with_type2_codebook_caps(const type2_codebook_caps_builder_params& params)
+{
+  using namespace asn1::rrc_nr;
+
+  ue_nr_cap_s ue_cap;
+  ue_cap.access_stratum_release.value                    = access_stratum_release_opts::rel17;
+  ue_cap.pdcp_params.max_num_rohc_context_sessions.value = pdcp_params_s::max_num_rohc_context_sessions_opts::cs2;
+
+  band_nr_s band;
+  band.band_nr                      = 78;
+  band.mimo_params_per_band_present = true;
+  band.mimo_params_per_band.ext     = true;
+  band.mimo_params_per_band.codebook_params.set_present();
+  codebook_params_s& cb_params = *band.mimo_params_per_band.codebook_params;
+
+  // The Type-I single-panel parameters are mandatory in CodebookParameters.
+  supported_csi_rs_res_s type1_res;
+  type1_res.max_num_tx_ports_per_res.value = supported_csi_rs_res_s::max_num_tx_ports_per_res_opts::p2;
+  type1_res.max_num_res_per_band           = 1;
+  type1_res.total_num_tx_ports_per_band    = 2;
+  cb_params.type1.single_panel.supported_csi_rs_res_list.push_back(type1_res);
+  cb_params.type1.single_panel.modes.value = codebook_params_s::type1_s_::single_panel_s_::modes_opts::mode1;
+  cb_params.type1.single_panel.max_num_csi_rs_per_res_set = 1;
+
+  if (params.type2_supported) {
+    cb_params.type2_present = true;
+    supported_csi_rs_res_s type2_res;
+    type2_res.max_num_tx_ports_per_res.value = params.max_nof_tx_ports;
+    type2_res.max_num_res_per_band           = 1;
+    type2_res.total_num_tx_ports_per_band    = 2;
+    cb_params.type2.supported_csi_rs_res_list.push_back(type2_res);
+    cb_params.type2.param_lx = params.param_lx;
+    cb_params.type2.amplitude_scaling_type.value =
+        params.subband_amplitude ? codebook_params_s::type2_s_::amplitude_scaling_type_opts::wideband_and_subband
+                                 : codebook_params_s::type2_s_::amplitude_scaling_type_opts::wideband;
+  }
+
+  ue_cap.rf_params.supported_band_list_nr.push_back(band);
+
+  byte_buffer   buf;
+  asn1::bit_ref bref{buf};
+  report_fatal_error_if_not(ue_cap.pack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to pack UE NR capabilities");
+  return buf;
+}
+
+TEST(decode_ue_nr_cap_container_type2_codebook_test, type2_codebook_caps_reported)
+{
+  byte_buffer container =
+      pack_ue_cap_with_type2_codebook_caps({.type2_supported = true, .param_lx = 4, .subband_amplitude = true});
+
+  expected<ue_capability_summary, std::string> caps = decode_ue_nr_cap_container(container);
+  ASSERT_TRUE(caps.has_value()) << fmt::format("Failed to decode UE capabilities: {}", caps.error());
+
+  ue_capability_summary                 expected_caps;
+  ue_capability_summary::supported_band band_caps;
+  band_caps.type2_codebook.emplace();
+  band_caps.type2_codebook->max_nof_beams                 = 4;
+  band_caps.type2_codebook->subband_amplitude_supported   = true;
+  band_caps.type2_codebook->max_nof_tx_ports_per_resource = 8;
+  expected_caps.bands.emplace(nr_band::n78, band_caps);
+
+  ASSERT_EQ(*caps, expected_caps);
+}
+
+TEST(decode_ue_nr_cap_container_type2_codebook_test, wideband_only_amplitude_reported)
+{
+  byte_buffer container = pack_ue_cap_with_type2_codebook_caps(
+      {.type2_supported  = true,
+       .param_lx         = 2,
+       .max_nof_tx_ports = asn1::rrc_nr::supported_csi_rs_res_s::max_num_tx_ports_per_res_opts::p4});
+
+  expected<ue_capability_summary, std::string> caps = decode_ue_nr_cap_container(container);
+  ASSERT_TRUE(caps.has_value()) << fmt::format("Failed to decode UE capabilities: {}", caps.error());
+
+  ue_capability_summary                 expected_caps;
+  ue_capability_summary::supported_band band_caps;
+  band_caps.type2_codebook.emplace();
+  band_caps.type2_codebook->max_nof_beams                 = 2;
+  band_caps.type2_codebook->subband_amplitude_supported   = false;
+  band_caps.type2_codebook->max_nof_tx_ports_per_resource = 4;
+  expected_caps.bands.emplace(nr_band::n78, band_caps);
+
+  ASSERT_EQ(*caps, expected_caps);
+}
+
+TEST(decode_ue_nr_cap_container_type2_codebook_test, absent_type2_codebook_yields_no_support)
+{
+  byte_buffer container = pack_ue_cap_with_type2_codebook_caps({});
+
+  expected<ue_capability_summary, std::string> caps = decode_ue_nr_cap_container(container);
+  ASSERT_TRUE(caps.has_value()) << fmt::format("Failed to decode UE capabilities: {}", caps.error());
+
+  ue_capability_summary expected_caps;
+  expected_caps.bands.emplace(nr_band::n78, ue_capability_summary::supported_band{});
+
+  ASSERT_EQ(*caps, expected_caps);
+}

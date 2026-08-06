@@ -56,10 +56,29 @@ static expected<ue_capability_summary, std::string> decode_advanced_ue_nr_caps(u
     }
     band_cap.pusch_tx_coherence = pusch_tx_coherence;
 
-    // Convert PDSCH TDRA repetition capability.
-    if (band.mimo_params_per_band_present and band.mimo_params_per_band.support_inter_slot_tdm_r16.is_present()) {
-      band_cap.max_pdsch_tdra_rep_number =
-          band.mimo_params_per_band.support_inter_slot_tdm_r16->support_rep_num_pdsch_tdra_r16.to_number();
+    if (band.mimo_params_per_band_present) {
+      const asn1::rrc_nr::mimo_params_per_band_s& mimo_params = band.mimo_params_per_band;
+
+      // Convert PDSCH TDRA repetition capability.
+      if (mimo_params.support_inter_slot_tdm_r16.is_present()) {
+        band_cap.max_pdsch_tdra_rep_number =
+            mimo_params.support_inter_slot_tdm_r16->support_rep_num_pdsch_tdra_r16.to_number();
+      }
+
+      // Convert Type-II codebook capability.
+      if (mimo_params.codebook_params.is_present() and mimo_params.codebook_params->type2_present) {
+        const auto& asn1_type2 = mimo_params.codebook_params->type2;
+
+        ue_capability_summary::type2_codebook_params& type2_cap = band_cap.type2_codebook.emplace();
+        type2_cap.max_nof_beams                                 = asn1_type2.param_lx;
+        type2_cap.subband_amplitude_supported =
+            asn1_type2.amplitude_scaling_type.value ==
+            asn1::rrc_nr::codebook_params_s::type2_s_::amplitude_scaling_type_opts::wideband_and_subband;
+        for (const auto& csi_rs_res : asn1_type2.supported_csi_rs_res_list) {
+          type2_cap.max_nof_tx_ports_per_resource =
+              std::max(type2_cap.max_nof_tx_ports_per_resource, csi_rs_res.max_num_tx_ports_per_res.to_number());
+        }
+      }
     }
   }
 

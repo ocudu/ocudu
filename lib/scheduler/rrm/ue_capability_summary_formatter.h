@@ -40,6 +40,16 @@ struct formatter<ocudu::ue_capability_summary::supported_band> {
     helper.format_always(ctx, "max_pdsch_tdra_rep_number={}", params.max_pdsch_tdra_rep_number);
     helper.format_always(ctx, "pusch_rep_type_a_avail_slot_supported={}", params.pusch_rep_type_a_avail_slot_supported);
     helper.format_always(ctx, "pucch_repeat_f0_2_r17_supported={}", params.pucch_repeat_f0_2_r17_supported);
+    if (params.type2_codebook.has_value()) {
+      helper.format_always(ctx,
+                           "type2_codebook={{max_nof_beams={} subband_amplitude_supported={} "
+                           "max_nof_tx_ports_per_resource={}}}",
+                           params.type2_codebook->max_nof_beams,
+                           params.type2_codebook->subband_amplitude_supported,
+                           params.type2_codebook->max_nof_tx_ports_per_resource);
+    } else {
+      helper.format_always(ctx, "type2_codebook=na");
+    }
     return ctx.out();
   }
 };
