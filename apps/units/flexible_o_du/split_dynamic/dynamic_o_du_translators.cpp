@@ -67,7 +67,8 @@ void ocudu::fill_dynamic_du_worker_manager_config(worker_manager_config&        
 {
   bool is_blocking_mode_enable = false;
   if (std::holds_alternative<ru_sdr_unit_config>(unit_cfg.ru_cfg)) {
-    is_blocking_mode_enable = std::get<ru_sdr_unit_config>(unit_cfg.ru_cfg).device_driver == "zmq";
+    const auto& driver      = std::get<ru_sdr_unit_config>(unit_cfg.ru_cfg).device_driver;
+    is_blocking_mode_enable = (driver == "zmq" || driver == "difi");
   }
   fill_o_du_high_worker_manager_config(config, unit_cfg.odu_high_cfg, is_blocking_mode_enable);
   std::vector<du_low_cell_config> cell_params;

@@ -3,9 +3,13 @@
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 set(SOURCES_DIFI
+        radio_config_difi_validator.cpp
         radio_difi_context_packet.cpp
         radio_difi_data_packet.cpp
+        radio_difi_stream_config.cpp
         radio_difi_udp_socket.cpp
+        radio_factory_difi_impl.cpp
+        radio_session_difi_impl.cpp
         radio_difi_rx_stream.cpp
         radio_difi_tx_stream.cpp)
 

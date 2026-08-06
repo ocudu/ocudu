@@ -15,6 +15,10 @@ bool ocudu::validate_split6_o_du_low_unit_config(const split6_o_du_low_unit_conf
       fmt::println("Split 6 O-DU low does not support 'zmq' driver");
       return false;
     }
+    if (ru->device_driver == "difi") {
+      fmt::println("Split 6 O-DU low does not support 'difi' driver");
+      return false;
+    }
   }
 
   return true;

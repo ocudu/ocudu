@@ -85,7 +85,7 @@ void split_8_o_du_application_unit_impl::dump_config(YAML::Node& node) const
 
 void split_8_o_du_application_unit_impl::fill_worker_manager_config(worker_manager_config& config)
 {
-  bool is_blocking_mode_enable = unit_cfg.ru_cfg.device_driver == "zmq";
+  bool is_blocking_mode_enable = unit_cfg.ru_cfg.device_driver == "zmq" || unit_cfg.ru_cfg.device_driver == "difi";
   fill_du_high_worker_manager_config(config, unit_cfg.odu_high_cfg.du_high_cfg.config, is_blocking_mode_enable);
   std::vector<du_low_cell_config> cell_params;
   cell_params.reserve(unit_cfg.odu_high_cfg.du_high_cfg.config.cells_cfg.size());

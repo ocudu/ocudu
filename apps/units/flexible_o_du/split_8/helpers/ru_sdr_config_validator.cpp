@@ -92,7 +92,11 @@ static bool validate_ru_sdr_appconfig(const ru_sdr_unit_config&                 
 
   if (discontinuous_transmission && (config.device_driver == "zmq")) {
     fmt::print("Discontinuous transmission modes cannot be used with ZMQ.\n");
+    return false;
+  }
 
+  if (discontinuous_transmission && (config.device_driver == "difi")) {
+    fmt::print("Discontinuous transmission modes cannot be used with DIFI.\n");
     return false;
   }
 

@@ -16,6 +16,10 @@
 #include "zmq/radio_factory_zmq_impl.h"
 #endif // ENABLE_ZMQ
 
+#ifdef ENABLE_DIFI
+#include "difi/radio_factory_difi_impl.h"
+#endif // ENABLE_DIFI
+
 #include "plugin_radio_factory.h"
 #include "realtime_loopback/radio_factory_realtime_loopback_impl.h"
 
@@ -40,6 +44,9 @@ static const std::vector<radio_factory_entry> radio_factory_available_factories 
 #ifdef ENABLE_ZMQ
     {"zmq", []() { return std::make_unique<radio_factory_zmq_impl>(); }},
 #endif // ENABLE_ZMQ
+#ifdef ENABLE_DIFI
+    {"difi", []() { return std::make_unique<radio_factory_difi_impl>(); }},
+#endif // ENABLE_DIFI
     {"realtime_loopback", []() { return std::make_unique<radio_factory_realtime_loopback_impl>(); }}};
 
 void ocudu::print_available_radio_factories()

@@ -54,7 +54,7 @@ static lower_phy_configuration generate_lower_phy_config(const flexible_o_du_ru_
   out_cfg.max_nof_prach_concurrent_requests = max_processing_delay_slot + 2;
 
   // Select RX buffer size policy.
-  if (ru_cfg.device_driver == "zmq") {
+  if (ru_cfg.device_driver == "zmq" || ru_cfg.device_driver == "difi") {
     out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::slot;
   } else if (ru_cfg.expert_execution_cfg.threads.execution_profile == lower_phy_thread_profile::single) {
     // For single executor, the same executor processes uplink and downlink. In this case, the processing is blocked
@@ -134,6 +134,17 @@ static void generate_radio_config(radio_configuration::radio&                   
   std::vector<std::string> zmq_tx_addr = extract_zmq_ports(ru_cfg.device_arguments, "tx_port");
   std::vector<std::string> zmq_rx_addr = extract_zmq_ports(ru_cfg.device_arguments, "rx_port");
 
+  std::vector<std::string> difi_tx_ports;
+  std::vector<std::string> difi_rx_ports;
+  std::vector<std::string> difi_tx_addrs;
+  std::vector<std::string> difi_rx_addrs;
+  if (ru_cfg.device_driver == "difi") {
+    difi_tx_ports = extract_zmq_ports(ru_cfg.device_arguments, "tx_port");
+    difi_rx_ports = extract_zmq_ports(ru_cfg.device_arguments, "rx_port");
+    difi_tx_addrs = extract_zmq_ports(ru_cfg.device_arguments, "tx_addr");
+    difi_rx_addrs = extract_zmq_ports(ru_cfg.device_arguments, "rx_addr");
+  }
+
   // For each sector...
   for (unsigned sector_id = 0, e = cells.size(); sector_id != e; ++sector_id) {
     // Select cell configuration.
@@ -188,6 +199,16 @@ static void generate_radio_config(radio_configuration::radio&                   
       }
       tx_stream_config.channels.emplace_back(tx_ch_config);
     }
+
+    // Set DIFI stream-level args (format expected by parse_difi_stream_args: "ip=X,port=Y").
+    if (ru_cfg.device_driver == "difi") {
+      if (sector_id < difi_tx_ports.size()) {
+        const std::string ip  = difi_tx_addrs.empty() ? "127.0.0.1" : difi_tx_addrs[0];
+        tx_stream_config.args = fmt::format("ip={},port={}", ip, difi_tx_ports[sector_id]);
+      } else if (!difi_tx_ports.empty()) {
+        report_error("DIFI transmission stream arguments out of bounds\n");
+      }
+    }
     out_cfg.tx_streams.emplace_back(tx_stream_config);
 
     // For each UL antenna port in the cell...
@@ -211,6 +232,16 @@ static void generate_radio_config(radio_configuration::radio&                   
         rx_ch_config.args = zmq_rx_addr[sector_id * cell.nof_rx_antennas + port_id];
       }
       rx_stream_config.channels.emplace_back(rx_ch_config);
+    }
+
+    // Set DIFI stream-level args (format expected by parse_difi_stream_args: "ip=X,port=Y").
+    if (ru_cfg.device_driver == "difi") {
+      if (sector_id < difi_rx_ports.size()) {
+        const std::string ip  = difi_rx_addrs.empty() ? "0.0.0.0" : difi_rx_addrs[0];
+        rx_stream_config.args = fmt::format("ip={},port={}", ip, difi_rx_ports[sector_id]);
+      } else if (!difi_rx_ports.empty()) {
+        report_error("DIFI reception stream arguments out of bounds\n");
+      }
     }
     out_cfg.rx_streams.emplace_back(rx_stream_config);
   }
@@ -241,9 +272,10 @@ void ocudu::fill_sdr_worker_manager_config(worker_manager_config& config, const 
 
   // The ZMQ driver requires sequential lower PHY execution to gurantee the order of the slot processing.
   worker_manager_config::ru_sdr_config::lower_phy_thread_profile thread_profile =
-      (ru_cfg.device_driver != "zmq") ? static_cast<worker_manager_config::ru_sdr_config::lower_phy_thread_profile>(
-                                            ru_cfg.expert_execution_cfg.threads.execution_profile)
-                                      : worker_manager_config::ru_sdr_config::lower_phy_thread_profile::sequential;
+      (ru_cfg.device_driver != "zmq" && ru_cfg.device_driver != "difi")
+          ? static_cast<worker_manager_config::ru_sdr_config::lower_phy_thread_profile>(
+                ru_cfg.expert_execution_cfg.threads.execution_profile)
+          : worker_manager_config::ru_sdr_config::lower_phy_thread_profile::sequential;
 
   config.ru_sdr_cfg.emplace(
       worker_manager_config::ru_sdr_config{.profile                 = thread_profile,

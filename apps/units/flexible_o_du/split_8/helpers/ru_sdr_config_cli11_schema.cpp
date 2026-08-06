@@ -293,8 +293,8 @@ void ocudu::autoderive_ru_sdr_parameters_after_parsing(CLI::App&           app,
     parsed_cfg.expert_execution_cfg.cell_affinities.resize(nof_cells);
   }
 
-  // Set the lower PHY to blocking for ZMQ.
-  if (parsed_cfg.device_driver == "zmq") {
+  // Set the lower PHY to blocking for ZMQ and DIFI (both are network-based transports).
+  if (parsed_cfg.device_driver == "zmq" || parsed_cfg.device_driver == "difi") {
     parsed_cfg.expert_execution_cfg.threads.execution_profile = lower_phy_thread_profile::blocking;
 
     // Default TX/RX gains to 0 dB for ZMQ if not explicitly configured. The non-zero defaults are tuned for USRP
