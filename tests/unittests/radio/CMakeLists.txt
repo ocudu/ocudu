@@ -10,3 +10,7 @@ endif (ZEROMQ_FOUND AND ENABLE_ZEROMQ)
 if (Sidekiq_FOUND AND ENABLE_SIDEKIQ)
     add_subdirectory(sidekiq)
 endif (Sidekiq_FOUND AND ENABLE_SIDEKIQ)
+
+if (ENABLE_DIFI)
+    add_subdirectory(difi)
+endif (ENABLE_DIFI)
