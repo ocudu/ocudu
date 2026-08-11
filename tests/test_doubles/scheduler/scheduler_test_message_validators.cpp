@@ -164,7 +164,7 @@ bool test_helper::is_valid_ul_sched_info(const ul_sched_info& grant)
   TRUE_OR_RETURN((grant.context.nof_retxs == 0) == grant.pusch_cfg.new_data);
 
   // Check code rate.
-  const float               max_code_rate       = 0.95;
+  constexpr float           max_code_rate       = 0.95;
   const ulsch_configuration ulsch_cfg           = get_ulsch_config(grant);
   const ulsch_information   ulsch_information   = get_ulsch_information(ulsch_cfg);
   float                     effective_code_rate = ulsch_information.get_effective_code_rate();
