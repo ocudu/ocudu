@@ -391,16 +391,16 @@ bool srs_scheduler_impl::allocate_srs_opportunity(cell_slot_resource_allocator& 
   if (is_crnti(srs_opportunity.rnti)) {
     // SRS of UE connected to the cell.
 
-    // Fetch UE config.
-    const ue_cell_configuration* ue_cfg = get_ue_cfg(srs_opportunity.rnti);
-    if (ue_cfg == nullptr) {
+    // Fetch UE cell.
+    const ue_cell* ue_cc = get_ue_cell(srs_opportunity.rnti);
+    if (ue_cc == nullptr) {
       logger.error("cell={} c-rnti={}: UE for which SRS is being scheduled was not found",
                    cell_cfg.cell_index,
                    srs_opportunity.rnti);
       return false;
     }
 
-    if (not ue_cfg->is_ul_enabled(sl_srs)) {
+    if (not ue_cc->is_ul_enabled(sl_srs)) {
       logger.warning("cell={} c-rnti={}: slot={} for SRS resource id={} is being scheduled is not UL enabled",
                      cell_cfg.cell_index,
                      srs_opportunity.rnti,
@@ -409,7 +409,7 @@ bool srs_scheduler_impl::allocate_srs_opportunity(cell_slot_resource_allocator& 
       return false;
     }
 
-    srs_res_list = ue_cfg->init_bwp().ul.ded()->srs_cfg.value().srs_res_list;
+    srs_res_list = ue_cc->cfg().init_bwp().ul.ded()->srs_cfg.value().srs_res_list;
 
   } else {
     // SRS for UE of neighbor cell.
@@ -521,14 +521,11 @@ void srs_scheduler_impl::rem_resource(rnti_t                 crnti,
 
 /////////////////////          Helper functions        ////////////////////////////
 
-const ue_cell_configuration* srs_scheduler_impl::get_ue_cfg(rnti_t rnti) const
+const ue_cell* srs_scheduler_impl::get_ue_cell(rnti_t rnti) const
 {
   auto* u = ues.find_by_rnti(rnti);
   if (u != nullptr) {
-    const auto* ue_cc = u->find_cell(cell_cfg.cell_index);
-    if (ue_cc != nullptr) {
-      return &ue_cc->cfg();
-    }
+    return u->find_cell(cell_cfg.cell_index);
   }
   return nullptr;
 }

@@ -118,8 +118,8 @@ std::optional<uci_allocation> ue_cell_grid_allocator::alloc_uci(const ue_cell&  
       cell_alloc.cfg.init_bwp.ul.td_mapper().k1_candidates(ss_info.get_dl_dci_format(), last_pdsch_slot.count());
 
   const pucch_repetition_factor max_rep_factor = ue_cc.link_adaptation_controller().get_recommended_pucch_rep_factor();
-  std::optional<uci_allocation> uci            = uci_alloc.alloc_harq_ack(
-      cell_alloc, ue_cc.cfg(), pdsch_td_cfg.k0 + last_occasion_offset, k1_list, max_rep_factor);
+  std::optional<uci_allocation> uci =
+      uci_alloc.alloc_harq_ack(cell_alloc, ue_cc, pdsch_td_cfg.k0 + last_occasion_offset, k1_list, max_rep_factor);
   if (not uci.has_value()) {
     logger.debug("ue={} rnti={}: Failed to allocate PDSCH. Cause: UCI allocation failed.",
                  fmt::underlying(ue_cc.ue_index),

@@ -107,11 +107,11 @@ public:
   void slot_indication(slot_point sl_tx) override { next_uci_allocation.reset(); }
 
   std::optional<uci_allocation>
-  alloc_harq_ack(cell_resource_allocator&     res_alloc,
-                 const ue_cell_configuration& ue_cell_cfg,
-                 unsigned                     k0,
-                 span<const uint8_t>          k1_list,
-                 pucch_repetition_factor      max_rep_factor = pucch_repetition_factor::n1) override
+  alloc_harq_ack(cell_resource_allocator& res_alloc,
+                 const ue_cell&           ue_cc,
+                 unsigned                 k0,
+                 span<const uint8_t>      k1_list,
+                 pucch_repetition_factor  max_rep_factor = pucch_repetition_factor::n1) override
   {
     return next_uci_allocation;
   }

@@ -14,6 +14,8 @@
 
 namespace ocudu {
 
+class ue_cell;
+
 /// Contains the results of the UCI allocation.
 struct uci_allocation {
   /// Delay in slots of the UE's PUCCH HARQ-ACK report with respect to the PDSCH.
@@ -41,17 +43,17 @@ public:
 
   /// Allocate a dedicated PUCCH resource for HARQ-ACK for a given UE.
   /// \param[out,in] res_alloc struct with scheduling results.
-  /// \param[in] ue_cell_cfg user configuration.
+  /// \param[in] ue_cc UE cell for which the UCI is being allocated.
   /// \param[in] k0 k0 value, or delay (in slots) of PDSCH slot vs the corresponding PDCCH slot.
   /// \param[in] k1_list List of k1 candidates configured for UE.
   /// \param[in] max_rep_factor Maximum PUCCH repetition factor to use for this grant. Defaults to n1 (no repetition).
   /// \return Returns the UCI allocation result if successful, std::nullopt otherwise.
   virtual std::optional<uci_allocation>
-  alloc_harq_ack(cell_resource_allocator&     res_alloc,
-                 const ue_cell_configuration& ue_cell_cfg,
-                 unsigned                     k0,
-                 span<const uint8_t>          k1_list,
-                 pucch_repetition_factor      max_rep_factor = pucch_repetition_factor::n1) = 0;
+  alloc_harq_ack(cell_resource_allocator& res_alloc,
+                 const ue_cell&           ue_cc,
+                 unsigned                 k0,
+                 span<const uint8_t>      k1_list,
+                 pucch_repetition_factor  max_rep_factor = pucch_repetition_factor::n1) = 0;
 
   /// Allocates the SR opportunities for a given UE.
   /// \param[out,in] slot_alloc struct with scheduling results.

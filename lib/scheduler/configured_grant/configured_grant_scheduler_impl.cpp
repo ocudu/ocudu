@@ -40,14 +40,11 @@ configured_grant_scheduler_impl::configured_grant_scheduler_impl(const cell_conf
   updated_ues.reserve(cell_cfg.max_nof_ue_contexts);
 }
 
-const ue_cell_configuration* configured_grant_scheduler_impl::get_ue_cfg(rnti_t rnti) const
+const ue_cell* configured_grant_scheduler_impl::get_ue_cell(rnti_t rnti) const
 {
   auto* u = ues.find_by_rnti(rnti);
   if (u != nullptr) {
-    const auto* ue_cc = u->find_cell(cell_cfg.cell_index);
-    if (ue_cc != nullptr) {
-      return &ue_cc->cfg();
-    }
+    return u->find_cell(cell_cfg.cell_index);
   }
   return nullptr;
 }
@@ -173,8 +170,8 @@ void configured_grant_scheduler_impl::reserve_updated_ues_resources(cell_resourc
   // For all UEs whose CG config has been recently updated, reserve their CG resources up until one slot before the
   // farthest slot in the resource grid (the farthest slot is handled by reserve_slot_cg_resources()).
   for (const rnti_t rnti : updated_ues) {
-    const ue_cell_configuration* ue_cfg = get_ue_cfg(rnti);
-    if (ue_cfg == nullptr) {
+    const ue_cell* ue_cc = get_ue_cell(rnti);
+    if (ue_cc == nullptr) {
       logger.error("rnti={}: UE for which CG resources are being reserved was not found", rnti);
       continue;
     }
@@ -183,7 +180,7 @@ void configured_grant_scheduler_impl::reserve_updated_ues_resources(cell_resourc
       cell_slot_resource_allocator& slot_alloc = res_alloc[n];
       const auto&                   rnti_list  = periodic_pusch_slot_wheel[slot_alloc.slot.to_uint()];
       if (std::find(rnti_list.begin(), rnti_list.end(), rnti) != rnti_list.end()) {
-        reserve_cg_resources(slot_alloc, *ue_cfg);
+        reserve_cg_resources(slot_alloc, *ue_cc);
       }
     }
   }
@@ -196,21 +193,22 @@ void configured_grant_scheduler_impl::reserve_slot_cg_resources(cell_slot_resour
 {
   const auto& rnti_list = periodic_pusch_slot_wheel[slot_alloc.slot.to_uint()];
   for (const rnti_t rnti : rnti_list) {
-    const ue_cell_configuration* ue_cfg = get_ue_cfg(rnti);
-    if (ue_cfg == nullptr) {
+    const ue_cell* ue_cc = get_ue_cell(rnti);
+    if (ue_cc == nullptr) {
       continue;
     }
-    reserve_cg_resources(slot_alloc, *ue_cfg);
+    reserve_cg_resources(slot_alloc, *ue_cc);
   }
 }
 
 void configured_grant_scheduler_impl::reserve_cg_resources(cell_slot_resource_allocator& slot_alloc,
-                                                           const ue_cell_configuration&  ue_cfg) const
+                                                           const ue_cell&                ue_cc) const
 {
-  // Skip if UL is not enabled in this slot (e.g., TDD DL slot).
-  if (not ue_cfg.is_ul_enabled(slot_alloc.slot)) {
+  // Skip if UL is not enabled in this slot (e.g., TDD DL slot, or the slot falls in the UL measurement gap window).
+  if (not ue_cc.is_ul_enabled(slot_alloc.slot)) {
     return;
   }
+  const ue_cell_configuration& ue_cfg = ue_cc.cfg();
 
   if (not cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.has_value()) {
     return;
@@ -265,10 +263,8 @@ bool configured_grant_scheduler_impl::validate_cg_opportunity(cell_slot_resource
     logger.error("rnti={}: CG opportunity scheduled but UE cell not found", rnti);
     return false;
   }
-  const ue_cell_configuration& ue_cfg = ue_cc->cfg();
-
-  // Skip if UL is not enabled in this slot (e.g., TDD DL slot).
-  if (not ue_cfg.is_ul_enabled(slot_alloc.slot)) {
+  // Skip if UL is not enabled in this slot (e.g., TDD DL slot, or the slot falls in the UL measurement gap window).
+  if (not ue_cc->is_ul_enabled(slot_alloc.slot)) {
     return false;
   }
 

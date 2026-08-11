@@ -51,8 +51,8 @@ private:
     type_t type;
   };
 
-  // Helper to fetch a UE cell config.
-  const ue_cell_configuration* get_ue_cfg(rnti_t rnti) const;
+  // Helper to fetch a UE cell.
+  const ue_cell* get_ue_cell(rnti_t rnti) const;
   // Helper that schedules the SRS for a given slot.
   void schedule_slot_srs(cell_slot_resource_allocator& slot_alloc);
   // Helper that schedules the SRS for UEs that were recently added or reconfigured.

@@ -99,6 +99,8 @@ public:
   {
     return active and cfg().is_dl_enabled(dl_slot) and shared_ctx.drx_ctrl.is_pdcch_enabled();
   }
+  /// Determines whether UL allocations are possible in the provided slot.
+  bool is_ul_enabled(slot_point ul_slot) const { return cfg().is_ul_enabled(ul_slot); }
   bool is_pdsch_enabled(slot_point pdcch_slot, slot_point pdsch_slot) const
   {
     // Verify that the DL is activated for the chosen slots (e.g. they are not UL slots in TDD or there is no measGap).
@@ -117,7 +119,7 @@ public:
   {
     // Verify that the DL is activated for the chosen PDCCH slot and UL is activated for the chosen PUSCH slot
     // (e.g the chosen slots fall in DL and UL slots of a TDD pattern respective, and there is no measGap).
-    return is_pdcch_enabled(pdcch_slot) and cfg().is_ul_enabled(pusch_slot) and
+    return is_pdcch_enabled(pdcch_slot) and is_ul_enabled(pusch_slot) and
            // Verify that the order of PUSCHs for the same UE matches the order of PDCCHs and that there is at most one
            // PUSCH per slot. [TS 38.214, 6.1] "For any HARQ process ID(s) in a given scheduled cell, the UE is not
            // expected to transmit a PUSCH that overlaps in time with another PUSCH". [TS 38.214, 6.1] "For any two HARQ

@@ -536,8 +536,7 @@ static std::optional<uci_allocation> allocate_ue_fallback_pucch(ue&             
         filtered_k1.push_back(k1_candidate);
       }
     }
-    std::optional<uci_allocation> uci =
-        uci_alloc.alloc_harq_ack(res_alloc, u.get_pcell().cfg(), pdsch_delay, filtered_k1);
+    std::optional<uci_allocation> uci = uci_alloc.alloc_harq_ack(res_alloc, u.get_pcell(), pdsch_delay, filtered_k1);
     return uci;
   }
 

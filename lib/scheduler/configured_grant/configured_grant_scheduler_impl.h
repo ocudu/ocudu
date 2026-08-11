@@ -33,8 +33,8 @@ public:
   void stop();
 
 private:
-  // Helper to fetch a UE cell config by RNTI.
-  const ue_cell_configuration* get_ue_cfg(rnti_t rnti) const;
+  // Helper to fetch a UE cell by RNTI.
+  const ue_cell* get_ue_cell(rnti_t rnti) const;
 
   // Adds a UE's CG grant positions to the slot wheel. Used by add_reconf_ue().
   void add_ue_to_wheel(const ue_cell_configuration& ue_cfg);
@@ -54,7 +54,7 @@ private:
   void reserve_updated_ues_resources(cell_resource_allocator& res_alloc);
 
   // Pre-reserves the CG PUSCH RBs and symbols of a single UE in the UL resource grid for the given slot.
-  void reserve_cg_resources(cell_slot_resource_allocator& slot_alloc, const ue_cell_configuration& ue_cfg) const;
+  void reserve_cg_resources(cell_slot_resource_allocator& slot_alloc, const ue_cell& ue_cc) const;
 
   // Helper that runs preliminary checks on the CG opportunity validity.
   bool validate_cg_opportunity(cell_slot_resource_allocator& slot_alloc, rnti_t rnti) const;

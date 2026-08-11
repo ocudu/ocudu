@@ -168,8 +168,7 @@ TEST_F(uci_alloc_test, csi_over_existing_pusch)
 TEST_F(uci_alloc_test, uci_harq_alloc_with_no_pusch_grants)
 {
   const std::vector<uint8_t> k1_candidates = {static_cast<uint8_t>(default_k1)};
-  t_bench.uci_alloc.alloc_harq_ack(
-      t_bench.res_grid, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, k1_candidates);
+  t_bench.uci_alloc.alloc_harq_ack(t_bench.res_grid, t_bench.get_main_ue().get_pcell(), t_bench.k0, k1_candidates);
 
   auto& slot_grid = t_bench.res_grid[t_bench.k0 + default_k1];
 
@@ -189,8 +188,7 @@ TEST_F(uci_alloc_test, uci_harq_alloc_over_existing_pucch_harq)
 {
   add_harq_grant_on_pucch();
   const std::vector<uint8_t> k1_candidates = {static_cast<uint8_t>(default_k1)};
-  t_bench.uci_alloc.alloc_harq_ack(
-      t_bench.res_grid, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, k1_candidates);
+  t_bench.uci_alloc.alloc_harq_ack(t_bench.res_grid, t_bench.get_main_ue().get_pcell(), t_bench.k0, k1_candidates);
 
   auto& slot_grid = t_bench.res_grid[t_bench.k0 + default_k1];
 
@@ -210,8 +208,7 @@ TEST_F(uci_alloc_test, uci_harq_alloc_over_existing_sr)
 {
   add_sr_grant();
   const std::vector<uint8_t> k1_candidates = {static_cast<uint8_t>(default_k1)};
-  t_bench.uci_alloc.alloc_harq_ack(
-      t_bench.res_grid, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, k1_candidates);
+  t_bench.uci_alloc.alloc_harq_ack(t_bench.res_grid, t_bench.get_main_ue().get_pcell(), t_bench.k0, k1_candidates);
 
   auto& slot_grid = t_bench.res_grid[t_bench.k0 + default_k1];
 
@@ -235,8 +232,7 @@ TEST_F(uci_alloc_test, uci_harq_alloc_on_existing_pucch_harq_plus_sr)
   add_sr_grant();
   add_harq_grant_on_pucch();
   const std::vector<uint8_t> k1_candidates = {static_cast<uint8_t>(default_k1)};
-  t_bench.uci_alloc.alloc_harq_ack(
-      t_bench.res_grid, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, k1_candidates);
+  t_bench.uci_alloc.alloc_harq_ack(t_bench.res_grid, t_bench.get_main_ue().get_pcell(), t_bench.k0, k1_candidates);
 
   //  No grants expected on PUSCH.
   const auto&            pusch_pdus = t_bench.res_grid[t_bench.k0 + default_k1].result.ul.puschs;
@@ -259,8 +255,7 @@ TEST_F(uci_alloc_test, uci_harq_alloc_on_existing_harq_2_bits)
 {
   add_harq_grant_on_pucch(/* Nof. HARQ bits */ 2);
   const std::vector<uint8_t> k1_candidates = {static_cast<uint8_t>(default_k1)};
-  t_bench.uci_alloc.alloc_harq_ack(
-      t_bench.res_grid, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, k1_candidates);
+  t_bench.uci_alloc.alloc_harq_ack(t_bench.res_grid, t_bench.get_main_ue().get_pcell(), t_bench.k0, k1_candidates);
 
   const auto&            pusch_pdus = t_bench.res_grid[t_bench.k0 + default_k1].result.ul.puschs;
   span<const pucch_info> pucch_pdus = t_bench.res_grid[t_bench.k0 + default_k1].result.ul.pucchs.unsorted();
@@ -279,8 +274,7 @@ TEST_F(uci_alloc_test, uci_harq_alloc_on_existing_pusch)
 {
   add_pusch_alloc(t_bench.k0 + k2);
   const std::vector<uint8_t> k1_candidates = {static_cast<uint8_t>(default_k1)};
-  t_bench.uci_alloc.alloc_harq_ack(
-      t_bench.res_grid, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, k1_candidates);
+  t_bench.uci_alloc.alloc_harq_ack(t_bench.res_grid, t_bench.get_main_ue().get_pcell(), t_bench.k0, k1_candidates);
 
   auto& slot_grid = t_bench.res_grid[k2];
 
@@ -303,8 +297,8 @@ TEST_F(uci_alloc_test, uci_harq_alloc_not_blocked_by_different_ue_pusch)
   puschs.back().pusch_cfg.rnti = other_rnti;
 
   const std::vector<uint8_t> k1_candidates = {static_cast<uint8_t>(default_k1)};
-  const auto                 result        = t_bench.uci_alloc.alloc_harq_ack(
-      t_bench.res_grid, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, k1_candidates);
+  const auto                 result =
+      t_bench.uci_alloc.alloc_harq_ack(t_bench.res_grid, t_bench.get_main_ue().get_pcell(), t_bench.k0, k1_candidates);
 
   // The other UE's PUSCH must not prevent allocation of UE0's PUCCH HARQ-ACK.
   ASSERT_TRUE(result.has_value()) << "HARQ-ACK allocation failed: slot has been skipped due to another UE's PUSCH";
@@ -336,8 +330,8 @@ TEST_F(uci_alloc_test, uci_harq_alloc_picks_closest_k1_ignoring_different_ue_pus
 
   // Prepare k1_candidates with expected one and not expected.
   const std::vector<uint8_t> k1_candidates = {near_k1, far_k1};
-  const auto                 result        = t_bench.uci_alloc.alloc_harq_ack(
-      t_bench.res_grid, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, k1_candidates);
+  const auto                 result =
+      t_bench.uci_alloc.alloc_harq_ack(t_bench.res_grid, t_bench.get_main_ue().get_pcell(), t_bench.k0, k1_candidates);
 
   ASSERT_TRUE(result.has_value());
   // Shall use k1=4, not fall back to k1=8.
@@ -513,7 +507,7 @@ TEST_F(uci_alloc_tdd_test, when_tdd_cfg_then_harq_bit_index_increases_with_numbe
   const std::vector<uint8_t> k1_candidates = {static_cast<uint8_t>(default_k1)};
   for (unsigned i = 0; i != DAI_MOD * 2; ++i) {
     std::optional<uci_allocation> alloc = t_bench.uci_alloc.alloc_harq_ack(
-        t_bench.res_grid, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, k1_candidates);
+        t_bench.res_grid, t_bench.get_main_ue().get_pcell(), t_bench.k0, k1_candidates);
 
     if (alloc.has_value()) {
       ASSERT_EQ(alloc.value().harq_bit_idx, i);

@@ -5,6 +5,7 @@
 #include "uci_allocator_impl.h"
 #include "../support/csi_report_helpers.h"
 #include "../support/sr_helper.h"
+#include "../ue_context/ue_cell.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/csi_report/csi_report_config_helpers.h"
 #include "ocudu/ran/csi_report/csi_report_on_pucch_helpers.h"
@@ -137,12 +138,14 @@ void uci_allocator_impl::stop()
   }
 }
 
-std::optional<uci_allocation> uci_allocator_impl::alloc_harq_ack(cell_resource_allocator&     res_alloc,
-                                                                 const ue_cell_configuration& ue_cell_cfg,
-                                                                 unsigned                     k0,
-                                                                 span<const uint8_t>          k1_list,
-                                                                 pucch_repetition_factor      max_rep_factor)
+std::optional<uci_allocation> uci_allocator_impl::alloc_harq_ack(cell_resource_allocator& res_alloc,
+                                                                 const ue_cell&           ue_cc,
+                                                                 unsigned                 k0,
+                                                                 span<const uint8_t>      k1_list,
+                                                                 pucch_repetition_factor  max_rep_factor)
 {
+  const ue_cell_configuration& ue_cell_cfg = ue_cc.cfg();
+
   // [Implementation-defined] We restrict the number of HARQ bits per PUCCH that are expected to carry CSI reporting to
   // 2 , until the PUCCH allocator supports more than this.
   // TODO: remove this, as with the new refactor we are not constrained by this anymore.
@@ -175,7 +178,7 @@ std::optional<uci_allocation> uci_allocator_impl::alloc_harq_ack(cell_resource_a
     if (not cell_cfg.is_fully_ul_enabled(uci_slot)) {
       continue;
     }
-    if (not ue_cell_cfg.is_ul_enabled(uci_slot)) {
+    if (not ue_cc.is_ul_enabled(uci_slot)) {
       continue;
     }
 
