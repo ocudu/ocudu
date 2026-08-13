@@ -264,6 +264,8 @@ void test_bench::add_ue()
     csi_report.report_slot_offset = params.csi_offset;
   }
 
+  ue_req.cfg.meas_gap_cfg = params.meas_gap;
+
   const ue_configuration* ue_cfg = cfg_mng.add_ue(ue_req);
   ocudu_assert(ue_cfg != nullptr, "Failed to create UE configuration");
   ue_ded_cfgs.push_back(ue_cfg);

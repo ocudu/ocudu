@@ -12,6 +12,7 @@
 #include "lib/scheduler/ue_context/ue_cell_repository.h"
 #include "lib/scheduler/ue_context/ue_repository.h"
 #include "ocudu/ran/csi_rs/csi_meas_config.h"
+#include "ocudu/ran/meas_gap_config.h"
 #include "ocudu/ran/pucch/pucch_configuration.h"
 #include "ocudu/scheduler/config/pucch_resource_builder_params.h"
 #include "ocudu/scheduler/rrm/pucch_resource_manager.h"
@@ -57,6 +58,8 @@ struct test_bench_params {
   // the DU learns the UE's reported capabilities in production (i.e. after the initial, capability-agnostic
   // pucch_resource_manager::alloc_resources()).
   std::optional<ue_capability_summary> ue_caps;
+  // If set, configures a measurement gap for every UE added, which disables the UE uplink inside the gap.
+  std::optional<meas_gap_config> meas_gap;
 };
 
 class test_bench
