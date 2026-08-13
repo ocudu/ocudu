@@ -28,7 +28,7 @@ public:
 
   void rem_ue(const ue_cell_configuration& ue_cfg) override;
 
-  void add_reconf_ue(const ue_cell_configuration& new_ue_cfg, const ue_cell_configuration& old_ue_cfg) override;
+  void add_reconf_ue(const ue_cell_configuration& new_ue_cfg, const ue_cell_configuration* old_ue_cfg) override;
 
   /// Called on cell deactivation.
   void stop();
@@ -41,7 +41,7 @@ private:
   void add_ue_to_wheel(const ue_cell_configuration& ue_cfg);
 
   // Sets the number of reserved CG HARQ processes on the UE cell HARQ entity. Used by add_reconf_ue().
-  void update_harq_reservation(const ue_cell_configuration& ue_cfg);
+  void update_harq_reservation(const ue_cell_configuration& ue_cfg) const;
 
   // Processes all CG PUSCH opportunities for the given slot.
   void allocate_slot_cg_opportunities(cell_slot_resource_allocator& slot_alloc) const;

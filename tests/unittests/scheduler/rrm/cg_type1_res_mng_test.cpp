@@ -10,6 +10,7 @@
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/du/du_cell_config_helpers.h"
+#include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/prach/prach_time_mapping.h"
 #include "ocudu/ran/tdd/tdd_ul_dl_config.h"
 #include "ocudu/scheduler/config/pucch_guardbands.h"
@@ -103,8 +104,7 @@ protected:
   explicit cg_type1_res_mng_test(const cg_builder_params& cg_params_ = {}) :
     cg_params(cg_params_),
     cell_params(make_cell_cfg_params(GetParam())),
-    cell_cfg_list({make_cg_du_cell_config(cell_params, cg_params)}),
-    cg_res_mng()
+    cell_cfg_list({make_cg_du_cell_config(cell_params, cg_params)})
   {
     cg_res_mng.add_cell(to_du_cell_index(0), cell_cfg_list.front().ran);
   }

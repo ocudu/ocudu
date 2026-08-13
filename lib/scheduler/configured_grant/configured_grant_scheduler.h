@@ -25,8 +25,9 @@ public:
 
   /// Updates the configured grant configuration of this UE, if there are any changes w.r.t. the previous configuration.
   /// \param[in] new_ue_cfg New UE dedicated configuration of the UE to be reconfigured.
-  /// \param[in] old_ue_cfg Old UE dedicated configuration of the UE to be reconfigured.
-  virtual void add_reconf_ue(const ue_cell_configuration& new_ue_cfg, const ue_cell_configuration& old_ue_cfg) = 0;
+  /// \param[in] old_ue_cfg If not nullptr, old UE dedicated configuration of the UE to be reconfigured.
+  /// \remark nullptr is passed to \ref old_ue_cfg when the UE is created through F1AP.
+  virtual void add_reconf_ue(const ue_cell_configuration& new_ue_cfg, const ue_cell_configuration* old_ue_cfg) = 0;
 };
 
 } // namespace ocudu

@@ -3,6 +3,8 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/scheduler/config/ran_cell_config_helper.h"
+#include "../support/dmrs_helpers.h"
+#include "../support/prbs_calculator.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/ran/pdcch/pdcch_candidates.h"
 #include "ocudu/ran/pdcch/pdcch_type0_css_coreset_config.h"
@@ -11,7 +13,9 @@
 #include "ocudu/ran/sib/sib_helper.h"
 #include "ocudu/ran/ssb/ssb_helper.h"
 #include "ocudu/ran/ssb/ssb_mapping.h"
+#include "ocudu/scheduler/config/serving_cell_config_factory.h"
 #include "ocudu/scheduler/config/time_domain_resource_helper.h"
+#include "ocudu/scheduler/result/dmrs_info.h"
 #include <algorithm>
 
 using namespace ocudu;
@@ -435,4 +439,103 @@ uint8_t config_helpers::compute_max_nof_candidates(aggregation_level aggr_lvl, c
     max_nof_candidates = 6;
   }
   return max_nof_candidates > PDCCH_MAX_NOF_CANDIDATES_SS ? PDCCH_MAX_NOF_CANDIDATES_SS : max_nof_candidates;
+}
+
+cg_configuration config_helpers::make_default_cell_cg_config(const ran_cell_config& cell_cfg)
+{
+  ocudu_assert(cell_cfg.init_bwp.cg_cfg.has_value(), "This function cannot be called if CG is not set");
+
+  // Build the full CG configuration from the cell-level defaults. This populates all fields of cg_configuration,
+  // including rrc_configured_ul_grant_cfg, from the cg_builder_params stored in the cell config.
+  // NOTE: the DU cell index is not needed for the CG configuration.
+  cg_configuration default_cg_cfg = config_helpers::make_default_ue_cell_config(cell_cfg, to_du_cell_index(0U))
+                                        .serv_cell_cfg.ul_config.value()
+                                        .init_ul_bwp.cg_cfg.value();
+
+  ocudu_assert(default_cg_cfg.rrc_configured_ul_grant_cfg.has_value(),
+               "rrc_configured_ul_grant must be set for a Type 1 CG");
+
+  // Compute PUSCH symbols to avoid overlapping with SRS.
+  const ofdm_symbol_range non_srs_symbols =
+      cell_cfg.init_bwp.srs_cfg.srs_type_enabled != srs_type::disabled
+          ? ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg.init_bwp.srs_cfg.max_nof_symbols.value()}
+          : ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP};
+
+  ocudu_assert(cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.has_value(),
+               "PUSCH Config Common must be configured.");
+  const auto& td_res        = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list;
+  unsigned    cg_td_res_idx = 0U;
+  // PUSCH time-domain resources are sorted by increasing k2 first, then by decreasing symbols .stop().
+  for (unsigned n = 0, sz = td_res.size(); n != sz; ++n) {
+    if (td_res[n].symbols.stop() <= non_srs_symbols.stop()) {
+      cg_td_res_idx = n;
+      break;
+    }
+  }
+
+  // Set Beta_offset for UCI-on-CG.
+  if (cell_cfg.init_bwp.cg_cfg->uci_beta_offsets.has_value()) {
+    default_cg_cfg.uci_on_pusch_cfg.beta_offsets_cfg.emplace(cell_cfg.init_bwp.cg_cfg->uci_beta_offsets.value());
+  }
+
+  default_cg_cfg.rrc_configured_ul_grant_cfg.value().time_domain_allocation = cg_td_res_idx;
+
+  return default_cg_cfg;
+}
+
+unsigned config_helpers::compute_nof_cg_prbs_per_ue(const ran_cell_config& cell_cfg, const cg_configuration& cg_cfg)
+{
+  ocudu_assert(cell_cfg.init_bwp.cg_cfg.has_value(), "This function cannot be called if CG is not set");
+  ocudu_assert(cg_cfg.rrc_configured_ul_grant_cfg.has_value(), "rrc_configured_ul_grant must be set for a Type 1 CG");
+
+  const auto& pusch_td_list = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
+  const pusch_time_domain_resource_allocation& pusch_td_cfg =
+      pusch_td_list[cg_cfg.rrc_configured_ul_grant_cfg.value().time_domain_allocation];
+
+  static constexpr unsigned nof_layers             = 1;
+  static constexpr bool     are_both_cws_enabled   = false;
+  const dmrs_information    dmrs                   = make_dmrs_info_dedicated(pusch_td_cfg,
+                                                         cell_cfg.pci,
+                                                         cell_cfg.dmrs_typeA_pos,
+                                                         cg_cfg.cg_dmrs_cfg,
+                                                         nof_layers,
+                                                         cell_cfg.ul_carrier.nof_ant,
+                                                         are_both_cws_enabled);
+  const unsigned            nof_dmrs_prb           = calculate_nof_dmrs_per_rb(dmrs);
+  constexpr bool            use_transform_precoder = false;
+  // TODO: Import p_pi2bpsk_present from PUSCH Config once it will have been added there.
+  constexpr bool            tp_pi2bpsk_present = false;
+  const sch_mcs_description mcs_info =
+      pusch_mcs_get_config(cg_cfg.mcs_table,
+                           sch_mcs_index{cg_cfg.rrc_configured_ul_grant_cfg.value().mcs},
+                           use_transform_precoder,
+                           tp_pi2bpsk_present);
+
+  x_overhead nof_oh_prb = cell_cfg.init_bwp.pusch.x_ov_head;
+  // As per TS 38.214, Section 5.1.3.2 and 6.1.4.2, and TS 38.212, Section 7.3.1.1 and 7.3.1.2, TB scaling filed is only
+  // used for DCI Format 1-0 (in the DL). Therefore, for the PUSCH this is set to 0.
+  constexpr unsigned tb_scaling_field = 0;
+
+  unsigned payload_bytes = 0;
+  if (std::holds_alternative<units::byterate>(cell_cfg.init_bwp.cg_cfg.value().grant_size_or_bitrate)) {
+    const unsigned slots_per_sec =
+        1000U * (1U << to_numerology_value(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs));
+    // Accumulate the requested rate (in bytes per second) over the CG periodicity (given in slots).
+    payload_bytes = static_cast<unsigned>(
+        std::ceil(std::get<units::byterate>(cell_cfg.init_bwp.cg_cfg.value().grant_size_or_bitrate).value() *
+                  static_cast<unsigned>(cg_cfg.periodicity) / static_cast<double>(slots_per_sec)));
+  } else {
+    payload_bytes = std::get<units::bytes>(cell_cfg.init_bwp.cg_cfg.value().grant_size_or_bitrate).value();
+  }
+
+  const sch_prbs_tbs prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{.payload_size_bytes = payload_bytes,
+                                                                        .nof_symb_sh  = pusch_td_cfg.symbols.length(),
+                                                                        .nof_dmrs_prb = nof_dmrs_prb,
+                                                                        .nof_oh_prb = static_cast<unsigned>(nof_oh_prb),
+                                                                        .mcs_descr  = mcs_info,
+                                                                        .nof_layers = nof_layers,
+                                                                        .tb_scaling_field = tb_scaling_field},
+                                             cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
+
+  return prbs_tbs.nof_prbs;
 }

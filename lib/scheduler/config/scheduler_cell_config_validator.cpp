@@ -260,6 +260,27 @@ static error_type<std::string> validate_sib1_cfg(const sched_cell_configuration_
   return {};
 }
 
+static error_type<std::string> validate_cg_cfg(const sched_cell_configuration_request_message& msg)
+{
+  if (not msg.ran.init_bwp.cg_cfg.has_value()) {
+    return {};
+  }
+
+  // Verify that the CG parameters are consistent, i.e. the number of RBs required per UE (derived from the CG grant
+  // size or bitrate and the MCS) does not exceed the maximum number of RBs reserved for CG in the cell. Otherwise, no
+  // CG resources could ever be allocated to any UE.
+  const cg_configuration default_cg_cfg = config_helpers::make_default_cell_cg_config(msg.ran);
+  const unsigned         nof_rbs_per_ue = config_helpers::compute_nof_cg_prbs_per_ue(msg.ran, default_cg_cfg);
+  const unsigned         max_cg_rbs     = msg.ran.init_bwp.cg_cfg.value().max_nof_cell_cg_rbs;
+  VERIFY(nof_rbs_per_ue <= max_cg_rbs,
+         "The Configured Grant size/bitrate requires {} RBs per UE at the configured MCS, which exceeds the maximum "
+         "of {} RBs reserved for CG in the cell. No CG resources could be allocated to any UE",
+         nof_rbs_per_ue,
+         max_cg_rbs);
+
+  return {};
+}
+
 static error_type<std::string> validate_paging_cfg(const scheduler_expert_config& expert_cfg)
 {
   static constexpr pdsch_mcs_table mcs_table = ocudu::pdsch_mcs_table::qam64;
@@ -273,6 +294,7 @@ static error_type<std::string> validate_paging_cfg(const scheduler_expert_config
 
 /// \brief Validates \c sched_cell_configuration_request_message used to add a cell.
 /// \param[in] msg scheduler cell configuration message to be validated.
+/// \param[in] expert_cfg Expert scheduler cell configuration.
 /// \return In case an invalid parameter is detected, returns a string containing an error message.
 error_type<std::string> config_validators::validate_sched_cell_configuration_request_message(
     const sched_cell_configuration_request_message& msg,
@@ -301,6 +323,8 @@ error_type<std::string> config_validators::validate_sched_cell_configuration_req
   HANDLE_CODE(validate_sib1_cfg(msg, expert_cfg));
 
   HANDLE_CODE(validate_paging_cfg(expert_cfg));
+
+  HANDLE_CODE(validate_cg_cfg(msg));
 
   if (msg.ran.init_bwp.csi.has_value()) {
     const auto csi_helper          = config_helpers::make_csi_meas_config_builder_params(msg.ran);

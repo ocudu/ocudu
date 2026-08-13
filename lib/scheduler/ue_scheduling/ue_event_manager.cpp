@@ -14,6 +14,7 @@
 #include "../ue_context/ue_cell_repository.h"
 #include "ocudu/scheduler/scheduler_feedback_handler.h"
 #include "ocudu/support/memory_pool/bounded_object_pool.h"
+#include "fmt/chrono.h"
 #include <memory>
 
 using namespace ocudu;
@@ -393,7 +394,7 @@ void ue_cell_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
       uci_sched.reconf_ue(ev.next_config().ue_cell_cfg(ue_cc.cell_index), ue_cc.cfg());
       srs_sched.reconf_ue(ev.next_config().ue_cell_cfg(ue_cc.cell_index), ue_cc.cfg());
       if (cg_sched != nullptr) {
-        cg_sched->add_reconf_ue(ev.next_config().ue_cell_cfg(ue_cc.cell_index), ue_cc.cfg());
+        cg_sched->add_reconf_ue(ev.next_config().ue_cell_cfg(ue_cc.cell_index), &ue_cc.cfg());
       }
     }
 
@@ -906,6 +907,10 @@ void ue_cell_event_manager::handle_crnti_ce_received(du_ue_index_t ue_index)
       // Initiate UCI and SRS schedulers with the confirmed UE resources.
       uci_sched.add_ue(ue_cc.cfg());
       srs_sched.add_ue(ue_cc.cfg());
+
+      if (cg_sched != nullptr) {
+        cg_sched->add_reconf_ue(ue_cc.cfg(), nullptr);
+      }
 
       // Notify slice scheduler only when the UE fully exits fallback (config also applied).
       if (not ue_cc.is_in_fallback_mode()) {

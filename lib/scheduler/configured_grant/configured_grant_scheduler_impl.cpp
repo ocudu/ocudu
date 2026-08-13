@@ -56,7 +56,7 @@ const ue_cell* configured_grant_scheduler_impl::get_ue_cell(rnti_t rnti) const
   return nullptr;
 }
 
-void configured_grant_scheduler_impl::update_harq_reservation(const ue_cell_configuration& ue_cfg)
+void configured_grant_scheduler_impl::update_harq_reservation(const ue_cell_configuration& ue_cfg) const
 {
   auto* u = ues.find_by_rnti(ue_cfg.crnti);
   if (u == nullptr) {
@@ -158,20 +158,21 @@ void configured_grant_scheduler_impl::rem_ue(const ue_cell_configuration& ue_cfg
   }
 
   // Remove UE TBS from TBS table.
-  // TODO: The event manager skips cg_sched.add_reconf_ue/rem_ue when conres_st == pending_conres_crnti_ce. If a CG
-  //       config is added while contention resolution is pending (add skipped) and the UE is deleted after ConRes
-  //       completes, rem_ue runs for a UE never registered → wheel error logs plus the (mislabeled) assert at line
-  //       176 firing.  Pre-existing event-manager design, not introduced by this commit, but the new assert  turns it
-  //       from a log into a crash in debug builds.
   ocudu_assert(ue_tbs_values.contains(u->ue_index), "UE={} not found in the TBS table", u->ue_index);
   ue_tbs_values.erase(u->ue_index);
 }
 
 void configured_grant_scheduler_impl::add_reconf_ue(const ue_cell_configuration& new_ue_cfg,
-                                                    const ue_cell_configuration& old_ue_cfg)
+                                                    const ue_cell_configuration* old_ue_cfg)
 {
+  if (old_ue_cfg == nullptr) {
+    add_ue_to_wheel(new_ue_cfg);
+    update_harq_reservation(new_ue_cfg);
+    return;
+  }
+
   const auto* new_ul_ded = new_ue_cfg.init_bwp().ul.ded();
-  const auto* old_ul_ded = old_ue_cfg.init_bwp().ul.ded();
+  const auto* old_ul_ded = old_ue_cfg->init_bwp().ul.ded();
 
   if (new_ul_ded != nullptr and old_ul_ded != nullptr and new_ul_ded->cg_cfg.has_value() and
       old_ul_ded->cg_cfg.has_value() and new_ul_ded->cg_cfg.value() == old_ul_ded->cg_cfg.value()) {
@@ -179,7 +180,7 @@ void configured_grant_scheduler_impl::add_reconf_ue(const ue_cell_configuration&
     return;
   }
 
-  rem_ue(old_ue_cfg);
+  rem_ue(*old_ue_cfg);
   add_ue_to_wheel(new_ue_cfg);
   update_harq_reservation(new_ue_cfg);
 }
@@ -276,7 +277,6 @@ void configured_grant_scheduler_impl::stop()
 pusch_config_params
 configured_grant_scheduler_impl::build_cg_pusch_cfg_params(const ue_cell_configuration& ue_cell_cfg) const
 {
-  // TODO: add pusch_td_alloc_list.has_value() to validator.
   const auto& pusch_td_list = cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
 
   const auto* ul_ded   = ue_cell_cfg.init_bwp().ul.ded();

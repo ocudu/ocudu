@@ -1055,3 +1055,111 @@ TEST_F(cg_disabled_cell_test, cell_without_cg_config_runs_and_produces_no_cg_gra
     run_slot();
   }
 }
+
+/// Fixture for CG behavior of UEs created via F1AP without RACH (e.g. RRC Reestablishment), which start in fallback
+/// mode awaiting a C-RNTI MAC CE to complete contention resolution (conres_st = pending_conres_crnti_ce).
+class cg_fallback_ue_test : public configured_grant_scheduler_test
+{
+protected:
+  static constexpr du_ue_index_t ue_idx = to_du_ue_index(0);
+
+  /// Creates the UE in fallback via the F1AP path (no UL-CCCH slot, no CFRA), without CG configuration.
+  /// Note: scheduler_test_simulator::add_ue() is bypassed, as it auto-completes contention resolution by sending the
+  /// C-RNTI CE right after the creation request, whereas this fixture must keep the UE awaiting the C-RNTI CE.
+  void add_fallback_crnti_ce_ue()
+  {
+    auto ue_req               = sched_config_helper::create_default_sched_ue_creation_request(cell_req.ran);
+    ue_req.ue_index           = ue_idx;
+    ue_req.crnti              = ue_crnti;
+    ue_req.starts_in_fallback = true;
+    ASSERT_EQ(sched_config_helper::to_ue_creation_mode(ue_req), ue_creation_mode::high_layers);
+    // Create the UE without CG: the CG config is installed via reconfiguration (see add_cg_ue()).
+    ue_req.cfg.cells->front().serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.reset();
+
+    sched->handle_ue_creation_request(ue_req);
+    notif.last_ue_index_cfg.reset();
+    for (unsigned i = 0; i != 100 and notif.last_ue_index_cfg != ue_idx; ++i) {
+      run_slot();
+    }
+    ASSERT_EQ(notif.last_ue_index_cfg, ue_idx) << "UE creation was not completed";
+  }
+
+  /// Sends a reconfiguration that installs the CG configuration and confirms it was applied by the UE.
+  void install_cg_via_reconf() const
+  {
+    auto ue_req     = sched_config_helper::create_default_sched_ue_creation_request(cell_req.ran);
+    ue_req.ue_index = ue_idx;
+    ue_req.crnti    = ue_crnti;
+    ue_req.cfg.cells->front()
+        .serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg->rrc_configured_ul_grant_cfg->time_domain_offset =
+        default_cg_offset_;
+
+    sched_ue_reconfiguration_message reconf;
+    reconf.ue_index = ue_idx;
+    reconf.crnti    = ue_crnti;
+    reconf.cfg      = ue_req.cfg;
+    reconf.cs_rnti  = cs_rnti;
+    sched->handle_ue_reconfiguration_request(reconf);
+    sched->handle_ue_config_applied(ue_idx);
+  }
+};
+
+/// Test (regression): for an F1AP-created UE awaiting a C-RNTI MAC CE, the CG setup requested via reconfiguration is
+/// deferred until the CE is received. No CG grant may appear before the CE, grants must appear after it, and the UE
+/// must be removed cleanly afterwards (the deferred CG registration must be caught up at CE reception, or the removal
+/// would run for a UE never registered in the CG scheduler).
+TEST_F(cg_fallback_ue_test, cg_setup_is_deferred_until_crnti_ce_and_ue_is_removed_cleanly)
+{
+  add_fallback_crnti_ce_ue();
+
+  // Install the CG config while contention resolution is still pending: the CG scheduler registration is skipped.
+  install_cg_via_reconf();
+
+  // While the C-RNTI CE is pending, no CG PUSCH must be scheduled.
+  ASSERT_EQ(run_until_next_cg_pusch(), nullptr) << "CG PUSCH scheduled while contention resolution is pending";
+
+  // C-RNTI CE received: contention resolution completes and the deferred CG registration is performed.
+  sched->handle_crnti_ce_received(ue_idx);
+
+  // CG grants must now appear with the configured periodicity.
+  const ul_sched_info* g1 = run_until_next_cg_pusch();
+  ASSERT_NE(g1, nullptr) << "No CG PUSCH scheduled after the C-RNTI CE was received";
+  const slot_point sl1 = last_result_slot();
+
+  const ul_sched_info* g2 = run_until_next_cg_pusch();
+  ASSERT_NE(g2, nullptr) << "No second CG PUSCH scheduled after the C-RNTI CE was received";
+  EXPECT_EQ(last_result_slot() - sl1, static_cast<int>(cg_params.period_slots));
+
+  // Remove the UE and wait for the removal to complete.
+  schedule_task(launch_rem_ue_task(ue_idx));
+  run_until_all_pending_tasks_completion();
+}
+
+/// Test: for an F1AP-created UE awaiting a C-RNTI MAC CE that never arrives, the CG setup requested via
+/// reconfiguration stays deferred: no CG grant is ever allocated, and the UE removal completes cleanly (the removal
+/// must not attempt to unregister a UE that was never registered in the CG scheduler).
+TEST_F(cg_fallback_ue_test, when_crnti_ce_never_arrives_no_cg_grant_is_allocated_and_ue_is_removed_cleanly)
+{
+  add_fallback_crnti_ce_ue();
+
+  // Install the CG config while contention resolution is still pending: the CG scheduler registration is skipped.
+  install_cg_via_reconf();
+
+  // The C-RNTI CE never arrives: no CG PUSCH must be scheduled over several CG periods.
+  constexpr unsigned safety_margin = 10U;
+  for (unsigned i = 0; i != 3 * cg_params.period_slots + safety_margin; ++i) {
+    run_slot();
+    ASSERT_EQ(find_ue_pusch(cs_rnti, *last_sched_result()), nullptr)
+        << "CG PUSCH scheduled for a UE whose contention resolution never completed";
+  }
+
+  // Remove the UE while contention resolution is still pending and wait for the removal to complete.
+  schedule_task(launch_rem_ue_task(ue_idx));
+  run_until_all_pending_tasks_completion();
+
+  // After the removal, no CG PUSCH must appear either.
+  for (unsigned i = 0; i != cg_params.period_slots + safety_margin; ++i) {
+    run_slot();
+    ASSERT_EQ(find_ue_pusch(cs_rnti, *last_sched_result()), nullptr) << "CG PUSCH scheduled after the UE was removed";
+  }
+}
