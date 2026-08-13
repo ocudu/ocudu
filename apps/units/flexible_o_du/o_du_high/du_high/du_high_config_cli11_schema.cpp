@@ -536,7 +536,7 @@ static void configure_cli11_mac_sr_args(CLI::App& app, mac_sr_unit_config& sr_pa
       ->capture_default_str()
       ->enum_values({4, 8, 16, 32, 64});
   add_option(app, "--sr_prohibit_timer", sr_params.sr_prohibit_timer, "Timer for SR transmission on PUCCH in ms")
-      ->enum_values({1, 2, 4, 8, 16, 32, 64, 128});
+      ->enum_values({1, 2, 4, 8, 16, 32, 64, 128, 192, 256, 320, 384, 448, 512, 576, 640, 1082});
 }
 
 static void configure_cli11_mac_cell_group_args(CLI::App& app, du_high_unit_mac_cell_group_config& mcg_params)

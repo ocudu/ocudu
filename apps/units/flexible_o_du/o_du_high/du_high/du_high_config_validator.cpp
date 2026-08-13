@@ -2017,6 +2017,13 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
       }
     }
   }
+  // Values beyond 128ms are only signalled via sr-ProhibitTimer-v1700, which is meant for NTN.
+  if (config.mcg_cfg.sr_cfg.sr_prohibit_timer.value_or(0) > 128 and not is_ntn_band) {
+    fmt::print("mac_cell_group.sr_cfg.sr_prohibit_timer={}ms is only supported in NTN cells. Maximum for TN cells is "
+               "128ms.\n",
+               *config.mcg_cfg.sr_cfg.sr_prohibit_timer);
+    return false;
+  }
   if (!validate_pdsch_cell_unit_config(config.pdsch_cfg, nof_crbs, config.nof_antennas_dl, is_ntn_band)) {
     return false;
   }

@@ -1189,7 +1189,8 @@ struct mac_phr_unit_config {
 /// MAC Scheduler Request configuration.
 struct mac_sr_unit_config {
   /// \brief \c sr-ProhibitTimer, or timer for SR transmission on PUCCH.
-  /// Values are in ms. Values: {1, 2, 4, 8, 16, 32, 64, 128}. When the field is absent, the UE applies the value 0.
+  /// Values are in ms. Values: {1, 2, 4, 8, 16, 32, 64, 128}, and {192, 256, 320, 384, 448, 512, 576, 640, 1082} for
+  /// NTN (\c sr-ProhibitTimer-v1700). When the field is absent, the UE applies the value 0.
   std::optional<unsigned> sr_prohibit_timer;
   /// \brief \c sr-TransMax possible values, or maximum number of SR transmissions.
   /// Values: {4, 8, 16, 32, 64}.

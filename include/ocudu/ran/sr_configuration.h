@@ -56,29 +56,57 @@ inline unsigned sr_periodicity_to_slot(sr_periodicity period)
   return static_cast<unsigned>(period);
 }
 
-/// \c sr-ProhibitTimer possible values, for \c SchedulingRequestToAddMod, TS 38.331.
-enum class sr_prohib_timer { ms1, ms2, ms4, ms8, ms16, ms32, ms64, ms128 };
+/// \brief \c sr-ProhibitTimer possible values, for \c SchedulingRequestToAddMod, TS 38.331.
+///
+/// Values above \c ms128 are only signalled via the Rel-17 NTN extension \c sr-ProhibitTimer-v1700.
+enum class sr_prohib_timer : uint16_t {
+  ms1    = 1,
+  ms2    = 2,
+  ms4    = 4,
+  ms8    = 8,
+  ms16   = 16,
+  ms32   = 32,
+  ms64   = 64,
+  ms128  = 128,
+  ms192  = 192,
+  ms256  = 256,
+  ms320  = 320,
+  ms384  = 384,
+  ms448  = 448,
+  ms512  = 512,
+  ms576  = 576,
+  ms640  = 640,
+  ms1082 = 1082
+};
+
+/// Returns true if the value can only be signalled via \c sr-ProhibitTimer-v1700.
+inline bool is_sr_prohib_timer_ext(sr_prohib_timer timer)
+{
+  return static_cast<unsigned>(timer) > static_cast<unsigned>(sr_prohib_timer::ms128);
+}
 
 /// Return the enum value of \ref sr-ProhibitTimer corresponding to the given unsigned value.
 inline sr_prohib_timer to_sr_prohib_timer(unsigned sr_prohibit_timer)
 {
   switch (sr_prohibit_timer) {
     case 1:
-      return sr_prohib_timer::ms1;
     case 2:
-      return sr_prohib_timer::ms2;
     case 4:
-      return sr_prohib_timer::ms4;
     case 8:
-      return sr_prohib_timer::ms8;
     case 16:
-      return sr_prohib_timer::ms16;
     case 32:
-      return sr_prohib_timer::ms32;
     case 64:
-      return sr_prohib_timer::ms64;
     case 128:
-      return sr_prohib_timer::ms128;
+    case 192:
+    case 256:
+    case 320:
+    case 384:
+    case 448:
+    case 512:
+    case 576:
+    case 640:
+    case 1082:
+      return static_cast<sr_prohib_timer>(sr_prohibit_timer);
     default:
       report_fatal_error("Invalid sr-ProhibitTimer value={}", sr_prohibit_timer);
   }

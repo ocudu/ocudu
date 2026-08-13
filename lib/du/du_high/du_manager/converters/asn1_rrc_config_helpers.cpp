@@ -3236,7 +3236,10 @@ static sched_request_to_add_mod_s make_asn1_rrc_scheduling_request(const schedul
   req.sched_request_id = cfg.sr_id;
   if (cfg.prohibit_timer.has_value()) {
     req.sr_prohibit_timer_present = true;
-    switch (cfg.prohibit_timer.value()) {
+    // Extended values go in sr-ProhibitTimer-v1700, which makes the UE ignore this field (TS 38.331).
+    const sr_prohib_timer legacy_timer =
+        is_sr_prohib_timer_ext(cfg.prohibit_timer.value()) ? sr_prohib_timer::ms128 : cfg.prohibit_timer.value();
+    switch (legacy_timer) {
       case sr_prohib_timer::ms1:
         req.sr_prohibit_timer = sched_request_to_add_mod_s::sr_prohibit_timer_opts::ms1;
         break;
@@ -3262,7 +3265,7 @@ static sched_request_to_add_mod_s make_asn1_rrc_scheduling_request(const schedul
         req.sr_prohibit_timer = sched_request_to_add_mod_s::sr_prohibit_timer_opts::ms128;
         break;
       default:
-        ocudu_assertion_failure("Invalid SR prohibit timer={}", fmt::underlying(cfg.prohibit_timer.value()));
+        ocudu_assertion_failure("Invalid SR prohibit timer={}", fmt::underlying(legacy_timer));
     }
   }
 
@@ -3287,6 +3290,52 @@ static sched_request_to_add_mod_s make_asn1_rrc_scheduling_request(const schedul
   }
 
   return req;
+}
+
+/// Builds the \c SchedulingRequestToAddModExt-v1700 entry of an SR configuration. Empty for legacy prohibit timers.
+static sched_request_to_add_mod_ext_v1700_s
+make_asn1_rrc_scheduling_request_ext(const scheduling_request_to_addmod& cfg)
+{
+  sched_request_to_add_mod_ext_v1700_s ext{};
+  if (not cfg.prohibit_timer.has_value() or not is_sr_prohib_timer_ext(cfg.prohibit_timer.value())) {
+    return ext;
+  }
+
+  ext.sr_prohibit_timer_v1700_present = true;
+  using ext_opts                      = sched_request_to_add_mod_ext_v1700_s::sr_prohibit_timer_v1700_opts;
+  switch (cfg.prohibit_timer.value()) {
+    case sr_prohib_timer::ms192:
+      ext.sr_prohibit_timer_v1700 = ext_opts::ms192;
+      break;
+    case sr_prohib_timer::ms256:
+      ext.sr_prohibit_timer_v1700 = ext_opts::ms256;
+      break;
+    case sr_prohib_timer::ms320:
+      ext.sr_prohibit_timer_v1700 = ext_opts::ms320;
+      break;
+    case sr_prohib_timer::ms384:
+      ext.sr_prohibit_timer_v1700 = ext_opts::ms384;
+      break;
+    case sr_prohib_timer::ms448:
+      ext.sr_prohibit_timer_v1700 = ext_opts::ms448;
+      break;
+    case sr_prohib_timer::ms512:
+      ext.sr_prohibit_timer_v1700 = ext_opts::ms512;
+      break;
+    case sr_prohib_timer::ms576:
+      ext.sr_prohibit_timer_v1700 = ext_opts::ms576;
+      break;
+    case sr_prohib_timer::ms640:
+      ext.sr_prohibit_timer_v1700 = ext_opts::ms640;
+      break;
+    case sr_prohib_timer::ms1082:
+      ext.sr_prohibit_timer_v1700 = ext_opts::ms1082;
+      break;
+    default:
+      ocudu_assertion_failure("Invalid extended SR prohibit timer={}", fmt::underlying(cfg.prohibit_timer.value()));
+  }
+
+  return ext;
 }
 
 static asn1::rrc_nr::drx_cfg_s make_asn1_drx_config(const drx_config& cfg)
@@ -3652,6 +3701,41 @@ static bool calculate_mac_cell_group_config_diff(asn1::rrc_nr::mac_cell_group_cf
     out.sched_request_cfg_present = true;
   }
 
+  // schedulingRequestConfig-v1700 is signalled when an add/mod entry above sets or clears an extended sr-ProhibitTimer.
+  // When absent, the UE keeps its stored values (Need M). Its list must match the add/mod list entry by entry
+  // (TS 38.331).
+  auto find_sr_cfg = [](const auto& sr_cfgs, uint8_t sr_id) -> const scheduling_request_to_addmod* {
+    auto it = std::find_if(sr_cfgs.begin(), sr_cfgs.end(), [sr_id](const scheduling_request_to_addmod& req) {
+      return req.sr_id == sr_id;
+    });
+    return it != sr_cfgs.end() ? &*it : nullptr;
+  };
+  auto has_ext_prohibit_timer = [](const scheduling_request_to_addmod* sr_cfg) {
+    return sr_cfg != nullptr and sr_cfg->prohibit_timer.has_value() and
+           is_sr_prohib_timer_ext(sr_cfg->prohibit_timer.value());
+  };
+  const auto& sr_add_mod_list = out.sched_request_cfg.sched_request_to_add_mod_list;
+  const bool  needs_sr_prohibit_timer_ext =
+      std::any_of(sr_add_mod_list.begin(), sr_add_mod_list.end(), [&](const sched_request_to_add_mod_s& req) {
+        return has_ext_prohibit_timer(find_sr_cfg(dest.scheduling_request_config, req.sched_request_id)) or
+               has_ext_prohibit_timer(find_sr_cfg(src.scheduling_request_config, req.sched_request_id));
+      });
+  if (needs_sr_prohibit_timer_ext) {
+    out.sched_request_cfg_v1700.set_present();
+    auto& ext_list = out.sched_request_cfg_v1700->sched_request_to_add_mod_list_ext_v1700;
+    ext_list.resize(sr_add_mod_list.size());
+    for (unsigned i = 0, e = ext_list.size(); i != e; ++i) {
+      const scheduling_request_to_addmod* sr_cfg =
+          find_sr_cfg(dest.scheduling_request_config, sr_add_mod_list[i].sched_request_id);
+      // An entry without sr-ProhibitTimer-v1700 releases the UE stored value (Need R).
+      if (sr_cfg != nullptr) {
+        ext_list[i] = make_asn1_rrc_scheduling_request_ext(*sr_cfg);
+      }
+    }
+  } else {
+    out.sched_request_cfg_v1700.reset();
+  }
+
   if (dest.bsr_cfg.has_value()) {
     out.bsr_cfg_present = true;
     make_asn1_rrc_bsr_config(out.bsr_cfg, dest.bsr_cfg.value());
@@ -3697,10 +3781,10 @@ static bool calculate_mac_cell_group_config_diff(asn1::rrc_nr::mac_cell_group_cf
     // Either tar-Config is unchanged, or it was never configured. Nothing to signal.
     out.tar_cfg_r17.reset();
   }
-  out.ext = out.ext or out.tar_cfg_r17.is_present();
+  out.ext = out.ext or out.tar_cfg_r17.is_present() or out.sched_request_cfg_v1700.is_present();
 
   return out.drx_cfg_present || out.sched_request_cfg_present || out.bsr_cfg_present || out.tag_cfg_present ||
-         out.phr_cfg_present || out.tar_cfg_r17.is_present();
+         out.phr_cfg_present || out.tar_cfg_r17.is_present() || out.sched_request_cfg_v1700.is_present();
 }
 
 static static_vector<rlc_bearer_config, MAX_NOF_RB_LCIDS> fill_rlc_bearers(const du_ue_resource_config& res)
