@@ -628,8 +628,56 @@ static bool validate_ntn_neighbor_cells(const du_high_unit_cell_ntn_config& ntn_
   return valid;
 }
 
-static bool validate_ntn_config(const du_high_unit_cell_ntn_config& ntn_cfg, nr_band band)
+/// \brief Validates that the SR retransmissions of a UE in an NTN cell outlast the round trip of the uplink grant.
+/// \param sr_cfg SR configuration of the cell.
+/// \param sr_period_msec Period of the SR opportunities.
+/// \param koffset \c cell_specific_koffset, i.e. the round trip.
+static bool
+validate_ntn_sr_config(const mac_sr_unit_config& sr_cfg, float sr_period_msec, std::chrono::milliseconds koffset)
 {
+  // The UE retransmits at the first SR opportunity after sr-ProhibitTimer expires (TS 38.321, Section 5.4.4). An absent
+  // sr-ProhibitTimer means it retransmits at every SR opportunity.
+  const float sr_prohibit_msec    = static_cast<float>(sr_cfg.sr_prohibit_timer.value_or(0));
+  const float sr_retx_period_msec = sr_period_msec * std::max(1.0F, std::ceil(sr_prohibit_msec / sr_period_msec));
+  const float sr_budget_msec      = sr_retx_period_msec * static_cast<float>(sr_cfg.sr_trans_max);
+  const float koffset_msec        = static_cast<float>(koffset.count());
+  // SR transmissions spent while the grant is in flight, the first one included.
+  const unsigned sr_tx_in_flight = static_cast<unsigned>(std::floor(koffset_msec / sr_retx_period_msec)) + 1U;
+
+  if (sr_budget_msec <= koffset_msec) {
+    fmt::print("Warning: mac_cell_group.sr_cfg.sr_trans_max={} SR transmissions, one every {}ms "
+               "(pucch.sr_period_ms={}, mac_cell_group.sr_cfg.sr_prohibit_timer={}), last {}ms, less than "
+               "ntn.cell_specific_koffset={}ms, so the UE may fall back to random access before the grant arrives. "
+               "Increase pucch.sr_period_ms, mac_cell_group.sr_cfg.sr_prohibit_timer or "
+               "mac_cell_group.sr_cfg.sr_trans_max.\n",
+               sr_cfg.sr_trans_max,
+               sr_retx_period_msec,
+               sr_period_msec,
+               sr_prohibit_msec,
+               sr_budget_msec,
+               koffset.count());
+  } else if (2 * sr_tx_in_flight > sr_cfg.sr_trans_max) {
+    fmt::print("An SR uses {} of the mac_cell_group.sr_cfg.sr_trans_max={} transmissions, one every {}ms "
+               "(pucch.sr_period_ms={}, mac_cell_group.sr_cfg.sr_prohibit_timer={}), within "
+               "ntn.cell_specific_koffset={}ms, more than half. Increase pucch.sr_period_ms, "
+               "mac_cell_group.sr_cfg.sr_prohibit_timer or mac_cell_group.sr_cfg.sr_trans_max.\n",
+               sr_tx_in_flight,
+               sr_cfg.sr_trans_max,
+               sr_retx_period_msec,
+               sr_period_msec,
+               sr_prohibit_msec,
+               koffset.count());
+    return false;
+  }
+
+  return true;
+}
+
+/// Validates the NTN config of a cell in an NTN band. Returns true on success, otherwise false.
+static bool validate_ntn_config(const du_high_unit_base_cell_config& cell_cfg, nr_band band)
+{
+  const du_high_unit_cell_ntn_config& ntn_cfg = *cell_cfg.ntn_cfg;
+
   if (!ntn_cfg.serving) {
     fmt::print("ntn: NTN parameters must be set for a cell in NTN band {}.\n", fmt::underlying(band));
     return false;
@@ -683,6 +731,11 @@ static bool validate_ntn_config(const du_high_unit_cell_ntn_config& ntn_cfg, nr_
 
   if (serving.ta_report_sr_enabled and not serving.ta_report_offset_threshold.has_value()) {
     fmt::print("ntn.ta_report_sr_enabled requires ntn.ta_report_offset_threshold to be set.\n");
+    valid = false;
+  }
+
+  if (not validate_ntn_sr_config(
+          cell_cfg.mcg_cfg.sr_cfg, cell_cfg.pucch_cfg.sr_period_msec, serving.cell_specific_koffset)) {
     valid = false;
   }
 
@@ -1955,7 +2008,7 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
   }
   if (config.ntn_cfg) {
     if (is_ntn_band) {
-      if (!validate_ntn_config(*config.ntn_cfg, band)) {
+      if (!validate_ntn_config(config, band)) {
         return false;
       }
     } else {
