@@ -21,7 +21,10 @@ cell_cfg:
       - si_period: 16
         sib_mapping: 19
   pucch: # increases the scheduling period of PUCCH to allow for the larger channel delay
-    sr_period_ms: 320
+    sr_period_ms: 80 # largest SR period allowed
+  mac_cell_group:
+    sr_cfg:
+      sr_prohibit_timer: 320 # keeps the UE from retransmitting the SR while the grant crosses the channel
   csi:
     csi_rs_period: 80
   pdsch: # disables HARQ processing

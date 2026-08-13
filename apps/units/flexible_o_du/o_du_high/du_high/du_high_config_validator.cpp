@@ -805,8 +805,7 @@ static bool validate_ntn_config(const du_high_unit_base_cell_config& cell_cfg, n
 static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&                config,
                                             subcarrier_spacing                                  scs_common,
                                             unsigned                                            nof_crbs,
-                                            const std::optional<du_high_unit_tdd_ul_dl_config>& tdd_cfg,
-                                            bool                                                is_ntn_band)
+                                            const std::optional<du_high_unit_tdd_ul_dl_config>& tdd_cfg)
 {
   const du_high_unit_pucch_config& pucch_cfg = config.pucch_cfg;
   const du_high_unit_csi_config&   csi_cfg   = config.csi_cfg;
@@ -857,16 +856,14 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
       return false;
     }
   }
-  if (!is_ntn_band) {
-    span<const unsigned> valid_sr_period_slots = mu_to_valid_sr_period_slots_lookup.at(to_numerology_value(scs_common));
-    if (std::find(valid_sr_period_slots.begin(), valid_sr_period_slots.end(), sr_period_slots) ==
-        valid_sr_period_slots.end()) {
-      fmt::print("SR period of {}ms (i.e. {} slots) is not valid for {}kHz SCS.\n",
-                 pucch_cfg.sr_period_msec,
-                 sr_period_slots,
-                 scs_to_khz(scs_common));
-      return false;
-    }
+  span<const unsigned> valid_sr_period_slots = mu_to_valid_sr_period_slots_lookup.at(to_numerology_value(scs_common));
+  if (std::find(valid_sr_period_slots.begin(), valid_sr_period_slots.end(), sr_period_slots) ==
+      valid_sr_period_slots.end()) {
+    fmt::print("SR period of {}ms (i.e. {} slots) is not valid for {}kHz SCS.\n",
+               pucch_cfg.sr_period_msec,
+               sr_period_slots,
+               scs_to_khz(scs_common));
+    return false;
   }
 
   if (!pucch_cfg.repetition_sinr_thresholds.empty()) {
@@ -2037,7 +2034,7 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
     return false;
   }
 
-  if (!validate_pucch_cell_unit_config(config, config.common_scs, nof_crbs, config.tdd_ul_dl_cfg, is_ntn_band)) {
+  if (!validate_pucch_cell_unit_config(config, config.common_scs, nof_crbs, config.tdd_ul_dl_cfg)) {
     return false;
   }
 
