@@ -79,7 +79,7 @@ void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_
         sat_sw_node["cell_specific_koffset"] = static_cast<unsigned>(sw.cell_specific_koffset->count());
       }
       if (sw.k_mac) {
-        sat_sw_node["k_mac"] = *sw.k_mac;
+        sat_sw_node["k_mac"] = static_cast<unsigned>(sw.k_mac->count());
       }
       if (sw.ta_report) {
         sat_sw_node["ta_report"] = *sw.ta_report;
@@ -113,7 +113,7 @@ void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_
         ncell_node["ntn_ul_sync_validity_dur"] = *ncell.ntn_ul_sync_validity_dur;
       }
       if (ncell.k_mac) {
-        ncell_node["k_mac"] = *ncell.k_mac;
+        ncell_node["k_mac"] = static_cast<unsigned>(ncell.k_mac->count());
       }
       if (ncell.polarization) {
         ncell_node["polarization"] = build_ntn_polarization_yaml_node(*ncell.polarization);

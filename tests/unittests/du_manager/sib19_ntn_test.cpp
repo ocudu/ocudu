@@ -59,7 +59,7 @@ ntn_config make_test_ntn_config(unsigned koffset_ms       = 260,
 
   // Basic timing parameters
   cfg.cell_specific_koffset.emplace(std::chrono::milliseconds(koffset_ms));
-  cfg.k_mac                    = k_mac;
+  cfg.k_mac                    = std::chrono::milliseconds{k_mac};
   cfg.ntn_ul_sync_validity_dur = sync_validity;
 
   // ECEF ephemeris

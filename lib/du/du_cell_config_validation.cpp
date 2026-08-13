@@ -21,6 +21,7 @@
 #include "ocudu/scheduler/config/serving_cell_config.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
 #include "ocudu/scheduler/config/serving_cell_config_validator.h"
+#include "ocudu/scheduler/sched_consts.h"
 #include "ocudu/support/config/validator_helpers.h"
 
 using namespace ocudu;
@@ -825,12 +826,13 @@ static check_outcome check_ntn_config(const du_cell_config& cell_cfg)
   // Validate cell_specific_koffset (required for NTN).
   if (ntn.cell_specific_koffset.has_value()) {
     CHECK_EQ_OR_ABOVE(ntn.cell_specific_koffset.value().count(), 1, "cell_specific_koffset");
-    CHECK_EQ_OR_BELOW(ntn.cell_specific_koffset.value().count(), 1023, "cell_specific_koffset");
+    CHECK_EQ_OR_BELOW(
+        ntn.cell_specific_koffset.value().count(), NTN_CELL_SPECIFIC_KOFFSET_MAX, "cell_specific_koffset");
   }
 
   if (ntn.k_mac.has_value()) {
-    CHECK_EQ_OR_ABOVE(ntn.k_mac.value(), 1, "k_mac");
-    CHECK_EQ_OR_BELOW(ntn.k_mac.value(), 512, "k_mac");
+    CHECK_EQ_OR_ABOVE(ntn.k_mac.value().count(), 1, "k_mac");
+    CHECK_EQ_OR_BELOW(ntn.k_mac.value().count(), NTN_K_MAC_MAX, "k_mac");
   }
 
   // ta_common and ta_common_offset are summed into the single taCommon-r17 field

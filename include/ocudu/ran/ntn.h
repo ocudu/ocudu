@@ -130,8 +130,13 @@ struct ntn_config {
   /// 15 kHz (i.e., 1 slot = 1 ms). To avoid ambiguity with other subcarrier spacings, this parameter is represented in
   /// the implementation as std::chrono::milliseconds.
   std::optional<std::chrono::milliseconds> cell_specific_koffset;
-  /// Scheduling offset provided by network if downlink and uplink frame timing are not aligned at gNB.
-  std::optional<unsigned> k_mac;
+  /// Scheduling offset provided by network if downlink and uplink frame timing are not aligned at gNB. The unit is
+  /// milliseconds.
+  ///
+  /// \note In the specifications, the k_mac field is expressed as a number of slots assuming a subcarrier spacing of
+  /// 15 kHz (i.e., 1 slot = 1 ms). To avoid ambiguity with other subcarrier spacings, this parameter is represented in
+  /// the implementation as std::chrono::milliseconds.
+  std::optional<std::chrono::milliseconds> k_mac;
   /// Network-controlled common timing advanced value, and it may include any timing offset considered necessary by the
   /// network.
   std::optional<ta_info_t> ta_info;

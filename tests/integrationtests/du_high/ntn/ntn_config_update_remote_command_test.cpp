@@ -877,7 +877,7 @@ TEST_F(ntn_config_update_remote_command_test, single_cell_update_from_json_strin
   ASSERT_TRUE(sat_sw.ntn_cfg.cell_specific_koffset.has_value());
   EXPECT_EQ(sat_sw.ntn_cfg.cell_specific_koffset->count(), 16);
   ASSERT_TRUE(sat_sw.ntn_cfg.k_mac.has_value());
-  EXPECT_EQ(sat_sw.ntn_cfg.k_mac.value(), 32U);
+  EXPECT_EQ(sat_sw.ntn_cfg.k_mac->count(), 32);
   ASSERT_TRUE(sat_sw.ntn_cfg.ntn_ul_sync_validity_dur.has_value());
   EXPECT_EQ(sat_sw.ntn_cfg.ntn_ul_sync_validity_dur.value(), 10U);
   ASSERT_TRUE(sat_sw.ntn_cfg.ta_report.has_value());
@@ -1416,7 +1416,7 @@ TEST_F(ntn_config_update_remote_command_test, single_cell_update_with_sat_switch
   ASSERT_TRUE(sat_sw.ntn_cfg.cell_specific_koffset.has_value());
   EXPECT_EQ(sat_sw.ntn_cfg.cell_specific_koffset->count(), 16);
   ASSERT_TRUE(sat_sw.ntn_cfg.k_mac.has_value());
-  EXPECT_EQ(sat_sw.ntn_cfg.k_mac.value(), 32);
+  EXPECT_EQ(sat_sw.ntn_cfg.k_mac->count(), 32);
   ASSERT_TRUE(sat_sw.ntn_cfg.ntn_ul_sync_validity_dur.has_value());
   EXPECT_EQ(sat_sw.ntn_cfg.ntn_ul_sync_validity_dur.value(), 10);
   ASSERT_TRUE(sat_sw.ntn_cfg.ta_report.has_value());

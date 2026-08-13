@@ -350,7 +350,7 @@ static expected<ntn_config, std::string> parse_sat_switch_ntn_cfg(const nlohmann
     if (!result) {
       return make_unexpected(result.error());
     }
-    cfg.k_mac = result->get<unsigned>();
+    cfg.k_mac = std::chrono::milliseconds(result->get<unsigned>());
   }
 
   if (json.contains("ntn_ul_sync_validity_dur")) {

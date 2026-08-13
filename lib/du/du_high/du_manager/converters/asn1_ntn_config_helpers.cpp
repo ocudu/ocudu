@@ -92,7 +92,7 @@ ntn_cfg_r17_s ocudu::odu::make_asn1_rrc_cell_ntn_cfg(const ntn_config& ntn_cfg)
   // K-mac.
   if (ntn_cfg.k_mac.has_value()) {
     out_ntn_cfg.kmac_r17_present = true;
-    out_ntn_cfg.kmac_r17         = *ntn_cfg.k_mac;
+    out_ntn_cfg.kmac_r17         = ntn_cfg.k_mac->count();
   }
 
   // TA-Info. Exempt from SI change notification or valueTag modification in SIB1.

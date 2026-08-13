@@ -61,7 +61,7 @@ static ntn_sib19_update_request make_base_request(bool si_valuetag_change)
   sib19_info& sib19 = req.sib19;
   sib19.ntn_cfg.emplace();
   sib19.ntn_cfg->cell_specific_koffset.emplace(std::chrono::milliseconds(260));
-  sib19.ntn_cfg->k_mac     = 128u;
+  sib19.ntn_cfg->k_mac     = std::chrono::milliseconds{128};
   sib19.ntn_cfg->ta_report = true;
   sib19.ntn_cfg->epoch_time.emplace();
   sib19.ntn_cfg->epoch_time->sfn             = 0;
@@ -158,7 +158,7 @@ TEST_F(sib19_value_tag_handler_test, tracked_koffset_change_triggers_value_tag)
 TEST_F(sib19_value_tag_handler_test, tracked_kmac_change_triggers_value_tag)
 {
   auto req                 = make_base_request(/*si_valuetag_change=*/true);
-  req.sib19.ntn_cfg->k_mac = 256u;
+  req.sib19.ntn_cfg->k_mac = std::chrono::milliseconds{256};
 
   handler.handle_sib19_msg_update(req);
 

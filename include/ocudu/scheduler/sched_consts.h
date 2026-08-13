@@ -49,6 +49,9 @@ constexpr units::bytes SRB1_TRIG_GRANT_SIZE{16};
 /// See TS 38.331.
 constexpr unsigned NTN_CELL_SPECIFIC_KOFFSET_MAX = 1023;
 
+/// Maximum value of NTN k_mac. The field is expressed in slots for a subcarrier spacing of 15 kHz. See TS 38.331.
+constexpr unsigned NTN_K_MAC_MAX = 512;
+
 /// Maximum value of Msg delta. See table 6.1.2.1.1-5, in TS 38.214.
 constexpr unsigned MAX_MSG3_DELTA = 6;
 

@@ -38,8 +38,8 @@ struct ntn_serving_cell_config {
   std::optional<std::chrono::system_clock::time_point> t_service;
   /// Cell-specific scheduling offset (k_offset) for NTN, in milliseconds.
   std::chrono::milliseconds cell_specific_koffset;
-  /// Scheduling offset k_mac if DL/UL frame timing not aligned.
-  std::optional<unsigned> k_mac;
+  /// Scheduling offset k_mac if DL/UL frame timing not aligned, in milliseconds.
+  std::optional<std::chrono::milliseconds> k_mac;
   /// Polarization info for service link.
   std::optional<ntn_polarization_t> polarization;
   /// Indicates if timing advance reporting is enabled.
@@ -68,7 +68,7 @@ struct ntn_neighbor_cell_config {
   std::optional<pci_t>                     phys_cell_id;
   std::optional<std::chrono::milliseconds> cell_specific_koffset;
   std::optional<unsigned>                  ntn_ul_sync_validity_dur;
-  std::optional<unsigned>                  k_mac;
+  std::optional<std::chrono::milliseconds> k_mac;
   std::optional<ntn_polarization_t>        polarization;
   std::optional<bool>                      ta_report;
   std::optional<bool>                      use_state_vector;
@@ -87,7 +87,7 @@ struct ntn_sat_switch_config {
   std::optional<sat_switch_with_resync_t::ssb_time_offset_t> ssb_time_offset_sf;
   std::optional<unsigned>                                    ntn_ul_sync_validity_dur;
   std::optional<std::chrono::milliseconds>                   cell_specific_koffset;
-  std::optional<unsigned>                                    k_mac;
+  std::optional<std::chrono::milliseconds>                   k_mac;
   std::optional<ntn_polarization_t>                          polarization;
   std::optional<bool>                                        ta_report;
   std::optional<bool>                                        use_state_vector;

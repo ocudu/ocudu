@@ -50,7 +50,7 @@ ntn_neighbor_cell_config make_ncell(unsigned                satellite_index,
   cfg.satellite_index          = satellite_index;
   cfg.ntn_ul_sync_validity_dur = ntn_ul_sync_validity_dur;
   cfg.cell_specific_koffset    = std::chrono::milliseconds{10};
-  cfg.k_mac                    = k_mac;
+  cfg.k_mac                    = std::chrono::milliseconds{k_mac};
   cfg.ta_report                = ta_report;
   cfg.has_feeder_link          = has_feeder_link;
   return cfg;
@@ -79,7 +79,7 @@ ntn_sat_switch_config make_sat_switch(unsigned satellite_index, std::optional<un
   cfg.satellite_index          = satellite_index;
   cfg.ntn_ul_sync_validity_dur = ntn_ul_sync_validity_dur;
   cfg.cell_specific_koffset    = std::chrono::milliseconds{15};
-  cfg.k_mac                    = 3U;
+  cfg.k_mac                    = std::chrono::milliseconds{3};
   cfg.ta_report                = true;
   return cfg;
 }
@@ -207,7 +207,7 @@ TEST(sib19_ncells_test, second_entry_explicit_when_any_static_field_differs_even
   }
   {
     ntn_neighbor_cell_config other = base;
-    other.k_mac                    = 99U;
+    other.k_mac                    = std::chrono::milliseconds{99};
     expect_both_explicit(base, other);
   }
   {
@@ -467,7 +467,7 @@ TEST(sib19_sat_switch_test, fields_left_unset_in_sat_switch_config_are_broadcast
 {
   ntn_cell_config cell_cfg                = make_cell_config(/*serving_is_ntn=*/true, /*serving_sync_dur=*/30U);
   cell_cfg.ntn_cfg->cell_specific_koffset = std::chrono::milliseconds{25};
-  cell_cfg.ntn_cfg->k_mac                 = 2U;
+  cell_cfg.ntn_cfg->k_mac                 = std::chrono::milliseconds{2};
   cell_cfg.ntn_cfg->ta_report             = true;
 
   // Sat-switch config with koffset, k_mac, polarization and ta_report left unset.
@@ -486,7 +486,7 @@ TEST(sib19_sat_switch_test, fields_left_unset_in_sat_switch_config_are_broadcast
   const auto& sw_ntn_cfg = sib19.sat_switch_with_resync->ntn_cfg;
   EXPECT_EQ(sw_ntn_cfg.cell_specific_koffset, std::chrono::milliseconds{25})
       << "an absent koffset makes the UE assume 0, not the serving value the promotion inherits";
-  EXPECT_EQ(sw_ntn_cfg.k_mac, 2U);
+  EXPECT_EQ(sw_ntn_cfg.k_mac, std::chrono::milliseconds{2});
   EXPECT_EQ(sw_ntn_cfg.ta_report, true);
   EXPECT_FALSE(sw_ntn_cfg.polarization.has_value()) << "absent in both sat-switch and serving config stays absent";
 }
@@ -509,7 +509,7 @@ ntn_config make_full_ntn_config(bool use_orbital)
   cfg.epoch_time->subframe_number = 5;
   cfg.ntn_ul_sync_validity_dur    = 60U;
   cfg.cell_specific_koffset.emplace(std::chrono::milliseconds(260));
-  cfg.k_mac = 512U;
+  cfg.k_mac = std::chrono::milliseconds{512};
 
   cfg.ta_info.emplace();
   cfg.ta_info->ta_common               = 500.0;

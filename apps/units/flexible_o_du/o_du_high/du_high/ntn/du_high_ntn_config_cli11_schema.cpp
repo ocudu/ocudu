@@ -63,7 +63,12 @@ static void configure_cli11_ntn_neighbor_cell_args(CLI::App& app, du_high_unit_n
   add_option(app, "--ntn_ul_sync_validity_dur", ncell.ntn_ul_sync_validity_dur, "UL sync validity duration [s]")
       ->enum_values({5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 120, 180, 240, 900});
 
-  add_option(app, "--k_mac", ncell.k_mac, "K_mac offset")->range(1U, 512U);
+  add_option_function<unsigned>(
+      app,
+      "--k_mac",
+      [&ncell](unsigned value) { ncell.k_mac = std::chrono::milliseconds(value); },
+      "K_mac offset [ms]")
+      ->range(1U, 512U);
 
   static ntn_polarization_t polarization;
   CLI::App*                 pol_subcmd = add_subcommand(app, "polarization", "Polarization for this neighbor");
@@ -112,8 +117,11 @@ static void configure_cli11_sat_switch_with_resync(CLI::App& app, du_high_unit_s
       "Cell-specific k-offset after switch [ms]. If not set, the serving cell value is used")
       ->range(1U, 1023U);
 
-  add_option(
-      app, "--k_mac", sat_switch_config.k_mac, "K_mac offset after switch. If not set, the serving cell value is used")
+  add_option_function<unsigned>(
+      app,
+      "--k_mac",
+      [&sat_switch_config](unsigned value) { sat_switch_config.k_mac = std::chrono::milliseconds(value); },
+      "K_mac offset after switch [ms]. If not set, the serving cell value is used")
       ->range(1U, 512U);
 
   static ntn_polarization_t polarization;

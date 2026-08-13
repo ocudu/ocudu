@@ -26,7 +26,7 @@ struct du_high_unit_ntn_neighbor_cell_config {
   /// Per-neighbor NTN parameters.
   std::optional<std::chrono::milliseconds> cell_specific_koffset;
   std::optional<unsigned>                  ntn_ul_sync_validity_dur;
-  std::optional<unsigned>                  k_mac;
+  std::optional<std::chrono::milliseconds> k_mac;
   std::optional<ntn_polarization_t>        polarization;
   std::optional<bool>                      ta_report;
   std::optional<bool>                      use_state_vector;
@@ -47,7 +47,7 @@ struct du_high_unit_sat_switch_config {
   /// Target cell NTN parameters after switch.
   std::optional<unsigned>                  ntn_ul_sync_validity_dur;
   std::optional<std::chrono::milliseconds> cell_specific_koffset;
-  std::optional<unsigned>                  k_mac;
+  std::optional<std::chrono::milliseconds> k_mac;
   std::optional<ntn_polarization_t>        polarization;
   std::optional<bool>                      ta_report;
   std::optional<bool>                      use_state_vector;
@@ -81,8 +81,13 @@ struct du_high_unit_ntn_serving_cell_config {
   /// 15 kHz (i.e., 1 slot = 1 ms). To avoid ambiguity with other subcarrier spacings, this parameter is represented in
   /// the implementation as std::chrono::milliseconds.
   std::chrono::milliseconds cell_specific_koffset;
-  /// Scheduling offset provided by network if downlink and uplink frame timing are not aligned at gNB.
-  std::optional<unsigned> k_mac;
+  /// Scheduling offset provided by network if downlink and uplink frame timing are not aligned at gNB. The unit is
+  /// milliseconds.
+  ///
+  /// \note In the specifications, the k_mac field is expressed as a number of slots assuming a subcarrier spacing of
+  /// 15 kHz (i.e., 1 slot = 1 ms). To avoid ambiguity with other subcarrier spacings, this parameter is represented in
+  /// the implementation as std::chrono::milliseconds.
+  std::optional<std::chrono::milliseconds> k_mac;
   /// A validity duration configured by the network for assistance information which indicates the maximum time duration
   /// (from epochTime) during which the UE can apply assistance information without having acquired new assistance
   /// information. Values {5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 120, 180, 240, 900} seconds.

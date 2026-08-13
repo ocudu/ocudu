@@ -43,7 +43,7 @@ ntn_sib19_update_request make_ntn_request(const nr_cell_global_id_t& nr_cgi)
   sib19_info& sib19 = req.sib19;
   sib19.ntn_cfg.emplace();
   sib19.ntn_cfg->cell_specific_koffset.emplace(std::chrono::milliseconds(260));
-  sib19.ntn_cfg->k_mac     = 128u;
+  sib19.ntn_cfg->k_mac     = std::chrono::milliseconds{128};
   sib19.ntn_cfg->ta_report = true;
   sib19.ntn_cfg->epoch_time.emplace();
   sib19.ntn_cfg->epoch_time->sfn             = 0;
