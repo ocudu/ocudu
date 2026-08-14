@@ -35,9 +35,11 @@ struct logical_cell {
 
 /// Registry of the CU-CP's logical cells, keyed by NR Cell Identity.
 ///
-/// Declared cells are seeded from configuration at construction and exist before any DU connects. Cells
-/// reported by DUs that were not declared are added dynamically with default (unlocked, unbarred) intent,
-/// preserving the pre-logical-cell behaviour for undeclared deployments. Intent survives DU removal.
+/// Declared cells are seeded from configuration at construction and exist before any DU connects, and the
+/// declared set doubles as the activation whitelist: when it is non-empty, a reported cell outside it is
+/// added dynamically in locked state (not activated until explicitly unlocked). When no cells are declared,
+/// dynamic cells get default (unlocked, unbarred) intent, preserving the pre-logical-cell behaviour for
+/// undeclared deployments. Intent survives DU removal.
 class logical_cell_manager
 {
 public:
@@ -48,6 +50,9 @@ public:
   const logical_cell* find_cell(nr_cell_identity nci) const;
 
   /// \brief Realize a cell reported by a DU, creating a dynamic logical cell if it was not declared.
+  ///
+  /// The dynamic cell is created locked when any cells were declared in configuration (declared set =
+  /// activation whitelist), unlocked otherwise.
   /// \return The (created or updated) logical cell record.
   logical_cell& realize_cell(nr_cell_identity nci, cu_cp_du_index_t du_index);
 
@@ -56,6 +61,10 @@ public:
 
 private:
   std::map<nr_cell_identity, logical_cell> cells;
+
+  /// Whether any cells were declared in configuration. When true, the declared set acts as the activation
+  /// whitelist and undeclared reported cells are realized locked.
+  const bool any_cells_declared;
 
   ocudulog::basic_logger& logger;
 };

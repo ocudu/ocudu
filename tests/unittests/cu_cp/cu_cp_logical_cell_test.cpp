@@ -134,30 +134,53 @@ public:
   cu_cp_logical_cell_test() : cu_cp_logical_cell_test_base(cu_cp_test_env_params{}) {}
 };
 
-/// Fixture with cell B declared administratively locked in the CU-CP configuration.
+/// Fixture with both served cells declared in the CU-CP configuration, cell B administratively locked.
 class cu_cp_declared_locked_cell_test : public cu_cp_logical_cell_test_base, public ::testing::Test
 {
 public:
   cu_cp_declared_locked_cell_test() :
     cu_cp_logical_cell_test_base([]() {
       cu_cp_test_env_params env_params{};
-      env_params.logical_cells = {ocucp::cu_cp_logical_cell_config{
-          nr_cell_identity::create(gnb_id_t{411, 22}, 1).value(), /* admin_locked = */ true, /* barred = */ false}};
+      env_params.logical_cells = {
+          ocucp::cu_cp_logical_cell_config{
+              nr_cell_identity::create(gnb_id_t{411, 22}, 0).value(), /* admin_locked = */ false, /* barred = */ false},
+          ocucp::cu_cp_logical_cell_config{
+              nr_cell_identity::create(gnb_id_t{411, 22}, 1).value(), /* admin_locked = */ true, /* barred = */ false}};
       return env_params;
     }())
   {
   }
 };
 
-/// Fixture with cell A declared barred (but unlocked) in the CU-CP configuration.
+/// Fixture with both served cells declared in the CU-CP configuration, cell A barred (but unlocked).
 class cu_cp_declared_barred_cell_test : public cu_cp_logical_cell_test_base, public ::testing::Test
 {
 public:
   cu_cp_declared_barred_cell_test() :
     cu_cp_logical_cell_test_base([]() {
       cu_cp_test_env_params env_params{};
+      env_params.logical_cells = {
+          ocucp::cu_cp_logical_cell_config{
+              nr_cell_identity::create(gnb_id_t{411, 22}, 0).value(), /* admin_locked = */ false, /* barred = */ true},
+          ocucp::cu_cp_logical_cell_config{nr_cell_identity::create(gnb_id_t{411, 22}, 1).value(),
+                                           /* admin_locked = */ false,
+                                           /* barred = */ false}};
+      return env_params;
+    }())
+  {
+  }
+};
+
+/// Fixture with only cell A declared in the CU-CP configuration: the served cell B is undeclared, so the
+/// declared set acts as the activation whitelist for it.
+class cu_cp_partially_declared_cell_test : public cu_cp_logical_cell_test_base, public ::testing::Test
+{
+public:
+  cu_cp_partially_declared_cell_test() :
+    cu_cp_logical_cell_test_base([]() {
+      cu_cp_test_env_params env_params{};
       env_params.logical_cells = {ocucp::cu_cp_logical_cell_config{
-          nr_cell_identity::create(gnb_id_t{411, 22}, 0).value(), /* admin_locked = */ false, /* barred = */ true}};
+          nr_cell_identity::create(gnb_id_t{411, 22}, 0).value(), /* admin_locked = */ false, /* barred = */ false}};
       return env_params;
     }())
   {
@@ -414,6 +437,45 @@ TEST_F(cu_cp_logical_cell_test, when_locked_cell_is_barred_then_bar_follows_the_
               asn1::f1ap::cell_barred_opts::barred);
   }
   get_du(du_idx).push_ul_pdu(make_ack_for(bar_upd));
+
+  EXPECT_TRUE(wait_for_task_result(launcher).success);
+}
+
+TEST_F(cu_cp_partially_declared_cell_test, when_cells_declared_then_undeclared_reported_cell_is_not_activated)
+{
+  // With logical cells declared, the declared set is the activation whitelist: the undeclared cell B is
+  // realized locked and omitted from the F1 Setup Response's Cells to be Activated List.
+  unsigned du_idx = 0;
+  auto     resp   = connect_du_and_run_f1_setup(du_idx);
+  ASSERT_TRUE(resp.has_value());
+
+  std::vector<uint64_t> ncis = activated_ncis(*resp);
+  ASSERT_EQ(ncis.size(), 1U) << "an undeclared cell must not be activated when logical cells are declared";
+  EXPECT_EQ(ncis[0], cell_a_cgi.nci.value());
+}
+
+TEST_F(cu_cp_partially_declared_cell_test, when_undeclared_cell_is_unlocked_by_command_then_it_activates)
+{
+  // The undeclared cell comes up locked, not rejected: an explicit cell_unlock command activates it at
+  // runtime without a configuration change.
+  unsigned du_idx = 0;
+  auto     resp   = connect_du_and_run_f1_setup(du_idx);
+  ASSERT_TRUE(resp.has_value());
+  ASSERT_EQ(activated_ncis(*resp).size(), 1U);
+
+  cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
+
+  async_task<cu_cp_cell_command_response>         resp_task = cell_cmd.activate_cell(cell_b_cgi);
+  lazy_task_launcher<cu_cp_cell_command_response> launcher(resp_task);
+
+  f1ap_message activ_upd;
+  ASSERT_TRUE(pop_cu_cfg_upd(du_idx, activ_upd)) << "unlocking the undeclared cell did not emit an activation update";
+  const auto& upd_ies = activ_upd.pdu.init_msg().value.gnb_cu_cfg_upd();
+  ASSERT_TRUE(upd_ies->cells_to_be_activ_list_present);
+  ASSERT_EQ(upd_ies->cells_to_be_activ_list.size(), 1U);
+  ASSERT_EQ(upd_ies->cells_to_be_activ_list[0]->cells_to_be_activ_list_item().nr_cgi.nr_cell_id.to_number(),
+            cell_b_cgi.nci.value());
+  get_du(du_idx).push_ul_pdu(make_ack_for(activ_upd));
 
   EXPECT_TRUE(wait_for_task_result(launcher).success);
 }

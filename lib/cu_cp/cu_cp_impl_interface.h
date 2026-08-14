@@ -223,8 +223,9 @@ public:
 
   /// \brief Handle the cells reported by a DU in the F1 Setup procedure.
   ///
-  /// Realizes the corresponding logical cells (creating dynamic ones for undeclared NCIs) and decides, per
-  /// reported cell, whether the CU-CP activates it.
+  /// Realizes the corresponding logical cells and decides, per reported cell, whether the CU-CP activates
+  /// it. Undeclared NCIs get a dynamic logical cell: unlocked when no cells were declared in configuration,
+  /// locked otherwise (the declared set acts as the activation whitelist).
   /// \return One flag per reported cell, in order: true if the cell shall be included in the F1 Setup
   /// Response Cells to be Activated List, false if it shall stay dormant (admin-locked).
   virtual std::vector<bool> handle_du_cells_reported(cu_cp_du_index_t du_index, span<const du_reported_cell> cells) = 0;

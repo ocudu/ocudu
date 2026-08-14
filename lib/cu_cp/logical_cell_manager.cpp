@@ -8,7 +8,7 @@ using namespace ocudu;
 using namespace ocudu::ocucp;
 
 logical_cell_manager::logical_cell_manager(span<const cu_cp_logical_cell_config> declared_cells) :
-  logger(ocudulog::fetch_basic_logger("CU-CP"))
+  any_cells_declared(not declared_cells.empty()), logger(ocudulog::fetch_basic_logger("CU-CP"))
 {
   for (const cu_cp_logical_cell_config& cell_cfg : declared_cells) {
     logical_cell& cell = cells[cell_cfg.nci];
@@ -38,11 +38,21 @@ logical_cell& logical_cell_manager::realize_cell(nr_cell_identity nci, cu_cp_du_
 {
   auto it = cells.find(nci);
   if (it == cells.end()) {
-    // Cell was not declared in configuration: create a dynamic logical cell with default intent, so
-    // undeclared deployments keep the pre-logical-cell behaviour.
     it             = cells.emplace(nci, logical_cell{}).first;
     it->second.nci = nci;
-    logger.debug("Added dynamic logical cell nci={:#x}", nci.value());
+    if (any_cells_declared) {
+      // Cells were declared in configuration, so the declared set acts as the activation whitelist: a
+      // reported cell outside it comes up locked, staying deactivated until an explicit cell_unlock command
+      // or a configuration declaration.
+      it->second.admin_locked = true;
+      logger.warning("Cell nci={:#x} reported by a DU is not declared in the CU-CP configuration: keeping it "
+                     "locked (not activated)",
+                     nci.value());
+    } else {
+      // No cells declared in configuration: create a dynamic logical cell with default intent, so
+      // undeclared deployments keep the pre-logical-cell behaviour.
+      logger.debug("Added dynamic logical cell nci={:#x}", nci.value());
+    }
   }
 
   logical_cell& cell = it->second;
