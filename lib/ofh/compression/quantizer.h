@@ -15,10 +15,7 @@ class quantizer
 {
 public:
   /// Constructor receives width in bits of a resulting fixed point number.
-  explicit quantizer(unsigned bit_width_) :
-    bit_width(bit_width_), nbits_shift_sign(16U - bit_width), gain((1 << (bit_width - 1)) - 1.0f)
-  {
-  }
+  explicit quantizer(unsigned bit_width_) : bit_width(bit_width_), gain((1 << (bit_width - 1)) - 1.0f) {}
 
   /// \brief Quantizes a floating point value into 16-bit integer.
   ///
@@ -75,20 +72,6 @@ public:
   /// \return Resultant floating point value.
   float to_float(int p) const { return (p / gain); }
 
-  /// \brief Converts a sequence of fixed point values to complex floating point values.
-  ///
-  /// \param[out] z       Resultant complex floating point values.
-  /// \param[in] x        Sequence of 16-bit integer values.
-  /// \param[in] in_scale Scaling factor (expected to be bigger or equal to 1) applied to the input prior conversion.
-  ///
-  /// \remark The size of \c x must be twice the size of \c z as \x is comprised by the quantized pairs of real and
-  /// imaginary parts of complex values.
-  void to_float(span<cf_t> z, span<const int16_t> x, int16_t in_scale) const
-  {
-    float scale = gain / in_scale;
-    ocuduvec::convert(z, x, scale);
-  }
-
   /// \brief Converts a sequence of fixed point values to complex brain floating point values.
   ///
   /// \param[out] z       Resultant complex brain floating point values.
@@ -97,7 +80,7 @@ public:
   ///
   /// \remark The size of \c x must be twice the size of \c z as \x is comprised by the quantized pairs of real and
   /// imaginary parts of complex values.
-  void to_brain_float(span<cbf16_t> z, span<const int16_t> x, int16_t in_scale) const
+  void to_brain_float(span<cbf16_t> z, span<const int16_t> x, float in_scale) const
   {
     float scale = gain / in_scale;
     ocuduvec::convert(z, x, scale);
@@ -106,15 +89,18 @@ public:
   /// Sign extends the input value.
   int16_t sign_extend(int16_t value) const
   {
-    int16_t shifted = value << nbits_shift_sign;
-    return shifted >> nbits_shift_sign;
+    // Bit holding the sign of a \c bit_width-bit mantissa.
+    uint16_t sign = uint16_t{1} << (bit_width - 1U);
+    // Mask the input value to keep only \c bit_width number of bits.
+    uint16_t bits = static_cast<uint16_t>(value) & static_cast<uint16_t>((1U << bit_width) - 1U);
+    // Avoid the common shift-left/shift-right sign-extension trick because left-shifting into the sign bit of a
+    // signed type is undefined in C++17.
+    return static_cast<int16_t>(static_cast<int32_t>(bits ^ sign) - static_cast<int32_t>(sign));
   }
 
 private:
   /// Width of fixed point number in bits.
   const unsigned bit_width;
-  /// Shift for sign extention.
-  const unsigned nbits_shift_sign;
   /// Quantization gain.
   const float gain;
 };

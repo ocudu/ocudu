@@ -130,8 +130,7 @@ void iq_compression_bfp_avx2::decompress(span<cbf16_t>                iq_data,
     // Get view over compressed PRB bytes.
     span<const uint8_t> comp_prb_buffer(&compressed_data[c_prb_idx * comp_prb_size], comp_prb_size);
 
-    // Compute scaling factor, first byte contains the exponent.
-    uint8_t exponent = comp_prb_buffer[0];
+    uint8_t exponent = decode_bfp_exponent(comp_prb_buffer[0]);
     float   scaler   = 1 << exponent;
 
     // Get view over the bytes following the compression parameter.

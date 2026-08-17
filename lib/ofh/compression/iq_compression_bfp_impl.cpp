@@ -94,9 +94,9 @@ void iq_compression_bfp_impl::decompress_prb_generic(span<cbf16_t>       output,
   // Quantizer.
   quantizer q_out(Q_BIT_WIDTH);
 
-  // Compute scaling factor, first byte contains the exponent.
-  uint8_t exponent = comp_prb[0];
-  int16_t scaler   = 1 << exponent;
+  uint8_t exponent = decode_bfp_exponent(comp_prb[0]);
+  // A masked exponent reaches 15, so the shift result (up to 32768) does not fit int16_t.
+  int32_t scaler = 1 << exponent;
 
   comp_prb             = comp_prb.last(comp_prb.size() - sizeof(exponent));
   auto bit_buff_reader = bit_buffer_reader::from_bytes(comp_prb);
