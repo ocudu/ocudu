@@ -397,6 +397,51 @@ TEST(rx_buffer_pool, buffer_resize_false_retransmission)
   ASSERT_FALSE(pool->get_pool().reserve(slot, buffer_id0, nof_codeblocks - 1, false));
 }
 
+// Tests that stresses concurrent reservation and release.
+TEST(rx_buffer_pool, buffer_reserve_release_contention)
+{
+  static constexpr trx_buffer_identifier buffer_id(to_rnti(0x1234), 0);
+  static constexpr unsigned              nof_repetitions = 32;
+  static constexpr unsigned              nof_codeblocks  = 2;
+
+  rx_buffer_pool_config pool_config;
+  pool_config.max_codeblock_size   = 16;
+  pool_config.nof_buffers          = 1;
+  pool_config.nof_codeblocks       = nof_codeblocks + 1;
+  pool_config.expire_timeout_slots = 10;
+  pool_config.external_soft_bits   = false;
+
+  slot_point slot(0, 0);
+
+  std::unique_ptr<rx_buffer_pool_controller> pool = create_rx_buffer_pool(pool_config);
+  ASSERT_TRUE(pool);
+
+  // Reserve a buffer for each repetition and execute the decoding asynchronously.
+  std::vector<std::thread> threads;
+  threads.reserve(nof_repetitions);
+  for (unsigned i_rep = 0; i_rep != nof_repetitions; ++i_rep) {
+    // Reserve buffer from the main thread. Only the first reservation shall reset CRCs.
+    unique_rx_buffer buffer = pool->get_pool().reserve(slot, buffer_id, nof_codeblocks, i_rep == 0);
+
+    // Buffer reservation failure is acceptable.
+    if (!buffer) {
+      continue;
+    }
+
+    // Release buffer asynchronously.
+    unique_task task = [local_buffer = std::move(buffer)]() mutable {
+      // Release buffer.
+      local_buffer.release();
+    };
+
+    // Create asynchronous thread.
+    threads.emplace_back([local_task = std::move(task)] { local_task(); });
+  }
+
+  // Join threads.
+  std::for_each(threads.rbegin(), threads.rend(), [](std::thread& thread) { thread.join(); });
+}
+
 // Tests that the pool returns an invalid buffer upon a retransmission without a previous reservation.
 TEST(rx_buffer_pool, fresh_false_retransmission)
 {

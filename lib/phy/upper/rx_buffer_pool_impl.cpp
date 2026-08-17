@@ -53,25 +53,12 @@ rx_buffer_pool_impl::reserve(slot_point slot, trx_buffer_identifier id, unsigned
   // Get reference to the buffer.
   rx_buffer_impl& buffer = buffers[i_buffer];
 
-  // Make sure that the number codeblocks do not change for retransmissions.
-  if (!new_data && (nof_codeblocks != buffer.get_nof_codeblocks())) {
-    logger.warning(slot.sfn(),
-                   slot.slot_index(),
-                   "UL HARQ {}: failed to reserve buffer, number of codeblocks for retransmission do not match.",
-                   id);
-    return unique_rx_buffer();
-  }
-
   // Reserve codeblocks.
   rx_buffer_status status = buffer.reserve(nof_codeblocks, new_data);
 
   // Report warning and return invalid buffer if the reservation is not successful.
   if (status != rx_buffer_status::successful) {
-    logger.warning(slot.sfn(),
-                   slot.slot_index(),
-                   "UL HARQ {}: failed to reserve buffer, {}.",
-                   id,
-                   (status == rx_buffer_status::already_in_use) ? "HARQ already in use" : "exhausted CB pool");
+    logger.warning(slot.sfn(), slot.slot_index(), "UL HARQ {}: failed to reserve buffer, {}.", id, to_string(status));
     return unique_rx_buffer();
   }
 

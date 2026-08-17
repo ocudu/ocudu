@@ -18,7 +18,34 @@
 
 namespace ocudu {
 
-enum class rx_buffer_status : uint8_t { successful = 0, already_in_use, insufficient_cb };
+/// Receive buffer reservation status codes.
+enum class rx_buffer_status : uint8_t {
+  /// Status code for successful reservation.
+  successful = 0,
+  /// The buffer is already reserved and in a state that cannot be reserved.
+  already_in_use,
+  /// The buffer was available but codeblocks could not be allocated.
+  insufficient_cb,
+  /// The buffer reservation is marked as a retransmission with a different number of codeblocks.
+  retransmission_cb_mismatch,
+};
+
+/// Gets the receive buffer status code text string.
+constexpr const char* to_string(rx_buffer_status status)
+{
+  switch (status) {
+    case rx_buffer_status::successful:
+      return "successful";
+    case rx_buffer_status::already_in_use:
+      return "already_in_use";
+    case rx_buffer_status::insufficient_cb:
+      return "insufficient_cb";
+    case rx_buffer_status::retransmission_cb_mismatch:
+      return "retransmission_cb_mismatch";
+    default:
+      return "unknown";
+  }
+}
 
 /// Implements a receiver buffer interface.
 class rx_buffer_impl : public unique_rx_buffer::buffer_management
@@ -55,6 +82,7 @@ private:
 
     // Indicate the buffer is available by clearing the codeblocks identifiers.
     codeblock_ids.clear();
+    crc.clear();
   }
 
 public:
@@ -75,13 +103,11 @@ public:
   ///
   /// It optionally resets the CRCs and dynamically reallocates codeblocks.
   ///
-  /// The reservation fails if:
-  /// - The buffer is locked and the number of codeblocks change.
+  /// \see rx_buffer_status for the different reasons the reservation fails.
   ///
   /// \param nof_codeblocks Number of codeblocks to reserve.
   /// \param reset_crc      Set to true for reset the codeblock CRCs.
   /// \return The reservation status.
-  /// \remark An assertion is triggered if the number of codeblocks has changed without resetting CRCs.
   rx_buffer_status reserve(unsigned nof_codeblocks, bool reset_crc)
   {
     if (!state_machine.on_reserve(reset_crc)) {
@@ -90,7 +116,11 @@ public:
 
     // Early return if it is a not a new transmission.
     if (!reset_crc) {
-      ocudu_assert(nof_codeblocks == codeblock_ids.size(), "Unexpected number of codeblocks.");
+      // Ensure the number of codeblocks remains the same.
+      if (nof_codeblocks != codeblock_ids.size()) {
+        state_machine.on_unlock();
+        return rx_buffer_status::retransmission_cb_mismatch;
+      }
       return rx_buffer_status::successful;
     }
 
@@ -136,7 +166,7 @@ public:
   }
 
   // See interface for documentation.
-  unsigned get_nof_codeblocks() const override { return crc.size(); }
+  unsigned get_nof_codeblocks() const override { return codeblock_ids.size(); }
 
   // See interface for documentation.
   void reset_codeblocks_crc() override
