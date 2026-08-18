@@ -581,12 +581,12 @@ struct du_high_configured_grants {
   /// When \ref requested_bitrate is set, \c grant_size gets ignored.
   /// \remark The default of 120 bytes results in 10 PRBs at the default MCS 5, which fits within the default
   /// \ref max_nof_cell_cg_rbs.
-  units::bytes grant_size{120};
+  unsigned grant_size{120};
   /// Configured Grant requested bitrate. The CLI value is expressed in kBps, while this field stores it normalized in
   /// bytes per second.
   /// Setting this automatically makes \ref grant_size be ignored.
   /// \remark The periodicity doesn't change this bitrate, but it affects the auto-computed grant size per period.
-  std::optional<units::byterate> requested_bitrate;
+  std::optional<unsigned> requested_bitrate;
   /// MCS configured for the UE configured grant. Values: {1,...,27}.
   unsigned mcs = 5;
   /// Number of HARQ processes reserved for configured grant. Values: {1,...,16}.

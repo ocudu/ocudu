@@ -1075,9 +1075,11 @@ std::vector<odu::du_cell_config> ocudu::generate_du_cell_config(const du_high_un
       du_cg_params.max_nof_cell_cg_rbs = user_cg_cfg.max_nof_cell_cg_rbs;
       // The requested bitrate, when set, takes precedence over the grant size.
       if (user_cg_cfg.requested_bitrate.has_value()) {
-        du_cg_params.grant_size_or_bitrate = user_cg_cfg.requested_bitrate.value();
+        // The CLI requested bitrate is passed in kBps, while in the cg_builder_params the corresponding value is in
+        // bytes per seconds.
+        du_cg_params.grant_size_or_bitrate.emplace<units::byterate>(user_cg_cfg.requested_bitrate.value() * 1000U);
       } else {
-        du_cg_params.grant_size_or_bitrate = user_cg_cfg.grant_size;
+        du_cg_params.grant_size_or_bitrate.emplace<units::bytes>(user_cg_cfg.grant_size);
       }
       beta_offsets cg_b_offsets{};
       cg_b_offsets.beta_offset_ack_idx_1    = base_cell.pusch_cfg.beta_offset_ack_idx_1;
