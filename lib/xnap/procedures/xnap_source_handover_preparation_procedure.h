@@ -16,6 +16,7 @@ class xnap_source_handover_preparation_procedure
 {
 public:
   xnap_source_handover_preparation_procedure(const xnap_handover_request& request_,
+                                             xnap_ue_context&             ue_ctxt_,
                                              xnap_ue_context_list&        ue_ctxt_list_,
                                              xnap_message_notifier&       xnc_notifier_,
                                              xnap_cu_cp_notifier&         cu_cp_notifier_,
@@ -30,8 +31,12 @@ public:
   xnap_message_notifier&      xnc_notifier;
   xnap_cu_cp_notifier&        cu_cp_notifier;
 
-  unique_timer     txn_reloc_prep_timer;
-  xnap_ue_context* ue_ctxt = nullptr;
+  unique_timer                                                                                 txn_reloc_prep_timer;
+  protocol_transaction_event_source<asn1::xnap::ho_request_ack_s, asn1::xnap::ho_prep_fail_s>& xn_handover_outcome;
+  // Copies of the UE identifiers and logger. The XNAP UE context can be removed while this procedure is suspended, so
+  // the procedure must not hold references into it.
+  const xnap_ue_ids ue_ids;
+  xnap_ue_logger    logger;
 
   protocol_transaction_outcome_observer<asn1::xnap::ho_request_ack_s, asn1::xnap::ho_prep_fail_s> transaction_sink;
   byte_buffer                                                                                     rrc_ho_cmd_pdu;

@@ -18,7 +18,9 @@ struct xnap_ue_ids {
 };
 
 struct xnap_ue_context {
-  xnap_ue_ids    ue_ids;
+  xnap_ue_ids ue_ids;
+  // Keep the logger declared before the event sources. Destroying an event source cancels its pending transaction,
+  // which resumes the awaiting procedure from within the destructor, and that procedure logs the cancellation.
   xnap_ue_logger logger;
 
   /// XN Handover Request Ack/Handover Preparation Failure Event Source.

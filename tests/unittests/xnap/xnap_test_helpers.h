@@ -63,12 +63,25 @@ public:
 
   void set_xnap_handover_request_outcome(bool success) { ho_request_outcome = success; }
 
+  /// Suspends the RRC Handover Command handling until \ref complete_rrc_handover_command is called. Allows a test to
+  /// run other events while the XNAP procedure is suspended.
+  void defer_rrc_handover_command() { rrc_handover_command_gate.emplace(); }
+
+  void complete_rrc_handover_command()
+  {
+    ocudu_assert(rrc_handover_command_gate.has_value(), "RRC Handover Command handling was not deferred");
+    rrc_handover_command_gate->set();
+  }
+
   async_task<bool> on_new_rrc_handover_command(cu_cp_ue_index_t ue_index, byte_buffer command) override
   {
     logger.info("Received a new RRC Handover Command for UE index {}", ue_index);
     last_handover_command = std::move(command);
-    return launch_async([](coro_context<async_task<bool>>& ctx) mutable {
+    return launch_async([this](coro_context<async_task<bool>>& ctx) mutable {
       CORO_BEGIN(ctx);
+      if (rrc_handover_command_gate.has_value()) {
+        CORO_AWAIT(*rrc_handover_command_gate);
+      }
       CORO_RETURN(true);
     });
   }
@@ -208,6 +221,9 @@ public:
 private:
   bool                                ho_request_outcome = false;
   std::vector<cu_cp_served_cell_info> served_cells;
+
+  // Gate that holds the RRC Handover Command handling suspended, when set.
+  std::optional<manual_event_flag> rrc_handover_command_gate;
 
   ue_manager&             ue_mng;
   ocudulog::basic_logger& logger;

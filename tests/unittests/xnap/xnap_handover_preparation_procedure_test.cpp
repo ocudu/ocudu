@@ -202,6 +202,44 @@ TEST_F(xnap_handover_preparation_procedure_test, when_handover_request_ack_recei
   ASSERT_TRUE(t.get().success);
 }
 
+/// Test that the procedure survives the removal of the XNAP UE context while it awaits the RRC Handover Command. That
+/// suspension is not a XNAP transaction, so stopping XNAP does not resume the procedure and the UE context can be
+/// destroyed underneath it.
+TEST_F(xnap_handover_preparation_procedure_test,
+       when_ue_context_is_removed_while_awaiting_rrc_command_then_procedure_finishes)
+{
+  // Run XN setup.
+  run_xn_setup(xnap_peer_cfg);
+
+  // Create UE context.
+  cu_cp_ue_index_t ue_index = create_ue();
+
+  // Generate Security context for the UE.
+  security::security_context sec_ctxt = generate_security_context(ue_mng.find_ue(ue_index)->get_security_manager());
+  xnap_handover_request      request  = generate_handover_request(ue_index, sec_ctxt);
+
+  // Suspend the procedure while it awaits the RRC Handover Command.
+  cu_cp_notifier.defer_rrc_handover_command();
+
+  logger.info("Launch source XNAP handover preparation procedure");
+  async_task<xnap_handover_preparation_response>         t = xnap->handle_handover_request_required(request);
+  lazy_task_launcher<xnap_handover_preparation_response> t_launcher(t);
+
+  // Inject Handover Request Acknowledge, so the procedure proceeds to await the RRC Handover Command.
+  xnap_message ho_request_ack = ::generate_handover_request_ack(local_xnap_ue_id_t::min, peer_xnap_ue_id_t::min);
+  xnap->handle_message(ho_request_ack);
+
+  ASSERT_FALSE(t.ready());
+
+  // Remove the XNAP UE context while the procedure is suspended.
+  xnap->get_xnap_ue_context_removal_handler().remove_ue_context(ue_index);
+
+  // Let the procedure resume and report its outcome.
+  cu_cp_notifier.complete_rrc_handover_command();
+
+  ASSERT_TRUE(t.ready());
+}
+
 /// Test that the Handover Request reports this source's own DRB-to-QoS-flow mapping via the Data Forwarding and
 /// Offloading Info from source NG-RAN node IE (TS 38.423 Section 9.2.1.17), so the target can prefer the same DRB
 /// numbering during admission instead of allocating DRB IDs blind to the source's own configuration.

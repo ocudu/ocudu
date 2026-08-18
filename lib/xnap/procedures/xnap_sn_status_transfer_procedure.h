@@ -28,7 +28,9 @@ private:
 
   std::chrono::milliseconds                                            procedure_timeout;
   protocol_transaction_event_source<asn1::xnap::sn_status_transfer_s>& sn_status_transfer_outcome;
-  xnap_ue_logger&                                                      logger;
+  // Copy of the UE logger. The XNAP UE context can be removed while this procedure is suspended, so the procedure must
+  // not hold a reference into it.
+  xnap_ue_logger logger;
 
   cu_cp_ue_index_t      ue_index;
   cu_cp_status_transfer sn_status_transfer;

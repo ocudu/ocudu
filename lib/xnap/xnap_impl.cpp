@@ -379,8 +379,12 @@ xnap_impl::handle_handover_request_required(const xnap_handover_request& request
 
   ue_ctxt_list[request.ue_index].logger.log_debug("Starting HO source preparation");
 
-  return launch_async<xnap_source_handover_preparation_procedure>(
-      request, ue_ctxt_list, tx_notifier, cu_cp_notifier, timer_factory{timers, ctrl_exec});
+  return launch_async<xnap_source_handover_preparation_procedure>(request,
+                                                                  ue_ctxt_list[request.ue_index],
+                                                                  ue_ctxt_list,
+                                                                  tx_notifier,
+                                                                  cu_cp_notifier,
+                                                                  timer_factory{timers, ctrl_exec});
 }
 
 void xnap_impl::handle_cho_cancel_required(cu_cp_ue_index_t ue_index, const nr_cell_global_id_t& target_cgi)
