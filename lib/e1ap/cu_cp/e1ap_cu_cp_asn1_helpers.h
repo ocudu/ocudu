@@ -449,14 +449,8 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
 
         // Fill DRB data forwarding info response.
         if (asn1_drb_setup_item.drb_data_forwarding_info_resp_present) {
-          if (asn1_drb_setup_item.drb_data_forwarding_info_resp.ul_data_forwarding_present) {
-            drb_setup_item.drb_data_forwarding_info_resp.value().ul_data_forwarding =
-                asn1_to_up_transport_layer_info(asn1_drb_setup_item.drb_data_forwarding_info_resp.ul_data_forwarding);
-          }
-          if (asn1_drb_setup_item.drb_data_forwarding_info_resp.dl_data_forwarding_present) {
-            drb_setup_item.drb_data_forwarding_info_resp.value().dl_data_forwarding =
-                asn1_to_up_transport_layer_info(asn1_drb_setup_item.drb_data_forwarding_info_resp.dl_data_forwarding);
-          }
+          drb_setup_item.drb_data_forwarding_info_resp =
+              e1ap_asn1_to_data_forwarding_info(asn1_drb_setup_item.drb_data_forwarding_info_resp);
         }
 
         res_setup_item.drb_setup_list_ng_ran.emplace(drb_setup_item.drb_id, drb_setup_item);
@@ -479,21 +473,13 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
 
       // Fill PDU session data forwarding info response.
       if (asn1_res_setup_item.pdu_session_data_forwarding_info_resp_present) {
-        if (asn1_res_setup_item.pdu_session_data_forwarding_info_resp.ul_data_forwarding_present) {
-          res_setup_item.pdu_session_data_forwarding_info_resp.value().ul_data_forwarding =
-              asn1_to_up_transport_layer_info(
-                  asn1_res_setup_item.pdu_session_data_forwarding_info_resp.ul_data_forwarding);
-        }
-        if (asn1_res_setup_item.pdu_session_data_forwarding_info_resp.dl_data_forwarding_present) {
-          res_setup_item.pdu_session_data_forwarding_info_resp.value().dl_data_forwarding =
-              asn1_to_up_transport_layer_info(
-                  asn1_res_setup_item.pdu_session_data_forwarding_info_resp.dl_data_forwarding);
-        }
+        res_setup_item.pdu_session_data_forwarding_info_resp =
+            e1ap_asn1_to_data_forwarding_info(asn1_res_setup_item.pdu_session_data_forwarding_info_resp);
       }
 
       // Fill NG DL UP unchanged.
       if (asn1_res_setup_item.ng_dl_up_unchanged_present) {
-        res_setup_item.ng_dl_up_unchanged.value() =
+        res_setup_item.ng_dl_up_unchanged =
             e1ap_asn1_ng_dl_up_unchanged_to_bool(asn1_res_setup_item.ng_dl_up_unchanged);
       }
 
@@ -789,16 +775,8 @@ inline void fill_e1ap_bearer_context_modification_response(
 
             // Fill DRB data forwarding info response.
             if (asn1_drb_setup_item.drb_data_forwarding_info_resp_present) {
-              if (asn1_drb_setup_item.drb_data_forwarding_info_resp.ul_data_forwarding_present) {
-                drb_setup_item.drb_data_forwarding_info_resp.value().ul_data_forwarding =
-                    asn1_to_up_transport_layer_info(
-                        asn1_drb_setup_item.drb_data_forwarding_info_resp.ul_data_forwarding);
-              }
-              if (asn1_drb_setup_item.drb_data_forwarding_info_resp.dl_data_forwarding_present) {
-                drb_setup_item.drb_data_forwarding_info_resp.value().dl_data_forwarding =
-                    asn1_to_up_transport_layer_info(
-                        asn1_drb_setup_item.drb_data_forwarding_info_resp.dl_data_forwarding);
-              }
+              drb_setup_item.drb_data_forwarding_info_resp =
+                  e1ap_asn1_to_data_forwarding_info(asn1_drb_setup_item.drb_data_forwarding_info_resp);
             }
 
             res_mod_item.drb_setup_list_ng_ran.emplace(drb_setup_item.drb_id, drb_setup_item);
@@ -815,21 +793,14 @@ inline void fill_e1ap_bearer_context_modification_response(
 
           // Fill security result.
           if (asn1_res_mod_item.security_result_present) {
+            res_mod_item.security_result = security_result_t{};
             asn1_to_security_result(res_mod_item.security_result.value(), asn1_res_mod_item.security_result);
           }
 
           // Fill PDU session data forwarding info response.
           if (asn1_res_mod_item.pdu_session_data_forwarding_info_resp_present) {
-            if (asn1_res_mod_item.pdu_session_data_forwarding_info_resp.ul_data_forwarding_present) {
-              res_mod_item.pdu_session_data_forwarding_info_resp.value().ul_data_forwarding =
-                  asn1_to_up_transport_layer_info(
-                      asn1_res_mod_item.pdu_session_data_forwarding_info_resp.ul_data_forwarding);
-            }
-            if (asn1_res_mod_item.pdu_session_data_forwarding_info_resp.dl_data_forwarding_present) {
-              res_mod_item.pdu_session_data_forwarding_info_resp.value().dl_data_forwarding =
-                  asn1_to_up_transport_layer_info(
-                      asn1_res_mod_item.pdu_session_data_forwarding_info_resp.dl_data_forwarding);
-            }
+            res_mod_item.pdu_session_data_forwarding_info_resp =
+                e1ap_asn1_to_data_forwarding_info(asn1_res_mod_item.pdu_session_data_forwarding_info_resp);
           }
 
           res.pdu_session_resource_setup_list.emplace(res_mod_item.pdu_session_id, res_mod_item);
@@ -894,16 +865,8 @@ inline void fill_e1ap_bearer_context_modification_response(
 
             // Fill DRB data forwarding info response.
             if (asn1_drb_setup_item.drb_data_forwarding_info_resp_present) {
-              if (asn1_drb_setup_item.drb_data_forwarding_info_resp.ul_data_forwarding_present) {
-                drb_setup_item.drb_data_forwarding_info_resp.value().ul_data_forwarding =
-                    asn1_to_up_transport_layer_info(
-                        asn1_drb_setup_item.drb_data_forwarding_info_resp.ul_data_forwarding);
-              }
-              if (asn1_drb_setup_item.drb_data_forwarding_info_resp.dl_data_forwarding_present) {
-                drb_setup_item.drb_data_forwarding_info_resp.value().dl_data_forwarding =
-                    asn1_to_up_transport_layer_info(
-                        asn1_drb_setup_item.drb_data_forwarding_info_resp.dl_data_forwarding);
-              }
+              drb_setup_item.drb_data_forwarding_info_resp =
+                  e1ap_asn1_to_data_forwarding_info(asn1_drb_setup_item.drb_data_forwarding_info_resp);
             }
 
             res_mod_item.drb_setup_list_ng_ran.emplace(drb_setup_item.drb_id, drb_setup_item);
@@ -980,21 +943,14 @@ inline void fill_e1ap_bearer_context_modification_response(
 
           // Fill security result.
           if (asn1_res_mod_item.security_result_present) {
+            res_mod_item.security_result = security_result_t{};
             asn1_to_security_result(res_mod_item.security_result.value(), asn1_res_mod_item.security_result);
           }
 
           // Fill PDU session data forwarding info response.
           if (asn1_res_mod_item.pdu_session_data_forwarding_info_resp_present) {
-            if (asn1_res_mod_item.pdu_session_data_forwarding_info_resp.ul_data_forwarding_present) {
-              res_mod_item.pdu_session_data_forwarding_info_resp.value().ul_data_forwarding =
-                  asn1_to_up_transport_layer_info(
-                      asn1_res_mod_item.pdu_session_data_forwarding_info_resp.ul_data_forwarding);
-            }
-            if (asn1_res_mod_item.pdu_session_data_forwarding_info_resp.dl_data_forwarding_present) {
-              res_mod_item.pdu_session_data_forwarding_info_resp.value().dl_data_forwarding =
-                  asn1_to_up_transport_layer_info(
-                      asn1_res_mod_item.pdu_session_data_forwarding_info_resp.dl_data_forwarding);
-            }
+            res_mod_item.pdu_session_data_forwarding_info_resp =
+                e1ap_asn1_to_data_forwarding_info(asn1_res_mod_item.pdu_session_data_forwarding_info_resp);
           }
 
           res.pdu_session_resource_modified_list.emplace(res_mod_item.pdu_session_id, res_mod_item);

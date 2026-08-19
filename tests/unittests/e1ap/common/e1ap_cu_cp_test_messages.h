@@ -52,12 +52,14 @@ struct drb_test_params {
 
 /// \brief Generate a dummy Bearer Context Setup Response.
 /// \param[in] cu_cp_ue_e1ap_id The CU-CP UE E1AP ID.
+/// \param[in] with_data_forwarding_info Whether to include DL data forwarding endpoints for every PDU session and DRB.
 e1ap_message generate_bearer_context_setup_response(
     gnb_cu_cp_ue_e1ap_id_t                                          cu_cp_ue_e1ap_id,
     gnb_cu_up_ue_e1ap_id_t                                          cu_up_ue_e1ap_id,
     const std::map<pdu_session_id_t, std::vector<drb_test_params>>& pdu_sessions_to_add =
         {{uint_to_pdu_session_id(1), {{drb_id_t::drb1, uint_to_qos_flow_id(1)}}}},
-    const std::vector<pdu_session_id_t>& pdu_sessions_to_fail = {});
+    const std::vector<pdu_session_id_t>& pdu_sessions_to_fail      = {},
+    bool                                 with_data_forwarding_info = false);
 
 /// \brief Generate a dummy Bearer Context Setup Failure.
 /// \param[in] cu_cp_ue_e1ap_id The CU-CP UE E1AP ID.

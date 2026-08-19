@@ -93,6 +93,43 @@ TEST_F(e1ap_cu_cp_bearer_context_setup_test, when_response_received_then_procedu
   ASSERT_TRUE(was_bearer_context_setup_successful());
 }
 
+TEST_F(e1ap_cu_cp_bearer_context_setup_test, when_response_carries_data_forwarding_info_then_endpoints_are_reported)
+{
+  // Test Preamble.
+  auto request = generate_bearer_context_setup_request(uint_to_ue_index(test_rng::uniform_int<uint64_t>(
+      cu_cp_ue_index_to_uint(cu_cp_ue_index_t::min), cu_cp_ue_index_to_uint(cu_cp_ue_index_t::max))));
+
+  // Start BEARER CONTEXT SETUP procedure and return back a response carrying DL data forwarding endpoints.
+  this->start_procedure(request);
+
+  auto& ue            = test_ues[request.ue_index];
+  ue.cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(
+      test_rng::uniform_int<uint64_t>(gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::min),
+                                      gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::max)));
+  e1ap_message response =
+      generate_bearer_context_setup_response(ue.cu_cp_ue_e1ap_id.value(),
+                                             ue.cu_up_ue_e1ap_id.value(),
+                                             {{uint_to_pdu_session_id(1), {{drb_id_t::drb1, uint_to_qos_flow_id(1)}}}},
+                                             {},
+                                             true);
+  e1ap->handle_message(response);
+
+  ASSERT_TRUE(was_bearer_context_setup_successful());
+
+  // Both the PDU session level and the DRB level DL forwarding endpoints reached the CU-CP.
+  const auto& pdu_session = t.get().pdu_session_resource_setup_list[uint_to_pdu_session_id(1)];
+  ASSERT_TRUE(pdu_session.pdu_session_data_forwarding_info_resp.has_value());
+  ASSERT_TRUE(pdu_session.pdu_session_data_forwarding_info_resp->dl_data_forwarding.has_value());
+  ASSERT_FALSE(pdu_session.pdu_session_data_forwarding_info_resp->ul_data_forwarding.has_value());
+
+  const auto& drb = pdu_session.drb_setup_list_ng_ran[drb_id_t::drb1];
+  ASSERT_TRUE(drb.drb_data_forwarding_info_resp.has_value());
+  ASSERT_TRUE(drb.drb_data_forwarding_info_resp->dl_data_forwarding.has_value());
+  ASSERT_FALSE(drb.drb_data_forwarding_info_resp->ul_data_forwarding.has_value());
+  ASSERT_NE(drb.drb_data_forwarding_info_resp->dl_data_forwarding.value(),
+            pdu_session.pdu_session_data_forwarding_info_resp->dl_data_forwarding.value());
+}
+
 TEST_F(e1ap_cu_cp_bearer_context_setup_test, when_failure_received_then_procedure_unsuccessful)
 {
   // Test Preamble.

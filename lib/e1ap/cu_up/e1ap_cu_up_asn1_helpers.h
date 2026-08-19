@@ -243,18 +243,8 @@ inline bool fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_req
 
       // Fill PDU session data forwarding info request.
       if (asn1_pdu_session_res_item.pdu_session_data_forwarding_info_request_present) {
-        e1ap_data_forwarding_info_request data_forwarding_info_req = {};
-        data_forwarding_info_req.data_forwarding_request =
-            asn1_pdu_session_res_item.pdu_session_data_forwarding_info_request.data_forwarding_request.to_string();
-
-        for (const auto& asn1_qos_flows_forwarded_item :
-             asn1_pdu_session_res_item.pdu_session_data_forwarding_info_request.qos_flows_forwarded_on_fwd_tunnels) {
-          e1ap_qos_flow_map_item qos_flows_forwarded_item =
-              asn1_e1ap_to_qos_flow_map_item(asn1_qos_flows_forwarded_item);
-
-          data_forwarding_info_req.qos_flows_forwarded_on_fwd_tunnels.emplace(
-              uint_to_qos_flow_id(asn1_qos_flows_forwarded_item.qos_flow_id), qos_flows_forwarded_item);
-        }
+        pdu_session_res_item.pdu_session_data_forwarding_info_request = e1ap_asn1_to_data_forwarding_info_request(
+            asn1_pdu_session_res_item.pdu_session_data_forwarding_info_request);
       }
 
       // Fill PDU session inactivity timer.
@@ -322,18 +312,8 @@ inline void fill_asn1_bearer_context_setup_response(asn1::e1ap::sys_bearer_conte
     // Fill PDU Session Data Forwarding Info Response.
     if (res_setup_item.pdu_session_data_forwarding_info_resp.has_value()) {
       asn1_res_setup_item.pdu_session_data_forwarding_info_resp_present = true;
-      if (res_setup_item.pdu_session_data_forwarding_info_resp.value().ul_data_forwarding.has_value()) {
-        asn1_res_setup_item.pdu_session_data_forwarding_info_resp.ul_data_forwarding_present = true;
-        up_transport_layer_info_to_asn1(
-            asn1_res_setup_item.pdu_session_data_forwarding_info_resp.ul_data_forwarding,
-            res_setup_item.pdu_session_data_forwarding_info_resp.value().ul_data_forwarding.value());
-      }
-      if (res_setup_item.pdu_session_data_forwarding_info_resp.value().dl_data_forwarding.has_value()) {
-        asn1_res_setup_item.pdu_session_data_forwarding_info_resp.dl_data_forwarding_present = true;
-        up_transport_layer_info_to_asn1(
-            asn1_res_setup_item.pdu_session_data_forwarding_info_resp.dl_data_forwarding,
-            res_setup_item.pdu_session_data_forwarding_info_resp.value().dl_data_forwarding.value());
-      }
+      e1ap_data_forwarding_info_to_asn1(asn1_res_setup_item.pdu_session_data_forwarding_info_resp,
+                                        res_setup_item.pdu_session_data_forwarding_info_resp.value());
     }
 
     // Fill NG DL UP Unchanged.
@@ -458,21 +438,9 @@ inline bool fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
 
         // Fill PDU session data forwarding info request.
         if (asn1_res_to_setup_mod_item.pdu_session_data_forwarding_info_request_present) {
-          e1ap_data_forwarding_info_request pdu_session_data_forwarding_info_request;
-          pdu_session_data_forwarding_info_request.data_forwarding_request =
-              asn1_res_to_setup_mod_item.pdu_session_data_forwarding_info_request.data_forwarding_request.to_string();
-
-          for (const auto& asn1_qos_flows_forwarded_item :
-               asn1_res_to_setup_mod_item.pdu_session_data_forwarding_info_request.qos_flows_forwarded_on_fwd_tunnels) {
-            e1ap_qos_flow_map_item qos_flows_forwarded_item =
-                asn1_e1ap_to_qos_flow_map_item(asn1_qos_flows_forwarded_item);
-
-            pdu_session_data_forwarding_info_request.qos_flows_forwarded_on_fwd_tunnels.emplace(
-                uint_to_qos_flow_id(asn1_qos_flows_forwarded_item.qos_flow_id), qos_flows_forwarded_item);
-          }
-
           pdu_session_res_to_setup_mod_item.pdu_session_data_forwarding_info_request =
-              pdu_session_data_forwarding_info_request;
+              e1ap_asn1_to_data_forwarding_info_request(
+                  asn1_res_to_setup_mod_item.pdu_session_data_forwarding_info_request);
         }
 
         // Fill PDU session inactivity timer.
@@ -564,12 +532,8 @@ inline bool fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
           }
           // Fill DRB data forwarding info.
           if (asn1_drb_to_mod_item.drb_data_forwarding_info_present) {
-            e1ap_data_forwarding_info drb_data_forwarding_info;
-            drb_data_forwarding_info.ul_data_forwarding =
-                asn1_to_up_transport_layer_info(asn1_drb_to_mod_item.drb_data_forwarding_info.ul_data_forwarding);
-            drb_data_forwarding_info.dl_data_forwarding =
-                asn1_to_up_transport_layer_info(asn1_drb_to_mod_item.drb_data_forwarding_info.dl_data_forwarding);
-            drb_to_mod_item.drb_data_forwarding_info = drb_data_forwarding_info;
+            drb_to_mod_item.drb_data_forwarding_info =
+                e1ap_asn1_to_data_forwarding_info(asn1_drb_to_mod_item.drb_data_forwarding_info);
           }
           // Fill PDCP SN status request.
           if (asn1_drb_to_mod_item.pdcp_sn_status_request_present) {
@@ -713,18 +677,8 @@ inline void fill_asn1_bearer_context_modification_response(asn1::e1ap::sys_beare
       // Fill PDU session data forwarding info response.
       if (res_setup_mod_item.pdu_session_data_forwarding_info_resp.has_value()) {
         asn1_res_setup_mod_item.pdu_session_data_forwarding_info_resp_present = true;
-        if (res_setup_mod_item.pdu_session_data_forwarding_info_resp.value().ul_data_forwarding.has_value()) {
-          asn1_res_setup_mod_item.pdu_session_data_forwarding_info_resp.ul_data_forwarding_present = true;
-          up_transport_layer_info_to_asn1(
-              asn1_res_setup_mod_item.pdu_session_data_forwarding_info_resp.ul_data_forwarding,
-              res_setup_mod_item.pdu_session_data_forwarding_info_resp.value().ul_data_forwarding.value());
-        }
-        if (res_setup_mod_item.pdu_session_data_forwarding_info_resp.value().dl_data_forwarding.has_value()) {
-          asn1_res_setup_mod_item.pdu_session_data_forwarding_info_resp.dl_data_forwarding_present = true;
-          up_transport_layer_info_to_asn1(
-              asn1_res_setup_mod_item.pdu_session_data_forwarding_info_resp.dl_data_forwarding,
-              res_setup_mod_item.pdu_session_data_forwarding_info_resp.value().dl_data_forwarding.value());
-        }
+        e1ap_data_forwarding_info_to_asn1(asn1_res_setup_mod_item.pdu_session_data_forwarding_info_resp,
+                                          res_setup_mod_item.pdu_session_data_forwarding_info_resp.value());
       }
 
       // Fill DRB setup mod list NG-RAN.
@@ -778,18 +732,8 @@ inline void fill_asn1_bearer_context_modification_response(asn1::e1ap::sys_beare
       // Fill PDU session data forwarding info response.
       if (res_modified_item.pdu_session_data_forwarding_info_resp.has_value()) {
         asn1_res_modified_item.pdu_session_data_forwarding_info_resp_present = true;
-        if (res_modified_item.pdu_session_data_forwarding_info_resp.value().ul_data_forwarding.has_value()) {
-          asn1_res_modified_item.pdu_session_data_forwarding_info_resp.ul_data_forwarding_present = true;
-          up_transport_layer_info_to_asn1(
-              asn1_res_modified_item.pdu_session_data_forwarding_info_resp.ul_data_forwarding,
-              res_modified_item.pdu_session_data_forwarding_info_resp.value().ul_data_forwarding.value());
-        }
-        if (res_modified_item.pdu_session_data_forwarding_info_resp.value().dl_data_forwarding.has_value()) {
-          asn1_res_modified_item.pdu_session_data_forwarding_info_resp.dl_data_forwarding_present = true;
-          up_transport_layer_info_to_asn1(
-              asn1_res_modified_item.pdu_session_data_forwarding_info_resp.dl_data_forwarding,
-              res_modified_item.pdu_session_data_forwarding_info_resp.value().dl_data_forwarding.value());
-        }
+        e1ap_data_forwarding_info_to_asn1(asn1_res_modified_item.pdu_session_data_forwarding_info_resp,
+                                          res_modified_item.pdu_session_data_forwarding_info_resp.value());
       }
 
       // Fill DRB setup list NG-RAN.

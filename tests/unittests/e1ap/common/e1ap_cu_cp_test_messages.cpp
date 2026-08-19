@@ -164,7 +164,8 @@ e1ap_message ocudu::ocucp::generate_bearer_context_setup_response(
     gnb_cu_cp_ue_e1ap_id_t                                          cu_cp_ue_e1ap_id,
     gnb_cu_up_ue_e1ap_id_t                                          cu_up_ue_e1ap_id,
     const std::map<pdu_session_id_t, std::vector<drb_test_params>>& pdu_sessions_to_add,
-    const std::vector<pdu_session_id_t>&                            pdu_sessions_to_fail)
+    const std::vector<pdu_session_id_t>&                            pdu_sessions_to_fail,
+    bool                                                            with_data_forwarding_info)
 {
   e1ap_message bearer_context_setup_response = {};
 
@@ -209,8 +210,26 @@ e1ap_message ocudu::ocucp::generate_bearer_context_setup_response(
           qo_s_flow_item.qos_flow_id = qos_flow_id_to_uint(drb_param.qos_flow_id);
         }
         drb_setup_item_ng_ran.flow_setup_list.push_back(qo_s_flow_item);
+
+        if (with_data_forwarding_info) {
+          drb_setup_item_ng_ran.drb_data_forwarding_info_resp_present                    = true;
+          drb_setup_item_ng_ran.drb_data_forwarding_info_resp.dl_data_forwarding_present = true;
+          auto& drb_fwd_tunnel =
+              drb_setup_item_ng_ran.drb_data_forwarding_info_resp.dl_data_forwarding.set_gtp_tunnel();
+          drb_fwd_tunnel.transport_layer_address.from_number(2887058953);
+          drb_fwd_tunnel.gtp_teid.from_string("40000283");
+        }
       }
       pdu_session_res_setup_item.drb_setup_list_ng_ran.push_back(drb_setup_item_ng_ran);
+    }
+
+    if (with_data_forwarding_info) {
+      pdu_session_res_setup_item.pdu_session_data_forwarding_info_resp_present                    = true;
+      pdu_session_res_setup_item.pdu_session_data_forwarding_info_resp.dl_data_forwarding_present = true;
+      auto& ps_fwd_tunnel =
+          pdu_session_res_setup_item.pdu_session_data_forwarding_info_resp.dl_data_forwarding.set_gtp_tunnel();
+      ps_fwd_tunnel.transport_layer_address.from_number(2887058953);
+      ps_fwd_tunnel.gtp_teid.from_string("20000283");
     }
 
     ng_ran_bearer_context_setup_resp.pdu_session_res_setup_list.push_back(pdu_session_res_setup_item);
