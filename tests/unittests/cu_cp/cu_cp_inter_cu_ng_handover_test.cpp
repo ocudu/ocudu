@@ -57,7 +57,7 @@ public:
   }
 
   [[nodiscard]] bool
-  send_handover_request_and_await_bearer_context_setup_request(bool include_drb_to_qos_flow_mapping = true)
+  send_handover_request_and_await_bearer_context_setup_request(const handover_request_params& ho_params = {})
   {
     report_fatal_error_if_not(not this->get_amf().try_pop_rx_pdu(ngap_pdu),
                               "there are still NGAP messages to pop from AMF");
@@ -67,7 +67,7 @@ public:
                               "there are still E1AP messages to pop from CU-UP");
 
     // Inject Handover Request and wait for Bearer Context Setup Request.
-    get_amf().push_tx_pdu(generate_valid_handover_request(amf_ue_id, include_drb_to_qos_flow_mapping));
+    get_amf().push_tx_pdu(generate_valid_handover_request(amf_ue_id, ho_params));
     report_fatal_error_if_not(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu),
                               "Failed to receive Bearer Context Setup Request");
     report_fatal_error_if_not(test_helpers::is_valid_bearer_context_setup_request(e1ap_pdu),
@@ -723,7 +723,9 @@ TEST_F(cu_cp_inter_cu_ng_handover_test,
 TEST_F(cu_cp_inter_cu_ng_handover_test, when_dl_ran_status_transfer_reports_an_unconfirmed_drb_id_then_it_is_ignored)
 {
   // Inject Handover Request (without the source's DRB-to-QoS-flow mapping) and await Bearer Context Setup Request.
-  ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request(/*include_drb_to_qos_flow_mapping=*/false));
+  handover_request_params ho_params;
+  ho_params.include_drb_to_qos_flow_mapping = false;
+  ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request(ho_params));
 
   // Inject Bearer Context Setup Response and await UE Context Setup Request.
   ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_setup_request());

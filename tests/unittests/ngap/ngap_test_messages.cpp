@@ -963,7 +963,7 @@ ocudu::ocucp::generate_error_indication_message(amf_ue_id_t amf_ue_id, ran_ue_id
   return ngap_msg;
 }
 
-ngap_message ocudu::ocucp::generate_valid_handover_request(amf_ue_id_t amf_ue_id, bool include_drb_to_qos_flow_mapping)
+ngap_message ocudu::ocucp::generate_valid_handover_request(amf_ue_id_t amf_ue_id, const handover_request_params& params)
 {
   ngap_message ngap_msg;
 
@@ -999,6 +999,18 @@ ngap_message ocudu::ocucp::generate_valid_handover_request(amf_ue_id_t amf_ue_id
       make_byte_buffer(
           "0000050082000a0c400000003040000000008b000a01f00a32130200001b13007f00010000860001000088000700010000091c00")
           .value();
+  {
+    // The Data Forwarding Not Possible IE decides whether the target may set up forwarding tunnels for the PDU session,
+    // so set it explicitly rather than inheriting whatever the transfer above happens to carry.
+    asn1::ngap::pdu_session_res_setup_request_transfer_s transfer;
+    asn1::cbit_ref transfer_bref({setup_item.ho_request_transfer.begin(), setup_item.ho_request_transfer.end()});
+    report_error_if_not(transfer.unpack(transfer_bref) == asn1::OCUDUASN_SUCCESS,
+                        "Failed to unpack Handover Request Transfer");
+    transfer->data_forwarding_not_possible_present = params.data_forwarding_not_possible;
+    transfer->data_forwarding_not_possible =
+        asn1::ngap::data_forwarding_not_possible_opts::data_forwarding_not_possible;
+    setup_item.ho_request_transfer = pack_into_pdu(transfer);
+  }
   ho_request->pdu_session_res_setup_list_ho_req.push_back(setup_item);
   // Fill allowed S-NSSAI.
   asn1::ngap::allowed_nssai_item_s allowed_nssai;
@@ -1019,14 +1031,18 @@ ngap_message ocudu::ocucp::generate_valid_handover_request(amf_ue_id_t amf_ue_id
   asn1::ngap::pdu_session_res_info_item_s session_item;
   session_item.pdu_session_id = 1;
   asn1::ngap::qos_flow_info_item_s flow_item;
-  flow_item.qos_flow_id = 0;
+  flow_item.qos_flow_id = 1;
+  if (params.propose_dl_data_forwarding) {
+    flow_item.dl_forwarding_present = true;
+    flow_item.dl_forwarding         = asn1::ngap::dl_forwarding_opts::dl_forwarding_proposed;
+  }
   session_item.qos_flow_info_list.push_back(flow_item);
-  if (include_drb_to_qos_flow_mapping) {
-    // Report this source's own DRB-to-QoS-flow mapping (DRB1 <-> QFI0, matching the admitted PDU session).
+  if (params.include_drb_to_qos_flow_mapping) {
+    // Report this source's own DRB-to-QoS-flow mapping (DRB1 <-> QFI1, matching the admitted PDU session).
     asn1::ngap::drbs_to_qos_flows_map_item_s drb_to_qos_flow_map_item;
     drb_to_qos_flow_map_item.drb_id = 1;
     asn1::ngap::associated_qos_flow_item_s assoc_qos_flow;
-    assoc_qos_flow.qos_flow_id = 0;
+    assoc_qos_flow.qos_flow_id = 1;
     drb_to_qos_flow_map_item.associated_qos_flow_list.push_back(assoc_qos_flow);
     session_item.drbs_to_qos_flows_map_list.push_back(drb_to_qos_flow_map_item);
   }
