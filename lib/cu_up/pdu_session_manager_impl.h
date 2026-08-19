@@ -89,6 +89,13 @@ private:
   drb_setup_result handle_drb_to_setup_item(pdu_session&                         new_session,
                                             const e1ap_drb_to_setup_item_ng_ran& drb_to_setup);
 
+  /// \brief Allocate the local endpoint of a DL data forwarding tunnel on the NG-U interface.
+  ///
+  /// The endpoint is reported to the gNB-CU-CP so that it can be advertised to the source NG-RAN node, which sends the
+  /// data it still holds for the UE to it (TS 37.483 section 9.3.2.6). It shares the NG-U bind address of the PDU
+  /// session, so that the forwarded and the freshly arriving DL packets reach the same gateway.
+  std::optional<up_transport_layer_info> allocate_dl_data_forwarding_tnl_info(const std::string& n3_addr);
+
   cu_up_ue_index_t                                         ue_index;
   const std::map<five_qi_t, ocuup::cu_up_qos_config>       qos_cfg;
   security::sec_as_config                                  security_info;

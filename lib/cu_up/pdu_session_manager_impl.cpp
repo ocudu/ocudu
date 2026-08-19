@@ -17,6 +17,9 @@
 using namespace ocudu;
 using namespace ocuup;
 
+/// Returns true if the given data forwarding request covers the downlink direction.
+static bool requests_dl_data_forwarding(const std::optional<e1ap_data_forwarding_info_request>& request);
+
 pdu_session_manager_impl::pdu_session_manager_impl(cu_up_ue_index_t                             ue_index_,
                                                    std::map<five_qi_t, ocuup::cu_up_qos_config> qos_cfg_,
                                                    const security::sec_as_config&               security_info_,
@@ -136,6 +139,18 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   }
   new_session->dispatch_queue = std::move(expected_dispatch_queue.value());
 
+  // Allocate the PDU session level DL data forwarding tunnel endpoint.
+  if (requests_dl_data_forwarding(session.pdu_session_data_forwarding_info_request)) {
+    new_session->dl_data_forwarding_tnl_info = allocate_dl_data_forwarding_tnl_info(n3_addr);
+    if (new_session->dl_data_forwarding_tnl_info.has_value()) {
+      pdu_session_result.data_forwarding_info.emplace();
+      pdu_session_result.data_forwarding_info->dl_data_forwarding = new_session->dl_data_forwarding_tnl_info;
+      logger.log_info("Allocated DL data forwarding tunnel for {}. tnl_info={}",
+                      session.pdu_session_id,
+                      new_session->dl_data_forwarding_tnl_info.value());
+    }
+  }
+
   // Handle DRB setup
   for (const e1ap_drb_to_setup_item_ng_ran& drb_to_setup : session.drb_to_setup_list_ng_ran) {
     drb_setup_result drb_result = handle_drb_to_setup_item(*new_session, drb_to_setup);
@@ -167,6 +182,18 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   pdu_sessions.emplace(session.pdu_session_id, std::move(new_session));
   pdu_session_result.success = true;
   return pdu_session_result;
+}
+
+std::optional<up_transport_layer_info>
+pdu_session_manager_impl::allocate_dl_data_forwarding_tnl_info(const std::string& n3_addr)
+{
+  expected<gtpu_teid_t> teid = n3_teid_allocator.request_teid();
+  if (not teid.has_value()) {
+    logger.log_warning("Could not allocate a TEID for the DL data forwarding tunnel");
+    return std::nullopt;
+  }
+
+  return up_transport_layer_info(transport_layer_address::create_from_string(n3_addr), teid.value());
 }
 
 drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&                         new_session,
@@ -842,4 +869,10 @@ pdu_session_state_t pdu_session_manager_impl::get_pdu_session_state()
     st.insert({psi, drb_st});
   }
   return st;
+}
+
+static bool requests_dl_data_forwarding(const std::optional<e1ap_data_forwarding_info_request>& request)
+{
+  return request.has_value() and (request->data_forwarding_request == e1ap_data_forwarding_request::dl or
+                                  request->data_forwarding_request == e1ap_data_forwarding_request::both);
 }

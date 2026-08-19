@@ -17,6 +17,7 @@
 #include "ocudu/gtpu/gtpu_gateway.h"
 #include "ocudu/gtpu/gtpu_teid_pool.h"
 #include "ocudu/gtpu/gtpu_tunnel_common_tx.h"
+#include <array>
 #include <chrono>
 #include <condition_variable>
 #include <list>
@@ -119,7 +120,11 @@ public:
     return teid;
   }
 
-  [[nodiscard]] bool release_teid(gtpu_teid_t teid) override { return true; }
+  [[nodiscard]] bool release_teid(gtpu_teid_t teid) override
+  {
+    released_teids.push_back(teid);
+    return true;
+  }
 
   bool is_teid_lingering(gtpu_teid_t teid) override { return true; }
 
@@ -127,7 +132,13 @@ public:
 
   uint32_t get_max_nof_teids() override { return UINT32_MAX; }
 
-  uint32_t next_teid = 1;
+  bool was_teid_released(gtpu_teid_t teid) const
+  {
+    return std::find(released_teids.begin(), released_teids.end(), teid) != released_teids.end();
+  }
+
+  uint32_t                 next_teid = 1;
+  std::vector<gtpu_teid_t> released_teids;
 };
 
 /// Dummy adapter between GTP-U and Network Gateway
@@ -301,10 +312,18 @@ private:
 class dummy_ngu_session_manager final : public ocuup::ngu_session_manager
 {
 public:
-  gtpu_tnl_pdu_session& get_next_ngu_gateway() override { return ngu_gw; }
+  dummy_ngu_session_manager()
+  {
+    ngu_gws[0].set_bind_address("127.0.0.2");
+    ngu_gws[1].set_bind_address("127.0.0.3");
+  }
+
+  // Hands out the gateways in round-robin order, like ngu_session_manager_impl does.
+  gtpu_tnl_pdu_session& get_next_ngu_gateway() override { return ngu_gws[next_gw++ % ngu_gws.size()]; }
 
 private:
-  dummy_gtpu_gateway ngu_gw;
+  std::array<dummy_gtpu_gateway, 2> ngu_gws;
+  unsigned                          next_gw = 0;
 };
 
 class dummy_cu_up_manager_pdcp_interface final : public ocuup::cu_up_manager_pdcp_interface

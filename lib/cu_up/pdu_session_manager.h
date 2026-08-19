@@ -48,6 +48,8 @@ struct pdu_session_setup_result {
   up_transport_layer_info          gtp_tunnel;
   std::optional<security_result_t> security_result;
   std::vector<drb_setup_result>    drb_setup_results;
+  /// Local endpoints of the PDU session level data forwarding tunnels, if the gNB-CU-CP requested them.
+  std::optional<e1ap_data_forwarding_info> data_forwarding_info;
 };
 
 // Final result when modifying a PDU session with all DRBs and QoS flow results.

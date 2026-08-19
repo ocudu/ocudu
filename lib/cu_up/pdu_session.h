@@ -40,6 +40,10 @@ struct pdu_session {
       gtpu_rx_demux.remove_tunnel(local_teid);
       (void)n3_teid_allocator.release_teid(local_teid);
 
+      if (dl_data_forwarding_tnl_info.has_value()) {
+        (void)n3_teid_allocator.release_teid(dl_data_forwarding_tnl_info->gtp_teid);
+      }
+
       if (dispatch_queue != nullptr) {
         dispatch_queue->stop();
       }
@@ -72,6 +76,10 @@ struct pdu_session {
   security_indication_t   security_ind;
   gtpu_teid_t             local_teid;     // the local teid used by the gNB for this PDU session
   up_transport_layer_info ul_tunnel_info; // the peer GTP-U address and TEID
+
+  /// Local endpoint of the PDU session level DL data forwarding tunnel, allocated when the gNB-CU-CP requests PDU
+  /// session level data forwarding (TS 37.483 section 9.3.2.5).
+  std::optional<up_transport_layer_info> dl_data_forwarding_tnl_info;
 
   // GTP-U demux parameters
   gtpu_demux_ctrl&                           gtpu_rx_demux;     // The demux entity to register/remove the tunnel.

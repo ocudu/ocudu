@@ -48,6 +48,59 @@ TEST_F(pdu_session_manager_test, when_valid_pdu_session_setup_item_session_can_b
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
 }
 
+TEST_F(pdu_session_manager_test, when_dl_data_forwarding_is_requested_then_tunnel_endpoints_are_reported)
+{
+  pdu_session_id_t psi    = uint_to_pdu_session_id(1);
+  drb_id_t         drb_id = uint_to_drb_id(1);
+  qos_flow_id_t    qfi    = uint_to_qos_flow_id(8);
+
+  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item =
+      generate_pdu_session_res_to_setup_item(psi, drb_id, qfi, uint_to_five_qi(9));
+
+  // Request DL data forwarding for the PDU session.
+  e1ap_data_forwarding_info_request forwarding_request;
+  forwarding_request.data_forwarding_request                      = e1ap_data_forwarding_request::dl;
+  pdu_session_setup_item.pdu_session_data_forwarding_info_request = forwarding_request;
+
+  pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
+
+  ASSERT_TRUE(setup_result.success);
+
+  // The PDU session got a DL forwarding endpoint and reports no UL endpoint.
+  ASSERT_TRUE(setup_result.data_forwarding_info.has_value());
+  ASSERT_TRUE(setup_result.data_forwarding_info->dl_data_forwarding.has_value());
+  ASSERT_FALSE(setup_result.data_forwarding_info->ul_data_forwarding.has_value());
+
+  // The forwarding endpoint shares the NG-U bind address of the PDU session, so that the forwarded and the freshly
+  // arriving DL packets reach the same gateway, and differs from it only in the TEID.
+  const up_transport_layer_info session_fwd = setup_result.data_forwarding_info->dl_data_forwarding.value();
+  ASSERT_EQ(session_fwd.tp_address, setup_result.gtp_tunnel.tp_address);
+  ASSERT_NE(session_fwd.gtp_teid, setup_result.gtp_tunnel.gtp_teid);
+
+  // Removing the session releases the forwarding TEID back to the NG-U pool.
+  ASSERT_FALSE(n3_allocator->was_teid_released(session_fwd.gtp_teid));
+
+  pdu_session_mng->remove_pdu_session(psi);
+  ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
+
+  ASSERT_TRUE(n3_allocator->was_teid_released(session_fwd.gtp_teid));
+}
+
+TEST_F(pdu_session_manager_test, when_dl_data_forwarding_is_not_requested_then_no_tunnel_endpoints_are_reported)
+{
+  pdu_session_id_t psi    = uint_to_pdu_session_id(1);
+  drb_id_t         drb_id = uint_to_drb_id(1);
+  qos_flow_id_t    qfi    = uint_to_qos_flow_id(8);
+
+  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item =
+      generate_pdu_session_res_to_setup_item(psi, drb_id, qfi, uint_to_five_qi(9));
+
+  pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
+
+  ASSERT_TRUE(setup_result.success);
+  ASSERT_FALSE(setup_result.data_forwarding_info.has_value());
+}
+
 TEST_F(pdu_session_manager_test, when_pdu_session_with_same_id_is_setup_session_cant_be_added)
 {
   // no sessions added yet
