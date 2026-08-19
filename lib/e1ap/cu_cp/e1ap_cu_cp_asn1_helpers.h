@@ -190,21 +190,8 @@ inline void fill_asn1_drb_to_setup_item(asn1::e1ap::drb_to_setup_item_ng_ran_s& 
   // Fill DRB data forwarding info request.
   if (drb_to_setup_item.drb_data_forwarding_info_request.has_value()) {
     asn1_drb_to_setup_item.drb_data_forwarding_info_request_present = true;
-    asn1::string_to_enum(asn1_drb_to_setup_item.drb_data_forwarding_info_request.data_forwarding_request,
-                         drb_to_setup_item.drb_data_forwarding_info_request.value().data_forwarding_request);
-    for (const auto& qos_flow_map_item :
-         drb_to_setup_item.drb_data_forwarding_info_request.value().qos_flows_forwarded_on_fwd_tunnels) {
-      asn1::e1ap::qos_flow_map_item_s asn1_qos_flow_map_item;
-      asn1_qos_flow_map_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_map_item.qos_flow_id);
-      if (qos_flow_map_item.qos_flow_map_ind.has_value()) {
-        asn1_qos_flow_map_item.qos_flow_map_ind_present = true;
-        asn1_qos_flow_map_item.qos_flow_map_ind =
-            static_cast<asn1::e1ap::qos_flow_map_ind_opts::options>((int)qos_flow_map_item.qos_flow_map_ind.value());
-      }
-
-      asn1_drb_to_setup_item.drb_data_forwarding_info_request.qos_flows_forwarded_on_fwd_tunnels.push_back(
-          asn1_qos_flow_map_item);
-    }
+    e1ap_data_forwarding_info_request_to_asn1(asn1_drb_to_setup_item.drb_data_forwarding_info_request,
+                                              drb_to_setup_item.drb_data_forwarding_info_request.value());
   }
 
   // Fill DRB inactivity timer.
@@ -316,23 +303,8 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
     // Fill PDU session data forwarding info request.
     if (pdu_session_res_item.pdu_session_data_forwarding_info_request.has_value()) {
       asn1_pdu_session_res_item.pdu_session_data_forwarding_info_request_present = true;
-
-      asn1::string_to_enum(
-          asn1_pdu_session_res_item.pdu_session_data_forwarding_info_request.data_forwarding_request,
-          pdu_session_res_item.pdu_session_data_forwarding_info_request.value().data_forwarding_request);
-      for (const auto& qos_flow_map_item :
-           pdu_session_res_item.pdu_session_data_forwarding_info_request.value().qos_flows_forwarded_on_fwd_tunnels) {
-        asn1::e1ap::qos_flow_map_item_s asn1_qos_flow_map_item;
-        asn1_qos_flow_map_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_map_item.qos_flow_id);
-        if (qos_flow_map_item.qos_flow_map_ind.has_value()) {
-          asn1_qos_flow_map_item.qos_flow_map_ind_present = true;
-          asn1_qos_flow_map_item.qos_flow_map_ind =
-              static_cast<asn1::e1ap::qos_flow_map_ind_opts::options>((int)qos_flow_map_item.qos_flow_map_ind.value());
-        }
-
-        asn1_pdu_session_res_item.pdu_session_data_forwarding_info_request.qos_flows_forwarded_on_fwd_tunnels.push_back(
-            asn1_qos_flow_map_item);
-      }
+      e1ap_data_forwarding_info_request_to_asn1(asn1_pdu_session_res_item.pdu_session_data_forwarding_info_request,
+                                                pdu_session_res_item.pdu_session_data_forwarding_info_request.value());
     }
 
     // Fill PDU session inactivity timer.

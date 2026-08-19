@@ -95,8 +95,11 @@ struct e1ap_qos_flow_map_item {
   std::optional<e1ap_qos_flow_map_ind> qos_flow_map_ind;
 };
 
+/// Direction of the data forwarding tunnels requested from the gNB-CU-UP (TS 37.483 section 9.3.2.5).
+enum class e1ap_data_forwarding_request { ul = 0, dl, both };
+
 struct e1ap_data_forwarding_info_request {
-  std::string                                              data_forwarding_request;
+  e1ap_data_forwarding_request                             data_forwarding_request = e1ap_data_forwarding_request::dl;
   slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_map_item> qos_flows_forwarded_on_fwd_tunnels;
 };
 

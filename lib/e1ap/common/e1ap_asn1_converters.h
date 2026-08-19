@@ -1191,6 +1191,34 @@ inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos
   }
 }
 
+/// \brief Convert E1AP ASN.1 Data Forwarding Request to \c e1ap_data_forwarding_request type.
+inline e1ap_data_forwarding_request
+e1ap_asn1_to_data_forwarding_request(const asn1::e1ap::data_forwarding_request_e& asn1_data_forwarding_request)
+{
+  switch (asn1_data_forwarding_request) {
+    case asn1::e1ap::data_forwarding_request_opts::ul:
+      return e1ap_data_forwarding_request::ul;
+    case asn1::e1ap::data_forwarding_request_opts::dl:
+      return e1ap_data_forwarding_request::dl;
+    default:
+      return e1ap_data_forwarding_request::both;
+  }
+}
+
+/// \brief Convert \c e1ap_data_forwarding_request type to E1AP ASN.1 Data Forwarding Request.
+inline asn1::e1ap::data_forwarding_request_e
+e1ap_data_forwarding_request_to_asn1(e1ap_data_forwarding_request data_forwarding_request)
+{
+  switch (data_forwarding_request) {
+    case e1ap_data_forwarding_request::ul:
+      return asn1::e1ap::data_forwarding_request_opts::ul;
+    case e1ap_data_forwarding_request::dl:
+      return asn1::e1ap::data_forwarding_request_opts::dl;
+    default:
+      return asn1::e1ap::data_forwarding_request_opts::both;
+  }
+}
+
 /// \brief Convert E1AP ASN.1 Data Forwarding Info Request to \c e1ap_data_forwarding_info_request type
 inline e1ap_data_forwarding_info_request e1ap_asn1_to_data_forwarding_info_request(
     const asn1::e1ap::data_forwarding_info_request_s& asn1_data_forwarding_info_request)
@@ -1199,7 +1227,7 @@ inline e1ap_data_forwarding_info_request e1ap_asn1_to_data_forwarding_info_reque
 
   // Fill DRB data forwarding info request.
   data_forwarding_info_request.data_forwarding_request =
-      asn1_data_forwarding_info_request.data_forwarding_request.to_string();
+      e1ap_asn1_to_data_forwarding_request(asn1_data_forwarding_info_request.data_forwarding_request);
 
   for (const auto& asn1_qos_flows_forwarded_item :
        asn1_data_forwarding_info_request.qos_flows_forwarded_on_fwd_tunnels) {
@@ -1210,6 +1238,26 @@ inline e1ap_data_forwarding_info_request e1ap_asn1_to_data_forwarding_info_reque
   }
 
   return data_forwarding_info_request;
+}
+
+/// \brief Convert \c e1ap_data_forwarding_info_request type to E1AP ASN.1 Data Forwarding Info Request.
+inline void
+e1ap_data_forwarding_info_request_to_asn1(asn1::e1ap::data_forwarding_info_request_s& asn1_data_forwarding_info_request,
+                                          const e1ap_data_forwarding_info_request&    data_forwarding_info_request)
+{
+  asn1_data_forwarding_info_request.data_forwarding_request =
+      e1ap_data_forwarding_request_to_asn1(data_forwarding_info_request.data_forwarding_request);
+
+  for (const auto& qos_flow_map_item : data_forwarding_info_request.qos_flows_forwarded_on_fwd_tunnels) {
+    asn1::e1ap::qos_flow_map_item_s asn1_qos_flow_map_item;
+    asn1_qos_flow_map_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_map_item.qos_flow_id);
+    if (qos_flow_map_item.qos_flow_map_ind.has_value()) {
+      asn1_qos_flow_map_item.qos_flow_map_ind_present = true;
+      asn1_qos_flow_map_item.qos_flow_map_ind =
+          static_cast<asn1::e1ap::qos_flow_map_ind_opts::options>((int)qos_flow_map_item.qos_flow_map_ind.value());
+    }
+    asn1_data_forwarding_info_request.qos_flows_forwarded_on_fwd_tunnels.push_back(asn1_qos_flow_map_item);
+  }
 }
 
 /// \brief Convert E1AP ASN.1 Data Forwarding Information to \c e1ap_data_forwarding_info type.
