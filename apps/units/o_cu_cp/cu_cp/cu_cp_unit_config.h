@@ -9,6 +9,7 @@
 #include "apps/helpers/ntn/ntn_satellite_config.h"
 #include "apps/units/o_cu_cp/cu_cp/cu_cp_unit_pcap_config.h"
 #include "cu_cp_unit_logger_config.h"
+#include "ocudu/cu_cp/cell_state.h"
 #include "ocudu/ran/arfcn.h"
 #include "ocudu/ran/cu_types.h"
 #include "ocudu/ran/gnb_id.h"
@@ -174,9 +175,10 @@ struct cu_cp_unit_logical_cell_config {
   /// Sector ID (4-14 bits), concatenated with the gNB Id to form the NCI. Must match the sector ID of the
   /// corresponding DU cell.
   unsigned sector_id = 0;
-  /// Administrative state of the cell: "locked" (the CU-CP does not activate the cell until unlocked by
-  /// command) or "unlocked".
-  std::string admin_state = "unlocked";
+  /// Administrative state of the cell: locked (the CU-CP does not activate the cell until unlocked by
+  /// command) or unlocked. Only these two values are accepted at parse; shutting_down is held by the CU-CP
+  /// itself during a graceful stop and cannot be configured.
+  ocucp::cell_admin_state admin_state = ocucp::cell_admin_state::unlocked;
   /// Intended MIB cellBarred state (same key the DU uses for the initial MIB value; the CU-CP maintains it
   /// at runtime via the F1AP Cells to be Barred List).
   bool cell_barred = false;

@@ -14,6 +14,7 @@
 #include "ocudu/support/config_parsers.h"
 #include <algorithm>
 #include <istream>
+#include <map>
 
 using namespace ocudu;
 
@@ -683,8 +684,11 @@ static void configure_cli11_logical_cell_args(CLI::App& app, cu_cp_unit_logical_
              "--admin_state",
              cell_params.admin_state,
              "Administrative state of the cell: locked cells are not activated by the CU-CP until unlocked by command")
-      ->capture_default_str()
-      ->transform(CLI::IsMember({"locked", "unlocked"}, CLI::ignore_case));
+      ->default_str("unlocked")
+      ->transform(CLI::CheckedTransformer(
+          std::map<std::string, ocucp::cell_admin_state>{{"unlocked", ocucp::cell_admin_state::unlocked},
+                                                         {"locked", ocucp::cell_admin_state::locked}},
+          CLI::ignore_case));
   add_option(app, "--cell_barred", cell_params.cell_barred, "Intended MIB cellBarred state of the cell")
       ->capture_default_str();
 }

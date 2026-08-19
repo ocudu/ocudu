@@ -537,7 +537,7 @@ static void fill_cu_cp_cells_section(YAML::Node node, span<const cu_cp_unit_logi
   for (const auto& cell : cells_cfg) {
     YAML::Node cell_node;
     cell_node["sector_id"]   = cell.sector_id;
-    cell_node["admin_state"] = cell.admin_state;
+    cell_node["admin_state"] = to_string(cell.admin_state);
     cell_node["cell_barred"] = cell.cell_barred;
     cells_node.push_back(cell_node);
   }

@@ -699,10 +699,9 @@ ocucp::cu_cp_configuration ocudu::generate_cu_cp_config(const cu_cp_unit_config&
   // the entry addresses the DU cell with the same sector ID.
   for (const cu_cp_unit_logical_cell_config& cell : cu_cfg.cells_cfg) {
     ocucp::cu_cp_logical_cell_config out_cell;
-    out_cell.nci = nr_cell_identity::create(cu_cfg.gnb_id, cell.sector_id).value();
-    out_cell.admin_state =
-        cell.admin_state == "locked" ? ocucp::cell_admin_state::locked : ocucp::cell_admin_state::unlocked;
-    out_cell.barred = cell.cell_barred;
+    out_cell.nci         = nr_cell_identity::create(cu_cfg.gnb_id, cell.sector_id).value();
+    out_cell.admin_state = cell.admin_state;
+    out_cell.barred      = cell.cell_barred;
     out_cfg.cells.push_back(out_cell);
   }
 
