@@ -134,3 +134,65 @@ TEST_F(cu_cp_xn_served_cells_test, when_a_du_disconnects_then_its_cells_are_repo
   ASSERT_EQ(asn1_cells_to_upd.served_cells_to_delete_nr.size(), 1);
   EXPECT_EQ(asn1_cells_to_upd.served_cells_to_delete_nr[0].nr_ci.to_number(), served_cell.nci.value());
 }
+
+/// Fixture with an XN-C peer and a declared-locked logical cell: the DU reports two cells at F1 setup, one of
+/// which the CU-CP configuration keeps administratively locked.
+class cu_cp_xn_locked_cell_test : public cu_cp_test_environment, public ::testing::Test
+{
+public:
+  cu_cp_xn_locked_cell_test() :
+    cu_cp_test_environment({/* max nof cu-ups */ 8,
+                            /* max nof dus */ 8,
+                            /* max nof ues */ 8192,
+                            /* max nof drbs per ue */ 8,
+                            /* amf config */ {{default_supported_tracking_area}},
+                            /* trigger ho from measurements */ true,
+                            /* enable rrc inactive */ false,
+                            /* enable xnc peer */ true,
+                            /* rrc reject wait time */ std::nullopt,
+                            /* logical cells */
+                            {ocucp::cu_cp_logical_cell_config{nr_cell_identity::create(gnb_id_t{411, 22}, 0).value(),
+                                                              /* admin_locked = */ false,
+                                                              /* barred = */ false},
+                             ocucp::cu_cp_logical_cell_config{nr_cell_identity::create(gnb_id_t{411, 22}, 1).value(),
+                                                              /* admin_locked = */ true,
+                                                              /* barred = */ false}}})
+  {
+    run_ng_setup();
+    run_xn_setup();
+
+    cell_b_info.nci = nr_cell_identity::create(gnb_id_t{411, 22}, 1).value();
+    cell_b_info.pci = 7;
+  }
+
+  static constexpr unsigned           xnc_peer_idx = 0;
+  test_helpers::served_cell_item_info cell_a_info;
+  test_helpers::served_cell_item_info cell_b_info;
+};
+
+TEST_F(cu_cp_xn_locked_cell_test, when_cell_declared_locked_then_it_is_not_advertised_to_the_peer)
+{
+  // Run the F1 setup manually: the run_f1_setup helper asserts that every reported cell is advertised to the
+  // peer, which is exactly what must not happen for the locked cell.
+  std::optional<unsigned> ret = connect_new_du();
+  ASSERT_TRUE(ret.has_value());
+  unsigned du_idx = ret.value();
+  get_du(du_idx).push_ul_pdu(
+      test_helpers::generate_f1_setup_request(int_to_gnb_du_id(0x11), {cell_a_info, cell_b_info}));
+  f1ap_message f1_resp;
+  ASSERT_TRUE(wait_for_f1ap_tx_pdu(du_idx, f1_resp));
+
+  // The NG-RAN Node Configuration Update advertises only the unlocked cell: the locked cell stays dormant
+  // and must not be announced as served.
+  xnap_message cfg_update;
+  ASSERT_TRUE(wait_for_xnap_tx_pdu(xnc_peer_idx, cfg_update));
+  ASSERT_TRUE(
+      test_helpers::is_pdu_type(cfg_update, asn1::xnap::xnap_elem_procs_o::init_msg_c::types::ngran_node_cfg_upd));
+  const auto& asn1_cells_to_add = cfg_update.pdu.init_msg()
+                                      .value.ngran_node_cfg_upd()
+                                      ->cfg_upd_init_node_choice.gnb()
+                                      .served_cells_to_upd_nr.served_cells_to_add_nr;
+  ASSERT_EQ(asn1_cells_to_add.size(), 1U) << "the locked cell must not be advertised as served over Xn";
+  EXPECT_EQ(asn1_cells_to_add[0].served_cell_info_nr.cell_id.nr_ci.to_number(), cell_a_info.nci.value());
+  get_xnc_cu_cp(xnc_peer_idx).push_tx_pdu(generate_asn1_ngran_node_cfg_update_ack());
+}

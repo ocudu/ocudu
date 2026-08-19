@@ -2471,15 +2471,18 @@ bool cu_cp_impl::dispatch_bar_cell(const nr_cell_global_id_t& cgi, bool barred)
   });
 }
 
-std::vector<bool> cu_cp_impl::handle_du_cells_reported(cu_cp_du_index_t du_index, span<const du_reported_cell> cells)
+std::set<nr_cell_identity> cu_cp_impl::handle_du_cells_reported(cu_cp_du_index_t             du_index,
+                                                                span<const du_reported_cell> cells)
 {
-  std::vector<bool>                  activate;
+  std::set<nr_cell_identity>         activate;
   std::vector<cell_lifecycle_target> cells_to_bar;
-  activate.reserve(cells.size());
   for (const du_reported_cell& reported : cells) {
     logical_cell& cell = logical_cells.realize_cell(reported.cgi.nci, du_index);
-    activate.push_back(!cell.admin_locked);
-    if (!cell.admin_locked && cell.barred) {
+    if (cell.admin_locked) {
+      continue;
+    }
+    activate.insert(reported.cgi.nci);
+    if (cell.barred) {
       cells_to_bar.push_back(cell_lifecycle_target{du_index, reported.cgi, reported.pci, {}});
     }
   }

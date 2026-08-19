@@ -9,6 +9,7 @@
 #include "../cu_cp_impl_interface.h"
 #include "../du_processor/du_processor.h"
 #include "ocudu/support/ocudu_assert.h"
+#include <set>
 
 namespace ocudu::ocucp {
 
@@ -33,7 +34,8 @@ public:
     return meas_config_handler->handle_cell_config_update_request(nci, serv_cell_cfg);
   }
 
-  std::vector<bool> on_du_cells_reported(cu_cp_du_index_t du_index, span<const du_reported_cell> cells) override
+  std::set<nr_cell_identity> on_du_cells_reported(cu_cp_du_index_t             du_index,
+                                                  span<const du_reported_cell> cells) override
   {
     ocudu_assert(cu_cp_handler != nullptr, "CU-CP handler must not be nullptr");
     return cu_cp_handler->handle_du_cells_reported(du_index, cells);

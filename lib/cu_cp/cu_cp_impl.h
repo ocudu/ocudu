@@ -31,6 +31,7 @@
 #include "ocudu/ran/plmn_identity.h"
 #include "ocudu/support/async/async_task_scheduler.h"
 #include <memory>
+#include <set>
 
 namespace ocudu {
 
@@ -250,7 +251,8 @@ private:
 
   byte_buffer handle_target_cell_sib1_required(cu_cp_du_index_t du_index, nr_cell_global_id_t cgi) override;
 
-  std::vector<bool> handle_du_cells_reported(cu_cp_du_index_t du_index, span<const du_reported_cell> cells) override;
+  std::set<nr_cell_identity> handle_du_cells_reported(cu_cp_du_index_t             du_index,
+                                                      span<const du_reported_cell> cells) override;
 
   void handle_du_removed(cu_cp_du_index_t du_index) override;
 

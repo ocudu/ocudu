@@ -178,9 +178,6 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
   // Store cell info in RRC DU.
   rrc->store_cell_info_db(cell_info_db);
 
-  // Notify the CU-CP that the cells served by this DU changed.
-  cu_cp_notifier.on_served_cells_updated();
-
   // Realize the reported cells as CU-CP logical cells and let the CU-CP decide, per cell, whether it may be
   // activated (admin-locked cells stay dormant).
   std::vector<du_reported_cell> reported_cells;
@@ -188,9 +185,7 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
   for (const auto& served_cell : request.gnb_du_served_cells_list) {
     reported_cells.push_back({served_cell.served_cell_info.nr_cgi, served_cell.served_cell_info.nr_pci});
   }
-  std::vector<bool> cells_to_activate = cu_cp_notifier.on_du_cells_reported(cfg.du_index, reported_cells);
-  ocudu_assert(cells_to_activate.size() == reported_cells.size(),
-               "One activation decision per reported cell is required");
+  std::set<nr_cell_identity> cells_to_activate = cu_cp_notifier.on_du_cells_reported(cfg.du_index, reported_cells);
 
   // Record the dormant (admin-locked) cells as deactivated in the DU configuration records, reusing the
   // same bookkeeping as a command deactivation, so lifecycle lookups treat them exactly like
@@ -198,15 +193,20 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
   // message is sent here: the update struct is only the vehicle for the configuration handler's records.
   {
     f1ap_gnb_cu_configuration_update dormant_cells_update;
-    for (unsigned i = 0; i != reported_cells.size(); ++i) {
-      if (!cells_to_activate[i]) {
-        dormant_cells_update.cells_to_be_deactivated_list.push_back({reported_cells[i].cgi});
+    for (const du_reported_cell& reported : reported_cells) {
+      if (cells_to_activate.count(reported.cgi.nci) == 0) {
+        dormant_cells_update.cells_to_be_deactivated_list.push_back({reported.cgi});
       }
     }
     if (!dormant_cells_update.cells_to_be_deactivated_list.empty()) {
       du_cfg_hdlr->handle_gnb_cu_configuration_update(dormant_cells_update);
     }
   }
+
+  // Notify the CU-CP that the cells served by this DU changed, only now that the DU configuration records
+  // reflect the dormant cells: the Xn served-cells snapshot may be taken inline within this notification,
+  // and must not include cells the CU-CP keeps deactivated.
+  cu_cp_notifier.on_served_cells_updated();
 
   // Prepare DU response with accepted setup.
   auto& accepted              = res.result.emplace<du_setup_result::accepted>();
@@ -217,13 +217,13 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
   // Activated List remain configured-but-dormant at the DU, and can be activated later via the gNB-CU
   // Configuration Update procedure (unlock command).
   accepted.cells_to_be_activ_list.reserve(request.gnb_du_served_cells_list.size());
-  for (unsigned i = 0; i != request.gnb_du_served_cells_list.size(); ++i) {
-    if (!cells_to_activate[i]) {
+  for (const auto& served_cell : request.gnb_du_served_cells_list) {
+    if (cells_to_activate.count(served_cell.served_cell_info.nr_cgi.nci) == 0) {
       continue;
     }
     auto& activ_item  = accepted.cells_to_be_activ_list.emplace_back();
-    activ_item.nr_cgi = request.gnb_du_served_cells_list[i].served_cell_info.nr_cgi;
-    activ_item.nr_pci = request.gnb_du_served_cells_list[i].served_cell_info.nr_pci;
+    activ_item.nr_cgi = served_cell.served_cell_info.nr_cgi;
+    activ_item.nr_pci = served_cell.served_cell_info.nr_pci;
   }
 
   return res;
