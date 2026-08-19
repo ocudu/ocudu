@@ -265,6 +265,40 @@ TEST_F(cu_cp_logical_cell_test, when_locked_cell_du_reconnects_then_it_stays_loc
   EXPECT_EQ(ncis[0], cell_a_cgi.nci.value());
 }
 
+TEST_F(cu_cp_logical_cell_test, when_lock_fails_then_cell_is_not_left_locked)
+{
+  // A failed graceful stop must not leave lock intent behind: recorded intent has to match the reported
+  // outcome, otherwise the cell would silently be omitted from activation at the next DU (re)connect.
+  unsigned du_idx = 0;
+  auto     resp   = connect_du_and_run_f1_setup(du_idx);
+  ASSERT_TRUE(resp.has_value());
+  ASSERT_EQ(activated_ncis(*resp).size(), 2U);
+
+  cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
+
+  async_task<cu_cp_cell_command_response>         resp_task = cell_cmd.deactivate_cell(cell_b_cgi);
+  lazy_task_launcher<cu_cp_cell_command_response> launcher(resp_task);
+
+  // The bar stage succeeds, but the DU rejects the deactivation update, so the lock fails.
+  f1ap_message bar_upd;
+  ASSERT_TRUE(pop_cu_cfg_upd(du_idx, bar_upd));
+  get_du(du_idx).push_ul_pdu(make_ack_for(bar_upd));
+  f1ap_message deact_upd;
+  ASSERT_TRUE(pop_cu_cfg_upd(du_idx, deact_upd));
+  f1ap_message fail = test_helpers::generate_gnb_cu_configuration_update_failure();
+  fail.pdu.unsuccessful_outcome().value.gnb_cu_cfg_upd_fail()->transaction_id =
+      deact_upd.pdu.init_msg().value.gnb_cu_cfg_upd()->transaction_id;
+  get_du(du_idx).push_ul_pdu(fail);
+  ASSERT_FALSE(wait_for_task_result(launcher).success);
+
+  // At the next F1 setup both cells are activated: the failed lock left no intent behind.
+  ASSERT_TRUE(drop_du_connection(du_idx));
+  unsigned new_du_idx = 0;
+  auto     resp2      = connect_du_and_run_f1_setup(new_du_idx);
+  ASSERT_TRUE(resp2.has_value());
+  EXPECT_EQ(activated_ncis(*resp2).size(), 2U) << "a failed lock must not persist as lock intent";
+}
+
 TEST_F(cu_cp_declared_barred_cell_test, when_cell_declared_barred_then_bar_update_follows_f1_setup)
 {
   // A barred (but unlocked) declared cell is activated at F1 setup and then barred right after it: the

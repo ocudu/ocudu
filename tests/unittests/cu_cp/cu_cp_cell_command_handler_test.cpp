@@ -323,6 +323,56 @@ TEST_F(cu_cp_cell_command_handler_test,
   EXPECT_TRUE(wait_for_task_result(cmd).success);
 }
 
+TEST_F(cu_cp_cell_command_handler_test, when_lock_and_unlock_dispatched_back_to_back_then_activation_restores_plmns)
+{
+  cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
+
+  // Both commands go through the real dispatch path (validation and scheduling marshalled onto the CU-CP
+  // executor), queued back to back before any F1AP exchange is served. The activation payload must be
+  // resolved when its task runs -- after the deactivation parked the PLMNs -- not when it was scheduled.
+  ASSERT_TRUE(cell_cmd.dispatch_deactivate_cell(served_cgi));
+  ASSERT_TRUE(cell_cmd.dispatch_activate_cell(served_cgi));
+
+  // Serve the graceful stop: bar update, then deactivation update.
+  ASSERT_NO_FATAL_FAILURE(expect_and_ack_bar_upd(served_cgi));
+  f1ap_message deact_upd;
+  ASSERT_TRUE(pop_cu_cfg_upd(deact_upd)) << "CU-CP did not emit the deactivation gNB-CU Configuration Update";
+  ASSERT_TRUE(deact_upd.pdu.init_msg().value.gnb_cu_cfg_upd()->cells_to_be_deactiv_list_present);
+  get_du(du_idx).push_ul_pdu(make_ack_for(deact_upd));
+
+  // The queued unlock runs next: its activation update must restore the PLMNs parked by the lock.
+  f1ap_message activ_upd;
+  ASSERT_TRUE(pop_cu_cfg_upd(activ_upd)) << "CU-CP did not emit the activation gNB-CU Configuration Update";
+  const auto& upd_ies = activ_upd.pdu.init_msg().value.gnb_cu_cfg_upd();
+  ASSERT_TRUE(upd_ies->cells_to_be_activ_list_present);
+  ASSERT_EQ(upd_ies->cells_to_be_activ_list.size(), 1U);
+  const auto& activ_item = upd_ies->cells_to_be_activ_list[0].value().cells_to_be_activ_list_item();
+  ASSERT_EQ(activ_item.nr_cgi.nr_cell_id.to_number(), served_cgi.nci.value());
+  ASSERT_TRUE(activ_item.ie_exts_present && activ_item.ie_exts.available_plmn_list_present)
+      << "the activation lost the PLMNs parked by the preceding deactivation";
+  ASSERT_GE(activ_item.ie_exts.available_plmn_list.size(), 1U);
+  EXPECT_EQ(plmn_identity::from_bytes(activ_item.ie_exts.available_plmn_list[0].plmn_id.to_bytes()).value(),
+            served_cgi.plmn_id);
+  get_du(du_idx).push_ul_pdu(make_ack_for(activ_upd));
+}
+
+TEST_F(cu_cp_cell_command_handler_test, when_dispatch_with_unknown_cgi_then_dispatch_reports_failure)
+{
+  cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
+
+  // A CGI no connected DU serves: same PLMN, different NCI.
+  nr_cell_global_id_t unknown_cgi{served_cgi.plmn_id, nr_cell_identity::create(served_cgi.nci.value() + 1).value()};
+
+  // The validation runs on the CU-CP executor; its verdict is marshalled back to the calling thread.
+  EXPECT_FALSE(cell_cmd.dispatch_deactivate_cell(unknown_cgi));
+  EXPECT_FALSE(cell_cmd.dispatch_activate_cell(unknown_cgi));
+  EXPECT_FALSE(cell_cmd.dispatch_bar_cell(unknown_cgi, true));
+
+  // And no F1AP gNB-CU Configuration Update goes out toward the DU.
+  f1ap_message unused;
+  ASSERT_FALSE(pop_cu_cfg_upd(unused)) << "No F1AP traffic expected for an unknown CGI";
+}
+
 /// Fixture with two cells on a single DU, used to prove that deactivating one cell only releases that cell's UEs.
 class cu_cp_cell_command_multicell_test : public cu_cp_test_environment, public ::testing::Test
 {
