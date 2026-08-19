@@ -5,6 +5,7 @@
 #pragma once
 
 #include "../du_processor/du_processor.h"
+#include "../logical_cell_manager.h"
 #include "../ue_manager/ue_manager_impl.h"
 #include "cell_lifecycle_target.h"
 #include "ocudu/adt/expected.h"
@@ -24,6 +25,7 @@ namespace ocudu::ocucp {
 /// autonomously draining them); (3) deactivate the cells via a gNB-CU Configuration Update carrying the Cells
 /// to be Deactivated List. Stages (1) and (2) are optional: pass bar_cells_first=false to skip the bar (e.g.
 /// when cells go down because their AMF is unreachable) and an empty UE list to leave UE handling to the DU.
+/// The logical cells of an acknowledged deactivation update become operationally disabled.
 class cell_deactivation_routine
 {
 public:
@@ -33,6 +35,7 @@ public:
                             ngap_cause_t                       release_cause_,
                             bool                               bar_cells_first_,
                             du_processor_repository&           du_db_,
+                            logical_cell_manager&              logical_cells_,
                             cu_cp_ue_context_release_handler&  ue_release_handler_,
                             ue_manager&                        ue_mng_,
                             ocudulog::basic_logger&            logger_);
@@ -46,6 +49,7 @@ public:
 
 private:
   du_processor_repository&          du_db;
+  logical_cell_manager&             logical_cells;
   cu_cp_ue_context_release_handler& ue_release_handler;
   ue_manager&                       ue_mng;
   ocudulog::basic_logger&           logger;

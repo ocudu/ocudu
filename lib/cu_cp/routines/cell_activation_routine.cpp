@@ -8,6 +8,7 @@
 #include "ocudu/f1ap/cu_cp/f1ap_cu_configuration_update.h"
 #include "ocudu/support/async/coroutine.h"
 #include "fmt/ranges.h"
+#include <algorithm>
 #include <map>
 
 using namespace ocudu;
@@ -16,8 +17,9 @@ using namespace ocudu::ocucp;
 cell_activation_routine::cell_activation_routine(const cu_cp_configuration&         cu_cp_cfg_,
                                                  std::vector<cell_lifecycle_target> targets,
                                                  du_processor_repository&           du_db_,
+                                                 logical_cell_manager&              logical_cells_,
                                                  ocudulog::basic_logger&            logger_) :
-  cu_cp_cfg(cu_cp_cfg_), du_db(du_db_), logger(logger_)
+  cu_cp_cfg(cu_cp_cfg_), du_db(du_db_), logical_cells(logical_cells_), logger(logger_)
 {
   // Group the targets into a single gNB-CU Configuration Update per DU.
   std::map<cu_cp_du_index_t, f1ap_gnb_cu_configuration_update> by_du;
@@ -53,6 +55,20 @@ void cell_activation_routine::operator()(coro_context<async_task<bool>>& ctx)
                       ? fmt::to_string(f1ap_cu_cfg_update_response.cause.value())
                       : "timeout");
       routine_success = false;
+      continue;
+    }
+    // The DU acknowledged the activation of this update's cells: record them as operationally enabled,
+    // except the ones the DU reported in the acknowledgement's Cells Failed to be Activated List.
+    for (const auto& cell : du_update_it->second.cells_to_be_activated_list) {
+      const auto& failed_cells = f1ap_cu_cfg_update_response.cells_failed_to_be_activated_list;
+      if (std::any_of(failed_cells.begin(), failed_cells.end(), [&cell](const f1ap_cell_failed_to_activate& failed) {
+            return failed.cgi == cell.cgi;
+          })) {
+        logger.warning(
+            "Cell nci={:#x} failed to activate at du={}", cell.cgi.nci.value(), fmt::underlying(du_update_it->first));
+        continue;
+      }
+      logical_cells.set_operational_state(cell.cgi.nci, cell_operational_state::enabled);
     }
   }
 

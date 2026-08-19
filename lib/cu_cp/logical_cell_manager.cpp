@@ -13,11 +13,11 @@ logical_cell_manager::logical_cell_manager(span<const cu_cp_logical_cell_config>
   for (const cu_cp_logical_cell_config& cell_cfg : declared_cells) {
     logical_cell& cell = cells[cell_cfg.nci];
     cell.nci           = cell_cfg.nci;
-    cell.admin_locked  = cell_cfg.admin_locked;
+    cell.admin_state   = cell_cfg.admin_state;
     cell.barred        = cell_cfg.barred;
-    logger.debug("Declared logical cell nci={:#x} admin_locked={} barred={}",
+    logger.debug("Declared logical cell nci={:#x} admin_state={} barred={}",
                  cell_cfg.nci.value(),
-                 cell_cfg.admin_locked,
+                 to_string(cell_cfg.admin_state),
                  cell_cfg.barred);
   }
 }
@@ -28,17 +28,17 @@ const logical_cell* logical_cell_manager::find_cell(nr_cell_identity nci) const
   return it != cells.end() ? &it->second : nullptr;
 }
 
-std::optional<bool> logical_cell_manager::set_admin_locked(nr_cell_identity nci, bool locked)
+std::optional<cell_admin_state> logical_cell_manager::set_admin_state(nr_cell_identity nci, cell_admin_state state)
 {
   auto it = cells.find(nci);
   if (it == cells.end()) {
-    logger.warning("Cannot set admin_locked={} for unknown logical cell nci={:#x}", locked, nci.value());
+    logger.warning("Cannot set admin_state={} for unknown logical cell nci={:#x}", to_string(state), nci.value());
     return std::nullopt;
   }
-  bool prev               = it->second.admin_locked;
-  it->second.admin_locked = locked;
-  if (prev != locked) {
-    logger.info("Logical cell nci={:#x} admin_locked: {} -> {}", nci.value(), prev, locked);
+  cell_admin_state prev  = it->second.admin_state;
+  it->second.admin_state = state;
+  if (prev != state) {
+    logger.info("Logical cell nci={:#x} admin_state: {} -> {}", nci.value(), to_string(prev), to_string(state));
   }
   return prev;
 }
@@ -58,6 +58,22 @@ std::optional<bool> logical_cell_manager::set_barred(nr_cell_identity nci, bool 
   return prev;
 }
 
+std::optional<cell_operational_state> logical_cell_manager::set_operational_state(nr_cell_identity       nci,
+                                                                                  cell_operational_state state)
+{
+  auto it = cells.find(nci);
+  if (it == cells.end()) {
+    logger.warning("Cannot set operational_state={} for unknown logical cell nci={:#x}", to_string(state), nci.value());
+    return std::nullopt;
+  }
+  cell_operational_state prev  = it->second.operational_state;
+  it->second.operational_state = state;
+  if (prev != state) {
+    logger.info("Logical cell nci={:#x} operational_state: {} -> {}", nci.value(), to_string(prev), to_string(state));
+  }
+  return prev;
+}
+
 const logical_cell& logical_cell_manager::realize_cell(nr_cell_identity nci, cu_cp_du_index_t du_index)
 {
   auto it = cells.find(nci);
@@ -68,7 +84,7 @@ const logical_cell& logical_cell_manager::realize_cell(nr_cell_identity nci, cu_
       // Cells were declared in configuration, so the declared set acts as the activation whitelist: a
       // reported cell outside it comes up locked, staying deactivated until an explicit cell_unlock command
       // or a configuration declaration.
-      it->second.admin_locked = true;
+      it->second.admin_state = cell_admin_state::locked;
       logger.warning("Cell nci={:#x} reported by a DU is not declared in the CU-CP configuration: keeping it "
                      "locked (not activated)",
                      nci.value());
@@ -89,10 +105,10 @@ const logical_cell& logical_cell_manager::realize_cell(nr_cell_identity nci, cu_
   cell.realized = true;
   cell.du_index = du_index;
 
-  logger.info("Logical cell nci={:#x} realized by du={} (admin_locked={} barred={})",
+  logger.info("Logical cell nci={:#x} realized by du={} (admin_state={} barred={})",
               nci.value(),
               fmt::underlying(du_index),
-              cell.admin_locked,
+              to_string(cell.admin_state),
               cell.barred);
 
   return cell;
@@ -102,13 +118,14 @@ void logical_cell_manager::derealize_du_cells(cu_cp_du_index_t du_index)
 {
   for (auto& [nci, cell] : cells) {
     if (cell.realized && cell.du_index == du_index) {
-      cell.realized = false;
-      cell.du_index = cu_cp_du_index_t::invalid;
-      logger.info("Logical cell nci={:#x} de-realized (du={} removed). Operator intent kept (admin_locked={} "
+      cell.realized          = false;
+      cell.du_index          = cu_cp_du_index_t::invalid;
+      cell.operational_state = cell_operational_state::disabled;
+      logger.info("Logical cell nci={:#x} de-realized (du={} removed). Operator intent kept (admin_state={} "
                   "barred={})",
                   nci.value(),
                   fmt::underlying(du_index),
-                  cell.admin_locked,
+                  to_string(cell.admin_state),
                   cell.barred);
     }
   }

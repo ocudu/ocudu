@@ -15,19 +15,22 @@ namespace ocudu::ocucp {
 
 /// CU-CP-side managed object for a cell: operator intent plus its realization by a connected DU.
 ///
-/// The intent half (\c admin_locked, \c barred) is owned by the CU-CP — declared in configuration and
+/// The intent half (\c admin_state, \c barred) is owned by the CU-CP — declared in configuration and
 /// mutated by operator commands — and outlives any DU connection. The realization half tracks whether (and
 /// where) a connected DU currently serves the cell; it is filled at F1 setup and cleared when the DU is
-/// removed. Operational state (served vs deactivated) intentionally stays in the DU configuration records:
-/// the logical cell stores what the operator wants, not what the network currently does.
+/// removed. The operational state records the outcome of the activations and deactivations the CU-CP
+/// drives; the per-PLMN F1AP bookkeeping stays in the DU configuration records.
 struct logical_cell {
   /// NR Cell Identity of the cell.
   nr_cell_identity nci;
-  /// Administrative state: when locked, the CU-CP does not activate the cell.
-  bool admin_locked = false;
+  /// Administrative state: the CU-CP activates the cell only while unlocked, and holds shutting_down while
+  /// a graceful stop drains it.
+  cell_admin_state admin_state = cell_admin_state::unlocked;
   /// Intended MIB cellBarred state, applied via the TS 38.473 Cells to be Barred List whenever active.
   bool barred = false;
 
+  /// Operational state: whether the cell is active at its realizing DU.
+  cell_operational_state operational_state = cell_operational_state::disabled;
   /// Whether a connected DU currently serves this cell.
   bool realized = false;
   /// Index of the realizing DU. Only valid when realized.
@@ -49,13 +52,17 @@ public:
   /// Find the logical cell with the given NCI. Returns nullptr if unknown.
   const logical_cell* find_cell(nr_cell_identity nci) const;
 
-  /// \brief Set the administrative lock intent of a logical cell.
-  /// \return The previous intent, or std::nullopt if no logical cell with the given NCI exists.
-  std::optional<bool> set_admin_locked(nr_cell_identity nci, bool locked);
+  /// \brief Set the administrative state of a logical cell.
+  /// \return The previous state, or std::nullopt if no logical cell with the given NCI exists.
+  std::optional<cell_admin_state> set_admin_state(nr_cell_identity nci, cell_admin_state state);
 
   /// \brief Set the intended MIB cellBarred state of a logical cell.
   /// \return The previous intent, or std::nullopt if no logical cell with the given NCI exists.
   std::optional<bool> set_barred(nr_cell_identity nci, bool barred);
+
+  /// \brief Set the operational state of a logical cell.
+  /// \return The previous state, or std::nullopt if no logical cell with the given NCI exists.
+  std::optional<cell_operational_state> set_operational_state(nr_cell_identity nci, cell_operational_state state);
 
   /// \brief Realize a cell reported by a DU, creating a dynamic logical cell if it was not declared.
   ///
@@ -64,7 +71,8 @@ public:
   /// \return The (created or updated) logical cell record.
   const logical_cell& realize_cell(nr_cell_identity nci, cu_cp_du_index_t du_index);
 
-  /// De-realize all cells realized by the given DU, keeping their operator intent.
+  /// De-realize all cells realized by the given DU, keeping their operator intent. The cells become
+  /// operationally disabled: without a DU nothing serves them.
   void derealize_du_cells(cu_cp_du_index_t du_index);
 
 private:

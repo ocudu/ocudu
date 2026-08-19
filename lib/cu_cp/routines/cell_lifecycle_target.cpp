@@ -35,7 +35,7 @@ std::vector<cell_lifecycle_target> ocudu::ocucp::resolve_activation_targets(du_p
     for (const du_cell_configuration& cell : du_ctxt->deactivated_cells) {
       // Skip administratively locked cells: a fault-recovery activation must not override an operator lock.
       const logical_cell* lc = logical_cells.find_cell(cell.cgi.nci);
-      if (lc != nullptr && lc->admin_locked) {
+      if (lc != nullptr && lc->admin_state != cell_admin_state::unlocked) {
         continue;
       }
 

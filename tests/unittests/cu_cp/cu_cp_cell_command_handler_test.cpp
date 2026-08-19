@@ -152,6 +152,9 @@ TEST_F(cu_cp_cell_command_handler_test, when_cgi_is_unknown_then_command_fails_w
   // And no F1AP gNB-CU Configuration Update goes out toward the DU.
   f1ap_message unused;
   ASSERT_FALSE(pop_cu_cfg_upd(unused)) << "No F1AP traffic expected for an unknown CGI";
+
+  // The state query reports the cell as unknown.
+  EXPECT_FALSE(cell_cmd.get_cell_state(unknown_cgi).has_value());
 }
 
 TEST_F(cu_cp_cell_command_handler_test, when_du_rejects_cfg_upd_then_command_fails)
@@ -371,6 +374,174 @@ TEST_F(cu_cp_cell_command_handler_test, when_dispatch_with_unknown_cgi_then_disp
   // And no F1AP gNB-CU Configuration Update goes out toward the DU.
   f1ap_message unused;
   ASSERT_FALSE(pop_cu_cfg_upd(unused)) << "No F1AP traffic expected for an unknown CGI";
+}
+
+TEST_F(cu_cp_cell_command_handler_test, when_cell_is_locked_and_unlocked_then_states_follow_the_graceful_stop)
+{
+  cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
+
+  // After F1 setup the dynamic logical cell is unlocked and active.
+  std::optional<cu_cp_cell_state> state = cell_cmd.get_cell_state(served_cgi);
+  ASSERT_TRUE(state.has_value());
+  EXPECT_EQ(state->admin_state, cell_admin_state::unlocked);
+  EXPECT_EQ(state->operational_state, cell_operational_state::enabled);
+
+  // While the graceful stop drains the cell, the administrative state is held as shutting_down and the cell
+  // is still on air.
+  async_task<cu_cp_cell_command_response>         deact_task = cell_cmd.deactivate_cell(served_cgi);
+  lazy_task_launcher<cu_cp_cell_command_response> deact_launcher(deact_task);
+  state = cell_cmd.get_cell_state(served_cgi);
+  ASSERT_TRUE(state.has_value());
+  EXPECT_EQ(state->admin_state, cell_admin_state::shutting_down);
+  EXPECT_EQ(state->operational_state, cell_operational_state::enabled);
+
+  ASSERT_NO_FATAL_FAILURE(expect_and_ack_bar_upd(served_cgi));
+  f1ap_message deact_upd;
+  ASSERT_TRUE(pop_cu_cfg_upd(deact_upd));
+  get_du(du_idx).push_ul_pdu(make_ack_for(deact_upd));
+  ASSERT_TRUE(wait_for_task_result(deact_launcher).success);
+
+  // The completed stop leaves the cell administratively locked and operationally disabled.
+  state = cell_cmd.get_cell_state(served_cgi);
+  ASSERT_TRUE(state.has_value());
+  EXPECT_EQ(state->admin_state, cell_admin_state::locked);
+  EXPECT_EQ(state->operational_state, cell_operational_state::disabled);
+
+  // The unlock brings the cell back: unlocked, and enabled once the DU acknowledges the activation.
+  async_task<cu_cp_cell_command_response>         act_task = cell_cmd.activate_cell(served_cgi);
+  lazy_task_launcher<cu_cp_cell_command_response> act_launcher(act_task);
+  f1ap_message                                    activ_upd;
+  ASSERT_TRUE(pop_cu_cfg_upd(activ_upd));
+  get_du(du_idx).push_ul_pdu(make_ack_for(activ_upd));
+  ASSERT_TRUE(wait_for_task_result(act_launcher).success);
+
+  state = cell_cmd.get_cell_state(served_cgi);
+  ASSERT_TRUE(state.has_value());
+  EXPECT_EQ(state->admin_state, cell_admin_state::unlocked);
+  EXPECT_EQ(state->operational_state, cell_operational_state::enabled);
+}
+
+TEST_F(cu_cp_cell_command_handler_test, when_deactivation_fails_then_admin_state_is_restored)
+{
+  cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
+
+  async_task<cu_cp_cell_command_response>         resp_task = cell_cmd.deactivate_cell(served_cgi);
+  lazy_task_launcher<cu_cp_cell_command_response> launcher(resp_task);
+
+  ASSERT_NO_FATAL_FAILURE(expect_and_ack_bar_upd(served_cgi));
+  f1ap_message deact_upd;
+  ASSERT_TRUE(pop_cu_cfg_upd(deact_upd));
+  f1ap_message fail = test_helpers::generate_gnb_cu_configuration_update_failure();
+  fail.pdu.unsuccessful_outcome().value.gnb_cu_cfg_upd_fail()->transaction_id =
+      deact_upd.pdu.init_msg().value.gnb_cu_cfg_upd()->transaction_id;
+  get_du(du_idx).push_ul_pdu(fail);
+  ASSERT_FALSE(wait_for_task_result(launcher).success);
+
+  // The failed stop restores the previous administrative state; the cell never left the air.
+  std::optional<cu_cp_cell_state> state = cell_cmd.get_cell_state(served_cgi);
+  ASSERT_TRUE(state.has_value());
+  EXPECT_EQ(state->admin_state, cell_admin_state::unlocked);
+  EXPECT_EQ(state->operational_state, cell_operational_state::enabled);
+}
+
+TEST_F(cu_cp_cell_command_handler_test, when_activation_fails_then_cell_stays_locked_and_disabled)
+{
+  cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
+
+  // Lock the cell first (bar, then deactivate).
+  {
+    async_task<cu_cp_cell_command_response>         deact_task = cell_cmd.deactivate_cell(served_cgi);
+    lazy_task_launcher<cu_cp_cell_command_response> deact_launcher(deact_task);
+    ASSERT_NO_FATAL_FAILURE(expect_and_ack_bar_upd(served_cgi));
+    f1ap_message deact_upd;
+    ASSERT_TRUE(pop_cu_cfg_upd(deact_upd));
+    get_du(du_idx).push_ul_pdu(make_ack_for(deact_upd));
+    ASSERT_TRUE(wait_for_task_result(deact_launcher).success);
+  }
+
+  // The DU rejects the activation of the unlock: the administrative state is restored to locked and the
+  // cell stays operationally disabled.
+  async_task<cu_cp_cell_command_response>         act_task = cell_cmd.activate_cell(served_cgi);
+  lazy_task_launcher<cu_cp_cell_command_response> act_launcher(act_task);
+  f1ap_message                                    activ_upd;
+  ASSERT_TRUE(pop_cu_cfg_upd(activ_upd));
+  f1ap_message fail = test_helpers::generate_gnb_cu_configuration_update_failure();
+  fail.pdu.unsuccessful_outcome().value.gnb_cu_cfg_upd_fail()->transaction_id =
+      activ_upd.pdu.init_msg().value.gnb_cu_cfg_upd()->transaction_id;
+  get_du(du_idx).push_ul_pdu(fail);
+  ASSERT_FALSE(wait_for_task_result(act_launcher).success);
+
+  std::optional<cu_cp_cell_state> state = cell_cmd.get_cell_state(served_cgi);
+  ASSERT_TRUE(state.has_value());
+  EXPECT_EQ(state->admin_state, cell_admin_state::locked);
+  EXPECT_EQ(state->operational_state, cell_operational_state::disabled);
+}
+
+TEST_F(cu_cp_cell_command_handler_test, when_du_acks_activation_with_cell_failed_then_cell_stays_disabled)
+{
+  cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
+
+  // Lock the cell first (bar, then deactivate).
+  {
+    async_task<cu_cp_cell_command_response>         deact_task = cell_cmd.deactivate_cell(served_cgi);
+    lazy_task_launcher<cu_cp_cell_command_response> deact_launcher(deact_task);
+    ASSERT_NO_FATAL_FAILURE(expect_and_ack_bar_upd(served_cgi));
+    f1ap_message deact_upd;
+    ASSERT_TRUE(pop_cu_cfg_upd(deact_upd));
+    get_du(du_idx).push_ul_pdu(make_ack_for(deact_upd));
+    ASSERT_TRUE(wait_for_task_result(deact_launcher).success);
+  }
+
+  // The DU acknowledges the unlock's configuration update but reports the cell in the Cells Failed to be
+  // Activated List: the cell must not be recorded as on air.
+  async_task<cu_cp_cell_command_response>         act_task = cell_cmd.activate_cell(served_cgi);
+  lazy_task_launcher<cu_cp_cell_command_response> act_launcher(act_task);
+  f1ap_message                                    activ_upd;
+  ASSERT_TRUE(pop_cu_cfg_upd(activ_upd));
+  f1ap_message ack = test_helpers::generate_gnb_cu_configuration_update_acknowledgement(
+      {{served_cgi, f1ap_cause_t{f1ap_cause_radio_network_t::cell_not_available}}});
+  ack.pdu.successful_outcome().value.gnb_cu_cfg_upd_ack()->transaction_id =
+      activ_upd.pdu.init_msg().value.gnb_cu_cfg_upd()->transaction_id;
+  get_du(du_idx).push_ul_pdu(ack);
+  wait_for_task_result(act_launcher);
+
+  std::optional<cu_cp_cell_state> state = cell_cmd.get_cell_state(served_cgi);
+  ASSERT_TRUE(state.has_value());
+  EXPECT_EQ(state->operational_state, cell_operational_state::disabled)
+      << "a cell the DU reported as failed to activate must not be recorded as on air";
+}
+
+TEST_F(cu_cp_cell_command_handler_test, when_bar_and_unbar_then_barred_intent_is_recorded)
+{
+  cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
+
+  ASSERT_TRUE(cell_cmd.get_cell_state(served_cgi).has_value());
+  EXPECT_FALSE(cell_cmd.get_cell_state(served_cgi)->barred);
+
+  // Barring only touches the barred intent: administrative and operational state are unchanged.
+  {
+    async_task<cu_cp_cell_command_response>         bar_task = cell_cmd.bar_cell(served_cgi, true);
+    lazy_task_launcher<cu_cp_cell_command_response> launcher(bar_task);
+    f1ap_message                                    bar_upd;
+    ASSERT_TRUE(pop_cu_cfg_upd(bar_upd));
+    get_du(du_idx).push_ul_pdu(make_ack_for(bar_upd));
+    ASSERT_TRUE(wait_for_task_result(launcher).success);
+  }
+  std::optional<cu_cp_cell_state> state = cell_cmd.get_cell_state(served_cgi);
+  ASSERT_TRUE(state.has_value());
+  EXPECT_TRUE(state->barred);
+  EXPECT_EQ(state->admin_state, cell_admin_state::unlocked);
+  EXPECT_EQ(state->operational_state, cell_operational_state::enabled);
+
+  {
+    async_task<cu_cp_cell_command_response>         unbar_task = cell_cmd.bar_cell(served_cgi, false);
+    lazy_task_launcher<cu_cp_cell_command_response> launcher(unbar_task);
+    f1ap_message                                    unbar_upd;
+    ASSERT_TRUE(pop_cu_cfg_upd(unbar_upd));
+    get_du(du_idx).push_ul_pdu(make_ack_for(unbar_upd));
+    ASSERT_TRUE(wait_for_task_result(launcher).success);
+  }
+  EXPECT_FALSE(cell_cmd.get_cell_state(served_cgi)->barred);
 }
 
 /// Fixture with two cells on a single DU, used to prove that deactivating one cell only releases that cell's UEs.

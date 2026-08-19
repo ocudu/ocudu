@@ -16,6 +16,7 @@ amf_connection_loss_routine::amf_connection_loss_routine(const cu_cp_amf_index_t
                                                          const cu_cp_configuration&        cu_cp_cfg_,
                                                          std::vector<plmn_identity>        plmns_,
                                                          du_processor_repository&          du_db_,
+                                                         logical_cell_manager&             logical_cells_,
                                                          cu_cp_ue_context_release_handler& ue_release_handler_,
                                                          ue_manager&                       ue_mng_,
                                                          cu_cp_controller&                 controller_,
@@ -24,6 +25,7 @@ amf_connection_loss_routine::amf_connection_loss_routine(const cu_cp_amf_index_t
   cu_cp_cfg(cu_cp_cfg_),
   plmns(std::move(plmns_)),
   du_db(du_db_),
+  logical_cells(logical_cells_),
   ue_release_handler(ue_release_handler_),
   ue_mng(ue_mng_),
   controller(controller_),
@@ -54,6 +56,7 @@ void amf_connection_loss_routine::operator()(coro_context<async_task<void>>& ctx
                                               ngap_cause_t{ngap_cause_transport_t::transport_res_unavailable},
                                               /* bar_cells_first = */ false,
                                               du_db,
+                                              logical_cells,
                                               ue_release_handler,
                                               ue_mng,
                                               logger));

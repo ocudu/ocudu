@@ -4,8 +4,10 @@
 
 #pragma once
 
+#include "ocudu/cu_cp/cell_state.h"
 #include "ocudu/ran/nr_cgi.h"
 #include "ocudu/support/async/async_task.h"
+#include <optional>
 
 namespace ocudu::ocucp {
 
@@ -13,6 +15,16 @@ namespace ocudu::ocucp {
 struct cu_cp_cell_command_response {
   /// Whether the command completed successfully from CU-CP's point of view (the DU accepted the F1AP update).
   bool success = false;
+};
+
+/// Recorded state of a CU-CP logical cell, as returned by cu_cp_cell_command_handler::get_cell_state.
+struct cu_cp_cell_state {
+  /// Administrative state of the cell.
+  cell_admin_state admin_state;
+  /// Operational state of the cell.
+  cell_operational_state operational_state;
+  /// Intended MIB cellBarred state.
+  bool barred;
 };
 
 /// \brief Handler for external cell-level commands directed at the CU-CP.
@@ -28,11 +40,13 @@ public:
 
   /// \brief Deactivate (administratively lock) a single cell identified by its NR CGI.
   ///
-  /// Records the lock on the CU-CP's logical cell — so the intent survives DU restarts — and drives the
-  /// CU-driven graceful stop: the cell is barred (TS 38.473 Cells to be Barred List) so idle UEs reselect
-  /// away, its UEs are released from the CU-CP (the gNB-CU Configuration Update procedure itself does not
+  /// Holds the logical cell's administrative state as shutting_down while the CU-driven graceful stop
+  /// drains the cell: the cell is barred (TS 38.473 Cells to be Barred List) so idle UEs reselect away,
+  /// its UEs are released from the CU-CP (the gNB-CU Configuration Update procedure itself does not
   /// affect existing UE-related contexts, TS 38.473 section 8.2.5.1), and finally the cell is deactivated
-  /// via a gNB-CU Configuration Update listing it in cells_to_be_deactivated_list.
+  /// via a gNB-CU Configuration Update listing it in cells_to_be_deactivated_list. On completion the
+  /// administrative state becomes locked (and the operational state disabled) — recorded on the logical
+  /// cell so the intent survives DU restarts; a failed stop restores the previous administrative state.
   ///
   /// The returned task completes once the DU has acknowledged the F1AP updates. Callers that do not need
   /// to await completion (e.g. fire-and-forget from a WS/O1 handler) should use dispatch_deactivate_cell
@@ -42,10 +56,11 @@ public:
 
   /// \brief Activate (administratively unlock) a single cell identified by its NR CGI.
   ///
-  /// Clears the lock on the CU-CP's logical cell and dispatches an F1AP gNB-CU Configuration Update to the
-  /// DU that serves the cell, listing the cell in cells_to_be_activated_list. The DU brings the MAC and PHY
-  /// online for the cell. If the logical cell carries barred intent, the CU-CP re-applies the bar right
-  /// after the activation.
+  /// Sets the logical cell's administrative state to unlocked and dispatches an F1AP gNB-CU Configuration
+  /// Update to the DU that serves the cell, listing the cell in cells_to_be_activated_list. The DU brings
+  /// the MAC and PHY online for the cell; the operational state becomes enabled once the DU acknowledges
+  /// the activation, and stays disabled when it fails (the administrative state is then restored). If the
+  /// logical cell carries barred intent, the CU-CP re-applies the bar right after the activation.
   /// \param[in] cgi NR Cell Global ID of the cell to activate.
   virtual async_task<cu_cp_cell_command_response> activate_cell(const nr_cell_global_id_t& cgi) = 0;
 
@@ -73,6 +88,14 @@ public:
 
   /// Fire-and-forget synchronous variant of bar_cell. See dispatch_deactivate_cell for the rationale.
   virtual bool dispatch_bar_cell(const nr_cell_global_id_t& cgi, bool barred) = 0;
+
+  /// \brief Read the recorded state of the logical cell identified by its NR CGI.
+  ///
+  /// Returns std::nullopt when no logical cell with the given NCI exists. The read is not synchronized:
+  /// callers outside the CU-CP execution context must marshal the call onto the CU-CP executor, as the
+  /// dispatch_* commands do.
+  /// \param[in] cgi NR Cell Global ID of the cell to query.
+  virtual std::optional<cu_cp_cell_state> get_cell_state(const nr_cell_global_id_t& cgi) const = 0;
 };
 
 } // namespace ocudu::ocucp

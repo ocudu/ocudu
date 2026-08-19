@@ -152,10 +152,10 @@ public:
                             /* rrc reject wait time */ std::nullopt,
                             /* logical cells */
                             {ocucp::cu_cp_logical_cell_config{nr_cell_identity::create(gnb_id_t{411, 22}, 0).value(),
-                                                              /* admin_locked = */ false,
+                                                              ocucp::cell_admin_state::unlocked,
                                                               /* barred = */ false},
                              ocucp::cu_cp_logical_cell_config{nr_cell_identity::create(gnb_id_t{411, 22}, 1).value(),
-                                                              /* admin_locked = */ true,
+                                                              ocucp::cell_admin_state::locked,
                                                               /* barred = */ false}}})
   {
     run_ng_setup();

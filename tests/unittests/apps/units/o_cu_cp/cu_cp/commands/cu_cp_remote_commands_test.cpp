@@ -66,6 +66,12 @@ public:
     last_activate_cgi = cgi;
     return next_dispatch_result;
   }
+
+  std::optional<ocucp::cu_cp_cell_state> get_cell_state(const nr_cell_global_id_t&) const override
+  {
+    // Not exercised by the WS command tests.
+    return std::nullopt;
+  }
 };
 
 /// Fake cu_cp_command_handler whose get_cell_command_handler() returns the capturing handler.

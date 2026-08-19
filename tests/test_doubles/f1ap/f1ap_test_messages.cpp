@@ -243,6 +243,7 @@ f1ap_message ocudu::test_helpers::generate_gnb_cu_configuration_update_acknowled
 
   auto& gnb_cu_cfg_upd_ack = gnb_cu_configuration_update_ack.pdu.successful_outcome().value.gnb_cu_cfg_upd_ack();
 
+  gnb_cu_cfg_upd_ack->cells_failed_to_be_activ_list_present = !cells_failed_to_activate.empty();
   for (const auto& cell : cells_failed_to_activate) {
     asn1::protocol_ie_single_container_s<asn1::f1ap::cells_failed_to_be_activ_list_item_ies_o> asn1_cell_container;
     cells_failed_to_be_activ_list_item_s& asn1_cell = asn1_cell_container->cells_failed_to_be_activ_list_item();

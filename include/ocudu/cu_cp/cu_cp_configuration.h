@@ -5,6 +5,7 @@
 #pragma once
 
 #include "ocudu/cu_cp/cell_meas_manager_config.h"
+#include "ocudu/cu_cp/cell_state.h"
 #include "ocudu/cu_cp/cu_cp_metrics_notifier.h"
 #include "ocudu/cu_cp/cu_cp_ng_setup_notifier.h"
 #include "ocudu/cu_cp/cu_cp_types.h"
@@ -53,8 +54,9 @@ struct cu_cp_logical_cell_config {
   /// NR Cell Identity of the cell.
   nr_cell_identity nci;
   /// Administrative state: when locked, the CU-CP does not activate the cell (neither at F1 setup nor on
-  /// AMF reconnection) until it is unlocked by command.
-  bool admin_locked = false;
+  /// AMF reconnection) until it is unlocked by command. Configuration declares unlocked or locked;
+  /// shutting_down is held by the CU-CP itself during a graceful stop.
+  cell_admin_state admin_state = cell_admin_state::unlocked;
   /// Intended MIB cellBarred state: when true, the CU-CP bars the cell (TS 38.473 Cells to be Barred List)
   /// whenever it is active.
   bool barred = false;

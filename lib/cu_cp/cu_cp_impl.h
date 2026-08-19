@@ -218,6 +218,7 @@ public:
   bool                                    dispatch_deactivate_cell(const nr_cell_global_id_t& cgi) override;
   bool                                    dispatch_activate_cell(const nr_cell_global_id_t& cgi) override;
   bool                                    dispatch_bar_cell(const nr_cell_global_id_t& cgi, bool barred) override;
+  std::optional<cu_cp_cell_state>         get_cell_state(const nr_cell_global_id_t& cgi) const override;
 
   /// Run a cell command's validation+scheduling on the CU-CP executor, blocking for the validation result.
   bool dispatch_cell_command(const char* name, std::function<bool()> validate_and_schedule);

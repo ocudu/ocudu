@@ -18,10 +18,12 @@ cell_deactivation_routine::cell_deactivation_routine(const cu_cp_configuration& 
                                                      ngap_cause_t                       release_cause_,
                                                      bool                               bar_cells_first_,
                                                      du_processor_repository&           du_db_,
+                                                     logical_cell_manager&              logical_cells_,
                                                      cu_cp_ue_context_release_handler&  ue_release_handler_,
                                                      ue_manager&                        ue_mng_,
                                                      ocudulog::basic_logger&            logger_) :
   du_db(du_db_),
+  logical_cells(logical_cells_),
   ue_release_handler(ue_release_handler_),
   ue_mng(ue_mng_),
   logger(logger_),
@@ -114,6 +116,11 @@ void cell_deactivation_routine::operator()(coro_context<async_task<bool>>& ctx)
                       ? fmt::to_string(f1ap_cu_cfg_update_response.cause.value())
                       : "timeout");
       routine_success = false;
+      continue;
+    }
+    // The DU acknowledged the deactivation of this update's cells: record them as operationally disabled.
+    for (const auto& cell : du_update_it->second.cells_to_be_deactivated_list) {
+      logical_cells.set_operational_state(cell.cgi.nci, cell_operational_state::disabled);
     }
   }
 

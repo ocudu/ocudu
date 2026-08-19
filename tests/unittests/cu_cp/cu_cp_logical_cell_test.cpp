@@ -142,10 +142,12 @@ public:
     cu_cp_logical_cell_test_base([]() {
       cu_cp_test_env_params env_params{};
       env_params.logical_cells = {
-          ocucp::cu_cp_logical_cell_config{
-              nr_cell_identity::create(gnb_id_t{411, 22}, 0).value(), /* admin_locked = */ false, /* barred = */ false},
-          ocucp::cu_cp_logical_cell_config{
-              nr_cell_identity::create(gnb_id_t{411, 22}, 1).value(), /* admin_locked = */ true, /* barred = */ false}};
+          ocucp::cu_cp_logical_cell_config{nr_cell_identity::create(gnb_id_t{411, 22}, 0).value(),
+                                           ocucp::cell_admin_state::unlocked,
+                                           /* barred = */ false},
+          ocucp::cu_cp_logical_cell_config{nr_cell_identity::create(gnb_id_t{411, 22}, 1).value(),
+                                           ocucp::cell_admin_state::locked,
+                                           /* barred = */ false}};
       return env_params;
     }())
   {
@@ -160,10 +162,11 @@ public:
     cu_cp_logical_cell_test_base([]() {
       cu_cp_test_env_params env_params{};
       env_params.logical_cells = {
-          ocucp::cu_cp_logical_cell_config{
-              nr_cell_identity::create(gnb_id_t{411, 22}, 0).value(), /* admin_locked = */ false, /* barred = */ true},
+          ocucp::cu_cp_logical_cell_config{nr_cell_identity::create(gnb_id_t{411, 22}, 0).value(),
+                                           ocucp::cell_admin_state::unlocked,
+                                           /* barred = */ true},
           ocucp::cu_cp_logical_cell_config{nr_cell_identity::create(gnb_id_t{411, 22}, 1).value(),
-                                           /* admin_locked = */ false,
+                                           ocucp::cell_admin_state::unlocked,
                                            /* barred = */ false}};
       return env_params;
     }())
@@ -179,8 +182,10 @@ public:
   cu_cp_partially_declared_cell_test() :
     cu_cp_logical_cell_test_base([]() {
       cu_cp_test_env_params env_params{};
-      env_params.logical_cells = {ocucp::cu_cp_logical_cell_config{
-          nr_cell_identity::create(gnb_id_t{411, 22}, 0).value(), /* admin_locked = */ false, /* barred = */ false}};
+      env_params.logical_cells = {
+          ocucp::cu_cp_logical_cell_config{nr_cell_identity::create(gnb_id_t{411, 22}, 0).value(),
+                                           ocucp::cell_admin_state::unlocked,
+                                           /* barred = */ false}};
       return env_params;
     }())
   {
@@ -263,6 +268,74 @@ TEST_F(cu_cp_logical_cell_test, when_locked_cell_du_reconnects_then_it_stays_loc
   std::vector<uint64_t> ncis = activated_ncis(*resp2);
   ASSERT_EQ(ncis.size(), 1U) << "the operator lock was lost across the DU restart";
   EXPECT_EQ(ncis[0], cell_a_cgi.nci.value());
+
+  // The recorded states reflect the outcome: cell B locked and dormant, cell A back on air.
+  cu_cp_cell_command_handler&     cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
+  std::optional<cu_cp_cell_state> state_b  = cell_cmd.get_cell_state(cell_b_cgi);
+  ASSERT_TRUE(state_b.has_value());
+  EXPECT_EQ(state_b->admin_state, cell_admin_state::locked);
+  EXPECT_EQ(state_b->operational_state, cell_operational_state::disabled);
+  std::optional<cu_cp_cell_state> state_a = cell_cmd.get_cell_state(cell_a_cgi);
+  ASSERT_TRUE(state_a.has_value());
+  EXPECT_EQ(state_a->admin_state, cell_admin_state::unlocked);
+  EXPECT_EQ(state_a->operational_state, cell_operational_state::enabled);
+}
+
+TEST_F(cu_cp_declared_locked_cell_test, when_f1_setup_completes_then_declared_states_are_recorded)
+{
+  // The declared administrative states are reflected in the recorded cell states right after F1 setup:
+  // the unlocked cell is on air, the declared-locked cell is dormant.
+  unsigned du_idx = 0;
+  auto     resp   = connect_du_and_run_f1_setup(du_idx);
+  ASSERT_TRUE(resp.has_value());
+  ASSERT_EQ(activated_ncis(*resp).size(), 1U);
+
+  cu_cp_cell_command_handler&     cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
+  std::optional<cu_cp_cell_state> state_a  = cell_cmd.get_cell_state(cell_a_cgi);
+  ASSERT_TRUE(state_a.has_value());
+  EXPECT_EQ(state_a->admin_state, cell_admin_state::unlocked);
+  EXPECT_EQ(state_a->operational_state, cell_operational_state::enabled);
+
+  std::optional<cu_cp_cell_state> state_b = cell_cmd.get_cell_state(cell_b_cgi);
+  ASSERT_TRUE(state_b.has_value());
+  EXPECT_EQ(state_b->admin_state, cell_admin_state::locked);
+  EXPECT_EQ(state_b->operational_state, cell_operational_state::disabled);
+}
+
+TEST_F(cu_cp_logical_cell_test, when_amf_reconnect_reactivation_fails_then_cell_is_unlocked_but_disabled)
+{
+  // A cell whose fault-recovery reactivation the DU rejects stays administratively unlocked but
+  // operationally disabled: the recorded state distinguishes it from a cell that is actually on air.
+  unsigned du_idx = 0;
+  auto     resp   = connect_du_and_run_f1_setup(du_idx);
+  ASSERT_TRUE(resp.has_value());
+  ASSERT_EQ(activated_ncis(*resp).size(), 2U);
+
+  // AMF loss deactivates the served cells.
+  ASSERT_TRUE(drop_amf_connection(0));
+  {
+    f1ap_message deact_upd;
+    ASSERT_TRUE(pop_cu_cfg_upd(du_idx, deact_upd)) << "AMF loss did not deactivate the served cells";
+    ASSERT_TRUE(deact_upd.pdu.init_msg().value.gnb_cu_cfg_upd()->cells_to_be_deactiv_list_present);
+    get_du(du_idx).push_ul_pdu(make_ack_for(deact_upd));
+  }
+
+  // AMF reconnects, but the DU rejects the reactivation update.
+  ASSERT_TRUE(reconnect_amf(0)) << "AMF did not reconnect within expected time";
+  f1ap_message activ_upd;
+  ASSERT_TRUE(pop_cu_cfg_upd(du_idx, activ_upd, std::chrono::milliseconds{1000}))
+      << "no activation update after AMF reconnection";
+  f1ap_message fail = test_helpers::generate_gnb_cu_configuration_update_failure();
+  fail.pdu.unsuccessful_outcome().value.gnb_cu_cfg_upd_fail()->transaction_id =
+      activ_upd.pdu.init_msg().value.gnb_cu_cfg_upd()->transaction_id;
+  get_du(du_idx).push_ul_pdu(fail);
+
+  cu_cp_cell_command_handler&     cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
+  std::optional<cu_cp_cell_state> state    = cell_cmd.get_cell_state(cell_a_cgi);
+  ASSERT_TRUE(state.has_value());
+  EXPECT_EQ(state->admin_state, cell_admin_state::unlocked);
+  EXPECT_EQ(state->operational_state, cell_operational_state::disabled)
+      << "a failed reactivation must not be recorded as on air";
 }
 
 TEST_F(cu_cp_logical_cell_test, when_lock_fails_then_cell_is_not_left_locked)
