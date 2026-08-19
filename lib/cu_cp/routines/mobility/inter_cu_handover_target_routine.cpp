@@ -10,6 +10,7 @@
 #include "ocudu/asn1/rrc_nr/rrc_nr.h"
 #include "ocudu/f1ap/cu_cp/f1ap_cu_ue_context_update.h"
 #include "ocudu/ran/cause/e1ap_cause_converters.h"
+#include <set>
 
 using namespace ocudu;
 using namespace ocucp;
@@ -392,7 +393,59 @@ bool inter_cu_handover_target_routine::fill_e1ap_bearer_context_setup_request(co
                                           ue_mng.get_ue_config(),
                                           default_security_indication);
 
+  fill_e1ap_data_forwarding_info_requests();
+
   return true;
+}
+
+void inter_cu_handover_target_routine::fill_e1ap_data_forwarding_info_requests()
+{
+  for (auto& pdu_session : bearer_context_setup_request.pdu_session_res_to_setup_list) {
+    const pdu_session_id_t psi = pdu_session.pdu_session_id;
+
+    // The 5GC may rule out data forwarding for a PDU session (TS 38.413 section 9.3.1.63).
+    if (request.pdu_session_res_setup_list[psi].data_forwarding_not_possible.value_or(false)) {
+      logger.debug(
+          "ue={}: Skipping data forwarding for {}. Cause: data forwarding not possible", request.ue_index, psi);
+      continue;
+    }
+
+    // Collect the QoS flows the source proposed for DL forwarding (TS 38.413 section 9.3.1.33).
+    std::set<qos_flow_id_t> proposed_flows;
+    for (const cu_cp_pdu_session_res_info_item& res_info : request.pdu_session_res_info_list) {
+      if (res_info.pdu_session_id != psi) {
+        continue;
+      }
+      for (const cu_cp_qos_flow_info_item& flow_info : res_info.qos_flow_info_list) {
+        if (flow_info.dl_forwarding.value_or(false)) {
+          proposed_flows.insert(flow_info.qos_flow_id);
+        }
+      }
+    }
+    if (proposed_flows.empty()) {
+      continue;
+    }
+
+    // Request a single PDU session level forwarding tunnel for every admitted QoS flow the source proposed. The
+    // forwarded packets are SDAP SDUs, so their PDCP sequence numbers are not preserved
+    // (TS 38.300 section 9.2.3.2.3).
+    slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_map_item> flows_on_pdu_session_tunnel;
+    const auto& next_session = next_config.pdu_sessions_to_setup_list.at(psi);
+    for (const auto& [drb_id, drb_ctx] : next_session.drb_to_add) {
+      for (const auto& [qfi, flow_ctx] : drb_ctx.qos_flows) {
+        if (proposed_flows.count(qfi) != 0) {
+          flows_on_pdu_session_tunnel.emplace(qfi, e1ap_qos_flow_map_item{qfi, std::nullopt});
+        }
+      }
+    }
+
+    if (not flows_on_pdu_session_tunnel.empty()) {
+      e1ap_data_forwarding_info_request session_request;
+      session_request.data_forwarding_request              = e1ap_data_forwarding_request::dl;
+      session_request.qos_flows_forwarded_on_fwd_tunnels   = std::move(flows_on_pdu_session_tunnel);
+      pdu_session.pdu_session_data_forwarding_info_request = session_request;
+    }
+  }
 }
 
 void inter_cu_handover_target_routine::create_srb(srb_id_t srb_id)

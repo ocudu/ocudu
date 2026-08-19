@@ -24,6 +24,15 @@
 using namespace ocudu;
 using namespace ocucp;
 
+// Returns the single PDU session of an E1AP Bearer Context Setup Request.
+static const asn1::e1ap::pdu_session_res_to_setup_item_s& get_pdu_session_res_to_setup_item(const e1ap_message& msg)
+{
+  const auto& ng_ran_bearer_ctxt = msg.pdu.init_msg()
+                                       .value.bearer_context_setup_request()
+                                       ->sys_bearer_context_setup_request.ng_ran_bearer_context_setup_request();
+  return ng_ran_bearer_ctxt[0]->pdu_session_res_to_setup_list()[0];
+}
+
 class cu_cp_inter_cu_ng_handover_test : public cu_cp_test_environment, public ::testing::Test
 {
 public:
@@ -676,6 +685,67 @@ TEST_F(cu_cp_inter_cu_ng_handover_test, when_handover_completed_at_target_then_p
   ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu));
   ASSERT_TRUE(test_helpers::is_valid_pdu_session_resource_setup_response(ngap_pdu));
   ASSERT_TRUE(test_helpers::is_expected_pdu_session_resource_setup_response(ngap_pdu, {}, {psi2}));
+}
+
+// When the source proposes DL data forwarding for its QoS flows, the target asks its CU-UP for a PDU session level
+// forwarding tunnel carrying those flows (TS 38.413 section 9.3.1.33, TS 37.483 section 9.3.2.5).
+TEST_F(cu_cp_inter_cu_ng_handover_test, when_source_proposes_dl_data_forwarding_then_target_requests_fwd_tunnels)
+{
+  // Inject a Handover Request proposing DL data forwarding and await the Bearer Context Setup Request.
+  handover_request_params ho_params;
+  ho_params.propose_dl_data_forwarding = true;
+  ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request(ho_params));
+
+  const asn1::e1ap::pdu_session_res_to_setup_item_s& e1ap_pdu_session = get_pdu_session_res_to_setup_item(e1ap_pdu);
+
+  ASSERT_TRUE(e1ap_pdu_session.pdu_session_data_forwarding_info_request_present);
+  ASSERT_EQ(e1ap_pdu_session.pdu_session_data_forwarding_info_request.data_forwarding_request.value,
+            asn1::e1ap::data_forwarding_request_opts::dl);
+
+  // The proposed QoS flow is listed as forwarded over that tunnel.
+  const auto& flows_on_tunnel =
+      e1ap_pdu_session.pdu_session_data_forwarding_info_request.qos_flows_forwarded_on_fwd_tunnels;
+  ASSERT_EQ(flows_on_tunnel.size(), 1U);
+  ASSERT_EQ(flows_on_tunnel[0].qos_flow_id, qos_flow_id_to_uint(qfi));
+
+  // No DRB level tunnel is requested. Per DRB forwarding tunnels arrive with the support for the direct
+  // forwarding path.
+  ASSERT_EQ(e1ap_pdu_session.drb_to_setup_list_ng_ran.size(), 1U);
+  ASSERT_FALSE(e1ap_pdu_session.drb_to_setup_list_ng_ran[0].drb_data_forwarding_info_request_present);
+
+  // The handover must still complete normally afterwards.
+  ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_setup_request());
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_handover_request_ack());
+  ASSERT_TRUE(send_dl_ran_status_transfer_and_await_bearer_context_modification_request());
+  ASSERT_TRUE(send_bearer_context_modification_response());
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_handover_notify_and_ue_context_modification_request());
+  ASSERT_TRUE(send_ue_context_modification_response_empty(cu_ue_id, du_ue_id));
+}
+
+// The 5GC can rule out data forwarding for a PDU session, in which case the target must not ask its CU-UP for any
+// forwarding tunnel (TS 38.413 section 9.3.1.63).
+TEST_F(cu_cp_inter_cu_ng_handover_test, when_data_forwarding_is_not_possible_then_no_fwd_tunnels_are_requested)
+{
+  // Inject a Handover Request proposing DL data forwarding but ruling it out for the PDU session.
+  handover_request_params ho_params;
+  ho_params.propose_dl_data_forwarding   = true;
+  ho_params.data_forwarding_not_possible = true;
+  ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request(ho_params));
+
+  const asn1::e1ap::pdu_session_res_to_setup_item_s& e1ap_pdu_session = get_pdu_session_res_to_setup_item(e1ap_pdu);
+  ASSERT_FALSE(e1ap_pdu_session.pdu_session_data_forwarding_info_request_present);
+  ASSERT_EQ(e1ap_pdu_session.drb_to_setup_list_ng_ran.size(), 1U);
+  ASSERT_FALSE(e1ap_pdu_session.drb_to_setup_list_ng_ran[0].drb_data_forwarding_info_request_present);
+
+  // The handover must still complete normally afterwards.
+  ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_setup_request());
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_handover_request_ack());
+  ASSERT_TRUE(send_dl_ran_status_transfer_and_await_bearer_context_modification_request());
+  ASSERT_TRUE(send_bearer_context_modification_response());
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_handover_notify_and_ue_context_modification_request());
+  ASSERT_TRUE(send_ue_context_modification_response_empty(cu_ue_id, du_ue_id));
 }
 
 // Per TS 38.413 Section 8.4.6 (Uplink RAN Status Transfer), the source includes its own DRB ID in the DRBs Subject to

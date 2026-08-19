@@ -36,6 +36,10 @@ struct cu_cp_pdu_session_res_setup_item {
   pdu_session_type_t                                            pdu_session_type;
   std::optional<security_indication_t>                          security_ind;
   slotted_id_vector<qos_flow_id_t, qos_flow_setup_request_item> qos_flow_setup_request_items;
+  /// \brief Set if the 5GC decided that this PDU session is not subject to data forwarding.
+  ///
+  /// Only carried by HANDOVER REQUEST and ignored otherwise (TS 38.413 section 9.3.4.1).
+  std::optional<bool> data_forwarding_not_possible;
 };
 
 } // namespace ocudu::ocucp
