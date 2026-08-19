@@ -22,19 +22,43 @@ logical_cell_manager::logical_cell_manager(span<const cu_cp_logical_cell_config>
   }
 }
 
-logical_cell* logical_cell_manager::find_cell(nr_cell_identity nci)
-{
-  auto it = cells.find(nci);
-  return it != cells.end() ? &it->second : nullptr;
-}
-
 const logical_cell* logical_cell_manager::find_cell(nr_cell_identity nci) const
 {
   auto it = cells.find(nci);
   return it != cells.end() ? &it->second : nullptr;
 }
 
-logical_cell& logical_cell_manager::realize_cell(nr_cell_identity nci, cu_cp_du_index_t du_index)
+std::optional<bool> logical_cell_manager::set_admin_locked(nr_cell_identity nci, bool locked)
+{
+  auto it = cells.find(nci);
+  if (it == cells.end()) {
+    logger.warning("Cannot set admin_locked={} for unknown logical cell nci={:#x}", locked, nci.value());
+    return std::nullopt;
+  }
+  bool prev               = it->second.admin_locked;
+  it->second.admin_locked = locked;
+  if (prev != locked) {
+    logger.info("Logical cell nci={:#x} admin_locked: {} -> {}", nci.value(), prev, locked);
+  }
+  return prev;
+}
+
+std::optional<bool> logical_cell_manager::set_barred(nr_cell_identity nci, bool barred)
+{
+  auto it = cells.find(nci);
+  if (it == cells.end()) {
+    logger.warning("Cannot set barred={} for unknown logical cell nci={:#x}", barred, nci.value());
+    return std::nullopt;
+  }
+  bool prev         = it->second.barred;
+  it->second.barred = barred;
+  if (prev != barred) {
+    logger.info("Logical cell nci={:#x} barred: {} -> {}", nci.value(), prev, barred);
+  }
+  return prev;
+}
+
+const logical_cell& logical_cell_manager::realize_cell(nr_cell_identity nci, cu_cp_du_index_t du_index)
 {
   auto it = cells.find(nci);
   if (it == cells.end()) {

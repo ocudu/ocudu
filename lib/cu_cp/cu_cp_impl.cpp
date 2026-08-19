@@ -2234,15 +2234,17 @@ async_task<cu_cp_cell_command_response> cu_cp_impl::deactivate_cell(const nr_cel
                        du_index,
                        targets        = std::move(targets),
                        ues_to_release = std::vector<cu_cp_ue_index_t>{},
-                       prev_locked    = false,
+                       prev_locked    = std::optional<bool>{},
                        success        = false](coro_context<async_task<cu_cp_cell_command_response>>& ctx) mutable {
     CORO_BEGIN(ctx);
     // Record the operator's lock intent on the logical cell when the command actually runs, so it survives
     // DU restarts and AMF reconnections. Recorded inside the task: a command that is never scheduled must
-    // not leave intent behind.
-    if (logical_cell* cell = logical_cells.find_cell(cgi.nci); cell != nullptr) {
-      prev_locked        = cell->admin_locked;
-      cell->admin_locked = true;
+    // not leave intent behind. Every reported cell is realized as a logical cell at F1 setup, so a missing
+    // record means the registry and the DU records disagree: fail the command instead of mutating only the
+    // DU-side state.
+    prev_locked = logical_cells.set_admin_locked(cgi.nci, true);
+    if (!prev_locked.has_value()) {
+      CORO_EARLY_RETURN(cu_cp_cell_command_response{false});
     }
     // The CU-CP drives the full graceful stop (bar, then release the cell's UEs, then deactivate), rather
     // than relying on the DU to autonomously bar/drain, so that the behaviour does not depend on DU-specific
@@ -2263,9 +2265,7 @@ async_task<cu_cp_cell_command_response> cu_cp_impl::deactivate_cell(const nr_cel
     if (!success) {
       // Restore the previous intent, so recorded intent stays consistent with the reported outcome (a failed
       // deactivation must not leave the cell marked as locked).
-      if (logical_cell* cell = logical_cells.find_cell(cgi.nci); cell != nullptr) {
-        cell->admin_locked = prev_locked;
-      }
+      logical_cells.set_admin_locked(cgi.nci, *prev_locked);
     }
     CORO_RETURN(cu_cp_cell_command_response{success});
   });
@@ -2288,16 +2288,17 @@ async_task<cu_cp_cell_command_response> cu_cp_impl::activate_cell(const nr_cell_
                        du_index,
                        targets     = std::vector<cell_lifecycle_target>{},
                        reapply_bar = false,
-                       prev_locked = true,
+                       prev_locked = std::optional<bool>{},
                        success     = false](coro_context<async_task<cu_cp_cell_command_response>>& ctx) mutable {
     CORO_BEGIN(ctx);
     // Clear the operator's lock intent when the command actually runs (a command that is never scheduled
     // must not mutate intent), and check whether barred intent has to be re-applied after the activation.
-    if (logical_cell* cell = logical_cells.find_cell(cgi.nci); cell != nullptr) {
-      prev_locked        = cell->admin_locked;
-      cell->admin_locked = false;
-      reapply_bar        = cell->barred;
+    // A missing logical cell record fails the command: every reported cell is realized at F1 setup.
+    prev_locked = logical_cells.set_admin_locked(cgi.nci, false);
+    if (!prev_locked.has_value()) {
+      CORO_EARLY_RETURN(cu_cp_cell_command_response{false});
     }
+    reapply_bar = logical_cells.find_cell(cgi.nci)->barred;
     // Restore the PLMNs that were parked when the cell was deactivated, and carry the recorded PCI, so the
     // activation brings the cell back with the same parameters the DU originally reported. Resolved when the
     // task runs, not when the command was created: a lock queued right before this unlock parks the PLMNs
@@ -2319,9 +2320,7 @@ async_task<cu_cp_cell_command_response> cu_cp_impl::activate_cell(const nr_cell_
     if (!success) {
       // Restore the previous intent, so recorded intent stays consistent with the reported outcome (a failed
       // activation must not leave the cell marked as unlocked).
-      if (logical_cell* cell = logical_cells.find_cell(cgi.nci); cell != nullptr) {
-        cell->admin_locked = prev_locked;
-      }
+      logical_cells.set_admin_locked(cgi.nci, *prev_locked);
     }
     if (success && reapply_bar) {
       // Re-apply the logical cell's barred intent now that the cell is active again. The command reports
@@ -2351,33 +2350,33 @@ async_task<cu_cp_cell_command_response> cu_cp_impl::bar_cell(const nr_cell_globa
 
   std::vector<cell_lifecycle_target> targets = {cell_lifecycle_target{du_index, cgi, std::nullopt, {}}};
 
-  return launch_async([this, cgi, barred, targets = std::move(targets), prev_barred = false, success = false](
-                          coro_context<async_task<cu_cp_cell_command_response>>& ctx) mutable {
-    CORO_BEGIN(ctx);
-    // Record the operator's barred intent when the command actually runs, so it survives DU restarts and a
-    // command that is never scheduled leaves no intent behind.
-    if (logical_cell* cell = logical_cells.find_cell(cgi.nci); cell != nullptr) {
-      prev_barred  = cell->barred;
-      cell->barred = barred;
-    }
-    // Whether the cell is currently active: a dormant cell transmits no MIB to bar, so only the intent is
-    // recorded (it is re-applied when the cell is activated). Checked when the task runs, so a deactivation
-    // queued before this command is accounted for.
-    if (du_db.find_du(cgi) == cu_cp_du_index_t::invalid) {
-      logger.info("Cell nci={:#x} is deactivated. Barred intent ({}) recorded and applied on activation",
-                  cgi.nci.value(),
-                  barred);
-      CORO_EARLY_RETURN(cu_cp_cell_command_response{true});
-    }
-    CORO_AWAIT_VALUE(success, launch_async<cell_barring_routine>(cfg, std::move(targets), barred, du_db, logger));
-    if (!success) {
-      // Restore the previous intent, so recorded intent stays consistent with the reported outcome.
-      if (logical_cell* cell = logical_cells.find_cell(cgi.nci); cell != nullptr) {
-        cell->barred = prev_barred;
-      }
-    }
-    CORO_RETURN(cu_cp_cell_command_response{success});
-  });
+  return launch_async(
+      [this, cgi, barred, targets = std::move(targets), prev_barred = std::optional<bool>{}, success = false](
+          coro_context<async_task<cu_cp_cell_command_response>>& ctx) mutable {
+        CORO_BEGIN(ctx);
+        // Record the operator's barred intent when the command actually runs, so it survives DU restarts and a
+        // command that is never scheduled leaves no intent behind. A missing logical cell record fails the
+        // command: every reported cell is realized at F1 setup.
+        prev_barred = logical_cells.set_barred(cgi.nci, barred);
+        if (!prev_barred.has_value()) {
+          CORO_EARLY_RETURN(cu_cp_cell_command_response{false});
+        }
+        // Whether the cell is currently active: a dormant cell transmits no MIB to bar, so only the intent is
+        // recorded (it is re-applied when the cell is activated). Checked when the task runs, so a deactivation
+        // queued before this command is accounted for.
+        if (du_db.find_du(cgi) == cu_cp_du_index_t::invalid) {
+          logger.info("Cell nci={:#x} is deactivated. Barred intent ({}) recorded and applied on activation",
+                      cgi.nci.value(),
+                      barred);
+          CORO_EARLY_RETURN(cu_cp_cell_command_response{true});
+        }
+        CORO_AWAIT_VALUE(success, launch_async<cell_barring_routine>(cfg, std::move(targets), barred, du_db, logger));
+        if (!success) {
+          // Restore the previous intent, so recorded intent stays consistent with the reported outcome.
+          logical_cells.set_barred(cgi.nci, *prev_barred);
+        }
+        CORO_RETURN(cu_cp_cell_command_response{success});
+      });
 }
 
 bool cu_cp_impl::dispatch_cell_command(const char* name, std::function<bool()> validate_and_schedule)
@@ -2477,7 +2476,7 @@ std::set<nr_cell_identity> cu_cp_impl::handle_du_cells_reported(cu_cp_du_index_t
   std::set<nr_cell_identity>         activate;
   std::vector<cell_lifecycle_target> cells_to_bar;
   for (const du_reported_cell& reported : cells) {
-    logical_cell& cell = logical_cells.realize_cell(reported.cgi.nci, du_index);
+    const logical_cell& cell = logical_cells.realize_cell(reported.cgi.nci, du_index);
     if (cell.admin_locked) {
       continue;
     }

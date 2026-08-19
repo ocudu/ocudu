@@ -9,6 +9,7 @@
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/cu_cp_types.h"
 #include <map>
+#include <optional>
 
 namespace ocudu::ocucp {
 
@@ -46,15 +47,22 @@ public:
   explicit logical_cell_manager(span<const cu_cp_logical_cell_config> declared_cells);
 
   /// Find the logical cell with the given NCI. Returns nullptr if unknown.
-  logical_cell*       find_cell(nr_cell_identity nci);
   const logical_cell* find_cell(nr_cell_identity nci) const;
+
+  /// \brief Set the administrative lock intent of a logical cell.
+  /// \return The previous intent, or std::nullopt if no logical cell with the given NCI exists.
+  std::optional<bool> set_admin_locked(nr_cell_identity nci, bool locked);
+
+  /// \brief Set the intended MIB cellBarred state of a logical cell.
+  /// \return The previous intent, or std::nullopt if no logical cell with the given NCI exists.
+  std::optional<bool> set_barred(nr_cell_identity nci, bool barred);
 
   /// \brief Realize a cell reported by a DU, creating a dynamic logical cell if it was not declared.
   ///
   /// The dynamic cell is created locked when any cells were declared in configuration (declared set =
   /// activation whitelist), unlocked otherwise.
   /// \return The (created or updated) logical cell record.
-  logical_cell& realize_cell(nr_cell_identity nci, cu_cp_du_index_t du_index);
+  const logical_cell& realize_cell(nr_cell_identity nci, cu_cp_du_index_t du_index);
 
   /// De-realize all cells realized by the given DU, keeping their operator intent.
   void derealize_du_cells(cu_cp_du_index_t du_index);
