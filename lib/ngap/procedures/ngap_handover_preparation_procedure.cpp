@@ -223,6 +223,10 @@ byte_buffer ngap_handover_preparation_procedure::fill_asn1_source_to_target_tran
         // Every QoS flow reported in the DRB-to-QoS-flow mapping must also appear in the QoS Flow Information List.
         qos_flow_info_item_s qos_flow_info_item = {};
         qos_flow_info_item.qos_flow_id          = qos_flow_id_to_uint(assoc_qos_flow.qos_flow_id);
+        // Propose the QoS flow for DL data forwarding, leaving it to the target to decide which flows it accepts and
+        // over which forwarding tunnels (TS 38.300 section 9.2.3.2.3).
+        qos_flow_info_item.dl_forwarding_present = true;
+        qos_flow_info_item.dl_forwarding         = dl_forwarding_opts::dl_forwarding_proposed;
         pdu_session_res_info_item.qos_flow_info_list.push_back(qos_flow_info_item);
       }
       pdu_session_res_info_item.drbs_to_qos_flows_map_list.push_back(asn1_drb_item);
