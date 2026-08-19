@@ -18,6 +18,7 @@
 #include "procedures/xnap_target_handover_preparation_procedure.h"
 #include "xnap_asn1_converters.h"
 #include "xnap_asn1_utils.h"
+#include "ocudu/adt/scope_exit.h"
 #include "ocudu/asn1/xnap/common.h"
 #include "ocudu/asn1/xnap/xnap.h"
 #include "ocudu/asn1/xnap/xnap_ies.h"
@@ -58,7 +59,24 @@ async_task<void> xnap_impl::stop()
   // Cancel pending per-UE transactions (e.g. Handover Preparation, SN Status Transfer).
   ue_ctxt_list.cancel_all_transactions();
 
-  return launch_no_op_task();
+  if (nof_ue_procedures == 0) {
+    return launch_no_op_task();
+  }
+
+  // Await the UE-associated procedures that are suspended on a CU-CP notifier. Cancelling the XNAP transactions
+  // does not resume those, and they access this XNAP instance once they do resume. The caller removes this
+  // instance as soon as this task completes.
+  logger.debug("Awaiting the completion of {} UE procedures before stopping XNAP", nof_ue_procedures);
+  return launch_async([this](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+
+    while (nof_ue_procedures != 0) {
+      ue_procedures_done.reset();
+      CORO_AWAIT(ue_procedures_done);
+    }
+
+    CORO_RETURN();
+  });
 }
 
 void xnap_impl::handle_message(const xnap_message& msg)
@@ -294,14 +312,14 @@ void xnap_impl::handle_handover_request(const asn1::xnap::ho_request_s& msg)
   }
 
   if (!cu_cp_notifier.schedule_async_task(ho_request.ue_index,
-                                          launch_async<xnap_target_handover_preparation_procedure>(
+                                          track_ue_procedure(launch_async<xnap_target_handover_preparation_procedure>(
                                               ho_request,
                                               xnc_index,
                                               uint_to_peer_xnap_ue_id(msg->source_ng_ra_nnode_ue_xn_ap_id),
                                               ue_ctxt_list,
                                               cu_cp_notifier,
                                               tx_notifier,
-                                              logger))) {
+                                              logger)))) {
     logger.debug("Couldn't schedule targer handover preparation procedure");
     send_handover_failure(msg->source_ng_ra_nnode_ue_xn_ap_id, xnap_cause_misc_t::not_enough_user_plane_processing_res);
     return;
@@ -379,12 +397,12 @@ xnap_impl::handle_handover_request_required(const xnap_handover_request& request
 
   ue_ctxt_list[request.ue_index].logger.log_debug("Starting HO source preparation");
 
-  return launch_async<xnap_source_handover_preparation_procedure>(request,
-                                                                  ue_ctxt_list[request.ue_index],
-                                                                  ue_ctxt_list,
-                                                                  tx_notifier,
-                                                                  cu_cp_notifier,
-                                                                  timer_factory{timers, ctrl_exec});
+  return track_ue_procedure(launch_async<xnap_source_handover_preparation_procedure>(request,
+                                                                                     ue_ctxt_list[request.ue_index],
+                                                                                     ue_ctxt_list,
+                                                                                     tx_notifier,
+                                                                                     cu_cp_notifier,
+                                                                                     timer_factory{timers, ctrl_exec}));
 }
 
 void xnap_impl::handle_cho_cancel_required(cu_cp_ue_index_t ue_index, const nr_cell_global_id_t& target_cgi)
@@ -491,8 +509,8 @@ async_task<expected<cu_cp_status_transfer>> xnap_impl::handle_sn_status_transfer
   }
 
   xnap_ue_context& ue_ctxt = ue_ctxt_list[ue_index];
-  return launch_async<xnap_sn_status_transfer_procedure>(
-      xnap_cfg.procedure_timeout, ue_ctxt.sn_status_transfer_outcome, ue_ctxt.logger);
+  return track_ue_procedure(launch_async<xnap_sn_status_transfer_procedure>(
+      xnap_cfg.procedure_timeout, ue_ctxt.sn_status_transfer_outcome, ue_ctxt.logger));
 }
 
 void xnap_impl::handle_handover_success(const asn1::xnap::ho_success_s& msg)
@@ -593,7 +611,8 @@ xnap_impl::handle_retrieve_ue_context_required(const xnap_retrieve_ue_context_re
     ue_ctxt_list.add_ue(request.ue_index, local_xnap_ue_id);
   }
 
-  return launch_async<xnap_new_node_retrieve_ue_context_procedure>(request, ue_ctxt_list, tx_notifier);
+  return track_ue_procedure(
+      launch_async<xnap_new_node_retrieve_ue_context_procedure>(request, ue_ctxt_list, tx_notifier));
 }
 
 void xnap_impl::handle_retrieve_ue_context_request(const asn1::xnap::retrieve_ue_context_request_s& msg)
@@ -646,10 +665,49 @@ void xnap_impl::handle_retrieve_ue_context_request(const asn1::xnap::retrieve_ue
 
   if (!cu_cp_notifier.schedule_async_task(
           request.ue_index,
-          launch_async<xnap_old_node_retrieve_ue_context_procedure>(
-              request, peer_xnap_ue_id, ue_ctxt_list, cu_cp_notifier, tx_notifier, logger))) {
+          track_ue_procedure(launch_async<xnap_old_node_retrieve_ue_context_procedure>(
+              request, peer_xnap_ue_id, ue_ctxt_list, cu_cp_notifier, tx_notifier, logger)))) {
     logger.debug("ue={}: Couldn't schedule the retrieve UE context procedure", request.ue_index);
     send_retrieve_ue_context_failure(xnap_cause_radio_network_t::unspecified);
     return;
   }
+}
+
+template <typename Result>
+async_task<Result> xnap_impl::track_ue_procedure(async_task<Result> proc)
+{
+  ++nof_ue_procedures;
+
+  // Runs when the procedure completes, or when it is discarded without ever running.
+  auto on_completion = make_scope_exit([this]() {
+    if (--nof_ue_procedures == 0) {
+      ue_procedures_done.set();
+    }
+  });
+
+  return launch_async([proc = std::move(proc), on_completion = std::move(on_completion), res = Result{}](
+                          coro_context<async_task<Result>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+    CORO_AWAIT_VALUE(res, std::move(proc));
+    CORO_RETURN(std::move(res));
+  });
+}
+
+async_task<void> xnap_impl::track_ue_procedure(async_task<void> proc)
+{
+  ++nof_ue_procedures;
+
+  // Runs when the procedure completes, or when it is discarded without ever running.
+  auto on_completion = make_scope_exit([this]() {
+    if (--nof_ue_procedures == 0) {
+      ue_procedures_done.set();
+    }
+  });
+
+  return launch_async(
+      [proc = std::move(proc), on_completion = std::move(on_completion)](coro_context<async_task<void>>& ctx) mutable {
+        CORO_BEGIN(ctx);
+        CORO_AWAIT(std::move(proc));
+        CORO_RETURN();
+      });
 }

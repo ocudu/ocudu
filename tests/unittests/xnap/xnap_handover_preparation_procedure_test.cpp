@@ -319,3 +319,38 @@ TEST_F(xnap_handover_preparation_procedure_test,
   ASSERT_EQ(rep.pdu.successful_outcome().value.type(),
             asn1::xnap::xnap_elem_procs_o::successful_outcome_c::types_opts::ho_request_ack);
 }
+
+/// Test that stopping XNAP waits for a UE procedure that is suspended on a CU-CP notifier. Cancelling the XNAP
+/// transactions does not resume such a procedure, and the caller removes the XNAP instance as soon as stop() returns.
+TEST_F(xnap_handover_preparation_procedure_test, when_ue_procedure_is_in_flight_then_stop_awaits_its_completion)
+{
+  // Run XN setup.
+  run_xn_setup(xnap_peer_cfg);
+
+  // Prepare handover to succeed.
+  set_handover_procedure_outcome(true);
+
+  // Suspend the target handover preparation procedure inside the CU-CP.
+  cu_cp_notifier.defer_handover_request();
+
+  // Inject Handover Request.
+  xnap_message request = ::generate_handover_request(local_xnap_ue_id_t::min);
+  xnap->handle_message(request);
+
+  // Stop XNAP while the procedure is suspended. The stop task must not complete yet.
+  async_task<void>         stop_task = xnap->stop();
+  lazy_task_launcher<void> stop_launcher(stop_task);
+  ASSERT_FALSE(stop_task.ready());
+
+  // Destroy XNAP as soon as it reports being stopped, the way xnap_repository::remove_xnap does. The procedure is
+  // still in flight here, so this must not happen yet.
+  if (stop_task.ready()) {
+    xnap.reset();
+  }
+
+  // Let the procedure resume and run to completion.
+  cu_cp_notifier.complete_handover_request();
+
+  // Only now may XNAP be considered stopped.
+  ASSERT_TRUE(stop_task.ready());
+}

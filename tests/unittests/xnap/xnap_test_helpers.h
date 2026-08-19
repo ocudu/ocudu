@@ -160,12 +160,26 @@ public:
       response = ho_fail;
     }
 
-    return launch_async([res = std::move(response)](
+    return launch_async([this, res = std::move(response)](
                             coro_context<async_task<cu_cp_handover_resource_allocation_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
 
+      if (handover_request_gate.has_value()) {
+        CORO_AWAIT(*handover_request_gate);
+      }
+
       CORO_RETURN(res);
     });
+  }
+
+  /// Suspends the handover request handling until \ref complete_handover_request is called. Allows a test to run
+  /// other events while the XNAP procedure is suspended.
+  void defer_handover_request() { handover_request_gate.emplace(); }
+
+  void complete_handover_request()
+  {
+    ocudu_assert(handover_request_gate.has_value(), "Handover request handling was not deferred");
+    handover_request_gate->set();
   }
 
   void on_xn_handover_execution(cu_cp_ue_index_t                              ue_index,
@@ -224,6 +238,9 @@ private:
 
   // Gate that holds the RRC Handover Command handling suspended, when set.
   std::optional<manual_event_flag> rrc_handover_command_gate;
+
+  // Gate that holds the handover request handling suspended, when set.
+  std::optional<manual_event_flag> handover_request_gate;
 
   ue_manager&             ue_mng;
   ocudulog::basic_logger& logger;
