@@ -228,7 +228,11 @@ baseband_gateway_receiver::metadata radio_difi_rx_stream::receive(baseband_gatew
       }
     }
 
-    const uint64_t pkt_ts = difi_time_to_ticks(read_u32_be(buf + 16), read_u64_be(buf + 20), config.sample_rate_Hz);
+    // Bring the wire timestamp back onto the baseband timeline before anything compares it, so the
+    // shared-clock test below sees like for like rather than a whole UTC epoch of difference.
+    const uint64_t pkt_ts = static_cast<uint64_t>(
+        static_cast<int64_t>(difi_time_to_ticks(read_u32_be(buf + 16), read_u64_be(buf + 20), config.sample_rate_Hz)) -
+        epoch_offset);
 
     if (!ts_offset.has_value()) {
       // Trust absolute time when the transmitter is plausibly on our clock. Translating a peer that is
@@ -289,9 +293,10 @@ baseband_gateway_receiver::metadata radio_difi_rx_stream::receive(baseband_gatew
   return metadata{.ts = base_ts};
 }
 
-void radio_difi_rx_stream::start(baseband_gateway_timestamp init_time)
+void radio_difi_rx_stream::start(baseband_gateway_timestamp init_time, int64_t epoch_offset_ticks)
 {
   sample_count.store(init_time, std::memory_order_relaxed);
+  epoch_offset = epoch_offset_ticks;
 
   // Drop any latched epoch and leftover samples: the next packet re-locks onto the transmitter.
   ts_offset.reset();

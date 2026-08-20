@@ -72,7 +72,10 @@ void radio_difi_tx_stream::transmit(const baseband_gateway_buffer_reader&       
 
     uint32_t full_secs = 0;
     uint64_t frac_ps   = 0;
-    difi_ticks_to_time(chunk_ts, config.sample_rate_Hz, full_secs, frac_ps);
+    difi_ticks_to_time(static_cast<uint64_t>(static_cast<int64_t>(chunk_ts) + epoch_offset),
+                       config.sample_rate_Hz,
+                       full_secs,
+                       frac_ps);
 
     // Periodic context re-send: send before the data packet at each interval boundary.
     if (pkts_since_ctx >= CTX_INTERVAL) {
@@ -132,7 +135,7 @@ void radio_difi_tx_stream::send_context_packet(uint32_t full_secs, uint64_t frac
   ctx_pkt_n = (ctx_pkt_n + 1U) & 0xfU;
 }
 
-void radio_difi_tx_stream::start(baseband_gateway_timestamp init_time)
+void radio_difi_tx_stream::start(baseband_gateway_timestamp init_time, int64_t epoch_offset_ticks)
 {
   // A stream that failed construction must never put a packet on the wire.
   if (!successful) {
@@ -143,12 +146,14 @@ void radio_difi_tx_stream::start(baseband_gateway_timestamp init_time)
     return;
   }
 
+  epoch_offset   = epoch_offset_ticks;
   last_tx_end_ts = init_time;
   started        = true;
 
   uint32_t full_secs = 0;
   uint64_t frac_ps   = 0;
-  difi_ticks_to_time(init_time, config.sample_rate_Hz, full_secs, frac_ps);
+  difi_ticks_to_time(
+      static_cast<uint64_t>(static_cast<int64_t>(init_time) + epoch_offset), config.sample_rate_Hz, full_secs, frac_ps);
 
   send_context_packet(full_secs, frac_ps);
 }

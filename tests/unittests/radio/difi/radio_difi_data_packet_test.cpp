@@ -67,13 +67,13 @@ TEST(DifiDataPacket, SizeFor8BitSamples)
 
 TEST(DifiDataPacket, HeaderWordPktN0)
 {
-  // DATA_STATIC_BITS = 0x18e00000, pkt_n=0, size_words = (28+0)/4 = 7
+  // DATA_STATIC_BITS = 0x18600000 (UTC), pkt_n=0, size_words = (28+0)/4 = 7
   const auto           p = make_params(16, 0);
   std::vector<uint8_t> buf(difi_data_packet_size(16, 0).value());
   build_difi_data_packet(buf, p, {});
 
   const uint32_t header   = read_u32_be(buf.data());
-  const uint32_t expected = 0x18e00000U | (0U << 16) | 7U;
+  const uint32_t expected = 0x18600000U | (0U << 16) | 7U;
   EXPECT_EQ(header, expected);
 }
 
@@ -87,7 +87,7 @@ TEST(DifiDataPacket, HeaderWordPktN5With4Samples)
 
   // packet = 28 + 16 = 44 bytes = 11 words.
   const uint32_t header   = read_u32_be(buf.data());
-  const uint32_t expected = 0x18e00000U | (5U << 16) | 11U;
+  const uint32_t expected = 0x18600000U | (5U << 16) | 11U;
   EXPECT_EQ(header, expected);
 }
 

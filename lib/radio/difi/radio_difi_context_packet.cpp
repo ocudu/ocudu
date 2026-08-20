@@ -13,16 +13,27 @@ using namespace ocudu;
 /// DIFI constants.
 ///
 
-/// Header template: type=0x4 (context), class-id present, integer-seconds timestamp mode.
-static constexpr uint32_t CONTEXT_STATIC_BITS = 0x49e00000U;
+/// \brief Header template: type=0x4 (context), class-id present, UTC timestamp mode.
+///
+/// Bits 31-20 select the epoch: 0x496 is UTC, 0x49a GPS, 0x49e POSIX. UTC is what DIFI equipment
+/// emits, so timestamps are comparable against a peer rather than only against ourselves.
+static constexpr uint32_t CONTEXT_STATIC_BITS = 0x49600000U;
 /// Fixed packet size in 32-bit words (108 / 4 = 27).
 static constexpr uint32_t CONTEXT_SIZE_WORDS = 27U;
 /// DIFI Organizational Unique Identifier (OUI) for the standard context packet.
 static constexpr uint32_t OUI = 0x6a621eU;
-/// Device class field within the class ID (0 = unspecified).
-static constexpr uint32_t DEVICE_CLASS = 0U;
-/// Reference point identifier (fixed DIFI value).
-static constexpr uint32_t REF_POINT = 0xfbb98000U;
+/// \brief Packet class code within the class ID: 1 marks a standard flow signal context packet.
+///
+/// Data packets use 0. A peer that classifies packets by this field ignores context packets carrying
+/// anything else.
+static constexpr uint32_t PACKET_CLASS_CODE = 1U;
+/// \brief Context Indicator Field 0: the bitmap declaring which context fields follow.
+///
+/// Fixed for the DIFI standard context packet. Zero here reads as "no fields present", so a
+/// conformant receiver would discard the sample rate and frequencies advertised below.
+static constexpr uint32_t CIF0 = 0xfbb98000U;
+/// Reference point identifier.
+static constexpr uint32_t REF_POINT = 0x64U;
 /// Default state-and-event word.
 static constexpr uint32_t DEFAULT_STATE_AND_EVENTS = 0x9ff00000U;
 /// Timestamp adjustment: 10 µs expressed in femtoseconds.
@@ -53,8 +64,8 @@ void ocudu::build_difi_context_packet(span<uint8_t> buf, const difi_context_pack
   // Offset 4: stream ID.
   pack_u32(out + 4, p.stream_id);
 
-  // Offset 8: 8-byte class ID — OUI in upper 32-bit word, device class in lower.
-  const uint64_t class_id = (static_cast<uint64_t>(OUI) << 32) | DEVICE_CLASS;
+  // Offset 8: 8-byte class ID — OUI in upper 32-bit word, information and packet class in lower.
+  const uint64_t class_id = (static_cast<uint64_t>(OUI) << 32) | PACKET_CLASS_CODE;
   pack_u64(out + 8, class_id);
 
   // Offset 16: timestamp — full seconds.
@@ -63,10 +74,10 @@ void ocudu::build_difi_context_packet(span<uint8_t> buf, const difi_context_pack
   // Offset 20: timestamp — fractional picoseconds (8 bytes).
   pack_u64(out + 20, p.frac_ps);
 
-  // Offset 28: CIF0 = 0 (fixed DIFI context layout, no change indicators).
-  pack_u32(out + 28, 0U);
+  // Offset 28: CIF0 — which context fields are present.
+  pack_u32(out + 28, CIF0);
 
-  // Offset 32: reference point.
+  // Offset 32: reference point identifier.
   pack_u32(out + 32, REF_POINT);
 
   // Offset 36: bandwidth (Hz × 2^20, unsigned) — set equal to sample rate.

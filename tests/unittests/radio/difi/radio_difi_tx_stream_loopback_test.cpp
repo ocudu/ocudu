@@ -140,7 +140,7 @@ TEST_F(TxStreamLoopback, StartSendsContextPacket)
 
   // Header: type=0x4 static bits, pkt_n=0, size=27 words.
   const uint32_t header   = read_u32_be(pkt.data());
-  const uint32_t expected = 0x49e00000U | (0U << 16) | 27U;
+  const uint32_t expected = 0x49600000U | (0U << 16) | 27U;
   EXPECT_EQ(header, expected) << "Context packet header word mismatch";
 
   // Stream ID.
@@ -171,6 +171,32 @@ TEST_F(TxStreamLoopback, StartContextPacketEncodesRfFreqAndSampleRate)
   EXPECT_EQ(read_u64_be(pkt.data() + 76), sr_expected);
 }
 
+// DIFI timestamps are absolute UTC, so the session hands both streams an offset that shifts the
+// baseband timeline - which starts near zero - onto the wall clock. Transmit must apply it to every
+// timestamp it puts on the wire, or a peer reads our stream as originating in 1970.
+TEST_F(TxStreamLoopback, EpochOffsetShiftsWireTimestamps)
+{
+  // One hour of ticks: large enough to be unambiguous, small enough to stay exact.
+  const int64_t offset_ticks = static_cast<int64_t>(SAMPLE_RATE) * 3600;
+
+  tx->start(0, offset_ticks);
+
+  std::vector<uint8_t> ctx;
+  ASSERT_GT(recv_packet(ctx), 0);
+  EXPECT_EQ(read_u32_be(ctx.data() + 16), 3600U) << "Context packet must carry the shifted epoch";
+
+  const std::vector<ci16_t>             samples = {ci16_t(1, 2)};
+  simple_buffer_reader                  buf(samples);
+  baseband_gateway_transmitter_metadata meta{};
+  meta.is_empty = false;
+  meta.ts       = 0;
+  tx->transmit(buf, meta);
+
+  std::vector<uint8_t> pkt;
+  ASSERT_GT(recv_packet(pkt), 0);
+  EXPECT_EQ(read_u32_be(pkt.data() + 16), 3600U) << "Data packet must carry the shifted epoch";
+}
+
 TEST_F(TxStreamLoopback, TransmitSendsDataPacket)
 {
   tx->start(0);
@@ -196,7 +222,7 @@ TEST_F(TxStreamLoopback, TransmitSendsDataPacket)
 
   // Header: DATA_STATIC_BITS | pkt_n=0 | 9 words.
   const uint32_t header = read_u32_be(pkt.data());
-  EXPECT_EQ(header, 0x18e00000U | (0U << 16) | 9U);
+  EXPECT_EQ(header, 0x18600000U | (0U << 16) | 9U);
 
   // Stream ID.
   EXPECT_EQ(read_u32_be(pkt.data() + 4), STREAM_ID);
@@ -377,7 +403,7 @@ TEST_F(TxFragmentation, SlotSplitsIntoWholePackets)
     // Header carries the mod-16 packet counter and the total length in 32-bit words.
     const auto     words  = static_cast<uint32_t>(pkt.size() / 4U);
     const uint32_t header = read_u32_be(pkt.data());
-    EXPECT_EQ(header, 0x18e00000U | (i << 16) | words) << "Header word of fragment " << i;
+    EXPECT_EQ(header, 0x18600000U | (i << 16) | words) << "Header word of fragment " << i;
 
     EXPECT_EQ(read_u32_be(pkt.data() + 4), STREAM_ID) << "Stream ID of fragment " << i;
 

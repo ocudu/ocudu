@@ -10,8 +10,12 @@
 
 using namespace ocudu;
 
-/// Header template: type=0x1 (IF data), class-id present, POSIX timestamp mode.
-static constexpr uint32_t DATA_STATIC_BITS = 0x18e00000U;
+/// \brief Header template: type=0x1 (IF data), class-id present, UTC timestamp mode.
+///
+/// Bits 31-20 select the epoch: 0x186 is UTC, 0x18a GPS, 0x18e POSIX. Kept in step with
+/// CONTEXT_STATIC_BITS, since a stream that declares one epoch in context and another in data is
+/// self-contradictory.
+static constexpr uint32_t DATA_STATIC_BITS = 0x18600000U;
 /// DIFI Organizational Unique Identifier — written into the class ID field so
 /// Wireshark's DIFI dissector can identify data packets by the same OUI used
 /// in context packets.

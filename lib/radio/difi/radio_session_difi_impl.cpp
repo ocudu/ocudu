@@ -6,6 +6,7 @@
 #include "radio_difi_stream_config.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/support/error_handling.h"
+#include <chrono>
 
 using namespace ocudu;
 
@@ -27,6 +28,8 @@ radio_session_difi_impl::radio_session_difi_impl(const radio_configuration::radi
   // Resolve bit depth from OTW format.
   unsigned bit_depth =
       (config.otw_format == radio_configuration::over_the_wire_format::SC8) ? SC8_BIT_DEPTH : DEFAULT_BIT_DEPTH;
+
+  sample_rate_Hz = config.sampling_rate_Hz;
 
   unsigned nof_streams = config.tx_streams.size();
   bb_gateways.reserve(nof_streams);
@@ -115,13 +118,36 @@ baseband_gateway_timestamp radio_session_difi_impl::read_current_time()
   return bb_gateways[0]->get_rx_stream().get_sample_count();
 }
 
+/// \brief Offset in sample ticks that maps the baseband timeline onto UTC.
+///
+/// Integer arithmetic throughout: at epoch scale the tick count exceeds the 53-bit mantissa of a
+/// double, and a rounding error there is a lost sample.
+static int64_t utc_epoch_offset_ticks(baseband_gateway_timestamp init_time, double sample_rate_Hz)
+{
+  if (sample_rate_Hz <= 0.0) {
+    return 0;
+  }
+
+  const auto     now   = std::chrono::system_clock::now().time_since_epoch();
+  const auto     ns    = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(now).count());
+  const uint64_t srate = static_cast<uint64_t>(sample_rate_Hz);
+  const uint64_t secs  = ns / 1000000000ULL;
+  const uint64_t rem   = ns % 1000000000ULL;
+
+  return static_cast<int64_t>(secs * srate + (rem * srate) / 1000000000ULL) - static_cast<int64_t>(init_time);
+}
+
 void radio_session_difi_impl::start(baseband_gateway_timestamp init_time)
 {
+  // DIFI timestamps are absolute UTC. One offset, read once, maps the baseband timeline onto UTC: transmit adds it
+  // and receive subtracts it, so both directions stay consistent.
+  const int64_t epoch_offset = utc_epoch_offset_ticks(init_time, sample_rate_Hz);
+
   for (auto& gateway : bb_gateways) {
-    gateway->get_rx_stream().start(init_time);
+    gateway->get_rx_stream().start(init_time, epoch_offset);
   }
   for (auto& gateway : bb_gateways) {
-    gateway->get_tx_stream().start(init_time);
+    gateway->get_tx_stream().start(init_time, epoch_offset);
   }
 }
 

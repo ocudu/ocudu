@@ -19,6 +19,8 @@ class radio_session_difi_impl : public radio_session, public radio_management_pl
   ocudulog::basic_logger& logger;
   /// One baseband gateway per configured stream.
   std::vector<std::unique_ptr<radio_difi_baseband_gateway>> bb_gateways;
+  /// Sample rate in Hz, kept for converting the UTC epoch offset into sample ticks at start().
+  double sample_rate_Hz = 0.0;
   /// Set to true when the session has been constructed without errors.
   bool successful = false;
 

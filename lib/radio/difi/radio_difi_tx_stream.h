@@ -59,8 +59,11 @@ public:
   void transmit(const baseband_gateway_buffer_reader&        data,
                 const baseband_gateway_transmitter_metadata& metadata) override;
 
-  /// Starts the stream at the given initial timestamp (in sample ticks).
-  void start(baseband_gateway_timestamp init_time);
+  /// \brief Starts the stream.
+  ///
+  /// \p epoch_offset_ticks is added to every timestamp put on the wire, mapping the baseband
+  /// timeline onto UTC. Zero keeps the timeline as-is, which is what the loopback tests expect.
+  void start(baseband_gateway_timestamp init_time, int64_t epoch_offset_ticks = 0);
 
   /// Stops the stream, flushing any pending data.
   void stop();
@@ -96,6 +99,8 @@ private:
   /// Timestamp of the most recently sent context packet — reused by set_freq/set_gain.
   uint32_t last_ctx_full_secs = 0;
   uint64_t last_ctx_frac_ps   = 0;
+  /// Offset added to a local timestamp to express it on the UTC wire timeline.
+  int64_t epoch_offset = 0;
   /// Expected next transmit timestamp (sample ticks); used to detect underflow gaps.
   uint64_t last_tx_end_ts = 0;
   bool     started        = false;

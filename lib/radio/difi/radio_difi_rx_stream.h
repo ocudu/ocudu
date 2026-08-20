@@ -51,7 +51,11 @@ public:
 
   uint64_t get_sample_count() const { return sample_count.load(std::memory_order_relaxed); }
 
-  void start(baseband_gateway_timestamp init_time);
+  /// \brief Starts the stream.
+  ///
+  /// \p epoch_offset_ticks is subtracted from every timestamp received, mapping the UTC wire
+  /// timeline back onto the baseband one. Must match what the paired transmit stream adds.
+  void start(baseband_gateway_timestamp init_time, int64_t epoch_offset_ticks = 0);
 
   void stop();
 
@@ -70,6 +74,8 @@ private:
   radio_difi_udp_socket socket;
   /// Reusable datagram buffer, sized for the largest possible UDP payload.
   std::vector<uint8_t> rx_buf;
+  /// Offset subtracted from a wire timestamp to bring it onto the baseband timeline.
+  int64_t epoch_offset = 0;
   /// Offset added to a packet timestamp to place it on this stream timeline. Empty until the first packet.
   std::optional<int64_t> ts_offset;
   /// \brief Samples of a packet that ran past the end of the previous buffer.

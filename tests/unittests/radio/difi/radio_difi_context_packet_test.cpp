@@ -51,8 +51,8 @@ TEST(DifiContextPacket, PacketSizeIs108Bytes)
 
 TEST(DifiContextPacket, HeaderWordPktN0)
 {
-  // type=0x4, static bits = 0x49e00000, pkt_n=0, size=27=0x1b
-  // Expected: 0x49e0001b
+  // type=0x4, static bits = 0x49600000 (UTC), pkt_n=0, size=27=0x1b
+  // Expected: 0x4960001b
   auto p      = make_params();
   p.ctx_pkt_n = 0;
 
@@ -60,7 +60,7 @@ TEST(DifiContextPacket, HeaderWordPktN0)
   build_difi_context_packet(buf, p);
 
   const uint32_t header   = read_u32_be(buf + 0);
-  const uint32_t expected = 0x49e00000U | (0U << 16) | 27U;
+  const uint32_t expected = 0x49600000U | (0U << 16) | 27U;
   EXPECT_EQ(header, expected);
 }
 
@@ -73,7 +73,7 @@ TEST(DifiContextPacket, HeaderWordPktN7)
   build_difi_context_packet(buf, p);
 
   const uint32_t header   = read_u32_be(buf + 0);
-  const uint32_t expected = 0x49e00000U | (7U << 16) | 27U;
+  const uint32_t expected = 0x49600000U | (7U << 16) | 27U;
   EXPECT_EQ(header, expected);
 }
 
@@ -107,9 +107,10 @@ TEST(DifiContextPacket, ClassId)
   uint8_t buf[DIFI_CONTEXT_PACKET_SIZE.value()];
   build_difi_context_packet(buf, p);
 
-  // Upper 32-bit word: OUI = 0x006a621e; lower 32-bit word: device_class = 0.
+  // Upper 32-bit word: OUI = 0x006a621e. Lower word: information class 0, packet class 1 - the code
+  // that identifies a standard flow signal context packet, as opposed to 0 on a data packet.
   EXPECT_EQ(read_u32_be(buf + 8), 0x006a621eU);
-  EXPECT_EQ(read_u32_be(buf + 12), 0U);
+  EXPECT_EQ(read_u32_be(buf + 12), 1U);
 }
 
 TEST(DifiContextPacket, TimestampFields)
@@ -123,14 +124,16 @@ TEST(DifiContextPacket, TimestampFields)
   EXPECT_EQ(read_u64_be(buf + 20), p.frac_ps);
 }
 
-TEST(DifiContextPacket, Cif0IsZero)
+// CIF0 is the bitmap declaring which context fields follow. Zero here reads as "no fields present",
+// so a conformant receiver would discard everything after it.
+TEST(DifiContextPacket, Cif0DeclaresTheStandardFieldSet)
 {
   const auto p = make_params();
 
   uint8_t buf[DIFI_CONTEXT_PACKET_SIZE.value()];
   build_difi_context_packet(buf, p);
 
-  EXPECT_EQ(read_u32_be(buf + 28), 0U);
+  EXPECT_EQ(read_u32_be(buf + 28), 0xfbb98000U);
 }
 
 TEST(DifiContextPacket, RefPoint)
@@ -140,7 +143,7 @@ TEST(DifiContextPacket, RefPoint)
   uint8_t buf[DIFI_CONTEXT_PACKET_SIZE.value()];
   build_difi_context_packet(buf, p);
 
-  EXPECT_EQ(read_u32_be(buf + 32), 0xfbb98000U);
+  EXPECT_EQ(read_u32_be(buf + 32), 0x64U);
 }
 
 TEST(DifiContextPacket, BandwidthEqualsFixedPointSampleRate)
