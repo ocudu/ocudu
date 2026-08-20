@@ -72,7 +72,8 @@ public:
   const logical_cell& realize_cell(nr_cell_identity nci, cu_cp_du_index_t du_index);
 
   /// De-realize all cells realized by the given DU, keeping their operator intent. The cells become
-  /// operationally disabled: without a DU nothing serves them.
+  /// operationally disabled (without a DU nothing serves them), and a cell caught mid-graceful-stop
+  /// (shutting_down) resolves to locked: the drain cannot complete once the DU is gone.
   void derealize_du_cells(cu_cp_du_index_t du_index);
 
 private:

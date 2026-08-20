@@ -31,7 +31,7 @@ public:
   }
 
   // See interface for documentation.
-  error_type<std::string> execute(const nlohmann::json& json) override;
+  expected<nlohmann::json, std::string> execute(const nlohmann::json& json) override;
 };
 
 /// \brief Remote command that unlocks a single cell identified by its NR CGI.
@@ -56,7 +56,7 @@ public:
   }
 
   // See interface for documentation.
-  error_type<std::string> execute(const nlohmann::json& json) override;
+  expected<nlohmann::json, std::string> execute(const nlohmann::json& json) override;
 };
 
 /// \brief Remote command that bars a single cell identified by its NR CGI, without deactivating it.
@@ -81,7 +81,7 @@ public:
   }
 
   // See interface for documentation.
-  error_type<std::string> execute(const nlohmann::json& json) override;
+  expected<nlohmann::json, std::string> execute(const nlohmann::json& json) override;
 };
 
 /// \brief Remote command that unbars a single cell identified by its NR CGI.
@@ -105,7 +105,31 @@ public:
   }
 
   // See interface for documentation.
-  error_type<std::string> execute(const nlohmann::json& json) override;
+  expected<nlohmann::json, std::string> execute(const nlohmann::json& json) override;
+};
+
+/// \brief Remote command that reads the recorded state of a single cell identified by its NR CGI.
+///
+/// The success response carries the cell's administrative state, operational state and barred intent.
+class cell_status_remote_command : public app_services::remote_command
+{
+  ocucp::cu_cp_command_handler& cu_cp;
+
+public:
+  explicit cell_status_remote_command(ocucp::cu_cp_command_handler& cu_cp_) : cu_cp(cu_cp_) {}
+
+  // See interface for documentation.
+  std::string_view get_name() const override { return "cell_status"; }
+
+  // See interface for documentation.
+  std::string_view get_description() const override
+  {
+    return "Read the recorded state (admin_state, operational_state, cell_barred) of the cell identified by "
+           "{plmn, nci}";
+  }
+
+  // See interface for documentation.
+  expected<nlohmann::json, std::string> execute(const nlohmann::json& json) override;
 };
 
 } // namespace ocudu

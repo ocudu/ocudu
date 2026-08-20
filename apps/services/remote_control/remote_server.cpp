@@ -38,12 +38,15 @@ static std::string build_error_response(std::string_view error, std::optional<st
   return response.dump();
 }
 
-/// Builds a successful response encoded in JSON format.
-static std::string build_success_response(std::string_view cmd)
+/// Builds a successful response encoded in JSON format, nesting a non-null payload under "result".
+static std::string build_success_response(std::string_view cmd, const nlohmann::json& payload = {})
 {
   nlohmann::json response;
   response["cmd"]       = cmd;
   response["timestamp"] = app_helpers::get_time_stamp();
+  if (!payload.is_null()) {
+    response["result"] = payload;
+  }
   return response.dump();
 }
 
@@ -60,7 +63,7 @@ public:
   std::string_view get_description() const override { return "Quit application"; }
 
   // See interface for documentation.
-  error_type<std::string> execute(const nlohmann::json& json) override
+  expected<nlohmann::json, std::string> execute(const nlohmann::json& json) override
   {
     std::raise(SIGTERM);
     return {};
@@ -103,7 +106,7 @@ class remote_server_impl : public remote_server,
     std::string_view get_description() const override { return "Subscribe to metrics notifications"; }
 
     // See interface for documentation.
-    error_type<std::string> execute(const nlohmann::json& json) override
+    expected<nlohmann::json, std::string> execute(const nlohmann::json& json) override
     {
       parent->subscribe_metrics_client();
       return {};
@@ -125,7 +128,7 @@ class remote_server_impl : public remote_server,
     std::string_view get_description() const override { return "Unsubscribe to metrics notifications"; }
 
     // See interface for documentation.
-    error_type<std::string> execute(const nlohmann::json& json) override
+    expected<nlohmann::json, std::string> execute(const nlohmann::json& json) override
     {
       parent->unsubscribe_metrics_client();
       return {};
@@ -299,11 +302,12 @@ private:
 
     const auto& cmd_value = cmd_key.value().get_ref<const nlohmann::json::string_t&>();
     if (auto cmd = commands.find(cmd_value); cmd != commands.end()) {
-      if (auto response_str = cmd->second->execute(req); !response_str) {
-        return build_error_response(response_str.error(), cmd_value);
+      auto response_payload = cmd->second->execute(req);
+      if (!response_payload) {
+        return build_error_response(response_payload.error(), cmd_value);
       }
 
-      return build_success_response(cmd_value);
+      return build_success_response(cmd_value, response_payload.value());
     }
 
     return build_error_response(fmt::format("Unknown command type: {}", cmd_value), cmd_value);

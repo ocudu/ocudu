@@ -58,6 +58,7 @@
 #include "ocudu/support/async/execute_on_blocking.h"
 #include "ocudu/support/synchronization/sync_event.h"
 #include "ocudu/xnap/xnap.h"
+#include <atomic>
 #include <chrono>
 #include <dlfcn.h>
 #include <future>
@@ -2235,7 +2236,8 @@ async_task<cu_cp_cell_command_response> cu_cp_impl::deactivate_cell(const nr_cel
                        targets        = std::move(targets),
                        ues_to_release = std::vector<cu_cp_ue_index_t>{},
                        prev_state     = std::optional<cell_admin_state>{},
-                       success        = false](coro_context<async_task<cu_cp_cell_command_response>>& ctx) mutable {
+                       result         = cell_deactivation_result{}](
+                          coro_context<async_task<cu_cp_cell_command_response>>& ctx) mutable {
     CORO_BEGIN(ctx);
     // Hold the administrative state as shutting_down while the graceful stop drains the cell; it becomes
     // locked when the stop completes, so the recorded intent survives DU restarts and AMF reconnections.
@@ -2252,7 +2254,7 @@ async_task<cu_cp_cell_command_response> cu_cp_impl::deactivate_cell(const nr_cel
     // the command was created: UEs attaching while the task was queued must be drained too.
     ues_to_release = collect_ues_on_cell(du_db, ue_mng, du_index, cgi);
     CORO_AWAIT_VALUE(
-        success,
+        result,
         launch_async<cell_deactivation_routine>(cfg,
                                                 std::move(targets),
                                                 std::move(ues_to_release),
@@ -2263,15 +2265,38 @@ async_task<cu_cp_cell_command_response> cu_cp_impl::deactivate_cell(const nr_cel
                                                 *this,
                                                 ue_mng,
                                                 logger));
-    if (success) {
+    if (result.success) {
       // The graceful stop completed: the cell is now administratively locked.
       logical_cells.set_admin_state(cgi.nci, cell_admin_state::locked);
-    } else {
-      // Restore the previous state, so recorded intent stays consistent with the reported outcome (a failed
-      // deactivation must not leave the cell marked as locked or shutting_down).
-      logical_cells.set_admin_state(cgi.nci, *prev_state);
+      CORO_EARLY_RETURN(cu_cp_cell_command_response{true});
     }
-    CORO_RETURN(cu_cp_cell_command_response{success});
+    // The failed stop can resume inside the executor task that is removing the DU, before the cell is
+    // de-realized: re-post to the back of the CU-CP executor so the removal settles before the state is
+    // resolved from what actually took effect.
+    CORO_AWAIT(defer_on_blocking(*cfg.services.cu_cp_executor, *cfg.services.timers));
+    // Resolve the recorded state from the outcome, not from the command result alone: the stop's stages can
+    // partially complete, and the state must match the cell, or a later F1 setup or AMF reconnection
+    // resurrects a cell the operator took down. De-realization resolves an interrupted stop itself (the DU
+    // vanished mid-stop); only resolve here while the stop still owns the shutting_down transient.
+    if (const logical_cell* cell = logical_cells.find_cell(cgi.nci);
+        cell != nullptr && cell->admin_state == cell_admin_state::shutting_down) {
+      if (cell->operational_state == cell_operational_state::disabled) {
+        // The deactivation took effect: the cell is off the air and administratively locked, even though an
+        // earlier stage failed the command.
+        logical_cells.set_admin_state(cgi.nci, cell_admin_state::locked);
+      } else {
+        // The cell is still on the air: restore the previous administrative state. If the stop's bar stage
+        // was acknowledged, the cell remains barred at the DU — record the barred intent so the registry
+        // matches the on-air state (cell_unbar clears it).
+        logical_cells.set_admin_state(cgi.nci, *prev_state);
+        if (result.bars_acked) {
+          logger.warning("Cell nci={:#x} remains barred after the failed graceful stop. Recording the barred intent",
+                         cgi.nci.value());
+          logical_cells.set_barred(cgi.nci, true);
+        }
+      }
+    }
+    CORO_RETURN(cu_cp_cell_command_response{false});
   });
 }
 
@@ -2385,32 +2410,55 @@ async_task<cu_cp_cell_command_response> cu_cp_impl::bar_cell(const nr_cell_globa
       });
 }
 
-bool cu_cp_impl::dispatch_cell_command(const char* name, std::function<bool()> validate_and_schedule)
+template <typename T>
+std::optional<T> cu_cp_impl::dispatch_on_cu_cp_executor(const char* name, std::function<T()> fn)
 {
-  // The WS/O1 command handlers run on their own IO thread: marshal both the validation and the scheduling
-  // onto the CU-CP executor (the same pattern start()/stop() use), blocking only until the synchronous
-  // validation result is known. This way every CU-CP structure (DU repository, logical cells, UE manager,
-  // task queue) is touched exclusively from the CU-CP execution context.
+  // The WS/O1 command handlers run on their own IO thread: marshal the callable onto the CU-CP executor
+  // (the same pattern start()/stop() use), blocking only until its synchronous result is known. This way
+  // every CU-CP structure (DU repository, logical cells, UE manager, task queue) is touched exclusively
+  // from the CU-CP execution context.
   //
   // The wait is bounded and the state is shared with the queued task: if the CU-CP executor is saturated or
-  // stops before running the task, the command fails instead of hanging the caller's thread, and a late
-  // execution writes into state that outlives this frame.
+  // stops before running the task, the dispatch fails instead of hanging the caller's thread. A timed-out
+  // dispatch is also cancelled — the queued task checks the flag and becomes a no-op — so the caller's
+  // failure report stays truthful: the callable does not run behind its back, unless the task had already
+  // started when the timeout expired.
   static constexpr std::chrono::seconds dispatch_timeout{5};
 
-  auto              result_promise = std::make_shared<std::promise<bool>>();
-  std::future<bool> fut            = result_promise->get_future();
+  auto           result_promise = std::make_shared<std::promise<T>>();
+  auto           cancelled      = std::make_shared<std::atomic<bool>>(false);
+  std::future<T> fut            = result_promise->get_future();
 
-  if (not cfg.services.cu_cp_executor->execute(
-          [result_promise, fn = std::move(validate_and_schedule)]() { result_promise->set_value(fn()); })) {
+  if (not cfg.services.cu_cp_executor->execute([result_promise, cancelled, fn = std::move(fn)]() {
+        if (cancelled->load(std::memory_order_acquire)) {
+          return;
+        }
+        result_promise->set_value(fn());
+      })) {
     logger.warning("Dispatch {} failed. Cause: CU-CP executor queue is full", name);
-    return false;
+    return std::nullopt;
   }
   if (fut.wait_for(dispatch_timeout) != std::future_status::ready) {
-    logger.warning(
-        "Dispatch {} failed. Cause: CU-CP executor did not run the command within {}s", name, dispatch_timeout.count());
-    return false;
+    cancelled->store(true, std::memory_order_release);
+    logger.warning("Dispatch {} timed out after {}s. The command was cancelled and does not run, unless it had "
+                   "already started",
+                   name,
+                   dispatch_timeout.count());
+    return std::nullopt;
   }
   return fut.get();
+}
+
+bool cu_cp_impl::dispatch_cell_command(const char* name, std::function<bool()> validate_and_schedule)
+{
+  return dispatch_on_cu_cp_executor<bool>(name, std::move(validate_and_schedule)).value_or(false);
+}
+
+std::optional<cu_cp_cell_state> cu_cp_impl::dispatch_get_cell_state(const nr_cell_global_id_t& cgi)
+{
+  std::optional<std::optional<cu_cp_cell_state>> state = dispatch_on_cu_cp_executor<std::optional<cu_cp_cell_state>>(
+      "get_cell_state", [this, cgi]() { return get_cell_state(cgi); });
+  return state.has_value() ? *state : std::nullopt;
 }
 
 bool cu_cp_impl::dispatch_deactivate_cell(const nr_cell_global_id_t& cgi)

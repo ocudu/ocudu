@@ -203,6 +203,14 @@ TEST_F(cu_cp_cell_command_handler_test, when_du_rejects_bar_upd_then_deactivatio
 
   // The command result reflects the failed bar stage.
   EXPECT_FALSE(wait_for_task_result(cmd).success);
+
+  // The deactivation was acknowledged, so the cell is off the air: the recorded state resolves to locked
+  // regardless of the failed bar stage — a later F1 setup or AMF recovery must not resurrect the cell.
+  std::optional<cu_cp_cell_state> state = cell_cmd.get_cell_state(served_cgi);
+  ASSERT_TRUE(state.has_value());
+  EXPECT_EQ(state->admin_state, cell_admin_state::locked);
+  EXPECT_EQ(state->operational_state, cell_operational_state::disabled);
+  EXPECT_FALSE(state->barred) << "the rejected bar must not be recorded as barred intent";
 }
 
 TEST_F(cu_cp_cell_command_handler_test, when_activate_follows_deactivate_then_deactivated_cell_is_found)
@@ -437,11 +445,14 @@ TEST_F(cu_cp_cell_command_handler_test, when_deactivation_fails_then_admin_state
   get_du(du_idx).push_ul_pdu(fail);
   ASSERT_FALSE(wait_for_task_result(launcher).success);
 
-  // The failed stop restores the previous administrative state; the cell never left the air.
+  // The deactivation was rejected, so the cell is still on the air: the previous administrative state is
+  // restored. The acknowledged bar stage left the cell barred at the DU, and the recorded barred intent
+  // reflects that (the operator clears it with cell_unbar).
   std::optional<cu_cp_cell_state> state = cell_cmd.get_cell_state(served_cgi);
   ASSERT_TRUE(state.has_value());
   EXPECT_EQ(state->admin_state, cell_admin_state::unlocked);
   EXPECT_EQ(state->operational_state, cell_operational_state::enabled);
+  EXPECT_TRUE(state->barred) << "the acknowledged bar must be recorded so the registry matches the on-air state";
 }
 
 TEST_F(cu_cp_cell_command_handler_test, when_activation_fails_then_cell_stays_locked_and_disabled)
@@ -509,6 +520,22 @@ TEST_F(cu_cp_cell_command_handler_test, when_du_acks_activation_with_cell_failed
   ASSERT_TRUE(state.has_value());
   EXPECT_EQ(state->operational_state, cell_operational_state::disabled)
       << "a cell the DU reported as failed to activate must not be recorded as on air";
+}
+
+TEST_F(cu_cp_cell_command_handler_test, when_state_is_read_through_dispatch_then_it_matches_the_recorded_state)
+{
+  cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
+
+  // The marshalled read goes through the real CU-CP executor and returns the recorded state.
+  std::optional<cu_cp_cell_state> state = cell_cmd.dispatch_get_cell_state(served_cgi);
+  ASSERT_TRUE(state.has_value());
+  EXPECT_EQ(state->admin_state, cell_admin_state::unlocked);
+  EXPECT_EQ(state->operational_state, cell_operational_state::enabled);
+  EXPECT_FALSE(state->barred);
+
+  // An unknown cell reads as nullopt through the same path.
+  nr_cell_global_id_t unknown_cgi{served_cgi.plmn_id, nr_cell_identity::create(served_cgi.nci.value() + 1).value()};
+  EXPECT_FALSE(cell_cmd.dispatch_get_cell_state(unknown_cgi).has_value());
 }
 
 TEST_F(cu_cp_cell_command_handler_test, when_bar_and_unbar_then_barred_intent_is_recorded)

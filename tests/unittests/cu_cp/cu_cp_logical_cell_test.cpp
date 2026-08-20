@@ -281,6 +281,44 @@ TEST_F(cu_cp_logical_cell_test, when_locked_cell_du_reconnects_then_it_stays_loc
   EXPECT_EQ(state_a->operational_state, cell_operational_state::enabled);
 }
 
+TEST_F(cu_cp_logical_cell_test, when_du_dies_mid_graceful_stop_then_cell_stays_locked_on_reconnect)
+{
+  // The DU vanishes while a lock is draining cell B (bar acknowledged, deactivation pending). The command
+  // fails, but the operator intent behind the stop is kept: the reconnected DU must not reactivate the cell.
+  unsigned du_idx = 0;
+  auto     resp   = connect_du_and_run_f1_setup(du_idx);
+  ASSERT_TRUE(resp.has_value());
+  ASSERT_EQ(activated_ncis(*resp).size(), 2U);
+
+  cu_cp_cell_command_handler&             cell_cmd  = get_cu_cp().get_command_handler().get_cell_command_handler();
+  async_task<cu_cp_cell_command_response> resp_task = cell_cmd.deactivate_cell(cell_b_cgi);
+  lazy_task_launcher<cu_cp_cell_command_response> launcher(resp_task);
+
+  f1ap_message bar_upd;
+  ASSERT_TRUE(pop_cu_cfg_upd(du_idx, bar_upd));
+  get_du(du_idx).push_ul_pdu(make_ack_for(bar_upd));
+  f1ap_message deact_upd;
+  ASSERT_TRUE(pop_cu_cfg_upd(du_idx, deact_upd)) << "no deactivation update emitted";
+
+  // The DU dies before acknowledging the deactivation.
+  ASSERT_TRUE(drop_du_connection(du_idx));
+  ASSERT_FALSE(wait_for_task_result(launcher).success);
+
+  // The reconnected DU reports both cells; only cell A is activated — the interrupted stop resolved to
+  // locked instead of silently reverting to unlocked.
+  unsigned new_du_idx = 0;
+  auto     resp2      = connect_du_and_run_f1_setup(new_du_idx);
+  ASSERT_TRUE(resp2.has_value());
+  std::vector<uint64_t> ncis = activated_ncis(*resp2);
+  ASSERT_EQ(ncis.size(), 1U) << "the interrupted lock was lost across the DU restart";
+  EXPECT_EQ(ncis[0], cell_a_cgi.nci.value());
+
+  std::optional<cu_cp_cell_state> state = cell_cmd.get_cell_state(cell_b_cgi);
+  ASSERT_TRUE(state.has_value());
+  EXPECT_EQ(state->admin_state, cell_admin_state::locked);
+  EXPECT_EQ(state->operational_state, cell_operational_state::disabled);
+}
+
 TEST_F(cu_cp_declared_locked_cell_test, when_f1_setup_completes_then_declared_states_are_recorded)
 {
   // The declared administrative states are reflected in the recorded cell states right after F1 setup:
@@ -364,12 +402,24 @@ TEST_F(cu_cp_logical_cell_test, when_lock_fails_then_cell_is_not_left_locked)
   get_du(du_idx).push_ul_pdu(fail);
   ASSERT_FALSE(wait_for_task_result(launcher).success);
 
-  // At the next F1 setup both cells are activated: the failed lock left no intent behind.
+  // At the next F1 setup both cells are activated: the failed lock left no lock intent behind.
   ASSERT_TRUE(drop_du_connection(du_idx));
   unsigned new_du_idx = 0;
   auto     resp2      = connect_du_and_run_f1_setup(new_du_idx);
   ASSERT_TRUE(resp2.has_value());
   EXPECT_EQ(activated_ncis(*resp2).size(), 2U) << "a failed lock must not persist as lock intent";
+
+  // The stop's acknowledged bar stage left barred intent behind (the cell stayed on the air barred), so the
+  // reconnected cell is re-barred right after the setup.
+  f1ap_message rebar_upd;
+  ASSERT_TRUE(pop_cu_cfg_upd(new_du_idx, rebar_upd, std::chrono::milliseconds{1000}))
+      << "the recorded barred intent was not re-applied after the DU restart";
+  const auto& rebar_ies = rebar_upd.pdu.init_msg().value.gnb_cu_cfg_upd();
+  ASSERT_TRUE(rebar_ies->cells_to_be_barred_list_present);
+  ASSERT_EQ(rebar_ies->cells_to_be_barred_list.size(), 1U);
+  ASSERT_EQ(rebar_ies->cells_to_be_barred_list[0]->cells_to_be_barred_item().nr_cgi.nr_cell_id.to_number(),
+            cell_b_cgi.nci.value());
+  get_du(new_du_idx).push_ul_pdu(make_ack_for(rebar_upd));
 }
 
 TEST_F(cu_cp_declared_barred_cell_test, when_cell_declared_barred_then_bar_update_follows_f1_setup)

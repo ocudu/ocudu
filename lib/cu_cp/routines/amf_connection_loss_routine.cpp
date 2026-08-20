@@ -49,7 +49,7 @@ void amf_connection_loss_routine::operator()(coro_context<async_task<void>>& ctx
   // gone, so they are dropped with a transport cause). No barring stage here: this is a fault path, not an
   // operator-driven graceful stop, and the pre-existing AMF-loss behaviour is kept unchanged.
   CORO_AWAIT_VALUE(
-      bool cells_deactivated,
+      cell_deactivation_result deactivation_result,
       launch_async<cell_deactivation_routine>(cu_cp_cfg,
                                               resolve_deactivation_targets(du_db, plmns),
                                               collect_ues_for_plmns(ue_mng, plmns),
@@ -60,7 +60,7 @@ void amf_connection_loss_routine::operator()(coro_context<async_task<void>>& ctx
                                               ue_release_handler,
                                               ue_mng,
                                               logger));
-  if (!cells_deactivated) {
+  if (!deactivation_result.success) {
     logger.warning("\"{}\" cell deactivation finished with errors", name());
   }
 

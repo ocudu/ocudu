@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "nlohmann/json_fwd.hpp"
+#include "nlohmann/json.hpp"
 #include "ocudu/adt/expected.h"
 #include <string>
 #include <string_view>
@@ -27,8 +27,11 @@ public:
   /// Returns the description of this command.
   virtual std::string_view get_description() const = 0;
 
-  /// Execute this command using the parameters encoded in the given JSON.
-  virtual error_type<std::string> execute(const nlohmann::json& json) = 0;
+  /// \brief Execute this command using the parameters encoded in the given JSON.
+  ///
+  /// Returns the response payload on success — a null value when the command has none — or an error
+  /// description. The server nests a non-null payload under the "result" key of the success response.
+  virtual expected<nlohmann::json, std::string> execute(const nlohmann::json& json) = 0;
 };
 
 } // namespace app_services

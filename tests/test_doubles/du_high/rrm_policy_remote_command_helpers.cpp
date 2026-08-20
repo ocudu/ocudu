@@ -8,11 +8,11 @@
 
 using namespace ocudu;
 
-error_type<std::string> test_helpers::apply_rrm_policy_reconfiguration(odu::du_configurator& configurator,
-                                                                       plmn_identity         plmn_id,
-                                                                       s_nssai_t             s_nssai,
-                                                                       unsigned              min_rbs,
-                                                                       unsigned              max_rbs)
+expected<nlohmann::json, std::string> test_helpers::apply_rrm_policy_reconfiguration(odu::du_configurator& configurator,
+                                                                                     plmn_identity         plmn_id,
+                                                                                     s_nssai_t             s_nssai,
+                                                                                     unsigned              min_rbs,
+                                                                                     unsigned              max_rbs)
 {
   nlohmann::json req;
 

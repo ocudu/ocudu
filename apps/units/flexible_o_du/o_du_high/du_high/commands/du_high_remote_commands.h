@@ -24,7 +24,7 @@ public:
   std::string_view get_description() const override { return "Modifies the SSB parameters"; }
 
   // See interface for documentation.
-  error_type<std::string> execute(const nlohmann::json& json) override;
+  expected<nlohmann::json, std::string> execute(const nlohmann::json& json) override;
 };
 
 /// Remote command that modifies the RRM policy ratio.
@@ -42,7 +42,7 @@ public:
   std::string_view get_description() const override { return "Modifies the RRM policy ratio"; }
 
   // See interface for documentation.
-  error_type<std::string> execute(const nlohmann::json& json) override;
+  expected<nlohmann::json, std::string> execute(const nlohmann::json& json) override;
 };
 
 /// \brief Remote command that updates SIB contents without a cell restart.
@@ -67,7 +67,7 @@ public:
   }
 
   // See interface for documentation.
-  error_type<std::string> execute(const nlohmann::json& json) override;
+  expected<nlohmann::json, std::string> execute(const nlohmann::json& json) override;
 };
 
 } // namespace ocudu

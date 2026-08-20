@@ -46,7 +46,10 @@ public:
   /// affect existing UE-related contexts, TS 38.473 section 8.2.5.1), and finally the cell is deactivated
   /// via a gNB-CU Configuration Update listing it in cells_to_be_deactivated_list. On completion the
   /// administrative state becomes locked (and the operational state disabled) — recorded on the logical
-  /// cell so the intent survives DU restarts; a failed stop restores the previous administrative state.
+  /// cell so the intent survives DU restarts. A failed stop resolves the recorded state from what took
+  /// effect: the cell stays locked when the deactivation was acknowledged (even if an earlier stage
+  /// failed), and otherwise the previous administrative state is restored — with the barred intent
+  /// recorded when the stop's bar stage was acknowledged, since the cell then remains barred on the air.
   ///
   /// The returned task completes once the DU has acknowledged the F1AP updates. Callers that do not need
   /// to await completion (e.g. fire-and-forget from a WS/O1 handler) should use dispatch_deactivate_cell
@@ -80,7 +83,9 @@ public:
   /// callers that cannot block (e.g. WebSocket/O1 command handlers running on the IO broker thread).
   /// Returns true if the command was accepted (CGI resolved to a served DU) and scheduled; false if
   /// the CGI is unknown or scheduling failed. The actual deactivation, including UE drain and PHY
-  /// stop, completes asynchronously.
+  /// stop, completes asynchronously. The dispatch wait is bounded: on timeout the command reports
+  /// failure and is cancelled — it does not run behind the caller's back, unless it had already
+  /// started when the timeout expired.
   virtual bool dispatch_deactivate_cell(const nr_cell_global_id_t& cgi) = 0;
 
   /// Fire-and-forget synchronous variant of activate_cell. See dispatch_deactivate_cell for the rationale.
@@ -89,11 +94,19 @@ public:
   /// Fire-and-forget synchronous variant of bar_cell. See dispatch_deactivate_cell for the rationale.
   virtual bool dispatch_bar_cell(const nr_cell_global_id_t& cgi, bool barred) = 0;
 
+  /// \brief Synchronous variant of get_cell_state for callers outside the CU-CP execution context.
+  ///
+  /// The read is marshalled onto the CU-CP executor with the same bounded, cancelled-on-timeout wait as the
+  /// dispatch_* commands. Returns std::nullopt when no logical cell with the given NCI exists or the
+  /// dispatch failed.
+  /// \param[in] cgi NR Cell Global ID of the cell to query.
+  virtual std::optional<cu_cp_cell_state> dispatch_get_cell_state(const nr_cell_global_id_t& cgi) = 0;
+
   /// \brief Read the recorded state of the logical cell identified by its NR CGI.
   ///
   /// Returns std::nullopt when no logical cell with the given NCI exists. The read is not synchronized:
-  /// callers outside the CU-CP execution context must marshal the call onto the CU-CP executor, as the
-  /// dispatch_* commands do.
+  /// callers outside the CU-CP execution context use dispatch_get_cell_state, which marshals it onto the
+  /// CU-CP executor.
   /// \param[in] cgi NR Cell Global ID of the cell to query.
   virtual std::optional<cu_cp_cell_state> get_cell_state(const nr_cell_global_id_t& cgi) const = 0;
 };

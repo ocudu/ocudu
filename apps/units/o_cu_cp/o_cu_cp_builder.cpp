@@ -206,6 +206,8 @@ o_cu_cp_unit ocudu::build_o_cu_cp(const o_cu_cp_unit_config& unit_cfg, const o_c
       std::make_unique<cell_bar_remote_command>(ocucp.unit->get_cu_cp().get_command_handler()));
   ocucp.commands.remote.push_back(
       std::make_unique<cell_unbar_remote_command>(ocucp.unit->get_cu_cp().get_command_handler()));
+  ocucp.commands.remote.push_back(
+      std::make_unique<cell_status_remote_command>(ocucp.unit->get_cu_cp().get_command_handler()));
 
   return ocucp;
 }

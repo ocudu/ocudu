@@ -105,6 +105,21 @@ TEST_F(logical_cell_manager_test, when_du_is_derealized_then_intent_is_kept_and_
   EXPECT_TRUE(cell->barred) << "operator intent must survive DU removal";
 }
 
+TEST_F(logical_cell_manager_test, when_du_is_derealized_mid_stop_then_shutting_down_resolves_to_locked)
+{
+  // A graceful stop cannot complete once the DU is gone: the transient shutting_down resolves to locked,
+  // keeping the operator intent behind the stop.
+  const cu_cp_du_index_t du_index = uint_to_cu_cp_du_index(0);
+  mng.realize_cell(declared_nci, du_index);
+  ASSERT_TRUE(mng.set_admin_state(declared_nci, cell_admin_state::shutting_down).has_value());
+
+  mng.derealize_du_cells(du_index);
+
+  ASSERT_NE(mng.find_cell(declared_nci), nullptr);
+  EXPECT_EQ(mng.find_cell(declared_nci)->admin_state, cell_admin_state::locked);
+  EXPECT_EQ(mng.find_cell(declared_nci)->operational_state, cell_operational_state::disabled);
+}
+
 TEST_F(logical_cell_manager_test, when_cells_are_declared_then_undeclared_realized_cell_comes_up_locked)
 {
   // The declared set acts as the activation whitelist: a reported cell outside it is realized locked.

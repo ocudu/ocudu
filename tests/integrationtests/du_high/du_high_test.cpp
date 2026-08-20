@@ -531,7 +531,7 @@ public:
 
   void apply_rrm_reconfiguration(unsigned max_rbs, unsigned min_rbs)
   {
-    error_type<std::string> cmd_exec_res = test_helpers::apply_rrm_policy_reconfiguration(
+    expected<nlohmann::json, std::string> cmd_exec_res = test_helpers::apply_rrm_policy_reconfiguration(
         this->du_hi->get_du_configurator(), plmn_id, s_nssai, min_rbs, max_rbs);
     ASSERT_TRUE(cmd_exec_res.has_value()) << cmd_exec_res.error();
   }

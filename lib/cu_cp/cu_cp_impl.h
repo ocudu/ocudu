@@ -218,10 +218,16 @@ public:
   bool                                    dispatch_deactivate_cell(const nr_cell_global_id_t& cgi) override;
   bool                                    dispatch_activate_cell(const nr_cell_global_id_t& cgi) override;
   bool                                    dispatch_bar_cell(const nr_cell_global_id_t& cgi, bool barred) override;
+  std::optional<cu_cp_cell_state>         dispatch_get_cell_state(const nr_cell_global_id_t& cgi) override;
   std::optional<cu_cp_cell_state>         get_cell_state(const nr_cell_global_id_t& cgi) const override;
 
   /// Run a cell command's validation+scheduling on the CU-CP executor, blocking for the validation result.
   bool dispatch_cell_command(const char* name, std::function<bool()> validate_and_schedule);
+
+  /// Run the given callable on the CU-CP executor and wait (bounded, cancelled on timeout) for its result.
+  /// Returns std::nullopt when the executor rejects the task or the wait times out.
+  template <typename T>
+  std::optional<T> dispatch_on_cu_cp_executor(const char* name, std::function<T()> fn);
 
   // cu_cp_amf_reconnection_handler.
   void handle_amf_reconnection(cu_cp_amf_index_t amf_index) override;

@@ -66,7 +66,7 @@ error_type<std::string> parse_int_in_range(T& out, const nlohmann::json& value, 
 
 } // namespace
 
-error_type<std::string> ssb_modify_remote_command::execute(const nlohmann::json& json)
+expected<nlohmann::json, std::string> ssb_modify_remote_command::execute(const nlohmann::json& json)
 {
   auto cells_key = json.find("cells");
   if (cells_key == json.end()) {
@@ -119,7 +119,7 @@ error_type<std::string> ssb_modify_remote_command::execute(const nlohmann::json&
     if (auto res = parse_int_in_range<MIN_SS_PBCH_BLOCK_POWER, MAX_SS_PBCH_BLOCK_POWER>(
             ssb_block_power_value, *ssb_block_power_key, "ssb_block_power_dbm");
         !res) {
-      return res;
+      return make_unexpected(res.error());
     }
     req.cells.emplace_back(nr_cgi, ssb_block_power_value);
   }
@@ -131,7 +131,7 @@ error_type<std::string> ssb_modify_remote_command::execute(const nlohmann::json&
   return make_unexpected("SSB modify command procedure failed to be applied by the DU");
 }
 
-error_type<std::string> rrm_policy_ratio_remote_command::execute(const nlohmann::json& json)
+expected<nlohmann::json, std::string> rrm_policy_ratio_remote_command::execute(const nlohmann::json& json)
 {
   auto policies_key = json.find("policies");
   if (policies_key == json.end()) {
@@ -187,7 +187,7 @@ error_type<std::string> rrm_policy_ratio_remote_command::execute(const nlohmann:
     uint8_t sst = 0;
     // SST is an 8-bit field (TS 23.003); the full uint8 domain is valid.
     if (auto res = parse_int_in_range<0, std::numeric_limits<uint8_t>::max()>(sst, *sst_key, "sst"); !res) {
-      return res;
+      return make_unexpected(res.error());
     }
 
     auto sd_key = policy_member_key.value().find("sd");
@@ -199,7 +199,7 @@ error_type<std::string> rrm_policy_ratio_remote_command::execute(const nlohmann:
       // into uint32 (e.g. 2^32 -> 0), which create() would otherwise accept.
       uint32_t sd_int = 0;
       if (auto res = parse_int_in_range<0, std::numeric_limits<uint32_t>::max()>(sd_int, *sd_key, "sd"); !res) {
-        return res;
+        return make_unexpected(res.error());
       }
       sd = slice_differentiator::create(sd_int);
       if (!sd) {
@@ -223,7 +223,7 @@ error_type<std::string> rrm_policy_ratio_remote_command::execute(const nlohmann:
     if (auto res = parse_int_in_range<prb_policy_ratio_min_percent, prb_policy_ratio_max_percent>(
             min_prb, *min_prb_policy_ratio, "min_prb_policy_ratio");
         !res) {
-      return res;
+      return make_unexpected(res.error());
     }
     min_prb_policy_ratio_value = min_prb;
   }
@@ -236,7 +236,7 @@ error_type<std::string> rrm_policy_ratio_remote_command::execute(const nlohmann:
     if (auto res = parse_int_in_range<prb_policy_ratio_min_percent, prb_policy_ratio_max_percent>(
             max_prb, *max_prb_policy_ratio, "max_prb_policy_ratio");
         !res) {
-      return res;
+      return make_unexpected(res.error());
     }
     max_prb_policy_ratio_value = max_prb;
   }
@@ -249,7 +249,7 @@ error_type<std::string> rrm_policy_ratio_remote_command::execute(const nlohmann:
     if (auto res = parse_int_in_range<prb_policy_ratio_min_percent, prb_policy_ratio_max_percent>(
             dedicated, *dedicated_ratio, "dedicated_ratio");
         !res) {
-      return res;
+      return make_unexpected(res.error());
     }
     dedicated_ratio_value = dedicated;
   }
@@ -738,7 +738,7 @@ static expected<sib4_info, std::string> parse_sib4(const nlohmann::json& content
   return sib4;
 }
 
-error_type<std::string> sib_update_remote_command::execute(const nlohmann::json& json)
+expected<nlohmann::json, std::string> sib_update_remote_command::execute(const nlohmann::json& json)
 {
   auto cells_key = json.find("cells");
   if (cells_key == json.end()) {

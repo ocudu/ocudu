@@ -55,12 +55,12 @@ error_type<std::string> parse_cgi(const nlohmann::json& json, nr_cell_global_id_
 
 } // namespace
 
-error_type<std::string> cell_lock_remote_command::execute(const nlohmann::json& json)
+expected<nlohmann::json, std::string> cell_lock_remote_command::execute(const nlohmann::json& json)
 {
   nr_cell_global_id_t     cgi;
   error_type<std::string> cgi_result = parse_cgi(json, cgi);
   if (not cgi_result.has_value()) {
-    return cgi_result;
+    return make_unexpected(cgi_result.error());
   }
 
   if (not cu_cp.get_cell_command_handler().dispatch_deactivate_cell(cgi)) {
@@ -69,12 +69,12 @@ error_type<std::string> cell_lock_remote_command::execute(const nlohmann::json& 
   return {};
 }
 
-error_type<std::string> cell_unlock_remote_command::execute(const nlohmann::json& json)
+expected<nlohmann::json, std::string> cell_unlock_remote_command::execute(const nlohmann::json& json)
 {
   nr_cell_global_id_t     cgi;
   error_type<std::string> cgi_result = parse_cgi(json, cgi);
   if (not cgi_result.has_value()) {
-    return cgi_result;
+    return make_unexpected(cgi_result.error());
   }
 
   if (not cu_cp.get_cell_command_handler().dispatch_activate_cell(cgi)) {
@@ -83,12 +83,12 @@ error_type<std::string> cell_unlock_remote_command::execute(const nlohmann::json
   return {};
 }
 
-error_type<std::string> cell_bar_remote_command::execute(const nlohmann::json& json)
+expected<nlohmann::json, std::string> cell_bar_remote_command::execute(const nlohmann::json& json)
 {
   nr_cell_global_id_t     cgi;
   error_type<std::string> cgi_result = parse_cgi(json, cgi);
   if (not cgi_result.has_value()) {
-    return cgi_result;
+    return make_unexpected(cgi_result.error());
   }
 
   if (not cu_cp.get_cell_command_handler().dispatch_bar_cell(cgi, /* barred = */ true)) {
@@ -97,16 +97,36 @@ error_type<std::string> cell_bar_remote_command::execute(const nlohmann::json& j
   return {};
 }
 
-error_type<std::string> cell_unbar_remote_command::execute(const nlohmann::json& json)
+expected<nlohmann::json, std::string> cell_unbar_remote_command::execute(const nlohmann::json& json)
 {
   nr_cell_global_id_t     cgi;
   error_type<std::string> cgi_result = parse_cgi(json, cgi);
   if (not cgi_result.has_value()) {
-    return cgi_result;
+    return make_unexpected(cgi_result.error());
   }
 
   if (not cu_cp.get_cell_command_handler().dispatch_bar_cell(cgi, /* barred = */ false)) {
     return make_unexpected("CU-CP rejected cell_unbar: no served DU matches the provided CGI, or scheduling failed");
   }
   return {};
+}
+
+expected<nlohmann::json, std::string> cell_status_remote_command::execute(const nlohmann::json& json)
+{
+  nr_cell_global_id_t     cgi;
+  error_type<std::string> cgi_result = parse_cgi(json, cgi);
+  if (not cgi_result.has_value()) {
+    return make_unexpected(cgi_result.error());
+  }
+
+  std::optional<ocucp::cu_cp_cell_state> state = cu_cp.get_cell_command_handler().dispatch_get_cell_state(cgi);
+  if (not state.has_value()) {
+    return make_unexpected("CU-CP has no cell matching the provided CGI, or the state read failed");
+  }
+
+  nlohmann::json result;
+  result["admin_state"]       = ocucp::to_string(state->admin_state);
+  result["operational_state"] = ocucp::to_string(state->operational_state);
+  result["cell_barred"]       = state->barred;
+  return result;
 }

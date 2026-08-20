@@ -72,6 +72,15 @@ public:
     // Not exercised by the WS command tests.
     return std::nullopt;
   }
+
+  std::optional<ocucp::cu_cp_cell_state> dispatch_get_cell_state(const nr_cell_global_id_t& cgi) override
+  {
+    last_status_cgi = cgi;
+    return next_cell_state;
+  }
+
+  std::optional<nr_cell_global_id_t>     last_status_cgi;
+  std::optional<ocucp::cu_cp_cell_state> next_cell_state;
 };
 
 /// Fake cu_cp_command_handler whose get_cell_command_handler() returns the capturing handler.
@@ -108,7 +117,7 @@ TEST(cu_cp_cell_lock_remote_command_test, valid_payload_dispatches_deactivate_wi
   fake_cu_cp_command_handler cu_cp;
   cell_lock_remote_command   cmd(cu_cp);
 
-  error_type<std::string> result = cmd.execute(make_valid_payload());
+  expected<nlohmann::json, std::string> result = cmd.execute(make_valid_payload());
 
   ASSERT_TRUE(result.has_value()) << "execute returned error: " << result.error();
   ASSERT_TRUE(cu_cp.cell_cmd.last_deactivate_cgi.has_value()) << "dispatch_deactivate_cell was not invoked";
@@ -123,7 +132,7 @@ TEST(cu_cp_cell_lock_remote_command_test, cu_cp_rejects_dispatch_returns_error)
   cu_cp.cell_cmd.next_dispatch_result = false;
   cell_lock_remote_command cmd(cu_cp);
 
-  error_type<std::string> result = cmd.execute(make_valid_payload());
+  expected<nlohmann::json, std::string> result = cmd.execute(make_valid_payload());
 
   ASSERT_FALSE(result.has_value());
   EXPECT_NE(result.error().find("CU-CP rejected cell_lock"), std::string::npos)
@@ -137,7 +146,7 @@ TEST(cu_cp_cell_unlock_remote_command_test, valid_payload_dispatches_activate_wi
   fake_cu_cp_command_handler cu_cp;
   cell_unlock_remote_command cmd(cu_cp);
 
-  error_type<std::string> result = cmd.execute(make_valid_payload());
+  expected<nlohmann::json, std::string> result = cmd.execute(make_valid_payload());
 
   ASSERT_TRUE(result.has_value()) << "execute returned error: " << result.error();
   ASSERT_TRUE(cu_cp.cell_cmd.last_activate_cgi.has_value()) << "dispatch_activate_cell was not invoked";
@@ -152,7 +161,7 @@ TEST(cu_cp_cell_unlock_remote_command_test, cu_cp_rejects_dispatch_returns_error
   cu_cp.cell_cmd.next_dispatch_result = false;
   cell_unlock_remote_command cmd(cu_cp);
 
-  error_type<std::string> result = cmd.execute(make_valid_payload());
+  expected<nlohmann::json, std::string> result = cmd.execute(make_valid_payload());
 
   ASSERT_FALSE(result.has_value());
   EXPECT_NE(result.error().find("CU-CP rejected cell_unlock"), std::string::npos)
@@ -164,7 +173,7 @@ TEST(cu_cp_cell_bar_remote_command_test, valid_payload_dispatches_bar_with_the_p
   fake_cu_cp_command_handler cu_cp;
   cell_bar_remote_command    cmd(cu_cp);
 
-  error_type<std::string> result = cmd.execute(make_valid_payload());
+  expected<nlohmann::json, std::string> result = cmd.execute(make_valid_payload());
 
   ASSERT_TRUE(result.has_value()) << "execute returned error: " << result.error();
   ASSERT_TRUE(cu_cp.cell_cmd.last_bar_cgi.has_value()) << "dispatch_bar_cell was not invoked";
@@ -181,7 +190,7 @@ TEST(cu_cp_cell_bar_remote_command_test, cu_cp_rejects_dispatch_returns_error)
   cu_cp.cell_cmd.next_dispatch_result = false;
   cell_bar_remote_command cmd(cu_cp);
 
-  error_type<std::string> result = cmd.execute(make_valid_payload());
+  expected<nlohmann::json, std::string> result = cmd.execute(make_valid_payload());
 
   ASSERT_FALSE(result.has_value());
   EXPECT_NE(result.error().find("CU-CP rejected cell_bar"), std::string::npos)
@@ -193,7 +202,7 @@ TEST(cu_cp_cell_unbar_remote_command_test, valid_payload_dispatches_unbar_with_t
   fake_cu_cp_command_handler cu_cp;
   cell_unbar_remote_command  cmd(cu_cp);
 
-  error_type<std::string> result = cmd.execute(make_valid_payload());
+  expected<nlohmann::json, std::string> result = cmd.execute(make_valid_payload());
 
   ASSERT_TRUE(result.has_value()) << "execute returned error: " << result.error();
   ASSERT_TRUE(cu_cp.cell_cmd.last_bar_cgi.has_value()) << "dispatch_bar_cell was not invoked";
@@ -208,7 +217,7 @@ TEST(cu_cp_cell_unbar_remote_command_test, cu_cp_rejects_dispatch_returns_error)
   cu_cp.cell_cmd.next_dispatch_result = false;
   cell_unbar_remote_command cmd(cu_cp);
 
-  error_type<std::string> result = cmd.execute(make_valid_payload());
+  expected<nlohmann::json, std::string> result = cmd.execute(make_valid_payload());
 
   ASSERT_FALSE(result.has_value());
   EXPECT_NE(result.error().find("CU-CP rejected cell_unbar"), std::string::npos)
@@ -226,7 +235,7 @@ TEST(cu_cp_cell_lock_remote_command_test, missing_cgi_object_returns_error)
   nlohmann::json req;
   req["something_else"] = "value";
 
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
   ASSERT_FALSE(result.has_value());
   EXPECT_NE(result.error().find("'cgi'"), std::string::npos) << result.error();
   EXPECT_FALSE(cu_cp.cell_cmd.last_deactivate_cgi.has_value()) << "Dispatch must not run on parse error";
@@ -240,7 +249,7 @@ TEST(cu_cp_cell_lock_remote_command_test, cgi_not_object_returns_error)
   nlohmann::json req;
   req["cgi"] = "not_an_object";
 
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
   ASSERT_FALSE(result.has_value());
   EXPECT_NE(result.error().find("'cgi' object value type"), std::string::npos) << result.error();
 }
@@ -253,7 +262,7 @@ TEST(cu_cp_cell_lock_remote_command_test, missing_plmn_returns_error)
   nlohmann::json req;
   req["cgi"]["nci"] = uint64_t{6733824};
 
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
   ASSERT_FALSE(result.has_value());
   EXPECT_NE(result.error().find("'cgi.plmn'"), std::string::npos) << result.error();
 }
@@ -267,7 +276,7 @@ TEST(cu_cp_cell_lock_remote_command_test, plmn_not_string_returns_error)
   req["cgi"]["plmn"] = 12345;
   req["cgi"]["nci"]  = uint64_t{6733824};
 
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
   ASSERT_FALSE(result.has_value());
   EXPECT_NE(result.error().find("'cgi.plmn' object value type"), std::string::npos) << result.error();
 }
@@ -281,7 +290,7 @@ TEST(cu_cp_cell_lock_remote_command_test, invalid_plmn_string_returns_error)
   req["cgi"]["plmn"] = "not-a-plmn";
   req["cgi"]["nci"]  = uint64_t{6733824};
 
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
   ASSERT_FALSE(result.has_value());
   EXPECT_NE(result.error().find("Invalid PLMN"), std::string::npos) << result.error();
 }
@@ -294,7 +303,7 @@ TEST(cu_cp_cell_lock_remote_command_test, missing_nci_returns_error)
   nlohmann::json req;
   req["cgi"]["plmn"] = "00101";
 
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
   ASSERT_FALSE(result.has_value());
   EXPECT_NE(result.error().find("'cgi.nci'"), std::string::npos) << result.error();
 }
@@ -308,7 +317,7 @@ TEST(cu_cp_cell_lock_remote_command_test, nci_not_unsigned_returns_error)
   req["cgi"]["plmn"] = "00101";
   req["cgi"]["nci"]  = -1;
 
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
   ASSERT_FALSE(result.has_value());
   EXPECT_NE(result.error().find("'cgi.nci' object value type"), std::string::npos) << result.error();
 }
@@ -323,7 +332,50 @@ TEST(cu_cp_cell_lock_remote_command_test, invalid_nci_value_returns_error)
   req["cgi"]["plmn"] = "00101";
   req["cgi"]["nci"]  = uint64_t{1} << 40;
 
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
   ASSERT_FALSE(result.has_value());
   EXPECT_NE(result.error().find("Invalid NR cell identity"), std::string::npos) << result.error();
+}
+
+// ── cell_status query ──
+
+TEST(cu_cp_cell_status_remote_command_test, valid_payload_returns_the_recorded_state)
+{
+  fake_cu_cp_command_handler cu_cp;
+  cu_cp.cell_cmd.next_cell_state = ocucp::cu_cp_cell_state{
+      ocucp::cell_admin_state::shutting_down, ocucp::cell_operational_state::enabled, /* barred = */ true};
+  cell_status_remote_command cmd(cu_cp);
+
+  expected<nlohmann::json, std::string> result = cmd.execute(make_valid_payload());
+
+  ASSERT_TRUE(result.has_value()) << "execute returned error: " << result.error();
+  ASSERT_TRUE(cu_cp.cell_cmd.last_status_cgi.has_value()) << "dispatch_get_cell_state was not invoked";
+  EXPECT_EQ(cu_cp.cell_cmd.last_status_cgi->nci.value(), 6733824U);
+  EXPECT_EQ(result.value()["admin_state"], "shutting_down");
+  EXPECT_EQ(result.value()["operational_state"], "enabled");
+  EXPECT_EQ(result.value()["cell_barred"], true);
+}
+
+TEST(cu_cp_cell_status_remote_command_test, unknown_cell_returns_error)
+{
+  fake_cu_cp_command_handler cu_cp;
+  cu_cp.cell_cmd.next_cell_state = std::nullopt;
+  cell_status_remote_command cmd(cu_cp);
+
+  expected<nlohmann::json, std::string> result = cmd.execute(make_valid_payload());
+
+  ASSERT_FALSE(result.has_value());
+  EXPECT_NE(result.error().find("no cell matching"), std::string::npos)
+      << "Unexpected error message: " << result.error();
+}
+
+TEST(cu_cp_cell_status_remote_command_test, missing_cgi_returns_parse_error)
+{
+  fake_cu_cp_command_handler cu_cp;
+  cell_status_remote_command cmd(cu_cp);
+
+  expected<nlohmann::json, std::string> result = cmd.execute(nlohmann::json::object());
+
+  ASSERT_FALSE(result.has_value());
+  EXPECT_FALSE(cu_cp.cell_cmd.last_status_cgi.has_value()) << "a parse error must not reach the CU-CP";
 }

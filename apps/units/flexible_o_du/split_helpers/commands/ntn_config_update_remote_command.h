@@ -30,7 +30,7 @@ public:
   std::string_view get_description() const override { return "Updates the NTN parameters"; }
 
   // See interface for documentation.
-  error_type<std::string> execute(const nlohmann::json& json) override;
+  expected<nlohmann::json, std::string> execute(const nlohmann::json& json) override;
 };
 
 } // namespace ocudu_ntn

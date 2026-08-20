@@ -98,7 +98,7 @@ TEST_F(ntn_config_update_remote_command_test, single_cell_update_succeeds)
   ntn_cfg_manager.result_to_return.succeeded.push_back(cgi);
 
   // Execute command
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   // Verify command succeeded
   ASSERT_TRUE(result.has_value()) << "Command failed: " << result.error();
@@ -196,7 +196,7 @@ TEST_F(ntn_config_update_remote_command_test, multi_cell_with_complete_config)
   ntn_cfg_manager.result_to_return.succeeded.push_back(cgi2);
 
   // Execute command.
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   // Verify command succeeded.
   ASSERT_TRUE(result.has_value()) << "Command failed: " << result.error();
@@ -315,7 +315,7 @@ TEST_F(ntn_config_update_remote_command_test, common_config_with_overrides)
   ntn_cfg_manager.result_to_return.succeeded.push_back(cgi3);
 
   // Execute command.
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   // Verify command succeeded.
   ASSERT_TRUE(result.has_value()) << "Command failed: " << result.error();
@@ -412,7 +412,7 @@ TEST_F(ntn_config_update_remote_command_test, common_config_without_cells_fails)
   // No cells array provided - cell identities (NCIs) are unknown.
 
   // Execute command.
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   // Verify command failed - cannot apply config without knowing which cells to update.
   ASSERT_FALSE(result.has_value());
@@ -432,7 +432,7 @@ TEST_F(ntn_config_update_remote_command_test, when_cells_array_is_empty_then_err
   req["cells"] = nlohmann::json::array();
 
   // Execute command.
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   // Verify command failed - empty cells array.
   ASSERT_FALSE(result.has_value());
@@ -478,7 +478,7 @@ TEST_F(ntn_config_update_remote_command_test, when_some_cells_fail_then_error_is
   ntn_cfg_manager.result_to_return.failed.push_back(cgi1);
 
   // Execute command.
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   // Verify command failed.
   ASSERT_FALSE(result.has_value());
@@ -498,7 +498,7 @@ TEST_F(ntn_config_update_remote_command_test, when_invalid_format_then_error_is_
   req["epoch_timestamp"] = 1706000000000ULL;
 
   // Execute command.
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   // Verify command failed.
   ASSERT_FALSE(result.has_value());
@@ -533,7 +533,7 @@ TEST_F(ntn_config_update_remote_command_test, when_request_has_invalid_field_the
   cell["polarization"]["dl"]                    = "circular"; // Not one of rhcp/lhcp/linear.
   req["cells"].push_back(cell);
 
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   ASSERT_FALSE(result.has_value());
   logger.info("Received error: {}", result.error());
@@ -587,7 +587,7 @@ TEST_F(ntn_config_update_remote_command_test, when_one_cell_has_invalid_config_t
   req["cells"].push_back(cell2);
 
   // Execute command.
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   // Verify command failed - entire request should be rejected when one cell fails parsing.
   ASSERT_FALSE(result.has_value());
@@ -639,7 +639,7 @@ TEST_F(ntn_config_update_remote_command_test,
   req["cells"].push_back(cell2);
 
   // Execute command.
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   // Verify command failed - entire request should be rejected when one cell fails parsing.
   ASSERT_FALSE(result.has_value());
@@ -777,7 +777,7 @@ TEST_F(ntn_config_update_remote_command_test, single_cell_update_from_json_strin
   ntn_cfg_manager.result_to_return.succeeded.push_back(cgi);
 
   // Execute command.
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   // Verify command succeeded.
   ASSERT_TRUE(result.has_value()) << "Command failed: " << result.error();
@@ -941,7 +941,7 @@ TEST_F(ntn_config_update_remote_command_test, single_cell_update_with_iso_timest
   ntn_cfg_manager.result_to_return.succeeded.push_back(cgi);
 
   // Execute command.
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   // Verify command succeeded.
   ASSERT_TRUE(result.has_value()) << "Command failed: " << result.error();
@@ -1046,7 +1046,7 @@ TEST_F(ntn_config_update_remote_command_test, multi_cell_update_from_json_string
   ntn_cfg_manager.result_to_return.succeeded.push_back(cgi2);
 
   // Execute command.
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   // Verify command succeeded.
   ASSERT_TRUE(result.has_value()) << "Command failed: " << result.error();
@@ -1184,7 +1184,7 @@ TEST_F(ntn_config_update_remote_command_test, common_config_with_overrides_from_
   ntn_cfg_manager.result_to_return.succeeded.push_back(cgi3);
 
   // Execute command.
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   // Verify command succeeded.
   ASSERT_TRUE(result.has_value()) << "Command failed: " << result.error();
@@ -1284,7 +1284,7 @@ TEST_F(ntn_config_update_remote_command_test, single_cell_update_with_ncells_pci
   cgi.nci     = nr_cell_identity::create(1).value();
   ntn_cfg_manager.result_to_return.succeeded.push_back(cgi);
 
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   ASSERT_TRUE(result.has_value()) << "Command failed: " << result.error();
   ASSERT_EQ(ntn_cfg_manager.last_request.cells.size(), 1);
@@ -1333,7 +1333,7 @@ TEST_F(ntn_config_update_remote_command_test, single_cell_update_with_ncells_par
   cgi.nci     = nr_cell_identity::create(1).value();
   ntn_cfg_manager.result_to_return.succeeded.push_back(cgi);
 
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   ASSERT_TRUE(result.has_value()) << "Command failed: " << result.error();
   ASSERT_EQ(ntn_cfg_manager.last_request.cells.size(), 1);
@@ -1391,7 +1391,7 @@ TEST_F(ntn_config_update_remote_command_test, single_cell_update_with_sat_switch
   cgi.nci     = nr_cell_identity::create(1).value();
   ntn_cfg_manager.result_to_return.succeeded.push_back(cgi);
 
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   ASSERT_TRUE(result.has_value()) << "Command failed: " << result.error();
   ASSERT_EQ(ntn_cfg_manager.last_request.cells.size(), 1);
@@ -1448,7 +1448,7 @@ TEST_F(ntn_config_update_remote_command_test, when_epoch_timestamp_is_in_past_th
   cell["ephemeris_info"]["ecef"]["velocity_vz"] = -2500.0;
   req["cells"].push_back(cell);
 
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   ASSERT_FALSE(result.has_value());
   logger.info("Received error: {}", result.error());
@@ -1476,7 +1476,7 @@ TEST_F(ntn_config_update_remote_command_test, when_ephemeris_info_has_no_known_s
   cell["ephemeris_info"]["eci"]["position_x"] = 3578630.0; // "eci" is not supported.
   req["cells"].push_back(cell);
 
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   ASSERT_FALSE(result.has_value());
   logger.info("Received error: {}", result.error());
@@ -1511,7 +1511,7 @@ TEST_F(ntn_config_update_remote_command_test, when_sat_switch_with_resync_has_no
   cell["sat_switch_with_resync"]["ssb_time_offset_sf"] = 60U; // ntn_cfg is absent.
   req["cells"].push_back(cell);
 
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   ASSERT_FALSE(result.has_value());
   logger.info("Received error: {}", result.error());
@@ -1546,7 +1546,7 @@ TEST_F(ntn_config_update_remote_command_test, when_ncells_entry_has_unsupported_
   cell["ncells"] = nlohmann::json::array({{{"pci", 2U}, {"carrier_freq", 650000U}, {"arfcn", 700000U}}});
   req["cells"].push_back(cell);
 
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   ASSERT_FALSE(result.has_value());
   logger.info("Received error: {}", result.error());
@@ -1582,7 +1582,7 @@ TEST_F(ntn_config_update_remote_command_test, when_ssb_time_offset_sf_is_out_of_
   cell["sat_switch_with_resync"]["ntn_cfg"]["cell_specific_koffset"] = 16U;
   req["cells"].push_back(cell);
 
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   ASSERT_FALSE(result.has_value());
   logger.info("Received error: {}", result.error());
@@ -1616,7 +1616,7 @@ TEST_F(ntn_config_update_remote_command_test, when_ncells_pci_is_out_of_range_th
   cell["ncells"]                                = nlohmann::json::array({{{"pci", 1008U}}}); // MAX_PCI is 1007.
   req["cells"].push_back(cell);
 
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   ASSERT_FALSE(result.has_value());
   logger.info("Received error: {}", result.error());
@@ -1650,7 +1650,7 @@ TEST_F(ntn_config_update_remote_command_test, when_ncells_carrier_freq_is_out_of
   cell["ncells"] = nlohmann::json::array({{{"carrier_freq", 3279166U}}}); // Max is 3279165.
   req["cells"].push_back(cell);
 
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   ASSERT_FALSE(result.has_value());
   logger.info("Received error: {}", result.error());
@@ -1689,7 +1689,7 @@ TEST_F(ntn_config_update_remote_command_test, when_ncells_exceeds_max_count_then
   }
   req["cells"].push_back(cell);
 
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   ASSERT_FALSE(result.has_value());
   logger.info("Received error: {}", result.error());
@@ -1729,7 +1729,7 @@ TEST_F(ntn_config_update_remote_command_test, single_cell_update_with_linear_pol
   cgi.nci     = nr_cell_identity::create(1).value();
   ntn_cfg_manager.result_to_return.succeeded.push_back(cgi);
 
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   ASSERT_TRUE(result.has_value()) << "Command failed: " << result.error();
   ASSERT_EQ(ntn_cfg_manager.last_request.cells.size(), 1);
@@ -1773,7 +1773,7 @@ TEST_F(ntn_config_update_remote_command_test, single_cell_update_with_ta_info_on
   cgi.nci     = nr_cell_identity::create(1).value();
   ntn_cfg_manager.result_to_return.succeeded.push_back(cgi);
 
-  error_type<std::string> result = cmd.execute(req);
+  expected<nlohmann::json, std::string> result = cmd.execute(req);
 
   ASSERT_TRUE(result.has_value()) << "Command failed: " << result.error();
   ASSERT_EQ(ntn_cfg_manager.last_request.cells.size(), 1);

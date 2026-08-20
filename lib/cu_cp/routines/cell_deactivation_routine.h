@@ -26,6 +26,15 @@ namespace ocudu::ocucp {
 /// to be Deactivated List. Stages (1) and (2) are optional: pass bar_cells_first=false to skip the bar (e.g.
 /// when cells go down because their AMF is unreachable) and an empty UE list to leave UE handling to the DU.
 /// The logical cells of an acknowledged deactivation update become operationally disabled.
+///
+/// The result reports the per-stage outcome so the caller can resolve the recorded cell state from what
+/// actually took effect: \c success covers all stages, \c bars_acked whether every stage-1 bar update was
+/// acknowledged (only meaningful when barring is enabled).
+struct cell_deactivation_result {
+  bool success    = true;
+  bool bars_acked = false;
+};
+
 class cell_deactivation_routine
 {
 public:
@@ -41,7 +50,7 @@ public:
                             ocudulog::basic_logger&            logger_);
   ~cell_deactivation_routine() = default;
 
-  void operator()(coro_context<async_task<bool>>& ctx);
+  void operator()(coro_context<async_task<cell_deactivation_result>>& ctx);
 
   static const char* name() { return "Cell Deactivation Routine"; }
 
@@ -67,6 +76,7 @@ private:
   // (Sub-)Routine results.
   f1ap_gnb_cu_configuration_update_response f1ap_cu_cfg_update_response;
   bool                                      routine_success = true;
+  bool                                      bars_acked      = false;
 
   using ue_release_task_t = eager_async_task<expected<cu_cp_ue_context_release_complete>>;
   std::vector<ue_release_task_t>           ue_release_tasks;

@@ -637,7 +637,7 @@ parse_cell_ntn_config(const nlohmann::json&                    json,
   return cell_req;
 }
 
-error_type<std::string> ntn_config_update_remote_command::execute(const nlohmann::json& json)
+expected<nlohmann::json, std::string> ntn_config_update_remote_command::execute(const nlohmann::json& json)
 {
   // Validate cells array presence.
   auto cells_it = json.find("cells");
