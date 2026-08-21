@@ -207,7 +207,7 @@ bool xnap_source_handover_preparation_procedure::send_handover_request()
 
   // Forward message to XN-C peer.
   if (!xnc_notifier.on_new_message(msg)) {
-    logger.log_warning("XN-C notifier is not set. Cannot send Handover Request");
+    logger.log_warning("Cannot send Handover Request");
     return false;
   }
 
@@ -231,7 +231,7 @@ bool xnap_source_handover_preparation_procedure::send_handover_cancel()
 
   // Forward message to XN-C peer.
   if (!xnc_notifier.on_new_message(msg)) {
-    logger.log_warning("XN-C notifier is not set. Cannot send Handover Cancel");
+    logger.log_warning("Cannot send Handover Cancel");
     return false;
   }
 

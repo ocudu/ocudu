@@ -142,7 +142,7 @@ bool ngap_handover_preparation_procedure::send_handover_required()
 
   // Forward message to AMF.
   if (!amf_notifier.on_new_message(msg)) {
-    logger.log_warning("AMF notifier is not set. Cannot send HandoverRequired");
+    logger.log_warning("Cannot send HandoverRequired");
     return false;
   }
 
@@ -167,7 +167,7 @@ bool ngap_handover_preparation_procedure::send_handover_cancel()
 
   // Forward message to AMF.
   if (!amf_notifier.on_new_message(msg)) {
-    logger.log_warning("AMF notifier is not set. Cannot send HandoverCancel");
+    logger.log_warning("Cannot send HandoverCancel");
     return false;
   }
 

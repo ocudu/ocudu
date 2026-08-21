@@ -83,7 +83,7 @@ void ngap_initial_context_setup_procedure::send_initial_context_setup_response(
 
   // Forward message to AMF.
   if (!amf_notifier.on_new_message(ngap_msg)) {
-    logger.log_warning("AMF notifier is not set. Cannot send InitialContextSetupResponse");
+    logger.log_warning("Cannot send InitialContextSetupResponse");
     return;
   }
 }
@@ -112,7 +112,7 @@ void ngap_initial_context_setup_procedure::send_initial_context_setup_failure(
 
   // Forward message to AMF.
   if (!amf_notifier.on_new_message(ngap_msg)) {
-    logger.log_warning("AMF notifier is not set. Cannot send InitialContextSetupFailure");
+    logger.log_warning("Cannot send InitialContextSetupFailure");
     return;
   }
 }

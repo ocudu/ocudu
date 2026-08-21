@@ -160,7 +160,7 @@ bool ngap_pdu_session_resource_release_procedure::validate_and_send_response()
 
   // Forward message to AMF.
   if (!amf_notifier.on_new_message(ngap_msg)) {
-    logger.log_warning("AMF notifier is not set. Cannot send PDUSessionResourceReleaseResponse");
+    logger.log_warning("Cannot send PDUSessionResourceReleaseResponse");
     return false;
   }
 

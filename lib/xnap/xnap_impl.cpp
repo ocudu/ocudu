@@ -436,7 +436,7 @@ void xnap_impl::handle_cho_cancel_required(cu_cp_ue_index_t ue_index, const nr_c
     ho_cancel->target_cells_to_cancel.push_back(cell_item);
 
     if (!tx_notifier.on_new_message(msg)) {
-      ue_ctxt.logger.log_warning("HandoverCancel (CHO non-winner): XN-C notifier not set, message not sent");
+      ue_ctxt.logger.log_warning("Cannot send HandoverCancel to release non-winning CHO target");
     } else {
       ue_ctxt.logger.log_debug("HandoverCancel sent to release non-winning CHO target");
     }

@@ -183,7 +183,7 @@ void ngap_impl::handle_initial_ue_message(const cu_cp_initial_ue_message& msg)
                            ue_ctxt.request_pdu_session_timer.duration().count());
   // Forward message to AMF.
   if (!tx_pdu_notifier.on_new_message(ngap_msg)) {
-    ue_ctxt.logger.log_warning("AMF notifier is not set. Cannot send InitialUEMessage");
+    ue_ctxt.logger.log_warning("Cannot send InitialUEMessage");
     return;
   }
 
@@ -233,7 +233,7 @@ void ngap_impl::handle_ul_nas_transport_message(const cu_cp_ul_nas_transport& ms
   ue->schedule_async_task(launch_async([this, msg, ngap_msg](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
     if (!tx_pdu_notifier.on_new_message(ngap_msg)) {
-      logger.error("ue={} ran_ue={} amf_ue={}: AMF notifier is not set. Cannot send ULNASTransportMessage",
+      logger.error("ue={} ran_ue={} amf_ue={}: Cannot send ULNASTransportMessage",
                    msg.ue_index,
                    ngap_msg.pdu.init_msg().value.ul_nas_transport()->ran_ue_ngap_id,
                    ngap_msg.pdu.init_msg().value.ul_nas_transport()->amf_ue_ngap_id);
@@ -286,7 +286,7 @@ void ngap_impl::handle_location_report_transmission(const location_report& msg)
   ue->schedule_async_task(launch_async([this, msg, ngap_msg](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
     if (!tx_pdu_notifier.on_new_message(ngap_msg)) {
-      logger.error("ue={}: AMF notifier is not set. Cannot send LocationReport", msg.ue_index);
+      logger.error("ue={}: Cannot send LocationReport", msg.ue_index);
       CORO_EARLY_RETURN();
     }
     CORO_RETURN();
@@ -320,7 +320,7 @@ void ngap_impl::handle_location_reporting_failure_indication_transmission(const 
 
   // Forward message to AMF.
   if (!tx_pdu_notifier.on_new_message(ngap_msg)) {
-    ue_ctxt.logger.log_warning("AMF notifier is not set. Cannot send LocationReportingFailureIndication");
+    ue_ctxt.logger.log_warning("Cannot send LocationReportingFailureIndication");
     return;
   }
 }
@@ -365,7 +365,7 @@ void ngap_impl::handle_tx_ue_radio_capability_info_indication_required(
   ue->schedule_async_task(launch_async([this, msg, ngap_msg](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
     if (!tx_pdu_notifier.on_new_message(ngap_msg)) {
-      logger.error("ue={} ran_ue={} amf_ue={}: AMF notifier is not set. Cannot send UERadioCapabilityInfoIndication",
+      logger.error("ue={} ran_ue={} amf_ue={}: Cannot send UERadioCapabilityInfoIndication",
                    msg.ue_index,
                    ngap_msg.pdu.init_msg().value.ul_nas_transport()->ran_ue_ngap_id,
                    ngap_msg.pdu.init_msg().value.ul_nas_transport()->amf_ue_ngap_id);
@@ -1005,7 +1005,7 @@ static ngap_message generate_handover_failure(uint64_t amf_ue_id)
 void ngap_impl::send_handover_failure(uint64_t amf_ue_id)
 {
   if (!tx_pdu_notifier.on_new_message(generate_handover_failure(amf_ue_id))) {
-    logger.warning("AMF notifier is not set. Cannot send HandoverFailure");
+    logger.warning("Cannot send HandoverFailure");
     return;
   }
   logger.warning("Sending HandoverFailure");
@@ -1101,7 +1101,7 @@ void ngap_impl::handle_ul_ran_status_transfer(const cu_cp_status_transfer& ul_ra
 
   // Forward message to AMF.
   if (!tx_pdu_notifier.on_new_message(ngap_msg)) {
-    ue_ctxt.logger.log_warning("AMF notifier is not set. Cannot send ULRANStatusTransfer");
+    ue_ctxt.logger.log_warning("Cannot send ULRANStatusTransfer");
     return;
   }
 }
@@ -1406,7 +1406,7 @@ async_task<bool> ngap_impl::handle_ue_context_release_request(const cu_cp_ue_con
                      ngap_msg.pdu.init_msg().value.ue_context_release_request()->amf_ue_ngap_id);
     } else {
       if (!tx_pdu_notifier.on_new_message(ngap_msg)) {
-        logger.error("ue={} ran_ue_id={} amf_ue_id={}: AMF notifier is not set. Cannot send UEContextReleaseRequest",
+        logger.error("ue={} ran_ue_id={} amf_ue_id={}: Cannot send UEContextReleaseRequest",
                      msg.ue_index,
                      ngap_msg.pdu.init_msg().value.ue_context_release_request()->ran_ue_ngap_id,
                      ngap_msg.pdu.init_msg().value.ue_context_release_request()->amf_ue_ngap_id);
@@ -1474,7 +1474,7 @@ void ngap_impl::handle_inter_cu_ho_rrc_recfg_complete(const cu_cp_ue_index_t    
 
   // Forward message to AMF.
   if (!tx_pdu_notifier.on_new_message(ngap_msg)) {
-    ue_ctxt.logger.log_warning("AMF notifier is not set. Cannot send HandoverNotify");
+    ue_ctxt.logger.log_warning("Cannot send HandoverNotify");
     return;
   }
 }
@@ -1518,7 +1518,7 @@ void ngap_impl::handle_ul_ue_associated_nrppa_transport(cu_cp_ue_index_t ue_inde
                      ngap_msg.pdu.init_msg().value.ul_ue_associated_nrppa_transport()->amf_ue_ngap_id);
     } else {
       if (!tx_pdu_notifier.on_new_message(ngap_msg)) {
-        logger.error("ue={} ran_ue={} amf_ue={}: AMF notifier is not set. Cannot send ULUEAssociatedNRPPATransport",
+        logger.error("ue={} ran_ue={} amf_ue={}: Cannot send ULUEAssociatedNRPPATransport",
                      ue_index,
                      ngap_msg.pdu.init_msg().value.ul_ue_associated_nrppa_transport()->ran_ue_ngap_id,
                      ngap_msg.pdu.init_msg().value.ul_ue_associated_nrppa_transport()->amf_ue_ngap_id);
@@ -1543,7 +1543,7 @@ async_task<void> ngap_impl::handle_ul_non_ue_associated_nrppa_transport(const by
 
     // Transmit non UE associated NRPPA transport.
     if (!tx_pdu_notifier.on_new_message(ngap_msg)) {
-      logger.warning("AMF notifier is not set. Cannot send ULnonUEAssociatedNRPPATransport");
+      logger.warning("Cannot send ULnonUEAssociatedNRPPATransport");
       CORO_EARLY_RETURN();
     }
     CORO_RETURN();
@@ -1608,7 +1608,7 @@ ngap_impl::handle_rrc_inactive_transition_report_required(const ngap_rrc_inactiv
     }
 
     if (!tx_pdu_notifier.on_new_message(ngap_msg)) {
-      logger.error("ue={} ran_ue_id={} amf_ue_id={}: AMF notifier is not set. Cannot send RRCInactiveTransitionReport",
+      logger.error("ue={} ran_ue_id={} amf_ue_id={}: Cannot send RRCInactiveTransitionReport",
                    report.ue_index,
                    ngap_msg.pdu.init_msg().value.rrc_inactive_transition_report()->ran_ue_ngap_id,
                    ngap_msg.pdu.init_msg().value.rrc_inactive_transition_report()->amf_ue_ngap_id);

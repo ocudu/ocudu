@@ -126,7 +126,7 @@ bool ngap_handover_resource_allocation_procedure::send_handover_request_ack(
 
   // Forward message to AMF.
   if (!amf_notifier.on_new_message(ngap_msg)) {
-    logger.warning("AMF notifier is not set. Cannot send HandoverRequestAck");
+    logger.warning("Cannot send HandoverRequestAck");
     return false;
   }
 
@@ -149,7 +149,7 @@ void ngap_handover_resource_allocation_procedure::send_handover_failure(
   // Forward message to AMF.
 
   if (!amf_notifier.on_new_message(ngap_msg)) {
-    logger.warning("AMF notifier is not set. Cannot send HandoverFailure");
+    logger.warning("Cannot send HandoverFailure");
     return;
   }
 }

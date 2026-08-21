@@ -72,7 +72,7 @@ void ngap_ue_context_modification_procedure::send_ue_context_modification_respon
 
   // Forward message to AMF.
   if (!amf_notifier.on_new_message(ngap_msg)) {
-    logger.log_warning("AMF notifier is not set. Cannot send UEContextModificationResponse");
+    logger.log_warning("Cannot send UEContextModificationResponse");
     return;
   }
 }
@@ -94,7 +94,7 @@ void ngap_ue_context_modification_procedure::send_ue_context_modification_failur
 
   // Forward message to AMF.
   if (!amf_notifier.on_new_message(ngap_msg)) {
-    logger.log_warning("AMF notifier is not set. Cannot send UEContextModificationFailure");
+    logger.log_warning("Cannot send UEContextModificationFailure");
     return;
   }
 }

@@ -32,7 +32,7 @@ void ng_reset_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   // Forward message to AMF.
   if (!send_ng_reset()) {
-    logger.info("AMF notifier is not set. Cannot send NGReset");
+    logger.info("Cannot send NGReset");
     CORO_EARLY_RETURN();
   }
 

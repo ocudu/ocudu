@@ -102,7 +102,7 @@ bool xnap_new_node_retrieve_ue_context_procedure::send_retrieve_ue_context_reque
   retrieve_ue_context_request_to_asn1(asn1_request, request);
 
   if (!tx_notifier.on_new_message(msg)) {
-    ue_ctxt->logger.log_warning("XN-C notifier is not set. Cannot send Retrieve UE Context Request");
+    ue_ctxt->logger.log_warning("Cannot send Retrieve UE Context Request");
     return false;
   }
 
