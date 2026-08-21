@@ -23,17 +23,16 @@ endif (ENABLE_PDSCH_HWACC AND ENABLE_PUSCH_HWACC)
 
 add_library(ocudu_pxsch_bler_test_helpers STATIC
         pxsch_bler_test_channel_emulator.cpp
-        pxsch_bler_test_factories.cpp)
+        pxsch_bler_test_factories.cpp
+        pxsch_bler_test_parse.cpp)
 target_link_libraries(ocudu_pxsch_bler_test_helpers ${PXSCH_BLER_TEST_LIBRARIES})
 
 target_link_libraries(pxsch_bler_test ocudu_pxsch_bler_test_helpers)
-
-# BLER test - vanilla configuration.
 add_test(pxsch_bler_test pxsch_bler_test -R 10)
 # BLER test - single codeblock (1 RB), 32 repetitions.
-add_test(pxsch_bler_test pxsch_bler_test -m 0 -R 10 -V 0,2,3,1,0,2,3,1,0,2,3,1,0,2,3,1,0,2,3,1,0,2,3,1,0,2,3,1,0,2,3,1 -B 1)
+add_test(pxsch_bler_test_1CBs_32reps pxsch_bler_test -m 0 -R 10 -V [0,2,3,1,0,2,3,1,0,2,3,1,0,2,3,1,0,2,3,1,0,2,3,1,0,2,3,1,0,2,3,1] -B 1)
 # BLER test - many codeblocks, one thread.
-add_test(pxsch_bler_test pxsch_bler_test -m 28 -R 10 -V 0,2,3,1 -j 1)
+add_test(pxsch_bler_test_manyCBs_4rep pxsch_bler_test -m 28 -R 10 -V [0,2,3,1] -j 1)
 
 add_executable(pxsch_chain_test pxsch_chain_test.cpp)
 target_link_libraries(pxsch_chain_test
