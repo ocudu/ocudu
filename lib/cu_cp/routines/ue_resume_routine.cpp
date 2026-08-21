@@ -20,7 +20,7 @@ verify_rrc_resume_request(const rrc_resume_request& request, ue_manager& ue_mng,
   }
 
   if (!ue_mng.find_du_ue(request.ue_index)) {
-    logger.warning("Can't find ue={}");
+    logger.warning("Can't find ue={}", request.ue_index);
     return false;
   }
 

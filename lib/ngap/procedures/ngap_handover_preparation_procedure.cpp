@@ -39,7 +39,7 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
   logger.log_info("\"{}\" started...", name());
 
   if (ue_ids.amf_ue_id == amf_ue_id_t::invalid || ue_ids.ran_ue_id == ran_ue_id_t::invalid) {
-    logger.log_error("\"{}\" failed. Cause: Invalid NGAP id pair");
+    logger.log_error("\"{}\" failed. Cause: Invalid NGAP id pair", name());
     CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
   }
 
