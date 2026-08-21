@@ -43,6 +43,13 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
     CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
   }
 
+  // The PDU Session Resource List IE of the HANDOVER REQUIRED carries at least one item (TS 38.413 section 9.2.3.1),
+  // so a UE without a PDU session cannot be handed over.
+  if (request.pdu_sessions.empty()) {
+    logger.log_warning("\"{}\" failed. Cause: UE has no PDU session", name());
+    CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
+  }
+
   // Subscribe to respective publisher to receive HANDOVER COMMAND/HANDOVER PREPARATION FAILURE message.
   transaction_sink.subscribe_to(ev_mng.handover_preparation_outcome, tng_reloc_prep_ms);
 

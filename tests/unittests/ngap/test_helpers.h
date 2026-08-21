@@ -47,6 +47,7 @@ public:
         asn1::bit_ref bref(pack_buffer);
         if (msg.pdu.pack(bref) != asn1::OCUDUASN_SUCCESS) {
           parent.logger.error("Failed to pack message");
+          ++parent.nof_unpackable_ngap_msgs;
           return false;
         }
 
@@ -70,6 +71,9 @@ public:
   }
 
   std::vector<ngap_message> last_ngap_msgs;
+
+  /// Number of messages the CU-CP handed over for transmission that could not be packed.
+  unsigned nof_unpackable_ngap_msgs = 0;
 
 private:
   ocudulog::basic_logger& logger;

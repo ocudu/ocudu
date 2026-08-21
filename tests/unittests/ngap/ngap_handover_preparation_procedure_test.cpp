@@ -61,6 +61,33 @@ TEST_F(ngap_test, when_source_gnb_handover_preparation_triggered_then_ho_command
   ASSERT_TRUE(t.get().success);
 }
 
+/// Test that a UE without a PDU session is not handed over, as the PDU Session Resource List IE of the HANDOVER
+/// REQUIRED carries at least one item (TS 38.413 section 9.2.3.1).
+TEST_F(ngap_test, when_ue_has_no_pdu_session_then_handover_preparation_is_declined)
+{
+  // Setup UE context. No PDU session is added to the UP manager.
+  cu_cp_ue_index_t ue_index = create_ue();
+  run_dl_nas_transport(ue_index); // needed to allocate AMF UE id.
+
+  auto& ue = test_ues.at(ue_index);
+  ue.rrc_ue_handler.set_ho_preparation_message({});
+
+  ngap_handover_preparation_request request =
+      generate_handover_preparation_request(ue_index, {}, nr_cell_identity::create({1, 22}, 1).value(), 22);
+
+  const size_t nof_ngap_msgs_before = n2_gw.last_ngap_msgs.size();
+
+  // Action: Launch HO preparation procedure.
+  async_task<ngap_handover_preparation_response>         t = ngap->handle_handover_preparation_request(request);
+  lazy_task_launcher<ngap_handover_preparation_response> t_launcher(t);
+
+  // The procedure must fail without handing an unpackable Handover Required over for transmission.
+  ASSERT_TRUE(t.ready());
+  ASSERT_FALSE(t.get().success);
+  ASSERT_EQ(n2_gw.last_ngap_msgs.size(), nof_ngap_msgs_before);
+  ASSERT_EQ(n2_gw.nof_unpackable_ngap_msgs, 0);
+}
+
 /// Test that the Handover Required correctly encodes the target PLMN in the TargetID's Global gNB-ID and in the
 /// Source-to-Target Transparent Container's Target Cell ID, for a target cell belonging to a different PLMN than the
 /// one currently serving the UE.
