@@ -4,9 +4,44 @@
 
 #include "du_positioning_measurement_procedure.h"
 #include "ocudu/adt/format.h"
+#include <algorithm>
+#include <cmath>
 
 using namespace ocudu;
 using namespace odu;
+
+/// Finds the requested positioning measurement quantity of a given type, if present.
+static const positioning_meas_quantity* find_pos_meas_quantity(const std::vector<positioning_meas_quantity>& quants,
+                                                               pos_meas_type                                 type)
+{
+  auto it = std::find_if(quants.begin(), quants.end(), [type](const positioning_meas_quantity& quantity) {
+    return quantity.meas_type == type;
+  });
+  return it == quants.end() ? nullptr : &(*it);
+}
+
+/// \brief Maps an Azimuth Angle of Arrival in degrees to the TS 38.473, Section 9.3.1.157 0.1 degree resolution
+/// encoding, wrapping the value into its valid, circular range {0,...,3599} (i.e. [0, 360) degrees).
+static uint16_t degrees_to_f1ap_azimuth_aoa(float degrees)
+{
+  static constexpr unsigned AZIMUTH_AOA_MODULUS = 3600U;
+
+  float wrapped_deg = std::fmod(degrees, 360.0F);
+  if (wrapped_deg < 0.0F) {
+    wrapped_deg += 360.0F;
+  }
+  return static_cast<uint16_t>(std::lround(wrapped_deg * 10.0F) % AZIMUTH_AOA_MODULUS);
+}
+
+/// \brief Maps a Zenith Angle of Arrival in degrees to the TS 38.473, Section 9.3.1.157 0.1 degree resolution
+/// encoding, clamping the value into its valid range {0,...,1799} (i.e. [0, 180) degrees).
+static uint16_t degrees_to_f1ap_zenith_aoa(float degrees)
+{
+  static constexpr float MAX_ZENITH_AOA_DEG = 179.9F;
+
+  const float clamped_deg = std::clamp(degrees, 0.0F, MAX_ZENITH_AOA_DEG);
+  return static_cast<uint16_t>(std::lround(clamped_deg * 10.0F));
+}
 
 /// Maps RSRP in dBFS to L3 RSRP (reported value) as per TS 38.133, Table 10.1.6.1-1.
 static uint8_t rsrp_dbfs_to_l3_rsrp_mapping(float rsrp_dbfs)
@@ -88,12 +123,10 @@ async_task<void> positioning_measurement_procedure::handle_mac_meas_request()
 du_positioning_meas_response positioning_measurement_procedure::prepare_f1ap_response()
 {
   ocudu_assert(not req.pos_meas_quants.empty(), "Positioning measurement quantities are empty.");
-  ocudu_assert(req.pos_meas_quants[0].granularity_factor.has_value(), "No granularity factor provided.");
   ocudu_assert(mac_resp.cell_results.size() == req.trp_meas_req_list.size(),
                "MAC responses size does not match TRP measurement request list size.");
 
   du_positioning_meas_response resp;
-  const uint8_t                granularity = req.pos_meas_quants[0].granularity_factor.value();
   resp.pos_meas_list.reserve(req.trp_meas_req_list.size());
   // The MAC response mac_resps[i] corresponds to the TRP in trp_meas_req_list[i]; \ref handle_mac_meas_request().
   for (unsigned trp_idx = 0, nof_trps = req.trp_meas_req_list.size(); trp_idx != nof_trps; ++trp_idx) {
@@ -101,36 +134,39 @@ du_positioning_meas_response positioning_measurement_procedure::prepare_f1ap_res
     // TRP ID.
     meas_res.trp_id = req.trp_meas_req_list[trp_idx].trp_id;
 
-    ocudu_assert(mac_resp.cell_results[trp_idx].ul_rtoa_meass.size() == 1,
+    ocudu_assert(mac_resp.cell_results[trp_idx].ul_srs_pos_meass.size() == 1,
                  "Currently we only support 1 measurement result (SRS indication) per TRP.");
     static constexpr size_t srs_ind_meas_idx = 0U;
+    const auto&             mac_meas         = mac_resp.cell_results[trp_idx].ul_srs_pos_meass[srs_ind_meas_idx];
 
-    // Check what reports have been requested.
-    const bool rtoa_report = std::any_of(
-        req.pos_meas_quants.begin(), req.pos_meas_quants.end(), [](const positioning_meas_quantity& quantity) {
-          return quantity.meas_type == pos_meas_type::ul_rtoa;
-        });
-    const bool rsrp_report = std::any_of(req.pos_meas_quants.begin(),
-                                         req.pos_meas_quants.end(),
-                                         [](const positioning_meas_quantity& quantity) {
-                                           return quantity.meas_type == pos_meas_type::ul_srs_rsrp;
-                                         }) and
-                             mac_resp.cell_results[trp_idx].ul_rtoa_meass[srs_ind_meas_idx].rsrp_dbfs.has_value();
+    // Check what reports have been requested, and whether MAC was able to produce them.
+    const positioning_meas_quantity* rtoa_quant  = find_pos_meas_quantity(req.pos_meas_quants, pos_meas_type::ul_rtoa);
+    const bool                       rtoa_report = rtoa_quant != nullptr and mac_meas.ul_rtoa.has_value();
+    const bool rsrp_report = find_pos_meas_quantity(req.pos_meas_quants, pos_meas_type::ul_srs_rsrp) != nullptr and
+                             mac_meas.rsrp_dbfs.has_value();
+    const bool aoa_report = find_pos_meas_quantity(req.pos_meas_quants, pos_meas_type::ul_aoa) != nullptr and
+                            mac_meas.azimuth_aoa_deg.has_value();
 
-    const size_t report_size = (rtoa_report ? 1U : 0U) + (rsrp_report ? 1U : 0U);
-    meas_res.results.resize(report_size);
-    // TODO: Review this assumption once the F1AP we defined which elements of Positioning measurement request are
-    //       mandatory.
-    // NOTE: We assume the UL-RTOA report (if requested) comes first, followed by the UL-RSRP report (if requested).
+    // NOTE: The UL-RTOA report (if requested) comes first, followed by the UL-RSRP report and the UL-AoA report (if
+    // requested).
+    meas_res.results.reserve((rtoa_report ? 1U : 0U) + (rsrp_report ? 1U : 0U) + (aoa_report ? 1U : 0U));
     if (rtoa_report) {
-      meas_res.results.front().emplace<pos_meas_result_ul_rtoa>(pos_meas_result_ul_rtoa{
-          .granularity = granularity,
-          .ul_rtoa = mac_resp.cell_results[trp_idx].ul_rtoa_meass[srs_ind_meas_idx].ul_rtoa.to_ul_rtoa(granularity)});
+      ocudu_assert(rtoa_quant->granularity_factor.has_value(),
+                   "No granularity factor provided for UL-RTOA measurement.");
+      const uint8_t granularity = rtoa_quant->granularity_factor.value();
+      meas_res.results.push_back(
+          pos_meas_result_ul_rtoa{.granularity = granularity, .ul_rtoa = mac_meas.ul_rtoa->to_ul_rtoa(granularity)});
     }
     if (rsrp_report) {
-      const auto rsrp_value = rsrp_dbfs_to_l3_rsrp_mapping(
-          mac_resp.cell_results[trp_idx].ul_rtoa_meass[srs_ind_meas_idx].rsrp_dbfs.value());
-      meas_res.results.back().emplace<pos_meas_result_ul_rsrp>(pos_meas_result_ul_rsrp{.ul_rsrp = rsrp_value});
+      meas_res.results.push_back(
+          pos_meas_result_ul_rsrp{.ul_rsrp = rsrp_dbfs_to_l3_rsrp_mapping(mac_meas.rsrp_dbfs.value())});
+    }
+    if (aoa_report) {
+      pos_meas_result_ul_aoa aoa_result{.azimuth_aoa = degrees_to_f1ap_azimuth_aoa(*mac_meas.azimuth_aoa_deg)};
+      if (mac_meas.zenith_aoa_deg.has_value()) {
+        aoa_result.zenith_aoa = degrees_to_f1ap_zenith_aoa(*mac_meas.zenith_aoa_deg);
+      }
+      meas_res.results.push_back(aoa_result);
     }
     meas_res.sl_rx = mac_resp.sl_rx;
 

@@ -83,12 +83,14 @@ bool f1ap_du_positioning_measurement_procedure::validate_request() const
     return false;
   }
 
-  // At least 1 of the elements must be UL-RTOA or UL SRS-RSRP.
+  // At least 1 of the elements must be UL-RTOA, UL SRS-RSRP or UL-AoA.
   if (not std::any_of(msg->pos_meas_quantities.begin(), msg->pos_meas_quantities.end(), [](const auto& quantity) {
         return quantity.pos_meas_type.value == pos_meas_type_opts::ul_rtoa or
-               quantity.pos_meas_type.value == pos_meas_type_opts::ul_srs_rsrp;
+               quantity.pos_meas_type.value == pos_meas_type_opts::ul_srs_rsrp or
+               quantity.pos_meas_type.value == pos_meas_type_opts::ul_aoa;
       })) {
-    logger.warning("Positioning Measurement Req.: no UL-RTOA and UL SRS RSRP pos. measurement type found in the list");
+    logger.warning(
+        "Positioning Measurement Req.: no UL-RTOA, UL SRS RSRP or UL-AoA pos. measurement type found in the list");
     return false;
   }
 
@@ -100,9 +102,11 @@ bool f1ap_du_positioning_measurement_procedure::validate_request() const
       }
     } else if (quant.pos_meas_type.value == pos_meas_type_opts::ul_srs_rsrp) {
       // Placeholder for UL SRS RSRP measurement specifc type checks.
+    } else if (quant.pos_meas_type.value == pos_meas_type_opts::ul_aoa) {
+      // Placeholder for UL-AoA measurement specific type checks.
     } else {
-      logger.warning("Only UL-RTOA and UL SRS RSRP positioning measurement types are supported. Other measurement "
-                     "types will be ignored");
+      logger.warning("Only UL-RTOA, UL SRS RSRP and UL-AoA positioning measurement types are supported. Other "
+                     "measurement types will be ignored");
     }
   }
 
@@ -230,12 +234,20 @@ void f1ap_du_positioning_measurement_procedure::send_response() const
           default:
             report_fatal_error("Invalid k value");
         }
-      } else {
-        // TODO: extend this if block as other measurements report are added.
+      } else if (std::holds_alternative<pos_meas_result_ul_rsrp>(du_meas_result)) {
         // UL-RSRP measurement result.
         const auto& du_rsrp_result = std::get<pos_meas_result_ul_rsrp>(du_meas_result);
-        auto&       rtoa_item      = asn1_meas_result.measured_results_value.set_ul_srs_rsrp();
-        rtoa_item                  = du_rsrp_result.ul_rsrp;
+        auto&       rsrp_item      = asn1_meas_result.measured_results_value.set_ul_srs_rsrp();
+        rsrp_item                  = du_rsrp_result.ul_rsrp;
+      } else {
+        // UL-AoA measurement result.
+        const auto& du_aoa_result = std::get<pos_meas_result_ul_aoa>(du_meas_result);
+        auto&       aoa_item      = asn1_meas_result.measured_results_value.set_ul_angle_of_arrival();
+        aoa_item.azimuth_ao_a     = du_aoa_result.azimuth_aoa;
+        if (du_aoa_result.zenith_aoa.has_value()) {
+          aoa_item.zenith_ao_a_present = true;
+          aoa_item.zenith_ao_a         = du_aoa_result.zenith_aoa.value();
+        }
       }
 
       // Slot and time stamp.

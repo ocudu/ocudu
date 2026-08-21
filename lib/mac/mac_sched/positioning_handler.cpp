@@ -184,9 +184,9 @@ void pos_handler_impl::handle_srs_indication(du_cell_index_t cell_index, const m
       // Not a positioning SRS report.
       continue;
     }
-    if (not pos_rep->ul_rtoa.has_value()) {
-      // TEMP: Ignore for now positioning reports without UL-RTOA.
-      logger.warning("rnti={} processing positioning SRS indication with no RTOA", pdu.rnti);
+    if (not pos_rep->ul_rtoa.has_value() and not pos_rep->azimuth_aoa.has_value()) {
+      // Ignore positioning reports that carry none of the currently supported measurement types.
+      logger.warning("rnti={} processing positioning SRS indication with no RTOA nor AoA", pdu.rnti);
       continue;
     }
     if (std::any_of(cells.begin(), cells.end(), [&](const auto& c) { return c.pos_rnti == pdu.rnti; })) {
@@ -270,12 +270,14 @@ void pos_handler_impl::handle_pending_srs_report(du_cell_index_t cell_index, mac
   resp.cell_results.resize(cur_req.cells.size());
   for (unsigned i = 0; i != cur_req.cells.size(); ++i) {
     const auto& srss = cells[cur_req.cells[i].cell_index].report_history[ring_idx].srss;
-    resp.cell_results[i].ul_rtoa_meass.resize(srss.size());
+    resp.cell_results[i].ul_srs_pos_meass.resize(srss.size());
     for (unsigned j = 0; j != srss.size(); ++j) {
-      auto& rep     = std::get<mac_srs_pdu::positioning_report>(srss[j].report);
-      auto& out     = resp.cell_results[i].ul_rtoa_meass[j];
-      out.ul_rtoa   = rep.ul_rtoa.value();
-      out.rsrp_dbfs = rep.ul_rsrp_dBFS;
+      auto& rep           = std::get<mac_srs_pdu::positioning_report>(srss[j].report);
+      auto& out           = resp.cell_results[i].ul_srs_pos_meass[j];
+      out.ul_rtoa         = rep.ul_rtoa;
+      out.rsrp_dbfs       = rep.ul_rsrp_dBFS;
+      out.azimuth_aoa_deg = rep.azimuth_aoa;
+      out.zenith_aoa_deg  = rep.zenith_aoa;
     }
   }
 

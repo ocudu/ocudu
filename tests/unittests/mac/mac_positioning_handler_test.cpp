@@ -47,13 +47,27 @@ srs_config make_test_srs_config()
   return cfg;
 }
 
-mac_srs_indication_message make_srs_ind(rnti_t rnti)
+mac_srs_indication_message make_srs_ind(rnti_t               rnti,
+                                        std::optional<float> azimuth_aoa_deg = std::nullopt,
+                                        std::optional<float> zenith_aoa_deg  = std::nullopt)
 {
   mac_srs_indication_message msg;
   msg.sl_rx = {0, 0};
   msg.srss.resize(1);
   msg.srss[0].rnti   = rnti;
-  msg.srss[0].report = mac_srs_pdu::positioning_report{phy_time_unit::from_units_of_Tc(1000)};
+  msg.srss[0].report = mac_srs_pdu::positioning_report{
+      phy_time_unit::from_units_of_Tc(1000), std::nullopt, azimuth_aoa_deg, zenith_aoa_deg};
+  return msg;
+}
+
+/// Creates an SRS indication carrying a positioning report with UL-AoA only, i.e. without UL-RTOA.
+mac_srs_indication_message make_aoa_only_srs_ind(rnti_t rnti, float azimuth_aoa_deg)
+{
+  mac_srs_indication_message msg;
+  msg.sl_rx = {0, 0};
+  msg.srss.resize(1);
+  msg.srss[0].rnti   = rnti;
+  msg.srss[0].report = mac_srs_pdu::positioning_report{std::nullopt, std::nullopt, azimuth_aoa_deg, std::nullopt};
   return msg;
 }
 
@@ -164,8 +178,8 @@ TEST_F(single_cell_positioning_handler_test,
   ASSERT_TRUE(t_launcher.result.has_value());
   ASSERT_EQ(t_launcher.result.value().sl_rx, srs_ind.sl_rx);
   ASSERT_EQ(t_launcher.result.value().cell_results.size(), 1);
-  ASSERT_EQ(t_launcher.result.value().cell_results[0].ul_rtoa_meass.size(), 1);
-  ASSERT_EQ(t_launcher.result.value().cell_results[0].ul_rtoa_meass[0].ul_rtoa,
+  ASSERT_EQ(t_launcher.result.value().cell_results[0].ul_srs_pos_meass.size(), 1);
+  ASSERT_EQ(t_launcher.result.value().cell_results[0].ul_srs_pos_meass[0].ul_rtoa,
             std::get<mac_srs_pdu::positioning_report>(srs_ind.srss[0].report).ul_rtoa.value());
 
   // Scheduler was notified to stop positioning measurements.
@@ -199,8 +213,8 @@ TEST_F(single_cell_positioning_handler_test,
   ASSERT_TRUE(t_launcher.result.has_value());
   ASSERT_EQ(t_launcher.result.value().sl_rx, srs_ind.sl_rx);
   ASSERT_EQ(t_launcher.result.value().cell_results.size(), 1);
-  ASSERT_EQ(t_launcher.result.value().cell_results[0].ul_rtoa_meass.size(), 1);
-  ASSERT_EQ(t_launcher.result.value().cell_results[0].ul_rtoa_meass[0].ul_rtoa,
+  ASSERT_EQ(t_launcher.result.value().cell_results[0].ul_srs_pos_meass.size(), 1);
+  ASSERT_EQ(t_launcher.result.value().cell_results[0].ul_srs_pos_meass[0].ul_rtoa,
             std::get<mac_srs_pdu::positioning_report>(srs_ind.srss[0].report).ul_rtoa.value());
 
   // Scheduler was notified to stop positioning measurements.
@@ -234,6 +248,55 @@ TEST_F(single_cell_positioning_handler_test,
   ASSERT_TRUE(t_launcher2.ready());
 
   ASSERT_EQ(pos_rnti1, pos_rnti2);
+}
+
+TEST_F(single_cell_positioning_handler_test, when_srs_indication_contains_ul_aoa_then_result_carries_ul_aoa)
+{
+  static constexpr float azimuth_deg = 123.4F;
+  static constexpr float zenith_deg  = 56.7F;
+
+  // Start a positioning measurement for a UE connected to the cell.
+  mac_positioning_measurement_request                      req  = make_positioning_request_for_connected_ue();
+  rnti_t                                                   rnti = req.cells[0].rnti.value();
+  auto                                                     t = pos_handler->handle_positioning_measurement_request(req);
+  lazy_task_launcher<mac_positioning_measurement_response> t_launcher(t);
+
+  // Forward an SRS indication carrying both UL-RTOA and UL-AoA.
+  mac_srs_indication_message srs_ind = make_srs_ind(rnti, azimuth_deg, zenith_deg);
+  cells[0]->handle_srs_indication(srs_ind);
+  worker.run_pending_tasks();
+
+  // The AoA values are forwarded unchanged in the positioning measurement result.
+  ASSERT_TRUE(t_launcher.ready());
+  const auto& meas = t_launcher.result.value().cell_results[0].ul_srs_pos_meass[0];
+  ASSERT_TRUE(meas.ul_rtoa.has_value());
+  ASSERT_TRUE(meas.azimuth_aoa_deg.has_value());
+  EXPECT_FLOAT_EQ(meas.azimuth_aoa_deg.value(), azimuth_deg);
+  ASSERT_TRUE(meas.zenith_aoa_deg.has_value());
+  EXPECT_FLOAT_EQ(meas.zenith_aoa_deg.value(), zenith_deg);
+}
+
+TEST_F(single_cell_positioning_handler_test, when_srs_indication_contains_only_ul_aoa_then_it_is_not_dropped)
+{
+  static constexpr float azimuth_deg = 200.1F;
+
+  // Start a positioning measurement for a UE connected to the cell.
+  mac_positioning_measurement_request                      req  = make_positioning_request_for_connected_ue();
+  rnti_t                                                   rnti = req.cells[0].rnti.value();
+  auto                                                     t = pos_handler->handle_positioning_measurement_request(req);
+  lazy_task_launcher<mac_positioning_measurement_response> t_launcher(t);
+
+  // Forward an SRS indication carrying UL-AoA only, i.e. without UL-RTOA.
+  mac_srs_indication_message srs_ind = make_aoa_only_srs_ind(rnti, azimuth_deg);
+  cells[0]->handle_srs_indication(srs_ind);
+  worker.run_pending_tasks();
+
+  // The report is not dropped despite missing UL-RTOA.
+  ASSERT_TRUE(t_launcher.ready());
+  const auto& meas = t_launcher.result.value().cell_results[0].ul_srs_pos_meass[0];
+  ASSERT_FALSE(meas.ul_rtoa.has_value());
+  ASSERT_TRUE(meas.azimuth_aoa_deg.has_value());
+  EXPECT_FLOAT_EQ(meas.azimuth_aoa_deg.value(), azimuth_deg);
 }
 
 class multi_cell_positioning_handler_test : public positioning_handler_test, public ::testing::Test

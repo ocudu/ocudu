@@ -52,6 +52,7 @@ public:
   std::optional<f1ap_ue_configuration_response>          last_ue_cfg_response;
   std::optional<std::pair<du_ue_index_t, du_ue_index_t>> last_reestablishment_ue_indexes;
   du_positioning_info_response                           next_positioning_info_response;
+  du_positioning_meas_response                           next_positioning_meas_response;
 
   // F1AP procedures.
   std::optional<gnbcu_config_update_request>      last_cu_upd_req;
@@ -166,7 +167,7 @@ public:
   request_positioning_measurement(const du_positioning_meas_request& req) override
   {
     last_positioning_meas_request = req;
-    return launch_no_op_task(du_positioning_meas_response{});
+    return launch_no_op_task(du_positioning_meas_response{next_positioning_meas_response});
   }
 
   /// \brief Retrieve task scheduler specific to a given UE.

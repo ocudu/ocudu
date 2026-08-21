@@ -78,7 +78,14 @@ struct pos_meas_result_ul_rsrp {
   uint8_t ul_rsrp;
 };
 
-using pos_meas_result_item = std::variant<pos_meas_result_ul_rtoa, pos_meas_result_ul_rsrp>;
+struct pos_meas_result_ul_aoa {
+  /// Azimuth Angle of Arrival, in units of 0.1 degrees. Values {0,...,3599}, as per TS 38.473, Section 9.3.1.157.
+  uint16_t azimuth_aoa;
+  /// Zenith Angle of Arrival, in units of 0.1 degrees. Values {0,...,1799}, as per TS 38.473, Section 9.3.1.157.
+  std::optional<uint16_t> zenith_aoa;
+};
+
+using pos_meas_result_item = std::variant<pos_meas_result_ul_rtoa, pos_meas_result_ul_rsrp, pos_meas_result_ul_aoa>;
 
 struct pos_meas_result {
   trp_id_t trp_id;

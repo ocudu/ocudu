@@ -29,13 +29,17 @@ struct mac_positioning_measurement_request {
 
 /// Result of a positioning measurement request.
 struct mac_positioning_measurement_response {
-  struct ul_rtoa_meas {
-    phy_time_unit        ul_rtoa;
-    std::optional<float> rsrp_dbfs;
+  struct ul_srs_pos_meas {
+    std::optional<phy_time_unit> ul_rtoa;
+    std::optional<float>         rsrp_dbfs;
+    /// Azimuth Angle of Arrival, in degrees. Values: {0,...,359.9}.
+    std::optional<float> azimuth_aoa_deg;
+    /// Zenith Angle of Arrival, in degrees. Values: {0,...,179.9}.
+    std::optional<float> zenith_aoa_deg;
   };
   struct cell_result {
-    /// List of UL RToA measurements for the cell for a given request.
-    std::vector<ul_rtoa_meas> ul_rtoa_meass;
+    /// List of UL SRS-based positioning measurements for the cell for a given request.
+    std::vector<ul_srs_pos_meas> ul_srs_pos_meass;
   };
 
   /// Slot at which the measurement (SRS) was received at PHY layer.

@@ -310,8 +310,8 @@ TEST_F(du_high_pos_multi_cells_tester,
   const unsigned expected_srs_offset = 0U;
   for (unsigned trp_idx = 0, sz = req_msg->trp_meas_request_list.size(); trp_idx != sz; ++trp_idx) {
     ASSERT_EQ(req_msg->trp_meas_request_list[trp_idx].trp_id, resp_msg->pos_meas_result_list[trp_idx].trp_id);
-    // The Positioning Measured Result should contain 2 items, 1 with UL-RTOA, the second with UL_RSRP.
-    ASSERT_EQ(2U, resp_msg->pos_meas_result_list[trp_idx].pos_meas_result.size());
+    // The Positioning Measured Result should contain 3 items: UL-RTOA, UL-RSRP and UL-AoA.
+    ASSERT_EQ(3U, resp_msg->pos_meas_result_list[trp_idx].pos_meas_result.size());
     ASSERT_EQ(asn1::f1ap::measured_results_value_c::types_opts::ul_rtoa,
               resp_msg->pos_meas_result_list[trp_idx].pos_meas_result[0].measured_results_value.type().value);
     const auto& pos_meas_result_rtoa = resp_msg->pos_meas_result_list[trp_idx].pos_meas_result[0];
@@ -326,6 +326,16 @@ TEST_F(du_high_pos_multi_cells_tester,
     ASSERT_EQ(asn1::f1ap::measured_results_value_c::types_opts::ul_srs_rsrp,
               resp_msg->pos_meas_result_list[trp_idx].pos_meas_result[1].measured_results_value.type().value);
     ASSERT_EQ(expected_rsrp, resp_msg->pos_meas_result_list[0].pos_meas_result[1].measured_results_value.ul_srs_rsrp());
+    // These correspond to the azimuth/zenith AoA (123.4/56.7 degrees) hard-coded in the SRS indication.
+    const uint16_t expected_azimuth_aoa = 1234;
+    const uint16_t expected_zenith_aoa  = 567;
+    ASSERT_EQ(asn1::f1ap::measured_results_value_c::types_opts::ul_angle_of_arrival,
+              resp_msg->pos_meas_result_list[trp_idx].pos_meas_result[2].measured_results_value.type().value);
+    const auto& aoa_result =
+        resp_msg->pos_meas_result_list[trp_idx].pos_meas_result[2].measured_results_value.ul_angle_of_arrival();
+    ASSERT_EQ(expected_azimuth_aoa, aoa_result.azimuth_ao_a);
+    ASSERT_TRUE(aoa_result.zenith_ao_a_present);
+    ASSERT_EQ(expected_zenith_aoa, aoa_result.zenith_ao_a);
     // The slot idx corresponding to the time-stamp should coincide with the SRS offset, which in this case is 0. Only
     // SCS 15 kHz and SCS 30 kHz are supported in the test environment.
     auto slot_idx =

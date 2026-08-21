@@ -196,9 +196,16 @@ mac_srs_pdu test_helpers::create_srs_pdu(const srs_info& srs)
   phy_time_unit ta = phy_time_unit::from_timing_advance(test_rng::uniform_int<unsigned>(0, 60), srs.bwp_cfg->scs);
   if (srs.positioning_report_requested) {
     // Set a random number, just to test the values are passed to the positioning report.
-    phy_time_unit rtoa = phy_time_unit::from_units_of_Tc(test_rng::uniform_int<unsigned>(0, 1000));
-    const float   rsrp = -84.6f;
-    return mac_srs_pdu(srs.crnti, ta, rtoa, rsrp);
+    phy_time_unit rtoa        = phy_time_unit::from_units_of_Tc(test_rng::uniform_int<unsigned>(0, 1000));
+    const float   rsrp        = -84.6f;
+    const float   azimuth_aoa = 123.4f;
+    const float   zenith_aoa  = 56.7f;
+
+    mac_srs_pdu pdu;
+    pdu.rnti                = srs.crnti;
+    pdu.time_advance_offset = ta;
+    pdu.report              = mac_srs_pdu::positioning_report{rtoa, rsrp, azimuth_aoa, zenith_aoa};
+    return pdu;
   } else {
     srs_channel_matrix ch_matrix(1, 1);
     return mac_srs_pdu(srs.crnti, ta, ch_matrix);
