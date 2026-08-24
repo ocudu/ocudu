@@ -30,7 +30,7 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   // The SRS allocator is only used if srs_prohibit_time is set.
   srs_alloc(cell_cfg, sched_cfg.ue.srs_prohibit_time),
   pg_sch(cell_cfg, pdcch_sch),
-  ev_mng(cell_cfg, pg_sch, logger)
+  ev_mng(cell_cfg, si_sch, pg_sch, logger)
 {
   // Register new cell in the UE scheduler.
   ue_sched = ue_sched_.add_cell(ue_cell_scheduler_creation_request{msg.cell_index,
@@ -48,12 +48,12 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
 
 void cell_scheduler::handle_pws_si_update_request(const pws_si_scheduling_update_request& msg)
 {
-  si_sch.handle_pws_si_update_request(msg);
+  ev_mng.handle_pws_si_update_request(msg);
 }
 
 void cell_scheduler::handle_si_update_request(const si_scheduling_update_request& msg)
 {
-  si_sch.handle_si_update_request(msg);
+  ev_mng.handle_si_update_request(msg);
 }
 
 void cell_scheduler::handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& slice_reconf_req)

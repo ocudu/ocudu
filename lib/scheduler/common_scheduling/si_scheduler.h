@@ -7,7 +7,6 @@
 #include "../support/paging_helpers.h"
 #include "si_message_scheduler.h"
 #include "sib1_scheduler.h"
-#include "ocudu/adt/lockfree_triple_buffer.h"
 #include "ocudu/adt/slotted_vector.h"
 #include "ocudu/ran/slot_point_extended.h"
 #include "ocudu/scheduler/scheduler_sys_info_handler.h"
@@ -28,8 +27,10 @@ public:
   /// \param hyper_sfn_tx HyperSFN for the slot provided in the current slot indication.
   void run_slot(cell_resource_allocator& res_alloc, uint32_t hyper_sfn_tx);
 
+  /// \note Must be called from the cell scheduler executor.
   void handle_si_update_request(const si_scheduling_update_request& req);
 
+  /// \note Must be called from the cell scheduler executor.
   void handle_pws_si_update_request(const pws_si_scheduling_update_request& req);
 
   void stop();
@@ -68,8 +69,9 @@ private:
   sib1_scheduler       sib1_sched;
   si_message_scheduler si_msg_sched;
 
-  si_version_type                                      last_version = 0;
-  lockfree_triple_buffer<si_scheduling_update_request> pending_req;
+  si_version_type last_version = 0;
+  /// Newest SI change request pending to be handled. A request that arrives while another one is on-going replaces it.
+  std::optional<si_scheduling_update_request> pending_req;
 
   std::optional<si_scheduling_update_request> on_going_req;
   /// Slot at which the on-going SI change modification window starts. Only meaningful while \c on_going_req has a
@@ -91,14 +93,8 @@ private:
   /// Whether every warning of the ETWS/CMAS SI epoch in effect finished being broadcast.
   bool all_pws_broadcasts_ended(slot_point_extended slot_sched) const;
 
-  /// Pending ETWS/CMAS SI epoch, tagged with a locally-generated version for newness detection.
-  struct pws_pending_epoch {
-    si_version_type                  version = 0;
-    pws_si_scheduling_update_request req;
-  };
-  lockfree_triple_buffer<pws_pending_epoch> pending_pws_epoch;
-  si_version_type                           last_seen_pws_epoch = 0;
-  si_version_type                           next_pws_epoch      = 1;
+  /// Newest ETWS/CMAS SI epoch pending to be applied. A newer epoch replaces one not yet applied.
+  std::optional<pws_si_scheduling_update_request> pending_pws_epoch;
 
   /// Deadline of the broadcast of one warning, held so that each warning is timed from its own broadcast.
   struct pws_broadcast_deadline {

@@ -20,9 +20,7 @@ si_scheduler::si_scheduler(const cell_configuration&                       cfg_,
   pdcch_sch(pdcch_sch_),
   logger(ocudulog::fetch_basic_logger("SCHED")),
   sib1_sched(cell_cfg, pdcch_sch, msg.si_scheduling.sib1_payload_size),
-  si_msg_sched(cell_cfg, pdcch_sch, msg.si_scheduling),
-  pending_req(si_scheduling_update_request{INVALID_DU_CELL_INDEX, last_version, {}}),
-  pending_pws_epoch(pws_pending_epoch{})
+  si_msg_sched(cell_cfg, pdcch_sch, msg.si_scheduling)
 {
 }
 
@@ -57,9 +55,11 @@ void si_scheduler::stop()
 {
   last_sl_tx = {};
 
-  // Reset on-going requests.
-  const auto& next = pending_req.read();
-  last_version     = next.version;
+  // Discard any request that is pending or on-going.
+  if (pending_req.has_value()) {
+    last_version = pending_req->version;
+    pending_req.reset();
+  }
   on_going_req.reset();
 
   sib1_sched.stop();
@@ -90,10 +90,10 @@ bool si_scheduler::try_handle_si_mod_request(slot_point_extended slot_sched)
 
   if (not on_going_req.has_value()) {
     // Not handling any new request at the moment. Check if there is any pending SI change request to handle.
-    const auto& next = pending_req.read();
-    if (next.version != last_version) {
+    if (pending_req.has_value() and pending_req->version != last_version) {
       // New pushed request. Save request to be handled in the following slots.
-      on_going_req = next;
+      on_going_req = std::move(pending_req);
+      pending_req.reset();
       last_version = on_going_req->version;
 
       // Apply the new PDSCH grant sizing immediately, rather than waiting for the SI change modification window
@@ -149,28 +149,27 @@ bool si_scheduler::try_handle_si_mod_request(slot_point_extended slot_sched)
 
 void si_scheduler::handle_si_update_request(const si_scheduling_update_request& req)
 {
-  pending_req.write_and_commit(req);
+  pending_req = req;
 }
 
 void si_scheduler::handle_pws_si_update_request(const pws_si_scheduling_update_request& req)
 {
-  pending_pws_epoch.write_and_commit(pws_pending_epoch{next_pws_epoch++, req});
+  pending_pws_epoch = req;
 }
 
 void si_scheduler::handle_pws_epoch(slot_point_extended slot_sched)
 {
   // Apply a newly pushed ETWS/CMAS epoch, if any.
-  const pws_pending_epoch& next = pending_pws_epoch.read();
-  if (next.version != last_seen_pws_epoch) {
-    // New SI epoch.
-    last_seen_pws_epoch = next.version;
+  if (pending_pws_epoch.has_value()) {
+    const pws_si_scheduling_update_request next = std::move(pending_pws_epoch.value());
+    pending_pws_epoch.reset();
 
     // Notify SI-message and SIB1 schedulers.
-    si_msg_sched.apply_pws_epoch(next.req.version, next.req.si_sched_cfg, next.req.broadcasting);
-    sib1_sched.handle_sib1_update_indication(next.req.version, next.req.si_sched_cfg.sib1_payload_size);
-    logger.debug("ETWS/CMAS SI epoch {} applied", next.req.version);
+    si_msg_sched.apply_pws_epoch(next.version, next.si_sched_cfg, next.broadcasting);
+    sib1_sched.handle_sib1_update_indication(next.version, next.si_sched_cfg.sib1_payload_size);
+    logger.debug("ETWS/CMAS SI epoch {} applied", next.version);
 
-    if (refresh_pws_deadlines(next.req, slot_sched)) {
+    if (refresh_pws_deadlines(next, slot_sched)) {
       // At least one warning message demands short message broadcasting.
       // As per TS 38.304, ETWS/CMAS-capable UEs monitor for this notification only in their own paging occasion, once
       // per DRX cycle. Since we don't know a given UE's UE_ID (hence its exact paging occasion), extend the
