@@ -18,6 +18,7 @@ class ngap_path_switch_procedure
 public:
   ngap_path_switch_procedure(const cu_cp_path_switch_request& request_,
                              ngap_ue_context&                 ue_ctxt_,
+                             ngap_ue_context_list&            ue_ctxt_list_,
                              ngap_message_notifier&           amf_notifier_);
 
   void operator()(coro_context<async_task<cu_cp_path_switch_response>>& ctx);
@@ -41,8 +42,13 @@ private:
   asn1_to_path_switch_request_failure(const asn1::ngap::path_switch_request_fail_s& asn1_fail) const;
 
   const cu_cp_path_switch_request request;
-  ngap_ue_context&                ue_ctxt;
+  ngap_ue_transaction_manager&    ev_mng; // only accessed before the first suspension, to subscribe to the outcome
+  ngap_ue_context_list&           ue_ctxt_list;
   ngap_message_notifier&          amf_notifier;
+  // Copies of the UE identifiers and logger. The NGAP UE context can be removed while this procedure is suspended, so
+  // the procedure must not hold references into it.
+  const ngap_ue_ids ue_ids;
+  ngap_ue_logger    logger;
 
   cu_cp_path_switch_response procedure_response;
 

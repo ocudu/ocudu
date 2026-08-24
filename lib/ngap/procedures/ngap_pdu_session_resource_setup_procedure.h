@@ -17,10 +17,11 @@ class ngap_pdu_session_resource_setup_procedure
 public:
   ngap_pdu_session_resource_setup_procedure(const ngap_pdu_session_resource_setup_request&     request_,
                                             const asn1::ngap::pdu_session_res_setup_request_s& asn1_request_,
-                                            ngap_ue_context_list&                              ue_ctxt_list_,
+                                            const ngap_ue_ids&                                 ue_ids_,
                                             ngap_cu_cp_notifier&                               cu_cp_notifier_,
                                             ngap_metrics_aggregator&                           metrics_handler_,
-                                            ngap_message_notifier&                             amf_notifier_);
+                                            ngap_message_notifier&                             amf_notifier_,
+                                            ngap_ue_logger&                                    logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -36,13 +37,14 @@ private:
   const asn1::ngap::pdu_session_res_setup_request_s asn1_request;
   ngap_pdu_session_resource_setup_response          validation_response;
   byte_buffer                                       nas_pdu;
-  ngap_ue_context_list&                             ue_ctxt_list;
   ngap_pdu_session_resource_setup_response          response;
   ngap_cu_cp_notifier&                              cu_cp_notifier;
   ngap_metrics_aggregator&                          metrics_handler;
   ngap_message_notifier&                            amf_notifier;
-
-  ngap_ue_context* ue_ctxt = nullptr;
+  // Copies of the UE identifiers and logger. The NGAP UE context can be removed while this procedure is suspended, so
+  // the procedure must not hold references into it.
+  const ngap_ue_ids ue_ids;
+  ngap_ue_logger    logger;
 
   cu_cp_ue_context_release_request ue_context_release_request;
 

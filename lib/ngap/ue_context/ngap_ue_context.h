@@ -30,14 +30,16 @@ struct ngap_ue_context {
   cu_cp_rrc_inactive_transition_report_request               rrc_inactive_transition_report_request =
       cu_cp_rrc_inactive_transition_report_request::cancel_report;
   byte_buffer last_pdu_session_resource_modify_request; // To check if a received modify request is a duplicate
-  ngap_ue_transaction_manager ev_mng;
+  // Declare the logger before the transaction manager. Destroying "ev_mng" cancels its pending transactions, which
+  // resumes the awaiting procedures from within the destructor, and those procedures log the cancellation.
   ngap_ue_logger              logger;
+  ngap_ue_transaction_manager ev_mng;
 
   ngap_ue_context(cu_cp_ue_index_t        ue_index_,
                   ran_ue_id_t             ran_ue_id_,
                   ngap_cu_cp_ue_notifier& ue_notifier_,
                   timer_factory&          timers_) :
-    ue_ids({ue_index_, ran_ue_id_}), ue(&ue_notifier_), ev_mng(timers_), logger("NGAP", {ue_index_, ran_ue_id_})
+    ue_ids({ue_index_, ran_ue_id_}), ue(&ue_notifier_), logger("NGAP", {ue_index_, ran_ue_id_}), ev_mng(timers_)
   {
     request_pdu_session_timer = timers_.create_timer();
   }
@@ -233,6 +235,8 @@ public:
     }
 
     ues.at(ran_ue_id).logger.log_debug("Removing NGAP UE context");
+
+    ues.at(ran_ue_id).request_pdu_session_timer.stop();
 
     if (ues.at(ran_ue_id).ue_ids.amf_ue_id != amf_ue_id_t::invalid) {
       amf_ue_id_to_ran_ue_id.erase(ues.at(ran_ue_id).ue_ids.amf_ue_id);

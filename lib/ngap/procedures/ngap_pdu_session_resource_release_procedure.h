@@ -32,7 +32,7 @@ private:
   ngap_pdu_session_resource_release_response response;
   ngap_cu_cp_notifier&                       cu_cp_notifier;
   ngap_message_notifier&                     amf_notifier;
-  ngap_ue_logger&                            logger;
+  ngap_ue_logger                             logger;
 };
 
 } // namespace ocudu::ocucp

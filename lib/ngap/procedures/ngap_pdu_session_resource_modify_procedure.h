@@ -9,8 +9,7 @@
 #include "ocudu/ngap/ngap.h"
 #include "ocudu/support/async/async_task.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 class ngap_pdu_session_resource_modify_procedure
 {
@@ -40,7 +39,7 @@ private:
   ngap_cu_cp_notifier&                               cu_cp_notifier;
   ngap_message_notifier&                             amf_notifier;
   ngap_control_message_handler&                      ngap_ctrl_handler;
-  ngap_ue_logger&                                    logger;
+  ngap_ue_logger                                     logger;
 
   cu_cp_ue_context_release_request ue_context_release_request;
 
@@ -48,5 +47,4 @@ private:
   pdu_session_resource_modify_validation_outcome verification_outcome;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

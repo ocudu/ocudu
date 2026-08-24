@@ -135,6 +135,38 @@ TEST_F(ngap_pdu_session_resource_release_procedure_test,
   ASSERT_TRUE(was_pdu_session_resource_release_command_valid());
 }
 
+/// Test that the procedure survives the removal of the NGAP UE context while it is suspended. The NGAP UE context is
+/// transferred between UEs on handover, so it can be removed from a task loop other than the one this procedure runs
+/// on.
+TEST_F(ngap_pdu_session_resource_release_procedure_test,
+       when_ue_context_is_removed_while_release_procedure_is_suspended_then_procedure_finishes)
+{
+  // Test preamble.
+  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(test_rng::uniform_int<uint16_t>(
+      pdu_session_id_to_uint(pdu_session_id_t::min), pdu_session_id_to_uint(pdu_session_id_t::max)));
+
+  cu_cp_ue_index_t ue_index = this->start_procedure(pdu_session_id);
+
+  auto& ue = test_ues.at(ue_index);
+
+  // Suspend the procedure inside the CU-CP release routine.
+  cu_cp_notifier.defer_pdu_session_resource_release();
+
+  ngap_message pdu_session_resource_release_command =
+      generate_valid_pdu_session_resource_release_command(ue.amf_ue_id.value(), ue.ran_ue_id.value(), pdu_session_id);
+  ngap->handle_message(pdu_session_resource_release_command);
+
+  ASSERT_TRUE(was_conversion_successful(pdu_session_resource_release_command, pdu_session_id));
+
+  // Remove the NGAP UE context while the procedure is suspended.
+  ngap->get_ngap_ue_context_removal_handler().remove_ue_context(ue_index);
+
+  // Let the procedure resume and report its outcome.
+  cu_cp_notifier.complete_pdu_session_resource_release();
+
+  ASSERT_TRUE(was_pdu_session_resource_release_command_valid());
+}
+
 /// Test PDU Session Resource Setup after PDU Session Resource Release Command.
 TEST_F(ngap_pdu_session_resource_release_procedure_test,
        when_pdu_session_resource_setup_request_received_after_release_command_then_pdu_session_setup_succeeds)

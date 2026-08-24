@@ -718,6 +718,12 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
                fmt::underlying(ue_ctxt.ue_ids.ran_ue_id),
                fmt::underlying(ue_ctxt.ue_ids.amf_ue_id));
 
+  if (!ue->is_security_enabled()) {
+    ue_ctxt.logger.log_warning("Dropping PDUSessionResourceSetupRequest. Security context is not activated");
+    send_error_indication(tx_pdu_notifier, logger, ue_ctxt.ue_ids.ran_ue_id, ue_ctxt.ue_ids.amf_ue_id, {});
+    return;
+  }
+
   // Stop PDU session setup timer.
   ue_ctxt.request_pdu_session_timer.stop();
 
@@ -740,7 +746,7 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
 
   // Start routine.
   ue->schedule_async_task(launch_async<ngap_pdu_session_resource_setup_procedure>(
-      msg, request, ue_ctxt_list, cu_cp_notifier, metrics_handler, tx_pdu_notifier));
+      msg, request, ue_ctxt.ue_ids, cu_cp_notifier, metrics_handler, tx_pdu_notifier, ue_ctxt.logger));
 }
 
 void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu_session_res_modify_request_s& request)
@@ -1641,7 +1647,7 @@ ngap_impl::handle_path_switch_request_required(const cu_cp_path_switch_request& 
 
   ngap_ue_context& ue_ctxt = ue_ctxt_list[request.ue_index];
 
-  return launch_async<ngap_path_switch_procedure>(request, ue_ctxt, tx_pdu_notifier);
+  return launch_async<ngap_path_switch_procedure>(request, ue_ctxt, ue_ctxt_list, tx_pdu_notifier);
 }
 
 ngap_info ngap_impl::handle_ngap_metrics_report_request() const

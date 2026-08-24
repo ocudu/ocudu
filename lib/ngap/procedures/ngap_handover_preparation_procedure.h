@@ -33,7 +33,7 @@ public:
   ngap_rrc_ue_notifier&                   rrc_ue_notifier;
   ngap_cu_cp_notifier&                    cu_cp_notifier;
   ngap_ue_transaction_manager&            ev_mng;
-  ngap_ue_logger&                         logger;
+  ngap_ue_logger                          logger;
 
   unique_timer tng_reloc_prep_timer;
 

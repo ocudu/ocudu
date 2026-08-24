@@ -37,11 +37,13 @@ private:
                                           const ran_ue_id_t&                     ran_ue_id);
 
   ngap_init_context_setup_request request;
-  const ngap_ue_ids&              ue_ids;
-  ngap_cu_cp_notifier&            cu_cp_notifier;
-  ngap_metrics_aggregator&        metrics_handler;
-  ngap_message_notifier&          amf_notifier;
-  ngap_ue_logger&                 logger;
+  // Copies of the UE identifiers and logger. The NGAP UE context can be removed while this procedure is suspended, so
+  // the procedure must not hold references into it.
+  const ngap_ue_ids        ue_ids;
+  ngap_cu_cp_notifier&     cu_cp_notifier;
+  ngap_metrics_aggregator& metrics_handler;
+  ngap_message_notifier&   amf_notifier;
+  ngap_ue_logger           logger;
 
   // Maps PDU session ID to S-NSSAI for metrics.
   std::map<pdu_session_id_t, s_nssai_t> pdu_session_id_to_snssai;

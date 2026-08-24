@@ -133,3 +133,26 @@ TEST_F(ngap_path_switch_procedure_test, when_path_switch_request_ack_received_th
   ASSERT_TRUE(t.ready());
   ASSERT_TRUE(std::holds_alternative<cu_cp_path_switch_request_ack>(t.get()));
 }
+
+/// Test that the procedure survives the removal of the NGAP UE context while it awaits the Path Switch Request Ack.
+/// Destroying the UE context cancels the pending transaction, which resumes this procedure from within the destructor.
+TEST_F(ngap_path_switch_procedure_test, when_ue_context_is_removed_then_path_switch_procedure_fails)
+{
+  // Test preparation: Create UE.
+  cu_cp_ue_index_t ue_index = create_ue();
+
+  // Action 1: Launch Path Switch Procedure.
+  test_logger.info("Launch path switch procedure...");
+  async_task<cu_cp_path_switch_response> t =
+      ngap->handle_path_switch_request_required(generate_path_switch_request(ue_index));
+  lazy_task_launcher<cu_cp_path_switch_response> t_launcher(t);
+
+  ASSERT_FALSE(t.ready());
+
+  // Remove the NGAP UE context while the procedure awaits the Path Switch Request Ack.
+  ngap->get_ngap_ue_context_removal_handler().remove_ue_context(ue_index);
+
+  // Check that path switch procedure failed.
+  ASSERT_TRUE(t.ready());
+  ASSERT_TRUE(std::holds_alternative<cu_cp_path_switch_request_failure>(t.get()));
+}

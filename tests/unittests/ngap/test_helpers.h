@@ -13,6 +13,7 @@
 #include "ocudu/ran/cu_cp_pdu_session.h"
 #include "ocudu/security/security.h"
 #include "ocudu/support/async/fifo_async_task_scheduler.h"
+#include "ocudu/support/async/manual_event.h"
 #include <gtest/gtest.h>
 #include <optional>
 
@@ -296,6 +297,16 @@ public:
     release_command_outcome = outcome;
   }
 
+  /// Suspends the PDU Session Resource Release Command handling until \ref complete_pdu_session_resource_release is
+  /// called. Allows a test to run other events while the NGAP procedure is suspended.
+  void defer_pdu_session_resource_release() { release_command_gate.emplace(); }
+
+  void complete_pdu_session_resource_release()
+  {
+    ocudu_assert(release_command_gate.has_value(), "PDU Session Resource Release Command handling was not deferred");
+    release_command_gate->set();
+  }
+
   async_task<ngap_pdu_session_resource_release_response>
   on_new_pdu_session_resource_release_command(ngap_pdu_session_resource_release_command& command) override
   {
@@ -305,6 +316,10 @@ public:
 
     return launch_async([this](coro_context<async_task<ngap_pdu_session_resource_release_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
+
+      if (release_command_gate.has_value()) {
+        CORO_AWAIT(*release_command_gate);
+      }
 
       if (release_command_outcome.has_value()) {
         CORO_EARLY_RETURN(release_command_outcome.value());
@@ -438,6 +453,9 @@ public:
 private:
   ue_manager&             ue_mng;
   ocudulog::basic_logger& logger;
+
+  // Gate that holds the PDU Session Resource Release Command handling suspended, when set.
+  std::optional<manual_event_flag> release_command_gate;
 
   ngap_ue_context_removal_handler* ngap_handler = nullptr;
   fifo_async_task_scheduler        amf_task_sched{16};

@@ -34,10 +34,12 @@ private:
                                             const ran_ue_id_t&                          ran_ue_id);
 
   ngap_ue_context_modification_request request;
-  const ngap_ue_ids&                   ue_ids;
-  ngap_cu_cp_notifier&                 cu_cp_notifier;
-  ngap_message_notifier&               amf_notifier;
-  ngap_ue_logger&                      logger;
+  // Copies of the UE identifiers and logger. The NGAP UE context can be removed while this procedure is suspended, so
+  // the procedure must not hold references into it.
+  const ngap_ue_ids      ue_ids;
+  ngap_cu_cp_notifier&   cu_cp_notifier;
+  ngap_message_notifier& amf_notifier;
+  ngap_ue_logger         logger;
 
   // routine result
   expected<ngap_ue_context_modification_response, ngap_ue_context_modification_failure>
