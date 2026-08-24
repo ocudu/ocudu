@@ -120,6 +120,52 @@ TEST_F(logical_cell_manager_test, when_du_is_derealized_mid_stop_then_shutting_d
   EXPECT_EQ(mng.find_cell(declared_nci)->operational_state, cell_operational_state::disabled);
 }
 
+TEST_F(logical_cell_manager_test, when_failed_stop_bar_is_recorded_then_derealization_clears_it)
+{
+  // The bar a failed stop left on the air does not outlive the DU: only operator intent survives.
+  const cu_cp_du_index_t du_index = uint_to_cu_cp_du_index(0);
+  mng.realize_cell(declared_nci, du_index);
+  ASSERT_TRUE(mng.record_failed_stop_bar(declared_nci));
+  EXPECT_TRUE(mng.find_cell(declared_nci)->barred);
+
+  mng.derealize_du_cells(du_index);
+
+  EXPECT_FALSE(mng.find_cell(declared_nci)->barred);
+}
+
+TEST_F(logical_cell_manager_test, when_failed_stop_bar_is_recorded_then_a_deactivation_clears_it)
+{
+  // A deactivation taking effect ends the on-air-barred condition the record describes.
+  ASSERT_TRUE(mng.record_failed_stop_bar(declared_nci));
+  ASSERT_TRUE(mng.set_operational_state(declared_nci, cell_operational_state::disabled).has_value());
+  EXPECT_FALSE(mng.find_cell(declared_nci)->barred);
+}
+
+TEST_F(logical_cell_manager_test, when_operator_sets_barred_then_it_survives_derealization_and_deactivation)
+{
+  // Operator intent, unlike the failed-stop record, outlives the DU and the cell state.
+  const cu_cp_du_index_t du_index = uint_to_cu_cp_du_index(0);
+  mng.realize_cell(declared_nci, du_index);
+  ASSERT_TRUE(mng.set_barred(declared_nci, true).has_value());
+
+  ASSERT_TRUE(mng.set_operational_state(declared_nci, cell_operational_state::disabled).has_value());
+  EXPECT_TRUE(mng.find_cell(declared_nci)->barred);
+  mng.derealize_du_cells(du_index);
+  EXPECT_TRUE(mng.find_cell(declared_nci)->barred);
+}
+
+TEST_F(logical_cell_manager_test, when_operator_sets_barred_then_it_takes_over_a_failed_stop_record)
+{
+  // cell_bar/cell_unbar after a failed stop makes the bar operator intent: it stops being transient.
+  ASSERT_TRUE(mng.record_failed_stop_bar(declared_nci));
+  ASSERT_TRUE(mng.set_barred(declared_nci, true).has_value());
+
+  const cu_cp_du_index_t du_index = uint_to_cu_cp_du_index(0);
+  mng.realize_cell(declared_nci, du_index);
+  mng.derealize_du_cells(du_index);
+  EXPECT_TRUE(mng.find_cell(declared_nci)->barred) << "an operator-owned bar must survive de-realization";
+}
+
 TEST_F(logical_cell_manager_test, when_cells_are_declared_then_undeclared_realized_cell_comes_up_locked)
 {
   // The declared set acts as the activation whitelist: a reported cell outside it is realized locked.

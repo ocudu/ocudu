@@ -28,6 +28,10 @@ struct logical_cell {
   cell_admin_state admin_state = cell_admin_state::unlocked;
   /// Intended MIB cellBarred state, applied via the TS 38.473 Cells to be Barred List whenever active.
   bool barred = false;
+  /// Whether \c barred mirrors an on-air bar left by a failed graceful stop rather than operator intent.
+  /// Such a record is transient: it is cleared when the DU goes away or a deactivation takes effect, and an
+  /// operator bar/unbar takes it over.
+  bool barred_by_failed_stop = false;
 
   /// Operational state: whether the cell is active at its realizing DU.
   cell_operational_state operational_state = cell_operational_state::disabled;
@@ -56,9 +60,17 @@ public:
   /// \return The previous state, or std::nullopt if no logical cell with the given NCI exists.
   std::optional<cell_admin_state> set_admin_state(nr_cell_identity nci, cell_admin_state state);
 
-  /// \brief Set the intended MIB cellBarred state of a logical cell.
+  /// \brief Set the intended MIB cellBarred state of a logical cell. The operator takes ownership: a
+  /// transient failed-stop bar record is cleared.
   /// \return The previous intent, or std::nullopt if no logical cell with the given NCI exists.
   std::optional<bool> set_barred(nr_cell_identity nci, bool barred);
+
+  /// \brief Record the bar a failed graceful stop left on the air, so the registry matches the cell.
+  ///
+  /// The record is transient (see \ref logical_cell::barred_by_failed_stop): unlike operator intent it does
+  /// not outlive the condition it describes.
+  /// \return false if no logical cell with the given NCI exists.
+  bool record_failed_stop_bar(nr_cell_identity nci);
 
   /// \brief Set the operational state of a logical cell.
   /// \return The previous state, or std::nullopt if no logical cell with the given NCI exists.

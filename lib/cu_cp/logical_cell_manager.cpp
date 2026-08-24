@@ -50,12 +50,27 @@ std::optional<bool> logical_cell_manager::set_barred(nr_cell_identity nci, bool 
     logger.warning("Cannot set barred={} for unknown logical cell nci={:#x}", barred, nci.value());
     return std::nullopt;
   }
-  bool prev         = it->second.barred;
-  it->second.barred = barred;
+  bool prev                        = it->second.barred;
+  it->second.barred                = barred;
+  it->second.barred_by_failed_stop = false;
   if (prev != barred) {
     logger.info("Logical cell nci={:#x} barred: {} -> {}", nci.value(), prev, barred);
   }
   return prev;
+}
+
+bool logical_cell_manager::record_failed_stop_bar(nr_cell_identity nci)
+{
+  auto it = cells.find(nci);
+  if (it == cells.end()) {
+    logger.warning("Cannot record the failed-stop bar for unknown logical cell nci={:#x}", nci.value());
+    return false;
+  }
+  it->second.barred                = true;
+  it->second.barred_by_failed_stop = true;
+  logger.warning("Cell nci={:#x} remains barred after the failed graceful stop. Recording the barred state",
+                 nci.value());
+  return true;
 }
 
 std::optional<cell_operational_state> logical_cell_manager::set_operational_state(nr_cell_identity       nci,
@@ -71,6 +86,13 @@ std::optional<cell_operational_state> logical_cell_manager::set_operational_stat
   if (prev != state) {
     logger.info("Logical cell nci={:#x} operational_state: {} -> {}", nci.value(), to_string(prev), to_string(state));
   }
+  if (state == cell_operational_state::disabled && it->second.barred_by_failed_stop) {
+    // The deactivation took effect: the on-air bar the failed stop left behind is gone with the cell.
+    it->second.barred                = false;
+    it->second.barred_by_failed_stop = false;
+    logger.info("Logical cell nci={:#x} failed-stop bar cleared (cell deactivated)", nci.value());
+  }
+
   return prev;
 }
 
@@ -129,6 +151,14 @@ void logical_cell_manager::derealize_du_cells(cu_cp_du_index_t du_index)
                     nci.value(),
                     fmt::underlying(du_index));
       }
+      if (cell.barred_by_failed_stop) {
+        // The bar a failed stop left on the air is gone with the DU; only operator intent survives.
+        cell.barred                = false;
+        cell.barred_by_failed_stop = false;
+        logger.info(
+            "Logical cell nci={:#x} failed-stop bar cleared (du={} removed)", nci.value(), fmt::underlying(du_index));
+      }
+
       logger.info("Logical cell nci={:#x} de-realized (du={} removed). Operator intent kept (admin_state={} "
                   "barred={})",
                   nci.value(),

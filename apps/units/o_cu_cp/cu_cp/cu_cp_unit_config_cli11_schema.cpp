@@ -759,20 +759,11 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_unit_config& cu_cp_p
 
   // Logical cells: the CU-CP-side declaration of cells (administrative intent), addressed by sector ID.
   // Distinct from the DU's top-level cells section, which carries the radio configuration.
-  app.add_option_function<std::vector<std::string>>(
+  add_option_object_list<cu_cp_unit_logical_cell_config>(
+      app,
       "--logical_cells",
-      [&cu_cp_params](const std::vector<std::string>& values) {
-        cu_cp_params.cells_cfg.resize(values.size());
-
-        for (unsigned i = 0, e = values.size(); i != e; ++i) {
-          CLI::App subapp("CU-CP logical cell list");
-          subapp.config_formatter(create_yaml_config_parser());
-          subapp.allow_config_extras(CLI::config_extras_mode::error);
-          configure_cli11_logical_cell_args(subapp, cu_cp_params.cells_cfg[i]);
-          std::istringstream ss(values[i]);
-          subapp.parse_from_stream(ss);
-        }
-      },
+      cu_cp_params.cells_cfg,
+      configure_cli11_logical_cell_args,
       "Sets the list of logical cells declared to the CU-CP (sector_id, admin_state, cell_barred)");
 
   CLI::App* amf_subcmd = add_subcommand(app, "amf", "AMF configuration");

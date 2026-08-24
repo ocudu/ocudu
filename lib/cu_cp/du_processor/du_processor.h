@@ -12,7 +12,6 @@
 #include "ocudu/f1ap/cu_cp/f1ap_cu.h"
 #include "ocudu/ran/nr_cgi.h"
 #include "ocudu/rrc/rrc_du.h"
-#include <set>
 
 namespace ocudu::ocucp {
 
@@ -101,10 +100,10 @@ public:
 
   /// \brief Notify the CU-CP about the cells reported by the DU in the F1 Setup procedure, so the
   /// corresponding logical cells are realized.
-  /// \return NCIs of the reported cells the CU-CP activates; reported cells absent from the set stay
-  /// dormant (admin-locked).
-  virtual std::set<nr_cell_identity> on_du_cells_reported(cu_cp_du_index_t             du_index,
-                                                          span<const du_reported_cell> cells) = 0;
+  /// \return NCIs of the reported cells the CU-CP activates; reported cells absent from it stay dormant
+  /// (admin-locked).
+  virtual std::vector<nr_cell_identity> on_du_cells_reported(cu_cp_du_index_t             du_index,
+                                                             span<const du_reported_cell> cells) = 0;
 
   /// \brief Notifies about a successful RRC UE creation.
   /// \param[in] ue_index The index of the UE.

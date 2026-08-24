@@ -14,7 +14,7 @@
 #include "cu_cp_impl_interface.h"
 #include "cu_up_processor/cu_up_processor_repository.h"
 #include "du_processor/du_processor_repository.h"
-#include "logical_cell_manager.h"
+#include "logical_cell_controller.h"
 #include "metrics_handler/metrics_handler_impl.h"
 #include "ngap_repository.h"
 #include "routines/mobility/inter_cu_handover_target_routine.h"
@@ -31,7 +31,6 @@
 #include "ocudu/ran/plmn_identity.h"
 #include "ocudu/support/async/async_task_scheduler.h"
 #include <memory>
-#include <set>
 
 namespace ocudu {
 
@@ -60,8 +59,7 @@ class cu_cp_impl final : public cu_cp,
                          public cu_cp_ng_handler,
                          public cu_cp_command_handler,
                          public cu_cp_ue_release_command_handler,
-                         public cu_cp_ntn_meas_update_handler,
-                         public cu_cp_cell_command_handler
+                         public cu_cp_ntn_meas_update_handler
 {
 public:
   explicit cu_cp_impl(const cu_cp_configuration& config_);
@@ -208,26 +206,10 @@ public:
   cu_cp_mobility_command_handler&   get_mobility_command_handler() override { return mobility_mng; }
   cu_cp_ue_release_command_handler& get_ue_release_command_handler() override { return *this; }
   cu_cp_ntn_meas_update_handler&    get_ntn_meas_update_handler() override { return *this; }
-  cu_cp_cell_command_handler&       get_cell_command_handler() override { return *this; }
+  cu_cp_cell_command_handler&       get_cell_command_handler() override { return cell_ctrl; }
   metrics_handler&                  get_metrics_handler() override { return metrics_hdlr; }
 
-  // cu_cp_cell_command_handler.
-  async_task<cu_cp_cell_command_response> deactivate_cell(const nr_cell_global_id_t& cgi) override;
-  async_task<cu_cp_cell_command_response> activate_cell(const nr_cell_global_id_t& cgi) override;
-  async_task<cu_cp_cell_command_response> bar_cell(const nr_cell_global_id_t& cgi, bool barred) override;
-  bool                                    dispatch_deactivate_cell(const nr_cell_global_id_t& cgi) override;
-  bool                                    dispatch_activate_cell(const nr_cell_global_id_t& cgi) override;
-  bool                                    dispatch_bar_cell(const nr_cell_global_id_t& cgi, bool barred) override;
-  std::optional<cu_cp_cell_state>         dispatch_get_cell_state(const nr_cell_global_id_t& cgi) override;
-  std::optional<cu_cp_cell_state>         get_cell_state(const nr_cell_global_id_t& cgi) const override;
-
   /// Run a cell command's validation+scheduling on the CU-CP executor, blocking for the validation result.
-  bool dispatch_cell_command(const char* name, std::function<bool()> validate_and_schedule);
-
-  /// Run the given callable on the CU-CP executor and wait (bounded, cancelled on timeout) for its result.
-  /// Returns std::nullopt when the executor rejects the task or the wait times out.
-  template <typename T>
-  std::optional<T> dispatch_on_cu_cp_executor(const char* name, std::function<T()> fn);
 
   // cu_cp_amf_reconnection_handler.
   void handle_amf_reconnection(cu_cp_amf_index_t amf_index) override;
@@ -258,8 +240,8 @@ private:
 
   byte_buffer handle_target_cell_sib1_required(cu_cp_du_index_t du_index, nr_cell_global_id_t cgi) override;
 
-  std::set<nr_cell_identity> handle_du_cells_reported(cu_cp_du_index_t             du_index,
-                                                      span<const du_reported_cell> cells) override;
+  std::vector<nr_cell_identity> handle_du_cells_reported(cu_cp_du_index_t             du_index,
+                                                         span<const du_reported_cell> cells) override;
 
   void handle_du_removed(cu_cp_du_index_t du_index) override;
 
@@ -306,9 +288,11 @@ private:
   // UE manager.
   ue_manager ue_mng;
 
-  // Registry of the CU-CP's logical cells (operator intent + realization by connected DUs). Declared before
-  // du_db, whose event handler reads and mutates it.
-  logical_cell_manager logical_cells;
+  // Controller of the CU-CP's logical cells (operator intent + realization + cell commands). Declared
+  // before du_db: DU teardown is forwarded here, so the controller must outlive the repository. Its
+  // constructor only stores the du_db/scheduler references, so binding them before their construction is
+  // safe.
+  logical_cell_controller cell_ctrl;
 
   // Cell measurement manager.
   cell_meas_manager cell_meas_mng;

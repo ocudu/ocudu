@@ -13,6 +13,7 @@
 #include "ocudu/rrc/rrc_du_factory.h"
 #include "ocudu/support/async/coroutine.h"
 #include "ocudu/support/cpu_architecture_info.h"
+#include <algorithm>
 
 using namespace ocudu;
 using namespace ocucp;
@@ -185,7 +186,7 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
   for (const auto& served_cell : request.gnb_du_served_cells_list) {
     reported_cells.push_back({served_cell.served_cell_info.nr_cgi, served_cell.served_cell_info.nr_pci});
   }
-  std::set<nr_cell_identity> cells_to_activate = cu_cp_notifier.on_du_cells_reported(cfg.du_index, reported_cells);
+  std::vector<nr_cell_identity> cells_to_activate = cu_cp_notifier.on_du_cells_reported(cfg.du_index, reported_cells);
 
   // Record the dormant (admin-locked) cells as deactivated in the DU configuration records, reusing the
   // same bookkeeping as a command deactivation, so lifecycle lookups treat them exactly like
@@ -194,7 +195,7 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
   {
     f1ap_gnb_cu_configuration_update dormant_cells_update;
     for (const du_reported_cell& reported : reported_cells) {
-      if (cells_to_activate.count(reported.cgi.nci) == 0) {
+      if (std::find(cells_to_activate.begin(), cells_to_activate.end(), reported.cgi.nci) == cells_to_activate.end()) {
         dormant_cells_update.cells_to_be_deactivated_list.push_back({reported.cgi});
       }
     }
@@ -218,7 +219,8 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
   // Configuration Update procedure (unlock command).
   accepted.cells_to_be_activ_list.reserve(request.gnb_du_served_cells_list.size());
   for (const auto& served_cell : request.gnb_du_served_cells_list) {
-    if (cells_to_activate.count(served_cell.served_cell_info.nr_cgi.nci) == 0) {
+    if (std::find(cells_to_activate.begin(), cells_to_activate.end(), served_cell.served_cell_info.nr_cgi.nci) ==
+        cells_to_activate.end()) {
       continue;
     }
     auto& activ_item  = accepted.cells_to_be_activ_list.emplace_back();

@@ -8,11 +8,11 @@
 
 using namespace ocudu;
 
-expected<nlohmann::json, std::string> test_helpers::apply_rrm_policy_reconfiguration(odu::du_configurator& configurator,
-                                                                                     plmn_identity         plmn_id,
-                                                                                     s_nssai_t             s_nssai,
-                                                                                     unsigned              min_rbs,
-                                                                                     unsigned              max_rbs)
+error_type<std::string> test_helpers::apply_rrm_policy_reconfiguration(odu::du_configurator& configurator,
+                                                                       plmn_identity         plmn_id,
+                                                                       s_nssai_t             s_nssai,
+                                                                       unsigned              min_rbs,
+                                                                       unsigned              max_rbs)
 {
   nlohmann::json req;
 
@@ -50,5 +50,9 @@ expected<nlohmann::json, std::string> test_helpers::apply_rrm_policy_reconfigura
   std::unique_ptr<app_services::remote_command> remote =
       std::make_unique<rrm_policy_ratio_remote_command>(configurator);
 
-  return remote->execute(req);
+  auto result = remote->execute(req);
+  if (not result.has_value()) {
+    return make_unexpected(result.error());
+  }
+  return {};
 }

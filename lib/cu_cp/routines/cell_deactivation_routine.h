@@ -17,15 +17,7 @@
 
 namespace ocudu::ocucp {
 
-/// \brief Deactivates a caller-selected set of cells, optionally barring them first and releasing their UEs.
-///
-/// The full graceful stop is a CU-driven, three-stage sequence: (1) bar the cells via a gNB-CU Configuration
-/// Update carrying the Cells to be Barred List (TS 38.473), so idle UEs reselect away and released UEs do not
-/// re-camp; (2) release the caller-selected UEs from the CU-CP (so the operation does not rely on the DU
-/// autonomously draining them); (3) deactivate the cells via a gNB-CU Configuration Update carrying the Cells
-/// to be Deactivated List. Stages (1) and (2) are optional: pass bar_cells_first=false to skip the bar (e.g.
-/// when cells go down because their AMF is unreachable) and an empty UE list to leave UE handling to the DU.
-/// The logical cells of an acknowledged deactivation update become operationally disabled.
+/// \brief Per-stage outcome of the cell deactivation routine.
 ///
 /// The result reports the per-stage outcome so the caller can resolve the recorded cell state from what
 /// actually took effect: \c success covers all stages, \c bars_acked whether every stage-1 bar update was
@@ -35,6 +27,15 @@ struct cell_deactivation_result {
   bool bars_acked = false;
 };
 
+/// \brief Deactivates a caller-selected set of cells, optionally barring them first and releasing their UEs.
+///
+/// The full graceful stop is a CU-driven, three-stage sequence: (1) bar the cells via a gNB-CU Configuration
+/// Update carrying the Cells to be Barred List (TS 38.473), so idle UEs reselect away and released UEs do not
+/// re-camp; (2) release the caller-selected UEs from the CU-CP (so the operation does not rely on the DU
+/// autonomously draining them); (3) deactivate the cells via a gNB-CU Configuration Update carrying the Cells
+/// to be Deactivated List. Stages (1) and (2) are optional: pass bar_cells_first=false to skip the bar (e.g.
+/// when cells go down because their AMF is unreachable) and an empty UE list to leave UE handling to the DU.
+/// The logical cells of an acknowledged deactivation update become operationally disabled.
 class cell_deactivation_routine
 {
 public:

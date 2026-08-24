@@ -12,6 +12,7 @@ add_subdirectory(ue_security_manager)
 set(SOURCES
         cu_cp_factory.cpp
         cu_cp_impl.cpp
+        logical_cell_controller.cpp
         cu_configurator_impl.cpp
         logical_cell_manager.cpp
         cu_cp_executor_mapper.cpp

@@ -103,8 +103,7 @@ public:
   {
     cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
 
-    async_task<cu_cp_cell_command_response>         resp_task = cell_cmd.deactivate_cell(cgi);
-    lazy_task_launcher<cu_cp_cell_command_response> launcher(resp_task);
+    launched_cu_cp_task<cu_cp_cell_command_response> launcher{*this, [&]() { return cell_cmd.deactivate_cell(cgi); }};
 
     // Stage 1: bar update.
     f1ap_message bar_upd;
@@ -231,8 +230,8 @@ TEST_F(cu_cp_declared_locked_cell_test, when_declared_locked_cell_is_unlocked_th
 
   cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
 
-  async_task<cu_cp_cell_command_response>         resp_task = cell_cmd.activate_cell(cell_b_cgi);
-  lazy_task_launcher<cu_cp_cell_command_response> launcher(resp_task);
+  launched_cu_cp_task<cu_cp_cell_command_response> launcher{*this,
+                                                            [&]() { return cell_cmd.activate_cell(cell_b_cgi); }};
 
   f1ap_message activ_upd;
   ASSERT_TRUE(pop_cu_cfg_upd(du_idx, activ_upd)) << "unlock did not emit an activation update";
@@ -271,11 +270,11 @@ TEST_F(cu_cp_logical_cell_test, when_locked_cell_du_reconnects_then_it_stays_loc
 
   // The recorded states reflect the outcome: cell B locked and dormant, cell A back on air.
   cu_cp_cell_command_handler&     cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
-  std::optional<cu_cp_cell_state> state_b  = cell_cmd.get_cell_state(cell_b_cgi);
+  std::optional<cu_cp_cell_state> state_b  = cell_cmd.dispatch_get_cell_state(cell_b_cgi);
   ASSERT_TRUE(state_b.has_value());
   EXPECT_EQ(state_b->admin_state, cell_admin_state::locked);
   EXPECT_EQ(state_b->operational_state, cell_operational_state::disabled);
-  std::optional<cu_cp_cell_state> state_a = cell_cmd.get_cell_state(cell_a_cgi);
+  std::optional<cu_cp_cell_state> state_a = cell_cmd.dispatch_get_cell_state(cell_a_cgi);
   ASSERT_TRUE(state_a.has_value());
   EXPECT_EQ(state_a->admin_state, cell_admin_state::unlocked);
   EXPECT_EQ(state_a->operational_state, cell_operational_state::enabled);
@@ -290,9 +289,9 @@ TEST_F(cu_cp_logical_cell_test, when_du_dies_mid_graceful_stop_then_cell_stays_l
   ASSERT_TRUE(resp.has_value());
   ASSERT_EQ(activated_ncis(*resp).size(), 2U);
 
-  cu_cp_cell_command_handler&             cell_cmd  = get_cu_cp().get_command_handler().get_cell_command_handler();
-  async_task<cu_cp_cell_command_response> resp_task = cell_cmd.deactivate_cell(cell_b_cgi);
-  lazy_task_launcher<cu_cp_cell_command_response> launcher(resp_task);
+  cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
+  launched_cu_cp_task<cu_cp_cell_command_response> launcher{*this,
+                                                            [&]() { return cell_cmd.deactivate_cell(cell_b_cgi); }};
 
   f1ap_message bar_upd;
   ASSERT_TRUE(pop_cu_cfg_upd(du_idx, bar_upd));
@@ -313,7 +312,7 @@ TEST_F(cu_cp_logical_cell_test, when_du_dies_mid_graceful_stop_then_cell_stays_l
   ASSERT_EQ(ncis.size(), 1U) << "the interrupted lock was lost across the DU restart";
   EXPECT_EQ(ncis[0], cell_a_cgi.nci.value());
 
-  std::optional<cu_cp_cell_state> state = cell_cmd.get_cell_state(cell_b_cgi);
+  std::optional<cu_cp_cell_state> state = cell_cmd.dispatch_get_cell_state(cell_b_cgi);
   ASSERT_TRUE(state.has_value());
   EXPECT_EQ(state->admin_state, cell_admin_state::locked);
   EXPECT_EQ(state->operational_state, cell_operational_state::disabled);
@@ -329,12 +328,12 @@ TEST_F(cu_cp_declared_locked_cell_test, when_f1_setup_completes_then_declared_st
   ASSERT_EQ(activated_ncis(*resp).size(), 1U);
 
   cu_cp_cell_command_handler&     cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
-  std::optional<cu_cp_cell_state> state_a  = cell_cmd.get_cell_state(cell_a_cgi);
+  std::optional<cu_cp_cell_state> state_a  = cell_cmd.dispatch_get_cell_state(cell_a_cgi);
   ASSERT_TRUE(state_a.has_value());
   EXPECT_EQ(state_a->admin_state, cell_admin_state::unlocked);
   EXPECT_EQ(state_a->operational_state, cell_operational_state::enabled);
 
-  std::optional<cu_cp_cell_state> state_b = cell_cmd.get_cell_state(cell_b_cgi);
+  std::optional<cu_cp_cell_state> state_b = cell_cmd.dispatch_get_cell_state(cell_b_cgi);
   ASSERT_TRUE(state_b.has_value());
   EXPECT_EQ(state_b->admin_state, cell_admin_state::locked);
   EXPECT_EQ(state_b->operational_state, cell_operational_state::disabled);
@@ -369,7 +368,7 @@ TEST_F(cu_cp_logical_cell_test, when_amf_reconnect_reactivation_fails_then_cell_
   get_du(du_idx).push_ul_pdu(fail);
 
   cu_cp_cell_command_handler&     cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
-  std::optional<cu_cp_cell_state> state    = cell_cmd.get_cell_state(cell_a_cgi);
+  std::optional<cu_cp_cell_state> state    = cell_cmd.dispatch_get_cell_state(cell_a_cgi);
   ASSERT_TRUE(state.has_value());
   EXPECT_EQ(state->admin_state, cell_admin_state::unlocked);
   EXPECT_EQ(state->operational_state, cell_operational_state::disabled)
@@ -387,8 +386,8 @@ TEST_F(cu_cp_logical_cell_test, when_lock_fails_then_cell_is_not_left_locked)
 
   cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
 
-  async_task<cu_cp_cell_command_response>         resp_task = cell_cmd.deactivate_cell(cell_b_cgi);
-  lazy_task_launcher<cu_cp_cell_command_response> launcher(resp_task);
+  launched_cu_cp_task<cu_cp_cell_command_response> launcher{*this,
+                                                            [&]() { return cell_cmd.deactivate_cell(cell_b_cgi); }};
 
   // The bar stage succeeds, but the DU rejects the deactivation update, so the lock fails.
   f1ap_message bar_upd;
@@ -402,24 +401,26 @@ TEST_F(cu_cp_logical_cell_test, when_lock_fails_then_cell_is_not_left_locked)
   get_du(du_idx).push_ul_pdu(fail);
   ASSERT_FALSE(wait_for_task_result(launcher).success);
 
-  // At the next F1 setup both cells are activated: the failed lock left no lock intent behind.
+  // While the cell is still on the air, the recorded state reflects the bar the failed stop left behind.
+  std::optional<cu_cp_cell_state> state = cell_cmd.dispatch_get_cell_state(cell_b_cgi);
+  ASSERT_TRUE(state.has_value());
+  EXPECT_TRUE(state->barred) << "the acknowledged bar must be recorded while the cell remains on the air";
+
+  // At the next F1 setup both cells are activated and neither is re-barred: the failed lock left no lock
+  // intent behind, and the failed-stop bar record does not outlive the DU (the DU restart cleared the
+  // on-air bar it described).
   ASSERT_TRUE(drop_du_connection(du_idx));
   unsigned new_du_idx = 0;
   auto     resp2      = connect_du_and_run_f1_setup(new_du_idx);
   ASSERT_TRUE(resp2.has_value());
   EXPECT_EQ(activated_ncis(*resp2).size(), 2U) << "a failed lock must not persist as lock intent";
 
-  // The stop's acknowledged bar stage left barred intent behind (the cell stayed on the air barred), so the
-  // reconnected cell is re-barred right after the setup.
-  f1ap_message rebar_upd;
-  ASSERT_TRUE(pop_cu_cfg_upd(new_du_idx, rebar_upd, std::chrono::milliseconds{1000}))
-      << "the recorded barred intent was not re-applied after the DU restart";
-  const auto& rebar_ies = rebar_upd.pdu.init_msg().value.gnb_cu_cfg_upd();
-  ASSERT_TRUE(rebar_ies->cells_to_be_barred_list_present);
-  ASSERT_EQ(rebar_ies->cells_to_be_barred_list.size(), 1U);
-  ASSERT_EQ(rebar_ies->cells_to_be_barred_list[0]->cells_to_be_barred_item().nr_cgi.nr_cell_id.to_number(),
-            cell_b_cgi.nci.value());
-  get_du(new_du_idx).push_ul_pdu(make_ack_for(rebar_upd));
+  f1ap_message unexpected_pdu;
+  ASSERT_FALSE(pop_cu_cfg_upd(new_du_idx, unexpected_pdu, std::chrono::milliseconds{100}))
+      << "the failed-stop bar record must not be re-applied after the DU restart";
+  state = cell_cmd.dispatch_get_cell_state(cell_b_cgi);
+  ASSERT_TRUE(state.has_value());
+  EXPECT_FALSE(state->barred);
 }
 
 TEST_F(cu_cp_declared_barred_cell_test, when_cell_declared_barred_then_bar_update_follows_f1_setup)
@@ -453,8 +454,8 @@ TEST_F(cu_cp_logical_cell_test, when_bar_cell_command_then_f1ap_carries_barred_l
 
   // Bar the active cell A.
   {
-    async_task<cu_cp_cell_command_response>         bar_task = cell_cmd.bar_cell(cell_a_cgi, true);
-    lazy_task_launcher<cu_cp_cell_command_response> launcher(bar_task);
+    launched_cu_cp_task<cu_cp_cell_command_response> launcher{*this,
+                                                              [&]() { return cell_cmd.bar_cell(cell_a_cgi, true); }};
 
     f1ap_message bar_upd;
     ASSERT_TRUE(pop_cu_cfg_upd(du_idx, bar_upd));
@@ -469,8 +470,8 @@ TEST_F(cu_cp_logical_cell_test, when_bar_cell_command_then_f1ap_carries_barred_l
 
   // Unbar it again: the update must carry cellBarred=notBarred.
   {
-    async_task<cu_cp_cell_command_response>         unbar_task = cell_cmd.bar_cell(cell_a_cgi, false);
-    lazy_task_launcher<cu_cp_cell_command_response> launcher(unbar_task);
+    launched_cu_cp_task<cu_cp_cell_command_response> launcher{*this,
+                                                              [&]() { return cell_cmd.bar_cell(cell_a_cgi, false); }};
 
     f1ap_message unbar_upd;
     ASSERT_TRUE(pop_cu_cfg_upd(du_idx, unbar_upd));
@@ -497,10 +498,10 @@ TEST_F(cu_cp_logical_cell_test, when_amf_reconnects_then_locked_cell_stays_locke
   // Operator locks cell B and bars cell A (which stays active).
   ASSERT_NO_FATAL_FAILURE(lock_cell(du_idx, cell_b_cgi));
   {
-    cu_cp_cell_command_handler&             cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
-    async_task<cu_cp_cell_command_response> bar_task = cell_cmd.bar_cell(cell_a_cgi, true);
-    lazy_task_launcher<cu_cp_cell_command_response> launcher(bar_task);
-    f1ap_message                                    bar_upd;
+    cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
+    launched_cu_cp_task<cu_cp_cell_command_response> launcher{*this,
+                                                              [&]() { return cell_cmd.bar_cell(cell_a_cgi, true); }};
+    f1ap_message                                     bar_upd;
     ASSERT_TRUE(pop_cu_cfg_upd(du_idx, bar_upd));
     get_du(du_idx).push_ul_pdu(make_ack_for(bar_upd));
     ASSERT_TRUE(wait_for_task_result(launcher).success);
@@ -558,10 +559,10 @@ TEST_F(cu_cp_logical_cell_test, when_locked_cell_is_barred_then_bar_follows_the_
 
   // Bar the dormant cell: completes synchronously with success and emits no F1AP.
   {
-    async_task<cu_cp_cell_command_response>         bar_task = cell_cmd.bar_cell(cell_b_cgi, true);
-    lazy_task_launcher<cu_cp_cell_command_response> launcher(bar_task);
-    ASSERT_TRUE(launcher.ready()) << "barring a dormant cell should complete synchronously";
-    ASSERT_TRUE(launcher.result.value().success);
+    launched_cu_cp_task<cu_cp_cell_command_response> launcher{*this,
+                                                              [&]() { return cell_cmd.bar_cell(cell_b_cgi, true); }};
+    ASSERT_TRUE(launcher.get_launcher().ready()) << "barring a dormant cell should complete synchronously";
+    ASSERT_TRUE(launcher.get_launcher().result.value().success);
 
     f1ap_message unexpected_pdu;
     ASSERT_FALSE(pop_cu_cfg_upd(du_idx, unexpected_pdu, std::chrono::milliseconds{50}))
@@ -569,8 +570,8 @@ TEST_F(cu_cp_logical_cell_test, when_locked_cell_is_barred_then_bar_follows_the_
   }
 
   // Unlock the cell: activation update first (with the parked PLMNs restored), then the bar update.
-  async_task<cu_cp_cell_command_response>         unlock_task = cell_cmd.activate_cell(cell_b_cgi);
-  lazy_task_launcher<cu_cp_cell_command_response> launcher(unlock_task);
+  launched_cu_cp_task<cu_cp_cell_command_response> launcher{*this,
+                                                            [&]() { return cell_cmd.activate_cell(cell_b_cgi); }};
 
   f1ap_message activ_upd;
   ASSERT_TRUE(pop_cu_cfg_upd(du_idx, activ_upd)) << "unlock did not emit an activation update";
@@ -622,8 +623,8 @@ TEST_F(cu_cp_partially_declared_cell_test, when_undeclared_cell_is_unlocked_by_c
 
   cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
 
-  async_task<cu_cp_cell_command_response>         resp_task = cell_cmd.activate_cell(cell_b_cgi);
-  lazy_task_launcher<cu_cp_cell_command_response> launcher(resp_task);
+  launched_cu_cp_task<cu_cp_cell_command_response> launcher{*this,
+                                                            [&]() { return cell_cmd.activate_cell(cell_b_cgi); }};
 
   f1ap_message activ_upd;
   ASSERT_TRUE(pop_cu_cfg_upd(du_idx, activ_upd)) << "unlocking the undeclared cell did not emit an activation update";

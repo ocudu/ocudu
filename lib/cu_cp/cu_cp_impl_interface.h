@@ -17,7 +17,6 @@
 #include "ocudu/rrc/rrc_ue.h"
 #include "ocudu/xnap/xnap_handover.h"
 #include "ocudu/xnap/xnap_ue_context_retrieval.h"
-#include <set>
 
 namespace ocudu::ocucp {
 
@@ -228,9 +227,9 @@ public:
   /// it. Undeclared NCIs get a dynamic logical cell: unlocked when no cells were declared in configuration,
   /// locked otherwise (the declared set acts as the activation whitelist).
   /// \return NCIs of the reported cells to include in the F1 Setup Response Cells to be Activated List;
-  /// reported cells absent from the set stay dormant (admin-locked).
-  virtual std::set<nr_cell_identity> handle_du_cells_reported(cu_cp_du_index_t             du_index,
-                                                              span<const du_reported_cell> cells) = 0;
+  /// reported cells absent from it stay dormant (admin-locked).
+  virtual std::vector<nr_cell_identity> handle_du_cells_reported(cu_cp_du_index_t             du_index,
+                                                                 span<const du_reported_cell> cells) = 0;
 
   /// \brief Handle the removal of a DU, de-realizing its logical cells while keeping operator intent.
   virtual void handle_du_removed(cu_cp_du_index_t du_index) = 0;
