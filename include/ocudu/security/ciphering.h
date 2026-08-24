@@ -128,7 +128,8 @@ inline void security_nea2_v3(const sec_128_key& key,
       // Encryption
       byte_buffer_segment_span_range segments = msg.modifiable_segments();
       for (const auto& segment : segments) {
-        ret = aes_crypt_ctr(&ctx, segment.size(), &nc_off, nonce_cnt, stream_blk, segment.data(), segment.data());
+        ret =
+            mbedtls_aes_crypt_ctr(&ctx, segment.size(), &nc_off, nonce_cnt, stream_blk, segment.data(), segment.data());
       }
     }
   }
