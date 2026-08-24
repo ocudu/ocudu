@@ -10,10 +10,10 @@ namespace ocudu {
 
 /// 3GPP TS 38.413 section 9.3.3.3, GUAMI (Globally unique AMF identifier)
 struct guami_t {
-  plmn_identity plmn = plmn_identity::test_value();
-  uint16_t      amf_set_id;
-  uint8_t       amf_pointer;
-  uint8_t       amf_region_id;
+  plmn_identity plmn          = plmn_identity::test_value();
+  uint16_t      amf_set_id    = 0;
+  uint8_t       amf_pointer   = 0;
+  uint8_t       amf_region_id = 0;
 };
 
 } // namespace ocudu
