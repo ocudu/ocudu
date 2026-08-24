@@ -16,9 +16,6 @@
 
 using namespace ocudu;
 
-// (Implementation-defined) limit for maximum number of pending paging indications.
-static constexpr size_t PAGING_INFO_QUEUE_SIZE = 128;
-
 paging_scheduler::paging_scheduler(const cell_configuration& cell_cfg_,
                                    pdcch_resource_allocator& pdcch_sch_,
                                    unsigned                  nof_slots_ahead_sched_) :
@@ -31,7 +28,6 @@ paging_scheduler::paging_scheduler(const cell_configuration& cell_cfg_,
   paging_frame_offset(cell_cfg.params.dl_cfg_common.pcch_cfg.paging_frame_offset),
   nof_po_per_pf(static_cast<unsigned>(cell_cfg.params.dl_cfg_common.pcch_cfg.ns)),
   slot_helper(cell_cfg_),
-  new_paging_notifications(PAGING_INFO_QUEUE_SIZE),
   logger(ocudulog::fetch_basic_logger("SCHED"))
 {
   ocudu_assert(cell_cfg.params.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.has_value(),
@@ -75,9 +71,6 @@ paging_scheduler::paging_scheduler(const cell_configuration& cell_cfg_,
 
 void paging_scheduler::run_slot(cell_resource_allocator& res_grid, uint32_t hyper_sfn_tx)
 {
-  // Pop pending Paging notification and process them.
-  handle_pending_paging_requests();
-
   // NOTE:
   // - [Implementation defined] The pagingSearchSpace (in PDCCH-Common IE) value in UE's active BWP must be taken into
   //   consideration while paging a UE. However, for simplification we consider the value of pagingSearchSpace in UE's
@@ -130,26 +123,6 @@ void paging_scheduler::run_slot(cell_resource_allocator& res_grid, uint32_t hype
   // Clear all the computed candidates.
   for (auto& sched_paging_ues : pdsch_time_res_idx_to_scheduled_ues_lookup) {
     sched_paging_ues.clear();
-  }
-}
-
-void paging_scheduler::handle_pending_paging_requests()
-{
-  sched_paging_information new_pg_info;
-  while (new_paging_notifications.try_pop(new_pg_info)) {
-    // Check whether Paging information is already present or not. i.e. tackle repeated Paging attempt from upper
-    // layers.
-    if (paging_pending_ues.find(new_pg_info.paging_identity) != paging_pending_ues.end()) {
-      logger.info("Paging information for id={} discarded. Cause: It is already being handled.",
-                  new_pg_info.paging_identity);
-      continue;
-    }
-    if (paging_pending_ues.size() >= MAX_NOF_PENDING_PAGINGS) {
-      logger.warning("Paging information for id={} discarded. Cause: Map of paging pending UEs is full.\n",
-                     new_pg_info.paging_identity);
-      return;
-    }
-    paging_pending_ues.emplace(new_pg_info.paging_identity, ue_paging_info{.request = new_pg_info, .retry_count = 0});
   }
 }
 
@@ -269,16 +242,22 @@ unsigned paging_scheduler::get_accumulated_paging_msg_size(const std::vector<ue_
 
 void paging_scheduler::handle_paging_information(const sched_paging_information& paging_info)
 {
-  if (not new_paging_notifications.try_push(paging_info)) {
-    logger.warning("Discarding paging information for UE ID={}. Cause: Event queue is full", paging_info.ue_identity);
+  // Check whether Paging information is already present or not. i.e. tackle repeated Paging attempt from upper layers.
+  if (paging_pending_ues.find(paging_info.paging_identity) != paging_pending_ues.end()) {
+    logger.info("Paging information for id={} discarded. Cause: It is already being handled.",
+                paging_info.paging_identity);
+    return;
   }
+  if (paging_pending_ues.size() >= MAX_NOF_PENDING_PAGINGS) {
+    logger.warning("Paging information for id={} discarded. Cause: Map of paging pending UEs is full.",
+                   paging_info.paging_identity);
+    return;
+  }
+  paging_pending_ues.emplace(paging_info.paging_identity, ue_paging_info{.request = paging_info, .retry_count = 0});
 }
 
 void paging_scheduler::stop()
 {
-  sched_paging_information paging_info;
-  while (new_paging_notifications.try_pop(paging_info)) {
-  }
   paging_pending_ues.clear();
 }
 

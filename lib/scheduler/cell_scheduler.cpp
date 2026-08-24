@@ -29,7 +29,8 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   prach_sch(cell_cfg),
   // The SRS allocator is only used if srs_prohibit_time is set.
   srs_alloc(cell_cfg, sched_cfg.ue.srs_prohibit_time),
-  pg_sch(cell_cfg, pdcch_sch)
+  pg_sch(cell_cfg, pdcch_sch),
+  ev_mng(cell_cfg, pg_sch, logger)
 {
   // Register new cell in the UE scheduler.
   ue_sched = ue_sched_.add_cell(ue_cell_scheduler_creation_request{msg.cell_index,
@@ -90,6 +91,9 @@ void cell_scheduler::run_slot(slot_point_extended sl_tx_ext)
 
   // > Start with clearing old allocations from the grid.
   reset_resource_grid(sl_tx);
+
+  // > Process the events pending for this cell.
+  ev_mng.run_slot();
 
   // > SSB scheduling.
   ssb_sch.run_slot(res_grid, sl_tx);
@@ -158,6 +162,7 @@ void cell_scheduler::start()
   active = true;
   logger.info("cell={}: Cell scheduling was activated.", cell_cfg.cell_index);
 
+  ev_mng.start();
   ue_sched->start();
 }
 
@@ -171,6 +176,9 @@ void cell_scheduler::stop()
   }
   active = false;
   logger.info("cell={}: Cell scheduling was deactivated.", cell_cfg.cell_index);
+
+  // Halt any pending events associated with this cell.
+  ev_mng.stop();
 
   // Stop sub-schedulers.
   ssb_sch.stop();

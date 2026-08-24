@@ -5,6 +5,7 @@
 #pragma once
 
 #include "cell/resource_grid.h"
+#include "cell_event_manager.h"
 #include "common_scheduling/csi_rs_scheduler.h"
 #include "common_scheduling/paging_scheduler.h"
 #include "common_scheduling/prach_scheduler.h"
@@ -59,7 +60,7 @@ public:
 
   void handle_crc_indication(const ul_crc_indication& crc_ind);
 
-  void handle_paging_information(const sched_paging_information& pi) { pg_sch.handle_paging_information(pi); }
+  void handle_paging_information(const sched_paging_information& pi) { ev_mng.handle_paging_information(pi); }
 
   scheduler_feedback_handler&         get_feedback_handler() { return ue_sched->get_feedback_handler(); }
   scheduler_cell_positioning_handler& get_positioning_handler() { return ue_sched->get_positioning_handler(); }
@@ -100,6 +101,9 @@ private:
   prach_scheduler    prach_sch;
   srs_allocator_impl srs_alloc;
   paging_scheduler   pg_sch;
+
+  /// Handler of the events of this cell that require no access to the UE repository.
+  cell_event_manager ev_mng;
 
   /// Reference to UE scheduler whose DU cell group contains this cell.
   ue_scheduler::unique_cell_ptr ue_sched;

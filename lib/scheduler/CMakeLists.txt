@@ -27,6 +27,7 @@ set(SOURCES
         slicing/ran_slice_instance.cpp
         slicing/slice_ue_repository.cpp
         srs/srs_scheduler_impl.cpp
+        cell_event_manager.cpp
         cell_scheduler.cpp
         scheduler_factory.cpp
         scheduler_impl.cpp

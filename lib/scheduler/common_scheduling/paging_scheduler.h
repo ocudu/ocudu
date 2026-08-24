@@ -8,7 +8,6 @@
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "../support/paging_helpers.h"
 #include "ocudu/adt/flat_map.h"
-#include "ocudu/adt/mpmc_queue.h"
 #include "ocudu/ocudulog/logger.h"
 #include "ocudu/ran/slot_point_extended.h"
 #include "ocudu/scheduler/config/scheduler_expert_config.h"
@@ -52,7 +51,8 @@ public:
   /// \param[in] hyper_sfn_tx HyperSFN for the slot provided in the current slot indication.
   void run_slot(cell_resource_allocator& res_grid, uint32_t hyper_sfn_tx);
 
-  /// Handles Paging information reported by upper layers.
+  /// \brief Handles Paging information reported by upper layers.
+  /// \note Must be called from the cell scheduler executor.
   /// \param[in] paging_info Per UE paging information to be scheduled.
   void handle_paging_information(const sched_paging_information& paging_info);
 
@@ -64,11 +64,6 @@ private:
     sched_paging_information  request;
     paging_retries_count_type retry_count;
   };
-
-  using paging_info_queue = concurrent_queue<sched_paging_information, concurrent_queue_policy::lockfree_mpmc>;
-
-  /// \brief Processes pending Paging requests from upper layers.
-  void handle_pending_paging_requests();
 
   std::optional<unsigned> find_pdsch_time_resource(const cell_resource_allocator&  res_grid,
                                                    const sched_paging_information& pg_req,
@@ -154,9 +149,6 @@ private:
   /// PDSCH time domain resource allocation list.
   span<const pdsch_time_domain_resource_allocation> pdsch_td_alloc_list;
 
-  /// List of notifications from upper layers containing Paging information.
-  /// This is used only to avoid data race between threads.
-  paging_info_queue new_paging_notifications;
   /// Contains paging information of UEs yet to be scheduled.
   flat_map<ue_paging_id, ue_paging_info> paging_pending_ues;
   /// Lookup to keep track of scheduled paging UEs at a particular PDSCH time resource index. Index of \c
