@@ -33,8 +33,7 @@ lower_phy_uplink_processor_impl::lower_phy_uplink_processor_impl(std::unique_ptr
   temp_buffer(config.nof_rx_ports, 2 * config.rate.get_dft_size(config.scs)),
   prach_proc(std::move(prach_proc_)),
   puxch_proc(std::move(puxch_proc_)),
-  cfo_processor(config.rate),
-  temp_cf_buffer({2 * config.rate.get_dft_size(config.scs), config.nof_rx_ports})
+  cfo_processor(config.rate)
 {
   ocudu_assert(prach_proc, "Invalid PRACH processor.");
   ocudu_assert(puxch_proc, "Invalid PUxCH processor.");

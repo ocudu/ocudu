@@ -141,8 +141,6 @@ private:
   uplink_processor_notifier* notifier = nullptr;
   /// Carrier Frequency Offset processor.
   baseband_cfo_processor cfo_processor;
-  /// Buffer to hold complex floating-point based samples for demodulation.
-  dynamic_tensor<2, cf_t> temp_cf_buffer;
 };
 
 } // namespace ocudu

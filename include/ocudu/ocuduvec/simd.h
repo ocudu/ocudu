@@ -1822,6 +1822,10 @@ inline simd_i16_t ocudu_simd_s_loadu(const int16_t* ptr)
 #endif /* __AVX512F__ */
 }
 
+/// \brief Loads and converts signed 16-bit bit complex integers into a complex SIMD register in single-precision
+/// floating point.
+/// \param[in] ptr Input pointer to the signed 16-bit complex integer data.
+/// \return A floating point SIMD register.
 inline simd_cf_t ocudu_simd_loadu(const ci16_t* ptr)
 {
   simd_cf_t ret;
@@ -1907,6 +1911,10 @@ inline simd_cf_t ocudu_simd_loadu(const ci16_t* ptr)
   return ret;
 }
 
+/// \brief Converts a single-precision floating point complex register into signed 16-bit complex integers and stores
+/// the result.
+/// \param[out] ptr Output pointer to the signed 16-bit complex integer data.
+/// \param[in]  simdreg SIMD register holding single-precision floating point complex values.
 inline void ocudu_simd_storeu(ci16_t* ptr, simd_cf_t simdreg)
 {
 #ifdef __AVX512F__
