@@ -27,16 +27,18 @@ struct aes_context {
   psa_key_id_t ecb_key_id  = 0;
   psa_key_id_t ctr_key_id  = 0;
 };
+#endif
 
 inline int crypto_init()
 {
+#if MBEDTLS_VERSION_NUMBER >= 0x04000000
   psa_status_t status = psa_crypto_init();
   if (status != PSA_SUCCESS) {
     return -1;
   }
+#endif
   return 0;
 }
-#endif
 
 inline int aes_setkey_enc(aes_context* ctx, const unsigned char* key, unsigned keysize)
 {

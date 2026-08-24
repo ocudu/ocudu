@@ -8,7 +8,7 @@
 using namespace ocudu;
 using namespace security;
 
-#ifdef MBEDTLS_CMAC_C
+#if MBEDTLS_VERSION_NUMBER >= 0x04000000
 
 integrity_engine_nia2_psa::integrity_engine_nia2_psa(sec_128_key        k_128_int_,
                                                      uint8_t            bearer_id_,
@@ -20,7 +20,23 @@ integrity_engine_nia2_psa::integrity_engine_nia2_psa(sec_128_key        k_128_in
   logger(ocudulog::fetch_basic_logger("SEC")),
   allow_unprotected(allow_unprotected_)
 {
-  // TODO.
+  int ret = crypto_init();
+  if (ret != 0) {
+    report_error("Failure in initializing crypto PSA");
+    return;
+  }
+  ret = aes_setkey_enc(&ctx, k_128_int.data(), 128);
+  if (ret != 0) {
+    report_error("Failure in setting AES key");
+    return;
+  }
+
+  psa_mac_operation_t op     = PSA_MAC_OPERATION_INIT;
+  psa_status_t        status = psa_mac_sign_setup(&op, ctx.ecb_key_id, PSA_ALG_CMAC);
+
+  if (status != PSA_SUCCESS) {
+    return;
+  }
 }
 
 integrity_engine_nia2_psa::~integrity_engine_nia2_psa()
@@ -30,15 +46,72 @@ integrity_engine_nia2_psa::~integrity_engine_nia2_psa()
 
 security_status integrity_engine_nia2_psa::compute_mac(sec_mac& mac, const byte_buffer_view v, uint32_t count)
 {
-  // TODO.
-  (void)bearer_id;
-  (void)direction;
+  psa_mac_operation_t op     = PSA_MAC_OPERATION_INIT;
+  psa_status_t        status = psa_mac_sign_setup(&op, ctx.cmac_key_id, PSA_ALG_CMAC);
+  if (status != PSA_SUCCESS) {
+    return security_status::engine_failure;
+  }
+
+  // process preamble
+  std::array<uint8_t, 8> preamble = {};
+  preamble[0]                     = (count >> 24) & 0xff;
+  preamble[1]                     = (count >> 16) & 0xff;
+  preamble[2]                     = (count >> 8) & 0xff;
+  preamble[3]                     = count & 0xff;
+  preamble[4]                     = (bearer_id << 3) | (to_number(direction) << 2);
+  status                          = psa_mac_update(&op, preamble.data(), preamble.size());
+
+  if (status != PSA_SUCCESS) {
+    psa_mac_abort(&op);
+    return security_status::integrity_failure;
+  }
+
+  // process PDU segments
+  const_byte_buffer_segment_span_range segments = v.segments();
+  for (const auto& segment : segments) {
+    status = psa_mac_update(&op, segment.data(), segment.size());
+    if (status != PSA_SUCCESS) {
+      psa_mac_abort(&op);
+      return security_status::integrity_failure;
+    }
+  }
+
+  // complete CMAC computation
+  std::array<uint8_t, 16> tmp_mac;
+  size_t                  mac_len = 0;
+  status                          = psa_mac_sign_finish(&op, tmp_mac.data(), tmp_mac.size(), &mac_len);
+
+  if (status != PSA_SUCCESS || mac_len != tmp_mac.size()) {
+    return security_status::integrity_failure;
+  }
+
+  // Copy first 4 bytes.
+  std::copy(tmp_mac.begin(), tmp_mac.begin() + 4, mac.begin());
   return security_status::success;
 }
 
 security_status integrity_engine_nia2_psa::protect_integrity(byte_buffer& buf, uint32_t count)
 {
-  // TODO.
+  byte_buffer_view v{buf.begin(), buf.end()};
+
+  security::sec_mac mac    = {};
+  security_status   status = compute_mac(mac, v, count);
+
+  logger.debug("Applying integrity protection. count={}", count);
+  logger.debug(v.begin(), v.end(), "Message input:");
+
+  if (status != security_status::success) {
+    return status;
+  }
+
+  if (not buf.append(mac)) {
+    return security_status::buffer_failure;
+  }
+
+  logger.debug("K_int: {}", k_128_int);
+  logger.debug("MAC-I: {}", mac);
+  logger.debug(buf.begin(), buf.end(), "Message output:");
+
   return security_status::success;
 }
 
@@ -96,4 +169,4 @@ security_status integrity_engine_nia2_psa::verify_integrity(byte_buffer& buf, ui
   return security_status::success;
 }
 
-#endif // MBEDTLS_CMAC_C
+#endif

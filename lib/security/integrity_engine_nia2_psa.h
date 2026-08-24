@@ -6,11 +6,12 @@
 
 #include "ocudu/security/integrity_engine.h"
 #include "ocudu/security/security.h"
+#include "ocudu/security/ssl.h"
 #include <psa/crypto.h>
 
 namespace ocudu::security {
 
-#ifdef PSA_WANT_ALG_CMAC
+#if MBEDTLS_VERSION_NUMBER >= 0x04000000
 
 class integrity_engine_nia2_psa final : public integrity_engine
 {
@@ -33,6 +34,8 @@ private:
 
   ocudulog::basic_logger& logger;
   bool                    allow_unprotected = false;
+
+  aes_context ctx;
 };
 
 #endif

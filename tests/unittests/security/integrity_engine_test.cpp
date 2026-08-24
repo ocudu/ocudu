@@ -5,6 +5,7 @@
 #include "lib/security/integrity_engine_generic.h"
 #include "lib/security/integrity_engine_nia2_cmac.h"
 #include "lib/security/integrity_engine_nia2_non_cmac.h"
+#include "lib/security/integrity_engine_nia2_psa.h"
 #include "nia1_test_set.h"
 #include "nia2_test_set.h"
 #include "nia3_test_set.h"
@@ -175,6 +176,44 @@ TEST_P(fxt_nia2, integrity_engine_nia2_cmac)
 }
 #endif // MBEDTLS_CMAC_C
 
+#else
+TEST_P(fxt_nia2, integrity_engine_nia2_psa)
+{
+  nia_test_set param = GetParam();
+
+  // Pack hex strings into ocudu types
+  sec_128_key key      = make_sec_128_key(param.ik_cstr);
+  auto        dir      = static_cast<security_direction>(param.direction);
+  byte_buffer message  = make_byte_buffer(param.message_cstr).value();
+  byte_buffer mact_buf = make_byte_buffer(param.mact_cstr).value();
+  byte_buffer prot_buf = message.deep_copy().value();
+  ASSERT_TRUE(prot_buf.append(mact_buf));
+
+  // Create integrity engine
+  std::unique_ptr<integrity_engine> nia = std::make_unique<integrity_engine_nia2_psa>(key, param.bearer, dir, false);
+
+  // Apply integrity and compare results
+  for (unsigned i = 0; i < 2; i++) {
+    byte_buffer     buf    = message.deep_copy().value();
+    security_status status = nia->protect_integrity(buf, param.count_i);
+    ASSERT_EQ(status, security_status::success);
+    logger.info(buf.begin(), buf.end(), "result:");
+    logger.info(prot_buf.begin(), prot_buf.end(), "exp:");
+    EXPECT_EQ(buf, prot_buf);
+  }
+
+  // Verify integrity
+  for (unsigned i = 0; i < 2; i++) {
+    byte_buffer     buf    = prot_buf.deep_copy().value();
+    security_status status = nia->verify_integrity(buf, param.count_i);
+    ASSERT_EQ(status, security_status::success);
+    logger.info(buf.begin(), buf.end(), "result:");
+    logger.info(message.begin(), message.end(), "exp:");
+    EXPECT_EQ(buf, message);
+  }
+}
+
+#endif
 TEST_P(fxt_nia2, integrity_engine_nia2_non_cmac)
 {
   nia_test_set param = GetParam();
@@ -211,9 +250,7 @@ TEST_P(fxt_nia2, integrity_engine_nia2_non_cmac)
     EXPECT_EQ(buf, message);
   }
 }
-#else
-// TODO PSA fixture.
-#endif
+
 TEST_P(fxt_nia2, integrity_engine_generic_nia2)
 {
   nia_test_set param = GetParam();

@@ -9,7 +9,6 @@
 using namespace ocudu;
 using namespace security;
 
-#if MBEDTLS_VERSION_NUMBER <= 0x04000000
 integrity_engine_nia2_non_cmac::integrity_engine_nia2_non_cmac(sec_128_key        k_128_int_,
                                                                uint8_t            bearer_id_,
                                                                security_direction direction_,
@@ -22,8 +21,18 @@ integrity_engine_nia2_non_cmac::integrity_engine_nia2_non_cmac(sec_128_key      
 {
   std::array<uint8_t, 16> l;
 
+  int ret = crypto_init();
+  if (ret != 0) {
+    report_error("Failure in initializing crypto PSA");
+    return;
+  }
+  ret = aes_setkey_enc(&ctx, k_128_int.data(), 128);
+  if (ret != 0) {
+    report_error("Failure in setting AES security key");
+    return;
+  }
+
   // subkey L generation
-  aes_setkey_enc(&ctx, k_128_int.data(), 128);
   aes_crypt_ecb(&ctx, aes_encrypt, zeros.data(), l.data());
 
   // subkey K1 generation
@@ -182,4 +191,3 @@ security_status integrity_engine_nia2_non_cmac::verify_integrity(byte_buffer& bu
   buf.trim_tail(sec_mac_len);
   return security_status::success;
 }
-#endif

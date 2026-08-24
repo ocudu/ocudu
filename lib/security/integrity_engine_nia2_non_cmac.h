@@ -7,6 +7,7 @@
 #include "mbedtls/version.h"
 #include "ocudu/security/integrity_engine.h"
 #include "ocudu/security/security.h"
+#include "ocudu/security/ssl.h"
 
 #if MBEDTLS_VERSION_NUMBER <= 0x04000000
 #include "mbedtls/aes.h"
@@ -14,7 +15,6 @@
 
 namespace ocudu::security {
 
-#if MBEDTLS_VERSION_NUMBER <= 0x04000000
 class integrity_engine_nia2_non_cmac final : public integrity_engine
 {
 public:
@@ -34,9 +34,9 @@ private:
   uint8_t            bearer_id;
   security_direction direction;
 
-  mbedtls_aes_context ctx;
-  uint8_t             k1[16];
-  uint8_t             k2[16];
+  aes_context ctx;
+  uint8_t     k1[16];
+  uint8_t     k2[16];
 
   std::array<uint8_t, sec_max_pdu_size>    msg_buf;
   static constexpr std::array<uint8_t, 16> zeros = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -44,6 +44,5 @@ private:
   ocudulog::basic_logger& logger;
   bool                    allow_unprotected = false;
 };
-#endif
 
 } // namespace ocudu::security

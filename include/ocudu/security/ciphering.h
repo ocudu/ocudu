@@ -88,12 +88,13 @@ inline void security_nea1(const sec_128_key& key,
   return security_nea1(key, count, bearer, direction, msg, msg.length() * 8);
 }
 
-inline void security_nea2(const sec_128_key& key,
-                          uint32_t           count,
-                          uint8_t            bearer,
-                          security_direction direction,
-                          byte_buffer_view&  msg,
-                          uint32_t           msg_len)
+#if MBEDTLS_VERSION_NUMBER <= 0x04000000
+inline void security_nea2_v3(const sec_128_key& key,
+                             uint32_t           count,
+                             uint8_t            bearer,
+                             security_direction direction,
+                             byte_buffer_view&  msg,
+                             uint32_t           msg_len)
 {
   aes_context   ctx;
   unsigned char stream_blk[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -103,6 +104,12 @@ inline void security_nea2(const sec_128_key& key,
 
   uint32_t msg_len_block_8 = (msg_len + 7) / 8;
   uint32_t len             = msg.length();
+
+  ret = crypto_init();
+  if (ret != 0) {
+    report_error("Failure in initializing crypto");
+    return;
+  }
 
   ret = aes_setkey_enc(&ctx, key.data(), 128);
   if (ret != 0) {
@@ -130,6 +137,80 @@ inline void security_nea2(const sec_128_key& key,
     zero_tailing_bits(msg[msg.length() - 1], msg_len);
   }
 }
+#else
+inline void security_nea2_psa(const sec_128_key& key,
+                              uint32_t           count,
+                              uint8_t            bearer,
+                              security_direction direction,
+                              byte_buffer_view&  msg,
+                              uint32_t           msg_len)
+{
+  aes_context   ctx;
+  unsigned char nonce_cnt[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  int           ret;
+
+  uint32_t msg_len_block_8 = (msg_len + 7) / 8;
+  uint32_t len             = msg.length();
+
+  ret = crypto_init();
+  if (ret != 0) {
+    report_error("Failure in initializing crypto PSA");
+    return;
+  }
+
+  ret = aes_setkey_enc(&ctx, key.data(), 128);
+  if (ret != 0) {
+    return;
+  }
+
+  if (msg_len_block_8 <= len && len > 0) {
+    if (ret == 0) {
+      // Construct nonce
+      nonce_cnt[0] = (count >> 24) & 0xff;
+      nonce_cnt[1] = (count >> 16) & 0xff;
+      nonce_cnt[2] = (count >> 8) & 0xff;
+      nonce_cnt[3] = (count) & 0xff;
+      nonce_cnt[4] = ((bearer & 0x1f) << 3) | ((to_number(direction) & 0x01) << 2);
+
+      // Encryption.
+      psa_cipher_operation_t operation = PSA_CIPHER_OPERATION_INIT;
+      psa_status_t           status    = psa_cipher_encrypt_setup(&operation, ctx.ctr_key_id, PSA_ALG_CTR);
+      if (status != PSA_SUCCESS) {
+        return;
+      }
+      status = psa_cipher_set_iv(&operation, nonce_cnt, sizeof(nonce_cnt));
+      if (status != PSA_SUCCESS) {
+        psa_cipher_abort(&operation);
+        return;
+      }
+
+      byte_buffer_segment_span_range segments = msg.modifiable_segments();
+      for (const auto& segment : segments) {
+        size_t output_len = 0;
+        status =
+            psa_cipher_update(&operation, segment.data(), segment.size(), segment.data(), segment.size(), &output_len);
+        if (status != PSA_SUCCESS || output_len != segment.size()) {
+          psa_cipher_abort(&operation);
+          return;
+        }
+      }
+
+      unsigned char output[16];
+      size_t        output_len = 0;
+
+      status = psa_cipher_finish(&operation, output, sizeof(output), &output_len);
+
+      if (status != PSA_SUCCESS || output_len != 0) {
+        return;
+      }
+    }
+  }
+  if (ret == 0) {
+    //  Zero tailing bits
+    zero_tailing_bits(msg[msg.length() - 1], msg_len);
+  }
+}
+#endif
 
 inline void security_nea2(const sec_128_key& key,
                           uint32_t           count,
@@ -137,7 +218,25 @@ inline void security_nea2(const sec_128_key& key,
                           security_direction direction,
                           byte_buffer_view&  msg)
 {
-  return security_nea2(key, count, bearer, direction, msg, msg.length() * 8);
+#if MBEDTLS_VERSION_NUMBER <= 0x04000000
+  security_nea2_v3(key, count, bearer, direction, msg, msg.length() * 8);
+#else
+  security_nea2_psa(key, count, bearer, direction, msg, msg.length() * 8);
+#endif
+}
+
+inline void security_nea2(const sec_128_key& key,
+                          uint32_t           count,
+                          uint8_t            bearer,
+                          security_direction direction,
+                          byte_buffer_view&  msg,
+                          uint32_t           msg_len)
+{
+#if MBEDTLS_VERSION_NUMBER <= 0x04000000
+  security_nea2_v3(key, count, bearer, direction, msg, msg_len);
+#else
+  security_nea2_psa(key, count, bearer, direction, msg, msg_len);
+#endif
 }
 
 inline void security_nea3(const sec_128_key& key,

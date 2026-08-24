@@ -105,8 +105,74 @@ inline void security_nia2_cmac(sec_mac&           mac,
     mac[i] = tmp_mac[i];
   }
 }
-#endif
+#endif // MBEDTLS_CMAC_C
+#else
+inline void security_nia2_psa(sec_mac&           mac,
+                              const sec_128_key& key,
+                              uint32_t           count,
+                              uint8_t            bearer,
+                              security_direction direction,
+                              byte_buffer_view&  msg)
+{
+  int         ret;
+  aes_context ctx;
 
+  ret = crypto_init();
+  if (ret != 0) {
+    report_error("Failure in initializing crypto PSA");
+    return;
+  }
+  ret = aes_setkey_enc(&ctx, key.data(), 128);
+  if (ret != 0) {
+    report_error("Failure in setting AES key");
+    return;
+  }
+
+  psa_mac_operation_t op = PSA_MAC_OPERATION_INIT;
+
+  psa_status_t status = psa_mac_sign_setup(&op, ctx.cmac_key_id, PSA_ALG_CMAC);
+
+  if (status != PSA_SUCCESS) {
+    return;
+  }
+
+  std::array<uint8_t, 8> preamble = {};
+  preamble[0]                     = (count >> 24) & 0xff;
+  preamble[1]                     = (count >> 16) & 0xff;
+  preamble[2]                     = (count >> 8) & 0xff;
+  preamble[3]                     = count & 0xff;
+  preamble[4]                     = (bearer << 3) | (to_number(direction) << 2);
+  status                          = psa_mac_update(&op, preamble.data(), preamble.size());
+  if (status != PSA_SUCCESS) {
+    psa_mac_abort(&op);
+    report_error("Failure in integrity protection operation");
+    return;
+  }
+
+  byte_buffer_segment_span_range segments = msg.modifiable_segments();
+  for (const auto& segment : segments) {
+    status = psa_mac_update(&op, segment.data(), segment.size());
+    if (status != PSA_SUCCESS) {
+      psa_mac_abort(&op);
+      report_error("Failure in integrity protection operation");
+      return;
+    }
+  }
+  uint8_t tmp_mac[16];
+  size_t  mac_length = 0;
+  status             = psa_mac_sign_finish(&op, tmp_mac, sizeof(tmp_mac), &mac_length);
+
+  if (status != PSA_SUCCESS) {
+    psa_mac_abort(&op);
+    report_error("Failure in integrity protection operation");
+    return;
+  }
+  for (int i = 0; i < 4; ++i) {
+    mac[i] = tmp_mac[i];
+  }
+}
+
+#endif
 inline void security_nia2_non_cmac(sec_mac&           mac,
                                    const sec_128_key& key,
                                    uint32_t           count,
@@ -115,6 +181,12 @@ inline void security_nia2_non_cmac(sec_mac&           mac,
                                    byte_buffer_view&  msg,
                                    uint32_t           msg_len)
 {
+  int ret = crypto_init();
+  if (ret != 0) {
+    report_error("Failure in initializing crypto");
+    return;
+  }
+
   uint32_t    len             = msg.length();
   uint32_t    msg_len_block_8 = (msg_len + 7) / 8;
   aes_context ctx;
@@ -204,28 +276,6 @@ inline void security_nia2_non_cmac(sec_mac&           mac,
     }
   }
 }
-#else
-inline void security_nia2_psa(sec_mac&           mac,
-                              const sec_128_key& key,
-                              uint32_t           count,
-                              uint8_t            bearer,
-                              security_direction direction,
-                              byte_buffer_view&  msg)
-{
-  // TODO implment PSA crypto.
-}
-
-inline void security_nia2_psa_bits(sec_mac&           mac,
-                                   const sec_128_key& key,
-                                   uint32_t           count,
-                                   uint8_t            bearer,
-                                   security_direction direction,
-                                   byte_buffer_view&  msg,
-                                   uint32_t           msg_len)
-{
-  // TODO implment PSA crypto.
-}
-#endif
 
 inline void security_nia2(sec_mac&           mac,
                           const sec_128_key& key,
@@ -242,21 +292,6 @@ inline void security_nia2(sec_mac&           mac,
 #endif
 #else
   security_nia2_psa(mac, key, count, bearer, direction, msg);
-#endif
-}
-
-inline void security_nia2_bits(sec_mac&           mac,
-                               const sec_128_key& key,
-                               uint32_t           count,
-                               uint8_t            bearer,
-                               security_direction direction,
-                               byte_buffer_view&  msg,
-                               uint32_t           msg_len)
-{
-#if MBEDTLS_VERSION_NUMBER <= 0x04000000
-  security_nia2_non_cmac(mac, key, count, bearer, direction, msg, msg.length() * 8);
-#else
-  security_nia2_psa_bits(mac, key, count, bearer, direction, msg, msg.length() * 8);
 #endif
 }
 
