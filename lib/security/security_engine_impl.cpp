@@ -4,11 +4,17 @@
 
 #include "security_engine_impl.h"
 #include "ciphering_engine_nea1.h"
-#include "ciphering_engine_nea2.h"
 #include "ciphering_engine_nea3.h"
 #include "integrity_engine_generic.h"
+#include <mbedtls/version.h>
+#if MBEDTLS_VERSION_NUMBER <= 0x04000000
+#include "ciphering_engine_nea2.h"
 #include "integrity_engine_nia2_cmac.h"
 #include "integrity_engine_nia2_non_cmac.h"
+#else
+#include "ciphering_engine_nea2_psa.h"
+#include "integrity_engine_nia2_psa.h"
+#endif
 
 using namespace ocudu;
 using namespace security;
@@ -26,12 +32,21 @@ security_engine_impl::security_engine_impl(security::sec_128_as_config sec_cfg,
     ocudu_assert(sec_cfg.k_128_int.has_value(), "Cannot enable integrity protection: No key");
     switch (sec_cfg.integ_algo.value()) {
       case integrity_algorithm::nia2:
+#if MBEDTLS_VERSION_NUMBER <= 0x04000000
 #ifdef MBEDTLS_CMAC_C
         integ_eng = std::make_unique<integrity_engine_nia2_cmac>(
             sec_cfg.k_128_int.value(), bearer_id, direction, allow_unprotected);
 #else
         integ_eng = std::make_unique<integrity_engine_nia2_non_cmac>(
             sec_cfg.k_128_int.value(), bearer_id, direction, allow_unprotected);
+#endif
+#else
+#ifdef PSA_WANT_ALG_CMAC
+        integ_eng = std::make_unique<integrity_engine_nia2_psa>(
+            sec_cfg.k_128_int.value(), bearer_id, direction, allow_unprotected);
+#else
+        report_error("PSA CMAC not available in MBedTLS");
+#endif
 #endif
         break;
       default:
@@ -46,7 +61,11 @@ security_engine_impl::security_engine_impl(security::sec_128_as_config sec_cfg,
         cipher_eng = std::make_unique<ciphering_engine_nea1>(sec_cfg.k_128_enc, bearer_id, direction);
         break;
       case ciphering_algorithm::nea2:
+#if MBEDTLS_VERSION_NUMBER <= 0x04000000
         cipher_eng = std::make_unique<ciphering_engine_nea2>(sec_cfg.k_128_enc, bearer_id, direction);
+#else
+        cipher_eng = std::make_unique<ciphering_engine_nea2_psa>(sec_cfg.k_128_enc, bearer_id, direction);
+#endif
         break;
       case ciphering_algorithm::nea3:
         cipher_eng = std::make_unique<ciphering_engine_nea3>(sec_cfg.k_128_enc, bearer_id, direction);

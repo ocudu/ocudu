@@ -9,6 +9,7 @@
 using namespace ocudu;
 using namespace security;
 
+#if MBEDTLS_VERSION_NUMBER <= 0x04000000
 integrity_engine_nia2_non_cmac::integrity_engine_nia2_non_cmac(sec_128_key        k_128_int_,
                                                                uint8_t            bearer_id_,
                                                                security_direction direction_,
@@ -181,3 +182,4 @@ security_status integrity_engine_nia2_non_cmac::verify_integrity(byte_buffer& bu
   buf.trim_tail(sec_mac_len);
   return security_status::success;
 }
+#endif

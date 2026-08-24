@@ -136,6 +136,7 @@ TEST_P(fxt_nia1, integrity_engine_generic_nia1)
   }
 }
 
+#if MBEDTLS_VERSION_NUMBER <= 0x04000000
 #ifdef MBEDTLS_CMAC_C
 TEST_P(fxt_nia2, integrity_engine_nia2_cmac)
 {
@@ -210,7 +211,9 @@ TEST_P(fxt_nia2, integrity_engine_nia2_non_cmac)
     EXPECT_EQ(buf, message);
   }
 }
-
+#else
+// TODO PSA fixture.
+#endif
 TEST_P(fxt_nia2, integrity_engine_generic_nia2)
 {
   nia_test_set param = GetParam();

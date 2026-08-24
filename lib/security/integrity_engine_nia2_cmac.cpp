@@ -3,12 +3,12 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "integrity_engine_nia2_cmac.h"
-#include "mbedtls/cmac.h"
 #include "ocudu/security/security.h"
 
 using namespace ocudu;
 using namespace security;
 
+#if MBEDTLS_VERSION_NUMBER <= 0x04000000
 #ifdef MBEDTLS_CMAC_C
 
 integrity_engine_nia2_cmac::integrity_engine_nia2_cmac(sec_128_key        k_128_int_,
@@ -169,4 +169,5 @@ security_status integrity_engine_nia2_cmac::verify_integrity(byte_buffer& buf, u
   return security_status::success;
 }
 
+#endif
 #endif // MBEDTLS_CMAC_C

@@ -784,7 +784,7 @@ TEST(security_nia2_test, testset1)
   // Apply integrity check
   byte_buffer_view message_view{message};
   sec_mac          mact_out = {};
-  security_nia2_non_cmac(mact_out, key, count_i, bearer, dir, message_view, length);
+  security_nia2_bits(mact_out, key, count_i, bearer, dir, message_view, length);
   EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
 }
 
@@ -809,18 +809,16 @@ TEST(security_nia2_test, testset1_mod)
 
   // Apply integrity check
   {
-#ifdef MBEDTLS_CMAC_C
     byte_buffer_view message_view{message};
     sec_mac          mact_out = {};
-    security_nia2_cmac(mact_out, key, count_i, bearer, dir, message_view);
+    security_nia2(mact_out, key, count_i, bearer, dir, message_view);
     EXPECT_EQ(message_view.length(), length / 8);
     EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
-#endif
   }
   {
     byte_buffer_view message_view{message};
     sec_mac          mact_out = {};
-    security_nia2_non_cmac(mact_out, key, count_i, bearer, dir, message_view, length);
+    security_nia2_bits(mact_out, key, count_i, bearer, dir, message_view, length);
     EXPECT_EQ(message_view.length(), length / 8);
     EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
   }
@@ -847,18 +845,16 @@ TEST(security_nia2_test, testset2)
 
   // Apply integrity check
   {
-#ifdef MBEDTLS_CMAC_C
     byte_buffer_view message_view{message};
     sec_mac          mact_out = {};
-    security_nia2_cmac(mact_out, key, count_i, bearer, dir, message_view);
+    security_nia2(mact_out, key, count_i, bearer, dir, message_view);
     EXPECT_EQ(message_view.length(), length / 8);
     EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
-#endif
   }
   {
     byte_buffer_view message_view{message};
     sec_mac          mact_out = {};
-    security_nia2_non_cmac(mact_out, key, count_i, bearer, dir, message_view, length);
+    security_nia2_bits(mact_out, key, count_i, bearer, dir, message_view, length);
     EXPECT_EQ(message_view.length(), length / 8);
     EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
   }
@@ -881,15 +877,15 @@ TEST(security_nia2_test, testset3)
   const char* mact_cstr    = "1f60b01d";
 
   // Pack hex strings into ocudu types
-  sec_128_key        key      = make_sec_128_key(ik_cstr);
-  security_direction dir      = static_cast<security_direction>(direction);
-  byte_buffer        message  = make_byte_buffer(message_cstr).value();
-  byte_buffer        mact_buf = make_byte_buffer(mact_cstr).value();
+  sec_128_key key      = make_sec_128_key(ik_cstr);
+  auto        dir      = static_cast<security_direction>(direction);
+  byte_buffer message  = make_byte_buffer(message_cstr).value();
+  byte_buffer mact_buf = make_byte_buffer(mact_cstr).value();
 
   // Apply integrity check
   byte_buffer_view message_view{message};
   sec_mac          mact_out = {};
-  security_nia2_non_cmac(mact_out, key, count_i, bearer, dir, message_view, length);
+  security_nia2_bits(mact_out, key, count_i, bearer, dir, message_view, length);
   EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
 }
 
@@ -907,25 +903,23 @@ TEST(security_nia2_test, testset3_mod)
   const char* mact_cstr    = "fde6c737";
 
   // Pack hex strings into ocudu types
-  sec_128_key        key      = make_sec_128_key(ik_cstr);
-  security_direction dir      = static_cast<security_direction>(direction);
-  byte_buffer        message  = make_byte_buffer(message_cstr).value();
-  byte_buffer        mact_buf = make_byte_buffer(mact_cstr).value();
+  sec_128_key key      = make_sec_128_key(ik_cstr);
+  auto        dir      = static_cast<security_direction>(direction);
+  byte_buffer message  = make_byte_buffer(message_cstr).value();
+  byte_buffer mact_buf = make_byte_buffer(mact_cstr).value();
 
   // Apply integrity check
   {
-#ifdef MBEDTLS_CMAC_C
     byte_buffer_view message_view{message};
     sec_mac          mact_out = {};
-    security_nia2_cmac(mact_out, key, count_i, bearer, dir, message_view);
+    security_nia2(mact_out, key, count_i, bearer, dir, message_view);
     EXPECT_EQ(message_view.length(), length / 8);
     EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
-#endif
   }
   {
     byte_buffer_view message_view{message};
     sec_mac          mact_out = {};
-    security_nia2_non_cmac(mact_out, key, count_i, bearer, dir, message_view, length);
+    security_nia2_bits(mact_out, key, count_i, bearer, dir, message_view, length);
     EXPECT_EQ(message_view.length(), length / 8);
     EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
   }
@@ -949,15 +943,15 @@ TEST(security_nia2_test, testset4)
   const char* mact_cstr    = "6846a2f0";
 
   // Pack hex strings into ocudu types
-  sec_128_key        key      = make_sec_128_key(ik_cstr);
-  security_direction dir      = static_cast<security_direction>(direction);
-  byte_buffer        message  = make_byte_buffer(message_cstr).value();
-  byte_buffer        mact_buf = make_byte_buffer(mact_cstr).value();
+  sec_128_key key      = make_sec_128_key(ik_cstr);
+  auto        dir      = static_cast<security_direction>(direction);
+  byte_buffer message  = make_byte_buffer(message_cstr).value();
+  byte_buffer mact_buf = make_byte_buffer(mact_cstr).value();
 
   // Apply integrity check
   byte_buffer_view message_view{message};
   sec_mac          mact_out = {};
-  security_nia2_non_cmac(mact_out, key, count_i, bearer, dir, message_view, length);
+  security_nia2_bits(mact_out, key, count_i, bearer, dir, message_view, length);
   EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
 }
 
@@ -983,18 +977,16 @@ TEST(security_nia2_test, testset4_mod)
 
   // Apply integrity check
   {
-#ifdef MBEDTLS_CMAC_C
     byte_buffer_view message_view{message};
     sec_mac          mact_out = {};
-    security_nia2_cmac(mact_out, key, count_i, bearer, dir, message_view);
+    security_nia2(mact_out, key, count_i, bearer, dir, message_view);
     EXPECT_EQ(message_view.length(), length / 8);
     EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
-#endif
   }
   {
     byte_buffer_view message_view{message};
     sec_mac          mact_out = {};
-    security_nia2_non_cmac(mact_out, key, count_i, bearer, dir, message_view, length);
+    security_nia2_bits(mact_out, key, count_i, bearer, dir, message_view, length);
     EXPECT_EQ(message_view.length(), length / 8);
     EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
   }
@@ -1016,25 +1008,23 @@ TEST(security_nia2_test, testset5)
   const char* mact_cstr = "e657e182";
 
   // Pack hex strings into ocudu types
-  sec_128_key        key      = make_sec_128_key(ik_cstr);
-  security_direction dir      = static_cast<security_direction>(direction);
-  byte_buffer        message  = make_byte_buffer(message_cstr).value();
-  byte_buffer        mact_buf = make_byte_buffer(mact_cstr).value();
+  sec_128_key key      = make_sec_128_key(ik_cstr);
+  auto        dir      = static_cast<security_direction>(direction);
+  byte_buffer message  = make_byte_buffer(message_cstr).value();
+  byte_buffer mact_buf = make_byte_buffer(mact_cstr).value();
 
   // Apply integrity check
   {
-#ifdef MBEDTLS_CMAC_C
     byte_buffer_view message_view{message};
     sec_mac          mact_out = {};
-    security_nia2_cmac(mact_out, key, count_i, bearer, dir, message_view);
+    security_nia2(mact_out, key, count_i, bearer, dir, message_view);
     EXPECT_EQ(message_view.length(), length / 8);
     EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
-#endif
   }
   {
     byte_buffer_view message_view{message};
     sec_mac          mact_out = {};
-    security_nia2_non_cmac(mact_out, key, count_i, bearer, dir, message_view, length);
+    security_nia2_bits(mact_out, key, count_i, bearer, dir, message_view, length);
     EXPECT_EQ(message_view.length(), length / 8);
     EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
   }
@@ -1066,7 +1056,7 @@ TEST(security_nia2_test, testset6)
   // Apply integrity check
   byte_buffer_view message_view{message};
   sec_mac          mact_out = {};
-  security_nia2_non_cmac(mact_out, key, count_i, bearer, dir, message_view, length);
+  security_nia2_bits(mact_out, key, count_i, bearer, dir, message_view, length);
   EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
 }
 
@@ -1088,25 +1078,23 @@ TEST(security_nia2_test, testset6_mod)
   const char* mact_cstr = "fe69c8ad";
 
   // Pack hex strings into ocudu types
-  sec_128_key        key      = make_sec_128_key(ik_cstr);
-  security_direction dir      = static_cast<security_direction>(direction);
-  byte_buffer        message  = make_byte_buffer(message_cstr).value();
-  byte_buffer        mact_buf = make_byte_buffer(mact_cstr).value();
+  sec_128_key key      = make_sec_128_key(ik_cstr);
+  auto        dir      = static_cast<security_direction>(direction);
+  byte_buffer message  = make_byte_buffer(message_cstr).value();
+  byte_buffer mact_buf = make_byte_buffer(mact_cstr).value();
 
   // Apply integrity check
   {
-#ifdef MBEDTLS_CMAC_C
     byte_buffer_view message_view{message};
     sec_mac          mact_out = {};
-    security_nia2_cmac(mact_out, key, count_i, bearer, dir, message_view);
+    security_nia2(mact_out, key, count_i, bearer, dir, message_view);
     EXPECT_EQ(message_view.length(), length / 8);
     EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
-#endif
   }
   {
     byte_buffer_view message_view{message};
     sec_mac          mact_out = {};
-    security_nia2_non_cmac(mact_out, key, count_i, bearer, dir, message_view, length);
+    security_nia2_bits(mact_out, key, count_i, bearer, dir, message_view, length);
     EXPECT_EQ(message_view.length(), length / 8);
     EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
   }
@@ -1143,7 +1131,7 @@ TEST(security_nia2_test, testset7)
   // Apply integrity check
   byte_buffer_view message_view{message};
   sec_mac          mact_out = {};
-  security_nia2_non_cmac(mact_out, key, count_i, bearer, dir, message_view, length);
+  security_nia2_bits(mact_out, key, count_i, bearer, dir, message_view, length);
   EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
 }
 
@@ -1177,18 +1165,16 @@ TEST(security_nia2_test, testset7_mod)
 
   // Apply integrity check
   {
-#ifdef MBEDTLS_CMAC_C
     byte_buffer_view message_view{message};
     sec_mac          mact_out = {};
-    security_nia2_cmac(mact_out, key, count_i, bearer, dir, message_view);
+    security_nia2(mact_out, key, count_i, bearer, dir, message_view);
     EXPECT_EQ(message_view.length(), length / 8);
     EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
-#endif
   }
   {
     byte_buffer_view message_view{message};
     sec_mac          mact_out = {};
-    security_nia2_non_cmac(mact_out, key, count_i, bearer, dir, message_view, length);
+    security_nia2_bits(mact_out, key, count_i, bearer, dir, message_view, length);
     EXPECT_EQ(message_view.length(), length / 8);
     EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
   }
@@ -1245,25 +1231,23 @@ TEST(security_nia2_test, testset8)
   const char* mact_cstr = "ebd5ccb0";
 
   // Pack hex strings into ocudu types
-  sec_128_key        key      = make_sec_128_key(ik_cstr);
-  security_direction dir      = static_cast<security_direction>(direction);
-  byte_buffer        message  = make_byte_buffer(message_cstr).value();
-  byte_buffer        mact_buf = make_byte_buffer(mact_cstr).value();
+  sec_128_key key      = make_sec_128_key(ik_cstr);
+  auto        dir      = static_cast<security_direction>(direction);
+  byte_buffer message  = make_byte_buffer(message_cstr).value();
+  byte_buffer mact_buf = make_byte_buffer(mact_cstr).value();
 
   // Apply integrity check
   {
-#ifdef MBEDTLS_CMAC_C
     byte_buffer_view message_view{message};
     sec_mac          mact_out = {};
-    security_nia2_cmac(mact_out, key, count_i, bearer, dir, message_view);
+    security_nia2(mact_out, key, count_i, bearer, dir, message_view);
     EXPECT_EQ(message_view.length(), length / 8);
     EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
-#endif
   }
   {
     byte_buffer_view message_view{message};
     sec_mac          mact_out = {};
-    security_nia2_non_cmac(mact_out, key, count_i, bearer, dir, message_view, length);
+    security_nia2_bits(mact_out, key, count_i, bearer, dir, message_view, length);
     EXPECT_EQ(message_view.length(), length / 8);
     EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
   }

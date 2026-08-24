@@ -7,6 +7,7 @@
 using namespace ocudu;
 using namespace security;
 
+#if MBEDTLS_VERSION_NUMBER <= 0x04000000
 ciphering_engine_nea2::ciphering_engine_nea2(sec_128_key        k_128_enc_,
                                              uint8_t            bearer_id_,
                                              security_direction direction_) :
@@ -41,7 +42,8 @@ security_status ciphering_engine_nea2::apply_ciphering(byte_buffer& buf, size_t 
   // Encryption
   byte_buffer_segment_span_range segments = msg.modifiable_segments();
   for (const auto& segment : segments) {
-    int ret = aes_crypt_ctr(&ctx, segment.size(), &nc_off, nonce_cnt, stream_blk, segment.data(), segment.data());
+    int ret =
+        mbedtls_aes_crypt_ctr(&ctx, segment.size(), &nc_off, nonce_cnt, stream_blk, segment.data(), segment.data());
     if (ret != 0) {
       return security_status::ciphering_failure;
     }
@@ -50,3 +52,4 @@ security_status ciphering_engine_nea2::apply_ciphering(byte_buffer& buf, size_t 
 
   return security_status::success;
 }
+#endif

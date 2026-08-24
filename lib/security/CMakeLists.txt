@@ -28,10 +28,12 @@ set(SOURCES
   security_engine_factory.cpp
   ciphering_engine_nea1.cpp
   ciphering_engine_nea2.cpp
+  ciphering_engine_nea2_psa.cpp
   ciphering_engine_nea3.cpp
   integrity_engine_generic.cpp
   integrity_engine_nia2_cmac.cpp
   integrity_engine_nia2_non_cmac.cpp
+  integrity_engine_nia2_psa.cpp
   security.cpp
   security_engine_impl.cpp
   s3g.cpp

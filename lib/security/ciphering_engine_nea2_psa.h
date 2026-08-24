@@ -8,14 +8,13 @@
 #include "ocudu/security/security.h"
 #include "ocudu/security/ssl.h"
 
-#if MBEDTLS_VERSION_NUMBER <= 0x04000000
 namespace ocudu::security {
 
-class ciphering_engine_nea2 final : public ciphering_engine
+class ciphering_engine_nea2_psa final : public ciphering_engine
 {
 public:
-  ciphering_engine_nea2(sec_128_key k_128_enc_, uint8_t bearer_id_, security_direction direction_);
-  ~ciphering_engine_nea2() override = default;
+  ciphering_engine_nea2_psa(sec_128_key k_128_enc_, uint8_t bearer_id_, security_direction direction_);
+  ~ciphering_engine_nea2_psa() override = default;
 
   security_status apply_ciphering(byte_buffer& buf, size_t offset, uint32_t count) override;
 
@@ -30,5 +29,3 @@ private:
 };
 
 } // namespace ocudu::security
-
-#endif

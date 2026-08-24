@@ -4,6 +4,7 @@
 
 #include "lib/security/ciphering_engine_nea1.h"
 #include "lib/security/ciphering_engine_nea2.h"
+#include "lib/security/ciphering_engine_nea2_psa.h"
 #include "lib/security/ciphering_engine_nea3.h"
 #include "nea1_test_set.h"
 #include "nea2_test_set.h"
@@ -130,8 +131,11 @@ TEST_P(fxt_nea2, ciphering_engine_nea2)
   byte_buffer ciphertext = make_byte_buffer(param.ciphertext_cstr).value();
 
   // Create ciphering engine
+#if MBEDTLS_VERSION_NUMBER <= 0x04000000
   std::unique_ptr<ciphering_engine> nea = std::make_unique<ciphering_engine_nea2>(key, param.bearer, dir);
-
+#else
+  std::unique_ptr<ciphering_engine> nea = std::make_unique<ciphering_engine_nea2_psa>(key, param.bearer, dir);
+#endif
   // Apply ciphering and compare results
   byte_buffer     buf    = plaintext.deep_copy().value();
   security_status status = nea->apply_ciphering(buf, 0, param.count);

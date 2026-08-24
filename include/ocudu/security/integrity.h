@@ -10,9 +10,9 @@
 #include "ocudu/security/security.h"
 #include "ocudu/security/ssl.h"
 #include "ocudu/security/zuc.h"
+#include <mbedtls/version.h>
 
-namespace ocudu {
-namespace security {
+namespace ocudu::security {
 
 constexpr uint32_t sec_var_short_mac_input_packed_len = 8;
 
@@ -52,6 +52,7 @@ inline void security_nia1(sec_mac&           mac,
   security_nia1(mac, key, count, bearer, direction, msg, msg.length() * 8);
 }
 
+#if MBEDTLS_VERSION_NUMBER <= 0x04000000
 #ifdef MBEDTLS_CMAC_C
 inline void security_nia2_cmac(sec_mac&           mac,
                                const sec_128_key& key,
@@ -203,6 +204,28 @@ inline void security_nia2_non_cmac(sec_mac&           mac,
     }
   }
 }
+#else
+inline void security_nia2_psa(sec_mac&           mac,
+                              const sec_128_key& key,
+                              uint32_t           count,
+                              uint8_t            bearer,
+                              security_direction direction,
+                              byte_buffer_view&  msg)
+{
+  // TODO implment PSA crypto.
+}
+
+inline void security_nia2_psa_bits(sec_mac&           mac,
+                                   const sec_128_key& key,
+                                   uint32_t           count,
+                                   uint8_t            bearer,
+                                   security_direction direction,
+                                   byte_buffer_view&  msg,
+                                   uint32_t           msg_len)
+{
+  // TODO implment PSA crypto.
+}
+#endif
 
 inline void security_nia2(sec_mac&           mac,
                           const sec_128_key& key,
@@ -211,10 +234,29 @@ inline void security_nia2(sec_mac&           mac,
                           security_direction direction,
                           byte_buffer_view&  msg)
 {
+#if MBEDTLS_VERSION_NUMBER <= 0x04000000
 #ifdef MBEDTLS_CMAC_C
   security_nia2_cmac(mac, key, count, bearer, direction, msg);
 #else
   security_nia2_non_cmac(mac, key, count, bearer, direction, msg, msg.length() * 8);
+#endif
+#else
+  security_nia2_psa(mac, key, count, bearer, direction, msg);
+#endif
+}
+
+inline void security_nia2_bits(sec_mac&           mac,
+                               const sec_128_key& key,
+                               uint32_t           count,
+                               uint8_t            bearer,
+                               security_direction direction,
+                               byte_buffer_view&  msg,
+                               uint32_t           msg_len)
+{
+#if MBEDTLS_VERSION_NUMBER <= 0x04000000
+  security_nia2_non_cmac(mac, key, count, bearer, direction, msg, msg.length() * 8);
+#else
+  security_nia2_psa_bits(mac, key, count, bearer, direction, msg, msg.length() * 8);
 #endif
 }
 
@@ -381,5 +423,4 @@ inline bool verify_short_mac(const sec_short_mac_i& rx_short_mac,
   channel(packed_var.begin(), packed_var.end(), "Integrity check input message.");
   return is_valid;
 }
-} // namespace security
-} // namespace ocudu
+} // namespace ocudu::security

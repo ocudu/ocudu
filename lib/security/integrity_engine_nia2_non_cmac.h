@@ -4,13 +4,17 @@
 
 #pragma once
 
-#include "mbedtls/aes.h"
+#include "mbedtls/version.h"
 #include "ocudu/security/integrity_engine.h"
 #include "ocudu/security/security.h"
 
-namespace ocudu {
-namespace security {
+#if MBEDTLS_VERSION_NUMBER <= 0x04000000
+#include "mbedtls/aes.h"
+#endif
 
+namespace ocudu::security {
+
+#if MBEDTLS_VERSION_NUMBER <= 0x04000000
 class integrity_engine_nia2_non_cmac final : public integrity_engine
 {
 public:
@@ -40,6 +44,6 @@ private:
   ocudulog::basic_logger& logger;
   bool                    allow_unprotected = false;
 };
+#endif
 
-} // namespace security
-} // namespace ocudu
+} // namespace ocudu::security
