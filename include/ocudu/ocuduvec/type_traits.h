@@ -5,6 +5,7 @@
 
 #include "ocudu/adt/complex.h"
 #include "ocudu/adt/span.h"
+#include <tuple>
 
 namespace ocudu {
 namespace ocuduvec {
