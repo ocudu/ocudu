@@ -125,13 +125,13 @@ void cell_metrics_handler::handle_ue_deletion(du_ue_index_t ue_index)
   }
 }
 
-void cell_metrics_handler::handle_rach_indication(const rach_indication_message& msg, slot_point sl_tx)
+void cell_metrics_handler::handle_rach_indication(const rach_indication_message& msg)
 {
   if (not enabled()) {
     return;
   }
   const rach_config_common& rach_cfg  = *cell_cfg.init_bwp.ul.rach_common();
-  unsigned                  slot_diff = sl_tx - msg.slot_rx;
+  const unsigned            slot_diff = last_slot_tx.valid() ? last_slot_tx.without_hyper_sfn() - msg.slot_rx : 0;
   for (const auto& occ : msg.occasions) {
     data.total_prach_preambles += occ.preambles.size();
     data.sum_prach_delay_slots += slot_diff * occ.preambles.size();

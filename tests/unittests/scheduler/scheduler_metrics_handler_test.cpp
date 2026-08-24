@@ -453,8 +453,7 @@ TEST_F(scheduler_metrics_handler_two_step_rach_tester, two_step_prach_preambles_
   const rach_indication_message::preamble msg1_preamble = test_helper::create_preamble(0, to_rnti(0x4601));
   const rach_indication_message::preamble msga_preamble =
       test_helper::create_preamble(MSGA_PREAMBLE_OFFSET, to_rnti(0x4602));
-  metrics.handle_rach_indication(test_helper::create_rach_indication(cell_cfg, sl_tx, {msg1_preamble, msga_preamble}),
-                                 sl_tx);
+  metrics.handle_rach_indication(test_helper::create_rach_indication(cell_cfg, sl_tx, {msg1_preamble, msga_preamble}));
 
   sched_result sched_res;
   sched_res.dl.nof_dl_symbols = 14;

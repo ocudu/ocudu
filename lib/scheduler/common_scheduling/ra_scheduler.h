@@ -40,7 +40,7 @@ public:
                         cell_metrics_handler&     metrics_handler_);
   ~ra_scheduler();
 
-  /// \brief Store a RACH indication coming from lower layers, to be handled in the next slot indication.
+  /// Handle a RACH indication coming from lower layers.
   void handle_rach_indication(const rach_indication_message& msg);
 
   /// \brief Store the UL CRCs of the indication that ACK/NACK a Msg3 HARQ process, discarding the remaining ones.
@@ -78,6 +78,12 @@ private:
     /// below threshold or occasion preamble count above threshold). Causes a Backoff Indicator subheader to be
     /// included in the RAR.
     bool send_backoff_indicator = false;
+  };
+
+  /// PRACH occasion pending to be allocated a MsgA PUSCH, holding only its MsgA preambles.
+  struct pending_msga_occasion {
+    rach_indication_message::occasion occ;
+    slot_point                        prach_slot_rx;
   };
 
   struct msg3_alloc_candidate {
@@ -118,20 +124,21 @@ private:
   /// Pre-compute invariant fields of Msg3 PDUs (PUSCH, DCI, etc.) for faster scheduling.
   void precompute_msg3_pdus();
 
-  void handle_rach_indication_impl(const rach_indication_message& msg, cell_resource_allocator& res_alloc);
-
   /// Handle a PRACH occasion carrying Msg1 (4-step RACH) preambles.
   void handle_msg1_occasion(const rach_indication_message::occasion&      occ,
                             span<const rach_indication_message::preamble> preambles,
                             slot_point                                    prach_slot_rx);
 
   /// Handle a PRACH occasion carrying MsgA (2-step RACH) preambles and allocate their PUSCH receptions.
-  void handle_msga_occasion(const rach_indication_message::occasion&      occ,
-                            span<const rach_indication_message::preamble> preambles,
-                            slot_point                                    prach_slot_rx,
-                            cell_resource_allocator&                      res_alloc);
+  void handle_msga_occasion(const rach_indication_message::occasion& occ,
+                            slot_point                               prach_slot_rx,
+                            cell_resource_allocator&                 res_alloc);
 
-  void handle_pending_crc_indications_impl(cell_resource_allocator& res_alloc);
+  /// Apply a UL CRC that ACKs/NACKs a Msg3 HARQ process.
+  void handle_ra_crc(const ul_crc_pdu_indication& crc, slot_point sl_rx);
+
+  /// Allocate the Msg3 retransmissions left pending by the CRCs handled so far.
+  void schedule_pending_msg3_retxs(cell_resource_allocator& res_alloc);
 
   /// Marks the MsgA PUSCH CRC outcome for preamble \c rapid under \c ra_rnti, and creates the ra_ue_repository
   /// entry (successRAR placeholder or Msg3 fallback entry).
@@ -286,11 +293,8 @@ private:
 
   // -- State.
 
-  // RACH indications pending to be processed. Never reallocates, as it is filled up to its reserved capacity.
-  std::vector<rach_indication_message> pending_rachs;
-
-  // CRC indications pending to be processed. Never reallocates, as it is filled up to its reserved capacity.
-  std::vector<ul_crc_indication> pending_crcs;
+  // MsgA PRACH occasions pending to be allocated. Never reallocates, as it is filled up to its reserved capacity.
+  std::vector<pending_msga_occasion> pending_msgas;
 
   // List of pending RARs to be scheduled.
   std::vector<pending_rar_alloc> pending_rars;

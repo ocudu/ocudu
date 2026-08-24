@@ -54,11 +54,8 @@ static uint8_t backoff_ms_to_indicator(std::chrono::milliseconds backoff_duratio
   return static_cast<uint8_t>(std::distance(table.begin(), it));
 }
 
-// (Implementation-defined) limit for maximum number of pending RACH indications.
-static constexpr size_t MAX_PENDING_RACH_INDS = MAX_PRACH_OCCASIONS_PER_SLOT * 2;
-
-// (Implementation-defined) limit for maximum number of pending CRC indications.
-static constexpr size_t MAX_PENDING_CRC_INDS = MAX_PUCCH_PDUS_PER_SLOT * 2;
+// (Implementation-defined) limit for maximum number of MsgA PRACH occasions pending to be allocated.
+static constexpr size_t MAX_PENDING_MSGA_OCCASIONS = MAX_PRACH_OCCASIONS_PER_SLOT * 2;
 
 /// \brief Compute the PRACH occasion duration in slots from cell configuration.
 ///
@@ -180,8 +177,7 @@ ra_scheduler::ra_scheduler(const cell_configuration& cellcfg_,
                                 cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated)),
   cached_init_bwp_info(std::make_unique<cached_bwp_info>(cell_cfg))
 {
-  pending_rachs.reserve(MAX_PENDING_RACH_INDS);
-  pending_crcs.reserve(MAX_PENDING_CRC_INDS);
+  pending_msgas.reserve(MAX_PENDING_MSGA_OCCASIONS);
 
   // The maximum number of pending RARs is given by the maximum number of PRACH occasions that can accumulate from a
   // given UL slot (at which the PRACH is received) until the expiration of the RAR window. The worst case is when:
@@ -304,18 +300,6 @@ void ra_scheduler::precompute_msg3_pdus()
 
 void ra_scheduler::handle_rach_indication(const rach_indication_message& msg)
 {
-  // Buffer detected RACHs to be handled in next slot.
-  if (pending_rachs.size() == pending_rachs.capacity()) {
-    logger.warning("pci={}: Discarding RACH indication for slot={}. Cause: Too many RACHs pending to be processed",
-                   cell_cfg.params.pci,
-                   msg.slot_rx);
-    return;
-  }
-  pending_rachs.push_back(msg);
-}
-
-void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& msg, cell_resource_allocator& res_alloc)
-{
   const rach_config_common& rach_cfg = *cell_cfg.params.ul_cfg_common.init_ul_bwp.rach_cfg_common;
 
   for (const auto& prach_occ : msg.occasions) {
@@ -350,12 +334,26 @@ void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& ms
       handle_msg1_occasion(prach_occ, msg1_preambles, msg.slot_rx);
     }
     if (not msga_preambles.empty()) {
-      handle_msga_occasion(prach_occ, msga_preambles, msg.slot_rx, res_alloc);
+      // The MsgA PUSCH can only be allocated once its resources have been reserved in the grid, which happens in
+      // run_slot. Buffer the occasion until then.
+      if (pending_msgas.size() == pending_msgas.capacity()) {
+        logger.warning("pci={}: Discarding MsgA PRACH occasion detected at slot={}. Cause: Too many occasions pending "
+                       "to be processed",
+                       cell_cfg.params.pci,
+                       msg.slot_rx);
+        continue;
+      }
+      pending_msgas.push_back(pending_msga_occasion{
+          rach_indication_message::occasion{.start_symbol    = prach_occ.start_symbol,
+                                            .slot_index      = prach_occ.slot_index,
+                                            .frequency_index = prach_occ.frequency_index,
+                                            .preambles       = {msga_preambles.begin(), msga_preambles.end()}},
+          msg.slot_rx});
     }
   }
 
   // Forward RACH indication to metrics handler.
-  metrics_hdlr.handle_rach_indication(msg, res_alloc.slot_tx());
+  metrics_hdlr.handle_rach_indication(msg);
 }
 
 void ra_scheduler::handle_msg1_occasion(const rach_indication_message::occasion&      occ,
@@ -471,10 +469,9 @@ void ra_scheduler::handle_msg1_occasion(const rach_indication_message::occasion&
   }
 }
 
-void ra_scheduler::handle_msga_occasion(const rach_indication_message::occasion&      occ,
-                                        span<const rach_indication_message::preamble> preambles,
-                                        slot_point                                    prach_slot_rx,
-                                        cell_resource_allocator&                      res_alloc)
+void ra_scheduler::handle_msga_occasion(const rach_indication_message::occasion& occ,
+                                        slot_point                               prach_slot_rx,
+                                        cell_resource_allocator&                 res_alloc)
 {
   const rach_config_common& rach_cfg = *cell_cfg.params.ul_cfg_common.init_ul_bwp.rach_cfg_common;
   ocudu_sanity_check(rach_cfg.two_step_rach_cfg.has_value(), "MsgA received but 2-step RACH is not configured");
@@ -578,7 +575,7 @@ void ra_scheduler::handle_msga_occasion(const rach_indication_message::occasion&
   const unsigned preambles_per_ssb = rach_cfg.total_nof_ra_preambles / nof_ssbs_per_ro;
   const unsigned preambles_per_po  = two_step_cfg.cb_preambles_per_ssb_per_shared_ro / msga_pusch_cfg.po_fdm;
 
-  for (const auto& preamble : preambles) {
+  for (const auto& preamble : occ.preambles) {
     ocudu_sanity_check(ra_helper::is_msga_cb_preamble(rach_cfg, preamble.preamble_id),
                        "Handling preamble that is not for MsgA. Are preamble IDs sorted in the RACH indication?");
     ev_logger.enqueue(scheduler_event_logger::prach_event{
@@ -667,26 +664,49 @@ void ra_scheduler::handle_crc_indication(const ul_crc_indication& crc_ind)
   auto is_ra_crc = [this](const ul_crc_pdu_indication& pdu) {
     return pdu.harq_id == to_harq_id(0) and (pdu.ue_index == INVALID_DU_UE_INDEX or find_cfra_ue(pdu.rnti) != nullptr);
   };
-  ul_crc_indication ra_crc_ind;
-  for (auto& crc : crc_ind.crcs) {
+  for (const ul_crc_pdu_indication& crc : crc_ind.crcs) {
     if (is_ra_crc(crc)) {
-      ra_crc_ind.crcs.push_back(crc);
+      handle_ra_crc(crc, crc_ind.sl_rx);
     }
   }
-  if (ra_crc_ind.crcs.empty()) {
-    // Early exit: No RA CRCs found.
-    return;
-  }
-  ra_crc_ind.sl_rx      = crc_ind.sl_rx;
-  ra_crc_ind.cell_index = crc_ind.cell_index;
+}
 
-  if (pending_crcs.size() == pending_crcs.capacity()) {
-    logger.warning("pci={}: CRC indication for slot={} discarded. Cause: Too many CRCs pending to be processed",
-                   cell_cfg.params.pci,
-                   crc_ind.sl_rx);
+void ra_scheduler::handle_ra_crc(const ul_crc_pdu_indication& crc, slot_point sl_rx)
+{
+  auto crc_it = ra_ue_repo.find(crc.rnti);
+  if (crc_it == ra_ue_repo.end()) {
+    // RNTI of the CRC is not associated with any existing TC-RNTI.
+    if (not crc.rapid.has_value()) {
+      // It is a UE which has finished RA. Ignore it.
+      return;
+    }
+
+    // It is a 2-step RA UE. Handle its MsgA PUSCH CRC.
+    handle_msga_crc(crc.rnti, *crc.rapid, crc.tb_crc_success);
     return;
   }
-  pending_crcs.push_back(std::move(ra_crc_ind));
+  // It is a 4-step RA.
+  auto& pending_msg3 = *crc_it;
+
+  // See TS 38.321, 5.4.2.1 - "For UL transmission with UL grant in RA Response, HARQ process identifier 0 is used."
+  harq_id_t                             h_id = to_harq_id(0);
+  std::optional<ul_harq_process_handle> h_ul = pending_msg3.harq_ent.ul_harq(h_id, sl_rx);
+  if (not h_ul.has_value() or crc.harq_id != h_id) {
+    logger.warning("pci={} tc-rnti={}: Invalid UL CRC for HARQ h_id={}. Cause: HARQ-Id 0 must be used in Msg3",
+                   cell_cfg.params.pci,
+                   crc.rnti,
+                   crc.harq_id);
+    return;
+  }
+
+  // Handle CRC info.
+  // Note: The ra_ue_repository entry is intentionally left in place once its Msg3 HARQ empties (slot_indication's
+  // ConRes-timer sweep reclaims the ring slot in due course): the async UE-creation event still needs to read
+  // prach_slot_rx from it (see ue_cell_event_manager::handle_ue_creation).
+  h_ul->ul_crc_info(crc.tb_crc_success);
+
+  // Forward MSG3 CRC indication to metrics handler.
+  metrics_hdlr.handle_msg3_crc_indication(crc);
 }
 
 const ue_cell* ra_scheduler::find_cfra_ue(rnti_t crnti) const
@@ -795,49 +815,8 @@ bool ra_scheduler::handle_msga_crc(rnti_t ra_rnti, uint8_t rapid, bool success)
   return false;
 }
 
-void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& res_alloc)
+void ra_scheduler::schedule_pending_msg3_retxs(cell_resource_allocator& res_alloc)
 {
-  // Process the pending CRCs.
-  for (const ul_crc_indication& crc_ind : pending_crcs) {
-    for (const ul_crc_pdu_indication& crc : crc_ind.crcs) {
-      auto crc_it = ra_ue_repo.find(crc.rnti);
-      if (crc_it == ra_ue_repo.end()) {
-        // RNTI of the CRC is not associated with any existing TC-RNTI.
-        if (not crc.rapid.has_value()) {
-          // It is a UE which has finished RA. Ignore it.
-          continue;
-        }
-
-        // It is a 2-step RA UE. Handle its MsgA PUSCH CRC.
-        handle_msga_crc(crc.rnti, *crc.rapid, crc.tb_crc_success);
-        continue;
-      }
-      // It is a 4-step RA.
-      auto& pending_msg3 = *crc_it;
-
-      // See TS 38.321, 5.4.2.1 - "For UL transmission with UL grant in RA Response, HARQ process identifier 0 is used."
-      harq_id_t                             h_id = to_harq_id(0);
-      std::optional<ul_harq_process_handle> h_ul = pending_msg3.harq_ent.ul_harq(h_id, crc_ind.sl_rx);
-      if (not h_ul.has_value() or crc.harq_id != h_id) {
-        logger.warning("pci={} tc-rnti={}: Invalid UL CRC for HARQ h_id={}. Cause: HARQ-Id 0 must be used in Msg3",
-                       cell_cfg.params.pci,
-                       crc.rnti,
-                       fmt::underlying(crc.harq_id));
-        continue;
-      }
-
-      // Handle CRC info.
-      // Note: The ra_ue_repository entry is intentionally left in place once its Msg3 HARQ empties (slot_indication's
-      // ConRes-timer sweep reclaims the ring slot in due course): the async UE-creation event still needs to read
-      // prach_slot_rx from it (see ue_cell_event_manager::handle_ue_creation).
-      h_ul->ul_crc_info(crc.tb_crc_success);
-
-      // Forward MSG3 CRC indication to metrics handler.
-      metrics_hdlr.handle_msg3_crc_indication(crc);
-    }
-  }
-  pending_crcs.clear();
-
   // Allocate pending Msg3 retransmissions.
   // Note: pending_ul_retxs size will change in this iteration, so we prefetch the next iterator.
   auto pending_ul_retxs = ra_ue_repo.harqs().pending_ul_retxs();
@@ -858,14 +837,14 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
   // Update Msg3 HARQ state and erase RA UE entries whose ra-ContentionResolutionTimer has expired.
   ra_ue_repo.slot_indication(res_alloc.slot_tx());
 
-  // Handle pending CRCs, which may lead to Msg3 reTxs.
-  handle_pending_crc_indications_impl(res_alloc);
+  // Allocate the Msg3 reTxs that the CRCs handled so far left pending.
+  schedule_pending_msg3_retxs(res_alloc);
 
-  // Process the pending RACHs.
-  for (const rach_indication_message& rach : pending_rachs) {
-    handle_rach_indication_impl(rach, res_alloc);
+  // Allocate the MsgA PUSCHs of the PRACH occasions handled so far.
+  for (const pending_msga_occasion& msga : pending_msgas) {
+    handle_msga_occasion(msga.occ, msga.prach_slot_rx, res_alloc);
   }
-  pending_rachs.clear();
+  pending_msgas.clear();
 
   // Schedule pending RARs.
   schedule_pending_rars(res_alloc);
@@ -876,8 +855,7 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
 
 void ra_scheduler::stop()
 {
-  pending_rachs.clear();
-  pending_crcs.clear();
+  pending_msgas.clear();
   pending_rars.clear();
   ra_ue_repo.clear();
   pending_msgbs.clear();
