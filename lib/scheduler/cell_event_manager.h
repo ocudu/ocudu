@@ -12,10 +12,13 @@ namespace ocudu {
 class cell_configuration;
 class cell_event_dispatcher;
 class paging_scheduler;
+class ra_scheduler;
 class si_scheduler;
 struct pws_si_scheduling_update_request;
+struct rach_indication_message;
 struct sched_paging_information;
 struct si_scheduling_update_request;
+struct ul_crc_indication;
 
 /// \brief Handler of the events of a cell that require no access to the UE repository.
 ///
@@ -27,6 +30,7 @@ public:
   cell_event_manager(const cell_configuration& cell_cfg,
                      si_scheduler&             si_sch,
                      paging_scheduler&         pg_sch,
+                     ra_scheduler&             ra_sch,
                      ocudulog::basic_logger&   logger);
   ~cell_event_manager();
 
@@ -48,9 +52,16 @@ public:
   /// Enqueue a request to update the ETWS/CMAS system information of the cell.
   void handle_pws_si_update_request(const pws_si_scheduling_update_request& req);
 
+  /// Enqueue a RACH indication coming from lower layers.
+  void handle_rach_indication(const rach_indication_message& msg);
+
+  /// Enqueue a UL CRC indication coming from lower layers.
+  void handle_crc_indication(const ul_crc_indication& crc_ind);
+
 private:
   si_scheduler&     si_sch;
   paging_scheduler& pg_sch;
+  ra_scheduler&     ra_sch;
 
   // Queue of pending events and pools of the event payloads that do not fit in an event callback.
   std::unique_ptr<cell_event_dispatcher> dispatcher;

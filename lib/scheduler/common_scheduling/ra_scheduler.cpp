@@ -55,10 +55,10 @@ static uint8_t backoff_ms_to_indicator(std::chrono::milliseconds backoff_duratio
 }
 
 // (Implementation-defined) limit for maximum number of pending RACH indications.
-static constexpr size_t RACH_IND_QUEUE_SIZE = MAX_PRACH_OCCASIONS_PER_SLOT * 2;
+static constexpr size_t MAX_PENDING_RACH_INDS = MAX_PRACH_OCCASIONS_PER_SLOT * 2;
 
 // (Implementation-defined) limit for maximum number of pending CRC indications.
-static constexpr size_t CRC_IND_QUEUE_SIZE = MAX_PUCCH_PDUS_PER_SLOT * 2;
+static constexpr size_t MAX_PENDING_CRC_INDS = MAX_PUCCH_PDUS_PER_SLOT * 2;
 
 /// \brief Compute the PRACH occasion duration in slots from cell configuration.
 ///
@@ -175,15 +175,14 @@ ra_scheduler::ra_scheduler(const cell_configuration& cellcfg_,
       cell_cfg.params.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id)),
   prach_occasion_duration_slots(compute_prach_occasion_duration_slots(cell_cfg)),
   backoff_indicator_value(backoff_ms_to_indicator(sched_cfg.backoff_indicator_duration)),
-  cfra_supported(
-      ra_helper::get_msg1_cfra_preambles_per_ssb(*cell_cfg.params.ul_cfg_common.init_ul_bwp.rach_cfg_common) > 0),
   pucch_crbs(compute_pucch_crbs(cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.crbs,
                                 cell_cfg.params.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common,
                                 cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated)),
-  cached_init_bwp_info(std::make_unique<cached_bwp_info>(cell_cfg)),
-  pending_rachs(RACH_IND_QUEUE_SIZE),
-  pending_crcs(CRC_IND_QUEUE_SIZE)
+  cached_init_bwp_info(std::make_unique<cached_bwp_info>(cell_cfg))
 {
+  pending_rachs.reserve(MAX_PENDING_RACH_INDS);
+  pending_crcs.reserve(MAX_PENDING_CRC_INDS);
+
   // The maximum number of pending RARs is given by the maximum number of PRACH occasions that can accumulate from a
   // given UL slot (at which the PRACH is received) until the expiration of the RAR window. The worst case is when:
   // (i) the PRACH is received instantaneously by the scheduler, and the PRACH slot is the farthest possible from the
@@ -306,10 +305,13 @@ void ra_scheduler::precompute_msg3_pdus()
 void ra_scheduler::handle_rach_indication(const rach_indication_message& msg)
 {
   // Buffer detected RACHs to be handled in next slot.
-  if (not pending_rachs.try_push(msg)) {
-    logger.warning(
-        "pci={}: Discarding RACH indication for slot={}. Cause: Event queue is full", cell_cfg.params.pci, msg.slot_rx);
+  if (pending_rachs.size() == pending_rachs.capacity()) {
+    logger.warning("pci={}: Discarding RACH indication for slot={}. Cause: Too many RACHs pending to be processed",
+                   cell_cfg.params.pci,
+                   msg.slot_rx);
+    return;
   }
+  pending_rachs.push_back(msg);
 }
 
 void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& msg, cell_resource_allocator& res_alloc)
@@ -657,17 +659,17 @@ void ra_scheduler::handle_msga_occasion(const rach_indication_message::occasion&
 
 void ra_scheduler::handle_crc_indication(const ul_crc_indication& crc_ind)
 {
-  // Coarse filter of CRCs that cannot belong to the RA procedure. It only relies on immutable state, as this
-  // method may run outside the cell scheduler executor. The exact CFRA classification is left to
-  // handle_pending_crc_indications_impl.
-  // Note: Only HARQ-ID=0 is relevant for the RA procedure.
-  // Note: UEs on CBRA have no ue_index assigned, while CFRA UEs do.
-  auto may_be_ra_crc = [this](const ul_crc_pdu_indication& pdu) {
-    return pdu.harq_id == to_harq_id(0) and (pdu.ue_index == INVALID_DU_UE_INDEX or cfra_supported);
+  // Filter out the CRCs that do not belong to the RA procedure, so that only the relevant ones are buffered.
+  // Note: Only HARQ-ID=0 is relevant for the RA procedure, as per TS 38.321, 5.4.2.1.
+  // Note: A UE on CBRA has no ue_index yet, so a CRC that carries one only belongs to the RA procedure while the UE is
+  // still undergoing a CFRA. Otherwise, a UE that already completed RA could free the Msg3 HARQ that its
+  // TC-RNTI-turned-C-RNTI still matches in ra_ue_repo.
+  auto is_ra_crc = [this](const ul_crc_pdu_indication& pdu) {
+    return pdu.harq_id == to_harq_id(0) and (pdu.ue_index == INVALID_DU_UE_INDEX or find_cfra_ue(pdu.rnti) != nullptr);
   };
   ul_crc_indication ra_crc_ind;
   for (auto& crc : crc_ind.crcs) {
-    if (may_be_ra_crc(crc)) {
+    if (is_ra_crc(crc)) {
       ra_crc_ind.crcs.push_back(crc);
     }
   }
@@ -678,10 +680,13 @@ void ra_scheduler::handle_crc_indication(const ul_crc_indication& crc_ind)
   ra_crc_ind.sl_rx      = crc_ind.sl_rx;
   ra_crc_ind.cell_index = crc_ind.cell_index;
 
-  if (not pending_crcs.try_push(ra_crc_ind)) {
-    logger.warning(
-        "pci={}: CRC indication for slot={} discarded. Cause: Event queue is full", cell_cfg.params.pci, crc_ind.sl_rx);
+  if (pending_crcs.size() == pending_crcs.capacity()) {
+    logger.warning("pci={}: CRC indication for slot={} discarded. Cause: Too many CRCs pending to be processed",
+                   cell_cfg.params.pci,
+                   crc_ind.sl_rx);
+    return;
   }
+  pending_crcs.push_back(std::move(ra_crc_ind));
 }
 
 const ue_cell* ra_scheduler::find_cfra_ue(rnti_t crnti) const
@@ -792,17 +797,9 @@ bool ra_scheduler::handle_msga_crc(rnti_t ra_rnti, uint8_t rapid, bool success)
 
 void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& res_alloc)
 {
-  // Pop pending CRCs and process them.
-  ul_crc_indication crc_ind;
-  while (pending_crcs.try_pop(crc_ind)) {
+  // Process the pending CRCs.
+  for (const ul_crc_indication& crc_ind : pending_crcs) {
     for (const ul_crc_pdu_indication& crc : crc_ind.crcs) {
-      // A CBRA UE has no ue_index yet, so a CRC that carries one only belongs to the RA procedure while the UE is
-      // still undergoing a CFRA. Otherwise, a UE that already completed RA could free the Msg3 HARQ that its
-      // TC-RNTI-turned-C-RNTI still matches in ra_ue_repo.
-      if (crc.ue_index != INVALID_DU_UE_INDEX and find_cfra_ue(crc.rnti) == nullptr) {
-        continue;
-      }
-
       auto crc_it = ra_ue_repo.find(crc.rnti);
       if (crc_it == ra_ue_repo.end()) {
         // RNTI of the CRC is not associated with any existing TC-RNTI.
@@ -839,6 +836,7 @@ void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& 
       metrics_hdlr.handle_msg3_crc_indication(crc);
     }
   }
+  pending_crcs.clear();
 
   // Allocate pending Msg3 retransmissions.
   // Note: pending_ul_retxs size will change in this iteration, so we prefetch the next iterator.
@@ -863,11 +861,11 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
   // Handle pending CRCs, which may lead to Msg3 reTxs.
   handle_pending_crc_indications_impl(res_alloc);
 
-  // Pop pending RACHs and process them.
-  rach_indication_message rach;
-  while (pending_rachs.try_pop(rach)) {
+  // Process the pending RACHs.
+  for (const rach_indication_message& rach : pending_rachs) {
     handle_rach_indication_impl(rach, res_alloc);
   }
+  pending_rachs.clear();
 
   // Schedule pending RARs.
   schedule_pending_rars(res_alloc);
@@ -878,12 +876,8 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
 
 void ra_scheduler::stop()
 {
-  rach_indication_message rach;
-  while (pending_rachs.try_pop(rach)) {
-  }
-  ul_crc_indication crc;
-  while (pending_crcs.try_pop(crc)) {
-  }
+  pending_rachs.clear();
+  pending_crcs.clear();
   pending_rars.clear();
   ra_ue_repo.clear();
   pending_msgbs.clear();

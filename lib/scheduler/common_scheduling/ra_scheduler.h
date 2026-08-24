@@ -9,7 +9,6 @@
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "../support/prbs_calculator.h"
 #include "ra_ue_repository.h"
-#include "ocudu/adt/mpmc_queue.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/resource_allocation/rb_bitmap.h"
 #include "ocudu/scheduler/config/scheduler_expert_config.h"
@@ -41,12 +40,10 @@ public:
                         cell_metrics_handler&     metrics_handler_);
   ~ra_scheduler();
 
-  /// Enqueue RACH indication coming from lower layers.
-  /// \note Potentially called from a different executor than the cell scheduler executor.
+  /// \brief Store a RACH indication coming from lower layers, to be handled in the next slot indication.
   void handle_rach_indication(const rach_indication_message& msg);
 
-  /// Handle UL CRC ACKing/NACKing a Msg3 HARQ process.
-  /// \note Potentially called from a different executor than the cell scheduler executor.
+  /// \brief Store the UL CRCs of the indication that ACK/NACK a Msg3 HARQ process, discarding the remaining ones.
   void handle_crc_indication(const ul_crc_indication& crc_ind);
 
   /// Allocate pending RARs + Msg3s
@@ -114,12 +111,6 @@ private:
     /// DL HARQ entity used for MsgB PDSCH retransmissions. Allocated when MsgB is first scheduled.
     unique_ue_harq_entity msgb_harq_ent;
   };
-
-  /// Queue type used to store pending RACH indications.
-  using rach_indication_queue = concurrent_queue<rach_indication_message, concurrent_queue_policy::lockfree_mpmc>;
-
-  /// Queue type used to store pending CRC indications.
-  using crc_indication_queue = concurrent_queue<ul_crc_indication, concurrent_queue_policy::lockfree_mpmc>;
 
   /// Pre-compute invariant fields of RAR PDUs (PDSCH, DCI, etc.) for faster scheduling.
   void precompute_rar_fields();
@@ -265,8 +256,6 @@ private:
   /// Backoff Indicator value included in the RAR, as per TS38.321 Table 7.2-1, mapped from
   /// \c scheduler_ra_expert_config::backoff_indicator_duration.
   const uint8_t backoff_indicator_value;
-  /// Whether the cell RACH configuration reserves preambles for contention-free random access.
-  const bool cfra_supported;
   /// Bitmap of CRBs that might be used for PUCCH transmissions, to avoid scheduling MSG3-PUSCH over them.
   crb_bitmap pucch_crbs;
 
@@ -297,11 +286,11 @@ private:
 
   // -- State.
 
-  // RACH indications pending to be processed.
-  rach_indication_queue pending_rachs;
+  // RACH indications pending to be processed. Never reallocates, as it is filled up to its reserved capacity.
+  std::vector<rach_indication_message> pending_rachs;
 
-  // CRC indications pending to be processed.
-  crc_indication_queue pending_crcs;
+  // CRC indications pending to be processed. Never reallocates, as it is filled up to its reserved capacity.
+  std::vector<ul_crc_indication> pending_crcs;
 
   // List of pending RARs to be scheduled.
   std::vector<pending_rar_alloc> pending_rars;

@@ -4,6 +4,7 @@
 
 #include "cell_event_manager.h"
 #include "common_scheduling/paging_scheduler.h"
+#include "common_scheduling/ra_scheduler.h"
 #include "common_scheduling/si_scheduler.h"
 #include "config/cell_configuration.h"
 #include "ocudu/adt/mpmc_queue.h"
@@ -27,10 +28,15 @@ class ocudu::cell_event_dispatcher
   static constexpr size_t PAGING_POOL_SIZE = 128;
   // [Implementation defined] System information updates are rare, so only a few can be in flight at any moment.
   static constexpr size_t SI_POOL_SIZE = 4;
+  // [Implementation defined] Lower layers report at most one RACH and one CRC indication per slot, so the pools only
+  // need to cover the slots that can elapse before the events are dispatched.
+  static constexpr size_t PHY_IND_POOL_SIZE = 8;
 
   using paging_pool = bounded_object_pool<sched_paging_information>;
   using si_pool     = bounded_object_pool<si_scheduling_update_request>;
   using pws_si_pool = bounded_object_pool<pws_si_scheduling_update_request>;
+  using rach_pool   = bounded_object_pool<rach_indication_message>;
+  using crc_pool    = bounded_object_pool<ul_crc_indication>;
 
   /// Event enqueued and dispatched by this class.
   struct event_t {
@@ -56,6 +62,8 @@ public:
     pending_pagings(PAGING_POOL_SIZE),
     pending_si_reqs(SI_POOL_SIZE),
     pending_pws_si_reqs(SI_POOL_SIZE),
+    pending_rachs(PHY_IND_POOL_SIZE),
+    pending_crcs(PHY_IND_POOL_SIZE),
     pending_events(EVENT_QUEUE_SIZE)
   {
   }
@@ -126,6 +134,10 @@ private:
       return "SI update";
     } else if constexpr (std::is_same_v<PDUType, pws_si_scheduling_update_request>) {
       return "ETWS/CMAS SI update";
+    } else if constexpr (std::is_same_v<PDUType, rach_indication_message>) {
+      return "RACH";
+    } else if constexpr (std::is_same_v<PDUType, ul_crc_indication>) {
+      return "CRC";
     } else {
       return "unknown";
     }
@@ -137,8 +149,14 @@ private:
   paging_pool pending_pagings;
   si_pool     pending_si_reqs;
   pws_si_pool pending_pws_si_reqs;
+  rach_pool   pending_rachs;
+  crc_pool    pending_crcs;
 
-  std::tuple<paging_pool*, si_pool*, pws_si_pool*> pools{&pending_pagings, &pending_si_reqs, &pending_pws_si_reqs};
+  std::tuple<paging_pool*, si_pool*, pws_si_pool*, rach_pool*, crc_pool*> pools{&pending_pagings,
+                                                                                &pending_si_reqs,
+                                                                                &pending_pws_si_reqs,
+                                                                                &pending_rachs,
+                                                                                &pending_crcs};
 
   event_queue pending_events;
 
@@ -149,8 +167,12 @@ private:
 cell_event_manager::cell_event_manager(const cell_configuration& cell_cfg,
                                        si_scheduler&             si_sch_,
                                        paging_scheduler&         pg_sch_,
+                                       ra_scheduler&             ra_sch_,
                                        ocudulog::basic_logger&   logger) :
-  si_sch(si_sch_), pg_sch(pg_sch_), dispatcher(std::make_unique<cell_event_dispatcher>(cell_cfg, logger))
+  si_sch(si_sch_),
+  pg_sch(pg_sch_),
+  ra_sch(ra_sch_),
+  dispatcher(std::make_unique<cell_event_dispatcher>(cell_cfg, logger))
 {
 }
 
@@ -200,4 +222,24 @@ void cell_event_manager::handle_pws_si_update_request(const pws_si_scheduling_up
 
   dispatcher->push("ETWS/CMAS SI update",
                    [this, req_ptr = std::move(req_ptr)]() { si_sch.handle_pws_si_update_request(*req_ptr); });
+}
+
+void cell_event_manager::handle_rach_indication(const rach_indication_message& msg)
+{
+  auto msg_ptr = dispatcher->create_pdu(msg);
+  if (msg_ptr == nullptr) {
+    return;
+  }
+
+  dispatcher->push("RACH", [this, msg_ptr = std::move(msg_ptr)]() { ra_sch.handle_rach_indication(*msg_ptr); });
+}
+
+void cell_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
+{
+  auto crc_ptr = dispatcher->create_pdu(crc_ind);
+  if (crc_ptr == nullptr) {
+    return;
+  }
+
+  dispatcher->push("CRC", [this, crc_ptr = std::move(crc_ptr)]() { ra_sch.handle_crc_indication(*crc_ptr); });
 }

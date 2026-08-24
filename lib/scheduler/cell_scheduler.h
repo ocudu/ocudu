@@ -56,7 +56,7 @@ public:
 
   void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& slice_reconf_req);
 
-  void handle_rach_indication(const rach_indication_message& msg) { ra_sch.handle_rach_indication(msg); }
+  void handle_rach_indication(const rach_indication_message& msg) { ev_mng.handle_rach_indication(msg); }
 
   void handle_crc_indication(const ul_crc_indication& crc_ind);
 
