@@ -233,6 +233,43 @@ public:
   /// a blocking task to this same worker and would deadlock if invoked while already running on it.
   bool wait_ready_on_cu_cp_worker(std::chrono::milliseconds timeout, const std::function<bool()>& is_ready);
 
+  /// \brief Runs \c task on the CU-CP worker thread and blocks until it has completed.
+  void run_on_cu_cp_worker(const std::function<void()>& task);
+
+  /// \brief A CU-CP task that is created, launched and destroyed on the CU-CP worker thread.
+  ///
+  /// The CU-CP command handlers read and mutate CU-CP state both when their task is created and while it runs, so
+  /// the task is kept on the CU-CP worker for its whole lifetime. Pass the object to \c wait_for_task_result to
+  /// get the result of the task, once the DU/CU-UP/AMF interaction the task needs to complete has been performed.
+  template <typename T>
+  class launched_cu_cp_task
+  {
+  public:
+    launched_cu_cp_task(cu_cp_test_environment& env_, const std::function<async_task<T>()>& make_task) : env(env_)
+    {
+      env.run_on_cu_cp_worker([this, &make_task]() {
+        task.emplace(make_task());
+        launcher.emplace(task.value());
+      });
+    }
+    launched_cu_cp_task(const launched_cu_cp_task&)            = delete;
+    launched_cu_cp_task& operator=(const launched_cu_cp_task&) = delete;
+    ~launched_cu_cp_task()
+    {
+      env.run_on_cu_cp_worker([this]() {
+        launcher.reset();
+        task.reset();
+      });
+    }
+
+    lazy_task_launcher<T>& get_launcher() { return launcher.value(); }
+
+  private:
+    cu_cp_test_environment&              env;
+    std::optional<async_task<T>>         task;
+    std::optional<lazy_task_launcher<T>> launcher;
+  };
+
   /// \brief Waits for a previously launched CU-CP task to complete, ticking the CU-CP clock as needed, and
   /// returns its result. Callers are expected to have already launched \c launcher (e.g. via a
   /// \c lazy_task_launcher wrapping the task returned by a CU-CP command handler) and to have performed any
@@ -247,6 +284,14 @@ public:
       ocudu_assert(launcher.result.has_value(), "CU-CP task completed without a result");
       return std::move(launcher.result).value();
     }
+  }
+
+  /// \brief Waits for a CU-CP task launched on the CU-CP worker to complete and returns its result.
+  template <typename T>
+  T wait_for_task_result(launched_cu_cp_task<T>&   task,
+                         std::chrono::milliseconds timeout = std::chrono::milliseconds{500})
+  {
+    return wait_for_task_result(task.get_launcher(), timeout);
   }
 
   /// Tick CU-CP timer until a NGAP PDU is sent.

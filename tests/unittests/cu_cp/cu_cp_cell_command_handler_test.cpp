@@ -94,8 +94,7 @@ TEST_F(cu_cp_cell_command_handler_test, when_deactivate_cell_then_bar_precedes_d
 {
   cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
 
-  async_task<cu_cp_cell_command_response>         resp_task = cell_cmd.deactivate_cell(served_cgi);
-  lazy_task_launcher<cu_cp_cell_command_response> launcher(resp_task);
+  launched_cu_cp_task<cu_cp_cell_command_response> cmd{*this, [&]() { return cell_cmd.deactivate_cell(served_cgi); }};
 
   // Stage 1: the CU-CP first bars the cell via a gNB-CU Configuration Update carrying the Cells to be Barred List.
   ASSERT_NO_FATAL_FAILURE(expect_and_ack_bar_upd(served_cgi));
@@ -114,15 +113,14 @@ TEST_F(cu_cp_cell_command_handler_test, when_deactivate_cell_then_bar_precedes_d
 
   // DU acks the update; the procedure completes with success.
   get_du(du_idx).push_ul_pdu(make_ack_for(cu_cfg_upd));
-  EXPECT_TRUE(wait_for_task_result(launcher).success);
+  EXPECT_TRUE(wait_for_task_result(cmd).success);
 }
 
 TEST_F(cu_cp_cell_command_handler_test, when_activate_cell_then_cfg_upd_carries_cgi_and_completes_on_du_ack)
 {
   cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
 
-  async_task<cu_cp_cell_command_response>         resp_task = cell_cmd.activate_cell(served_cgi);
-  lazy_task_launcher<cu_cp_cell_command_response> launcher(resp_task);
+  launched_cu_cp_task<cu_cp_cell_command_response> cmd{*this, [&]() { return cell_cmd.activate_cell(served_cgi); }};
 
   f1ap_message cu_cfg_upd;
   ASSERT_TRUE(pop_cu_cfg_upd(cu_cfg_upd)) << "CU-CP did not emit gNB-CU Configuration Update";
@@ -133,7 +131,7 @@ TEST_F(cu_cp_cell_command_handler_test, when_activate_cell_then_cfg_upd_carries_
   ASSERT_EQ(activ_item.nr_cgi.nr_cell_id.to_number(), served_cgi.nci.value());
 
   get_du(du_idx).push_ul_pdu(make_ack_for(cu_cfg_upd));
-  EXPECT_TRUE(wait_for_task_result(launcher).success);
+  EXPECT_TRUE(wait_for_task_result(cmd).success);
 }
 
 TEST_F(cu_cp_cell_command_handler_test, when_cgi_is_unknown_then_command_fails_without_f1ap_traffic)
@@ -143,10 +141,10 @@ TEST_F(cu_cp_cell_command_handler_test, when_cgi_is_unknown_then_command_fails_w
   // A CGI no connected DU serves: same PLMN, different NCI.
   nr_cell_global_id_t unknown_cgi{served_cgi.plmn_id, nr_cell_identity::create(served_cgi.nci.value() + 1).value()};
 
-  async_task<cu_cp_cell_command_response>         resp_task = cell_cmd.deactivate_cell(unknown_cgi);
-  lazy_task_launcher<cu_cp_cell_command_response> launcher(resp_task);
+  launched_cu_cp_task<cu_cp_cell_command_response> cmd{*this, [&]() { return cell_cmd.deactivate_cell(unknown_cgi); }};
 
   // Validation fails without DU interaction.
+  lazy_task_launcher<cu_cp_cell_command_response>& launcher = cmd.get_launcher();
   ASSERT_TRUE(launcher.ready()) << "Unknown CGI should fail synchronously";
   ASSERT_TRUE(launcher.result.has_value());
   EXPECT_FALSE(launcher.result.value().success);
@@ -160,8 +158,7 @@ TEST_F(cu_cp_cell_command_handler_test, when_du_rejects_cfg_upd_then_command_fai
 {
   cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
 
-  async_task<cu_cp_cell_command_response>         resp_task = cell_cmd.deactivate_cell(served_cgi);
-  lazy_task_launcher<cu_cp_cell_command_response> launcher(resp_task);
+  launched_cu_cp_task<cu_cp_cell_command_response> cmd{*this, [&]() { return cell_cmd.deactivate_cell(served_cgi); }};
 
   // The bar stage succeeds.
   ASSERT_NO_FATAL_FAILURE(expect_and_ack_bar_upd(served_cgi));
@@ -177,15 +174,14 @@ TEST_F(cu_cp_cell_command_handler_test, when_du_rejects_cfg_upd_then_command_fai
   get_du(du_idx).push_ul_pdu(fail);
 
   // CU-CP should resolve the procedure as failed.
-  EXPECT_FALSE(wait_for_task_result(launcher).success);
+  EXPECT_FALSE(wait_for_task_result(cmd).success);
 }
 
 TEST_F(cu_cp_cell_command_handler_test, when_du_rejects_bar_upd_then_deactivation_still_proceeds_and_command_fails)
 {
   cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
 
-  async_task<cu_cp_cell_command_response>         resp_task = cell_cmd.deactivate_cell(served_cgi);
-  lazy_task_launcher<cu_cp_cell_command_response> launcher(resp_task);
+  launched_cu_cp_task<cu_cp_cell_command_response> cmd{*this, [&]() { return cell_cmd.deactivate_cell(served_cgi); }};
 
   // DU rejects the stage-1 bar update.
   f1ap_message bar_upd;
@@ -203,7 +199,7 @@ TEST_F(cu_cp_cell_command_handler_test, when_du_rejects_bar_upd_then_deactivatio
   get_du(du_idx).push_ul_pdu(make_ack_for(cu_cfg_upd));
 
   // The command result reflects the failed bar stage.
-  EXPECT_FALSE(wait_for_task_result(launcher).success);
+  EXPECT_FALSE(wait_for_task_result(cmd).success);
 }
 
 TEST_F(cu_cp_cell_command_handler_test, when_activate_follows_deactivate_then_deactivated_cell_is_found)
@@ -212,8 +208,8 @@ TEST_F(cu_cp_cell_command_handler_test, when_activate_follows_deactivate_then_de
 
   // Lock the cell first (bar, then deactivate). On the deactivate ack the cell leaves the DU's served-cell view.
   {
-    async_task<cu_cp_cell_command_response>         deact_task = cell_cmd.deactivate_cell(served_cgi);
-    lazy_task_launcher<cu_cp_cell_command_response> deact_launcher(deact_task);
+    launched_cu_cp_task<cu_cp_cell_command_response> deactivation{
+        *this, [&]() { return cell_cmd.deactivate_cell(served_cgi); }};
 
     ASSERT_NO_FATAL_FAILURE(expect_and_ack_bar_upd(served_cgi));
 
@@ -221,13 +217,13 @@ TEST_F(cu_cp_cell_command_handler_test, when_activate_follows_deactivate_then_de
     ASSERT_TRUE(pop_cu_cfg_upd(deact_upd));
     get_du(du_idx).push_ul_pdu(make_ack_for(deact_upd));
 
-    ASSERT_TRUE(wait_for_task_result(deact_launcher).success);
+    ASSERT_TRUE(wait_for_task_result(deactivation).success);
   }
 
   // Unlock. activate_cell must locate the now-deactivated cell via the any-state DU lookup; the
   // strict served-cells lookup no longer finds it. Without that lookup no cfg update is emitted.
-  async_task<cu_cp_cell_command_response>         act_task = cell_cmd.activate_cell(served_cgi);
-  lazy_task_launcher<cu_cp_cell_command_response> act_launcher(act_task);
+  launched_cu_cp_task<cu_cp_cell_command_response> activation{*this,
+                                                              [&]() { return cell_cmd.activate_cell(served_cgi); }};
 
   f1ap_message act_upd;
   ASSERT_TRUE(pop_cu_cfg_upd(act_upd)) << "Activate after deactivate emitted no cfg update; cell lookup failed";
@@ -236,7 +232,7 @@ TEST_F(cu_cp_cell_command_handler_test, when_activate_follows_deactivate_then_de
   ASSERT_EQ(upd_ies->cells_to_be_activ_list.size(), 1U);
 
   get_du(du_idx).push_ul_pdu(make_ack_for(act_upd));
-  EXPECT_TRUE(wait_for_task_result(act_launcher).success);
+  EXPECT_TRUE(wait_for_task_result(activation).success);
 }
 
 TEST_F(cu_cp_cell_command_handler_test, when_deactivate_cell_with_attached_ue_then_cu_releases_ue_before_deactivating)
@@ -251,8 +247,7 @@ TEST_F(cu_cp_cell_command_handler_test, when_deactivate_cell_with_attached_ue_th
 
   cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
 
-  async_task<cu_cp_cell_command_response>         resp_task = cell_cmd.deactivate_cell(served_cgi);
-  lazy_task_launcher<cu_cp_cell_command_response> launcher(resp_task);
+  launched_cu_cp_task<cu_cp_cell_command_response> cmd{*this, [&]() { return cell_cmd.deactivate_cell(served_cgi); }};
 
   // Stage 1: the cell is barred before any UE is touched, so the released UE does not re-camp on it.
   ASSERT_NO_FATAL_FAILURE(expect_and_ack_bar_upd(served_cgi));
@@ -280,7 +275,7 @@ TEST_F(cu_cp_cell_command_handler_test, when_deactivate_cell_with_attached_ue_th
   ASSERT_EQ(upd_ies->cells_to_be_deactiv_list.size(), 1U);
 
   get_du(du_idx).push_ul_pdu(make_ack_for(cu_cfg_upd));
-  EXPECT_TRUE(wait_for_task_result(launcher).success);
+  EXPECT_TRUE(wait_for_task_result(cmd).success);
 }
 
 TEST_F(cu_cp_cell_command_handler_test,
@@ -298,8 +293,7 @@ TEST_F(cu_cp_cell_command_handler_test,
 
   cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
 
-  async_task<cu_cp_cell_command_response>         resp_task = cell_cmd.deactivate_cell(served_cgi);
-  lazy_task_launcher<cu_cp_cell_command_response> launcher(resp_task);
+  launched_cu_cp_task<cu_cp_cell_command_response> cmd{*this, [&]() { return cell_cmd.deactivate_cell(served_cgi); }};
 
   // Stage 1: the cell is barred before the UE drain begins.
   ASSERT_NO_FATAL_FAILURE(expect_and_ack_bar_upd(served_cgi));
@@ -326,7 +320,7 @@ TEST_F(cu_cp_cell_command_handler_test,
   ASSERT_TRUE(pop_cu_cfg_upd(cu_cfg_upd)) << "deactivation cfg update should follow all UE releases";
 
   get_du(du_idx).push_ul_pdu(make_ack_for(cu_cfg_upd));
-  EXPECT_TRUE(wait_for_task_result(launcher).success);
+  EXPECT_TRUE(wait_for_task_result(cmd).success);
 }
 
 /// Fixture with two cells on a single DU, used to prove that deactivating one cell only releases that cell's UEs.
@@ -403,8 +397,7 @@ TEST_F(cu_cp_cell_command_multicell_test, when_deactivate_cell_then_ues_on_other
   ASSERT_EQ(get_cu_cp().get_metrics_handler().request_metrics_report().ues.size(), 1U);
 
   // Lock the cell that has no UEs. The UE on the camped cell must be left alone.
-  async_task<cu_cp_cell_command_response>         resp_task = cell_cmd.deactivate_cell(other_cgi);
-  lazy_task_launcher<cu_cp_cell_command_response> launcher(resp_task);
+  launched_cu_cp_task<cu_cp_cell_command_response> cmd{*this, [&]() { return cell_cmd.deactivate_cell(other_cgi); }};
 
   // Stage 1: the very first F1AP PDU is the bar update, and it bars the locked cell only.
   ASSERT_NO_FATAL_FAILURE(expect_and_ack_bar_upd(other_cgi));
@@ -419,7 +412,7 @@ TEST_F(cu_cp_cell_command_multicell_test, when_deactivate_cell_then_ues_on_other
             other_cgi.nci.value());
 
   get_du(du_idx).push_ul_pdu(make_ack_for(cu_cfg_upd));
-  EXPECT_TRUE(wait_for_task_result(launcher).success);
+  EXPECT_TRUE(wait_for_task_result(cmd).success);
 
   // The UE on the camped cell survived the lock of the other cell.
   EXPECT_EQ(get_cu_cp().get_metrics_handler().request_metrics_report().ues.size(), 1U);

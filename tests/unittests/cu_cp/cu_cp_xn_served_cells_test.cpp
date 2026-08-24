@@ -104,14 +104,14 @@ TEST_F(cu_cp_xn_served_cells_test, when_a_cell_is_deactivated_then_it_is_reporte
 
   cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
 
-  async_task<cu_cp_cell_command_response>         resp_task = cell_cmd.deactivate_cell(served_cgi);
-  lazy_task_launcher<cu_cp_cell_command_response> launcher(resp_task);
+  launched_cu_cp_task<cu_cp_cell_command_response> deactivation{*this,
+                                                                [&]() { return cell_cmd.deactivate_cell(served_cgi); }};
 
   // Taking a cell down bars it first and deactivates it once the UEs are released, each with its own gNB-CU
   // Configuration Update the DU acknowledges.
   ASSERT_TRUE(ack_gnb_cu_configuration_update()) << "CU-CP did not bar the cell";
   ASSERT_TRUE(ack_gnb_cu_configuration_update()) << "CU-CP did not deactivate the cell";
-  EXPECT_TRUE(wait_for_task_result(launcher).success);
+  EXPECT_TRUE(wait_for_task_result(deactivation).success);
 
   xnap_message cfg_update;
   ASSERT_TRUE(pop_ngran_node_cfg_update(cfg_update)) << "CU-CP did not report the deactivated cell to the XN-C peer";
