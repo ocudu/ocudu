@@ -97,11 +97,6 @@ void scheduler_impl::handle_ue_creation_request(const sched_ue_creation_request_
   // Fetch cell group associated with the UE PCell.
   const du_cell_index_t pcell_idx = ue_cfg_ev.next_config().pcell_common_cfg().cell_index;
 
-  if (ue_request.cfra_enabled) {
-    // Notify RA scheduler of upcoming CFRA-created UE ids.
-    cells[pcell_idx]->handle_cfra_mapping(ue_request.ue_index, ue_request.crnti);
-  }
-
   // Create UE context.
   cells[pcell_idx]->get_ue_configurator().handle_ue_creation(std::move(ue_cfg_ev));
 }

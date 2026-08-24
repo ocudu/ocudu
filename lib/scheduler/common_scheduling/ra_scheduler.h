@@ -22,6 +22,7 @@ class scheduler_event_logger;
 class cell_metrics_handler;
 class pucch_allocator;
 class uci_allocator;
+class ue_cell;
 class ue_cell_repository;
 class ue_cell_configuration;
 struct ul_crc_indication;
@@ -47,9 +48,6 @@ public:
   /// Handle UL CRC ACKing/NACKing a Msg3 HARQ process.
   /// \note Potentially called from a different executor than the cell scheduler executor.
   void handle_crc_indication(const ul_crc_indication& crc_ind);
-
-  /// Save an upcoming CFRA UE Ids.
-  void handle_cfra_mapping_update(du_ue_index_t ue_index, rnti_t crnti);
 
   /// Allocate pending RARs + Msg3s
   void run_slot(cell_resource_allocator& res_alloc);
@@ -182,6 +180,10 @@ private:
   /// Returns true if an RAR UL grant can be scheduled for the given UE in the given slot.
   bool can_allocate_rar_ul_grant(rnti_t crnti, const cell_slot_resource_allocator& slot_alloc) const;
 
+  /// \brief Returns the UE cell associated with a C-RNTI that is still undergoing a CFRA.
+  /// \return \c nullptr if the C-RNTI does not belong to a UE of this cell undergoing a CFRA.
+  const ue_cell* find_cfra_ue(rnti_t crnti) const;
+
   /// \brief Returns the dedicated config of a CFRA UE whose pending UCI may be multiplexed into its Msg3 PUSCH.
   /// \return \c nullptr if UCI-on-Msg3 is disabled, the RNTI is not a CFRA UE, or the UE has no dedicated config.
   const ue_cell_configuration* find_uci_on_msg3_ue_cfg(rnti_t crnti) const;
@@ -244,9 +246,14 @@ private:
   pdcch_resource_allocator&         pdcch_sch;
   pucch_allocator&                  pucch_alloc;
   uci_allocator&                    uci_alloc;
-  scheduler_event_logger&           ev_logger;
-  cell_metrics_handler&             metrics_hdlr;
-  ocudulog::basic_logger&           logger = ocudulog::fetch_basic_logger("SCHED");
+  // Shared repository of in-flight RA attempts, keyed by TC-RNTI. It also holds the 2-step RACH
+  // contention-resolution outcome.
+  ra_ue_repository& ra_ue_repo;
+  // UEs configured in this cell.
+  ue_cell_repository&     ue_cell_db;
+  scheduler_event_logger& ev_logger;
+  cell_metrics_handler&   metrics_hdlr;
+  ocudulog::basic_logger& logger = ocudulog::fetch_basic_logger("SCHED");
 
   // -- Derived from args.
 
@@ -258,6 +265,8 @@ private:
   /// Backoff Indicator value included in the RAR, as per TS38.321 Table 7.2-1, mapped from
   /// \c scheduler_ra_expert_config::backoff_indicator_duration.
   const uint8_t backoff_indicator_value;
+  /// Whether the cell RACH configuration reserves preambles for contention-free random access.
+  const bool cfra_supported;
   /// Bitmap of CRBs that might be used for PUCCH transmissions, to avoid scheduling MSG3-PUSCH over them.
   crb_bitmap pucch_crbs;
 
@@ -297,22 +306,11 @@ private:
   // List of pending RARs to be scheduled.
   std::vector<pending_rar_alloc> pending_rars;
 
-  // Shared repository of in-flight RA attempts (Msg3 grants pending to be scheduled or waiting for a positive
-  // HARQ-ACK, plus 2-step RACH contention-resolution outcome), keyed by TC-RNTI. Owned by the cell scheduler,
-  // read by the UE-dedicated scheduler.
-  ra_ue_repository& ra_ue_repo;
-
-  // UEs configured in this cell, used to retrieve the dedicated config of a CFRA UE.
-  ue_cell_repository& ue_cell_db;
-
   // List of pending MsgBs (2-step RACH responses) to be scheduled.
   std::vector<pending_msgb_alloc> pending_msgbs;
 
   // Marks whether the next slot indication is the first.
   bool first_slot_flag = true;
-
-  // Circular map of RNTIs associated with CFRA.
-  std::vector<std::atomic<rnti_t>> pending_cfra_ues;
 };
 
 } // namespace ocudu

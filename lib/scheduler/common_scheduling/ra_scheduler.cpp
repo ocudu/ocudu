@@ -165,6 +165,8 @@ ra_scheduler::ra_scheduler(const cell_configuration& cellcfg_,
   pdcch_sch(pdcch_sch_),
   pucch_alloc(pucch_alloc_),
   uci_alloc(uci_alloc_),
+  ra_ue_repo(ra_ue_repo_),
+  ue_cell_db(ue_cell_db_),
   ev_logger(ev_logger_),
   metrics_hdlr(metrics_hdlr_),
   ra_win_nof_slots(cell_cfg.params.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window),
@@ -173,18 +175,14 @@ ra_scheduler::ra_scheduler(const cell_configuration& cellcfg_,
       cell_cfg.params.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id)),
   prach_occasion_duration_slots(compute_prach_occasion_duration_slots(cell_cfg)),
   backoff_indicator_value(backoff_ms_to_indicator(sched_cfg.backoff_indicator_duration)),
+  cfra_supported(
+      ra_helper::get_msg1_cfra_preambles_per_ssb(*cell_cfg.params.ul_cfg_common.init_ul_bwp.rach_cfg_common) > 0),
   pucch_crbs(compute_pucch_crbs(cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.crbs,
                                 cell_cfg.params.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common,
                                 cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated)),
   cached_init_bwp_info(std::make_unique<cached_bwp_info>(cell_cfg)),
   pending_rachs(RACH_IND_QUEUE_SIZE),
-  pending_crcs(CRC_IND_QUEUE_SIZE),
-  ra_ue_repo(ra_ue_repo_),
-  ue_cell_db(ue_cell_db_),
-  pending_cfra_ues(
-      ra_helper::get_msg1_cfra_preambles_per_ssb(*cell_cfg.params.ul_cfg_common.init_ul_bwp.rach_cfg_common) > 0
-          ? MAX_NOF_DU_UES
-          : 0)
+  pending_crcs(CRC_IND_QUEUE_SIZE)
 {
   // The maximum number of pending RARs is given by the maximum number of PRACH occasions that can accumulate from a
   // given UL slot (at which the PRACH is received) until the expiration of the RAR window. The worst case is when:
@@ -200,10 +198,6 @@ ra_scheduler::ra_scheduler(const cell_configuration& cellcfg_,
   pending_rars.reserve(MAX_PRACH_OCCASIONS_PER_SLOT * MAX_PENDING_RARS_SLOTS);
   // MsgB window can be up to 320 slots (msgB-ResponseWindow-r16), so use the same bound.
   pending_msgbs.reserve(MAX_PRACH_OCCASIONS_PER_SLOT * MAX_PENDING_RARS_SLOTS);
-
-  for (auto& cfra_ue : pending_cfra_ues) {
-    cfra_ue.store(rnti_t::INVALID_RNTI, std::memory_order_relaxed);
-  }
 
   // Precompute RAR PDSCH and DCI PDUs.
   precompute_rar_fields();
@@ -663,19 +657,17 @@ void ra_scheduler::handle_msga_occasion(const rach_indication_message::occasion&
 
 void ra_scheduler::handle_crc_indication(const ul_crc_indication& crc_ind)
 {
-  // Filter out CRCs that are not associated with the CBRA or CFRA.
+  // Coarse filter of CRCs that cannot belong to the RA procedure. It only relies on immutable state, as this
+  // method may run outside the cell scheduler executor. The exact CFRA classification is left to
+  // handle_pending_crc_indications_impl.
   // Note: Only HARQ-ID=0 is relevant for the RA procedure.
-  // Note: UEs on CBRA have no ue_index assigned, but CFRA UEs do. We determine that a CRC is for a CFRA by checking
-  // if its RNTI is in the pending_cfra_ues map.
-  auto is_ra_crc = [this](const ul_crc_pdu_indication& pdu) {
-    return pdu.harq_id == to_harq_id(0) and
-           (pdu.ue_index == INVALID_DU_UE_INDEX or
-            (not pending_cfra_ues.empty() and
-             pending_cfra_ues[pdu.ue_index].load(std::memory_order_acquire) == pdu.rnti));
+  // Note: UEs on CBRA have no ue_index assigned, while CFRA UEs do.
+  auto may_be_ra_crc = [this](const ul_crc_pdu_indication& pdu) {
+    return pdu.harq_id == to_harq_id(0) and (pdu.ue_index == INVALID_DU_UE_INDEX or cfra_supported);
   };
   ul_crc_indication ra_crc_ind;
   for (auto& crc : crc_ind.crcs) {
-    if (is_ra_crc(crc)) {
+    if (may_be_ra_crc(crc)) {
       ra_crc_ind.crcs.push_back(crc);
     }
   }
@@ -692,10 +684,15 @@ void ra_scheduler::handle_crc_indication(const ul_crc_indication& crc_ind)
   }
 }
 
-void ra_scheduler::handle_cfra_mapping_update(du_ue_index_t ue_index, rnti_t crnti)
+const ue_cell* ra_scheduler::find_cfra_ue(rnti_t crnti) const
 {
-  ocudu_assert(not pending_cfra_ues.empty(), "RACH config does not support CFRA UEs");
-  pending_cfra_ues[ue_index].store(crnti, std::memory_order_relaxed);
+  // For CFRA the RA scheduler is given the UE's real C-RNTI, so the UE cell lookup is keyed by it.
+  const ue_cell* ue_cc = ue_cell_db.find_by_rnti(crnti);
+  if (ue_cc == nullptr or not ue_cc->is_pcell() or
+      ue_cc->get_pcell_state().conres_st != ue_conres_state::pending_cfra) {
+    return nullptr;
+  }
+  return ue_cc;
 }
 
 bool ra_scheduler::can_allocate_rar_ul_grant(rnti_t crnti, const cell_slot_resource_allocator& slot_alloc) const
@@ -731,8 +728,7 @@ const ue_cell_configuration* ra_scheduler::find_uci_on_msg3_ue_cfg(rnti_t crnti)
   if (not sched_cfg.multiplex_uci_on_cf_rar_ul_grant) {
     return nullptr;
   }
-  // For CFRA the RA scheduler is given the UE's real C-RNTI, so the UE cell lookup is keyed by it.
-  const ue_cell* ue_cc = ue_cell_db.find_by_rnti(crnti);
+  const ue_cell* ue_cc = find_cfra_ue(crnti);
   if (ue_cc == nullptr) {
     return nullptr;
   }
@@ -800,6 +796,13 @@ void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& 
   ul_crc_indication crc_ind;
   while (pending_crcs.try_pop(crc_ind)) {
     for (const ul_crc_pdu_indication& crc : crc_ind.crcs) {
+      // A CBRA UE has no ue_index yet, so a CRC that carries one only belongs to the RA procedure while the UE is
+      // still undergoing a CFRA. Otherwise, a UE that already completed RA could free the Msg3 HARQ that its
+      // TC-RNTI-turned-C-RNTI still matches in ra_ue_repo.
+      if (crc.ue_index != INVALID_DU_UE_INDEX and find_cfra_ue(crc.rnti) == nullptr) {
+        continue;
+      }
+
       auto crc_it = ra_ue_repo.find(crc.rnti);
       if (crc_it == ra_ue_repo.end()) {
         // RNTI of the CRC is not associated with any existing TC-RNTI.
@@ -827,16 +830,10 @@ void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& 
       }
 
       // Handle CRC info.
+      // Note: The ra_ue_repository entry is intentionally left in place once its Msg3 HARQ empties (slot_indication's
+      // ConRes-timer sweep reclaims the ring slot in due course): the async UE-creation event still needs to read
+      // prach_slot_rx from it (see ue_cell_event_manager::handle_ue_creation).
       h_ul->ul_crc_info(crc.tb_crc_success);
-      if (h_ul->empty()) {
-        // Note: The ra_ue_repository entry is intentionally left in place here (its Msg3 HARQ is already empty, so
-        // slot_indication's ConRes-timer sweep will reclaim its ring slot in due course): the async UE-creation
-        // event still needs to read prach_slot_rx from it (see ue_cell_event_manager::handle_ue_creation).
-        // In case of CFRA, update cfra mapping.
-        if (crc.ue_index != INVALID_DU_UE_INDEX) {
-          pending_cfra_ues[crc.ue_index].store(rnti_t::INVALID_RNTI, std::memory_order_release);
-        }
-      }
 
       // Forward MSG3 CRC indication to metrics handler.
       metrics_hdlr.handle_msg3_crc_indication(crc);
