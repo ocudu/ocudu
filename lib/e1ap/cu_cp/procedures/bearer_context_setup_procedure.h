@@ -10,8 +10,7 @@
 #include "ocudu/e1ap/common/e1ap_message.h"
 #include "ocudu/support/async/async_task.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// \brief This class handles the E1AP Bearer Context Setup Procedure, as per TS 38.461 8.3.1.
 class bearer_context_setup_procedure
@@ -40,12 +39,11 @@ private:
   e1ap_bearer_transaction_manager& ev_mng;
   e1ap_ue_context_list&            ue_ctxt_list;
   e1ap_message_notifier&           e1ap_notifier;
-  e1ap_ue_logger&                  logger;
+  e1ap_ue_logger                   logger;
 
   protocol_transaction_outcome_observer<asn1::e1ap::bearer_context_setup_resp_s,
                                         asn1::e1ap::bearer_context_setup_fail_s>
       transaction_sink;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

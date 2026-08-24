@@ -11,8 +11,7 @@
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "ocudu/support/async/async_task.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 class bearer_context_modification_procedure
 {
@@ -38,11 +37,10 @@ private:
   const e1ap_message               request;
   e1ap_bearer_transaction_manager& ev_mng;
   e1ap_message_notifier&           e1ap_notifier;
-  e1ap_ue_logger&                  logger;
+  e1ap_ue_logger                   logger;
 
   protocol_transaction_outcome_observer<asn1::e1ap::bearer_context_mod_resp_s, asn1::e1ap::bearer_context_mod_fail_s>
       transaction_sink;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp
