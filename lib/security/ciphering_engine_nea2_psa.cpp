@@ -51,6 +51,7 @@ security_status ciphering_engine_nea2_psa::apply_ciphering(byte_buffer& buf, siz
 
   status = psa_cipher_set_iv(&operation, nonce_cnt, sizeof(nonce_cnt));
   if (status != PSA_SUCCESS) {
+    psa_cipher_abort(&operation);
     return security_status::ciphering_failure;
   }
 
@@ -63,6 +64,14 @@ security_status ciphering_engine_nea2_psa::apply_ciphering(byte_buffer& buf, siz
       return security_status::ciphering_failure;
     }
   }
+
+  unsigned char output[16];
+  size_t        output_len = 0;
+  status                   = psa_cipher_finish(&operation, output, sizeof(output), &output_len);
+  if (status != PSA_SUCCESS || output_len != 0) {
+    return security_status::ciphering_failure;
+  }
+
   logger.debug(msg.begin(), msg.end(), "Ciphering output:");
 
   return security_status::success;
