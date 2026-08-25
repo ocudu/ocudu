@@ -30,19 +30,9 @@ integrity_engine_nia2_psa::integrity_engine_nia2_psa(sec_128_key        k_128_in
     report_error("Failure in setting AES key");
     return;
   }
-
-  psa_mac_operation_t op     = PSA_MAC_OPERATION_INIT;
-  psa_status_t        status = psa_mac_sign_setup(&op, ctx.ecb_key_id, PSA_ALG_CMAC);
-
-  if (status != PSA_SUCCESS) {
-    return;
-  }
 }
 
-integrity_engine_nia2_psa::~integrity_engine_nia2_psa()
-{
-  // TODO.
-}
+integrity_engine_nia2_psa::~integrity_engine_nia2_psa() {}
 
 security_status integrity_engine_nia2_psa::compute_mac(sec_mac& mac, const byte_buffer_view v, uint32_t count)
 {
