@@ -34,11 +34,11 @@ include(FindPackageHandleStandardArgs)
 
 # Handle the QUIETLY and REQUIRED arguments and set FFTZ_FOUND to TRUE
 # if all listed variables are TRUE.
-find_package_handle_standard_args(FFTZ DEFAULT_MSG FFTZ_INCLUDE_DIR FFTZ_LIBRARY)
+find_package_handle_standard_args(FFTZ DEFAULT_MSG FFTZ_INCLUDE_DIR FFTZ_LIBRARIES)
 
 if (FFTZ_FOUND)
     MESSAGE(STATUS "Found FFTZ INCLUDE DIRS: ${FFTZ_INCLUDE_DIRS}")
     MESSAGE(STATUS "Found FFTZ LIBRARIES: ${FFTZ_LIBRARIES}")
 endif (FFTZ_FOUND)
 
-mark_as_advanced(FFTZ_INCLUDE_DIR FFTZ_LIBRARY)
+mark_as_advanced(FFTZ_INCLUDE_DIR FFTZ_LIBRARIES)
