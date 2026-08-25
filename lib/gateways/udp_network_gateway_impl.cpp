@@ -258,18 +258,21 @@ void udp_network_gateway_impl::receive()
     return;
   }
 
-  for (int i = 0; i < rx_msgs; ++i) {
-    float pool_occupancy =
-        (1 - (float)get_byte_buffer_segment_pool_current_size_approx() / get_byte_buffer_segment_pool_capacity());
-    if (pool_occupancy >= config.pool_occupancy_threshold) {
-      if (warn_low_buffer_pool) {
-        logger.warning("Buffer pool at {:.1f}% occupancy. Dropping {} packets", pool_occupancy * 100, rx_msgs - i);
-        warn_low_buffer_pool = false;
-        return;
-      }
-      logger.info("Buffer pool at {:.1f}% occupancy. Dropping {} packets", pool_occupancy * 100, rx_msgs - i);
+  // Check pool occupancy to avoid over-saturating the byte buffer pool.
+  // This operation can be heavy, so it is done outside of the loop, improving performance at the cost of some accuracy.
+  float pool_occupancy =
+      (1 - (float)get_byte_buffer_segment_pool_current_size_approx() / get_byte_buffer_segment_pool_capacity());
+  if (pool_occupancy >= config.pool_occupancy_threshold) {
+    if (warn_low_buffer_pool) {
+      logger.warning("Buffer pool at {:.1f}% occupancy. Dropping {} packets", pool_occupancy * 100, rx_msgs);
+      warn_low_buffer_pool = false;
       return;
     }
+    logger.info("Buffer pool at {:.1f}% occupancy. Dropping {} packets", pool_occupancy * 100, rx_msgs);
+    return;
+  }
+
+  for (int i = 0; i < rx_msgs; ++i) {
     span<uint8_t> payload(rx_context.rx_mem[i].data(), rx_context.rx_msghdr[i].msg_len);
 
     byte_buffer pdu = {};
