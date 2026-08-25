@@ -6,6 +6,7 @@
 
 #include "ocudu/adt/static_vector.h"
 #include "ocudu/ran/du_types.h"
+#include "ocudu/ran/rnti.h"
 #include "ocudu/ran/srs/srs_configuration.h"
 #include <optional>
 

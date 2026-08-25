@@ -5,6 +5,7 @@
 #include "../test_utils/config_generators.h"
 #include "lib/scheduler/srs/srs_scheduler_impl.h"
 #include "lib/scheduler/ue_context/ue_cell_repository.h"
+#include "lib/scheduler/ue_context/ue_repository.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/test_doubles/utils/test_rng.h"
@@ -139,7 +140,7 @@ public:
     cell_cfg(*cfg_mng.add_cell(cfg_mng.get_default_cell_config_request())),
     cell_ues(cell_cfg, nullptr),
     ues(expert_cfg.ue),
-    srs_sched(cell_cfg, ues),
+    srs_sched(cell_cfg, cell_ues),
     current_sl_tx{to_numerology_value(cell_cfg.params.dl_cfg_common.init_dl_bwp.generic_params.scs), 0}
   {
     ues.register_cell(cell_ues);

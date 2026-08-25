@@ -5,6 +5,7 @@
 #pragma once
 
 #include "ocudu/ocudulog/logger.h"
+#include "ocudu/scheduler/scheduler_positioning_handler.h"
 #include <memory>
 
 namespace ocudu {
@@ -14,6 +15,7 @@ class cell_event_dispatcher;
 class paging_scheduler;
 class ra_scheduler;
 class si_scheduler;
+class srs_scheduler;
 struct pws_si_scheduling_update_request;
 struct rach_indication_message;
 struct sched_paging_information;
@@ -24,15 +26,16 @@ struct ul_crc_indication;
 ///
 /// Events are enqueued from any executor and processed at the start of the cell slot indication, so that their
 /// handling runs in the cell scheduler executor.
-class cell_event_manager
+class cell_event_manager final : public scheduler_cell_positioning_handler
 {
 public:
   cell_event_manager(const cell_configuration& cell_cfg,
                      si_scheduler&             si_sch,
                      paging_scheduler&         pg_sch,
                      ra_scheduler&             ra_sch,
+                     srs_scheduler&            srs_sch,
                      ocudulog::basic_logger&   logger);
-  ~cell_event_manager();
+  ~cell_event_manager() override;
 
   /// Activate event processing.
   void start();
@@ -58,10 +61,16 @@ public:
   /// Enqueue a UL CRC indication coming from lower layers.
   void handle_crc_indication(const ul_crc_indication& crc_ind);
 
+  // scheduler_cell_positioning_handler methods.
+  void handle_positioning_measurement_request(const positioning_measurement_request::cell_info& req) override;
+  void handle_positioning_measurement_stop(rnti_t pos_rnti) override;
+
 private:
-  si_scheduler&     si_sch;
-  paging_scheduler& pg_sch;
-  ra_scheduler&     ra_sch;
+  const cell_configuration& cell_cfg;
+  si_scheduler&             si_sch;
+  paging_scheduler&         pg_sch;
+  ra_scheduler&             ra_sch;
+  srs_scheduler&            srs_sch;
 
   // Queue of pending events and pools of the event payloads that do not fit in an event callback.
   std::unique_ptr<cell_event_dispatcher> dispatcher;

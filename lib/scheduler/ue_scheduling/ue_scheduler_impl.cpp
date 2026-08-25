@@ -27,7 +27,7 @@ ue_cell_scheduler* ue_scheduler_impl::do_add_cell(const ue_cell_scheduler_creati
                                                        cell.fallback_sched,
                                                        cell.uci_sched,
                                                        cell.slice_sched,
-                                                       cell.srs_sched,
+                                                       *params.srs_sched,
                                                        cell.cg_sched.get(),
                                                        cell.uci_selector,
                                                        *params.cell_metrics,
@@ -56,7 +56,6 @@ void ue_scheduler_impl::do_stop_cell(du_cell_index_t cell_index)
 
   // Stop sub-schedulers.
   c.fallback_sched.stop();
-  c.srs_sched.stop();
   c.uci_sched.stop();
   if (c.cg_sched != nullptr) {
     c.cg_sched->stop();
@@ -148,9 +147,6 @@ void ue_scheduler_impl::run_slot_impl(slot_point sl_tx)
     // Schedule periodic UCI (SR and CSI) before any UL grants.
     group_cell.uci_sched.run_slot(*group_cell.cell_res_alloc);
 
-    // Schedule periodic SRS before any UE grants.
-    group_cell.srs_sched.run_slot(*group_cell.cell_res_alloc);
-
     // Schedule configured grant PUSCH opportunities.
     if (group_cell.cg_sched != nullptr) {
       group_cell.cg_sched->run_slot(*group_cell.cell_res_alloc);
@@ -209,7 +205,6 @@ ue_scheduler_impl::cell_context::cell_context(ue_scheduler_impl&                
                     *params.cell_res_alloc,
                     *params.cell_metrics,
                     ocudulog::fetch_basic_logger("SCHED")),
-  srs_sched(params.cell_res_alloc->cfg, parent.ue_db),
   cg_sched(params.cell_res_alloc->cfg.params.init_bwp.cg_cfg.has_value()
                ? std::make_unique<configured_grant_scheduler_impl>(params.cell_res_alloc->cfg,
                                                                    *params.uci_alloc,

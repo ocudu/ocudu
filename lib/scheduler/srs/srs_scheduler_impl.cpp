@@ -49,8 +49,8 @@ static srs_info create_srs_pdu(rnti_t                          rnti,
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-srs_scheduler_impl::srs_scheduler_impl(const cell_configuration& cell_cfg_, ue_repository& ues_) :
-  cell_cfg(cell_cfg_), ues(ues_), logger(ocudulog::fetch_basic_logger("SCHED"))
+srs_scheduler_impl::srs_scheduler_impl(const cell_configuration& cell_cfg_, ue_cell_repository& ue_cell_db_) :
+  cell_cfg(cell_cfg_), ue_cell_db(ue_cell_db_), logger(ocudulog::fetch_basic_logger("SCHED"))
 {
   // Max size of the SRS resource slot wheel, dimensioned based on the maximum SRS periods.
   periodic_srs_slot_wheel.resize(static_cast<unsigned>(srs_periodicity::sl2560));
@@ -224,18 +224,19 @@ void srs_scheduler_impl::handle_positioning_measurement_request(
 
   if (cell_req.ue_index.has_value()) {
     // It is a positioning request for a connected UE.
-    if (not ues.contains(cell_req.ue_index.value())) {
+    const ue_cell* ue_cc = ue_cell_db.find(cell_req.ue_index.value());
+    if (ue_cc == nullptr) {
       logger.warning("ue={}: Positioning measurement request discarded. Cause: Non-existent UE",
                      fmt::underlying(cell_req.ue_index.value()));
       return;
     }
-    auto& u = ues[cell_req.ue_index.value()];
-    if (u.crnti != cell_req.pos_rnti) {
+    if (ue_cc->rnti() != cell_req.pos_rnti) {
       logger.warning("ue={}: Positioning measurement request discarded. Cause: Incorrect C-RNTI",
                      fmt::underlying(cell_req.ue_index.value()));
       return;
     }
-    const auto* ul_cfg = u.get_pcell().cfg().init_bwp().ul.ded();
+    ocudu_sanity_check(ue_cc->is_pcell(), "The SRS of a UE is only scheduled in its PCell");
+    const auto* ul_cfg = ue_cc->cfg().init_bwp().ul.ded();
 
     if (ul_cfg == nullptr or not ul_cfg->srs_cfg.has_value()) {
       logger.warning("ue={}: Positioning measurement request discarded. Cause: UE has no configured SRS config",
@@ -523,9 +524,5 @@ void srs_scheduler_impl::rem_resource(rnti_t                 crnti,
 
 const ue_cell* srs_scheduler_impl::get_ue_cell(rnti_t rnti) const
 {
-  auto* u = ues.find_by_rnti(rnti);
-  if (u != nullptr) {
-    return u->find_cell(cell_cfg.cell_index);
-  }
-  return nullptr;
+  return ue_cell_db.find_by_rnti(rnti);
 }

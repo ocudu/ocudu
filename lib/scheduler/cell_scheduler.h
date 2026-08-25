@@ -20,6 +20,7 @@
 #include "pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "pucch_scheduling/pucch_allocator_impl.h"
 #include "srs/srs_allocator_impl.h"
+#include "srs/srs_scheduler_impl.h"
 #include "uci_scheduling/uci_allocator_impl.h"
 #include "ue_context/ue_cell_repository.h"
 #include "ue_scheduling/ue_scheduler.h"
@@ -62,8 +63,8 @@ public:
 
   void handle_paging_information(const sched_paging_information& pi) { ev_mng.handle_paging_information(pi); }
 
-  scheduler_feedback_handler&         get_feedback_handler() { return ue_sched->get_feedback_handler(); }
-  scheduler_cell_positioning_handler& get_positioning_handler() { return ue_sched->get_positioning_handler(); }
+  scheduler_feedback_handler&                   get_feedback_handler() { return ue_sched->get_feedback_handler(); }
+  scheduler_cell_positioning_handler&           get_positioning_handler() { return ev_mng; }
   scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler()
   {
     return ue_sched->get_dl_buffer_state_indication_handler();
@@ -100,6 +101,7 @@ private:
   ra_scheduler       ra_sch;
   prach_scheduler    prach_sch;
   srs_allocator_impl srs_alloc;
+  srs_scheduler_impl srs_sch;
   paging_scheduler   pg_sch;
 
   /// Handler of the events of this cell that require no access to the UE repository.

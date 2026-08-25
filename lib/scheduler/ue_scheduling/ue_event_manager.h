@@ -48,7 +48,6 @@ class ue_event_manager;
 /// Handler of UE events for a given cell.
 class ue_cell_event_manager final : public sched_ue_configuration_handler,
                                     public scheduler_feedback_handler,
-                                    public scheduler_cell_positioning_handler,
                                     public scheduler_dl_buffer_state_indication_handler
 {
 public:
@@ -83,10 +82,6 @@ public:
   void handle_ul_ta_report_indication(const ul_ta_report_indication_message& ta_report_ind) override;
   void handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce) override;
   void handle_crnti_ce_received(du_ue_index_t ue_index) override;
-
-  // scheduler_cell_positioning_handler methods.
-  void handle_positioning_measurement_request(const positioning_measurement_request::cell_info& req) override;
-  void handle_positioning_measurement_stop(rnti_t pos_rnti) override;
 
   // scheduler_dl_buffer_state_indication_handler methods.
   void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override;

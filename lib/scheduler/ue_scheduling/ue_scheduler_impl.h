@@ -5,7 +5,6 @@
 #pragma once
 
 #include "../slicing/inter_slice_scheduler.h"
-#include "../srs/srs_scheduler_impl.h"
 #include "../uci_scheduling/uci_indication_selector.h"
 #include "../uci_scheduling/uci_scheduler_impl.h"
 #include "../ue_context/ue_cell_repository.h"
@@ -62,9 +61,6 @@ private:
     /// Intra-slice scheduler.
     intra_slice_scheduler intra_slice_sched;
 
-    /// SRS scheduler
-    srs_scheduler_impl srs_sched;
-
     /// Configured Grant scheduler.
     std::unique_ptr<configured_grant_scheduler_impl> cg_sched;
 
@@ -93,7 +89,6 @@ private:
     }
 
     scheduler_feedback_handler&                   get_feedback_handler() override { return *ev_mng; }
-    scheduler_cell_positioning_handler&           get_positioning_handler() override { return *ev_mng; }
     scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler() override { return *ev_mng; }
     sched_ue_configuration_handler&               get_ue_configurator() override { return *ev_mng; }
 

@@ -21,6 +21,7 @@ class sched_ue_configuration_handler;
 class scheduler_event_logger;
 class cell_metrics_handler;
 class ra_ue_repository;
+class srs_scheduler;
 class ue_cell_repository;
 
 /// Request to create a new cell handler in the UE scheduler.
@@ -34,6 +35,8 @@ struct ue_cell_scheduler_creation_request {
   uci_allocator* uci_alloc;
   /// UCI allocator for the cell.
   srs_allocator* srs_alloc;
+  /// SRS scheduler for the cell.
+  srs_scheduler* srs_sched;
   /// Resource grid for the cell.
   cell_resource_allocator* cell_res_alloc;
   /// Cell metrics handler for the cell.
@@ -65,9 +68,6 @@ public:
 
   /// Retrieves handler of UE feedback for a given cell.
   virtual scheduler_feedback_handler& get_feedback_handler() = 0;
-
-  /// Retrieves handler of UE positioning for a given cell.
-  virtual scheduler_cell_positioning_handler& get_positioning_handler() = 0;
 
   /// Retrieves handler of DL buffer state updates for a given cell.
   virtual scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler() = 0;

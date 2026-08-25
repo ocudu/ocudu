@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../ue_context/ue_repository.h"
+#include "../ue_context/ue_cell_repository.h"
 #include "srs_scheduler.h"
 #include "ocudu/ran/srs/srs_configuration.h"
 
@@ -17,7 +17,7 @@ struct srs_info;
 class srs_scheduler_impl : public srs_scheduler
 {
 public:
-  explicit srs_scheduler_impl(const cell_configuration& cell_cfg_, ue_repository& ues_);
+  explicit srs_scheduler_impl(const cell_configuration& cell_cfg_, ue_cell_repository& ue_cell_db_);
 
   ~srs_scheduler_impl() override;
 
@@ -68,7 +68,8 @@ private:
 
   // Cell configuration.
   const cell_configuration& cell_cfg;
-  ue_repository&            ues;
+  // UEs configured in this cell.
+  ue_cell_repository& ue_cell_db;
 
   ocudulog::basic_logger& logger;
 

@@ -7,6 +7,7 @@
 #include "lib/scheduler/srs/srs_allocator_impl.h"
 #include "lib/scheduler/srs/srs_scheduler_impl.h"
 #include "lib/scheduler/ue_context/ue_cell_repository.h"
+#include "lib/scheduler/ue_context/ue_repository.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/test_doubles/utils/test_rng.h"

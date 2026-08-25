@@ -129,7 +129,6 @@ class ocudu::pdu_indication_pool
   static constexpr size_t CRC_INITIAL_POOL_SIZE      = MAX_PUSCH_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
   static constexpr size_t SRS_INITIAL_POOL_SIZE      = MAX_SRS_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
   static constexpr size_t BSR_INITIAL_POOL_SIZE      = MAX_PUSCH_PDUS_PER_SLOT * MAX_BSR_PHR_EXPECTED_SLOTS;
-  static constexpr size_t POSITIONING_REQ_POOL_SIZE  = 1 * MAX_EXPECTED_SLOTS;
   static constexpr size_t SLICE_RECONF_POOL_SIZE     = 1 * MAX_EXPECTED_SLOTS;
   // TA reports are event-triggered and rare in steady state, at most one per UE per offsetThresholdTA of drift, but
   // every UE reports in Msg3 when ta-Report is configured, so simultaneous attaches produce one per UE within a couple
@@ -142,7 +141,6 @@ class ocudu::pdu_indication_pool
   using crc_pool          = bounded_object_pool<ul_crc_pdu_indication>;
   using srs_pool          = bounded_object_pool<srs_indication::srs_indication_pdu>;
   using bsr_pool          = bounded_object_pool<ul_bsr_indication_message>;
-  using pos_req_pool      = bounded_object_pool<positioning_measurement_request::cell_info>;
   using slice_reconf_pool = bounded_object_pool<du_cell_slice_reconfig_request>;
   using ta_report_pool    = bounded_object_pool<ul_ta_report_indication_message>;
 
@@ -154,7 +152,6 @@ public:
     pending_crcs(CRC_INITIAL_POOL_SIZE),
     pending_srss(SRS_INITIAL_POOL_SIZE),
     pending_bsrs(BSR_INITIAL_POOL_SIZE),
-    pending_pos_reqs(POSITIONING_REQ_POOL_SIZE),
     slice_reconf_reqs(SLICE_RECONF_POOL_SIZE),
     pending_ta_reports(TA_REPORT_POOL_SIZE)
   {
@@ -174,8 +171,6 @@ public:
       return "SRS";
     } else if constexpr (std::is_same_v<PDUType, ul_bsr_indication_message>) {
       return "BSR";
-    } else if constexpr (std::is_same_v<PDUType, positioning_measurement_request::cell_info>) {
-      return "positioning measurement request";
     } else if constexpr (std::is_same_v<PDUType, du_cell_slice_reconfig_request>) {
       return "slice reconfiguration request";
     } else if constexpr (std::is_same_v<PDUType, ul_ta_report_indication_message>) {
@@ -207,19 +202,17 @@ private:
   crc_pool          pending_crcs;
   srs_pool          pending_srss;
   bsr_pool          pending_bsrs;
-  pos_req_pool      pending_pos_reqs;
   slice_reconf_pool slice_reconf_reqs;
   ta_report_pool    pending_ta_reports;
 
-  std::tuple<uci_pool*, phr_pool*, crc_pool*, srs_pool*, bsr_pool*, pos_req_pool*, slice_reconf_pool*, ta_report_pool*>
-      pools{&pending_ucis,
-            &pending_phrs,
-            &pending_crcs,
-            &pending_srss,
-            &pending_bsrs,
-            &pending_pos_reqs,
-            &slice_reconf_reqs,
-            &pending_ta_reports};
+  std::tuple<uci_pool*, phr_pool*, crc_pool*, srs_pool*, bsr_pool*, slice_reconf_pool*, ta_report_pool*> pools{
+      &pending_ucis,
+      &pending_phrs,
+      &pending_crcs,
+      &pending_srss,
+      &pending_bsrs,
+      &slice_reconf_reqs,
+      &pending_ta_reports};
 };
 
 // Initial capacity for the common and cell event lists, in order to avoid std::vector reallocations. We use the max
@@ -922,35 +915,6 @@ void ue_cell_event_manager::handle_crnti_ce_received(du_ue_index_t ue_index)
   };
 
   push_event(cfg.cell_index, event_t{"CRNTI CE received", ue_index, std::move(handle_crnti_ce_received)});
-}
-
-void ue_cell_event_manager::handle_positioning_measurement_request(
-    const positioning_measurement_request::cell_info& req)
-{
-  ocudu_assert(req.cell_index == cfg.cell_index, "Received positioning request for wrong cell");
-
-  auto req_ptr = ind_pdu_pool->create_pdu(req);
-  if (req_ptr == nullptr) {
-    return;
-  }
-
-  const du_cell_index_t cell_index = req.cell_index;
-  auto                  task       = [this, req_ptr = std::move(req_ptr)]() {
-    srs_sched.handle_positioning_measurement_request(*req_ptr);
-    return event_result::processed;
-  };
-
-  push_event(cell_index, event_t{"POS MEAS REQ", std::move(task)});
-}
-
-void ue_cell_event_manager::handle_positioning_measurement_stop(rnti_t pos_rnti)
-{
-  auto task = [this, pos_rnti]() {
-    srs_sched.handle_positioning_measurement_stop(pos_rnti);
-    return event_result::processed;
-  };
-
-  push_event(cfg.cell_index, event_t{"pos_meas_stop", std::move(task)});
 }
 
 void ue_cell_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)

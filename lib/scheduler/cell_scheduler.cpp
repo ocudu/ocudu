@@ -29,8 +29,9 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   prach_sch(cell_cfg),
   // The SRS allocator is only used if srs_prohibit_time is set.
   srs_alloc(cell_cfg, sched_cfg.ue.srs_prohibit_time),
+  srs_sch(cell_cfg, ue_cell_db),
   pg_sch(cell_cfg, pdcch_sch),
-  ev_mng(cell_cfg, si_sch, pg_sch, ra_sch, logger)
+  ev_mng(cell_cfg, si_sch, pg_sch, ra_sch, srs_sch, logger)
 {
   // Register new cell in the UE scheduler.
   ue_sched = ue_sched_.add_cell(ue_cell_scheduler_creation_request{msg.cell_index,
@@ -38,6 +39,7 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
                                                                    &pucch_alloc,
                                                                    &uci_alloc,
                                                                    &srs_alloc,
+                                                                   &srs_sch,
                                                                    &res_grid,
                                                                    &metrics,
                                                                    &event_logger,
@@ -117,6 +119,9 @@ void cell_scheduler::run_slot(slot_point_extended sl_tx_ext)
   // > Schedule Paging.
   pg_sch.run_slot(res_grid, sl_tx_ext.hyper_sfn());
 
+  // > Schedule the periodic SRS.
+  srs_sch.run_slot(res_grid);
+
   // > Schedule UE DL and UL data.
   ue_sched->run_slot(sl_tx);
 
@@ -191,6 +196,7 @@ void cell_scheduler::stop()
   ra_sch.stop();
   pg_sch.stop();
   ue_sched->stop();
+  srs_sch.stop();
 
   // Reset resource grid and sub-allocators.
   res_grid.stop();
