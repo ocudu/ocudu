@@ -495,7 +495,14 @@ void ra_scheduler::handle_msga_occasion(const rach_indication_message::occasion&
     return;
   }
 
-  if (pending_msgas.size() == pending_msgas.capacity()) {
+  // One pending entry per MsgB suffices, as the preambles of every occasion sharing it are registered in it. Checked
+  // before any preamble is registered: a registration that no pending entry covers would leave the MsgB responding
+  // to a preamble whose MsgA PUSCH was never allocated.
+  const bool already_pending =
+      std::any_of(pending_msgas.begin(), pending_msgas.end(), [&](const pending_msga_occasion& pending) {
+        return pending.msgb_rnti == msgb_rnti and pending.prach_slot_rx == prach_slot_rx;
+      });
+  if (not already_pending and pending_msgas.size() == pending_msgas.capacity()) {
     logger.warning("pci={} msgb-rnti={}: Discarding MsgA occasion. Cause: Too many occasions pending to be scheduled",
                    cell_cfg.params.pci,
                    msgb_rnti);
@@ -562,11 +569,7 @@ void ra_scheduler::handle_msga_occasion(const rach_indication_message::occasion&
   }
 
   // The MsgA PUSCHs can only be allocated once their resources have been reserved in the grid, which happens in
-  // run_slot. One entry per MsgB suffices, as the preambles of every occasion sharing it are registered in it.
-  const bool already_pending =
-      std::any_of(pending_msgas.begin(), pending_msgas.end(), [&](const pending_msga_occasion& pending) {
-        return pending.msgb_rnti == msgb_rnti and pending.prach_slot_rx == prach_slot_rx;
-      });
+  // run_slot.
   if (not already_pending) {
     pending_msgas.push_back(pending_msga_occasion{msgb_rnti, prach_slot_rx});
   }
