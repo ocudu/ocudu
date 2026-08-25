@@ -26,6 +26,23 @@ struct aes_context {
   psa_key_id_t cmac_key_id = 0;
   psa_key_id_t ecb_key_id  = 0;
   psa_key_id_t ctr_key_id  = 0;
+
+  aes_context()                              = default;
+  aes_context(const aes_context&)            = delete;
+  aes_context& operator=(const aes_context&) = delete;
+
+  ~aes_context()
+  {
+    if (cmac_key_id != 0) {
+      psa_destroy_key(cmac_key_id);
+    }
+    if (ecb_key_id != 0) {
+      psa_destroy_key(ecb_key_id);
+    }
+    if (ctr_key_id != 0) {
+      psa_destroy_key(ctr_key_id);
+    }
+  }
 };
 #endif
 
