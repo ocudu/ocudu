@@ -18,12 +18,6 @@ using namespace ocudu;
 /// Events are pushed from any executor and dispatched in the cell scheduler executor.
 class ocudu::cell_event_dispatcher
 {
-  /// \brief Capacity of the queue of pending events.
-  ///
-  /// [Implementation defined] Sized for the events that can accumulate over the slots elapsed between two slot
-  /// indications of this cell.
-  static constexpr size_t EVENT_QUEUE_SIZE = 128;
-
   // [Implementation defined] Number of paging requests that can be in flight at any moment.
   static constexpr size_t PAGING_POOL_SIZE = 128;
   // [Implementation defined] System information updates are rare, so only a few can be in flight at any moment.
@@ -31,6 +25,14 @@ class ocudu::cell_event_dispatcher
   // [Implementation defined] Lower layers report at most one RACH and one CRC indication per slot, so the pools only
   // need to cover the slots that can elapse before the events are dispatched.
   static constexpr size_t PHY_IND_POOL_SIZE = 8;
+
+  /// \brief Capacity of the queue of pending events.
+  ///
+  /// It holds every payload the pools can hand out, so that an event type is only ever limited by its own pool and
+  /// never by another type having filled the queue.
+  static constexpr size_t EVENT_QUEUE_SIZE = PAGING_POOL_SIZE +     // paging
+                                             2 * SI_POOL_SIZE +     // SI and ETWS/CMAS SI updates
+                                             2 * PHY_IND_POOL_SIZE; // RACH and CRC indications
 
   using paging_pool = bounded_object_pool<sched_paging_information>;
   using si_pool     = bounded_object_pool<si_scheduling_update_request>;
@@ -220,7 +222,7 @@ void cell_event_manager::handle_pws_si_update_request(const pws_si_scheduling_up
     return;
   }
 
-  dispatcher->push("ETWS/CMAS SI update",
+  dispatcher->push("PWS SI update",
                    [this, req_ptr = std::move(req_ptr)]() { si_sch.handle_pws_si_update_request(*req_ptr); });
 }
 
