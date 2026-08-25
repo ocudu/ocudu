@@ -305,9 +305,11 @@ void sctp_network_server_impl::handle_socket_shutdown(const char* cause)
   io_sub.reset();
 }
 
-void sctp_network_server_impl::defer_socket_shutdown(const char* cause, std::optional<scoped_sync_token> token)
+void sctp_network_server_impl::defer_socket_shutdown(const char* cause, const std::optional<scoped_sync_token>& token)
 {
-  while (not app_exec.defer([this, keepalive = keepalive_token, token = std::move(token)]() {
+  // Capture the token by copy rather than by move: defer() consumes the task on failure, so a moved token would be
+  // gone on the next retry. scoped_sync_token is reference counted, so each attempt just bumps the count.
+  while (not app_exec.defer([this, keepalive = keepalive_token, token]() {
     if (*keepalive) {
       *keepalive = false;
       handle_socket_shutdown(nullptr);

@@ -88,7 +88,7 @@ private:
   bool subscribe_association_to_broker(unique_fd assoc_fd, sctp_associaton_context& assoc_ctxt);
 
   void handle_socket_shutdown(const char* cause);
-  void defer_socket_shutdown(const char* cause, std::optional<scoped_sync_token> token = std::nullopt);
+  void defer_socket_shutdown(const char* cause, const std::optional<scoped_sync_token>& token = std::nullopt);
 
   void handle_data(int assoc_id, span<const uint8_t> payload);
   void handle_notification(span<const uint8_t>           payload,
