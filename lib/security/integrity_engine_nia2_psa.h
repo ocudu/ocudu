@@ -11,7 +11,7 @@
 
 namespace ocudu::security {
 
-#if MBEDTLS_VERSION_NUMBER >= 0x04000000
+#if OCUDU_MBEDTLS_PSA
 
 class integrity_engine_nia2_psa final : public integrity_engine
 {

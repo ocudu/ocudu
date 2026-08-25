@@ -8,6 +8,7 @@
 #include "ocudu/security/security.h"
 #include "ocudu/security/ssl.h"
 
+#if OCUDU_MBEDTLS_PSA
 namespace ocudu::security {
 
 class ciphering_engine_nea2_psa final : public ciphering_engine
@@ -29,3 +30,4 @@ private:
 };
 
 } // namespace ocudu::security
+#endif

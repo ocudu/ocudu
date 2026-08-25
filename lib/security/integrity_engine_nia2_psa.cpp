@@ -8,7 +8,7 @@
 using namespace ocudu;
 using namespace security;
 
-#if MBEDTLS_VERSION_NUMBER >= 0x04000000
+#if OCUDU_MBEDTLS_PSA
 
 integrity_engine_nia2_psa::integrity_engine_nia2_psa(sec_128_key        k_128_int_,
                                                      uint8_t            bearer_id_,

@@ -52,61 +52,7 @@ inline void security_nia1(sec_mac&           mac,
   security_nia1(mac, key, count, bearer, direction, msg, msg.length() * 8);
 }
 
-#if MBEDTLS_VERSION_NUMBER <= 0x04000000
-#ifdef MBEDTLS_CMAC_C
-inline void security_nia2_cmac(sec_mac&           mac,
-                               const sec_128_key& key,
-                               uint32_t           count,
-                               uint8_t            bearer,
-                               security_direction direction,
-                               byte_buffer_view&  msg)
-{
-  int                          ret;
-  mbedtls_cipher_context_t     ctx;
-  const mbedtls_cipher_info_t* cipher_info;
-  cipher_info = mbedtls_cipher_info_from_type(MBEDTLS_CIPHER_AES_128_ECB);
-  if (cipher_info == nullptr) {
-    return;
-  }
-  mbedtls_cipher_init(&ctx);
-
-  ret = mbedtls_cipher_setup(&ctx, cipher_info);
-  if (ret != 0) {
-    return;
-  }
-
-  ret = mbedtls_cipher_cmac_starts(&ctx, key.data(), 128);
-  if (ret != 0) {
-    return;
-  }
-
-  std::array<uint8_t, 8> preamble = {};
-  preamble[0]                     = (count >> 24) & 0xff;
-  preamble[1]                     = (count >> 16) & 0xff;
-  preamble[2]                     = (count >> 8) & 0xff;
-  preamble[3]                     = count & 0xff;
-  preamble[4]                     = (bearer << 3) | (to_number(direction) << 2);
-  ret                             = mbedtls_cipher_cmac_update(&ctx, preamble.data(), preamble.size());
-
-  byte_buffer_segment_span_range segments = msg.modifiable_segments();
-  for (const auto& segment : segments) {
-    ret = mbedtls_cipher_cmac_update(&ctx, segment.data(), segment.size());
-    if (ret != 0) {
-      return;
-    }
-  }
-  uint8_t tmp_mac[16];
-  ret = mbedtls_cipher_cmac_finish(&ctx, tmp_mac);
-  if (ret != 0) {
-    return;
-  }
-  mbedtls_cipher_free(&ctx);
-  for (int i = 0; i < 4; ++i) {
-    mac[i] = tmp_mac[i];
-  }
-}
-#endif // MBEDTLS_CMAC_C
-#else
+#if OCUDU_MBEDTLS_PSA
 inline void security_nia2_psa(sec_mac&           mac,
                               const sec_128_key& key,
                               uint32_t           count,
@@ -171,8 +117,62 @@ inline void security_nia2_psa(sec_mac&           mac,
     mac[i] = tmp_mac[i];
   }
 }
+#else
+#ifdef MBEDTLS_CMAC_C
+inline void security_nia2_cmac(sec_mac&           mac,
+                               const sec_128_key& key,
+                               uint32_t           count,
+                               uint8_t            bearer,
+                               security_direction direction,
+                               byte_buffer_view&  msg)
+{
+  int                          ret;
+  mbedtls_cipher_context_t     ctx;
+  const mbedtls_cipher_info_t* cipher_info;
+  cipher_info = mbedtls_cipher_info_from_type(MBEDTLS_CIPHER_AES_128_ECB);
+  if (cipher_info == nullptr) {
+    return;
+  }
+  mbedtls_cipher_init(&ctx);
 
+  ret = mbedtls_cipher_setup(&ctx, cipher_info);
+  if (ret != 0) {
+    return;
+  }
+
+  ret = mbedtls_cipher_cmac_starts(&ctx, key.data(), 128);
+  if (ret != 0) {
+    return;
+  }
+
+  std::array<uint8_t, 8> preamble = {};
+  preamble[0]                     = (count >> 24) & 0xff;
+  preamble[1]                     = (count >> 16) & 0xff;
+  preamble[2]                     = (count >> 8) & 0xff;
+  preamble[3]                     = count & 0xff;
+  preamble[4]                     = (bearer << 3) | (to_number(direction) << 2);
+  ret                             = mbedtls_cipher_cmac_update(&ctx, preamble.data(), preamble.size());
+
+  byte_buffer_segment_span_range segments = msg.modifiable_segments();
+  for (const auto& segment : segments) {
+    ret = mbedtls_cipher_cmac_update(&ctx, segment.data(), segment.size());
+    if (ret != 0) {
+      return;
+    }
+  }
+  uint8_t tmp_mac[16];
+  ret = mbedtls_cipher_cmac_finish(&ctx, tmp_mac);
+  if (ret != 0) {
+    return;
+  }
+  mbedtls_cipher_free(&ctx);
+  for (int i = 0; i < 4; ++i) {
+    mac[i] = tmp_mac[i];
+  }
+}
+#endif // MBEDTLS_CMAC_C
 #endif
+
 inline void security_nia2_non_cmac(sec_mac&           mac,
                                    const sec_128_key& key,
                                    uint32_t           count,
@@ -284,14 +284,14 @@ inline void security_nia2(sec_mac&           mac,
                           security_direction direction,
                           byte_buffer_view&  msg)
 {
-#if MBEDTLS_VERSION_NUMBER <= 0x04000000
+#if OCUDU_MBEDTLS_PSA
+  security_nia2_psa(mac, key, count, bearer, direction, msg);
+#else
 #ifdef MBEDTLS_CMAC_C
   security_nia2_cmac(mac, key, count, bearer, direction, msg);
 #else
   security_nia2_non_cmac(mac, key, count, bearer, direction, msg, msg.length() * 8);
 #endif
-#else
-  security_nia2_psa(mac, key, count, bearer, direction, msg);
 #endif
 }
 

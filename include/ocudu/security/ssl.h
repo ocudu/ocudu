@@ -4,14 +4,16 @@
 
 #pragma once
 
+#define OCUDU_MBEDTLS_PSA (MBEDTLS_VERSION_NUMBER >= 0x04000000)
+
 #include "ocudu/support/error_handling.h"
 #include <mbedtls/version.h>
-#if MBEDTLS_VERSION_NUMBER <= 0x04000000
+#if OCUDU_MBEDTLS_PSA
+#include <psa/crypto.h>
+#else
 #include <mbedtls/aes.h>
 #include <mbedtls/cmac.h>
 #include <mbedtls/md.h>
-#else
-#include <psa/crypto.h>
 #endif
 
 namespace ocudu::security {
@@ -19,9 +21,7 @@ namespace ocudu::security {
 constexpr int aes_encrypt = 1;
 constexpr int aes_decrypt = 0;
 
-#if MBEDTLS_VERSION_NUMBER <= 0x04000000
-using aes_context = mbedtls_aes_context;
-#else
+#if OCUDU_MBEDTLS_PSA
 struct aes_context {
   psa_key_id_t cmac_key_id = 0;
   psa_key_id_t ecb_key_id  = 0;
@@ -44,11 +44,13 @@ struct aes_context {
     }
   }
 };
+#else
+using aes_context = mbedtls_aes_context;
 #endif
 
 inline int crypto_init()
 {
-#if MBEDTLS_VERSION_NUMBER >= 0x04000000
+#if OCUDU_MBEDTLS_PSA
   psa_status_t status = psa_crypto_init();
   if (status != PSA_SUCCESS) {
     return -1;
@@ -59,9 +61,7 @@ inline int crypto_init()
 
 inline int aes_setkey_enc(aes_context* ctx, const unsigned char* key, unsigned keysize)
 {
-#if MBEDTLS_VERSION_NUMBER <= 0x04000000
-  return mbedtls_aes_setkey_enc(ctx, key, keysize);
-#else
+#if OCUDU_MBEDTLS_PSA
   /// Set ECB PSA key.
   {
     psa_key_attributes_t attributes = PSA_KEY_ATTRIBUTES_INIT;
@@ -111,14 +111,14 @@ inline int aes_setkey_enc(aes_context* ctx, const unsigned char* key, unsigned k
     }
   }
   return 0;
+#else
+  return mbedtls_aes_setkey_enc(ctx, key, keysize);
 #endif
 }
 
 inline int aes_crypt_ecb(aes_context* ctx, int mode, const unsigned char input[16], unsigned char output[16])
 {
-#if MBEDTLS_VERSION_NUMBER <= 0x04000000
-  return mbedtls_aes_crypt_ecb(ctx, mode, input, output);
-#else
+#if OCUDU_MBEDTLS_PSA
   size_t       output_len = 0;
   psa_status_t status;
 
@@ -129,6 +129,8 @@ inline int aes_crypt_ecb(aes_context* ctx, int mode, const unsigned char input[1
   }
 
   return (status == PSA_SUCCESS && output_len == 16) ? 0 : -1;
+#else
+  return mbedtls_aes_crypt_ecb(ctx, mode, input, output);
 #endif
 }
 
@@ -139,9 +141,7 @@ inline void sha256(const unsigned char* key,
                    unsigned char        output[32],
                    int                  is224)
 {
-#if MBEDTLS_VERSION_NUMBER <= 0x04000000
-  mbedtls_md_hmac(mbedtls_md_info_from_type(MBEDTLS_MD_SHA256), key, keylen, input, ilen, output);
-#else
+#if OCUDU_MBEDTLS_PSA
   int ret = crypto_init();
   if (ret != 0) {
     report_error("Failure in initializing crypto PSA");
@@ -169,6 +169,8 @@ inline void sha256(const unsigned char* key,
   status = psa_mac_compute(key_id, PSA_ALG_HMAC(PSA_ALG_SHA_256), input, ilen, output, 32, &output_len);
 
   psa_destroy_key(key_id);
+#else
+  mbedtls_md_hmac(mbedtls_md_info_from_type(MBEDTLS_MD_SHA256), key, keylen, input, ilen, output);
 #endif
 }
 

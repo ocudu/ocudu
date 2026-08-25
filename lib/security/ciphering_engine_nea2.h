@@ -8,7 +8,7 @@
 #include "ocudu/security/security.h"
 #include "ocudu/security/ssl.h"
 
-#if MBEDTLS_VERSION_NUMBER <= 0x04000000
+#if !OCUDU_MBEDTLS_PSA
 namespace ocudu::security {
 
 class ciphering_engine_nea2 final : public ciphering_engine

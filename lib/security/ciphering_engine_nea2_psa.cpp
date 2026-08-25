@@ -7,7 +7,7 @@
 using namespace ocudu;
 using namespace security;
 
-#if MBEDTLS_VERSION_NUMBER >= 0x04000000
+#if OCUDU_MBEDTLS_PSA
 ciphering_engine_nea2_psa::ciphering_engine_nea2_psa(sec_128_key        k_128_enc_,
                                                      uint8_t            bearer_id_,
                                                      security_direction direction_) :

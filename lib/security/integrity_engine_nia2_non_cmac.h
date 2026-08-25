@@ -9,7 +9,7 @@
 #include "ocudu/security/security.h"
 #include "ocudu/security/ssl.h"
 
-#if MBEDTLS_VERSION_NUMBER <= 0x04000000
+#if !OCUDU_MBEDTLS_PSA
 #include "mbedtls/aes.h"
 #endif
 
