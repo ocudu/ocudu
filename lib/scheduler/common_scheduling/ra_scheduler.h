@@ -80,10 +80,10 @@ private:
     bool send_backoff_indicator = false;
   };
 
-  /// PRACH occasion pending to be allocated a MsgA PUSCH, holding only its MsgA preambles.
+  /// Pending MsgB whose registered MsgA preambles still have to be allocated a MsgA PUSCH.
   struct pending_msga_occasion {
-    rach_indication_message::occasion occ;
-    slot_point                        prach_slot_rx;
+    rnti_t     msgb_rnti;
+    slot_point prach_slot_rx;
   };
 
   struct msg3_alloc_candidate {
@@ -100,6 +100,8 @@ private:
       /// CRC outcome for the MsgA PUSCH.
       /// nullopt = indication not yet received; true = CRC OK (SuccessRAR); false = CRC KO (FallbackRAR).
       std::optional<bool> crc_result;
+      /// Set to true once the MsgA PUSCH of this preamble has been allocated in the grid.
+      bool msga_pusch_scheduled = false;
       /// Set to true once the MsgB grant for this preamble has been scheduled.
       bool msgb_scheduled = false;
 
@@ -130,9 +132,16 @@ private:
                             slot_point                                    prach_slot_rx);
 
   /// Handle a PRACH occasion carrying MsgA (2-step RACH) preambles and allocate their PUSCH receptions.
-  void handle_msga_occasion(const rach_indication_message::occasion& occ,
-                            slot_point                               prach_slot_rx,
-                            cell_resource_allocator&                 res_alloc);
+  void handle_msga_occasion(const rach_indication_message::occasion&      occ,
+                            span<const rach_indication_message::preamble> preambles,
+                            slot_point                                    prach_slot_rx);
+
+  /// Allocate in the grid the MsgA PUSCHs of the PRACH occasions handled so far.
+  void schedule_pending_msgas(cell_resource_allocator& res_alloc);
+
+  /// \brief Allocate in the grid the MsgA PUSCHs of the preambles registered in a pending MsgB.
+  /// \note The preambles that could not be allocated one are removed from the MsgB.
+  void schedule_msga_puschs(rnti_t msgb_rnti, slot_point prach_slot_rx, cell_resource_allocator& res_alloc);
 
   /// Apply a UL CRC that ACKs/NACKs a Msg3 HARQ process.
   void handle_ra_crc(const ul_crc_pdu_indication& crc, slot_point sl_rx);
@@ -293,7 +302,8 @@ private:
 
   // -- State.
 
-  // MsgA PRACH occasions pending to be allocated. Never reallocates, as it is filled up to its reserved capacity.
+  // MsgBs whose MsgA PUSCHs are pending to be allocated. Never reallocates, as it is filled up to its reserved
+  // capacity.
   std::vector<pending_msga_occasion> pending_msgas;
 
   // List of pending RARs to be scheduled.

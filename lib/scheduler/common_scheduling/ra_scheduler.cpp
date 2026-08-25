@@ -334,21 +334,7 @@ void ra_scheduler::handle_rach_indication(const rach_indication_message& msg)
       handle_msg1_occasion(prach_occ, msg1_preambles, msg.slot_rx);
     }
     if (not msga_preambles.empty()) {
-      // The MsgA PUSCH can only be allocated once its resources have been reserved in the grid, which happens in
-      // run_slot. Buffer the occasion until then.
-      if (pending_msgas.size() == pending_msgas.capacity()) {
-        logger.warning("pci={}: Discarding MsgA PRACH occasion detected at slot={}. Cause: Too many occasions pending "
-                       "to be processed",
-                       cell_cfg.params.pci,
-                       msg.slot_rx);
-        continue;
-      }
-      pending_msgas.push_back(pending_msga_occasion{
-          rach_indication_message::occasion{.start_symbol    = prach_occ.start_symbol,
-                                            .slot_index      = prach_occ.slot_index,
-                                            .frequency_index = prach_occ.frequency_index,
-                                            .preambles       = {msga_preambles.begin(), msga_preambles.end()}},
-          msg.slot_rx});
+      handle_msga_occasion(prach_occ, msga_preambles, msg.slot_rx);
     }
   }
 
@@ -452,7 +438,19 @@ void ra_scheduler::handle_msg1_occasion(const rach_indication_message::occasion&
 
     if (not keep_preamble[idx]) {
       // Preamble excluded due to congestion control. The UE will get no RAPID match in the RAR and will retry.
+      logger.debug("pci={} ra-rnti={}: Discarding PRACH preamble. Cause: Congestion control excluded the preamble",
+                   cell_cfg.params.pci,
+                   ra_rnti);
       continue;
+    }
+
+    // Note: Checked before the RA UE context is created, so that no context is left without a RAR to be listed in.
+    if (rar_req->tc_rntis.full()) {
+      logger.warning("pci={} ra-rnti={}: Discarding PRACH preamble. Cause: The RAR already carries the maximum number "
+                     "of TC-RNTIs",
+                     cell_cfg.params.pci,
+                     ra_rnti);
+      break;
     }
 
     // Create a new UE RA context.
@@ -469,26 +467,46 @@ void ra_scheduler::handle_msg1_occasion(const rach_indication_message::occasion&
   }
 }
 
-void ra_scheduler::handle_msga_occasion(const rach_indication_message::occasion& occ,
-                                        slot_point                               prach_slot_rx,
-                                        cell_resource_allocator&                 res_alloc)
+void ra_scheduler::handle_msga_occasion(const rach_indication_message::occasion&      occ,
+                                        span<const rach_indication_message::preamble> preambles,
+                                        slot_point                                    prach_slot_rx)
 {
   const rach_config_common& rach_cfg = *cell_cfg.params.ul_cfg_common.init_ul_bwp.rach_cfg_common;
   ocudu_sanity_check(rach_cfg.two_step_rach_cfg.has_value(), "MsgA received but 2-step RACH is not configured");
   const rach_config_common_two_step&                    two_step_cfg   = *rach_cfg.two_step_rach_cfg;
-  const bwp_uplink_common&                              ul_bwp         = cell_cfg.params.ul_cfg_common.init_ul_bwp;
   const rach_config_common_two_step::msgA_pusch_config& msga_pusch_cfg = two_step_cfg.pusch;
 
   // Derive MsgB-RNTI.
   const rnti_t msgb_rnti = ra_helper::get_msgb_rnti(occ.slot_index, occ.start_symbol, occ.frequency_index);
   const rnti_t ra_rnti   = ra_helper::get_ra_rnti(occ.slot_index, occ.start_symbol, occ.frequency_index);
 
+  // Determine the MsgA PUSCH slot and whether its OFDM symbols fall in valid UL symbols.
+  // Note: k2 from the TD allocation is ignored; the actual PUSCH slot offset is given by td_offset as per
+  // TS 38.331 "msgA-PUSCH-TimeDomainAllocation".
+  const slot_point                             pusch_slot = prach_slot_rx + msga_pusch_cfg.td_offset;
+  const pusch_time_domain_resource_allocation& td_alloc =
+      get_pusch_td_list(cell_cfg)[msga_pusch_cfg.pusch_td_res_index];
+  const unsigned start_ul_symbols = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg.get_nof_ul_symbol_per_slot(pusch_slot);
+  if (not cell_cfg.is_ul_enabled(pusch_slot) or td_alloc.symbols.start() < start_ul_symbols) {
+    logger.warning("pci={} msgb-rnti={}: Discarding MsgA PUSCH. Cause: PUSCH would fall in an invalid slot={}",
+                   cell_cfg.params.pci,
+                   msgb_rnti,
+                   pusch_slot);
+    return;
+  }
+
+  if (pending_msgas.size() == pending_msgas.capacity()) {
+    logger.warning("pci={} msgb-rnti={}: Discarding MsgA occasion. Cause: Too many occasions pending to be scheduled",
+                   cell_cfg.params.pci,
+                   msgb_rnti);
+    return;
+  }
+
   // Search for a pending MsgB entry matching in MsgB-RNTI and PRACH slot.
   auto msgb_it = std::find_if(pending_msgbs.begin(), pending_msgbs.end(), [&](const pending_msgb_alloc& msgb) {
     return msgb.msgb_rnti == msgb_rnti and msgb.prach_slot_rx == prach_slot_rx;
   });
-  pending_msgb_alloc* msgb_req = msgb_it != pending_msgbs.end() ? &*msgb_it : nullptr;
-  if (msgb_req == nullptr) {
+  if (msgb_it == pending_msgbs.end()) {
     // No MsgB with matching MsgB-RNTI and PRACH slot exists. Create one.
     if (pending_msgbs.capacity() == pending_msgbs.size()) {
       logger.warning("pci={} msgb-rnti={}: Discarding MsgA occasion. Cause: Pending MsgBs queue is full",
@@ -496,11 +514,11 @@ void ra_scheduler::handle_msga_occasion(const rach_indication_message::occasion&
                      msgb_rnti);
       return;
     }
-    msgb_req                = &pending_msgbs.emplace_back();
-    msgb_it                 = pending_msgbs.end() - 1;
-    msgb_req->msgb_rnti     = msgb_rnti;
-    msgb_req->ra_rnti       = ra_rnti;
-    msgb_req->prach_slot_rx = prach_slot_rx;
+    pending_msgb_alloc& new_msgb = pending_msgbs.emplace_back();
+    msgb_it                      = pending_msgbs.end() - 1;
+    new_msgb.msgb_rnti           = msgb_rnti;
+    new_msgb.ra_rnti             = ra_rnti;
+    new_msgb.prach_slot_rx       = prach_slot_rx;
 
     // Set MsgB response window. First slot after PRACH with active DL slot is the window start.
     if (cell_cfg.is_tdd()) {
@@ -508,16 +526,79 @@ void ra_scheduler::handle_msga_occasion(const rach_indication_message::occasion&
       for (unsigned sl_idx = 0; sl_idx < period; ++sl_idx) {
         const slot_point sl_start = prach_slot_rx + prach_occasion_duration_slots + sl_idx;
         if (cell_cfg.is_dl_enabled(sl_start)) {
-          msgb_req->msgb_window = {sl_start, sl_start + two_step_cfg.msgB_response_window_slots};
+          new_msgb.msgb_window = {sl_start, sl_start + two_step_cfg.msgB_response_window_slots};
           break;
         }
       }
-      ocudu_sanity_check(msgb_req->msgb_window.length() != 0, "Invalid TDD configuration for MsgB window");
+      ocudu_sanity_check(new_msgb.msgb_window.length() != 0, "Invalid TDD configuration for MsgB window");
     } else {
-      msgb_req->msgb_window = {prach_slot_rx + prach_occasion_duration_slots,
-                               prach_slot_rx + prach_occasion_duration_slots + two_step_cfg.msgB_response_window_slots};
+      new_msgb.msgb_window = {prach_slot_rx + prach_occasion_duration_slots,
+                              prach_slot_rx + prach_occasion_duration_slots + two_step_cfg.msgB_response_window_slots};
     }
   }
+
+  // Register the detected preambles in the MsgB.
+  pending_msgb_alloc& msgb_req = *msgb_it;
+  for (const auto& preamble : preambles) {
+    ocudu_sanity_check(ra_helper::is_msga_cb_preamble(rach_cfg, preamble.preamble_id),
+                       "Handling preamble that is not for MsgA. Are preamble IDs sorted in the RACH indication?");
+    ev_logger.enqueue(scheduler_event_logger::prach_event{
+        prach_slot_rx,
+        cell_cfg.cell_index,
+        preamble.preamble_id,
+        msgb_rnti,
+        preamble.tc_rnti,
+        preamble.time_advance.to_Ta(cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.scs),
+        true});
+
+    if (msgb_req.preambles.full()) {
+      logger.warning("pci={} msgb-rnti={}: Discarding MsgA preamble id={}. Cause: MsgB preamble list is full",
+                     cell_cfg.params.pci,
+                     msgb_rnti,
+                     preamble.preamble_id);
+      continue;
+    }
+    msgb_req.preambles.emplace_back(preamble);
+  }
+
+  // The MsgA PUSCHs can only be allocated once their resources have been reserved in the grid, which happens in
+  // run_slot. One entry per MsgB suffices, as the preambles of every occasion sharing it are registered in it.
+  const bool already_pending =
+      std::any_of(pending_msgas.begin(), pending_msgas.end(), [&](const pending_msga_occasion& pending) {
+        return pending.msgb_rnti == msgb_rnti and pending.prach_slot_rx == prach_slot_rx;
+      });
+  if (not already_pending) {
+    pending_msgas.push_back(pending_msga_occasion{msgb_rnti, prach_slot_rx});
+  }
+}
+
+void ra_scheduler::schedule_pending_msgas(cell_resource_allocator& res_alloc)
+{
+  for (const pending_msga_occasion& pending : pending_msgas) {
+    schedule_msga_puschs(pending.msgb_rnti, pending.prach_slot_rx, res_alloc);
+  }
+  pending_msgas.clear();
+}
+
+void ra_scheduler::schedule_msga_puschs(rnti_t msgb_rnti, slot_point prach_slot_rx, cell_resource_allocator& res_alloc)
+{
+  const rach_config_common&                             rach_cfg       = *cell_cfg.init_bwp.ul.rach_common();
+  const rach_config_common_two_step&                    two_step_cfg   = *rach_cfg.two_step_rach_cfg;
+  const bwp_uplink_common&                              ul_bwp         = cell_cfg.params.ul_cfg_common.init_ul_bwp;
+  const rach_config_common_two_step::msgA_pusch_config& msga_pusch_cfg = two_step_cfg.pusch;
+
+  // The MsgB entry, and the preambles registered in it, were set up when the occasion was handled.
+  auto msgb_it = std::find_if(pending_msgbs.begin(), pending_msgbs.end(), [&](const pending_msgb_alloc& msgb) {
+    return msgb.msgb_rnti == msgb_rnti and msgb.prach_slot_rx == prach_slot_rx;
+  });
+  if (msgb_it == pending_msgbs.end()) {
+    logger.warning("pci={} msgb-rnti={}: Discarding MsgA PUSCHs. Cause: The pending MsgB no longer exists",
+                   cell_cfg.params.pci,
+                   msgb_rnti);
+    return;
+  }
+  pending_msgb_alloc& msgb_req = *msgb_it;
+  const rnti_t        ra_rnti  = msgb_req.ra_rnti;
 
   // If by the end of this function, no MsgA PUSCHs were allocated, we remove the respective MsgB entry.
   auto erase_msgb_if_empty = make_scope_exit([this, &msgb_it]() {
@@ -527,32 +608,24 @@ void ra_scheduler::handle_msga_occasion(const rach_indication_message::occasion&
     }
   });
 
-  // Determine MsgA PUSCH slot.
   const slot_point pusch_slot = prach_slot_rx + msga_pusch_cfg.td_offset;
   if (pusch_slot < res_alloc.slot_tx()) {
     logger.warning("pci={} msgb-rnti={}: Discarding MsgA PUSCH. Cause: The PUSCH slot={} has already passed",
                    cell_cfg.params.pci,
                    msgb_rnti,
                    pusch_slot);
+    // Drop only the preambles that never got a PUSCH. The ones already allocated one keep the MsgB alive.
+    msgb_req.preambles.erase(std::remove_if(msgb_req.preambles.begin(),
+                                            msgb_req.preambles.end(),
+                                            [](const auto& p) { return not p.msga_pusch_scheduled; }),
+                             msgb_req.preambles.end());
     return;
   }
   cell_slot_resource_allocator& pusch_alloc = res_alloc[pusch_slot];
 
   // Look up the PUSCH time-domain allocation to derive symbol range and mapping type for DMRS computation.
-  // Note: k2 from the TD allocation is ignored; the actual PUSCH slot offset is given by td_offset as per
-  // TS 38.331 "msgA-PUSCH-TimeDomainAllocation".
   const pusch_time_domain_resource_allocation& td_alloc =
       get_pusch_td_list(cell_cfg)[msga_pusch_cfg.pusch_td_res_index];
-
-  // Determine whether MsgA PUSCH OFDM symbols fall in valid UL symbols.
-  const unsigned start_ul_symbols = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg.get_nof_ul_symbol_per_slot(pusch_slot);
-  if (not cell_cfg.is_ul_enabled(pusch_slot) or td_alloc.symbols.start() < start_ul_symbols) {
-    logger.warning("pci={} msgb-rnti={}: Discarding MsgA PUSCH. Cause: PUSCH would fall in an invalid slot={}",
-                   cell_cfg.params.pci,
-                   msgb_rnti,
-                   pusch_slot);
-    return;
-  }
 
   // Compute DMRS and TBS — shared by all preambles since nof_prbs_per_msgA_po is constant across FDM occasions.
   const dmrs_information    dmrs = make_dmrs_info_common(td_alloc, cell_cfg.params.pci, cell_cfg.params.dmrs_typeA_pos);
@@ -575,24 +648,13 @@ void ra_scheduler::handle_msga_occasion(const rach_indication_message::occasion&
   const unsigned preambles_per_ssb = rach_cfg.total_nof_ra_preambles / nof_ssbs_per_ro;
   const unsigned preambles_per_po  = two_step_cfg.cb_preambles_per_ssb_per_shared_ro / msga_pusch_cfg.po_fdm;
 
-  for (const auto& preamble : occ.preambles) {
-    ocudu_sanity_check(ra_helper::is_msga_cb_preamble(rach_cfg, preamble.preamble_id),
-                       "Handling preamble that is not for MsgA. Are preamble IDs sorted in the RACH indication?");
-    ev_logger.enqueue(scheduler_event_logger::prach_event{
-        prach_slot_rx,
-        cell_cfg.cell_index,
-        preamble.preamble_id,
-        msgb_rnti,
-        preamble.tc_rnti,
-        preamble.time_advance.to_Ta(cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.scs),
-        true});
-    if (msgb_req->preambles.full()) {
-      logger.warning("pci={} msgb-rnti={}: Discarding MsgA preamble id={}. Cause: MsgB preamble list is full",
-                     cell_cfg.params.pci,
-                     msgb_rnti,
-                     preamble.preamble_id);
+  for (auto it = msgb_req.preambles.begin(); it != msgb_req.preambles.end();) {
+    if (it->msga_pusch_scheduled) {
+      // The MsgA PUSCH of this preamble was already allocated in a previous slot indication.
+      ++it;
       continue;
     }
+    const rach_indication_message::preamble& preamble = it->info;
 
     // Determine this preamble's PUSCH occasion index and its CRB allocation.
     const unsigned msga_local_id = (preamble.preamble_id % preambles_per_ssb) - rach_cfg.nof_cb_preambles_per_ssb;
@@ -613,6 +675,7 @@ void ra_scheduler::handle_msga_occasion(const rach_indication_message::occasion&
           msgb_rnti,
           preamble.tc_rnti,
           pusch_slot);
+      it = msgb_req.preambles.erase(it);
       continue;
     }
 
@@ -649,8 +712,8 @@ void ra_scheduler::handle_msga_occasion(const rach_indication_message::occasion&
     pusch.ul_freq_shift_7p5khz = false;
     pusch.dmrs_hopping_mode    = pusch_information::dmrs_hopping_mode::no_hopping;
 
-    // MsgA PUSCH successfully allocated. We will register it in the pending MsgB.
-    msgb_req->preambles.emplace_back(preamble);
+    it->msga_pusch_scheduled = true;
+    ++it;
   }
 }
 
@@ -841,10 +904,7 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
   schedule_pending_msg3_retxs(res_alloc);
 
   // Allocate the MsgA PUSCHs of the PRACH occasions handled so far.
-  for (const pending_msga_occasion& msga : pending_msgas) {
-    handle_msga_occasion(msga.occ, msga.prach_slot_rx, res_alloc);
-  }
-  pending_msgas.clear();
+  schedule_pending_msgas(res_alloc);
 
   // Schedule pending RARs.
   schedule_pending_rars(res_alloc);
