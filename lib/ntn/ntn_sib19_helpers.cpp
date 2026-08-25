@@ -4,9 +4,29 @@
 
 #include "ntn_sib19_helpers.h"
 #include "ocudu/adt/static_vector.h"
+#include <algorithm>
+#include <chrono>
 
 using namespace ocudu;
 using namespace ocudu_ntn;
+
+/// \brief Converts the ephemeris feeder-link round trip into the taCommon-r17 value broadcast in SIB19.
+///
+/// feeder_RTT = RTT(gNB, RP) + RTT(RP, satellite) = k_mac + Common_TA (TS 38.300, Section 16.14.2.1). The ephemeris
+/// computation yields the full feeder_RTT, so k_mac must be subtracted to obtain Common_TA. Applies to every cell
+/// that carries a k_mac of its own - serving, post-switch and neighbour - otherwise the UE double-counts the
+/// RP-to-gNB leg and over-advances by k_mac.
+///
+/// \note \c ta_common is in us whereas \c k_mac is in ms (slots at 15 kHz SCS).
+static void subtract_k_mac_from_ta_common(std::optional<ta_info_t>&                       ta_info,
+                                          const std::optional<std::chrono::milliseconds>& k_mac)
+{
+  if (not ta_info.has_value() or not k_mac.has_value()) {
+    return;
+  }
+  const auto k_mac_us = std::chrono::duration_cast<std::chrono::microseconds>(*k_mac);
+  ta_info->ta_common  = std::max(0.0, ta_info->ta_common - static_cast<double>(k_mac_us.count()));
+}
 
 /// Two neighbor cell configs yield an identical ntn-Config: same satellite (same ephemeris_info) and same
 /// ntn_ul_sync_validity_dur (this also feeds the OCM call and can otherwise change the computed ephemeris_info/
@@ -70,6 +90,8 @@ sib19_info ocudu_ntn::generate_sib19_info(const ntn_cell_config&        cell_cfg
     }
     sib19.ntn_cfg->ntn_ul_sync_validity_dur = ntn_cfg.ntn_ul_sync_validity_dur;
 
+    subtract_k_mac_from_ta_common(sib19.ntn_cfg->ta_info, sib19.ntn_cfg->k_mac);
+
     if (ntn_cfg.ta_common_offset) {
       if (!sib19.ntn_cfg->ta_info) {
         sib19.ntn_cfg->ta_info.emplace();
@@ -104,7 +126,8 @@ sib19_info ocudu_ntn::generate_sib19_info(const ntn_cell_config&        cell_cfg
     }
     sat_sw.ntn_cfg.ephemeris_info = sat_sw_reply->ephemeris_info;
     sat_sw.ntn_cfg.ta_info        = sat_sw_reply->ta_info;
-    sib19.sat_switch_with_resync  = sat_sw;
+    subtract_k_mac_from_ta_common(sat_sw.ntn_cfg.ta_info, sat_sw.ntn_cfg.k_mac);
+    sib19.sat_switch_with_resync = sat_sw;
   }
 
   // Populate each neighbor NTN cell entry and fill OCM result.
@@ -156,6 +179,7 @@ sib19_info ocudu_ntn::generate_sib19_info(const ntn_cell_config&        cell_cfg
       // (transparent payload). Regenerative neighbours have no feeder-link delay to signal.
       if (nc_cfg.has_feeder_link) {
         ncell.ntn_cfg->ta_info = ncell_replies[i].ta_info;
+        subtract_k_mac_from_ta_common(ncell.ntn_cfg->ta_info, ncell.ntn_cfg->k_mac);
       }
     }
     sib19.ncells.push_back(ncell);

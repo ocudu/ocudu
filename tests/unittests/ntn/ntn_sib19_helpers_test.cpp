@@ -34,7 +34,7 @@ ntn_orbital_state make_reply(bool success)
 ntn_orbital_state make_reply_with_ta_info(bool success)
 {
   ntn_orbital_state reply = make_reply(success);
-  reply.ta_info           = ta_info_t{/*ta_common=*/1000.0, /*ta_common_drift=*/1.0, /*ta_common_drift_variant=*/0.1};
+  reply.ta_info           = ta_info_t{/*ta_common=*/3000.0, /*ta_common_drift=*/1.0, /*ta_common_drift_variant=*/0.1};
   return reply;
 }
 
