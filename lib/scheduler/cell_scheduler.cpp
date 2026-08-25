@@ -78,8 +78,12 @@ void cell_scheduler::run_slot(slot_point_extended sl_tx_ext)
   // If there are skipped slots, handle them. Otherwise, the cell grid and cached results are not correctly cleared.
   if (OCUDU_LIKELY(res_grid.slot_tx().valid())) {
     while (OCUDU_UNLIKELY(res_grid.slot_tx() + 1 != sl_tx)) {
-      slot_point skipped_slot = res_grid.slot_tx() + 1;
+      const slot_point skipped_slot = res_grid.slot_tx() + 1;
       logger.info("cell={}: Detected skipped slot={}.", cell_cfg.cell_index, skipped_slot);
+
+      // Account for the skipped slot in the metrics.
+      metrics.handle_skipped_slot(sl_tx_ext - static_cast<uint32_t>(sl_tx - skipped_slot));
+
       reset_resource_grid(skipped_slot);
     }
   } else {

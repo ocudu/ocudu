@@ -632,6 +632,13 @@ void cell_metrics_handler::handle_slot_result(slot_point_extended       sl_tx,
   data.failed_fallback_uci_allocs += slot_result.failed_attempts.fallback_uci_allocs;
 }
 
+void cell_metrics_handler::handle_skipped_slot(slot_point_extended sl_tx)
+{
+  // A skipped slot scheduled nothing and took no time to decide.
+  static const sched_result empty_result{};
+  push_result(sl_tx, empty_result, std::chrono::microseconds{0});
+}
+
 void cell_metrics_handler::push_result(slot_point_extended       sl_tx,
                                        const sched_result&       slot_result,
                                        std::chrono::microseconds slot_decision_latency)

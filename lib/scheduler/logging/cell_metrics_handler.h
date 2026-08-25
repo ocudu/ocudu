@@ -264,6 +264,9 @@ public:
   /// \brief Handle late UL HARQ indication.
   void handle_late_ul_harqs();
 
+  /// \brief Handle a slot that the scheduler did not run, so that the metrics keep track of the slots that elapsed.
+  void handle_skipped_slot(slot_point_extended sl_tx);
+
   /// \brief Handle results stored in the scheduler result and push new entry.
   void push_result(slot_point_extended       sl_tx,
                    const sched_result&       slot_result,
