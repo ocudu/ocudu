@@ -64,10 +64,7 @@ static void configure_cli11_ntn_neighbor_cell_args(CLI::App& app, du_high_unit_n
       ->enum_values({5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 120, 180, 240, 900});
 
   add_option_function<unsigned>(
-      app,
-      "--k_mac",
-      [&ncell](unsigned value) { ncell.k_mac = std::chrono::milliseconds(value); },
-      "K_mac offset [ms]")
+      app, "--k_mac", [&ncell](unsigned value) { ncell.k_mac = std::chrono::milliseconds(value); }, "K_mac offset [ms]")
       ->range(1U, 512U);
 
   static ntn_polarization_t polarization;
@@ -168,6 +165,13 @@ static void configure_cli11_ntn_args(CLI::App&                             app,
              "Cell-specific k-offset to be used for NTN [ms].")
       ->capture_default_str()
       ->range(1, 1023);
+
+  add_option_function<unsigned>(
+      app,
+      "--k_mac",
+      [&serv_cell_ntn_config](unsigned value) { serv_cell_ntn_config.k_mac = std::chrono::milliseconds(value); },
+      "Scheduling offset [ms] used when DL and UL frame timing are not aligned at the gNB. Range: [1..512].")
+      ->range(1U, 512U);
 
   add_option(
       app, "--ntn_ul_sync_validity_dur", serv_cell_ntn_config.ntn_ul_sync_validity_dur, "An UL sync validity duration")
