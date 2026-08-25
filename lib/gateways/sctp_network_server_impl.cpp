@@ -274,22 +274,20 @@ void sctp_network_server_impl::receive_impl(std::vector<uint8_t>   payload,
                                             sockaddr_storage       msg_src_addr,
                                             socklen_t              msg_src_addrlen)
 {
-  while (not app_exec.defer([this,
-                             keepalive = keepalive_token,
-                             payload   = std::move(payload),
-                             msg_flags,
-                             sri,
-                             msg_src_addr,
-                             msg_src_addrlen]() {
-    if (!*keepalive) {
-      return;
-    }
-    if (msg_flags & MSG_NOTIFICATION) {
-      handle_notification(payload, sri, reinterpret_cast<const sockaddr&>(msg_src_addr), msg_src_addrlen);
-    } else {
-      handle_data(sri.sinfo_assoc_id, payload);
-    }
-  })) {
+  // The task is rebuilt on every retry, so the payload must survive a failed dispatch: hold it behind a shared_ptr
+  // instead of moving it into the lambda. Costs one small allocation and never copies the payload bytes.
+  auto payload_holder = std::make_shared<const std::vector<uint8_t>>(std::move(payload));
+  while (not app_exec.defer(
+      [this, keepalive = keepalive_token, payload = payload_holder, msg_flags, sri, msg_src_addr, msg_src_addrlen]() {
+        if (!*keepalive) {
+          return;
+        }
+        if (msg_flags & MSG_NOTIFICATION) {
+          handle_notification(*payload, sri, reinterpret_cast<const sockaddr&>(msg_src_addr), msg_src_addrlen);
+        } else {
+          handle_data(sri.sinfo_assoc_id, *payload);
+        }
+      })) {
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 }
