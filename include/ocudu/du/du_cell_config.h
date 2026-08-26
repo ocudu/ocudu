@@ -28,6 +28,12 @@ struct du_cell_config {
   tac_t               tac;
   nr_cell_global_id_t nr_cgi;
 
+  /// \brief TACs broadcast in \c trackingAreaList, TS 38.331. NTN cells only.
+  ///
+  /// Empty in a TN cell, which broadcasts the mutually exclusive \c trackingAreaCode. When set, holds at least two
+  /// entries led by \c tac.
+  tac_list_t tac_list;
+
   /// Whether the DU automatically attempts to activate the cell or waits for a command from the SMO.
   /// Note: If set to false, the DU won't add this cell to the list of served cells in the F1 Setup Request.
   bool enabled = true;

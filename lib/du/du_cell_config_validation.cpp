@@ -856,6 +856,28 @@ static check_outcome check_ntn_config(const du_cell_config& cell_cfg)
   return {};
 }
 
+static check_outcome check_tac_list(const du_cell_config& cell_cfg)
+{
+  if (cell_cfg.tac_list.empty()) {
+    // TN cell: SIB1 broadcasts trackingAreaCode.
+    return {};
+  }
+
+  // A single-entry list carries no more than trackingAreaCode. The first entry mirrors du_cell_config::tac.
+  CHECK_EQ_OR_ABOVE(cell_cfg.tac_list.size(), 2, "TAC list size");
+  CHECK_EQ_OR_BELOW(cell_cfg.tac_list.size(), MAX_NOF_TACS_NTN, "TAC list size");
+  CHECK_EQ(cell_cfg.tac_list.front(), cell_cfg.tac, "first entry of the TAC list");
+
+  for (unsigned i = 0, e = cell_cfg.tac_list.size(); i != e; ++i) {
+    CHECK_TRUE(is_valid(cell_cfg.tac_list[i]), "Invalid TAC {} in the TAC list", cell_cfg.tac_list[i]);
+    for (unsigned j = i + 1; j != e; ++j) {
+      CHECK_NEQ(cell_cfg.tac_list[j], cell_cfg.tac_list[i], "duplicate TAC in the TAC list");
+    }
+  }
+
+  return {};
+}
+
 check_outcome odu::is_du_cell_config_valid(const du_cell_config& cell_cfg)
 {
   CHECK_EQ_OR_BELOW(cell_cfg.ran.pci, MAX_PCI, "cell PCI");
@@ -878,6 +900,7 @@ check_outcome odu::is_du_cell_config_valid(const du_cell_config& cell_cfg)
   HANDLE_ERROR(check_ul_config_dedicated(cell_cfg));
   HANDLE_ERROR(check_si_sched_config(cell_cfg));
   HANDLE_ERROR(check_ntn_config(cell_cfg));
+  HANDLE_ERROR(check_tac_list(cell_cfg));
   // TODO: Remaining.
   return {};
 }

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "ocudu/adt/static_vector.h"
 #include <cstdint>
 
 namespace ocudu {
@@ -18,5 +19,11 @@ constexpr bool is_valid(tac_t tac)
   // TAC must be in [0..16777215].
   return tac < INVALID_TAC;
 }
+
+/// Max TACs a cell may broadcast per PLMN: maxTAC-r17 (TS 38.331) and maxnoofTACsinNTN (TS 38.413), both 12.
+constexpr size_t MAX_NOF_TACS_NTN = 12;
+
+/// List of TACs broadcast by a cell in \c trackingAreaList, TS 38.331.
+using tac_list_t = static_vector<tac_t, MAX_NOF_TACS_NTN>;
 
 } // namespace ocudu
