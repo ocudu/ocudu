@@ -171,6 +171,15 @@ amf:
         mcc: ${MCC}
         mnc: ${MNC}
       tac: 7
+    # TACs 8 and 9 are served only for the multi-TAC NTN example; every other example registers with TAC 7.
+    - plmn_id:
+        mcc: ${MCC}
+        mnc: ${MNC}
+      tac: 8
+    - plmn_id:
+        mcc: ${MCC}
+        mnc: ${MNC}
+      tac: 9
   plmn_support:
     - plmn_id:
         mcc: ${MCC}
