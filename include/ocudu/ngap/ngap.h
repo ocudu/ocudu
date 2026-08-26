@@ -317,8 +317,8 @@ public:
   handle_dl_ran_status_transfer_required(cu_cp_ue_index_t ue_index) = 0;
 
   /// \brief Handle the reception of an inter CU handover related RRC Reconfiguration Complete.
-  virtual void
-  handle_inter_cu_ho_rrc_recfg_complete(cu_cp_ue_index_t ue_index, const nr_cell_global_id_t& cgi, tac_t tac) = 0;
+  virtual void handle_inter_cu_ho_rrc_recfg_complete(cu_cp_ue_index_t                   ue_index,
+                                                     const cu_cp_user_location_info_nr& user_location_info) = 0;
 
   /// \brief Get the supported PLMNs.
   virtual const ngap_context_t& get_ngap_context() const = 0;

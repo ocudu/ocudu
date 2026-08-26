@@ -1451,9 +1451,8 @@ ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_r
                                                            ue_ctxt.logger);
 }
 
-void ngap_impl::handle_inter_cu_ho_rrc_recfg_complete(const cu_cp_ue_index_t     ue_index,
-                                                      const nr_cell_global_id_t& cgi,
-                                                      const tac_t                tac)
+void ngap_impl::handle_inter_cu_ho_rrc_recfg_complete(const cu_cp_ue_index_t             ue_index,
+                                                      const cu_cp_user_location_info_nr& user_location_info)
 {
   if (!ue_ctxt_list.contains(ue_index)) {
     logger.warning("ue={}: Dropping RrcReconfigurationComplete. UE context does not exist", ue_index);
@@ -1470,7 +1469,7 @@ void ngap_impl::handle_inter_cu_ho_rrc_recfg_complete(const cu_cp_ue_index_t    
   ho_notify->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ctxt.ue_ids.ran_ue_id);
   ho_notify->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ctxt.ue_ids.amf_ue_id);
 
-  fill_asn1_handover_notify(ho_notify, cgi, tac);
+  fill_asn1_handover_notify(ho_notify, user_location_info);
 
   // Forward message to AMF.
   if (!tx_pdu_notifier.on_new_message(ngap_msg)) {

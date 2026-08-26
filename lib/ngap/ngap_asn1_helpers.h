@@ -1061,15 +1061,11 @@ inline bool fill_asn1_handover_resource_allocation_response(asn1::ngap::ho_fail_
 
 /// \brief Fill the Handover Notify to ASN.1 struct.
 /// \param[out] asn1_msg The Handover Notify ASN1 struct to fill.
-/// \param[in] cgi The nr_cell_global_id common type struct of the UE.
-/// \param[in] tac The tac of the UE.
-inline void
-fill_asn1_handover_notify(asn1::ngap::ho_notify_s& asn1_msg, const nr_cell_global_id_t& cgi, const tac_t tac)
+/// \param[in] user_location_info The User Location Information of the UE in the target cell.
+inline void fill_asn1_handover_notify(asn1::ngap::ho_notify_s&           asn1_msg,
+                                      const cu_cp_user_location_info_nr& user_location_info)
 {
-  auto& user_loc_info_nr       = asn1_msg->user_location_info.set_user_location_info_nr();
-  user_loc_info_nr.nr_cgi      = nr_cgi_to_ngap_asn1(cgi);
-  user_loc_info_nr.tai.plmn_id = cgi.plmn_id.to_bytes();
-  user_loc_info_nr.tai.tac.from_number(tac);
+  asn1_msg->user_location_info.set_user_location_info_nr() = cu_cp_user_location_info_to_asn1(user_location_info);
 }
 
 /// \brief Convert the UL RAN Status Transfer struct to ASN.1.

@@ -75,10 +75,15 @@ void inter_cu_handover_execution_target_routine::operator()(coro_context<async_t
 
   if (!is_xn_handover()) {
     // Send handover notify from here. Use UE selected PLMN in the NR-CGI in case of MOCN.
-    ngap.get_ngap_control_message_handler().handle_inter_cu_ho_rrc_recfg_complete(
-        ue->get_ue_index(),
-        {ue->get_ue_context().plmn, ue->get_rrc_ue()->get_cell_context().cgi.nci},
-        ue->get_rrc_ue()->get_cell_context().tac);
+    // Note: get_cell_context() returns by value, so keep a copy rather than a reference into a temporary.
+    const rrc_cell_context      target_cell = ue->get_rrc_ue()->get_cell_context();
+    cu_cp_user_location_info_nr user_location_info;
+    user_location_info.nr_cgi   = {ue->get_ue_context().plmn, target_cell.cgi.nci};
+    user_location_info.tai      = {ue->get_ue_context().plmn, target_cell.tac};
+    user_location_info.tac_list = target_cell.tac_list;
+
+    ngap.get_ngap_control_message_handler().handle_inter_cu_ho_rrc_recfg_complete(ue->get_ue_index(),
+                                                                                  user_location_info);
   } else {
     // Prepare Path Switch Request.
     path_switch_request = fill_path_switch_request(xnap_ho_target_execution_ctxt.value(),

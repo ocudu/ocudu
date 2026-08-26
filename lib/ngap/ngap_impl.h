@@ -65,9 +65,8 @@ public:
   void handle_ul_ran_status_transfer(const cu_cp_status_transfer& ul_ran_status_transfer) override;
   async_task<expected<cu_cp_status_transfer>>
                         handle_dl_ran_status_transfer_required(cu_cp_ue_index_t ue_index) override;
-  void                  handle_inter_cu_ho_rrc_recfg_complete(cu_cp_ue_index_t           ue_index,
-                                                              const nr_cell_global_id_t& cgi,
-                                                              unsigned                   tac) override;
+  void                  handle_inter_cu_ho_rrc_recfg_complete(cu_cp_ue_index_t                   ue_index,
+                                                              const cu_cp_user_location_info_nr& user_location_info) override;
   const ngap_context_t& get_ngap_context() const override { return context; }
   void handle_ul_ue_associated_nrppa_transport(cu_cp_ue_index_t ue_index, const byte_buffer& nrppa_pdu) override;
   async_task<void> handle_ul_non_ue_associated_nrppa_transport(const byte_buffer& nrppa_pdu) override;

@@ -440,9 +440,8 @@ public:
     return launch_no_op_task(ngap_handover_preparation_response{false});
   }
 
-  void handle_inter_cu_ho_rrc_recfg_complete(const cu_cp_ue_index_t     ue_index,
-                                             const nr_cell_global_id_t& cgi,
-                                             const tac_t                tac) override
+  void handle_inter_cu_ho_rrc_recfg_complete(const cu_cp_ue_index_t             ue_index,
+                                             const cu_cp_user_location_info_nr& user_location_info) override
   {
     logger.info("Received a RRC Reconfiguration Complete for Inter-CU Handover");
   }
