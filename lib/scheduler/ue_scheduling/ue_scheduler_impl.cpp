@@ -29,7 +29,6 @@ ue_cell_scheduler* ue_scheduler_impl::do_add_cell(const ue_cell_scheduler_creati
                                                        cell.slice_sched,
                                                        *params.srs_sched,
                                                        cell.cg_sched.get(),
-                                                       cell.uci_selector,
                                                        *params.cell_metrics,
                                                        *params.ev_logger,
                                                        *params.cell_tracer,
@@ -176,9 +175,6 @@ void ue_scheduler_impl::run_slot_impl(slot_point sl_tx)
     // Record UEs needing triggered UL grants based on the finalized DL grant list.
     group_cell.trig_ul_sched.process_dl_results(sl_tx, (*group_cell.cell_res_alloc)[0].result);
 
-    // Update the UCI indication handler after the slot scheduling.
-    group_cell.uci_selector.handle_result(sl_tx, (*group_cell.cell_res_alloc)[0].result);
-
     ocudu_sanity_check(puxch_grant_sanitizer(*group_cell.cell_res_alloc, logger),
                        "PUCCH and PUSCH found for the same UE in the same slot");
   }
@@ -213,12 +209,7 @@ ue_scheduler_impl::cell_context::cell_context(ue_scheduler_impl&                
                                                                    *params.uci_alloc,
                                                                    parent.ue_db)
                : nullptr),
-  trig_ul_sched(parent.ue_db, params.cell_res_alloc->cfg.cell_index, params.cell_res_alloc->cfg.scs_common()),
-  uci_selector(*this,
-               uci_indication_selector::DEFAULT_ACK_TIMEOUT_SLOTS,
-               MAX_PUCCH_PDUS_PER_SLOT,
-               params.cell_res_alloc->cfg.max_nof_ue_contexts,
-               parent.expert_cfg.pucch_sinr_threshold_dB)
+  trig_ul_sched(parent.ue_db, params.cell_res_alloc->cfg.cell_index, params.cell_res_alloc->cfg.scs_common())
 {
 }
 

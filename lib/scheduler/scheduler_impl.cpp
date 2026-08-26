@@ -205,7 +205,7 @@ void scheduler_impl::handle_uci_indication(const uci_indication& uci)
 {
   ocudu_assert(cells.contains(uci.cell_index), "cell={} does not exist", uci.cell_index);
 
-  cells[uci.cell_index]->get_feedback_handler().handle_uci_indication(uci);
+  cells[uci.cell_index]->handle_uci_indication(uci);
 }
 
 void scheduler_impl::handle_srs_indication(const srs_indication& srs)

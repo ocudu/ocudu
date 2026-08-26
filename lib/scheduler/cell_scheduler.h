@@ -23,10 +23,32 @@
 #include "srs/srs_allocator_impl.h"
 #include "srs/srs_scheduler_impl.h"
 #include "uci_scheduling/uci_allocator_impl.h"
+#include "uci_scheduling/uci_indication_selector.h"
 #include "ue_context/ue_cell_repository.h"
 #include "ue_scheduling/ue_scheduler.h"
 
 namespace ocudu {
+
+/// \brief Forwards to the cell event manager the UCI grants whose indication did not arrive before the deadline.
+///
+/// It is handed to the UCI indication handler at its creation, which precedes that of the event manager that consumes
+/// the timeouts.
+class cell_uci_timeout_forwarder final : public uci_indication_timeout_notifier
+{
+public:
+  /// Set the event manager that the timeouts are forwarded to.
+  void connect(cell_event_manager& ev_mng_) { ev_mng = &ev_mng_; }
+
+  void on_timeout(slot_point sl_rx, rnti_t crnti, const uci_action& action) override
+  {
+    if (ev_mng != nullptr) {
+      ev_mng->handle_uci_indication_timeout(sl_rx, crnti, action);
+    }
+  }
+
+private:
+  cell_event_manager* ev_mng = nullptr;
+};
 
 /// \brief This class holds all the resources that are specific to a cell.
 /// This includes the SIB and RA scheduler objects, PDCCH scheduler object, the cell resource grid, etc.
@@ -63,6 +85,8 @@ public:
   void handle_crc_indication(const ul_crc_indication& crc_ind);
 
   void handle_srs_indication(const srs_indication& srs) { ev_mng.handle_srs_indication(srs); }
+
+  void handle_uci_indication(const uci_indication& uci) { ev_mng.handle_uci_indication(uci); }
 
   void handle_paging_information(const sched_paging_information& pi) { ev_mng.handle_paging_information(pi); }
 
@@ -105,7 +129,13 @@ private:
   prach_scheduler    prach_sch;
   srs_allocator_impl srs_alloc;
   srs_scheduler_impl srs_sch;
-  paging_scheduler   pg_sch;
+
+  /// Forwarder of the UCI timeouts to the event manager of this cell.
+  cell_uci_timeout_forwarder uci_timeout_fwd;
+
+  /// Handler of the UCI indications of this cell.
+  uci_indication_selector uci_sel;
+  paging_scheduler        pg_sch;
 
   /// Relay of the notifications of this cell to the UE scheduler.
   cell_ue_event_relay ue_ev_relay;

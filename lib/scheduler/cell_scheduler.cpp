@@ -30,9 +30,30 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   // The SRS allocator is only used if srs_prohibit_time is set.
   srs_alloc(cell_cfg, sched_cfg.ue.srs_prohibit_time),
   srs_sch(cell_cfg, ue_cell_db),
+  uci_sel(uci_timeout_fwd,
+          uci_indication_selector::DEFAULT_ACK_TIMEOUT_SLOTS,
+          MAX_PUCCH_PDUS_PER_SLOT,
+          cell_cfg.max_nof_ue_contexts,
+          sched_cfg.ue.pucch_sinr_threshold_dB),
   pg_sch(cell_cfg, pdcch_sch),
-  ev_mng(cell_cfg, ue_cell_db, si_sch, pg_sch, ra_sch, srs_sch, ue_ev_relay, metrics, event_logger, logger)
+  ev_mng(cell_cfg,
+         res_grid,
+         ue_cell_db,
+         si_sch,
+         pg_sch,
+         ra_sch,
+         srs_sch,
+         ue_ev_relay,
+         ra_ue_repo,
+         uci_sel,
+         metrics,
+         event_logger,
+         *cell_tracer,
+         logger)
 {
+  // The event manager consumes the UCI timeouts detected by the UCI indication handler.
+  uci_timeout_fwd.connect(ev_mng);
+
   // Register new cell in the UE scheduler.
   ue_sched = ue_sched_.add_cell(ue_cell_scheduler_creation_request{msg.cell_index,
                                                                    &pdcch_sch,
@@ -124,6 +145,9 @@ void cell_scheduler::run_slot(slot_point_extended sl_tx_ext)
   // > Schedule UE DL and UL data.
   ue_sched->run_slot(sl_tx);
 
+  // > Update the UCI indication handler with the UCI grants of the finished slot.
+  uci_sel.handle_result(sl_tx, last_result());
+
   // > Mark stop of the slot processing
   auto slot_stop_tp = std::chrono::high_resolution_clock::now();
   auto slot_dur     = std::chrono::duration_cast<std::chrono::microseconds>(slot_stop_tp - slot_start_tp);
@@ -141,7 +165,7 @@ void cell_scheduler::run_slot(slot_point_extended sl_tx_ext)
 
 void cell_scheduler::handle_error_indication(slot_point sl_tx, scheduler_slot_handler::error_outcome event)
 {
-  ue_sched->handle_error_indication(sl_tx, event);
+  ev_mng.handle_error_indication(sl_tx, event);
 }
 
 void cell_scheduler::reset_resource_grid(slot_point sl_tx)

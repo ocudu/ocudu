@@ -36,7 +36,6 @@ struct cell_creation_event {
   srs_scheduler&           srs_sched;
   /// Configured Grant scheduler. Nullptr if CG is not configured for the cell.
   configured_grant_scheduler*    cg_sched;
-  uci_indication_selector&       uci_selector;
   cell_metrics_handler&          metrics;
   scheduler_event_logger&        ev_logger;
   schedtrace::cell_event_tracer& cell_tracer;
@@ -76,7 +75,6 @@ public:
 
   // scheduler_feedback_handler methods.
   void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override;
-  void handle_uci_indication(const uci_indication& uci) override;
   void handle_ul_phr_indication(const ul_phr_indication_message& phr_ind) override;
   void handle_ul_ta_report_indication(const ul_ta_report_indication_message& ta_report_ind) override;
   void handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce) override;
@@ -84,18 +82,16 @@ public:
 
   // cell_ue_event_notifier methods.
   void on_cfra_msg3_acked(du_ue_index_t ue_index) override;
+  void on_conres_ce_acked(du_ue_index_t ue_index) override;
+  void on_sr_detected(du_ue_index_t ue_index, slot_point uci_slot) override;
 
   // scheduler_dl_buffer_state_indication_handler methods.
   void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override;
-
-  // Handle error indication for a past slot.
-  void handle_error_indication(slot_point sl_tx, scheduler_slot_handler::error_outcome event);
 
   // Handle slice reconfiguration request.
   void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req);
 
   // Handle UCI indication timeouts.
-  void handle_uci_indication_timeout(slot_point uci_slot, rnti_t rnti, const uci_action& action);
 
 private:
   class ue_dl_buffer_occupancy_manager;
@@ -142,37 +138,21 @@ private:
   /// Log event when UE does not have a carrier for this cell.
   void log_invalid_cc(du_ue_index_t ue_idx, const char* event_name, bool warn_if_ignored = true) const;
 
-  /// Whether the given rnti/slot pair identifies the successRAR's own HARQ-ACK PUCCH (2-step RACH), allocated by the
-  /// RA scheduler against a common PUCCH resource rather than tracked as a per-UE DL HARQ. Only meant to be checked
-  /// as a fallback, once the UE/HARQ lookup it would otherwise explain has already failed.
-  bool is_msgb_harq_ack_slot(rnti_t rnti, slot_point uci_sl) const;
-
-  void         handle_harq_ind(ue_cell&                             ue_cc,
-                               slot_point                           uci_sl,
-                               bool                                 uci_valid,
-                               const bounded_bitset<MAX_NOF_HARQS>& harq_bits,
-                               std::optional<float>                 pucch_snr);
-  void         handle_csi(ue_cell& ue_cc, slot_point sl_rx, const csi_report_data& csi_rep);
-  event_result handle_uci_pdu(slot_point uci_sl, const uci_indication::uci_pdu& uci_pdu);
-
   // shared parameters.
   ue_event_manager&       parent;
   ue_repository&          ue_db;
   ocudulog::basic_logger& logger;
   // cell parameters.
   const cell_configuration& cfg;
-  cell_resource_allocator&  res_grid;
   ue_fallback_scheduler&    fallback_sched;
   uci_scheduler_impl&       uci_sched;
   inter_slice_scheduler&    slice_sched;
   srs_scheduler&            srs_sched;
   /// Configured Grant scheduler. Nullptr if CG is not configured for the cell.
-  configured_grant_scheduler*    cg_sched;
-  uci_indication_selector&       uci_selector;
-  cell_metrics_handler&          metrics;
-  scheduler_event_logger&        ev_logger;
-  schedtrace::cell_event_tracer& ev_tracer;
-  ra_ue_repository&              ra_ue_repo;
+  configured_grant_scheduler* cg_sched;
+  cell_metrics_handler&       metrics;
+  scheduler_event_logger&     ev_logger;
+  ra_ue_repository&           ra_ue_repo;
 
   std::unique_ptr<pdu_indication_pool> ind_pdu_pool;
 

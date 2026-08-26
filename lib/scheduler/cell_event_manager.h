@@ -5,9 +5,14 @@
 #pragma once
 
 #include "cell_ue_event_notifier.h"
+#include "logging/cell_event_tracer.h"
+#include "ocudu/adt/bounded_bitset.h"
 #include "ocudu/ocudulog/logger.h"
+#include "ocudu/ran/csi_report/csi_report_data.h"
 #include "ocudu/ran/slot_point.h"
+#include "ocudu/scheduler/scheduler_feedback_handler.h"
 #include "ocudu/scheduler/scheduler_positioning_handler.h"
+#include "ocudu/scheduler/scheduler_slot_handler.h"
 #include <memory>
 
 namespace ocudu {
@@ -20,7 +25,11 @@ class ra_scheduler;
 class scheduler_event_logger;
 class si_scheduler;
 class srs_scheduler;
+class ra_ue_repository;
+class uci_indication_selector;
+class ue_cell;
 class ue_cell_repository;
+struct cell_resource_allocator;
 struct pws_si_scheduling_update_request;
 struct srs_indication;
 struct rach_indication_message;
@@ -28,6 +37,8 @@ struct sched_paging_information;
 struct si_scheduling_update_request;
 struct ul_crc_indication;
 struct ul_crc_pdu_indication;
+struct uci_action;
+struct uci_indication;
 
 /// \brief Handler of the events of a cell that require no access to the state shared by the UEs of the cell group.
 ///
@@ -36,16 +47,20 @@ struct ul_crc_pdu_indication;
 class cell_event_manager final : public scheduler_cell_positioning_handler
 {
 public:
-  cell_event_manager(const cell_configuration& cell_cfg,
-                     ue_cell_repository&       ue_cell_db,
-                     si_scheduler&             si_sch,
-                     paging_scheduler&         pg_sch,
-                     ra_scheduler&             ra_sch,
-                     srs_scheduler&            srs_sch,
-                     cell_ue_event_notifier&   ue_ev_notifier,
-                     cell_metrics_handler&     metrics,
-                     scheduler_event_logger&   ev_logger,
-                     ocudulog::basic_logger&   logger);
+  cell_event_manager(const cell_configuration&      cell_cfg,
+                     cell_resource_allocator&       res_grid,
+                     ue_cell_repository&            ue_cell_db,
+                     si_scheduler&                  si_sch,
+                     paging_scheduler&              pg_sch,
+                     ra_scheduler&                  ra_sch,
+                     srs_scheduler&                 srs_sch,
+                     cell_ue_event_notifier&        ue_ev_notifier,
+                     ra_ue_repository&              ra_ue_repo,
+                     uci_indication_selector&       uci_sel,
+                     cell_metrics_handler&          metrics,
+                     scheduler_event_logger&        ev_logger,
+                     schedtrace::cell_event_tracer& ev_tracer,
+                     ocudulog::basic_logger&        logger);
   ~cell_event_manager() override;
 
   /// Activate event processing.
@@ -75,6 +90,15 @@ public:
   /// Enqueue an SRS indication coming from lower layers.
   void handle_srs_indication(const srs_indication& srs);
 
+  /// Enqueue a UCI indication coming from lower layers.
+  void handle_uci_indication(const uci_indication& uci);
+
+  /// Handle a UCI grant whose indication did not arrive before its deadline.
+  void handle_uci_indication_timeout(slot_point uci_slot, rnti_t crnti, const uci_action& action);
+
+  /// Enqueue an error indication of a past slot coming from lower layers.
+  void handle_error_indication(slot_point sl_tx, scheduler_slot_handler::error_outcome event);
+
   // scheduler_cell_positioning_handler methods.
   void handle_positioning_measurement_request(const positioning_measurement_request::cell_info& req) override;
   void handle_positioning_measurement_stop(rnti_t pos_rnti) override;
@@ -83,15 +107,36 @@ private:
   /// Handle a CRC that ACKs/NACKs a HARQ of a UE of this cell.
   void handle_ue_crc(slot_point sl_rx, const ul_crc_pdu_indication& crc);
 
-  const cell_configuration& cell_cfg;
-  ue_cell_repository&       ue_cell_db;
-  si_scheduler&             si_sch;
-  paging_scheduler&         pg_sch;
-  ra_scheduler&             ra_sch;
-  srs_scheduler&            srs_sch;
-  cell_ue_event_notifier&   ue_ev_notifier;
-  cell_metrics_handler&     metrics;
-  scheduler_event_logger&   ev_logger;
+  /// Handle a single UCI PDU of a UE of this cell.
+  void handle_uci_pdu(slot_point uci_sl, const uci_indication::uci_pdu& uci_pdu);
+
+  /// \brief Whether the given rnti/slot pair identifies the successRAR's own HARQ-ACK PUCCH (2-step RACH), allocated by
+  /// the RA scheduler against a common PUCCH resource rather than tracked as a per-UE DL HARQ. Only meant to be checked
+  /// as a fallback, once the UE lookup it would otherwise explain has already failed.
+  bool is_msgb_harq_ack_slot(rnti_t rnti, slot_point uci_sl) const;
+
+  void handle_harq_ind(ue_cell&                             ue_cc,
+                       slot_point                           uci_sl,
+                       bool                                 uci_valid,
+                       const bounded_bitset<MAX_NOF_HARQS>& harq_bits,
+                       std::optional<float>                 pucch_snr);
+
+  void handle_csi(ue_cell& ue_cc, slot_point sl_rx, const csi_report_data& csi_rep);
+
+  const cell_configuration&      cell_cfg;
+  cell_resource_allocator&       res_grid;
+  ue_cell_repository&            ue_cell_db;
+  si_scheduler&                  si_sch;
+  paging_scheduler&              pg_sch;
+  ra_scheduler&                  ra_sch;
+  srs_scheduler&                 srs_sch;
+  cell_ue_event_notifier&        ue_ev_notifier;
+  ra_ue_repository&              ra_ue_repo;
+  uci_indication_selector&       uci_sel;
+  cell_metrics_handler&          metrics;
+  scheduler_event_logger&        ev_logger;
+  schedtrace::cell_event_tracer& ev_tracer;
+  ocudulog::basic_logger&        logger;
 
   // Queue of pending events and pools of the event payloads that do not fit in an event callback.
   std::unique_ptr<cell_event_dispatcher> dispatcher;

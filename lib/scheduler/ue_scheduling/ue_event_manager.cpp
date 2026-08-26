@@ -212,16 +212,13 @@ ue_cell_event_manager::ue_cell_event_manager(ue_event_manager&          parent_,
   ue_db(ue_db_),
   logger(logger_),
   cfg(cell_ev.cell_res_grid.cfg),
-  res_grid(cell_ev.cell_res_grid),
   fallback_sched(cell_ev.fallback_sched),
   uci_sched(cell_ev.uci_sched),
   slice_sched(cell_ev.slice_sched),
   srs_sched(cell_ev.srs_sched),
   cg_sched(cell_ev.cg_sched),
-  uci_selector(cell_ev.uci_selector),
   metrics(cell_ev.metrics),
   ev_logger(cell_ev.ev_logger),
-  ev_tracer(cell_ev.cell_tracer),
   ra_ue_repo(cell_ev.ra_ue_repo),
   ind_pdu_pool(std::make_unique<pdu_indication_pool>(logger)),
   dl_bo_mng(std::make_unique<ue_dl_buffer_occupancy_manager>(*this)),
@@ -521,6 +518,42 @@ void ue_cell_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_mes
   push_event(pcell_index, event_t{"BSR", ue_index, std::move(handle_ul_bsr_ind_impl)});
 }
 
+void ue_cell_event_manager::on_conres_ce_acked(du_ue_index_t ue_index)
+{
+  auto handle_impl = [this, ue_index]() {
+    if (not ue_db.contains(ue_index)) {
+      return event_result::invalid_ue;
+    }
+    ue_db.handle_conres_ce_outcome(ue_index, true);
+    return event_result::processed;
+  };
+
+  push_event(cfg.cell_index, event_t{"ConRes CE ACKed", ue_index, std::move(handle_impl)});
+}
+
+void ue_cell_event_manager::on_sr_detected(du_ue_index_t ue_index, slot_point uci_slot)
+{
+  auto handle_impl = [this, ue_index, uci_slot]() {
+    if (not ue_db.contains(ue_index)) {
+      return event_result::invalid_ue;
+    }
+    ue&            u     = ue_db[ue_index];
+    const ue_cell* ue_cc = u.find_cell(cfg.cell_index);
+    if (ue_cc == nullptr) {
+      return event_result::invalid_ue_cc;
+    }
+
+    u.handle_sr_indication(uci_slot);
+    if (ue_cc->is_in_fallback_mode()) {
+      fallback_sched.handle_sr_indication(ue_index);
+    }
+    return event_result::processed;
+  };
+
+  // Note: Not warned about when the UE is gone, for the same reason as the UCI indication it comes from.
+  push_event(cfg.cell_index, event_t{"SR", ue_index, std::move(handle_impl), false});
+}
+
 void ue_cell_event_manager::on_cfra_msg3_acked(du_ue_index_t ue_index)
 {
   auto handle_impl = [this, ue_index]() {
@@ -540,101 +573,6 @@ void ue_cell_event_manager::on_cfra_msg3_acked(du_ue_index_t ue_index)
   };
 
   push_event(cfg.cell_index, event_t{"CFRA Msg3 ACKed", ue_index, std::move(handle_impl)});
-}
-
-ue_cell_event_manager::event_result ue_cell_event_manager::handle_uci_pdu(slot_point                     uci_sl,
-                                                                          const uci_indication::uci_pdu& uci_pdu)
-{
-  // Fetch UE objects.
-  if (not ue_db.contains(uci_pdu.ue_index)) {
-    // The UE context may not exist yet if this is the successRAR's own HARQ-ACK PUCCH (2-step RACH), whose common
-    // PUCCH resource is allocated by the RA scheduler before UE creation completes.
-    return is_msgb_harq_ack_slot(uci_pdu.crnti, uci_sl) ? event_result::processed : event_result::invalid_ue;
-  }
-  ue&      u     = ue_db[uci_pdu.ue_index];
-  ue_cell* ue_cc = u.find_cell(cfg.cell_index);
-  if (ue_cc == nullptr) {
-    return is_msgb_harq_ack_slot(uci_pdu.crnti, uci_sl) ? event_result::processed : event_result::invalid_ue_cc;
-  }
-
-  // Process the PDU and determine resulting action.
-  auto action = uci_selector.handle_uci_ind_pdu(uci_sl, uci_pdu);
-  if (not action.has_value()) {
-    // No action came out of this UCI PDU (likely needs to combine more UCI PDUs).
-    return event_result::processed;
-  }
-
-  // Process DL HARQ-ACK bits.
-  // Note: the slot of the UCI grant is used, rather than the slot in which the PDU was received, as they differ in the
-  // case of a multi-slot PUCCH repetition burst, and it is the former that the DL HARQ processes are keyed on.
-  if (not action->harq_ack_bits.empty()) {
-    handle_harq_ind(*ue_cc, action->uci_slot, action->uci_valid, action->harq_ack_bits, action->ul_sinr_dB);
-  }
-
-  // Process SRs.
-  if (action->sr_detected) {
-    // Handle SR indication.
-    u.handle_sr_indication(uci_sl);
-
-    if (ue_cc->is_in_fallback_mode()) {
-      fallback_sched.handle_sr_indication(ue_cc->ue_index);
-    }
-
-    // Log SR event.
-    sr_event event{ue_cc->ue_index, ue_cc->rnti()};
-    ev_tracer.on_event(event);
-    ev_logger.enqueue(event);
-
-    // Report SR to metrics.
-    metrics.handle_sr_indication(ue_cc->ue_index, uci_sl);
-  }
-
-  // Process CSI, if present.
-  if (action->csi.has_value()) {
-    handle_csi(*ue_cc, uci_sl, *action->csi);
-  }
-
-  // Process SINR and Timing Advance Offset.
-  if (action->uci_valid and action->ul_sinr_dB.has_value()) {
-    if (action->type == uci_action::pdu_type::pucch_f2f3f4) {
-      ue_cc->get_pucch_power_controller().update_pucch_sinr_f2_f3_f4(
-          uci_sl, action->ul_sinr_dB.value(), not action->harq_ack_bits.empty(), action->csi.has_value());
-    } else {
-      ue_cc->get_pucch_power_controller().update_pucch_sinr_f0_f1(uci_sl, *action->ul_sinr_dB);
-    }
-
-    if (action->time_advance_offset.has_value()) {
-      ue_cc->handle_ul_n_ta_update_indication(action->ul_sinr_dB.value(), *action->time_advance_offset);
-    }
-  }
-
-  // Report the UCI PDU to the metrics handler.
-  metrics.handle_uci_pdu_indication(uci_pdu.ue_index, *action);
-
-  return event_result::processed;
-}
-
-void ue_cell_event_manager::handle_uci_indication(const uci_indication& uci)
-{
-  for (unsigned i = 0, e = uci.ucis.size(); i != e; ++i) {
-    auto uci_ptr = ind_pdu_pool->create_pdu(uci.ucis[i]);
-    if (uci_ptr == nullptr) {
-      return;
-    }
-
-    auto uci_handle_impl = [this, uci_sl = uci.slot_rx, uci_pdu = std::move(uci_ptr)]() {
-      return handle_uci_pdu(uci_sl, *uci_pdu);
-    };
-    push_event(uci.cell_index,
-               event_t{"UCI",
-                       uci.ucis[i].ue_index,
-                       std::move(uci_handle_impl),
-                       // Note: We do not warn if the UE is not found, because there is this transient
-                       // period when the UE is about to receive and process the RRC Release, but it is
-                       // still sending CSI or SR in the PUCCH. If we stop the PUCCH scheduling for the
-                       // UE about to be released, we could risk interference between UEs in the PUCCH.
-                       false});
-  }
 }
 
 void ue_cell_event_manager::handle_ul_phr_indication(const ul_phr_indication_message& phr_ind)
@@ -800,87 +738,6 @@ void ue_cell_event_manager::handle_dl_buffer_state_indication(const dl_buffer_st
   dl_bo_mng->handle_dl_buffer_state_indication(bs);
 }
 
-static void handle_discarded_pusch(const cell_slot_resource_allocator& prev_slot_result, ue_repository& ue_db)
-{
-  for (const ul_sched_info& grant : prev_slot_result.result.ul.puschs) {
-    ue* u = ue_db.find_by_rnti(grant.pusch_cfg.rnti);
-    if (u == nullptr) {
-      // UE has been removed.
-      continue;
-    }
-
-    // - The lower layers will not attempt to decode the PUSCH and will not send any CRC indication.
-    std::optional<ul_harq_process_handle> h_ul = u->get_pcell().harqs.ul_harq(to_harq_id(grant.pusch_cfg.harq_id));
-    if (h_ul.has_value()) {
-      // Note: We don't use this cancellation to update the UL OLLA, as we shouldn't take lates into account in link
-      // adaptation.
-      if (h_ul->nof_retxs() == 0) {
-        // Given that the PUSCH grant was discarded before it reached the PHY, the "new_data" flag was not handled
-        // and the UL softbuffer was not reset. To avoid mixing different TBs in the softbuffer, it is important to
-        // reset the UL HARQ process.
-        h_ul->reset();
-      } else {
-        // To avoid a long UL HARQ timeout window (due to lack of CRC indication), it is important to force a NACK
-        // in the UL HARQ process.
-        h_ul->ul_crc_info(false);
-      }
-    }
-  }
-}
-
-void ue_cell_event_manager::handle_error_indication(slot_point sl_tx, scheduler_slot_handler::error_outcome event)
-{
-  auto handle_error_impl = [this, sl_tx, event]() {
-    // Handle Error Indication.
-
-    const cell_slot_resource_allocator* prev_slot_result = res_grid.get_history(sl_tx);
-    if (prev_slot_result == nullptr) {
-      logger.warning("cell={}, slot={}: Discarding error indication. Cause: Scheduler results associated with the slot "
-                     "of the error indication have already been erased (current slot={})",
-                     cfg.cell_index,
-                     sl_tx,
-                     last_sl_tx);
-      return event_result::processed;
-    }
-
-    // In case DL PDCCHs were skipped, there will be the following consequences:
-    // - The UE will not decode the PDSCH and will not send the respective UCI.
-    // - The UE won't update the HARQ NDI, if new HARQ TB.
-    // - The UCI indication coming later from the lower layers will likely contain a HARQ-ACK=DTX.
-    // In case UL PDCCHs were skipped, there will be the following consequences:
-    // - The UE will not decode the PUSCH.
-    // - The UE won't update the HARQ NDI, if new HARQ TB.
-    // - The CRC indication coming from the lower layers will likely be CRC=KO.
-    // - Any UCI in the respective PUSCH will be likely reported as HARQ-ACK=DTX.
-    // In neither of the cases, the HARQs will timeout, because we did not lose the UCI/CRC indications in the
-    // lower layers. We do not need to cancel associated PUSCH grant (in UL PDCCH case) because it is important
-    // that the PUSCH "new_data" flag reaches the lower layers, telling them whether the UL HARQ buffer needs to
-    // be reset or not. Cancelling HARQ retransmissions is dangerous as it increases the chances of NDI
-    // ambiguity.
-
-    // In case of PDSCH grants being discarded, there will be the following consequences:
-    // - If the PDCCH was not discarded,the UE will fail to decode the PDSCH and will send an HARQ-ACK=NACK. The
-    // scheduler will retransmit the respective DL HARQ. No actions required.
-
-    // In case of PUCCH and PUSCH grants being discarded.
-    if (event.pusch_and_pucch_discarded) {
-      handle_discarded_pusch(*prev_slot_result, ue_db);
-
-      uci_selector.handle_discarded_ucis(sl_tx);
-    }
-
-    // Log event.
-    ev_logger.enqueue(scheduler_event_logger::error_indication_event{sl_tx, event});
-
-    // Report metrics.
-    metrics.handle_error_indication();
-
-    return event_result::processed;
-  };
-
-  push_event(cfg.cell_index, event_t{"error_ind", std::move(handle_error_impl)});
-}
-
 void ue_cell_event_manager::handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req)
 {
   auto req_ptr = ind_pdu_pool->create_pdu(req);
@@ -899,119 +756,6 @@ void ue_cell_event_manager::handle_slice_reconfiguration_request(const du_cell_s
   };
 
   push_event(cfg.cell_index, event_t{"slice_reconf", std::move(handle_slice_reconfig_impl)});
-}
-
-bool ue_cell_event_manager::is_msgb_harq_ack_slot(rnti_t rnti, slot_point uci_sl) const
-{
-  auto ra_it = ra_ue_repo.find(rnti);
-  return ra_it != ra_ue_repo.end() and ra_it->msgb_ack_slot_tx.has_value() and *ra_it->msgb_ack_slot_tx == uci_sl;
-}
-
-void ue_cell_event_manager::handle_harq_ind(ue_cell&                             ue_cc,
-                                            slot_point                           uci_sl,
-                                            bool                                 uci_valid,
-                                            const bounded_bitset<MAX_NOF_HARQS>& harq_bits,
-                                            std::optional<float>                 pucch_snr)
-{
-  metrics.handle_uci_with_harq_ack(ue_cc.ue_index, uci_sl, pucch_snr.has_value());
-
-  mac_harq_ack_report_status status = mac_harq_ack_report_status::dtx;
-  for (unsigned harq_idx = 0, harq_end_idx = harq_bits.size(); harq_idx != harq_end_idx; ++harq_idx) {
-    // Possible report scenarios: (i) ACK, (ii) NACK, (iii) UCI invalid, (iv) UCI timeout.
-    // The (iii) and (iv) are treated as HARQ report status "DTX" to not affect the DL OLLA.
-    if (uci_valid) {
-      status = harq_bits.test(harq_idx) ? mac_harq_ack_report_status::ack : mac_harq_ack_report_status::nack;
-    }
-
-    // Update UE HARQ state with received HARQ-ACK.
-    std::optional<dl_harq_process_handle> h_dl = ue_cc.handle_dl_ack_info(uci_sl, status, harq_idx, pucch_snr);
-    if (not h_dl.has_value()) {
-      // HARQ process was not found or in invalid state. This is expected for the successRAR's own HARQ-ACK PUCCH
-      // (2-step RACH), allocated by the RA scheduler against a common PUCCH resource rather than tracked here; only
-      // warn when that fallback explanation doesn't hold.
-      if (not is_msgb_harq_ack_slot(ue_cc.rnti(), uci_sl)) {
-        logger.warning("rnti={}: Discarding ACK info. Cause: DL HARQ for uci slot={} and HARQ-ACK bit={} not found.",
-                       ue_cc.rnti(),
-                       uci_sl,
-                       harq_idx);
-      }
-      continue;
-    }
-    const units::bytes tbs{h_dl->get_grant_params().tbs};
-
-    // Log Event.
-    harq_ack_event event{ue_cc.ue_index, ue_cc.rnti(), ue_cc.cell_index, uci_sl, h_dl->id(), status, tbs};
-    ev_tracer.on_event(event);
-    ev_logger.enqueue(event);
-
-    // NOTE: this is for the first attachment only. In this case, the first ACK is the one that acks the ConRes or the
-    // ConRes + MSG4; there is only 1 HARQ process waiting for ACKs, which acks the ConRes.
-    if (h_dl->empty() and ue_cc.is_pcell() and
-        ue_cc.get_pcell_state().conres_st == ue_conres_state::pending_conres_ce) {
-      ue_db.handle_conres_ce_outcome(ue_cc.ue_index, true);
-    }
-
-    // Notify metrics handler with HARQ outcome.
-    metrics.handle_dl_harq_ack(ue_cc.ue_index, status == mac_harq_ack_report_status::ack, tbs);
-  }
-}
-
-void ue_cell_event_manager::handle_csi(ue_cell& ue_cc, slot_point sl_rx, const csi_report_data& csi_rep)
-{
-  // Forward CSI bits to UE.
-  ue_cc.handle_csi_report(csi_rep);
-
-  // Log event.
-  csi_report_event event{ue_cc.ue_index, ue_cc.rnti(), sl_rx, csi_rep};
-  ev_tracer.on_event(event);
-  ev_logger.enqueue(event);
-}
-
-void ue_cell_event_manager::handle_uci_indication_timeout(slot_point uci_slot, rnti_t crnti, const uci_action& action)
-{
-  // Notify respective DL HARQ that the UCI went missing.
-  ue* u = parent.ue_db.find_by_rnti(crnti);
-  if (u == nullptr) {
-    // The UE context may not exist yet if this is the successRAR's own HARQ-ACK PUCCH (2-step RACH), whose common
-    // PUCCH resource is allocated by the RA scheduler before UE creation completes.
-    if (not is_msgb_harq_ack_slot(crnti, uci_slot)) {
-      parent.logger.warning("rnti={}: UCI timeout detected for unknown UE at UCI slot={}", crnti, uci_slot);
-    }
-    return;
-  }
-  ue_cell* ue_cc = u->find_cell(cfg.cell_index);
-  if (ue_cc == nullptr) {
-    if (not is_msgb_harq_ack_slot(crnti, uci_slot)) {
-      parent.logger.warning("cell={} rnti={} ue={}: UCI timeout detected for unknown UE carrier at UCI slot={}",
-                            cfg.cell_index,
-                            crnti,
-                            u->ue_index,
-                            uci_slot);
-    }
-    return;
-  }
-
-  // Forward HARQ-ACK bits.
-  if (not action.harq_ack_bits.empty()) {
-    handle_harq_ind(*ue_cc, uci_slot, action.uci_valid, action.harq_ack_bits, action.ul_sinr_dB);
-  }
-
-  // Forward SR indication, if pending.
-  if (action.sr_detected) {
-    u->handle_sr_indication(uci_slot);
-
-    if (ue_cc->is_in_fallback_mode()) {
-      fallback_sched.handle_sr_indication(ue_cc->ue_index);
-    }
-
-    // Log SR event.
-    sr_event event{ue_cc->ue_index, ue_cc->rnti()};
-    ev_tracer.on_event(event);
-    ev_logger.enqueue(event);
-
-    // Report SR to metrics.
-    metrics.handle_sr_indication(ue_cc->ue_index, uci_slot);
-  }
 }
 
 void ue_cell_event_manager::push_event(du_cell_index_t cell_index, event_t event)

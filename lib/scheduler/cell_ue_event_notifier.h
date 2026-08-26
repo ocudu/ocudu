@@ -5,6 +5,7 @@
 #pragma once
 
 #include "ocudu/ran/du_types.h"
+#include "ocudu/ran/slot_point.h"
 
 namespace ocudu {
 
@@ -19,6 +20,12 @@ public:
 
   /// The Msg3 of a contention-free access was ACKed, which completes the contention resolution of the UE.
   virtual void on_cfra_msg3_acked(du_ue_index_t ue_index) = 0;
+
+  /// The contention resolution CE of the UE was ACKed.
+  virtual void on_conres_ce_acked(du_ue_index_t ue_index) = 0;
+
+  /// A scheduling request of the UE was detected in the given UCI slot.
+  virtual void on_sr_detected(du_ue_index_t ue_index, slot_point uci_slot) = 0;
 };
 
 /// \brief Relays the notifications of a cell to the UE scheduler.
@@ -35,6 +42,20 @@ public:
   {
     if (handler != nullptr) {
       handler->on_cfra_msg3_acked(ue_index);
+    }
+  }
+
+  void on_conres_ce_acked(du_ue_index_t ue_index) override
+  {
+    if (handler != nullptr) {
+      handler->on_conres_ce_acked(ue_index);
+    }
+  }
+
+  void on_sr_detected(du_ue_index_t ue_index, slot_point uci_slot) override
+  {
+    if (handler != nullptr) {
+      handler->on_sr_detected(ue_index, uci_slot);
     }
   }
 

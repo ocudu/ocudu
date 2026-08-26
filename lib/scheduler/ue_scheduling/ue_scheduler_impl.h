@@ -41,7 +41,7 @@ private:
 
   void run_sched_strategy(du_cell_index_t cell_index);
 
-  struct cell_context final : public ue_cell_scheduler, public uci_indication_timeout_notifier {
+  struct cell_context final : public ue_cell_scheduler {
     ue_scheduler_impl& parent;
 
     cell_resource_allocator* cell_res_alloc;
@@ -67,9 +67,6 @@ private:
     /// Triggered UL grant sub-scheduler.
     triggered_ul_grant_scheduler trig_ul_sched;
 
-    /// Handler of UCI indications.
-    uci_indication_selector uci_selector;
-
     /// Cell-specific event manager.
     std::unique_ptr<ue_cell_event_manager> ev_mng;
 
@@ -77,11 +74,6 @@ private:
     ~cell_context() override;
 
     void run_slot(slot_point sl_tx) override { parent.run_slot_impl(sl_tx); }
-
-    void handle_error_indication(slot_point sl_tx, scheduler_slot_handler::error_outcome event) override
-    {
-      ev_mng->handle_error_indication(sl_tx, event);
-    }
 
     void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& slice_reconf_req) override
     {
@@ -95,11 +87,6 @@ private:
     void start() override { parent.do_start_cell(cell_res_alloc->cfg.cell_index); }
 
     void stop() override { parent.do_stop_cell(cell_res_alloc->cfg.cell_index); }
-
-    void on_timeout(slot_point sl_rx, rnti_t crnti, const uci_action& action) override
-    {
-      ev_mng->handle_uci_indication_timeout(sl_rx, crnti, action);
-    }
   };
   const scheduler_ue_expert_config& expert_cfg;
   ocudulog::basic_logger&           logger;
