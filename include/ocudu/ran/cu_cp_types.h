@@ -13,6 +13,7 @@
 #include "ocudu/ran/gnb_id.h"
 #include "ocudu/ran/nr_cgi.h"
 #include "ocudu/ran/plmn_identity.h"
+#include "ocudu/ran/tac.h"
 #include "ocudu/ran/tai.h"
 #include "fmt/base.h"
 #include <cstdint>
@@ -133,6 +134,9 @@ struct cu_cp_user_location_info_nr {
   nr_cell_global_id_t     nr_cgi;
   tai_t                   tai;
   std::optional<uint64_t> time_stamp;
+  /// TACs broadcast by the serving cell (\c trackingAreaList, TS 38.331), reported as TAC List in NR NTN,
+  /// TS 38.413. Empty unless several.
+  tac_list_t tac_list;
 };
 
 struct cu_cp_initial_ue_message {

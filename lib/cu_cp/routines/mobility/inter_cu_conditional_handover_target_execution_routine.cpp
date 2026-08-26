@@ -263,9 +263,12 @@ cu_cp_path_switch_request inter_cu_conditional_handover_target_execution_routine
   path_switch_request.ue_index              = execution_ctxt.ue_index;
   path_switch_request.source_amf_ue_ngap_id = execution_ctxt.amf_ue_id;
 
-  path_switch_request.user_location_info.nr_cgi = {ue->get_ue_context().plmn,
-                                                   ue->get_rrc_ue()->get_cell_context().cgi.nci};
-  path_switch_request.user_location_info.tai    = {ue->get_ue_context().plmn, ue->get_rrc_ue()->get_cell_context().tac};
+  // Note: get_cell_context() returns by value, so keep a copy rather than a reference into a temporary.
+  const rrc_cell_context cell_context = ue->get_rrc_ue()->get_cell_context();
+
+  path_switch_request.user_location_info.nr_cgi   = {ue->get_ue_context().plmn, cell_context.cgi.nci};
+  path_switch_request.user_location_info.tai      = {ue->get_ue_context().plmn, cell_context.tac};
+  path_switch_request.user_location_info.tac_list = cell_context.tac_list;
 
   path_switch_request.supported_enc_algos = ue->get_security_manager().get_security_context().supported_enc_algos;
   path_switch_request.supported_int_algos = ue->get_security_manager().get_security_context().supported_int_algos;

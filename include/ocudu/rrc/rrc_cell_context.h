@@ -39,6 +39,7 @@ struct rrc_timers_t {
 struct rrc_cell_context {
   nr_cell_global_id_t        cgi;
   tac_t                      tac;
+  tac_list_t                 tac_list; ///< TACs broadcast in trackingAreaList, TS 38.331. Empty unless several.
   pci_t                      pci;
   arfcn_t                    ssb_arfcn; ///< Absolute SSB position.
   std::vector<nr_band>       bands;     ///< Required for capability band filter.

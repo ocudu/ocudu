@@ -69,8 +69,9 @@ ocudu::ocucp::fill_retrieved_context_path_switch_request(cu_cp_ue&              
   // The AMF identifies the UE by the ID it has at the peer, which is why the retrieval reports it.
   path_switch_req.source_amf_ue_ngap_id = retrieval_context.amf_ue_id;
 
-  path_switch_req.user_location_info.nr_cgi = {selected_plmn, cell_context.cgi.nci};
-  path_switch_req.user_location_info.tai    = {selected_plmn, cell_context.tac};
+  path_switch_req.user_location_info.nr_cgi   = {selected_plmn, cell_context.cgi.nci};
+  path_switch_req.user_location_info.tai      = {selected_plmn, cell_context.tac};
+  path_switch_req.user_location_info.tac_list = cell_context.tac_list;
 
   const security::security_context& sec_context = ue.get_security_manager().get_security_context();
   path_switch_req.supported_enc_algos           = sec_context.supported_enc_algos;
@@ -158,8 +159,9 @@ void ocudu::ocucp::start_retrieved_context_location_reporting(cu_cp_ue&         
     const plmn_identity&    selected_plmn = ue.get_ue_context().plmn;
 
     cu_cp_user_location_info_nr user_location_info;
-    user_location_info.nr_cgi = {selected_plmn, cell_context.cgi.nci};
-    user_location_info.tai    = {selected_plmn, cell_context.tac};
+    user_location_info.nr_cgi   = {selected_plmn, cell_context.cgi.nci};
+    user_location_info.tai      = {selected_plmn, cell_context.tac};
+    user_location_info.tac_list = cell_context.tac_list;
 
     loc_report_handler.handle_location_report_transmission(
         ue.get_location_manager().get_direct_location_report(ue.get_ue_index(), user_location_info, loc_req));

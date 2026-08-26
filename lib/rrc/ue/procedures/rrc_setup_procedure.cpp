@@ -155,11 +155,12 @@ void rrc_setup_procedure::send_initial_ue_msg()
 
   const auto& rrc_setup_complete = rrc_setup_complete_msg.crit_exts.rrc_setup_complete();
 
-  init_ue_msg.ue_index                  = context.ue_index;
-  init_ue_msg.nas_pdu                   = rrc_setup_complete.ded_nas_msg.copy();
-  init_ue_msg.establishment_cause       = context.connection_cause;
-  init_ue_msg.user_location_info.nr_cgi = {context.plmn_id, context.cell.cgi.nci};
-  init_ue_msg.user_location_info.tai    = {context.plmn_id, context.cell.tac};
+  init_ue_msg.ue_index                    = context.ue_index;
+  init_ue_msg.nas_pdu                     = rrc_setup_complete.ded_nas_msg.copy();
+  init_ue_msg.establishment_cause         = context.connection_cause;
+  init_ue_msg.user_location_info.nr_cgi   = {context.plmn_id, context.cell.cgi.nci};
+  init_ue_msg.user_location_info.tai      = {context.plmn_id, context.cell.tac};
+  init_ue_msg.user_location_info.tac_list = context.cell.tac_list;
 
   if (rrc_setup_complete.ng_5_g_s_tmsi_value_present) {
     if (rrc_setup_complete.ng_5_g_s_tmsi_value.type() ==

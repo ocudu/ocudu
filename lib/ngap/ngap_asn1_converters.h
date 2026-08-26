@@ -227,6 +227,19 @@ cu_cp_user_location_info_to_asn1(const cu_cp_user_location_info_nr& cu_cp_user_l
     asn1_user_location_info.time_stamp_present = true;
     asn1_user_location_info.time_stamp.from_number(cu_cp_user_location_info.time_stamp.value());
   }
+  // NR NTN TAI Information, TS 38.413: the TAI above carries one TAC, so report the full broadcast list here. An
+  // AMF reading this IE ignores that TAI; one that does not support it still has it.
+  if (not cu_cp_user_location_info.tac_list.empty()) {
+    asn1_user_location_info.ie_exts_present                      = true;
+    asn1_user_location_info.ie_exts.nr_ntn_tai_info_present      = true;
+    asn1_user_location_info.ie_exts.nr_ntn_tai_info.serving_plmn = cu_cp_user_location_info.tai.plmn_id.to_bytes();
+    for (tac_t tac : cu_cp_user_location_info.tac_list) {
+      asn1::fixed_octstring<3, true> asn1_tac;
+      asn1_tac.from_number(tac);
+      asn1_user_location_info.ie_exts.nr_ntn_tai_info.tac_list_in_nr_ntn.push_back(asn1_tac);
+    }
+    // UE Location Derived TAC needs the coarse UE location, not reported yet.
+  }
 
   return asn1_user_location_info;
 }

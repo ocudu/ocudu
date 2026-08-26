@@ -355,11 +355,12 @@ void rrc_ue_impl::handle_security_mode_complete(const asn1::rrc_nr::security_mod
 
 void rrc_ue_impl::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_info_transfer)
 {
-  cu_cp_ul_nas_transport ul_nas_msg    = {};
-  ul_nas_msg.ue_index                  = context.ue_index;
-  ul_nas_msg.nas_pdu                   = ul_info_transfer.ded_nas_msg.copy();
-  ul_nas_msg.user_location_info.nr_cgi = {context.plmn_id, context.cell.cgi.nci};
-  ul_nas_msg.user_location_info.tai    = {context.plmn_id, context.cell.tac};
+  cu_cp_ul_nas_transport ul_nas_msg      = {};
+  ul_nas_msg.ue_index                    = context.ue_index;
+  ul_nas_msg.nas_pdu                     = ul_info_transfer.ded_nas_msg.copy();
+  ul_nas_msg.user_location_info.nr_cgi   = {context.plmn_id, context.cell.cgi.nci};
+  ul_nas_msg.user_location_info.tai      = {context.plmn_id, context.cell.tac};
+  ul_nas_msg.user_location_info.tac_list = context.cell.tac_list;
 
   if (!ngap_notifier.on_ul_nas_transport_message(ul_nas_msg)) {
     logger.log_info(
@@ -884,8 +885,9 @@ rrc_ue_impl::get_rrc_ue_release_context(bool                                    
 {
   // Prepare location info to return.
   rrc_ue_release_context release_context;
-  release_context.user_location_info.nr_cgi = {context.plmn_id, context.cell.cgi.nci};
-  release_context.user_location_info.tai    = {context.plmn_id, context.cell.tac};
+  release_context.user_location_info.nr_cgi   = {context.plmn_id, context.cell.cgi.nci};
+  release_context.user_location_info.tai      = {context.plmn_id, context.cell.tac};
+  release_context.user_location_info.tac_list = context.cell.tac_list;
 
   if (requires_rrc_message) {
     if (context.pdcp_manager.get_srb_ids().empty()) {

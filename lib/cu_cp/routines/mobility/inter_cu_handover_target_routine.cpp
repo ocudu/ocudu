@@ -291,8 +291,9 @@ void inter_cu_handover_target_routine::operator()(
                        request.target_cell_id);
       } else {
         cu_cp_user_location_info_nr user_location_info;
-        user_location_info.nr_cgi = {request.guami.plmn, target_cell->cgi.nci};
-        user_location_info.tai    = {request.guami.plmn, target_cell->tac};
+        user_location_info.nr_cgi   = {request.guami.plmn, target_cell->cgi.nci};
+        user_location_info.tai      = {request.guami.plmn, target_cell->tac};
+        user_location_info.tac_list = target_cell->tac_list;
         auto report =
             ue->get_location_manager().get_direct_location_report(request.ue_index, user_location_info, loc_req);
         ngap_loc_report_handler.handle_location_report_transmission(report);

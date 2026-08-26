@@ -227,6 +227,7 @@ bool du_processor_impl::create_rrc_ue(cu_cp_ue&                              ue,
   rrc_ue_create_msg.c_rnti                = c_rnti;
   rrc_ue_create_msg.cell.cgi              = cgi;
   rrc_ue_create_msg.cell.tac              = cell.tac;
+  rrc_ue_create_msg.cell.tac_list         = cell.tac_list;
   rrc_ue_create_msg.cell.pci              = cell.pci;
   rrc_ue_create_msg.cell.bands            = cell.bands;
   rrc_ue_create_msg.f1ap_pdu_notifier     = &rrc_ue_f1ap_adapters.at(ue_index);

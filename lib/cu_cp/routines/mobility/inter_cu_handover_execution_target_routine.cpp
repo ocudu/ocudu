@@ -252,8 +252,9 @@ cu_cp_path_switch_request inter_cu_handover_execution_target_routine::fill_path_
   path_switch_req.ue_index              = target_execution_ctxt.ue_index;
   path_switch_req.source_amf_ue_ngap_id = target_execution_ctxt.amf_ue_id;
 
-  path_switch_req.user_location_info.nr_cgi = {selected_plmn, cell_context.cgi.nci};
-  path_switch_req.user_location_info.tai    = {selected_plmn, cell_context.tac};
+  path_switch_req.user_location_info.nr_cgi   = {selected_plmn, cell_context.cgi.nci};
+  path_switch_req.user_location_info.tai      = {selected_plmn, cell_context.tac};
+  path_switch_req.user_location_info.tac_list = cell_context.tac_list;
 
   path_switch_req.supported_enc_algos = security_context.supported_enc_algos;
   path_switch_req.supported_int_algos = security_context.supported_int_algos;
