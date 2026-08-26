@@ -263,4 +263,5 @@ void ocudu::fill_sdr_worker_manager_config(worker_manager_config& config, const 
   for (unsigned i = 0; i != sdr_cfg.nof_cells; ++i) {
     config.config_affinities[i].push_back(ru_cfg.expert_execution_cfg.cell_affinities[i].ru_cpu_cfg);
   }
+  sdr_cfg.executor_tracing_enable = ru_cfg.tracer.executor_tracing_enable;
 }

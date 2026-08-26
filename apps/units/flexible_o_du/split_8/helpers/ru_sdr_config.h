@@ -58,6 +58,12 @@ struct ru_sdr_unit_logger_config {
   ocudulog::basic_levels phy_level   = ocudulog::basic_levels::warning;
 };
 
+/// RU SDR tracing functionalities.
+struct ru_sdr_unit_tracer_config {
+  /// Set to true to enable tracing of the RU physical layer executors.
+  bool executor_tracing_enable = false;
+};
+
 /// CPU affinities configuration for the cell.
 struct ru_sdr_unit_cpu_affinities_cell_config {
   /// Radio Unit workers CPU affinity mask.
@@ -153,6 +159,8 @@ struct ru_sdr_unit_config {
   std::string otw_format = "default";
   /// Loggers.
   ru_sdr_unit_logger_config loggers;
+  /// Tracers.
+  ru_sdr_unit_tracer_config tracer;
   /// Expert SDR Radio Unit settings.
   ru_sdr_unit_expert_config expert_cfg;
   /// Amplitude control configuration.

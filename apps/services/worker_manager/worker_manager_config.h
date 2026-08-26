@@ -40,6 +40,8 @@ struct worker_manager_config {
 
     lower_phy_thread_profile profile;
     unsigned                 nof_cells;
+    /// Enable task tracing.
+    bool executor_tracing_enable = false;
   };
 
   /// RU dummy worker configuration.

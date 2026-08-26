@@ -9,6 +9,7 @@
 #include "ocudu/ru/ofh/ru_ofh_executor_mapper_factory.h"
 #include "ocudu/support/executors/executor_decoration_factory.h"
 #include "ocudu/support/executors/inline_task_executor.h"
+#include "ocudu/support/executors/metrics/executor_metrics_channel_registry.h"
 #include "ocudu/support/executors/strand_executor.h"
 
 using namespace ocudu;
@@ -558,17 +559,21 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
       task_executor* phy_exec  = exec_mng.executors().at(exec_name);
 
       ru_sdr_executor_mapper_sequential_configuration ru_sdr_exec_map_config;
-      ru_sdr_exec_map_config.asynchronous_exec = exec_mng.executors().at("radio_exec");
-      ru_sdr_exec_map_config.common_exec       = phy_exec;
-      ru_sdr_exec_map_config.nof_sectors       = config.nof_cells;
-      sdr_exec_mapper                          = create_ru_sdr_executor_mapper(ru_sdr_exec_map_config);
+      ru_sdr_exec_map_config.asynchronous_exec             = exec_mng.executors().at("radio_exec");
+      ru_sdr_exec_map_config.common_exec                   = phy_exec;
+      ru_sdr_exec_map_config.nof_sectors                   = config.nof_cells;
+      ru_sdr_exec_map_config.exec_metrics_channel_registry = exec_metrics_channel_registry;
+      ru_sdr_exec_map_config.executor_tracing_enable       = config.executor_tracing_enable;
+      sdr_exec_mapper                                      = create_ru_sdr_executor_mapper(ru_sdr_exec_map_config);
       break;
     }
     case worker_manager_config::ru_sdr_config::lower_phy_thread_profile::single: {
       fmt::print("Lower PHY in single baseband executor mode.\n");
       ru_sdr_executor_mapper_single_configuration ru_sdr_exec_map_config;
-      ru_sdr_exec_map_config.radio_exec         = exec_mng.executors().at("radio_exec");
-      ru_sdr_exec_map_config.high_prio_executor = rt_hi_prio_exec;
+      ru_sdr_exec_map_config.radio_exec                    = exec_mng.executors().at("radio_exec");
+      ru_sdr_exec_map_config.high_prio_executor            = rt_hi_prio_exec;
+      ru_sdr_exec_map_config.exec_metrics_channel_registry = exec_metrics_channel_registry;
+      ru_sdr_exec_map_config.executor_tracing_enable       = config.executor_tracing_enable;
 
       for (unsigned cell_id = 0; cell_id != config.nof_cells; ++cell_id) {
         const std::string name      = "lower_phy#" + std::to_string(cell_id);
@@ -591,8 +596,10 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
     case worker_manager_config::ru_sdr_config::lower_phy_thread_profile::dual: {
       fmt::print("Lower PHY in dual baseband executor mode.\n");
       ru_sdr_executor_mapper_dual_configuration ru_sdr_exec_map_config;
-      ru_sdr_exec_map_config.radio_exec         = exec_mng.executors().at("radio_exec");
-      ru_sdr_exec_map_config.high_prio_executor = rt_hi_prio_exec;
+      ru_sdr_exec_map_config.radio_exec                    = exec_mng.executors().at("radio_exec");
+      ru_sdr_exec_map_config.high_prio_executor            = rt_hi_prio_exec;
+      ru_sdr_exec_map_config.exec_metrics_channel_registry = exec_metrics_channel_registry;
+      ru_sdr_exec_map_config.executor_tracing_enable       = config.executor_tracing_enable;
 
       for (unsigned cell_id = 0; cell_id != config.nof_cells; ++cell_id) {
         const std::string name_tx = "lower_phy_tx#" + std::to_string(cell_id);
@@ -624,8 +631,10 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
     case worker_manager_config::ru_sdr_config::lower_phy_thread_profile::triple: {
       fmt::print("Lower PHY in triple executor mode.\n");
       ru_sdr_executor_mapper_triple_configuration ru_sdr_exec_map_config;
-      ru_sdr_exec_map_config.radio_exec         = exec_mng.executors().at("radio_exec");
-      ru_sdr_exec_map_config.high_prio_executor = rt_hi_prio_exec;
+      ru_sdr_exec_map_config.radio_exec                    = exec_mng.executors().at("radio_exec");
+      ru_sdr_exec_map_config.high_prio_executor            = rt_hi_prio_exec;
+      ru_sdr_exec_map_config.exec_metrics_channel_registry = exec_metrics_channel_registry;
+      ru_sdr_exec_map_config.executor_tracing_enable       = config.executor_tracing_enable;
 
       for (unsigned cell_id = 0; cell_id != config.nof_cells; ++cell_id) {
         const std::string name_tx = "lower_phy_tx#" + std::to_string(cell_id);

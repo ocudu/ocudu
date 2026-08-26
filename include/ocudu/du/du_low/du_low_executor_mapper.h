@@ -90,16 +90,6 @@ struct du_low_executor_mapper_flexible_exec_config {
 using du_low_executor_mapper_exec_config =
     std::variant<du_low_executor_mapper_single_exec_config, du_low_executor_mapper_flexible_exec_config>;
 
-/// Collects the DU low executor mapper metrics configuration.
-struct du_low_executor_mapper_metric_config {
-  /// Period.
-  std::chrono::milliseconds period;
-  /// Sequential executor for metric processing.
-  task_executor& sequential_executor;
-  /// Metrics logger.
-  ocudulog::log_channel& logger;
-};
-
 /// Configuration of DU-low executor mapper.
 struct du_low_executor_mapper_config {
   /// Common executor configuration.

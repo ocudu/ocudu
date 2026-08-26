@@ -11,6 +11,7 @@
 namespace ocudu {
 
 class task_executor;
+class executor_metrics_channel_registry;
 
 /// Interface used to access different executors used in an SDR Radio Unit sector.
 class ru_sdr_sector_executor_mapper
@@ -64,6 +65,12 @@ struct ru_sdr_executor_mapper_sequential_configuration {
   task_executor* common_exec;
   /// Number of sectors.
   unsigned nof_sectors;
+  /// \brief Optional executor metrics channel registry.
+  ///
+  /// If it is initialized, the executor mapper wraps the executors with metric decorators.
+  executor_metrics_channel_registry* exec_metrics_channel_registry = nullptr;
+  /// Enable task tracing.
+  bool executor_tracing_enable = false;
 };
 
 /// Collects the SDR RU executor mapper dependencies for a single baseband thread.
@@ -74,6 +81,12 @@ struct ru_sdr_executor_mapper_single_configuration {
   task_executor* high_prio_executor;
   /// Dedicated baseband executor per cell basis.
   std::vector<task_executor*> baseband_exec;
+  /// \brief Optional executor metrics channel registry.
+  ///
+  /// If it is initialized, the executor mapper wraps the executors with metric decorators.
+  executor_metrics_channel_registry* exec_metrics_channel_registry = nullptr;
+  /// Enable task tracing.
+  bool executor_tracing_enable = false;
 };
 
 /// Collects the SDR RU executor mapper dependencies for a dual baseband executor.
@@ -92,6 +105,12 @@ struct ru_sdr_executor_mapper_dual_configuration {
   task_executor* high_prio_executor;
   /// Dedicated baseband executor per cell basis.
   std::vector<cell_executors> baseband_exec;
+  /// \brief Optional executor metrics channel registry.
+  ///
+  /// If it is initialized, the executor mapper wraps the executors with metric decorators.
+  executor_metrics_channel_registry* exec_metrics_channel_registry = nullptr;
+  /// Enable task tracing.
+  bool executor_tracing_enable = false;
 };
 
 /// Collects the SDR RU executor mapper dependencies for a triple baseband executor.
@@ -112,6 +131,12 @@ struct ru_sdr_executor_mapper_triple_configuration {
   task_executor* high_prio_executor;
   /// Dedicated baseband executor per cell basis.
   std::vector<cell_executors> baseband_exec;
+  /// \brief Optional executor metrics channel registry.
+  ///
+  /// If it is initialized, the executor mapper wraps the executors with metric decorators.
+  executor_metrics_channel_registry* exec_metrics_channel_registry = nullptr;
+  /// Enable task tracing.
+  bool executor_tracing_enable = false;
 };
 
 /// Creates an SDR RU executor mapper from a sequential baseband executor configuration.
