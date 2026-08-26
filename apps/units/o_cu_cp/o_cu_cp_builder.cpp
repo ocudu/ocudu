@@ -18,6 +18,8 @@
 #include "ocudu/cu_cp/cu_cp_executor_mapper.h"
 #include "ocudu/cu_cp/o_cu_cp_config.h"
 #include "ocudu/cu_cp/o_cu_cp_factory.h"
+#include "ocudu/ocudulog/ocudulog.h"
+#include "ocudu/ran/i_rnti.h"
 
 using namespace ocudu;
 
@@ -55,6 +57,65 @@ build_cu_cp_metrics_config(std::vector<app_services::metrics_config>&   cu_cp_se
   return out;
 }
 
+/// Logs the Local NG-RAN Node Identifier that the I-RNTIs of this node carry, and which gNB IDs a neighbour can be
+/// given while staying distinguishable from it.
+///
+/// The I-RNTI identifies the allocating node by a Local NG-RAN Node Identifier (TS 38.300 Annex F) that is narrower
+/// than a gNB ID. [Implementation-defined] The CU-CP takes it from the least significant bits of its gNB ID
+/// (TS 38.300 Annex C). Peers resolve an I-RNTI at RRC Resume by matching that identifier against the gNB IDs they are
+/// connected to, so gNB IDs sharing those bits address the same node.
+static void
+log_i_rnti_node_identifiers(gnb_id_t gnb_id, full_i_rnti_profile full_profile, short_i_rnti_profile short_profile)
+{
+  const uint32_t full_mask  = (1U << full_i_rnti_t::nof_node_id_bits(full_profile)) - 1;
+  const uint32_t short_mask = (1U << short_i_rnti_t::nof_node_id_bits(short_profile)) - 1;
+  const uint32_t full_id    = full_i_rnti_t::to_local_node_id(full_profile, gnb_id.id);
+  const uint32_t short_id   = short_i_rnti_t::to_local_node_id(short_profile, gnb_id.id);
+
+  // A gNB ID that fits in the node identifier is carried whole, and the I-RNTIs of this node address it alone.
+  const bool full_truncates  = gnb_id.id > full_mask;
+  const bool short_truncates = gnb_id.id > short_mask;
+  if (!full_truncates && !short_truncates) {
+    return;
+  }
+
+  auto is_available = [&](uint32_t candidate) {
+    return (!full_truncates || (candidate & full_mask) != full_id) &&
+           (!short_truncates || (candidate & short_mask) != short_id);
+  };
+
+  // Walk up from the configured gNB ID, which shows that adjacent gNB IDs are usable while those a whole node
+  // identifier apart are not.
+  std::vector<std::string> available;
+  std::vector<std::string> unavailable;
+  const uint64_t           gnb_id_range = uint64_t{1} << gnb_id.bit_length;
+  for (uint64_t candidate = gnb_id.id + 1; candidate < gnb_id_range && (available.size() < 3 || unavailable.size() < 3);
+       ++candidate) {
+    std::vector<std::string>& examples = is_available(candidate) ? available : unavailable;
+    if (examples.size() < 3) {
+      examples.push_back(fmt::format("{:#x}", candidate));
+    }
+  }
+
+  std::vector<std::string> conditions;
+  if (full_truncates) {
+    conditions.push_back(fmt::format("gnb_id & {:#x} != {:#x}", full_mask, full_id));
+  }
+  if (short_truncates) {
+    conditions.push_back(fmt::format("gnb_id & {:#x} != {:#x}", short_mask, short_id));
+  }
+
+  ocudulog::basic_logger& logger = ocudulog::fetch_basic_logger("CU-CP", false);
+  logger.info("I-RNTI node identifiers for gnb_id={:#x}: full={:#x}, short={:#x}. A neighbour gNB is told apart from "
+              "this node only if {} (available gnb_ids: {}; unavailable gnb_ids: {})",
+              gnb_id.id,
+              full_id,
+              short_id,
+              fmt::join(conditions, " and "),
+              fmt::join(available, ", "),
+              fmt::join(unavailable, ", "));
+}
+
 o_cu_cp_unit ocudu::build_o_cu_cp(const o_cu_cp_unit_config& unit_cfg, const o_cu_cp_unit_dependencies& dependencies)
 {
   ocudu_assert(dependencies.executor_mapper, "Invalid CU-CP executor mapper");
@@ -70,6 +131,11 @@ o_cu_cp_unit ocudu::build_o_cu_cp(const o_cu_cp_unit_config& unit_cfg, const o_c
   cu_cp_cfg.services.cu_cp_e2_exec          = &dependencies.executor_mapper->e2_executor();
   cu_cp_cfg.services.timers                 = dependencies.timers;
   cu_cp_cfg.xnap.xnc_gws                    = dependencies.xnc_gws;
+
+  // Only a peer over Xn resolves the I-RNTIs this node allocates.
+  if (!cucp_unit_cfg.xnap_config.gateways.empty()) {
+    log_i_rnti_node_identifiers(cu_cp_cfg.node.gnb_id, cu_cp_cfg.ue.full_i_rnti_prof, cu_cp_cfg.ue.short_i_rnti_prof);
+  }
 
   o_cu_cp_unit ocucp;
   auto         e2_metric_connectors = std::make_unique<e2_cu_metrics_connector_manager>();

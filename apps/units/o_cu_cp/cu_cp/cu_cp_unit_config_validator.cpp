@@ -706,66 +706,6 @@ static bool validate_ntn_appconfig(const cu_cp_unit_config& config)
   return true;
 }
 
-/// Reports the Local NG-RAN Node Identifier that the I-RNTIs of this node carry, and which gNB IDs a neighbour can be
-/// given while staying distinguishable from it.
-///
-/// The I-RNTI identifies the allocating node by a Local NG-RAN Node Identifier (TS 38.300 Annex F) that is narrower
-/// than a gNB ID. [Implementation-defined] The CU-CP takes it from the least significant bits of its gNB ID
-/// (TS 38.300 Annex C). Peers resolve an I-RNTI at RRC Resume by matching that identifier against the gNB IDs they are
-/// connected to, so gNB IDs sharing those bits address the same node.
-static void
-report_i_rnti_node_identifiers(gnb_id_t gnb_id, full_i_rnti_profile full_profile, short_i_rnti_profile short_profile)
-{
-  const uint32_t full_mask  = (1U << full_i_rnti_t::nof_node_id_bits(full_profile)) - 1;
-  const uint32_t short_mask = (1U << short_i_rnti_t::nof_node_id_bits(short_profile)) - 1;
-  const uint32_t full_id    = full_i_rnti_t::to_local_node_id(full_profile, gnb_id.id);
-  const uint32_t short_id   = short_i_rnti_t::to_local_node_id(short_profile, gnb_id.id);
-
-  // A gNB ID that fits in the node identifier is carried whole, and the I-RNTIs of this node address it alone.
-  const bool full_truncates  = gnb_id.id > full_mask;
-  const bool short_truncates = gnb_id.id > short_mask;
-  if (!full_truncates && !short_truncates) {
-    return;
-  }
-
-  auto is_available = [&](uint32_t candidate) {
-    return (!full_truncates || (candidate & full_mask) != full_id) &&
-           (!short_truncates || (candidate & short_mask) != short_id);
-  };
-
-  // Walk up from the configured gNB ID, which shows that adjacent gNB IDs are usable while those a whole node
-  // identifier apart are not.
-  std::vector<std::string> available;
-  std::vector<std::string> unavailable;
-  const uint64_t           gnb_id_range = uint64_t{1} << gnb_id.bit_length;
-  for (uint64_t candidate = gnb_id.id + 1; candidate < gnb_id_range && (available.size() < 3 || unavailable.size() < 3);
-       ++candidate) {
-    std::vector<std::string>& examples = is_available(candidate) ? available : unavailable;
-    if (examples.size() < 3) {
-      examples.push_back(fmt::format("{:#x}", candidate));
-    }
-  }
-
-  std::vector<std::string> conditions;
-  if (full_truncates) {
-    conditions.push_back(fmt::format("gnb_id & {:#x} != {:#x}", full_mask, full_id));
-  }
-  if (short_truncates) {
-    conditions.push_back(fmt::format("gnb_id & {:#x} != {:#x}", short_mask, short_id));
-  }
-
-  fmt::print("I-RNTI node identifiers for gnb_id={:#x}: full={:#x}, short={:#x}.\n"
-             "A neighbour gNB is told apart from this node only if {}:\n"
-             "  - available gnb_ids: {}\n"
-             "  - unavailable gnb_ids: {}\n",
-             gnb_id.id,
-             full_id,
-             short_id,
-             fmt::join(conditions, " and "),
-             fmt::join(available, ", "),
-             fmt::join(unavailable, ", "));
-}
-
 static bool validate_cu_cp_appconfig(const gnb_id_t gnb_id, const cu_cp_unit_config& config)
 {
   // validate AMF config
@@ -791,19 +731,15 @@ static bool validate_cu_cp_appconfig(const gnb_id_t gnb_id, const cu_cp_unit_con
     return false;
   }
 
-  // Only a peer over Xn resolves the I-RNTIs this node allocates.
-  if (!config.xnap_config.gateways.empty()) {
-    full_i_rnti_profile  full_profile  = full_i_rnti_profile::profile_0;
-    short_i_rnti_profile short_profile = short_i_rnti_profile::profile_0;
-    if (!from_string(full_profile, config.full_i_rnti_profile)) {
-      fmt::print("Invalid full_i_rnti_profile={}.\n", config.full_i_rnti_profile);
-      return false;
-    }
-    if (!from_string(short_profile, config.short_i_rnti_profile)) {
-      fmt::print("Invalid short_i_rnti_profile={}.\n", config.short_i_rnti_profile);
-      return false;
-    }
-    report_i_rnti_node_identifiers(gnb_id, full_profile, short_profile);
+  full_i_rnti_profile  full_profile  = full_i_rnti_profile::profile_0;
+  short_i_rnti_profile short_profile = short_i_rnti_profile::profile_0;
+  if (!from_string(full_profile, config.full_i_rnti_profile)) {
+    fmt::print("Invalid full_i_rnti_profile={}.\n", config.full_i_rnti_profile);
+    return false;
+  }
+  if (!from_string(short_profile, config.short_i_rnti_profile)) {
+    fmt::print("Invalid short_i_rnti_profile={}.\n", config.short_i_rnti_profile);
+    return false;
   }
 
   return true;
