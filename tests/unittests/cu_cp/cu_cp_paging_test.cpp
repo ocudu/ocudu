@@ -5,6 +5,7 @@
 #include "cu_cp_test_environment.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
+#include "tests/test_doubles/rrc/rrc_packed_test_messages.h"
 #include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
 #include "ocudu/adt/format.h"
@@ -192,6 +193,43 @@ TEST_F(cu_cp_paging_test, when_no_du_for_tac_exists_then_paging_is_not_sent_to_d
   ASSERT_EQ(report.ngaps[0].metrics.nof_cn_initiated_paging_requests, 1) << "Paging request should be in the metrics";
 
   // Make sure that no paging was sent to the DU.
+  ASSERT_FALSE(this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu));
+}
+
+TEST_F(cu_cp_paging_test, when_paged_tac_is_a_secondary_broadcast_tac_then_paging_is_sent_to_du)
+{
+  // Cell broadcasts TACs 7, 8 and 9 in trackingAreaList, TS 38.331. F1AP carries only the primary TAC, so the CU-CP
+  // recovers the list from the SIB1 the DU provides.
+  static const std::array<tac_t, 3> broadcast_tacs = {7, 8, 9};
+  unsigned                          du_idx         = setup_du(test_helpers::generate_f1_setup_request(
+      int_to_gnb_du_id(0x11),
+      {test_helpers::served_cell_item_info{
+                                           .tac = broadcast_tacs[0],
+                                           .sib1_str = test_helpers::create_sib1_hex_string(plmn_identity::test_value(), broadcast_tacs)}}));
+
+  // Page a TAC the cell broadcasts but which is not its primary TAC. Matching only the primary would drop this.
+  ngap_message paging_msg = generate_valid_minimal_paging_message();
+  paging_msg.pdu.init_msg().value.paging()->tai_list_for_paging[0].tai.tac.from_number(9);
+  ASSERT_TRUE(send_ngap_paging(du_idx, paging_msg));
+
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu)) << "F1AP Paging should have been sent to the DU";
+  ASSERT_TRUE(test_helpers::is_valid_paging(f1ap_pdu));
+}
+
+TEST_F(cu_cp_paging_test, when_paged_tac_is_outside_the_broadcast_tac_list_then_paging_is_not_sent_to_du)
+{
+  static const std::array<tac_t, 3> broadcast_tacs = {7, 8, 9};
+  unsigned                          du_idx         = setup_du(test_helpers::generate_f1_setup_request(
+      int_to_gnb_du_id(0x11),
+      {test_helpers::served_cell_item_info{
+                                           .tac = broadcast_tacs[0],
+                                           .sib1_str = test_helpers::create_sib1_hex_string(plmn_identity::test_value(), broadcast_tacs)}}));
+
+  // A TAC outside the broadcast list must still be rejected.
+  ngap_message paging_msg = generate_valid_minimal_paging_message();
+  paging_msg.pdu.init_msg().value.paging()->tai_list_for_paging[0].tai.tac.from_number(10);
+  ASSERT_TRUE(send_ngap_paging(du_idx, paging_msg));
+
   ASSERT_FALSE(this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu));
 }
 

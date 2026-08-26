@@ -12,6 +12,7 @@
 #include "ocudu/ran/pci.h"
 #include "ocudu/ran/plmn_identity.h"
 #include "ocudu/ran/rnti.h"
+#include "ocudu/ran/tac.h"
 
 namespace ocudu {
 namespace test_helpers {
@@ -53,7 +54,10 @@ byte_buffer pack_ul_ccch_msg(const asn1::rrc_nr::ul_ccch_msg_s& msg);
 byte_buffer pack_ul_dcch_msg(const asn1::rrc_nr::ul_dcch_msg_s& msg);
 
 /// \brief Generates a dummy SIB1 message.
-asn1::rrc_nr::sib1_s create_sib1(const plmn_identity& plmn = plmn_identity::test_value());
+/// Creates a SIB1. A non-empty \c tac_list is broadcast in trackingAreaList instead of trackingAreaCode,
+/// TS 38.331.
+asn1::rrc_nr::sib1_s create_sib1(const plmn_identity& plmn     = plmn_identity::test_value(),
+                                 span<const tac_t>    tac_list = {});
 
 } // namespace test_helpers
 } // namespace ocudu

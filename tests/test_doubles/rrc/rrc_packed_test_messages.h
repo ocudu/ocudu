@@ -11,6 +11,7 @@
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/ran/plmn_identity.h"
 #include "ocudu/ran/subcarrier_spacing.h"
+#include "ocudu/ran/tac.h"
 
 namespace ocudu {
 namespace test_helpers {
@@ -26,10 +27,12 @@ byte_buffer create_meas_timing_cfg(uint32_t carrier_freq, subcarrier_spacing scs
 byte_buffer create_meas_timing_cfg_no_freq_and_timing();
 
 /// \brief Generates a packed dummy SIB1 message.
-byte_buffer create_packed_sib1(const plmn_identity& plmn = plmn_identity::test_value());
+byte_buffer create_packed_sib1(const plmn_identity& plmn     = plmn_identity::test_value(),
+                               span<const tac_t>    tac_list = {});
 
 /// \brief Generates a dummy SIB1 hex string.
-std::string create_sib1_hex_string(const plmn_identity& plmn = plmn_identity::test_value());
+std::string create_sib1_hex_string(const plmn_identity& plmn     = plmn_identity::test_value(),
+                                   span<const tac_t>    tac_list = {});
 
 /// \brief Generates a dummy CellGroupConfig.
 byte_buffer create_cell_group_config();

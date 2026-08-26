@@ -435,7 +435,7 @@ byte_buffer ocudu::test_helpers::pack_ul_dcch_msg(const ul_dcch_msg_s& msg)
   return byte_buffer{};
 }
 
-asn1::rrc_nr::sib1_s ocudu::test_helpers::create_sib1(const plmn_identity& plmn)
+asn1::rrc_nr::sib1_s ocudu::test_helpers::create_sib1(const plmn_identity& plmn, span<const tac_t> tac_list)
 {
   asn1::rrc_nr::sib1_s sib1;
 
@@ -454,7 +454,19 @@ asn1::rrc_nr::sib1_s ocudu::test_helpers::create_sib1(const plmn_identity& plmn)
   plmn_info.plmn_id_list[0] = ocucp::plmn_to_asn1(plmn);
 
   // Fill ta and cell id.
-  plmn_info.tac.from_number(7);
+  if (tac_list.empty()) {
+    plmn_info.tac_present = true;
+    plmn_info.tac.from_number(7);
+  } else {
+    // TS 38.331: trackingAreaList replaces trackingAreaCode; it sits in an extension group.
+    plmn_info.ext = true;
+    plmn_info.tracking_area_list_r17.set_present();
+    for (tac_t tac : tac_list) {
+      asn1::fixed_bitstring<24> asn1_tac;
+      asn1_tac.from_number(tac);
+      plmn_info.tracking_area_list_r17->push_back(asn1_tac);
+    }
+  }
   plmn_info.cell_id.from_number(0x66c0000);
   plmn_info.cell_reserved_for_oper = asn1::rrc_nr::plmn_id_info_s::cell_reserved_for_oper_opts::options::not_reserved;
 

@@ -46,9 +46,9 @@ byte_buffer ocudu::test_helpers::create_meas_timing_cfg_no_freq_and_timing()
   return byte_buffer{};
 }
 
-byte_buffer ocudu::test_helpers::create_packed_sib1(const plmn_identity& plmn)
+byte_buffer ocudu::test_helpers::create_packed_sib1(const plmn_identity& plmn, span<const tac_t> tac_list)
 {
-  asn1::rrc_nr::sib1_s sib1 = create_sib1(plmn);
+  asn1::rrc_nr::sib1_s sib1 = create_sib1(plmn, tac_list);
 
   byte_buffer   pdu;
   asn1::bit_ref bref{pdu};
@@ -58,9 +58,9 @@ byte_buffer ocudu::test_helpers::create_packed_sib1(const plmn_identity& plmn)
   return byte_buffer{};
 }
 
-std::string ocudu::test_helpers::create_sib1_hex_string(const plmn_identity& plmn)
+std::string ocudu::test_helpers::create_sib1_hex_string(const plmn_identity& plmn, span<const tac_t> tac_list)
 {
-  return asn1::octet_string_helper::to_hex_string(create_packed_sib1(plmn));
+  return asn1::octet_string_helper::to_hex_string(create_packed_sib1(plmn, tac_list));
 }
 
 byte_buffer ocudu::test_helpers::create_cell_group_config()
