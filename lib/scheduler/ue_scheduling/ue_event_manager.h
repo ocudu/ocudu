@@ -9,6 +9,7 @@
 #include "../logging/cell_event_tracer.h"
 #include "../slicing/inter_slice_scheduler.h"
 #include "ue_fallback_scheduler.h"
+#include "ue_scheduler.h"
 #include "ocudu/adt/mpmc_queue.h"
 #include "ocudu/adt/unique_function.h"
 #include "ocudu/ran/du_types.h"
@@ -47,6 +48,7 @@ class ue_event_manager;
 /// Handler of UE events for a given cell.
 class ue_cell_event_manager final : public sched_ue_configuration_handler,
                                     public ue_feedback_handler,
+                                    public cell_ue_event_notifier,
                                     public scheduler_dl_buffer_state_indication_handler
 {
 public:
@@ -74,12 +76,14 @@ public:
 
   // scheduler_feedback_handler methods.
   void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override;
-  void handle_crc_indication(const ul_crc_indication& crc) override;
   void handle_uci_indication(const uci_indication& uci) override;
   void handle_ul_phr_indication(const ul_phr_indication_message& phr_ind) override;
   void handle_ul_ta_report_indication(const ul_ta_report_indication_message& ta_report_ind) override;
   void handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce) override;
   void handle_crnti_ce_received(du_ue_index_t ue_index) override;
+
+  // cell_ue_event_notifier methods.
+  void on_cfra_msg3_acked(du_ue_index_t ue_index) override;
 
   // scheduler_dl_buffer_state_indication_handler methods.
   void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override;

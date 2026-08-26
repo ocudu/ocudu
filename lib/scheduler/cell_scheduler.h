@@ -6,6 +6,7 @@
 
 #include "cell/resource_grid.h"
 #include "cell_event_manager.h"
+#include "cell_ue_event_notifier.h"
 #include "common_scheduling/csi_rs_scheduler.h"
 #include "common_scheduling/paging_scheduler.h"
 #include "common_scheduling/prach_scheduler.h"
@@ -105,6 +106,9 @@ private:
   srs_allocator_impl srs_alloc;
   srs_scheduler_impl srs_sch;
   paging_scheduler   pg_sch;
+
+  /// Relay of the notifications of this cell to the UE scheduler.
+  cell_ue_event_relay ue_ev_relay;
 
   /// Handler of the events of this cell that require no access to the UE repository.
   cell_event_manager ev_mng;

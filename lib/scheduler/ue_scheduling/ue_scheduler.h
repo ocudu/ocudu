@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "../cell_ue_event_notifier.h"
 #include "../logging/cell_event_tracer.h"
 #include "../pucch_scheduling/pucch_allocator.h"
 #include "../srs/srs_allocator.h"
@@ -49,6 +50,8 @@ struct ue_cell_scheduler_creation_request {
   ra_ue_repository* ra_ue_repo;
   /// Repository of the UEs configured in the cell.
   ue_cell_repository* ue_cell_db;
+  /// Relay of the notifications of the cell, to be connected to the created cell.
+  cell_ue_event_relay* ue_ev_relay;
 };
 
 /// Handler of UE grant scheduling for a given cell.

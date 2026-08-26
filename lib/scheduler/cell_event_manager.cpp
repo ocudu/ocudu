@@ -194,6 +194,7 @@ cell_event_manager::cell_event_manager(const cell_configuration& cell_cfg_,
                                        paging_scheduler&         pg_sch_,
                                        ra_scheduler&             ra_sch_,
                                        srs_scheduler&            srs_sch_,
+                                       cell_ue_event_notifier&   ue_ev_notifier_,
                                        cell_metrics_handler&     metrics_,
                                        scheduler_event_logger&   ev_logger_,
                                        ocudulog::basic_logger&   logger) :
@@ -203,6 +204,7 @@ cell_event_manager::cell_event_manager(const cell_configuration& cell_cfg_,
   pg_sch(pg_sch_),
   ra_sch(ra_sch_),
   srs_sch(srs_sch_),
+  ue_ev_notifier(ue_ev_notifier_),
   metrics(metrics_),
   ev_logger(ev_logger_),
   dispatcher(std::make_unique<cell_event_dispatcher>(cell_cfg_, logger))
@@ -274,7 +276,70 @@ void cell_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
     return;
   }
 
-  dispatcher->push("CRC", [this, crc_ptr = std::move(crc_ptr)]() { ra_sch.handle_crc_indication(*crc_ptr); });
+  dispatcher->push("CRC", [this, crc_ptr = std::move(crc_ptr)]() {
+    // The RA scheduler selects the CRCs that belong to the RA procedure.
+    ra_sch.handle_crc_indication(*crc_ptr);
+
+    for (const ul_crc_pdu_indication& crc : crc_ptr->crcs) {
+      if (crc.ue_index == INVALID_DU_UE_INDEX) {
+        // The CRC of a UE that has not been created yet, and is therefore only of interest to the RA scheduler.
+        continue;
+      }
+      handle_ue_crc(crc_ptr->sl_rx, crc);
+    }
+  });
+}
+
+void cell_event_manager::handle_ue_crc(slot_point sl_rx, const ul_crc_pdu_indication& crc)
+{
+  ue_cell* ue_cc = ue_cell_db.find(crc.ue_index);
+  if (ue_cc == nullptr) {
+    return;
+  }
+
+  // Update HARQ.
+  const bool was_pending_cfra = ue_cc->get_pcell_state().conres_st == ue_conres_state::pending_cfra;
+  const auto crc_process_res  = ue_cc->handle_crc_pdu(sl_rx, crc);
+  if (not crc_process_res.has_value()) {
+    // The Msg3 HARQ of a contention-free access is owned by the RA scheduler. Completing the contention resolution
+    // needs the state shared by the UEs of the cell group, so hand it over to the UE scheduler.
+    if (was_pending_cfra and crc.tb_crc_success) {
+      ue_ev_notifier.on_cfra_msg3_acked(crc.ue_index);
+    }
+    return;
+  }
+
+  // \ref pusch_transmitted is true if the gnb detected that the PUSCH was transmitted, false if it was DTX.
+  auto [tbs, pusch_transmitted] = crc_process_res.value();
+  if (not pusch_transmitted) {
+    ev_logger.enqueue(scheduler_event_logger::crc_event{crc.ue_index,
+                                                        crc.rnti,
+                                                        cell_cfg.cell_index,
+                                                        sl_rx,
+                                                        crc.harq_id,
+                                                        scheduler_event_logger::crc_event::crc_res_t::dtx,
+                                                        crc.ul_sinr_dB});
+    return;
+  }
+
+  // Process Timing Advance Offset.
+  if (crc.tb_crc_success and crc.time_advance_offset.has_value() and crc.ul_sinr_dB.has_value()) {
+    ue_cc->handle_ul_n_ta_update_indication(crc.ul_sinr_dB.value(), crc.time_advance_offset.value());
+  }
+
+  // Log event.
+  ev_logger.enqueue(scheduler_event_logger::crc_event{crc.ue_index,
+                                                      crc.rnti,
+                                                      cell_cfg.cell_index,
+                                                      sl_rx,
+                                                      crc.harq_id,
+                                                      crc.tb_crc_success
+                                                          ? scheduler_event_logger::crc_event::crc_res_t::ok
+                                                          : scheduler_event_logger::crc_event::crc_res_t::ko,
+                                                      crc.ul_sinr_dB});
+
+  // Notify metrics handler.
+  metrics.handle_crc_indication(sl_rx, crc, tbs);
 }
 
 void cell_event_manager::handle_positioning_measurement_request(const positioning_measurement_request::cell_info& req)

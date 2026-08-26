@@ -275,7 +275,6 @@ class ue_feedback_handler
 public:
   virtual ~ue_feedback_handler()                                              = default;
   virtual void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) = 0;
-  virtual void handle_crc_indication(const ul_crc_indication& crc)            = 0;
   virtual void handle_uci_indication(const uci_indication& uci)               = 0;
 
   /// \brief Handles PHR indication sent by MAC.
@@ -303,7 +302,8 @@ public:
 class scheduler_feedback_handler : public ue_feedback_handler
 {
 public:
-  virtual void handle_srs_indication(const srs_indication& srs) = 0;
+  virtual void handle_crc_indication(const ul_crc_indication& crc) = 0;
+  virtual void handle_srs_indication(const srs_indication& srs)    = 0;
 };
 
 } // namespace ocudu

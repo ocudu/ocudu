@@ -4,7 +4,9 @@
 
 #pragma once
 
+#include "cell_ue_event_notifier.h"
 #include "ocudu/ocudulog/logger.h"
+#include "ocudu/ran/slot_point.h"
 #include "ocudu/scheduler/scheduler_positioning_handler.h"
 #include <memory>
 
@@ -25,6 +27,7 @@ struct rach_indication_message;
 struct sched_paging_information;
 struct si_scheduling_update_request;
 struct ul_crc_indication;
+struct ul_crc_pdu_indication;
 
 /// \brief Handler of the events of a cell that require no access to the state shared by the UEs of the cell group.
 ///
@@ -39,6 +42,7 @@ public:
                      paging_scheduler&         pg_sch,
                      ra_scheduler&             ra_sch,
                      srs_scheduler&            srs_sch,
+                     cell_ue_event_notifier&   ue_ev_notifier,
                      cell_metrics_handler&     metrics,
                      scheduler_event_logger&   ev_logger,
                      ocudulog::basic_logger&   logger);
@@ -76,12 +80,16 @@ public:
   void handle_positioning_measurement_stop(rnti_t pos_rnti) override;
 
 private:
+  /// Handle a CRC that ACKs/NACKs a HARQ of a UE of this cell.
+  void handle_ue_crc(slot_point sl_rx, const ul_crc_pdu_indication& crc);
+
   const cell_configuration& cell_cfg;
   ue_cell_repository&       ue_cell_db;
   si_scheduler&             si_sch;
   paging_scheduler&         pg_sch;
   ra_scheduler&             ra_sch;
   srs_scheduler&            srs_sch;
+  cell_ue_event_notifier&   ue_ev_notifier;
   cell_metrics_handler&     metrics;
   scheduler_event_logger&   ev_logger;
 

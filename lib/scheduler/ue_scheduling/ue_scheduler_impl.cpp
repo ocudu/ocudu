@@ -35,6 +35,9 @@ ue_cell_scheduler* ue_scheduler_impl::do_add_cell(const ue_cell_scheduler_creati
                                                        *params.cell_tracer,
                                                        *params.ra_ue_repo});
 
+  // Relay the notifications of the cell to the created event manager.
+  params.ue_ev_relay->connect(*cell.ev_mng);
+
   return &cell;
 }
 

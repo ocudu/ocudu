@@ -31,7 +31,7 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   srs_alloc(cell_cfg, sched_cfg.ue.srs_prohibit_time),
   srs_sch(cell_cfg, ue_cell_db),
   pg_sch(cell_cfg, pdcch_sch),
-  ev_mng(cell_cfg, ue_cell_db, si_sch, pg_sch, ra_sch, srs_sch, metrics, event_logger, logger)
+  ev_mng(cell_cfg, ue_cell_db, si_sch, pg_sch, ra_sch, srs_sch, ue_ev_relay, metrics, event_logger, logger)
 {
   // Register new cell in the UE scheduler.
   ue_sched = ue_sched_.add_cell(ue_cell_scheduler_creation_request{msg.cell_index,
@@ -45,7 +45,8 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
                                                                    &event_logger,
                                                                    cell_tracer.get(),
                                                                    &ra_ue_repo,
-                                                                   &ue_cell_db});
+                                                                   &ue_cell_db,
+                                                                   &ue_ev_relay});
 }
 
 void cell_scheduler::handle_pws_si_update_request(const pws_si_scheduling_update_request& msg)
@@ -65,10 +66,8 @@ void cell_scheduler::handle_slice_reconfiguration_request(const du_cell_slice_re
 
 void cell_scheduler::handle_crc_indication(const ul_crc_indication& crc_ind)
 {
-  // Forward CRCs to RA scheduler. RA scheduler will auto-select the ones associated with the RA procedure.
+  // The cell event manager selects the CRCs of the RA procedure and those of the UEs of this cell.
   ev_mng.handle_crc_indication(crc_ind);
-  // Forward CRCs to UE scheduler.
-  ue_sched->get_feedback_handler().handle_crc_indication(crc_ind);
 }
 
 void cell_scheduler::run_slot(slot_point_extended sl_tx_ext)

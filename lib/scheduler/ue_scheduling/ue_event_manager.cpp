@@ -126,7 +126,6 @@ class ocudu::pdu_indication_pool
   static constexpr size_t MAX_BSR_PHR_EXPECTED_SLOTS = 8;
   static constexpr size_t UCI_INITIAL_POOL_SIZE      = MAX_PUCCH_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
   static constexpr size_t PHR_INITIAL_POOL_SIZE      = MAX_PUSCH_PDUS_PER_SLOT * MAX_BSR_PHR_EXPECTED_SLOTS;
-  static constexpr size_t CRC_INITIAL_POOL_SIZE      = MAX_PUSCH_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
   static constexpr size_t BSR_INITIAL_POOL_SIZE      = MAX_PUSCH_PDUS_PER_SLOT * MAX_BSR_PHR_EXPECTED_SLOTS;
   static constexpr size_t SLICE_RECONF_POOL_SIZE     = 1 * MAX_EXPECTED_SLOTS;
   // TA reports are event-triggered and rare in steady state, at most one per UE per offsetThresholdTA of drift, but
@@ -137,7 +136,6 @@ class ocudu::pdu_indication_pool
 
   using uci_pool          = bounded_object_pool<uci_indication::uci_pdu>;
   using phr_pool          = bounded_object_pool<ul_phr_indication_message>;
-  using crc_pool          = bounded_object_pool<ul_crc_pdu_indication>;
   using bsr_pool          = bounded_object_pool<ul_bsr_indication_message>;
   using slice_reconf_pool = bounded_object_pool<du_cell_slice_reconfig_request>;
   using ta_report_pool    = bounded_object_pool<ul_ta_report_indication_message>;
@@ -147,7 +145,6 @@ public:
     logger(logger_),
     pending_ucis(UCI_INITIAL_POOL_SIZE),
     pending_phrs(PHR_INITIAL_POOL_SIZE),
-    pending_crcs(CRC_INITIAL_POOL_SIZE),
     pending_bsrs(BSR_INITIAL_POOL_SIZE),
     slice_reconf_reqs(SLICE_RECONF_POOL_SIZE),
     pending_ta_reports(TA_REPORT_POOL_SIZE)
@@ -162,8 +159,6 @@ public:
       return "UCI";
     } else if constexpr (std::is_same_v<PDUType, ul_phr_indication_message>) {
       return "PHR";
-    } else if constexpr (std::is_same_v<PDUType, ul_crc_pdu_indication>) {
-      return "CRC";
     } else if constexpr (std::is_same_v<PDUType, ul_bsr_indication_message>) {
       return "BSR";
     } else if constexpr (std::is_same_v<PDUType, du_cell_slice_reconfig_request>) {
@@ -194,13 +189,15 @@ private:
 
   uci_pool          pending_ucis;
   phr_pool          pending_phrs;
-  crc_pool          pending_crcs;
   bsr_pool          pending_bsrs;
   slice_reconf_pool slice_reconf_reqs;
   ta_report_pool    pending_ta_reports;
 
-  std::tuple<uci_pool*, phr_pool*, crc_pool*, bsr_pool*, slice_reconf_pool*, ta_report_pool*>
-      pools{&pending_ucis, &pending_phrs, &pending_crcs, &pending_bsrs, &slice_reconf_reqs, &pending_ta_reports};
+  std::tuple<uci_pool*, phr_pool*, bsr_pool*, slice_reconf_pool*, ta_report_pool*> pools{&pending_ucis,
+                                                                                         &pending_phrs,
+                                                                                         &pending_bsrs,
+                                                                                         &slice_reconf_reqs,
+                                                                                         &pending_ta_reports};
 };
 
 // Initial capacity for the common and cell event lists, in order to avoid std::vector reallocations. We use the max
@@ -524,81 +521,25 @@ void ue_cell_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_mes
   push_event(pcell_index, event_t{"BSR", ue_index, std::move(handle_ul_bsr_ind_impl)});
 }
 
-void ue_cell_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
+void ue_cell_event_manager::on_cfra_msg3_acked(du_ue_index_t ue_index)
 {
-  for (unsigned i = 0, e = crc_ind.crcs.size(); i != e; ++i) {
-    if (crc_ind.crcs[i].ue_index == INVALID_DU_UE_INDEX) {
-      // CRCs with invalid UE index are ignored (They are handled by the RA scheduler).
-      continue;
+  auto handle_impl = [this, ue_index]() {
+    if (not ue_db.contains(ue_index)) {
+      return event_result::invalid_ue;
     }
-    auto crc_ind_ptr = ind_pdu_pool->create_pdu(crc_ind.crcs[i]);
-    if (crc_ind_ptr == nullptr) {
-      return;
+    const ue_cell* ue_cc = ue_db[ue_index].find_cell(cfg.cell_index);
+    if (ue_cc == nullptr) {
+      return event_result::invalid_ue_cc;
     }
 
-    auto crc_handle_impl = [this, sl_rx = crc_ind.sl_rx, crc_ptr = std::move(crc_ind_ptr)]() -> event_result {
-      if (not ue_db.contains(crc_ptr->ue_index)) {
-        return event_result::invalid_ue;
-      }
-      ue&      u     = ue_db[crc_ptr->ue_index];
-      ue_cell* ue_cc = u.find_cell(cfg.cell_index);
-      if (ue_cc == nullptr) {
-        return event_result::invalid_ue_cc;
-      }
+    if (ue_db.cfra_msg3_acked(ue_index) and not ue_cc->is_in_fallback_mode()) {
+      // CFRA Msg3 ACKed. UE is directly added to slice scheduling. It doesn't need to be in fallback mode.
+      slice_sched.config_applied(ue_index);
+    }
+    return event_result::processed;
+  };
 
-      // Update HARQ.
-      const bool was_pending_cfra = ue_cc->get_pcell_state().conres_st == ue_conres_state::pending_cfra;
-      const auto crc_process_res  = ue_cc->handle_crc_pdu(sl_rx, *crc_ptr);
-      if (not crc_process_res.has_value()) {
-        if (was_pending_cfra and crc_ptr->tb_crc_success and ue_db.cfra_msg3_acked(crc_ptr->ue_index)) {
-          // CFRA Msg3 ACKed. UE is directly added to slice scheduling. It doesn't need to be in fallback mode.
-          if (not ue_cc->is_in_fallback_mode()) {
-            slice_sched.config_applied(crc_ptr->ue_index);
-          }
-        }
-
-        return event_result::processed;
-      }
-
-      // \ref pusch_transmitted is true if the gnb detected that the PUSCH was transmitted, false if it was DTX.
-      auto [tbs, pusch_transmitted] = crc_process_res.value();
-      if (not pusch_transmitted) {
-        // Log event.
-        ev_logger.enqueue(scheduler_event_logger::crc_event{crc_ptr->ue_index,
-                                                            crc_ptr->rnti,
-                                                            cfg.cell_index,
-                                                            sl_rx,
-                                                            crc_ptr->harq_id,
-                                                            scheduler_event_logger::crc_event::crc_res_t::dtx,
-                                                            crc_ptr->ul_sinr_dB});
-        return event_result::processed;
-      }
-
-      // Process Timing Advance Offset.
-      if (crc_ptr->tb_crc_success and crc_ptr->time_advance_offset.has_value() and crc_ptr->ul_sinr_dB.has_value()) {
-        ue_cc->handle_ul_n_ta_update_indication(crc_ptr->ul_sinr_dB.value(), crc_ptr->time_advance_offset.value());
-      }
-
-      // Log event.
-      ev_logger.enqueue(scheduler_event_logger::crc_event{crc_ptr->ue_index,
-                                                          crc_ptr->rnti,
-                                                          cfg.cell_index,
-                                                          sl_rx,
-                                                          crc_ptr->harq_id,
-                                                          crc_ptr->tb_crc_success
-                                                              ? scheduler_event_logger::crc_event::crc_res_t::ok
-                                                              : scheduler_event_logger::crc_event::crc_res_t::ko,
-                                                          crc_ptr->ul_sinr_dB});
-
-      // Notify metrics handler.
-      metrics.handle_crc_indication(sl_rx, *crc_ptr, tbs);
-
-      return event_result::processed;
-    };
-
-    // Push UE CRC event.
-    push_event(crc_ind.cell_index, event_t{"CRC", crc_ind.crcs[i].ue_index, std::move(crc_handle_impl)});
-  }
+  push_event(cfg.cell_index, event_t{"CFRA Msg3 ACKed", ue_index, std::move(handle_impl)});
 }
 
 ue_cell_event_manager::event_result ue_cell_event_manager::handle_uci_pdu(slot_point                     uci_sl,
