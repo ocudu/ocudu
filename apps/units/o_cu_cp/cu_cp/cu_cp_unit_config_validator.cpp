@@ -614,21 +614,28 @@ static bool validate_amf_appconfig(const cu_cp_unit_amf_config&                 
       }
     }
 
+    // One AMF may serve a PLMN across several tracking areas; only a PLMN shared with another AMF is an error.
+    std::vector<std::string> amf_plmns;
     for (const auto& ta : config.supported_tas) {
       for (const auto& plmn_item : ta.plmn_list) {
-        if (std::find(plmns.begin(), plmns.end(), plmn_item.plmn_id) == plmns.end()) {
-          plmns.push_back(plmn_item.plmn_id);
-        } else {
-          fmt::print("PLMN={} is already supported by another AMF\n", plmn_item.plmn_id);
-          return false;
-        }
-
         if (plmn_item.tai_slice_support_list.empty()) {
           fmt::print("TAI slice support list for PLMN={} and TAC={} is empty\n", plmn_item.plmn_id, ta.tac);
           return false;
         }
+
+        if (std::find(amf_plmns.begin(), amf_plmns.end(), plmn_item.plmn_id) == amf_plmns.end()) {
+          amf_plmns.push_back(plmn_item.plmn_id);
+        }
       }
     }
+
+    for (const auto& plmn : amf_plmns) {
+      if (std::find(plmns.begin(), plmns.end(), plmn) != plmns.end()) {
+        fmt::print("PLMN={} is already supported by another AMF\n", plmn);
+        return false;
+      }
+    }
+    plmns.insert(plmns.end(), amf_plmns.begin(), amf_plmns.end());
   }
 
   return true;
