@@ -27,9 +27,8 @@ sudo apt-get install -y \
 `llvm-symbolizer`, which is needed to resolve symbol names in ASAN crash
 reports.
 
-> **Version note:** The `afl++` package in Ubuntu 22.04 LTS ships AFL++
-> 4.00c.  Ubuntu 24.04 LTS ships 4.09c.  Both work with these harnesses.
-> If you need a newer release, see the
+> **Version note:** The `afl++` package in Ubuntu 26.04 LTS ships AFL++
+> 4.33c. If you need a newer release, see the
 > [AFL++ installation instructions](https://github.com/AFLplusplus/AFLplusplus/blob/stable/docs/INSTALL.md).
 
 ### Verify the installation

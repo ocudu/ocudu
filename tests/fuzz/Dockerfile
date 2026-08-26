@@ -24,7 +24,7 @@
 #
 # GitLab CI – see tests/fuzz/README.md for a full job definition.
 
-ARG UBUNTU_VERSION=22.04
+ARG UBUNTU_VERSION=26.04
 FROM ubuntu:${UBUNTU_VERSION}
 
 ENV DEBIAN_FRONTEND=noninteractive
