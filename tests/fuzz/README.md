@@ -1,7 +1,6 @@
 # Fuzz Test Harnesses
 
-Coverage-guided fuzz testing for the OFH packet-parsing stack and the NGAP/CU-CP
-receive path, targeting [AFL++](https://github.com/AFLplusplus/AFLplusplus). The
+Coverage-guided fuzz testing, targeting [AFL++](https://github.com/AFLplusplus/AFLplusplus). The
 harnesses use the `LLVMFuzzerTestOneInput` interface so they also run unmodified
 under [libFuzzer](https://llvm.org/docs/LibFuzzer.html) and are compatible with
 [OSS-Fuzz](https://github.com/google/oss-fuzz).
@@ -322,68 +321,53 @@ accumulates automatically across weekly runs via AFL++ resume mode — see
 
 ## Docker
 
-A `Dockerfile` and `run_fuzzers.sh` entrypoint are provided in `tests/fuzz/`
-so the entire build-and-fuzz workflow runs in an isolated, reproducible
-container without any local tool installation beyond Docker itself.
+The `Dockerfile` in `tests/fuzz/` defines a build-environment image containing
+only system dependencies (AFL++, Clang, LLVM, cmake, and the mandatory project
+libraries).  Fuzz targets are compiled at run time from the checked-out source,
+so the image only needs to be rebuilt when its dependencies change — not on
+every code change.
 
 ### Building the image
 
-Run from the **repository root** (the build context must contain the full
-source tree):
-
 ```bash
-docker build -f tests/fuzz/Dockerfile -t ocudu-fuzz .
+docker build -f tests/fuzz/Dockerfile -t ocudu-fuzz-deps .
 ```
 
-What the build does:
+Bump `FUZZ_IMAGE_VERSION` in `.gitlab-ci.yml` after pushing a new image so
+the CI jobs pick it up.
 
-1. Installs all system dependencies (AFL++, Clang, LLVM, cmake, and the
-   mandatory project libraries).
-2. Configures a minimal CMake build with `afl-clang-fast++` and ASAN, with
-   all optional subsystems disabled.
-3. Compiles all five fuzz binaries.
-4. Generates the seed corpus via both `gen_corpus.py` scripts.
-5. Sets `run_fuzzers.sh` as the container entrypoint.
+### Running locally
 
-### Running the container
-
-Bind-mount a host directory to `/findings` so AFL++ output is written there
-and persists after the container exits:
-
-```bash
-mkdir -p findings
-docker run --rm \
-    -v "$(pwd)/findings:/findings" \
-    ocudu-fuzz
-```
-
-By default all five fuzzers run for **2 hours each**.  Override with
-environment variables:
-
-| Variable | Default | Description |
-|---|---|---|
-| `FUZZ_TIMEOUT_EACH` | `7200` | Seconds to run each fuzzer |
-| `FUZZ_OUTPUT_DIR` | `/findings` | AFL++ output root inside the container |
-| `FUZZ_CORPUS_DIR` | `/corpus` | Seed corpus root inside the container |
-| `FUZZ_TARGETS` | _(all five)_ | Space-separated list of targets to run |
-
-```bash
-# Run only the U-Plane fuzzer for 30 minutes
-docker run --rm \
-    -v "$(pwd)/findings:/findings" \
-    -e FUZZ_TIMEOUT_EACH=1800 \
-    -e FUZZ_TARGETS="ofh_uplane_decoder_fuzzer" \
-    ocudu-fuzz
-```
-
-For better crash detection, run with `--privileged` so the container can set
-`/proc/sys/kernel/core_pattern`:
+Mount the repository and a findings directory into the container, then build
+and run inside it:
 
 ```bash
 docker run --rm --privileged \
+    -v "$(pwd):/src" \
     -v "$(pwd)/findings:/findings" \
-    ocudu-fuzz
+    -w /src \
+    ocudu-fuzz-deps bash -c "
+        cmake -S . -B /build -GNinja \
+            -DCMAKE_C_COMPILER=afl-clang-fast \
+            -DCMAKE_CXX_COMPILER=afl-clang-fast++ \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DENABLE_FUZZTESTS=ON -DENABLE_ASAN=ON \
+            -DBUILD_TESTING=OFF -DENABLE_UHD=OFF \
+            -DENABLE_ZEROMQ=OFF -DENABLE_DPDK=OFF
+        ninja -C /build fuzz_targets
+        mkdir -p /tmp/corpus/ngap_cu_cp
+        cp -r tests/fuzz/ofh/corpus/* /tmp/corpus/
+        cp -r tests/fuzz/ngap/corpus/* /tmp/corpus/
+        cp tests/fuzz/ngap/corpus/ngap/* /tmp/corpus/ngap_cu_cp/
+        PATH=/build/tests/fuzz/ofh:/build/tests/fuzz/ngap:\$PATH \
+            FUZZ_OUTPUT_DIR=/findings \
+            FUZZ_CORPUS_DIR=/tmp/corpus \
+            tests/fuzz/run_fuzzers.sh
+    "
 ```
+
+`--privileged` allows setting `/proc/sys/kernel/core_pattern` for accurate
+crash detection.
 
 ### Output layout
 
@@ -408,60 +392,6 @@ findings/
 ```
 
 ---
-
-## CI integration
-
-Two jobs are defined in `.gitlab-ci.yml` and run on a weekly scheduled
-pipeline with the description **"Weekly fuzz"**:
-
-- **`build-fuzz-image`** — builds the fuzz Docker image and pushes it to the
-  project registry.
-- **`fuzz`** — pulls the image and runs all targets.  The `findings/`
-  directory is cached between pipeline runs so `run_fuzzers.sh` resumes from
-  the accumulated AFL++ queue rather than restarting from the seed corpus each
-  week.
-
-To activate: create a [GitLab scheduled pipeline](https://docs.gitlab.com/ee/ci/pipelines/schedules.html)
-on the default branch with the description `Weekly fuzz`.
-
-### Relevant `.gitlab-ci.yml` excerpt
-
-```yaml
-build-fuzz-image:
-  stage: .post
-  image: docker:latest
-  services:
-    - docker:dind
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Weekly fuzz/'
-  script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -f tests/fuzz/Dockerfile -t $CI_REGISTRY_IMAGE/fuzz:latest .
-    - docker push $CI_REGISTRY_IMAGE/fuzz:latest
-  dependencies: []
-
-fuzz:
-  stage: .post
-  image: $CI_REGISTRY_IMAGE/fuzz:latest
-  needs: [build-fuzz-image]
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Weekly fuzz/'
-  variables:
-    FUZZ_OUTPUT_DIR: $CI_PROJECT_DIR/findings
-    FUZZ_TIMEOUT_EACH: "7200"
-  cache:
-    key: fuzz-corpus-$CI_DEFAULT_BRANCH
-    paths:
-      - findings/
-  script:
-    - /usr/local/bin/run_fuzzers.sh
-  artifacts:
-    when: always
-    paths:
-      - findings/
-    expire_in: 4 weeks
-  dependencies: []
-```
 
 ### Corpus accumulation
 

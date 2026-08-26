@@ -27,6 +27,9 @@ stages:
 # variables:
 #   SKIP_OCUDU_BUILDING_CONTAINERS_CI: true # set to any value to skip building ocudu containers in CI
 
+variables:
+  FUZZ_IMAGE_VERSION: "1"  # bump when tests/fuzz/Dockerfile changes
+
 ################################################################################
 ## CI MR
 ################################################################################
@@ -614,19 +617,25 @@ promotion:
 # fuzz
 ################################################################################
 
-# Build and push the fuzz Docker image on every weekly fuzz pipeline.
-# The image contains AFL++, all build dependencies, and the fuzz binaries.
+# Build and push the fuzz build-environment image.
+# The image contains only system dependencies (AFL++, clang, cmake, libs);
+# fuzz targets are compiled at job time so this image only needs rebuilding
+# when the Dockerfile itself changes.
 build-fuzz-image:
   stage: .post
   image: docker:latest
   services:
     - docker:dind
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Weekly fuzz/'
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      changes:
+        - tests/fuzz/Dockerfile
+    - when: manual
+      allow_failure: true
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -f tests/fuzz/Dockerfile -t $CI_REGISTRY_IMAGE/fuzz:latest .
-    - docker push $CI_REGISTRY_IMAGE/fuzz:latest
+    - docker build -f tests/fuzz/Dockerfile -t $CI_REGISTRY_IMAGE/fuzz-deps:$FUZZ_IMAGE_VERSION .
+    - docker push $CI_REGISTRY_IMAGE/fuzz-deps:$FUZZ_IMAGE_VERSION
   dependencies: []
 
 # Run all fuzz targets for FUZZ_TIMEOUT_EACH seconds each.
@@ -634,19 +643,51 @@ build-fuzz-image:
 # accumulated queue rather than restarting from the seed corpus each week.
 fuzz:
   stage: .post
-  image: $CI_REGISTRY_IMAGE/fuzz:latest
-  needs: [build-fuzz-image]
+  image: $CI_REGISTRY_IMAGE/fuzz-deps:$FUZZ_IMAGE_VERSION
   rules:
-    - if: '$CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Weekly fuzz/'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Weekly fuzz/'
   variables:
     FUZZ_OUTPUT_DIR: $CI_PROJECT_DIR/findings
+    FUZZ_CORPUS_DIR: $CI_PROJECT_DIR/seed_corpus
     FUZZ_TIMEOUT_EACH: "7200"
   cache:
     key: fuzz-corpus-$CI_DEFAULT_BRANCH
     paths:
       - findings/
   script:
-    - /usr/local/bin/run_fuzzers.sh
+    - |
+      cmake -S . -B build_fuzz -GNinja \
+        -DCMAKE_C_COMPILER=afl-clang-fast \
+        -DCMAKE_CXX_COMPILER=afl-clang-fast++ \
+        -DCMAKE_BUILD_TYPE=Debug \
+        -DENABLE_FUZZTESTS=ON \
+        -DENABLE_ASAN=ON \
+        -DBUILD_TESTING=OFF \
+        -DENABLE_UHD=OFF \
+        -DENABLE_ZEROMQ=OFF \
+        -DENABLE_FFTW=OFF \
+        -DENABLE_MKL=OFF \
+        -DENABLE_FFTZ=OFF \
+        -DENABLE_ARMPL=OFF \
+        -DENABLE_DPDK=OFF \
+        -DENABLE_LIBNUMA=OFF \
+        -DENABLE_BACKWARD=OFF \
+        -DENABLE_WERROR=OFF
+    - |
+      ninja -C build_fuzz \
+        ofh_uplane_decoder_fuzzer \
+        ofh_ecpri_decoder_fuzzer \
+        ofh_vlan_frame_decoder_fuzzer \
+        ngap_pdu_decoder_fuzzer \
+        ngap_cu_cp_fuzzer
+    - |
+      mkdir -p seed_corpus/ngap_cu_cp
+      cp -r tests/fuzz/ofh/corpus/* seed_corpus/
+      cp -r tests/fuzz/ngap/corpus/* seed_corpus/
+      cp tests/fuzz/ngap/corpus/ngap/* seed_corpus/ngap_cu_cp/
+    - |
+      export PATH="$CI_PROJECT_DIR/build_fuzz/tests/fuzz/ofh:$CI_PROJECT_DIR/build_fuzz/tests/fuzz/ngap:$PATH"
+      tests/fuzz/run_fuzzers.sh
   artifacts:
     when: always
     paths:
