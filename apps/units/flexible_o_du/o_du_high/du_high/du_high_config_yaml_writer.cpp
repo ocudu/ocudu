@@ -699,7 +699,14 @@ static YAML::Node build_cell_entry(const du_high_unit_base_cell_config& config)
   if (!config.additional_plmns.empty()) {
     node["additional_plmns"] = config.additional_plmns;
   }
-  node["tac"]          = config.tac;
+  node["tac"] = config.tac;
+  if (!config.additional_tacs.empty()) {
+    YAML::Node additional_tacs_node(YAML::NodeType::Sequence);
+    for (tac_t tac : config.additional_tacs) {
+      additional_tacs_node.push_back(tac);
+    }
+    node["additional_tacs"] = additional_tacs_node;
+  }
   node["q_rx_lev_min"] = config.q_rx_lev_min;
   node["q_qual_min"]   = config.q_qual_min;
   if (config.pcg_cfg.p_nr_fr1.has_value()) {

@@ -2485,6 +2485,10 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
       ->min_length(5)
       ->max_length(6);
   add_option(app, "--tac", cell_params.tac, "TAC")->capture_default_str();
+  add_option(app,
+             "--additional_tacs",
+             cell_params.additional_tacs,
+             "Additional TACs broadcast by this cell in trackingAreaList. NTN cells only");
   add_option(app, "--enabled", cell_params.enabled, "Automatically activate the cell on startup")
       ->capture_default_str();
   add_option(app, "--cell_barred", cell_params.cell_barred, "MIB cellBarred: if true, UEs cannot camp on this cell")

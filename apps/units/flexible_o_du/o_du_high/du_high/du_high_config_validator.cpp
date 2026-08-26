@@ -1648,6 +1648,48 @@ static bool validate_power_ctrl_value(const char* name, int value, int min_value
   return true;
 }
 
+/// Validates the additional TACs broadcast by a cell in trackingAreaList, TS 38.331.
+static bool validate_additional_tacs(const du_high_unit_base_cell_config& config, bool is_ntn_band)
+{
+  if (config.additional_tacs.empty()) {
+    return true;
+  }
+
+  // TS 38.331: trackingAreaList is only present in an NTN cell.
+  if (!is_ntn_band) {
+    fmt::print("Additional TACs can only be broadcast by NTN cells.\n");
+    return false;
+  }
+
+  // tac takes the first of the TACs allowed per PLMN.
+  if (config.additional_tacs.size() + 1 > MAX_NOF_TACS_NTN) {
+    fmt::print("A cell can broadcast at most {} TACs, but {} are configured.\n",
+               MAX_NOF_TACS_NTN,
+               config.additional_tacs.size() + 1);
+    return false;
+  }
+
+  for (unsigned i = 0, e = config.additional_tacs.size(); i != e; ++i) {
+    const tac_t tac = config.additional_tacs[i];
+    if (!is_valid(tac)) {
+      fmt::print("Invalid TAC '{}' in the additional TACs of the cell.\n", tac);
+      return false;
+    }
+    if (tac == config.tac) {
+      fmt::print("TAC '{}' is repeated in the additional TACs of the cell.\n", tac);
+      return false;
+    }
+    for (unsigned j = i + 1; j != e; ++j) {
+      if (config.additional_tacs[j] == tac) {
+        fmt::print("TAC '{}' is repeated in the additional TACs of the cell.\n", tac);
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 /// Validates the given cell application configuration. Returns true on success, otherwise false.
 static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& config)
 {
@@ -1722,6 +1764,9 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
       band_helper::get_n_rbs_from_bw(config.channel_bw_mhz, config.common_scs, band_helper::get_freq_range(band));
 
   const bool is_ntn_band = band_helper::is_ntn_band(band);
+  if (!validate_additional_tacs(config, is_ntn_band)) {
+    return false;
+  }
   if (config.ntn_cfg) {
     if (is_ntn_band) {
       if (!validate_ntn_config(*config.ntn_cfg, band)) {

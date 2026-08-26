@@ -671,6 +671,13 @@ std::vector<odu::du_cell_config> ocudu::generate_du_cell_config(const du_high_un
     out_cell.nr_cgi.nci     = nr_cell_identity::create(config.gnb_id, base_cell.sector_id.value()).value();
     out_cell.tac            = base_cell.tac;
     out_cell.enabled        = base_cell.enabled;
+    // The list leads with the cell TAC.
+    if (!base_cell.additional_tacs.empty()) {
+      out_cell.tac_list.push_back(base_cell.tac);
+      for (tac_t tac : base_cell.additional_tacs) {
+        out_cell.tac_list.push_back(tac);
+      }
+    }
 
     // > TA offset.
     out_cell.ran.ta_offset = band_helper::get_ta_offset(band, base_cell.eutra_coexistence);

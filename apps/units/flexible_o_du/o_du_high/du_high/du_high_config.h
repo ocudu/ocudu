@@ -1254,6 +1254,9 @@ struct du_high_unit_base_cell_config {
   std::vector<std::string> additional_plmns;
   /// TAC.
   tac_t tac = 7;
+  /// Additional TACs broadcast alongside \c tac in \c trackingAreaList, TS 38.331. NTN cells only; at most
+  /// MAX_NOF_TACS_NTN - 1, since \c tac takes the first.
+  std::vector<tac_t> additional_tacs;
   /// Whether the DU adds this cell to the list of served cells while communicating with the CU-CP or it waits for a
   /// command from the SMO to activate it.
   bool enabled = true;
