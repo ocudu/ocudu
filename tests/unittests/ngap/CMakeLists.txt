@@ -15,6 +15,7 @@ set(SOURCES
         ngap_handover_test.cpp
         ngap_location_reporting_test.cpp
         ngap_nas_message_test.cpp
+        ngap_ntn_tai_info_test.cpp
         ngap_paging_test.cpp
         ngap_path_switch_procedure_test.cpp
         ngap_pdu_session_resource_setup_procedure_test.cpp
