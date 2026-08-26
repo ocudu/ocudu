@@ -4,9 +4,11 @@
 
 #include "du_configuration_manager.h"
 #include "ocudu/adt/format.h"
+#include "ocudu/asn1/rrc_nr/sys_info.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/band_helper.h"
 #include "ocudu/ran/plmn_identity.h"
+#include <algorithm>
 
 using namespace ocudu;
 using namespace ocucp;
@@ -91,6 +93,49 @@ std::unique_ptr<du_configuration_handler> du_configuration_manager::create_du_ha
   return std::make_unique<du_configuration_handler_impl>(*this);
 }
 
+/// \brief Reads the broadcast TAC list (trackingAreaList, TS 38.331) from the gNB-DU's SIB1.
+///
+/// F1AP carries at most one TAC per broadcast PLMN, never several for one PLMN, so SIB1 is the only source.
+/// Empty when the cell broadcasts trackingAreaCode.
+///
+/// TODO: TS 38.413 reports the list for the UE's serving PLMN, while the CU-CP stores one list per cell and reads it
+/// from the first PLMN-IdentityInfo. A cell broadcasting a different list per PLMN is not supported.
+static tac_list_t
+extract_broadcast_tac_list(const nr_cell_global_id_t& cgi, const byte_buffer& packed_sib1, tac_t five_gs_tac)
+{
+  tac_list_t tac_list;
+
+  asn1::cbit_ref       bref{packed_sib1};
+  asn1::rrc_nr::sib1_s sib1;
+  if (sib1.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+    ocudulog::fetch_basic_logger("CU-CP").warning(
+        "nci={}: Failed to unpack the SIB1 of the served cell. Assuming the cell broadcasts a single TAC", cgi.nci);
+    return tac_list;
+  }
+
+  const auto& plmn_id_info_list = sib1.cell_access_related_info.plmn_id_info_list;
+  if (plmn_id_info_list.size() == 0 or not plmn_id_info_list[0].tracking_area_list_r17.is_present()) {
+    return tac_list;
+  }
+
+  for (const auto& asn1_tac : *plmn_id_info_list[0].tracking_area_list_r17) {
+    tac_list.push_back(asn1_tac.to_number());
+  }
+
+  // The gNB-DU reports one TAC per cell over F1AP, so a list without it contradicts the cell configuration.
+  if (std::find(tac_list.begin(), tac_list.end(), five_gs_tac) == tac_list.end()) {
+    ocudulog::fetch_basic_logger("CU-CP").warning(
+        "nci={}: Ignoring the broadcast TAC list [{}] of the served cell. Cause: it does not contain the 5GS TAC {} "
+        "that the gNB-DU reports for the cell over F1AP. Assuming the cell broadcasts that TAC alone",
+        cgi.nci,
+        fmt::join(tac_list, ", "),
+        five_gs_tac);
+    tac_list.clear();
+  }
+
+  return tac_list;
+}
+
 static du_cell_configuration create_du_cell_config(du_cell_index_t                   cell_idx,
                                                    const cu_cp_du_served_cells_item& f1ap_cell_cfg)
 {
@@ -119,6 +164,7 @@ static du_cell_configuration create_du_cell_config(du_cell_index_t              
   // Add packed MIB and SIB1
   cell.sys_info.packed_mib  = f1ap_cell_cfg.gnb_du_sys_info->mib_msg.copy();
   cell.sys_info.packed_sib1 = f1ap_cell_cfg.gnb_du_sys_info->sib1_msg.copy();
+  cell.tac_list             = extract_broadcast_tac_list(cell.cgi, cell.sys_info.packed_sib1, cell.tac);
   return cell;
 }
 

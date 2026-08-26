@@ -34,6 +34,19 @@ static bool is_tac_in_list(span<const cu_cp_tai_list_for_paging_item> tai_list, 
   return std::any_of(tai_list.begin(), tai_list.end(), [&tac](const auto& tai) { return tai.tai.tac == tac; });
 }
 
+/// \brief True if any TAC the cell broadcasts appears in the paging TAI list.
+///
+/// A cell belongs to every tracking area it broadcasts; matching only the first drops paging for the others.
+static bool is_cell_in_tai_list(span<const cu_cp_tai_list_for_paging_item> tai_list, const du_cell_configuration& cell)
+{
+  if (cell.tac_list.empty()) {
+    return is_tac_in_list(tai_list, cell.tac);
+  }
+
+  return std::any_of(
+      cell.tac_list.begin(), cell.tac_list.end(), [&tai_list](tac_t tac) { return is_tac_in_list(tai_list, tac); });
+}
+
 /// Remove recommended cells that do not match any TAC in the TAI list or that do not belong to this DU.
 static void remove_non_applicable_recommended_cells(cu_cp_paging_message& msg, const du_configuration_context& du_cfg)
 {
@@ -49,7 +62,7 @@ static void remove_non_applicable_recommended_cells(cu_cp_paging_message& msg, c
       // Recommended cell not found for this DU.
       return true;
     }
-    return not is_tac_in_list(msg.tai_list_for_paging, cell_it->tac);
+    return not is_cell_in_tai_list(msg.tai_list_for_paging, *cell_it);
   };
 
   recommended_cells.erase(std::remove_if(recommended_cells.begin(), recommended_cells.end(), is_bad_recommended_cell),
@@ -92,7 +105,7 @@ bool paging_message_handler::handle_du_paging_message(cu_cp_du_index_t          
     // If tai_list_for_paging is empty, this is a RAN paging.
     // TODO: Support RANAC based paging.
     if (!msg_filtered.tai_list_for_paging.empty()) {
-      if (not is_tac_in_list(msg_filtered.tai_list_for_paging, cell.tac)) {
+      if (not is_cell_in_tai_list(msg_filtered.tai_list_for_paging, cell)) {
         continue;
       }
     }
