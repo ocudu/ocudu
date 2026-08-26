@@ -9,6 +9,7 @@
 #include "ocudu/ocuduvec/sc_prod.h"
 #include "ocudu/phy/support/re_pattern.h"
 #include "ocudu/phy/support/resource_grid_mapper.h"
+#include "ocudu/ran/beamforming/beam_identifier_helpers.h"
 
 using namespace ocudu;
 
@@ -213,6 +214,6 @@ void ocudu::dmrs_pdsch_processor_impl::map(resource_grid_writer& grid, const con
     }
 
     // Map the CDM group symbols into the resource grid.
-    mapper->map(grid, temp_re, dmrs_pattern_cdm, cdm_group_precoding);
+    mapper->map(grid, temp_re, dmrs_pattern_cdm, to_precoding_beamforming_configuration(cdm_group_precoding));
   }
 }

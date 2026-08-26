@@ -131,6 +131,10 @@ add_executable(precoding_codebooks_test precoding/precoding_codebooks_test.cpp)
 target_link_libraries(precoding_codebooks_test ocudu_ran GTest::gtest ocudu_gtest_main)
 add_test(precoding_codebooks_test precoding_codebooks_test)
 
+add_executable(precoding_beamforming_configuration_test precoding/precoding_beamforming_configuration_test.cpp)
+target_link_libraries(precoding_beamforming_configuration_test ocudu_ran GTest::gtest ocudu_gtest_main)
+add_test(precoding_beamforming_configuration_test precoding_beamforming_configuration_test)
+
 add_executable(precoding_matrix_factorization_test precoding/precoding_matrix_factorization_test.cpp)
 target_link_libraries(precoding_matrix_factorization_test
         ocudu_ran

@@ -17,6 +17,7 @@
 #include "ocudu/phy/upper/channel_processors/ssb/ssb_processor.h"
 #include "ocudu/phy/upper/sequence_generators/sequence_generator_factories.h"
 #include "ocudu/phy/upper/upper_phy_timing_context.h"
+#include "ocudu/ran/beamforming/beam_identifier_helpers.h"
 #include "ocudu/ran/prach/prach_constants.h"
 #include "ocudu/ran/precoding/precoding_codebooks.h"
 #include "ocudu/ran/ssb/ssb_mapping.h"
@@ -238,7 +239,8 @@ public:
       re_pattern grid_allocation(0, nof_subcs / NOF_SUBCARRIERS_PER_RB, 1, ~re_prb_mask(), ~symbol_slot_mask());
 
       // Map the data symbols to the grid.
-      mapper->map(rg.get_writer(), data_symbols, grid_allocation, precoding_config);
+      mapper->map(
+          rg.get_writer(), data_symbols, grid_allocation, to_precoding_beamforming_configuration(precoding_config));
     }
 
     resource_grid_context rg_context;

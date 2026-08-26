@@ -4,6 +4,8 @@
 
 #include "ocudu/ran/beamforming/beam_identifier_helpers.h"
 #include "ocudu/support/ocudu_assert.h"
+#include <algorithm>
+#include <iterator>
 
 using namespace ocudu;
 

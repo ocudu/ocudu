@@ -4,6 +4,9 @@
 
 #pragma once
 
+#include "ocudu/adt/to_array.h"
+#include <algorithm>
+#include <array>
 #include <cstdint>
 
 namespace ocudu {
@@ -34,6 +37,15 @@ enum class antenna_topology : uint16_t {
   /// Single-panel of 4x1 antenna ports with two polarizations.
   single_panel_four_one = 0x0301,
 };
+
+/// All the supported antenna topologies.
+static constexpr auto all_antenna_topologies = to_array<antenna_topology>({antenna_topology::one_port,
+                                                                           antenna_topology::two_port,
+                                                                           antenna_topology::four_ports,
+                                                                           antenna_topology::eight_ports,
+                                                                           antenna_topology::single_panel_two_one,
+                                                                           antenna_topology::single_panel_two_two,
+                                                                           antenna_topology::single_panel_four_one});
 
 /// Gets the antenna topology number of panels.
 constexpr unsigned get_nof_antenna_panels(antenna_topology topology)
@@ -103,6 +115,18 @@ constexpr unsigned get_total_nof_beams(antenna_topology topology)
   unsigned nof_polarizations = get_nof_antenna_polarizations(topology);
 
   return get_total_nof_ports(topology) + nof_panels * nof_beams_dim1 * nof_beams_dim2 * nof_polarizations;
+}
+
+/// Gets the maximum number of beams that any of the supported antenna topologies defines.
+constexpr unsigned get_max_nof_beams()
+{
+  unsigned max_nof_beams = 0;
+  for (antenna_topology topology : all_antenna_topologies) {
+    unsigned nof_beams = get_total_nof_beams(topology);
+    max_nof_beams      = std::max(max_nof_beams, nof_beams);
+  }
+
+  return max_nof_beams;
 }
 
 /// Convert the antenna topology to a constant string.

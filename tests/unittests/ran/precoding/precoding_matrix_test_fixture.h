@@ -79,11 +79,11 @@ protected:
     pmi = param.pmi;
 
     // Composite type containing the MIMO precoding weights and the beam list, both derived from the test's PMI.
-    precoding_mimo_beam_composite composite_precoding = get_mimo_matrix_from_pmi(param.pmi, param.nof_layers);
+    precoding_beamforming_composite composite_precoding = get_mimo_matrix_from_pmi(param.pmi, param.nof_layers);
 
     // Extract MIMO weights and beam list separately.
-    mimo_weights = std::get<0>(composite_precoding);
-    beam_list    = std::get<1>(composite_precoding);
+    mimo_weights = composite_precoding.mimo;
+    beam_list    = composite_precoding.beams;
 
     // Generate the beam weights codebook from the antenna topology.
     beam_codebook = generate_beam_weights_codebook(param.topology);

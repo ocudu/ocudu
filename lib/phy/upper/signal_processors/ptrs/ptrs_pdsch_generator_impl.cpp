@@ -5,6 +5,7 @@
 #include "ptrs_pdsch_generator_impl.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/phy/support/resource_grid_mapper.h"
+#include "ocudu/ran/beamforming/beam_identifier_helpers.h"
 #include "ocudu/ran/ptrs/ptrs_pattern.h"
 
 using namespace ocudu;
@@ -73,6 +74,10 @@ void ptrs_pdsch_generator_generic_impl::generate(resource_grid_writer& grid, con
     }
   }
 
+  // Convert the precoding of the port into a precoding and beamforming configuration without beamforming.
+  precoding_beamforming_configuration port_precoding_beamforming =
+      to_precoding_beamforming_configuration(port_precoding);
+
   // Select samples from the sequence.
   span<cf_t> sequence_slice = sequence.get_slice(0);
   for (unsigned i_re = 0; i_re != nof_prb_ptrs; ++i_re) {
@@ -100,6 +105,6 @@ void ptrs_pdsch_generator_generic_impl::generate(resource_grid_writer& grid, con
     map_pattern.re_mask.set(pattern.re_offset[0]);
 
     // Map sequence in the resource grid.
-    mapper->map(grid, sequence, map_pattern, port_precoding);
+    mapper->map(grid, sequence, map_pattern, port_precoding_beamforming);
   }
 }

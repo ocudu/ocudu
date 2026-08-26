@@ -140,7 +140,7 @@ void pdsch_processor_impl::modulate(resource_grid_writer& grid, span<const bit_b
 
   // Populate the list of resource grid ports for this transmission. Since the logical ports map physical ports, the
   // list is trivial.
-  static_vector<uint8_t, precoding_constants::MAX_NOF_PORTS> ports(nof_ports);
+  static_vector<unsigned, precoding_constants::MAX_NOF_PORTS> ports(nof_ports);
   std::iota(ports.begin(), ports.end(), 0);
   modulator_config.ports = ports;
 

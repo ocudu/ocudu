@@ -555,19 +555,19 @@ struct mimo_matrix_from_pmi_extractor {
   /// Number of transmission layers.
   unsigned nof_layers;
 
-  precoding_mimo_beam_composite operator()(std::monostate) const
+  precoding_beamforming_composite operator()(std::monostate) const
   {
     ocudu_assertion_failure("Unsupported PMI codebook configuration");
     return {};
   }
 
-  precoding_mimo_beam_composite operator()(const pmi_two_antenna_port&) const
+  precoding_beamforming_composite operator()(const pmi_two_antenna_port&) const
   {
     ocudu_assertion_failure("Unsupported PMI codebook configuration");
     return {};
   }
 
-  precoding_mimo_beam_composite operator()(const pmi_typeII&) const
+  precoding_beamforming_composite operator()(const pmi_typeII&) const
   {
     // The compact MIMO-matrix / beam-list form is specific to the Type I Single-Panel codebook. The Type II codebook
     // uses a linear combination of up to L beams per layer and is generated through make_type2().
@@ -575,7 +575,7 @@ struct mimo_matrix_from_pmi_extractor {
     return {};
   }
 
-  precoding_mimo_beam_composite operator()(const pmi_typeI_single_panel& pmi) const
+  precoding_beamforming_composite operator()(const pmi_typeI_single_panel& pmi) const
   {
     static constexpr unsigned max_nof_layers = 4;
     ocudu_assert(nof_layers <= max_nof_layers,
@@ -615,8 +615,8 @@ struct mimo_matrix_from_pmi_extractor {
 
 } // namespace
 
-precoding_mimo_beam_composite ocudu::get_mimo_matrix_from_pmi(const precoding_matrix_indicator& pmi,
-                                                              unsigned                          nof_layers)
+precoding_beamforming_composite ocudu::get_mimo_matrix_from_pmi(const precoding_matrix_indicator& pmi,
+                                                                unsigned                          nof_layers)
 {
   return std::visit(mimo_matrix_from_pmi_extractor{nof_layers}, pmi);
 }

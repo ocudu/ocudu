@@ -4,8 +4,13 @@
 
 #pragma once
 
+#include "ocudu/adt/span.h"
+#include "ocudu/adt/static_vector.h"
 #include "ocudu/ran/antenna_topology.h"
 #include "ocudu/ran/beamforming/beam_identifier.h"
+#include "ocudu/support/ocudu_assert.h"
+#include <algorithm>
+#include <iterator>
 
 namespace ocudu {
 
@@ -45,5 +50,26 @@ beam_identifier get_beam_id(antenna_topology antenna_topology,
                             uint8_t          i_pol,
                             uint8_t          i_beam_dim1,
                             uint8_t          i_beam_dim2);
+
+/// \brief Get a default beam identifier list for a given number of ports.
+///
+/// The default list of beams selects the beams that map directly to ports, starting from port 0 to the total number of
+/// ports minus one.
+///
+/// \param[in] nof_ports Number of ports to be mapped directly onto beams.
+/// \return The list of beam identifiers associated to the port identifiers, starting from zero and in increasing order.
+/// \remark An assertion is triggered if the number of ports exceeds \c precoding_constants::MAX_NOF_PORTS.
+inline precoding_beam_list get_default_beam_list(unsigned nof_ports)
+{
+  ocudu_assert(nof_ports <= precoding_constants::MAX_NOF_PORTS,
+               "The number of ports (i.e., {}) exceeds the maximum (i.e., {}).",
+               nof_ports,
+               precoding_constants::MAX_NOF_PORTS);
+
+  precoding_beam_list beams;
+  std::generate_n(std::back_inserter(beams), nof_ports, [i_port = 0U]() mutable { return to_beam_id(i_port++); });
+
+  return beams;
+}
 
 } // namespace ocudu

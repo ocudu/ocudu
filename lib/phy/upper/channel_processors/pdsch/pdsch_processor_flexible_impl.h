@@ -93,7 +93,7 @@ private:
     /// Precoding configuration scaled.
     precoding_configuration precoding;
     /// Port identifiers onto which the codeword is mapped in the resource grid.
-    span<const uint8_t> ports;
+    span<const unsigned> ports;
     /// Number of layers the codeword is mapped into.
     unsigned nof_layers;
   };
@@ -152,7 +152,7 @@ private:
   std::atomic<unsigned> async_task_counter = {0};
   /// List of resource grid ports for the current transmission - each codeword gets a view of their corresponding ports
   /// from the list.
-  static_vector<uint8_t, precoding_constants::MAX_NOF_PORTS> ports;
+  static_vector<unsigned, precoding_constants::MAX_NOF_PORTS> ports;
   /// Number of resource elements used to map PDSCH on the resource grid - common for all codewords.
   unsigned nof_re_pdsch;
 };

@@ -102,10 +102,8 @@ protected:
 
   /// Create a resource grid with the given number of ports, mapping the specified data to the resource grid using the
   /// given precoding configuration.
-  std::unique_ptr<resource_grid> create_grid_and_map(unsigned                       nof_ports,
-                                                     span<ci8_t>                    data,
-                                                     span<const uint8_t>            ports,
-                                                     const precoding_configuration& precoding)
+  std::unique_ptr<resource_grid>
+  create_grid_and_map(unsigned nof_ports, span<ci8_t> data, const precoding_beamforming_configuration& precoding)
   {
     // Create resource grid.
     std::unique_ptr<resource_grid> grid = rg_factory->create(nof_ports, MAX_NSYMB_PER_SLOT, nof_re);
@@ -113,7 +111,7 @@ protected:
 
     // Map data to the resource grid.
     resource_grid_mapper::symbol_buffer_adapter buffer(data);
-    mapper->map(grid->get_writer(), buffer, allocation, reserved, ports, precoding);
+    mapper->map(grid->get_writer(), buffer, allocation, reserved, precoding);
 
     return grid;
   }
@@ -176,26 +174,27 @@ std::unique_ptr<resource_grid_mapper>         PrecodingMatrixResourceGridFixture
 
 TEST_P(PrecodingMatrixResourceGridFixture, PrecodingMatrixResourceGrid)
 {
-  // Extract the MIMO matrix from the test Precoding Matrix Indicator.
-  const precoding_configuration mimo = precoding_configuration::make_wideband(mimo_weights);
+  // Build the MIMO precoding and beamforming configuration from the test Precoding Matrix Indicator.
+  const precoding_beamforming_configuration mimo =
+      precoding_beamforming_configuration::make_wideband(mimo_weights, beam_list);
   // The number of ports of the precoding matrix must equal the number of beams allocated in the PMI.
-  ASSERT_EQ(mimo.get_nof_ports(), beam_list.size());
+  ASSERT_EQ(mimo.get_nof_beams(), beam_list.size());
 
   // Generate random data for each layer.
   std::vector<ci8_t> data = generate_random_data(nof_re * nof_layers);
 
-  // Get the resource grid port list from the beam list.
-  static_vector<uint8_t, 2 * max_nof_layers> beam_ports = beam_list_to_ports(beam_list);
-
-  // Generate the MIMO-precoded resource grid and map data onto it.
+  // Generate the MIMO-precoded resource grid and map data onto it. The mapper maps each of the beams onto its resource
+  // grid port.
   unsigned                       total_nof_beams = get_total_nof_beams(topology);
-  std::unique_ptr<resource_grid> beam_grid       = create_grid_and_map(total_nof_beams, data, beam_ports, mimo);
+  std::unique_ptr<resource_grid> beam_grid       = create_grid_and_map(total_nof_beams, data, mimo);
 
   // Apply beamforming to the resource grid.
   apply_beamforming(std::move(beam_grid));
 
-  // Apply layer mapping and precoding with the reference, compact, precoding matrix.
-  std::unique_ptr<resource_grid> ref_grid = create_grid_and_map(nof_antenna_ports, data, antenna_ports, reference);
+  // Apply layer mapping and precoding with the reference, compact, precoding matrix, without beamforming. The reference
+  // maps onto the first antenna ports, therefore the default beam list applies.
+  std::unique_ptr<resource_grid> ref_grid =
+      create_grid_and_map(nof_antenna_ports, data, to_precoding_beamforming_configuration(reference));
 
   // Ensure that the result matches the reference precoding matrix.
   compare_resource_grids(std::move(beam_grid), std::move(ref_grid));

@@ -8,6 +8,7 @@
 #include "ocudu/ocuduvec/sc_prod.h"
 #include "ocudu/phy/support/re_pattern.h"
 #include "ocudu/phy/support/resource_grid_mapper.h"
+#include "ocudu/ran/beamforming/beam_identifier_helpers.h"
 #include "ocudu/ran/precoding/precoding_codebooks.h"
 
 using namespace ocudu;
@@ -51,7 +52,7 @@ void pdcch_modulator_impl::map(resource_grid_writer& grid, const re_buffer_reade
   pattern.re_mask = re_mask;
 
   // Actual mapping.
-  mapper->map(grid, d_pdcch, pattern, config.precoding);
+  mapper->map(grid, d_pdcch, pattern, to_precoding_beamforming_configuration(config.precoding));
 }
 
 void pdcch_modulator_impl::modulate(resource_grid_writer&            grid,

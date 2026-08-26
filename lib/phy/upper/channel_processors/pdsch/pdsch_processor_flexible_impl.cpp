@@ -161,7 +161,7 @@ void pdsch_processor_flexible_impl::initialize_codeword(unsigned i_cw, shared_tr
   codeword_context.nof_layers = nof_layers_cw;
 
   // Get a view of the list of ports where the codeword is being mapped to.
-  codeword_context.ports = span<const uint8_t>(ports.data(), ports.size()).subspan(i_cw * nof_ports, nof_ports);
+  codeword_context.ports = span<const unsigned>(ports.data(), ports.size()).subspan(i_cw * nof_ports, nof_ports);
 
   // Extract the codeword-specific precoding.
   codeword_context.precoding =

@@ -11,6 +11,7 @@
 #include "ocudu/phy/support/resource_grid_mapper.h"
 #include "ocudu/phy/support/resource_grid_reader.h"
 #include "ocudu/phy/support/support_factories.h"
+#include "ocudu/ran/beamforming/beam_identifier_helpers.h"
 #include "ocudu/ran/cyclic_prefix.h"
 #include "ocudu/ran/precoding/precoding_codebooks.h"
 #include "fmt/ostream.h"
@@ -346,7 +347,10 @@ TEST_F(ResourceGridMapperFixture, SinglePort)
   std::unique_ptr<resource_grid_mapper> mapper = mapper_factory->create();
 
   // Map into the resource grid.
-  mapper->map(grid->get_writer(), input_data, allocation.get_re_patterns().front(), precoding_config);
+  mapper->map(grid->get_writer(),
+              input_data,
+              allocation.get_re_patterns().front(),
+              to_precoding_beamforming_configuration(precoding_config));
 
   // Generate the golden precoded data.
   const re_buffer_reader<>& golden = generate_golden(input_data, allocation, precoding_config);
@@ -386,7 +390,10 @@ TEST_F(ResourceGridMapperFixture, OneLayerToOnePort)
     std::unique_ptr<resource_grid_mapper> mapper = mapper_factory->create();
 
     // Map into the resource grid.
-    mapper->map(grid->get_writer(), input_data, allocation.get_re_patterns().front(), precoding_config);
+    mapper->map(grid->get_writer(),
+                input_data,
+                allocation.get_re_patterns().front(),
+                to_precoding_beamforming_configuration(precoding_config));
 
     // Generate the golden precoded data.
     const re_buffer_reader<>& golden = generate_golden(input_data, allocation, precoding_config);
@@ -424,7 +431,10 @@ TEST_F(ResourceGridMapperFixture, OneLayerAllPorts)
     std::unique_ptr<resource_grid_mapper> mapper = mapper_factory->create();
 
     // Map into the resource grid.
-    mapper->map(grid->get_writer(), input_data, allocation.get_re_patterns().front(), precoding_config);
+    mapper->map(grid->get_writer(),
+                input_data,
+                allocation.get_re_patterns().front(),
+                to_precoding_beamforming_configuration(precoding_config));
 
     // Generate the golden precoded data.
     const re_buffer_reader<>& golden = generate_golden(input_data, allocation, precoding_config);
@@ -458,7 +468,10 @@ TEST_F(ResourceGridMapperFixture, Identity)
     std::unique_ptr<resource_grid_mapper> mapper = mapper_factory->create();
 
     // Map into the resource grid.
-    mapper->map(grid->get_writer(), input_data, allocation.get_re_patterns().front(), precoding_config);
+    mapper->map(grid->get_writer(),
+                input_data,
+                allocation.get_re_patterns().front(),
+                to_precoding_beamforming_configuration(precoding_config));
 
     // Generate the golden precoded data.
     const re_buffer_reader<>& golden = generate_golden(input_data, allocation, precoding_config);
@@ -498,7 +511,10 @@ TEST_F(ResourceGridMapperFixture, OneLayerTwoPorts)
     std::unique_ptr<resource_grid_mapper> mapper = mapper_factory->create();
 
     // Map into the resource grid.
-    mapper->map(grid->get_writer(), input_data, allocation.get_re_patterns().front(), precoding_config);
+    mapper->map(grid->get_writer(),
+                input_data,
+                allocation.get_re_patterns().front(),
+                to_precoding_beamforming_configuration(precoding_config));
 
     // Generate the golden precoded data.
     const re_buffer_reader<>& golden = generate_golden(input_data, allocation, precoding_config);
@@ -538,7 +554,10 @@ TEST_F(ResourceGridMapperFixture, TwoLayerTwoPorts)
     std::unique_ptr<resource_grid_mapper> mapper = mapper_factory->create();
 
     // Map into the resource grid.
-    mapper->map(grid->get_writer(), input_data, allocation.get_re_patterns().front(), precoding_config);
+    mapper->map(grid->get_writer(),
+                input_data,
+                allocation.get_re_patterns().front(),
+                to_precoding_beamforming_configuration(precoding_config));
 
     // Generate the golden precoded data.
     const re_buffer_reader<>& golden = generate_golden(input_data, allocation, precoding_config);
@@ -586,7 +605,10 @@ TEST_F(ResourceGridMapperFixture, OneLayerFourPorts)
       std::unique_ptr<resource_grid_mapper> mapper = mapper_factory->create();
 
       // Map into the resource grid.
-      mapper->map(grid->get_writer(), input_data, allocation.get_re_patterns().front(), precoding_config);
+      mapper->map(grid->get_writer(),
+                  input_data,
+                  allocation.get_re_patterns().front(),
+                  to_precoding_beamforming_configuration(precoding_config));
 
       // Generate the golden precoded data.
       const re_buffer_reader<>& golden = generate_golden(input_data, allocation, precoding_config);
@@ -636,7 +658,10 @@ TEST_F(ResourceGridMapperFixture, TwoLayerFourPorts)
         std::unique_ptr<resource_grid_mapper> mapper = mapper_factory->create();
 
         // Map into the resource grid.
-        mapper->map(grid->get_writer(), input_data, allocation.get_re_patterns().front(), precoding_config);
+        mapper->map(grid->get_writer(),
+                    input_data,
+                    allocation.get_re_patterns().front(),
+                    to_precoding_beamforming_configuration(precoding_config));
 
         // Generate the golden precoded data.
         const re_buffer_reader<>& golden = generate_golden(input_data, allocation, precoding_config);
@@ -686,7 +711,10 @@ TEST_F(ResourceGridMapperFixture, ThreeLayerFourPorts)
       std::unique_ptr<resource_grid_mapper> mapper = mapper_factory->create();
 
       // Map into the resource grid.
-      mapper->map(grid->get_writer(), input_data, allocation.get_re_patterns().front(), precoding_config);
+      mapper->map(grid->get_writer(),
+                  input_data,
+                  allocation.get_re_patterns().front(),
+                  to_precoding_beamforming_configuration(precoding_config));
 
       // Generate the golden precoded data.
       const re_buffer_reader<>& golden = generate_golden(input_data, allocation, precoding_config);
@@ -735,7 +763,10 @@ TEST_F(ResourceGridMapperFixture, FourLayerFourPorts)
       std::unique_ptr<resource_grid_mapper> mapper = mapper_factory->create();
 
       // Map into the resource grid.
-      mapper->map(grid->get_writer(), input_data, allocation.get_re_patterns().front(), precoding_config);
+      mapper->map(grid->get_writer(),
+                  input_data,
+                  allocation.get_re_patterns().front(),
+                  to_precoding_beamforming_configuration(precoding_config));
 
       // Generate the golden precoded data.
       const re_buffer_reader<>& golden = generate_golden(input_data, allocation, precoding_config);
@@ -788,7 +819,10 @@ TEST_P(ResourceGridMapperFixture, MultiplePrg)
     std::unique_ptr<resource_grid_mapper> mapper = mapper_factory->create();
 
     // Map into the resource grid.
-    mapper->map(grid->get_writer(), input_data, allocation.get_re_patterns().front(), precoding_config);
+    mapper->map(grid->get_writer(),
+                input_data,
+                allocation.get_re_patterns().front(),
+                to_precoding_beamforming_configuration(precoding_config));
 
     // Generate the golden precoded data.
     const re_buffer_reader<>& golden = generate_golden(input_data, allocation, precoding_config);

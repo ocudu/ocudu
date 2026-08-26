@@ -8,6 +8,7 @@
 #include "ocudu/phy/support/mask_types.h"
 #include "ocudu/phy/support/re_pattern.h"
 #include "ocudu/phy/support/resource_grid_mapper.h"
+#include "ocudu/ran/beamforming/beam_identifier_helpers.h"
 #include "ocudu/support/math/math_utils.h"
 
 using namespace ocudu;
@@ -47,7 +48,7 @@ void dmrs_pdcch_processor_impl::mapping(resource_grid_writer&     grid,
   pattern.re_mask = re_mask;
 
   // Actual mapping.
-  mapper->map(grid, d_pdcch, pattern, config.precoding);
+  mapper->map(grid, d_pdcch, pattern, to_precoding_beamforming_configuration(config.precoding));
 }
 
 void dmrs_pdcch_processor_impl::map(resource_grid_writer& grid, const dmrs_pdcch_processor::config_t& config)

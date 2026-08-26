@@ -69,7 +69,7 @@ public:
     /// of layers is eight, the effective maximum number of logical ports (resource grid ports) is eight, four per
     /// codeword. If the total logical number of ports were to be higher, i.e., more than eight, as in the case of
     /// beamforming, codewords will still be mapped to a reduced subset (maximum eight) of logical resource grid ports.
-    static_vector<uint8_t, precoding_constants::MAX_NOF_PORTS> ports;
+    static_vector<unsigned, precoding_constants::MAX_NOF_PORTS> ports;
   };
 
   /// Default destructor.

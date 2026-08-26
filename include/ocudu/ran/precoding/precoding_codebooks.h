@@ -7,6 +7,7 @@
 #include "precoding_matrix_indicator.h"
 #include "ocudu/ran/beamforming/beam_identifier.h"
 #include "ocudu/ran/precoding/precoding_weight_matrix.h"
+#include "ocudu/ran/precoding_beamforming_composite.h"
 
 namespace ocudu {
 
@@ -16,20 +17,6 @@ namespace ocudu {
 /// layers, the precoding uses two different beams, \f$v_{l, m}\f$ and \f$v_{l', m'}\f$, where \f$l \neq l'\f$ and \f$m
 /// \neq m'\f$. In such case, two beams are allocated, each one with two polarizations.
 static constexpr unsigned max_nof_beams_per_pmi = 4;
-
-/// Alias for a list of precoding beams.
-using precoding_beam_list = static_vector<beam_identifier, max_nof_beams_per_pmi>;
-
-/// \brief Composite precoding matrix weights.
-///
-/// The type alias is a tuple that describes a precoding weight matrix composed by a MIMO precoding matrix, and
-/// a list of selected beams.
-///
-/// The MIMO precoding matrix is applied in the upper physical layer in the layer mapping and precoding phase.
-///
-/// The selected beam list describe the coefficients applied for each of the allocated port in the previous phase. These
-/// are applied at the lower physical layer.
-using precoding_mimo_beam_composite = std::tuple<precoding_weight_matrix, precoding_beam_list>;
 
 /// Constructs a precoder configuration for a single transmitter port.
 precoding_weight_matrix make_single_port();
@@ -108,6 +95,6 @@ precoding_weight_matrix make_type1_sp_mode1(const precoding_matrix_indicator& pm
 ///                       reports.
 /// \param[in] nof_layers Number of transmission layers.
 /// \return The MIMO precoding matrix and beam list derived from the PMI and the number of layers.
-precoding_mimo_beam_composite get_mimo_matrix_from_pmi(const precoding_matrix_indicator& pmi, unsigned nof_layers);
+precoding_beamforming_composite get_mimo_matrix_from_pmi(const precoding_matrix_indicator& pmi, unsigned nof_layers);
 
 } // namespace ocudu

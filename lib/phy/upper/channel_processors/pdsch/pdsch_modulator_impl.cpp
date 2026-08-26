@@ -36,7 +36,7 @@ void pdsch_modulator_impl::map(resource_grid_writer&    grid,
                                span<const ci8_t>        data_re,
                                unsigned                 i_codeword,
                                precoding_configuration& precoding,
-                               span<uint8_t>            ports,
+                               span<unsigned>           ports,
                                const config_t&          config)
 {
   ocudu_assert(config.time_alloc.stop() <= MAX_NSYMB_PER_SLOT,
@@ -88,7 +88,7 @@ void pdsch_modulator_impl::modulate(resource_grid_writer&            grid,
   unsigned nof_layers = config.precoding.get().get_nof_layers();
 
   // List of resource grid ports where each codeword is being mapped to.
-  static_vector<uint8_t, precoding_constants::MAX_NOF_PORTS> ports(nof_ports);
+  static_vector<unsigned, precoding_constants::MAX_NOF_PORTS> ports(nof_ports);
 
   for (unsigned i_cw = 0; i_cw != nof_codewords; ++i_cw) {
     modulation_scheme mod = (i_cw == 0) ? config.modulation1 : *config.modulation2;
@@ -118,7 +118,7 @@ void pdsch_modulator_impl::modulate(resource_grid_writer&            grid,
 
     // Populate the list of resource grid ports for this codeword. The first codeword is mapped to the first half of
     // ports, while the second is mapped to the last half.
-    span<const uint8_t> codeword_ports =
+    span<const unsigned> codeword_ports =
         span(config.ports.data(), config.ports.size()).subspan(i_cw * nof_ports, nof_ports);
     ocuduvec::copy(ports, codeword_ports);
 

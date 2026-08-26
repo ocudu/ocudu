@@ -16,6 +16,7 @@ namespace ocudu {
 
 struct re_pattern;
 class re_pattern_list;
+class precoding_beamforming_configuration;
 class precoding_configuration;
 
 /// \brief Resource Element mapping interface.
@@ -83,14 +84,15 @@ public:
   };
 
   /// \brief Maps the input resource elements into the resource grid.
+  ///
   /// \param[out] grid       Resource grid writer interface.
   /// \param[in]  input      Input data.
   /// \param[in]  pattern    Data allocation pattern in the resource grid.
-  /// \param[in]  precoding  Precoding configuration.
-  virtual void map(resource_grid_writer&          grid,
-                   const re_buffer_reader<cf_t>&  input,
-                   const re_pattern&              pattern,
-                   const precoding_configuration& precoding) = 0;
+  /// \param[in]  precoding  Precoding and beamforming configuration.
+  virtual void map(resource_grid_writer&                      grid,
+                   const re_buffer_reader<cf_t>&              input,
+                   const re_pattern&                          pattern,
+                   const precoding_beamforming_configuration& precoding) = 0;
 
   /// Collects the parameters that describe a physical channel generic resource grid allocation.
   struct allocation_configuration {
@@ -111,6 +113,24 @@ public:
   };
 
   /// \brief Maps complex symbols onto the resource grid.
+  ///
+  /// \param[out] grid       Resource grid writer interface.
+  /// \param[in]  buffer     Buffer containing the complex symbols to map.
+  /// \param[in]  allocation Resource allocation parameters.
+  /// \param[in]  reserved   Reserved resource elements, to be excluded from the allocation pattern.
+  /// \param[in]  precoding  Precoding and beamforming configuration.
+  /// \param[in]  re_skip    Number of RE to skip before start mapping the buffer.
+  /// \remark Only one PRG is supported, therefore the MIMO precoding matrix of the first PRG is applied to the entire
+  /// allocation.
+  virtual void map(resource_grid_writer&                      grid,
+                   symbol_buffer&                             buffer,
+                   const allocation_configuration&            allocation,
+                   const re_pattern_list&                     reserved,
+                   const precoding_beamforming_configuration& precoding,
+                   unsigned                                   re_skip = 0) const = 0;
+
+  /// \brief Maps complex symbols onto the resource grid, without beamforming.
+  ///
   /// \param[out] grid       Resource grid writer interface.
   /// \param[in]  buffer     Buffer containing the complex symbols to map.
   /// \param[in]  allocation Resource allocation parameters.
@@ -122,7 +142,7 @@ public:
                    symbol_buffer&                  buffer,
                    const allocation_configuration& allocation,
                    const re_pattern_list&          reserved,
-                   span<const uint8_t>             ports,
+                   span<const unsigned>            ports,
                    const precoding_configuration&  precoding,
                    unsigned                        re_skip = 0) const = 0;
 };

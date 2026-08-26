@@ -12,6 +12,7 @@
 #include "ocudu/ocuduvec/copy.h"
 #include "ocudu/ran/precoding/precoding_constants.h"
 #include "ocudu/ran/precoding/precoding_weight_matrix.h"
+#include "ocudu/ran/precoding_beamforming_configuration.h"
 #include "ocudu/ran/resource_block.h"
 
 namespace ocudu {
@@ -23,6 +24,9 @@ namespace ocudu {
 ///
 /// Each PRG contains a matrix of weights per layer and port. The precoding matrix dimensions (i.e., number of layers
 /// and ports) is set at construction time.
+///
+/// \deprecated Use \c precoding_beamforming_configuration instead. \c precoding_configuration will be removed in a
+/// future release.
 class precoding_configuration
 {
 public:
@@ -363,5 +367,25 @@ private:
   /// Internal data storage.
   static_vector<precoding_weight_matrix, precoding_constants::MAX_NOF_PRG> weights_list;
 };
+
+/// \brief Converts a precoding configuration into an equivalent precoding and beamforming configuration composite.
+///
+/// \param[in] precoding Precoding configuration.
+/// \return A precoding and beamforming configuration without beamforming.
+inline precoding_beamforming_configuration
+to_precoding_beamforming_configuration(const precoding_configuration& precoding)
+{
+  precoding_beamforming_configuration result(
+      precoding.get_nof_layers(), precoding.get_nof_ports(), precoding.get_nof_prg(), precoding.get_prg_size());
+
+  // Get the default beam list - no beamforming is applied.
+  precoding_beam_list beams = get_default_beam_list(precoding.get_nof_ports());
+
+  for (unsigned i_prg = 0, i_prg_end = precoding.get_nof_prg(); i_prg != i_prg_end; ++i_prg) {
+    result.set_prg({precoding.get_prg_coefficients(i_prg), beams}, i_prg);
+  }
+
+  return result;
+}
 
 } // namespace ocudu

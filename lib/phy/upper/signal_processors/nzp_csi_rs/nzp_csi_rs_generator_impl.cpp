@@ -6,6 +6,7 @@
 #include "ocudu/adt/format.h"
 #include "ocudu/phy/support/re_pattern.h"
 #include "ocudu/phy/support/resource_grid_mapper.h"
+#include "ocudu/ran/beamforming/beam_identifier_helpers.h"
 #include "ocudu/ran/csi_rs/csi_rs_config_helpers.h"
 #include "ocudu/ran/csi_rs/csi_rs_pattern.h"
 
@@ -267,7 +268,8 @@ void nzp_csi_rs_generator_impl::map(resource_grid_writer& grid, const config_t& 
       }
     }
 
-    mapper->map(grid, data, pattern, cdm_group_precoding);
+    // Map the CDM group into the resource grid.
+    mapper->map(grid, data, pattern, to_precoding_beamforming_configuration(cdm_group_precoding));
   }
 }
 

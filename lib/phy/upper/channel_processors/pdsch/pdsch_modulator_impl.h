@@ -49,7 +49,7 @@ private:
            span<const ci8_t>        data_re,
            unsigned                 i_codeword,
            precoding_configuration& precoding,
-           span<uint8_t>            ports,
+           span<unsigned>           ports,
            const config_t&          config);
 
   /// Temporary buffer for scrambled sequence.

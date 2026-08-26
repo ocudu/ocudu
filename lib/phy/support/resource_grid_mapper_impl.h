@@ -20,17 +20,25 @@ public:
   ~resource_grid_mapper_impl() = default;
 
   // See interface for documentation.
-  void map(resource_grid_writer&          writer,
-           const re_buffer_reader<>&      input,
-           const re_pattern&              pattern,
-           const precoding_configuration& precoding) override;
+  void map(resource_grid_writer&                      writer,
+           const re_buffer_reader<>&                  input,
+           const re_pattern&                          pattern,
+           const precoding_beamforming_configuration& precoding) override;
+
+  // See interface for documentation.
+  void map(resource_grid_writer&                      grid,
+           symbol_buffer&                             buffer,
+           const allocation_configuration&            allocation,
+           const re_pattern_list&                     reserved,
+           const precoding_beamforming_configuration& precoding,
+           unsigned                                   re_skip) const override;
 
   // See interface for documentation.
   void map(resource_grid_writer&           grid,
            symbol_buffer&                  buffer,
            const allocation_configuration& allocation,
            const re_pattern_list&          reserved,
-           span<const uint8_t>             ports,
+           span<const unsigned>            ports,
            const precoding_configuration&  precoding,
            unsigned                        re_skip) const override;
 
@@ -51,7 +59,7 @@ private:
   /// \param[in]  i_subc       Initial subcarrier index at which start mapping.
   void map_re_block(resource_grid_writer&                      writer,
                     const bounded_bitset<max_nof_subcarriers>& block_mask,
-                    span<const uint8_t>                        ports,
+                    span<const unsigned>                       ports,
                     const precoding_weight_matrix&             prg_weights,
                     span<const ci8_t>                          block,
                     unsigned                                   i_symbol,
