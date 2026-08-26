@@ -107,11 +107,18 @@ void ocudu::autoderive_supported_tas_for_amf_from_du_cells(const du_high_unit_co
   cu_cp_cfg.amf_config.amf.supported_tas.clear();
   cu_cp_cfg.amf_config.amf.is_default_supported_tas = false;
 
-  // Derive supported TAs from DU cell configuration.
+  // Derive supported TAs from DU cell configuration: one entry per broadcast TAC.
   for (const auto& cell : du_hi_cfg.cells_cfg) {
-    cu_cp_unit_supported_ta_item supported_ta;
-    supported_ta.tac = cell.cell.tac;
-    supported_ta.plmn_list.push_back({cell.cell.plmn, {cu_cp_unit_plmn_item::tai_slice_t{1}}});
-    cu_cp_cfg.amf_config.amf.supported_tas.push_back(supported_ta);
+    auto add_supported_ta = [&](tac_t tac) {
+      cu_cp_unit_supported_ta_item supported_ta;
+      supported_ta.tac = tac;
+      supported_ta.plmn_list.push_back({cell.cell.plmn, {cu_cp_unit_plmn_item::tai_slice_t{1}}});
+      cu_cp_cfg.amf_config.amf.supported_tas.push_back(supported_ta);
+    };
+
+    add_supported_ta(cell.cell.tac);
+    for (tac_t tac : cell.cell.additional_tacs) {
+      add_supported_ta(tac);
+    }
   }
 }

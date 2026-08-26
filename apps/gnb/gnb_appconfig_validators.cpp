@@ -58,22 +58,34 @@ bool ocudu::validate_plmn_and_tacs(const du_high_unit_config& du_hi_cfg, const c
     }
   }
 
+  // Every broadcast TAC must be covered, not just the first: the AMF rejects UEs resolving to an uncovered one.
   for (const auto& cell : du_hi_cfg.cells_cfg) {
-    bool found = false;
-    for (const auto& supported_ta : supported_tas) {
-      for (const auto& plmn_item : supported_ta.plmn_list) {
-        if (plmn_item.plmn_id == cell.cell.plmn && supported_ta.tac == cell.cell.tac) {
-          found = true;
-          break;
+    auto is_ta_supported = [&](tac_t tac) {
+      for (const auto& supported_ta : supported_tas) {
+        for (const auto& plmn_item : supported_ta.plmn_list) {
+          if (plmn_item.plmn_id == cell.cell.plmn && supported_ta.tac == tac) {
+            return true;
+          }
         }
       }
-    }
+      return false;
+    };
 
-    if (!found) {
+    if (!is_ta_supported(cell.cell.tac)) {
       fmt::print("Could not find cell PLMN '{}' and cell TAC '{}' in the CU-CP supported tracking areas list\n",
                  cell.cell.plmn,
                  cell.cell.tac);
       return false;
+    }
+
+    for (tac_t tac : cell.cell.additional_tacs) {
+      if (!is_ta_supported(tac)) {
+        fmt::print("Could not find cell PLMN '{}' and additional cell TAC '{}' in the CU-CP supported tracking areas "
+                   "list\n",
+                   cell.cell.plmn,
+                   tac);
+        return false;
+      }
     }
   }
 
