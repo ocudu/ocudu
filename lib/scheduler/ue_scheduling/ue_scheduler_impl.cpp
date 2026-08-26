@@ -25,7 +25,7 @@ ue_cell_scheduler* ue_scheduler_impl::do_add_cell(const ue_cell_scheduler_creati
   cell.ev_mng = event_mng.add_cell(cell_creation_event{*params.cell_res_alloc,
                                                        cell.ue_cell_db,
                                                        cell.fallback_sched,
-                                                       cell.uci_sched,
+                                                       *params.uci_sched,
                                                        cell.slice_sched,
                                                        *params.srs_sched,
                                                        cell.cg_sched.get(),
@@ -58,7 +58,6 @@ void ue_scheduler_impl::do_stop_cell(du_cell_index_t cell_index)
 
   // Stop sub-schedulers.
   c.fallback_sched.stop();
-  c.uci_sched.stop();
   if (c.cg_sched != nullptr) {
     c.cg_sched->stop();
   }
@@ -146,9 +145,6 @@ void ue_scheduler_impl::run_slot_impl(slot_point sl_tx)
     // Update all UEs state.
     ue_db.slot_indication(sl_tx);
 
-    // Schedule periodic UCI (SR and CSI) before any UL grants.
-    group_cell.uci_sched.run_slot(*group_cell.cell_res_alloc);
-
     // Schedule configured grant PUSCH opportunities.
     if (group_cell.cg_sched != nullptr) {
       group_cell.cg_sched->run_slot(*group_cell.cell_res_alloc);
@@ -185,7 +181,6 @@ ue_scheduler_impl::cell_context::cell_context(ue_scheduler_impl&                
   parent(parent_),
   cell_res_alloc(params.cell_res_alloc),
   ue_cell_db(*params.ue_cell_db),
-  uci_sched(params.cell_res_alloc->cfg, *params.uci_alloc, parent.ue_db),
   fallback_sched(parent.expert_cfg,
                  params.cell_res_alloc->cfg,
                  *params.pdcch_sched,

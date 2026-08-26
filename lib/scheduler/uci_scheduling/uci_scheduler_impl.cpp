@@ -14,8 +14,8 @@ using namespace ocudu;
 
 uci_scheduler_impl::uci_scheduler_impl(const cell_configuration& cell_cfg_,
                                        uci_allocator&            uci_alloc_,
-                                       ue_repository&            ues_) :
-  cell_cfg(cell_cfg_), uci_alloc(uci_alloc_), ues(ues_), logger(ocudulog::fetch_basic_logger("SCHED"))
+                                       ue_cell_repository&       ue_cell_db_) :
+  cell_cfg(cell_cfg_), uci_alloc(uci_alloc_), ue_cell_db(ue_cell_db_), logger(ocudulog::fetch_basic_logger("SCHED"))
 {
   // Max size of the UCI resource slot wheel, dimensioned based on the UCI periods.
   periodic_uci_slot_wheel.resize(std::max(MAX_SR_PERIOD, MAX_CSI_REPORT_PERIOD));
@@ -174,11 +174,7 @@ void uci_scheduler_impl::rem_ue(const ue_cell_configuration& ue_cfg)
 
 const ue_cell* uci_scheduler_impl::get_ue_cell(rnti_t rnti) const
 {
-  auto* u = ues.find_by_rnti(rnti);
-  if (u != nullptr) {
-    return u->find_cell(cell_cfg.cell_index);
-  }
-  return nullptr;
+  return ue_cell_db.find_by_rnti(rnti);
 }
 
 void uci_scheduler_impl::schedule_slot_ucis(cell_slot_resource_allocator& slot_alloc)

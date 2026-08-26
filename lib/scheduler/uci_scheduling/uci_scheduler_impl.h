@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../ue_context/ue_repository.h"
+#include "../ue_context/ue_cell_repository.h"
 #include "uci_scheduler.h"
 
 namespace ocudu {
@@ -17,7 +17,9 @@ struct cell_slot_resource_allocator;
 class uci_scheduler_impl final : public uci_scheduler
 {
 public:
-  explicit uci_scheduler_impl(const cell_configuration& cell_cfg_, uci_allocator& uci_alloc_, ue_repository& ues_);
+  explicit uci_scheduler_impl(const cell_configuration& cell_cfg_,
+                              uci_allocator&            uci_alloc_,
+                              ue_cell_repository&       ue_cell_db_);
 
   void run_slot(cell_resource_allocator& res_alloc) override;
 
@@ -54,7 +56,8 @@ private:
   const cell_configuration& cell_cfg;
   // Reference to PUCCH resource allocator object.
   uci_allocator& uci_alloc;
-  ue_repository& ues;
+  // UEs configured in this cell.
+  ue_cell_repository& ue_cell_db;
 
   ocudulog::basic_logger& logger;
 

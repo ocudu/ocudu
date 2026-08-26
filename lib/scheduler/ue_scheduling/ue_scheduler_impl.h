@@ -49,9 +49,6 @@ private:
     /// Repository of UEs for this cell.
     ue_cell_repository& ue_cell_db;
 
-    /// PUCCH scheduler.
-    uci_scheduler_impl uci_sched;
-
     /// Fallback scheduler.
     ue_fallback_scheduler fallback_sched;
 

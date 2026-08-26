@@ -211,7 +211,7 @@ test_bench::test_bench(const test_bench_params& params_) :
   dci_info{make_default_dci(params.n_cces, &cell_cfg.params.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.value())},
   pucch_alloc{cell_cfg, params.max_pucchs_per_slot, params.max_ul_grants_per_slot},
   uci_alloc(cell_cfg, pucch_alloc),
-  uci_sched{cell_cfg, uci_alloc, ues},
+  uci_sched{cell_cfg, uci_alloc, cell_ues},
   sl_tx{to_numerology_value(cell_cfg.params.dl_cfg_common.init_dl_bwp.generic_params.scs), 0}
 {
   ues.register_cell(cell_ues);

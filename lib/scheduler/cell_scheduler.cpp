@@ -30,6 +30,7 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   // The SRS allocator is only used if srs_prohibit_time is set.
   srs_alloc(cell_cfg, sched_cfg.ue.srs_prohibit_time),
   srs_sch(cell_cfg, ue_cell_db),
+  uci_sch(cell_cfg, uci_alloc, ue_cell_db),
   uci_sel(uci_timeout_fwd,
           uci_indication_selector::DEFAULT_ACK_TIMEOUT_SLOTS,
           MAX_PUCCH_PDUS_PER_SLOT,
@@ -61,6 +62,7 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
                                                                    &uci_alloc,
                                                                    &srs_alloc,
                                                                    &srs_sch,
+                                                                   &uci_sch,
                                                                    &res_grid,
                                                                    &metrics,
                                                                    &event_logger,
@@ -138,6 +140,9 @@ void cell_scheduler::run_slot(slot_point_extended sl_tx_ext)
 
   // > Schedule Paging.
   pg_sch.run_slot(res_grid, sl_tx_ext.hyper_sfn());
+
+  // > Schedule the periodic UCI (SR and CSI) before any UL grant.
+  uci_sch.run_slot(res_grid);
 
   // > Schedule the periodic SRS.
   srs_sch.run_slot(res_grid);
@@ -220,6 +225,7 @@ void cell_scheduler::stop()
   pg_sch.stop();
   ue_sched->stop();
   srs_sch.stop();
+  uci_sch.stop();
 
   // Reset resource grid and sub-allocators.
   res_grid.stop();

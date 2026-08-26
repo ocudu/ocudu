@@ -24,6 +24,7 @@
 #include "srs/srs_scheduler_impl.h"
 #include "uci_scheduling/uci_allocator_impl.h"
 #include "uci_scheduling/uci_indication_selector.h"
+#include "uci_scheduling/uci_scheduler_impl.h"
 #include "ue_context/ue_cell_repository.h"
 #include "ue_scheduling/ue_scheduler.h"
 
@@ -129,6 +130,9 @@ private:
   prach_scheduler    prach_sch;
   srs_allocator_impl srs_alloc;
   srs_scheduler_impl srs_sch;
+
+  /// Scheduler of the periodic UCI of the UEs of this cell.
+  uci_scheduler_impl uci_sch;
 
   /// Forwarder of the UCI timeouts to the event manager of this cell.
   cell_uci_timeout_forwarder uci_timeout_fwd;
