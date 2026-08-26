@@ -329,15 +329,30 @@ static asn1::rrc_nr::plmn_id_s make_asn1_plmn_id(const plmn_identity& plmn)
   return asn1_plmn;
 }
 
-static asn1::rrc_nr::plmn_id_info_s
-make_asn1_plmn_id_info(const plmn_identity& plmn, const tac_t& tac, const nr_cell_identity& nci)
+static asn1::rrc_nr::plmn_id_info_s make_asn1_plmn_id_info(const plmn_identity&    plmn,
+                                                           const tac_t&            tac,
+                                                           span<const tac_t>       tac_list,
+                                                           const nr_cell_identity& nci)
 {
   using namespace asn1::rrc_nr;
 
   plmn_id_info_s asn1_plmn_info;
   asn1_plmn_info.plmn_id_list.push_back(make_asn1_plmn_id(plmn));
-  asn1_plmn_info.tac_present = true;
-  asn1_plmn_info.tac.from_number(tac);
+  if (tac_list.empty()) {
+    asn1_plmn_info.tac_present = true;
+    asn1_plmn_info.tac.from_number(tac);
+  } else {
+    // NTN cells only. TS 38.331: trackingAreaList replaces trackingAreaCode; leave tac absent.
+    asn1_plmn_info.tac_present = false;
+    // The field sits in an extension group, only packed when the extension marker is set.
+    asn1_plmn_info.ext = true;
+    asn1_plmn_info.tracking_area_list_r17.set_present();
+    for (tac_t entry : tac_list) {
+      asn1::fixed_bitstring<24> asn1_tac;
+      asn1_tac.from_number(entry);
+      asn1_plmn_info.tracking_area_list_r17->push_back(asn1_tac);
+    }
+  }
   asn1_plmn_info.cell_id.from_number(nci.value());
   asn1_plmn_info.cell_reserved_for_oper.value = plmn_id_info_s::cell_reserved_for_oper_opts::not_reserved;
   return asn1_plmn_info;
@@ -355,7 +370,8 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
   sib1.cell_sel_info.q_qual_min         = du_cfg.si.cell_sel_info.q_qual_min.value();
 
   auto& asn1_plmn_id_info_list = sib1.cell_access_related_info.plmn_id_info_list;
-  asn1_plmn_id_info_list.push_back(make_asn1_plmn_id_info(du_cfg.nr_cgi.plmn_id, du_cfg.tac, du_cfg.nr_cgi.nci));
+  asn1_plmn_id_info_list.push_back(
+      make_asn1_plmn_id_info(du_cfg.nr_cgi.plmn_id, du_cfg.tac, du_cfg.tac_list, du_cfg.nr_cgi.nci));
   for (auto& add_plmn : du_cfg.si.cell_acc_rel_info.additional_plmns) {
     asn1_plmn_id_info_list[0].plmn_id_list.push_back(make_asn1_plmn_id(add_plmn));
   }
