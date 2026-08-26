@@ -212,6 +212,35 @@ cu_cp:
 
 ---
 
+### Broadcasting several TACs in one cell
+
+TS 38.331 lets an NTN cell broadcast up to 12 TACs per PLMN in `trackingAreaList`. Stack
+`multi_tac.yml` on top of `gnb.yml`:
+
+```bash
+sudo $GNB_PATH -c ./gnb.yml -c sat.yml -c ntn_du.yml -c ntn_cu.yml -c zmq.yml -c multi_tac.yml
+```
+
+```yaml
+cell_cfg:
+  tac: 7
+  additional_tacs: [8, 9]           # cell advertises 7, 8 and 9
+
+cu_cp:
+  amf:
+    supported_tracking_areas:       # one entry per broadcast TAC, all known to the core
+      - tac: 7
+        plmn_list: [{ plmn: "00101", tai_slice_support_list: [{ sst: 1 }] }]
+      - tac: 8
+        plmn_list: [{ plmn: "00101", tai_slice_support_list: [{ sst: 1 }] }]
+      - tac: 9
+        plmn_list: [{ plmn: "00101", tai_slice_support_list: [{ sst: 1 }] }]
+```
+
+A later `-c` file replaces a list instead of appending to it, which is why `tac: 7` is repeated.
+
+---
+
 ## 3. Start the SRS gNB
 
 Launch the gNB using the generated NTN configuration together with the standard configuration files:

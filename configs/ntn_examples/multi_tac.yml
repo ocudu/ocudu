@@ -1,0 +1,29 @@
+# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+# Makes the NTN cell broadcast TACs 7, 8 and 9. Stack on top of gnb.yml:
+#   gnb -c ./gnb.yml -c sat.yml -c ntn_du.yml -c ntn_cu.yml -c multi_tac.yml
+
+cell_cfg:
+  tac: 7
+  additional_tacs: [8, 9]
+
+cu_cp:
+  amf:
+    # A later -c file replaces this list instead of appending, hence tac 7 is repeated.
+    supported_tracking_areas:
+      - tac: 7
+        plmn_list:
+          - plmn: "00101"
+            tai_slice_support_list:
+              - sst: 1
+      - tac: 8
+        plmn_list:
+          - plmn: "00101"
+            tai_slice_support_list:
+              - sst: 1
+      - tac: 9
+        plmn_list:
+          - plmn: "00101"
+            tai_slice_support_list:
+              - sst: 1
