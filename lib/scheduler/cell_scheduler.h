@@ -61,9 +61,11 @@ public:
 
   void handle_crc_indication(const ul_crc_indication& crc_ind);
 
+  void handle_srs_indication(const srs_indication& srs) { ev_mng.handle_srs_indication(srs); }
+
   void handle_paging_information(const sched_paging_information& pi) { ev_mng.handle_paging_information(pi); }
 
-  scheduler_feedback_handler&                   get_feedback_handler() { return ue_sched->get_feedback_handler(); }
+  ue_feedback_handler&                          get_feedback_handler() { return ue_sched->get_feedback_handler(); }
   scheduler_cell_positioning_handler&           get_positioning_handler() { return ev_mng; }
   scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler()
   {

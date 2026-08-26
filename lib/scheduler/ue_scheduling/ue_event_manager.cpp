@@ -127,7 +127,6 @@ class ocudu::pdu_indication_pool
   static constexpr size_t UCI_INITIAL_POOL_SIZE      = MAX_PUCCH_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
   static constexpr size_t PHR_INITIAL_POOL_SIZE      = MAX_PUSCH_PDUS_PER_SLOT * MAX_BSR_PHR_EXPECTED_SLOTS;
   static constexpr size_t CRC_INITIAL_POOL_SIZE      = MAX_PUSCH_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
-  static constexpr size_t SRS_INITIAL_POOL_SIZE      = MAX_SRS_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
   static constexpr size_t BSR_INITIAL_POOL_SIZE      = MAX_PUSCH_PDUS_PER_SLOT * MAX_BSR_PHR_EXPECTED_SLOTS;
   static constexpr size_t SLICE_RECONF_POOL_SIZE     = 1 * MAX_EXPECTED_SLOTS;
   // TA reports are event-triggered and rare in steady state, at most one per UE per offsetThresholdTA of drift, but
@@ -139,7 +138,6 @@ class ocudu::pdu_indication_pool
   using uci_pool          = bounded_object_pool<uci_indication::uci_pdu>;
   using phr_pool          = bounded_object_pool<ul_phr_indication_message>;
   using crc_pool          = bounded_object_pool<ul_crc_pdu_indication>;
-  using srs_pool          = bounded_object_pool<srs_indication::srs_indication_pdu>;
   using bsr_pool          = bounded_object_pool<ul_bsr_indication_message>;
   using slice_reconf_pool = bounded_object_pool<du_cell_slice_reconfig_request>;
   using ta_report_pool    = bounded_object_pool<ul_ta_report_indication_message>;
@@ -150,7 +148,6 @@ public:
     pending_ucis(UCI_INITIAL_POOL_SIZE),
     pending_phrs(PHR_INITIAL_POOL_SIZE),
     pending_crcs(CRC_INITIAL_POOL_SIZE),
-    pending_srss(SRS_INITIAL_POOL_SIZE),
     pending_bsrs(BSR_INITIAL_POOL_SIZE),
     slice_reconf_reqs(SLICE_RECONF_POOL_SIZE),
     pending_ta_reports(TA_REPORT_POOL_SIZE)
@@ -167,8 +164,6 @@ public:
       return "PHR";
     } else if constexpr (std::is_same_v<PDUType, ul_crc_pdu_indication>) {
       return "CRC";
-    } else if constexpr (std::is_same_v<PDUType, srs_indication::srs_indication_pdu>) {
-      return "SRS";
     } else if constexpr (std::is_same_v<PDUType, ul_bsr_indication_message>) {
       return "BSR";
     } else if constexpr (std::is_same_v<PDUType, du_cell_slice_reconfig_request>) {
@@ -200,19 +195,12 @@ private:
   uci_pool          pending_ucis;
   phr_pool          pending_phrs;
   crc_pool          pending_crcs;
-  srs_pool          pending_srss;
   bsr_pool          pending_bsrs;
   slice_reconf_pool slice_reconf_reqs;
   ta_report_pool    pending_ta_reports;
 
-  std::tuple<uci_pool*, phr_pool*, crc_pool*, srs_pool*, bsr_pool*, slice_reconf_pool*, ta_report_pool*> pools{
-      &pending_ucis,
-      &pending_phrs,
-      &pending_crcs,
-      &pending_srss,
-      &pending_bsrs,
-      &slice_reconf_reqs,
-      &pending_ta_reports};
+  std::tuple<uci_pool*, phr_pool*, crc_pool*, bsr_pool*, slice_reconf_pool*, ta_report_pool*>
+      pools{&pending_ucis, &pending_phrs, &pending_crcs, &pending_bsrs, &slice_reconf_reqs, &pending_ta_reports};
 };
 
 // Initial capacity for the common and cell event lists, in order to avoid std::vector reallocations. We use the max
@@ -228,7 +216,6 @@ ue_cell_event_manager::ue_cell_event_manager(ue_event_manager&          parent_,
   logger(logger_),
   cfg(cell_ev.cell_res_grid.cfg),
   res_grid(cell_ev.cell_res_grid),
-  cell_harqs(cell_ev.ue_cell_db.get_cell_harqs()),
   fallback_sched(cell_ev.fallback_sched),
   uci_sched(cell_ev.uci_sched),
   slice_sched(cell_ev.slice_sched),
@@ -589,8 +576,7 @@ void ue_cell_event_manager::handle_crc_indication(const ul_crc_indication& crc_i
 
       // Process Timing Advance Offset.
       if (crc_ptr->tb_crc_success and crc_ptr->time_advance_offset.has_value() and crc_ptr->ul_sinr_dB.has_value()) {
-        u.handle_ul_n_ta_update_indication(
-            ue_cc->cell_index, crc_ptr->ul_sinr_dB.value(), crc_ptr->time_advance_offset.value());
+        ue_cc->handle_ul_n_ta_update_indication(crc_ptr->ul_sinr_dB.value(), crc_ptr->time_advance_offset.value());
       }
 
       // Log event.
@@ -677,7 +663,7 @@ ue_cell_event_manager::event_result ue_cell_event_manager::handle_uci_pdu(slot_p
     }
 
     if (action->time_advance_offset.has_value()) {
-      u.handle_ul_n_ta_update_indication(ue_cc->cell_index, action->ul_sinr_dB.value(), *action->time_advance_offset);
+      ue_cc->handle_ul_n_ta_update_indication(action->ul_sinr_dB.value(), *action->time_advance_offset);
     }
   }
 
@@ -707,55 +693,6 @@ void ue_cell_event_manager::handle_uci_indication(const uci_indication& uci)
                        // still sending CSI or SR in the PUCCH. If we stop the PUCCH scheduling for the
                        // UE about to be released, we could risk interference between UEs in the PUCCH.
                        false});
-  }
-}
-
-void ue_cell_event_manager::handle_srs_indication(const srs_indication& srs)
-{
-  for (unsigned i = 0, e = srs.srss.size(); i != e; ++i) {
-    const srs_indication::srs_indication_pdu& srs_pdu     = srs.srss[i];
-    auto                                      srs_pdu_ptr = ind_pdu_pool->create_pdu(srs_pdu);
-    if (srs_pdu_ptr == nullptr) {
-      return;
-    }
-
-    auto srs_handle_impl = [this, srs_ptr = std::move(srs_pdu_ptr)]() {
-      // Fetch UE objects.
-      if (not ue_db.contains(srs_ptr->ue_index)) {
-        return event_result::invalid_ue;
-      }
-      ue&      u     = ue_db[srs_ptr->ue_index];
-      ue_cell* ue_cc = u.find_cell(cfg.cell_index);
-      if (ue_cc == nullptr) {
-        return event_result::invalid_ue_cc;
-      }
-
-      // Indicate the channel matrix.
-      ue_cc->handle_srs_channel_matrix(srs_ptr->channel_matrix);
-
-      // Log event.
-      ev_logger.enqueue(scheduler_event_logger::srs_indication_event{
-          srs_ptr->ue_index, srs_ptr->rnti, ue_cc->channel_state_manager().get_latest_tpmi_select_info()});
-
-      // Handle time aligment measurement if present.
-      if (srs_ptr->time_advance_offset.has_value()) {
-        // Assume some SINR for the TA feedback using the channel matrix topology and near zero
-        // noise variance.
-        float frobenius_norm = srs_ptr->channel_matrix.frobenius_norm();
-        float noise_var      = near_zero;
-        float sinr_dB        = convert_power_to_dB(frobenius_norm * frobenius_norm / noise_var);
-
-        // Notify UL TA update.
-        ue_db[ue_cc->ue_index].handle_ul_n_ta_update_indication(
-            ue_cc->cell_index, sinr_dB, srs_ptr->time_advance_offset.value());
-
-        // Report the SRS PDU to the metrics handler.
-        metrics.handle_srs_indication(*srs_ptr, ue_cc->channel_state_manager().get_nof_ul_layers());
-      }
-      return event_result::processed;
-    };
-
-    push_event(srs.cell_index, event_t{"SRS", srs_pdu.ue_index, std::move(srs_handle_impl), false});
   }
 }
 

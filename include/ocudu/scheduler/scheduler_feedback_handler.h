@@ -269,14 +269,14 @@ struct ul_ta_report_indication_message {
   std::chrono::microseconds ul_ta;
 };
 
-class scheduler_feedback_handler
+/// Interface used to push the feedback that is directed at a UE of a cell.
+class ue_feedback_handler
 {
 public:
-  virtual ~scheduler_feedback_handler()                                       = default;
+  virtual ~ue_feedback_handler()                                              = default;
   virtual void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) = 0;
   virtual void handle_crc_indication(const ul_crc_indication& crc)            = 0;
   virtual void handle_uci_indication(const uci_indication& uci)               = 0;
-  virtual void handle_srs_indication(const srs_indication& srs)               = 0;
 
   /// \brief Handles PHR indication sent by MAC.
   ///
@@ -295,6 +295,15 @@ public:
 
   /// \brief Handle indication that C-RNTI CE was received for the provided UE.
   virtual void handle_crnti_ce_received(du_ue_index_t ue_index) = 0;
+};
+
+/// \brief Interface used to push cell-specific feedback to the scheduler.
+///
+/// It extends the feedback directed at a UE with the one that the cell handles without reaching the UE context.
+class scheduler_feedback_handler : public ue_feedback_handler
+{
+public:
+  virtual void handle_srs_indication(const srs_indication& srs) = 0;
 };
 
 } // namespace ocudu

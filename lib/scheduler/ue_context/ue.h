@@ -33,7 +33,6 @@ public:
      ue_logical_channel_repository dl_lch_repo,
      ue_drx_controller&            drx_ctrl,
      ue_ta_report_tracker&         ta_report_tracker_,
-     ue_ta_manager                 ta_mgr_,
      const ue_cell_lookup&         ue_cells);
   ue(const ue&)            = delete;
   ue(ue&&)                 = delete;
@@ -74,13 +73,6 @@ public:
   /// \brief Handles received BSR indication by updating UE UL logical channel states.
   void handle_bsr_indication(const ul_bsr_indication_message& msg) { lc_ch_mgr.handle_bsr_indication(msg); }
 
-  /// \brief Handles received N_TA update indication by forwarding it to Timing Advance manager.
-  void handle_ul_n_ta_update_indication(du_cell_index_t cell_index, float ul_sinr, phy_time_unit n_ta_diff)
-  {
-    const ue_cell* ue_cc = find_cell(cell_index);
-    ta_mgr.handle_ul_n_ta_update_indication(ue_cc->cfg().tag_id(), n_ta_diff.to_Tc(), ul_sinr);
-  }
-
   /// \brief Handles MAC CE indication.
   void handle_dl_mac_ce_indication(const dl_mac_ce_indication& msg)
   {
@@ -116,8 +108,6 @@ private:
   const ue_configuration* ue_ded_cfg = nullptr;
   /// UE Logical Channel Manager.
   ue_logical_channel_repository lc_ch_mgr;
-  /// UE Timing Advance Manager.
-  ue_ta_manager ta_mgr;
   /// Controller of DRX active timer.
   ue_drx_controller& drx;
   /// Tracker of the uplink timing advance reported by the UE.

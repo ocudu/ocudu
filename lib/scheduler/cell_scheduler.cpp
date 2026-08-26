@@ -31,7 +31,7 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   srs_alloc(cell_cfg, sched_cfg.ue.srs_prohibit_time),
   srs_sch(cell_cfg, ue_cell_db),
   pg_sch(cell_cfg, pdcch_sch),
-  ev_mng(cell_cfg, si_sch, pg_sch, ra_sch, srs_sch, logger)
+  ev_mng(cell_cfg, ue_cell_db, si_sch, pg_sch, ra_sch, srs_sch, metrics, event_logger, logger)
 {
   // Register new cell in the UE scheduler.
   ue_sched = ue_sched_.add_cell(ue_cell_scheduler_creation_request{msg.cell_index,

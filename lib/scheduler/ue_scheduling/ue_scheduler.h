@@ -67,7 +67,7 @@ public:
   virtual void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& slice_reconf_req) = 0;
 
   /// Retrieves handler of UE feedback for a given cell.
-  virtual scheduler_feedback_handler& get_feedback_handler() = 0;
+  virtual ue_feedback_handler& get_feedback_handler() = 0;
 
   /// Retrieves handler of DL buffer state updates for a given cell.
   virtual scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler() = 0;

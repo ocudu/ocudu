@@ -7,9 +7,13 @@
 #include "common_scheduling/ra_scheduler.h"
 #include "common_scheduling/si_scheduler.h"
 #include "config/cell_configuration.h"
+#include "logging/cell_metrics_handler.h"
+#include "logging/scheduler_event_logger.h"
 #include "srs/srs_scheduler.h"
+#include "ue_context/ue_cell_repository.h"
 #include "ocudu/adt/mpmc_queue.h"
 #include "ocudu/adt/unique_function.h"
+#include "ocudu/support/math/math_utils.h"
 #include "ocudu/support/memory_pool/bounded_object_pool.h"
 
 using namespace ocudu;
@@ -28,6 +32,8 @@ class ocudu::cell_event_dispatcher
   static constexpr size_t PHY_IND_POOL_SIZE = 8;
   // [Implementation defined] Positioning measurements are rare, so only a few can be in flight at any moment.
   static constexpr size_t POSITIONING_POOL_SIZE = 4;
+  // [Implementation defined] Number of SRS PDUs that can be in flight at any moment.
+  static constexpr size_t SRS_POOL_SIZE = MAX_SRS_PDUS_PER_SLOT * 4;
 
   /// \brief Capacity of the queue of pending events.
   ///
@@ -43,6 +49,7 @@ class ocudu::cell_event_dispatcher
   using rach_pool    = bounded_object_pool<rach_indication_message>;
   using crc_pool     = bounded_object_pool<ul_crc_indication>;
   using pos_req_pool = bounded_object_pool<positioning_measurement_request::cell_info>;
+  using srs_pool     = bounded_object_pool<srs_indication::srs_indication_pdu>;
 
   /// Event enqueued and dispatched by this class.
   struct event_t {
@@ -71,6 +78,7 @@ public:
     pending_rachs(PHY_IND_POOL_SIZE),
     pending_crcs(PHY_IND_POOL_SIZE),
     pending_pos_reqs(POSITIONING_POOL_SIZE),
+    pending_srss(SRS_POOL_SIZE),
     pending_events(EVENT_QUEUE_SIZE)
   {
   }
@@ -147,6 +155,8 @@ private:
       return "CRC";
     } else if constexpr (std::is_same_v<PDUType, positioning_measurement_request::cell_info>) {
       return "positioning request";
+    } else if constexpr (std::is_same_v<PDUType, srs_indication::srs_indication_pdu>) {
+      return "SRS";
     } else {
       return "unknown";
     }
@@ -161,13 +171,16 @@ private:
   rach_pool    pending_rachs;
   crc_pool     pending_crcs;
   pos_req_pool pending_pos_reqs;
+  srs_pool     pending_srss;
 
-  std::tuple<paging_pool*, si_pool*, pws_si_pool*, rach_pool*, crc_pool*, pos_req_pool*> pools{&pending_pagings,
-                                                                                               &pending_si_reqs,
-                                                                                               &pending_pws_si_reqs,
-                                                                                               &pending_rachs,
-                                                                                               &pending_crcs,
-                                                                                               &pending_pos_reqs};
+  std::tuple<paging_pool*, si_pool*, pws_si_pool*, rach_pool*, crc_pool*, pos_req_pool*, srs_pool*> pools{
+      &pending_pagings,
+      &pending_si_reqs,
+      &pending_pws_si_reqs,
+      &pending_rachs,
+      &pending_crcs,
+      &pending_pos_reqs,
+      &pending_srss};
 
   event_queue pending_events;
 
@@ -176,16 +189,22 @@ private:
 };
 
 cell_event_manager::cell_event_manager(const cell_configuration& cell_cfg_,
+                                       ue_cell_repository&       ue_cell_db_,
                                        si_scheduler&             si_sch_,
                                        paging_scheduler&         pg_sch_,
                                        ra_scheduler&             ra_sch_,
                                        srs_scheduler&            srs_sch_,
+                                       cell_metrics_handler&     metrics_,
+                                       scheduler_event_logger&   ev_logger_,
                                        ocudulog::basic_logger&   logger) :
   cell_cfg(cell_cfg_),
+  ue_cell_db(ue_cell_db_),
   si_sch(si_sch_),
   pg_sch(pg_sch_),
   ra_sch(ra_sch_),
   srs_sch(srs_sch_),
+  metrics(metrics_),
+  ev_logger(ev_logger_),
   dispatcher(std::make_unique<cell_event_dispatcher>(cell_cfg_, logger))
 {
 }
@@ -275,4 +294,42 @@ void cell_event_manager::handle_positioning_measurement_request(const positionin
 void cell_event_manager::handle_positioning_measurement_stop(rnti_t pos_rnti)
 {
   dispatcher->push("positioning stop", [this, pos_rnti]() { srs_sch.handle_positioning_measurement_stop(pos_rnti); });
+}
+
+void cell_event_manager::handle_srs_indication(const srs_indication& srs)
+{
+  for (const srs_indication::srs_indication_pdu& srs_pdu : srs.srss) {
+    auto srs_ptr = dispatcher->create_pdu(srs_pdu);
+    if (srs_ptr == nullptr) {
+      return;
+    }
+
+    dispatcher->push("SRS", [this, srs_ptr = std::move(srs_ptr)]() {
+      ue_cell* ue_cc = ue_cell_db.find(srs_ptr->ue_index);
+      if (ue_cc == nullptr) {
+        return;
+      }
+
+      // Indicate the channel matrix.
+      ue_cc->handle_srs_channel_matrix(srs_ptr->channel_matrix);
+
+      // Log event.
+      ev_logger.enqueue(scheduler_event_logger::srs_indication_event{
+          srs_ptr->ue_index, srs_ptr->rnti, ue_cc->channel_state_manager().get_latest_tpmi_select_info()});
+
+      // Handle time aligment measurement if present.
+      if (srs_ptr->time_advance_offset.has_value()) {
+        // Assume some SINR for the TA feedback using the channel matrix topology and near zero noise variance.
+        const float frobenius_norm = srs_ptr->channel_matrix.frobenius_norm();
+        const float noise_var      = near_zero;
+        const float sinr_dB        = convert_power_to_dB(frobenius_norm * frobenius_norm / noise_var);
+
+        // Notify UL TA update.
+        ue_cc->handle_ul_n_ta_update_indication(sinr_dB, srs_ptr->time_advance_offset.value());
+
+        // Report the SRS PDU to the metrics handler.
+        metrics.handle_srs_indication(*srs_ptr, ue_cc->channel_state_manager().get_nof_ul_layers());
+      }
+    });
+  }
 }

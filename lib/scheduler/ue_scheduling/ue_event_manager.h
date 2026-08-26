@@ -19,7 +19,6 @@ namespace ocudu {
 class cell_metrics_handler;
 class scheduler_event_logger;
 class uci_scheduler_impl;
-class cell_harq_manager;
 class srs_scheduler;
 class pdu_indication_pool;
 class uci_indication_selector;
@@ -47,7 +46,7 @@ class ue_event_manager;
 
 /// Handler of UE events for a given cell.
 class ue_cell_event_manager final : public sched_ue_configuration_handler,
-                                    public scheduler_feedback_handler,
+                                    public ue_feedback_handler,
                                     public scheduler_dl_buffer_state_indication_handler
 {
 public:
@@ -77,7 +76,6 @@ public:
   void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override;
   void handle_crc_indication(const ul_crc_indication& crc) override;
   void handle_uci_indication(const uci_indication& uci) override;
-  void handle_srs_indication(const srs_indication& srs) override;
   void handle_ul_phr_indication(const ul_phr_indication_message& phr_ind) override;
   void handle_ul_ta_report_indication(const ul_ta_report_indication_message& ta_report_ind) override;
   void handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce) override;
@@ -160,7 +158,6 @@ private:
   // cell parameters.
   const cell_configuration& cfg;
   cell_resource_allocator&  res_grid;
-  cell_harq_manager&        cell_harqs;
   ue_fallback_scheduler&    fallback_sched;
   uci_scheduler_impl&       uci_sched;
   inter_slice_scheduler&    slice_sched;

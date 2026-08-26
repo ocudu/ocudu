@@ -212,7 +212,7 @@ void scheduler_impl::handle_srs_indication(const srs_indication& srs)
 {
   ocudu_assert(cells.contains(srs.cell_index), "cell={} does not exist", srs.cell_index);
 
-  cells[srs.cell_index]->get_feedback_handler().handle_srs_indication(srs);
+  cells[srs.cell_index]->handle_srs_indication(srs);
 }
 
 void scheduler_impl::handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce)

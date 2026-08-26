@@ -13,16 +13,20 @@ namespace ocudu {
 class cell_configuration;
 class cell_event_dispatcher;
 class paging_scheduler;
+class cell_metrics_handler;
 class ra_scheduler;
+class scheduler_event_logger;
 class si_scheduler;
 class srs_scheduler;
+class ue_cell_repository;
 struct pws_si_scheduling_update_request;
+struct srs_indication;
 struct rach_indication_message;
 struct sched_paging_information;
 struct si_scheduling_update_request;
 struct ul_crc_indication;
 
-/// \brief Handler of the events of a cell that require no access to the UE repository.
+/// \brief Handler of the events of a cell that require no access to the state shared by the UEs of the cell group.
 ///
 /// Events are enqueued from any executor and processed at the start of the cell slot indication, so that their
 /// handling runs in the cell scheduler executor.
@@ -30,10 +34,13 @@ class cell_event_manager final : public scheduler_cell_positioning_handler
 {
 public:
   cell_event_manager(const cell_configuration& cell_cfg,
+                     ue_cell_repository&       ue_cell_db,
                      si_scheduler&             si_sch,
                      paging_scheduler&         pg_sch,
                      ra_scheduler&             ra_sch,
                      srs_scheduler&            srs_sch,
+                     cell_metrics_handler&     metrics,
+                     scheduler_event_logger&   ev_logger,
                      ocudulog::basic_logger&   logger);
   ~cell_event_manager() override;
 
@@ -61,16 +68,22 @@ public:
   /// Enqueue a UL CRC indication coming from lower layers.
   void handle_crc_indication(const ul_crc_indication& crc_ind);
 
+  /// Enqueue an SRS indication coming from lower layers.
+  void handle_srs_indication(const srs_indication& srs);
+
   // scheduler_cell_positioning_handler methods.
   void handle_positioning_measurement_request(const positioning_measurement_request::cell_info& req) override;
   void handle_positioning_measurement_stop(rnti_t pos_rnti) override;
 
 private:
   const cell_configuration& cell_cfg;
+  ue_cell_repository&       ue_cell_db;
   si_scheduler&             si_sch;
   paging_scheduler&         pg_sch;
   ra_scheduler&             ra_sch;
   srs_scheduler&            srs_sch;
+  cell_metrics_handler&     metrics;
+  scheduler_event_logger&   ev_logger;
 
   // Queue of pending events and pools of the event payloads that do not fit in an event callback.
   std::unique_ptr<cell_event_dispatcher> dispatcher;

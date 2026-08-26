@@ -127,6 +127,10 @@ private:
   /// UE Timing Advance Manager.
   ta_management_system ta_mgr_sys;
 
+  /// \brief Timing Advance manager handle of each UE.
+  /// \note Declared after \c ta_mgr_sys, as releasing a handle reaches into it.
+  slotted_id_table<du_ue_index_t, ue_ta_manager, MAX_NOF_DU_UES, false> ue_ta_mgrs;
+
   /// Lookup of UE cells per UE.
   slotted_id_table<du_ue_index_t, ue_cell_lookup, MAX_NOF_DU_UES, false> ue_cell_lookups;
 
