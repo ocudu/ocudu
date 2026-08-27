@@ -23,11 +23,13 @@ public:
   byte_buffer update_si_pdus(const byte_buffer& sib1, span<const bcch_dl_sch_payload_type> si_msgs = {})
   {
     mac_cell_sys_info_config req;
-    auto                     old_pdu = std::move(bench.sys_info_cfg.sib1);
-    bench.sys_info_cfg.sib1          = sib1.copy();
-    req.sib1                         = sib1.copy();
+    // Note: sib1 may alias the payload being moved out, so it is copied before the move.
+    req.sib1                = sib1.copy();
+    byte_buffer old_pdu     = std::move(bench.sys_info_cfg.sib1);
+    bench.sys_info_cfg.sib1 = req.sib1.copy();
     for (const auto& si_msg : si_msgs) {
       req.si_messages.push_back(si_msg);
+      req.si_sched_cfg.si_messages.emplace_back().sibs = sib_type_set{sib_type::sib2};
     }
     std::optional<si_update_command> cmd = bench.update_si(req);
     last_version = cmd.has_value() ? std::optional<si_version_type>{cmd->version} : std::nullopt;
