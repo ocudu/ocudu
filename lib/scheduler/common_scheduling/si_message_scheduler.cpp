@@ -353,6 +353,7 @@ void si_message_scheduler::fill_si_grant(cell_slot_resource_allocator& res_grid,
   sib_information& si = res_grid.result.dl.bc.sibs.emplace_back();
   si.si_indicator     = sib_information::si_indicator_type::other_si;
   si.si_msg_index     = si_message;
+  si.sibs             = si_sched_cfg.si_messages[si_message].sibs;
   si.version          = version;
   si.nof_txs          = message_context.total_nof_tx;
 

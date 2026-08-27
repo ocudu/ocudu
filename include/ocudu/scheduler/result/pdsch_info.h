@@ -13,6 +13,7 @@
 #include "ocudu/ran/precoding/precoding_constants.h"
 #include "ocudu/ran/resource_allocation/vrb_to_prb.h"
 #include "ocudu/ran/rnti.h"
+#include "ocudu/ran/sib/sib_type.h"
 #include "ocudu/ran/slot_pdu_capacity_constants.h"
 #include "ocudu/ran/time_alignment_config.h"
 #include "ocudu/scheduler/config/bwp_configuration.h"
@@ -198,7 +199,12 @@ struct ssb_information {
 /// Stores the information associated with an SIB1 or other SI allocation.
 struct sib_information {
   enum si_indicator_type { sib1, other_si } si_indicator;
+  /// Position of the SI message in the SIB1 schedulingInfoList of the SI epoch this grant was scheduled with.
   std::optional<uint8_t> si_msg_index;
+  /// \brief SIBs carried by the SI message. Empty for SIB1.
+  ///
+  /// Identifies the SI message on its own, unlike its position, which only holds within one SI epoch.
+  sib_type_set sibs;
   /// \brief Version of the SIB1/SI message payload. This counter should be incremented every time the content of the
   /// respective SIB1/SI message changes.
   unsigned version;
