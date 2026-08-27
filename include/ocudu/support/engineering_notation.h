@@ -9,6 +9,7 @@
 #include <cmath>
 #include <cstdint>
 #include <iomanip>
+#include <sstream>
 #include <string>
 
 namespace ocudu {

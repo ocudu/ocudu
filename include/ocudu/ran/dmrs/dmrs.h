@@ -6,6 +6,7 @@
 
 #include "ocudu/adt/bounded_bitset.h"
 #include <cstdint>
+#include <string>
 
 namespace ocudu {
 

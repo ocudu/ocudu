@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/asn1/e2sm/e2sm_ccc.h"
+#include <sstream>
 
 using namespace asn1;
 using namespace asn1::e2sm_ccc;
