@@ -26,6 +26,15 @@ install_dpdk_dependencies_debian_ubuntu() {
         python3-pip libnuma-dev pciutils libfdt-dev libatomic1 iproute2
         libibverbs1 ibverbs-providers
     )
+
+    # Ubuntu 24.04 DPDK libraries link the runtime variants; development
+    # headers are only needed while building DPDK.
+    if [[ "${ID:-}:${VERSION_ID:-}" == "ubuntu:24.04" ]]; then
+        run_pkgs=(
+            python3-pip libnuma1 pciutils libfdt1 libatomic1 iproute2
+            libibverbs1 ibverbs-providers libnl-3-200 libnl-route-3-200
+        )
+    fi
     local -a pip_build_pkgs=(meson pyelftools)
     local -a pip_run_pkgs=(pyelftools)
 

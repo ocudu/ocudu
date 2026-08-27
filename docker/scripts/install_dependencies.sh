@@ -23,7 +23,6 @@ install_dependencies_debian_ubuntu() {
     local -x DEBIAN_FRONTEND=noninteractive
     local -a pkgs=()
     local ARCH=""
-
     local -a build_pkgs=(
         cmake make gcc g++ pkg-config
         libfftw3-dev libmbedtls-dev libsctp-dev libyaml-cpp-dev libgtest-dev
@@ -31,6 +30,12 @@ install_dependencies_debian_ubuntu() {
     local -a run_pkgs=(
         libfftw3-dev libmbedtls-dev libsctp-dev libyaml-cpp-dev libgtest-dev libcap2-bin
     )
+
+    # Ubuntu 24.04 customer binaries link only these runtime libraries. Avoid
+    # retaining unused development, mbedTLS TLS/X.509 and GoogleTest packages.
+    if [[ "${ID:-}:${VERSION_ID:-}" == "ubuntu:24.04" ]]; then
+        run_pkgs=(libfftw3-single3 libmbedcrypto7t64 libsctp1 libyaml-cpp0.8 libcap2-bin)
+    fi
     local -a extra_pkgs=(
         libzmq3-dev libuhd-dev uhd-host libboost-program-options-dev libdpdk-dev libelf-dev libdwarf-dev libdw-dev capnproto libcapnp-dev
     )

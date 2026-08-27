@@ -23,6 +23,18 @@ install_uhd_dependencies_debian_ubuntu() {
         inetutils-tools libboost-all-dev libncurses5-dev libusb-1.0-0 libusb-1.0-0-dev
         libusb-dev python3-dev python3-requests
     )
+
+    # Ubuntu 24.04 UHD binaries only link these Boost and USB runtime
+    # libraries. The image downloader needs Python and requests, not headers.
+    if [[ "${ID:-}:${VERSION_ID:-}" == "ubuntu:24.04" ]]; then
+        run_pkgs=(
+            inetutils-tools
+            libboost-chrono1.83.0t64 libboost-filesystem1.83.0
+            libboost-program-options1.83.0 libboost-serialization1.83.0
+            libboost-thread1.83.0 libusb-1.0-0
+            python3 python3-requests
+        )
+    fi
     local -a extra_pkgs=(
         inetutils-tools libncurses5-dev libusb-1.0-0 libusb-1.0-0-dev
         libusb-dev python3-dev
