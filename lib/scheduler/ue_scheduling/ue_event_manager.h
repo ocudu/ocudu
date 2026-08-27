@@ -6,7 +6,6 @@
 
 #include "../config/sched_config_manager.h"
 #include "../configured_grant/configured_grant_scheduler.h"
-#include "../logging/cell_event_tracer.h"
 #include "../slicing/inter_slice_scheduler.h"
 #include "ue_fallback_scheduler.h"
 #include "ue_scheduler.h"
@@ -33,11 +32,10 @@ struct cell_creation_event {
   inter_slice_scheduler&   slice_sched;
   srs_scheduler&           srs_sched;
   /// Configured Grant scheduler. Nullptr if CG is not configured for the cell.
-  configured_grant_scheduler*    cg_sched;
-  cell_metrics_handler&          metrics;
-  scheduler_event_logger&        ev_logger;
-  schedtrace::cell_event_tracer& cell_tracer;
-  ra_ue_repository&              ra_ue_repo;
+  configured_grant_scheduler* cg_sched;
+  cell_metrics_handler&       metrics;
+  scheduler_event_logger&     ev_logger;
+  ra_ue_repository&           ra_ue_repo;
 };
 
 class ue_event_manager;

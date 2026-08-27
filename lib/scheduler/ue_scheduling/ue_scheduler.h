@@ -5,7 +5,6 @@
 #pragma once
 
 #include "../cell_ue_event_notifier.h"
-#include "../logging/cell_event_tracer.h"
 #include "../pucch_scheduling/pucch_allocator.h"
 #include "../srs/srs_allocator.h"
 #include "../uci_scheduling/uci_allocator.h"
@@ -47,8 +46,6 @@ struct ue_cell_scheduler_creation_request {
   cell_metrics_handler* cell_metrics;
   /// Logger of events for the cell.
   scheduler_event_logger* ev_logger;
-  /// Tracer of events for the cell.
-  schedtrace::cell_event_tracer* cell_tracer;
   /// Shared repository of in-flight RA attempts, keyed by TC-RNTI.
   ra_ue_repository* ra_ue_repo;
   /// Repository of the UEs configured in the cell.

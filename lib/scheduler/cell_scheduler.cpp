@@ -66,7 +66,6 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
                                                                    &res_grid,
                                                                    &metrics,
                                                                    &event_logger,
-                                                                   cell_tracer.get(),
                                                                    &ra_ue_repo,
                                                                    &ue_cell_db,
                                                                    &ue_ev_relay});
