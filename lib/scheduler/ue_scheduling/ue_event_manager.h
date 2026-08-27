@@ -84,6 +84,10 @@ public:
   void on_cfra_msg3_acked(du_ue_index_t ue_index) override;
   void on_conres_ce_acked(du_ue_index_t ue_index) override;
   void on_sr_detected(du_ue_index_t ue_index, slot_point uci_slot) override;
+  void on_ul_n_ta_update(du_ue_index_t              ue_index,
+                         time_alignment_group::id_t tag_id,
+                         phy_time_unit              n_ta_diff,
+                         float                      ul_sinr) override;
 
   // scheduler_dl_buffer_state_indication_handler methods.
   void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override;

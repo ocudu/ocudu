@@ -554,6 +554,19 @@ void ue_cell_event_manager::on_sr_detected(du_ue_index_t ue_index, slot_point uc
   push_event(cfg.cell_index, event_t{"SR", ue_index, std::move(handle_impl), false});
 }
 
+void ue_cell_event_manager::on_ul_n_ta_update(du_ue_index_t              ue_index,
+                                              time_alignment_group::id_t tag_id,
+                                              phy_time_unit              n_ta_diff,
+                                              float                      ul_sinr)
+{
+  // Note: Handled synchronously, so that the measurement is not applied out of order with respect to the later
+  // measurements of the same slot.
+  if (not ue_db.contains(ue_index)) {
+    return;
+  }
+  ue_db[ue_index].handle_ul_n_ta_update_indication(tag_id, n_ta_diff, ul_sinr);
+}
+
 void ue_cell_event_manager::on_cfra_msg3_acked(du_ue_index_t ue_index)
 {
   auto handle_impl = [this, ue_index]() {

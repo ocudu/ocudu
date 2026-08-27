@@ -8,7 +8,6 @@
 #include "../config/ue_configuration.h"
 #include "../support/pucch_power_controller.h"
 #include "../support/pusch_power_controller.h"
-#include "ta_management_system.h"
 #include "ue_channel_state_manager.h"
 #include "ue_drx_controller.h"
 #include "ue_fsm_states.h"
@@ -30,8 +29,6 @@ struct ue_shared_context {
   ue_drx_controller& drx_ctrl;
   /// Tracker of the uplink timing advance reported by the UE.
   ue_ta_report_tracker& ta_report_tracker;
-  /// Timing Advance manager of the UE.
-  ue_ta_manager& ta_mgr;
 };
 
 /// State of the UE PCell.
@@ -166,12 +163,6 @@ public:
 
   /// \brief Handle Sounding Reference Signal (SRS) channel matrix.
   void handle_srs_channel_matrix(const srs_channel_matrix& channel_matrix);
-
-  /// Handle a received N_TA update indication by forwarding it to the Timing Advance manager of the UE.
-  void handle_ul_n_ta_update_indication(float ul_sinr, phy_time_unit n_ta_diff)
-  {
-    shared_ctx.ta_mgr.handle_ul_n_ta_update_indication(cfg().tag_id(), n_ta_diff.to_Tc(), ul_sinr);
-  }
 
   /// Update UE with the latest CSI report for a given cell.
   void handle_csi_report(const csi_report_data& csi_report);

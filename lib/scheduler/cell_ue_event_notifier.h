@@ -5,7 +5,9 @@
 #pragma once
 
 #include "ocudu/ran/du_types.h"
+#include "ocudu/ran/phy_time_unit.h"
 #include "ocudu/ran/slot_point.h"
+#include "ocudu/ran/time_alignment_config.h"
 
 namespace ocudu {
 
@@ -26,6 +28,12 @@ public:
 
   /// A scheduling request of the UE was detected in the given UCI slot.
   virtual void on_sr_detected(du_ue_index_t ue_index, slot_point uci_slot) = 0;
+
+  /// An N_TA update was measured for the time alignment group of the UE in this cell.
+  virtual void on_ul_n_ta_update(du_ue_index_t              ue_index,
+                                 time_alignment_group::id_t tag_id,
+                                 phy_time_unit              n_ta_diff,
+                                 float                      ul_sinr) = 0;
 };
 
 /// \brief Relays the notifications of a cell to the UE scheduler.
@@ -56,6 +64,16 @@ public:
   {
     if (handler != nullptr) {
       handler->on_sr_detected(ue_index, uci_slot);
+    }
+  }
+
+  void on_ul_n_ta_update(du_ue_index_t              ue_index,
+                         time_alignment_group::id_t tag_id,
+                         phy_time_unit              n_ta_diff,
+                         float                      ul_sinr) override
+  {
+    if (handler != nullptr) {
+      handler->on_ul_n_ta_update(ue_index, tag_id, n_ta_diff, ul_sinr);
     }
   }
 

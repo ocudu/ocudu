@@ -33,6 +33,7 @@ public:
      ue_logical_channel_repository dl_lch_repo,
      ue_drx_controller&            drx_ctrl,
      ue_ta_report_tracker&         ta_report_tracker_,
+     ue_ta_manager                 ta_mgr_,
      const ue_cell_lookup&         ue_cells);
   ue(const ue&)            = delete;
   ue(ue&&)                 = delete;
@@ -82,6 +83,12 @@ public:
   /// Called when a new UE configuration is passed to the scheduler, as part of the RRC Reconfiguration procedure.
   void handle_reconfiguration_request(const ue_configuration& new_cfg);
 
+  /// Handle a received N_TA update indication by forwarding it to the Timing Advance manager of the UE.
+  void handle_ul_n_ta_update_indication(time_alignment_group::id_t tag_id, phy_time_unit n_ta_diff, float ul_sinr)
+  {
+    ta_mgr.handle_ul_n_ta_update_indication(tag_id, n_ta_diff.to_Tc(), ul_sinr);
+  }
+
   /// \brief Handles DL Buffer State indication.
   void handle_dl_buffer_state_indication(lcid_t lcid, unsigned bs, slot_point hol_toa = {});
 
@@ -112,6 +119,8 @@ private:
   ue_drx_controller& drx;
   /// Tracker of the uplink timing advance reported by the UE.
   ue_ta_report_tracker& ta_report;
+  /// Timing Advance manager of the UE.
+  ue_ta_manager ta_mgr;
   /// Configured cells for the UE.
   const ue_cell_lookup& cells;
 

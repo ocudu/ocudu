@@ -69,14 +69,13 @@ private:
   cell_metrics_handler*   metrics;
   ocudulog::basic_logger& logger;
 
+  /// Pool of UE cell instances of this cell.
+  /// Note: The pools are declared before the list of UEs, as the UEs hold objects taken from them.
+  /// Note: The separate pools for different components are used for memory access efficiency (SoA).
+  free_list_object_pool<ue_cell> ue_pool;
+
   /// HARQs manager for the cell.
   cell_harq_manager cell_harqs;
-
-  // Note: The pools are declared before the list of UEs, as the UEs hold objects taken from them.
-  // Note: The separate pools for different components are used for memory access efficiency (SoA).
-
-  /// Pool of UE cells of this cell.
-  free_list_object_pool<ue_cell> ue_pool;
 
   /// Pool of channel state managers of the cell.
   free_list_object_pool<ue_channel_state_manager> channel_state_pool;

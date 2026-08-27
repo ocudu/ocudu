@@ -344,7 +344,8 @@ void cell_event_manager::handle_ue_crc(slot_point sl_rx, const ul_crc_pdu_indica
 
   // Process Timing Advance Offset.
   if (crc.tb_crc_success and crc.time_advance_offset.has_value() and crc.ul_sinr_dB.has_value()) {
-    ue_cc->handle_ul_n_ta_update_indication(crc.ul_sinr_dB.value(), crc.time_advance_offset.value());
+    ue_ev_notifier.on_ul_n_ta_update(
+        ue_cc->ue_index, ue_cc->cfg().tag_id(), crc.time_advance_offset.value(), crc.ul_sinr_dB.value());
   }
 
   // Log event.
@@ -410,7 +411,8 @@ void cell_event_manager::handle_srs_indication(const srs_indication& srs)
         const float sinr_dB        = convert_power_to_dB(frobenius_norm * frobenius_norm / noise_var);
 
         // Notify UL TA update.
-        ue_cc->handle_ul_n_ta_update_indication(sinr_dB, srs_ptr->time_advance_offset.value());
+        ue_ev_notifier.on_ul_n_ta_update(
+            ue_cc->ue_index, ue_cc->cfg().tag_id(), srs_ptr->time_advance_offset.value(), sinr_dB);
 
         // Report the SRS PDU to the metrics handler.
         metrics.handle_srs_indication(*srs_ptr, ue_cc->channel_state_manager().get_nof_ul_layers());
@@ -487,7 +489,8 @@ void cell_event_manager::handle_uci_pdu(slot_point uci_sl, const uci_indication:
     }
 
     if (action->time_advance_offset.has_value()) {
-      ue_cc->handle_ul_n_ta_update_indication(action->ul_sinr_dB.value(), *action->time_advance_offset);
+      ue_ev_notifier.on_ul_n_ta_update(
+          ue_cc->ue_index, ue_cc->cfg().tag_id(), *action->time_advance_offset, action->ul_sinr_dB.value());
     }
   }
 
