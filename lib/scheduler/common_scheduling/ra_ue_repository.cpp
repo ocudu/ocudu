@@ -69,12 +69,17 @@ private:
     auto it = ra_ue_repo.table.find(static_cast<size_t>(ue_idx));
     ocudu_sanity_check(it != ra_ue_repo.end(), "timeout called but HARQ entity does not exist");
 
-    logger.warning("pci={} tc-rnti={}: {}",
-                   pci,
-                   it->preamble.tc_rnti,
-                   is_feedback_timeout
-                       ? "Discarding Msg3 HARQ process. Cause: HARQ-ACK/CRC feedback was not received in time."
-                       : "Discarding Msg3 retransmission HARQ process. Cause: Retransmission period timed out.");
+    if (is_feedback_timeout) {
+      logger.warning("pci={} tc-rnti={}: Discarding Msg3 HARQ process. Cause: HARQ-ACK/CRC feedback was not received "
+                     "in time.",
+                     pci,
+                     it->preamble.tc_rnti);
+    } else {
+      logger.warning("pci={} tc-rnti={}: Discarding Msg3 retransmission HARQ process. Cause: Retransmission period "
+                     "timed out.",
+                     pci,
+                     it->preamble.tc_rnti);
+    }
 
     // Erase the entry to make the slot available again.
     ra_ue_repo.erase(it);
