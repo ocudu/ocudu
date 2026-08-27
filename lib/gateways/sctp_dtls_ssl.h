@@ -5,6 +5,7 @@
 
 #include "sctp_dtls_mode.h"
 #include "ocudu/ocudulog/logger.h"
+#include "ocudu/support/io/transport_layer_address.h"
 #include <memory>
 
 /// Optional includes that are only required if DTLS is enabled.
@@ -17,7 +18,8 @@
 namespace ocudu {
 
 struct dtls_ssl_config {
-  dtls_mode mode;
+  dtls_mode               mode;
+  transport_layer_address addr;
 };
 
 class dtls_context;
@@ -30,8 +32,11 @@ struct dtls_ssl_dependencies {
 class dtls_ssl
 {
 public:
-  virtual bool init(int socket) = 0;
-  virtual ~dtls_ssl()           = default;
+  virtual bool init(int socket)   = 0;
+  virtual bool is_init_finished() = 0;
+  virtual bool handshake()        = 0;
+  virtual bool receive()          = 0;
+  virtual ~dtls_ssl()             = default;
 };
 
 /// Creates an instance of a DTLS context.
@@ -47,8 +52,13 @@ public:
   openssl_dtls_ssl(const dtls_ssl_config& cfg_, const dtls_ssl_dependencies& ssl_ctx_);
   ~openssl_dtls_ssl() override;
   bool init(int socket) override;
+  bool is_init_finished() override;
+  bool handshake() override;
+  bool receive() override;
 
 private:
+  static void dtls_notification_cb(BIO* bio, void* context, void* buf);
+
   dtls_ssl_config cfg;
   BIO*            bio = nullptr;
   SSL*            ssl = nullptr;

@@ -105,6 +105,8 @@ private:
   /// Remove association from the map, triggering recv notifier destruction.
   void remove_association(int assoc_id);
 
+  void mark_connection_as_complete(const transport_layer_address& addr);
+
   struct pending_connect {
     std::vector<transport_layer_address> dest_addrs;
     manual_event<bool>                   event;

@@ -158,6 +158,21 @@ void sctp_network_server_impl::sctp_associaton_context::receive()
   sockaddr_storage msg_src_addr;
   socklen_t        msg_src_addrlen = sizeof(msg_src_addr);
 
+  if (parent.dtls_cfg.has_value()) {
+    if (ssl == nullptr) {
+      // TODO log error.
+      return;
+    }
+    if (not ssl->is_init_finished()) {
+      if (ssl->handshake()) {
+        parent.mark_connection_as_complete(addr);
+      }
+      return;
+    }
+    ssl->receive();
+    return;
+  }
+
   int rx_bytes = ::sctp_recvmsg(fd,
                                 temp_recv_buffer.data(),
                                 temp_recv_buffer.size(),
@@ -514,6 +529,7 @@ void sctp_network_server_impl::handle_sctp_comm_up(const struct sctp_assoc_chang
   /// TODO create DTLS SSL association.
   if (dtls_cfg.has_value()) {
     assoc_ctxt.ssl = create_dtls_ssl(dtls_ssl_config{dtls_cfg->mode}, {*dtls_ctxt});
+    assoc_ctxt.ssl->init(assoc_ctxt.fd);
   }
 
   logger.info("{} assoc={}: New client SCTP association (client_addr={})", node_cfg.if_name, assoc_id, assoc_ctxt.addr);
@@ -542,6 +558,23 @@ void sctp_network_server_impl::handle_sctp_comm_up(const struct sctp_assoc_chang
       handle_association_shutdown(assoc_ctxt.assoc_id, "IO broker error");
       remove_association(assoc_ctxt.assoc_id);
       return;
+    }
+  })) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+}
+
+void sctp_network_server_impl::mark_connection_as_complete(const transport_layer_address& addr)
+{
+  while (not app_exec.defer([this, addr]() mutable {
+    auto pending_it = std::find_if(pending_connects.begin(),
+                                   pending_connects.end(),
+                                   [&addr](const pending_connect& pending) { return pending.contains(addr); });
+
+    /// If DTLS is not configured, mark connection as complete. Otherwise, wait for the DTLS handshake before signaling
+    /// the connection is set up to upper layers.
+    if (pending_it != pending_connects.end()) {
+      pending_it->event.set(true);
     }
   })) {
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
