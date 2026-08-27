@@ -84,7 +84,7 @@ struct pdcp_tx_buffer_info {
 struct pdcp_tx_pdu_info {
   byte_buffer                           pdu;     /// Buffer for PDU.
   uint32_t                              count;   /// COUNT associated with this SDU/PDU.
-  std::chrono::system_clock::time_point sdu_toa; /// Time of arrival of SDU.
+  std::chrono::steady_clock::time_point sdu_toa; /// Time of arrival of SDU.
 };
 
 /// Base class used for transmitting PDCP bearers.

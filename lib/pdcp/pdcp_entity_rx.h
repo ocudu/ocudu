@@ -46,7 +46,7 @@ struct pdcp_rx_pdu_info {
   /// Indicates whether the integrity of \c buf is verified (true) or unverified/unchecked (false).
   bool integrity_verified;
   /// Time of arrival at the PDCP entity
-  std::chrono::system_clock::time_point time_of_arrival;
+  std::chrono::steady_clock::time_point time_of_arrival;
   /// The PDCP crypto token
   pdcp_crypto_token token;
 };
@@ -60,7 +60,7 @@ struct pdcp_rx_sdu_info {
   /// Indicates whether the integrity of \c buf is verified (true) or unverified/unchecked (false).
   bool integrity_verified;
   /// Time of arrival at the PDCP entity
-  std::chrono::system_clock::time_point time_of_arrival;
+  std::chrono::steady_clock::time_point time_of_arrival;
 };
 
 /// Base class used for receiving PDCP bearers.
@@ -211,7 +211,7 @@ private:
   /// \brief Handles a received data PDU.
   /// \param pdu The data PDU to be handled (including header and payload)
   /// \param time_of_arrival The time of arrival at the PDCP entity
-  void handle_data_pdu(byte_buffer pdu, std::chrono::system_clock::time_point time_of_arrival);
+  void handle_data_pdu(byte_buffer pdu, std::chrono::steady_clock::time_point time_of_arrival);
 
   void apply_security(pdcp_rx_pdu_info&& pdu_info);
 
@@ -245,7 +245,7 @@ private:
   /// Iterates from RX_DELIV to RX_NEXT, removing each buffered entry and advancing RX_DELIV. Gaps are ignored.
   void discard_rx_window();
 
-  void record_reordering_delay(std::chrono::system_clock::time_point time_of_arrival);
+  void record_reordering_delay(std::chrono::steady_clock::time_point time_of_arrival);
 
   /// Apply deciphering and integrity check to the PDU
   security::security_status apply_deciphering_and_integrity_check(byte_buffer& buf, uint32_t count);

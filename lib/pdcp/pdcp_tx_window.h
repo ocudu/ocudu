@@ -21,7 +21,7 @@ struct pdcp_tx_window_sdu_info {
   /// The count value of the SDU/PDU
   uint32_t count;
   /// Time of arrival at the PDCP entity
-  std::chrono::system_clock::time_point time_of_arrival;
+  std::chrono::steady_clock::time_point time_of_arrival;
   /// Tick point of arrival at the PDCP entity (only set if discard timer is configured with for finite duration)
   std::optional<tick_point_t> tick_point_of_arrival;
 };

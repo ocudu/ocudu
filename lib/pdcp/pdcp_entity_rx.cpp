@@ -223,7 +223,7 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_chain buf)
 
   trace_point rx_tp = up_tracer.now();
   metrics.add_pdus(1, buf.length());
-  std::chrono::system_clock::time_point time_of_arrival = std::chrono::high_resolution_clock::now();
+  std::chrono::steady_clock::time_point time_of_arrival = std::chrono::steady_clock::now();
 
   // Log PDU
   logger.log_debug(buf.begin(), buf.end(), "RX PDU. pdu_len={}", buf.length());
@@ -297,7 +297,7 @@ void pdcp_entity_rx::reestablish(security::sec_128_as_config sec_cfg)
   configure_security(sec_cfg, integrity_enabled, ciphering_enabled);
 }
 
-void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu, std::chrono::system_clock::time_point time_of_arrival)
+void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu, std::chrono::steady_clock::time_point time_of_arrival)
 {
   // Count all received data PDUs.
   metrics.add_data_pdus(1, pdu.length());
@@ -573,8 +573,8 @@ void pdcp_entity_rx::deliver_sdu(pdcp_rx_sdu_info& sdu_info)
     // Pass PDCP SDU to the upper layers
     metrics.add_sdus(1, sdu_info.buf.length());
     record_reordering_delay(sdu_info.time_of_arrival);
-    auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
-        std::chrono::high_resolution_clock::now() - sdu_info.time_of_arrival);
+    auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() -
+                                                                               sdu_info.time_of_arrival);
     metrics.add_sdu_latency_ns(sdu_latency_ns.count());
     upper_dn.on_new_sdu(std::move(sdu_info.buf), sdu_info.integrity_verified);
   }
@@ -893,9 +893,9 @@ bool pdcp_entity_rx::read_data_pdu_header(pdcp_data_pdu_header& hdr, const byte_
   return true;
 }
 
-void pdcp_entity_rx::record_reordering_delay(std::chrono::system_clock::time_point time_of_arrival)
+void pdcp_entity_rx::record_reordering_delay(std::chrono::steady_clock::time_point time_of_arrival)
 {
   std::chrono::microseconds time_taken =
-      std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - time_of_arrival);
+      std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time_of_arrival);
   metrics.add_reordering_delay_us((uint32_t)time_taken.count());
 }

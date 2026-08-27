@@ -242,7 +242,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   }
 
   trace_point                           tx_tp           = up_tracer.now();
-  std::chrono::system_clock::time_point time_of_arrival = std::chrono::high_resolution_clock::now();
+  std::chrono::steady_clock::time_point time_of_arrival = std::chrono::steady_clock::now();
 
   if (!is_srb()) {
     auto drop_reason = check_early_drop(buf);
@@ -514,8 +514,8 @@ void pdcp_entity_tx::write_data_pdu_to_lower_layers(pdcp_tx_pdu_info&& pdu_info,
                   pdu_info.count,
                   is_retx);
   metrics.add_pdus(1, pdu_info.pdu.length());
-  auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() -
-                                                                             pdu_info.sdu_toa);
+  auto sdu_latency_ns =
+      std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - pdu_info.sdu_toa);
   metrics.add_pdu_latency_ns(sdu_latency_ns.count());
   lower_dn.on_new_pdu(std::move(pdu_info.pdu), is_retx);
 }
