@@ -190,7 +190,8 @@ struct fuzz_state {
     s_nssai_t               nssai{slice_service_type{1}, slice_differentiator{}};
     plmn_item               plmn{plmn_identity::test_value(), {nssai}};
     supported_tracking_area ta{7, {plmn}};
-    cfg.ngap.ngaps.push_back(cu_cp_configuration::ngap_config{&amf, {ta}});
+    cfg.ngap.n2_gws.push_back(&amf);
+    cfg.ngap.ngaps.push_back(cu_cp_configuration::ngap_config{{ta}});
 
     // Attach our no-op XN-C gateway.
     cfg.xnap.xnc_gws.push_back(&xnc_gw);
