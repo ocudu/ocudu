@@ -53,6 +53,9 @@ protected:
   {
     sched_res.dl.nof_dl_symbols = nof_dl_syms;
     si_messages.resize(nof_si_msgs);
+    // An SI grant is matched against the SIBs it carries, so each SI message of the cell must carry a different one.
+    si_messages[0].sibs = sib_type_set{sib_type::sib2};
+    si_messages[1].sibs = sib_type_set{sib_type::sib3};
   }
 
   /// Instantiates the writer under test. Must be called after the SI message config is set up.
@@ -70,6 +73,7 @@ protected:
     sib.pdsch_cfg.rnti   = rnti_t::SI_RNTI;
     if (si_indicator == sib_information::other_si) {
       sib.si_msg_index = si_msg_index;
+      sib.sibs         = si_messages[si_msg_index].sibs;
     }
     data_res.si_pdus.emplace_back(0, make_pdu());
   }
@@ -258,7 +262,7 @@ TEST_F(mac_cell_pcap_writer_test, when_sib1_version_changes_then_pdu_is_written_
 
 TEST_F(mac_cell_pcap_writer_test, when_si_message_does_not_require_activation_then_repeated_version_is_deduped)
 {
-  si_messages[si_msg_index].sibs = sib_type_set{sib_type::sib2};
+  si_messages[si_msg_index].sibs = sib_type_set{sib_type::sib3};
   create_writer();
   for (unsigned i = 0; i != 3; ++i) {
     clear_grants();
@@ -280,6 +284,26 @@ TEST_F(mac_cell_pcap_writer_test, when_si_message_requires_activation_then_repea
   }
 
   ASSERT_EQ(pcap.contexts.size(), 3);
+}
+
+TEST_F(mac_cell_pcap_writer_test, when_a_warning_is_scheduled_then_sib1_stays_deduped)
+{
+  si_messages[si_msg_index].sibs = sib_type_set{sib_type::sib7};
+  create_writer();
+  add_si_grant(sib_information::sib1, 0);
+  writer->write_slot_result(sl_tx, sched_res, data_res);
+  ASSERT_EQ(pcap.contexts.size(), 1);
+
+  // The warning bypasses the version-based dedup, which must leave the dedup state of SIB1 alone. Its version differs
+  // from the one of SIB1, so tracking it against the SIB1 state would make every SIB1 occasion look like a new one.
+  for (unsigned i = 0; i != 2; ++i) {
+    clear_grants();
+    add_si_grant(sib_information::other_si, 5);
+    add_si_grant(sib_information::sib1, 0);
+    writer->write_slot_result(sl_tx, sched_res, data_res);
+  }
+
+  ASSERT_EQ(pcap.contexts.size(), 3) << "An unchanged SIB1 must stay deduped while a warning is on air";
 }
 
 TEST_F(mac_cell_pcap_writer_test, when_sib1_and_si_message_are_scheduled_then_dedup_state_is_independent)

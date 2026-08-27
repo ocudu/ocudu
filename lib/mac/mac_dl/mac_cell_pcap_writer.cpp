@@ -6,6 +6,7 @@
 #include "ocudu/mac/mac_cell_result.h"
 #include "ocudu/pcap/mac_pcap.h"
 #include "ocudu/scheduler/result/sched_result.h"
+#include <algorithm>
 #include <limits>
 
 using namespace ocudu;
@@ -15,14 +16,12 @@ mac_cell_pcap_writer::mac_cell_pcap_writer(mac_pcap&                            
                                            span<const si_message_scheduling_config> si_messages) :
   pcap(pcap_),
   radio_type(is_tdd ? PCAP_TDD_RADIO : PCAP_FDD_RADIO),
-  pws_si_messages(MAX_SI_MESSAGES),
   sib1_dumped_version(std::numeric_limits<unsigned>::max())
 {
   ocudu_assert(si_messages.size() <= MAX_SI_MESSAGES, "Invalid number of SI messages");
-  for (unsigned i = 0, e = si_messages.size(); i != e; ++i) {
-    pws_si_messages.set(i, si_messages[i].requires_activation());
+  for (const si_message_scheduling_config& si_msg : si_messages) {
+    si_msgs.push_back(si_msg_context{si_msg.sibs, std::numeric_limits<unsigned>::max()});
   }
-  si_dumped_version.fill(std::numeric_limits<unsigned>::max());
 }
 
 void mac_cell_pcap_writer::write_slot_result(slot_point                sl_tx,
@@ -44,28 +43,37 @@ void mac_cell_pcap_writer::write_si_pdus(slot_point sl_tx, const sched_result& s
   for (unsigned i = 0, e = dl_res.si_pdus.size(); i != e; ++i) {
     const sib_information& dl_alloc = sl_res.dl.bc.sibs[i];
 
-    bool      is_pws_si_message = false;
-    unsigned* dumped_version    = &sib1_dumped_version;
-    if (dl_alloc.si_indicator != sib_information::sib1) {
-      ocudu_assert(dl_alloc.si_msg_index.has_value() and *dl_alloc.si_msg_index < si_dumped_version.size(),
-                   "Invalid SI message index");
-      is_pws_si_message = pws_si_messages.test(*dl_alloc.si_msg_index);
-      dumped_version    = &si_dumped_version[*dl_alloc.si_msg_index];
-    }
-
-    if (is_pws_si_message or *dumped_version != dl_alloc.version) {
-      const mac_dl_data_result::dl_pdu& si_pdu  = dl_res.si_pdus[i];
-      mac_nr_context_info               context = {};
-      context.radioType                         = radio_type;
-      context.direction                         = PCAP_DIRECTION_DOWNLINK;
-      context.rntiType                          = PCAP_SI_RNTI;
-      context.rnti                              = to_underlying(dl_alloc.pdsch_cfg.rnti);
-      context.system_frame_number               = sl_tx.sfn();
-      context.sub_frame_number                  = sl_tx.subframe_index();
-      context.length                            = si_pdu.pdu.get_buffer().size();
-      pcap.push_pdu(context, si_pdu.pdu.get_buffer());
+    // A PWS (ETWS/CMAS) SI-message cycles through multiple content segments and repetitions without bumping "version"
+    // (which only tracks SI scheduling info updates), so it bypasses the version-based dedup, which would wrongly
+    // suppress genuinely different payloads.
+    if (not dl_alloc.sibs.is_pws()) {
+      unsigned* dumped_version = &sib1_dumped_version;
+      if (dl_alloc.si_indicator != sib_information::sib1) {
+        const auto si_msg_it = std::find_if(si_msgs.begin(), si_msgs.end(), [&dl_alloc](const si_msg_context& si_msg) {
+          return si_msg.sibs == dl_alloc.sibs;
+        });
+        if (si_msg_it == si_msgs.end()) {
+          // The SI message this grant carries is not one of the cell.
+          continue;
+        }
+        dumped_version = &si_msg_it->dumped_version;
+      }
+      if (*dumped_version == dl_alloc.version) {
+        continue;
+      }
       *dumped_version = dl_alloc.version;
     }
+
+    const mac_dl_data_result::dl_pdu& si_pdu  = dl_res.si_pdus[i];
+    mac_nr_context_info               context = {};
+    context.radioType                         = radio_type;
+    context.direction                         = PCAP_DIRECTION_DOWNLINK;
+    context.rntiType                          = PCAP_SI_RNTI;
+    context.rnti                              = to_underlying(dl_alloc.pdsch_cfg.rnti);
+    context.system_frame_number               = sl_tx.sfn();
+    context.sub_frame_number                  = sl_tx.subframe_index();
+    context.length                            = si_pdu.pdu.get_buffer().size();
+    pcap.push_pdu(context, si_pdu.pdu.get_buffer());
   }
 }
 

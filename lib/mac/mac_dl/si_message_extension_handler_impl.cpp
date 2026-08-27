@@ -6,6 +6,7 @@
 #include "ocudu/adt/spsc_queue.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/support/units.h"
+#include <algorithm>
 
 using namespace ocudu;
 
@@ -32,6 +33,12 @@ public:
   {
     cur_si_msg.resize(req.si_messages.size());
 
+    // An SI grant states which SI messages it carries, rather than the position it holds in the SI epoch it was
+    // scheduled with, which does not survive a warning going on and off air.
+    for (const si_message_scheduling_config& si_msg : req.si_sched_cfg.si_messages) {
+      si_msg_sibs.push_back(si_msg.sibs);
+    }
+
     /// Min si_period is 8 frames (80 ms), with size of 128, we can enqueue SIB19 PDUs for the next 10s.
     static constexpr unsigned max_nof_msgs = 128;
     si_msg_queues.reserve(req.si_messages.size());
@@ -43,18 +50,24 @@ public:
   // See interface for documentation.
   span<const uint8_t> get_pdu(slot_point_extended sl_tx_ext, const sib_information& si_info) override
   {
-    const unsigned idx = si_info.si_msg_index.value();
     ocudu_assert(si_info.pdsch_cfg.codewords.size() == 1, "SIB grants always carry exactly one codeword");
     const unsigned   tbs   = si_info.pdsch_cfg.codewords[0].tb_size_bytes.value();
     const slot_point sl_tx = sl_tx_ext.without_hyper_sfn();
 
+    const auto sibs_it = std::find(si_msg_sibs.begin(), si_msg_sibs.end(), si_info.sibs);
+    if (sibs_it == si_msg_sibs.end()) {
+      // The SI message this grant carries is not one of the cell.
+      return span<const uint8_t>();
+    }
+    const unsigned idx = std::distance(si_msg_sibs.begin(), sibs_it);
+
     if (idx >= si_msg_queues.size()) {
-      // si_message_handler does not hold a msg queue for the given si_msg_index.
+      // si_message_handler does not hold a msg queue for the given SI message.
       return span<const uint8_t>();
     }
 
     if (si_msg_queues[idx]->empty()) {
-      // si_message_handler does not hold any PDUs for the given si_msg_index.
+      // si_message_handler does not hold any PDUs for the given SI message.
       return span<const uint8_t>();
     }
 
@@ -123,6 +136,9 @@ private:
                                              concurrent_queue_wait_policy::non_blocking>;
   std::vector<std::unique_ptr<si_msg_queue_type>> si_msg_queues;
   std::vector<si_pdu_update>                      cur_si_msg;
+
+  // SIBs carried by each SI message of the cell, in the order the queues are held in.
+  std::vector<sib_type_set> si_msg_sibs;
 };
 } // namespace
 

@@ -8,7 +8,6 @@
 #include "ocudu/adt/span.h"
 #include "ocudu/ran/slot_point.h"
 #include "ocudu/scheduler/config/si_scheduling_config.h"
-#include <array>
 #include <cstdint>
 
 namespace ocudu {
@@ -36,14 +35,20 @@ private:
 
   const uint8_t radio_type;
 
-  // SI-message indexes whose version-based dedup must be bypassed. PWS (ETWS/CMAS) SI-messages cycle through multiple
-  // content segments and repetitions without bumping "version" (which only tracks SI scheduling info updates), so
-  // version-based dedup would wrongly suppress genuinely different payloads.
-  bounded_bitset<MAX_SI_MESSAGES> pws_si_messages;
+  // PCAP state of one SI message of the cell.
+  struct si_msg_context {
+    // SIBs the SI message carries.
+    sib_type_set sibs;
+    // Last version written to PCAP, used to dedup repeated broadcasts.
+    unsigned dumped_version;
+  };
 
-  // Last SIB1 and SI-message versions written to PCAP, used to dedup repeated broadcasts.
-  unsigned                              sib1_dumped_version;
-  std::array<unsigned, MAX_SI_MESSAGES> si_dumped_version;
+  // One entry per SI message of the cell. An SI grant is matched against the SIBs it carries, rather than against the
+  // position it holds in the SI epoch it was scheduled with, which does not survive a warning going on and off air.
+  static_vector<si_msg_context, MAX_SI_MESSAGES> si_msgs;
+
+  // Last SIB1 version written to PCAP, used to dedup repeated broadcasts.
+  unsigned sib1_dumped_version;
 };
 
 } // namespace ocudu
