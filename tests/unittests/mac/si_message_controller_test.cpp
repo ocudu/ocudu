@@ -260,20 +260,21 @@ TEST_F(si_message_controller_pws_test, when_unrelated_si_reconfiguration_occurs_
   bench.push_si_pdu_updates(pws_req);
   ASSERT_EQ(bench.sched.nof_pws_broadcast_indications, 1);
 
-  // An unrelated SI reconfiguration arrives (a SIB2 SI-message is added), rebuilding all SI-messages, including a
-  // placeholder for index 0 that has nothing to do with the active warning.
-  static const std::array<sib_type, 2> reconf_sibs{sib_type::sib6, sib_type::sib2};
+  // An unrelated SI reconfiguration arrives (a SIB2 SI-message is prepended), rebuilding all SI-messages, including a
+  // placeholder for the SIB7 one that has nothing to do with the active warning.
+  static const std::array<sib_type, 2> reconf_sibs{sib_type::sib2, sib_type::sib7};
 
-  mac_cell_sys_info_config unrelated_req = bench.sys_info_cfg;
-  unrelated_req.sib1                     = make_sib1_with_si_sched_info(reconf_sibs);
-  unrelated_req.si_messages[0]           = bcch_dl_sch_payload_type{make_random_pdu()};
+  mac_cell_sys_info_config unrelated_req;
+  unrelated_req.sib1 = make_sib1_with_si_sched_info(reconf_sibs);
+  unrelated_req.si_messages.push_back(bcch_dl_sch_payload_type{make_random_pdu()});
   unrelated_req.si_messages.push_back(bcch_dl_sch_payload_type{make_random_pdu()});
   unrelated_req.si_sched_cfg.si_messages.emplace_back().sibs = sib_type_set{sib_type::sib2};
+  unrelated_req.si_sched_cfg.si_messages.emplace_back().sibs = sib_type_set{sib_type::sib7};
   ASSERT_TRUE(bench.update_si(unrelated_req).has_value());
 
   // The active PWS broadcast's content must still be served, not the unrelated placeholder.
   units::bytes        tbs{static_cast<unsigned>(segment.length())};
-  sib_information     si_info = make_sib_pdu(0, bench.last_pws_cmd->version, tbs);
+  sib_information     si_info = make_sib_pdu(1, bench.last_pws_cmd->version, tbs);
   span<const uint8_t> pdu     = bench.assembler.encode_si_pdu(bench.current_slot, si_info);
   ASSERT_EQ(byte_buffer::create(pdu).value(), segment)
       << "Unrelated SI reconfiguration must not disrupt the active PWS broadcast";
@@ -390,48 +391,52 @@ TEST_F(si_message_controller_auto_broadcast_test,
   ASSERT_EQ(broadcasting.msg_len, units::bytes{50});
 }
 
-/// Fixture whose SIB1 is a real ASN.1 payload listing one dormant SIB7 SI message, so that its si-BroadcastStatus can
-/// be read back from the generated payloads.
-class si_message_controller_broadcast_status_test : public ::testing::Test
+/// Fixture whose SIB1 is a real ASN.1 payload listing a SIB2 SI message that is always broadcast and a SIB7 one that
+/// only carries a warning, so that the schedulingInfoList of each epoch can be read back from the generated payloads.
+class si_message_controller_sched_info_test : public ::testing::Test
 {
 public:
-  si_message_controller_broadcast_status_test() : bench(make_sys_info_cfg()) {}
+  si_message_controller_sched_info_test() : bench(make_sys_info_cfg()) {}
 
   static mac_cell_sys_info_config make_sys_info_cfg()
   {
-    static const std::array<sib_type, 1> si_msg_sibs{sib_type::sib7};
-
     mac_cell_sys_info_config cfg;
-    cfg.sib1 = make_sib1_with_si_sched_info(si_msg_sibs);
-    cfg.si_messages.push_back(bcch_dl_sch_payload_type{make_random_pdu()});
-    cfg.si_sched_cfg.si_messages.emplace_back().sibs = sib_type_set{sib_type::sib7};
+    cfg.sib1 = make_sib1_with_si_sched_info(cell_sibs);
+    for (sib_type sib : cell_sibs) {
+      cfg.si_messages.push_back(bcch_dl_sch_payload_type{make_random_pdu()});
+      cfg.si_sched_cfg.si_messages.emplace_back().sibs = sib_type_set{sib};
+    }
     return cfg;
   }
 
-  /// Encodes SIB1 out of a given epoch and returns the si-BroadcastStatus it lists per SI message.
-  std::vector<bool> broadcast_status_of(const si_update_command& cmd)
+  /// Encodes SIB1 out of a given epoch and returns the SIBs its schedulingInfoList lists.
+  std::vector<sib_type> listed_sibs_of(const si_update_command& cmd)
   {
-    units::bytes    tbs{MAX_BCCH_DL_SCH_PDU_SIZE / 2};
-    sib_information si_info = make_sib_pdu(std::nullopt, cmd.version, tbs);
-    auto            payload = cmd.sib1->encode(bench.current_slot, si_info);
-    report_fatal_error_if_not(payload.has_value(), "Failed to encode SIB1");
-    return get_si_broadcast_status(payload.value());
+    return get_sib1_listed_sibs(cmd, bench.current_slot);
   }
+
+  /// Position, in the cell SI scheduling configuration, of the SI message carrying the warning.
+  static constexpr unsigned pws_si_msg_idx = 1;
+
+  static const std::array<sib_type, 2> cell_sibs;
 
   si_bench bench;
 };
 
-TEST_F(si_message_controller_broadcast_status_test, when_no_warning_is_on_air_then_no_pws_epoch_is_generated)
+const std::array<sib_type, 2> si_message_controller_sched_info_test::cell_sibs{sib_type::sib2, sib_type::sib7};
+
+TEST_F(si_message_controller_sched_info_test, when_no_warning_is_on_air_then_no_pws_epoch_is_generated)
 {
   ASSERT_FALSE(bench.last_pws_cmd.has_value()) << "No ETWS/CMAS epoch must be generated while no warning is on air";
-  ASSERT_EQ(broadcast_status_of(bench.si_mng.last_command()), std::vector<bool>{false});
+  ASSERT_EQ(listed_sibs_of(bench.si_mng.last_command()), (std::vector<sib_type>{sib_type::sib2}))
+      << "A dormant warning must not be advertised in SIB1";
 }
 
-TEST_F(si_message_controller_broadcast_status_test, when_warning_starts_then_pws_epoch_lists_it_as_broadcasting)
+TEST_F(si_message_controller_sched_info_test, when_warning_starts_then_pws_epoch_advertises_it)
 {
   std::vector<byte_buffer>     segments = make_random_segmented_pdu(50, 1);
   mac_cell_sys_info_pdu_update req;
-  req.si_msg_idx    = 0;
+  req.si_msg_idx    = pws_si_msg_idx;
   req.sib_idx       = 7;
   req.si_messages   = span<byte_buffer>(segments);
   req.pws_broadcast = pws_broadcast_indication{std::chrono::seconds{1}, 1};
@@ -441,20 +446,21 @@ TEST_F(si_message_controller_broadcast_status_test, when_warning_starts_then_pws
   ASSERT_TRUE(pws_cmd.has_value()) << "Starting a warning must generate an ETWS/CMAS epoch";
   ASSERT_EQ(pws_cmd->active_pws_si_messages[0].version, pws_cmd->version)
       << "A warning starting a broadcast must be stamped with the version of the epoch it triggers";
-  ASSERT_EQ(broadcast_status_of(*pws_cmd), std::vector<bool>{true});
+  ASSERT_EQ(listed_sibs_of(*pws_cmd), (std::vector<sib_type>{sib_type::sib2, sib_type::sib7}))
+      << "The warning must be advertised after the SI messages that are always broadcast";
 
-  // The normal-operation epoch keeps listing it as dormant, so that it resumes on its own once the warning stops.
-  ASSERT_EQ(broadcast_status_of(bench.si_mng.last_command()), std::vector<bool>{false});
+  // The normal operation epoch keeps it out of SIB1, so that it goes back to dormant once the warning stops.
+  ASSERT_EQ(listed_sibs_of(bench.si_mng.last_command()), (std::vector<sib_type>{sib_type::sib2}));
   ASSERT_NE(pws_cmd->version, bench.si_mng.last_command().version)
       << "Both epochs must be distinguishable by version alone";
 }
 
-TEST_F(si_message_controller_broadcast_status_test, when_si_changes_mid_warning_then_pws_epoch_is_derived_again)
+TEST_F(si_message_controller_sched_info_test, when_si_changes_mid_warning_then_pws_epoch_is_derived_again)
 {
   // Start a warning, and keep the SI-message encoder it produced.
   std::vector<byte_buffer>     segments = make_random_segmented_pdu(50, 1);
   mac_cell_sys_info_pdu_update pws_req;
-  pws_req.si_msg_idx    = 0;
+  pws_req.si_msg_idx    = pws_si_msg_idx;
   pws_req.sib_idx       = 7;
   pws_req.si_messages   = span<byte_buffer>(segments);
   pws_req.pws_broadcast = pws_broadcast_indication{std::chrono::seconds{1}, 1};
@@ -463,14 +469,10 @@ TEST_F(si_message_controller_broadcast_status_test, when_si_changes_mid_warning_
   ASSERT_TRUE(bench.last_pws_cmd.has_value());
   const si_update_command first_pws = *bench.last_pws_cmd;
 
-  // An unrelated SI change arrives while the warning is on air: a SIB2 SI-message is added, so both SIB1 and the SI
-  // scheduling configuration differ from the ones the warning epoch was derived from.
-  static const std::array<sib_type, 2> reconf_sibs{sib_type::sib7, sib_type::sib2};
-
+  // An unrelated SI change arrives while the warning is on air: the content of the SIB2 SI-message changes, so both
+  // SIB1 and the SI messages differ from the ones the warning epoch was derived from.
   mac_cell_sys_info_config reconf = bench.sys_info_cfg;
-  reconf.sib1                     = make_sib1_with_si_sched_info(reconf_sibs);
-  reconf.si_messages.push_back(bcch_dl_sch_payload_type{make_random_pdu()});
-  reconf.si_sched_cfg.si_messages.emplace_back().sibs = sib_type_set{sib_type::sib2};
+  reconf.si_messages[0]           = bcch_dl_sch_payload_type{make_random_pdu()};
 
   std::optional<si_update_command> baseline = bench.update_si(reconf);
   ASSERT_TRUE(baseline.has_value());
@@ -483,21 +485,20 @@ TEST_F(si_message_controller_broadcast_status_test, when_si_changes_mid_warning_
       << "An SI change did not trigger the warning, so it must not prolong its broadcast";
   ASSERT_EQ(second_pws->active_pws_si_messages[0].version, first_pws.active_pws_si_messages[0].version);
 
-  // It still lists the warning as broadcasting, while the normal operation epoch lists it as dormant. The SIB2
-  // SI-message that came with the SI change is broadcasting in both.
-  ASSERT_EQ(broadcast_status_of(*second_pws), (std::vector<bool>{true, true}));
-  ASSERT_EQ(broadcast_status_of(*baseline), (std::vector<bool>{false, true}));
+  // It still advertises the warning, while the normal operation epoch keeps it out of SIB1.
+  ASSERT_EQ(listed_sibs_of(*second_pws), (std::vector<sib_type>{sib_type::sib2, sib_type::sib7}));
+  ASSERT_EQ(listed_sibs_of(*baseline), (std::vector<sib_type>{sib_type::sib2}));
 
   // The warning content itself is untouched, so its segment cycle is not restarted.
-  ASSERT_EQ(second_pws->si_msgs[0], first_pws.si_msgs[0]);
+  ASSERT_EQ(second_pws->si_msgs[pws_si_msg_idx], first_pws.si_msgs[pws_si_msg_idx]);
 }
 
-TEST_F(si_message_controller_broadcast_status_test, when_warning_ends_then_a_later_si_change_does_not_bring_it_back)
+TEST_F(si_message_controller_sched_info_test, when_warning_ends_then_a_later_si_change_does_not_bring_it_back)
 {
   // Start a warning and let the cell finish broadcasting it.
   std::vector<byte_buffer>     segments = make_random_segmented_pdu(50, 1);
   mac_cell_sys_info_pdu_update pws_req;
-  pws_req.si_msg_idx    = 0;
+  pws_req.si_msg_idx    = pws_si_msg_idx;
   pws_req.sib_idx       = 7;
   pws_req.si_messages   = span<byte_buffer>(segments);
   pws_req.pws_broadcast = pws_broadcast_indication{std::chrono::seconds{1}, 1};
@@ -510,30 +511,158 @@ TEST_F(si_message_controller_broadcast_status_test, when_warning_ends_then_a_lat
 
   const unsigned nof_epochs_before = bench.nof_pws_epochs;
 
-  // An unrelated SI change arrives: a SIB2 SI-message is added.
-  static const std::array<sib_type, 2> reconf_sibs{sib_type::sib7, sib_type::sib2};
-
+  // An unrelated SI change arrives: the content of the SIB2 SI-message changes.
   mac_cell_sys_info_config reconf = bench.sys_info_cfg;
-  reconf.sib1                     = make_sib1_with_si_sched_info(reconf_sibs);
-  reconf.si_messages.push_back(bcch_dl_sch_payload_type{make_random_pdu()});
-  reconf.si_sched_cfg.si_messages.emplace_back().sibs = sib_type_set{sib_type::sib2};
+  reconf.si_messages[0]           = bcch_dl_sch_payload_type{make_random_pdu()};
   ASSERT_TRUE(bench.update_si(reconf).has_value());
 
   ASSERT_EQ(bench.nof_pws_epochs, nof_epochs_before)
       << "A warning that is over must not be put back on air by an unrelated SI change";
-  ASSERT_EQ(broadcast_status_of(bench.si_mng.last_command()), (std::vector<bool>{false, true}));
+  ASSERT_EQ(listed_sibs_of(bench.si_mng.last_command()), (std::vector<sib_type>{sib_type::sib2}));
+}
+
+/// Fixture whose cell configuration lists the SIB7 warning ahead of the SIB2 SI message that is always broadcast, so
+/// that the order the SI epoch imposes can be told apart from the one the cell was configured with.
+class si_message_controller_reordered_sched_info_test : public ::testing::Test
+{
+public:
+  si_message_controller_reordered_sched_info_test() : bench(make_sys_info_cfg()) {}
+
+  static mac_cell_sys_info_config make_sys_info_cfg()
+  {
+    static const std::array<sib_type, 2> cell_sibs{sib_type::sib7, sib_type::sib2};
+
+    mac_cell_sys_info_config cfg;
+    cfg.sib1 = make_sib1_with_si_sched_info(cell_sibs);
+    for (sib_type sib : cell_sibs) {
+      cfg.si_messages.push_back(bcch_dl_sch_payload_type{make_random_pdu()});
+      cfg.si_sched_cfg.si_messages.emplace_back().sibs = sib_type_set{sib};
+    }
+    return cfg;
+  }
+
+  si_bench bench;
+};
+
+TEST_F(si_message_controller_reordered_sched_info_test, when_no_warning_is_on_air_then_the_epoch_holds_the_rest_alone)
+{
+  const std::vector<sib_type> expected{sib_type::sib2};
+  ASSERT_EQ(get_epoch_sibs(bench.si_mng.last_command()), expected);
+  ASSERT_EQ(get_sib1_listed_sibs(bench.si_mng.last_command(), bench.current_slot), expected);
+}
+
+TEST_F(si_message_controller_reordered_sched_info_test,
+       when_warning_is_configured_first_then_the_epoch_still_puts_it_last)
+{
+  std::vector<byte_buffer>     segments = make_random_segmented_pdu(50, 1);
+  mac_cell_sys_info_pdu_update req;
+  req.si_msg_idx    = 0;
+  req.sib_idx       = 7;
+  req.si_messages   = span<byte_buffer>(segments);
+  req.pws_broadcast = pws_broadcast_indication{std::chrono::seconds{1}, 1};
+  ASSERT_TRUE(bench.push_si_pdu_updates(req));
+  ASSERT_TRUE(bench.last_pws_cmd.has_value());
+
+  // The SI window of the SIB2 SI message derives from its position, so it must not move as the warning goes on air.
+  // The warning takes the position after it, in both the epoch and the SIB1 that epoch is broadcast with.
+  const std::vector<sib_type> expected{sib_type::sib2, sib_type::sib7};
+  ASSERT_EQ(get_epoch_sibs(*bench.last_pws_cmd), expected);
+  ASSERT_EQ(get_sib1_listed_sibs(*bench.last_pws_cmd, bench.current_slot), expected);
+}
+
+/// \brief Fixture whose cell carries a SIB2 SI message that is always broadcast, a SIB7 warning, and a SIB19 one whose
+/// content bypasses the SI change modification window.
+///
+/// The SIB19 SI message states its SI window position, so it is listed in the SIB1 schedulingInfoList2 and follows the
+/// warning in every SI epoch. Its position therefore shifts as the warning goes on and off air, which is what makes it
+/// the case to cover for the SI PDU updates served outside the modification window.
+class si_message_controller_si_pdu_update_test : public ::testing::Test
+{
+public:
+  si_message_controller_si_pdu_update_test() : bench(make_sys_info_cfg()) {}
+
+  static mac_cell_sys_info_config make_sys_info_cfg()
+  {
+    // Note: the packed SIB1 only holds the schedulingInfoList entries, given that the test helper does not build a
+    // schedulingInfoList2. The SI epoch layout is derived from the SI scheduling configuration regardless.
+    static const std::array<sib_type, 2> sched_info_list_sibs{sib_type::sib2, sib_type::sib7};
+
+    mac_cell_sys_info_config cfg;
+    cfg.sib1 = make_sib1_with_si_sched_info(sched_info_list_sibs);
+    for (unsigned i = 0; i != 3; ++i) {
+      cfg.si_messages.push_back(bcch_dl_sch_payload_type{make_random_pdu()});
+    }
+    cfg.si_sched_cfg.si_messages.emplace_back().sibs = sib_type_set{sib_type::sib2};
+    cfg.si_sched_cfg.si_messages.emplace_back().sibs = sib_type_set{sib_type::sib7};
+    si_message_scheduling_config& ntn_si_msg         = cfg.si_sched_cfg.si_messages.emplace_back();
+    ntn_si_msg.sibs                                  = sib_type_set{sib_type::sib19};
+    ntn_si_msg.si_window_position                    = 3;
+    return cfg;
+  }
+
+  /// Enqueues an SI PDU update for the SIB19 SI message, which sits at position 2 of the cell configuration.
+  byte_buffer push_ntn_si_pdu_update()
+  {
+    ntn_segments.clear();
+    ntn_segments.push_back(make_random_pdu());
+
+    mac_cell_sys_info_pdu_update req;
+    req.si_msg_idx  = 2;
+    req.sib_idx     = 19;
+    req.si_messages = span<byte_buffer>(ntn_segments);
+    report_fatal_error_if_not(bench.push_si_pdu_updates(req), "Failed to enqueue the SI PDU update");
+    return ntn_segments.front().copy();
+  }
+
+  /// Serves a grant for the SIB19 SI message out of a given epoch, at a given position of it.
+  byte_buffer serve_ntn_grant(unsigned si_msg_index, si_version_type version, units::bytes tbs)
+  {
+    sib_information si_info = make_sib_pdu(si_msg_index, version, tbs, sib_type_set{sib_type::sib19});
+    return byte_buffer::create(bench.assembler.encode_si_pdu(bench.current_slot, si_info)).value();
+  }
+
+  std::vector<byte_buffer> ntn_segments;
+  si_bench                 bench;
+};
+
+TEST_F(si_message_controller_si_pdu_update_test, when_no_warning_is_on_air_then_the_update_is_served_from_its_position)
+{
+  const byte_buffer pdu = push_ntn_si_pdu_update();
+
+  // With no warning on air, the epoch holds the SIB2 and the SIB19 SI messages, so the latter sits at position 1.
+  const units::bytes tbs{static_cast<unsigned>(pdu.length())};
+  ASSERT_EQ(serve_ntn_grant(1, bench.si_mng.last_command().version, tbs), pdu);
+}
+
+TEST_F(si_message_controller_si_pdu_update_test, when_a_warning_goes_on_air_then_the_update_is_still_served)
+{
+  // The warning joins the epoch ahead of the SIB19 SI message, pushing it from position 1 to position 2.
+  std::vector<byte_buffer>     segments = make_random_segmented_pdu(50, 1);
+  mac_cell_sys_info_pdu_update pws_req;
+  pws_req.si_msg_idx    = 1;
+  pws_req.sib_idx       = 7;
+  pws_req.si_messages   = span<byte_buffer>(segments);
+  pws_req.pws_broadcast = pws_broadcast_indication{std::chrono::seconds{1}, 1};
+  ASSERT_TRUE(bench.push_si_pdu_updates(pws_req));
+  ASSERT_TRUE(bench.last_pws_cmd.has_value());
+
+  const byte_buffer pdu = push_ntn_si_pdu_update();
+
+  // The SI PDU update is matched against the SIBs the grant carries, so it survives the SI message changing position.
+  const units::bytes tbs{static_cast<unsigned>(pdu.length())};
+  ASSERT_EQ(serve_ntn_grant(2, bench.last_pws_cmd->version, tbs), pdu);
 }
 
 /// Fixture with one SI-message carrying SIB7 (ETWS) and another carrying SIB8 (CMAS), so that two warnings can be
 /// broadcast one after the other.
-class si_message_controller_two_warnings_test : public si_message_controller_broadcast_status_test
+class si_message_controller_two_warnings_test : public si_message_controller_sched_info_test
 {
 public:
   si_message_controller_two_warnings_test() { bench_two.emplace(make_two_warnings_cfg()); }
 
   static mac_cell_sys_info_config make_two_warnings_cfg()
   {
-    static const std::array<sib_type, 2> si_msg_sibs{sib_type::sib7, sib_type::sib8};
+    static const std::array<sib_type, 3> si_msg_sibs{sib_type::sib2, sib_type::sib7, sib_type::sib8};
 
     mac_cell_sys_info_config cfg;
     cfg.sib1 = make_sib1_with_si_sched_info(si_msg_sibs);
@@ -564,19 +693,19 @@ public:
 TEST_F(si_message_controller_two_warnings_test, when_warning_ends_then_a_new_warning_does_not_bring_it_back)
 {
   // The ETWS warning is broadcast and finishes.
-  start_warning(0, sib_type::sib7);
+  start_warning(1, sib_type::sib7);
   ASSERT_TRUE(bench_two->last_pws_cmd.has_value());
   bench_two->serve_sib1_grant(bench_two->last_pws_cmd->version);
   bench_two->serve_sib1_grant(bench_two->si_mng.last_command().version);
 
   // A CMAS warning starts afterwards. Its epoch must carry it alone.
-  start_warning(1, sib_type::sib8);
+  start_warning(2, sib_type::sib8);
   ASSERT_EQ(bench_two->only_broadcasting_si_message().sib_set, sib_type_set{sib_type::sib8});
 
   units::bytes    tbs{MAX_BCCH_DL_SCH_PDU_SIZE / 2};
   sib_information si_info = make_sib_pdu(std::nullopt, bench_two->last_pws_cmd->version, tbs);
   auto            payload = bench_two->last_pws_cmd->sib1->encode(bench_two->current_slot, si_info);
   ASSERT_TRUE(payload.has_value());
-  ASSERT_EQ(get_si_broadcast_status(payload.value()), (std::vector<bool>{false, true}))
-      << "SIB1 must not advertise the warning that is over as broadcasting";
+  ASSERT_EQ(get_listed_sibs(payload.value()), (std::vector<sib_type>{sib_type::sib2, sib_type::sib8}))
+      << "SIB1 must not advertise the warning that is over";
 }

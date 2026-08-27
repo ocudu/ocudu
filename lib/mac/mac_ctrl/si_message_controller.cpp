@@ -39,13 +39,36 @@ static sib_type to_sib_type(const asn1::rrc_nr::sib_type_info_s& sib_info)
   }
 }
 
-/// \brief Repacks a SIB1 payload, marking as broadcasting the SI messages that carry a warning.
+/// SIBs carried by an SI message listed in the SIB1 schedulingInfoList.
+static sib_type_set to_sib_type_set(const asn1::rrc_nr::sched_info_s& sched_info)
+{
+  sib_type_set sib_set;
+  for (const asn1::rrc_nr::sib_type_info_s& sib_info : sched_info.sib_map_info) {
+    const sib_type sib = to_sib_type(sib_info);
+    if (sib != sib_type::sib_invalid) {
+      sib_set.add(sib);
+    }
+  }
+  return sib_set;
+}
+
+/// Makes room in a SIB1 for the HyperSFN that the HyperSFN-aware encoder keeps up to date.
+static void ensure_hypersfn_present(asn1::rrc_nr::sib1_s& sib1_msg)
+{
+  sib1_msg.non_crit_ext_present                                         = true;
+  sib1_msg.non_crit_ext.non_crit_ext_present                            = true;
+  sib1_msg.non_crit_ext.non_crit_ext.non_crit_ext_present               = true;
+  sib1_msg.non_crit_ext.non_crit_ext.non_crit_ext.hyper_sfn_r17_present = true;
+}
+
+/// \brief Repacks a SIB1 payload so that its schedulingInfoList lists the SI messages that an SI epoch broadcasts.
 ///
-/// PWS SI messages are only listed as broadcasting while their warning is on air. As per TS 38.331, 5.2.2.2.2, this
-/// does not require an SI change notification: the etwsAndCmasIndication short message makes the UE re-acquire SIB1.
+/// An SI message carrying a warning is only listed while the warning is on air, and after the SI messages that are
+/// always broadcast, so that their SI windows stay in place. As per TS 38.331, 5.2.2.2.2, listing it does not require
+/// an SI change notification: the etwsAndCmasIndication short message makes the UE re-acquire SIB1.
 /// \return The repacked payload, or an empty buffer if the reference payload could not be processed.
-static byte_buffer repack_sib1_broadcast_status(const byte_buffer&                      sib1,
-                                                span<const pws_broadcasting_si_message> broadcasting)
+static byte_buffer
+repack_sib1_si_sched_info(const byte_buffer& sib1, span<const sib_type_set> on_air, bool with_hypersfn)
 {
   asn1::rrc_nr::bcch_dl_sch_msg_s msg;
   {
@@ -57,26 +80,25 @@ static byte_buffer repack_sib1_broadcast_status(const byte_buffer&              
     }
   }
 
+  asn1::rrc_nr::sib1_s& sib1_msg        = msg.msg.c1().sib_type1();
+  auto&                 sched_info_list = sib1_msg.si_sched_info.sched_info_list;
+
   // Note: PWS SIBs are release 15 SIBs, and an SI message cannot mix release 17 and non-release 17 SIBs. Hence, a PWS
   // SI message is always listed in schedulingInfoList, and never in schedulingInfoList2.
-  for (asn1::rrc_nr::sched_info_s& sched_info : msg.msg.c1().sib_type1().si_sched_info.sched_info_list) {
-    sib_type_set sib_set;
-    for (const asn1::rrc_nr::sib_type_info_s& sib_info : sched_info.sib_map_info) {
-      const sib_type sib = to_sib_type(sib_info);
-      if (sib != sib_type::sib_invalid) {
-        sib_set.add(sib);
-      }
-    }
-    if (not sib_set.is_pws()) {
-      continue;
-    }
+  for (auto* it = sched_info_list.begin(); it != sched_info_list.end();) {
+    const sib_type_set sib_set = to_sib_type_set(*it);
+    const bool listed = not sib_set.is_pws() or std::find(on_air.begin(), on_air.end(), sib_set) != on_air.end();
+    it                = listed ? it + 1 : sched_info_list.erase(it);
+  }
+  std::stable_partition(sched_info_list.begin(), sched_info_list.end(), [](const auto& sched_info) {
+    return not to_sib_type_set(sched_info).is_pws();
+  });
 
-    const bool is_broadcasting = std::any_of(broadcasting.begin(), broadcasting.end(), [sib_set](const auto& warning) {
-      return warning.sib_set == sib_set;
-    });
-    sched_info.si_broadcast_status.value = is_broadcasting
-                                               ? asn1::rrc_nr::sched_info_s::si_broadcast_status_opts::broadcasting
-                                               : asn1::rrc_nr::sched_info_s::si_broadcast_status_opts::not_broadcasting;
+  // si-WindowLength comes with the schedulingInfoList, which must hold at least one entry.
+  sib1_msg.si_sched_info_present = sched_info_list.size() != 0;
+
+  if (with_hypersfn) {
+    ensure_hypersfn_present(sib1_msg);
   }
 
   byte_buffer   repacked;
@@ -130,11 +152,7 @@ public:
     }
 
     // Ensure HyperSFN is encoded in SIB1 and its value matches the member current_hyper_sfn.
-    auto& sib1msg                                                        = current_unpacked.msg.c1().sib_type1();
-    sib1msg.non_crit_ext_present                                         = true;
-    sib1msg.non_crit_ext.non_crit_ext_present                            = true;
-    sib1msg.non_crit_ext.non_crit_ext.non_crit_ext_present               = true;
-    sib1msg.non_crit_ext.non_crit_ext.non_crit_ext.hyper_sfn_r17_present = true;
+    ensure_hypersfn_present(current_unpacked.msg.c1().sib_type1());
     build_bcch_dl_sch_payload(0);
   }
 
@@ -388,7 +406,7 @@ si_message_controller::si_message_controller(du_cell_index_t                 cel
     }
     // test_mode ETWS/CMAS config was set for this SI-message. Broadcast its (already encoded) content right away,
     // indefinitely, instead of waiting for a real Write-Replace Warning. The sequence pushes the epoch.
-    find_pws_sequence(last_cmd.si_sched_cfg, i)->activate_forever(sys_info.si_messages[i]);
+    find_pws_sequence(cell_si_sched_cfg, i)->activate_forever(sys_info.si_messages[i]);
   }
 }
 
@@ -462,32 +480,22 @@ bool si_message_controller::has_si_changed(const mac_cell_sys_info_config& req) 
       return true;
     }
   }
-  return req.si_sched_cfg != last_cmd.si_sched_cfg;
+  return req.si_sched_cfg != cell_si_sched_cfg;
 }
 
 void si_message_controller::build_command(const mac_cell_sys_info_config& req)
 {
-  // Generate SIB1 encoder, reusing the previous one if the payload did not change.
-  if (last_cmd.sib1 == nullptr or req.sib1 != last_sib1 or req.sib1_contains_hypersfn != last_hypersfn_enabled) {
-    // SIB1 changes detected.
-    last_sib1             = req.sib1.copy();
-    last_hypersfn_enabled = req.sib1_contains_hypersfn;
-    if (req.sib1_contains_hypersfn) {
-      last_cmd.sib1 = std::make_shared<sib1_hypersfn_encoder>(req.sib1);
-    } else {
-      // eDRX not enabled, use static buffer.
-      last_cmd.sib1 = std::make_shared<sib1_static_encoder>(req.sib1);
-    }
-  }
+  last_sib1             = req.sib1.copy();
+  last_hypersfn_enabled = req.sib1_contains_hypersfn;
 
   // Check if SI messages have changed.
-  last_cmd.si_msgs.resize(req.si_messages.size());
+  cell_si_msgs.resize(req.si_messages.size());
   last_si_messages.resize(req.si_messages.size());
   for (unsigned i = 0, e = req.si_messages.size(); i != e; ++i) {
     if (const pws_broadcast_sequence* pws_seq = find_pws_sequence(req.si_sched_cfg, i)) {
       // The content of this SI message flows through handle_pws_broadcast, not through this (possibly unrelated) SI
       // reconfiguration. Leave it untouched.
-      last_cmd.si_msgs[i] = pws_seq->encoder();
+      cell_si_msgs[i] = pws_seq->encoder();
       continue;
     }
 
@@ -495,11 +503,78 @@ void si_message_controller::build_command(const mac_cell_sys_info_config& req)
       ocudu_assert(req.si_messages[i].size() == 1, "Static SI-messages must not be segmented");
       last_si_messages[i].resize(1);
       last_si_messages[i].front() = req.si_messages[i].front().copy();
-      last_cmd.si_msgs[i]         = std::make_shared<static_si_msg_encoder>(req.si_messages[i].front());
+      cell_si_msgs[i]             = std::make_shared<static_si_msg_encoder>(req.si_messages[i].front());
     }
   }
 
-  last_cmd.si_sched_cfg = req.si_sched_cfg;
+  cell_si_sched_cfg = req.si_sched_cfg;
+
+  std::optional<byte_buffer> epoch_sib1 = make_epoch_sib1({});
+  if (not epoch_sib1.has_value()) {
+    logger.error("cell={}: Failed to generate the SIB1 of the normal operation", cell_index);
+    return;
+  }
+  if (last_cmd.sib1 == nullptr or *epoch_sib1 != normal_epoch_sib1) {
+    normal_epoch_sib1 = std::move(*epoch_sib1);
+    last_cmd.sib1     = make_sib1_encoder(normal_epoch_sib1);
+  }
+  fill_epoch_si_config(last_cmd, {}, units::bytes{static_cast<unsigned>(normal_epoch_sib1.length())});
+}
+
+std::optional<byte_buffer> si_message_controller::make_epoch_sib1(span<const sib_type_set> on_air) const
+{
+  if (pws_sequences.empty()) {
+    // A cell with no warning to broadcast has nothing to add to or remove from the SIB1 the DU packed.
+    return last_sib1.copy();
+  }
+  byte_buffer repacked = repack_sib1_si_sched_info(last_sib1, on_air, last_hypersfn_enabled);
+  if (repacked.empty()) {
+    return std::nullopt;
+  }
+  return repacked;
+}
+
+std::shared_ptr<bcch_dl_sch_msg_encoder> si_message_controller::make_sib1_encoder(const byte_buffer& sib1) const
+{
+  if (last_hypersfn_enabled) {
+    return std::make_shared<sib1_hypersfn_encoder>(sib1);
+  }
+  // eDRX not enabled, use static buffer.
+  return std::make_shared<sib1_static_encoder>(sib1);
+}
+
+void si_message_controller::fill_epoch_si_config(si_update_command&       cmd,
+                                                 span<const sib_type_set> on_air,
+                                                 units::bytes             sib1_len) const
+{
+  cmd.si_sched_cfg                   = make_si_epoch_config(cell_si_sched_cfg, on_air);
+  cmd.si_sched_cfg.sib1_payload_size = sib1_len;
+
+  const span<const si_message_scheduling_config> epoch_si_msgs = cmd.si_sched_cfg.si_messages;
+  cmd.si_msgs.resize(epoch_si_msgs.size());
+  for (unsigned i = 0, e = epoch_si_msgs.size(); i != e; ++i) {
+    cmd.si_msgs[i] = find_si_msg_encoder(epoch_si_msgs[i].sibs);
+  }
+}
+
+std::shared_ptr<bcch_dl_sch_msg_encoder> si_message_controller::find_si_msg_encoder(sib_type_set sibs) const
+{
+  const auto& si_msgs = cell_si_sched_cfg.si_messages;
+  const auto  it = std::find_if(si_msgs.begin(), si_msgs.end(), [sibs](const auto& cfg) { return cfg.sibs == sibs; });
+  if (it == si_msgs.end()) {
+    return nullptr;
+  }
+  const unsigned idx = std::distance(si_msgs.begin(), it);
+  return idx < cell_si_msgs.size() ? cell_si_msgs[idx] : nullptr;
+}
+
+static_vector<sib_type_set, MAX_PWS_SI_MESSAGES> si_message_controller::on_air_sib_sets() const
+{
+  static_vector<sib_type_set, MAX_PWS_SI_MESSAGES> on_air;
+  for (const pws_broadcasting_si_message& warning : active_pws_si_msgs) {
+    on_air.push_back(warning.sib_set);
+  }
+  return on_air;
 }
 
 bool si_message_controller::handle_si_message_pdu_updates(const mac_cell_sys_info_pdu_update& req)
@@ -528,7 +603,7 @@ si_message_controller::pws_broadcast_sequence* si_message_controller::find_pws_s
 
 bool si_message_controller::handle_pws_broadcast(const mac_cell_sys_info_pdu_update& req)
 {
-  pws_broadcast_sequence* pws_seq = find_pws_sequence(last_cmd.si_sched_cfg, req.si_msg_idx);
+  pws_broadcast_sequence* pws_seq = find_pws_sequence(cell_si_sched_cfg, req.si_msg_idx);
   if (pws_seq == nullptr) {
     // The SI message carries no PWS SIB, so no PWS broadcast state was allocated for it.
     return false;
@@ -548,14 +623,14 @@ void si_message_controller::push_pws_epoch(std::optional<sib_type_set> pws_sib_s
   if (pws_sib_set.has_value()) {
     // One more broadcast of this warning is starting. Refresh its encoder and the properties the epoch states for it,
     // before deriving the epoch.
-    const auto&    si_msgs    = last_cmd.si_sched_cfg.si_messages;
+    const auto&    si_msgs    = cell_si_sched_cfg.si_messages;
     const unsigned si_msg_idx = std::distance(
         si_msgs.begin(),
         std::find_if(si_msgs.begin(), si_msgs.end(), [&](const auto& cfg) { return cfg.sibs == *pws_sib_set; }));
     ocudu_assert(si_msg_idx < si_msgs.size(), "Broadcasting a warning of an SI message that is not scheduled");
 
     pws_broadcast_sequence* pws_seq = find_pws_sequence(*pws_sib_set);
-    last_cmd.si_msgs[si_msg_idx]    = pws_seq->encoder();
+    cell_si_msgs[si_msg_idx]        = pws_seq->encoder();
 
     // Stamping it with the version of the epoch it triggers is what tells the scheduler to start one more broadcast of
     // this warning, and of this warning alone.
@@ -574,18 +649,18 @@ void si_message_controller::push_pws_epoch(std::optional<sib_type_set> pws_sib_s
     }
   }
 
-  byte_buffer pws_sib1 = repack_sib1_broadcast_status(last_sib1, active_pws_si_msgs);
-  if (pws_sib1.empty()) {
+  const static_vector<sib_type_set, MAX_PWS_SI_MESSAGES> on_air   = on_air_sib_sets();
+  const std::optional<byte_buffer>                       pws_sib1 = make_epoch_sib1(on_air);
+  if (not pws_sib1.has_value()) {
     logger.error("cell={}: Failed to generate the SIB1 of a warning broadcast", cell_index);
     return;
   }
 
-  // The ETWS/CMAS epoch only differs from the normal operation one in SIB1, so the remaining encoders are shared.
-  si_update_command cmd              = last_cmd;
-  cmd.version                        = new_version;
-  cmd.si_sched_cfg.sib1_payload_size = units::bytes{static_cast<unsigned>(pws_sib1.length())};
-  cmd.sib1                           = std::make_shared<sib1_static_encoder>(pws_sib1);
-  cmd.active_pws_si_messages         = active_pws_si_msgs;
+  si_update_command cmd;
+  cmd.version = new_version;
+  cmd.sib1    = make_sib1_encoder(*pws_sib1);
+  fill_epoch_si_config(cmd, on_air, units::bytes{static_cast<unsigned>(pws_sib1->length())});
+  cmd.active_pws_si_messages = active_pws_si_msgs;
 
   // Forward SI update command to DL MAC and scheduler.
   dl_cell.handle_si_update(cmd);

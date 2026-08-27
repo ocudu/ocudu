@@ -61,14 +61,16 @@ inline byte_buffer make_sib1_with_si_sched_info(span<const sib_type> si_msg_sibs
   for (unsigned i = 0, e = si_msg_sibs.size(); i != e; ++i) {
     const sib_type sib        = si_msg_sibs[i];
     auto&          sched_info = sib1.si_sched_info.sched_info_list[i];
-    // Mirrors the DU packer: a PWS SI message is listed as dormant until a warning is on air.
-    sched_info.si_broadcast_status.value = is_pws_sib(sib)
-                                               ? asn1::rrc_nr::sched_info_s::si_broadcast_status_opts::not_broadcasting
-                                               : asn1::rrc_nr::sched_info_s::si_broadcast_status_opts::broadcasting;
+    // Mirrors the DU packer: this payload is the reference every SI epoch is derived from, so every entry it lists is
+    // one being broadcast.
+    sched_info.si_broadcast_status.value = asn1::rrc_nr::sched_info_s::si_broadcast_status_opts::broadcasting;
     sched_info.si_periodicity.value      = asn1::rrc_nr::sched_info_s::si_periodicity_opts::rf16;
     sched_info.sib_map_info.resize(1);
     auto& sib_info = sched_info.sib_map_info[0];
     switch (sib) {
+      case sib_type::sib6:
+        sib_info.type.value = asn1::rrc_nr::sib_type_info_s::type_opts::sib_type6;
+        break;
       case sib_type::sib7:
         sib_info.type.value = asn1::rrc_nr::sib_type_info_s::type_opts::sib_type7;
         break;
@@ -87,20 +89,24 @@ inline byte_buffer make_sib1_with_si_sched_info(span<const sib_type> si_msg_sibs
   return buf;
 }
 
-/// Returns the si-BroadcastStatus of each SI message listed in a packed BCCH-DL-SCH SIB1 payload.
-inline std::vector<bool> get_si_broadcast_status(span<const uint8_t> sib1_pdu)
+/// Returns the SIB carried by each SI message that a packed BCCH-DL-SCH SIB1 payload lists, in the listed order.
+inline std::vector<sib_type> get_listed_sibs(span<const uint8_t> sib1_pdu)
 {
   byte_buffer                     sib1_buf = byte_buffer::create(sib1_pdu).value();
   asn1::rrc_nr::bcch_dl_sch_msg_s msg;
   asn1::cbit_ref                  bref{sib1_buf};
   report_fatal_error_if_not(msg.unpack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to unpack the SIB1");
 
-  std::vector<bool> broadcasting;
-  for (const auto& sched_info : msg.msg.c1().sib_type1().si_sched_info.sched_info_list) {
-    broadcasting.push_back(sched_info.si_broadcast_status.value ==
-                           asn1::rrc_nr::sched_info_s::si_broadcast_status_opts::broadcasting);
+  const asn1::rrc_nr::sib1_s& sib1 = msg.msg.c1().sib_type1();
+  std::vector<sib_type>       listed;
+  if (not sib1.si_sched_info_present) {
+    return listed;
   }
-  return broadcasting;
+  for (const auto& sched_info : sib1.si_sched_info.sched_info_list) {
+    report_fatal_error_if_not(sched_info.sib_map_info.size() == 1, "Test SI messages carry a single SIB");
+    listed.push_back(static_cast<sib_type>(sched_info.sib_map_info[0].type.to_number()));
+  }
+  return listed;
 }
 
 inline byte_buffer make_pdu_with_padding(const byte_buffer& payload, units::bytes tbs)
@@ -111,16 +117,37 @@ inline byte_buffer make_pdu_with_padding(const byte_buffer& payload, units::byte
   return result;
 }
 
-inline sib_information make_sib_pdu(std::optional<unsigned> si_msg_index, si_version_type si_version, units::bytes tbs)
+inline sib_information
+make_sib_pdu(std::optional<unsigned> si_msg_index, si_version_type si_version, units::bytes tbs, sib_type_set sibs = {})
 {
   sib_information result{};
   result.si_indicator  = si_msg_index.has_value() ? sib_information::other_si : sib_information::sib1;
   result.si_msg_index  = si_msg_index;
+  result.sibs          = sibs;
   result.version       = si_version;
   result.is_repetition = false;
   result.pdsch_cfg.codewords.emplace_back();
   result.pdsch_cfg.codewords[0].tb_size_bytes = tbs;
   return result;
+}
+
+/// SIBs carried by each SI message of an SI epoch, in the order the epoch holds them.
+inline std::vector<sib_type> get_epoch_sibs(const si_update_command& cmd)
+{
+  std::vector<sib_type> sibs;
+  for (const si_message_scheduling_config& si_msg : cmd.si_sched_cfg.si_messages) {
+    sibs.push_back(si_msg.sibs.front());
+  }
+  return sibs;
+}
+
+/// SIBs that the SIB1 of an SI epoch lists in its schedulingInfoList.
+inline std::vector<sib_type> get_sib1_listed_sibs(const si_update_command& cmd, slot_point_extended sl_tx)
+{
+  sib_information si_info = make_sib_pdu(std::nullopt, cmd.version, units::bytes{MAX_BCCH_DL_SCH_PDU_SIZE / 2});
+  auto            payload = cmd.sib1->encode(sl_tx, si_info);
+  report_fatal_error_if_not(payload.has_value(), "Failed to encode SIB1");
+  return get_listed_sibs(payload.value());
 }
 
 /// \brief Bench pairing an SI message controller with the SIB assembler it feeds.

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "ocudu/adt/span.h"
 #include "ocudu/adt/static_vector.h"
 #include "ocudu/ran/sib/sib_type.h"
 #include "ocudu/support/units.h"
@@ -68,5 +69,13 @@ struct si_scheduling_config {
   }
   bool operator!=(const si_scheduling_config& other) const { return not(*this == other); }
 };
+
+/// \brief Derives the SI scheduling configuration of the SI epoch that broadcasts a given set of warnings.
+///
+/// It holds the SI messages that the epoch broadcasts, in the order the SIB1 schedulingInfoList lists them in.
+/// \param cell_si_sched_cfg SI scheduling configuration of the cell, listing every SI message it can broadcast.
+/// \param on_air SI messages carrying a warning. Empty for the epoch of the normal operation.
+si_scheduling_config make_si_epoch_config(const si_scheduling_config& cell_si_sched_cfg,
+                                          span<const sib_type_set>    on_air);
 
 } // namespace ocudu

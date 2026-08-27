@@ -1495,6 +1495,21 @@ static bool validate_cell_sib_config(const du_high_unit_base_cell_config& cell_c
     }
   }
 
+  // An SI message carrying SIB6/7/8 is only listed in the SIB1 schedulingInfoList while its warning is on air, so it
+  // cannot be the one carrying the si-WindowLength that the schedulingInfoList2 entries depend on.
+  const unsigned n_always_broadcast_si_msgs =
+      std::count_if(sib_cfg.si_sched_info.begin(), sib_cfg.si_sched_info.end(), [](const auto& si_msg) {
+        return not si_msg.si_window_position.has_value() and
+               std::none_of(si_msg.sib_mapping_info.begin(), si_msg.sib_mapping_info.end(), [](uint8_t t) {
+                 return t == 6 || t == 7 || t == 8;
+               });
+      });
+  if (not si_window_positions.empty() and n_always_broadcast_si_msgs == 0) {
+    fmt::print("The SIBs with ID >= 15 require at least one SI message carrying a SIB other than SIB6/7/8, given that "
+               "an SI message carrying SIB6/7/8 is only advertised in SIB1 while a warning is on air.\n");
+    return false;
+  }
+
   std::sort(sibs_included.begin(), sibs_included.end());
   // Check if there are repeated SIBs in the SI messages.
   const auto duplicate_it = std::adjacent_find(sibs_included.begin(), sibs_included.end());

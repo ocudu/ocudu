@@ -402,14 +402,9 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
 
       // For each SI message in the configuration...
       for (const auto& cfg_si : du_cfg.si.si_config->si_sched_info) {
-        // Prepare a SchedulingInfo element. This holds information for an SI message carrying SIBs 2, 6, 7 or 8.
-        // Note: a PWS SI message is only broadcast while a warning is on air, which the MAC signals by repacking this
-        // payload with its si-BroadcastStatus set to broadcasting. Listing it as broadcasting here would advertise a
-        // warning that is not being transmitted.
+        // Prepare a SchedulingInfo element.
         sched_info_s asn1_si;
-        asn1_si.si_broadcast_status.value = cfg_si.requires_activation()
-                                                ? sched_info_s::si_broadcast_status_opts::not_broadcasting
-                                                : sched_info_s::si_broadcast_status_opts::broadcasting;
+        asn1_si.si_broadcast_status.value = sched_info_s::si_broadcast_status_opts::broadcasting;
         ret                               = asn1::number_to_enum(asn1_si.si_periodicity, cfg_si.si_period_radio_frames);
         ocudu_assert(ret, "Invalid SI period");
 

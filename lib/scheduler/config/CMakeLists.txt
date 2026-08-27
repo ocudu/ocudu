@@ -7,6 +7,7 @@ add_library(sched_config STATIC
         builder/csi_meas_config.cpp
         cell_config_builder_params.cpp
         ran_cell_config_helper.cpp
+        si_scheduling_config.cpp
         serving_cell_config_factory.cpp
         sched_cell_config_helpers.cpp
         scheduler_cell_config_validator.cpp
