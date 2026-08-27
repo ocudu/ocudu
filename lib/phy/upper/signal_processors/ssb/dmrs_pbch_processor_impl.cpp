@@ -3,7 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "dmrs_pbch_processor_impl.h"
-#include "ocudu/ocuduvec/conversion.h"
+#include "ocudu/ocuduvec/sc_prod.h"
 #include "ocudu/phy/support/resource_grid_writer.h"
 
 using namespace ocudu;
@@ -40,11 +40,17 @@ void dmrs_pbch_processor_impl::mapping(const std::array<cf_t, NOF_RE>& r,
   const uint8_t  l0 = args.ssb_first_symbol;
   const uint16_t k0 = args.ssb_first_subcarrier;
 
-  // For each port...
-  for (unsigned port : args.ports) {
-    // Convert symbols to complex BF16.
+  // Extract the precoding and beamforming information - only one PRG.
+  const precoding_beamforming_composite& precoding = args.precoding_and_beamforming.get_prg(0);
+
+  // For each beam.
+  for (unsigned i_beam = 0, nof_beams = precoding.beams.size(); i_beam != nof_beams; ++i_beam) {
+    // Apply the MIMO precoding weight of the beam and convert the symbols to complex BF16.
     std::array<cbf16_t, NOF_RE> symbols_cbf16;
-    ocuduvec::convert(symbols_cbf16, r);
+    ocuduvec::sc_prod(symbols_cbf16, r, precoding.mimo.get_coefficient(0, i_beam));
+
+    // Resource grid port that carries the beam.
+    unsigned port = to_uint(precoding.beams[i_beam]);
 
     // Create view with the symbols.
     span<const cbf16_t> symbols = symbols_cbf16;
@@ -68,10 +74,10 @@ void dmrs_pbch_processor_impl::mapping(const std::array<cf_t, NOF_RE>& r,
 
 void dmrs_pbch_processor_impl::map(resource_grid_writer& grid, const config_t& config)
 {
-  // Generate sequence
+  // Generate sequence.
   std::array<cf_t, NOF_RE> sequence;
   generation(sequence, config);
 
-  // Mapping to physical resources
+  // Mapping to physical resources.
   mapping(sequence, grid, config);
 }

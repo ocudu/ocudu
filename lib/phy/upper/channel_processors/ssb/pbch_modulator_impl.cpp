@@ -4,6 +4,7 @@
 
 #include "pbch_modulator_impl.h"
 #include "ocudu/ocuduvec/bit.h"
+#include "ocudu/ocuduvec/sc_prod.h"
 #include "ocudu/phy/support/resource_grid_writer.h"
 #include "ocudu/ran/ssb/ssb_properties.h"
 
@@ -55,9 +56,19 @@ void pbch_modulator_impl::map(span<const cf_t> d_pbch, resource_grid_writer& gri
   rb_edge_mask.fill(16, 20);
   bounded_bitset<MAX_NOF_SUBCARRIERS> edge_mask = rb_edge_mask.kronecker_product<NOF_SUBCARRIERS_PER_RB>(re_mask);
 
-  // Map symbols for each of the ports.
-  for (unsigned port : config.ports) {
-    span<const cf_t> symbols = d_pbch;
+  // Extract the precoding and beamforming information - only one PRG.
+  const precoding_beamforming_composite& precoding = config.precoding_and_beamforming.get_prg(0);
+
+  // Map symbols for each of the beams.
+  for (unsigned i_beam = 0, nof_beams = precoding.beams.size(); i_beam != nof_beams; ++i_beam) {
+    // Apply the MIMO precoding weight of the beam.
+    std::array<cf_t, M_symb> precoded_symbols;
+    ocuduvec::sc_prod(precoded_symbols, d_pbch, precoding.mimo.get_coefficient(0, i_beam));
+
+    // Resource grid port that carries the beam.
+    unsigned port = to_uint(precoding.beams[i_beam]);
+
+    span<const cf_t> symbols = precoded_symbols;
 
     // Put sequence in symbol 1 (0, 1, ..., 239), skip the subcarriers reserved for PBCH DM-RS.
     symbols = grid.put(port, l0 + 1, k0, full_mask, symbols);

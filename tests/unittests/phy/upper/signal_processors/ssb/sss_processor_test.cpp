@@ -4,6 +4,7 @@
 
 #include "../../../support/resource_grid_test_doubles.h"
 #include "ocudu/adt/format.h"
+#include "ocudu/phy/antenna_ports.h"
 #include "ocudu/phy/phys_cell_id.h"
 #include "ocudu/phy/upper/signal_processors/ssb/factories.h"
 #include "ocudu/ran/ssb/ssb_properties.h"
@@ -69,7 +70,7 @@ static error_type<std::string> test_case(sss_processor& sss, const sss_processor
   std::vector<resource_grid_writer_spy::expected_entry_t> expected_grid_entries;
   for (unsigned i = 0; i != 127; ++i) {
     resource_grid_writer_spy::expected_entry_t entry = {};
-    entry.port                                       = sss_args.ports[0];
+    entry.port                                       = to_uint(sss_args.precoding_and_beamforming.get_prg(0).beams[0]);
     entry.symbol                                     = sss_args.ssb_first_symbol + 2;
     entry.subcarrier                                 = sss_args.ssb_first_subcarrier + 56 + i;
     entry.value                                      = sequence_gold[i];
@@ -103,7 +104,8 @@ TEST(sss_processor_test, map)
     sss_args.ssb_first_subcarrier    = dist_ssb_first_subcarrier(rgen);
     sss_args.ssb_first_symbol        = dist_ssb_first_symbol(rgen);
     sss_args.amplitude               = 1.0F;
-    sss_args.ports.emplace_back(dist_port(rgen));
+    sss_args.precoding_and_beamforming =
+        precoding_beamforming_configuration::make_wideband(precoding_beam_list{to_beam_id(dist_port(rgen))});
 
     error_type<std::string> test_ok = test_case(*sss, sss_args);
     ASSERT_TRUE(test_ok.has_value()) << test_ok.error();

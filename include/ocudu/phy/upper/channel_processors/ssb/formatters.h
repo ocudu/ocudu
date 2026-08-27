@@ -5,6 +5,7 @@
 #pragma once
 
 #include "ocudu/phy/upper/channel_processors/ssb/ssb_processor.h"
+#include "ocudu/ran/precoding_beamforming_formatters.h"
 #include "ocudu/support/format/delimited_formatter.h"
 
 namespace fmt {
@@ -37,7 +38,12 @@ struct formatter<ocudu::ssb_processor::pdu_t> {
 
     helper.format_if_verbose(ctx, "beta_pss={:+.1f}dB", ocudu::ssb_pss_to_sss_epre_to_dB(pdu.beta_pss));
     helper.format_if_verbose(ctx, "slot={}", pdu.slot);
-    helper.format_if_verbose(ctx, "ports={}", ocudu::span<const uint8_t>(pdu.ports));
+
+    if (helper.is_multiline()) {
+      helper.format_if_verbose(ctx, "{:n}", pdu.precoding_and_beamforming);
+    } else {
+      helper.format_if_verbose(ctx, "{}", pdu.precoding_and_beamforming);
+    }
 
     return ctx.out();
   }

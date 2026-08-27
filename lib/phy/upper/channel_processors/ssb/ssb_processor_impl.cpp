@@ -42,48 +42,48 @@ void ssb_processor_impl::process(resource_grid_writer& grid, const pdu_t& pdu)
 
   // Create modulator configuration.
   pbch_modulator::config_t modulator_config;
-  modulator_config.phys_cell_id         = pdu.phys_cell_id;
-  modulator_config.ssb_idx              = pdu.ssb_idx;
-  modulator_config.ssb_first_subcarrier = k_start;
-  modulator_config.ssb_first_symbol     = l_start;
-  modulator_config.amplitude            = 1.0F;
-  modulator_config.ports                = pdu.ports;
+  modulator_config.phys_cell_id              = pdu.phys_cell_id;
+  modulator_config.ssb_idx                   = pdu.ssb_idx;
+  modulator_config.ssb_first_subcarrier      = k_start;
+  modulator_config.ssb_first_symbol          = l_start;
+  modulator_config.amplitude                 = 1.0F;
+  modulator_config.precoding_and_beamforming = pdu.precoding_and_beamforming;
 
   // Modulate PBCH.
   modulator->put(encoded_bits, grid, modulator_config);
 
   // Create DMRS for PBCH configuration.
   dmrs_pbch_processor::config_t dmrs_config;
-  dmrs_config.phys_cell_id         = pdu.phys_cell_id;
-  dmrs_config.ssb_idx              = pdu.ssb_idx;
-  dmrs_config.L_max                = pdu.L_max;
-  dmrs_config.ssb_first_subcarrier = k_start;
-  dmrs_config.ssb_first_symbol     = l_start;
-  dmrs_config.hrf                  = pdu.slot.is_odd_hrf();
-  dmrs_config.amplitude            = 1.0F;
-  dmrs_config.ports                = pdu.ports;
+  dmrs_config.phys_cell_id              = pdu.phys_cell_id;
+  dmrs_config.ssb_idx                   = pdu.ssb_idx;
+  dmrs_config.L_max                     = pdu.L_max;
+  dmrs_config.ssb_first_subcarrier      = k_start;
+  dmrs_config.ssb_first_symbol          = l_start;
+  dmrs_config.hrf                       = pdu.slot.is_odd_hrf();
+  dmrs_config.amplitude                 = 1.0F;
+  dmrs_config.precoding_and_beamforming = pdu.precoding_and_beamforming;
 
   // Put DMRS for PBCH.
   dmrs->map(grid, dmrs_config);
 
   // Create PSS configuration
   pss_processor::config_t pss_config;
-  pss_config.phys_cell_id         = pdu.phys_cell_id;
-  pss_config.ssb_first_symbol     = l_start;
-  pss_config.ssb_first_subcarrier = k_start;
-  pss_config.amplitude            = ssb_pss_to_sss_epre_to_amplitude(pdu.beta_pss);
-  pss_config.ports                = pdu.ports;
+  pss_config.phys_cell_id              = pdu.phys_cell_id;
+  pss_config.ssb_first_symbol          = l_start;
+  pss_config.ssb_first_subcarrier      = k_start;
+  pss_config.amplitude                 = ssb_pss_to_sss_epre_to_amplitude(pdu.beta_pss);
+  pss_config.precoding_and_beamforming = pdu.precoding_and_beamforming;
 
   // Put PSS.
   pss->map(grid, pss_config);
 
   // Create SSS configuration.
   sss_processor::config_t sss_config;
-  sss_config.phys_cell_id         = pdu.phys_cell_id;
-  sss_config.ssb_first_symbol     = l_start;
-  sss_config.ssb_first_subcarrier = k_start;
-  sss_config.amplitude            = 1.0F;
-  sss_config.ports                = pdu.ports;
+  sss_config.phys_cell_id              = pdu.phys_cell_id;
+  sss_config.ssb_first_symbol          = l_start;
+  sss_config.ssb_first_subcarrier      = k_start;
+  sss_config.amplitude                 = 1.0F;
+  sss_config.precoding_and_beamforming = pdu.precoding_and_beamforming;
 
   // Put SSS.
   sss->map(grid, sss_config);

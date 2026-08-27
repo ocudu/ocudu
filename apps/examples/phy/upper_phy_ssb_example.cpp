@@ -197,17 +197,17 @@ public:
         }
 
         ssb_processor::pdu_t pdu;
-        pdu.slot              = context.slot.without_hyper_sfn();
-        pdu.phys_cell_id      = ssb_config.phys_cell_id;
-        pdu.beta_pss          = ssb_config.beta_pss_dB;
-        pdu.ssb_idx           = ssb_idx;
-        pdu.L_max             = ssb_config.L_max;
-        pdu.common_scs        = to_subcarrier_spacing(ssb_config.pattern_case);
-        pdu.subcarrier_offset = ssb_config.subcarrier_offset;
-        pdu.offset_to_pointA  = ssb_config.offset_pointA;
-        pdu.pattern_case      = ssb_config.pattern_case;
-        pdu.mib_payload       = {};
-        pdu.ports             = {0};
+        pdu.slot                      = context.slot.without_hyper_sfn();
+        pdu.phys_cell_id              = ssb_config.phys_cell_id;
+        pdu.beta_pss                  = ssb_config.beta_pss_dB;
+        pdu.ssb_idx                   = ssb_idx;
+        pdu.L_max                     = ssb_config.L_max;
+        pdu.common_scs                = to_subcarrier_spacing(ssb_config.pattern_case);
+        pdu.subcarrier_offset         = ssb_config.subcarrier_offset;
+        pdu.offset_to_pointA          = ssb_config.offset_pointA;
+        pdu.pattern_case              = ssb_config.pattern_case;
+        pdu.mib_payload               = {};
+        pdu.precoding_and_beamforming = precoding_beamforming_configuration(1, 1, 1, MAX_NOF_PRBS);
 
         ssb->process(rg.get().get_writer(), pdu);
         logger.info("SSB: phys_cell_id={}; ssb_idx={};", pdu.phys_cell_id, pdu.ssb_idx);

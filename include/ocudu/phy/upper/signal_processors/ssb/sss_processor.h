@@ -4,9 +4,8 @@
 
 #pragma once
 
-#include "ocudu/adt/static_vector.h"
-#include "ocudu/phy/antenna_ports.h"
 #include "ocudu/ran/pci.h"
+#include "ocudu/ran/precoding_beamforming_configuration.h"
 #include <memory>
 
 namespace ocudu {
@@ -27,8 +26,8 @@ public:
     unsigned ssb_first_symbol;
     /// SSS linear signal amplitude
     float amplitude;
-    /// Port indexes to map the signal.
-    static_vector<uint8_t, MAX_PORTS> ports;
+    /// Precoding and beamforming configuration.
+    precoding_beamforming_configuration precoding_and_beamforming;
   };
 
   /// Default destructor

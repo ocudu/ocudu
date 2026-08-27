@@ -17,9 +17,15 @@ void sss_processor_impl::mapping(span<const cf_t> sequence, resource_grid_writer
   unsigned l = args.ssb_first_symbol + ssb_l;
   unsigned k = args.ssb_first_subcarrier + ssb_k_begin;
 
-  // Write in grid for each port.
-  for (unsigned port : args.ports) {
-    grid.put(port, l, k, sequence);
+  // Extract the precoding and beamforming information - only one PRG.
+  const precoding_beamforming_composite& precoding = args.precoding_and_beamforming.get_prg(0);
+
+  // Write in the resource grid port that carries each of the beams, after applying the MIMO precoding weight.
+  for (unsigned i_beam = 0, nof_beams = precoding.beams.size(); i_beam != nof_beams; ++i_beam) {
+    std::array<cf_t, sequence_len> precoded_sequence;
+    ocuduvec::sc_prod(precoded_sequence, sequence, precoding.mimo.get_coefficient(0, i_beam));
+
+    grid.put(to_uint(precoding.beams[i_beam]), l, k, precoded_sequence);
   }
 }
 

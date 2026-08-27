@@ -116,7 +116,7 @@ TEST(fapi_to_phy_ssb_conversion_test, valid_pdu_conversion_success)
               ASSERT_EQ(pdu.subcarrier_offset, subcarrier_offset);
               ASSERT_EQ(pdu.offset_to_pointA.value(), offset_pointA);
               ASSERT_EQ(pdu.pattern_case, pattern_case);
-              ASSERT_TRUE(ocuduvec::equal(pdu.ports, std::vector<uint8_t>{0}));
+              ASSERT_EQ(pdu.precoding_and_beamforming, precoding_beamforming_configuration(1, 1, 1, MAX_NOF_PRBS));
 
               std::array<uint8_t, ssb_processor::MIB_PAYLOAD_SIZE> dest;
               ocuduvec::bit_unpack(dest, mib_payload, dest.size());

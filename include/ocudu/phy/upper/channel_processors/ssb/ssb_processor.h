@@ -5,9 +5,8 @@
 #pragma once
 
 #include "ocudu/adt/expected.h"
-#include "ocudu/adt/static_vector.h"
-#include "ocudu/phy/antenna_ports.h"
 #include "ocudu/ran/pci.h"
+#include "ocudu/ran/precoding_beamforming_configuration.h"
 #include "ocudu/ran/slot_point.h"
 #include "ocudu/ran/ssb/ssb_configuration.h"
 #include "ocudu/ran/ssb/ssb_properties.h"
@@ -55,8 +54,8 @@ public:
     /// \brief Packed MIB payload.
     /// \remark The MIB contents are described by the Information Element \e MIB in TS38.331 Section 6.2.2.
     std::array<uint8_t, MIB_PAYLOAD_SIZE> mib_payload;
-    /// Port indexes to map the SS/PBCH transmission.
-    static_vector<uint8_t, MAX_PORTS> ports;
+    /// Precoding and beamforming configuration.
+    precoding_beamforming_configuration precoding_and_beamforming;
   };
 
   /// Default destructor.

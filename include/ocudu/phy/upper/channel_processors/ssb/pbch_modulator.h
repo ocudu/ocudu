@@ -5,9 +5,8 @@
 #pragma once
 
 #include "ocudu/adt/span.h"
-#include "ocudu/adt/static_vector.h"
-#include "ocudu/phy/antenna_ports.h"
 #include "ocudu/ran/pci.h"
+#include "ocudu/ran/precoding_beamforming_configuration.h"
 #include "ocudu/ran/ssb/ssb_configuration.h"
 
 namespace ocudu {
@@ -36,8 +35,8 @@ public:
     unsigned ssb_first_symbol;
     /// PSS linear signal amplitude.
     float amplitude;
-    /// Port indexes to map the channel.
-    static_vector<uint8_t, MAX_PORTS> ports;
+    /// Precoding and beamforming configuration.
+    precoding_beamforming_configuration precoding_and_beamforming;
   };
 
   /// Default destructor.

@@ -51,6 +51,6 @@ void ocudu::fapi_adaptor::convert_ssb_fapi_to_phy(ssb_processor::pdu_t&   proc_p
 
   unpack_bch_payload(proc_pdu.mib_payload, fapi_pdu);
 
-  // Use only a single port for SSB.
-  proc_pdu.ports = {0};
+  // Use only a single port for SSB, with identity precoding and no beamforming.
+  proc_pdu.precoding_and_beamforming = precoding_beamforming_configuration(1, 1, 1, MAX_NOF_PRBS);
 }

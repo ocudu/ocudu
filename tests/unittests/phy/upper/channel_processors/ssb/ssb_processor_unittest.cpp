@@ -11,6 +11,7 @@
 #include "ocudu/adt/format.h"
 #include "ocudu/adt/to_array.h"
 #include "ocudu/ocuduvec/compare.h"
+#include "ocudu/phy/antenna_ports.h"
 #include "ocudu/phy/phys_cell_id.h"
 #include "ocudu/phy/upper/channel_processors/ssb/ssb_processor.h"
 #include "ocudu/ran/cyclic_prefix.h"
@@ -185,7 +186,8 @@ TEST_P(SsbProcessorFixture, UnitTest)
       pdu.subcarrier_offset    = subcarrier_offset;
       pdu.offset_to_pointA     = offset_pointA;
       pdu.pattern_case         = pattern_case;
-      pdu.ports.emplace_back(port_dist(rgen));
+      pdu.precoding_and_beamforming =
+          precoding_beamforming_configuration::make_wideband(precoding_beam_list{to_beam_id(port_dist(rgen))});
       for (uint8_t& bit : pdu.mib_payload) {
         bit = bit_dist(rgen);
       }
@@ -228,7 +230,7 @@ TEST_P(SsbProcessorFixture, UnitTest)
       ASSERT_EQ(ssb_first_subcarrier, modulator_entry.config.ssb_first_subcarrier);
       ASSERT_TRUE(modulator_entry.config.ssb_first_symbol == ssb_first_symbol_slot);
       ASSERT_TRUE(modulator_entry.config.amplitude == 1.0F);
-      ASSERT_TRUE(ocuduvec::equal(modulator_entry.config.ports, pdu.ports));
+      ASSERT_EQ(modulator_entry.config.precoding_and_beamforming, pdu.precoding_and_beamforming);
       ASSERT_TRUE(ocuduvec::equal(modulator_entry.bits, encoder_entry.encoded));
       ASSERT_TRUE(modulator_entry.grid_ptr == &grid);
 
@@ -241,7 +243,7 @@ TEST_P(SsbProcessorFixture, UnitTest)
       ASSERT_TRUE(dmrs_entry.config.ssb_first_symbol == ssb_first_symbol_slot);
       ASSERT_TRUE(dmrs_entry.config.hrf == pdu.slot.is_odd_hrf());
       ASSERT_TRUE(dmrs_entry.config.amplitude == 1.0F);
-      ASSERT_TRUE(ocuduvec::equal(dmrs_entry.config.ports, pdu.ports));
+      ASSERT_EQ(dmrs_entry.config.precoding_and_beamforming, pdu.precoding_and_beamforming);
 
       // Assert PSS.
       const auto& pss_entry = pss->get_entries()[0];
@@ -249,7 +251,7 @@ TEST_P(SsbProcessorFixture, UnitTest)
       ASSERT_TRUE(pss_entry.config.ssb_first_subcarrier == ssb_first_subcarrier);
       ASSERT_TRUE(pss_entry.config.ssb_first_symbol == ssb_first_symbol_slot);
       ASSERT_TRUE(pss_entry.config.amplitude == ssb_pss_to_sss_epre_to_amplitude(beta_pss));
-      ASSERT_TRUE(ocuduvec::equal(pss_entry.config.ports, pdu.ports));
+      ASSERT_EQ(pss_entry.config.precoding_and_beamforming, pdu.precoding_and_beamforming);
 
       // Assert SSS.
       const auto& sss_entry = sss->get_entries()[0];
@@ -257,7 +259,7 @@ TEST_P(SsbProcessorFixture, UnitTest)
       ASSERT_TRUE(sss_entry.config.ssb_first_subcarrier == ssb_first_subcarrier);
       ASSERT_TRUE(sss_entry.config.ssb_first_symbol == ssb_first_symbol_slot);
       ASSERT_TRUE(sss_entry.config.amplitude == 1.0F);
-      ASSERT_TRUE(ocuduvec::equal(sss_entry.config.ports, pdu.ports));
+      ASSERT_EQ(sss_entry.config.precoding_and_beamforming, pdu.precoding_and_beamforming);
     }
   }
 }
