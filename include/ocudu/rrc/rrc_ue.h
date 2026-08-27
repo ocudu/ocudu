@@ -310,10 +310,7 @@ public:
   /// \brief Initiate the UE capability transfer procedure.
   virtual async_task<bool> handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) = 0;
 
-  /// \brief Fills the TAC this gNB derived from the coarse position the UE reported, TS 38.300 sec. 16.14.5.
-  ///
-  /// Sets the UE Location Derived TAC in NR NTN, TS 38.413. Left untouched when the UE has reported no location, or it
-  /// maps outside the TACs the serving cell broadcasts.
+  /// \brief Fills what this gNB derived from the coarse position the UE reported, TS 38.300 sec. 16.14.5.
   virtual void fill_ue_derived_location(cu_cp_user_location_info_nr& user_location_info) const = 0;
 
   /// \brief Asks the UE for its coarse location, if the serving cell is one whose location is worth asking for.

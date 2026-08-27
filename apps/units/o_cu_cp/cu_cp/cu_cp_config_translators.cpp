@@ -651,8 +651,16 @@ static std::vector<ntn_cell_location_mapping> generate_ntn_location_mappings(con
     ntn_cell_location_mapping mapping;
     mapping.nci = nr_cell_identity::create(cell_cfg.nr_cell_id).value();
     for (const auto& area : cell_cfg.location_areas) {
-      mapping.mapping.location_areas.push_back(
-          ntn_location_area{area.tac, area.lat_min, area.lat_max, area.lon_min, area.lon_max});
+      ntn_location_area location_area;
+      location_area.tac     = area.tac;
+      location_area.lat_min = area.lat_min;
+      location_area.lat_max = area.lat_max;
+      location_area.lon_min = area.lon_min;
+      location_area.lon_max = area.lon_max;
+      if (area.mapped_nr_cell_id.has_value()) {
+        location_area.mapped_nci = nr_cell_identity::create(area.mapped_nr_cell_id.value()).value();
+      }
+      mapping.mapping.location_areas.push_back(location_area);
     }
     mappings.push_back(std::move(mapping));
   }

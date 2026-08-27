@@ -76,6 +76,9 @@ public:
 
   /// Returns the TAC of the configured area holding the coarse position the UE reported, if any.
   std::optional<tac_t> get_ue_location_derived_tac() const;
+
+  /// Returns the Mapped Cell ID of the configured area holding the coarse position the UE reported, if any.
+  std::optional<nr_cell_identity> get_ue_mapped_cell_id() const;
   rrc_ue_release_context
                           get_rrc_ue_release_context(bool                                          requires_rrc_message,
                                                      std::optional<std::chrono::seconds>           release_wait_time = std::nullopt,

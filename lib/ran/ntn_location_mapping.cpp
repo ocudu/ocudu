@@ -7,11 +7,11 @@
 
 using namespace ocudu;
 
-std::optional<tac_t> ocudu::derive_tac_from_location(const ntn_location_mapping& mapping,
-                                                     const reference_location&   position)
+/// Returns the configured area holding the position, or nullptr when the mapping cannot place it.
+static const ntn_location_area* find_area(const ntn_location_mapping& mapping, const reference_location& position)
 {
   if (mapping.empty()) {
-    return std::nullopt;
+    return nullptr;
   }
 
   // Areas may overlap, so the first match in configuration order wins.
@@ -21,8 +21,30 @@ std::optional<tac_t> ocudu::derive_tac_from_location(const ntn_location_mapping&
   if (area == mapping.location_areas.end()) {
     // An NTN footprint is large and coverage plans are approximate, so a position outside every area is a normal
     // case, not an error.
+    return nullptr;
+  }
+
+  return &*area;
+}
+
+std::optional<tac_t> ocudu::derive_tac_from_location(const ntn_location_mapping& mapping,
+                                                     const reference_location&   position)
+{
+  const ntn_location_area* area = find_area(mapping, position);
+  if (area == nullptr) {
     return std::nullopt;
   }
 
   return area->tac;
+}
+
+std::optional<nr_cell_identity> ocudu::derive_mapped_cell_id_from_location(const ntn_location_mapping& mapping,
+                                                                           const reference_location&   position)
+{
+  const ntn_location_area* area = find_area(mapping, position);
+  if (area == nullptr) {
+    return std::nullopt;
+  }
+
+  return area->mapped_nci;
 }

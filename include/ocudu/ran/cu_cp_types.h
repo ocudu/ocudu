@@ -134,6 +134,9 @@ struct cu_cp_user_location_info_nr {
   /// TAC derived from the coarse UE location, reported as UE Location Derived TAC in NR NTN, TS 38.413. Absent when
   /// the location is unknown, or maps outside the TACs the cell broadcasts.
   std::optional<tac_t> ue_location_derived_tac;
+  /// Mapped Cell ID an NTN cell reports in place of its Uu Cell ID, naming a geographical area rather than a cell,
+  /// TS 38.300 sec. 16.14.5. Absent unless a configured area names one for the UE position.
+  std::optional<nr_cell_identity> mapped_nci;
 };
 
 struct cu_cp_initial_ue_message {

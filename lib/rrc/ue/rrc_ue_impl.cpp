@@ -168,7 +168,16 @@ void rrc_ue_impl::request_coarse_ue_location()
 
 void rrc_ue_impl::fill_ue_derived_location(cu_cp_user_location_info_nr& user_location_info) const
 {
-  user_location_info.ue_location_derived_tac = get_ue_location_derived_tac();
+  const std::optional<tac_t>            derived_tac = get_ue_location_derived_tac();
+  const std::optional<nr_cell_identity> mapped_nci  = get_ue_mapped_cell_id();
+
+  // An area whose TAC the cell does not broadcast still names a Mapped Cell ID, so the two are taken separately.
+  if (not derived_tac.has_value() and not mapped_nci.has_value()) {
+    return;
+  }
+
+  user_location_info.ue_location_derived_tac = derived_tac;
+  user_location_info.mapped_nci              = mapped_nci;
 }
 
 std::optional<tac_t> rrc_ue_impl::get_ue_location_derived_tac() const
@@ -193,6 +202,31 @@ std::optional<tac_t> rrc_ue_impl::get_ue_location_derived_tac() const
 
   logger.log_debug("Derived TAC={} from the coarse UE location", derived_tac.value());
   return derived_tac;
+}
+
+std::optional<nr_cell_identity> rrc_ue_impl::get_ue_mapped_cell_id() const
+{
+  if (not context.coarse_location.has_value()) {
+    return std::nullopt;
+  }
+
+  const std::optional<nr_cell_identity> mapped_nci =
+      derive_mapped_cell_id_from_location(context.cell.location_mapping, context.coarse_location->position);
+  if (not mapped_nci.has_value()) {
+    // Reporting the Uu Cell ID is what TS 38.300 sec. 16.14.5 leaves in place, so this is a normal outcome and not a
+    // failure: an area is free to map no Mapped Cell ID.
+    logger.log_debug("Reporting the Uu Cell ID rather than a Mapped Cell ID for the coarse UE location lat={:.4f} "
+                     "lon={:.4f}. Cause: {}",
+                     context.coarse_location->position.latitude,
+                     context.coarse_location->position.longitude,
+                     context.cell.location_mapping.empty()
+                         ? "the cell has no location mapping"
+                         : "the position is outside every area, or inside one that maps no Mapped Cell ID");
+    return std::nullopt;
+  }
+
+  logger.log_debug("Derived Mapped Cell ID={:#x} from the coarse UE location", mapped_nci.value());
+  return mapped_nci;
 }
 
 // Builds the UE's current radio bearer configuration (all active DRBs across all PDU sessions) from the UP

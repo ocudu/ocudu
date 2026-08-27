@@ -216,8 +216,11 @@ cu_cp_user_location_info_to_asn1(const cu_cp_user_location_info_nr& cu_cp_user_l
 {
   asn1::ngap::user_location_info_nr_s asn1_user_location_info;
 
-  // Fill NR CGI.
-  asn1_user_location_info.nr_cgi.nr_cell_id.from_number(cu_cp_user_location_info.nr_cgi.nci.value());
+  // Fill NR CGI. TS 38.300 sec. 16.14.5 has an NTN cell report the Mapped Cell ID of the area holding the UE
+  // in place of its Uu Cell ID. Where none applies the Uu Cell ID stands: every cell outside NTN, and an NTN cell
+  // whose areas name none for the UE position.
+  asn1_user_location_info.nr_cgi.nr_cell_id.from_number(
+      cu_cp_user_location_info.mapped_nci.value_or(cu_cp_user_location_info.nr_cgi.nci).value());
   asn1_user_location_info.nr_cgi.plmn_id = cu_cp_user_location_info.nr_cgi.plmn_id.to_bytes();
   // Fill TAI.
   asn1_user_location_info.tai.plmn_id = cu_cp_user_location_info.tai.plmn_id.to_bytes();

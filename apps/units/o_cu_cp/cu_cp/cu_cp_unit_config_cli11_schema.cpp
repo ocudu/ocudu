@@ -433,6 +433,11 @@ static void configure_cli11_ntn_location_area_args(CLI::App& app, cu_cp_unit_ntn
   add_option(app, "--tac", config.tac, "TAC to report for a UE inside this area")
       ->capture_default_str()
       ->range(0U, 0xffffffU);
+  add_option(app,
+             "--mapped_nr_cell_id",
+             config.mapped_nr_cell_id,
+             "Mapped Cell ID reported for a UE inside this area, instead of the cell id of the serving cell")
+      ->range(static_cast<uint64_t>(0U), nr_cell_identity::max().value());
   add_option(app, "--lat_min", config.lat_min, "Southern edge of the area, in degrees")->range(-90.0, 90.0);
   add_option(app, "--lat_max", config.lat_max, "Northern edge of the area, in degrees")->range(-90.0, 90.0);
   add_option(app, "--lon_min", config.lon_min, "Western edge of the area, in degrees")->range(-180.0, 180.0);

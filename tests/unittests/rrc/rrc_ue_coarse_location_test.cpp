@@ -21,14 +21,30 @@ protected:
 
   void TearDown() override { ocudulog::flush(); }
 
-  /// Brings up a connected RRC UE on a cell of \c band, mapping one area to a TAC when \c with_mapping.
+  /// Mapped Cell ID of the southern area, the identity the core knows a UE placed there by.
+  static nr_cell_identity mapped_nci() { return nr_cell_identity::create(0x66c0ff).value(); }
+
+  /// \brief Brings up a connected RRC UE on a cell of \c band, mapping one area to a TAC when \c with_mapping.
+  ///
+  /// Only the southern area names a Mapped Cell ID, TS 38.300 sec. 16.14.5 leaving an area free to name none.
   void init_cell(nr_band band, bool with_mapping, bool with_security = true)
   {
     rrc_ue_test_cell_params cell_params;
     cell_params.bands = {band};
     if (with_mapping) {
-      // Two adjoining areas, so that a position can move from one TAC to another.
-      cell_params.location_mapping.location_areas = {{7, 50.0, 52.0, 14.0, 17.0}, {8, 52.0, 54.0, 14.0, 17.0}};
+      // The areas share the 52.0 edge, so that a position can move from one TAC to another.
+      auto make_area = [](tac_t tac, double lat_min, double lat_max, std::optional<nr_cell_identity> nci) {
+        ntn_location_area area;
+        area.tac        = tac;
+        area.mapped_nci = nci;
+        area.lat_min    = lat_min;
+        area.lat_max    = lat_max;
+        area.lon_min    = 14.0;
+        area.lon_max    = 17.0;
+        return area;
+      };
+      cell_params.location_mapping.location_areas = {make_area(7, 50.0, 52.0, mapped_nci()),
+                                                     make_area(8, 52.0, 54.0, std::nullopt)};
     }
     init(cell_params);
 
@@ -99,13 +115,19 @@ protected:
     ASSERT_TRUE(coarse_location_was_requested());
   }
 
-  /// The TAC the RRC UE derives for the stored position, as the NGAP reads it out of the UE.
-  std::optional<tac_t> derived_tac()
+  /// The User Location Information the RRC UE fills in for the stored position, as the NGAP reads it out of the UE.
+  cu_cp_user_location_info_nr derived_location()
   {
     cu_cp_user_location_info_nr user_location_info;
     rrc_ue->fill_ue_derived_location(user_location_info);
-    return user_location_info.ue_location_derived_tac;
+    return user_location_info;
   }
+
+  /// The TAC the RRC UE derives for the stored position.
+  std::optional<tac_t> derived_tac() { return derived_location().ue_location_derived_tac; }
+
+  /// The Mapped Cell ID the RRC UE derives for the stored position, TS 38.300 sec. 16.14.5.
+  std::optional<nr_cell_identity> derived_mapped_nci() { return derived_location().mapped_nci; }
 
   /// An Ellipsoid-Point of TS 37.355, the shape the UE reports its coarse location in.
   static std::vector<uint8_t> packed_position(const reference_location& loc)
@@ -230,3 +252,26 @@ TEST_F(rrc_ue_coarse_location, undecodable_position_reports_nothing)
 
   EXPECT_EQ(rrc_ue_cu_cp_notifier.nof_ue_location_updates, 0);
 }
+
+TEST_F(rrc_ue_coarse_location, reported_position_yields_the_mapped_cell_id_of_its_area)
+{
+  // TS 38.300 sec. 16.14.5: the position picks the area, and the area names the identity the core knows the UE by.
+  init_and_request();
+
+  receive_ue_information_response(packed_position({51.0, 15.0}));
+
+  EXPECT_EQ(derived_mapped_nci(), mapped_nci());
+}
+
+TEST_F(rrc_ue_coarse_location, an_area_naming_no_mapped_cell_id_reports_the_uu_cell_id)
+{
+  // An area is free to name no Mapped Cell ID, TS 38.300 sec. 16.14.5, which leaves the Uu Cell ID of the serving
+  // cell in place while the TAC of the area is still derived.
+  init_and_request();
+
+  receive_ue_information_response(packed_position({53.0, 15.0}));
+
+  EXPECT_EQ(derived_tac(), 8);
+  EXPECT_FALSE(derived_mapped_nci().has_value());
+}
+

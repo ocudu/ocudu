@@ -763,6 +763,7 @@ public:
   void fill_ue_derived_location(cu_cp_user_location_info_nr& user_location_info) const override
   {
     user_location_info.ue_location_derived_tac = ue_location_derived_tac;
+    user_location_info.mapped_nci              = mapped_nci;
   }
 
   void request_coarse_ue_location() override {}
@@ -914,6 +915,7 @@ private:
   ocudulog::basic_logger&               logger                  = ocudulog::fetch_basic_logger("TEST");
   bool                                  ue_cap_transfer_outcome = true;
   std::optional<tac_t>                  ue_location_derived_tac;
+  std::optional<nr_cell_identity>       mapped_nci;
   bool                                  rrc_reconfiguration_outcome = false;
   unsigned                              test_transaction_id;
   static_vector<srb_id_t, MAX_NOF_SRBS> srb_vec;

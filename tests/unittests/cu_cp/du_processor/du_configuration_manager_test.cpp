@@ -94,13 +94,15 @@ TEST(du_configuration_manager_ntn_test, a_cell_broadcasting_a_single_tac_keeps_i
 {
   // TS 38.300 sec. 16.14.3.1 leaves broadcasting several TACs optional, and TS 38.331 keeps the single TAC of such a
   // cell in trackingAreaCode, which leaves trackingAreaList empty. That cell still derives its own TAC, reported as
-  // the single entry of the TAC List in NR NTN, so the mapping must survive.
+  // the single entry of the TAC List in NR NTN, and a Mapped Cell ID regardless of what it broadcasts, so the mapping
+  // must survive.
   ntn_location_area area;
-  area.tac     = 7;
-  area.lat_min = 50.0;
-  area.lat_max = 52.0;
-  area.lon_min = 14.0;
-  area.lon_max = 17.0;
+  area.tac        = 7;
+  area.mapped_nci = nr_cell_identity::create(0x66c0f0).value();
+  area.lat_min    = 50.0;
+  area.lat_max    = 52.0;
+  area.lon_min    = 14.0;
+  area.lon_max    = 17.0;
 
   ntn_cell_location_mapping mapping;
   mapping.nci = nr_cell_identity::create(gnb_id_t{411, 22}, 0).value();
@@ -119,6 +121,9 @@ TEST(du_configuration_manager_ntn_test, a_cell_broadcasting_a_single_tac_keeps_i
   ASSERT_FALSE(cell.location_mapping.empty());
   ASSERT_EQ(cell.location_mapping.location_areas.size(), 1);
   EXPECT_EQ(cell.location_mapping.location_areas[0].tac, 7);
+  // A Mapped Cell ID names a geographical area, TS 38.300 sec. 16.14.5, so it is reported whatever the cell
+  // broadcasts.
+  EXPECT_TRUE(cell.location_mapping.reports_mapped_cell_id(nr_cell_identity::create(0x66c0f0).value()));
 }
 
 TEST_F(du_configuration_manager_test, when_du_has_duplicate_du_id_then_setup_fails)
