@@ -44,9 +44,12 @@ class ocudu::cell_event_dispatcher
   ///
   /// It holds every payload the pools can hand out, so that an event type is only ever limited by its own pool and
   /// never by another type having filled the queue.
-  static constexpr size_t EVENT_QUEUE_SIZE = PAGING_POOL_SIZE +     // paging
-                                             2 * SI_POOL_SIZE +     // SI and ETWS/CMAS SI updates
-                                             2 * PHY_IND_POOL_SIZE; // RACH and CRC indications
+  static constexpr size_t EVENT_QUEUE_SIZE = PAGING_POOL_SIZE +      // paging
+                                             2 * SI_POOL_SIZE +      // SI and ETWS/CMAS SI updates
+                                             2 * PHY_IND_POOL_SIZE + // RACH and CRC indications
+                                             POSITIONING_POOL_SIZE + // positioning measurement requests
+                                             UCI_POOL_SIZE +         // UCI PDUs
+                                             SRS_POOL_SIZE;          // SRS PDUs
 
   using paging_pool  = bounded_object_pool<sched_paging_information>;
   using si_pool      = bounded_object_pool<si_scheduling_update_request>;

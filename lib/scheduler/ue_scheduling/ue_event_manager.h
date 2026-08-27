@@ -13,7 +13,6 @@
 #include "ocudu/adt/mpmc_queue.h"
 #include "ocudu/adt/unique_function.h"
 #include "ocudu/ran/du_types.h"
-#include "ocudu/scheduler/scheduler_positioning_handler.h"
 
 namespace ocudu {
 
@@ -25,7 +24,6 @@ class pdu_indication_pool;
 class uci_indication_selector;
 class ra_ue_repository;
 class ue_cell_repository;
-struct uci_action;
 
 struct cell_creation_event {
   cell_resource_allocator& cell_res_grid;
@@ -94,8 +92,6 @@ public:
 
   // Handle slice reconfiguration request.
   void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req);
-
-  // Handle UCI indication timeouts.
 
 private:
   class ue_dl_buffer_occupancy_manager;
