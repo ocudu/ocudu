@@ -6,7 +6,6 @@
 #include "ocudu/adt/format.h"
 #include "ocudu/phy/support/re_pattern.h"
 #include "ocudu/phy/support/resource_grid_mapper.h"
-#include "ocudu/ran/beamforming/beam_identifier_helpers.h"
 #include "ocudu/ran/csi_rs/csi_rs_config_helpers.h"
 #include "ocudu/ran/csi_rs/csi_rs_pattern.h"
 
@@ -160,15 +159,15 @@ void nzp_csi_rs_generator_impl::map(resource_grid_writer& grid, const config_t& 
 {
   unsigned nof_ports = csi_rs::get_nof_csi_rs_ports(config.csi_rs_mapping_table_row);
 
-  ocudu_assert(nof_ports == config.precoding.get_nof_ports(),
-               "CSI-RS number of ports, i.e., {}, does not match the precoding number of ports, i.e., {}.",
+  ocudu_assert(nof_ports == config.precoding_and_beamforming.get_nof_beams(),
+               "CSI-RS number of ports, i.e., {}, does not match the number of beams, i.e., {}.",
                nof_ports,
-               config.precoding.get_nof_ports());
+               config.precoding_and_beamforming.get_nof_beams());
 
-  ocudu_assert(nof_ports == config.precoding.get_nof_layers(),
-               "CSI-RS precoding number of ports, i.e., {} and number of layers, i.e., {}, must be equal.",
+  ocudu_assert(nof_ports == config.precoding_and_beamforming.get_nof_layers(),
+               "CSI-RS number of beams, i.e., {} and number of layers, i.e., {}, must be equal.",
                nof_ports,
-               config.precoding.get_nof_layers());
+               config.precoding_and_beamforming.get_nof_layers());
 
   interval<unsigned, false> l0_range(0, get_nsymb_per_slot(config.cp));
   ocudu_assert(l0_range.contains(config.symbol_l0),
@@ -197,6 +196,9 @@ void nzp_csi_rs_generator_impl::map(resource_grid_writer& grid, const config_t& 
   // Calculate number of CDM groups.
   unsigned nof_cdm_groups = nof_ports / cdm_group_size;
 
+  // Precoding and beamforming of the transmission.
+  const precoding_beamforming_configuration& precoding = config.precoding_and_beamforming;
+
   // Iterate each CDM group.
   for (unsigned i_cdm_group = 0; i_cdm_group != nof_cdm_groups; ++i_cdm_group) {
     // Use the corresponding RE pattern.
@@ -207,9 +209,6 @@ void nzp_csi_rs_generator_impl::map(resource_grid_writer& grid, const config_t& 
 
     // Prepare data.
     data.resize(cdm_group_size, seq_len * nof_symbols);
-
-    // Prepare precoding configuration for the CDM group.
-    precoding_configuration cdm_group_precoding(cdm_group_size, nof_ports, 1, MAX_NOF_PRBS);
 
     // Prepare base sequence for each symbol within the slot.
     for (unsigned i_symbol_slot = 0, i_symbol_slot_end = get_nsymb_per_slot(config.cp), i_symbol_cdm = 0;
@@ -239,17 +238,6 @@ void nzp_csi_rs_generator_impl::map(resource_grid_writer& grid, const config_t& 
       ocudu_assert(pattern == get_re_pattern_port(pattern_all_port, i_port_layer),
                    "All ports within a CDM group must have the same pattern.");
 
-      // Load the port coefficients for the CDM port.
-      for (unsigned i_port = 0, i_port_end = nof_ports; i_port != i_port_end; ++i_port) {
-        for (unsigned i_prg = 0, i_prg_end = config.precoding.get_nof_prg(); i_prg != i_prg_end; ++i_prg) {
-          // Extract the coefficient for mapping the NZP-CSI-RS to the port.
-          cf_t coefficient = config.precoding.get_coefficient(i_port_layer, i_port, i_prg);
-
-          // Set coefficient in the CDM group precoding.
-          cdm_group_precoding.set_coefficient(coefficient, i_cdm_port, i_port, i_prg);
-        }
-      }
-
       // Skip CDM weights for first port of the CDM group.
       if (i_cdm_port == 0) {
         continue;
@@ -268,8 +256,35 @@ void nzp_csi_rs_generator_impl::map(resource_grid_writer& grid, const config_t& 
       }
     }
 
+    // Prepare the precoding and beamforming configuration of the CDM group.
+    precoding_beamforming_configuration cdm_group_precoding(
+        cdm_group_size, nof_ports, precoding.get_nof_prg(), precoding.get_prg_size());
+
+    // Extract the precoding and beamforming of the CDM group ports for each PRG.
+    for (unsigned i_prg = 0, i_prg_end = precoding.get_nof_prg(); i_prg != i_prg_end; ++i_prg) {
+      const precoding_beamforming_composite& prg_composite = precoding.get_prg(i_prg);
+
+      // Prepare the MIMO precoding matrix of the CDM group, with one row per CSI-RS port within the group.
+      precoding_weight_matrix cdm_precoding(cdm_group_size, nof_ports);
+      for (unsigned i_cdm_port = 0; i_cdm_port != cdm_group_size; ++i_cdm_port) {
+        // Calculate the absolute port identifier.
+        unsigned i_port_layer = i_cdm_group * cdm_group_size + i_cdm_port;
+
+        for (unsigned i_port = 0, i_port_end = nof_ports; i_port != i_port_end; ++i_port) {
+          // Extract the coefficient for mapping the NZP-CSI-RS to the port.
+          cf_t coefficient = prg_composite.mimo.get_coefficient(i_port_layer, i_port);
+
+          // Set coefficient in the CDM group precoding.
+          cdm_precoding.set_coefficient(coefficient, i_cdm_port, i_port);
+        }
+      }
+
+      // The CDM group ports are carried by the beams of the transmission.
+      cdm_group_precoding.set_prg({cdm_precoding, prg_composite.beams}, i_prg);
+    }
+
     // Map the CDM group into the resource grid.
-    mapper->map(grid, data, pattern, to_precoding_beamforming_configuration(cdm_group_precoding));
+    mapper->map(grid, data, pattern, cdm_group_precoding);
   }
 }
 

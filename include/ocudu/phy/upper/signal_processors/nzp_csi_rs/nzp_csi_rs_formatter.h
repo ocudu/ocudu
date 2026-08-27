@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "ocudu/phy/support/precoding_formatters.h"
 #include "ocudu/phy/upper/signal_processors/nzp_csi_rs/nzp_csi_rs_generator.h"
+#include "ocudu/ran/precoding_beamforming_formatters.h"
 
 namespace fmt {
 /// \brief Custom formatter for \c nzp_csi_rs_generator::config_t.
@@ -40,7 +40,12 @@ struct formatter<ocudu::nzp_csi_rs_generator::config_t> {
     helper.format_if_verbose(ctx, "cp={}", nzp_csi_config.cp.to_string());
     helper.format_if_verbose(ctx, "sc_id={}", nzp_csi_config.scrambling_id);
     helper.format_if_verbose(ctx, "amplitude={}", nzp_csi_config.amplitude);
-    helper.format_if_verbose(ctx, "precoding={}", nzp_csi_config.precoding);
+
+    if (helper.is_multiline()) {
+      helper.format_if_verbose(ctx, "{:n}", nzp_csi_config.precoding_and_beamforming);
+    } else {
+      helper.format_if_verbose(ctx, "{}", nzp_csi_config.precoding_and_beamforming);
+    }
 
     return ctx.out();
   }

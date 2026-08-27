@@ -6,10 +6,10 @@
 
 #include "ocudu/adt/expected.h"
 #include "ocudu/adt/static_vector.h"
-#include "ocudu/phy/support/precoding_configuration.h"
 #include "ocudu/ran/csi_rs/csi_rs_constants.h"
 #include "ocudu/ran/csi_rs/csi_rs_types.h"
 #include "ocudu/ran/cyclic_prefix.h"
+#include "ocudu/ran/precoding_beamforming_configuration.h"
 #include "ocudu/ran/slot_point.h"
 
 namespace ocudu {
@@ -57,8 +57,8 @@ public:
     unsigned scrambling_id;
     /// Linear amplitude scaling factor.
     float amplitude;
-    /// Precoding configuration.
-    precoding_configuration precoding;
+    /// Precoding and beamforming configuration.
+    precoding_beamforming_configuration precoding_and_beamforming;
   };
 
   /// Default destructor.

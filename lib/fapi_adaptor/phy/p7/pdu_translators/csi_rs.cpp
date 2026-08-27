@@ -45,8 +45,8 @@ void ocudu::fapi_adaptor::convert_csi_rs_fapi_to_phy(nzp_csi_rs_generator::confi
     proc_pdu.amplitude = convert_dB_to_amplitude(profile_sss->pwr_offset_db);
   }
 
-  unsigned nof_ports = csi_rs::get_nof_csi_rs_ports(fapi_pdu.row);
-  proc_pdu.precoding = precoding_configuration::make_wideband(make_identity(nof_ports));
+  unsigned nof_ports                 = csi_rs::get_nof_csi_rs_ports(fapi_pdu.row);
+  proc_pdu.precoding_and_beamforming = precoding_beamforming_configuration::make_wideband(make_identity(nof_ports));
 }
 
 void ocudu::fapi_adaptor::get_csi_rs_pattern_from_fapi_pdu(csi_rs_pattern&            pattern,
