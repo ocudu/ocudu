@@ -140,12 +140,6 @@ void cell_scheduler::run_slot(slot_point_extended sl_tx_ext)
   // > Schedule Paging.
   pg_sch.run_slot(res_grid, sl_tx_ext.hyper_sfn());
 
-  // > Schedule the periodic UCI (SR and CSI) before any UL grant.
-  uci_sch.run_slot(res_grid);
-
-  // > Schedule the periodic SRS.
-  srs_sch.run_slot(res_grid);
-
   // > Schedule UE DL and UL data.
   ue_sched->run_slot(sl_tx);
 

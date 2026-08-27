@@ -49,6 +49,12 @@ private:
     /// Repository of UEs for this cell.
     ue_cell_repository& ue_cell_db;
 
+    /// Scheduler of the periodic UCI of the cell.
+    uci_scheduler_impl& uci_sched;
+
+    /// Scheduler of the periodic SRS of the cell.
+    srs_scheduler& srs_sched;
+
     /// Fallback scheduler.
     ue_fallback_scheduler fallback_sched;
 
