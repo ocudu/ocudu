@@ -229,9 +229,10 @@ static auto formatted_date(trace_point start_tp)
 
   return make_formattable([start_tp](auto& ctx) {
     // Retrieve system clock approximation
-    auto    systp        = cached_sys_tp + (start_tp - cached_trace_tp);
-    std::tm current_time = fmt::gmtime(high_resolution_clock::to_time_t(systp));
-    auto    us_fraction  = std::chrono::duration_cast<microseconds>(systp.time_since_epoch()).count() % 1000000u;
+    auto    systp = cached_sys_tp + (start_tp - cached_trace_tp);
+    std::tm current_time =
+        fmt::gmtime(system_clock::to_time_t(std::chrono::time_point_cast<system_clock::duration>(systp)));
+    auto us_fraction = std::chrono::duration_cast<microseconds>(systp.time_since_epoch()).count() % 1000000u;
     return fmt::format_to(ctx.out(), "{:%H:%M:%S}.{:06}", current_time, us_fraction);
   });
 }

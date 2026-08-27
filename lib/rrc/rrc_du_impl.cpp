@@ -187,7 +187,8 @@ std::optional<std::chrono::system_clock::time_point> rrc_du_impl::get_ref_time_r
                    (static_cast<int64_t>(rrc_ref_time.ref_milli_seconds_r16) * 1'000'000LL) +
                    (static_cast<int64_t>(rrc_ref_time.ref_ten_nano_seconds_r16) * 10LL);
   int64_t unix_ns = is_local_clock ? raw_ns : (raw_ns + GPS_EPOCH_OFFSET_NS);
-  return std::chrono::system_clock::time_point{std::chrono::nanoseconds{unix_ns}};
+  return std::chrono::system_clock::time_point{
+      std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::nanoseconds{unix_ns})};
 }
 
 std::optional<arfcn_t> rrc_du_impl::get_ssb_arfcn(const byte_buffer& encoded)
