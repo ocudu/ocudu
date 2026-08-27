@@ -5,6 +5,7 @@
 #include "ocudu/adt/format.h"
 #include "ocudu/ran/csi_report/csi_report_configuration.h"
 #include "ocudu/ran/csi_report/csi_report_formatters.h"
+#include "ocudu/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "ocudu/ran/csi_report/csi_report_on_pusch_helpers.h"
 #include "ocudu/ran/precoding/precoding_codebook_helpers.h"
 #include "ocudu/ran/uci/uci_part2_size_calculator.h"
@@ -483,3 +484,47 @@ INSTANTIATE_TEST_SUITE_P(
                                          csi_report_quantities::cri_ri_cqi,
                                          csi_report_quantities::cri_ri_li_pmi_cqi),
                        ::testing::Range(0U, 10U)));
+
+// Verify that no supported CSI report configuration produces a report part larger than \c csi_report_max_size.
+//
+// \c csi_report_max_size bounds the packed CSI report container, hence a configuration exceeding it would be truncated.
+TEST(csi_report_size, no_supported_configuration_exceeds_the_maximum_report_size)
+{
+  // The RI restriction is a bitmap with one bit per layer, hence the codebooks with more ports than the maximum number
+  // of layers are skipped.
+  constexpr unsigned max_nof_csi_rs_ports = 8;
+
+  for (unsigned codebook_id = 0, codebook_id_end = pmi_codebook_id::max() + 1; codebook_id != codebook_id_end;
+       ++codebook_id) {
+    const pmi_codebook_config& pmi_codebook     = to_pmi_codebook_config(codebook_id);
+    unsigned                   nof_csi_rs_ports = get_precoding_codebook_antenna_ports(pmi_codebook);
+    if ((nof_csi_rs_ports == 0) || (nof_csi_rs_ports > max_nof_csi_rs_ports)) {
+      continue;
+    }
+
+    for (unsigned ri_bitmap = 1, ri_bitmap_end = 1U << nof_csi_rs_ports; ri_bitmap != ri_bitmap_end; ++ri_bitmap) {
+      for (csi_report_quantities quantities : {csi_report_quantities::cri_ri_pmi_cqi,
+                                               csi_report_quantities::cri_ri_cqi,
+                                               csi_report_quantities::cri_ri_li_pmi_cqi}) {
+        ri_restriction_type ri_restriction(nof_csi_rs_ports);
+        ri_restriction.from_uint64(ri_bitmap);
+
+        csi_report_configuration config = {};
+        config.nof_csi_rs_resources     = 1;
+        config.nof_reported_rs          = 1;
+        config.pmi_codebook             = pmi_codebook;
+        config.ri_restriction           = ri_restriction;
+        config.quantities               = quantities;
+
+        const csi_report_size pusch_size = get_csi_report_pusch_size(config);
+        ASSERT_LE(pusch_size.part1_size, csi_report_max_size)
+            << "PUSCH CSI Part 1 of codebook " << to_string(pmi_codebook) << " exceeds the maximum report size.";
+        ASSERT_LE(pusch_size.part2_max_size, csi_report_max_size)
+            << "PUSCH CSI Part 2 of codebook " << to_string(pmi_codebook) << " exceeds the maximum report size.";
+
+        ASSERT_LE(get_csi_report_pucch_size(config).part1_size, csi_report_max_size)
+            << "PUCCH CSI Part 1 of codebook " << to_string(pmi_codebook) << " exceeds the maximum report size.";
+      }
+    }
+  }
+}
