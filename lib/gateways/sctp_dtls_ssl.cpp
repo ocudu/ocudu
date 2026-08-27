@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #include "sctp_dtls_ssl.h"
 #include "sctp_dtls.h"
+#include "ocudu/adt/byte_buffer.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/support/error_handling.h"
 #include <linux/sctp.h>
@@ -13,7 +14,6 @@ using namespace ocudu;
 #ifdef OCUDU_HAVE_OPENSSL_DTLS
 
 static std::string get_ssl_error_string(int err);
-static const char* sctp_notification_type_name(uint16_t type);
 
 std::unique_ptr<dtls_ssl> ocudu::create_dtls_ssl(const dtls_ssl_config& cfg_, const dtls_ssl_dependencies& deps_)
 {
@@ -66,12 +66,12 @@ bool openssl_dtls_ssl::init(int socket)
   if (ret <= 0) {
     int err = SSL_get_error(ssl, ret);
     if (err != SSL_ERROR_WANT_READ && err != SSL_ERROR_WANT_WRITE) {
-      logger.error("connect/accept failed. err={}", err);
-      fmt::println("connect/accept failed. err={}", err);
+      logger.error(
+          "DTLS {} failed. err={}", cfg.mode == dtls_mode::server ? "accept" : "connect", get_ssl_error_string(err));
       return false;
     }
   }
-  fmt::println(stderr, "handshake finished");
+  logger.debug("DTLS handshake finished");
   return true;
 }
 
@@ -95,36 +95,34 @@ bool openssl_dtls_ssl::handshake()
   return ret == 1;
 }
 
-bool openssl_dtls_ssl::receive()
+expected<byte_buffer> openssl_dtls_ssl::receive()
 {
   /// SSL should be initialized from here on.
   std::array<uint8_t, 9000> buff;
   int                       len = SSL_read(ssl, buff.data(), 9000);
 
   if (len <= 0) {
-    int  err = SSL_get_error(ssl, len);
-    char buf[256];
-    ERR_error_string_n(err, buf, sizeof(buf));
-    fprintf(stderr, "SSL_read returned %d, SSL_get_error=%d %s\n", len, err, get_ssl_error_string(err).c_str());
-    return false;
+    int err = SSL_get_error(ssl, len);
+    if (err != SSL_ERROR_WANT_READ && err != SSL_ERROR_WANT_WRITE) {
+      char buf[256];
+      ERR_error_string_n(err, buf, sizeof(buf));
+      logger.error("SSL_read returned {}, SSL_get_error={} {}", len, err, get_ssl_error_string(err));
+    }
+    return make_unexpected(default_error_t{});
   }
-  fmt::println("Read {} bytes from SSL", len);
-  return true;
+  logger.debug("Read {} bytes from DTLS connection", len);
+  auto buffer = byte_buffer{byte_buffer::fallback_allocation_tag{}, buff};
+  return buffer;
+}
+
+int openssl_dtls_ssl::write(span<const uint8_t> pdu_span)
+{
+  return SSL_write(ssl, pdu_span.data(), pdu_span.size());
 }
 
 void openssl_dtls_ssl::dtls_notification_cb(BIO* bio, void* context, void* buf)
 {
-  if (buf == nullptr) {
-    fmt::println(stderr, "got SCTP notification: <null>");
-    return;
-  }
-
-  auto* sn = static_cast<sctp_notification*>(buf);
-
-  fmt::println(stderr,
-               "got SCTP notification: type={} ({})",
-               sn->sn_header.sn_type,
-               sctp_notification_type_name(sn->sn_header.sn_type));
+  // TODO handle notifications.
 }
 
 static std::string get_ssl_error_string(int err)
@@ -166,37 +164,6 @@ static std::string get_ssl_error_string(int err)
   return error_str;
 }
 
-const char* sctp_notification_type_name(uint16_t type)
-{
-  switch (type) {
-    case SCTP_ASSOC_CHANGE:
-      return "SCTP_ASSOC_CHANGE";
-    case SCTP_PEER_ADDR_CHANGE:
-      return "SCTP_PEER_ADDR_CHANGE";
-    case SCTP_REMOTE_ERROR:
-      return "SCTP_REMOTE_ERROR";
-    case SCTP_SEND_FAILED:
-      return "SCTP_SEND_FAILED";
-    case SCTP_SHUTDOWN_EVENT:
-      return "SCTP_SHUTDOWN_EVENT";
-    case SCTP_ADAPTATION_INDICATION:
-      return "SCTP_ADAPTATION_INDICATION";
-    case SCTP_PARTIAL_DELIVERY_EVENT:
-      return "SCTP_PARTIAL_DELIVERY_EVENT";
-    case SCTP_AUTHENTICATION_EVENT:
-      return "SCTP_AUTHENTICATION_EVENT";
-    case SCTP_SENDER_DRY_EVENT:
-      return "SCTP_SENDER_DRY_EVENT";
-    case SCTP_STREAM_RESET_EVENT:
-      return "SCTP_STREAM_RESET_EVENT";
-    case SCTP_ASSOC_RESET_EVENT:
-      return "SCTP_ASSOC_RESET_EVENT";
-    case SCTP_STREAM_CHANGE_EVENT:
-      return "SCTP_STREAM_CHANGE_EVENT";
-    default:
-      return "UNKNOWN";
-  }
-}
 #else
 
 std::unique_ptr<dtls_ssl> ocudu::create_dtls_ssl(const dtls_ssl_config& cfg_, const dtls_ssl_dependencies& deps_)

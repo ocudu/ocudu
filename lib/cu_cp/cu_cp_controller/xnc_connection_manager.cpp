@@ -155,9 +155,7 @@ void xnc_connection_manager::start(const xnap_configuration& xnap_cfg_)
         launch_async([this, xnc_idx, xnap_if, peer_addrs = std::move(peer_addrs), gateway, connect_result = false](
                          coro_context<async_task<void>>& ctx) mutable {
           CORO_BEGIN(ctx);
-          logger.info("Establishing connection to XN-C peer at {}",
-                      peer_addrs.front(),
-                      std::chrono::duration_cast<std::chrono::seconds>(xnap_cfg.reconnect_timer));
+          logger.info("Establishing connection to XN-C peer at {}", peer_addrs.front());
           // Establish the SCTP association via the XnAP gateway assigned to this peer.
           CORO_AWAIT_VALUE(connect_result, gateway->connect_to_peer(peer_addrs));
           if (!connect_result) {

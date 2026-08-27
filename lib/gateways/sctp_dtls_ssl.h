@@ -4,6 +4,7 @@
 #pragma once
 
 #include "sctp_dtls_mode.h"
+#include "ocudu/adt/byte_buffer.h"
 #include "ocudu/ocudulog/logger.h"
 #include "ocudu/support/io/transport_layer_address.h"
 #include <memory>
@@ -32,11 +33,12 @@ struct dtls_ssl_dependencies {
 class dtls_ssl
 {
 public:
-  virtual bool init(int socket)   = 0;
-  virtual bool is_init_finished() = 0;
-  virtual bool handshake()        = 0;
-  virtual bool receive()          = 0;
-  virtual ~dtls_ssl()             = default;
+  virtual bool                  init(int socket)                    = 0;
+  virtual bool                  is_init_finished()                  = 0;
+  virtual bool                  handshake()                         = 0;
+  virtual expected<byte_buffer> receive()                           = 0;
+  virtual int                   write(span<const uint8_t> pdu_span) = 0;
+  virtual ~dtls_ssl()                                               = default;
 };
 
 /// Creates an instance of a DTLS context.
@@ -51,10 +53,11 @@ class openssl_dtls_ssl : public dtls_ssl
 public:
   openssl_dtls_ssl(const dtls_ssl_config& cfg_, const dtls_ssl_dependencies& ssl_ctx_);
   ~openssl_dtls_ssl() override;
-  bool init(int socket) override;
-  bool is_init_finished() override;
-  bool handshake() override;
-  bool receive() override;
+  bool                  init(int socket) override;
+  bool                  is_init_finished() override;
+  bool                  handshake() override;
+  expected<byte_buffer> receive() override;
+  int                   write(span<const uint8_t> pdu_span) override;
 
 private:
   static void dtls_notification_cb(BIO* bio, void* context, void* buf);

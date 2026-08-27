@@ -17,13 +17,15 @@ class sctp_network_server_impl::sctp_send_notifier : public sctp_association_sdu
 {
 public:
   sctp_send_notifier(sctp_network_server_impl&                                parent,
-                     const sctp_network_server_impl::sctp_associaton_context& assoc,
+                     const sctp_network_server_impl::sctp_associaton_context& assoc_,
                      ocudulog::basic_logger&                                  logger_) :
     ppid(parent.node_cfg.ppid),
-    fd(assoc.fd),
+    fd(assoc_.fd),
     if_name(parent.node_cfg.if_name),
-    assoc_id(assoc.assoc_id),
+    assoc_id(assoc_.assoc_id),
+    assoc(assoc_),
     client_addr(assoc.addr),
+    ssl_enabled(parent.dtls_cfg.has_value()),
     assoc_shutdown_flag(assoc.association_shutdown_received),
     logger(logger_)
   {
@@ -49,16 +51,14 @@ public:
     span<const uint8_t> pdu_span = to_span(sdu, send_buffer);
 
     transport_layer_address::native_type dest_addr  = client_addr.native();
-    int                                  bytes_sent = ::sctp_sendmsg(fd,
-                                    pdu_span.data(),
-                                    pdu_span.size(),
-                                    const_cast<struct sockaddr*>(dest_addr.addr),
-                                    dest_addr.addrlen,
-                                    htonl(ppid),
-                                    0,
-                                    stream_no,
-                                    0,
-                                    0);
+    int                                  bytes_sent = -1;
+    if (not ssl_enabled) {
+      bytes_sent = ::sctp_sendmsg(
+          fd, pdu_span.data(), pdu_span.size(), dest_addr.addr, dest_addr.addrlen, htonl(ppid), 0, stream_no, 0, 0);
+    } else {
+      bytes_sent = assoc.ssl->write(pdu_span);
+    }
+
     if (bytes_sent == -1) {
       logger.error("{} assoc={}: Closing SCTP association. Cause: Couldn't send {} B of data. errno={}",
                    if_name,
@@ -127,11 +127,13 @@ private:
   }
 
   // Note: We copy all the required params by value to avoid race conditions with the server thread.
-  const uint32_t                ppid;
-  const int                     fd;
-  std::string                   if_name;
-  const int                     assoc_id;
-  const transport_layer_address client_addr;
+  const uint32_t                                           ppid;
+  const int                                                fd;
+  std::string                                              if_name;
+  const int                                                assoc_id;
+  const sctp_network_server_impl::sctp_associaton_context& assoc;
+  const transport_layer_address                            client_addr;
+  bool                                                     ssl_enabled;
   // This flag is shared by the server main class and this notifier and is used to signal the association shut down.
   // Note: shared_ptr copy used to avoid the case when the notifier outlives the association.
   std::shared_ptr<std::atomic<bool>> assoc_shutdown_flag;
@@ -160,7 +162,6 @@ void sctp_network_server_impl::sctp_associaton_context::receive()
 
   if (parent.dtls_cfg.has_value()) {
     if (ssl == nullptr) {
-      // TODO log error.
       return;
     }
     if (not ssl->is_init_finished()) {
@@ -169,7 +170,11 @@ void sctp_network_server_impl::sctp_associaton_context::receive()
       }
       return;
     }
-    ssl->receive();
+    auto plain = ssl->receive();
+
+    if (plain.has_value()) {
+      sctp_data_recv_notifier->on_new_sdu(std::move(*plain));
+    }
     return;
   }
 
