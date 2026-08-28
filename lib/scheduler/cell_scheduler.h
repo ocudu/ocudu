@@ -6,7 +6,7 @@
 
 #include "cell/resource_grid.h"
 #include "cell_event_manager.h"
-#include "cell_ue_event_notifier.h"
+#include "cell_group_event_notifier.h"
 #include "common_scheduling/csi_rs_scheduler.h"
 #include "common_scheduling/paging_scheduler.h"
 #include "common_scheduling/prach_scheduler.h"
@@ -97,7 +97,7 @@ public:
   {
     return ue_sched->get_dl_buffer_state_indication_handler();
   }
-  sched_ue_configuration_handler& get_ue_configurator() { return ue_sched->get_ue_configurator(); }
+  sched_ue_configuration_handler& get_ue_configurator() { return ev_mng; }
 
   const cell_configuration& cell_cfg;
 

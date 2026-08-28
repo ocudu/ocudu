@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "cell_ue_event_notifier.h"
+#include "cell_group_event_notifier.h"
 #include "logging/cell_event_tracer.h"
 #include "ocudu/adt/bounded_bitset.h"
 #include "ocudu/ocudulog/logger.h"
@@ -44,7 +44,7 @@ struct uci_indication;
 ///
 /// Events are enqueued from any executor and processed at the start of the cell slot indication, so that their
 /// handling runs in the cell scheduler executor.
-class cell_event_manager final : public scheduler_cell_positioning_handler
+class cell_event_manager final : public scheduler_cell_positioning_handler, public sched_ue_configuration_handler
 {
 public:
   cell_event_manager(const cell_configuration&      cell_cfg,
@@ -54,7 +54,7 @@ public:
                      paging_scheduler&              pg_sch,
                      ra_scheduler&                  ra_sch,
                      srs_scheduler&                 srs_sch,
-                     cell_ue_event_notifier&        ue_ev_notifier,
+                     cell_group_event_notifier&     cell_group_ev_notifier,
                      ra_ue_repository&              ra_ue_repo,
                      uci_indication_selector&       uci_sel,
                      cell_metrics_handler&          metrics,
@@ -99,6 +99,13 @@ public:
   /// Enqueue an error indication of a past slot coming from lower layers.
   void handle_error_indication(slot_point sl_tx, scheduler_slot_handler::error_outcome event);
 
+  // sched_ue_configuration_handler methods.
+  void handle_ue_creation(ue_config_update_event ev) override;
+  void handle_ue_reconfiguration(ue_config_update_event ev) override;
+  void handle_ue_deletion(ue_config_delete_event ev) override;
+  void handle_ue_config_applied(du_ue_index_t ue_idx) override;
+  void handle_ue_deactivation_request(du_ue_index_t ue_idx) override;
+
   // scheduler_cell_positioning_handler methods.
   void handle_positioning_measurement_request(const positioning_measurement_request::cell_info& req) override;
   void handle_positioning_measurement_stop(rnti_t pos_rnti) override;
@@ -130,7 +137,7 @@ private:
   paging_scheduler&              pg_sch;
   ra_scheduler&                  ra_sch;
   srs_scheduler&                 srs_sch;
-  cell_ue_event_notifier&        ue_ev_notifier;
+  cell_group_event_notifier&     cell_group_ev_notifier;
   ra_ue_repository&              ra_ue_repo;
   uci_indication_selector&       uci_sel;
   cell_metrics_handler&          metrics;

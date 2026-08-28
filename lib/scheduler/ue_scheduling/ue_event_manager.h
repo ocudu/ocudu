@@ -62,12 +62,12 @@ public:
   /// Process pending events when a slot indication is received for the given cell.
   void run_slot(slot_point sl_tx);
 
-  /// UE Add/Mod/Remove interface.
+  // sched_ue_configuration_handler methods.
   void handle_ue_creation(ue_config_update_event ev) override;
   void handle_ue_reconfiguration(ue_config_update_event ev) override;
   void handle_ue_deletion(ue_config_delete_event ev) override;
-  void handle_ue_config_applied(du_cell_index_t pcell_idx, du_ue_index_t ue_idx) override;
-  void handle_ue_deactivation_request(du_cell_index_t pcell_idx, du_ue_index_t ue_idx) override;
+  void handle_ue_config_applied(du_ue_index_t ue_idx) override;
+  void handle_ue_deactivation_request(du_ue_index_t ue_idx) override;
 
   // scheduler_feedback_handler methods.
   void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override;
@@ -129,6 +129,16 @@ private:
 
   /// Enqueue a new cell event to be processed by the scheduler.
   void push_event(du_cell_index_t cell_index, event_t event);
+
+  /// Handlers of the UE lifecycle events that the cell dispatches.
+  event_result handle_ue_creation_impl(ue_config_update_event ev);
+  event_result handle_ue_reconfiguration_impl(ue_config_update_event ev);
+  event_result handle_ue_deletion_impl(ue_config_delete_event ev);
+  event_result handle_ue_config_applied_impl(du_ue_index_t ue_idx);
+  event_result handle_ue_deactivation_request_impl(du_ue_index_t ue_idx);
+
+  /// Log the outcome of an event that was handled outside the event queue.
+  void log_event_result(const char* ev_name, du_ue_index_t ue_index, event_result res) const;
 
   /// Log event with invalid UE index.
   void log_invalid_ue_index(du_ue_index_t ue_index, const char* event_name, bool warn_if_ignored = true) const;

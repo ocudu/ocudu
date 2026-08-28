@@ -51,11 +51,6 @@ protected:
     ++next_slot;
   }
 
-  /// \brief Run the slots needed for the UE creation to be processed.
-  /// \note An indication is only handled once the UE exists in the cell, which the MAC guarantees by awaiting the UE
-  /// creation before the UE is told to transmit anything.
-  void run_ue_creation() { run_slot(); }
-
   void notify_uci_ind_on_pucch(bool sr_ind, span<const bool> harq_bits)
   {
     uci_indication uci_ind{};
@@ -165,7 +160,6 @@ TEST_F(sched_uci_indication_test, pusch_scheduled_after_sr_indication)
 {
   // Maximum delay between the SR indication being forwarded to the scheduler and the scheduler generating an UL grant.
   static constexpr unsigned MAX_UL_GRANT_DELAY = 8;
-  run_ue_creation();
   notify_uci_ind_on_pucch(true, {});
 
   bool pusch_found = false;
@@ -184,7 +178,6 @@ TEST_F(sched_uci_indication_test, pusch_scheduled_after_sr_indication)
 TEST_F(sched_uci_indication_test, uci_ind_on_pusch)
 {
   static constexpr unsigned MAX_COUNT = 16;
-  run_ue_creation();
   // SR request.
   notify_uci_ind_on_pucch(true, {});
 

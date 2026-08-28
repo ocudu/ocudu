@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../cell_ue_event_notifier.h"
+#include "../cell_group_event_notifier.h"
 #include "../pucch_scheduling/pucch_allocator.h"
 #include "../srs/srs_allocator.h"
 #include "../uci_scheduling/uci_allocator.h"
@@ -17,7 +17,6 @@ namespace ocudu {
 
 class pdcch_resource_allocator;
 struct cell_resource_allocator;
-class sched_ue_configuration_handler;
 class scheduler_event_logger;
 class cell_metrics_handler;
 class ra_ue_repository;
@@ -71,9 +70,6 @@ public:
 
   /// Retrieves handler of DL buffer state updates for a given cell.
   virtual scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler() = 0;
-
-  /// Return UE configurator.
-  virtual sched_ue_configuration_handler& get_ue_configurator() = 0;
 
   /// Called when cell is activated.
   virtual void start() = 0;

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "config/sched_config_manager.h"
 #include "ocudu/ran/du_types.h"
 #include "ocudu/ran/phy_time_unit.h"
 #include "ocudu/ran/slot_point.h"
@@ -11,7 +12,7 @@
 
 namespace ocudu {
 
-/// \brief Interface used to notify the UE scheduler of the outcome of an event that the cell handled.
+/// \brief Interface used to notify the outcome of an event that a cell handled for one of its UEs.
 ///
 /// It carries the outcomes whose handling needs the state shared by the UEs of the cell group, which the cell
 /// scheduler has no access to.
@@ -36,15 +37,41 @@ public:
                                  float                      ul_sinr) = 0;
 };
 
+/// \brief Interface through which a cell notifies the events that its cell group has to handle.
+///
+/// The cell dispatches them; the cell group handles them synchronously.
+class cell_group_event_notifier : public cell_ue_event_notifier
+{
+public:
+  /// Create a UE in the cell group.
+  virtual void on_ue_creation(ue_config_update_event ev) = 0;
+
+  /// Reconfigure a UE of the cell group.
+  virtual void on_ue_reconfiguration(ue_config_update_event ev) = 0;
+
+  /// Delete a UE of the cell group.
+  virtual void on_ue_deletion(ue_config_delete_event ev) = 0;
+
+  /// The UE applied the last configuration sent to it.
+  virtual void on_ue_config_applied(du_ue_index_t ue_idx) = 0;
+
+  /// The deactivation of the UE was requested.
+  virtual void on_ue_deactivation_request(du_ue_index_t ue_idx) = 0;
+};
+
 /// \brief Relays the notifications of a cell to the UE scheduler.
 ///
 /// It is handed to both sides at their creation, so that the cell can notify without knowing whether the UE
 /// scheduler cell that consumes the notifications exists yet.
-class cell_ue_event_relay final : public cell_ue_event_notifier
+class cell_ue_event_relay final : public cell_group_event_notifier
 {
 public:
-  /// Set the notifier that the cell notifications are relayed to.
-  void connect(cell_ue_event_notifier& notifier) { handler = &notifier; }
+  /// Set the handlers that the cell notifications and UE configuration requests are relayed to.
+  void connect(cell_ue_event_notifier& notifier, sched_ue_configuration_handler& ue_configurator)
+  {
+    handler        = &notifier;
+    ue_cfg_handler = &ue_configurator;
+  }
 
   void on_cfra_msg3_acked(du_ue_index_t ue_index) override
   {
@@ -67,6 +94,41 @@ public:
     }
   }
 
+  void on_ue_creation(ue_config_update_event ev) override
+  {
+    if (ue_cfg_handler != nullptr) {
+      ue_cfg_handler->handle_ue_creation(std::move(ev));
+    }
+  }
+
+  void on_ue_reconfiguration(ue_config_update_event ev) override
+  {
+    if (ue_cfg_handler != nullptr) {
+      ue_cfg_handler->handle_ue_reconfiguration(std::move(ev));
+    }
+  }
+
+  void on_ue_deletion(ue_config_delete_event ev) override
+  {
+    if (ue_cfg_handler != nullptr) {
+      ue_cfg_handler->handle_ue_deletion(std::move(ev));
+    }
+  }
+
+  void on_ue_config_applied(du_ue_index_t ue_idx) override
+  {
+    if (ue_cfg_handler != nullptr) {
+      ue_cfg_handler->handle_ue_config_applied(ue_idx);
+    }
+  }
+
+  void on_ue_deactivation_request(du_ue_index_t ue_idx) override
+  {
+    if (ue_cfg_handler != nullptr) {
+      ue_cfg_handler->handle_ue_deactivation_request(ue_idx);
+    }
+  }
+
   void on_ul_n_ta_update(du_ue_index_t              ue_index,
                          time_alignment_group::id_t tag_id,
                          phy_time_unit              n_ta_diff,
@@ -78,7 +140,8 @@ public:
   }
 
 private:
-  cell_ue_event_notifier* handler = nullptr;
+  cell_ue_event_notifier*         handler        = nullptr;
+  sched_ue_configuration_handler* ue_cfg_handler = nullptr;
 };
 
 } // namespace ocudu

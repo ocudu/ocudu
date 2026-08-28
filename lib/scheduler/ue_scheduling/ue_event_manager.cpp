@@ -271,208 +271,206 @@ void ue_cell_event_manager::run_slot(slot_point sl_tx)
 
 void ue_cell_event_manager::handle_ue_creation(ue_config_update_event ev)
 {
-  const du_cell_index_t ue_pcell_index = ev.next_config().pcell_common_cfg().cell_index;
+  const du_ue_index_t ue_index = ev.get_ue_index();
+  log_event_result("ue_add", ue_index, handle_ue_creation_impl(std::move(ev)));
+}
 
-  auto handle_ue_creation_impl = [this, ev = std::move(ev)]() mutable {
-    const du_ue_index_t ue_index = ev.get_ue_index();
-    const rnti_t        crnti    = ev.next_config().crnti;
-    if (ue_db.contains(ue_index)) {
-      logger.error("ue={} rnti={}: Discarding UE creation. Cause: A UE with the same index already exists",
-                   fmt::underlying(ue_index),
-                   crnti);
-      return event_result::processed;
-    }
-
-    // Check if this UE was created via RACH and is still tracked by the RA scheduler, so its PRACH reception slot
-    // can be carried over into the UE's PCell context. A 2-step RACH successRAR completion already resolved
-    // contention (TS38.321 6.2.3a), so no MAC ConRes CE is needed.
-    auto                      ra_it = ra_ue_repo.find(crnti);
-    std::optional<slot_point> prach_slot_rx =
-        ra_it != ra_ue_repo.end() ? std::optional<slot_point>(ra_it->prach_slot_rx) : std::nullopt;
-
-    bool             is_in_fallback = ev.get_fallback_command().has_value() and ev.get_fallback_command().value();
-    ue_creation_mode creation_mode  = ue_creation_mode::skip_fallback;
-    if (is_in_fallback) {
-      if (ev.get_ul_ccch_slot_rx().has_value()) {
-        // RACH-created UE. A 2-step RACH successRAR completion already resolved contention (TS38.321 6.2.3a), so
-        // no MAC ConRes CE is needed; any other RACH path (native 4-step, or 2-step fallback) still needs one.
-        creation_mode = ra_it != ra_ue_repo.end() and ra_it->is_msgb_success_rar()
-                            ? ue_creation_mode::two_step_success_rar
-                            : ue_creation_mode::msg3_rach;
-      } else if (ev.get_cfra_enabled()) {
-        creation_mode = ue_creation_mode::cfra;
-      } else {
-        creation_mode = ue_creation_mode::high_layers;
-      }
-    }
-
-    // Insert UE in UE repository.
-    const du_cell_index_t pcell_index = ev.next_config().pcell_common_cfg().cell_index;
-    ue_db.add_ue(ev.next_config(), {creation_mode, ev.get_ul_ccch_slot_rx(), prach_slot_rx});
-
-    auto& u     = ue_db[ue_index];
-    auto& ue_cc = u.get_pcell();
-    if (ue_cc.get_pcell_state().conres_st != ue_conres_state::pending_conres_crnti_ce) {
-      // Defer UCI/SR scheduling only for UEs awaiting a C-RNTI MAC CE.
-      uci_sched.add_ue(ue_cc.cfg());
-      srs_sched.add_ue(ue_cc.cfg());
-    }
-
-    // Add UE to slice scheduler.
-    // Note: This action only has effect when UE is created in non-fallback mode.
-    slice_sched.add_ue(ue_index);
-
-    if (ue_cc.get_pcell_state().conres_st == ue_conres_state::pending_conres_ce) {
-      // Note: In case of RACH-created UE, auto-inject MAC ConRes CE.
-
-      // Forward CE to ue instance.
-      u.handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
-
-      // Notify fallback scheduler of a pending ConRes CE.
-      fallback_sched.handle_conres_indication(ue_index);
-    }
-
-    // Log Event.
-    ev_logger.enqueue(scheduler_event_logger::ue_creation_event{ue_index, crnti, pcell_index});
-
-    // Register UE in the cell metrics.
-    metrics.handle_ue_creation(ue_index, crnti, ev.next_config().pcell_common_cfg().params.pci);
-
-    // Notify config manager that creation is complete with success.
-    ev.notify_completion();
-
+ue_cell_event_manager::event_result ue_cell_event_manager::handle_ue_creation_impl(ue_config_update_event ev)
+{
+  const du_ue_index_t ue_index = ev.get_ue_index();
+  const rnti_t        crnti    = ev.next_config().crnti;
+  if (ue_db.contains(ue_index)) {
+    logger.error("ue={} rnti={}: Discarding UE creation. Cause: A UE with the same index already exists",
+                 fmt::underlying(ue_index),
+                 crnti);
     return event_result::processed;
-  };
+  }
 
-  // Defer UE object addition to ue list to the slot indication handler.
-  push_event(ue_pcell_index, event_t{"ue_add", std::move(handle_ue_creation_impl)});
+  // Check if this UE was created via RACH and is still tracked by the RA scheduler, so its PRACH reception slot
+  // can be carried over into the UE's PCell context. A 2-step RACH successRAR completion already resolved
+  // contention (TS38.321 6.2.3a), so no MAC ConRes CE is needed.
+  auto                      ra_it = ra_ue_repo.find(crnti);
+  std::optional<slot_point> prach_slot_rx =
+      ra_it != ra_ue_repo.end() ? std::optional<slot_point>(ra_it->prach_slot_rx) : std::nullopt;
+
+  bool             is_in_fallback = ev.get_fallback_command().has_value() and ev.get_fallback_command().value();
+  ue_creation_mode creation_mode  = ue_creation_mode::skip_fallback;
+  if (is_in_fallback) {
+    if (ev.get_ul_ccch_slot_rx().has_value()) {
+      // RACH-created UE. A 2-step RACH successRAR completion already resolved contention (TS38.321 6.2.3a), so
+      // no MAC ConRes CE is needed; any other RACH path (native 4-step, or 2-step fallback) still needs one.
+      creation_mode = ra_it != ra_ue_repo.end() and ra_it->is_msgb_success_rar()
+                          ? ue_creation_mode::two_step_success_rar
+                          : ue_creation_mode::msg3_rach;
+    } else if (ev.get_cfra_enabled()) {
+      creation_mode = ue_creation_mode::cfra;
+    } else {
+      creation_mode = ue_creation_mode::high_layers;
+    }
+  }
+
+  // Insert UE in UE repository.
+  const du_cell_index_t pcell_index = ev.next_config().pcell_common_cfg().cell_index;
+  ue_db.add_ue(ev.next_config(), {creation_mode, ev.get_ul_ccch_slot_rx(), prach_slot_rx});
+
+  auto& u     = ue_db[ue_index];
+  auto& ue_cc = u.get_pcell();
+  if (ue_cc.get_pcell_state().conres_st != ue_conres_state::pending_conres_crnti_ce) {
+    // Defer UCI/SR scheduling only for UEs awaiting a C-RNTI MAC CE.
+    uci_sched.add_ue(ue_cc.cfg());
+    srs_sched.add_ue(ue_cc.cfg());
+  }
+
+  // Add UE to slice scheduler.
+  // Note: This action only has effect when UE is created in non-fallback mode.
+  slice_sched.add_ue(ue_index);
+
+  if (ue_cc.get_pcell_state().conres_st == ue_conres_state::pending_conres_ce) {
+    // Note: In case of RACH-created UE, auto-inject MAC ConRes CE.
+
+    // Forward CE to ue instance.
+    u.handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
+
+    // Notify fallback scheduler of a pending ConRes CE.
+    fallback_sched.handle_conres_indication(ue_index);
+  }
+
+  // Log Event.
+  ev_logger.enqueue(scheduler_event_logger::ue_creation_event{ue_index, crnti, pcell_index});
+
+  // Register UE in the cell metrics.
+  metrics.handle_ue_creation(ue_index, crnti, ev.next_config().pcell_common_cfg().params.pci);
+
+  // Notify config manager that creation is complete with success.
+  ev.notify_completion();
+
+  return event_result::processed;
 }
 
 void ue_cell_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
 {
-  const du_cell_index_t pcell_index = ev.next_config().pcell_common_cfg().cell_index;
-  const du_ue_index_t   ue_index    = ev.get_ue_index();
+  const du_ue_index_t ue_index = ev.get_ue_index();
+  log_event_result("ue_reconf", ue_index, handle_ue_reconfiguration_impl(std::move(ev)));
+}
 
-  auto handle_ue_reconf_impl = [this, ev = std::move(ev)]() mutable {
-    const du_ue_index_t ue_idx = ev.get_ue_index();
-    if (not ue_db.contains(ue_idx)) {
-      return event_result::invalid_ue;
+ue_cell_event_manager::event_result ue_cell_event_manager::handle_ue_reconfiguration_impl(ue_config_update_event ev)
+{
+  const du_ue_index_t ue_idx = ev.get_ue_index();
+  if (not ue_db.contains(ue_idx)) {
+    return event_result::invalid_ue;
+  }
+  auto& u = ue_db[ue_idx];
+
+  // Reconfigure PCell
+  // Note: Carrier aggregation not yet supported.
+  auto& ue_cc = u.get_cell(SERVING_PCELL_IDX);
+
+  if (ue_cc.get_pcell_state().conres_st != ue_conres_state::pending_conres_crnti_ce) {
+    uci_sched.reconf_ue(ev.next_config().ue_cell_cfg(ue_cc.cell_index), ue_cc.cfg());
+    srs_sched.reconf_ue(ev.next_config().ue_cell_cfg(ue_cc.cell_index), ue_cc.cfg());
+    if (cg_sched != nullptr) {
+      cg_sched->add_reconf_ue(ev.next_config().ue_cell_cfg(ue_cc.cell_index), &ue_cc.cfg());
     }
-    auto& u = ue_db[ue_idx];
+  }
 
-    // Reconfigure PCell
-    // Note: Carrier aggregation not yet supported.
-    auto& ue_cc = u.get_cell(SERVING_PCELL_IDX);
+  // Configure existing UE.
+  ue_db.reconfigure_ue(ev.next_config(), ev.get_cause());
 
-    if (ue_cc.get_pcell_state().conres_st != ue_conres_state::pending_conres_crnti_ce) {
-      uci_sched.reconf_ue(ev.next_config().ue_cell_cfg(ue_cc.cell_index), ue_cc.cfg());
-      srs_sched.reconf_ue(ev.next_config().ue_cell_cfg(ue_cc.cell_index), ue_cc.cfg());
-      if (cg_sched != nullptr) {
-        cg_sched->add_reconf_ue(ev.next_config().ue_cell_cfg(ue_cc.cell_index), &ue_cc.cfg());
-      }
-    }
+  // Update slice scheduler.
+  slice_sched.reconf_ue(u.ue_index);
 
-    // Configure existing UE.
-    ue_db.reconfigure_ue(ev.next_config(), ev.get_cause());
+  // Log event.
+  ev_logger.enqueue(scheduler_event_logger::ue_reconf_event{ue_idx, u.crnti});
 
-    // Update slice scheduler.
-    slice_sched.reconf_ue(u.ue_index);
+  // Update the cell metrics.
+  metrics.handle_ue_reconfiguration(ue_idx);
 
-    // Log event.
-    ev_logger.enqueue(scheduler_event_logger::ue_reconf_event{ue_idx, u.crnti});
+  // Notify config manager that creation is complete with success.
+  ev.notify_completion();
 
-    // Update the cell metrics.
-    metrics.handle_ue_reconfiguration(ue_idx);
-
-    // Notify config manager that creation is complete with success.
-    ev.notify_completion();
-
-    return event_result::processed;
-  };
-
-  // Defer UE reconf to ue list to the slot indication handler.
-  push_event(pcell_index, event_t{"ue_reconf", ue_index, std::move(handle_ue_reconf_impl)});
+  return event_result::processed;
 }
 
 void ue_cell_event_manager::handle_ue_deletion(ue_config_delete_event ev)
 {
-  const du_ue_index_t   ue_index    = ev.ue_index();
-  const du_cell_index_t pcell_index = ev.pcell_index();
-
-  auto handle_ue_deletion_impl = [this, ev = std::move(ev)]() mutable {
-    const du_ue_index_t ue_idx = ev.ue_index();
-    if (not ue_db.contains(ue_idx)) {
-      return event_result::invalid_ue;
-    }
-    const auto&  u    = ue_db[ue_idx];
-    const rnti_t rnti = u.crnti;
-
-    const auto& ue_cc = u.get_pcell();
-    if (ue_cc.get_pcell_state().conres_st != ue_conres_state::pending_conres_crnti_ce) {
-      // A UE awaiting a C-RNTI CE was not added to UCI/SRS scheduling yet (deferred until the CE is received), so
-      // it must not be removed either. All other UEs (including CFRA) were added at creation.
-      uci_sched.rem_ue(u.get_pcell().cfg());
-      srs_sched.rem_ue(u.get_pcell().cfg());
-      if (cg_sched != nullptr) {
-        cg_sched->rem_ue(u.get_pcell().cfg());
-      }
-    }
-    // Schedule removal of UE from slice scheduler.
-    slice_sched.rem_ue(ue_idx);
-
-    // Schedule UE removal from repository.
-    ue_db.schedule_ue_rem(std::move(ev));
-
-    // Log UE removal event.
-    ev_logger.enqueue(sched_ue_delete_message{ue_idx, rnti});
-
-    return event_result::processed;
-  };
-
-  push_event(pcell_index, event_t{"ue_rem", ue_index, std::move(handle_ue_deletion_impl)});
+  const du_ue_index_t ue_index = ev.ue_index();
+  log_event_result("ue_rem", ue_index, handle_ue_deletion_impl(std::move(ev)));
 }
 
-void ue_cell_event_manager::handle_ue_config_applied(du_cell_index_t pcell_idx, du_ue_index_t ue_idx)
+ue_cell_event_manager::event_result ue_cell_event_manager::handle_ue_deletion_impl(ue_config_delete_event ev)
 {
-  auto handle_ue_config_applied_impl = [this, ue_idx]() {
-    // Confirm that UE applied new config.
-    ue_db.ue_config_applied(ue_idx);
+  const du_ue_index_t ue_idx = ev.ue_index();
+  if (not ue_db.contains(ue_idx)) {
+    return event_result::invalid_ue;
+  }
+  const auto&  u    = ue_db[ue_idx];
+  const rnti_t rnti = u.crnti;
 
-    // Notify slice scheduler only when the UE fully exits fallback (conres also done).
-    if (not ue_db[ue_idx].get_pcell().is_in_fallback_mode()) {
-      slice_sched.config_applied(ue_idx);
+  const auto& ue_cc = u.get_pcell();
+  if (ue_cc.get_pcell_state().conres_st != ue_conres_state::pending_conres_crnti_ce) {
+    // A UE awaiting a C-RNTI CE was not added to UCI/SRS scheduling yet (deferred until the CE is received), so
+    // it must not be removed either. All other UEs (including CFRA) were added at creation.
+    uci_sched.rem_ue(u.get_pcell().cfg());
+    srs_sched.rem_ue(u.get_pcell().cfg());
+    if (cg_sched != nullptr) {
+      cg_sched->rem_ue(u.get_pcell().cfg());
     }
+  }
+  // Schedule removal of UE from slice scheduler.
+  slice_sched.rem_ue(ue_idx);
 
-    // Log UE config applied event.
-    ev_logger.enqueue(scheduler_event_logger::ue_cfg_applied_event{ue_idx, ue_db[ue_idx].crnti});
+  // Schedule UE removal from repository.
+  ue_db.schedule_ue_rem(std::move(ev));
 
-    return event_result::processed;
-  };
+  // Log UE removal event.
+  ev_logger.enqueue(sched_ue_delete_message{ue_idx, rnti});
 
-  push_event(pcell_idx, event_t{"ue_cfg_applied", ue_idx, std::move(handle_ue_config_applied_impl)});
+  return event_result::processed;
 }
 
-void ue_cell_event_manager::handle_ue_deactivation_request(du_cell_index_t pcell_idx, du_ue_index_t ue_idx)
+void ue_cell_event_manager::handle_ue_config_applied(du_ue_index_t ue_idx)
 {
-  auto handle_ue_deactivation_impl = [this, ue_idx]() {
-    if (not ue_db.contains(ue_idx)) {
-      return event_result::invalid_ue;
-    }
-    auto& u = ue_db[ue_idx];
+  log_event_result("ue_cfg_applied", ue_idx, handle_ue_config_applied_impl(ue_idx));
+}
 
-    // Deactivate the UE (no more grants after this point).
-    u.deactivate();
+ue_cell_event_manager::event_result ue_cell_event_manager::handle_ue_config_applied_impl(du_ue_index_t ue_idx)
+{
+  // Confirm that UE applied new config.
+  ue_db.ue_config_applied(ue_idx);
 
-    // Schedule removal of UE from slice scheduler so it doesn't get scheduled PDSCH/PUSCH.
-    slice_sched.rem_ue(ue_idx);
+  // Notify slice scheduler only when the UE fully exits fallback (conres also done).
+  if (not ue_db[ue_idx].get_pcell().is_in_fallback_mode()) {
+    slice_sched.config_applied(ue_idx);
+  }
 
-    // Log event.
-    ev_logger.enqueue(scheduler_event_logger::ue_deactivation_event{ue_idx, u.crnti});
+  // Log UE config applied event.
+  ev_logger.enqueue(scheduler_event_logger::ue_cfg_applied_event{ue_idx, ue_db[ue_idx].crnti});
 
-    return event_result::processed;
-  };
+  return event_result::processed;
+}
 
-  push_event(pcell_idx, event_t{"ue_deactivation", ue_idx, std::move(handle_ue_deactivation_impl)});
+void ue_cell_event_manager::handle_ue_deactivation_request(du_ue_index_t ue_idx)
+{
+  log_event_result("ue_deactivation", ue_idx, handle_ue_deactivation_request_impl(ue_idx));
+}
+
+ue_cell_event_manager::event_result ue_cell_event_manager::handle_ue_deactivation_request_impl(du_ue_index_t ue_idx)
+{
+  if (not ue_db.contains(ue_idx)) {
+    return event_result::invalid_ue;
+  }
+  auto& u = ue_db[ue_idx];
+
+  // Deactivate the UE (no more grants after this point).
+  u.deactivate();
+
+  // Schedule removal of UE from slice scheduler so it doesn't get scheduled PDSCH/PUSCH.
+  slice_sched.rem_ue(ue_idx);
+
+  // Log event.
+  ev_logger.enqueue(scheduler_event_logger::ue_deactivation_event{ue_idx, u.crnti});
+
+  return event_result::processed;
 }
 
 void ue_cell_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message& bsr_ind)
@@ -797,6 +795,20 @@ void ue_cell_event_manager::push_event(du_cell_index_t cell_index, event_t event
                      fmt::underlying(ue_idx),
                      ev_name);
     }
+  }
+}
+
+void ue_cell_event_manager::log_event_result(const char* ev_name, du_ue_index_t ue_index, event_result res) const
+{
+  switch (res) {
+    case event_result::invalid_ue:
+      log_invalid_ue_index(ue_index, ev_name);
+      break;
+    case event_result::invalid_ue_cc:
+      log_invalid_cc(ue_index, ev_name);
+      break;
+    default:
+      break;
   }
 }
 

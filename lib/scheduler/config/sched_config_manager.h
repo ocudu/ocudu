@@ -95,10 +95,10 @@ public:
   virtual void handle_ue_deletion(ue_config_delete_event ev) = 0;
 
   /// Called when the UE applied the last sent RRC configuration.
-  virtual void handle_ue_config_applied(du_cell_index_t cell_index, du_ue_index_t ue_idx) = 0;
+  virtual void handle_ue_config_applied(du_ue_index_t ue_idx) = 0;
 
   /// Called when the UE deactivation is requested.
-  virtual void handle_ue_deactivation_request(du_cell_index_t cell_index, du_ue_index_t ue_idx) = 0;
+  virtual void handle_ue_deactivation_request(du_ue_index_t ue_idx) = 0;
 };
 
 /// Class that handles the creation/reconfiguration/deletion of cell and UE configurations in the scheduler.

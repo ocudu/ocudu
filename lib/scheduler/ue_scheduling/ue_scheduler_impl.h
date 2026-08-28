@@ -85,7 +85,6 @@ private:
 
     ue_feedback_handler&                          get_feedback_handler() override { return *ev_mng; }
     scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler() override { return *ev_mng; }
-    sched_ue_configuration_handler&               get_ue_configurator() override { return *ev_mng; }
 
     void start() override { parent.do_start_cell(cell_res_alloc->cfg.cell_index); }
 
