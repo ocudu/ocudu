@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../cell_group_event_notifier.h"
+#include "../cell_group_event_handler.h"
 #include "../pucch_scheduling/pucch_allocator.h"
 #include "../srs/srs_allocator.h"
 #include "../uci_scheduling/uci_allocator.h"
@@ -49,8 +49,6 @@ struct ue_cell_scheduler_creation_request {
   ra_ue_repository* ra_ue_repo;
   /// Repository of the UEs configured in the cell.
   ue_cell_repository* ue_cell_db;
-  /// Relay of the notifications of the cell, to be connected to the created cell.
-  cell_ue_event_relay* ue_ev_relay;
 };
 
 /// Handler of UE grant scheduling for a given cell.
@@ -58,6 +56,9 @@ class ue_cell_scheduler
 {
 public:
   virtual ~ue_cell_scheduler() = default;
+
+  /// Retrieve the handler of the events that this cell dispatches to its cell group.
+  virtual cell_group_event_handler& get_event_handler() = 0;
 
   /// Schedule UE DL and UL grants for a given {slot, cell}.
   virtual void run_slot(slot_point sl_tx) = 0;

@@ -310,7 +310,7 @@ public:
       }
 
       // Apply the update to the UE, which the cell group owns.
-      if (parent.cell_group_ev_notifier.on_dl_buffer_state_indication(dl_bo)) {
+      if (parent.ue_ev_handler.handle_dl_buffer_state_indication(dl_bo)) {
         parent.ev_logger.enqueue(dl_bo);
         parent.metrics.handle_dl_buffer_state_indication(dl_bo);
       }
@@ -338,7 +338,7 @@ cell_event_manager::cell_event_manager(const cell_configuration&      cell_cfg_,
                                        paging_scheduler&              pg_sch_,
                                        ra_scheduler&                  ra_sch_,
                                        srs_scheduler&                 srs_sch_,
-                                       cell_group_event_notifier&     cell_group_event_notifier_,
+                                       cell_group_event_handler&      ue_ev_handler_,
                                        ra_ue_repository&              ra_ue_repo_,
                                        uci_indication_selector&       uci_sel_,
                                        cell_metrics_handler&          metrics_,
@@ -352,7 +352,7 @@ cell_event_manager::cell_event_manager(const cell_configuration&      cell_cfg_,
   pg_sch(pg_sch_),
   ra_sch(ra_sch_),
   srs_sch(srs_sch_),
-  cell_group_ev_notifier(cell_group_event_notifier_),
+  ue_ev_handler(ue_ev_handler_),
   ra_ue_repo(ra_ue_repo_),
   uci_sel(uci_sel_),
   metrics(metrics_),
@@ -465,7 +465,7 @@ void cell_event_manager::handle_ue_crc(slot_point sl_rx, const ul_crc_pdu_indica
     // The Msg3 HARQ of a contention-free access is owned by the RA scheduler. Completing the contention resolution
     // needs the state shared by the UEs of the cell group, so hand it over to the UE scheduler.
     if (was_pending_cfra and crc.tb_crc_success) {
-      cell_group_ev_notifier.on_cfra_msg3_acked(crc.ue_index);
+      ue_ev_handler.handle_cfra_msg3_acked(crc.ue_index);
     }
     return;
   }
@@ -485,7 +485,7 @@ void cell_event_manager::handle_ue_crc(slot_point sl_rx, const ul_crc_pdu_indica
 
   // Process Timing Advance Offset.
   if (crc.tb_crc_success and crc.time_advance_offset.has_value() and crc.ul_sinr_dB.has_value()) {
-    cell_group_ev_notifier.on_ul_n_ta_update(
+    ue_ev_handler.handle_ul_n_ta_update(
         ue_cc->ue_index, ue_cc->cfg().tag_id(), crc.time_advance_offset.value(), crc.ul_sinr_dB.value());
   }
 
@@ -524,7 +524,7 @@ void cell_event_manager::handle_ue_creation(ue_config_update_event ev)
     const du_ue_index_t ue_index = ev.get_ue_index();
     const rnti_t        crnti    = ev.next_config().crnti;
     const pci_t         pci      = ev.next_config().pcell_common_cfg().params.pci;
-    if (cell_group_ev_notifier.on_ue_creation(std::move(ev))) {
+    if (ue_ev_handler.handle_ue_creation(std::move(ev))) {
       // Trace/log event.
       ev_logger.enqueue(scheduler_event_logger::ue_creation_event{ue_index, crnti, cell_cfg.cell_index});
       metrics.handle_ue_creation(ue_index, crnti, pci);
@@ -537,7 +537,7 @@ void cell_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
   dispatcher->push("UE reconfiguration", [this, ev = std::move(ev)]() mutable {
     const du_ue_index_t ue_index = ev.get_ue_index();
     const rnti_t        crnti    = ev.next_config().crnti;
-    if (cell_group_ev_notifier.on_ue_reconfiguration(std::move(ev))) {
+    if (ue_ev_handler.handle_ue_reconfiguration(std::move(ev))) {
       // Trace/log event.
       ev_logger.enqueue(scheduler_event_logger::ue_reconf_event{ue_index, crnti});
       metrics.handle_ue_reconfiguration(ue_index);
@@ -551,7 +551,7 @@ void cell_event_manager::handle_ue_deletion(ue_config_delete_event ev)
     const du_ue_index_t ue_index = ev.ue_index();
     const ue_cell*      ue_cc    = ue_cell_db.find(ue_index);
     const rnti_t        crnti    = ue_cc != nullptr ? ue_cc->rnti() : rnti_t::INVALID_RNTI;
-    if (cell_group_ev_notifier.on_ue_deletion(std::move(ev))) {
+    if (ue_ev_handler.handle_ue_deletion(std::move(ev))) {
       // Trace/log event.
       // Note: The UE deletion is not yet complete, so we don't update the metrics yet.
       ev_logger.enqueue(sched_ue_delete_message{ue_index, crnti});
@@ -564,7 +564,7 @@ void cell_event_manager::handle_ue_config_applied(du_ue_index_t ue_idx)
   dispatcher->push("UE config applied", [this, ue_idx]() {
     const ue_cell* ue_cc = ue_cell_db.find(ue_idx);
     const rnti_t   crnti = ue_cc != nullptr ? ue_cc->rnti() : rnti_t::INVALID_RNTI;
-    if (cell_group_ev_notifier.on_ue_config_applied(ue_idx)) {
+    if (ue_ev_handler.handle_ue_config_applied(ue_idx)) {
       ev_logger.enqueue(scheduler_event_logger::ue_cfg_applied_event{ue_idx, crnti});
     }
   });
@@ -575,7 +575,7 @@ void cell_event_manager::handle_ue_deactivation_request(du_ue_index_t ue_idx)
   dispatcher->push("UE deactivation", [this, ue_idx]() {
     const ue_cell* ue_cc = ue_cell_db.find(ue_idx);
     const rnti_t   crnti = ue_cc != nullptr ? ue_cc->rnti() : rnti_t::INVALID_RNTI;
-    if (cell_group_ev_notifier.on_ue_deactivation_request(ue_idx)) {
+    if (ue_ev_handler.handle_ue_deactivation_request(ue_idx)) {
       ev_logger.enqueue(scheduler_event_logger::ue_deactivation_event{ue_idx, crnti});
     }
   });
@@ -588,7 +588,7 @@ void cell_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_messag
     return;
   }
   dispatcher->push("BSR", [this, bsr_ptr = std::move(bsr_ptr)]() {
-    if (cell_group_ev_notifier.on_ul_bsr_indication(*bsr_ptr)) {
+    if (ue_ev_handler.handle_ul_bsr_indication(*bsr_ptr)) {
       ev_logger.enqueue(*bsr_ptr);
       metrics.handle_ul_bsr_indication(*bsr_ptr);
     }
@@ -602,7 +602,7 @@ void cell_event_manager::handle_ul_phr_indication(const ul_phr_indication_messag
     return;
   }
   dispatcher->push("PHR", [this, phr_ptr = std::move(phr_ptr)]() {
-    if (cell_group_ev_notifier.on_ul_phr_indication(*phr_ptr)) {
+    if (ue_ev_handler.handle_ul_phr_indication(*phr_ptr)) {
       ev_logger.enqueue(*phr_ptr);
       metrics.handle_ul_phr_indication(*phr_ptr);
     }
@@ -616,7 +616,7 @@ void cell_event_manager::handle_ul_ta_report_indication(const ul_ta_report_indic
     return;
   }
   dispatcher->push("TA report", [this, ta_ptr = std::move(ta_ptr)]() {
-    if (not cell_group_ev_notifier.on_ul_ta_report_indication(*ta_ptr)) {
+    if (not ue_ev_handler.handle_ul_ta_report_indication(*ta_ptr)) {
       return;
     }
 
@@ -655,7 +655,7 @@ void cell_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication&
                      ce.ue_index);
       return;
     }
-    if (cell_group_ev_notifier.on_dl_mac_ce_indication(ce)) {
+    if (ue_ev_handler.handle_dl_mac_ce_indication(ce)) {
       ev_logger.enqueue(ce);
     }
   });
@@ -663,7 +663,7 @@ void cell_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication&
 
 void cell_event_manager::handle_crnti_ce_received(du_ue_index_t ue_index)
 {
-  dispatcher->push("C-RNTI CE received", [this, ue_index]() { cell_group_ev_notifier.on_crnti_ce_received(ue_index); });
+  dispatcher->push("C-RNTI CE received", [this, ue_index]() { ue_ev_handler.handle_crnti_ce_received(ue_index); });
 }
 
 void cell_event_manager::handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req)
@@ -673,7 +673,7 @@ void cell_event_manager::handle_slice_reconfiguration_request(const du_cell_slic
     return;
   }
   dispatcher->push("slice reconfiguration", [this, req_ptr = std::move(req_ptr)]() {
-    cell_group_ev_notifier.on_slice_reconfiguration(*req_ptr);
+    ue_ev_handler.handle_slice_reconfiguration(*req_ptr);
     ev_logger.enqueue(scheduler_event_logger::slice_reconfiguration_event{req_ptr->cell_index});
   });
 }
@@ -712,7 +712,7 @@ void cell_event_manager::handle_srs_indication(const srs_indication& srs)
         const float sinr_dB        = convert_power_to_dB(frobenius_norm * frobenius_norm / noise_var);
 
         // Notify UL TA update.
-        cell_group_ev_notifier.on_ul_n_ta_update(
+        ue_ev_handler.handle_ul_n_ta_update(
             ue_cc->ue_index, ue_cc->cfg().tag_id(), srs_ptr->time_advance_offset.value(), sinr_dB);
 
         // Report the SRS PDU to the metrics handler.
@@ -764,7 +764,7 @@ void cell_event_manager::handle_uci_pdu(slot_point uci_sl, const uci_indication:
   // Process SRs.
   if (action->sr_detected) {
     // Serving the SR needs the logical channels of the UE, so hand it over to the UE scheduler.
-    cell_group_ev_notifier.on_sr_detected(ue_cc->ue_index, uci_sl);
+    ue_ev_handler.handle_sr_detected(ue_cc->ue_index, uci_sl);
 
     // Log SR event.
     sr_event event{ue_cc->ue_index, ue_cc->rnti()};
@@ -790,7 +790,7 @@ void cell_event_manager::handle_uci_pdu(slot_point uci_sl, const uci_indication:
     }
 
     if (action->time_advance_offset.has_value()) {
-      cell_group_ev_notifier.on_ul_n_ta_update(
+      ue_ev_handler.handle_ul_n_ta_update(
           ue_cc->ue_index, ue_cc->cfg().tag_id(), *action->time_advance_offset, action->ul_sinr_dB.value());
     }
   }
@@ -847,7 +847,7 @@ void cell_event_manager::handle_harq_ind(ue_cell&                             ue
     if (h_dl->empty() and ue_cc.is_pcell() and
         ue_cc.get_pcell_state().conres_st == ue_conres_state::pending_conres_ce) {
       // Completing the contention resolution needs the state shared by the UEs of the cell group.
-      cell_group_ev_notifier.on_conres_ce_acked(ue_cc.ue_index);
+      ue_ev_handler.handle_conres_ce_acked(ue_cc.ue_index);
     }
 
     // Notify metrics handler with HARQ outcome.
@@ -886,7 +886,7 @@ void cell_event_manager::handle_uci_indication_timeout(slot_point uci_slot, rnti
 
   // Forward SR indication, if pending.
   if (action.sr_detected) {
-    cell_group_ev_notifier.on_sr_detected(ue_cc->ue_index, uci_slot);
+    ue_ev_handler.handle_sr_detected(ue_cc->ue_index, uci_slot);
 
     // Log SR event.
     sr_event event{ue_cc->ue_index, ue_cc->rnti()};

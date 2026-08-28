@@ -34,16 +34,14 @@ struct cell_creation_event {
 class cell_group_event_manager;
 
 /// Applies to the cell group the events that one of its cells dispatched.
-class cell_group_event_handler final : public cell_group_ue_config_handler,
-                                       public cell_group_ue_indication_handler,
-                                       public cell_ue_event_notifier
+class cell_group_event_handler_impl final : public cell_group_event_handler
 {
 public:
-  cell_group_event_handler(cell_group_event_manager&  parent_,
-                           const cell_creation_event& cell_ev,
-                           ue_repository&             ue_db,
-                           ocudulog::basic_logger&    logger);
-  ~cell_group_event_handler() override;
+  cell_group_event_handler_impl(cell_group_event_manager&  parent_,
+                                const cell_creation_event& cell_ev,
+                                ue_repository&             ue_db,
+                                ocudulog::basic_logger&    logger);
+  ~cell_group_event_handler_impl() override;
 
   // cell_group_ue_config_handler methods. Handled synchronously, as the cell already deferred them.
   bool handle_ue_creation(ue_config_update_event ev) override;
@@ -61,14 +59,13 @@ public:
   bool handle_crnti_ce_received(du_ue_index_t ue_index) override;
   bool handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& dl_bo) override;
 
-  // cell_ue_event_notifier methods.
-  void on_cfra_msg3_acked(du_ue_index_t ue_index) override;
-  void on_conres_ce_acked(du_ue_index_t ue_index) override;
-  void on_sr_detected(du_ue_index_t ue_index, slot_point uci_slot) override;
-  void on_ul_n_ta_update(du_ue_index_t              ue_index,
-                         time_alignment_group::id_t tag_id,
-                         phy_time_unit              n_ta_diff,
-                         float                      ul_sinr) override;
+  void handle_cfra_msg3_acked(du_ue_index_t ue_index) override;
+  void handle_conres_ce_acked(du_ue_index_t ue_index) override;
+  void handle_sr_detected(du_ue_index_t ue_index, slot_point uci_slot) override;
+  void handle_ul_n_ta_update(du_ue_index_t              ue_index,
+                             time_alignment_group::id_t tag_id,
+                             phy_time_unit              n_ta_diff,
+                             float                      ul_sinr) override;
 
 private:
   /// Log event with invalid UE index.
@@ -99,17 +96,17 @@ class cell_group_event_manager
 public:
   cell_group_event_manager(ue_repository& ue_db);
 
-  std::unique_ptr<cell_group_event_handler> add_cell(const cell_creation_event& cell_ev);
+  std::unique_ptr<cell_group_event_handler_impl> add_cell(const cell_creation_event& cell_ev);
 
 private:
-  friend class cell_group_event_handler;
+  friend class cell_group_event_handler_impl;
 
   bool cell_exists(du_cell_index_t cell_index) const;
 
   ue_repository&          ue_db;
   ocudulog::basic_logger& logger;
 
-  std::array<cell_group_event_handler*, MAX_NOF_DU_CELLS> cells;
+  std::array<cell_group_event_handler_impl*, MAX_NOF_DU_CELLS> cells;
 };
 
 } // namespace ocudu

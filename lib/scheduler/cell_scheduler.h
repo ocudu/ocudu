@@ -6,7 +6,6 @@
 
 #include "cell/resource_grid.h"
 #include "cell_event_manager.h"
-#include "cell_group_event_notifier.h"
 #include "common_scheduling/csi_rs_scheduler.h"
 #include "common_scheduling/paging_scheduler.h"
 #include "common_scheduling/prach_scheduler.h"
@@ -138,14 +137,11 @@ private:
   uci_indication_selector uci_sel;
   paging_scheduler        pg_sch;
 
-  /// Relay of the notifications of this cell to the UE scheduler.
-  cell_ue_event_relay ue_ev_relay;
+  /// Reference to UE scheduler whose DU cell group contains this cell.
+  ue_scheduler::unique_cell_ptr ue_sched;
 
   /// Handler of the events of this cell that require no access to the UE repository.
   cell_event_manager ev_mng;
-
-  /// Reference to UE scheduler whose DU cell group contains this cell.
-  ue_scheduler::unique_cell_ptr ue_sched;
 
   /// Current state of the cell.
   bool active = false;

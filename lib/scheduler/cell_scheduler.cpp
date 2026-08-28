@@ -37,6 +37,19 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
           cell_cfg.max_nof_ue_contexts,
           sched_cfg.ue.pucch_sinr_threshold_dB),
   pg_sch(cell_cfg, pdcch_sch),
+  // Note: Created before the event manager, which dispatches to the handler that it owns.
+  ue_sched(ue_sched_.add_cell(ue_cell_scheduler_creation_request{msg.cell_index,
+                                                                 &pdcch_sch,
+                                                                 &pucch_alloc,
+                                                                 &uci_alloc,
+                                                                 &srs_alloc,
+                                                                 &srs_sch,
+                                                                 &uci_sch,
+                                                                 &res_grid,
+                                                                 &metrics,
+                                                                 &event_logger,
+                                                                 &ra_ue_repo,
+                                                                 &ue_cell_db})),
   ev_mng(cell_cfg,
          res_grid,
          ue_cell_db,
@@ -44,7 +57,7 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
          pg_sch,
          ra_sch,
          srs_sch,
-         ue_ev_relay,
+         ue_sched->get_event_handler(),
          ra_ue_repo,
          uci_sel,
          metrics,
@@ -54,21 +67,6 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
 {
   // The event manager consumes the UCI timeouts detected by the UCI indication handler.
   uci_timeout_fwd.connect(ev_mng);
-
-  // Register new cell in the UE scheduler.
-  ue_sched = ue_sched_.add_cell(ue_cell_scheduler_creation_request{msg.cell_index,
-                                                                   &pdcch_sch,
-                                                                   &pucch_alloc,
-                                                                   &uci_alloc,
-                                                                   &srs_alloc,
-                                                                   &srs_sch,
-                                                                   &uci_sch,
-                                                                   &res_grid,
-                                                                   &metrics,
-                                                                   &event_logger,
-                                                                   &ra_ue_repo,
-                                                                   &ue_cell_db,
-                                                                   &ue_ev_relay});
 }
 
 void cell_scheduler::handle_pws_si_update_request(const pws_si_scheduling_update_request& msg)

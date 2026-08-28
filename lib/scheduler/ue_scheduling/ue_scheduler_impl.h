@@ -70,10 +70,12 @@ private:
     triggered_ul_grant_scheduler trig_ul_sched;
 
     /// Handler of the events that this cell dispatches to the cell group.
-    std::unique_ptr<cell_group_event_handler> ev_handler;
+    std::unique_ptr<cell_group_event_handler_impl> ev_handler;
 
     cell_context(ue_scheduler_impl& parent, const ue_cell_scheduler_creation_request& params);
     ~cell_context() override;
+
+    cell_group_event_handler& get_event_handler() override { return *ev_handler; }
 
     void run_slot(slot_point sl_tx) override { parent.run_slot_impl(sl_tx); }
 

@@ -79,15 +79,16 @@ power headroom reports, MAC CEs, paging and SI requests, positioning requests, U
    order, whatever their type.
 2. The queue is drained at the start of the cell slot indication, in the cell executor. An event that only touches the
    state of the cell is applied there.
-3. An event that needs the state shared by a UE's carriers is relayed to the cell group over
-   `cell_group_event_notifier` (`cell_group_event_notifier.h`) and applied synchronously by
-   `cell_group_event_handler`, the per-cell handler that `cell_group_event_manager` owns. It reports back whether it
-   applied the event, so that the cell logs it and accounts for it in its metrics only when it did.
+3. An event that needs the state shared by a UE's carriers is handed to the `cell_group_event_handler` of the cell and
+   applied synchronously. It reports back whether it applied the event, so that the cell logs it and accounts for it in
+   its metrics only when it did.
 
-The relay (`cell_ue_event_relay`) is handed to both sides at their creation, so the cell can notify without knowing
-whether the cell group that consumes the notifications exists yet. It converts each notification into a call on the
-interface that the cell group implements: `cell_group_ue_config_handler` for the UE configuration requests,
-`cell_group_ue_indication_handler` for the UE indications.
+`cell_group_event_handler` (`cell_group_event_handler.h`) groups the two interfaces that the cell calls:
+`cell_group_ue_config_handler` for the UE configuration requests, and `cell_group_ue_indication_handler` for the UE
+indications and for the outcomes that a cell derives for one of its UEs while processing its own events.
+`cell_group_event_manager` owns one implementation of it per cell of the group. The cell scheduler creates its
+`ue_cell_scheduler` handle before its `cell_event_manager`, so the handler already exists when the manager is given the
+reference.
 
 The cell also aggregates the DL buffer occupancy updates that it receives for a bearer since the last slot, and relays
 only the resulting update.
@@ -172,5 +173,6 @@ lib/scheduler/
 └── ue_scheduling/              # UE grant scheduler, fallback, intra-slice allocator
 ```
 
-The event handling spans both levels: `cell_event_manager.{h,cpp}` and `cell_group_event_notifier.h` sit at the top
-level, next to `cell_scheduler`, and `ue_scheduling/cell_group_event_manager.{h,cpp}` holds the cell-group side.
+The event handling spans both levels: `cell_event_manager.{h,cpp}` and the interfaces in
+`cell_group_event_handler.h` sit at the top level, next to `cell_scheduler`, and
+`ue_scheduling/cell_group_event_manager.{h,cpp}` holds the cell-group side.

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "cell_group_event_notifier.h"
+#include "cell_group_event_handler.h"
 #include "logging/cell_event_tracer.h"
 #include "ocudu/adt/bounded_bitset.h"
 #include "ocudu/ocudulog/logger.h"
@@ -58,7 +58,7 @@ public:
                      paging_scheduler&              pg_sch,
                      ra_scheduler&                  ra_sch,
                      srs_scheduler&                 srs_sch,
-                     cell_group_event_notifier&     cell_group_ev_notifier,
+                     cell_group_event_handler&      ue_ev_handler,
                      ra_ue_repository&              ra_ue_repo,
                      uci_indication_selector&       uci_sel,
                      cell_metrics_handler&          metrics,
@@ -156,7 +156,7 @@ private:
   paging_scheduler&              pg_sch;
   ra_scheduler&                  ra_sch;
   srs_scheduler&                 srs_sch;
-  cell_group_event_notifier&     cell_group_ev_notifier;
+  cell_group_event_handler&      ue_ev_handler;
   ra_ue_repository&              ra_ue_repo;
   uci_indication_selector&       uci_sel;
   cell_metrics_handler&          metrics;
