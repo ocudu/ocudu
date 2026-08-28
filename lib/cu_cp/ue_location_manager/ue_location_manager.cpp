@@ -111,9 +111,12 @@ std::optional<location_report_request> ue_location_manager::get_location_reporti
 
 ue_presence ue_location_manager::check_ue_presence(const area_of_interest& aoi, const cu_cp_user_location_info_nr& loc)
 {
+  // TS 38.300 sec. 16.14.5: in an NTN cell, and where one is configured for the UE's position, the Cell Identity of an
+  // Area of Interest is a Mapped Cell ID.
+  const nr_cell_global_id_t reported_cgi{loc.nr_cgi.plmn_id, loc.mapped_nci.value_or(loc.nr_cgi.nci)};
   for (const auto& cell : aoi.cell_list) {
     // TODO: add handling for other types of CGIs
-    if (cell == loc.nr_cgi) {
+    if (cell == reported_cgi) {
       return ue_presence::in;
     }
   }
