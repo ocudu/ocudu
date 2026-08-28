@@ -322,6 +322,92 @@ TEST_F(cu_cp_write_replace_warning_test, when_first_du_f1ap_times_out_then_secon
   ASSERT_EQ(ngap_pdu.pdu.successful_outcome().proc_code, ASN1_NGAP_ID_WRITE_REPLACE_WARNING);
 }
 
+/// A cell whose coarse location mapping reports a Mapped Cell ID, TS 38.300 sec. 16.14.5.
+class cu_cp_write_replace_warning_mapped_cell_id_test : public cu_cp_test_environment, public ::testing::Test
+{
+public:
+  static constexpr uint64_t uu_nci     = 0x66c000; // gnb_id 411, bit length 22, cell 0.
+  static constexpr uint64_t mapped_nci = 0x66c0ff;
+
+  cu_cp_write_replace_warning_mapped_cell_id_test() : cu_cp_test_environment(make_params())
+  {
+    run_ng_setup();
+
+    std::optional<unsigned> ret = connect_new_du();
+    EXPECT_TRUE(ret.has_value());
+    du_idx = ret.value();
+    get_du(du_idx).push_ul_pdu(test_helpers::generate_f1_setup_request());
+    EXPECT_TRUE(wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
+  }
+
+protected:
+  static cu_cp_test_env_params make_params()
+  {
+    ntn_location_area area;
+    area.tac        = 7;
+    area.mapped_nci = nr_cell_identity::create(mapped_nci).value();
+    area.lat_min    = 50.0;
+    area.lat_max    = 52.0;
+    area.lon_min    = 14.0;
+    area.lon_max    = 17.0;
+
+    cu_cp_test_env_params params{};
+    params.ntn_location_mappings.push_back(
+        ntn_cell_location_mapping{nr_cell_identity::create(uu_nci).value(), ntn_location_mapping{}});
+    params.ntn_location_mappings.back().mapping.location_areas.push_back(area);
+    return params;
+  }
+
+  unsigned     du_idx = 0;
+  ngap_message ngap_pdu;
+  f1ap_message f1ap_pdu;
+};
+
+TEST_F(cu_cp_write_replace_warning_mapped_cell_id_test, warning_area_naming_a_mapped_cell_id_reaches_the_du)
+{
+  // The AMF names the cell by the Mapped Cell ID the gNB reports for it, not by its Uu Cell ID.
+  const nr_cell_global_id_t mapped_cgi{plmn_identity::test_value(), nr_cell_identity::create(mapped_nci).value()};
+  get_amf().push_tx_pdu(generate_write_replace_warning_request_with_nr_cgi_list({mapped_cgi}));
+
+  ASSERT_TRUE(wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu)) << "the warning area must resolve to the cell of this gNB-DU";
+  ASSERT_EQ(f1ap_pdu.pdu.init_msg().proc_code, ASN1_F1AP_ID_WRITE_REPLACE_WARNING);
+
+  // F1AP names cells by their Uu Cell ID, so the request must carry that rather than the identity the AMF used.
+  const auto& req = *f1ap_pdu.pdu.init_msg().value.write_replace_warning_request();
+  ASSERT_TRUE(req.cells_to_be_broadcast_list_present);
+  ASSERT_EQ(req.cells_to_be_broadcast_list.size(), 1);
+  EXPECT_EQ(req.cells_to_be_broadcast_list[0]->cells_to_be_broadcast_item().nr_cgi.nr_cell_id.to_number(), uu_nci);
+}
+
+TEST_F(cu_cp_write_replace_warning_mapped_cell_id_test,
+       warning_area_naming_a_cell_by_both_identities_reaches_the_du_once)
+{
+  // TS 38.300 sec. 16.14.5 leaves the Uu Cell ID in place alongside the Mapped Cell ID, so a warning area may name the
+  // same cell by both. It has to be broadcast in once.
+  const nr_cell_global_id_t uu_cgi{plmn_identity::test_value(), nr_cell_identity::create(uu_nci).value()};
+  const nr_cell_global_id_t mapped_cgi{plmn_identity::test_value(), nr_cell_identity::create(mapped_nci).value()};
+  get_amf().push_tx_pdu(generate_write_replace_warning_request_with_nr_cgi_list({uu_cgi, mapped_cgi}));
+
+  ASSERT_TRUE(wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
+  ASSERT_EQ(f1ap_pdu.pdu.init_msg().proc_code, ASN1_F1AP_ID_WRITE_REPLACE_WARNING);
+
+  const auto& req = *f1ap_pdu.pdu.init_msg().value.write_replace_warning_request();
+  ASSERT_TRUE(req.cells_to_be_broadcast_list_present);
+  ASSERT_EQ(req.cells_to_be_broadcast_list.size(), 1) << "the cell is named twice, so it must not be listed twice";
+  EXPECT_EQ(req.cells_to_be_broadcast_list[0]->cells_to_be_broadcast_item().nr_cgi.nr_cell_id.to_number(), uu_nci);
+}
+
+TEST_F(cu_cp_write_replace_warning_mapped_cell_id_test, warning_area_naming_an_unknown_identity_reaches_no_du)
+{
+  const nr_cell_global_id_t unknown_cgi{plmn_identity::test_value(), nr_cell_identity::create(0x66c0fe).value()};
+  get_amf().push_tx_pdu(generate_write_replace_warning_request_with_nr_cgi_list({unknown_cgi}));
+
+  // The NGAP response is still sent, but no gNB-DU is asked to broadcast.
+  ASSERT_TRUE(wait_for_ngap_tx_pdu(ngap_pdu));
+  ASSERT_EQ(ngap_pdu.pdu.successful_outcome().proc_code, ASN1_NGAP_ID_WRITE_REPLACE_WARNING);
+  ASSERT_FALSE(get_du(du_idx).try_pop_dl_pdu(f1ap_pdu));
+}
+
 // Fixture with a 3-byte segment size — forces segmentation of any warning message longer than 3 bytes.
 class cu_cp_write_replace_warning_segmented_test : public cu_cp_test_environment, public ::testing::Test
 {
