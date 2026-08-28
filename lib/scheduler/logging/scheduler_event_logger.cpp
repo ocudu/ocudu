@@ -34,12 +34,12 @@ using slot_event_buffer = type_list_buffer_stream<cell_creation_event,
                                                   sel::error_indication_event,
                                                   sr_event,
                                                   csi_report_event,
-                                                  sel::bsr_event,
+                                                  ul_bsr_indication_message,
                                                   harq_ack_event,
                                                   sel::crc_event,
                                                   dl_mac_ce_indication,
                                                   dl_buffer_state_indication_message,
-                                                  sel::phr_event,
+                                                  ul_phr_indication_message,
                                                   sel::srs_indication_event,
                                                   sel::slice_reconfiguration_event>;
 
@@ -161,11 +161,11 @@ void format_debug_level(FormatContext& ctx, const Event& ev)
     if (ev.csi.pmi.has_value()) {
       fmt::format_to(ctx.out(), " {}", *ev.csi.pmi);
     }
-  } else if constexpr (std::is_same_v<Event, sel::bsr_event>) {
+  } else if constexpr (std::is_same_v<Event, ul_bsr_indication_message>) {
     fmt::format_to(ctx.out(),
                    "\n- BSR: ue={} rnti={} type=\"{}\" report={{",
                    fmt::underlying(ev.ue_index),
-                   ev.rnti,
+                   ev.crnti,
                    to_string(ev.type));
     if (ev.type == bsr_format::LONG_BSR or ev.type == bsr_format::LONG_TRUNC_BSR or ev.reported_lcgs.full()) {
       std::array<int, MAX_NOF_LCGS> report;
@@ -190,7 +190,7 @@ void format_debug_level(FormatContext& ctx, const Event& ev)
                        ev.reported_lcgs[i].nof_bytes);
       }
     }
-    fmt::format_to(ctx.out(), "}} pending_bytes={}", ev.tot_ul_pending_bytes);
+    fmt::format_to(ctx.out(), "}}");
   } else if constexpr (std::is_same_v<Event, harq_ack_event>) {
     fmt::format_to(ctx.out(),
                    "\n- HARQ-ACK: ue={} rnti={} slot_rx={} h_id={} ack={}",
@@ -229,10 +229,13 @@ void format_debug_level(FormatContext& ctx, const Event& ev)
                    fmt::underlying(ev.ue_index),
                    ev.lcid,
                    ev.bs);
-  } else if constexpr (std::is_same_v<Event, sel::phr_event>) {
-    fmt::format_to(ctx.out(), "\n- PHR: ue={} rnti={} ph={}dB", fmt::underlying(ev.ue_index), ev.rnti, ev.ph);
-    if (ev.p_cmax.has_value()) {
-      fmt::format_to(ctx.out(), " p_cmax={}dBm", ev.p_cmax.value());
+  } else if constexpr (std::is_same_v<Event, ul_phr_indication_message>) {
+    fmt::format_to(ctx.out(), "\n- PHR: ue={} rnti={}", fmt::underlying(ev.ue_index), ev.rnti);
+    for (const cell_ph_report& cell_phr : ev.phr.get_phr()) {
+      fmt::format_to(ctx.out(), " scell={} ph={}dB", fmt::underlying(cell_phr.serv_cell_id), cell_phr.ph);
+      if (cell_phr.p_cmax.has_value()) {
+        fmt::format_to(ctx.out(), " p_cmax={}dBm", cell_phr.p_cmax.value());
+      }
     }
   } else if constexpr (std::is_same_v<Event, sel::srs_indication_event>) {
     fmt::format_to(ctx.out(), "\n- SRS: ue={} rnti={}", fmt::underlying(ev.ue_index), ev.rnti);
@@ -421,7 +424,7 @@ void scheduler_event_logger::enqueue_impl(const csi_report_event& csi)
   }
 }
 
-void scheduler_event_logger::enqueue_impl(const bsr_event& bsr)
+void scheduler_event_logger::enqueue_impl(const ul_bsr_indication_message& bsr)
 {
   if (not slot_buffer_writer->push(bsr)) {
     logger.error("Scheduler event log entry exceeded segment size and was dropped");
@@ -456,9 +459,9 @@ void scheduler_event_logger::enqueue_impl(const dl_buffer_state_indication_messa
   }
 }
 
-void scheduler_event_logger::enqueue_impl(const phr_event& phr_ev)
+void scheduler_event_logger::enqueue_impl(const ul_phr_indication_message& phr_ind)
 {
-  if (not slot_buffer_writer->push(phr_ev)) {
+  if (not slot_buffer_writer->push(phr_ind)) {
     logger.error("Scheduler event log entry exceeded segment size and was dropped");
   }
 }

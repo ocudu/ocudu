@@ -310,7 +310,10 @@ public:
       }
 
       // Apply the update to the UE, which the cell group owns.
-      parent.cell_group_ev_notifier.on_dl_buffer_state_indication(dl_bo);
+      if (parent.cell_group_ev_notifier.on_dl_buffer_state_indication(dl_bo)) {
+        parent.ev_logger.enqueue(dl_bo);
+        parent.metrics.handle_dl_buffer_state_indication(dl_bo);
+      }
     }
   }
 
@@ -584,8 +587,12 @@ void cell_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_messag
   if (bsr_ptr == nullptr) {
     return;
   }
-  dispatcher->push("BSR",
-                   [this, bsr_ptr = std::move(bsr_ptr)]() { cell_group_ev_notifier.on_ul_bsr_indication(*bsr_ptr); });
+  dispatcher->push("BSR", [this, bsr_ptr = std::move(bsr_ptr)]() {
+    if (cell_group_ev_notifier.on_ul_bsr_indication(*bsr_ptr)) {
+      ev_logger.enqueue(*bsr_ptr);
+      metrics.handle_ul_bsr_indication(*bsr_ptr);
+    }
+  });
 }
 
 void cell_event_manager::handle_ul_phr_indication(const ul_phr_indication_message& phr)
@@ -594,8 +601,12 @@ void cell_event_manager::handle_ul_phr_indication(const ul_phr_indication_messag
   if (phr_ptr == nullptr) {
     return;
   }
-  dispatcher->push("PHR",
-                   [this, phr_ptr = std::move(phr_ptr)]() { cell_group_ev_notifier.on_ul_phr_indication(*phr_ptr); });
+  dispatcher->push("PHR", [this, phr_ptr = std::move(phr_ptr)]() {
+    if (cell_group_ev_notifier.on_ul_phr_indication(*phr_ptr)) {
+      ev_logger.enqueue(*phr_ptr);
+      metrics.handle_ul_phr_indication(*phr_ptr);
+    }
+  });
 }
 
 void cell_event_manager::handle_ul_ta_report_indication(const ul_ta_report_indication_message& ta_report)
@@ -611,7 +622,11 @@ void cell_event_manager::handle_ul_ta_report_indication(const ul_ta_report_indic
 
 void cell_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& ce)
 {
-  dispatcher->push("DL MAC CE", [this, ce]() { cell_group_ev_notifier.on_dl_mac_ce_indication(ce); });
+  dispatcher->push("DL MAC CE", [this, ce]() {
+    if (cell_group_ev_notifier.on_dl_mac_ce_indication(ce)) {
+      ev_logger.enqueue(ce);
+    }
+  });
 }
 
 void cell_event_manager::handle_crnti_ce_received(du_ue_index_t ue_index)
@@ -627,6 +642,7 @@ void cell_event_manager::handle_slice_reconfiguration_request(const du_cell_slic
   }
   dispatcher->push("slice reconfiguration", [this, req_ptr = std::move(req_ptr)]() {
     cell_group_ev_notifier.on_slice_reconfiguration(*req_ptr);
+    ev_logger.enqueue(scheduler_event_logger::slice_reconfiguration_event{req_ptr->cell_index});
   });
 }
 

@@ -13,8 +13,6 @@
 
 namespace ocudu {
 
-class cell_metrics_handler;
-class scheduler_event_logger;
 class uci_scheduler_impl;
 class srs_scheduler;
 class uci_indication_selector;
@@ -30,8 +28,6 @@ struct cell_creation_event {
   srs_scheduler&           srs_sched;
   /// Configured Grant scheduler. Nullptr if CG is not configured for the cell.
   configured_grant_scheduler* cg_sched;
-  cell_metrics_handler&       metrics;
-  scheduler_event_logger&     ev_logger;
   ra_ue_repository&           ra_ue_repo;
 };
 
@@ -39,9 +35,8 @@ class ue_event_manager;
 
 /// Handler of UE events for a given cell.
 class ue_cell_event_manager final : public cell_group_ue_config_handler,
-                                    public ue_feedback_handler,
-                                    public cell_ue_event_notifier,
-                                    public scheduler_dl_buffer_state_indication_handler
+                                    public cell_group_ue_indication_handler,
+                                    public cell_ue_event_notifier
 {
 public:
   ue_cell_event_manager(ue_event_manager&          parent_,
@@ -58,12 +53,13 @@ public:
   bool handle_ue_deactivation_request(du_ue_index_t ue_idx) override;
   void handle_slice_reconfiguration(const du_cell_slice_reconfig_request& req) override;
 
-  // scheduler_feedback_handler methods.
-  void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override;
-  void handle_ul_phr_indication(const ul_phr_indication_message& phr_ind) override;
-  void handle_ul_ta_report_indication(const ul_ta_report_indication_message& ta_report_ind) override;
-  void handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce) override;
-  void handle_crnti_ce_received(du_ue_index_t ue_index) override;
+  // cell_group_ue_indication_handler methods.
+  bool handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override;
+  bool handle_ul_phr_indication(const ul_phr_indication_message& phr_ind) override;
+  bool handle_ul_ta_report_indication(const ul_ta_report_indication_message& ta_report_ind) override;
+  bool handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce) override;
+  bool handle_crnti_ce_received(du_ue_index_t ue_index) override;
+  bool handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& dl_bo) override;
 
   // cell_ue_event_notifier methods.
   void on_cfra_msg3_acked(du_ue_index_t ue_index) override;
@@ -73,9 +69,6 @@ public:
                          time_alignment_group::id_t tag_id,
                          phy_time_unit              n_ta_diff,
                          float                      ul_sinr) override;
-
-  // scheduler_dl_buffer_state_indication_handler methods.
-  void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override;
 
 private:
   /// Log event with invalid UE index.
@@ -96,8 +89,6 @@ private:
   srs_scheduler&            srs_sched;
   /// Configured Grant scheduler. Nullptr if CG is not configured for the cell.
   configured_grant_scheduler* cg_sched;
-  cell_metrics_handler&       metrics;
-  scheduler_event_logger&     ev_logger;
   ra_ue_repository&           ra_ue_repo;
 };
 

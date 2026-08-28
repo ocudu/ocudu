@@ -6,14 +6,11 @@
 #include "../cell/resource_grid.h"
 #include "../common_scheduling/ra_ue_repository.h"
 #include "../config/sched_config_manager.h"
-#include "../logging/cell_metrics_handler.h"
-#include "../logging/scheduler_event_logger.h"
 #include "../srs/srs_scheduler.h"
 #include "../uci_scheduling/uci_indication_selector.h"
 #include "../uci_scheduling/uci_scheduler_impl.h"
 #include "../ue_context/ue_cell_repository.h"
 #include "ocudu/scheduler/scheduler_feedback_handler.h"
-#include "ocudu/support/memory_pool/bounded_object_pool.h"
 #include "fmt/chrono.h"
 #include <memory>
 
@@ -32,8 +29,6 @@ ue_cell_event_manager::ue_cell_event_manager(ue_event_manager&          parent_,
   slice_sched(cell_ev.slice_sched),
   srs_sched(cell_ev.srs_sched),
   cg_sched(cell_ev.cg_sched),
-  metrics(cell_ev.metrics),
-  ev_logger(cell_ev.ev_logger),
   ra_ue_repo(cell_ev.ra_ue_repo)
 {
 }
@@ -198,11 +193,11 @@ bool ue_cell_event_manager::handle_ue_deactivation_request(du_ue_index_t ue_idx)
   return true;
 }
 
-void ue_cell_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message& bsr_ind)
+bool ue_cell_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message& bsr_ind)
 {
   if (not ue_db.contains(bsr_ind.ue_index)) {
     log_invalid_ue_index(bsr_ind.ue_index, "BSR");
-    return;
+    return false;
   }
   auto& u = ue_db[bsr_ind.ue_index];
 
@@ -214,19 +209,7 @@ void ue_cell_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_mes
     fallback_sched.handle_ul_bsr_indication(bsr_ind.ue_index, bsr_ind);
   }
 
-  // Log event.
-  if (ev_logger.enabled()) {
-    scheduler_event_logger::bsr_event event{};
-    event.ue_index             = bsr_ind.ue_index;
-    event.rnti                 = bsr_ind.crnti;
-    event.type                 = bsr_ind.type;
-    event.reported_lcgs        = bsr_ind.reported_lcgs;
-    event.tot_ul_pending_bytes = units::bytes{u.pending_ul_newtx_bytes()};
-    ev_logger.enqueue(event);
-  }
-
-  // Notify metrics handler.
-  metrics.handle_ul_bsr_indication(bsr_ind);
+  return true;
 }
 
 void ue_cell_event_manager::on_conres_ce_acked(du_ue_index_t ue_index)
@@ -263,9 +246,8 @@ void ue_cell_event_manager::on_ul_n_ta_update(du_ue_index_t              ue_inde
                                               phy_time_unit              n_ta_diff,
                                               float                      ul_sinr)
 {
-  // Note: Handled synchronously, so that the measurement is not applied out of order with respect to the later
-  // measurements of the same slot.
   if (not ue_db.contains(ue_index)) {
+    log_invalid_ue_index(ue_index, "N_TA update");
     return;
   }
   ue_db[ue_index].handle_ul_n_ta_update_indication(tag_id, n_ta_diff, ul_sinr);
@@ -289,41 +271,30 @@ void ue_cell_event_manager::on_cfra_msg3_acked(du_ue_index_t ue_index)
   }
 }
 
-void ue_cell_event_manager::handle_ul_phr_indication(const ul_phr_indication_message& phr_ind)
+bool ue_cell_event_manager::handle_ul_phr_indication(const ul_phr_indication_message& phr_ind)
 {
   // Fetch UE objects.
   if (not ue_db.contains(phr_ind.ue_index)) {
     log_invalid_ue_index(phr_ind.ue_index, "PHR");
-    return;
+    return false;
   }
   auto& u = ue_db[phr_ind.ue_index];
 
   for (const cell_ph_report& cell_phr : phr_ind.phr.get_phr()) {
-    ocudu_sanity_check(
-        cell_phr.serv_cell_id < u.nof_cells(), "Invalid serving cell index={}", fmt::underlying(cell_phr.serv_cell_id));
+    ocudu_sanity_check(cell_phr.serv_cell_id < u.nof_cells(), "Invalid serving cell index={}", cell_phr.serv_cell_id);
     auto& ue_cc = u.get_cell(cell_phr.serv_cell_id);
 
     ue_cc.get_pusch_power_controller().handle_phr(cell_phr, phr_ind.slot_rx, phr_ind.rnti);
-
-    // Log event.
-    scheduler_event_logger::phr_event event{};
-    event.ue_index   = phr_ind.ue_index;
-    event.rnti       = phr_ind.rnti;
-    event.cell_index = ue_cc.cell_index;
-    event.ph         = cell_phr.ph;
-    event.p_cmax     = cell_phr.p_cmax;
-    ev_logger.enqueue(event);
   }
 
-  // Notify metrics handler.
-  metrics.handle_ul_phr_indication(phr_ind);
+  return true;
 }
 
-void ue_cell_event_manager::handle_ul_ta_report_indication(const ul_ta_report_indication_message& ta_report)
+bool ue_cell_event_manager::handle_ul_ta_report_indication(const ul_ta_report_indication_message& ta_report)
 {
   if (not ue_db.contains(ta_report.ue_index)) {
     log_invalid_ue_index(ta_report.ue_index, "TA report");
-    return;
+    return false;
   }
   auto& u = ue_db[ta_report.ue_index];
 
@@ -349,13 +320,15 @@ void ue_cell_event_manager::handle_ul_ta_report_indication(const ul_ta_report_in
   }
 
   u.ta_report_tracker().handle_ta_report(ta_report.ul_ta);
+
+  return true;
 }
 
-void ue_cell_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& ce)
+bool ue_cell_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& ce)
 {
   if (not ue_db.contains(ce.ue_index)) {
     log_invalid_ue_index(ce.ue_index, "DL MAC CE");
-    return;
+    return false;
   }
   auto& u = ue_db[ce.ue_index];
 
@@ -366,21 +339,20 @@ void ue_cell_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indicati
                    cfg.cell_index,
                    u.crnti,
                    u.ue_index);
-    return;
+    return false;
   }
 
   // Forward CE to UE instance.
   u.handle_dl_mac_ce_indication(ce);
 
-  // Log event.
-  ev_logger.enqueue(ce);
+  return true;
 }
 
-void ue_cell_event_manager::handle_crnti_ce_received(du_ue_index_t ue_index)
+bool ue_cell_event_manager::handle_crnti_ce_received(du_ue_index_t ue_index)
 {
   if (not ue_db.contains(ue_index)) {
     log_invalid_ue_index(ue_index, "C-RNTI CE received");
-    return;
+    return false;
   }
   auto& u     = ue_db[ue_index];
   auto& ue_cc = u.get_pcell();
@@ -390,7 +362,7 @@ void ue_cell_event_manager::handle_crnti_ce_received(du_ue_index_t ue_index)
                    ue_index,
                    u.crnti,
                    ue_cc.cell_index);
-    return;
+    return false;
   }
 
   if (ue_db.crnti_ce_received(ue_index)) {
@@ -409,13 +381,15 @@ void ue_cell_event_manager::handle_crnti_ce_received(du_ue_index_t ue_index)
       slice_sched.config_applied(ue_index);
     }
   }
+
+  return true;
 }
 
-void ue_cell_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& dl_bo)
+bool ue_cell_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& dl_bo)
 {
   if (not ue_db.contains(dl_bo.ue_index)) {
-    logger.warning("ue={}: Discarding DL buffer occupancy update. Cause: UE not recognized", dl_bo.ue_index);
-    return;
+    log_invalid_ue_index(dl_bo.ue_index, "DL buffer occupancy update");
+    return false;
   }
   ue& u = ue_db[dl_bo.ue_index];
 
@@ -426,20 +400,12 @@ void ue_cell_event_manager::handle_dl_buffer_state_indication(const dl_buffer_st
     fallback_sched.handle_dl_buffer_state_indication(dl_bo.ue_index);
   }
 
-  // Log event.
-  ev_logger.enqueue(dl_bo);
-
-  // Report event.
-  metrics.handle_dl_buffer_state_indication(dl_bo);
+  return true;
 }
 
 void ue_cell_event_manager::handle_slice_reconfiguration(const du_cell_slice_reconfig_request& req)
 {
-  // Handle slice reconfiguration.
   slice_sched.handle_slice_reconfiguration_request(req);
-
-  // Log event.
-  ev_logger.enqueue(scheduler_event_logger::slice_reconfiguration_event{req.cell_index});
 }
 
 void ue_cell_event_manager::log_invalid_ue_index(du_ue_index_t ue_index,

@@ -66,6 +66,34 @@ public:
   virtual void handle_slice_reconfiguration(const du_cell_slice_reconfig_request& req) = 0;
 };
 
+/// \brief Interface used to apply to a cell group the UE indications that a cell dispatched.
+///
+/// The methods return whether the indication was applied, so that the cell that dispatched it can log it and account
+/// for it in its metrics.
+class cell_group_ue_indication_handler
+{
+public:
+  virtual ~cell_group_ue_indication_handler() = default;
+
+  /// Apply a buffer status report of a UE of the cell group.
+  virtual bool handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) = 0;
+
+  /// Apply a power headroom report of a UE of the cell group.
+  virtual bool handle_ul_phr_indication(const ul_phr_indication_message& phr) = 0;
+
+  /// Apply a timing advance report of a UE of the cell group.
+  virtual bool handle_ul_ta_report_indication(const ul_ta_report_indication_message& ta_report) = 0;
+
+  /// Queue a MAC CE for transmission to a UE of the cell group.
+  virtual bool handle_dl_mac_ce_indication(const dl_mac_ce_indication& ce) = 0;
+
+  /// Complete the contention resolution of a UE of the cell group with a received C-RNTI MAC CE.
+  virtual bool handle_crnti_ce_received(du_ue_index_t ue_index) = 0;
+
+  /// Apply a downlink buffer occupancy update of a bearer of a UE of the cell group.
+  virtual bool handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& dl_bo) = 0;
+};
+
 /// \brief Interface through which a cell notifies the events that its cell group has to handle.
 ///
 /// The cell dispatches them; the cell group handles them synchronously.
@@ -88,25 +116,25 @@ public:
   virtual bool on_ue_deactivation_request(du_ue_index_t ue_idx) = 0;
 
   /// A buffer status report of the UE was received.
-  virtual void on_ul_bsr_indication(const ul_bsr_indication_message& bsr) = 0;
+  virtual bool on_ul_bsr_indication(const ul_bsr_indication_message& bsr) = 0;
 
   /// A power headroom report of the UE was received.
-  virtual void on_ul_phr_indication(const ul_phr_indication_message& phr) = 0;
+  virtual bool on_ul_phr_indication(const ul_phr_indication_message& phr) = 0;
 
   /// A timing advance report of the UE was received.
-  virtual void on_ul_ta_report_indication(const ul_ta_report_indication_message& ta_report) = 0;
+  virtual bool on_ul_ta_report_indication(const ul_ta_report_indication_message& ta_report) = 0;
 
   /// A MAC CE is pending transmission to the UE.
-  virtual void on_dl_mac_ce_indication(const dl_mac_ce_indication& ce) = 0;
+  virtual bool on_dl_mac_ce_indication(const dl_mac_ce_indication& ce) = 0;
 
   /// A C-RNTI MAC CE of the UE was received.
-  virtual void on_crnti_ce_received(du_ue_index_t ue_index) = 0;
+  virtual bool on_crnti_ce_received(du_ue_index_t ue_index) = 0;
 
   /// The slices of the cell were reconfigured.
   virtual void on_slice_reconfiguration(const du_cell_slice_reconfig_request& req) = 0;
 
   /// The downlink buffer occupancy of a bearer of the UE changed.
-  virtual void on_dl_buffer_state_indication(const dl_buffer_state_indication_message& dl_bo) = 0;
+  virtual bool on_dl_buffer_state_indication(const dl_buffer_state_indication_message& dl_bo) = 0;
 };
 
 /// \brief Relays the notifications of a cell to the UE scheduler.
@@ -117,15 +145,13 @@ class cell_ue_event_relay final : public cell_group_event_notifier
 {
 public:
   /// Set the handlers that the cell notifications and UE configuration requests are relayed to.
-  void connect(cell_ue_event_notifier&                       notifier,
-               cell_group_ue_config_handler&                 ue_configurator,
-               ue_feedback_handler&                          ue_fb_handler,
-               scheduler_dl_buffer_state_indication_handler& ue_dl_bo_handler)
+  void connect(cell_ue_event_notifier&           notifier,
+               cell_group_ue_config_handler&     ue_configurator,
+               cell_group_ue_indication_handler& ue_ind_handler)
   {
     handler        = &notifier;
     ue_cfg_handler = &ue_configurator;
-    fb_handler     = &ue_fb_handler;
-    dl_bo_handler  = &ue_dl_bo_handler;
+    ind_handler    = &ue_ind_handler;
   }
 
   void on_cfra_msg3_acked(du_ue_index_t ue_index) override
@@ -184,39 +210,29 @@ public:
     }
   }
 
-  void on_ul_bsr_indication(const ul_bsr_indication_message& bsr) override
+  bool on_ul_bsr_indication(const ul_bsr_indication_message& bsr) override
   {
-    if (fb_handler != nullptr) {
-      fb_handler->handle_ul_bsr_indication(bsr);
-    }
+    return ind_handler != nullptr and ind_handler->handle_ul_bsr_indication(bsr);
   }
 
-  void on_ul_phr_indication(const ul_phr_indication_message& phr) override
+  bool on_ul_phr_indication(const ul_phr_indication_message& phr) override
   {
-    if (fb_handler != nullptr) {
-      fb_handler->handle_ul_phr_indication(phr);
-    }
+    return ind_handler != nullptr and ind_handler->handle_ul_phr_indication(phr);
   }
 
-  void on_ul_ta_report_indication(const ul_ta_report_indication_message& ta_report) override
+  bool on_ul_ta_report_indication(const ul_ta_report_indication_message& ta_report) override
   {
-    if (fb_handler != nullptr) {
-      fb_handler->handle_ul_ta_report_indication(ta_report);
-    }
+    return ind_handler != nullptr and ind_handler->handle_ul_ta_report_indication(ta_report);
   }
 
-  void on_dl_mac_ce_indication(const dl_mac_ce_indication& ce) override
+  bool on_dl_mac_ce_indication(const dl_mac_ce_indication& ce) override
   {
-    if (fb_handler != nullptr) {
-      fb_handler->handle_dl_mac_ce_indication(ce);
-    }
+    return ind_handler != nullptr and ind_handler->handle_dl_mac_ce_indication(ce);
   }
 
-  void on_crnti_ce_received(du_ue_index_t ue_index) override
+  bool on_crnti_ce_received(du_ue_index_t ue_index) override
   {
-    if (fb_handler != nullptr) {
-      fb_handler->handle_crnti_ce_received(ue_index);
-    }
+    return ind_handler != nullptr and ind_handler->handle_crnti_ce_received(ue_index);
   }
 
   void on_slice_reconfiguration(const du_cell_slice_reconfig_request& req) override
@@ -226,19 +242,15 @@ public:
     }
   }
 
-  void on_dl_buffer_state_indication(const dl_buffer_state_indication_message& dl_bo) override
+  bool on_dl_buffer_state_indication(const dl_buffer_state_indication_message& dl_bo) override
   {
-    if (dl_bo_handler != nullptr) {
-      dl_bo_handler->handle_dl_buffer_state_indication(dl_bo);
-    }
+    return ind_handler != nullptr and ind_handler->handle_dl_buffer_state_indication(dl_bo);
   }
 
 private:
-  cell_ue_event_notifier*       handler        = nullptr;
-  cell_group_ue_config_handler* ue_cfg_handler = nullptr;
-  ue_feedback_handler*          fb_handler     = nullptr;
-
-  scheduler_dl_buffer_state_indication_handler* dl_bo_handler = nullptr;
+  cell_ue_event_notifier*           handler        = nullptr;
+  cell_group_ue_config_handler*     ue_cfg_handler = nullptr;
+  cell_group_ue_indication_handler* ind_handler    = nullptr;
 };
 
 } // namespace ocudu
