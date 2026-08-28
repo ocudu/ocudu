@@ -167,3 +167,81 @@ TEST(uci_part2_size_calculator, basic_four_ports)
     ASSERT_EQ(csi_part2_size, units::bits(3));
   }
 }
+
+// Test that a CSI Part 2 size description is rejected if there is no CSI Part 1 payload to derive the size from.
+TEST(uci_part2_size_calculator, empty_part1_payload)
+{
+  ASSERT_FALSE(uci_part2_size_description(4).is_valid(0));
+
+  // A description without entries does not derive any size from CSI Part 1.
+  ASSERT_TRUE(uci_part2_size_description(0).is_valid(0));
+}
+
+// Test that a parameter ending exactly at the last CSI Part 1 bit is accepted and read correctly.
+//
+// The description reads a single parameter placed at the end of a four-bit CSI Part 1, i.e. the parameter occupies the
+// last two bits.
+TEST(uci_part2_size_calculator, parameter_ends_at_last_part1_bit)
+{
+  static constexpr unsigned csi_part1_size = 4;
+  static constexpr unsigned param_width    = 2;
+  static constexpr unsigned param_offset   = csi_part1_size - param_width;
+
+  // Create a description with a single parameter that ends at the last CSI Part 1 bit.
+  uci_part2_size_description             description = {};
+  uci_part2_size_description::entry&     entry       = description.entries.emplace_back();
+  uci_part2_size_description::parameter& parameter   = entry.parameters.emplace_back();
+  parameter.offset                                   = param_offset;
+  parameter.width                                    = param_width;
+
+  // Map each parameter value onto a distinct CSI Part 2 size. The sizes are arbitrary.
+  entry.map.assign({10, 11, 12, 13});
+
+  // The parameter ends at the last CSI Part 1 bit.
+  ASSERT_TRUE(description.is_valid(csi_part1_size));
+
+  // Each parameter value must select its CSI Part 2 size.
+  uci_payload_type csi_part1(csi_part1_size);
+
+  // Parameter value 0, i.e. bits 0b00.
+  csi_part1.set(param_offset, false);
+  csi_part1.set(param_offset + 1, false);
+  ASSERT_EQ(uci_part2_get_size(csi_part1, description), units::bits(10));
+
+  // Parameter value 1, i.e. bits 0b01.
+  csi_part1.set(param_offset, false);
+  csi_part1.set(param_offset + 1, true);
+  ASSERT_EQ(uci_part2_get_size(csi_part1, description), units::bits(11));
+
+  // Parameter value 2, i.e. bits 0b10.
+  csi_part1.set(param_offset, true);
+  csi_part1.set(param_offset + 1, false);
+  ASSERT_EQ(uci_part2_get_size(csi_part1, description), units::bits(12));
+
+  // Parameter value 3, i.e. bits 0b11.
+  csi_part1.set(param_offset, true);
+  csi_part1.set(param_offset + 1, true);
+  ASSERT_EQ(uci_part2_get_size(csi_part1, description), units::bits(13));
+}
+
+// Test that a parameter exceeding the CSI Part 1 size is rejected.
+TEST(uci_part2_size_calculator, parameter_exceeds_part1_size)
+{
+  static constexpr unsigned csi_part1_size = 8;
+
+  // Create a description with a single parameter that reads one bit past the end of the CSI Part 1.
+  uci_part2_size_description             description = {};
+  uci_part2_size_description::entry&     entry       = description.entries.emplace_back();
+  uci_part2_size_description::parameter& parameter   = entry.parameters.emplace_back();
+  parameter.offset                                   = 6;
+  parameter.width                                    = 3;
+
+  // Set the appropriate map size, so the only reason to reject the Part 2 description is its incorrect size.
+  entry.map.resize(1 << parameter.width);
+
+  // The description itself is coherent, i.e. it is accepted for a CSI Part 1 that fits the parameter.
+  ASSERT_TRUE(description.is_valid(parameter.offset + parameter.width));
+
+  // It must fail if the Part 2 description is not appropriate for the Part 1 size.
+  ASSERT_FALSE(description.is_valid(csi_part1_size));
+}
