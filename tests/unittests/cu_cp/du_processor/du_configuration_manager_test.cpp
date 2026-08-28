@@ -175,3 +175,130 @@ TEST_F(du_configuration_manager_test, when_du_has_different_plmn_then_setup_fail
   ASSERT_EQ(du_cfg_mng.nof_dus(), 0);
   fmt::print("DU creation failed with error: {}\n", ret.error().cause_str);
 }
+
+/// Builds a served cell, optionally reporting \c mapped_nci as the Mapped Cell ID of its single area.
+static du_cell_configuration create_cell(uint64_t nci, std::optional<uint64_t> mapped_nci = std::nullopt)
+{
+  du_cell_configuration cell;
+  cell.cgi.plmn_id = plmn_identity::test_value();
+  cell.cgi.nci     = nr_cell_identity::create(nci).value();
+  cell.tac         = 7;
+  if (mapped_nci.has_value()) {
+    ntn_location_area area;
+    area.tac        = 7;
+    area.mapped_nci = nr_cell_identity::create(mapped_nci.value()).value();
+    area.lat_min    = 50.0;
+    area.lat_max    = 52.0;
+    area.lon_min    = 14.0;
+    area.lon_max    = 17.0;
+    cell.location_mapping.location_areas.push_back(area);
+  }
+  return cell;
+}
+
+static nr_cell_global_id_t make_cgi(uint64_t nci)
+{
+  return {plmn_identity::test_value(), nr_cell_identity::create(nci).value()};
+}
+
+TEST(du_configuration_context_test, cell_is_found_by_its_own_cgi)
+{
+  du_configuration_context ctxt;
+  ctxt.served_cells.push_back(create_cell(0x66c000, 0x66c001));
+
+  const std::vector<const du_cell_configuration*> cells = ctxt.find_cells_by_reported_cgi(make_cgi(0x66c000));
+  ASSERT_EQ(cells.size(), 1);
+  EXPECT_EQ(cells[0]->cgi.nci.value(), 0x66c000);
+}
+
+TEST(du_configuration_context_test, cell_is_found_by_a_mapped_cell_id_it_reports)
+{
+  du_configuration_context ctxt;
+  ctxt.served_cells.push_back(create_cell(0x66c000, 0x66c001));
+
+  // The core names the cell by the identity the gNB reported for it, TS 38.300 sec. 16.14.5.
+  const std::vector<const du_cell_configuration*> cells = ctxt.find_cells_by_reported_cgi(make_cgi(0x66c001));
+  ASSERT_EQ(cells.size(), 1);
+  EXPECT_EQ(cells[0]->cgi.nci.value(), 0x66c000) << "the cell must be returned under its own identity";
+}
+
+TEST(du_configuration_context_test, a_cell_is_found_by_every_mapped_cell_id_its_areas_name)
+{
+  // TS 38.300 sec. 16.14.5 NOTE 2 lets Mapped Cell IDs name different geographical areas, so the areas of one cell may
+  // name several. A warning area naming any of them has to reach the cell.
+  du_configuration_context ctxt;
+  du_cell_configuration    cell = create_cell(0x66c000, 0x66c001);
+  ntn_location_area        second_area;
+  second_area.tac        = 8;
+  second_area.mapped_nci = nr_cell_identity::create(0x66c002).value();
+  second_area.lat_min    = 52.0;
+  second_area.lat_max    = 54.0;
+  second_area.lon_min    = 14.0;
+  second_area.lon_max    = 17.0;
+  cell.location_mapping.location_areas.push_back(second_area);
+  ctxt.served_cells.push_back(cell);
+
+  const std::vector<const du_cell_configuration*> first = ctxt.find_cells_by_reported_cgi(make_cgi(0x66c001));
+  ASSERT_EQ(first.size(), 1);
+  EXPECT_EQ(first[0]->cgi.nci.value(), 0x66c000);
+
+  const std::vector<const du_cell_configuration*> second = ctxt.find_cells_by_reported_cgi(make_cgi(0x66c002));
+  ASSERT_EQ(second.size(), 1);
+  EXPECT_EQ(second[0]->cgi.nci.value(), 0x66c000) << "the second area names the cell just as the first does";
+}
+
+TEST(du_configuration_context_test, a_cell_without_a_mapping_is_found_by_its_own_cgi_alone)
+{
+  du_configuration_context ctxt;
+  ctxt.served_cells.push_back(create_cell(0x66c000));
+
+  EXPECT_EQ(ctxt.find_cells_by_reported_cgi(make_cgi(0x66c000)).size(), 1);
+  EXPECT_TRUE(ctxt.find_cells_by_reported_cgi(make_cgi(0x66c001)).empty());
+}
+
+TEST(du_configuration_context_test, a_mapped_cell_id_of_another_plmn_finds_no_cell)
+{
+  du_configuration_context ctxt;
+  ctxt.served_cells.push_back(create_cell(0x66c000, 0x66c001));
+
+  const nr_cell_global_id_t foreign{plmn_identity::parse("00102").value(), nr_cell_identity::create(0x66c001).value()};
+  EXPECT_TRUE(ctxt.find_cells_by_reported_cgi(foreign).empty());
+}
+
+TEST(du_configuration_context_test, an_unknown_identity_finds_no_cell)
+{
+  du_configuration_context ctxt;
+  ctxt.served_cells.push_back(create_cell(0x66c000, 0x66c001));
+
+  EXPECT_TRUE(ctxt.find_cells_by_reported_cgi(make_cgi(0x66c009)).empty());
+}
+
+TEST(du_configuration_context_test, every_cell_covering_a_mapped_cell_id_is_found)
+{
+  // TS 38.300 sec. 16.14.5 leaves the mapping between a Mapped Cell ID and its geographical area to configuration, so
+  // more than one cell may cover the area and report the same identity. A warning area naming it has to reach all of
+  // them, not the first one alone.
+  du_configuration_context ctxt;
+  ctxt.served_cells.push_back(create_cell(0x66c000, 0x66c0ff));
+  ctxt.served_cells.push_back(create_cell(0x66c001, 0x66c0ff));
+
+  const std::vector<const du_cell_configuration*> cells = ctxt.find_cells_by_reported_cgi(make_cgi(0x66c0ff));
+  ASSERT_EQ(cells.size(), 2);
+  EXPECT_EQ(cells[0]->cgi.nci.value(), 0x66c000);
+  EXPECT_EQ(cells[1]->cgi.nci.value(), 0x66c001);
+}
+
+TEST(du_configuration_context_test, a_mapped_cell_id_equal_to_the_uu_cell_id_of_another_cell_finds_both)
+{
+  // Nothing keeps a Mapped Cell ID clear of the Uu Cell ID of a served cell: it names an area agreed between RAN and
+  // core, and TS 38.300 sec. 16.14.5 NOTE 3 even allows special values for it. Stopping at the cell whose Uu Cell ID
+  // matches would leave the cell covering the area unserved.
+  du_configuration_context ctxt;
+  ctxt.served_cells.push_back(create_cell(0x66c000));
+  ctxt.served_cells.push_back(create_cell(0x66c001, 0x66c000));
+
+  const std::vector<const du_cell_configuration*> cells = ctxt.find_cells_by_reported_cgi(make_cgi(0x66c000));
+  ASSERT_EQ(cells.size(), 2);
+  EXPECT_EQ(cells[0]->cgi.nci.value(), 0x66c000) << "the cell the identity names directly";
+  EXPECT_EQ(cells[1]->cgi.nci.value(), 0x66c001) << "the cell reporting it as its Mapped Cell ID";
+}

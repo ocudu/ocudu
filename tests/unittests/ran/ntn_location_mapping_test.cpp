@@ -136,6 +136,38 @@ TEST(ntn_location_mapping_test, empty_mapping_yields_no_mapped_cell_id)
   EXPECT_FALSE(derive_mapped_cell_id_from_location(ntn_location_mapping{}, {51.0, 15.0}).has_value());
 }
 
+TEST(ntn_location_mapping_test, a_configured_mapped_cell_id_is_reported_by_the_mapping)
+{
+  // The reverse question of the derivation: the core names a cell by the identity the gNB reported for it, so the
+  // mapping has to recognise its own, TS 38.300 sec. 16.14.5.
+  EXPECT_TRUE(make_mapping().reports_mapped_cell_id(nr_cell_identity::create(mapped_cell_id).value()));
+}
+
+TEST(ntn_location_mapping_test, every_mapped_cell_id_the_areas_name_is_reported_by_the_mapping)
+{
+  // TS 38.300 sec. 16.14.5 NOTE 2 lets Mapped Cell IDs name different geographical areas, so the areas of one cell may
+  // name several. The core may then address the cell by any of them.
+  ntn_location_mapping mapping;
+  mapping.location_areas = {make_area(7, 50.0, 52.0, 14.0, 17.0, mapped_cell_id),
+                            make_area(8, 52.0, 54.0, 14.0, 17.0, second_mapped_cell_id)};
+
+  EXPECT_TRUE(mapping.reports_mapped_cell_id(nr_cell_identity::create(mapped_cell_id).value()));
+  EXPECT_TRUE(mapping.reports_mapped_cell_id(nr_cell_identity::create(second_mapped_cell_id).value()));
+}
+
+TEST(ntn_location_mapping_test, an_unconfigured_mapped_cell_id_is_not_reported_by_the_mapping)
+{
+  EXPECT_FALSE(make_mapping().reports_mapped_cell_id(nr_cell_identity::create(0x66c009).value()));
+}
+
+TEST(ntn_location_mapping_test, a_mapping_without_mapped_cell_ids_reports_none)
+{
+  ntn_location_mapping mapping;
+  mapping.location_areas = {make_area(7, 50.0, 52.0, 14.0, 17.0)};
+
+  EXPECT_FALSE(mapping.reports_mapped_cell_id(nr_cell_identity::create(mapped_cell_id).value()));
+}
+
 TEST(ntn_location_mapping_test, an_area_yields_both_the_tac_and_the_mapped_cell_id_it_configures)
 {
   // A Mapped Cell ID names a geographical area agreed with the core network, so like the derived TAC it is not
