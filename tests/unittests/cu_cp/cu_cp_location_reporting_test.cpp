@@ -333,14 +333,39 @@ TEST_F(cu_cp_location_reporting_test,
 
 namespace {
 
-cu_cp_user_location_info_nr make_uli(std::optional<tac_t> derived_tac = std::nullopt)
+/// Builds a User Location Information for a cell, optionally reporting a Mapped Cell ID and a derived TAC for the UE.
+cu_cp_user_location_info_nr make_uli(uint64_t                uu_nci,
+                                     std::optional<uint64_t> mapped_nci  = std::nullopt,
+                                     std::optional<tac_t>    derived_tac = std::nullopt)
 {
   cu_cp_user_location_info_nr uli;
   uli.nr_cgi.plmn_id          = plmn_identity::test_value();
-  uli.nr_cgi.nci              = nr_cell_identity::create(0x66c000).value();
+  uli.nr_cgi.nci              = nr_cell_identity::create(uu_nci).value();
   uli.tai                     = {plmn_identity::test_value(), 7};
   uli.ue_location_derived_tac = derived_tac;
+  if (mapped_nci.has_value()) {
+    uli.mapped_nci = nr_cell_identity::create(mapped_nci.value()).value();
+  }
   return uli;
+}
+
+/// Reports the UE presence in an Area of Interest holding \c aoi_nci alone.
+ue_presence presence_in_area_of(uint64_t aoi_nci, const cu_cp_user_location_info_nr& uli)
+{
+  area_of_interest aoi;
+  aoi.cell_list.push_back({plmn_identity::test_value(), nr_cell_identity::create(aoi_nci).value()});
+
+  ue_location_manager_cfg cfg;
+  cfg.report_ue_presence_in_aoi = true;
+  cfg.area_of_interest_list.emplace(1, aoi);
+
+  ue_location_manager mng;
+  mng.set_config(cfg);
+
+  const location_report report = mng.get_direct_location_report(cu_cp_ue_index_t::min, uli, location_report_request{});
+  EXPECT_TRUE(report.ue_presence_in_area_of_interest_list.has_value());
+  EXPECT_EQ(report.ue_presence_in_area_of_interest_list->size(), 1);
+  return report.ue_presence_in_area_of_interest_list->front().ue_presence_in_aio;
 }
 
 /// Reports the second of two consecutive locations, with change_of_serve_cell reporting alone active.
@@ -361,7 +386,7 @@ std::optional<location_report> report_after(const cu_cp_user_location_info_nr& f
 
 TEST(cu_cp_location_change_test, an_unchanged_location_is_not_reported_again)
 {
-  const cu_cp_user_location_info_nr uli = make_uli(9);
+  const cu_cp_user_location_info_nr uli = make_uli(0x66c000, std::nullopt, 9);
 
   EXPECT_FALSE(report_after(uli, uli).has_value());
 }
@@ -370,8 +395,33 @@ TEST(cu_cp_location_change_test, a_changed_derived_tac_is_reported_without_a_cha
 {
   // The UE moved into another area of the same cell, so the TAC reported to the AMF changed while the serving cell
   // did not.
-  const std::optional<location_report> report = report_after(make_uli(9), make_uli(8));
+  const std::optional<location_report> report =
+      report_after(make_uli(0x66c000, std::nullopt, 9), make_uli(0x66c000, std::nullopt, 8));
   ASSERT_TRUE(report.has_value());
   ASSERT_TRUE(report->user_location_info.ue_location_derived_tac.has_value());
   EXPECT_EQ(report->user_location_info.ue_location_derived_tac.value(), 8);
+}
+
+TEST(cu_cp_area_of_interest_test, ue_is_inside_an_area_naming_the_mapped_cell_id_it_reports)
+{
+  // TS 38.300 sec. 16.14.5: the AMF names the cells of an Area of Interest by the Mapped Cell ID the gNB reports, so
+  // matching the Uu Cell ID of the serving cell would place the UE outside every area.
+  EXPECT_EQ(presence_in_area_of(0x66c0ff, make_uli(0x66c000, 0x66c0ff)), ue_presence::in);
+}
+
+TEST(cu_cp_area_of_interest_test, ue_is_outside_an_area_naming_the_uu_cell_id_it_no_longer_reports)
+{
+  // Once a Mapped Cell ID applies, it is the identity the core knows the UE by.
+  EXPECT_EQ(presence_in_area_of(0x66c000, make_uli(0x66c000, 0x66c0ff)), ue_presence::out);
+}
+
+TEST(cu_cp_area_of_interest_test, ue_is_inside_an_area_naming_the_uu_cell_id_without_a_mapped_cell_id)
+{
+  // A terrestrial cell, or an NTN cell whose UE location is unknown, keeps reporting its Uu Cell ID.
+  EXPECT_EQ(presence_in_area_of(0x66c000, make_uli(0x66c000)), ue_presence::in);
+}
+
+TEST(cu_cp_area_of_interest_test, ue_is_outside_an_area_naming_an_unrelated_cell)
+{
+  EXPECT_EQ(presence_in_area_of(0x66c0fe, make_uli(0x66c000, 0x66c0ff)), ue_presence::out);
 }
