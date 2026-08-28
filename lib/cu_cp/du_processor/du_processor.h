@@ -70,6 +70,11 @@ public:
   /// activate_cell path needs to find cells that were previously deactivated, hence this variant.
   virtual bool has_cell_any_state(nr_cell_global_id_t cgi) = 0;
 
+  /// \brief PCI-keyed variant of has_cell_any_state(). Lets the mobility path recognize a handover
+  /// target that this CU-CP owns but keeps administratively deactivated, instead of mistaking it
+  /// for another gNB's cell.
+  virtual bool has_cell_any_state(pci_t pci) = 0;
+
   /// \brief Get DU configuration context.
   virtual const du_configuration_context* get_context() const = 0;
 };

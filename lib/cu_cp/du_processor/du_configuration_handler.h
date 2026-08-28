@@ -50,6 +50,18 @@ struct du_configuration_context {
         deactivated_cells.begin(), deactivated_cells.end(), [&cgi](const auto& c) { return c.cgi == cgi; });
     return it != deactivated_cells.end() ? &(*it) : nullptr;
   }
+  /// PCI-keyed variant of the above. Used by the mobility path to distinguish a locally-owned but
+  /// administratively deactivated cell (handover target must be rejected) from a PCI this CU-CP does
+  /// not know at all (inter-CU handover candidate).
+  const du_cell_configuration* find_cell_any_state(pci_t pci) const
+  {
+    if (auto* c = find_cell(pci); c != nullptr) {
+      return c;
+    }
+    auto it = std::find_if(
+        deactivated_cells.begin(), deactivated_cells.end(), [&pci](const auto& c) { return c.pci == pci; });
+    return it != deactivated_cells.end() ? &(*it) : nullptr;
+  }
 };
 
 class du_configuration_handler

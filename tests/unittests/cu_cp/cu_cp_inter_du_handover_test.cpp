@@ -5,14 +5,19 @@
 #include "cu_cp_test_environment.h"
 #include "tests/test_doubles/e1ap/e1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
+#include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/test_doubles/ngap/ngap_test_message_validators.h"
 #include "tests/test_doubles/rrc/rrc_test_message_validators.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
 #include "ocudu/adt/format.h"
+#include "ocudu/asn1/f1ap/common.h"
+#include "ocudu/asn1/f1ap/f1ap.h"
+#include "ocudu/asn1/f1ap/f1ap_pdu_contents.h"
 #include "ocudu/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "ocudu/asn1/ngap/ngap_pdu_contents.h"
+#include "ocudu/cu_cp/cu_cp_cell_command_handler.h"
 #include "ocudu/e1ap/common/e1ap_types.h"
 #include "ocudu/f1ap/f1ap_message.h"
 #include "ocudu/f1ap/f1ap_ue_id_types.h"
@@ -503,6 +508,70 @@ TEST_F(cu_cp_inter_du_handover_test, when_controller_triggered_ho_succeeds_then_
 
   // STATUS: UE should be removed from source DU.
   ASSERT_EQ(report.ues.size(), 1) << "UE should be removed";
+}
+
+TEST_F(cu_cp_inter_du_handover_test, when_target_cell_is_deactivated_then_ho_is_rejected_and_ue_stays_reconfigurable)
+{
+  // Administratively lock the target cell (graceful stop: bar update, then deactivation update; no
+  // UEs are attached at the target, so the release stage is empty).
+  cu_cp_cell_command_handler& cell_cmd = get_cu_cp().get_command_handler().get_cell_command_handler();
+  nr_cell_global_id_t         target_cgi{target_cell_info.plmn_id, target_cell_info.nci};
+
+  auto ack_next_cu_cfg_upd = [this]() {
+    f1ap_message upd;
+    if (!wait_for_f1ap_tx_pdu(target_du_idx, upd)) {
+      return false;
+    }
+    if (upd.pdu.type().value != asn1::f1ap::f1ap_pdu_c::types::init_msg ||
+        upd.pdu.init_msg().proc_code != ASN1_F1AP_ID_GNB_CU_CFG_UPD) {
+      return false;
+    }
+    f1ap_message ack = test_helpers::generate_gnb_cu_configuration_update_acknowledgement({});
+    ack.pdu.successful_outcome().value.gnb_cu_cfg_upd_ack()->transaction_id =
+        upd.pdu.init_msg().value.gnb_cu_cfg_upd()->transaction_id;
+    get_du(target_du_idx).push_ul_pdu(ack);
+    return true;
+  };
+
+  {
+    launched_cu_cp_task<cu_cp_cell_command_response> lock{*this,
+                                                          [&]() { return cell_cmd.deactivate_cell(target_cgi); }};
+    ASSERT_TRUE(ack_next_cu_cfg_upd()) << "no bar update emitted by the lock";
+    ASSERT_TRUE(ack_next_cu_cfg_upd()) << "no deactivation update emitted by the lock";
+    ASSERT_TRUE(wait_for_task_result(lock).success);
+  }
+
+  // A handover towards the deactivated cell is rejected outright: no UE Context Setup reaches the
+  // target DU, no inter-CU preparation goes out towards the AMF, and the handover machinery is
+  // never entered.
+  get_cu_cp().get_command_handler().get_mobility_command_handler().trigger_handover(
+      source_cell_info.pci, ue_ctx->crnti, target_cell_info.pci, target_cell_info.plmn_id, target_cell_info.tac);
+  f1ap_message rejected_f1ap_pdu;
+  ASSERT_FALSE(this->wait_for_f1ap_tx_pdu(target_du_idx, rejected_f1ap_pdu, std::chrono::milliseconds{100}));
+  ngap_message rejected_ngap_pdu;
+  ASSERT_FALSE(this->wait_for_ngap_tx_pdu(rejected_ngap_pdu, std::chrono::milliseconds{100}));
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.mobility.nof_handover_executions_requested, 0U);
+
+  // The rejection must not leave the UE unreconfigurable: unlock the cell and the same handover now
+  // runs to completion.
+  {
+    launched_cu_cp_task<cu_cp_cell_command_response> unlock{*this,
+                                                            [&]() { return cell_cmd.activate_cell(target_cgi); }};
+    ASSERT_TRUE(ack_next_cu_cfg_upd()) << "unlock did not emit an activation update";
+    ASSERT_TRUE(wait_for_task_result(unlock).success);
+  }
+  ASSERT_TRUE(trigger_handover_manually_and_await_ue_context_setup_request());
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_ue_context_modification_request());
+  ASSERT_TRUE(send_ue_context_modification_response(source_du_idx));
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_bearer_context_modification_request());
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_ue_context_modification_request());
+  ASSERT_TRUE(send_ue_context_modification_response_and_await_ue_context_release_command());
+  ASSERT_TRUE(send_f1ap_ue_context_release_complete(source_du_idx));
+
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.mobility.nof_handover_executions_requested, 1U);
+  ASSERT_EQ(report.mobility.nof_successful_handover_executions, 1U);
 }
 
 /// Fixture that attaches the UE with cell-change location reporting configured via Initial Context Setup.

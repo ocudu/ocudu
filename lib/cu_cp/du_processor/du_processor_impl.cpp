@@ -533,6 +533,11 @@ bool du_processor_impl::has_cell_any_state(nr_cell_global_id_t cgi)
   return du_cfg_hdlr->get_context().find_cell_any_state(cgi) != nullptr;
 }
 
+bool du_processor_impl::has_cell_any_state(pci_t pci)
+{
+  return du_cfg_hdlr->get_context().find_cell_any_state(pci) != nullptr;
+}
+
 async_task<f1ap_gnb_cu_configuration_update_response>
 du_processor_impl::handle_configuration_update(const f1ap_gnb_cu_configuration_update& request)
 {

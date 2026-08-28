@@ -46,6 +46,7 @@ public:
   bool                            has_cell(pci_t pci) override;
   bool                            has_cell(nr_cell_global_id_t cgi) override;
   bool                            has_cell_any_state(nr_cell_global_id_t cgi) override;
+  bool                            has_cell_any_state(pci_t pci) override;
   const du_configuration_context* get_context() const override
   {
     return du_cfg_hdlr->has_context() ? &du_cfg_hdlr->get_context() : nullptr;

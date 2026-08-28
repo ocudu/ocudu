@@ -72,6 +72,10 @@ public:
   /// activate command. find_du(cgi) only searches served cells and would miss locked ones.
   cu_cp_du_index_t find_du_any_state(const nr_cell_global_id_t& cgi);
 
+  /// \brief PCI-keyed variant of find_du_any_state(). Lets the mobility path recognize a handover
+  /// target that a local DU hosts in deactivated state instead of treating the PCI as foreign.
+  cu_cp_du_index_t find_du_any_state(pci_t pci);
+
   /// \brief Find a DU object.
   /// \param[in] du_index The index of the DU processor object.
   /// \return A pointer to the DU processor object, nullptr if the DU processor object is not found.

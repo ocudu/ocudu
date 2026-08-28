@@ -292,23 +292,31 @@ void mobility_manager::handle_handover(cu_cp_ue_index_t     ue_index,
     return;
   }
 
-  // Handover is going ahead.
-
-  // Disable new reconfigurations from now on (except for the Handover Command).
-  ue_ctxt.reconfiguration_disabled = true;
-
-  // Try to find target DU. If it is not found, it means that the target cell is not managed by this CU-CP and
-  // an inter-CU handover is required.
+  // Try to find target DU. A PCI no local DU serves is either a cell this CU-CP owns but keeps
+  // administratively deactivated (the handover must be rejected — the cell is not available) or a
+  // genuinely foreign cell (an inter-CU handover is required). The reconfiguration guard is only set
+  // once a handover actually goes ahead, so a rejected target leaves the UE reconfigurable.
   cu_cp_du_index_t target_du = du_db.find_du(neighbor_pci);
   if (target_du == cu_cp_du_index_t::invalid) {
+    if (du_db.find_du_any_state(neighbor_pci) != cu_cp_du_index_t::invalid) {
+      logger.warning("ue={}: Ignoring Handover Request. Cause: Target cell with pci={} is administratively deactivated",
+                     ue_index,
+                     neighbor_pci);
+      return;
+    }
     logger.debug("ue={}: Requesting inter CU handover. No local DU/cell with pci={} found", ue_index, neighbor_pci);
     if (!neighbor_tac.has_value()) {
       logger.error("ue={}: Cannot trigger inter-CU handover. Target TAC is required but not set", ue_index);
       return;
     }
+    // Disable new reconfigurations from now on (except for the Handover Command).
+    ue_ctxt.reconfiguration_disabled = true;
     handle_inter_cu_handover(ue_index, neighbor_gnb_id, neighbor_plmn, neighbor_tac.value(), neighbor_nci);
     return;
   }
+
+  // Disable new reconfigurations from now on (except for the Handover Command).
+  ue_ctxt.reconfiguration_disabled = true;
 
   cu_cp_du_index_t source_du = ue_mng.find_du_ue(ue_index)->get_du_index();
 
