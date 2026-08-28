@@ -78,12 +78,6 @@ private:
 
     void run_slot(slot_point sl_tx) override { parent.run_slot_impl(sl_tx); }
 
-    void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& slice_reconf_req) override
-    {
-      ev_mng->handle_slice_reconfiguration_request(slice_reconf_req);
-    }
-
-    ue_feedback_handler&                          get_feedback_handler() override { return *ev_mng; }
     scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler() override { return *ev_mng; }
 
     void start() override { parent.do_start_cell(cell_res_alloc->cfg.cell_index); }

@@ -44,7 +44,9 @@ struct uci_indication;
 ///
 /// Events are enqueued from any executor and processed at the start of the cell slot indication, so that their
 /// handling runs in the cell scheduler executor.
-class cell_event_manager final : public scheduler_cell_positioning_handler, public sched_ue_configuration_handler
+class cell_event_manager final : public scheduler_cell_positioning_handler,
+                                 public sched_ue_configuration_handler,
+                                 public ue_feedback_handler
 {
 public:
   cell_event_manager(const cell_configuration&      cell_cfg,
@@ -105,6 +107,16 @@ public:
   void handle_ue_deletion(ue_config_delete_event ev) override;
   void handle_ue_config_applied(du_ue_index_t ue_idx) override;
   void handle_ue_deactivation_request(du_ue_index_t ue_idx) override;
+
+  // ue_feedback_handler methods.
+  void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override;
+  void handle_ul_phr_indication(const ul_phr_indication_message& phr) override;
+  void handle_ul_ta_report_indication(const ul_ta_report_indication_message& ta_report) override;
+  void handle_dl_mac_ce_indication(const dl_mac_ce_indication& ce) override;
+  void handle_crnti_ce_received(du_ue_index_t ue_index) override;
+
+  /// Enqueue a request to reconfigure the slices of the cell.
+  void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req);
 
   // scheduler_cell_positioning_handler methods.
   void handle_positioning_measurement_request(const positioning_measurement_request::cell_info& req) override;

@@ -35,7 +35,7 @@ ue_cell_scheduler* ue_scheduler_impl::do_add_cell(const ue_cell_scheduler_creati
                                                        *params.ra_ue_repo});
 
   // Relay the notifications of the cell to the created event manager.
-  params.ue_ev_relay->connect(*cell.ev_mng, *cell.ev_mng);
+  params.ue_ev_relay->connect(*cell.ev_mng, *cell.ev_mng, *cell.ev_mng);
 
   return &cell;
 }
@@ -43,18 +43,12 @@ ue_cell_scheduler* ue_scheduler_impl::do_add_cell(const ue_cell_scheduler_creati
 void ue_scheduler_impl::do_start_cell(du_cell_index_t cell_index)
 {
   ocudu_assert(cells.contains(cell_index), "Cell reference not found in the scheduler");
-
-  // Signal event manager that new events can be processed for this cell.
-  cells[cell_index].ev_mng->start();
 }
 
 void ue_scheduler_impl::do_stop_cell(du_cell_index_t cell_index)
 {
   ocudu_assert(cells.contains(cell_index), "Cell reference not found in the scheduler");
   auto& c = cells[cell_index];
-
-  // Halt any pending events associated with this cell.
-  cells[cell_index].ev_mng->stop();
 
   // Stop sub-schedulers.
   c.fallback_sched.stop();

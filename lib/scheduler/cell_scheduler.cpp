@@ -83,7 +83,7 @@ void cell_scheduler::handle_si_update_request(const si_scheduling_update_request
 
 void cell_scheduler::handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& slice_reconf_req)
 {
-  ue_sched->handle_slice_reconfiguration_request(slice_reconf_req);
+  ev_mng.handle_slice_reconfiguration_request(slice_reconf_req);
 }
 
 void cell_scheduler::handle_crc_indication(const ul_crc_indication& crc_ind)

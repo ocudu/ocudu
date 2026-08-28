@@ -42,27 +42,39 @@ class ocudu::cell_event_dispatcher
   // [Implementation defined] The UE lifecycle events carry their payload in the callback, so they have no pool of
   // their own. They are dispatched by the UE PCell, so one event per UE of the cell can be in flight at any moment.
   static constexpr size_t UE_CONFIG_EVENT_SIZE = MAX_NOF_DU_UES_PER_CELL;
+  // [Implementation defined] BSR, PHR and TA reports are reported in the same quantity as CRC indications, but they
+  // follow a slower path to reach the scheduler: a thread hop to a per-UE MAC UL PDU executor, plus the MAC PDU
+  // decoding, so more of them accumulate in flight.
+  static constexpr size_t MAC_REPORT_POOL_SIZE = MAX_PUSCH_PDUS_PER_SLOT * 8;
+  // [Implementation defined] Slice reconfigurations are rare, so only a few can be in flight at any moment.
+  static constexpr size_t SLICE_RECONF_POOL_SIZE = 4;
 
   /// \brief Capacity of the queue of pending events.
   ///
   /// It holds every payload the pools can hand out, so that an event type is only ever limited by its own pool and
   /// never by another type having filled the queue.
-  static constexpr size_t EVENT_QUEUE_SIZE = PAGING_POOL_SIZE +      // paging
-                                             2 * SI_POOL_SIZE +      // SI and ETWS/CMAS SI updates
-                                             2 * PHY_IND_POOL_SIZE + // RACH and CRC indications
-                                             POSITIONING_POOL_SIZE + // positioning measurement requests
-                                             UCI_POOL_SIZE +         // UCI PDUs
-                                             SRS_POOL_SIZE +         // SRS PDUs
-                                             UE_CONFIG_EVENT_SIZE;   // UE creation/reconfiguration/deletion
+  static constexpr size_t EVENT_QUEUE_SIZE = PAGING_POOL_SIZE +         // paging
+                                             2 * SI_POOL_SIZE +         // SI and ETWS/CMAS SI updates
+                                             2 * PHY_IND_POOL_SIZE +    // RACH and CRC indications
+                                             POSITIONING_POOL_SIZE +    // positioning measurement requests
+                                             UCI_POOL_SIZE +            // UCI PDUs
+                                             SRS_POOL_SIZE +            // SRS PDUs
+                                             UE_CONFIG_EVENT_SIZE +     // UE creation/reconfiguration/deletion
+                                             3 * MAC_REPORT_POOL_SIZE + // BSR, PHR and TA reports
+                                             SLICE_RECONF_POOL_SIZE;    // slice reconfigurations
 
-  using paging_pool  = bounded_object_pool<sched_paging_information>;
-  using si_pool      = bounded_object_pool<si_scheduling_update_request>;
-  using pws_si_pool  = bounded_object_pool<pws_si_scheduling_update_request>;
-  using rach_pool    = bounded_object_pool<rach_indication_message>;
-  using crc_pool     = bounded_object_pool<ul_crc_indication>;
-  using pos_req_pool = bounded_object_pool<positioning_measurement_request::cell_info>;
-  using srs_pool     = bounded_object_pool<srs_indication::srs_indication_pdu>;
-  using uci_pool     = bounded_object_pool<uci_indication::uci_pdu>;
+  using paging_pool       = bounded_object_pool<sched_paging_information>;
+  using si_pool           = bounded_object_pool<si_scheduling_update_request>;
+  using pws_si_pool       = bounded_object_pool<pws_si_scheduling_update_request>;
+  using rach_pool         = bounded_object_pool<rach_indication_message>;
+  using crc_pool          = bounded_object_pool<ul_crc_indication>;
+  using pos_req_pool      = bounded_object_pool<positioning_measurement_request::cell_info>;
+  using srs_pool          = bounded_object_pool<srs_indication::srs_indication_pdu>;
+  using uci_pool          = bounded_object_pool<uci_indication::uci_pdu>;
+  using bsr_pool          = bounded_object_pool<ul_bsr_indication_message>;
+  using phr_pool          = bounded_object_pool<ul_phr_indication_message>;
+  using ta_report_pool    = bounded_object_pool<ul_ta_report_indication_message>;
+  using slice_reconf_pool = bounded_object_pool<du_cell_slice_reconfig_request>;
 
   /// Event enqueued and dispatched by this class.
   struct event_t {
@@ -93,6 +105,10 @@ public:
     pending_pos_reqs(POSITIONING_POOL_SIZE),
     pending_srss(SRS_POOL_SIZE),
     pending_ucis(UCI_POOL_SIZE),
+    pending_bsrs(MAC_REPORT_POOL_SIZE),
+    pending_phrs(MAC_REPORT_POOL_SIZE),
+    pending_ta_reports(MAC_REPORT_POOL_SIZE),
+    pending_slice_reconfs(SLICE_RECONF_POOL_SIZE),
     pending_events(EVENT_QUEUE_SIZE)
   {
   }
@@ -173,6 +189,14 @@ private:
       return "SRS";
     } else if constexpr (std::is_same_v<PDUType, uci_indication::uci_pdu>) {
       return "UCI";
+    } else if constexpr (std::is_same_v<PDUType, ul_bsr_indication_message>) {
+      return "BSR";
+    } else if constexpr (std::is_same_v<PDUType, ul_phr_indication_message>) {
+      return "PHR";
+    } else if constexpr (std::is_same_v<PDUType, ul_ta_report_indication_message>) {
+      return "TA report";
+    } else if constexpr (std::is_same_v<PDUType, du_cell_slice_reconfig_request>) {
+      return "slice reconfiguration";
     } else {
       return "unknown";
     }
@@ -181,24 +205,43 @@ private:
   const cell_configuration& cell_cfg;
   ocudulog::basic_logger&   logger;
 
-  paging_pool  pending_pagings;
-  si_pool      pending_si_reqs;
-  pws_si_pool  pending_pws_si_reqs;
-  rach_pool    pending_rachs;
-  crc_pool     pending_crcs;
-  pos_req_pool pending_pos_reqs;
-  srs_pool     pending_srss;
-  uci_pool     pending_ucis;
+  paging_pool       pending_pagings;
+  si_pool           pending_si_reqs;
+  pws_si_pool       pending_pws_si_reqs;
+  rach_pool         pending_rachs;
+  crc_pool          pending_crcs;
+  pos_req_pool      pending_pos_reqs;
+  srs_pool          pending_srss;
+  uci_pool          pending_ucis;
+  bsr_pool          pending_bsrs;
+  phr_pool          pending_phrs;
+  ta_report_pool    pending_ta_reports;
+  slice_reconf_pool pending_slice_reconfs;
 
-  std::tuple<paging_pool*, si_pool*, pws_si_pool*, rach_pool*, crc_pool*, pos_req_pool*, srs_pool*, uci_pool*> pools{
-      &pending_pagings,
-      &pending_si_reqs,
-      &pending_pws_si_reqs,
-      &pending_rachs,
-      &pending_crcs,
-      &pending_pos_reqs,
-      &pending_srss,
-      &pending_ucis};
+  std::tuple<paging_pool*,
+             si_pool*,
+             pws_si_pool*,
+             rach_pool*,
+             crc_pool*,
+             pos_req_pool*,
+             srs_pool*,
+             uci_pool*,
+             bsr_pool*,
+             phr_pool*,
+             ta_report_pool*,
+             slice_reconf_pool*>
+      pools{&pending_pagings,
+            &pending_si_reqs,
+            &pending_pws_si_reqs,
+            &pending_rachs,
+            &pending_crcs,
+            &pending_pos_reqs,
+            &pending_srss,
+            &pending_ucis,
+            &pending_bsrs,
+            &pending_phrs,
+            &pending_ta_reports,
+            &pending_slice_reconfs};
 
   event_queue pending_events;
 
@@ -444,6 +487,58 @@ void cell_event_manager::handle_ue_deactivation_request(du_ue_index_t ue_idx)
     if (cell_group_ev_notifier.on_ue_deactivation_request(ue_idx)) {
       ev_logger.enqueue(scheduler_event_logger::ue_deactivation_event{ue_idx, crnti});
     }
+  });
+}
+
+void cell_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message& bsr)
+{
+  auto bsr_ptr = dispatcher->create_pdu(bsr);
+  if (bsr_ptr == nullptr) {
+    return;
+  }
+  dispatcher->push("BSR",
+                   [this, bsr_ptr = std::move(bsr_ptr)]() { cell_group_ev_notifier.on_ul_bsr_indication(*bsr_ptr); });
+}
+
+void cell_event_manager::handle_ul_phr_indication(const ul_phr_indication_message& phr)
+{
+  auto phr_ptr = dispatcher->create_pdu(phr);
+  if (phr_ptr == nullptr) {
+    return;
+  }
+  dispatcher->push("PHR",
+                   [this, phr_ptr = std::move(phr_ptr)]() { cell_group_ev_notifier.on_ul_phr_indication(*phr_ptr); });
+}
+
+void cell_event_manager::handle_ul_ta_report_indication(const ul_ta_report_indication_message& ta_report)
+{
+  auto ta_ptr = dispatcher->create_pdu(ta_report);
+  if (ta_ptr == nullptr) {
+    return;
+  }
+  dispatcher->push("TA report", [this, ta_ptr = std::move(ta_ptr)]() {
+    cell_group_ev_notifier.on_ul_ta_report_indication(*ta_ptr);
+  });
+}
+
+void cell_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& ce)
+{
+  dispatcher->push("DL MAC CE", [this, ce]() { cell_group_ev_notifier.on_dl_mac_ce_indication(ce); });
+}
+
+void cell_event_manager::handle_crnti_ce_received(du_ue_index_t ue_index)
+{
+  dispatcher->push("C-RNTI CE received", [this, ue_index]() { cell_group_ev_notifier.on_crnti_ce_received(ue_index); });
+}
+
+void cell_event_manager::handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req)
+{
+  auto req_ptr = dispatcher->create_pdu(req);
+  if (req_ptr == nullptr) {
+    return;
+  }
+  dispatcher->push("slice reconfiguration", [this, req_ptr = std::move(req_ptr)]() {
+    cell_group_ev_notifier.on_slice_reconfiguration(*req_ptr);
   });
 }
 

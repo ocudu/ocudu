@@ -115,95 +115,6 @@ private:
   ue_event_queue pending_evs;
 };
 
-class ocudu::pdu_indication_pool
-{
-  // We use this value as a safety margin to account for skipped slot indications.
-  static constexpr size_t MAX_EXPECTED_SLOTS = 4;
-  // Although PHR and BSR indications are reported in the same quantity as CRC indications, the formers follow a slower
-  // path to reach the scheduler; there's both a thread hop (dispatched to a per-UE MAC UL PDU executor) and processing
-  // latency (MAC PDU decoding + subPDU parsing); therefore, there can be a larger accumulation of in-flight BSR/PHR
-  // indications compared to CRC.
-  static constexpr size_t MAX_BSR_PHR_EXPECTED_SLOTS = 8;
-  static constexpr size_t UCI_INITIAL_POOL_SIZE      = MAX_PUCCH_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
-  static constexpr size_t PHR_INITIAL_POOL_SIZE      = MAX_PUSCH_PDUS_PER_SLOT * MAX_BSR_PHR_EXPECTED_SLOTS;
-  static constexpr size_t BSR_INITIAL_POOL_SIZE      = MAX_PUSCH_PDUS_PER_SLOT * MAX_BSR_PHR_EXPECTED_SLOTS;
-  static constexpr size_t SLICE_RECONF_POOL_SIZE     = 1 * MAX_EXPECTED_SLOTS;
-  // TA reports are event-triggered and rare in steady state, at most one per UE per offsetThresholdTA of drift, but
-  // every UE reports in Msg3 when ta-Report is configured, so simultaneous attaches produce one per UE within a couple
-  // of slots. They also reach the scheduler over the same per-UE MAC UL PDU executor as BSR/PHR, so they accumulate in
-  // flight the same way.
-  static constexpr size_t TA_REPORT_POOL_SIZE = MAX_PUSCH_PDUS_PER_SLOT * MAX_BSR_PHR_EXPECTED_SLOTS;
-
-  using uci_pool          = bounded_object_pool<uci_indication::uci_pdu>;
-  using phr_pool          = bounded_object_pool<ul_phr_indication_message>;
-  using bsr_pool          = bounded_object_pool<ul_bsr_indication_message>;
-  using slice_reconf_pool = bounded_object_pool<du_cell_slice_reconfig_request>;
-  using ta_report_pool    = bounded_object_pool<ul_ta_report_indication_message>;
-
-public:
-  pdu_indication_pool(ocudulog::basic_logger& logger_) :
-    logger(logger_),
-    pending_ucis(UCI_INITIAL_POOL_SIZE),
-    pending_phrs(PHR_INITIAL_POOL_SIZE),
-    pending_bsrs(BSR_INITIAL_POOL_SIZE),
-    slice_reconf_reqs(SLICE_RECONF_POOL_SIZE),
-    pending_ta_reports(TA_REPORT_POOL_SIZE)
-  {
-  }
-
-  /// Returns a human-readable name for a PDU type.
-  template <typename PDUType>
-  static constexpr const char* pdu_type_name()
-  {
-    if constexpr (std::is_same_v<PDUType, uci_indication::uci_pdu>) {
-      return "UCI";
-    } else if constexpr (std::is_same_v<PDUType, ul_phr_indication_message>) {
-      return "PHR";
-    } else if constexpr (std::is_same_v<PDUType, ul_bsr_indication_message>) {
-      return "BSR";
-    } else if constexpr (std::is_same_v<PDUType, du_cell_slice_reconfig_request>) {
-      return "slice reconfiguration request";
-    } else if constexpr (std::is_same_v<PDUType, ul_ta_report_indication_message>) {
-      return "TA report";
-    } else {
-      return "unknown";
-    }
-  }
-
-  /// Create a PDU managed by an object pool.
-  template <typename PDUType>
-  auto create_pdu(const PDUType& pdu)
-  {
-    auto* pool = std::get<bounded_object_pool<std::decay_t<PDUType>>*>(pools);
-    auto  ret  = pool->get();
-    if (ret != nullptr) {
-      *ret = pdu;
-    } else {
-      logger.warning("Discarding {} indication PDU. Cause: PDU pool is empty", pdu_type_name<std::decay_t<PDUType>>());
-    }
-    return ret;
-  }
-
-private:
-  ocudulog::basic_logger& logger;
-
-  uci_pool          pending_ucis;
-  phr_pool          pending_phrs;
-  bsr_pool          pending_bsrs;
-  slice_reconf_pool slice_reconf_reqs;
-  ta_report_pool    pending_ta_reports;
-
-  std::tuple<uci_pool*, phr_pool*, bsr_pool*, slice_reconf_pool*, ta_report_pool*> pools{&pending_ucis,
-                                                                                         &pending_phrs,
-                                                                                         &pending_bsrs,
-                                                                                         &slice_reconf_reqs,
-                                                                                         &pending_ta_reports};
-};
-
-// Initial capacity for the common and cell event lists, in order to avoid std::vector reallocations. We use the max
-// nof UEs as a conservative estimate of the expected number of events per slot.
-static constexpr size_t CELL_EVENT_LIST_SIZE = MAX_NOF_DU_UES * 2;
-
 ue_cell_event_manager::ue_cell_event_manager(ue_event_manager&          parent_,
                                              const cell_creation_event& cell_ev,
                                              ue_repository&             ue_db_,
@@ -220,50 +131,19 @@ ue_cell_event_manager::ue_cell_event_manager(ue_event_manager&          parent_,
   metrics(cell_ev.metrics),
   ev_logger(cell_ev.ev_logger),
   ra_ue_repo(cell_ev.ra_ue_repo),
-  ind_pdu_pool(std::make_unique<pdu_indication_pool>(logger)),
-  dl_bo_mng(std::make_unique<ue_dl_buffer_occupancy_manager>(*this)),
-  pending_events(CELL_EVENT_LIST_SIZE)
+  dl_bo_mng(std::make_unique<ue_dl_buffer_occupancy_manager>(*this))
 {
 }
 
 ue_cell_event_manager::~ue_cell_event_manager()
 {
-  // Stop cell if not already stopped.
-  stop();
-
   // Deregister cell from ue_event_manager.
   parent.cells[cfg.cell_index] = nullptr;
-}
-
-void ue_cell_event_manager::stop()
-{
-  active.store(false, std::memory_order_release);
-
-  // Clear pending events.
-  event_t cell_ev;
-  while (pending_events.try_pop(cell_ev)) {
-  }
 }
 
 void ue_cell_event_manager::run_slot(slot_point sl_tx)
 {
   last_sl_tx = sl_tx;
-
-  // Pop and process pending cell-specific events.
-  event_t cell_ev;
-  while (pending_events.try_pop(cell_ev)) {
-    const auto result = cell_ev.callback();
-    switch (result) {
-      case event_result::invalid_ue:
-        log_invalid_ue_index(cell_ev.ue_index, cell_ev.ev_name, cell_ev.warn_if_ignored);
-        break;
-      case event_result::invalid_ue_cc:
-        log_invalid_cc(cell_ev.ue_index, cell_ev.ev_name, cell_ev.warn_if_ignored);
-        break;
-      default:
-        break;
-    }
-  }
 
   // Process pending DL buffer occupancy updates.
   dl_bo_mng->slot_indication(sl_tx);
@@ -425,81 +305,62 @@ bool ue_cell_event_manager::handle_ue_deactivation_request(du_ue_index_t ue_idx)
 
 void ue_cell_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message& bsr_ind)
 {
-  auto bsr_ind_ptr = ind_pdu_pool->create_pdu(bsr_ind);
-  if (bsr_ind_ptr == nullptr) {
+  if (not ue_db.contains(bsr_ind.ue_index)) {
+    log_invalid_ue_index(bsr_ind.ue_index, "BSR");
     return;
   }
-  const du_cell_index_t pcell_index = bsr_ind.cell_index;
-  const du_ue_index_t   ue_index    = bsr_ind.ue_index;
+  auto& u = ue_db[bsr_ind.ue_index];
 
-  auto handle_ul_bsr_ind_impl = [this, bsr_ind = std::move(bsr_ind_ptr)]() {
-    if (not ue_db.contains(bsr_ind->ue_index)) {
-      return event_result::invalid_ue;
-    }
-    auto& u = ue_db[bsr_ind->ue_index];
+  // Handle event.
+  u.handle_bsr_indication(bsr_ind);
 
-    // Handle event.
-    u.handle_bsr_indication(*bsr_ind);
+  if (u.get_pcell().is_in_fallback_mode()) {
+    // Signal SRB fallback scheduler with the new SRB0/SRB1 buffer state.
+    fallback_sched.handle_ul_bsr_indication(bsr_ind.ue_index, bsr_ind);
+  }
 
-    if (u.get_pcell().is_in_fallback_mode()) {
-      // Signal SRB fallback scheduler with the new SRB0/SRB1 buffer state.
-      fallback_sched.handle_ul_bsr_indication(bsr_ind->ue_index, *bsr_ind);
-    }
+  // Log event.
+  if (ev_logger.enabled()) {
+    scheduler_event_logger::bsr_event event{};
+    event.ue_index             = bsr_ind.ue_index;
+    event.rnti                 = bsr_ind.crnti;
+    event.type                 = bsr_ind.type;
+    event.reported_lcgs        = bsr_ind.reported_lcgs;
+    event.tot_ul_pending_bytes = units::bytes{u.pending_ul_newtx_bytes()};
+    ev_logger.enqueue(event);
+  }
 
-    // Log event.
-    if (ev_logger.enabled()) {
-      scheduler_event_logger::bsr_event event{};
-      event.ue_index             = bsr_ind->ue_index;
-      event.rnti                 = bsr_ind->crnti;
-      event.type                 = bsr_ind->type;
-      event.reported_lcgs        = bsr_ind->reported_lcgs;
-      event.tot_ul_pending_bytes = units::bytes{u.pending_ul_newtx_bytes()};
-      ev_logger.enqueue(event);
-    }
-
-    // Notify metrics handler.
-    metrics.handle_ul_bsr_indication(*bsr_ind);
-
-    return event_result::processed;
-  };
-
-  push_event(pcell_index, event_t{"BSR", ue_index, std::move(handle_ul_bsr_ind_impl)});
+  // Notify metrics handler.
+  metrics.handle_ul_bsr_indication(bsr_ind);
 }
 
 void ue_cell_event_manager::on_conres_ce_acked(du_ue_index_t ue_index)
 {
-  auto handle_impl = [this, ue_index]() {
-    if (not ue_db.contains(ue_index)) {
-      return event_result::invalid_ue;
-    }
-    ue_db.handle_conres_ce_outcome(ue_index, true);
-    return event_result::processed;
-  };
-
-  push_event(cfg.cell_index, event_t{"ConRes CE ACKed", ue_index, std::move(handle_impl)});
+  if (not ue_db.contains(ue_index)) {
+    log_invalid_ue_index(ue_index, "ConRes CE ACKed");
+    return;
+  }
+  ue_db.handle_conres_ce_outcome(ue_index, true);
 }
 
 void ue_cell_event_manager::on_sr_detected(du_ue_index_t ue_index, slot_point uci_slot)
 {
-  auto handle_impl = [this, ue_index, uci_slot]() {
-    if (not ue_db.contains(ue_index)) {
-      return event_result::invalid_ue;
-    }
-    ue&            u     = ue_db[ue_index];
-    const ue_cell* ue_cc = u.find_cell(cfg.cell_index);
-    if (ue_cc == nullptr) {
-      return event_result::invalid_ue_cc;
-    }
-
-    u.handle_sr_indication(uci_slot);
-    if (ue_cc->is_in_fallback_mode()) {
-      fallback_sched.handle_sr_indication(ue_index);
-    }
-    return event_result::processed;
-  };
-
   // Note: Not warned about when the UE is gone, for the same reason as the UCI indication it comes from.
-  push_event(cfg.cell_index, event_t{"SR", ue_index, std::move(handle_impl), false});
+  if (not ue_db.contains(ue_index)) {
+    log_invalid_ue_index(ue_index, "SR", false);
+    return;
+  }
+  ue&            u     = ue_db[ue_index];
+  const ue_cell* ue_cc = u.find_cell(cfg.cell_index);
+  if (ue_cc == nullptr) {
+    log_invalid_cc(ue_index, "SR", false);
+    return;
+  }
+
+  u.handle_sr_indication(uci_slot);
+  if (ue_cc->is_in_fallback_mode()) {
+    fallback_sched.handle_sr_indication(ue_index);
+  }
 }
 
 void ue_cell_event_manager::on_ul_n_ta_update(du_ue_index_t              ue_index,
@@ -517,181 +378,142 @@ void ue_cell_event_manager::on_ul_n_ta_update(du_ue_index_t              ue_inde
 
 void ue_cell_event_manager::on_cfra_msg3_acked(du_ue_index_t ue_index)
 {
-  auto handle_impl = [this, ue_index]() {
-    if (not ue_db.contains(ue_index)) {
-      return event_result::invalid_ue;
-    }
-    const ue_cell* ue_cc = ue_db[ue_index].find_cell(cfg.cell_index);
-    if (ue_cc == nullptr) {
-      return event_result::invalid_ue_cc;
-    }
+  if (not ue_db.contains(ue_index)) {
+    log_invalid_ue_index(ue_index, "CFRA Msg3 ACKed");
+    return;
+  }
+  const ue_cell* ue_cc = ue_db[ue_index].find_cell(cfg.cell_index);
+  if (ue_cc == nullptr) {
+    log_invalid_cc(ue_index, "CFRA Msg3 ACKed");
+    return;
+  }
 
-    if (ue_db.cfra_msg3_acked(ue_index) and not ue_cc->is_in_fallback_mode()) {
-      // CFRA Msg3 ACKed. UE is directly added to slice scheduling. It doesn't need to be in fallback mode.
-      slice_sched.config_applied(ue_index);
-    }
-    return event_result::processed;
-  };
-
-  push_event(cfg.cell_index, event_t{"CFRA Msg3 ACKed", ue_index, std::move(handle_impl)});
+  if (ue_db.cfra_msg3_acked(ue_index) and not ue_cc->is_in_fallback_mode()) {
+    // CFRA Msg3 ACKed. UE is directly added to slice scheduling. It doesn't need to be in fallback mode.
+    slice_sched.config_applied(ue_index);
+  }
 }
 
 void ue_cell_event_manager::handle_ul_phr_indication(const ul_phr_indication_message& phr_ind)
 {
-  auto phr_ind_ptr = ind_pdu_pool->create_pdu(phr_ind);
-  if (phr_ind_ptr == nullptr) {
+  // Fetch UE objects.
+  if (not ue_db.contains(phr_ind.ue_index)) {
+    log_invalid_ue_index(phr_ind.ue_index, "PHR");
     return;
   }
-  const du_cell_index_t pcell_index = phr_ind.cell_index;
-  const du_ue_index_t   ue_index    = phr_ind.ue_index;
+  auto& u = ue_db[phr_ind.ue_index];
 
-  auto handle_phr_impl = [this, phr_ind = std::move(phr_ind_ptr)]() {
-    // Fetch UE objects.
-    if (not ue_db.contains(phr_ind->ue_index)) {
-      return event_result::invalid_ue;
-    }
-    auto& u = ue_db[phr_ind->ue_index];
+  for (const cell_ph_report& cell_phr : phr_ind.phr.get_phr()) {
+    ocudu_sanity_check(
+        cell_phr.serv_cell_id < u.nof_cells(), "Invalid serving cell index={}", fmt::underlying(cell_phr.serv_cell_id));
+    auto& ue_cc = u.get_cell(cell_phr.serv_cell_id);
 
-    for (const cell_ph_report& cell_phr : phr_ind->phr.get_phr()) {
-      ocudu_sanity_check(cell_phr.serv_cell_id < u.nof_cells(),
-                         "Invalid serving cell index={}",
-                         fmt::underlying(cell_phr.serv_cell_id));
-      auto& ue_cc = u.get_cell(cell_phr.serv_cell_id);
+    ue_cc.get_pusch_power_controller().handle_phr(cell_phr, phr_ind.slot_rx, phr_ind.rnti);
 
-      ue_cc.get_pusch_power_controller().handle_phr(cell_phr, phr_ind->slot_rx, phr_ind->rnti);
+    // Log event.
+    scheduler_event_logger::phr_event event{};
+    event.ue_index   = phr_ind.ue_index;
+    event.rnti       = phr_ind.rnti;
+    event.cell_index = ue_cc.cell_index;
+    event.ph         = cell_phr.ph;
+    event.p_cmax     = cell_phr.p_cmax;
+    ev_logger.enqueue(event);
+  }
 
-      // Log event.
-      scheduler_event_logger::phr_event event{};
-      event.ue_index   = phr_ind->ue_index;
-      event.rnti       = phr_ind->rnti;
-      event.cell_index = ue_cc.cell_index;
-      event.ph         = cell_phr.ph;
-      event.p_cmax     = cell_phr.p_cmax;
-      ev_logger.enqueue(event);
-    }
-
-    // Notify metrics handler.
-    metrics.handle_ul_phr_indication(*phr_ind);
-
-    return event_result::processed;
-  };
-
-  push_event(pcell_index, event_t{"PHR", ue_index, std::move(handle_phr_impl)});
+  // Notify metrics handler.
+  metrics.handle_ul_phr_indication(phr_ind);
 }
 
-void ue_cell_event_manager::handle_ul_ta_report_indication(const ul_ta_report_indication_message& ta_report_ind)
+void ue_cell_event_manager::handle_ul_ta_report_indication(const ul_ta_report_indication_message& ta_report)
 {
-  auto ind_ptr = ind_pdu_pool->create_pdu(ta_report_ind);
-  if (ind_ptr == nullptr) {
+  if (not ue_db.contains(ta_report.ue_index)) {
+    log_invalid_ue_index(ta_report.ue_index, "TA report");
     return;
   }
-  const du_cell_index_t pcell_index = ta_report_ind.cell_index;
-  const du_ue_index_t   ue_index    = ta_report_ind.ue_index;
+  auto& u = ue_db[ta_report.ue_index];
 
-  auto handle_ta_report_impl = [this, ta_report = std::move(ind_ptr)]() {
-    if (not ue_db.contains(ta_report->ue_index)) {
-      return event_result::invalid_ue;
-    }
-    auto& u = ue_db[ta_report->ue_index];
+  // Cross-check of the cell reference-location estimate against the UE's own report. The scheduler maps the
+  // measurement gap onto the uplink grid with the estimate: the gap sits on the downlink frame timing, the UE
+  // transmits T_TA earlier (TS 38.211, Section 4.3.1) and drops whatever lands in it (TS 38.321, Section 5.14). A
+  // mismatch beyond the report's one-slot quantization (TS 38.321, Section 6.1.3.56) - e.g. wrong estimate inputs
+  // or a UE far from the reference location - means the mapping is off and the UE drops the affected grants.
+  constexpr std::chrono::milliseconds            max_ul_ta_deviation{1};
+  const std::optional<std::chrono::microseconds> estimate = u.get_pcell().cfg().cell_cfg_common.ntn_ref_location_ul_ta;
+  if (estimate.has_value() and std::chrono::abs(ta_report.ul_ta - *estimate) > max_ul_ta_deviation) {
+    logger.warning("ue={} rnti={}: Reported T_TA={}us differs from the cell estimate={}us by more than a slot",
+                   ta_report.ue_index,
+                   ta_report.rnti,
+                   ta_report.ul_ta.count(),
+                   estimate->count());
+  } else {
+    logger.debug("ue={} rnti={}: Reported T_TA={}us (cell estimate={}us)",
+                 ta_report.ue_index,
+                 ta_report.rnti,
+                 ta_report.ul_ta.count(),
+                 estimate.has_value() ? estimate->count() : 0);
+  }
 
-    // Cross-check of the cell reference-location estimate against the UE's own report. The scheduler maps the
-    // measurement gap onto the uplink grid with the estimate: the gap sits on the downlink frame timing, the UE
-    // transmits T_TA earlier (TS 38.211, Section 4.3.1) and drops whatever lands in it (TS 38.321, Section 5.14). A
-    // mismatch beyond the report's one-slot quantization (TS 38.321, Section 6.1.3.56) - e.g. wrong estimate inputs
-    // or a UE far from the reference location - means the mapping is off and the UE drops the affected grants.
-    constexpr std::chrono::milliseconds            max_ul_ta_deviation{1};
-    const std::optional<std::chrono::microseconds> estimate =
-        u.get_pcell().cfg().cell_cfg_common.ntn_ref_location_ul_ta;
-    if (estimate.has_value() and std::chrono::abs(ta_report->ul_ta - *estimate) > max_ul_ta_deviation) {
-      logger.warning("ue={} rnti={}: Reported T_TA={}us differs from the cell estimate={}us by more than a slot",
-                     ta_report->ue_index,
-                     ta_report->rnti,
-                     ta_report->ul_ta.count(),
-                     estimate->count());
-    } else {
-      logger.debug("ue={} rnti={}: Reported T_TA={}us (cell estimate={}us)",
-                   ta_report->ue_index,
-                   ta_report->rnti,
-                   ta_report->ul_ta.count(),
-                   estimate.has_value() ? estimate->count() : 0);
-    }
-
-    u.ta_report_tracker().handle_ta_report(ta_report->ul_ta);
-
-    return event_result::processed;
-  };
-
-  push_event(pcell_index, event_t{"TA report", ue_index, std::move(handle_ta_report_impl)});
+  u.ta_report_tracker().handle_ta_report(ta_report.ul_ta);
 }
 
 void ue_cell_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& ce)
 {
-  auto handle_mac_ce_impl = [this, ce]() {
-    if (not ue_db.contains(ce.ue_index)) {
-      return event_result::invalid_ue;
-    }
-    auto& u = ue_db[ce.ue_index];
+  if (not ue_db.contains(ce.ue_index)) {
+    log_invalid_ue_index(ce.ue_index, "DL MAC CE");
+    return;
+  }
+  auto& u = ue_db[ce.ue_index];
 
-    // Notify SRB fallback scheduler upon receiving ConRes CE indication.
-    if (ce.ce_lcid == lcid_dl_sch_t::UE_CON_RES_ID) {
-      logger.warning("cell={} rnti={} ue={}: Discarding ConRes CE indication. Cause: The scheduler automatically "
-                     "triggers this type of CE",
-                     cfg.cell_index,
-                     u.crnti,
-                     u.ue_index);
-      return event_result::processed;
-    }
+  // Notify SRB fallback scheduler upon receiving ConRes CE indication.
+  if (ce.ce_lcid == lcid_dl_sch_t::UE_CON_RES_ID) {
+    logger.warning("cell={} rnti={} ue={}: Discarding ConRes CE indication. Cause: The scheduler automatically "
+                   "triggers this type of CE",
+                   cfg.cell_index,
+                   u.crnti,
+                   u.ue_index);
+    return;
+  }
 
-    // Forward CE to UE instance.
-    u.handle_dl_mac_ce_indication(ce);
+  // Forward CE to UE instance.
+  u.handle_dl_mac_ce_indication(ce);
 
-    // Log event.
-    ev_logger.enqueue(ce);
-
-    return event_result::processed;
-  };
-
-  push_event(cfg.cell_index, event_t{"DL MAC CE", ce.ue_index, std::move(handle_mac_ce_impl)});
+  // Log event.
+  ev_logger.enqueue(ce);
 }
 
 void ue_cell_event_manager::handle_crnti_ce_received(du_ue_index_t ue_index)
 {
-  auto handle_crnti_ce_received = [this, ue_index]() {
-    if (not ue_db.contains(ue_index)) {
-      return event_result::invalid_ue;
-    }
-    auto& u     = ue_db[ue_index];
-    auto& ue_cc = u.get_pcell();
-    if (ue_cc.cell_index != cfg.cell_index) {
-      logger.warning("cell={} ue={} rnti={}: Discarding C-RNTI CE. It was received in cell that is not PCell ({})",
-                     cfg.cell_index,
-                     ue_index,
-                     u.crnti,
-                     ue_cc.cell_index);
-      return event_result::invalid_ue_cc;
-    }
+  if (not ue_db.contains(ue_index)) {
+    log_invalid_ue_index(ue_index, "C-RNTI CE received");
+    return;
+  }
+  auto& u     = ue_db[ue_index];
+  auto& ue_cc = u.get_pcell();
+  if (ue_cc.cell_index != cfg.cell_index) {
+    logger.warning("cell={} ue={} rnti={}: Discarding C-RNTI CE. It was received in cell that is not PCell ({})",
+                   cfg.cell_index,
+                   ue_index,
+                   u.crnti,
+                   ue_cc.cell_index);
+    return;
+  }
 
-    if (ue_db.crnti_ce_received(ue_index)) {
-      // C-RNTI CE received: contention resolution completed for this F1AP-created UE.
+  if (ue_db.crnti_ce_received(ue_index)) {
+    // C-RNTI CE received: contention resolution completed for this F1AP-created UE.
 
-      // Initiate UCI and SRS schedulers with the confirmed UE resources.
-      uci_sched.add_ue(ue_cc.cfg());
-      srs_sched.add_ue(ue_cc.cfg());
+    // Initiate UCI and SRS schedulers with the confirmed UE resources.
+    uci_sched.add_ue(ue_cc.cfg());
+    srs_sched.add_ue(ue_cc.cfg());
 
-      if (cg_sched != nullptr) {
-        cg_sched->add_reconf_ue(ue_cc.cfg(), nullptr);
-      }
-
-      // Notify slice scheduler only when the UE fully exits fallback (config also applied).
-      if (not ue_cc.is_in_fallback_mode()) {
-        slice_sched.config_applied(ue_index);
-      }
+    if (cg_sched != nullptr) {
+      cg_sched->add_reconf_ue(ue_cc.cfg(), nullptr);
     }
 
-    return event_result::processed;
-  };
-
-  push_event(cfg.cell_index, event_t{"CRNTI CE received", ue_index, std::move(handle_crnti_ce_received)});
+    // Notify slice scheduler only when the UE fully exits fallback (config also applied).
+    if (not ue_cc.is_in_fallback_mode()) {
+      slice_sched.config_applied(ue_index);
+    }
+  }
 }
 
 void ue_cell_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)
@@ -699,53 +521,13 @@ void ue_cell_event_manager::handle_dl_buffer_state_indication(const dl_buffer_st
   dl_bo_mng->handle_dl_buffer_state_indication(bs);
 }
 
-void ue_cell_event_manager::handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req)
+void ue_cell_event_manager::handle_slice_reconfiguration(const du_cell_slice_reconfig_request& req)
 {
-  auto req_ptr = ind_pdu_pool->create_pdu(req);
-  if (req_ptr == nullptr) {
-    return;
-  }
+  // Handle slice reconfiguration.
+  slice_sched.handle_slice_reconfiguration_request(req);
 
-  auto handle_slice_reconfig_impl = [this, req_ptr = std::move(req_ptr)]() {
-    // Handle slice reconfiguration.
-    slice_sched.handle_slice_reconfiguration_request(*req_ptr);
-
-    // Log event.
-    ev_logger.enqueue(scheduler_event_logger::slice_reconfiguration_event{req_ptr->cell_index});
-
-    return event_result::processed;
-  };
-
-  push_event(cfg.cell_index, event_t{"slice_reconf", std::move(handle_slice_reconfig_impl)});
-}
-
-void ue_cell_event_manager::push_event(du_cell_index_t cell_index, event_t event)
-{
-  if (OCUDU_UNLIKELY(not active.load(std::memory_order_acquire))) {
-    // Note: PHY events should not arrive after the cell has been stopped.
-    if (event.ue_index == INVALID_DU_UE_INDEX) {
-      logger.warning("cell={}: Discarding {} event. Cause: Cell is not active", cell_index, event.ev_name);
-    } else {
-      logger.warning("cell={} ue={}: Discarding {} event. Cause: Cell is not active",
-                     cell_index,
-                     fmt::underlying(event.ue_index),
-                     event.ev_name);
-    }
-    return;
-  }
-
-  const du_ue_index_t ue_idx  = event.ue_index;
-  const char*         ev_name = event.ev_name;
-  if (not pending_events.try_push(std::move(event))) {
-    if (ue_idx == INVALID_DU_UE_INDEX) {
-      logger.warning("cell={}: Discarding {} event. Cause: Event queue is full", cell_index, ev_name);
-    } else {
-      logger.warning("cell={} ue={}: Discarding {} event. Cause: Event queue is full",
-                     cell_index,
-                     fmt::underlying(ue_idx),
-                     ev_name);
-    }
-  }
+  // Log event.
+  ev_logger.enqueue(scheduler_event_logger::slice_reconfiguration_event{req.cell_index});
 }
 
 void ue_cell_event_manager::log_invalid_ue_index(du_ue_index_t ue_index,

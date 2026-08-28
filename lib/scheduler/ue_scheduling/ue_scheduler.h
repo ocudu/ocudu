@@ -62,12 +62,6 @@ public:
   /// Schedule UE DL and UL grants for a given {slot, cell}.
   virtual void run_slot(slot_point sl_tx) = 0;
 
-  /// Handle slice reconfiguration request for a given cell.
-  virtual void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& slice_reconf_req) = 0;
-
-  /// Retrieves handler of UE feedback for a given cell.
-  virtual ue_feedback_handler& get_feedback_handler() = 0;
-
   /// Retrieves handler of DL buffer state updates for a given cell.
   virtual scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler() = 0;
 

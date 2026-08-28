@@ -9,6 +9,7 @@
 #include "ocudu/ran/phy_time_unit.h"
 #include "ocudu/ran/slot_point.h"
 #include "ocudu/ran/time_alignment_config.h"
+#include "ocudu/scheduler/scheduler_feedback_handler.h"
 
 namespace ocudu {
 
@@ -59,6 +60,9 @@ public:
 
   /// Deactivate a UE of the cell group.
   virtual bool handle_ue_deactivation_request(du_ue_index_t ue_index) = 0;
+
+  /// Apply a slice reconfiguration to the cell group.
+  virtual void handle_slice_reconfiguration(const du_cell_slice_reconfig_request& req) = 0;
 };
 
 /// \brief Interface through which a cell notifies the events that its cell group has to handle.
@@ -81,6 +85,24 @@ public:
 
   /// The deactivation of the UE was requested.
   virtual bool on_ue_deactivation_request(du_ue_index_t ue_idx) = 0;
+
+  /// A buffer status report of the UE was received.
+  virtual void on_ul_bsr_indication(const ul_bsr_indication_message& bsr) = 0;
+
+  /// A power headroom report of the UE was received.
+  virtual void on_ul_phr_indication(const ul_phr_indication_message& phr) = 0;
+
+  /// A timing advance report of the UE was received.
+  virtual void on_ul_ta_report_indication(const ul_ta_report_indication_message& ta_report) = 0;
+
+  /// A MAC CE is pending transmission to the UE.
+  virtual void on_dl_mac_ce_indication(const dl_mac_ce_indication& ce) = 0;
+
+  /// A C-RNTI MAC CE of the UE was received.
+  virtual void on_crnti_ce_received(du_ue_index_t ue_index) = 0;
+
+  /// The slices of the cell were reconfigured.
+  virtual void on_slice_reconfiguration(const du_cell_slice_reconfig_request& req) = 0;
 };
 
 /// \brief Relays the notifications of a cell to the UE scheduler.
@@ -91,10 +113,13 @@ class cell_ue_event_relay final : public cell_group_event_notifier
 {
 public:
   /// Set the handlers that the cell notifications and UE configuration requests are relayed to.
-  void connect(cell_ue_event_notifier& notifier, cell_group_ue_config_handler& ue_configurator)
+  void connect(cell_ue_event_notifier&       notifier,
+               cell_group_ue_config_handler& ue_configurator,
+               ue_feedback_handler&          ue_fb_handler)
   {
     handler        = &notifier;
     ue_cfg_handler = &ue_configurator;
+    fb_handler     = &ue_fb_handler;
   }
 
   void on_cfra_msg3_acked(du_ue_index_t ue_index) override
@@ -153,9 +178,52 @@ public:
     }
   }
 
+  void on_ul_bsr_indication(const ul_bsr_indication_message& bsr) override
+  {
+    if (fb_handler != nullptr) {
+      fb_handler->handle_ul_bsr_indication(bsr);
+    }
+  }
+
+  void on_ul_phr_indication(const ul_phr_indication_message& phr) override
+  {
+    if (fb_handler != nullptr) {
+      fb_handler->handle_ul_phr_indication(phr);
+    }
+  }
+
+  void on_ul_ta_report_indication(const ul_ta_report_indication_message& ta_report) override
+  {
+    if (fb_handler != nullptr) {
+      fb_handler->handle_ul_ta_report_indication(ta_report);
+    }
+  }
+
+  void on_dl_mac_ce_indication(const dl_mac_ce_indication& ce) override
+  {
+    if (fb_handler != nullptr) {
+      fb_handler->handle_dl_mac_ce_indication(ce);
+    }
+  }
+
+  void on_crnti_ce_received(du_ue_index_t ue_index) override
+  {
+    if (fb_handler != nullptr) {
+      fb_handler->handle_crnti_ce_received(ue_index);
+    }
+  }
+
+  void on_slice_reconfiguration(const du_cell_slice_reconfig_request& req) override
+  {
+    if (ue_cfg_handler != nullptr) {
+      ue_cfg_handler->handle_slice_reconfiguration(req);
+    }
+  }
+
 private:
   cell_ue_event_notifier*       handler        = nullptr;
   cell_group_ue_config_handler* ue_cfg_handler = nullptr;
+  ue_feedback_handler*          fb_handler     = nullptr;
 };
 
 } // namespace ocudu
