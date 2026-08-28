@@ -249,19 +249,23 @@ ru_sdr_configuration ocudu::generate_ru_sdr_config(const ru_sdr_unit_config&    
 
 void ocudu::fill_sdr_worker_manager_config(worker_manager_config& config, const ru_sdr_unit_config& ru_cfg)
 {
-  auto& sdr_cfg = config.ru_sdr_cfg.emplace();
+  unsigned nof_cells = ru_cfg.expert_execution_cfg.cell_affinities.size();
 
-  sdr_cfg.nof_cells = ru_cfg.expert_execution_cfg.cell_affinities.size();
-  sdr_cfg.profile   = (ru_cfg.device_driver != "zmq")
-                          ? static_cast<worker_manager_config::ru_sdr_config::lower_phy_thread_profile>(
-                              ru_cfg.expert_execution_cfg.threads.execution_profile)
-                          : worker_manager_config::ru_sdr_config::lower_phy_thread_profile::sequential;
+  // The ZMQ driver requires sequential lower PHY execution to gurantee the order of the slot processing.
+  worker_manager_config::ru_sdr_config::lower_phy_thread_profile thread_profile =
+      (ru_cfg.device_driver != "zmq") ? static_cast<worker_manager_config::ru_sdr_config::lower_phy_thread_profile>(
+                                            ru_cfg.expert_execution_cfg.threads.execution_profile)
+                                      : worker_manager_config::ru_sdr_config::lower_phy_thread_profile::sequential;
+
+  config.ru_sdr_cfg.emplace(
+      worker_manager_config::ru_sdr_config{.profile                 = thread_profile,
+                                           .nof_cells               = nof_cells,
+                                           .executor_tracing_enable = ru_cfg.tracer.executor_tracing_enable});
 
   ocudu_assert(config.config_affinities.size() == ru_cfg.expert_execution_cfg.cell_affinities.size(),
                "Invalid number of cell affinities");
 
-  for (unsigned i = 0; i != sdr_cfg.nof_cells; ++i) {
+  for (unsigned i = 0; i != nof_cells; ++i) {
     config.config_affinities[i].push_back(ru_cfg.expert_execution_cfg.cell_affinities[i].ru_cpu_cfg);
   }
-  sdr_cfg.executor_tracing_enable = ru_cfg.tracer.executor_tracing_enable;
 }
