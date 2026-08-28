@@ -35,6 +35,23 @@ struct du_configuration_context {
     auto it = std::find_if(served_cells.begin(), served_cells.end(), [&cgi](const auto& c) { return c.cgi == cgi; });
     return it != served_cells.end() ? &(*it) : nullptr;
   }
+  /// \brief Find every served cell the core network names by \c cgi.
+  ///
+  /// The same \c cgi can match more than one cell, so the search does not stop at the first:
+  /// - a Mapped Cell ID names a geographical area, TS 38.300 sec. 16.14.5, which several cells may cover;
+  /// - nothing rejects a Mapped Cell ID equal to the Uu Cell ID of a different cell.
+  std::vector<const du_cell_configuration*> find_cells_by_reported_cgi(nr_cell_global_id_t cgi) const
+  {
+    std::vector<const du_cell_configuration*> cells;
+    for (const du_cell_configuration& c : served_cells) {
+      // A cell answers to its own NR CGI, and, within the same PLMN, to a Mapped Cell ID any of its areas names,
+      // which TS 38.300 sec. 16.14.5 reports in place of the Uu Cell ID in an NTN cell.
+      if (c.cgi == cgi or (c.cgi.plmn_id == cgi.plmn_id and c.location_mapping.reports_mapped_cell_id(cgi.nci))) {
+        cells.push_back(&c);
+      }
+    }
+    return cells;
+  }
   /// \brief Find a cell in either served or deactivated state.
   ///
   /// Used by the cell lifecycle command path on CU-CP to locate cells that may currently be

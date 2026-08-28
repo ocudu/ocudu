@@ -7,6 +7,7 @@
 #include "pws_sib_encoder.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/support/async/when_all.h"
+#include <algorithm>
 
 using namespace ocudu;
 using namespace ocudu::ocucp;
@@ -66,8 +67,13 @@ std::vector<async_task<bool>> cu_cp_write_replace_warning_routine::build_du_task
       }
       matching_cells.clear();
       for (const auto& cgi : *cgi_filter) {
-        if (du_proc->has_cell(cgi)) {
-          matching_cells.push_back(cgi);
+        // The AMF names a cell by whatever identity the gNB reported for it: its Uu Cell ID, or in an NTN cell the
+        // Mapped Cell ID of TS 38.300 sec. 16.14.5. The gNB-DU knows its cells only by their Uu Cell ID, so every
+        // cell that identity resolves to is listed under its own, and one named by both identities is listed once.
+        for (const du_cell_configuration* cell : du_proc->get_context()->find_cells_by_reported_cgi(cgi)) {
+          if (std::find(matching_cells.begin(), matching_cells.end(), cell->cgi) == matching_cells.end()) {
+            matching_cells.push_back(cell->cgi);
+          }
         }
       }
       if (matching_cells.empty()) {
