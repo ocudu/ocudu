@@ -111,10 +111,10 @@ public:
     cu_cp_handler->handle_transmission_of_handover_required();
   }
 
-  async_task<bool> on_new_rrc_handover_command(cu_cp_ue_index_t ue_index, byte_buffer command) override
+  async_task<bool> on_new_rrc_handover_command(cu_cp_rrc_handover_command command) override
   {
     ocudu_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
-    return cu_cp_handler->handle_new_rrc_handover_command(ue_index, std::move(command));
+    return cu_cp_handler->handle_new_rrc_handover_command(std::move(command));
   }
 
   void on_n2_handover_execution(cu_cp_ue_index_t ue_index) override

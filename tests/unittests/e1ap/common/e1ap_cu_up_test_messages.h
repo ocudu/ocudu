@@ -34,6 +34,13 @@ e1ap_message generate_bearer_context_modification_request_with_ng_ul_tnl(unsigne
                                                                          uint32_t    upf_teid,
                                                                          const char* upf_addr);
 
+/// \brief Generate a bearer context modification request that sets the PDU session level DL data forwarding tunnel on
+/// the PDU session to be modified. Used to test the NG handover data forwarding path.
+e1ap_message generate_bearer_context_modification_request_with_data_forwarding_info(unsigned      cu_cp_ue_e1ap_id,
+                                                                                    uint32_t      fwd_teid,
+                                                                                    const char*   fwd_addr,
+                                                                                    qos_flow_id_t qos_flow_id);
+
 /// \brief Generate an invalid dummy bearer context modification request.
 e1ap_message generate_invalid_bearer_context_modification_request(unsigned cu_cp_ue_e1ap_id, unsigned cu_up_ue_e1ap_id);
 

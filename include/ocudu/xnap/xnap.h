@@ -106,10 +106,9 @@ public:
   virtual ~xnap_cu_cp_notifier() = default;
 
   /// \brief Notify about the reception of a new RRC Handover Command (TS 38.331 section 11.2.2).
-  /// \param[in] ue_index The index of the UE.
-  /// \param[in] command The RRC container containing the Handover Command.
+  /// \param[in] command The Handover Command, including the data forwarding tunnels of the target.
   /// \returns True if the Handover command is valid and was successfully handled by the DU.
-  virtual async_task<bool> on_new_rrc_handover_command(cu_cp_ue_index_t ue_index, byte_buffer command) = 0;
+  virtual async_task<bool> on_new_rrc_handover_command(cu_cp_rrc_handover_command command) = 0;
 
   /// \brief Request UE index allocation on the CU-CP on XNAP handover request.
   virtual cu_cp_ue_index_t request_new_ue_index_allocation(const nr_cell_global_id_t& cgi,

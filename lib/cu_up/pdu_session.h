@@ -80,6 +80,10 @@ struct pdu_session {
   /// Local endpoint of the PDU session level DL data forwarding tunnel, allocated when the gNB-CU-CP requests PDU
   /// session level data forwarding (TS 37.483 section 9.3.2.5).
   std::optional<up_transport_layer_info> dl_data_forwarding_tnl_info;
+  /// Peer endpoint of the PDU session level DL data forwarding tunnel, to send the data still held for the UE to, and
+  /// the QoS flows to send over it (TS 37.483 section 9.3.2.6).
+  std::optional<up_transport_layer_info> peer_dl_data_forwarding_tnl_info;
+  std::vector<qos_flow_id_t>             qos_flows_to_be_forwarded;
 
   // GTP-U demux parameters
   gtpu_demux_ctrl&                           gtpu_rx_demux;     // The demux entity to register/remove the tunnel.

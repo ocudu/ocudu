@@ -19,10 +19,10 @@ public:
     xnc_index     = xnc_index_;
   }
 
-  async_task<bool> on_new_rrc_handover_command(cu_cp_ue_index_t ue_index, byte_buffer command) override
+  async_task<bool> on_new_rrc_handover_command(cu_cp_rrc_handover_command command) override
   {
     ocudu_assert(cu_cp_handler != nullptr, "CU-CP XNAP handler must not be nullptr");
-    return cu_cp_handler->handle_new_rrc_handover_command(ue_index, std::move(command), xnc_index);
+    return cu_cp_handler->handle_new_rrc_handover_command(std::move(command), xnc_index);
   }
 
   cu_cp_ue_index_t request_new_ue_index_allocation(const nr_cell_global_id_t& cgi, const plmn_identity& plmn) override

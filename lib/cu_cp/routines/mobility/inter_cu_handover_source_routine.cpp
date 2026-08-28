@@ -8,16 +8,15 @@
 using namespace ocudu;
 using namespace ocucp;
 
-inter_cu_handover_source_routine::inter_cu_handover_source_routine(cu_cp_ue_index_t              ue_index_,
-                                                                   byte_buffer                   command_,
+inter_cu_handover_source_routine::inter_cu_handover_source_routine(cu_cp_rrc_handover_command    command_,
                                                                    ue_manager&                   ue_mng_,
                                                                    du_processor_repository&      du_db_,
                                                                    cu_up_processor_repository&   cu_up_db_,
                                                                    ngap_control_message_handler& ngap_,
                                                                    xnap_interface*               xnap_,
                                                                    ocudulog::basic_logger&       logger_) :
-  ue_index(ue_index_),
   command(std::move(command_)),
+  ue_index(command.ue_index),
   ue_mng(ue_mng_),
   du_db(du_db_),
   cu_up_db(cu_up_db_),
@@ -36,7 +35,8 @@ void inter_cu_handover_source_routine::operator()(coro_context<async_task<bool>>
   }
 
   // Unpack Handover Command PDU at RRC, to get RRC Reconfig PDU.
-  ho_reconfig_pdu = ue_mng.find_du_ue(ue_index)->get_rrc_ue()->handle_rrc_handover_command(std::move(command));
+  ho_reconfig_pdu =
+      ue_mng.find_du_ue(ue_index)->get_rrc_ue()->handle_rrc_handover_command(std::move(command.rrc_container));
   if (ho_reconfig_pdu.empty()) {
     logger.warning("ue={}: Could not unpack Handover Command PDU", ue_index);
     CORO_EARLY_RETURN(false);
@@ -58,9 +58,8 @@ void inter_cu_handover_source_routine::operator()(coro_context<async_task<bool>>
     CORO_EARLY_RETURN(false);
   }
 
-  // Transfer PDCP state.
-  // Get PDCP state from CU-UP.
-  fill_e1ap_bearer_modification_request_pdcp_sn_query();
+  // Get the PDCP state from the CU-UP and give it the forwarding tunnels to send the held data to.
+  fill_e1ap_bearer_context_modification_request();
 
   CORO_AWAIT_VALUE(bearer_mod_resp,
                    cu_up_db.find_cu_up_processor(ue_mng.find_du_ue(ue_index)->get_cu_up_index())
@@ -86,7 +85,7 @@ void inter_cu_handover_source_routine::operator()(coro_context<async_task<bool>>
   CORO_RETURN(true);
 }
 
-void inter_cu_handover_source_routine::fill_e1ap_bearer_modification_request_pdcp_sn_query()
+void inter_cu_handover_source_routine::fill_e1ap_bearer_context_modification_request()
 {
   bearer_mod_req.ue_index = ue_index;
   bearer_mod_req.ng_ran_bearer_context_mod_request.emplace();
@@ -95,6 +94,25 @@ void inter_cu_handover_source_routine::fill_e1ap_bearer_modification_request_pdc
     e1ap_pdu_session_res_to_modify_item e1ap_pdu_session_item;
     e1ap_pdu_session_item.pdu_session_id = pdu_session_id;
 
+    // The forwarding tunnels accepted for this PDU session, if any.
+    const auto forwarding_info     = command.data_forwarding_info_from_target.find(pdu_session_id);
+    const bool has_forwarding_info = forwarding_info != command.data_forwarding_info_from_target.end();
+
+    // Give the CU-UP the PDU session level forwarding tunnel, together with the QoS flows to be forwarded over it.
+    bool forwarding_tunnel_programmed = false;
+    if (has_forwarding_info and forwarding_info->second.pdu_session_level_dl_data_forwarding_info.has_value()) {
+      e1ap_data_forwarding_info session_forwarding_info;
+      session_forwarding_info.dl_data_forwarding = forwarding_info->second.pdu_session_level_dl_data_forwarding_info;
+      session_forwarding_info.data_forwarding_to_ng_ran_qos_flow_info_list =
+          forwarding_info->second.qos_flows_accepted_for_data_forwarding_list;
+      logger.info("ue={}: Forwarding {} over the PDU session level tunnel. tnl_info={}",
+                  ue_index,
+                  pdu_session_id,
+                  session_forwarding_info.dl_data_forwarding.value());
+      e1ap_pdu_session_item.pdu_session_data_forwarding_info = std::move(session_forwarding_info);
+      forwarding_tunnel_programmed                           = true;
+    }
+
     const up_pdu_session_context& pdu_session =
         ue_mng.find_du_ue(ue_index)->get_up_resource_manager().get_pdu_session_context(pdu_session_id);
     // Fill DRBs
@@ -102,8 +120,18 @@ void inter_cu_handover_source_routine::fill_e1ap_bearer_modification_request_pdc
       e1ap_drb_to_modify_item_ng_ran drb_to_mod;
       drb_to_mod.drb_id                 = drb.first;
       drb_to_mod.pdcp_sn_status_request = true;
+
       e1ap_pdu_session_item.drb_to_modify_list_ng_ran.emplace(drb.first, drb_to_mod);
     }
+
+    // This node proposes DL forwarding for every QoS flow it hands over, so a PDU session left without any tunnel
+    // means the data still held for the UE is lost. The 5GC may report QoS flows as accepted for forwarding and
+    // still provide no endpoint to send them to.
+    if (not forwarding_tunnel_programmed) {
+      logger.info(
+          "ue={}: Not forwarding the data of {}. Cause: no forwarding tunnel was provided", ue_index, pdu_session_id);
+    }
+
     bearer_mod_req.ng_ran_bearer_context_mod_request->pdu_session_res_to_modify_list.emplace(pdu_session_id,
                                                                                              e1ap_pdu_session_item);
   }

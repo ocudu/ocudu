@@ -1273,11 +1273,12 @@ void cu_cp_impl::handle_transmission_of_handover_required()
   mobility_mng.get_metrics_handler().aggregate_requested_handover_preparation();
 }
 
-async_task<bool> cu_cp_impl::handle_new_rrc_handover_command(cu_cp_ue_index_t                ue_index,
-                                                             byte_buffer                     command,
+async_task<bool> cu_cp_impl::handle_new_rrc_handover_command(cu_cp_rrc_handover_command      command,
                                                              std::optional<xnc_peer_index_t> xnc_index)
 {
   static constexpr std::chrono::milliseconds tng_reloc_overall_timeout{1000};
+
+  const cu_cp_ue_index_t ue_index = command.ue_index;
 
   // Notify mobility manager metrics handler about the successful handover preparation.
   mobility_mng.get_metrics_handler().aggregate_successful_handover_preparation();
@@ -1312,7 +1313,7 @@ async_task<bool> cu_cp_impl::handle_new_rrc_handover_command(cu_cp_ue_index_t   
                                        ngap_cause_radio_network_t::tngrelocoverall_expiry});
 
   return launch_async<inter_cu_handover_source_routine>(
-      ue_index, std::move(command), ue_mng, du_db, cu_up_db, ngap->get_ngap_control_message_handler(), xnap, logger);
+      std::move(command), ue_mng, du_db, cu_up_db, ngap->get_ngap_control_message_handler(), xnap, logger);
 }
 
 async_task<cu_cp_handover_resource_allocation_response>

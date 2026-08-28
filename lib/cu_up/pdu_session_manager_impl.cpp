@@ -459,6 +459,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                  drb_iter->second->drb_id);
 
     std::unique_ptr<drb_context>& drb = drb_iter->second;
+
     if (new_ul_tnl_info_required) {
       // Allocate new UL TEID for DRB
       expected<gtpu_teid_t> ret = f1u_teid_allocator.request_teid();
@@ -632,6 +633,18 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                     ul_tnl.gtp_teid);
     pdu_session->gtpu->get_tx_lower_layer_interface()->update_tx_endpoint(
         ul_tnl.tp_address.to_string(), n3_config.upf_port, ul_tnl.gtp_teid.value());
+  }
+
+  // > Store the peer endpoint of the PDU session level DL data forwarding tunnel (TS 37.483 section 9.3.2.6).
+  if (session.pdu_session_data_forwarding_info.has_value() and
+      session.pdu_session_data_forwarding_info->dl_data_forwarding.has_value()) {
+    pdu_session->peer_dl_data_forwarding_tnl_info = session.pdu_session_data_forwarding_info->dl_data_forwarding;
+    pdu_session->qos_flows_to_be_forwarded =
+        session.pdu_session_data_forwarding_info->data_forwarding_to_ng_ran_qos_flow_info_list;
+    logger.log_info("Received DL data forwarding tunnel for {}. tnl_info={} nof_qos_flows={}",
+                    session.pdu_session_id,
+                    pdu_session->peer_dl_data_forwarding_tnl_info.value(),
+                    pdu_session->qos_flows_to_be_forwarded.size());
   }
 
   pdu_session_result.success = true;

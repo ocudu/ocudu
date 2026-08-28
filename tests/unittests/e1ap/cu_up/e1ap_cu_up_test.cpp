@@ -285,6 +285,67 @@ TEST_F(e1ap_cu_up_test,
   EXPECT_FALSE(session_item.ng_ul_up_tnl_info.has_value());
 }
 
+/// Verify that the PDU session level data forwarding info of a pdu_session_res_to_modify_item is decoded and forwarded
+/// to the CU-UP notifier. This is the endpoint the source node sends the data it still holds for the UE to
+/// (TS 37.483 section 9.3.2.6).
+TEST_F(e1ap_cu_up_test,
+       when_bearer_context_modification_with_data_forwarding_info_received_then_info_is_decoded_and_forwarded)
+{
+  run_e1_setup_procedure();
+  this->setup_bearer(9);
+
+  constexpr uint32_t    fwd_teid    = 0x20000283;
+  constexpr const char* fwd_addr    = "192.168.1.100";
+  const qos_flow_id_t   qos_flow_id = uint_to_qos_flow_id(1);
+
+  e1ap_message bearer_context_modification =
+      generate_bearer_context_modification_request_with_data_forwarding_info(9, fwd_teid, fwd_addr, qos_flow_id);
+  e1ap->handle_message(bearer_context_modification);
+
+  // The modification response must indicate success.
+  ASSERT_EQ(asn1::e1ap::e1ap_pdu_c::types_opts::options::successful_outcome, e1ap_gw.last_tx_e1ap_pdu.pdu.type());
+  ASSERT_EQ(asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::options::bearer_context_mod_resp,
+            e1ap_gw.last_tx_e1ap_pdu.pdu.successful_outcome().value.type());
+
+  // Verify the decoded forwarding info was forwarded to the CU-UP notifier.
+  const auto& mod_req = cu_up_notifier.last_bearer_context_modification_request;
+  ASSERT_TRUE(mod_req.ng_ran_bearer_context_mod_request.has_value());
+  const auto& pdu_session_res_to_mod_list =
+      mod_req.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list;
+  ASSERT_EQ(pdu_session_res_to_mod_list.size(), 1U);
+
+  const auto& session_item = *pdu_session_res_to_mod_list.begin();
+  ASSERT_TRUE(session_item.pdu_session_data_forwarding_info.has_value());
+  ASSERT_TRUE(session_item.pdu_session_data_forwarding_info->dl_data_forwarding.has_value());
+  EXPECT_EQ(session_item.pdu_session_data_forwarding_info->dl_data_forwarding->gtp_teid.value(), fwd_teid);
+  EXPECT_EQ(session_item.pdu_session_data_forwarding_info->dl_data_forwarding->tp_address.to_string(), fwd_addr);
+  EXPECT_FALSE(session_item.pdu_session_data_forwarding_info->ul_data_forwarding.has_value());
+
+  ASSERT_EQ(session_item.pdu_session_data_forwarding_info->data_forwarding_to_ng_ran_qos_flow_info_list.size(), 1U);
+  EXPECT_EQ(session_item.pdu_session_data_forwarding_info->data_forwarding_to_ng_ran_qos_flow_info_list[0],
+            qos_flow_id);
+}
+
+/// Negative: when the data forwarding info is absent, the field must not be set in the decoded output.
+TEST_F(e1ap_cu_up_test, when_bearer_context_modification_without_data_forwarding_info_received_then_field_is_absent)
+{
+  run_e1_setup_procedure();
+  this->setup_bearer(9);
+
+  e1ap_message bearer_context_modification = generate_bearer_context_modification_request(9, 0);
+  e1ap->handle_message(bearer_context_modification);
+
+  ASSERT_EQ(asn1::e1ap::e1ap_pdu_c::types_opts::options::successful_outcome, e1ap_gw.last_tx_e1ap_pdu.pdu.type());
+
+  const auto& mod_req = cu_up_notifier.last_bearer_context_modification_request;
+  ASSERT_TRUE(mod_req.ng_ran_bearer_context_mod_request.has_value());
+  const auto& pdu_session_res_to_mod_list =
+      mod_req.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list;
+  ASSERT_EQ(pdu_session_res_to_mod_list.size(), 1U);
+
+  EXPECT_FALSE(pdu_session_res_to_mod_list.begin()->pdu_session_data_forwarding_info.has_value());
+}
+
 TEST_F(e1ap_cu_up_test, when_valid_bearer_context_release_command_received_then_bearer_context_release_complete_is_sent)
 {
   run_e1_setup_procedure();

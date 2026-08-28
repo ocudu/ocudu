@@ -218,6 +218,7 @@ struct e1ap_qos_flow_failed_item {
 struct e1ap_data_forwarding_info {
   std::optional<up_transport_layer_info> ul_data_forwarding;
   std::optional<up_transport_layer_info> dl_data_forwarding;
+  std::vector<qos_flow_id_t>             data_forwarding_to_ng_ran_qos_flow_info_list;
 };
 
 struct e1ap_drb_setup_item_ng_ran {

@@ -41,6 +41,7 @@ public:
   protocol_transaction_outcome_observer<asn1::xnap::ho_request_ack_s, asn1::xnap::ho_prep_fail_s> transaction_sink;
   byte_buffer                                                                                     rrc_ho_cmd_pdu;
   bool                               rrc_reconfig_success = false;
+  cu_cp_rrc_handover_command         ho_command;
   xnap_handover_preparation_response response;
 
   bool send_handover_request();

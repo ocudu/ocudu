@@ -1096,7 +1096,10 @@ ngap_message ocudu::ocucp::generate_handover_preparation_failure(amf_ue_id_t amf
   return ngap_msg;
 }
 
-ngap_message ocudu::ocucp::generate_valid_handover_command(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id)
+ngap_message ocudu::ocucp::generate_valid_handover_command(amf_ue_id_t amf_ue_id,
+                                                           ran_ue_id_t ran_ue_id,
+                                                           bool        with_data_forwarding_info,
+                                                           bool        with_forwarding_tunnel)
 {
   ngap_message ngap_msg;
 
@@ -1115,6 +1118,24 @@ ngap_message ocudu::ocucp::generate_valid_handover_command(amf_ue_id_t amf_ue_id
   asn1::ngap::pdu_session_res_ho_item_s ho_item;
   ho_item.pdu_session_id  = 1;
   ho_item.ho_cmd_transfer = make_byte_buffer("00").value();
+  if (with_data_forwarding_info) {
+    // Report a PDU session level DL forwarding tunnel. Its endpoint belongs either to the handover target, when the
+    // 5GC uses a direct forwarding path, or to a UPF the 5GC inserted for indirect forwarding. The source treats both
+    // the same way.
+    asn1::ngap::ho_cmd_transfer_s ho_cmd_transfer;
+    if (with_forwarding_tunnel) {
+      ho_cmd_transfer.dl_forwarding_up_tnl_info_present = true;
+      auto& session_tunnel                              = ho_cmd_transfer.dl_forwarding_up_tnl_info.set_gtp_tunnel();
+      session_tunnel.transport_layer_address.from_number(2887058953);
+      session_tunnel.gtp_teid.from_string("20000283");
+    }
+
+    asn1::ngap::qos_flow_to_be_forwarded_item_s flow_to_be_forwarded;
+    flow_to_be_forwarded.qos_flow_id = 1;
+    ho_cmd_transfer.qos_flow_to_be_forwarded_list.push_back(flow_to_be_forwarded);
+
+    ho_item.ho_cmd_transfer = pack_into_pdu(ho_cmd_transfer);
+  }
   ho_cmd->pdu_session_res_ho_list.push_back(ho_item);
 
   // Fill target to source transparent container.

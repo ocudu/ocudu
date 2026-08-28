@@ -95,10 +95,10 @@ void xnap_source_handover_preparation_procedure::operator()(
 
   if (!request.is_conditional_handover) {
     // Immediate HO: forward RRC Handover Command to DU Processor.
-    CORO_AWAIT_VALUE(
-        rrc_reconfig_success,
-        cu_cp_notifier.on_new_rrc_handover_command(
-            request.ue_index, transaction_sink.response()->target2_source_ng_ra_nnode_transp_container.copy()));
+    // TODO: Report the data forwarding tunnels of the Data Forwarding Info From Target IE (TS 38.423 section 9.2.1.19).
+    ho_command.ue_index      = request.ue_index;
+    ho_command.rrc_container = transaction_sink.response()->target2_source_ng_ra_nnode_transp_container.copy();
+    CORO_AWAIT_VALUE(rrc_reconfig_success, cu_cp_notifier.on_new_rrc_handover_command(std::move(ho_command)));
     if (!rrc_reconfig_success) {
       logger.log_warning("\"{}\" failed. Cause: Received invalid Handover Command", name());
       CORO_EARLY_RETURN(xnap_handover_preparation_response{});

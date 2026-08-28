@@ -41,13 +41,14 @@ public:
 
   protocol_transaction_outcome_observer<asn1::ngap::ho_cmd_s, asn1::ngap::ho_prep_fail_s> transaction_sink;
   protocol_transaction_outcome_observer<asn1::ngap::ho_cancel_ack_s>                      ho_cancel_transaction_sink;
-  byte_buffer                                                                             rrc_ho_cmd_pdu;
+  cu_cp_rrc_handover_command                                                              rrc_ho_cmd;
   bool                                                                                    rrc_reconfig_success = false;
 
-  void        get_required_handover_context();
-  bool        send_handover_required();
-  bool        send_handover_cancel();
-  byte_buffer get_rrc_handover_command() const;
+  void get_required_handover_context();
+  bool send_handover_required();
+  bool send_handover_cancel();
+  /// Unpacks the Handover Command, including the data forwarding tunnels reported per PDU session.
+  cu_cp_rrc_handover_command get_rrc_handover_command() const;
 
   // ASN.1 helpers
   void        fill_asn1_target_ran_node_id(asn1::ngap::target_id_c& target_id);

@@ -92,15 +92,14 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
 
   if (transaction_sink.successful()) {
     // Unpack transparent container to get RRC Handover Command.
-    rrc_ho_cmd_pdu = get_rrc_handover_command();
-    if (rrc_ho_cmd_pdu.empty()) {
+    rrc_ho_cmd = get_rrc_handover_command();
+    if (rrc_ho_cmd.rrc_container.empty()) {
       logger.log_warning("\"{}\" failed. Cause: Received invalid HandoverCommand", name());
       CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
     }
 
     // Forward RRC Handover Command to DU Processor.
-    CORO_AWAIT_VALUE(rrc_reconfig_success,
-                     cu_cp_notifier.on_new_rrc_handover_command(request.ue_index, std::move(rrc_ho_cmd_pdu)));
+    CORO_AWAIT_VALUE(rrc_reconfig_success, cu_cp_notifier.on_new_rrc_handover_command(std::move(rrc_ho_cmd)));
     if (!rrc_reconfig_success) {
       logger.log_warning("\"{}\" failed. Cause: Received invalid HandoverCommand", name());
       CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
@@ -254,8 +253,11 @@ byte_buffer ngap_handover_preparation_procedure::fill_asn1_source_to_target_tran
   return buf;
 }
 
-byte_buffer ngap_handover_preparation_procedure::get_rrc_handover_command() const
+cu_cp_rrc_handover_command ngap_handover_preparation_procedure::get_rrc_handover_command() const
 {
+  cu_cp_rrc_handover_command ho_command;
+  ho_command.ue_index = request.ue_index;
+
   const auto& target_to_source_container_packed = transaction_sink.response()->target_to_source_transparent_container;
 
   asn1::ngap::target_ngran_node_to_source_ngran_node_transparent_container_s target_to_source_container;
@@ -263,8 +265,22 @@ byte_buffer ngap_handover_preparation_procedure::get_rrc_handover_command() cons
 
   if (target_to_source_container.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
     logger.log_error("Couldn't unpack target to source transparent container");
-    return byte_buffer{};
+    return ho_command;
+  }
+  ho_command.rrc_container = std::move(target_to_source_container.rrc_container);
+
+  // Unpack the Handover Command Transfer of every PDU session, to learn where the data still held for the UE has to be
+  // forwarded to (TS 38.413 section 9.3.4.10).
+  for (const auto& asn1_pdu_session : transaction_sink.response()->pdu_session_res_ho_list) {
+    asn1::ngap::ho_cmd_transfer_s asn1_ho_cmd_transfer;
+    asn1::cbit_ref transfer_bref({asn1_pdu_session.ho_cmd_transfer.begin(), asn1_pdu_session.ho_cmd_transfer.end()});
+    if (asn1_ho_cmd_transfer.unpack(transfer_bref) != asn1::OCUDUASN_SUCCESS) {
+      logger.log_warning("Couldn't unpack Handover Command Transfer of psi={}", asn1_pdu_session.pdu_session_id);
+      continue;
+    }
+    ho_command.data_forwarding_info_from_target.emplace(uint_to_pdu_session_id(asn1_pdu_session.pdu_session_id),
+                                                        asn1_to_data_forwarding_info_from_target(asn1_ho_cmd_transfer));
   }
 
-  return std::move(target_to_source_container.rrc_container);
+  return ho_command;
 }

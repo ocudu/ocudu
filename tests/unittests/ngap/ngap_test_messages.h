@@ -255,7 +255,10 @@ ngap_message generate_valid_handover_request(amf_ue_id_t amf_ue_id, const handov
 ngap_message generate_handover_preparation_failure(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
 
 /// \brief Generate a valid dummy Handover Command message.
-ngap_message generate_valid_handover_command(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
+ngap_message generate_valid_handover_command(amf_ue_id_t amf_ue_id,
+                                             ran_ue_id_t ran_ue_id,
+                                             bool        with_data_forwarding_info = false,
+                                             bool        with_forwarding_tunnel    = true);
 
 /// \brief Generate a valid dummy DL RAN Status Transfer. \c drb_ids adds one DRBs Subject to Status Transfer List
 /// entry per DRB, e.g. to simulate a source DRB ID that was not admitted at (or not allocated the same way by) the

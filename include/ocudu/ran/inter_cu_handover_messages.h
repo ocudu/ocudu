@@ -16,6 +16,7 @@
 #include "ocudu/ran/rb_id.h"
 #include "ocudu/ran/up_transport_layer_info.h"
 #include "ocudu/security/security.h"
+#include <map>
 
 namespace ocudu::ocucp {
 
@@ -98,6 +99,17 @@ struct cu_cp_handover_request_ack {
 struct cu_cp_handover_request_failure {
   cu_cp_ue_index_t                         ue_index = cu_cp_ue_index_t::invalid;
   std::variant<ngap_cause_t, xnap_cause_t> cause;
+};
+
+struct cu_cp_rrc_handover_command {
+  cu_cp_ue_index_t ue_index = cu_cp_ue_index_t::invalid;
+  /// RRC container carrying the HandoverCommand (TS 38.331 section 11.2.2).
+  byte_buffer rrc_container;
+  /// \brief Data forwarding tunnels to send the data still held for the UE to, per PDU session.
+  ///
+  /// For direct data forwarding these are the endpoints of the handover target, for indirect data forwarding those of
+  /// the UPF the 5GC inserted (TS 38.413 section 9.3.4.10).
+  std::map<pdu_session_id_t, cu_cp_data_forwarding_info_from_target_ng_ran_node> data_forwarding_info_from_target;
 };
 
 using cu_cp_handover_resource_allocation_response =

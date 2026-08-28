@@ -899,6 +899,42 @@ inline bool target_to_source_transport_container_to_asn1(byte_buffer& asn1_conta
   return true;
 }
 
+/// \brief Convert an NGAP ASN.1 Handover Command Transfer to \c cu_cp_data_forwarding_info_from_target_ng_ran_node.
+/// \param[in] asn1_ho_cmd_transfer The ASN.1 Handover Command Transfer (TS 38.413 section 9.3.4.10).
+/// \return The forwarding tunnels the source shall send the data it still holds for the UE to.
+inline cu_cp_data_forwarding_info_from_target_ng_ran_node
+asn1_to_data_forwarding_info_from_target(const asn1::ngap::ho_cmd_transfer_s& asn1_ho_cmd_transfer)
+{
+  cu_cp_data_forwarding_info_from_target_ng_ran_node data_forwarding_info;
+
+  // Fill PDU session level DL forwarding UP TNL info.
+  if (asn1_ho_cmd_transfer.dl_forwarding_up_tnl_info_present) {
+    data_forwarding_info.pdu_session_level_dl_data_forwarding_info =
+        asn1_to_up_transport_layer_info(asn1_ho_cmd_transfer.dl_forwarding_up_tnl_info);
+  }
+
+  // Fill QoS flows to be forwarded over the PDU session level tunnel.
+  for (const auto& asn1_qos_flow : asn1_ho_cmd_transfer.qos_flow_to_be_forwarded_list) {
+    data_forwarding_info.qos_flows_accepted_for_data_forwarding_list.push_back(
+        uint_to_qos_flow_id(asn1_qos_flow.qos_flow_id));
+  }
+
+  // Fill data forwarding resp DRB list.
+  for (const auto& asn1_drb_item : asn1_ho_cmd_transfer.data_forwarding_resp_drb_list) {
+    cu_cp_data_forwarding_resp_drb_item drb_item;
+    drb_item.drb_id = uint_to_drb_id(asn1_drb_item.drb_id);
+    if (asn1_drb_item.dl_forwarding_up_tnl_info_present) {
+      drb_item.dl_forwarding_up_tnl = asn1_to_up_transport_layer_info(asn1_drb_item.dl_forwarding_up_tnl_info);
+    }
+    if (asn1_drb_item.ul_forwarding_up_tnl_info_present) {
+      drb_item.ul_forwarding_up_tnl = asn1_to_up_transport_layer_info(asn1_drb_item.ul_forwarding_up_tnl_info);
+    }
+    data_forwarding_info.data_forwarding_resp_drb_item_list.push_back(drb_item);
+  }
+
+  return data_forwarding_info;
+}
+
 /// \brief Convert NGAP ASN.1 to \c five_g_s_tmsi_t.
 /// \param[in] asn1_ue_id The ASN.1 type ue paging ID.
 /// \return The common type five_g_s_tmsi_t.

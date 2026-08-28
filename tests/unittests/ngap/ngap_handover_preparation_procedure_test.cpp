@@ -88,6 +88,53 @@ TEST_F(ngap_test, when_ue_has_no_pdu_session_then_handover_preparation_is_declin
   ASSERT_EQ(n2_gw.nof_unpackable_ngap_msgs, 0);
 }
 
+/// Test that the forwarding tunnels reported per PDU session in the Handover Command are handed to the CU-CP, so that
+/// it can point the source CU-UP at them (TS 38.413 section 9.3.4.10).
+TEST_F(ngap_test, when_handover_command_reports_forwarding_tunnels_then_they_are_forwarded_to_the_cu_cp)
+{
+  cu_cp_ue_index_t ue_index = create_ue();
+  run_dl_nas_transport(ue_index);
+
+  add_pdu_session_to_up_manager(
+      ue_index,
+      uint_to_pdu_session_id(1),
+      pdu_session_type_t::ipv4,
+      up_transport_layer_info{transport_layer_address::create_from_string("127.0.0.1"), int_to_gtpu_teid(1)},
+      uint_to_drb_id(1),
+      uint_to_qos_flow_id(1));
+
+  auto& ue = test_ues.at(ue_index);
+  ue.rrc_ue_handler.set_ho_preparation_message({});
+
+  ngap_handover_preparation_request request =
+      generate_handover_preparation_request(ue_index,
+                                            ue_mng.find_ue(ue_index)->get_up_resource_manager().get_pdu_sessions_map(),
+                                            nr_cell_identity::create({1, 22}, 1).value(),
+                                            22);
+
+  async_task<ngap_handover_preparation_response>         t = ngap->handle_handover_preparation_request(request);
+  lazy_task_launcher<ngap_handover_preparation_response> t_launcher(t);
+
+  // Inject a Handover Command carrying a PDU session level forwarding tunnel.
+  ngap->handle_message(generate_valid_handover_command(ue.amf_ue_id.value(), ue.ran_ue_id.value(), true));
+
+  ASSERT_TRUE(t.ready());
+  ASSERT_TRUE(t.get().success);
+
+  const auto& ho_command = cu_cp_notifier.last_handover_command;
+  ASSERT_EQ(ho_command.ue_index, ue_index);
+  ASSERT_FALSE(ho_command.rrc_container.empty());
+
+  ASSERT_EQ(ho_command.data_forwarding_info_from_target.size(), 1U);
+  const auto& forwarding_info = ho_command.data_forwarding_info_from_target.at(uint_to_pdu_session_id(1));
+
+  ASSERT_TRUE(forwarding_info.pdu_session_level_dl_data_forwarding_info.has_value());
+  ASSERT_EQ(forwarding_info.qos_flows_accepted_for_data_forwarding_list.size(), 1U);
+  EXPECT_EQ(forwarding_info.qos_flows_accepted_for_data_forwarding_list[0], uint_to_qos_flow_id(1));
+
+  EXPECT_TRUE(forwarding_info.data_forwarding_resp_drb_item_list.empty());
+}
+
 /// Test that the Handover Required correctly encodes the target PLMN in the TargetID's Global gNB-ID and in the
 /// Source-to-Target Transparent Container's Target Cell ID, for a target cell belonging to a different PLMN than the
 /// one currently serving the UE.

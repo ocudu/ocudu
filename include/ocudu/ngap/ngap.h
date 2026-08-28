@@ -208,10 +208,9 @@ public:
   virtual void on_transmission_of_handover_required() = 0;
 
   /// \brief Notify about the reception of a new RRC Handover Command (TS 38.331 section 11.2.2).
-  /// \param[in] ue_index The index of the UE.
-  /// \param[in] command The RRC container containing the Handover Command.
+  /// \param[in] command The Handover Command, including the data forwarding tunnels of the target.
   /// \returns True if the Handover command is valid and was successfully handled by the DU.
-  virtual async_task<bool> on_new_rrc_handover_command(cu_cp_ue_index_t ue_index, byte_buffer command) = 0;
+  virtual async_task<bool> on_new_rrc_handover_command(cu_cp_rrc_handover_command command) = 0;
 
   /// \brief Notify the CU-CP to await the RRC Reconfiguration Complete and the DL Status Transfer.
   /// \param[in] ue_index The index of the UE.

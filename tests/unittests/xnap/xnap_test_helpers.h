@@ -73,9 +73,9 @@ public:
     rrc_handover_command_gate->set();
   }
 
-  async_task<bool> on_new_rrc_handover_command(cu_cp_ue_index_t ue_index, byte_buffer command) override
+  async_task<bool> on_new_rrc_handover_command(cu_cp_rrc_handover_command command) override
   {
-    logger.info("Received a new RRC Handover Command for UE index {}", ue_index);
+    logger.info("Received a new RRC Handover Command for UE index {}", command.ue_index);
     last_handover_command = std::move(command);
     return launch_async([this](coro_context<async_task<bool>>& ctx) mutable {
       CORO_BEGIN(ctx);
@@ -224,7 +224,7 @@ public:
     });
   }
 
-  byte_buffer last_handover_command;
+  cu_cp_rrc_handover_command last_handover_command;
 
   /// UE index the dummy resolves a UE Context ID to.
   cu_cp_ue_index_t ue_context_id_lookup_result = cu_cp_ue_index_t::invalid;

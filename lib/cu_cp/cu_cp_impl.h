@@ -137,8 +137,7 @@ public:
   handle_write_replace_warning_request(const ngap_write_replace_warning_request& request) override;
 
   // cu_cp_inter_cu_handover_handler.
-  async_task<bool> handle_new_rrc_handover_command(cu_cp_ue_index_t                ue_index,
-                                                   byte_buffer                     command,
+  async_task<bool> handle_new_rrc_handover_command(cu_cp_rrc_handover_command      command,
                                                    std::optional<xnc_peer_index_t> xnc_index = std::nullopt) override;
   cu_cp_ue_index_t handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi,
                                                       const plmn_identity&       plmn) override;

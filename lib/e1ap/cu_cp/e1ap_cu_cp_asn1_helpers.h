@@ -527,6 +527,12 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
                                           res_to_mod_item.ng_ul_up_tnl_info.value());
         }
 
+        if (res_to_mod_item.pdu_session_data_forwarding_info.has_value()) {
+          asn1_res_to_mod_item.pdu_session_data_forwarding_info_present = true;
+          e1ap_data_forwarding_info_to_asn1(asn1_res_to_mod_item.pdu_session_data_forwarding_info,
+                                            res_to_mod_item.pdu_session_data_forwarding_info.value());
+        }
+
         for (const auto& drb_to_setup_item : res_to_mod_item.drb_to_setup_list_ng_ran) {
           asn1::e1ap::drb_to_setup_item_ng_ran_s asn1_drb_to_setup_item;
           fill_asn1_drb_to_setup_item(asn1_drb_to_setup_item, drb_to_setup_item);

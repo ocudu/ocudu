@@ -509,6 +509,12 @@ inline bool fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
               asn1_to_up_transport_layer_info(asn1_res_to_mod_item.ng_ul_up_tnl_info);
         }
 
+        // Fill PDU session data forwarding info.
+        if (asn1_res_to_mod_item.pdu_session_data_forwarding_info_present) {
+          pdu_session_res_to_mod_item.pdu_session_data_forwarding_info =
+              e1ap_asn1_to_data_forwarding_info(asn1_res_to_mod_item.pdu_session_data_forwarding_info);
+        }
+
         // Fill DRB to setup list.
         for (const auto& asn1_drb_to_setup_item : asn1_res_to_mod_item.drb_to_setup_list_ng_ran) {
           e1ap_drb_to_setup_item_ng_ran drb_to_setup_item;

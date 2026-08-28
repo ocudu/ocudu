@@ -1274,6 +1274,12 @@ e1ap_asn1_to_data_forwarding_info(const asn1::e1ap::data_forwarding_info_s& asn1
     data_forwarding_info.dl_data_forwarding =
         asn1_to_up_transport_layer_info(asn1_data_forwarding_info.dl_data_forwarding);
   }
+  if (asn1_data_forwarding_info.ie_exts.data_forwardingto_ng_ran_qos_flow_info_list_present) {
+    for (const auto& asn1_qos_flow : asn1_data_forwarding_info.ie_exts.data_forwardingto_ng_ran_qos_flow_info_list) {
+      data_forwarding_info.data_forwarding_to_ng_ran_qos_flow_info_list.push_back(
+          uint_to_qos_flow_id(asn1_qos_flow.qos_flow_id));
+    }
+  }
   return data_forwarding_info;
 }
 
@@ -1290,6 +1296,15 @@ inline void e1ap_data_forwarding_info_to_asn1(asn1::e1ap::data_forwarding_info_s
     asn1_data_forwarding_info.dl_data_forwarding_present = true;
     up_transport_layer_info_to_asn1(asn1_data_forwarding_info.dl_data_forwarding,
                                     data_forwarding_info.dl_data_forwarding.value());
+  }
+  if (not data_forwarding_info.data_forwarding_to_ng_ran_qos_flow_info_list.empty()) {
+    asn1_data_forwarding_info.ie_exts_present                                             = true;
+    asn1_data_forwarding_info.ie_exts.data_forwardingto_ng_ran_qos_flow_info_list_present = true;
+    for (qos_flow_id_t qos_flow_id : data_forwarding_info.data_forwarding_to_ng_ran_qos_flow_info_list) {
+      asn1::e1ap::data_forwardingto_ng_ran_qos_flow_info_list_item_s asn1_qos_flow;
+      asn1_qos_flow.qos_flow_id = qos_flow_id_to_uint(qos_flow_id);
+      asn1_data_forwarding_info.ie_exts.data_forwardingto_ng_ran_qos_flow_info_list.push_back(asn1_qos_flow);
+    }
   }
 }
 

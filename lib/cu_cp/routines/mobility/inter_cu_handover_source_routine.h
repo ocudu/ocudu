@@ -16,8 +16,7 @@ namespace ocudu::ocucp {
 class inter_cu_handover_source_routine
 {
 public:
-  inter_cu_handover_source_routine(cu_cp_ue_index_t              ue_index_,
-                                   byte_buffer                   command,
+  inter_cu_handover_source_routine(cu_cp_rrc_handover_command    command_,
                                    ue_manager&                   ue_mng_,
                                    du_processor_repository&      du_db_,
                                    cu_up_processor_repository&   cu_up_db_,
@@ -30,11 +29,11 @@ public:
   static const char* name() { return "Inter CU Handover Source Routine"; }
 
 private:
-  void fill_e1ap_bearer_modification_request_pdcp_sn_query();
+  void fill_e1ap_bearer_context_modification_request();
   bool fill_status_transfer();
 
+  cu_cp_rrc_handover_command    command;
   cu_cp_ue_index_t              ue_index;
-  byte_buffer                   command;
   ue_manager&                   ue_mng;
   du_processor_repository&      du_db;
   cu_up_processor_repository&   cu_up_db;

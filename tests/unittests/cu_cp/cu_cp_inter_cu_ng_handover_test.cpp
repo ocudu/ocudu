@@ -256,11 +256,15 @@ public:
     return true;
   }
 
-  [[nodiscard]] bool send_handover_command_and_await_ue_context_modification_request(amf_ue_id_t ngap_amf_ue_id,
-                                                                                     ran_ue_id_t ngap_ran_ue_id)
+  [[nodiscard]] bool
+  send_handover_command_and_await_ue_context_modification_request(amf_ue_id_t ngap_amf_ue_id,
+                                                                  ran_ue_id_t ngap_ran_ue_id,
+                                                                  bool        with_data_forwarding_info = false,
+                                                                  bool        with_forwarding_tunnel    = true)
   {
     // Inject Handover Command and wait for UE Context Modification Request (containing RRC Reconfiguration).
-    get_amf().push_tx_pdu(generate_valid_handover_command(ngap_amf_ue_id, ngap_ran_ue_id));
+    get_amf().push_tx_pdu(generate_valid_handover_command(
+        ngap_amf_ue_id, ngap_ran_ue_id, with_data_forwarding_info, with_forwarding_tunnel));
 
     report_fatal_error_if_not(
         this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu),
@@ -507,6 +511,90 @@ TEST_F(cu_cp_inter_cu_ng_handover_test, when_handover_succeeds_then_amf_releases
   // STATUS: UE should be removed at this stage
   report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ues.size(), 0) << "UE should be removed";
+}
+
+// The forwarding tunnels the Handover Command reports must be handed to the source CU-UP, so that it sends the data it
+// still holds for the UE to them (TS 38.413 section 9.3.4.10, TS 37.483 section 9.3.2.6). For indirect data forwarding
+// these endpoints are the ones the 5GC inserted, so they must be taken from the Handover Command and never from what
+// this node itself advertised.
+TEST_F(cu_cp_inter_cu_ng_handover_test, when_handover_command_reports_fwd_tunnels_then_source_up_is_pointed_at_them)
+{
+  ASSERT_TRUE(attach_ue());
+
+  ASSERT_TRUE(
+      send_rrc_measurement_report_and_await_handover_required(ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value()));
+
+  // Inject a Handover Command carrying a PDU session level forwarding tunnel.
+  ASSERT_TRUE(send_handover_command_and_await_ue_context_modification_request(
+      ue_ctx->amf_ue_id.value(), ue_ctx->ran_ue_id.value(), true));
+
+  ASSERT_TRUE(send_ue_context_modification_response_and_await_bearer_context_modification_request(
+      ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value()));
+
+  // The Bearer Context Modification Request points the CU-UP at the forwarding tunnel.
+  const auto& bearer_ctxt_mod_req = e1ap_pdu.pdu.init_msg().value.bearer_context_mod_request();
+  ASSERT_TRUE(bearer_ctxt_mod_req->sys_bearer_context_mod_request_present);
+  const auto& ng_ran_mod_req = bearer_ctxt_mod_req->sys_bearer_context_mod_request.ng_ran_bearer_context_mod_request();
+  ASSERT_TRUE(ng_ran_mod_req.pdu_session_res_to_modify_list_present);
+  ASSERT_EQ(ng_ran_mod_req.pdu_session_res_to_modify_list.size(), 1U);
+  const asn1::e1ap::pdu_session_res_to_modify_item_s& pdu_session = ng_ran_mod_req.pdu_session_res_to_modify_list[0];
+
+  ASSERT_TRUE(pdu_session.pdu_session_data_forwarding_info_present);
+  ASSERT_TRUE(pdu_session.pdu_session_data_forwarding_info.dl_data_forwarding_present);
+  ASSERT_FALSE(pdu_session.pdu_session_data_forwarding_info.ul_data_forwarding_present);
+  ASSERT_TRUE(pdu_session.pdu_session_data_forwarding_info.ie_exts.data_forwardingto_ng_ran_qos_flow_info_list_present);
+  ASSERT_EQ(pdu_session.pdu_session_data_forwarding_info.ie_exts.data_forwardingto_ng_ran_qos_flow_info_list.size(),
+            1U);
+
+  // No DRB level tunnel is programmed. Per DRB forwarding tunnels arrive with the support for the direct
+  // forwarding path.
+  ASSERT_EQ(pdu_session.drb_to_modify_list_ng_ran.size(), 1U);
+  const auto& drb_to_modify = pdu_session.drb_to_modify_list_ng_ran[0];
+  ASSERT_FALSE(drb_to_modify.drb_data_forwarding_info_present);
+
+  // The PDCP SN status is still queried alongside the forwarding tunnel.
+  ASSERT_TRUE(drb_to_modify.pdcp_sn_status_request_present);
+
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_ul_status_transfer(ue_ctx->cu_cp_e1ap_id.value(),
+                                                                                     ue_ctx->cu_up_e1ap_id.value()));
+}
+
+// A 5GC may report QoS flows as accepted for data forwarding without providing an endpoint to send them to, which
+// Amarisoft LTEMME does when only DRB level tunnels are advertised. The source must not program a forwarding tunnel
+// for such a PDU session, and must still query the PDCP SN status of its DRBs.
+TEST_F(cu_cp_inter_cu_ng_handover_test,
+       when_handover_command_reports_no_fwd_tunnel_then_source_up_is_not_pointed_at_one)
+{
+  ASSERT_TRUE(attach_ue());
+
+  ASSERT_TRUE(
+      send_rrc_measurement_report_and_await_handover_required(ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value()));
+
+  // Inject a Handover Command listing the QoS flows to be forwarded but carrying no forwarding tunnel.
+  ASSERT_TRUE(send_handover_command_and_await_ue_context_modification_request(
+      ue_ctx->amf_ue_id.value(), ue_ctx->ran_ue_id.value(), true, false));
+
+  ASSERT_TRUE(send_ue_context_modification_response_and_await_bearer_context_modification_request(
+      ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value()));
+
+  const auto& bearer_ctxt_mod_req = e1ap_pdu.pdu.init_msg().value.bearer_context_mod_request();
+  ASSERT_TRUE(bearer_ctxt_mod_req->sys_bearer_context_mod_request_present);
+  const auto& ng_ran_mod_req = bearer_ctxt_mod_req->sys_bearer_context_mod_request.ng_ran_bearer_context_mod_request();
+  ASSERT_TRUE(ng_ran_mod_req.pdu_session_res_to_modify_list_present);
+  ASSERT_EQ(ng_ran_mod_req.pdu_session_res_to_modify_list.size(), 1U);
+  const asn1::e1ap::pdu_session_res_to_modify_item_s& pdu_session = ng_ran_mod_req.pdu_session_res_to_modify_list[0];
+
+  // No forwarding tunnel is programmed at either level.
+  ASSERT_FALSE(pdu_session.pdu_session_data_forwarding_info_present);
+  ASSERT_EQ(pdu_session.drb_to_modify_list_ng_ran.size(), 1U);
+  const auto& drb_to_modify = pdu_session.drb_to_modify_list_ng_ran[0];
+  ASSERT_FALSE(drb_to_modify.drb_data_forwarding_info_present);
+
+  // The PDCP SN status is still queried, so the handover itself is unaffected.
+  ASSERT_TRUE(drb_to_modify.pdcp_sn_status_request_present);
+
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_ul_status_transfer(ue_ctx->cu_cp_e1ap_id.value(),
+                                                                                     ue_ctx->cu_up_e1ap_id.value()));
 }
 
 TEST_F(cu_cp_inter_cu_ng_handover_test,

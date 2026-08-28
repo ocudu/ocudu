@@ -357,7 +357,7 @@ public:
 
   void on_transmission_of_handover_required() override { logger.info("Received a new Handover Required"); }
 
-  async_task<bool> on_new_rrc_handover_command(cu_cp_ue_index_t ue_index, byte_buffer command) override
+  async_task<bool> on_new_rrc_handover_command(cu_cp_rrc_handover_command command) override
   {
     logger.info("Received a new RRC Handover Command");
 
@@ -376,7 +376,7 @@ public:
   bool schedule_async_task(async_task<void> task) override { return amf_task_sched.schedule(std::move(task)); }
 
   cu_cp_ue_context_release_command last_command;
-  byte_buffer                      last_handover_command;
+  cu_cp_rrc_handover_command       last_handover_command;
 
   cu_cp_ue_index_t allocate_ue_index()
   {
