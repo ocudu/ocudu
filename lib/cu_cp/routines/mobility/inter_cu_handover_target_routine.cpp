@@ -459,94 +459,131 @@ void inter_cu_handover_target_routine::create_srb(srb_id_t srb_id)
   ue_mng.find_du_ue(request.ue_index)->get_rrc_ue()->create_srb(srb_msg);
 }
 
+// The DL forwarding tunnel the CU-UP established for a PDU session, together with the QoS flows this target accepts
+// for forwarding over it.
+struct pdu_session_dl_data_forwarding {
+  std::optional<up_transport_layer_info> tnl_info;
+  std::set<qos_flow_id_t>                accepted_flows;
+};
+
+// Determines what this target can accept for data forwarding: the QoS flows that were both requested to be forwarded
+// over the PDU session level tunnel and actually set up, and the tunnel the CU-UP established for them. Returns
+// nothing when no such flow remains, since the tunnel must not be advertised unless forwarding is accepted for at
+// least one QoS flow (TS 38.413 section 8.4.2.2).
+static pdu_session_dl_data_forwarding
+get_pdu_session_dl_data_forwarding(const e1ap_pdu_session_res_to_setup_item&                requested_session,
+                                   const e1ap_pdu_session_resource_setup_modification_item& setup_session)
+{
+  pdu_session_dl_data_forwarding forwarding;
+  if (not setup_session.pdu_session_data_forwarding_info_resp.has_value() or
+      not setup_session.pdu_session_data_forwarding_info_resp->dl_data_forwarding.has_value() or
+      not requested_session.pdu_session_data_forwarding_info_request.has_value()) {
+    return forwarding;
+  }
+
+  for (const e1ap_qos_flow_map_item& requested_flow :
+       requested_session.pdu_session_data_forwarding_info_request->qos_flows_forwarded_on_fwd_tunnels) {
+    for (const auto& drb_setup_item : setup_session.drb_setup_list_ng_ran) {
+      if (drb_setup_item.flow_setup_list.contains(requested_flow.qos_flow_id)) {
+        forwarding.accepted_flows.insert(requested_flow.qos_flow_id);
+        break;
+      }
+    }
+  }
+
+  if (not forwarding.accepted_flows.empty()) {
+    forwarding.tnl_info = setup_session.pdu_session_data_forwarding_info_resp->dl_data_forwarding;
+  }
+  return forwarding;
+}
+
+// Fills the parts of an admitted PDU session item that NG and Xn report alike, marking every QoS flow accepted for
+// data forwarding (TS 38.413 section 9.3.2.13).
+template <typename admitted_item_type>
+static void fill_admitted_item_common(admitted_item_type&                                      admitted_item,
+                                      const e1ap_pdu_session_resource_setup_modification_item& setup_session,
+                                      const std::set<qos_flow_id_t>&                           accepted_flows)
+{
+  admitted_item.pdu_session_id     = setup_session.pdu_session_id;
+  admitted_item.dl_ngu_up_tnl_info = setup_session.ng_dl_up_tnl_info;
+
+  for (const auto& drb_setup_item : setup_session.drb_setup_list_ng_ran) {
+    // Fill QoS flow setup resp list.
+    for (const auto& flow_setup_item : drb_setup_item.flow_setup_list) {
+      cu_cp_qos_flow_with_data_forwarding_item qos_flow_item;
+      qos_flow_item.qos_flow_id = flow_setup_item.qos_flow_id;
+      if (accepted_flows.count(flow_setup_item.qos_flow_id) != 0) {
+        qos_flow_item.data_forwarding_accepted = true;
+      }
+      admitted_item.qos_flows_setup_list.push_back(qos_flow_item);
+    }
+
+    // Fill QoS flow failed to setup list.
+    for (const auto& flow_failed_item : drb_setup_item.flow_failed_list) {
+      cu_cp_qos_flow_with_cause_item qos_flow_item;
+      qos_flow_item.qos_flow_id = flow_failed_item.qos_flow_id;
+      qos_flow_item.cause       = e1ap_to_ngap_cause(flow_failed_item.cause);
+
+      admitted_item.qos_flows_failed_to_setup_list.push_back(qos_flow_item);
+    }
+  }
+}
+
+// Fills the PDU sessions admitted for an NG handover, reporting the DL forwarding tunnel the CU-UP allocated
+// (TS 38.413 section 9.3.4.11).
 static inline void fill_ng_pdu_session_res_admitted_list(
-    std::vector<cu_cp_pdu_session_res_admitted_item>& pdu_session_res_admitted_list,
+    std::vector<cu_cp_pdu_session_res_admitted_item>&                              pdu_session_res_admitted_list,
+    const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_res_to_setup_item>& pdu_session_res_to_setup_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
-        pdu_session_resource_setup_list)
+                            pdu_session_resource_setup_list,
+    ocudulog::basic_logger& logger)
 {
   for (const auto& pdu_session : pdu_session_resource_setup_list) {
-    cu_cp_ng_pdu_session_res_admitted_item admitted_item;
-
-    // Fill PDU session ID.
-    admitted_item.pdu_session_id = pdu_session.pdu_session_id;
-
-    // Fill HO request ack transfer.
-    // Fill DL NGU UP TNL info.
-    admitted_item.dl_ngu_up_tnl_info = pdu_session.ng_dl_up_tnl_info;
-
-    for (const auto& drb_setup_item : pdu_session.drb_setup_list_ng_ran) {
-      // Fill QoS flow setup resp list.
-      for (const auto& flow_setup_item : drb_setup_item.flow_setup_list) {
-        cu_cp_qos_flow_with_data_forwarding_item qos_flow_item;
-        // Fill QoS flow ID.
-        qos_flow_item.qos_flow_id = flow_setup_item.qos_flow_id;
-
-        admitted_item.qos_flows_setup_list.push_back(qos_flow_item);
-      }
-
-      // Fill QoS flow failed to setup list.
-      for (const auto& flow_failed_item : drb_setup_item.flow_failed_list) {
-        cu_cp_qos_flow_with_cause_item qos_flow_item;
-        // Fill QoS flow ID.
-        qos_flow_item.qos_flow_id = flow_failed_item.qos_flow_id;
-        // Fill Cause.
-        qos_flow_item.cause = e1ap_to_ngap_cause(flow_failed_item.cause);
-
-        admitted_item.qos_flows_failed_to_setup_list.push_back(qos_flow_item);
-      }
-
-      // Fill Data forwarding resp DRB list.
-      cu_cp_data_forwarding_resp_drb_item drb_item;
-      drb_item.drb_id = drb_setup_item.drb_id;
-      admitted_item.data_forwarding_info_from_target.data_forwarding_resp_drb_item_list.push_back(drb_item);
+    // Sanity check - make sure this session ID is present in the original setup message.
+    if (not pdu_session_res_to_setup_list.contains(pdu_session.pdu_session_id)) {
+      logger.warning("Ignoring {} of the Bearer Context Setup Response. Cause: it was not requested",
+                     pdu_session.pdu_session_id);
+      continue;
     }
+
+    const pdu_session_dl_data_forwarding forwarding =
+        get_pdu_session_dl_data_forwarding(pdu_session_res_to_setup_list[pdu_session.pdu_session_id], pdu_session);
+
+    cu_cp_ng_pdu_session_res_admitted_item admitted_item;
+    fill_admitted_item_common(admitted_item, pdu_session, forwarding.accepted_flows);
+    admitted_item.dl_forwarding_up_tnl_info = forwarding.tnl_info;
 
     pdu_session_res_admitted_list.push_back(admitted_item);
   }
 }
 
+// Fills the PDU sessions admitted for an Xn handover, reporting the DL forwarding tunnel the CU-UP allocated
+// (TS 38.423 section 9.2.1.19).
 static inline void fill_xn_pdu_session_res_admitted_list(
-    std::vector<cu_cp_pdu_session_res_admitted_item>& pdu_session_res_admitted_list,
+    std::vector<cu_cp_pdu_session_res_admitted_item>&                              pdu_session_res_admitted_list,
+    const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_res_to_setup_item>& pdu_session_res_to_setup_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
-        pdu_session_resource_setup_list)
+                            pdu_session_resource_setup_list,
+    ocudulog::basic_logger& logger)
 {
   for (const auto& pdu_session : pdu_session_resource_setup_list) {
+    // Sanity check - make sure this session ID is present in the original setup message.
+    if (not pdu_session_res_to_setup_list.contains(pdu_session.pdu_session_id)) {
+      logger.warning("Ignoring {} of the Bearer Context Setup Response. Cause: it was not requested",
+                     pdu_session.pdu_session_id);
+      continue;
+    }
+
+    const pdu_session_dl_data_forwarding forwarding =
+        get_pdu_session_dl_data_forwarding(pdu_session_res_to_setup_list[pdu_session.pdu_session_id], pdu_session);
+
     cu_cp_xn_pdu_session_res_admitted_item admitted_item;
-
-    // Fill PDU session ID.
-    admitted_item.pdu_session_id = pdu_session.pdu_session_id;
-
-    // Fill HO request ack transfer.
-    // Fill DL NGU UP TNL info.
-    admitted_item.dl_ngu_up_tnl_info = pdu_session.ng_dl_up_tnl_info;
+    fill_admitted_item_common(admitted_item, pdu_session, forwarding.accepted_flows);
 
     admitted_item.data_forwarding_info_from_target.emplace();
-    for (const auto& drb_setup_item : pdu_session.drb_setup_list_ng_ran) {
-      // Fill QoS flow setup resp list.
-      for (const auto& flow_setup_item : drb_setup_item.flow_setup_list) {
-        cu_cp_qos_flow_with_data_forwarding_item qos_flow_item;
-        // Fill QoS flow ID.
-        qos_flow_item.qos_flow_id = flow_setup_item.qos_flow_id;
-
-        admitted_item.qos_flows_setup_list.push_back(qos_flow_item);
-      }
-
-      // Fill QoS flow failed to setup list.
-      for (const auto& flow_failed_item : drb_setup_item.flow_failed_list) {
-        cu_cp_qos_flow_with_cause_item qos_flow_item;
-        // Fill QoS flow ID.
-        qos_flow_item.qos_flow_id = flow_failed_item.qos_flow_id;
-        // Fill Cause.
-        qos_flow_item.cause = e1ap_to_ngap_cause(flow_failed_item.cause);
-
-        admitted_item.qos_flows_failed_to_setup_list.push_back(qos_flow_item);
-      }
-
-      // Fill Data forwarding resp DRB list.
-      cu_cp_data_forwarding_resp_drb_item drb_item;
-      drb_item.drb_id = drb_setup_item.drb_id;
-      admitted_item.data_forwarding_info_from_target->data_forwarding_resp_drb_item_list.push_back(drb_item);
-    }
+    admitted_item.data_forwarding_info_from_target->pdu_session_level_dl_data_forwarding_info = forwarding.tnl_info;
+    admitted_item.data_forwarding_info_from_target->qos_flows_accepted_for_data_forwarding_list.assign(
+        forwarding.accepted_flows.begin(), forwarding.accepted_flows.end());
 
     pdu_session_res_admitted_list.push_back(admitted_item);
   }
@@ -571,10 +608,14 @@ inter_cu_handover_target_routine::generate_handover_resource_allocation_response
     // > Fill PDU session res admitted list.
     if (is_xn_handover()) {
       fill_xn_pdu_session_res_admitted_list(ho_request_ack.pdu_session_res_admitted_list,
-                                            bearer_context_setup_response.pdu_session_resource_setup_list);
+                                            bearer_context_setup_request.pdu_session_res_to_setup_list,
+                                            bearer_context_setup_response.pdu_session_resource_setup_list,
+                                            logger);
     } else {
       fill_ng_pdu_session_res_admitted_list(ho_request_ack.pdu_session_res_admitted_list,
-                                            bearer_context_setup_response.pdu_session_resource_setup_list);
+                                            bearer_context_setup_request.pdu_session_res_to_setup_list,
+                                            bearer_context_setup_response.pdu_session_resource_setup_list,
+                                            logger);
     }
 
     // > Fill PDU session res failed to setup list HO ack.

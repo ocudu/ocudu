@@ -87,10 +87,16 @@ public:
     return true;
   }
 
-  [[nodiscard]] bool send_bearer_context_setup_response_and_await_ue_context_setup_request()
+  [[nodiscard]] bool
+  send_bearer_context_setup_response_and_await_ue_context_setup_request(bool with_data_forwarding_info = false)
   {
     // Inject Bearer Context Setup Response and wait for UE Context Setup Request.
-    get_cu_up(cu_up_idx).push_tx_pdu(generate_bearer_context_setup_response(cu_cp_e1ap_id, cu_up_e1ap_id));
+    get_cu_up(cu_up_idx).push_tx_pdu(generate_bearer_context_setup_response(
+        cu_cp_e1ap_id,
+        cu_up_e1ap_id,
+        {{uint_to_pdu_session_id(1), {{drb_id_t::drb1, uint_to_qos_flow_id(1)}}}},
+        {},
+        with_data_forwarding_info));
     report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu),
                               "Failed to receive UE Context Setup Request");
     report_fatal_error_if_not(test_helpers::is_valid_ue_context_setup_request(f1ap_pdu),
@@ -742,6 +748,78 @@ TEST_F(cu_cp_inter_cu_ng_handover_test, when_data_forwarding_is_not_possible_the
   ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_setup_request());
   ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
   ASSERT_TRUE(send_bearer_context_modification_response_and_await_handover_request_ack());
+  ASSERT_TRUE(send_dl_ran_status_transfer_and_await_bearer_context_modification_request());
+  ASSERT_TRUE(send_bearer_context_modification_response());
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_handover_notify_and_ue_context_modification_request());
+  ASSERT_TRUE(send_ue_context_modification_response_empty(cu_ue_id, du_ue_id));
+}
+
+// The forwarding tunnel endpoint the CU-UP allocated must reach the source node, so that it can send the data it still
+// holds for the UE to it. The QoS flows carried on that tunnel are marked as accepted for data forwarding
+// (TS 38.413 sections 9.3.4.11 and 9.3.2.13).
+TEST_F(cu_cp_inter_cu_ng_handover_test, when_target_allocated_fwd_tunnels_then_they_are_advertised_to_the_amf)
+{
+  handover_request_params ho_params;
+  ho_params.propose_dl_data_forwarding = true;
+  ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request(ho_params));
+
+  // Inject a Bearer Context Setup Response carrying the allocated forwarding endpoints.
+  ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_setup_request(true));
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_handover_request_ack());
+
+  const auto& ho_request_ack = ngap_pdu.pdu.successful_outcome().value.ho_request_ack();
+  ASSERT_EQ(ho_request_ack->pdu_session_res_admitted_list.size(), 1U);
+
+  asn1::ngap::ho_request_ack_transfer_s ack_transfer;
+  asn1::cbit_ref                        bref(ho_request_ack->pdu_session_res_admitted_list[0].ho_request_ack_transfer);
+  ASSERT_EQ(ack_transfer.unpack(bref), asn1::OCUDUASN_SUCCESS);
+
+  ASSERT_TRUE(ack_transfer.dl_forwarding_up_tnl_info_present);
+  ASSERT_FALSE(ack_transfer.ie_exts.ul_forwarding_up_tnl_info_present);
+
+  // No DRB item is reported. Per DRB forwarding tunnels arrive with the support for the direct forwarding path.
+  ASSERT_EQ(ack_transfer.data_forwarding_resp_drb_list.size(), 0U);
+
+  ASSERT_EQ(ack_transfer.qos_flow_setup_resp_list.size(), 1U);
+  ASSERT_TRUE(ack_transfer.qos_flow_setup_resp_list[0].data_forwarding_accepted_present);
+
+  // The DL forwarding endpoint differs from the DL NG-U endpoint of the PDU session.
+  ASSERT_NE(ack_transfer.dl_forwarding_up_tnl_info.gtp_tunnel().gtp_teid.to_number(),
+            ack_transfer.dl_ngu_up_tnl_info.gtp_tunnel().gtp_teid.to_number());
+
+  // The handover must still complete normally afterwards.
+  ASSERT_TRUE(send_dl_ran_status_transfer_and_await_bearer_context_modification_request());
+  ASSERT_TRUE(send_bearer_context_modification_response());
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_handover_notify_and_ue_context_modification_request());
+  ASSERT_TRUE(send_ue_context_modification_response_empty(cu_ue_id, du_ue_id));
+}
+
+// A PDU session the 5GC ruled out for data forwarding must be reported without any forwarding IE, rather than with an
+// empty Data Forwarding Response DRB Item that would tell the source forwarding was accepted (TS 38.413 section
+// 9.3.4.11).
+TEST_F(cu_cp_inter_cu_ng_handover_test, when_data_forwarding_is_not_possible_then_no_fwd_tunnels_are_advertised)
+{
+  handover_request_params ho_params;
+  ho_params.propose_dl_data_forwarding   = true;
+  ho_params.data_forwarding_not_possible = true;
+  ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request(ho_params));
+
+  ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_setup_request());
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_handover_request_ack());
+
+  const auto&                           ho_request_ack = ngap_pdu.pdu.successful_outcome().value.ho_request_ack();
+  asn1::ngap::ho_request_ack_transfer_s ack_transfer;
+  asn1::cbit_ref                        bref(ho_request_ack->pdu_session_res_admitted_list[0].ho_request_ack_transfer);
+  ASSERT_EQ(ack_transfer.unpack(bref), asn1::OCUDUASN_SUCCESS);
+
+  ASSERT_EQ(ack_transfer.data_forwarding_resp_drb_list.size(), 0U);
+  ASSERT_FALSE(ack_transfer.dl_forwarding_up_tnl_info_present);
+  ASSERT_EQ(ack_transfer.qos_flow_setup_resp_list.size(), 1U);
+  ASSERT_FALSE(ack_transfer.qos_flow_setup_resp_list[0].data_forwarding_accepted_present);
+
+  // The handover must still complete normally afterwards.
   ASSERT_TRUE(send_dl_ran_status_transfer_and_await_bearer_context_modification_request());
   ASSERT_TRUE(send_bearer_context_modification_response());
   ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_handover_notify_and_ue_context_modification_request());
