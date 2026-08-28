@@ -62,9 +62,6 @@ public:
   /// Schedule UE DL and UL grants for a given {slot, cell}.
   virtual void run_slot(slot_point sl_tx) = 0;
 
-  /// Retrieves handler of DL buffer state updates for a given cell.
-  virtual scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler() = 0;
-
   /// Called when cell is activated.
   virtual void start() = 0;
 

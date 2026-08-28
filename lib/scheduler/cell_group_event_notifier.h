@@ -9,6 +9,7 @@
 #include "ocudu/ran/phy_time_unit.h"
 #include "ocudu/ran/slot_point.h"
 #include "ocudu/ran/time_alignment_config.h"
+#include "ocudu/scheduler/scheduler_dl_buffer_state_indication_handler.h"
 #include "ocudu/scheduler/scheduler_feedback_handler.h"
 
 namespace ocudu {
@@ -103,6 +104,9 @@ public:
 
   /// The slices of the cell were reconfigured.
   virtual void on_slice_reconfiguration(const du_cell_slice_reconfig_request& req) = 0;
+
+  /// The downlink buffer occupancy of a bearer of the UE changed.
+  virtual void on_dl_buffer_state_indication(const dl_buffer_state_indication_message& dl_bo) = 0;
 };
 
 /// \brief Relays the notifications of a cell to the UE scheduler.
@@ -113,13 +117,15 @@ class cell_ue_event_relay final : public cell_group_event_notifier
 {
 public:
   /// Set the handlers that the cell notifications and UE configuration requests are relayed to.
-  void connect(cell_ue_event_notifier&       notifier,
-               cell_group_ue_config_handler& ue_configurator,
-               ue_feedback_handler&          ue_fb_handler)
+  void connect(cell_ue_event_notifier&                       notifier,
+               cell_group_ue_config_handler&                 ue_configurator,
+               ue_feedback_handler&                          ue_fb_handler,
+               scheduler_dl_buffer_state_indication_handler& ue_dl_bo_handler)
   {
     handler        = &notifier;
     ue_cfg_handler = &ue_configurator;
     fb_handler     = &ue_fb_handler;
+    dl_bo_handler  = &ue_dl_bo_handler;
   }
 
   void on_cfra_msg3_acked(du_ue_index_t ue_index) override
@@ -220,10 +226,19 @@ public:
     }
   }
 
+  void on_dl_buffer_state_indication(const dl_buffer_state_indication_message& dl_bo) override
+  {
+    if (dl_bo_handler != nullptr) {
+      dl_bo_handler->handle_dl_buffer_state_indication(dl_bo);
+    }
+  }
+
 private:
   cell_ue_event_notifier*       handler        = nullptr;
   cell_group_ue_config_handler* ue_cfg_handler = nullptr;
   ue_feedback_handler*          fb_handler     = nullptr;
+
+  scheduler_dl_buffer_state_indication_handler* dl_bo_handler = nullptr;
 };
 
 } // namespace ocudu

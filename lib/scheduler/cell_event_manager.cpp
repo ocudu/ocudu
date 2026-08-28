@@ -249,6 +249,85 @@ private:
   std::atomic<bool> active{true};
 };
 
+/// \brief More than one DL buffer occupancy update may be received per slot for the same UE and bearer. This class
+/// ensures that the UE DL buffer occupancy is updated only once per bearer per slot for efficiency reasons.
+class cell_event_manager::ue_dl_buffer_occupancy_manager final : public scheduler_dl_buffer_state_indication_handler
+{
+  using bearer_key                        = uint32_t;
+  static constexpr size_t NOF_BEARER_KEYS = MAX_NOF_DU_UES * MAX_NOF_RB_LCIDS;
+
+  static bearer_key    get_bearer_key(du_ue_index_t ue_index, lcid_t lcid) { return lcid * MAX_NOF_DU_UES + ue_index; }
+  static du_ue_index_t get_ue_index(bearer_key key) { return to_du_ue_index(key % MAX_NOF_DU_UES); }
+  static lcid_t        get_lcid(bearer_key key) { return uint_to_lcid(key / MAX_NOF_DU_UES); }
+
+public:
+  ue_dl_buffer_occupancy_manager(cell_event_manager& parent_) : parent(parent_), pending_evs(NOF_BEARER_KEYS)
+  {
+    std::fill(ue_dl_bo_table.begin(), ue_dl_bo_table.end(), std::make_pair(-1, 0));
+  }
+
+  void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& rlc_dl_bo) override
+  {
+    // Update DL Buffer Occupancy for the given UE and bearer.
+    unsigned key          = get_bearer_key(rlc_dl_bo.ue_index, rlc_dl_bo.lcid);
+    bool     first_rlc_bo = ue_dl_bo_table[key].first.exchange(rlc_dl_bo.bs, std::memory_order_acquire) < 0;
+    ue_dl_bo_table[key].second.store(rlc_dl_bo.hol_toa.valid() ? rlc_dl_bo.hol_toa.count_val : -1,
+                                     std::memory_order_relaxed);
+
+    if (not first_rlc_bo) {
+      // If another DL BO update has been received before for this same bearer, we do not need to enqueue a new event.
+      return;
+    }
+
+    // Signal that this bearer needs its BO state updated.
+    if (not pending_evs.try_push(key)) {
+      parent.logger.warning("ue={} lcid={}: Discarding DL buffer occupancy update. Cause: Event queue is full",
+                            rlc_dl_bo.ue_index,
+                            rlc_dl_bo.lcid);
+    }
+  }
+
+  void slot_indication(slot_point sl)
+  {
+    // Process RLC buffer updates of pending UEs.
+    bearer_key key;
+    while (pending_evs.try_pop(key)) {
+      // Recreate latest DL BO update.
+      dl_buffer_state_indication_message dl_bo;
+      // > Extract UE index and LCID.
+      dl_bo.ue_index = get_ue_index(key);
+      dl_bo.lcid     = get_lcid(key);
+      int hol_toa    = ue_dl_bo_table[key].second.load(std::memory_order_relaxed);
+      if (hol_toa >= 0) {
+        dl_bo.hol_toa = std::min(sl, slot_point{sl.numerology(), static_cast<unsigned>(hol_toa)});
+      }
+      // > Extract last DL BO value for the respective bearer and reset BO table position.
+      dl_bo.bs = ue_dl_bo_table[key].first.exchange(-1, std::memory_order_release);
+      if (dl_bo.bs < 0) {
+        parent.logger.warning(
+            "ue={} lcid={}: Invalid DL buffer occupancy value: {}", dl_bo.ue_index, dl_bo.lcid, dl_bo.bs);
+        continue;
+      }
+
+      // Apply the update to the UE, which the cell group owns.
+      parent.cell_group_ev_notifier.on_dl_buffer_state_indication(dl_bo);
+    }
+  }
+
+private:
+  using bearer_key_queue =
+      concurrent_queue<bearer_key, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>;
+
+  cell_event_manager& parent;
+
+  // Table of pending DL Buffer Occupancy values and HOL TOAs. DL Buffer Occupancy=-1 means that it is not set. HOL
+  // ToA of 0 means it is not set.
+  std::array<std::pair<std::atomic<int>, std::atomic<int>>, NOF_BEARER_KEYS> ue_dl_bo_table;
+
+  // Queue of {UE Id, LCID} pairs with pending DL Buffer Occupancy updates.
+  bearer_key_queue pending_evs;
+};
+
 cell_event_manager::cell_event_manager(const cell_configuration&      cell_cfg_,
                                        cell_resource_allocator&       res_grid_,
                                        ue_cell_repository&            ue_cell_db_,
@@ -277,7 +356,8 @@ cell_event_manager::cell_event_manager(const cell_configuration&      cell_cfg_,
   ev_logger(ev_logger_),
   ev_tracer(ev_tracer_),
   logger(logger_),
-  dispatcher(std::make_unique<cell_event_dispatcher>(cell_cfg_, logger_))
+  dispatcher(std::make_unique<cell_event_dispatcher>(cell_cfg_, logger_)),
+  dl_bo_mng(std::make_unique<ue_dl_buffer_occupancy_manager>(*this))
 {
 }
 
@@ -293,9 +373,17 @@ void cell_event_manager::stop()
   dispatcher->stop();
 }
 
-void cell_event_manager::run_slot()
+void cell_event_manager::run_slot(slot_point sl_tx)
 {
   dispatcher->run();
+
+  // Process pending DL buffer occupancy updates.
+  dl_bo_mng->slot_indication(sl_tx);
+}
+
+void cell_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& dl_bo)
+{
+  dl_bo_mng->handle_dl_buffer_state_indication(dl_bo);
 }
 
 void cell_event_manager::handle_paging_information(const sched_paging_information& pi)

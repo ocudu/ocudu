@@ -78,8 +78,6 @@ private:
 
     void run_slot(slot_point sl_tx) override { parent.run_slot_impl(sl_tx); }
 
-    scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler() override { return *ev_mng; }
-
     void start() override { parent.do_start_cell(cell_res_alloc->cfg.cell_index); }
 
     void stop() override { parent.do_stop_cell(cell_res_alloc->cfg.cell_index); }

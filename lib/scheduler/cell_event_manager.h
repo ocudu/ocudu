@@ -10,6 +10,7 @@
 #include "ocudu/ocudulog/logger.h"
 #include "ocudu/ran/csi_report/csi_report_data.h"
 #include "ocudu/ran/slot_point.h"
+#include "ocudu/scheduler/scheduler_dl_buffer_state_indication_handler.h"
 #include "ocudu/scheduler/scheduler_feedback_handler.h"
 #include "ocudu/scheduler/scheduler_positioning_handler.h"
 #include "ocudu/scheduler/scheduler_slot_handler.h"
@@ -46,7 +47,8 @@ struct uci_indication;
 /// handling runs in the cell scheduler executor.
 class cell_event_manager final : public scheduler_cell_positioning_handler,
                                  public sched_ue_configuration_handler,
-                                 public ue_feedback_handler
+                                 public ue_feedback_handler,
+                                 public scheduler_dl_buffer_state_indication_handler
 {
 public:
   cell_event_manager(const cell_configuration&      cell_cfg,
@@ -72,7 +74,7 @@ public:
   void stop();
 
   /// Process the events pending for this cell.
-  void run_slot();
+  void run_slot(slot_point sl_tx);
 
   /// Enqueue paging information reported by upper layers.
   void handle_paging_information(const sched_paging_information& pi);
@@ -118,11 +120,16 @@ public:
   /// Enqueue a request to reconfigure the slices of the cell.
   void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req);
 
+  // scheduler_dl_buffer_state_indication_handler methods.
+  void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& dl_bo) override;
+
   // scheduler_cell_positioning_handler methods.
   void handle_positioning_measurement_request(const positioning_measurement_request::cell_info& req) override;
   void handle_positioning_measurement_stop(rnti_t pos_rnti) override;
 
 private:
+  class ue_dl_buffer_occupancy_manager;
+
   /// Handle a CRC that ACKs/NACKs a HARQ of a UE of this cell.
   void handle_ue_crc(slot_point sl_rx, const ul_crc_pdu_indication& crc);
 
@@ -159,6 +166,9 @@ private:
 
   // Queue of pending events and pools of the event payloads that do not fit in an event callback.
   std::unique_ptr<cell_event_dispatcher> dispatcher;
+
+  /// Aggregator of the DL buffer occupancy updates received since the last slot.
+  std::unique_ptr<ue_dl_buffer_occupancy_manager> dl_bo_mng;
 };
 
 } // namespace ocudu

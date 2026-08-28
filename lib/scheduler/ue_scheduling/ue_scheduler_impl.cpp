@@ -35,7 +35,7 @@ ue_cell_scheduler* ue_scheduler_impl::do_add_cell(const ue_cell_scheduler_creati
                                                        *params.ra_ue_repo});
 
   // Relay the notifications of the cell to the created event manager.
-  params.ue_ev_relay->connect(*cell.ev_mng, *cell.ev_mng, *cell.ev_mng);
+  params.ue_ev_relay->connect(*cell.ev_mng, *cell.ev_mng, *cell.ev_mng, *cell.ev_mng);
 
   return &cell;
 }
@@ -132,9 +132,6 @@ void ue_scheduler_impl::run_slot_impl(slot_point sl_tx)
 
   for (auto& group_cell : cells) {
     du_cell_index_t cell_index = group_cell.cell_res_alloc->cfg.cell_index;
-
-    // Process any pending events that are directed at UEs.
-    group_cell.ev_mng->run_slot(sl_tx);
 
     // Update all UEs state.
     ue_db.slot_indication(sl_tx);

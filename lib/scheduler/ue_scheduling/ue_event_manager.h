@@ -50,9 +50,6 @@ public:
                         ocudulog::basic_logger&    logger);
   ~ue_cell_event_manager() override;
 
-  /// Process pending events when a slot indication is received for the given cell.
-  void run_slot(slot_point sl_tx);
-
   // cell_group_ue_config_handler methods. Handled synchronously, as the cell already deferred them.
   bool handle_ue_creation(ue_config_update_event ev) override;
   bool handle_ue_reconfiguration(ue_config_update_event ev) override;
@@ -81,8 +78,6 @@ public:
   void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override;
 
 private:
-  class ue_dl_buffer_occupancy_manager;
-
   /// Log event with invalid UE index.
   void log_invalid_ue_index(du_ue_index_t ue_index, const char* event_name, bool warn_if_ignored = true) const;
 
@@ -104,10 +99,6 @@ private:
   cell_metrics_handler&       metrics;
   scheduler_event_logger&     ev_logger;
   ra_ue_repository&           ra_ue_repo;
-
-  std::unique_ptr<ue_dl_buffer_occupancy_manager> dl_bo_mng;
-
-  slot_point last_sl_tx;
 };
 
 /// \brief Class used to manage events that arrive to the scheduler and are directed at UEs.

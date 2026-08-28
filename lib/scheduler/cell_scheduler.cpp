@@ -120,7 +120,7 @@ void cell_scheduler::run_slot(slot_point_extended sl_tx_ext)
   reset_resource_grid(sl_tx);
 
   // > Process the events pending for this cell.
-  ev_mng.run_slot();
+  ev_mng.run_slot(sl_tx);
 
   // > SSB scheduling.
   ssb_sch.run_slot(res_grid, sl_tx);
