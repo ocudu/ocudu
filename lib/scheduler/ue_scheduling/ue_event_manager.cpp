@@ -269,21 +269,14 @@ void ue_cell_event_manager::run_slot(slot_point sl_tx)
   dl_bo_mng->slot_indication(sl_tx);
 }
 
-void ue_cell_event_manager::handle_ue_creation(ue_config_update_event ev)
-{
-  const du_ue_index_t ue_index = ev.get_ue_index();
-  log_event_result("ue_add", ue_index, handle_ue_creation_impl(std::move(ev)));
-}
-
-ue_cell_event_manager::event_result ue_cell_event_manager::handle_ue_creation_impl(ue_config_update_event ev)
+bool ue_cell_event_manager::handle_ue_creation(ue_config_update_event ev)
 {
   const du_ue_index_t ue_index = ev.get_ue_index();
   const rnti_t        crnti    = ev.next_config().crnti;
   if (ue_db.contains(ue_index)) {
-    logger.error("ue={} rnti={}: Discarding UE creation. Cause: A UE with the same index already exists",
-                 fmt::underlying(ue_index),
-                 crnti);
-    return event_result::processed;
+    logger.error(
+        "ue={} rnti={}: Discarding UE creation. Cause: A UE with the same index already exists", ue_index, crnti);
+    return false;
   }
 
   // Check if this UE was created via RACH and is still tracked by the RA scheduler, so its PRACH reception slot
@@ -310,7 +303,6 @@ ue_cell_event_manager::event_result ue_cell_event_manager::handle_ue_creation_im
   }
 
   // Insert UE in UE repository.
-  const du_cell_index_t pcell_index = ev.next_config().pcell_common_cfg().cell_index;
   ue_db.add_ue(ev.next_config(), {creation_mode, ev.get_ul_ccch_slot_rx(), prach_slot_rx});
 
   auto& u     = ue_db[ue_index];
@@ -335,29 +327,18 @@ ue_cell_event_manager::event_result ue_cell_event_manager::handle_ue_creation_im
     fallback_sched.handle_conres_indication(ue_index);
   }
 
-  // Log Event.
-  ev_logger.enqueue(scheduler_event_logger::ue_creation_event{ue_index, crnti, pcell_index});
-
-  // Register UE in the cell metrics.
-  metrics.handle_ue_creation(ue_index, crnti, ev.next_config().pcell_common_cfg().params.pci);
-
   // Notify config manager that creation is complete with success.
   ev.notify_completion();
 
-  return event_result::processed;
+  return true;
 }
 
-void ue_cell_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
-{
-  const du_ue_index_t ue_index = ev.get_ue_index();
-  log_event_result("ue_reconf", ue_index, handle_ue_reconfiguration_impl(std::move(ev)));
-}
-
-ue_cell_event_manager::event_result ue_cell_event_manager::handle_ue_reconfiguration_impl(ue_config_update_event ev)
+bool ue_cell_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
 {
   const du_ue_index_t ue_idx = ev.get_ue_index();
   if (not ue_db.contains(ue_idx)) {
-    return event_result::invalid_ue;
+    log_invalid_ue_index(ue_idx, "ue_reconf");
+    return false;
   }
   auto& u = ue_db[ue_idx];
 
@@ -379,33 +360,20 @@ ue_cell_event_manager::event_result ue_cell_event_manager::handle_ue_reconfigura
   // Update slice scheduler.
   slice_sched.reconf_ue(u.ue_index);
 
-  // Log event.
-  ev_logger.enqueue(scheduler_event_logger::ue_reconf_event{ue_idx, u.crnti});
-
-  // Update the cell metrics.
-  metrics.handle_ue_reconfiguration(ue_idx);
-
-  // Notify config manager that creation is complete with success.
+  // Notify config manager that reconfiguration is complete with success.
   ev.notify_completion();
 
-  return event_result::processed;
+  return true;
 }
 
-void ue_cell_event_manager::handle_ue_deletion(ue_config_delete_event ev)
-{
-  const du_ue_index_t ue_index = ev.ue_index();
-  log_event_result("ue_rem", ue_index, handle_ue_deletion_impl(std::move(ev)));
-}
-
-ue_cell_event_manager::event_result ue_cell_event_manager::handle_ue_deletion_impl(ue_config_delete_event ev)
+bool ue_cell_event_manager::handle_ue_deletion(ue_config_delete_event ev)
 {
   const du_ue_index_t ue_idx = ev.ue_index();
   if (not ue_db.contains(ue_idx)) {
-    return event_result::invalid_ue;
+    log_invalid_ue_index(ue_idx, "ue_rem");
+    return false;
   }
-  const auto&  u    = ue_db[ue_idx];
-  const rnti_t rnti = u.crnti;
-
+  const auto& u     = ue_db[ue_idx];
   const auto& ue_cc = u.get_pcell();
   if (ue_cc.get_pcell_state().conres_st != ue_conres_state::pending_conres_crnti_ce) {
     // A UE awaiting a C-RNTI CE was not added to UCI/SRS scheduling yet (deferred until the CE is received), so
@@ -422,18 +390,10 @@ ue_cell_event_manager::event_result ue_cell_event_manager::handle_ue_deletion_im
   // Schedule UE removal from repository.
   ue_db.schedule_ue_rem(std::move(ev));
 
-  // Log UE removal event.
-  ev_logger.enqueue(sched_ue_delete_message{ue_idx, rnti});
-
-  return event_result::processed;
+  return true;
 }
 
-void ue_cell_event_manager::handle_ue_config_applied(du_ue_index_t ue_idx)
-{
-  log_event_result("ue_cfg_applied", ue_idx, handle_ue_config_applied_impl(ue_idx));
-}
-
-ue_cell_event_manager::event_result ue_cell_event_manager::handle_ue_config_applied_impl(du_ue_index_t ue_idx)
+bool ue_cell_event_manager::handle_ue_config_applied(du_ue_index_t ue_idx)
 {
   // Confirm that UE applied new config.
   ue_db.ue_config_applied(ue_idx);
@@ -443,21 +403,14 @@ ue_cell_event_manager::event_result ue_cell_event_manager::handle_ue_config_appl
     slice_sched.config_applied(ue_idx);
   }
 
-  // Log UE config applied event.
-  ev_logger.enqueue(scheduler_event_logger::ue_cfg_applied_event{ue_idx, ue_db[ue_idx].crnti});
-
-  return event_result::processed;
+  return true;
 }
 
-void ue_cell_event_manager::handle_ue_deactivation_request(du_ue_index_t ue_idx)
-{
-  log_event_result("ue_deactivation", ue_idx, handle_ue_deactivation_request_impl(ue_idx));
-}
-
-ue_cell_event_manager::event_result ue_cell_event_manager::handle_ue_deactivation_request_impl(du_ue_index_t ue_idx)
+bool ue_cell_event_manager::handle_ue_deactivation_request(du_ue_index_t ue_idx)
 {
   if (not ue_db.contains(ue_idx)) {
-    return event_result::invalid_ue;
+    log_invalid_ue_index(ue_idx, "ue_deactivation");
+    return false;
   }
   auto& u = ue_db[ue_idx];
 
@@ -467,10 +420,7 @@ ue_cell_event_manager::event_result ue_cell_event_manager::handle_ue_deactivatio
   // Schedule removal of UE from slice scheduler so it doesn't get scheduled PDSCH/PUSCH.
   slice_sched.rem_ue(ue_idx);
 
-  // Log event.
-  ev_logger.enqueue(scheduler_event_logger::ue_deactivation_event{ue_idx, u.crnti});
-
-  return event_result::processed;
+  return true;
 }
 
 void ue_cell_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message& bsr_ind)
@@ -654,13 +604,13 @@ void ue_cell_event_manager::handle_ul_ta_report_indication(const ul_ta_report_in
         u.get_pcell().cfg().cell_cfg_common.ntn_ref_location_ul_ta;
     if (estimate.has_value() and std::chrono::abs(ta_report->ul_ta - *estimate) > max_ul_ta_deviation) {
       logger.warning("ue={} rnti={}: Reported T_TA={}us differs from the cell estimate={}us by more than a slot",
-                     fmt::underlying(ta_report->ue_index),
+                     ta_report->ue_index,
                      ta_report->rnti,
                      ta_report->ul_ta.count(),
                      estimate->count());
     } else {
       logger.debug("ue={} rnti={}: Reported T_TA={}us (cell estimate={}us)",
-                   fmt::underlying(ta_report->ue_index),
+                   ta_report->ue_index,
                    ta_report->rnti,
                    ta_report->ul_ta.count(),
                    estimate.has_value() ? estimate->count() : 0);
@@ -795,20 +745,6 @@ void ue_cell_event_manager::push_event(du_cell_index_t cell_index, event_t event
                      fmt::underlying(ue_idx),
                      ev_name);
     }
-  }
-}
-
-void ue_cell_event_manager::log_event_result(const char* ev_name, du_ue_index_t ue_index, event_result res) const
-{
-  switch (res) {
-    case event_result::invalid_ue:
-      log_invalid_ue_index(ue_index, ev_name);
-      break;
-    case event_result::invalid_ue_cc:
-      log_invalid_cc(ue_index, ev_name);
-      break;
-    default:
-      break;
   }
 }
 

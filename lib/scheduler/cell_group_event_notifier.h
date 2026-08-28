@@ -37,6 +37,30 @@ public:
                                  float                      ul_sinr) = 0;
 };
 
+/// \brief Interface used to apply to a cell group the UE configuration requests that a cell dispatched.
+///
+/// The methods return whether the request was applied, so that the cell that dispatched it can report the failure.
+class cell_group_ue_config_handler
+{
+public:
+  virtual ~cell_group_ue_config_handler() = default;
+
+  /// Create a UE in the cell group.
+  virtual bool handle_ue_creation(ue_config_update_event ev) = 0;
+
+  /// Reconfigure a UE of the cell group.
+  virtual bool handle_ue_reconfiguration(ue_config_update_event ev) = 0;
+
+  /// Delete a UE of the cell group.
+  virtual bool handle_ue_deletion(ue_config_delete_event ev) = 0;
+
+  /// Confirm that the UE applied the last configuration sent to it.
+  virtual bool handle_ue_config_applied(du_ue_index_t ue_index) = 0;
+
+  /// Deactivate a UE of the cell group.
+  virtual bool handle_ue_deactivation_request(du_ue_index_t ue_index) = 0;
+};
+
 /// \brief Interface through which a cell notifies the events that its cell group has to handle.
 ///
 /// The cell dispatches them; the cell group handles them synchronously.
@@ -44,19 +68,19 @@ class cell_group_event_notifier : public cell_ue_event_notifier
 {
 public:
   /// Create a UE in the cell group.
-  virtual void on_ue_creation(ue_config_update_event ev) = 0;
+  virtual bool on_ue_creation(ue_config_update_event ev) = 0;
 
   /// Reconfigure a UE of the cell group.
-  virtual void on_ue_reconfiguration(ue_config_update_event ev) = 0;
+  virtual bool on_ue_reconfiguration(ue_config_update_event ev) = 0;
 
   /// Delete a UE of the cell group.
-  virtual void on_ue_deletion(ue_config_delete_event ev) = 0;
+  virtual bool on_ue_deletion(ue_config_delete_event ev) = 0;
 
   /// The UE applied the last configuration sent to it.
-  virtual void on_ue_config_applied(du_ue_index_t ue_idx) = 0;
+  virtual bool on_ue_config_applied(du_ue_index_t ue_idx) = 0;
 
   /// The deactivation of the UE was requested.
-  virtual void on_ue_deactivation_request(du_ue_index_t ue_idx) = 0;
+  virtual bool on_ue_deactivation_request(du_ue_index_t ue_idx) = 0;
 };
 
 /// \brief Relays the notifications of a cell to the UE scheduler.
@@ -67,7 +91,7 @@ class cell_ue_event_relay final : public cell_group_event_notifier
 {
 public:
   /// Set the handlers that the cell notifications and UE configuration requests are relayed to.
-  void connect(cell_ue_event_notifier& notifier, sched_ue_configuration_handler& ue_configurator)
+  void connect(cell_ue_event_notifier& notifier, cell_group_ue_config_handler& ue_configurator)
   {
     handler        = &notifier;
     ue_cfg_handler = &ue_configurator;
@@ -94,39 +118,29 @@ public:
     }
   }
 
-  void on_ue_creation(ue_config_update_event ev) override
+  bool on_ue_creation(ue_config_update_event ev) override
   {
-    if (ue_cfg_handler != nullptr) {
-      ue_cfg_handler->handle_ue_creation(std::move(ev));
-    }
+    return ue_cfg_handler != nullptr and ue_cfg_handler->handle_ue_creation(std::move(ev));
   }
 
-  void on_ue_reconfiguration(ue_config_update_event ev) override
+  bool on_ue_reconfiguration(ue_config_update_event ev) override
   {
-    if (ue_cfg_handler != nullptr) {
-      ue_cfg_handler->handle_ue_reconfiguration(std::move(ev));
-    }
+    return ue_cfg_handler != nullptr and ue_cfg_handler->handle_ue_reconfiguration(std::move(ev));
   }
 
-  void on_ue_deletion(ue_config_delete_event ev) override
+  bool on_ue_deletion(ue_config_delete_event ev) override
   {
-    if (ue_cfg_handler != nullptr) {
-      ue_cfg_handler->handle_ue_deletion(std::move(ev));
-    }
+    return ue_cfg_handler != nullptr and ue_cfg_handler->handle_ue_deletion(std::move(ev));
   }
 
-  void on_ue_config_applied(du_ue_index_t ue_idx) override
+  bool on_ue_config_applied(du_ue_index_t ue_idx) override
   {
-    if (ue_cfg_handler != nullptr) {
-      ue_cfg_handler->handle_ue_config_applied(ue_idx);
-    }
+    return ue_cfg_handler != nullptr and ue_cfg_handler->handle_ue_config_applied(ue_idx);
   }
 
-  void on_ue_deactivation_request(du_ue_index_t ue_idx) override
+  bool on_ue_deactivation_request(du_ue_index_t ue_idx) override
   {
-    if (ue_cfg_handler != nullptr) {
-      ue_cfg_handler->handle_ue_deactivation_request(ue_idx);
-    }
+    return ue_cfg_handler != nullptr and ue_cfg_handler->handle_ue_deactivation_request(ue_idx);
   }
 
   void on_ul_n_ta_update(du_ue_index_t              ue_index,
@@ -140,8 +154,8 @@ public:
   }
 
 private:
-  cell_ue_event_notifier*         handler        = nullptr;
-  sched_ue_configuration_handler* ue_cfg_handler = nullptr;
+  cell_ue_event_notifier*       handler        = nullptr;
+  cell_group_ue_config_handler* ue_cfg_handler = nullptr;
 };
 
 } // namespace ocudu

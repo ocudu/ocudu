@@ -386,31 +386,65 @@ void cell_event_manager::handle_positioning_measurement_request(const positionin
 
 void cell_event_manager::handle_ue_creation(ue_config_update_event ev)
 {
-  dispatcher->push("UE creation",
-                   [this, ev = std::move(ev)]() mutable { cell_group_ev_notifier.on_ue_creation(std::move(ev)); });
+  dispatcher->push("UE creation", [this, ev = std::move(ev)]() mutable {
+    const du_ue_index_t ue_index = ev.get_ue_index();
+    const rnti_t        crnti    = ev.next_config().crnti;
+    const pci_t         pci      = ev.next_config().pcell_common_cfg().params.pci;
+    if (cell_group_ev_notifier.on_ue_creation(std::move(ev))) {
+      // Trace/log event.
+      ev_logger.enqueue(scheduler_event_logger::ue_creation_event{ue_index, crnti, cell_cfg.cell_index});
+      metrics.handle_ue_creation(ue_index, crnti, pci);
+    }
+  });
 }
 
 void cell_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
 {
   dispatcher->push("UE reconfiguration", [this, ev = std::move(ev)]() mutable {
-    cell_group_ev_notifier.on_ue_reconfiguration(std::move(ev));
+    const du_ue_index_t ue_index = ev.get_ue_index();
+    const rnti_t        crnti    = ev.next_config().crnti;
+    if (cell_group_ev_notifier.on_ue_reconfiguration(std::move(ev))) {
+      // Trace/log event.
+      ev_logger.enqueue(scheduler_event_logger::ue_reconf_event{ue_index, crnti});
+      metrics.handle_ue_reconfiguration(ue_index);
+    }
   });
 }
 
 void cell_event_manager::handle_ue_deletion(ue_config_delete_event ev)
 {
-  dispatcher->push("UE deletion",
-                   [this, ev = std::move(ev)]() mutable { cell_group_ev_notifier.on_ue_deletion(std::move(ev)); });
+  dispatcher->push("UE deletion", [this, ev = std::move(ev)]() mutable {
+    const du_ue_index_t ue_index = ev.ue_index();
+    const ue_cell*      ue_cc    = ue_cell_db.find(ue_index);
+    const rnti_t        crnti    = ue_cc != nullptr ? ue_cc->rnti() : rnti_t::INVALID_RNTI;
+    if (cell_group_ev_notifier.on_ue_deletion(std::move(ev))) {
+      // Trace/log event.
+      // Note: The UE deletion is not yet complete, so we don't update the metrics yet.
+      ev_logger.enqueue(sched_ue_delete_message{ue_index, crnti});
+    }
+  });
 }
 
 void cell_event_manager::handle_ue_config_applied(du_ue_index_t ue_idx)
 {
-  dispatcher->push("UE config applied", [this, ue_idx]() { cell_group_ev_notifier.on_ue_config_applied(ue_idx); });
+  dispatcher->push("UE config applied", [this, ue_idx]() {
+    const ue_cell* ue_cc = ue_cell_db.find(ue_idx);
+    const rnti_t   crnti = ue_cc != nullptr ? ue_cc->rnti() : rnti_t::INVALID_RNTI;
+    if (cell_group_ev_notifier.on_ue_config_applied(ue_idx)) {
+      ev_logger.enqueue(scheduler_event_logger::ue_cfg_applied_event{ue_idx, crnti});
+    }
+  });
 }
 
 void cell_event_manager::handle_ue_deactivation_request(du_ue_index_t ue_idx)
 {
-  dispatcher->push("UE deactivation", [this, ue_idx]() { cell_group_ev_notifier.on_ue_deactivation_request(ue_idx); });
+  dispatcher->push("UE deactivation", [this, ue_idx]() {
+    const ue_cell* ue_cc = ue_cell_db.find(ue_idx);
+    const rnti_t   crnti = ue_cc != nullptr ? ue_cc->rnti() : rnti_t::INVALID_RNTI;
+    if (cell_group_ev_notifier.on_ue_deactivation_request(ue_idx)) {
+      ev_logger.enqueue(scheduler_event_logger::ue_deactivation_event{ue_idx, crnti});
+    }
+  });
 }
 
 void cell_event_manager::handle_positioning_measurement_stop(rnti_t pos_rnti)
