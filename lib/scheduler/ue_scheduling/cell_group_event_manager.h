@@ -31,19 +31,19 @@ struct cell_creation_event {
   ra_ue_repository&           ra_ue_repo;
 };
 
-class ue_event_manager;
+class cell_group_event_manager;
 
-/// Handler of UE events for a given cell.
-class ue_cell_event_manager final : public cell_group_ue_config_handler,
-                                    public cell_group_ue_indication_handler,
-                                    public cell_ue_event_notifier
+/// Applies to the cell group the events that one of its cells dispatched.
+class cell_group_event_handler final : public cell_group_ue_config_handler,
+                                       public cell_group_ue_indication_handler,
+                                       public cell_ue_event_notifier
 {
 public:
-  ue_cell_event_manager(ue_event_manager&          parent_,
-                        const cell_creation_event& cell_ev,
-                        ue_repository&             ue_db,
-                        ocudulog::basic_logger&    logger);
-  ~ue_cell_event_manager() override;
+  cell_group_event_handler(cell_group_event_manager&  parent_,
+                           const cell_creation_event& cell_ev,
+                           ue_repository&             ue_db,
+                           ocudulog::basic_logger&    logger);
+  ~cell_group_event_handler() override;
 
   // cell_group_ue_config_handler methods. Handled synchronously, as the cell already deferred them.
   bool handle_ue_creation(ue_config_update_event ev) override;
@@ -78,9 +78,9 @@ private:
   void log_invalid_cc(du_ue_index_t ue_idx, const char* event_name, bool warn_if_ignored = true) const;
 
   // shared parameters.
-  ue_event_manager&       parent;
-  ue_repository&          ue_db;
-  ocudulog::basic_logger& logger;
+  cell_group_event_manager& parent;
+  ue_repository&            ue_db;
+  ocudulog::basic_logger&   logger;
   // cell parameters.
   const cell_configuration& cfg;
   ue_fallback_scheduler&    fallback_sched;
@@ -92,25 +92,24 @@ private:
   ra_ue_repository&           ra_ue_repo;
 };
 
-/// \brief Class used to manage events that arrive to the scheduler and are directed at UEs.
-/// This class acts as a facade for several of the ue_scheduler subcomponents, managing the asynchronous configuration
-/// of the UEs and logging in a thread-safe manner.
-class ue_event_manager
+/// \brief Class used to manage events that arrive to the scheduler and concern a cell group state rather than just
+/// an individual cell.
+class cell_group_event_manager
 {
 public:
-  ue_event_manager(ue_repository& ue_db);
+  cell_group_event_manager(ue_repository& ue_db);
 
-  std::unique_ptr<ue_cell_event_manager> add_cell(const cell_creation_event& cell_ev);
+  std::unique_ptr<cell_group_event_handler> add_cell(const cell_creation_event& cell_ev);
 
 private:
-  friend class ue_cell_event_manager;
+  friend class cell_group_event_handler;
 
   bool cell_exists(du_cell_index_t cell_index) const;
 
   ue_repository&          ue_db;
   ocudulog::basic_logger& logger;
 
-  std::array<ue_cell_event_manager*, MAX_NOF_DU_CELLS> cells;
+  std::array<cell_group_event_handler*, MAX_NOF_DU_CELLS> cells;
 };
 
 } // namespace ocudu

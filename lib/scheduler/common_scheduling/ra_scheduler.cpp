@@ -768,7 +768,7 @@ void ra_scheduler::handle_ra_crc(const ul_crc_pdu_indication& crc, slot_point sl
   // Handle CRC info.
   // Note: The ra_ue_repository entry is intentionally left in place once its Msg3 HARQ empties (slot_indication's
   // ConRes-timer sweep reclaims the ring slot in due course): the async UE-creation event still needs to read
-  // prach_slot_rx from it (see ue_cell_event_manager::handle_ue_creation).
+  // prach_slot_rx from it (see cell_group_event_handler::handle_ue_creation).
   h_ul->ul_crc_info(crc.tb_crc_success);
 
   // Forward MSG3 CRC indication to metrics handler.

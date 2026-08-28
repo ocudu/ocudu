@@ -616,13 +616,45 @@ void cell_event_manager::handle_ul_ta_report_indication(const ul_ta_report_indic
     return;
   }
   dispatcher->push("TA report", [this, ta_ptr = std::move(ta_ptr)]() {
-    cell_group_ev_notifier.on_ul_ta_report_indication(*ta_ptr);
+    if (not cell_group_ev_notifier.on_ul_ta_report_indication(*ta_ptr)) {
+      return;
+    }
+
+    // Cross-check of the cell reference-location estimate against the UE's own report. The scheduler maps the
+    // measurement gap onto the uplink grid with the estimate: the gap sits on the downlink frame timing, the UE
+    // transmits T_TA earlier (TS 38.211, Section 4.3.1) and drops whatever lands in it (TS 38.321, Section 5.14). A
+    // mismatch beyond the report's one-slot quantization (TS 38.321, Section 6.1.3.56) - e.g. wrong estimate inputs
+    // or a UE far from the reference location - means the mapping is off and the UE drops the affected grants.
+    constexpr std::chrono::milliseconds            max_ul_ta_deviation{1};
+    const std::optional<std::chrono::microseconds> estimate = cell_cfg.ntn_ref_location_ul_ta;
+    if (estimate.has_value() and std::chrono::abs(ta_ptr->ul_ta - *estimate) > max_ul_ta_deviation) {
+      logger.warning("ue={} rnti={}: Reported T_TA={}us differs from the cell estimate={}us by more than a slot",
+                     ta_ptr->ue_index,
+                     ta_ptr->rnti,
+                     ta_ptr->ul_ta.count(),
+                     estimate->count());
+    } else {
+      logger.debug("ue={} rnti={}: Reported T_TA={}us (cell estimate={}us)",
+                   ta_ptr->ue_index,
+                   ta_ptr->rnti,
+                   ta_ptr->ul_ta.count(),
+                   estimate.has_value() ? estimate->count() : 0);
+    }
   });
 }
 
 void cell_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& ce)
 {
   dispatcher->push("DL MAC CE", [this, ce]() {
+    if (ce.ce_lcid == lcid_dl_sch_t::UE_CON_RES_ID) {
+      const ue_cell* ue_cc = ue_cell_db.find(ce.ue_index);
+      logger.warning("cell={} rnti={} ue={}: Discarding ConRes CE indication. Cause: The scheduler automatically "
+                     "triggers this type of CE",
+                     cell_cfg.cell_index,
+                     ue_cc != nullptr ? ue_cc->rnti() : rnti_t::INVALID_RNTI,
+                     ce.ue_index);
+      return;
+    }
     if (cell_group_ev_notifier.on_dl_mac_ce_indication(ce)) {
       ev_logger.enqueue(ce);
     }

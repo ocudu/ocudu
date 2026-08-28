@@ -7,12 +7,11 @@
 #include "../slicing/inter_slice_scheduler.h"
 #include "../uci_scheduling/uci_indication_selector.h"
 #include "../uci_scheduling/uci_scheduler_impl.h"
-#include "../ue_context/ue_cell_repository.h"
 #include "../ue_context/ue_repository.h"
+#include "cell_group_event_manager.h"
 #include "intra_slice_scheduler.h"
 #include "triggered_ul_grant_scheduler.h"
 #include "ue_cell_grid_allocator.h"
-#include "ue_event_manager.h"
 #include "ue_fallback_scheduler.h"
 #include "ue_scheduler.h"
 #include "ocudu/scheduler/config/scheduler_expert_config.h"
@@ -70,8 +69,8 @@ private:
     /// Triggered UL grant sub-scheduler.
     triggered_ul_grant_scheduler trig_ul_sched;
 
-    /// Cell-specific event manager.
-    std::unique_ptr<ue_cell_event_manager> ev_mng;
+    /// Handler of the events that this cell dispatches to the cell group.
+    std::unique_ptr<cell_group_event_handler> ev_handler;
 
     cell_context(ue_scheduler_impl& parent, const ue_cell_scheduler_creation_request& params);
     ~cell_context() override;
@@ -92,7 +91,7 @@ private:
   ue_repository ue_db;
 
   /// Processor of UE input events.
-  ue_event_manager event_mng;
+  cell_group_event_manager event_mng;
 
   // Mutex to lock cells of the same cell group (when CA enabled) for joint carrier scheduling
   std::mutex cell_group_mutex;

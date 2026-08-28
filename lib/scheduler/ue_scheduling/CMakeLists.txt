@@ -2,10 +2,9 @@
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 # Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
-
 set(SOURCES
         ue_cell_grid_allocator.cpp
-        ue_event_manager.cpp
+        cell_group_event_manager.cpp
         ue_fallback_scheduler.cpp
         ue_scheduler_impl.cpp
         grant_params_selector.cpp
