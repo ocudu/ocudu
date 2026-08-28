@@ -373,8 +373,8 @@ bool udp_network_gateway_impl::get_bind_address(std::string& ip_address) const
 
 bool udp_network_gateway_impl::set_sockopts()
 {
-  if (config.rx_timeout_sec > 0) {
-    if (not set_receive_timeout(config.rx_timeout_sec)) {
+  if (config.rx_timeout_sec.count() > 0) {
+    if (!set_receive_timeout(config.rx_timeout_sec)) {
       logger.error("Couldn't set receive timeout for socket");
 
       return false;
@@ -408,10 +408,10 @@ bool udp_network_gateway_impl::set_non_blocking()
   return true;
 }
 
-bool udp_network_gateway_impl::set_receive_timeout(unsigned rx_timeout_sec)
+bool udp_network_gateway_impl::set_receive_timeout(std::chrono::seconds rx_timeout)
 {
   struct timeval tv;
-  tv.tv_sec  = rx_timeout_sec;
+  tv.tv_sec  = rx_timeout.count();
   tv.tv_usec = 0;
 
   if (::setsockopt(sock_fd.value(), SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv)) {

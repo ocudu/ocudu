@@ -5,42 +5,10 @@
 #pragma once
 
 #include "apps/services/metrics/metrics_config.h"
+#include "o_cu_up_unit_dependencies.h"
 #include "o_cu_up_unit_impl.h"
-#include "ocudu/gtpu/gtpu_teid_pool.h"
-#include "ocudu/support/timers.h"
-#include <memory>
 
 namespace ocudu {
-
-namespace app_services {
-class remote_server_metrics_gateway;
-class metrics_notifier;
-} // namespace app_services
-
-namespace ocuup {
-class e1_connection_client;
-} // namespace ocuup
-
-struct o_cu_up_unit_config;
-class dlt_pcap;
-class f1u_cu_up_gateway;
-class io_broker;
-struct worker_manager;
-class e2_connection_client;
-
-/// O-RAN CU-UP unit dependencies.
-struct o_cu_up_unit_dependencies {
-  worker_manager*                              workers;
-  e2_connection_client*                        e2_gw                  = nullptr;
-  app_services::metrics_notifier*              metrics_notifier       = nullptr;
-  app_services::remote_server_metrics_gateway* remote_metrics_gateway = nullptr;
-  std::vector<ocuup::e1_connection_client*>    e1ap_conn_client;
-  gtpu_teid_pool*                              f1u_teid_allocator = nullptr;
-  f1u_cu_up_gateway*                           f1u_gateway        = nullptr;
-  dlt_pcap*                                    gtpu_pcap          = nullptr;
-  timer_manager*                               timers             = nullptr;
-  io_broker*                                   io_brk             = nullptr;
-};
 
 /// O-RAN CU-CP unit.
 struct o_cu_up_unit {

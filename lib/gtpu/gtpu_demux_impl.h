@@ -5,52 +5,60 @@
 #pragma once
 
 #include "gtpu_pdu.h"
-#include "gtpu_tunnel_logger.h"
 #include "ocudu/gtpu/gtpu_demux.h"
 #include "ocudu/gtpu/gtpu_teid_pool.h"
-#include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/pcap/dlt_pcap.h"
-#include "ocudu/support/executors/task_executor.h"
 #include "ocudu/support/rate_limiting/lockfree_token_bucket.h"
-#include "fmt/base.h"
 #include <mutex>
 #include <random>
-#include <unordered_map>
 
 namespace ocudu {
 
+/// Defines the GTPU demux tunner context type.S.
 struct gtpu_demux_tunnel_ctx_t {
   gtpu_demux_dispatch_queue&                   batched_queue;
   gtpu_tunnel_common_rx_upper_layer_interface* tunnel;
 };
 
+/// Holds the GTPU implementation dependencies.
+struct gtpu_demux_impl_dependencies {
+  gtpu_teid_lingering_interface& teid_linger_checker;
+  dlt_pcap&                      gtpu_pcap;
+  ocudulog::basic_logger&        logger;
+  lockfree_token_bucket*         rate_limiter = nullptr;
+};
+
+/// GTPU demux implementation.
 class gtpu_demux_impl final : public gtpu_demux
 {
 public:
-  explicit gtpu_demux_impl(gtpu_demux_cfg_t               cfg_,
-                           gtpu_teid_lingering_interface& teid_linger_checker_,
-                           dlt_pcap&                      gtpu_pcap_,
-                           lockfree_token_bucket*         rate_limiter_ = nullptr);
+  gtpu_demux_impl(gtpu_demux_cfg_t cfg_, const gtpu_demux_impl_dependencies& dependencies);
   ~gtpu_demux_impl() override = default;
 
-  // gtpu_demux_rx_upper_layer_interface
+  // See interface for documentation.
   void handle_pdu(byte_buffer pdu, const sockaddr_storage& src_addr) override; // Will be run from IO executor.
 
-  // gtpu_demux_ctrl
+  // See interface for documentation.
   expected<std::unique_ptr<gtpu_demux_dispatch_queue>>
-       add_tunnel(gtpu_teid_t                                  teid,
-                  task_executor&                               tunnel_exec,
-                  gtpu_tunnel_common_rx_upper_layer_interface* tunnel) override;
+  add_tunnel(gtpu_teid_t                                  teid,
+             task_executor&                               tunnel_exec,
+             gtpu_tunnel_common_rx_upper_layer_interface* tunnel) override;
+
+  // See interface for documentation.
   bool remove_tunnel(gtpu_teid_t teid) override;
 
+  // See interface for documentation.
   void apply_test_teids(std::vector<gtpu_teid_t> teids) override;
 
+  // See interface for documentation.
   void stop() override;
 
+  // See interface for documentation.
   void set_error_indication_tx(gtpu_tunnel_common_tx_upper_layer_notifier& tx_upper,
                                const std::string&                          local_addr) override;
 
 private:
+  /// Sends an error indication with the given TEID.
   void send_error_indication(uint32_t teid, const sockaddr_storage& src_addr);
 
   /// \brief Write PDU to PCAP (if activated).
@@ -61,7 +69,7 @@ private:
   /// \param pdu The PDU to be written to PCAP as reference.
   void write_pcap(const byte_buffer& pdu);
 
-  // Actual demuxing, to be run in CU-UP executor.
+  /// Actual demuxing, to be run in CU-UP executor.
   void handle_pdu_impl(gtpu_teid_t teid, gtpu_demux_pdu_ctx_t pdu_ctx);
 
   const gtpu_demux_cfg_t         cfg;
@@ -69,16 +77,16 @@ private:
   dlt_pcap&                      gtpu_pcap;
   std::atomic<bool>              stopped = false;
 
-  // The map is modified by accessed the io_broker (to get the right executor)
-  // and the modified by UE executors when setting up/tearing down.
+  /// The map is modified by accessed the io_broker (to get the right executor) and the modified by UE executors when
+  /// setting up/tearing down.
   std::mutex                                                                   map_mutex;
   std::unordered_map<gtpu_teid_t, gtpu_demux_tunnel_ctx_t, gtpu_teid_hasher_t> teid_to_tunnel;
 
-  // Rate limiting. Lockfree, as to support parallel tunnel executors.
+  /// Rate limiting. Lock free, as to support parallel tunnel executors.
   lockfree_token_bucket* rate_limiter;
 
-  // TEID(s) used for test mode operation and helpers
-  // to randomly pick TEIDs from the available values.
+  /// TEID(s) used for test mode operation and helpers
+  /// to randomly pick TEIDs from the available values.
   std::vector<gtpu_teid_t>        test_teids;
   std::random_device              rd;
   std::default_random_engine      gen;
@@ -86,7 +94,7 @@ private:
 
   ocudulog::basic_logger& logger;
 
-  // Error Indication TX support
+  /// Error Indication TX support.
   gtpu_tunnel_common_tx_upper_layer_notifier* tx_upper     = nullptr;
   gtpu_ie_gtpu_peer_address                   ei_peer_addr = {};
   uint16_t                                    ei_sn_next   = 0;

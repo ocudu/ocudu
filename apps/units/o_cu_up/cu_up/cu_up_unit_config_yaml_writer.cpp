@@ -56,8 +56,8 @@ static void fill_cu_up_metrics_layers_section(YAML::Node node, const cu_up_unit_
 
 static void fill_cu_up_metrics_section(YAML::Node node, const cu_up_unit_metrics_config& config)
 {
-  auto perdiodicity_node                   = node["periodicity"];
-  perdiodicity_node["cu_up_report_period"] = config.cu_up_report_period;
+  auto periodicity_node                   = node["periodicity"];
+  periodicity_node["cu_up_report_period"] = config.cu_up_report_period.count();
 
   fill_cu_up_metrics_layers_section(node["layers"], config.layers_cfg);
 }
@@ -112,10 +112,10 @@ static void fill_cu_up_qos_entry(YAML::Node node, const cu_up_unit_qos_config& c
 static YAML::Node get_last_entry(YAML::Node node)
 {
   auto it = node.begin();
-  for (unsigned i = 1; i != node.size(); ++i) {
+  for (unsigned i = 1, e = node.size(); i != e; ++i) {
     ++it;
   }
-  return *it;
+  return static_cast<YAML::Node>(*it);
 }
 
 static void fill_cu_up_qos_section(YAML::Node node, span<const cu_up_unit_qos_config> qos_cfg)

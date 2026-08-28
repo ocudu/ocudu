@@ -8,7 +8,6 @@
 #include "ocudu/support/rate_limiting/token_bucket.h"
 #include "fmt/base.h"
 #include <chrono>
-#include <cstdint>
 #include <string>
 
 namespace ocudu {

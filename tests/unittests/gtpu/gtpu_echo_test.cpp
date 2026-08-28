@@ -85,9 +85,7 @@ TEST_F(gtpu_echo_test, entity_creation)
 {
   null_dlt_pcap dummy_pcap;
   // init echo entity
-  gtpu_echo_creation_message msg = {};
-  msg.gtpu_pcap                  = &dummy_pcap;
-  msg.tx_upper                   = &gtpu_tx;
+  gtpu_echo_creation_message msg = {.gtpu_pcap = dummy_pcap, .tx_upper = gtpu_tx};
   echo                           = create_gtpu_echo(msg);
 
   ASSERT_NE(echo, nullptr);
@@ -98,9 +96,7 @@ TEST_F(gtpu_echo_test, rx_echo_req_tx_echo_rep)
 {
   null_dlt_pcap dummy_pcap;
   // init echo entity
-  gtpu_echo_creation_message msg = {};
-  msg.gtpu_pcap                  = &dummy_pcap;
-  msg.tx_upper                   = &gtpu_tx;
+  gtpu_echo_creation_message msg = {.gtpu_pcap = dummy_pcap, .tx_upper = gtpu_tx};
   echo                           = create_gtpu_echo(msg);
 
   sockaddr_storage orig_addr = {};
@@ -119,9 +115,7 @@ TEST_F(gtpu_echo_test, rx_error_indication)
 {
   null_dlt_pcap dummy_pcap;
   // init echo entity
-  gtpu_echo_creation_message msg = {};
-  msg.gtpu_pcap                  = &dummy_pcap;
-  msg.tx_upper                   = &gtpu_tx;
+  gtpu_echo_creation_message msg = {.gtpu_pcap = dummy_pcap, .tx_upper = gtpu_tx};
   echo                           = create_gtpu_echo(msg);
 
   sockaddr_storage orig_addr        = {};

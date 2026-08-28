@@ -5,7 +5,6 @@
 #pragma once
 
 #include "cu_up_f1u_metrics.h"
-#include "ocudu/ocudulog/log_channel.h"
 
 namespace ocudu {
 
@@ -24,6 +23,19 @@ public:
 
 private:
   ocuup::f1u_metrics_notifier& notifier;
+};
+
+/// Holds the CU-CP F1U metrics consumer JSON configuration.
+struct cu_up_f1u_metrics_consumer_json_config {
+  std::chrono::milliseconds report_period;
+};
+
+/// Holds the CU-CP F1U metrics consumer JSON dependencies.
+struct cu_up_f1u_metrics_consumer_json_dependencies {
+  ocudulog::basic_logger& logger;
+  ocudulog::log_channel&  log_chan;
+  task_executor&          executor;
+  unique_timer            timer;
 };
 
 /// Consumer for the json CU-UP F1-U metrics.
@@ -46,11 +58,8 @@ class cu_up_f1u_metrics_consumer_json : public app_services::metrics_consumer
   };
 
 public:
-  cu_up_f1u_metrics_consumer_json(ocudulog::basic_logger& logger_,
-                                  ocudulog::log_channel&  log_chan_,
-                                  task_executor&          executor_,
-                                  unique_timer            timer_,
-                                  unsigned                report_period_ms_);
+  cu_up_f1u_metrics_consumer_json(const cu_up_f1u_metrics_consumer_json_config& cfg,
+                                  cu_up_f1u_metrics_consumer_json_dependencies  dependencies);
 
   // See interface for documentation.
   void handle_metric(const app_services::metrics_set& metric) override;
@@ -65,12 +74,12 @@ private:
   // Initialize timer.
   void initialize_timer();
 
-  const unsigned          report_period_ms;
-  ocudulog::basic_logger& logger;
-  ocudulog::log_channel&  log_chan;
-  task_executor&          executor;
-  unique_timer            timer;
-  aggregated_metrics      aggr_metrics;
+  const std::chrono::milliseconds report_period;
+  ocudulog::basic_logger&         logger;
+  ocudulog::log_channel&          log_chan;
+  task_executor&                  executor;
+  unique_timer                    timer;
+  aggregated_metrics              aggr_metrics;
 };
 
 /// Consumer for the log F1-U metrics.

@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "e1ap_cu_up_test_helpers.h"
+#include "../common/e1ap_cu_up_test_messages.h"
 #include "lib/e1ap/common/e1ap_asn1_utils.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/support/async/async_test_utils.h"
@@ -39,11 +40,14 @@ e1ap_cu_up_test::e1ap_cu_up_test()
   e1ap_logger.set_level(ocudulog::basic_levels::debug);
   ocudulog::init();
 
-  e1ap_configuration e1ap_cfg;
-  e1ap_cfg.max_nof_ues      = 16384;
-  e1ap_cfg.json_log_enabled = true;
-
-  e1ap = create_e1ap(cu_up_e1_index_t{0}, e1ap_cfg, e1ap_gw, cu_up_notifier, timers, cu_up_worker);
+  e1ap = create_e1ap(e1ap_configuration{.max_nof_ues      = 16384,
+                                        .json_log_enabled = true,
+                                        .metrics_period   = timer_duration(0),
+                                        .e1_index         = static_cast<cu_up_e1_index_t>(0)},
+                     e1ap_cu_up_impl_dependencies{.e1_client_handler = e1ap_gw,
+                                                  .cu_up_notifier    = cu_up_notifier,
+                                                  .timers            = timers,
+                                                  .cu_up_exec        = cu_up_worker});
 }
 
 void e1ap_cu_up_test::run_e1_setup_procedure()

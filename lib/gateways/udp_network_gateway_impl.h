@@ -8,9 +8,7 @@
 #include "ocudu/support/executors/task_executor.h"
 #include "ocudu/support/io/unique_fd.h"
 #include <netdb.h>
-#include <netinet/in.h>
 #include <sys/socket.h>
-#include <sys/types.h>
 
 namespace ocudu {
 
@@ -80,7 +78,7 @@ private:
 
   // socket helpers
   bool set_non_blocking();
-  bool set_receive_timeout(unsigned rx_timeout_sec);
+  bool set_receive_timeout(std::chrono::seconds rx_timeout);
   bool set_reuse_addr();
   bool set_dscp();
   bool close_socket();

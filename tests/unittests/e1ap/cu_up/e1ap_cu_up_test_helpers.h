@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include "../common/e1ap_cu_up_test_messages.h"
 #include "../common/test_helpers.h"
 #include "ocudu/e1ap/common/e1ap_common.h"
 #include "ocudu/e1ap/cu_up/e1ap_cu_up.h"
 #include "ocudu/e1ap/cu_up/e1ap_cu_up_factory.h"
+#include "ocudu/e1ap/gateways/e1_connection_client.h"
 #include "ocudu/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 

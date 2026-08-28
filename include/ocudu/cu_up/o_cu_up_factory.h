@@ -6,13 +6,10 @@
 
 #include "ocudu/cu_up/o_cu_up.h"
 #include "ocudu/cu_up/o_cu_up_config.h"
-#include <memory>
 
-namespace ocudu {
-namespace ocuup {
+namespace ocudu::ocuup {
 
 /// O-RAN CU-UP interface with the given configuration and dependencies.
 std::unique_ptr<o_cu_up> create_o_cu_up(const o_cu_up_config& config, o_cu_up_dependencies&& dependencies);
 
-} // namespace ocuup
-} // namespace ocudu
+} // namespace ocudu::ocuup

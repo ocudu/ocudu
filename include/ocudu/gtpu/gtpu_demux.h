@@ -5,23 +5,26 @@
 #pragma once
 
 #include "ocudu/adt/batched_dispatch_queue.h"
-#include "ocudu/adt/byte_buffer.h"
 #include "ocudu/gtpu/gtpu_tunnel_common_rx.h"
 #include "ocudu/gtpu/gtpu_tunnel_common_tx.h"
 #include "ocudu/ran/gtpu/gtpu_teid.h"
-#include "ocudu/support/executors/task_executor.h"
 #include <sys/socket.h>
 
 namespace ocudu {
 
+constexpr auto DEFAULT_GTPU_DEMUX_QUEUE_SIZE = 8192U;
+constexpr auto DEFAULT_GTPU_DEMUX_BATCH_SIZE = 256U;
+
+/// Holds the GTPU demux configuration.
 struct gtpu_demux_cfg_t {
   std::string name;
   bool        warn_on_drop;
   bool        test_mode  = false;
-  uint32_t    queue_size = 8192;
-  uint32_t    batch_size = 256;
+  uint32_t    queue_size = DEFAULT_GTPU_DEMUX_QUEUE_SIZE;
+  uint32_t    batch_size = DEFAULT_GTPU_DEMUX_BATCH_SIZE;
 };
 
+/// Defines the GTPU demux PDU context type.
 struct gtpu_demux_pdu_ctx_t {
   byte_buffer      pdu;
   sockaddr_storage src_addr;
@@ -72,7 +75,7 @@ public:
 class gtpu_demux : public gtpu_demux_rx_upper_layer_interface, public gtpu_demux_ctrl
 {
 public:
-  virtual ~gtpu_demux() = default;
+  ~gtpu_demux() override = default;
 };
 
 } // namespace ocudu

@@ -19,12 +19,12 @@ void o_cu_up_impl::stop()
 
 void o_cu_up_with_e2_impl::start()
 {
-  o_cu_up_impl::start();
+  cu_up->start();
   e2agent->start();
 }
 
 void o_cu_up_with_e2_impl::stop()
 {
   e2agent->stop();
-  o_cu_up_impl::stop();
+  cu_up->stop();
 }

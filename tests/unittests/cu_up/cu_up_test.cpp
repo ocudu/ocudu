@@ -132,15 +132,17 @@ protected:
 
   cu_up_dependencies get_default_cu_up_dependencies()
   {
-    cu_up_dependencies deps;
-    deps.gtpu_pcap          = &dummy_pcap;
-    deps.exec_mapper        = exec_pool.get();
-    deps.e1_conn_clients    = {&e1ap_client};
-    deps.f1u_teid_allocator = f1u_teid_allocator.get();
-    deps.f1u_gateway        = f1u_gw.get();
-    ngu_gw                  = create_udp_gtpu_gateway(cu_up_udp_cfg, *broker, *executor, *executor);
-    deps.ngu_gws.push_back(ngu_gw.get());
-    deps.timers = app_timers.get();
+    cu_up_dependencies deps{.exec_mapper          = *exec_pool,
+                            .f1u_teid_allocator   = *f1u_teid_allocator,
+                            .f1u_gateway          = *f1u_gw,
+                            .timers               = *app_timers,
+                            .gtpu_pcap            = dummy_pcap,
+                            .logger               = ocudulog::fetch_basic_logger("TEST"),
+                            .pdcp_metric_notifier = nullptr,
+                            .e1_conn_clients      = {&e1ap_client},
+                            .ngu_gws              = {},
+                            .e1_setup_notifier    = nullptr};
+    deps.ngu_gws.push_back(create_udp_gtpu_gateway(cu_up_udp_cfg, *broker, *executor, *executor));
     return deps;
   }
 

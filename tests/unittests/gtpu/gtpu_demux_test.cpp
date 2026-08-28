@@ -56,10 +56,14 @@ protected:
     gtpu_tunnel = std::make_unique<gtpu_tunnel_rx_upper_dummy>();
 
     // create DUT object
-    gtpu_demux_creation_request msg = {};
-    msg.teid_linger_checker         = &teid_linger_checker;
-    msg.gtpu_pcap                   = &dummy_pcap;
-    dut                             = create_gtpu_demux(msg);
+    gtpu_demux_creation_request msg = {
+        .cfg =
+            gtpu_demux_cfg_t{
+                .name = "Test", .warn_on_drop = true, .test_mode = false, .queue_size = 8192, .batch_size = 256},
+        .teid_linger_checker = teid_linger_checker,
+        .gtpu_pcap           = dummy_pcap,
+    };
+    dut = create_gtpu_demux(msg);
   }
 
   void TearDown() override

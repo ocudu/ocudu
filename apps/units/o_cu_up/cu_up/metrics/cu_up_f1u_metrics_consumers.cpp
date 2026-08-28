@@ -4,8 +4,6 @@
 
 #include "cu_up_f1u_metrics_consumers.h"
 #include "apps/helpers/metrics/json_generators/cu_up/f1u.h"
-#include "cu_up_f1u_metrics.h"
-#include "ocudu/f1u/cu_up/f1u_metrics.h"
 
 using namespace ocudu;
 
@@ -14,22 +12,20 @@ void cu_up_f1u_metrics_consumer_e2::handle_metric(const app_services::metrics_se
   notifier.report_metrics(static_cast<const cu_up_f1u_metrics_impl&>(metric).get_metrics());
 }
 
-cu_up_f1u_metrics_consumer_json::cu_up_f1u_metrics_consumer_json(ocudulog::basic_logger& logger_,
-                                                                 ocudulog::log_channel&  log_chan_,
-                                                                 task_executor&          executor_,
-                                                                 unique_timer            timer_,
-                                                                 unsigned                report_period_ms_) :
-  report_period_ms(report_period_ms_),
-  logger(logger_),
-  log_chan(log_chan_),
-  executor(executor_),
-  timer(std::move(timer_))
+cu_up_f1u_metrics_consumer_json::cu_up_f1u_metrics_consumer_json(
+    const cu_up_f1u_metrics_consumer_json_config& cfg,
+    cu_up_f1u_metrics_consumer_json_dependencies  dependencies) :
+  report_period(cfg.report_period),
+  logger(dependencies.logger),
+  log_chan(dependencies.log_chan),
+  executor(dependencies.executor),
+  timer(std::move(dependencies.timer))
 {
-  ocudu_assert(report_period_ms > 10, "CU-UP report period is too fast to work with current JSON consumer");
+  ocudu_assert(report_period.count() > 10, "CU-UP report period is too fast to work with current JSON consumer");
   ocudu_assert(timer.is_valid(), "Invalid timer passed to metrics controller");
 
   // Shift the timer a little.
-  timer.set(std::chrono::milliseconds(report_period_ms / 10), [this]() { initialize_timer(); });
+  timer.set(std::chrono::milliseconds(report_period.count() / 10), [this]() { initialize_timer(); });
   timer.run();
 }
 
@@ -73,7 +69,7 @@ void cu_up_f1u_metrics_consumer_json::print_metrics()
 
 void cu_up_f1u_metrics_consumer_json::initialize_timer()
 {
-  timer.set(std::chrono::milliseconds(report_period_ms), [this]() {
+  timer.set(report_period, [this]() {
     if (!executor.execute([this]() {
           print_metrics();
           timer.run();

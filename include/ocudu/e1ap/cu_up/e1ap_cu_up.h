@@ -4,16 +4,13 @@
 
 #pragma once
 
-#include "ocudu/adt/expected.h"
 #include "ocudu/cu_up/cu_up_types.h"
 #include "ocudu/e1ap/common/e1_setup_messages.h"
 #include "ocudu/e1ap/common/e1ap_common.h"
-#include "ocudu/e1ap/common/e1ap_types.h"
 #include "ocudu/e1ap/cu_up/e1ap_cu_up_bearer_context_update.h"
 #include "ocudu/support/async/async_task.h"
 
-namespace ocudu {
-namespace ocuup {
+namespace ocudu::ocuup {
 
 /// Handle E1AP interface management procedures as defined in TS 38.463 section 8.2.
 class e1ap_connection_manager
@@ -127,8 +124,7 @@ class e1ap_cu_up_manager_notifier : public e1ap_cu_up_manager_message_notifier,
                                     public e1ap_cu_up_manager_connection_notifier
 {
 public:
-  virtual ~e1ap_cu_up_manager_notifier() = default;
+  ~e1ap_cu_up_manager_notifier() override = default;
 };
 
-} // namespace ocuup
-} // namespace ocudu
+} // namespace ocudu::ocuup

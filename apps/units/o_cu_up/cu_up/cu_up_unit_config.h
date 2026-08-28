@@ -28,7 +28,7 @@ struct cu_up_unit_metrics_layer_config {
 /// Metrics configuration.
 struct cu_up_unit_metrics_config {
   /// CU-UP statistics report period in milliseconds.
-  unsigned                        cu_up_report_period = 1000;
+  std::chrono::milliseconds       cu_up_report_period = std::chrono::milliseconds(1000U);
   app_helpers::metrics_config     common_metrics_cfg;
   cu_up_unit_metrics_layer_config layers_cfg;
 };

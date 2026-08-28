@@ -6,8 +6,8 @@
 
 #include "ocudu/cu_up/cu_up_e1_setup_notifier.h"
 #include "ocudu/cu_up/cu_up_executor_mapper.h"
+#include "ocudu/cu_up/cu_up_types.h"
 #include "ocudu/e1ap/cu_up/e1ap_configuration.h"
-#include "ocudu/e1ap/cu_up/e1ap_cu_up.h"
 #include "ocudu/e1ap/gateways/e1_connection_client.h"
 #include "ocudu/f1u/cu_up/f1u_gateway.h"
 #include "ocudu/gtpu/gtpu_config.h"
@@ -51,6 +51,7 @@ struct n3_interface_config {
   bool warn_on_drop;
 };
 
+/// Holds the CU-UP test mode configuration.
 struct cu_up_test_mode_config {
   bool                      enabled           = false;
   bool                      integrity_enabled = true;
@@ -80,8 +81,10 @@ struct cu_up_config {
   uint32_t max_nof_ues = 16384;
   /// CU-UP name.
   std::string cu_up_name = "ocuup_01";
-  /// E1AP configuration.
-  e1ap_configuration e1ap;
+  /// Whether to enable JSON logging of E1AP Tx and Rx messages.
+  bool e1ap_json_log_enabled = false;
+  /// E1AP metrics period.
+  timer_duration e1ap_metrics_period{0};
   /// List of supported PLMNs (1..12). Must be populated before use.
   std::vector<std::string> plmns;
   /// CU-UP statistics report period in seconds.
@@ -91,23 +94,25 @@ struct cu_up_config {
 /// CU-UP dependencies.
 struct cu_up_dependencies {
   /// Executor mapper.
-  cu_up_executor_mapper* exec_mapper = nullptr;
+  cu_up_executor_mapper& exec_mapper;
   /// F1-U TEID pool.
-  gtpu_teid_pool* f1u_teid_allocator = nullptr;
+  gtpu_teid_pool& f1u_teid_allocator;
   /// F1-U gateway.
-  f1u_cu_up_gateway* f1u_gateway = nullptr;
+  f1u_cu_up_gateway& f1u_gateway;
   /// Time manager.
-  timer_manager* timers = nullptr;
+  timer_manager& timers;
   /// PCAP.
-  dlt_pcap* gtpu_pcap = nullptr;
+  dlt_pcap& gtpu_pcap;
+  /// Logger.
+  ocudulog::basic_logger& logger;
   /// PDCP metrics notifier.
   pdcp_metrics_notifier* pdcp_metric_notifier = nullptr;
   /// E1AP connection client.
   std::vector<e1_connection_client*> e1_conn_clients;
   /// NG-U gateways
-  std::vector<gtpu_gateway*> ngu_gws;
+  std::vector<std::unique_ptr<gtpu_gateway>> ngu_gws;
   /// Optional notifier invoked once after a successful E1 Setup.
-  cu_up_e1_setup_complete_notifier* e1_setup_notifier = nullptr;
+  std::unique_ptr<cu_up_e1_setup_complete_notifier> e1_setup_notifier = nullptr;
 };
 
 } // namespace ocuup

@@ -4,6 +4,7 @@
 #pragma once
 
 #include "ocudu/adt/byte_buffer.h"
+#include <chrono>
 
 struct sockaddr_storage;
 
@@ -13,15 +14,15 @@ class io_broker;
 
 /// \brief Generic network gateway interfaces to connect components to the outside world.
 
-/// \brief Common parameters to all network gateways. Specific gateway
-/// implementations will further specify parameters according to their
-/// needs.
+/// \brief Common parameters to all network gateways. Specific gateway implementations will further specify parameters
+/// according to their needs.
 struct common_network_gateway_config {
   std::string bind_interface;
   int         bind_port         = 0;
   bool        non_blocking_mode = false;
-  unsigned    rx_timeout_sec    = 1; /// Socket received timeout in seconds
-  bool        reuse_addr        = false;
+  /// Socket received timeout in seconds
+  std::chrono::seconds rx_timeout_sec = std::chrono::seconds(1U);
+  bool                 reuse_addr     = false;
 };
 
 /// \brief Interface to inform upper layers about reception of new PDUs.
@@ -31,7 +32,7 @@ public:
   virtual ~network_gateway_data_notifier() = default;
 
   /// \brief This callback is invoked on each received PDU.
-  /// \param[in]  put Byte-buffer with new PDU.
+  /// \param[in] pdu Byte-buffer with new PDU.
   virtual void on_new_pdu(byte_buffer pdu) = 0;
 };
 
@@ -42,14 +43,13 @@ public:
   virtual ~network_gateway_data_notifier_with_src_addr() = default;
 
   /// \brief This callback is invoked on each received PDU.
-  /// \param[in]  put Byte-buffer with new PDU.
-  /// \param[in]  Source address
+  /// \param[in] pdu Byte-buffer with new PDU.
+  /// \param[in] src_addr Source address
   virtual void on_new_pdu(byte_buffer pdu, const sockaddr_storage& src_addr) = 0;
 };
 
-/// \brief Interface to control common parameters to all
-/// network gateways, such as create(), bind(), etc.
-/// Gateway specializations should add specific methods as required.
+/// \brief Interface to control common parameters to all network gateways, such as create(), bind(), etc. Gateway
+/// specializations should add specific methods as required.
 class network_gateway_controller
 {
 public:

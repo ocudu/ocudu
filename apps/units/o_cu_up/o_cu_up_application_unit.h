@@ -6,12 +6,10 @@
 
 #include "apps/units/application_unit.h"
 #include "apps/units/o_cu_up/o_cu_up_builder.h"
-#include <yaml-cpp/node/node.h>
 
 namespace ocudu {
 
 struct o_cu_up_unit_config;
-struct worker_manager_config;
 
 /// O-RAN CU-UP application unit interface.
 class o_cu_up_application_unit : public application_unit

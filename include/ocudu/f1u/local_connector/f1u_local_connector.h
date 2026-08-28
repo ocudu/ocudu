@@ -190,7 +190,7 @@ public:
   void stop() override {}
 
   odu::f1u_du_gateway* get_f1u_du_gateway() { return this; }
-  f1u_cu_up_gateway*   get_f1u_cu_up_gateway() { return this; }
+  f1u_cu_up_gateway&   get_f1u_cu_up_gateway() { return *this; }
 
   std::unique_ptr<f1u_cu_up_gateway_bearer> create_cu_bearer(uint32_t                              ue_index,
                                                              s_nssai_t                             snssai,

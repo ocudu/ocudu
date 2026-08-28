@@ -32,6 +32,7 @@
 #include "ocudu/adt/format.h"
 #include "ocudu/adt/scope_exit.h"
 #include "ocudu/cu_cp/cu_cp_operation_controller.h"
+#include "ocudu/cu_up/cu_up_operation_controller.h"
 #include "ocudu/cu_up/o_cu_up.h"
 #include "ocudu/e1ap/gateways/e1_local_connector_factory.h"
 #include "ocudu/f1ap/gateways/f1c_network_server_factory.h"
@@ -400,11 +401,16 @@ int main(int argc, char** argv)
   std::unique_ptr<gtpu_teid_pool> cu_f1u_teid_allocator = create_gtpu_allocator(cu_f1u_alloc_msg);
 
   // > Create GTP-U Demux.
-  gtpu_demux_creation_request cu_f1u_gtpu_msg   = {};
-  cu_f1u_gtpu_msg.cfg.name                      = "CU-NR-U-DEMUX";
-  cu_f1u_gtpu_msg.cfg.warn_on_drop              = true;
-  cu_f1u_gtpu_msg.teid_linger_checker           = cu_f1u_teid_allocator.get();
-  cu_f1u_gtpu_msg.gtpu_pcap                     = cu_up_dlt_pcaps.f1u.get();
+  gtpu_demux_creation_request cu_f1u_gtpu_msg   = {.cfg                 = gtpu_demux_cfg_t{.name         = "CU-NR-U-DEMUX",
+                                                                                           .warn_on_drop = true,
+                                                                                           .test_mode    = false,
+                                                                                           .queue_size   = DEFAULT_GTPU_DEMUX_QUEUE_SIZE,
+                                                                                           .batch_size   = DEFAULT_GTPU_DEMUX_BATCH_SIZE},
+                                                   .teid_linger_checker = *cu_f1u_teid_allocator,
+                                                   .gtpu_pcap           = *cu_up_dlt_pcaps.f1u,
+                                                   .rate_limiter        = nullptr
+
+  };
   std::unique_ptr<gtpu_demux> cu_f1u_gtpu_demux = create_gtpu_demux(cu_f1u_gtpu_msg);
   // > Create UDP gateway(s).
   gtpu_gateway_maps f1u_gw_maps;
@@ -477,17 +483,17 @@ int main(int argc, char** argv)
   }
 
   // Create O-CU-UP dependencies.
-  o_cu_up_unit_dependencies o_cuup_unit_deps;
-  o_cuup_unit_deps.workers = &workers;
-  o_cuup_unit_deps.e1ap_conn_client.push_back(e1_gw.get());
-  o_cuup_unit_deps.f1u_teid_allocator     = cu_f1u_teid_allocator.get();
-  o_cuup_unit_deps.f1u_gateway            = cu_f1u_conn.get();
-  o_cuup_unit_deps.gtpu_pcap              = cu_up_dlt_pcaps.n3.get();
-  o_cuup_unit_deps.timers                 = cu_timers;
-  o_cuup_unit_deps.io_brk                 = epoll_broker.get();
-  o_cuup_unit_deps.e2_gw                  = e2_gw_cu_up.get();
-  o_cuup_unit_deps.metrics_notifier       = &metrics_notifier_forwarder;
-  o_cuup_unit_deps.remote_metrics_gateway = remote_server_gateway;
+  std::vector<ocuup::e1_connection_client*> e1ap_conn_client({e1_gw.get()});
+  o_cu_up_unit_dependencies                 o_cuup_unit_deps{.workers                = workers,
+                                                             .e2_gw                  = *e2_gw_cu_up,
+                                                             .metrics_notifier       = metrics_notifier_forwarder,
+                                                             .remote_metrics_gateway = remote_server_gateway,
+                                                             .e1ap_conn_client       = std::move(e1ap_conn_client),
+                                                             .f1u_teid_allocator     = *cu_f1u_teid_allocator,
+                                                             .f1u_gateway            = *cu_f1u_conn,
+                                                             .gtpu_pcap              = *cu_up_dlt_pcaps.n3,
+                                                             .timers                 = *cu_timers,
+                                                             .io_brk                 = *epoll_broker};
 
   // Create O-CU-UP.
   auto            o_cuup_unit = o_cu_up_app_unit->create_o_cu_up_unit(o_cuup_unit_deps);

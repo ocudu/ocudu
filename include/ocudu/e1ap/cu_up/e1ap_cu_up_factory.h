@@ -6,21 +6,11 @@
 
 #include "ocudu/e1ap/cu_up/e1ap_configuration.h"
 #include "ocudu/e1ap/cu_up/e1ap_cu_up.h"
-#include "ocudu/e1ap/gateways/e1_connection_client.h"
-#include "ocudu/support/executors/task_executor.h"
-#include "ocudu/support/timers.h"
-#include <memory>
 
-namespace ocudu {
-namespace ocuup {
+namespace ocudu::ocuup {
 
 /// Creates an instance of an E1AP interface, notifying outgoing packets on the specified listener object.
-std::unique_ptr<e1ap_interface> create_e1ap(cu_up_e1_index_t             e1_index,
-                                            const e1ap_configuration&    e1ap_cfg_,
-                                            e1_connection_client&        e1_client_handler_,
-                                            e1ap_cu_up_manager_notifier& cu_up_notifier_,
-                                            timer_manager&               timers_,
-                                            task_executor&               cu_up_exec_);
+std::unique_ptr<e1ap_interface> create_e1ap(const e1ap_configuration&           e1ap_cfg,
+                                            const e1ap_cu_up_impl_dependencies& e1ap_dependencies);
 
-} // namespace ocuup
-} // namespace ocudu
+} // namespace ocudu::ocuup

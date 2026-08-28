@@ -25,7 +25,12 @@ ocudu::create_e2_cu_up_agent(const e2ap_config&                                 
                              std::unique_ptr<e2_node_component_config_provider> node_component_config_provider_)
 {
   ocudulog::basic_logger& logger = ocudulog::fetch_basic_logger("E2-CU-UP");
-  e2_agent_dependencies dependencies{logger, e2_client_, timers_, e2_exec_, std::move(node_component_config_provider_)};
+  e2_agent_dependencies   dependencies{.logger                         = logger,
+                                       .e2_client                      = e2_client_,
+                                       .timers                         = timers_,
+                                       .task_exec                      = e2_exec_,
+                                       .node_component_config_provider = std::move(node_component_config_provider_),
+                                       .e2sm_modules                   = {}};
 
   // E2SM-KPM
   if (e2ap_cfg_.e2sm_kpm_enabled) {
@@ -51,6 +56,5 @@ ocudu::create_e2_cu_up_agent(const e2ap_config&                                 
                                                        std::move(e2sm_rc_iface)});
   }
 
-  auto e2_ext = std::make_unique<e2_entity>(e2ap_cfg_, std::move(dependencies));
-  return e2_ext;
+  return std::make_unique<e2_entity>(e2ap_cfg_, std::move(dependencies));
 }

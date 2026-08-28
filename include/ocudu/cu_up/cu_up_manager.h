@@ -4,10 +4,8 @@
 
 #pragma once
 
-#include "ocudu/cu_up/cu_up_state.h"
 #include "ocudu/e1ap/cu_up/e1ap_cu_up_bearer_context_update.h"
 #include "ocudu/support/async/async_task.h"
-#include <map>
 
 namespace ocudu::ocuup {
 

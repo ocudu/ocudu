@@ -5,7 +5,6 @@
 #pragma once
 
 #include "cu_up_pdcp_metrics.h"
-#include "ocudu/ocudulog/log_channel.h"
 
 namespace ocudu {
 
@@ -28,7 +27,20 @@ private:
   pdcp_metrics_notifier& notifier;
 };
 
-/// Consumer for the json CU-UP PDCP metrics.
+/// Holds the CU-UP PDCP metrics consumer JSON configuration.
+struct cu_up_pdcp_metrics_consumer_json_config {
+  std::chrono::milliseconds report_period;
+};
+
+/// Holds the CU-UP PDCP metrics consumer JSON dependencies.
+struct cu_up_pdcp_metrics_consumer_json_dependencies {
+  ocudulog::basic_logger&                      logger;
+  app_services::remote_server_metrics_gateway& gateway;
+  task_executor&                               executor;
+  unique_timer                                 timer;
+};
+
+/// Consumer for the JSON CU-UP PDCP metrics.
 class cu_up_pdcp_metrics_consumer_json : public app_services::metrics_consumer
 {
   struct aggregated_metrics {
@@ -50,11 +62,8 @@ class cu_up_pdcp_metrics_consumer_json : public app_services::metrics_consumer
   };
 
 public:
-  cu_up_pdcp_metrics_consumer_json(ocudulog::basic_logger&                      logger_,
-                                   app_services::remote_server_metrics_gateway& gateway_,
-                                   task_executor&                               executor_,
-                                   unique_timer                                 timer_,
-                                   unsigned                                     report_period_ms_);
+  cu_up_pdcp_metrics_consumer_json(const cu_up_pdcp_metrics_consumer_json_config& cfg,
+                                   cu_up_pdcp_metrics_consumer_json_dependencies  dependencies);
 
   // See interface for documentation.
   void handle_metric(const app_services::metrics_set& metric) override;
@@ -69,7 +78,7 @@ private:
   // Initialize timer.
   void initialize_timer();
 
-  const unsigned                               report_period_ms;
+  const std::chrono::milliseconds              report_period;
   ocudulog::basic_logger&                      logger;
   app_services::remote_server_metrics_gateway& gateway;
   task_executor&                               executor;

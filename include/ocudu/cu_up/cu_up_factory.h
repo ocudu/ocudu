@@ -12,7 +12,7 @@ namespace ocudu {
 namespace ocuup {
 
 /// Creates an instance of a CU-UP with the given parameters.
-std::unique_ptr<cu_up_interface> create_cu_up(const cu_up_config& cfg, const cu_up_dependencies& dependencies);
+std::unique_ptr<cu_up_interface> create_cu_up(const cu_up_config& cfg, cu_up_dependencies dependencies);
 
 } // namespace ocuup
 } // namespace ocudu

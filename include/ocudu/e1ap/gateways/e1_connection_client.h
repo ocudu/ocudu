@@ -7,8 +7,7 @@
 #include "ocudu/e1ap/common/e1ap_common.h"
 #include <memory>
 
-namespace ocudu {
-namespace ocuup {
+namespace ocudu::ocuup {
 
 /// Interface used by the CU-UP to establish a new connection with a CU-CP via the E1 interface.
 class e1_connection_client
@@ -24,5 +23,4 @@ public:
   handle_cu_up_connection_request(std::unique_ptr<e1ap_message_notifier> cu_up_rx_pdu_notifier) = 0;
 };
 
-} // namespace ocuup
-} // namespace ocudu
+} // namespace ocudu::ocuup

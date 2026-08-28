@@ -7,8 +7,6 @@
 #include "gtpu_tunnel_logger.h"
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/adt/static_vector.h"
-#include "fmt/base.h"
-#include <cstdint>
 
 namespace ocudu {
 
@@ -52,7 +50,7 @@ constexpr unsigned GTPU_MAX_NUM_HEADER_EXTENSIONS = 10;
 constexpr unsigned GTPU_MAX_NUM_PRIVATE_EXTENSIONS     = 1;
 constexpr unsigned GTPU_PRIVATE_EXTENSION_VALUE_LENGTH = 1;
 
-// GTP-U extension header types. See TS 29.281 v16.2.0, figure 5.2.1-3
+/// GTP-U extension header types. See TS 29.281 v16.2.0, figure 5.2.1-3.
 enum class gtpu_extension_header_type : uint8_t {
   no_more_extension_headers = 0b00000000,
   reserved_0                = 0b00000001,
@@ -106,15 +104,15 @@ inline const char* format_as(gtpu_extension_header_type ext_type)
   return to_string(ext_type);
 }
 
-// 00 Comprehension of this extension header is not required. An Intermediate Node shall forward it to any Receiver
-// Endpoint
-// 01 Comprehension of this extension header is not required. An Intermediate Node shall discard the
-// Extension Header Content and not forward it to any Receiver Endpoint. Other extension headers shall be treated
-// independently of this extension header.
-// 10 Comprehension of this extension header is required by the Endpoint
-// Receiver but not by an Intermediate Node. An Intermediate Node shall forward the whole field to the Endpoint
-// Receiver.
-// 11 Comprehension of this header type is required by recipient (either Endpoint Receiver or Intermediate Node)
+/// 00 Comprehension of this extension header is not required. An Intermediate Node shall forward it to any Receiver
+/// Endpoint.
+/// 01 Comprehension of this extension header is not required. An Intermediate Node shall discard the
+/// Extension Header Content and not forward it to any Receiver Endpoint. Other extension headers shall be treated
+/// independently of this extension header.
+/// 10 Comprehension of this extension header is required by the Endpoint
+/// Receiver but not by an Intermediate Node. An Intermediate Node shall forward the whole field to the Endpoint
+/// Receiver.
+/// 11 Comprehension of this header type is required by recipient (either Endpoint Receiver or Intermediate Node).
 enum class gtpu_comprehension : uint8_t {
   not_required_intermediate_node_forward     = 0b00000000,
   not_required_intermediate_node_discard     = 0b00000001,
@@ -122,7 +120,7 @@ enum class gtpu_comprehension : uint8_t {
   required_at_endpoint_and_intermediate_node = 0b00000011
 };
 
-// GTP-U information element types types. See TS 29.281 Sec. 8.1
+/// GTP-U information element types types. See TS 29.281 Sec. 8.1.
 enum class gtpu_information_element_type : uint8_t {
   recovery                          = 14,
   tunnel_endpoint_identifier_data_i = 16,
@@ -148,31 +146,31 @@ inline const char* to_string(gtpu_information_element_type type)
   }
 }
 
-/// Base class for GTP-U extension headers
+/// Base class for GTP-U extension headers.
 struct gtpu_extension_header {
   gtpu_extension_header_type extension_header_type = gtpu_extension_header_type::no_more_extension_headers;
-  byte_buffer_view           container             = {};
+  byte_buffer_view           container;
 };
 
-/// GTP-U information element for "Recovery". See TS 29.281 Sec. 8.2
+/// GTP-U information element for "Recovery". See TS 29.281 Sec. 8.2.
 ///
 /// The value of the restart counter shall be set to 0 by the sending entity and ignored by the receiving entity. This
 /// information element is used in GTP user plane due to backwards compatibility reasons.
 ///
-/// IE format: TV
+/// IE format: TV.
 struct gtpu_ie_recovery {
-  /// Restart counter (always 0)
+  /// Restart counter (always 0).
   uint8_t restart_counter = 0;
 };
 
-/// GTPU information element for "Tunnel Endpoint Identifier Data I". See TS 29.281 Sec. 8.3
+/// GTPU information element for "Tunnel Endpoint Identifier Data I". See TS 29.281 Sec. 8.3.
 ///
 /// The Tunnel Endpoint Identifier Data I information element contains the Tunnel Endpoint Identifier used by a GTP
 /// entity for the user plane.
 ///
-/// IE format: TV
+/// IE format: TV.
 struct gtpu_ie_teid_i {
-  /// Tunnel Endpoint Identifier Data I
+  /// Tunnel Endpoint Identifier Data I.
   uint32_t teid_i = 0;
 };
 
@@ -180,20 +178,20 @@ struct gtpu_ie_gtpu_peer_address {
   using ipv4_addr_t = std::array<uint8_t, 4>;
   using ipv6_addr_t = std::array<uint8_t, 16>;
 
-  /// IPv4 or IPv6 Address
+  /// IPv4 or IPv6 Address.
   std::variant<ipv4_addr_t, ipv6_addr_t> gtpu_peer_address;
 };
 
-/// GTP-U information element for "Private Extension". See TS 29.281 Sec. 8.6
-/// IE format: TLV
+/// GTP-U information element for "Private Extension". See TS 29.281 Sec. 8.6.
+/// IE format: TLV.
 struct gtpu_ie_private_extension {
-  /// The Extension Identifier is a value defined in the Private Enterprise number list
+  /// The Extension Identifier is a value defined in the Private Enterprise number list.
   uint16_t extension_identifier;
-  /// Custom extension
+  /// Custom extension.
   static_vector<uint8_t, GTPU_PRIVATE_EXTENSION_VALUE_LENGTH> extension_value;
 };
 
-/// GTP-U header, including extensions
+/// GTP-U header, including extensions.
 struct gtpu_header {
   struct gtpu_flags {
     uint8_t version       = 1;
@@ -217,7 +215,7 @@ struct gtpu_header {
   /// Next Extension Header Type: This field defines the type of Extension Header that follows this field in the
   /// GTP-PDU.
   gtpu_extension_header_type next_ext_hdr_type = gtpu_extension_header_type::no_more_extension_headers;
-  /// Collection of included GTP-U header extensions
+  /// Collection of included GTP-U header extensions.
   static_vector<gtpu_extension_header, GTPU_MAX_NUM_HEADER_EXTENSIONS> ext_list;
 };
 
@@ -226,9 +224,9 @@ struct gtpu_header {
 /// content are mapped. After processing the extension headers, the T-PDU can be extracted via \c gtpu_extract_t_pdu
 /// which advances the PDU buffer to the start of the T-PDU according to \c hdr_len.
 struct gtpu_dissected_pdu {
-  /// Storage of the original GTP-U PDU to which the views of the extension header content is mapped
+  /// Storage of the original GTP-U PDU to which the views of the extension header content is mapped.
   byte_buffer buf;
-  /// Access to the dissected content of the GTP-U PDU
+  /// Access to the dissected content of the GTP-U PDU.
   gtpu_header hdr;
   /// Total header length (including all extension headers); marks the start of the T-PDU.
   size_t hdr_len = 0;
@@ -270,7 +268,7 @@ bool gtpu_write_ie_recovery(byte_buffer& pdu, gtpu_ie_recovery& ie_recovery, gtp
 /// Append the "private extension" information element to a GTP-U PDU.
 /// Ref: TS 29.281 Sec. 8.6.
 /// \param[out] pdu Buffer of the GTP-U PDU to which the information element shall be appended.
-/// \param[in] ie_recovery The information element "private extension".
+/// \param[in] ie_priv_ext The information element "private extension".
 /// \param[in] logger Access to the logger.
 /// \return True if write was successful, False otherwise.
 bool gtpu_write_ie_private_extension(byte_buffer&               pdu,
@@ -293,8 +291,13 @@ bool gtpu_write_ie_teid_i(byte_buffer& pdu, const gtpu_ie_teid_i& ie, gtpu_tunne
 /// \return True if write was successful, False otherwise.
 bool gtpu_write_ie_gtpu_peer_address(byte_buffer& pdu, const gtpu_ie_gtpu_peer_address& ie, gtpu_tunnel_logger& logger);
 
+/// Logs the GTPU supported flags check in the given GTPU header.
 bool gtpu_supported_flags_check(const gtpu_header& header, gtpu_tunnel_logger& logger);
+
+/// Logs the GTPU supported message type check in the given GTPU header.
 bool gtpu_supported_msg_type_check(const gtpu_header& header, gtpu_tunnel_logger& logger);
+
+/// Logs the GTPU extension header comprehension check by the given type.
 bool gtpu_extension_header_comprehension_check(const gtpu_extension_header_type& type, gtpu_tunnel_logger& logger);
 
 /// Extracts the GTP-U message (i.e. the information elements or the G-PDU) of a dissected GTP-U PDU by advancing its
@@ -305,11 +308,11 @@ bool gtpu_extension_header_comprehension_check(const gtpu_extension_header_type&
 /// \return The T-PDU of the dissected GTP-U PDU.
 byte_buffer gtpu_extract_msg(gtpu_dissected_pdu&& dissected_pdu);
 
-/// GTP-U Tunnel Management Message: Error Indication. See TS 29.281 Sec. 7.3.1
+/// GTP-U Tunnel Management Message: Error Indication. See TS 29.281 Sec. 7.3.1.
 struct gtpu_msg_error_indication {
-  /// Tunnel Endpoint Identifier Data I
+  /// Tunnel Endpoint Identifier Data I.
   gtpu_ie_teid_i teid_i;
-  /// GTP-U Peer Adddress
+  /// GTP-U Peer Address.
   gtpu_ie_gtpu_peer_address gtpu_peer_address;
 };
 
@@ -386,30 +389,35 @@ struct formatter<ocudu::gtpu_ie_gtpu_peer_address> {
   template <typename FormatContext>
   auto format(const ocudu::gtpu_ie_gtpu_peer_address& ie, FormatContext& ctx) const
   {
-    if (std::holds_alternative<ocudu::gtpu_ie_gtpu_peer_address::ipv4_addr_t>(ie.gtpu_peer_address)) {
-      auto& addr = std::get<ocudu::gtpu_ie_gtpu_peer_address::ipv4_addr_t>(ie.gtpu_peer_address);
-      return format_to(ctx.out(), "peer_addr={}.{}.{}.{}", addr[0], addr[1], addr[2], addr[3]);
+    if (const auto* gptu_addr_ipv4 =
+            std::get_if<ocudu::gtpu_ie_gtpu_peer_address::ipv4_addr_t>(&ie.gtpu_peer_address)) {
+      return format_to(ctx.out(),
+                       "peer_addr={}.{}.{}.{}",
+                       gptu_addr_ipv4[0],
+                       gptu_addr_ipv4[1],
+                       gptu_addr_ipv4[2],
+                       gptu_addr_ipv4[3]);
     }
-    if (std::holds_alternative<ocudu::gtpu_ie_gtpu_peer_address::ipv6_addr_t>(ie.gtpu_peer_address)) {
-      auto& addr = std::get<ocudu::gtpu_ie_gtpu_peer_address::ipv6_addr_t>(ie.gtpu_peer_address);
+    if (const auto* gptu_addr_ipv6 =
+            std::get_if<ocudu::gtpu_ie_gtpu_peer_address::ipv6_addr_t>(&ie.gtpu_peer_address)) {
       return format_to(ctx.out(),
                        "peer_addr={:x}{:x}:{:x}{:x}:{:x}{:x}:{:x}{:x}:{:x}{:x}:{:x}{:x}:{:x}{:x}:{:x}{:x}",
-                       addr[0],
-                       addr[1],
-                       addr[2],
-                       addr[3],
-                       addr[4],
-                       addr[5],
-                       addr[6],
-                       addr[7],
-                       addr[8],
-                       addr[9],
-                       addr[10],
-                       addr[11],
-                       addr[12],
-                       addr[13],
-                       addr[14],
-                       addr[15]);
+                       gptu_addr_ipv6[0],
+                       gptu_addr_ipv6[1],
+                       gptu_addr_ipv6[2],
+                       gptu_addr_ipv6[3],
+                       gptu_addr_ipv6[4],
+                       gptu_addr_ipv6[5],
+                       gptu_addr_ipv6[6],
+                       gptu_addr_ipv6[7],
+                       gptu_addr_ipv6[8],
+                       gptu_addr_ipv6[9],
+                       gptu_addr_ipv6[10],
+                       gptu_addr_ipv6[11],
+                       gptu_addr_ipv6[12],
+                       gptu_addr_ipv6[13],
+                       gptu_addr_ipv6[14],
+                       gptu_addr_ipv6[15]);
     }
     return format_to(ctx.out(), "peer_addr={{na}}", ie);
   }

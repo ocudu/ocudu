@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "adapters/gtpu_adapters.h"
 #include "ngu_session_manager.h"
 #include "ue_manager.h"
 #include "ocudu/cu_up/cu_up_config.h"
@@ -41,46 +40,72 @@ struct cu_up_manager_impl_dependencies {
   fifo_async_task_scheduler&                          cu_up_task_scheduler;
 };
 
+/// CU-UP manager implementation.
 class cu_up_manager_impl final : public cu_up_manager
 {
 public:
   cu_up_manager_impl(const cu_up_manager_impl_config& config, const cu_up_manager_impl_dependencies& dependencies);
 
+  // See interface for documentation.
   async_task<void> stop() override;
+
+  // See interface for documentation.
   e1ap_bearer_context_setup_response
   handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override;
 
+  // See interface for documentation.
   async_task<e1ap_bearer_context_modification_response>
   handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& msg) override;
 
+  // See interface for documentation.
   async_task<void> handle_bearer_context_release_command(const e1ap_bearer_context_release_command& msg) override;
 
+  // See interface for documentation.
   void handle_e1ap_connection_drop(cu_up_e1_index_t e1_index) override;
 
+  // See interface for documentation.
   async_task<void> handle_e1_reset(const e1ap_reset& msg) override;
 
+  // See interface for documentation.
   void schedule_cu_up_async_task(async_task<void> task) override;
 
+  // See interface for documentation.
   void schedule_ue_async_task(cu_up_ue_index_t ue_index, async_task<void> task) override;
 
+  // See interface for documentation.
   size_t get_nof_ues() override { return ue_mng->get_nof_ues(); }
 
-  // PDCP event handlers.
+  // See interface for documentation.
   void handle_pdcp_protocol_failure(cu_up_ue_index_t ue_index) override;
-  void handle_pdcp_integrity_failure(cu_up_ue_index_t ue_index) override;
-  void handle_pdcp_max_count_reached(cu_up_ue_index_t ue_index) override;
-  void handle_pdcp_resume_required(cu_up_ue_index_t ue_index) override;
 
-  // Test helpers.
+  // See interface for documentation.
+  void handle_pdcp_integrity_failure(cu_up_ue_index_t ue_index) override;
+
+  // See interface for documentation.
+  void handle_pdcp_max_count_reached(cu_up_ue_index_t ue_index) override;
+
+  // See interface for documentation.
+  void handle_pdcp_resume_required(cu_up_ue_index_t ue_index) override;
+  /// Enables test mode.
   void trigger_enable_test_mode();
+
+  /// Disables the test mode.
   void trigger_disable_test_mode();
+
+  /// Re-establishes the test mode.
   void trigger_reestablish_test_mode();
 
 private:
-  void on_statistics_report_timer_expired();
+  /// On statistics report timer expired callback.
+  void on_statistics_report_timer_expired() {}
 
+  // See interface for documentation.
   async_task<void> enable_test_mode() override;
+
+  /// Disables the test mode.
   async_task<void> disable_test_mode();
+
+  /// Re-establishes the test mode.
   async_task<void> reestablish_test_mode();
 
   gnb_cu_up_id_t           cu_up_id;

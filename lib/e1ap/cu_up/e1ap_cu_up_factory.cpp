@@ -10,18 +10,8 @@
 using namespace ocudu;
 using namespace ocuup;
 
-std::unique_ptr<e1ap_interface> ocudu::ocuup::create_e1ap(cu_up_e1_index_t             e1_index_,
-                                                          const e1ap_configuration&    e1ap_cfg_,
-                                                          e1_connection_client&        e1_client_handler_,
-                                                          e1ap_cu_up_manager_notifier& cu_up_notifier_,
-                                                          timer_manager&               timers_,
-                                                          task_executor&               cu_up_exec_)
+std::unique_ptr<e1ap_interface> ocudu::ocuup::create_e1ap(const e1ap_configuration&           e1ap_cfg,
+                                                          const e1ap_cu_up_impl_dependencies& e1ap_dependencies)
 {
-  auto e1ap_cu_up = std::make_unique<e1ap_cu_up_impl>(e1_index_, // TODO: pass index through factory function.
-                                                      e1ap_cfg_,
-                                                      e1_client_handler_,
-                                                      cu_up_notifier_,
-                                                      timers_,
-                                                      cu_up_exec_);
-  return e1ap_cu_up;
+  return std::make_unique<e1ap_cu_up_impl>(e1ap_cfg, e1ap_dependencies);
 }

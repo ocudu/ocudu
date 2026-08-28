@@ -9,7 +9,9 @@ using namespace ocudu;
 
 std::unique_ptr<gtpu_demux> ocudu::create_gtpu_demux(const gtpu_demux_creation_request& msg)
 {
-  report_fatal_error_if_not(msg.teid_linger_checker, "TEID linger checker is uninitialized");
-  report_fatal_error_if_not(msg.gtpu_pcap, "CU-UP pcap is uninitialized");
-  return std::make_unique<gtpu_demux_impl>(msg.cfg, *msg.teid_linger_checker, *msg.gtpu_pcap, msg.rate_limiter);
+  return std::make_unique<gtpu_demux_impl>(msg.cfg,
+                                           gtpu_demux_impl_dependencies{.teid_linger_checker = msg.teid_linger_checker,
+                                                                        .gtpu_pcap           = msg.gtpu_pcap,
+                                                                        .logger = ocudulog::fetch_basic_logger("GTPU"),
+                                                                        .rate_limiter = msg.rate_limiter});
 }

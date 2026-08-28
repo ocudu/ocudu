@@ -6,6 +6,7 @@
 
 #include "ocudu/e1ap/gateways/e1_connection_client.h"
 #include "ocudu/e1ap/gateways/e1_connection_server.h"
+#include <memory>
 
 namespace ocudu {
 

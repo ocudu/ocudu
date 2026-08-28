@@ -53,7 +53,7 @@ cu_up_manager_impl::cu_up_manager_impl(const cu_up_manager_impl_config&       co
   timers(dependencies.timers),
   cu_up_task_scheduler(dependencies.cu_up_task_scheduler)
 {
-  /// > Create UE manager
+  /// Create UE manager.
   ue_mng = std::make_unique<ue_manager>(generate_ue_manager_config(config.max_nof_ues, n3_cfg, test_mode_cfg),
                                         generate_ue_manager_dependencies(dependencies, *this, logger));
 }
@@ -80,7 +80,7 @@ cu_up_manager_impl::handle_bearer_context_setup_request(const e1ap_bearer_contex
   response.ue_index                           = INVALID_CU_UP_UE_INDEX;
   response.success                            = false;
 
-  // 1. Create new UE context
+  // 1. Create new UE context.
   ue_context_cfg ue_cfg = {};
   fill_sec_as_config(ue_cfg.security_info, msg.security_info);
   ue_cfg.activity_level                   = msg.activity_notif_level;
@@ -88,16 +88,15 @@ cu_up_manager_impl::handle_bearer_context_setup_request(const e1ap_bearer_contex
   ue_cfg.qos                              = qos;
   ue_cfg.ue_dl_aggregate_maximum_bit_rate = msg.ue_dl_aggregate_maximum_bit_rate;
   ue_context* ue_ctxt                     = ue_mng->add_ue(msg.e1_index, ue_cfg);
-  if (ue_ctxt == nullptr) {
+  if (!ue_ctxt) {
     logger.error("Could not create UE context");
     return response;
   }
   ue_ctxt->get_logger().log_info("UE created");
 
-  // 2. Handle bearer context setup request
+  // 2. Handle bearer context setup request.
   for (const auto& pdu_session : msg.pdu_session_res_to_setup_list) {
-    pdu_session_setup_result result = ue_ctxt->setup_pdu_session(pdu_session);
-    if (result.success) {
+    if (pdu_session_setup_result result = ue_ctxt->setup_pdu_session(pdu_session); result.success) {
       process_successful_pdu_resource_setup_mod_outcome(response.pdu_session_resource_setup_list, result);
     } else {
       e1ap_pdu_session_resource_failed_item res_failed_item;
@@ -109,7 +108,7 @@ cu_up_manager_impl::handle_bearer_context_setup_request(const e1ap_bearer_contex
     }
   }
 
-  // 3. Create response
+  // 3. Create response.
   response.ue_index = ue_ctxt->get_index();
   response.success  = true;
   return response;
@@ -138,7 +137,7 @@ async_task<void>
 cu_up_manager_impl::handle_bearer_context_release_command(const e1ap_bearer_context_release_command& msg)
 {
   ue_context* ue_ctxt = ue_mng->find_ue(msg.ue_index);
-  if (ue_ctxt == nullptr) {
+  if (!ue_ctxt) {
     logger.error("ue={}: Discarding E1 Bearer Context Release Command. UE context not found",
                  fmt::underlying(msg.ue_index));
     return launch_async([](coro_context<async_task<void>>& ctx) {
@@ -167,7 +166,13 @@ void cu_up_manager_impl::handle_e1ap_connection_drop(cu_up_e1_index_t e1_index)
   }
   std::reference_wrapper<e1ap_interface> e1ap = e1aps[to_underlying(e1_index)];
   schedule_cu_up_async_task(launch_async<cu_up_e1_connection_loss_routine>(
-      cu_up_id, cu_up_name, plmns, stop_command, e1ap, *ue_mng, timers, exec_mapper.ctrl_executor()));
+      cu_up_e1_connection_loss_routine_config{.cu_up_id = cu_up_id, .cu_up_name = cu_up_name, .plmns = plmns},
+      cu_up_e1_connection_loss_routine_dependencies{.stop_command = stop_command,
+                                                    .e1ap         = e1ap,
+                                                    .ue_mng       = *ue_mng,
+                                                    .timers       = timers,
+                                                    .ctrl_exec    = exec_mapper.ctrl_executor(),
+                                                    .logger       = logger}));
 }
 
 async_task<void> cu_up_manager_impl::handle_e1_reset(const e1ap_reset& msg)
@@ -196,7 +201,7 @@ async_task<void> cu_up_manager_impl::handle_e1_reset(const e1ap_reset& msg)
 void cu_up_manager_impl::handle_pdcp_protocol_failure(cu_up_ue_index_t ue_index)
 {
   ue_context* ue_ctxt = ue_mng->find_ue(ue_index);
-  if (ue_ctxt == nullptr) {
+  if (!ue_ctxt) {
     logger.error("ue={}: Could not handle PDCP protocol failure. UE context not found", ue_index);
     return;
   }
@@ -215,7 +220,7 @@ void cu_up_manager_impl::handle_pdcp_protocol_failure(cu_up_ue_index_t ue_index)
 void cu_up_manager_impl::handle_pdcp_integrity_failure(cu_up_ue_index_t ue_index)
 {
   ue_context* ue_ctxt = ue_mng->find_ue(ue_index);
-  if (ue_ctxt == nullptr) {
+  if (!ue_ctxt) {
     logger.error("ue={}: Could not handle PDCP integrity failure. UE context not found", ue_index);
     return;
   }
@@ -234,10 +239,11 @@ void cu_up_manager_impl::handle_pdcp_integrity_failure(cu_up_ue_index_t ue_index
 void cu_up_manager_impl::handle_pdcp_max_count_reached(cu_up_ue_index_t ue_index)
 {
   ue_context* ue_ctxt = ue_mng->find_ue(ue_index);
-  if (ue_ctxt == nullptr) {
+  if (!ue_ctxt) {
     logger.error("ue={}: Reached PDCP MAX count, but could not find UE context", ue_index);
     return;
   }
+
   cu_up_e1_index_t e1_index = ue_ctxt->get_e1_index();
   if (to_underlying(e1_index) >= e1aps.size()) {
     logger.error("e1={} ue={}: Could not handle PDCP MAX count reached from unknown E1",
@@ -253,7 +259,7 @@ void cu_up_manager_impl::handle_pdcp_max_count_reached(cu_up_ue_index_t ue_index
 void cu_up_manager_impl::handle_pdcp_resume_required(cu_up_ue_index_t ue_index)
 {
   ue_context* ue_ctxt = ue_mng->find_ue(ue_index);
-  if (ue_ctxt == nullptr) {
+  if (!ue_ctxt) {
     logger.error("ue={}: Resume was requested, but could not find UE context", ue_index);
     return;
   }
@@ -267,7 +273,7 @@ void cu_up_manager_impl::handle_pdcp_resume_required(cu_up_ue_index_t ue_index)
   }
   std::reference_wrapper<e1ap_interface> e1ap = e1aps[to_underlying(e1_index)];
 
-  if (not ue_ctxt->is_suspended()) {
+  if (!ue_ctxt->is_suspended()) {
     logger.warning("ue={}: Resume requested, but bearer context is not suspended", ue_index);
   }
 
@@ -298,30 +304,36 @@ async_task<void> cu_up_manager_impl::reestablish_test_mode()
 
 void cu_up_manager_impl::trigger_enable_test_mode()
 {
-  if (test_mode_cfg.attach_detach_period.count() != 0) {
-    test_mode_ue_timer = timers.create_unique_timer(exec_mapper.ctrl_executor());
-    test_mode_ue_timer.set(test_mode_cfg.attach_detach_period,
-                           [this]() { schedule_cu_up_async_task(enable_test_mode()); });
-    test_mode_ue_timer.run();
+  if (test_mode_cfg.attach_detach_period.count() == 0) {
+    return;
   }
+
+  test_mode_ue_timer = timers.create_unique_timer(exec_mapper.ctrl_executor());
+  test_mode_ue_timer.set(test_mode_cfg.attach_detach_period,
+                         [this]() { schedule_cu_up_async_task(enable_test_mode()); });
+  test_mode_ue_timer.run();
 }
 
 void cu_up_manager_impl::trigger_disable_test_mode()
 {
-  if (test_mode_cfg.attach_detach_period.count() != 0) {
-    test_mode_ue_timer = timers.create_unique_timer(exec_mapper.ctrl_executor());
-    test_mode_ue_timer.set(test_mode_cfg.attach_detach_period,
-                           [this]() { schedule_cu_up_async_task(disable_test_mode()); });
-    test_mode_ue_timer.run();
+  if (test_mode_cfg.attach_detach_period.count() == 0) {
+    return;
   }
+
+  test_mode_ue_timer = timers.create_unique_timer(exec_mapper.ctrl_executor());
+  test_mode_ue_timer.set(test_mode_cfg.attach_detach_period,
+                         [this]() { schedule_cu_up_async_task(disable_test_mode()); });
+  test_mode_ue_timer.run();
 }
 
 void cu_up_manager_impl::trigger_reestablish_test_mode()
 {
-  if (test_mode_cfg.reestablish_period.count() != 0) {
-    test_mode_ue_timer = timers.create_unique_timer(exec_mapper.ctrl_executor());
-    test_mode_ue_timer.set(test_mode_cfg.reestablish_period,
-                           [this]() { schedule_cu_up_async_task(reestablish_test_mode()); });
-    test_mode_ue_timer.run();
+  if (test_mode_cfg.reestablish_period.count() == 0) {
+    return;
   }
+
+  test_mode_ue_timer = timers.create_unique_timer(exec_mapper.ctrl_executor());
+  test_mode_ue_timer.set(test_mode_cfg.reestablish_period,
+                         [this]() { schedule_cu_up_async_task(reestablish_test_mode()); });
+  test_mode_ue_timer.run();
 }

@@ -6,7 +6,6 @@
 #include "apps/helpers/metrics/json_generators/cu_up/pdcp.h"
 #include "apps/helpers/metrics/json_generators/generator_helpers.h"
 #include "apps/services/remote_control/remote_server_metrics_gateway.h"
-#include "cu_up_pdcp_metrics.h"
 #include "ocudu/pdcp/pdcp_metrics.h"
 
 using namespace ocudu;
@@ -17,18 +16,19 @@ void cu_up_pdcp_metrics_consumer_e2::handle_metric(const app_services::metrics_s
 }
 
 cu_up_pdcp_metrics_consumer_json::cu_up_pdcp_metrics_consumer_json(
-    ocudulog::basic_logger&                      logger_,
-    app_services::remote_server_metrics_gateway& gateway_,
-    task_executor&                               executor_,
-    unique_timer                                 timer_,
-    unsigned                                     report_period_ms_) :
-  report_period_ms(report_period_ms_), logger(logger_), gateway(gateway_), executor(executor_), timer(std::move(timer_))
+    const cu_up_pdcp_metrics_consumer_json_config& cfg,
+    cu_up_pdcp_metrics_consumer_json_dependencies  dependencies) :
+  report_period(cfg.report_period),
+  logger(dependencies.logger),
+  gateway(dependencies.gateway),
+  executor(dependencies.executor),
+  timer(std::move(dependencies.timer))
 {
-  ocudu_assert(report_period_ms > 10, "CU-UP report period is too fast to work with current JSON consumer");
+  ocudu_assert(report_period.count() > 10, "CU-UP report period is too fast to work with current JSON consumer");
   ocudu_assert(timer.is_valid(), "Invalid timer passed to metrics controller");
 
   // Shift the timer a little.
-  timer.set(std::chrono::milliseconds(report_period_ms / 10), [this]() { initialize_timer(); });
+  timer.set(std::chrono::milliseconds(report_period.count() / 10), [this]() { initialize_timer(); });
   timer.run();
 }
 
@@ -116,7 +116,7 @@ void cu_up_pdcp_metrics_consumer_json::print_metrics()
 
 void cu_up_pdcp_metrics_consumer_json::initialize_timer()
 {
-  timer.set(std::chrono::milliseconds(report_period_ms), [this]() {
+  timer.set(std::chrono::milliseconds(report_period), [this]() {
     if (!executor.execute([this]() {
           print_metrics();
           timer.run();

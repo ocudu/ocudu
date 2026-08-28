@@ -10,17 +10,14 @@
 using namespace ocudu;
 using namespace ocuup;
 
-cu_up_setup_routine::cu_up_setup_routine(gnb_cu_up_id_t                    cu_up_id_,
-                                         std::string                       cu_up_name_,
-                                         std::vector<std::string>          plmns_,
-                                         e1ap_connection_manager&          e1ap_conn_mng_,
-                                         cu_up_e1_setup_complete_notifier* e1_setup_notifier_) :
-  cu_up_id(cu_up_id_),
-  cu_up_name(std::move(cu_up_name_)),
-  plmns(std::move(plmns_)),
-  e1ap_conn_mng(e1ap_conn_mng_),
-  e1_setup_notifier(e1_setup_notifier_),
-  logger(ocudulog::fetch_basic_logger("CU-UP"))
+cu_up_setup_routine::cu_up_setup_routine(cu_up_setup_routine_config              cfg,
+                                         const cu_up_setup_routine_dependencies& dependencies) :
+  cu_up_id(cfg.cu_up_id),
+  cu_up_name(std::move(cfg.cu_up_name)),
+  plmns(std::move(cfg.plmns)),
+  logger(dependencies.logger),
+  e1ap_conn_mng(dependencies.e1ap_conn_mng),
+  e1_setup_notifier(dependencies.e1_setup_notifier)
 {
 }
 
@@ -42,7 +39,7 @@ void cu_up_setup_routine::operator()(coro_context<async_task<bool>>& ctx)
   handle_cu_up_e1_setup_response(response_msg);
 
   // Notify successful setup and deliver packed E1 setup PDU bytes via notifier.
-  if (e1_setup_notifier != nullptr) {
+  if (e1_setup_notifier) {
     e1_setup_notifier->on_e1_setup_complete(
         std::move(response_msg.packed_e1_setup_request), std::move(response_msg.packed_e1_setup_response), cu_up_id);
   }
@@ -74,7 +71,7 @@ async_task<cu_up_e1_setup_response> cu_up_setup_routine::start_cu_up_e1_setup_re
 void cu_up_setup_routine::handle_cu_up_e1_setup_response(const cu_up_e1_setup_response& resp)
 {
   // TODO
-  if (not resp.success) {
+  if (!resp.success) {
     report_fatal_error("CU-UP E1 Setup failed");
   }
 

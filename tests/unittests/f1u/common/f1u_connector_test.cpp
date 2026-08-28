@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "ocudu/f1u/cu_up/f1u_gateway.h"
 #include "ocudu/f1u/du/f1u_rx_sdu_notifier.h"
 #include "ocudu/f1u/local_connector/f1u_local_connector.h"
 #include "ocudu/ocudulog/ocudulog.h"
@@ -215,13 +216,12 @@ TEST_F(f1u_connector_test, create_new_connector)
 {
   EXPECT_NE(f1u_conn, nullptr);
   EXPECT_NE(f1u_conn->get_f1u_du_gateway(), nullptr);
-  EXPECT_NE(f1u_conn->get_f1u_cu_up_gateway(), nullptr);
 }
 
 /// Test attaching/detaching F1-U bearer at CU-UP and DU and UL DL flow
 TEST_F(f1u_connector_test, ul_dl_flow)
 {
-  f1u_cu_up_gateway*   cu_gw = f1u_conn->get_f1u_cu_up_gateway();
+  f1u_cu_up_gateway&   cu_gw = f1u_conn->get_f1u_cu_up_gateway();
   odu::f1u_du_gateway* du_gw = f1u_conn->get_f1u_du_gateway();
 
   up_transport_layer_info ul_tnl{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{1}};
@@ -232,7 +232,7 @@ TEST_F(f1u_connector_test, ul_dl_flow)
   // Create CU TX notifier adapter
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
-  std::unique_ptr<ocuup::f1u_tx_pdu_notifier> cu_bearer = cu_gw->create_cu_bearer(
+  std::unique_ptr<ocuup::f1u_tx_pdu_notifier> cu_bearer = cu_gw.create_cu_bearer(
       0, s_nssai_t{}, drb_id_t::drb1, five_qi_t{9}, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
 
   // Create DU TX notifier adapter and RX handler
@@ -250,7 +250,7 @@ TEST_F(f1u_connector_test, ul_dl_flow)
                                                                                 ue_worker);
 
   // Create CU RX handler and attach it to the DU TX
-  cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
+  cu_gw.attach_dl_teid(ul_tnl, dl_tnl);
 
   // Check CU-UP -> DU path
   byte_buffer cu_buf = make_byte_buffer("dead").value();
@@ -264,7 +264,7 @@ TEST_F(f1u_connector_test, ul_dl_flow)
 /// Test destryoing F1-U bearer at CU-UP and pushing traffic at DU
 TEST_F(f1u_connector_test, destroy_bearer_cu_up)
 {
-  f1u_cu_up_gateway*   cu_gw = f1u_conn->get_f1u_cu_up_gateway();
+  f1u_cu_up_gateway&   cu_gw = f1u_conn->get_f1u_cu_up_gateway();
   odu::f1u_du_gateway* du_gw = f1u_conn->get_f1u_du_gateway();
 
   up_transport_layer_info ul_tnl{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{1}};
@@ -275,7 +275,7 @@ TEST_F(f1u_connector_test, destroy_bearer_cu_up)
   // Create CU TX notifier adapter
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
-  std::unique_ptr<ocuup::f1u_tx_pdu_notifier> cu_bearer = cu_gw->create_cu_bearer(
+  std::unique_ptr<ocuup::f1u_tx_pdu_notifier> cu_bearer = cu_gw.create_cu_bearer(
       0, s_nssai_t{}, drb_id_t::drb1, five_qi_t{9}, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
 
   // Create DU TX notifier adapter and RX handler
@@ -293,7 +293,7 @@ TEST_F(f1u_connector_test, destroy_bearer_cu_up)
                                                                                 ue_worker);
 
   // Create CU RX handler and attach it to the DU TX
-  cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
+  cu_gw.attach_dl_teid(ul_tnl, dl_tnl);
 
   // Check CU-UP -> DU path
   byte_buffer cu_buf = make_byte_buffer("dead").value();
@@ -314,7 +314,7 @@ TEST_F(f1u_connector_test, destroy_bearer_cu_up)
 /// Test disconnecting bearer at CU-UP and pushing traffic UL and DL
 TEST_F(f1u_connector_test, disconnect_bearer_cu_up)
 {
-  f1u_cu_up_gateway*   cu_gw = f1u_conn->get_f1u_cu_up_gateway();
+  f1u_cu_up_gateway&   cu_gw = f1u_conn->get_f1u_cu_up_gateway();
   odu::f1u_du_gateway* du_gw = f1u_conn->get_f1u_du_gateway();
 
   up_transport_layer_info ul_tnl{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{1}};
@@ -325,7 +325,7 @@ TEST_F(f1u_connector_test, disconnect_bearer_cu_up)
   // Create CU TX notifier adapter
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
-  std::unique_ptr<ocuup::f1u_tx_pdu_notifier> cu_bearer = cu_gw->create_cu_bearer(
+  std::unique_ptr<ocuup::f1u_tx_pdu_notifier> cu_bearer = cu_gw.create_cu_bearer(
       0, s_nssai_t{}, drb_id_t::drb1, five_qi_t{9}, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
 
   // Create DU TX notifier adapter and RX handler
@@ -343,7 +343,7 @@ TEST_F(f1u_connector_test, disconnect_bearer_cu_up)
                                                                                 ue_worker);
 
   // Create CU RX handler and attach it to the DU TX
-  cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
+  cu_gw.attach_dl_teid(ul_tnl, dl_tnl);
 
   // Check CU-UP -> DU path
   byte_buffer cu_buf = make_byte_buffer("dddd").value();
@@ -354,7 +354,7 @@ TEST_F(f1u_connector_test, disconnect_bearer_cu_up)
   check_ul_path_connected(du_buf.deep_copy().value(), du_bearer.get(), cu_rx);
 
   // Disconnect CU bearer without destryoing it from connector
-  cu_gw->disconnect_cu_bearer(ul_tnl);
+  cu_gw.disconnect_cu_bearer(ul_tnl);
 
   // Check CU-UP -> DU path is properly detached
   byte_buffer cu_buf2 = make_byte_buffer("DEAD").value();
@@ -368,7 +368,7 @@ TEST_F(f1u_connector_test, disconnect_bearer_cu_up)
 /// Test destryoing F1-U bearer at DU and pushing traffic at CU-UP
 TEST_F(f1u_connector_test, destroy_bearer_du)
 {
-  f1u_cu_up_gateway*   cu_gw = f1u_conn->get_f1u_cu_up_gateway();
+  f1u_cu_up_gateway&   cu_gw = f1u_conn->get_f1u_cu_up_gateway();
   odu::f1u_du_gateway* du_gw = f1u_conn->get_f1u_du_gateway();
 
   up_transport_layer_info ul_tnl{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{1}};
@@ -378,7 +378,7 @@ TEST_F(f1u_connector_test, destroy_bearer_du)
 
   // Create CU TX notifier adapter
   dummy_f1u_cu_up_rx_notifier                 cu_rx;
-  std::unique_ptr<ocuup::f1u_tx_pdu_notifier> cu_bearer = cu_gw->create_cu_bearer(
+  std::unique_ptr<ocuup::f1u_tx_pdu_notifier> cu_bearer = cu_gw.create_cu_bearer(
       0, s_nssai_t{}, drb_id_t::drb1, five_qi_t{9}, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
 
   // Create DU TX notifier adapter and RX handler
@@ -396,7 +396,7 @@ TEST_F(f1u_connector_test, destroy_bearer_du)
                                                                                 ue_worker);
 
   // Create CU RX handler and attach it to the DU TX
-  cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
+  cu_gw.attach_dl_teid(ul_tnl, dl_tnl);
 
   // Check CU-UP -> DU path
   byte_buffer cu_buf = make_byte_buffer("dead").value();
@@ -417,7 +417,7 @@ TEST_F(f1u_connector_test, destroy_bearer_du)
 /// Test destryoing F1-U bearer at DU and pushing traffic at CU-UP
 TEST_F(f1u_connector_test, disconnect_bearer_du)
 {
-  f1u_cu_up_gateway*   cu_gw = f1u_conn->get_f1u_cu_up_gateway();
+  f1u_cu_up_gateway&   cu_gw = f1u_conn->get_f1u_cu_up_gateway();
   odu::f1u_du_gateway* du_gw = f1u_conn->get_f1u_du_gateway();
 
   up_transport_layer_info ul_tnl{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{1}};
@@ -427,7 +427,7 @@ TEST_F(f1u_connector_test, disconnect_bearer_du)
 
   // Create CU TX notifier adapter
   dummy_f1u_cu_up_rx_notifier                 cu_rx;
-  std::unique_ptr<ocuup::f1u_tx_pdu_notifier> cu_bearer = cu_gw->create_cu_bearer(
+  std::unique_ptr<ocuup::f1u_tx_pdu_notifier> cu_bearer = cu_gw.create_cu_bearer(
       0, s_nssai_t{}, drb_id_t::drb1, five_qi_t{9}, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
 
   // Create DU TX notifier adapter and RX handler
@@ -445,7 +445,7 @@ TEST_F(f1u_connector_test, disconnect_bearer_du)
                                                                                 ue_worker);
 
   // Create CU RX handler and attach it to the DU TX
-  cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
+  cu_gw.attach_dl_teid(ul_tnl, dl_tnl);
 
   // Check CU-UP -> DU path
   byte_buffer cu_buf = make_byte_buffer("DDDD").value();
@@ -470,7 +470,7 @@ TEST_F(f1u_connector_test, disconnect_bearer_du)
 /// Update F1-U DU bearer and remove old DU bearer, as done in handover.
 TEST_F(f1u_connector_test, update_du_f1u)
 {
-  f1u_cu_up_gateway*   cu_gw = f1u_conn->get_f1u_cu_up_gateway();
+  f1u_cu_up_gateway&   cu_gw = f1u_conn->get_f1u_cu_up_gateway();
   odu::f1u_du_gateway* du_gw = f1u_conn->get_f1u_du_gateway();
 
   up_transport_layer_info ul_tnl{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{1}};
@@ -481,7 +481,7 @@ TEST_F(f1u_connector_test, update_du_f1u)
 
   // Create CU TX notifier adapter
   dummy_f1u_cu_up_rx_notifier                 cu_rx;
-  std::unique_ptr<ocuup::f1u_tx_pdu_notifier> cu_bearer = cu_gw->create_cu_bearer(
+  std::unique_ptr<ocuup::f1u_tx_pdu_notifier> cu_bearer = cu_gw.create_cu_bearer(
       0, s_nssai_t{}, drb_id_t::drb1, five_qi_t{9}, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
 
   // Create DU TX notifier adapter and RX handler
@@ -499,7 +499,7 @@ TEST_F(f1u_connector_test, update_du_f1u)
                                                                                  ue_worker);
 
   // Create CU RX handler and attach it to the DU TX
-  cu_gw->attach_dl_teid(ul_tnl, dl_tnl1);
+  cu_gw.attach_dl_teid(ul_tnl, dl_tnl1);
 
   // Check CU-UP -> DU path
   byte_buffer cu_buf = make_byte_buffer("dead").value();
@@ -526,7 +526,7 @@ TEST_F(f1u_connector_test, update_du_f1u)
                                                                                  ue_worker);
 
   // Attach new DL TEID
-  cu_gw->attach_dl_teid(ul_tnl, dl_tnl2);
+  cu_gw.attach_dl_teid(ul_tnl, dl_tnl2);
 
   // Delete old DU bearer
   du_bearer1.reset();

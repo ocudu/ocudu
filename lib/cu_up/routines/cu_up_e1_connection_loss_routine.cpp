@@ -10,22 +10,17 @@
 using namespace ocudu;
 using namespace ocuup;
 
-cu_up_e1_connection_loss_routine::cu_up_e1_connection_loss_routine(gnb_cu_up_id_t           cu_up_id_,
-                                                                   std::string              cu_up_name_,
-                                                                   std::vector<std::string> plmns_,
-                                                                   std::atomic<bool>&       stop_command_,
-                                                                   e1ap_interface&          e1ap_,
-                                                                   ue_manager&              ue_mng_,
-                                                                   timer_manager&           timers,
-                                                                   task_executor&           ctrl_exec) :
-  cu_up_id(cu_up_id_),
-  cu_up_name(std::move(cu_up_name_)),
-  plmns(std::move(plmns_)),
-  stop_command(stop_command_),
-  retry_timer(timers.create_unique_timer(ctrl_exec)),
-  e1ap(e1ap_),
-  ue_mng(ue_mng_),
-  logger(ocudulog::fetch_basic_logger("CU-UP"))
+cu_up_e1_connection_loss_routine::cu_up_e1_connection_loss_routine(
+    cu_up_e1_connection_loss_routine_config              cfg,
+    const cu_up_e1_connection_loss_routine_dependencies& dependencies) :
+  cu_up_id(cfg.cu_up_id),
+  cu_up_name(std::move(cfg.cu_up_name)),
+  plmns(std::move(cfg.plmns)),
+  stop_command(dependencies.stop_command),
+  retry_timer(dependencies.timers.create_unique_timer(dependencies.ctrl_exec)),
+  e1ap(dependencies.e1ap),
+  ue_mng(dependencies.ue_mng),
+  logger(dependencies.logger)
 {
 }
 
@@ -39,7 +34,11 @@ void cu_up_e1_connection_loss_routine::operator()(coro_context<async_task<void>>
 
   // Attempt a new E1 setup connection.
   for (;;) {
-    CORO_AWAIT_VALUE(reconnected, launch_async<cu_up_setup_routine>(cu_up_id, cu_up_name, plmns, e1ap));
+    CORO_AWAIT_VALUE(
+        reconnected,
+        launch_async<cu_up_setup_routine>(
+            cu_up_setup_routine_config{.cu_up_id = cu_up_id, .cu_up_name = cu_up_name, .plmns = plmns},
+            cu_up_setup_routine_dependencies{.logger = logger, .e1ap_conn_mng = e1ap, .e1_setup_notifier = nullptr}));
     if (reconnected || stop_command) {
       break;
     }

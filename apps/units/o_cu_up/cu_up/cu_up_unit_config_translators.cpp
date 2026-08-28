@@ -11,59 +11,56 @@ using namespace ocudu;
 
 ocuup::cu_up_config ocudu::generate_cu_up_config(const cu_up_unit_config& config)
 {
-  ocuup::cu_up_config out_cfg;
-  out_cfg.gnb_id      = config.gnb_id;
-  out_cfg.cu_up_id    = config.gnb_cu_up_id;
-  out_cfg.cu_up_name  = fmt::format("ocuup_{}", fmt::underlying(config.gnb_cu_up_id));
-  out_cfg.max_nof_ues = config.max_nof_ues;
-
-  out_cfg.statistics_report_period = std::chrono::seconds{config.metrics.cu_up_report_period};
-
-  out_cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds{config.ngu_cfg.gtpu_cfg.gtpu_reordering_timer_ms};
-
-  out_cfg.n3_cfg.gtpu_rate_limiting_period     = config.ngu_cfg.gtpu_cfg.rate_limiter_period;
-  out_cfg.n3_cfg.gtpu_teid_release_linger_time = config.ngu_cfg.gtpu_cfg.gtpu_teid_release_linger_time;
-  out_cfg.n3_cfg.gtpu_ignore_ue_ambr           = config.ngu_cfg.gtpu_cfg.ignore_ue_ambr;
-  out_cfg.n3_cfg.gtpu_queue_size               = config.ngu_cfg.gtpu_cfg.gtpu_queue_size;
-  out_cfg.n3_cfg.gtpu_batch_size               = config.ngu_cfg.gtpu_cfg.gtpu_batch_size;
-  out_cfg.n3_cfg.warn_on_drop                  = config.warn_on_drop;
-
-  // E1AP-CU-UP config.
   // JSON metrics are not supported at E1AP for now, so only enable if log metrics are enabled.
-  out_cfg.e1ap.max_nof_ues      = config.max_nof_ues;
-  out_cfg.e1ap.json_log_enabled = config.loggers.e1ap_json_enabled;
-  out_cfg.e1ap.metrics_period =
-      timer_duration{config.metrics.layers_cfg.enable_e1ap && config.metrics.common_metrics_cfg.enable_log_metrics
-                         ? config.metrics.cu_up_report_period
-                         : 0};
-
-  out_cfg.plmns = config.plmn_list;
-
-  out_cfg.test_mode_cfg.enabled              = config.test_mode_cfg.enabled;
-  out_cfg.test_mode_cfg.integrity_enabled    = config.test_mode_cfg.integrity_enabled;
-  out_cfg.test_mode_cfg.ciphering_enabled    = config.test_mode_cfg.ciphering_enabled;
-  out_cfg.test_mode_cfg.nea_algo             = config.test_mode_cfg.nea_algo;
-  out_cfg.test_mode_cfg.nia_algo             = config.test_mode_cfg.nia_algo;
-  out_cfg.test_mode_cfg.ue_ambr              = config.test_mode_cfg.ue_ambr;
-  out_cfg.test_mode_cfg.attach_detach_period = config.test_mode_cfg.attach_detach_period;
-  out_cfg.test_mode_cfg.reestablish_period   = config.test_mode_cfg.reestablish_period;
-  out_cfg.test_mode_cfg.f1u_peer_address     = config.test_mode_cfg.f1u_peer_address;
-  out_cfg.test_mode_cfg.nof_ues              = config.test_mode_cfg.nof_ues;
-  return out_cfg;
+  return {
+      .qos = {},
+      .n3_cfg =
+          ocuup::n3_interface_config{
+              .upf_port                  = GTPU_PORT,
+              .gtpu_reordering_timer     = std::chrono::milliseconds{config.ngu_cfg.gtpu_cfg.gtpu_reordering_timer_ms},
+              .gtpu_rate_limiting_period = config.ngu_cfg.gtpu_cfg.rate_limiter_period,
+              .gtpu_teid_release_linger_time = config.ngu_cfg.gtpu_cfg.gtpu_teid_release_linger_time,
+              .gtpu_ignore_ue_ambr           = config.ngu_cfg.gtpu_cfg.ignore_ue_ambr,
+              .gtpu_queue_size               = config.ngu_cfg.gtpu_cfg.gtpu_queue_size,
+              .gtpu_batch_size               = config.ngu_cfg.gtpu_cfg.gtpu_batch_size,
+              .warn_on_drop                  = config.warn_on_drop},
+      .test_mode_cfg         = ocuup::cu_up_test_mode_config{.enabled              = config.test_mode_cfg.enabled,
+                                                             .integrity_enabled    = config.test_mode_cfg.integrity_enabled,
+                                                             .ciphering_enabled    = config.test_mode_cfg.ciphering_enabled,
+                                                             .nea_algo             = config.test_mode_cfg.nea_algo,
+                                                             .nia_algo             = config.test_mode_cfg.nia_algo,
+                                                             .ue_ambr              = config.test_mode_cfg.ue_ambr,
+                                                             .attach_detach_period = config.test_mode_cfg.attach_detach_period,
+                                                             .reestablish_period   = config.test_mode_cfg.reestablish_period,
+                                                             .f1u_peer_address     = config.test_mode_cfg.f1u_peer_address,
+                                                             .nof_ues              = config.test_mode_cfg.nof_ues},
+      .gnb_id                = config.gnb_id,
+      .cu_up_id              = config.gnb_cu_up_id,
+      .max_nof_ues           = config.max_nof_ues,
+      .cu_up_name            = fmt::format("ocuup_{}", fmt::underlying(config.gnb_cu_up_id)),
+      .e1ap_json_log_enabled = config.loggers.e1ap_json_enabled,
+      .e1ap_metrics_period =
+          timer_duration{config.metrics.layers_cfg.enable_e1ap && config.metrics.common_metrics_cfg.enable_log_metrics
+                             ? config.metrics.cu_up_report_period
+                             : std::chrono::milliseconds{0}},
+      .plmns                    = config.plmn_list,
+      .statistics_report_period = std::chrono::duration_cast<std::chrono::seconds>(config.metrics.cu_up_report_period),
+  };
 }
 
 std::map<five_qi_t, ocuup::cu_up_qos_config> ocudu::generate_cu_up_qos_config(const cu_up_unit_config& cu_up_config)
 {
-  std::map<five_qi_t, ocuup::cu_up_qos_config> out_cfg = {};
   if (cu_up_config.qos_cfg.empty()) {
-    out_cfg = config_helpers::make_default_cu_up_qos_config_list(
+    return config_helpers::make_default_cu_up_qos_config_list(
         cu_up_config.warn_on_drop,
-        timer_duration(cu_up_config.metrics.layers_cfg.enable_pdcp ? cu_up_config.metrics.cu_up_report_period : 0),
+        timer_duration(cu_up_config.metrics.layers_cfg.enable_pdcp ? cu_up_config.metrics.cu_up_report_period
+                                                                   : std::chrono::milliseconds(0)),
         cu_up_config.test_mode_cfg.enabled);
-    return out_cfg;
   }
 
-  for (const cu_up_unit_qos_config& qos : cu_up_config.qos_cfg) {
+  std::map<five_qi_t, ocuup::cu_up_qos_config> out_cfg;
+
+  for (const auto& qos : cu_up_config.qos_cfg) {
     if (out_cfg.find(qos.five_qi) != out_cfg.end()) {
       report_error("Duplicate 5QI configuration: {}\n", qos.five_qi);
     }
@@ -71,7 +68,8 @@ std::map<five_qi_t, ocuup::cu_up_qos_config> ocudu::generate_cu_up_qos_config(co
     // Convert PDCP custom config
     pdcp_custom_config& out_pdcp_custom = out_cfg[qos.five_qi].pdcp_custom_cfg;
     out_pdcp_custom.metrics_period =
-        timer_duration(cu_up_config.metrics.layers_cfg.enable_pdcp ? cu_up_config.metrics.cu_up_report_period : 0);
+        timer_duration(cu_up_config.metrics.layers_cfg.enable_pdcp ? cu_up_config.metrics.cu_up_report_period
+                                                                   : std::chrono::milliseconds(0));
     out_pdcp_custom.rx.warn_on_drop = cu_up_config.warn_on_drop;
     out_pdcp_custom.tx.warn_on_drop = cu_up_config.warn_on_drop;
     out_pdcp_custom.tx.test_mode    = cu_up_config.test_mode_cfg.enabled;
@@ -83,8 +81,10 @@ std::map<five_qi_t, ocuup::cu_up_qos_config> ocudu::generate_cu_up_qos_config(co
     f1u_cfg.queue_size         = qos.f1u_cu_up.queue_size;
     f1u_cfg.batch_size         = qos.f1u_cu_up.batch_size;
     f1u_cfg.metrics_period =
-        timer_duration(cu_up_config.metrics.layers_cfg.enable_nrup ? cu_up_config.metrics.cu_up_report_period : 0);
+        timer_duration(cu_up_config.metrics.layers_cfg.enable_nrup ? cu_up_config.metrics.cu_up_report_period
+                                                                   : std::chrono::milliseconds(0));
   }
+
   return out_cfg;
 }
 

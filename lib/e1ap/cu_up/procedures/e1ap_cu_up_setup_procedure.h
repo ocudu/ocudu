@@ -4,16 +4,11 @@
 
 #pragma once
 
-#include "../../common/e1ap_asn1_utils.h"
 #include "common/e1ap_logger.h"
 #include "e1ap_cu_up_event_manager.h"
-#include "ocudu/e1ap/common/e1_setup_messages.h"
 #include "ocudu/e1ap/cu_up/e1ap_cu_up.h"
-#include "ocudu/ocudulog/logger.h"
-#include "ocudu/support/async/async_task.h"
 
-namespace ocudu {
-namespace ocuup {
+namespace ocudu::ocuup {
 
 /// E1 Setup Procedure for the gNB-CU-UP as per TS 38.463, 8.2.3.
 class e1ap_cu_up_setup_procedure
@@ -53,5 +48,4 @@ private:
   byte_buffer          captured_request;
 };
 
-} // namespace ocuup
-} // namespace ocudu
+} // namespace ocudu::ocuup

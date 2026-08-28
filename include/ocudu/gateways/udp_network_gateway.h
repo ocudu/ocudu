@@ -6,7 +6,6 @@
 #include "ocudu/gateways/network_gateway.h"
 #include "ocudu/support/io/io_broker.h"
 #include <netdb.h>
-#include <sys/types.h>
 
 struct sockaddr_storage;
 

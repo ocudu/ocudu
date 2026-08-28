@@ -16,40 +16,41 @@
 
 namespace ocudu::ocuup {
 
-class e1_connection_client;
 class e1ap_event_manager;
 
+/// E1AP CU-CP implementation.
 class e1ap_cu_up_impl final : public e1ap_interface
 {
 public:
-  e1ap_cu_up_impl(cu_up_e1_index_t             e1_index,
-                  const e1ap_configuration&    e1ap_cfg_,
-                  e1_connection_client&        e1_client_handler_,
-                  e1ap_cu_up_manager_notifier& cu_up_notifier_,
-                  timer_manager&               timers_,
-                  task_executor&               cu_up_exec_);
+  e1ap_cu_up_impl(const e1ap_configuration& e1ap_cfg_, const e1ap_cu_up_impl_dependencies& dependencies);
   ~e1ap_cu_up_impl() override;
 
-  // e1ap connection manager functions
+  // See interface for documentation.
   [[nodiscard]] bool connect_to_cu_cp() override;
-  // E1AP interface management procedures functions as per TS38.463, Section 8.2.
-  async_task<cu_up_e1_setup_response> handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& request) override;
-  async_task<void>                    handle_cu_up_e1ap_release_request() override;
 
-  // e1ap message handler functions
+  // See interface for documentation.
+  async_task<cu_up_e1_setup_response> handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& request) override;
+
+  // See interface for documentation.
+  async_task<void> handle_cu_up_e1ap_release_request() override;
+
+  // See interface for documentation.
   void handle_message(const e1ap_message& msg) override;
 
-  // e1ap control message handler functions
+  // See interface for documentation.
   void handle_bearer_context_inactivity_notification(const e1ap_bearer_context_inactivity_notification& msg) override;
 
+  // See interface for documentation.
   void handle_bearer_context_release_request_required(cu_up_ue_index_t ue_index) override;
 
+  // See interface for documentation.
   void handle_dl_data_notification_required(cu_up_ue_index_t ue_index) override;
 
-  // e1ap_statistics_handler functions
+  // See interface for documentation.
   size_t get_nof_ues() const override { return ue_ctxt_list.size(); }
 
-  cu_up_e1_index_t get_e1_index() const override { return e1_index; }
+  /// Gets the E1 index.
+  cu_up_e1_index_t get_e1_index() const override { return e1ap_cfg.e1_index; }
 
 private:
   /// \brief Decorator of e1ap_message_notifier that logs the transmitted E1AP messages.
@@ -72,36 +73,37 @@ private:
   /// \param[in] msg The received initiating message.
   void handle_initiating_message(const asn1::e1ap::init_msg_s& msg);
 
-  /// \brief Notify about the reception of an Bearer Context Setup Request message.
+  /// \brief Notify about the reception of a Bearer Context Setup Request message.
   /// This starts the UE context creation at the UE manager and E1.
   /// \param[in] msg The Bearer Context Setup message.
   void handle_bearer_context_setup_request(const asn1::e1ap::bearer_context_setup_request_s& msg);
 
-  /// \brief Notify about the reception of an Bearer Context Modification Request message.
+  /// \brief Notify about the reception of a Bearer Context Modification Request message.
   /// This starts the UE context creation at the UE manager and E1.
   /// \param[in] msg The Bearer Context Modification message.
   void handle_bearer_context_modification_request(const asn1::e1ap::bearer_context_mod_request_s& msg);
 
-  /// \brief Notify about the reception of an Bearer Context Release Command message.
+  /// \brief Notify about the reception of a Bearer Context Release Command message.
   /// This starts the UE context release at the UE manager and E1.
   /// \param[in] msg The Bearer Context Release Command.
   void handle_bearer_context_release_command(const asn1::e1ap::bearer_context_release_cmd_s& msg);
 
+  /// \brief Notify about the reception of a CU-UP E1AP reset.
+  /// \param[in] msg The received outcome message.
   void handle_cu_up_e1ap_reset(const asn1::e1ap::reset_s& msg);
 
-  /// \brief Notify about the reception of an successful outcome.
-  /// \param[in] msg The received successful outcome message.
+  /// \brief Notify about the reception of a successful outcome.
+  /// \param[in] outcome The received successful outcome message.
   void handle_successful_outcome(const asn1::e1ap::successful_outcome_s& outcome);
 
   /// \brief Notify about the reception of an unsuccessful outcome.
-  /// \param[in] msg The received unsuccessful outcome message.
+  /// \param[in] outcome The received unsuccessful outcome message.
   void handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful_outcome_s& outcome);
 
-  const cu_up_e1_index_t   e1_index;
   const e1ap_configuration e1ap_cfg;
   e1ap_logger              logger;
 
-  // nofifiers and handles
+  /// Notifiers and handles.
   e1ap_cu_up_manager_notifier& cu_up_notifier;
 
   timer_manager& timers;

@@ -3,10 +3,11 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "e1ap_cu_up_setup_procedure.h"
+#include "../../common/e1ap_asn1_utils.h"
 #include "../e1ap_cu_up_asn1_helpers.h"
 #include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/e1ap/common.h"
 #include "ocudu/e1ap/common/e1ap_message.h"
-#include "ocudu/ran/bcd_helper.h"
 #include "ocudu/support/async/async_timer.h"
 
 using namespace ocudu;
