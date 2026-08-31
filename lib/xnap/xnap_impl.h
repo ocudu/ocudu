@@ -59,6 +59,9 @@ public:
     return peer_ctxt.has_value() && peer_ctxt->gnb_id == peer_gnb_id;
   }
 
+  /// \brief Checks whether this peer holds an XNAP UE context for the given UE.
+  bool has_ue_context(cu_cp_ue_index_t ue_index) const { return ue_ctxt_list.contains(ue_index); }
+
   bool has_peer_local_node_id(uint32_t node_id, unsigned nof_node_id_bits) const override
   {
     return peer_ctxt.has_value() && (peer_ctxt->gnb_id.id & ((1U << nof_node_id_bits) - 1)) == node_id;

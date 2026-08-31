@@ -393,3 +393,27 @@ xnap_message ocudu::ocucp::generate_retrieve_ue_context_failure(local_xnap_ue_id
 
   return xnap_msg;
 }
+
+xnap_message ocudu::ocucp::generate_handover_cancel(local_xnap_ue_id_t         local_xnap_ue_id,
+                                                    peer_xnap_ue_id_t          peer_xnap_ue_id,
+                                                    const nr_cell_global_id_t& cell)
+{
+  xnap_message xnap_msg;
+
+  xnap_msg.pdu.set_init_msg();
+  xnap_msg.pdu.init_msg().load_info_obj(ASN1_XNAP_ID_HO_CANCEL);
+
+  auto& ho_cancel = xnap_msg.pdu.init_msg().value.ho_cancel();
+
+  ho_cancel->source_ng_ra_nnode_ue_xn_ap_id         = local_xnap_ue_id_to_uint(local_xnap_ue_id);
+  ho_cancel->target_ng_ra_nnode_ue_xn_ap_id_present = true;
+  ho_cancel->target_ng_ra_nnode_ue_xn_ap_id         = peer_xnap_ue_id_to_uint(peer_xnap_ue_id);
+  ho_cancel->cause.set_radio_network()              = cause_radio_network_layer_opts::proc_cancelled;
+
+  ho_cancel->target_cells_to_cancel_present = true;
+  asn1::xnap::target_cell_list_item_s cell_item;
+  cell_item.target_cell.set_nr() = cgi_to_asn1(cell);
+  ho_cancel->target_cells_to_cancel.push_back(cell_item);
+
+  return xnap_msg;
+}

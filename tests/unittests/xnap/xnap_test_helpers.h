@@ -16,6 +16,8 @@
 #include "ocudu/xnap/xnap_message_notifier.h"
 #include <chrono>
 #include <gtest/gtest.h>
+#include <utility>
+#include <vector>
 
 namespace ocudu::ocucp {
 
@@ -29,10 +31,12 @@ public:
   bool on_new_message(const xnap_message& msg) override
   {
     last_msg = msg;
+    all_msgs.push_back(msg);
     return true;
   }
 
-  xnap_message& last_msg;
+  xnap_message&             last_msg;
+  std::vector<xnap_message> all_msgs;
 };
 
 /// Reusable class that stores the messages sent over XNAP for test inspection.
@@ -315,6 +319,11 @@ protected:
   };
 
   xnap_message get_last_message() { return last_tx_msg; }
+
+  /// \brief Returns the messages sent since the last call, and clears the record.
+  std::vector<xnap_message> pop_sent_messages() { return std::exchange(tx_notifier_spy->all_msgs, {}); }
+
+  dummy_xnap_message_notifier* tx_notifier_spy = nullptr;
 
 private:
   xnap_message last_tx_msg;

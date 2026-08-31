@@ -6,6 +6,7 @@
 #include "tests/unittests/xnap/xnap_test_messages.h"
 #include "xnap_test_helpers.h"
 #include "ocudu/adt/format.h"
+#include "ocudu/ran/inter_cu_handover_messages.h"
 #include "ocudu/security/security.h"
 #include "ocudu/support/async/async_test_utils.h"
 #include "ocudu/xnap/xnap_handover.h"
@@ -60,6 +61,29 @@ public:
   }
 
   void set_handover_procedure_outcome(bool outcome) { cu_cp_notifier.set_xnap_handover_request_outcome(outcome); }
+
+  /// \brief Prepares two CHO candidates at this node under one Source NG-RAN node UE XnAP ID, and returns the Target
+  /// NG-RAN node UE XnAP ID each of them was given, in preparation order.
+  std::vector<uint64_t> prepare_two_target_candidates(local_xnap_ue_id_t source_ue_id)
+  {
+    run_xn_setup(xnap_peer_cfg);
+    set_handover_procedure_outcome(true);
+    pop_sent_messages();
+
+    xnap->handle_message(::generate_handover_request(source_ue_id));
+    xnap->handle_message(::generate_handover_request(source_ue_id));
+
+    std::vector<uint64_t>     local_ids;
+    std::vector<xnap_message> acks = pop_sent_messages();
+    EXPECT_EQ(acks.size(), 2);
+    for (const xnap_message& ack : acks) {
+      const auto& ho_ack = ack.pdu.successful_outcome().value.ho_request_ack();
+      EXPECT_EQ(ho_ack->source_ng_ra_nnode_ue_xn_ap_id, local_xnap_ue_id_to_uint(source_ue_id));
+      local_ids.push_back(ho_ack->target_ng_ra_nnode_ue_xn_ap_id);
+    }
+    EXPECT_NE(local_ids[0], local_ids[1]) << "each candidate must get its own Target NG-RAN node UE XnAP ID";
+    return local_ids;
+  }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -353,4 +377,53 @@ TEST_F(xnap_handover_preparation_procedure_test, when_ue_procedure_is_in_flight_
 
   // Only now may XNAP be considered stopped.
   ASSERT_TRUE(stop_task.ready());
+}
+
+/// TS 38.423 Section 9.1.1.4: the SN STATUS TRANSFER is addressed by the Target NG-RAN node UE XnAP ID, which this node
+/// allocated. Parallel CHO preparations from one source share the Source NG-RAN node UE XnAP ID, so routing on that ID
+/// alone hands one candidate's status to another and leaves the addressed candidate waiting for a message it received.
+TEST_F(xnap_handover_preparation_procedure_test,
+       when_two_target_contexts_share_a_source_ue_id_then_sn_status_transfer_reaches_the_addressed_one)
+{
+  const local_xnap_ue_id_t    source_ue_id = local_xnap_ue_id_t::min;
+  const std::vector<uint64_t> local_ids    = prepare_two_target_candidates(source_ue_id);
+  ASSERT_EQ(local_ids.size(), 2);
+
+  const cu_cp_ue_index_t ue_index_b = uint_to_ue_index(cu_cp_ue_index_to_uint(cu_cp_ue_index_t::min) + 1);
+  ASSERT_TRUE(xnap->has_ue_context(cu_cp_ue_index_t::min));
+  ASSERT_TRUE(xnap->has_ue_context(ue_index_b));
+
+  async_task<expected<cu_cp_status_transfer>>         t_b = xnap->handle_sn_status_transfer_expected(ue_index_b);
+  lazy_task_launcher<expected<cu_cp_status_transfer>> launcher_b(t_b);
+  ASSERT_FALSE(t_b.ready());
+
+  // The UE accessed the second candidate, so the source addresses that context.
+  xnap->handle_message(::generate_sn_status_transfer(source_ue_id, uint_to_peer_xnap_ue_id(local_ids[1])));
+
+  ASSERT_TRUE(t_b.ready()) << "SN Status Transfer was routed to another candidate's context";
+  ASSERT_TRUE(t_b.get().has_value());
+}
+
+/// TS 38.423 Section 8.2.3.2: a HANDOVER CANCEL cancels the handover on the signalling connection identified by the
+/// Source NG-RAN node UE XnAP ID and, if included, the Target NG-RAN node UE XnAP ID. Parallel CHO preparations share
+/// the source ID, so only the target ID picks out one of them; cancelling one must leave its sibling prepared.
+TEST_F(xnap_handover_preparation_procedure_test,
+       when_two_target_contexts_share_a_source_ue_id_then_handover_cancel_releases_only_the_named_one)
+{
+  const local_xnap_ue_id_t    source_ue_id = local_xnap_ue_id_t::min;
+  const std::vector<uint64_t> local_ids    = prepare_two_target_candidates(source_ue_id);
+  ASSERT_EQ(local_ids.size(), 2);
+
+  const cu_cp_ue_index_t ue_index_a = cu_cp_ue_index_t::min;
+  const cu_cp_ue_index_t ue_index_b = uint_to_ue_index(cu_cp_ue_index_to_uint(cu_cp_ue_index_t::min) + 1);
+  ASSERT_TRUE(xnap->has_ue_context(ue_index_a));
+  ASSERT_TRUE(xnap->has_ue_context(ue_index_b));
+
+  // The source cancels the second candidate only. Both candidates were prepared for the cell that
+  // generate_handover_request() names, so the Target NG-RAN node UE XnAP ID is what tells them apart.
+  const nr_cell_global_id_t prepared_cell{plmn_identity::test_value(), nr_cell_identity::create({411, 22}, 0).value()};
+  xnap->handle_message(::generate_handover_cancel(source_ue_id, uint_to_peer_xnap_ue_id(local_ids[1]), prepared_cell));
+
+  ASSERT_TRUE(xnap->has_ue_context(ue_index_a)) << "the sibling candidate was released by another candidate's cancel";
+  ASSERT_FALSE(xnap->has_ue_context(ue_index_b)) << "the named candidate was not released";
 }
