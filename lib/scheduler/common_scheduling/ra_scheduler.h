@@ -126,6 +126,12 @@ private:
   /// Pre-compute invariant fields of Msg3 PDUs (PUSCH, DCI, etc.) for faster scheduling.
   void precompute_msg3_pdus();
 
+  /// \brief SS/PBCH block index associated with a detected preamble, as per TS 38.213, Section 8.1.
+  /// \return Nullopt if the PRACH occasion is associated with no SS/PBCH block index.
+  std::optional<ssb_id_t> get_preamble_ssb_index(const rach_indication_message::occasion& occ,
+                                                 const rach_indication_message::preamble& preamble,
+                                                 slot_point                               prach_slot_rx) const;
+
   /// Handle a PRACH occasion carrying Msg1 (4-step RACH) preambles.
   void handle_msg1_occasion(const rach_indication_message::occasion&      occ,
                             span<const rach_indication_message::preamble> preambles,

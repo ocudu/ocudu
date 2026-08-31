@@ -133,17 +133,10 @@ void prach_scheduler::stop()
 
 void prach_scheduler::allocate_slot_prach_pdus(cell_resource_allocator& res_grid, slot_point sl)
 {
-  // If any of the slots over which the PRACH preamble should be allocated isn't an UL slot, return.
-  if (td_mapper.has_long_preamble()) {
-    for (unsigned sl_idx = 0; sl_idx != td_mapper.prach_burst_length_slots(); ++sl_idx) {
-      if (not cell_cfg.is_fully_ul_enabled(sl + sl_idx)) {
-        return;
-      }
-    }
-  } else {
-    if (not cell_cfg.is_fully_ul_enabled(sl)) {
-      return;
-    }
+  // Skip the slots whose PRACH occasions are not valid, as per TS 38.213, Section 8.1. For a long preamble, this
+  // covers every slot the burst spans.
+  if (not cell_cfg.ssb_ro_map.is_valid_prach_slot(sl)) {
+    return;
   }
 
   // Check if the current slot is a valid PRACH occasion.

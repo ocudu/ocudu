@@ -12,19 +12,14 @@
 
 using namespace ocudu;
 
-static unsigned get_nof_ssbs_per_ro(const rach_config_common& rach_cfg)
-{
-  return rach_cfg.total_nof_ra_preambles / ra_helper::get_preambles_per_ssb(rach_cfg);
-}
-
 static unsigned get_total_msga_cb_preambles(const rach_config_common& rach_cfg)
 {
-  return ra_helper::get_msga_cb_preambles_per_ssb(rach_cfg) * get_nof_ssbs_per_ro(rach_cfg);
+  return ra_helper::get_msga_cb_preambles_per_ssb(rach_cfg) * get_nof_ssb_per_ro(rach_cfg.nof_ssb_per_ro);
 }
 
 static unsigned get_total_msg1_cfra_preambles(const rach_config_common& rach_cfg)
 {
-  return ra_helper::get_msg1_cfra_preambles_per_ssb(rach_cfg) * get_nof_ssbs_per_ro(rach_cfg);
+  return ra_helper::get_msg1_cfra_preambles_per_ssb(rach_cfg) * get_nof_ssb_per_ro(rach_cfg.nof_ssb_per_ro);
 }
 
 mac_cell_rach_handler_impl::mac_cell_rach_handler_impl(mac_rach_handler&                               parent_,

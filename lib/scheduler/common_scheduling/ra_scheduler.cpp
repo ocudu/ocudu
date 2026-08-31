@@ -342,6 +342,15 @@ void ra_scheduler::handle_rach_indication(const rach_indication_message& msg)
   metrics_hdlr.handle_rach_indication(msg);
 }
 
+std::optional<ssb_id_t> ra_scheduler::get_preamble_ssb_index(const rach_indication_message::occasion& occ,
+                                                             const rach_indication_message::preamble& preamble,
+                                                             slot_point prach_slot_rx) const
+{
+  // The lower layers do not report the time-domain occasion index, so only the first occasion of the PRACH slot is
+  // resolved. The configuration validator rejects time multiplexed occasions when more than one SSB beam is active.
+  return cell_cfg.ssb_ro_map.get_ssb_index(prach_slot_rx, 0, occ.frequency_index, preamble.preamble_id);
+}
+
 void ra_scheduler::handle_msg1_occasion(const rach_indication_message::occasion&      occ,
                                         span<const rach_indication_message::preamble> preambles,
                                         slot_point                                    prach_slot_rx)
@@ -425,6 +434,14 @@ void ra_scheduler::handle_msg1_occasion(const rach_indication_message::occasion&
 
   for (unsigned idx = 0; idx != preambles.size(); ++idx) {
     const auto& preamble = preambles[idx];
+
+    if (not get_preamble_ssb_index(occ, preamble, prach_slot_rx).has_value()) {
+      logger.info("pci={} ra-rnti={}: Discarding PRACH preamble. Cause: Its PRACH occasion is associated with no "
+                  "SS/PBCH block",
+                  cell_cfg.params.pci,
+                  ra_rnti);
+      continue;
+    }
 
     // Log event.
     ev_logger.enqueue(scheduler_event_logger::prach_event{
@@ -549,6 +566,14 @@ void ra_scheduler::handle_msga_occasion(const rach_indication_message::occasion&
   for (const auto& preamble : preambles) {
     ocudu_sanity_check(ra_helper::is_msga_cb_preamble(rach_cfg, preamble.preamble_id),
                        "Handling preamble that is not for MsgA. Are preamble IDs sorted in the RACH indication?");
+    if (not get_preamble_ssb_index(occ, preamble, prach_slot_rx).has_value()) {
+      logger.info("pci={} msgb-rnti={}: Discarding MsgA preamble. Cause: Its PRACH occasion is associated with no "
+                  "SS/PBCH block",
+                  cell_cfg.params.pci,
+                  msgb_rnti);
+      continue;
+    }
+
     ev_logger.enqueue(scheduler_event_logger::prach_event{
         prach_slot_rx,
         cell_cfg.cell_index,
@@ -645,10 +670,7 @@ void ra_scheduler::schedule_msga_puschs(rnti_t msgb_rnti, slot_point prach_slot_
 
   // Precompute the preamble-to-PUSCH-occasion index mapping. When po_fdm > 1, the CB preambles are divided evenly
   // across po_fdm FDM occasions. Preamble i (within the MsgA range) maps to occasion floor(i / preambles_per_po).
-  const auto     ssb_per_ro_idx    = static_cast<unsigned>(rach_cfg.nof_ssb_per_ro);
-  const auto     one_idx           = static_cast<unsigned>(ssb_per_rach_occasions::one);
-  const unsigned nof_ssbs_per_ro   = ssb_per_ro_idx >= one_idx ? (1U << (ssb_per_ro_idx - one_idx)) : 1U;
-  const unsigned preambles_per_ssb = rach_cfg.total_nof_ra_preambles / nof_ssbs_per_ro;
+  const unsigned preambles_per_ssb = ra_helper::get_preambles_per_ssb(rach_cfg);
   const unsigned preambles_per_po  = two_step_cfg.cb_preambles_per_ssb_per_shared_ro / msga_pusch_cfg.po_fdm;
 
   for (auto it = msgb_req.preambles.begin(); it != msgb_req.preambles.end();) {

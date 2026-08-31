@@ -24,6 +24,17 @@ static std::vector<zp_csi_rs_resource> make_zp_csi_rs_list(const ran_cell_config
   return csi_helper::make_periodic_zp_csi_rs_resource_list(csi_helper);
 }
 
+static prach_helper::ssb_to_ro_mapping make_ssb_to_ro_mapping(const ran_cell_config& cfg)
+{
+  return prach_helper::ssb_to_ro_mapping{
+      prach_helper::ssb_to_ro_mapping_config{cfg.dl_carrier.band,
+                                             cfg.ul_cfg_common.init_ul_bwp.generic_params.scs,
+                                             cfg.ul_cfg_common.init_ul_bwp.generic_params.cp,
+                                             *cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common,
+                                             cfg.ssb_cfg,
+                                             cfg.tdd_cfg}};
+}
+
 static std::vector<nzp_csi_rs_resource> make_nzp_csi_rs_list(const ran_cell_config& cfg)
 {
   if (!cfg.init_bwp.csi.has_value()) {
@@ -50,6 +61,7 @@ cell_configuration::cell_configuration(const scheduler_expert_config&           
   nof_slots_per_frame(get_nof_slots_per_subframe(scs_common()) * NOF_SUBFRAMES_PER_FRAME),
   zp_csi_rs_list(make_zp_csi_rs_list(params)),
   nzp_csi_rs_list(make_nzp_csi_rs_list(params)),
+  ssb_ro_map(make_ssb_to_ro_mapping(params)),
   init_bwp(init_bwp_),
   // NTN parameters.
   ntn_cs_koffset(params.ntn_params.has_value()

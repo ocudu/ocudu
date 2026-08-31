@@ -153,15 +153,9 @@ namespace ra_helper {
 /// Determines the number of RA preambles per SSB.
 inline uint8_t get_preambles_per_ssb(const rach_config_common& rach_cfg)
 {
-  // Number of SSBs per RO, as an integer. For fractional values (< 1 SSB per RO), one SSB covers
-  // multiple ROs and all preambles in the RO belong to that SSB (nof_ssbs_per_ro = 1).
-  const auto     ssb_per_ro_idx  = static_cast<unsigned>(rach_cfg.nof_ssb_per_ro);
-  const auto     one_idx         = static_cast<unsigned>(ssb_per_rach_occasions::one);
-  const unsigned nof_ssbs_per_ro = ssb_per_ro_idx >= one_idx ? (1U << (ssb_per_ro_idx - one_idx)) : 1U;
-
-  // Number of preambles assigned to each SSB within this RO.
-  const uint8_t preambles_per_ssb = rach_cfg.total_nof_ra_preambles / nof_ssbs_per_ro;
-  return preambles_per_ssb;
+  // For fractional values (< 1 SSB per RO), one SSB covers multiple ROs and all preambles in the RO belong to that
+  // SSB.
+  return rach_cfg.total_nof_ra_preambles / get_nof_ssb_per_ro(rach_cfg.nof_ssb_per_ro);
 }
 
 /// Determines the number of 2-step RACH (MsgA) contention-based preambles per SSB, or 0 if 2-step RACH is disabled.

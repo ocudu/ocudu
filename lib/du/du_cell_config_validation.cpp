@@ -353,6 +353,26 @@ static check_outcome check_ssb_configuration(const du_cell_config& cell_cfg)
   CHECK_TRUE(ssb_cfg.ssb_bitmap.test(0) and ssb_cfg.ssb_bitmap.none(1U, ssb_cfg.ssb_bitmap.get_L_max()),
              "Multiple beams not supported for SSB.");
 
+  if (ssb_cfg.ssb_bitmap.count() > 1) {
+    // The SS/PBCH block associated with a detected preamble is derived from the position of its PRACH occasion in the
+    // occasion ordering of TS 38.213, Section 8.1, which requires the occasion to be identified unambiguously. The
+    // lower layers report neither the frequency-domain occasion index nor the time-domain one.
+    const rach_config_common& rach_cfg = *cell_cfg.ran.ul_cfg_common.init_ul_bwp.rach_cfg_common;
+    const prach_configuration prach_cfg =
+        prach_configuration_get(band_helper::get_freq_range(cell_cfg.ran.dl_carrier.band),
+                                band_helper::get_duplex_mode(cell_cfg.ran.dl_carrier.band),
+                                rach_cfg.rach_cfg_generic.prach_config_index);
+    CHECK_EQ(rach_cfg.rach_cfg_generic.msg1_fdm,
+             1,
+             "Frequency multiplexed PRACH occasions are not supported with multiple SSB beams.");
+    CHECK_EQ_OR_BELOW(prach_cfg.nof_occasions_within_slot,
+                      1,
+                      "Time multiplexed PRACH occasions are not supported with multiple SSB beams.");
+    CHECK_EQ(fmt::underlying(rach_cfg.nof_ssb_per_ro),
+             fmt::underlying(ssb_per_rach_occasions::one),
+             "Only one SSB per RACH occasion is supported with multiple SSB beams.");
+  }
+
   // Checks that SSB does not get located outside the band.
   if (scs_common == subcarrier_spacing::kHz15) {
     // Check if k_SSB is within limits, according to the SCScommon.

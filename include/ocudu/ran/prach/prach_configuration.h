@@ -23,6 +23,22 @@ inline float ssb_per_rach_occ_to_float(ssb_per_rach_occasions value)
   return static_cast<float>(1U << (static_cast<unsigned>(value))) / 8.0f;
 }
 
+/// Number of SS/PBCH block indexes associated with one PRACH occasion, rounded up to unity.
+inline unsigned get_nof_ssb_per_ro(ssb_per_rach_occasions value)
+{
+  const auto idx = static_cast<unsigned>(value);
+  const auto one = static_cast<unsigned>(ssb_per_rach_occasions::one);
+  return idx >= one ? (1U << (idx - one)) : 1U;
+}
+
+/// Number of consecutive PRACH occasions associated with one SS/PBCH block index, rounded up to unity.
+inline unsigned get_nof_ro_per_ssb(ssb_per_rach_occasions value)
+{
+  const auto idx = static_cast<unsigned>(value);
+  const auto one = static_cast<unsigned>(ssb_per_rach_occasions::one);
+  return idx < one ? (1U << (one - idx)) : 1U;
+}
+
 /// \brief Contains the PRACH configuration parameters.
 ///
 /// The parameters are used in TS38.211 Section 6.3.3.2 and they are derived from TS38.211 Tables 6.3.3.2-2, 6.3.3.2-3
