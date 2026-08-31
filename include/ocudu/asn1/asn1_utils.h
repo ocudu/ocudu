@@ -489,7 +489,9 @@ template <typename EnumType>
 OCUDUASN_CODE unpack_enum(EnumType& e, cbit_ref& bref)
 {
   ValOrError ret = unpack_enum(EnumType::nof_types, EnumType::nof_exts, EnumType::has_ext, bref);
-  e              = (typename EnumType::options)ret.val;
+  if (ret.code == OCUDUASN_SUCCESS) {
+    e = (typename EnumType::options)ret.val;
+  }
   return ret.code;
 }
 
