@@ -62,6 +62,10 @@ void xnap_target_handover_preparation_procedure::operator()(coro_context<async_t
   xnap_ue_context& ue_ctxt = ue_ctxt_list[ho_ack.ue_index];
   ue_ctxt_list.update_peer_xnap_ue_id(ue_ctxt.ue_ids.local_xnap_ue_id, target_xnap_ue_id);
 
+  // Remember the cell this context was prepared for. Parallel CHO preparations from one source share the Source NG-RAN
+  // node UE XnAP ID, so a message that omits our Target NG-RAN node UE XnAP ID can only be routed by target cell.
+  ue_ctxt.ho_target_cell = request.nr_cgi;
+
   if (!send_handover_request_ack(ue_ctxt.ue_ids.ue_index, ue_ctxt.ue_ids.local_xnap_ue_id, ho_ack)) {
     logger.debug("ue={}: \"{}\" failed. Cause: Failed to send Handover Request Ack", ho_ack.ue_index, name());
     CORO_EARLY_RETURN();

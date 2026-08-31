@@ -328,20 +328,65 @@ void xnap_impl::handle_handover_request(const asn1::xnap::ho_request_s& msg)
 
 void xnap_impl::handle_handover_cancel(const asn1::xnap::ho_cancel_s& msg)
 {
+  // TS 38.423 Section 8.2.3.2: the cancelled handover is the one on the signalling connection identified by the Source
+  // NG-RAN node UE XnAP ID and, if included, also by the Target NG-RAN node UE XnAP ID, restricted to the candidate
+  // cells of the Candidate Cells To Be Cancelled List when that IE is present. Parallel CHO preparations from one
+  // source share the source ID, so it alone does not identify a context here.
   // This is sent from the source to the target, so the source XNAP UE ID is the peer UE ID.
-  peer_xnap_ue_id_t peer_xnap_ue_id = uint_to_peer_xnap_ue_id(msg->source_ng_ra_nnode_ue_xn_ap_id);
-  if (!ue_ctxt_list.contains(peer_xnap_ue_id)) {
-    logger.info("Received HandoverCancel for unknown UE. peer_xnap_ue_id={}", msg->source_ng_ra_nnode_ue_xn_ap_id);
+  const peer_xnap_ue_id_t peer_xnap_ue_id = uint_to_peer_xnap_ue_id(msg->source_ng_ra_nnode_ue_xn_ap_id);
+
+  // Releases one prepared candidate: the CU-CP drops its UE, then the local XNAP UE context goes.
+  auto release = [this](xnap_ue_context& ue_ctxt) {
+    const cu_cp_ue_index_t ue_index = ue_ctxt.ue_ids.ue_index;
+    cu_cp_notifier.on_handover_cancel_received(ue_index);
+    ue_ctxt_list.remove_ue_context(ue_index);
+  };
+
+  if (msg->target_ng_ra_nnode_ue_xn_ap_id_present) {
+    xnap_ue_context* ue_ctxt = ue_ctxt_list.find(uint_to_local_xnap_ue_id(msg->target_ng_ra_nnode_ue_xn_ap_id));
+    // Both IDs name the same signalling connection, so a context whose source ID differs is not the addressed one.
+    if (ue_ctxt != nullptr and ue_ctxt->ue_ids.peer_xnap_ue_id != peer_xnap_ue_id) {
+      logger.info("Discarding HandoverCancel: peer_xnap_ue_id={} does not match local_xnap_ue_id={}",
+                  msg->source_ng_ra_nnode_ue_xn_ap_id,
+                  msg->target_ng_ra_nnode_ue_xn_ap_id);
+      return;
+    }
+    if (ue_ctxt == nullptr) {
+      logger.info("Received HandoverCancel for unknown UE. peer_xnap_ue_id={}", msg->source_ng_ra_nnode_ue_xn_ap_id);
+      return;
+    }
+    release(*ue_ctxt);
     return;
   }
 
-  cu_cp_ue_index_t ue_index = ue_ctxt_list[peer_xnap_ue_id].ue_ids.ue_index;
+  // Without the target ID the named candidate cells are what tell parallel CHO preparations apart. Every named cell
+  // is cancelled, and only those: Section 8.2.3.2 scopes the procedure to the cells the list identifies.
+  bool named_a_cell = false;
+  for (const auto& item : msg->target_cells_to_cancel) {
+    if (item.target_cell.type() != target_cgi_c::types_opts::nr) {
+      continue;
+    }
+    named_a_cell = true;
+    xnap_ue_context* cell_ctxt =
+        ue_ctxt_list.find_by_peer_and_cell(peer_xnap_ue_id, asn1_to_cgi(item.target_cell.nr()));
+    if (cell_ctxt == nullptr) {
+      logger.info("HandoverCancel names a cell with no prepared UE. peer_xnap_ue_id={}",
+                  msg->source_ng_ra_nnode_ue_xn_ap_id);
+      continue;
+    }
+    release(*cell_ctxt);
+  }
+  if (named_a_cell) {
+    return;
+  }
 
-  // Request CU-CP to release the UE context.
-  cu_cp_notifier.on_handover_cancel_received(ue_index);
-
-  // Remove local UE context.
-  ue_ctxt_list.remove_ue_context(ue_index);
+  // Neither the target ID nor a candidate cell: the whole UE-associated signalling connection is cancelled.
+  xnap_ue_context* ue_ctxt = ue_ctxt_list.find(peer_xnap_ue_id);
+  if (ue_ctxt == nullptr) {
+    logger.info("Received HandoverCancel for unknown UE. peer_xnap_ue_id={}", msg->source_ng_ra_nnode_ue_xn_ap_id);
+    return;
+  }
+  release(*ue_ctxt);
 }
 
 void xnap_impl::handle_sn_status_transfer(const asn1::xnap::sn_status_transfer_s& msg)

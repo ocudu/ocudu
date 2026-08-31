@@ -29,6 +29,10 @@ struct xnap_ue_context {
   /// XN Status Transfer Event Source.
   protocol_transaction_event_source<asn1::xnap::sn_status_transfer_s> sn_status_transfer_outcome;
 
+  /// \brief Target cell this context was prepared for, set when admitting a Handover Request. Parallel CHO
+  /// preparations from one source share its XNAP UE ID, so the cell is what tells the contexts apart.
+  std::optional<nr_cell_global_id_t> ho_target_cell;
+
   /// Retrieve UE Context Response/Failure Event Source.
   protocol_transaction_event_source<asn1::xnap::retrieve_ue_context_resp_s, asn1::xnap::retrieve_ue_context_fail_s>
       retrieve_ue_context_outcome;
@@ -157,6 +161,17 @@ public:
       return nullptr;
     }
     return find(peer_xnap_ue_id_to_local_xnap_ue_id.at(peer_xnap_ue_id));
+  }
+
+  xnap_ue_context* find_by_peer_and_cell(peer_xnap_ue_id_t peer_xnap_ue_id, const nr_cell_global_id_t& cell)
+  {
+    for (auto& ue : ues) {
+      if (ue.second.ue_ids.peer_xnap_ue_id == peer_xnap_ue_id and ue.second.ho_target_cell.has_value() and
+          *ue.second.ho_target_cell == cell) {
+        return &ue.second;
+      }
+    }
+    return nullptr;
   }
 
   xnap_ue_context* find(cu_cp_ue_index_t ue_index)
