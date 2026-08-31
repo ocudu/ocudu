@@ -73,6 +73,8 @@ private:
 
     sctp_associaton_context(int assoc_id, int fd_, sctp_network_server_impl& parent_);
     void                      receive();
+    void                      receive_plain();
+    void                      receive_dtls();
     sctp_network_server_impl& parent;
   };
 

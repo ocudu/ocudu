@@ -66,7 +66,8 @@ private:
   BIO*            bio = nullptr;
   SSL*            ssl = nullptr;
 
-  dtls_context& ssl_ctx;
+  dtls_context&             ssl_ctx;
+  static constexpr uint32_t dtls_max_len = 9100;
 
   ocudulog::basic_logger& logger;
 };

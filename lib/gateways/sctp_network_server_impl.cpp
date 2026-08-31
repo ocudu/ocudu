@@ -126,7 +126,6 @@ private:
     assoc_shutdown_flag->store(true, std::memory_order_relaxed);
   }
 
-  // Note: We copy all the required params by value to avoid race conditions with the server thread.
   const uint32_t                                           ppid;
   const int                                                fd;
   std::string                                              if_name;
@@ -152,6 +151,15 @@ sctp_network_server_impl::sctp_associaton_context::sctp_associaton_context(int  
 
 void sctp_network_server_impl::sctp_associaton_context::receive()
 {
+  if (parent.dtls_cfg.has_value()) {
+    receive_dtls();
+  } else {
+    receive_plain();
+  }
+}
+
+void sctp_network_server_impl::sctp_associaton_context::receive_plain()
+{
   struct sctp_sndrcvinfo                            sri       = {};
   int                                               msg_flags = 0;
   std::array<uint8_t, network_gateway_sctp_max_len> temp_recv_buffer;
@@ -159,24 +167,6 @@ void sctp_network_server_impl::sctp_associaton_context::receive()
   // fromlen is an in/out variable in sctp_recvmsg.
   sockaddr_storage msg_src_addr;
   socklen_t        msg_src_addrlen = sizeof(msg_src_addr);
-
-  if (parent.dtls_cfg.has_value()) {
-    if (ssl == nullptr) {
-      return;
-    }
-    if (not ssl->is_init_finished()) {
-      if (ssl->handshake()) {
-        parent.mark_connection_as_complete(addr);
-      }
-      return;
-    }
-    auto plain = ssl->receive();
-
-    if (plain.has_value()) {
-      sctp_data_recv_notifier->on_new_sdu(std::move(*plain));
-    }
-    return;
-  }
 
   int rx_bytes = ::sctp_recvmsg(fd,
                                 temp_recv_buffer.data(),
@@ -207,6 +197,33 @@ void sctp_network_server_impl::sctp_associaton_context::receive()
   /// We pass the actual data and association handling back to the parent, to avoid code duplication.
   auto payload = std::vector<uint8_t>(temp_recv_buffer.begin(), temp_recv_buffer.begin() + rx_bytes);
   parent.receive_impl(std::move(payload), sri, msg_flags, msg_src_addr, msg_src_addrlen);
+}
+
+void sctp_network_server_impl::sctp_associaton_context::receive_dtls()
+{
+  if (not parent.dtls_cfg.has_value()) {
+    report_error("Receive DTLS called, but not dtls config provided");
+  }
+  while (not parent.app_exec.defer([this, keepalive = parent.keepalive_token]() {
+    if (*keepalive) {
+      if (ssl == nullptr) {
+        return;
+      }
+      if (not ssl->is_init_finished()) {
+        if (ssl->handshake()) {
+          parent.mark_connection_as_complete(addr);
+        }
+        return;
+      }
+      auto plain = ssl->receive();
+
+      if (plain.has_value()) {
+        sctp_data_recv_notifier->on_new_sdu(std::move(*plain));
+      }
+    }
+  })) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
 }
 
 sctp_network_server_impl::sctp_network_server_impl(const ocudu::sctp_network_gateway_config& sctp_cfg_,
@@ -531,10 +548,14 @@ void sctp_network_server_impl::handle_sctp_comm_up(const struct sctp_assoc_chang
     return;
   }
 
-  /// TODO create DTLS SSL association.
   if (dtls_cfg.has_value()) {
     assoc_ctxt.ssl = create_dtls_ssl(dtls_ssl_config{dtls_cfg->mode}, {*dtls_ctxt});
-    assoc_ctxt.ssl->init(assoc_ctxt.fd);
+    if (not assoc_ctxt.ssl->init(assoc_ctxt.fd)) {
+      logger.error("{} assoc={}: Could initialize DTLS context for new association", node_cfg.if_name, assoc_id);
+      /// Remove association as if it was lost. Do it directly, as we are running in the app excutor already.
+      handle_association_shutdown(assoc_id, "DTLS error");
+      remove_association(assoc_id);
+    }
   }
 
   logger.info("{} assoc={}: New client SCTP association (client_addr={})", node_cfg.if_name, assoc_id, assoc_ctxt.addr);

@@ -98,8 +98,8 @@ bool openssl_dtls_ssl::handshake()
 expected<byte_buffer> openssl_dtls_ssl::receive()
 {
   /// SSL should be initialized from here on.
-  std::array<uint8_t, 9000> buff;
-  int                       len = SSL_read(ssl, buff.data(), 9000);
+  std::array<uint8_t, dtls_max_len> buff;
+  int                               len = SSL_read(ssl, buff.data(), dtls_max_len);
 
   if (len <= 0) {
     int err = SSL_get_error(ssl, len);
