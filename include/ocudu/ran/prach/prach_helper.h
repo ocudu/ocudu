@@ -9,6 +9,7 @@
 #include "ocudu/ran/duplex_mode.h"
 #include "ocudu/ran/prach/prach_configuration.h"
 #include "ocudu/ran/prach/prach_format_type.h"
+#include "ocudu/ran/prach/ssb_per_rach_occasions.h"
 #include <optional>
 
 namespace ocudu {

@@ -7,7 +7,6 @@
 #include "bwp_config_res_pool.h"
 #include "ocudu/adt/slotted_vector.h"
 #include "ocudu/ran/band_helper.h"
-#include "ocudu/ran/prach/ssb_to_ro_mapping.h"
 #include "ocudu/ran/subcarrier_spacing.h"
 #include "ocudu/scheduler/config/ran_cell_config.h"
 #include "ocudu/scheduler/config/scheduler_expert_config.h"
@@ -52,8 +51,6 @@ public:
   const std::vector<zp_csi_rs_resource> zp_csi_rs_list;
   /// List of nzp-CSI-RS resources.
   const std::vector<nzp_csi_rs_resource> nzp_csi_rs_list;
-  /// Association between SS/PBCH block indexes and PRACH occasions.
-  const prach_helper::ssb_to_ro_mapping ssb_ro_map;
   /// Initial BWP configuration for this cell.
   const sched_bwp_config& init_bwp;
   /// List of BWP config resources handled by this cell.

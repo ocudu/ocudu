@@ -6,7 +6,7 @@
 
 #include "../cell/resource_grid.h"
 #include "ocudu/ocudulog/logger.h"
-#include "ocudu/ran/prach/prach_time_mapping.h"
+#include "ocudu/ran/prach/ssb_to_ro_mapping.h"
 #include "ocudu/ran/slot_point.h"
 
 namespace ocudu {
@@ -34,6 +34,8 @@ private:
     prach_occasion_info occasion;
   };
 
+  const prach_helper::preamble_slot_mapping& td_mapper() const { return ssb_ro_map.td_slot_mapping(); }
+
   const rach_config_common& rach_cfg_common() const
   {
     return *cell_cfg.params.ul_cfg_common.init_ul_bwp.rach_cfg_common;
@@ -48,12 +50,12 @@ private:
 
   const cell_configuration& cell_cfg;
   ocudulog::basic_logger&   logger;
+  /// Helper to determine the slot positioning of the PRACH preambles and which of their occasions are valid.
+  prach_helper::ssb_to_ro_mapping ssb_ro_map;
 
   bool first_slot_ind = true;
   /// Pre-generated PRACH occasions.
   static_vector<cached_prach_occasion, MAX_PRACH_OCCASIONS_PER_SLOT> cached_prachs;
-  /// Helper to determine slot positioning of the PRACH preambles.
-  prach_helper::preamble_slot_mapping td_mapper;
 };
 
 } // namespace ocudu

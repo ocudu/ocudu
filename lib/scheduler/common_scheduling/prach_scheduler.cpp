@@ -13,12 +13,20 @@
 
 using namespace ocudu;
 
+/// Builds the association between SS/PBCH block indexes and PRACH occasions of the cell.
+static prach_helper::ssb_to_ro_mapping make_ssb_to_ro_mapping(const cell_configuration& cell_cfg)
+{
+  const auto& ul_bwp = cell_cfg.params.ul_cfg_common.init_ul_bwp;
+  return prach_helper::ssb_to_ro_mapping{prach_helper::ssb_to_ro_mapping_config{cell_cfg.params.dl_carrier.band,
+                                                                                ul_bwp.generic_params.scs,
+                                                                                ul_bwp.generic_params.cp,
+                                                                                *ul_bwp.rach_cfg_common,
+                                                                                cell_cfg.params.ssb_cfg,
+                                                                                cell_cfg.params.tdd_cfg}};
+}
+
 prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
-  cell_cfg(cfg_),
-  logger(ocudulog::fetch_basic_logger("SCHED")),
-  td_mapper(cell_cfg.params.dl_carrier.band,
-            cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.scs,
-            rach_cfg_common().rach_cfg_generic.prach_config_index)
+  cell_cfg(cfg_), logger(ocudulog::fetch_basic_logger("SCHED")), ssb_ro_map(make_ssb_to_ro_mapping(cell_cfg))
 {
   // Obtain the PRACH configuration.
   prach_configuration prach_cfg =
@@ -61,15 +69,15 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
                                            cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.crbs.length())};
     const crb_interval crbs = prb_to_crb(cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params, prach_prbs);
 
-    if (td_mapper.has_long_preamble()) {
+    if (td_mapper().has_long_preamble()) {
       // If the PRACH preamble is longer than 1 slot, then allocate a grant for each slot that include the preamble.
-      for (unsigned prach_slot_idx = 0; prach_slot_idx != td_mapper.prach_burst_length_slots(); ++prach_slot_idx) {
+      for (unsigned prach_slot_idx = 0; prach_slot_idx != td_mapper().prach_burst_length_slots(); ++prach_slot_idx) {
         // For the first slot, use the start_symbol_pusch_scs; in any other case, the preamble starts from the initial
         // symbol. For the last slot, compute the final symbol; in any other case, the preamble ends at the last slot's
         // symbol.
         const ofdm_symbol_range prach_symbols{
             prach_slot_idx == 0 ? prach_duration_info.start_symbol_pusch_scs : 0,
-            prach_slot_idx < td_mapper.prach_burst_length_slots() - 1
+            prach_slot_idx < td_mapper().prach_burst_length_slots() - 1
                 ? nof_symbols_per_slot
                 : (prach_duration_info.start_symbol_pusch_scs + prach_duration_info.nof_symbols) %
                       nof_symbols_per_slot};
@@ -82,7 +90,7 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
                                                 prach_duration_info.nof_symbols};
       // If the burst of PRACH opportunities extends over 1 slot, then allocate a grant for each slot that include these
       // opportunities (1 or 2 slots).
-      for (unsigned prach_slot_idx = 0; prach_slot_idx != td_mapper.prach_burst_length_slots(); ++prach_slot_idx) {
+      for (unsigned prach_slot_idx = 0; prach_slot_idx != td_mapper().prach_burst_length_slots(); ++prach_slot_idx) {
         // For the short PRACH formats, both grants (if more than 1) occupy the same symbols within the slot.
         cached_prach.grant_list.emplace_back(
             grant_info{cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.scs, prach_symbols, crbs});
@@ -115,7 +123,7 @@ void prach_scheduler::run_slot(cell_resource_allocator& res_grid)
     // (farthest in the future) usable slot.
     first_slot_ind = false;
     // NOTE: Min value of cell_resource_allocator.max_ul_slot_alloc_delay is 20, max value of prach_length_slots is 7.
-    for (unsigned sl = 0; sl < (res_grid.max_ul_slot_alloc_delay - td_mapper.prach_burst_length_slots() + 1); ++sl) {
+    for (unsigned sl = 0; sl < (res_grid.max_ul_slot_alloc_delay - td_mapper().prach_burst_length_slots() + 1); ++sl) {
       allocate_slot_prach_pdus(res_grid, res_grid[sl].slot);
     }
     return;
@@ -123,7 +131,7 @@ void prach_scheduler::run_slot(cell_resource_allocator& res_grid)
 
   // Pre-allocate PRACH PDU in the last slot.
   allocate_slot_prach_pdus(res_grid,
-                           res_grid[res_grid.max_ul_slot_alloc_delay - td_mapper.prach_burst_length_slots()].slot);
+                           res_grid[res_grid.max_ul_slot_alloc_delay - td_mapper().prach_burst_length_slots()].slot);
 }
 
 void prach_scheduler::stop()
@@ -133,22 +141,17 @@ void prach_scheduler::stop()
 
 void prach_scheduler::allocate_slot_prach_pdus(cell_resource_allocator& res_grid, slot_point sl)
 {
-  // Skip the slots whose PRACH occasions are not valid, as per TS 38.213, Section 8.1. For a long preamble, this
-  // covers every slot the burst spans.
-  if (not cell_cfg.ssb_ro_map.is_valid_prach_slot(sl)) {
-    return;
-  }
-
-  // Check if the current slot is a valid PRACH occasion.
-  if (not td_mapper.has_prach_occasion(sl)) {
+  // Skip the slots that do not start a usable burst of PRACH occasions, as per TS 38.213, Section 8.1. For a long
+  // preamble, this covers every slot the burst spans.
+  if (not ssb_ro_map.is_valid_prach_slot(sl)) {
     return;
   }
 
   for (const cached_prach_occasion& cached_prach : cached_prachs) {
-    if (td_mapper.has_long_preamble()) {
+    if (td_mapper().has_long_preamble()) {
       // Reserve RBs and symbols of the PRACH occasion in the resource grid for each grant (over multiple slots) of the
       // preamble.
-      for (unsigned sl_idx = 0; sl_idx != td_mapper.prach_burst_length_slots(); ++sl_idx) {
+      for (unsigned sl_idx = 0; sl_idx != td_mapper().prach_burst_length_slots(); ++sl_idx) {
         res_grid[sl + sl_idx].ul_res_grid.fill(cached_prach.grant_list[sl_idx]);
       }
       // Add PRACH occasion to scheduler slot output (one PRACH PDU per preamble).
@@ -157,7 +160,7 @@ void prach_scheduler::allocate_slot_prach_pdus(cell_resource_allocator& res_grid
       // Reserve RBs and symbols of the PRACH occasion in the resource grid for each grant (over 1 or 2 slots) of the
       // preamble and add the PRACH occasions to scheduler slot output (1 or 2 PRACH PDU per burst of PRACH
       // opportunities, depending on whether this burst repeats over 1 or 2 slots).
-      res_grid[sl].ul_res_grid.fill(cached_prach.grant_list[sl.slot_index() % td_mapper.prach_burst_length_slots()]);
+      res_grid[sl].ul_res_grid.fill(cached_prach.grant_list[sl.slot_index() % td_mapper().prach_burst_length_slots()]);
       res_grid[sl].result.ul.prachs.push_back(cached_prach.occasion);
     }
   }

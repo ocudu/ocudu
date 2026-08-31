@@ -266,7 +266,7 @@ static const std::array<prach_configuration, 256> fr1_paired_table = {
      {prach_format_type::C2, 1, {0}, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 0, 2, 2, 6},
      {prach_format_type::C2, 1, {0}, {1, 3, 5, 7, 9}, 0, 2, 2, 6}}};
 
-static prach_configuration prach_configuration_get_fr1_paired(uint8_t prach_config_index)
+static const prach_configuration& prach_configuration_get_fr1_paired(uint8_t prach_config_index)
 {
   return fr1_paired_table[prach_config_index];
 }
@@ -537,7 +537,7 @@ static const std::array<prach_configuration, 263> fr1_unpaired_table = {
      {prach_format_type::zero, 2, {0}, {2}, 0, 0, 0, 0},
      {prach_format_type::zero, 2, {1}, {2}, 0, 0, 0, 0}}};
 
-static prach_configuration prach_configuration_get_fr1_unpaired(uint16_t prach_config_index)
+static const prach_configuration& prach_configuration_get_fr1_unpaired(uint16_t prach_config_index)
 {
   return fr1_unpaired_table[prach_config_index];
 }
@@ -891,12 +891,13 @@ static const std::array<prach_configuration, 256> fr2_unpaired = {
      /* A3/B3 */ {PRACH_CONFIG_RESERVED},
      /* A3/B3 */ {PRACH_CONFIG_RESERVED}}};
 
-static prach_configuration prach_configuration_get_fr2_unpaired(uint8_t prach_config_index)
+static const prach_configuration& prach_configuration_get_fr2_unpaired(uint8_t prach_config_index)
 {
   return fr2_unpaired[prach_config_index];
 }
 
-prach_configuration ocudu::prach_configuration_get(frequency_range fr, duplex_mode dm, uint16_t prach_config_index)
+const prach_configuration&
+ocudu::prach_configuration_get(frequency_range fr, duplex_mode dm, uint16_t prach_config_index)
 {
   if ((fr == frequency_range::FR1) && (dm == duplex_mode::FDD || dm == duplex_mode::SUL)) {
     return prach_configuration_get_fr1_paired(prach_config_index);

@@ -8,6 +8,7 @@
 #include "ocudu/ran/meas_units.h"
 #include "ocudu/ran/prach/prach_configuration.h"
 #include "ocudu/ran/prach/restricted_set_config.h"
+#include "ocudu/ran/prach/ssb_per_rach_occasions.h"
 #include "ocudu/ran/sch/sch_mcs.h"
 #include <chrono>
 #include <optional>

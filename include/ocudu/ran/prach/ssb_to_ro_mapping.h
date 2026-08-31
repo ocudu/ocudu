@@ -51,7 +51,8 @@ public:
   /// Whether a PRACH occasion spanning \c prach_symbols in slot \c sl is valid, as per TS 38.213, Section 8.1.
   bool is_valid_ro(slot_point sl, ofdm_symbol_range prach_symbols) const;
 
-  /// Whether every PRACH occasion of the burst starting at slot \c sl is valid, as per TS 38.213, Section 8.1.
+  /// \brief Whether the burst of PRACH occasions starting at slot \c sl can be used, i.e. the slot starts a PRACH
+  /// burst and every occasion of that burst is valid, as per TS 38.213, Section 8.1.
   bool is_valid_prach_slot(slot_point sl) const;
 
   /// \brief SS/PBCH block index associated with a preamble detected in the PRACH occasion
@@ -61,6 +62,9 @@ public:
                                         unsigned   td_occasion_idx,
                                         unsigned   fd_occasion_idx,
                                         unsigned   preamble_id) const;
+
+  /// Time-domain positioning of the PRACH preambles of the cell.
+  const preamble_slot_mapping& td_slot_mapping() const { return td_mapping; }
 
   /// Number of system frames spanned by the SS/PBCH block to PRACH occasion association period.
   unsigned association_period_frames() const { return assoc_period_frames; }

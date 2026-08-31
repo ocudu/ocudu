@@ -20,6 +20,7 @@
 #include "ocudu/ran/pdcch/search_space.h"
 #include "ocudu/ran/pdsch/pdsch_mcs.h"
 #include "ocudu/ran/prach/prach_configuration.h"
+#include "ocudu/ran/prach/ssb_per_rach_occasions.h"
 #include "ocudu/ran/pucch/pucch_configuration.h"
 #include "ocudu/ran/pucch/pucch_mapping.h"
 #include "ocudu/ran/pusch/pusch_mcs.h"

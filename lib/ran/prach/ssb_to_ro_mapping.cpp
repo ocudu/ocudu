@@ -37,7 +37,7 @@ static unsigned get_n_gap(const prach_configuration& prach_cfg, subcarrier_spaci
 }
 
 /// PRACH configuration derived from the PRACH configuration index of the cell.
-static prach_configuration get_prach_config(const prach_helper::ssb_to_ro_mapping_config& config)
+static const prach_configuration& get_prach_config(const prach_helper::ssb_to_ro_mapping_config& config)
 {
   return prach_configuration_get(band_helper::get_freq_range(config.band),
                                  band_helper::get_duplex_mode(config.band),
@@ -66,8 +66,7 @@ prach_helper::ssb_to_ro_mapping::ssb_to_ro_mapping(const ssb_to_ro_mapping_confi
   report_error_if_not(not tdd_cfg.has_value() or tdd_cfg->ref_scs == config.ul_scs,
                       "The TDD reference subcarrier spacing must match the uplink subcarrier spacing");
 
-  const ssb_bitmap_t& ssb_bitmap = config.ssb_cfg.ssb_bitmap;
-  for (int idx = ssb_bitmap.find_lowest(); idx != -1; idx = ssb_bitmap.find_lowest(idx + 1, ssb_bitmap.size())) {
+  for (size_t idx : config.ssb_cfg.ssb_bitmap.get_bit_positions()) {
     ssb_indexes.push_back(static_cast<uint8_t>(idx));
   }
   report_error_if_not(not ssb_indexes.empty(), "No SS/PBCH block is active");
@@ -171,6 +170,9 @@ bool prach_helper::ssb_to_ro_mapping::is_valid_ro(slot_point sl, ofdm_symbol_ran
 
 bool prach_helper::ssb_to_ro_mapping::is_valid_prach_slot(slot_point sl) const
 {
+  if (not td_mapping.has_prach_occasion(sl)) {
+    return false;
+  }
   for (unsigned td = 0; td != nof_td_occasions; ++td) {
     if (not is_valid_occasion(sl, td)) {
       return false;

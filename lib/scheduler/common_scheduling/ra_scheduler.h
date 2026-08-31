@@ -10,6 +10,7 @@
 #include "../support/prbs_calculator.h"
 #include "ra_ue_repository.h"
 #include "ocudu/ocudulog/ocudulog.h"
+#include "ocudu/ran/prach/ssb_to_ro_mapping.h"
 #include "ocudu/ran/resource_allocation/rb_bitmap.h"
 #include "ocudu/scheduler/config/scheduler_expert_config.h"
 #include "ocudu/scheduler/scheduler_feedback_handler.h"
@@ -280,6 +281,8 @@ private:
   const uint8_t backoff_indicator_value;
   /// Bitmap of CRBs that might be used for PUCCH transmissions, to avoid scheduling MSG3-PUSCH over them.
   crb_bitmap pucch_crbs;
+  /// Association between SS/PBCH block indexes and PRACH occasions.
+  const prach_helper::ssb_to_ro_mapping ssb_ro_map;
 
   /// Pre-cached information related to RAR for a given PDSCH time resource.
   struct rar_param_cached_data {
