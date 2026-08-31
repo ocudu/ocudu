@@ -29,7 +29,7 @@ class inter_cu_conditional_handover_source_completion_routine
 {
 public:
   inter_cu_conditional_handover_source_completion_routine(cu_cp_ue_index_t                  source_ue_index_,
-                                                          peer_xnap_ue_id_t                 winner_peer_xnap_ue_id_,
+                                                          const nr_cell_global_id_t&        winner_cgi_,
                                                           ue_manager&                       ue_mng_,
                                                           cu_up_processor_repository&       cu_up_db_,
                                                           xnap_interface*                   winner_xnap_,
@@ -46,7 +46,7 @@ private:
   bool fill_status_transfer();
 
   const cu_cp_ue_index_t            source_ue_index;
-  const peer_xnap_ue_id_t           winner_peer_xnap_ue_id;
+  const nr_cell_global_id_t         winner_cgi;
   ue_manager&                       ue_mng;
   cu_up_processor_repository&       cu_up_db;
   xnap_interface*                   winner_xnap = nullptr;

@@ -973,8 +973,8 @@ public:
     logger.info("ue={}: Received a handover cancel message", ue_index);
   }
 
-  void handle_xnap_handover_success_received(cu_cp_ue_index_t  source_ue_index,
-                                             peer_xnap_ue_id_t winner_peer_xnap_ue_id) override
+  void handle_xnap_handover_success_received(cu_cp_ue_index_t           source_ue_index,
+                                             const nr_cell_global_id_t& winner_cgi) override
   {
     logger.info("ue={}: Received a HandoverSuccess message", source_ue_index);
   }

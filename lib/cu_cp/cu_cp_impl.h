@@ -152,8 +152,8 @@ public:
   async_task<cu_cp_handover_resource_allocation_response>
                                       handle_xnap_handover_request(const xnap_handover_request& request) override;
   void                                handle_handover_cancel_received(cu_cp_ue_index_t ue_index) override;
-  void                                handle_xnap_handover_success_received(cu_cp_ue_index_t  source_ue_index,
-                                                                            peer_xnap_ue_id_t winner_peer_xnap_ue_id) override;
+  void                                handle_xnap_handover_success_received(cu_cp_ue_index_t           source_ue_index,
+                                                                            const nr_cell_global_id_t& winner_cgi) override;
   void                                handle_xnap_ue_context_release_received(cu_cp_ue_index_t ue_index) override;
   std::vector<cu_cp_served_cell_info> handle_served_cells_required() override;
   cu_cp_ue_index_t handle_xnap_ue_context_id_lookup(const xnap_ue_context_id& ue_context_id) override;

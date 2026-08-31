@@ -47,13 +47,15 @@ bool handle_bearer_context_modification_response(
 /// \param[in] ue_mng                 UE manager for intra-CU candidate lookups.
 /// \param[in] xnap_db                Xn repository for inter-CU cancel; pass nullptr to skip Xn cancellation.
 /// \param[in] winner_ue_index        UE index of the intra-CU winner to exclude. Pass invalid to not skip by index.
-/// \param[in] winner_peer_xnap_ue_id Peer XNAP UE ID of the inter-CU winner to exclude. Pass invalid to not skip by ID.
+/// \param[in] winner_cgi             Target cell of the inter-CU winner to exclude. Pass nullopt to not skip by cell.
+/// Identified by cell rather than by peer XNAP UE ID, which is only unique per Xn interface: two candidates at
+/// different peers commonly hold the same ID, and skipping by ID would then skip both.
 /// \return Number of candidates cancelled.
-unsigned cancel_cho_candidates(cu_cp_ue&         source_ue,
-                               ue_manager&       ue_mng,
-                               xnap_repository*  xnap_db                = nullptr,
-                               cu_cp_ue_index_t  winner_ue_index        = cu_cp_ue_index_t::invalid,
-                               peer_xnap_ue_id_t winner_peer_xnap_ue_id = peer_xnap_ue_id_t::invalid);
+unsigned cancel_cho_candidates(cu_cp_ue&                          source_ue,
+                               ue_manager&                        ue_mng,
+                               xnap_repository*                   xnap_db         = nullptr,
+                               cu_cp_ue_index_t                   winner_ue_index = cu_cp_ue_index_t::invalid,
+                               std::optional<nr_cell_global_id_t> winner_cgi      = std::nullopt);
 
 } // namespace ocucp
 } // namespace ocudu

@@ -188,7 +188,7 @@ public:
     logger.info("Requested XN handover execution for UE index {}", ue_index);
   }
 
-  void on_handover_success_received(cu_cp_ue_index_t source_ue_index, peer_xnap_ue_id_t winner_peer_xnap_ue_id) override
+  void on_handover_success_received(cu_cp_ue_index_t source_ue_index, const nr_cell_global_id_t& winner_cgi) override
   {
     logger.info("HandoverSuccess received for source UE index {}", source_ue_index);
   }

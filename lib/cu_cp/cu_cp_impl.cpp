@@ -1360,8 +1360,8 @@ void cu_cp_impl::handle_handover_cancel_received(cu_cp_ue_index_t ue_index)
   }
 }
 
-void cu_cp_impl::handle_xnap_handover_success_received(cu_cp_ue_index_t  source_ue_index,
-                                                       peer_xnap_ue_id_t winner_peer_xnap_ue_id)
+void cu_cp_impl::handle_xnap_handover_success_received(cu_cp_ue_index_t           source_ue_index,
+                                                       const nr_cell_global_id_t& winner_cgi)
 {
   cu_cp_ue* ue = ue_mng.find_du_ue(source_ue_index);
   if (ue == nullptr || !ue->get_cho_context().has_value()) {
@@ -1369,27 +1369,39 @@ void cu_cp_impl::handle_xnap_handover_success_received(cu_cp_ue_index_t  source_
     return;
   }
 
-  // Stop the CHO execution timer; the UE has already executed CHO.
-  ue->get_cho_context()->cho_execution_timer.stop();
-
-  // Find the winning candidate to get the xnc_index for SN Status Transfer.
+  // Find the winning candidate to get the xnc_index for SN Status Transfer. Match on the target cell: XNAP UE IDs
+  // are only unique per Xn interface, so candidates at different peers routinely share one.
   xnap_interface* winner_xnap = nullptr;
   for (const auto& candidate : ue->get_cho_context()->candidates) {
-    if (candidate.peer_xnap_ue_id == winner_peer_xnap_ue_id && candidate.xnc_index.has_value()) {
+    if (candidate.target_cgi == winner_cgi && candidate.xnc_index.has_value()) {
       winner_xnap = xnap_db.find_xnap(*candidate.xnc_index);
+      if (winner_xnap != nullptr) {
+        // Remember the peer the UE handed over to, so that releasing the source UE also releases its XNAP UE context.
+        // Only one peer is remembered, so release the context at any peer this UE was previously associated with -
+        // otherwise it survives until the process ends.
+        const xnc_peer_index_t previous_xnc_index = ue->get_xnc_peer_index();
+        if (previous_xnc_index != xnc_peer_index_t::invalid and previous_xnc_index != *candidate.xnc_index) {
+          if (xnap_interface* previous_xnap = xnap_db.find_xnap(previous_xnc_index); previous_xnap != nullptr) {
+            previous_xnap->handle_ue_context_release_required(source_ue_index);
+          }
+        }
+        ue->set_xnc_peer_index(*candidate.xnc_index);
+      }
       break;
     }
   }
 
   if (winner_xnap == nullptr) {
-    logger.warning("ue={}: HandoverSuccess: could not find XNAP interface for winner peer_xnap_ue_id={}",
-                   source_ue_index,
-                   winner_peer_xnap_ue_id);
+    logger.warning("ue={}: HandoverSuccess: could not find XNAP interface for winner {}", source_ue_index, winner_cgi);
     return;
   }
 
+  // Only now: the UE has executed CHO and the completion routine takes over. Stopping earlier would disarm the
+  // guard timer on the paths above that bail out, leaving the CHO neither completed nor cancelled.
+  ue->get_cho_context()->cho_execution_timer.stop();
+
   ue->get_task_sched().schedule_async_task(launch_async<inter_cu_conditional_handover_source_completion_routine>(
-      source_ue_index, winner_peer_xnap_ue_id, ue_mng, cu_up_db, winner_xnap, &xnap_db, *this, logger));
+      source_ue_index, winner_cgi, ue_mng, cu_up_db, winner_xnap, &xnap_db, *this, logger));
 }
 
 std::vector<cu_cp_served_cell_info> cu_cp_impl::handle_served_cells_required()

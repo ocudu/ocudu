@@ -159,11 +159,11 @@ bool ocudu::ocucp::handle_bearer_context_modification_response(
   return bearer_context_modification_response.success;
 }
 
-unsigned ocudu::ocucp::cancel_cho_candidates(cu_cp_ue&         source_ue,
-                                             ue_manager&       ue_mng,
-                                             xnap_repository*  xnap_db,
-                                             cu_cp_ue_index_t  winner_ue_index,
-                                             peer_xnap_ue_id_t winner_peer_xnap_ue_id)
+unsigned ocudu::ocucp::cancel_cho_candidates(cu_cp_ue&                          source_ue,
+                                             ue_manager&                        ue_mng,
+                                             xnap_repository*                   xnap_db,
+                                             cu_cp_ue_index_t                   winner_ue_index,
+                                             std::optional<nr_cell_global_id_t> winner_cgi)
 {
   unsigned cancelled = 0;
   auto&    cho_ctx   = source_ue.get_cho_context();
@@ -171,10 +171,31 @@ unsigned ocudu::ocucp::cancel_cho_candidates(cu_cp_ue&         source_ue,
     return 0;
   }
   const cu_cp_ue_index_t source_ue_index = source_ue.get_ue_index();
-  const bool             has_xnap_winner = winner_peer_xnap_ue_id != peer_xnap_ue_id_t::invalid;
+
+  // TS 38.423 Section 8.2.8.2: a Handover Success implicitly cancels every other CHO preparation accepted for this UE
+  // on the same UE-associated signalling connection, and Sections 8.2.3.2 and 8.2.9.2 identify such a connection by
+  // the Source *and* Target NG-RAN node UE XnAP IDs. Candidates on the winner's connection are therefore skipped
+  // below, while every other one is cancelled explicitly - the winning node alone is not the criterion, since a peer
+  // that answers each candidate with a Target NG-RAN node UE XnAP ID of its own puts them on separate connections.
+  std::optional<xnc_peer_index_t> winner_xnc_index;
+  peer_xnap_ue_id_t               winner_peer_xnap_ue_id = peer_xnap_ue_id_t::invalid;
+  if (winner_cgi.has_value()) {
+    for (const auto& candidate : cho_ctx->candidates) {
+      if (candidate.target_cgi == *winner_cgi) {
+        winner_xnc_index       = candidate.xnc_index;
+        winner_peer_xnap_ue_id = candidate.peer_xnap_ue_id;
+        break;
+      }
+    }
+  }
+
   for (const auto& candidate : cho_ctx->candidates) {
     if (candidate.is_inter_cu()) {
-      if (has_xnap_winner && candidate.peer_xnap_ue_id == winner_peer_xnap_ue_id) {
+      if (winner_cgi.has_value() && candidate.target_cgi == *winner_cgi) {
+        continue;
+      }
+      if (winner_peer_xnap_ue_id != peer_xnap_ue_id_t::invalid && candidate.xnc_index == winner_xnc_index &&
+          candidate.peer_xnap_ue_id == winner_peer_xnap_ue_id) {
         continue;
       }
       if (xnap_db != nullptr && candidate.xnc_index.has_value()) {

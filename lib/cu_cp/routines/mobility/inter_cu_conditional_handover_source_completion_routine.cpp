@@ -12,7 +12,7 @@ using namespace ocucp;
 
 inter_cu_conditional_handover_source_completion_routine::inter_cu_conditional_handover_source_completion_routine(
     cu_cp_ue_index_t                  source_ue_index_,
-    peer_xnap_ue_id_t                 winner_peer_xnap_ue_id_,
+    const nr_cell_global_id_t&        winner_cgi_,
     ue_manager&                       ue_mng_,
     cu_up_processor_repository&       cu_up_db_,
     xnap_interface*                   winner_xnap_,
@@ -20,7 +20,7 @@ inter_cu_conditional_handover_source_completion_routine::inter_cu_conditional_ha
     cu_cp_ue_context_release_handler& release_handler_,
     ocudulog::basic_logger&           logger_) :
   source_ue_index(source_ue_index_),
-  winner_peer_xnap_ue_id(winner_peer_xnap_ue_id_),
+  winner_cgi(winner_cgi_),
   ue_mng(ue_mng_),
   cu_up_db(cu_up_db_),
   winner_xnap(winner_xnap_),
@@ -41,7 +41,7 @@ void inter_cu_conditional_handover_source_completion_routine::operator()(coro_co
       CORO_EARLY_RETURN();
     }
 
-    cancel_cho_candidates(*source_ue, ue_mng, xnap_db, cu_cp_ue_index_t::invalid, winner_peer_xnap_ue_id);
+    cancel_cho_candidates(*source_ue, ue_mng, xnap_db, cu_cp_ue_index_t::invalid, winner_cgi);
 
     // Clear CHO context now to prevent stale callbacks.
     source_ue->get_cho_context()->clear();

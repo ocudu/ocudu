@@ -523,13 +523,24 @@ void xnap_impl::handle_handover_success(const asn1::xnap::ho_success_s& msg)
     return;
   }
 
-  cu_cp_ue_index_t ue_index = ue_ctxt_list[local_xnap_ue_id].ue_ids.ue_index;
+  xnap_ue_context& ue_ctxt_ref = ue_ctxt_list[local_xnap_ue_id];
 
-  // Target NG-RAN node UE XnAP ID is the target's local XNAP UE ID, stored at the source as peer_xnap_ue_id.
-  peer_xnap_ue_id_t winner_peer_id = uint_to_peer_xnap_ue_id(msg->target_ng_ra_nnode_ue_xn_ap_id);
+  // TS 38.423 Section 8.2.8: the Requested Target Cell Global ID names the cell the UE accessed. It is what
+  // identifies the winning candidate, since XNAP UE IDs are only unique per Xn interface.
+  if (msg->requested_target_cell_global_id.type() != target_cgi_c::types_opts::nr) {
+    ue_ctxt_ref.logger.log_warning("Discarding HandoverSuccess: Requested Target Cell Global ID is not an NR cell");
+    return;
+  }
+  const nr_cell_global_id_t winner_cgi = asn1_to_cgi(msg->requested_target_cell_global_id.nr());
+
+  // The Target NG-RAN node UE XnAP ID is the winning target's own local ID, so adopt it: the SN Status Transfer that
+  // follows addresses the UE by it, and the other candidates' IDs are of no further use.
+  ue_ctxt_list.update_peer_xnap_ue_id(local_xnap_ue_id, uint_to_peer_xnap_ue_id(msg->target_ng_ra_nnode_ue_xn_ap_id));
+
+  ue_ctxt_ref.logger.log_debug("CHO winner is {}", winner_cgi);
 
   // Notify CU-CP: source must now send SN Status Transfer and release UE context.
-  cu_cp_notifier.on_handover_success_received(ue_index, winner_peer_id);
+  cu_cp_notifier.on_handover_success_received(ue_ctxt_ref.ue_ids.ue_index, winner_cgi);
 }
 
 void xnap_impl::handle_conditional_ho_cancel(const asn1::xnap::conditional_ho_cancel_s& msg)

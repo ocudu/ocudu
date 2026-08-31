@@ -148,9 +148,9 @@ public:
   /// Signals that the UE has arrived at the target CU-CP via CHO execution.
   /// The source CU-CP must send SN Status Transfer and release the source UE context.
   /// \param[in] source_ue_index The source UE index derived from the XNAP UE ID mapping.
-  /// \param[in] winner_peer_xnap_ue_id The target's XNAP UE ID (used to identify the winning candidate).
-  virtual void on_handover_success_received(cu_cp_ue_index_t  source_ue_index,
-                                            peer_xnap_ue_id_t winner_peer_xnap_ue_id) = 0;
+  /// \param[in] winner_cgi The cell the UE accessed, which identifies the winning candidate.
+  virtual void on_handover_success_received(cu_cp_ue_index_t           source_ue_index,
+                                            const nr_cell_global_id_t& winner_cgi) = 0;
 
   /// \brief Notify the CU-CP about the reception of a UE Context Release message.
   /// \param[in] ue_index The index of the UE.
