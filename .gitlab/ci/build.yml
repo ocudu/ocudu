@@ -282,6 +282,16 @@ variables:
     MARCH: x86-64-v3
     LINKER: mold
 
+.smoke old clang:
+  extends: .build_and_unit
+  variables:
+    OS: ubuntu-24.04
+    COMPILER: clang
+    CMAKE_BUILD_TYPE: Release
+    ASSERT_LEVEL: NONE
+    TEST_MODE: none
+    MARCH: x86-64-v3
+
 # Combinations to use in schedules matrix
 
 .combinations: &basic_combinations
@@ -305,6 +315,17 @@ variables:
 smoke relwithdeb cached:
   extends: .smoke relwithdeb
   rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
+      when: never
+    - if: $ON_MR
+  cache:
+    - *cache_build_get
+
+smoke old clang cached:
+  extends: .smoke old clang
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-old-clang/
+      when: never
     - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
       when: never
     - if: $ON_MR
@@ -371,6 +392,13 @@ smoke pretty printers cached:
 smoke relwithdeb clean:
   extends: .smoke relwithdeb
   rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
+
+smoke old clang clean:
+  extends: .smoke old clang
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-old-clang/
+      when: never
     - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
 
 smoke tsan clean:
