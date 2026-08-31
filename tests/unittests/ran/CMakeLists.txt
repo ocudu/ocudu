@@ -69,6 +69,10 @@ add_executable(ssb_to_ro_mapping_test prach/ssb_to_ro_mapping_test.cpp)
 target_link_libraries(ssb_to_ro_mapping_test ocudu_ran ocudulog GTest::gtest ocudu_gtest_main)
 add_test(ssb_to_ro_mapping_test ssb_to_ro_mapping_test)
 
+add_executable(prach_occasion_mapping_test prach/prach_occasion_mapping_test.cpp)
+target_link_libraries(prach_occasion_mapping_test ocudu_ran ocudulog GTest::gtest ocudu_gtest_main)
+add_test(prach_occasion_mapping_test prach_occasion_mapping_test)
+
 add_executable(pucch_info_test pucch/pucch_info_test.cpp)
 target_link_libraries(pucch_info_test ocudu_ran GTest::gtest ocudu_gtest_main)
 add_test(pucch_info_test pucch_info_test)

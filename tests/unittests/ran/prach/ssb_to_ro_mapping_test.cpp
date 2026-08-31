@@ -47,7 +47,7 @@ ssb_configuration make_ssb_cfg(uint64_t bitmap, uint8_t l_max, subcarrier_spacin
 ssb_to_ro_mapping make_fdd_mapping(const rach_config_common& rach_cfg, const ssb_configuration& ssb_cfg)
 {
   static const std::optional<tdd_ul_dl_config_common> no_tdd;
-  return ssb_to_ro_mapping{ssb_to_ro_mapping_config{
+  return ssb_to_ro_mapping{prach_occasion_mapping_config{
       nr_band::n1, subcarrier_spacing::kHz15, cyclic_prefix::NORMAL, rach_cfg, ssb_cfg, no_tdd}};
 }
 
@@ -56,6 +56,16 @@ std::optional<unsigned> ssb_of(const ssb_to_ro_mapping& mapping, unsigned sfn, u
 {
   const std::optional<ssb_id_t> ssb = mapping.get_ssb_index(slot_point{0, sfn, slot}, 0, 0, 0);
   return ssb.has_value() ? std::optional<unsigned>{ssb->value()} : std::nullopt;
+}
+
+/// Builds a mapping over a TDD cell with a 5msec DDDDDDDSUU pattern whose special slot holds 6 downlink and 4 uplink
+/// symbols.
+ssb_to_ro_mapping make_tdd_mapping(const rach_config_common& rach_cfg, const ssb_configuration& ssb_cfg)
+{
+  static const std::optional<tdd_ul_dl_config_common> tdd_cfg =
+      tdd_ul_dl_config_common{subcarrier_spacing::kHz15, tdd_ul_dl_pattern{10, 7, 6, 2, 4}, std::nullopt};
+  return ssb_to_ro_mapping{prach_occasion_mapping_config{
+      nr_band::n41, subcarrier_spacing::kHz15, cyclic_prefix::NORMAL, rach_cfg, ssb_cfg, tdd_cfg}};
 }
 
 TEST(ssb_to_ro_mapping_test, single_active_ssb_maps_every_occasion_to_it)
@@ -130,61 +140,6 @@ TEST(ssb_to_ro_mapping_test, association_period_grows_until_every_ssb_is_mapped)
   ASSERT_EQ(ssb_of(mapping, 2, 0), 0U);
 }
 
-TEST(ssb_to_ro_mapping_test, frequency_multiplexed_occasions_are_ordered_first)
-{
-  const rach_config_common rach_cfg = make_rach_cfg(ssb_per_rach_occasions::one, 4);
-  const ssb_configuration  ssb_cfg  = make_ssb_cfg(ssb_bitmap_4_of_8, 8);
-  const ssb_to_ro_mapping  mapping  = make_fdd_mapping(rach_cfg, ssb_cfg);
-
-  // The four frequency-multiplexed occasions of the first PRACH slot are consecutive in the occasion ordering.
-  const std::array<unsigned, 4> expected = {0, 3, 5, 6};
-  for (unsigned fd = 0; fd != expected.size(); ++fd) {
-    const std::optional<ssb_id_t> ssb = mapping.get_ssb_index(slot_point{0, 0, 0}, 0, fd, 0);
-    ASSERT_TRUE(ssb.has_value());
-    ASSERT_EQ(ssb->value(), expected[fd]) << "fd=" << fd;
-  }
-}
-
-/// Builds a mapping over a TDD cell with a 5msec DDDDDDDSUU pattern whose special slot holds 6 downlink and 4 uplink
-/// symbols.
-ssb_to_ro_mapping make_tdd_mapping(const rach_config_common& rach_cfg, const ssb_configuration& ssb_cfg)
-{
-  static const std::optional<tdd_ul_dl_config_common> tdd_cfg =
-      tdd_ul_dl_config_common{subcarrier_spacing::kHz15, tdd_ul_dl_pattern{10, 7, 6, 2, 4}, std::nullopt};
-  return ssb_to_ro_mapping{ssb_to_ro_mapping_config{
-      nr_band::n41, subcarrier_spacing::kHz15, cyclic_prefix::NORMAL, rach_cfg, ssb_cfg, tdd_cfg}};
-}
-
-TEST(ssb_to_ro_mapping_test, occasion_within_uplink_symbols_is_valid)
-{
-  const rach_config_common rach_cfg =
-      make_rach_cfg(ssb_per_rach_occasions::one, 1, prach_cfg_idx_six_occasions_in_subframe_9);
-  const ssb_configuration ssb_cfg = make_ssb_cfg(0b10000000, 8);
-  const ssb_to_ro_mapping mapping = make_tdd_mapping(rach_cfg, ssb_cfg);
-
-  // Fully uplink slots.
-  ASSERT_TRUE(mapping.is_valid_ro(slot_point{0, 0, 8}, ofdm_symbol_range{0, 14}));
-  ASSERT_TRUE(mapping.is_valid_ro(slot_point{0, 0, 9}, ofdm_symbol_range{4, 8}));
-  // Uplink symbols of the special slot.
-  ASSERT_TRUE(mapping.is_valid_ro(slot_point{0, 0, 7}, ofdm_symbol_range{10, 14}));
-}
-
-TEST(ssb_to_ro_mapping_test, occasion_in_a_special_slot_is_valid_only_after_the_gap)
-{
-  const rach_config_common rach_cfg =
-      make_rach_cfg(ssb_per_rach_occasions::one, 1, prach_cfg_idx_six_occasions_in_subframe_9);
-  const ssb_configuration ssb_cfg = make_ssb_cfg(0b10000000, 8);
-  const ssb_to_ro_mapping mapping = make_tdd_mapping(rach_cfg, ssb_cfg);
-
-  // The special slot holds 6 downlink symbols, so with N_gap of 2 an occasion is valid from symbol 8 onwards.
-  ASSERT_FALSE(mapping.is_valid_ro(slot_point{0, 0, 7}, ofdm_symbol_range{6, 10}));
-  ASSERT_FALSE(mapping.is_valid_ro(slot_point{0, 0, 7}, ofdm_symbol_range{7, 11}));
-  ASSERT_TRUE(mapping.is_valid_ro(slot_point{0, 0, 7}, ofdm_symbol_range{8, 12}));
-
-  // A fully downlink slot never holds a valid occasion.
-  ASSERT_FALSE(mapping.is_valid_ro(slot_point{0, 0, 0}, ofdm_symbol_range{8, 12}));
-}
-
 TEST(ssb_to_ro_mapping_test, time_multiplexed_occasions_are_ordered_within_the_prach_slot)
 {
   const rach_config_common rach_cfg =
@@ -206,32 +161,19 @@ TEST(ssb_to_ro_mapping_test, time_multiplexed_occasions_are_ordered_within_the_p
   ASSERT_FALSE(mapping.get_ssb_index(slot_point{0, 0, 8}, 0, 0, 0).has_value());
 }
 
-TEST(ssb_to_ro_mapping_test, ssb_symbols_are_rescaled_to_the_uplink_numerology)
+TEST(ssb_to_ro_mapping_test, frequency_multiplexed_occasions_are_ordered_first)
 {
-  // SS/PBCH block 0 of pattern case A spans the 15kHz symbols 2 to 5, i.e. the 30kHz symbols 4 to 11 of slot 0.
-  const rach_config_common rach_cfg =
-      make_rach_cfg(ssb_per_rach_occasions::one, 1, prach_cfg_idx_six_occasions_in_subframe_9);
-  const ssb_configuration ssb_cfg = make_ssb_cfg(0b10000000, 8, subcarrier_spacing::kHz15);
-
-  static const std::optional<tdd_ul_dl_config_common> tdd_cfg =
-      tdd_ul_dl_config_common{subcarrier_spacing::kHz30, tdd_ul_dl_pattern{20, 0, 0, 19, 0}, std::nullopt};
-  const ssb_to_ro_mapping mapping{ssb_to_ro_mapping_config{
-      nr_band::n41, subcarrier_spacing::kHz30, cyclic_prefix::NORMAL, rach_cfg, ssb_cfg, tdd_cfg}};
-
-  // Slot 0 holds no uplink symbol and its last SS/PBCH block symbol is 11, so with N_gap of 2 no occasion fits.
-  ASSERT_FALSE(mapping.is_valid_ro(slot_point{1, 0, 0}, ofdm_symbol_range{12, 14}));
-  // Slot 1 holds no SS/PBCH block and is fully uplink.
-  ASSERT_TRUE(mapping.is_valid_ro(slot_point{1, 0, 1}, ofdm_symbol_range{0, 14}));
-}
-
-TEST(ssb_to_ro_mapping_test, all_occasions_of_a_paired_spectrum_cell_are_valid)
-{
-  const rach_config_common rach_cfg = make_rach_cfg(ssb_per_rach_occasions::one);
+  const rach_config_common rach_cfg = make_rach_cfg(ssb_per_rach_occasions::one, 4);
   const ssb_configuration  ssb_cfg  = make_ssb_cfg(ssb_bitmap_4_of_8, 8);
   const ssb_to_ro_mapping  mapping  = make_fdd_mapping(rach_cfg, ssb_cfg);
 
-  ASSERT_TRUE(mapping.is_valid_ro(slot_point{0, 0, 0}, ofdm_symbol_range{0, 14}));
-  ASSERT_TRUE(mapping.is_valid_ro(slot_point{0, 3, 7}, ofdm_symbol_range{2, 6}));
+  // The four frequency-multiplexed occasions of the first PRACH slot are consecutive in the occasion ordering.
+  const std::array<unsigned, 4> expected = {0, 3, 5, 6};
+  for (unsigned fd = 0; fd != expected.size(); ++fd) {
+    const std::optional<ssb_id_t> ssb = mapping.get_ssb_index(slot_point{0, 0, 0}, 0, fd, 0);
+    ASSERT_TRUE(ssb.has_value());
+    ASSERT_EQ(ssb->value(), expected[fd]) << "fd=" << fd;
+  }
 }
 
 } // namespace

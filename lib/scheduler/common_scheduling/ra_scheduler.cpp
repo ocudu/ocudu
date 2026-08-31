@@ -36,12 +36,12 @@ using namespace ocudu;
 static prach_helper::ssb_to_ro_mapping make_ssb_to_ro_mapping(const cell_configuration& cell_cfg)
 {
   const auto& ul_bwp = cell_cfg.params.ul_cfg_common.init_ul_bwp;
-  return prach_helper::ssb_to_ro_mapping{prach_helper::ssb_to_ro_mapping_config{cell_cfg.params.dl_carrier.band,
-                                                                                ul_bwp.generic_params.scs,
-                                                                                ul_bwp.generic_params.cp,
-                                                                                *ul_bwp.rach_cfg_common,
-                                                                                cell_cfg.params.ssb_cfg,
-                                                                                cell_cfg.params.tdd_cfg}};
+  return prach_helper::ssb_to_ro_mapping{prach_helper::prach_occasion_mapping_config{cell_cfg.params.dl_carrier.band,
+                                                                                     ul_bwp.generic_params.scs,
+                                                                                     ul_bwp.generic_params.cp,
+                                                                                     *ul_bwp.rach_cfg_common,
+                                                                                     cell_cfg.params.ssb_cfg,
+                                                                                     cell_cfg.params.tdd_cfg}};
 }
 
 /// Convert CRBs to VRBs.
@@ -186,7 +186,7 @@ ra_scheduler::ra_scheduler(const cell_configuration& cellcfg_,
                                 cell_cfg.params.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common,
                                 cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated)),
   ssb_ro_map(make_ssb_to_ro_mapping(cell_cfg)),
-  cached_init_bwp_info(std::make_unique<cached_bwp_info>(cell_cfg, ssb_ro_map.td_slot_mapping()))
+  cached_init_bwp_info(std::make_unique<cached_bwp_info>(cell_cfg, ssb_ro_map.occasions().td_slot_mapping()))
 {
   pending_msgas.reserve(MAX_PENDING_MSGA_OCCASIONS);
 

@@ -31,6 +31,7 @@ add_library(ocudu_ran
         prach/prach_preamble_information.cpp
         prach/prach_helper.cpp
         prach/prach_time_mapping.cpp
+        prach/prach_occasion_mapping.cpp
         prach/ssb_to_ro_mapping.cpp
         precoding/precoding_codebook_configuration.cpp
         precoding/precoding_codebooks.cpp

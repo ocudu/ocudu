@@ -13,20 +13,21 @@
 
 using namespace ocudu;
 
-/// Builds the association between SS/PBCH block indexes and PRACH occasions of the cell.
-static prach_helper::ssb_to_ro_mapping make_ssb_to_ro_mapping(const cell_configuration& cell_cfg)
+/// Builds the position and validity of the PRACH occasions of the cell.
+static prach_helper::prach_occasion_mapping make_prach_occasion_mapping(const cell_configuration& cell_cfg)
 {
   const auto& ul_bwp = cell_cfg.params.ul_cfg_common.init_ul_bwp;
-  return prach_helper::ssb_to_ro_mapping{prach_helper::ssb_to_ro_mapping_config{cell_cfg.params.dl_carrier.band,
-                                                                                ul_bwp.generic_params.scs,
-                                                                                ul_bwp.generic_params.cp,
-                                                                                *ul_bwp.rach_cfg_common,
-                                                                                cell_cfg.params.ssb_cfg,
-                                                                                cell_cfg.params.tdd_cfg}};
+  return prach_helper::prach_occasion_mapping{
+      prach_helper::prach_occasion_mapping_config{cell_cfg.params.dl_carrier.band,
+                                                  ul_bwp.generic_params.scs,
+                                                  ul_bwp.generic_params.cp,
+                                                  *ul_bwp.rach_cfg_common,
+                                                  cell_cfg.params.ssb_cfg,
+                                                  cell_cfg.params.tdd_cfg}};
 }
 
 prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
-  cell_cfg(cfg_), logger(ocudulog::fetch_basic_logger("SCHED")), ssb_ro_map(make_ssb_to_ro_mapping(cell_cfg))
+  cell_cfg(cfg_), logger(ocudulog::fetch_basic_logger("SCHED")), occasions(make_prach_occasion_mapping(cell_cfg))
 {
   // Obtain the PRACH configuration.
   prach_configuration prach_cfg =
@@ -143,7 +144,7 @@ void prach_scheduler::allocate_slot_prach_pdus(cell_resource_allocator& res_grid
 {
   // Skip the slots that do not start a usable burst of PRACH occasions, as per TS 38.213, Section 8.1. For a long
   // preamble, this covers every slot the burst spans.
-  if (not ssb_ro_map.is_valid_prach_slot(sl)) {
+  if (not occasions.is_valid_prach_slot(sl)) {
     return;
   }
 
