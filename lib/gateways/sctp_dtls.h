@@ -3,7 +3,8 @@
 
 #pragma once
 
-#include "sctp_dtls_mode.h"
+#include "ocudu/gateways/dtls_context_config.h"
+#include "ocudu/gateways/sctp_dtls_mode.h"
 #include "ocudu/ocudulog/logger.h"
 #include <memory>
 #include <string>
@@ -16,13 +17,6 @@
 #endif
 
 namespace ocudu {
-
-struct dtls_context_config {
-  dtls_mode   mode;
-  std::string session_id;
-  std::string cert_filename;
-  std::string key_filename;
-};
 
 /// DTLS context interface used to abstract away OpenSSL specific details if
 /// no openSSL with SCTP DTLS is present.

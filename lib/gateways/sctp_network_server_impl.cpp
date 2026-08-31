@@ -25,7 +25,7 @@ public:
     assoc_id(assoc_.assoc_id),
     assoc(assoc_),
     client_addr(assoc.addr),
-    ssl_enabled(parent.dtls_cfg.has_value()),
+    ssl_enabled(parent.node_cfg.dtls_cfg.has_value()),
     assoc_shutdown_flag(assoc.association_shutdown_received),
     logger(logger_)
   {
@@ -154,7 +154,7 @@ sctp_network_server_impl::sctp_associaton_context::sctp_associaton_context(int  
 
 void sctp_network_server_impl::sctp_associaton_context::receive()
 {
-  if (parent.dtls_cfg.has_value()) {
+  if (parent.node_cfg.dtls_cfg.has_value()) {
     receive_dtls();
   } else {
     receive_plain();
@@ -204,7 +204,7 @@ void sctp_network_server_impl::sctp_associaton_context::receive_plain()
 
 void sctp_network_server_impl::sctp_associaton_context::receive_dtls()
 {
-  ocudu_assert(parent.dtls_cfg.has_value(), "Receive DTLS called, but no DTLS config provided");
+  ocudu_assert(parent.node_cfg.dtls_cfg.has_value(), "Receive DTLS called, but no DTLS config provided");
 
   if (ssl == nullptr) {
     return;
@@ -273,8 +273,8 @@ bool sctp_network_server_impl::create_and_bind()
   if (not this->create_and_bind_common()) {
     return false;
   }
-  if (OCUDU_DTLS_SCTP_SUPPORT and dtls_cfg.has_value()) {
-    dtls_ctxt = create_dtls_context(*dtls_cfg);
+  if (OCUDU_DTLS_SCTP_SUPPORT and node_cfg.dtls_cfg.has_value()) {
+    dtls_ctxt = create_dtls_context(*node_cfg.dtls_cfg);
     if (not dtls_ctxt->init(socket.fd().value())) {
       report_error("Could not initialize DTLS context in SCTP gateway. if={}", node_cfg.if_name);
     }
@@ -561,8 +561,8 @@ void sctp_network_server_impl::handle_sctp_comm_up(const struct sctp_assoc_chang
     return;
   }
 
-  if (dtls_cfg.has_value()) {
-    assoc_ctxt.ssl = create_dtls_ssl(dtls_ssl_config{dtls_cfg->mode}, {*dtls_ctxt});
+  if (node_cfg.dtls_cfg.has_value()) {
+    assoc_ctxt.ssl = create_dtls_ssl(dtls_ssl_config{node_cfg.dtls_cfg->mode}, {*dtls_ctxt});
     if (not assoc_ctxt.ssl->init(assoc_ctxt.fd)) {
       logger.error("{} assoc={}: Could not initialize DTLS context for new association", node_cfg.if_name, assoc_id);
       /// Remove association as if it was lost. Do it directly, as we are running in the app executor already.
@@ -588,7 +588,7 @@ void sctp_network_server_impl::handle_sctp_comm_up(const struct sctp_assoc_chang
 
     /// If DTLS is not configured, mark connection as complete. Otherwise, wait for the DTLS handshake before
     /// signaling the connection is set up to upper layers.
-    if (pending_it != pending_connects.end() && !dtls_cfg.has_value()) {
+    if (pending_it != pending_connects.end() && !node_cfg.dtls_cfg.has_value()) {
       pending_it->event.set(true);
     }
     /// Register peeled-off socket in IO broker.

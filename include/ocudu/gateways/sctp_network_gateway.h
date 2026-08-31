@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "ocudu/gateways/dtls_context_config.h"
 #include "ocudu/gateways/network_gateway.h"
 #include <chrono>
 #include <optional>
@@ -40,6 +41,8 @@ struct sctp_network_gateway_config : public common_network_gateway_config {
   std::optional<std::chrono::milliseconds> hb_interval;
   std::optional<int32_t>                   assoc_max_rxt;
   std::optional<bool>                      nodelay;
+
+  std::optional<dtls_context_config> dtls_cfg;
 };
 
 /// \brief Configuration for SCTP network client

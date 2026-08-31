@@ -131,8 +131,7 @@ private:
   std::list<pending_connect> pending_connects;
 
   /// DTLS Context
-  std::optional<dtls_context_config> dtls_cfg;
-  std::unique_ptr<dtls_context>      dtls_ctxt;
+  std::unique_ptr<dtls_context> dtls_ctxt;
 };
 
 } // namespace ocudu

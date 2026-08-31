@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "sctp_dtls_mode.h"
 #include "ocudu/adt/byte_buffer.h"
+#include "ocudu/gateways/sctp_dtls_mode.h"
 #include "ocudu/ocudulog/logger.h"
 #include <memory>
 
