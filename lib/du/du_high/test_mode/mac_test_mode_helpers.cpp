@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "mac_test_mode_helpers.h"
+#include "ocudu/ran/csi_report/csi_report_packed.h"
 #include "ocudu/scheduler/result/pucch_info.h"
 #include "ocudu/scheduler/result/pusch_info.h"
 
@@ -45,11 +46,11 @@ expected<mac_rx_data_indication> odu::create_test_pdu_with_rrc_setup_complete(du
       sl_rx, cell_index, mac_rx_pdu_list{mac_rx_pdu{test_rnti, harq_id, std::move(buf.value())}}};
 }
 
-static void fill_csi_bits(bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload,
-                          rnti_t                                                          rnti,
-                          unsigned                                                        nof_ports,
-                          unsigned                                                        nof_allowed_ri,
-                          const du_test_mode_config::test_mode_ue_config&                 test_ue_cfg)
+static void fill_csi_bits(csi_report_packed&                              payload,
+                          rnti_t                                          rnti,
+                          unsigned                                        nof_ports,
+                          unsigned                                        nof_allowed_ri,
+                          const du_test_mode_config::test_mode_ue_config& test_ue_cfg)
 {
   static constexpr size_t CQI_BITLEN = 4;
 
@@ -77,10 +78,10 @@ static void fill_csi_bits(bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PAR
   payload.push_back(test_ue_cfg.cqi, CQI_BITLEN);
 }
 
-static void fill_csi_bits(bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload,
-                          rnti_t                                                          rnti,
-                          const pucch_info&                                               pucch,
-                          const du_test_mode_config::test_mode_ue_config&                 test_ue_cfg)
+static void fill_csi_bits(csi_report_packed&                              payload,
+                          rnti_t                                          rnti,
+                          const pucch_info&                               pucch,
+                          const du_test_mode_config::test_mode_ue_config& test_ue_cfg)
 {
   unsigned nof_ports =
       pucch.csi_rep_cfg.has_value() ? get_precoding_codebook_antenna_ports(pucch.csi_rep_cfg->pmi_codebook) : 1;
@@ -88,10 +89,10 @@ static void fill_csi_bits(bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PAR
   fill_csi_bits(payload, rnti, nof_ports, nof_allowed_ri, test_ue_cfg);
 }
 
-static void fill_csi_bits(bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload,
-                          rnti_t                                                          rnti,
-                          const ul_sched_info&                                            pusch,
-                          const du_test_mode_config::test_mode_ue_config&                 test_ue_cfg)
+static void fill_csi_bits(csi_report_packed&                              payload,
+                          rnti_t                                          rnti,
+                          const ul_sched_info&                            pusch,
+                          const du_test_mode_config::test_mode_ue_config& test_ue_cfg)
 {
   if (not pusch.uci.has_value() or not pusch.uci.value().csi.has_value()) {
     return;

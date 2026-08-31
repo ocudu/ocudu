@@ -56,23 +56,11 @@ static auto convert_mac_harq_bits_to_sched_harq_values(bool harq_status,
   return harqs;
 }
 
-static csi_report_data decode_pucch_csi(const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload,
-                                        const csi_report_configuration& csi_rep_cfg)
-{
-  // Convert UCI CSI1 bits to "csi_report_packed".
-  csi_report_packed csi_bits(payload.size());
-  for (unsigned k = 0; k != csi_bits.size(); ++k) {
-    csi_bits.set(k, payload.test(k));
-  }
-
-  return csi_report_unpack_pucch(csi_bits, csi_rep_cfg);
-}
-
 static std::optional<csi_report_data> decode_csi_bits(const mac_uci_pdu::pucch_f2_or_f3_or_f4_type& pucch,
                                                       const csi_report_configuration&               csi_rep_cfg)
 {
   // TODO: Handle CSI part 2.
-  return decode_pucch_csi(pucch.csi_part1_info->payload, csi_rep_cfg);
+  return csi_report_unpack_pucch(pucch.csi_part1_info->payload, csi_rep_cfg);
 }
 
 /// Returns true if a CSI Part 2 report is expected on PUSCH for the given CSI report configuration.
@@ -86,7 +74,7 @@ decode_csi_bits(const mac_uci_pdu::pusch_type& pusch, const csi_report_configura
 {
   if (not is_aperiodic) {
     // TODO: Handle CSI part 2.
-    return decode_pucch_csi(pusch.csi_part1_info->payload, csi_rep_cfg);
+    return csi_report_unpack_pucch(pusch.csi_part1_info->payload, csi_rep_cfg);
   }
 
   // The PHY does not report a CSI Part 2 payload if the field is not multiplexed in the PUSCH or if its detection
@@ -98,17 +86,11 @@ decode_csi_bits(const mac_uci_pdu::pusch_type& pusch, const csi_report_configura
     return csi_report_data{.valid = false};
   }
 
-  // Convert UCI CSI1 and CSI2 bits to "csi_report_packed".
-  csi_report_packed csi1_bits(pusch.csi_part1_info->payload.size());
-  for (unsigned k = 0; k != csi1_bits.size(); ++k) {
-    csi1_bits.set(k, pusch.csi_part1_info->payload.test(k));
-  }
-  csi_report_packed csi2_bits(has_csi_part2 ? pusch.csi_part2_info->payload.size() : 0);
-  for (unsigned k = 0; k != csi2_bits.size(); ++k) {
-    csi2_bits.set(k, pusch.csi_part2_info->payload.test(k));
-  }
+  // CSI Part 2 is unpacked as an empty report if it is not present.
+  const csi_report_packed  no_csi_part2;
+  const csi_report_packed& csi2_bits = has_csi_part2 ? pusch.csi_part2_info->payload : no_csi_part2;
 
-  return csi_report_unpack_pusch(csi1_bits, csi2_bits, csi_rep_cfg);
+  return csi_report_unpack_pusch(pusch.csi_part1_info->payload, csi2_bits, csi_rep_cfg);
 }
 
 static bool grid_access_required(const mac_uci_indication_message& msg)

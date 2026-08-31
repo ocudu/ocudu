@@ -9,6 +9,8 @@
 #include "ocudu/fapi/p7/messages/srs_indication.h"
 #include "ocudu/fapi/p7/messages/uci_indication.h"
 #include "ocudu/ocudulog/ocudulog.h"
+#include "ocudu/ran/csi_report/csi_report_packed.h"
+#include "ocudu/ran/uci/uci_payload_type.h"
 
 using namespace ocudu;
 using namespace fapi_adaptor;
@@ -172,16 +174,20 @@ static void convert_fapi_to_mac_pusch_uci_ind(mac_uci_pdu::pusch_type& mac_pusch
 
   // Fill CSI Part 1.
   if (fapi_pusch.csi_part1.has_value()) {
+    const uci_payload_type& payload = fapi_pusch.csi_part1->payload;
+
     mac_uci_pdu::pusch_type::csi_information& csi = mac_pusch.csi_part1_info.emplace();
     csi.is_valid                                  = is_fapi_uci_payload_valid(fapi_pusch.csi_part1->detection_status);
-    csi.payload                                   = fapi_pusch.csi_part1->payload;
+    csi.payload                                   = payload.slice<csi_report_max_size.value()>(0, payload.size());
   }
 
   // Fill CSI Part 2.
   if (fapi_pusch.csi_part2.has_value()) {
+    const uci_payload_type& payload = fapi_pusch.csi_part2->payload;
+
     mac_uci_pdu::pusch_type::csi_information& csi = mac_pusch.csi_part2_info.emplace();
     csi.is_valid                                  = is_fapi_uci_payload_valid(fapi_pusch.csi_part2->detection_status);
-    csi.payload                                   = fapi_pusch.csi_part2->payload;
+    csi.payload                                   = payload.slice<csi_report_max_size.value()>(0, payload.size());
   }
 }
 
@@ -211,16 +217,20 @@ static void convert_fapi_to_mac_pucch_f2_f3_f4_uci_ind(mac_uci_pdu::pucch_f2_or_
 
   // Fill CSI Part 1.
   if (fapi_pucch.csi_part1.has_value()) {
+    const uci_payload_type& payload = fapi_pucch.csi_part1->payload;
+
     mac_uci_pdu::pucch_f2_or_f3_or_f4_type::csi_information& csi = mac_pucch.csi_part1_info.emplace();
     csi.is_valid = is_fapi_uci_payload_valid(fapi_pucch.csi_part1->detection_status);
-    csi.payload  = fapi_pucch.csi_part1->payload;
+    csi.payload  = payload.slice<csi_report_max_size.value()>(0, payload.size());
   }
 
   // Fill CSI Part 2.
   if (fapi_pucch.csi_part2.has_value()) {
+    const uci_payload_type& payload = fapi_pucch.csi_part2->payload;
+
     mac_uci_pdu::pucch_f2_or_f3_or_f4_type::csi_information& csi = mac_pucch.csi_part2_info.emplace();
     csi.is_valid = is_fapi_uci_payload_valid(fapi_pucch.csi_part2->detection_status);
-    csi.payload  = fapi_pucch.csi_part2->payload;
+    csi.payload  = payload.slice<csi_report_max_size.value()>(0, payload.size());
   }
 }
 
