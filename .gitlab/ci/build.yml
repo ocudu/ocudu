@@ -36,6 +36,7 @@ variables:
   variables:
     TEST_EXECUTION_TIMEOUT: 0
     CTEST_XUNIT_NAME: "ctest"
+    ENABLE_SPLIT_DWARF: "True"
   script:
     - &script_functions |
       build_ocudu_extended() {
