@@ -10,7 +10,7 @@
 
 using namespace ocudu;
 
-class sctp_network_server_peer_test : public ::testing::Test
+class sctp_network_server_peer_test : public ::testing::TestWithParam<bool>
 {
 protected:
   sctp_network_server_peer_test()
@@ -18,20 +18,30 @@ protected:
     ocudulog::fetch_basic_logger("SCTP-GW").set_level(ocudulog::basic_levels::debug);
     ocudulog::init();
 
+    bool test_dtls                  = GetParam();
     server_cfg1.sctp.if_name        = "SERVER1";
     server_cfg1.sctp.ppid           = XNAP_PPID;
     server_cfg1.sctp.bind_addresses = {"127.0.0.1"};
     server_cfg1.sctp.bind_port      = 0;
+    if (test_dtls) {
+      server_cfg1.sctp.dtls_cfg = {dtls_mode::server, "0", "/tmp/test.pem", "/tmp/test.pem"};
+    }
 
     server_cfg2.sctp.if_name        = "SERVER2";
     server_cfg2.sctp.ppid           = XNAP_PPID;
     server_cfg2.sctp.bind_addresses = {"127.0.0.2"};
     server_cfg2.sctp.bind_port      = 0;
+    if (test_dtls) {
+      server_cfg2.sctp.dtls_cfg = {dtls_mode::server, "0", "/tmp/test.pem", "/tmp/test.pem"};
+    }
 
     server_cfg3.sctp.if_name        = "SERVER3";
     server_cfg3.sctp.ppid           = XNAP_PPID;
     server_cfg3.sctp.bind_addresses = {"127.0.0.3"};
     server_cfg3.sctp.bind_port      = 0;
+    if (test_dtls) {
+      server_cfg3.sctp.dtls_cfg = {dtls_mode::server, "0", "/tmp/test.pem", "/tmp/test.pem"};
+    }
   }
 
   ~sctp_network_server_peer_test() override
@@ -306,3 +316,7 @@ TEST_F(sctp_network_server_peer_test, when_server_is_destroyed_then_associations
 
   server2->stop();
 }
+
+INSTANTIATE_TEST_SUITE_P(sctp_network_server_peer_test_with_and_without_dtls,
+                         sctp_network_server_peer_test,
+                         ::testing::Values(true, false));
