@@ -33,6 +33,10 @@ struct ue_capability_summary {
   ///
   /// It is given by field \e type2 of \e codebookParameters in Information Element \e MIMO-ParametersPerBand.
   struct type2_codebook_params {
+    // This user provided constructor is added here to fix a Clang compilation error related to the use of nested types
+    // with std::optional.
+    type2_codebook_params() {}
+
     /// Maximum number of beams supported for linear combination, given by field \e parameterLx. Values: {2, 3, 4}.
     uint8_t max_nof_beams = 2;
     /// Set to true if the UE supports subband amplitude scaling, given by field \e amplitudeScalingType.
