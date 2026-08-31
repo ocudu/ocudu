@@ -125,6 +125,8 @@ private:
   ra_scheduler       ra_sch;
   prach_scheduler    prach_sch;
   srs_allocator_impl srs_alloc;
+
+  /// Scheduler of the periodic SRS of the UEs of this cell.
   srs_scheduler_impl srs_sch;
 
   /// Scheduler of the periodic UCI of the UEs of this cell.

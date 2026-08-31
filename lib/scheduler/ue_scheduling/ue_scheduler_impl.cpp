@@ -124,11 +124,11 @@ void ue_scheduler_impl::run_slot_impl(slot_point sl_tx)
   }
   last_sl_ind = sl_tx;
 
+  // Update the state of every UE of the cell group. It also updates the state of the UEs of each of its cells.
+  ue_db.slot_indication(sl_tx);
+
   for (auto& group_cell : cells) {
     du_cell_index_t cell_index = group_cell.cell_res_alloc->cfg.cell_index;
-
-    // Update all UEs state.
-    ue_db.slot_indication(sl_tx);
 
     // Schedule configured grant PUSCH opportunities.
     if (group_cell.cg_sched != nullptr) {
