@@ -1712,48 +1712,78 @@ inline simd_i_t ocudu_simd_i_select(simd_i_t a, simd_i_t b, simd_sel_t selector)
 #endif /* __AVX512F__ */
 }
 
+#if OCUDU_SIMD_CI16_SIZE
+
+#ifdef __AVX512F__
+using simd_u64_t = __m512i;
+#elif defined(__AVX2__)
+using simd_u64_t = __m256i;
+#elif defined(__SSE4_1__)
+using simd_u64_t = __m128i;
+#elif defined(__ARM_NEON)
+using simd_u64_t = uint64x2_t;
+#endif
+
 #if defined(__AVX512F__) || defined(__AVX2__)
 
-/// \brief Accumulates all the 32-bit unsigned integer values within an AVX register into a 64-bit unsigned integer.
-///
-/// The input lanes are treated as unsigned 32-bit values. This is intended for accumulating squared integer magnitudes.
-inline uint64_t ocudu_simd_i_accumulate_avx2(__m256i v)
+/// \brief Horizontally sums four 64-bit unsigned integer lanes within an AVX2 register into a scalar.
+inline uint64_t ocudu_simd_u64_hsum_avx2(__m256i v)
 {
-  const __m256i lo     = _mm256_unpacklo_epi32(v, _mm256_setzero_si256());
-  const __m256i hi     = _mm256_unpackhi_epi32(v, _mm256_setzero_si256());
-  const __m256i sum64  = _mm256_add_epi64(lo, hi);
-  const __m128i sum128 = _mm_add_epi64(_mm256_castsi256_si128(sum64), _mm256_extracti128_si256(sum64, 1));
+  __m128i sum128 = _mm_add_epi64(_mm256_castsi256_si128(v), _mm256_extracti128_si256(v, 1));
   return static_cast<uint64_t>(_mm_cvtsi128_si64(sum128)) + static_cast<uint64_t>(_mm_extract_epi64(sum128, 1));
 }
 #endif /* __AVX512F__ || __AVX2__ */
 
-inline uint64_t ocudu_simd_i_accumulate(simd_i_t v)
+inline simd_u64_t ocudu_simd_u64_zero()
 {
 #ifdef __AVX512F__
-  const __m256i lo = _mm512_castsi512_si256(v);
-  const __m256i hi = _mm512_extracti64x4_epi64(v, 1);
-  return ocudu_simd_i_accumulate_avx2(lo) + ocudu_simd_i_accumulate_avx2(hi);
-#else /* __AVX512F__ */
-#ifdef __AVX2__
-  return ocudu_simd_i_accumulate_avx2(v);
-#else /* __AVX2__ */
-#ifdef __SSE4_1__
-  const __m128i lo    = _mm_unpacklo_epi32(v, _mm_setzero_si128());
-  const __m128i hi    = _mm_unpackhi_epi32(v, _mm_setzero_si128());
-  const __m128i sum64 = _mm_add_epi64(lo, hi);
-  return static_cast<uint64_t>(_mm_cvtsi128_si64(sum64)) + static_cast<uint64_t>(_mm_extract_epi64(sum64, 1));
-#else /* __SSE4_1__ */
-#ifdef __ARM_NEON
-  const uint32x4_t lanes = vreinterpretq_u32_s32(v);
-  const uint64x2_t lo64  = vmovl_u32(vget_low_u32(lanes));
-  const uint64x2_t hi64  = vmovl_u32(vget_high_u32(lanes));
-  const uint64x2_t sum   = vaddq_u64(lo64, hi64);
-  return vgetq_lane_u64(sum, 0) + vgetq_lane_u64(sum, 1);
-#endif /* __ARM_NEON */
-#endif /* __SSE4_1__ */
-#endif /* __AVX2__ */
-#endif /* __AVX512F__ */
+  return _mm512_setzero_si512();
+#elif defined(__AVX2__)
+  return _mm256_setzero_si256();
+#elif defined(__SSE4_1__)
+  return _mm_setzero_si128();
+#elif defined(__ARM_NEON)
+  return vdupq_n_u64(0);
+#endif
 }
+
+/// \brief Widens unsigned 32-bit lanes in \c v to 64-bit and adds them to \c accum.
+///
+/// This function is intended to be used together with \ref ocudu_simd_u64_accum_reduce for reducing the sum to a
+/// single value. Both \c unpacklo and \c unpackhi widened lane groups are summed element-wise before accumulation.
+inline simd_u64_t ocudu_simd_u64_accumulate_i(simd_u64_t accum, simd_i_t v)
+{
+#ifdef __AVX512F__
+  return _mm512_add_epi64(_mm512_unpackhi_epi32(v, _mm512_setzero_si512()),
+                          _mm512_add_epi64(accum, _mm512_unpacklo_epi32(v, _mm512_setzero_si512())));
+#elif defined(__AVX2__)
+  return _mm256_add_epi64(_mm256_unpackhi_epi32(v, _mm256_setzero_si256()),
+                          _mm256_add_epi64(accum, _mm256_unpacklo_epi32(v, _mm256_setzero_si256())));
+#elif defined(__SSE4_1__)
+  return _mm_add_epi64(_mm_unpackhi_epi32(v, _mm_setzero_si128()),
+                       _mm_add_epi64(accum, _mm_unpacklo_epi32(v, _mm_setzero_si128())));
+#elif defined(__ARM_NEON)
+  const uint32x4_t lanes = vreinterpretq_u32_s32(v);
+  return vaddq_u64(vmovl_u32(vget_high_u32(lanes)), vaddq_u64(accum, vmovl_u32(vget_low_u32(lanes))));
+#endif
+}
+
+/// \brief Reduces all unsigned 64-bit values into a scalar 64-bit unsigned integer sum.
+inline uint64_t ocudu_simd_u64_accum_reduce(simd_u64_t accum)
+{
+#ifdef __AVX512F__
+  return ocudu_simd_u64_hsum_avx2(_mm512_castsi512_si256(accum)) +
+         ocudu_simd_u64_hsum_avx2(_mm512_extracti64x4_epi64(accum, 1));
+#elif defined(__AVX2__)
+  return ocudu_simd_u64_hsum_avx2(accum);
+#elif defined(__SSE4_1__)
+  return static_cast<uint64_t>(_mm_cvtsi128_si64(accum)) + static_cast<uint64_t>(_mm_extract_epi64(accum, 1));
+#elif defined(__ARM_NEON)
+  return vgetq_lane_u64(accum, 0) + vgetq_lane_u64(accum, 1);
+#endif
+}
+
+#endif /* OCUDU_SIMD_CI16_SIZE */
 
 #endif /* OCUDU_SIMD_I_SIZE */
 
