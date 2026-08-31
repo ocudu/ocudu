@@ -5,7 +5,6 @@
 #include "ue_scheduler_impl.h"
 #include "../configured_grant/configured_grant_scheduler_impl.h"
 #include "../logging/cell_metrics_handler.h"
-#include "../srs/srs_scheduler.h"
 
 using namespace ocudu;
 
@@ -131,12 +130,6 @@ void ue_scheduler_impl::run_slot_impl(slot_point sl_tx)
     // Update all UEs state.
     ue_db.slot_indication(sl_tx);
 
-    // Schedule periodic UCI (SR and CSI) before any UL grants.
-    group_cell.uci_sched.run_slot(*group_cell.cell_res_alloc);
-
-    // Schedule periodic SRS before any UE grants.
-    group_cell.srs_sched.run_slot(*group_cell.cell_res_alloc);
-
     // Schedule configured grant PUSCH opportunities.
     if (group_cell.cg_sched != nullptr) {
       group_cell.cg_sched->run_slot(*group_cell.cell_res_alloc);
@@ -173,8 +166,6 @@ ue_scheduler_impl::cell_context::cell_context(ue_scheduler_impl&                
   parent(parent_),
   cell_res_alloc(params.cell_res_alloc),
   ue_cell_db(*params.ue_cell_db),
-  uci_sched(*params.uci_sched),
-  srs_sched(*params.srs_sched),
   fallback_sched(parent.expert_cfg,
                  params.cell_res_alloc->cfg,
                  *params.pdcch_sched,
