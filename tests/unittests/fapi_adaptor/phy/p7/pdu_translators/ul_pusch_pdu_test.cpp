@@ -85,6 +85,7 @@ TEST(fapi_phy_ul_pusch_adaptor_test, valid_pdu_pass)
   ASSERT_EQ(fapi_pdu.ldpc_base_graph, phy_pdu.codeword.value().ldpc_base_graph);
   ASSERT_EQ(fapi_pdu.pusch_data->tb_size.value(), pdu.tb_size.value());
   ASSERT_EQ(fapi_pdu.pusch_data->harq_process_id, pdu.pdu.harq_id);
+  ASSERT_TRUE(phy_pdu.codeword.value().last_repetition);
 
   // Rapid.
   ASSERT_EQ(fapi_pdu.rapid, phy_pdu.n_rapid);

@@ -8,9 +8,11 @@
 #include "ocudu/ocuduvec/add.h"
 #include "ocudu/ocuduvec/prod.h"
 #include "ocudu/ocuduvec/sc_prod.h"
+#include "ocudu/ocuduvec/zero.h"
 #include "ocudu/phy/support/resource_grid_reader.h"
 #include "ocudu/phy/support/resource_grid_writer.h"
 #include "ocudu/support/executors/task_executor.h"
+#include "ocudu/support/synchronization/sync_event.h"
 #include <algorithm>
 #include <cmath>
 #include <set>
@@ -165,7 +167,7 @@ void channel_emulator::run(resource_grid_writer& rx_grid, const resource_grid_re
   unsigned nof_taps     = taps_channel_response.get_dimension_size(1);
 
   // Channel emulator.
-  std::atomic<unsigned> count = {0}, completed = {0};
+  sync_event sync;
   for (unsigned i_rx_port = 0; i_rx_port != nof_rx_ports; ++i_rx_port) {
     // Generate frequency domain channel response for each transmit port.
     for (unsigned i_tx_port = 0; i_tx_port != nof_tx_ports; ++i_tx_port) {
@@ -209,21 +211,17 @@ void channel_emulator::run(resource_grid_writer& rx_grid, const resource_grid_re
 
     // Run channel for each symbol with the same frequency response.
     for (unsigned i_symbol = 0; i_symbol != nof_ofdm_symbols; ++i_symbol) {
-      bool success = executor.execute([this, &rx_grid, &tx_grid, i_rx_port, i_symbol, &completed]() {
+      bool success = executor.execute([this, &rx_grid, &tx_grid, i_rx_port, i_symbol, token = sync.get_token()]() {
         auto emulator = emulators.get();
         report_fatal_error_if_not(emulator, "Failed to retrieve channel emulator.");
         emulator->run(rx_grid, tx_grid, freq_domain_channel, cfo_coeffs[i_symbol], i_rx_port, i_symbol);
-        ++completed;
       });
       report_fatal_error_if_not(success, "Failed to enqueue concurrent channel emulate.");
-      ++count;
     }
   }
 
   // Wait for channel emulator to finish.
-  while (completed != count) {
-    std::this_thread::sleep_for(std::chrono::microseconds(10));
-  }
+  sync.wait();
 }
 
 void channel_emulator::concurrent_channel_emulator::run(resource_grid_writer&       rx_grid,

@@ -393,7 +393,8 @@ TEST(rx_buffer_pool, buffer_resize_false_retransmission)
   // Unlock the buffer.
   buffer.unlock();
 
-  // Reserve the same buffer with less codeblocks, the buffer shall be invalid.
+  // Reserve the same buffer with fewer codeblocks on retransmission. For TTI bundling the codeblock count must remain
+  // the same between repetitions, so this should fail.
   ASSERT_FALSE(pool->get_pool().reserve(slot, buffer_id0, nof_codeblocks - 1, false));
 }
 
@@ -466,6 +467,44 @@ TEST(rx_buffer_pool, fresh_false_retransmission)
   trx_buffer_identifier buffer_id0(to_rnti(0x1234), 0x3);
   unique_rx_buffer      buffer = pool->get_pool().reserve(slot, buffer_id0, nof_codeblocks, false);
   ASSERT_FALSE(buffer);
+}
+
+// Tests that the pool returns an invalid buffer upon an excess of repetitions.
+TEST(rx_buffer_pool, exceed_repetitions)
+{
+  static constexpr trx_buffer_identifier buffer_id(to_rnti(0x1234), 0);
+  static constexpr unsigned              max_nof_repetitions = 32;
+  static constexpr unsigned              nof_codeblocks      = 2;
+
+  rx_buffer_pool_config pool_config;
+  pool_config.max_codeblock_size   = 16;
+  pool_config.nof_buffers          = 1;
+  pool_config.nof_codeblocks       = nof_codeblocks + 1;
+  pool_config.expire_timeout_slots = 10;
+  pool_config.external_soft_bits   = false;
+
+  // Current slot.
+  static constexpr slot_point slot(0, 0);
+
+  // Create buffer pool.
+  std::unique_ptr<rx_buffer_pool_controller> pool = create_rx_buffer_pool(pool_config);
+  ASSERT_TRUE(pool);
+
+  // Allocate a buffer for each repetition.
+  for (unsigned i_rep = 0; i_rep != max_nof_repetitions; ++i_rep) {
+    // Mark as new data only the first repetition.
+    bool new_data = (i_rep == 0);
+
+    // Allocate buffer.
+    unique_rx_buffer buffer = pool->get_pool().reserve(slot, buffer_id, nof_codeblocks, new_data);
+    ASSERT_TRUE(buffer);
+
+    // The retransmission identifier must be equal to the repetition.
+    ASSERT_EQ(buffer.get_retransmission(), i_rep);
+  }
+
+  // Try to reserve one more buffer, it must fail.
+  ASSERT_FALSE(pool->get_pool().reserve(slot, buffer_id, nof_codeblocks, false));
 }
 
 // Tests buffer soft bits contents persists between retransmissions.
@@ -802,6 +841,54 @@ TEST(rx_buffer_pool, decode_cb_in_sequence_concurrent)
 
   // Make sure the decode sequence matches the expected.
   ASSERT_EQ(decode_sequence, expected_sequence);
+}
+
+// Tests decode_cb_in_sequence() with chained callbacks.
+TEST(rx_buffer_pool, sequenced_decode_chained_callbacks)
+{
+  // Emulates pusch_decoder_impl: the codeblock task runs inline when the executor is bypassed, and ends in
+  // join_and_notify(), which unlocks the receive buffer.
+  class decoder_callback : public rx_buffer_decoder_callback
+  {
+  public:
+    explicit decoder_callback(unique_rx_buffer buffer_) : buffer(std::move(buffer_)) {}
+
+    void codeblock_decode(unsigned) override
+    {
+      unique_rx_buffer local_buffer = std::move(buffer);
+      local_buffer.unlock();
+    }
+
+    unique_rx_buffer buffer;
+  };
+
+  rx_buffer_pool_config pool_config;
+  pool_config.max_codeblock_size   = 16;
+  pool_config.nof_buffers          = 1;
+  pool_config.nof_codeblocks       = 1;
+  pool_config.expire_timeout_slots = 10;
+  pool_config.external_soft_bits   = false;
+
+  std::unique_ptr<rx_buffer_pool_controller> pool = create_rx_buffer_pool(pool_config);
+
+  // Two overlapping occasions of the same HARQ process, as in a TTI bundle. Only the first carries new data.
+  const slot_point            slot(0, 0);
+  const trx_buffer_identifier buffer_id(to_rnti(0x4601), 0);
+
+  // Create decoders for the maximum number of repetitions.
+  std::vector<decoder_callback> decoders;
+  decoders.reserve(32);
+  for (unsigned i = 0; i != 32; ++i) {
+    decoders.push_back(decoder_callback(pool->get_pool().reserve(slot, buffer_id, 1, i == 0)));
+  }
+
+  // Remove one.
+  decoders.erase(decoders.begin() + 3);
+
+  // Decode in sequence backwards.
+  for (auto it = decoders.rbegin(); it != decoders.rend(); ++it) {
+    it->buffer.decode_cb_in_sequence(0, *it);
+  }
 }
 
 // Test that covers the external_soft_bits=true constructor path.

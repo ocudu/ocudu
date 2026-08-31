@@ -44,6 +44,8 @@ public:
     /// Unlike the NDI field in DCI, it does not toggle to indicate new transmission. It is true for the first
     /// transmission of the HARQ process. Otherwise, it is false.
     bool new_data;
+    /// Flag to denote last repetition (last HARQ transmission in a burst).
+    bool last_repetition;
   };
 
   /// Collects Uplink Control Information parameters.

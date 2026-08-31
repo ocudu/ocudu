@@ -36,11 +36,13 @@ public:
                                        unsigned                    codeblock_id,
                                        rx_buffer_decoder_callback& decoder_callback) = 0;
 
-    /// Unlocks the buffer.
-    virtual void unlock() = 0;
+    /// \brief Unlocks the buffer.
+    /// \param[in] retransmission Retransmission identifier.
+    virtual void unlock(unsigned retransmission) = 0;
 
-    /// Releases (after unlocking) the buffer resources.
-    virtual void release() = 0;
+    /// \brief Releases (after unlocking) the buffer resources.
+    /// \param[in] retransmission Retransmission identifier.
+    virtual void release(unsigned retransmission) = 0;
   };
 
   /// Builds an invalid buffer.
@@ -58,13 +60,13 @@ public:
   ~unique_rx_buffer()
   {
     if (ptr != nullptr) {
-      ptr->unlock();
+      ptr->unlock(retransmission);
       ptr = nullptr;
     }
   }
 
   /// Copy constructor is deleted to prevent the unique buffer from being shared across multiple scopes.
-  unique_rx_buffer(unique_rx_buffer& /**/) = delete;
+  unique_rx_buffer(const unique_rx_buffer& /**/) = delete;
 
   /// Move constructor is the only way to move the buffer to a different scope.
   unique_rx_buffer(unique_rx_buffer&& other) noexcept
@@ -79,7 +81,7 @@ public:
   {
     // Unlock current soft buffer if it is actually not unlocked.
     if (ptr != nullptr) {
-      ptr->unlock();
+      ptr->unlock(retransmission);
     }
 
     // Move the other soft buffer ownership to the current soft buffer.
@@ -89,6 +91,8 @@ public:
 
     return *this;
   }
+
+  unique_rx_buffer& operator=(const unique_rx_buffer& other) = delete;
 
   /// Gets the buffer.
   rx_buffer& get()
@@ -119,7 +123,7 @@ public:
   void release()
   {
     ocudu_assert(ptr != nullptr, "Invalid buffer for releasing.");
-    ptr->release();
+    ptr->release(retransmission);
     ptr = nullptr;
   }
 
@@ -127,7 +131,7 @@ public:
   void unlock()
   {
     ocudu_assert(ptr != nullptr, "Invalid buffer for unlocking.");
-    ptr->unlock();
+    ptr->unlock(retransmission);
     ptr = nullptr;
   }
 
@@ -146,6 +150,8 @@ public:
   {
     ptr->decode_cb_in_sequence(retransmission, codeblock_id, decoder_callback);
   }
+
+  unsigned get_retransmission() const { return retransmission; }
 
 private:
   /// Underlying pointer to the buffer. Set to nullptr for an invalid buffer.

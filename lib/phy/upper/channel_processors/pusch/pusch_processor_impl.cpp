@@ -15,7 +15,6 @@
 #include "ocudu/phy/upper/unique_rx_buffer.h"
 #include "ocudu/ran/pusch/ulsch_info.h"
 #include "ocudu/ran/sch/sch_dmrs_power.h"
-#include "ocudu/ran/uci/uci_formatters.h"
 #include "ocudu/ran/uci/uci_part2_size_calculator.h"
 
 using namespace ocudu;
@@ -294,6 +293,7 @@ void pusch_processor_impl::process_data(span<uint8_t>                          d
     decoder_config.nof_ldpc_iterations = dec_nof_iterations;
     decoder_config.use_early_stop      = dec_enable_early_stop;
     decoder_config.new_data            = pdu.codeword->new_data;
+    decoder_config.last_repetition     = pdu.codeword->last_repetition;
 
     // Setup decoder.
     decoder_buffer =

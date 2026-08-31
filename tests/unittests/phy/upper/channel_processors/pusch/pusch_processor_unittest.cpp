@@ -162,6 +162,7 @@ protected:
       pdu.codeword.value().rv              = rv_dist(rgen);
       pdu.codeword.value().ldpc_base_graph = static_cast<ldpc_base_graph_type>(ldpc_base_graph_dist(rgen));
       pdu.codeword.value().new_data        = bool_dist(rgen) == 0;
+      pdu.codeword.value().last_repetition = bool_dist(rgen) == 0;
     }
 
     // Fill UCI configuration.
@@ -451,6 +452,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
     ASSERT_EQ(10, decoder_entry.config.nof_ldpc_iterations);
     ASSERT_EQ(true, decoder_entry.config.use_early_stop);
     ASSERT_EQ(pdu.codeword.value().new_data, decoder_entry.config.new_data);
+    ASSERT_EQ(pdu.codeword.value().last_repetition, decoder_entry.config.last_repetition);
 
     ASSERT_EQ(sch_entries.size(), 1);
     const auto& sch_entry = sch_entries.back();

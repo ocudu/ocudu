@@ -20,6 +20,7 @@ static void fill_codeword(uplink_pdu_slot_repository::pusch_pdu& pdu, const fapi
   cw.rv              = fapi_pdu.pusch_data->rv_index;
   cw.ldpc_base_graph = fapi_pdu.ldpc_base_graph;
   cw.new_data        = fapi_pdu.pusch_data->new_data;
+  cw.last_repetition = !fapi_pdu.repetitions.has_value() || (fapi_pdu.repetitions->tb_over_ms_remaining_slots == 0);
 
   pdu.tb_size = fapi_pdu.pusch_data->tb_size;
 

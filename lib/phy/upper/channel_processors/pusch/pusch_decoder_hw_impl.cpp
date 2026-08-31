@@ -110,6 +110,11 @@ void pusch_decoder_hw_impl::on_new_softbits(span<const log_likelihood_ratio> sof
 
 void pusch_decoder_hw_impl::on_end_softbits()
 {
+  softbuffer.decode_cb_in_sequence(0, *this);
+}
+
+void pusch_decoder_hw_impl::codeblock_decode(unsigned)
+{
   // Create the asynchronous function.
   auto asynch_func = [this]() { run_asynch_hw_decoder(); };
 
@@ -411,20 +416,23 @@ void pusch_decoder_hw_impl::copy_tb_and_notify(hw_decoder_pool::ptr decoder, spa
     }
   }
 
-  // Release soft buffer if the CRC is OK, otherwise unlock.
-  if (stats.tb_crc_ok) {
-    softbuffer.release();
-  } else {
-    softbuffer.unlock();
-  }
+  // Transfer receive buffer ownership and notifier to the stack.
+  bool                    last_repetition    = current_config.last_repetition;
+  unique_rx_buffer        current_softbuffer = std::move(softbuffer);
+  pusch_decoder_notifier* notifier           = std::exchange(result_notifier, nullptr);
 
-  // Free the hardware-queue utilized by completed decoding operation.
+  // Release the hardware queue before notifying.
   decoder->free_queue();
 
-  // In case there are multiple codeblocks and at least one has a corrupted codeblock CRC, nothing to do.
-
   // Finally report decoding result.
-  result_notifier->on_sch_data(stats);
+  notifier->on_sch_data(stats);
+
+  // Release soft buffer if the CRC is OK and it is the last repetition, otherwise unlock.
+  if (stats.tb_crc_ok && last_repetition) {
+    current_softbuffer.release();
+  } else {
+    current_softbuffer.unlock();
+  }
 }
 
 void pusch_decoder_hw_impl::set_hw_dec_configuration(hal::hw_accelerator_pusch_dec& decoder,

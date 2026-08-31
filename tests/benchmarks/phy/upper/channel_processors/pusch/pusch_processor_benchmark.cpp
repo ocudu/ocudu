@@ -381,7 +381,7 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
           config.cp                     = profile.cp;
           config.mcs_descr              = mcs;
           config.codeword.emplace(pusch_processor::codeword_description{
-              rv, get_ldpc_base_graph(mcs.get_normalised_target_code_rate(), units::bits(tbs)), true});
+              rv, get_ldpc_base_graph(mcs.get_normalised_target_code_rate(), units::bits(tbs)), true, true});
           config.uci.alpha_scaling         = 1.0;
           config.uci.beta_offset_harq_ack  = 5.0;
           config.uci.beta_offset_csi_part1 = 5.0;

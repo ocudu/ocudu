@@ -9,6 +9,7 @@
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/phy/upper/channel_processors/pusch/pusch_decoder.h"
 #include "ocudu/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
+#include "ocudu/phy/upper/rx_buffer_decoder_callback.h"
 #include "ocudu/phy/upper/unique_rx_buffer.h"
 #include "ocudu/ran/pusch/pusch_constants.h"
 #include "ocudu/support/executors/task_executor.h"
@@ -18,7 +19,7 @@
 namespace ocudu {
 
 /// Implementation of the PUSCH decoder.
-class pusch_decoder_impl : public pusch_decoder, private pusch_decoder_buffer
+class pusch_decoder_impl : public pusch_decoder, private pusch_decoder_buffer, private rx_buffer_decoder_callback
 {
 public:
   /// Code block decoder pool type.
@@ -70,13 +71,13 @@ public:
     ocudu_assert(crc_set.crc24B->get_generator_poly() == crc_generator_poly::CRC24B, "Wrong TB CRC calculator.");
   }
 
-  // See interface for the documentation.
+  // See the pusch_decoder interface for the documentation.
   pusch_decoder_buffer& new_data(span<uint8_t>           transport_block,
                                  unique_rx_buffer        rm_buffer,
                                  pusch_decoder_notifier& notifier,
                                  const configuration&    cfg) override;
 
-  // See interface for the documentation.
+  // See the pusch_decoder interface for the documentation.
   void set_nof_softbits(units::bits nof_softbits) override;
 
 private:
@@ -167,14 +168,17 @@ private:
   /// CRC calculator for inner codeblock checks.
   crc_calculator* block_crc;
 
-  // See interface for the documentation.
+  // See the pusch_decoder_buffer interface for the documentation.
   span<log_likelihood_ratio> get_next_block_view(unsigned block_size) override;
 
-  // See interface for the documentation.
+  // See the pusch_decoder_buffer interface for the documentation.
   void on_new_softbits(span<const log_likelihood_ratio> softbits) override;
 
-  // See interface for the documentation.
+  // See the pusch_decoder_buffer interface for the documentation.
   void on_end_softbits() override;
+
+  // See the rx_buffer_decoder_callback interface for the documentation.
+  void codeblock_decode(unsigned codeblock_id) override;
 
   /// \brief Creates a codeblock decoding task.
   ///

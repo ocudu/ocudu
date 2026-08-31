@@ -292,7 +292,7 @@ void pusch_decoder_impl::on_end_softbits()
   }
 }
 
-void pusch_decoder_impl::fork_codeblock_task(unsigned cb_id)
+void pusch_decoder_impl::codeblock_decode(unsigned cb_id)
 {
   auto cb_process_task = [this, cb_id]() {
     span<const log_likelihood_ratio> cb_llrs = codeblock_llrs[cb_id].first;
@@ -380,6 +380,11 @@ void pusch_decoder_impl::fork_codeblock_task(unsigned cb_id)
   }
 }
 
+void pusch_decoder_impl::fork_codeblock_task(unsigned cb_id)
+{
+  unique_rm_buffer.decode_cb_in_sequence(cb_id, *this);
+}
+
 void pusch_decoder_impl::join_and_notify()
 {
   // Transition to decoded if the current state is collecting. In this case, skip notifying.
@@ -423,25 +428,31 @@ void pusch_decoder_impl::join_and_notify()
     }
   }
 
-  // Release soft buffer if the CRC is OK, otherwise unlock.
-  if (stats.tb_crc_ok) {
-    unique_rm_buffer.release();
-  } else {
-    unique_rm_buffer.unlock();
-  }
-
   // In case there are multiple codeblocks and at least one has a corrupted codeblock CRC, nothing to do.
 
+  // Transfer last repetition flag, receive buffer ownership and the pointer to the notifier to the stack.
+  bool                    last_repetition   = current_config.last_repetition;
+  unique_rx_buffer        current_rm_buffer = std::move(unique_rm_buffer);
+  pusch_decoder_notifier* notifier          = std::exchange(result_notifier, nullptr);
+
   // Transition back to idle.
-  internal_states previous_state = current_state.exchange(internal_states::idle);
+  [[maybe_unused]] internal_states previous_state = current_state.exchange(internal_states::idle);
   ocudu_assert((previous_state == internal_states::decoding) || (previous_state == internal_states::decoded),
                "Invalid state. It expected to be {} or {} but it was {}.",
                to_string(internal_states::decoding),
                to_string(internal_states::decoded),
                to_string(previous_state));
 
-  // Finally report decoding result.
-  result_notifier->on_sch_data(stats);
+  // Finally, notify the decoding result. The decoder will become available again. Make sure no more class attributes
+  // are used after the notfication, including the noti
+  notifier->on_sch_data(stats);
+
+  // Release soft buffer if the CRC is OK and it is the last repetition, otherwise unlock.
+  if (stats.tb_crc_ok && last_repetition) {
+    current_rm_buffer.release();
+  } else {
+    current_rm_buffer.unlock();
+  }
 }
 
 unsigned pusch_decoder_impl::concatenate_codeblocks()

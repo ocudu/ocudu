@@ -19,7 +19,7 @@
 namespace ocudu {
 
 /// Receive buffer reservation status codes.
-enum class rx_buffer_status : uint8_t {
+enum class rx_buffer_error : uint8_t {
   /// Status code for successful reservation.
   successful = 0,
   /// The buffer is already reserved and in a state that cannot be reserved.
@@ -28,20 +28,24 @@ enum class rx_buffer_status : uint8_t {
   insufficient_cb,
   /// The buffer reservation is marked as a retransmission with a different number of codeblocks.
   retransmission_cb_mismatch,
+  /// The number of repetitions for a buffer reservation exceeds the maximum.
+  exceed_repetitions
 };
 
-/// Gets the receive buffer status code text string.
-constexpr const char* to_string(rx_buffer_status status)
+/// Gets the receiver buffer status code text string.
+constexpr const char* to_string(rx_buffer_error status)
 {
   switch (status) {
-    case rx_buffer_status::successful:
+    case rx_buffer_error::successful:
       return "successful";
-    case rx_buffer_status::already_in_use:
-      return "already_in_use";
-    case rx_buffer_status::insufficient_cb:
-      return "insufficient_cb";
-    case rx_buffer_status::retransmission_cb_mismatch:
-      return "retransmission_cb_mismatch";
+    case rx_buffer_error::already_in_use:
+      return "already in use";
+    case rx_buffer_error::insufficient_cb:
+      return "insufficient CBs in the pool";
+    case rx_buffer_error::retransmission_cb_mismatch:
+      return "retransmission number of CBs mismatch";
+    case rx_buffer_error::exceed_repetitions:
+      return "exceeds number of repetitions";
     default:
       return "unknown";
   }
@@ -60,15 +64,17 @@ private:
   /// Stores codeblock identifiers.
   static_vector<unsigned, MAX_NOF_SEGMENTS> codeblock_ids;
   /// Repetition counter - it becomes the identifier for the next reservation.
-  std::atomic<unsigned> repetition_counter = 0;
+  unsigned repetition_counter = 0;
 
   /// \brief Decodes enqueued callbacks for the next repetition.
   ///
-  /// For each codeblock assigned to this buffer, advance the repetition counter.
-  void increment_repetition()
+  /// It unlocks the sequential repetition for each codeblock assigned to this buffer.
+  ///
+  /// \param[in] retransmission Retransmission identifier that has been unlocked.
+  void on_unlock_buffer(unsigned retransmission)
   {
     for (unsigned cb_id : codeblock_ids) {
-      codeblock_pool.advance_repetition(cb_id);
+      codeblock_pool.on_unlock_repetition(cb_id, retransmission);
     }
   }
 
@@ -103,15 +109,15 @@ public:
   ///
   /// It optionally resets the CRCs and dynamically reallocates codeblocks.
   ///
-  /// \see rx_buffer_status for the different reasons the reservation fails.
+  /// \see rx_buffer_error for the different reasons the reservation fails.
   ///
   /// \param nof_codeblocks Number of codeblocks to reserve.
   /// \param reset_crc      Set to true for reset the codeblock CRCs.
-  /// \return The reservation status.
-  rx_buffer_status reserve(unsigned nof_codeblocks, bool reset_crc)
+  /// \return The repetition counter on success, or an error on failure.
+  expected<unsigned, rx_buffer_error> reserve(unsigned nof_codeblocks, bool reset_crc)
   {
     if (!state_machine.on_reserve(reset_crc)) {
-      return rx_buffer_status::already_in_use;
+      return make_unexpected(rx_buffer_error::already_in_use);
     }
 
     // Early return if it is a not a new transmission.
@@ -119,9 +125,19 @@ public:
       // Ensure the number of codeblocks remains the same.
       if (nof_codeblocks != codeblock_ids.size()) {
         state_machine.on_unlock();
-        return rx_buffer_status::retransmission_cb_mismatch;
+        return make_unexpected(rx_buffer_error::retransmission_cb_mismatch);
       }
-      return rx_buffer_status::successful;
+
+      // Increment repetition counter.
+      unsigned this_repetition = ++repetition_counter;
+
+      // Maker sure the repetition is within the range.
+      if (this_repetition >= rx_buffer_codeblock_pool::max_nof_repetitions) {
+        state_machine.on_unlock();
+        return make_unexpected(rx_buffer_error::exceed_repetitions);
+      }
+
+      return this_repetition;
     }
 
     // If the current number of codeblocks is larger than required, free the excess of codeblocks.
@@ -143,7 +159,7 @@ public:
       if (!cb_id.has_value()) {
         free();
         state_machine.on_insufficient_cb();
-        return rx_buffer_status::insufficient_cb;
+        return make_unexpected(rx_buffer_error::insufficient_cb);
       }
 
       // Append the codeblock identifier to the list.
@@ -153,16 +169,14 @@ public:
     // Resize CRCs.
     crc.resize(nof_codeblocks);
 
-    // Reset CRCs and repetition counters if necessary.
-    if (reset_crc) {
-      reset_codeblocks_crc();
-      repetition_counter = 0;
-      for (auto cb_id : codeblock_ids) {
-        codeblock_pool.reset_repetition(cb_id);
-      }
+    // Reset CRCs and repetition counters.
+    reset_codeblocks_crc();
+    repetition_counter = 0;
+    for (auto cb_id : codeblock_ids) {
+      codeblock_pool.reset_repetition(cb_id);
     }
 
-    return rx_buffer_status::successful;
+    return repetition_counter;
   }
 
   // See interface for documentation.
@@ -218,7 +232,7 @@ public:
     return codeblock_pool.get_data_bits(cb_id).first(data_size);
   }
 
-  // See interface for documentation.
+  // See the unique_rx_buffer::buffer_management interface for documentation.
   void decode_cb_in_sequence(unsigned                    retransmission,
                              unsigned                    codeblock_id,
                              rx_buffer_decoder_callback& decoder_callback) override
@@ -226,21 +240,21 @@ public:
     codeblock_pool.decode_cb_in_sequence(codeblock_ids[codeblock_id], retransmission, codeblock_id, decoder_callback);
   }
 
-  // See interface for documentation.
-  void unlock() override
+  // See the unique_rx_buffer::buffer_management interface for documentation.
+  void unlock(unsigned retransmission) override
   {
     // Decode next repetition before unlocking the FSM.
-    increment_repetition();
+    on_unlock_buffer(retransmission);
 
     // Notify unlock to the FSM.
     state_machine.on_unlock();
   }
 
-  // See interface for documentation.
-  void release() override
+  // See the unique_rx_buffer::buffer_management interface for documentation.
+  void release(unsigned retransmission) override
   {
     // Decode next repetition before releasing the FSM.
-    increment_repetition();
+    on_unlock_buffer(retransmission);
 
     // Notify the release event to the state machine.
     bool released = state_machine.on_release();
@@ -254,9 +268,6 @@ public:
       state_machine.on_release_complete();
     }
   }
-
-  /// Fetches and increment the repetition identifier.
-  unsigned fetch_and_increment_repetition_id() { return repetition_counter.fetch_add(1); }
 
   /// Returns true if the buffer is free.
   bool is_free() const { return state_machine.is_available(); }

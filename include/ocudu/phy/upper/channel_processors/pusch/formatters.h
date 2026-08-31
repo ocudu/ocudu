@@ -51,6 +51,7 @@ struct formatter<ocudu::pusch_processor::codeword_description> {
     helper.format_always(ctx, "rv={}", codeword.rv);
     helper.format_if_verbose(ctx, "bg={}", fmt::underlying(codeword.ldpc_base_graph));
     helper.format_if_verbose(ctx, "new_data={}", codeword.new_data);
+    helper.format_if_verbose(ctx, "last_repetition={}", codeword.last_repetition);
 
     return ctx.out();
   }

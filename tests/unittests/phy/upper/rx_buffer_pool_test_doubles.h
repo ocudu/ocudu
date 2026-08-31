@@ -54,8 +54,8 @@ public:
     is_buffer_locked = true;
     return true;
   }
-  void unlock() override { is_buffer_locked = false; }
-  void release() override { is_buffer_locked = false; }
+  void unlock(unsigned) override { is_buffer_locked = false; }
+  void release(unsigned) override { is_buffer_locked = false; }
 
   void clear()
   {

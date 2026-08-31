@@ -54,11 +54,15 @@ rx_buffer_pool_impl::reserve(slot_point slot, trx_buffer_identifier id, unsigned
   rx_buffer_impl& buffer = buffers[i_buffer];
 
   // Reserve codeblocks.
-  rx_buffer_status status = buffer.reserve(nof_codeblocks, new_data);
+  expected<unsigned, rx_buffer_error> status = buffer.reserve(nof_codeblocks, new_data);
 
   // Report warning and return invalid buffer if the reservation is not successful.
-  if (status != rx_buffer_status::successful) {
-    logger.warning(slot.sfn(), slot.slot_index(), "UL HARQ {}: failed to reserve buffer, {}.", id, to_string(status));
+  if (!status.has_value()) {
+    logger.warning(slot.sfn(),
+                   slot.slot_index(),
+                   "UL HARQ {}: failed to reserve buffer, {}.",
+                   id,
+                   (status.error() == rx_buffer_error::already_in_use) ? "HARQ already in use" : "exhausted CB pool");
     return unique_rx_buffer();
   }
 
@@ -67,7 +71,7 @@ rx_buffer_pool_impl::reserve(slot_point slot, trx_buffer_identifier id, unsigned
   expirations[i_buffer] = slot + expire_timeout_slots;
 
   // Create buffer.
-  return unique_rx_buffer(buffer, buffer.fetch_and_increment_repetition_id());
+  return unique_rx_buffer(buffer, status.value());
 }
 
 void rx_buffer_pool_impl::run_slot(slot_point slot)

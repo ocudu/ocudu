@@ -16,6 +16,7 @@
 #include "ocudu/phy/upper/channel_processors/pusch/pusch_decoder.h"
 #include "ocudu/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
 #include "ocudu/phy/upper/codeblock_metadata.h"
+#include "ocudu/phy/upper/rx_buffer_decoder_callback.h"
 #include "ocudu/phy/upper/unique_rx_buffer.h"
 #include "ocudu/ran/pdsch/pdsch_constants.h"
 #include "ocudu/support/executors/task_executor.h"
@@ -33,7 +34,7 @@ constexpr unsigned MAX_TBS = 1277992;
 constexpr unsigned LONG_CRC_LENGTH = 24;
 
 /// Generic hardware-accelerated implementation of the PUSCH decoder.
-class pusch_decoder_hw_impl : public pusch_decoder, private pusch_decoder_buffer
+class pusch_decoder_hw_impl : public pusch_decoder, private pusch_decoder_buffer, private rx_buffer_decoder_callback
 {
 public:
   /// Code block decoder pool type.
@@ -142,6 +143,9 @@ private:
 
   /// \brief Processes
   void run_asynch_hw_decoder();
+
+  // See the rx_buffer_decoder_callback interface for the documentation.
+  void codeblock_decode(unsigned codeblock_id) override;
 
   /// \brief Checks the results of a decoding operation for a certain code block.
   ///

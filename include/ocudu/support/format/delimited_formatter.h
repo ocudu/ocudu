@@ -172,6 +172,10 @@ public:
   /// \remark it must be called after \ref parse.
   bool is_verbose() const { return verbose; }
 
+  /// \brief Returns \c true if the delimiter is configured for new line, \c false otherwise.
+  /// \remark it must be called after \ref parse.
+  bool is_multiline() const { return (delimiter_buffer.size() > 0) && (delimiter_buffer[0] == '\n'); }
+
 private:
   /// Internal method used to format with any formatting options.
   template <typename FormatContext, typename... Args>

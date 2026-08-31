@@ -4,7 +4,7 @@
 
 #include "pxsch_bler_test_channel_emulator.h"
 #include "pxsch_bler_test_factories.h"
-#include "ocudu/adt/format.h"
+#include "ocudu/ocudulog/logger.h"
 #include "ocudu/phy/support/resource_grid.h"
 #include "ocudu/phy/support/support_factories.h"
 #include "ocudu/phy/upper/channel_processors/pusch/pusch_decoder_result.h"
@@ -23,6 +23,7 @@
 #include <getopt.h>
 #include <mutex>
 #include <random>
+#include <sstream>
 #include <thread>
 
 using namespace ocudu;
@@ -36,14 +37,13 @@ static constexpr unsigned           nof_ldpc_iterations         = 10;
 static constexpr dmrs_config_type   dmrs                        = dmrs_config_type::type1;
 static constexpr unsigned           nof_cdm_groups_without_data = 2;
 static constexpr cyclic_prefix      cy_prefix                   = cyclic_prefix::NORMAL;
-static constexpr unsigned           rv                          = 0;
 static constexpr unsigned           n_id                        = 0;
 static constexpr unsigned           scrambling_id               = 0;
 static constexpr bool               n_scid                      = false;
 static constexpr bool               use_early_stop              = true;
 static unsigned                     max_nof_threads             = std::min(8U, std::thread::hardware_concurrency());
 static bool                         show_stats                  = true;
-static unsigned                     nof_repetitions             = 1000;
+static unsigned                     nof_slots                   = 1000;
 static std::string                  channel_delay_profile       = "single-tap";
 static std::string                  channel_fading_distribution = "uniform-phase";
 static float                        sinr_dB                     = 60.0F;
@@ -57,6 +57,8 @@ static sch_mcs_index                mcs_index                        = 20;
 static bool                         enable_dc_position               = false;
 static std::string                  pxsch_type                       = "auto";
 static std::string                  eal_arguments                    = "pxsch_bler_test";
+static std::string                  rep_rv_sequence_str              = "0";
+static ocudulog::basic_levels       log_level                        = ocudulog::basic_levels::warning;
 
 namespace {
 
@@ -108,7 +110,7 @@ static std::string capture_eal_args(int* argc, char*** argv)
 
 std::optional<pusch_mcs_table> to_mcs_table(const char* str)
 {
-  for (unsigned table_idx = 0; table_idx != 5; ++table_idx) {
+  for (unsigned table_idx = 0; table_idx != 3; ++table_idx) {
     pusch_mcs_table mcs_table = static_cast<pusch_mcs_table>(table_idx);
     if (strcmp(str, to_string(mcs_table)) == 0) {
       return mcs_table;
@@ -118,12 +120,28 @@ std::optional<pusch_mcs_table> to_mcs_table(const char* str)
   return std::nullopt;
 }
 
+/// Parses a comma-separated list of unsigned integers (no spaces) into a vector.
+static std::vector<unsigned> parse_rep_rv_sequence(std::string_view csv)
+{
+  std::vector<unsigned> result;
+  std::stringstream     ss{std::string{csv}};
+  std::string           token;
+  while (std::getline(ss, token, ',')) {
+    if (token.empty()) {
+      continue;
+    }
+    result.push_back(static_cast<unsigned>(std::strtoul(token.c_str(), nullptr, 10)));
+  }
+  return result;
+}
+
 class pxsch_bler_test
 {
 public:
   pxsch_bler_test()
   {
     ocudulog::init();
+    rep_rv_sequence = parse_rep_rv_sequence(rep_rv_sequence_str);
     setup();
   }
 
@@ -199,7 +217,8 @@ private:
     executor = std::make_unique<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>>(*worker_pool);
 
     // Prepare logging.
-    ocudulog::fetch_basic_logger("ALL").set_level(ocudulog::basic_levels::warning);
+    ocudulog::fetch_basic_logger("ALL").set_level(log_level);
+    ocudulog::fetch_basic_logger("PHY", true).set_level(log_level);
 
     // Compute modulation and code scheme.
     sch_mcs_description mcs_descr = pusch_mcs_get_config(mcs_table, mcs_index, false, false);
@@ -229,16 +248,29 @@ private:
         create_sw_pdsch_processor_factory(*executor, max_nof_threads + 1, eal_arguments, pxsch_type);
     report_fatal_error_if_not(pdsch_proc_factory, "Failed to create PDSCH processor factory.");
 
+    // Create a PDSCH processor pool factory - creates a PDSCH processor for each retransmission.
+    pdsch_proc_factory = create_pdsch_processor_pool(pdsch_proc_factory, rep_rv_sequence.size());
+    report_fatal_error_if_not(pdsch_proc_factory, "Failed to create PDSCH processor pool factory.");
+
     // Create PUSCH processor factory.
     std::shared_ptr<pusch_processor_factory> pusch_proc_factory =
         create_sw_pusch_processor_factory(*executor,
-                                          max_nof_threads + 1,
+                                          rep_rv_sequence.size() * max_nof_threads + 1,
                                           nof_ldpc_iterations,
                                           use_early_stop,
                                           pxsch_type,
                                           port_channel_estimator_td_interpolation_strategy::average,
                                           channel_equalizer_algorithm_type::zf);
     report_fatal_error_if_not(pusch_proc_factory, "Failed to create PUSCH processor factory.");
+
+    // Create a PUSCH processor pool factory - creates a PUSCH processor for each retransmission.
+    pusch_processor_pool_factory_config pusch_proc_pool_config{
+        .factory                = pusch_proc_factory,
+        .uci_factory            = pusch_proc_factory,
+        .nof_regular_processors = static_cast<unsigned>(rep_rv_sequence.size()),
+        .nof_uci_processors     = static_cast<unsigned>(rep_rv_sequence.size())};
+    pusch_proc_factory = create_pusch_processor_pool(pusch_proc_pool_config);
+    report_fatal_error_if_not(pusch_proc_factory, "Failed to create PUSCH processor pool factory.");
 
     // Create resource grid factory.
     std::shared_ptr<resource_grid_factory> grid_factory = create_grid_factory();
@@ -253,8 +285,10 @@ private:
     report_fatal_error_if_not(receiver, "Failed to create PUSCH processor.");
 
     // Create resource grids.
-    tx_grid = grid_factory->create(nof_layers, MAX_NSYMB_PER_SLOT, MAX_NOF_SUBCARRIERS);
-    rx_grid = grid_factory->create(nof_rx_ports, MAX_NSYMB_PER_SLOT, MAX_NOF_SUBCARRIERS);
+    for ([[maybe_unused]] unsigned rv : rep_rv_sequence) {
+      tx_grids.emplace_back(grid_factory->create(nof_layers, MAX_NSYMB_PER_SLOT, MAX_NOF_SUBCARRIERS));
+      rx_grids.emplace_back(grid_factory->create(nof_rx_ports, MAX_NSYMB_PER_SLOT, MAX_NOF_SUBCARRIERS));
+    }
 
     // Calculate number of codeblocks.
     nof_codeblocks = compute_nof_codeblocks(units::bits(tbs), ldpc_base_graph);
@@ -272,58 +306,67 @@ private:
     report_error_if_not(buffer_pool, "Failed to create buffer pool.");
 
     // Prepare PDSCH processor configuration.
-    pdsch_config.context                     = std::nullopt;
-    pdsch_config.slot                        = slot_point(to_numerology_value(scs), 0);
-    pdsch_config.rnti                        = rnti;
-    pdsch_config.bwp_size_rb                 = bwp_size_rb;
-    pdsch_config.bwp_start_rb                = bwp_start_rb;
-    pdsch_config.cp                          = cy_prefix;
-    pdsch_config.n_id                        = n_id;
-    pdsch_config.ref_point                   = pdsch_processor::pdu_t::PRB0;
-    pdsch_config.dmrs_symbol_mask            = dmrs_mask;
-    pdsch_config.dmrs                        = dmrs;
-    pdsch_config.scrambling_id               = scrambling_id;
-    pdsch_config.n_scid                      = n_scid;
-    pdsch_config.nof_cdm_groups_without_data = nof_cdm_groups_without_data;
-    pdsch_config.freq_alloc                  = freq_alloc;
-    pdsch_config.start_symbol_index          = 0;
-    pdsch_config.nof_symbols                 = nof_ofdm_symbols;
-    pdsch_config.tbs_lbrm                    = tbs_lbrm_default;
-    pdsch_config.reserved                    = {};
-    pdsch_config.ratio_pdsch_data_to_sss_dB  = 0.0F;
-    pdsch_config.ratio_pdsch_dmrs_to_sss_dB  = get_sch_to_dmrs_ratio_dB(nof_cdm_groups_without_data);
-    pdsch_config.precoding                   = precoding_configuration::make_wideband(make_identity(nof_layers));
-    pdsch_config.codewords.emplace_back(
-        pdsch_processor::codeword_description{mcs_descr.modulation, rv, ldpc_base_graph});
+    pdsch_config.reserve(rep_rv_sequence.size());
+    for (unsigned i_rep = 0, rep_end = rep_rv_sequence.size(); i_rep != rep_end; ++i_rep) {
+      unsigned rv = rep_rv_sequence[i_rep];
 
-    static_vector<uint8_t, MAX_PORTS> rx_ports(nof_rx_ports);
-    std::iota(rx_ports.begin(), rx_ports.end(), 0U);
+      pdsch_config.push_back(pdsch_processor::pdu_t{
+          .context          = std::nullopt,
+          .slot             = slot_point(to_numerology_value(scs), 0),
+          .rnti             = rnti,
+          .bwp_size_rb      = bwp_size_rb,
+          .bwp_start_rb     = bwp_start_rb,
+          .cp               = cy_prefix,
+          .codewords        = {pdsch_processor::codeword_description{mcs_descr.modulation, rv, ldpc_base_graph}},
+          .n_id             = n_id,
+          .ref_point        = pdsch_processor::pdu_t::PRB0,
+          .dmrs_symbol_mask = dmrs_mask,
+          .dmrs             = dmrs,
+          .scrambling_id    = scrambling_id,
+          .n_scid           = n_scid,
+          .nof_cdm_groups_without_data = nof_cdm_groups_without_data,
+          .freq_alloc                  = freq_alloc,
+          .start_symbol_index          = 0,
+          .nof_symbols                 = nof_ofdm_symbols,
+          .tbs_lbrm                    = tbs_lbrm_default,
+          .reserved                    = {},
+          .ratio_pdsch_dmrs_to_sss_dB  = get_sch_to_dmrs_ratio_dB(nof_cdm_groups_without_data),
+          .ratio_pdsch_data_to_sss_dB  = 0.0F,
+          .precoding                   = precoding_configuration::make_wideband(make_identity(nof_layers))});
 
-    // Prepare PUSCH processor configuration.
-    pusch_config.harq_id            = INVALID_HARQ_ID;
-    pusch_config.slot               = slot_point(to_numerology_value(scs), 0);
-    pusch_config.rnti               = rnti;
-    pusch_config.bwp_size_rb        = bwp_size_rb;
-    pusch_config.bwp_start_rb       = bwp_start_rb;
-    pusch_config.cp                 = cy_prefix;
-    pusch_config.mcs_descr          = mcs_descr;
-    pusch_config.codeword           = {rv, ldpc_base_graph, true};
-    pusch_config.uci                = {};
-    pusch_config.n_id               = n_id;
-    pusch_config.nof_tx_layers      = nof_layers;
-    pusch_config.rx_ports           = rx_ports;
-    pusch_config.dmrs_symbol_mask   = dmrs_mask;
-    pusch_config.dmrs               = pusch_processor::dmrs_configuration{.dmrs                        = dmrs,
-                                                                          .scrambling_id               = scrambling_id,
-                                                                          .n_scid                      = n_scid,
-                                                                          .nof_cdm_groups_without_data = nof_cdm_groups_without_data};
-    pusch_config.freq_alloc         = freq_alloc;
-    pusch_config.start_symbol_index = 0;
-    pusch_config.nof_symbols        = nof_ofdm_symbols;
-    pusch_config.tbs_lbrm           = tbs_lbrm_default;
-    pusch_config.dc_position =
-        enable_dc_position ? std::optional(bwp_size_rb * NOF_SUBCARRIERS_PER_RB / 2) : std::nullopt;
-    pusch_config.n_rapid = std::nullopt;
+      static_vector<uint8_t, MAX_PORTS> rx_ports(nof_rx_ports);
+      std::iota(rx_ports.begin(), rx_ports.end(), 0U);
+
+      pusch_processor::dmrs_configuration dmrs_config = {.dmrs                        = dmrs,
+                                                         .scrambling_id               = scrambling_id,
+                                                         .n_scid                      = n_scid,
+                                                         .nof_cdm_groups_without_data = nof_cdm_groups_without_data};
+
+      pusch_processor::codeword_description cw_descr = {rv, ldpc_base_graph, i_rep == 0, i_rep == rep_end - 1};
+
+      // Prepare PUSCH processor configuration.
+      pusch_config.push_back(pusch_processor::pdu_t{
+          .harq_id            = INVALID_HARQ_ID,
+          .slot               = slot_point(to_numerology_value(scs), 0),
+          .rnti               = rnti,
+          .bwp_size_rb        = bwp_size_rb,
+          .bwp_start_rb       = bwp_start_rb,
+          .cp                 = cy_prefix,
+          .mcs_descr          = mcs_descr,
+          .codeword           = cw_descr,
+          .uci                = {},
+          .n_id               = n_id,
+          .nof_tx_layers      = nof_layers,
+          .rx_ports           = rx_ports,
+          .dmrs_symbol_mask   = dmrs_mask,
+          .dmrs               = dmrs_config,
+          .freq_alloc         = freq_alloc,
+          .start_symbol_index = 0,
+          .nof_symbols        = nof_ofdm_symbols,
+          .tbs_lbrm           = tbs_lbrm_default,
+          .dc_position = enable_dc_position ? std::optional(bwp_size_rb * NOF_SUBCARRIERS_PER_RB / 2) : std::nullopt,
+          .n_rapid     = std::nullopt});
+    }
 
     // Resize data to accomodate the transport block.
     tx_data.resize(tbs.value());
@@ -351,22 +394,27 @@ private:
 
   void print_stats(double completion_percent)
   {
-    double crc_bler        = static_cast<double>(crc_error_count) / static_cast<double>(count);
-    double data_bler       = static_cast<double>(data_error_count) / static_cast<double>(count);
-    double mean_iterations = static_cast<double>(count_iterations) / static_cast<double>(count * nof_codeblocks);
+    double crc_bler  = static_cast<double>(crc_error_count) / static_cast<double>(count);
+    double data_bler = static_cast<double>(data_error_count) / static_cast<double>(count);
+    double mean_iterations =
+        static_cast<double>(count_iterations) / static_cast<double>(count * nof_codeblocks * rep_rv_sequence.size());
 
-    fmt::print("[{:>5.1f}%] "
+    fmt::print("\r[{:>5.1f}%] "
                "Iterations={{{:<2} {:<2} {:<3.1f}}}; "
+               "Repetitions={{{:<2} {:<2} {:<3.1f}}}; "
                "BLER={:.10f}/{:.10f}; "
                "SINR={{{:+.2f} {:+.2f} {:+.2f}}}; "
                "EVM={{{:.3f} {:.3f} {:.3f}}}; "
                "TA={{{:.2f} {:.2f} {:.2f}}}us; "
                "CFO={{{:.2f} {:.2f} {:.2f}}}Hz; "
-               "pxsch={}\r",
+               "pxsch={}",
                completion_percent,
                min_iterations,
                max_iterations,
                mean_iterations,
+               repetitions_stats.get_min(),
+               repetitions_stats.get_max(),
+               repetitions_stats.get_mean(),
                crc_bler,
                data_bler,
                sinr_stats.get_min(),
@@ -389,61 +437,97 @@ private:
     std::mt19937 rgen(0);
 
     // Iterate different seeds.
-    for (unsigned n = 0; n != nof_repetitions; ++n) {
+    for (unsigned n = 0; n != nof_slots; ++n) {
       // Generate random data.
       std::generate(tx_data.begin(), tx_data.end(), [&rgen]() { return static_cast<uint8_t>(rgen() & 0xff); });
 
       // Process PDSCH.
-      pdsch_processor_notifier_adaptor tx_notifier;
-      transmitter->process(tx_grid->get_writer(), tx_notifier, {shared_transport_block(tx_data)}, pdsch_config);
-      tx_notifier.wait_for_completion();
+      std::vector<pdsch_processor_notifier_adaptor> tx_notifiers(rep_rv_sequence.size());
+      for (unsigned i_rep = 0, rep_end = rep_rv_sequence.size(); i_rep != rep_end; ++i_rep) {
+        // Select notifier.
+        pdsch_processor_notifier_adaptor& tx_notifier = tx_notifiers[i_rep];
 
-      emulator->run(rx_grid->get_writer(), tx_grid->get_reader());
+        // Process PDSCH
+        transmitter->process(
+            tx_grids[i_rep]->get_writer(), tx_notifier, {shared_transport_block(tx_data)}, pdsch_config[i_rep]);
+      }
 
-      // Get a receive buffer.
-      unique_rx_buffer buffer =
-          buffer_pool->get_pool().reserve(pusch_config.slot, trx_buffer_identifier(rnti, 0), nof_codeblocks, true);
-      report_error_if_not(buffer, "Invalid buffer.");
+      // Wait for PDSCH processing to complete.
+      for (pdsch_processor_notifier_adaptor& tx_notifier : tx_notifiers) {
+        tx_notifier.wait_for_completion();
+      }
+
+      // Run channel emulator for retransmission.
+      for (unsigned i_rep = 0, rep_end = rep_rv_sequence.size(); i_rep != rep_end; ++i_rep) {
+        emulator->run(rx_grids[i_rep]->get_writer(), tx_grids[i_rep]->get_reader());
+      }
 
       // Process PUSCH.
-      pusch_processor_notifier_adaptor rx_notifier;
-      receiver->process(rx_data, std::move(buffer), rx_notifier, rx_grid->get_reader(), pusch_config);
+      std::vector<pusch_processor_notifier_adaptor> rx_notifiers(rep_rv_sequence.size());
+      for (unsigned i_rep = 0, rep_end = rep_rv_sequence.size(); i_rep != rep_end; ++i_rep) {
+        bool new_data = i_rep == 0;
 
-      const pusch_processor_result_data& sch_result = rx_notifier.wait_for_completion();
+        // Get a receive buffer.
+        unique_rx_buffer buffer = buffer_pool->get_pool().reserve(
+            pusch_config[i_rep].slot, trx_buffer_identifier(rnti, 0), nof_codeblocks, new_data);
+        report_error_if_not(buffer, "Invalid buffer.");
+
+        // Fork PUSCH reception.
+        receiver->process(
+            rx_data, std::move(buffer), rx_notifiers[i_rep], rx_grids[i_rep]->get_reader(), pusch_config[i_rep]);
+      }
+
+      // Wait for all PUSCH processing to complete.
+      std::vector<pusch_processor_result_data> sch_results;
+      sch_results.reserve(rep_rv_sequence.size());
+      for (pusch_processor_notifier_adaptor& rx_notifier : rx_notifiers) {
+        sch_results.push_back(rx_notifier.wait_for_completion());
+      }
+
+      // Extract the latest SCH result.
+      const auto sch_result_it =
+          std::find_if(sch_results.begin(), sch_results.end(), [](const pusch_processor_result_data& data) {
+            return data.data.tb_crc_ok;
+          });
+      repetitions_stats.update(std::min(std::distance(sch_results.begin(), sch_result_it) + 1UL, sch_results.size()));
 
       // Accumulate counters.
       ++count;
-      if (!sch_result.data.tb_crc_ok) {
+      if (sch_result_it == sch_results.end()) {
         ++crc_error_count;
       }
       if (tx_data != rx_data) {
         ++data_error_count;
       }
 
-      max_iterations = std::max(sch_result.data.ldpc_decoder_stats.get_max(), max_iterations);
-      min_iterations = std::min(sch_result.data.ldpc_decoder_stats.get_min(), min_iterations);
-      count_iterations += static_cast<uint64_t>(sch_result.data.ldpc_decoder_stats.get_nof_observations() *
-                                                sch_result.data.ldpc_decoder_stats.get_mean());
-      if (sch_result.csi.get_total_evm().has_value()) {
-        evm_stats.update(sch_result.csi.get_total_evm().value());
-      }
-      if (sch_result.csi.get_sinr_dB().has_value()) {
-        sinr_stats.update(sch_result.csi.get_sinr_dB().value());
-      }
-      if (sch_result.csi.get_time_alignment().has_value()) {
-        ta_stats_us.update(sch_result.csi.get_time_alignment()->to_seconds() * 1e6);
-      }
-      if (sch_result.csi.get_cfo_Hz().has_value()) {
-        cfo_stats_Hz.update(*sch_result.csi.get_cfo_Hz());
+      for (const pusch_processor_result_data& sch_result : sch_results) {
+        max_iterations = std::max(sch_result.data.ldpc_decoder_stats.get_max(), max_iterations);
+        min_iterations = std::min(sch_result.data.ldpc_decoder_stats.get_min(), min_iterations);
+        count_iterations += static_cast<uint64_t>(sch_result.data.ldpc_decoder_stats.get_nof_observations() *
+                                                  sch_result.data.ldpc_decoder_stats.get_mean());
+        if (sch_result.csi.get_total_evm().has_value()) {
+          evm_stats.update(sch_result.csi.get_total_evm().value());
+        }
+        if (sch_result.csi.get_sinr_dB().has_value()) {
+          sinr_stats.update(sch_result.csi.get_sinr_dB().value());
+        }
+        if (sch_result.csi.get_time_alignment().has_value()) {
+          ta_stats_us.update(sch_result.csi.get_time_alignment()->to_seconds() * 1e6);
+        }
+        if (sch_result.csi.get_cfo_Hz().has_value()) {
+          cfo_stats_Hz.update(*sch_result.csi.get_cfo_Hz());
+        }
       }
 
       // Increment slots.
-      ++pdsch_config.slot;
-      ++pusch_config.slot;
+      for (unsigned i_rep = 0, rep_end = rep_rv_sequence.size(); i_rep != rep_end; ++i_rep) {
+        ++pdsch_config[i_rep].slot;
+        ++pusch_config[i_rep].slot;
+      }
 
       // Set following line to 1 for printing partial results.
       if (show_stats && (n % 100 == 0)) {
-        print_stats(static_cast<double>(n) / static_cast<double>(nof_repetitions) * 100.0);
+        print_stats(static_cast<double>(n) / static_cast<double>(nof_slots) * 100.0);
       }
     }
 
@@ -451,26 +535,29 @@ private:
     print_stats(100.0);
   }
 
-  unsigned                 nof_codeblocks;
-  uint64_t                 count            = 0;
-  uint64_t                 crc_error_count  = 0;
-  uint64_t                 data_error_count = 0;
-  unsigned                 max_iterations   = std::numeric_limits<unsigned>::min();
-  unsigned                 min_iterations   = std::numeric_limits<unsigned>::max();
-  uint64_t                 count_iterations = 0;
-  sample_statistics<float> sinr_stats;
-  sample_statistics<float> evm_stats;
-  sample_statistics<float> ta_stats_us;
-  sample_statistics<float> cfo_stats_Hz;
+  unsigned                    nof_codeblocks;
+  uint64_t                    count            = 0;
+  uint64_t                    crc_error_count  = 0;
+  uint64_t                    data_error_count = 0;
+  unsigned                    max_iterations   = std::numeric_limits<unsigned>::min();
+  unsigned                    min_iterations   = std::numeric_limits<unsigned>::max();
+  uint64_t                    count_iterations = 0;
+  sample_statistics<unsigned> repetitions_stats;
+  sample_statistics<float>    sinr_stats;
+  sample_statistics<float>    evm_stats;
+  sample_statistics<float>    ta_stats_us;
+  sample_statistics<float>    cfo_stats_Hz;
 
-  std::unique_ptr<pdsch_processor>           transmitter;
-  std::unique_ptr<pusch_processor>           receiver;
-  std::unique_ptr<resource_grid>             tx_grid;
-  std::unique_ptr<resource_grid>             rx_grid;
-  std::unique_ptr<rx_buffer_pool_controller> buffer_pool;
+  std::unique_ptr<pdsch_processor>            transmitter;
+  std::unique_ptr<pusch_processor>            receiver;
+  std::vector<std::unique_ptr<resource_grid>> tx_grids;
+  std::vector<std::unique_ptr<resource_grid>> rx_grids;
+  std::unique_ptr<rx_buffer_pool_controller>  buffer_pool;
 
-  pdsch_processor::pdu_t pdsch_config;
-  pusch_processor::pdu_t pusch_config;
+  std::vector<unsigned> rep_rv_sequence;
+
+  std::vector<pdsch_processor::pdu_t> pdsch_config;
+  std::vector<pusch_processor::pdu_t> pusch_config;
 
   std::vector<uint8_t> tx_data;
   std::vector<uint8_t> rx_data;
@@ -479,12 +566,14 @@ private:
   std::unique_ptr<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>> executor;
 
   std::unique_ptr<channel_emulator> emulator;
-};
+}; // namespace
 } // namespace
 
 static void usage(std::string_view prog)
 {
-  fmt::print("Usage: {} [-C X] [-F X] [-S X] [-N X] [-P X] [-R X] [-M X] [-m X] [-D] [-T X] [eal_args ...]\n", prog);
+  fmt::print(
+      "Usage: {} [-C X] [-F X] [-S X] [-N X] [-P X] [-R X] [-M X] [-m X] [-D] [-T X] [-V X] [-j X] [eal_args ...]\n",
+      prog);
   fmt::print("\t-C       Channel delay profile: single-tap, TDLA, TDLB or TDLC. [Default {}]\n", channel_delay_profile);
   fmt::print("\t-F       Channel fading distribution: uniform-phase, rayleigh or butler. [Default {}]\n",
              channel_fading_distribution);
@@ -495,19 +584,28 @@ static void usage(std::string_view prog)
   fmt::print("\t-L       Number of transmit layers. It must not exceed the number of ports. [Default {}]\n",
              nof_layers);
   fmt::print("\t-B       Number of allocated PRBs (same as BWP size). [Default {}]\n", bwp_size_rb);
-  fmt::print("\t-M       MCS table. [Default {}]\n", fmt::underlying(mcs_table));
+  fmt::print("\t-M       MCS table. [{} {} {}][Default {}]\n",
+             to_string(pusch_mcs_table::qam64),
+             to_string(pusch_mcs_table::qam256),
+             to_string(pusch_mcs_table::qam64LowSe),
+             to_string(mcs_table));
   fmt::print("\t-m       MCS index. [Default {}]\n", mcs_index);
-  fmt::print("\t-R       Number of slots to process. [Default {}]\n", nof_repetitions);
+  fmt::print("\t-R       Number of slots to process. [Default {}]\n", nof_slots);
   fmt::print("\t-T       PxSCH implementation type [auto,acc100][Default {}]\n", pxsch_type);
+  fmt::print("\t-V       Retransmission RV/RV sequence (comma-separated, no spaces, e.g. 0,4,2,3) [Default {}]\n",
+             rep_rv_sequence_str);
+  fmt::print("\t-l       Log level: none, error, warning, info, debug. [Default {}]\n",
+             ocudulog::basic_level_to_string(log_level));
   fmt::print("\teal_args EAL arguments\n");
   fmt::print("\t-v       Toggle preliminary stats. [Default {}]\n", show_stats);
+  fmt::print("\t-j       Number of threads. [Default {}]\n", max_nof_threads);
   fmt::print("\t-h       Print this message.\n");
 }
 
 static void parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "C:F:S:N:P:L:R:B:M:m:DT:vh")) != -1) {
+  while ((opt = getopt(argc, argv, "C:F:S:N:P:L:R:B:M:m:V:D:T:vl:j:h")) != -1) {
     switch (opt) {
       case 'C':
         if (optarg != nullptr) {
@@ -551,14 +649,35 @@ static void parse_args(int argc, char** argv)
       case 'm':
         mcs_index = std::strtol(optarg, nullptr, 10);
         break;
+      case 'V':
+        if (optarg != nullptr) {
+          rep_rv_sequence_str = std::string(optarg);
+        }
+        break;
       case 'R':
-        nof_repetitions = std::strtol(optarg, nullptr, 10);
+        nof_slots = std::strtol(optarg, nullptr, 10);
         break;
       case 'T':
         pxsch_type = std::string(optarg);
         break;
+      case 'l':
+        if (optarg != nullptr) {
+          std::optional<ocudulog::basic_levels> level = ocudulog::str_to_basic_level(optarg);
+          if (!level.has_value()) {
+            fmt::println("Invalid log level {}.", optarg);
+            usage(argv[0]);
+            std::exit(-1);
+          }
+          log_level = level.value();
+        }
+        break;
       case 'v':
         show_stats = !show_stats;
+        break;
+      case 'j':
+        if (optarg != nullptr) {
+          max_nof_threads = std::strtol(optarg, nullptr, 10);
+        }
         break;
       case 'h':
       default:

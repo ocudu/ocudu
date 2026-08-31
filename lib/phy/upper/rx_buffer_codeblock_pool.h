@@ -8,7 +8,6 @@
 #include "ocudu/adt/mpmc_queue.h"
 #include "ocudu/adt/slotted_array.h"
 #include "ocudu/adt/span.h"
-#include "ocudu/adt/unique_function.h"
 #include "ocudu/phy/upper/log_likelihood_ratio.h"
 #include "ocudu/phy/upper/rx_buffer_decoder_callback.h"
 #include "ocudu/support/math/math_utils.h"
@@ -21,16 +20,25 @@ namespace ocudu {
 /// Manages a codeblock buffer pool.
 class rx_buffer_codeblock_pool
 {
-private:
+public:
   /// \brief Maximum number of repetitions.
   ///
   /// The maximum number of repetitions is given by the maximum value of the parameter \e numberOfRepetitionsExt-r17 in
   /// the Information Element \e PUSCH-Allocation-r16 defined in TS38.331 Section 6.3.2.
   static constexpr unsigned max_nof_repetitions = 32;
 
+private:
   /// Codeblock identifier list type.
   using codeblock_identifier_list =
       concurrent_queue<unsigned, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>;
+
+  /// Bitset used for unlocked repetitions.
+  class unlocked_repetition_bitset : public bounded_bitset<max_nof_repetitions>
+  {
+  public:
+    /// Default constructor - creates a bitset of the maximum size without any unlocked repetition bitset.
+    unlocked_repetition_bitset() : bounded_bitset(max_nof_repetitions) {}
+  };
 
   /// Collects a codeblock call back context.
   struct codeblock_callback_context {
@@ -50,6 +58,8 @@ private:
     std::mutex callbacks_mutex;
     /// Current repetition.
     unsigned repetition;
+    /// Unlocked repetitions.
+    unlocked_repetition_bitset repetition_mask;
     /// Decoder callbacks.
     slotted_array<codeblock_callback_context, max_nof_repetitions> callbacks;
   };
@@ -114,6 +124,7 @@ public:
     ocudu_assert(codeblock.callbacks.empty(), "Callback list is not empty.");
 
     codeblock.repetition = 0;
+    codeblock.repetition_mask.fill(false);
   }
 
   /// \brief Gets a codeblock soft-bit buffer.
@@ -175,21 +186,55 @@ public:
     codeblock.callbacks.emplace(repetition, codeblock_callback_context{tb_cb_id, &decoder_callback});
   }
 
-  /// \brief Advances the repetition counter.
+  /// \brief Unlocks a repetition for a selected codeblock.
   /// \param[in] codeblock_id  Codeblock identifier within the codeblock pool.
-  void advance_repetition(unsigned codeblock_id)
+  /// \param[in] repetition    Repetition identifier that was unlocked.
+  /// \remark An assertion is triggered if the unlocked repetition has a pending callback.
+  void on_unlock_repetition(unsigned codeblock_id, unsigned repetition)
   {
     // Select codeblock.
     codeblock_container& codeblock = entries[codeblock_id];
 
-    // Protect concurrent access.
-    std::lock_guard lock(codeblock.callbacks_mutex);
+    std::optional<codeblock_callback_context> callback;
 
-    unsigned repetition = ++codeblock.repetition;
+    // Advance repetition until a callback is found.
+    {
+      // Protect concurrent access.
+      std::scoped_lock lock(codeblock.callbacks_mutex);
 
-    // Consume decode callback if any.
-    if (codeblock.callbacks.contains(repetition)) {
-      codeblock_callback_context callback_ctx = codeblock.callbacks.take(repetition);
+      // The receive buffer is designed to be unlocked/released after decoding the codeblock. It is not possible that
+      // a buffer was unlocked (or destroyed) leaving a callback behind.
+      ocudu_assert(!codeblock.callbacks.contains(repetition),
+                   "An out of order unlocked codeblock left an unattended callback.");
+
+      // Mark repetition as completed.
+      codeblock.repetition_mask.set(repetition);
+
+      // Skip further steps if the unlocked repetition is not the current one.
+      if (codeblock.repetition != repetition) {
+        return;
+      }
+
+      // Advance from the repetition counter to the most advanced marked completed repetition.
+      int next_repetition = codeblock.repetition_mask.find_lowest(repetition, max_nof_repetitions, false);
+      if (next_repetition < 0) {
+        // If all repetitions have been unlocked, leave the maximum number of repetitions and return.
+        codeblock.repetition = max_nof_repetitions;
+        return;
+      }
+
+      // Move to the next repetition.
+      codeblock.repetition = next_repetition;
+
+      // Save the decode callback for being invoked in the unprotected region.
+      if (codeblock.callbacks.contains(next_repetition)) {
+        callback = codeblock.callbacks.take(next_repetition);
+      }
+    }
+
+    // Invoke callback if there is any.
+    if (callback.has_value()) {
+      codeblock_callback_context callback_ctx = callback.value();
       callback_ctx.callback->codeblock_decode(callback_ctx.codeblock_id);
     }
   }

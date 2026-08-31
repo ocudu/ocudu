@@ -62,9 +62,9 @@ public:
     return true;
   }
 
-  void unlock() override { locked = false; }
+  void unlock(unsigned) override { locked = false; }
 
-  void release() override { locked = false; }
+  void release(unsigned) override { locked = false; }
 
   /// Clears all counters.
   void clear()

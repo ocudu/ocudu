@@ -55,6 +55,8 @@ public:
     bool use_early_stop = true;
     /// Flag to denote new data (first HARQ transmission).
     bool new_data = true;
+    /// Flag to denote last repetition (last HARQ transmission in a burst).
+    bool last_repetition = true;
   };
 
   /// Default destructor.
