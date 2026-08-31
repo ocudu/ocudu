@@ -71,7 +71,7 @@ bool openssl_dtls_ssl::init(int socket)
       return false;
     }
   }
-  logger.debug("DTLS handshake finished");
+  logger.debug("DTLS context initialized");
   return true;
 }
 
@@ -111,7 +111,8 @@ expected<byte_buffer> openssl_dtls_ssl::receive()
     return make_unexpected(default_error_t{});
   }
   logger.debug("Read {} bytes from DTLS connection", len);
-  auto buffer = byte_buffer{byte_buffer::fallback_allocation_tag{}, buff};
+  auto buffer =
+      byte_buffer{byte_buffer::fallback_allocation_tag{}, span<const uint8_t>(buff.begin(), buff.begin() + len)};
   return buffer;
 }
 
