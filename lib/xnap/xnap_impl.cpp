@@ -26,6 +26,8 @@
 #include "ocudu/support/async/async_no_op_task.h"
 #include "ocudu/xnap/xnap_message.h"
 #include "ocudu/xnap/xnap_types.h"
+#include <algorithm>
+#include <vector>
 
 using namespace ocudu;
 using namespace asn1::xnap;
@@ -158,8 +160,24 @@ void xnap_impl::handle_successful_outcome(const successful_outcome_s& outcome)
       cfg_update_outcome.set(outcome.value.ngran_node_cfg_upd_ack());
     } break;
     case xnap_elem_procs_o::successful_outcome_c::types_opts::ho_request_ack: {
-      if (auto* ue_ctxt = asn1_utils::get_ue_ctxt_in_ue_assoc_msg(outcome, ue_ctxt_list, logger)) {
-        ue_ctxt->xn_handover_outcome.set(outcome.value.ho_request_ack());
+      auto* ue_ctxt = asn1_utils::get_ue_ctxt_in_ue_assoc_msg(outcome, ue_ctxt_list, logger);
+      if (ue_ctxt == nullptr) {
+        break;
+      }
+      const ho_request_ack_s& ack = outcome.value.ho_request_ack();
+      // TS 38.423 Section 8.2.1.2: for a conditional handover the target shall echo the requested target cell, which
+      // tells parallel preparations sharing a Source NG-RAN node UE XnAP ID apart.
+      std::optional<nr_cell_global_id_t> cell;
+      if (ack->ch_oinfo_ack_present) {
+        if (ack->ch_oinfo_ack.requested_target_cell_global_id.type() != target_cgi_c::types_opts::nr) {
+          ue_ctxt->logger.log_warning(
+              "Discarding HandoverRequestAcknowledge: Requested Target Cell Global ID is not an NR cell");
+          break;
+        }
+        cell = asn1_to_cgi(ack->ch_oinfo_ack.requested_target_cell_global_id.nr());
+      }
+      if (!ue_ctxt->deliver_ho_prep_outcome(cell, ack)) {
+        ue_ctxt->logger.log_warning("Discarding HandoverRequestAcknowledge: no matching handover preparation");
       }
     } break;
     case xnap_elem_procs_o::successful_outcome_c::types_opts::retrieve_ue_context_resp: {
@@ -182,8 +200,25 @@ void xnap_impl::handle_unsuccessful_outcome(const unsuccessful_outcome_s& outcom
       cfg_update_outcome.set(outcome.value.ngran_node_cfg_upd_fail());
     } break;
     case xnap_elem_procs_o::unsuccessful_outcome_c::types_opts::ho_prep_fail: {
-      if (auto* ue_ctxt = asn1_utils::get_ue_ctxt_in_ue_assoc_msg(outcome, ue_ctxt_list, logger)) {
-        ue_ctxt->xn_handover_outcome.set(outcome.value.ho_prep_fail());
+      auto* ue_ctxt = asn1_utils::get_ue_ctxt_in_ue_assoc_msg(outcome, ue_ctxt_list, logger);
+      if (ue_ctxt == nullptr) {
+        break;
+      }
+      const ho_prep_fail_s& fail = outcome.value.ho_prep_fail();
+      // TS 38.423 Section 8.2.1.3: the failure carries the requested target cell when it rejects one of several
+      // parallel CHO preparations. The IE is optional, so it may have to be routed without one.
+      std::optional<nr_cell_global_id_t> cell;
+      if (fail->requested_target_cell_global_id_present) {
+        if (fail->requested_target_cell_global_id.type() != target_cgi_c::types_opts::nr) {
+          // The named cell cannot be one we prepared, so do not let it resolve an unrelated transaction.
+          ue_ctxt->logger.log_warning(
+              "Discarding HandoverPreparationFailure: Requested Target Cell Global ID is not an NR cell");
+          break;
+        }
+        cell = asn1_to_cgi(fail->requested_target_cell_global_id.nr());
+      }
+      if (!ue_ctxt->deliver_ho_prep_outcome(cell, fail)) {
+        ue_ctxt->logger.log_warning("Discarding HandoverPreparationFailure: no matching handover preparation");
       }
     } break;
     case xnap_elem_procs_o::unsuccessful_outcome_c::types_opts::retrieve_ue_context_fail: {
@@ -355,6 +390,21 @@ void xnap_impl::handle_handover_cancel(const asn1::xnap::ho_cancel_s& msg)
       logger.info("Received HandoverCancel for unknown UE. peer_xnap_ue_id={}", msg->source_ng_ra_nnode_ue_xn_ap_id);
       return;
     }
+    // Section 8.2.3.2 scopes the cancellation to the listed cells as well as to the connection the IDs name, so a
+    // list that does not mention this context's cell is not cancelling it.
+    if (msg->target_cells_to_cancel.size() != 0 and ue_ctxt->ho_target_cell.has_value()) {
+      const bool names_this_cell = std::any_of(msg->target_cells_to_cancel.begin(),
+                                               msg->target_cells_to_cancel.end(),
+                                               [&ue_ctxt](const asn1::xnap::target_cell_list_item_s& item) {
+                                                 return item.target_cell.type() == target_cgi_c::types_opts::nr and
+                                                        asn1_to_cgi(item.target_cell.nr()) == *ue_ctxt->ho_target_cell;
+                                               });
+      if (not names_this_cell) {
+        logger.info("Discarding HandoverCancel: the candidate cell list does not name local_xnap_ue_id={}'s cell",
+                    msg->target_ng_ra_nnode_ue_xn_ap_id);
+        return;
+      }
+    }
     release(*ue_ctxt);
     return;
   }
@@ -438,25 +488,33 @@ void xnap_impl::handle_ue_context_release(const asn1::xnap::ue_context_release_s
 async_task<xnap_handover_preparation_response>
 xnap_impl::handle_handover_request_required(const xnap_handover_request& request)
 {
-  if (!ue_ctxt_list.contains(request.ue_index)) {
-    // Allocate new local XNAP UE context if it doesn't exist.
-    local_xnap_ue_id_t local_xnap_ue_id = ue_ctxt_list.allocate_local_xnap_ue_id();
-    if (local_xnap_ue_id == local_xnap_ue_id_t::invalid) {
-      logger.error("Failed to allocate XNAP UE ID for ue={}. Cannot transmit HandoverPreparationRequest",
-                   request.ue_index);
-      return launch_no_op_task(xnap_handover_preparation_response{false});
-    }
-    ue_ctxt_list.add_ue(request.ue_index, local_xnap_ue_id);
+  // TS 38.423 Section 8.2.1.1: all CHO candidate cells served by this peer share one Source NG-RAN node UE XnAP ID,
+  // hence one UE context, just like the successive handovers of an immediate HO.
+  const local_xnap_ue_id_t local_xnap_ue_id = ue_ctxt_list.find_or_create_ue_context(request.ue_index);
+  if (local_xnap_ue_id == local_xnap_ue_id_t::invalid) {
+    logger.error("Failed to allocate XNAP UE ID for ue={}. Cannot transmit HandoverPreparationRequest",
+                 request.ue_index);
+    return launch_no_op_task(xnap_handover_preparation_response{false});
   }
 
-  ue_ctxt_list[request.ue_index].logger.log_debug("Starting HO source preparation");
+  xnap_ue_context& ue_ctxt = ue_ctxt_list[local_xnap_ue_id];
 
-  return track_ue_procedure(launch_async<xnap_source_handover_preparation_procedure>(request,
-                                                                                     ue_ctxt_list[request.ue_index],
-                                                                                     ue_ctxt_list,
-                                                                                     tx_notifier,
-                                                                                     cu_cp_notifier,
-                                                                                     timer_factory{timers, ctrl_exec}));
+  // The event source this preparation awaits. A conditional handover gets its own, keyed by target cell, so that
+  // parallel candidates each await their own outcome; an immediate handover uses the one of the UE context.
+  ho_prep_outcome_t* ho_outcome = &ue_ctxt.xn_handover_outcome;
+  if (request.is_conditional_handover) {
+    ho_outcome = ue_ctxt.add_cho_cell_prep(request.nr_cgi, timer_factory{timers, ctrl_exec});
+    if (ho_outcome == nullptr) {
+      ue_ctxt.logger.log_warning("CHO preparation already in flight for nci={:#x}", request.nr_cgi.nci.value());
+      return launch_no_op_task(xnap_handover_preparation_response{false});
+    }
+    ue_ctxt.logger.log_debug("Starting CHO source preparation for nci={:#x}", request.nr_cgi.nci.value());
+  } else {
+    ue_ctxt.logger.log_debug("Starting HO source preparation");
+  }
+
+  return track_ue_procedure(launch_async<xnap_source_handover_preparation_procedure>(
+      request, ue_ctxt, *ho_outcome, ue_ctxt_list, tx_notifier, cu_cp_notifier, timer_factory{timers, ctrl_exec}));
 }
 
 void xnap_impl::handle_cho_cancel_required(cu_cp_ue_index_t ue_index, const nr_cell_global_id_t& target_cgi)
@@ -466,25 +524,25 @@ void xnap_impl::handle_cho_cancel_required(cu_cp_ue_index_t ue_index, const nr_c
     return;
   }
 
-  xnap_ue_context&  ue_ctxt    = ue_ctxt_list[ue_index];
-  peer_xnap_ue_id_t peer_ue_id = ue_ctxt.ue_ids.peer_xnap_ue_id;
+  xnap_ue_context&         ue_ctxt          = ue_ctxt_list[ue_index];
+  const local_xnap_ue_id_t local_xnap_ue_id = ue_ctxt.ue_ids.local_xnap_ue_id;
+  const peer_xnap_ue_id_t  peer_ue_id       = ue_ctxt_list.remove_cho_prepared(local_xnap_ue_id, target_cgi);
 
   if (peer_ue_id == peer_xnap_ue_id_t::invalid) {
-    ue_ctxt.logger.log_warning("HandoverCancel (CHO non-winner) skipped: peer XNAP UE ID is invalid");
+    ue_ctxt.logger.log_warning("HandoverCancel (CHO non-winner) skipped: no candidate prepared for nci={:#x}",
+                               target_cgi.nci.value());
   } else {
     // TS 38.423 Section 8.2.3: source sends HANDOVER CANCEL to release a non-winning prepared context at the target.
     // Include TargetCellsToCancel IE to identify the specific candidate cell being cancelled.
     xnap_message msg = {};
     msg.pdu.set_init_msg();
     msg.pdu.init_msg().load_info_obj(ASN1_XNAP_ID_HO_CANCEL);
-    ho_cancel_s& ho_cancel                    = msg.pdu.init_msg().value.ho_cancel();
-    ho_cancel->source_ng_ra_nnode_ue_xn_ap_id = to_underlying(ue_ctxt.ue_ids.local_xnap_ue_id);
-    ho_cancel->cause.set_radio_network()      = cause_radio_network_layer_opts::proc_cancelled;
-    if (ue_ctxt.ue_ids.peer_xnap_ue_id != peer_xnap_ue_id_t::invalid) {
-      ho_cancel->target_ng_ra_nnode_ue_xn_ap_id_present = true;
-      ho_cancel->target_ng_ra_nnode_ue_xn_ap_id         = to_underlying(ue_ctxt.ue_ids.peer_xnap_ue_id);
-    }
-    ho_cancel->target_cells_to_cancel_present = true;
+    ho_cancel_s& ho_cancel                            = msg.pdu.init_msg().value.ho_cancel();
+    ho_cancel->source_ng_ra_nnode_ue_xn_ap_id         = to_underlying(local_xnap_ue_id);
+    ho_cancel->cause.set_radio_network()              = cause_radio_network_layer_opts::proc_cancelled;
+    ho_cancel->target_ng_ra_nnode_ue_xn_ap_id_present = true;
+    ho_cancel->target_ng_ra_nnode_ue_xn_ap_id         = to_underlying(peer_ue_id);
+    ho_cancel->target_cells_to_cancel_present         = true;
     asn1::xnap::target_cell_list_item_s cell_item;
     cell_item.target_cell.set_nr() = cgi_to_asn1(target_cgi);
     ho_cancel->target_cells_to_cancel.push_back(cell_item);
@@ -492,12 +550,16 @@ void xnap_impl::handle_cho_cancel_required(cu_cp_ue_index_t ue_index, const nr_c
     if (!tx_notifier.on_new_message(msg)) {
       ue_ctxt.logger.log_warning("Cannot send HandoverCancel to release non-winning CHO target");
     } else {
-      ue_ctxt.logger.log_debug("HandoverCancel sent to release non-winning CHO target");
+      ue_ctxt.logger.log_debug("HandoverCancel sent to release non-winning CHO target nci={:#x}",
+                               target_cgi.nci.value());
     }
   }
 
-  // Release the local XNAP UE context for this candidate.
-  ue_ctxt_list.remove_ue_context(ue_index);
+  // Release the local XNAP UE context once this peer holds no candidate for this UE any more. Other candidates at
+  // the same peer keep it alive.
+  if (ue_ctxt.cho_idle()) {
+    ue_ctxt_list.remove_ue_context(ue_index);
+  }
 }
 
 void xnap_impl::handle_handover_success_required(cu_cp_ue_index_t ue_index, const nr_cell_global_id_t& cgi)
@@ -587,6 +649,13 @@ void xnap_impl::handle_handover_success(const asn1::xnap::ho_success_s& msg)
   }
   const nr_cell_global_id_t winner_cgi = asn1_to_cgi(msg->requested_target_cell_global_id.nr());
 
+  // Only a cell we prepared can have won. Adopting the ID first would leave the context addressed by an ID that
+  // belongs to no candidate if the peer names a stale or unknown cell.
+  if (ue_ctxt_ref.find_cho_prepared(winner_cgi) == peer_xnap_ue_id_t::invalid) {
+    ue_ctxt_ref.logger.log_warning("Discarding HandoverSuccess: no CHO candidate prepared for {}", winner_cgi);
+    return;
+  }
+
   // The Target NG-RAN node UE XnAP ID is the winning target's own local ID, so adopt it: the SN Status Transfer that
   // follows addresses the UE by it, and the other candidates' IDs are of no further use.
   ue_ctxt_list.update_peer_xnap_ue_id(local_xnap_ue_id, uint_to_peer_xnap_ue_id(msg->target_ng_ra_nnode_ue_xn_ap_id));
@@ -600,9 +669,9 @@ void xnap_impl::handle_handover_success(const asn1::xnap::ho_success_s& msg)
 void xnap_impl::handle_conditional_ho_cancel(const asn1::xnap::conditional_ho_cancel_s& msg)
 {
   // ConditionalHandoverCancel is sent from TARGET to SOURCE (TS 38.423 Section 8.2.9).
-  // The target self-cancels a prepared CHO context it no longer wants to hold.
+  // The target self-cancels prepared CHO contexts it no longer wants to hold.
   // Source NG-RAN node UE XnAP ID is our local XNAP UE ID (we allocated it when initiating HO).
-  // Target NG-RAN node UE XnAP ID is the cancelling target's XNAP UE ID (our peer_xnap_ue_id).
+  // Target NG-RAN node UE XnAP ID is the cancelling target's XNAP UE ID.
   local_xnap_ue_id_t local_id = uint_to_local_xnap_ue_id(msg->source_ng_ra_nnode_ue_xn_ap_id);
   if (!ue_ctxt_list.contains(local_id)) {
     logger.info("Received ConditionalHandoverCancel for unknown local_xnap_ue_id={}",
@@ -610,10 +679,66 @@ void xnap_impl::handle_conditional_ho_cancel(const asn1::xnap::conditional_ho_ca
     return;
   }
 
-  cu_cp_ue_index_t ue_index = ue_ctxt_list[local_id].ue_ids.ue_index;
+  xnap_ue_context&        ue_ctxt         = ue_ctxt_list[local_id];
+  const peer_xnap_ue_id_t cancelling_peer = uint_to_peer_xnap_ue_id(msg->target_ng_ra_nnode_ue_xn_ap_id);
 
-  // Release the XNAP UE context for this preparation link.
-  ue_ctxt_list.remove_ue_context(ue_index);
+  // TS 38.423 Section 8.2.9.2: when the target names cells, only those candidates are released; the remaining ones
+  // stay prepared under the same UE context. Both lists identify candidates by NG-RAN CGI.
+  std::vector<nr_cell_global_id_t> cancelled_cells;
+  unsigned                         nof_non_nr_cells = 0;
+  for (const auto& item : msg->target_cells_to_cancel) {
+    if (item.target_cell.type() == target_cgi_c::types_opts::nr) {
+      cancelled_cells.push_back(asn1_to_cgi(item.target_cell.nr()));
+    } else {
+      ++nof_non_nr_cells;
+    }
+  }
+  for (const auto& item : msg->conditional_recfg_to_cancel_list) {
+    if (item.pcell_id.type() == target_cgi_c::types_opts::nr) {
+      cancelled_cells.push_back(asn1_to_cgi(item.pcell_id.nr()));
+    } else {
+      ++nof_non_nr_cells;
+    }
+  }
+  if (nof_non_nr_cells != 0) {
+    ue_ctxt.logger.log_warning("ConditionalHandoverCancel names {} cell(s) that are not NR cells; ignoring them",
+                               nof_non_nr_cells);
+  }
+
+  if (!msg->target_cells_to_cancel_present and !msg->conditional_recfg_to_cancel_list_present) {
+    // Neither list is present: the target withdraws every candidate it prepared for this UE.
+    for (const auto& [cell, peer_xnap_ue_id] : ue_ctxt.cho_prepared) {
+      if (peer_xnap_ue_id == cancelling_peer) {
+        cancelled_cells.push_back(cell);
+      }
+    }
+  }
+
+  for (const nr_cell_global_id_t& cell : cancelled_cells) {
+    // TS 38.423 Section 8.2.9.4: candidate cells that were not prepared using this UE-associated signalling
+    // connection are ignored. The connection is named by both XNAP UE IDs (Section 8.2.9.2), so a cell prepared
+    // under another Target NG-RAN node UE XnAP ID is not this sender's to cancel.
+    const peer_xnap_ue_id_t prepared_peer = ue_ctxt.find_cho_prepared(cell);
+    if (prepared_peer == peer_xnap_ue_id_t::invalid) {
+      ue_ctxt.logger.log_info("ConditionalHandoverCancel names nci={:#x}, which is not prepared", cell.nci.value());
+      continue;
+    }
+    if (prepared_peer != cancelling_peer) {
+      ue_ctxt.logger.log_info("Ignoring nci={:#x} in ConditionalHandoverCancel: prepared for peer_xnap_ue={}, not {}",
+                              cell.nci.value(),
+                              fmt::underlying(prepared_peer),
+                              fmt::underlying(cancelling_peer));
+      continue;
+    }
+    // The peer XNAP UE ID lookup is released from the candidate's own record, never from the ID carried by this
+    // message, so a stale or misaddressed one cannot unregister an unrelated UE.
+    ue_ctxt_list.remove_cho_prepared(local_id, cell);
+  }
+
+  // Release the XNAP UE context once this peer holds no candidate for this UE any more.
+  if (ue_ctxt.cho_idle()) {
+    ue_ctxt_list.remove_ue_context(ue_ctxt.ue_ids.ue_index);
+  }
 }
 
 bool xnap_impl::handle_ue_context_release_required(cu_cp_ue_index_t ue_index)
