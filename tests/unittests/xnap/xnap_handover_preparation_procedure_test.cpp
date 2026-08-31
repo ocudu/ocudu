@@ -427,3 +427,225 @@ TEST_F(xnap_handover_preparation_procedure_test,
   ASSERT_TRUE(xnap->has_ue_context(ue_index_a)) << "the sibling candidate was released by another candidate's cancel";
   ASSERT_FALSE(xnap->has_ue_context(ue_index_b)) << "the named candidate was not released";
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//                    Source CU-CP - conditional handover
+///////////////////////////////////////////////////////////////////////////////
+
+/// Fixture for CHO preparations towards two candidate cells served by the same XN-C peer.
+class xnap_cho_preparation_test : public xnap_handover_preparation_procedure_test
+{
+protected:
+  void SetUp() override
+  {
+    run_xn_setup(xnap_peer_cfg);
+    ue_index = create_ue();
+    sec_ctxt = generate_security_context(ue_mng.find_ue(ue_index)->get_security_manager());
+    // Discard the XN setup exchange, so that each test only sees the messages it triggers.
+    pop_sent_messages();
+  }
+
+  /// \brief Launches a CHO preparation towards \c cell and returns the pending task.
+  xnap_handover_request make_cho_request(const nr_cell_global_id_t& cell)
+  {
+    xnap_handover_request request   = generate_handover_request(ue_index, sec_ctxt);
+    request.is_conditional_handover = true;
+    request.nr_cgi                  = cell;
+    return request;
+  }
+
+  const nr_cell_global_id_t cell_a{plmn_identity::test_value(), nr_cell_identity::create({1, 22}, 1).value()};
+  const nr_cell_global_id_t cell_b{plmn_identity::test_value(), nr_cell_identity::create({1, 22}, 2).value()};
+
+  // TS 38.423 Section 8.2.1.1: parallel CHO preparations share one Source NG-RAN node UE XnAP ID.
+  const local_xnap_ue_id_t local_id = local_xnap_ue_id_t::min;
+  const peer_xnap_ue_id_t  peer_a   = peer_xnap_ue_id_t::min;
+  const peer_xnap_ue_id_t  peer_b   = uint_to_peer_xnap_ue_id(to_underlying(peer_xnap_ue_id_t::min) + 1);
+
+  cu_cp_ue_index_t           ue_index = cu_cp_ue_index_t::invalid;
+  security::security_context sec_ctxt;
+};
+
+/// Two CHO candidates at the same peer share one Source NG-RAN node UE XnAP ID, and each acknowledgement resolves
+/// only the preparation for the cell it names.
+TEST_F(xnap_cho_preparation_test, when_two_cho_candidates_prepared_then_each_ack_resolves_its_own_cell)
+{
+  async_task<xnap_handover_preparation_response> t_a = xnap->handle_handover_request_required(make_cho_request(cell_a));
+  lazy_task_launcher<xnap_handover_preparation_response> launcher_a(t_a);
+  async_task<xnap_handover_preparation_response> t_b = xnap->handle_handover_request_required(make_cho_request(cell_b));
+  lazy_task_launcher<xnap_handover_preparation_response> launcher_b(t_b);
+
+  // Both Handover Requests carry the same source XNAP UE ID.
+  std::vector<xnap_message> requests = pop_sent_messages();
+  ASSERT_EQ(requests.size(), 2);
+  ASSERT_EQ(requests[0].pdu.init_msg().value.ho_request()->source_ng_ra_nnode_ue_xn_ap_id, to_underlying(local_id));
+  ASSERT_EQ(requests[1].pdu.init_msg().value.ho_request()->source_ng_ra_nnode_ue_xn_ap_id, to_underlying(local_id));
+
+  ASSERT_FALSE(t_a.ready());
+  ASSERT_FALSE(t_b.ready());
+
+  // The acknowledgement for cell A resolves only the preparation for cell A.
+  xnap->handle_message(::generate_cho_handover_request_ack(local_id, peer_a, cell_a));
+  ASSERT_TRUE(t_a.ready());
+  ASSERT_TRUE(t_a.get().success);
+  ASSERT_FALSE(t_b.ready());
+
+  xnap->handle_message(::generate_cho_handover_request_ack(local_id, peer_b, cell_b));
+  ASSERT_TRUE(t_b.ready());
+  ASSERT_TRUE(t_b.get().success);
+}
+
+/// A Handover Preparation Failure naming one candidate cell must fail only that preparation.
+TEST_F(xnap_cho_preparation_test, when_one_cho_candidate_fails_then_the_other_stays_pending)
+{
+  async_task<xnap_handover_preparation_response> t_a = xnap->handle_handover_request_required(make_cho_request(cell_a));
+  lazy_task_launcher<xnap_handover_preparation_response> launcher_a(t_a);
+  async_task<xnap_handover_preparation_response> t_b = xnap->handle_handover_request_required(make_cho_request(cell_b));
+  lazy_task_launcher<xnap_handover_preparation_response> launcher_b(t_b);
+  pop_sent_messages();
+
+  xnap->handle_message(::generate_cho_handover_preparation_failure(local_id, cell_a));
+  ASSERT_TRUE(t_a.ready());
+  ASSERT_FALSE(t_a.get().success);
+  ASSERT_FALSE(t_b.ready());
+
+  xnap->handle_message(::generate_cho_handover_request_ack(local_id, peer_b, cell_b));
+  ASSERT_TRUE(t_b.ready());
+  ASSERT_TRUE(t_b.get().success);
+}
+
+/// Cancelling a non-winning candidate sends a HandoverCancel naming that candidate's cell and target XNAP UE ID,
+/// and keeps the UE context alive for the remaining candidate.
+TEST_F(xnap_cho_preparation_test, when_non_winner_cancelled_then_handover_cancel_names_that_candidate)
+{
+  async_task<xnap_handover_preparation_response> t_a = xnap->handle_handover_request_required(make_cho_request(cell_a));
+  lazy_task_launcher<xnap_handover_preparation_response> launcher_a(t_a);
+  async_task<xnap_handover_preparation_response> t_b = xnap->handle_handover_request_required(make_cho_request(cell_b));
+  lazy_task_launcher<xnap_handover_preparation_response> launcher_b(t_b);
+
+  xnap->handle_message(::generate_cho_handover_request_ack(local_id, peer_a, cell_a));
+  xnap->handle_message(::generate_cho_handover_request_ack(local_id, peer_b, cell_b));
+  ASSERT_TRUE(t_a.ready() and t_a.get().success);
+  ASSERT_TRUE(t_b.ready() and t_b.get().success);
+  pop_sent_messages();
+
+  // Cancel the candidate at cell B; cell A won.
+  xnap->handle_cho_cancel_required(ue_index, cell_b);
+
+  std::vector<xnap_message> cancels = pop_sent_messages();
+  ASSERT_EQ(cancels.size(), 1);
+  ASSERT_EQ(cancels[0].pdu.init_msg().value.type().value,
+            asn1::xnap::xnap_elem_procs_o::init_msg_c::types_opts::ho_cancel);
+  const asn1::xnap::ho_cancel_s& cancel = cancels[0].pdu.init_msg().value.ho_cancel();
+  ASSERT_EQ(cancel->source_ng_ra_nnode_ue_xn_ap_id, to_underlying(local_id));
+  ASSERT_TRUE(cancel->target_ng_ra_nnode_ue_xn_ap_id_present);
+  ASSERT_EQ(cancel->target_ng_ra_nnode_ue_xn_ap_id, to_underlying(peer_b));
+  ASSERT_TRUE(cancel->target_cells_to_cancel_present);
+  ASSERT_EQ(cancel->target_cells_to_cancel.size(), 1);
+  ASSERT_EQ(cancel->target_cells_to_cancel[0].target_cell.nr().nr_ci.to_number(), cell_b.nci.value());
+
+  // The winning candidate keeps the UE context alive.
+  ASSERT_TRUE(xnap->has_ue_context(ue_index));
+
+  // Cancelling the last candidate releases it.
+  xnap->handle_cho_cancel_required(ue_index, cell_a);
+  ASSERT_FALSE(xnap->has_ue_context(ue_index));
+}
+
+/// When one CHO candidate times out, the HandoverCancel that follows must be scoped to that candidate alone
+/// (TS 38.423 Section 8.2.3.2). A cancel that omits Target Cells to Cancel releases the whole UE-associated
+/// signalling connection, taking the sibling candidates with it.
+TEST_F(xnap_cho_preparation_test, when_one_cho_candidate_times_out_then_the_cancel_names_only_that_cell)
+{
+  async_task<xnap_handover_preparation_response> t_a = xnap->handle_handover_request_required(make_cho_request(cell_a));
+  lazy_task_launcher<xnap_handover_preparation_response> launcher_a(t_a);
+  async_task<xnap_handover_preparation_response> t_b = xnap->handle_handover_request_required(make_cho_request(cell_b));
+  lazy_task_launcher<xnap_handover_preparation_response> launcher_b(t_b);
+
+  // Cell B is prepared; cell A never gets an answer.
+  xnap->handle_message(::generate_cho_handover_request_ack(local_id, peer_b, cell_b));
+  ASSERT_TRUE(t_b.ready() and t_b.get().success);
+  pop_sent_messages();
+
+  ASSERT_TRUE(this->tick(t_a, std::chrono::milliseconds{1000}));
+  ASSERT_TRUE(t_a.ready());
+  ASSERT_FALSE(t_a.get().success);
+
+  std::vector<xnap_message> sent = pop_sent_messages();
+  ASSERT_EQ(sent.size(), 1);
+  ASSERT_EQ(sent[0].pdu.init_msg().value.type().value,
+            asn1::xnap::xnap_elem_procs_o::init_msg_c::types_opts::ho_cancel);
+  const asn1::xnap::ho_cancel_s& cancel = sent[0].pdu.init_msg().value.ho_cancel();
+  ASSERT_TRUE(cancel->target_cells_to_cancel_present) << "the cancel must be scoped to the candidate that timed out";
+  ASSERT_EQ(cancel->target_cells_to_cancel.size(), 1);
+  ASSERT_EQ(cancel->target_cells_to_cancel[0].target_cell.nr().nr_ci.to_number(), cell_a.nci.value());
+}
+
+/// A CHO preparation that fails before it is sent must drop its per-cell event source, so that the same candidate
+/// cell can be prepared again.
+TEST_F(xnap_cho_preparation_test, when_cho_preparation_fails_early_then_the_same_cell_can_be_prepared_again)
+{
+  xnap_handover_request bad_request = make_cho_request(cell_a);
+  bad_request.ue_context_info_ho_request.pdu_session_res_to_be_setup_list.clear();
+
+  async_task<xnap_handover_preparation_response>         t_bad = xnap->handle_handover_request_required(bad_request);
+  lazy_task_launcher<xnap_handover_preparation_response> launcher_bad(t_bad);
+  ASSERT_TRUE(t_bad.ready());
+  ASSERT_FALSE(t_bad.get().success);
+
+  // Retrying the same candidate cell must be accepted, not rejected as already in flight.
+  async_task<xnap_handover_preparation_response> t_retry =
+      xnap->handle_handover_request_required(make_cho_request(cell_a));
+  lazy_task_launcher<xnap_handover_preparation_response> launcher_retry(t_retry);
+  ASSERT_FALSE(t_retry.ready()) << "the retry was refused instead of being sent";
+
+  xnap->handle_message(::generate_cho_handover_request_ack(local_id, peer_a, cell_a));
+  ASSERT_TRUE(t_retry.ready());
+  ASSERT_TRUE(t_retry.get().success);
+}
+
+/// TS 38.331 allows up to eight conditional reconfigurations, so a UE can hold eight CHO candidates at the same
+/// peer. All of them share one Source NG-RAN node UE XnAP ID and must each resolve on their own cell.
+TEST_F(xnap_cho_preparation_test, when_eight_cho_candidates_prepared_then_all_resolve_independently)
+{
+  constexpr unsigned nof_candidates = 8;
+
+  std::vector<nr_cell_global_id_t>                                                     cells;
+  std::vector<async_task<xnap_handover_preparation_response>>                          tasks;
+  std::vector<std::unique_ptr<lazy_task_launcher<xnap_handover_preparation_response>>> launchers;
+  tasks.reserve(nof_candidates);
+
+  for (unsigned i = 0; i != nof_candidates; ++i) {
+    cells.push_back(nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create({1, 22}, i + 1).value()});
+    tasks.push_back(xnap->handle_handover_request_required(make_cho_request(cells.back())));
+    launchers.push_back(std::make_unique<lazy_task_launcher<xnap_handover_preparation_response>>(tasks.back()));
+  }
+
+  // All eight Handover Requests went out under one Source NG-RAN node UE XnAP ID.
+  std::vector<xnap_message> requests = pop_sent_messages();
+  ASSERT_EQ(requests.size(), nof_candidates);
+  for (const xnap_message& request : requests) {
+    ASSERT_EQ(request.pdu.init_msg().value.ho_request()->source_ng_ra_nnode_ue_xn_ap_id, to_underlying(local_id));
+  }
+  for (const auto& task : tasks) {
+    ASSERT_FALSE(task.ready());
+  }
+
+  // Acknowledge them out of order; each ack must resolve only its own candidate.
+  const std::vector<unsigned> ack_order = {3, 0, 7, 5, 1, 6, 2, 4};
+  for (unsigned acked = 0; acked != ack_order.size(); ++acked) {
+    const unsigned          cand    = ack_order[acked];
+    const peer_xnap_ue_id_t peer_id = uint_to_peer_xnap_ue_id(to_underlying(peer_xnap_ue_id_t::min) + cand);
+
+    xnap->handle_message(::generate_cho_handover_request_ack(local_id, peer_id, cells[cand]));
+
+    ASSERT_TRUE(tasks[cand].ready()) << "candidate " << cand << " did not resolve on its own ack";
+    ASSERT_TRUE(tasks[cand].get().success);
+
+    // Every candidate not acknowledged yet must still be pending.
+    for (unsigned later = acked + 1; later != ack_order.size(); ++later) {
+      ASSERT_FALSE(tasks[ack_order[later]].ready())
+          << "candidate " << ack_order[later] << " resolved on another candidate's ack";
+    }
+  }
+}

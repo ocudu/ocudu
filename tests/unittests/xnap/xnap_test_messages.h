@@ -40,6 +40,16 @@ xnap_message generate_handover_preparation_failure(peer_xnap_ue_id_t peer_xnap_u
 /// \brief Generate a dummy Handover Request Ack message.
 xnap_message generate_handover_request_ack(local_xnap_ue_id_t local_xnap_ue_id, peer_xnap_ue_id_t peer_xnap_ue_id);
 
+/// \brief Generate a Handover Request Ack for a conditional handover, carrying the requested target cell in the
+/// CHOinformation-Ack IE (TS 38.423 Section 9.1.1.2), which tells parallel CHO preparations apart.
+xnap_message generate_cho_handover_request_ack(local_xnap_ue_id_t         local_xnap_ue_id,
+                                               peer_xnap_ue_id_t          peer_xnap_ue_id,
+                                               const nr_cell_global_id_t& cell);
+
+/// \brief Generate a Handover Preparation Failure carrying the requested target cell (TS 38.423 Section 8.2.1.3).
+xnap_message generate_cho_handover_preparation_failure(local_xnap_ue_id_t         local_xnap_ue_id,
+                                                       const nr_cell_global_id_t& cell);
+
 /// \brief Generate a Handover Cancel message scoped to one CHO candidate cell. The arguments take the sender's view:
 /// \c local_xnap_ue_id fills the Source NG-RAN node UE XnAP ID and \c peer_xnap_ue_id the Target one.
 xnap_message generate_handover_cancel(local_xnap_ue_id_t         local_xnap_ue_id,

@@ -218,6 +218,43 @@ xnap_message ocudu::ocucp::generate_handover_request_ack(local_xnap_ue_id_t loca
   return xnap_msg;
 }
 
+xnap_message ocudu::ocucp::generate_cho_handover_request_ack(local_xnap_ue_id_t         local_xnap_ue_id,
+                                                             peer_xnap_ue_id_t          peer_xnap_ue_id,
+                                                             const nr_cell_global_id_t& cell)
+{
+  xnap_message xnap_msg = generate_handover_request_ack(local_xnap_ue_id, peer_xnap_ue_id);
+
+  auto& ho_request_ack = xnap_msg.pdu.successful_outcome().value.ho_request_ack();
+
+  // Note: generate_handover_request_ack() assigns the two UE ID fields the other way round. Set them as a target
+  // node would: the source field carries our LOCAL XNAP UE ID, the target field the one the target allocated.
+  ho_request_ack->source_ng_ra_nnode_ue_xn_ap_id = to_underlying(local_xnap_ue_id);
+  ho_request_ack->target_ng_ra_nnode_ue_xn_ap_id = to_underlying(peer_xnap_ue_id);
+
+  ho_request_ack->ch_oinfo_ack_present                                  = true;
+  ho_request_ack->ch_oinfo_ack.requested_target_cell_global_id.set_nr() = cgi_to_asn1(cell);
+
+  return xnap_msg;
+}
+
+xnap_message ocudu::ocucp::generate_cho_handover_preparation_failure(local_xnap_ue_id_t         local_xnap_ue_id,
+                                                                     const nr_cell_global_id_t& cell)
+{
+  xnap_message xnap_msg;
+
+  xnap_msg.pdu.set_unsuccessful_outcome();
+  xnap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_XNAP_ID_HO_PREP);
+
+  auto& ho_prep_fail = xnap_msg.pdu.unsuccessful_outcome().value.ho_prep_fail();
+
+  ho_prep_fail->source_ng_ra_nnode_ue_xn_ap_id           = to_underlying(local_xnap_ue_id);
+  ho_prep_fail->cause.set_radio_network()                = asn1::xnap::cause_radio_network_layer_opts::unspecified;
+  ho_prep_fail->requested_target_cell_global_id_present  = true;
+  ho_prep_fail->requested_target_cell_global_id.set_nr() = cgi_to_asn1(cell);
+
+  return xnap_msg;
+}
+
 xnap_message ocudu::ocucp::generate_sn_status_transfer(local_xnap_ue_id_t           local_xnap_ue_id,
                                                        peer_xnap_ue_id_t            peer_xnap_ue_id,
                                                        const std::vector<drb_id_t>& extra_drb_ids)
