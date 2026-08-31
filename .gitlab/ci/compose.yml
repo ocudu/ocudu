@@ -58,7 +58,6 @@ gnb docker compose fedora 44:
           - docker/scripts/**/*
           - docker/Dockerfile
           - docker/docker-compose.yml
-      when: manual
       allow_failure: true
     - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Weekly/
 
