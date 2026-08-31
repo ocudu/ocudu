@@ -346,18 +346,27 @@ void xnap_impl::handle_handover_cancel(const asn1::xnap::ho_cancel_s& msg)
 
 void xnap_impl::handle_sn_status_transfer(const asn1::xnap::sn_status_transfer_s& msg)
 {
-  // This is sent from the source to the target, so the source XNAP UE ID is the peer UE ID and the target XNAP UE ID is
-  // the local UE ID.
-  peer_xnap_ue_id_t peer_xnap_ue_id = uint_to_peer_xnap_ue_id(msg->source_ng_ra_nnode_ue_xn_ap_id);
+  // This is sent from the source to the target, so the target XNAP UE ID is the local UE ID. Address the context by it:
+  // parallel CHO preparations from one source share the Source NG-RAN node UE XnAP ID, so it does not identify a single
+  // context here (TS 38.423 Section 9.1.1.4, the Target NG-RAN node UE XnAP ID is mandatory and allocated by us).
+  const local_xnap_ue_id_t local_xnap_ue_id = uint_to_local_xnap_ue_id(msg->target_ng_ra_nnode_ue_xn_ap_id);
 
-  if (!ue_ctxt_list.contains(peer_xnap_ue_id)) {
+  if (!ue_ctxt_list.contains(local_xnap_ue_id)) {
     logger.warning("peer_xnap_ue={} local_xnap_ue={}: Dropping SNStatusTransfer. UE context does not exist",
                    msg->source_ng_ra_nnode_ue_xn_ap_id,
                    msg->target_ng_ra_nnode_ue_xn_ap_id);
     return;
   }
 
-  xnap_ue_context& ue_ctxt = ue_ctxt_list[peer_xnap_ue_id];
+  xnap_ue_context& ue_ctxt = ue_ctxt_list[local_xnap_ue_id];
+
+  // Both IDs name the same signalling connection, so a context whose source ID differs is not the addressed one.
+  if (ue_ctxt.ue_ids.peer_xnap_ue_id != uint_to_peer_xnap_ue_id(msg->source_ng_ra_nnode_ue_xn_ap_id)) {
+    logger.warning("peer_xnap_ue={} local_xnap_ue={}: Dropping SNStatusTransfer. The IDs name different contexts",
+                   msg->source_ng_ra_nnode_ue_xn_ap_id,
+                   msg->target_ng_ra_nnode_ue_xn_ap_id);
+    return;
+  }
 
   ue_ctxt.sn_status_transfer_outcome.set(msg);
 }
