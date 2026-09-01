@@ -83,8 +83,8 @@ private:
   // See the rx_buffer_decoder_callback interface for documentation.
   void codeblock_decode(unsigned codeblock_id) override
   {
-    sync_token.reset();
     last_codeblock_id = codeblock_id;
+    sync_token.reset();
   }
 
   sync_event        sync;
