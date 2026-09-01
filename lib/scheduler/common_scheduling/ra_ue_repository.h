@@ -7,6 +7,7 @@
 #include "../cell/cell_harq_manager.h"
 #include "ocudu/adt/slotted_vector.h"
 #include "ocudu/ran/du_types.h"
+#include "ocudu/ran/ssb/ssb_configuration.h"
 #include "ocudu/scheduler/scheduler_rach_handler.h"
 
 namespace ocudu {
@@ -20,6 +21,8 @@ struct ra_ue_context {
   rach_indication_message::preamble preamble{};
   /// Slot at which the PRACH preamble was received.
   slot_point prach_slot_rx;
+  /// Index of the SS/PBCH block associated with the detected preamble, as per TS 38.213, Section 8.1.
+  ssb_id_t ssb_index;
   /// HARQ entity used to allocate the UL HARQ process for Msg3 (native 4-step or 2-step fallback).
   /// \note [TS 38.321, 5.4.2.1] "For UL transmission with UL grant in RA Response, HARQ process identifier 0 is
   /// used".
@@ -95,9 +98,9 @@ public:
   /// its Msg3 retransmissions (native 4-step or 2-step fallback).
   /// \return Pointer to the newly created entry; \c nullptr if a ring-key collision was detected (an unrelated,
   /// still-live entry already occupies this TC-RNTI's ring slot).
-  ra_ue_context* add(const rach_indication_message::preamble& preamble, slot_point prach_slot_rx)
+  ra_ue_context* add(const rach_indication_message::preamble& preamble, slot_point prach_slot_rx, ssb_id_t ssb_index)
   {
-    ra_ue_context* ctx = add_entry(preamble, prach_slot_rx);
+    ra_ue_context* ctx = add_entry(preamble, prach_slot_rx, ssb_index);
     if (ctx == nullptr) {
       return nullptr;
     }
@@ -108,9 +111,10 @@ public:
   /// Adds a new RA UE entry as soon as MsgA CRC=OK is known, before the RA scheduler commits the successRAR grant
   /// (can lag by several slots). No Msg3 HARQ is allocated, since contention is already resolved.
   /// \return Pointer to the new entry; \c nullptr on a TC-RNTI ring-key collision.
-  ra_ue_context* add_msgb_pending(const rach_indication_message::preamble& preamble, slot_point prach_slot_rx)
+  ra_ue_context*
+  add_msgb_pending(const rach_indication_message::preamble& preamble, slot_point prach_slot_rx, ssb_id_t ssb_index)
   {
-    return add_entry(preamble, prach_slot_rx);
+    return add_entry(preamble, prach_slot_rx, ssb_index);
   }
 
   /// Records the successRAR MsgB PDSCH slot and its HARQ-ACK feedback slot on an entry created by \c
@@ -173,7 +177,8 @@ private:
   /// \brief Inserts a new entry for the detected preamble's TC-RNTI, saving the preamble directly.
   /// \return Pointer to the newly created entry; \c nullptr if a ring-key collision was detected (an unrelated,
   /// still-live entry already occupies this TC-RNTI's ring slot).
-  ra_ue_context* add_entry(const rach_indication_message::preamble& preamble, slot_point prach_slot_rx)
+  ra_ue_context*
+  add_entry(const rach_indication_message::preamble& preamble, slot_point prach_slot_rx, ssb_id_t ssb_index)
   {
     const uint16_t key = ring_key(preamble.tc_rnti);
     if (table.contains(key)) {
@@ -182,6 +187,7 @@ private:
     auto& ctx         = table.emplace(key);
     ctx.preamble      = preamble;
     ctx.prach_slot_rx = prach_slot_rx;
+    ctx.ssb_index     = ssb_index;
     return &ctx;
   }
 

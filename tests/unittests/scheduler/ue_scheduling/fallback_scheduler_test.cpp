@@ -700,7 +700,7 @@ TEST_P(fallback_scheduler_tester, when_msgb_ack_not_yet_sent_ue_doesnt_get_alloc
   // Simulate the RA scheduler having committed the MsgB PDSCH a few slots ahead.
   rach_indication_message::preamble preamble{};
   preamble.tc_rnti = tc_rnti;
-  ASSERT_NE(bench->ra_ue_repo.add_msgb_pending(preamble, prach_slot), nullptr);
+  ASSERT_NE(bench->ra_ue_repo.add_msgb_pending(preamble, prach_slot, ssb_id_t{0}), nullptr);
   ASSERT_TRUE(bench->ra_ue_repo.set_msgb_scheduled(tc_rnti, msgb_slot_tx, msgb_ack_slot_tx));
 
   // UE created right after the successRAR was scheduled, before its PDSCH is transmitted.

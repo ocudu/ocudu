@@ -353,13 +353,12 @@ void ra_scheduler::handle_rach_indication(const rach_indication_message& msg)
   metrics_hdlr.handle_rach_indication(msg);
 }
 
-std::optional<ssb_id_t> ra_scheduler::get_preamble_ssb_index(const rach_indication_message::occasion& occ,
-                                                             const rach_indication_message::preamble& preamble,
-                                                             slot_point prach_slot_rx) const
+std::optional<ssb_id_t>
+ra_scheduler::get_preamble_ssb_index(slot_point prach_slot_rx, unsigned fd_occasion_idx, unsigned preamble_id) const
 {
   // The lower layers do not report the time-domain occasion index, so only the first occasion of the PRACH slot is
   // resolved. The configuration validator rejects time multiplexed occasions when more than one SSB beam is active.
-  return ssb_ro_map.get_ssb_index(prach_slot_rx, 0, occ.frequency_index, preamble.preamble_id);
+  return ssb_ro_map.get_ssb_index(prach_slot_rx, 0, fd_occasion_idx, preamble_id);
 }
 
 void ra_scheduler::handle_msg1_occasion(const rach_indication_message::occasion&      occ,
@@ -446,7 +445,8 @@ void ra_scheduler::handle_msg1_occasion(const rach_indication_message::occasion&
   for (unsigned idx = 0; idx != preambles.size(); ++idx) {
     const auto& preamble = preambles[idx];
 
-    const std::optional<ssb_id_t> ssb_index = get_preamble_ssb_index(occ, preamble, prach_slot_rx);
+    const std::optional<ssb_id_t> ssb_index =
+        get_preamble_ssb_index(prach_slot_rx, occ.frequency_index, preamble.preamble_id);
     if (not ssb_index.has_value()) {
       logger.info("pci={} ra-rnti={}: Discarding PRACH preamble. Cause: Its PRACH occasion is associated with no "
                   "SS/PBCH block",
@@ -484,7 +484,7 @@ void ra_scheduler::handle_msg1_occasion(const rach_indication_message::occasion&
     }
 
     // Create a new UE RA context.
-    ra_ue_context* msg3_entry = ra_ue_repo.add(preamble, prach_slot_rx);
+    ra_ue_context* msg3_entry = ra_ue_repo.add(preamble, prach_slot_rx, *ssb_index);
     if (msg3_entry == nullptr) {
       logger.warning("pci={}: PRACH ignored, as the allocated TC-RNTI={} is already under use",
                      cell_cfg.params.pci,
@@ -556,6 +556,7 @@ void ra_scheduler::handle_msga_occasion(const rach_indication_message::occasion&
     new_msgb.msgb_rnti           = msgb_rnti;
     new_msgb.ra_rnti             = ra_rnti;
     new_msgb.prach_slot_rx       = prach_slot_rx;
+    new_msgb.frequency_index     = occ.frequency_index;
 
     // Set MsgB response window. First slot after PRACH with active DL slot is the window start.
     if (cell_cfg.is_tdd()) {
@@ -579,7 +580,8 @@ void ra_scheduler::handle_msga_occasion(const rach_indication_message::occasion&
   for (const auto& preamble : preambles) {
     ocudu_sanity_check(ra_helper::is_msga_cb_preamble(rach_cfg, preamble.preamble_id),
                        "Handling preamble that is not for MsgA. Are preamble IDs sorted in the RACH indication?");
-    const std::optional<ssb_id_t> ssb_index = get_preamble_ssb_index(occ, preamble, prach_slot_rx);
+    const std::optional<ssb_id_t> ssb_index =
+        get_preamble_ssb_index(prach_slot_rx, occ.frequency_index, preamble.preamble_id);
     if (not ssb_index.has_value()) {
       logger.info("pci={} msgb-rnti={}: Discarding MsgA preamble. Cause: Its PRACH occasion is associated with no "
                   "SS/PBCH block",
@@ -900,8 +902,14 @@ bool ra_scheduler::handle_msga_crc(rnti_t ra_rnti, uint8_t rapid, bool success)
 
       // Track the outcome now: schedule_pending_msgbs can commit the grant several slots later, and the fallback
       // gate needs an entry to check against before then.
-      ra_ue_context* ctx = success ? ra_ue_repo.add_msgb_pending(p.info, msgb.prach_slot_rx)
-                                   : ra_ue_repo.add(p.info, msgb.prach_slot_rx);
+      // The association is immutable, so the SS/PBCH block resolved when the preamble was detected is recovered
+      // here rather than carried on every pending preamble.
+      const std::optional<ssb_id_t> ssb_index =
+          get_preamble_ssb_index(msgb.prach_slot_rx, msgb.frequency_index, p.info.preamble_id);
+      ocudu_sanity_check(ssb_index.has_value(), "MsgA preamble accepted in an occasion with no SS/PBCH block");
+
+      ra_ue_context* ctx = success ? ra_ue_repo.add_msgb_pending(p.info, msgb.prach_slot_rx, *ssb_index)
+                                   : ra_ue_repo.add(p.info, msgb.prach_slot_rx, *ssb_index);
       if (ctx != nullptr) {
         return true;
       }

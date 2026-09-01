@@ -109,9 +109,11 @@ private:
       preamble_ctx(const rach_indication_message::preamble& info_) : info(info_) {}
     };
 
-    rnti_t        msgb_rnti = rnti_t::INVALID_RNTI;
-    rnti_t        ra_rnti   = rnti_t::INVALID_RNTI;
-    slot_point    prach_slot_rx;
+    rnti_t     msgb_rnti = rnti_t::INVALID_RNTI;
+    rnti_t     ra_rnti   = rnti_t::INVALID_RNTI;
+    slot_point prach_slot_rx;
+    /// Frequency domain index of the PRACH occasion that carried the MsgA preambles.
+    uint8_t       frequency_index = 0;
     slot_interval msgb_window;
     /// Last slot at which the scheduler attempted to allocate this MsgB grant.
     slot_point last_sched_try_slot;
@@ -127,11 +129,11 @@ private:
   /// Pre-compute invariant fields of Msg3 PDUs (PUSCH, DCI, etc.) for faster scheduling.
   void precompute_msg3_pdus();
 
-  /// \brief SS/PBCH block index associated with a detected preamble, as per TS 38.213, Section 8.1.
+  /// \brief SS/PBCH block index associated with a preamble detected in the PRACH occasion
+  /// \c (prach_slot_rx, fd_occasion_idx), as per TS 38.213, Section 8.1.
   /// \return Nullopt if the PRACH occasion is associated with no SS/PBCH block index.
-  std::optional<ssb_id_t> get_preamble_ssb_index(const rach_indication_message::occasion& occ,
-                                                 const rach_indication_message::preamble& preamble,
-                                                 slot_point                               prach_slot_rx) const;
+  std::optional<ssb_id_t>
+  get_preamble_ssb_index(slot_point prach_slot_rx, unsigned fd_occasion_idx, unsigned preamble_id) const;
 
   /// Handle a PRACH occasion carrying Msg1 (4-step RACH) preambles.
   void handle_msg1_occasion(const rach_indication_message::occasion&      occ,

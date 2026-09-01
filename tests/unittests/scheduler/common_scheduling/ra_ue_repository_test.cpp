@@ -44,7 +44,7 @@ TEST_F(ra_ue_repository_test, add_creates_entry_findable_by_tc_rnti)
 {
   const rnti_t tc_rnti = to_rnti(0x4601);
 
-  ra_ue_context* ctx = repo.add(test_helper::create_preamble(0, tc_rnti), sl_tx);
+  ra_ue_context* ctx = repo.add(test_helper::create_preamble(0, tc_rnti), sl_tx, ssb_id_t{0});
   ASSERT_NE(ctx, nullptr);
   EXPECT_EQ(ctx->tc_rnti(), tc_rnti);
   EXPECT_EQ(ctx->prach_slot_rx, sl_tx);
@@ -60,7 +60,7 @@ TEST_F(ra_ue_repository_test, add_creates_entry_findable_by_tc_rnti)
 TEST_F(ra_ue_repository_test, erase_removes_resolved_entry)
 {
   const rnti_t tc_rnti = to_rnti(0x4601);
-  repo.add(test_helper::create_preamble(0, tc_rnti), sl_tx);
+  repo.add(test_helper::create_preamble(0, tc_rnti), sl_tx, ssb_id_t{0});
   ASSERT_NE(repo.find(tc_rnti), repo.end());
 
   repo.erase(tc_rnti);
@@ -70,7 +70,7 @@ TEST_F(ra_ue_repository_test, erase_removes_resolved_entry)
 TEST_F(ra_ue_repository_test, slot_indication_erases_entry_after_conres_timeout)
 {
   const rnti_t tc_rnti = to_rnti(0x4601);
-  repo.add(test_helper::create_preamble(0, tc_rnti), sl_tx);
+  repo.add(test_helper::create_preamble(0, tc_rnti), sl_tx, ssb_id_t{0});
 
   // Must survive every slot_indication() call up to (not including) the ConRes timeout boundary.
   for (unsigned i = 0; i != conres_timer_slots; ++i) {
@@ -87,7 +87,7 @@ TEST_F(ra_ue_repository_test, slot_indication_keeps_entry_alive_while_msg3_harq_
 {
   const rnti_t tc_rnti = to_rnti(0x4601);
 
-  ra_ue_context* ctx = repo.add(test_helper::create_preamble(0, tc_rnti), sl_tx);
+  ra_ue_context* ctx = repo.add(test_helper::create_preamble(0, tc_rnti), sl_tx, ssb_id_t{0});
   ASSERT_NE(ctx, nullptr);
 
   std::optional<ul_harq_process_handle> h_ul = ctx->harq_ent.alloc_ul_harq(sl_tx, 4);
@@ -108,7 +108,7 @@ TEST_F(ra_ue_repository_test, add_msgb_pending_entry_is_harqless_and_pending_unt
   const rnti_t tc_rnti = to_rnti(0x4601);
 
   // As soon as MsgA CRC=OK is known, an entry is created with no committed MsgB slot yet.
-  ra_ue_context* ctx = repo.add_msgb_pending(test_helper::create_preamble(0, tc_rnti), sl_tx);
+  ra_ue_context* ctx = repo.add_msgb_pending(test_helper::create_preamble(0, tc_rnti), sl_tx, ssb_id_t{0});
   ASSERT_NE(ctx, nullptr);
   EXPECT_TRUE(ctx->harq_ent.empty());
   EXPECT_FALSE(ctx->msgb_slot_tx.has_value());
@@ -133,7 +133,7 @@ TEST_F(ra_ue_repository_test, add_msgb_pending_entry_is_erased_after_conres_time
 {
   const rnti_t tc_rnti = to_rnti(0x4601);
 
-  repo.add_msgb_pending(test_helper::create_preamble(0, tc_rnti), sl_tx);
+  repo.add_msgb_pending(test_helper::create_preamble(0, tc_rnti), sl_tx, ssb_id_t{0});
   ASSERT_NE(repo.find(tc_rnti), repo.end());
 
   // Reclaimed by the ConRes-timer sweep even if set_msgb_scheduled() never runs.
@@ -146,7 +146,7 @@ TEST_F(ra_ue_repository_test, add_msgb_pending_then_scheduled_entry_is_erased_af
   const rnti_t     tc_rnti      = to_rnti(0x4601);
   const slot_point msgb_slot_tx = sl_tx + 3;
 
-  repo.add_msgb_pending(test_helper::create_preamble(0, tc_rnti), sl_tx);
+  repo.add_msgb_pending(test_helper::create_preamble(0, tc_rnti), sl_tx, ssb_id_t{0});
   ASSERT_TRUE(repo.set_msgb_scheduled(tc_rnti, msgb_slot_tx, msgb_slot_tx + 4));
 
   // A HARQ-less successRAR entry is swept the same way as a Msg3-tracking one, based purely on prach_slot_rx.
