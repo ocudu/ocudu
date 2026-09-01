@@ -69,11 +69,12 @@ auto format_info_level(FormatContext& ctx, const Event& ev, bool first)
     fmt::format_to(ctx.out(), "{}Cell creation idx={}", separator, ev.cell_index);
   } else if constexpr (std::is_same_v<Event, sel::prach_event>) {
     fmt::format_to(ctx.out(),
-                   "{}prach({}={} preamble={} tc-rnti={})",
+                   "{}prach({}={} preamble={} ssb={} tc-rnti={})",
                    separator,
                    ev.is_msga ? "msgb-rnti" : "ra-rnti",
                    ev.ra_rnti,
                    ev.preamble_id,
+                   ev.ssb_index,
                    ev.tc_rnti);
   } else if constexpr (std::is_same_v<Event, rach_indication_message>) {
     fmt::format_to(ctx.out(), "{}RACH Ind slot_rx={}", separator, ev.slot_rx);

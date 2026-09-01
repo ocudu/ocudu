@@ -446,7 +446,8 @@ void ra_scheduler::handle_msg1_occasion(const rach_indication_message::occasion&
   for (unsigned idx = 0; idx != preambles.size(); ++idx) {
     const auto& preamble = preambles[idx];
 
-    if (not get_preamble_ssb_index(occ, preamble, prach_slot_rx).has_value()) {
+    const std::optional<ssb_id_t> ssb_index = get_preamble_ssb_index(occ, preamble, prach_slot_rx);
+    if (not ssb_index.has_value()) {
       logger.info("pci={} ra-rnti={}: Discarding PRACH preamble. Cause: Its PRACH occasion is associated with no "
                   "SS/PBCH block",
                   cell_cfg.params.pci,
@@ -461,6 +462,7 @@ void ra_scheduler::handle_msg1_occasion(const rach_indication_message::occasion&
         preamble.preamble_id,
         ra_rnti,
         preamble.tc_rnti,
+        *ssb_index,
         preamble.time_advance.to_Ta(cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.scs),
         false});
 
@@ -577,7 +579,8 @@ void ra_scheduler::handle_msga_occasion(const rach_indication_message::occasion&
   for (const auto& preamble : preambles) {
     ocudu_sanity_check(ra_helper::is_msga_cb_preamble(rach_cfg, preamble.preamble_id),
                        "Handling preamble that is not for MsgA. Are preamble IDs sorted in the RACH indication?");
-    if (not get_preamble_ssb_index(occ, preamble, prach_slot_rx).has_value()) {
+    const std::optional<ssb_id_t> ssb_index = get_preamble_ssb_index(occ, preamble, prach_slot_rx);
+    if (not ssb_index.has_value()) {
       logger.info("pci={} msgb-rnti={}: Discarding MsgA preamble. Cause: Its PRACH occasion is associated with no "
                   "SS/PBCH block",
                   cell_cfg.params.pci,
@@ -591,6 +594,7 @@ void ra_scheduler::handle_msga_occasion(const rach_indication_message::occasion&
         preamble.preamble_id,
         msgb_rnti,
         preamble.tc_rnti,
+        *ssb_index,
         preamble.time_advance.to_Ta(cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.scs),
         true});
 

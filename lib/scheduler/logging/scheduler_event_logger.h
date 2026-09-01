@@ -12,6 +12,7 @@
 #include "ocudu/ran/pusch/pusch_tpmi_select.h"
 #include "ocudu/ran/rnti.h"
 #include "ocudu/ran/slot_point.h"
+#include "ocudu/ran/ssb/ssb_configuration.h"
 #include "ocudu/scheduler/input/uci_inputs.h"
 #include "ocudu/scheduler/scheduler_configurator.h"
 #include "ocudu/scheduler/scheduler_dl_buffer_state_indication_handler.h"
@@ -30,6 +31,7 @@ public:
     unsigned        preamble_id;
     rnti_t          ra_rnti;
     rnti_t          tc_rnti;
+    ssb_id_t        ssb_index;
     unsigned        ta;
     bool            is_msga;
   };
