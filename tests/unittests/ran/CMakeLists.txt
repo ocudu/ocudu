@@ -45,6 +45,10 @@ add_executable(pdcch_type0_css_coreset_config_test pdcch/pdcch_type0_css_coreset
 target_link_libraries(pdcch_type0_css_coreset_config_test ocudu_ran ocudulog)
 add_test(pdcch_type0_css_coreset_config_test pdcch_type0_css_coreset_config_test)
 
+add_executable(pdsch_dmrs_symbol_mask_test pdsch/pdsch_dmrs_symbol_mask_test.cpp)
+target_link_libraries(pdsch_dmrs_symbol_mask_test ocudu_ran ocudulog GTest::gtest ocudu_gtest_main)
+add_test(pdsch_dmrs_symbol_mask_test pdsch_dmrs_symbol_mask_test)
+
 add_executable(pdsch_mcs_table_test pdsch/pdsch_mcs_table_test.cpp)
 target_link_libraries(pdsch_mcs_table_test ocudu_ran ocudulog GTest::gtest ocudu_gtest_main)
 add_test(pdsch_mcs_table_test pdsch_mcs_table_test)
@@ -76,6 +80,10 @@ add_test(prach_occasion_mapping_test prach_occasion_mapping_test)
 add_executable(pucch_info_test pucch/pucch_info_test.cpp)
 target_link_libraries(pucch_info_test ocudu_ran GTest::gtest ocudu_gtest_main)
 add_test(pucch_info_test pucch_info_test)
+
+add_executable(pusch_dmrs_symbol_mask_test pusch/pusch_dmrs_symbol_mask_test.cpp)
+target_link_libraries(pusch_dmrs_symbol_mask_test ocudu_ran ocudulog GTest::gtest ocudu_gtest_main)
+add_test(pusch_dmrs_symbol_mask_test pusch_dmrs_symbol_mask_test)
 
 add_executable(pusch_mcs_table_test pusch/pusch_mcs_table_test.cpp)
 target_link_libraries(pusch_mcs_table_test ocudu_ran ocudulog GTest::gtest ocudu_gtest_main)
