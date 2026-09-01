@@ -20,23 +20,31 @@ using namespace odu;
 bool             g_enable_pcap = false;
 ocudu::mac_pcap* g_pcap        = nullptr;
 
-/// A cell configured with a reserved (dormant) SI-message occasion for SIB6, but no etws_cfg content -- i.e. the
-/// SI-message requires activation and has no matching entry in si_config->sibs yet.
+/// A cell provisioned for an ETWS primary notification, with no content configured for it -- i.e. it stays dormant
+/// until a Write-Replace Warning provides one.
 static du_cell_config make_cell_config_with_dormant_pws_si_message()
 {
   du_cell_config cfg = config_helpers::make_default_du_cell_config();
 
   cfg.si.si_config.emplace();
   cfg.si.si_config->si_window_len_slots = 10;
-
-  si_message_sched_info si_msg;
-  si_msg.sib_mapping_info       = {sib_type::sib6};
-  si_msg.si_period_radio_frames = 32;
-  cfg.si.si_config->si_sched_info.push_back(si_msg);
-  // Note: si_config->sibs is left empty -- no content configured for the dormant SIB6, which is what makes this SI
-  // message require activation.
+  cfg.si.si_config->pws_si_messages.push_back(pws_si_message_config{sib_type::sib6, 32, false});
+  // Note: si_config->sibs is left empty -- no content configured for the dormant SIB6.
 
   return cfg;
+}
+
+/// SIB2 content, used as the SI message of the normal operation of the test cells.
+static sib2_info make_sib2_info()
+{
+  sib2_info sib2;
+  sib2.q_hyst                    = q_hyst_t::db4;
+  sib2.thresh_serving_low_p      = reselection_threshold_t{14};
+  sib2.cell_reselection_priority = cell_reselection_priority_t{4};
+  sib2.q_rx_lev_min              = q_rx_lev_min_t{-70};
+  sib2.s_intra_search_p          = reselection_threshold_t{31};
+  sib2.t_reselection_nr          = t_reselection_t{1};
+  return sib2;
 }
 
 TEST(asn1_sib1_sched_info_test, pws_si_message_is_packed_even_without_content)
@@ -66,17 +74,10 @@ TEST(asn1_sib1_sched_info_test, pws_si_message_is_packed_even_without_content)
 
 TEST(asn1_sib1_sched_info_test, si_message_with_content_is_packed_with_its_value_tag)
 {
-  du_cell_config cell_cfg                                       = make_cell_config_with_dormant_pws_si_message();
-  cell_cfg.si.si_config->si_sched_info.front().sib_mapping_info = {sib_type::sib2};
-
-  sib2_info sib2;
-  sib2.q_hyst                    = q_hyst_t::db4;
-  sib2.thresh_serving_low_p      = reselection_threshold_t{14};
-  sib2.cell_reselection_priority = cell_reselection_priority_t{4};
-  sib2.q_rx_lev_min              = q_rx_lev_min_t{-70};
-  sib2.s_intra_search_p          = reselection_threshold_t{31};
-  sib2.t_reselection_nr          = t_reselection_t{1};
-  cell_cfg.si.si_config->sibs.push_back(sib_type_info{sib2, value_tag_t{0}});
+  du_cell_config cell_cfg = make_cell_config_with_dormant_pws_si_message();
+  cell_cfg.si.si_config->pws_si_messages.clear();
+  cell_cfg.si.si_config->si_sched_info.push_back(si_message_sched_info{{sib_type::sib2}, 32});
+  cell_cfg.si.si_config->sibs.push_back(sib_type_info{make_sib2_info(), value_tag_t{0}});
 
   byte_buffer buf = asn1_packer::pack_sib1(cell_cfg, si_message_set::every_si_message);
 
@@ -106,15 +107,16 @@ static std::vector<sib_type> first_sib_of_each(const si_scheduling_config& si_sc
 
 TEST(asn1_sib1_sched_info_test, pws_si_message_takes_no_position_in_the_si_scheduling_of_a_starting_cell)
 {
-  // A cell whose SI scheduling lists the SIB8 SI message between two that are always broadcast.
-  du_cell_config cell_cfg                                       = make_cell_config_with_dormant_pws_si_message();
-  cell_cfg.si.si_config->si_sched_info.front().sib_mapping_info = {sib_type::sib2};
-  cell_cfg.si.si_config->si_sched_info.push_back(si_message_sched_info{{sib_type::sib8}, 64});
+  // A cell provisioned for a CMAS warning, on top of two SI messages that are always broadcast.
+  du_cell_config cell_cfg                = make_cell_config_with_dormant_pws_si_message();
+  cell_cfg.si.si_config->pws_si_messages = {pws_si_message_config{sib_type::sib8, 64, false}};
+  cell_cfg.si.si_config->si_sched_info.push_back(si_message_sched_info{{sib_type::sib2}, 64});
   cell_cfg.si.si_config->si_sched_info.push_back(si_message_sched_info{{sib_type::sib3}, 64});
 
-  const std::array<units::bytes, 3> si_msg_lens{units::bytes{10}, units::bytes{10}, units::bytes{10}};
+  const std::array<units::bytes, 2> si_msg_lens{units::bytes{10}, units::bytes{10}};
+  const std::array<units::bytes, 1> pws_si_msg_lens{units::bytes{0}};
   const si_scheduling_config        cell_si_sched_cfg =
-      make_si_scheduling_info_config(cell_cfg, units::bytes{100}, si_msg_lens);
+      make_si_scheduling_info_config(cell_cfg, units::bytes{100}, si_msg_lens, pws_si_msg_lens);
 
   const sched_cell_configuration_request_message sched_req =
       make_sched_cell_config_req(to_du_cell_index(0), cell_cfg, cell_si_sched_cfg, 8);
@@ -128,21 +130,12 @@ TEST(asn1_sib1_sched_info_test, pws_si_message_takes_no_position_in_the_si_sched
 /// \param pws_test_mode Whether the SIB6 SI message is given content and broadcast right away, as test_mode does.
 static du_cell_config make_cell_config_with_sib2_and_pws(bool pws_test_mode)
 {
-  du_cell_config cfg                                       = make_cell_config_with_dormant_pws_si_message();
-  cfg.si.si_config->si_sched_info.front().sib_mapping_info = {sib_type::sib2};
-  cfg.si.si_config->si_sched_info.push_back(si_message_sched_info{{sib_type::sib6}, 64});
-
-  sib2_info sib2;
-  sib2.q_hyst                    = q_hyst_t::db4;
-  sib2.thresh_serving_low_p      = reselection_threshold_t{14};
-  sib2.cell_reselection_priority = cell_reselection_priority_t{4};
-  sib2.q_rx_lev_min              = q_rx_lev_min_t{-70};
-  sib2.s_intra_search_p          = reselection_threshold_t{31};
-  sib2.t_reselection_nr          = t_reselection_t{1};
-  cfg.si.si_config->sibs.push_back(sib_type_info{sib2, value_tag_t{0}});
+  du_cell_config cfg = make_cell_config_with_dormant_pws_si_message();
+  cfg.si.si_config->si_sched_info.push_back(si_message_sched_info{{sib_type::sib2}, 64});
+  cfg.si.si_config->sibs.push_back(sib_type_info{make_sib2_info(), value_tag_t{0}});
 
   if (pws_test_mode) {
-    cfg.si.si_config->si_sched_info.back().auto_broadcast = true;
+    cfg.si.si_config->pws_si_messages.front().auto_broadcast = true;
     cfg.si.si_config->sibs.push_back(sib_type_info{sib6_info{4352, 0, 0}, value_tag_t{0}});
   }
 
@@ -203,17 +196,59 @@ TEST(asn1_sib1_sched_info_test, sib1_of_the_normal_operation_is_shorter_than_the
   ASSERT_LT(starting_sib1.length(), mac_sib1.length());
 }
 
+TEST(asn1_sib1_sched_info_test, warning_content_is_packed_apart_from_the_si_messages_of_the_normal_operation)
+{
+  const du_cell_config cell_cfg = make_cell_config_with_sib2_and_pws(true);
+
+  const std::vector<bcch_dl_sch_payload_type> si_msgs =
+      asn1_packer::pack_all_bcch_dl_sch_msgs(cell_cfg, si_message_set::every_si_message);
+  ASSERT_EQ(si_msgs.size(), 2) << "Only SIB1 and the SI message of the normal operation must be packed here";
+
+  const std::vector<bcch_dl_sch_payload_type> pws_msgs = asn1_packer::pack_pws_si_messages(cell_cfg);
+  ASSERT_EQ(pws_msgs.size(), 1);
+  ASSERT_EQ(pws_msgs[0].size(), 1) << "An ETWS primary notification is never segmented";
+  ASSERT_FALSE(pws_msgs[0].front().empty());
+}
+
+TEST(asn1_sib1_sched_info_test, warning_with_no_configured_content_is_packed_empty)
+{
+  const std::vector<bcch_dl_sch_payload_type> pws_msgs =
+      asn1_packer::pack_pws_si_messages(make_cell_config_with_dormant_pws_si_message());
+
+  ASSERT_EQ(pws_msgs.size(), 1);
+  ASSERT_TRUE(pws_msgs[0].empty()) << "A dormant warning carries no content until a Write-Replace Warning provides one";
+}
+
+TEST(asn1_sib1_sched_info_test, warning_parameters_reach_the_si_scheduling_configuration)
+{
+  const du_cell_config cell_cfg = make_cell_config_with_sib2_and_pws(true);
+
+  const std::array<units::bytes, 1> si_msg_lens{units::bytes{10}};
+  const std::array<units::bytes, 1> pws_si_msg_lens{units::bytes{20}};
+  const si_scheduling_config        si_sched_cfg =
+      make_si_scheduling_info_config(cell_cfg, units::bytes{100}, si_msg_lens, pws_si_msg_lens);
+
+  // The warning takes no position among the SI messages of the normal operation.
+  ASSERT_EQ(first_sib_of_each(si_sched_cfg), (std::vector<sib_type>{sib_type::sib2}));
+
+  ASSERT_EQ(si_sched_cfg.pws_si_messages.size(), 1);
+  EXPECT_EQ(si_sched_cfg.pws_si_messages[0].sibs, sib_type_set{sib_type::sib6});
+  EXPECT_EQ(si_sched_cfg.pws_si_messages[0].period_radio_frames, 32);
+  EXPECT_EQ(si_sched_cfg.pws_si_messages[0].msg_len, units::bytes{20});
+  EXPECT_TRUE(si_sched_cfg.pws_si_messages[0].test_mode_auto_broadcast);
+}
+
 TEST(asn1_sib1_sched_info_test, pws_sib_mixed_with_other_sibs_in_one_si_message_is_rejected)
 {
   // The MAC lists a PWS SI-message in SIB1 only while its warning is on air, and an SI message is listed as a whole, so
   // appending a non-PWS SIB to a PWS SI-message would take that SIB off the air while no warning is on-going.
   du_cell_config cell_cfg = make_cell_config_with_dormant_pws_si_message();
-  cell_cfg.si.si_config->si_sched_info[0].sib_mapping_info.push_back(sib_type::sib2);
+  cell_cfg.si.si_config->si_sched_info.push_back(si_message_sched_info{{sib_type::sib6, sib_type::sib2}, 32});
 
   ASSERT_FALSE(is_du_cell_config_valid(cell_cfg).has_value());
 }
 
-TEST(asn1_sib1_sched_info_test, dormant_pws_si_message_alone_in_its_si_message_is_accepted)
+TEST(asn1_sib1_sched_info_test, cell_provisioned_for_a_warning_with_no_other_si_message_is_accepted)
 {
   ASSERT_TRUE(is_du_cell_config_valid(make_cell_config_with_dormant_pws_si_message()).has_value());
 }

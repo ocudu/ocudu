@@ -21,29 +21,24 @@ si_scheduling_config ocudu::make_si_epoch_config(const si_scheduling_config& cel
     return std::find(on_air.begin(), on_air.end(), sibs) != on_air.end();
   };
 
-  // An SI message is broadcast by the epoch unless it is a warning that is not on air.
-  auto is_broadcast = [&is_on_air](const si_message_scheduling_config& si_msg) {
-    return not si_msg.requires_activation() or is_on_air(si_msg.sibs);
-  };
-
   // The SI window of an SI message listed in the SIB1 schedulingInfoList derives from its position in that list, so the
   // epoch holds exactly the SI messages the cell broadcasts, in the order SIB1 lists them. A dormant warning is left
   // out altogether, and the ones on air come after every SI message that is always broadcast, so that their SI windows
   // stay in place as warnings come and go.
   for (const si_message_scheduling_config& si_msg : si_msgs) {
-    if (not si_msg.si_window_position.has_value() and not si_msg.requires_activation()) {
+    if (not si_msg.si_window_position.has_value()) {
       epoch_cfg.si_messages.push_back(si_msg);
     }
   }
-  for (const si_message_scheduling_config& si_msg : si_msgs) {
-    if (not si_msg.si_window_position.has_value() and si_msg.requires_activation() and is_on_air(si_msg.sibs)) {
+  for (const si_message_scheduling_config& si_msg : cell_si_sched_cfg.pws_si_messages) {
+    if (is_on_air(si_msg.sibs)) {
       epoch_cfg.si_messages.push_back(si_msg);
     }
   }
   // Entries of the schedulingInfoList2 state their SI window position explicitly, so their position in the epoch does
   // not matter.
   for (const si_message_scheduling_config& si_msg : si_msgs) {
-    if (si_msg.si_window_position.has_value() and is_broadcast(si_msg)) {
+    if (si_msg.si_window_position.has_value()) {
       epoch_cfg.si_messages.push_back(si_msg);
     }
   }

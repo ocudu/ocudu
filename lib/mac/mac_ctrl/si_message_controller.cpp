@@ -382,15 +382,13 @@ si_message_controller::si_message_controller(du_cell_index_t                 cel
   dl_cell(dl_cell_),
   ext_handler(create_si_message_extension_handler(sys_info))
 {
-  // Set up PWS broadcast sequences, one entry per SI message carrying PWS SIBs.
-  const auto& si_sched_messages = sys_info.si_sched_cfg.si_messages;
-  for (unsigned i = 0, e = sys_info.si_messages.size(); i != e; ++i) {
-    if (i < si_sched_messages.size() and si_sched_messages[i].requires_activation()) {
-      pws_sequences.emplace_back(
-          si_sched_messages[i].sibs,
-          std::make_unique<pws_broadcast_sequence>(
-              si_sched_messages[i].sibs, timers, [this, sibs = si_sched_messages[i].sibs]() { push_pws_epoch(sibs); }));
-    }
+  // Set up PWS broadcast sequences, one entry per SI message carrying a warning.
+  const auto& pws_si_messages = sys_info.si_sched_cfg.pws_si_messages;
+  for (const si_message_scheduling_config& pws_si_msg : pws_si_messages) {
+    pws_sequences.emplace_back(
+        pws_si_msg.sibs,
+        std::make_unique<pws_broadcast_sequence>(
+            pws_si_msg.sibs, timers, [this, sibs = pws_si_msg.sibs]() { push_pws_epoch(sibs); }));
   }
 
   // Version starts at 0.
@@ -402,13 +400,13 @@ si_message_controller::si_message_controller(du_cell_index_t                 cel
   // Start broadcasting the System Information the cell was created with.
   dl_cell.start_broadcast(ext_handler, last_cmd, std::make_unique<pws_broadcast_end_adapter>(*this));
 
-  for (unsigned i = 0, e = sys_info.si_messages.size(); i != e; ++i) {
-    if (i >= si_sched_messages.size() or not si_sched_messages[i].test_mode_auto_broadcast) {
+  for (unsigned i = 0, e = pws_si_messages.size(); i != e; ++i) {
+    if (not pws_si_messages[i].test_mode_auto_broadcast) {
       continue;
     }
     // test_mode ETWS/CMAS config was set for this SI-message. Broadcast its (already encoded) content right away,
     // indefinitely, instead of waiting for a real Write-Replace Warning. The sequence pushes the epoch.
-    find_pws_sequence(cell_si_sched_cfg, i)->activate_forever(sys_info.si_messages[i]);
+    find_pws_sequence(pws_si_messages[i].sibs)->activate_forever(sys_info.pws_si_messages[i]);
   }
 }
 
@@ -475,11 +473,6 @@ bool si_message_controller::has_si_changed(const mac_cell_sys_info_config& req) 
     return true;
   }
   for (unsigned i = 0, e = req.si_messages.size(); i != e; ++i) {
-    if (find_pws_sequence(req.si_sched_cfg, i) != nullptr) {
-      // This SI message is exclusively managed by its PWS encoder, and its content does not flow through this
-      // (possibly unrelated) SI reconfiguration.
-      continue;
-    }
     if (req.si_messages[i] != last_si_messages[i]) {
       return true;
     }
@@ -505,13 +498,6 @@ bool si_message_controller::build_command(const mac_cell_sys_info_config& req)
   cell_si_msgs.resize(req.si_messages.size());
   last_si_messages.resize(req.si_messages.size());
   for (unsigned i = 0, e = req.si_messages.size(); i != e; ++i) {
-    if (const pws_broadcast_sequence* pws_seq = find_pws_sequence(req.si_sched_cfg, i)) {
-      // The content of this SI message flows through handle_pws_broadcast, not through this (possibly unrelated) SI
-      // reconfiguration. Leave it untouched.
-      cell_si_msgs[i] = pws_seq->encoder();
-      continue;
-    }
-
     if (req.si_messages[i] != last_si_messages[i]) {
       ocudu_assert(req.si_messages[i].size() == 1, "Static SI-messages must not be segmented");
       last_si_messages[i].resize(1);
@@ -570,6 +556,11 @@ void si_message_controller::fill_epoch_si_config(si_update_command&       cmd,
 
 std::shared_ptr<bcch_dl_sch_msg_encoder> si_message_controller::find_si_msg_encoder(sib_type_set sibs) const
 {
+  if (sibs.is_pws()) {
+    // The content of an SI message carrying a warning is owned by its broadcast sequence.
+    const pws_broadcast_sequence* pws_seq = find_pws_sequence(sibs);
+    return pws_seq != nullptr ? pws_seq->encoder() : nullptr;
+  }
   const auto& si_msgs = cell_si_sched_cfg.si_messages;
   const auto  it = std::find_if(si_msgs.begin(), si_msgs.end(), [sibs](const auto& cfg) { return cfg.sibs == sibs; });
   if (it == si_msgs.end()) {
@@ -596,15 +587,6 @@ bool si_message_controller::handle_si_message_pdu_updates(const mac_cell_sys_inf
   return ext_handler != nullptr and ext_handler->enqueue_si_pdu_updates(req);
 }
 
-si_message_controller::pws_broadcast_sequence*
-si_message_controller::find_pws_sequence(const si_scheduling_config& si_sched_cfg, unsigned si_msg_idx) const
-{
-  if (si_msg_idx >= si_sched_cfg.si_messages.size()) {
-    return nullptr;
-  }
-  return find_pws_sequence(si_sched_cfg.si_messages[si_msg_idx].sibs);
-}
-
 si_message_controller::pws_broadcast_sequence* si_message_controller::find_pws_sequence(sib_type_set sib_set) const
 {
   auto it = std::find_if(
@@ -614,9 +596,11 @@ si_message_controller::pws_broadcast_sequence* si_message_controller::find_pws_s
 
 bool si_message_controller::handle_pws_broadcast(const mac_cell_sys_info_pdu_update& req)
 {
-  pws_broadcast_sequence* pws_seq = find_pws_sequence(cell_si_sched_cfg, req.si_msg_idx);
+  sib_type_set sib_set;
+  sib_set.add(static_cast<sib_type>(req.sib_idx));
+  pws_broadcast_sequence* pws_seq = find_pws_sequence(sib_set);
   if (pws_seq == nullptr) {
-    // The SI message carries no PWS SIB, so no PWS broadcast state was allocated for it.
+    // The cell is not provisioned for a warning carried by this SIB.
     return false;
   }
   // The new content is broadcast from the epochs that carry its encoder, and the SI message starts being listed as
@@ -632,16 +616,10 @@ void si_message_controller::push_pws_epoch(std::optional<sib_type_set> pws_sib_s
   const si_version_type new_version = ++last_version;
 
   if (pws_sib_set.has_value()) {
-    // One more broadcast of this warning is starting. Refresh its encoder and the properties the epoch states for it,
-    // before deriving the epoch.
-    const auto&    si_msgs    = cell_si_sched_cfg.si_messages;
-    const unsigned si_msg_idx = std::distance(
-        si_msgs.begin(),
-        std::find_if(si_msgs.begin(), si_msgs.end(), [&](const auto& cfg) { return cfg.sibs == *pws_sib_set; }));
-    ocudu_assert(si_msg_idx < si_msgs.size(), "Broadcasting a warning of an SI message that is not scheduled");
-
+    // One more broadcast of this warning is starting. Take the properties the epoch states for it before deriving the
+    // epoch.
     pws_broadcast_sequence* pws_seq = find_pws_sequence(*pws_sib_set);
-    cell_si_msgs[si_msg_idx]        = pws_seq->encoder();
+    ocudu_assert(pws_seq != nullptr, "Broadcasting a warning of an SI message the cell is not provisioned for");
 
     // Stamping it with the version of the epoch it triggers is what tells the scheduler to start one more broadcast of
     // this warning, and of this warning alone.

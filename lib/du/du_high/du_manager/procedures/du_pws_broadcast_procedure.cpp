@@ -15,21 +15,16 @@ using namespace odu;
 
 namespace {
 
-/// Finds the SI-message index at which \c type is statically scheduled in \c cell_cfg, if any. A cell only has a
-/// scheduling slot for SIB6/7/8 if it was configured with the corresponding etws_cfg/cmas_cfg at startup.
-std::optional<unsigned> find_si_msg_idx_for_sib(const du_cell_config& cell_cfg, sib_type type)
+/// Whether the cell is provisioned for a warning carried by \c type, which its ETWS/CMAS configuration decides.
+bool is_provisioned_for_sib(const du_cell_config& cell_cfg, sib_type type)
 {
   if (not cell_cfg.si.si_config.has_value()) {
-    return std::nullopt;
+    return false;
   }
-  const auto& si_sched_info = cell_cfg.si.si_config->si_sched_info;
-  for (unsigned i = 0, e = si_sched_info.size(); i != e; ++i) {
-    const auto& sibs = si_sched_info[i].sib_mapping_info;
-    if (std::find(sibs.begin(), sibs.end(), type) != sibs.end()) {
-      return i;
-    }
-  }
-  return std::nullopt;
+  const auto& pws_si_messages = cell_cfg.si.si_config->pws_si_messages;
+  return std::any_of(pws_si_messages.begin(), pws_si_messages.end(), [type](const pws_si_message_config& pws_si_msg) {
+    return pws_si_msg.sib == type;
+  });
 }
 
 /// \brief Packs a single ASN.1 PER-encoded SIB6/7/8 segment \c sib_msg into a full BCCH-DL-SCH-Message envelope.
@@ -106,8 +101,7 @@ async_task<mac_cell_reconfig_response> du_pws_broadcast_procedure::handle_cell_b
 {
   const du_cell_config& cell_cfg = cell_mng.get_cell_cfg(cell_index);
 
-  std::optional<unsigned> si_msg_idx = find_si_msg_idx_for_sib(cell_cfg, static_cast<sib_type>(request.sib_type));
-  if (not si_msg_idx.has_value()) {
+  if (not is_provisioned_for_sib(cell_cfg, static_cast<sib_type>(request.sib_type))) {
     logger.warning("cell={}: Discarding Write-Replace Warning. Cause: Cell not provisioned for SIB{}",
                    cell_index,
                    request.sib_type);
@@ -127,8 +121,10 @@ async_task<mac_cell_reconfig_response> du_pws_broadcast_procedure::handle_cell_b
   }
 
   mac_cell_reconfig_request req;
+  // A warning is routed by the SIB it carries, not by a position in the schedulingInfoList, which it only takes while
+  // it is on air.
   req.new_si_pdu_info = mac_cell_sys_info_pdu_update{
-      .si_msg_idx     = si_msg_idx.value(),
+      .si_msg_idx     = 0,
       .sib_idx        = request.sib_type,
       .slot           = std::nullopt,
       .si_slot_period = std::nullopt,

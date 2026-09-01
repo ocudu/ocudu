@@ -365,6 +365,42 @@ static bool carries_warning(const si_message_sched_info& si_msg)
       si_msg.sib_mapping_info.begin(), si_msg.sib_mapping_info.end(), [](sib_type sib) { return is_pws_sib(sib); });
 }
 
+/// Content configured for a SIB, or nullptr if the cell has none.
+static const sib_type_info* find_sib_content(const si_scheduling_info_config& si_cfg, sib_type sib)
+{
+  const auto it = std::find_if(si_cfg.sibs.begin(), si_cfg.sibs.end(), [sib](const sib_type_info& entry) {
+    return get_sib_info_type(entry.content) == sib;
+  });
+  return it != si_cfg.sibs.end() ? &*it : nullptr;
+}
+
+/// \brief Builds the schedulingInfoList entry of an SI message that carries a warning.
+///
+/// A warning SIB is a release 15 SIB, so its entry never goes in schedulingInfoList2. It is advertised even while the
+/// cell has no content for it, so that the UE knows to look for it once a Write-Replace Warning activates it.
+static asn1::rrc_nr::sched_info_s make_asn1_pws_sched_info(const pws_si_message_config&     pws_si_msg,
+                                                           const si_scheduling_info_config& si_cfg)
+{
+  using namespace asn1::rrc_nr;
+
+  sched_info_s asn1_si;
+  asn1_si.si_broadcast_status.value = sched_info_s::si_broadcast_status_opts::broadcasting;
+  bool ret                          = asn1::number_to_enum(asn1_si.si_periodicity, pws_si_msg.si_period_radio_frames);
+  ocudu_assert(ret, "Invalid SI period");
+
+  sib_type_info_s type_info;
+  ret = asn1::number_to_enum(type_info.type, static_cast<unsigned>(pws_si_msg.sib));
+  ocudu_assert(ret, "Invalid warning SIB type");
+  const sib_type_info* content = find_sib_content(si_cfg, pws_si_msg.sib);
+  if (content != nullptr and content->value_tag.valid()) {
+    type_info.value_tag_present = true;
+    type_info.value_tag         = content->value_tag.value();
+  }
+  asn1_si.sib_map_info.push_back(type_info);
+
+  return asn1_si;
+}
+
 static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg, si_message_set msg_set)
 {
   using namespace asn1::rrc_nr;
@@ -403,14 +439,14 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
     }
 
     // Populate the SI Scheduling info list.
-    if (!du_cfg.si.si_config->si_sched_info.empty()) {
+    if (!du_cfg.si.si_config->si_sched_info.empty() or !du_cfg.si.si_config->pws_si_messages.empty()) {
       bool ret = asn1::number_to_enum(sib1.si_sched_info.si_win_len, du_cfg.si.si_config.value().si_window_len_slots);
       ocudu_assert(ret, "Invalid SI window length");
 
       // For each SI message in the configuration...
       for (const auto& cfg_si : du_cfg.si.si_config->si_sched_info) {
-        if (msg_set == si_message_set::normal_operation and carries_warning(cfg_si)) {
-          // Its entry is only listed while its warning is on air, which the MAC takes care of.
+        if (carries_warning(cfg_si)) {
+          // The SI messages that carry a warning have parameters of their own, and are listed further down.
           continue;
         }
         // Prepare a SchedulingInfo element.
@@ -435,8 +471,8 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
               du_cfg.si.si_config->sibs.begin(),
               du_cfg.si.si_config->sibs.end(),
               [mapping_info](const sib_type_info& sib) { return get_sib_info_type(sib.content) == mapping_info; });
-          if (matching_sib == du_cfg.si.si_config->sibs.end() and not is_pws_sib(mapping_info)) {
-            // No content configured for this SIB and is not a dormant SIB (e.g. PWS).
+          if (matching_sib == du_cfg.si.si_config->sibs.end()) {
+            // No content configured for this SIB.
             continue;
           }
 
@@ -444,16 +480,11 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
             case sib_type::sib2:
             case sib_type::sib3:
             case sib_type::sib4:
-            case sib_type::sib5:
-            case sib_type::sib6:
-            case sib_type::sib7:
-            case sib_type::sib8: {
-              // Append the SIB type to the schedulingInfo element. A dormant, unconfigured PWS SIB (SIB6/7/8) has no
-              // matching content entry and, therefore, no value tag. However, it is still advertised so the UE knows to
-              // look for it once a Write-Replace Warning activates it.
+            case sib_type::sib5: {
+              // Append the SIB type to the schedulingInfo element.
               sib_type_info_s type_info;
               ret = asn1::number_to_enum(type_info.type, sib_id);
-              if (matching_sib != du_cfg.si.si_config->sibs.end() and matching_sib->value_tag.valid()) {
+              if (matching_sib->value_tag.valid()) {
                 type_info.value_tag_present = true;
                 type_info.value_tag         = matching_sib->value_tag.value();
               }
@@ -515,6 +546,15 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
           }
           auto& si_sched_info_r17 = sib1.non_crit_ext.non_crit_ext.non_crit_ext.si_sched_info_v1700;
           si_sched_info_r17.sched_info_list2_r17.push_back(asn1_si_r17);
+        }
+      }
+
+      if (msg_set == si_message_set::every_si_message) {
+        // The SI messages carrying a warning come last, so that the SI windows of the ones that are always broadcast
+        // stay in place as warnings come and go.
+        for (const pws_si_message_config& pws_si_msg : du_cfg.si.si_config->pws_si_messages) {
+          sib1.si_sched_info_present = true;
+          sib1.si_sched_info.sched_info_list.push_back(make_asn1_pws_sched_info(pws_si_msg, *du_cfg.si.si_config));
         }
       }
     }
@@ -1050,8 +1090,8 @@ asn1_packer::pack_all_bcch_dl_sch_msgs(const du_cell_config&     du_cfg,
     const auto& sibs = du_cfg.si.si_config.value().sibs;
 
     for (const auto& si_sched : du_cfg.si.si_config.value().si_sched_info) {
-      if (msg_set == si_message_set::normal_operation and carries_warning(si_sched)) {
-        // Only broadcast while its warning is on air, so it is no part of the normal operation.
+      if (carries_warning(si_sched)) {
+        // The content of an SI message that carries a warning is packed by pack_pws_si_messages.
         continue;
       }
       // Pack SI messages that contain multiple SIBs.
@@ -1091,22 +1131,8 @@ asn1_packer::pack_all_bcch_dl_sch_msgs(const du_cell_config&     du_cfg,
           return get_sib_info_type(sib.content) == sib_id;
         });
 
-        if (it == sibs.end()) {
-          // Dormant SIB6/7/8 SI-message with no explicitly configured (testing-only) content.
-          // Use a trivial placeholder instead of ASN.1/CBS-encoding anything.
-          ocudu_assert(is_pws_sib(sib_id) and not si_sched.auto_broadcast,
-                       "SIB{} in SIB mapping info has no defined config",
-                       static_cast<unsigned>(sib_id));
-
-          bcch_dl_sch_payload_type packed_sib(1);
-          packed_sib.front() = byte_buffer::create({0x00}).value();
-          msgs.emplace_back(std::move(packed_sib));
-
-          if (bcch_dl_sch_json_msgs != nullptr) {
-            bcch_dl_sch_json_msgs->emplace_back("\"dormant PWS placeholder\"");
-          }
-          continue;
-        }
+        ocudu_assert(
+            it != sibs.end(), "SIB{} in SIB mapping info has no defined config", static_cast<unsigned>(sib_id));
 
         // Buffer to hold the packed message. It may be necessary to store multiple SI messages (one for each segment).
         bcch_dl_sch_payload_type packed_sib;
@@ -1139,6 +1165,27 @@ asn1_packer::pack_all_bcch_dl_sch_msgs(const du_cell_config&     du_cfg,
   if (bcch_dl_sch_json_msgs != nullptr) {
     ocudu_assert(bcch_dl_sch_json_msgs->size() == msgs.size(),
                  "Unexpected mismatch between packed BCCH-DL-SCH and JSON lists");
+  }
+
+  return msgs;
+}
+
+std::vector<bcch_dl_sch_payload_type> asn1_packer::pack_pws_si_messages(const du_cell_config& du_cfg)
+{
+  std::vector<bcch_dl_sch_payload_type> msgs;
+  if (not du_cfg.si.si_config.has_value()) {
+    return msgs;
+  }
+
+  for (const pws_si_message_config& pws_si_msg : du_cfg.si.si_config->pws_si_messages) {
+    bcch_dl_sch_payload_type packed_sib;
+    // A cell with no content configured for a warning stays silent until a Write-Replace Warning provides it.
+    if (const sib_type_info* content = find_sib_content(*du_cfg.si.si_config, pws_si_msg.sib)) {
+      for (const auto& sib : make_asn1_rrc_sib_item(content->content)) {
+        pack_si_message(packed_sib, sib);
+      }
+    }
+    msgs.push_back(std::move(packed_sib));
   }
 
   return msgs;

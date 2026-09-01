@@ -114,10 +114,6 @@ private:
   /// \param pws_sib_set SIB set of the SI message starting one more broadcast of its warning.
   void push_pws_epoch(std::optional<sib_type_set> pws_sib_set);
 
-  /// \brief Fetches the PWS broadcast sequence of the SI message at a given position of an SI scheduling config.
-  /// \return The sequence, or nullptr if the position does not exist or its SI message carries no PWS SIB.
-  pws_broadcast_sequence* find_pws_sequence(const si_scheduling_config& si_sched_cfg, unsigned si_msg_idx) const;
-
   /// \brief Fetches the PWS broadcast sequence of the SI message carrying a given set of SIBs.
   /// \return The sequence, or nullptr if no SI message carries them.
   pws_broadcast_sequence* find_pws_sequence(sib_type_set sib_set) const;

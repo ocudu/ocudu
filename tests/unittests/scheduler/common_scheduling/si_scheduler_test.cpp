@@ -41,7 +41,8 @@ public:
 
 TEST(no_si_scheduler_test, when_no_si_is_provided_then_nothing_is_scheduled)
 {
-  si_scheduler_test_environment setup{make_sched_configuration_request(si_scheduling_config{units::bytes{0}, {}, 0})};
+  si_scheduler_test_environment setup{
+      make_sched_configuration_request(si_scheduling_config{units::bytes{0}, {}, {}, 0})};
 
   const unsigned nof_slots = 100;
 
@@ -57,6 +58,7 @@ constexpr units::bytes     DEFAULT_SIB1_PAYLOAD_SIZE{128};
 const si_scheduling_config DEFAULT_SI_SCHED_CFG{
     DEFAULT_SIB1_PAYLOAD_SIZE,
     {{si_message_scheduling_config{sib_type_set{sib_type::sib2}, units::bytes{64}, 16}}},
+    {},
     10};
 
 class si_scheduler_test : public si_scheduler_test_environment, public testing::Test
@@ -356,6 +358,7 @@ static void broadcast_warning(si_scheduler&                                     
 const si_scheduling_config ACTIVATION_REQUIRED_SI_SCHED_CFG{
     DEFAULT_SIB1_PAYLOAD_SIZE,
     {{si_message_scheduling_config{sib_type_set{sib_type::sib7}, units::bytes{64}, 16}}},
+    {},
     10};
 
 class si_msg_scheduler_activation_test : public si_scheduler_test_environment, public testing::Test
@@ -589,6 +592,7 @@ const si_scheduling_config MULTI_ACTIVATION_REQUIRED_SI_SCHED_CFG{
     DEFAULT_SIB1_PAYLOAD_SIZE,
     {si_message_scheduling_config{sib_type_set{sib_type::sib7}, units::bytes{64}, 16},
      si_message_scheduling_config{sib_type_set{sib_type::sib8}, units::bytes{64}, 16, 3}},
+    {},
     10};
 
 class si_msg_scheduler_multi_activation_test : public si_scheduler_test_environment, public testing::Test

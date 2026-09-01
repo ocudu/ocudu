@@ -25,6 +25,11 @@ struct mac_cell_sys_info_config {
   byte_buffer sib1;
   /// SI messages provided by the cell and which are part of the SIB1 SI-SchedConfig.
   static_vector<bcch_dl_sch_payload_type, MAX_SI_MESSAGES> si_messages;
+  /// \brief Content that each SI message carrying a warning broadcasts from the cell start, indexed as in
+  /// \c si_sched_cfg.pws_si_messages.
+  ///
+  /// An entry is empty if the cell waits for a Write-Replace Warning to provide the content.
+  static_vector<bcch_dl_sch_payload_type, MAX_PWS_SI_MESSAGES> pws_si_messages;
   /// SI scheduling configuration to provide to MAC scheduler.
   si_scheduling_config si_sched_cfg;
   /// Whether HyperSFN is stored in SIB1 and needs to be updated periodically.

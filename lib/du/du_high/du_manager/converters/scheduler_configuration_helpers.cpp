@@ -18,29 +18,57 @@ using namespace odu;
 
 si_scheduling_config ocudu::odu::make_si_scheduling_info_config(const du_cell_config&    du_cfg,
                                                                 units::bytes             sib1_len,
-                                                                span<const units::bytes> si_message_lens)
+                                                                span<const units::bytes> si_message_lens,
+                                                                span<const units::bytes> pws_si_message_lens)
 {
-  ocudu_assert(si_message_lens.size() ==
-                   (du_cfg.si.si_config.has_value() ? du_cfg.si.si_config->si_sched_info.size() : 0),
-               "Number of SI messages does not match the number of SI payload sizes");
-
   si_scheduling_config sched_req{};
   sched_req.sib1_payload_size = sib1_len;
 
-  if (du_cfg.si.si_config.has_value()) {
-    sched_req.si_window_len_slots = du_cfg.si.si_config->si_window_len_slots;
-    sched_req.si_messages.resize(du_cfg.si.si_config->si_sched_info.size());
-    for (unsigned i = 0, sz = du_cfg.si.si_config->si_sched_info.size(); i != sz; ++i) {
-      const auto& si_sched = du_cfg.si.si_config->si_sched_info[i];
+  if (not du_cfg.si.si_config.has_value()) {
+    ocudu_assert(si_message_lens.empty() and pws_si_message_lens.empty(),
+                 "Number of SI messages does not match the number of SI payload sizes");
+    return sched_req;
+  }
+  ocudu_assert(pws_si_message_lens.size() == du_cfg.si.si_config->pws_si_messages.size(),
+               "Number of SI messages carrying a warning does not match the number of SI payload sizes");
 
-      for (sib_type sib : si_sched.sib_mapping_info) {
-        sched_req.si_messages[i].sibs.add(sib);
-      }
-      sched_req.si_messages[i].period_radio_frames      = si_sched.si_period_radio_frames;
-      sched_req.si_messages[i].msg_len                  = si_message_lens[i];
-      sched_req.si_messages[i].si_window_position       = si_sched.si_window_position;
-      sched_req.si_messages[i].test_mode_auto_broadcast = si_sched.auto_broadcast;
+  sched_req.si_window_len_slots = du_cfg.si.si_config->si_window_len_slots;
+
+  // An SI message that carries a warning has parameters of its own, so it is no part of the SI scheduling info.
+  auto carries_warning = [](const si_message_sched_info& si_sched) {
+    return std::any_of(si_sched.sib_mapping_info.begin(), si_sched.sib_mapping_info.end(), [](sib_type sib) {
+      return is_pws_sib(sib);
+    });
+  };
+  const auto& si_sched_info = du_cfg.si.si_config->si_sched_info;
+  ocudu_assert(si_message_lens.size() ==
+                   static_cast<size_t>(std::count_if(si_sched_info.begin(),
+                                                     si_sched_info.end(),
+                                                     [&](const auto& si) { return not carries_warning(si); })),
+               "Number of SI messages does not match the number of SI payload sizes");
+
+  for (const si_message_sched_info& si_sched : si_sched_info) {
+    if (carries_warning(si_sched)) {
+      continue;
     }
+    si_message_scheduling_config& out = sched_req.si_messages.emplace_back();
+    for (sib_type sib : si_sched.sib_mapping_info) {
+      out.sibs.add(sib);
+    }
+    out.period_radio_frames = si_sched.si_period_radio_frames;
+    out.msg_len             = si_message_lens[sched_req.si_messages.size() - 1];
+    out.si_window_position  = si_sched.si_window_position;
+  }
+
+  for (unsigned i = 0, sz = du_cfg.si.si_config->pws_si_messages.size(); i != sz; ++i) {
+    const pws_si_message_config&  pws_si_msg = du_cfg.si.si_config->pws_si_messages[i];
+    si_message_scheduling_config& out        = sched_req.pws_si_messages.emplace_back();
+
+    out.sibs.add(pws_si_msg.sib);
+    out.period_radio_frames = pws_si_msg.si_period_radio_frames;
+    // A warning pushed by a Write-Replace Warning states its own payload size in the SI epoch that broadcasts it.
+    out.msg_len                  = pws_si_message_lens[i];
+    out.test_mode_auto_broadcast = pws_si_msg.auto_broadcast;
   }
 
   return sched_req;
@@ -54,9 +82,6 @@ ocudu::odu::make_sched_cell_config_req(du_cell_index_t             cell_index,
                                        unsigned                    max_nof_ue_contexts)
 {
   ocudu_assert(si_sched_cfg.sib1_payload_size.value() > 0, "SIB1 payload size needs to be set");
-  ocudu_assert(si_sched_cfg.si_messages.size() ==
-                   (du_cfg.si.si_config.has_value() ? du_cfg.si.si_config->si_sched_info.size() : 0),
-               "Number of SI messages does not match the number of SI payload sizes");
 
   sched_cell_configuration_request_message sched_req{};
   sched_req.cell_index       = cell_index;

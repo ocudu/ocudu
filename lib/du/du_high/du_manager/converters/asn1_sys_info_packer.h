@@ -19,7 +19,7 @@ namespace odu {
 /// \brief Set of SI messages that a packed BCCH-DL-SCH payload accounts for.
 ///
 /// A cell lists an SI message carrying SIB6/7/8 in its SIB1 schedulingInfoList only while the warning is on air, which
-/// the MAC adds and removes. Hence, the two sets differ in whether they hold those SI messages.
+/// the MAC adds and removes. Hence, the two sets differ in whether the packed SIB1 lists those SI messages.
 enum class si_message_set {
   /// SI messages of the normal operation, which a cell starts out broadcasting. The ones that only carry a warning are
   /// left out.
@@ -53,11 +53,17 @@ byte_buffer pack_sib19(const sib19_info& sib19_params, std::string* js_str = nul
 /// \param[in] du_cfg DU Cell Configuration.
 /// \param[out] bcch_dl_sch_json_msgs Optional list of BCCH-DL-SCH messages serialized as JSON (one entry per returned
 /// message). If nullptr, no conversion takes place.
-/// \return A list of buffers with packed cell BCCH-DL-SCH message. First buffer is SIB1, the rest are SI messages.
+/// \return A list of buffers with packed cell BCCH-DL-SCH message. First buffer is SIB1, the rest are the SI messages
+/// of the normal operation. The ones carrying a warning are packed by \c pack_pws_si_messages.
 std::vector<bcch_dl_sch_payload_type>
 pack_all_bcch_dl_sch_msgs(const du_cell_config&     du_cfg,
                           si_message_set            msg_set,
                           std::vector<std::string>* bcch_dl_sch_json_msgs = nullptr);
+
+/// \brief Pack the content that each SI message carrying a warning broadcasts from the cell start.
+/// \param[in] du_cfg DU Cell Configuration.
+/// \return One entry per \c si_scheduling_info_config::pws_si_messages entry, empty if no content is configured for it.
+std::vector<bcch_dl_sch_payload_type> pack_pws_si_messages(const du_cell_config& du_cfg);
 
 } // namespace asn1_packer
 } // namespace odu

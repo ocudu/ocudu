@@ -23,9 +23,20 @@ du_cell_manager::du_cell_manager(const du_manager_params& cfg_) :
 {
 }
 
+/// Size of the largest segment of an SI message, 0 bytes if it carries no content.
+static units::bytes largest_segment_len(const bcch_dl_sch_payload_type& si_msg)
+{
+  size_t len = 0;
+  for (const byte_buffer& segment : si_msg) {
+    len = std::max(len, segment.length());
+  }
+  return units::bytes{static_cast<unsigned>(len)};
+}
+
 static void fill_si_scheduler_config(si_scheduling_config&                si_sched_cfg,
                                      const du_cell_config&                cell_cfg,
-                                     span<const bcch_dl_sch_payload_type> si_messages)
+                                     span<const bcch_dl_sch_payload_type> si_messages,
+                                     span<const bcch_dl_sch_payload_type> pws_si_messages)
 {
   // The SI messages that only carry a warning are not broadcast when the cell starts, so the SIB1 it starts out with
   // does not list them and is shorter than the one packed for the MAC to derive the SI epochs from.
@@ -44,7 +55,12 @@ static void fill_si_scheduler_config(si_scheduling_config&                si_sch
     }
     si_payload_sizes.emplace_back(units::bytes{static_cast<unsigned>(si_msg_len)});
   }
-  si_sched_cfg = make_si_scheduling_info_config(cell_cfg, sib1_len, si_payload_sizes);
+  // A warning message may end in a shorter segment, so its grants are sized off the largest one.
+  static_vector<units::bytes, MAX_PWS_SI_MESSAGES> pws_payload_sizes;
+  for (const auto& pws_si_msg : pws_si_messages) {
+    pws_payload_sizes.emplace_back(largest_segment_len(pws_si_msg));
+  }
+  si_sched_cfg = make_si_scheduling_info_config(cell_cfg, sib1_len, si_payload_sizes, pws_payload_sizes);
 }
 
 void du_cell_manager::add_cell(const du_cell_config& cell_cfg)
@@ -72,10 +88,12 @@ void du_cell_manager::add_cell(const du_cell_config& cell_cfg)
   cell.live_barred      = cell_cfg.cell_barred;
   cell.si_cfg.sib1      = sib1.copy();
   cell.si_cfg.si_messages.assign(si_messages.begin(), si_messages.end());
+  std::vector<bcch_dl_sch_payload_type> pws_msgs = asn1_packer::pack_pws_si_messages(cell_cfg);
+  cell.si_cfg.pws_si_messages.assign(pws_msgs.begin(), pws_msgs.end());
   cell.si_cfg.sib1_contains_hypersfn = cell_cfg.ran.init_bwp.paging.edrx_enabled;
 
   // Generate Scheduler SI scheduling config.
-  fill_si_scheduler_config(cell.si_cfg.si_sched_cfg, cell_cfg, si_messages);
+  fill_si_scheduler_config(cell.si_cfg.si_sched_cfg, cell_cfg, si_messages, cell.si_cfg.pws_si_messages);
 }
 
 expected<du_cell_reconfig_result>
@@ -201,13 +219,16 @@ du_cell_manager::handle_cell_reconf_request(const du_cell_param_config_request& 
       span<const bcch_dl_sch_payload_type> si_messages =
           span<const bcch_dl_sch_payload_type>(bcch_msgs).last(bcch_msgs.size() - 1);
       cell.si_cfg.si_messages.assign(si_messages.begin(), si_messages.end());
+
+      std::vector<bcch_dl_sch_payload_type> pws_msgs = asn1_packer::pack_pws_si_messages(cell_cfg);
+      cell.si_cfg.pws_si_messages.assign(pws_msgs.begin(), pws_msgs.end());
     } else {
       // Only SSB power changed, repack only SIB1.
       cell.si_cfg.sib1 = asn1_packer::pack_sib1(cell_cfg, si_message_set::every_si_message);
     }
 
     // Update SI scheduling config. The SI version is owned by the MAC.
-    fill_si_scheduler_config(cell.si_cfg.si_sched_cfg, cell_cfg, cell.si_cfg.si_messages);
+    fill_si_scheduler_config(cell.si_cfg.si_sched_cfg, cell_cfg, cell.si_cfg.si_messages, cell.si_cfg.pws_si_messages);
   }
 
   result.cell_index           = cell_index;

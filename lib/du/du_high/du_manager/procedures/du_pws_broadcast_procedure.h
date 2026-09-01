@@ -28,8 +28,7 @@ public:
 
 private:
   /// \brief Push the warning SIB content and repeat/count indication to a single cell's MAC.
-  /// \return Whether the cell accepted the broadcast (i.e. was statically provisioned with a scheduling slot for
-  /// the requested SIB type).
+  /// \return Whether the cell accepted the broadcast.
   async_task<mac_cell_reconfig_response> handle_cell_broadcast(du_cell_index_t cell_index);
 
   const write_replace_warning_information request;

@@ -18,19 +18,15 @@ using namespace odu;
 
 namespace {
 
-/// A cell configured with a reserved (dormant) SI-message occasion for SIB6, but no etws_cfg content -- i.e. the
-/// SI-message requires activation and has no matching entry in si_config->sibs yet.
+/// A cell provisioned for an ETWS primary notification, with no content configured for it -- i.e. it stays dormant
+/// until a Write-Replace Warning provides one.
 du_cell_config make_cell_config_with_dormant_pws_si_message()
 {
   du_cell_config cfg = config_helpers::make_default_du_cell_config();
 
   cfg.si.si_config.emplace();
   cfg.si.si_config->si_window_len_slots = 10;
-
-  si_message_sched_info si_msg;
-  si_msg.sib_mapping_info       = {sib_type::sib6};
-  si_msg.si_period_radio_frames = 32;
-  cfg.si.si_config->si_sched_info.push_back(si_msg);
+  cfg.si.si_config->pws_si_messages.push_back(pws_si_message_config{sib_type::sib6, 32, false});
 
   return cfg;
 }
@@ -84,7 +80,7 @@ protected:
   std::unique_ptr<du_manager> du_mng;
 };
 
-/// Fixture whose cell has a statically-provisioned, dormant SI-message occasion for SIB6.
+/// Fixture whose cell is provisioned for an ETWS primary notification, with no content configured for it.
 class du_pws_broadcast_procedure_provisioned_test : public du_pws_broadcast_procedure_test
 {
 protected:
@@ -105,7 +101,7 @@ TEST_F(du_pws_broadcast_procedure_test, when_cell_not_provisioned_for_sib_type_t
   req.nof_broadcasts_requested = 4;
   req.cells                    = {du_cell_index_t::MIN_DU_CELL_INDEX};
 
-  // The default cell config has no static SI window for SIB6/7/8 (no etws_cfg/cmas_cfg provisioned).
+  // The default cell config is not provisioned for any warning (no etws_cfg/cmas_cfg configured).
   async_task<std::vector<du_cell_index_t>> t =
       du_mng->get_f1ap_event_handler().get_pws_handler().handle_write_replace_warning(req);
   lazy_task_launcher<std::vector<du_cell_index_t>> launcher{t};
