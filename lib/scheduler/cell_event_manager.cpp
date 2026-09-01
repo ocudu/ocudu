@@ -30,9 +30,12 @@ class ocudu::cell_event_dispatcher
   static constexpr size_t PAGING_POOL_SIZE = 128;
   // [Implementation defined] System information updates are rare, so only a few can be in flight at any moment.
   static constexpr size_t SI_POOL_SIZE = 4;
-  // [Implementation defined] Lower layers report at most one RACH and one CRC indication per slot, so the pools only
-  // need to cover the slots that can elapse before the events are dispatched.
-  static constexpr size_t PHY_IND_POOL_SIZE = 8;
+  // [Implementation defined] Lower layers report at most one RACH indication per slot, so the pool only needs to
+  // cover the slots that can elapse before the events are dispatched.
+  static constexpr size_t RACH_POOL_SIZE = 8;
+  // [Implementation defined] Lower layers report one CRC indication per PUSCH PDU, so the pool has to cover a full
+  // slot of PUSCH PDUs times the slots that can elapse before the events are dispatched.
+  static constexpr size_t CRC_POOL_SIZE = MAX_PUSCH_PDUS_PER_SLOT * 4;
   // [Implementation defined] Positioning measurements are rare, so only a few can be in flight at any moment.
   static constexpr size_t POSITIONING_POOL_SIZE = 4;
   // [Implementation defined] Number of UCI PDUs that can be in flight at any moment.
@@ -55,7 +58,8 @@ class ocudu::cell_event_dispatcher
   /// never by another type having filled the queue.
   static constexpr size_t EVENT_QUEUE_SIZE = PAGING_POOL_SIZE +         // paging
                                              2 * SI_POOL_SIZE +         // SI and ETWS/CMAS SI updates
-                                             2 * PHY_IND_POOL_SIZE +    // RACH and CRC indications
+                                             RACH_POOL_SIZE +           // RACH indications
+                                             CRC_POOL_SIZE +            // CRC indications
                                              POSITIONING_POOL_SIZE +    // positioning measurement requests
                                              UCI_POOL_SIZE +            // UCI PDUs
                                              SRS_POOL_SIZE +            // SRS PDUs
@@ -100,8 +104,8 @@ public:
     pending_pagings(PAGING_POOL_SIZE),
     pending_si_reqs(SI_POOL_SIZE),
     pending_pws_si_reqs(SI_POOL_SIZE),
-    pending_rachs(PHY_IND_POOL_SIZE),
-    pending_crcs(PHY_IND_POOL_SIZE),
+    pending_rachs(RACH_POOL_SIZE),
+    pending_crcs(CRC_POOL_SIZE),
     pending_pos_reqs(POSITIONING_POOL_SIZE),
     pending_srss(SRS_POOL_SIZE),
     pending_ucis(UCI_POOL_SIZE),
