@@ -136,10 +136,10 @@ void mac_cell_processor::start_broadcast(std::shared_ptr<si_message_extension_ha
                                          const si_update_command&                      cmd,
                                          std::unique_ptr<pws_broadcast_end_notifier>   pws_end_notifier)
 {
+  // Note: The scheduler is not notified of this epoch. It is created with the SI scheduling configuration of the cell,
+  // which is the one of this epoch, and an SI change notification would only take effect a full SI change modification
+  // window later.
   sib_assembler.start_broadcast(std::move(ext_handler), cmd, std::move(pws_end_notifier));
-
-  // Notify scheduler of the initial SIB1/SI message scheduling.
-  sched.handle_si_change_indication(si_scheduling_update_request{cell_cfg.cell_index, cmd.version, cmd.si_sched_cfg});
 }
 
 void mac_cell_processor::handle_si_update(const si_update_command& cmd)
