@@ -115,7 +115,7 @@ static prs_config make_prs_config(const du_high_unit_prs_config& prs_cfg)
   return out;
 }
 
-tdd_ul_dl_config_common ocudu::generate_tdd_pattern(subcarrier_spacing scs, const du_high_unit_tdd_ul_dl_config& config)
+static tdd_ul_dl_config_common generate_tdd_pattern(subcarrier_spacing scs, const du_high_unit_tdd_ul_dl_config& config)
 {
   tdd_ul_dl_config_common out;
   out.ref_scs = scs;

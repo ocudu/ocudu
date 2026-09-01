@@ -3,7 +3,6 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "du_high_config_validator.h"
-#include "du_high_config_translators.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/ran/duplex_mode.h"
 #include "ocudu/ran/frame_types.h"
@@ -12,7 +11,6 @@
 #include "ocudu/ran/pdsch/pdsch_constants.h"
 #include "ocudu/ran/prach/prach_configuration.h"
 #include "ocudu/ran/prach/prach_helper.h"
-#include "ocudu/ran/prs/prs.h"
 #include "ocudu/ran/pucch/pucch_constants.h"
 #include "ocudu/ran/pucch/pucch_info.h"
 #include "ocudu/ran/pucch/pucch_mapping.h"
@@ -391,172 +389,6 @@ static bool validate_csi_cell_unit_config(const du_high_unit_csi_config&        
           config.csi_rs_period_msec,
           csi_period_slots);
       return false;
-    }
-  }
-
-  return true;
-}
-
-/// Validates the given PRS cell application configuration. Returns true on success, otherwise false.
-static bool validate_prs_cell_unit_config(const du_high_unit_prs_config&                      config,
-                                          subcarrier_spacing                                  common_scs,
-                                          unsigned                                            cell_bw_crbs,
-                                          const std::optional<du_high_unit_tdd_ul_dl_config>& tdd_cfg)
-{
-  // DL-PRS is disabled when no resource set is configured.
-  if (config.resource_sets.empty()) {
-    return true;
-  }
-
-  // As per TS 38.455, Section 9.2.44, a TRP reports up to 8 PRS resource sets.
-  if (config.resource_sets.size() > 8) {
-    fmt::print("Invalid number of PRS resource sets (i.e., {}). Values: {{1,...,8}}.\n", config.resource_sets.size());
-    return false;
-  }
-
-  std::optional<tdd_ul_dl_config_common> tdd_pattern;
-  unsigned                               tdd_period_slots = 0;
-  if (tdd_cfg.has_value()) {
-    tdd_pattern.emplace(generate_tdd_pattern(common_scs, *tdd_cfg));
-    tdd_period_slots = nof_slots_per_tdd_period(*tdd_pattern);
-  }
-
-  for (const auto& res_set : config.resource_sets) {
-    const unsigned nof_symbols = res_set.nof_symbols;
-    const unsigned comb_size   = res_set.comb_size;
-
-    // The valid combinations are given in TS 38.211, Section 7.4.1.7.3.
-    if (not prs_valid_num_symbols_and_comb_size(static_cast<prs_num_symbols>(nof_symbols),
-                                                static_cast<prs_comb_size>(comb_size))) {
-      fmt::print("Invalid PRS number of symbols (i.e., {}) and comb size (i.e., {}) combination. See TS 38.211, "
-                 "Section 7.4.1.7.3.\n",
-                 nof_symbols,
-                 comb_size);
-      return false;
-    }
-
-    // The PRS bandwidth is derived from the cell bandwidth when it is not set, so it is checked here rather than in
-    // the CLI schema.
-    ocudu_assert(res_set.bandwidth_prbs.has_value(), "PRS bandwidth was not derived from the cell bandwidth");
-    const unsigned bandwidth_prbs = res_set.bandwidth_prbs.value();
-    if ((bandwidth_prbs % 4 != 0) or (bandwidth_prbs < 24) or (bandwidth_prbs > 272)) {
-      fmt::print("Invalid PRS bandwidth (i.e., {} PRBs). It must be a multiple of 4 in the range {{24,...,272}}.\n",
-                 bandwidth_prbs);
-      return false;
-    }
-
-    // The cell carrier starts at Point A, so the start PRB is also the index of the first CRB of the resource set.
-    if (res_set.start_prb + bandwidth_prbs > cell_bw_crbs) {
-      fmt::print("Invalid PRS start PRB (i.e., {}). A PRS bandwidth of {} PRBs starting there does not fit within the "
-                 "cell bandwidth (i.e., {} PRBs).\n",
-                 res_set.start_prb,
-                 bandwidth_prbs,
-                 cell_bw_crbs);
-      return false;
-    }
-
-    if (res_set.slot_offset >= res_set.periodicity_slots) {
-      fmt::print("Invalid PRS resource set slot offset (i.e., {}). It must be smaller than the PRS periodicity (i.e., "
-                 "{} slots).\n",
-                 res_set.slot_offset,
-                 res_set.periodicity_slots);
-      return false;
-    }
-
-    // As per TS 38.214, Section 5.1.6.5, all the repetitions of a PRS resource must fit within one period.
-    if (res_set.repetition_factor * res_set.time_gap > res_set.periodicity_slots) {
-      fmt::print("Invalid PRS repetition factor (i.e., {}) and time gap (i.e., {} slots) combination. Their product "
-                 "must not exceed the PRS periodicity (i.e., {} slots).\n",
-                 res_set.repetition_factor,
-                 res_set.time_gap,
-                 res_set.periodicity_slots);
-      return false;
-    }
-
-    // As per TS 38.455, Section 9.2.44, a PRS resource set contains up to 64 PRS resources.
-    if (res_set.resources.empty() or res_set.resources.size() > 64) {
-      fmt::print("Invalid number of PRS resources (i.e., {}). Values: {{1,...,64}}.\n", res_set.resources.size());
-      return false;
-    }
-
-    // [Implementation-defined] Only PRS periodicities that are a multiple of the TDD period are supported, so that
-    // the PRS occasions always fall in the same slots of the TDD pattern.
-    if (tdd_pattern.has_value() and (res_set.periodicity_slots % tdd_period_slots != 0)) {
-      fmt::print("Invalid PRS periodicity (i.e., {} slots). In TDD mode, it must be a multiple of the TDD period "
-                 "(i.e., {} slots).\n",
-                 res_set.periodicity_slots,
-                 tdd_period_slots);
-      return false;
-    }
-
-    for (const auto& res : res_set.resources) {
-      if (res.re_offset >= comb_size) {
-        fmt::print("Invalid PRS RE offset (i.e., {}). It must be smaller than the comb size (i.e., {}).\n",
-                   res.re_offset,
-                   comb_size);
-        return false;
-      }
-
-      if (res.symbol_offset + nof_symbols > NOF_OFDM_SYM_PER_SLOT_NORMAL_CP) {
-        fmt::print("Invalid PRS symbol offset (i.e., {}). A PRS resource of {} symbols does not fit within the slot.\n",
-                   res.symbol_offset,
-                   nof_symbols);
-        return false;
-      }
-
-      // Slot offset of the last repetition of the resource, relative to the beginning of the period.
-      const unsigned last_rep_slot_offset =
-          res_set.slot_offset + res.slot_offset + (res_set.repetition_factor - 1) * res_set.time_gap;
-      if (last_rep_slot_offset >= res_set.periodicity_slots) {
-        fmt::print("Invalid PRS resource slot offset (i.e., {}). Its last repetition falls in slot {} of the period, "
-                   "which exceeds the PRS periodicity (i.e., {} slots).\n",
-                   res.slot_offset,
-                   last_rep_slot_offset,
-                   res_set.periodicity_slots);
-        return false;
-      }
-
-      if (not tdd_pattern.has_value()) {
-        continue;
-      }
-
-      // In TDD, all the repetitions of the resource must fall in slots with enough DL symbols.
-      for (unsigned rep = 0; rep != res_set.repetition_factor; ++rep) {
-        const unsigned slot_offset = res_set.slot_offset + res.slot_offset + rep * res_set.time_gap;
-        const unsigned nof_dl_symbols =
-            get_active_tdd_dl_symbols(*tdd_pattern, slot_offset, cyclic_prefix::NORMAL).length();
-        if (res.symbol_offset + nof_symbols > nof_dl_symbols) {
-          fmt::print("The PRS resource with slot offset {} and symbol offset {} does not fit in the DL symbols of slot "
-                     "{} of the TDD pattern.\n",
-                     res.slot_offset,
-                     res.symbol_offset,
-                     slot_offset % tdd_period_slots);
-          return false;
-        }
-      }
-    }
-
-    // Two resources of the same set that share the slot offset, the symbol offset and the comb offset are mapped onto
-    // exactly the same REs, as all the resources of a set have the same comb size and number of symbols.
-    //
-    // Note that resources with different symbol offsets are not necessarily in conflict, even if their symbols
-    // overlap: the comb offset hops with the symbol index within the resource, as per TS 38.211, Table 7.4.1.7.3-1.
-    for (unsigned i = 0, e = res_set.resources.size(); i != e; ++i) {
-      for (unsigned j = i + 1; j != e; ++j) {
-        const du_high_unit_prs_resource_config& lhs = res_set.resources[i];
-        const du_high_unit_prs_resource_config& rhs = res_set.resources[j];
-        if ((lhs.slot_offset == rhs.slot_offset) and (lhs.symbol_offset == rhs.symbol_offset) and
-            (lhs.re_offset == rhs.re_offset)) {
-          fmt::print("PRS resources {} and {} of the same resource set are mapped onto the same REs. They share the "
-                     "slot offset {}, the symbol offset {} and the RE offset {}.\n",
-                     i,
-                     j,
-                     lhs.slot_offset,
-                     lhs.symbol_offset,
-                     lhs.re_offset);
-          return false;
-        }
-      }
     }
   }
 
@@ -1924,10 +1756,6 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
   }
 
   if (!validate_csi_cell_unit_config(config.csi_cfg, config.common_scs, nof_crbs, config.tdd_ul_dl_cfg)) {
-    return false;
-  }
-
-  if (!validate_prs_cell_unit_config(config.prs_cfg, config.common_scs, nof_crbs, config.tdd_ul_dl_cfg)) {
     return false;
   }
 

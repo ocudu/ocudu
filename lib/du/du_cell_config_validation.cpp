@@ -13,6 +13,7 @@
 #include "ocudu/ran/prach/prach_configuration.h"
 #include "ocudu/ran/prach/prach_frequency_mapping.h"
 #include "ocudu/ran/prach/prach_preamble_information.h"
+#include "ocudu/ran/prs/prs.h"
 #include "ocudu/ran/srs/srs_bandwidth_configuration.h"
 #include "ocudu/ran/ssb/ssb_mapping.h"
 #include "ocudu/scheduler/config/pucch_guardbands.h"
@@ -900,6 +901,167 @@ static check_outcome check_tac_list(const du_cell_config& cell_cfg)
   return {};
 }
 
+/// Determines whether the given value belongs to a list of valid values.
+template <size_t N>
+static bool is_one_of(unsigned value, const std::array<unsigned, N>& valid_values)
+{
+  return std::find(valid_values.begin(), valid_values.end(), value) != valid_values.end();
+}
+
+static check_outcome check_prs_resource_set(const prs_resource_set&                       res_set,
+                                            unsigned                                      set_id,
+                                            const scs_specific_carrier&                   dl_carrier,
+                                            const std::optional<tdd_ul_dl_config_common>& tdd_cfg)
+{
+  const unsigned comb_size         = static_cast<unsigned>(res_set.comb_size);
+  const unsigned nof_symbols       = static_cast<unsigned>(res_set.nof_symbols);
+  const unsigned repetition_factor = static_cast<unsigned>(res_set.repetition_factor);
+  const unsigned time_gap          = static_cast<unsigned>(res_set.time_gap);
+
+  CHECK_TRUE(
+      is_one_of(comb_size, PRS_VALID_COMB_SIZES), "Invalid comb size ({}) of PRS resource set {}", comb_size, set_id);
+  CHECK_TRUE(is_one_of(nof_symbols, PRS_VALID_NUM_SYMBOLS),
+             "Invalid number of symbols ({}) of PRS resource set {}",
+             nof_symbols,
+             set_id);
+  CHECK_TRUE(is_one_of(repetition_factor, PRS_VALID_REPETITION_FACTORS),
+             "Invalid repetition factor ({}) of PRS resource set {}",
+             repetition_factor,
+             set_id);
+  CHECK_TRUE(
+      is_one_of(time_gap, PRS_VALID_TIME_GAPS), "Invalid time gap ({} slots) of PRS resource set {}", time_gap, set_id);
+  CHECK_TRUE(is_one_of(res_set.periodicity_slots, PRS_VALID_PERIODICITIES),
+             "Invalid periodicity ({} slots) of PRS resource set {}",
+             res_set.periodicity_slots,
+             set_id);
+
+  // The valid combinations are given in TS 38.211, Section 7.4.1.7.3.
+  CHECK_TRUE(prs_valid_num_symbols_and_comb_size(res_set.nof_symbols, res_set.comb_size),
+             "Invalid number of symbols ({}) and comb size ({}) combination of PRS resource set {}. See TS 38.211, "
+             "Section 7.4.1.7.3",
+             nof_symbols,
+             comb_size,
+             set_id);
+
+  CHECK_TRUE(res_set.bandwidth_prbs % 4 == 0,
+             "Invalid bandwidth ({} PRBs) of PRS resource set {}. It must be a multiple of 4",
+             res_set.bandwidth_prbs,
+             set_id);
+  CHECK_EQ_OR_ABOVE(res_set.bandwidth_prbs, 24, "bandwidth, in PRBs, of PRS resource set {}", set_id);
+  CHECK_EQ_OR_BELOW(res_set.bandwidth_prbs, 272, "bandwidth, in PRBs, of PRS resource set {}", set_id);
+  CHECK_EQ_OR_ABOVE(res_set.power_offset_db, -60, "power offset, in dB, of PRS resource set {}", set_id);
+  CHECK_EQ_OR_BELOW(res_set.power_offset_db, 50, "power offset, in dB, of PRS resource set {}", set_id);
+
+  // The start PRB of the resource set is relative to Point A, as is the offset of the DL carrier.
+  CHECK_EQ_OR_ABOVE(res_set.start_prb, dl_carrier.offset_to_carrier, "start PRB of PRS resource set {}", set_id);
+  CHECK_EQ_OR_BELOW(res_set.start_prb + res_set.bandwidth_prbs,
+                    dl_carrier.offset_to_carrier + dl_carrier.carrier_bandwidth,
+                    "last PRB of PRS resource set {}",
+                    set_id);
+
+  CHECK_BELOW(res_set.slot_offset, res_set.periodicity_slots, "slot offset of PRS resource set {}", set_id);
+
+  // As per TS 38.214, Section 5.1.6.5, all the repetitions of a PRS resource must fit within one period.
+  CHECK_EQ_OR_BELOW(repetition_factor * time_gap,
+                    res_set.periodicity_slots,
+                    "product of the repetition factor and the time gap, in slots, of PRS resource set {}",
+                    set_id);
+
+  // [Implementation-defined] Only PRS periodicities that are a multiple of the TDD period are supported, so that the
+  // PRS occasions always fall in the same slots of the TDD pattern.
+  if (tdd_cfg.has_value()) {
+    const unsigned tdd_period_slots = nof_slots_per_tdd_period(tdd_cfg.value());
+    CHECK_TRUE(res_set.periodicity_slots % tdd_period_slots == 0,
+               "Invalid periodicity ({} slots) of PRS resource set {}. In TDD mode, it must be a multiple of the TDD "
+               "period ({} slots)",
+               res_set.periodicity_slots,
+               set_id,
+               tdd_period_slots);
+  }
+
+  // As per TS 38.455, Section 9.2.44, a PRS resource set contains up to 64 PRS resources.
+  CHECK_TRUE(not res_set.resources.empty(), "No PRS resource configured in PRS resource set {}", set_id);
+  CHECK_EQ_OR_BELOW(res_set.resources.size(), 64, "number of PRS resources of PRS resource set {}", set_id);
+
+  for (unsigned res_id = 0, nof_res = res_set.resources.size(); res_id != nof_res; ++res_id) {
+    const prs_resource& res = res_set.resources[res_id];
+
+    CHECK_EQ_OR_BELOW(res.sequence_id, 4095, "sequence ID of PRS resource {} of resource set {}", res_id, set_id);
+    CHECK_BELOW(res.re_offset, comb_size, "RE offset of PRS resource {} of resource set {}", res_id, set_id);
+    CHECK_EQ_OR_BELOW(res.slot_offset, 511, "slot offset of PRS resource {} of resource set {}", res_id, set_id);
+    CHECK_EQ_OR_BELOW(res.symbol_offset + nof_symbols,
+                      get_nsymb_per_slot(cyclic_prefix::NORMAL),
+                      "last symbol of PRS resource {} of resource set {}",
+                      res_id,
+                      set_id);
+
+    // Slot offset of the last repetition of the resource, relative to the beginning of the period.
+    const unsigned last_rep_slot_offset = res_set.slot_offset + res.slot_offset + (repetition_factor - 1) * time_gap;
+    CHECK_BELOW(last_rep_slot_offset,
+                res_set.periodicity_slots,
+                "slot offset of the last repetition of PRS resource {} of resource set {}",
+                res_id,
+                set_id);
+
+    if (not tdd_cfg.has_value()) {
+      continue;
+    }
+
+    // In TDD, all the repetitions of the resource must fall in slots with enough DL symbols.
+    for (unsigned rep = 0; rep != repetition_factor; ++rep) {
+      const unsigned slot_offset = res_set.slot_offset + res.slot_offset + rep * time_gap;
+      const unsigned nof_dl_symbols =
+          get_active_tdd_dl_symbols(tdd_cfg.value(), slot_offset, cyclic_prefix::NORMAL).length();
+      CHECK_TRUE(res.symbol_offset + nof_symbols <= nof_dl_symbols,
+                 "PRS resource {} of resource set {} does not fit in the DL symbols of slot {} of the TDD pattern",
+                 res_id,
+                 set_id,
+                 slot_offset % nof_slots_per_tdd_period(tdd_cfg.value()));
+    }
+  }
+
+  // Two resources of the same set that share the slot offset, the symbol offset and the comb offset are mapped onto
+  // exactly the same REs, as all the resources of a set have the same comb size and number of symbols.
+  //
+  // Note that resources with different symbol offsets are not necessarily in conflict, even if their symbols overlap:
+  // the comb offset hops with the symbol index within the resource, as per TS 38.211, Table 7.4.1.7.3-1.
+  CHECK_TRUE(has_unique_ids(res_set.resources,
+                            [](const prs_resource& res) {
+                              return std::make_tuple(res.slot_offset, res.symbol_offset, res.re_offset);
+                            }),
+             "Two PRS resources of resource set {} share the slot offset, the symbol offset and the RE offset, so they "
+             "are mapped onto the same REs",
+             set_id);
+
+  return {};
+}
+
+static check_outcome check_prs_config(const du_cell_config& cell_cfg)
+{
+  const prs_config& prs_cfg = cell_cfg.prs_cfg;
+
+  // DL-PRS is disabled when no resource set is configured.
+  if (prs_cfg.resource_sets.empty()) {
+    return {};
+  }
+
+  // As per TS 38.455, Section 9.2.44, a TRP has up to 8 PRS resource sets.
+  CHECK_EQ_OR_BELOW(prs_cfg.resource_sets.size(), 8, "number of PRS resource sets");
+
+  // DL-PRS is transmitted in the DL carrier of the cell, with the SCS common.
+  const subcarrier_spacing scs        = cell_cfg.ran.dl_cfg_common.init_dl_bwp.generic_params.scs;
+  const auto&              carriers   = cell_cfg.ran.dl_cfg_common.freq_info_dl.scs_carrier_list;
+  const auto               dl_carrier = std::find_if(
+      carriers.begin(), carriers.end(), [scs](const scs_specific_carrier& carrier) { return carrier.scs == scs; });
+  CHECK_TRUE(dl_carrier != carriers.end(), "No DL carrier configured for the SCS common, required to transmit DL-PRS");
+
+  for (unsigned set_id = 0, nof_sets = prs_cfg.resource_sets.size(); set_id != nof_sets; ++set_id) {
+    HANDLE_ERROR(check_prs_resource_set(prs_cfg.resource_sets[set_id], set_id, *dl_carrier, cell_cfg.ran.tdd_cfg));
+  }
+
+  return {};
+}
+
 check_outcome odu::is_du_cell_config_valid(const du_cell_config& cell_cfg)
 {
   CHECK_EQ_OR_BELOW(cell_cfg.ran.pci, MAX_PCI, "cell PCI");
@@ -923,6 +1085,7 @@ check_outcome odu::is_du_cell_config_valid(const du_cell_config& cell_cfg)
   HANDLE_ERROR(check_si_sched_config(cell_cfg));
   HANDLE_ERROR(check_ntn_config(cell_cfg));
   HANDLE_ERROR(check_tac_list(cell_cfg));
+  HANDLE_ERROR(check_prs_config(cell_cfg));
   // TODO: Remaining.
   return {};
 }
