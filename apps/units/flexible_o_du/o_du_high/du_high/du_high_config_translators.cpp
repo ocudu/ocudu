@@ -505,21 +505,28 @@ static ntn_cell_params make_ntn_cell_params(const du_high_unit_ntn_serving_cell_
   return ntn;
 }
 
-/// Fill SI-Scheduling Information.
-/// \brief Fills the parameters of the SI messages that carry a warning.
+/// \brief Fills the SI messages that carry a warning, and the content the cell broadcasts them with, if any.
 ///
 /// A warning SIB is never mapped together with another SIB, so ETWS takes one SI message for its primary notification
-/// and another for its secondary one.
+/// and another for its secondary one. Only a warning configured for testing has content from the start; any other one
+/// waits for a Write-Replace Warning to provide it.
 static void fill_pws_si_messages(si_scheduling_info_config& out, const du_high_unit_sib_config& sib_cfg)
 {
   if (sib_cfg.etws_cfg.has_value()) {
     const auto& etws = sib_cfg.etws_cfg.value();
     out.pws_si_messages.push_back({sib_type::sib6, etws.si_period_rf, etws.test.has_value()});
     out.pws_si_messages.push_back({sib_type::sib7, etws.si_period_rf, etws.test.has_value()});
+    if (etws.test.has_value()) {
+      out.sibs.push_back({create_sib6_info(etws.test.value()), value_tag_t::min()});
+      out.sibs.push_back({create_sib7_info(etws.test.value()), value_tag_t::min()});
+    }
   }
   if (sib_cfg.cmas_cfg.has_value()) {
     const auto& cmas = sib_cfg.cmas_cfg.value();
     out.pws_si_messages.push_back({sib_type::sib8, cmas.si_period_rf, cmas.test.has_value()});
+    if (cmas.test.has_value()) {
+      out.sibs.push_back({create_sib8_info(cmas.test.value()), value_tag_t::min()});
+    }
   }
 }
 
@@ -535,7 +542,6 @@ static std::optional<si_scheduling_info_config> make_si_sched_info_config(const 
   // Set SIB mapping info.
   out.si_sched_info.resize(sib_cfg.si_sched_info.size());
   std::vector<uint8_t> sibs_included;
-  auto                 is_pws_sib = [](uint8_t sib_id) { return ocudu::is_pws_sib(static_cast<sib_type>(sib_id)); };
   for (unsigned i = 0; i != sib_cfg.si_sched_info.size(); ++i) {
     auto& out_si                  = out.si_sched_info[i];
     out_si.si_period_radio_frames = sib_cfg.si_sched_info[i].si_period_rf;
@@ -543,17 +549,6 @@ static std::optional<si_scheduling_info_config> make_si_sched_info_config(const 
     out_si.si_window_position = sib_cfg.si_sched_info[i].si_window_position;
 
     const auto& sib_mapping_info = sib_cfg.si_sched_info[i].sib_mapping_info;
-    // An SI-message that carries SIB6/7/8 requires explicit activation before being scheduled: it keeps a reserved
-    // occasion in schedulingInfoList, but has no real content until an F1AP Write-Replace Warning activates it.
-    // Unless its (testing-only) content is explicitly configured, in which case it is broadcast right away,
-    // indefinitely.
-    if (std::any_of(sib_mapping_info.begin(), sib_mapping_info.end(), is_pws_sib)) {
-      out_si.auto_broadcast = std::any_of(sib_mapping_info.begin(), sib_mapping_info.end(), [&sib_cfg](uint8_t sib_id) {
-        return sib_id == 8 ? (sib_cfg.cmas_cfg.has_value() and sib_cfg.cmas_cfg->test.has_value())
-                           : (sib_cfg.etws_cfg.has_value() and sib_cfg.etws_cfg->test.has_value());
-      });
-    }
-
     for (unsigned j = 0; j != sib_mapping_info.size(); ++j) {
       const uint8_t sib_id = sib_mapping_info[j];
       sibs_included.push_back(sib_id);
@@ -592,24 +587,6 @@ static std::optional<si_scheduling_info_config> make_si_sched_info_config(const 
                        "the si_sched_info list");
         }
         item = create_sib5_info(sib_cfg.sib5_cfg.value());
-      } break;
-      case 6: {
-        if (!sib_cfg.etws_cfg.has_value() or !sib_cfg.etws_cfg->test.has_value()) {
-          continue;
-        }
-        item = create_sib6_info(sib_cfg.etws_cfg->test.value());
-      } break;
-      case 7: {
-        if (!sib_cfg.etws_cfg.has_value() or !sib_cfg.etws_cfg->test.has_value()) {
-          continue;
-        }
-        item = create_sib7_info(sib_cfg.etws_cfg->test.value());
-      } break;
-      case 8: {
-        if (!sib_cfg.cmas_cfg.has_value() or !sib_cfg.cmas_cfg->test.has_value()) {
-          continue;
-        }
-        item = create_sib8_info(sib_cfg.cmas_cfg->test.value());
       } break;
       case 16: {
         if (!sib_cfg.sib16_cfg.has_value()) {

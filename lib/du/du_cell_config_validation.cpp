@@ -824,13 +824,10 @@ static check_outcome check_si_sched_config(const du_cell_config& cell_cfg)
   }
 
   for (const si_message_sched_info& si_msg : cell_cfg.si.si_config->si_sched_info) {
-    // A PWS SI-message is only broadcast while a warning is active, and si-BroadcastStatus applies to the whole SI
-    // message. Appending a non-PWS SIB to it would take that SIB off the air while no warning is on-going.
-    const bool has_pws     = std::any_of(si_msg.sib_mapping_info.begin(), si_msg.sib_mapping_info.end(), is_pws_sib);
-    const bool has_non_pws = std::any_of(si_msg.sib_mapping_info.begin(),
-                                         si_msg.sib_mapping_info.end(),
-                                         [](sib_type sib) { return not is_pws_sib(sib); });
-    CHECK_TRUE(not(has_pws and has_non_pws), "SIB6/7/8 cannot share an SI message with other SIBs");
+    // An SI message carrying a warning has parameters of its own, and takes a position in the schedulingInfoList only
+    // while the warning is on air, so it is no part of the SI scheduling info.
+    const bool has_pws = std::any_of(si_msg.sib_mapping_info.begin(), si_msg.sib_mapping_info.end(), is_pws_sib);
+    CHECK_TRUE(not has_pws, "SIB6/7/8 cannot be mapped to an SI message of the SI scheduling info");
   }
 
   return {};

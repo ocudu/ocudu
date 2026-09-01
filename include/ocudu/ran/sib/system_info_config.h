@@ -260,18 +260,6 @@ struct si_message_sched_info {
   /// entry of schedulingInfoList2. See TS 38.331, \c SchedulingInfo2-r17. Values: {1,...,256}.
   /// \remark This field is only applicable for release 17 \c SI-SchedulingInfo.
   std::optional<unsigned> si_window_position;
-  /// \brief Whether this SI-message (carrying SIB6/7/8) should be broadcast right away, indefinitely, instead of
-  /// staying dormant until an actual F1AP Write-Replace Warning activates it. Only meaningful for SI-messages
-  /// carrying PWS SIBs.
-  bool auto_broadcast = false;
-
-  /// \brief Whether this SI-message carries SIB6/7/8 and therefore requires explicit activation before it is
-  /// actually scheduled. Such an SI-message keeps a reserved occasion in schedulingInfoList, but does not need real
-  /// ASN.1-encoded content until it is activated.
-  bool requires_activation() const
-  {
-    return std::any_of(sib_mapping_info.begin(), sib_mapping_info.end(), [](sib_type sib) { return is_pws_sib(sib); });
-  }
 };
 
 /// \brief Parameters of an SI message that carries a warning (SIB6, SIB7 or SIB8).

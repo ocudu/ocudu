@@ -1422,19 +1422,44 @@ static bool validate_cell_sib_config(const du_high_unit_base_cell_config& cell_c
 
   const du_high_unit_sib_config& sib_cfg = cell_cfg.sib_cfg;
 
+  // A warning SIB has parameters of its own, in the etws and cmas configuration blocks.
+  for (const auto& si_msg : sib_cfg.si_sched_info) {
+    for (uint8_t sib_it : si_msg.sib_mapping_info) {
+      if (sib_it == 6 || sib_it == 7 || sib_it == 8) {
+        fmt::print("SIB{} cannot be mapped to an SI message of the si_sched_info list. Configure the {} block "
+                   "instead.\n",
+                   sib_it,
+                   sib_it == 8 ? "cmas" : "etws");
+        return false;
+      }
+    }
+  }
+
+  // A cell only broadcasts a warning while it is on air, but its SI window must be reserved from the start, so that
+  // the SI messages of the normal operation keep their own as warnings come and go. ETWS takes one SI message for its
+  // primary notification and another for its secondary one, CMAS takes one.
+  const unsigned nof_pws_si_msgs = (sib_cfg.etws_cfg.has_value() ? 2 : 0) + (sib_cfg.cmas_cfg.has_value() ? 1 : 0);
+
   // Compute how many slots it takes to transmit all SI messages in sequence.
-  const unsigned all_si_msg_slots = sib_cfg.si_sched_info.size() * sib_cfg.si_window_len_slots;
+  const unsigned all_si_msg_slots = (sib_cfg.si_sched_info.size() + nof_pws_si_msgs) * sib_cfg.si_window_len_slots;
 
   // If the SI period of any SI message is shorter than the number of slots required to transmit the SI messages, the
   // configuration is invalid.
-  for (const auto& si_msg : sib_cfg.si_sched_info) {
+  auto si_period_fits_every_window = [&](unsigned si_period_rf) {
     const unsigned si_period_slots =
-        si_msg.si_period_rf * get_nof_slots_per_subframe(cell_cfg.common_scs) * NOF_SUBFRAMES_PER_FRAME;
+        si_period_rf * get_nof_slots_per_subframe(cell_cfg.common_scs) * NOF_SUBFRAMES_PER_FRAME;
     if (all_si_msg_slots > si_period_slots) {
       fmt::print("The SI message period (i.e., {} frames) is too small given the SI window length (i.e., {} slots). "
                  "Increase the SI period or decrease the SI window length.\n",
-                 si_msg.si_period_rf,
+                 si_period_rf,
                  sib_cfg.si_window_len_slots);
+      return false;
+    }
+    return true;
+  };
+
+  for (const auto& si_msg : sib_cfg.si_sched_info) {
+    if (not si_period_fits_every_window(si_msg.si_period_rf)) {
       return false;
     }
 
@@ -1446,15 +1471,12 @@ static bool validate_cell_sib_config(const du_high_unit_base_cell_config& cell_c
       fmt::print("SIB19 cannot be included in the SI messages together with other SIBs.\n");
       return false;
     }
-
-    // Check if SIB6/7/8 (PWS) are included together with any other SIB, which is not allowed.
-    const bool any_pws_sib = std::any_of(si_msg.sib_mapping_info.begin(), si_msg.sib_mapping_info.end(), [](uint8_t t) {
-      return t == 6 || t == 7 || t == 8;
-    });
-    if (any_pws_sib && si_msg.sib_mapping_info.size() > 1) {
-      fmt::print("SIB6/7/8 cannot be included in the SI messages together with other SIBs.\n");
-      return false;
-    }
+  }
+  if (sib_cfg.etws_cfg.has_value() and not si_period_fits_every_window(sib_cfg.etws_cfg->si_period_rf)) {
+    return false;
+  }
+  if (sib_cfg.cmas_cfg.has_value() and not si_period_fits_every_window(sib_cfg.cmas_cfg->si_period_rf)) {
+    return false;
   }
 
   std::vector<uint8_t>  sibs_included;
@@ -1493,21 +1515,6 @@ static bool validate_cell_sib_config(const du_high_unit_base_cell_config& cell_c
       }
       n_sched_info_list_messages++;
     }
-  }
-
-  // An SI message carrying SIB6/7/8 is only listed in the SIB1 schedulingInfoList while its warning is on air, so it
-  // cannot be the one carrying the si-WindowLength that the schedulingInfoList2 entries depend on.
-  const unsigned n_always_broadcast_si_msgs =
-      std::count_if(sib_cfg.si_sched_info.begin(), sib_cfg.si_sched_info.end(), [](const auto& si_msg) {
-        return not si_msg.si_window_position.has_value() and
-               std::none_of(si_msg.sib_mapping_info.begin(), si_msg.sib_mapping_info.end(), [](uint8_t t) {
-                 return t == 6 || t == 7 || t == 8;
-               });
-      });
-  if (not si_window_positions.empty() and n_always_broadcast_si_msgs == 0) {
-    fmt::print("The SIBs with ID >= 15 require at least one SI message carrying a SIB other than SIB6/7/8, given that "
-               "an SI message carrying SIB6/7/8 is only advertised in SIB1 while a warning is on air.\n");
-    return false;
   }
 
   std::sort(sibs_included.begin(), sibs_included.end());

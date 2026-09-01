@@ -222,12 +222,12 @@ TEST(asn1_sib1_sched_info_test, warning_parameters_reach_the_si_scheduling_confi
   EXPECT_TRUE(si_sched_cfg.pws_si_messages[0].test_mode_auto_broadcast);
 }
 
-TEST(asn1_sib1_sched_info_test, pws_sib_mixed_with_other_sibs_in_one_si_message_is_rejected)
+TEST(asn1_sib1_sched_info_test, warning_sib_mapped_to_an_si_scheduling_info_entry_is_rejected)
 {
-  // The MAC lists a PWS SI-message in SIB1 only while its warning is on air, and an SI message is listed as a whole, so
-  // appending a non-PWS SIB to a PWS SI-message would take that SIB off the air while no warning is on-going.
+  // A warning SIB has parameters of its own and takes a position in the schedulingInfoList only while it is on air, so
+  // it is no part of the SI scheduling info.
   du_cell_config cell_cfg = make_cell_config_with_dormant_pws_si_message();
-  cell_cfg.si.si_config->si_sched_info.push_back(si_message_sched_info{{sib_type::sib6, sib_type::sib2}, 32});
+  cell_cfg.si.si_config->si_sched_info.push_back(si_message_sched_info{{sib_type::sib6}, 32});
 
   ASSERT_FALSE(is_du_cell_config_valid(cell_cfg).has_value());
 }
