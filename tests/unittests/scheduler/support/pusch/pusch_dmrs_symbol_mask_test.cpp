@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
-#include "lib/scheduler/support/pusch/pusch_dmrs_symbol_mask.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/adt/static_vector.h"
+#include "ocudu/ran/pusch/pusch_dmrs_symbol_mask.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 #include <map>

@@ -23,6 +23,7 @@ add_library(ocudu_ran
         pdcch/pdcch_type0_css_occasions.cpp
         pdcch/search_space.cpp
         pdsch/dlsch_info.cpp
+        pdsch/pdsch_dmrs_symbol_mask.cpp
         pdsch/pdsch_mcs.cpp
         pdsch/pdsch_antenna_port_mapping.cpp
         prach/prach_configuration.cpp
@@ -42,6 +43,7 @@ add_library(ocudu_ran
         ptrs/ptrs_pattern.cpp
         pucch/pucch_info.cpp
         pusch/pusch_antenna_port_mapping.cpp
+        pusch/pusch_dmrs_symbol_mask.cpp
         pusch/pusch_mcs.cpp
         pusch/pusch_tpmi_select.cpp
         pusch/pusch_uci_beta_offset.cpp

@@ -5,7 +5,7 @@
 #pragma once
 
 #include "ocudu/adt/bounded_integer.h"
-#include "ocudu/ran/dmrs/dmrs_downlink_config.h"
+#include "ocudu/ran/dmrs/dmrs.h"
 
 namespace ocudu {
 

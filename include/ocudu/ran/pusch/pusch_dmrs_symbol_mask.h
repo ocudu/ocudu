@@ -4,7 +4,8 @@
 
 #pragma once
 
-#include "ocudu/ran/dmrs/dmrs_uplink_config.h"
+#include "ocudu/adt/bounded_integer.h"
+#include "ocudu/ran/dmrs/dmrs.h"
 
 namespace ocudu {
 
