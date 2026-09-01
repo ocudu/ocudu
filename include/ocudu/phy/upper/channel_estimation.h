@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "ocudu/adt/complex.h"
 #include "ocudu/adt/span.h"
 #include "ocudu/adt/tensor.h"
 #include "ocudu/phy/upper/channel_state_information.h"

@@ -12,7 +12,7 @@
 #include "ocudu/ran/pusch/pusch_constants.h"
 #include "ocudu/ran/pusch/tx_scheme_configuration.h"
 #include "ocudu/ran/srs/srs_channel_matrix.h"
-#include "ocudu/support/math/math_utils.h"
+#include "ocudu/support/math/cf_math_utils.h"
 #include <array>
 #include <cmath>
 #include <limits>

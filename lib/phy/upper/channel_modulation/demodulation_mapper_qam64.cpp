@@ -5,6 +5,7 @@
 #include "demodulation_mapper_qam64.h"
 #include "demodulation_mapper_intervals.h"
 #include "ocudu/phy/upper/log_likelihood_ratio.h"
+#include "ocudu/support/math/cf_math_utils.h"
 
 #if defined(__AVX512F__) && defined(__AVX512BW__) && (!defined(__GNUC__) || (__GNUC__ > 9))
 #define HAVE_AVX512

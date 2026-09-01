@@ -6,10 +6,10 @@
 
 #pragma once
 
-#include "ocudu/adt/complex.h"
 #include "ocudu/support/math/pow2_utils.h"
 #include "ocudu/support/ocudu_assert.h"
 #include <array>
+#include <cmath>
 #include <numeric>
 
 namespace ocudu {
@@ -47,25 +47,10 @@ constexpr unsigned divide_round(unsigned num, unsigned den)
   return static_cast<unsigned>(std::round(static_cast<float>(num) / static_cast<float>(den)));
 }
 
-/// \brief Calculates the squared modulus of a complex value.
-/// \param[in] x Complex value.
-/// \return The squared absolute of the given value, i.e. \f$\abs{x}^2=x\cdot\conj{x}=\Re(x)^2+\Im(x)^2\f$.
-constexpr float abs_sq(cf_t x)
-{
-  // Equivalent to but computationally simpler than std::pow(std::abs(x),2).
-  return x.real() * x.real() + x.imag() * x.imag();
-}
-
 /// Determines whether a floating point value is near zero.
 inline bool is_near_zero(float value)
 {
   return std::abs(value) < near_zero;
-}
-
-/// Determines whether a complex floating point value is near zero.
-inline bool is_near_zero(cf_t value)
-{
-  return abs_sq(value) < near_zero;
 }
 
 /// \brief Converts a value in decibels to linear amplitude ratio

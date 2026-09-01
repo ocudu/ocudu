@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "ocudu/ocuduvec/clip.h"
-#include "ocudu/support/math/math_utils.h"
+#include "ocudu/support/math/cf_math_utils.h"
 
 using namespace ocudu;
 

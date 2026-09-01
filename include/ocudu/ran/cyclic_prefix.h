@@ -10,6 +10,7 @@
 #include "ocudu/ran/phy_time_unit.h"
 #include "ocudu/support/math/math_utils.h"
 #include <algorithm>
+#include <string>
 
 namespace ocudu {
 

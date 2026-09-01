@@ -7,6 +7,7 @@
 #include "ocudu/support/error_handling.h"
 #include "ocudu/support/math/math_utils.h"
 #include <algorithm>
+#include <cstring>
 #include <locale>
 
 using namespace ocudu;
