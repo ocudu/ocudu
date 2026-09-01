@@ -96,8 +96,12 @@ static void configure_cli11_sat_switch_with_resync(CLI::App& app, du_high_unit_s
       sat_switch_config.t_service_start,
       "Time when target satellite starts serving (Unix time in ms or ISO 8601: YYYY-MM-DDTHH:MM:SS[.mmm])");
 
-  add_option(app, "--ssb_time_offset_sf", sat_switch_config.ssb_time_offset_sf, "SSB time offset in subframes (0-159)")
-      ->range(0U, 159U);
+  add_option(app,
+             "--ssb_time_offset_sf",
+             sat_switch_config.ssb_time_offset_sf,
+             "SSB time offset in subframes (0-159, in steps of 5)")
+      ->range(0U, 159U)
+      ->multiple_of(5U);
 
   add_option(app,
              "--ntn_ul_sync_validity_dur",

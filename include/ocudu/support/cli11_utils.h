@@ -135,7 +135,7 @@ public:
     if (node_ != nullptr) {
       node_->constraints.minimum = config::to_scalar(node_->type, static_cast<double>(min_value));
       node_->constraints.maximum = config::to_scalar(node_->type, static_cast<double>(max_value));
-      assert_bounds_match_step();
+      assert_lower_bound_matches_step();
     }
     return *this;
   }
@@ -164,10 +164,11 @@ public:
   /// steps of 4), instead of enumerating every value with \ref enum_values: the generated schema and the error
   /// message state the rule rather than a wall of digits. \c step must be greater than zero.
   ///
-  /// \warning \c multipleOf expresses divisibility, so it describes an arithmetic sequence only when the sequence
-  /// starts and ends on a multiple of \c step (e.g. 24,28,...,272 with step 4). A sequence with a non-zero offset
-  /// (e.g. 25,29,...) is not expressible in JSON Schema and must be enumerated with \ref enum_values instead;
-  /// combining such a range with this method is rejected at registration.
+  /// \warning \c multipleOf expresses divisibility, so it describes an arithmetic sequence only when that sequence
+  /// starts on a multiple of \c step (e.g. 24,28,...,272 with step 4). A sequence with a non-zero offset (e.g.
+  /// 25,29,...) is not expressible in JSON Schema and must be enumerated with \ref enum_values instead; combining
+  /// such a lower bound with this method is rejected at registration. An upper bound off the step is fine, as it is
+  /// simply not attainable (e.g. 0..159 with step 5 describes 0,5,...,155).
   template <typename V>
   option_handle& multiple_of(V step)
   {
@@ -185,7 +186,7 @@ public:
         "MULTIPLE OF " + std::to_string(step)));
     if (node_ != nullptr) {
       node_->constraints.multiple_of = config::to_scalar(node_->type, static_cast<double>(step));
-      assert_bounds_match_step();
+      assert_lower_bound_matches_step();
     }
     return *this;
   }
@@ -231,28 +232,29 @@ public:
   }
 
 private:
-  /// \brief Rejects a recorded range whose bounds are not multiples of the recorded step.
+  /// \brief Rejects a recorded lower bound that is not a multiple of the recorded step.
   ///
-  /// \c multipleOf constrains divisibility, so pairing it with bounds that are off the step would describe a
-  /// different value set than the intended sequence. Called from both \ref range and \ref multiple_of, so the two
-  /// are checked whichever order they are chained in.
-  void assert_bounds_match_step() const
+  /// \c multipleOf constrains divisibility, so it describes the intended sequence only if that sequence starts on a
+  /// multiple of the step: a lower bound off the step (e.g. 25 with step 4) means the sequence has an offset, which
+  /// JSON Schema cannot express. The upper bound is deliberately not checked - one off the step is simply not
+  /// attainable, so it does not change the described value set (e.g. 0..159 with step 5 yields 0,5,...,155).
+  ///
+  /// Called from both \ref range and \ref multiple_of, so the pair is checked whichever order they are chained in.
+  void assert_lower_bound_matches_step() const
   {
-    if (node_ == nullptr || !node_->constraints.multiple_of) {
+    if (node_ == nullptr || !node_->constraints.multiple_of || !node_->constraints.minimum) {
       return;
     }
     const auto* step = std::get_if<std::int64_t>(&*node_->constraints.multiple_of);
-    if (step == nullptr || *step == 0) {
+    const auto* min  = std::get_if<std::int64_t>(&*node_->constraints.minimum);
+    if (step == nullptr || *step == 0 || min == nullptr) {
       return;
     }
-    for (const std::optional<config::schema_scalar>& bound : {node_->constraints.minimum, node_->constraints.maximum}) {
-      const auto* value = bound ? std::get_if<std::int64_t>(&*bound) : nullptr;
-      report_fatal_error_if_not(value == nullptr || (*value % *step == 0),
-                                "Option range bound {} is not a multiple of {}. multipleOf cannot express a sequence "
-                                "with a non-zero offset; enumerate its values instead",
-                                value != nullptr ? *value : 0,
-                                *step);
-    }
+    report_fatal_error_if_not(*min % *step == 0,
+                              "Option lower bound {} is not a multiple of {}. multipleOf cannot express a sequence "
+                              "with a non-zero offset; enumerate its values instead",
+                              *min,
+                              *step);
   }
 
   CLI::Option*         opt_  = nullptr;

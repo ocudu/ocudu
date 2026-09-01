@@ -1063,19 +1063,25 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
              pusch_params.p0_nominal_with_grant,
              "P0 value for PUSCH with grant (except msg3). Value in dBm. Valid values must be multiple of 2 and "
              "within the [-202, 24] interval.  Default: -76")
-      ->capture_default_str();
+      ->capture_default_str()
+      ->range(-202, 24)
+      ->multiple_of(2);
   add_option(app,
              "--p0_nominal_without_grant",
              pusch_params.p0_nominal_without_grant,
              "P0 value for PUSCH without grant. Value in dBm. Valid values must be multiple of 2 and "
              "within the [-202, 24] interval.  Default: -76")
-      ->capture_default_str();
+      ->capture_default_str()
+      ->range(-202, 24)
+      ->multiple_of(2);
   add_option(app,
              "--msg3_delta_power",
              pusch_params.msg3_delta_power,
              "Target power level at the network receiver side, in dBm. Valid values must be multiple of 2 and "
              "within the [-6, 8] interval. Default: 8")
-      ->capture_default_str();
+      ->capture_default_str()
+      ->range(-6, 8)
+      ->multiple_of(2);
   add_option(app, "--max_puschs_per_slot", pusch_params.max_puschs_per_slot, "Maximum number of PUSCH grants per slot")
       ->capture_default_str()
       ->range(1U, (unsigned)MAX_PUSCH_PDUS_PER_SLOT);
@@ -1260,7 +1266,9 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
              pucch_params.p0_nominal,
              "Power control parameter P0 for PUCCH transmissions. Value in dBm. Valid values must be multiple of 2 and "
              "within the [-202, 24] interval. Default: -90")
-      ->capture_default_str();
+      ->capture_default_str()
+      ->range(-202, 24)
+      ->multiple_of(2);
   add_option(app,
              "--pucch_resource_common",
              pucch_params.pucch_resource_common,
@@ -1525,7 +1533,9 @@ static void configure_cli11_srs_args(CLI::App& app, du_high_unit_srs_config& srs
              srs_params.p0,
              "P0 value for SRS. Value in dBm. Valid values must be multiple of 2 and "
              "within the [-202, 24] interval.  Default: -84")
-      ->capture_default_str();
+      ->capture_default_str()
+      ->range(-202, 24)
+      ->multiple_of(2);
 }
 
 static void configure_cli11_cg_args(CLI::App& app, du_high_configured_grants& cg_params)
@@ -1735,7 +1745,9 @@ static void configure_cli11_prach_args(CLI::App& app, du_high_unit_rach_config& 
              prach_params.preamble_rx_target_pw,
              "Target power level at the network receiver side, in dBm. Valid values must be multiple of 2 and within "
              "the [-202, -60] interval.")
-      ->capture_default_str();
+      ->capture_default_str()
+      ->range(-202, -60)
+      ->multiple_of(2);
   add_option(app,
              "--preamble_trans_max",
              prach_params.preamble_trans_max,
@@ -1812,35 +1824,13 @@ static void configure_cli11_sib2_config_args(CLI::App& app, du_high_unit_sib_con
       ->range(0, 7);
   add_option(app, "--q_rx_lev_min", sib2_cfg.q_rx_lev_min, "Minimum required Rx level in the cell in dBm")
       ->capture_default_str()
-      ->check([](const std::string& value) -> std::string {
-        const auto v = parse_int<int>(value);
-
-        if (!v.has_value()) {
-          return v.error();
-        }
-
-        static constexpr interval<int, true> valid_range(-140, -44);
-        if (not valid_range.contains(*v) || (*v % 2 != 0)) {
-          return fmt::format("Must be an even value within the {} interval", valid_range);
-        }
-        return "";
-      });
+      ->range(-140, -44)
+      ->multiple_of(2);
   add_option(
       app, "--s_intra_search_p", sib2_cfg.s_intra_search_p, "Rx level threshold for intra frequency measurements in dB")
       ->capture_default_str()
-      ->check([](const std::string& value) -> std::string {
-        const auto v = parse_int<int>(value);
-
-        if (!v.has_value()) {
-          return v.error();
-        }
-
-        static constexpr interval<unsigned, true> valid_range(0, 62);
-        if (not valid_range.contains(*v) or (*v % 2 != 0)) {
-          return fmt::format("Must be an even value within the {} interval", valid_range);
-        }
-        return "";
-      });
+      ->range(0, 62)
+      ->multiple_of(2);
   add_option(app, "--t_reselection_nr", sib2_cfg.t_reselection_nr, "Cell reselection timer value in seconds")
       ->capture_default_str()
       ->range(0, 7);
@@ -1900,55 +1890,22 @@ static void configure_cli11_inter_freq_carrier_freq_info_args(
       ->capture_default_str();
   add_option(app, "--q_rx_lev_min", config.q_rx_lev_min, "Minimum required Rx level in the cell in dBm")
       ->capture_default_str()
-      ->check([](const std::string& value) -> std::string {
-        const auto v = parse_int<int>(value);
-
-        if (!v.has_value()) {
-          return v.error();
-        }
-
-        static constexpr interval<int, true> valid_range(-140, -44);
-        if (not valid_range.contains(*v) or (*v % 2 != 0)) {
-          return fmt::format("Must be an even value within the {} interval", valid_range);
-        }
-        return "";
-      });
+      ->range(-140, -44)
+      ->multiple_of(2);
   add_option(app,
              "--thresh_x_high_p",
              config.thresh_x_high_p,
              "Rx level threshold in dB used when reselecting to a higher priority RAT/frequency in dB")
       ->capture_default_str()
-      ->check([](const std::string& value) -> std::string {
-        const auto v = parse_int<int>(value);
-
-        if (!v.has_value()) {
-          return v.error();
-        }
-
-        static constexpr interval<unsigned, true> valid_range(0, 62);
-        if (not valid_range.contains(*v) or (*v % 2 != 0)) {
-          return fmt::format("Must be an even value within the {} interval", valid_range);
-        }
-        return "";
-      });
+      ->range(0, 62)
+      ->multiple_of(2);
   add_option(app,
              "--thresh_x_low_p",
              config.thresh_x_low_p,
              "Rx level threshold in dB used when reselecting to a lower priority RAT/frequency in dB")
       ->capture_default_str()
-      ->check([](const std::string& value) -> std::string {
-        const auto v = parse_int<int>(value);
-
-        if (!v.has_value()) {
-          return v.error();
-        }
-
-        static constexpr interval<unsigned, true> valid_range(0, 62);
-        if (not valid_range.contains(*v) || (*v % 2 != 0)) {
-          return fmt::format("Must be an even value within the {} interval", valid_range);
-        }
-        return "";
-      });
+      ->range(0, 62)
+      ->multiple_of(2);
   add_option(app,
              "--q_offset_freq",
              config.q_offset_freq,
@@ -1991,50 +1948,19 @@ configure_cli11_carrier_freq_eutra_args(CLI::App&                               
              config.thresh_x_high,
              "Rx level threshold in dB used when reselecting to a higher priority RAT/frequency in dB")
       ->capture_default_str()
-      ->check([](const std::string& value) -> std::string {
-        const auto v = parse_int<int>(value);
-
-        if (!v.has_value()) {
-          return v.error();
-        }
-
-        static constexpr interval<unsigned, true> valid_range(0, 62);
-        if (not valid_range.contains(*v) || (*v % 2 != 0)) {
-          return fmt::format("Must be an even value within the {} interval", valid_range);
-        }
-        return "";
-      });
+      ->range(0, 62)
+      ->multiple_of(2);
   add_option(app,
              "--thresh_x_low",
              config.thresh_x_low,
              "Rx level threshold in dB used when reselecting to a lower priority RAT/frequency in dB")
       ->capture_default_str()
-      ->check([](const std::string& value) -> std::string {
-        const auto v = parse_int<int>(value);
-        if (!v.has_value()) {
-          return v.error();
-        }
-        static constexpr interval<unsigned, true> valid_range(0, 62);
-        if (not valid_range.contains(*v) || (*v % 2 != 0)) {
-          return fmt::format("Must be an even value within the {} interval", valid_range);
-        }
-        return "";
-      });
+      ->range(0, 62)
+      ->multiple_of(2);
   add_option(app, "--q_rx_lev_min", config.q_rx_lev_min, "Minimum required Rx level in the cell in dBm")
       ->capture_default_str()
-      ->check([](const std::string& value) -> std::string {
-        const auto v = parse_int<int>(value);
-
-        if (!v.has_value()) {
-          return v.error();
-        }
-
-        static constexpr interval<int, true> valid_range(-140, -44);
-        if (not valid_range.contains(*v) || (*v % 2 != 0)) {
-          return fmt::format("Must be an even value within the {} interval", valid_range);
-        }
-        return "";
-      });
+      ->range(-140, -44)
+      ->multiple_of(2);
   add_option(app, "--q_qual_min", config.q_qual_min, "Minimum required quality level in the cell in dB")
       ->capture_default_str()
       ->range(-34, -3);

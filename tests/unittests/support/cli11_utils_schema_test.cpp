@@ -179,6 +179,25 @@ TEST_F(cli11_utils_schema_test, multiple_of_rejects_bounds_off_the_step)
   EXPECT_DEATH(add_option(app, "--off_step2", off_step2, "off-step")->multiple_of(4)->range(25, 273), ".*");
 }
 
+TEST_F(cli11_utils_schema_test, multiple_of_allows_an_upper_bound_off_the_step)
+{
+  CLI::App    app;
+  schema_node root;
+  register_schema_root(app, root);
+
+  // An upper bound off the step is not attainable, so it describes the sequence 0,5,...,155 correctly.
+  unsigned offset_sf = 0;
+  add_option(app, "--offset_sf", offset_sf, "offset in subframes")->range(0U, 159U)->multiple_of(5U);
+
+  ASSERT_EQ(root.children.size(), 1u);
+  EXPECT_EQ(std::get<std::int64_t>(*root.children[0]->constraints.multiple_of), 5);
+
+  setup_yaml(app);
+  std::istringstream ss("offset_sf: 155\n");
+  EXPECT_NO_THROW(app.parse_from_stream(ss));
+  EXPECT_EQ(offset_sf, 155u);
+}
+
 TEST_F(cli11_utils_schema_test, option_pointer_exposes_required_flag)
 {
   CLI::App    app;

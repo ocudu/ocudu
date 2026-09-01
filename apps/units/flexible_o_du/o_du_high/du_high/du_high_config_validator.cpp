@@ -858,11 +858,6 @@ static bool validate_ntn_config(const du_high_unit_cell_ntn_config& ntn_cfg, nr_
       fmt::print("sat_switch_with_resync: promote_neighbors has no effect unless promote_to_serving is enabled.\n");
       valid = false;
     }
-    if (sw.ssb_time_offset_sf && *sw.ssb_time_offset_sf % 5 != 0) {
-      fmt::print("sat_switch_with_resync: ssb_time_offset_sf must be 0 or a multiple of 5 subframes, got {}.\n",
-                 *sw.ssb_time_offset_sf);
-      valid = false;
-    }
     if (sw.sat_ref.satellite_idx) {
       if (sw.sat_ref.epoch_timestamp) {
         fmt::print("sat_switch_with_resync: satellite_idx and epoch_timestamp are mutually exclusive.\n");
@@ -1803,20 +1798,6 @@ static bool validate_cell_cg_config(const du_high_configured_grants& cg_cfg, uns
   return true;
 }
 
-// Validates that a dBm power-control value is a multiple of 2 within [min_value, max_value].
-static bool validate_power_ctrl_value(const char* name, int value, int min_value, int max_value)
-{
-  if (value < min_value || value > max_value || (value % 2) != 0) {
-    fmt::print("Invalid {} value {}. Valid values must be a multiple of 2 within the [{}, {}] interval.\n",
-               name,
-               value,
-               min_value,
-               max_value);
-    return false;
-  }
-  return true;
-}
-
 /// Validates the additional TACs broadcast by a cell in trackingAreaList, TS 38.331.
 static bool validate_additional_tacs(const du_high_unit_base_cell_config& config, bool is_ntn_band)
 {
@@ -1879,15 +1860,6 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
     fmt::print("Invalid TAC value {}. Valid TAC values are in [1, 16777215] excluding the reserved value 16777214 "
                "(0xfffffe).\n",
                config.tac);
-    return false;
-  }
-
-  if (!validate_power_ctrl_value("p0_nominal_with_grant", config.pusch_cfg.p0_nominal_with_grant, -202, 24) ||
-      !validate_power_ctrl_value("p0_nominal_without_grant", config.pusch_cfg.p0_nominal_without_grant, -202, 24) ||
-      !validate_power_ctrl_value("msg3_delta_power", config.pusch_cfg.msg3_delta_power, -6, 8) ||
-      !validate_power_ctrl_value("p0_nominal", config.pucch_cfg.p0_nominal, -202, 24) ||
-      !validate_power_ctrl_value("p0", config.srs_cfg.p0, -202, 24) ||
-      !validate_power_ctrl_value("preamble_rx_target_pw", config.prach_cfg.preamble_rx_target_pw, -202, -60)) {
     return false;
   }
 
