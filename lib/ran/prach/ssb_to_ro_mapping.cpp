@@ -6,6 +6,7 @@
 #include "ocudu/ran/prach/prach_constants.h"
 #include "ocudu/support/error_handling.h"
 #include "ocudu/support/math/bit_ops.h"
+#include "ocudu/support/math/math_utils.h"
 #include "ocudu/support/ocudu_assert.h"
 #include <limits>
 
@@ -70,7 +71,9 @@ void prach_helper::ssb_to_ro_mapping::build_occasion_table()
   }
 
   // As per TS 38.213, Section 8.1, all the active SS/PBCH block indexes are mapped over this many PRACH occasions.
-  ros_per_cycle = ssb_indexes.size() * nof_ro_per_ssb / nof_ssb_per_ro;
+  // The division rounds up, since a PRACH occasion carrying more SS/PBCH block indexes than the cell transmits still
+  // maps all of them, and a cycle of no occasion would make the divisions below ill-defined.
+  ros_per_cycle = divide_ceil(ssb_indexes.size() * nof_ro_per_ssb, nof_ssb_per_ro);
 
   // The PRACH occasion pattern only repeats once both the PRACH configuration period and the SS/PBCH block burst
   // realign. Both span a power of two number of system frames.

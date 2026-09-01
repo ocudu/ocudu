@@ -161,6 +161,21 @@ TEST(ssb_to_ro_mapping_test, time_multiplexed_occasions_are_ordered_within_the_p
   ASSERT_FALSE(mapping.get_ssb_index(slot_point{0, 0, 8}, 0, 0, 0).has_value());
 }
 
+TEST(ssb_to_ro_mapping_test, occasion_carrying_more_ssbs_than_are_active_maps_them_all)
+{
+  // Four SS/PBCH blocks per occasion while the cell only transmits the blocks 0 and 2, so a single occasion covers
+  // the whole mapping cycle.
+  const rach_config_common rach_cfg = make_rach_cfg(ssb_per_rach_occasions::four);
+  const ssb_configuration  ssb_cfg  = make_ssb_cfg(0b10100000, 8);
+  const ssb_to_ro_mapping  mapping  = make_fdd_mapping(rach_cfg, ssb_cfg);
+
+  // With 64 preambles split over four SS/PBCH blocks, each one owns 16 of them.
+  ASSERT_EQ(mapping.get_ssb_index(slot_point{0, 0, 0}, 0, 0, 0).value().value(), 0U);
+  ASSERT_EQ(mapping.get_ssb_index(slot_point{0, 0, 0}, 0, 0, 16).value().value(), 2U);
+  // The preambles of the SS/PBCH blocks that the cell does not transmit are associated with none.
+  ASSERT_FALSE(mapping.get_ssb_index(slot_point{0, 0, 0}, 0, 0, 32).has_value());
+}
+
 TEST(ssb_to_ro_mapping_test, frequency_multiplexed_occasions_are_ordered_first)
 {
   const rach_config_common rach_cfg = make_rach_cfg(ssb_per_rach_occasions::one, 4);
