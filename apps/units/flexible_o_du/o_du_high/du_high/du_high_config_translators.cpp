@@ -260,7 +260,7 @@ static sib5_info create_sib5_info(const du_high_unit_sib_config::sib5_config& co
   return sib5;
 }
 
-static sib6_info create_sib6_info(const du_high_unit_sib_config::etws_config& cfg)
+static sib6_info create_sib6_info(const du_high_unit_sib_config::etws_config::test_config& cfg)
 {
   sib6_info sib6;
 
@@ -271,7 +271,7 @@ static sib6_info create_sib6_info(const du_high_unit_sib_config::etws_config& cf
   return sib6;
 }
 
-static sib7_info create_sib7_info(const du_high_unit_sib_config::etws_config& cfg)
+static sib7_info create_sib7_info(const du_high_unit_sib_config::etws_config::test_config& cfg)
 {
   sib7_info sib7;
 
@@ -283,7 +283,7 @@ static sib7_info create_sib7_info(const du_high_unit_sib_config::etws_config& cf
   return sib7;
 }
 
-static sib8_info create_sib8_info(const du_high_unit_sib_config::cmas_config& cfg)
+static sib8_info create_sib8_info(const du_high_unit_sib_config::cmas_config::test_config& cfg)
 {
   sib8_info sib8;
 
@@ -531,7 +531,8 @@ static std::optional<si_scheduling_info_config> make_si_sched_info_config(const 
     // indefinitely.
     if (std::any_of(sib_mapping_info.begin(), sib_mapping_info.end(), is_pws_sib)) {
       out_si.auto_broadcast = std::any_of(sib_mapping_info.begin(), sib_mapping_info.end(), [&sib_cfg](uint8_t sib_id) {
-        return sib_id == 8 ? sib_cfg.cmas_cfg.has_value() : sib_cfg.etws_cfg.has_value();
+        return sib_id == 8 ? (sib_cfg.cmas_cfg.has_value() and sib_cfg.cmas_cfg->test.has_value())
+                           : (sib_cfg.etws_cfg.has_value() and sib_cfg.etws_cfg->test.has_value());
       });
     }
 
@@ -575,22 +576,22 @@ static std::optional<si_scheduling_info_config> make_si_sched_info_config(const 
         item = create_sib5_info(sib_cfg.sib5_cfg.value());
       } break;
       case 6: {
-        if (!sib_cfg.etws_cfg.has_value()) {
+        if (!sib_cfg.etws_cfg.has_value() or !sib_cfg.etws_cfg->test.has_value()) {
           continue;
         }
-        item = create_sib6_info(sib_cfg.etws_cfg.value());
+        item = create_sib6_info(sib_cfg.etws_cfg->test.value());
       } break;
       case 7: {
-        if (!sib_cfg.etws_cfg.has_value()) {
+        if (!sib_cfg.etws_cfg.has_value() or !sib_cfg.etws_cfg->test.has_value()) {
           continue;
         }
-        item = create_sib7_info(sib_cfg.etws_cfg.value());
+        item = create_sib7_info(sib_cfg.etws_cfg->test.value());
       } break;
       case 8: {
-        if (!sib_cfg.cmas_cfg.has_value()) {
+        if (!sib_cfg.cmas_cfg.has_value() or !sib_cfg.cmas_cfg->test.has_value()) {
           continue;
         }
-        item = create_sib8_info(sib_cfg.cmas_cfg.value());
+        item = create_sib8_info(sib_cfg.cmas_cfg->test.value());
       } break;
       case 16: {
         if (!sib_cfg.sib16_cfg.has_value()) {

@@ -2052,46 +2052,90 @@ static void configure_cli11_sib16_config_args(CLI::App& app, du_high_unit_sib_co
       "Frequency priority slicing list entries");
 }
 
-static void configure_cli11_etws_args(CLI::App& app, du_high_unit_sib_config::etws_config& sib_params)
+static void configure_cli11_etws_test_args(CLI::App& app, du_high_unit_sib_config::etws_config::test_config& params)
 {
-  add_option(app, "--message_id", sib_params.message_id, "ETWS message ID.")->capture_default_str()->range(0, 0xffff);
+  add_option(app, "--message_id", params.message_id, "ETWS message ID.")->capture_default_str()->range(0, 0xffff);
 
-  add_option(app, "--serial_num", sib_params.serial_num, "ETWS message serial number.")
+  add_option(app, "--serial_num", params.serial_num, "ETWS message serial number.")
       ->capture_default_str()
       ->range(0, 0xffff);
 
-  add_option(app, "--warning_type", sib_params.warning_type, "ETWS warning type.")
-      ->capture_default_str()
-      ->range(0, 0xffff);
+  add_option(app, "--warning_type", params.warning_type, "ETWS warning type.")->capture_default_str()->range(0, 0xffff);
 
-  add_option(app, "--data_coding_scheme", sib_params.data_coding_scheme, "ETWS message CBS coding scheme.")
+  add_option(app, "--data_coding_scheme", params.data_coding_scheme, "ETWS message CBS coding scheme.")
       ->capture_default_str()
       ->range(0, 0xff);
 
   add_option(app,
              "--warning_message",
-             sib_params.warning_message,
+             params.warning_message,
              "ETWS warning message. Max. Length and character support depends on the chosen coding scheme.")
+      ->capture_default_str();
+}
+
+static void configure_cli11_etws_args(CLI::App& app, du_high_unit_sib_config::etws_config& sib_params)
+{
+  add_option(app,
+             "--si_period",
+             sib_params.si_period_rf,
+             "Scheduling period, in radio frames, of the SI messages carrying SIB6 and SIB7")
+      ->capture_default_str();
+
+  CLI::App* test_subcmd =
+      add_subcommand(app, "test", "Fixed ETWS content that the cell broadcasts from its start, for testing purposes");
+  static du_high_unit_sib_config::etws_config::test_config test_cfg;
+  configure_cli11_etws_test_args(*test_subcmd, test_cfg);
+  auto test_verify_callback = [&app, &sib_params]() {
+    CLI::App* sub_cmd = app.get_subcommand("test");
+    if (sub_cmd->count() != 0) {
+      sib_params.test.emplace(test_cfg);
+    } else {
+      sub_cmd->disabled();
+    }
+  };
+  test_subcmd->parse_complete_callback(test_verify_callback);
+}
+
+static void configure_cli11_cmas_test_args(CLI::App& app, du_high_unit_sib_config::cmas_config::test_config& params)
+{
+  add_option(app, "--message_id", params.message_id, "CMAS message ID.")->capture_default_str()->range(0, 0xffff);
+
+  add_option(app, "--serial_num", params.serial_num, "CMAS message serial number.")
+      ->capture_default_str()
+      ->range(0, 0xffff);
+
+  add_option(app, "--data_coding_scheme", params.data_coding_scheme, "CMAS message CBS coding scheme.")
+      ->capture_default_str()
+      ->range(0, 0xff);
+
+  add_option(app,
+             "--warning_message",
+             params.warning_message,
+             "CMAS warning message. Max. Length and character support depends on the chosen coding scheme.")
       ->capture_default_str();
 }
 
 static void configure_cli11_cmas_args(CLI::App& app, du_high_unit_sib_config::cmas_config& sib_params)
 {
-  add_option(app, "--message_id", sib_params.message_id, "CMAS message ID.")->capture_default_str()->range(0, 0xffff);
-
-  add_option(app, "--serial_num", sib_params.serial_num, "CMAS message serial number.")
-      ->capture_default_str()
-      ->range(0, 0xffff);
-
-  add_option(app, "--data_coding_scheme", sib_params.data_coding_scheme, "CMAS message CBS coding scheme.")
-      ->capture_default_str()
-      ->range(0, 0xff);
-
   add_option(app,
-             "--warning_message",
-             sib_params.warning_message,
-             "CMAS warning message. Max. Length and character support depends on the chosen coding scheme.")
+             "--si_period",
+             sib_params.si_period_rf,
+             "Scheduling period, in radio frames, of the SI message carrying SIB8")
       ->capture_default_str();
+
+  CLI::App* test_subcmd =
+      add_subcommand(app, "test", "Fixed CMAS content that the cell broadcasts from its start, for testing purposes");
+  static du_high_unit_sib_config::cmas_config::test_config test_cfg;
+  configure_cli11_cmas_test_args(*test_subcmd, test_cfg);
+  auto test_verify_callback = [&app, &sib_params]() {
+    CLI::App* sub_cmd = app.get_subcommand("test");
+    if (sub_cmd->count() != 0) {
+      sib_params.test.emplace(test_cfg);
+    } else {
+      sub_cmd->disabled();
+    }
+  };
+  test_subcmd->parse_complete_callback(test_verify_callback);
 }
 
 static void configure_cli11_sib_args(CLI::App& app, du_high_unit_sib_config& sib_params)
@@ -2178,7 +2222,7 @@ static void configure_cli11_sib_args(CLI::App& app, du_high_unit_sib_config& sib
   sib16_subcmd->parse_complete_callback(sib16_verify_callback);
 
   CLI::App* etws_subcmd = add_subcommand(
-      app, "etws", "Testing parameters to automatically and permanently broadcast a fixed ETWS message over SIB6/7");
+      app, "etws", "Earthquake and Tsunami Warning System (ETWS) parameters, broadcast over SIB6 and SIB7");
   static du_high_unit_sib_config::etws_config etws_cfg;
   configure_cli11_etws_args(*etws_subcmd, etws_cfg);
   auto etws_verify_callback = [&]() {
@@ -2192,8 +2236,8 @@ static void configure_cli11_sib_args(CLI::App& app, du_high_unit_sib_config& sib
   etws_subcmd->parse_complete_callback(etws_verify_callback);
 
   static du_high_unit_sib_config::cmas_config cmas_cfg;
-  CLI::App*                                   cmas_subcmd = add_subcommand(
-      app, "cmas", "Testing parameters to automatically and permanently broadcast a fixed CMAS message over SIB8");
+  CLI::App*                                   cmas_subcmd =
+      add_subcommand(app, "cmas", "Commercial Mobile Alert Service (CMAS) parameters, broadcast over SIB8");
   configure_cli11_cmas_args(*cmas_subcmd, cmas_cfg);
   auto cmas_verify_callback = [&]() {
     CLI::App* cmas_sub_cmd = app.get_subcommand("cmas");
