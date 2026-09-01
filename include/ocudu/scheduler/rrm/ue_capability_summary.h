@@ -13,6 +13,30 @@
 
 namespace ocudu {
 
+/// \brief Type-II codebook parameters supported by the UE.
+///
+/// It is given by field \e type2 of \e codebookParameters in Information Element \e MIMO-ParametersPerBand.
+///
+/// \remark This type is defined at namespace scope on purpose. The default member initializers of a nested class are
+/// only parsed at the closing brace of the outermost enclosing class, hence a \c std::optional of a nested class that
+/// is instantiated within that same enclosing class is neither known to be default constructible nor literal.
+struct ue_type2_codebook_params {
+  /// Maximum number of beams supported for linear combination, given by field \e parameterLx. Values: {2, 3, 4}.
+  uint8_t max_nof_beams = 2;
+  /// Set to true if the UE supports subband amplitude scaling, given by field \e amplitudeScalingType.
+  bool subband_amplitude_supported = false;
+  /// Maximum number of TX ports in a CSI-RS resource, given by field \e supportedCSI-RS-ResourceList.
+  uint8_t max_nof_tx_ports_per_resource = 2;
+
+  /// Equality operator.
+  bool operator==(const ue_type2_codebook_params& other) const
+  {
+    return (max_nof_beams == other.max_nof_beams) &&
+           (subband_amplitude_supported == other.subband_amplitude_supported) &&
+           (max_nof_tx_ports_per_resource == other.max_nof_tx_ports_per_resource);
+  }
+};
+
 /// Flat structure summarizing the decoded ASN.1 UE capabilities.
 struct ue_capability_summary {
   /// \defgroup default_caps Default parameters.
@@ -29,29 +53,8 @@ struct ue_capability_summary {
   static constexpr unsigned default_max_pdsch_tdra_rep_number = 1;
   /// @}
 
-  /// \brief Type-II codebook parameters supported by the UE.
-  ///
-  /// It is given by field \e type2 of \e codebookParameters in Information Element \e MIMO-ParametersPerBand.
-  struct type2_codebook_params {
-    // This user provided constructor is added here to fix a Clang compilation error related to the use of nested types
-    // with std::optional.
-    type2_codebook_params() {}
-
-    /// Maximum number of beams supported for linear combination, given by field \e parameterLx. Values: {2, 3, 4}.
-    uint8_t max_nof_beams = 2;
-    /// Set to true if the UE supports subband amplitude scaling, given by field \e amplitudeScalingType.
-    bool subband_amplitude_supported = false;
-    /// Maximum number of TX ports in a CSI-RS resource, given by field \e supportedCSI-RS-ResourceList.
-    uint8_t max_nof_tx_ports_per_resource = 2;
-
-    /// Equality operator.
-    bool operator==(const type2_codebook_params& other) const
-    {
-      return (max_nof_beams == other.max_nof_beams) &&
-             (subband_amplitude_supported == other.subband_amplitude_supported) &&
-             (max_nof_tx_ports_per_resource == other.max_nof_tx_ports_per_resource);
-    }
-  };
+  /// Type-II codebook parameters supported by the UE.
+  using type2_codebook_params = ue_type2_codebook_params;
 
   /// Contains band specific parameters.
   struct supported_band {
