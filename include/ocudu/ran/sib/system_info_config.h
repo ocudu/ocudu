@@ -274,6 +274,22 @@ struct si_message_sched_info {
   }
 };
 
+/// \brief Parameters of an SI message that carries a warning (SIB6, SIB7 or SIB8).
+///
+/// Its schedulingInfoList entry is only listed while its warning is on air, which the MAC takes care of, so it holds no
+/// position in \ref si_scheduling_info_config::si_sched_info.
+struct pws_si_message_config {
+  /// SIB the SI message carries. A warning SIB is never mapped together with another SIB.
+  sib_type sib;
+  /// Periodicity of the SI message, in radio frames. Values: {8, 16, 32, 64, 128, 256, 512}.
+  unsigned si_period_radio_frames = 64;
+  /// \brief Whether the cell broadcasts the configured content from its start, rather than waiting for a
+  /// Write-Replace Warning.
+  ///
+  /// Used for test_mode-configured ETWS/CMAS content.
+  bool auto_broadcast = false;
+};
+
 /// This struct contains the information required for the generation of the SI messages sent by the network and the
 /// generation of the SIB1 "SI-SchedulingInfo" field of the SIB1. See TS 38.331, "SystemInformation" and
 /// "SI-SchedulingInfo".
@@ -283,6 +299,8 @@ struct si_scheduling_info_config {
   unsigned si_window_len_slots;
   /// List of SI-messages and associated scheduling information.
   std::vector<si_message_sched_info> si_sched_info;
+  /// SI messages that carry a warning, which the cell only broadcasts while one is on air.
+  std::vector<pws_si_message_config> pws_si_messages;
   /// Information included in each SIB that is scheduled as part of one of the SI-messages, with associated value tags.
   std::vector<sib_type_info> sibs;
 };

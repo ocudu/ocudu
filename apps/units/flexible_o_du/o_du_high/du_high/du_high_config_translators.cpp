@@ -506,14 +506,32 @@ static ntn_cell_params make_ntn_cell_params(const du_high_unit_ntn_serving_cell_
 }
 
 /// Fill SI-Scheduling Information.
+/// \brief Fills the parameters of the SI messages that carry a warning.
+///
+/// A warning SIB is never mapped together with another SIB, so ETWS takes one SI message for its primary notification
+/// and another for its secondary one.
+static void fill_pws_si_messages(si_scheduling_info_config& out, const du_high_unit_sib_config& sib_cfg)
+{
+  if (sib_cfg.etws_cfg.has_value()) {
+    const auto& etws = sib_cfg.etws_cfg.value();
+    out.pws_si_messages.push_back({sib_type::sib6, etws.si_period_rf, etws.test.has_value()});
+    out.pws_si_messages.push_back({sib_type::sib7, etws.si_period_rf, etws.test.has_value()});
+  }
+  if (sib_cfg.cmas_cfg.has_value()) {
+    const auto& cmas = sib_cfg.cmas_cfg.value();
+    out.pws_si_messages.push_back({sib_type::sib8, cmas.si_period_rf, cmas.test.has_value()});
+  }
+}
+
 static std::optional<si_scheduling_info_config> make_si_sched_info_config(const du_high_unit_base_cell_config& cell_cfg)
 {
   const auto& sib_cfg = cell_cfg.sib_cfg;
-  if (sib_cfg.si_sched_info.empty()) {
+  if (sib_cfg.si_sched_info.empty() and not sib_cfg.etws_cfg.has_value() and not sib_cfg.cmas_cfg.has_value()) {
     return std::nullopt;
   }
   si_scheduling_info_config out;
   out.si_window_len_slots = sib_cfg.si_window_len_slots;
+  fill_pws_si_messages(out, sib_cfg);
   // Set SIB mapping info.
   out.si_sched_info.resize(sib_cfg.si_sched_info.size());
   std::vector<uint8_t> sibs_included;
