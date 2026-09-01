@@ -247,7 +247,7 @@ bool cu_cp_impl::start()
         }
 
         // Start AMF connection procedure.
-        controller.amf_connection_handler().connect_to_amf(&p);
+        controller.amf_connection_handler().connect_to_amf(&p, cfg.ngap.amf_reconnection_retry_time);
       })) {
     report_fatal_error("Failed to initiate CU-CP setup");
   }

@@ -34,15 +34,20 @@ amf_connection_manager::amf_connection_manager(ngap_repository&                 
 {
 }
 
-void amf_connection_manager::connect_to_amf(std::promise<bool>* completion_signal)
+void amf_connection_manager::connect_to_amf(std::promise<bool>* completion_signal, std::chrono::milliseconds retry_time)
 {
   // Schedules setup routine to be executed in sequence with other CU-CP procedures.
-  common_task_sched.schedule(
-      launch_async([this, success = false, p = completion_signal](coro_context<async_task<void>>& ctx) mutable {
+  common_task_sched.schedule(launch_async(
+      [this, success = false, p = completion_signal, retry_time](coro_context<async_task<void>>& ctx) mutable {
         CORO_BEGIN(ctx);
 
         // Launch procedure to initiate AMF connection.
         CORO_AWAIT_VALUE(success, start_amf_connection_setup(ngaps, amfs_connected, ng_setup_notifier));
+
+        if (not success) {
+          // Keep trying in the background, so that the CU-CP does not require the AMF to be reachable on startup.
+          success = retry_unconnected_amfs(retry_time);
+        }
 
         // Signal through the promise the result of the connection setup.
         if (p != nullptr) {
@@ -93,7 +98,9 @@ void amf_connection_manager::reconnect_to_amf(cu_cp_amf_index_t         amf_inde
         if (success) {
           // Update PLMN lookups in NGAP repository after successful reconnection.
           ngaps.update_plmn_lookup(amf_index);
-          ue_mng->remove_blocked_plmns(ngaps.find_ngap(amf_index)->get_ngap_context().get_supported_plmns());
+          if (ue_mng != nullptr) {
+            ue_mng->remove_blocked_plmns(ngaps.find_ngap(amf_index)->get_ngap_context().get_supported_plmns());
+          }
           amfs_connected.emplace(amf_index, true);
           // Notrify CU-CP about the successful reconnection.
           cu_cp_notifier.handle_amf_reconnection(amf_index);
@@ -174,6 +181,25 @@ void amf_connection_manager::handle_connection_setup_result(cu_cp_amf_index_t am
 {
   // Update AMF connection handler state.
   amfs_connected.emplace(amf_index, success);
+}
+
+bool amf_connection_manager::retry_unconnected_amfs(std::chrono::milliseconds retry_time)
+{
+  bool all_recoverable = true;
+
+  for (const auto& [amf_index, ngap] : ngaps.get_ngaps()) {
+    if (ngap->is_amf_tnl_connected()) {
+      // The N2 TNL association is up, so either this AMF is connected or its NG Setup failed. The NGAP does not
+      // support reconnections on a live association, so the latter cannot be retried without tearing it down first.
+      all_recoverable = all_recoverable and is_amf_connected(amf_index);
+      continue;
+    }
+
+    // The N2 TNL association was never established. Retry it in the background.
+    reconnect_to_amf(amf_index, nullptr, retry_time);
+  }
+
+  return all_recoverable;
 }
 
 cu_cp_amf_index_t amf_connection_manager::plmn_to_amf_index(plmn_identity plmn) const

@@ -79,6 +79,24 @@ TEST_F(cu_cp_connectivity_test, when_ng_setup_fails_then_cu_cp_is_not_in_amf_con
   ASSERT_FALSE(get_cu_cp().get_ng_handler().amfs_are_connected());
 }
 
+TEST_F(cu_cp_connectivity_test, when_amf_is_not_reachable_on_startup_then_cu_cp_starts_and_connects_once_amf_is_up)
+{
+  // Simulate an AMF that is not reachable yet.
+  get_amf().drop_connection();
+
+  // The CU-CP must start, even though the N2 TNL connection could not be established.
+  ASSERT_TRUE(get_cu_cp().start());
+  ASSERT_FALSE(get_cu_cp().get_ng_handler().amfs_are_connected());
+
+  ngap_message ngap_pdu;
+  ASSERT_FALSE(get_amf().try_pop_rx_pdu(ngap_pdu)) << "CU-CP sent an NG Setup Request without a TNL connection";
+
+  // The AMF becomes reachable. The scheduled reconnection must establish the TNL connection and run the NG Setup.
+  ASSERT_TRUE(reconnect_amf(0)) << "CU-CP did not retry the AMF connection";
+  ASSERT_TRUE(tick_until(
+      std::chrono::milliseconds{1000}, [this]() { return get_cu_cp().get_ng_handler().amfs_are_connected(); }, false));
+}
+
 TEST_F(cu_cp_connectivity_test, when_amf_connection_is_lost_and_no_dus_are_connected_then_no_amfs_are_connected)
 {
   // Run NG setup to completion.

@@ -29,7 +29,9 @@ public:
   /// \brief Initiates the connection to the AMF.
   /// A promise is passed as a parameter to enable blocking synchronization between the completion of the scheduled
   /// async task and the caller side.
-  void connect_to_amf(std::promise<bool>* completion_signal = nullptr);
+  /// \param[in] completion_signal Promise signalled with the result of the connection setup.
+  /// \param[in] retry_time The time to wait between attempts of the AMFs that are reconnected in the background.
+  void connect_to_amf(std::promise<bool>* completion_signal, std::chrono::milliseconds retry_time);
 
   /// \brief Initiate procedure to disconnect from the N2 interface.
   async_task<void> disconnect_amf();
@@ -40,7 +42,8 @@ public:
 
   /// \brief Initiates the reconnection to the AMF.
   /// \param[in] amf_index The index of the AMF to reconnect to.
-  /// \param[in] ue_mng The UE manager to re-enable UE connections in case the reconnection was successful.
+  /// \param[in] ue_mng The UE manager to re-enable UE connections in case the reconnection was successful. It may be
+  /// null when no UE connection was ever blocked for this AMF, e.g. when the initial connection setup failed.
   /// \param[in] amf_reconnection_retry_time The time to wait before retrying the reconnection.
   void reconnect_to_amf(cu_cp_amf_index_t         amf_index,
                         ue_manager*               ue_mng,
@@ -57,6 +60,10 @@ public:
 private:
   void              handle_connection_setup_result(cu_cp_amf_index_t amf_index, bool success);
   cu_cp_amf_index_t plmn_to_amf_index(plmn_identity plmn) const;
+
+  /// \brief Schedules a background reconnection for every AMF whose N2 TNL association could not be established.
+  /// \return True if no AMF was left in a state from which it cannot recover on its own, false otherwise.
+  bool retry_unconnected_amfs(std::chrono::milliseconds retry_time);
 
   ngap_repository&                  ngaps;
   cu_cp_amf_reconnection_handler&   cu_cp_notifier;

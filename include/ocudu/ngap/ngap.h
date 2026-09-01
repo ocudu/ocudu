@@ -66,6 +66,10 @@ public:
   /// \brief Request a new TNL association to the AMF.
   virtual bool handle_amf_tnl_connection_request() = 0;
 
+  /// \brief Determines whether the TNL association to the AMF is established.
+  /// \remark A new TNL association can only be requested while this is false.
+  [[nodiscard]] virtual bool is_amf_tnl_connected() const = 0;
+
   /// \brief Request the NGAP handler to disconnect from the AMF.
   virtual async_task<void> handle_amf_disconnection_request() = 0;
 

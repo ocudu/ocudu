@@ -530,10 +530,7 @@ int main(int argc, char** argv)
   o_cucp_obj.get_operation_controller().start();
   cu_logger.info("CU-CP started successfully");
 
-  // Check connection to AMF.
-  if (not o_cucp_obj.get_cu_cp().get_ng_handler().amfs_are_connected()) {
-    report_error("CU-CP failed to connect to AMF");
-  }
+  // Note: An AMF that is not reachable on startup is reconnected to in the background.
 
   // Configure the remote commands and start the service.
   if (remote_control_server) {
