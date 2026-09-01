@@ -150,7 +150,7 @@ TEST(precoding_codebooks_test, OneLayerTwoPorts)
                                               {cf_t(1.0f, 0.0f), cf_t(-1.0f, 0.0f)},
                                               {cf_t(1.0f, 0.0f), cf_t(0.0f, -1.0f)}};
 
-  static constexpr float norm_factor = M_SQRT1_2f;
+  static constexpr float norm_factor = M_SQRT1_2;
 
   for (unsigned i_codebook = 0; i_codebook != 4; ++i_codebook) {
     precoding_weight_matrix precoding = make_one_layer_two_ports(i_codebook);
