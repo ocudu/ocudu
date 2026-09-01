@@ -16,6 +16,7 @@
 #include "ocudu/ran/duplex_mode.h"
 #include "ocudu/ran/pdcch/pdcch_candidates.h"
 #include "ocudu/ran/prach/prach_configuration.h"
+#include "ocudu/ran/prs/prs.h"
 #include "ocudu/ran/pucch/pucch_info.h"
 #include "ocudu/ran/pucch/pucch_mapping.h"
 #include "ocudu/ran/sib/cell_reselection.h"
@@ -28,6 +29,7 @@
 #include "ocudu/scheduler/config/scheduler_expert_config_factory.h"
 #include "ocudu/scheduler/config/scheduler_expert_config_validator.h"
 #include "ocudu/scheduler/config/time_domain_resource_helper.h"
+#include "ocudu/support/ocudu_assert.h"
 #include <algorithm>
 #include <cmath>
 
@@ -78,6 +80,39 @@ static trp_position_direct_accuracy_t make_trp_geo_coordinates(const du_high_uni
     return make_trp_geo_coordinates_normal(*cfg);
   }
   return make_trp_geo_coordinates_ha(std::get<du_high_unit_cell_geo_coordinates_ha_config>(geo_cfg));
+}
+
+static prs_config make_prs_config(const du_high_unit_prs_config& prs_cfg)
+{
+  prs_config out;
+
+  out.resource_sets.reserve(prs_cfg.resource_sets.size());
+  for (const auto& res_set_cfg : prs_cfg.resource_sets) {
+    // The PRS bandwidth is derived from the cell bandwidth when it is not set in the application configuration.
+    ocudu_assert(res_set_cfg.bandwidth_prbs.has_value(), "PRS bandwidth was not derived from the cell bandwidth");
+
+    prs_resource_set& res_set = out.resource_sets.emplace_back();
+    res_set.bandwidth_prbs    = res_set_cfg.bandwidth_prbs.value();
+    res_set.start_prb         = res_set_cfg.start_prb;
+    res_set.comb_size         = static_cast<prs_comb_size>(res_set_cfg.comb_size);
+    res_set.periodicity_slots = res_set_cfg.periodicity_slots;
+    res_set.slot_offset       = res_set_cfg.slot_offset;
+    res_set.repetition_factor = static_cast<prs_repetition_factor>(res_set_cfg.repetition_factor);
+    res_set.time_gap          = static_cast<prs_time_gap>(res_set_cfg.time_gap);
+    res_set.nof_symbols       = static_cast<prs_num_symbols>(res_set_cfg.nof_symbols);
+    res_set.power_offset_db   = res_set_cfg.power_offset_db;
+
+    res_set.resources.reserve(res_set_cfg.resources.size());
+    for (const auto& res_cfg : res_set_cfg.resources) {
+      prs_resource& res = res_set.resources.emplace_back();
+      res.sequence_id   = res_cfg.sequence_id;
+      res.re_offset     = res_cfg.re_offset;
+      res.slot_offset   = res_cfg.slot_offset;
+      res.symbol_offset = res_cfg.symbol_offset;
+    }
+  }
+
+  return out;
 }
 
 tdd_ul_dl_config_common ocudu::generate_tdd_pattern(subcarrier_spacing scs, const du_high_unit_tdd_ul_dl_config& config)
@@ -770,6 +805,9 @@ std::vector<odu::du_cell_config> ocudu::generate_du_cell_config(const du_high_un
     if (base_cell.geo_coordinates_cfg.has_value()) {
       out_cell.trp_geo_coordinates = make_trp_geo_coordinates(base_cell.geo_coordinates_cfg.value());
     }
+
+    // DL-PRS parameters.
+    out_cell.prs_cfg = make_prs_config(base_cell.prs_cfg);
 
     // MAC Cell Group Config parameters.
     out_cell.mcg_params = make_mac_cell_group_params(base_cell);
