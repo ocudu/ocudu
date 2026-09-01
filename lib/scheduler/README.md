@@ -38,7 +38,7 @@ scheduler_impl
 
 A `ue_scheduler` is shared across all cells in a cell group (Carrier Aggregation), and holds the state that spans a UE's carriers. Each `cell_scheduler` holds a `ue_cell_scheduler` handle, which is an RAII view into the shared `ue_scheduler`.
 
-The `uci_scheduler` and the `srs_scheduler` are owned by the cell but driven from the UE scheduling step, as they have to run before any UL grant of the slot.
+The `uci_scheduler` and the `srs_scheduler` run after the schedulers of the common channels and before the UE scheduling step, as they have to reserve their periodic opportunities before any UE grant of the slot.
 
 ## Slot Processing Flow
 
@@ -52,20 +52,20 @@ The `uci_scheduler` and the `srs_scheduler` are owned by the cell but driven fro
 6. **PRACH** — schedule PRACH occasions.
 7. **RA** — schedule random access (RA) grants (e.g. RAR and Msg3) for detected RACH preambles.
 8. **Paging** — schedule paging PDCCH and PDSCH.
-9. **UE scheduling** (`ue_cell_scheduler::run_slot`):
+9. **Periodic UCI** — schedule the SR and CSI PUCCH opportunities (`uci_scheduler`).
+10. **Periodic SRS** — schedule the periodic and aperiodic SRS (`srs_scheduler`).
+11. **UE scheduling** (`ue_cell_scheduler::run_slot`):
    1. Advance UE state machines (DRX, timing advance, HARQ timers).
-   2. Schedule SR and CSI PUCCH opportunities (`uci_scheduler`).
-   3. Schedule periodic and aperiodic SRS (`srs_scheduler`).
-   4. Schedule configured grant PUSCH opportunities, if configured.
-   5. Schedule SRB0 / fallback grants (`ue_fallback_scheduler`).
-   6. Prioritize slices for this slot (`inter_slice_scheduler::slot_indication`).
-   7. For each slice in priority order:
+   2. Schedule configured grant PUSCH opportunities, if configured.
+   3. Schedule SRB0 / fallback grants (`ue_fallback_scheduler`).
+   4. Prioritize slices for this slot (`inter_slice_scheduler::slot_indication`).
+   5. For each slice in priority order:
       - Schedule PDSCH retransmissions, then new transmissions.
       - Schedule PUSCH retransmissions, then new transmissions.
-   8. Post-process allocations (finalize PUCCH/UCI state).
-   9. Inject synthetic BSRs for the UEs that need a triggered UL grant.
-10. **UCI indications** — match the UCI grants of the finished slot to their indications (`uci_indication_selector`).
-11. **Logging and metrics** — flush the event log, the result log and the slot metrics.
+   6. Post-process allocations (finalize PUCCH/UCI state).
+   7. Inject synthetic BSRs for the UEs that need a triggered UL grant.
+12. **UCI indications** — match the UCI grants of the finished slot to their indications (`uci_indication_selector`).
+13. **Logging and metrics** — flush the event log, the result log and the slot metrics.
 
 ## Event Handling
 

@@ -165,6 +165,11 @@ bool cell_group_event_handler_impl::handle_ue_deletion(ue_config_delete_event ev
 
 bool cell_group_event_handler_impl::handle_ue_config_applied(du_ue_index_t ue_idx)
 {
+  if (not ue_db.contains(ue_idx)) {
+    log_invalid_ue_index(ue_idx, "ue_cfg_applied");
+    return false;
+  }
+
   // Confirm that UE applied new config.
   ue_db.ue_config_applied(ue_idx);
 

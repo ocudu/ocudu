@@ -33,7 +33,7 @@ struct cell_creation_event {
 
 class cell_group_event_manager;
 
-/// Applies to the cell group the events that one of its cells dispatched.
+/// Applies to the cell group events that one of its cells dispatched.
 class cell_group_event_handler_impl final : public cell_group_event_handler
 {
 public:
@@ -74,11 +74,11 @@ private:
   /// Log event when UE does not have a carrier for this cell.
   void log_invalid_cc(du_ue_index_t ue_idx, const char* event_name, bool warn_if_ignored = true) const;
 
-  // shared parameters.
+  // Shared parameters.
   cell_group_event_manager& parent;
   ue_repository&            ue_db;
   ocudulog::basic_logger&   logger;
-  // cell parameters.
+  // Cell parameters.
   const cell_configuration& cfg;
   ue_fallback_scheduler&    fallback_sched;
   uci_scheduler_impl&       uci_sched;

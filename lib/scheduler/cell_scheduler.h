@@ -142,7 +142,7 @@ private:
   /// Reference to UE scheduler whose DU cell group contains this cell.
   ue_scheduler::unique_cell_ptr ue_sched;
 
-  /// Handler of the events of this cell that require no access to the UE repository.
+  /// Handler of the events of this cell.
   cell_event_manager ev_mng;
 
   /// Current state of the cell.

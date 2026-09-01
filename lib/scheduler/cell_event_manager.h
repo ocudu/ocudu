@@ -41,10 +41,11 @@ struct ul_crc_pdu_indication;
 struct uci_action;
 struct uci_indication;
 
-/// \brief Handler of the events of a cell that require no access to the state shared by the UEs of the cell group.
+/// \brief Handler of the events of a cell.
 ///
 /// Events are enqueued from any executor and processed at the start of the cell slot indication, so that their
-/// handling runs in the cell scheduler executor.
+/// handling runs in the cell scheduler executor. The ones that need the state shared by the UEs of the cell group are
+/// handed over to it.
 class cell_event_manager final : public scheduler_cell_positioning_handler,
                                  public sched_ue_configuration_handler,
                                  public ue_feedback_handler,
