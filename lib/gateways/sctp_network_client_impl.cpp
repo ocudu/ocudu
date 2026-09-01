@@ -253,13 +253,16 @@ sctp_network_client_impl::connect(std::unique_ptr<sctp_association_sdu_notifier>
     if (errno == 0) {
       cause = "IO broker could not register socket";
     }
-    fmt::print("{}: Failed to connect to {} on [{}]:{}. error=\"{}\" timeout={}ms\n",
-               node_cfg.if_name,
-               client_cfg.dest_name,
-               fmt::join(client_cfg.connect_addresses, ", "),
-               client_cfg.connect_port,
-               cause,
-               now_ms.count());
+    if (not connect_failure_printed) {
+      connect_failure_printed = true;
+      fmt::print("{}: Failed to connect to {} on [{}]:{}. error=\"{}\" timeout={}ms\n",
+                 node_cfg.if_name,
+                 client_cfg.dest_name,
+                 fmt::join(client_cfg.connect_addresses, ", "),
+                 client_cfg.connect_port,
+                 cause,
+                 now_ms.count());
+    }
     logger.error("{}: Failed to connect to {} on [{}]:{}. error=\"{}\" timeout={}ms",
                  node_cfg.if_name,
                  client_cfg.dest_name,
@@ -292,11 +295,14 @@ sctp_network_client_impl::connect(std::unique_ptr<sctp_association_sdu_notifier>
   }
 
   if (peer_addrs.empty()) {
-    fmt::print("{}: Failed to connect to {} on [{}]:{}. Failed to get peer addresses.\n",
-               node_cfg.if_name,
-               client_cfg.dest_name,
-               fmt::join(client_cfg.connect_addresses, ", "),
-               client_cfg.connect_port);
+    if (not connect_failure_printed) {
+      connect_failure_printed = true;
+      fmt::print("{}: Failed to connect to {} on [{}]:{}. Failed to get peer addresses.\n",
+                 node_cfg.if_name,
+                 client_cfg.dest_name,
+                 fmt::join(client_cfg.connect_addresses, ", "),
+                 client_cfg.connect_port);
+    }
     logger.error("{}: Failed to connect to {} on [{}]:{}. Failed to get peer addresses.",
                  node_cfg.if_name,
                  client_cfg.dest_name,
@@ -352,6 +358,9 @@ sctp_network_client_impl::connect(std::unique_ptr<sctp_association_sdu_notifier>
     recv_handler.reset();
     return nullptr;
   }
+
+  // The connection is up, so a failure of a future one is worth announcing again.
+  connect_failure_printed = false;
 
   return std::make_unique<sctp_send_notifier>(*this, peer_addrs[0]);
 }

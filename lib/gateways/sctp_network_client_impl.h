@@ -53,6 +53,10 @@ private:
   io_broker&     broker;
   task_executor& io_rx_executor;
 
+  // Whether the last connection failure was already announced in STDOUT. Set to avoid flooding the console when the
+  // connection is retried periodically. The failures are still logged on every attempt.
+  bool connect_failure_printed = false;
+
   // Handler of IO events. It is only accessed by the backend (io_broker), once the connection is set up.
   std::unique_ptr<sctp_association_sdu_notifier> recv_handler;
 
