@@ -21,6 +21,7 @@
     MULTI_ARCH_BUILD: "false"
     CACHE: "true"
     CACHE_MODE: "max"
+    IMAGE_REPOSITORY: ""
     IMAGE_TAG_OS: ""
     IMAGE_TAG_DRIVER: "false"
     COMPONENT: ""
@@ -40,7 +41,9 @@
     - export CONTEXT=${CI_PROJECT_DIR}
     - export DOCKERFILE=${CI_PROJECT_DIR}/docker
     - |
-      if [ -n "${DRIVER}" ]; then
+      if [ -n "${IMAGE_REPOSITORY}" ]; then
+        IMAGE_COMPONENT="${IMAGE_REPOSITORY}"
+      elif [ -n "${DRIVER}" ]; then
         IMAGE_COMPONENT="${COMPONENT}-${DRIVER}"
       else
         IMAGE_COMPONENT="${COMPONENT}"
@@ -316,6 +319,8 @@
         MARCH: neoverse-n1+crc+crypto+ssbs
 
 .matrix-image-rh-gnb:
+  variables:
+    IMAGE_REPOSITORY: gnb
   parallel:
     matrix:
       - COMPONENT: gnb
@@ -344,6 +349,8 @@
         MARCH: neoverse-n1+crc+crypto+ssbs
 
 .matrix-image-rh-du:
+  variables:
+    IMAGE_REPOSITORY: du
   parallel:
     matrix:
       - COMPONENT: du

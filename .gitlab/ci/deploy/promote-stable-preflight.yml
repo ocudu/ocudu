@@ -208,11 +208,16 @@ promote-stable:ubuntu:ru-emulator:
     - *simd-label
     - unset DOCKER_AUTH_CONFIG
     - |
-      if [ -n "${DRIVER}" ]; then
+      if [ -n "${IMAGE_REPOSITORY:-}" ]; then
+        IMAGE_COMPONENT="${IMAGE_REPOSITORY}"
+      elif [ -n "${DRIVER}" ]; then
         IMAGE_COMPONENT="${COMPONENT}-${DRIVER}"
-        TAG_DRIVER="-${DRIVER}"
       else
         IMAGE_COMPONENT="${COMPONENT}"
+      fi
+      if [ -n "${DRIVER}" ]; then
+        TAG_DRIVER="-${DRIVER}"
+      else
         TAG_DRIVER=""
       fi
       DATE=$(date -u -d "${CI_PIPELINE_CREATED_AT}" +%Y%m%d)
@@ -285,11 +290,16 @@ promote-stable:rh:ru-emulator:
     - echo "${REGISTRY_AUTH_PASSWORD}" | docker login "${REGISTRY_AUTH_SERVER}" -u "${REGISTRY_AUTH_USERNAME}" --password-stdin
     - export PFLT_DOCKERCONFIG=/root/.docker/config.json
     - |
-      if [ -n "${DRIVER}" ]; then
+      if [ -n "${IMAGE_REPOSITORY:-}" ]; then
+        IMAGE_COMPONENT="${IMAGE_REPOSITORY}"
+      elif [ -n "${DRIVER}" ]; then
         IMAGE_COMPONENT="${COMPONENT}-${DRIVER}"
-        TAG_DRIVER="-${DRIVER}"
       else
         IMAGE_COMPONENT="${COMPONENT}"
+      fi
+      if [ -n "${DRIVER}" ]; then
+        TAG_DRIVER="-${DRIVER}"
+      else
         TAG_DRIVER=""
       fi
       DATE=$(date -u -d "${CI_PIPELINE_CREATED_AT}" +%Y%m%d)
@@ -301,13 +311,13 @@ promote-stable:rh:ru-emulator:
       export IMAGE_REF="${RH_DOCKERHUB_REGISTRY_URI}/${IMAGE_COMPONENT}:${VERSION}"
     - |
       CERTIFICATION_COMPONENT_ID=""
-      case "${IMAGE_COMPONENT}" in
-        gnb-uhd|gnb-dpdk) CERTIFICATION_COMPONENT_ID="${PFLT_CERTIFICATION_COMPONENT_ID_GNB}" ;;
-        du-uhd|du-dpdk)   CERTIFICATION_COMPONENT_ID="${PFLT_CERTIFICATION_COMPONENT_ID_DU}" ;;
-        cu)               CERTIFICATION_COMPONENT_ID="${PFLT_CERTIFICATION_COMPONENT_ID_CU}" ;;
-        cu-cp)            CERTIFICATION_COMPONENT_ID="${PFLT_CERTIFICATION_COMPONENT_ID_CU_CP}" ;;
-        cu-up)            CERTIFICATION_COMPONENT_ID="${PFLT_CERTIFICATION_COMPONENT_ID_CU_UP}" ;;
-        ru-emulator-dpdk) CERTIFICATION_COMPONENT_ID="${PFLT_CERTIFICATION_COMPONENT_ID_RU_EMULATOR}" ;;
+      case "${COMPONENT}" in
+        gnb)         CERTIFICATION_COMPONENT_ID="${PFLT_CERTIFICATION_COMPONENT_ID_GNB}" ;;
+        du)          CERTIFICATION_COMPONENT_ID="${PFLT_CERTIFICATION_COMPONENT_ID_DU}" ;;
+        cu)          CERTIFICATION_COMPONENT_ID="${PFLT_CERTIFICATION_COMPONENT_ID_CU}" ;;
+        cu-cp)       CERTIFICATION_COMPONENT_ID="${PFLT_CERTIFICATION_COMPONENT_ID_CU_CP}" ;;
+        cu-up)       CERTIFICATION_COMPONENT_ID="${PFLT_CERTIFICATION_COMPONENT_ID_CU_UP}" ;;
+        ru-emulator) CERTIFICATION_COMPONENT_ID="${PFLT_CERTIFICATION_COMPONENT_ID_RU_EMULATOR}" ;;
       esac
       export PFLT_CERTIFICATION_COMPONENT_ID="${CERTIFICATION_COMPONENT_ID}"
 
