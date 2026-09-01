@@ -358,7 +358,14 @@ static asn1::rrc_nr::plmn_id_info_s make_asn1_plmn_id_info(const plmn_identity& 
   return asn1_plmn_info;
 }
 
-static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg)
+/// Whether an SI message only carries a warning, and is therefore no part of the normal operation.
+static bool carries_warning(const si_message_sched_info& si_msg)
+{
+  return std::any_of(
+      si_msg.sib_mapping_info.begin(), si_msg.sib_mapping_info.end(), [](sib_type sib) { return is_pws_sib(sib); });
+}
+
+static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg, si_message_set msg_set)
 {
   using namespace asn1::rrc_nr;
 
@@ -402,6 +409,10 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
 
       // For each SI message in the configuration...
       for (const auto& cfg_si : du_cfg.si.si_config->si_sched_info) {
+        if (msg_set == si_message_set::normal_operation and carries_warning(cfg_si)) {
+          // Its entry is only listed while its warning is on air, which the MAC takes care of.
+          continue;
+        }
         // Prepare a SchedulingInfo element.
         sched_info_s asn1_si;
         asn1_si.si_broadcast_status.value = sched_info_s::si_broadcast_status_opts::broadcasting;
@@ -553,11 +564,11 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
   return sib1;
 }
 
-byte_buffer asn1_packer::pack_sib1(const du_cell_config& du_cfg, std::string* js_str)
+byte_buffer asn1_packer::pack_sib1(const du_cell_config& du_cfg, si_message_set msg_set, std::string* js_str)
 {
   byte_buffer          buf;
   asn1::bit_ref        bref{buf};
-  asn1::rrc_nr::sib1_s sib1 = make_asn1_rrc_cell_sib1(du_cfg);
+  asn1::rrc_nr::sib1_s sib1 = make_asn1_rrc_cell_sib1(du_cfg, msg_set);
   asn1::OCUDUASN_CODE  ret  = sib1.pack(bref);
   ocudu_assert(ret == asn1::OCUDUASN_SUCCESS, "Failed to pack SIB1");
 
@@ -1012,7 +1023,9 @@ static void pack_si_message(bcch_dl_sch_payload_type& buffer, const asn1::rrc_nr
 }
 
 std::vector<bcch_dl_sch_payload_type>
-asn1_packer::pack_all_bcch_dl_sch_msgs(const du_cell_config& du_cfg, std::vector<std::string>* bcch_dl_sch_json_msgs)
+asn1_packer::pack_all_bcch_dl_sch_msgs(const du_cell_config&     du_cfg,
+                                       si_message_set            msg_set,
+                                       std::vector<std::string>* bcch_dl_sch_json_msgs)
 {
   std::vector<bcch_dl_sch_payload_type> msgs;
   if (bcch_dl_sch_json_msgs != nullptr) {
@@ -1022,7 +1035,7 @@ asn1_packer::pack_all_bcch_dl_sch_msgs(const du_cell_config& du_cfg, std::vector
   // Pack SIB1.
   {
     asn1::rrc_nr::bcch_dl_sch_msg_s msg;
-    msg.msg.set_c1().set_sib_type1() = make_asn1_rrc_cell_sib1(du_cfg);
+    msg.msg.set_c1().set_sib_type1() = make_asn1_rrc_cell_sib1(du_cfg, msg_set);
 
     bcch_dl_sch_payload_type packed_sib(1);
     pack_si_message(packed_sib.front(), msg);
@@ -1037,6 +1050,10 @@ asn1_packer::pack_all_bcch_dl_sch_msgs(const du_cell_config& du_cfg, std::vector
     const auto& sibs = du_cfg.si.si_config.value().sibs;
 
     for (const auto& si_sched : du_cfg.si.si_config.value().si_sched_info) {
+      if (msg_set == si_message_set::normal_operation and carries_warning(si_sched)) {
+        // Only broadcast while its warning is on air, so it is no part of the normal operation.
+        continue;
+      }
       // Pack SI messages that contain multiple SIBs.
       if (si_sched.sib_mapping_info.size() > 1) {
         asn1::rrc_nr::bcch_dl_sch_msg_s msg;

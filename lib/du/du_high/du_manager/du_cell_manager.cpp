@@ -28,7 +28,10 @@ static void fill_si_scheduler_config(si_scheduling_config&                si_sch
                                      const byte_buffer&                   sib1,
                                      span<const bcch_dl_sch_payload_type> si_messages)
 {
-  const units::bytes                           sib1_len = units::bytes{static_cast<unsigned>(sib1.length())};
+  // The SI messages that only carry a warning are not broadcast when the cell starts, so the SIB1 it starts out with
+  // does not list them and is shorter than the one packed for the MAC to derive the SI epochs from.
+  const byte_buffer  starting_sib1 = asn1_packer::pack_sib1(cell_cfg, si_message_set::normal_operation);
+  const units::bytes sib1_len      = units::bytes{static_cast<unsigned>(starting_sib1.length())};
   static_vector<units::bytes, MAX_SI_MESSAGES> si_payload_sizes;
   for (const auto& si_msg : si_messages) {
     size_t si_msg_len = si_msg.front().length();
@@ -54,7 +57,8 @@ void du_cell_manager::add_cell(const du_cell_config& cell_cfg)
   }
 
   // Generate system information.
-  std::vector<bcch_dl_sch_payload_type> bcch_msgs = asn1_packer::pack_all_bcch_dl_sch_msgs(cell_cfg);
+  std::vector<bcch_dl_sch_payload_type> bcch_msgs =
+      asn1_packer::pack_all_bcch_dl_sch_msgs(cell_cfg, si_message_set::every_si_message);
 
   ocudu_assert(bcch_msgs[0].size() == 1, "SIB-1 cannot be segmented");
   const byte_buffer& sib1 = bcch_msgs[0].front();
@@ -189,7 +193,8 @@ du_cell_manager::handle_cell_reconf_request(const du_cell_param_config_request& 
     if (req.new_sys_info.has_value()) {
       // Other SIB msg was updated, repack ALL SIBs (SIB1 + SI messages).
       logger.info("Repacking all BCCH-DL-SCH messages for cell {} (SIB update)", cell_index);
-      std::vector<bcch_dl_sch_payload_type> bcch_msgs = asn1_packer::pack_all_bcch_dl_sch_msgs(cell_cfg);
+      std::vector<bcch_dl_sch_payload_type> bcch_msgs =
+          asn1_packer::pack_all_bcch_dl_sch_msgs(cell_cfg, si_message_set::every_si_message);
 
       ocudu_assert(bcch_msgs[0].size() == 1, "SIB-1 cannot be segmented");
       cell.si_cfg.sib1 = bcch_msgs[0].front().copy();
@@ -199,7 +204,7 @@ du_cell_manager::handle_cell_reconf_request(const du_cell_param_config_request& 
       cell.si_cfg.si_messages.assign(si_messages.begin(), si_messages.end());
     } else {
       // Only SSB power changed, repack only SIB1.
-      cell.si_cfg.sib1 = asn1_packer::pack_sib1(cell_cfg);
+      cell.si_cfg.sib1 = asn1_packer::pack_sib1(cell_cfg, si_message_set::every_si_message);
     }
 
     // Update SI scheduling config. The SI version is owned by the MAC.

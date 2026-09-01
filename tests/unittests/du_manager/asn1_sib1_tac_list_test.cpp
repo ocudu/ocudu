@@ -20,7 +20,7 @@ ocudu::mac_pcap* g_pcap        = nullptr;
 /// ocudu_assert would drop the call entirely in a build with asserts disabled.
 static void pack_and_unpack_sib1(const du_cell_config& cell_cfg, asn1::rrc_nr::sib1_s& sib1)
 {
-  byte_buffer    buf = asn1_packer::pack_sib1(cell_cfg);
+  byte_buffer    buf = asn1_packer::pack_sib1(cell_cfg, si_message_set::every_si_message);
   asn1::cbit_ref bref{buf};
   ASSERT_EQ(sib1.unpack(bref), asn1::OCUDUASN_SUCCESS);
 }

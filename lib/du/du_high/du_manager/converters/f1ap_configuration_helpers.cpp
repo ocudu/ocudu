@@ -91,12 +91,16 @@ gnb_du_sys_info ocudu::odu::make_f1ap_du_sys_info(const du_cell_config&     du_c
 {
   gnb_du_sys_info sys_info;
 
+  // The CU-CP forwards this System Information to UEs, so it must state what the cell broadcasts in the normal
+  // operation. An SI message carrying a warning is only broadcast while the warning is on air, and the MAC is the one
+  // that lists it in SIB1 for as long as that lasts.
   sys_info.packed_mib  = asn1_packer::pack_mib(du_cfg);
-  sys_info.packed_sib1 = asn1_packer::pack_sib1(du_cfg, js_str);
+  sys_info.packed_sib1 = asn1_packer::pack_sib1(du_cfg, si_message_set::normal_operation, js_str);
 
   // Pack extra SI messages.
   std::vector<std::string> all_msg_json;
-  auto all_msgs = asn1_packer::pack_all_bcch_dl_sch_msgs(du_cfg, si_json_strs != nullptr ? &all_msg_json : nullptr);
+  auto                     all_msgs = asn1_packer::pack_all_bcch_dl_sch_msgs(
+      du_cfg, si_message_set::normal_operation, si_json_strs != nullptr ? &all_msg_json : nullptr);
   std::size_t nof_si_segments = 0;
   for (std::size_t i = 1; i < all_msgs.size(); ++i) {
     nof_si_segments += all_msgs[i].size();
