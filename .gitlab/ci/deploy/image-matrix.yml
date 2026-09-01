@@ -109,6 +109,7 @@
       fi
     - |
       IMAGE_REF="${REGISTRY_URI}/${NAME}:${VERSION}"
+      echo "Publishing image ${IMAGE_REF}"
       echo "IMAGE_REF=${IMAGE_REF}" > build.env
   artifacts:
     reports:
