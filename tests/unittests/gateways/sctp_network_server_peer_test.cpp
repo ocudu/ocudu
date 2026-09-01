@@ -24,7 +24,10 @@ protected:
     server_cfg1.sctp.bind_addresses = {"127.0.0.1"};
     server_cfg1.sctp.bind_port      = 0;
     if (test_dtls) {
-      server_cfg1.sctp.dtls_cfg = {dtls_mode::server, "0", "/tmp/test.pem", "/tmp/test.pem"};
+      server_cfg1.sctp.dtls_cfg = {dtls_mode::server,
+                                   "1",
+                                   std::string(TEST_CERT_DIR) + "/test_cert1.pem",
+                                   std::string(TEST_CERT_DIR) + "/test_key1.pem"};
     }
 
     server_cfg2.sctp.if_name        = "SERVER2";
@@ -32,7 +35,10 @@ protected:
     server_cfg2.sctp.bind_addresses = {"127.0.0.2"};
     server_cfg2.sctp.bind_port      = 0;
     if (test_dtls) {
-      server_cfg2.sctp.dtls_cfg = {dtls_mode::server, "0", "/tmp/test.pem", "/tmp/test.pem"};
+      server_cfg1.sctp.dtls_cfg = {dtls_mode::server,
+                                   "2",
+                                   std::string(TEST_CERT_DIR) + "/test_cert2.pem",
+                                   std::string(TEST_CERT_DIR) + "/test_key2.pem"};
     }
 
     server_cfg3.sctp.if_name        = "SERVER3";
@@ -40,7 +46,10 @@ protected:
     server_cfg3.sctp.bind_addresses = {"127.0.0.3"};
     server_cfg3.sctp.bind_port      = 0;
     if (test_dtls) {
-      server_cfg3.sctp.dtls_cfg = {dtls_mode::server, "0", "/tmp/test.pem", "/tmp/test.pem"};
+      server_cfg3.sctp.dtls_cfg = {dtls_mode::server,
+                                   "3",
+                                   std::string(TEST_CERT_DIR) + "/test_cert3.pem",
+                                   std::string(TEST_CERT_DIR) + "/test_key3.pem"};
     }
   }
 
@@ -83,7 +92,7 @@ protected:
   association_factory assoc_factory3;
 };
 
-TEST_F(sctp_network_server_peer_test, when_config_is_valid_then_server_is_created_successfully)
+TEST_P(sctp_network_server_peer_test, when_config_is_valid_then_server_is_created_successfully)
 {
   server1 = create_sctp_network_server(server_cfg1);
   server2 = create_sctp_network_server(server_cfg2);
@@ -93,7 +102,7 @@ TEST_F(sctp_network_server_peer_test, when_config_is_valid_then_server_is_create
   ASSERT_NE(server3, nullptr);
 }
 
-TEST_F(sctp_network_server_peer_test, when_association_requested_association_initiates_successfully)
+TEST_P(sctp_network_server_peer_test, when_association_requested_association_initiates_successfully)
 {
   server1 = create_sctp_network_server(server_cfg1);
   server2 = create_sctp_network_server(server_cfg2);
@@ -180,7 +189,7 @@ TEST_F(sctp_network_server_peer_test, when_association_requested_association_ini
   ASSERT_EQ(assoc_factory1.last_sdu, tx_sdu2);
 }
 
-TEST_F(sctp_network_server_peer_test, when_connect_called_with_empty_address_list_then_returns_false)
+TEST_P(sctp_network_server_peer_test, when_connect_called_with_empty_address_list_then_returns_false)
 {
   server1 = create_sctp_network_server(server_cfg1);
   ASSERT_NE(server1, nullptr);
@@ -193,7 +202,7 @@ TEST_F(sctp_network_server_peer_test, when_connect_called_with_empty_address_lis
   ASSERT_EQ(0, assoc_factory1.association_count());
 }
 
-TEST_F(sctp_network_server_peer_test, when_connect_uses_multiple_destination_addresses_then_association_succeeds)
+TEST_P(sctp_network_server_peer_test, when_connect_uses_multiple_destination_addresses_then_association_succeeds)
 {
   server_cfg1.sctp.bind_addresses = {server1_addr_str, server1_multihomed_addr_str};
   server_cfg2.sctp.bind_addresses = {server2_addr_str, server2_multihomed_addr_str};
@@ -237,7 +246,7 @@ TEST_F(sctp_network_server_peer_test, when_connect_uses_multiple_destination_add
   ASSERT_EQ(assoc_factory2.last_sdu, tx_sdu);
 }
 
-TEST_F(sctp_network_server_peer_test, when_pending_connects_overlap_then_second_connect_is_rejected)
+TEST_P(sctp_network_server_peer_test, when_pending_connects_overlap_then_second_connect_is_rejected)
 {
   server_cfg1.sctp.bind_addresses = {server1_addr_str, server1_multihomed_addr_str};
   server_cfg2.sctp.bind_addresses = {server2_addr_str, server2_multihomed_addr_str};
@@ -279,7 +288,7 @@ TEST_F(sctp_network_server_peer_test, when_pending_connects_overlap_then_second_
   ASSERT_EQ(1, assoc_factory1.association_count());
 }
 
-TEST_F(sctp_network_server_peer_test, when_server_is_destroyed_then_associations_are_cleaned_up)
+TEST_P(sctp_network_server_peer_test, when_server_is_destroyed_then_associations_are_cleaned_up)
 {
   server1 = create_sctp_network_server(server_cfg1);
   server2 = create_sctp_network_server(server_cfg2);

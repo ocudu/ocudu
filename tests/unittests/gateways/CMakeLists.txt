@@ -16,6 +16,10 @@ add_executable(sctp_network_gateway_test
 target_link_libraries(sctp_network_gateway_test ocudu_gateway ocudu_support ocudulog gtest gtest_main)
 gtest_discover_tests(sctp_network_gateway_test PROPERTIES "LABELS;sctp")
 
+target_compile_definitions(sctp_network_gateway_test PRIVATE
+    TEST_CERT_DIR="${CMAKE_CURRENT_SOURCE_DIR}/sctp/certs"
+)
+
 add_executable(udp_network_gateway_test udp_network_gateway_test.cpp)
 target_link_libraries(udp_network_gateway_test ocudu_gateway ocudu_support ocudulog gtest gtest_main)
 gtest_discover_tests(udp_network_gateway_test PROPERTIES "LABELS;tsan")
