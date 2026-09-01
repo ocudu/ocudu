@@ -568,9 +568,9 @@ create_ul_processor_factory(const upper_phy_factory_configuration& config,
 
   port_channel_estimator_fd_smoothing_strategy pusch_chan_estimator_fd_strategy =
       port_channel_estimator_fd_smoothing_strategy::filter;
-  if (config.pusch_channel_estimator_td_strategy == "none") {
+  if (config.pusch_channel_estimator_fd_strategy == "none") {
     pusch_chan_estimator_fd_strategy = port_channel_estimator_fd_smoothing_strategy::none;
-  } else if (config.pusch_channel_estimator_td_strategy == "mean") {
+  } else if (config.pusch_channel_estimator_fd_strategy == "mean") {
     pusch_chan_estimator_fd_strategy = port_channel_estimator_fd_smoothing_strategy::mean;
   }
 
