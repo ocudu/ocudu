@@ -47,29 +47,19 @@ static sib2_info make_sib2_info()
   return sib2;
 }
 
-TEST(asn1_sib1_sched_info_test, pws_si_message_is_packed_even_without_content)
+TEST(asn1_sib1_sched_info_test, si_message_carrying_a_warning_is_not_listed_in_the_packed_sib1)
 {
   du_cell_config cell_cfg = make_cell_config_with_dormant_pws_si_message();
 
-  byte_buffer buf = asn1_packer::pack_sib1(cell_cfg, si_message_set::every_si_message);
+  byte_buffer buf = asn1_packer::pack_sib1(cell_cfg);
 
   asn1::cbit_ref       bref{buf};
   asn1::rrc_nr::sib1_s sib1;
   ASSERT_EQ(sib1.unpack(bref), asn1::OCUDUASN_SUCCESS);
 
-  // This payload is the reference the MAC derives every SI epoch from, keeping the entry of a PWS SI-message only
-  // while its warning is on air. Dropping the entry here for the lack of content would leave the MAC with nothing to
-  // list once a warning starts.
-  ASSERT_TRUE(sib1.si_sched_info_present) << "schedulingInfoList must not be dropped for a PWS SI-message";
-  ASSERT_EQ(sib1.si_sched_info.sched_info_list.size(), 1);
-
-  const auto& sched_info = sib1.si_sched_info.sched_info_list[0];
-  ASSERT_EQ(sched_info.sib_map_info.size(), 1);
-  EXPECT_EQ(sched_info.sib_map_info[0].type.value, asn1::rrc_nr::sib_type_info_s::type_opts::sib_type6);
-  EXPECT_FALSE(sched_info.sib_map_info[0].value_tag_present) << "A SIB with no content has no value tag";
-
-  // Every entry this payload holds is one being broadcast, given that the MAC removes the ones it must not list.
-  EXPECT_EQ(sched_info.si_broadcast_status.value, asn1::rrc_nr::sched_info_s::si_broadcast_status_opts::broadcasting);
+  // The DU packs the SIB1 of the normal operation, and the MAC appends the warnings for as long as they are on air.
+  EXPECT_FALSE(sib1.si_sched_info_present)
+      << "A cell that only broadcasts warnings has no schedulingInfoList of its own";
 }
 
 TEST(asn1_sib1_sched_info_test, si_message_with_content_is_packed_with_its_value_tag)
@@ -79,7 +69,7 @@ TEST(asn1_sib1_sched_info_test, si_message_with_content_is_packed_with_its_value
   cell_cfg.si.si_config->si_sched_info.push_back(si_message_sched_info{{sib_type::sib2}, 32});
   cell_cfg.si.si_config->sibs.push_back(sib_type_info{make_sib2_info(), value_tag_t{0}});
 
-  byte_buffer buf = asn1_packer::pack_sib1(cell_cfg, si_message_set::every_si_message);
+  byte_buffer buf = asn1_packer::pack_sib1(cell_cfg);
 
   asn1::cbit_ref       bref{buf};
   asn1::rrc_nr::sib1_s sib1;
@@ -183,25 +173,19 @@ TEST(asn1_sib1_sched_info_test, f1ap_system_information_leaves_out_a_test_mode_p
   ASSERT_EQ(sys_info.packed_si_msgs.size(), 1);
 }
 
-TEST(asn1_sib1_sched_info_test, sib1_of_the_normal_operation_is_shorter_than_the_one_packed_for_the_mac)
+TEST(asn1_sib1_sched_info_test, packed_sib1_lists_the_si_messages_of_the_normal_operation_alone)
 {
-  const du_cell_config cell_cfg = make_cell_config_with_sib2_and_pws(false);
+  const du_cell_config cell_cfg = make_cell_config_with_sib2_and_pws(true);
 
-  // The MAC derives the SI epochs from a SIB1 holding every entry it can list, so the payload a cell starts out with,
-  // which the SI grants are sized from, is the shorter one.
-  const byte_buffer mac_sib1      = asn1_packer::pack_sib1(cell_cfg, si_message_set::every_si_message);
-  const byte_buffer starting_sib1 = asn1_packer::pack_sib1(cell_cfg, si_message_set::normal_operation);
-
-  ASSERT_EQ(listed_sibs_of(mac_sib1), (std::vector<sib_type>{sib_type::sib2, sib_type::sib6}));
-  ASSERT_LT(starting_sib1.length(), mac_sib1.length());
+  // Even a warning that the cell broadcasts from its start is left to the MAC to list.
+  ASSERT_EQ(listed_sibs_of(asn1_packer::pack_sib1(cell_cfg)), (std::vector<sib_type>{sib_type::sib2}));
 }
 
 TEST(asn1_sib1_sched_info_test, warning_content_is_packed_apart_from_the_si_messages_of_the_normal_operation)
 {
   const du_cell_config cell_cfg = make_cell_config_with_sib2_and_pws(true);
 
-  const std::vector<bcch_dl_sch_payload_type> si_msgs =
-      asn1_packer::pack_all_bcch_dl_sch_msgs(cell_cfg, si_message_set::every_si_message);
+  const std::vector<bcch_dl_sch_payload_type> si_msgs = asn1_packer::pack_all_bcch_dl_sch_msgs(cell_cfg);
   ASSERT_EQ(si_msgs.size(), 2) << "Only SIB1 and the SI message of the normal operation must be packed here";
 
   const std::vector<bcch_dl_sch_payload_type> pws_msgs = asn1_packer::pack_pws_si_messages(cell_cfg);

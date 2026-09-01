@@ -33,10 +33,11 @@ inline std::vector<byte_buffer> make_random_segmented_pdu(unsigned segment_size 
   return segmented_pdu;
 }
 
-/// \brief Packs a BCCH-DL-SCH message carrying a SIB1 that schedules one SI message per given SIB set.
+/// \brief Packs a BCCH-DL-SCH message carrying a SIB1 that schedules one SI message per given SIB.
 ///
-/// Only the fields the SI message controller reads back are filled, so that the payload round-trips through the ASN.1
-/// unpacking that a si-BroadcastStatus update requires.
+/// It stands in for the payload the DU packs, which lists the SI messages of the normal operation alone. Only the
+/// fields the SI message controller reads back are filled, so that the payload round-trips through the ASN.1
+/// unpacking that appending a warning requires.
 inline byte_buffer make_sib1_with_si_sched_info(span<const sib_type> si_msg_sibs)
 {
   asn1::rrc_nr::bcch_dl_sch_msg_s msg;
@@ -55,7 +56,7 @@ inline byte_buffer make_sib1_with_si_sched_info(span<const sib_type> si_msg_sibs
   plmn_info.cell_id.from_number(0x19b0);
   plmn_info.cell_reserved_for_oper.value = asn1::rrc_nr::plmn_id_info_s::cell_reserved_for_oper_opts::not_reserved;
 
-  sib1.si_sched_info_present          = true;
+  sib1.si_sched_info_present          = not si_msg_sibs.empty();
   sib1.si_sched_info.si_win_len.value = asn1::rrc_nr::si_sched_info_s::si_win_len_opts::s20;
   sib1.si_sched_info.sched_info_list.resize(si_msg_sibs.size());
   for (unsigned i = 0, e = si_msg_sibs.size(); i != e; ++i) {
@@ -87,6 +88,22 @@ inline byte_buffer make_sib1_with_si_sched_info(span<const sib_type> si_msg_sibs
   asn1::bit_ref bref{buf};
   report_fatal_error_if_not(msg.pack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to pack the test SIB1");
   return buf;
+}
+
+/// \brief SI window length, in slots, that a packed BCCH-DL-SCH SIB1 payload states.
+/// \return The length, or std::nullopt if the payload holds no schedulingInfoList.
+inline std::optional<unsigned> get_si_window_len(span<const uint8_t> sib1_pdu)
+{
+  byte_buffer                     sib1_buf = byte_buffer::create(sib1_pdu).value();
+  asn1::rrc_nr::bcch_dl_sch_msg_s msg;
+  asn1::cbit_ref                  bref{sib1_buf};
+  report_fatal_error_if_not(msg.unpack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to unpack the SIB1");
+
+  const asn1::rrc_nr::sib1_s& sib1 = msg.msg.c1().sib_type1();
+  if (not sib1.si_sched_info_present) {
+    return std::nullopt;
+  }
+  return sib1.si_sched_info.si_win_len.to_number();
 }
 
 /// Returns the SIB carried by each SI message that a packed BCCH-DL-SCH SIB1 payload lists, in the listed order.
@@ -141,13 +158,19 @@ inline std::vector<sib_type> get_epoch_sibs(const si_update_command& cmd)
   return sibs;
 }
 
-/// SIBs that the SIB1 of an SI epoch lists in its schedulingInfoList.
-inline std::vector<sib_type> get_sib1_listed_sibs(const si_update_command& cmd, slot_point_extended sl_tx)
+/// Encodes the SIB1 payload that an SI epoch broadcasts.
+inline span<const uint8_t> encode_epoch_sib1(const si_update_command& cmd, slot_point_extended sl_tx)
 {
   sib_information si_info = make_sib_pdu(std::nullopt, cmd.version, units::bytes{MAX_BCCH_DL_SCH_PDU_SIZE / 2});
   auto            payload = cmd.sib1->encode(sl_tx, si_info);
   report_fatal_error_if_not(payload.has_value(), "Failed to encode SIB1");
-  return get_listed_sibs(payload.value());
+  return payload.value();
+}
+
+/// SIBs that the SIB1 of an SI epoch lists in its schedulingInfoList.
+inline std::vector<sib_type> get_sib1_listed_sibs(const si_update_command& cmd, slot_point_extended sl_tx)
+{
+  return get_listed_sibs(encode_epoch_sib1(cmd, sl_tx));
 }
 
 /// \brief Bench pairing an SI message controller with the SIB assembler it feeds.

@@ -374,34 +374,7 @@ static const sib_type_info* find_sib_content(const si_scheduling_info_config& si
   return it != si_cfg.sibs.end() ? &*it : nullptr;
 }
 
-/// \brief Builds the schedulingInfoList entry of an SI message that carries a warning.
-///
-/// A warning SIB is a release 15 SIB, so its entry never goes in schedulingInfoList2. It is advertised even while the
-/// cell has no content for it, so that the UE knows to look for it once a Write-Replace Warning activates it.
-static asn1::rrc_nr::sched_info_s make_asn1_pws_sched_info(const pws_si_message_config&     pws_si_msg,
-                                                           const si_scheduling_info_config& si_cfg)
-{
-  using namespace asn1::rrc_nr;
-
-  sched_info_s asn1_si;
-  asn1_si.si_broadcast_status.value = sched_info_s::si_broadcast_status_opts::broadcasting;
-  bool ret                          = asn1::number_to_enum(asn1_si.si_periodicity, pws_si_msg.si_period_radio_frames);
-  ocudu_assert(ret, "Invalid SI period");
-
-  sib_type_info_s type_info;
-  ret = asn1::number_to_enum(type_info.type, static_cast<unsigned>(pws_si_msg.sib));
-  ocudu_assert(ret, "Invalid warning SIB type");
-  const sib_type_info* content = find_sib_content(si_cfg, pws_si_msg.sib);
-  if (content != nullptr and content->value_tag.valid()) {
-    type_info.value_tag_present = true;
-    type_info.value_tag         = content->value_tag.value();
-  }
-  asn1_si.sib_map_info.push_back(type_info);
-
-  return asn1_si;
-}
-
-static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg, si_message_set msg_set)
+static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg)
 {
   using namespace asn1::rrc_nr;
 
@@ -438,8 +411,9 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
       }
     }
 
-    // Populate the SI Scheduling info list.
-    if (!du_cfg.si.si_config->si_sched_info.empty() or !du_cfg.si.si_config->pws_si_messages.empty()) {
+    // Populate the SI Scheduling info list. The SI messages that carry a warning are left out: the MAC lists one only
+    // while its warning is on air.
+    if (!du_cfg.si.si_config->si_sched_info.empty()) {
       bool ret = asn1::number_to_enum(sib1.si_sched_info.si_win_len, du_cfg.si.si_config.value().si_window_len_slots);
       ocudu_assert(ret, "Invalid SI window length");
 
@@ -548,15 +522,6 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
           si_sched_info_r17.sched_info_list2_r17.push_back(asn1_si_r17);
         }
       }
-
-      if (msg_set == si_message_set::every_si_message) {
-        // The SI messages carrying a warning come last, so that the SI windows of the ones that are always broadcast
-        // stay in place as warnings come and go.
-        for (const pws_si_message_config& pws_si_msg : du_cfg.si.si_config->pws_si_messages) {
-          sib1.si_sched_info_present = true;
-          sib1.si_sched_info.sched_info_list.push_back(make_asn1_pws_sched_info(pws_si_msg, *du_cfg.si.si_config));
-        }
-      }
     }
   }
 
@@ -604,11 +569,11 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
   return sib1;
 }
 
-byte_buffer asn1_packer::pack_sib1(const du_cell_config& du_cfg, si_message_set msg_set, std::string* js_str)
+byte_buffer asn1_packer::pack_sib1(const du_cell_config& du_cfg, std::string* js_str)
 {
   byte_buffer          buf;
   asn1::bit_ref        bref{buf};
-  asn1::rrc_nr::sib1_s sib1 = make_asn1_rrc_cell_sib1(du_cfg, msg_set);
+  asn1::rrc_nr::sib1_s sib1 = make_asn1_rrc_cell_sib1(du_cfg);
   asn1::OCUDUASN_CODE  ret  = sib1.pack(bref);
   ocudu_assert(ret == asn1::OCUDUASN_SUCCESS, "Failed to pack SIB1");
 
@@ -1063,9 +1028,7 @@ static void pack_si_message(bcch_dl_sch_payload_type& buffer, const asn1::rrc_nr
 }
 
 std::vector<bcch_dl_sch_payload_type>
-asn1_packer::pack_all_bcch_dl_sch_msgs(const du_cell_config&     du_cfg,
-                                       si_message_set            msg_set,
-                                       std::vector<std::string>* bcch_dl_sch_json_msgs)
+asn1_packer::pack_all_bcch_dl_sch_msgs(const du_cell_config& du_cfg, std::vector<std::string>* bcch_dl_sch_json_msgs)
 {
   std::vector<bcch_dl_sch_payload_type> msgs;
   if (bcch_dl_sch_json_msgs != nullptr) {
@@ -1075,7 +1038,7 @@ asn1_packer::pack_all_bcch_dl_sch_msgs(const du_cell_config&     du_cfg,
   // Pack SIB1.
   {
     asn1::rrc_nr::bcch_dl_sch_msg_s msg;
-    msg.msg.set_c1().set_sib_type1() = make_asn1_rrc_cell_sib1(du_cfg, msg_set);
+    msg.msg.set_c1().set_sib_type1() = make_asn1_rrc_cell_sib1(du_cfg);
 
     bcch_dl_sch_payload_type packed_sib(1);
     pack_si_message(packed_sib.front(), msg);
