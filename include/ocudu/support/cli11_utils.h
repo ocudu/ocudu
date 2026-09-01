@@ -5,12 +5,14 @@
 
 #include "ocudu/support/config_parsers.h"
 #include "ocudu/support/config_schema.h"
+#include "ocudu/support/error_handling.h"
 #include "ocudu/support/string_parsing_utils.h"
 #include "CLI/CLI11.hpp"
 #include <functional>
 #include <memory>
 #include <optional>
 #include <sstream>
+#include <variant>
 
 namespace ocudu {
 
@@ -133,6 +135,7 @@ public:
     if (node_ != nullptr) {
       node_->constraints.minimum = config::to_scalar(node_->type, static_cast<double>(min_value));
       node_->constraints.maximum = config::to_scalar(node_->type, static_cast<double>(max_value));
+      assert_bounds_match_step();
     }
     return *this;
   }
@@ -151,6 +154,38 @@ public:
     opt_->check(CLI::PositiveNumber);
     if (node_ != nullptr) {
       node_->constraints.exclusive_minimum = config::to_scalar(node_->type, 0.0);
+    }
+    return *this;
+  }
+
+  /// \brief Enforces that the value is a multiple of \c step, and records it as JSON Schema \c multipleOf.
+  ///
+  /// Use it together with \ref range for a parameter whose accepted values form an arithmetic sequence (e.g. PRBs in
+  /// steps of 4), instead of enumerating every value with \ref enum_values: the generated schema and the error
+  /// message state the rule rather than a wall of digits. \c step must be greater than zero.
+  ///
+  /// \warning \c multipleOf expresses divisibility, so it describes an arithmetic sequence only when the sequence
+  /// starts and ends on a multiple of \c step (e.g. 24,28,...,272 with step 4). A sequence with a non-zero offset
+  /// (e.g. 25,29,...) is not expressible in JSON Schema and must be enumerated with \ref enum_values instead;
+  /// combining such a range with this method is rejected at registration.
+  template <typename V>
+  option_handle& multiple_of(V step)
+  {
+    static_assert(std::is_integral_v<V>, "multiple_of() only supports integral steps");
+    report_fatal_error_if_not(step > 0, "multiple_of() requires a step greater than zero");
+    opt_->check(CLI::Validator(
+        [step](const std::string& value) -> std::string {
+          auto parsed = parse_int<V>(value);
+          // Malformed input is left to CLI11's own type conversion, which reports it against the option's type.
+          if (parsed.has_value() && (parsed.value() % step != 0)) {
+            return "Value " + value + " is not a multiple of " + std::to_string(step);
+          }
+          return {};
+        },
+        "MULTIPLE OF " + std::to_string(step)));
+    if (node_ != nullptr) {
+      node_->constraints.multiple_of = config::to_scalar(node_->type, static_cast<double>(step));
+      assert_bounds_match_step();
     }
     return *this;
   }
@@ -196,6 +231,30 @@ public:
   }
 
 private:
+  /// \brief Rejects a recorded range whose bounds are not multiples of the recorded step.
+  ///
+  /// \c multipleOf constrains divisibility, so pairing it with bounds that are off the step would describe a
+  /// different value set than the intended sequence. Called from both \ref range and \ref multiple_of, so the two
+  /// are checked whichever order they are chained in.
+  void assert_bounds_match_step() const
+  {
+    if (node_ == nullptr || !node_->constraints.multiple_of) {
+      return;
+    }
+    const auto* step = std::get_if<std::int64_t>(&*node_->constraints.multiple_of);
+    if (step == nullptr || *step == 0) {
+      return;
+    }
+    for (const std::optional<config::schema_scalar>& bound : {node_->constraints.minimum, node_->constraints.maximum}) {
+      const auto* value = bound ? std::get_if<std::int64_t>(&*bound) : nullptr;
+      report_fatal_error_if_not(value == nullptr || (*value % *step == 0),
+                                "Option range bound {} is not a multiple of {}. multipleOf cannot express a sequence "
+                                "with a non-zero offset; enumerate its values instead",
+                                value != nullptr ? *value : 0,
+                                *step);
+    }
+  }
+
   CLI::Option*         opt_  = nullptr;
   config::schema_node* node_ = nullptr;
 };

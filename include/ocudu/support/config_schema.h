@@ -62,6 +62,7 @@ struct schema_constraints {
   std::optional<schema_scalar> minimum;
   std::optional<schema_scalar> maximum;
   std::optional<schema_scalar> exclusive_minimum;
+  std::optional<schema_scalar> multiple_of; // JSON Schema "multipleOf": the value must be a multiple of this.
   std::vector<schema_scalar>   enums;
   std::optional<std::string>   pattern;    // JSON Schema "pattern" (ECMA-262 regex) for a string value.
   std::optional<std::uint64_t> min_length; // JSON Schema "minLength" for a string value.
@@ -69,7 +70,8 @@ struct schema_constraints {
 
   bool empty() const
   {
-    return !minimum && !maximum && !exclusive_minimum && enums.empty() && !pattern && !min_length && !max_length;
+    return !minimum && !maximum && !exclusive_minimum && !multiple_of && enums.empty() && !pattern && !min_length &&
+           !max_length;
   }
 };
 

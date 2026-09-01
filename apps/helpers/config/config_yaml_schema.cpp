@@ -80,6 +80,9 @@ void add_constraints(const schema_constraints& constraints, YAML::Node& target)
   if (constraints.exclusive_minimum) {
     target["exclusiveMinimum"] = scalar_node(*constraints.exclusive_minimum);
   }
+  if (constraints.multiple_of) {
+    target["multipleOf"] = scalar_node(*constraints.multiple_of);
+  }
   if (!constraints.enums.empty()) {
     YAML::Node values(YAML::NodeType::Sequence);
     for (const schema_scalar& v : constraints.enums) {

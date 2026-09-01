@@ -130,6 +130,55 @@ TEST_F(cli11_utils_schema_test, first_class_constraint_methods_record_and_enforc
   EXPECT_THROW(app.parse_from_stream(ss), CLI::ParseError);
 }
 
+TEST_F(cli11_utils_schema_test, multiple_of_records_and_enforces)
+{
+  CLI::App    app;
+  schema_node root;
+  register_schema_root(app, root);
+
+  unsigned prbs = 24;
+  add_option(app, "--prbs", prbs, "PRS bandwidth in PRBs")->range(24, 272)->multiple_of(4);
+
+  ASSERT_EQ(root.children.size(), 1u);
+  EXPECT_EQ(std::get<std::int64_t>(*root.children[0]->constraints.minimum), 24);
+  EXPECT_EQ(std::get<std::int64_t>(*root.children[0]->constraints.maximum), 272);
+  EXPECT_EQ(std::get<std::int64_t>(*root.children[0]->constraints.multiple_of), 4);
+  // An arithmetic sequence is recorded as a step, not as an enum of every accepted value.
+  EXPECT_TRUE(root.children[0]->constraints.enums.empty());
+
+  setup_yaml(app);
+  // A value in range but off the step is rejected.
+  std::istringstream bad("prbs: 26\n");
+  EXPECT_THROW(app.parse_from_stream(bad), CLI::ParseError);
+
+  // A value on the step is accepted.
+  CLI::App    app2;
+  schema_node root2;
+  register_schema_root(app2, root2);
+  unsigned prbs2 = 24;
+  add_option(app2, "--prbs", prbs2, "PRS bandwidth in PRBs")->range(24, 272)->multiple_of(4);
+  setup_yaml(app2);
+  std::istringstream good("prbs: 28\n");
+  EXPECT_NO_THROW(app2.parse_from_stream(good));
+  EXPECT_EQ(prbs2, 28u);
+}
+
+TEST_F(cli11_utils_schema_test, multiple_of_rejects_bounds_off_the_step)
+{
+  CLI::App    app;
+  schema_node root;
+  register_schema_root(app, root);
+
+  // A sequence with a non-zero offset (25,29,...) is not expressible as multipleOf, so registering it must fail
+  // rather than silently describe a different value set.
+  int off_step = 25;
+  EXPECT_DEATH(add_option(app, "--off_step", off_step, "off-step")->range(25, 273)->multiple_of(4), ".*");
+
+  // The same check applies when the range is chained after the step.
+  int off_step2 = 25;
+  EXPECT_DEATH(add_option(app, "--off_step2", off_step2, "off-step")->multiple_of(4)->range(25, 273), ".*");
+}
+
 TEST_F(cli11_utils_schema_test, option_pointer_exposes_required_flag)
 {
   CLI::App    app;

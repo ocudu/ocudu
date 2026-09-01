@@ -68,6 +68,9 @@ TEST_F(config_yaml_schema_test, emits_expected_schema)
       ->min_length(5)
       ->max_length(6);
 
+  unsigned prbs = 24;
+  add_option(app, "--prbs", prbs, "a number of PRBs")->capture_default_str()->range(24, 272)->multiple_of(4);
+
   std::string yaml = app_helpers::generate_yaml_config_schema(root, "Test", "test-app");
 
   // Round-trips as valid YAML and ends with a newline.
@@ -99,6 +102,11 @@ TEST_F(config_yaml_schema_test, emits_expected_schema)
   EXPECT_EQ(props["flag"]["default"].as<bool>(), true);
   EXPECT_EQ(props["gain"]["type"].as<std::string>(), "number");
   EXPECT_DOUBLE_EQ(props["gain"]["default"].as<double>(), 0.5);
+  // Arithmetic sequence: range + multipleOf, rather than an enum of every accepted value.
+  EXPECT_EQ(props["prbs"]["minimum"].as<int>(), 24);
+  EXPECT_EQ(props["prbs"]["maximum"].as<int>(), 272);
+  EXPECT_EQ(props["prbs"]["multipleOf"].as<int>(), 4);
+  EXPECT_FALSE(props["prbs"]["enum"]);
   // String constraints: pattern + minLength/maxLength.
   EXPECT_EQ(props["code"]["type"].as<std::string>(), "string");
   EXPECT_EQ(props["code"]["pattern"].as<std::string>(), "^[0-9]{5,6}$");

@@ -738,7 +738,8 @@ static void configure_cli11_prs_resource_set_args(CLI::App& app, du_high_unit_pr
              res_set_params.bandwidth_prbs,
              "PRS bandwidth, in PRBs. If not set, the cell bandwidth is used")
       ->capture_default_str()
-      ->range(24, 272);
+      ->range(24, 272)
+      ->multiple_of(4);
   add_option(app, "--start_prb", res_set_params.start_prb, "Start PRB of the PRS resource set, relative to Point A")
       ->capture_default_str()
       ->range(0, 2176);
