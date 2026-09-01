@@ -14,6 +14,7 @@
 #include "ocudu/ran/prach/prach_frequency_mapping.h"
 #include "ocudu/ran/prach/prach_preamble_information.h"
 #include "ocudu/ran/prs/prs.h"
+#include "ocudu/ran/prs/prs_constants.h"
 #include "ocudu/ran/srs/srs_bandwidth_configuration.h"
 #include "ocudu/ran/ssb/ssb_mapping.h"
 #include "ocudu/scheduler/config/pucch_guardbands.h"
@@ -918,19 +919,23 @@ static check_outcome check_prs_resource_set(const prs_resource_set&             
   const unsigned repetition_factor = static_cast<unsigned>(res_set.repetition_factor);
   const unsigned time_gap          = static_cast<unsigned>(res_set.time_gap);
 
-  CHECK_TRUE(
-      is_one_of(comb_size, PRS_VALID_COMB_SIZES), "Invalid comb size ({}) of PRS resource set {}", comb_size, set_id);
-  CHECK_TRUE(is_one_of(nof_symbols, PRS_VALID_NUM_SYMBOLS),
+  CHECK_TRUE(is_one_of(comb_size, prs_constants::VALID_COMB_SIZES),
+             "Invalid comb size ({}) of PRS resource set {}",
+             comb_size,
+             set_id);
+  CHECK_TRUE(is_one_of(nof_symbols, prs_constants::VALID_NOF_SYMBOLS),
              "Invalid number of symbols ({}) of PRS resource set {}",
              nof_symbols,
              set_id);
-  CHECK_TRUE(is_one_of(repetition_factor, PRS_VALID_REPETITION_FACTORS),
+  CHECK_TRUE(is_one_of(repetition_factor, prs_constants::VALID_REPETITION_FACTORS),
              "Invalid repetition factor ({}) of PRS resource set {}",
              repetition_factor,
              set_id);
-  CHECK_TRUE(
-      is_one_of(time_gap, PRS_VALID_TIME_GAPS), "Invalid time gap ({} slots) of PRS resource set {}", time_gap, set_id);
-  CHECK_TRUE(is_one_of(res_set.periodicity_slots, PRS_VALID_PERIODICITIES),
+  CHECK_TRUE(is_one_of(time_gap, prs_constants::VALID_TIME_GAPS),
+             "Invalid time gap ({} slots) of PRS resource set {}",
+             time_gap,
+             set_id);
+  CHECK_TRUE(is_one_of(res_set.periodicity_slots, prs_constants::VALID_PERIODICITIES),
              "Invalid periodicity ({} slots) of PRS resource set {}",
              res_set.periodicity_slots,
              set_id);
@@ -943,16 +948,22 @@ static check_outcome check_prs_resource_set(const prs_resource_set&             
              comb_size,
              set_id);
 
-  CHECK_TRUE(res_set.bandwidth_prbs % 4 == 0,
-             "Invalid bandwidth ({} PRBs) of PRS resource set {}. It must be a multiple of 4",
+  CHECK_TRUE(res_set.bandwidth_prbs % prs_constants::PRB_GRANULARITY == 0,
+             "Invalid bandwidth ({} PRBs) of PRS resource set {}. It must be a multiple of {}",
              res_set.bandwidth_prbs,
-             set_id);
-  CHECK_EQ_OR_ABOVE(res_set.bandwidth_prbs, 24, "bandwidth, in PRBs, of PRS resource set {}", set_id);
-  CHECK_EQ_OR_BELOW(res_set.bandwidth_prbs, 272, "bandwidth, in PRBs, of PRS resource set {}", set_id);
-  CHECK_EQ_OR_ABOVE(res_set.power_offset_db, -60, "power offset, in dB, of PRS resource set {}", set_id);
-  CHECK_EQ_OR_BELOW(res_set.power_offset_db, 50, "power offset, in dB, of PRS resource set {}", set_id);
+             set_id,
+             prs_constants::PRB_GRANULARITY);
+  CHECK_EQ_OR_ABOVE(
+      res_set.bandwidth_prbs, prs_constants::MIN_PRBS, "bandwidth, in PRBs, of PRS resource set {}", set_id);
+  CHECK_EQ_OR_BELOW(
+      res_set.bandwidth_prbs, prs_constants::MAX_PRBS, "bandwidth, in PRBs, of PRS resource set {}", set_id);
+  CHECK_EQ_OR_ABOVE(
+      res_set.power_offset_db, prs_constants::MIN_POWER_OFF_DB, "power offset, in dB, of PRS resource set {}", set_id);
+  CHECK_EQ_OR_BELOW(
+      res_set.power_offset_db, prs_constants::MAX_POWER_OFF_DB, "power offset, in dB, of PRS resource set {}", set_id);
 
   // The start PRB of the resource set is relative to Point A, as is the offset of the DL carrier.
+  CHECK_EQ_OR_BELOW(res_set.start_prb, prs_constants::MAX_START_PRB, "start PRB of PRS resource set {}", set_id);
   CHECK_EQ_OR_ABOVE(res_set.start_prb, dl_carrier.offset_to_carrier, "start PRB of PRS resource set {}", set_id);
   CHECK_EQ_OR_BELOW(res_set.start_prb + res_set.bandwidth_prbs,
                     dl_carrier.offset_to_carrier + dl_carrier.carrier_bandwidth,
@@ -979,16 +990,26 @@ static check_outcome check_prs_resource_set(const prs_resource_set&             
                tdd_period_slots);
   }
 
-  // As per TS 38.455, Section 9.2.44, a PRS resource set contains up to 64 PRS resources.
   CHECK_TRUE(not res_set.resources.empty(), "No PRS resource configured in PRS resource set {}", set_id);
-  CHECK_EQ_OR_BELOW(res_set.resources.size(), 64, "number of PRS resources of PRS resource set {}", set_id);
+  CHECK_EQ_OR_BELOW(res_set.resources.size(),
+                    prs_constants::MAX_NOF_RESOURCES_PER_SET,
+                    "number of PRS resources of PRS resource set {}",
+                    set_id);
 
   for (unsigned res_id = 0, nof_res = res_set.resources.size(); res_id != nof_res; ++res_id) {
     const prs_resource& res = res_set.resources[res_id];
 
-    CHECK_EQ_OR_BELOW(res.sequence_id, 4095, "sequence ID of PRS resource {} of resource set {}", res_id, set_id);
+    CHECK_EQ_OR_BELOW(res.sequence_id,
+                      prs_constants::MAX_SEQUENCE_ID,
+                      "sequence ID of PRS resource {} of resource set {}",
+                      res_id,
+                      set_id);
     CHECK_BELOW(res.re_offset, comb_size, "RE offset of PRS resource {} of resource set {}", res_id, set_id);
-    CHECK_EQ_OR_BELOW(res.slot_offset, 511, "slot offset of PRS resource {} of resource set {}", res_id, set_id);
+    CHECK_EQ_OR_BELOW(res.slot_offset,
+                      prs_constants::MAX_RES_SLOT_OFFSET,
+                      "slot offset of PRS resource {} of resource set {}",
+                      res_id,
+                      set_id);
     CHECK_EQ_OR_BELOW(res.symbol_offset + nof_symbols,
                       get_nsymb_per_slot(cyclic_prefix::NORMAL),
                       "last symbol of PRS resource {} of resource set {}",
@@ -1045,8 +1066,7 @@ static check_outcome check_prs_config(const du_cell_config& cell_cfg)
     return {};
   }
 
-  // As per TS 38.455, Section 9.2.44, a TRP has up to 8 PRS resource sets.
-  CHECK_EQ_OR_BELOW(prs_cfg.resource_sets.size(), 8, "number of PRS resource sets");
+  CHECK_EQ_OR_BELOW(prs_cfg.resource_sets.size(), prs_constants::MAX_NOF_RESOURCE_SETS, "number of PRS resource sets");
 
   // DL-PRS is transmitted in the DL carrier of the cell, with the SCS common.
   const subcarrier_spacing scs        = cell_cfg.ran.dl_cfg_common.init_dl_bwp.generic_params.scs;

@@ -1091,7 +1091,7 @@ struct du_high_unit_prs_resource_set_config {
   unsigned comb_size = 2;
   /// \brief Resource set periodicity, or \f$T_{per}^{PRS}\f$, in slots.
   ///
-  /// Valid values are given by \ref PRS_VALID_PERIODICITIES.
+  /// Valid values are given by \ref prs_constants::VALID_PERIODICITIES.
   unsigned periodicity_slots = 160;
   /// Resource set slot offset within the period, or \f$T_{offset}^{PRS}\f$. Values: {0,...,periodicity - 1}.
   unsigned slot_offset = 0;

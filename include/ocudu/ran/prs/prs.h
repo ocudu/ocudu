@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "ocudu/adt/to_array.h"
 #include <cstdint>
 #include <vector>
 
@@ -15,9 +14,6 @@ namespace ocudu {
 
 /// PRS transmission comb size.
 enum class prs_comb_size : uint8_t { two = 2, four = 4, six = 6, twelve = 12 };
-
-/// Valid comb size values, as per TS 38.455, Section 9.2.44, "Comb Size".
-inline constexpr auto PRS_VALID_COMB_SIZES = to_array<unsigned>({2, 4, 6, 12});
 
 /// PRS resource repetition factor.
 enum class prs_repetition_factor : uint8_t {
@@ -30,24 +26,11 @@ enum class prs_repetition_factor : uint8_t {
   thirtytwo = 32
 };
 
-/// Valid resource repetition factor values, as per TS 38.455, Section 9.2.44, "Resource Repetition Factor".
-inline constexpr auto PRS_VALID_REPETITION_FACTORS = to_array<unsigned>({1, 2, 4, 6, 8, 16, 32});
-
 /// PRS transmission time domain duration.
 enum class prs_num_symbols : uint8_t { two = 2, four = 4, six = 6, twelve = 12 };
 
-/// Valid time domain duration values, in OFDM symbols, as per TS 38.455, Section 9.2.44, "Resource Number of Symbols".
-inline constexpr auto PRS_VALID_NUM_SYMBOLS = to_array<unsigned>({2, 4, 6, 12});
-
-/// Valid resource set periodicity values, in slots, as per TS 38.455, Section 9.2.44, "Resource Set Periodicity".
-inline constexpr auto PRS_VALID_PERIODICITIES = to_array<unsigned>(
-    {4, 5, 8, 10, 16, 20, 32, 40, 64, 80, 160, 320, 640, 1280, 2560, 5120, 10240, 20480, 40960, 81920, 128, 256, 512});
-
 /// PRS resource time gap between repetitions, in slots.
 enum class prs_time_gap : uint8_t { one = 1, two = 2, four = 4, eight = 8, sixteen = 16, thirtytwo = 32 };
-
-/// Valid resource time gap values, in slots, as per TS 38.455, Section 9.2.44, "Resource Time Gap".
-inline constexpr auto PRS_VALID_TIME_GAPS = to_array<unsigned>({1, 2, 4, 8, 16, 32});
 
 /// \brief Determines whether the combination of time domain duration and comb size is valid.
 ///
@@ -63,11 +46,15 @@ inline bool prs_valid_num_symbols_and_comb_size(prs_num_symbols nsymb, prs_comb_
 ///
 /// \remark See TS 38.455, Section 9.2.44, and TS 38.211, Section 7.4.1.7.
 struct prs_resource {
-  /// Sequence ID seeding the PRS pseudo-random sequence, or \f$n_{ID,seq}^{PRS}\f$. Values: {0,...,4095}.
+  /// \brief Sequence ID seeding the PRS pseudo-random sequence, or \f$n_{ID,seq}^{PRS}\f$.
+  ///
+  /// Values: {0,...,\ref prs_constants::MAX_SEQUENCE_ID}.
   unsigned sequence_id;
   /// RE offset, or comb offset, of the resource. Values: {0,...,comb size - 1}.
   unsigned re_offset;
-  /// Slot offset of the resource, on top of the slot offset of the resource set. Values: {0,...,511}.
+  /// \brief Slot offset of the resource, on top of the slot offset of the resource set.
+  ///
+  /// Values: {0,...,\ref prs_constants::MAX_RES_SLOT_OFFSET}.
   unsigned slot_offset;
   /// First OFDM symbol of the resource within the slot. Values: {0,...,12}.
   unsigned symbol_offset;
@@ -77,14 +64,17 @@ struct prs_resource {
 ///
 /// \remark See TS 38.455, Section 9.2.44, and TS 38.211, Section 7.4.1.7.
 struct prs_resource_set {
-  /// PRS bandwidth, in PRBs. It is a multiple of 4. Values: {24,...,272}.
+  /// \brief PRS bandwidth, in PRBs. It is a multiple of \ref prs_constants::PRB_GRANULARITY.
+  ///
+  /// Values: {\ref prs_constants::MIN_PRBS,...,\ref prs_constants::MAX_PRBS}.
   unsigned bandwidth_prbs;
-  /// Start PRB of the resource set, relative to Point A. Values: {0,...,2176}.
+  /// Start PRB of the resource set, relative to Point A. Values: {0,...,\ref prs_constants::MAX_START_PRB}.
   unsigned start_prb;
   /// Comb size, or \f$K_{comb}^{PRS}\f$.
   prs_comb_size comb_size;
-  /// Resource set periodicity, or \f$T_{per}^{PRS}\f$, in slots. Valid values are given by \ref
-  /// PRS_VALID_PERIODICITIES.
+  /// \brief Resource set periodicity, or \f$T_{per}^{PRS}\f$, in slots.
+  ///
+  /// Valid values are given by \ref prs_constants::VALID_PERIODICITIES.
   unsigned periodicity_slots;
   /// Resource set slot offset within the period, or \f$T_{offset}^{PRS}\f$. Values: {0,...,periodicity - 1}.
   unsigned slot_offset;
@@ -94,9 +84,11 @@ struct prs_resource_set {
   prs_time_gap time_gap;
   /// Number of OFDM symbols of each resource, or \f$L_{PRS}\f$.
   prs_num_symbols nof_symbols;
-  /// Transmission power offset of the resource set, in dB. Values: {-60,...,50}.
+  /// \brief Transmission power offset of the resource set, in dB.
+  ///
+  /// Values: {\ref prs_constants::MIN_POWER_OFF_DB,...,\ref prs_constants::MAX_POWER_OFF_DB}.
   int power_offset_db;
-  /// \brief Resources of the resource set. TS 38.455, Section 9.2.44, allows up to 64 resources per set.
+  /// \brief Resources of the resource set. Up to \ref prs_constants::MAX_NOF_RESOURCES_PER_SET.
   ///
   /// The PRS Resource ID of a resource is its index in this list.
   std::vector<prs_resource> resources;
@@ -105,7 +97,7 @@ struct prs_resource_set {
 
 /// DL-PRS configuration of a cell.
 struct prs_config {
-  /// \brief Resource sets of the cell. TS 38.455, Section 9.2.44, allows up to 8 resource sets per TRP.
+  /// \brief Resource sets of the cell. Up to \ref prs_constants::MAX_NOF_RESOURCE_SETS.
   ///
   /// The PRS Resource Set ID of a resource set is its index in this list. DL-PRS is disabled when this list is empty.
   std::vector<prs_resource_set> resource_sets;

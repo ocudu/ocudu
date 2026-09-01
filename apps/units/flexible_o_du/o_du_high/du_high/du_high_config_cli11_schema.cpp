@@ -15,7 +15,7 @@
 #include "ocudu/ran/du_types.h"
 #include "ocudu/ran/duplex_mode.h"
 #include "ocudu/ran/prach/ra_helper.h"
-#include "ocudu/ran/prs/prs.h"
+#include "ocudu/ran/prs/prs_constants.h"
 #include "ocudu/ran/pucch/pucch_mapping.h"
 #include "ocudu/ran/slot_point_extended.h"
 #include "ocudu/scheduler/config/scheduler_expert_config.h"
@@ -694,7 +694,7 @@ static void configure_cli11_prs_resource_args(CLI::App& app, du_high_unit_prs_re
 {
   add_option(app, "--sequence_id", prs_res_params.sequence_id, "Sequence ID seeding the PRS sequence generation")
       ->capture_default_str()
-      ->range(0, 4095);
+      ->range(0U, prs_constants::MAX_SEQUENCE_ID);
   add_option(app, "--re_offset", prs_res_params.re_offset, "RE offset (comb offset) of the PRS resource")
       ->capture_default_str()
       ->range(0, 11);
@@ -703,7 +703,7 @@ static void configure_cli11_prs_resource_args(CLI::App& app, du_high_unit_prs_re
              prs_res_params.slot_offset,
              "Slot offset of the PRS resource, relative to the slot offset of the PRS resource set")
       ->capture_default_str()
-      ->range(0, 511);
+      ->range(0U, prs_constants::MAX_RES_SLOT_OFFSET);
   add_option(
       app, "--symbol_offset", prs_res_params.symbol_offset, "First OFDM symbol of the PRS resource within the slot")
       ->capture_default_str()
@@ -714,41 +714,41 @@ static void configure_cli11_prs_resource_set_args(CLI::App& app, du_high_unit_pr
 {
   add_option(app, "--comb_size", res_set_params.comb_size, "Comb size of the PRS resource set")
       ->capture_default_str()
-      ->check(CLI::IsMember(PRS_VALID_COMB_SIZES));
+      ->check(CLI::IsMember(prs_constants::VALID_COMB_SIZES));
   add_option(app, "--nof_symbols", res_set_params.nof_symbols, "Number of OFDM symbols of each PRS resource")
       ->capture_default_str()
-      ->check(CLI::IsMember(PRS_VALID_NUM_SYMBOLS));
+      ->check(CLI::IsMember(prs_constants::VALID_NOF_SYMBOLS));
   add_option(app, "--periodicity_slots", res_set_params.periodicity_slots, "PRS resource set periodicity, in slots")
       ->capture_default_str()
-      ->check(CLI::IsMember(PRS_VALID_PERIODICITIES));
+      ->check(CLI::IsMember(prs_constants::VALID_PERIODICITIES));
   add_option(app, "--slot_offset", res_set_params.slot_offset, "Slot offset of the PRS resource set within the period")
       ->capture_default_str()
-      ->range(0, 81919);
+      ->range(0U, prs_constants::MAX_PERIODICITY_SLOTS - 1);
   add_option(app,
              "--repetition_factor",
              res_set_params.repetition_factor,
              "Number of consecutive repetitions of each PRS resource within a period")
       ->capture_default_str()
-      ->check(CLI::IsMember(PRS_VALID_REPETITION_FACTORS));
+      ->check(CLI::IsMember(prs_constants::VALID_REPETITION_FACTORS));
   add_option(app, "--time_gap", res_set_params.time_gap, "Slot gap between repetitions of a PRS resource")
       ->capture_default_str()
-      ->check(CLI::IsMember(PRS_VALID_TIME_GAPS));
+      ->check(CLI::IsMember(prs_constants::VALID_TIME_GAPS));
   add_option(app,
              "--bandwidth_prbs",
              res_set_params.bandwidth_prbs,
              "PRS bandwidth, in PRBs. If not set, the cell bandwidth is used")
       ->capture_default_str()
-      ->range(24, 272)
-      ->multiple_of(4);
+      ->range(prs_constants::MIN_PRBS, prs_constants::MAX_PRBS)
+      ->multiple_of(prs_constants::PRB_GRANULARITY);
   add_option(app, "--start_prb", res_set_params.start_prb, "Start PRB of the PRS resource set, relative to Point A")
       ->capture_default_str()
-      ->range(0, 2176);
+      ->range(0U, prs_constants::MAX_START_PRB);
   add_option(app,
              "--power_offset_db",
              res_set_params.power_offset_db,
              "Transmission power offset of the PRS resource set, in dB")
       ->capture_default_str()
-      ->range(-60, 50);
+      ->range(prs_constants::MIN_POWER_OFF_DB, prs_constants::MAX_POWER_OFF_DB);
 
   // PRS resources of the resource set.
   add_option_object_list<du_high_unit_prs_resource_config>(app,
@@ -3033,7 +3033,8 @@ static void derive_cell_auto_params(du_high_unit_base_cell_config& cell_cfg)
         // The PRS bandwidth is a multiple of 4 PRBs and does not exceed 272 PRBs. A start PRB past the end of the
         // cell bandwidth results in a null bandwidth, which the validator rejects.
         const unsigned nof_crbs_left = (res_set.start_prb < nof_crbs) ? (nof_crbs - res_set.start_prb) : 0U;
-        res_set.bandwidth_prbs       = std::min(272U, (nof_crbs_left / 4U) * 4U);
+        res_set.bandwidth_prbs       = std::min(
+            prs_constants::MAX_PRBS, (nof_crbs_left / prs_constants::PRB_GRANULARITY) * prs_constants::PRB_GRANULARITY);
       }
     }
   }
