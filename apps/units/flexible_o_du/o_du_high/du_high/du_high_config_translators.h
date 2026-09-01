@@ -6,6 +6,7 @@
 
 #include "du_high_config.h"
 #include "ocudu/du/du_cell_config.h"
+#include "ocudu/ran/tdd/tdd_ul_dl_config.h"
 
 namespace ocudu {
 
@@ -15,6 +16,9 @@ struct du_high_configuration;
 
 struct du_high_unit_config;
 struct worker_manager_config;
+
+/// Converts and returns the given TDD pattern application configuration to a TDD UL-DL common configuration.
+tdd_ul_dl_config_common generate_tdd_pattern(subcarrier_spacing scs, const du_high_unit_tdd_ul_dl_config& config);
 
 /// Converts and returns the given gNB application configuration to a DU cell configuration.
 std::vector<odu::du_cell_config> generate_du_cell_config(const du_high_unit_config& config);

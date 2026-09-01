@@ -613,6 +613,39 @@ static YAML::Node build_du_high_csi_section(const du_high_unit_csi_config& confi
   return node;
 }
 
+static YAML::Node build_du_high_prs_section(const du_high_unit_prs_config& config)
+{
+  YAML::Node node;
+
+  for (const auto& res_set : config.resource_sets) {
+    YAML::Node res_set_node;
+    res_set_node["comb_size"]         = static_cast<unsigned>(res_set.comb_size);
+    res_set_node["nof_symbols"]       = static_cast<unsigned>(res_set.nof_symbols);
+    res_set_node["periodicity_slots"] = res_set.periodicity_slots;
+    res_set_node["slot_offset"]       = res_set.slot_offset;
+    res_set_node["repetition_factor"] = res_set.repetition_factor;
+    res_set_node["time_gap"]          = res_set.time_gap;
+    if (res_set.bandwidth_prbs.has_value()) {
+      res_set_node["bandwidth_prbs"] = res_set.bandwidth_prbs.value();
+    }
+    res_set_node["start_prb"]       = res_set.start_prb;
+    res_set_node["power_offset_db"] = res_set.power_offset_db;
+
+    for (const auto& res : res_set.resources) {
+      YAML::Node res_node;
+      res_node["sequence_id"]   = res.sequence_id;
+      res_node["re_offset"]     = res.re_offset;
+      res_node["slot_offset"]   = res.slot_offset;
+      res_node["symbol_offset"] = res.symbol_offset;
+      res_set_node["resources"].push_back(res_node);
+    }
+
+    node["resource_sets"].push_back(res_set_node);
+  }
+
+  return node;
+}
+
 static void fill_du_high_sched_expert_section(YAML::Node& node, const du_high_unit_scheduler_config& config)
 {
   YAML::Node sched_node;
@@ -756,7 +789,10 @@ static YAML::Node build_cell_entry(const du_high_unit_base_cell_config& config)
 
   node["paging"] = build_du_high_paging_section(config.paging_cfg);
   node["csi"]    = build_du_high_csi_section(config.csi_cfg);
-  node["srs"]    = build_du_high_srs_section(config.srs_cfg);
+  if (not config.prs_cfg.resource_sets.empty()) {
+    node["prs"] = build_du_high_prs_section(config.prs_cfg);
+  }
+  node["srs"] = build_du_high_srs_section(config.srs_cfg);
   if (config.drx_cfg.long_cycle != 0) {
     node["drx"] = build_du_high_drx_section(config.drx_cfg);
   }

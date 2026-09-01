@@ -1063,6 +1063,57 @@ struct du_high_unit_csi_config {
   csi_report_type report_type = csi_report_type::periodic;
 };
 
+/// \brief Configuration of a single DL-PRS resource within a PRS Resource Set.
+///
+/// \remark See TS 38.455, Section 9.2.44 and TS 38.211, Section 7.4.1.7.
+struct du_high_unit_prs_resource_config {
+  /// Sequence ID seeding the PRS pseudo-random sequence. Values: {0,...,4095}.
+  unsigned sequence_id = 0;
+  /// RE offset (comb offset) of the resource. Values: {0,...,comb_size - 1}.
+  unsigned re_offset = 0;
+  /// Slot offset of the resource, on top of the slot offset of the resource set. Values: {0,...,511}.
+  unsigned slot_offset = 0;
+  /// First OFDM symbol of the resource within the slot. Values: {0,...,12}.
+  unsigned symbol_offset = 0;
+};
+
+/// \brief Configuration of a DL-PRS Resource Set.
+///
+/// \remark See TS 38.455, Section 9.2.44 and TS 38.211, Section 7.4.1.7.
+struct du_high_unit_prs_resource_set_config {
+  /// \brief PRS bandwidth, in PRBs. It must be a multiple of 4. Values: {24,...,272}.
+  ///
+  /// If not set, it is derived from the cell bandwidth, rounded down to a multiple of 4 PRBs.
+  std::optional<unsigned> bandwidth_prbs;
+  /// Start PRB of the resource set, relative to Point A. Values: {0,...,2176}.
+  unsigned start_prb = 0;
+  /// Comb size, or \f$K_{comb}^{PRS}\f$. Values: {2, 4, 6, 12}.
+  unsigned comb_size = 2;
+  /// \brief Resource set periodicity, or \f$T_{per}^{PRS}\f$, in slots.
+  ///
+  /// Valid values are given by \ref PRS_VALID_PERIODICITIES.
+  unsigned periodicity_slots = 160;
+  /// Resource set slot offset within the period, or \f$T_{offset}^{PRS}\f$. Values: {0,...,periodicity - 1}.
+  unsigned slot_offset = 0;
+  /// Resource repetition factor, or \f$T_{rep}^{PRS}\f$. Values: {1, 2, 4, 6, 8, 16, 32}.
+  unsigned repetition_factor = 1;
+  /// Resource time gap between repetitions, or \f$T_{gap}^{PRS}\f$, in slots. Values: {1, 2, 4, 8, 16, 32}.
+  unsigned time_gap = 1;
+  /// Number of OFDM symbols of each resource, or \f$L_{PRS}\f$. Values: {2, 4, 6, 12}.
+  unsigned nof_symbols = 2;
+  /// Transmission power offset of the resource set, in dB. Values: {-60,...,50}.
+  int power_offset_db = 0;
+  /// PRS resources belonging to this resource set. TS 38.455, Section 9.2.44, allows up to 64 resources per set.
+  std::vector<du_high_unit_prs_resource_config> resources;
+  // TODO: Muting (Options 1 and 2) and QCL information.
+};
+
+/// DL-PRS application configuration.
+struct du_high_unit_prs_config {
+  /// PRS resource sets of the cell. TS 38.455, Section 9.2.44, allows up to 8 resource sets per TRP.
+  std::vector<du_high_unit_prs_resource_set_config> resource_sets;
+};
+
 /// MAC Buffer Status Report application configuration.
 struct mac_bsr_unit_config {
   /// Periodic Buffer Status Report Timer value in nof. subframes. Values {1, 5, 10, 16, 20, 32, 40, 64, 80, 128, 160,
@@ -1303,6 +1354,8 @@ struct du_high_unit_base_cell_config {
   du_high_unit_paging_config paging_cfg;
   /// CSI configuration.
   du_high_unit_csi_config csi_cfg;
+  /// DL-PRS configuration.
+  du_high_unit_prs_config prs_cfg;
   /// Scheduler radio resource allocation configuration.
   du_high_unit_scheduler_config scheduler_cfg;
   /// Timing Advance MAC CE control-loop management and scheduling configuration.

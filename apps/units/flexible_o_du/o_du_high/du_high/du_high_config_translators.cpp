@@ -80,7 +80,7 @@ static trp_position_direct_accuracy_t make_trp_geo_coordinates(const du_high_uni
   return make_trp_geo_coordinates_ha(std::get<du_high_unit_cell_geo_coordinates_ha_config>(geo_cfg));
 }
 
-static tdd_ul_dl_config_common generate_tdd_pattern(subcarrier_spacing scs, const du_high_unit_tdd_ul_dl_config& config)
+tdd_ul_dl_config_common ocudu::generate_tdd_pattern(subcarrier_spacing scs, const du_high_unit_tdd_ul_dl_config& config)
 {
   tdd_ul_dl_config_common out;
   out.ref_scs = scs;
