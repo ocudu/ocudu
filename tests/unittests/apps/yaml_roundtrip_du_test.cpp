@@ -76,4 +76,22 @@ TEST(du_default_config_test, roundtrip)
   assert_roundtrip(YAML::Dump(a), &load_and_emit, "du defaults");
 }
 
+/// The ETWS and CMAS blocks are the only way to provision a cell for a warning, so a dumped configuration that leaves
+/// them out cannot be fed back to the application.
+TEST(du_pws_config_test, roundtrip)
+{
+  YAML::Node cfg = YAML::Load(read_file(CONFIGS + "/du_rf_b200_tdd_n78_20mhz.yml"));
+
+  YAML::Node sib                            = cfg["cell_cfg"]["sib"];
+  sib["etws"]["si_period"]                  = 32;
+  sib["etws"]["test"]["message_id"]         = 4353;
+  sib["etws"]["test"]["serial_num"]         = 12288;
+  sib["etws"]["test"]["warning_type"]       = 2432;
+  sib["etws"]["test"]["data_coding_scheme"] = 1;
+  sib["etws"]["test"]["warning_message"]    = "An ETWS warning";
+  sib["cmas"]["si_period"]                  = 128;
+
+  assert_roundtrip(YAML::Dump(cfg), &load_and_emit, "du pws");
+}
+
 } // namespace

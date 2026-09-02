@@ -142,6 +142,43 @@ static YAML::Node build_du_high_ssb_section(const du_high_unit_ssb_config& confi
   return node;
 }
 
+static YAML::Node build_du_high_etws_section(const du_high_unit_sib_config::etws_config& config)
+{
+  YAML::Node node;
+
+  node["si_period"] = config.si_period_rf;
+
+  if (config.test.has_value()) {
+    YAML::Node test_node;
+    test_node["message_id"]         = config.test->message_id;
+    test_node["serial_num"]         = config.test->serial_num;
+    test_node["warning_type"]       = config.test->warning_type;
+    test_node["data_coding_scheme"] = config.test->data_coding_scheme;
+    test_node["warning_message"]    = config.test->warning_message;
+    node["test"]                    = test_node;
+  }
+
+  return node;
+}
+
+static YAML::Node build_du_high_cmas_section(const du_high_unit_sib_config::cmas_config& config)
+{
+  YAML::Node node;
+
+  node["si_period"] = config.si_period_rf;
+
+  if (config.test.has_value()) {
+    YAML::Node test_node;
+    test_node["message_id"]         = config.test->message_id;
+    test_node["serial_num"]         = config.test->serial_num;
+    test_node["data_coding_scheme"] = config.test->data_coding_scheme;
+    test_node["warning_message"]    = config.test->warning_message;
+    node["test"]                    = test_node;
+  }
+
+  return node;
+}
+
 static YAML::Node build_du_high_sib_section(const du_high_unit_sib_config& config)
 {
   YAML::Node node;
@@ -171,6 +208,13 @@ static YAML::Node build_du_high_sib_section(const du_high_unit_sib_config& confi
     }
 
     node["si_sched_info"].push_back(si_node);
+  }
+
+  if (config.etws_cfg.has_value()) {
+    node["etws"] = build_du_high_etws_section(config.etws_cfg.value());
+  }
+  if (config.cmas_cfg.has_value()) {
+    node["cmas"] = build_du_high_cmas_section(config.cmas_cfg.value());
   }
 
   return node;
