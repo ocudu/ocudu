@@ -18,11 +18,10 @@ tests covered compile_commands.json discovery. This one resolves via fixed,
 build-independent roots instead (see gen_dependency_tree.py's own docstring
 for why), so the fixture needs no build directory at all, and the generator
 tests instead cover the fixed-roots and CMakeLists.txt-owned-directory
-resolution this version actually does. The checker tests are close to a
-direct port: check_dependency_rules.py's own rule-evaluation logic
-(glob matching, transitive BFS, peer isolation, exemptions, changed-files
-scoping) is unchanged from !17 — only the tree/rules file format moved from
-YAML to JSON (PyYAML is not installed on the static CI image this runs on).
+resolution this version actually does. The checker tests are a direct port:
+check_dependency_rules.py's own rule-evaluation logic (glob matching,
+transitive BFS, peer isolation, exemptions, changed-files scoping) is
+unchanged from !17, YAML tree/rules format included.
 
 Usage:
     python3 test_dependency_tools.py
@@ -37,10 +36,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import yaml
+
 TEST_DIR = Path(__file__).resolve().parent
 GEN = TEST_DIR / "gen_dependency_tree.py"
 CHECK = TEST_DIR / "check_dependency_rules.py"
-SEED_RULES = TEST_DIR / "ocudu_dependency_rules.json"
+SEED_RULES = TEST_DIR / "ocudu_dependency_rules.yml"
 
 MAC_RULE = {
     "version": 1,
@@ -60,8 +61,8 @@ def write(root: Path, rel: str, text: str) -> Path:
     return path
 
 
-def write_json(root: Path, rel: str, doc: dict) -> Path:
-    return write(root, rel, json.dumps(doc, indent=1))
+def write_yaml(root: Path, rel: str, doc: dict) -> Path:
+    return write(root, rel, yaml.safe_dump(doc, sort_keys=False))
 
 
 def make_project(root: Path, mac_impl_extra: str = "", mac_header_extra: str = "") -> None:
@@ -96,7 +97,7 @@ def run(script: Path, *args: str) -> subprocess.CompletedProcess:
 
 def gen(root: Path, *args: str) -> Path:
     """Run the generator against `root`, asserting success, and return the tree path."""
-    out = root / "tree.json"
+    out = root / "tree.yml"
     result = run(GEN, "--repo", str(root), "--output", str(out), "--quiet", *args)
     assert result.returncode == 0, result.stderr
     return out
@@ -107,7 +108,7 @@ class GeneratorTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             make_project(root)
-            tree = json.loads(gen(root).read_text())
+            tree = yaml.safe_load(gen(root).read_text())
 
             entry = tree["files"]["lib/mac/mac_impl.cpp"]
             targets = {inc["target"] for inc in entry["includes"]}
@@ -127,7 +128,7 @@ class GeneratorTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             make_project(root, mac_impl_extra='#include "proj/mac/missing.h"\n')
-            tree = json.loads(gen(root).read_text())
+            tree = yaml.safe_load(gen(root).read_text())
             unresolved = tree["files"]["lib/mac/mac_impl.cpp"]["unresolved"]
             quoted_missing = [u for u in unresolved if u["text"] == "proj/mac/missing.h"]
             self.assertEqual(len(quoted_missing), 1)
@@ -147,7 +148,7 @@ class GeneratorTest(unittest.TestCase):
             root = Path(tmp)
             make_project(root)
             write(root, "build/generated.h", '#include "proj/ran/rnti.h"\n')
-            tree = json.loads(gen(root).read_text())
+            tree = yaml.safe_load(gen(root).read_text())
             self.assertNotIn("build/generated.h", tree["files"])
 
     def test_external_fixed_roots_resolve(self):
@@ -164,7 +165,7 @@ class GeneratorTest(unittest.TestCase):
                 '#include "fmt/format.h"\n'
                 '#include <cameron314/concurrentqueue.h>\n',
             )
-            tree = json.loads(gen(root).read_text())
+            tree = yaml.safe_load(gen(root).read_text())
             targets = {inc["target"] for inc in tree["files"]["lib/mac/mac_impl.cpp"]["includes"]}
             self.assertIn("external/fmt/include/fmt/format.h", targets)
             self.assertIn("external/cameron314/concurrentqueue.h", targets)
@@ -178,7 +179,7 @@ class GeneratorTest(unittest.TestCase):
             make_project(root)
             write(root, "apps/cu/helper.h", "#pragma once\n")
             write(root, "apps/cu/cu.cpp", '#include "apps/cu/helper.h"\n')
-            tree = json.loads(gen(root).read_text())
+            tree = yaml.safe_load(gen(root).read_text())
             targets = {inc["target"] for inc in tree["files"]["apps/cu/cu.cpp"]["includes"]}
             self.assertEqual(targets, {"apps/cu/helper.h"})
 
@@ -203,7 +204,7 @@ class GeneratorTest(unittest.TestCase):
                 root, "lib/f1ap/cu_cp/impl.cpp",
                 '#include "common.h"\n',  # parent (..): lib/f1ap is the include root
             )
-            tree = json.loads(gen(root).read_text())
+            tree = yaml.safe_load(gen(root).read_text())
             e2_targets = {inc["target"] for inc in tree["files"]["lib/e2/common/e2_impl.cpp"]["includes"]}
             self.assertIn("lib/e2/procedures/setup.h", e2_targets)
             f1ap_targets = {inc["target"] for inc in tree["files"]["lib/f1ap/cu_cp/impl.cpp"]["includes"]}
@@ -214,7 +215,7 @@ class CheckerTest(unittest.TestCase):
     def build(self, root: Path, rules: dict, **kwargs) -> tuple[Path, Path]:
         make_project(root, **kwargs)
         tree = gen(root)
-        rules_path = write_json(root, "rules.json", rules)
+        rules_path = write_yaml(root, "rules.yml", rules)
         return tree, rules_path
 
     def check(self, tree: Path, rules: Path, *args: str) -> subprocess.CompletedProcess:
@@ -319,7 +320,7 @@ class CheckerTest(unittest.TestCase):
             make_project(root)
             write(root, "lib/e2/e2_impl.cpp", '#include "../mac/mac_config.h"\n')
             tree = gen(root)
-            rules_path = write_json(root, "rules.json", rules)
+            rules_path = write_yaml(root, "rules.yml", rules)
             payload, code = self.json_check(tree, rules_path)
             self.assertEqual(code, 1)
             finding = payload["findings"][0]
@@ -445,13 +446,13 @@ class IncludeOnlyTargetTest(unittest.TestCase):
         self._tmp.cleanup()
 
     def test_external_is_a_target_but_not_a_key(self):
-        tree = json.loads(self.tree.read_text())
+        tree = yaml.safe_load(self.tree.read_text())
         targets = {inc["target"] for inc in tree["files"]["include/proj/mac/mac.h"]["includes"]}
         self.assertIn("external/fmt/include/fmt/format.h", targets)
         self.assertNotIn("external/fmt/include/fmt/format.h", tree["files"])
 
     def test_rule_targeting_external_is_not_stale(self):
-        rules = write_json(self.root, "rules.json", {
+        rules = write_yaml(self.root, "rules.yml", {
             "version": 1,
             "rules": [{
                 "id": "public-headers-must-not-include-external",
@@ -473,7 +474,7 @@ class RulesetValidationTest(unittest.TestCase):
     def prepare(self, root: Path, rules: dict) -> tuple[Path, Path]:
         make_project(root)
         tree = gen(root)
-        return tree, write_json(root, "rules.json", rules)
+        return tree, write_yaml(root, "rules.yml", rules)
 
     def expect_broken(self, rules: dict, needle: str) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -560,8 +561,8 @@ class RulesetValidationTest(unittest.TestCase):
     def test_missing_tree_exits_2(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            rules_path = write_json(root, "rules.json", MAC_RULE)
-            result = run(CHECK, "--tree", str(root / "nope.json"), "--rules", str(rules_path))
+            rules_path = write_yaml(root, "rules.yml", MAC_RULE)
+            result = run(CHECK, "--tree", str(root / "nope.yml"), "--rules", str(rules_path))
             self.assertEqual(result.returncode, 2)
             self.assertIn("gen_dependency_tree.py", result.stderr)
 
@@ -574,7 +575,7 @@ class GlobSemanticsTest(unittest.TestCase):
             write(root, "lib/mac/detail/inner.cpp", '#include "proj/du/du_manager.h"\n')
             tree = gen(root)
             # `lib/mac/*.cpp` must not reach lib/mac/detail/inner.cpp.
-            rules_path = write_json(root, "rules.json", {
+            rules_path = write_yaml(root, "rules.yml", {
                 "version": 1, "rules": [{
                     "id": "shallow-only",
                     "from": "lib/mac/*.cpp",
@@ -585,7 +586,7 @@ class GlobSemanticsTest(unittest.TestCase):
             result = run(CHECK, "--tree", str(tree), "--rules", str(rules_path), "--json")
             self.assertEqual(result.returncode, 0, result.stdout)
 
-            rules_path = write_json(root, "rules_deep.json", {
+            rules_path = write_yaml(root, "rules_deep.yml", {
                 "version": 1, "rules": [{
                     "id": "deep-too",
                     "from": "lib/mac/**",
@@ -601,7 +602,7 @@ class GlobSemanticsTest(unittest.TestCase):
 
 class SeedRulesTest(unittest.TestCase):
     def test_seed_ruleset_parses_and_is_self_consistent(self):
-        doc = json.loads(SEED_RULES.read_text())
+        doc = yaml.safe_load(SEED_RULES.read_text())
         self.assertEqual(doc["version"], 1)
         ids = [rule["id"] for rule in doc["rules"]]
         self.assertEqual(len(ids), len(set(ids)))

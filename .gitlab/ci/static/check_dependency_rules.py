@@ -32,9 +32,9 @@ Usage:
   python3 check_dependency_rules.py [options]
 
 Options:
-  --tree <path>                Dependency tree JSON from gen_dependency_tree.py.
-                               Default: ./ocudu_dependency_tree.json.
-  --rules <path>                Rules JSON. Default: ocudu_dependency_rules.json
+  --tree <path>                Dependency tree YAML from gen_dependency_tree.py.
+                               Default: ./ocudu_dependency_tree.yml.
+  --rules <path>                Rules YAML. Default: ocudu_dependency_rules.yml
                                beside this script.
   --changed-files <path> [..]  Repo-relative paths under review.
   --changed-files-from <path>  Read those paths from a file, one per line;
@@ -57,6 +57,14 @@ import sys
 from collections import deque
 from pathlib import Path
 from typing import NoReturn
+
+try:
+    import yaml
+except ImportError:
+    sys.stderr.write("error: PyYAML required: pip install pyyaml\n")
+    sys.exit(2)
+
+LOADER = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
 
 RULE_KINDS = ("forbidden-edge", "peer-isolation")
 COMMON_KEYS = {"id", "kind", "reason", "transitive", "exempt"}
@@ -133,8 +141,8 @@ def load_tree(path: Path) -> dict:
             f"  python3 gen_dependency_tree.py"
         )
     try:
-        doc = json.loads(path.read_text())
-    except (OSError, json.JSONDecodeError) as exc:
+        doc = yaml.load(path.read_text(), Loader=LOADER)
+    except (OSError, yaml.YAMLError) as exc:
         fail(f"{path}: {exc}")
     if not isinstance(doc, dict) or not isinstance(doc.get("files"), dict):
         fail(f"{path}: not a dependency tree (missing a `files` mapping)")
@@ -145,11 +153,11 @@ def load_rules(path: Path) -> list[dict]:
     if not path.is_file():
         fail(f"{path}: no such rules file")
     try:
-        doc = json.loads(path.read_text())
-    except (OSError, json.JSONDecodeError) as exc:
+        doc = yaml.load(path.read_text(), Loader=LOADER)
+    except (OSError, yaml.YAMLError) as exc:
         fail(f"{path}: {exc}")
     if not isinstance(doc, dict):
-        fail(f"{path}: top level must be an object with `version` and `rules`")
+        fail(f"{path}: top level must be a mapping with `version` and `rules`")
     if doc.get("version") != 1:
         fail(f"{path}: unsupported rules version {doc.get('version')!r} (expected 1)")
     rules = doc.get("rules")
@@ -348,8 +356,8 @@ def main() -> int:
     args = parser.parse_args()
 
     script_dir = Path(__file__).resolve().parent
-    rules_path = Path(args.rules) if args.rules else script_dir / "ocudu_dependency_rules.json"
-    tree_path = Path(args.tree) if args.tree else Path.cwd() / "ocudu_dependency_tree.json"
+    rules_path = Path(args.rules) if args.rules else script_dir / "ocudu_dependency_rules.yml"
+    tree_path = Path(args.tree) if args.tree else Path.cwd() / "ocudu_dependency_tree.yml"
 
     doc = load_tree(tree_path)
     meta = doc.get("meta") or {}

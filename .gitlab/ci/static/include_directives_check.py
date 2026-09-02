@@ -35,8 +35,15 @@ relative-include ban — is unchanged from the original.
 from __future__ import annotations
 
 import argparse
-import json
 import sys
+
+try:
+    import yaml
+except ImportError:
+    sys.stderr.write("error: PyYAML required: pip install pyyaml\n")
+    sys.exit(2)
+
+LOADER = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
 from pathlib import Path
 
 # Third-party folders always allowed regardless of source module.
@@ -283,8 +290,8 @@ def load_tree(path: Path) -> dict:
             f"  python3 gen_dependency_tree.py"
         )
     try:
-        return json.loads(path.read_text())
-    except (OSError, json.JSONDecodeError) as exc:
+        return yaml.load(path.read_text(), Loader=LOADER)
+    except (OSError, yaml.YAMLError) as exc:
         fail(f"{path}: {exc}")
 
 
@@ -295,7 +302,7 @@ def fail(msg: str) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(add_help=True, description=__doc__)
-    parser.add_argument('--tree', required=True, help='dependency tree JSON from gen_dependency_tree.py')
+    parser.add_argument('--tree', required=True, help='dependency tree YAML from gen_dependency_tree.py')
     parser.add_argument('--repo', help='project root, for re-reading a line to check for a relative include')
     args = parser.parse_args()
 

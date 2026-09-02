@@ -94,9 +94,9 @@ include:
       include-directives-check() {
         EXIT_CODE=0
         python3 -u $CI_PROJECT_DIR/.gitlab/ci/static/gen_dependency_tree.py \
-          --repo $CI_PROJECT_DIR --output /tmp/ocudu_dependency_tree.json || exit $?
+          --repo $CI_PROJECT_DIR --output /tmp/ocudu_dependency_tree.yml || exit $?
         python3 -u $CI_PROJECT_DIR/.gitlab/ci/static/include_directives_check.py \
-          --tree /tmp/ocudu_dependency_tree.json --repo $CI_PROJECT_DIR || EXIT_CODE=$?
+          --tree /tmp/ocudu_dependency_tree.yml --repo $CI_PROJECT_DIR || EXIT_CODE=$?
         exit $EXIT_CODE
       }
     - cd $CPP_SRC_DIR
@@ -109,10 +109,10 @@ include:
       dependency-rules-check() {
         EXIT_CODE=0
         python3 -u $CI_PROJECT_DIR/.gitlab/ci/static/gen_dependency_tree.py \
-          --repo $CI_PROJECT_DIR --output /tmp/ocudu_dependency_tree.json || exit $?
+          --repo $CI_PROJECT_DIR --output /tmp/ocudu_dependency_tree.yml || exit $?
         python3 -u $CI_PROJECT_DIR/.gitlab/ci/static/check_dependency_rules.py \
-          --tree /tmp/ocudu_dependency_tree.json \
-          --rules $CI_PROJECT_DIR/.gitlab/ci/static/ocudu_dependency_rules.json || EXIT_CODE=$?
+          --tree /tmp/ocudu_dependency_tree.yml \
+          --rules $CI_PROJECT_DIR/.gitlab/ci/static/ocudu_dependency_rules.yml || EXIT_CODE=$?
         exit $EXIT_CODE
       }
     - cd $CPP_SRC_DIR
