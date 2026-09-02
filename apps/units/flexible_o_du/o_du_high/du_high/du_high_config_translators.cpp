@@ -17,6 +17,7 @@
 #include "ocudu/ran/pdcch/pdcch_candidates.h"
 #include "ocudu/ran/prach/prach_configuration.h"
 #include "ocudu/ran/prs/prs.h"
+#include "ocudu/ran/prs/prs_constants.h"
 #include "ocudu/ran/pucch/pucch_info.h"
 #include "ocudu/ran/pucch/pucch_mapping.h"
 #include "ocudu/ran/sib/cell_reselection.h"
@@ -29,7 +30,6 @@
 #include "ocudu/scheduler/config/scheduler_expert_config_factory.h"
 #include "ocudu/scheduler/config/scheduler_expert_config_validator.h"
 #include "ocudu/scheduler/config/time_domain_resource_helper.h"
-#include "ocudu/support/ocudu_assert.h"
 #include <algorithm>
 #include <cmath>
 
@@ -82,17 +82,26 @@ static trp_position_direct_accuracy_t make_trp_geo_coordinates(const du_high_uni
   return make_trp_geo_coordinates_ha(std::get<du_high_unit_cell_geo_coordinates_ha_config>(geo_cfg));
 }
 
-static prs_config make_prs_config(const du_high_unit_prs_config& prs_cfg)
+/// \brief Generates the DL-PRS configuration of a cell.
+///
+/// \param prs_cfg  DL-PRS application configuration of the cell.
+/// \param nof_crbs Number of CRBs of the cell, used to derive the bandwidth of the resource sets that do not set it.
+static prs_config make_prs_config(const du_high_unit_prs_config& prs_cfg, unsigned nof_crbs)
 {
   prs_config out;
 
   out.resource_sets.reserve(prs_cfg.resource_sets.size());
   for (const auto& res_set_cfg : prs_cfg.resource_sets) {
-    // The PRS bandwidth is derived from the cell bandwidth when it is not set in the application configuration.
-    ocudu_assert(res_set_cfg.bandwidth_prbs.has_value(), "PRS bandwidth was not derived from the cell bandwidth");
-
     prs_resource_set& res_set = out.resource_sets.emplace_back();
-    res_set.bandwidth_prbs    = static_cast<uint16_t>(res_set_cfg.bandwidth_prbs.value());
+    if (res_set_cfg.bandwidth_prbs.has_value()) {
+      res_set.bandwidth_prbs = static_cast<uint16_t>(res_set_cfg.bandwidth_prbs.value());
+    } else {
+      // The PRS bandwidth is a multiple of the PRB granularity and does not exceed the maximum. A start PRB past the
+      // end of the cell bandwidth results in a null bandwidth, which the DU cell config validator rejects.
+      const unsigned nof_crbs_left = (res_set_cfg.start_prb < nof_crbs) ? (nof_crbs - res_set_cfg.start_prb) : 0U;
+      res_set.bandwidth_prbs       = static_cast<uint16_t>(std::min(
+          prs_constants::MAX_PRBS, (nof_crbs_left / prs_constants::PRB_GRANULARITY) * prs_constants::PRB_GRANULARITY));
+    }
     res_set.start_prb         = static_cast<uint16_t>(res_set_cfg.start_prb);
     res_set.comb_size         = static_cast<prs_comb_size>(res_set_cfg.comb_size);
     res_set.periodicity_slots = res_set_cfg.periodicity_slots;
@@ -806,8 +815,11 @@ std::vector<odu::du_cell_config> ocudu::generate_du_cell_config(const du_high_un
       out_cell.trp_geo_coordinates = make_trp_geo_coordinates(base_cell.geo_coordinates_cfg.value());
     }
 
+    // Number of CRBs of the cell.
+    const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(base_cell.channel_bw_mhz, param.scs_common, freq_range);
+
     // DL-PRS parameters.
-    out_cell.prs_cfg = make_prs_config(base_cell.prs_cfg);
+    out_cell.prs_cfg = make_prs_config(base_cell.prs_cfg, nof_crbs);
 
     // MAC Cell Group Config parameters.
     out_cell.mcg_params = make_mac_cell_group_params(base_cell);
@@ -906,8 +918,7 @@ std::vector<odu::du_cell_config> ocudu::generate_du_cell_config(const du_high_un
     if (base_cell.pdcch_cfg.dedicated.coreset1_rb_start.has_value()) {
       cset1_start_crb = base_cell.pdcch_cfg.dedicated.coreset1_rb_start.value();
     }
-    const unsigned nof_crbs    = band_helper::get_n_rbs_from_bw(base_cell.channel_bw_mhz, param.scs_common, freq_range);
-    unsigned       cset1_l_crb = nof_crbs - cset1_start_crb;
+    unsigned cset1_l_crb = nof_crbs - cset1_start_crb;
     if (base_cell.pdcch_cfg.dedicated.coreset1_l_crb.has_value()) {
       cset1_l_crb = base_cell.pdcch_cfg.dedicated.coreset1_l_crb.value();
     }

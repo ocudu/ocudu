@@ -3023,21 +3023,6 @@ static void derive_cell_auto_params(du_high_unit_base_cell_config& cell_cfg)
   if (not cell_cfg.prach_cfg.ra_resp_window.has_value()) {
     cell_cfg.prach_cfg.ra_resp_window = 10U << to_numerology_value(cell_cfg.common_scs);
   }
-
-  // If the PRS bandwidth is not set, use the cell bandwidth left above the start PRB.
-  if (not cell_cfg.prs_cfg.resource_sets.empty()) {
-    const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
-        cell_cfg.channel_bw_mhz, cell_cfg.common_scs, band_helper::get_freq_range(cell_cfg.band.value()));
-    for (auto& res_set : cell_cfg.prs_cfg.resource_sets) {
-      if (not res_set.bandwidth_prbs.has_value()) {
-        // The PRS bandwidth is a multiple of 4 PRBs and does not exceed 272 PRBs. A start PRB past the end of the
-        // cell bandwidth results in a null bandwidth, which the validator rejects.
-        const unsigned nof_crbs_left = (res_set.start_prb < nof_crbs) ? (nof_crbs - res_set.start_prb) : 0U;
-        res_set.bandwidth_prbs       = std::min(
-            prs_constants::MAX_PRBS, (nof_crbs_left / prs_constants::PRB_GRANULARITY) * prs_constants::PRB_GRANULARITY);
-      }
-    }
-  }
 }
 
 static void derive_auto_params(du_high_unit_config& config)
