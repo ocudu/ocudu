@@ -235,11 +235,18 @@ def build_tree(repo: Path, files: list[Path], resolver: Resolver) -> tuple[dict,
 
 def main() -> int:
     parser = argparse.ArgumentParser(add_help=True, description=__doc__)
-    parser.add_argument("--repo")
-    parser.add_argument("--output")
-    parser.add_argument("--roots", nargs="+")
-    parser.add_argument("--exclude", nargs="+", default=[])
-    parser.add_argument("--quiet", action="store_true")
+    parser.add_argument("--repo", help="project root; default: git toplevel of the cwd")
+    parser.add_argument("--output", help="output file; default: <repo>/ocudu_dependency_tree.yml")
+    parser.add_argument(
+        "--roots", nargs="+",
+        help="source roots to scan, repo-relative; default: every top-level directory "
+             "holding sources, minus the excludes",
+    )
+    parser.add_argument(
+        "--exclude", nargs="+", default=[],
+        help="extra top-level names to skip (glob, matched against the directory name)",
+    )
+    parser.add_argument("--quiet", action="store_true", help="suppress the summary line on stderr")
     args = parser.parse_args()
 
     repo = Path(args.repo).resolve() if args.repo else git_toplevel()
