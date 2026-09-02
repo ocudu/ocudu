@@ -3,7 +3,7 @@
 
 #include "ocudu/ocuduvec/compare.h"
 #include "ocudu/ocuduvec/simd.h"
-#include "ocudu/support/math/cf_math_utils.h"
+#include "ocudu/support/math/complex_math_utils.h"
 #include <array>
 #include <cmath>
 #include <numeric>

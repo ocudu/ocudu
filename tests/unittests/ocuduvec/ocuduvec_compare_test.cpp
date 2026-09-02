@@ -3,7 +3,7 @@
 
 #include "ocudu/ocuduvec/compare.h"
 #include "ocudu/ocuduvec/conversion.h"
-#include "ocudu/support/math/cf_math_utils.h"
+#include "ocudu/support/math/complex_math_utils.h"
 #include <gtest/gtest.h>
 #include <limits>
 #include <random>
