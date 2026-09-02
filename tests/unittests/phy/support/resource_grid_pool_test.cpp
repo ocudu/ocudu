@@ -31,10 +31,10 @@ static void test_allocate_grids(unsigned nof_slots)
   for (unsigned slot = 0; slot != nof_slots; ++slot) {
     // Get grid.
     shared_resource_grid grid = pool->allocate_resource_grid({0, slot});
-    ASSERT_TRUE(grid.is_valid());
+    report_fatal_error_if_not(grid.is_valid(), "grid.is_valid()");
 
     // Verify grid reference match
-    ASSERT_EQ(reinterpret_cast<const void*>(&grid.get()), reinterpret_cast<const void*>(expected_grids[slot]));
+    report_fatal_error_if_not((reinterpret_cast<const void*>(&grid.get())) == (reinterpret_cast<const void*>(expected_grids[slot])), "reinterpret_cast<const void*>(&grid.get()) == reinterpret_cast<const void*>(expected_grids[slot])");
 
     // Move grid to the reserved list to avoid being released.
     reserved_grids.emplace_back(std::move(grid));

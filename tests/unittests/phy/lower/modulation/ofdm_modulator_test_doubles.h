@@ -6,7 +6,7 @@
 
 #include "ocudu/ocuduvec/copy.h"
 #include "ocudu/phy/lower/modulation/modulation_factories.h"
-#include <gtest/gtest.h>
+#include "ocudu/support/error_handling.h"
 #include <random>
 
 namespace ocudu {
@@ -47,7 +47,7 @@ public:
                 span<const cf_t>            port_weights,
                 unsigned                    symbol_index) override
   {
-    EXPECT_EQ(output.size(), get_symbol_size(symbol_index));
+    report_fatal_error_if_not((output.size()) == (get_symbol_size(symbol_index)), "output.size() == get_symbol_size(symbol_index)");
 
     modulate_entries.emplace_back();
     modulate_entry& entry = modulate_entries.back();

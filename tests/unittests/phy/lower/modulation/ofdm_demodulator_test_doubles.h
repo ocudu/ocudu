@@ -6,7 +6,7 @@
 
 #include "ocudu/ocuduvec/copy.h"
 #include "ocudu/phy/lower/modulation/modulation_factories.h"
-#include <gtest/gtest.h>
+#include "ocudu/support/error_handling.h"
 #include <random>
 
 namespace ocudu {
@@ -40,7 +40,7 @@ public:
   void
   demodulate(resource_grid_writer& grid, span<const ci16_t> input, unsigned port_index, unsigned symbol_index) override
   {
-    EXPECT_EQ(input.size(), get_symbol_size(symbol_index));
+    report_fatal_error_if_not((input.size()) == (get_symbol_size(symbol_index)), "input.size() == get_symbol_size(symbol_index)");
 
     demodulate_entries.emplace_back();
     demodulate_entry& entry = demodulate_entries.back();

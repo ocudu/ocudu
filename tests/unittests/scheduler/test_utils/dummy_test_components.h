@@ -9,7 +9,7 @@
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator.h"
 #include "lib/scheduler/uci_scheduling/uci_allocator.h"
 #include "ocudu/scheduler/scheduler_metrics.h"
-#include <gtest/gtest.h>
+#include "ocudu/support/error_handling.h"
 #include <set>
 
 namespace ocudu {
@@ -32,8 +32,7 @@ public:
                                               search_space_id               ss_id,
                                               aggregation_level             aggr_lvl) override
   {
-    EXPECT_EQ(fmt::underlying(ss_id),
-              fmt::underlying(slot_alloc.cfg.params.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id));
+    report_fatal_error_if_not((fmt::underlying(ss_id)) == (fmt::underlying(slot_alloc.cfg.params.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id)), "fmt::underlying(ss_id) == fmt::underlying(slot_alloc.cfg.params.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id)");
     if (fail_pdcch_alloc_cond and fail_pdcch_alloc_cond(slot_alloc.slot)) {
       return nullptr;
     }

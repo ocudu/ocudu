@@ -64,17 +64,17 @@ private:
   static std::shared_ptr<pdsch_encoder_factory> create_sw_pdsch_encoder_factory()
   {
     std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
-    EXPECT_TRUE(crc_calc_factory);
+    report_fatal_error_if_not(crc_calc_factory, "crc_calc_factory");
 
     std::shared_ptr<ldpc_encoder_factory> ldpc_encoder_factory = create_ldpc_encoder_factory_sw("auto");
-    EXPECT_TRUE(ldpc_encoder_factory);
+    report_fatal_error_if_not(ldpc_encoder_factory, "ldpc_encoder_factory");
 
     std::shared_ptr<ldpc_rate_matcher_factory> ldpc_rate_matcher_factory = create_ldpc_rate_matcher_factory_sw();
-    EXPECT_TRUE(ldpc_rate_matcher_factory);
+    report_fatal_error_if_not(ldpc_rate_matcher_factory, "ldpc_rate_matcher_factory");
 
     std::shared_ptr<ldpc_segmenter_tx_factory> segmenter_factory =
         create_ldpc_segmenter_tx_factory_sw(crc_calc_factory);
-    EXPECT_TRUE(segmenter_factory);
+    report_fatal_error_if_not(segmenter_factory, "segmenter_factory");
 
     pdsch_encoder_factory_sw_configuration encoder_factory_config;
     encoder_factory_config.encoder_factory      = ldpc_encoder_factory;
@@ -86,19 +86,19 @@ private:
   static std::shared_ptr<pusch_decoder_factory> create_sw_pusch_decoder_factory()
   {
     std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
-    EXPECT_TRUE(crc_calc_factory);
+    report_fatal_error_if_not(crc_calc_factory, "crc_calc_factory");
 
     ldpc_decoder_factory::ldpc_decoder_factory_configuration ldpc_dec_cfg = {.force_decoding      = false,
                                                                              .early_stop_syndrome = false};
     std::shared_ptr<ldpc_decoder_factory> ldpc_decoder_factory = create_ldpc_decoder_factory_sw("auto", ldpc_dec_cfg);
-    EXPECT_TRUE(ldpc_decoder_factory);
+    report_fatal_error_if_not(ldpc_decoder_factory, "ldpc_decoder_factory");
 
     std::shared_ptr<ldpc_rate_dematcher_factory> ldpc_rate_dematcher_factory =
         create_ldpc_rate_dematcher_factory_sw("auto");
-    EXPECT_TRUE(ldpc_rate_dematcher_factory);
+    report_fatal_error_if_not(ldpc_rate_dematcher_factory, "ldpc_rate_dematcher_factory");
 
     std::shared_ptr<ldpc_segmenter_rx_factory> segmenter_rx_factory = create_ldpc_segmenter_rx_factory_sw();
-    EXPECT_TRUE(segmenter_rx_factory);
+    report_fatal_error_if_not(segmenter_rx_factory, "segmenter_rx_factory");
 
     pusch_decoder_factory_sw_configuration pusch_decoder_factory_sw_config;
     pusch_decoder_factory_sw_config.crc_factory               = crc_calc_factory;
@@ -143,28 +143,28 @@ protected:
   void SetUp() override
   {
     std::shared_ptr<pdsch_encoder_factory> pdsch_enc_factory = create_sw_pdsch_encoder_factory();
-    ASSERT_TRUE(pdsch_enc_factory);
+    report_fatal_error_if_not(pdsch_enc_factory, "pdsch_enc_factory");
 
     std::shared_ptr<pusch_decoder_factory> pusch_dec_factory = create_sw_pusch_decoder_factory();
-    ASSERT_TRUE(pusch_dec_factory);
+    report_fatal_error_if_not(pusch_dec_factory, "pusch_dec_factory");
 
     std::shared_ptr<modulation_mapper_factory> modulation_factory = create_modulation_mapper_factory();
-    ASSERT_TRUE(modulation_factory);
+    report_fatal_error_if_not(modulation_factory, "modulation_factory");
 
     std::shared_ptr<demodulation_mapper_factory> demodulation_factory = create_demodulation_mapper_factory();
-    ASSERT_TRUE(demodulation_factory);
+    report_fatal_error_if_not(demodulation_factory, "demodulation_factory");
 
     encoder = pdsch_enc_factory->create();
-    ASSERT_TRUE(encoder);
+    report_fatal_error_if_not(encoder, "encoder");
 
     decoder = pusch_dec_factory->create();
-    ASSERT_TRUE(decoder);
+    report_fatal_error_if_not(decoder, "decoder");
 
     modulator = modulation_factory->create();
-    ASSERT_TRUE(modulator);
+    report_fatal_error_if_not(modulator, "modulator");
 
     demodulator = demodulation_factory->create();
-    ASSERT_TRUE(demodulator);
+    report_fatal_error_if_not(demodulator, "demodulator");
   }
 
   std::unique_ptr<pdsch_encoder>       encoder;

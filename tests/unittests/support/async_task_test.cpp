@@ -115,13 +115,13 @@ void run_impl(TaskFactory&& launch_passthrough_task)
   lazy_task_launcher<int> launcher(task3);
 
   // Status: While event is not set, the result is not propagated in the chain.
-  ASSERT_TRUE(not task3.ready());
-  ASSERT_TRUE(not task.ready());
+  report_fatal_error_if_not(not task3.ready(), "not task3.ready()");
+  report_fatal_error_if_not(not task.ready(), "not task.ready()");
 
   event.set(3);
-  ASSERT_TRUE(task.ready());
-  ASSERT_TRUE(task3.ready());
-  ASSERT_EQ(3, task3.get());
+  report_fatal_error_if_not(task.ready(), "task.ready()");
+  report_fatal_error_if_not(task3.ready(), "task3.ready()");
+  report_fatal_error_if_not((3) == (task3.get()), "3 == task3.get()");
 }
 
 /// Runs test with object-based, lambda-based async tasks and procedures.
@@ -163,13 +163,13 @@ void run_lambda()
       CORO_AWAIT_VALUE(int obj, t);
       CORO_RETURN(obj);
     });
-    ASSERT_TRUE(not ev.is_set());
-    ASSERT_TRUE(not t.ready());
+    report_fatal_error_if_not(not ev.is_set(), "not ev.is_set()");
+    report_fatal_error_if_not(not t.ready(), "not t.ready()");
     // tasks are suspended
 
     // Event and tasks get cancelled and destroyed here.
   }
-  ASSERT_EQ(0, moveonly_test_object::object_count());
+  report_fatal_error_if_not((0) == (moveonly_test_object::object_count()), "0 == moveonly_test_object::object_count()");
 }
 
 class proc_cleanup_first final : public async_procedure<int>
@@ -193,13 +193,13 @@ void run_async_procedure()
     async_task<int>         t  = launch_async<proc_cleanup_first>(ev, std::move(to_destroy));
     async_task<int>         t2 = launch_async<passthrough_async_procedure>(t);
     lazy_task_launcher<int> t3(t2);
-    ASSERT_TRUE(not ev.is_set());
-    ASSERT_TRUE(not t.ready());
+    report_fatal_error_if_not(not ev.is_set(), "not ev.is_set()");
+    report_fatal_error_if_not(not t.ready(), "not t.ready()");
     // tasks are suspended
 
     // Event and tasks get cancelled and destroyed here.
   }
-  ASSERT_EQ(0, moveonly_test_object::object_count());
+  report_fatal_error_if_not((0) == (moveonly_test_object::object_count()), "0 == moveonly_test_object::object_count()");
 }
 
 void run()
