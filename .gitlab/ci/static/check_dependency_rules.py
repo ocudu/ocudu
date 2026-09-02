@@ -4,24 +4,38 @@
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 """
-check_dependency_rules.py — Check a dependency tree against forbidden-include rules.
+check_dependency_rules.py — Check a dependency tree against dependency rules.
 
 Reads the adjacency map written by gen_dependency_tree.py plus a rules file, and
-reports every include edge a rule forbids. Complements include_directives_check.py:
-that one enforces a single per-module allow-list; this one expresses rules the
-allow-list has no vocabulary for — peer isolation between two sibling directories,
-transitive reachability, and layering rules keyed on the *kind* of file (public
-vs. private, production vs. test/app-wiring) rather than on module identity.
+reports every include edge a rule forbids.
 
-Two rule kinds:
+Four rule kinds:
 
   forbidden-edge (default)  `from` may not include `to`. Both accept a string
                             or a list of glob patterns.
+  allowed-edge              The inverse: `from` may *only* include `allow`
+                            (plus the top-level `always_allowed` list) —
+                            anything else is a violation. `from_exclude`
+                            carves out a subset of `from` handled by a more
+                            specific rule instead (e.g. a submodule).
+                            `extra_allow_for_prefix` widens `allow` further
+                            for files whose name starts with a given prefix,
+                            without introducing a second rule that could
+                            independently pass or fail the same file.
   peer-isolation            For every pair of distinct directories matching
                             `peers`, files under one may not include files
                             under the other.
+  no-relative-includes      Files matching `from` may not use a `..`
+                            component in their #include text.
 
-Globs are repo-relative; `*` does not cross `/`, `**` does.
+`from`, `to`, `allow`, `from_exclude`, and `always_allowed` entries are either a
+literal repo-relative glob (`*` does not cross `/`, `**` does — must start with
+`lib/`, `include/`, `external/`, `apps/`, `tests/`, or contain a wildcard) or a
+bare module name, expanded to whichever of `lib/<name>/**` /
+`include/ocudu/<name>/**` actually has files in the tree (`external/<name>/**`
+for `always_allowed`) — same convention gen_dependency_tree.py's module
+classification already uses, so a rule reads the way the module table it is
+ported from does.
 
 The whole tree is always evaluated. `--changed-files` does not narrow the
 evaluation, only the report: matching violations become findings, the rest are
@@ -36,6 +50,9 @@ Options:
                                Default: ./ocudu_dependency_tree.yml.
   --rules <path>                Rules YAML. Default: ocudu_dependency_rules.yml
                                beside this script.
+  --repo <path>                Project root, for re-reading a line to check for
+                               a relative include. Default: the tree's
+                               meta.repo_root.
   --changed-files <path> [..]  Repo-relative paths under review.
   --changed-files-from <path>  Read those paths from a file, one per line;
                                `-` reads stdin.
@@ -66,12 +83,20 @@ except ImportError:
 
 LOADER = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
 
-RULE_KINDS = ("forbidden-edge", "peer-isolation")
+RULE_KINDS = ("forbidden-edge", "allowed-edge", "peer-isolation", "no-relative-includes")
 COMMON_KEYS = {"id", "kind", "reason", "transitive", "exempt"}
 KIND_KEYS = {
     "forbidden-edge": {"from", "to"},
+    "allowed-edge": {"from", "from_exclude", "allow", "extra_allow_for_prefix"},
     "peer-isolation": {"peers"},
+    "no-relative-includes": {"from"},
 }
+
+# Path roots a `from`/`to`/`allow`/`always_allowed` entry can be written out in full;
+# anything else without a wildcard is a bare module name, expanded via MODULE_ROOTS.
+LITERAL_ROOTS = ("lib/", "include/", "external/", "apps/", "tests/")
+MODULE_ROOTS = ("lib/", "include/ocudu/")
+EXTERNAL_ROOTS = ("external/",)
 
 errors: list[str] = []
 warnings: list[str] = []
@@ -134,6 +159,37 @@ def as_list(value, field: str, rule_id: str) -> list[str]:
     return []
 
 
+def resolve_refs(
+    raw: list[str], known_paths: set[str], rule_id: str, field: str,
+    roots: tuple[str, ...] = MODULE_ROOTS,
+) -> list[str]:
+    """Expand bare module names into the glob(s) that actually have files.
+
+    A literal entry (starts with a recognized path root, or has a wildcard)
+    passes through unchanged. A bare name expands to `<root><name>/**` for
+    whichever of `roots` has at least one file under it in the tree — e.g.
+    'adt' only ever expands to its include/ half, since lib/adt/ doesn't
+    exist (adt is header-only); most modules expand to both.
+    """
+    resolved = []
+    for entry in raw:
+        if entry.startswith(LITERAL_ROOTS) or "*" in entry:
+            resolved.append(entry)
+            continue
+        expansion = [
+            f"{root}{entry}/**" for root in roots
+            if any(p.startswith(f"{root}{entry}/") for p in known_paths)
+        ]
+        if not expansion:
+            errors.append(
+                f"rule '{rule_id}': '{field}' entry '{entry}' matches no directory under "
+                f"{' or '.join(roots)} — typo, or does it need to be a literal path?"
+            )
+            continue
+        resolved.extend(expansion)
+    return resolved
+
+
 def load_tree(path: Path) -> dict:
     if not path.is_file():
         fail(
@@ -149,7 +205,7 @@ def load_tree(path: Path) -> dict:
     return doc
 
 
-def load_rules(path: Path) -> list[dict]:
+def load_rules(path: Path) -> dict:
     if not path.is_file():
         fail(f"{path}: no such rules file")
     try:
@@ -163,7 +219,7 @@ def load_rules(path: Path) -> list[dict]:
     rules = doc.get("rules")
     if not isinstance(rules, list) or not rules:
         fail(f"{path}: `rules` must be a non-empty list")
-    return rules
+    return doc
 
 
 def validate_rules(rules: list[dict], paths: set[str], dirs: set[str]) -> list[dict]:
@@ -209,18 +265,44 @@ def validate_rules(rules: list[dict], paths: set[str], dirs: set[str]) -> list[d
             "exempt": [],
         }
 
+        def file_matcher(field: str) -> "Matcher":
+            """A matcher over file globs (bare names expand via lib/+include/ocudu/)."""
+            resolved = resolve_refs(as_list(rule.get(field), field, rule_id), paths, rule_id, field)
+            matcher = Matcher(resolved)
+            for dead in matcher.unmatched(paths):
+                errors.append(
+                    f"rule '{rule_id}': '{field}' pattern '{dead}' matches no files "
+                    f"— stale rule after a rename?"
+                )
+            return matcher
+
         if kind == "forbidden-edge":
-            src = Matcher(as_list(rule.get("from"), "from", rule_id))
-            dst = Matcher(as_list(rule.get("to"), "to", rule_id))
-            for field, matcher in (("from", src), ("to", dst)):
-                for dead in matcher.unmatched(paths):
-                    errors.append(
-                        f"rule '{rule_id}': '{field}' pattern '{dead}' matches no files "
-                        f"— stale rule after a rename?"
-                    )
-            prepared_rule["from"] = src
-            prepared_rule["to"] = dst
-        else:
+            prepared_rule["from"] = file_matcher("from")
+            prepared_rule["to"] = file_matcher("to")
+        elif kind == "allowed-edge":
+            prepared_rule["from"] = file_matcher("from")
+            prepared_rule["from_exclude"] = (
+                file_matcher("from_exclude") if rule.get("from_exclude") is not None else Matcher([])
+            )
+            prepared_rule["allow"] = file_matcher("allow")
+            extras = rule.get("extra_allow_for_prefix", []) or []
+            if not isinstance(extras, list):
+                errors.append(f"rule '{rule_id}': `extra_allow_for_prefix` must be a list")
+                extras = []
+            prepared_extras = []
+            for entry in extras:
+                if not isinstance(entry, dict) or set(entry) != {"prefix", "allow"}:
+                    errors.append(f"rule '{rule_id}': each `extra_allow_for_prefix` entry needs exactly prefix/allow")
+                    continue
+                prefix = entry.get("prefix")
+                if not isinstance(prefix, str) or not prefix:
+                    errors.append(f"rule '{rule_id}': `extra_allow_for_prefix` entry missing a string `prefix`")
+                    continue
+                field_name = f"extra_allow_for_prefix[{prefix}].allow"
+                resolved = resolve_refs(as_list(entry.get("allow"), field_name, rule_id), paths, rule_id, field_name)
+                prepared_extras.append((prefix, Matcher(resolved)))
+            prepared_rule["extra_allow_for_prefix"] = prepared_extras
+        elif kind == "peer-isolation":
             peers = Matcher(as_list(rule.get("peers"), "peers", rule_id))
             for dead in peers.unmatched(dirs):
                 errors.append(
@@ -228,10 +310,12 @@ def validate_rules(rules: list[dict], paths: set[str], dirs: set[str]) -> list[d
                     f"— stale rule after a rename?"
                 )
             prepared_rule["peers"] = peers
+        else:  # no-relative-includes
+            prepared_rule["from"] = file_matcher("from")
 
-        if kind == "peer-isolation" and prepared_rule["transitive"]:
+        if kind in ("peer-isolation", "allowed-edge", "no-relative-includes") and prepared_rule["transitive"]:
             errors.append(
-                f"rule '{rule_id}': `transitive` is not supported for kind 'peer-isolation'"
+                f"rule '{rule_id}': `transitive` is not supported for kind '{kind}'"
             )
             continue
 
@@ -317,9 +401,30 @@ def find_include_line(files: dict, source: str, target: str) -> int:
     return entries[0]["line"] if entries else 1
 
 
-def violations_for(rule: dict, edges: dict[str, list[str]]) -> list[dict]:
+def is_relative_include(repo: Path, source: str, line: int) -> bool:
+    """True if the #include on this line of `source` uses a `..` component."""
+    try:
+        text = (repo / source).read_text(errors="replace").splitlines()[line - 1]
+    except (OSError, IndexError):
+        return False
+    stripped = text.split("include", 1)
+    if len(stripped) < 2:
+        return False
+    quote = stripped[1].strip().lstrip("#").strip()
+    for opener, closer in (('"', '"'), ("<", ">")):
+        if quote.startswith(opener):
+            end = quote.find(closer, 1)
+            if end != -1:
+                return ".." in Path(quote[1:end]).parts
+    return False
+
+
+def violations_for(
+    rule: dict, edges: dict[str, list[str]], files: dict, always_allowed: "Matcher", repo: Path,
+) -> list[dict]:
     found = []
-    if rule["kind"] == "forbidden-edge":
+    kind = rule["kind"]
+    if kind == "forbidden-edge":
         src, dst = rule["from"], rule["to"]
         for source in edges:
             if not src.matches(source):
@@ -332,7 +437,30 @@ def violations_for(rule: dict, edges: dict[str, list[str]]) -> list[dict]:
             for target in edges[source]:
                 if dst.matches(target):
                     found.append({"file": source, "to": target, "chain": [source, target]})
-    else:
+    elif kind == "allowed-edge":
+        src, exclude, allow = rule["from"], rule["from_exclude"], rule["allow"]
+        for source in edges:
+            if not src.matches(source) or exclude.matches(source):
+                continue
+            extra = next(
+                (m for prefix, m in rule["extra_allow_for_prefix"] if Path(source).name.startswith(prefix)),
+                None,
+            )
+            for target in edges[source]:
+                if allow.matches(target) or always_allowed.matches(target):
+                    continue
+                if extra is not None and extra.matches(target):
+                    continue
+                found.append({"file": source, "to": target, "chain": [source, target]})
+    elif kind == "no-relative-includes":
+        src = rule["from"]
+        for source in edges:
+            if not src.matches(source):
+                continue
+            for inc in files.get(source, {}).get("includes", []):
+                if is_relative_include(repo, source, inc["line"]):
+                    found.append({"file": source, "to": inc["target"], "chain": [source, inc["target"]]})
+    else:  # peer-isolation
         peers = rule["peers"]
         for source, targets in edges.items():
             source_peer = peer_of(source, peers)
@@ -350,6 +478,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(add_help=True, description=__doc__)
     parser.add_argument("--tree")
     parser.add_argument("--rules")
+    parser.add_argument("--repo", help="project root, for re-reading a line to check for a relative include")
     parser.add_argument("--changed-files", nargs="+", default=[])
     parser.add_argument("--changed-files-from")
     parser.add_argument("--json", action="store_true")
@@ -361,6 +490,7 @@ def main() -> int:
 
     doc = load_tree(tree_path)
     meta = doc.get("meta") or {}
+    repo = Path(args.repo).resolve() if args.repo else Path(meta.get("repo_root", "."))
 
     files = doc["files"]
     edges = {path: [inc["target"] for inc in entry.get("includes") or []] for path, entry in files.items()}
@@ -372,7 +502,15 @@ def main() -> int:
     # the directories the tree actually covers.
     known_dirs = {d for path in known_paths for d in ancestor_dirs(path)}
 
-    rules = validate_rules(load_rules(rules_path), known_paths, known_dirs)
+    rules_doc = load_rules(rules_path)
+    rules = validate_rules(rules_doc.get("rules", []), known_paths, known_dirs)
+    always_allowed_raw = resolve_refs(
+        as_list(rules_doc.get("always_allowed", []), "always_allowed", "<top-level>"),
+        known_paths, "<top-level>", "always_allowed", roots=EXTERNAL_ROOTS,
+    )
+    always_allowed = Matcher(always_allowed_raw)
+    for dead in always_allowed.unmatched(known_paths):
+        errors.append(f"'always_allowed' pattern '{dead}' matches no files — stale rule after a rename?")
     if errors:
         for line in errors:
             sys.stderr.write(f"error: {line}\n")
@@ -392,7 +530,7 @@ def main() -> int:
 
     findings: list[dict] = []
     for rule in rules:
-        for hit in violations_for(rule, edges):
+        for hit in violations_for(rule, edges, files, always_allowed, repo):
             exemption = next(
                 (e for e in rule["exempt"] if e["from"] == hit["file"] and e["to"] == hit["to"]),
                 None,
