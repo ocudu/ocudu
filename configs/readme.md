@@ -26,7 +26,7 @@ sudo ./gnb -c qos.yml -c gnb_ru_ran550_tdd_n78_20mhz.yml
 
 ## Full list of configuration options
 
-Look [here](https://docs.srsran.com/projects/project/en/latest/user_manuals/source/config_ref.html) for
+Look [here](https://docs.ocudu.org/user_manual/config_reference/) for
 the main configuration reference. We update this list regularly and aim to always keep it up-to-date
 with the actual code.
 

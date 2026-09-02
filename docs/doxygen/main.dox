@@ -2,8 +2,10 @@
 /*!
 \mainpage
 
-OCUDU is a complete 5G RAN solution, featuring an ORAN-native
-CU/DU developed by [SRS](https://www.srs.io/).
+The [OCUDU project](https://www.ocudu.org/) is a complete open source
+RAN solution for 5G and beyond. The OCUDU solution was originally
+developed by [SRS](https://www.srs.io/), and is now hosted by the
+Linux Foundation’s OCUDU Ecosystem Foundation.
 
 The solution includes a complete L1/2/3 implementation with minimal external
 dependencies. Portable across processor architectures, the software has been
@@ -12,12 +14,11 @@ implementing the functional splits between distributed unit (DU) and
 centralized unit (CU). The CU is further disaggregated into control plane
 (CU-CP) and user-plane (CU-UP).
 
-See the [OCUDU](https://www.ocudu.org/) for information, guides and
+See the [OCUDU site](https://www.ocudu.org/) for information, guides and
 project news.
 
 This is the API documentation for OCUDU, generated from the source
 code by [Doxygen](https://www.doxygen.nl/). For application features, build
-instructions and user guides see the [OCUDU
-documentation](https://docs.srsran.com/projects/project).
+instructions and user guides see the [OCUDU documentation](https://docs.ocudu.org).
 
 */
