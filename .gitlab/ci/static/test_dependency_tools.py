@@ -41,6 +41,7 @@ import yaml
 TEST_DIR = Path(__file__).resolve().parent
 GEN = TEST_DIR / "gen_dependency_tree.py"
 CHECK = TEST_DIR / "check_dependency_rules.py"
+ENTRYPOINT = TEST_DIR / "check_dependencies.py"
 SEED_RULES = TEST_DIR / "ocudu_dependency_rules.yml"
 
 MAC_RULE = {
@@ -613,6 +614,91 @@ class SeedRulesTest(unittest.TestCase):
             else:
                 self.assertIn("from", rule)
                 self.assertIn("to", rule)
+
+
+class EntrypointTest(unittest.TestCase):
+    """check_dependencies.py orchestrates both checkers over one generated
+    tree. These test the orchestration itself (tree built once, both
+    checkers invoked, exit codes aggregated correctly) rather than either
+    checker's own rule logic, which the other test classes already cover."""
+
+    def make_ocudu_shaped_project(self, root: Path, mac_extra: str = "") -> None:
+        """Uses the real `include/ocudu/...` / `lib/...` layout (unlike
+        make_project's generic `include/proj/...`), so
+        include_directives_check.py's real, hardcoded ALLOWED_INCLUDES
+        applies to it exactly as it would to actual OCUDU sources."""
+        write(root, "include/ocudu/ran/rnti.h", "#pragma once\n")
+        write(root, "include/ocudu/du/du_manager.h", "#pragma once\n")
+        write(
+            root, "lib/mac/mac_impl.cpp",
+            '#include "ocudu/ran/rnti.h"\n' + mac_extra,
+        )
+
+    def rules_matching_fixture(self, root: Path) -> Path:
+        """A rules file whose patterns match real files in
+        make_ocudu_shaped_project's fixture, but that fixture's clean form
+        doesn't violate — so it exercises check_dependency_rules.py without
+        tripping its own dead-pattern staleness check (the checked-in seed
+        ruleset's patterns mostly match nothing in this tiny fixture)."""
+        return write_yaml(root, "rules.yml", {
+            "version": 1, "rules": [{
+                "id": "no-mac-to-du",
+                "from": "lib/mac/**",
+                "to": "include/ocudu/du/**",
+                "reason": "Contrived, just to give the ruleset something real to match.",
+            }],
+        })
+
+    def test_clean_project_exits_0_and_runs_both_checks(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.make_ocudu_shaped_project(root)
+            rules_path = self.rules_matching_fixture(root)
+            result = run(ENTRYPOINT, "--repo", str(root), "--rules", str(rules_path))
+            self.assertEqual(result.returncode, 0, result.stdout)
+            self.assertIn("include-directives", result.stdout)
+            self.assertIn("dependency-rules", result.stdout)
+
+    def test_allow_list_violation_yields_exit_1(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            # mac may not depend on du (ALLOWED_INCLUDES['mac'] has no 'du').
+            self.make_ocudu_shaped_project(root, mac_extra='#include "ocudu/du/du_manager.h"\n')
+            rules_path = self.rules_matching_fixture(root)
+            result = run(ENTRYPOINT, "--repo", str(root), "--rules", str(rules_path))
+            self.assertEqual(result.returncode, 1, result.stdout)
+            self.assertIn("forbidden include of 'du'", result.stdout)
+
+    def test_dependency_rules_violation_yields_exit_1(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.make_ocudu_shaped_project(root)
+            rules_path = write_yaml(root, "rules.yml", {
+                "version": 1, "rules": [{
+                    "id": "no-mac-to-ran",
+                    "from": "lib/mac/**",
+                    "to": "include/ocudu/ran/**",
+                    "reason": "Contrived, just to exercise the second checker.",
+                }],
+            })
+            result = run(ENTRYPOINT, "--repo", str(root), "--rules", str(rules_path))
+            self.assertEqual(result.returncode, 1, result.stdout)
+            self.assertIn("no-mac-to-ran", result.stdout)
+
+    def test_broken_ruleset_yields_exit_2(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.make_ocudu_shaped_project(root)
+            rules_path = write_yaml(root, "rules.yml", {
+                "version": 1, "rules": [{
+                    "id": "dead",
+                    "from": "nonexistent/**",
+                    "to": "also_nonexistent/**",
+                    "reason": "Stale rule, on purpose.",
+                }],
+            })
+            result = run(ENTRYPOINT, "--repo", str(root), "--rules", str(rules_path))
+            self.assertEqual(result.returncode, 2, result.stdout)
 
 
 if __name__ == "__main__":
