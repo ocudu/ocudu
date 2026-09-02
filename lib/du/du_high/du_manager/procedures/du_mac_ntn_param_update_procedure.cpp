@@ -167,8 +167,7 @@ du_mac_ntn_param_update_procedure::handle_cell_update(const du_cell_ntn_param_up
   }
 
   // Add SIB19 content update.
-  req.new_si_pdu_info = {.si_msg_idx     = cell_req.si_msg_idx,
-                         .sib_idx        = static_cast<uint8_t>(cell_req.sib_idx),
+  req.new_si_pdu_info = {.sib_idx        = static_cast<uint8_t>(cell_req.sib_idx),
                          .slot           = cell_req.slot,
                          .si_slot_period = cell_req.si_slot_period,
                          .si_messages    = cell_req.si_messages};

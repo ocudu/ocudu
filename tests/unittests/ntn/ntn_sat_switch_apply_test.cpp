@@ -18,8 +18,7 @@ namespace {
 ntn_cell_config make_base_config()
 {
   ntn_cell_config cfg{};
-  cfg.si_sched = ntn_si_scheduling_info{/*si_msg_idx=*/0,
-                                        /*si_period_rf=*/1,
+  cfg.si_sched = ntn_si_scheduling_info{/*si_period_rf=*/1,
                                         /*si_window_len_slots=*/1,
                                         /*si_window_position=*/1};
 
@@ -211,8 +210,7 @@ TEST(sat_switch_apply_integration_test, promotes_switch_target_at_t_service_not_
 
   ntn_cell_config cell{};
   // 10ms period -> one timer firing per 10 ticks (si_period_rf == 1).
-  cell.si_sched = ntn_si_scheduling_info{/*si_msg_idx=*/0,
-                                         /*si_period_rf=*/1,
+  cell.si_sched = ntn_si_scheduling_info{/*si_period_rf=*/1,
                                          /*si_window_len_slots=*/1,
                                          /*si_window_position=*/1};
 
@@ -293,8 +291,7 @@ TEST(sat_switch_apply_integration_test, does_not_promote_when_promote_to_serving
   cfg.satellites.push_back(sat1);
 
   ntn_cell_config cell{};
-  cell.si_sched = ntn_si_scheduling_info{/*si_msg_idx=*/0,
-                                         /*si_period_rf=*/1,
+  cell.si_sched = ntn_si_scheduling_info{/*si_period_rf=*/1,
                                          /*si_window_len_slots=*/1,
                                          /*si_window_position=*/1};
 

@@ -562,14 +562,13 @@ public:
     return cfg;
   }
 
-  /// Enqueues an SI PDU update for the SIB19 SI message, which sits at position 1 of the cell configuration.
+  /// Enqueues an SI PDU update for the SIB19 SI message.
   byte_buffer push_ntn_si_pdu_update()
   {
     ntn_segments.clear();
     ntn_segments.push_back(make_random_pdu());
 
     mac_cell_sys_info_pdu_update req;
-    req.si_msg_idx  = 1;
     req.sib_idx     = 19;
     req.si_messages = span<byte_buffer>(ntn_segments);
     report_fatal_error_if_not(bench.push_si_pdu_updates(req), "Failed to enqueue the SI PDU update");
@@ -594,6 +593,16 @@ TEST_F(si_message_controller_si_pdu_update_test, when_no_warning_is_on_air_then_
   // With no warning on air, the epoch holds the SIB2 and the SIB19 SI messages, so the latter sits at position 1.
   const units::bytes tbs{static_cast<unsigned>(pdu.length())};
   ASSERT_EQ(serve_ntn_grant(1, bench.si_mng.last_command().version, tbs), pdu);
+}
+
+TEST_F(si_message_controller_si_pdu_update_test, when_no_si_message_carries_the_sib_then_the_update_is_rejected)
+{
+  std::vector<byte_buffer>     segments{make_random_pdu()};
+  mac_cell_sys_info_pdu_update req;
+  req.sib_idx     = 4;
+  req.si_messages = span<byte_buffer>(segments);
+
+  ASSERT_FALSE(bench.push_si_pdu_updates(req)) << "The cell broadcasts no SI message carrying SIB4";
 }
 
 TEST_F(si_message_controller_si_pdu_update_test, when_a_warning_goes_on_air_then_the_update_is_still_served)

@@ -121,10 +121,7 @@ async_task<mac_cell_reconfig_response> du_pws_broadcast_procedure::handle_cell_b
   }
 
   mac_cell_reconfig_request req;
-  // A warning is routed by the SIB it carries, not by a position in the schedulingInfoList, which it only takes while
-  // it is on air.
   req.new_si_pdu_info = mac_cell_sys_info_pdu_update{
-      .si_msg_idx     = 0,
       .sib_idx        = request.sib_type,
       .slot           = std::nullopt,
       .si_slot_period = std::nullopt,

@@ -52,7 +52,6 @@ static ntn_sib19_update_request make_base_request(bool si_valuetag_change)
 {
   ntn_sib19_update_request req;
   req.nr_cgi             = nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create(1).value()};
-  req.si_msg_idx         = 0;
   req.sib_idx            = 19;
   req.slot               = slot_point{subcarrier_spacing::kHz15, 0, 0};
   req.si_slot_period     = 320;

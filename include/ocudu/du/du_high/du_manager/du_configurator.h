@@ -96,8 +96,6 @@ struct du_cell_ntn_param_update_request {
   nr_cell_global_id_t nr_cgi;
   /// NTN assistance information update.
   std::optional<ntn_assistance_info_update> ntn_assistance_info;
-  /// SI message index.
-  unsigned si_msg_idx;
   /// SIB index (e.g., sib2 => value 2).
   unsigned sib_idx;
   /// Slot at which the first SI is transmitted.

@@ -103,7 +103,8 @@ public:
   // See interface for documentation.
   bool enqueue_si_pdu_updates(const mac_cell_sys_info_pdu_update& req) override
   {
-    if (req.si_msg_idx >= si_msg_queues.size()) {
+    const std::optional<unsigned> si_msg_idx = find_si_msg_carrying(static_cast<sib_type>(req.sib_idx));
+    if (not si_msg_idx.has_value()) {
       return false;
     }
 
@@ -116,11 +117,11 @@ public:
       logger.debug("New SIB{} PDU enqueued for tx_slot: {}, si_msg_idx: {} size: {}",
                    req.sib_idx,
                    tx_slot.has_value() ? fmt::to_string(*tx_slot) : "asap",
-                   req.si_msg_idx,
+                   *si_msg_idx,
                    static_cast<unsigned>(pdu.length()));
       si_pdu_update sib_pdu_update{
           tx_slot, units::bytes{static_cast<unsigned>(pdu.length())}, make_linear_bcch_dl_sch_buffer(pdu)};
-      if (!si_msg_queues[req.si_msg_idx]->try_push(sib_pdu_update)) {
+      if (!si_msg_queues[*si_msg_idx]->try_push(sib_pdu_update)) {
         return false;
       }
     }
@@ -129,6 +130,18 @@ public:
   }
 
 private:
+  /// \brief Position of the SI message that carries a given SIB.
+  /// \return The position, or std::nullopt if no SI message of the cell carries it.
+  std::optional<unsigned> find_si_msg_carrying(sib_type sib) const
+  {
+    for (unsigned i = 0, e = std::min(si_msg_sibs.size(), si_msg_queues.size()); i != e; ++i) {
+      if (si_msg_sibs[i].contains(sib)) {
+        return i;
+      }
+    }
+    return std::nullopt;
+  }
+
   ocudulog::basic_logger& logger;
 
   using si_msg_queue_type = concurrent_queue<si_pdu_update,

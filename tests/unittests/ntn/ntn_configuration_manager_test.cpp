@@ -263,8 +263,8 @@ TEST_F(ntn_configuration_manager_test, periodic_update_requests_the_cell_common_
 // update and check it.
 TEST_F(ntn_configuration_manager_test, si_window_start_is_correct_for_window_position_above_one)
 {
-  ntn_configuration_manager_config cfg = make_sib19_cell_config(ntn_si_scheduling_info{
-      /*si_msg_idx=*/0, /*si_period_rf=*/8, /*si_window_len_slots=*/5, /*si_window_position=*/2});
+  ntn_configuration_manager_config cfg = make_sib19_cell_config(
+      ntn_si_scheduling_info{/*si_period_rf=*/8, /*si_window_len_slots=*/5, /*si_window_position=*/2});
   create_manager(cfg);
   time_provider->mapping = make_mapping(0); // current slot: SFN 0, slot 0
 

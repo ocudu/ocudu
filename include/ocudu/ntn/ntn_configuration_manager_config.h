@@ -104,7 +104,6 @@ struct ntn_sat_switch_config {
 
 /// SIB19 scheduling information of a cell.
 struct ntn_si_scheduling_info {
-  unsigned si_msg_idx;
   unsigned si_period_rf;
   unsigned si_window_len_slots;
   unsigned si_window_position;
