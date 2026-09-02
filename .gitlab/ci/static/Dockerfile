@@ -19,6 +19,7 @@ RUN apt-get update \
     yamllint \
     file \
     pipx \
+    python3-yaml \
     && rm -f /usr/bin/pebble \
     && apt-get autoremove \
     && apt-get clean \
