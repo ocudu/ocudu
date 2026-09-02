@@ -44,7 +44,8 @@ struct cu_cp_test_env_params {
       bool                                                     enable_rrc_inactive_          = false,
       bool                                                     enable_xnc_peer_              = false,
       std::optional<std::chrono::seconds>                      rrc_reject_wait_time_         = std::nullopt,
-      std::vector<ocucp::cu_cp_logical_cell_config>            logical_cells_                = {}) :
+      std::vector<ocucp::cu_cp_logical_cell_config>            logical_cells_                = {},
+      bool                                                     add_cho_cond_trigger_         = false) :
     max_nof_cu_ups(max_nof_cu_ups_),
     max_nof_dus(max_nof_dus_),
     max_nof_ues(max_nof_ues_),
@@ -52,6 +53,7 @@ struct cu_cp_test_env_params {
     trigger_ho_from_measurements(trigger_ho_from_measurements_),
     enable_rrc_inactive(enable_rrc_inactive_),
     rrc_reject_wait_time(rrc_reject_wait_time_),
+    add_cho_cond_trigger(add_cho_cond_trigger_),
     logical_cells(std::move(logical_cells_))
   {
     uint16_t amf_idx = 0;
@@ -74,7 +76,9 @@ struct cu_cp_test_env_params {
   bool                                                enable_rrc_inactive;
   std::map<unsigned, std::unique_ptr<mock_xnc_cu_cp>> peer_xnc_configs;
   std::optional<std::chrono::seconds>                 rrc_reject_wait_time;
-  uint32_t                                            pws_max_warning_message_segment_size = 150;
+  /// Add a CHO conditional trigger report config to the neighbour cells of cell 1.
+  bool     add_cho_cond_trigger;
+  uint32_t pws_max_warning_message_segment_size = 150;
   /// Operator-declared logical cells passed to the CU-CP configuration.
   std::vector<ocucp::cu_cp_logical_cell_config> logical_cells;
 };

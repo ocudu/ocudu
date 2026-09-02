@@ -45,6 +45,12 @@ std::vector<ssb_frequency_t> generate_cho_measurement_object_list(const cell_mea
                                                                   nr_cell_identity                serving_nci,
                                                                   span<const pci_t>               candidate_pcis);
 
+/// \brief Check whether the given report config is a conditional trigger (i.e. used for CHO).
+/// \param[in] cfg The cell configuration.
+/// \param[in] report_cfg_id The report configuration id.
+/// \returns True if the report config exists and holds a \c rrc_cond_trigger_cfg, false otherwise.
+bool is_cond_trigger_report_config(const cell_meas_manager_config& cfg, report_cfg_id_t report_cfg_id);
+
 /// \brief Generate report configuration for the given cell configuration.
 /// \param[in] cfg The cell configuration.
 /// \param[in] nci The cell id.

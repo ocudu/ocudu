@@ -148,6 +148,10 @@ cell_meas_manager::get_measurement_config(cu_cp_ue_index_t                   ue_
             cfg.cells.at(ncell.nci).serving_cell_cfg.ssb_arfcn.value() == ssb_freq) {
           logger.debug("ue={}: Adding neighbor cell nci={:#x} to measurement config", ue_index, ncell.nci);
           for (const auto& report_cfg_id : ncell.report_cfg_ids) {
+            // Skip conditional triggers.
+            if (is_cond_trigger_report_config(cfg, report_cfg_id)) {
+              continue;
+            }
             generate_report_config(cfg, ncell.nci, report_cfg_id, new_cfg, ue_meas_context);
           }
         }

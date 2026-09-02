@@ -130,11 +130,17 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
         cell_cfg_1.periodic_report_cfg_id             = uint_to_report_cfg_id(1);
         cell_cfg_1.serving_cell_cfg.gnb_id_bit_length = gnb_id1.bit_length;
         cell_cfg_1.serving_cell_cfg.nci               = nci1;
-        cell_cfg_1.ncells.push_back({nci2, {uint_to_report_cfg_id(2)}});
+        // A neighbour that is both a measurement-report neighbour and a CHO candidate carries the regular
+        // event-triggered report config plus the conditional trigger used by condExecutionCond.
+        std::vector<report_cfg_id_t> ncell_report_cfg_ids = {uint_to_report_cfg_id(2)};
+        if (params.add_cho_cond_trigger) {
+          ncell_report_cfg_ids.push_back(uint_to_report_cfg_id(3));
+        }
+        cell_cfg_1.ncells.push_back({nci2, ncell_report_cfg_ids});
         // Add external cells (for inter CU handover tests).
-        cell_cfg_1.ncells.push_back({nci3, {uint_to_report_cfg_id(2)}});
+        cell_cfg_1.ncells.push_back({nci3, ncell_report_cfg_ids});
         if (!xnc_peers.empty()) {
-          cell_cfg_1.ncells.push_back({nci4, {uint_to_report_cfg_id(2)}});
+          cell_cfg_1.ncells.push_back({nci4, ncell_report_cfg_ids});
         }
         meas_mng_cfg.cells.emplace(nci1, cell_cfg_1);
       }
@@ -232,6 +238,22 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
         event_trigger_cfg.report_quant_rs_idxes = report_quant_rs_idxes;
 
         meas_mng_cfg.report_config_ids.emplace(uint_to_report_cfg_id(2), rrc_report_cfg_nr{event_trigger_cfg});
+      }
+
+      // Add CHO conditional trigger (event A3).
+      if (params.add_cho_cond_trigger) {
+        rrc_cond_trigger_cfg cond_trigger;
+
+        rrc_event_id& cond_event_a3 = cond_trigger.cond_event_id;
+        cond_event_a3.id            = rrc_event_id::event_id_t::a3;
+        cond_event_a3.meas_trigger_quant_thres_or_offset.emplace();
+        cond_event_a3.meas_trigger_quant_thres_or_offset.value().rsrp.emplace() = 6;
+        cond_event_a3.hysteresis                                                = 0;
+        cond_event_a3.time_to_trigger                                           = 100;
+
+        cond_trigger.rs_type = ocucp::rrc_nr_rs_type::ssb;
+
+        meas_mng_cfg.report_config_ids.emplace(uint_to_report_cfg_id(3), rrc_report_cfg_nr{cond_trigger});
       }
     }
     cu_cp_cfg.mobility.meas_mgr_config = meas_mng_cfg;

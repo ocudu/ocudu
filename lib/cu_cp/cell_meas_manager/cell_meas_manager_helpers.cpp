@@ -175,11 +175,15 @@ std::vector<ssb_frequency_t> ocudu::ocucp::generate_measurement_object_list(cons
   if (is_complete(serving_cell.serving_cell_cfg)) {
     ssb_freqs.push_back(serving_cell.serving_cell_cfg.ssb_arfcn.value().value());
   }
-  // Add neighbor cells measurement objects if report is configured.
+  // Add neighbor cells measurement objects if a non-conditional report is configured.
   for (const auto& ncell : serving_cell.ncells) {
     ocudu_assert(cfg.cells.find(ncell.nci) != cfg.cells.end(), "No cell config for nci={:#x}", ncell.nci);
-    const auto& cell_cfg = cfg.cells.at(ncell.nci);
-    if (!ncell.report_cfg_ids.empty() && is_complete(cell_cfg.serving_cell_cfg)) {
+    const auto& cell_cfg               = cfg.cells.at(ncell.nci);
+    const bool  has_regular_report_cfg = std::any_of(
+        ncell.report_cfg_ids.begin(), ncell.report_cfg_ids.end(), [&cfg](const report_cfg_id_t report_cfg_id) {
+          return !is_cond_trigger_report_config(cfg, report_cfg_id);
+        });
+    if (has_regular_report_cfg && is_complete(cell_cfg.serving_cell_cfg)) {
       if (std::find(ssb_freqs.begin(), ssb_freqs.end(), cell_cfg.serving_cell_cfg.ssb_arfcn.value()) ==
           ssb_freqs.end()) {
         ssb_freqs.push_back(cell_cfg.serving_cell_cfg.ssb_arfcn.value().value());
@@ -222,6 +226,14 @@ std::vector<ssb_frequency_t> ocudu::ocucp::generate_cho_measurement_object_list(
   }
 
   return {freqs.begin(), freqs.end()};
+}
+
+bool ocudu::ocucp::is_cond_trigger_report_config(const cell_meas_manager_config& cfg,
+                                                 const report_cfg_id_t           report_cfg_id)
+{
+  const auto report_cfg_it = cfg.report_config_ids.find(report_cfg_id);
+  return report_cfg_it != cfg.report_config_ids.end() &&
+         std::holds_alternative<rrc_cond_trigger_cfg>(report_cfg_it->second);
 }
 
 void ocudu::ocucp::generate_report_config(const cell_meas_manager_config& cfg,

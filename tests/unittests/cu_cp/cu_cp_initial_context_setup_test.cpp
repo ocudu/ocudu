@@ -16,6 +16,7 @@
 #include "ocudu/f1ap/f1ap_message.h"
 #include "ocudu/ngap/ngap_message.h"
 #include <gtest/gtest.h>
+#include <set>
 
 using namespace ocudu;
 using namespace ocucp;
@@ -23,7 +24,10 @@ using namespace ocucp;
 class cu_cp_initial_context_setup_test : public cu_cp_test_environment, public ::testing::Test
 {
 public:
-  cu_cp_initial_context_setup_test() : cu_cp_test_environment(cu_cp_test_env_params{})
+  cu_cp_initial_context_setup_test() : cu_cp_initial_context_setup_test(cu_cp_test_env_params{}) {}
+
+  explicit cu_cp_initial_context_setup_test(cu_cp_test_env_params env_params) :
+    cu_cp_test_environment(std::move(env_params))
   {
     // Run NG setup to completion.
     run_ng_setup();
@@ -425,4 +429,60 @@ TEST_F(cu_cp_initial_context_setup_test,
 
   // Inject Security Mode Complete and await DL RRC Message (Registration Accept) and Initial Context Setup Response
   ASSERT_TRUE(send_security_mode_complete_and_await_registration_accept_and_initial_context_setup_response());
+}
+
+/// Fixture where a neighbour cell of the serving cell carries a CHO conditional trigger report config
+/// alongside the regular event-triggered one.
+class cu_cp_initial_context_setup_with_cho_trigger_test : public cu_cp_initial_context_setup_test
+{
+public:
+  cu_cp_initial_context_setup_with_cho_trigger_test() : cu_cp_initial_context_setup_test(make_params()) {}
+
+private:
+  static cu_cp_test_env_params make_params()
+  {
+    cu_cp_test_env_params env_params;
+    env_params.add_cho_cond_trigger = true;
+    return env_params;
+  }
+};
+
+TEST_F(cu_cp_initial_context_setup_with_cho_trigger_test,
+       when_initial_context_setup_completes_then_rrc_reconfiguration_meas_config_is_self_consistent)
+{
+  // Drive the initial context setup up to the first RRC Reconfiguration sent to the UE.
+  ASSERT_TRUE(send_initial_context_setup_request(true));
+  ASSERT_TRUE(send_ue_context_setup_request_and_await_response());
+  ASSERT_TRUE(send_security_mode_complete_and_await_ue_capability_enquiry());
+  ASSERT_TRUE(send_ue_capability_info_and_handle_pdu_session_resource_setup_request());
+
+  // f1ap_pdu now holds the DL RRC Message Transfer carrying that RRC Reconfiguration.
+  const byte_buffer rrc_container = test_helpers::extract_dl_dcch_msg(test_helpers::get_rrc_container(f1ap_pdu));
+  asn1::cbit_ref    bref{rrc_container};
+  asn1::rrc_nr::dl_dcch_msg_s dl_dcch_msg;
+  ASSERT_EQ(dl_dcch_msg.unpack(bref), asn1::OCUDUASN_SUCCESS);
+
+  const auto& recfg = dl_dcch_msg.msg.c1().rrc_recfg().crit_exts.rrc_recfg();
+  ASSERT_TRUE(recfg.meas_cfg_present) << "RRC Reconfiguration is expected to carry a measConfig";
+  ASSERT_NE(recfg.meas_cfg.report_cfg_to_add_mod_list.size(), 0);
+
+  // A conditional trigger is only evaluated through a conditionalReconfiguration, which this message does not
+  // set up, so none of its report configs may be one.
+  std::set<uint8_t> configured_report_cfg_ids;
+  for (const auto& report_cfg : recfg.meas_cfg.report_cfg_to_add_mod_list) {
+    ASSERT_EQ(report_cfg.report_cfg.type().value,
+              asn1::rrc_nr::report_cfg_to_add_mod_s::report_cfg_c_::types_opts::report_cfg_nr);
+    EXPECT_NE(report_cfg.report_cfg.report_cfg_nr().report_type.type().value,
+              asn1::rrc_nr::report_cfg_nr_s::report_type_c_::types_opts::cond_trigger_cfg_r16)
+        << "reportConfigId=" << static_cast<unsigned>(report_cfg.report_cfg_id) << " is a condTriggerConfig";
+    configured_report_cfg_ids.insert(report_cfg.report_cfg_id);
+  }
+
+  // Dropping a report config must not leave the measId that points at it behind (TS 38.331 Sec. 5.5.2.1).
+  for (const auto& meas_id : recfg.meas_cfg.meas_id_to_add_mod_list) {
+    EXPECT_NE(configured_report_cfg_ids.find(meas_id.report_cfg_id), configured_report_cfg_ids.end())
+        << "measId=" << static_cast<unsigned>(meas_id.meas_id)
+        << " refers to reportConfigId=" << static_cast<unsigned>(meas_id.report_cfg_id)
+        << ", which is not in reportConfigToAddModList";
+  }
 }
