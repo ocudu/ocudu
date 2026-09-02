@@ -20,16 +20,17 @@
 
 version: 1
 always_allowed:
-- Backward
-- CLI
-- TartanLlama
-- cameron314
-- fmt
-- nlohmann
-- rigtorp
-- uWebSockets
+- external/Backward/**
+- external/CLI/**
+- external/TartanLlama/**
+- external/cameron314/**
+- external/fmt/**
+- external/nlohmann/**
+- external/rigtorp/**
+- external/uWebSockets/**
 rules:
 - id: mac-must-not-depend-on-du
+  kind: forbidden-edge
   from:
   - lib/mac/**
   - include/ocudu/mac/**
@@ -39,6 +40,7 @@ rules:
   reason: MAC sits below the DU manager. Including DU headers inverts the layering and drags DU configuration
     types into the cell-processing path.
 - id: rlc-must-not-depend-on-du
+  kind: forbidden-edge
   from:
   - lib/rlc/**
   - include/ocudu/rlc/**
@@ -48,6 +50,7 @@ rules:
   reason: RLC sits below the DU manager. Including DU headers inverts the layering and couples per-bearer
     processing to DU-level configuration types.
 - id: f1ap-must-not-depend-on-du
+  kind: forbidden-edge
   from:
   - lib/f1ap/**
   - include/ocudu/f1ap/**
@@ -63,11 +66,13 @@ rules:
     sibling subsystem's lib/ directory couples to implementation details and blocks refactoring either
     side independently.
 - id: public-headers-must-not-include-private
+  kind: forbidden-edge
   from: include/**
   to: lib/**
   reason: A public header that pulls in an implementation header exports private types to every consumer
     and makes the private header impossible to change without breaking external code.
 - id: production-must-not-include-tests-or-apps
+  kind: forbidden-edge
   from:
   - include/**
   - lib/**
@@ -77,663 +82,1123 @@ rules:
   reason: 'Library code depending on test fixtures or application wiring inverts the build graph: the
     library can no longer be built or shipped on its own.'
 - id: apps-must-use-public-headers
+  kind: forbidden-edge
   from: apps/**
   to: lib/**
   reason: Applications compose subsystems through their public interfaces under include/ocudu/. Reaching
     into lib/ pins an app to one subsystem's internal layout.
 - id: apps-must-not-depend-on-tests
+  kind: forbidden-edge
   from: apps/**
   to: tests/**
   reason: 'Shipped applications must not include test fixtures or doubles: it drags test-only code into
     the release build and makes the app unbuildable when testing is disabled.'
 - id: adt-allowed-includes
   kind: allowed-edge
-  from: adt
+  from:
+  - include/ocudu/adt/**
   allow:
-  - adt
-  - ocudulog
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['adt'].
+  - include/ocudu/adt/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module adt may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: asn1-allowed-includes
   kind: allowed-edge
-  from: asn1
+  from:
+  - include/ocudu/asn1/**
+  - lib/asn1/**
   allow:
-  - adt
-  - asn1
-  - ocudulog
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['asn1'].
+  - include/ocudu/adt/**
+  - include/ocudu/asn1/**
+  - lib/asn1/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module asn1 may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: cu_cp-allowed-includes
   kind: allowed-edge
-  from: cu_cp
+  from:
+  - include/ocudu/cu_cp/**
+  - lib/cu_cp/**
   allow:
-  - adt
-  - asn1
-  - cu_cp
-  - e1ap/common
-  - e1ap/cu_cp
-  - f1ap/cu_cp
-  - gateways
-  - ngap
-  - nrppa
-  - ocudulog
-  - pdcp
-  - ran
-  - rrc
-  - sdap
-  - security
-  - support
-  - xnap
+  - include/ocudu/adt/**
+  - include/ocudu/asn1/**
+  - lib/asn1/**
+  - include/ocudu/cu_cp/**
+  - lib/cu_cp/**
+  - include/ocudu/e1ap/common/**
+  - lib/e1ap/common/**
+  - include/ocudu/e1ap/cu_cp/**
+  - lib/e1ap/cu_cp/**
+  - include/ocudu/f1ap/cu_cp/**
+  - lib/f1ap/cu_cp/**
+  - include/ocudu/gateways/**
+  - lib/gateways/**
+  - include/ocudu/ngap/**
+  - lib/ngap/**
+  - include/ocudu/nrppa/**
+  - lib/nrppa/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/pdcp/**
+  - lib/pdcp/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/rrc/**
+  - lib/rrc/**
+  - include/ocudu/sdap/**
+  - lib/sdap/**
+  - include/ocudu/security/**
+  - lib/security/**
+  - include/ocudu/support/**
+  - lib/support/**
+  - include/ocudu/xnap/**
+  - lib/xnap/**
   - include/ocudu/f1ap/f1ap_message.h
   - include/ocudu/f1ap/f1ap_ue_id_types.h
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['cu_cp'].
+  reason: Module cu_cp may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
   extra_allow_for_prefix:
   - prefix: o_cu_cp
     allow:
-    - e2
+    - include/ocudu/e2/**
+    - lib/e2/**
 - id: cu_up-allowed-includes
   kind: allowed-edge
-  from: cu_up
+  from:
+  - include/ocudu/cu_up/**
+  - lib/cu_up/**
   allow:
-  - adt
-  - cu_up
-  - e1ap
-  - e2
-  - f1u
-  - gtpu
-  - nru
-  - ocudulog
-  - pcap
-  - pdcp
-  - ran
-  - rohc
-  - sdap
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['cu_up'].
+  - include/ocudu/adt/**
+  - include/ocudu/cu_up/**
+  - lib/cu_up/**
+  - include/ocudu/e1ap/**
+  - lib/e1ap/**
+  - include/ocudu/e2/**
+  - lib/e2/**
+  - include/ocudu/f1u/**
+  - lib/f1u/**
+  - include/ocudu/gtpu/**
+  - lib/gtpu/**
+  - include/ocudu/nru/**
+  - lib/nru/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/pcap/**
+  - lib/pcap/**
+  - include/ocudu/pdcp/**
+  - lib/pdcp/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/rohc/**
+  - lib/rohc/**
+  - include/ocudu/sdap/**
+  - lib/sdap/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module cu_up may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: du-allowed-includes
   kind: allowed-edge
-  from: du
+  from:
+  - include/ocudu/du/**
+  - lib/du/**
   allow:
-  - adt
-  - asn1/f1ap
-  - du
-  - f1ap/du
-  - f1u
-  - mac
-  - ntn
-  - ocudulog
-  - pcap
-  - phy
-  - ran
-  - rlc
-  - scheduler
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['du'].
+  - include/ocudu/adt/**
+  - include/ocudu/asn1/f1ap/**
+  - lib/asn1/f1ap/**
+  - include/ocudu/du/**
+  - lib/du/**
+  - include/ocudu/f1ap/du/**
+  - lib/f1ap/du/**
+  - include/ocudu/f1u/**
+  - lib/f1u/**
+  - include/ocudu/mac/**
+  - lib/mac/**
+  - include/ocudu/ntn/**
+  - lib/ntn/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/pcap/**
+  - lib/pcap/**
+  - include/ocudu/phy/**
+  - lib/phy/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/rlc/**
+  - lib/rlc/**
+  - include/ocudu/scheduler/**
+  - lib/scheduler/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module du may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
   from_exclude:
-  - du/du_high
-  - du/du_low
+  - include/ocudu/du/du_high/**
+  - lib/du/du_high/**
+  - include/ocudu/du/du_low/**
+  - lib/du/du_low/**
   extra_allow_for_prefix:
   - prefix: o_du
     allow:
-    - fapi
-    - fapi_adaptor
-    - hal
+    - include/ocudu/fapi/**
+    - include/ocudu/fapi_adaptor/**
+    - lib/fapi_adaptor/**
+    - include/ocudu/hal/**
+    - lib/hal/**
 - id: du-du_high-allowed-includes
   kind: allowed-edge
-  from: du/du_high
+  from:
+  - include/ocudu/du/du_high/**
+  - lib/du/du_high/**
   allow:
-  - adt
-  - asn1
-  - du
-  - du/du_high
-  - f1ap
-  - f1u
-  - gtpu
-  - mac
-  - ntn
-  - ocudulog
-  - pcap
-  - ran
-  - rlc
-  - scheduler
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['du/du_high'].
+  - include/ocudu/adt/**
+  - include/ocudu/asn1/**
+  - lib/asn1/**
+  - include/ocudu/du/**
+  - lib/du/**
+  - include/ocudu/du/du_high/**
+  - lib/du/du_high/**
+  - include/ocudu/f1ap/**
+  - lib/f1ap/**
+  - include/ocudu/f1u/**
+  - lib/f1u/**
+  - include/ocudu/gtpu/**
+  - lib/gtpu/**
+  - include/ocudu/mac/**
+  - lib/mac/**
+  - include/ocudu/ntn/**
+  - lib/ntn/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/pcap/**
+  - lib/pcap/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/rlc/**
+  - lib/rlc/**
+  - include/ocudu/scheduler/**
+  - lib/scheduler/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module du/du_high may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
   extra_allow_for_prefix:
   - prefix: o_du_high
     allow:
-    - e2
-    - fapi
-    - fapi_adaptor
-    - hal
+    - include/ocudu/e2/**
+    - lib/e2/**
+    - include/ocudu/fapi/**
+    - include/ocudu/fapi_adaptor/**
+    - lib/fapi_adaptor/**
+    - include/ocudu/hal/**
+    - lib/hal/**
 - id: du-du_low-allowed-includes
   kind: allowed-edge
-  from: du/du_low
+  from:
+  - include/ocudu/du/du_low/**
+  - lib/du/du_low/**
   allow:
-  - adt
-  - du
-  - du/du_low
-  - ocudulog
-  - pcap
-  - phy
-  - ran
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['du/du_low'].
+  - include/ocudu/adt/**
+  - include/ocudu/du/**
+  - lib/du/**
+  - include/ocudu/du/du_low/**
+  - lib/du/du_low/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/pcap/**
+  - lib/pcap/**
+  - include/ocudu/phy/**
+  - lib/phy/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module du/du_low may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
   extra_allow_for_prefix:
   - prefix: o_du_low
     allow:
-    - fapi
-    - fapi_adaptor
-    - hal
+    - include/ocudu/fapi/**
+    - include/ocudu/fapi_adaptor/**
+    - lib/fapi_adaptor/**
+    - include/ocudu/hal/**
+    - lib/hal/**
 - id: e1ap-allowed-includes
   kind: allowed-edge
-  from: e1ap
+  from:
+  - include/ocudu/e1ap/**
+  - lib/e1ap/**
   allow:
-  - adt
-  - asn1/e1ap
-  - e1ap
-  - gateways
-  - ocudulog
-  - pcap
-  - ran
-  - security
-  - support
+  - include/ocudu/adt/**
+  - include/ocudu/asn1/e1ap/**
+  - lib/asn1/e1ap/**
+  - include/ocudu/e1ap/**
+  - lib/e1ap/**
+  - include/ocudu/gateways/**
+  - lib/gateways/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/pcap/**
+  - lib/pcap/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/security/**
+  - lib/security/**
+  - include/ocudu/support/**
+  - lib/support/**
   - include/ocudu/asn1/asn1_utils.h
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['e1ap'].
+  reason: Module e1ap may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: e2-allowed-includes
   kind: allowed-edge
-  from: e2
+  from:
+  - include/ocudu/e2/**
+  - lib/e2/**
   allow:
-  - adt
-  - asn1/e2ap
-  - asn1/e2sm
-  - cu_cp
-  - du/du_high
-  - e2
-  - f1ap
-  - f1u
-  - gateways
-  - ocudulog
-  - pcap
-  - pdcp
-  - ran
-  - rlc
-  - scheduler
-  - security
-  - support
+  - include/ocudu/adt/**
+  - include/ocudu/asn1/e2ap/**
+  - lib/asn1/e2ap/**
+  - include/ocudu/asn1/e2sm/**
+  - lib/asn1/e2sm/**
+  - include/ocudu/cu_cp/**
+  - lib/cu_cp/**
+  - include/ocudu/du/du_high/**
+  - lib/du/du_high/**
+  - include/ocudu/e2/**
+  - lib/e2/**
+  - include/ocudu/f1ap/**
+  - lib/f1ap/**
+  - include/ocudu/f1u/**
+  - lib/f1u/**
+  - include/ocudu/gateways/**
+  - lib/gateways/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/pcap/**
+  - lib/pcap/**
+  - include/ocudu/pdcp/**
+  - lib/pdcp/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/rlc/**
+  - lib/rlc/**
+  - include/ocudu/scheduler/**
+  - lib/scheduler/**
+  - include/ocudu/security/**
+  - lib/security/**
+  - include/ocudu/support/**
+  - lib/support/**
   - include/ocudu/asn1/asn1_ap_utils.h
   - include/ocudu/asn1/asn1_utils.h
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['e2'].
+  reason: Module e2 may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: f1ap-allowed-includes
   kind: allowed-edge
-  from: f1ap
+  from:
+  - include/ocudu/f1ap/**
+  - lib/f1ap/**
   allow:
-  - adt
-  - asn1/f1ap
-  - f1ap
-  - gateways
-  - ocudulog
-  - pcap
-  - ran
-  - support
+  - include/ocudu/adt/**
+  - include/ocudu/asn1/f1ap/**
+  - lib/asn1/f1ap/**
+  - include/ocudu/f1ap/**
+  - lib/f1ap/**
+  - include/ocudu/gateways/**
+  - lib/gateways/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/pcap/**
+  - lib/pcap/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/support/**
+  - lib/support/**
   - include/ocudu/asn1/asn1_utils.h
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['f1ap'].
+  reason: Module f1ap may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: fapi-allowed-includes
   kind: allowed-edge
-  from: fapi
+  from:
+  - include/ocudu/fapi/**
   allow:
-  - adt
-  - fapi
-  - ocudulog
-  - ocuduvec
-  - ran
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['fapi'].
+  - include/ocudu/adt/**
+  - include/ocudu/fapi/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ocuduvec/**
+  - lib/ocuduvec/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module fapi may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: fapi_adaptor-allowed-includes
   kind: allowed-edge
-  from: fapi_adaptor
+  from:
+  - include/ocudu/fapi_adaptor/**
+  - lib/fapi_adaptor/**
   allow:
-  - adt
-  - fapi
-  - fapi_adaptor
-  - ocudulog
-  - ocuduvec
-  - ran
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['fapi_adaptor'].
+  - include/ocudu/adt/**
+  - include/ocudu/fapi/**
+  - include/ocudu/fapi_adaptor/**
+  - lib/fapi_adaptor/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ocuduvec/**
+  - lib/ocuduvec/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module fapi_adaptor may only depend on the modules listed in allow; anything else breaks its
+    layering boundary.
   from_exclude:
-  - fapi_adaptor/mac
-  - fapi_adaptor/phy
+  - include/ocudu/fapi_adaptor/mac/**
+  - lib/fapi_adaptor/mac/**
+  - include/ocudu/fapi_adaptor/phy/**
+  - lib/fapi_adaptor/phy/**
 - id: fapi_adaptor-mac-allowed-includes
   kind: allowed-edge
-  from: fapi_adaptor/mac
+  from:
+  - include/ocudu/fapi_adaptor/mac/**
+  - lib/fapi_adaptor/mac/**
   allow:
-  - adt
-  - fapi
-  - fapi_adaptor
-  - fapi_adaptor/mac
-  - mac
-  - ocudulog
-  - ocuduvec
-  - ran
-  - scheduler
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['fapi_adaptor/mac'].
+  - include/ocudu/adt/**
+  - include/ocudu/fapi/**
+  - include/ocudu/fapi_adaptor/**
+  - lib/fapi_adaptor/**
+  - include/ocudu/fapi_adaptor/mac/**
+  - lib/fapi_adaptor/mac/**
+  - include/ocudu/mac/**
+  - lib/mac/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ocuduvec/**
+  - lib/ocuduvec/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/scheduler/**
+  - lib/scheduler/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module fapi_adaptor/mac may only depend on the modules listed in allow; anything else breaks
+    its layering boundary.
 - id: fapi_adaptor-phy-allowed-includes
   kind: allowed-edge
-  from: fapi_adaptor/phy
+  from:
+  - include/ocudu/fapi_adaptor/phy/**
+  - lib/fapi_adaptor/phy/**
   allow:
-  - adt
-  - fapi
-  - fapi_adaptor
-  - fapi_adaptor/phy
-  - ocudulog
-  - ocuduvec
-  - phy
-  - ran
-  - support
+  - include/ocudu/adt/**
+  - include/ocudu/fapi/**
+  - include/ocudu/fapi_adaptor/**
+  - lib/fapi_adaptor/**
+  - include/ocudu/fapi_adaptor/phy/**
+  - lib/fapi_adaptor/phy/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ocuduvec/**
+  - lib/ocuduvec/**
+  - include/ocudu/phy/**
+  - lib/phy/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/support/**
+  - lib/support/**
   - include/ocudu/instrumentation/traces/critical_traces.h
   - include/ocudu/instrumentation/traces/du_traces.h
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['fapi_adaptor/phy'].
+  reason: Module fapi_adaptor/phy may only depend on the modules listed in allow; anything else breaks
+    its layering boundary.
 - id: gateways-allowed-includes
   kind: allowed-edge
-  from: gateways
+  from:
+  - include/ocudu/gateways/**
+  - lib/gateways/**
   allow:
-  - adt
-  - gateways
-  - ocudulog
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['gateways'].
+  - include/ocudu/adt/**
+  - include/ocudu/gateways/**
+  - lib/gateways/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module gateways may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: gtpu-allowed-includes
   kind: allowed-edge
-  from: gtpu
+  from:
+  - include/ocudu/gtpu/**
+  - lib/gtpu/**
   allow:
-  - adt
-  - gateways
-  - gtpu
-  - nru
-  - ocudulog
-  - pcap
-  - psup
-  - ran
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['gtpu'].
+  - include/ocudu/adt/**
+  - include/ocudu/gateways/**
+  - lib/gateways/**
+  - include/ocudu/gtpu/**
+  - lib/gtpu/**
+  - include/ocudu/nru/**
+  - lib/nru/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/pcap/**
+  - lib/pcap/**
+  - include/ocudu/psup/**
+  - lib/psup/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module gtpu may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: hal-allowed-includes
   kind: allowed-edge
-  from: hal
+  from:
+  - include/ocudu/hal/**
+  - lib/hal/**
   allow:
-  - adt
-  - hal
-  - ocudulog
-  - ocuduvec
-  - ran
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['hal'].
+  - include/ocudu/adt/**
+  - include/ocudu/hal/**
+  - lib/hal/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ocuduvec/**
+  - lib/ocuduvec/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module hal may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: instrumentation-allowed-includes
   kind: allowed-edge
-  from: instrumentation
+  from:
+  - include/ocudu/instrumentation/**
+  - lib/instrumentation/**
   allow:
-  - adt
-  - instrumentation
-  - ocudulog
-  - ran
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['instrumentation'].
+  - include/ocudu/adt/**
+  - include/ocudu/instrumentation/**
+  - lib/instrumentation/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module instrumentation may only depend on the modules listed in allow; anything else breaks
+    its layering boundary.
 - id: mac-allowed-includes
   kind: allowed-edge
-  from: mac
+  from:
+  - include/ocudu/mac/**
+  - lib/mac/**
   allow:
-  - adt
-  - mac
-  - ocudulog
-  - pcap
-  - ran
-  - scheduler
-  - support
+  - include/ocudu/adt/**
+  - include/ocudu/mac/**
+  - lib/mac/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/pcap/**
+  - lib/pcap/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/scheduler/**
+  - lib/scheduler/**
+  - include/ocudu/support/**
+  - lib/support/**
   - include/ocudu/instrumentation/traces/du_traces.h
   - include/ocudu/instrumentation/traces/up_traces.h
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['mac'].
+  reason: Module mac may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: ngap-allowed-includes
   kind: allowed-edge
-  from: ngap
+  from:
+  - include/ocudu/ngap/**
+  - lib/ngap/**
   allow:
-  - adt
-  - asn1/ngap
-  - gateways
-  - ngap
-  - ocudulog
-  - pcap
-  - ran
-  - security
-  - support
+  - include/ocudu/adt/**
+  - include/ocudu/asn1/ngap/**
+  - lib/asn1/ngap/**
+  - include/ocudu/gateways/**
+  - lib/gateways/**
+  - include/ocudu/ngap/**
+  - lib/ngap/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/pcap/**
+  - lib/pcap/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/security/**
+  - lib/security/**
+  - include/ocudu/support/**
+  - lib/support/**
   - include/ocudu/asn1/asn1_utils.h
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['ngap'].
+  reason: Module ngap may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: nrppa-allowed-includes
   kind: allowed-edge
-  from: nrppa
+  from:
+  - include/ocudu/nrppa/**
+  - lib/nrppa/**
   allow:
-  - adt
-  - asn1/nrppa
-  - nrppa
-  - ocudulog
-  - ran
-  - support
+  - include/ocudu/adt/**
+  - include/ocudu/asn1/nrppa/**
+  - lib/asn1/nrppa/**
+  - include/ocudu/nrppa/**
+  - lib/nrppa/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/support/**
+  - lib/support/**
   - include/ocudu/asn1/asn1_utils.h
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['nrppa'].
+  reason: Module nrppa may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: nru-allowed-includes
   kind: allowed-edge
-  from: nru
+  from:
+  - include/ocudu/nru/**
+  - lib/nru/**
   allow:
-  - adt
-  - nru
-  - ocudulog
-  - ran
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['nru'].
+  - include/ocudu/adt/**
+  - include/ocudu/nru/**
+  - lib/nru/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module nru may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: ntn-allowed-includes
   kind: allowed-edge
-  from: ntn
+  from:
+  - include/ocudu/ntn/**
+  - lib/ntn/**
   allow:
-  - adt
-  - ntn
-  - ocudulog
-  - ran
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['ntn'].
+  - include/ocudu/adt/**
+  - include/ocudu/ntn/**
+  - lib/ntn/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module ntn may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: ocudulog-allowed-includes
   kind: allowed-edge
-  from: ocudulog
+  from:
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
   allow:
-  - ocudulog
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['ocudulog'].
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  reason: Module ocudulog may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: ocuduvec-allowed-includes
   kind: allowed-edge
-  from: ocuduvec
+  from:
+  - include/ocudu/ocuduvec/**
+  - lib/ocuduvec/**
   allow:
-  - adt
-  - ocudulog
-  - ocuduvec
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['ocuduvec'].
+  - include/ocudu/adt/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ocuduvec/**
+  - lib/ocuduvec/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module ocuduvec may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: ofh-allowed-includes
   kind: allowed-edge
-  from: ofh
+  from:
+  - include/ocudu/ofh/**
+  - lib/ofh/**
   allow:
-  - adt
-  - ocudulog
-  - ocuduvec
-  - ofh
-  - phy
-  - ran
-  - support
+  - include/ocudu/adt/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ocuduvec/**
+  - lib/ocuduvec/**
+  - include/ocudu/ofh/**
+  - lib/ofh/**
+  - include/ocudu/phy/**
+  - lib/phy/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/support/**
+  - lib/support/**
   - include/ocudu/instrumentation/traces/ofh_traces.h
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['ofh'].
+  reason: Module ofh may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: pcap-allowed-includes
   kind: allowed-edge
-  from: pcap
+  from:
+  - include/ocudu/pcap/**
+  - lib/pcap/**
   allow:
-  - adt
-  - ocudulog
-  - ocuduvec
-  - pcap
-  - ran
-  - rlc
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['pcap'].
+  - include/ocudu/adt/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ocuduvec/**
+  - lib/ocuduvec/**
+  - include/ocudu/pcap/**
+  - lib/pcap/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/rlc/**
+  - lib/rlc/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module pcap may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: pdcp-allowed-includes
   kind: allowed-edge
-  from: pdcp
+  from:
+  - include/ocudu/pdcp/**
+  - lib/pdcp/**
   allow:
-  - adt
-  - ocudulog
-  - pdcp
-  - ran
-  - rohc
-  - security
-  - support
+  - include/ocudu/adt/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/pdcp/**
+  - lib/pdcp/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/rohc/**
+  - lib/rohc/**
+  - include/ocudu/security/**
+  - lib/security/**
+  - include/ocudu/support/**
+  - lib/support/**
   - include/ocudu/instrumentation/traces/tracy_profiler.h
   - include/ocudu/instrumentation/traces/up_traces.h
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['pdcp'].
+  reason: Module pdcp may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: phy-allowed-includes
   kind: allowed-edge
-  from: phy
+  from:
+  - include/ocudu/phy/**
+  - lib/phy/**
   allow:
-  - adt
-  - gateways/baseband
-  - ocudulog
-  - ocuduvec
-  - phy
-  - ran
-  - support
+  - include/ocudu/adt/**
+  - include/ocudu/gateways/baseband/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ocuduvec/**
+  - lib/ocuduvec/**
+  - include/ocudu/phy/**
+  - lib/phy/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/support/**
+  - lib/support/**
   - include/ocudu/instrumentation/traces/du_traces.h
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['phy'].
+  reason: Module phy may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
   from_exclude:
-  - phy/lower
-  - phy/upper
+  - include/ocudu/phy/lower/**
+  - lib/phy/lower/**
+  - include/ocudu/phy/upper/**
+  - lib/phy/upper/**
 - id: phy-lower-allowed-includes
   kind: allowed-edge
-  from: phy/lower
+  from:
+  - include/ocudu/phy/lower/**
+  - lib/phy/lower/**
   allow:
-  - adt
-  - gateways/baseband
-  - hal
-  - ocudulog
-  - ocuduvec
-  - phy
-  - phy/lower
-  - ran
-  - support
+  - include/ocudu/adt/**
+  - include/ocudu/gateways/baseband/**
+  - include/ocudu/hal/**
+  - lib/hal/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ocuduvec/**
+  - lib/ocuduvec/**
+  - include/ocudu/phy/**
+  - lib/phy/**
+  - include/ocudu/phy/lower/**
+  - lib/phy/lower/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/support/**
+  - lib/support/**
   - include/ocudu/instrumentation/traces/critical_traces.h
   - include/ocudu/instrumentation/traces/ru_traces.h
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['phy/lower'].
+  reason: Module phy/lower may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: phy-upper-allowed-includes
   kind: allowed-edge
-  from: phy/upper
+  from:
+  - include/ocudu/phy/upper/**
+  - lib/phy/upper/**
   allow:
-  - adt
-  - hal
-  - ocudulog
-  - ocuduvec
-  - phy
-  - phy/upper
-  - ran
-  - support
+  - include/ocudu/adt/**
+  - include/ocudu/hal/**
+  - lib/hal/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ocuduvec/**
+  - lib/ocuduvec/**
+  - include/ocudu/phy/**
+  - lib/phy/**
+  - include/ocudu/phy/upper/**
+  - lib/phy/upper/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/support/**
+  - lib/support/**
   - include/ocudu/instrumentation/traces/du_traces.h
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['phy/upper'].
+  reason: Module phy/upper may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: psup-allowed-includes
   kind: allowed-edge
-  from: psup
+  from:
+  - include/ocudu/psup/**
+  - lib/psup/**
   allow:
-  - adt
-  - ocudulog
-  - psup
-  - ran
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['psup'].
+  - include/ocudu/adt/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/psup/**
+  - lib/psup/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module psup may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: radio-allowed-includes
   kind: allowed-edge
-  from: radio
+  from:
+  - include/ocudu/radio/**
+  - lib/radio/**
   allow:
-  - adt
-  - gateways
-  - ocudulog
-  - ocuduvec
-  - radio
-  - ran
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['radio'].
+  - include/ocudu/adt/**
+  - include/ocudu/gateways/**
+  - lib/gateways/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ocuduvec/**
+  - lib/ocuduvec/**
+  - include/ocudu/radio/**
+  - lib/radio/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module radio may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: ran-allowed-includes
   kind: allowed-edge
-  from: ran
+  from:
+  - include/ocudu/ran/**
+  - lib/ran/**
   allow:
-  - adt
-  - ocudulog
-  - ocuduvec
-  - ran
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['ran'].
+  - include/ocudu/adt/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ocuduvec/**
+  - lib/ocuduvec/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module ran may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: rlc-allowed-includes
   kind: allowed-edge
-  from: rlc
+  from:
+  - include/ocudu/rlc/**
+  - lib/rlc/**
   allow:
-  - adt
-  - ocudulog
-  - pcap
-  - ran
-  - rlc
-  - support
+  - include/ocudu/adt/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/pcap/**
+  - lib/pcap/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/rlc/**
+  - lib/rlc/**
+  - include/ocudu/support/**
+  - lib/support/**
   - include/ocudu/asn1/asn1_utils.h
   - include/ocudu/instrumentation/traces/du_traces.h
   - include/ocudu/instrumentation/traces/up_traces.h
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['rlc'].
+  reason: Module rlc may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: rohc-allowed-includes
   kind: allowed-edge
-  from: rohc
+  from:
+  - include/ocudu/rohc/**
+  - lib/rohc/**
   allow:
-  - adt
-  - ocudulog
-  - ran
-  - rohc
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['rohc'].
+  - include/ocudu/adt/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/rohc/**
+  - lib/rohc/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module rohc may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: rrc-allowed-includes
   kind: allowed-edge
-  from: rrc
+  from:
+  - include/ocudu/rrc/**
+  - lib/rrc/**
   allow:
-  - adt
-  - asn1/rrc_nr
-  - ocudulog
-  - ran
-  - rrc
-  - security
-  - support
+  - include/ocudu/adt/**
+  - include/ocudu/asn1/rrc_nr/**
+  - lib/asn1/rrc_nr/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/rrc/**
+  - lib/rrc/**
+  - include/ocudu/security/**
+  - lib/security/**
+  - include/ocudu/support/**
+  - lib/support/**
   - include/ocudu/asn1/asn1_utils.h
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['rrc'].
+  reason: Module rrc may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: ru-allowed-includes
   kind: allowed-edge
-  from: ru
+  from:
+  - include/ocudu/ru/**
+  - lib/ru/**
   allow:
-  - adt
-  - instrumentation
-  - ntn
-  - ocudulog
-  - ocuduvec
-  - ofh
-  - phy/support
-  - phy/upper
-  - radio
-  - ran
-  - ru
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['ru'].
+  - include/ocudu/adt/**
+  - include/ocudu/instrumentation/**
+  - lib/instrumentation/**
+  - include/ocudu/ntn/**
+  - lib/ntn/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ocuduvec/**
+  - lib/ocuduvec/**
+  - include/ocudu/ofh/**
+  - lib/ofh/**
+  - include/ocudu/phy/support/**
+  - lib/phy/support/**
+  - include/ocudu/phy/upper/**
+  - lib/phy/upper/**
+  - include/ocudu/radio/**
+  - lib/radio/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/ru/**
+  - lib/ru/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module ru may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
   from_exclude:
-  - ru/dummy
-  - ru/ofh
-  - ru/sdr
+  - include/ocudu/ru/dummy/**
+  - lib/ru/dummy/**
+  - include/ocudu/ru/ofh/**
+  - lib/ru/ofh/**
+  - include/ocudu/ru/sdr/**
+  - lib/ru/sdr/**
 - id: ru-dummy-allowed-includes
   kind: allowed-edge
-  from: ru/dummy
+  from:
+  - include/ocudu/ru/dummy/**
+  - lib/ru/dummy/**
   allow:
-  - adt
-  - instrumentation
-  - ntn
-  - ocudulog
-  - ocuduvec
-  - phy/support
-  - radio
-  - ran
-  - ru
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['ru/dummy'].
+  - include/ocudu/adt/**
+  - include/ocudu/instrumentation/**
+  - lib/instrumentation/**
+  - include/ocudu/ntn/**
+  - lib/ntn/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ocuduvec/**
+  - lib/ocuduvec/**
+  - include/ocudu/phy/support/**
+  - lib/phy/support/**
+  - include/ocudu/radio/**
+  - lib/radio/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/ru/**
+  - lib/ru/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module ru/dummy may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: ru-ofh-allowed-includes
   kind: allowed-edge
-  from: ru/ofh
+  from:
+  - include/ocudu/ru/ofh/**
+  - lib/ru/ofh/**
   allow:
-  - adt
-  - gateways/baseband
-  - instrumentation
-  - ntn
-  - ocudulog
-  - ocuduvec
-  - ofh
-  - phy
-  - radio
-  - ran
-  - ru
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['ru/ofh'].
+  - include/ocudu/adt/**
+  - include/ocudu/gateways/baseband/**
+  - include/ocudu/instrumentation/**
+  - lib/instrumentation/**
+  - include/ocudu/ntn/**
+  - lib/ntn/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ocuduvec/**
+  - lib/ocuduvec/**
+  - include/ocudu/ofh/**
+  - lib/ofh/**
+  - include/ocudu/phy/**
+  - lib/phy/**
+  - include/ocudu/radio/**
+  - lib/radio/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/ru/**
+  - lib/ru/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module ru/ofh may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: ru-sdr-allowed-includes
   kind: allowed-edge
-  from: ru/sdr
+  from:
+  - include/ocudu/ru/sdr/**
+  - lib/ru/sdr/**
   allow:
-  - adt
-  - gateways/baseband
-  - instrumentation
-  - ntn
-  - ocudulog
-  - ocuduvec
-  - phy
-  - radio
-  - ran
-  - ru
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['ru/sdr'].
+  - include/ocudu/adt/**
+  - include/ocudu/gateways/baseband/**
+  - include/ocudu/instrumentation/**
+  - lib/instrumentation/**
+  - include/ocudu/ntn/**
+  - lib/ntn/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ocuduvec/**
+  - lib/ocuduvec/**
+  - include/ocudu/phy/**
+  - lib/phy/**
+  - include/ocudu/radio/**
+  - lib/radio/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/ru/**
+  - lib/ru/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module ru/sdr may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: scheduler-allowed-includes
   kind: allowed-edge
-  from: scheduler
+  from:
+  - include/ocudu/scheduler/**
+  - lib/scheduler/**
   allow:
-  - adt
-  - ntn
-  - ocudulog
-  - ran
-  - scheduler
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['scheduler'].
+  - include/ocudu/adt/**
+  - include/ocudu/ntn/**
+  - lib/ntn/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/scheduler/**
+  - lib/scheduler/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module scheduler may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: sdap-allowed-includes
   kind: allowed-edge
-  from: sdap
+  from:
+  - include/ocudu/sdap/**
+  - lib/sdap/**
   allow:
-  - adt
-  - ocudulog
-  - ran
-  - sdap
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['sdap'].
+  - include/ocudu/adt/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/sdap/**
+  - lib/sdap/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module sdap may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: security-allowed-includes
   kind: allowed-edge
-  from: security
+  from:
+  - include/ocudu/security/**
+  - lib/security/**
   allow:
-  - adt
-  - asn1
-  - ocudulog
-  - ocuduvec
-  - ran
-  - security
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['security'].
+  - include/ocudu/adt/**
+  - include/ocudu/asn1/**
+  - lib/asn1/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ocuduvec/**
+  - lib/ocuduvec/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/security/**
+  - lib/security/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module security may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: support-allowed-includes
   kind: allowed-edge
-  from: support
+  from:
+  - include/ocudu/support/**
+  - lib/support/**
   allow:
-  - adt
-  - ocudulog
-  - ocuduvec
-  - support
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['support'].
+  - include/ocudu/adt/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/ocuduvec/**
+  - lib/ocuduvec/**
+  - include/ocudu/support/**
+  - lib/support/**
+  reason: Module support may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: xnap-allowed-includes
   kind: allowed-edge
-  from: xnap
+  from:
+  - include/ocudu/xnap/**
+  - lib/xnap/**
   allow:
-  - adt
-  - asn1/xnap
-  - gateways
-  - ocudulog
-  - pcap
-  - ran
-  - security
-  - support
-  - xnap
+  - include/ocudu/adt/**
+  - include/ocudu/asn1/xnap/**
+  - lib/asn1/xnap/**
+  - include/ocudu/gateways/**
+  - lib/gateways/**
+  - include/ocudu/ocudulog/**
+  - lib/ocudulog/**
+  - include/ocudu/pcap/**
+  - lib/pcap/**
+  - include/ocudu/ran/**
+  - lib/ran/**
+  - include/ocudu/security/**
+  - lib/security/**
+  - include/ocudu/support/**
+  - lib/support/**
+  - include/ocudu/xnap/**
+  - lib/xnap/**
   - include/ocudu/asn1/asn1_utils.h
-  reason: Ported from include_directives_check.py's ALLOWED_INCLUDES['xnap'].
+  reason: Module xnap may only depend on the modules listed in allow; anything else breaks its layering
+    boundary.
 - id: public-headers-must-not-use-relative-includes
   kind: no-relative-includes
   from: include/**

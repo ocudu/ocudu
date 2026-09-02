@@ -48,6 +48,7 @@ MAC_RULE = {
     "version": 1,
     "rules": [{
         "id": "mac-must-not-depend-on-du",
+        "kind": "forbidden-edge",
         "from": "lib/mac/**",
         "to": "include/proj/du/**",
         "reason": "MAC sits below the DU manager.",
@@ -259,6 +260,7 @@ class CheckerTest(unittest.TestCase):
                 "version": 1,
                 "rules": [{
                     "id": "no-mac-config",
+                    "kind": "forbidden-edge",
                     "from": "lib/mac/mac_impl.cpp",
                     "to": "lib/mac/mac_config.h",
                     "reason": "Contrived rule pinning a relative include.",
@@ -275,6 +277,7 @@ class CheckerTest(unittest.TestCase):
                 "version": 1,
                 "rules": [{
                     "id": "mac-must-not-reach-du",
+                    "kind": "forbidden-edge",
                     "from": "lib/mac/**",
                     "to": "include/proj/du/**",
                     "transitive": True,
@@ -352,6 +355,7 @@ class CheckerTest(unittest.TestCase):
                 "version": 1,
                 "rules": [{
                     "id": "mac-must-not-depend-on-du",
+                    "kind": "forbidden-edge",
                     "from": "lib/mac/**",
                     "to": "include/proj/du/**",
                     "reason": "MAC sits below the DU manager.",
@@ -377,6 +381,7 @@ class CheckerTest(unittest.TestCase):
                 "version": 1,
                 "rules": [{
                     "id": "mac-must-not-depend-on-du",
+                    "kind": "forbidden-edge",
                     "from": "lib/mac/**",
                     "to": "include/proj/du/**",
                     "reason": "MAC sits below the DU manager.",
@@ -429,10 +434,10 @@ class CheckerTest(unittest.TestCase):
 
 class AllowedEdgeTest(unittest.TestCase):
     """kind: allowed-edge — the inverse of forbidden-edge, ported from
-    include_directives_check.py's ALLOWED_INCLUDES. Uses a du/du_high-shaped
-    fixture (real OCUDU module names, `ocudu/`-prefixed includes) since bare
-    module names in `from`/`allow` expand via the same lib/+include/ocudu/
-    convention gen_dependency_tree.py's own module classification uses."""
+    include_directives_check.py's (now-retired) ALLOWED_INCLUDES. `from`/`to`/
+    `allow`/`from_exclude` are plain repo-relative globs, same as every other
+    rule kind. Uses a du/du_high-shaped fixture (real OCUDU module names,
+    `ocudu/`-prefixed includes)."""
 
     def make_fixture(self, root: Path) -> None:
         write(root, "include/ocudu/ran/rnti.h", "#pragma once\n")
@@ -455,17 +460,19 @@ class AllowedEdgeTest(unittest.TestCase):
                 {
                     "id": "du-allowed-includes",
                     "kind": "allowed-edge",
-                    "from": "du",
-                    "from_exclude": "du/du_high",
-                    "allow": ["du", "ran"],
-                    "extra_allow_for_prefix": [{"prefix": "o_du", "allow": ["e2"]}],
+                    "from": ["lib/du/**", "include/ocudu/du/**"],
+                    "from_exclude": ["lib/du/du_high/**", "include/ocudu/du/du_high/**"],
+                    "allow": ["lib/du/**", "include/ocudu/du/**", "include/ocudu/ran/**"],
+                    "extra_allow_for_prefix": [{"prefix": "o_du", "allow": ["include/ocudu/e2/**"]}],
                     "reason": "test coarse du rule",
                 },
                 {
                     "id": "du-du_high-allowed-includes",
                     "kind": "allowed-edge",
-                    "from": "du/du_high",
-                    "allow": ["du/du_high", "ran"],
+                    "from": ["lib/du/du_high/**", "include/ocudu/du/du_high/**"],
+                    "allow": [
+                        "lib/du/du_high/**", "include/ocudu/du/du_high/**", "include/ocudu/ran/**",
+                    ],
                     "reason": "test submodule du_high rule",
                 },
             ],
@@ -511,12 +518,12 @@ class AllowedEdgeTest(unittest.TestCase):
             write(root, "lib/du/du_coarse.cpp", '#include "ocudu/du/du_manager.h"\n#include "fmt/core.h"\n')
             tree = gen(root)
             rules_doc = self.base_rules()
-            rules_doc["always_allowed"] = ["fmt"]
+            rules_doc["always_allowed"] = ["external/fmt/**"]
             rules = write_yaml(root, "rules.yml", rules_doc)
             payload, code = self.json_check(tree, rules)
             self.assertEqual(code, 0, payload["findings"])
 
-    def test_bare_module_name_violation_is_reported(self):
+    def test_violation_is_reported(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.make_fixture(root)
@@ -527,7 +534,7 @@ class AllowedEdgeTest(unittest.TestCase):
             self.assertEqual(code, 1)
             self.assertEqual(payload["findings"][0]["to"], "include/ocudu/e2/e2_thing.h")
 
-    def test_bare_module_name_with_no_real_directory_is_stale(self):
+    def test_stale_from_pattern_is_an_error(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.make_fixture(root)
@@ -536,14 +543,14 @@ class AllowedEdgeTest(unittest.TestCase):
                 "version": 1, "rules": [{
                     "id": "bogus",
                     "kind": "allowed-edge",
-                    "from": "nonexistent_module_xyz",
-                    "allow": ["du"],
+                    "from": "lib/nonexistent_module_xyz/**",
+                    "allow": ["lib/du/**"],
                     "reason": "test",
                 }],
             })
             result = run(CHECK, "--tree", str(tree), "--rules", str(rules))
             self.assertEqual(result.returncode, 2, result.stdout)
-            self.assertIn("matches no directory", result.stderr)
+            self.assertIn("matches no files", result.stderr)
 
     def test_transitive_is_rejected_for_allowed_edge(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -554,8 +561,8 @@ class AllowedEdgeTest(unittest.TestCase):
                 "version": 1, "rules": [{
                     "id": "bad",
                     "kind": "allowed-edge",
-                    "from": "du",
-                    "allow": ["du", "ran"],
+                    "from": ["lib/du/**", "include/ocudu/du/**"],
+                    "allow": ["lib/du/**", "include/ocudu/du/**", "include/ocudu/ran/**"],
                     "transitive": True,
                     "reason": "test",
                 }],
@@ -641,6 +648,7 @@ class IncludeOnlyTargetTest(unittest.TestCase):
             "version": 1,
             "rules": [{
                 "id": "public-headers-must-not-include-external",
+                "kind": "forbidden-edge",
                 "from": "include/**",
                 "to": "external/**",
                 "reason": "Public headers must not expose third-party types.",
@@ -672,6 +680,7 @@ class RulesetValidationTest(unittest.TestCase):
         self.expect_broken(
             {"version": 1, "rules": [{
                 "id": "renamed-away",
+                "kind": "forbidden-edge",
                 "from": "lib/mac/**",
                 "to": "include/proj/du_manager/**",
                 "reason": "The target directory was renamed, so this rule enforces nothing.",
@@ -699,10 +708,22 @@ class RulesetValidationTest(unittest.TestCase):
             "duplicate id",
         )
 
+    def test_missing_kind_is_an_error(self):
+        self.expect_broken(
+            {"version": 1, "rules": [{
+                "id": "no-kind",
+                "from": "lib/mac/**",
+                "to": "include/proj/du/**",
+                "reason": "kind has no default; it must be spelled out.",
+            }]},
+            "missing `kind`",
+        )
+
     def test_unknown_key_is_an_error(self):
         self.expect_broken(
             {"version": 1, "rules": [{
                 "id": "typo",
+                "kind": "forbidden-edge",
                 "form": "lib/mac/**",
                 "to": "include/proj/du/**",
                 "reason": "`form` is a typo for `from`.",
@@ -714,6 +735,7 @@ class RulesetValidationTest(unittest.TestCase):
         self.expect_broken(
             {"version": 1, "rules": [{
                 "id": "no-reason",
+                "kind": "forbidden-edge",
                 "from": "lib/mac/**",
                 "to": "include/proj/du/**",
             }]},
@@ -763,6 +785,7 @@ class GlobSemanticsTest(unittest.TestCase):
             rules_path = write_yaml(root, "rules.yml", {
                 "version": 1, "rules": [{
                     "id": "shallow-only",
+                    "kind": "forbidden-edge",
                     "from": "lib/mac/*.cpp",
                     "to": "include/proj/du/**",
                     "reason": "Only direct children of lib/mac are in scope.",
@@ -774,6 +797,7 @@ class GlobSemanticsTest(unittest.TestCase):
             rules_path = write_yaml(root, "rules_deep.yml", {
                 "version": 1, "rules": [{
                     "id": "deep-too",
+                    "kind": "forbidden-edge",
                     "from": "lib/mac/**",
                     "to": "include/proj/du/**",
                     "reason": "Every file under lib/mac is in scope.",
@@ -820,6 +844,7 @@ class EntrypointTest(unittest.TestCase):
         return write_yaml(root, "rules.yml", {
             "version": 1, "rules": [{
                 "id": "no-mac-to-du",
+                "kind": "forbidden-edge",
                 "from": "lib/mac/**",
                 "to": "include/proj/du/**",
                 "reason": "Contrived, just to give the ruleset something real to match.",
@@ -850,6 +875,7 @@ class EntrypointTest(unittest.TestCase):
             rules_path = write_yaml(root, "rules.yml", {
                 "version": 1, "rules": [{
                     "id": "dead",
+                    "kind": "forbidden-edge",
                     "from": "nonexistent/**",
                     "to": "also_nonexistent/**",
                     "reason": "Stale rule, on purpose.",
