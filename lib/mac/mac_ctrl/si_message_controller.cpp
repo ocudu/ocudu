@@ -571,7 +571,7 @@ si_message_controller::pws_broadcast_sequence* si_message_controller::find_pws_s
 bool si_message_controller::handle_pws_broadcast(const mac_cell_sys_info_pdu_update& req)
 {
   sib_type_set sib_set;
-  sib_set.add(static_cast<sib_type>(req.sib_idx));
+  sib_set.add(req.sib_idx);
   pws_broadcast_sequence* pws_seq = find_pws_sequence(sib_set);
   if (pws_seq == nullptr) {
     // The cell is not provisioned for a warning carried by this SIB.

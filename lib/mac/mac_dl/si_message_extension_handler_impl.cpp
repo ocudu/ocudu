@@ -103,7 +103,7 @@ public:
   // See interface for documentation.
   bool enqueue_si_pdu_updates(const mac_cell_sys_info_pdu_update& req) override
   {
-    const std::optional<unsigned> si_msg_idx = find_si_msg_carrying(static_cast<sib_type>(req.sib_idx));
+    const std::optional<unsigned> si_msg_idx = find_si_msg_carrying(req.sib_idx);
     if (not si_msg_idx.has_value()) {
       return false;
     }

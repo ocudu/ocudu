@@ -687,7 +687,6 @@ void ntn_configuration_manager_impl::periodic_ntn_config_update_task(const nr_ce
 
     ntn_sib19_update_request ntn_req;
     ntn_req.nr_cgi             = cell_cfg.nr_cgi;
-    ntn_req.sib_idx            = 19;
     ntn_req.slot               = next_si_win_start;
     ntn_req.si_slot_period     = cell_cfg.si_sched->si_period_rf * next_si_win_start.nof_slots_per_frame();
     ntn_req.epoch_time         = epoch_time;

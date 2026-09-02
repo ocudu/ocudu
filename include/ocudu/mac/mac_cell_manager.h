@@ -37,8 +37,11 @@ struct pws_broadcast_indication {
 
 /// Structure used to update SI PDU messages, without SI change notifications nor in a modification of valueTag in SIB1.
 struct mac_cell_sys_info_pdu_update {
-  /// SIB index (e.g., sib2 => value 2). Identifies the SI message that carries it.
-  uint8_t sib_idx;
+  /// \brief SIB whose SI message this update targets.
+  ///
+  /// A SIB is mapped to at most one SI message, so it identifies the SI message within the cell. \c si_messages holds
+  /// the content of that SI message as a whole, every SIB it carries included.
+  sib_type sib_idx;
   /// Slot at which the new SI is transmitted. If absent, the update is applied as soon as possible (e.g. PWS).
   std::optional<slot_point> slot;
   /// SI period in nof slots, required if more than one are SI PDU passed.

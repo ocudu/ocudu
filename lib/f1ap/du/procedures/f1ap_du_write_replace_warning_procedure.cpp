@@ -38,7 +38,9 @@ void f1ap_du_write_replace_warning_procedure::operator()(coro_context<async_task
 write_replace_warning_information f1ap_du_write_replace_warning_procedure::build_request() const
 {
   write_replace_warning_information info;
-  info.sib_type = request->pws_sys_info.sib_type;
+  // TS 38.473 constrains the IE to 6, 7 or 8, but the DU checks the cell is provisioned for the SIB anyway, so a
+  // value outside that range is discarded rather than trusted.
+  info.sib_id = static_cast<sib_type>(request->pws_sys_info.sib_type);
   info.sib_msgs.push_back(request->pws_sys_info.sib_msg.copy());
   if (request->pws_sys_info.ie_exts_present and request->pws_sys_info.ie_exts.add_sib_msg_list_present) {
     for (const auto& item : request->pws_sys_info.ie_exts.add_sib_msg_list) {

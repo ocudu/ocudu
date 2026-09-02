@@ -36,25 +36,25 @@ bool is_provisioned_for_sib(const du_cell_config& cell_cfg, sib_type type)
 /// \remark SIB6 is never segmented (always exactly one segment). SIB7/8 may be split into multiple segments by the
 /// CU (see \c write_replace_warning_information::sib_msgs); this function must be called once per segment, and each
 /// resulting BCCH-DL-SCH-Message is transmitted in its own SI-message window occasion, in order.
-expected<byte_buffer> pack_warning_bcch_dl_sch_msg(uint8_t sib_type, const byte_buffer& sib_msg)
+expected<byte_buffer> pack_warning_bcch_dl_sch_msg(sib_type sib_id, const byte_buffer& sib_msg)
 {
   using namespace asn1::rrc_nr;
 
   asn1::cbit_ref bref(sib_msg);
 
   sys_info_ies_s::item_c_ sib_item;
-  switch (sib_type) {
-    case 6:
+  switch (sib_id) {
+    case sib_type::sib6:
       if (sib_item.set_sib6().unpack(bref) != asn1::OCUDUASN_SUCCESS) {
         return make_unexpected(default_error_t{});
       }
       break;
-    case 7:
+    case sib_type::sib7:
       if (sib_item.set_sib7().unpack(bref) != asn1::OCUDUASN_SUCCESS) {
         return make_unexpected(default_error_t{});
       }
       break;
-    case 8:
+    case sib_type::sib8:
       if (sib_item.set_sib8().unpack(bref) != asn1::OCUDUASN_SUCCESS) {
         return make_unexpected(default_error_t{});
       }
@@ -101,20 +101,19 @@ async_task<mac_cell_reconfig_response> du_pws_broadcast_procedure::handle_cell_b
 {
   const du_cell_config& cell_cfg = cell_mng.get_cell_cfg(cell_index);
 
-  if (not is_provisioned_for_sib(cell_cfg, static_cast<sib_type>(request.sib_type))) {
-    logger.warning("cell={}: Discarding Write-Replace Warning. Cause: Cell not provisioned for SIB{}",
-                   cell_index,
-                   request.sib_type);
+  if (not is_provisioned_for_sib(cell_cfg, request.sib_id)) {
+    logger.warning(
+        "cell={}: Discarding Write-Replace Warning. Cause: Cell not provisioned for SIB{}", cell_index, request.sib_id);
     return launch_no_op_task(mac_cell_reconfig_response{});
   }
 
   si_messages.clear();
   si_messages.reserve(request.sib_msgs.size());
   for (const byte_buffer& segment : request.sib_msgs) {
-    expected<byte_buffer> pdu = pack_warning_bcch_dl_sch_msg(request.sib_type, segment);
+    expected<byte_buffer> pdu = pack_warning_bcch_dl_sch_msg(request.sib_id, segment);
     if (not pdu.has_value()) {
       logger.warning(
-          "cell={}: Discarding Write-Replace Warning. Cause: Failed to pack SIB{}", cell_index, request.sib_type);
+          "cell={}: Discarding Write-Replace Warning. Cause: Failed to pack SIB{}", cell_index, request.sib_id);
       return launch_no_op_task(mac_cell_reconfig_response{});
     }
     si_messages.push_back(std::move(pdu.value()));
@@ -122,7 +121,7 @@ async_task<mac_cell_reconfig_response> du_pws_broadcast_procedure::handle_cell_b
 
   mac_cell_reconfig_request req;
   req.new_si_pdu_info = mac_cell_sys_info_pdu_update{
-      .sib_idx        = request.sib_type,
+      .sib_idx        = request.sib_id,
       .slot           = std::nullopt,
       .si_slot_period = std::nullopt,
       .si_messages    = span<byte_buffer>(si_messages),

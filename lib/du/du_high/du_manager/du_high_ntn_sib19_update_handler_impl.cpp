@@ -43,7 +43,6 @@ void du_high_ntn_sib19_update_handler_impl::handle_sib19_msg_update(const ocudu_
   // Create cell-level request.
   du_cell_ntn_param_update_request cell_req;
   cell_req.nr_cgi         = req.nr_cgi;
-  cell_req.sib_idx        = req.sib_idx;
   cell_req.slot           = req.slot;
   cell_req.si_slot_period = req.si_slot_period;
   cell_req.si_messages    = std::move(msgs);

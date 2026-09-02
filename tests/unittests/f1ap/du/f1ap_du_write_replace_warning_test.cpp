@@ -66,7 +66,7 @@ TEST_F(f1ap_du_write_replace_warning_test, when_cells_list_is_absent_then_all_se
 
   ASSERT_TRUE(this->pws_handler.last_pws_info.has_value());
   const auto& info = this->pws_handler.last_pws_info.value();
-  ASSERT_EQ(info.sib_type, 6);
+  ASSERT_EQ(info.sib_id, sib_type::sib6);
   ASSERT_EQ(info.repeat_period, std::chrono::seconds{60});
   ASSERT_EQ(info.nof_broadcasts_requested, 4U);
   ASSERT_EQ(info.cells.size(), 1U);

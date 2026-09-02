@@ -95,7 +95,7 @@ protected:
 TEST_F(du_pws_broadcast_procedure_test, when_cell_not_provisioned_for_sib_type_then_it_is_not_accepted)
 {
   write_replace_warning_information req;
-  req.sib_type = 6;
+  req.sib_id = sib_type::sib6;
   req.sib_msgs.push_back(byte_buffer::create({0x1, 0x2, 0x3}).value());
   req.repeat_period            = std::chrono::seconds{60};
   req.nof_broadcasts_requested = 4;
@@ -116,7 +116,7 @@ TEST_F(du_pws_broadcast_procedure_test, when_cell_not_provisioned_for_sib_type_t
 TEST_F(du_pws_broadcast_procedure_provisioned_test, when_sib_content_is_empty_then_broadcast_is_not_accepted)
 {
   write_replace_warning_information req;
-  req.sib_type = 6;
+  req.sib_id = sib_type::sib6;
   req.sib_msgs.push_back(byte_buffer{});
   req.repeat_period            = std::chrono::seconds{60};
   req.nof_broadcasts_requested = 4;
@@ -136,7 +136,7 @@ TEST_F(du_pws_broadcast_procedure_provisioned_test, when_sib_content_is_empty_th
 TEST_F(du_pws_broadcast_procedure_provisioned_test, when_sib_content_is_malformed_then_broadcast_is_not_accepted)
 {
   write_replace_warning_information req;
-  req.sib_type = 6;
+  req.sib_id = sib_type::sib6;
   req.sib_msgs.push_back(byte_buffer::create({0x1, 0x2, 0x3}).value());
   req.repeat_period            = std::chrono::seconds{60};
   req.nof_broadcasts_requested = 4;
@@ -157,7 +157,7 @@ TEST_F(du_pws_broadcast_procedure_provisioned_test, when_sib_content_is_malforme
 TEST_F(du_pws_broadcast_procedure_provisioned_test, when_sib_content_is_valid_then_broadcast_is_accepted)
 {
   write_replace_warning_information req;
-  req.sib_type = 6;
+  req.sib_id = sib_type::sib6;
   req.sib_msgs.push_back(pack_valid_sib6_pdu());
   req.repeat_period            = std::chrono::seconds{60};
   req.nof_broadcasts_requested = 4;

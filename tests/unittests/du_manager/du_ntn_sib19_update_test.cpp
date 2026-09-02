@@ -32,7 +32,6 @@ ntn_sib19_update_request make_ntn_request(const nr_cell_global_id_t& nr_cgi)
 {
   ntn_sib19_update_request req;
   req.nr_cgi         = nr_cgi;
-  req.sib_idx        = 19;
   req.slot           = slot_point{subcarrier_spacing::kHz15, 0, 0};
   req.si_slot_period = 320;
   // Keep si_valuetag_change=false so the update takes the plain SI-PDU path and does not depend on a cell SIB1
@@ -160,7 +159,7 @@ TEST_F(du_ntn_sib19_update_test, si_messages_survive_deferred_update_and_reach_m
   // The MAC received the SI PDU update and the captured bytes decode as the SIB19 that was sent.
   ASSERT_TRUE(dependencies.mac.mac_cell.last_cell_recfg_req.has_value());
   ASSERT_TRUE(dependencies.mac.mac_cell.last_cell_recfg_req->new_si_pdu_info.has_value());
-  EXPECT_EQ(dependencies.mac.mac_cell.last_cell_recfg_req->new_si_pdu_info->sib_idx, req.sib_idx);
+  EXPECT_EQ(dependencies.mac.mac_cell.last_cell_recfg_req->new_si_pdu_info->sib_idx, sib_type::sib19);
   ASSERT_EQ(dependencies.mac.mac_cell.last_si_msg_bytes.size(), 1U);
   expect_decodes_as_sib19(dependencies.mac.mac_cell.last_si_msg_bytes[0]);
 }

@@ -15,6 +15,7 @@
 #include "ocudu/ran/du_types.h"
 #include "ocudu/ran/paging_information.h"
 #include "ocudu/ran/rb_id.h"
+#include "ocudu/ran/sib/sib_type.h"
 #include "ocudu/support/async/async_task.h"
 #include "ocudu/support/timers.h"
 
@@ -229,8 +230,8 @@ public:
 
 /// \brief Write-Replace Warning Request as per TS 38.473 Section 8.5.1, resolved to local DU cell indexes.
 struct write_replace_warning_information {
-  /// SIB type carried by \c sib_msgs (6, 7 or 8).
-  uint8_t sib_type;
+  /// SIB carried by \c sib_msgs. SIB6, SIB7 or SIB8.
+  sib_type sib_id;
   /// \brief CU-encoded SIB6/7/8 PDU segments, as per TS 38.331.
   std::vector<byte_buffer> sib_msgs;
   /// Repetition Period.

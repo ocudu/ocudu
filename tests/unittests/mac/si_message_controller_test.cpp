@@ -110,7 +110,7 @@ TEST_F(si_message_controller_test, when_cell_is_not_provisioned_for_a_warning_th
   // must be rejected rather than silently misbehave.
   std::vector<byte_buffer>     segments = make_random_segmented_pdu(50, 1);
   mac_cell_sys_info_pdu_update req;
-  req.sib_idx       = 6;
+  req.sib_idx       = sib_type::sib6;
   req.si_messages   = span<byte_buffer>(segments);
   req.pws_broadcast = pws_broadcast_indication{std::chrono::seconds{1}, 1};
 
@@ -141,7 +141,7 @@ TEST_F(si_message_controller_pws_test,
 {
   std::vector<byte_buffer>     segments = make_random_segmented_pdu(50, 2);
   mac_cell_sys_info_pdu_update req;
-  req.sib_idx       = 7;
+  req.sib_idx       = sib_type::sib7;
   req.si_messages   = span<byte_buffer>(segments);
   req.pws_broadcast = pws_broadcast_indication{std::chrono::seconds{1}, 3};
 
@@ -161,7 +161,7 @@ TEST_F(si_message_controller_pws_test, when_pws_broadcast_content_is_encoded_the
 {
   std::vector<byte_buffer>     segments = make_random_segmented_pdu(50, 2);
   mac_cell_sys_info_pdu_update req;
-  req.sib_idx       = 7;
+  req.sib_idx       = sib_type::sib7;
   req.si_messages   = span<byte_buffer>(segments);
   req.pws_broadcast = pws_broadcast_indication{std::chrono::seconds{1}, 1};
   bench.push_si_pdu_updates(req);
@@ -193,7 +193,7 @@ TEST_F(si_message_controller_pws_test,
   auto                         segment = make_random_pdu();
   std::vector<byte_buffer>     segments{segment.copy()};
   mac_cell_sys_info_pdu_update req;
-  req.sib_idx                   = 7;
+  req.sib_idx                   = sib_type::sib7;
   req.si_messages               = span<byte_buffer>(segments);
   const unsigned nof_broadcasts = 3;
   req.pws_broadcast             = pws_broadcast_indication{std::chrono::seconds{1}, nof_broadcasts};
@@ -223,7 +223,7 @@ TEST_F(si_message_controller_pws_test, when_new_pws_broadcast_replaces_previous_
   auto                         segment_a = make_random_pdu();
   std::vector<byte_buffer>     segments_a{segment_a.copy()};
   mac_cell_sys_info_pdu_update req_a;
-  req_a.sib_idx       = 7;
+  req_a.sib_idx       = sib_type::sib7;
   req_a.si_messages   = span<byte_buffer>(segments_a);
   req_a.pws_broadcast = pws_broadcast_indication{std::chrono::seconds{1}, 10};
   bench.push_si_pdu_updates(req_a);
@@ -232,7 +232,7 @@ TEST_F(si_message_controller_pws_test, when_new_pws_broadcast_replaces_previous_
   auto                         segment_b = make_random_pdu();
   std::vector<byte_buffer>     segments_b{segment_b.copy()};
   mac_cell_sys_info_pdu_update req_b;
-  req_b.sib_idx       = 7;
+  req_b.sib_idx       = sib_type::sib7;
   req_b.si_messages   = span<byte_buffer>(segments_b);
   req_b.pws_broadcast = pws_broadcast_indication{std::chrono::seconds{1}, 1};
   bench.push_si_pdu_updates(req_b);
@@ -258,7 +258,7 @@ TEST_F(si_message_controller_pws_test, when_unrelated_si_reconfiguration_occurs_
   auto                         segment = make_random_pdu();
   std::vector<byte_buffer>     segments{segment.copy()};
   mac_cell_sys_info_pdu_update pws_req;
-  pws_req.sib_idx       = 7;
+  pws_req.sib_idx       = sib_type::sib7;
   pws_req.si_messages   = span<byte_buffer>(segments);
   pws_req.pws_broadcast = pws_broadcast_indication{std::chrono::seconds{1}, 3};
   bench.push_si_pdu_updates(pws_req);
@@ -295,7 +295,7 @@ TEST_F(si_message_controller_pws_test,
 
   std::vector<byte_buffer>     segments = make_random_segmented_pdu(50, 1);
   mac_cell_sys_info_pdu_update req;
-  req.sib_idx       = 7;
+  req.sib_idx       = sib_type::sib7;
   req.si_messages   = span<byte_buffer>(segments);
   req.pws_broadcast = pws_broadcast_indication{std::chrono::seconds{1}, 1};
   ASSERT_TRUE(bench.push_si_pdu_updates(req));
@@ -313,7 +313,7 @@ TEST_F(si_message_controller_pws_test, when_si_layout_changes_then_active_warnin
   auto                         segment = make_random_pdu();
   std::vector<byte_buffer>     segments{segment.copy()};
   mac_cell_sys_info_pdu_update pws_req;
-  pws_req.sib_idx       = 7;
+  pws_req.sib_idx       = sib_type::sib7;
   pws_req.si_messages   = span<byte_buffer>(segments);
   pws_req.pws_broadcast = pws_broadcast_indication{std::chrono::seconds{1}, 3};
   ASSERT_TRUE(bench.push_si_pdu_updates(pws_req));
@@ -393,7 +393,7 @@ TEST_F(si_message_controller_auto_broadcast_test,
 {
   std::vector<byte_buffer>     segments = make_random_segmented_pdu(50, 1);
   mac_cell_sys_info_pdu_update req;
-  req.sib_idx       = 7;
+  req.sib_idx       = sib_type::sib7;
   req.si_messages   = span<byte_buffer>(segments);
   req.pws_broadcast = pws_broadcast_indication{std::chrono::seconds{1}, 1};
 
@@ -450,7 +450,7 @@ TEST_F(si_message_controller_sched_info_test, when_warning_starts_then_pws_epoch
 {
   std::vector<byte_buffer>     segments = make_random_segmented_pdu(50, 1);
   mac_cell_sys_info_pdu_update req;
-  req.sib_idx       = 7;
+  req.sib_idx       = sib_type::sib7;
   req.si_messages   = span<byte_buffer>(segments);
   req.pws_broadcast = pws_broadcast_indication{std::chrono::seconds{1}, 1};
   ASSERT_TRUE(bench.push_si_pdu_updates(req));
@@ -473,7 +473,7 @@ TEST_F(si_message_controller_sched_info_test, when_si_changes_mid_warning_then_p
   // Start a warning, and keep the SI-message encoder it produced.
   std::vector<byte_buffer>     segments = make_random_segmented_pdu(50, 1);
   mac_cell_sys_info_pdu_update pws_req;
-  pws_req.sib_idx       = 7;
+  pws_req.sib_idx       = sib_type::sib7;
   pws_req.si_messages   = span<byte_buffer>(segments);
   pws_req.pws_broadcast = pws_broadcast_indication{std::chrono::seconds{1}, 1};
   ASSERT_TRUE(bench.push_si_pdu_updates(pws_req));
@@ -510,7 +510,7 @@ TEST_F(si_message_controller_sched_info_test, when_warning_ends_then_a_later_si_
   // Start a warning and let the cell finish broadcasting it.
   std::vector<byte_buffer>     segments = make_random_segmented_pdu(50, 1);
   mac_cell_sys_info_pdu_update pws_req;
-  pws_req.sib_idx       = 7;
+  pws_req.sib_idx       = sib_type::sib7;
   pws_req.si_messages   = span<byte_buffer>(segments);
   pws_req.pws_broadcast = pws_broadcast_indication{std::chrono::seconds{1}, 1};
   ASSERT_TRUE(bench.push_si_pdu_updates(pws_req));
@@ -569,7 +569,7 @@ public:
     ntn_segments.push_back(make_random_pdu());
 
     mac_cell_sys_info_pdu_update req;
-    req.sib_idx     = 19;
+    req.sib_idx     = sib_type::sib19;
     req.si_messages = span<byte_buffer>(ntn_segments);
     report_fatal_error_if_not(bench.push_si_pdu_updates(req), "Failed to enqueue the SI PDU update");
     return ntn_segments.front().copy();
@@ -599,7 +599,7 @@ TEST_F(si_message_controller_si_pdu_update_test, when_no_si_message_carries_the_
 {
   std::vector<byte_buffer>     segments{make_random_pdu()};
   mac_cell_sys_info_pdu_update req;
-  req.sib_idx     = 4;
+  req.sib_idx     = sib_type::sib4;
   req.si_messages = span<byte_buffer>(segments);
 
   ASSERT_FALSE(bench.push_si_pdu_updates(req)) << "The cell broadcasts no SI message carrying SIB4";
@@ -610,7 +610,7 @@ TEST_F(si_message_controller_si_pdu_update_test, when_a_warning_goes_on_air_then
   // The warning joins the epoch ahead of the SIB19 SI message, pushing it from position 1 to position 2.
   std::vector<byte_buffer>     segments = make_random_segmented_pdu(50, 1);
   mac_cell_sys_info_pdu_update pws_req;
-  pws_req.sib_idx       = 7;
+  pws_req.sib_idx       = sib_type::sib7;
   pws_req.si_messages   = span<byte_buffer>(segments);
   pws_req.pws_broadcast = pws_broadcast_indication{std::chrono::seconds{1}, 1};
   ASSERT_TRUE(bench.push_si_pdu_updates(pws_req));
@@ -649,7 +649,7 @@ public:
     segments = make_random_segmented_pdu(50, 1);
 
     mac_cell_sys_info_pdu_update pws_req;
-    pws_req.sib_idx       = static_cast<uint8_t>(sib);
+    pws_req.sib_idx       = sib;
     pws_req.si_messages   = span<byte_buffer>(segments);
     pws_req.pws_broadcast = pws_broadcast_indication{std::chrono::seconds{1}, 1};
     report_fatal_error_if_not(bench_two->push_si_pdu_updates(pws_req), "Failed to start the warning");

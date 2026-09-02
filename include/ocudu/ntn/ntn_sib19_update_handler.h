@@ -19,8 +19,6 @@ struct ntn_sib19_update_request {
 
   /// NR Cell Global ID of the cell being configured.
   nr_cell_global_id_t nr_cgi;
-  /// SIB index (should be 19 for SIB19).
-  unsigned sib_idx;
   /// Slot at which the SIB19 is transmitted.
   slot_point slot;
   /// SI period in number of slots.
