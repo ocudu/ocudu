@@ -26,8 +26,8 @@ protected:
     if (test_dtls) {
       server_cfg1.sctp.dtls_cfg = {dtls_mode::server,
                                    "1",
-                                   std::string(TEST_CERT_DIR) + "/test_cert1.pem",
-                                   std::string(TEST_CERT_DIR) + "/test_key1.pem"};
+                                   std::string(TEST_CERT_DIR) + "/link1-a.crt",
+                                   std::string(TEST_CERT_DIR) + "/link1-a.key"};
     }
 
     server_cfg2.sctp.if_name        = "SERVER2";
@@ -35,10 +35,10 @@ protected:
     server_cfg2.sctp.bind_addresses = {"127.0.0.2"};
     server_cfg2.sctp.bind_port      = 0;
     if (test_dtls) {
-      server_cfg1.sctp.dtls_cfg = {dtls_mode::server,
+      server_cfg2.sctp.dtls_cfg = {dtls_mode::client,
                                    "2",
-                                   std::string(TEST_CERT_DIR) + "/test_cert2.pem",
-                                   std::string(TEST_CERT_DIR) + "/test_key2.pem"};
+                                   std::string(TEST_CERT_DIR) + "/link1-b.crt",
+                                   std::string(TEST_CERT_DIR) + "/link1-b.key"};
     }
 
     server_cfg3.sctp.if_name        = "SERVER3";
@@ -48,8 +48,8 @@ protected:
     if (test_dtls) {
       server_cfg3.sctp.dtls_cfg = {dtls_mode::server,
                                    "3",
-                                   std::string(TEST_CERT_DIR) + "/test_cert3.pem",
-                                   std::string(TEST_CERT_DIR) + "/test_key3.pem"};
+                                   std::string(TEST_CERT_DIR) + "/link3-a.crt",
+                                   std::string(TEST_CERT_DIR) + "/link3-a.key"};
     }
   }
 
@@ -148,6 +148,13 @@ TEST_P(sctp_network_server_peer_test, when_association_requested_association_ini
   ASSERT_EQ(1, assoc_factory2.association_count());
   ASSERT_EQ(0, assoc_factory3.association_count());
 
+  // Setup DTLS handshake.
+  ocudulog::fetch_basic_logger("TEST").error("after comm up");
+  broker1.handle_receive(server_1_2_assoc_fd); //
+  broker2.handle_receive(server_2_1_assoc_fd); //
+  broker1.handle_receive(server_1_2_assoc_fd); //
+  broker2.handle_receive(server_2_1_assoc_fd); //
+
   // Create associations between S1 <-> S3
   async_task<bool>         connect2 = server1->connect({addr3});
   lazy_task_launcher<bool> l2(connect2);
@@ -187,6 +194,8 @@ TEST_P(sctp_network_server_peer_test, when_association_requested_association_ini
   ASSERT_TRUE(assoc_factory2.association_senders[0]->on_new_sdu(tx_sdu2.copy()));
   broker1.handle_receive(server_1_2_assoc_fd); // RX DATA
   ASSERT_EQ(assoc_factory1.last_sdu, tx_sdu2);
+
+  // TODO check the rest of the associations.
 }
 
 TEST_P(sctp_network_server_peer_test, when_connect_called_with_empty_address_list_then_returns_false)
@@ -230,7 +239,16 @@ TEST_P(sctp_network_server_peer_test, when_connect_uses_multiple_destination_add
   lazy_task_launcher<bool> launcher(connect_task);
 
   broker1.handle_receive(server1_listen_fd); // COMM_UP completes the connect task on server1
+  int server_1_2_assoc_fd = broker1.get_last_registered_fd();
   broker2.handle_receive(server2_listen_fd); // COMM_UP arrives on server2 and creates the association handler
+  int server_2_1_assoc_fd = broker2.get_last_registered_fd();
+
+  /// Handle DTLS handshake.
+  broker1.handle_receive(server_1_2_assoc_fd);
+  broker2.handle_receive(server_2_1_assoc_fd);
+  broker1.handle_receive(server_1_2_assoc_fd);
+  broker2.handle_receive(server_2_1_assoc_fd);
+
   ASSERT_TRUE(connect_task.ready());
   ASSERT_TRUE(connect_task.get());
   ASSERT_EQ(1, assoc_factory1.association_count());
@@ -277,12 +295,22 @@ TEST_P(sctp_network_server_peer_test, when_pending_connects_overlap_then_second_
   // Second connect attempt overlaps on primary_addr — should be rejected immediately.
   async_task<bool>         connect2 = server1->connect({primary_addr});
   lazy_task_launcher<bool> launcher2(connect2);
+
   ASSERT_TRUE(connect2.ready());
   ASSERT_FALSE(connect2.get());
 
   // Completing the first connect leaves only one association on server1.
   broker1.handle_receive(server1_listen_fd);
+  int server_1_2_assoc_fd = broker1.get_last_registered_fd();
   broker2.handle_receive(server2_listen_fd);
+  int server_2_1_assoc_fd = broker2.get_last_registered_fd();
+
+  /// Handle DTLS handshake.
+  broker1.handle_receive(server_1_2_assoc_fd);
+  broker2.handle_receive(server_2_1_assoc_fd);
+  broker1.handle_receive(server_1_2_assoc_fd);
+  broker2.handle_receive(server_2_1_assoc_fd);
+
   ASSERT_TRUE(connect1.ready());
   ASSERT_TRUE(connect1.get());
   ASSERT_EQ(1, assoc_factory1.association_count());
@@ -328,4 +356,4 @@ TEST_P(sctp_network_server_peer_test, when_server_is_destroyed_then_associations
 
 INSTANTIATE_TEST_SUITE_P(sctp_network_server_peer_test_with_and_without_dtls,
                          sctp_network_server_peer_test,
-                         ::testing::Values(true, false));
+                         ::testing::Values(false, true));

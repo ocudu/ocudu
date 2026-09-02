@@ -70,7 +70,7 @@ bool openssl_dtls_ssl::init(int socket)
       return false;
     }
   }
-  logger.debug("DTLS context initialized");
+  logger.debug("DTLS SSL context initialized");
   return true;
 }
 
@@ -82,8 +82,10 @@ bool openssl_dtls_ssl::is_init_finished()
 bool openssl_dtls_ssl::handshake()
 {
   if (SSL_is_init_finished(ssl)) {
+    logger.debug("DTLS SSL handshake already done");
     return false;
   }
+
   /// Do the handshake.
   int ret = -1;
   if (cfg.mode == dtls_mode::server) {
@@ -99,6 +101,16 @@ bool openssl_dtls_ssl::handshake()
           "DTLS {} failed. err={}", cfg.mode == dtls_mode::server ? "accept" : "connect", get_ssl_error_string(err));
       return false;
     }
+  }
+
+  if (ret != 1) {
+    logger.debug("DTLS SSL handshake on going. mode={} state={}",
+                 cfg.mode == dtls_mode::server ? "server" : "client",
+                 SSL_state_string_long(ssl));
+  } else {
+    logger.debug("DTLS SSL handshake finished. mode={} state={}",
+                 cfg.mode == dtls_mode::server ? "server" : "client",
+                 SSL_state_string_long(ssl));
   }
   return ret == 1;
 }
