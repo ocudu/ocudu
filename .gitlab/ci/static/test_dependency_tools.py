@@ -427,6 +427,190 @@ class CheckerTest(unittest.TestCase):
             self.assertEqual(len(json.loads(result.stdout)["findings"]), 1)
 
 
+class AllowedEdgeTest(unittest.TestCase):
+    """kind: allowed-edge — the inverse of forbidden-edge, ported from
+    include_directives_check.py's ALLOWED_INCLUDES. Uses a du/du_high-shaped
+    fixture (real OCUDU module names, `ocudu/`-prefixed includes) since bare
+    module names in `from`/`allow` expand via the same lib/+include/ocudu/
+    convention gen_dependency_tree.py's own module classification uses."""
+
+    def make_fixture(self, root: Path) -> None:
+        write(root, "include/ocudu/ran/rnti.h", "#pragma once\n")
+        write(root, "include/ocudu/du/du_manager.h", "#pragma once\n")
+        write(root, "include/ocudu/e2/e2_thing.h", "#pragma once\n")
+        write(
+            root, "include/ocudu/du/du_high/du_high_thing.h",
+            '#pragma once\n#include "ocudu/ran/rnti.h"\n',
+        )
+        write(
+            root, "lib/du/du_high/du_high_impl.cpp",
+            '#include "ocudu/ran/rnti.h"\n#include "ocudu/du/du_high/du_high_thing.h"\n',
+        )
+        write(root, "lib/du/du_coarse.cpp", '#include "ocudu/du/du_manager.h"\n')
+
+    def base_rules(self) -> dict:
+        return {
+            "version": 1,
+            "rules": [
+                {
+                    "id": "du-allowed-includes",
+                    "kind": "allowed-edge",
+                    "from": "du",
+                    "from_exclude": "du/du_high",
+                    "allow": ["du", "ran"],
+                    "extra_allow_for_prefix": [{"prefix": "o_du", "allow": ["e2"]}],
+                    "reason": "test coarse du rule",
+                },
+                {
+                    "id": "du-du_high-allowed-includes",
+                    "kind": "allowed-edge",
+                    "from": "du/du_high",
+                    "allow": ["du/du_high", "ran"],
+                    "reason": "test submodule du_high rule",
+                },
+            ],
+        }
+
+    def test_from_exclude_routes_submodule_to_its_own_rule(self):
+        """du_high_impl.cpp matches the coarse 'du' rule's `from` too, unless
+        `from_exclude` routes it to the narrower du_high rule instead — the
+        coarse rule's allow list has no 'du/du_high', so it would otherwise
+        be a false-positive violation there."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.make_fixture(root)
+            tree = gen(root)
+            rules = write_yaml(root, "rules.yml", self.base_rules())
+            payload, code = self.json_check(tree, rules)
+            self.assertEqual(code, 0)
+            self.assertEqual(payload["findings"], [])
+
+    def json_check(self, tree: Path, rules: Path) -> tuple[dict, int]:
+        result = run(CHECK, "--tree", str(tree), "--rules", str(rules), "--json")
+        self.assertIn(result.returncode, (0, 1), result.stderr)
+        return json.loads(result.stdout), result.returncode
+
+    def test_extra_allow_for_prefix_widens_only_matching_filenames(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.make_fixture(root)
+            write(root, "lib/du/o_du_extra.cpp", '#include "ocudu/e2/e2_thing.h"\n')
+            write(root, "lib/du/du_no_prefix.cpp", '#include "ocudu/e2/e2_thing.h"\n')
+            tree = gen(root)
+            rules = write_yaml(root, "rules.yml", self.base_rules())
+            payload, code = self.json_check(tree, rules)
+            self.assertEqual(code, 1)
+            self.assertEqual(len(payload["findings"]), 1)
+            self.assertEqual(payload["findings"][0]["file"], "lib/du/du_no_prefix.cpp")
+
+    def test_always_allowed_covers_every_rule(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.make_fixture(root)
+            write(root, "external/fmt/include/fmt/core.h", "#pragma once\n")
+            write(root, "lib/du/du_coarse.cpp", '#include "ocudu/du/du_manager.h"\n#include "fmt/core.h"\n')
+            tree = gen(root)
+            rules_doc = self.base_rules()
+            rules_doc["always_allowed"] = ["fmt"]
+            rules = write_yaml(root, "rules.yml", rules_doc)
+            payload, code = self.json_check(tree, rules)
+            self.assertEqual(code, 0, payload["findings"])
+
+    def test_bare_module_name_violation_is_reported(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.make_fixture(root)
+            write(root, "lib/du/du_coarse.cpp", '#include "ocudu/e2/e2_thing.h"\n')
+            tree = gen(root)
+            rules = write_yaml(root, "rules.yml", self.base_rules())
+            payload, code = self.json_check(tree, rules)
+            self.assertEqual(code, 1)
+            self.assertEqual(payload["findings"][0]["to"], "include/ocudu/e2/e2_thing.h")
+
+    def test_bare_module_name_with_no_real_directory_is_stale(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.make_fixture(root)
+            tree = gen(root)
+            rules = write_yaml(root, "rules.yml", {
+                "version": 1, "rules": [{
+                    "id": "bogus",
+                    "kind": "allowed-edge",
+                    "from": "nonexistent_module_xyz",
+                    "allow": ["du"],
+                    "reason": "test",
+                }],
+            })
+            result = run(CHECK, "--tree", str(tree), "--rules", str(rules))
+            self.assertEqual(result.returncode, 2, result.stdout)
+            self.assertIn("matches no directory", result.stderr)
+
+    def test_transitive_is_rejected_for_allowed_edge(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.make_fixture(root)
+            tree = gen(root)
+            rules = write_yaml(root, "rules.yml", {
+                "version": 1, "rules": [{
+                    "id": "bad",
+                    "kind": "allowed-edge",
+                    "from": "du",
+                    "allow": ["du", "ran"],
+                    "transitive": True,
+                    "reason": "test",
+                }],
+            })
+            result = run(CHECK, "--tree", str(tree), "--rules", str(rules))
+            self.assertEqual(result.returncode, 2, result.stdout)
+            self.assertIn("not supported for kind 'allowed-edge'", result.stderr)
+
+
+class NoRelativeIncludesTest(unittest.TestCase):
+    def test_relative_include_in_public_header_is_flagged(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root, "include/ocudu/du/du_manager.h", "#pragma once\n")
+            write(
+                root, "include/ocudu/ran/bad_relative.h",
+                '#pragma once\n#include "../du/du_manager.h"\n',
+            )
+            tree = gen(root)
+            rules = write_yaml(root, "rules.yml", {
+                "version": 1, "rules": [{
+                    "id": "no-relative-in-public-headers",
+                    "kind": "no-relative-includes",
+                    "from": "include/**",
+                    "reason": "test",
+                }],
+            })
+            result = run(CHECK, "--tree", str(tree), "--rules", str(rules), "--repo", str(root), "--json")
+            self.assertEqual(result.returncode, 1, result.stdout)
+            findings = json.loads(result.stdout)["findings"]
+            self.assertEqual(len(findings), 1)
+            self.assertEqual(findings[0]["line"], 2)
+
+    def test_default_repo_comes_from_tree_meta(self):
+        """--repo is optional — falls back to the tree's own meta.repo_root."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root, "include/ocudu/du/du_manager.h", "#pragma once\n")
+            write(
+                root, "include/ocudu/ran/bad_relative.h",
+                '#pragma once\n#include "../du/du_manager.h"\n',
+            )
+            tree = gen(root)
+            rules = write_yaml(root, "rules.yml", {
+                "version": 1, "rules": [{
+                    "id": "no-relative-in-public-headers",
+                    "kind": "no-relative-includes",
+                    "from": "include/**",
+                    "reason": "test",
+                }],
+            })
+            result = run(CHECK, "--tree", str(tree), "--rules", str(rules))
+            self.assertEqual(result.returncode, 1, result.stdout)
+
+
 class IncludeOnlyTargetTest(unittest.TestCase):
     """Third-party trees (external/) are edge targets but are never scanned
     for their own edges, so they appear in the tree only on the right-hand
@@ -609,86 +793,60 @@ class SeedRulesTest(unittest.TestCase):
         self.assertEqual(len(ids), len(set(ids)))
         for rule in doc["rules"]:
             self.assertTrue(rule.get("reason", "").strip(), rule["id"])
-            if rule.get("kind") == "peer-isolation":
+            kind = rule.get("kind", "forbidden-edge")
+            if kind == "peer-isolation":
                 self.assertIn("peers", rule)
+            elif kind == "allowed-edge":
+                self.assertIn("from", rule)
+                self.assertIn("allow", rule)
+            elif kind == "no-relative-includes":
+                self.assertIn("from", rule)
             else:
                 self.assertIn("from", rule)
                 self.assertIn("to", rule)
+        for name in doc.get("always_allowed", []):
+            self.assertIsInstance(name, str)
 
 
 class EntrypointTest(unittest.TestCase):
-    """check_dependencies.py orchestrates both checkers over one generated
-    tree. These test the orchestration itself (tree built once, both
-    checkers invoked, exit codes aggregated correctly) rather than either
-    checker's own rule logic, which the other test classes already cover."""
+    """check_dependencies.py orchestrates gen_dependency_tree.py +
+    check_dependency_rules.py over one generated tree. These test the
+    orchestration itself (tree built once, exit code passed through)
+    rather than the checker's own rule logic, which the other test classes
+    already cover."""
 
-    def make_ocudu_shaped_project(self, root: Path, mac_extra: str = "") -> None:
-        """Uses the real `include/ocudu/...` / `lib/...` layout (unlike
-        make_project's generic `include/proj/...`), so
-        include_directives_check.py's real, hardcoded ALLOWED_INCLUDES
-        applies to it exactly as it would to actual OCUDU sources."""
-        write(root, "include/ocudu/ran/rnti.h", "#pragma once\n")
-        write(root, "include/ocudu/du/du_manager.h", "#pragma once\n")
-        write(
-            root, "lib/mac/mac_impl.cpp",
-            '#include "ocudu/ran/rnti.h"\n' + mac_extra,
-        )
-
-    def rules_matching_fixture(self, root: Path) -> Path:
-        """A rules file whose patterns match real files in
-        make_ocudu_shaped_project's fixture, but that fixture's clean form
-        doesn't violate — so it exercises check_dependency_rules.py without
-        tripping its own dead-pattern staleness check (the checked-in seed
-        ruleset's patterns mostly match nothing in this tiny fixture)."""
+    def rules_matching_fixture(self, root: Path, mac_extra: str = "") -> Path:
+        make_project(root, mac_impl_extra=mac_extra)
         return write_yaml(root, "rules.yml", {
             "version": 1, "rules": [{
                 "id": "no-mac-to-du",
                 "from": "lib/mac/**",
-                "to": "include/ocudu/du/**",
+                "to": "include/proj/du/**",
                 "reason": "Contrived, just to give the ruleset something real to match.",
             }],
         })
 
-    def test_clean_project_exits_0_and_runs_both_checks(self):
+    def test_clean_project_exits_0(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            self.make_ocudu_shaped_project(root)
             rules_path = self.rules_matching_fixture(root)
             result = run(ENTRYPOINT, "--repo", str(root), "--rules", str(rules_path))
             self.assertEqual(result.returncode, 0, result.stdout)
-            self.assertIn("include-directives", result.stdout)
-            self.assertIn("dependency-rules", result.stdout)
 
-    def test_allow_list_violation_yields_exit_1(self):
+    def test_violation_yields_exit_1(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            # mac may not depend on du (ALLOWED_INCLUDES['mac'] has no 'du').
-            self.make_ocudu_shaped_project(root, mac_extra='#include "ocudu/du/du_manager.h"\n')
-            rules_path = self.rules_matching_fixture(root)
+            rules_path = self.rules_matching_fixture(
+                root, mac_extra='#include "proj/du/du_manager.h"\n',
+            )
             result = run(ENTRYPOINT, "--repo", str(root), "--rules", str(rules_path))
             self.assertEqual(result.returncode, 1, result.stdout)
-            self.assertIn("forbidden include of 'du'", result.stdout)
-
-    def test_dependency_rules_violation_yields_exit_1(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            self.make_ocudu_shaped_project(root)
-            rules_path = write_yaml(root, "rules.yml", {
-                "version": 1, "rules": [{
-                    "id": "no-mac-to-ran",
-                    "from": "lib/mac/**",
-                    "to": "include/ocudu/ran/**",
-                    "reason": "Contrived, just to exercise the second checker.",
-                }],
-            })
-            result = run(ENTRYPOINT, "--repo", str(root), "--rules", str(rules_path))
-            self.assertEqual(result.returncode, 1, result.stdout)
-            self.assertIn("no-mac-to-ran", result.stdout)
+            self.assertIn("no-mac-to-du", result.stdout)
 
     def test_broken_ruleset_yields_exit_2(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            self.make_ocudu_shaped_project(root)
+            make_project(root)
             rules_path = write_yaml(root, "rules.yml", {
                 "version": 1, "rules": [{
                     "id": "dead",
