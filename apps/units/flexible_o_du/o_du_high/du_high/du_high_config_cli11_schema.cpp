@@ -714,13 +714,13 @@ static void configure_cli11_prs_resource_set_args(CLI::App& app, du_high_unit_pr
 {
   add_option(app, "--comb_size", res_set_params.comb_size, "Comb size of the PRS resource set")
       ->capture_default_str()
-      ->check(CLI::IsMember(prs_constants::VALID_COMB_SIZES));
+      ->enum_values(prs_constants::VALID_COMB_SIZES);
   add_option(app, "--nof_symbols", res_set_params.nof_symbols, "Number of OFDM symbols of each PRS resource")
       ->capture_default_str()
-      ->check(CLI::IsMember(prs_constants::VALID_NOF_SYMBOLS));
+      ->enum_values(prs_constants::VALID_NOF_SYMBOLS);
   add_option(app, "--periodicity_slots", res_set_params.periodicity_slots, "PRS resource set periodicity, in slots")
       ->capture_default_str()
-      ->check(CLI::IsMember(prs_constants::VALID_PERIODICITIES));
+      ->enum_values(prs_constants::VALID_PERIODICITIES);
   add_option(app, "--slot_offset", res_set_params.slot_offset, "Slot offset of the PRS resource set within the period")
       ->capture_default_str()
       ->range(0U, prs_constants::MAX_PERIODICITY_SLOTS - 1);
@@ -729,10 +729,10 @@ static void configure_cli11_prs_resource_set_args(CLI::App& app, du_high_unit_pr
              res_set_params.repetition_factor,
              "Number of consecutive repetitions of each PRS resource within a period")
       ->capture_default_str()
-      ->check(CLI::IsMember(prs_constants::VALID_REPETITION_FACTORS));
+      ->enum_values(prs_constants::VALID_REPETITION_FACTORS);
   add_option(app, "--time_gap", res_set_params.time_gap, "Slot gap between repetitions of a PRS resource")
       ->capture_default_str()
-      ->check(CLI::IsMember(prs_constants::VALID_TIME_GAPS));
+      ->enum_values(prs_constants::VALID_TIME_GAPS);
   add_option(app,
              "--bandwidth_prbs",
              res_set_params.bandwidth_prbs,
@@ -748,7 +748,7 @@ static void configure_cli11_prs_resource_set_args(CLI::App& app, du_high_unit_pr
              res_set_params.power_offset_db,
              "Transmission power offset of the PRS resource set, in dB")
       ->capture_default_str()
-      ->range(prs_constants::MIN_POWER_OFF_DB, prs_constants::MAX_POWER_OFF_DB);
+      ->range(prs_constants::MIN_POWER_OFFSET_DB, prs_constants::MAX_POWER_OFFSET_DB);
 
   // PRS resources of the resource set.
   add_option_object_list<du_high_unit_prs_resource_config>(app,

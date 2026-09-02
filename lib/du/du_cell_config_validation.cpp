@@ -903,8 +903,8 @@ static check_outcome check_tac_list(const du_cell_config& cell_cfg)
 }
 
 /// Determines whether the given value belongs to a list of valid values.
-template <size_t N>
-static bool is_one_of(unsigned value, const std::array<unsigned, N>& valid_values)
+template <typename T, size_t N>
+static bool is_one_of(unsigned value, const std::array<T, N>& valid_values)
 {
   return std::find(valid_values.begin(), valid_values.end(), value) != valid_values.end();
 }
@@ -957,10 +957,14 @@ static check_outcome check_prs_resource_set(const prs_resource_set&             
       res_set.bandwidth_prbs, prs_constants::MIN_PRBS, "bandwidth, in PRBs, of PRS resource set {}", set_id);
   CHECK_EQ_OR_BELOW(
       res_set.bandwidth_prbs, prs_constants::MAX_PRBS, "bandwidth, in PRBs, of PRS resource set {}", set_id);
-  CHECK_EQ_OR_ABOVE(
-      res_set.power_offset_db, prs_constants::MIN_POWER_OFF_DB, "power offset, in dB, of PRS resource set {}", set_id);
-  CHECK_EQ_OR_BELOW(
-      res_set.power_offset_db, prs_constants::MAX_POWER_OFF_DB, "power offset, in dB, of PRS resource set {}", set_id);
+  CHECK_EQ_OR_ABOVE(res_set.power_offset_db,
+                    prs_constants::MIN_POWER_OFFSET_DB,
+                    "power offset, in dB, of PRS resource set {}",
+                    set_id);
+  CHECK_EQ_OR_BELOW(res_set.power_offset_db,
+                    prs_constants::MAX_POWER_OFFSET_DB,
+                    "power offset, in dB, of PRS resource set {}",
+                    set_id);
 
   // The start PRB of the resource set is relative to Point A, as is the offset of the DL carrier.
   CHECK_EQ_OR_BELOW(res_set.start_prb, prs_constants::MAX_START_PRB, "start PRB of PRS resource set {}", set_id);

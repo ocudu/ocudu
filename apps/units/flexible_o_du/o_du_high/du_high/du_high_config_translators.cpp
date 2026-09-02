@@ -92,23 +92,23 @@ static prs_config make_prs_config(const du_high_unit_prs_config& prs_cfg)
     ocudu_assert(res_set_cfg.bandwidth_prbs.has_value(), "PRS bandwidth was not derived from the cell bandwidth");
 
     prs_resource_set& res_set = out.resource_sets.emplace_back();
-    res_set.bandwidth_prbs    = res_set_cfg.bandwidth_prbs.value();
-    res_set.start_prb         = res_set_cfg.start_prb;
+    res_set.bandwidth_prbs    = static_cast<uint16_t>(res_set_cfg.bandwidth_prbs.value());
+    res_set.start_prb         = static_cast<uint16_t>(res_set_cfg.start_prb);
     res_set.comb_size         = static_cast<prs_comb_size>(res_set_cfg.comb_size);
     res_set.periodicity_slots = res_set_cfg.periodicity_slots;
     res_set.slot_offset       = res_set_cfg.slot_offset;
     res_set.repetition_factor = static_cast<prs_repetition_factor>(res_set_cfg.repetition_factor);
     res_set.time_gap          = static_cast<prs_time_gap>(res_set_cfg.time_gap);
     res_set.nof_symbols       = static_cast<prs_num_symbols>(res_set_cfg.nof_symbols);
-    res_set.power_offset_db   = res_set_cfg.power_offset_db;
+    res_set.power_offset_db   = static_cast<int8_t>(res_set_cfg.power_offset_db);
 
     res_set.resources.reserve(res_set_cfg.resources.size());
     for (const auto& res_cfg : res_set_cfg.resources) {
       prs_resource& res = res_set.resources.emplace_back();
-      res.sequence_id   = res_cfg.sequence_id;
-      res.re_offset     = res_cfg.re_offset;
-      res.slot_offset   = res_cfg.slot_offset;
-      res.symbol_offset = res_cfg.symbol_offset;
+      res.sequence_id   = static_cast<uint16_t>(res_cfg.sequence_id);
+      res.re_offset     = static_cast<uint8_t>(res_cfg.re_offset);
+      res.slot_offset   = static_cast<uint16_t>(res_cfg.slot_offset);
+      res.symbol_offset = static_cast<uint8_t>(res_cfg.symbol_offset);
     }
   }
 

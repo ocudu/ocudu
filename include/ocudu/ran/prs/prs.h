@@ -3,7 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 /// \file
-/// \brief Positioning Reference Signals (PRS) parameters.
+/// \brief Positioning Reference Signals (PRS) type definitions.
 
 #pragma once
 
@@ -49,15 +49,15 @@ struct prs_resource {
   /// \brief Sequence ID seeding the PRS pseudo-random sequence, or \f$n_{ID,seq}^{PRS}\f$.
   ///
   /// Values: {0,...,\ref prs_constants::MAX_SEQUENCE_ID}.
-  unsigned sequence_id;
+  uint16_t sequence_id;
   /// RE offset, or comb offset, of the resource. Values: {0,...,comb size - 1}.
-  unsigned re_offset;
+  uint8_t re_offset;
   /// \brief Slot offset of the resource, on top of the slot offset of the resource set.
   ///
   /// Values: {0,...,\ref prs_constants::MAX_RES_SLOT_OFFSET}.
-  unsigned slot_offset;
+  uint16_t slot_offset;
   /// First OFDM symbol of the resource within the slot. Values: {0,...,12}.
-  unsigned symbol_offset;
+  uint8_t symbol_offset;
 };
 
 /// \brief Configuration of a DL-PRS resource set.
@@ -67,9 +67,9 @@ struct prs_resource_set {
   /// \brief PRS bandwidth, in PRBs. It is a multiple of \ref prs_constants::PRB_GRANULARITY.
   ///
   /// Values: {\ref prs_constants::MIN_PRBS,...,\ref prs_constants::MAX_PRBS}.
-  unsigned bandwidth_prbs;
+  uint16_t bandwidth_prbs;
   /// Start PRB of the resource set, relative to Point A. Values: {0,...,\ref prs_constants::MAX_START_PRB}.
-  unsigned start_prb;
+  uint16_t start_prb;
   /// Comb size, or \f$K_{comb}^{PRS}\f$.
   prs_comb_size comb_size;
   /// \brief Resource set periodicity, or \f$T_{per}^{PRS}\f$, in slots.
@@ -86,8 +86,8 @@ struct prs_resource_set {
   prs_num_symbols nof_symbols;
   /// \brief Transmission power offset of the resource set, in dB.
   ///
-  /// Values: {\ref prs_constants::MIN_POWER_OFF_DB,...,\ref prs_constants::MAX_POWER_OFF_DB}.
-  int power_offset_db;
+  /// Values: {\ref prs_constants::MIN_POWER_OFFSET_DB,...,\ref prs_constants::MAX_POWER_OFFSET_DB}.
+  int8_t power_offset_db;
   /// \brief Resources of the resource set. Up to \ref prs_constants::MAX_NOF_RESOURCES_PER_SET.
   ///
   /// The PRS Resource ID of a resource is its index in this list.
