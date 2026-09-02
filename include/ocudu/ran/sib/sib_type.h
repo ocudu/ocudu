@@ -24,6 +24,12 @@ enum class sib_type : uint8_t {
   sib_invalid = 255
 };
 
+/// Formats a SIB type as its number.
+constexpr unsigned format_as(sib_type sib)
+{
+  return static_cast<unsigned>(sib);
+}
+
 /// \brief Maximum number of SI messages that can carry PWS (ETWS/CMAS) content.
 ///
 /// There are only three PWS SIBs (SIB6, SIB7 and SIB8), and a SIB is mapped to at most one SI message.

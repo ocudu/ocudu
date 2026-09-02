@@ -136,12 +136,9 @@ du_cell_manager::handle_cell_reconf_request(const du_cell_param_config_request& 
         // Increment value_tag with wrapping (5-bit field: 0-31).
         sib_it->value_tag = (sib_it->value_tag.value() + 1) % 32;
         si_updated        = true;
-        logger.info("Updated SIB{} in cell {} config, new value_tag={}",
-                    static_cast<int>(type),
-                    cell_index,
-                    sib_it->value_tag.value());
+        logger.info("Updated SIB{} in cell {} config, new value_tag={}", type, cell_index, sib_it->value_tag.value());
       } else {
-        logger.warning("Requested SIB{} update in cell {}, but entry not found.", static_cast<int>(type), cell_index);
+        logger.warning("Requested SIB{} update in cell {}, but entry not found.", type, cell_index);
       }
     }
   }

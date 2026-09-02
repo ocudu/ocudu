@@ -490,7 +490,7 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
             case sib_type::sib1:
             case sib_type::sib_invalid:
             default:
-              ocudu_assertion_failure("Invalid SIB type (i.e., {}) for an SI message", fmt::underlying(mapping_info));
+              ocudu_assertion_failure("Invalid SIB type (i.e., {}) for an SI message", mapping_info);
           }
         }
 
@@ -1070,8 +1070,7 @@ asn1_packer::pack_all_bcch_dl_sch_msgs(const du_cell_config& du_cfg, std::vector
           auto it = std::find_if(sibs.begin(), sibs.end(), [sib_id](const sib_type_info& sib) {
             return get_sib_info_type(sib.content) == sib_id;
           });
-          ocudu_assert(
-              it != sibs.end(), "SIB{} in SIB mapping info has no defined config", static_cast<unsigned>(sib_id));
+          ocudu_assert(it != sibs.end(), "SIB{} in SIB mapping info has no defined config", sib_id);
 
           // Obtain the SIB and make sure it does not hold a segmented message.
           auto sib = make_asn1_rrc_sib_item(it->content);
@@ -1094,8 +1093,7 @@ asn1_packer::pack_all_bcch_dl_sch_msgs(const du_cell_config& du_cfg, std::vector
           return get_sib_info_type(sib.content) == sib_id;
         });
 
-        ocudu_assert(
-            it != sibs.end(), "SIB{} in SIB mapping info has no defined config", static_cast<unsigned>(sib_id));
+        ocudu_assert(it != sibs.end(), "SIB{} in SIB mapping info has no defined config", sib_id);
 
         // Buffer to hold the packed message. It may be necessary to store multiple SI messages (one for each segment).
         bcch_dl_sch_payload_type packed_sib;
