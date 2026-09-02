@@ -85,38 +85,13 @@ include:
     - cd $CPP_SRC_DIR
     - include-guards-check
 
-.include-directives:
+.dependency-checks:
   extends: .static
   variables:
     INPUT_PATH: .
   script:
-    - |
-      include-directives-check() {
-        EXIT_CODE=0
-        python3 -u $CI_PROJECT_DIR/.gitlab/ci/static/gen_dependency_tree.py \
-          --repo $CI_PROJECT_DIR --output /tmp/ocudu_dependency_tree.yml || exit $?
-        python3 -u $CI_PROJECT_DIR/.gitlab/ci/static/include_directives_check.py \
-          --tree /tmp/ocudu_dependency_tree.yml --repo $CI_PROJECT_DIR || EXIT_CODE=$?
-        exit $EXIT_CODE
-      }
     - cd $CPP_SRC_DIR
-    - include-directives-check
-
-.dependency-rules:
-  extends: .static
-  script:
-    - |
-      dependency-rules-check() {
-        EXIT_CODE=0
-        python3 -u $CI_PROJECT_DIR/.gitlab/ci/static/gen_dependency_tree.py \
-          --repo $CI_PROJECT_DIR --output /tmp/ocudu_dependency_tree.yml || exit $?
-        python3 -u $CI_PROJECT_DIR/.gitlab/ci/static/check_dependency_rules.py \
-          --tree /tmp/ocudu_dependency_tree.yml \
-          --rules $CI_PROJECT_DIR/.gitlab/ci/static/ocudu_dependency_rules.yml || EXIT_CODE=$?
-        exit $EXIT_CODE
-      }
-    - cd $CPP_SRC_DIR
-    - dependency-rules-check
+    - python3 -u $CI_PROJECT_DIR/.gitlab/ci/static/check_dependencies.py --repo $CI_PROJECT_DIR
 
 .dco:
   extends: .static
