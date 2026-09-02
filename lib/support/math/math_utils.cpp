@@ -4,6 +4,7 @@
 #include "ocudu/support/math/math_utils.h"
 #include "ocudu/support/error_handling.h"
 #include "ocudu/support/ocudu_assert.h"
+#include <array>
 
 using namespace ocudu;
 

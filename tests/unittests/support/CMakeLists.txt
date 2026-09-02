@@ -123,6 +123,6 @@ add_executable(math_test math/mod_math_utils_test.cpp math/curve_fitting_find_ma
 target_link_libraries(math_test ocudu_support_math ocuduvec gtest ocudu_gtest_main)
 add_test(math_test math_test)
 
-add_executable(bit_opts_test math/bit_opts_test.cpp)
-target_link_libraries(bit_opts_test ocudu_support_math gtest ocudu_gtest_main)
-add_test(bit_opts_test bit_opts_test)
+add_executable(bit_ops_test math/bit_ops_test.cpp)
+target_link_libraries(bit_ops_test ocudu_support_math gtest ocudu_gtest_main)
+add_test(bit_ops_test bit_ops_test)

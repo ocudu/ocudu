@@ -1813,7 +1813,7 @@ OCUDUASN_CODE pack_unconstrained_real(bit_ref& bref, float n, bool aligned)
     info_octet |= 0x1 << 6;
   }
 
-  uint32_t trailing_zeros = ocudu::detail::bitset_builtin_helper<unsigned>::zero_lsb_count(mantissa);
+  uint32_t trailing_zeros = ocudu::zero_lsb_count<unsigned>(mantissa);
   mantissa >>= trailing_zeros;
   // the inverse of the trailing zeros gives the number of bits to shift
   // the mantissa to the right to make it a whole number, this number must be added to the exponent
@@ -1894,7 +1894,7 @@ OCUDUASN_CODE unpack_unconstrained_real(float& n, cbit_ref& bref, bool aligned)
   for (size_t i = 2; i < len; ++i) {
     mantissa = (mantissa << 8) | buf[i];
   }
-  uint8_t leading_zeros = ocudu::detail::bitset_builtin_helper<unsigned>::zero_msb_count(mantissa) - 8;
+  uint8_t leading_zeros = ocudu::zero_msb_count<unsigned>(mantissa) - 8;
   mantissa <<= leading_zeros;
 
   // Build the IEEE 754 float value from the sign, exponent, and mantissa

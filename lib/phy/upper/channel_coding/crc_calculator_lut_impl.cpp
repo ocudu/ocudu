@@ -4,7 +4,7 @@
 
 #include "crc_calculator_lut_impl.h"
 #include "ocudu/ocuduvec/bit.h"
-#include "ocudu/support/math/math_utils.h"
+#include "ocudu/support/math/bit_ops.h"
 
 #if __SSE4_1__
 #include <immintrin.h>

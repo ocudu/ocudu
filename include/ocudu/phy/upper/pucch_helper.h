@@ -12,6 +12,7 @@
 #include "ocudu/ran/resource_block.h"
 #include "ocudu/ran/slot_point.h"
 #include "ocudu/support/error_handling.h"
+#include "ocudu/support/math/bit_ops.h"
 
 namespace ocudu {
 
