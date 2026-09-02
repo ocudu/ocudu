@@ -281,6 +281,16 @@ include-guards:
       optional: true
       artifacts: false
 
+include-directives:
+  extends: .include-directives
+  allow_failure: true
+  rules:
+    - if: $ON_MR
+  needs:
+    - job: trigger static
+      optional: true
+      artifacts: false
+
 dco:
   extends: .dco
   rules:

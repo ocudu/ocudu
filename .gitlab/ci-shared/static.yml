@@ -85,6 +85,23 @@ include:
     - cd $CPP_SRC_DIR
     - include-guards-check
 
+.include-directives:
+  extends: .static
+  variables:
+    INPUT_PATH: .
+  script:
+    - |
+      include-directives-check() {
+        EXIT_CODE=0
+        python3 -u $CI_PROJECT_DIR/.gitlab/ci/static/gen_dependency_tree.py \
+          --repo $CI_PROJECT_DIR --output /tmp/ocudu_dependency_tree.json || exit $?
+        python3 -u $CI_PROJECT_DIR/.gitlab/ci/static/include_directives_check.py \
+          --tree /tmp/ocudu_dependency_tree.json --repo $CI_PROJECT_DIR || EXIT_CODE=$?
+        exit $EXIT_CODE
+      }
+    - cd $CPP_SRC_DIR
+    - include-directives-check
+
 .dco:
   extends: .static
   stage: ci
