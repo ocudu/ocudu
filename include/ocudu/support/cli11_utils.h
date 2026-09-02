@@ -8,6 +8,7 @@
 #include "ocudu/support/error_handling.h"
 #include "ocudu/support/string_parsing_utils.h"
 #include "CLI/CLI11.hpp"
+#include <cmath>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -15,6 +16,29 @@
 #include <variant>
 
 namespace ocudu {
+
+namespace detail {
+
+/// \brief Determines whether \c value is a multiple of \c step, treating both as real numbers.
+///
+/// The quotient is compared against the nearest integer with a relative tolerance, so that a decimal step that is not
+/// exactly representable as a double (e.g. 0.1) does not reject the values of its own sequence.
+inline bool is_multiple_of(double value, double step)
+{
+  const double quotient = value / step;
+  return std::fabs(quotient - std::round(quotient)) <= 1e-9 * std::max(1.0, std::fabs(quotient));
+}
+
+/// \brief Element type used for CLI11's membership check over a container of accepted option values.
+///
+/// Narrow integer types (e.g. \c uint8_t) are widened, as CLI11 renders the accepted values with a stream insertion,
+/// which would print them as the characters with those codes rather than as numbers.
+template <typename T>
+using widened_enum_value_t = std::conditional_t<std::is_integral_v<T> && (sizeof(T) < sizeof(int)),
+                                                std::conditional_t<std::is_signed_v<T>, int, unsigned>,
+                                                T>;
+
+} // namespace detail
 
 /// \brief Chainable handle returned by the option-adding helpers.
 ///
@@ -162,7 +186,8 @@ public:
   ///
   /// Use it together with \ref range for a parameter whose accepted values form an arithmetic sequence (e.g. PRBs in
   /// steps of 4), instead of enumerating every value with \ref enum_values: the generated schema and the error
-  /// message state the rule rather than a wall of digits. \c step must be greater than zero.
+  /// message state the rule rather than a wall of digits. As in JSON Schema, \c step is any number greater than zero,
+  /// so a fractional step (e.g. 0.5 dB) is accepted for a floating point option.
   ///
   /// \warning \c multipleOf expresses divisibility, so it describes an arithmetic sequence only when that sequence
   /// starts on a multiple of \c step (e.g. 24,28,...,272 with step 4). A sequence with a non-zero offset (e.g.
@@ -172,20 +197,26 @@ public:
   template <typename V>
   option_handle& multiple_of(V step)
   {
-    static_assert(std::is_integral_v<V>, "multiple_of() only supports integral steps");
+    static_assert(std::is_arithmetic_v<V>, "multiple_of() only supports numeric steps");
     report_fatal_error_if_not(step > 0, "multiple_of() requires a step greater than zero");
+    const double step_value = static_cast<double>(step);
     opt_->check(CLI::Validator(
-        [step](const std::string& value) -> std::string {
-          auto parsed = parse_int<V>(value);
+        [step_value](const std::string& value) -> std::string {
+          auto parsed = parse_double(value);
           // Malformed input is left to CLI11's own type conversion, which reports it against the option's type.
-          if (parsed.has_value() && (parsed.value() % step != 0)) {
-            return "Value " + value + " is not a multiple of " + std::to_string(step);
+          if (parsed.has_value() && !detail::is_multiple_of(parsed.value(), step_value)) {
+            return fmt::format("Value {} is not a multiple of {}", value, step_value);
           }
           return {};
         },
-        "MULTIPLE OF " + std::to_string(step)));
+        fmt::format("MULTIPLE OF {}", step_value)));
     if (node_ != nullptr) {
-      node_->constraints.multiple_of = config::to_scalar(node_->type, static_cast<double>(step));
+      // An integer option cannot express a fractional step, and recording it would truncate the step (possibly to
+      // zero, which is not a valid multipleOf).
+      report_fatal_error_if_not(node_->type != config::leaf_type::integer || step_value == std::trunc(step_value),
+                                "multiple_of() requires a whole step for an integer option, given {}",
+                                step_value);
+      node_->constraints.multiple_of = config::to_scalar(node_->type, step_value);
       assert_lower_bound_matches_step();
     }
     return *this;
@@ -198,6 +229,25 @@ public:
     if (node_ != nullptr) {
       for (const U& value : values) {
         node_->constraints.enums.push_back(config::detail::scalar_default<U>(value));
+      }
+    }
+    return *this;
+  }
+
+  /// \brief Enforces that the value is one of \c values, and records them as JSON Schema \c enum.
+  ///
+  /// Overload for a container of accepted values, as opposed to a braced list, so that a constant listing the valid
+  /// values of a parameter is the single source of truth for the option.
+  template <typename Container>
+  option_handle& enum_values(const Container& values)
+  {
+    using value_type = typename Container::value_type;
+
+    const std::vector<detail::widened_enum_value_t<value_type>> accepted_values(values.begin(), values.end());
+    opt_->check(CLI::IsMember(accepted_values));
+    if (node_ != nullptr) {
+      for (const value_type& value : values) {
+        node_->constraints.enums.push_back(config::detail::scalar_default<value_type>(value));
       }
     }
     return *this;
@@ -245,16 +295,31 @@ private:
     if (node_ == nullptr || !node_->constraints.multiple_of || !node_->constraints.minimum) {
       return;
     }
-    const auto* step = std::get_if<std::int64_t>(&*node_->constraints.multiple_of);
-    const auto* min  = std::get_if<std::int64_t>(&*node_->constraints.minimum);
-    if (step == nullptr || *step == 0 || min == nullptr) {
+    const std::optional<double> step = as_number(*node_->constraints.multiple_of);
+    const std::optional<double> min  = as_number(*node_->constraints.minimum);
+    if (!step.has_value() || (step.value() == 0.0) || !min.has_value()) {
       return;
     }
-    report_fatal_error_if_not(*min % *step == 0,
+    report_fatal_error_if_not(detail::is_multiple_of(min.value(), step.value()),
                               "Option lower bound {} is not a multiple of {}. multipleOf cannot express a sequence "
                               "with a non-zero offset; enumerate its values instead",
-                              *min,
-                              *step);
+                              min.value(),
+                              step.value());
+  }
+
+  /// Returns the value of a recorded numeric constraint, or nullopt if \c scalar does not hold a number.
+  static std::optional<double> as_number(const config::schema_scalar& scalar)
+  {
+    if (const auto* value = std::get_if<std::int64_t>(&scalar)) {
+      return static_cast<double>(*value);
+    }
+    if (const auto* value = std::get_if<std::uint64_t>(&scalar)) {
+      return static_cast<double>(*value);
+    }
+    if (const auto* value = std::get_if<double>(&scalar)) {
+      return *value;
+    }
+    return std::nullopt;
   }
 
   CLI::Option*         opt_  = nullptr;

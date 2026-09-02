@@ -3,6 +3,7 @@
 
 #include "ocudu/support/cli11_utils.h"
 #include "ocudu/support/config_parsers.h"
+#include <array>
 #include <gtest/gtest.h>
 #include <sstream>
 
@@ -163,6 +164,47 @@ TEST_F(cli11_utils_schema_test, multiple_of_records_and_enforces)
   EXPECT_EQ(prbs2, 28u);
 }
 
+TEST_F(cli11_utils_schema_test, multiple_of_supports_a_fractional_step)
+{
+  CLI::App    app;
+  schema_node root;
+  register_schema_root(app, root);
+
+  // As in JSON Schema, the step is any positive number, not only an integer.
+  double gain = 0.0;
+  add_option(app, "--gain", gain, "gain in dB")->range(0.0, 10.0)->multiple_of(0.5);
+
+  ASSERT_EQ(root.children.size(), 1u);
+  EXPECT_DOUBLE_EQ(std::get<double>(*root.children[0]->constraints.multiple_of), 0.5);
+
+  setup_yaml(app);
+  // A value in range but off the step is rejected.
+  std::istringstream bad("gain: 0.7\n");
+  EXPECT_THROW(app.parse_from_stream(bad), CLI::ParseError);
+
+  // A value on the step is accepted.
+  CLI::App    app2;
+  schema_node root2;
+  register_schema_root(app2, root2);
+  double gain2 = 0.0;
+  add_option(app2, "--gain", gain2, "gain in dB")->range(0.0, 10.0)->multiple_of(0.5);
+  setup_yaml(app2);
+  std::istringstream good("gain: 2.5\n");
+  EXPECT_NO_THROW(app2.parse_from_stream(good));
+  EXPECT_DOUBLE_EQ(gain2, 2.5);
+}
+
+TEST_F(cli11_utils_schema_test, multiple_of_rejects_a_fractional_step_for_an_integer_option)
+{
+  CLI::App    app;
+  schema_node root;
+  register_schema_root(app, root);
+
+  // An integer option cannot express a fractional step, which would be recorded truncated (here, as a zero multipleOf).
+  unsigned prbs = 0;
+  EXPECT_DEATH(add_option(app, "--prbs", prbs, "a number of PRBs")->multiple_of(0.5), ".*");
+}
+
 TEST_F(cli11_utils_schema_test, multiple_of_rejects_bounds_off_the_step)
 {
   CLI::App    app;
@@ -196,6 +238,38 @@ TEST_F(cli11_utils_schema_test, multiple_of_allows_an_upper_bound_off_the_step)
   std::istringstream ss("offset_sf: 155\n");
   EXPECT_NO_THROW(app.parse_from_stream(ss));
   EXPECT_EQ(offset_sf, 155u);
+}
+
+TEST_F(cli11_utils_schema_test, enum_values_accepts_a_container_of_narrow_integers)
+{
+  CLI::App    app;
+  schema_node root;
+  register_schema_root(app, root);
+
+  // A constant listing the accepted values is passed as is, and its narrow element type is recorded (and rendered by
+  // CLI11) as a number, not as the character with that code.
+  static constexpr std::array<uint8_t, 4> valid_comb_sizes = {2, 4, 6, 12};
+  unsigned                                comb_size        = 2;
+  add_option(app, "--comb_size", comb_size, "comb size")->capture_default_str()->enum_values(valid_comb_sizes);
+
+  ASSERT_EQ(root.children.size(), 1u);
+  ASSERT_EQ(root.children[0]->constraints.enums.size(), 4u);
+  EXPECT_EQ(std::get<std::uint64_t>(root.children[0]->constraints.enums[3]), 12u);
+  EXPECT_NE(root.children[0]->option->get_type_name().find("{2,4,6,12}"), std::string::npos);
+
+  setup_yaml(app);
+  std::istringstream bad("comb_size: 3\n");
+  EXPECT_THROW(app.parse_from_stream(bad), CLI::ParseError);
+
+  CLI::App    app2;
+  schema_node root2;
+  register_schema_root(app2, root2);
+  unsigned comb_size2 = 2;
+  add_option(app2, "--comb_size", comb_size2, "comb size")->enum_values(valid_comb_sizes);
+  setup_yaml(app2);
+  std::istringstream good("comb_size: 12\n");
+  EXPECT_NO_THROW(app2.parse_from_stream(good));
+  EXPECT_EQ(comb_size2, 12u);
 }
 
 TEST_F(cli11_utils_schema_test, option_pointer_exposes_required_flag)
