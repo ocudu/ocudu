@@ -6,7 +6,7 @@
 
 #include "ocudu/ocuduvec/copy.h"
 #include "ocudu/phy/lower/modulation/modulation_factories.h"
-#include "ocudu/support/ocudu_test.h"
+#include <gtest/gtest.h>
 #include <random>
 
 namespace ocudu {
@@ -47,7 +47,7 @@ public:
                 span<const cf_t>            port_weights,
                 unsigned                    symbol_index) override
   {
-    TESTASSERT_EQ(output.size(), get_symbol_size(symbol_index));
+    EXPECT_EQ(output.size(), get_symbol_size(symbol_index));
 
     modulate_entries.emplace_back();
     modulate_entry& entry = modulate_entries.back();

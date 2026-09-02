@@ -74,7 +74,7 @@ struct add_reconf_delete_ue_test_task {
     CORO_AWAIT(mac_dl.remove_ue(delete_msg));
     logger.info("UE deleted");
     event_test(test_task_event::ue_deleted);
-    TESTASSERT(std::this_thread::get_id() == tid);
+    ASSERT_TRUE(std::this_thread::get_id() == tid);
     CORO_RETURN();
   }
 };
@@ -116,7 +116,8 @@ TEST_F(mac_dl_cfg_test, test_dl_ue_procedure_execution_contexts)
 
   // TEST: Thread used for resumption does not change.
   auto test_event = [&ctrl_worker](test_task_event ev) {
-    TESTASSERT(ctrl_worker.get_thread_id() == std::this_thread::get_id(), "Procedure must finish in CTRL thread.");
+    ASSERT_TRUE(ctrl_worker.get_thread_id() == std::this_thread::get_id())
+        << fmt::format("Procedure must finish in CTRL thread.");
     if (ev == test_task_event::ue_deleted) {
       ctrl_worker.request_stop();
     }
@@ -133,7 +134,7 @@ TEST_F(mac_dl_cfg_test, test_dl_ue_procedure_execution_contexts)
       dl_worker.try_run_next();
     }
   }
-  TESTASSERT(not t.empty() and t.ready());
+  ASSERT_TRUE(not t.empty() and t.ready());
 }
 
 TEST_F(mac_dl_cfg_test, test_dl_ue_procedure_tsan)
@@ -169,7 +170,7 @@ TEST_F(mac_dl_cfg_test, test_dl_ue_procedure_tsan)
   // TEST: Thread used for resumption does not change
   std::thread::id tid        = std::this_thread::get_id();
   auto            test_event = [&ctrl_worker, &tid](test_task_event ev) {
-    TESTASSERT(tid == std::this_thread::get_id()); // resumes back in CTRL thread
+    ASSERT_TRUE(tid == std::this_thread::get_id()); // resumes back in CTRL thread
     if (ev == test_task_event::ue_deleted) {
       ctrl_worker.request_stop();
     }
@@ -177,5 +178,5 @@ TEST_F(mac_dl_cfg_test, test_dl_ue_procedure_tsan)
   eager_async_task<void> t = launch_async<add_reconf_delete_ue_test_task>(mac_dl, test_event);
 
   ctrl_worker.run();
-  TESTASSERT(not t.empty() and t.ready());
+  ASSERT_TRUE(not t.empty() and t.ready());
 }

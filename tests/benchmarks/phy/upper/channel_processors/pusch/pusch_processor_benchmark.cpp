@@ -13,12 +13,12 @@
 #include "ocudu/ran/sch/sch_segmentation.h"
 #include "ocudu/ran/sch/tbs_calculator.h"
 #include "ocudu/support/benchmark_utils.h"
+#include "ocudu/support/error_handling.h"
 #include "ocudu/support/executors/inline_task_executor.h"
 #include "ocudu/support/executors/task_worker_pool.h"
 #include "ocudu/support/executors/unique_thread.h"
 #include "ocudu/support/math/complex_normal_random.h"
 #include "ocudu/support/math/math_utils.h"
-#include "ocudu/support/ocudu_test.h"
 #include "ocudu/support/rtsan.h"
 #ifdef HWACC_PUSCH_ENABLED
 #include "ocudu/hal/dpdk/bbdev/bbdev_acc.h"
@@ -418,14 +418,14 @@ create_sw_pusch_decoder_factory(std::shared_ptr<crc_calculator_factory> crc_calc
                                                                            .early_stop_syndrome = false};
   std::shared_ptr<ldpc_decoder_factory>                    ldpc_decoder_factory =
       create_ldpc_decoder_factory_sw(ldpc_decoder_type, ldpc_dec_cfg);
-  TESTASSERT(ldpc_decoder_factory);
+  report_fatal_error_if_not(ldpc_decoder_factory, "ldpc_decoder_factory");
 
   std::shared_ptr<ldpc_rate_dematcher_factory> ldpc_rate_dematcher_factory =
       create_ldpc_rate_dematcher_factory_sw(rate_dematcher_type);
-  TESTASSERT(ldpc_rate_dematcher_factory);
+  report_fatal_error_if_not(ldpc_rate_dematcher_factory, "ldpc_rate_dematcher_factory");
 
   std::shared_ptr<ldpc_segmenter_rx_factory> segmenter_rx_factory = create_ldpc_segmenter_rx_factory_sw();
-  TESTASSERT(segmenter_rx_factory);
+  report_fatal_error_if_not(segmenter_rx_factory, "segmenter_rx_factory");
 
   pusch_decoder_factory_sw_configuration pusch_decoder_factory_sw_config;
   pusch_decoder_factory_sw_config.crc_factory               = crc_calculator_factory;
@@ -443,10 +443,11 @@ create_sw_pusch_decoder_factory(std::shared_ptr<crc_calculator_factory> crc_calc
 static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelerator_pusch_dec_factory()
 {
 #ifdef HWACC_PUSCH_ENABLED
-  TESTASSERT(nof_threads + nof_pusch_decoder_threads + 1 <= dpdk::MAX_NOF_BBDEV_VF_INSTANCES,
-             "Insufficient hardware-accelerated LDPC decoder VFs: requested {} but only {} are available.",
-             nof_threads + nof_pusch_decoder_threads + 1,
-             dpdk::MAX_NOF_BBDEV_VF_INSTANCES);
+  report_fatal_error_if_not(
+      nof_threads + nof_pusch_decoder_threads + 1 <= dpdk::MAX_NOF_BBDEV_VF_INSTANCES,
+      "Insufficient hardware-accelerated LDPC decoder VFs: requested {} but only {} are available.",
+      nof_threads + nof_pusch_decoder_threads + 1,
+      dpdk::MAX_NOF_BBDEV_VF_INSTANCES);
 
   // Intefacing to the bbdev-based hardware-accelerator.
   ocudulog::basic_logger& logger = ocudulog::fetch_basic_logger("HWACC", false);
@@ -458,14 +459,14 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
   bbdev_config.nof_fft_lcores                        = 0;
   bbdev_config.nof_mbuf                              = static_cast<unsigned>(pow2(log2_ceil(MAX_NOF_SEGMENTS)));
   std::shared_ptr<dpdk::bbdev_acc> bbdev_accelerator = create_bbdev_acc(bbdev_config, logger);
-  TESTASSERT(bbdev_accelerator);
+  report_fatal_error_if_not(bbdev_accelerator, "bbdev_accelerator");
 
   // Interfacing to a shared external HARQ buffer context repository.
   unsigned nof_cbs                   = MAX_NOF_SEGMENTS;
   uint64_t acc100_ext_harq_buff_size = bbdev_accelerator->get_harq_buff_size_bytes();
   std::shared_ptr<hal::ext_harq_buffer_context_repository> harq_buffer_context =
       hal::create_ext_harq_buffer_context_repository(nof_cbs, acc100_ext_harq_buff_size, false);
-  TESTASSERT(harq_buffer_context);
+  report_fatal_error_if_not(harq_buffer_context, "harq_buffer_context");
 
   // Set the PUSCH decoder hardware-accelerator factory configuration for the ACC100.
   hal::bbdev_hwacc_pusch_dec_factory_configuration hw_decoder_config;
@@ -486,10 +487,10 @@ static std::shared_ptr<pusch_decoder_factory>
 create_acc100_pusch_decoder_factory(std::shared_ptr<crc_calculator_factory> crc_calculator_factory)
 {
   std::shared_ptr<ldpc_segmenter_rx_factory> segmenter_rx_factory = create_ldpc_segmenter_rx_factory_sw();
-  TESTASSERT(segmenter_rx_factory);
+  report_fatal_error_if_not(segmenter_rx_factory, "segmenter_rx_factory");
 
   std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> hw_decoder_factory = create_hw_accelerator_pusch_dec_factory();
-  TESTASSERT(hw_decoder_factory, "Failed to create a HW acceleration decoder factory.");
+  report_fatal_error_if_not(hw_decoder_factory, "Failed to create a HW acceleration decoder factory.");
 
   // Set the hardware-accelerated PUSCH decoder configuration.
   pusch_decoder_factory_hw_configuration decoder_hw_factory_config;
@@ -515,41 +516,41 @@ static std::shared_ptr<pusch_processor_factory> create_pusch_processor_factory()
 {
   // Create pseudo-random sequence generator.
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
-  TESTASSERT(prg_factory);
+  report_fatal_error_if_not(prg_factory, "prg_factory");
 
   std::shared_ptr<low_papr_sequence_generator_factory> low_papr_sequence_gen_factory =
       create_low_papr_sequence_generator_sw_factory();
-  TESTASSERT(low_papr_sequence_gen_factory);
+  report_fatal_error_if_not(low_papr_sequence_gen_factory, "low_papr_sequence_gen_factory");
 
   // Create demodulator mapper factory.
   std::shared_ptr<demodulation_mapper_factory> chan_demodulation_factory = create_demodulation_mapper_factory();
-  TESTASSERT(chan_demodulation_factory);
+  report_fatal_error_if_not(chan_demodulation_factory, "chan_demodulation_factory");
 
   // Create EVM calculator mapper factory.
   std::shared_ptr<evm_calculator_factory> evm_calc_factory = nullptr;
   if (enable_evm) {
     evm_calc_factory = create_evm_calculator_factory();
-    TESTASSERT(evm_calc_factory);
+    report_fatal_error_if_not(evm_calc_factory, "evm_calc_factory");
   }
 
   // Create CRC calculator factory.
   std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
-  TESTASSERT(crc_calc_factory);
+  report_fatal_error_if_not(crc_calc_factory, "crc_calc_factory");
 
   std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
-  TESTASSERT(short_block_det_factory);
+  report_fatal_error_if_not(short_block_det_factory, "short_block_det_factory");
 
   std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory();
-  TESTASSERT(dft_factory, "Cannot create DFT factory.");
+  report_fatal_error_if_not(dft_factory, "Cannot create DFT factory.");
 
   std::shared_ptr<time_alignment_estimator_factory> ta_estimator_factory =
       create_time_alignment_estimator_dft_factory(dft_factory);
-  TESTASSERT(ta_estimator_factory, "Cannot create TA estimator factory.");
+  report_fatal_error_if_not(ta_estimator_factory, "Cannot create TA estimator factory.");
 
   // Create port channel estimator factory.
   std::shared_ptr<port_channel_estimator_factory> port_chan_estimator_factory =
       create_port_channel_estimator_factory_sw(ta_estimator_factory);
-  TESTASSERT(port_chan_estimator_factory);
+  report_fatal_error_if_not(port_chan_estimator_factory, "port_chan_estimator_factory");
 
   // Create DM-RS for PUSCH channel estimator.
   std::shared_ptr<dmrs_pusch_estimator_factory> dmrs_pusch_chan_estimator_factory =
@@ -561,25 +562,25 @@ static std::shared_ptr<pusch_processor_factory> create_pusch_processor_factory()
                                              fd_smoothing_strategy,
                                              td_interpolation_strategy,
                                              compensate_cfo);
-  TESTASSERT(dmrs_pusch_chan_estimator_factory);
+  report_fatal_error_if_not(dmrs_pusch_chan_estimator_factory, "dmrs_pusch_chan_estimator_factory");
 
   // Create channel equalizer factory.
   std::shared_ptr<channel_equalizer_factory> eq_factory =
       create_channel_equalizer_generic_factory(equalizer_algorithm_type);
-  TESTASSERT(eq_factory);
+  report_fatal_error_if_not(eq_factory, "eq_factory");
 
   std::shared_ptr<transform_precoder_factory> precoding_factory =
       create_dft_transform_precoder_factory(dft_factory, MAX_NOF_PRBS);
-  TESTASSERT(precoding_factory);
+  report_fatal_error_if_not(precoding_factory, "precoding_factory");
 
   // Create PUSCH demodulator factory.
   std::shared_ptr<pusch_demodulator_factory> pusch_demod_factory = create_pusch_demodulator_factory_sw(
       eq_factory, precoding_factory, chan_demodulation_factory, evm_calc_factory, prg_factory, MAX_NOF_PRBS, false);
-  TESTASSERT(pusch_demod_factory);
+  report_fatal_error_if_not(pusch_demod_factory, "pusch_demod_factory");
 
   // Create PUSCH demultiplexer factory.
   std::shared_ptr<ulsch_demultiplex_factory> demux_factory = create_ulsch_demultiplex_factory_sw();
-  TESTASSERT(demux_factory);
+  report_fatal_error_if_not(demux_factory, "demux_factory");
 
   // Create worker pool and exectuors for concurrent PUSCH processor implementations.
   // Note that currently hardware-acceleration is limited to "generic" processor types.
@@ -590,7 +591,7 @@ static std::shared_ptr<pusch_processor_factory> create_pusch_processor_factory()
 
   // Create PUSCH decoder factory.
   std::shared_ptr<pusch_decoder_factory> pusch_dec_factory = create_pusch_decoder_factory(crc_calc_factory);
-  TESTASSERT(pusch_dec_factory);
+  report_fatal_error_if_not(pusch_dec_factory, "pusch_dec_factory");
 
   // Create polar decoder factory.
   std::shared_ptr<polar_factory> polar_dec_factory = create_polar_factory_sw();
@@ -599,7 +600,7 @@ static std::shared_ptr<pusch_processor_factory> create_pusch_processor_factory()
   // Create UCI decoder factory.
   std::shared_ptr<uci_decoder_factory> uci_dec_factory =
       create_uci_decoder_factory_generic(short_block_det_factory, polar_dec_factory, crc_calc_factory);
-  TESTASSERT(uci_dec_factory);
+  report_fatal_error_if_not(uci_dec_factory, "uci_dec_factory");
 
   // Create PUSCH processor.
   pusch_processor_factory_sw_configuration pusch_proc_factory_config;
@@ -618,14 +619,14 @@ static std::shared_ptr<pusch_processor_factory> create_pusch_processor_factory()
   pusch_proc_factory_config.max_nof_concurrent_threads = nof_threads;
   std::shared_ptr<pusch_processor_factory> pusch_proc_factory =
       create_pusch_processor_factory_sw(pusch_proc_factory_config);
-  TESTASSERT(pusch_proc_factory);
+  report_fatal_error_if_not(pusch_proc_factory, "pusch_proc_factory");
 
   pusch_proc_factory_config.decoder_factory =
       create_pusch_decoder_empty_factory(MAX_NOF_PRBS, pusch_constants::MAX_NOF_LAYERS);
-  TESTASSERT(pusch_proc_factory_config.decoder_factory);
+  report_fatal_error_if_not(pusch_proc_factory_config.decoder_factory, "pusch_proc_factory_config.decoder_factory");
   std::shared_ptr<pusch_processor_factory> uci_proc_factory =
       create_pusch_processor_factory_sw(pusch_proc_factory_config);
-  TESTASSERT(uci_proc_factory);
+  report_fatal_error_if_not(uci_proc_factory, "uci_proc_factory");
 
   pusch_processor_pool_factory_config pusch_proc_pool_config;
   pusch_proc_pool_config.factory                = pusch_proc_factory;
@@ -634,7 +635,7 @@ static std::shared_ptr<pusch_processor_factory> create_pusch_processor_factory()
   pusch_proc_pool_config.nof_uci_processors     = nof_threads;
 
   pusch_proc_factory = create_pusch_processor_pool(pusch_proc_pool_config);
-  TESTASSERT(pusch_proc_factory);
+  report_fatal_error_if_not(pusch_proc_factory, "pusch_proc_factory");
 
   return pusch_proc_factory;
 }
@@ -646,11 +647,11 @@ static std::tuple<std::unique_ptr<pusch_processor>, std::unique_ptr<pusch_pdu_va
 
   // Create PUSCH processor.
   std::unique_ptr<pusch_processor> processor = pusch_proc_factory->create();
-  TESTASSERT(processor);
+  report_fatal_error_if_not(processor, "processor");
 
   // Create PUSCH processor validator.
   std::unique_ptr<pusch_pdu_validator> validator = pusch_proc_factory->create_validator();
-  TESTASSERT(validator);
+  report_fatal_error_if_not(validator, "validator");
 
   return std::make_tuple(std::move(processor), std::move(validator));
 }
@@ -718,7 +719,7 @@ static void thread_process(pusch_processor&              proc,
 static std::unique_ptr<resource_grid> create_resource_grid(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc)
 {
   std::shared_ptr<resource_grid_factory> rg_factory = create_resource_grid_factory();
-  TESTASSERT(rg_factory != nullptr, "Invalid resource grid factory.");
+  report_fatal_error_if_not(rg_factory != nullptr, "Invalid resource grid factory.");
 
   return rg_factory->create(nof_ports, nof_symbols, nof_subc);
 }
@@ -748,7 +749,7 @@ int main(int argc, char** argv)
     ocudulog::basic_logger& logger = ocudulog::fetch_basic_logger("EAL", false);
     logger.set_level(hal_log_level);
     dpdk_interface = dpdk::create_dpdk_eal(eal_arguments, logger);
-    TESTASSERT(dpdk_interface, "Failed to open DPDK EAL with arguments.");
+    report_fatal_error_if_not(dpdk_interface, "Failed to open DPDK EAL with arguments.");
   }
 #endif // HWACC_PUSCH_ENABLED
 
@@ -781,7 +782,7 @@ int main(int argc, char** argv)
   // Create resource grid.
   std::unique_ptr<resource_grid> grid =
       create_resource_grid(pusch_constants::MAX_NOF_LAYERS, grid_nof_symbols, grid_nof_subcs);
-  TESTASSERT(grid);
+  report_fatal_error_if_not(grid, "grid");
 
   unsigned nof_grid_re = grid_nof_subcs * grid_nof_symbols * selected_profile.nof_rx_ports;
 
@@ -820,7 +821,7 @@ int main(int argc, char** argv)
     unsigned tbs = std::get<1>(test_case);
 
     // Make sure the configuration is valid.
-    TESTASSERT(validator->is_valid(config));
+    report_fatal_error_if_not(validator->is_valid(config), "validator->is_valid(config)");
 
     // Reset finish counter.
     finish_count  = 0;

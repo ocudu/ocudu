@@ -5,7 +5,7 @@
 #include "ocudu/adt/format.h"
 #include "ocudu/adt/static_vector.h"
 #include "ocudu/phy/upper/channel_coding/channel_coding_factories.h"
-#include "ocudu/support/ocudu_test.h"
+#include <gtest/gtest.h>
 #include <numeric>
 
 using namespace ocudu;
@@ -1040,13 +1040,13 @@ static const std::vector<polar_interleaver_gold_t> polar_interleaver_gold = {
          147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162,
      }}};
 
-int main(int argc, char** argv)
+TEST(polar_interleaver_test, interleave)
 {
   std::shared_ptr<polar_factory> factory = create_polar_factory_sw();
-  TESTASSERT(factory);
+  ASSERT_TRUE(factory);
 
   std::unique_ptr<polar_interleaver> interleaver = factory->create_interleaver();
-  TESTASSERT(interleaver);
+  ASSERT_TRUE(interleaver);
 
   for (const polar_interleaver_gold_t& e : polar_interleaver_gold) {
     uint32_t K = e.K;
@@ -1060,15 +1060,13 @@ int main(int argc, char** argv)
     interleaver->interleave(interleaved, input, polar_interleaver_direction::tx);
 
     // Check indexes
-    TESTASSERT_EQ(span<const uint8_t>(e.indexes), span<const uint8_t>(interleaved));
+    ASSERT_EQ(span<const uint8_t>(e.indexes), span<const uint8_t>(interleaved));
 
     // Run interleaver backwards
     std::vector<uint8_t> deinterleaved(K);
     interleaver->interleave(deinterleaved, interleaved, polar_interleaver_direction::rx);
 
     // Check indexes
-    TESTASSERT_EQ(span<const uint8_t>(input), span<const uint8_t>(deinterleaved));
+    ASSERT_EQ(span<const uint8_t>(input), span<const uint8_t>(deinterleaved));
   }
-
-  return 0;
 }

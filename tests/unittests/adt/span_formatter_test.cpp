@@ -4,12 +4,12 @@
 #include "ocudu/adt/complex.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/adt/span.h"
-#include "ocudu/support/ocudu_test.h"
 #include <array>
+#include <gtest/gtest.h>
 
 using namespace ocudu;
 
-static void test_int_comma()
+TEST(span_formatter_test, int_comma)
 {
   std::array<int, 5> data = {0, 1, 2, 3, 4};
   fmt::memory_buffer buffer;
@@ -17,11 +17,11 @@ static void test_int_comma()
 
   std::string formatted_string = to_string(buffer);
   std::string expected_string  = "0, 1, 2, 3, 4";
-  TESTASSERT_EQ(formatted_string, expected_string);
-  TESTASSERT_EQ(span<int>(data), span<int>(data));
+  ASSERT_EQ(formatted_string, expected_string);
+  ASSERT_EQ(span<int>(data), span<int>(data));
 }
 
-static void test_u8_dec()
+TEST(span_formatter_test, u8_dec)
 {
   std::array<uint8_t, 5> data = {0, 1, 2, 3, 4};
   fmt::memory_buffer     buffer;
@@ -29,11 +29,11 @@ static void test_u8_dec()
 
   std::string formatted_string = to_string(buffer);
   std::string expected_string  = "[0, 1, 2, 3, 4]";
-  TESTASSERT_EQ(formatted_string, expected_string);
-  TESTASSERT_EQ(span<uint8_t>(data), span<uint8_t>(data));
+  ASSERT_EQ(formatted_string, expected_string);
+  ASSERT_EQ(span<uint8_t>(data), span<uint8_t>(data));
 }
 
-static void test_u8_hex()
+TEST(span_formatter_test, u8_hex)
 {
   std::array<uint8_t, 5> data = {0, 1, 2, 3, 4};
   fmt::memory_buffer     buffer;
@@ -41,11 +41,11 @@ static void test_u8_hex()
 
   std::string formatted_string = to_string(buffer);
   std::string expected_string  = "[00, 01, 02, 03, 04]";
-  TESTASSERT_EQ(formatted_string, expected_string);
-  TESTASSERT_EQ(span<uint8_t>(data), span<uint8_t>(data));
+  ASSERT_EQ(formatted_string, expected_string);
+  ASSERT_EQ(span<uint8_t>(data), span<uint8_t>(data));
 }
 
-static void test_cf_long()
+TEST(span_formatter_test, cf_long)
 {
   using namespace std::complex_literals;
 
@@ -56,11 +56,11 @@ static void test_cf_long()
   std::string formatted_string = to_string(buffer);
   std::string expected_string  = "[+0.000000+0.000000j, +0.000000+1.000000j, +0.000000+2.000000j, "
                                  "+0.000000+3.000000j, +0.000000+4.000000j]";
-  TESTASSERT_EQ(formatted_string, expected_string);
-  TESTASSERT_EQ(span<cf_t>(data), span<cf_t>(data));
+  ASSERT_EQ(formatted_string, expected_string);
+  ASSERT_EQ(span<cf_t>(data), span<cf_t>(data));
 }
 
-static void test_cf_short()
+TEST(span_formatter_test, cf_short)
 {
   using namespace std::complex_literals;
 
@@ -70,16 +70,6 @@ static void test_cf_short()
 
   std::string formatted_string = to_string(buffer);
   std::string expected_string  = "[+0.0+0.0j, +0.0+1.0j, +0.0+2.0j, +0.0+3.0j, +0.0+4.0j]";
-  TESTASSERT_EQ(formatted_string, expected_string);
-  TESTASSERT_EQ(span<cf_t>(data), span<cf_t>(data));
-}
-
-int main()
-{
-  test_int_comma();
-  test_u8_dec();
-  test_u8_hex();
-  test_cf_long();
-  test_cf_short();
-  return 0;
+  ASSERT_EQ(formatted_string, expected_string);
+  ASSERT_EQ(span<cf_t>(data), span<cf_t>(data));
 }

@@ -4,7 +4,7 @@
 
 #include "ocudu/phy/upper/channel_coding/channel_coding_factories.h"
 #include "ocudu/support/benchmark_utils.h"
-#include "ocudu/support/ocudu_test.h"
+#include "ocudu/support/error_handling.h"
 #include <getopt.h>
 #include <random>
 
@@ -58,9 +58,9 @@ int main(int argc, char** argv)
   for (const ldpc_base_graph_type& bg : {ldpc_base_graph_type::BG1, ldpc_base_graph_type::BG2}) {
     for (const lifting_size_t& ls : all_lifting_sizes) {
       std::shared_ptr<ldpc_encoder_factory> encoder_factory = create_ldpc_encoder_factory_sw(enc_type);
-      TESTASSERT(encoder_factory);
+      report_fatal_error_if_not(encoder_factory, "encoder_factory");
       std::unique_ptr<ldpc_encoder> encoder = encoder_factory->create();
-      TESTASSERT(encoder);
+      report_fatal_error_if_not(encoder, "encoder");
 
       // Set base-graph message and codeblock lengths.
       unsigned min_cb_length_bg = 24;

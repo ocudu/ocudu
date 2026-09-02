@@ -78,7 +78,7 @@ TEST_F(asn1_e2sm_ccc_test, simple_struct_plmn_info_s)
   // Dump and check if equal to ref.
   nlohmann::ordered_json j = plmn_info;
   test_logger.info("nlohmann::json: \n{}", j.dump(4).c_str());
-  TESTASSERT_EQ(remove_whitespace(j.dump()), remove_whitespace(simple_struct_plmn_info_json));
+  ASSERT_EQ(remove_whitespace(j.dump()), remove_whitespace(simple_struct_plmn_info_json));
 
   plmn_info_s plmn_info_from_json = j;
   ASSERT_EQ(plmn_info_from_json.plmn_id_present, plmn_info.plmn_id_present);
@@ -107,7 +107,7 @@ TEST_F(asn1_e2sm_ccc_test, simple_struct_plmn_info_s)
 
   // Parse, dump again and check if equal to ref.
   nlohmann::ordered_json j2 = plmn_info_from_json_str;
-  TESTASSERT_EQ(remove_whitespace(j.dump()), remove_whitespace(j2.dump()));
+  ASSERT_EQ(remove_whitespace(j.dump()), remove_whitespace(j2.dump()));
 }
 
 const char ran_func_def_json[] = R"json(
@@ -345,13 +345,13 @@ TEST_F(asn1_e2sm_ccc_test, test_ran_func_def)
   // Dump and check if equal to ref.
   nlohmann::ordered_json j = ran_function_desc;
   test_logger.info("nlohmann::json: \n{}", j.dump(4).c_str());
-  TESTASSERT_EQ(remove_whitespace(j.dump()), remove_whitespace(ran_func_def_json));
+  ASSERT_EQ(remove_whitespace(j.dump()), remove_whitespace(ran_func_def_json));
 
   // Parse, dump again and check if equal to ref.
   ran_function_definition_s ran_desc_from_json = nlohmann::json::parse(j.dump());
   nlohmann::ordered_json    j2                 = ran_desc_from_json;
   test_logger.info("parsed nlohmann::json: \n{}", j2.dump(4).c_str());
-  TESTASSERT_EQ(remove_whitespace(j.dump()), remove_whitespace(j2.dump()));
+  ASSERT_EQ(remove_whitespace(j.dump()), remove_whitespace(j2.dump()));
 }
 
 const char ric_ctrl_hdr_json[] = R"json(
@@ -496,22 +496,22 @@ TEST_F(asn1_e2sm_ccc_test, test_ric_ctrl_msg)
   // Dump and check if equal to ref.
   nlohmann::ordered_json j_hdr = ric_ctrl_hdr;
   test_logger.info("nlohmann::json: \n{}", j_hdr.dump(4).c_str());
-  TESTASSERT_EQ(remove_whitespace(j_hdr.dump()), remove_whitespace(ric_ctrl_hdr_json));
+  ASSERT_EQ(remove_whitespace(j_hdr.dump()), remove_whitespace(ric_ctrl_hdr_json));
 
   nlohmann::ordered_json j_msg = ric_ctrl_msg;
   test_logger.info("nlohmann::json: \n{}", j_msg.dump(4).c_str());
-  TESTASSERT_EQ(remove_whitespace(j_msg.dump()), remove_whitespace(ric_ctrl_msg_json));
+  ASSERT_EQ(remove_whitespace(j_msg.dump()), remove_whitespace(ric_ctrl_msg_json));
 
   // Parse, dump again and check if equal to ref.
   ric_ctrl_hdr_s         ric_ctrl_hdr_from_json = nlohmann::json::parse(j_hdr.dump());
   nlohmann::ordered_json j_hdr2                 = ric_ctrl_hdr_from_json;
   test_logger.info("parsed nlohmann::json: \n{}", j_hdr2.dump(4).c_str());
-  TESTASSERT_EQ(remove_whitespace(j_hdr2.dump()), remove_whitespace(ric_ctrl_hdr_json));
+  ASSERT_EQ(remove_whitespace(j_hdr2.dump()), remove_whitespace(ric_ctrl_hdr_json));
 
   ric_ctrl_msg_s         ric_ctrl_msg_from_json = nlohmann::json::parse(j_msg.dump());
   nlohmann::ordered_json j_msg2                 = ric_ctrl_msg_from_json;
   test_logger.info("parsed nlohmann::json: \n{}", j_msg2.dump(4).c_str());
-  TESTASSERT_EQ(remove_whitespace(j_msg2.dump()), remove_whitespace(ric_ctrl_msg_json));
+  ASSERT_EQ(remove_whitespace(j_msg2.dump()), remove_whitespace(ric_ctrl_msg_json));
 }
 
 const char ric_ind_hdr_json[] = R"json(
@@ -618,20 +618,20 @@ TEST_F(asn1_e2sm_ccc_test, test_ric_ind_msg)
   // Dump and check if equal to ref.
   nlohmann::ordered_json j_hdr = ric_ind_hdr;
   test_logger.info("nlohmann::json: \n{}", j_hdr.dump(4).c_str());
-  TESTASSERT_EQ(remove_whitespace(j_hdr.dump()), remove_whitespace(ric_ind_hdr_json));
+  ASSERT_EQ(remove_whitespace(j_hdr.dump()), remove_whitespace(ric_ind_hdr_json));
 
   nlohmann::ordered_json j_msg = ric_ind_msg;
   test_logger.info("nlohmann::json: \n{}", j_msg.dump(4).c_str());
-  TESTASSERT_EQ(remove_whitespace(j_msg.dump()), remove_whitespace(ric_ind_msg_json));
+  ASSERT_EQ(remove_whitespace(j_msg.dump()), remove_whitespace(ric_ind_msg_json));
 
   // Parse, dump again and check if equal to ref.
   ric_ind_hdr_s          hdr_from_json = nlohmann::json::parse(j_hdr.dump());
   nlohmann::ordered_json j_hdr2        = hdr_from_json;
   test_logger.info("parsed nlohmann::json: \n{}", j_hdr2.dump(4).c_str());
-  TESTASSERT_EQ(remove_whitespace(j_hdr2.dump()), remove_whitespace(ric_ind_hdr_json));
+  ASSERT_EQ(remove_whitespace(j_hdr2.dump()), remove_whitespace(ric_ind_hdr_json));
 
   ric_ind_msg_s          msg_from_json = nlohmann::json::parse(j_msg.dump());
   nlohmann::ordered_json j_msg2        = msg_from_json;
   test_logger.info("parsed nlohmann::json: \n{}", j_msg2.dump(4).c_str());
-  TESTASSERT_EQ(remove_whitespace(j_msg2.dump()), remove_whitespace(ric_ind_msg_json));
+  ASSERT_EQ(remove_whitespace(j_msg2.dump()), remove_whitespace(ric_ind_msg_json));
 }

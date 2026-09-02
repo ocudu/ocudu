@@ -3,8 +3,8 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/phy/upper/channel_coding/channel_coding_factories.h"
-#include "ocudu/support/ocudu_test.h"
 #include <getopt.h>
+#include <gtest/gtest.h>
 #include <random>
 
 using namespace ocudu;
@@ -103,47 +103,42 @@ void parse_args(int argc, char** argv)
   }
 }
 
-/*!
- * \brief Main function.
- */
-int main(int argc, char** argv)
+TEST(polar_chain_test, chain)
 {
   // Random distribution generates unpacked bits
   std::uniform_int_distribution<uint8_t> dist(0, 1);
 
-  parse_args(argc, argv);
-
   // Create factory.
   std::shared_ptr<polar_factory> factory = create_polar_factory_sw();
-  TESTASSERT(factory);
+  ASSERT_TRUE(factory);
 
   // Create code
   std::unique_ptr<polar_code> code = factory->create_code();
-  TESTASSERT(code);
+  ASSERT_TRUE(code);
 
   // Create encoder
   std::unique_ptr<polar_encoder> encoder = factory->create_encoder();
-  TESTASSERT(encoder);
+  ASSERT_TRUE(encoder);
 
   // Create allocator
   std::unique_ptr<polar_allocator> allocator = factory->create_allocator();
-  TESTASSERT(allocator);
+  ASSERT_TRUE(allocator);
 
   // Create decoder
   std::unique_ptr<polar_decoder> decoder = factory->create_decoder(nMax);
-  TESTASSERT(decoder);
+  ASSERT_TRUE(decoder);
 
   // Create deallocator
   std::unique_ptr<polar_deallocator> deallocator = factory->create_deallocator();
-  TESTASSERT(deallocator);
+  ASSERT_TRUE(deallocator);
 
   // Create rate matcher
   std::unique_ptr<polar_rate_matcher> rate_matcher = factory->create_rate_matcher();
-  TESTASSERT(rate_matcher);
+  ASSERT_TRUE(rate_matcher);
 
   // Create rate dematcher
   std::unique_ptr<polar_rate_dematcher> rate_dematcher = factory->create_rate_dematcher();
-  TESTASSERT(rate_dematcher);
+  ASSERT_TRUE(rate_dematcher);
 
   // Create Tx data and fill
   std::vector<uint8_t> data_tx(K);
@@ -184,5 +179,16 @@ int main(int argc, char** argv)
   deallocator->deallocate(data_rx, allocated_rx, *code);
 
   // Assert decoded message
-  TESTASSERT(std::equal(data_tx.begin(), data_tx.end(), data_rx.begin()));
+  ASSERT_TRUE(std::equal(data_tx.begin(), data_tx.end(), data_rx.begin()));
+}
+
+/*!
+ * \brief Main function.
+ */
+int main(int argc, char** argv)
+{
+  parse_args(argc, argv);
+
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }

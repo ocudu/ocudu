@@ -8,8 +8,8 @@
 #include "ocudu/ran/cyclic_prefix.h"
 #include "ocudu/ran/resource_block.h"
 #include "ocudu/support/benchmark_utils.h"
+#include "ocudu/support/error_handling.h"
 #include "ocudu/support/math/math_utils.h"
-#include "ocudu/support/ocudu_test.h"
 #include <getopt.h>
 #include <random>
 
@@ -70,10 +70,10 @@ int main(int argc, char** argv)
 
   std::shared_ptr<channel_equalizer_factory> equalizer_factory;
   equalizer_factory = create_channel_equalizer_generic_factory(equalizer_type);
-  TESTASSERT(equalizer_factory);
+  report_fatal_error_if_not(equalizer_factory, "equalizer_factory");
 
   std::unique_ptr<channel_equalizer> equalizer = equalizer_factory->create();
-  TESTASSERT(equalizer);
+  report_fatal_error_if_not(equalizer, "equalizer");
 
   // Channel estimate distributions.
   std::uniform_real_distribution<float> ch_mag_dist(0.1F, 1.0F);

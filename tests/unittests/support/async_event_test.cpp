@@ -13,15 +13,15 @@ using namespace ocudu;
 TEST(manual_event_flag_test, test_all)
 {
   manual_event_flag event;
-  TESTASSERT(not event.is_set());
+  ASSERT_TRUE(not event.is_set());
   event.set();
-  TESTASSERT(event.is_set());
+  ASSERT_TRUE(event.is_set());
   event.set();
-  TESTASSERT(event.is_set());
+  ASSERT_TRUE(event.is_set());
   event.reset();
-  TESTASSERT(not event.is_set());
+  ASSERT_TRUE(not event.is_set());
   event.reset();
-  TESTASSERT(not event.is_set());
+  ASSERT_TRUE(not event.is_set());
 
   // launch task that awaits on event flag
   eager_async_task<void> t = launch_async([&event](coro_context<eager_async_task<void>>& ctx) {
@@ -29,23 +29,23 @@ TEST(manual_event_flag_test, test_all)
     CORO_AWAIT(event);
     CORO_RETURN();
   });
-  TESTASSERT(not t.ready());
+  ASSERT_TRUE(not t.ready());
 
   // confirm setting event resumes the task
   event.set();
-  TESTASSERT(t.ready());
+  ASSERT_TRUE(t.ready());
 }
 
 /// Test manual event
 TEST(manual_event_test, test_all)
 {
   manual_event<int> event;
-  TESTASSERT(not event.is_set());
+  ASSERT_TRUE(not event.is_set());
   event.set(5);
-  TESTASSERT(event.is_set());
-  TESTASSERT_EQ(5, event.get());
+  ASSERT_TRUE(event.is_set());
+  ASSERT_EQ(5, event.get());
   event.reset();
-  TESTASSERT(not event.is_set());
+  ASSERT_TRUE(not event.is_set());
 
   // launch task that awaits on event
   eager_async_task<int> t = launch_async([&event](coro_context<eager_async_task<int>>& ctx) {
@@ -53,12 +53,12 @@ TEST(manual_event_test, test_all)
     CORO_AWAIT_VALUE(int received_value, event);
     CORO_RETURN(received_value);
   });
-  TESTASSERT(not t.ready());
+  ASSERT_TRUE(not t.ready());
 
   // confirm setting event resumes the task and value is passed
   event.set(5);
-  TESTASSERT(t.ready());
-  TESTASSERT_EQ(5, t.get());
+  ASSERT_TRUE(t.ready());
+  ASSERT_EQ(5, t.get());
 }
 
 TEST(event_sender_receiver_test, test_receiver_no_sender)

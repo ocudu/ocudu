@@ -16,7 +16,7 @@
 #include "ocudu/ran/resource_block.h"
 #include "ocudu/ran/sch/sch_segmentation.h"
 #include "ocudu/ran/sch/tbs_calculator.h"
-#include "ocudu/support/ocudu_test.h"
+#include "ocudu/support/error_handling.h"
 #ifdef DPDK_FOUND
 #include "ocudu/hal/dpdk/bbdev/bbdev_acc.h"
 #include "ocudu/hal/dpdk/bbdev/bbdev_acc_factory.h"
@@ -164,18 +164,18 @@ static int parse_args(int argc, char** argv)
 static std::shared_ptr<pusch_decoder_factory> create_generic_pusch_decoder_factory()
 {
   std::shared_ptr<crc_calculator_factory> crc_calculator_factory = create_crc_calculator_factory_sw("auto");
-  TESTASSERT(crc_calculator_factory);
+  report_fatal_error_if_not(crc_calculator_factory, "crc_calculator_factory");
 
   std::shared_ptr<ldpc_decoder_factory> ldpc_decoder_factory =
       create_ldpc_decoder_factory_sw("auto", {.force_decoding = false});
-  TESTASSERT(ldpc_decoder_factory);
+  report_fatal_error_if_not(ldpc_decoder_factory, "ldpc_decoder_factory");
 
   std::shared_ptr<ldpc_rate_dematcher_factory> ldpc_rate_dematcher_factory =
       create_ldpc_rate_dematcher_factory_sw("auto");
-  TESTASSERT(ldpc_rate_dematcher_factory);
+  report_fatal_error_if_not(ldpc_rate_dematcher_factory, "ldpc_rate_dematcher_factory");
 
   std::shared_ptr<ldpc_segmenter_rx_factory> segmenter_rx_factory = create_ldpc_segmenter_rx_factory_sw();
-  TESTASSERT(segmenter_rx_factory);
+  report_fatal_error_if_not(segmenter_rx_factory, "segmenter_rx_factory");
 
   pusch_decoder_factory_sw_configuration pusch_decoder_factory_sw_config;
   pusch_decoder_factory_sw_config.crc_factory       = crc_calculator_factory;
@@ -201,7 +201,7 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
   static std::unique_ptr<dpdk::dpdk_eal> dpdk_interface = nullptr;
   if (!dpdk_interface) {
     dpdk_interface = dpdk::create_dpdk_eal(eal_arguments, logger);
-    TESTASSERT(dpdk_interface, "Failed to open DPDK EAL with arguments.");
+    report_fatal_error_if_not(dpdk_interface, "Failed to open DPDK EAL with arguments.");
   }
 
   // Intefacing to the bbdev-based hardware-accelerator.
@@ -212,7 +212,7 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
   bbdev_config.nof_fft_lcores                        = 0;
   bbdev_config.nof_mbuf                              = static_cast<unsigned>(pow2(log2_ceil(MAX_NOF_SEGMENTS)));
   std::shared_ptr<dpdk::bbdev_acc> bbdev_accelerator = create_bbdev_acc(bbdev_config, logger);
-  TESTASSERT(bbdev_accelerator);
+  report_fatal_error_if_not(bbdev_accelerator, "bbdev_accelerator");
 
   // Interfacing to a shared external HARQ buffer context repository.
   unsigned nof_cbs                   = MAX_NOF_SEGMENTS;
@@ -222,7 +222,7 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
   }
   std::shared_ptr<hal::ext_harq_buffer_context_repository> harq_buffer_context =
       hal::create_ext_harq_buffer_context_repository(nof_cbs, acc100_ext_harq_buff_size, test_harq);
-  TESTASSERT(harq_buffer_context);
+  report_fatal_error_if_not(harq_buffer_context, "harq_buffer_context");
 
   // Set the PUSCH decoder hardware-accelerator factory configuration for the ACC100.
   hal::bbdev_hwacc_pusch_dec_factory_configuration hw_decoder_config;
@@ -242,13 +242,13 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
 static std::shared_ptr<pusch_decoder_factory> create_acc100_pusch_decoder_factory()
 {
   std::shared_ptr<crc_calculator_factory> crc_calculator_factory = create_crc_calculator_factory_sw("auto");
-  TESTASSERT(crc_calculator_factory);
+  report_fatal_error_if_not(crc_calculator_factory, "crc_calculator_factory");
 
   std::shared_ptr<ldpc_segmenter_rx_factory> segmenter_rx_factory = create_ldpc_segmenter_rx_factory_sw();
-  TESTASSERT(segmenter_rx_factory);
+  report_fatal_error_if_not(segmenter_rx_factory, "segmenter_rx_factory");
 
   std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> hw_decoder_factory = create_hw_accelerator_pusch_dec_factory();
-  TESTASSERT(hw_decoder_factory, "Failed to create a HW acceleration decoder factory.");
+  report_fatal_error_if_not(hw_decoder_factory, "Failed to create a HW acceleration decoder factory.");
 
   // Set the hardware-accelerated PUSCH decoder configuration.
   pusch_decoder_factory_hw_configuration decoder_hw_factory_config;
@@ -346,19 +346,19 @@ int main(int argc, char** argv)
 
   // Create the generic PUSCH decoder against which to benchmark the hardware-accelerated PUSCH decoder.
   std::shared_ptr<pusch_decoder_factory> gen_pusch_dec_factory = create_pusch_decoder_factory("generic");
-  TESTASSERT(gen_pusch_dec_factory, "Failed to create PUSCH decoder factory of type {}.", "generic");
+  report_fatal_error_if_not(gen_pusch_dec_factory, "Failed to create PUSCH decoder factory of type {}.", "generic");
 
   std::unique_ptr<pusch_decoder> gen_decoder = gen_pusch_dec_factory->create();
-  TESTASSERT(gen_decoder);
+  report_fatal_error_if_not(gen_decoder, "gen_decoder");
 
   // Create the hardware-accelerated PUSCH decoder.
   std::shared_ptr<pusch_decoder_factory> hwacc_pusch_dec_factory = create_pusch_decoder_factory(hwacc_decoder_type);
-  TESTASSERT(hwacc_pusch_dec_factory,
-             "Failed to create hardware-accelerated PUSCH decoder factory of type {}.",
-             hwacc_decoder_type);
+  report_fatal_error_if_not(hwacc_pusch_dec_factory,
+                            "Failed to create hardware-accelerated PUSCH decoder factory of type {}.",
+                            hwacc_decoder_type);
 
   std::unique_ptr<pusch_decoder> hwacc_decoder = hwacc_pusch_dec_factory->create();
-  TESTASSERT(hwacc_decoder);
+  report_fatal_error_if_not(hwacc_decoder, "hwacc_decoder");
 
   rx_buffer_pool_config pool_config = {};
 
@@ -403,7 +403,7 @@ int main(int argc, char** argv)
 
     // Create Rx softbuffer pool.
     std::unique_ptr<rx_buffer_pool_controller> pool_hwacc = create_rx_buffer_pool(pool_config);
-    TESTASSERT(pool_hwacc);
+    report_fatal_error_if_not(pool_hwacc, "pool_hwacc");
 
     pusch_decoder::configuration dec_cfg = {};
 
@@ -420,7 +420,7 @@ int main(int argc, char** argv)
     // Reserve softbuffer.
     unique_rx_buffer softbuffer_hwacc =
         pool_hwacc->get_pool().reserve({}, trx_buffer_identifier(to_rnti(0), 0), nof_codeblocks, true);
-    TESTASSERT(softbuffer_hwacc.is_valid());
+    report_fatal_error_if_not(softbuffer_hwacc.is_valid(), "softbuffer_hwacc.is_valid()");
 
     // Force all CRCs to false to test LLR combining.
     softbuffer_hwacc.get().reset_codeblocks_crc();
@@ -445,7 +445,7 @@ int main(int argc, char** argv)
     // Create Rx softbuffer pool.
     pool_config.external_soft_bits                      = false;
     std::unique_ptr<rx_buffer_pool_controller> pool_gen = create_rx_buffer_pool(pool_config);
-    TESTASSERT(pool_gen);
+    report_fatal_error_if_not(pool_gen, "pool_gen");
 
     // Prepare decoder configuration.
     dec_cfg                     = {};
@@ -461,7 +461,7 @@ int main(int argc, char** argv)
     // Reserve softbuffer.
     unique_rx_buffer softbuffer_gen =
         pool_gen->get_pool().reserve({}, trx_buffer_identifier(to_rnti(0), 0), nof_codeblocks, true);
-    TESTASSERT(softbuffer_gen.is_valid());
+    report_fatal_error_if_not(softbuffer_gen.is_valid(), "softbuffer_gen.is_valid()");
 
     // Force all CRCs to false to test LLR combining.
     softbuffer_gen.get().reset_codeblocks_crc();

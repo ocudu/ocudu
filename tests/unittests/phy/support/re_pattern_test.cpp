@@ -10,12 +10,12 @@
 #include "ocudu/adt/format.h"
 #include "ocudu/phy/support/re_pattern.h"
 #include "ocudu/ran/cyclic_prefix.h"
-#include "ocudu/support/ocudu_test.h"
+#include <gtest/gtest.h>
 
 using namespace ocudu;
 
 // Tests that two patterns with subcarrier mask in common are merged into one.
-void test_merge_even()
+TEST(re_pattern_test, merge_even)
 {
   unsigned rb_begin  = 1;
   unsigned rb_end    = 50;
@@ -41,7 +41,7 @@ void test_merge_even()
     pattern_1.symbols.set(l, l % 2 == 0);
   }
   list.merge(pattern_1);
-  TESTASSERT_EQ(list.get_nof_entries(), 1);
+  ASSERT_EQ(list.get_nof_entries(), 1);
 
   // Create second pattern:
   // - Even subcarrier indexes, and
@@ -52,7 +52,7 @@ void test_merge_even()
     pattern_2.symbols.set(l, l % 2 == 1); // Only odd symbols
   }
   list.merge(pattern_2);
-  TESTASSERT_EQ(list.get_nof_entries(), 1);
+  ASSERT_EQ(list.get_nof_entries(), 1);
 
   // The pattern should be repeated for each symbol.
   for (unsigned l = 0; l != MAX_NSYMB_PER_SLOT; ++l) {
@@ -72,7 +72,7 @@ void test_merge_even()
         // Even subcarrier
         gold = (k % 2 == 0);
       }
-      TESTASSERT_EQ(mask.test(k), gold);
+      ASSERT_EQ(mask.test(k), gold);
     }
 
     // Set exclude.
@@ -80,13 +80,13 @@ void test_merge_even()
 
     // All the subcarriers shall be false.
     for (unsigned k = 0; k != MAX_NOF_SUBCARRIERS; ++k) {
-      TESTASSERT(!mask.test(k));
+      ASSERT_TRUE(!mask.test(k));
     }
   }
 }
 
 // Tests that two patterns with symbol mask in common are merged into one.
-void test_merge_odd()
+TEST(re_pattern_test, merge_odd)
 {
   unsigned rb_begin  = 1;
   unsigned rb_end    = 50;
@@ -112,7 +112,7 @@ void test_merge_odd()
     pattern_1.symbols.set(l, l % 2 == 0);
   }
   list.merge(pattern_1);
-  TESTASSERT(list.get_nof_entries() == 1);
+  ASSERT_TRUE(list.get_nof_entries() == 1);
 
   // Create second pattern:
   // - odd subcarrier indexes, and
@@ -122,7 +122,7 @@ void test_merge_odd()
     pattern_2.re_mask.set(k, k % 2 == 1);
   }
   list.merge(pattern_2);
-  TESTASSERT(list.get_nof_entries() == 1);
+  ASSERT_TRUE(list.get_nof_entries() == 1);
 
   // The pattern should be repeated for each symbol.
   for (unsigned l = 0; l != MAX_NSYMB_PER_SLOT; ++l) {
@@ -142,7 +142,7 @@ void test_merge_odd()
         // Even symbol
         gold = (l % 2 == 0);
       }
-      TESTASSERT_EQ(mask.test(k), gold);
+      ASSERT_EQ(mask.test(k), gold);
     }
 
     // Set exclude.
@@ -150,13 +150,13 @@ void test_merge_odd()
 
     // All the subcarriers shall be false.
     for (unsigned k = 0; k != MAX_NOF_SUBCARRIERS; ++k) {
-      TESTASSERT(!mask.test(k));
+      ASSERT_TRUE(!mask.test(k));
     }
   }
 }
 
 // Tests a merge between two patterns are the same.
-void test_merge_same()
+TEST(re_pattern_test, merge_same)
 {
   // Create a pattern.
   re_pattern pattern;
@@ -171,11 +171,11 @@ void test_merge_same()
   list.merge(pattern);
 
   // The number of entries shall be 1.
-  TESTASSERT_EQ(list.get_nof_entries(), 1);
+  ASSERT_EQ(list.get_nof_entries(), 1);
 }
 
 // Tests a merge between two patterns with different RB mapping.
-void test_merge_diff_rb()
+TEST(re_pattern_test, merge_diff_rb)
 {
   // Create pattern 1.
   re_pattern pattern1;
@@ -198,10 +198,10 @@ void test_merge_diff_rb()
   list.merge(pattern2);
 
   // The number of entries shall be 2.
-  TESTASSERT_EQ(list.get_nof_entries(), 1);
+  ASSERT_EQ(list.get_nof_entries(), 1);
 }
 
-void test_inclusion_count()
+TEST(re_pattern_test, inclusion_count)
 {
   // Create a pattern.
   re_pattern pattern;
@@ -217,16 +217,16 @@ void test_inclusion_count()
   // Validate the inclusion count with an RB mask that matches.
   crb_bitmap rb_mask_match(2);
   rb_mask_match.set(0, true);
-  TESTASSERT_EQ(list.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, rb_mask_match), 1);
+  ASSERT_EQ(list.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, rb_mask_match), 1);
 
   // Validate the inclusion count with an RB mask that does not match.
   crb_bitmap rb_mask_unmatch(2);
   rb_mask_unmatch.set(1, true);
-  TESTASSERT_EQ(list.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, rb_mask_unmatch), 0);
+  ASSERT_EQ(list.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, rb_mask_unmatch), 0);
 }
 
 // Test that a pattern is equal to itself and different to others.
-void test_equal()
+TEST(re_pattern_test, equal)
 {
   // Create a pattern.
   re_pattern pattern;
@@ -247,15 +247,15 @@ void test_equal()
   list2.merge(pattern);
 
   // Validate the equal operator.
-  TESTASSERT(list1 == list1);
-  TESTASSERT(list2 == list2);
+  ASSERT_TRUE(list1 == list1);
+  ASSERT_TRUE(list2 == list2);
 
   // Validate the not equal operator.
-  TESTASSERT(list1 != list2);
+  ASSERT_TRUE(list1 != list2);
 }
 
 // Test a pattern creation from an initializer list.
-void test_bracket_initializer()
+TEST(re_pattern_test, bracket_initializer)
 {
   // Create pattern list from full initializer list.
   re_pattern_list list1 = {
@@ -281,18 +281,6 @@ void test_bracket_initializer()
   list3.merge(pattern);
 
   // Validate that all lists are equal.
-  TESTASSERT(list1 == list2);
-  TESTASSERT(list1 == list3);
-}
-
-int main()
-{
-  test_merge_even();
-  test_merge_odd();
-  test_merge_same();
-  test_merge_diff_rb();
-  test_inclusion_count();
-  test_equal();
-  test_bracket_initializer();
-  return 0;
+  ASSERT_TRUE(list1 == list2);
+  ASSERT_TRUE(list1 == list3);
 }

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "ocudu/adt/unique_function.h"
-#include "ocudu/support/test_utils.h"
+#include <gtest/gtest.h>
 
 using namespace ocudu;
 
@@ -14,7 +14,7 @@ struct D {
   D() { big_val[0] = 6; }
 };
 
-void test_unique_function()
+TEST(unique_function_test, unique_function)
 {
   int v = 0;
 
@@ -29,11 +29,11 @@ void test_unique_function()
 
   t();
   t2();
-  TESTASSERT_EQ(1, v);
+  ASSERT_EQ(1, v);
   v              = 2;
   decltype(t) t3 = std::move(t);
   t3();
-  TESTASSERT_EQ(1, v);
+  ASSERT_EQ(1, v);
 
   C                       c;
   unique_function<void()> t4 = [&v, c = std::move(c)]() { v = *c.val; };
@@ -41,7 +41,7 @@ void test_unique_function()
     decltype(t4) t5;
     t5 = std::move(t4);
     t5();
-    TESTASSERT(v == 5);
+    ASSERT_TRUE(v == 5);
   }
 
   D                       d;
@@ -49,11 +49,11 @@ void test_unique_function()
   {
     unique_function<void()> t7;
     t6();
-    TESTASSERT_EQ(6, v);
+    ASSERT_EQ(6, v);
     v  = 0;
     t7 = std::move(t6);
     t7();
-    TESTASSERT_EQ(6, v);
+    ASSERT_EQ(6, v);
   }
 
   auto l1 = [&v, c = C{}]() { v = *c.val; };
@@ -62,27 +62,22 @@ void test_unique_function()
   t2      = l2;
   v       = 0;
   t();
-  TESTASSERT_EQ(5, v);
+  ASSERT_EQ(5, v);
   t2();
-  TESTASSERT_EQ(6, v);
-  TESTASSERT(t.is_in_small_buffer() and not t2.is_in_small_buffer());
+  ASSERT_EQ(6, v);
+  ASSERT_TRUE(t.is_in_small_buffer() and not t2.is_in_small_buffer());
   std::swap(t, t2);
-  TESTASSERT(t2.is_in_small_buffer() and not t.is_in_small_buffer());
+  ASSERT_TRUE(t2.is_in_small_buffer() and not t.is_in_small_buffer());
   v = 0;
   t();
-  TESTASSERT_EQ(6, v);
+  ASSERT_EQ(6, v);
   t2();
-  TESTASSERT_EQ(5, v);
+  ASSERT_EQ(5, v);
 
   // TEST: task works in const contexts
   t       = l2;
   auto l3 = [](const unique_function<void()>& task) { task(); };
   v       = 0;
   l3(t);
-  TESTASSERT_EQ(6, v);
-}
-
-int main()
-{
-  test_unique_function();
+  ASSERT_EQ(6, v);
 }

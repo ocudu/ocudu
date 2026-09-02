@@ -4,7 +4,6 @@
 
 #include "ocudu/adt/format.h"
 #include "ocudu/ran/pdcch/pdcch_type0_css_occasions.h"
-#include "ocudu/support/ocudu_test.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;

@@ -5,7 +5,7 @@
 #include "ocudu/ocuduvec/bit.h"
 #include "ocudu/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "ocudu/support/benchmark_utils.h"
-#include "ocudu/support/ocudu_test.h"
+#include "ocudu/support/error_handling.h"
 #include <getopt.h>
 #include <random>
 
@@ -49,22 +49,22 @@ int main(int argc, char** argv)
   parse_args(argc, argv);
 
   std::shared_ptr<modulation_mapper_factory> modulator_factory = create_modulation_mapper_factory();
-  TESTASSERT(modulator_factory);
+  report_fatal_error_if_not(modulator_factory, "modulator_factory");
 
   std::shared_ptr<demodulation_mapper_factory> demodulator_factory = create_demodulation_mapper_factory();
-  TESTASSERT(demodulator_factory);
+  report_fatal_error_if_not(demodulator_factory, "demodulator_factory");
 
   std::shared_ptr<evm_calculator_factory> evm_calc_factory = create_evm_calculator_factory();
-  TESTASSERT(evm_calc_factory);
+  report_fatal_error_if_not(evm_calc_factory, "evm_calc_factory");
 
   std::unique_ptr<modulation_mapper> modulator = modulator_factory->create();
-  TESTASSERT(modulator);
+  report_fatal_error_if_not(modulator, "modulator");
 
   std::unique_ptr<demodulation_mapper> demodulator = demodulator_factory->create();
-  TESTASSERT(demodulator);
+  report_fatal_error_if_not(demodulator, "demodulator");
 
   std::unique_ptr<evm_calculator> evm_calc = evm_calc_factory->create();
-  TESTASSERT(evm_calc);
+  report_fatal_error_if_not(evm_calc, "evm_calc");
 
   std::uniform_int_distribution<uint8_t> bit_dist(0, 1);
 

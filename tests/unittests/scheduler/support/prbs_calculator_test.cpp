@@ -5,7 +5,6 @@
 #include "lib/scheduler/support/prbs_calculator.h"
 #include "ocudu/ran/pdsch/pdsch_mcs.h"
 #include "ocudu/ran/sch/tbs_calculator.h"
-#include "ocudu/support/ocudu_test.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;

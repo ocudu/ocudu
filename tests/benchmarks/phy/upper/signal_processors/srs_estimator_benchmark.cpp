@@ -13,8 +13,8 @@
 #include "ocudu/ran/cyclic_prefix.h"
 #include "ocudu/ran/srs/srs_resource_formatter.h"
 #include "ocudu/support/benchmark_utils.h"
+#include "ocudu/support/error_handling.h"
 #include "ocudu/support/math/complex_normal_random.h"
-#include "ocudu/support/ocudu_test.h"
 #include <getopt.h>
 #include <random>
 
@@ -66,9 +66,9 @@ static void parse_args(int argc, char** argv)
 static std::unique_ptr<resource_grid> create_resource_grid(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc)
 {
   std::shared_ptr<channel_precoder_factory> precoding_factory = create_channel_precoder_factory("auto");
-  TESTASSERT(precoding_factory != nullptr, "Invalid channel precoder factory.");
+  report_fatal_error_if_not(precoding_factory != nullptr, "Invalid channel precoder factory.");
   std::shared_ptr<resource_grid_factory> rg_factory = create_resource_grid_factory();
-  TESTASSERT(rg_factory != nullptr, "Invalid resource grid factory.");
+  report_fatal_error_if_not(rg_factory != nullptr, "Invalid resource grid factory.");
 
   return rg_factory->create(nof_ports, nof_symbols, nof_subc);
 }
@@ -81,23 +81,23 @@ int main(int argc, char** argv)
 
   std::shared_ptr<low_papr_sequence_generator_factory> low_papr_seq_gen_factory =
       create_low_papr_sequence_generator_sw_factory();
-  TESTASSERT(low_papr_seq_gen_factory);
+  report_fatal_error_if_not(low_papr_seq_gen_factory, "low_papr_seq_gen_factory");
 
   std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw_slow();
   if (!dft_factory) {
     dft_factory = create_dft_processor_factory_generic();
   }
-  TESTASSERT(dft_factory);
+  report_fatal_error_if_not(dft_factory, "dft_factory");
 
   std::shared_ptr<time_alignment_estimator_factory> ta_est_factory =
       create_time_alignment_estimator_dft_factory(dft_factory);
-  TESTASSERT(low_papr_seq_gen_factory);
+  report_fatal_error_if_not(low_papr_seq_gen_factory, "low_papr_seq_gen_factory");
 
   std::shared_ptr<srs_estimator_factory> srs_est_factory =
       create_srs_estimator_generic_factory(low_papr_seq_gen_factory, ta_est_factory, MAX_NOF_PRBS);
 
   std::unique_ptr<srs_estimator> estimator = srs_est_factory->create();
-  TESTASSERT(estimator);
+  report_fatal_error_if_not(estimator, "estimator");
 
   // Precoding weight distribution.
   std::uniform_real_distribution<float> weight_dist(-1.0F, 1.0F);
@@ -119,7 +119,7 @@ int main(int argc, char** argv)
 
   // Create resource grid.
   std::unique_ptr<resource_grid> grid = create_resource_grid(nof_rx_ports, grid_nof_symbols, grid_nof_subcs);
-  TESTASSERT(grid);
+  report_fatal_error_if_not(grid, "grid");
 
   unsigned nof_grid_re = grid_nof_subcs * grid_nof_symbols * nof_rx_ports;
 

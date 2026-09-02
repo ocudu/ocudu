@@ -8,7 +8,6 @@
 #include "tests/unittests/e2/common/e2_test_helpers.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/support/executors/task_worker.h"
-#include "ocudu/support/ocudu_test.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;

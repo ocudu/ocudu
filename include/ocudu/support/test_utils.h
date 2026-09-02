@@ -5,8 +5,9 @@
 
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/support/error_handling.h"
-#include "ocudu/support/ocudu_test.h"
+#include "ocudu/support/ocudu_assert.h"
 #include <cstdio>
+#include <gtest/gtest.h>
 #include <random>
 
 namespace ocudu {

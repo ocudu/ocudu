@@ -3,7 +3,6 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/asn1/asn1_utils.h"
-#include "ocudu/support/ocudu_test.h"
 #include "ocudu/support/test_utils.h"
 #include <cmath>
 #include <gtest/gtest.h>
@@ -28,7 +27,7 @@ TEST(asn1_bit_ref_test, unpack_empty_buffer)
 
   // Make sure the log backend has already processed the generated log entries.
   ocudulog::flush();
-  TESTASSERT(test_spy->get_error_counter() == 1 and test_spy->get_warning_counter() == 0);
+  ASSERT_TRUE(test_spy->get_error_counter() == 1 and test_spy->get_warning_counter() == 0);
   test_spy->reset_counters();
 }
 
@@ -64,34 +63,34 @@ TEST(asn1_array_test, pack_unpack_operators)
   const int*     old_ptr = ext_ar.data();
   // Test Resize until goes out of small buffer
   for (uint32_t i = 0; i < ext_ar.small_buffer_size + 1; ++i) {
-    TESTASSERT(ext_ar.is_in_small_buffer());
-    TESTASSERT(ext_ar.capacity() == ext_ar.small_buffer_size);
-    TESTASSERT(ext_ar.size() == i);
+    ASSERT_TRUE(ext_ar.is_in_small_buffer());
+    ASSERT_TRUE(ext_ar.capacity() == ext_ar.small_buffer_size);
+    ASSERT_TRUE(ext_ar.size() == i);
     ext_ar.push_back(i);
   }
-  TESTASSERT(not ext_ar.is_in_small_buffer());
-  TESTASSERT(ext_ar.size() == ext_ar.small_buffer_size + 1);
-  TESTASSERT(old_ptr != ext_ar.data());
-  TESTASSERT(ext_ar.capacity() > ext_ar.small_buffer_size);
+  ASSERT_TRUE(not ext_ar.is_in_small_buffer());
+  ASSERT_TRUE(ext_ar.size() == ext_ar.small_buffer_size + 1);
+  ASSERT_TRUE(old_ptr != ext_ar.data());
+  ASSERT_TRUE(ext_ar.capacity() > ext_ar.small_buffer_size);
   // Test Copy
   {
     ext_array<int> ext_ar2(ext_ar);
-    TESTASSERT(ext_ar2 == ext_ar);
-    TESTASSERT(not ext_ar.is_in_small_buffer());
+    ASSERT_TRUE(ext_ar2 == ext_ar);
+    ASSERT_TRUE(not ext_ar.is_in_small_buffer());
   }
-  TESTASSERT(ext_ar.size() == 5);
+  ASSERT_TRUE(ext_ar.size() == 5);
   // Test Move
   {
     ext_array<int> ext_ar2(std::move(ext_ar));
-    TESTASSERT(ext_ar.is_in_small_buffer());
-    TESTASSERT(ext_ar2.size() == 5);
-    TESTASSERT(ext_ar2[2] == 2);
+    ASSERT_TRUE(ext_ar.is_in_small_buffer());
+    ASSERT_TRUE(ext_ar2.size() == 5);
+    ASSERT_TRUE(ext_ar2[2] == 2);
   }
   ext_ar = ext_array<int>(5);
-  TESTASSERT(not ext_ar.is_in_small_buffer());
-  TESTASSERT(ext_ar.size() == 5);
+  ASSERT_TRUE(not ext_ar.is_in_small_buffer());
+  ASSERT_TRUE(ext_ar.size() == 5);
   ext_ar.resize(0);
-  TESTASSERT(not ext_ar.is_in_small_buffer());
+  ASSERT_TRUE(not ext_ar.is_in_small_buffer());
 }
 
 TEST(asn1_bit_ref, pack_unpack_operators)
@@ -110,7 +109,7 @@ TEST(asn1_bit_ref, pack_unpack_operators)
     ASSERT_EQ(nof_bytes_to_pack, (unsigned)bref.distance() / 8U);
     ASSERT_EQ(0, bref.distance() % 8);
     //    bool is_eq = buf == vec_compare;
-    //    TESTASSERT(is_eq);
+    //    ASSERT_TRUE(is_eq);
 
     // Unpack in batches of n_bit_stride.
     cbit_ref bref2(buf);
@@ -120,7 +119,7 @@ TEST(asn1_bit_ref, pack_unpack_operators)
       uint64_t val;
       ASSERT_EQ(i * n_bit_stride, (unsigned)bref2.distance());
       ASSERT_EQ(OCUDUASN_SUCCESS, bref2.unpack(val, n_bit_stride));
-      TESTASSERT((i & bitmask) == val);
+      ASSERT_TRUE((i & bitmask) == val);
     }
     ASSERT_EQ(nof_bytes_to_pack, (unsigned)bref2.distance_bytes());
     ASSERT_EQ(bref.distance(), bref2.distance());
@@ -140,11 +139,11 @@ TEST(asn1_bit_ref, pack_unpack_operators)
     ASSERT_EQ(OCUDUASN_SUCCESS, bref.pack_bytes(buf2));
     ASSERT_EQ((int)nof_bytes, bref.distance_bytes());
     ASSERT_EQ(nof_bytes, buf.length());
-    TESTASSERT(buf == buf2);
+    ASSERT_TRUE(buf == buf2);
     cbit_ref bref2(buf);
     ASSERT_EQ(OCUDUASN_SUCCESS, bref2.unpack_bytes(buf2));
     ASSERT_EQ((int)nof_bytes, bref2.distance_bytes());
-    TESTASSERT(buf == buf2);
+    ASSERT_TRUE(buf == buf2);
   }
 
   // pack bytes unaligned
@@ -169,11 +168,11 @@ TEST(asn1_bit_ref, pack_unpack_operators)
     cbit_ref bref2(buf);
     uint32_t val;
     ASSERT_EQ(OCUDUASN_SUCCESS, bref2.unpack(val, 1));
-    TESTASSERT(val == 0);
+    ASSERT_TRUE(val == 0);
     ASSERT_EQ(OCUDUASN_SUCCESS, bref2.unpack_bytes(buf3));
-    TESTASSERT(bref2.distance_bytes() == (int)nof_bytes + 1);
-    TESTASSERT(bref2.distance_bytes() == bref.distance_bytes());
-    TESTASSERT(std::equal(buf2.begin(), buf2.end(), buf3.begin(), buf3.end()));
+    ASSERT_TRUE(bref2.distance_bytes() == (int)nof_bytes + 1);
+    ASSERT_TRUE(bref2.distance_bytes() == bref.distance_bytes());
+    ASSERT_TRUE(std::equal(buf2.begin(), buf2.end(), buf3.begin(), buf3.end()));
   }
 
   // test advance bits
@@ -206,21 +205,21 @@ TEST(asn1_octet_string_test, pack_unpack_operators)
   dynstr.from_string(hexstr);
   dynstr_from_bytes.from_bytes(bytes);
 
-  TESTASSERT(sizeof(statstr) == statstr.size());
-  TESTASSERT(statstr.size() == 5);
-  TESTASSERT(dynstr.size() == 5);
-  TESTASSERT(dynstr[0] == 1);
-  TESTASSERT(statstr[4] == 255);
-  TESTASSERT(statstr.to_string() == hexstr);
-  TESTASSERT(statstr.to_string() == dynstr.to_string());
-  TESTASSERT(statstr.to_number() == dynstr.to_number());
-  TESTASSERT(statstr.to_number() == dynstr_from_bytes.to_number());
+  ASSERT_TRUE(sizeof(statstr) == statstr.size());
+  ASSERT_TRUE(statstr.size() == 5);
+  ASSERT_TRUE(dynstr.size() == 5);
+  ASSERT_TRUE(dynstr[0] == 1);
+  ASSERT_TRUE(statstr[4] == 255);
+  ASSERT_TRUE(statstr.to_string() == hexstr);
+  ASSERT_TRUE(statstr.to_string() == dynstr.to_string());
+  ASSERT_TRUE(statstr.to_number() == dynstr.to_number());
+  ASSERT_TRUE(statstr.to_number() == dynstr_from_bytes.to_number());
 
   // check endianess
-  TESTASSERT(statstr.to_number() == 5443660543);
-  TESTASSERT(dynstr.to_number() == 5443660543);
+  ASSERT_TRUE(statstr.to_number() == 5443660543);
+  ASSERT_TRUE(dynstr.to_number() == 5443660543);
   dynstr.from_number(dynstr.to_number());
-  TESTASSERT(dynstr.to_number() == 5443660543);
+  ASSERT_TRUE(dynstr.to_number() == 5443660543);
 
   statstr.from_string(hexstr);
   dynstr.from_string(hexstr);
@@ -228,38 +227,38 @@ TEST(asn1_octet_string_test, pack_unpack_operators)
   ocudu::byte_buffer buf;
   bit_ref            b{buf};
   statstr.pack(b);
-  TESTASSERT(std::equal(buf.begin(), buf.end(), statstr.begin(), statstr.end())); // no prefix in static strings.
-  TESTASSERT(b.distance() == (int)statstr.size() * 8);
+  ASSERT_TRUE(std::equal(buf.begin(), buf.end(), statstr.begin(), statstr.end())); // no prefix in static strings.
+  ASSERT_TRUE(b.distance() == (int)statstr.size() * 8);
   fixed_octstring<5> statstr2;
   cbit_ref           b2 = cbit_ref(buf);
   ASSERT_EQ(OCUDUASN_SUCCESS, statstr2.unpack(b2));
-  TESTASSERT(statstr == statstr2);
+  ASSERT_TRUE(statstr == statstr2);
 
   buf.clear();
   b = {buf};
   dynstr.pack(b);
-  TESTASSERT(*buf.begin() == dynstr.size()); // true for small strings.
-  TESTASSERT(std::equal(buf.begin() + 1, buf.end(), dynstr.begin(), dynstr.end()));
-  TESTASSERT(b.distance() == (int)(dynstr.size() * 8 + 8));
+  ASSERT_TRUE(*buf.begin() == dynstr.size()); // true for small strings.
+  ASSERT_TRUE(std::equal(buf.begin() + 1, buf.end(), dynstr.begin(), dynstr.end()));
+  ASSERT_TRUE(b.distance() == (int)(dynstr.size() * 8 + 8));
   dyn_octstring dynstr2; // unpacker allocates automatically
   b2 = cbit_ref(buf);
   dynstr2.unpack(b2);
-  TESTASSERT(dynstr == dynstr2);
+  ASSERT_TRUE(dynstr == dynstr2);
 
   // test copy ctor
   {
     fixed_octstring<5> statcopy(statstr);
-    TESTASSERT(statcopy == statstr);
+    ASSERT_TRUE(statcopy == statstr);
   }
   {
     dyn_octstring scopy(dynstr);
-    TESTASSERT(scopy == dynstr);
+    ASSERT_TRUE(scopy == dynstr);
   }
 
   b.pack(1, 1);
   ASSERT_EQ(b.distance(), (int)(hexstr.size() * 8 / 2 + 9));
   b.align_bytes_zero();
-  TESTASSERT(b.distance() == (int)(hexstr.size() * 8 / 2 + 16));
+  ASSERT_TRUE(b.distance() == (int)(hexstr.size() * 8 / 2 + 16));
 }
 
 TEST(asn1_octet_string_test, to_uint_and_to_octet_string_preserve_byte_order)
@@ -273,20 +272,20 @@ TEST(asn1_octet_string_test, to_uint_and_to_octet_string_preserve_byte_order)
   ocudu::byte_buffer           byte_buffer_octets;
 
   octet_string_helper::to_octet_string(span_full_octets, number);
-  TESTASSERT(std::equal(
+  ASSERT_TRUE(std::equal(
       span_full_octets.begin(), span_full_octets.end(), expected_full_octets.begin(), expected_full_octets.end()));
-  TESTASSERT(octet_string_helper::to_uint(span_full_octets) == number);
+  ASSERT_TRUE(octet_string_helper::to_uint(span_full_octets) == number);
 
   octet_string_helper::to_octet_string(span_small_octets, small_number);
-  TESTASSERT(std::equal(
+  ASSERT_TRUE(std::equal(
       span_small_octets.begin(), span_small_octets.end(), expected_small_octets.begin(), expected_small_octets.end()));
-  TESTASSERT(octet_string_helper::to_uint(span_small_octets) == small_number);
+  ASSERT_TRUE(octet_string_helper::to_uint(span_small_octets) == small_number);
 
   octet_string_helper::to_octet_string(byte_buffer_octets, number);
-  TESTASSERT(byte_buffer_octets.length() == expected_full_octets.size());
-  TESTASSERT(std::equal(
+  ASSERT_TRUE(byte_buffer_octets.length() == expected_full_octets.size());
+  ASSERT_TRUE(std::equal(
       byte_buffer_octets.begin(), byte_buffer_octets.end(), expected_full_octets.begin(), expected_full_octets.end()));
-  TESTASSERT(octet_string_helper::to_uint(byte_buffer_octets) == number);
+  ASSERT_TRUE(octet_string_helper::to_uint(byte_buffer_octets) == number);
 }
 
 TEST(asn1_fixed_bit_string, integer_conversion)
@@ -309,79 +308,79 @@ TEST(asn1_bit_string_test, pack_unpack_operators)
 
   /* Test BitSet and BitGet and Length */
   // fixed
-  TESTASSERT(bstr1.length() == 10);
-  TESTASSERT(bstr1.get(7));
-  TESTASSERT(bstr1.get(9));
-  TESTASSERT(not bstr1.get(8));
-  TESTASSERT(not bstr1.get(0));
+  ASSERT_TRUE(bstr1.length() == 10);
+  ASSERT_TRUE(bstr1.get(7));
+  ASSERT_TRUE(bstr1.get(9));
+  ASSERT_TRUE(not bstr1.get(8));
+  ASSERT_TRUE(not bstr1.get(0));
   // bounded
-  TESTASSERT(bound_bstr1.length() == 10);
-  TESTASSERT(bound_bstr1.get(7));
-  TESTASSERT(bound_bstr1.get(9));
-  TESTASSERT(not bound_bstr1.get(8));
-  TESTASSERT(not bound_bstr1.get(0));
+  ASSERT_TRUE(bound_bstr1.length() == 10);
+  ASSERT_TRUE(bound_bstr1.get(7));
+  ASSERT_TRUE(bound_bstr1.get(9));
+  ASSERT_TRUE(not bound_bstr1.get(8));
+  ASSERT_TRUE(not bound_bstr1.get(0));
   // dyn
-  TESTASSERT(dyn_bstr1.length() == 10);
-  TESTASSERT(dyn_bstr1.get(7));
-  TESTASSERT(dyn_bstr1.get(9));
-  TESTASSERT(not dyn_bstr1.get(8));
-  TESTASSERT(not dyn_bstr1.get(0));
+  ASSERT_TRUE(dyn_bstr1.length() == 10);
+  ASSERT_TRUE(dyn_bstr1.get(7));
+  ASSERT_TRUE(dyn_bstr1.get(9));
+  ASSERT_TRUE(not dyn_bstr1.get(8));
+  ASSERT_TRUE(not dyn_bstr1.get(0));
 
   /* Test Copy, Dtor, and Equal Comparison */
   {
     // fixed
     fixed_bitstring<10> bstr2;
     bstr2 = bstr1;
-    TESTASSERT(bstr2 == bstr1);
+    ASSERT_TRUE(bstr2 == bstr1);
     // bound
     bounded_bitstring<5, 15> bound_bstr2;
     bound_bstr2 = bound_bstr1;
-    TESTASSERT(bound_bstr2 == bound_bstr1);
+    ASSERT_TRUE(bound_bstr2 == bound_bstr1);
     // dyn
     dyn_bitstring dyn_bstr2(10);
     dyn_bstr2 = dyn_bstr1;
-    TESTASSERT(dyn_bstr2 == dyn_bstr1);
+    ASSERT_TRUE(dyn_bstr2 == dyn_bstr1);
     // dtors called
   }
 
   /* Test Number and String conversion */
   // fixed
-  TESTASSERT(bstr1.to_string() == "1010000000");
-  TESTASSERT(bstr1.to_number() == 640);
+  ASSERT_TRUE(bstr1.to_string() == "1010000000");
+  ASSERT_TRUE(bstr1.to_number() == 640);
   bstr1.set(1, true);
-  TESTASSERT(bstr1.to_string() == "1010000010");
-  TESTASSERT(bstr1.to_number() == 642);
-  TESTASSERT(bstr1 == fixed_bitstring<10>().from_number(642));
+  ASSERT_TRUE(bstr1.to_string() == "1010000010");
+  ASSERT_TRUE(bstr1.to_number() == 642);
+  ASSERT_TRUE(bstr1 == fixed_bitstring<10>().from_number(642));
   // bounded
-  TESTASSERT(bound_bstr1.to_string() == "1010000000");
-  TESTASSERT(bound_bstr1.to_number() == 640);
+  ASSERT_TRUE(bound_bstr1.to_string() == "1010000000");
+  ASSERT_TRUE(bound_bstr1.to_number() == 640);
   bound_bstr1.set(1, true);
-  TESTASSERT(bound_bstr1.to_string() == "1010000010");
-  TESTASSERT(bound_bstr1.to_number() == 642);
-  TESTASSERT((bound_bstr1 == bounded_bitstring<5, 15>().from_number(642)));
-  TESTASSERT((bound_bstr1 == bounded_bitstring<5, 15>().from_string("1010000010")));
+  ASSERT_TRUE(bound_bstr1.to_string() == "1010000010");
+  ASSERT_TRUE(bound_bstr1.to_number() == 642);
+  ASSERT_TRUE((bound_bstr1 == bounded_bitstring<5, 15>().from_number(642)));
+  ASSERT_TRUE((bound_bstr1 == bounded_bitstring<5, 15>().from_string("1010000010")));
   // dyn
-  TESTASSERT(dyn_bstr1.to_string() == "1010000000");
-  TESTASSERT(dyn_bstr1.to_number() == 640);
+  ASSERT_TRUE(dyn_bstr1.to_string() == "1010000000");
+  ASSERT_TRUE(dyn_bstr1.to_number() == 640);
   dyn_bstr1.set(1, true);
-  TESTASSERT(dyn_bstr1.to_string() == "1010000010");
-  TESTASSERT(dyn_bstr1.to_number() == 642);
-  TESTASSERT(dyn_bstr1 == dyn_bitstring().from_number(642));
-  TESTASSERT(dyn_bstr1 == dyn_bitstring().from_string("1010000010"));
+  ASSERT_TRUE(dyn_bstr1.to_string() == "1010000010");
+  ASSERT_TRUE(dyn_bstr1.to_number() == 642);
+  ASSERT_TRUE(dyn_bstr1 == dyn_bitstring().from_number(642));
+  ASSERT_TRUE(dyn_bstr1 == dyn_bitstring().from_string("1010000010"));
   // zero case
-  TESTASSERT(bound_bstr1.from_number(0) == "00000");
+  ASSERT_TRUE(bound_bstr1.from_number(0) == "00000");
 
   /* Test Resize */
   bound_bstr1.resize(11);
-  TESTASSERT(not bound_bstr1.get(9)); // resets content
-  TESTASSERT(bound_bstr1.length() == 11);
+  ASSERT_TRUE(not bound_bstr1.get(9)); // resets content
+  ASSERT_TRUE(bound_bstr1.length() == 11);
   bound_bstr1.set(9, true);
   dyn_bstr1.resize(11);
-  TESTASSERT(not dyn_bstr1.get(9));
-  TESTASSERT(dyn_bstr1.length() == 11);
+  ASSERT_TRUE(not dyn_bstr1.get(9));
+  ASSERT_TRUE(dyn_bstr1.length() == 11);
   dyn_bstr1.set(9, true);
-  TESTASSERT(dyn_bstr1.get(9));
-  TESTASSERT(not dyn_bstr1.get(10));
+  ASSERT_TRUE(dyn_bstr1.get(9));
+  ASSERT_TRUE(not dyn_bstr1.get(10));
 
   /* Test Packing/Unpacking */
   ocudu::byte_buffer buf;
@@ -389,36 +388,36 @@ TEST(asn1_bit_string_test, pack_unpack_operators)
   // fixed
   ASSERT_EQ(OCUDUASN_SUCCESS, bstr1.pack(bref));
   fixed_bitstring<10> bstr2;
-  TESTASSERT(bstr2.length() == 10);
+  ASSERT_TRUE(bstr2.length() == 10);
   cbit_ref bref2(buf);
   ASSERT_EQ(OCUDUASN_SUCCESS, bstr2.unpack(bref2));
-  TESTASSERT(bstr2 == bstr1);
-  TESTASSERT(bref.distance() == 10 and bref.distance() == bref2.distance());
+  ASSERT_TRUE(bstr2 == bstr1);
+  ASSERT_TRUE(bref.distance() == 10 and bref.distance() == bref2.distance());
   // bounded
   buf.clear();
   bref = bit_ref(buf);
-  TESTASSERT(bound_bstr1.pack(bref) == OCUDUASN_SUCCESS);
+  ASSERT_TRUE(bound_bstr1.pack(bref) == OCUDUASN_SUCCESS);
   bounded_bitstring<5, 15> bound_bstr2(dyn_bstr1.length());
-  TESTASSERT(bound_bstr2.length() == 11);
+  ASSERT_TRUE(bound_bstr2.length() == 11);
   bref2 = cbit_ref(buf);
-  TESTASSERT(bound_bstr2.unpack(bref2) == OCUDUASN_SUCCESS);
-  TESTASSERT(bound_bstr2 == bound_bstr1);
-  TESTASSERT(bref.distance() == (11 + 4) and bref.distance() == bref2.distance());
+  ASSERT_TRUE(bound_bstr2.unpack(bref2) == OCUDUASN_SUCCESS);
+  ASSERT_TRUE(bound_bstr2 == bound_bstr1);
+  ASSERT_TRUE(bref.distance() == (11 + 4) and bref.distance() == bref2.distance());
   // dyn
   buf.clear();
   bref = bit_ref(buf);
-  TESTASSERT(dyn_bstr1.pack(bref) == OCUDUASN_SUCCESS);
+  ASSERT_TRUE(dyn_bstr1.pack(bref) == OCUDUASN_SUCCESS);
   dyn_bitstring dyn_bstr2(dyn_bstr1.length());
-  TESTASSERT(dyn_bstr2.length() == 11);
+  ASSERT_TRUE(dyn_bstr2.length() == 11);
   bref2 = cbit_ref(buf);
-  TESTASSERT(dyn_bstr2.unpack(bref2) == OCUDUASN_SUCCESS);
-  TESTASSERT(dyn_bstr2 == dyn_bstr1);
+  ASSERT_TRUE(dyn_bstr2.unpack(bref2) == OCUDUASN_SUCCESS);
+  ASSERT_TRUE(dyn_bstr2 == dyn_bstr1);
   //  printf("%s==%s\n", dyn_bstr1.to_string().c_str(), dyn_bstr2.to_string().c_str());
 
   // disable temporarily the prints to check failures
   //  ocudu::nullsink_log null_log("NULL");
   //  bit_ref bref3(&buffer[0], sizeof(buffer));
-  //  TESTASSERT(dyn_bstr1.pack(bref3, false, 5, 10)==OCUDUASN_ERROR_ENCODE_FAIL);
+  //  ASSERT_TRUE(dyn_bstr1.pack(bref3, false, 5, 10)==OCUDUASN_ERROR_ENCODE_FAIL);
 
   /* Test Pack/Unpack 2 */
   buf.clear();
@@ -427,8 +426,8 @@ TEST(asn1_bit_string_test, pack_unpack_operators)
   bref2 = cbit_ref(buf);
   fixed_bitstring<16> bstr3;
   bstr3.unpack(bref2);
-  TESTASSERT(bstr3 == "0000000000000111");
-  TESTASSERT(bstr3.to_string() == "0000000000000111");
+  ASSERT_TRUE(bstr3 == "0000000000000111");
+  ASSERT_TRUE(bstr3.to_string() == "0000000000000111");
 }
 
 TEST(asn1_seq_of_test, pack_unpack_and_operators)
@@ -441,7 +440,7 @@ TEST(asn1_seq_of_test, pack_unpack_and_operators)
   {
     // test copy and ==
     std::array<uint32_t, 33> fixed_list2 = fixed_list;
-    TESTASSERT(fixed_list == fixed_list2);
+    ASSERT_TRUE(fixed_list == fixed_list2);
   }
 
   int      lb = 0, ub = 40;
@@ -450,65 +449,65 @@ TEST(asn1_seq_of_test, pack_unpack_and_operators)
   ocudu::byte_buffer buffer;
   bit_ref            b{buffer};
   pack_fixed_seq_of(b, fixed_list, fixed_list.size(), integer_packer<uint32_t>(lb, ub, false));
-  TESTASSERT(b.distance() == (int)(fixed_list_size * n_bits));
+  ASSERT_TRUE(b.distance() == (int)(fixed_list_size * n_bits));
   cbit_ref                 b2(buffer);
   std::array<uint32_t, 33> fixed_list2;
   unpack_fixed_seq_of(fixed_list2, b2, fixed_list.size(), integer_packer<uint32_t>(lb, ub, false));
-  TESTASSERT(fixed_list == fixed_list2);
+  ASSERT_TRUE(fixed_list == fixed_list2);
 
   // bounded seq_of
   buffer.clear();
   bounded_array<uint32_t, 33> bseq;
-  TESTASSERT(bseq.size() == 0);
+  ASSERT_TRUE(bseq.size() == 0);
   bseq.resize(fixed_list_size);
-  TESTASSERT(bseq.size() == fixed_list_size);
+  ASSERT_TRUE(bseq.size() == fixed_list_size);
   std::memcpy(&bseq[0], &fixed_list[0], fixed_list_size * sizeof(uint32_t));
   b = {buffer};
   pack_dyn_seq_of(b, bseq, 0, 33, integer_packer<uint32_t>(lb, ub, false));
-  TESTASSERT(b.distance() == (int)((fixed_list_size + 1) * n_bits)); // unaligned
+  ASSERT_TRUE(b.distance() == (int)((fixed_list_size + 1) * n_bits)); // unaligned
   //  ASSERT_EQ(b.distance(), (int)fixed_list_size * (int)n_bits + 8); // aligned
   bounded_array<uint32_t, 33> bseq2;
   bseq2.resize(fixed_list_size);
   b2 = {buffer};
   unpack_dyn_seq_of(bseq2, b2, 0, 33, integer_packer<uint32_t>(lb, ub, false));
-  TESTASSERT(bseq2 == bseq);
-  TESTASSERT(std::equal(bseq2.begin(), bseq2.end(), &fixed_list[0]));
+  ASSERT_TRUE(bseq2 == bseq);
+  ASSERT_TRUE(std::equal(bseq2.begin(), bseq2.end(), &fixed_list[0]));
 
   {
     bounded_array<uint32_t, 33> bseq3;
     bseq3 = bseq;
-    TESTASSERT(bseq == bseq3);
+    ASSERT_TRUE(bseq == bseq3);
     // call dtor
   }
-  TESTASSERT(bseq2 == bseq);
+  ASSERT_TRUE(bseq2 == bseq);
 
   // dynamic array
   dyn_array<int> vec, vec2(33);
   std::iota(vec2.begin(), vec2.end(), 0);
   std::shuffle(vec2.begin(), vec2.end(), g);
-  TESTASSERT(vec2.size() == 33);
-  TESTASSERT(vec.size() == 0);
+  ASSERT_TRUE(vec2.size() == 33);
+  ASSERT_TRUE(vec.size() == 0);
   vec.resize(32);
   std::iota(vec.begin(), vec.end(), 0);
   std::shuffle(vec.begin(), vec.end(), g);
-  TESTASSERT(vec.size() == 32);
+  ASSERT_TRUE(vec.size() == 32);
   vec[5] = 5;
   vec.push_back(33);
-  TESTASSERT(vec.size() == 33);
-  TESTASSERT(vec[5] == 5); // resize does not affect content
+  ASSERT_TRUE(vec.size() == 33);
+  ASSERT_TRUE(vec[5] == 5); // resize does not affect content
   int* pos = &vec[5];
   vec.resize(10);
-  TESTASSERT(vec.size() == 10); // reduction in size does not cause realloc
-  TESTASSERT(pos == &vec[5]);
+  ASSERT_TRUE(vec.size() == 10); // reduction in size does not cause realloc
+  ASSERT_TRUE(pos == &vec[5]);
   {
     dyn_array<int> vec3 = vec2;
-    TESTASSERT(vec3.size() == vec2.size());
-    TESTASSERT(std::equal(vec3.begin(), vec3.end(), vec2.begin()));
+    ASSERT_TRUE(vec3.size() == vec2.size());
+    ASSERT_TRUE(std::equal(vec3.begin(), vec3.end(), vec2.begin()));
     vec3 = vec;
-    TESTASSERT(vec3.size() == vec.size());
-    TESTASSERT(std::equal(vec3.begin(), vec3.end(), vec.begin()));
+    ASSERT_TRUE(vec3.size() == vec.size());
+    ASSERT_TRUE(std::equal(vec3.begin(), vec3.end(), vec.begin()));
   }
-  TESTASSERT(vec[5] == 5);
+  ASSERT_TRUE(vec[5] == 5);
 }
 
 TEST(asn1_copy_ptr_test, memory_safety)
@@ -526,34 +525,34 @@ TEST(asn1_copy_ptr_test, memory_safety)
 
   std::memcpy(&(*cptr)[0], buffer, N);
 
-  TESTASSERT(cptr2.get() == NULL);
-  TESTASSERT(std::memcmp(&(*s)[0], buffer, s->size()) == 0);
-  TESTASSERT(*cptr == *s);
-  TESTASSERT(cptr.get() == s);
-  TESTASSERT(std::memcmp(&(*cptr)[0], buffer, cptr->size()) == 0);
-  TESTASSERT(cptr2.get() == NULL);
-  TESTASSERT(cptr.get() != NULL);
+  ASSERT_TRUE(cptr2.get() == NULL);
+  ASSERT_TRUE(std::memcmp(&(*s)[0], buffer, s->size()) == 0);
+  ASSERT_TRUE(*cptr == *s);
+  ASSERT_TRUE(cptr.get() == s);
+  ASSERT_TRUE(std::memcmp(&(*cptr)[0], buffer, cptr->size()) == 0);
+  ASSERT_TRUE(cptr2.get() == NULL);
+  ASSERT_TRUE(cptr.get() != NULL);
 
   {
     copy_ptr<TestType> cptr3 = cptr;
-    TESTASSERT(cptr3 == cptr);
-    TESTASSERT(*cptr3 == *s);
-    TESTASSERT(cptr3.get() != cptr.get()); // different addresses
-    TESTASSERT(std::memcmp(&(*cptr3)[0], buffer, cptr3->size()) == 0);
+    ASSERT_TRUE(cptr3 == cptr);
+    ASSERT_TRUE(*cptr3 == *s);
+    ASSERT_TRUE(cptr3.get() != cptr.get()); // different addresses
+    ASSERT_TRUE(std::memcmp(&(*cptr3)[0], buffer, cptr3->size()) == 0);
     // call dtor
   }
-  TESTASSERT(*cptr == *s);
+  ASSERT_TRUE(*cptr == *s);
 
   // Test make_copy_ptr() function. It has the potential to hide all news from the code.
   TestType           s2(*s);
   copy_ptr<TestType> cptr3 = make_copy_ptr(s2);
-  TESTASSERT(cptr3.get() != &s2);
-  TESTASSERT(cptr3 == cptr);
+  ASSERT_TRUE(cptr3.get() != &s2);
+  ASSERT_TRUE(cptr3 == cptr);
 
   // get raw pointer and delete manually
   TestType* s3 = cptr.release();
-  TESTASSERT(s3 == s); // same address
-  delete s3;           // it should *not* double free
+  ASSERT_TRUE(s3 == s); // same address
+  delete s3;            // it should *not* double free
 }
 
 class EnumTest
@@ -607,38 +606,38 @@ TEST(asn1_enumerated, pack_unpack)
   EnumTest e;
   EnumTest e2;
   e = EnumTest::test10;
-  TESTASSERT(e.nof_types == 3);
-  TESTASSERT(e.to_string() == "test10");
-  TESTASSERT(e.to_number() == 10);
-  TESTASSERT(string_to_enum<EnumTest>(e2, "test10"));
-  TESTASSERT(e2 == e);
-  TESTASSERT(number_to_enum<EnumTest>(e2, 10));
-  TESTASSERT(e2 == e);
+  ASSERT_TRUE(e.nof_types == 3);
+  ASSERT_TRUE(e.to_string() == "test10");
+  ASSERT_TRUE(e.to_number() == 10);
+  ASSERT_TRUE(string_to_enum<EnumTest>(e2, "test10"));
+  ASSERT_TRUE(e2 == e);
+  ASSERT_TRUE(number_to_enum<EnumTest>(e2, 10));
+  ASSERT_TRUE(e2 == e);
 
   ocudu::byte_buffer buffer;
   bit_ref            bref(buffer);
-  TESTASSERT(pack_enum(bref, e) == OCUDUASN_SUCCESS);
-  TESTASSERT(bref.distance() == (int)(std::floor(std::log2(e.nof_types)) + 1));
+  ASSERT_TRUE(pack_enum(bref, e) == OCUDUASN_SUCCESS);
+  ASSERT_TRUE(bref.distance() == (int)(std::floor(std::log2(e.nof_types)) + 1));
 
   cbit_ref bref2(buffer);
-  TESTASSERT(unpack_enum(e2, bref2) == OCUDUASN_SUCCESS);
-  TESTASSERT(bref2.distance() == (int)bref.distance());
-  TESTASSERT(e == e2);
+  ASSERT_TRUE(unpack_enum(e2, bref2) == OCUDUASN_SUCCESS);
+  ASSERT_TRUE(bref2.distance() == (int)bref.distance());
+  ASSERT_TRUE(e == e2);
 
   // Test fail path
   buffer.clear();
-  TESTASSERT(test_spy->get_error_counter() == 0 and test_spy->get_warning_counter() == 0);
+  ASSERT_TRUE(test_spy->get_error_counter() == 0 and test_spy->get_warning_counter() == 0);
   bref = bit_ref(buffer);
   e    = EnumTest::nulltype;
-  TESTASSERT(pack_enum(bref, e) == OCUDUASN_ERROR_ENCODE_FAIL);
+  ASSERT_TRUE(pack_enum(bref, e) == OCUDUASN_ERROR_ENCODE_FAIL);
   ASSERT_EQ(0, bref.distance());
   ASSERT_TRUE(buffer.append(255));
   bref2 = cbit_ref(buffer);
-  TESTASSERT(unpack_enum(e, bref2) == OCUDUASN_ERROR_DECODE_FAIL);
+  ASSERT_TRUE(unpack_enum(e, bref2) == OCUDUASN_ERROR_DECODE_FAIL);
 
   // Make sure the log backend has already processed the generated log entries.
   ocudulog::flush();
-  TESTASSERT(test_spy->get_error_counter() == 2 and test_spy->get_warning_counter() == 0);
+  ASSERT_TRUE(test_spy->get_error_counter() == 2 and test_spy->get_warning_counter() == 0);
   test_spy->reset_counters();
 }
 
@@ -673,13 +672,13 @@ public:
 TEST(asn1_enumerated, bool_to_enum_test)
 {
   EnumBoolTest e, e2;
-  TESTASSERT(e.nof_types == 1);
+  ASSERT_TRUE(e.nof_types == 1);
   bool_to_enum<EnumBoolTest>(e, true);
-  TESTASSERT(e.to_string() == "true");
+  ASSERT_TRUE(e.to_string() == "true");
   e2 = EnumBoolTest::options::true_value;
-  TESTASSERT(enum_to_bool(e2));
+  ASSERT_TRUE(enum_to_bool(e2));
   e2 = EnumBoolTest::options::nulltype;
-  TESTASSERT(!enum_to_bool(e2));
+  ASSERT_TRUE(!enum_to_bool(e2));
 }
 
 void test_json_writer()
@@ -712,15 +711,15 @@ TEST(asn1_integer_test, large_integer_pack_unpack)
 
   ocudu::byte_buffer buffer;
   bit_ref            bref(buffer);
-  TESTASSERT(big_integer.pack(bref) == 0);
+  ASSERT_TRUE(big_integer.pack(bref) == 0);
 
   std::array<uint8_t, 5> bytes{0xc0, 0xbd, 0x12, 0x00, 0x3f};
-  TESTASSERT(std::equal(buffer.begin(), buffer.end(), bytes.begin(), bytes.end()));
+  ASSERT_TRUE(std::equal(buffer.begin(), buffer.end(), bytes.begin(), bytes.end()));
 
   integer<uint64_t, 0, 4294967295, false, true> big_integer2;
   cbit_ref                                      cbref(buffer);
-  TESTASSERT(big_integer2.unpack(cbref) == 0);
-  TESTASSERT(big_integer == big_integer2);
+  ASSERT_TRUE(big_integer2.unpack(cbref) == 0);
+  ASSERT_TRUE(big_integer == big_integer2);
 }
 
 TEST(asn1_real_test, real_special_number_pack_unpack)
@@ -735,20 +734,20 @@ TEST(asn1_real_test, real_special_number_pack_unpack)
 
     ocudu::byte_buffer buffer;
     bit_ref            bref(buffer);
-    TESTASSERT(real_number.pack(bref) == 0);
-    TESTASSERT(std::equal(buffer.begin(), buffer.end(), out_bytes.begin(), out_bytes.end()));
+    ASSERT_TRUE(real_number.pack(bref) == 0);
+    ASSERT_TRUE(std::equal(buffer.begin(), buffer.end(), out_bytes.begin(), out_bytes.end()));
 
     real_s   real_number2;
     cbit_ref cbref(buffer);
-    TESTASSERT(real_number2.unpack(cbref) == 0);
+    ASSERT_TRUE(real_number2.unpack(cbref) == 0);
     if (std::isnan(real_number.value)) {
-      TESTASSERT(std::isnan(real_number2.value));
+      ASSERT_TRUE(std::isnan(real_number2.value));
     }
     if (std::isinf(real_number.value) && real_number.value < 0) {
-      TESTASSERT(std::isinf(real_number2.value) && (real_number2.value < 0));
+      ASSERT_TRUE(std::isinf(real_number2.value) && (real_number2.value < 0));
     }
     if (std::isinf(real_number.value) && real_number.value > 0) {
-      TESTASSERT(std::isinf(real_number2.value) && (real_number2.value > 0));
+      ASSERT_TRUE(std::isinf(real_number2.value) && (real_number2.value > 0));
     }
   }
 }
@@ -772,8 +771,8 @@ TEST(asn1_real_test, real_positive_number_pack_unpack)
 
     ocudu::byte_buffer buffer;
     bit_ref            bref(buffer);
-    TESTASSERT(real_number.pack(bref) == 0);
-    TESTASSERT(std::equal(buffer.begin(), buffer.end(), out_bytes.begin(), out_bytes.end()));
+    ASSERT_TRUE(real_number.pack(bref) == 0);
+    ASSERT_TRUE(std::equal(buffer.begin(), buffer.end(), out_bytes.begin(), out_bytes.end()));
 
     int8_t   S = ((out_bytes[1] >> 6) & 0x1) ? -1 : 1;
     int8_t   E = static_cast<int8_t>(out_bytes[2]);
@@ -782,12 +781,12 @@ TEST(asn1_real_test, real_positive_number_pack_unpack)
       N = (N << 8) | out_bytes[j];
     }
     float val = static_cast<float>(1.0 * S * N * std::pow(2, E));
-    TESTASSERT(real_number.value == val);
+    ASSERT_TRUE(real_number.value == val);
 
     real_s   real_number2;
     cbit_ref cbref(buffer);
-    TESTASSERT(real_number2.unpack(cbref) == 0);
-    TESTASSERT(real_number.value == real_number2.value);
+    ASSERT_TRUE(real_number2.unpack(cbref) == 0);
+    ASSERT_TRUE(real_number.value == real_number2.value);
   }
 }
 
@@ -810,8 +809,8 @@ TEST(asn1_real_test, real_negative_number_pack_unpack)
 
     ocudu::byte_buffer buffer;
     bit_ref            bref(buffer);
-    TESTASSERT(real_number.pack(bref) == 0);
-    TESTASSERT(std::equal(buffer.begin(), buffer.end(), out_bytes.begin(), out_bytes.end()));
+    ASSERT_TRUE(real_number.pack(bref) == 0);
+    ASSERT_TRUE(std::equal(buffer.begin(), buffer.end(), out_bytes.begin(), out_bytes.end()));
 
     int8_t   S = ((out_bytes[1] >> 6) & 0x1) ? -1 : 1;
     int8_t   E = static_cast<int8_t>(out_bytes[2]);
@@ -820,12 +819,12 @@ TEST(asn1_real_test, real_negative_number_pack_unpack)
       N = (N << 8) | out_bytes[j];
     }
     float val = static_cast<float>(1.0 * S * N * std::pow(2, E));
-    TESTASSERT(real_number.value == val);
+    ASSERT_TRUE(real_number.value == val);
 
     real_s   real_number2;
     cbit_ref cbref(buffer);
-    TESTASSERT(real_number2.unpack(cbref) == 0);
-    TESTASSERT(real_number.value == real_number2.value);
+    ASSERT_TRUE(real_number2.unpack(cbref) == 0);
+    ASSERT_TRUE(real_number.value == real_number2.value);
   }
 }
 
@@ -883,7 +882,7 @@ int main(int argc, char** argv)
   // Start the log backend.
   ocudulog::init();
 
-  //  TESTASSERT(test_json_writer()==0);
+  //  ASSERT_TRUE(test_json_writer()==0);
 
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

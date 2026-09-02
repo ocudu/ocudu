@@ -11,7 +11,7 @@
 #include "ocudu/phy/upper/channel_processors/pdsch/factories.h"
 #include "ocudu/phy/upper/channel_processors/pdsch/pdsch_encoder.h"
 #include "ocudu/ran/sch/tbs_calculator.h"
-#include "ocudu/support/ocudu_test.h"
+#include "ocudu/support/error_handling.h"
 #ifdef DPDK_FOUND
 #include "ocudu/hal/dpdk/bbdev/bbdev_acc.h"
 #include "ocudu/hal/dpdk/bbdev/bbdev_acc_factory.h"
@@ -147,16 +147,16 @@ static int parse_args(int argc, char** argv)
 static std::shared_ptr<pdsch_encoder_factory> create_generic_pdsch_encoder_factory()
 {
   std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
-  TESTASSERT(crc_calc_factory);
+  report_fatal_error_if_not(crc_calc_factory, "crc_calc_factory");
 
   std::shared_ptr<ldpc_encoder_factory> ldpc_encoder_factory = create_ldpc_encoder_factory_sw("generic");
-  TESTASSERT(ldpc_encoder_factory);
+  report_fatal_error_if_not(ldpc_encoder_factory, "ldpc_encoder_factory");
 
   std::shared_ptr<ldpc_rate_matcher_factory> ldpc_rate_matcher_factory = create_ldpc_rate_matcher_factory_sw();
-  TESTASSERT(ldpc_rate_matcher_factory);
+  report_fatal_error_if_not(ldpc_rate_matcher_factory, "ldpc_rate_matcher_factory");
 
   std::shared_ptr<ldpc_segmenter_tx_factory> segmenter_factory = create_ldpc_segmenter_tx_factory_sw(crc_calc_factory);
-  TESTASSERT(segmenter_factory);
+  report_fatal_error_if_not(segmenter_factory, "segmenter_factory");
 
   pdsch_encoder_factory_sw_configuration encoder_factory_config;
   encoder_factory_config.encoder_factory      = ldpc_encoder_factory;
@@ -179,7 +179,7 @@ static std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> create_hw_accelera
   static std::unique_ptr<dpdk::dpdk_eal> dpdk_interface = nullptr;
   if (!dpdk_interface) {
     dpdk_interface = dpdk::create_dpdk_eal(eal_arguments, logger);
-    TESTASSERT(dpdk_interface, "Failed to open DPDK EAL with arguments.");
+    report_fatal_error_if_not(dpdk_interface, "Failed to open DPDK EAL with arguments.");
   }
 
   // Intefacing to the bbdev-based hardware-accelerator.
@@ -190,7 +190,7 @@ static std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> create_hw_accelera
   bbdev_config.nof_fft_lcores                        = 0;
   bbdev_config.nof_mbuf                              = static_cast<unsigned>(pow2(log2_ceil(MAX_NOF_SEGMENTS)));
   std::shared_ptr<dpdk::bbdev_acc> bbdev_accelerator = create_bbdev_acc(bbdev_config, logger);
-  TESTASSERT(bbdev_accelerator);
+  report_fatal_error_if_not(bbdev_accelerator, "bbdev_accelerator");
 
   // Set the PDSCH encoder hardware-accelerator factory configuration for the ACC100.
   hal::bbdev_hwacc_pdsch_enc_factory_configuration hw_encoder_config;
@@ -210,13 +210,13 @@ static std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> create_hw_accelera
 static std::shared_ptr<pdsch_encoder_factory> create_acc100_pdsch_encoder_factory()
 {
   std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
-  TESTASSERT(crc_calc_factory);
+  report_fatal_error_if_not(crc_calc_factory, "crc_calc_factory");
 
   std::shared_ptr<ldpc_segmenter_tx_factory> segmenter_factory = create_ldpc_segmenter_tx_factory_sw(crc_calc_factory);
-  TESTASSERT(segmenter_factory);
+  report_fatal_error_if_not(segmenter_factory, "segmenter_factory");
 
   std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> hw_encoder_factory = create_hw_accelerator_pdsch_enc_factory();
-  TESTASSERT(hw_encoder_factory, "Failed to create a HW acceleration encoder factory.");
+  report_fatal_error_if_not(hw_encoder_factory, "Failed to create a HW acceleration encoder factory.");
 
   // Set the hardware-accelerated PDSCH encoder configuration.
   pdsch_encoder_factory_hw_configuration encoder_hw_factory_config;
@@ -313,19 +313,19 @@ int main(int argc, char** argv)
 
   // Create the generic PDSCH encoder against which to benchmark the hardware-accelerated PDSCH encoder.
   std::shared_ptr<pdsch_encoder_factory> gen_pdsch_enc_factory = create_pdsch_encoder_factory("generic");
-  TESTASSERT(gen_pdsch_enc_factory, "Failed to create PDSCH encoder factory of type {}.", "generic");
+  report_fatal_error_if_not(gen_pdsch_enc_factory, "Failed to create PDSCH encoder factory of type {}.", "generic");
 
   std::unique_ptr<pdsch_encoder> gen_encoder = gen_pdsch_enc_factory->create();
-  TESTASSERT(gen_encoder);
+  report_fatal_error_if_not(gen_encoder, "gen_encoder");
 
   // Create the hardware-accelerated PDSCH encoder.
   std::shared_ptr<pdsch_encoder_factory> hwacc_pdsch_enc_factory = create_pdsch_encoder_factory(hwacc_encoder_type);
-  TESTASSERT(hwacc_pdsch_enc_factory,
-             "Failed to create hardware-accelerated PDSCH encoder factory of type {}.",
-             hwacc_encoder_type);
+  report_fatal_error_if_not(hwacc_pdsch_enc_factory,
+                            "Failed to create hardware-accelerated PDSCH encoder factory of type {}.",
+                            hwacc_encoder_type);
 
   std::unique_ptr<pdsch_encoder> hwacc_encoder = hwacc_pdsch_enc_factory->create();
-  TESTASSERT(hwacc_encoder);
+  report_fatal_error_if_not(hwacc_encoder, "hwacc_encoder");
 
   // Generate the test cases.
   std::vector<test_case_type> test_case_set = generate_test_cases(selected_profile);

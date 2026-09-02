@@ -7,7 +7,7 @@
 #include "ocudu/phy/upper/signal_processors/pdsch/dmrs_pdsch_processor.h"
 #include "ocudu/phy/upper/signal_processors/pdsch/factories.h"
 #include "ocudu/support/benchmark_utils.h"
-#include "ocudu/support/ocudu_test.h"
+#include "ocudu/support/error_handling.h"
 #include <getopt.h>
 #include <random>
 
@@ -62,9 +62,9 @@ static void parse_args(int argc, char** argv)
 static std::unique_ptr<resource_grid> create_resource_grid(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc)
 {
   std::shared_ptr<channel_precoder_factory> precoding_factory = create_channel_precoder_factory("auto");
-  TESTASSERT(precoding_factory != nullptr, "Invalid channel precoder factory.");
+  report_fatal_error_if_not(precoding_factory != nullptr, "Invalid channel precoder factory.");
   std::shared_ptr<resource_grid_factory> rg_factory = create_resource_grid_factory();
-  TESTASSERT(rg_factory != nullptr, "Invalid resource grid factory.");
+  report_fatal_error_if_not(rg_factory != nullptr, "Invalid resource grid factory.");
 
   return rg_factory->create(nof_ports, nof_symbols, nof_subc);
 }
@@ -75,21 +75,21 @@ int main(int argc, char** argv)
 
   // Create pseudo-random sequence generator.
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
-  TESTASSERT(prg_factory);
+  report_fatal_error_if_not(prg_factory, "prg_factory");
 
   std::shared_ptr<channel_precoder_factory> precoding_factory = create_channel_precoder_factory("auto");
-  TESTASSERT(precoding_factory);
+  report_fatal_error_if_not(precoding_factory, "precoding_factory");
 
   std::shared_ptr<resource_grid_mapper_factory> rg_mapper_factory =
       create_resource_grid_mapper_factory(precoding_factory);
-  TESTASSERT(rg_mapper_factory);
+  report_fatal_error_if_not(rg_mapper_factory, "rg_mapper_factory");
 
   std::shared_ptr<dmrs_pdsch_processor_factory> dmrs_pdsch_proc_factory =
       create_dmrs_pdsch_processor_factory_sw(prg_factory, rg_mapper_factory);
-  TESTASSERT(dmrs_pdsch_proc_factory);
+  report_fatal_error_if_not(dmrs_pdsch_proc_factory, "dmrs_pdsch_proc_factory");
 
   std::unique_ptr<dmrs_pdsch_processor> dmrs_proc = dmrs_pdsch_proc_factory->create();
-  TESTASSERT(dmrs_proc);
+  report_fatal_error_if_not(dmrs_proc, "dmrs_proc");
 
   // Precoding weight distribution.
   std::uniform_real_distribution<float> weight_dist(-1.0F, 1.0F);
@@ -99,7 +99,7 @@ int main(int argc, char** argv)
   for (auto topology : channel_topology_list) {
     std::unique_ptr<resource_grid> grid =
         create_resource_grid(topology.nof_ports, MAX_NSYMB_PER_SLOT, MAX_NOF_SUBCARRIERS);
-    TESTASSERT(grid);
+    report_fatal_error_if_not(grid, "grid");
 
     // Generate precoding weights.
     precoding_weight_matrix weights(topology.nof_layers, topology.nof_ports);

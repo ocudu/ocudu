@@ -3,7 +3,6 @@
 
 #include "ocudu/adt/format.h"
 #include "ocudu/ocuduvec/sc_prod.h"
-#include "ocudu/support/ocudu_test.h"
 #include <gtest/gtest.h>
 #include <random>
 

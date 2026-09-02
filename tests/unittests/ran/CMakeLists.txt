@@ -42,8 +42,8 @@ target_link_libraries(dci_packing_validator_test ocudu_support ocudu_ran GTest::
 add_test(dci_packing_validator_test dci_packing_validator_test)
 
 add_executable(pdcch_type0_css_coreset_config_test pdcch/pdcch_type0_css_coreset_config_test.cpp)
-target_link_libraries(pdcch_type0_css_coreset_config_test ocudu_ran ocudulog)
-add_test(pdcch_type0_css_coreset_config_test pdcch_type0_css_coreset_config_test)
+target_link_libraries(pdcch_type0_css_coreset_config_test ocudu_ran ocudulog GTest::gtest ocudu_gtest_main)
+gtest_discover_tests(pdcch_type0_css_coreset_config_test)
 
 add_executable(pdsch_dmrs_symbol_mask_test pdsch/pdsch_dmrs_symbol_mask_test.cpp)
 target_link_libraries(pdsch_dmrs_symbol_mask_test ocudu_ran ocudulog GTest::gtest ocudu_gtest_main)
@@ -94,8 +94,8 @@ target_link_libraries(pusch_precoding_info_test ocudu_ran ocudulog GTest::gtest 
 add_test(pusch_precoding_info_test pusch_precoding_info_test)
 
 add_executable(resource_allocation_frequency_test resource_allocation/resource_allocation_frequency_test.cpp)
-target_link_libraries(resource_allocation_frequency_test ocudu_support ocudu_ran)
-add_test(resource_allocation_frequency_test resource_allocation_frequency_test)
+target_link_libraries(resource_allocation_frequency_test ocudu_support ocudu_ran GTest::gtest ocudu_gtest_main)
+gtest_discover_tests(resource_allocation_frequency_test)
 
 add_executable(vrb_to_prb_test resource_allocation/vrb_to_prb_test.cpp)
 target_link_libraries(vrb_to_prb_test ocudu_ran ocudulog GTest::gtest ocudu_gtest_main)
@@ -106,8 +106,8 @@ target_link_libraries(uci_part2_size_calculator_test ocudu_support ocudu_ran ocu
 add_test(uci_part2_size_calculator_test uci_part2_size_calculator_test)
 
 add_executable(slot_point_test slot_point_test.cpp)
-target_link_libraries(slot_point_test ocudu_support)
-add_test(slot_point_test slot_point_test)
+target_link_libraries(slot_point_test ocudu_support GTest::gtest ocudu_gtest_main)
+gtest_discover_tests(slot_point_test)
 
 add_executable(band_helper_test band_helper_test.cpp)
 target_link_libraries(band_helper_test ocudu_ran ocudulog GTest::gtest ocudu_gtest_main)
@@ -119,8 +119,8 @@ target_link_libraries(ssb_gscn_test ocudu_ran GTest::gtest ocudu_gtest_main)
 add_test(ssb_gscn_test ssb_gscn_test)
 
 add_executable(ssb_mapping_test ssb_mapping_test.cpp)
-target_link_libraries(ssb_mapping_test ocudu_ran ocudulog)
-add_test(ssb_mapping_test ssb_mapping_test)
+target_link_libraries(ssb_mapping_test ocudu_ran ocudulog GTest::gtest ocudu_gtest_main)
+gtest_discover_tests(ssb_mapping_test)
 
 add_executable(srs_bandwidth_configuration_test srs/srs_bandwidth_configuration_test.cpp)
 target_link_libraries(srs_bandwidth_configuration_test ocudu_ran ocudulog GTest::gtest ocudu_gtest_main)

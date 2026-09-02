@@ -14,7 +14,6 @@
 #include "ocudu/scheduler/config/scheduler_ue_config_validator.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
 #include "ocudu/scheduler/scheduler_configurator.h"
-#include "ocudu/support/ocudu_test.h"
 #include "fmt/std.h"
 #include <gtest/gtest.h>
 #include <unordered_map>
@@ -529,11 +528,11 @@ TEST(pdcch_resource_allocator_test, monitoring_period)
 
           if (expected_result[i]) {
             // Inside PDCCH monitoring window.
-            TESTASSERT(pdcch != nullptr);
-            TESTASSERT(pdcch->ctx.rnti == ra_rnti);
+            ASSERT_TRUE(pdcch != nullptr);
+            ASSERT_TRUE(pdcch->ctx.rnti == ra_rnti);
           } else {
             // Outside PDCCH monitoring window.
-            TESTASSERT(pdcch == nullptr);
+            ASSERT_TRUE(pdcch == nullptr);
           }
 
           sl_tx++;

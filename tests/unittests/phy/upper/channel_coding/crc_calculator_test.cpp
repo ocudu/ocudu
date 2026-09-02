@@ -5,7 +5,6 @@
 #include "ocudu/adt/to_array.h"
 #include "ocudu/phy/upper/channel_coding/channel_coding_factories.h"
 #include "ocudu/support/cpu_features.h"
-#include "ocudu/support/ocudu_test.h"
 #include "fmt/ostream.h"
 #include <functional>
 #include <getopt.h>

@@ -7,6 +7,7 @@
 #include "ocudu/support/async/eager_async_task.h"
 #include "ocudu/support/async/manual_event.h"
 #include "ocudu/support/test_utils.h"
+#include <gtest/gtest.h>
 
 using namespace ocudu;
 
@@ -60,7 +61,7 @@ public:
 //////////////////////////////////////////////// TESTS ///////////////////////////////////////////////////////////
 
 /// Test that an eager_async_task starts automatically.
-void test_eager_task_start()
+TEST(async_task_test, eager_task_start)
 {
   int                   value = 2;
   eager_async_task<int> t     = launch_async([&value](coro_context<eager_async_task<int>>& ctx) mutable {
@@ -68,12 +69,12 @@ void test_eager_task_start()
     value += 4;
     CORO_RETURN(value * 2);
   });
-  TESTASSERT_EQ(6, value);
-  TESTASSERT(t.ready());
+  ASSERT_EQ(6, value);
+  ASSERT_TRUE(t.ready());
 }
 
 /// Test that a async_task starts lazily.
-void test_lazy_task_start()
+TEST(async_task_test, lazy_task_start)
 {
   int             value = 2;
   async_task<int> t     = launch_async([&value](coro_context<async_task<int>>& ctx) mutable {
@@ -83,7 +84,7 @@ void test_lazy_task_start()
   });
 
   // STATUS: The lazy coroutine is not started because is still not being awaited.
-  TESTASSERT_EQ(2, value);
+  ASSERT_EQ(2, value);
 
   // Action: Start an eager passthrough coroutine that awaits on the lazy coroutine.
   eager_async_task<int> t2 = launch_async([&t](coro_context<eager_async_task<int>>& ctx) {
@@ -93,11 +94,11 @@ void test_lazy_task_start()
   });
 
   // STATUS: The lazy coroutine runs to completion.
-  TESTASSERT_EQ(6, value);
-  TESTASSERT(t.ready());
-  TESTASSERT_EQ(12, t.get());
-  TESTASSERT(t2.ready());
-  TESTASSERT_EQ(13, t2.get());
+  ASSERT_EQ(6, value);
+  ASSERT_TRUE(t.ready());
+  ASSERT_EQ(12, t.get());
+  ASSERT_TRUE(t2.ready());
+  ASSERT_EQ(13, t2.get());
 }
 
 /// Tests for chaining of multiple async tasks
@@ -114,13 +115,13 @@ void run_impl(TaskFactory&& launch_passthrough_task)
   lazy_task_launcher<int> launcher(task3);
 
   // Status: While event is not set, the result is not propagated in the chain.
-  TESTASSERT(not task3.ready());
-  TESTASSERT(not task.ready());
+  ASSERT_TRUE(not task3.ready());
+  ASSERT_TRUE(not task.ready());
 
   event.set(3);
-  TESTASSERT(task.ready());
-  TESTASSERT(task3.ready());
-  TESTASSERT_EQ(3, task3.get());
+  ASSERT_TRUE(task.ready());
+  ASSERT_TRUE(task3.ready());
+  ASSERT_EQ(3, task3.get());
 }
 
 /// Runs test with object-based, lambda-based async tasks and procedures.
@@ -162,13 +163,13 @@ void run_lambda()
       CORO_AWAIT_VALUE(int obj, t);
       CORO_RETURN(obj);
     });
-    TESTASSERT(not ev.is_set());
-    TESTASSERT(not t.ready());
+    ASSERT_TRUE(not ev.is_set());
+    ASSERT_TRUE(not t.ready());
     // tasks are suspended
 
     // Event and tasks get cancelled and destroyed here.
   }
-  TESTASSERT_EQ(0, moveonly_test_object::object_count());
+  ASSERT_EQ(0, moveonly_test_object::object_count());
 }
 
 class proc_cleanup_first final : public async_procedure<int>
@@ -192,13 +193,13 @@ void run_async_procedure()
     async_task<int>         t  = launch_async<proc_cleanup_first>(ev, std::move(to_destroy));
     async_task<int>         t2 = launch_async<passthrough_async_procedure>(t);
     lazy_task_launcher<int> t3(t2);
-    TESTASSERT(not ev.is_set());
-    TESTASSERT(not t.ready());
+    ASSERT_TRUE(not ev.is_set());
+    ASSERT_TRUE(not t.ready());
     // tasks are suspended
 
     // Event and tasks get cancelled and destroyed here.
   }
-  TESTASSERT_EQ(0, moveonly_test_object::object_count());
+  ASSERT_EQ(0, moveonly_test_object::object_count());
 }
 
 void run()
@@ -209,10 +210,12 @@ void run()
 
 } // namespace task_cleanup
 
-int main()
+TEST(async_task_test, task_chaining)
 {
-  test_eager_task_start();
-  test_lazy_task_start();
   task_chaining_test::run();
+}
+
+TEST(async_task_test, task_cleanup)
+{
   task_cleanup::run();
 }

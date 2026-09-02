@@ -10,9 +10,9 @@
 #include "ocudu/phy/upper/channel_processors/pucch/factories.h"
 #include "ocudu/ran/pucch/pucch_constants.h"
 #include "ocudu/support/benchmark_utils.h"
+#include "ocudu/support/error_handling.h"
 #include "ocudu/support/executors/unique_thread.h"
 #include "ocudu/support/math/complex_normal_random.h"
-#include "ocudu/support/ocudu_test.h"
 #include <getopt.h>
 #include <random>
 #include <thread>
@@ -290,68 +290,68 @@ static pucch_processor_factory& get_pucch_processor_factory()
 
   // Create factories required by the PUCCH demodulator factory.
   std::shared_ptr<channel_equalizer_factory> equalizer_factory = create_channel_equalizer_generic_factory();
-  TESTASSERT(equalizer_factory);
+  report_fatal_error_if_not(equalizer_factory, "equalizer_factory");
 
   std::shared_ptr<demodulation_mapper_factory> demod_factory = create_demodulation_mapper_factory();
-  TESTASSERT(demod_factory);
+  report_fatal_error_if_not(demod_factory, "demod_factory");
 
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
-  TESTASSERT(prg_factory);
+  report_fatal_error_if_not(prg_factory, "prg_factory");
 
   std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw_slow();
-  TESTASSERT(dft_factory);
+  report_fatal_error_if_not(dft_factory, "dft_factory");
 
   std::shared_ptr<transform_precoder_factory> precoding_factory =
       create_dft_transform_precoder_factory(dft_factory, pucch_constants::f3::MAX_NOF_RBS + 1);
-  TESTASSERT(precoding_factory);
+  report_fatal_error_if_not(precoding_factory, "precoding_factory");
 
   // Create PUCCH demodulator factory.
   std::shared_ptr<pucch_demodulator_factory> pucch_demod_factory =
       create_pucch_demodulator_factory_sw(equalizer_factory, demod_factory, prg_factory, precoding_factory);
-  TESTASSERT(pucch_demod_factory);
+  report_fatal_error_if_not(pucch_demod_factory, "pucch_demod_factory");
 
   // Create factories required by the PUCCH channel estimator factory.
   std::shared_ptr<low_papr_sequence_generator_factory> lpg_factory = create_low_papr_sequence_generator_sw_factory();
-  TESTASSERT(lpg_factory);
+  report_fatal_error_if_not(lpg_factory, "lpg_factory");
 
   std::shared_ptr<low_papr_sequence_collection_factory> lpc_factory =
       create_low_papr_sequence_collection_sw_factory(lpg_factory);
-  TESTASSERT(lpc_factory);
+  report_fatal_error_if_not(lpc_factory, "lpc_factory");
 
   std::shared_ptr<time_alignment_estimator_factory> ta_estimator_factory =
       create_time_alignment_estimator_dft_factory(dft_factory);
-  TESTASSERT(ta_estimator_factory);
+  report_fatal_error_if_not(ta_estimator_factory, "ta_estimator_factory");
 
   // Create channel estimator factory.
   std::shared_ptr<port_channel_estimator_factory> port_chan_estimator_factory =
       create_port_channel_estimator_factory_sw(ta_estimator_factory);
-  TESTASSERT(port_chan_estimator_factory);
+  report_fatal_error_if_not(port_chan_estimator_factory, "port_chan_estimator_factory");
 
   std::shared_ptr<dmrs_pucch_estimator_factory> estimator_factory =
       create_dmrs_pucch_estimator_factory_sw(prg_factory, lpc_factory, lpg_factory, port_chan_estimator_factory);
-  TESTASSERT(estimator_factory);
+  report_fatal_error_if_not(estimator_factory, "estimator_factory");
 
   // Create PUCCH detector factory.
   std::shared_ptr<pucch_detector_factory> detector_factory =
       create_pucch_detector_factory_sw(lpc_factory, prg_factory, equalizer_factory, dft_factory);
-  TESTASSERT(detector_factory);
+  report_fatal_error_if_not(detector_factory, "detector_factory");
 
   // Create short block detector factory.
   std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
-  TESTASSERT(short_block_det_factory);
+  report_fatal_error_if_not(short_block_det_factory, "short_block_det_factory");
 
   // Create polar decoder factory.
   std::shared_ptr<polar_factory> polar_dec_factory = create_polar_factory_sw();
-  TESTASSERT(polar_dec_factory);
+  report_fatal_error_if_not(polar_dec_factory, "polar_dec_factory");
 
   // Create CRC calculator factory.
   std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
-  TESTASSERT(crc_calc_factory);
+  report_fatal_error_if_not(crc_calc_factory, "crc_calc_factory");
 
   // Create UCI decoder factory.
   std::shared_ptr<uci_decoder_factory> uci_dec_factory =
       create_uci_decoder_factory_generic(short_block_det_factory, polar_dec_factory, crc_calc_factory);
-  TESTASSERT(uci_dec_factory);
+  report_fatal_error_if_not(uci_dec_factory, "uci_dec_factory");
 
   // Create PUCCH processor factory.
   channel_estimate::channel_estimate_dimensions max_dimensions = {.nof_prb       = bwp_size_rb,
@@ -360,11 +360,11 @@ static pucch_processor_factory& get_pucch_processor_factory()
                                                                   .nof_tx_layers = pucch_constants::NOF_LAYERS};
   pucch_proc_factory                                           = create_pucch_processor_factory_sw(
       estimator_factory, detector_factory, pucch_demod_factory, uci_dec_factory, max_dimensions);
-  TESTASSERT(pucch_proc_factory);
+  report_fatal_error_if_not(pucch_proc_factory, "pucch_proc_factory");
 
   if (nof_threads > 1) {
     pucch_proc_factory = create_pucch_processor_pool_factory(std::move(pucch_proc_factory), nof_threads);
-    TESTASSERT(pucch_proc_factory);
+    report_fatal_error_if_not(pucch_proc_factory, "pucch_proc_factory");
   }
 
   return *pucch_proc_factory;
@@ -377,11 +377,11 @@ static std::tuple<std::unique_ptr<pucch_processor>, std::unique_ptr<pucch_pdu_va
 
   // Create pucch processor.
   std::unique_ptr<pucch_processor> processor = pucch_proc_factory.create();
-  TESTASSERT(processor);
+  report_fatal_error_if_not(processor, "processor");
 
   // Create pucch processor validator.
   std::unique_ptr<pucch_pdu_validator> validator = pucch_proc_factory.create_validator();
-  TESTASSERT(validator);
+  report_fatal_error_if_not(validator, "validator");
 
   return std::make_tuple(std::move(processor), std::move(validator));
 }
@@ -434,7 +434,7 @@ static void thread_process(pucch_processor& proc, const pucch_configuration& con
 static std::unique_ptr<resource_grid> create_resource_grid(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc)
 {
   std::shared_ptr<resource_grid_factory> rg_factory = create_resource_grid_factory();
-  TESTASSERT(rg_factory != nullptr, "Invalid resource grid factory.");
+  report_fatal_error_if_not(rg_factory != nullptr, "Invalid resource grid factory.");
 
   return rg_factory->create(nof_ports, nof_symbols, nof_subc);
 }
@@ -463,7 +463,7 @@ int main(int argc, char** argv)
   // Create resource grid.
   std::unique_ptr<resource_grid> grid =
       create_resource_grid(max_nof_ports, get_nsymb_per_slot(cy_prefix), NOF_SUBCARRIERS_PER_RB * bwp_size_rb);
-  TESTASSERT(grid);
+  report_fatal_error_if_not(grid, "grid");
 
   // Standard complex normal distribution with zero mean.
   complex_normal_distribution<cf_t> c_normal_dist = {};
@@ -494,15 +494,15 @@ int main(int argc, char** argv)
 
     // Make sure the configuration is valid.
     if (auto pucch0 = get_config<pucch_processor::format0_configuration>(config)) {
-      TESTASSERT(validator->is_valid(*pucch0));
+      report_fatal_error_if_not(validator->is_valid(*pucch0), "validator->is_valid(*pucch0)");
     } else if (auto pucch1 = get_config<pucch_processor::format1_configuration>(config)) {
-      TESTASSERT(validator->is_valid(*pucch1));
+      report_fatal_error_if_not(validator->is_valid(*pucch1), "validator->is_valid(*pucch1)");
     } else if (auto pucch2 = get_config<pucch_processor::format2_configuration>(config)) {
-      TESTASSERT(validator->is_valid(*pucch2));
+      report_fatal_error_if_not(validator->is_valid(*pucch2), "validator->is_valid(*pucch2)");
     } else if (auto pucch3 = get_config<pucch_processor::format3_configuration>(config)) {
-      TESTASSERT(validator->is_valid(*pucch3));
+      report_fatal_error_if_not(validator->is_valid(*pucch3), "validator->is_valid(*pucch3)");
     } else if (auto pucch4 = get_config<pucch_processor::format4_configuration>(config)) {
-      TESTASSERT(validator->is_valid(*pucch4));
+      report_fatal_error_if_not(validator->is_valid(*pucch4), "validator->is_valid(*pucch4)");
     }
 
     // Reset finish counter.

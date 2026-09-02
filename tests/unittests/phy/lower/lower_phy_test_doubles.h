@@ -70,7 +70,7 @@ public:
   ///
   /// A use case to ensure no event happened:
   /// \code
-  /// TESTASSERT_EQ(0, error_notifier.get_nof_errors());
+  /// EXPECT_EQ(0, error_notifier.get_nof_errors());
   /// \endcode
   ///
   /// \return The total number of events that have been registered.
@@ -151,7 +151,7 @@ public:
   ///
   /// A use case to ensure no event happened:
   /// \code
-  /// TESTASSERT_EQ(0, rx_symbol_notifier.get_nof_events());
+  /// EXPECT_EQ(0, rx_symbol_notifier.get_nof_events());
   /// \endcode
   ///
   /// \return The total number of events that have been registered.
@@ -210,7 +210,7 @@ public:
   ///
   /// A use case to ensure no event happened:
   /// \code
-  /// TESTASSERT_EQ(0, timing_notifier.get_nof_events());
+  /// EXPECT_EQ(0, timing_notifier.get_nof_events());
   /// \endcode
   ///
   /// \return The total number of events that have been registered.

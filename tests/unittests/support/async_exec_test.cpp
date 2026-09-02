@@ -6,12 +6,13 @@
 #include "ocudu/support/executors/blocking_task_worker.h"
 #include "ocudu/support/executors/task_worker.h"
 #include "ocudu/support/test_utils.h"
+#include <gtest/gtest.h>
 
 using namespace ocudu;
 
 /// In this test, we keep hopping between workers. In each worker we increment an unprotected integer, and print
 /// Given that the access to the integer is sequential, we dont need mutexes.
-void test_move_exec_context()
+TEST(async_exec_test, move_exec_context)
 {
   test_delimit_logger delimiter{"Switch Execution Context"};
 
@@ -41,12 +42,12 @@ void test_move_exec_context()
       });
 
   worker0.run();
-  TESTASSERT_EQ(4, count);
+  ASSERT_EQ(4, count);
 }
 
 /// In this test, we verify the correctness of the task offloader. An awaitable that runs a task in another
 /// execution context and resumes back in the original execution context
-void test_offload_exec()
+TEST(async_exec_test, offload_exec)
 {
   test_delimit_logger delimiter{"Offload Execution Context"};
 
@@ -75,11 +76,5 @@ void test_offload_exec()
       });
 
   worker0.run();
-  TESTASSERT_EQ(6, count);
-}
-
-int main()
-{
-  test_move_exec_context();
-  test_offload_exec();
+  ASSERT_EQ(6, count);
 }

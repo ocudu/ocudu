@@ -8,7 +8,7 @@
 #include "ocudu/phy/upper/channel_coding/channel_coding_factories.h"
 #include "ocudu/phy/upper/channel_coding/ldpc/ldpc_encoder_buffer.h"
 #include "ocudu/support/benchmark_utils.h"
-#include "ocudu/support/ocudu_test.h"
+#include "ocudu/support/error_handling.h"
 #include <getopt.h>
 #include <random>
 
@@ -91,20 +91,20 @@ int main(int argc, char** argv)
       std::unique_ptr<ldpc_encoder>   encoder = nullptr;
       // Decoder.
       std::shared_ptr<ldpc_decoder_factory> decoder_factory = create_ldpc_decoder_factory_sw(dec_type, ldpc_dec_cfg);
-      TESTASSERT(decoder_factory);
+      report_fatal_error_if_not(decoder_factory, "decoder_factory");
       std::unique_ptr<ldpc_decoder> decoder = decoder_factory->create();
-      TESTASSERT(decoder);
+      report_fatal_error_if_not(decoder, "decoder");
 
       if (use_crc) {
         // Encoder.
         std::shared_ptr<ldpc_encoder_factory> enc_factory = create_ldpc_encoder_factory_sw("auto");
-        TESTASSERT(enc_factory);
+        report_fatal_error_if_not(enc_factory, "enc_factory");
         encoder = enc_factory->create();
-        TESTASSERT(encoder);
+        report_fatal_error_if_not(encoder, "encoder");
         // CRC.
         std::shared_ptr<crc_calculator_factory> crc_factory = create_crc_calculator_factory_sw("auto");
         crc16                                               = crc_factory->create(crc_generator_poly::CRC16);
-        TESTASSERT(crc16);
+        report_fatal_error_if_not(crc16, "crc16");
       }
 
       // Set base-graph message and codeblock lengths.

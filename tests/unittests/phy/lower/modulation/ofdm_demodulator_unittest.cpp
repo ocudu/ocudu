@@ -11,12 +11,12 @@
 #include "ocudu/ocuduvec/sc_prod.h"
 #include "ocudu/phy/antenna_ports.h"
 #include "ocudu/phy/lower/modulation/modulation_factories.h"
-#include "ocudu/support/test_utils.h"
+#include <gtest/gtest.h>
 #include <random>
 
 using namespace ocudu;
 
-int main()
+TEST(ofdm_demodulator_unittest, demodulate)
 {
   std::mt19937                            rgen(0);
   std::uniform_real_distribution<float>   dist_rg(-1, 1);
@@ -24,13 +24,13 @@ int main()
 
   // Create DFT factory spy.
   std::shared_ptr<dft_processor_factory_spy> dft_factory = std::make_shared<dft_processor_factory_spy>();
-  TESTASSERT(dft_factory);
+  ASSERT_TRUE(dft_factory);
 
   // Create OFDM demodulator factory.
   ofdm_factory_generic_configuration ofdm_common_config;
   ofdm_common_config.dft_factory                         = dft_factory;
   std::shared_ptr<ofdm_demodulator_factory> ofdm_factory = create_ofdm_demodulator_factory_generic(ofdm_common_config);
-  TESTASSERT(ofdm_factory);
+  ASSERT_TRUE(ofdm_factory);
 
   // Iterate all possible numerologies.
   for (subcarrier_spacing scs : {subcarrier_spacing::kHz15,
@@ -76,13 +76,13 @@ int main()
 
         // Create OFDM demodulator.
         std::unique_ptr<ofdm_slot_demodulator> ofdm = ofdm_factory->create_ofdm_slot_demodulator(ofdm_config);
-        TESTASSERT(ofdm != nullptr);
+        ASSERT_TRUE(ofdm != nullptr);
 
         // Check is a DFT processor is created and not used.
         auto& dft_processor_factory_entry = dft_factory->get_entries();
-        TESTASSERT(dft_processor_factory_entry.size() == 1);
+        ASSERT_TRUE(dft_processor_factory_entry.size() == 1);
         dft_processor_spy& dft = *dft_processor_factory_entry[0].dft;
-        TESTASSERT(dft.get_entries().empty());
+        ASSERT_TRUE(dft.get_entries().empty());
 
         // Iterate all slots within a subframe.
         for (unsigned slot_idx = 0, nslot = get_nof_slots_per_subframe(scs); slot_idx != nslot; ++slot_idx) {
@@ -111,7 +111,7 @@ int main()
           ofdm->demodulate(rg, time_data, port_idx, slot_idx);
 
           // Check the number of calls to DFT processor match with the number of symbols.
-          TESTASSERT(dft.get_entries().size() == nsymb);
+          ASSERT_TRUE(dft.get_entries().size() == nsymb);
 
           // Iterate all symbols.
           std::vector<resource_grid_writer_spy::expected_entry_t> expected_rg;
@@ -131,7 +131,7 @@ int main()
             // Verify DFT input.
             std::vector<cf_t> expected_dft_input(dft_size);
             ocuduvec::convert(expected_dft_input, time_data_symbol.last(dft_size), ocuduvec::scaling_factor_ci16_to_cf);
-            TESTASSERT(ocuduvec::equal(expected_dft_input, dft_input.first(dft_size)));
+            ASSERT_TRUE(ocuduvec::equal(expected_dft_input, dft_input.first(dft_size)));
 
             // Generate ideal frequency domain outputs.
             for (unsigned subc_idx = 0; subc_idx != nsubc; ++subc_idx) {
@@ -157,6 +157,4 @@ int main()
       }
     }
   }
-
-  return 0;
 }

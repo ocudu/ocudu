@@ -10,10 +10,10 @@
 #include "ocudu/ran/precoding/precoding_codebooks.h"
 #include "ocudu/ran/sch/tbs_calculator.h"
 #include "ocudu/support/benchmark_utils.h"
+#include "ocudu/support/error_handling.h"
 #include "ocudu/support/executors/task_worker_pool.h"
 #include "ocudu/support/math/math_utils.h"
 #include "ocudu/support/memory_pool/bounded_object_pool.h"
-#include "ocudu/support/ocudu_test.h"
 #include "ocudu/support/rtsan.h"
 #include "ocudu/support/tracing/event_tracing.h"
 #ifdef HWACC_PDSCH_ENABLED
@@ -598,7 +598,8 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
 
       // Adjust precoding for two codeword transmission.
       bool succ = adjust_precoding_for_two_codewords(precoding_config);
-      TESTASSERT(succ, "Could not adjust {}-layer precoding for two codewords.", precoding_config.get_nof_layers());
+      report_fatal_error_if_not(
+          succ, "Could not adjust {}-layer precoding for two codewords.", precoding_config.get_nof_layers());
 
       // Transmissions with more than four layers require time-domain OCC. This requires a double-symbol DM-RS, so a
       // front-loaded pair of adjacent DM-RS symbols is used in that case.
@@ -671,14 +672,14 @@ static std::shared_ptr<pdsch_encoder_factory>
 create_sw_pdsch_encoder_factory(std::shared_ptr<crc_calculator_factory> crc_calculator_factory)
 {
   std::shared_ptr<ldpc_encoder_factory> ldpc_encoder_factory = create_ldpc_encoder_factory_sw(ldpc_encoder_type);
-  TESTASSERT(ldpc_encoder_factory);
+  report_fatal_error_if_not(ldpc_encoder_factory, "ldpc_encoder_factory");
 
   std::shared_ptr<ldpc_rate_matcher_factory> ldpc_rate_matcher_factory = create_ldpc_rate_matcher_factory_sw();
-  TESTASSERT(ldpc_rate_matcher_factory);
+  report_fatal_error_if_not(ldpc_rate_matcher_factory, "ldpc_rate_matcher_factory");
 
   std::shared_ptr<ldpc_segmenter_tx_factory> segmenter_factory =
       create_ldpc_segmenter_tx_factory_sw(crc_calculator_factory);
-  TESTASSERT(segmenter_factory);
+  report_fatal_error_if_not(segmenter_factory, "segmenter_factory");
 
   pdsch_encoder_factory_sw_configuration encoder_factory_config;
   encoder_factory_config.encoder_factory      = ldpc_encoder_factory;
@@ -697,10 +698,10 @@ static std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> create_hw_accelera
   if (nof_pdsch_processor_concurrent_threads > 0) {
     nof_ldpc_enc_cores *= nof_pdsch_processor_concurrent_threads;
   }
-  TESTASSERT(nof_ldpc_enc_cores <= dpdk::MAX_NOF_BBDEV_VF_INSTANCES,
-             "Requested {} accelerated LDPC encoder functions, but only {} are supported.",
-             nof_ldpc_enc_cores,
-             dpdk::MAX_NOF_BBDEV_VF_INSTANCES);
+  report_fatal_error_if_not(nof_ldpc_enc_cores <= dpdk::MAX_NOF_BBDEV_VF_INSTANCES,
+                            "Requested {} accelerated LDPC encoder functions, but only {} are supported.",
+                            nof_ldpc_enc_cores,
+                            dpdk::MAX_NOF_BBDEV_VF_INSTANCES);
   dpdk::bbdev_acc_configuration bbdev_config;
   bbdev_config.id                                    = 0;
   bbdev_config.nof_ldpc_enc_lcores                   = nof_ldpc_enc_cores;
@@ -708,7 +709,7 @@ static std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> create_hw_accelera
   bbdev_config.nof_fft_lcores                        = 0;
   bbdev_config.nof_mbuf                              = static_cast<unsigned>(pow2(log2_ceil(MAX_NOF_SEGMENTS)));
   std::shared_ptr<dpdk::bbdev_acc> bbdev_accelerator = create_bbdev_acc(bbdev_config, logger);
-  TESTASSERT(bbdev_accelerator);
+  report_fatal_error_if_not(bbdev_accelerator, "bbdev_accelerator");
 
   // Set the PDSCH encoder hardware-accelerator factory configuration for the ACC100.
   hal::bbdev_hwacc_pdsch_enc_factory_configuration hw_encoder_config;
@@ -730,10 +731,10 @@ create_acc100_pdsch_encoder_factory(std::shared_ptr<crc_calculator_factory> crc_
 {
   std::shared_ptr<ldpc_segmenter_tx_factory> segmenter_factory =
       create_ldpc_segmenter_tx_factory_sw(crc_calculator_factory);
-  TESTASSERT(segmenter_factory);
+  report_fatal_error_if_not(segmenter_factory, "segmenter_factory");
 
   std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> hw_encoder_factory = create_hw_accelerator_pdsch_enc_factory();
-  TESTASSERT(hw_encoder_factory, "Failed to create a HW acceleration encoder factory.");
+  report_fatal_error_if_not(hw_encoder_factory, "Failed to create a HW acceleration encoder factory.");
 
   // Set the hardware-accelerated PDSCH encoder configuration.
   pdsch_encoder_factory_hw_configuration encoder_hw_factory_config;
@@ -763,68 +764,68 @@ static pdsch_processor_factory& get_processor_factory()
 
   // Create pseudo-random sequence generator.
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
-  TESTASSERT(prg_factory);
+  report_fatal_error_if_not(prg_factory, "prg_factory");
 
   // Create demodulator mapper factory.
   std::shared_ptr<modulation_mapper_factory> chan_modulation_factory = create_modulation_mapper_factory();
-  TESTASSERT(chan_modulation_factory);
+  report_fatal_error_if_not(chan_modulation_factory, "chan_modulation_factory");
 
   // Create CRC calculator factory.
   std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
-  TESTASSERT(crc_calc_factory);
+  report_fatal_error_if_not(crc_calc_factory, "crc_calc_factory");
 
   // Create LDPC encoder factory.
   std::shared_ptr<ldpc_encoder_factory> ldpc_enc_factory = create_ldpc_encoder_factory_sw(ldpc_encoder_type);
-  TESTASSERT(ldpc_enc_factory);
+  report_fatal_error_if_not(ldpc_enc_factory, "ldpc_enc_factory");
 
   // Create LDPC rate matcher factory.
   std::shared_ptr<ldpc_rate_matcher_factory> ldpc_rm_factory = create_ldpc_rate_matcher_factory_sw();
-  TESTASSERT(ldpc_rm_factory);
+  report_fatal_error_if_not(ldpc_rm_factory, "ldpc_rm_factory");
 
   // Create LDPC segmenter factory.
   std::shared_ptr<ldpc_segmenter_tx_factory> ldpc_segm_tx_factory =
       create_ldpc_segmenter_tx_factory_sw(crc_calc_factory);
-  TESTASSERT(ldpc_segm_tx_factory);
+  report_fatal_error_if_not(ldpc_segm_tx_factory, "ldpc_segm_tx_factory");
 
   // Create channel precoder factory.
   std::shared_ptr<channel_precoder_factory> precoding_factory = create_channel_precoder_factory("auto");
-  TESTASSERT(precoding_factory);
+  report_fatal_error_if_not(precoding_factory, "precoding_factory");
 
   // Create resource grid mapper factory.
   std::shared_ptr<resource_grid_mapper_factory> rg_mapper_factory =
       create_resource_grid_mapper_factory(precoding_factory);
-  TESTASSERT(rg_mapper_factory);
+  report_fatal_error_if_not(rg_mapper_factory, "rg_mapper_factory");
 
   // Create DM-RS for PDSCH channel estimator.
   std::shared_ptr<dmrs_pdsch_processor_factory> dmrs_pdsch_gen_factory =
       create_dmrs_pdsch_processor_factory_sw(prg_factory, rg_mapper_factory);
-  TESTASSERT(dmrs_pdsch_gen_factory);
+  report_fatal_error_if_not(dmrs_pdsch_gen_factory, "dmrs_pdsch_gen_factory");
 
   // Create PT-RS for PDSCH channel estimator.
   std::shared_ptr<ptrs_pdsch_generator_factory> ptrs_pdsch_gen_factory =
       create_ptrs_pdsch_generator_generic_factory(prg_factory, rg_mapper_factory);
-  TESTASSERT(ptrs_pdsch_gen_factory);
+  report_fatal_error_if_not(ptrs_pdsch_gen_factory, "ptrs_pdsch_gen_factory");
 
   // Create PDSCH demodulator factory.
   std::shared_ptr<pdsch_modulator_factory> pdsch_mod_factory =
       create_pdsch_modulator_factory_sw(chan_modulation_factory, prg_factory, rg_mapper_factory);
-  TESTASSERT(pdsch_mod_factory);
+  report_fatal_error_if_not(pdsch_mod_factory, "pdsch_mod_factory");
 
   std::shared_ptr<pdsch_encoder_factory>         pdsch_enc_factory;
   std::shared_ptr<pdsch_block_processor_factory> block_processor_factory;
   if (pdsch_processor_type == "generic") {
     // Create PDSCH encoder factory and generic PDSCH processor.
     pdsch_enc_factory = create_pdsch_encoder_factory(crc_calc_factory);
-    TESTASSERT(pdsch_enc_factory);
+    report_fatal_error_if_not(pdsch_enc_factory, "pdsch_enc_factory");
 
     pdsch_proc_factory = create_pdsch_processor_factory_sw(
         pdsch_enc_factory, pdsch_mod_factory, dmrs_pdsch_gen_factory, ptrs_pdsch_gen_factory);
-    TESTASSERT(pdsch_proc_factory);
+    report_fatal_error_if_not(pdsch_proc_factory, "pdsch_proc_factory");
 
     // When required create a synchronous PDSCH processor pool.
     if (nof_threads > 1) {
       pdsch_proc_factory = create_pdsch_processor_pool(std::move(pdsch_proc_factory), nof_threads);
-      TESTASSERT(pdsch_proc_factory);
+      report_fatal_error_if_not(pdsch_proc_factory, "pdsch_proc_factory");
     }
 
     return *pdsch_proc_factory;
@@ -837,12 +838,12 @@ static pdsch_processor_factory& get_processor_factory()
   } else {
     std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> hw_encoder_factory =
         create_hw_accelerator_pdsch_enc_factory();
-    TESTASSERT(hw_encoder_factory, "Failed to create a HW acceleration encoder factory.");
+    report_fatal_error_if_not(hw_encoder_factory, "Failed to create a HW acceleration encoder factory.");
 
     block_processor_factory =
         create_pdsch_block_processor_factory_hw(hw_encoder_factory, prg_factory, chan_modulation_factory);
   }
-  TESTASSERT(block_processor_factory, "Failed to create a PDSCH block processor factory.");
+  report_fatal_error_if_not(block_processor_factory, "Failed to create a PDSCH block processor factory.");
 
   // Create PDSCH concurrent pool for asynchronous codeblock processing.
   cb_worker_pool = std::make_unique<task_worker_pool<queue_policy>>(
@@ -869,7 +870,7 @@ static pdsch_processor_factory& get_processor_factory()
   // Wrap the PDSCH processor with a pool. It assumes that each thread will only spawn one PDSCH transmission.
   pdsch_proc_factory = create_pdsch_processor_pool(std::move(pdsch_proc_factory), nof_threads);
 
-  TESTASSERT(pdsch_proc_factory);
+  report_fatal_error_if_not(pdsch_proc_factory, "pdsch_proc_factory");
 
   return *pdsch_proc_factory;
 }
@@ -890,7 +891,7 @@ static std::unique_ptr<pdsch_processor> create_processor()
 static std::unique_ptr<resource_grid> create_resource_grid(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc)
 {
   std::shared_ptr<resource_grid_factory> rg_factory = create_resource_grid_factory();
-  TESTASSERT(rg_factory != nullptr, "Invalid resource grid factory.");
+  report_fatal_error_if_not(rg_factory != nullptr, "Invalid resource grid factory.");
 
   return rg_factory->create(nof_ports, nof_symbols, nof_subc);
 }
@@ -937,7 +938,7 @@ int main(int argc, char** argv)
     ocudulog::basic_logger& logger = ocudulog::fetch_basic_logger("EAL", false);
     logger.set_level(hal_log_level);
     dpdk_interface = dpdk::create_dpdk_eal(eal_arguments, logger);
-    TESTASSERT(dpdk_interface, "Failed to open DPDK EAL with arguments.");
+    report_fatal_error_if_not(dpdk_interface, "Failed to open DPDK EAL with arguments.");
   }
 #endif // HWACC_PDSCH_ENABLED
 
@@ -1009,7 +1010,7 @@ int main(int argc, char** argv)
 
     // Make sure the configuration is valid.
     error_type<std::string> validator_result = validator->is_valid(config);
-    TESTASSERT(validator_result.has_value(), "{}", validator_result.error());
+    report_fatal_error_if_not(validator_result.has_value(), "{}", validator_result.error());
 
     // Calculate the peak throughput, considering that the number of bits is for a slot.
     double slot_duration_us     = 1e3 / static_cast<double>(pow2(config.slot.numerology()));

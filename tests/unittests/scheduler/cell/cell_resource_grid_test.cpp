@@ -6,7 +6,6 @@
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "ocudu/scheduler/config/scheduler_expert_config_factory.h"
-#include "ocudu/support/ocudu_test.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -34,32 +33,32 @@ TEST(carrier_subslot_resource_grid_test, test_all)
   // Wideband Carrier, 15kHz case.
   {
     carrier_subslot_resource_grid carrier_grid(carrier_cfgs[0]);
-    TESTASSERT_EQ(fmt::underlying(subcarrier_spacing::kHz15), fmt::underlying(carrier_grid.scs()));
-    TESTASSERT_EQ(52, carrier_grid.nof_rbs());
-    TESTASSERT_EQ(0, carrier_grid.offset());
+    ASSERT_EQ(fmt::underlying(subcarrier_spacing::kHz15), fmt::underlying(carrier_grid.scs()));
+    ASSERT_EQ(52, carrier_grid.nof_rbs());
+    ASSERT_EQ(0, carrier_grid.offset());
     crb_interval lims{0, 52};
-    TESTASSERT(carrier_grid.rb_dims() == lims);
-    TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{0, 14}, lims));
-    TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{2, 5}, crb_interval{2, 5}));
-    TESTASSERT(not carrier_grid.all_set(ofdm_symbol_range{0, 14}, lims));
+    ASSERT_TRUE(carrier_grid.rb_dims() == lims);
+    ASSERT_TRUE(not carrier_grid.collides(ofdm_symbol_range{0, 14}, lims));
+    ASSERT_TRUE(not carrier_grid.collides(ofdm_symbol_range{2, 5}, crb_interval{2, 5}));
+    ASSERT_TRUE(not carrier_grid.all_set(ofdm_symbol_range{0, 14}, lims));
 
     carrier_grid.fill({2, 5}, crb_interval{2, 4});
-    TESTASSERT(carrier_grid.collides(ofdm_symbol_range{2, 3}, crb_interval{1, 3}));
-    TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{2, 3}, crb_interval{1, 2}));
-    TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{0, 1}, crb_interval{1, 3}));
-    TESTASSERT(carrier_grid.all_set(ofdm_symbol_range{2, 5}, crb_interval{2, 4}));
-    TESTASSERT(carrier_grid.all_set(ofdm_symbol_range{2, 4}, crb_interval{2, 3}));
-    TESTASSERT(carrier_grid.all_set(ofdm_symbol_range{3, 5}, crb_interval{3, 4}));
-    TESTASSERT(not carrier_grid.all_set(ofdm_symbol_range{1, 5}, crb_interval{1, 4}));
-    TESTASSERT(not carrier_grid.all_set(ofdm_symbol_range{2, 6}, crb_interval{2, 5}));
+    ASSERT_TRUE(carrier_grid.collides(ofdm_symbol_range{2, 3}, crb_interval{1, 3}));
+    ASSERT_TRUE(not carrier_grid.collides(ofdm_symbol_range{2, 3}, crb_interval{1, 2}));
+    ASSERT_TRUE(not carrier_grid.collides(ofdm_symbol_range{0, 1}, crb_interval{1, 3}));
+    ASSERT_TRUE(carrier_grid.all_set(ofdm_symbol_range{2, 5}, crb_interval{2, 4}));
+    ASSERT_TRUE(carrier_grid.all_set(ofdm_symbol_range{2, 4}, crb_interval{2, 3}));
+    ASSERT_TRUE(carrier_grid.all_set(ofdm_symbol_range{3, 5}, crb_interval{3, 4}));
+    ASSERT_TRUE(not carrier_grid.all_set(ofdm_symbol_range{1, 5}, crb_interval{1, 4}));
+    ASSERT_TRUE(not carrier_grid.all_set(ofdm_symbol_range{2, 6}, crb_interval{2, 5}));
 
     carrier_grid.fill(ofdm_symbol_range{0, 14}, lims);
-    TESTASSERT(carrier_grid.all_set(ofdm_symbol_range{0, 14}, lims));
-    TESTASSERT(carrier_grid.all_set(ofdm_symbol_range{0, 13}, {0, 51}));
-    TESTASSERT(carrier_grid.all_set(ofdm_symbol_range{1, 14}, {1, 52}));
+    ASSERT_TRUE(carrier_grid.all_set(ofdm_symbol_range{0, 14}, lims));
+    ASSERT_TRUE(carrier_grid.all_set(ofdm_symbol_range{0, 13}, {0, 51}));
+    ASSERT_TRUE(carrier_grid.all_set(ofdm_symbol_range{1, 14}, {1, 52}));
 
     carrier_grid.clear();
-    TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{2, 3}, crb_interval{1, 3}));
+    ASSERT_TRUE(not carrier_grid.collides(ofdm_symbol_range{2, 3}, crb_interval{1, 3}));
   }
 
   // Narrowband Carrier, 15kHz case.
@@ -68,21 +67,21 @@ TEST(carrier_subslot_resource_grid_test, test_all)
     carrier_cfg.offset_to_carrier    = 10;
     carrier_cfg.carrier_bandwidth    = 20;
     carrier_subslot_resource_grid carrier_grid(carrier_cfg);
-    TESTASSERT_EQ(fmt::underlying(subcarrier_spacing::kHz15), fmt::underlying(carrier_grid.scs()));
-    TESTASSERT_EQ(20, carrier_grid.nof_rbs());
-    TESTASSERT_EQ(10, carrier_grid.offset());
+    ASSERT_EQ(fmt::underlying(subcarrier_spacing::kHz15), fmt::underlying(carrier_grid.scs()));
+    ASSERT_EQ(20, carrier_grid.nof_rbs());
+    ASSERT_EQ(10, carrier_grid.offset());
     crb_interval lims{10, 30};
-    TESTASSERT(carrier_grid.rb_dims() == lims);
-    TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{0, 14}, lims));
-    TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{2, 5}, crb_interval{12, 15}));
+    ASSERT_TRUE(carrier_grid.rb_dims() == lims);
+    ASSERT_TRUE(not carrier_grid.collides(ofdm_symbol_range{0, 14}, lims));
+    ASSERT_TRUE(not carrier_grid.collides(ofdm_symbol_range{2, 5}, crb_interval{12, 15}));
 
     carrier_grid.fill({2, 5}, crb_interval{12, 14});
-    TESTASSERT(carrier_grid.collides(ofdm_symbol_range{2, 3}, crb_interval{11, 13}));
-    TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{2, 3}, crb_interval{11, 12}));
-    TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{0, 1}, crb_interval{11, 13}));
+    ASSERT_TRUE(carrier_grid.collides(ofdm_symbol_range{2, 3}, crb_interval{11, 13}));
+    ASSERT_TRUE(not carrier_grid.collides(ofdm_symbol_range{2, 3}, crb_interval{11, 12}));
+    ASSERT_TRUE(not carrier_grid.collides(ofdm_symbol_range{0, 1}, crb_interval{11, 13}));
 
     carrier_grid.clear();
-    TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{2, 3}, crb_interval{11, 13}));
+    ASSERT_TRUE(not carrier_grid.collides(ofdm_symbol_range{2, 3}, crb_interval{11, 13}));
   }
 }
 
@@ -97,17 +96,17 @@ TEST(cell_resource_grid_test, test_all)
     bwp_cfg.scs  = ocudu::subcarrier_spacing::kHz15;
     bwp_cfg.crbs = {0, 52};
 
-    TESTASSERT(not cell_grid.collides(bwp_sch_grant_info(bwp_cfg, {0, 14}, {0, 52})));
+    ASSERT_TRUE(not cell_grid.collides(bwp_sch_grant_info(bwp_cfg, {0, 14}, {0, 52})));
 
     bwp_sch_grant_info grant{bwp_cfg, {2, 14}, {5, 10}};
     cell_grid.fill(grant);
-    TESTASSERT(cell_grid.collides(subcarrier_spacing::kHz15, {0, 14}, crb_interval{0, 52}));
-    TESTASSERT(not cell_grid.collides(subcarrier_spacing::kHz15, {0, 14}, crb_interval{0, 5}));
-    TESTASSERT(cell_grid.collides(subcarrier_spacing::kHz15, {2, 3}, crb_interval{0, 6}));
-    TESTASSERT(not cell_grid.collides(subcarrier_spacing::kHz15, {0, 2}, crb_interval{0, 6}));
+    ASSERT_TRUE(cell_grid.collides(subcarrier_spacing::kHz15, {0, 14}, crb_interval{0, 52}));
+    ASSERT_TRUE(not cell_grid.collides(subcarrier_spacing::kHz15, {0, 14}, crb_interval{0, 5}));
+    ASSERT_TRUE(cell_grid.collides(subcarrier_spacing::kHz15, {2, 3}, crb_interval{0, 6}));
+    ASSERT_TRUE(not cell_grid.collides(subcarrier_spacing::kHz15, {0, 2}, crb_interval{0, 6}));
 
     cell_grid.clear();
-    TESTASSERT(not cell_grid.collides(subcarrier_spacing::kHz15, {2, 3}, crb_interval{0, 6}));
+    ASSERT_TRUE(not cell_grid.collides(subcarrier_spacing::kHz15, {2, 3}, crb_interval{0, 6}));
   }
 
   // Narrow BWP, 15 kHz case.
@@ -117,17 +116,17 @@ TEST(cell_resource_grid_test, test_all)
     bwp_cfg.scs  = ocudu::subcarrier_spacing::kHz15;
     bwp_cfg.crbs = {10, 30};
 
-    TESTASSERT(not cell_grid.collides(subcarrier_spacing::kHz15, {0, 14}, crb_interval{0, 52}));
+    ASSERT_TRUE(not cell_grid.collides(subcarrier_spacing::kHz15, {0, 14}, crb_interval{0, 52}));
 
     bwp_sch_grant_info grant{bwp_cfg, {2, 14}, {5, 10}};
     cell_grid.fill(grant);
-    TESTASSERT(cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {0, 14}, {0, 20}}));
-    TESTASSERT(not cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {0, 14}, {0, 5}}));
-    TESTASSERT(cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {2, 3}, {0, 6}}));
-    TESTASSERT(not cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {0, 2}, {0, 6}}));
+    ASSERT_TRUE(cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {0, 14}, {0, 20}}));
+    ASSERT_TRUE(not cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {0, 14}, {0, 5}}));
+    ASSERT_TRUE(cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {2, 3}, {0, 6}}));
+    ASSERT_TRUE(not cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {0, 2}, {0, 6}}));
 
     cell_grid.clear();
-    TESTASSERT(not cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {2, 3}, {0, 6}}));
+    ASSERT_TRUE(not cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {2, 3}, {0, 6}}));
   }
 
   // Wide BWP, 120 kHz case.
@@ -137,17 +136,17 @@ TEST(cell_resource_grid_test, test_all)
     bwp_cfg.scs  = ocudu::subcarrier_spacing::kHz120;
     bwp_cfg.crbs = {10, 275};
 
-    TESTASSERT(not cell_grid.collides(subcarrier_spacing::kHz120, {0, 14}, crb_interval{0, 265}));
+    ASSERT_TRUE(not cell_grid.collides(subcarrier_spacing::kHz120, {0, 14}, crb_interval{0, 265}));
 
     bwp_sch_grant_info grant{bwp_cfg, {2, 14}, {5, 200}};
     cell_grid.fill(grant);
-    TESTASSERT(cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {0, 14}, {10, 30}}));
-    TESTASSERT(not cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {0, 14}, {0, 5}}));
-    TESTASSERT(cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {2, 3}, {0, 30}}));
-    TESTASSERT(not cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {0, 2}, {0, 30}}));
+    ASSERT_TRUE(cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {0, 14}, {10, 30}}));
+    ASSERT_TRUE(not cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {0, 14}, {0, 5}}));
+    ASSERT_TRUE(cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {2, 3}, {0, 30}}));
+    ASSERT_TRUE(not cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {0, 2}, {0, 30}}));
 
     cell_grid.clear();
-    TESTASSERT(not cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {2, 3}, {0, 30}}));
+    ASSERT_TRUE(not cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {2, 3}, {0, 30}}));
   }
 }
 
@@ -169,13 +168,13 @@ TEST(pusch_resource_allocation_test, test_all)
   res_grid_alloc.slot_indication(sl_tx);
 
   // Test: resource allocator operator[] returns a slot_allocator pointing at the correct slot
-  TESTASSERT_EQ(sl_tx, res_grid_alloc.slot_tx());
-  TESTASSERT_EQ(sl_tx, res_grid_alloc[0].slot);
-  TESTASSERT_EQ(sl_tx + 1, res_grid_alloc[1].slot);
+  ASSERT_EQ(sl_tx, res_grid_alloc.slot_tx());
+  ASSERT_EQ(sl_tx, res_grid_alloc[0].slot);
+  ASSERT_EQ(sl_tx + 1, res_grid_alloc[1].slot);
 
   // Test: No allocations made yet
-  TESTASSERT(res_grid_alloc[0].ul_res_grid.used_crbs(bwp_cfg, {0, 14}).none());
-  TESTASSERT(res_grid_alloc[0].result.ul.puschs.empty());
+  ASSERT_TRUE(res_grid_alloc[0].ul_res_grid.used_crbs(bwp_cfg, {0, 14}).none());
+  ASSERT_TRUE(res_grid_alloc[0].result.ul.puschs.empty());
 
   // Action 2: Allocate PUSCH grant in current slot_tx
   bwp_sch_grant_info ul_grant{bwp_cfg, {0, 14}, {1, 5}};
@@ -183,9 +182,9 @@ TEST(pusch_resource_allocation_test, test_all)
   res_grid_alloc[0].result.ul.puschs.emplace_back();
 
   // Test: Allocated PUSCH was registered in the cell resource grid for slot_tx
-  TESTASSERT(res_grid_alloc[0].ul_res_grid.used_crbs(bwp_cfg, {0, 14}).any());
-  TESTASSERT_EQ(res_grid_alloc[0].ul_res_grid.used_crbs(bwp_cfg, {0, 14}).count(), ul_grant.prbs.length());
-  TESTASSERT_EQ(1, res_grid_alloc[0].result.ul.puschs.size());
+  ASSERT_TRUE(res_grid_alloc[0].ul_res_grid.used_crbs(bwp_cfg, {0, 14}).any());
+  ASSERT_EQ(res_grid_alloc[0].ul_res_grid.used_crbs(bwp_cfg, {0, 14}).count(), ul_grant.prbs.length());
+  ASSERT_EQ(1, res_grid_alloc[0].result.ul.puschs.size());
 
   // Action 3: Allocate PUSCH grant in slot_tx + 1
   bwp_sch_grant_info ul_grant2{bwp_cfg, {0, 14}, {4, 20}};
@@ -193,13 +192,13 @@ TEST(pusch_resource_allocation_test, test_all)
   res_grid_alloc[1].result.ul.puschs.emplace_back();
 
   // Test: Allocated PUSCH was registered in the cell resource grid for slot_tx + 1
-  TESTASSERT(res_grid_alloc[1].ul_res_grid.used_crbs(bwp_cfg, {0, 14}).any());
-  TESTASSERT_EQ(res_grid_alloc[1].ul_res_grid.used_crbs(bwp_cfg, {0, 14}).count(), ul_grant2.prbs.length());
-  TESTASSERT_EQ(1, res_grid_alloc[1].result.ul.puschs.size());
+  ASSERT_TRUE(res_grid_alloc[1].ul_res_grid.used_crbs(bwp_cfg, {0, 14}).any());
+  ASSERT_EQ(res_grid_alloc[1].ul_res_grid.used_crbs(bwp_cfg, {0, 14}).count(), ul_grant2.prbs.length());
+  ASSERT_EQ(1, res_grid_alloc[1].result.ul.puschs.size());
 
   // Action 4: New slot
   res_grid_alloc.slot_indication(++sl_tx);
 
   // Test: Current slot_tx allocations match the ones done with "slot_tx + 1" in the previous slot
-  TESTASSERT_EQ(res_grid_alloc[0].ul_res_grid.used_crbs(bwp_cfg, {0, 14}).count(), ul_grant2.prbs.length());
+  ASSERT_EQ(res_grid_alloc[0].ul_res_grid.used_crbs(bwp_cfg, {0, 14}).count(), ul_grant2.prbs.length());
 }

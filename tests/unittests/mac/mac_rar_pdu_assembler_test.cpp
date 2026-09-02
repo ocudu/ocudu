@@ -98,7 +98,7 @@ rar_ul_grant decode_ul_grant(span<const uint8_t> rar_subpdu)
   dec.unpack(rnti, 16);
   ret.temp_crnti = to_rnti(rnti);
 
-  TESTASSERT_EQ(RAR_PDU_SIZE, dec.nof_bytes());
+  EXPECT_EQ(RAR_PDU_SIZE, dec.nof_bytes());
 
   return ret;
 }
@@ -133,7 +133,7 @@ struct success_rar_content {
 /// Decode successRAR subPDU (subheader + payload) as per TS 38.321, Figure 6.1.5a-3 and 6.2.3a-2.
 success_rar_content decode_success_rar(span<const uint8_t> rar_subpdu)
 {
-  TESTASSERT_EQ(SUCCESS_RAR_PDU_SIZE, rar_subpdu.size());
+  EXPECT_EQ(SUCCESS_RAR_PDU_SIZE, rar_subpdu.size());
   success_rar_content ret{};
   std::copy(rar_subpdu.begin() + 1, rar_subpdu.begin() + 1 + UE_CON_RES_ID_LEN, ret.con_res_id.begin());
 
@@ -166,16 +166,16 @@ rar_ul_grant make_random_success_rar_grant()
 /// Tests if the encoded RAR PDU matches the content in the original RAR.
 void test_encoded_rar(const rar_information& original_rar, span<const uint8_t> rar_pdu)
 {
-  TESTASSERT(not rar_pdu.empty());
-  TESTASSERT_EQ(RAR_PDU_SIZE * original_rar.grants.size(), rar_pdu.size());
+  ASSERT_TRUE(not rar_pdu.empty());
+  ASSERT_EQ(RAR_PDU_SIZE * original_rar.grants.size(), rar_pdu.size());
 
   for (unsigned i = 0; i < original_rar.grants.size(); ++i) {
     span<const uint8_t> subpdu = rar_pdu.subspan(i * RAR_PDU_SIZE, RAR_PDU_SIZE);
-    TESTASSERT_EQ(is_last_subpdu(subpdu), (i == original_rar.grants.size() - 1), "for index={}", i);
-    TESTASSERT(is_rapid_subpdu(subpdu));
+    ASSERT_EQ(is_last_subpdu(subpdu), (i == original_rar.grants.size() - 1)) << fmt::format("for index={}", i);
+    ASSERT_TRUE(is_rapid_subpdu(subpdu));
 
     rar_ul_grant grant2 = decode_ul_grant(subpdu);
-    TESTASSERT(original_rar.grants[i] == grant2);
+    ASSERT_TRUE(original_rar.grants[i] == grant2);
   }
 }
 

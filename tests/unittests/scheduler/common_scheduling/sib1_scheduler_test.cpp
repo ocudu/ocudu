@@ -13,7 +13,6 @@
 #include "ocudu/ran/ssb/ssb_mapping.h"
 #include "ocudu/scheduler/config/time_domain_resource_helper.h"
 #include "ocudu/support/enum_utils.h"
-#include "ocudu/support/ocudu_test.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -29,8 +28,8 @@ public:
                                               search_space_id               ss_id,
                                               aggregation_level             aggr_lvl) override
   {
-    TESTASSERT_EQ(fmt::underlying(ss_id),
-                  fmt::underlying(slot_alloc.cfg.params.dl_cfg_common.init_dl_bwp.pdcch_common.sib1_search_space_id));
+    EXPECT_EQ(fmt::underlying(ss_id),
+              fmt::underlying(slot_alloc.cfg.params.dl_cfg_common.init_dl_bwp.pdcch_common.sib1_search_space_id));
     slot_alloc.result.dl.dl_pdcchs.emplace_back();
     slot_alloc.result.dl.dl_pdcchs.back().ctx.rnti    = rnti;
     slot_alloc.result.dl.dl_pdcchs.back().ctx.bwp_cfg = &slot_alloc.cfg.params.dl_cfg_common.init_dl_bwp.generic_params;
@@ -99,18 +98,18 @@ public:
   {
     // Test SIB_information message
     const sib_information& test_sib1 = res_grid[0].result.dl.bc.sibs.back();
-    TESTASSERT_EQ(fmt::underlying(sib_information::si_indicator_type::sib1), fmt::underlying(test_sib1.si_indicator));
-    TESTASSERT_EQ(rnti_t::SI_RNTI, test_sib1.pdsch_cfg.rnti);
+    ASSERT_EQ(fmt::underlying(sib_information::si_indicator_type::sib1), fmt::underlying(test_sib1.si_indicator));
+    ASSERT_EQ(rnti_t::SI_RNTI, test_sib1.pdsch_cfg.rnti);
 
     // Test PDCCH_grant and DCI
     const pdcch_dl_information* pdcch =
         std::find_if(res_grid[0].result.dl.dl_pdcchs.begin(),
                      res_grid[0].result.dl.dl_pdcchs.end(),
                      [](const auto& pdcch_) { return pdcch_.ctx.rnti == rnti_t::SI_RNTI; });
-    TESTASSERT(pdcch != nullptr);
-    TESTASSERT_EQ(fmt::underlying(dci_dl_rnti_config_type::si_f1_0), fmt::underlying(pdcch->dci.type()));
-    TESTASSERT_EQ(si_cfg.sib1_mcs_index, pdcch->dci.as_si_rnti_f1_0().modulation_coding_scheme);
-    TESTASSERT_EQ(0, pdcch->dci.as_si_rnti_f1_0().redundancy_version);
+    ASSERT_TRUE(pdcch != nullptr);
+    ASSERT_EQ(fmt::underlying(dci_dl_rnti_config_type::si_f1_0), fmt::underlying(pdcch->dci.type()));
+    ASSERT_EQ(si_cfg.sib1_mcs_index, pdcch->dci.as_si_rnti_f1_0().modulation_coding_scheme);
+    ASSERT_EQ(0, pdcch->dci.as_si_rnti_f1_0().redundancy_version);
   }
 
   /// Tests if PRBs have been set as used in the resource grid for the current slot.
@@ -118,11 +117,11 @@ public:
   {
     // Tests if PRBs have been allocated.
     if (got_allocated) {
-      TESTASSERT(
+      ASSERT_TRUE(
           res_grid[0].dl_res_grid.used_crbs(cell_cfg.params.dl_cfg_common.init_dl_bwp.generic_params, {0, 14}).any());
     } else {
       // Tests if PRBs are still unused.
-      TESTASSERT(
+      ASSERT_TRUE(
           res_grid[0].dl_res_grid.used_crbs(cell_cfg.params.dl_cfg_common.init_dl_bwp.generic_params, {0, 14}).none());
     }
   }
@@ -331,9 +330,9 @@ void test_sib1_periodicity(sib1_rtx_periodicity sib1_rtx_period, ssb_periodicity
     // this beam.
     if ((sl_idx % expected_sib1_period_slots) == sib1_allocation_slot) {
       // Verify that the scheduler results list contain 1 element with the SIB1 information.
-      TESTASSERT_EQ(1, t_bench.res_grid[0].result.dl.bc.sibs.size());
+      ASSERT_EQ(1, t_bench.res_grid[0].result.dl.bc.sibs.size());
     } else {
-      TESTASSERT(t_bench.res_grid[0].result.dl.bc.sibs.empty());
+      ASSERT_TRUE(t_bench.res_grid[0].result.dl.bc.sibs.empty());
     }
   }
 }
@@ -402,7 +401,7 @@ void test_sib_1_pdsch_collisions(arfcn_t freq_arfcn, subcarrier_spacing scs, bs_
             pdcch_type0_css_coreset_get(band, scs, scs, coreset0, k_ssb_val);
 
         // If the Coreset 0 exceeds the BPW limit, skip this configuration.
-        TESTASSERT(coreset0_param.offset >= 0, "FR2 not supported in this test");
+        ASSERT_TRUE(coreset0_param.offset >= 0) << fmt::format("FR2 not supported in this test");
 
         // CRB (with reference to SCScommon carrier) pointed to by offset_to_point_A.
         const unsigned crb_ssb = scs == subcarrier_spacing::kHz15 ? offset_to_point_A : offset_to_point_A / 2;
@@ -646,9 +645,9 @@ TEST_P(sib1_tdd_partial_slot_test, successful_sib1_allocation_in_partial_slot)
         (sib1_allocation_slot_pattern2.has_value() and
          (sl_idx % expected_sib1_period_slots) == sib1_allocation_slot_pattern2.value())) {
       // Verify that the scheduler results list contain 1 element with the SIB1 information.
-      TESTASSERT_EQ(1, t_bench.res_grid[0].result.dl.bc.sibs.size());
+      ASSERT_EQ(1, t_bench.res_grid[0].result.dl.bc.sibs.size());
     } else {
-      TESTASSERT(t_bench.res_grid[0].result.dl.bc.sibs.empty());
+      ASSERT_TRUE(t_bench.res_grid[0].result.dl.bc.sibs.empty());
     }
   }
 }

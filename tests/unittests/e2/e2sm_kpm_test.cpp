@@ -227,7 +227,7 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)
   ASSERT_TRUE(e2sm_kpm_iface->action_supported(ric_action));
   auto report_service = e2sm_kpm_iface->get_e2sm_report_service(ric_action.ric_action_definition);
 
-  TESTASSERT_EQ(false, report_service->is_ind_msg_ready());
+  ASSERT_EQ(false, report_service->is_ind_msg_ready());
   // As E2 is always present and provides valid metrics, there is no need to check if the indication is ready when
   // filled with only no_values.
 
@@ -239,7 +239,7 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)
     report_service->collect_measurements();
   }
 
-  TESTASSERT_EQ(true, report_service->is_ind_msg_ready());
+  ASSERT_EQ(true, report_service->is_ind_msg_ready());
   // Get RIC indication msg content.
   byte_buffer ind_hdr_bytes = report_service->get_indication_header();
   byte_buffer ind_msg_bytes = report_service->get_indication_message();
@@ -252,13 +252,12 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)
     return;
   }
 
-  TESTASSERT_EQ(nof_meas_data, ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data.size());
+  ASSERT_EQ(nof_meas_data, ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data.size());
   for (unsigned i = 0; i < nof_meas_data; ++i) {
-    TESTASSERT_EQ(nof_records, ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data[i].meas_record.size());
-    TESTASSERT_EQ(meas_int_values[i],
-                  ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data[i].meas_record[0].integer());
-    TESTASSERT_EQ(meas_real_values[i],
-                  ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data[i].meas_record[1].real().value);
+    ASSERT_EQ(nof_records, ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data[i].meas_record.size());
+    ASSERT_EQ(meas_int_values[i], ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data[i].meas_record[0].integer());
+    ASSERT_EQ(meas_real_values[i],
+              ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data[i].meas_record[1].real().value);
   }
 
   if (g_enable_pcap) {
@@ -319,7 +318,7 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style2)
   ASSERT_TRUE(e2sm_kpm_iface->action_supported(ric_action));
   auto report_service = e2sm_kpm_iface->get_e2sm_report_service(ric_action.ric_action_definition);
 
-  TESTASSERT_EQ(false, report_service->is_ind_msg_ready());
+  ASSERT_EQ(false, report_service->is_ind_msg_ready());
   // Fill only with no_values and check if indication is ready.
   for (unsigned i = 0; i < nof_meas_data; ++i) {
     // Push dummy metric measurements.
@@ -327,7 +326,7 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style2)
     // Trigger measurement collection.
     report_service->collect_measurements();
   }
-  TESTASSERT_EQ(false, report_service->is_ind_msg_ready());
+  ASSERT_EQ(false, report_service->is_ind_msg_ready());
 
   for (unsigned i = 0; i < nof_meas_data; ++i) {
     // Push dummy metric measurements.
@@ -336,7 +335,7 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style2)
     report_service->collect_measurements();
   }
 
-  TESTASSERT_EQ(true, report_service->is_ind_msg_ready());
+  ASSERT_EQ(true, report_service->is_ind_msg_ready());
   // Get RIC indication msg content.
   byte_buffer ind_hdr_bytes = report_service->get_indication_header();
   byte_buffer ind_msg_bytes = report_service->get_indication_message();
@@ -349,14 +348,13 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style2)
     return;
   }
 
-  TESTASSERT_EQ(nof_meas_data, ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data.size());
+  ASSERT_EQ(nof_meas_data, ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data.size());
   for (unsigned i = 0; i < nof_meas_data; ++i) {
-    TESTASSERT_EQ(nof_records, ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data[i].meas_record.size());
+    ASSERT_EQ(nof_records, ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data[i].meas_record.size());
     if (presence[i]) {
-      TESTASSERT_EQ(meas_values[i],
-                    ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data[i].meas_record[0].integer());
+      ASSERT_EQ(meas_values[i], ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data[i].meas_record[0].integer());
     } else {
-      TESTASSERT_EQ(
+      ASSERT_EQ(
           fmt::underlying(meas_record_item_c::types_opts::no_value),
           fmt::underlying(ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data[i].meas_record[0].type().value));
     }
@@ -468,7 +466,7 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
   ASSERT_TRUE(e2sm_kpm_iface->action_supported(ric_action));
   auto report_service = e2sm_kpm_iface->get_e2sm_report_service(ric_action.ric_action_definition);
 
-  TESTASSERT_EQ(false, report_service->is_ind_msg_ready());
+  ASSERT_EQ(false, report_service->is_ind_msg_ready());
   // Fill only with no_values and check if indication is ready.
   for (unsigned i = 0; i < nof_meas_data; ++i) {
     // Push dummy metric measurements.
@@ -476,7 +474,7 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
     // Trigger measurement collection.
     report_service->collect_measurements();
   }
-  TESTASSERT_EQ(false, report_service->is_ind_msg_ready());
+  ASSERT_EQ(false, report_service->is_ind_msg_ready());
 
   for (unsigned i = 0; i < nof_meas_data; ++i) {
     // Push dummy metric measurements
@@ -485,7 +483,7 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
     report_service->collect_measurements();
   }
 
-  TESTASSERT_EQ(true, report_service->is_ind_msg_ready());
+  ASSERT_EQ(true, report_service->is_ind_msg_ready());
   // Get RIC indication msg content.
   byte_buffer ind_hdr_bytes = report_service->get_indication_header();
   byte_buffer ind_msg_bytes = report_service->get_indication_message();
@@ -498,9 +496,9 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
     return;
   }
 
-  TESTASSERT_EQ(nof_meas_data, ric_ind_msg.ind_msg_formats.ind_msg_format2().meas_data.size());
+  ASSERT_EQ(nof_meas_data, ric_ind_msg.ind_msg_formats.ind_msg_format2().meas_data.size());
   for (unsigned i = 0; i < nof_meas_data; ++i) {
-    TESTASSERT_EQ(nof_records, ric_ind_msg.ind_msg_formats.ind_msg_format2().meas_data[i].meas_record.size());
+    ASSERT_EQ(nof_records, ric_ind_msg.ind_msg_formats.ind_msg_format2().meas_data[i].meas_record.size());
     for (unsigned j = 0; j < nof_reported_ues; ++j) {
       uint32_t ue_id = ric_ind_msg.ind_msg_formats.ind_msg_format2()
                            .meas_cond_ue_id_list[0]
@@ -510,10 +508,10 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
       std::vector<uint32_t>::iterator it     = std::find(ue_ids.begin(), ue_ids.end(), ue_id);
       uint32_t                        ue_idx = std::distance(ue_ids.begin(), it);
       if (cond_presence[i][ue_idx]) {
-        TESTASSERT_EQ(meas_values[i][ue_idx],
-                      ric_ind_msg.ind_msg_formats.ind_msg_format2().meas_data[i].meas_record[j].integer());
+        ASSERT_EQ(meas_values[i][ue_idx],
+                  ric_ind_msg.ind_msg_formats.ind_msg_format2().meas_data[i].meas_record[j].integer());
       } else {
-        TESTASSERT_EQ(
+        ASSERT_EQ(
             fmt::underlying(meas_record_item_c::types_opts::no_value),
             fmt::underlying(ric_ind_msg.ind_msg_formats.ind_msg_format2().meas_data[i].meas_record[j].type().value));
       }
@@ -614,7 +612,7 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style4)
   ASSERT_TRUE(e2sm_kpm_iface->action_supported(ric_action));
   auto report_service = e2sm_kpm_iface->get_e2sm_report_service(ric_action.ric_action_definition);
 
-  TESTASSERT_EQ(false, report_service->is_ind_msg_ready());
+  ASSERT_EQ(false, report_service->is_ind_msg_ready());
   // Fill only with no_values and check if indication is ready.
   for (unsigned i = 0; i < nof_meas_data; ++i) {
     // Push dummy metric measurements.
@@ -622,7 +620,7 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style4)
     // Trigger measurement collection.
     report_service->collect_measurements();
   }
-  TESTASSERT_EQ(false, report_service->is_ind_msg_ready());
+  ASSERT_EQ(false, report_service->is_ind_msg_ready());
 
   for (unsigned i = 0; i < nof_meas_data; ++i) {
     // Push dummy metric measurements.
@@ -631,7 +629,7 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style4)
     report_service->collect_measurements();
   }
 
-  TESTASSERT_EQ(true, report_service->is_ind_msg_ready());
+  ASSERT_EQ(true, report_service->is_ind_msg_ready());
   // Get RIC indication msg content.
   byte_buffer ind_hdr_bytes = report_service->get_indication_header();
   byte_buffer ind_msg_bytes = report_service->get_indication_message();
@@ -644,23 +642,23 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style4)
     return;
   }
 
-  TESTASSERT_EQ(nof_reported_ues, ric_ind_msg.ind_msg_formats.ind_msg_format3().ue_meas_report_list.size());
+  ASSERT_EQ(nof_reported_ues, ric_ind_msg.ind_msg_formats.ind_msg_format3().ue_meas_report_list.size());
   for (unsigned j = 0; j < nof_reported_ues; ++j) {
     uint32_t ue_id =
         ric_ind_msg.ind_msg_formats.ind_msg_format3().ue_meas_report_list[j].ue_id.gnb_du_ue_id().gnb_cu_ue_f1ap_id;
     std::vector<uint32_t>::iterator it     = std::find(ue_ids.begin(), ue_ids.end(), ue_id);
     uint32_t                        ue_idx = std::distance(ue_ids.begin(), it);
-    TESTASSERT_EQ(nof_meas_data,
-                  ric_ind_msg.ind_msg_formats.ind_msg_format3().ue_meas_report_list[j].meas_report.meas_data.size());
+    ASSERT_EQ(nof_meas_data,
+              ric_ind_msg.ind_msg_formats.ind_msg_format3().ue_meas_report_list[j].meas_report.meas_data.size());
     for (unsigned i = 0; i < nof_meas_data; ++i) {
       auto& meas_record =
           ric_ind_msg.ind_msg_formats.ind_msg_format3().ue_meas_report_list[j].meas_report.meas_data[i].meas_record;
-      TESTASSERT_EQ(nof_records, meas_record.size());
+      ASSERT_EQ(nof_records, meas_record.size());
       if (cond_presence[i][ue_idx]) {
-        TESTASSERT_EQ(meas_values[i][ue_idx], meas_record[0].integer());
+        ASSERT_EQ(meas_values[i][ue_idx], meas_record[0].integer());
       } else {
-        TESTASSERT_EQ(fmt::underlying(meas_record_item_c::types_opts::no_value),
-                      fmt::underlying(meas_record[0].type().value));
+        ASSERT_EQ(fmt::underlying(meas_record_item_c::types_opts::no_value),
+                  fmt::underlying(meas_record[0].type().value));
       }
     }
   }
@@ -740,7 +738,7 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style5)
   ASSERT_TRUE(e2sm_kpm_iface->action_supported(ric_action));
   auto report_service = e2sm_kpm_iface->get_e2sm_report_service(ric_action.ric_action_definition);
 
-  TESTASSERT_EQ(false, report_service->is_ind_msg_ready());
+  ASSERT_EQ(false, report_service->is_ind_msg_ready());
   // Fill only with no_values and check if indication is ready.
   for (unsigned i = 0; i < nof_meas_data; ++i) {
     // Push dummy metric measurements.
@@ -748,7 +746,7 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style5)
     // Trigger measurement collection.
     report_service->collect_measurements();
   }
-  TESTASSERT_EQ(false, report_service->is_ind_msg_ready());
+  ASSERT_EQ(false, report_service->is_ind_msg_ready());
 
   for (unsigned i = 0; i < nof_meas_data; ++i) {
     // Push dummy metric measurements.
@@ -757,7 +755,7 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style5)
     report_service->collect_measurements();
   }
 
-  TESTASSERT_EQ(true, report_service->is_ind_msg_ready());
+  ASSERT_EQ(true, report_service->is_ind_msg_ready());
   // Get RIC indication msg content.
   byte_buffer ind_hdr_bytes = report_service->get_indication_header();
   byte_buffer ind_msg_bytes = report_service->get_indication_message();
@@ -770,23 +768,23 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style5)
     return;
   }
 
-  TESTASSERT_EQ(nof_reported_ues, ric_ind_msg.ind_msg_formats.ind_msg_format3().ue_meas_report_list.size());
+  ASSERT_EQ(nof_reported_ues, ric_ind_msg.ind_msg_formats.ind_msg_format3().ue_meas_report_list.size());
   for (unsigned j = 0; j < nof_reported_ues; ++j) {
     uint32_t ue_id =
         ric_ind_msg.ind_msg_formats.ind_msg_format3().ue_meas_report_list[j].ue_id.gnb_du_ue_id().gnb_cu_ue_f1ap_id;
     std::vector<uint32_t>::iterator it     = std::find(ue_ids.begin(), ue_ids.end(), ue_id);
     uint32_t                        ue_idx = std::distance(ue_ids.begin(), it);
-    TESTASSERT_EQ(nof_meas_data,
-                  ric_ind_msg.ind_msg_formats.ind_msg_format3().ue_meas_report_list[j].meas_report.meas_data.size());
+    ASSERT_EQ(nof_meas_data,
+              ric_ind_msg.ind_msg_formats.ind_msg_format3().ue_meas_report_list[j].meas_report.meas_data.size());
     for (unsigned i = 0; i < nof_meas_data; ++i) {
       auto& meas_record =
           ric_ind_msg.ind_msg_formats.ind_msg_format3().ue_meas_report_list[j].meas_report.meas_data[i].meas_record;
-      TESTASSERT_EQ(nof_records, meas_record.size());
+      ASSERT_EQ(nof_records, meas_record.size());
       if (cond_presence[i][ue_idx]) {
-        TESTASSERT_EQ(meas_values[i][ue_idx], meas_record[0].integer());
+        ASSERT_EQ(meas_values[i][ue_idx], meas_record[0].integer());
       } else {
-        TESTASSERT_EQ(fmt::underlying(meas_record_item_c::types_opts::no_value),
-                      fmt::underlying(meas_record[0].type().value));
+        ASSERT_EQ(fmt::underlying(meas_record_item_c::types_opts::no_value),
+                  fmt::underlying(meas_record[0].type().value));
       }
     }
   }

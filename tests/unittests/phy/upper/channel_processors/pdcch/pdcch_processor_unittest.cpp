@@ -11,6 +11,7 @@
 #include "ocudu/phy/support/resource_grid_mapper.h"
 #include "ocudu/phy/upper/channel_processors/pdcch/pdcch_processor.h"
 #include "ocudu/ran/precoding/precoding_codebooks.h"
+#include <gtest/gtest.h>
 #include <random>
 
 static std::mt19937 rgen(0);
@@ -34,7 +35,7 @@ public:
 
 using namespace ocudu;
 
-int main()
+TEST(pdcch_processor_unittest, process)
 {
   // Random distributions.
   std::uniform_int_distribution<unsigned> dist_numerology(0, 4);
@@ -56,7 +57,7 @@ int main()
 
   std::shared_ptr<pdcch_processor_factory> pdcch_factory =
       create_pdcch_processor_factory_sw(encoder_factory_spy, modulator_factory_spy, dmrs_factory_spy);
-  TESTASSERT(pdcch_factory);
+  ASSERT_TRUE(pdcch_factory);
 
   std::unique_ptr<pdcch_processor> pdcch = pdcch_factory->create();
 
@@ -131,37 +132,37 @@ int main()
                 crb_bitmap rb_mask = pdcch_processor_impl::compute_rb_mask(pdu.coreset, pdu.dci);
 
                 // Check PDCCH encoder inputs.
-                TESTASSERT_EQ(encoder->get_nof_entries(), 1);
+                ASSERT_EQ(encoder->get_nof_entries(), 1);
                 const auto& encoder_entry = encoder->get_entries().front();
-                TESTASSERT_EQ(encoder_entry.config.rnti, dci.rnti);
-                TESTASSERT_EQ(encoder_entry.config.E, E);
-                TESTASSERT_EQ(const_span<uint8_t>(encoder_entry.data), const_span<uint8_t>(pdu.dci.payload));
+                ASSERT_EQ(encoder_entry.config.rnti, dci.rnti);
+                ASSERT_EQ(encoder_entry.config.E, E);
+                ASSERT_EQ(const_span<uint8_t>(encoder_entry.data), const_span<uint8_t>(pdu.dci.payload));
 
                 // Check PDCCH modulator inputs.
-                TESTASSERT_EQ(modulator->get_nof_entries(), 1);
+                ASSERT_EQ(modulator->get_nof_entries(), 1);
                 const auto& modulator_entry = modulator->get_entries().front();
-                TESTASSERT_EQ(rb_mask, modulator_entry.config.rb_mask);
-                TESTASSERT_EQ(modulator_entry.config.start_symbol_index, start_symbol_index);
-                TESTASSERT_EQ(modulator_entry.config.duration, duration);
-                TESTASSERT_EQ(modulator_entry.config.n_id, dci.n_id_pdcch_data);
-                TESTASSERT_EQ(modulator_entry.config.n_rnti, dci.n_rnti);
-                TESTASSERT_EQ(modulator_entry.config.scaling, convert_dB_to_amplitude(dci.data_power_offset_dB));
-                TESTASSERT_EQ(pdu.dci.precoding, modulator_entry.config.precoding);
-                TESTASSERT_EQ(const_span<uint8_t>(modulator_entry.bits), const_span<uint8_t>(encoder_entry.encoded));
-                TESTASSERT_EQ((void*)modulator_entry.grid, (void*)&grid.get_writer());
+                ASSERT_EQ(rb_mask, modulator_entry.config.rb_mask);
+                ASSERT_EQ(modulator_entry.config.start_symbol_index, start_symbol_index);
+                ASSERT_EQ(modulator_entry.config.duration, duration);
+                ASSERT_EQ(modulator_entry.config.n_id, dci.n_id_pdcch_data);
+                ASSERT_EQ(modulator_entry.config.n_rnti, dci.n_rnti);
+                ASSERT_EQ(modulator_entry.config.scaling, convert_dB_to_amplitude(dci.data_power_offset_dB));
+                ASSERT_EQ(pdu.dci.precoding, modulator_entry.config.precoding);
+                ASSERT_EQ(const_span<uint8_t>(modulator_entry.bits), const_span<uint8_t>(encoder_entry.encoded));
+                ASSERT_EQ((void*)modulator_entry.grid, (void*)&grid.get_writer());
 
                 // Check PDCCH DMRS inputs.
-                TESTASSERT_EQ(dmrs->get_nof_entries(), 1);
+                ASSERT_EQ(dmrs->get_nof_entries(), 1);
                 const auto& dmrs_entry = dmrs->get_entries().front();
-                TESTASSERT_EQ(dmrs_entry.config.slot, pdu.slot);
-                TESTASSERT_EQ(dmrs_entry.config.cp, cp);
-                TESTASSERT_EQ(dmrs_entry.config.reference_point_k_rb, is_coreset0 ? coreset.bwp_start_rb : 0);
-                TESTASSERT_EQ(dmrs_entry.config.rb_mask, rb_mask);
-                TESTASSERT_EQ(dmrs_entry.config.start_symbol_index, coreset.start_symbol_index);
-                TESTASSERT_EQ(dmrs_entry.config.duration, coreset.duration);
-                TESTASSERT_EQ(dmrs_entry.config.n_id, dci.n_id_pdcch_dmrs);
-                TESTASSERT_EQ(dmrs_entry.config.amplitude, convert_dB_to_amplitude(dci.dmrs_power_offset_dB));
-                TESTASSERT_EQ(pdu.dci.precoding, dmrs_entry.config.precoding);
+                ASSERT_EQ(dmrs_entry.config.slot, pdu.slot);
+                ASSERT_EQ(dmrs_entry.config.cp, cp);
+                ASSERT_EQ(dmrs_entry.config.reference_point_k_rb, is_coreset0 ? coreset.bwp_start_rb : 0);
+                ASSERT_EQ(dmrs_entry.config.rb_mask, rb_mask);
+                ASSERT_EQ(dmrs_entry.config.start_symbol_index, coreset.start_symbol_index);
+                ASSERT_EQ(dmrs_entry.config.duration, coreset.duration);
+                ASSERT_EQ(dmrs_entry.config.n_id, dci.n_id_pdcch_dmrs);
+                ASSERT_EQ(dmrs_entry.config.amplitude, convert_dB_to_amplitude(dci.dmrs_power_offset_dB));
+                ASSERT_EQ(pdu.dci.precoding, dmrs_entry.config.precoding);
               }
             }
           }
@@ -169,5 +170,4 @@ int main()
       }
     }
   }
-  return 0;
 }

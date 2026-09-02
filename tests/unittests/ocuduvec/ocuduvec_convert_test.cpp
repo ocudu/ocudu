@@ -3,7 +3,6 @@
 
 #include "ocudu/adt/format.h"
 #include "ocudu/ocuduvec/conversion.h"
-#include "ocudu/support/ocudu_test.h"
 #include <fmt/ostream.h>
 #include <gtest/gtest.h>
 #include <random>
@@ -89,7 +88,7 @@ TEST_P(OcuduvecConvertFixture, OcuduvecConvertTestInt16Complex)
   for (size_t i = 0; i != size; ++i) {
     cf_t  gold = {static_cast<float>(x[2 * i]) / scale, static_cast<float>(x[2 * i + 1]) / scale};
     float err  = std::abs(gold - z[i]);
-    TESTASSERT(err < ASSERT_CF_MAX_ERROR);
+    ASSERT_TRUE(err < ASSERT_CF_MAX_ERROR);
   }
 }
 
@@ -132,7 +131,7 @@ TEST_P(OcuduvecConvertFixture, OcuduvecConvertTestInt16Float)
   for (size_t i = 0; i != size; ++i) {
     float gold = static_cast<float>(x[i]) / scale;
     float err  = std::abs(gold - z[i]);
-    TESTASSERT(err < ASSERT_FLOAT_MAX_ERROR);
+    ASSERT_TRUE(err < ASSERT_FLOAT_MAX_ERROR);
   }
 }
 

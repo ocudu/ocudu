@@ -7,6 +7,7 @@
 #include "ocudu/phy/phys_cell_id.h"
 #include "ocudu/phy/upper/signal_processors/ssb/factories.h"
 #include "ocudu/ran/ssb/ssb_properties.h"
+#include <gtest/gtest.h>
 #include <random>
 
 using namespace ocudu;
@@ -80,14 +81,14 @@ static void test_case(sss_processor& sss, const sss_processor::config_t& sss_arg
   grid.assert_entries(expected_grid_entries);
 }
 
-int main()
+TEST(sss_processor_test, map)
 {
   std::shared_ptr<sss_processor_factory> sss_factory = create_sss_processor_factory_sw();
-  TESTASSERT(sss_factory);
+  ASSERT_TRUE(sss_factory);
 
   // Create SSS processor.
   std::unique_ptr<sss_processor> sss = sss_factory->create();
-  TESTASSERT(sss);
+  ASSERT_TRUE(sss);
 
   // Random distributions
   std::uniform_int_distribution<unsigned> dist_cell_id(0, phys_cell_id::NOF_NID - 1);
@@ -106,6 +107,4 @@ int main()
 
     test_case(*sss, sss_args);
   }
-
-  return 0;
 }
