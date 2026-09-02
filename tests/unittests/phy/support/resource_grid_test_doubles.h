@@ -165,15 +165,25 @@ public:
       }
 
       // Verify the value is not the default.
-      report_fatal_error_if_not(value_cbf16 != cbf16_t(), "No resource element was written for port={}, symbol={} and subcarrier={}.", entry.port, entry.symbol, entry.subcarrier);
+      report_fatal_error_if_not(value_cbf16 != cbf16_t(),
+                                "No resource element was written for port={}, symbol={} and subcarrier={}.",
+                                entry.port,
+                                entry.symbol,
+                                entry.subcarrier);
 
       // Convert value to cf and compare with the expected value.
       cf_t  value = to_cf(value_cbf16) * scaling;
       float error = std::abs(entry.value - value);
       // Calculate maximum error allowed introduced by BFloat16 compression.
       float max_error = std::abs(entry.value) / 128.0;
-      report_fatal_error_if_not(error < max_error, "Mismatched value {} but expected {}. port={} symbol={} "
-                                                    "subcarrier={}.", value, entry.value, entry.port, entry.symbol, entry.subcarrier);
+      report_fatal_error_if_not(error < max_error,
+                                "Mismatched value {} but expected {}. port={} symbol={} "
+                                "subcarrier={}.",
+                                value,
+                                entry.value,
+                                entry.port,
+                                entry.symbol,
+                                entry.subcarrier);
     }
   }
 
@@ -215,13 +225,20 @@ private:
     // Ensure the port, symbol and subcarrier indexes are in range.
     report_fatal_error_if_not(port < max_ports, "Port index {} exceeded maximum {}.", port, max_ports);
     report_fatal_error_if_not(symbol < max_symb, "Symbol index {} exceeded maximum {}.", symbol, max_symb);
-    report_fatal_error_if_not(subcarrier < max_prb * NOF_SUBCARRIERS_PER_RB, "Subcarrier index {} exceeded maximum {}.", subcarrier, max_prb * NOF_SUBCARRIERS_PER_RB);
+    report_fatal_error_if_not(subcarrier < max_prb * NOF_SUBCARRIERS_PER_RB,
+                              "Subcarrier index {} exceeded maximum {}.",
+                              subcarrier,
+                              max_prb * NOF_SUBCARRIERS_PER_RB);
 
     // Select reference to the resource element.
     cbf16_t& value_cbf16 = data[{subcarrier, symbol, port}];
 
     // Ensure the resource element does not exist.
-    report_fatal_error_if_not(value_cbf16 == 0, "Detected resource grid overwrite for port={}, symbol={} and subcarrier={}.", port, symbol, subcarrier);
+    report_fatal_error_if_not(value_cbf16 == 0,
+                              "Detected resource grid overwrite for port={}, symbol={} and subcarrier={}.",
+                              port,
+                              symbol,
+                              subcarrier);
 
     // Write element.
     value_cbf16 = to_cbf16(value);

@@ -116,7 +116,8 @@ TEST_F(mac_dl_cfg_test, test_dl_ue_procedure_execution_contexts)
 
   // TEST: Thread used for resumption does not change.
   auto test_event = [&ctrl_worker](test_task_event ev) {
-    report_fatal_error_if_not(ctrl_worker.get_thread_id() == std::this_thread::get_id(), "Procedure must finish in CTRL thread.");
+    report_fatal_error_if_not(ctrl_worker.get_thread_id() == std::this_thread::get_id(),
+                              "Procedure must finish in CTRL thread.");
     if (ev == test_task_event::ue_deleted) {
       ctrl_worker.request_stop();
     }
@@ -169,7 +170,8 @@ TEST_F(mac_dl_cfg_test, test_dl_ue_procedure_tsan)
   // TEST: Thread used for resumption does not change
   std::thread::id tid        = std::this_thread::get_id();
   auto            test_event = [&ctrl_worker, &tid](test_task_event ev) {
-    report_fatal_error_if_not(tid == std::this_thread::get_id(), "tid == std::this_thread::get_id()"); // resumes back in CTRL thread
+    report_fatal_error_if_not(tid == std::this_thread::get_id(),
+                              "tid == std::this_thread::get_id()"); // resumes back in CTRL thread
     if (ev == test_task_event::ue_deleted) {
       ctrl_worker.request_stop();
     }

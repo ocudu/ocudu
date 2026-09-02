@@ -167,7 +167,8 @@ rar_ul_grant make_random_success_rar_grant()
 void test_encoded_rar(const rar_information& original_rar, span<const uint8_t> rar_pdu)
 {
   report_fatal_error_if_not(not rar_pdu.empty(), "not rar_pdu.empty()");
-  report_fatal_error_if_not((RAR_PDU_SIZE * original_rar.grants.size()) == (rar_pdu.size()), "RAR_PDU_SIZE * original_rar.grants.size() == rar_pdu.size()");
+  report_fatal_error_if_not((RAR_PDU_SIZE * original_rar.grants.size()) == (rar_pdu.size()),
+                            "RAR_PDU_SIZE * original_rar.grants.size() == rar_pdu.size()");
 
   for (unsigned i = 0; i < original_rar.grants.size(); ++i) {
     span<const uint8_t> subpdu = rar_pdu.subspan(i * RAR_PDU_SIZE, RAR_PDU_SIZE);
