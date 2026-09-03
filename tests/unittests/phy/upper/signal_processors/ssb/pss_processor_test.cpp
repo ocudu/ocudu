@@ -40,7 +40,7 @@ void generate_sequence_gold(std::array<cf_t, 127>& sequence, unsigned NID, float
   }
 }
 
-static void test_case(pss_processor& pss, const pss_processor::config_t& pss_args)
+static error_type<std::string> test_case(pss_processor& pss, const pss_processor::config_t& pss_args)
 {
   // Create resource grid.
   resource_grid_writer_spy grid(MAX_PORTS,
@@ -67,7 +67,7 @@ static void test_case(pss_processor& pss, const pss_processor::config_t& pss_arg
   }
 
   // Assert grid entries.
-  grid.assert_entries(expected_grid_entries);
+  return grid.assert_entries(expected_grid_entries);
 }
 
 TEST(pss_processor_test, map)
@@ -94,6 +94,7 @@ TEST(pss_processor_test, map)
     pss_args.amplitude               = 1.0F;
     pss_args.ports.emplace_back(dist_port(rgen));
 
-    test_case(*pss, pss_args);
+    error_type<std::string> test_ok = test_case(*pss, pss_args);
+    ASSERT_TRUE(test_ok.has_value()) << test_ok.error();
   }
 }

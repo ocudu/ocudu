@@ -7,8 +7,6 @@
 #include "ocudu/adt/format.h"
 #include "ocudu/ocuduvec/compare.h"
 #include "ocudu/ocuduvec/conversion.h"
-#include "ocudu/ocuduvec/copy.h"
-#include "ocudu/ocuduvec/sc_prod.h"
 #include "ocudu/phy/antenna_ports.h"
 #include "ocudu/phy/lower/modulation/modulation_factories.h"
 #include <gtest/gtest.h>
@@ -152,7 +150,8 @@ TEST(ofdm_demodulator_unittest, demodulate)
           }
 
           // Assert resource grid entries.
-          rg.assert_entries(expected_rg);
+          error_type<std::string> grid_ok = rg.assert_entries(expected_rg);
+          ASSERT_TRUE(grid_ok.has_value()) << grid_ok.has_value();
         }
       }
     }
