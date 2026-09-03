@@ -423,12 +423,11 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
 
   matching_cond_item_s matching_cond_item2;
   test_cond_info_s     test_cond_info1;
-  test_cond_info1.test_type.set_ul_r_srp().value = test_cond_type_c::ul_r_srp_opts::true_value;
-  test_cond_info1.test_expr_present              = true;
-  test_cond_info1.test_expr                      = test_cond_expression_opts::greaterthan;
-  // TODO: seems that asn1 does not suppport negative numbers.
+  test_cond_info1.test_type.set_ul_r_srp().value                = test_cond_type_c::ul_r_srp_opts::true_value;
+  test_cond_info1.test_expr_present                             = true;
+  test_cond_info1.test_expr                                     = test_cond_expression_opts::greaterthan;
   test_cond_info1.test_value_present                            = true;
-  test_cond_info1.test_value.set_value_int()                    = 50;
+  test_cond_info1.test_value.set_value_int()                    = -110;
   matching_cond_item2.lc_or_present                             = true; // If false use OR, if true then use AND.
   matching_cond_item2.lc_or                                     = lc_or_opts::true_value;
   matching_cond_item2.matching_cond_choice.set_test_cond_info() = test_cond_info1;
@@ -436,12 +435,11 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
 
   matching_cond_item_s matching_cond_item3;
   test_cond_info_s     test_cond_info2;
-  test_cond_info2.test_type.set_ul_r_srp().value = test_cond_type_c::ul_r_srp_opts::true_value;
-  test_cond_info2.test_expr_present              = true;
-  test_cond_info2.test_value_present             = true;
-  test_cond_info2.test_expr                      = test_cond_expression_opts::lessthan;
-  // TODO: seems that asn1 does not suppport negative numbers.
-  test_cond_info2.test_value.set_value_int()                    = 110;
+  test_cond_info2.test_type.set_ul_r_srp().value                = test_cond_type_c::ul_r_srp_opts::true_value;
+  test_cond_info2.test_expr_present                             = true;
+  test_cond_info2.test_value_present                            = true;
+  test_cond_info2.test_expr                                     = test_cond_expression_opts::lessthan;
+  test_cond_info2.test_value.set_value_int()                    = -50;
   matching_cond_item3.lc_or_present                             = false; // If false use OR, if true then use AND.
   matching_cond_item3.matching_cond_choice.set_test_cond_info() = test_cond_info2;
   meas_cond_item.matching_cond.push_back(matching_cond_item3);
@@ -571,9 +569,8 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style4)
   matching_ue_cond_item1.test_cond_info.test_expr_present              = true;
   matching_ue_cond_item1.test_cond_info.test_value_present             = true;
   matching_ue_cond_item1.test_cond_info.test_expr                      = test_cond_expression_opts::greaterthan;
-  // TODO: seems that asn1 does not suppport negative numbers.
-  matching_ue_cond_item1.test_cond_info.test_value.set_value_int() = 50;
-  matching_ue_cond_item1.lc_or_present                             = false; // if false use OR, if true then use AND
+  matching_ue_cond_item1.test_cond_info.test_value.set_value_int()     = -110;
+  matching_ue_cond_item1.lc_or_present                                 = false; // if false use OR, if true then use AND
   action_def_f4.matching_ue_cond_list.push_back(matching_ue_cond_item1);
 
   matching_ue_cond_per_sub_item_s matching_ue_cond_item2;
@@ -581,8 +578,7 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style4)
   matching_ue_cond_item2.test_cond_info.test_expr_present              = true;
   matching_ue_cond_item2.test_cond_info.test_value_present             = true;
   matching_ue_cond_item2.test_cond_info.test_expr                      = test_cond_expression_opts::lessthan;
-  // TODO: seems that asn1 does not suppport negative numbers.
-  matching_ue_cond_item2.test_cond_info.test_value.set_value_int() = 110;
+  matching_ue_cond_item2.test_cond_info.test_value.set_value_int()     = -50;
   action_def_f4.matching_ue_cond_list.push_back(matching_ue_cond_item2);
 
   e2sm_kpm_action_definition_format1_s& subscription_info = action_def_f4.sub_info;

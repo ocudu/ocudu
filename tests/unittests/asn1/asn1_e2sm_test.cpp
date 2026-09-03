@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "ocudu/asn1/e2sm/e2sm_kpm_ies.h"
 #include "ocudu/asn1/e2sm/e2sm_rc_ies.h"
 #include <gtest/gtest.h>
 
@@ -106,4 +107,58 @@ TEST_F(asn1_e2sm_test, unpack_ric_control_message)
             asn1::e2sm::ran_param_value_type_c::types_opts::ran_p_choice_elem_false);
 
   ASSERT_EQ(test_pack_unpack_consistency(pdu), OCUDUASN_SUCCESS);
+}
+
+TEST_F(asn1_e2sm_test, pack_unpack_action_definition_with_negative_test_cond_values)
+{
+  using namespace asn1::e2sm;
+
+  // Report Style 3 subscription selecting the UEs with RSRP > -110 and RSRP < -50. TestCond-Value.valueInt is an
+  // unconstrained INTEGER, so the thresholds exercise the two's-complement encoding of negative whole numbers.
+  e2sm_kpm_action_definition_s action_def;
+  action_def.ric_style_type                = 3;
+  e2sm_kpm_action_definition_format3_s& f3 = action_def.action_definition_formats.set_action_definition_format3();
+
+  meas_cond_item_s meas_cond_item;
+  meas_cond_item.meas_type.set_meas_name().from_string("DRB.UEThpDl");
+
+  matching_cond_item_s lower_bound_cond;
+  test_cond_info_s     lower_bound_info;
+  lower_bound_info.test_type.set_ul_r_srp().value            = test_cond_type_c::ul_r_srp_opts::true_value;
+  lower_bound_info.test_expr_present                         = true;
+  lower_bound_info.test_expr                                 = test_cond_expression_opts::greaterthan;
+  lower_bound_info.test_value_present                        = true;
+  lower_bound_info.test_value.set_value_int()                = -110;
+  lower_bound_cond.lc_or_present                             = true;
+  lower_bound_cond.lc_or                                     = lc_or_opts::true_value;
+  lower_bound_cond.matching_cond_choice.set_test_cond_info() = lower_bound_info;
+  meas_cond_item.matching_cond.push_back(lower_bound_cond);
+
+  matching_cond_item_s upper_bound_cond;
+  test_cond_info_s     upper_bound_info;
+  upper_bound_info.test_type.set_ul_r_srp().value            = test_cond_type_c::ul_r_srp_opts::true_value;
+  upper_bound_info.test_expr_present                         = true;
+  upper_bound_info.test_expr                                 = test_cond_expression_opts::lessthan;
+  upper_bound_info.test_value_present                        = true;
+  upper_bound_info.test_value.set_value_int()                = -50;
+  upper_bound_cond.lc_or_present                             = false;
+  upper_bound_cond.matching_cond_choice.set_test_cond_info() = upper_bound_info;
+  meas_cond_item.matching_cond.push_back(upper_bound_cond);
+
+  f3.meas_cond_list.push_back(meas_cond_item);
+  f3.granul_period = 100;
+
+  byte_buffer   buffer;
+  asn1::bit_ref bref{buffer};
+  ASSERT_EQ(action_def.pack(bref), OCUDUASN_SUCCESS);
+
+  e2sm_kpm_action_definition_s unpacked_action_def;
+  asn1::cbit_ref               cbref{buffer};
+  ASSERT_EQ(unpacked_action_def.unpack(cbref), OCUDUASN_SUCCESS);
+
+  const auto& unpacked_cond =
+      unpacked_action_def.action_definition_formats.action_definition_format3().meas_cond_list[0].matching_cond;
+  ASSERT_EQ(unpacked_cond.size(), 2);
+  ASSERT_EQ(unpacked_cond[0].matching_cond_choice.test_cond_info().test_value.value_int(), -110);
+  ASSERT_EQ(unpacked_cond[1].matching_cond_choice.test_cond_info().test_value.value_int(), -50);
 }
