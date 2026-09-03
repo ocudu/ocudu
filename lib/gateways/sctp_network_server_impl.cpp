@@ -592,18 +592,14 @@ void sctp_network_server_impl::handle_sctp_comm_up(const struct sctp_assoc_chang
 
 void sctp_network_server_impl::mark_connection_as_complete(const transport_layer_address& addr)
 {
-  while (not app_exec.defer([this, addr]() mutable {
-    auto pending_it = std::find_if(pending_connects.begin(),
-                                   pending_connects.end(),
-                                   [&addr](const pending_connect& pending) { return pending.contains(addr); });
+  auto pending_it = std::find_if(pending_connects.begin(),
+                                 pending_connects.end(),
+                                 [&addr](const pending_connect& pending) { return pending.contains(addr); });
 
-    /// If DTLS is not configured, mark connection as complete. Otherwise, wait for the DTLS handshake before signaling
-    /// the connection is set up to upper layers.
-    if (pending_it != pending_connects.end()) {
-      pending_it->event.set(true);
-    }
-  })) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  /// If DTLS is not configured, mark connection as complete. Otherwise, wait for the DTLS handshake before signaling
+  /// the connection is set up to upper layers.
+  if (pending_it != pending_connects.end()) {
+    pending_it->event.set(true);
   }
 }
 
