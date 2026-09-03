@@ -8,6 +8,7 @@
 #include "apps/helpers/logger/logger_appconfig.h"
 #include "apps/helpers/network/sctp_appconfig.h"
 #include "apps/helpers/tracing/tracer_appconfig.h"
+#include "apps/helpers/xnu/xnu_appconfig.h"
 #include "apps/services/app_execution_metrics/executor_metrics_config.h"
 #include "apps/services/app_resource_usage/app_resource_usage_config.h"
 #include "apps/services/buffer_pool/buffer_pool_appconfig.h"
@@ -46,6 +47,8 @@ struct cu_appconfig {
   tracer_appconfig trace_cfg;
   /// Expert configuration.
   expert_execution_appconfig expert_execution_cfg;
+  /// Xn-U configuration.
+  xnu_sockets_appconfig xnu_cfg;
   /// F1-U configuration.
   f1u_sockets_appconfig f1u_cfg;
   /// F1AP configuration.

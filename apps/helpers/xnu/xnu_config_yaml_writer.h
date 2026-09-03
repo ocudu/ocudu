@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include "CLI/CLI11.hpp"
+#include <yaml-cpp/yaml.h>
 
 namespace ocudu {
 
-struct f1u_sockets_appconfig;
+struct xnu_sockets_appconfig;
 
-/// Configures the given CLI11 application with the F1-U sockets application configuration schema.
-void configure_cli11_f1u_sockets_args(CLI::App& app, f1u_sockets_appconfig& f1u_params);
+/// Fills the Xn-U configuration in the given YAML node.
+void fill_xnu_config_yaml_schema(YAML::Node& node, const xnu_sockets_appconfig& config);
 
 } // namespace ocudu

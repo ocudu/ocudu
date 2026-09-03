@@ -5,6 +5,7 @@
 #include "gnb_appconfig_yaml_writer.h"
 #include "apps/helpers/logger/logger_appconfig_yaml_writer.h"
 #include "apps/helpers/tracing/tracer_appconfig_yaml_writer.h"
+#include "apps/helpers/xnu/xnu_config_yaml_writer.h"
 #include "apps/services/app_execution_metrics/executor_metrics_config_yaml_writer.h"
 #include "apps/services/app_resource_usage/app_resource_usage_config_yaml_writer.h"
 #include "apps/services/buffer_pool/buffer_pool_config_yaml_writer.h"
@@ -52,6 +53,12 @@ static void fill_gnb_appconfig_remote_control_section(YAML::Node node, const rem
   node["port"]      = config.port;
 }
 
+static void fill_gnb_appconfig_xnu_section(YAML::Node& node, const xnu_sockets_appconfig& config)
+{
+  YAML::Node xnu_node = node["cu_up"]["xnu"];
+  fill_xnu_config_yaml_schema(xnu_node, config);
+}
+
 void ocudu::fill_gnb_appconfig_in_yaml_schema(YAML::Node& node, const gnb_appconfig& config)
 {
   node["gnb_id"]            = config.gnb_id.id;
@@ -68,4 +75,5 @@ void ocudu::fill_gnb_appconfig_in_yaml_schema(YAML::Node& node, const gnb_appcon
   fill_gnb_appconfig_hal_section(node, config.hal_config);
   fill_gnb_appconfig_expert_execution_section(node["expert_execution"], config.expert_execution_cfg);
   fill_gnb_appconfig_remote_control_section(node["remote_control"], config.remote_control_config);
+  fill_gnb_appconfig_xnu_section(node, config.xnu_cfg);
 }

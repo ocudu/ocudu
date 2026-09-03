@@ -7,6 +7,7 @@
 #include "apps/helpers/logger/logger_appconfig_cli11_schema.h"
 #include "apps/helpers/network/sctp_cli11_schema.h"
 #include "apps/helpers/tracing/tracer_appconfig_cli11_schema.h"
+#include "apps/helpers/xnu/xnu_cli11_schema.h"
 #include "apps/services/app_execution_metrics/executor_metrics_config_cli11_schema.h"
 #include "apps/services/app_resource_usage/app_resource_usage_config_cli11_schema.h"
 #include "apps/services/buffer_pool/buffer_pool_appconfig_cli11_schema.h"
@@ -54,13 +55,18 @@ void ocudu::configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_appconfig
   app_services::configure_cli11_with_metrics_appconfig_schema(app, cu_cfg.metrics_cfg.metrics_service_cfg);
   app_services::configure_cli11_with_executor_metrics_appconfig_schema(app, cu_cfg.metrics_cfg.executors_metrics_cfg);
 
-  // F1AP section.
+  // CU-CP section.
   CLI::App* cu_cp_subcmd = add_subcommand(app, "cu_cp", "CU-CP parameters")->configurable();
-  CLI::App* f1ap_subcmd  = add_subcommand(*cu_cp_subcmd, "f1ap", "F1AP parameters")->configurable();
+  // F1AP section.
+  CLI::App* f1ap_subcmd = add_subcommand(*cu_cp_subcmd, "f1ap", "F1AP parameters")->configurable();
   configure_cli11_f1ap_args(*f1ap_subcmd, cu_cfg.f1ap_cfg);
 
-  // NR-U section.
+  // CU-UP section.
   CLI::App* cu_up_subcmd = add_subcommand(app, "cu_up", "CU-UP parameters")->configurable();
-  CLI::App* f1u_subcmd   = add_subcommand(*cu_up_subcmd, "f1u", "F1-U parameters")->configurable();
+  // NR-U section.
+  CLI::App* f1u_subcmd = add_subcommand(*cu_up_subcmd, "f1u", "F1-U parameters")->configurable();
   configure_cli11_f1u_sockets_args(*f1u_subcmd, cu_cfg.f1u_cfg);
+  // Xn-U section.
+  CLI::App* xnu_subcmd = add_subcommand(*cu_up_subcmd, "xnu", "Xn-U parameters")->configurable();
+  configure_cli11_xnu_sockets_args(*xnu_subcmd, cu_cfg.xnu_cfg);
 }
