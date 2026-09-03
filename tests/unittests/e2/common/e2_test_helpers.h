@@ -1162,10 +1162,10 @@ class e2_test_subscriber : public e2_test_base
     du_meas_provider = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
     e2sm_kpm_iface   = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_kpm_packer, *du_meas_provider);
     e2sm_mngr        = std::make_unique<e2sm_manager>(test_logger);
-    e2sm_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_kpm_iface));
-    e2sm_mngr->add_supported_ran_function(1, "1.3.6.1.4.1.53148.1.2.2.2");
+    e2sm_mngr->add_e2sm_service(e2sm_kpm_asn1_packer::oid, std::move(e2sm_kpm_iface));
+    e2sm_mngr->add_supported_ran_function(1, e2sm_kpm_asn1_packer::oid);
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2sm_mngr);
-    e2_subscription_mngr->add_ran_function_oid(1, "1.3.6.1.4.1.53148.1.2.2.2");
+    e2_subscription_mngr->add_ran_function_oid(1, e2sm_kpm_asn1_packer::oid);
     agent_notifier = std::make_unique<dummy_e2_agent_mng>();
     e2             = std::make_unique<e2_impl>(e2_impl_dependencies{.logger            = test_logger,
                                                                     .agent_notifier    = *agent_notifier,
@@ -1222,7 +1222,7 @@ class e2_test_setup : public e2_test_base
     e2sm_rc_iface->add_e2sm_control_service(std::move(e2sm_rc_control_service_style2));
     e2sm_rc_iface->add_e2sm_control_service(std::move(e2sm_rc_control_service_style3));
     e2sm_mngr = std::make_unique<e2sm_manager>(test_logger);
-    e2sm_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_kpm_iface));
+    e2sm_mngr->add_e2sm_service(e2sm_kpm_asn1_packer::oid, std::move(e2sm_kpm_iface));
     e2sm_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.1.2.3", std::move(e2sm_rc_iface));
     e2sm_mngr->add_supported_ran_function(3, "1.3.6.1.4.1.53148.1.1.2.3");
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2sm_mngr);

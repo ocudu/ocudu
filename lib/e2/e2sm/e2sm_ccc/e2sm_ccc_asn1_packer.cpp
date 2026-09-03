@@ -9,6 +9,8 @@ using namespace asn1::e2ap;
 using namespace asn1::e2sm_ccc;
 using namespace ocudu;
 
+// The IEs are generated from the E2SM CCC v06.00 (2025) release. Unlike the other service models, E2SM-CCC is JSON
+// encoded and its specification defines no module OID to copy, so the OID below cannot be checked against it.
 const std::string e2sm_ccc_asn1_packer::short_name       = "ORAN-E2SM-CCC";
 const std::string e2sm_ccc_asn1_packer::oid              = "1.3.6.1.4.1.53148.1.6.2.4";
 const std::string e2sm_ccc_asn1_packer::func_description = "Cell Configuration and Control";

@@ -8,6 +8,8 @@ using namespace asn1::e2ap;
 using namespace asn1::e2sm;
 using namespace ocudu;
 
+// The IEs are generated from the E2SM v05.00 (2024) release, whose E2SM-KPM ASN.1 module header reads
+// "{... oran(53148) e2(1) version2(2) e2sm(2) e2sm-KPMMON-IEs(2)}".
 const std::string e2sm_kpm_asn1_packer::short_name       = "ORAN-E2SM-KPM";
 const std::string e2sm_kpm_asn1_packer::oid              = "1.3.6.1.4.1.53148.1.2.2.2";
 const std::string e2sm_kpm_asn1_packer::func_description = "KPM Monitor";

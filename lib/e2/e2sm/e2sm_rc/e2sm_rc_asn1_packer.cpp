@@ -9,6 +9,8 @@ using namespace asn1::e2ap;
 using namespace asn1::e2sm;
 using namespace ocudu;
 
+// The IEs are generated from the E2SM v05.00 (2024) release, whose E2SM-RC ASN.1 module header reads
+// "{... oran(53148) e2(1) version1(1) e2sm(2) e2sm-RC-IEs(3)}". E2SM-RC has only ever had this one version arc.
 const std::string e2sm_rc_asn1_packer::short_name       = "ORAN-E2SM-RC";
 const std::string e2sm_rc_asn1_packer::oid              = "1.3.6.1.4.1.53148.1.1.2.3";
 const std::string e2sm_rc_asn1_packer::func_description = "RAN Control";
