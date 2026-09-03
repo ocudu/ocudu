@@ -31,7 +31,7 @@ public:
     report_fatal_error_if_not(
         (fmt::underlying(ss_id)) ==
             (fmt::underlying(slot_alloc.cfg.params.dl_cfg_common.init_dl_bwp.pdcch_common.sib1_search_space_id)),
-        "fmt::underlying(ss_id) == "
+        "fmt::underlying(ss_id) != "
         "fmt::underlying(slot_alloc.cfg.params.dl_cfg_common.init_dl_bwp.pdcch_common.sib1_search_space_id)");
     slot_alloc.result.dl.dl_pdcchs.emplace_back();
     slot_alloc.result.dl.dl_pdcchs.back().ctx.rnti    = rnti;
@@ -103,9 +103,9 @@ public:
     const sib_information& test_sib1 = res_grid[0].result.dl.bc.sibs.back();
     report_fatal_error_if_not(
         (fmt::underlying(sib_information::si_indicator_type::sib1)) == (fmt::underlying(test_sib1.si_indicator)),
-        "fmt::underlying(sib_information::si_indicator_type::sib1) == fmt::underlying(test_sib1.si_indicator)");
+        "fmt::underlying(sib_information::si_indicator_type::sib1) != fmt::underlying(test_sib1.si_indicator)");
     report_fatal_error_if_not((rnti_t::SI_RNTI) == (test_sib1.pdsch_cfg.rnti),
-                              "rnti_t::SI_RNTI == test_sib1.pdsch_cfg.rnti");
+                              "rnti_t::SI_RNTI != test_sib1.pdsch_cfg.rnti");
 
     // Test PDCCH_grant and DCI
     const pdcch_dl_information* pdcch =
@@ -115,11 +115,11 @@ public:
     report_fatal_error_if_not(pdcch != nullptr, "pdcch != nullptr");
     report_fatal_error_if_not(
         (fmt::underlying(dci_dl_rnti_config_type::si_f1_0)) == (fmt::underlying(pdcch->dci.type())),
-        "fmt::underlying(dci_dl_rnti_config_type::si_f1_0) == fmt::underlying(pdcch->dci.type())");
+        "fmt::underlying(dci_dl_rnti_config_type::si_f1_0) != fmt::underlying(pdcch->dci.type())");
     report_fatal_error_if_not((si_cfg.sib1_mcs_index) == (pdcch->dci.as_si_rnti_f1_0().modulation_coding_scheme),
-                              "si_cfg.sib1_mcs_index == pdcch->dci.as_si_rnti_f1_0().modulation_coding_scheme");
+                              "si_cfg.sib1_mcs_index != pdcch->dci.as_si_rnti_f1_0().modulation_coding_scheme");
     report_fatal_error_if_not((0) == (pdcch->dci.as_si_rnti_f1_0().redundancy_version),
-                              "0 == pdcch->dci.as_si_rnti_f1_0().redundancy_version");
+                              "0 != pdcch->dci.as_si_rnti_f1_0().redundancy_version");
   }
 
   /// Tests if PRBs have been set as used in the resource grid for the current slot.
@@ -345,7 +345,7 @@ void test_sib1_periodicity(sib1_rtx_periodicity sib1_rtx_period, ssb_periodicity
     if ((sl_idx % expected_sib1_period_slots) == sib1_allocation_slot) {
       // Verify that the scheduler results list contain 1 element with the SIB1 information.
       report_fatal_error_if_not((1) == (t_bench.res_grid[0].result.dl.bc.sibs.size()),
-                                "1 == t_bench.res_grid[0].result.dl.bc.sibs.size()");
+                                "1 != t_bench.res_grid[0].result.dl.bc.sibs.size()");
     } else {
       report_fatal_error_if_not(t_bench.res_grid[0].result.dl.bc.sibs.empty(),
                                 "t_bench.res_grid[0].result.dl.bc.sibs.empty()");

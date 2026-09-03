@@ -48,7 +48,7 @@ public:
                 unsigned                    symbol_index) override
   {
     report_fatal_error_if_not((output.size()) == (get_symbol_size(symbol_index)),
-                              "output.size() == get_symbol_size(symbol_index)");
+                              "output.size() != get_symbol_size(symbol_index)");
 
     modulate_entries.emplace_back();
     modulate_entry& entry = modulate_entries.back();

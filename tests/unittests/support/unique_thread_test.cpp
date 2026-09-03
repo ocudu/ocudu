@@ -37,7 +37,7 @@ TEST(unique_thread_test, init_unique_thread)
   std::atomic<bool> running{true};
   std::string       t_name;
   t = unique_thread("T1", [&running]() {
-    report_fatal_error_if_not((std::string("T1")) == (this_thread_name()), "std::string(\"T1\") == this_thread_name()");
+    report_fatal_error_if_not((std::string("T1")) == (this_thread_name()), "std::string(\"T1\") != this_thread_name()");
 
     print_this_thread_priority();
 

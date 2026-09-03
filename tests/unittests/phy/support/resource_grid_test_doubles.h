@@ -151,7 +151,7 @@ public:
     });
 
     // Make sure the number of elements match.
-    report_fatal_error_if_not((expected_entries.size()) == (re_count), "expected_entries.size() == re_count");
+    report_fatal_error_if_not((expected_entries.size()) == (re_count), "expected_entries.size() != re_count");
 
     // Iterate each expected entry, check that there is an entry and that the expected value error is below a threshold.
     for (const auto& entry : expected_entries) {

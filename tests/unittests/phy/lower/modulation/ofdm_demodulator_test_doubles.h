@@ -41,7 +41,7 @@ public:
   demodulate(resource_grid_writer& grid, span<const ci16_t> input, unsigned port_index, unsigned symbol_index) override
   {
     report_fatal_error_if_not((input.size()) == (get_symbol_size(symbol_index)),
-                              "input.size() == get_symbol_size(symbol_index)");
+                              "input.size() != get_symbol_size(symbol_index)");
 
     demodulate_entries.emplace_back();
     demodulate_entry& entry = demodulate_entries.back();

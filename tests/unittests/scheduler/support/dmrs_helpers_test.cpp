@@ -68,15 +68,15 @@ void verify_dmrs_info(const dmrs_information& expected_dmrs, const dmrs_informat
                             "expected_dmrs.dmrs_symb_pos == dmrs_under_test.dmrs_symb_pos");
   report_fatal_error_if_not(
       (fmt::underlying(expected_dmrs.config_type)) == (fmt::underlying(dmrs_under_test.config_type)),
-      "fmt::underlying(expected_dmrs.config_type) == fmt::underlying(dmrs_under_test.config_type)");
+      "fmt::underlying(expected_dmrs.config_type) != fmt::underlying(dmrs_under_test.config_type)");
   report_fatal_error_if_not((expected_dmrs.dmrs_scrambling_id) == (dmrs_under_test.dmrs_scrambling_id),
-                            "expected_dmrs.dmrs_scrambling_id == dmrs_under_test.dmrs_scrambling_id");
+                            "expected_dmrs.dmrs_scrambling_id != dmrs_under_test.dmrs_scrambling_id");
   report_fatal_error_if_not((expected_dmrs.low_papr_dmrs) == (dmrs_under_test.low_papr_dmrs),
-                            "expected_dmrs.low_papr_dmrs == dmrs_under_test.low_papr_dmrs");
+                            "expected_dmrs.low_papr_dmrs != dmrs_under_test.low_papr_dmrs");
   report_fatal_error_if_not((expected_dmrs.n_scid) == (dmrs_under_test.n_scid),
-                            "expected_dmrs.n_scid == dmrs_under_test.n_scid");
+                            "expected_dmrs.n_scid != dmrs_under_test.n_scid");
   report_fatal_error_if_not((expected_dmrs.num_dmrs_cdm_grps_no_data) == (dmrs_under_test.num_dmrs_cdm_grps_no_data),
-                            "expected_dmrs.num_dmrs_cdm_grps_no_data == dmrs_under_test.num_dmrs_cdm_grps_no_data");
+                            "expected_dmrs.num_dmrs_cdm_grps_no_data != dmrs_under_test.num_dmrs_cdm_grps_no_data");
   report_fatal_error_if_not(expected_dmrs.dmrs_ports == dmrs_under_test.dmrs_ports,
                             "expected_dmrs.dmrs_ports == dmrs_under_test.dmrs_ports");
 }

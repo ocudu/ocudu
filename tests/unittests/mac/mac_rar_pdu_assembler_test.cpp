@@ -98,7 +98,7 @@ rar_ul_grant decode_ul_grant(span<const uint8_t> rar_subpdu)
   dec.unpack(rnti, 16);
   ret.temp_crnti = to_rnti(rnti);
 
-  report_fatal_error_if_not((RAR_PDU_SIZE) == (dec.nof_bytes()), "RAR_PDU_SIZE == dec.nof_bytes()");
+  report_fatal_error_if_not((RAR_PDU_SIZE) == (dec.nof_bytes()), "RAR_PDU_SIZE != dec.nof_bytes()");
 
   return ret;
 }
@@ -133,7 +133,7 @@ struct success_rar_content {
 /// Decode successRAR subPDU (subheader + payload) as per TS 38.321, Figure 6.1.5a-3 and 6.2.3a-2.
 success_rar_content decode_success_rar(span<const uint8_t> rar_subpdu)
 {
-  report_fatal_error_if_not((SUCCESS_RAR_PDU_SIZE) == (rar_subpdu.size()), "SUCCESS_RAR_PDU_SIZE == rar_subpdu.size()");
+  report_fatal_error_if_not((SUCCESS_RAR_PDU_SIZE) == (rar_subpdu.size()), "SUCCESS_RAR_PDU_SIZE != rar_subpdu.size()");
   success_rar_content ret{};
   std::copy(rar_subpdu.begin() + 1, rar_subpdu.begin() + 1 + UE_CON_RES_ID_LEN, ret.con_res_id.begin());
 
@@ -168,7 +168,7 @@ void test_encoded_rar(const rar_information& original_rar, span<const uint8_t> r
 {
   report_fatal_error_if_not(not rar_pdu.empty(), "not rar_pdu.empty()");
   report_fatal_error_if_not((RAR_PDU_SIZE * original_rar.grants.size()) == (rar_pdu.size()),
-                            "RAR_PDU_SIZE * original_rar.grants.size() == rar_pdu.size()");
+                            "RAR_PDU_SIZE * original_rar.grants.size() != rar_pdu.size()");
 
   for (unsigned i = 0; i < original_rar.grants.size(); ++i) {
     span<const uint8_t> subpdu = rar_pdu.subspan(i * RAR_PDU_SIZE, RAR_PDU_SIZE);
