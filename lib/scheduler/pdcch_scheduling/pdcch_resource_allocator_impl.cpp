@@ -42,7 +42,7 @@ void pdcch_resource_allocator_impl::slot_indication(slot_point sl_tx)
   last_sl_ind = sl_tx;
 
   // Clear old records.
-  slot_records[(last_sl_ind - 1).to_uint() % slot_records.size()]->clear();
+  slot_records[(last_sl_ind - 1).count() % slot_records.size()]->clear();
 }
 
 pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_common(cell_slot_resource_allocator& slot_alloc,
@@ -237,5 +237,5 @@ void pdcch_resource_allocator_impl::stop()
 pdcch_slot_allocator& pdcch_resource_allocator_impl::get_pdcch_slot_alloc(slot_point sl)
 {
   ocudu_sanity_check(sl < last_sl_ind + SLOT_ALLOCATOR_RING_SIZE, "PDCCH being allocated to far into the future");
-  return *slot_records[sl.to_uint() % slot_records.size()];
+  return *slot_records[sl.count() % slot_records.size()];
 }

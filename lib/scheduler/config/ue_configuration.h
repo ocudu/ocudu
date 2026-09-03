@@ -51,14 +51,14 @@ struct search_space_info {
   /// \brief Retrieve all the PDCCH candidates for a given aggregation level and slot for this SearchSpace.
   span<const uint8_t> get_pdcch_candidates(aggregation_level aggr_lvl, slot_point pdcch_slot) const
   {
-    return ss_pdcch_candidates[pdcch_slot.to_uint() % ss_pdcch_candidates.size()][to_aggregation_level_index(aggr_lvl)];
+    return ss_pdcch_candidates[pdcch_slot.count() % ss_pdcch_candidates.size()][to_aggregation_level_index(aggr_lvl)];
   }
 
   /// \brief Retrieve all the CRBs for a given aggregation level and searchSpace candidate.
   span<const crb_index_list_span> get_crb_list_of_pdcch_candidates(aggregation_level aggr_lvl,
                                                                    slot_point        pdcch_slot) const
   {
-    return crbs_of_candidates[pdcch_slot.to_uint() % crbs_of_candidates.size()][to_aggregation_level_index(aggr_lvl)];
+    return crbs_of_candidates[pdcch_slot.count() % crbs_of_candidates.size()][to_aggregation_level_index(aggr_lvl)];
   }
 
   /// \brief Returns the maximum number of DL layers for which a PDSCH config exists for the given time-domain resource.

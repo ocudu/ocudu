@@ -459,7 +459,7 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res
     if (pdcch_alloc.result.dl.dl_pdcchs.full() or pdsch_alloc.result.dl.ue_grants.full()) {
       logger.debug("rnti={}: Failed to allocate fallback PDSCH. Cause: No space available in scheduler output list",
                    u.crnti);
-      slots_with_no_pdxch_space[next_slot.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = true;
+      slots_with_no_pdxch_space[next_slot.count() % FALLBACK_SCHED_RING_BUFFER_SIZE] = true;
       continue;
     }
 
@@ -626,7 +626,7 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
   if (unused_crbs.empty()) {
     logger.debug("rnti={}: Postponed PDU scheduling for slot={}. Cause: No space in PDSCH.", u.crnti, pdsch_alloc.slot);
     // If there is no free PRBs left on this slot for this UE, then this slot should be avoided by the other UEs too.
-    slots_with_no_pdxch_space[pdsch_alloc.slot.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = true;
+    slots_with_no_pdxch_space[pdsch_alloc.slot.count() % FALLBACK_SCHED_RING_BUFFER_SIZE] = true;
     return {};
   }
 
@@ -677,7 +677,7 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
                    chosen_tbs);
       if (only_conres_bytes > 0) {
         // In case not even a ConRes CE can fit, we can start ignoring this slot.
-        slots_with_no_pdxch_space[pdsch_alloc.slot.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = true;
+        slots_with_no_pdxch_space[pdsch_alloc.slot.count() % FALLBACK_SCHED_RING_BUFFER_SIZE] = true;
       }
       return {};
     }
@@ -710,7 +710,7 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
   if (pdcch == nullptr) {
     logger.debug("rnti={}: Postponed PDU scheduling for slot={}. Cause: No space in PDCCH.", u.crnti, pdcch_alloc.slot);
     // If there is no PDCCH space on this slot for this UE, then this slot should be avoided by the other UEs too.
-    slots_with_no_pdxch_space[pdcch_alloc.slot.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = true;
+    slots_with_no_pdxch_space[pdcch_alloc.slot.count() % FALLBACK_SCHED_RING_BUFFER_SIZE] = true;
     return {};
   }
 

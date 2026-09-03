@@ -180,7 +180,7 @@ const ue_cell* uci_scheduler_impl::get_ue_cell(rnti_t rnti) const
 void uci_scheduler_impl::schedule_slot_ucis(cell_slot_resource_allocator& slot_alloc)
 {
   // For the provided slot, check if there are any pending UCI resources to allocate, and allocate them.
-  auto& slot_ucis = periodic_uci_slot_wheel[slot_alloc.slot.to_uint() % periodic_uci_slot_wheel.size()];
+  auto& slot_ucis = periodic_uci_slot_wheel[slot_alloc.slot.count() % periodic_uci_slot_wheel.size()];
   for (auto* it = slot_ucis.begin(); it != slot_ucis.end();) {
     const periodic_uci_info& uci_info = *it;
     const ue_cell*           ue_cc    = get_ue_cell(uci_info.rnti);

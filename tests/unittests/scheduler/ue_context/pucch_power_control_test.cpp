@@ -327,7 +327,7 @@ TEST_P(pucch_power_control_test_bench, when_phr_is_non_positive_cl_stops_increas
   bool convergence_reached = false;
 
   for (unsigned sl_cnt = 0, sl_max = 1200; sl_cnt != sl_max; ++sl_cnt, ++sl) {
-    const unsigned slot_idx_tdd_slot = sl.to_uint() % TDD_PATTERN_LENGTH;
+    const unsigned slot_idx_tdd_slot = sl.count() % TDD_PATTERN_LENGTH;
     const bool     is_dl_slot        = slot_idx_tdd_slot <= 7U;
 
     // In DL slots, process the PUCCH SINR, which is supposed to be carried by the UCI indication.

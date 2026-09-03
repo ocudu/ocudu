@@ -61,7 +61,6 @@ public:
   using slot_point::slot_index;
   using slot_point::subframe_index;
   using slot_point::system_slot;
-  using slot_point::to_uint;
   using slot_point::valid;
   using slot_point::operator uint32_t;
   using slot_point::hrf_slot_index;

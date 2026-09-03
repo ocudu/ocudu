@@ -9,5 +9,5 @@ bool ocudu::csi_helper::is_csi_reporting_slot(const ue_periodic_csi_config& peri
                                               csi_resource_periodicity      csi_period,
                                               slot_point                    sl_tx)
 {
-  return (sl_tx - periodic_csi.offset).to_uint() % csi_resource_periodicity_to_uint(csi_period) == 0;
+  return (sl_tx - periodic_csi.offset).count() % csi_resource_periodicity_to_uint(csi_period) == 0;
 }

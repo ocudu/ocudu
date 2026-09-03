@@ -109,7 +109,7 @@ void pucch_allocator_impl::slot_indication(slot_point sl_tx)
   col_manager.slot_indication(sl_tx);
 
   // Clear previous slot PUCCH grants allocations.
-  slots_ctx[(sl_tx - 1).to_uint()].clear();
+  slots_ctx[(sl_tx - 1).count()].clear();
 }
 
 void pucch_allocator_impl::stop()
@@ -129,7 +129,7 @@ std::optional<unsigned> pucch_allocator_impl::alloc_common_harq_ack(cell_resourc
 {
   // Get the slot allocation grid considering the PDSCH delay (k0) and the PUCCH delay wrt PDSCH (k1).
   cell_slot_resource_allocator& pucch_slot_alloc = res_alloc[k0 + k1 + res_alloc.cfg.ntn_cs_koffset];
-  auto&                         slot_ctx         = slots_ctx[pucch_slot_alloc.slot.to_uint()];
+  auto&                         slot_ctx         = slots_ctx[pucch_slot_alloc.slot.count()];
   alloc_context                 alloc_ctx{alloc_context::alloc_type::common_harq_ack, tcrnti, pucch_slot_alloc.slot};
 
   ue_grants* existing_ue_grants = slot_ctx.find_ue_grants(tcrnti);
@@ -192,7 +192,7 @@ std::optional<unsigned> pucch_allocator_impl::alloc_common_and_ded_harq_ack(cell
 {
   // Get the slot allocation grid considering the PDSCH delay (k0) and the PUCCH delay wrt PDSCH (k1).
   cell_slot_resource_allocator& pucch_slot_alloc = res_alloc[k0 + k1 + res_alloc.cfg.ntn_cs_koffset];
-  auto&                         slot_ctx         = slots_ctx[pucch_slot_alloc.slot.to_uint()];
+  auto&                         slot_ctx         = slots_ctx[pucch_slot_alloc.slot.count()];
   alloc_context alloc_ctx{alloc_context::alloc_type::common_and_ded_harq_ack, ue_cell_cfg.crnti, pucch_slot_alloc.slot};
 
   ue_grants* existing_grants = slot_ctx.find_ue_grants(ue_cell_cfg.crnti);
@@ -253,7 +253,7 @@ std::optional<unsigned> pucch_allocator_impl::alloc_ded_harq_ack(cell_resource_a
   // Get the slot allocation grid considering the PDSCH delay (k0) and the PUCCH delay wrt PDSCH (k1).
   const unsigned                anchor_delay     = k0 + k1 + res_alloc.cfg.ntn_cs_koffset;
   cell_slot_resource_allocator& pucch_slot_alloc = res_alloc[anchor_delay];
-  auto&                         slot_ctx         = slots_ctx[pucch_slot_alloc.slot.to_uint()];
+  auto&                         slot_ctx         = slots_ctx[pucch_slot_alloc.slot.count()];
   alloc_context alloc_ctx{alloc_context::alloc_type::ded_harq_ack, ue_cell_cfg.crnti, pucch_slot_alloc.slot};
 
   ue_grants* existing_grants = slot_ctx.find_ue_grants(ue_cell_cfg.crnti);
@@ -314,7 +314,7 @@ std::optional<unsigned> pucch_allocator_impl::alloc_ded_harq_ack(cell_resource_a
       std::optional<unsigned> d_pri;
       for (const slot_point& burst_slot : existing_grants->burst_slots) {
         cell_slot_resource_allocator& sl          = res_alloc[burst_slot];
-        ue_grants*                    slot_grants = slots_ctx[sl.slot.to_uint()].find_ue_grants(ue_cell_cfg.crnti);
+        ue_grants*                    slot_grants = slots_ctx[sl.slot.count()].find_ue_grants(ue_cell_cfg.crnti);
         ocudu_assert(slot_grants != nullptr, "Missing PUCCH repetition burst grant for slot={}", burst_slot);
         d_pri = update_harq_ack_bits(sl, *slot_grants, new_bits.harq_ack_nof_bits, alloc_ctx);
       }
@@ -376,7 +376,7 @@ std::optional<unsigned> pucch_allocator_impl::alloc_ded_harq_ack(cell_resource_a
 bool pucch_allocator_impl::alloc_sr_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
                                                 const ue_cell_configuration&  ue_cell_cfg)
 {
-  auto&         slot_ctx = slots_ctx[pucch_slot_alloc.slot.to_uint()];
+  auto&         slot_ctx = slots_ctx[pucch_slot_alloc.slot.count()];
   alloc_context alloc_ctx{alloc_context::alloc_type::sr, ue_cell_cfg.crnti, pucch_slot_alloc.slot};
 
   ue_grants* existing_grants = slot_ctx.find_ue_grants(ue_cell_cfg.crnti);
@@ -415,7 +415,7 @@ bool pucch_allocator_impl::alloc_sr_opportunity(cell_slot_resource_allocator& pu
 bool pucch_allocator_impl::alloc_csi_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
                                                  const ue_cell_configuration&  ue_cell_cfg)
 {
-  auto&         slot_ctx = slots_ctx[pucch_slot_alloc.slot.to_uint()];
+  auto&         slot_ctx = slots_ctx[pucch_slot_alloc.slot.count()];
   alloc_context alloc_ctx{alloc_context::alloc_type::csi, ue_cell_cfg.crnti, pucch_slot_alloc.slot};
 
   ue_grants* existing_grants = slot_ctx.find_ue_grants(ue_cell_cfg.crnti);
@@ -455,7 +455,7 @@ pucch_uci_bits pucch_allocator_impl::remove_ue_uci_from_pucch(cell_slot_resource
                                                               const ue_cell_configuration&  ue_cell_cfg)
 {
   // Get the PUCCH grants for the slot.
-  auto&      slot_ctx           = slots_ctx[slot_alloc.slot.to_uint()];
+  auto&      slot_ctx           = slots_ctx[slot_alloc.slot.count()];
   ue_grants* existing_ue_grants = slot_ctx.find_ue_grants(ue_cell_cfg.crnti);
   if (existing_ue_grants == nullptr) {
     // No PUCCH grants found for the UE in this slot.
@@ -501,14 +501,14 @@ pucch_uci_bits pucch_allocator_impl::remove_ue_uci_from_pucch(cell_slot_resource
 
 bool pucch_allocator_impl::has_common_pucch_grant(rnti_t rnti, slot_point sl_tx) const
 {
-  const auto& slot_ctx = slots_ctx[sl_tx.to_uint()];
+  const auto& slot_ctx = slots_ctx[sl_tx.count()];
   auto        it       = slot_ctx.ue_grants_map.find(rnti);
   return it != slot_ctx.ue_grants_map.end() and it->second.common.has_value();
 }
 
 span<const slot_point> pucch_allocator_impl::get_pucch_repetition_slots(rnti_t rnti, slot_point sl_tx) const
 {
-  const auto& slot_ctx = slots_ctx[sl_tx.to_uint()];
+  const auto& slot_ctx = slots_ctx[sl_tx.count()];
   auto        it       = slot_ctx.ue_grants_map.find(rnti);
   if (it == slot_ctx.ue_grants_map.end()) {
     return {};
@@ -713,7 +713,7 @@ pucch_allocator_impl::find_burst_slots(cell_resource_allocator& res_alloc,
     if (std::find(released_slots.begin(), released_slots.end(), sl.slot) == released_slots.end()) {
       // A PUCCH with repetitions can carry neither SR/CSI nor PUSCH-multiplexed UCI, so the slot must not hold any
       // other grant of this UE.
-      if (slots_ctx[sl.slot.to_uint()].find_ue_grants(rnti) != nullptr) {
+      if (slots_ctx[sl.slot.count()].find_ue_grants(rnti) != nullptr) {
         return std::nullopt;
       }
       const bool ue_has_pusch =
@@ -762,7 +762,7 @@ void pucch_allocator_impl::commit_harq_ack_burst(cell_resource_allocator&       
     // propagated to all of them and keep the repeated payload in sync.
     new_grants->burst_slots = candidate.slots;
 
-    slots_ctx[sl.slot.to_uint()].ue_grants_map[alloc_ctx.rnti] = *new_grants;
+    slots_ctx[sl.slot.count()].ue_grants_map[alloc_ctx.rnti] = *new_grants;
   }
 }
 
@@ -772,7 +772,7 @@ void pucch_allocator_impl::release_harq_ack_burst(cell_resource_allocator& res_a
 {
   for (slot_point burst_slot : burst_slots) {
     cell_slot_resource_allocator& sl       = res_alloc[burst_slot];
-    auto&                         slot_ctx = slots_ctx[sl.slot.to_uint()];
+    auto&                         slot_ctx = slots_ctx[sl.slot.count()];
     ue_grants*                    grants   = slot_ctx.find_ue_grants(rnti);
     ocudu_assert(grants != nullptr and grants->harq_ack.has_value() and not grants->common.has_value() and
                      not grants->sr.has_value() and not grants->csi.has_value(),
@@ -1230,7 +1230,7 @@ bool pucch_allocator_impl::can_allocate_pucch(const cell_slot_resource_allocator
   }
 
   // Check if there is space in the PUCCH grants list of the slot.
-  const auto& slot_ctx = slots_ctx[pucch_slot_alloc.slot.to_uint()];
+  const auto& slot_ctx = slots_ctx[pucch_slot_alloc.slot.count()];
   if (existing_ue_grants == nullptr and slot_ctx.ue_grants_map.size() == slot_ctx.ue_grants_map.max_size()) {
     alloc_ctx.log_skipped_alloc(logger.info, "PUCCH allocator grant list is full");
     return false;

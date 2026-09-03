@@ -162,7 +162,7 @@ void pucch_power_controller::update_pucch_sinr_f0_f1(slot_point slor_rx, float s
   // For PUCCH format 1, there can be up to 2 PUCCH power control data, in case of PUCCH with HARQ-ACK and SR. However,
   // either PUCCH report the same delta TF value.
   // NOTE: The UE only transmit one of these PUCCHs.
-  const auto& pucchs_pw_ctrl = pucch_pw_ctrl_grid[slor_rx.to_uint()];
+  const auto& pucchs_pw_ctrl = pucch_pw_ctrl_grid[slor_rx.count()];
   const auto& pucch_pw       = std::find_if(pucchs_pw_ctrl.begin(), pucchs_pw_ctrl.end(), [](const auto& pucch) {
     return pucch.format == pucch_format::FORMAT_0 || pucch.format == pucch_format::FORMAT_1;
   });
@@ -177,7 +177,7 @@ void pucch_power_controller::update_pucch_sinr_f0_f1(slot_point slor_rx, float s
                          "{}[slot_rx={} grid_idx={} {} bits={}]",
                          fmtbuf.size() == 0 ? "" : ", ",
                          item_item.slot_rx,
-                         item_item.slot_rx.to_uint() % pucch_pw_ctrl_grid.size(),
+                         item_item.slot_rx.count() % pucch_pw_ctrl_grid.size(),
                          to_string(item_item.format),
                          item_item.uci_bits);
         }
@@ -194,7 +194,7 @@ void pucch_power_controller::update_pucch_sinr_f0_f1(slot_point slor_rx, float s
                 "the grid contains={}. Unless occurred during Setup/ReConf, consider increasing the grid size",
                 rnti,
                 slor_rx,
-                slor_rx.to_uint() % pucch_pw_ctrl_grid.size(),
+                slor_rx.count() % pucch_pw_ctrl_grid.size(),
                 to_c_str(fmtbuf));
     return;
   }
@@ -213,7 +213,7 @@ void pucch_power_controller::update_pucch_sinr_f2_f3_f4(slot_point slor_rx,
     return;
   }
 
-  const auto& pucchs_pw_ctrl = pucch_pw_ctrl_grid[slor_rx.to_uint()];
+  const auto& pucchs_pw_ctrl = pucch_pw_ctrl_grid[slor_rx.count()];
 
   // For Formats 2, 3 and 4, there can be up to 2 PUCCH power control data. We can tell them apart from the UCI bits.
   const auto& pucch_pw =
@@ -234,7 +234,7 @@ void pucch_power_controller::update_pucch_sinr_f2_f3_f4(slot_point slor_rx,
                          "{}[slot_rx={} grid_idx={} {} bits={}]",
                          fmtbuf.size() == 0 ? "" : ", ",
                          item_item.slot_rx,
-                         item_item.slot_rx.to_uint() % pucch_pw_ctrl_grid.size(),
+                         item_item.slot_rx.count() % pucch_pw_ctrl_grid.size(),
                          to_string(item_item.format),
                          item_item.uci_bits);
         }
@@ -251,7 +251,7 @@ void pucch_power_controller::update_pucch_sinr_f2_f3_f4(slot_point slor_rx,
                 "the grid contains={}. Unless occurred during Setup/ReConf, consider increasing the grid size",
                 rnti,
                 slor_rx,
-                slor_rx.to_uint() % pucch_pw_ctrl_grid.size(),
+                slor_rx.count() % pucch_pw_ctrl_grid.size(),
                 to_c_str(fmtbuf));
 
     return;
@@ -275,7 +275,7 @@ void pucch_power_controller::update_pucch_pw_ctrl_state(slot_point      slot,
     return;
   }
 
-  const unsigned grid_idx            = slot.to_uint();
+  const unsigned grid_idx            = slot.count();
   const auto&    slot_pucchs_pw_ctrl = pucch_pw_ctrl_grid[grid_idx];
 
   // If there are PUCCH power control data for a slot different from \ref slot, it means that this element of the ring
@@ -286,7 +286,7 @@ void pucch_power_controller::update_pucch_pw_ctrl_state(slot_point      slot,
                                       slot_pucchs_pw_ctrl.end(),
                                       [slot](const auto& pucch) { return pucch.slot_rx != slot; });
   if (clear_slot) {
-    pucch_pw_ctrl_grid[slot.to_uint()].clear();
+    pucch_pw_ctrl_grid[slot.count()].clear();
   }
 
   if (pucch_pw_ctrl_grid[grid_idx].full()) {

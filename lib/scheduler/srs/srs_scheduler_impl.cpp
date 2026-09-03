@@ -311,7 +311,7 @@ void srs_scheduler_impl::handle_positioning_measurement_stop(rnti_t pos_rnti)
 void srs_scheduler_impl::schedule_slot_srs(ocudu::cell_slot_resource_allocator& slot_alloc)
 {
   // For the provided slot, check if there are any pending SRS resources to allocate, and allocate them.
-  auto& slot_srss = periodic_srs_slot_wheel[slot_alloc.slot.to_uint() % periodic_srs_slot_wheel.size()];
+  auto& slot_srss = periodic_srs_slot_wheel[slot_alloc.slot.count() % periodic_srs_slot_wheel.size()];
   for (auto srs_info_it : slot_srss) {
     allocate_srs_opportunity(slot_alloc, srs_info_it);
   }

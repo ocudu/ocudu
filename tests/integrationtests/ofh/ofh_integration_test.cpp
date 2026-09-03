@@ -408,7 +408,7 @@ public:
   void on_tti_boundary(const tti_boundary_context& slot_context) override
   {
     if (!slot_synchronized) {
-      slot_val          = (slot_context.slot.without_hyper_sfn() + processing_delay_slots).to_uint();
+      slot_val          = (slot_context.slot.without_hyper_sfn() + processing_delay_slots).count();
       slot_synchronized = true;
       fmt::print("Initial slot set to {}\n", slot_point(slot_context.slot.numerology(), slot_val));
     }
@@ -732,7 +732,7 @@ private:
       if (slot_sim_exec_time < slot_duration_us) {
         std::this_thread::sleep_for(slot_duration_us - slot_sim_exec_time - sleep_margin);
       }
-      slot_val = (++slot).to_uint();
+      slot_val = (++slot).count();
     }
     // Leave time for the uplink slots to be processed.
     auto proc_time = processing_delay_slots * slot_duration_us + (T1a_max_cp_ul * symbol_duration_us) + 100ms;

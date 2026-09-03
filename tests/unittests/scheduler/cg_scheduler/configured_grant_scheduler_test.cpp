@@ -530,7 +530,7 @@ TEST_P(cg_duplex_test, no_dynamic_pusch_in_cg_slot)
     bool has_cg = std::any_of(puschs.begin(), puschs.end(), [](const ul_sched_info& p) { return p.pusch_cfg.is_cg; });
     bool has_dynamic =
         std::any_of(puschs.begin(), puschs.end(), [](const ul_sched_info& p) { return not p.pusch_cfg.is_cg; });
-    EXPECT_FALSE(has_cg and has_dynamic) << "Slot " << last_result_slot().to_uint()
+    EXPECT_FALSE(has_cg and has_dynamic) << "Slot " << last_result_slot().count()
                                          << ": CG and dynamic PUSCH must not coexist in the same slot";
   }
 }

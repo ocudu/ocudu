@@ -114,7 +114,6 @@ public:
 
   /// Conversion of slot_point to system slot.
   constexpr uint32_t system_slot() const { return count_val; }
-  constexpr uint32_t to_uint() const { return count_val; }
   constexpr uint32_t count() const { return count_val; }
   constexpr explicit operator uint32_t() const { return count_val; }
 
@@ -274,10 +273,10 @@ inline slot_point set_slot_numerology(slot_point sl, unsigned new_numerology)
 {
   unsigned old_numerology = sl.numerology();
   if (old_numerology > new_numerology) {
-    return slot_point{new_numerology, sl.to_uint() >> (old_numerology - new_numerology)};
+    return slot_point{new_numerology, sl.count() >> (old_numerology - new_numerology)};
   }
   if (old_numerology < new_numerology) {
-    return slot_point{new_numerology, sl.to_uint() << (new_numerology - old_numerology)};
+    return slot_point{new_numerology, sl.count() << (new_numerology - old_numerology)};
   }
   return sl;
 }

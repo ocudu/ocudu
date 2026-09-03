@@ -38,13 +38,12 @@ void ran_slice_instance::slot_indication(slot_point slot_tx)
   // Recompute rate of DL allocation for slice and clear the PDSCH RB count of the slot that just became finalized:
   // since PDSCH TDRA k0 offsets (including repetition occasions) are never negative, no round from here on can still
   // write into slot_tx - 1.
-  auto& pdsch_slot_to_clear = pdsch_rb_count_per_slot[(slot_tx - 1).to_uint() % pdsch_rb_count_per_slot.size()];
+  auto& pdsch_slot_to_clear = pdsch_rb_count_per_slot[(slot_tx - 1).count() % pdsch_rb_count_per_slot.size()];
   avg_pdsch_rbs_per_slot += exp_avg_coeff * (pdsch_slot_to_clear - avg_pdsch_rbs_per_slot);
   pdsch_slot_to_clear = 0;
 
   // Recompute rate of UL allocation for slice and clear PUSCH RB count in previous slot.
-  auto& pusch_slot_to_clear =
-      pusch_rb_count_per_slot[(slot_tx + min_k2 - 1).to_uint() % pusch_rb_count_per_slot.size()];
+  auto& pusch_slot_to_clear = pusch_rb_count_per_slot[(slot_tx + min_k2 - 1).count() % pusch_rb_count_per_slot.size()];
   avg_pusch_rbs_per_slot += exp_avg_coeff * (pusch_slot_to_clear - avg_pusch_rbs_per_slot);
   pusch_slot_to_clear = 0;
 

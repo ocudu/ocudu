@@ -171,10 +171,10 @@ struct search_space_configuration {
   {
     if (is_search_space0()) {
       ocudu_assert(ssb_beam_idx < monitoring_slot_offset.size(), "Invalid SSB beam index={}", ssb_beam_idx);
-      return monitoring_slot_offset[ssb_beam_idx].to_uint();
+      return monitoring_slot_offset[ssb_beam_idx].count();
     }
     ocudu_assert(ssb_beam_idx == 0, "SSB beam index is not used for SearchSpace Id > 0");
-    return monitoring_slot_offset.back().to_uint();
+    return monitoring_slot_offset.back().count();
   }
 
   /// \brief Sets the duration in number of slots for non-SearchSpace#0 SearchSpaces.

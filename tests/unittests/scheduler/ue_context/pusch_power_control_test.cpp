@@ -127,7 +127,7 @@ TEST_P(phr_ul_power_control_test_bench, pw_control_reduces_prbs_when_estimated_p
   // Simulate at 100 PHR periods.
   for (unsigned sl_cnt = 0, sl_max = phr_periodic_timer_sl * 40; sl_cnt != sl_max; ++sl_cnt, ++sl) {
     // > If the PHR timer expires, generate the PH value to report and the PUSCH-to-PHR delay.
-    if (sl.to_uint() % phr_periodic_timer_sl == 0) {
+    if (sl.count() % phr_periodic_timer_sl == 0) {
       // Set a random value from -20 to 10 dB for the PH value to report. This is to simulate both cases of positive and
       // negative PHRs.
       ph_value_to_report.emplace(test_rng::uniform_int<int>(-20, 10));
@@ -138,7 +138,7 @@ TEST_P(phr_ul_power_control_test_bench, pw_control_reduces_prbs_when_estimated_p
     }
 
     // > At UL slots, check if the PUSCH transmission is to be performed.
-    const unsigned slot_idx_tdd_slot = sl.to_uint() % TDD_PATTERN_LENGTH;
+    const unsigned slot_idx_tdd_slot = sl.count() % TDD_PATTERN_LENGTH;
     const bool     is_tdd_slot = GetParam().two_ul_slots_per_pattern ? slot_idx_tdd_slot > 7U : slot_idx_tdd_slot > 6U;
     if (is_tdd_slot) {
       // Simulate a PUSCH transmission with probability 0.5 at every UL slot in the TDD pattern. For large PHR periods,
@@ -180,7 +180,7 @@ TEST_P(phr_ul_power_control_test_bench, pw_control_reduces_prbs_when_estimated_p
 
           // Save the number of PRBs allocated to the PUSCH, both in the channel state manager and in the test-bench.
           ul_pw_ctrl_manager->update_pusch_pw_ctrl_state(sl, updated_pusch_nof_prbs);
-          pusch_nof_prbs_grid[sl.to_uint() % pusch_nof_prbs_grid.size()] = pusch_prbs_entry{sl, updated_pusch_nof_prbs};
+          pusch_nof_prbs_grid[sl.count() % pusch_nof_prbs_grid.size()] = pusch_prbs_entry{sl, updated_pusch_nof_prbs};
         } else {
           ch_state_manager->update_pusch_snr(default_pusch_sinr);
           uint8_t tpc = ul_pw_ctrl_manager->compute_tpc_command(sl);
@@ -194,7 +194,7 @@ TEST_P(phr_ul_power_control_test_bench, pw_control_reduces_prbs_when_estimated_p
           ASSERT_EQ(updated_pusch_nof_prbs, nof_prbs);
           // Save the number of PRBs allocated to the PUSCH, both in the channel state manager and in the test-bench.
           ul_pw_ctrl_manager->update_pusch_pw_ctrl_state(sl, updated_pusch_nof_prbs);
-          pusch_nof_prbs_grid[sl.to_uint() % pusch_nof_prbs_grid.size()] = pusch_prbs_entry{sl, nof_prbs};
+          pusch_nof_prbs_grid[sl.count() % pusch_nof_prbs_grid.size()] = pusch_prbs_entry{sl, nof_prbs};
         }
         // If there is a PH value to report, save the slot at which the PHR is received.
         if (ph_value_to_report.has_value() and not sl_phr.has_value()) {
@@ -462,14 +462,14 @@ TEST_P(pusch_closed_loop_power_control_test_bench, with_cl_pw_control_pusch_reac
         sinr + (1 - alpha_fractional_pl) * (ref_path_loss_for_target_sinr - actual_path_loss_dB);
 
     // > If the PHR timer expires, generate the PUSCH-to-PHR delay.
-    if (sl.to_uint() % phr_periodic_timer_sl == 0) {
+    if (sl.count() % phr_periodic_timer_sl == 0) {
       phr_to_report = true;
       pusch_to_phr_delay =
           test_rng::uniform_int<unsigned>(PUSCH_TO_PHR_DELAY_BOUNDS.start(), PUSCH_TO_PHR_DELAY_BOUNDS.stop() - 1);
     }
 
     // > At UL slots, check if the PUSCH transmission is to be performed.
-    const unsigned slot_idx_tdd_slot = sl.to_uint() % TDD_PATTERN_LENGTH;
+    const unsigned slot_idx_tdd_slot = sl.count() % TDD_PATTERN_LENGTH;
     const bool     is_tdd_slot       = slot_idx_tdd_slot > 7U;
     if (is_tdd_slot) {
       // Simulate a PUSCH transmission with probability 0.5 at every UL slot in the TDD pattern.
@@ -487,7 +487,7 @@ TEST_P(pusch_closed_loop_power_control_test_bench, with_cl_pw_control_pusch_reac
         // Save the Closed-loop power control value for the slot; this is used in the test to generate the PHR value.
         f_cl_pw_control += tpc_mapping(tpc_cmd);
 
-        pusch_nof_prbs_grid[sl.to_uint() % pusch_nof_prbs_grid.size()] =
+        pusch_nof_prbs_grid[sl.count() % pusch_nof_prbs_grid.size()] =
             pusch_prbs_entry{sl, updated_pusch_nof_prbs, static_cast<int>(f_cl_pw_control)};
 
         // If there is a PH value to report, save the slot at which the PHR is received.
@@ -639,14 +639,14 @@ TEST_F(pusch_cl_pw_control_bounds_test_bench, when_phr_is_non_positive_cl_stops_
     slot_indication();
 
     // > If the PHR timer expires, generate the PUSCH-to-PHR delay.
-    if (sl.to_uint() % phr_periodic_timer_sl == 0) {
+    if (sl.count() % phr_periodic_timer_sl == 0) {
       phr_to_report = true;
       pusch_to_phr_delay =
           test_rng::uniform_int<unsigned>(PUSCH_TO_PHR_DELAY_BOUNDS.start(), PUSCH_TO_PHR_DELAY_BOUNDS.stop() - 1);
     }
 
     // > At UL slots, check if the PUSCH transmission is to be performed.
-    const unsigned slot_idx_tdd_slot = sl.to_uint() % TDD_PATTERN_LENGTH;
+    const unsigned slot_idx_tdd_slot = sl.count() % TDD_PATTERN_LENGTH;
     const bool     is_tdd_slot       = slot_idx_tdd_slot > 7U;
     if (is_tdd_slot) {
       // Simulate a PUSCH transmission with probability 0.5 at every UL slot in the TDD pattern.
@@ -661,7 +661,7 @@ TEST_F(pusch_cl_pw_control_bounds_test_bench, when_phr_is_non_positive_cl_stops_
         // Save the number of PRBs allocated to the PUSCH, both in the channel state manager and in the test-bench.
         ul_pw_ctrl_manager->update_pusch_pw_ctrl_state(sl, updated_pusch_nof_prbs);
         // Save the Closed-loop power control value for the slot; this is used in the test to generate the PHR value.
-        pusch_nof_prbs_grid[sl.to_uint() % pusch_nof_prbs_grid.size()] =
+        pusch_nof_prbs_grid[sl.count() % pusch_nof_prbs_grid.size()] =
             pusch_prbs_entry{sl, updated_pusch_nof_prbs, static_cast<int>(f_cl_pw_control)};
 
         // If there is a PH value to report, save the slot at which the PHR is received.

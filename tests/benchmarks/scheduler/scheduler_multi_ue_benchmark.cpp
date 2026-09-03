@@ -138,7 +138,7 @@ public:
 
     // Process past UCI results.
     slot_point          sl_rx = next_sl_tx.without_hyper_sfn() - dl_pipeline_delay - uci_process_delay;
-    const sched_result& res   = sched_results[sl_rx.to_uint()];
+    const sched_result& res   = sched_results[sl_rx.count()];
     if (res.success) {
       uci_indication ind;
       ind.slot_rx    = sl_rx;

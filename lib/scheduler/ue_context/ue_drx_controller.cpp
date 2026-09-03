@@ -56,7 +56,7 @@ void ue_drx_controller::slot_indication(slot_point dl_slot)
   }
 
   if (not active_time_end.valid()) {
-    const unsigned slot_mod                  = dl_slot.to_uint() % active_window_period;
+    const unsigned slot_mod                  = dl_slot.count() % active_window_period;
     bool is_slot_in_on_duration_timer_window = slot_mod >= active_window.start() and slot_mod < active_window.stop();
     if (not is_slot_in_on_duration_timer_window and active_window.stop() >= active_window_period) {
       // We must also check the interval [0, window_end % window_period).

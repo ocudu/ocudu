@@ -60,7 +60,7 @@ void pusch_power_controller::update_pusch_pw_ctrl_state(slot_point slot_rx, unsi
 {
   const int latest_f_cl_pw_control =
       latest_pusch_pw_control.has_value() ? latest_pusch_pw_control.value().f_cl_pw_control : 0;
-  const unsigned grid_idx      = slot_rx.to_uint();
+  const unsigned grid_idx      = slot_rx.count();
   pusch_pw_ctrl_grid[grid_idx] = {slot_rx, nof_prbs, latest_f_cl_pw_control};
 }
 
@@ -80,7 +80,7 @@ void pusch_power_controller::handle_phr(const cell_ph_report& phr, slot_point sl
   }
 
   // Find the entry in the grid that corresponds to the slot where the PHR was received.
-  const auto& pusch_pw_ctrl = pusch_pw_ctrl_grid[slot_rx.to_uint()];
+  const auto& pusch_pw_ctrl = pusch_pw_ctrl_grid[slot_rx.count()];
   if (pusch_pw_ctrl.slot_rx != slot_rx) {
     const bool first_phr_reporting =
         std::all_of(pusch_pw_ctrl_grid.begin(), pusch_pw_ctrl_grid.end(), [](const pusch_pw_ctrl_data& data) {
@@ -91,7 +91,7 @@ void pusch_power_controller::handle_phr(const cell_ph_report& phr, slot_point sl
                   "increasing the grid size",
                   rnti,
                   slot_rx,
-                  slot_rx.to_uint() % pusch_pw_ctrl_grid.size());
+                  slot_rx.count() % pusch_pw_ctrl_grid.size());
     }
     latest_phr.emplace(ue_phr_report{phr, std::nullopt});
     return;

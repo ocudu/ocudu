@@ -26,7 +26,7 @@ constexpr uint64_t pack_slot_and_duration(slot_point slot, uint64_t duration_ns)
   uint64_t packed = std::min(duration_ns, 0xffffffffUL);
 
   // Pack slot index which takes no more than 20 bits.
-  packed |= (slot.to_uint() & 0xfffffUL) << 32UL;
+  packed |= (slot.count() & 0xfffffUL) << 32UL;
 
   // Pack numerology as 4 bits.
   packed |= (slot.numerology() & 0xfUL) << 60UL;

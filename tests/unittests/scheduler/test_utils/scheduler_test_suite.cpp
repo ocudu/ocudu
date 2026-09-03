@@ -70,7 +70,7 @@ void ocudu::assert_tdd_pattern_consistency(const cell_configuration& cell_cfg,
   }
 
   ofdm_symbol_range ul_symbols = get_active_tdd_ul_symbols(
-      *cell_cfg.params.tdd_cfg, sl_tx.to_uint(), cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.cp);
+      *cell_cfg.params.tdd_cfg, sl_tx.count(), cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.cp);
   ASSERT_EQ(ul_symbols.length(), result.ul.nof_ul_symbols);
 
   if (ul_symbols.empty()) {

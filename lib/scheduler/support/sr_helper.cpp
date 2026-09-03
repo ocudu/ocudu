@@ -9,5 +9,5 @@ bool ocudu::sr_helper::is_sr_opportunity_slot(const ue_uplink_bwp_config& ue_ul_
                                               sr_periodicity              sr_period,
                                               slot_point                  sl_tx)
 {
-  return (sl_tx - ue_ul_cfg.pucch.sr_offset).to_uint() % sr_periodicity_to_slot(sr_period) == 0;
+  return (sl_tx - ue_ul_cfg.pucch.sr_offset).count() % sr_periodicity_to_slot(sr_period) == 0;
 }

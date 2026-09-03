@@ -214,7 +214,7 @@ void configured_grant_scheduler_impl::reserve_updated_ues_resources(cell_resourc
 
     for (unsigned n = 0; n != res_alloc.max_ul_slot_alloc_delay; ++n) {
       cell_slot_resource_allocator& slot_alloc = res_alloc[n];
-      const auto&                   rnti_list  = periodic_pusch_slot_wheel[slot_alloc.slot.to_uint()];
+      const auto&                   rnti_list  = periodic_pusch_slot_wheel[slot_alloc.slot.count()];
       if (std::find(rnti_list.begin(), rnti_list.end(), rnti) != rnti_list.end()) {
         reserve_cg_resources(slot_alloc, *ue_cc);
       }
@@ -227,7 +227,7 @@ void configured_grant_scheduler_impl::reserve_updated_ues_resources(cell_resourc
 
 void configured_grant_scheduler_impl::reserve_slot_cg_resources(cell_slot_resource_allocator& slot_alloc) const
 {
-  const auto& rnti_list = periodic_pusch_slot_wheel[slot_alloc.slot.to_uint()];
+  const auto& rnti_list = periodic_pusch_slot_wheel[slot_alloc.slot.count()];
   for (const rnti_t rnti : rnti_list) {
     const ue_cell* ue_cc = get_ue_cell(rnti);
     if (ue_cc == nullptr) {
@@ -322,7 +322,7 @@ configured_grant_scheduler_impl::build_cg_pusch_cfg_params(const ue_cell_configu
 
 void configured_grant_scheduler_impl::allocate_slot_cg_opportunities(cell_slot_resource_allocator& slot_alloc) const
 {
-  const auto& rnti_list = periodic_pusch_slot_wheel[slot_alloc.slot.to_uint()];
+  const auto& rnti_list = periodic_pusch_slot_wheel[slot_alloc.slot.count()];
   for (const rnti_t rnti : rnti_list) {
     allocate_cg_opportunity(slot_alloc, rnti);
   }

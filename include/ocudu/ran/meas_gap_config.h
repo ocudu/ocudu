@@ -158,7 +158,7 @@ inline bool is_inside_meas_gap(const meas_gap_config& gap, slot_point sl)
   const unsigned slot_per_sf  = sl.nof_slots_per_subframe();
   const unsigned period_slots = static_cast<uint8_t>(gap.mgrp) * slot_per_sf;
   const unsigned length_slots = std::ceil(meas_gap_length_to_msec(gap.mgl) * slot_per_sf);
-  const unsigned slot_mod     = (sl - gap.offset * slot_per_sf).to_uint() % period_slots;
+  const unsigned slot_mod     = (sl - gap.offset * slot_per_sf).count() % period_slots;
   // The gap starts at the gap offset and spans MGL, hence slot_mod in [0, length_slots).
   return slot_mod < length_slots;
 }
@@ -191,7 +191,7 @@ is_inside_ul_meas_gap(const meas_gap_config& gap, slot_point ul_slot, std::optio
   const unsigned length_slots = std::ceil(meas_gap_length_to_msec(gap.mgl) * slot_per_sf) + 2 * guard_slots + 1;
   // A whole period is added so that the start stays non-negative when the guard reaches below the gap offset.
   const unsigned window_start = gap.offset * slot_per_sf + period_slots + ta_slots - guard_slots;
-  return (ul_slot - window_start).to_uint() % period_slots < length_slots;
+  return (ul_slot - window_start).count() % period_slots < length_slots;
 }
 
 } // namespace ocudu

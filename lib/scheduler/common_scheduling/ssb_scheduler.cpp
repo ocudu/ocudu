@@ -50,7 +50,7 @@ void ssb_scheduler::schedule_ssb(cell_slot_resource_allocator& res_grid) const
   // Perform mod operation of slot index by ssb_periodicity;
   // "ssb_periodicity * nof_slots_per_subframe" gives the number of slots in 1 ssb_periodicity time interval.
   const slot_point sl_point_mod(sl_point.numerology(),
-                                sl_point.to_uint() % (ssb_period * sl_point.nof_slots_per_subframe()));
+                                sl_point.count() % (ssb_period * sl_point.nof_slots_per_subframe()));
 
   // Select SSB case with reference to TS 38.213, Section 4.1.
   switch (ssb_case) {
@@ -86,7 +86,7 @@ void ssb_scheduler::ssb_alloc_case_A_C(ssb_information_list& ssb_list,
                                        arfcn_t               freq_arfcn_cut_off,
                                        slot_point            sl_point_mod) const
 {
-  const uint32_t slot_idx = sl_point_mod.to_uint();
+  const uint32_t slot_idx = sl_point_mod.count();
 
   // The OFDM symbols allocations for Case A and case C are identical; the only difference is the cutoff frequency,
   // which is 3GHz for case A and C paired, but 1.88GHz for case C unpaired.
@@ -119,7 +119,7 @@ void ssb_scheduler::ssb_alloc_case_A_C(ssb_information_list& ssb_list,
 
 void ssb_scheduler::ssb_alloc_case_B(ssb_information_list& ssb_list, slot_point sl_point_mod) const
 {
-  const uint32_t slot_idx = sl_point_mod.to_uint();
+  const uint32_t slot_idx = sl_point_mod.count();
 
   // For frequency lower than cutoff, SSB occasions are on slot 0 and 1 only, while for frequencies higher than the
   // cutoff, the SSB occasions are on slot 0, 1, 2, and 3.
@@ -181,7 +181,7 @@ void ssb_scheduler::ssb_alloc_case_D(ssb_information_list& ssb_list, slot_point 
   // Section 4.1.
   static constexpr std::array<unsigned, 16> slot_pairs = {0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18};
 
-  const uint32_t slot_idx = sl_point_mod.to_uint();
+  const uint32_t slot_idx = sl_point_mod.count();
 
   // Skip if the slot index is out of the 5ms burst.
   if (slot_idx >= nof_slots_ssb_burst) {

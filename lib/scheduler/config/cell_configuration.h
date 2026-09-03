@@ -84,7 +84,7 @@ public:
       // Convert slot into equivalent reference SCS.
       sl = set_slot_numerology(sl, to_numerology_value(params.tdd_cfg->ref_scs));
     }
-    return dl_symbols_per_slot_lst[sl.to_uint() % dl_symbols_per_slot_lst.size()] ==
+    return dl_symbols_per_slot_lst[sl.count() % dl_symbols_per_slot_lst.size()] ==
            get_nsymb_per_slot(params.dl_cfg_common.init_dl_bwp.generic_params.cp);
   }
 
@@ -99,7 +99,7 @@ public:
       // Convert slot into equivalent reference SCS.
       sl = set_slot_numerology(sl, to_numerology_value(params.tdd_cfg->ref_scs));
     }
-    return ul_symbols_per_slot_lst[sl.to_uint() % ul_symbols_per_slot_lst.size()] ==
+    return ul_symbols_per_slot_lst[sl.count() % ul_symbols_per_slot_lst.size()] ==
            get_nsymb_per_slot(params.ul_cfg_common.init_ul_bwp.generic_params.cp);
   }
 
@@ -114,7 +114,7 @@ public:
       // Convert slot into equivalent reference SCS.
       sl = set_slot_numerology(sl, to_numerology_value(params.tdd_cfg->ref_scs));
     }
-    return dl_symbols_per_slot_lst[sl.to_uint() % dl_symbols_per_slot_lst.size()] > 0;
+    return dl_symbols_per_slot_lst[sl.count() % dl_symbols_per_slot_lst.size()] > 0;
   }
 
   /// Checks if UL is active for at least one symbol in the given slot.
@@ -128,7 +128,7 @@ public:
       // Convert slot into equivalent reference SCS.
       sl = set_slot_numerology(sl, to_numerology_value(params.tdd_cfg->ref_scs));
     }
-    return ul_symbols_per_slot_lst[sl.to_uint() % ul_symbols_per_slot_lst.size()] > 0;
+    return ul_symbols_per_slot_lst[sl.count() % ul_symbols_per_slot_lst.size()] > 0;
   }
 
   bool cfra_enabled() const { return params.init_bwp.rach.cfra_enabled; }
@@ -148,7 +148,7 @@ public:
       // Convert slot into equivalent reference SCS.
       sl = set_slot_numerology(sl, to_numerology_value(params.tdd_cfg->ref_scs));
     }
-    return dl_symbols_per_slot_lst[sl.to_uint() % dl_symbols_per_slot_lst.size()];
+    return dl_symbols_per_slot_lst[sl.count() % dl_symbols_per_slot_lst.size()];
   }
 
   /// Returns the number of active UL symbols in the given slot.
@@ -162,7 +162,7 @@ public:
       // Convert slot into equivalent reference SCS.
       sl = set_slot_numerology(sl, to_numerology_value(params.tdd_cfg->ref_scs));
     }
-    return ul_symbols_per_slot_lst[sl.to_uint() % ul_symbols_per_slot_lst.size()];
+    return ul_symbols_per_slot_lst[sl.count() % ul_symbols_per_slot_lst.size()];
   }
 
   /// Returns the coreset configuration for the given coreset ID.

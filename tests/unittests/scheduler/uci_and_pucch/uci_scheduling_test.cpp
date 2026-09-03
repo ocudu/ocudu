@@ -69,12 +69,12 @@ TEST_P(uci_sched_sr_test, test_different_periods)
   const auto starting_slot = test_rng::uniform_int<unsigned>(0, 1000U);
   for (unsigned sl_cnt = starting_slot; sl_cnt < starting_slot + nof_slots_to_test; ++sl_cnt) {
     t_bench.uci_sched.run_slot(t_bench.res_grid);
-    if ((t_bench.sl_tx - sr_offset).to_uint() % sr_periodicity_to_slot(sr_period) == 0) {
+    if ((t_bench.sl_tx - sr_offset).count() % sr_periodicity_to_slot(sr_period) == 0) {
       ASSERT_EQ(1, t_bench.res_grid[0].result.ul.pucchs.size());
       // The scheduler allocates:
       // - SR only on slots that are for SR only.
       // - CSI + SR on slots that are for CSI + SR.
-      if ((t_bench.sl_tx - csi_offset).to_uint() % csi_report_periodicity_to_uint(csi_period) == 0) {
+      if ((t_bench.sl_tx - csi_offset).count() % csi_report_periodicity_to_uint(csi_period) == 0) {
         ASSERT_TRUE(find_pucch_pdu(
             t_bench.res_grid[0].result.ul.pucchs.unsorted(),
             [&expected = pucch_sr_csi_test](const auto& pdu) { return pucch_info_match(expected, pdu); }));
@@ -126,7 +126,7 @@ protected:
   ///
   /// The gap spans its 6 slots, plus the trailing slot that the uplink window adds for the gap edge reaching into the
   /// next slot. The cell tracks no T_TA here, so the window is not shifted.
-  static bool is_ue_ul_disabled(slot_point sl) { return sl.to_uint() % 40 < 7; }
+  static bool is_ue_ul_disabled(slot_point sl) { return sl.count() % 40 < 7; }
 
   test_bench t_bench;
 };
@@ -141,15 +141,15 @@ TEST_F(uci_sched_meas_gap_test, sr_opportunities_overlapping_the_ue_meas_gap_are
   for (unsigned sl_cnt = 0; sl_cnt != nof_slots_to_test; ++sl_cnt) {
     t_bench.uci_sched.run_slot(t_bench.res_grid);
 
-    if (t_bench.sl_tx.to_uint() % sr_periodicity_to_slot(sr_period) == 0) {
+    if (t_bench.sl_tx.count() % sr_periodicity_to_slot(sr_period) == 0) {
       // SR occasion.
       if (is_ue_ul_disabled(t_bench.sl_tx)) {
         ASSERT_EQ(0, t_bench.res_grid[0].result.ul.pucchs.size())
-            << "no SR must be scheduled in slot " << t_bench.sl_tx.to_uint() << ", inside the UE measurement gap";
+            << "no SR must be scheduled in slot " << t_bench.sl_tx.count() << ", inside the UE measurement gap";
         tested_inside_gap = true;
       } else {
         ASSERT_EQ(1, t_bench.res_grid[0].result.ul.pucchs.size())
-            << "the SR must be scheduled in slot " << t_bench.sl_tx.to_uint() << ", outside the UE measurement gap";
+            << "the SR must be scheduled in slot " << t_bench.sl_tx.count() << ", outside the UE measurement gap";
         tested_outside_gap = true;
       }
     }
@@ -210,12 +210,12 @@ TEST_P(uci_sched_csi_test, test_different_periods)
   const auto starting_slot = test_rng::uniform_int<unsigned>(0, 1000U);
   for (unsigned sl_cnt = starting_slot; sl_cnt < starting_slot + nof_slots_to_test; ++sl_cnt) {
     t_bench.uci_sched.run_slot(t_bench.res_grid);
-    if ((t_bench.sl_tx - csi_offset).to_uint() % csi_resource_periodicity_to_uint(csi_period) == 0) {
+    if ((t_bench.sl_tx - csi_offset).count() % csi_resource_periodicity_to_uint(csi_period) == 0) {
       ASSERT_EQ(1, t_bench.res_grid[0].result.ul.pucchs.size());
       // The scheduler allocates:
       // - CSI only on slots that are for CSI only.
       // - CSI + SR on slots that are for CSI + SR.
-      if ((t_bench.sl_tx - sr_offset).to_uint() % sr_period == 0) {
+      if ((t_bench.sl_tx - sr_offset).count() % sr_period == 0) {
         ASSERT_TRUE(find_pucch_pdu(
             t_bench.res_grid[0].result.ul.pucchs.unsorted(),
             [&expected = pucch_csi_and_sr_test](const auto& pdu) { return pucch_info_match(expected, pdu); }));
@@ -259,7 +259,7 @@ TEST_P(uci_sched_reconf_test, after_ue_reconf_uci_doesnt_stopped_being_scheduled
 
   for (unsigned sl_cnt = 0; sl_cnt < nof_slots_to_test; ++sl_cnt) {
     t_bench.uci_sched.run_slot(t_bench.res_grid);
-    if ((t_bench.sl_tx - sr_offset).to_uint() % sr_period_slots == 0) {
+    if ((t_bench.sl_tx - sr_offset).count() % sr_period_slots == 0) {
       ASSERT_EQ(1, t_bench.res_grid[0].result.ul.pucchs.size());
     }
     // Update the slot indicator.
@@ -273,7 +273,7 @@ TEST_P(uci_sched_reconf_test, after_ue_reconf_uci_doesnt_stopped_being_scheduled
   // After reconfiguration, the UCI scheduler should still be able to schedule the UCI.
   for (unsigned sl_cnt = 0; sl_cnt < nof_slots_to_test; ++sl_cnt) {
     t_bench.uci_sched.run_slot(t_bench.res_grid);
-    if ((t_bench.sl_tx - sr_offset).to_uint() % sr_period_slots == 0) {
+    if ((t_bench.sl_tx - sr_offset).count() % sr_period_slots == 0) {
       ASSERT_EQ(1, t_bench.res_grid[0].result.ul.pucchs.size());
     }
     // Update the slot indicator.

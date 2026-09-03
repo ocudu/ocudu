@@ -1038,7 +1038,7 @@ TEST_P(fallback_scheduler_head_scheduling, test_ahead_scheduling_for_srb_allocat
 
       // Mark resource grid as occupied.
       fill_resource_grid(current_slot,
-                         check_alloc_slot.to_uint() - current_slot.to_uint(),
+                         check_alloc_slot.count() - current_slot.count(),
                          bench->cell_cfg.params.dl_cfg_common.init_dl_bwp.generic_params.crbs);
     }
 

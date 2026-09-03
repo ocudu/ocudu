@@ -92,14 +92,14 @@ void sib1_scheduler::run_slot(cell_slot_resource_allocator& res_grid)
       continue;
     }
 
-    if (sl_point.to_uint() % sib1_rtx_period_slots == sib1_type0_pdcch_css_slots[ssb_idx].to_uint()) {
+    if (sl_point.count() % sib1_rtx_period_slots == sib1_type0_pdcch_css_slots[ssb_idx].count()) {
       // Ensure slot for SIB1 has DL enabled.
       if (not cell_cfg.is_dl_enabled(sl_point)) {
         logger.error("Could not allocate SIB1 for beam idx {} as slot is not DL enabled.", ssb_idx);
         return;
       }
 
-      if ((sl_point.to_uint() % sib1_newtx_period_slots) == sib1_type0_pdcch_css_slots[ssb_idx].to_uint()) {
+      if ((sl_point.count() % sib1_newtx_period_slots) == sib1_type0_pdcch_css_slots[ssb_idx].count()) {
         // If it is a new Tx, apply a new SIB1 PDU version, if it is pending.
         handle_pending_sib1_update();
       }

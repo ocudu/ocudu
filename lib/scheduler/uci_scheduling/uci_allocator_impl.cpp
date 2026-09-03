@@ -103,7 +103,7 @@ add_csi_to_uci_on_pusch(uci_info::csi_info& uci_csi, const ue_cell_configuration
 
 uci_allocator_impl::slot_alloc_list::ue_uci* uci_allocator_impl::get_uci_alloc(slot_point uci_slot, rnti_t rnti)
 {
-  auto& ucis = uci_alloc_grid[uci_slot.to_uint()].ucis;
+  auto& ucis = uci_alloc_grid[uci_slot.count()].ucis;
   auto* it   = std::find_if(ucis.begin(), ucis.end(), [rnti](const auto& uci) { return uci.rnti == rnti; });
   return it != ucis.end() ? it : nullptr;
 }
@@ -128,7 +128,7 @@ unsigned uci_allocator_impl::get_min_pdsch_to_ack_slot_distance(slot_point pdsch
 void uci_allocator_impl::slot_indication(slot_point sl_tx)
 {
   // Clear previous slot UCI allocations.
-  uci_alloc_grid[(sl_tx - 1).to_uint()].ucis.clear();
+  uci_alloc_grid[(sl_tx - 1).count()].ucis.clear();
 }
 
 void uci_allocator_impl::stop()
@@ -182,7 +182,7 @@ std::optional<uci_allocation> uci_allocator_impl::alloc_harq_ack(cell_resource_a
       continue;
     }
 
-    if (uci_alloc_grid[slot_alloc.slot.to_uint()].ucis.full()) {
+    if (uci_alloc_grid[slot_alloc.slot.count()].ucis.full()) {
       logger.info(
           "rnti={}: UCI allocation for slot={} skipped due to UCI cache full. Attempting this allocation for the next "
           "k1 candidate, if any k1 available",
@@ -235,7 +235,7 @@ std::optional<uci_allocation> uci_allocator_impl::alloc_harq_ack(cell_resource_a
     if (d_pri.has_value()) {
       auto* uci = get_uci_alloc(slot_alloc.slot, ue_cell_cfg.crnti);
       if (uci == nullptr) {
-        uci                             = &uci_alloc_grid[slot_alloc.slot.to_uint()].ucis.emplace_back();
+        uci                             = &uci_alloc_grid[slot_alloc.slot.count()].ucis.emplace_back();
         uci->rnti                       = ue_cell_cfg.crnti;
         uci->scheduled_dl_pdcch_counter = 0;
       }
