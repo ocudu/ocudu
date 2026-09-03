@@ -110,14 +110,19 @@ expected<byte_buffer> openssl_dtls_ssl::receive()
   int                               len = SSL_read(ssl, buff.data(), dtls_max_len);
 
   if (len <= 0) {
-    int err = SSL_get_error(ssl, len);
-    if (err != SSL_ERROR_WANT_READ && err != SSL_ERROR_WANT_WRITE) {
+    int err = 0;
+    while ((err = SSL_get_error(ssl, len)) != 0) {
+      if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
+        break;
+      }
+
       char buf[256];
       ERR_error_string_n(err, buf, sizeof(buf));
-      logger.error("SSL_read returned {}, SSL_get_error={} {}", len, err, get_ssl_error_string(err));
+      logger.error("SSL_read returned {}, SSL_get_error={} {} {}", len, err, get_ssl_error_string(err), buf);
     }
     return make_unexpected(default_error_t{});
   }
+
   logger.debug("Read {} bytes from DTLS connection", len);
   auto buffer =
       byte_buffer{byte_buffer::fallback_allocation_tag{}, span<const uint8_t>(buff.begin(), buff.begin() + len)};
