@@ -5,7 +5,6 @@
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/support/error_handling.h"
-#include <linux/sctp.h>
 #include <string>
 #include <utility>
 
@@ -92,6 +91,15 @@ bool openssl_dtls_ssl::handshake()
   } else {
     ret = SSL_connect(ssl);
   }
+
+  if (ret <= 0) {
+    int err = SSL_get_error(ssl, ret);
+    if (err != SSL_ERROR_WANT_READ && err != SSL_ERROR_WANT_WRITE) {
+      logger.error(
+          "DTLS {} failed. err={}", cfg.mode == dtls_mode::server ? "accept" : "connect", get_ssl_error_string(err));
+      return false;
+    }
+  }
   return ret == 1;
 }
 
@@ -118,7 +126,12 @@ expected<byte_buffer> openssl_dtls_ssl::receive()
 
 int openssl_dtls_ssl::write(span<const uint8_t> pdu_span)
 {
-  return SSL_write(ssl, pdu_span.data(), pdu_span.size());
+  int bytes_written = SSL_write(ssl, pdu_span.data(), pdu_span.size());
+  if (bytes_written <= 0) {
+    int err = SSL_get_error(ssl, bytes_written);
+    logger.error("Could not write {} bytes to DTLS connection. err={}", pdu_span.size(), get_ssl_error_string(err));
+  }
+  return bytes_written;
 }
 
 void openssl_dtls_ssl::dtls_notification_cb(BIO* bio, void* context, void* buf)

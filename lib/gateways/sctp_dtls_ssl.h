@@ -6,7 +6,6 @@
 #include "sctp_dtls_mode.h"
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/ocudulog/logger.h"
-#include "ocudu/support/io/transport_layer_address.h"
 #include <memory>
 
 /// Optional includes that are only required if DTLS is enabled.
@@ -19,8 +18,7 @@
 namespace ocudu {
 
 struct dtls_ssl_config {
-  dtls_mode               mode;
-  transport_layer_address addr;
+  dtls_mode mode;
 };
 
 class dtls_context;

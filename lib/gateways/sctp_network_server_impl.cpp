@@ -55,19 +55,22 @@ public:
     if (not ssl_enabled) {
       bytes_sent = ::sctp_sendmsg(
           fd, pdu_span.data(), pdu_span.size(), dest_addr.addr, dest_addr.addrlen, htonl(ppid), 0, stream_no, 0, 0);
+      if (bytes_sent <= 0) {
+        logger.error("{} assoc={}: Closing SCTP association. Cause: Couldn't send {} B of data. errno={}",
+                     if_name,
+                     assoc_id,
+                     pdu_span.size_bytes(),
+                     ::strerror(errno));
+      }
     } else {
       bytes_sent = assoc.ssl->write(pdu_span);
     }
 
-    if (bytes_sent == -1) {
-      logger.error("{} assoc={}: Closing SCTP association. Cause: Couldn't send {} B of data. errno={}",
-                   if_name,
-                   assoc_id,
-                   pdu_span.size_bytes(),
-                   ::strerror(errno));
+    if (bytes_sent <= 0) {
       close();
       return false;
     }
+
     return true;
   }
 
@@ -201,9 +204,8 @@ void sctp_network_server_impl::sctp_associaton_context::receive_plain()
 
 void sctp_network_server_impl::sctp_associaton_context::receive_dtls()
 {
-  if (not parent.dtls_cfg.has_value()) {
-    report_error("Receive DTLS called, but not dtls config provided");
-  }
+  ocudu_assert(parent.dtls_cfg.has_value(), "Receive DTLS called, but no DTLS config provided");
+
   while (not parent.app_exec.defer([this, keepalive = parent.keepalive_token]() {
     if (*keepalive) {
       if (ssl == nullptr) {
@@ -551,10 +553,11 @@ void sctp_network_server_impl::handle_sctp_comm_up(const struct sctp_assoc_chang
   if (dtls_cfg.has_value()) {
     assoc_ctxt.ssl = create_dtls_ssl(dtls_ssl_config{dtls_cfg->mode}, {*dtls_ctxt});
     if (not assoc_ctxt.ssl->init(assoc_ctxt.fd)) {
-      logger.error("{} assoc={}: Could initialize DTLS context for new association", node_cfg.if_name, assoc_id);
-      /// Remove association as if it was lost. Do it directly, as we are running in the app excutor already.
+      logger.error("{} assoc={}: Could not initialize DTLS context for new association", node_cfg.if_name, assoc_id);
+      /// Remove association as if it was lost. Do it directly, as we are running in the app executor already.
       handle_association_shutdown(assoc_id, "DTLS error");
       remove_association(assoc_id);
+      return;
     }
   }
 
