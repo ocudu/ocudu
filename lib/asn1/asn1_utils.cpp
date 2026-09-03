@@ -594,10 +594,26 @@ template OCUDUASN_CODE unpack_norm_small_non_neg_whole_number<uint16_t>(uint16_t
 template OCUDUASN_CODE unpack_norm_small_non_neg_whole_number<uint32_t>(uint32_t& n, cbit_ref& bref);
 template OCUDUASN_CODE unpack_norm_small_non_neg_whole_number<uint64_t>(uint64_t& n, cbit_ref& bref);
 
+/// Number of octets of the minimal two's-complement encoding of an unconstrained whole number (X.691 - Section 10.8,
+/// X.690 - Section 8.3). A non-negative value needs a leading zero bit, so e.g. 128 takes two octets, not one.
 template <typename IntType>
-IntType unconstrained_whole_number_length(IntType n)
+uint32_t unconstrained_whole_number_length(IntType n)
 {
-  return (IntType)std::ceil((std::log2(n) + 1) / 8.0f);
+  uint32_t len = 1;
+  if constexpr (std::is_signed<IntType>::value) {
+    auto val = static_cast<int64_t>(n);
+    while (val > 127 or val < -128) {
+      val >>= 8;
+      ++len;
+    }
+  } else {
+    auto val = static_cast<uint64_t>(n);
+    while (val > 127) {
+      val >>= 8;
+      ++len;
+    }
+  }
+  return len;
 }
 
 /**
@@ -615,7 +631,15 @@ OCUDUASN_CODE pack_unconstrained_whole_number(bit_ref& bref, IntType n, bool ali
   if (aligned) {
     HANDLE_CODE(bref.align_bytes_zero());
   }
-  HANDLE_CODE(bref.pack(n, len * 8));
+  // Two's-complement content octets, most significant first. The conversion to uint64_t yields the 64-bit two's-
+  // complement pattern of the value, so shifting out the low octets works for both signed and unsigned types.
+  auto bits = static_cast<uint64_t>(n);
+  for (uint32_t i = len; i != 0; --i) {
+    uint32_t shift = 8U * (i - 1);
+    // A non-negative value wider than 63 bits needs a 9th octet, which is the leading zero octet.
+    uint64_t octet = shift < 64U ? (bits >> shift) & 0xffU : 0U;
+    HANDLE_CODE(bref.pack(octet, 8));
+  }
 
   return OCUDUASN_SUCCESS;
 }
@@ -625,7 +649,40 @@ OCUDUASN_CODE unpack_unconstrained_whole_number(IntType& n, cbit_ref& bref, uint
   if (aligned) {
     HANDLE_CODE(bref.align_bytes());
   }
-  HANDLE_CODE(bref.unpack(n, len * 8));
+  if (len == 0) {
+    log_error("Unconstrained whole number with no content octets");
+    return OCUDUASN_ERROR_DECODE_FAIL;
+  }
+  uint64_t bits     = 0;
+  bool     negative = false;
+  bool     fits     = true;
+  for (uint32_t i = 0; i != len; ++i) {
+    uint8_t octet = 0;
+    HANDLE_CODE(bref.unpack(octet, 8));
+    if (i == 0) {
+      // The encoding is negative if the top bit of the first content octet is set.
+      negative = (octet & 0x80U) != 0;
+      fits     = not negative or std::is_signed<IntType>::value;
+    }
+    if (len - i > sizeof(uint64_t)) {
+      // Leading octet that is dropped. It only carries sign extension if it repeats the sign bit.
+      fits = fits and octet == (negative ? 0xffU : 0x00U);
+      continue;
+    }
+    bits = (bits << 8U) | octet;
+  }
+  if (negative and len < sizeof(uint64_t)) {
+    // Sign extension of the two's-complement encoding.
+    bits |= ~static_cast<uint64_t>(0) << (8U * len);
+  } else if (std::is_signed<IntType>::value and len >= sizeof(uint64_t)) {
+    // Octets were dropped from the front, so the retained bits must carry the sign of the encoding themselves.
+    fits = fits and ((bits >> 63U) != 0) == negative;
+  }
+  n = static_cast<IntType>(bits);
+  if (not fits or static_cast<uint64_t>(n) != bits) {
+    log_error("Unconstrained whole number of {} octets does not fit in the destination type", len);
+    return OCUDUASN_ERROR_DECODE_FAIL;
+  }
 
   return OCUDUASN_SUCCESS;
 }

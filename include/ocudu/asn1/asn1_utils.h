@@ -612,7 +612,7 @@ OCUDUASN_CODE unpack_norm_small_non_neg_whole_number(UintType& n, cbit_ref& bref
 template <typename IntType>
 OCUDUASN_CODE pack_unconstrained_whole_number(bit_ref& bref, IntType n, bool aligned);
 template <typename IntType>
-OCUDUASN_CODE unpack_unconstrained_whole_number(IntType& n, cbit_ref& bref, bool aligned);
+OCUDUASN_CODE unpack_unconstrained_whole_number(IntType& n, cbit_ref& bref, uint32_t len, bool aligned);
 
 /************************
    length determinant

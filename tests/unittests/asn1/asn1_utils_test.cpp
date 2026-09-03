@@ -722,6 +722,133 @@ TEST(asn1_integer_test, large_integer_pack_unpack)
   ASSERT_TRUE(big_integer == big_integer2);
 }
 
+TEST(asn1_integer_test, unconstrained_integer_pack_uses_minimal_twos_complement)
+{
+  // X.691 - Section 10.8: a length determinant followed by the minimal two's-complement content octets.
+  const std::vector<std::pair<int32_t, std::vector<uint8_t>>> test_vectors = {
+      {0, {0x01, 0x00}},
+      {1, {0x01, 0x01}},
+      {-1, {0x01, 0xff}},
+      {127, {0x01, 0x7f}},
+      {-128, {0x01, 0x80}},
+      {128, {0x02, 0x00, 0x80}},
+      {-129, {0x02, 0xff, 0x7f}},
+      {255, {0x02, 0x00, 0xff}},
+      {-32768, {0x02, 0x80, 0x00}},
+      {32768, {0x03, 0x00, 0x80, 0x00}},
+      {std::numeric_limits<int32_t>::max(), {0x04, 0x7f, 0xff, 0xff, 0xff}},
+      {std::numeric_limits<int32_t>::min(), {0x04, 0x80, 0x00, 0x00, 0x00}}};
+
+  for (const auto& test_vector : test_vectors) {
+    ocudu::byte_buffer buffer;
+    bit_ref            bref(buffer);
+    ASSERT_EQ(pack_unconstrained_integer(bref, test_vector.first, false, true), OCUDUASN_SUCCESS)
+        << "Failed to pack " << test_vector.first;
+    ASSERT_TRUE(std::equal(buffer.begin(), buffer.end(), test_vector.second.begin(), test_vector.second.end()))
+        << "Unexpected encoding of " << test_vector.first;
+  }
+}
+
+TEST(asn1_integer_test, unconstrained_integer_pack_unpack_round_trip)
+{
+  const std::vector<int64_t> values = {0,
+                                       1,
+                                       -1,
+                                       127,
+                                       128,
+                                       -128,
+                                       -129,
+                                       255,
+                                       256,
+                                       32767,
+                                       32768,
+                                       -32768,
+                                       -32769,
+                                       65535,
+                                       std::numeric_limits<int32_t>::max(),
+                                       std::numeric_limits<int32_t>::min(),
+                                       std::numeric_limits<int64_t>::max(),
+                                       std::numeric_limits<int64_t>::min()};
+
+  for (bool aligned : {false, true}) {
+    for (int64_t value : values) {
+      ocudu::byte_buffer buffer;
+      bit_ref            bref(buffer);
+      ASSERT_EQ(pack_unconstrained_integer(bref, value, false, aligned), OCUDUASN_SUCCESS)
+          << "Failed to pack " << value;
+
+      int64_t  unpacked_value = 0;
+      cbit_ref cbref(buffer);
+      ASSERT_EQ(unpack_unconstrained_integer(unpacked_value, cbref, false, aligned), OCUDUASN_SUCCESS)
+          << "Failed to unpack " << value;
+      ASSERT_EQ(unpacked_value, value);
+    }
+  }
+}
+
+TEST(asn1_integer_test, unconstrained_integer_unpack_rejects_value_wider_than_destination)
+{
+  // Length determinant of 4 octets, holding a value that does not fit in an int8_t.
+  const std::vector<uint8_t> bytes = {0x04, 0x00, 0x00, 0x02, 0x00};
+
+  ocudu::byte_buffer buffer = byte_buffer::create(bytes).value();
+  cbit_ref           cbref(buffer);
+  int8_t             value = 0;
+  ASSERT_EQ(unpack_unconstrained_integer(value, cbref, false, true), OCUDUASN_ERROR_DECODE_FAIL);
+
+  ocudulog::flush();
+  test_spy->reset_counters();
+}
+
+/// Unpacks content octets that are not preceded by a length determinant.
+template <typename IntType>
+static OCUDUASN_CODE unpack_content_octets(IntType& value, const std::vector<uint8_t>& content)
+{
+  ocudu::byte_buffer buffer = byte_buffer::create(content).value();
+  cbit_ref           cbref(buffer);
+  return unpack_unconstrained_whole_number(value, cbref, content.size(), true);
+}
+
+TEST(asn1_integer_test, unconstrained_whole_number_unpack_rejects_out_of_range_values)
+{
+  // 2^63, 2^64-1 and -2^63-1, each minimally encoded in nine octets, are all outside the int64_t range.
+  int64_t signed_value = 0;
+  ASSERT_EQ(unpack_content_octets(signed_value, {0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}),
+            OCUDUASN_ERROR_DECODE_FAIL);
+  ASSERT_EQ(unpack_content_octets(signed_value, {0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}),
+            OCUDUASN_ERROR_DECODE_FAIL);
+  ASSERT_EQ(unpack_content_octets(signed_value, {0xff, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}),
+            OCUDUASN_ERROR_DECODE_FAIL);
+
+  // A negative encoding never fits an unsigned destination.
+  uint16_t unsigned_value = 0;
+  ASSERT_EQ(unpack_content_octets(unsigned_value, {0xff}), OCUDUASN_ERROR_DECODE_FAIL);
+  uint64_t wide_unsigned_value = 0;
+  ASSERT_EQ(unpack_content_octets(wide_unsigned_value, {0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}),
+            OCUDUASN_ERROR_DECODE_FAIL);
+
+  ocudulog::flush();
+  test_spy->reset_counters();
+}
+
+TEST(asn1_integer_test, unconstrained_whole_number_unpack_accepts_redundant_leading_octet)
+{
+  // Nine octets whose leading octet only repeats the sign of the value still fit in an int64_t.
+  int64_t signed_value = 0;
+  ASSERT_EQ(unpack_content_octets(signed_value, {0xff, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}),
+            OCUDUASN_SUCCESS);
+  ASSERT_EQ(signed_value, std::numeric_limits<int64_t>::min());
+  ASSERT_EQ(unpack_content_octets(signed_value, {0x00, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}),
+            OCUDUASN_SUCCESS);
+  ASSERT_EQ(signed_value, std::numeric_limits<int64_t>::max());
+
+  // The leading zero octet is how a value with bit 63 set is encoded for an unsigned destination.
+  uint64_t unsigned_value = 0;
+  ASSERT_EQ(unpack_content_octets(unsigned_value, {0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}),
+            OCUDUASN_SUCCESS);
+  ASSERT_EQ(unsigned_value, std::numeric_limits<uint64_t>::max());
+}
+
 TEST(asn1_real_test, real_special_number_pack_unpack)
 {
   std::vector<float>                input_numbers = {0.0, NAN, INFINITY, -INFINITY};
