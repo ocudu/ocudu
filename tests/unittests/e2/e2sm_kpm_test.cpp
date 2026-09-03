@@ -5,6 +5,7 @@
 #include "common/e2ap_asn1_packer.h"
 #include "lib/e2/common/e2ap_asn1_utils.h"
 #include "lib/pcap/dlt_pcap_impl.h"
+#include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/unittests/e2/common/e2_test_helpers.h"
 #include "ocudu/support/executors/task_worker.h"
 #include "ocudu/support/test_utils.h"
@@ -17,6 +18,15 @@ using namespace asn1::e2sm;
 // Helper global variables to pass pcap_writer to all tests.
 bool      g_enable_pcap = false;
 dlt_pcap* g_pcap        = nullptr;
+
+/// Packs an F1AP PDU the way the DU does before handing it to the E2 node component config collector.
+static byte_buffer pack_f1ap_pdu(const f1ap_message& msg)
+{
+  byte_buffer   packed{byte_buffer::fallback_allocation_tag{}};
+  asn1::bit_ref bref(packed);
+  report_error_if_not(msg.pdu.pack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to pack F1AP PDU");
+  return packed;
+}
 
 class e2_entity_test_with_pcap : public e2_test_base_with_pcap
 {
@@ -42,8 +52,15 @@ protected:
     factory                         = timer_factory{timers, task_worker};
     du_rc_param_configurator        = std::make_unique<dummy_du_configurator>();
     node_component_config_collector = std::make_unique<e2_node_component_config_collector>(task_worker, 1);
-    // Pre-deliver a dummy F1 config so the setup coroutine is not blocked awaiting it.
-    node_component_config_collector->deliver(e2_node_component_interface_type::f1, {}, {});
+    // Pre-deliver the F1 setup exchange so the setup coroutine is not blocked awaiting it. The PDUs are packed
+    // like the DU does, so that the E2 Setup Request carries a component configuration that decodes as F1AP.
+    const gnb_du_id_t  gnb_du_id     = int_to_gnb_du_id(0x11);
+    const f1ap_message f1_setup_req  = test_helpers::generate_f1_setup_request(gnb_du_id);
+    const f1ap_message f1_setup_resp = test_helpers::generate_f1_setup_response(f1_setup_req);
+    node_component_config_collector->deliver(e2_node_component_interface_type::f1,
+                                             pack_f1ap_pdu(f1_setup_req),
+                                             pack_f1ap_pdu(f1_setup_resp),
+                                             e2_node_component_id{gnb_du_id});
     e2agent = create_e2_du_agent(
         cfg,
         e2ap_dependencies{.e2_client                      = *e2_client,

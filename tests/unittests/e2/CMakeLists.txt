@@ -104,7 +104,7 @@ set_tests_properties(
     PROPERTIES LABELS "MVP-GOV-E2-15.1;MVP-GOV-E2-15.2;MVP-GOV-E2-15.3;MVP-GOV-E2-16.1;MVP-GOV-E2-16.2;MVP-GOV-E2-17.1;MVP-GOV-E2-17.2;MVP-GOV-E2-4.1;MVP-GOV-E2-4.2")
 
 add_executable(e2sm_kpm_test e2sm_kpm_test.cpp)
-target_link_libraries(e2sm_kpm_test ocudulog ocudu_e2 e2ap_asn1 ocudu_pcap ocudu_gateway ocudu_support e2_test_helpers GTest::gtest GTest::gtest_main
+target_link_libraries(e2sm_kpm_test ocudulog ocudu_e2 e2ap_asn1 ocudu_pcap ocudu_gateway ocudu_support e2_test_helpers f1ap_test_doubles GTest::gtest GTest::gtest_main
 )
 target_include_directories(e2sm_kpm_test PRIVATE ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(e2sm_kpm_test)
