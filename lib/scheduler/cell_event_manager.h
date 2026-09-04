@@ -27,6 +27,7 @@ class ra_scheduler;
 class scheduler_event_logger;
 class si_scheduler;
 class srs_scheduler;
+class configured_grant_scheduler;
 class ra_ue_repository;
 class uci_indication_selector;
 class ue_cell;

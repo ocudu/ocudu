@@ -5,45 +5,45 @@
 
 #pragma once
 
-#include "ocudu/adt/circular_vector.h"
 #include "ocudu/adt/slotted_array.h"
 #include "ocudu/scheduler/config/ran_cell_config.h"
-#include "ocudu/scheduler/rrm/cg_resource_manager.h"
+#include "ocudu/scheduler/rrm/configured_grant_rrm.h"
 
 namespace ocudu {
 
 /// \brief Resource manager for Type-1 Configured Grant.
 ///
 /// This class implements the CG resource allocation assuming Type-1 CG.
-class cg_type1_res_mng : public cg_resource_manager
+class configured_grant_type1_rrm : public configured_grant_rrm
 {
 public:
   void add_cell(du_cell_index_t cell_idx, const ran_cell_config& cell_cfg) override;
 
   void rem_cell(du_cell_index_t cell_idx) override;
 
-  bool alloc_resources(ue_cell_config& ue_cell_cfg) override;
+  bool build_ue_cg_config(ue_cell_config& ue_cell_cfg) override;
 
-  void dealloc_resources(ue_cell_config& ue_cell_cfg) override;
+  void reset_ue_cg_config(ue_cell_config& ue_cell_cfg) override;
 
 private:
   struct cell_context {
     explicit cell_context(const ran_cell_config& cell_cfg_);
 
-    std::optional<unsigned> find_optimal_cg_offset();
+    std::optional<unsigned> find_optimal_cg_offset() const;
 
-    const ran_cell_config                        cell_cfg;
-    const std::optional<tdd_ul_dl_config_common> tdd_ul_dl_cfg_common;
+    const ran_cell_config cell_cfg;
     // Contains the default (per-cell) parameters for the Configured Grant configuration.
     const cg_configuration default_cg_config;
     const unsigned         nof_rbs_per_ue;
+    // Slot offsets, within the CG period, that CG resources can be placed at: full-UL slots (in TDD) that carry no
+    // PRACH occasion on any of their occurrences. The offsets outside this list are never allocated, so the two
+    // vectors below hold no meaningful state at their indices.
+    const std::vector<unsigned> usable_cg_offsets;
 
-    // Ring vector that keeps track of the RB usage (for CG, PRACH and PUCCH) at a given slot within the "CG period".
-    // NOTE: more precisely, we use the LCM of CG period and PRACH period as length of the ring.
-    circular_vector<crb_bitmap> cg_alloc_grid;
-    // Ring vector that keeps track of how many RBs have been used for CG at a given slot within the "CG period".
-    // NOTE: more precisely, we use the LCM of CG period and PRACH period as length of the ring.
-    circular_vector<unsigned> nof_rbs_allocated;
+    // Vector that keeps track of the RB usage (for CG and PUCCH) at a given slot offset within the CG period.
+    std::vector<crb_bitmap> cg_alloc_grid;
+    // Vector that keeps track of how many RBs have been used for CG at a given slot offset within the CG period.
+    std::vector<unsigned> nof_rbs_allocated;
   };
 
   // Contains the resources for the different cells of the DU.

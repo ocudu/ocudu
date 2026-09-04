@@ -4,7 +4,9 @@
 # Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 add_library(sched_rrm STATIC
-        cg_res_mng.cpp
+        configured_grant_type1_rrm.cpp
+        configured_grant_type2_rrm.cpp
+        configured_grant_rrm_factory.cpp
         pucch_resource_manager.cpp
         srs_resource_generator.cpp
         srs_resource_manager_helpers.cpp

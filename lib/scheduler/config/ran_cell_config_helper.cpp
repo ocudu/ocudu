@@ -11,13 +11,18 @@
 #include "ocudu/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "ocudu/ran/pdsch/pdsch_constants.h"
 #include "ocudu/ran/prach/prach_helper.h"
+#include "ocudu/ran/prach/prach_time_mapping.h"
 #include "ocudu/ran/sib/sib_helper.h"
 #include "ocudu/ran/ssb/ssb_helper.h"
 #include "ocudu/ran/ssb/ssb_mapping.h"
+#include "ocudu/ran/tdd/tdd_ul_dl_config.h"
+#include "ocudu/scheduler/config/pucch_guardbands.h"
+#include "ocudu/scheduler/config/pucch_resource_generator.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
 #include "ocudu/scheduler/config/time_domain_resource_helper.h"
 #include "ocudu/scheduler/result/dmrs_info.h"
 #include <algorithm>
+#include <numeric>
 
 using namespace ocudu;
 
@@ -452,8 +457,16 @@ cg_configuration config_helpers::make_default_cell_cg_config(const ran_cell_conf
                                         .serv_cell_cfg.ul_config.value()
                                         .init_ul_bwp.cg_cfg.value();
 
-  ocudu_assert(default_cg_cfg.rrc_configured_ul_grant_cfg.has_value(),
-               "rrc_configured_ul_grant must be set for a Type 1 CG");
+  // Set Beta_offset for UCI-on-CG.
+  if (cell_cfg.init_bwp.cg_cfg->uci_beta_offsets.has_value()) {
+    default_cg_cfg.uci_on_pusch_cfg.beta_offsets_cfg.emplace(cell_cfg.init_bwp.cg_cfg->uci_beta_offsets.value());
+  }
+
+  if (cell_cfg.init_bwp.cg_cfg.value().is_type2()) {
+    ocudu_assert(not default_cg_cfg.rrc_configured_ul_grant_cfg.has_value(),
+                 "For type2 CG, rrc_configured_ul_grant_cfg must not be configured.");
+    return default_cg_cfg;
+  }
 
   // Compute PUSCH symbols to avoid overlapping with SRS.
   const ofdm_symbol_range non_srs_symbols =
@@ -472,12 +485,6 @@ cg_configuration config_helpers::make_default_cell_cg_config(const ran_cell_conf
       break;
     }
   }
-
-  // Set Beta_offset for UCI-on-CG.
-  if (cell_cfg.init_bwp.cg_cfg->uci_beta_offsets.has_value()) {
-    default_cg_cfg.uci_on_pusch_cfg.beta_offsets_cfg.emplace(cell_cfg.init_bwp.cg_cfg->uci_beta_offsets.value());
-  }
-
   default_cg_cfg.rrc_configured_ul_grant_cfg.value().time_domain_allocation = cg_td_res_idx;
 
   return default_cg_cfg;
@@ -486,11 +493,33 @@ cg_configuration config_helpers::make_default_cell_cg_config(const ran_cell_conf
 unsigned config_helpers::compute_nof_cg_prbs_per_ue(const ran_cell_config& cell_cfg, const cg_configuration& cg_cfg)
 {
   ocudu_assert(cell_cfg.init_bwp.cg_cfg.has_value(), "This function cannot be called if CG is not set");
-  ocudu_assert(cg_cfg.rrc_configured_ul_grant_cfg.has_value(), "rrc_configured_ul_grant must be set for a Type 1 CG");
 
   const auto& pusch_td_list = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
-  const pusch_time_domain_resource_allocation& pusch_td_cfg =
-      pusch_td_list[cg_cfg.rrc_configured_ul_grant_cfg.value().time_domain_allocation];
+
+  unsigned cg_td_res_idx = 0U;
+  if (not cell_cfg.init_bwp.cg_cfg.value().is_type2()) {
+    ocudu_assert(cg_cfg.rrc_configured_ul_grant_cfg.has_value(), "rrc_configured_ul_grant must be set for a Type 1 CG");
+    cg_td_res_idx = cg_cfg.rrc_configured_ul_grant_cfg.value().time_domain_allocation;
+  } else {
+    // For type2 CG, the TD allocation is not defined yet at this point; the scheduler will choose the symbols that do
+    // not collide with SRS. In the following, we proceed under that assumption.
+
+    // Compute PUSCH symbols to avoid overlapping with SRS.
+    const ofdm_symbol_range non_srs_symbols =
+        cell_cfg.init_bwp.srs_cfg.srs_type_enabled != srs_type::disabled
+            ? ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg.init_bwp.srs_cfg.max_nof_symbols.value()}
+            : ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP};
+
+    // PUSCH time-domain resources are sorted by increasing k2 first, then by decreasing symbols .stop().
+    for (unsigned n = 0, sz = pusch_td_list.size(); n != sz; ++n) {
+      if (pusch_td_list[n].symbols.stop() <= non_srs_symbols.stop()) {
+        cg_td_res_idx = n;
+        break;
+      }
+    }
+  }
+
+  const pusch_time_domain_resource_allocation& pusch_td_cfg = pusch_td_list[cg_td_res_idx];
 
   static constexpr unsigned nof_layers             = 1;
   static constexpr bool     are_both_cws_enabled   = false;
@@ -507,7 +536,7 @@ unsigned config_helpers::compute_nof_cg_prbs_per_ue(const ran_cell_config& cell_
   constexpr bool            tp_pi2bpsk_present = false;
   const sch_mcs_description mcs_info =
       pusch_mcs_get_config(cg_cfg.mcs_table,
-                           sch_mcs_index{cg_cfg.rrc_configured_ul_grant_cfg.value().mcs},
+                           sch_mcs_index{static_cast<uint8_t>(cell_cfg.init_bwp.cg_cfg.value().mcs)},
                            use_transform_precoder,
                            tp_pi2bpsk_present);
 
@@ -538,4 +567,87 @@ unsigned config_helpers::compute_nof_cg_prbs_per_ue(const ran_cell_config& cell_
                                              cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
 
   return prbs_tbs.nof_prbs;
+}
+
+std::vector<crb_interval> config_helpers::compute_cg_type2_freq_resources(const ran_cell_config& cell_cfg)
+{
+  ocudu_assert(cell_cfg.init_bwp.cg_cfg.has_value(), "This function cannot be called if CG is not set");
+
+  const crb_bitmap pucch_crbs = compute_pucch_crbs(cell_cfg);
+  const unsigned   nof_non_pucch_crbs =
+      cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length() - pucch_crbs.count();
+
+  // Calculate the RBs per CG resource and the number of CG resources that fit in the CG band.
+  const cg_configuration default_cg_config = config_helpers::make_default_cell_cg_config(cell_cfg);
+  const unsigned         nof_cg_rbs_per_ue = config_helpers::compute_nof_cg_prbs_per_ue(cell_cfg, default_cg_config);
+  ocudu_assert(nof_cg_rbs_per_ue > 0, "The number of PRBs required per CG UE must be positive");
+  if (nof_cg_rbs_per_ue == 0) {
+    return {};
+  }
+  const unsigned nof_cg_res =
+      std::min(cell_cfg.init_bwp.cg_cfg->max_nof_cell_cg_rbs, nof_non_pucch_crbs) / nof_cg_rbs_per_ue;
+
+  // Only considers the lower part of the spectrum, as we allocate CG resources on that side.
+  std::vector<crb_interval> cg_crbs;
+  cg_crbs.reserve(nof_cg_res);
+  unsigned cg_crb_start = pucch_crbs.find_highest(0, pucch_crbs.size() / 2, true) + 1;
+  for (unsigned n = 0; n != nof_cg_res; ++n) {
+    cg_crbs.push_back({cg_crb_start, cg_crb_start + nof_cg_rbs_per_ue});
+    cg_crb_start += nof_cg_rbs_per_ue;
+  }
+
+  return cg_crbs;
+}
+
+std::vector<unsigned> config_helpers::compute_cg_usable_slot_offsets(const ran_cell_config& cell_cfg)
+{
+  ocudu_assert(cell_cfg.init_bwp.cg_cfg.has_value() and cell_cfg.init_bwp.cg_cfg.value().periodicity.has_value(),
+               "Configured Grant must be configured and with a period set");
+
+  // Computes the PRACH periodicity, in slots.
+  const auto                                ul_scs = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs;
+  const prach_helper::preamble_slot_mapping td_mapper(
+      cell_cfg.dl_carrier.band,
+      ul_scs,
+      cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.prach_config_index);
+
+  const unsigned prach_period_sl =
+      get_nof_slots_per_subframe(ul_scs) * static_cast<unsigned>(NOF_SUBFRAMES_PER_FRAME) * td_mapper.sfn_period();
+  ocudu_assert(prach_period_sl > 0, "PRACH opportunities period must be positive");
+
+  const auto cg_period_sl = static_cast<unsigned>(cell_cfg.init_bwp.cg_cfg.value().periodicity.value());
+
+  // A CG offset recurs every CG period, and each of its occurrences falls at a different point of the TDD and PRACH
+  // patterns. Both patterns realign with the CG period after the LCM of the three, so the occurrences within that
+  // window are all the distinct slots the offset will ever land on.
+  // NOTE: the CG period is not necessarily a multiple of the TDD period (e.g. sl16 against a 10-slot TDD period), so
+  // the TDD condition has to be evaluated on every occurrence of the offset and not just on the first one.
+  const unsigned tdd_period_sl  = cell_cfg.tdd_cfg.has_value() ? nof_slots_per_tdd_period(cell_cfg.tdd_cfg.value()) : 1;
+  const unsigned fold_period_sl = std::lcm(std::lcm(prach_period_sl, cg_period_sl), tdd_period_sl);
+
+  // An occurrence is usable if it is a full-UL slot and carries no PRACH occasion.
+  // NOTE: is_tdd_full_ul_slot() wraps the slot index around the TDD period on its own.
+  auto is_usable_occurrence = [&](unsigned n) {
+    if (cell_cfg.tdd_cfg.has_value() and not is_tdd_full_ul_slot(cell_cfg.tdd_cfg.value(), n)) {
+      return false;
+    }
+    return not td_mapper.has_prach_occasion(slot_point(ul_scs, n % prach_period_sl));
+  };
+
+  std::vector<unsigned> offsets;
+  offsets.reserve(cg_period_sl);
+  for (unsigned offset = 0; offset != cg_period_sl; ++offset) {
+    bool usable = true;
+    for (unsigned n = offset; n < fold_period_sl; n += cg_period_sl) {
+      if (not is_usable_occurrence(n)) {
+        usable = false;
+        break;
+      }
+    }
+    if (usable) {
+      offsets.push_back(offset);
+    }
+  }
+
+  return offsets;
 }

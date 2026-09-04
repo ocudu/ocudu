@@ -279,6 +279,11 @@ static cg_configuration make_default_cg_config(const cg_builder_params& cg_param
   uci_cfg.scaling          = alpha_scaling_opt::f1;
   uci_cfg.beta_offsets_cfg = make_default_beta_uci_on_pusch();
 
+  // > RRC-configured uplink grant Type 2 CG: skip rrc_configured_ul_grant.
+  if (cg_params.is_type2()) {
+    return cfg;
+  }
+
   // > RRC-configured uplink grant (Type 1 CG).
   cg_configuration::rrc_configured_ul_grant grant{};
   constexpr unsigned                        nof_layers      = 1U;

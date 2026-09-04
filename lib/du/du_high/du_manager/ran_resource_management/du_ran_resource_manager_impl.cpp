@@ -10,6 +10,7 @@
 #include "ocudu/ran/csi_report/csi_report_config_helpers.h"
 #include "ocudu/scheduler/config/ran_cell_config_helper.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
+#include "ocudu/scheduler/rrm/configured_grant_rrm_factory.h"
 #include "ocudu/scheduler/rrm/srs_resource_manager_factory.h"
 #include "ocudu/scheduler/scheduler_configurator.h"
 
@@ -85,7 +86,9 @@ du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_co
   pusch_res_mng(cell_cfg_list, test_cfg),
   csi_res_mng(cell_cfg_list, test_cfg),
   bearer_res_mng(srbs, qos, logger),
+  // Extract Type of CG (i.e., Type1 or 2) from the first cell; all cell share the same type.
   srs_res_mng(create_srs_resource_manager(cell_cfg_list_[0].ran)),
+  cg_res_mng(create_configured_grant_rrm(cell_cfg_list_[0].ran)),
   meas_cfg_mng(cell_cfg_list),
   drx_res_mng(cell_cfg_list),
   ra_res_alloc(cell_cfg_list),
@@ -97,7 +100,7 @@ du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_co
     pucch_res_mng.add_cell(cell_idx, cell.ran);
     srs_res_mng->add_cell(cell_idx, cell.ran);
     if (cell.ran.init_bwp.cg_cfg.has_value()) {
-      cg_res_mng.add_cell(cell_idx, cell.ran);
+      cg_res_mng->add_cell(cell_idx, cell.ran);
     }
 
     // The resource pools of a cell do not change during the lifetime of this class, so the capacity of the cell can be
@@ -344,9 +347,9 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
         ue_mcg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.ul_config.has_value() and
         ue_mcg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.has_value();
     if (has_drbs and not cg_was_active) {
-      // NOTE: cg_res_mng.alloc_resources returns true if allocation is successful or if the Configured grant resource
-      // allocation was not requested (i.e., not set in by the user).
-      if (not cg_res_mng.alloc_resources(ue_mcg.cell_group.cells.at(SERVING_PCELL_IDX))) {
+      // NOTE: cg_res_mng.build_ue_cg_config returns true if allocation is successful or if the Configured grant
+      // resource allocation was not requested (i.e., not set in by the user).
+      if (not cg_res_mng->build_ue_cg_config(ue_mcg.cell_group.cells.at(SERVING_PCELL_IDX))) {
         // NOTE: This is ONLY IF CG allocation was requested and failed.
         // Deallocate previously allocated resources on PCell.
         if (pcell_newly_allocated) {
@@ -373,7 +376,7 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
     }
     // Remove old CG config when DRBs are removed.
     else if (not has_drbs and cg_was_active) {
-      cg_res_mng.dealloc_resources(ue_mcg.cell_group.cells.at(SERVING_PCELL_IDX));
+      cg_res_mng->reset_ue_cg_config(ue_mcg.cell_group.cells.at(SERVING_PCELL_IDX));
     }
   }
 
@@ -480,7 +483,7 @@ void du_ran_resource_manager_impl::deallocate_cell_resources(du_ue_index_t ue_in
     pdsch_res_mng.dealloc_resources(ue_res.cell_group);
     pusch_res_mng.dealloc_resources(ue_res.cell_group);
     csi_res_mng.dealloc_resources(ue_res.cell_group);
-    cg_res_mng.dealloc_resources(ue_res.cell_group.cells.at(SERVING_PCELL_IDX));
+    cg_res_mng->reset_ue_cg_config(ue_res.cell_group.cells.at(SERVING_PCELL_IDX));
     ue_res.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.cell_index = INVALID_DU_CELL_INDEX;
   } else {
     // TODO: Remove of SCell params.

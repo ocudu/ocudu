@@ -12,6 +12,7 @@
 namespace ocudu {
 
 struct pucch_resource;
+struct ran_cell_config;
 
 /// \brief Computes a CRB bitmap marking all CRBs occupied by PUCCH (common + dedicated resources).
 ///
@@ -21,6 +22,13 @@ struct pucch_resource;
 /// \return A CRB bitmap of size \c ul_bwp_crbs.length() with bits set for every CRB used by PUCCH.
 crb_bitmap
 compute_pucch_crbs(crb_interval ul_bwp_crbs, unsigned pucch_res_common, span<const pucch_resource> ded_pucch_resources);
+
+/// \brief Computes a CRB bitmap marking all CRBs occupied by PUCCH, with the arguments of the overload above derived
+/// from the cell configuration (the dedicated resources being the ones the cell generates for its UEs).
+///
+/// \param[in] cell_cfg Cell configuration. Its initial UL BWP must have PUCCH Config Common set.
+/// \return A CRB bitmap of the size of the initial UL BWP, indexed relative to the start of that BWP.
+crb_bitmap compute_pucch_crbs(const ran_cell_config& cell_cfg);
 
 /// \brief Computes the CRB interval, within the UL BWP, that is free of the common PUCCH resources.
 ///

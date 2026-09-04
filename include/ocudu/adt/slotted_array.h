@@ -16,6 +16,9 @@
 
 namespace ocudu {
 
+template <typename T, size_t N, bool EmbeddedStorage>
+class slotted_array;
+
 namespace detail {
 
 /// Iterator implementation for an array of optional types that automatically skips positions without a value.
@@ -86,6 +89,8 @@ private:
   friend class base_slotted_array_view;
   template <typename U>
   friend class slotted_array_iter_impl;
+  template <typename T, size_t N, bool EmbeddedStorage>
+  friend class ocudu::slotted_array;
 
   ArrayOfOpts* vec = nullptr;
   size_t       idx = std::numeric_limits<size_t>::max();

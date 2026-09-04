@@ -724,22 +724,6 @@ bool ue_cell_configuration::is_ul_enabled(slot_point                            
   return true;
 }
 
-bool ue_cell_configuration::is_cg_slot(slot_point slot) const
-{
-  // TODO: support type 2.
-  if (init_bwp().ul.cg_cfg() != nullptr) {
-    const auto& cg_cfg = init_bwp().ul.cg_cfg();
-    if (cg_cfg->rrc_configured_ul_grant_cfg.has_value()) {
-      const auto& rrc_cg_cfg = cg_cfg->rrc_configured_ul_grant_cfg.value();
-      if (slot.count() % static_cast<unsigned>(cg_cfg->periodicity) == rrc_cg_cfg.time_domain_offset) {
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
-
 //
 
 ue_configuration::ue_configuration(du_ue_index_t                         ue_index_,

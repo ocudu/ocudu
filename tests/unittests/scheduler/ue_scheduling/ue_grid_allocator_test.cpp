@@ -977,24 +977,40 @@ protected:
     return add_ue(req);
   }
 
-  /// Builds a Type 1 Configured Grant configuration whose only occasion within its period is \c cg_slot.
-  static cg_configuration make_cg_config_at(slot_point cg_slot)
+  /// Adds a repetition UE holding a Type 1 Configured Grant whose only occasion within its period is \c cg_slot.
+  ///
+  /// The schedulers read the UE's CG occasions off its \c ue_conf_grant_state_manager, which the Configured Grant
+  /// scheduler primes on UE creation. That scheduler is not part of this fixture, so the state is set here the way
+  /// \c configured_grant_scheduler_impl::add_ue_to_wheel() sets it. Only the periodicity and the time offset carry
+  /// meaning: the grant allocator reaches the state manager through \c is_cg_slot() alone.
+  const ue& add_cg_repetition_ue(slot_point cg_slot)
   {
-    constexpr auto   period = cg_configuration::periodicity_t::sl80;
+    constexpr auto period      = cg_configuration::periodicity_t::sl80;
+    const unsigned time_offset = cg_slot.count() % static_cast<unsigned>(period);
+
     cg_configuration cg{};
     cg.mcs_table          = pusch_mcs_table::qam64;
     cg.nof_harq_processes = 8;
     cg.periodicity        = period;
 
     cg_configuration::rrc_configured_ul_grant grant{};
-    grant.time_domain_offset       = cg_slot.count() % static_cast<unsigned>(period);
+    grant.time_domain_offset       = time_offset;
     grant.time_domain_allocation   = 0;
     grant.freq_domain_res          = ra_frequency_type1_configuration{};
     grant.antenna_port             = 0;
     grant.precoding_and_nof_layers = 0;
     grant.mcs                      = 10;
     cg.rrc_configured_ul_grant_cfg = grant;
-    return cg;
+
+    const ue& u = add_repetition_ue(std::nullopt, cg);
+    ues[u.ue_index].get_pcell().get_conf_grant_state_manager().update_state(static_cast<unsigned>(period),
+                                                                            units::bytes{0},
+                                                                            vrb_interval{0, 0},
+                                                                            grant.mcs,
+                                                                            grant.time_domain_allocation,
+                                                                            time_offset,
+                                                                            0U);
+    return u;
   }
 
   void set_pusch_snr(ue_cell& ue_cc, float snr_db) { ue_cc.channel_state_manager().update_pusch_snr(snr_db); }
@@ -1290,12 +1306,13 @@ TEST_P(ue_grid_allocator_pusch_repetition_test, bundle_whose_occasion_falls_on_a
   const uint8_t      common_k2 = cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].k2;
   const slot_point   cg_slot   = current_slot + common_k2 + target_occasion_offset;
 
-  const ue&        u          = add_repetition_ue(std::nullopt, make_cg_config_at(cg_slot));
+  const ue&        u          = add_cg_repetition_ue(cg_slot);
   ue_cell&         ue_cc      = ues[u.ue_index].get_pcell();
   const slot_point pusch_slot = current_slot + rep_k2;
   ASSERT_EQ(pusch_slot + target_occasion_offset, cg_slot);
-  ASSERT_FALSE(ue_cc.cfg().is_cg_slot(pusch_slot)) << "the base slot itself is a CG slot, the test proves nothing";
-  ASSERT_TRUE(ue_cc.cfg().is_cg_slot(cg_slot));
+  ASSERT_FALSE(ue_cc.get_conf_grant_state_manager().is_cg_slot(pusch_slot))
+      << "the base slot itself is a CG slot, the test proves nothing";
+  ASSERT_TRUE(ue_cc.get_conf_grant_state_manager().is_cg_slot(cg_slot));
 
   set_pusch_snr(ue_cc, 0.0F);
   ASSERT_EQ(allocate_ul_newtx_grant(pusch_slot, slice_ues[u.ue_index], units::bytes{1000}), alloc_status::success);

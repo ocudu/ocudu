@@ -56,7 +56,8 @@ ue_cell_repository::ue_cell_repository(const cell_configuration& cell_cfg, cell_
   channel_state_pool(cell_cfg.max_nof_ue_contexts),
   mcs_calculator_pool(cell_cfg.max_nof_ue_contexts),
   pusch_pwr_controller_pool(cell_cfg.max_nof_ue_contexts),
-  pucch_pwr_controller_pool(cell_cfg.max_nof_ue_contexts)
+  pucch_pwr_controller_pool(cell_cfg.max_nof_ue_contexts),
+  cg_state_pool(cell_cfg.max_nof_ue_contexts)
 {
   // Pre-reserve the UE storage and the range of DU UE indexes, so that no allocation is needed to add a UE.
   ues.reserve(cell_cfg.max_nof_ue_contexts, MAX_NOF_DU_UES);
@@ -96,6 +97,7 @@ ue_cell& ue_cell_repository::add_ue(const ue_configuration& ue_cfg,
   components.ue_mcs_calculator    = mcs_calculator_pool.get(ue_cell_cfg.cell_cfg_common, *components.channel_state);
   components.pusch_pwr_controller = pusch_pwr_controller_pool.get(ue_cell_cfg, *components.channel_state, logger);
   components.pucch_pwr_controller = pucch_pwr_controller_pool.get(ue_cell_cfg, logger);
+  components.config_grant_state   = cg_state_pool.get();
 
   // Add UE in the repository.
   ues.emplace(

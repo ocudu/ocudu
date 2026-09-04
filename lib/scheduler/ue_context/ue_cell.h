@@ -10,6 +10,7 @@
 #include "../support/pucch_power_controller.h"
 #include "../support/pusch_power_controller.h"
 #include "ue_channel_state_manager.h"
+#include "ue_conf_grant_state_manager.h"
 #include "ue_drx_controller.h"
 #include "ue_fsm_states.h"
 #include "ue_link_adaptation_controller.h"
@@ -58,6 +59,7 @@ struct ue_cell_components {
   free_list_object_pool<ue_link_adaptation_controller>::ptr ue_mcs_calculator;
   free_list_object_pool<pusch_power_controller>::ptr        pusch_pwr_controller;
   free_list_object_pool<pucch_power_controller>::ptr        pucch_pwr_controller;
+  free_list_object_pool<ue_conf_grant_state_manager>::ptr   config_grant_state;
 };
 
 /// \brief Context respective to a UE serving cell.
@@ -214,6 +216,9 @@ public:
 
   pucch_power_controller&       get_pucch_power_controller() { return *components.pucch_pwr_controller; }
   const pucch_power_controller& get_pucch_power_controller() const { return *components.pucch_pwr_controller; }
+
+  ue_conf_grant_state_manager&       get_conf_grant_state_manager() { return *components.config_grant_state; }
+  const ue_conf_grant_state_manager& get_conf_grant_state_manager() const { return *components.config_grant_state; }
 
   /// \brief Returns an estimated DL rate in bytes per slot based on the given input parameters.
   double get_estimated_dl_rate(const pdsch_config_params& pdsch_cfg, sch_mcs_index mcs, unsigned nof_prbs) const;

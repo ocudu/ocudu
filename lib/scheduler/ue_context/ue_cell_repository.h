@@ -88,6 +88,9 @@ private:
   free_list_object_pool<pusch_power_controller> pusch_pwr_controller_pool;
   free_list_object_pool<pucch_power_controller> pucch_pwr_controller_pool;
 
+  /// Pool of configured grant state managers of the cell.
+  free_list_object_pool<ue_conf_grant_state_manager> cg_state_pool;
+
   // List of UEs in the cell.
   ue_list ues;
 

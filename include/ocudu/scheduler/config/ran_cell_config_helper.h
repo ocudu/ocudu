@@ -62,4 +62,24 @@ cg_configuration make_default_cell_cg_config(const ran_cell_config& cell_cfg);
 /// \remark This function must only be called if the cell has CG enabled (i.e. \c cell_cfg.init_bwp.cg_cfg is set).
 unsigned compute_nof_cg_prbs_per_ue(const ran_cell_config& cell_cfg, const cg_configuration& cg_cfg);
 
+/// \brief Computes the CRB blocks usable by the Type-2 Configured Grant resources of a cell.
+///
+/// The band available for CG is the part of the UL BWP left free by the PUCCH guardbands, capped by \c
+/// max_nof_cell_cg_rbs; it is split into contiguous blocks of the number of PRBs a UE requires, one block per CG
+/// resource. Two UEs activated on the same slot offset are handed two different resources, so the blocks returned by
+/// this function never overlap.
+/// \return The CRB block of each CG resource, indexed by resource id. Empty if no CG resource fits in the cell.
+/// \remark This function must only be called if the cell has CG enabled (i.e. \c cell_cfg.init_bwp.cg_cfg is set).
+std::vector<crb_interval> compute_cg_type2_freq_resources(const ran_cell_config& cell_cfg);
+
+/// \brief Computes the slot offsets, within the CG period, that the Configured Grant resources of a cell can be
+/// placed at. Applies to both CG types.
+///
+/// A CG offset recurs every CG period, and each of its occurrences falls at a different point of the TDD and PRACH
+/// patterns; the offset is usable only if every one of them is a full-UL slot (in TDD) carrying no PRACH occasion. The
+/// occurrences within the LCM of the CG, PRACH and TDD periods are all the distinct slots the offset can land on.
+/// \return The usable slot offsets, in increasing order. Empty if the cell has no slot available for CG.
+/// \remark This function must only be called if the cell has CG enabled (i.e. \c cell_cfg.init_bwp.cg_cfg is set).
+std::vector<unsigned> compute_cg_usable_slot_offsets(const ran_cell_config& cell_cfg);
+
 } // namespace ocudu::config_helpers

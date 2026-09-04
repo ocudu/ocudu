@@ -82,10 +82,6 @@ private:
   // UEs whose CG configuration has been added or updated in between the last and current slot indications. Their CG
   // resources still need to be pre-reserved over the whole resource grid.
   std::vector<rnti_t> updated_ues;
-
-  // TBS, in bytes, of the CG PUSCH grant of each UE, indexed by the UE's DU index. Insertion and removal do not
-  // allocate memory.
-  slotted_id_table<du_ue_index_t, units::bytes, MAX_NOF_DU_UES> ue_tbs_values;
 };
 
 } // namespace ocudu

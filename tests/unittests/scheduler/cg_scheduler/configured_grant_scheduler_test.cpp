@@ -35,6 +35,8 @@ struct cg_test_params {
   unsigned                        nof_harq_procs = 4;
   /// When false, the cell is built without CG configured at cell level, so the CG scheduler is not instantiated.
   bool cell_cg_enabled = true;
+  /// Selecting Type 2 CG requires DCI activation before any CG PUSCH is scheduled.
+  cg_builder_params::cg_type type = cg_builder_params::cg_type::type1;
 };
 
 /// Default CG VRB allocation set by the config factory (see make_default_cg_config() in
@@ -75,7 +77,7 @@ class configured_grant_scheduler_test : public scheduler_test_simulator, public 
 {
 protected:
   static constexpr rnti_t ue_crnti = to_rnti(0x4601);
-  /// CS-RNTI assigned to the test UE. Matches the temporary value used in cg_res_mng.cpp.
+  /// CS-RNTI assigned to the test UE.
   static constexpr rnti_t cs_rnti = to_rnti(0xe0ef);
 
   cg_test_params                           cg_params;
@@ -93,6 +95,7 @@ protected:
     if (cg_params.cell_cg_enabled) {
       cell_req.ran.init_bwp.cg_cfg = cg_builder_params{
           .periodicity        = cg_params.periodicity,
+          .type               = cg_params.type,
           .mcs                = cg_params.mcs,
           .nof_harq_processes = cg_params.nof_harq_procs,
       };

@@ -222,9 +222,6 @@ public:
   /// \brief Gets the SRS transmit number of ports.
   const auto& get_srs_nof_ports() const { return init_bwp().ul.ue_cfg()->srs.nof_ports; }
 
-  /// \brief Test whether the given slot is a Configured Grant opportunity for this UE.
-  bool is_cg_slot(slot_point slot) const;
-
 private:
   void configure_bwp_cfg(bwp_id_t bwpid, const sched_bwp_config& bwp);
 

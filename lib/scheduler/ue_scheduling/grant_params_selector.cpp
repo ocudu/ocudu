@@ -495,7 +495,7 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
   }
 
   // If there is a CG configured and this is a CG slot, then we skip the PUSCH dynamic grant allocation.
-  if (ue_cc.cfg().is_cg_slot(pusch_slot)) {
+  if (ue_cc.get_conf_grant_state_manager().is_cg_slot(pusch_slot)) {
     return std::nullopt;
   }
 

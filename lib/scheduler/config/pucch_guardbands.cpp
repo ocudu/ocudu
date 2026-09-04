@@ -8,6 +8,8 @@
 #include "ocudu/ran/pucch/pucch_configuration.h"
 #include "ocudu/ran/pucch/pucch_constants.h"
 #include "ocudu/scheduler/config/pucch_default_resource.h"
+#include "ocudu/scheduler/config/pucch_resource_generator.h"
+#include "ocudu/scheduler/config/ran_cell_config.h"
 #include "ocudu/support/ocudu_assert.h"
 
 using namespace ocudu;
@@ -48,6 +50,19 @@ crb_bitmap ocudu::compute_pucch_crbs(crb_interval               ul_bwp_crbs,
   }
 
   return pucch_crbs;
+}
+
+crb_bitmap ocudu::compute_pucch_crbs(const ran_cell_config& cell_cfg)
+{
+  ocudu_assert(cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common.has_value(), "PUCCH Config Common not configured");
+  const crb_interval ul_bwp_crbs = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs;
+
+  const std::vector<pucch_resource> ded_pucch_resources =
+      config_helpers::generate_cell_pucch_res_list(cell_cfg.init_bwp.pucch.resources, ul_bwp_crbs.length());
+
+  return compute_pucch_crbs(ul_bwp_crbs,
+                            cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().pucch_resource_common,
+                            ded_pucch_resources);
 }
 
 crb_interval ocudu::compute_available_crbs_without_common_pucch(crb_interval ul_bwp_crbs, unsigned pucch_res_common)

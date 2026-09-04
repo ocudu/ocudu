@@ -11,7 +11,6 @@
 #include "../support/repetition_helpers.h"
 #include "../support/sch_pdu_builder.h"
 #include "../uci_scheduling/uci_allocator_impl.h"
-#include "ocudu/ran/csi_report/csi_report_config_helpers.h"
 #include "ocudu/ran/direct_current_offset.h"
 #include <optional>
 
@@ -98,6 +97,12 @@ void configured_grant_scheduler_impl::add_ue_to_wheel(const ue_cell_configuratio
 
   const auto period_slots = static_cast<unsigned>(cg_cfg.periodicity);
 
+  auto* ue_cc = u->find_cell(cell_cfg.cell_index);
+  if (ue_cc == nullptr) {
+    logger.error("rnti={}: UE cell not found in the CG scheduler cell", ue_cfg.crnti);
+    return;
+  }
+
   // Fill the slot wheel at every slot where a CG PUSCH opportunity occurs.
   for (unsigned wheel_offset = ul_grant.time_domain_offset; wheel_offset < max_cg_slot_periodicity;
        wheel_offset += period_slots) {
@@ -117,14 +122,20 @@ void configured_grant_scheduler_impl::add_ue_to_wheel(const ue_cell_configuratio
   // Register the UE TBS in the TBS table.
   pusch_config_params pusch_params = build_cg_pusch_cfg_params(ue_cfg);
   const auto          cg_vrbs      = compute_cg_vrbs(ul_grant);
-  const units::bytes  tbs          = compute_ul_tbs_unsafe(pusch_params, sch_mcs_index{ul_grant.mcs}, cg_vrbs.length());
-  ocudu_assert(not ue_tbs_values.contains(u->ue_index), "UE={} already present in the TBS table", u->ue_index);
-  ue_tbs_values.emplace(u->ue_index, tbs);
+  ue_cc->get_conf_grant_state_manager().update_state(
+      period_slots,
+      compute_ul_tbs_unsafe(pusch_params, sch_mcs_index{ul_grant.mcs}, cg_vrbs.length()),
+      cg_vrbs,
+      ul_grant.mcs,
+      ul_grant.time_domain_allocation,
+      ul_grant.time_domain_offset,
+      // Resource id is only applicable to CG type 2.
+      0U);
 }
 
 void configured_grant_scheduler_impl::rem_ue(const ue_cell_configuration& ue_cfg)
 {
-  const auto* u = ues.find_by_rnti(ue_cfg.crnti);
+  auto* u = ues.find_by_rnti(ue_cfg.crnti);
   if (u == nullptr) {
     logger.error("rnti={}: UE not found in the CG scheduler UEs repo during UE removal", ue_cfg.crnti);
     return;
@@ -158,9 +169,12 @@ void configured_grant_scheduler_impl::rem_ue(const ue_cell_configuration& ue_cfg
     slot_wheel.pop_back();
   }
 
-  // Remove UE TBS from TBS table.
-  ocudu_assert(ue_tbs_values.contains(u->ue_index), "UE={} not found in the TBS table", u->ue_index);
-  ue_tbs_values.erase(u->ue_index);
+  auto* ue_cc = u->find_cell(cell_cfg.cell_index);
+  if (ue_cc == nullptr) {
+    logger.error("rnti={}: UE cell not found in the CG scheduler cell during UE removal", ue_cfg.crnti);
+    return;
+  }
+  ue_cc->get_conf_grant_state_manager().reset_state();
 }
 
 void configured_grant_scheduler_impl::add_reconf_ue(const ue_cell_configuration& new_ue_cfg,
@@ -247,10 +261,10 @@ void configured_grant_scheduler_impl::reserve_cg_resources(cell_slot_resource_al
   }
   const ue_cell_configuration& ue_cfg = ue_cc.cfg();
 
-  if (not cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.has_value()) {
-    return;
-  }
-  const auto& pusch_td_list = cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
+  // For a Type 1 CG with PUSCH repetition Type A, the TDRA table is selected as for DCI format 0_0 in a UE-specific
+  // search space (TS 38.214, Section 6.1.2.3), i.e. the UE's dedicated pusch-TimeDomainAllocationList when configured
+  // and the common one otherwise, which is what the mapper's dedicated list already resolves to.
+  const auto& pusch_td_list = ue_cc.active_bwp().ul.td_mapper().dedicated_pusch_td_resources();
 
   // NOTE: the CG and UL grant configs were validated when the UE was added to the wheel.
   const auto& ul_grant = ue_cfg.init_bwp().ul.ded()->cg_cfg.value().rrc_configured_ul_grant_cfg.value();
@@ -272,13 +286,13 @@ void configured_grant_scheduler_impl::stop()
   for (auto& sl : periodic_pusch_slot_wheel) {
     sl.clear();
   }
-  ue_tbs_values.clear();
 }
 
 pusch_config_params
 configured_grant_scheduler_impl::build_cg_pusch_cfg_params(const ue_cell_configuration& ue_cell_cfg) const
 {
-  const auto& pusch_td_list = cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
+  // Same TDRA table as the one the grid reservation is built against, see reserve_cg_resources().
+  const auto& pusch_td_list = ue_cell_cfg.init_bwp().ul.td_mapper().dedicated_pusch_td_resources();
 
   const auto* ul_ded   = ue_cell_cfg.init_bwp().ul.ded();
   const auto& cg_cfg   = ul_ded->cg_cfg.value();
@@ -398,10 +412,8 @@ bool configured_grant_scheduler_impl::allocate_cg_opportunity(cell_slot_resource
   // after the UE was added; hence, no collision check nor grid fill is needed here.
 
   // Compute TBS from the configured MCS and VRB count.
-  const sch_mcs_index mcs_idx{ul_grant.mcs};
-  // NOTE: the TBS should have been computed to be valid when the UE config was built.
-  ocudu_assert(ue_tbs_values.contains(u->ue_index), "UE={} not found in the TBS table", u->ue_index);
-  const units::bytes tbs = ue_tbs_values[u->ue_index];
+  const sch_mcs_index mcs_idx{ue_cc->get_conf_grant_state_manager().get_mcs()};
+  const units::bytes  tbs = ue_cc->get_conf_grant_state_manager().get_tbs();
 
   // Fill UL scheduling result.
   ul_sched_info& sched_info = slot_alloc.result.ul.puschs.emplace_back();

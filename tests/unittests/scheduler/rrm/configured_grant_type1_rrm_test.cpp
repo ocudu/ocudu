@@ -4,7 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 /// \file
-/// \brief Unit tests for cg_type1_res_mng. Verifies correct CG resource allocation, PRACH/PUCCH collision
+/// \brief Unit tests for configured_grant_type1_rrm. Verifies correct CG resource allocation, PRACH/PUCCH collision
 /// avoidance, multi-UE orthogonality, capacity exhaustion and resource reclamation.
 
 #include "tests/ocudu_test_requirements.h"
@@ -16,9 +16,9 @@
 #include "ocudu/ran/prach/prach_time_mapping.h"
 #include "ocudu/ran/tdd/tdd_ul_dl_config.h"
 #include "ocudu/scheduler/config/pucch_guardbands.h"
-#include "ocudu/scheduler/config/pucch_resource_generator.h"
+#include "ocudu/scheduler/config/ran_cell_config_helper.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
-#include "ocudu/scheduler/rrm/cg_res_mng.h"
+#include "ocudu/scheduler/rrm/configured_grant_type1_rrm.h"
 #include "ocudu/scheduler/support/rb_helper.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
@@ -97,13 +97,13 @@ ue_cg_alloc_params get_cg_alloc(const ue_cell_config& ue_cell_cfg)
 
 // ---- Test fixture ----
 
-class cg_type1_res_mng_test : public ::testing::TestWithParam<cg_test_params>
+class configured_grant_type1_rrm_test : public ::testing::TestWithParam<cg_test_params>
 {
 protected:
   // NOTE: the default cg_builder_params are expected to be self-consistent, i.e. the number of PRBs derived by the
   // resource manager from grant_size_or_bitrate and MCS must not exceed max_nof_cell_cg_rbs, otherwise no CG
   // allocation is possible.
-  explicit cg_type1_res_mng_test(const cg_builder_params& cg_params_ = {}) :
+  explicit configured_grant_type1_rrm_test(const cg_builder_params& cg_params_ = {}) :
     cg_params(cg_params_),
     cell_params(make_cell_cfg_params(GetParam())),
     cell_cfg_list({make_cg_du_cell_config(cell_params, cg_params)})
@@ -111,16 +111,16 @@ protected:
     cg_res_mng.add_cell(to_du_cell_index(0), cell_cfg_list.front().ran);
   }
 
-  // Creates a ue_cell_config for a new UE PCell, then calls alloc_resources.
+  // Creates a ue_cell_config for a new UE PCell, then calls build_ue_cg_config.
   // Return the ue_cell_config if allocation succeeded, nullopt otherwise.
   std::optional<ue_cell_config> add_ue(du_ue_index_t ue_idx)
   {
     ue_cell_config ue_cell_cfg = config_helpers::make_default_ue_cell_config(cell_cfg_list.front().ran);
 
-    // Reset CG config so alloc_resources fills it fresh.
+    // Reset CG config so build_ue_cg_config fills it fresh.
     ue_cell_cfg.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.reset();
 
-    if (not cg_res_mng.alloc_resources(ue_cell_cfg)) {
+    if (not cg_res_mng.build_ue_cg_config(ue_cell_cfg)) {
       return std::nullopt;
     }
 
@@ -132,12 +132,20 @@ protected:
   void rem_ue(du_ue_index_t ue_idx)
   {
     ASSERT_TRUE(ues.contains(ue_idx));
-    cg_res_mng.dealloc_resources(ues[ue_idx]);
+    cg_res_mng.reset_ue_cg_config(ues[ue_idx]);
     ues.erase(ue_idx);
   }
 
   // Returns the CG period in slots.
   unsigned cg_period_slots() const { return static_cast<unsigned>(cg_params.periodicity.value()); }
+
+  // Returns the PRACH periodicity, in slots.
+  unsigned prach_period_slots() const
+  {
+    const auto ul_scs = cell_cfg_list.front().ran.ul_cfg_common.init_ul_bwp.generic_params.scs;
+    return get_nof_slots_per_subframe(ul_scs) * static_cast<unsigned>(NOF_SUBFRAMES_PER_FRAME) *
+           make_prach_mapper().sfn_period();
+  }
 
   // Returns the PRACH slot helper for collision checks.
   prach_helper::preamble_slot_mapping make_prach_mapper() const
@@ -149,15 +157,7 @@ protected:
   }
 
   // Returns the PUCCH guardband CRBs bitmap (BWP-relative).
-  crb_bitmap get_pucch_crbs() const
-  {
-    const auto& ran                 = cell_cfg_list.front().ran;
-    const auto  cell_pucch_res_list = config_helpers::generate_cell_pucch_res_list(
-        ran.init_bwp.pucch.resources, ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
-    return compute_pucch_crbs(ran.ul_cfg_common.init_ul_bwp.generic_params.crbs,
-                              ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().pucch_resource_common,
-                              cell_pucch_res_list);
-  }
+  crb_bitmap get_pucch_crbs() const { return compute_pucch_crbs(cell_cfg_list.front().ran); }
 
   // Checks whether the given slot offset (within the CG period) falls on a PRACH occasion.
   bool is_prach_slot(unsigned slot_offset) const
@@ -198,14 +198,14 @@ protected:
   cg_builder_params                             cg_params;
   cell_config_builder_params                    cell_params;
   std::vector<du_cell_config>                   cell_cfg_list;
-  cg_type1_res_mng                              cg_res_mng;
+  configured_grant_type1_rrm                    cg_res_mng;
   slotted_array<ue_cell_config, MAX_NOF_DU_UES> ues;
 };
 
 // ---- Tests ----
 
 /// Test: a single UE gets all CG parameters correctly populated.
-TEST_P(cg_type1_res_mng_test, single_ue_cg_config_is_fully_populated)
+TEST_P(configured_grant_type1_rrm_test, single_ue_cg_config_is_fully_populated)
 {
   OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
 
@@ -240,7 +240,7 @@ TEST_P(cg_type1_res_mng_test, single_ue_cg_config_is_fully_populated)
 }
 
 /// Test: CG offset does not fall on a PRACH slot.
-TEST_P(cg_type1_res_mng_test, cg_offset_does_not_collide_with_prach)
+TEST_P(configured_grant_type1_rrm_test, cg_offset_does_not_collide_with_prach)
 {
   OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
 
@@ -261,8 +261,31 @@ TEST_P(cg_type1_res_mng_test, cg_offset_does_not_collide_with_prach)
   }
 }
 
+/// Test: every occurrence of the CG offset, and not only the first one, falls on a full-UL slot.
+TEST_P(configured_grant_type1_rrm_test, cg_offset_falls_on_a_full_ul_slot)
+{
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
+  const auto& ran = cell_cfg_list.front().ran;
+  if (ran.tdd_cfg.has_value()) {
+    const auto ue = add_ue(to_du_ue_index(0));
+    ASSERT_TRUE(ue.has_value());
+
+    const auto [offset, vrbs] = get_cg_alloc(*ue);
+
+    // The CG, PRACH and TDD patterns realign after the LCM of their periods, so the occurrences of the offset within
+    // that window are all the distinct slots it can land on.
+    const unsigned lcm_period =
+        std::lcm(std::lcm(prach_period_slots(), cg_period_slots()), nof_slots_per_tdd_period(ran.tdd_cfg.value()));
+    for (unsigned n = offset; n < lcm_period; n += cg_period_slots()) {
+      EXPECT_TRUE(is_tdd_full_ul_slot(ran.tdd_cfg.value(), n))
+          << "CG offset " << offset << " recurs at slot " << n << ", which is not a full-UL slot";
+    }
+  }
+}
+
 /// Test: CG VRBs do not overlap with PUCCH guardband CRBs.
-TEST_P(cg_type1_res_mng_test, cg_rbs_do_not_collide_with_pucch)
+TEST_P(configured_grant_type1_rrm_test, cg_rbs_do_not_collide_with_pucch)
 {
   OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
 
@@ -273,7 +296,7 @@ TEST_P(cg_type1_res_mng_test, cg_rbs_do_not_collide_with_pucch)
 }
 
 /// Test: multiple UEs get orthogonal CG resources (no collision in offset+VRBs).
-TEST_P(cg_type1_res_mng_test, multiple_ues_get_orthogonal_cg_resources)
+TEST_P(configured_grant_type1_rrm_test, multiple_ues_get_orthogonal_cg_resources)
 {
   OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
 
@@ -306,7 +329,7 @@ TEST_P(cg_type1_res_mng_test, multiple_ues_get_orthogonal_cg_resources)
 }
 
 /// Test: allocation fails when resources are exhausted; all previous UEs remain valid.
-TEST_P(cg_type1_res_mng_test, allocation_fails_when_resources_exhausted)
+TEST_P(configured_grant_type1_rrm_test, allocation_fails_when_resources_exhausted)
 {
   OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
 
@@ -328,8 +351,33 @@ TEST_P(cg_type1_res_mng_test, allocation_fails_when_resources_exhausted)
   EXPECT_FALSE(extra_ue.has_value()) << "Allocation should fail after resource exhaustion";
 }
 
+/// Test: allocating twice for the same UE is a no-op. A second allocation would overwrite the offset and VRBs stored
+/// in the UE config, leaving the RBs of the first one reserved in the grid with nothing left pointing at them.
+TEST_P(configured_grant_type1_rrm_test, allocating_twice_for_the_same_ue_is_a_no_op)
+{
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
+  auto ue = add_ue(to_du_ue_index(0));
+  ASSERT_TRUE(ue.has_value());
+  const ue_cg_alloc_params first_alloc = get_cg_alloc(*ue);
+
+  // Fill the rest of the cell, so that a second allocation would have to find room that is no longer there.
+  for (unsigned i = 1; i != MAX_NOF_DU_UES; ++i) {
+    if (not add_ue(to_du_ue_index(i)).has_value()) {
+      break;
+    }
+  }
+
+  // The UE already holds its CG resources, so the call must report success and change nothing, even though there is
+  // no room left in the cell for a new allocation.
+  ue_cell_config& stored_ue = ues[to_du_ue_index(0)];
+  EXPECT_TRUE(cg_res_mng.build_ue_cg_config(stored_ue))
+      << "re-allocating for an already configured UE must succeed, even on a full cell";
+  EXPECT_EQ(get_cg_alloc(stored_ue), first_alloc) << "the CG allocation of the UE must be left untouched";
+}
+
 /// Test: after removing a UE, a new UE can be allocated with the freed resources.
-TEST_P(cg_type1_res_mng_test, dealloc_and_realloc_succeeds)
+TEST_P(configured_grant_type1_rrm_test, dealloc_and_realloc_succeeds)
 {
   OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
 
@@ -369,10 +417,35 @@ TEST_P(cg_type1_res_mng_test, dealloc_and_realloc_succeeds)
   }
 }
 
+// ---- Non-parameterized tests ----
+
+/// A CG period that is not a multiple of the TDD period walks the offset through the whole TDD pattern. When no offset
+/// stays on a full-UL slot at every one of its occurrences, the allocation must be refused rather than granted on a
+/// slot that turns out to be DL.
+TEST(configured_grant_type1_rrm_tdd_test, allocation_is_refused_when_no_offset_stays_on_ul_slots)
+{
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
+  // TDD 7DL + 1S + 2UL (10-slot period) against a 16-slot CG period: gcd(16, 10) = 2, so each offset visits 5
+  // different TDD slot indices, of which at most 2 are UL.
+  const du_cell_config du_cfg =
+      make_cg_du_cell_config(make_cell_cfg_params(cg_test_params{.nof_ul_slots = 2}),
+                             cg_builder_params{.periodicity = cg_configuration::periodicity_t::sl16});
+
+  configured_grant_type1_rrm res_mng;
+  res_mng.add_cell(to_du_cell_index(0), du_cfg.ran);
+
+  ue_cell_config ue_cell_cfg = config_helpers::make_default_ue_cell_config(du_cfg.ran);
+  ue_cell_cfg.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.reset();
+
+  EXPECT_FALSE(res_mng.build_ue_cg_config(ue_cell_cfg))
+      << "a CG offset was allocated even though every one of its occurrences cannot be an UL slot";
+}
+
 // ---- Parameterization ----
 
-INSTANTIATE_TEST_SUITE_P(cg_type1_res_mng,
-                         cg_type1_res_mng_test,
+INSTANTIATE_TEST_SUITE_P(configured_grant_type1_rrm,
+                         configured_grant_type1_rrm_test,
                          ::testing::Values(
                              // FDD.
                              cg_test_params{},
