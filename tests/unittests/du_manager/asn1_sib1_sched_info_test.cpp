@@ -194,6 +194,27 @@ TEST(asn1_sib1_sched_info_test, warning_content_is_packed_apart_from_the_si_mess
   ASSERT_FALSE(pws_msgs[0].front().empty());
 }
 
+/// Regression test: a cell configured with the ETWS block takes two SI messages, one for the primary notification and
+/// another for the secondary one, and both must be packed with the content they broadcast from the cell start.
+TEST(asn1_sib1_sched_info_test, etws_test_content_is_packed_for_both_of_its_si_messages)
+{
+  du_cell_config cell_cfg = config_helpers::make_default_du_cell_config();
+  cell_cfg.si.si_config.emplace();
+  cell_cfg.si.si_config->si_window_len_slots = 20;
+  cell_cfg.si.si_config->pws_si_messages     = {pws_si_message_config{sib_type::sib6, 32, true},
+                                                pws_si_message_config{sib_type::sib7, 32, true}};
+  cell_cfg.si.si_config->sibs.push_back(sib_type_info{sib6_info{0x1104, 0x3000, 0x0980}, value_tag_t{0}});
+  cell_cfg.si.si_config->sibs.push_back(sib_type_info{sib7_info{0x1104, 0x3000, "ETWS message", 0x48}, value_tag_t{0}});
+
+  const std::vector<bcch_dl_sch_payload_type> pws_msgs = asn1_packer::pack_pws_si_messages(cell_cfg);
+
+  ASSERT_EQ(pws_msgs.size(), 2);
+  for (unsigned i = 0; i != pws_msgs.size(); ++i) {
+    ASSERT_FALSE(pws_msgs[i].empty()) << "SI message " << i << " broadcasts from the cell start with no content";
+    ASSERT_FALSE(pws_msgs[i].front().empty());
+  }
+}
+
 TEST(asn1_sib1_sched_info_test, warning_with_no_configured_content_is_packed_empty)
 {
   const std::vector<bcch_dl_sch_payload_type> pws_msgs =

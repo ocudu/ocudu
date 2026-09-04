@@ -31,6 +31,19 @@ du_cell_config make_cell_config_with_dormant_pws_si_message()
   return cfg;
 }
 
+/// A cell whose ETWS configuration carries the content it broadcasts from its start, as test_mode does.
+du_cell_config make_cell_config_with_etws_test_content()
+{
+  du_cell_config cfg = make_cell_config_with_dormant_pws_si_message();
+
+  cfg.si.si_config->pws_si_messages = {pws_si_message_config{sib_type::sib6, 32, true},
+                                       pws_si_message_config{sib_type::sib7, 32, true}};
+  cfg.si.si_config->sibs.push_back(sib_type_info{sib6_info{0x1104, 0x3000, 0x0980}, value_tag_t{0}});
+  cfg.si.si_config->sibs.push_back(sib_type_info{sib7_info{0x1104, 0x3000, "ETWS message", 0x48}, value_tag_t{0}});
+
+  return cfg;
+}
+
 /// Builds a minimal, validly-packed SIB6 PDU, as if it had come from the CU over F1AP.
 byte_buffer pack_valid_sib6_pdu()
 {
@@ -90,6 +103,16 @@ protected:
   }
 };
 
+/// Fixture whose cell broadcasts its configured ETWS content from the cell start.
+class du_pws_broadcast_procedure_test_content_test : public du_pws_broadcast_procedure_test
+{
+protected:
+  du_pws_broadcast_procedure_test_content_test() :
+    du_pws_broadcast_procedure_test(make_cell_config_with_etws_test_content())
+  {
+  }
+};
+
 } // namespace
 
 TEST_F(du_pws_broadcast_procedure_test, when_cell_not_provisioned_for_sib_type_then_it_is_not_accepted)
@@ -109,6 +132,28 @@ TEST_F(du_pws_broadcast_procedure_test, when_cell_not_provisioned_for_sib_type_t
   ASSERT_TRUE(t.ready());
   ASSERT_TRUE(t.get().empty());
   ASSERT_FALSE(dependencies.mac.mac_cell.last_cell_recfg_req.has_value());
+}
+
+/// \brief Regression test: the content a cell broadcasts for a warning from its start must reach the MAC.
+///
+/// The DU builds the MAC cell configuration by copying each SI message it packed, and the ones carrying a warning are
+/// held apart from the ones of the normal operation. Leaving them behind gives the MAC a warning to broadcast with no
+/// content, which its encoder cannot serve.
+TEST_F(du_pws_broadcast_procedure_test_content_test,
+       when_cell_broadcasts_a_warning_from_its_start_then_its_content_reaches_the_mac)
+{
+  const auto& creation_req = dependencies.mac.last_cell_creation_req;
+  ASSERT_TRUE(creation_req.has_value());
+
+  const auto& pws_si_msgs = creation_req->sys_info.si_sched_cfg.pws_si_messages;
+  ASSERT_EQ(pws_si_msgs.size(), creation_req->sys_info.pws_si_messages.size());
+  for (unsigned i = 0, e = pws_si_msgs.size(); i != e; ++i) {
+    if (not pws_si_msgs[i].test_mode_auto_broadcast) {
+      continue;
+    }
+    ASSERT_FALSE(creation_req->sys_info.pws_si_messages[i].empty())
+        << "SI message " << i << " is broadcast from the cell start with no content";
+  }
 }
 
 /// Regression test: a CU-CP peer that (incorrectly) forwards a Write-Replace Warning with no actual SIB content must

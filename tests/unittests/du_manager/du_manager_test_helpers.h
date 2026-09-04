@@ -347,12 +347,34 @@ public:
   wait_manual_event_tester<mac_ue_reconfiguration_response> wait_ue_reconf;
   wait_manual_event_tester<mac_ue_delete_response>          wait_ue_delete;
   bool                                                      next_ul_ccch_msg_result = true;
+  /// System Information of the last cell created in the MAC.
+  std::optional<mac_cell_creation_request> last_cell_creation_req;
 
   mac_cell_manager&                    get_cell_manager() override { return *this; }
   mac_ue_configurator&                 get_ue_configurator() override { return *this; }
   mac_positioning_measurement_handler& get_positioning_handler() override { return *this; }
 
-  mac_cell_controller&      add_cell(const mac_cell_creation_request& cell_cfg) override { return mac_cell; }
+  mac_cell_controller& add_cell(const mac_cell_creation_request& cell_cfg) override
+  {
+    last_cell_creation_req.emplace();
+    last_cell_creation_req->cell_index                      = cell_cfg.cell_index;
+    last_cell_creation_req->sys_info.si_sched_cfg           = cell_cfg.sys_info.si_sched_cfg;
+    last_cell_creation_req->sys_info.sib1_contains_hypersfn = cell_cfg.sys_info.sib1_contains_hypersfn;
+    last_cell_creation_req->sys_info.sib1                   = cell_cfg.sys_info.sib1.copy();
+    for (const auto& msg : cell_cfg.sys_info.si_messages) {
+      auto& copied = last_cell_creation_req->sys_info.si_messages.emplace_back();
+      for (const byte_buffer& segment : msg) {
+        copied.push_back(segment.copy());
+      }
+    }
+    for (const auto& msg : cell_cfg.sys_info.pws_si_messages) {
+      auto& copied = last_cell_creation_req->sys_info.pws_si_messages.emplace_back();
+      for (const byte_buffer& segment : msg) {
+        copied.push_back(segment.copy());
+      }
+    }
+    return mac_cell;
+  }
   void                      remove_cell(du_cell_index_t cell_index) override {}
   mac_cell_controller&      get_cell_controller(du_cell_index_t cell_index) override { return mac_cell; }
   mac_subframe_time_mapper& get_subframe_time_mapper() override { return sfn_time_mapper; }

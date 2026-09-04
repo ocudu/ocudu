@@ -691,3 +691,46 @@ TEST_F(si_message_controller_two_warnings_test, when_two_warnings_are_on_air_the
   ASSERT_EQ(get_epoch_sibs(*bench_two->last_pws_cmd), expected);
   ASSERT_EQ(get_sib1_listed_sibs(*bench_two->last_pws_cmd, bench_two->current_slot), expected);
 }
+
+/// \brief Fixture mirroring a cell whose ETWS test content is set and that broadcasts nothing else.
+///
+/// The ETWS configuration provisions the cell for two warnings, the primary notification and the secondary one, and
+/// both are broadcast from the cell start.
+class si_message_controller_two_auto_broadcasts_test : public ::testing::Test
+{
+public:
+  si_message_controller_two_auto_broadcasts_test() : bench(make_sys_info_cfg()) {}
+
+  static mac_cell_sys_info_config make_sys_info_cfg()
+  {
+    mac_cell_sys_info_config cfg;
+    cfg.sib1 = make_sib1_with_si_sched_info({});
+    add_pws_si_message(cfg, sib_type::sib6, make_random_segmented_pdu(40, 1));
+    add_pws_si_message(cfg, sib_type::sib7, make_random_segmented_pdu(50, 2));
+    return cfg;
+  }
+
+  si_bench bench;
+};
+
+TEST_F(si_message_controller_two_auto_broadcasts_test, when_both_warnings_start_then_the_epoch_carries_both)
+{
+  ASSERT_TRUE(bench.last_pws_cmd.has_value());
+  ASSERT_EQ(get_epoch_sibs(*bench.last_pws_cmd), (std::vector<sib_type>{sib_type::sib6, sib_type::sib7}));
+  ASSERT_EQ(bench.last_pws_cmd->si_msgs.size(), 2);
+}
+
+TEST_F(si_message_controller_two_auto_broadcasts_test, when_each_warning_is_encoded_then_it_serves_its_own_content)
+{
+  ASSERT_TRUE(bench.last_pws_cmd.has_value());
+  const si_version_type version = bench.last_pws_cmd->version;
+
+  for (unsigned i = 0; i != 2; ++i) {
+    const auto&        segments = bench.sys_info_cfg.pws_si_messages[i];
+    const units::bytes tbs{static_cast<unsigned>(segments[0].length())};
+
+    sib_information si_info = make_sib_pdu(i, version, tbs);
+    ASSERT_EQ(byte_buffer::create(bench.assembler.encode_si_pdu(bench.current_slot, si_info)).value(), segments[0])
+        << "SI message " << i << " did not serve its own content";
+  }
+}

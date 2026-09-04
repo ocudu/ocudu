@@ -371,6 +371,8 @@ si_message_controller::si_message_controller(du_cell_index_t                 cel
 {
   // Set up PWS broadcast sequences, one entry per SI message carrying a warning.
   const auto& pws_si_messages = sys_info.si_sched_cfg.pws_si_messages;
+  ocudu_assert(sys_info.pws_si_messages.size() == pws_si_messages.size(),
+               "Number of SI messages carrying a warning does not match the number of contents provided");
   for (const si_message_scheduling_config& pws_si_msg : pws_si_messages) {
     pws_sequences.emplace_back(
         pws_si_msg.sibs,

@@ -48,6 +48,12 @@ static mac_cell_creation_request make_mac_cell_config(du_cell_index_t           
       copied_msg.push_back(segment.copy());
     }
   }
+  for (const auto& msg : sys_info.pws_si_messages) {
+    auto& copied_msg = mac_cfg.sys_info.pws_si_messages.emplace_back();
+    for (const byte_buffer& segment : msg) {
+      copied_msg.push_back(segment.copy());
+    }
+  }
   mac_cfg.sys_info.sib1_contains_hypersfn = sys_info.sib1_contains_hypersfn;
   mac_cfg.sys_info.si_sched_cfg           = sys_info.si_sched_cfg;
   mac_cfg.sched_req                       = sched_cell_cfg;
