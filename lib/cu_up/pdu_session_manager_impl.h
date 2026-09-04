@@ -31,7 +31,7 @@ struct pdu_session_manager_dependencies {
   f1u_cu_up_gateway&            f1u_gw;
   ngu_session_manager&          ngu_session_mngr;
   cu_up_manager_pdcp_interface& cu_up_mngr_pdcp_if;
-  gtpu_teid_pool&               n3_teid_allocator;
+  gtpu_teid_pool&               ngu_teid_allocator;
   gtpu_teid_pool&               f1u_teid_allocator;
   gtpu_demux_ctrl&              gtpu_rx_demux;
   task_executor&                ue_dl_exec;
@@ -47,7 +47,7 @@ public:
   pdu_session_manager_impl(cu_up_ue_index_t                             ue_index_,
                            std::map<five_qi_t, ocuup::cu_up_qos_config> qos_cfg_,
                            const security::sec_as_config&               security_info_,
-                           const n3_interface_config&                   n3_config_,
+                           const ngu_interface_config&                  ngu_config_,
                            const cu_up_test_mode_config&                test_mode_config_,
                            uint64_t                                     ue_dl_ambr,
                            const pdu_session_manager_dependencies&      dependencies);
@@ -94,12 +94,12 @@ private:
   /// The endpoint is reported to the gNB-CU-CP so that it can be advertised to the source NG-RAN node, which sends the
   /// data it still holds for the UE to it (TS 37.483 section 9.3.2.6). It shares the NG-U bind address of the PDU
   /// session, so that the forwarded and the freshly arriving DL packets reach the same gateway.
-  std::optional<up_transport_layer_info> allocate_dl_data_forwarding_tnl_info(const std::string& n3_addr);
+  std::optional<up_transport_layer_info> allocate_dl_data_forwarding_tnl_info(const std::string& ngu_addr);
 
   cu_up_ue_index_t                                         ue_index;
   const std::map<five_qi_t, ocuup::cu_up_qos_config>       qos_cfg;
   security::sec_as_config                                  security_info;
-  const n3_interface_config&                               n3_config;
+  const ngu_interface_config&                              ngu_config;
   cu_up_test_mode_config                                   test_mode_config;
   cu_up_ue_logger&                                         logger;
   std::unique_ptr<token_bucket>                            ue_ambr_limiter;
@@ -107,7 +107,7 @@ private:
   timer_factory                                            ue_dl_timer_factory;
   timer_factory                                            ue_ul_timer_factory;
   timer_factory                                            ue_ctrl_timer_factory;
-  gtpu_teid_pool&                                          n3_teid_allocator;
+  gtpu_teid_pool&                                          ngu_teid_allocator;
   gtpu_teid_pool&                                          f1u_teid_allocator;
   gtpu_demux_ctrl&                                         gtpu_rx_demux;
   task_executor&                                           ue_dl_exec;

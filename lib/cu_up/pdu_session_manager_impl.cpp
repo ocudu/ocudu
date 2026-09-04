@@ -23,21 +23,21 @@ static bool requests_dl_data_forwarding(const std::optional<e1ap_data_forwarding
 pdu_session_manager_impl::pdu_session_manager_impl(cu_up_ue_index_t                             ue_index_,
                                                    std::map<five_qi_t, ocuup::cu_up_qos_config> qos_cfg_,
                                                    const security::sec_as_config&               security_info_,
-                                                   const n3_interface_config&                   n3_config_,
+                                                   const ngu_interface_config&                  ngu_config_,
                                                    const cu_up_test_mode_config&                test_mode_config_,
                                                    uint64_t                                     ue_dl_ambr,
                                                    const pdu_session_manager_dependencies&      dependencies) :
   ue_index(ue_index_),
   qos_cfg(std::move(qos_cfg_)),
   security_info(security_info_),
-  n3_config(n3_config_),
+  ngu_config(ngu_config_),
   test_mode_config(test_mode_config_),
   logger(dependencies.logger),
   ue_inactivity_timer(dependencies.ue_inactivity_timer),
   ue_dl_timer_factory(dependencies.ue_dl_timer_factory),
   ue_ul_timer_factory(dependencies.ue_ul_timer_factory),
   ue_ctrl_timer_factory(dependencies.ue_ctrl_timer_factory),
-  n3_teid_allocator(dependencies.n3_teid_allocator),
+  ngu_teid_allocator(dependencies.ngu_teid_allocator),
   f1u_teid_allocator(dependencies.f1u_teid_allocator),
   gtpu_rx_demux(dependencies.gtpu_rx_demux),
   ue_dl_exec(dependencies.ue_dl_exec),
@@ -74,7 +74,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   }
 
   // Allocate local TEID
-  expected<gtpu_teid_t> local_teid = n3_teid_allocator.request_teid();
+  expected<gtpu_teid_t> local_teid = ngu_teid_allocator.request_teid();
   if (not local_teid.has_value()) {
     logger.log_warning("Failed to create PDU session. Cause: could not allocate local TEID. {}",
                        session.pdu_session_id);
@@ -82,7 +82,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   }
 
   std::unique_ptr<pdu_session> new_session =
-      std::make_unique<pdu_session>(session, local_teid.value(), gtpu_rx_demux, n3_teid_allocator);
+      std::make_unique<pdu_session>(session, local_teid.value(), gtpu_rx_demux, ngu_teid_allocator);
   const auto& ul_tunnel_info = new_session->ul_tunnel_info;
 
   // Get uplink transport address
@@ -92,15 +92,15 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
                    ul_tunnel_info.gtp_teid.value(),
                    ul_tunnel_info.tp_address);
 
-  // Advertise either local or external IP address of N3 interface
+  // Advertise either local or external IP address of NG-U (N3) interface
   // TODO select correct GW based on slice or UE info.
-  std::string           n3_addr;
-  gtpu_tnl_pdu_session& n3_gw = ngu_session_mngr.get_next_ngu_gateway();
-  if (not n3_gw.get_bind_address(n3_addr)) {
+  std::string           ngu_addr;
+  gtpu_tnl_pdu_session& ngu_gw = ngu_session_mngr.get_next_ngu_gateway();
+  if (not ngu_gw.get_bind_address(ngu_addr)) {
     report_error("Could not get NG-U bind address to report to core.");
   }
   pdu_session_result.gtp_tunnel =
-      up_transport_layer_info(transport_layer_address::create_from_string(n3_addr), new_session->local_teid);
+      up_transport_layer_info(transport_layer_address::create_from_string(ngu_addr), new_session->local_teid);
 
   // Create SDAP entity
   sdap_entity_creation_message sdap_msg = {ue_index, session.pdu_session_id, &new_session->sdap_to_gtpu_adapter};
@@ -111,12 +111,12 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   msg.ue_index                         = ue_index;
   msg.cfg.tx.peer_teid                 = int_to_gtpu_teid(ul_tunnel_info.gtp_teid.value());
   msg.cfg.tx.peer_addr                 = ul_tunnel_info.tp_address.to_string();
-  msg.cfg.tx.peer_port                 = n3_config.upf_port;
+  msg.cfg.tx.peer_port                 = ngu_config.upf_port;
   msg.cfg.rx.local_teid                = new_session->local_teid;
-  msg.cfg.rx.ignore_ue_ambr            = n3_config.gtpu_ignore_ue_ambr;
+  msg.cfg.rx.ignore_ue_ambr            = ngu_config.gtpu_ignore_ue_ambr;
   msg.cfg.rx.ue_ambr_limiter           = ue_ambr_limiter.get();
-  msg.cfg.rx.t_reordering              = n3_config.gtpu_reordering_timer;
-  msg.cfg.rx.warn_on_drop              = n3_config.warn_on_drop;
+  msg.cfg.rx.t_reordering              = ngu_config.gtpu_reordering_timer;
+  msg.cfg.rx.warn_on_drop              = ngu_config.warn_on_drop;
   msg.cfg.rx.test_mode                 = test_mode_config.enabled;
   msg.rx_lower                         = &new_session->gtpu_to_sdap_adapter;
   msg.tx_upper                         = &new_session->gtpu_to_udp_adapter;
@@ -127,7 +127,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   // Connect adapters
   new_session->sdap_to_gtpu_adapter.connect_gtpu(*new_session->gtpu->get_tx_lower_layer_interface());
   new_session->gtpu_to_sdap_adapter.connect_sdap(new_session->sdap->get_sdap_tx_sdu_handler());
-  new_session->gtpu_to_udp_adapter.connect_network_gateway(n3_gw);
+  new_session->gtpu_to_udp_adapter.connect_network_gateway(ngu_gw);
 
   // Register tunnel at demux
   expected<std::unique_ptr<gtpu_demux_dispatch_queue>> expected_dispatch_queue =
@@ -141,7 +141,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
 
   // Allocate the PDU session level DL data forwarding tunnel endpoint.
   if (requests_dl_data_forwarding(session.pdu_session_data_forwarding_info_request)) {
-    new_session->dl_data_forwarding_tnl_info = allocate_dl_data_forwarding_tnl_info(n3_addr);
+    new_session->dl_data_forwarding_tnl_info = allocate_dl_data_forwarding_tnl_info(ngu_addr);
     if (new_session->dl_data_forwarding_tnl_info.has_value()) {
       pdu_session_result.data_forwarding_info.emplace();
       pdu_session_result.data_forwarding_info->dl_data_forwarding = new_session->dl_data_forwarding_tnl_info;
@@ -185,15 +185,15 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
 }
 
 std::optional<up_transport_layer_info>
-pdu_session_manager_impl::allocate_dl_data_forwarding_tnl_info(const std::string& n3_addr)
+pdu_session_manager_impl::allocate_dl_data_forwarding_tnl_info(const std::string& ngu_addr)
 {
-  expected<gtpu_teid_t> teid = n3_teid_allocator.request_teid();
+  expected<gtpu_teid_t> teid = ngu_teid_allocator.request_teid();
   if (not teid.has_value()) {
     logger.log_warning("Could not allocate a TEID for the DL data forwarding tunnel");
     return std::nullopt;
   }
 
-  return up_transport_layer_info(transport_layer_address::create_from_string(n3_addr), teid.value());
+  return up_transport_layer_info(transport_layer_address::create_from_string(ngu_addr), teid.value());
 }
 
 drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&                         new_session,
@@ -624,15 +624,15 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
     logger.log_info("Removed {} for {}", drb_to_rem, session.pdu_session_id);
   }
 
-  // > Update N3 UL UP tunnel endpoint (e.g. after Xn path switch provides new UPF address/TEID).
+  // > Update NG-U (N3) UL UP tunnel endpoint (e.g. after Xn path switch provides new UPF address/TEID).
   if (session.ng_ul_up_tnl_info.has_value()) {
     const auto& ul_tnl = session.ng_ul_up_tnl_info.value();
-    logger.log_info("{}: Updating N3 UL tunnel endpoint to addr={} teid={}",
+    logger.log_info("{}: Updating NG-U UL tunnel endpoint to addr={} teid={}",
                     session.pdu_session_id,
                     ul_tnl.tp_address,
                     ul_tnl.gtp_teid);
     pdu_session->gtpu->get_tx_lower_layer_interface()->update_tx_endpoint(
-        ul_tnl.tp_address.to_string(), n3_config.upf_port, ul_tnl.gtp_teid.value());
+        ul_tnl.tp_address.to_string(), ngu_config.upf_port, ul_tnl.gtp_teid.value());
   }
 
   // > Store the peer endpoint of the PDU session level DL data forwarding tunnel (TS 37.483 section 9.3.2.6).

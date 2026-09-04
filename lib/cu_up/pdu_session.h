@@ -22,14 +22,14 @@ struct pdu_session {
   pdu_session(const e1ap_pdu_session_res_to_setup_item& session,
               gtpu_teid_t      local_teid_, // the local teid used by the gNB for this PDU session
               gtpu_demux_ctrl& gtpu_rx_demux_,
-              gtpu_teid_pool&  n3_teid_allocator_) :
+              gtpu_teid_pool&  ngu_teid_allocator_) :
     pdu_session_id(session.pdu_session_id),
     snssai(session.snssai),
     security_ind(session.security_ind),
     local_teid(local_teid_),
     ul_tunnel_info(session.ng_ul_up_tnl_info),
     gtpu_rx_demux(gtpu_rx_demux_),
-    n3_teid_allocator(n3_teid_allocator_)
+    ngu_teid_allocator(ngu_teid_allocator_)
   {
   }
   ~pdu_session() { stop(); }
@@ -38,10 +38,10 @@ struct pdu_session {
   {
     if (not stopped) {
       gtpu_rx_demux.remove_tunnel(local_teid);
-      (void)n3_teid_allocator.release_teid(local_teid);
+      (void)ngu_teid_allocator.release_teid(local_teid);
 
       if (dl_data_forwarding_tnl_info.has_value()) {
-        (void)n3_teid_allocator.release_teid(dl_data_forwarding_tnl_info->gtp_teid);
+        (void)ngu_teid_allocator.release_teid(dl_data_forwarding_tnl_info->gtp_teid);
       }
 
       if (dispatch_queue != nullptr) {
@@ -86,8 +86,8 @@ struct pdu_session {
   std::vector<qos_flow_id_t>             qos_flows_to_be_forwarded;
 
   // GTP-U demux parameters
-  gtpu_demux_ctrl&                           gtpu_rx_demux;     // The demux entity to register/remove the tunnel.
-  gtpu_teid_pool&                            n3_teid_allocator; // Pool to de-allocate TEID on release
+  gtpu_demux_ctrl&                           gtpu_rx_demux;      // The demux entity to register/remove the tunnel.
+  gtpu_teid_pool&                            ngu_teid_allocator; // Pool to de-allocate TEID on release
   std::unique_ptr<gtpu_demux_dispatch_queue> dispatch_queue;
 
   // DRB contexts

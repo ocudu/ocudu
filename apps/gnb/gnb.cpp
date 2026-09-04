@@ -69,8 +69,8 @@ using namespace ocudu;
 /// \brief Application of a co-located gNB with combined distributed unit (DU) and centralized unit (CU).
 ///
 /// This application runs a gNB without the the F1 connection between CU and DU and without the E1 connection
-/// between the CU-CP and CU-UP going over a real SCTP connection. However, its does expose the N2 and N3 interface
-/// to the AMF and UPF over the standard SCTP ports.
+/// between the CU-CP and CU-UP going over a real SCTP connection. However, its does expose the NG-C (N2) and NG-U (N3)
+/// interface to the AMF and UPF over the standard SCTP ports.
 /// The app serves as an example for a all-integrated, small-cell-style gNB.
 
 static std::string config_file;
@@ -530,7 +530,7 @@ int main(int argc, char** argv)
                                                              .e1ap_conn_client       = std::move(e1ap_conn_client),
                                                              .f1u_teid_allocator     = *cu_f1u_teid_allocator,
                                                              .f1u_gateway = f1u_conn->get_f1u_cu_up_gateway(),
-                                                             .gtpu_pcap   = *cu_up_dlt_pcaps.n3,
+                                                             .gtpu_pcap   = *cu_up_dlt_pcaps.ngu,
                                                              .timers      = *cu_timers,
                                                              .io_brk      = *epoll_broker};
 

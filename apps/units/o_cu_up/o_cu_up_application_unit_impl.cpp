@@ -18,7 +18,7 @@ using namespace ocudu;
 
 o_cu_up_application_unit_impl::o_cu_up_application_unit_impl(std::string_view app_name)
 {
-  unit_cfg.cu_up_cfg.pcap_cfg.n3.filename   = fmt::format("/tmp/{}_n3.pcap", app_name);
+  unit_cfg.cu_up_cfg.pcap_cfg.ngu.filename  = fmt::format("/tmp/{}_ngu.pcap", app_name);
   unit_cfg.cu_up_cfg.pcap_cfg.f1u.filename  = fmt::format("/tmp/{}_f1u.pcap", app_name);
   unit_cfg.cu_up_cfg.pcap_cfg.e1ap.filename = fmt::format("/tmp/{}_e1ap.pcap", app_name);
 }

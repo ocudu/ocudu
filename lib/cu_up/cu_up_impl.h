@@ -24,8 +24,8 @@ public:
   // See interface for documentation.
   void stop() override;
 
-  /// Gets the N3 bind port (helper function for testing).
-  std::optional<uint16_t> get_n3_bind_port() const // TODO include index?
+  /// Gets the NG-U bind port (helper function for testing).
+  std::optional<uint16_t> get_ngu_bind_port() const // TODO include index?
   {
     return ngu_sessions[0]->get_bind_port();
   }
@@ -58,9 +58,9 @@ private:
   std::vector<std::unique_ptr<gtpu_tnl_pdu_session>> ngu_sessions;
   std::unique_ptr<gtpu_demux>                        ngu_demux;
   std::unique_ptr<gtpu_echo>                         ngu_echo;
-  std::unique_ptr<gtpu_teid_pool>                    n3_teid_allocator;
+  std::unique_ptr<gtpu_teid_pool>                    ngu_teid_allocator;
   std::unique_ptr<cu_up_manager>                     cu_up_mng;
-  std::optional<lockfree_token_bucket>               n3_limiter;
+  std::optional<lockfree_token_bucket>               ngu_limiter;
 
   // Adapters
   std::unique_ptr<network_gateway_data_gtpu_demux_adapter> gw_data_gtpu_demux_adapter;

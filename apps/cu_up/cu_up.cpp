@@ -57,7 +57,7 @@ using namespace ocudu;
 /// \file
 /// \brief Application of a Central Unit User-Plane (CU-UP).
 ///
-/// This application runs a CU-UP with the E1 connection between the CU-CP and CU-UP, N3 connection to the UPF
+/// This application runs a CU-UP with the E1 connection between the CU-CP and CU-UP, NG-U (N3) connection to the UPF
 /// and F1-U interface to the DU.
 ///
 /// The app serves an stand-alone CU-UP.
@@ -421,7 +421,7 @@ int main(int argc, char** argv)
                                              .e1ap_conn_client       = {},
                                              .f1u_teid_allocator     = *cu_f1u_teid_allocator,
                                              .f1u_gateway            = *cu_f1u_conn,
-                                             .gtpu_pcap              = *cu_up_dlt_pcaps.n3,
+                                             .gtpu_pcap              = *cu_up_dlt_pcaps.ngu,
                                              .timers                 = app_timers,
                                              .io_brk                 = *epoll_broker};
 

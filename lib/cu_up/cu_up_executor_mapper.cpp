@@ -192,12 +192,12 @@ public:
                                  std::nullopt,
                                  config.exec_metrics_channel_registry,
                                  "cu_up_strand_ctrl_exec")),
-    n3_exec(decorator.decorate(config.low_prio_executor,
-                               false,
-                               config.tracing_enabled,
-                               std::nullopt,
-                               config.exec_metrics_channel_registry,
-                               "n3_exec")),
+    ngu_exec(decorator.decorate(config.low_prio_executor,
+                                false,
+                                config.tracing_enabled,
+                                std::nullopt,
+                                config.exec_metrics_channel_registry,
+                                "ngu_exec")),
     xnu_exec(decorator.decorate(config.low_prio_executor,
                                 false,
                                 config.tracing_enabled,
@@ -217,7 +217,7 @@ public:
 
   task_executor& e2_executor() override { return ctrl_exec; }
 
-  task_executor& n3_rx_executor() override { return n3_exec; }
+  task_executor& ngu_rx_executor() override { return ngu_exec; }
 
   task_executor& xnu_rx_executor() override { return xnu_exec; }
 
@@ -290,7 +290,7 @@ private:
   task_executor*                                               io_ul_exec_ptr;
 
   // Executors for reception of data from the IO.
-  task_executor& n3_exec;
+  task_executor& ngu_exec;
   task_executor& xnu_exec;
   task_executor& f1u_exec;
   task_executor& e1_exec;

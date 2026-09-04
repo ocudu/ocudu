@@ -14,8 +14,8 @@ ocuup::cu_up_config ocudu::generate_cu_up_config(const cu_up_unit_config& config
   // JSON metrics are not supported at E1AP for now, so only enable if log metrics are enabled.
   return {
       .qos = {},
-      .n3_cfg =
-          ocuup::n3_interface_config{
+      .ngu_cfg =
+          ocuup::ngu_interface_config{
               .upf_port                  = GTPU_PORT,
               .gtpu_reordering_timer     = std::chrono::milliseconds{config.ngu_cfg.gtpu_cfg.gtpu_reordering_timer_ms},
               .gtpu_rate_limiting_period = config.ngu_cfg.gtpu_cfg.rate_limiter_period,
@@ -111,8 +111,8 @@ void ocudu::fill_cu_up_worker_manager_config(worker_manager_config& config, cons
   if (unit_cfg.pcap_cfg.e1ap.enabled) {
     pcap_cfg.is_e1ap_enabled = true;
   }
-  if (unit_cfg.pcap_cfg.n3.enabled) {
-    pcap_cfg.is_n3_enabled = true;
+  if (unit_cfg.pcap_cfg.ngu.enabled) {
+    pcap_cfg.is_ngu_enabled = true;
   }
   if (unit_cfg.pcap_cfg.f1u.enabled) {
     pcap_cfg.is_f1u_enabled = true;

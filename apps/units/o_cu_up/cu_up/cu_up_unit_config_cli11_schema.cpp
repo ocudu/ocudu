@@ -18,14 +18,14 @@ using namespace ocudu;
 
 static void configure_cli11_ngu_socket_args(CLI::App& app, cu_up_unit_ngu_socket_config& ngu_sock_params)
 {
-  add_option(app, "--bind_addr", ngu_sock_params.bind_addr, "Local IP address to bind for N3 interface")
+  add_option(app, "--bind_addr", ngu_sock_params.bind_addr, "Local IP address to bind for NG-U interface")
       ->check(CLI::ValidIPV4 | CLI::IsMember({"auto"}));
-  add_option(app, "--bind_interface", ngu_sock_params.bind_interface, "Network device to bind for N3 interface")
+  add_option(app, "--bind_interface", ngu_sock_params.bind_interface, "Network device to bind for NG-U interface")
       ->capture_default_str();
   add_option(app,
              "--ext_addr",
              ngu_sock_params.ext_addr,
-             "External IP address that is advertised to receive GTP-U packets from UPF via N3 interface")
+             "External IP address that is advertised to receive GTP-U packets from UPF via NG-U interface")
       ->check(CLI::ValidIPV4 | CLI::IsMember({"auto"}));
 
   configure_cli11_with_udp_config_schema(app, ngu_sock_params.udp_config);
@@ -86,7 +86,7 @@ static void configure_cli11_ngu_args(CLI::App& app, cu_up_unit_ngu_config& ngu_p
                                                        "--socket",
                                                        ngu_params.ngu_socket_cfg,
                                                        configure_cli11_ngu_socket_args,
-                                                       "Configures UDP/IP socket parameters of the N3 interface");
+                                                       "Configures UDP/IP socket parameters of the NG-U interface");
 }
 
 static void configure_cli11_test_mode_args(CLI::App& app, cu_up_unit_test_mode_config& test_mode_params)
@@ -201,8 +201,9 @@ static void configure_cli11_log_args(CLI::App& app, cu_up_unit_logger_config& lo
 
 static void configure_cli11_pcap_args(CLI::App& app, cu_up_unit_pcap_config& pcap_params)
 {
-  add_option(app, "--n3_filename", pcap_params.n3.filename, "N3 GTP-U PCAP file output path")->capture_default_str();
-  add_option(app, "--n3_enable", pcap_params.n3.enabled, "Enable N3 GTP-U packet capture")->always_capture_default();
+  // TODO: Rename prefix from n3_ to ngu_
+  add_option(app, "--n3_filename", pcap_params.ngu.filename, "NG-U GTP-U PCAP file output path")->capture_default_str();
+  add_option(app, "--n3_enable", pcap_params.ngu.enabled, "Enable NG-U GTP-U packet capture")->always_capture_default();
   add_option(app, "--f1u_filename", pcap_params.f1u.filename, "F1-U GTP-U PCAP file output path")
       ->capture_default_str();
   add_option(app, "--f1u_enable", pcap_params.f1u.enabled, "F1-U GTP-U PCAP")->always_capture_default();

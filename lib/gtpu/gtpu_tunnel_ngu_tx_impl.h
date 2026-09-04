@@ -16,7 +16,7 @@
 
 namespace ocudu {
 
-/// Class used for transmitting GTP-U NGU bearers, e.g. on N3 interface.
+/// Class used for transmitting GTP-U NG-U bearers, e.g. on N3 interface.
 class gtpu_tunnel_ngu_tx_impl final : public gtpu_tunnel_base_tx, public gtpu_tunnel_ngu_tx_lower_layer_interface
 {
 public:

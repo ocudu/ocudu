@@ -21,7 +21,7 @@ struct cu_up_manager_impl_config {
   uint32_t                              max_nof_ues;
   std::vector<std::string>              plmns;
   std::map<five_qi_t, cu_up_qos_config> qos;
-  n3_interface_config                   n3_cfg;
+  ngu_interface_config                  ngu_cfg;
   cu_up_test_mode_config                test_mode_cfg;
 };
 
@@ -31,7 +31,7 @@ struct cu_up_manager_impl_dependencies {
   std::vector<std::reference_wrapper<e1ap_interface>> e1aps;
   gtpu_demux&                                         ngu_demux;
   ngu_session_manager&                                ngu_session_mngr;
-  gtpu_teid_pool&                                     n3_teid_allocator;
+  gtpu_teid_pool&                                     ngu_teid_allocator;
   gtpu_teid_pool&                                     f1u_teid_allocator;
   cu_up_executor_mapper&                              exec_mapper;
   f1u_cu_up_gateway&                                  f1u_gateway;
@@ -116,7 +116,7 @@ private:
   std::vector<std::reference_wrapper<e1ap_interface>> e1aps;
   std::map<five_qi_t, cu_up_qos_config>               qos;
   const network_interface_config                      net_cfg;
-  const n3_interface_config                           n3_cfg;
+  const ngu_interface_config                          ngu_cfg;
   const cu_up_test_mode_config                        test_mode_cfg;
   gtpu_demux&                                         ngu_demux;
   cu_up_executor_mapper&                              exec_mapper;

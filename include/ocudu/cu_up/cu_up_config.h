@@ -32,12 +32,12 @@ struct network_interface_config {
   int f1u_bind_port = GTPU_PORT;
 };
 
-struct n3_interface_config {
+struct ngu_interface_config {
   /// TS 29.281 Sec. 4.4.2.3 Encapsulated T-PDUs.
   int upf_port = GTPU_PORT;
-  /// N3 reordering timer.
+  /// NG-U reordering timer.
   std::chrono::milliseconds gtpu_reordering_timer;
-  /// N3 token bucket rate limiting period.
+  /// NG-U token bucket rate limiting period.
   std::chrono::milliseconds gtpu_rate_limiting_period;
   /// Error indication suppression time for released TEIDs.
   std::chrono::milliseconds gtpu_teid_release_linger_time;
@@ -84,8 +84,8 @@ struct cu_up_test_mode_config {
 struct cu_up_config {
   /// 5QI as key.
   std::map<five_qi_t, cu_up_qos_config> qos;
-  /// N3 configuration.
-  n3_interface_config n3_cfg;
+  /// NG-U configuration.
+  ngu_interface_config ngu_cfg;
   /// Xn-U configuration.
   xnu_interface_config xnu_cfg;
   /// Test mode configuration.

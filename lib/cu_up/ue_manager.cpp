@@ -11,14 +11,14 @@ using namespace ocuup;
 
 ue_manager::ue_manager(const ue_manager_config& config, const ue_manager_dependencies& dependencies) :
   max_nof_ues(config.max_nof_ues),
-  n3_config(config.n3_config),
+  ngu_config(config.ngu_config),
   test_mode_config(config.test_mode_config),
   e1aps(dependencies.e1aps),
   f1u_gw(dependencies.f1u_gw),
   ngu_session_mngr(dependencies.ngu_session_mngr),
   cu_up_mngr_pdcp_if(dependencies.cu_up_mngr_pdcp_if),
   gtpu_rx_demux(dependencies.gtpu_rx_demux),
-  n3_teid_allocator(dependencies.n3_teid_allocator),
+  ngu_teid_allocator(dependencies.ngu_teid_allocator),
   f1u_teid_allocator(dependencies.f1u_teid_allocator),
   exec_pool(dependencies.exec_pool),
   ctrl_executor(exec_pool.ctrl_executor()),
@@ -144,7 +144,7 @@ ue_context* ue_manager::add_ue(cu_up_e1_index_t e1_index, const ue_context_cfg& 
   std::unique_ptr<ue_context> new_ctx =
       std::make_unique<ue_context>(new_idx,
                                    ue_cfg,
-                                   n3_config,
+                                   ngu_config,
                                    test_mode_config,
                                    ue_context_dependencies{e1ap,
                                                            std::move(ue_exec_mapper),
@@ -155,7 +155,7 @@ ue_context* ue_manager::add_ue(cu_up_e1_index_t e1_index, const ue_context_cfg& 
                                                            f1u_gw,
                                                            ngu_session_mngr,
                                                            cu_up_mngr_pdcp_if,
-                                                           n3_teid_allocator,
+                                                           ngu_teid_allocator,
                                                            f1u_teid_allocator,
                                                            gtpu_rx_demux,
                                                            gtpu_pcap});

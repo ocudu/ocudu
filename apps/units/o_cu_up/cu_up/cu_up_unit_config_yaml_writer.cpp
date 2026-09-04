@@ -87,8 +87,9 @@ static void fill_cu_up_trace_section(YAML::Node node, const cu_up_unit_trace_con
 
 static void fill_cu_up_pcap_section(YAML::Node node, const cu_up_unit_pcap_config& config)
 {
-  node["n3_filename"]   = config.n3.filename;
-  node["n3_enable"]     = config.n3.enabled;
+  // TODO: Rename prefix from n3_ to ngu_
+  node["n3_filename"]   = config.ngu.filename;
+  node["n3_enable"]     = config.ngu.enabled;
   node["f1u_filename"]  = config.f1u.filename;
   node["f1u_enable"]    = config.f1u.enabled;
   node["e1ap_filename"] = config.e1ap.filename;

@@ -19,14 +19,14 @@ using namespace ocuup;
 static void assert_cu_up_dependencies_valid(const cu_up_dependencies& dependencies)
 {
   ocudu_assert(!dependencies.e1_conn_clients.empty(), "Invalid E1 connection client(s)");
-  ocudu_assert(!dependencies.ngu_gws.empty(), "Invalid N3 gateway list");
+  ocudu_assert(!dependencies.ngu_gws.empty(), "Invalid NG-U gateway list");
 
   for (auto* e1 : dependencies.e1_conn_clients) {
     ocudu_assert(e1, "Invalid E1 gateway");
   }
 
   for (const auto& gw : dependencies.ngu_gws) {
-    ocudu_assert(gw, "Invalid N3 gateway");
+    ocudu_assert(gw, "Invalid NG-U gateway");
   }
 }
 
@@ -42,22 +42,22 @@ cu_up::cu_up(const cu_up_config& config_, cu_up_dependencies dependencies) :
 
   // > Create and connect upper layers.
 
-  // Create N3 TEID allocator.
-  n3_teid_allocator = create_gtpu_allocator(
+  // Create NG-U TEID allocator.
+  ngu_teid_allocator = create_gtpu_allocator(
       gtpu_allocator_creation_request{.max_nof_teids            = cfg.max_nof_ues * MAX_NOF_PDU_SESSIONS,
-                                      .teid_release_linger_time = cfg.n3_cfg.gtpu_teid_release_linger_time,
+                                      .teid_release_linger_time = cfg.ngu_cfg.gtpu_teid_release_linger_time,
                                       .timers                   = timers});
 
-  // Create N3 GTP-U demux.
+  // Create NG-U GTP-U demux.
   ngu_demux = create_gtpu_demux(
       gtpu_demux_creation_request{.cfg                 = gtpu_demux_cfg_t{.name         = "NG-U-DEMUX",
-                                                                          .warn_on_drop = cfg.n3_cfg.warn_on_drop,
+                                                                          .warn_on_drop = cfg.ngu_cfg.warn_on_drop,
                                                                           .test_mode    = cfg.test_mode_cfg.enabled,
-                                                                          .queue_size   = cfg.n3_cfg.gtpu_queue_size,
-                                                                          .batch_size   = cfg.n3_cfg.gtpu_batch_size},
-                                  .teid_linger_checker = *n3_teid_allocator,
+                                                                          .queue_size   = cfg.ngu_cfg.gtpu_queue_size,
+                                                                          .batch_size   = cfg.ngu_cfg.gtpu_batch_size},
+                                  .teid_linger_checker = *ngu_teid_allocator,
                                   .gtpu_pcap           = dependencies.gtpu_pcap,
-                                  .rate_limiter        = n3_limiter.has_value() ? &n3_limiter.value() : nullptr});
+                                  .rate_limiter        = ngu_limiter.has_value() ? &ngu_limiter.value() : nullptr});
 
   echo_exec_mapper = dependencies.exec_mapper.create_ue_executor_mapper();
   report_error_if_not(echo_exec_mapper, "Could not create CU-UP executor for control TEID");
@@ -91,9 +91,9 @@ cu_up::cu_up(const cu_up_config& config_, cu_up_dependencies dependencies) :
 
   // Configure GTP-U Error Indication TX on the demux.
   {
-    std::string n3_bind_addr;
-    if (ngu_sessions[0]->get_bind_address(n3_bind_addr)) {
-      ngu_demux->set_error_indication_tx(gtpu_gw_adapter, n3_bind_addr);
+    std::string ngu_bind_addr;
+    if (ngu_sessions[0]->get_bind_address(ngu_bind_addr)) {
+      ngu_demux->set_error_indication_tx(gtpu_gw_adapter, ngu_bind_addr);
     }
   }
 
@@ -124,13 +124,13 @@ cu_up::cu_up(const cu_up_config& config_, cu_up_dependencies dependencies) :
                                 .max_nof_ues   = cfg.max_nof_ues,
                                 .plmns         = cfg.plmns,
                                 .qos           = cfg.qos,
-                                .n3_cfg        = cfg.n3_cfg,
+                                .ngu_cfg       = cfg.ngu_cfg,
                                 .test_mode_cfg = cfg.test_mode_cfg},
       cu_up_manager_impl_dependencies{.stop_command         = stop_command,
                                       .e1aps                = std::move(e1ap_refs),
                                       .ngu_demux            = *ngu_demux,
                                       .ngu_session_mngr     = *ngu_session_mngr,
-                                      .n3_teid_allocator    = *n3_teid_allocator,
+                                      .ngu_teid_allocator   = *ngu_teid_allocator,
                                       .f1u_teid_allocator   = dependencies.f1u_teid_allocator,
                                       .exec_mapper          = dependencies.exec_mapper,
                                       .f1u_gateway          = dependencies.f1u_gateway,

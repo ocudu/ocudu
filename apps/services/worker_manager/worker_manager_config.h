@@ -100,7 +100,7 @@ struct worker_manager_config {
     bool is_e1ap_enabled = false;
     bool is_xnap_enabled = false;
     bool is_e2ap_enabled = false;
-    bool is_n3_enabled   = false;
+    bool is_ngu_enabled  = false;
     bool is_f1u_enabled  = false;
     bool is_mac_enabled  = false;
     bool is_rlc_enabled  = false;

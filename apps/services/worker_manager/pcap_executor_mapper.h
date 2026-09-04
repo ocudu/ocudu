@@ -67,8 +67,8 @@ public:
   /// Retrieves the executor for E1AP PCAP writing.
   virtual task_executor& get_e1ap_executor() = 0;
 
-  /// Retrieves the executor for N3 PCAP writing.
-  virtual task_executor& get_n3_executor() = 0;
+  /// Retrieves the executor for NG-U PCAP writing.
+  virtual task_executor& get_ngu_executor() = 0;
 };
 
 } // namespace ocudu

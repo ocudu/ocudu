@@ -230,7 +230,7 @@ TEST_F(e1ap_cu_up_test,
 }
 
 /// Verify that ng_ul_up_tnl_info in a pdu_session_res_to_modify_item is correctly decoded and forwarded to the
-/// CU-UP notifier. This covers the E1AP ASN1 deserialization path added for the Xn path switch N3 tunnel update.
+/// CU-UP notifier. This covers the E1AP ASN1 deserialization path added for the Xn path switch NG-U (N3) tunnel update.
 TEST_F(e1ap_cu_up_test,
        when_bearer_context_modification_with_ng_ul_up_tnl_info_received_then_info_is_decoded_and_forwarded)
 {

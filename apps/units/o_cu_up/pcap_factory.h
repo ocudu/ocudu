@@ -12,12 +12,12 @@
 namespace ocudu {
 
 struct o_cu_up_dlt_pcaps {
-  std::unique_ptr<dlt_pcap> n3;
+  std::unique_ptr<dlt_pcap> ngu;
   std::unique_ptr<dlt_pcap> f1u;
   std::unique_ptr<dlt_pcap> e1ap;
   std::unique_ptr<dlt_pcap> e2ap;
 
-  std::unique_ptr<signal_observer> n3_sig_handler;
+  std::unique_ptr<signal_observer> ngu_sig_handler;
   std::unique_ptr<signal_observer> f1u_sig_handler;
   std::unique_ptr<signal_observer> e1ap_sig_handler;
   std::unique_ptr<signal_observer> e2ap_sig_handler;
@@ -25,8 +25,8 @@ struct o_cu_up_dlt_pcaps {
   /// \brief Close (and flush) the PCAPs without destroying the objects.
   void close()
   {
-    if (n3) {
-      n3->close();
+    if (ngu) {
+      ngu->close();
     }
     if (f1u) {
       f1u->close();
@@ -42,12 +42,12 @@ struct o_cu_up_dlt_pcaps {
   /// \brief Destroy (close and flush) the PCAPs.
   void reset()
   {
-    n3_sig_handler.reset();
+    ngu_sig_handler.reset();
     f1u_sig_handler.reset();
     e1ap_sig_handler.reset();
     e2ap_sig_handler.reset();
 
-    n3.reset();
+    ngu.reset();
     f1u.reset();
     e1ap.reset();
     e2ap.reset();
@@ -61,10 +61,10 @@ inline o_cu_up_dlt_pcaps create_o_cu_up_dlt_pcaps(const o_cu_up_unit_config&  un
 {
   o_cu_up_dlt_pcaps pcaps;
 
-  const auto& cu_pcaps = unit_cfg.cu_up_cfg.pcap_cfg;
-  pcaps.n3             = cu_pcaps.n3.enabled ? create_gtpu_pcap(cu_pcaps.n3.filename, exec_mapper.get_n3_executor())
-                                             : create_null_dlt_pcap();
-  pcaps.n3_sig_handler = std::make_unique<signal_observer>(signal_source, [&pcaps]() { pcaps.n3->flush(); });
+  const auto& cu_pcaps  = unit_cfg.cu_up_cfg.pcap_cfg;
+  pcaps.ngu             = cu_pcaps.ngu.enabled ? create_gtpu_pcap(cu_pcaps.ngu.filename, exec_mapper.get_ngu_executor())
+                                               : create_null_dlt_pcap();
+  pcaps.ngu_sig_handler = std::make_unique<signal_observer>(signal_source, [&pcaps]() { pcaps.ngu->flush(); });
 
   pcaps.f1u             = cu_pcaps.f1u.enabled ? create_gtpu_pcap(cu_pcaps.f1u.filename, exec_mapper.get_f1u_executor())
                                                : create_null_dlt_pcap();

@@ -113,29 +113,28 @@ o_cu_up_unit ocudu::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_c
   // Create NG-U gateway(s).
   std::vector<std::unique_ptr<gtpu_gateway>> ngu_gws;
   if (!unit_cfg.cu_up_cfg.ngu_cfg.no_core) {
-    for (const auto& sock_cfg : unit_cfg.cu_up_cfg.ngu_cfg.ngu_socket_cfg) {
-      udp_network_gateway_config n3_udp_cfg = {};
-      n3_udp_cfg.bind_interface             = sock_cfg.bind_interface;
-      n3_udp_cfg.bind_port                  = GTPU_PORT;
-      n3_udp_cfg.non_blocking_mode          = false;
-      n3_udp_cfg.rx_timeout_sec             = std::chrono::seconds(1U);
-      n3_udp_cfg.reuse_addr                 = sock_cfg.udp_config.reuse_addr;
-      n3_udp_cfg.if_name                    = "N3";
-      n3_udp_cfg.bind_address               = sock_cfg.bind_addr;
-      n3_udp_cfg.rx_max_mmsg                = sock_cfg.udp_config.rx_max_msgs;
-      n3_udp_cfg.tx_qsize                   = sock_cfg.udp_config.tx_qsize;
-      n3_udp_cfg.tx_max_mmsg                = sock_cfg.udp_config.tx_max_msgs;
-      n3_udp_cfg.tx_max_segments            = sock_cfg.udp_config.tx_max_segments;
-      n3_udp_cfg.pool_occupancy_threshold   = sock_cfg.udp_config.pool_threshold;
-      n3_udp_cfg.dscp                       = sock_cfg.udp_config.dscp;
-      n3_udp_cfg.ext_bind_addr              = sock_cfg.ext_addr;
-      n3_udp_cfg.warn_on_drop               = unit_cfg.cu_up_cfg.warn_on_drop;
+    for (const cu_up_unit_ngu_socket_config& sock_cfg : unit_cfg.cu_up_cfg.ngu_cfg.ngu_socket_cfg) {
+      udp_network_gateway_config ngu_udp_cfg = {};
+      ngu_udp_cfg.if_name                    = "NG-U";
+      ngu_udp_cfg.bind_address               = sock_cfg.bind_addr;
+      ngu_udp_cfg.bind_interface             = sock_cfg.bind_interface;
+      ngu_udp_cfg.ext_bind_addr              = sock_cfg.ext_addr;
+      ngu_udp_cfg.pool_occupancy_threshold   = sock_cfg.udp_config.pool_threshold;
+      ngu_udp_cfg.bind_port                  = GTPU_PORT;
+      ngu_udp_cfg.rx_max_mmsg                = sock_cfg.udp_config.rx_max_msgs;
+      ngu_udp_cfg.tx_qsize                   = sock_cfg.udp_config.tx_qsize;
+      ngu_udp_cfg.tx_max_mmsg                = sock_cfg.udp_config.tx_max_msgs;
+      ngu_udp_cfg.tx_max_segments            = sock_cfg.udp_config.tx_max_segments;
+      ngu_udp_cfg.pool_occupancy_threshold   = sock_cfg.udp_config.pool_threshold;
+      ngu_udp_cfg.reuse_addr                 = sock_cfg.udp_config.reuse_addr;
+      ngu_udp_cfg.dscp                       = sock_cfg.udp_config.dscp;
+      ngu_udp_cfg.warn_on_drop               = unit_cfg.cu_up_cfg.warn_on_drop;
 
       std::unique_ptr<gtpu_gateway> ngu_gw =
-          create_udp_gtpu_gateway(n3_udp_cfg,
+          create_udp_gtpu_gateway(ngu_udp_cfg,
                                   dependencies.io_brk,
                                   dependencies.workers.get_cu_up_executor_mapper().io_ul_executor(),
-                                  dependencies.workers.get_cu_up_executor_mapper().n3_rx_executor());
+                                  dependencies.workers.get_cu_up_executor_mapper().ngu_rx_executor());
       ngu_gws.push_back(std::move(ngu_gw));
     }
   } else {

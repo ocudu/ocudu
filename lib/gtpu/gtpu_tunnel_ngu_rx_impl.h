@@ -39,7 +39,7 @@ struct gtpu_rx_sdu_info {
   std::optional<uint16_t> sn          = {};
 };
 
-/// Class used for receiving GTP-U NGU bearers, e.g. on N3 interface.
+/// Class used for receiving GTP-U NG-U bearers, e.g. on N3 interface.
 class gtpu_tunnel_ngu_rx_impl : public gtpu_tunnel_base_rx
 {
 public:

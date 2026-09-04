@@ -78,12 +78,12 @@ TEST_F(pdu_session_manager_test, when_dl_data_forwarding_is_requested_then_tunne
   ASSERT_NE(session_fwd.gtp_teid, setup_result.gtp_tunnel.gtp_teid);
 
   // Removing the session releases the forwarding TEID back to the NG-U pool.
-  ASSERT_FALSE(n3_allocator->was_teid_released(session_fwd.gtp_teid));
+  ASSERT_FALSE(ngu_allocator->was_teid_released(session_fwd.gtp_teid));
 
   pdu_session_mng->remove_pdu_session(psi);
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
 
-  ASSERT_TRUE(n3_allocator->was_teid_released(session_fwd.gtp_teid));
+  ASSERT_TRUE(ngu_allocator->was_teid_released(session_fwd.gtp_teid));
 }
 
 TEST_F(pdu_session_manager_test, when_dl_data_forwarding_is_not_requested_then_no_tunnel_endpoints_are_reported)
@@ -437,7 +437,7 @@ TEST_F(pdu_session_manager_test, when_new_ul_info_is_requested_f1u_is_disconnect
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
 }
 
-/// N3 UL tunnel update via ng_ul_up_tnl_info in a Bearer Context Modification (Xn path switch).
+/// NG-U (N3) UL tunnel update via ng_ul_up_tnl_info in a Bearer Context Modification (Xn path switch).
 TEST_F(pdu_session_manager_test, when_ng_ul_up_tnl_info_is_set_in_modify_item_then_tunnel_update_succeeds)
 {
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
@@ -453,7 +453,7 @@ TEST_F(pdu_session_manager_test, when_ng_ul_up_tnl_info_is_set_in_modify_item_th
   ASSERT_TRUE(setup_result.success);
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
 
-  // Modify with a new N3 UL tunnel endpoint (simulates AMF providing new UPF address after Xn HO).
+  // Modify with a new NG-U (N3) UL tunnel endpoint (simulates AMF providing new UPF address after Xn HO).
   e1ap_pdu_session_res_to_modify_item pdu_session_modify_item =
       generate_pdu_session_res_to_modify_item_with_ng_ul_up_tnl_info(psi, "10.0.0.1", 0xabcd1234);
   pdu_session_modification_result mod_result = pdu_session_mng->modify_pdu_session(pdu_session_modify_item, false);
@@ -464,7 +464,7 @@ TEST_F(pdu_session_manager_test, when_ng_ul_up_tnl_info_is_set_in_modify_item_th
   EXPECT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
 }
 
-/// Modifying a PDU session without ng_ul_up_tnl_info must succeed without touching the N3 tunnel
+/// Modifying a PDU session without ng_ul_up_tnl_info must succeed without touching the NG-U (N3) tunnel
 /// (negative: absence of ng_ul_up_tnl_info must not cause failure or unintended side effects).
 TEST_F(pdu_session_manager_test, when_ng_ul_up_tnl_info_absent_in_modify_item_then_no_tunnel_change)
 {

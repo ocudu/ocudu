@@ -52,8 +52,8 @@ public:
           make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(pool_task_exec, task_worker_queue_size);
     }
 
-    if (config.is_n3_enabled) {
-      n3_exec = make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(pool_task_exec, task_worker_queue_size);
+    if (config.is_ngu_enabled) {
+      ngu_exec = make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(pool_task_exec, task_worker_queue_size);
     }
     if (config.is_f1u_enabled) {
       f1u_exec = make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(pool_task_exec, task_worker_queue_size);
@@ -71,14 +71,14 @@ public:
   task_executor& get_xnap_executor() override { return *common_exec; }
   task_executor& get_e1ap_executor() override { return *common_exec; }
   task_executor& get_e2ap_executor() override { return *common_exec; }
-  task_executor& get_n3_executor() override { return *n3_exec; }
+  task_executor& get_ngu_executor() override { return *ngu_exec; }
   task_executor& get_f1u_executor() override { return *f1u_exec; }
   task_executor& get_mac_executor() override { return *mac_exec; }
   task_executor& get_rlc_executor() override { return *rlc_exec; }
 
 private:
   std::unique_ptr<task_executor> common_exec;
-  std::unique_ptr<task_executor> n3_exec;
+  std::unique_ptr<task_executor> ngu_exec;
   std::unique_ptr<task_executor> f1u_exec;
   std::unique_ptr<task_executor> mac_exec;
   std::unique_ptr<task_executor> rlc_exec;

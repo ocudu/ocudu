@@ -24,7 +24,7 @@ struct sockaddr_storage;
  *    with the upper or lower layers.
  * 3. Interface/Notifier: whether this is an interface the GTP-U tunnel will
  *    inherit or a notifier that the GTP-U will keep as a member.
- * 4. DOMAIN indicates the GTP-U specialization for a particular domain {NG-U (N3), NR-U (F1-U),...}
+ * 4. DOMAIN indicates the GTP-U specialization for a particular domain {NG-U (N3), F1-U, ...}
  *
  */
 
@@ -50,7 +50,7 @@ public:
   /// \param qfi QoS flow ID that is associated with the SDU.
   virtual void handle_sdu(byte_buffer sdu, qos_flow_id_t qfi) = 0;
 
-  /// \brief Update the remote UPF endpoint (N3 UL tunnel), e.g. after an Xn path switch.
+  /// \brief Update the remote UPF endpoint (NR-U (N3) UL tunnel), e.g. after an Xn path switch.
   /// \param new_addr New peer IPv4/IPv6 address string.
   /// \param new_port New peer UDP port.
   /// \param new_teid New peer GTP-U TEID.

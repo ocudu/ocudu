@@ -54,10 +54,8 @@ static void configure_cli11_log_args(CLI::App& app, cu_cp_unit_logger_config& lo
 /// Configures the CLI11 PCAP arguments.
 static void configure_cli11_pcap_args(CLI::App& app, cu_cp_unit_pcap_config& pcap_params)
 {
-  add_option(app, "--ngap_filename", pcap_params.ngap.filename, "N3 GTP-U PCAP file output path")
-      ->capture_default_str();
-  add_option(app, "--ngap_enable", pcap_params.ngap.enabled, "Enable N3 GTP-U packet capture")
-      ->always_capture_default();
+  add_option(app, "--ngap_filename", pcap_params.ngap.filename, "NG-C PCAP file output path")->capture_default_str();
+  add_option(app, "--ngap_enable", pcap_params.ngap.enabled, "Enable NG-C packet capture")->always_capture_default();
   add_option(app, "--xnap_filename", pcap_params.xnap.filename, "XNAP PCAP file output path")->capture_default_str();
   add_option(app, "--xnap_enable", pcap_params.xnap.enabled, "Enable XNAP packet capture")->always_capture_default();
   add_option(app, "--f1ap_filename", pcap_params.f1ap.filename, "F1AP PCAP file output path")->capture_default_str();

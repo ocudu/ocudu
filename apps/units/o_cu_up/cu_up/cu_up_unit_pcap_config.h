@@ -13,7 +13,7 @@ struct cu_up_unit_pcap_config {
   struct {
     std::string filename;
     bool        enabled = false;
-  } n3;
+  } ngu;
   struct {
     std::string filename;
     bool        enabled = false;

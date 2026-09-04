@@ -28,7 +28,7 @@ protected:
     std::unique_ptr<ue_executor_mapper> exec_mapper = std::make_unique<dummy_ue_executor_mapper>(exec);
     return std::make_unique<ue_context>(ue_index,
                                         ue_cfg,
-                                        n3_cfg,
+                                        ngu_cfg,
                                         cu_up_test_mode_config{},
                                         ue_context_dependencies{e1ap,
                                                                 std::move(exec_mapper),
@@ -39,7 +39,7 @@ protected:
                                                                 f1u_gw,
                                                                 ngu_session_mngr,
                                                                 pdcp_if,
-                                                                n3_allocator,
+                                                                ngu_allocator,
                                                                 f1u_allocator,
                                                                 gtpu_demux,
                                                                 pcap});
@@ -76,20 +76,20 @@ private:
   dummy_f1u_gateway                  f1u_gw;
   dummy_ngu_session_manager          ngu_session_mngr;
   dummy_cu_up_manager_pdcp_interface pdcp_if;
-  dummy_gtpu_teid_pool               n3_allocator;
+  dummy_gtpu_teid_pool               ngu_allocator;
   dummy_gtpu_teid_pool               f1u_allocator;
   dummy_gtpu_demux_ctrl              gtpu_demux;
   null_dlt_pcap                      pcap;
 
-  // N3 Configs.
-  n3_interface_config n3_cfg{GTPU_PORT,
-                             std::chrono::milliseconds{0},
-                             std::chrono::milliseconds{200},
-                             GTPU_DEFAULT_TEID_RELEASE_LINGER_TIME,
-                             true,
-                             2048,
-                             1,
-                             false};
+  // NG-U Configs.
+  ngu_interface_config ngu_cfg{GTPU_PORT,
+                               std::chrono::milliseconds{0},
+                               std::chrono::milliseconds{200},
+                               GTPU_DEFAULT_TEID_RELEASE_LINGER_TIME,
+                               true,
+                               2048,
+                               1,
+                               false};
 
   // UE context cfg.
   ue_context_cfg ue_cfg{{}, activity_notification_level_t::ue, std::chrono::seconds{30}, {}, 1000000000, {}};

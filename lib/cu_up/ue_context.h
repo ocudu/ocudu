@@ -43,7 +43,7 @@ struct ue_context_dependencies {
   f1u_cu_up_gateway&                  f1u_gw;
   ngu_session_manager&                ngu_session_mngr;
   cu_up_manager_pdcp_interface&       cu_up_mngr_pdcp_if;
-  gtpu_teid_pool&                     n3_teid_allocator;
+  gtpu_teid_pool&                     ngu_teid_allocator;
   gtpu_teid_pool&                     f1u_teid_allocator;
   gtpu_demux_ctrl&                    gtpu_rx_demux;
   dlt_pcap&                           gtpu_pcap;
@@ -55,7 +55,7 @@ class ue_context : public pdu_session_manager_ctrl
 public:
   ue_context(cu_up_ue_index_t              index_,
              ue_context_cfg                cfg_,
-             const n3_interface_config&    n3_config_,
+             const ngu_interface_config&   ngu_config_,
              const cu_up_test_mode_config& test_mode_config_,
              ue_context_dependencies       dependencies) :
     task_sched(dependencies.task_sched),
@@ -67,7 +67,7 @@ public:
     pdu_session_manager(index,
                         cfg.qos,
                         cfg.security_info,
-                        n3_config_,
+                        ngu_config_,
                         test_mode_config_,
                         cfg.ue_dl_aggregate_maximum_bit_rate,
                         {logger,
@@ -79,7 +79,7 @@ public:
                          dependencies.f1u_gw,
                          dependencies.ngu_session_mngr,
                          dependencies.cu_up_mngr_pdcp_if,
-                         dependencies.n3_teid_allocator,
+                         dependencies.ngu_teid_allocator,
                          dependencies.f1u_teid_allocator,
                          dependencies.gtpu_rx_demux,
                          ue_exec_mapper->dl_pdu_executor(),

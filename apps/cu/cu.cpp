@@ -68,8 +68,8 @@ using namespace ocudu;
 /// \brief Application of a Central Unit (CU) with combined CU control-plane (CU-CP) and CU user-plane (CU-UP).
 ///
 /// This application runs a CU without the E1 connection between the CU-CP and CU-UP going over a real SCTP
-/// connection. However, its does expose the F1, N2 and N3 interface to the DU, AMF and UPF over the standard
-/// UDP/SCTP ports.
+/// connection. However, its does expose the F1, NG-C (N2) and NG-U (N3) interface to the DU, AMF and UPF over the
+/// standard UDP/SCTP ports.
 ///
 /// The app serves as an example for an all-integrated CU.
 
@@ -491,7 +491,7 @@ int main(int argc, char** argv)
                                                              .e1ap_conn_client       = std::move(e1ap_conn_client),
                                                              .f1u_teid_allocator     = *cu_f1u_teid_allocator,
                                                              .f1u_gateway            = *cu_f1u_conn,
-                                                             .gtpu_pcap              = *cu_up_dlt_pcaps.n3,
+                                                             .gtpu_pcap              = *cu_up_dlt_pcaps.ngu,
                                                              .timers                 = *cu_timers,
                                                              .io_brk                 = *epoll_broker};
 
