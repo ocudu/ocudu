@@ -3,8 +3,8 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/gtpu/gtpu_pdu.h"
-#include "lib/gtpu/gtpu_tunnel_ngu_rx_impl.h"
-#include "lib/gtpu/gtpu_tunnel_ngu_tx_impl.h"
+#include "lib/gtpu/gtpu_tunnel_psup_rx_impl.h"
+#include "lib/gtpu/gtpu_tunnel_psup_tx_impl.h"
 #include "ocudu/support/bit_encoding.h"
 #include "ocudu/support/executors/manual_task_worker.h"
 #include "ocudu/support/rate_limiting/token_bucket.h"
@@ -44,11 +44,11 @@ class gtpu_pdu_generator
 public:
   gtpu_pdu_generator(gtpu_teid_t teid) : tx_upper_dummy(*this)
   {
-    gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_tx_config cfg = {};
-    cfg.peer_teid                                         = teid;
-    cfg.peer_addr                                         = "127.0.0.1";
+    gtpu_tunnel_psup_config::gtpu_tunnel_psup_tx_config cfg = {};
+    cfg.peer_teid                                           = teid;
+    cfg.peer_addr                                           = "127.0.0.1";
 
-    tx = std::make_unique<gtpu_tunnel_ngu_tx_impl>(
+    tx = std::make_unique<gtpu_tunnel_psup_tx_impl>(
         cu_up_ue_index_t::MIN_CU_UP_UE_INDEX, cfg, dummy_pcap, tx_upper_dummy);
   }
 
@@ -95,16 +95,16 @@ public:
   }
 
 private:
-  null_dlt_pcap                            dummy_pcap = {};
-  gtpu_tunnel_tx_upper_dummy               tx_upper_dummy;
-  std::unique_ptr<gtpu_tunnel_ngu_tx_impl> tx;
-  byte_buffer                              gen_pdu;
-  gtpu_tunnel_logger                       gtpu_logger{"GTPU", {{}, gtpu_teid_t{1}, "DL"}};
+  null_dlt_pcap                             dummy_pcap = {};
+  gtpu_tunnel_tx_upper_dummy                tx_upper_dummy;
+  std::unique_ptr<gtpu_tunnel_psup_tx_impl> tx;
+  byte_buffer                               gen_pdu;
+  gtpu_tunnel_logger                        gtpu_logger{"GTPU", {{}, gtpu_teid_t{1}, "DL"}};
 
 public:
 };
 
-class gtpu_tunnel_rx_lower_dummy : public gtpu_tunnel_ngu_rx_lower_layer_notifier
+class gtpu_tunnel_rx_lower_dummy : public gtpu_tunnel_psup_rx_lower_layer_notifier
 {
   void on_new_sdu(byte_buffer sdu, qos_flow_id_t qos_flow_id) final
   {
@@ -136,11 +136,11 @@ public:
   sockaddr_storage last_addr = {};
 };
 
-/// Fixture base class for GTP-U tunnel NG-U Rx tests
-class gtpu_tunnel_ngu_rx_test : public ::testing::Test
+/// Fixture base class for GTP-U tunnel PSUP Rx tests
+class gtpu_tunnel_psup_rx_test : public ::testing::Test
 {
 public:
-  gtpu_tunnel_ngu_rx_test() :
+  gtpu_tunnel_psup_rx_test() :
     logger(ocudulog::fetch_basic_logger("TEST", false)), gtpu_logger(ocudulog::fetch_basic_logger("GTPU", false))
   {
   }
@@ -175,13 +175,13 @@ protected:
     ue_ambr_limiter = std::make_unique<token_bucket>(ue_ambr_cfg);
 
     // create Rx entity
-    gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config rx_cfg = {};
-    rx_cfg.local_teid                                        = local_teid;
-    rx_cfg.ue_ambr_limiter                                   = ue_ambr_limiter.get();
-    rx_cfg.t_reordering                                      = std::chrono::milliseconds{10};
-    rx_cfg.warn_on_drop                                      = warn_on_drop;
+    gtpu_tunnel_psup_config::gtpu_tunnel_psup_rx_config rx_cfg = {};
+    rx_cfg.local_teid                                          = local_teid;
+    rx_cfg.ue_ambr_limiter                                     = ue_ambr_limiter.get();
+    rx_cfg.t_reordering                                        = std::chrono::milliseconds{10};
+    rx_cfg.warn_on_drop                                        = warn_on_drop;
 
-    rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(cu_up_ue_index_t::MIN_CU_UP_UE_INDEX, rx_cfg, rx_lower, timers);
+    rx = std::make_unique<gtpu_tunnel_psup_rx_impl>(cu_up_ue_index_t::MIN_CU_UP_UE_INDEX, rx_cfg, rx_lower, timers);
   }
 
   /// \brief Helper to advance the timers
@@ -209,8 +209,8 @@ protected:
   timer_factory      timers{timers_manager, worker};
 
   // GTP-U tunnel Rx entity
-  std::unique_ptr<token_bucket>            ue_ambr_limiter;
-  std::unique_ptr<gtpu_tunnel_ngu_rx_impl> rx;
+  std::unique_ptr<token_bucket>             ue_ambr_limiter;
+  std::unique_ptr<gtpu_tunnel_psup_rx_impl> rx;
 
   // Surrounding tester
   gtpu_tunnel_rx_lower_dummy rx_lower = {};
@@ -218,23 +218,23 @@ protected:
   gtpu_teid_t local_teid{0x1};
 };
 
-/// Fixture class for GTP-U tunnel NG-U Rx tests (different configs)
-class gtpu_tunnel_ngu_rx_test_cfg : public gtpu_tunnel_ngu_rx_test, public ::testing::WithParamInterface<bool>
+/// Fixture class for GTP-U tunnel PSUP Rx tests (different configs)
+class gtpu_tunnel_psup_rx_test_cfg : public gtpu_tunnel_psup_rx_test, public ::testing::WithParamInterface<bool>
 {
 public:
-  gtpu_tunnel_ngu_rx_test_cfg() {}
+  gtpu_tunnel_psup_rx_test_cfg() {}
 };
 
-/// Fixture class for GTP-U tunnel NG-U Rx tests (different configs, different start SN)
-class gtpu_tunnel_ngu_rx_test_cfg_sn : public gtpu_tunnel_ngu_rx_test,
-                                       public ::testing::WithParamInterface<std::tuple<bool, uint16_t>>
+/// Fixture class for GTP-U tunnel PSUP Rx tests (different configs, different start SN)
+class gtpu_tunnel_psup_rx_test_cfg_sn : public gtpu_tunnel_psup_rx_test,
+                                        public ::testing::WithParamInterface<std::tuple<bool, uint16_t>>
 {
 public:
-  gtpu_tunnel_ngu_rx_test_cfg_sn() {}
+  gtpu_tunnel_psup_rx_test_cfg_sn() {}
 };
 
 /// \brief Test correct creation of Rx entity
-TEST_P(gtpu_tunnel_ngu_rx_test_cfg, entity_creation)
+TEST_P(gtpu_tunnel_psup_rx_test_cfg, entity_creation)
 {
   create_gtpu_rx_entity(false);
   ASSERT_NE(rx, nullptr);
@@ -245,7 +245,7 @@ TEST_P(gtpu_tunnel_ngu_rx_test_cfg, entity_creation)
 }
 
 /// \brief Test reception of PDUs with no SN
-TEST_P(gtpu_tunnel_ngu_rx_test_cfg_sn, rx_no_sn)
+TEST_P(gtpu_tunnel_psup_rx_test_cfg_sn, rx_no_sn)
 {
   bool warn_on_drop = std::get<bool>(GetParam());
   create_gtpu_rx_entity(warn_on_drop);
@@ -270,7 +270,7 @@ TEST_P(gtpu_tunnel_ngu_rx_test_cfg_sn, rx_no_sn)
 }
 
 /// \brief Test in-order reception of PDUs
-TEST_P(gtpu_tunnel_ngu_rx_test_cfg_sn, rx_in_order)
+TEST_P(gtpu_tunnel_psup_rx_test_cfg_sn, rx_in_order)
 {
   bool     warn_on_drop = std::get<bool>(GetParam());
   uint16_t start_sn     = std::get<uint16_t>(GetParam());
@@ -298,7 +298,7 @@ TEST_P(gtpu_tunnel_ngu_rx_test_cfg_sn, rx_in_order)
 }
 
 /// \brief Test out-of-order reception of PDUs
-TEST_P(gtpu_tunnel_ngu_rx_test_cfg_sn, rx_out_of_order)
+TEST_P(gtpu_tunnel_psup_rx_test_cfg_sn, rx_out_of_order)
 {
   bool     warn_on_drop = std::get<bool>(GetParam());
   uint16_t start_sn     = std::get<uint16_t>(GetParam());
@@ -381,7 +381,7 @@ TEST_P(gtpu_tunnel_ngu_rx_test_cfg_sn, rx_out_of_order)
 /// \brief Test out-of-order reception of PDUs
 /// When there are two holes and they gets filled out-of-order
 /// t-Reordering is stopped correctly
-TEST_P(gtpu_tunnel_ngu_rx_test_cfg_sn, rx_out_of_order_two_holes)
+TEST_P(gtpu_tunnel_psup_rx_test_cfg_sn, rx_out_of_order_two_holes)
 {
   bool     warn_on_drop = std::get<bool>(GetParam());
   uint16_t start_sn     = std::get<uint16_t>(GetParam());
@@ -462,7 +462,7 @@ TEST_P(gtpu_tunnel_ngu_rx_test_cfg_sn, rx_out_of_order_two_holes)
 }
 
 /// \brief Test t-Reordering expiration
-TEST_P(gtpu_tunnel_ngu_rx_test_cfg_sn, rx_t_reordering_expiration)
+TEST_P(gtpu_tunnel_psup_rx_test_cfg_sn, rx_t_reordering_expiration)
 {
   bool     warn_on_drop = std::get<bool>(GetParam());
   uint16_t start_sn     = std::get<uint16_t>(GetParam());
@@ -540,7 +540,7 @@ TEST_P(gtpu_tunnel_ngu_rx_test_cfg_sn, rx_t_reordering_expiration)
 /// \brief Test t-Reordering expiration
 /// When there are two holes and the second one gets filled before
 /// t-Reordering expires, timer is not restarted.
-TEST_P(gtpu_tunnel_ngu_rx_test_cfg_sn, rx_t_reordering_two_holes)
+TEST_P(gtpu_tunnel_psup_rx_test_cfg_sn, rx_t_reordering_two_holes)
 {
   bool     warn_on_drop = std::get<bool>(GetParam());
   uint16_t start_sn     = std::get<uint16_t>(GetParam());
@@ -624,7 +624,7 @@ TEST_P(gtpu_tunnel_ngu_rx_test_cfg_sn, rx_t_reordering_two_holes)
 }
 
 /// \brief Test in-order reception of PDUs
-TEST_P(gtpu_tunnel_ngu_rx_test_cfg_sn, rx_stop)
+TEST_P(gtpu_tunnel_psup_rx_test_cfg_sn, rx_stop)
 {
   bool     warn_on_drop = std::get<bool>(GetParam());
   uint16_t start_sn     = std::get<uint16_t>(GetParam());
@@ -695,12 +695,12 @@ std::string cfg_sn_test_param_info_to_string(const ::testing::TestParamInfo<std:
 }
 
 INSTANTIATE_TEST_SUITE_P(ngu_rx_cfg,
-                         gtpu_tunnel_ngu_rx_test_cfg,
+                         gtpu_tunnel_psup_rx_test_cfg,
                          ::testing::Values(false, true),
                          cfg_test_param_info_to_string);
 
 INSTANTIATE_TEST_SUITE_P(ngu_rx_cfg_sn,
-                         gtpu_tunnel_ngu_rx_test_cfg_sn,
+                         gtpu_tunnel_psup_rx_test_cfg_sn,
                          ::testing::Combine(::testing::Values(false, true),
                                             ::testing::Values(0, 1, 17000, 33000, 65535)),
                          cfg_sn_test_param_info_to_string);

@@ -7,7 +7,7 @@
 #include "ocudu/gateways/udp_network_gateway.h"
 #include "ocudu/gtpu/gtpu_tunnel_common_rx.h"
 #include "ocudu/gtpu/gtpu_tunnel_common_tx.h"
-#include "ocudu/gtpu/gtpu_tunnel_ngu_rx.h"
+#include "ocudu/gtpu/gtpu_tunnel_psup_rx.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/sdap/sdap.h"
 
@@ -38,7 +38,7 @@ private:
 };
 
 /// Adapter between GTP-U and SDAP
-class gtpu_sdap_adapter : public gtpu_tunnel_ngu_rx_lower_layer_notifier
+class gtpu_sdap_adapter : public gtpu_tunnel_psup_rx_lower_layer_notifier
 {
 public:
   gtpu_sdap_adapter()           = default;

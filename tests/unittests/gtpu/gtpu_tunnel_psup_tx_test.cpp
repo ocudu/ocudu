@@ -3,7 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/gtpu/gtpu_pdu.h"
-#include "lib/gtpu/gtpu_tunnel_ngu_tx_impl.h"
+#include "lib/gtpu/gtpu_tunnel_psup_tx_impl.h"
 #include "tests/unittests/gtpu/gtpu_test_shared.h"
 #include "ocudu/support/executors/manual_task_worker.h"
 #include "ocudu/support/io/sockets.h"
@@ -31,11 +31,11 @@ public:
   ::sockaddr_storage       last_dest_addr = {};
 };
 
-/// Fixture class for GTP-U tunnel NG-U Rx tests
-class gtpu_tunnel_ngu_tx_test : public ::testing::Test
+/// Fixture class for GTP-U tunnel PSUP Tx tests
+class gtpu_tunnel_psup_tx_test : public ::testing::Test
 {
 public:
-  gtpu_tunnel_ngu_tx_test() :
+  gtpu_tunnel_psup_tx_test() :
     logger(ocudulog::fetch_basic_logger("TEST", false)), gtpu_logger(ocudulog::fetch_basic_logger("GTPU", false))
   {
   }
@@ -81,8 +81,8 @@ protected:
   timer_manager      timers_manager;
   timer_factory      timers{timers_manager, worker};
 
-  // GTP-U tunnel Rx entity
-  std::unique_ptr<gtpu_tunnel_ngu_tx_impl> tx;
+  // GTP-U tunnel Tx entity
+  std::unique_ptr<gtpu_tunnel_psup_tx_impl> tx;
 
   // Surrounding tester
   gtpu_tunnel_tx_upper_dummy tx_upper = {};
@@ -91,27 +91,27 @@ protected:
 };
 
 /// \brief Test correct creation of Rx entity
-TEST_F(gtpu_tunnel_ngu_tx_test, entity_creation)
+TEST_F(gtpu_tunnel_psup_tx_test, entity_creation)
 {
   // create Tx entity
-  gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_tx_config tx_cfg = {};
-  tx_cfg.peer_addr                                         = "127.0.0.1";
-  tx_cfg.peer_teid                                         = gtpu_teid_t{0x1};
+  gtpu_tunnel_psup_config::gtpu_tunnel_psup_tx_config tx_cfg = {};
+  tx_cfg.peer_addr                                           = "127.0.0.1";
+  tx_cfg.peer_teid                                           = gtpu_teid_t{0x1};
 
-  tx = std::make_unique<gtpu_tunnel_ngu_tx_impl>(cu_up_ue_index_t::MIN_CU_UP_UE_INDEX, tx_cfg, dummy_pcap, tx_upper);
+  tx = std::make_unique<gtpu_tunnel_psup_tx_impl>(cu_up_ue_index_t::MIN_CU_UP_UE_INDEX, tx_cfg, dummy_pcap, tx_upper);
 
   ASSERT_NE(tx, nullptr);
 }
 
 /// \brief Test reception of PDUs with no SN
-TEST_F(gtpu_tunnel_ngu_tx_test, tx_sdus)
+TEST_F(gtpu_tunnel_psup_tx_test, tx_sdus)
 {
   // create Rx entity
-  gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_tx_config tx_cfg = {};
-  tx_cfg.peer_addr                                         = "127.0.0.1";
-  tx_cfg.peer_teid                                         = gtpu_teid_t{0x2};
+  gtpu_tunnel_psup_config::gtpu_tunnel_psup_tx_config tx_cfg = {};
+  tx_cfg.peer_addr                                           = "127.0.0.1";
+  tx_cfg.peer_teid                                           = gtpu_teid_t{0x2};
 
-  tx = std::make_unique<gtpu_tunnel_ngu_tx_impl>(cu_up_ue_index_t::MIN_CU_UP_UE_INDEX, tx_cfg, dummy_pcap, tx_upper);
+  tx = std::make_unique<gtpu_tunnel_psup_tx_impl>(cu_up_ue_index_t::MIN_CU_UP_UE_INDEX, tx_cfg, dummy_pcap, tx_upper);
   ASSERT_NE(tx, nullptr);
 
   for (unsigned i = 0; i < 3; i++) {
@@ -131,14 +131,14 @@ TEST_F(gtpu_tunnel_ngu_tx_test, tx_sdus)
 }
 
 /// \brief Test in-order reception of PDUs
-TEST_F(gtpu_tunnel_ngu_tx_test, tx_stop)
+TEST_F(gtpu_tunnel_psup_tx_test, tx_stop)
 {
   // create Rx entity
-  gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_tx_config tx_cfg = {};
-  tx_cfg.peer_addr                                         = "127.0.0.1";
-  tx_cfg.peer_teid                                         = gtpu_teid_t{0x2};
+  gtpu_tunnel_psup_config::gtpu_tunnel_psup_tx_config tx_cfg = {};
+  tx_cfg.peer_addr                                           = "127.0.0.1";
+  tx_cfg.peer_teid                                           = gtpu_teid_t{0x2};
 
-  tx = std::make_unique<gtpu_tunnel_ngu_tx_impl>(cu_up_ue_index_t::MIN_CU_UP_UE_INDEX, tx_cfg, dummy_pcap, tx_upper);
+  tx = std::make_unique<gtpu_tunnel_psup_tx_impl>(cu_up_ue_index_t::MIN_CU_UP_UE_INDEX, tx_cfg, dummy_pcap, tx_upper);
   ASSERT_NE(tx, nullptr);
 
   for (unsigned i = 0; i < 3; i++) {
@@ -160,13 +160,13 @@ TEST_F(gtpu_tunnel_ngu_tx_test, tx_stop)
 }
 
 /// \brief After update_tx_endpoint() subsequent SDUs carry the new TEID in the GTP-U header.
-TEST_F(gtpu_tunnel_ngu_tx_test, update_tx_endpoint_changes_teid_in_pdu)
+TEST_F(gtpu_tunnel_psup_tx_test, update_tx_endpoint_changes_teid_in_pdu)
 {
-  gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_tx_config tx_cfg = {};
-  tx_cfg.peer_addr                                         = "127.0.0.1";
-  tx_cfg.peer_teid                                         = gtpu_teid_t{0x2};
+  gtpu_tunnel_psup_config::gtpu_tunnel_psup_tx_config tx_cfg = {};
+  tx_cfg.peer_addr                                           = "127.0.0.1";
+  tx_cfg.peer_teid                                           = gtpu_teid_t{0x2};
 
-  tx = std::make_unique<gtpu_tunnel_ngu_tx_impl>(cu_up_ue_index_t::MIN_CU_UP_UE_INDEX, tx_cfg, dummy_pcap, tx_upper);
+  tx = std::make_unique<gtpu_tunnel_psup_tx_impl>(cu_up_ue_index_t::MIN_CU_UP_UE_INDEX, tx_cfg, dummy_pcap, tx_upper);
   ASSERT_NE(tx, nullptr);
 
   // SDU before the update should carry the original TEID (0x2).
@@ -196,13 +196,13 @@ TEST_F(gtpu_tunnel_ngu_tx_test, update_tx_endpoint_changes_teid_in_pdu)
 }
 
 /// \brief Calling update_tx_endpoint() a second time overrides the first update.
-TEST_F(gtpu_tunnel_ngu_tx_test, update_tx_endpoint_second_call_overrides_first)
+TEST_F(gtpu_tunnel_psup_tx_test, update_tx_endpoint_second_call_overrides_first)
 {
-  gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_tx_config tx_cfg = {};
-  tx_cfg.peer_addr                                         = "127.0.0.1";
-  tx_cfg.peer_teid                                         = gtpu_teid_t{0x1};
+  gtpu_tunnel_psup_config::gtpu_tunnel_psup_tx_config tx_cfg = {};
+  tx_cfg.peer_addr                                           = "127.0.0.1";
+  tx_cfg.peer_teid                                           = gtpu_teid_t{0x1};
 
-  tx = std::make_unique<gtpu_tunnel_ngu_tx_impl>(cu_up_ue_index_t::MIN_CU_UP_UE_INDEX, tx_cfg, dummy_pcap, tx_upper);
+  tx = std::make_unique<gtpu_tunnel_psup_tx_impl>(cu_up_ue_index_t::MIN_CU_UP_UE_INDEX, tx_cfg, dummy_pcap, tx_upper);
 
   tx->update_tx_endpoint("10.0.0.1", 2152, 0xaa);
   tx->update_tx_endpoint("10.0.0.2", 2152, 0xbb);

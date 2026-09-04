@@ -10,7 +10,7 @@
 #include "ocudu/adt/batched_dispatch_queue.h"
 #include "ocudu/gtpu/gtpu_demux.h"
 #include "ocudu/gtpu/gtpu_teid_pool.h"
-#include "ocudu/gtpu/gtpu_tunnel_ngu.h"
+#include "ocudu/gtpu/gtpu_tunnel_psup.h"
 #include "ocudu/ran/up_transport_layer_info.h"
 
 namespace ocudu::ocuup {
@@ -59,8 +59,8 @@ struct pdu_session {
 
   bool stopped = false;
 
-  std::unique_ptr<sdap_entity>     sdap;
-  std::unique_ptr<gtpu_tunnel_ngu> gtpu;
+  std::unique_ptr<sdap_entity>      sdap;
+  std::unique_ptr<gtpu_tunnel_psup> gtpu;
 
   // Adapters between SDAP and GTPU
   gtpu_sdap_adapter gtpu_to_sdap_adapter;

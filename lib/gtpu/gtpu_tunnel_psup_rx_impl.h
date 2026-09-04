@@ -6,7 +6,7 @@
 
 #include "gtpu_tunnel_base_rx.h"
 #include "ocudu/gtpu/gtpu_config.h"
-#include "ocudu/gtpu/gtpu_tunnel_ngu_rx.h"
+#include "ocudu/gtpu/gtpu_tunnel_psup_rx.h"
 #include "ocudu/psup/psup_packing.h"
 #include "ocudu/ran/cu_up_types.h"
 #include "ocudu/support/sdu_window.h"
@@ -39,14 +39,14 @@ struct gtpu_rx_sdu_info {
   std::optional<uint16_t> sn          = {};
 };
 
-/// Class used for receiving GTP-U NG-U bearers, e.g. on N3 interface.
-class gtpu_tunnel_ngu_rx_impl : public gtpu_tunnel_base_rx
+/// Class used for receiving GTP-U PSUP tunnels, e.g. on NG-U or Xn-U interfaces.
+class gtpu_tunnel_psup_rx_impl : public gtpu_tunnel_base_rx
 {
 public:
-  gtpu_tunnel_ngu_rx_impl(cu_up_ue_index_t                                  ue_index,
-                          gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config cfg,
-                          gtpu_tunnel_ngu_rx_lower_layer_notifier&          rx_lower_,
-                          timer_factory                                     ue_ctrl_timer_factory_) :
+  gtpu_tunnel_psup_rx_impl(cu_up_ue_index_t                                    ue_index,
+                           gtpu_tunnel_psup_config::gtpu_tunnel_psup_rx_config cfg,
+                           gtpu_tunnel_psup_rx_lower_layer_notifier&           rx_lower_,
+                           timer_factory                                       ue_ctrl_timer_factory_) :
     gtpu_tunnel_base_rx(gtpu_tunnel_log_prefix{ue_index, cfg.local_teid, "DL"}, cfg.test_mode),
     psup_packer(logger.get_basic_logger()),
     lower_dn(rx_lower_),
@@ -59,9 +59,9 @@ public:
       reordering_timer = ue_ctrl_timer_factory.create_timer();
       reordering_timer.set(config.t_reordering, reordering_callback{this});
     }
-    logger.log_info("GTPU NGU Rx configured. {}", config);
+    logger.log_info("GTP-U PSUP Rx configured. {}", config);
   }
-  ~gtpu_tunnel_ngu_rx_impl() override = default;
+  ~gtpu_tunnel_psup_rx_impl() override = default;
 
   void stop()
   {
@@ -89,9 +89,9 @@ protected:
     // Limit UE to AMBR.
     if (not config.ignore_ue_ambr && not config.ue_ambr_limiter->consume(pdu.buf.length())) {
       if (not config.warn_on_drop) {
-        logger.log_info("Dropped GTPU PDU. UE went over UE-AMBR");
+        logger.log_info("Dropped GTP-U PDU. UE went over UE-AMBR");
       } else {
-        logger.log_warning("Dropped GTPU PDU. UE went over UE-AMBR");
+        logger.log_warning("Dropped GTP-U PDU. UE went over UE-AMBR");
       }
       return;
     }
@@ -300,12 +300,12 @@ protected:
   }
 
 private:
-  psup_packing                             psup_packer;
-  gtpu_tunnel_ngu_rx_lower_layer_notifier& lower_dn;
-  bool                                     stopped = false;
+  psup_packing                              psup_packer;
+  gtpu_tunnel_psup_rx_lower_layer_notifier& lower_dn;
+  bool                                      stopped = false;
 
   /// Rx config
-  gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config config;
+  gtpu_tunnel_psup_config::gtpu_tunnel_psup_rx_config config;
 
   /// Rx state
   ///
@@ -325,7 +325,7 @@ private:
   class reordering_callback
   {
   public:
-    explicit reordering_callback(gtpu_tunnel_ngu_rx_impl* parent_) : parent(parent_) {}
+    explicit reordering_callback(gtpu_tunnel_psup_rx_impl* parent_) : parent(parent_) {}
     void operator()()
     {
       if (not parent->config.warn_on_drop) {
@@ -341,7 +341,7 @@ private:
     }
 
   private:
-    gtpu_tunnel_ngu_rx_impl* parent;
+    gtpu_tunnel_psup_rx_impl* parent;
   };
 
   /// \brief Helper function for arithmetic comparisons of state variables or SN values.

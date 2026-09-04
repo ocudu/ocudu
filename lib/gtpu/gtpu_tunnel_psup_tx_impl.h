@@ -8,7 +8,7 @@
 #include "gtpu_tunnel_base_tx.h"
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/gtpu/gtpu_config.h"
-#include "ocudu/gtpu/gtpu_tunnel_ngu_tx.h"
+#include "ocudu/gtpu/gtpu_tunnel_psup_tx.h"
 #include "ocudu/ran/cu_up_types.h"
 #include "ocudu/support/bit_encoding.h"
 #include <arpa/inet.h>
@@ -16,20 +16,20 @@
 
 namespace ocudu {
 
-/// Class used for transmitting GTP-U NG-U bearers, e.g. on N3 interface.
-class gtpu_tunnel_ngu_tx_impl final : public gtpu_tunnel_base_tx, public gtpu_tunnel_ngu_tx_lower_layer_interface
+/// Class used for transmitting GTP-U PSUP tunnels, e.g. on NG-U or Xn-U interfaces.
+class gtpu_tunnel_psup_tx_impl final : public gtpu_tunnel_base_tx, public gtpu_tunnel_psup_tx_lower_layer_interface
 {
 public:
-  gtpu_tunnel_ngu_tx_impl(cu_up_ue_index_t                                         ue_index,
-                          const gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_tx_config& cfg_,
-                          dlt_pcap&                                                gtpu_pcap_,
-                          gtpu_tunnel_common_tx_upper_layer_notifier&              upper_dn_) :
+  gtpu_tunnel_psup_tx_impl(cu_up_ue_index_t                                           ue_index,
+                           const gtpu_tunnel_psup_config::gtpu_tunnel_psup_tx_config& cfg_,
+                           dlt_pcap&                                                  gtpu_pcap_,
+                           gtpu_tunnel_common_tx_upper_layer_notifier&                upper_dn_) :
     gtpu_tunnel_base_tx(gtpu_tunnel_log_prefix{ue_index, cfg_.peer_teid, "UL"}, gtpu_pcap_, upper_dn_),
     cfg(cfg_),
     current_peer_teid(cfg_.peer_teid)
   {
     to_sockaddr(peer_sockaddr, cfg.peer_addr.c_str(), cfg.peer_port);
-    logger.log_info("GTPU NGU Tx configured. {}", cfg);
+    logger.log_info("GTPU PSUP Tx configured. {}", cfg);
   }
 
   void stop() { stopped = true; }
@@ -88,13 +88,13 @@ public:
     current_peer_teid = int_to_gtpu_teid(new_teid);
     to_sockaddr(peer_sockaddr, new_addr.c_str(), new_port);
     logger.log_info(
-        "GTPU NGU Tx endpoint updated. peer_addr={} peer_port={} peer_teid={}", new_addr, new_port, current_peer_teid);
+        "GTPU PSUP Tx endpoint updated. peer_addr={} peer_port={} peer_teid={}", new_addr, new_port, current_peer_teid);
   }
 
 private:
-  const gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_tx_config cfg;
-  gtpu_teid_t                                             current_peer_teid = {};
-  sockaddr_storage                                        peer_sockaddr     = {};
-  bool                                                    stopped           = false;
+  const gtpu_tunnel_psup_config::gtpu_tunnel_psup_tx_config cfg;
+  gtpu_teid_t                                               current_peer_teid = {};
+  sockaddr_storage                                          peer_sockaddr     = {};
+  bool                                                      stopped           = false;
 };
 } // namespace ocudu

@@ -5,8 +5,8 @@
 #include "gtpu_test_shared.h"
 #include "lib/gtpu/gtpu_pdu.h"
 #include "ocudu/gtpu/gtpu_tunnel_common_rx.h"
-#include "ocudu/gtpu/gtpu_tunnel_ngu_factory.h"
-#include "ocudu/gtpu/gtpu_tunnel_ngu_tx.h"
+#include "ocudu/gtpu/gtpu_tunnel_psup_factory.h"
+#include "ocudu/gtpu/gtpu_tunnel_psup_tx.h"
 #include "ocudu/support/executors/manual_task_worker.h"
 #include "ocudu/support/rate_limiting/token_bucket.h"
 #include "ocudu/support/rate_limiting/token_bucket_config.h"
@@ -15,7 +15,7 @@
 
 using namespace ocudu;
 
-class gtpu_tunnel_rx_lower_dummy : public gtpu_tunnel_ngu_rx_lower_layer_notifier
+class gtpu_tunnel_rx_lower_dummy : public gtpu_tunnel_psup_rx_lower_layer_notifier
 {
   void on_new_sdu(byte_buffer sdu, qos_flow_id_t qos_flow_id) final
   {
@@ -53,11 +53,11 @@ public:
   sockaddr_storage last_addr = {};
 };
 
-/// Fixture class for GTP-U tunnel NG-U tests
-class gtpu_tunnel_ngu_test : public ::testing::Test
+/// Fixture class for GTP-U tunnel PSUP tests
+class gtpu_tunnel_psup_test : public ::testing::Test
 {
 public:
-  gtpu_tunnel_ngu_test() :
+  gtpu_tunnel_psup_test() :
     logger(ocudulog::fetch_basic_logger("TEST", false)), gtpu_logger(ocudulog::fetch_basic_logger("GTPU", false))
   {
   }
@@ -94,7 +94,7 @@ protected:
   timer_factory      timers{timers_manager, worker};
 
   // GTP-U tunnel entity
-  std::unique_ptr<gtpu_tunnel_ngu> gtpu;
+  std::unique_ptr<gtpu_tunnel_psup> gtpu;
 
   // Surrounding tester
   gtpu_tunnel_rx_lower_dummy gtpu_rx = {};
@@ -102,7 +102,7 @@ protected:
 };
 
 /// \brief Test correct creation of GTP-U entity
-TEST_F(gtpu_tunnel_ngu_test, entity_creation)
+TEST_F(gtpu_tunnel_psup_test, entity_creation)
 {
   null_dlt_pcap dummy_pcap;
 
@@ -112,22 +112,22 @@ TEST_F(gtpu_tunnel_ngu_test, entity_creation)
   token_bucket ue_ambr_limiter(ue_ambr_cfg);
 
   // init GTP-U entity
-  gtpu_tunnel_ngu_creation_message msg = {};
-  msg.cfg.rx.local_teid                = gtpu_teid_t{0x1};
-  msg.cfg.rx.ue_ambr_limiter           = &ue_ambr_limiter;
-  msg.cfg.tx.peer_teid                 = gtpu_teid_t{0x2};
-  msg.cfg.tx.peer_addr                 = "127.0.0.1";
-  msg.gtpu_pcap                        = &dummy_pcap;
-  msg.rx_lower                         = &gtpu_rx;
-  msg.tx_upper                         = &gtpu_tx;
-  msg.ue_ctrl_timer_factory            = timers;
-  gtpu                                 = create_gtpu_tunnel_ngu(msg);
+  gtpu_tunnel_psup_creation_message msg = {};
+  msg.cfg.rx.local_teid                 = gtpu_teid_t{0x1};
+  msg.cfg.rx.ue_ambr_limiter            = &ue_ambr_limiter;
+  msg.cfg.tx.peer_teid                  = gtpu_teid_t{0x2};
+  msg.cfg.tx.peer_addr                  = "127.0.0.1";
+  msg.gtpu_pcap                         = &dummy_pcap;
+  msg.rx_lower                          = &gtpu_rx;
+  msg.tx_upper                          = &gtpu_tx;
+  msg.ue_ctrl_timer_factory             = timers;
+  gtpu                                  = create_gtpu_tunnel_psup(msg);
 
   ASSERT_NE(gtpu, nullptr);
 }
 
 /// \brief Test correct reception of GTP-U packet with PDU Session Container
-TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
+TEST_F(gtpu_tunnel_psup_test, rx_sdu)
 {
   null_dlt_pcap dummy_pcap;
 
@@ -137,16 +137,16 @@ TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
   token_bucket ue_ambr_limiter(ue_ambr_cfg);
 
   // init GTP-U entity
-  gtpu_tunnel_ngu_creation_message msg = {};
-  msg.cfg.rx.local_teid                = gtpu_teid_t{0x2};
-  msg.cfg.rx.ue_ambr_limiter           = &ue_ambr_limiter;
-  msg.cfg.tx.peer_teid                 = gtpu_teid_t{0xbc1e3be9};
-  msg.cfg.tx.peer_addr                 = "127.0.0.1";
-  msg.gtpu_pcap                        = &dummy_pcap;
-  msg.rx_lower                         = &gtpu_rx;
-  msg.tx_upper                         = &gtpu_tx;
-  msg.ue_ctrl_timer_factory            = timers;
-  gtpu                                 = create_gtpu_tunnel_ngu(msg);
+  gtpu_tunnel_psup_creation_message msg = {};
+  msg.cfg.rx.local_teid                 = gtpu_teid_t{0x2};
+  msg.cfg.rx.ue_ambr_limiter            = &ue_ambr_limiter;
+  msg.cfg.tx.peer_teid                  = gtpu_teid_t{0xbc1e3be9};
+  msg.cfg.tx.peer_addr                  = "127.0.0.1";
+  msg.gtpu_pcap                         = &dummy_pcap;
+  msg.rx_lower                          = &gtpu_rx;
+  msg.tx_upper                          = &gtpu_tx;
+  msg.ue_ctrl_timer_factory             = timers;
+  gtpu                                  = create_gtpu_tunnel_psup(msg);
 
   sockaddr_storage   orig_addr = {};
   byte_buffer        orig_vec  = make_byte_buffer(gtpu_ping_vec_teid_2_qfi_1_dl).value();
@@ -162,7 +162,7 @@ TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
 }
 
 /// \brief Test correct transmission of GTP-U packet
-TEST_F(gtpu_tunnel_ngu_test, tx_pdu)
+TEST_F(gtpu_tunnel_psup_test, tx_pdu)
 {
   null_dlt_pcap dummy_pcap;
 
@@ -172,21 +172,21 @@ TEST_F(gtpu_tunnel_ngu_test, tx_pdu)
   token_bucket ue_ambr_limiter(ue_ambr_cfg);
 
   // init GTP-U entity
-  gtpu_tunnel_ngu_creation_message msg = {};
-  msg.cfg.rx.local_teid                = gtpu_teid_t{0x1};
-  msg.cfg.rx.ue_ambr_limiter           = &ue_ambr_limiter;
-  msg.cfg.tx.peer_teid                 = gtpu_teid_t{0x2};
-  msg.cfg.tx.peer_addr                 = "127.0.0.1";
-  msg.gtpu_pcap                        = &dummy_pcap;
-  msg.rx_lower                         = &gtpu_rx;
-  msg.tx_upper                         = &gtpu_tx;
-  msg.ue_ctrl_timer_factory            = timers;
-  gtpu                                 = create_gtpu_tunnel_ngu(msg);
+  gtpu_tunnel_psup_creation_message msg = {};
+  msg.cfg.rx.local_teid                 = gtpu_teid_t{0x1};
+  msg.cfg.rx.ue_ambr_limiter            = &ue_ambr_limiter;
+  msg.cfg.tx.peer_teid                  = gtpu_teid_t{0x2};
+  msg.cfg.tx.peer_addr                  = "127.0.0.1";
+  msg.gtpu_pcap                         = &dummy_pcap;
+  msg.rx_lower                          = &gtpu_rx;
+  msg.tx_upper                          = &gtpu_tx;
+  msg.ue_ctrl_timer_factory             = timers;
+  gtpu                                  = create_gtpu_tunnel_psup(msg);
 
   byte_buffer sdu = byte_buffer::create(gtpu_ping_sdu).value();
   byte_buffer pdu = byte_buffer::create(gtpu_ping_vec_teid_2_qfi_1_ul).value();
 
-  gtpu_tunnel_ngu_tx_lower_layer_interface* tx = gtpu->get_tx_lower_layer_interface();
+  gtpu_tunnel_psup_tx_lower_layer_interface* tx = gtpu->get_tx_lower_layer_interface();
   tx->handle_sdu(std::move(sdu), uint_to_qos_flow_id(1));
   ASSERT_EQ(pdu, gtpu_tx.last_tx);
 }

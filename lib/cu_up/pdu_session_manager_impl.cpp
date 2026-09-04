@@ -6,7 +6,7 @@
 #include "ocudu/e1ap/common/e1ap_types.h"
 #include "ocudu/e1ap/cu_up/e1ap_config_converters.h"
 #include "ocudu/f1u/cu_up/f1u_bearer_factory.h"
-#include "ocudu/gtpu/gtpu_tunnel_ngu_factory.h"
+#include "ocudu/gtpu/gtpu_tunnel_psup_factory.h"
 #include "ocudu/pdcp/pdcp_factory.h"
 #include "ocudu/rohc/rohc_support.h"
 #include "ocudu/sdap/sdap_factory.h"
@@ -107,22 +107,22 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   new_session->sdap                     = create_sdap(sdap_msg);
 
   // Create GTPU entity
-  gtpu_tunnel_ngu_creation_message msg = {};
-  msg.ue_index                         = ue_index;
-  msg.cfg.tx.peer_teid                 = int_to_gtpu_teid(ul_tunnel_info.gtp_teid.value());
-  msg.cfg.tx.peer_addr                 = ul_tunnel_info.tp_address.to_string();
-  msg.cfg.tx.peer_port                 = ngu_config.upf_port;
-  msg.cfg.rx.local_teid                = new_session->local_teid;
-  msg.cfg.rx.ignore_ue_ambr            = ngu_config.gtpu_ignore_ue_ambr;
-  msg.cfg.rx.ue_ambr_limiter           = ue_ambr_limiter.get();
-  msg.cfg.rx.t_reordering              = ngu_config.gtpu_reordering_timer;
-  msg.cfg.rx.warn_on_drop              = ngu_config.warn_on_drop;
-  msg.cfg.rx.test_mode                 = test_mode_config.enabled;
-  msg.rx_lower                         = &new_session->gtpu_to_sdap_adapter;
-  msg.tx_upper                         = &new_session->gtpu_to_udp_adapter;
-  msg.gtpu_pcap                        = &gtpu_pcap;
-  msg.ue_ctrl_timer_factory            = ue_ctrl_timer_factory;
-  new_session->gtpu                    = create_gtpu_tunnel_ngu(msg);
+  gtpu_tunnel_psup_creation_message msg = {};
+  msg.ue_index                          = ue_index;
+  msg.cfg.tx.peer_teid                  = int_to_gtpu_teid(ul_tunnel_info.gtp_teid.value());
+  msg.cfg.tx.peer_addr                  = ul_tunnel_info.tp_address.to_string();
+  msg.cfg.tx.peer_port                  = ngu_config.upf_port;
+  msg.cfg.rx.local_teid                 = new_session->local_teid;
+  msg.cfg.rx.ignore_ue_ambr             = ngu_config.gtpu_ignore_ue_ambr;
+  msg.cfg.rx.ue_ambr_limiter            = ue_ambr_limiter.get();
+  msg.cfg.rx.t_reordering               = ngu_config.gtpu_reordering_timer;
+  msg.cfg.rx.warn_on_drop               = ngu_config.warn_on_drop;
+  msg.cfg.rx.test_mode                  = test_mode_config.enabled;
+  msg.rx_lower                          = &new_session->gtpu_to_sdap_adapter;
+  msg.tx_upper                          = &new_session->gtpu_to_udp_adapter;
+  msg.gtpu_pcap                         = &gtpu_pcap;
+  msg.ue_ctrl_timer_factory             = ue_ctrl_timer_factory;
+  new_session->gtpu                     = create_gtpu_tunnel_psup(msg);
 
   // Connect adapters
   new_session->sdap_to_gtpu_adapter.connect_gtpu(*new_session->gtpu->get_tx_lower_layer_interface());

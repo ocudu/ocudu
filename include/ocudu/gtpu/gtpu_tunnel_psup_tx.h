@@ -35,15 +35,15 @@ namespace ocudu {
  ****************************************/
 /// This interface represents the data entry point of the transmitting side of a GTP-U entity.
 /// The lower layer will use this call to pass GTP-U SDUs (i.e. NG-U PDUs) into the TX entity.
-class gtpu_tunnel_ngu_tx_lower_layer_interface
+class gtpu_tunnel_psup_tx_lower_layer_interface
 {
 public:
-  gtpu_tunnel_ngu_tx_lower_layer_interface()                                                           = default;
-  virtual ~gtpu_tunnel_ngu_tx_lower_layer_interface()                                                  = default;
-  gtpu_tunnel_ngu_tx_lower_layer_interface(const gtpu_tunnel_ngu_tx_lower_layer_interface&)            = delete;
-  gtpu_tunnel_ngu_tx_lower_layer_interface& operator=(const gtpu_tunnel_ngu_tx_lower_layer_interface&) = delete;
-  gtpu_tunnel_ngu_tx_lower_layer_interface(gtpu_tunnel_ngu_tx_lower_layer_interface&&)                 = delete;
-  gtpu_tunnel_ngu_tx_lower_layer_interface& operator=(gtpu_tunnel_ngu_tx_lower_layer_interface&&)      = delete;
+  gtpu_tunnel_psup_tx_lower_layer_interface()                                                            = default;
+  virtual ~gtpu_tunnel_psup_tx_lower_layer_interface()                                                   = default;
+  gtpu_tunnel_psup_tx_lower_layer_interface(const gtpu_tunnel_psup_tx_lower_layer_interface&)            = delete;
+  gtpu_tunnel_psup_tx_lower_layer_interface& operator=(const gtpu_tunnel_psup_tx_lower_layer_interface&) = delete;
+  gtpu_tunnel_psup_tx_lower_layer_interface(gtpu_tunnel_psup_tx_lower_layer_interface&&)                 = delete;
+  gtpu_tunnel_psup_tx_lower_layer_interface& operator=(gtpu_tunnel_psup_tx_lower_layer_interface&&)      = delete;
 
   /// \brief Interface for the lower layer to pass a SDU (i.e. NG-U PDU) into the GTP-U.
   /// \param sdu SDU to be handled.

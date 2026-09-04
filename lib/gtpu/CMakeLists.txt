@@ -3,7 +3,7 @@
 # Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 
-set(SOURCES gtpu_tunnel_ngu_factory.cpp
+set(SOURCES gtpu_tunnel_psup_factory.cpp
             gtpu_tunnel_nru_factory.cpp
             gtpu_pdu.cpp
             gtpu_demux_factory.cpp

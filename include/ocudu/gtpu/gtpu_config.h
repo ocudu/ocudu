@@ -16,9 +16,9 @@ namespace ocudu {
 /// TS 29.281 Sec. 4.4.2.3
 constexpr unsigned GTPU_PORT = 2152;
 
-/// \brief Configurable parameters for GTP-U NG-U tunnels
-struct gtpu_tunnel_ngu_config {
-  struct gtpu_tunnel_ngu_rx_config {
+/// \brief Configurable parameters for GTP-U PSUP tunnels
+struct gtpu_tunnel_psup_config {
+  struct gtpu_tunnel_psup_rx_config {
     gtpu_teid_t               local_teid;
     std::chrono::milliseconds t_reordering    = {};
     token_bucket*             ue_ambr_limiter = nullptr;
@@ -26,7 +26,7 @@ struct gtpu_tunnel_ngu_config {
     bool                      ignore_ue_ambr  = false;
     bool                      test_mode       = false;
   } rx;
-  struct gtpu_tunnel_ngu_tx_config {
+  struct gtpu_tunnel_psup_tx_config {
     gtpu_teid_t peer_teid;
     std::string peer_addr;
     uint16_t    peer_port;
@@ -55,9 +55,9 @@ struct gtpu_tunnel_nru_config {
 //
 namespace fmt {
 
-// GTP-U NG-U RX config
+// GTP-U PSUP RX config
 template <>
-struct formatter<ocudu::gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config> {
+struct formatter<ocudu::gtpu_tunnel_psup_config::gtpu_tunnel_psup_rx_config> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx)
   {
@@ -65,10 +65,10 @@ struct formatter<ocudu::gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config> {
   }
 
   template <typename FormatContext>
-  auto format(const ocudu::gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config& cfg, FormatContext& ctx) const
+  auto format(const ocudu::gtpu_tunnel_psup_config::gtpu_tunnel_psup_rx_config& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
-                     "node=ngu local_teid={} t_reordering={} warn_on_drop={} ignore_ue_ambr={}",
+                     "node=psup local_teid={} t_reordering={} warn_on_drop={} ignore_ue_ambr={}",
                      cfg.local_teid,
                      cfg.t_reordering,
                      cfg.warn_on_drop,
@@ -76,9 +76,9 @@ struct formatter<ocudu::gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config> {
   }
 };
 
-// GTP-U NG-U TX config
+// GTP-U PSUP TX config
 template <>
-struct formatter<ocudu::gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_tx_config> {
+struct formatter<ocudu::gtpu_tunnel_psup_config::gtpu_tunnel_psup_tx_config> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx)
   {
@@ -86,15 +86,15 @@ struct formatter<ocudu::gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_tx_config> {
   }
 
   template <typename FormatContext>
-  auto format(const ocudu::gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_tx_config& cfg, FormatContext& ctx) const
+  auto format(const ocudu::gtpu_tunnel_psup_config::gtpu_tunnel_psup_tx_config& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "peer_teid={} peer_addr={} peer_port={}", cfg.peer_teid, cfg.peer_addr, cfg.peer_port);
   }
 };
 
-// GTP-U NG-U config
+// GTP-U PSUP config
 template <>
-struct formatter<ocudu::gtpu_tunnel_ngu_config> {
+struct formatter<ocudu::gtpu_tunnel_psup_config> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx)
   {
@@ -102,7 +102,7 @@ struct formatter<ocudu::gtpu_tunnel_ngu_config> {
   }
 
   template <typename FormatContext>
-  auto format(const ocudu::gtpu_tunnel_ngu_config& cfg, FormatContext& ctx) const
+  auto format(const ocudu::gtpu_tunnel_psup_config& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{} {}", cfg.rx, cfg.tx);
   }

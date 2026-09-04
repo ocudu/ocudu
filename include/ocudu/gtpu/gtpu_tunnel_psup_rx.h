@@ -32,17 +32,17 @@ namespace ocudu {
 /****************************************
  * Interfaces/notifiers for the gateway
  ****************************************/
-/// This interface represents the data exit point of the receiving side of a GTP-U NGU entity.
+/// This interface represents the data exit point of the receiving side of a GTP-U PSUP entity.
 /// The GTP-U will use this notifier to pass GTP-U SDUs (i.e. NG-U PDUs) into the lower layers.
-class gtpu_tunnel_ngu_rx_lower_layer_notifier
+class gtpu_tunnel_psup_rx_lower_layer_notifier
 {
 public:
-  gtpu_tunnel_ngu_rx_lower_layer_notifier()                                                          = default;
-  virtual ~gtpu_tunnel_ngu_rx_lower_layer_notifier()                                                 = default;
-  gtpu_tunnel_ngu_rx_lower_layer_notifier(const gtpu_tunnel_ngu_rx_lower_layer_notifier&)            = delete;
-  gtpu_tunnel_ngu_rx_lower_layer_notifier& operator=(const gtpu_tunnel_ngu_rx_lower_layer_notifier&) = delete;
-  gtpu_tunnel_ngu_rx_lower_layer_notifier(gtpu_tunnel_ngu_rx_lower_layer_notifier&&)                 = delete;
-  gtpu_tunnel_ngu_rx_lower_layer_notifier& operator=(gtpu_tunnel_ngu_rx_lower_layer_notifier&&)      = delete;
+  gtpu_tunnel_psup_rx_lower_layer_notifier()                                                           = default;
+  virtual ~gtpu_tunnel_psup_rx_lower_layer_notifier()                                                  = default;
+  gtpu_tunnel_psup_rx_lower_layer_notifier(const gtpu_tunnel_psup_rx_lower_layer_notifier&)            = delete;
+  gtpu_tunnel_psup_rx_lower_layer_notifier& operator=(const gtpu_tunnel_psup_rx_lower_layer_notifier&) = delete;
+  gtpu_tunnel_psup_rx_lower_layer_notifier(gtpu_tunnel_psup_rx_lower_layer_notifier&&)                 = delete;
+  gtpu_tunnel_psup_rx_lower_layer_notifier& operator=(gtpu_tunnel_psup_rx_lower_layer_notifier&&)      = delete;
 
   /// \brief Interface for the GTP-U to pass a SDU (i.e. NG-U PDU) into the lower layer.
   /// \param sdu SDU to be passed down.
