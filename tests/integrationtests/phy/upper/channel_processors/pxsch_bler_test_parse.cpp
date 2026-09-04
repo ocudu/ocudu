@@ -42,6 +42,20 @@ parse_td_interpolation_strategy(const std::string& str)
   return std::nullopt;
 }
 
+static std::optional<port_channel_estimator_fd_smoothing_strategy> parse_fd_smoothing_strategy(const std::string& str)
+{
+  if (str == "none") {
+    return port_channel_estimator_fd_smoothing_strategy::none;
+  }
+  if (str == "mean") {
+    return port_channel_estimator_fd_smoothing_strategy::mean;
+  }
+  if (str == "filter") {
+    return port_channel_estimator_fd_smoothing_strategy::filter;
+  }
+  return std::nullopt;
+}
+
 std::optional<pxsch_bler_test_configuration> parse_configuration(int argc, char** argv)
 {
   CLI::App                      app{"OCUDU PxSCH BLER test"};
@@ -97,6 +111,15 @@ std::optional<pxsch_bler_test_configuration> parse_configuration(int argc, char*
         cfg.td_interpolation_strategy = strat.value();
       },
       "TD interpolation strategy: interpolate, average");
+
+  app.add_option_function<std::string>(
+      "--fd-smoothing",
+      [&cfg](const std::string& value) {
+        auto strat = parse_fd_smoothing_strategy(value);
+        report_error_if_not(strat, "Invalid FD smoothing strategy {}", value);
+        cfg.fd_smoothing_strategy = strat.value();
+      },
+      "FD smoothing strategy: none, mean, filter");
 
   app.add_option_function<std::string>(
       "-A,--dmrs-additional-positions",

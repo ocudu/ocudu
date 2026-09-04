@@ -34,6 +34,8 @@ struct pxsch_bler_test_configuration {
   std::string                                      pxsch_type                       = "auto";
   port_channel_estimator_td_interpolation_strategy td_interpolation_strategy =
       port_channel_estimator_td_interpolation_strategy::average;
+  port_channel_estimator_fd_smoothing_strategy fd_smoothing_strategy =
+      port_channel_estimator_fd_smoothing_strategy::filter;
   dmrs_additional_positions dmrs_additional_pos = dmrs_additional_positions::pos2;
   unsigned                  nof_ldpc_iterations = 10;
   std::vector<unsigned>     rep_rv_sequence     = {0};

@@ -175,6 +175,7 @@ private:
                                           use_early_stop,
                                           cfg.pxsch_type,
                                           cfg.td_interpolation_strategy,
+                                          cfg.fd_smoothing_strategy,
                                           channel_equalizer_algorithm_type::zf);
     report_fatal_error_if_not(pusch_proc_factory, "Failed to create PUSCH processor factory.");
 
