@@ -7,7 +7,6 @@
 #include "apps/helpers/network/udp_appconfig.h"
 #include "ocudu/gtpu/gtpu_config.h"
 #include "ocudu/ran/qos/five_qi.h"
-#include "ocudu/ran/s_nssai.h"
 #include <vector>
 
 namespace ocudu {
