@@ -4,7 +4,6 @@
 
 #include "gnb_appconfig_validators.h"
 #include "apps/helpers/logger/logger_appconfig_validator.h"
-#include "apps/helpers/xnu/xnu_appconfig_validator.h"
 #include "apps/services/worker_manager/worker_manager_appconfig_validator.h"
 #include "apps/units/flexible_o_du/o_du_high/du_high/du_high_config.h"
 #include "apps/units/o_cu_cp/cu_cp/cu_cp_unit_config.h"
@@ -34,10 +33,6 @@ bool ocudu::validate_appconfig(const gnb_appconfig& config)
   }
 
   if (!validate_hal_config(config.hal_config)) {
-    return false;
-  }
-
-  if (!validate_xnu_sockets_appconfig(config.xnu_cfg)) {
     return false;
   }
 

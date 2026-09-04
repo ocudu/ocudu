@@ -7,7 +7,6 @@
 #include "apps/helpers/logger/logger_appconfig_yaml_writer.h"
 #include "apps/helpers/network/sctp_config_yaml_writer.h"
 #include "apps/helpers/tracing/tracer_appconfig_yaml_writer.h"
-#include "apps/helpers/xnu/xnu_config_yaml_writer.h"
 #include "apps/services/app_execution_metrics/executor_metrics_config_yaml_writer.h"
 #include "apps/services/app_resource_usage/app_resource_usage_config_yaml_writer.h"
 #include "apps/services/buffer_pool/buffer_pool_config_yaml_writer.h"
@@ -70,12 +69,6 @@ static void fill_cu_up_appconfig_f1u_section(YAML::Node& node, const f1u_sockets
   fill_f1u_config_yaml_schema(f1u_node, config);
 }
 
-static void fill_cu_up_appconfig_xnu_section(YAML::Node& node, const xnu_sockets_appconfig& config)
-{
-  YAML::Node xnu_node = node["cu_up"]["xnu"];
-  fill_xnu_config_yaml_schema(xnu_node, config);
-}
-
 void ocudu::fill_cu_up_appconfig_in_yaml_schema(YAML::Node& node, const cu_up_appconfig& config)
 {
   app_services::fill_app_resource_usage_config_in_yaml_schema(node, config.metrics_cfg.rusage_config);
@@ -89,5 +82,4 @@ void ocudu::fill_cu_up_appconfig_in_yaml_schema(YAML::Node& node, const cu_up_ap
   fill_cu_up_appconfig_remote_control_section(node["remote_control"], config.remote_control_config);
   fill_cu_up_appconfig_e1ap_list_section(node, config.e1ap_cfg);
   fill_cu_up_appconfig_f1u_section(node, config.f1u_cfg);
-  fill_cu_up_appconfig_xnu_section(node, config.xnu_cfg);
 }

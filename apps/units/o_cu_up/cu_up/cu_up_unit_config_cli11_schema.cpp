@@ -6,6 +6,7 @@
 #include "apps/helpers/logger/logger_appconfig_cli11_utils.h"
 #include "apps/helpers/metrics/metrics_config_cli11_schema.h"
 #include "apps/helpers/network/udp_cli11_schema.h"
+#include "apps/helpers/xnu/xnu_cli11_schema.h"
 #include "apps/units/o_cu_up/cu_up/cu_up_unit_config.h"
 #include "apps/units/o_cu_up/cu_up/cu_up_unit_pcap_config.h"
 #include "ocudu/ran/cu_up_constants.h"
@@ -120,6 +121,10 @@ static void configure_cli11_cu_up_args(CLI::App& app, cu_up_unit_config& cu_up_p
   // NG-U section.
   CLI::App* ngu_subcmd = add_subcommand(app, "ngu", "NG-U parameters")->configurable();
   configure_cli11_ngu_args(*ngu_subcmd, cu_up_params.ngu_cfg);
+
+  // Xn-U section.
+  CLI::App* xnu_subcmd = add_subcommand(app, "xnu", "Xn-U parameters")->configurable();
+  configure_cli11_xnu_sockets_args(*xnu_subcmd, cu_up_params.xnu_cfg);
 
   // Test mode section.
   CLI::App* test_mode_subcmd = add_subcommand(app, "test_mode", "CU-UP test mode parameters")->configurable();

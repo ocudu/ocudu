@@ -6,7 +6,6 @@
 #include "apps/helpers/hal/hal_cli11_schema.h"
 #include "apps/helpers/logger/logger_appconfig_cli11_schema.h"
 #include "apps/helpers/tracing/tracer_appconfig_cli11_schema.h"
-#include "apps/helpers/xnu/xnu_cli11_schema.h"
 #include "apps/services/app_execution_metrics/executor_metrics_config_cli11_schema.h"
 #include "apps/services/app_resource_usage/app_resource_usage_config_cli11_schema.h"
 #include "apps/services/buffer_pool/buffer_pool_appconfig_cli11_schema.h"
@@ -69,11 +68,6 @@ void ocudu::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconf
   app_services::configure_cli11_with_app_resource_usage_config_schema(app, gnb_cfg.metrics_cfg.rusage_config);
   app_services::configure_cli11_with_metrics_appconfig_schema(app, gnb_cfg.metrics_cfg.metrics_service_cfg);
 
-  // CU-UP section.
-  CLI::App* cu_up_subcmd = add_subcommand(app, "cu_up", "CU-UP parameters")->configurable();
-  // XN-U section.
-  CLI::App* xnu_subcmd = add_subcommand(*cu_up_subcmd, "xnu", "Xn-U parameters")->configurable();
-  configure_cli11_xnu_sockets_args(*xnu_subcmd, gnb_cfg.xnu_cfg);
 
 #ifdef DPDK_FOUND
   // HAL section.

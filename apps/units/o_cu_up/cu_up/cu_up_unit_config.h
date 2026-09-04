@@ -6,6 +6,7 @@
 
 #include "apps/helpers/metrics/metrics_config.h"
 #include "apps/helpers/network/udp_appconfig.h"
+#include "apps/helpers/xnu/xnu_appconfig.h"
 #include "apps/units/o_cu_up/cu_up/cu_up_unit_pcap_config.h"
 #include "cu_up_unit_logger_config.h"
 #include "ocudu/ran/gnb_cu_up_id.h"
@@ -106,6 +107,8 @@ struct cu_up_unit_config {
   bool warn_on_drop = false;
   /// NG-U configuration.
   cu_up_unit_ngu_config ngu_cfg;
+  /// Xn-U configuration.
+  xnu_sockets_appconfig xnu_cfg;
   /// Execution configuration
   cu_up_unit_execution_config exec_cfg;
   /// Metrics.

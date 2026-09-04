@@ -5,6 +5,7 @@
 #include "cu_up_unit_config_yaml_writer.h"
 #include "apps/helpers/metrics/metrics_config_yaml_writer.h"
 #include "apps/helpers/network/udp_config_yaml_writer.h"
+#include "apps/helpers/xnu/xnu_config_yaml_writer.h"
 #include "cu_up_unit_config.h"
 #include "ocudu/adt/span.h"
 
@@ -151,6 +152,8 @@ void ocudu::fill_cu_up_config_in_yaml_schema(YAML::Node& node, const cu_up_unit_
   YAML::Node cu_up_node = node["cu_up"];
   fill_cu_up_section(cu_up_node, config);
   fill_cu_up_ngu_section(cu_up_node["ngu"], config.ngu_cfg);
+  YAML::Node xnu_node = cu_up_node["xnu"];
+  fill_xnu_config_yaml_schema(xnu_node, config.xnu_cfg);
 
   fill_cu_up_qos_section(cu_up_node, config.qos_cfg);
 }

@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "cu_up_unit_config_validator.h"
+#include "apps/helpers/xnu/xnu_appconfig_validator.h"
 #include "cu_up_unit_config.h"
 #include "ocudu/adt/span.h"
 #include "ocudu/ran/plmn_identity.h"
@@ -73,6 +74,10 @@ bool ocudu::validate_cu_up_unit_config(const cu_up_unit_config& config, bool tra
   }
 
   if (!validate_plmn_list(config.plmn_list)) {
+    return false;
+  }
+
+  if (!validate_xnu_sockets_appconfig(config.xnu_cfg)) {
     return false;
   }
 
