@@ -77,7 +77,7 @@ bool ocudu::validate_cu_up_unit_config(const cu_up_unit_config& config, bool tra
     return false;
   }
 
-  if (!validate_xnu_sockets_appconfig(config.xnu_cfg)) {
+  if (!validate_xnu_sockets_appconfig(config.xnu_cfg.sockets_cfg)) {
     return false;
   }
 

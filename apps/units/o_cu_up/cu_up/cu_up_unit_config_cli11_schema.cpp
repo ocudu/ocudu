@@ -116,6 +116,35 @@ static void configure_cli11_test_mode_args(CLI::App& app, cu_up_unit_test_mode_c
   add_option(app, "--nof_ues", test_mode_params.nof_ues, "Number of UEs used for test mode")->capture_default_str();
 }
 
+static void configure_cli11_xnu_gtpu_args(CLI::App& app, cu_up_unit_xnu_gtpu_config& gtpu_cfg)
+{
+  add_option(app, "--queue_size", gtpu_cfg.gtpu_queue_size, "GTP-U queue size, in PDUs")->capture_default_str();
+  add_option(app, "--batch_size", gtpu_cfg.gtpu_batch_size, "Maximum number of GTP-U PDUs processed in a batch")
+      ->capture_default_str();
+  add_option(
+      app, "--reordering_timer", gtpu_cfg.gtpu_reordering_timer_ms, "GTP-U RX reordering timer (in milliseconds)")
+      ->capture_default_str();
+  add_option(
+      app, "--rate_limiter_period", gtpu_cfg.rate_limiter_period, "GTP-U RX rate limiter period (in milliseconds)")
+      ->capture_default_str();
+  add_option(app,
+             "--teid_release_linger_time",
+             gtpu_cfg.gtpu_teid_release_linger_time,
+             "Error indication suppression time for released TEIDs (in milliseconds)")
+      ->capture_default_str();
+  add_option(app, "--ignore_ue_ambr", gtpu_cfg.ignore_ue_ambr, "Ignore GTP-U DL UE-AMBR rate limiter")
+      ->capture_default_str();
+}
+
+static void configure_cli11_xnu_args(CLI::App& app, cu_up_unit_xnu_config& xnu_params)
+{
+  // Add GTP-U options.
+  CLI::App* gtpu_subcmd = add_subcommand(app, "gtpu", "CU-UP Xn-U GTP-U parameters")->configurable();
+  configure_cli11_xnu_gtpu_args(*gtpu_subcmd, xnu_params.gtpu_cfg);
+
+  configure_cli11_xnu_sockets_args(app, xnu_params.sockets_cfg);
+}
+
 static void configure_cli11_cu_up_args(CLI::App& app, cu_up_unit_config& cu_up_params)
 {
   // NG-U section.
@@ -124,7 +153,7 @@ static void configure_cli11_cu_up_args(CLI::App& app, cu_up_unit_config& cu_up_p
 
   // Xn-U section.
   CLI::App* xnu_subcmd = add_subcommand(app, "xnu", "Xn-U parameters")->configurable();
-  configure_cli11_xnu_sockets_args(*xnu_subcmd, cu_up_params.xnu_cfg);
+  configure_cli11_xnu_args(*xnu_subcmd, cu_up_params.xnu_cfg);
 
   // Test mode section.
   CLI::App* test_mode_subcmd = add_subcommand(app, "test_mode", "CU-UP test mode parameters")->configurable();

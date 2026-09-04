@@ -68,7 +68,6 @@ void ocudu::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconf
   app_services::configure_cli11_with_app_resource_usage_config_schema(app, gnb_cfg.metrics_cfg.rusage_config);
   app_services::configure_cli11_with_metrics_appconfig_schema(app, gnb_cfg.metrics_cfg.metrics_service_cfg);
 
-
 #ifdef DPDK_FOUND
   // HAL section.
   gnb_cfg.hal_config.emplace();

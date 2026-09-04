@@ -40,6 +40,23 @@ static void fill_cu_up_ngu_socket_section(YAML::Node node, const std::vector<cu_
   }
 }
 
+static void fill_cu_up_xnu_gtpu_section(YAML::Node& node, const cu_up_unit_xnu_gtpu_config& config)
+{
+  auto gtpu_node                        = node["gtpu"];
+  gtpu_node["queue_size"]               = config.gtpu_queue_size;
+  gtpu_node["batch_size"]               = config.gtpu_batch_size;
+  gtpu_node["reordering_timer"]         = config.gtpu_reordering_timer_ms;
+  gtpu_node["rate_limiter_period"]      = config.rate_limiter_period.count();
+  gtpu_node["teid_release_linger_time"] = config.gtpu_teid_release_linger_time.count();
+  gtpu_node["ignore_ue_ambr"]           = config.ignore_ue_ambr;
+}
+
+static void fill_cu_up_xnu_section(YAML::Node& node, const cu_up_unit_xnu_config& config)
+{
+  fill_cu_up_xnu_gtpu_section(node, config.gtpu_cfg);
+  fill_xnu_config_yaml_schema(node, config.sockets_cfg);
+}
+
 static void fill_cu_up_ngu_section(YAML::Node node, const cu_up_unit_ngu_config& config)
 {
   node["no_core"] = config.no_core;
@@ -153,7 +170,7 @@ void ocudu::fill_cu_up_config_in_yaml_schema(YAML::Node& node, const cu_up_unit_
   fill_cu_up_section(cu_up_node, config);
   fill_cu_up_ngu_section(cu_up_node["ngu"], config.ngu_cfg);
   YAML::Node xnu_node = cu_up_node["xnu"];
-  fill_xnu_config_yaml_schema(xnu_node, config.xnu_cfg);
+  fill_cu_up_xnu_section(xnu_node, config.xnu_cfg);
 
   fill_cu_up_qos_section(cu_up_node, config.qos_cfg);
 }

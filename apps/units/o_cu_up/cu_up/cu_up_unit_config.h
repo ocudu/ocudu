@@ -61,6 +61,21 @@ struct cu_up_unit_ngu_config {
   cu_up_unit_ngu_gtpu_config                gtpu_cfg;
 };
 
+/// GTP-U parameters for Xn-U.
+struct cu_up_unit_xnu_gtpu_config {
+  unsigned                  gtpu_queue_size          = 2046;
+  unsigned                  gtpu_batch_size          = 256;
+  unsigned                  gtpu_reordering_timer_ms = 0;
+  std::chrono::milliseconds rate_limiter_period{100};
+  std::chrono::milliseconds gtpu_teid_release_linger_time{100};
+  bool                      ignore_ue_ambr = true;
+};
+
+struct cu_up_unit_xnu_config {
+  xnu_sockets_appconfig      sockets_cfg;
+  cu_up_unit_xnu_gtpu_config gtpu_cfg;
+};
+
 /// F1-U configuration at CU_UP side
 struct cu_cp_unit_f1u_config {
   uint32_t queue_size = 8192; ///< Queue size for F1-U PDUs
@@ -108,7 +123,7 @@ struct cu_up_unit_config {
   /// NG-U configuration.
   cu_up_unit_ngu_config ngu_cfg;
   /// Xn-U configuration.
-  xnu_sockets_appconfig xnu_cfg;
+  cu_up_unit_xnu_config xnu_cfg;
   /// Execution configuration
   cu_up_unit_execution_config exec_cfg;
   /// Metrics.
