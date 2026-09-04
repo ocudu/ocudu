@@ -217,7 +217,8 @@ private:
   struct harq_key_hash {
     size_t operator()(const harq_key& k) const
     {
-      return std::hash<uint32_t>{}((static_cast<uint32_t>(to_value(k.rnti)) << 8) | static_cast<uint8_t>(k.harq_id));
+      return std::hash<uint32_t>{}((static_cast<uint32_t>(to_underlying(k.rnti)) << 8) |
+                                   static_cast<uint8_t>(k.harq_id));
     }
   };
 

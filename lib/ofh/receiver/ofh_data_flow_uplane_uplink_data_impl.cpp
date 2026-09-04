@@ -62,7 +62,7 @@ bool data_flow_uplane_uplink_data_impl::should_uplane_packet_be_filtered(
                 sector_id,
                 results.params.slot,
                 results.params.symbol_id,
-                to_value(results.params.filter_index));
+                to_underlying(results.params.filter_index));
 
     return true;
   }
@@ -75,8 +75,8 @@ bool data_flow_uplane_uplink_data_impl::should_uplane_packet_be_filtered(
     logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet as the expected filter index '{}' does "
                 "not match with value '{}' for slot '{}', symbol '{}' and eAxC '{}'",
                 sector_id,
-                to_value(context.filter_index),
-                to_value(params.filter_index),
+                to_underlying(context.filter_index),
+                to_underlying(params.filter_index),
                 params.slot,
                 params.symbol_id,
                 eaxc);

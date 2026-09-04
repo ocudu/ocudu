@@ -224,13 +224,13 @@ private:
 
   unsigned get_ue_offset(rnti_t rnti) const
   {
-    const unsigned base      = to_value(parent.cfg.rnti) + static_cast<unsigned>(cell_index) * parent.cfg.nof_ues;
-    const unsigned ue_offset = to_value(rnti) - base;
+    const unsigned base      = to_underlying(parent.cfg.rnti) + static_cast<unsigned>(cell_index) * parent.cfg.nof_ues;
+    const unsigned ue_offset = to_underlying(rnti) - base;
     return ue_offset;
   }
   rnti_t get_ue_rnti(unsigned ue_offset) const
   {
-    const unsigned base = to_value(parent.cfg.rnti) + static_cast<unsigned>(cell_index) * parent.cfg.nof_ues;
+    const unsigned base = to_underlying(parent.cfg.rnti) + static_cast<unsigned>(cell_index) * parent.cfg.nof_ues;
     return to_rnti(ue_offset + base);
   }
 

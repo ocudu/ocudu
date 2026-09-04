@@ -2641,7 +2641,7 @@ static void configure_cli11_test_ue_mode_args(CLI::App& app, du_high_unit_test_m
 {
   add_option(app, "--rnti", test_params.rnti, "C-RNTI (0x0 if not configured)")
       ->capture_default_str()
-      ->range(to_value((rnti_t::INVALID_RNTI)), to_value(rnti_t::MAX_CRNTI));
+      ->range(to_underlying((rnti_t::INVALID_RNTI)), to_underlying(rnti_t::MAX_CRNTI));
   add_option(app, "--nof_ues", test_params.nof_ues, "Number of test UE(s) to create.")
       ->capture_default_str()
       ->range((uint16_t)1, (uint16_t)MAX_NOF_DU_UES);

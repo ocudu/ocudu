@@ -167,7 +167,7 @@ private:
   class msg3_harq_timeout_notifier;
 
   /// Maps a TC-RNTI to its ring index in this repository.
-  uint16_t ring_key(rnti_t tc_rnti) const { return static_cast<uint16_t>(to_value(tc_rnti) % ring_capacity); }
+  uint16_t ring_key(rnti_t tc_rnti) const { return static_cast<uint16_t>(to_underlying(tc_rnti) % ring_capacity); }
 
   /// Derive temporary UE index.
   /// \note RA UEs don't have a UE index yet assigned, so we generate a temporary one. This index will be internal to

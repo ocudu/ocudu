@@ -28,7 +28,7 @@ namespace {
 
 class ra_scheduler_setup : public sub_scheduler_test_environment
 {
-  static constexpr unsigned CRNTI_RANGE = to_value(rnti_t::MAX_CRNTI) - to_value(rnti_t::MIN_CRNTI);
+  static constexpr unsigned CRNTI_RANGE = to_underlying(rnti_t::MAX_CRNTI) - to_underlying(rnti_t::MIN_CRNTI);
 
 public:
   ra_scheduler_setup(const sched_cell_configuration_request_message& req, bool sched_csi, bool sched_sib1) :
@@ -106,7 +106,7 @@ public:
 
   rach_indication_message::preamble create_random_preamble()
   {
-    const auto next_rnti = rnti_count + to_value(rnti_t::MIN_CRNTI);
+    const auto next_rnti = rnti_count + to_underlying(rnti_t::MIN_CRNTI);
 
     rach_indication_message::preamble preamble =
         test_helper::create_preamble(test_rng::uniform_int<unsigned>(0, 63), to_rnti(next_rnti));
@@ -818,7 +818,7 @@ public:
 TEST_P(ra_scheduler_two_step_rach_test, when_two_step_rach_enqueued_then_msga_pusch_is_scheduled)
 {
   // Event: Enqueue RACH indication with two-step RACH preamble.
-  const rnti_t tc_rnti  = to_rnti(to_value(rnti_t::MIN_CRNTI));
+  const rnti_t tc_rnti  = to_rnti(to_underlying(rnti_t::MIN_CRNTI));
   auto         rach_ind = create_msga_rach_indication({make_msga_preamble(0, tc_rnti)});
   handle_rach_indication(rach_ind);
 
@@ -832,7 +832,7 @@ TEST_P(ra_scheduler_two_step_rach_test, when_two_step_rach_enqueued_then_msga_pu
 TEST_P(ra_scheduler_two_step_rach_test, when_msga_crc_ok_then_msgb_with_success_rar_scheduled_and_no_msg3)
 {
   // Event: Enqueue RACH indication with two-step RACH preamble.
-  const rnti_t tc_rnti = to_rnti(to_value(rnti_t::MIN_CRNTI));
+  const rnti_t tc_rnti = to_rnti(to_underlying(rnti_t::MIN_CRNTI));
   send_msga_rach({make_msga_preamble(0, tc_rnti)});
 
   // Event: MsgA PUSCH scheduled and forward CRC=OK.
@@ -853,7 +853,7 @@ TEST_P(ra_scheduler_two_step_rach_test, when_msga_crc_ok_then_msgb_with_success_
 /// Msg3 PUSCH for the UE to fall back to the 4-step procedure.
 TEST_P(ra_scheduler_two_step_rach_test, when_msga_crc_ko_then_fallback_rar_and_msg3_scheduled)
 {
-  const rnti_t tc_rnti = to_rnti(to_value(rnti_t::MIN_CRNTI));
+  const rnti_t tc_rnti = to_rnti(to_underlying(rnti_t::MIN_CRNTI));
   send_msga_rach({make_msga_preamble(0, tc_rnti)});
   run_slot();
 
@@ -886,7 +886,7 @@ TEST_P(ra_scheduler_two_step_rach_test, when_msga_crc_ko_then_fallback_rar_and_m
 /// time for the CRC to be received.  Once the CRC arrives the MsgB must be scheduled promptly.
 TEST_P(ra_scheduler_two_step_rach_test, when_crc_pending_then_msgb_scheduling_is_postponed)
 {
-  const rnti_t tc_rnti = to_rnti(to_value(rnti_t::MIN_CRNTI));
+  const rnti_t tc_rnti = to_rnti(to_underlying(rnti_t::MIN_CRNTI));
   send_msga_rach({make_msga_preamble(0, tc_rnti)});
   run_slot();
 
@@ -904,8 +904,8 @@ TEST_P(ra_scheduler_two_step_rach_test, when_crc_pending_then_msgb_scheduling_is
 /// within the same MsgB response.
 TEST_P(ra_scheduler_two_step_rach_test, when_mixed_crc_outcomes_both_rar_types_scheduled_together)
 {
-  const rnti_t tc_rnti_ok = to_rnti(to_value(rnti_t::MIN_CRNTI));
-  const rnti_t tc_rnti_ko = to_rnti(to_value(rnti_t::MIN_CRNTI) + 1);
+  const rnti_t tc_rnti_ok = to_rnti(to_underlying(rnti_t::MIN_CRNTI));
+  const rnti_t tc_rnti_ko = to_rnti(to_underlying(rnti_t::MIN_CRNTI) + 1);
   send_msga_rach({make_msga_preamble(0, tc_rnti_ok), make_msga_preamble(1, tc_rnti_ko)});
 
   ASSERT_TRUE(run_slot_until([this]() { return not res_grid[0].result.ul.puschs.empty(); }));
@@ -927,7 +927,7 @@ TEST_P(ra_scheduler_two_step_rach_test, when_mixed_crc_outcomes_both_rar_types_s
 /// MsgB-conformant UE discards the DCI/PDSCH. Otherwise, these bits are just reserved (0).
 TEST_P(ra_scheduler_two_step_rach_test, msgb_dci_carries_prach_sfn_lsbs_per_response_window_applicability)
 {
-  const rnti_t tc_rnti = to_rnti(to_value(rnti_t::MIN_CRNTI));
+  const rnti_t tc_rnti = to_rnti(to_underlying(rnti_t::MIN_CRNTI));
   send_msga_rach({make_msga_preamble(0, tc_rnti)});
 
   ASSERT_TRUE(run_slot_until([this]() { return not res_grid[0].result.ul.puschs.empty(); }));

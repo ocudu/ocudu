@@ -66,8 +66,8 @@ public:
 private:
   bool is_test_ue_in_cell(du_cell_index_t cell_index, rnti_t rnti) const
   {
-    const unsigned base = to_value(cfg.rnti) + static_cast<unsigned>(cell_index) * cfg.nof_ues;
-    const unsigned v    = to_value(rnti);
+    const unsigned base = to_underlying(cfg.rnti) + static_cast<unsigned>(cell_index) * cfg.nof_ues;
+    const unsigned v    = to_underlying(rnti);
     return v >= base and v < base + cfg.nof_ues;
   }
 

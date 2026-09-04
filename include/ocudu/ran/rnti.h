@@ -44,7 +44,7 @@ constexpr rnti_t to_rnti(std::underlying_type_t<rnti_t> number)
 }
 
 /// Converts RNTI value to integer.
-constexpr uint16_t to_value(rnti_t rnti)
+constexpr uint16_t to_underlying(rnti_t rnti)
 {
   return static_cast<uint16_t>(rnti);
 }
@@ -64,7 +64,7 @@ struct formatter<ocudu::rnti_t> {
   template <typename FormatContext>
   auto format(ocudu::rnti_t rnti, FormatContext& ctx) const
   {
-    return format_to(ctx.out(), "{:#x}", to_value(rnti));
+    return format_to(ctx.out(), "{:#x}", to_underlying(rnti));
   }
 };
 

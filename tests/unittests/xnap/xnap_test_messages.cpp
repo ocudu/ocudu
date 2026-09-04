@@ -281,7 +281,7 @@ xnap_message ocudu::ocucp::generate_retrieve_ue_context_request(peer_xnap_ue_id_
   request->new_ng_ra_nnode_ue_xn_ap_id = peer_xnap_ue_id_to_uint(peer_xnap_ue_id);
 
   auto& reest_id = request->ue_context_id.set_rrrc_reest();
-  reest_id.c_rnti.from_number(to_value(rnti_t::MIN_CRNTI));
+  reest_id.c_rnti.from_number(to_underlying(rnti_t::MIN_CRNTI));
   reest_id.fail_cell_pci.set_nr() = fail_cell_pci;
 
   request->mac_i.from_number(0xabcd);
@@ -306,7 +306,7 @@ xnap_message ocudu::ocucp::generate_retrieve_ue_context_request_for_resume(peer_
 
   auto& resume_id = request->ue_context_id.set_rrc_resume();
   resume_id.i_rnti.set_i_rnti_short().from_number(i_rnti.value());
-  resume_id.allocated_c_rnti.from_number(to_value(rnti_t::MIN_CRNTI));
+  resume_id.allocated_c_rnti.from_number(to_underlying(rnti_t::MIN_CRNTI));
   resume_id.access_pci.set_nr() = 0;
 
   request->mac_i.from_number(resume_mac_i);

@@ -25,7 +25,8 @@ sib_helper::sib1_sched_occations sib_helper::get_occupied_slot_offsets(const ssb
   const pdcch_type0_css_coreset_description coreset0_params =
       pdcch_type0_css_coreset_get(band, ssb_cfg.scs, scs_common, coreset0_idx, ssb_cfg.k_ssb.value());
 
-  const unsigned ssb_period_ms = std::max<unsigned>(to_value(ssb_cfg.ssb_period), to_value(min_sib1_retx_period));
+  const unsigned ssb_period_ms =
+      std::max<unsigned>(to_underlying(ssb_cfg.ssb_period), to_underlying(min_sib1_retx_period));
 
   // For patterns 2 and 3 (FR2), CORESET0 lies within the same slot as the SS/PBCH block, so the Type0-CSS monitoring
   // slots are exactly the SSB slots. Return those directly; the window period is the SSB period.

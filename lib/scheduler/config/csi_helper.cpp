@@ -111,7 +111,7 @@ static bool is_csi_slot_offset_valid(unsigned                       slot_offset,
                                      unsigned                       sib1_period_slots,
                                      span<const unsigned>           sib1_slot_offsets)
 {
-  const unsigned ssb_period_slots = to_value(ssb_period) * get_nof_slots_per_subframe(tdd_cfg.ref_scs);
+  const unsigned ssb_period_slots = to_underlying(ssb_period) * get_nof_slots_per_subframe(tdd_cfg.ref_scs);
 
   const unsigned slot_in_ssb_period  = slot_offset % ssb_period_slots;
   const unsigned slot_in_sib1_period = slot_offset % sib1_period_slots;

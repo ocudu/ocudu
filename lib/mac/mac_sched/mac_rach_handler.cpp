@@ -175,7 +175,7 @@ std::optional<rnti_t> mac_cell_rach_handler_impl::handle_msga_ccch_sdu(rnti_t   
 /// owning TC-RNTI, used as a collision-detection tag on resolution.
 static uint64_t pack_con_res_id(rnti_t tc_rnti, const ue_con_res_id_t& con_res_id)
 {
-  uint64_t word = static_cast<uint64_t>(to_value(tc_rnti)) << 48U;
+  uint64_t word = static_cast<uint64_t>(to_underlying(tc_rnti)) << 48U;
   for (unsigned i = 0; i != UE_CON_RES_ID_LEN; ++i) {
     word |= static_cast<uint64_t>(con_res_id[i]) << (8U * i);
   }
@@ -199,7 +199,7 @@ static ue_con_res_id_t unpack_con_res_id(uint64_t word)
 unsigned mac_cell_rach_handler_impl::get_con_res_id_index(rnti_t tc_rnti) const
 {
   ocudu_assert(is_crnti(tc_rnti), "Invalid TC-RNTI={}", tc_rnti);
-  return to_value(tc_rnti) % msga_con_res_ids.size();
+  return to_underlying(tc_rnti) % msga_con_res_ids.size();
 }
 
 void mac_cell_rach_handler_impl::add_msga_con_res_id(rnti_t tc_rnti, const ue_con_res_id_t& con_res_id)

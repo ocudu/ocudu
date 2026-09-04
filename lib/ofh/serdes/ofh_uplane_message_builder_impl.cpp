@@ -16,7 +16,7 @@ static uint8_t encode_data_direction()
 {
   uint8_t octet = 0;
   // Data direction (DL); offset: 7, 1 bit long.
-  octet |= uint8_t(to_value(data_direction::downlink)) << 7u;
+  octet |= uint8_t(to_underlying(data_direction::downlink)) << 7u;
   // Payload version; offset: 4, 3 bits long.
   octet |= uint8_t(OFH_PAYLOAD_VERSION) << 4u;
   // Filter index is fixed to 0, skip it.

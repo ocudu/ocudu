@@ -323,8 +323,9 @@ void test_sib1_periodicity(sib1_rtx_periodicity sib1_rtx_period, ssb_periodicity
           subcarrier_spacing::kHz15, 9U, 0b1000, L_max, ssb_period, 20, ocudu::duplex_mode::FDD)};
 
   // Determine the expected SIB1 retx periodicity.
-  const unsigned expected_sib1_period_ms =
-      to_value(sib1_rtx_period) > to_value(ssb_period) ? to_value(sib1_rtx_period) : to_value(ssb_period);
+  const unsigned expected_sib1_period_ms = to_underlying(sib1_rtx_period) > to_underlying(ssb_period)
+                                               ? to_underlying(sib1_rtx_period)
+                                               : to_underlying(ssb_period);
 
   // SIB1 periodicity in slots.
   const unsigned expected_sib1_period_slots = expected_sib1_period_ms * t_bench.next_slot.nof_slots_per_subframe();
@@ -636,9 +637,9 @@ TEST_P(sib1_tdd_partial_slot_test, successful_sib1_allocation_in_partial_slot)
                                build_sib1_partial_slot_cell_req(params)};
 
   // Determine the expected SIB1 retx periodicity.
-  const unsigned expected_sib1_period_ms = to_value(params.sib1_rtx_period) > to_value(params.ssb_period)
-                                               ? to_value(params.sib1_rtx_period)
-                                               : to_value(params.ssb_period);
+  const unsigned expected_sib1_period_ms = to_underlying(params.sib1_rtx_period) > to_underlying(params.ssb_period)
+                                               ? to_underlying(params.sib1_rtx_period)
+                                               : to_underlying(params.ssb_period);
 
   // SIB1 periodicity in slots.
   const unsigned expected_sib1_period_slots = expected_sib1_period_ms * t_bench.next_slot.nof_slots_per_subframe();

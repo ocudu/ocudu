@@ -15,7 +15,7 @@ ssb_scheduler::ssb_scheduler(const cell_configuration& cfg_) :
   cell_cfg(cfg_),
   logger(ocudulog::fetch_basic_logger("SCHED"))
 {
-  ssb_period = to_value(cell_cfg.params.ssb_cfg.ssb_period);
+  ssb_period = to_underlying(cell_cfg.params.ssb_cfg.ssb_period);
 }
 
 void ssb_scheduler::run_slot(cell_resource_allocator& res_alloc, slot_point sl_point)

@@ -59,7 +59,7 @@ void mac_cell_pcap_writer::write_si_pdus(slot_point sl_tx, const sched_result& s
       context.radioType                         = radio_type;
       context.direction                         = PCAP_DIRECTION_DOWNLINK;
       context.rntiType                          = PCAP_SI_RNTI;
-      context.rnti                              = to_value(dl_alloc.pdsch_cfg.rnti);
+      context.rnti                              = to_underlying(dl_alloc.pdsch_cfg.rnti);
       context.system_frame_number               = sl_tx.sfn();
       context.sub_frame_number                  = sl_tx.subframe_index();
       context.length                            = si_pdu.pdu.get_buffer().size();
@@ -80,7 +80,7 @@ void mac_cell_pcap_writer::write_rar_pdus(slot_point                sl_tx,
     context.radioType                          = radio_type;
     context.direction                          = PCAP_DIRECTION_DOWNLINK;
     context.rntiType                           = PCAP_RA_RNTI;
-    context.rnti                               = to_value(dl_alloc.pdsch_cfg.rnti);
+    context.rnti                               = to_underlying(dl_alloc.pdsch_cfg.rnti);
     context.system_frame_number                = sl_tx.sfn();
     context.sub_frame_number                   = sl_tx.subframe_index();
     context.length                             = rar_pdu.pdu.get_buffer().size();
@@ -99,7 +99,7 @@ void mac_cell_pcap_writer::write_paging_pdus(slot_point                sl_tx,
     context.radioType                          = radio_type;
     context.direction                          = PCAP_DIRECTION_DOWNLINK;
     context.rntiType                           = PCAP_P_RNTI;
-    context.rnti                               = to_value(dl_alloc.pdsch_cfg.rnti);
+    context.rnti                               = to_underlying(dl_alloc.pdsch_cfg.rnti);
     context.system_frame_number                = sl_tx.sfn();
     context.sub_frame_number                   = sl_tx.subframe_index();
     context.length                             = pg_pdu.pdu.get_buffer().size();
@@ -120,7 +120,7 @@ void mac_cell_pcap_writer::write_ue_pdus(slot_point sl_tx, const sched_result& s
       context.radioType           = radio_type;
       context.direction           = PCAP_DIRECTION_DOWNLINK;
       context.rntiType            = PCAP_C_RNTI;
-      context.rnti                = to_value(dl_alloc.pdsch_cfg.rnti);
+      context.rnti                = to_underlying(dl_alloc.pdsch_cfg.rnti);
       context.ueid                = dl_alloc.context.ue_index == du_ue_index_t::INVALID_DU_UE_INDEX
                                         ? du_ue_index_t::INVALID_DU_UE_INDEX
                                         : dl_alloc.context.ue_index + 1;

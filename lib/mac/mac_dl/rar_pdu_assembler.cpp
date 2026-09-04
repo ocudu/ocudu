@@ -148,9 +148,9 @@ void rar_pdu_encoder::encode_rar_grant_payload(const rar_ul_grant& grant)
   ++ptr;
 
   // Encode Temporary C-RNTI (2 Octets).
-  *ptr = (to_value(grant.temp_crnti) >> 8U) & 0xffU;
+  *ptr = (to_underlying(grant.temp_crnti) >> 8U) & 0xffU;
   ++ptr;
-  *ptr = to_value(grant.temp_crnti) & 0xffU;
+  *ptr = to_underlying(grant.temp_crnti) & 0xffU;
   ++ptr;
 }
 
@@ -201,9 +201,9 @@ void rar_pdu_encoder::encode_successrar_payload(const rar_ul_grant& grant)
   ++ptr;
 
   // Encode C-RNTI (2 octets).
-  *ptr = (to_value(grant.temp_crnti) >> 8U) & 0xffU;
+  *ptr = (to_underlying(grant.temp_crnti) >> 8U) & 0xffU;
   ++ptr;
-  *ptr = to_value(grant.temp_crnti) & 0xffU;
+  *ptr = to_underlying(grant.temp_crnti) & 0xffU;
   ++ptr;
 }
 

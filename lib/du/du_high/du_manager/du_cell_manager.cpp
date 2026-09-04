@@ -296,7 +296,7 @@ async_task<void> du_cell_manager::set_cell_barred_and_wait(du_cell_index_t cell_
   // air before released/idle UEs reselect, so hold a couple of SSB periods to guarantee it is transmitted at
   // least once with margin. Meant to run concurrently with the UE drain, so it adds no latency in the common
   // case.
-  const unsigned                  ssb_period_ms = to_value(get_cell_cfg(cell_index).ran.ssb_cfg.ssb_period);
+  const unsigned                  ssb_period_ms = to_underlying(get_cell_cfg(cell_index).ran.ssb_cfg.ssb_period);
   const std::chrono::milliseconds bar_settling_window{2 * ssb_period_ms};
   unique_timer                    settling_timer = cfg.services.timers.create_unique_timer(cfg.services.du_mng_exec);
 

@@ -199,7 +199,7 @@ TEST(csi_helper_test, ssb_slot_offsets_are_all_avoided)
   ASSERT_TRUE(csi_helper::derive_valid_csi_rs_slot_offsets(
       params.csi_params, std::nullopt, std::nullopt, {}, tdd_cfg, max_csi_symbol, ssb_period, ssb_slots, 1U, {}));
 
-  const unsigned ssb_period_slots = to_value(ssb_period) * get_nof_slots_per_subframe(tdd_cfg.ref_scs);
+  const unsigned ssb_period_slots = to_underlying(ssb_period) * get_nof_slots_per_subframe(tdd_cfg.ref_scs);
   for (unsigned ssb_slot : ssb_slots) {
     EXPECT_NE(params.csi_params.meas_csi_slot_offsets[0] % ssb_period_slots, ssb_slot)
         << "meas_csi_slot_offsets[0] collides with SSB slot " << ssb_slot;

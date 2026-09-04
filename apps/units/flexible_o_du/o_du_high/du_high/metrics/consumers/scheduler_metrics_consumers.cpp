@@ -50,7 +50,7 @@ void scheduler_cell_metrics_consumer_stdout::handle_metric(const scheduler_metri
 
     for (const auto& ue : cell.ue_metrics) {
       fmt::print("{:>4}", ue.pci);
-      fmt::print("{:>5x}", to_value(ue.rnti));
+      fmt::print("{:>5x}", to_underlying(ue.rnti));
 
       if (ue.cqi_stats.get_nof_observations() > 0) {
         fmt::print(" | {:>3}", static_cast<unsigned>(std::round(ue.cqi_stats.get_mean())));

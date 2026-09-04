@@ -219,7 +219,7 @@ static void set_static_header_params(span<uint8_t> frame, header_parameters para
   // Set compression header.
   uint8_t octet = 0U;
   octet |= uint8_t(cfg.compr_params.data_width) << 4U;
-  octet |= uint8_t(to_value(cfg.compr_params.type));
+  octet |= uint8_t(to_underlying(cfg.compr_params.type));
   frame[34] = octet;
 }
 
@@ -278,7 +278,7 @@ static std::vector<eaxc_buffers> generate_test_data(const ru_emulator_config& cf
         params.payload_size = data_size + ofh_header_size.value() + ecpri::ECPRI_COMMON_HEADER_SIZE.value();
         params.start_prb    = start_prb;
         params.nof_prbs     = nof_frame_prbs[j];
-        params.filter_index = to_value(filter_index_type::standard_channel_filter);
+        params.filter_index = to_underlying(filter_index_type::standard_channel_filter);
 
         set_static_header_params(frame_header, params, cfg);
 
@@ -327,9 +327,9 @@ generate_test_prach(const ru_emulator_config& cfg, span<const unsigned> prach_ea
       params.payload_size = iq_data_size + ofh_header_size.value() + ecpri::ECPRI_COMMON_HEADER_SIZE.value();
       params.start_prb    = 0;
       params.nof_prbs     = nof_prbs;
-      params.filter_index = to_value(cfg.prach_format == ocudu::ru_emulator_prach_format::LONG_F0
-                                         ? filter_index_type::ul_prach_preamble_1p25khz
-                                         : filter_index_type::ul_prach_preamble_short);
+      params.filter_index = to_underlying(cfg.prach_format == ocudu::ru_emulator_prach_format::LONG_F0
+                                              ? filter_index_type::ul_prach_preamble_1p25khz
+                                              : filter_index_type::ul_prach_preamble_short);
       set_static_header_params(frame_header, params, cfg);
 
       // Prepare IQ data.
@@ -785,8 +785,8 @@ private:
                                                  : filter_index_type::ul_prach_preamble_short;
       if (message_info.filter_index != valid_filter_index) {
         logger.warning("Packet is corrupt: incorrect PRACH filter index = {}, expected {}",
-                       to_value(message_info.filter_index),
-                       to_value(valid_filter_index));
+                       to_underlying(message_info.filter_index),
+                       to_underlying(valid_filter_index));
         return false;
       }
       if (message_info.nof_symbols > nof_prach_symbols) {

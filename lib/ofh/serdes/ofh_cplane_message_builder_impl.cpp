@@ -12,17 +12,17 @@ using namespace ofh;
 /// bits storing the FFT/iFFT size.
 static uint8_t encode_frame_structure(cplane_scs scs, cplane_fft_size fft_size)
 {
-  uint8_t value = to_value(scs);
-  return value | (uint8_t(to_value(fft_size)) << 4u);
+  uint8_t value = to_underlying(scs);
+  return value | (uint8_t(to_underlying(fft_size)) << 4u);
 }
 
 /// Encodes and returns the data direction Byte.
 static uint8_t encode_data_direction(const cplane_radio_application_header& params)
 {
   uint8_t value = 0;
-  value |= uint8_t(to_value(params.direction)) << 7;
+  value |= uint8_t(to_underlying(params.direction)) << 7;
   value |= uint8_t(OFH_PAYLOAD_VERSION & 0x7) << 4;
-  value |= uint8_t(to_value(params.filter_index));
+  value |= uint8_t(to_underlying(params.filter_index));
 
   return value;
 }
@@ -53,9 +53,9 @@ static uint8_t encode_sect_id_rb_symbols(const cplane_common_section_0_1_3_5_fie
   uint8_t value = 0;
   value |= uint8_t(section.section_id & 0xf) << 4;
   // Resource block set to all PRB.
-  value |= uint8_t(to_value(rb_id_type::every_rb_used)) << 3;
+  value |= uint8_t(to_underlying(rb_id_type::every_rb_used)) << 3;
   // Symbol increment set to current symbol number.
-  value |= uint8_t(to_value(symbol_incr_type::current_symbol_number)) << 2;
+  value |= uint8_t(to_underlying(symbol_incr_type::current_symbol_number)) << 2;
   value |= uint8_t(section.prb_start >> 8) & 0x3;
 
   return value;

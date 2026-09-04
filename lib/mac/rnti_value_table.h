@@ -23,7 +23,7 @@ class rnti_value_table
 {
   static constexpr rnti_t MIN_CRNTI  = rnti_t::MIN_CRNTI;
   static constexpr rnti_t MAX_CRNTI  = rnti_t::MAX_CRNTI;
-  static constexpr size_t RNTI_RANGE = to_value(rnti_t::MAX_CRNTI) + 1 - to_value(rnti_t::MIN_CRNTI);
+  static constexpr size_t RNTI_RANGE = to_underlying(rnti_t::MAX_CRNTI) + 1 - to_underlying(rnti_t::MIN_CRNTI);
   using array_type                   = std::array<std::atomic<T>, RNTI_RANGE>;
 
 public:
@@ -97,10 +97,13 @@ public:
   }
 
 private:
-  std::atomic<T>& get(rnti_t rnti) { return (*rnti_to_ue_index_map)[to_value(rnti) - to_value(rnti_t::MIN_CRNTI)]; }
+  std::atomic<T>& get(rnti_t rnti)
+  {
+    return (*rnti_to_ue_index_map)[to_underlying(rnti) - to_underlying(rnti_t::MIN_CRNTI)];
+  }
   const std::atomic<T>& get(rnti_t rnti) const
   {
-    return (*rnti_to_ue_index_map)[to_value(rnti) - to_value(rnti_t::MIN_CRNTI)];
+    return (*rnti_to_ue_index_map)[to_underlying(rnti) - to_underlying(rnti_t::MIN_CRNTI)];
   }
 
   /// Table of RNTI -> UE index with size 65535.

@@ -18,7 +18,7 @@ static span<const uint8_t> get_k_re_ref(dmrs_config_type dmrs_type, ptrs_re_offs
       {{0, 1, 2, 3, 4, 5}, {1, 6, 3, 8, 5, 10}, {6, 7, 8, 9, 10, 11}, {7, 0, 9, 2, 11, 4}}};
 
   // Convert RE offset to a value.
-  unsigned re_offset = to_value(offset);
+  unsigned re_offset = to_underlying(offset);
 
   // Select the correct subcarrier reference table depending on the DM-RS for PDSCH type and RE offset parameter.
   span<const uint8_t> k_re_ref = (dmrs_type == dmrs_config_type::type1)
@@ -46,15 +46,15 @@ ptrs_pattern ocudu::get_ptrs_pattern(const ptrs_pattern_configuration& pattern_c
   unsigned N_rb = pattern_config.rb_mask.count();
 
   // Obtain frequency density, parameter K_{PT-RS}.
-  unsigned K_ptrs = to_value(pattern_config.freq_density);
+  unsigned K_ptrs = to_underlying(pattern_config.freq_density);
 
   // Obtain time density, parameter L_{PT-RS}.
-  unsigned L_ptrs = to_value(pattern_config.time_density);
+  unsigned L_ptrs = to_underlying(pattern_config.time_density);
 
   // Compute the reference resource block.
-  unsigned k_rb_ref = to_value(pattern_config.rnti) % K_ptrs;
+  unsigned k_rb_ref = to_underlying(pattern_config.rnti) % K_ptrs;
   if (N_rb % K_ptrs != 0) {
-    k_rb_ref = to_value(pattern_config.rnti) % (N_rb % K_ptrs);
+    k_rb_ref = to_underlying(pattern_config.rnti) % (N_rb % K_ptrs);
   }
 
   // Get the RE offsets for each port.

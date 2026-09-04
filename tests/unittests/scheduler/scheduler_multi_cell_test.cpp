@@ -71,7 +71,8 @@ protected:
 
   static rach_indication_message::preamble create_preamble()
   {
-    static auto next_rnti = test_rng::uniform_int<unsigned>(to_value(rnti_t::MIN_CRNTI), to_value(rnti_t::MAX_CRNTI));
+    static auto next_rnti =
+        test_rng::uniform_int<unsigned>(to_underlying(rnti_t::MIN_CRNTI), to_underlying(rnti_t::MAX_CRNTI));
     static const auto rnti_inc = test_rng::uniform_int<unsigned>(1, 5);
 
     rach_indication_message::preamble preamble =
@@ -162,7 +163,7 @@ public:
 TEST_P(multi_cell_scheduler_tester, test_ssb_allocation_for_multiple_cells)
 {
   const auto ssb_period_slots =
-      to_value(cell_cfg(to_du_cell_index(0)).params.ssb_cfg.ssb_period) *
+      to_underlying(cell_cfg(to_du_cell_index(0)).params.ssb_cfg.ssb_period) *
       get_nof_slots_per_subframe(cell_cfg_builder_params_list[to_du_cell_index(0)].scs_common);
 
   std::vector<bool> is_ssb_scheduled_atleast_once(cell_cfg_builder_params_list.size(), false);
@@ -184,8 +185,8 @@ TEST_P(multi_cell_scheduler_tester, test_ssb_allocation_for_multiple_cells)
 TEST_P(multi_cell_scheduler_tester, test_sib1_allocation_for_multiple_cells)
 {
   const auto sib1_period_slots =
-      std::max<unsigned>(to_value(cell_cfg(to_du_cell_index(0)).params.ssb_cfg.ssb_period),
-                         to_value(sched_cfg.si.sib1_retx_period)) *
+      std::max<unsigned>(to_underlying(cell_cfg(to_du_cell_index(0)).params.ssb_cfg.ssb_period),
+                         to_underlying(sched_cfg.si.sib1_retx_period)) *
       get_nof_slots_per_subframe(cell_cfg_builder_params_list[to_du_cell_index(0)].scs_common);
 
   std::vector<bool> is_sib1_scheduled_atleast_once(cell_cfg_builder_params_list.size(), false);

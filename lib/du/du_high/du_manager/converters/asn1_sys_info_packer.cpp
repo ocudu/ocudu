@@ -278,7 +278,7 @@ static asn1::rrc_nr::serving_cell_cfg_common_sib_s make_asn1_rrc_cell_serving_ce
         << (8U - du_cfg.ran.ssb_cfg.ssb_bitmap.get_L_max()));
   }
 
-  asn1::number_to_enum(cell.ssb_periodicity_serving_cell, to_value(du_cfg.ran.ssb_cfg.ssb_period));
+  asn1::number_to_enum(cell.ssb_periodicity_serving_cell, to_underlying(du_cfg.ran.ssb_cfg.ssb_period));
   cell.ss_pbch_block_pwr = du_cfg.ran.ssb_cfg.ssb_block_power;
 
   switch (du_cfg.ran.ta_offset) {

@@ -8,8 +8,9 @@
 namespace ocudu {
 
 /// Convert an enum type to its respective underlying integer type.
+/// \remark Implements std::to_underlying (C++23) while the codebase has not adopted C++23 yet.
 template <typename Enum>
-auto to_value(Enum e) -> std::underlying_type_t<Enum>
+auto to_underlying(Enum e) -> std::underlying_type_t<Enum>
 {
   return static_cast<std::underlying_type_t<Enum>>(e);
 }
@@ -18,7 +19,7 @@ auto to_value(Enum e) -> std::underlying_type_t<Enum>
 template <typename Enum>
 Enum to_enum(std::underlying_type_t<Enum> e)
 {
-  return static_cast<std::underlying_type_t<Enum>>(e);
+  return static_cast<Enum>(e);
 }
 
 } // namespace ocudu

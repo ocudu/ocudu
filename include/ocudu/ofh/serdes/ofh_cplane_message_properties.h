@@ -79,7 +79,7 @@ enum class cplane_fft_size : uint8_t {
 };
 
 /// Converts and returns the given FFT size into an integer.
-constexpr unsigned to_value(cplane_fft_size fft)
+constexpr unsigned to_underlying(cplane_fft_size fft)
 {
   return static_cast<unsigned>(fft);
 }
@@ -96,7 +96,7 @@ enum class cplane_scs : uint8_t {
 };
 
 /// Converts and returns the given cplane scs into an integer.
-constexpr unsigned to_value(cplane_scs scs)
+constexpr unsigned to_underlying(cplane_scs scs)
 {
   return static_cast<unsigned>(scs);
 }

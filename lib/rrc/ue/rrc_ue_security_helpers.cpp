@@ -31,7 +31,7 @@ bool verify_mac_i(const char*                       mac_i_type,
   VarMacInput var_mac_input = {};
   var_mac_input.source_pci  = source_pci;
   var_mac_input.target_cell_id.from_number(target_nci.value());
-  var_mac_input.source_c_rnti = to_value(source_c_rnti);
+  var_mac_input.source_c_rnti = to_underlying(source_c_rnti);
 
   byte_buffer   var_mac_input_packed = {};
   asn1::bit_ref bref(var_mac_input_packed);

@@ -38,7 +38,7 @@ sib1_scheduler::sib1_scheduler(const cell_configuration& cfg_,
 
   // Compute derived SIB1 parameters.
   sib1_rtx_period = std::chrono::milliseconds{
-      std::max<unsigned>(to_value(cfg_.params.ssb_cfg.ssb_period), to_value(expert_cfg.sib1_retx_period))};
+      std::max<unsigned>(to_underlying(cfg_.params.ssb_cfg.ssb_period), to_underlying(expert_cfg.sib1_retx_period))};
 
   // Only the first L_max SSB beams can be used.
   for (size_t i_ssb = 0; i_ssb != L_max; ++i_ssb) {

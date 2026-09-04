@@ -220,7 +220,7 @@ TEST_F(du_cell_lock_test, when_graceful_stop_then_bar_is_issued_at_once_and_cell
 {
   // The settling window is derived from the cell's configured SSB period (two periods), not a hardcoded
   // constant, so the test tracks the same source as the procedure.
-  const unsigned settling_ms = 2 * to_value(cell_cfgs[0].ran.ssb_cfg.ssb_period);
+  const unsigned settling_ms = 2 * to_underlying(cell_cfgs[0].ran.ssb_cfg.ssb_period);
 
   gnbcu_config_update_request req;
   req.cells_to_deactivate.push_back(cell_cfgs[0].nr_cgi);
@@ -330,7 +330,7 @@ TEST_F(du_cell_lock_test, when_cell_already_barred_by_cu_then_graceful_stop_skip
   lazy_task_launcher<gnbcu_config_update_response> deact_launcher(deact_task);
 
   // Just inside the settling window the cell must not have been torn down yet.
-  const unsigned settling_ms = 2 * to_value(cell_cfgs[0].ran.ssb_cfg.ssb_period);
+  const unsigned settling_ms = 2 * to_underlying(cell_cfgs[0].ran.ssb_cfg.ssb_period);
   pump(settling_ms - 2);
   ASSERT_EQ(dependencies.mac.mac_cell.stop_count, 0U)
       << "The settling window must be held even when the cell was already barred by the CU";

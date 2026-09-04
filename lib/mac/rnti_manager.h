@@ -17,7 +17,7 @@ class rnti_manager : public du_rnti_table
 {
 public:
   rnti_manager(rnti_t initial_rnti = to_rnti(0x4601)) :
-    rnti_counter(to_value(initial_rnti) - to_value(rnti_t::MIN_CRNTI))
+    rnti_counter(to_underlying(initial_rnti) - to_underlying(rnti_t::MIN_CRNTI))
   {
     ocudu_assert(is_crnti(initial_rnti), "Invalid initial c-rnti={}", initial_rnti);
   }
@@ -38,13 +38,13 @@ public:
     rnti_t temp_crnti;
     do {
       uint16_t prev_counter = rnti_counter.fetch_add(1, std::memory_order_relaxed) % CRNTI_RANGE;
-      temp_crnti            = to_rnti(prev_counter + to_value(rnti_t::MIN_CRNTI));
+      temp_crnti            = to_rnti(prev_counter + to_underlying(rnti_t::MIN_CRNTI));
     } while (this->has_rnti(temp_crnti));
     return temp_crnti;
   }
 
 private:
-  static constexpr int CRNTI_RANGE = to_value(rnti_t::MAX_CRNTI) + 1 - to_value(rnti_t::MIN_CRNTI);
+  static constexpr int CRNTI_RANGE = to_underlying(rnti_t::MAX_CRNTI) + 1 - to_underlying(rnti_t::MIN_CRNTI);
 
   std::atomic<std::underlying_type_t<rnti_t>> rnti_counter;
 };

@@ -286,7 +286,8 @@ TEST_F(ue_configuration_test, search_spaces_pdcch_candidate_lists_does_not_surpa
   ue_create_msg = sched_config_helper::create_default_sched_ue_creation_request(msg.ran);
 
   const cell_configuration& cell_cfg = add_cell();
-  rnti_t crnti = to_rnti(test_rng::uniform_int<uint16_t>(to_value(rnti_t::MIN_CRNTI), to_value(rnti_t::MAX_CRNTI)));
+  rnti_t                    crnti =
+      to_rnti(test_rng::uniform_int<uint16_t>(to_underlying(rnti_t::MIN_CRNTI), to_underlying(rnti_t::MAX_CRNTI)));
   ue_cell_configuration ue_cfg{crnti, cell_cfg, cfg_pool.add_ue(ue_create_msg).cells[cell_cfg.cell_index]};
 
   const sched_bwp_config& bwp            = ue_cfg.bwp(to_bwp_id(0));

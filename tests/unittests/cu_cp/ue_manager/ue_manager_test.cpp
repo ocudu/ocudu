@@ -208,8 +208,8 @@ TEST_F(ue_manager_test, when_multiple_ues_added_then_ues_exist)
   ue_mng_logger.set_level(ocudulog::basic_levels::warning);
   test_logger.set_level(ocudulog::basic_levels::warning);
 
-  for (unsigned it = to_value(rnti_t::MIN_CRNTI);
-       it < unsigned(to_value(rnti_t::MIN_CRNTI) + cu_cp_cfg.admission.max_nof_ues);
+  for (unsigned it = to_underlying(rnti_t::MIN_CRNTI);
+       it < unsigned(to_underlying(rnti_t::MIN_CRNTI) + cu_cp_cfg.admission.max_nof_ues);
        it++) {
     rnti_t           rnti     = to_rnti(it);
     cu_cp_ue_index_t ue_index = ue_mng.add_ue(du_index);
@@ -236,7 +236,7 @@ TEST_F(ue_manager_test, when_multiple_ues_added_then_ues_exist)
     ASSERT_EQ(ue->get_ue_index(), ue_mng.get_ue_index(ue->get_pci(), ue->get_c_rnti()));
 
     // Check that the number of DU UEs is increased.
-    ASSERT_EQ(ue_mng.get_nof_du_ues(du_index), it - to_value(rnti_t::MIN_CRNTI) + 1);
+    ASSERT_EQ(ue_mng.get_nof_du_ues(du_index), it - to_underlying(rnti_t::MIN_CRNTI) + 1);
   }
 
   // Reset log level.
@@ -256,8 +256,8 @@ TEST_F(ue_manager_test, when_more_than_max_ues_added_then_ue_created_but_not_ser
   ue_mng_logger.set_level(ocudulog::basic_levels::warning);
   test_logger.set_level(ocudulog::basic_levels::warning);
 
-  for (unsigned it = to_value(rnti_t::MIN_CRNTI);
-       it < unsigned(to_value(rnti_t::MIN_CRNTI) + cu_cp_cfg.admission.max_nof_ues);
+  for (unsigned it = to_underlying(rnti_t::MIN_CRNTI);
+       it < unsigned(to_underlying(rnti_t::MIN_CRNTI) + cu_cp_cfg.admission.max_nof_ues);
        it++) {
     rnti_t           rnti     = to_rnti(it);
     cu_cp_ue_index_t ue_index = ue_mng.add_ue(du_index);
@@ -284,7 +284,7 @@ TEST_F(ue_manager_test, when_more_than_max_ues_added_then_ue_created_but_not_ser
     ASSERT_EQ(ue->get_ue_index(), ue_mng.get_ue_index(ue->get_pci(), ue->get_c_rnti()));
 
     // Check that the number of DU UEs is increased.
-    ASSERT_EQ(ue_mng.get_nof_du_ues(du_index), it - to_value(rnti_t::MIN_CRNTI) + 1);
+    ASSERT_EQ(ue_mng.get_nof_du_ues(du_index), it - to_underlying(rnti_t::MIN_CRNTI) + 1);
   }
 
   // Reset log level.

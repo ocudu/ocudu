@@ -553,7 +553,7 @@ private:
     // Set compression header.
     uint8_t octet = 0U;
     octet |= uint8_t(compr_params.data_width) << 4U;
-    octet |= uint8_t(to_value(compr_params.type));
+    octet |= uint8_t(to_underlying(compr_params.type));
     frame[30 + offset] = octet;
   }
 

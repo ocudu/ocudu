@@ -3766,7 +3766,7 @@ void ocudu::odu::calculate_cell_group_config_diff(asn1::rrc_nr::cell_group_cfg_s
   if (dest.cell_group.pcg_cfg.cs_rnti.has_value() or src.cell_group.pcg_cfg.cs_rnti.has_value()) {
     out.phys_cell_group_cfg.cs_rnti_present = true;
     if (dest.cell_group.pcg_cfg.cs_rnti.has_value()) {
-      out.phys_cell_group_cfg.cs_rnti.set_setup() = to_value(dest.cell_group.pcg_cfg.cs_rnti.value());
+      out.phys_cell_group_cfg.cs_rnti.set_setup() = to_underlying(dest.cell_group.pcg_cfg.cs_rnti.value());
     } else {
       out.phys_cell_group_cfg.cs_rnti.set_release();
     }
@@ -3874,7 +3874,7 @@ bool ocudu::odu::calculate_reconfig_with_sync_diff(asn1::rrc_nr::recfg_with_sync
 
   out.sp_cell_cfg_common.ssb_periodicity_serving_cell_present = true;
   asn1::number_to_enum(out.sp_cell_cfg_common.ssb_periodicity_serving_cell,
-                       to_value(du_cell_cfg.ran.ssb_cfg.ssb_period));
+                       to_underlying(du_cell_cfg.ran.ssb_cfg.ssb_period));
 
   out.sp_cell_cfg_common.dmrs_type_a_position.value = du_cell_cfg.ran.dmrs_typeA_pos == dmrs_typeA_position::pos2
                                                           ? serving_cell_cfg_common_s::dmrs_type_a_position_opts::pos2
@@ -3893,7 +3893,7 @@ bool ocudu::odu::calculate_reconfig_with_sync_diff(asn1::rrc_nr::recfg_with_sync
   // ss-PBCH-BlockPower INTEGER (-60..50)
   out.sp_cell_cfg_common.ss_pbch_block_pwr = du_cell_cfg.ran.ssb_cfg.ssb_block_power;
 
-  out.new_ue_id = to_value(rnti);
+  out.new_ue_id = to_underlying(rnti);
 
   asn1::number_to_enum(out.t304, du_cell_cfg.si.ue_timers_and_constants.t304.count());
 

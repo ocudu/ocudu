@@ -163,7 +163,7 @@ TEST_F(mac_cell_pcap_writer_test, when_ue_grant_is_new_data_then_pdu_is_written_
   ASSERT_EQ(context.radioType, PCAP_TDD_RADIO);
   ASSERT_EQ(context.direction, PCAP_DIRECTION_DOWNLINK);
   ASSERT_EQ(context.rntiType, PCAP_C_RNTI);
-  ASSERT_EQ(context.rnti, to_value(ue_rnti));
+  ASSERT_EQ(context.rnti, to_underlying(ue_rnti));
   ASSERT_EQ(context.ueid, ue_index + 1);
   ASSERT_EQ(context.harqid, harq_id);
   ASSERT_EQ(context.system_frame_number, sl_tx.sfn());
@@ -202,7 +202,7 @@ TEST_F(mac_cell_pcap_writer_test, when_rar_is_scheduled_then_pdu_is_written_with
 
   ASSERT_EQ(pcap.contexts.size(), 1);
   ASSERT_EQ(pcap.contexts[0].rntiType, PCAP_RA_RNTI);
-  ASSERT_EQ(pcap.contexts[0].rnti, to_value(ra_rnti));
+  ASSERT_EQ(pcap.contexts[0].rnti, to_underlying(ra_rnti));
   ASSERT_EQ(pcap.payloads[0], pdu_storage[0]);
 }
 
@@ -215,7 +215,7 @@ TEST_F(mac_cell_pcap_writer_test, when_paging_is_scheduled_then_pdu_is_written_w
 
   ASSERT_EQ(pcap.contexts.size(), 1);
   ASSERT_EQ(pcap.contexts[0].rntiType, PCAP_P_RNTI);
-  ASSERT_EQ(pcap.contexts[0].rnti, to_value(rnti_t::P_RNTI));
+  ASSERT_EQ(pcap.contexts[0].rnti, to_underlying(rnti_t::P_RNTI));
   ASSERT_EQ(pcap.payloads[0], pdu_storage[0]);
 }
 
@@ -228,7 +228,7 @@ TEST_F(mac_cell_pcap_writer_test, when_sib1_is_scheduled_then_pdu_is_written_wit
 
   ASSERT_EQ(pcap.contexts.size(), 1);
   ASSERT_EQ(pcap.contexts[0].rntiType, PCAP_SI_RNTI);
-  ASSERT_EQ(pcap.contexts[0].rnti, to_value(rnti_t::SI_RNTI));
+  ASSERT_EQ(pcap.contexts[0].rnti, to_underlying(rnti_t::SI_RNTI));
   ASSERT_EQ(pcap.payloads[0], pdu_storage[0]);
 }
 

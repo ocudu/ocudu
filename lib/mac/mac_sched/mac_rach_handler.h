@@ -73,7 +73,7 @@ private:
     /// Reconstructs an entry from a word previously produced by \c to_word().
     explicit msga_tc_rnti_entry(uint64_t word) : packed(word) {}
     msga_tc_rnti_entry(rnti_t ra_rnti, rnti_t tc_rnti, slot_point expiry) :
-      packed(static_cast<uint64_t>(to_value(ra_rnti)) | (static_cast<uint64_t>(to_value(tc_rnti)) << 16) |
+      packed(static_cast<uint64_t>(to_underlying(ra_rnti)) | (static_cast<uint64_t>(to_underlying(tc_rnti)) << 16) |
              (static_cast<uint64_t>(expiry.count()) << 32) | (static_cast<uint64_t>(expiry.numerology()) << 61))
     {
     }

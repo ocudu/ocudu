@@ -40,7 +40,7 @@ enum class compression_type {
 };
 
 /// Converts and returns the given compression type into an integer.
-constexpr unsigned to_value(compression_type c)
+constexpr unsigned to_underlying(compression_type c)
 {
   return static_cast<unsigned>(c);
 }

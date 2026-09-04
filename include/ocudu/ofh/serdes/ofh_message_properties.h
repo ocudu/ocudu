@@ -12,7 +12,7 @@ namespace ofh {
 enum class data_direction : uint8_t { uplink, downlink };
 
 /// Converts and returns the given data direction into an integer.
-constexpr unsigned to_value(data_direction dir)
+constexpr unsigned to_underlying(data_direction dir)
 {
   return static_cast<unsigned>(dir);
 }
@@ -21,7 +21,7 @@ constexpr unsigned to_value(data_direction dir)
 enum class rb_id_type : uint8_t { every_rb_used, every_other_rb_used };
 
 /// Converts and returns the given resource block type into an integer.
-constexpr unsigned to_value(rb_id_type rb)
+constexpr unsigned to_underlying(rb_id_type rb)
 {
   return static_cast<unsigned>(rb);
 }
@@ -30,7 +30,7 @@ constexpr unsigned to_value(rb_id_type rb)
 enum class symbol_incr_type : uint8_t { current_symbol_number, increment_current_symbol_number };
 
 /// Converts and returns the given symbol increment type into an integer.
-constexpr unsigned to_value(symbol_incr_type s)
+constexpr unsigned to_underlying(symbol_incr_type s)
 {
   return static_cast<unsigned>(s);
 }
@@ -49,7 +49,7 @@ enum class filter_index_type : uint8_t {
 };
 
 /// Converts and returns the given filter type into an integer.
-constexpr unsigned to_value(filter_index_type filter_type)
+constexpr unsigned to_underlying(filter_index_type filter_type)
 {
   return static_cast<unsigned>(filter_type);
 }

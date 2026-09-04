@@ -593,7 +593,7 @@ inline asn1::nrppa::ssb_info_item_s ssb_info_item_to_asn1(const ssb_info_item_t&
   asn1::string_to_enum(asn1_ssb_info_item.ssb_cfg.ssb_subcarrier_spacing,
                        to_string(ssb_info_item.ssb_cfg.ssb_subcarrier_spacing));
   asn1_ssb_info_item.ssb_cfg.ssb_tx_pwr = ssb_info_item.ssb_cfg.ssb_tx_pwr;
-  asn1::number_to_enum(asn1_ssb_info_item.ssb_cfg.ssb_periodicity, to_value(ssb_info_item.ssb_cfg.ssb_period));
+  asn1::number_to_enum(asn1_ssb_info_item.ssb_cfg.ssb_periodicity, to_underlying(ssb_info_item.ssb_cfg.ssb_period));
   asn1_ssb_info_item.ssb_cfg.ssb_half_frame_offset = ssb_info_item.ssb_cfg.ssb_half_frame_offset;
   asn1_ssb_info_item.ssb_cfg.ssb_sfn_offset        = ssb_info_item.ssb_cfg.ssb_sfn_offset;
   if (ssb_info_item.ssb_cfg.ssb_burst_position.has_value()) {

@@ -703,7 +703,7 @@ f1ap_message ocudu::test_helpers::generate_init_ul_rrc_message_transfer(gnb_du_u
   nr_cell_identity nci = nr_cell_identity::create(gnb_id_t{411, 22}, 0).value();
   init_ul_rrc->nr_cgi.nr_cell_id.from_number(nci.value());
   init_ul_rrc->nr_cgi.plmn_id = plmn_id.to_bytes();
-  init_ul_rrc->c_rnti         = to_value(crnti);
+  init_ul_rrc->c_rnti         = to_underlying(crnti);
 
   init_ul_rrc->sul_access_ind_present = true;
   init_ul_rrc->sul_access_ind.value   = sul_access_ind_opts::options::true_value;

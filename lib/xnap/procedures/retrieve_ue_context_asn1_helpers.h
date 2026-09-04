@@ -38,14 +38,14 @@ inline void ue_context_id_to_asn1(asn1::xnap::ue_context_id_c& asn1_ue_context_i
     } else {
       asn1_resume.i_rnti.set_i_rnti_full().from_number(std::get<full_i_rnti_t>(resume_id.i_rnti).value());
     }
-    asn1_resume.allocated_c_rnti.from_number(to_value(resume_id.allocated_c_rnti));
+    asn1_resume.allocated_c_rnti.from_number(to_underlying(resume_id.allocated_c_rnti));
     asn1_resume.access_pci.set_nr() = resume_id.access_pci;
     return;
   }
 
   const auto& reest_id   = std::get<xnap_ue_context_id_for_rrc_reest>(ue_context_id);
   auto&       asn1_reest = asn1_ue_context_id.set_rrrc_reest();
-  asn1_reest.c_rnti.from_number(to_value(reest_id.c_rnti));
+  asn1_reest.c_rnti.from_number(to_underlying(reest_id.c_rnti));
   asn1_reest.fail_cell_pci.set_nr() = reest_id.fail_cell_pci;
 }
 

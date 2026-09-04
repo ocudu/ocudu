@@ -17,7 +17,7 @@ void pdcch_encoder_impl::crc_attach(span<uint8_t>& c, span<const uint8_t> a, rnt
   std::array<uint8_t, RNTI_LEN> unpacked_rnti;
 
   // Unpack RNTI bits
-  ocuduvec::bit_unpack(unpacked_rnti, to_value(rnti), RNTI_LEN);
+  ocuduvec::bit_unpack(unpacked_rnti, to_underlying(rnti), RNTI_LEN);
 
   // Set first L bits to 1s
   std::fill(c.begin(), c.begin() + CRC_LEN, 1U);

@@ -113,7 +113,7 @@ static void fill_format2_parameters(uplink_pdu_slot_repository::pucch_pdu& phy_p
   const auto* fapi_pdu_format_2 = std::get_if<fapi::ul_pucch_pdu_format_2>(&fapi_pdu.format);
   ocudu_assert(fapi_pdu_format_2 != nullptr, "Invalid PUCCH format 2");
 
-  format2.rnti   = to_value(fapi_pdu.rnti);
+  format2.rnti   = to_underlying(fapi_pdu.rnti);
   format2.n_id   = fapi_pdu_format_2->nid_pucch_scrambling;
   format2.n_id_0 = fapi_pdu_format_2->nid0_pucch_dmrs_scrambling;
 
@@ -151,7 +151,7 @@ static void fill_format3_parameters(uplink_pdu_slot_repository::pucch_pdu& phy_p
   format3.start_symbol_index = fapi_pdu.symbols.start();
   format3.nof_symbols        = fapi_pdu.symbols.length();
 
-  format3.rnti = to_value(fapi_pdu.rnti);
+  format3.rnti = to_underlying(fapi_pdu.rnti);
 
   const auto* fapi_pdu_format_3 = std::get_if<fapi::ul_pucch_pdu_format_3>(&fapi_pdu.format);
   ocudu_assert(fapi_pdu_format_3 != nullptr, "Invalid PUCCH format 3");
@@ -196,7 +196,7 @@ static void fill_format4_parameters(uplink_pdu_slot_repository::pucch_pdu& phy_p
   format4.start_symbol_index = fapi_pdu.symbols.start();
   format4.nof_symbols        = fapi_pdu.symbols.length();
 
-  format4.rnti = to_value(fapi_pdu.rnti);
+  format4.rnti = to_underlying(fapi_pdu.rnti);
 
   const auto* fapi_pdu_format_4 = std::get_if<fapi::ul_pucch_pdu_format_4>(&fapi_pdu.format);
   ocudu_assert(fapi_pdu_format_4 != nullptr, "Invalid PUCCH format 4");

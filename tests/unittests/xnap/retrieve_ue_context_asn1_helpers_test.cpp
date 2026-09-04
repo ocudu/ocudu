@@ -31,7 +31,7 @@ static asn1::xnap::retrieve_ue_context_request_s make_asn1_reest_request()
   asn1_request->new_ng_ra_nnode_ue_xn_ap_id = 5;
 
   auto& asn1_reest_id = asn1_request->ue_context_id.set_rrrc_reest();
-  asn1_reest_id.c_rnti.from_number(to_value(to_rnti(0x4601)));
+  asn1_reest_id.c_rnti.from_number(to_underlying(to_rnti(0x4601)));
   asn1_reest_id.fail_cell_pci.set_nr() = 42;
 
   asn1_request->mac_i.from_number(0xabcd);
@@ -67,7 +67,7 @@ TEST(retrieve_ue_context_asn1_helpers_test, resume_request_is_converted_from_asn
   // Replace the identity with an RRC Resume one, which carries an I-RNTI and the cell the UE accessed here.
   auto& asn1_resume_id = asn1_request->ue_context_id.set_rrc_resume();
   asn1_resume_id.i_rnti.set_i_rnti_short().from_number(0x1234);
-  asn1_resume_id.allocated_c_rnti.from_number(to_value(to_rnti(0x4602)));
+  asn1_resume_id.allocated_c_rnti.from_number(to_underlying(to_rnti(0x4602)));
   asn1_resume_id.access_pci.set_nr()     = 7;
   asn1_request->rrc_resume_cause_present = true;
   asn1_request->rrc_resume_cause.value   = asn1::xnap::rrc_resume_cause_opts::rna_upd;
