@@ -59,6 +59,9 @@ public:
   /// \brief Gets task executor used to read N3 data from the IO. This executor allows parallelization.
   virtual task_executor& n3_rx_executor() = 0;
 
+  /// \brief Gets task executor used to read Xn-U data from the IO. This executor allows parallelization.
+  virtual task_executor& xnu_rx_executor() = 0;
+
   /// \brief Gets task executor used to read E1 data from the IO. This executor allows parallelization.
   virtual task_executor& e1_rx_executor() = 0;
 

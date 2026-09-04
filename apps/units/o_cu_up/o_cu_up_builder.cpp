@@ -162,7 +162,7 @@ o_cu_up_unit ocudu::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_c
     xnu_gws.push_back(create_udp_gtpu_gateway(xnu_udp_cfg,
                                               dependencies.io_brk,
                                               dependencies.workers.get_cu_up_executor_mapper().io_ul_executor(),
-                                              dependencies.workers.get_cu_up_executor_mapper().n3_rx_executor()));
+                                              dependencies.workers.get_cu_up_executor_mapper().xnu_rx_executor()));
   }
 
   auto e2_metric_connectors = std::make_unique<e2_cu_metrics_connector_manager>();

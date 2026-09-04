@@ -55,6 +55,8 @@ public:
 
   task_executor& n3_rx_executor() override { return *test_executor; }
 
+  task_executor& xnu_rx_executor() override { return *test_executor; }
+
   task_executor& e1_rx_executor() override { return *test_executor; }
 
   task_executor& e2_rx_executor() override { return *test_executor; }
