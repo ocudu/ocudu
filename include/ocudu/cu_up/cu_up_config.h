@@ -51,6 +51,23 @@ struct n3_interface_config {
   bool warn_on_drop;
 };
 
+struct xnu_interface_config {
+  /// Xn-U reordering timer.
+  std::chrono::milliseconds gtpu_reordering_timer;
+  /// Xn-U token bucket rate limiting period.
+  std::chrono::milliseconds gtpu_rate_limiting_period;
+  /// Error indication suppression time for released TEIDs.
+  std::chrono::milliseconds gtpu_teid_release_linger_time;
+  /// Ignore DL UE-AMBR.
+  bool gtpu_ignore_ue_ambr;
+  /// GTP-U queue size in PDUs.
+  uint32_t gtpu_queue_size;
+  /// Maximum number of GTP-U PDUs processed in a batch.
+  uint32_t gtpu_batch_size;
+  /// Warn whenever a PDU is dropped.
+  bool warn_on_drop;
+};
+
 /// Holds the CU-UP test mode configuration.
 struct cu_up_test_mode_config {
   bool                      enabled           = false;
@@ -71,6 +88,8 @@ struct cu_up_config {
   std::map<five_qi_t, cu_up_qos_config> qos;
   /// N3 configuration.
   n3_interface_config n3_cfg;
+  /// Xn-U configuration.
+  xnu_interface_config xnu_cfg;
   /// Test mode configuration.
   cu_up_test_mode_config test_mode_cfg;
   /// gNodeB identifier.
@@ -111,6 +130,8 @@ struct cu_up_dependencies {
   std::vector<e1_connection_client*> e1_conn_clients;
   /// NG-U gateways
   std::vector<std::unique_ptr<gtpu_gateway>> ngu_gws;
+  /// Xn-U gateways.
+  std::vector<std::unique_ptr<gtpu_gateway>> xnu_gws;
   /// Optional notifier invoked once after a successful E1 Setup.
   std::unique_ptr<cu_up_e1_setup_complete_notifier> e1_setup_notifier = nullptr;
 };

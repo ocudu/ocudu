@@ -142,6 +142,29 @@ o_cu_up_unit ocudu::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_c
     ngu_gws.push_back(create_no_core_gtpu_gateway());
   }
 
+  // Create Xn-U gateway(s).
+  std::vector<std::unique_ptr<gtpu_gateway>> xnu_gws;
+  for (const xnu_socket_appconfig& sock_cfg : unit_cfg.cu_up_cfg.xnu_cfg.sockets_cfg.xnu_socket_cfg) {
+    udp_network_gateway_config xnu_udp_cfg = {};
+    xnu_udp_cfg.if_name                    = "Xn-U";
+    xnu_udp_cfg.bind_address               = sock_cfg.bind_addr;
+    xnu_udp_cfg.ext_bind_addr              = sock_cfg.udp_config.ext_addr;
+    xnu_udp_cfg.bind_port                  = unit_cfg.cu_up_cfg.xnu_cfg.sockets_cfg.bind_port;
+    xnu_udp_cfg.pool_occupancy_threshold   = sock_cfg.udp_config.pool_threshold;
+    xnu_udp_cfg.rx_max_mmsg                = sock_cfg.udp_config.rx_max_msgs;
+    xnu_udp_cfg.tx_qsize                   = sock_cfg.udp_config.tx_qsize;
+    xnu_udp_cfg.tx_max_mmsg                = sock_cfg.udp_config.tx_max_msgs;
+    xnu_udp_cfg.tx_max_segments            = sock_cfg.udp_config.tx_max_segments;
+    xnu_udp_cfg.reuse_addr                 = sock_cfg.udp_config.reuse_addr;
+    xnu_udp_cfg.dscp                       = sock_cfg.udp_config.dscp;
+    xnu_udp_cfg.warn_on_drop               = unit_cfg.cu_up_cfg.warn_on_drop;
+
+    xnu_gws.push_back(create_udp_gtpu_gateway(xnu_udp_cfg,
+                                              dependencies.io_brk,
+                                              dependencies.workers.get_cu_up_executor_mapper().io_ul_executor(),
+                                              dependencies.workers.get_cu_up_executor_mapper().n3_rx_executor()));
+  }
+
   auto e2_metric_connectors = std::make_unique<e2_cu_metrics_connector_manager>();
 
   e2_cu_metrics_interface* e2_cu_metric_iface = nullptr;
@@ -196,6 +219,7 @@ o_cu_up_unit ocudu::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_c
                                                    // TODO support multiple E1APs.
                                                       .e1_conn_clients   = {dependencies.e1ap_conn_client},
                                                       .ngu_gws           = std::move(ngu_gws),
+                                                      .xnu_gws           = std::move(xnu_gws),
                                                       .e1_setup_notifier = nullptr
 
       },
