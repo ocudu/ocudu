@@ -24,12 +24,13 @@ public:
                            const gtpu_tunnel_psup_config::gtpu_tunnel_psup_tx_config& cfg_,
                            dlt_pcap&                                                  gtpu_pcap_,
                            gtpu_tunnel_common_tx_upper_layer_notifier&                upper_dn_) :
-    gtpu_tunnel_base_tx(gtpu_tunnel_log_prefix{ue_index, cfg_.peer_teid, "UL"}, gtpu_pcap_, upper_dn_),
+    gtpu_tunnel_base_tx(gtpu_tunnel_log_prefix{cfg_.li, ue_index, cfg_.peer_teid, "UL"}, gtpu_pcap_, upper_dn_),
     cfg(cfg_),
     current_peer_teid(cfg_.peer_teid)
   {
     to_sockaddr(peer_sockaddr, cfg.peer_addr.c_str(), cfg.peer_port);
-    logger.log_info("GTPU PSUP Tx configured. {}", cfg);
+    logger.log_info("GTPU PSUP TX configured. {}", cfg);
+    ocudu_assert(cfg.li == gtpu_logical_interface::ngu, "GTP-U PSUP TX node not correctly initialized. li={}", cfg.li);
   }
 
   void stop() { stopped = true; }

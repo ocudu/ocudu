@@ -7,6 +7,7 @@
 #include "ocudu/adt/batched_dispatch_queue.h"
 #include "ocudu/gtpu/gtpu_tunnel_common_rx.h"
 #include "ocudu/gtpu/gtpu_tunnel_common_tx.h"
+#include "ocudu/ran/gtpu/gtpu_logical_interface.h"
 #include "ocudu/ran/gtpu/gtpu_teid.h"
 #include <sys/socket.h>
 
@@ -17,11 +18,12 @@ constexpr auto DEFAULT_GTPU_DEMUX_BATCH_SIZE = 256U;
 
 /// Holds the GTPU demux configuration.
 struct gtpu_demux_cfg_t {
-  std::string name;
-  bool        warn_on_drop;
-  bool        test_mode  = false;
-  uint32_t    queue_size = DEFAULT_GTPU_DEMUX_QUEUE_SIZE;
-  uint32_t    batch_size = DEFAULT_GTPU_DEMUX_BATCH_SIZE;
+  gtpu_logical_interface li = gtpu_logical_interface::invalid;
+  std::string            name;
+  bool                   warn_on_drop;
+  bool                   test_mode  = false;
+  uint32_t               queue_size = DEFAULT_GTPU_DEMUX_QUEUE_SIZE;
+  uint32_t               batch_size = DEFAULT_GTPU_DEMUX_BATCH_SIZE;
 };
 
 /// Defines the GTPU demux PDU context type.

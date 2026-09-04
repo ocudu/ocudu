@@ -47,7 +47,7 @@ public:
                            gtpu_tunnel_psup_config::gtpu_tunnel_psup_rx_config cfg,
                            gtpu_tunnel_psup_rx_lower_layer_notifier&           rx_lower_,
                            timer_factory                                       ue_ctrl_timer_factory_) :
-    gtpu_tunnel_base_rx(gtpu_tunnel_log_prefix{ue_index, cfg.local_teid, "DL"}, cfg.test_mode),
+    gtpu_tunnel_base_rx(gtpu_tunnel_log_prefix{cfg.li, ue_index, cfg.local_teid, "DL"}, cfg.test_mode),
     psup_packer(logger.get_basic_logger()),
     lower_dn(rx_lower_),
     config(cfg),
@@ -59,7 +59,8 @@ public:
       reordering_timer = ue_ctrl_timer_factory.create_timer();
       reordering_timer.set(config.t_reordering, reordering_callback{this});
     }
-    logger.log_info("GTP-U PSUP Rx configured. {}", config);
+    logger.log_info("GTP-U PSUP RX configured. {}", config);
+    ocudu_assert(cfg.li == gtpu_logical_interface::ngu, "GTP-U PSUP RX node not correctly initialized. li={}", cfg.li);
   }
   ~gtpu_tunnel_psup_rx_impl() override = default;
 

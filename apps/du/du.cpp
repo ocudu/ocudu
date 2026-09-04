@@ -337,11 +337,12 @@ int main(int argc, char** argv)
   std::unique_ptr<gtpu_teid_pool> du_f1u_teid_allocator = create_gtpu_allocator(du_f1u_alloc_msg);
 
   // > Create GTP-U Demux.
-  gtpu_demux_creation_request du_f1u_gtpu_msg   = {.cfg                 = gtpu_demux_cfg_t{.name         = "DU-NR-U-DEMUX",
-                                                                                           .warn_on_drop = true,
-                                                                                           .test_mode    = false,
-                                                                                           .queue_size   = du_cfg.f1u_cfg.pdu_queue_size,
-                                                                                           .batch_size   = DEFAULT_GTPU_DEMUX_BATCH_SIZE},
+  gtpu_demux_creation_request du_f1u_gtpu_msg   = {.cfg = gtpu_demux_cfg_t{.li           = gtpu_logical_interface::f1u_du,
+                                                                           .name         = "DU-NR-U-DEMUX",
+                                                                           .warn_on_drop = true,
+                                                                           .test_mode    = false,
+                                                                           .queue_size   = du_cfg.f1u_cfg.pdu_queue_size,
+                                                                           .batch_size   = DEFAULT_GTPU_DEMUX_BATCH_SIZE},
                                                    .teid_linger_checker = *du_f1u_teid_allocator,
                                                    .gtpu_pcap           = *du_pcaps.f1u,
                                                    .rate_limiter        = nullptr};

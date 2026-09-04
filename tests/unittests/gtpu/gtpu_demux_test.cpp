@@ -57,9 +57,12 @@ protected:
 
     // create DUT object
     gtpu_demux_creation_request msg = {
-        .cfg =
-            gtpu_demux_cfg_t{
-                .name = "Test", .warn_on_drop = true, .test_mode = false, .queue_size = 8192, .batch_size = 256},
+        .cfg                 = gtpu_demux_cfg_t{.li           = gtpu_logical_interface::ngu,
+                                                .name         = "Test",
+                                                .warn_on_drop = true,
+                                                .test_mode    = false,
+                                                .queue_size   = 8192,
+                                                .batch_size   = 256},
         .teid_linger_checker = teid_linger_checker,
         .gtpu_pcap           = dummy_pcap,
     };

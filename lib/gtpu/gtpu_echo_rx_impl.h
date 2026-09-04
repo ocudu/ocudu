@@ -15,7 +15,7 @@ class gtpu_echo_rx : public gtpu_tunnel_base_rx
 {
 public:
   gtpu_echo_rx(gtpu_echo_tx_interface& tx_) :
-    gtpu_tunnel_base_rx(gtpu_tunnel_log_prefix{{}, GTPU_PATH_MANAGEMENT_TEID, "DL"}),
+    gtpu_tunnel_base_rx(gtpu_tunnel_log_prefix{gtpu_logical_interface::ngu, {}, GTPU_PATH_MANAGEMENT_TEID, "DL"}),
     tx(tx_),
     psup_packer(logger.get_basic_logger())
   {

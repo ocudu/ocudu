@@ -119,15 +119,16 @@ protected:
     ASSERT_TRUE(tester_bind_port.has_value());
 
     // create GTP-U dmux
-    gtpu_demux_creation_request msg = {
-        .cfg =
-            gtpu_demux_cfg_t{
-                .name = "Test", .warn_on_drop = true, .test_mode = false, .queue_size = 8192, .batch_size = 256},
-        .teid_linger_checker = teid_linger_checker,
-        .gtpu_pcap           = dummy_pcap,
-        .rate_limiter        = nullptr};
-    msg.cfg.warn_on_drop = true;
-    demux                = create_gtpu_demux(msg);
+    gtpu_demux_creation_request msg = {.cfg                 = gtpu_demux_cfg_t{.li           = gtpu_logical_interface::f1u_du,
+                                                                               .name         = "Test",
+                                                                               .warn_on_drop = true,
+                                                                               .test_mode    = false,
+                                                                               .queue_size   = 8192,
+                                                                               .batch_size   = 256},
+                                       .teid_linger_checker = teid_linger_checker,
+                                       .gtpu_pcap           = dummy_pcap,
+                                       .rate_limiter        = nullptr};
+    demux                           = create_gtpu_demux(msg);
 
     // create f1-u connector
     udp_network_gateway_config nru_gw_config = {};

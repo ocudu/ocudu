@@ -74,7 +74,6 @@ protected:
 
   // GTP-U logger
   ocudulog::basic_logger& gtpu_logger;
-  gtpu_tunnel_logger      gtpu_rx_logger{"GTPU", {{}, gtpu_teid_t{1}, "DL"}};
 
   // Timers
   manual_task_worker worker{64};
@@ -95,6 +94,7 @@ TEST_F(gtpu_tunnel_psup_tx_test, entity_creation)
 {
   // create Tx entity
   gtpu_tunnel_psup_config::gtpu_tunnel_psup_tx_config tx_cfg = {};
+  tx_cfg.li                                                  = gtpu_logical_interface::ngu;
   tx_cfg.peer_addr                                           = "127.0.0.1";
   tx_cfg.peer_teid                                           = gtpu_teid_t{0x1};
 
@@ -106,8 +106,9 @@ TEST_F(gtpu_tunnel_psup_tx_test, entity_creation)
 /// \brief Test reception of PDUs with no SN
 TEST_F(gtpu_tunnel_psup_tx_test, tx_sdus)
 {
-  // create Rx entity
+  // create Tx entity
   gtpu_tunnel_psup_config::gtpu_tunnel_psup_tx_config tx_cfg = {};
+  tx_cfg.li                                                  = gtpu_logical_interface::ngu;
   tx_cfg.peer_addr                                           = "127.0.0.1";
   tx_cfg.peer_teid                                           = gtpu_teid_t{0x2};
 
@@ -135,6 +136,7 @@ TEST_F(gtpu_tunnel_psup_tx_test, tx_stop)
 {
   // create Rx entity
   gtpu_tunnel_psup_config::gtpu_tunnel_psup_tx_config tx_cfg = {};
+  tx_cfg.li                                                  = gtpu_logical_interface::ngu;
   tx_cfg.peer_addr                                           = "127.0.0.1";
   tx_cfg.peer_teid                                           = gtpu_teid_t{0x2};
 
@@ -163,6 +165,7 @@ TEST_F(gtpu_tunnel_psup_tx_test, tx_stop)
 TEST_F(gtpu_tunnel_psup_tx_test, update_tx_endpoint_changes_teid_in_pdu)
 {
   gtpu_tunnel_psup_config::gtpu_tunnel_psup_tx_config tx_cfg = {};
+  tx_cfg.li                                                  = gtpu_logical_interface::ngu;
   tx_cfg.peer_addr                                           = "127.0.0.1";
   tx_cfg.peer_teid                                           = gtpu_teid_t{0x2};
 
@@ -199,6 +202,7 @@ TEST_F(gtpu_tunnel_psup_tx_test, update_tx_endpoint_changes_teid_in_pdu)
 TEST_F(gtpu_tunnel_psup_tx_test, update_tx_endpoint_second_call_overrides_first)
 {
   gtpu_tunnel_psup_config::gtpu_tunnel_psup_tx_config tx_cfg = {};
+  tx_cfg.li                                                  = gtpu_logical_interface::ngu;
   tx_cfg.peer_addr                                           = "127.0.0.1";
   tx_cfg.peer_teid                                           = gtpu_teid_t{0x1};
 

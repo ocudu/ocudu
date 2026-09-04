@@ -16,6 +16,7 @@ gtpu_demux_impl::gtpu_demux_impl(gtpu_demux_cfg_t cfg_, const gtpu_demux_impl_de
   logger(dependencies.logger)
 {
   logger.info("GTP-U demux. {}", cfg);
+  ocudu_assert(cfg.li != gtpu_logical_interface::invalid, "GTP-U demux not correctly initialized. li={}", cfg.li);
 }
 
 void gtpu_demux_impl::stop()

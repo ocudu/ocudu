@@ -23,12 +23,15 @@ public:
                           gtpu_tunnel_nru_config::gtpu_tunnel_nru_tx_config cfg_,
                           dlt_pcap&                                         gtpu_pcap_,
                           gtpu_tunnel_common_tx_upper_layer_notifier&       upper_dn_) :
-    gtpu_tunnel_base_tx(gtpu_tunnel_log_prefix{ue_index, cfg_.peer_teid, "TX"}, gtpu_pcap_, upper_dn_),
+    gtpu_tunnel_base_tx(gtpu_tunnel_log_prefix{cfg_.li, ue_index, cfg_.peer_teid, "TX"}, gtpu_pcap_, upper_dn_),
     packer(logger.get_basic_logger()),
     cfg(cfg_)
   {
     to_sockaddr(peer_sockaddr, cfg.peer_addr.c_str(), cfg.peer_port);
-    logger.log_info("GTPU NR-U Tx configured. {}", cfg);
+    logger.log_info("GTPU NRUP TX configured. {}", cfg);
+    ocudu_assert(cfg.li == gtpu_logical_interface::f1u_du || cfg.li == gtpu_logical_interface::f1u_cu_up,
+                 "GTP-U NRUP TX node not correctly initialized. li={}",
+                 cfg.li);
   }
 
   /*

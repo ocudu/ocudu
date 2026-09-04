@@ -85,8 +85,7 @@ protected:
 
   // GTP-U logger
   ocudulog::basic_logger& gtpu_logger;
-  gtpu_tunnel_logger      gtpu_rx_logger{"GTPU", {{}, gtpu_teid_t{1}, "DL"}};
-  gtpu_tunnel_logger      gtpu_tx_logger{"GTPU", {{}, gtpu_teid_t{1}, "UL"}};
+  gtpu_tunnel_logger      gtpu_rx_logger{"GTPU", {gtpu_logical_interface::ngu, {}, gtpu_teid_t{1}, "DL"}};
 
   // Timers
   manual_task_worker worker{64};
@@ -113,8 +112,10 @@ TEST_F(gtpu_tunnel_psup_test, entity_creation)
 
   // init GTP-U entity
   gtpu_tunnel_psup_creation_message msg = {};
+  msg.cfg.rx.li                         = gtpu_logical_interface::ngu;
   msg.cfg.rx.local_teid                 = gtpu_teid_t{0x1};
   msg.cfg.rx.ue_ambr_limiter            = &ue_ambr_limiter;
+  msg.cfg.tx.li                         = gtpu_logical_interface::ngu;
   msg.cfg.tx.peer_teid                  = gtpu_teid_t{0x2};
   msg.cfg.tx.peer_addr                  = "127.0.0.1";
   msg.gtpu_pcap                         = &dummy_pcap;
@@ -138,8 +139,10 @@ TEST_F(gtpu_tunnel_psup_test, rx_sdu)
 
   // init GTP-U entity
   gtpu_tunnel_psup_creation_message msg = {};
+  msg.cfg.rx.li                         = gtpu_logical_interface::ngu;
   msg.cfg.rx.local_teid                 = gtpu_teid_t{0x2};
   msg.cfg.rx.ue_ambr_limiter            = &ue_ambr_limiter;
+  msg.cfg.tx.li                         = gtpu_logical_interface::ngu;
   msg.cfg.tx.peer_teid                  = gtpu_teid_t{0xbc1e3be9};
   msg.cfg.tx.peer_addr                  = "127.0.0.1";
   msg.gtpu_pcap                         = &dummy_pcap;
@@ -173,8 +176,10 @@ TEST_F(gtpu_tunnel_psup_test, tx_pdu)
 
   // init GTP-U entity
   gtpu_tunnel_psup_creation_message msg = {};
+  msg.cfg.rx.li                         = gtpu_logical_interface::ngu;
   msg.cfg.rx.local_teid                 = gtpu_teid_t{0x1};
   msg.cfg.rx.ue_ambr_limiter            = &ue_ambr_limiter;
+  msg.cfg.tx.li                         = gtpu_logical_interface::ngu;
   msg.cfg.tx.peer_teid                  = gtpu_teid_t{0x2};
   msg.cfg.tx.peer_addr                  = "127.0.0.1";
   msg.gtpu_pcap                         = &dummy_pcap;

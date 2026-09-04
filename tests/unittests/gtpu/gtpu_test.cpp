@@ -42,8 +42,8 @@ protected:
 
   // GTP-U logger
   ocudulog::basic_logger& gtpu_logger;
-  gtpu_tunnel_logger      gtpu_rx_logger{"GTPU", {{}, gtpu_teid_t{1}, "DL"}};
-  gtpu_tunnel_logger      gtpu_tx_logger{"GTPU", {{}, gtpu_teid_t{1}, "UL"}};
+  gtpu_tunnel_logger      gtpu_rx_logger{"GTPU", {gtpu_logical_interface::invalid, {}, gtpu_teid_t{1}, "DL"}};
+  gtpu_tunnel_logger      gtpu_tx_logger{"GTPU", {gtpu_logical_interface::invalid, {}, gtpu_teid_t{1}, "UL"}};
 };
 
 /// \brief Test correct read TEID helper function

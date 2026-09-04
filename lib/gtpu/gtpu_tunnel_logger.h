@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "ocudu/ran/gtpu/gtpu_logical_interface.h"
 #include "ocudu/ran/gtpu/gtpu_teid.h"
 #include "ocudu/support/format/fmt_to_c_str.h"
 #include "ocudu/support/format/prefixed_logger.h"
@@ -15,13 +16,13 @@ namespace ocudu {
 class gtpu_tunnel_log_prefix
 {
 public:
-  gtpu_tunnel_log_prefix(std::optional<uint32_t> ue_index, gtpu_teid_t teid, const char* dir)
+  gtpu_tunnel_log_prefix(gtpu_logical_interface li, std::optional<uint32_t> ue_index, gtpu_teid_t teid, const char* dir)
   {
     fmt::memory_buffer buffer;
     if (ue_index.has_value()) {
-      fmt::format_to(std::back_inserter(buffer), "ue={} {} teid={}: ", *ue_index, dir, teid);
+      fmt::format_to(std::back_inserter(buffer), "li={} ue={} {} teid={}: ", li, *ue_index, dir, teid);
     } else {
-      fmt::format_to(std::back_inserter(buffer), "{} teid={}: ", dir, teid);
+      fmt::format_to(std::back_inserter(buffer), "li={} {} teid={}: ", li, dir, teid);
     }
     prefix = ocudu::to_c_str(buffer);
   }

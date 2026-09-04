@@ -50,7 +50,8 @@ cu_up::cu_up(const cu_up_config& config_, cu_up_dependencies dependencies) :
 
   // Create NG-U GTP-U demux.
   ngu_demux = create_gtpu_demux(
-      gtpu_demux_creation_request{.cfg                 = gtpu_demux_cfg_t{.name         = "NG-U-DEMUX",
+      gtpu_demux_creation_request{.cfg                 = gtpu_demux_cfg_t{.li           = gtpu_logical_interface::ngu,
+                                                                          .name         = "NG-U-DEMUX",
                                                                           .warn_on_drop = cfg.ngu_cfg.warn_on_drop,
                                                                           .test_mode    = cfg.test_mode_cfg.enabled,
                                                                           .queue_size   = cfg.ngu_cfg.gtpu_queue_size,
