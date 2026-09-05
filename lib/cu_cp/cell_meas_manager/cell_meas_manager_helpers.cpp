@@ -163,6 +163,52 @@ void ocudu::ocucp::add_old_meas_config_to_rem_list(const rrc_meas_cfg& old_cfg, 
   }
 }
 
+void ocudu::ocucp::prune_redundant_rem_list_entries(const rrc_meas_cfg& old_cfg, rrc_meas_cfg& new_cfg)
+{
+  // Reusing an id assumes the encoded measObject fully determines the entry: only its delta lists survive a
+  // modification. cellsToAddMod is handled below; excludedCells/allowedCells are never populated. Populating
+  // those, or adding a Need-M field, needs the same handling.
+  for (auto& meas_obj : new_cfg.meas_obj_to_add_mod_list) {
+    const auto old_it = std::find_if(
+        old_cfg.meas_obj_to_add_mod_list.begin(),
+        old_cfg.meas_obj_to_add_mod_list.end(),
+        [&meas_obj](const rrc_meas_obj_to_add_mod& old_obj) { return old_obj.meas_obj_id == meas_obj.meas_obj_id; });
+    if (old_it == old_cfg.meas_obj_to_add_mod_list.end()) {
+      continue;
+    }
+
+    new_cfg.meas_obj_to_rem_list.erase(
+        std::remove(new_cfg.meas_obj_to_rem_list.begin(), new_cfg.meas_obj_to_rem_list.end(), meas_obj.meas_obj_id),
+        new_cfg.meas_obj_to_rem_list.end());
+
+    // Cell lists are applied as a delta, so dropped cells must be removed explicitly.
+    if (!old_it->meas_obj_nr.has_value() || !meas_obj.meas_obj_nr.has_value()) {
+      continue;
+    }
+    const auto& new_cells = meas_obj.meas_obj_nr.value().cells_to_add_mod_list;
+    for (const auto& old_cell : old_it->meas_obj_nr.value().cells_to_add_mod_list) {
+      if (std::none_of(new_cells.begin(), new_cells.end(), [&old_cell](const rrc_cells_to_add_mod& new_cell) {
+            return new_cell.pci == old_cell.pci;
+          })) {
+        meas_obj.meas_obj_nr.value().cells_to_rem_list.push_back(old_cell.pci);
+      }
+    }
+  }
+
+  for (const auto& report_cfg : new_cfg.report_cfg_to_add_mod_list) {
+    new_cfg.report_cfg_to_rem_list.erase(std::remove(new_cfg.report_cfg_to_rem_list.begin(),
+                                                     new_cfg.report_cfg_to_rem_list.end(),
+                                                     report_cfg.report_cfg_id),
+                                         new_cfg.report_cfg_to_rem_list.end());
+  }
+
+  for (const auto& meas_id : new_cfg.meas_id_to_add_mod_list) {
+    new_cfg.meas_id_to_rem_list.erase(
+        std::remove(new_cfg.meas_id_to_rem_list.begin(), new_cfg.meas_id_to_rem_list.end(), meas_id.meas_id),
+        new_cfg.meas_id_to_rem_list.end());
+  }
+}
+
 std::vector<ssb_frequency_t> ocudu::ocucp::generate_measurement_object_list(const cell_meas_manager_config& cfg,
                                                                             nr_cell_identity                serving_nci)
 {

@@ -26,6 +26,13 @@ void log_meas_objects(const ocudulog::basic_logger&                             
 /// \param[out] new_cfg The new configuration.
 void add_old_meas_config_to_rem_list(const rrc_meas_cfg& old_cfg, rrc_meas_cfg& new_cfg);
 
+/// \brief Drop the removal list entries that the new configuration adds back anyway.
+/// Ids already known to the UE are modified in place (TS 38.331 Sections 5.5.2.5, 5.5.2.7 and 5.5.2.3), and
+/// removing a measurement object also drops the measurement ids using it (Section 5.5.2.4).
+/// \param[in] old_cfg The configuration currently applied by the UE.
+/// \param[in,out] new_cfg The new configuration, with its removal lists already filled from \c old_cfg.
+void prune_redundant_rem_list_entries(const rrc_meas_cfg& old_cfg, rrc_meas_cfg& new_cfg);
+
 /// \brief Generate measurement objects for the given cell configuration.
 /// \param[in] cfg The cell configuration.
 /// \param[in] nci The cell id.

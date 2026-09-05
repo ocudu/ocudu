@@ -3,9 +3,11 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "cell_meas_manager_test_helpers.h"
+#include "lib/cu_cp/cell_meas_manager/cell_meas_manager_helpers.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/ran/plmn_identity.h"
+#include "ocudu/support/enum_utils.h"
 #include <variant>
 
 using namespace ocudu;
@@ -193,7 +195,7 @@ TEST_F(cell_meas_manager_test, when_empty_cell_config_is_used_then_meas_cfg_is_n
   verify_empty_meas_cfg(meas_cfg);
 }
 
-TEST_F(cell_meas_manager_test, when_old_meas_config_is_provided_old_ids_are_removed)
+TEST_F(cell_meas_manager_test, when_old_meas_config_is_provided_reused_ids_are_not_removed)
 {
   create_default_manager();
 
@@ -211,15 +213,28 @@ TEST_F(cell_meas_manager_test, when_old_meas_config_is_provided_old_ids_are_remo
   const nr_cell_identity      target_nci      = nr_cell_identity::create(0x19b1).value();
   std::optional<rrc_meas_cfg> target_meas_cfg = manager->get_measurement_config(ue_index, target_nci, initial_meas_cfg);
 
-  // Make sure initial IDs are release again.
-  ASSERT_EQ(target_meas_cfg.value().meas_obj_to_rem_list.at(0),
-            initial_meas_cfg.value().meas_obj_to_add_mod_list.at(0).meas_obj_id);
+  // Ids the new config sets up again are modified in place, so they must not be removed first.
+  const auto& rem_meas_objs   = target_meas_cfg.value().meas_obj_to_rem_list;
+  const auto& rem_report_cfgs = target_meas_cfg.value().report_cfg_to_rem_list;
+  const auto& rem_meas_ids    = target_meas_cfg.value().meas_id_to_rem_list;
+  for (const auto& meas_obj : target_meas_cfg.value().meas_obj_to_add_mod_list) {
+    ASSERT_EQ(std::find(rem_meas_objs.begin(), rem_meas_objs.end(), meas_obj.meas_obj_id), rem_meas_objs.end())
+        << "measObjectId " << to_underlying(meas_obj.meas_obj_id) << " is removed and added back";
+  }
+  for (const auto& report_cfg : target_meas_cfg.value().report_cfg_to_add_mod_list) {
+    ASSERT_EQ(std::find(rem_report_cfgs.begin(), rem_report_cfgs.end(), report_cfg.report_cfg_id),
+              rem_report_cfgs.end())
+        << "reportConfigId " << to_underlying(report_cfg.report_cfg_id) << " is removed and added back";
+  }
+  for (const auto& meas_id : target_meas_cfg.value().meas_id_to_add_mod_list) {
+    ASSERT_EQ(std::find(rem_meas_ids.begin(), rem_meas_ids.end(), meas_id.meas_id), rem_meas_ids.end())
+        << "measId " << to_underlying(meas_id.meas_id) << " is removed and added back";
+  }
 
-  ASSERT_EQ(target_meas_cfg.value().meas_id_to_rem_list.at(0),
-            initial_meas_cfg.value().meas_id_to_add_mod_list.at(0).meas_id);
-
-  ASSERT_EQ(target_meas_cfg.value().report_cfg_to_rem_list.at(0),
-            initial_meas_cfg.value().report_cfg_to_add_mod_list.at(0).report_cfg_id);
+  // Every id is reused here, so nothing is left to remove.
+  ASSERT_TRUE(rem_meas_objs.empty());
+  ASSERT_TRUE(rem_report_cfgs.empty());
+  ASSERT_TRUE(rem_meas_ids.empty());
 
   // The new config should reuse the IDs again.
   check_default_meas_cfg(target_meas_cfg, meas_obj_id_t::min);
@@ -733,4 +748,64 @@ TEST_F(cell_meas_manager_test, when_cho_meas_config_requested_then_ntn_neighbour
     }
   }
   EXPECT_GT(nof_cells, 0U);
+}
+
+TEST_F(cell_meas_manager_test, when_reused_meas_object_drops_a_cell_then_the_cell_is_removed)
+{
+  // Old config: measurement object 1 covers pci=5.
+  rrc_meas_cfg            old_cfg;
+  rrc_meas_obj_to_add_mod old_obj;
+  old_obj.meas_obj_id = uint_to_meas_obj_id(1);
+  old_obj.meas_obj_nr.emplace();
+  rrc_cells_to_add_mod stale_cell;
+  stale_cell.pci = 5;
+  old_obj.meas_obj_nr.value().cells_to_add_mod_list.push_back(stale_cell);
+  old_cfg.meas_obj_to_add_mod_list.push_back(old_obj);
+
+  // New config: same measurement object, without that cell.
+  rrc_meas_cfg            new_cfg;
+  rrc_meas_obj_to_add_mod new_obj;
+  new_obj.meas_obj_id = uint_to_meas_obj_id(1);
+  new_obj.meas_obj_nr.emplace();
+  new_cfg.meas_obj_to_add_mod_list.push_back(new_obj);
+  add_old_meas_config_to_rem_list(old_cfg, new_cfg);
+
+  prune_redundant_rem_list_entries(old_cfg, new_cfg);
+
+  ASSERT_TRUE(new_cfg.meas_obj_to_rem_list.empty());
+  const auto& cells_to_rem = new_cfg.meas_obj_to_add_mod_list.at(0).meas_obj_nr.value().cells_to_rem_list;
+  ASSERT_EQ(cells_to_rem.size(), 1);
+  ASSERT_EQ(cells_to_rem.at(0), 5);
+}
+
+TEST_F(cell_meas_manager_test, when_new_meas_config_is_smaller_then_the_dropped_ids_are_removed)
+{
+  // Old config: two of everything.
+  rrc_meas_cfg old_cfg;
+  for (uint8_t id : {1, 2}) {
+    rrc_meas_obj_to_add_mod meas_obj;
+    meas_obj.meas_obj_id = uint_to_meas_obj_id(id);
+    meas_obj.meas_obj_nr.emplace();
+    old_cfg.meas_obj_to_add_mod_list.push_back(meas_obj);
+    old_cfg.report_cfg_to_add_mod_list.push_back({uint_to_report_cfg_id(id), {}});
+    old_cfg.meas_id_to_add_mod_list.push_back(
+        {uint_to_meas_id(id), uint_to_meas_obj_id(id), uint_to_report_cfg_id(id)});
+  }
+
+  // New config: only the first of each is set up again.
+  rrc_meas_cfg            new_cfg;
+  rrc_meas_obj_to_add_mod meas_obj;
+  meas_obj.meas_obj_id = uint_to_meas_obj_id(1);
+  meas_obj.meas_obj_nr.emplace();
+  new_cfg.meas_obj_to_add_mod_list.push_back(meas_obj);
+  new_cfg.report_cfg_to_add_mod_list.push_back({uint_to_report_cfg_id(1), {}});
+  new_cfg.meas_id_to_add_mod_list.push_back({uint_to_meas_id(1), uint_to_meas_obj_id(1), uint_to_report_cfg_id(1)});
+  add_old_meas_config_to_rem_list(old_cfg, new_cfg);
+
+  prune_redundant_rem_list_entries(old_cfg, new_cfg);
+
+  // The ids that are gone must still be removed, the reused ones must not.
+  ASSERT_EQ(new_cfg.meas_obj_to_rem_list, std::vector<meas_obj_id_t>{uint_to_meas_obj_id(2)});
+  ASSERT_EQ(new_cfg.report_cfg_to_rem_list, std::vector<report_cfg_id_t>{uint_to_report_cfg_id(2)});
+  ASSERT_EQ(new_cfg.meas_id_to_rem_list, std::vector<meas_id_t>{uint_to_meas_id(2)});
 }

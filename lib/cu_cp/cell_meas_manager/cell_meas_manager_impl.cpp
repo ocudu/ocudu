@@ -206,6 +206,11 @@ cell_meas_manager::get_measurement_config(cu_cp_ue_index_t                   ue_
 
   new_cfg.quant_cfg = quant_cfg;
 
+  // Keep in the removal lists only what the new config does not set up again.
+  if (current_meas_config.has_value()) {
+    prune_redundant_rem_list_entries(current_meas_config.value(), new_cfg);
+  }
+
   return meas_cfg;
 }
 
