@@ -112,8 +112,8 @@ protected:
       } break;
       case pucch_format::FORMAT_2: {
         uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu pucch_pdu{};
-        pucch_pdu.sr_info.resize(sr_nof_bits_to_uint(pucch_res.uci_bits.sr_bits));
-        pucch_pdu.sr_info.fill(0, sr_nof_bits_to_uint(pucch_res.uci_bits.sr_bits), true);
+        pucch_pdu.sr_info.resize(to_underlying(pucch_res.uci_bits.sr_bits));
+        pucch_pdu.sr_info.fill(0, to_underlying(pucch_res.uci_bits.sr_bits), true);
       } break;
       default:
         report_fatal_error("Not handling SR grant over PUCCH format 0, 3 and 4");

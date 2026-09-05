@@ -13,6 +13,7 @@
 #include "ocudu/ran/ssb/ssb_properties.h"
 #include "ocudu/ran/subcarrier_spacing.h"
 #include "ocudu/scheduler/rrm/ue_capability_summary.h"
+#include "ocudu/support/enum_utils.h"
 #include <array>
 #include <numeric>
 #include <optional>
@@ -261,7 +262,7 @@ static std::vector<periodic_uci_config> collect_ul_occasions(const ue_cell_confi
       if (pucch_rep != nullptr &&
           pucch_rep->report_type ==
               csi_report_config::periodic_or_semi_persistent_report_on_pucch::report_type_t::periodic) {
-        out.push_back({csi_report_periodicity_to_uint(pucch_rep->report_slot_period), pucch_rep->report_slot_offset});
+        out.push_back({to_underlying(pucch_rep->report_slot_period), pucch_rep->report_slot_offset});
       }
     }
   }

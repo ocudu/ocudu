@@ -136,6 +136,6 @@ void e1ap_ue_context_list::increase_next_cu_cp_ue_e1ap_id()
     next_cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_t::min;
   } else {
     // increase cu-cp ue e1ap id counter
-    next_cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(gnb_cu_cp_ue_e1ap_id_to_uint(next_cu_cp_ue_e1ap_id) + 1);
+    next_cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(to_underlying(next_cu_cp_ue_e1ap_id) + 1);
   }
 }

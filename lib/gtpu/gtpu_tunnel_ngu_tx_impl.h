@@ -56,10 +56,10 @@ public:
     byte_buffer ext_buf;
     bit_encoder encoder{ext_buf};
     bool        pack_ok = true;
-    pack_ok &= encoder.pack(1, 4);                        // PDU type
-    pack_ok &= encoder.pack(0, 4);                        // unused options
-    pack_ok &= encoder.pack(0, 1);                        // spare
-    pack_ok &= encoder.pack(qos_flow_id_to_uint(qfi), 7); // QFI
+    pack_ok &= encoder.pack(1, 4);                  // PDU type
+    pack_ok &= encoder.pack(0, 4);                  // unused options
+    pack_ok &= encoder.pack(0, 1);                  // spare
+    pack_ok &= encoder.pack(to_underlying(qfi), 7); // QFI
 
     if (!pack_ok) {
       logger.log_error(

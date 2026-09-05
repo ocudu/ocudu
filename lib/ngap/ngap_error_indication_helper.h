@@ -41,13 +41,13 @@ inline void send_error_indication(ngap_message_notifier&      ngap_notifier,
   // Set optionally provided RAN UE ID.
   if (ran_ue_id.has_value()) {
     error_ind->ran_ue_ngap_id_present = true;
-    error_ind->ran_ue_ngap_id         = ran_ue_id_to_uint(ran_ue_id.value());
+    error_ind->ran_ue_ngap_id         = to_underlying(ran_ue_id.value());
   }
 
   // Set optionally provided AMF UE ID.
   if (amf_ue_id.has_value()) {
     error_ind->amf_ue_ngap_id_present = true;
-    error_ind->amf_ue_ngap_id         = amf_ue_id_to_uint(amf_ue_id.value());
+    error_ind->amf_ue_ngap_id         = to_underlying(amf_ue_id.value());
   }
 
   if (cause.has_value()) {

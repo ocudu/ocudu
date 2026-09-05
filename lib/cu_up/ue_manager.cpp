@@ -119,10 +119,10 @@ ue_context* ue_manager::add_ue(cu_up_e1_index_t e1_index, const ue_context_cfg& 
   }
 
   // Find E1AP for this bearer context.
-  if (cu_up_e1_index_to_uint(e1_index) >= e1aps.size()) {
+  if (to_underlying(e1_index) >= e1aps.size()) {
     return nullptr;
   }
-  std::reference_wrapper<e1ap_interface> e1ap = e1aps[cu_up_e1_index_to_uint(e1_index)];
+  std::reference_wrapper<e1ap_interface> e1ap = e1aps[to_underlying(e1_index)];
 
   cu_up_ue_index_t new_idx = get_next_ue_index();
   if (new_idx == INVALID_CU_UP_UE_INDEX) {

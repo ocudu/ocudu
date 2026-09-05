@@ -211,7 +211,7 @@ private:
       next_ue_index = cu_cp_ue_index_t::min;
     } else {
       // Increase cu ue f1ap id counter.
-      next_ue_index = uint_to_ue_index(cu_cp_ue_index_to_uint(next_ue_index) + 1);
+      next_ue_index = uint_to_ue_index(to_underlying(next_ue_index) + 1);
     }
   }
 

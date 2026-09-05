@@ -31,7 +31,7 @@ public:
     request.ue_index = ue_index,
     request.nr_cgi   = nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create({1, 22}, 1).value()};
     request.guami = guami_t{.plmn = plmn_identity::test_value(), .amf_set_id = 1, .amf_pointer = 1, .amf_region_id = 1};
-    request.ue_context_info_ho_request.amf_ue_id        = amf_ue_id_to_uint(amf_ue_id_t::min);
+    request.ue_context_info_ho_request.amf_ue_id        = to_underlying(amf_ue_id_t::min);
     request.ue_context_info_ho_request.amf_addr         = transport_layer_address::create_from_string("127.0.0.1");
     request.ue_context_info_ho_request.security_context = sec_ctxt;
     request.ue_context_info_ho_request.ue_ambr.dl       = 0;
@@ -78,7 +78,7 @@ public:
     EXPECT_EQ(acks.size(), 2);
     for (const xnap_message& ack : acks) {
       const auto& ho_ack = ack.pdu.successful_outcome().value.ho_request_ack();
-      EXPECT_EQ(ho_ack->source_ng_ra_nnode_ue_xn_ap_id, local_xnap_ue_id_to_uint(source_ue_id));
+      EXPECT_EQ(ho_ack->source_ng_ra_nnode_ue_xn_ap_id, to_underlying(source_ue_id));
       local_ids.push_back(ho_ack->target_ng_ra_nnode_ue_xn_ap_id);
     }
     EXPECT_NE(local_ids[0], local_ids[1]) << "each candidate must get its own Target NG-RAN node UE XnAP ID";
@@ -389,7 +389,7 @@ TEST_F(xnap_handover_preparation_procedure_test,
   const std::vector<uint64_t> local_ids    = prepare_two_target_candidates(source_ue_id);
   ASSERT_EQ(local_ids.size(), 2);
 
-  const cu_cp_ue_index_t ue_index_b = uint_to_ue_index(cu_cp_ue_index_to_uint(cu_cp_ue_index_t::min) + 1);
+  const cu_cp_ue_index_t ue_index_b = uint_to_ue_index(to_underlying(cu_cp_ue_index_t::min) + 1);
   ASSERT_TRUE(xnap->has_ue_context(cu_cp_ue_index_t::min));
   ASSERT_TRUE(xnap->has_ue_context(ue_index_b));
 
@@ -415,7 +415,7 @@ TEST_F(xnap_handover_preparation_procedure_test,
   ASSERT_EQ(local_ids.size(), 2);
 
   const cu_cp_ue_index_t ue_index_a = cu_cp_ue_index_t::min;
-  const cu_cp_ue_index_t ue_index_b = uint_to_ue_index(cu_cp_ue_index_to_uint(cu_cp_ue_index_t::min) + 1);
+  const cu_cp_ue_index_t ue_index_b = uint_to_ue_index(to_underlying(cu_cp_ue_index_t::min) + 1);
   ASSERT_TRUE(xnap->has_ue_context(ue_index_a));
   ASSERT_TRUE(xnap->has_ue_context(ue_index_b));
 

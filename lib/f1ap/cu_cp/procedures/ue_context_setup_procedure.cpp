@@ -231,12 +231,12 @@ static void fill_asn1_ue_context_setup_request(asn1::f1ap::ue_context_setup_requ
                                                const f1ap_ue_context_setup_request&    request,
                                                const f1ap_ue_ids&                      ue_ids)
 {
-  asn1_request->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue_ids.cu_ue_f1ap_id);
+  asn1_request->gnb_cu_ue_f1ap_id = to_underlying(ue_ids.cu_ue_f1ap_id);
 
   asn1_request->gnb_du_ue_f1ap_id_present =
       ue_ids.du_ue_f1ap_id && ue_ids.du_ue_f1ap_id != gnb_du_ue_f1ap_id_t::invalid;
   if (asn1_request->gnb_du_ue_f1ap_id_present) {
-    asn1_request->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(*ue_ids.du_ue_f1ap_id);
+    asn1_request->gnb_du_ue_f1ap_id = to_underlying(*ue_ids.du_ue_f1ap_id);
   }
 
   asn1_request->sp_cell_id    = cgi_to_asn1(request.sp_cell_id);
@@ -377,13 +377,13 @@ static void fill_asn1_ue_context_setup_request(asn1::f1ap::ue_context_setup_requ
   // new gnb cu ue f1ap id
   if (request.new_gnb_cu_ue_f1ap_id.has_value()) {
     asn1_request->new_gnb_cu_ue_f1ap_id_present = true;
-    asn1_request->new_gnb_cu_ue_f1ap_id         = gnb_cu_ue_f1ap_id_to_uint(request.new_gnb_cu_ue_f1ap_id.value());
+    asn1_request->new_gnb_cu_ue_f1ap_id         = to_underlying(request.new_gnb_cu_ue_f1ap_id.value());
   }
 
   // ran ue id
   if (request.ran_ue_id.has_value()) {
     asn1_request->ran_ue_id_present = true;
-    asn1_request->ran_ue_id.from_number(ran_ue_id_to_uint(request.ran_ue_id.value()));
+    asn1_request->ran_ue_id.from_number(to_underlying(request.ran_ue_id.value()));
   }
 
   // Conditional inter DU mobility info.
@@ -395,7 +395,7 @@ static void fill_asn1_ue_context_setup_request(asn1::f1ap::ue_context_setup_requ
     if (cho_info.cho_trigger == f1ap_cho_trigger::cho_replace and cho_info.target_gnb_du_ue_f1ap_id.has_value()) {
       asn1_request->conditional_inter_du_mob_info.target_gnb_du_ue_f1ap_id_present = true;
       asn1_request->conditional_inter_du_mob_info.target_gnb_du_ue_f1ap_id =
-          gnb_du_ue_f1ap_id_to_uint(cho_info.target_gnb_du_ue_f1ap_id.value());
+          to_underlying(cho_info.target_gnb_du_ue_f1ap_id.value());
     }
   }
 }

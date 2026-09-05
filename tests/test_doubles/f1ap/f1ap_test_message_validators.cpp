@@ -343,8 +343,7 @@ bool ocudu::test_helpers::is_valid_ue_context_release_request(const f1ap_message
 bool ocudu::test_helpers::is_valid_ue_context_release_request(const f1ap_message& msg, gnb_du_ue_f1ap_id_t du_ue_id)
 {
   TRUE_OR_RETURN(is_valid_ue_context_release_request(msg));
-  TRUE_OR_RETURN(msg.pdu.init_msg().value.ue_context_release_request()->gnb_du_ue_f1ap_id ==
-                 gnb_du_ue_f1ap_id_to_uint(du_ue_id));
+  TRUE_OR_RETURN(msg.pdu.init_msg().value.ue_context_release_request()->gnb_du_ue_f1ap_id == to_underlying(du_ue_id));
   return true;
 }
 

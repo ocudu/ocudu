@@ -140,7 +140,7 @@ e1ap_cu_cp_impl::handle_bearer_context_setup_request(const e1ap_bearer_context_s
   auto& bearer_context_setup_request = e1ap_msg.pdu.init_msg().value.bearer_context_setup_request();
 
   fill_asn1_bearer_context_setup_request(bearer_context_setup_request, request);
-  bearer_context_setup_request->gnb_cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.ue_ids.cu_cp_ue_e1ap_id);
+  bearer_context_setup_request->gnb_cu_cp_ue_e1ap_id = to_underlying(ue_ctxt.ue_ids.cu_cp_ue_e1ap_id);
 
   return launch_async<bearer_context_setup_procedure>(
       e1ap_cfg, e1ap_msg, ue_ctxt.bearer_ev_mng, ue_ctxt_list, pdu_notifier, ue_ctxt.logger);
@@ -168,8 +168,8 @@ e1ap_cu_cp_impl::handle_bearer_context_modification_request(const e1ap_bearer_co
   e1ap_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_MOD);
 
   auto& bearer_context_mod_request                 = e1ap_msg.pdu.init_msg().value.bearer_context_mod_request();
-  bearer_context_mod_request->gnb_cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.ue_ids.cu_cp_ue_e1ap_id);
-  bearer_context_mod_request->gnb_cu_up_ue_e1ap_id = gnb_cu_up_ue_e1ap_id_to_uint(ue_ctxt.ue_ids.cu_up_ue_e1ap_id);
+  bearer_context_mod_request->gnb_cu_cp_ue_e1ap_id = to_underlying(ue_ctxt.ue_ids.cu_cp_ue_e1ap_id);
+  bearer_context_mod_request->gnb_cu_up_ue_e1ap_id = to_underlying(ue_ctxt.ue_ids.cu_up_ue_e1ap_id);
 
   fill_asn1_bearer_context_modification_request(bearer_context_mod_request, request);
 
@@ -203,8 +203,8 @@ e1ap_cu_cp_impl::handle_bearer_context_release_command(const e1ap_bearer_context
   e1ap_msg.pdu.set_init_msg();
   e1ap_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_RELEASE);
   auto& bearer_context_release_cmd                 = e1ap_msg.pdu.init_msg().value.bearer_context_release_cmd();
-  bearer_context_release_cmd->gnb_cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.ue_ids.cu_cp_ue_e1ap_id);
-  bearer_context_release_cmd->gnb_cu_up_ue_e1ap_id = gnb_cu_up_ue_e1ap_id_to_uint(ue_ctxt.ue_ids.cu_up_ue_e1ap_id);
+  bearer_context_release_cmd->gnb_cu_cp_ue_e1ap_id = to_underlying(ue_ctxt.ue_ids.cu_cp_ue_e1ap_id);
+  bearer_context_release_cmd->gnb_cu_up_ue_e1ap_id = to_underlying(ue_ctxt.ue_ids.cu_up_ue_e1ap_id);
 
   fill_asn1_bearer_context_release_command(bearer_context_release_cmd, command);
 

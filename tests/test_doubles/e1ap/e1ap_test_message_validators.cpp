@@ -49,7 +49,7 @@ bool ocudu::test_helpers::is_valid_security_indication_with_bearer_context_setup
       ng_ran_bearer_ctxt[0]->pdu_session_res_to_setup_list();
 
   for (const asn1::e1ap::pdu_session_res_to_setup_item_s& pdu_session : asn1_pdu_session_res_item) {
-    if (pdu_session.pdu_session_id != pdu_session_id_to_uint(psi)) {
+    if (pdu_session.pdu_session_id != to_underlying(psi)) {
       continue;
     }
     asn1::e1ap::security_ind_s security_indication = pdu_session.security_ind;

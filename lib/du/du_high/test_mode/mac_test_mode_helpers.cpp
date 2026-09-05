@@ -155,7 +155,7 @@ make_f2f3f4_uci_pdu(const pucch_info& pucch, const du_test_mode_config::test_mod
   if (sr_bits != sr_nof_bits::no_sr) {
     // Set SR to not detected.
     pucch_ind.sr_info.emplace();
-    pucch_ind.sr_info->resize(sr_nof_bits_to_uint(sr_bits));
+    pucch_ind.sr_info->resize(to_underlying(sr_bits));
   }
   if (harq_ack_nof_bits > 0) {
     // Set all HARQ-ACK bits to ACK.

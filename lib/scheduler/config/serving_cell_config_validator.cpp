@@ -17,6 +17,7 @@
 #include "ocudu/scheduler/config/serving_cell_config.h"
 #include "ocudu/scheduler/sched_consts.h"
 #include "ocudu/support/config/validator_helpers.h"
+#include "ocudu/support/enum_utils.h"
 
 using namespace ocudu;
 
@@ -264,7 +265,7 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
     const bool     csi_sr_collision = csi_helper::are_sr_and_csi_pucchs_scheduled_together(
         sr_periodicity_to_slot(pucch_cfg.sr_res_list.front().period),
         pucch_cfg.sr_res_list.front().offset,
-        csi_report_periodicity_to_uint(csi.report_slot_period),
+        to_underlying(csi.report_slot_period),
         csi.report_slot_offset);
 
     // If SR and CSI are reported within the same slot, 1 SR bit can be multiplexed with CSI within the same PUCCH
@@ -490,7 +491,7 @@ config_validators::validate_nzp_csi_rs_list(span<const nzp_csi_rs_resource>     
             csi_rs_cfg.freq_allocation_ref_idx, res.res_mapping.fd_alloc, static_cast<unsigned>(row_idx));
 
         const unsigned tdd_period_slots    = nof_slots_per_tdd_period(tdd_cfg_common.value());
-        const unsigned csi_rs_period_slots = csi_resource_periodicity_to_uint(res.csi_res_period.value());
+        const unsigned csi_rs_period_slots = to_underlying(res.csi_res_period.value());
 
         VERIFY(csi_rs_period_slots % tdd_period_slots == 0,
                "Period={} of NZP-CSI-RS-ResourceId={} is not a multiple of the TDD pattern period={}",

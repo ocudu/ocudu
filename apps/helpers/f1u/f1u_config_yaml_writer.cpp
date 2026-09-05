@@ -22,7 +22,7 @@ static void fill_cu_up_f1u_socket_entry(YAML::Node& node, const f1u_socket_appco
     node["sd"] = *config.sd;
   }
   if (config.five_qi.has_value()) {
-    node["five_qi"] = five_qi_to_uint(*config.five_qi);
+    node["five_qi"] = to_underlying(*config.five_qi);
   }
 
   fill_udp_config_in_yaml_schema(node["udp"], config.udp_config);

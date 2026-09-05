@@ -70,7 +70,7 @@ inline asn1::e1ap::gnb_cu_up_e1_setup_request_s cu_up_e1_setup_request_to_asn1(c
         asn1::e1ap::ng_ran_qos_support_item_s asn1_ran_item;
 
         // Fill five QI.
-        asn1_ran_item.non_dyn_5qi_descriptor.five_qi = five_qi_to_uint(ran_item.non_dyn_5qi_desc.five_qi);
+        asn1_ran_item.non_dyn_5qi_descriptor.five_qi = to_underlying(ran_item.non_dyn_5qi_desc.five_qi);
 
         // Fill QoS prio level.
         if (ran_item.non_dyn_5qi_desc.qos_prio_level.has_value()) {
@@ -291,7 +291,7 @@ inline void fill_asn1_bearer_context_setup_response(asn1::e1ap::sys_bearer_conte
     asn1::e1ap::pdu_session_res_setup_item_s asn1_res_setup_item;
 
     // Fill PDU Session ID.
-    asn1_res_setup_item.pdu_session_id = pdu_session_id_to_uint(res_setup_item.pdu_session_id);
+    asn1_res_setup_item.pdu_session_id = to_underlying(res_setup_item.pdu_session_id);
 
     // Fill NG DL UP TNL Info.
     up_transport_layer_info_to_asn1(asn1_res_setup_item.ng_dl_up_tnl_info, res_setup_item.ng_dl_up_tnl_info);
@@ -336,7 +336,7 @@ inline void fill_asn1_bearer_context_setup_response(asn1::e1ap::sys_bearer_conte
     asn1_bearer_context_setup_response.pdu_session_res_failed_list_present = true;
     for (const auto& failed_item : response.pdu_session_resource_failed_list) {
       asn1::e1ap::pdu_session_res_failed_item_s asn1_failed_item;
-      asn1_failed_item.pdu_session_id = pdu_session_id_to_uint(failed_item.pdu_session_id);
+      asn1_failed_item.pdu_session_id = to_underlying(failed_item.pdu_session_id);
       asn1_failed_item.cause          = cause_to_asn1(failed_item.cause);
 
       asn1_bearer_context_setup_response.pdu_session_res_failed_list.push_back(asn1_failed_item);
@@ -669,7 +669,7 @@ inline void fill_asn1_bearer_context_modification_response(asn1::e1ap::sys_beare
       asn1::e1ap::pdu_session_res_setup_mod_item_s asn1_res_setup_mod_item;
 
       // Fill PDU session ID.
-      asn1_res_setup_mod_item.pdu_session_id = pdu_session_id_to_uint(res_setup_mod_item.pdu_session_id);
+      asn1_res_setup_mod_item.pdu_session_id = to_underlying(res_setup_mod_item.pdu_session_id);
 
       // Fill security result.
       if (res_setup_mod_item.security_result.has_value()) {
@@ -705,7 +705,7 @@ inline void fill_asn1_bearer_context_modification_response(asn1::e1ap::sys_beare
 
     for (const auto& res_failed_mod_item : response.pdu_session_resource_failed_list) {
       asn1::e1ap::pdu_session_res_failed_mod_item_s asn1_res_failed_mod_item;
-      asn1_res_failed_mod_item.pdu_session_id = pdu_session_id_to_uint(res_failed_mod_item.pdu_session_id);
+      asn1_res_failed_mod_item.pdu_session_id = to_underlying(res_failed_mod_item.pdu_session_id);
       asn1_res_failed_mod_item.cause          = cause_to_asn1(res_failed_mod_item.cause);
 
       asn1_bearer_context_modification_response.pdu_session_res_failed_mod_list.push_back(asn1_res_failed_mod_item);
@@ -720,7 +720,7 @@ inline void fill_asn1_bearer_context_modification_response(asn1::e1ap::sys_beare
       asn1::e1ap::pdu_session_res_modified_item_s asn1_res_modified_item;
 
       // Fill PDU session ID.
-      asn1_res_modified_item.pdu_session_id = pdu_session_id_to_uint(res_modified_item.pdu_session_id);
+      asn1_res_modified_item.pdu_session_id = to_underlying(res_modified_item.pdu_session_id);
 
       // Fill NG DL UP TNL info.
       if (res_modified_item.ng_dl_up_tnl_info.has_value()) {
@@ -754,7 +754,7 @@ inline void fill_asn1_bearer_context_modification_response(asn1::e1ap::sys_beare
         asn1::e1ap::drb_modified_item_ng_ran_s asn1_drb_modified_item;
 
         // Fill DRB ID.
-        asn1_drb_modified_item.drb_id = drb_id_to_uint(drb_modified_item.drb_id);
+        asn1_drb_modified_item.drb_id = to_underlying(drb_modified_item.drb_id);
 
         // Fill UL UP transport params.
         for (const auto& ul_up_transport_param : drb_modified_item.ul_up_transport_params) {
@@ -790,14 +790,14 @@ inline void fill_asn1_bearer_context_modification_response(asn1::e1ap::sys_beare
         // Fill flow setup list.
         for (const auto& qos_flow_item : drb_modified_item.flow_setup_list) {
           asn1::e1ap::qos_flow_item_s asn1_flow_item;
-          asn1_flow_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_item.qos_flow_id);
+          asn1_flow_item.qos_flow_id = to_underlying(qos_flow_item.qos_flow_id);
           asn1_drb_modified_item.flow_setup_list.push_back(asn1_flow_item);
         }
 
         // Fill flow failed list.
         for (const auto& flow_failed_item : drb_modified_item.flow_failed_list) {
           asn1::e1ap::qos_flow_failed_item_s asn1_flow_failed_item;
-          asn1_flow_failed_item.qos_flow_id = qos_flow_id_to_uint(flow_failed_item.qos_flow_id);
+          asn1_flow_failed_item.qos_flow_id = to_underlying(flow_failed_item.qos_flow_id);
           asn1_drb_modified_item.flow_failed_list.push_back(asn1_flow_failed_item);
         }
 
@@ -818,7 +818,7 @@ inline void fill_asn1_bearer_context_modification_response(asn1::e1ap::sys_beare
 
     for (const auto& res_failed_to_modify_item : response.pdu_session_resource_failed_to_modify_list) {
       asn1::e1ap::pdu_session_res_failed_to_modify_item_s asn1_res_failed_to_modify_item;
-      asn1_res_failed_to_modify_item.pdu_session_id = pdu_session_id_to_uint(res_failed_to_modify_item.pdu_session_id);
+      asn1_res_failed_to_modify_item.pdu_session_id = to_underlying(res_failed_to_modify_item.pdu_session_id);
       asn1_res_failed_to_modify_item.cause          = cause_to_asn1(res_failed_to_modify_item.cause);
 
       asn1_bearer_context_modification_response.pdu_session_res_failed_to_modify_list.push_back(

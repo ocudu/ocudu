@@ -153,8 +153,8 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
   f1ap_msg.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
   ue_context_mod_resp_s& resp = f1ap_msg.pdu.successful_outcome().value.ue_context_mod_resp();
 
-  resp->gnb_du_ue_f1ap_id                           = gnb_du_ue_f1ap_id_to_uint(ue.context.gnb_du_ue_f1ap_id);
-  resp->gnb_cu_ue_f1ap_id                           = gnb_cu_ue_f1ap_id_to_uint(ue.context.gnb_cu_ue_f1ap_id);
+  resp->gnb_du_ue_f1ap_id                           = to_underlying(ue.context.gnb_du_ue_f1ap_id);
+  resp->gnb_cu_ue_f1ap_id                           = to_underlying(ue.context.gnb_cu_ue_f1ap_id);
   resp->res_coordination_transfer_container_present = false;
 
   // DRBs-SetupMod-List
@@ -218,8 +218,8 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_fai
   f1ap_msg.pdu.set_unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
   ue_context_mod_fail_s& resp = f1ap_msg.pdu.unsuccessful_outcome().value.ue_context_mod_fail();
 
-  resp->gnb_du_ue_f1ap_id               = gnb_du_ue_f1ap_id_to_uint(ue.context.gnb_du_ue_f1ap_id);
-  resp->gnb_cu_ue_f1ap_id               = gnb_cu_ue_f1ap_id_to_uint(ue.context.gnb_cu_ue_f1ap_id);
+  resp->gnb_du_ue_f1ap_id               = to_underlying(ue.context.gnb_du_ue_f1ap_id);
+  resp->gnb_cu_ue_f1ap_id               = to_underlying(ue.context.gnb_cu_ue_f1ap_id);
   resp->cause.set_radio_network().value = asn1::f1ap::cause_radio_network_opts::unspecified;
 
   ue.f1ap_msg_notifier.on_new_message(f1ap_msg);

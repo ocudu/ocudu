@@ -16,7 +16,7 @@
 
 namespace ocudu {
 
-enum class csi_resource_periodicity;
+enum class csi_resource_periodicity : unsigned;
 
 /// \brief CSI-ReportConfigId is used to identify one CSI-ReportConfig.
 /// \remark See TS 38.331, \c CSI-ReportConfigId.
@@ -31,7 +31,7 @@ constexpr unsigned MAX_CSI_REPORT_PERIOD = 320;
 
 /// \brief Periodicity and slot offset.
 /// \remark See TS 38.331, \c CSI-ReportPeriodicityAndOffset.
-enum class csi_report_periodicity {
+enum class csi_report_periodicity : unsigned {
   slots4   = 4,
   slots5   = 5,
   slots8   = 8,
@@ -43,11 +43,6 @@ enum class csi_report_periodicity {
   slots160 = 160,
   slots320 = 320
 };
-
-constexpr unsigned csi_report_periodicity_to_uint(csi_report_periodicity period)
-{
-  return static_cast<unsigned>(period);
-}
 
 /// \brief CQI table to use for CQI calculation.
 /// \remark See TS 38.331, \c cqi-Table in \c CSI-ReportConfig and TS 38.214, clause 5.2.2.1.

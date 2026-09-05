@@ -29,12 +29,6 @@ enum class cu_cp_ue_index_t : uint64_t {
   invalid = std::numeric_limits<uint64_t>::max()
 };
 
-/// Convert ue_index type to integer.
-inline uint64_t cu_cp_ue_index_to_uint(cu_cp_ue_index_t index)
-{
-  return static_cast<uint64_t>(index);
-}
-
 /// Convert integer to ue_index type.
 inline cu_cp_ue_index_t uint_to_ue_index(std::underlying_type_t<cu_cp_ue_index_t> index)
 {

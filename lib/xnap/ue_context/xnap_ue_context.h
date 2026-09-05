@@ -6,6 +6,7 @@
 #include "xnap_ue_logger.h"
 #include "ocudu/asn1/xnap/xnap_pdu_contents.h"
 #include "ocudu/support/async/protocol_transaction_manager.h"
+#include "ocudu/support/enum_utils.h"
 #include "ocudu/support/timers.h"
 #include "ocudu/xnap/xnap_types.h"
 
@@ -354,7 +355,7 @@ private:
       next_local_xnap_ue_id = local_xnap_ue_id_t::min;
     } else {
       // Increase LOCAL_XNAP_UE_ID counter.
-      next_local_xnap_ue_id = uint_to_local_xnap_ue_id(local_xnap_ue_id_to_uint(next_local_xnap_ue_id) + 1);
+      next_local_xnap_ue_id = uint_to_local_xnap_ue_id(to_underlying(next_local_xnap_ue_id) + 1);
     }
   }
 

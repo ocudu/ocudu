@@ -417,7 +417,7 @@ std::vector<cu_cp_metrics_report::ue_info> ue_manager::handle_ue_metrics_report_
 cu_cp_ue_index_t ue_manager::allocate_ue_index()
 {
   // Return invalid when no UE index is available.
-  if (ues.size() == cu_cp_ue_index_to_uint(cu_cp_ue_index_t::max)) {
+  if (ues.size() == to_underlying(cu_cp_ue_index_t::max)) {
     return cu_cp_ue_index_t::invalid;
   }
 

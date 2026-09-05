@@ -21,11 +21,6 @@ enum class rbg_size { config1, config2 };
 /// \remark See TS 38.214, Sections 5.1.2.2 and 6.1.2.2.
 enum class nominal_rbg_size : unsigned { P2 = 2, P4 = 4, P8 = 8, P16 = 16 };
 
-inline unsigned to_nominal_rbg_size_value(nominal_rbg_size sz)
-{
-  return static_cast<unsigned>(sz);
-}
-
 /// Bitset of RBGs with size up to 18.
 using rbg_bitmap = bounded_bitset<MAX_NOF_RBGS, true>;
 

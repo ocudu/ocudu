@@ -974,8 +974,7 @@ inline asn1::nrppa::trp_info_list_trp_resp_item_s_ trp_information_list_trp_resp
   asn1::nrppa::trp_info_list_trp_resp_item_s_ asn1_trp_info_list_trp_response_item;
 
   // Fill TRP ID.
-  asn1_trp_info_list_trp_response_item.trp_info.trp_id =
-      trp_id_to_uint(trp_info_list_trp_response_item.trp_info.trp_id);
+  asn1_trp_info_list_trp_response_item.trp_info.trp_id = to_underlying(trp_info_list_trp_response_item.trp_info.trp_id);
 
   // Fill TRP info type response list.
   for (const auto& trp_info_type_resp_item : trp_info_list_trp_response_item.trp_info.trp_info_type_resp_list) {
@@ -1560,7 +1559,7 @@ trp_meas_request_item_to_asn1(const trp_meas_request_item_t& trp_meas_request_it
   asn1::nrppa::trp_meas_request_item_s asn1_trp_meas_request_item;
 
   // Fill TRP ID.
-  asn1_trp_meas_request_item.trp_id = trp_id_to_uint(trp_meas_request_item.trp_id);
+  asn1_trp_meas_request_item.trp_id = to_underlying(trp_meas_request_item.trp_id);
 
   // Fill search window info.
   if (trp_meas_request_item.search_win_info.has_value()) {

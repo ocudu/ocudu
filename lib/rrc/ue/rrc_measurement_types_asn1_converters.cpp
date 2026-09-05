@@ -5,6 +5,7 @@
 #include "rrc_measurement_types_asn1_converters.h"
 #include "ocudu/lpp/reference_location.h"
 #include "ocudu/ocudulog/ocudulog.h"
+#include "ocudu/support/enum_utils.h"
 #include "ocudu/support/error_handling.h"
 
 using namespace ocudu;
@@ -819,7 +820,7 @@ ocudu::ocucp::meas_obj_to_add_mod_to_rrc_asn1(const rrc_meas_obj_to_add_mod& mea
   asn1::rrc_nr::meas_obj_to_add_mod_s asn1_meas_obj_to_add_mod;
 
   // Fill meas obj ID.
-  asn1_meas_obj_to_add_mod.meas_obj_id = meas_obj_id_to_uint(meas_obj_to_add_mod.meas_obj_id);
+  asn1_meas_obj_to_add_mod.meas_obj_id = to_underlying(meas_obj_to_add_mod.meas_obj_id);
 
   // Fill meas obj.
   if (meas_obj_to_add_mod.meas_obj_nr.has_value()) {
@@ -1168,7 +1169,7 @@ ocudu::ocucp::report_cfg_to_add_mod_to_rrc_asn1(const rrc_report_cfg_to_add_mod&
   asn1::rrc_nr::report_cfg_to_add_mod_s asn1_report_cfg_to_add_mod;
 
   // Fill report cfg ID.
-  asn1_report_cfg_to_add_mod.report_cfg_id = report_cfg_id_to_uint(report_cfg_to_add_mod.report_cfg_id);
+  asn1_report_cfg_to_add_mod.report_cfg_id = to_underlying(report_cfg_to_add_mod.report_cfg_id);
 
   // Fill report cfg.
   asn1_report_cfg_to_add_mod.report_cfg.set_report_cfg_nr() =
@@ -1183,11 +1184,11 @@ ocudu::ocucp::meas_id_to_add_mod_to_rrc_asn1(const rrc_meas_id_to_add_mod& meas_
   asn1::rrc_nr::meas_id_to_add_mod_s asn1_meas_id_to_add_mod;
 
   // Fill meas ID.
-  asn1_meas_id_to_add_mod.meas_id = meas_id_to_uint(meas_id_to_add_mod.meas_id);
+  asn1_meas_id_to_add_mod.meas_id = to_underlying(meas_id_to_add_mod.meas_id);
   // Fill meas obj ID.
-  asn1_meas_id_to_add_mod.meas_obj_id = meas_obj_id_to_uint(meas_id_to_add_mod.meas_obj_id);
+  asn1_meas_id_to_add_mod.meas_obj_id = to_underlying(meas_id_to_add_mod.meas_obj_id);
   // Fill report cfg ID.
-  asn1_meas_id_to_add_mod.report_cfg_id = report_cfg_id_to_uint(meas_id_to_add_mod.report_cfg_id);
+  asn1_meas_id_to_add_mod.report_cfg_id = to_underlying(meas_id_to_add_mod.report_cfg_id);
 
   return asn1_meas_id_to_add_mod;
 }
@@ -1235,7 +1236,7 @@ asn1::rrc_nr::meas_cfg_s ocudu::ocucp::meas_config_to_rrc_asn1(const rrc_meas_cf
 
   // Fill meas obj to rem list.
   for (const auto& meas_obj_to_rem : meas_cfg.meas_obj_to_rem_list) {
-    asn1_meas_cfg.meas_obj_to_rem_list.push_back(meas_obj_id_to_uint(meas_obj_to_rem));
+    asn1_meas_cfg.meas_obj_to_rem_list.push_back(to_underlying(meas_obj_to_rem));
   }
 
   // Fill meas obj to add mod list.
@@ -1246,7 +1247,7 @@ asn1::rrc_nr::meas_cfg_s ocudu::ocucp::meas_config_to_rrc_asn1(const rrc_meas_cf
 
   // Fill report cfg to rem list.
   for (const auto& report_cfg_to_rem : meas_cfg.report_cfg_to_rem_list) {
-    asn1_meas_cfg.report_cfg_to_rem_list.push_back(report_cfg_id_to_uint(report_cfg_to_rem));
+    asn1_meas_cfg.report_cfg_to_rem_list.push_back(to_underlying(report_cfg_to_rem));
   }
 
   // Fill report cfg to add mod list.
@@ -1258,7 +1259,7 @@ asn1::rrc_nr::meas_cfg_s ocudu::ocucp::meas_config_to_rrc_asn1(const rrc_meas_cf
 
   // Fill meas ID to rem list.
   for (const auto& meas_id_to_rem : meas_cfg.meas_id_to_rem_list) {
-    asn1_meas_cfg.meas_id_to_rem_list.push_back(meas_id_to_uint(meas_id_to_rem));
+    asn1_meas_cfg.meas_id_to_rem_list.push_back(to_underlying(meas_id_to_rem));
   }
 
   // Fill meas ID to add mod list.

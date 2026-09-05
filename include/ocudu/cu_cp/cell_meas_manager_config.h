@@ -10,6 +10,7 @@
 #include "ocudu/ran/plmn_identity.h"
 #include "ocudu/ran/subcarrier_spacing.h"
 #include "ocudu/ran/tac.h"
+#include "ocudu/support/enum_utils.h"
 #include <map>
 #include <unordered_map>
 #include <vector>
@@ -94,7 +95,7 @@ struct formatter<ocudu::ocucp::cell_meas_config> {
         is_complete(cfg.serving_cell_cfg) ? "yes" : "no",
         cfg.serving_cell_cfg.nci.gnb_id(cfg.serving_cell_cfg.gnb_id_bit_length).id,
         cfg.serving_cell_cfg.pci.has_value() ? to_string(cfg.serving_cell_cfg.pci.value()) : "?",
-        cfg.serving_cell_cfg.band.has_value() ? to_string(nr_band_to_uint(cfg.serving_cell_cfg.band.value())) : "?",
+        cfg.serving_cell_cfg.band.has_value() ? to_string(to_underlying(cfg.serving_cell_cfg.band.value())) : "?",
         cfg.serving_cell_cfg.ssb_arfcn.has_value() ? to_string(cfg.serving_cell_cfg.ssb_arfcn.value()) : "?",
         cfg.serving_cell_cfg.ssb_scs.has_value() ? to_string(cfg.serving_cell_cfg.ssb_scs.value()) : "?",
         ncell_str);

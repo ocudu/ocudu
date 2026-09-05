@@ -42,7 +42,7 @@ void ocudu::announce_du_high_cells(const du_high_unit_config& du_high_unit_cfg)
                cell.ran.dl_carrier.nof_ant,
                cell.ran.ul_carrier.nof_ant,
                cell.ran.dl_carrier.arfcn_f_ref,
-               nr_band_to_uint(cell.ran.dl_carrier.band),
+               to_underlying(cell.ran.dl_carrier.band),
                band_helper::nr_arfcn_to_freq(cell.ran.dl_carrier.arfcn_f_ref) / 1e6,
                cell.ran.dl_cfg_common.freq_info_dl.absolute_frequency_ssb,
                band_helper::nr_arfcn_to_freq(cell.ran.ul_carrier.arfcn_f_ref) / 1e6);

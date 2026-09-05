@@ -69,11 +69,11 @@ bool ng_reset_procedure::send_ng_reset()
 
         if (ue_ctxt.ue_ids.amf_ue_id != amf_ue_id_t::invalid) {
           conn_item.amf_ue_ngap_id_present = true;
-          conn_item.amf_ue_ngap_id         = amf_ue_id_to_uint(ue_ctxt.ue_ids.amf_ue_id);
+          conn_item.amf_ue_ngap_id         = to_underlying(ue_ctxt.ue_ids.amf_ue_id);
         }
         if (ue_ctxt.ue_ids.ran_ue_id != ran_ue_id_t::invalid) {
           conn_item.ran_ue_ngap_id_present = true;
-          conn_item.ran_ue_ngap_id         = ran_ue_id_to_uint(ue_ctxt.ue_ids.ran_ue_id);
+          conn_item.ran_ue_ngap_id         = to_underlying(ue_ctxt.ue_ids.ran_ue_id);
         }
 
         reset_part_of_ng_interface.push_back(conn_item);

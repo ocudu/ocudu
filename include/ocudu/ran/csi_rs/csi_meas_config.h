@@ -12,6 +12,7 @@
 #include "ocudu/ran/csi_rs/frequency_allocation_type.h"
 #include "ocudu/ran/resource_allocation/rb_interval.h"
 #include "ocudu/ran/tci.h"
+#include "ocudu/support/enum_utils.h"
 #include <variant>
 #include <vector>
 
@@ -57,7 +58,7 @@ struct csi_rs_resource_mapping {
 /// semi-persistent reporting on PUCCH.
 ///
 /// \remark See TS 38.331, \c CSI-ResourcePeriodicityAndOffset.
-enum class csi_resource_periodicity {
+enum class csi_resource_periodicity : unsigned {
   slots4   = 4,
   slots5   = 5,
   slots8   = 8,
@@ -72,11 +73,6 @@ enum class csi_resource_periodicity {
   slots320 = 320,
   slots640 = 640
 };
-
-constexpr unsigned csi_resource_periodicity_to_uint(csi_resource_periodicity val)
-{
-  return static_cast<unsigned>(val);
-}
 
 inline span<const csi_resource_periodicity> csi_resource_periodicity_options()
 {

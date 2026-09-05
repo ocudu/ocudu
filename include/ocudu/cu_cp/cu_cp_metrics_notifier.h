@@ -64,7 +64,7 @@ inline std::string format_rrc_metrics(const std::vector<cu_cp_metrics_report::du
   for (const auto& du_info : report) {
     // log RRC metrics
     fmt::format_to(std::back_inserter(buffer), "[");
-    fmt::format_to(std::back_inserter(buffer), " gnb_du_id={}", gnb_du_id_to_int(du_info.id));
+    fmt::format_to(std::back_inserter(buffer), " gnb_du_id={}", to_underlying(du_info.id));
 
     fmt::format_to(std::back_inserter(buffer),
                    " mean_nof_rrc_connections={} max_nof_rrc_connections={} mean_nof_inactive_rrc_connections={} "

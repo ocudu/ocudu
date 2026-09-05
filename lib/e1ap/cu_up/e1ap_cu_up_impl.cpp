@@ -110,8 +110,8 @@ void e1ap_cu_up_impl::handle_bearer_context_inactivity_notification(
   e1ap_msg.pdu.set_init_msg();
   e1ap_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_INACTIVITY_NOTIF);
   auto& inactivity_notification                 = e1ap_msg.pdu.init_msg().value.bearer_context_inactivity_notif();
-  inactivity_notification->gnb_cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.ue_ids.cu_cp_ue_e1ap_id);
-  inactivity_notification->gnb_cu_up_ue_e1ap_id = gnb_cu_up_ue_e1ap_id_to_uint(ue_ctxt.ue_ids.cu_up_ue_e1ap_id);
+  inactivity_notification->gnb_cu_cp_ue_e1ap_id = to_underlying(ue_ctxt.ue_ids.cu_cp_ue_e1ap_id);
+  inactivity_notification->gnb_cu_up_ue_e1ap_id = to_underlying(ue_ctxt.ue_ids.cu_up_ue_e1ap_id);
 
   if (ue_ctxt.activity_notification_level == activity_notification_level_t::ue) {
     inactivity_notification->activity_info.set_ue_activity();
@@ -144,8 +144,8 @@ void e1ap_cu_up_impl::handle_bearer_context_release_request_required(cu_up_ue_in
   e1ap_msg.pdu.set_init_msg();
   e1ap_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_RELEASE_REQUEST);
   bearer_context_release_request_s& release_request = e1ap_msg.pdu.init_msg().value.bearer_context_release_request();
-  release_request->gnb_cu_cp_ue_e1ap_id             = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.ue_ids.cu_cp_ue_e1ap_id);
-  release_request->gnb_cu_up_ue_e1ap_id             = gnb_cu_up_ue_e1ap_id_to_uint(ue_ctxt.ue_ids.cu_up_ue_e1ap_id);
+  release_request->gnb_cu_cp_ue_e1ap_id             = to_underlying(ue_ctxt.ue_ids.cu_cp_ue_e1ap_id);
+  release_request->gnb_cu_up_ue_e1ap_id             = to_underlying(ue_ctxt.ue_ids.cu_up_ue_e1ap_id);
   release_request->cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::options::ppdcp_count_wrap_around;
 
   // Send Release Request.
@@ -167,8 +167,8 @@ void e1ap_cu_up_impl::handle_dl_data_notification_required(cu_up_ue_index_t ue_i
   e1ap_msg.pdu.set_init_msg();
   e1ap_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_D_L_DATA_NOTIF);
   dl_data_notif_s& dl_notif      = e1ap_msg.pdu.init_msg().value.dl_data_notif();
-  dl_notif->gnb_cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.ue_ids.cu_cp_ue_e1ap_id);
-  dl_notif->gnb_cu_up_ue_e1ap_id = gnb_cu_up_ue_e1ap_id_to_uint(ue_ctxt.ue_ids.cu_up_ue_e1ap_id);
+  dl_notif->gnb_cu_cp_ue_e1ap_id = to_underlying(ue_ctxt.ue_ids.cu_cp_ue_e1ap_id);
+  dl_notif->gnb_cu_up_ue_e1ap_id = to_underlying(ue_ctxt.ue_ids.cu_up_ue_e1ap_id);
 
   // Send DL Data Notification.
   pdu_notifier->on_new_message(e1ap_msg);
@@ -251,7 +251,7 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
 
   // Add gnb_cu_up_ue_e1ap_id to failure message.
   e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->gnb_cu_up_ue_e1ap_id =
-      gnb_cu_up_ue_e1ap_id_to_uint(cu_up_ue_e1ap_id);
+      to_underlying(cu_up_ue_e1ap_id);
 
   // Forward message to CU-UP.
   e1ap_bearer_context_setup_request bearer_context_setup = {};
@@ -289,7 +289,7 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
     e1ap_msg.pdu.successful_outcome().value.bearer_context_setup_resp()->gnb_cu_cp_ue_e1ap_id =
         msg->gnb_cu_cp_ue_e1ap_id;
     e1ap_msg.pdu.successful_outcome().value.bearer_context_setup_resp()->gnb_cu_up_ue_e1ap_id =
-        gnb_cu_up_ue_e1ap_id_to_uint(cu_up_ue_e1ap_id);
+        to_underlying(cu_up_ue_e1ap_id);
 
     fill_asn1_bearer_context_setup_response(
         e1ap_msg.pdu.successful_outcome().value.bearer_context_setup_resp()->sys_bearer_context_setup_resp,

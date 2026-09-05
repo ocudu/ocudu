@@ -121,8 +121,8 @@ bool xnap_target_handover_preparation_procedure::send_handover_request_ack(cu_cp
   // Fill UE IDs.
   // This is sent from the target to the source, so the source UE ID is the peer XNAP UE ID and the target UE ID is the
   // local XNAP UE ID.
-  ho_request_ack->source_ng_ra_nnode_ue_xn_ap_id = peer_xnap_ue_id_to_uint(target_xnap_ue_id);
-  ho_request_ack->target_ng_ra_nnode_ue_xn_ap_id = local_xnap_ue_id_to_uint(local_xnap_ue_id);
+  ho_request_ack->source_ng_ra_nnode_ue_xn_ap_id = to_underlying(target_xnap_ue_id);
+  ho_request_ack->target_ng_ra_nnode_ue_xn_ap_id = to_underlying(local_xnap_ue_id);
 
   // TS 38.423 Section 8.2.1: if the request contained Conditional Handover Information Request IE,
   // the target shall include Conditional Handover Information Acknowledge IE in the response.
@@ -151,7 +151,7 @@ void xnap_target_handover_preparation_procedure::send_handover_preparation_failu
 
   auto& ho_fail = xnap_msg.pdu.unsuccessful_outcome().value.ho_prep_fail();
   // This is sent from the target to the source, so the source UE ID is the peer XNAP UE ID.
-  ho_fail->source_ng_ra_nnode_ue_xn_ap_id = peer_xnap_ue_id_to_uint(target_xnap_ue_id);
+  ho_fail->source_ng_ra_nnode_ue_xn_ap_id = to_underlying(target_xnap_ue_id);
 
   // Forward message to XN-C peer.
   if (!tx_notifier.on_new_message(xnap_msg)) {

@@ -96,8 +96,8 @@ bool ngap_pdu_session_resource_setup_procedure::send_pdu_session_resource_setup_
                                            response);
 
   auto& pdu_session_res_setup_resp           = ngap_msg.pdu.successful_outcome().value.pdu_session_res_setup_resp();
-  pdu_session_res_setup_resp->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ids.amf_ue_id);
-  pdu_session_res_setup_resp->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ids.ran_ue_id);
+  pdu_session_res_setup_resp->amf_ue_ngap_id = to_underlying(ue_ids.amf_ue_id);
+  pdu_session_res_setup_resp->ran_ue_ngap_id = to_underlying(ue_ids.ran_ue_id);
 
   // Notify metrics handler about successful PDU sessions.
   for (const auto& pdu_session : response.pdu_session_res_setup_response_items) {

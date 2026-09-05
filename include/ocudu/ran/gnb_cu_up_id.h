@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "ocudu/support/enum_utils.h"
 #include <cstdint>
 
 namespace ocudu {
@@ -18,15 +19,9 @@ constexpr gnb_cu_up_id_t uint_to_gnb_cu_up_id(uint64_t id)
   return static_cast<gnb_cu_up_id_t>(id);
 }
 
-/// Converts a GNB-CU-UP-ID to an integer.
-constexpr uint64_t gnb_cu_up_id_to_uint(gnb_cu_up_id_t gnb_cu_up_id)
-{
-  return static_cast<uint64_t>(gnb_cu_up_id);
-}
-
 constexpr uint64_t format_as(gnb_cu_up_id_t o)
 {
-  return gnb_cu_up_id_to_uint(o);
+  return to_underlying(o);
 }
 
 } // namespace ocudu

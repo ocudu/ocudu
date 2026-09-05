@@ -173,7 +173,7 @@ TEST_F(ngap_ue_context_management_procedure_test,
   amf_ue_id_t new_id = old_id;
   while (new_id == old_id) {
     new_id = uint_to_amf_ue_id(
-        test_rng::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
+        test_rng::uniform_int<uint64_t>(to_underlying(amf_ue_id_t::min), to_underlying(amf_ue_id_t::max)));
   }
   ASSERT_NE(old_id, new_id);
 
@@ -437,7 +437,7 @@ TEST_F(ngap_ue_context_management_procedure_test,
   ASSERT_TRUE(was_ue_added());
 
   // Inject UE Context Release Command for unknown UE.
-  amf_ue_id_t unknown_ue_id = uint_to_amf_ue_id(amf_ue_id_to_uint(ue.amf_ue_id.value()) + 1);
+  amf_ue_id_t unknown_ue_id = uint_to_amf_ue_id(to_underlying(ue.amf_ue_id.value()) + 1);
 
   ngap_message ue_context_release_cmd = generate_valid_ue_context_release_command_with_amf_ue_ngap_id(unknown_ue_id);
   ngap->handle_message(ue_context_release_cmd);
@@ -551,7 +551,7 @@ TEST_F(
 
   // Inject UE Context Release Command with the correct RAN UE NGAP ID but a different
   // AMF UE NGAP ID than the one stored for this UE.
-  amf_ue_id_t  wrong_amf_ue_id = uint_to_amf_ue_id(amf_ue_id_to_uint(ue.amf_ue_id.value()) + 1);
+  amf_ue_id_t  wrong_amf_ue_id = uint_to_amf_ue_id(to_underlying(ue.amf_ue_id.value()) + 1);
   ngap_message ue_context_release_cmd =
       generate_valid_ue_context_release_command_with_ue_ngap_id_pair(wrong_amf_ue_id, ue.ran_ue_id.value());
   ngap->handle_message(ue_context_release_cmd);
@@ -578,7 +578,7 @@ TEST_F(
 
   // Inject a UE Context Release Command with ue's AMF UE NGAP ID paired with a RAN UE NGAP ID that
   // does not exist in any context.
-  ran_ue_id_t  unknown_ran_ue_id = uint_to_ran_ue_id(ran_ue_id_to_uint(ue.ran_ue_id.value()) + 1);
+  ran_ue_id_t  unknown_ran_ue_id = uint_to_ran_ue_id(to_underlying(ue.ran_ue_id.value()) + 1);
   ngap_message ue_context_release_cmd =
       generate_valid_ue_context_release_command_with_ue_ngap_id_pair(ue.amf_ue_id.value(), unknown_ran_ue_id);
   ngap->handle_message(ue_context_release_cmd);
@@ -667,8 +667,8 @@ TEST_F(ngap_ue_context_management_procedure_test,
   ASSERT_TRUE(was_ue_added());
 
   // Inject UE Context Modification Request for unknown UE.
-  amf_ue_id_t unknown_amf_ue_id = uint_to_amf_ue_id(amf_ue_id_to_uint(ue.amf_ue_id.value()) + 1);
-  ran_ue_id_t unknown_ran_ue_id = uint_to_ran_ue_id(ran_ue_id_to_uint(ue.ran_ue_id.value()) + 1);
+  amf_ue_id_t unknown_amf_ue_id = uint_to_amf_ue_id(to_underlying(ue.amf_ue_id.value()) + 1);
+  ran_ue_id_t unknown_ran_ue_id = uint_to_ran_ue_id(to_underlying(ue.ran_ue_id.value()) + 1);
 
   ngap_message ue_context_mod_request = generate_valid_ue_context_modification_request_message(
       unknown_amf_ue_id,

@@ -88,7 +88,7 @@ bool ocudu::ocucp::is_valid_configuration(
         cfg.report_config_ids.find(cell.second.periodic_report_cfg_id.value()) == cfg.report_config_ids.end()) {
       auto msg = fmt::format("Cell {:#x}: periodic report config id {} not found in configuration",
                              nci,
-                             report_cfg_id_to_uint(cell.second.periodic_report_cfg_id.value()));
+                             to_underlying(cell.second.periodic_report_cfg_id.value()));
       ocudulog::fetch_basic_logger(LOG_CHAN).error("{}", msg);
       fmt::print("CU-CP: {}\n", msg);
       return false;
@@ -106,7 +106,7 @@ bool ocudu::ocucp::is_valid_configuration(
         if (cfg.report_config_ids.find(report_cfg_id) == cfg.report_config_ids.end()) {
           auto msg = fmt::format("Cell {:#x}: report config id {} for neighbor {:#x} not found in configuration",
                                  nci,
-                                 report_cfg_id_to_uint(report_cfg_id),
+                                 to_underlying(report_cfg_id),
                                  ncell_nci.nci);
           ocudulog::fetch_basic_logger(LOG_CHAN).error("{}", msg);
           fmt::print("CU-CP: {}\n", msg);
@@ -233,7 +233,7 @@ void ocudu::ocucp::generate_report_config(const cell_meas_manager_config& cfg,
   // Add report cfg to add mod
   if (cfg.report_config_ids.find(report_cfg_id) == cfg.report_config_ids.end()) {
     ocudulog::fetch_basic_logger("CU-CP").error("Report config ID {} not found in configuration",
-                                                report_cfg_id_to_uint(report_cfg_id));
+                                                to_underlying(report_cfg_id));
     return;
   }
   rrc_report_cfg_to_add_mod report_cfg_to_add_mod;
@@ -282,7 +282,7 @@ rrc_meas_obj_nr ocudu::ocucp::generate_measurement_object(const serving_cell_mea
   meas_obj_nr.ref_sig_cfg.ssb_cfg_mob.emplace().derive_ssb_idx_from_cell = true;
   meas_obj_nr.nrof_ss_blocks_to_average.emplace()                        = 8; // TODO: remove hardcoded values
   meas_obj_nr.quant_cfg_idx                                              = 1; // TODO: remove hardcoded values
-  meas_obj_nr.freq_band_ind_nr.emplace()                                 = nr_band_to_uint(cfg.band.value());
+  meas_obj_nr.freq_band_ind_nr.emplace()                                 = to_underlying(cfg.band.value());
 
   // TODO: Add optional fields.
 

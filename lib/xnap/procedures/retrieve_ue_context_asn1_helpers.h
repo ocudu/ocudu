@@ -177,14 +177,14 @@ inline void retrieve_ue_context_response_to_asn1(asn1::xnap::retrieve_ue_context
   // Fill PDU session resource to be setup list.
   for (const auto& pdu_session_item : ue_context_info.pdu_session_res_to_be_setup_list) {
     asn1::xnap::pdu_session_res_to_be_setup_item_s asn1_pdu_session_item;
-    asn1_pdu_session_item.pdu_session_id = pdu_session_id_to_uint(pdu_session_item.pdu_session_id);
+    asn1_pdu_session_item.pdu_session_id = to_underlying(pdu_session_item.pdu_session_id);
     asn1_pdu_session_item.s_nssai        = s_nssai_to_asn1(pdu_session_item.s_nssai);
     up_transport_layer_info_to_asn1(asn1_pdu_session_item.ul_ng_u_tnl_at_up_f, pdu_session_item.ul_ngu_up_tnl_info);
     asn1_pdu_session_item.pdu_session_type = pdu_session_type_to_asn1(pdu_session_item.pdu_session_type);
 
     for (const auto& qos_flow : pdu_session_item.qos_flow_setup_request_items) {
       asn1::xnap::qos_flows_to_be_setup_item_s asn1_qos_flow_item;
-      asn1_qos_flow_item.qfi = qos_flow_id_to_uint(qos_flow.qos_flow_id);
+      asn1_qos_flow_item.qfi = to_underlying(qos_flow.qos_flow_id);
       asn1_qos_flow_item.qos_flow_level_qos_params =
           qos_flow_level_qos_parameters_to_asn1(qos_flow.qos_flow_level_qos_params);
       asn1_pdu_session_item.qos_flows_to_be_setup_list.push_back(asn1_qos_flow_item);

@@ -170,7 +170,7 @@ void ngap_impl::handle_initial_ue_message(const cu_cp_initial_ue_message& msg)
   ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_INIT_UE_MSG);
 
   auto& init_ue_msg           = ngap_msg.pdu.init_msg().value.init_ue_msg();
-  init_ue_msg->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ctxt.ue_ids.ran_ue_id);
+  init_ue_msg->ran_ue_ngap_id = to_underlying(ue_ctxt.ue_ids.ran_ue_id);
 
   fill_asn1_initial_ue_message(init_ue_msg, msg, context);
 
@@ -218,14 +218,14 @@ void ngap_impl::handle_ul_nas_transport_message(const cu_cp_ul_nas_transport& ms
 
   auto& ul_nas_transport_msg = ngap_msg.pdu.init_msg().value.ul_nas_transport();
 
-  ul_nas_transport_msg->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ctxt.ue_ids.ran_ue_id);
+  ul_nas_transport_msg->ran_ue_ngap_id = to_underlying(ue_ctxt.ue_ids.ran_ue_id);
 
   amf_ue_id_t amf_ue_id = ue_ctxt.ue_ids.amf_ue_id;
   if (amf_ue_id == amf_ue_id_t::invalid) {
     logger.warning("ue={}: Dropping ULNAStransport. UE AMF ID not found", msg.ue_index);
     return;
   }
-  ul_nas_transport_msg->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
+  ul_nas_transport_msg->amf_ue_ngap_id = to_underlying(amf_ue_id);
 
   fill_asn1_ul_nas_transport(ul_nas_transport_msg, msg);
 
@@ -271,14 +271,14 @@ void ngap_impl::handle_location_report_transmission(const location_report& msg)
 
   auto& location_report_msg = ngap_msg.pdu.init_msg().value.location_report();
 
-  location_report_msg->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ctxt.ue_ids.ran_ue_id);
+  location_report_msg->ran_ue_ngap_id = to_underlying(ue_ctxt.ue_ids.ran_ue_id);
 
   amf_ue_id_t amf_ue_id = ue_ctxt.ue_ids.amf_ue_id;
   if (amf_ue_id == amf_ue_id_t::invalid) {
     logger.warning("ue={}: Dropping Location Report message. UE AMF ID not found", msg.ue_index);
     return;
   }
-  location_report_msg->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
+  location_report_msg->amf_ue_ngap_id = to_underlying(amf_ue_id);
 
   fill_asn1_location_report(*location_report_msg, msg);
 
@@ -314,8 +314,8 @@ void ngap_impl::handle_location_reporting_failure_indication_transmission(const 
 
   auto& fail_ind_msg = ngap_msg.pdu.init_msg().value.location_report_fail_ind();
 
-  fail_ind_msg->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
-  fail_ind_msg->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ctxt.ue_ids.ran_ue_id);
+  fail_ind_msg->amf_ue_ngap_id = to_underlying(amf_ue_id);
+  fail_ind_msg->ran_ue_ngap_id = to_underlying(ue_ctxt.ue_ids.ran_ue_id);
   fail_ind_msg->cause          = cause_to_asn1(msg.cause);
 
   // Forward message to AMF.
@@ -348,7 +348,7 @@ void ngap_impl::handle_tx_ue_radio_capability_info_indication_required(
   ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_UE_RADIO_CAP_INFO_IND);
   auto& ue_radio_cap_info_ind_msg = ngap_msg.pdu.init_msg().value.ue_radio_cap_info_ind();
 
-  ue_radio_cap_info_ind_msg->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ctxt.ue_ids.ran_ue_id);
+  ue_radio_cap_info_ind_msg->ran_ue_ngap_id = to_underlying(ue_ctxt.ue_ids.ran_ue_id);
 
   amf_ue_id_t amf_ue_id = ue_ctxt.ue_ids.amf_ue_id;
   if (amf_ue_id == amf_ue_id_t::invalid) {
@@ -356,7 +356,7 @@ void ngap_impl::handle_tx_ue_radio_capability_info_indication_required(
                    fmt::underlying(msg.ue_index));
     return;
   }
-  ue_radio_cap_info_ind_msg->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
+  ue_radio_cap_info_ind_msg->amf_ue_ngap_id = to_underlying(amf_ue_id);
   ue_radio_cap_info_ind_msg->ue_radio_cap   = msg.ue_cap_rat_container_list.copy();
 
   ue_ctxt.logger.log_debug("Scheduling UE Radio Capability Info Indication");
@@ -1094,8 +1094,8 @@ void ngap_impl::handle_ul_ran_status_transfer(const cu_cp_status_transfer& ul_ra
   ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_UL_RAN_STATUS_TRANSFER);
 
   ul_ran_status_transfer_s& asn1_ul_status = ngap_msg.pdu.init_msg().value.ul_ran_status_transfer();
-  asn1_ul_status->ran_ue_ngap_id           = ran_ue_id_to_uint(ue_ctxt.ue_ids.ran_ue_id);
-  asn1_ul_status->amf_ue_ngap_id           = amf_ue_id_to_uint(ue_ctxt.ue_ids.amf_ue_id);
+  asn1_ul_status->ran_ue_ngap_id           = to_underlying(ue_ctxt.ue_ids.ran_ue_id);
+  asn1_ul_status->amf_ue_ngap_id           = to_underlying(ue_ctxt.ue_ids.amf_ue_id);
 
   fill_asn1_ul_ran_status_transfer(asn1_ul_status, ul_ran_status_transfer.drbs_subject_to_status_transfer_list);
 
@@ -1385,8 +1385,8 @@ async_task<bool> ngap_impl::handle_ue_context_release_request(const cu_cp_ue_con
 
   auto& ue_context_release_request = ngap_msg.pdu.init_msg().value.ue_context_release_request();
 
-  ue_context_release_request->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ctxt.ue_ids.ran_ue_id);
-  ue_context_release_request->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ctxt.ue_ids.amf_ue_id);
+  ue_context_release_request->ran_ue_ngap_id = to_underlying(ue_ctxt.ue_ids.ran_ue_id);
+  ue_context_release_request->amf_ue_ngap_id = to_underlying(ue_ctxt.ue_ids.amf_ue_id);
 
   fill_asn1_ue_context_release_request(ue_context_release_request, msg);
 
@@ -1466,8 +1466,8 @@ void ngap_impl::handle_inter_cu_ho_rrc_recfg_complete(const cu_cp_ue_index_t    
   ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_HO_NOTIF);
 
   auto& ho_notify           = ngap_msg.pdu.init_msg().value.ho_notify();
-  ho_notify->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ctxt.ue_ids.ran_ue_id);
-  ho_notify->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ctxt.ue_ids.amf_ue_id);
+  ho_notify->ran_ue_ngap_id = to_underlying(ue_ctxt.ue_ids.ran_ue_id);
+  ho_notify->amf_ue_ngap_id = to_underlying(ue_ctxt.ue_ids.amf_ue_id);
 
   fill_asn1_handover_notify(ho_notify, user_location_info);
 
@@ -1494,9 +1494,9 @@ void ngap_impl::handle_ul_ue_associated_nrppa_transport(cu_cp_ue_index_t ue_inde
   ngap_msg.pdu.init_msg().value.ul_ue_associated_nrppa_transport()->routing_id = context.lmf_routing_id.copy();
   ngap_msg.pdu.init_msg().value.ul_ue_associated_nrppa_transport()->nrppa_pdu  = nrppa_pdu.copy();
   ngap_msg.pdu.init_msg().value.ul_ue_associated_nrppa_transport()->amf_ue_ngap_id =
-      amf_ue_id_to_uint(ue_ctxt.ue_ids.amf_ue_id);
+      to_underlying(ue_ctxt.ue_ids.amf_ue_id);
   ngap_msg.pdu.init_msg().value.ul_ue_associated_nrppa_transport()->ran_ue_ngap_id =
-      ran_ue_id_to_uint(ue_ctxt.ue_ids.ran_ue_id);
+      to_underlying(ue_ctxt.ue_ids.ran_ue_id);
 
   auto* ue = ue_ctxt.get_cu_cp_ue();
   ocudu_assert(ue != nullptr,
@@ -1587,8 +1587,8 @@ ngap_impl::handle_rrc_inactive_transition_report_required(const ngap_rrc_inactiv
 
   rrc_inactive_transition_report_s& asn1_rrc_transition_report =
       ngap_msg.pdu.init_msg().value.rrc_inactive_transition_report();
-  asn1_rrc_transition_report->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ctxt.ue_ids.ran_ue_id);
-  asn1_rrc_transition_report->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ctxt.ue_ids.amf_ue_id);
+  asn1_rrc_transition_report->ran_ue_ngap_id = to_underlying(ue_ctxt.ue_ids.ran_ue_id);
+  asn1_rrc_transition_report->amf_ue_ngap_id = to_underlying(ue_ctxt.ue_ids.amf_ue_id);
 
   fill_asn1_rrc_inactive_transition_report(asn1_rrc_transition_report, report);
 

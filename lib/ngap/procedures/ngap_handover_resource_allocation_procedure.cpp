@@ -121,8 +121,8 @@ bool ngap_handover_resource_allocation_procedure::send_handover_request_ack(
                                                   ho_request_ack);
 
   auto& asn1_ho_request_ack           = ngap_msg.pdu.successful_outcome().value.ho_request_ack();
-  asn1_ho_request_ack->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
-  asn1_ho_request_ack->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
+  asn1_ho_request_ack->amf_ue_ngap_id = to_underlying(amf_ue_id);
+  asn1_ho_request_ack->ran_ue_ngap_id = to_underlying(ran_ue_id);
 
   // Forward message to AMF.
   if (!amf_notifier.on_new_message(ngap_msg)) {
@@ -144,7 +144,7 @@ void ngap_handover_resource_allocation_procedure::send_handover_failure(
                                                   ho_request_failure);
 
   auto& ho_fail           = ngap_msg.pdu.unsuccessful_outcome().value.ho_fail();
-  ho_fail->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
+  ho_fail->amf_ue_ngap_id = to_underlying(amf_ue_id);
 
   // Forward message to AMF.
 

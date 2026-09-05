@@ -23,12 +23,6 @@ constexpr uint8_t MAX_NOF_MEAS = 64;
 /// Meas index.
 enum class meas_id_t : uint8_t { min = 1, max = MAX_NOF_MEAS, invalid = MAX_NOF_MEAS + 1 };
 
-/// Convert meas_id type to integer.
-inline uint8_t meas_id_to_uint(meas_id_t id)
-{
-  return static_cast<uint8_t>(id);
-}
-
 /// Convert integer to meas_id type.
 inline meas_id_t uint_to_meas_id(uint8_t id)
 {
@@ -41,12 +35,6 @@ constexpr uint8_t MAX_NOF_MEAS_OBJ = 64;
 /// Meas object index.
 enum class meas_obj_id_t : uint8_t { min = 1, max = MAX_NOF_MEAS_OBJ, invalid = MAX_NOF_MEAS_OBJ + 1 };
 
-/// Convert meas_obj_id type to integer.
-inline uint8_t meas_obj_id_to_uint(meas_obj_id_t id)
-{
-  return static_cast<uint8_t>(id);
-}
-
 /// Convert integer to meas_obj_id type.
 inline meas_obj_id_t uint_to_meas_obj_id(uint8_t id)
 {
@@ -58,12 +46,6 @@ constexpr uint8_t MAX_NOF_REPORT_CFG = 64;
 
 /// Report config index.
 enum class report_cfg_id_t : uint8_t { min = 0, max = MAX_NOF_REPORT_CFG - 1, invalid = MAX_NOF_REPORT_CFG };
-
-/// Convert report_cfg_id type to integer.
-inline uint8_t report_cfg_id_to_uint(report_cfg_id_t id)
-{
-  return static_cast<uint8_t>(id);
-}
 
 /// Convert integer to report_cfg_id type.
 inline report_cfg_id_t uint_to_report_cfg_id(uint8_t id)

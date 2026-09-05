@@ -94,11 +94,11 @@ bool cu_cp_e1_reset_procedure::send_e1_reset()
 
       if (ue_ctxt.ue_ids.cu_cp_ue_e1ap_id != gnb_cu_cp_ue_e1ap_id_t::invalid) {
         conn_item.gnb_cu_cp_ue_e1ap_id_present = true;
-        conn_item.gnb_cu_cp_ue_e1ap_id         = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.ue_ids.cu_cp_ue_e1ap_id);
+        conn_item.gnb_cu_cp_ue_e1ap_id         = to_underlying(ue_ctxt.ue_ids.cu_cp_ue_e1ap_id);
       }
       if (ue_ctxt.ue_ids.cu_up_ue_e1ap_id != gnb_cu_up_ue_e1ap_id_t::invalid) {
         conn_item.gnb_cu_up_ue_e1ap_id_present = true;
-        conn_item.gnb_cu_up_ue_e1ap_id         = gnb_cu_up_ue_e1ap_id_to_uint(ue_ctxt.ue_ids.cu_up_ue_e1ap_id);
+        conn_item.gnb_cu_up_ue_e1ap_id         = to_underlying(ue_ctxt.ue_ids.cu_up_ue_e1ap_id);
       }
 
       reset_part_of_e1_interface.push_back(item_container);

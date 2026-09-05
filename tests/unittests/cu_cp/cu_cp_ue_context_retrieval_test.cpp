@@ -145,7 +145,7 @@ TEST_F(cu_cp_ue_context_retrieval_test, when_ue_context_is_retrievable_then_cont
 
   ASSERT_TRUE(response.success);
   ASSERT_EQ(response.guami.plmn, guami.plmn);
-  ASSERT_EQ(response.ue_context_info.amf_ue_id, amf_ue_id_to_uint(amf_ue_id_t::min));
+  ASSERT_EQ(response.ue_context_info.amf_ue_id, to_underlying(amf_ue_id_t::min));
   ASSERT_EQ(response.ue_context_info.amf_addr, amf_addr) << "The peer was not told which AMF serves the UE";
   ASSERT_EQ(response.ue_context_info.pdu_session_res_to_be_setup_list.size(), 1);
   ASSERT_EQ(response.ue_context_info.pdu_session_res_to_be_setup_list[uint_to_pdu_session_id(1)]

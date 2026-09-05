@@ -72,7 +72,7 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_cfg_common_sib(const d
   for (const auto& dl_band : cfg.freq_info_dl.freq_band_list) {
     nr_multi_band_info_s asn1_band;
     asn1_band.freq_band_ind_nr_present = true;
-    asn1_band.freq_band_ind_nr         = nr_band_to_uint(dl_band.band);
+    asn1_band.freq_band_ind_nr         = to_underlying(dl_band.band);
     out.freq_info_dl.freq_band_list.push_back(asn1_band);
   }
   out.freq_info_dl.offset_to_point_a = cfg.freq_info_dl.offset_to_point_a;
@@ -219,7 +219,7 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
   for (const auto& ul_band : cfg.freq_info_ul.freq_band_list) {
     nr_multi_band_info_s asn1_band;
     asn1_band.freq_band_ind_nr_present = true;
-    asn1_band.freq_band_ind_nr         = nr_band_to_uint(ul_band.band);
+    asn1_band.freq_band_ind_nr         = to_underlying(ul_band.band);
     out.freq_info_ul.freq_band_list.push_back(asn1_band);
   }
   out.freq_info_ul.absolute_freq_point_a_present = true;

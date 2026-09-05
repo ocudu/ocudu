@@ -16,8 +16,8 @@ void f1ap_ue_context::handle_dl_rrc_message(const f1ap_dl_rrc_message& msg, f1ap
                      "Invalid gNB-DU-UE-F1AP-Id");
 
   asn1::f1ap::dl_rrc_msg_transfer_s dl_rrc_msg = {};
-  dl_rrc_msg->gnb_cu_ue_f1ap_id                = gnb_cu_ue_f1ap_id_to_uint(ue_ids.cu_ue_f1ap_id);
-  dl_rrc_msg->gnb_du_ue_f1ap_id                = gnb_du_ue_f1ap_id_to_uint(*ue_ids.du_ue_f1ap_id);
+  dl_rrc_msg->gnb_cu_ue_f1ap_id                = to_underlying(ue_ids.cu_ue_f1ap_id);
+  dl_rrc_msg->gnb_du_ue_f1ap_id                = to_underlying(*ue_ids.du_ue_f1ap_id);
   dl_rrc_msg->srb_id                           = static_cast<uint8_t>(srb_id_to_uint(msg.srb_id));
   dl_rrc_msg->rrc_container                    = msg.rrc_container.copy();
 
@@ -25,7 +25,7 @@ void f1ap_ue_context::handle_dl_rrc_message(const f1ap_dl_rrc_message& msg, f1ap
     // If the UE requests to reestablish RRC connection in the last serving gNB-DU, the DL RRC MESSAGE TRANSFER message
     // shall include old gNB-DU UE F1AP ID, see TS 38.401 section 8.7.
     dl_rrc_msg->old_gnb_du_ue_f1ap_id_present = true;
-    dl_rrc_msg->old_gnb_du_ue_f1ap_id         = gnb_du_ue_f1ap_id_to_uint(pending_old_ue_id.value());
+    dl_rrc_msg->old_gnb_du_ue_f1ap_id         = to_underlying(pending_old_ue_id.value());
 
     pending_old_ue_id.reset();
   }

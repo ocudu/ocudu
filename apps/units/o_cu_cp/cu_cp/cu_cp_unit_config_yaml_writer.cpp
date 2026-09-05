@@ -490,20 +490,20 @@ static void fill_cu_cp_pdcp_qos_section(YAML::Node node, const cu_cp_unit_pdcp_c
   {
     YAML::Node tx_node                = node["tx"];
     tx_node["sn"]                     = pdcp_sn_size_to_uint(config.tx.sn_field_length);
-    tx_node["discard_timer"]          = pdcp_discard_timer_to_int(config.tx.discard_timer);
+    tx_node["discard_timer"]          = to_underlying(config.tx.discard_timer);
     tx_node["status_report_required"] = config.tx.status_report_required;
   }
   {
     YAML::Node rx_node               = node["rx"];
     rx_node["sn"]                    = pdcp_sn_size_to_uint(config.rx.sn_field_length);
-    rx_node["t_reordering"]          = pdcp_t_reordering_to_int(config.rx.t_reordering);
+    rx_node["t_reordering"]          = to_underlying(config.rx.t_reordering);
     rx_node["out_of_order_delivery"] = config.rx.out_of_order_delivery;
   }
 }
 
 static void fill_cu_cp_qos_entry(YAML::Node node, const cu_cp_unit_qos_config& config)
 {
-  node["five_qi"] = five_qi_to_uint(config.five_qi);
+  node["five_qi"] = to_underlying(config.five_qi);
   fill_cu_cp_rlc_qos_section(node["rlc"], config.rlc);
   fill_cu_cp_pdcp_qos_section(node["pdcp"], config.pdcp);
 }

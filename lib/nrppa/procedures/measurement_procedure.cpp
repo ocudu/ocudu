@@ -186,7 +186,7 @@ asn1::nrppa::nr_ppa_pdu_c measurement_procedure::create_measurement_failure(nrpp
   asn1_fail.unsuccessful_outcome().nrppatransaction_id = transaction_id;
   asn1::nrppa::meas_fail_s& meas_init_fail             = asn1_fail.unsuccessful_outcome().value.meas_fail();
 
-  meas_init_fail->lmf_meas_id = lmf_meas_id_to_uint(meas_request.lmf_meas_id);
+  meas_init_fail->lmf_meas_id = to_underlying(meas_request.lmf_meas_id);
   meas_init_fail->cause       = cause_to_asn1(cause);
 
   return asn1_fail;
@@ -349,15 +349,15 @@ asn1::nrppa::nr_ppa_pdu_c measurement_procedure::create_measurement_response()
 
   asn1::nrppa::meas_resp_s& asn1_meas_resp = asn1_resp.successful_outcome().value.meas_resp();
 
-  asn1_meas_resp->lmf_meas_id = lmf_meas_id_to_uint(procedure_outcome->lmf_meas_id);
-  asn1_meas_resp->ran_meas_id = ran_meas_id_to_uint(ran_meas_id);
+  asn1_meas_resp->lmf_meas_id = to_underlying(procedure_outcome->lmf_meas_id);
+  asn1_meas_resp->ran_meas_id = to_underlying(ran_meas_id);
 
   if (!procedure_outcome->trp_meas_resp_list.empty()) {
     asn1_meas_resp->trp_meas_resp_list_present = true;
 
     for (const auto& trp_measurement_response_item : procedure_outcome->trp_meas_resp_list) {
       asn1::nrppa::trp_meas_resp_item_s asn1_trp_meas_resp_item;
-      asn1_trp_meas_resp_item.trp_id = trp_id_to_uint(trp_measurement_response_item.trp_id);
+      asn1_trp_meas_resp_item.trp_id = to_underlying(trp_measurement_response_item.trp_id);
       for (const auto& trp_meas_result_item : trp_measurement_response_item.meas_result) {
         asn1::nrppa::trp_meas_result_item_s asn1_trp_meas_result_item;
 

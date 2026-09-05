@@ -6,6 +6,7 @@
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/f1ap/f1ap_ies.h"
 #include "ocudu/ran/band_helper.h"
+#include "ocudu/support/enum_utils.h"
 
 using namespace asn1::f1ap;
 
@@ -30,7 +31,7 @@ served_cell_info_s ocudu::odu::make_asn1_served_cell_info(const du_served_cell_i
     tdd_info_s& tdd           = f1ap_cell.nr_mode_info.set_tdd();
     tdd.nr_freq_info.nr_arfcn = band_helper::freq_to_nr_arfcn(absolute_freq_point_a).value();
     tdd.nr_freq_info.freq_band_list_nr.resize(1);
-    tdd.nr_freq_info.freq_band_list_nr[0].freq_band_ind_nr = nr_band_to_uint(served_cell.dl_carrier.band);
+    tdd.nr_freq_info.freq_band_list_nr[0].freq_band_ind_nr = to_underlying(served_cell.dl_carrier.band);
 
     tdd.tx_bw.nr_scs.value = (nr_scs_opts::options)to_numerology_value(served_cell.scs_common);
 
@@ -40,12 +41,12 @@ served_cell_info_s ocudu::odu::make_asn1_served_cell_info(const du_served_cell_i
     fdd_info_s& fdd              = f1ap_cell.nr_mode_info.set_fdd();
     fdd.dl_nr_freq_info.nr_arfcn = band_helper::freq_to_nr_arfcn(absolute_freq_point_a).value();
     fdd.dl_nr_freq_info.freq_band_list_nr.resize(1);
-    fdd.dl_nr_freq_info.freq_band_list_nr[0].freq_band_ind_nr = nr_band_to_uint(served_cell.dl_carrier.band);
+    fdd.dl_nr_freq_info.freq_band_list_nr[0].freq_band_ind_nr = to_underlying(served_cell.dl_carrier.band);
     const double ul_absolute_freq_point_a                     = band_helper::get_abs_freq_point_a_from_f_ref(
         band_helper::nr_arfcn_to_freq(served_cell.ul_carrier->arfcn_f_ref), nof_crbs, served_cell.scs_common);
     fdd.ul_nr_freq_info.nr_arfcn = band_helper::freq_to_nr_arfcn(ul_absolute_freq_point_a).value();
     fdd.ul_nr_freq_info.freq_band_list_nr.resize(1);
-    fdd.ul_nr_freq_info.freq_band_list_nr[0].freq_band_ind_nr = nr_band_to_uint(served_cell.ul_carrier->band);
+    fdd.ul_nr_freq_info.freq_band_list_nr[0].freq_band_ind_nr = to_underlying(served_cell.ul_carrier->band);
 
     fdd.dl_tx_bw.nr_scs.value = (nr_scs_opts::options)to_numerology_value(served_cell.scs_common);
     unsigned nof_dl_crbs =

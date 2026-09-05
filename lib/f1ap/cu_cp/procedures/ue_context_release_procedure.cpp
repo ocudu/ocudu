@@ -20,8 +20,8 @@ ue_context_release_procedure::ue_context_release_procedure(const f1ap_configurat
                                                            f1ap_message_notifier&                 f1ap_notif_) :
   f1ap_cfg(f1ap_cfg_), ue_ctxt(ue_ctxt_), f1ap_notifier(f1ap_notif_), logger(ocudulog::fetch_basic_logger("CU-CP-F1"))
 {
-  command->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.ue_ids.cu_ue_f1ap_id);
-  command->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(*ue_ctxt.ue_ids.du_ue_f1ap_id);
+  command->gnb_cu_ue_f1ap_id = to_underlying(ue_ctxt.ue_ids.cu_ue_f1ap_id);
+  command->gnb_du_ue_f1ap_id = to_underlying(*ue_ctxt.ue_ids.du_ue_f1ap_id);
   command->cause             = cause_to_asn1(cmd_.cause);
   if (!cmd_.rrc_pdu.empty()) {
     command->rrc_container_present = true;

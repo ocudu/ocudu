@@ -161,11 +161,11 @@ cu_up_manager_impl::handle_bearer_context_release_command(const e1ap_bearer_cont
 
 void cu_up_manager_impl::handle_e1ap_connection_drop(cu_up_e1_index_t e1_index)
 {
-  if (cu_up_e1_index_to_uint(e1_index) >= e1aps.size()) {
+  if (to_underlying(e1_index) >= e1aps.size()) {
     logger.error("e1={}: Could not handle E1 connection drop from unknown E1", fmt::underlying(e1_index));
     return;
   }
-  std::reference_wrapper<e1ap_interface> e1ap = e1aps[cu_up_e1_index_to_uint(e1_index)];
+  std::reference_wrapper<e1ap_interface> e1ap = e1aps[to_underlying(e1_index)];
   schedule_cu_up_async_task(launch_async<cu_up_e1_connection_loss_routine>(
       cu_up_id, cu_up_name, plmns, stop_command, e1ap, *ue_mng, timers, exec_mapper.ctrl_executor()));
 }
@@ -201,14 +201,14 @@ void cu_up_manager_impl::handle_pdcp_protocol_failure(cu_up_ue_index_t ue_index)
     return;
   }
   cu_up_e1_index_t e1_index = ue_ctxt->get_e1_index();
-  if (cu_up_e1_index_to_uint(e1_index) >= e1aps.size()) {
+  if (to_underlying(e1_index) >= e1aps.size()) {
     logger.error("e1={} ue={}: Could not handle PDCP protocol failure from unknown E1",
                  fmt::underlying(e1_index),
                  fmt::underlying(ue_index));
     return;
   }
 
-  std::reference_wrapper<e1ap_interface> e1ap = e1aps[cu_up_e1_index_to_uint(e1_index)];
+  std::reference_wrapper<e1ap_interface> e1ap = e1aps[to_underlying(e1_index)];
   e1ap.get().handle_bearer_context_release_request_required(ue_index);
 }
 
@@ -220,14 +220,14 @@ void cu_up_manager_impl::handle_pdcp_integrity_failure(cu_up_ue_index_t ue_index
     return;
   }
   cu_up_e1_index_t e1_index = ue_ctxt->get_e1_index();
-  if (cu_up_e1_index_to_uint(e1_index) >= e1aps.size()) {
+  if (to_underlying(e1_index) >= e1aps.size()) {
     logger.error("e1={} ue={}: Could not handle PDCP integrity failure from unknown E1",
                  fmt::underlying(e1_index),
                  fmt::underlying(ue_index));
     return;
   }
 
-  std::reference_wrapper<e1ap_interface> e1ap = e1aps[cu_up_e1_index_to_uint(e1_index)];
+  std::reference_wrapper<e1ap_interface> e1ap = e1aps[to_underlying(e1_index)];
   e1ap.get().handle_bearer_context_release_request_required(ue_index);
 }
 
@@ -239,14 +239,14 @@ void cu_up_manager_impl::handle_pdcp_max_count_reached(cu_up_ue_index_t ue_index
     return;
   }
   cu_up_e1_index_t e1_index = ue_ctxt->get_e1_index();
-  if (cu_up_e1_index_to_uint(e1_index) >= e1aps.size()) {
+  if (to_underlying(e1_index) >= e1aps.size()) {
     logger.error("e1={} ue={}: Could not handle PDCP MAX count reached from unknown E1",
                  fmt::underlying(e1_index),
                  fmt::underlying(ue_index));
     return;
   }
 
-  std::reference_wrapper<e1ap_interface> e1ap = e1aps[cu_up_e1_index_to_uint(e1_index)];
+  std::reference_wrapper<e1ap_interface> e1ap = e1aps[to_underlying(e1_index)];
   e1ap.get().handle_bearer_context_release_request_required(ue_index);
 }
 
@@ -259,13 +259,13 @@ void cu_up_manager_impl::handle_pdcp_resume_required(cu_up_ue_index_t ue_index)
   }
 
   cu_up_e1_index_t e1_index = ue_ctxt->get_e1_index();
-  if (cu_up_e1_index_to_uint(e1_index) >= e1aps.size()) {
+  if (to_underlying(e1_index) >= e1aps.size()) {
     logger.error("e1={} ue={}: Could not handle PDCP resume required from unknown E1",
                  fmt::underlying(e1_index),
                  fmt::underlying(ue_index));
     return;
   }
-  std::reference_wrapper<e1ap_interface> e1ap = e1aps[cu_up_e1_index_to_uint(e1_index)];
+  std::reference_wrapper<e1ap_interface> e1ap = e1aps[to_underlying(e1_index)];
 
   if (not ue_ctxt->is_suspended()) {
     logger.warning("ue={}: Resume requested, but bearer context is not suspended", ue_index);

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "ocudu/support/enum_utils.h"
 #include "fmt/base.h"
 #include <cstdint>
 
@@ -13,7 +14,7 @@ namespace ocudu {
 /// This timer is configured only for DRBs. In the transmitter, a new timer is started upon reception of an SDU from
 /// upper layer.
 /// See TS 38.322 for timer description and TS 38.331 for valid timer durations.
-enum class pdcp_discard_timer {
+enum class pdcp_discard_timer : int16_t {
   ms10     = 10,
   ms20     = 20,
   ms30     = 30,
@@ -58,12 +59,6 @@ constexpr bool pdcp_discard_timer_from_int(pdcp_discard_timer& discard_timer, in
   }
 }
 
-/// Convert PDCP NR discard timer from enum to integer.
-constexpr int16_t pdcp_discard_timer_to_int(pdcp_discard_timer discard_timer)
-{
-  return static_cast<int16_t>(discard_timer);
-}
-
 } // namespace ocudu
 
 // Formatters.
@@ -83,7 +78,7 @@ struct formatter<ocudu::pdcp_discard_timer> {
     if (discard_timer == ocudu::pdcp_discard_timer::infinity) {
       return format_to(ctx.out(), "infinity");
     }
-    return format_to(ctx.out(), "{}", ocudu::pdcp_discard_timer_to_int(discard_timer));
+    return format_to(ctx.out(), "{}", ocudu::to_underlying(discard_timer));
   }
 };
 } // namespace fmt

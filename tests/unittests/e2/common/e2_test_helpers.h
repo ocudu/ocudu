@@ -406,7 +406,7 @@ public:
 
   std::optional<gnb_cu_ue_f1ap_id_t> get_gnb_cu_ue_f1ap_id(const gnb_du_ue_f1ap_id_t& gnb_du_ue_f1ap_id) const override
   {
-    return int_to_gnb_cu_ue_f1ap_id(gnb_du_ue_f1ap_id_to_uint(gnb_du_ue_f1ap_id));
+    return int_to_gnb_cu_ue_f1ap_id(to_underlying(gnb_du_ue_f1ap_id));
   }
 
   gnb_du_ue_f1ap_id_t get_gnb_du_ue_f1ap_id(const du_ue_index_t& ue_index) override
@@ -416,19 +416,19 @@ public:
   }
   gnb_du_ue_f1ap_id_t get_gnb_du_ue_f1ap_id(const gnb_cu_ue_f1ap_id_t& gnb_cu_ue_f1ap_id) override
   {
-    gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id));
+    gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(to_underlying(gnb_cu_ue_f1ap_id));
     return gnb_du_ue_f1ap_id;
   }
 
   du_ue_index_t get_ue_index(const gnb_du_ue_f1ap_id_t& gnb_du_ue_f1ap_id) override
   {
-    du_ue_index_t du_ue_index = to_du_ue_index(gnb_du_ue_f1ap_id_to_uint(gnb_du_ue_f1ap_id));
+    du_ue_index_t du_ue_index = to_du_ue_index(to_underlying(gnb_du_ue_f1ap_id));
     return du_ue_index;
   }
 
   du_ue_index_t get_ue_index(const gnb_cu_ue_f1ap_id_t& gnb_cu_ue_f1ap_id) override
   {
-    du_ue_index_t du_ue_index = to_du_ue_index(gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id));
+    du_ue_index_t du_ue_index = to_du_ue_index(to_underlying(gnb_cu_ue_f1ap_id));
     return du_ue_index;
   }
 };

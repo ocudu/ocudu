@@ -4,6 +4,7 @@
 
 #include "ocudu/nru/nru_packing.h"
 #include "ocudu/support/bit_encoding.h"
+#include "ocudu/support/enum_utils.h"
 
 using namespace ocudu;
 
@@ -138,7 +139,7 @@ bool nru_packing::pack(byte_buffer& out_buf, const nru_dl_user_data& dl_user_dat
   bit_encoder encoder{out_buf};
 
   // PDU Type
-  VERIFY_WRITE(encoder.pack(nru_pdu_type_to_uint(nru_pdu_type::dl_user_data), 4));
+  VERIFY_WRITE(encoder.pack(to_underlying(nru_pdu_type::dl_user_data), 4));
 
   // Spare (v15.2.0)
   VERIFY_WRITE(encoder.pack(0, 1));
@@ -342,7 +343,7 @@ bool nru_packing::pack(byte_buffer& out_buf, const nru_dl_data_delivery_status& 
   bit_encoder encoder{out_buf};
 
   // PDU Type
-  VERIFY_WRITE(encoder.pack(nru_pdu_type_to_uint(nru_pdu_type::dl_data_delivery_status), 4));
+  VERIFY_WRITE(encoder.pack(to_underlying(nru_pdu_type::dl_data_delivery_status), 4));
 
   // Highest transmitted NR PDCP SN indication
   VERIFY_WRITE(encoder.pack(dl_data_delivery_status.highest_transmitted_pdcp_sn.has_value(), 1));

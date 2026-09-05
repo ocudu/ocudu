@@ -105,7 +105,7 @@ TEST_F(ngap_nas_message_routine_test, when_ue_present_dl_nas_transport_is_forwar
 
   auto& ue     = test_ues.at(ue_index);
   ue.amf_ue_id = uint_to_amf_ue_id(
-      test_rng::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
+      test_rng::uniform_int<uint64_t>(to_underlying(amf_ue_id_t::min), to_underlying(amf_ue_id_t::max)));
 
   // Inject DL NAS transport message from AMF.
   ngap_message dl_nas_transport = generate_downlink_nas_transport_message(ue.amf_ue_id.value(), ue.ran_ue_id.value());
@@ -120,9 +120,9 @@ TEST_F(ngap_nas_message_routine_test, when_no_ue_present_dl_nas_transport_is_dro
   // Inject DL NAS transport message from AMF.
   ngap_message dl_nas_transport = generate_downlink_nas_transport_message(
       uint_to_amf_ue_id(
-          test_rng::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max))),
+          test_rng::uniform_int<uint64_t>(to_underlying(amf_ue_id_t::min), to_underlying(amf_ue_id_t::max))),
       uint_to_ran_ue_id(
-          test_rng::uniform_int<uint64_t>(ran_ue_id_to_uint(ran_ue_id_t::min), ran_ue_id_to_uint(ran_ue_id_t::max))));
+          test_rng::uniform_int<uint64_t>(to_underlying(ran_ue_id_t::min), to_underlying(ran_ue_id_t::max))));
   ngap->handle_message(dl_nas_transport);
 
   // Check that Error Indication has been sent to AMF.
@@ -138,7 +138,7 @@ TEST_F(ngap_nas_message_routine_test,
 
   auto& ue     = test_ues.at(ue_index);
   ue.amf_ue_id = uint_to_amf_ue_id(
-      test_rng::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
+      test_rng::uniform_int<uint64_t>(to_underlying(amf_ue_id_t::min), to_underlying(amf_ue_id_t::max)));
 
   // Inject DL NAS transport message from AMF.
   ngap_message dl_nas_transport =
@@ -242,7 +242,7 @@ TEST_F(ngap_nas_message_routine_test, when_amf_ue_id_is_max_size_then_its_not_cr
   ASSERT_TRUE(was_ul_nas_transport_forwarded());
 
   ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.ul_nas_transport()->amf_ue_ngap_id,
-            amf_ue_id_to_uint(amf_ue_id_t::max));
+            to_underlying(amf_ue_id_t::max));
 }
 
 /// Test UE ID pair consistency.

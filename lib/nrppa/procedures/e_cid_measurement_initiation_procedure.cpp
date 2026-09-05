@@ -200,7 +200,7 @@ e_cid_measurement_initiation_procedure::create_e_cid_measurement_initiation_fail
   asn1::nrppa::e_c_id_meas_initiation_fail_s& meas_init_fail =
       asn1_fail.unsuccessful_outcome().value.e_c_id_meas_initiation_fail();
 
-  meas_init_fail->lmf_ue_meas_id = lmf_ue_meas_id_to_uint(ue_ctxt->ue_ids.lmf_ue_meas_id);
+  meas_init_fail->lmf_ue_meas_id = to_underlying(ue_ctxt->ue_ids.lmf_ue_meas_id);
   meas_init_fail->cause          = cause_to_asn1(cause);
 
   return asn1_fail;
@@ -217,8 +217,8 @@ e_cid_measurement_initiation_procedure::create_e_cid_measurement_initiation_resp
   asn1::nrppa::e_c_id_meas_initiation_resp_s& meas_init_resp =
       asn1_resp.successful_outcome().value.e_c_id_meas_initiation_resp();
 
-  meas_init_resp->lmf_ue_meas_id = lmf_ue_meas_id_to_uint(ue_ctxt->ue_ids.lmf_ue_meas_id);
-  meas_init_resp->ran_ue_meas_id = ran_ue_meas_id_to_uint(ue_ctxt->ue_ids.ran_ue_meas_id);
+  meas_init_resp->lmf_ue_meas_id = to_underlying(ue_ctxt->ue_ids.lmf_ue_meas_id);
+  meas_init_resp->ran_ue_meas_id = to_underlying(ue_ctxt->ue_ids.ran_ue_meas_id);
 
   if (on_demand) {
     meas_init_resp->e_c_id_meas_result_present = true;

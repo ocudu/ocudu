@@ -230,8 +230,8 @@ TEST_F(ngap_pdu_session_resource_setup_procedure_test,
   cu_cp_ue_index_t ue_index = this->start_procedure();
 
   // Inject PDU Session Resource Setup Request.
-  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(test_rng::uniform_int<uint16_t>(
-      pdu_session_id_to_uint(pdu_session_id_t::min), pdu_session_id_to_uint(pdu_session_id_t::max)));
+  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(
+      test_rng::uniform_int<uint16_t>(to_underlying(pdu_session_id_t::min), to_underlying(pdu_session_id_t::max)));
 
   auto& ue = test_ues.at(ue_index);
 
@@ -264,8 +264,8 @@ TEST_F(ngap_pdu_session_resource_setup_procedure_test,
   cu_cp_ue_index_t ue_index = this->start_procedure();
 
   // Inject PDU Session Resource Setup Request.
-  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(test_rng::uniform_int<uint16_t>(
-      pdu_session_id_to_uint(pdu_session_id_t::min), pdu_session_id_to_uint(pdu_session_id_t::max)));
+  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(
+      test_rng::uniform_int<uint16_t>(to_underlying(pdu_session_id_t::min), to_underlying(pdu_session_id_t::max)));
 
   auto& ue = test_ues.at(ue_index);
 
@@ -298,8 +298,8 @@ TEST_F(ngap_pdu_session_resource_setup_procedure_test,
   cu_cp_ue_index_t ue_index = this->start_procedure();
 
   // Inject PDU Session Resource Setup Request.
-  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(test_rng::uniform_int<uint16_t>(
-      pdu_session_id_to_uint(pdu_session_id_t::min), pdu_session_id_to_uint(pdu_session_id_t::max)));
+  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(
+      test_rng::uniform_int<uint16_t>(to_underlying(pdu_session_id_t::min), to_underlying(pdu_session_id_t::max)));
 
   auto& ue = test_ues.at(ue_index);
 
@@ -333,8 +333,8 @@ TEST_F(
   cu_cp_ue_index_t ue_index = this->start_procedure();
 
   // Inject PDU Session Resource Setup Request.
-  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(test_rng::uniform_int<uint16_t>(
-      pdu_session_id_to_uint(pdu_session_id_t::min), pdu_session_id_to_uint(pdu_session_id_t::max)));
+  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(
+      test_rng::uniform_int<uint16_t>(to_underlying(pdu_session_id_t::min), to_underlying(pdu_session_id_t::max)));
 
   auto& ue = test_ues.at(ue_index);
 
@@ -367,8 +367,8 @@ TEST_F(ngap_pdu_session_resource_setup_procedure_test,
   cu_cp_ue_index_t ue_index = this->start_procedure();
 
   // Inject PDU Session Resource Setup Request.
-  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(test_rng::uniform_int<uint16_t>(
-      pdu_session_id_to_uint(pdu_session_id_t::min), pdu_session_id_to_uint(pdu_session_id_t::max)));
+  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(
+      test_rng::uniform_int<uint16_t>(to_underlying(pdu_session_id_t::min), to_underlying(pdu_session_id_t::max)));
 
   auto& ue = test_ues.at(ue_index);
 
@@ -449,8 +449,8 @@ TEST_F(ngap_pdu_session_resource_setup_procedure_test, when_security_not_enabled
   auto&            ue       = test_ues.at(ue_index);
 
   // Inject PDU Session Resource Setup Request.
-  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(test_rng::uniform_int<uint16_t>(
-      pdu_session_id_to_uint(pdu_session_id_t::min), pdu_session_id_to_uint(pdu_session_id_t::max)));
+  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(
+      test_rng::uniform_int<uint16_t>(to_underlying(pdu_session_id_t::min), to_underlying(pdu_session_id_t::max)));
 
   ngap_message pdu_session_resource_setup_request = generate_valid_pdu_session_resource_setup_request_message(
       ue.amf_ue_id.value(),

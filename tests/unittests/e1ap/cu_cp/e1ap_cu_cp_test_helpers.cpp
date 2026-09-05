@@ -97,10 +97,10 @@ e1ap_cu_cp_test::test_ue& e1ap_cu_cp_test::create_ue()
   ue_mng.set_plmn(ue_index, plmn_identity::test_value());
   auto request = generate_bearer_context_setup_request(ue_index);
 
-  run_bearer_context_setup(request.ue_index,
-                           int_to_gnb_cu_up_ue_e1ap_id(test_rng::uniform_int<uint64_t>(
-                               gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::min),
-                               gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::max) - 1)));
+  run_bearer_context_setup(
+      request.ue_index,
+      int_to_gnb_cu_up_ue_e1ap_id(test_rng::uniform_int<uint64_t>(to_underlying(gnb_cu_up_ue_e1ap_id_t::min),
+                                                                  to_underlying(gnb_cu_up_ue_e1ap_id_t::max) - 1)));
 
   return test_ues[request.ue_index];
 }

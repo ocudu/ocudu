@@ -9,7 +9,7 @@
 
 namespace ocudu {
 
-enum class nr_band;
+enum class nr_band : uint16_t;
 
 /// Refer to "SS/PBCH block and CORESET multiplexing pattern", TS 38.213, Section 13.
 enum class ssb_coreset0_mplex_pattern { mplx_pattern1 = 0, mplx_pattern2, mplx_pattern3, mplex_invalid };

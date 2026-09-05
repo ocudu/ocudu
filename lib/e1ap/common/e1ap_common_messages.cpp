@@ -22,12 +22,12 @@ e1ap_message ocudu::generate_error_indication(uint8_t                           
 
   error_ind->gnb_cu_up_ue_e1ap_id_present = cu_up_ue_id.has_value();
   if (cu_up_ue_id.has_value()) {
-    error_ind->gnb_cu_up_ue_e1ap_id = gnb_cu_up_ue_e1ap_id_to_uint(*cu_up_ue_id);
+    error_ind->gnb_cu_up_ue_e1ap_id = to_underlying(*cu_up_ue_id);
   }
 
   error_ind->gnb_cu_cp_ue_e1ap_id_present = cu_cp_ue_id.has_value();
   if (cu_cp_ue_id.has_value()) {
-    error_ind->gnb_cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_to_uint(*cu_cp_ue_id);
+    error_ind->gnb_cu_cp_ue_e1ap_id = to_underlying(*cu_cp_ue_id);
   }
 
   error_ind->cause_present = cause.has_value();

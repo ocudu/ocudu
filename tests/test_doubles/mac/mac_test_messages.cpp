@@ -126,7 +126,7 @@ mac_uci_pdu ocudu::test_helpers::create_uci_pdu(const pucch_info& pucch, bool de
 
       if (pucch.uci_bits.sr_bits != sr_nof_bits::no_sr) {
         uci_f2.sr_info.emplace();
-        uci_f2.sr_info->resize(sr_nof_bits_to_uint(pucch.uci_bits.sr_bits));
+        uci_f2.sr_info->resize(to_underlying(pucch.uci_bits.sr_bits));
       }
 
       if (pucch.uci_bits.csi_part1_nof_bits > 0) {

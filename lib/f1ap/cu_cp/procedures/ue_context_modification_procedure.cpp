@@ -74,8 +74,8 @@ void ue_context_modification_procedure::send_ue_context_modification_request()
 
   ocudu_sanity_check(ue_ctxt.ue_ids.du_ue_f1ap_id && ue_ctxt.ue_ids.du_ue_f1ap_id != gnb_du_ue_f1ap_id_t::invalid,
                      "Invalid gNB-DU-UE-F1AP-Id");
-  ctx_mod->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(*ue_ctxt.ue_ids.du_ue_f1ap_id);
-  ctx_mod->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.ue_ids.cu_ue_f1ap_id);
+  ctx_mod->gnb_du_ue_f1ap_id = to_underlying(*ue_ctxt.ue_ids.du_ue_f1ap_id);
+  ctx_mod->gnb_cu_ue_f1ap_id = to_underlying(ue_ctxt.ue_ids.cu_ue_f1ap_id);
 
   // send UE context modification request message
   f1ap_notifier.on_new_message(f1ap_ue_ctxt_mod_request_msg);
@@ -258,7 +258,7 @@ static void fill_asn1_ue_context_modification_request(asn1::f1ap::ue_context_mod
       asn1_drb_to_be_released_item_container.load_info_obj(ASN1_F1AP_ID_DRBS_TO_BE_RELEASED_ITEM);
 
       auto& asn1_drb_to_be_released_item  = asn1_drb_to_be_released_item_container.value().drbs_to_be_released_item();
-      asn1_drb_to_be_released_item.drb_id = drb_id_to_uint(drb_id);
+      asn1_drb_to_be_released_item.drb_id = to_underlying(drb_id);
 
       asn1_request->drbs_to_be_released_list.push_back(asn1_drb_to_be_released_item_container);
     }

@@ -222,7 +222,7 @@ qos_flow_level_qos_parameters_to_asn1(const qos_flow_level_qos_parameters& qos_f
     asn1_dynamic_5qi.packet_error_rate.per_exponent = dynamic_5qi.per.exponent;
     if (dynamic_5qi.five_qi.has_value()) {
       asn1_dynamic_5qi.five_qi_present = true;
-      asn1_dynamic_5qi.five_qi         = five_qi_to_uint(dynamic_5qi.five_qi.value());
+      asn1_dynamic_5qi.five_qi         = to_underlying(dynamic_5qi.five_qi.value());
     }
     if (dynamic_5qi.is_delay_critical.has_value()) {
       asn1_dynamic_5qi.delay_crit_present = true;
@@ -243,7 +243,7 @@ qos_flow_level_qos_parameters_to_asn1(const qos_flow_level_qos_parameters& qos_f
     asn1_qos_flow_level_params.qos_characteristics.set_non_dyn();
     auto& asn1_non_dynamic_5qi = asn1_qos_flow_level_params.qos_characteristics.non_dyn();
 
-    asn1_non_dynamic_5qi.five_qi = five_qi_to_uint(non_dynamic_5qi.five_qi);
+    asn1_non_dynamic_5qi.five_qi = to_underlying(non_dynamic_5qi.five_qi);
 
     if (non_dynamic_5qi.qos_prio_level.has_value()) {
       asn1_non_dynamic_5qi.prio_level_qos_present = true;
@@ -457,21 +457,21 @@ inline bool pdu_session_res_admitted_item_to_asn1(asn1::xnap::pdu_session_res_ad
                                                   const cu_cp_xn_pdu_session_res_admitted_item& admitted_item)
 {
   // Fill PDU session ID.
-  asn1_admitted_item.pdu_session_id = pdu_session_id_to_uint(admitted_item.pdu_session_id);
+  asn1_admitted_item.pdu_session_id = to_underlying(admitted_item.pdu_session_id);
 
   // Fill PDU session res admitted info.
   // > Fill QoS flows admitted list.
   for (const auto& qos_flow_item : admitted_item.qos_flows_setup_list) {
     asn1::xnap::qos_flows_admitted_item_s asn1_qos_flow_admitted_item;
     // Fill QoS flow ID.
-    asn1_qos_flow_admitted_item.qfi = qos_flow_id_to_uint(qos_flow_item.qos_flow_id);
+    asn1_qos_flow_admitted_item.qfi = to_underlying(qos_flow_item.qos_flow_id);
     asn1_admitted_item.pdu_session_res_admitted_info.qos_flows_admitted_list.push_back(asn1_qos_flow_admitted_item);
   }
   // > Fill QoS flows not admitted list.
   for (const auto& qos_flow_not_admitted_item : admitted_item.qos_flows_failed_to_setup_list) {
     asn1::xnap::qos_flowwith_cause_item_s asn1_qos_flow_not_admitted_item;
     // Fill QoS flow ID.
-    asn1_qos_flow_not_admitted_item.qfi = qos_flow_id_to_uint(qos_flow_not_admitted_item.qos_flow_id);
+    asn1_qos_flow_not_admitted_item.qfi = to_underlying(qos_flow_not_admitted_item.qos_flow_id);
     // Fill cause.
     const auto* cause = std::get_if<std::optional<xnap_cause_t>>(&qos_flow_not_admitted_item.cause);
     if (cause && cause->has_value()) {
@@ -488,7 +488,7 @@ inline bool pdu_session_res_admitted_item_to_asn1(asn1::xnap::pdu_session_res_ad
   for (const auto& qfi : data_forwarding_info_from_target->qos_flows_accepted_for_data_forwarding_list) {
     asn1::xnap::qos_f_lows_accepted_to_be_forwarded_item_s asn1_qos_flow_accepted_for_data_forwarding_item;
     // Fill QoS flow ID.
-    asn1_qos_flow_accepted_for_data_forwarding_item.qos_flow_id = qos_flow_id_to_uint(qfi);
+    asn1_qos_flow_accepted_for_data_forwarding_item.qos_flow_id = to_underlying(qfi);
     asn1_admitted_item.pdu_session_res_admitted_info.data_forwarding_info_from_target
         .qos_flows_accepted_for_data_forwarding_list.push_back(asn1_qos_flow_accepted_for_data_forwarding_item);
   }
@@ -514,7 +514,7 @@ inline bool pdu_session_res_admitted_item_to_asn1(asn1::xnap::pdu_session_res_ad
   for (const auto& drb_item : data_forwarding_info_from_target->data_forwarding_resp_drb_item_list) {
     asn1::xnap::data_forwarding_resp_drb_item_s asn1_drb_item;
     // Fill DRB ID.
-    asn1_drb_item.drb_id = drb_id_to_uint(drb_item.drb_id);
+    asn1_drb_item.drb_id = to_underlying(drb_item.drb_id);
     // Fill DL forwarding UP TNL.
     if (drb_item.dl_forwarding_up_tnl.has_value()) {
       asn1_drb_item.dl_forwarding_up_tnl_present = true;

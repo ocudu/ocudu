@@ -270,7 +270,7 @@ private:
       next_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_t::min;
     } else {
       // increase cu ue f1ap id counter
-      next_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(gnb_cu_ue_f1ap_id_to_uint(next_cu_ue_f1ap_id) + 1);
+      next_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(to_underlying(next_cu_ue_f1ap_id) + 1);
     }
   }
 

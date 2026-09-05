@@ -67,11 +67,11 @@ public:
     // Put PDU session container
     byte_buffer ext_buf;
     bit_encoder encoder{ext_buf};
-    encoder.pack(0, 4);                            // PDU type
-    encoder.pack(0, 4);                            // unused options
-    encoder.pack(0, 1);                            // Paging Policy Presence
-    encoder.pack(0, 1);                            // Reflective QoS Indicator
-    encoder.pack(qos_flow_id_to_uint(flow_id), 6); // QFI
+    encoder.pack(0, 4);                      // PDU type
+    encoder.pack(0, 4);                      // unused options
+    encoder.pack(0, 1);                      // Paging Policy Presence
+    encoder.pack(0, 1);                      // Reflective QoS Indicator
+    encoder.pack(to_underlying(flow_id), 6); // QFI
 
     gtpu_extension_header ext;
     ext.extension_header_type = gtpu_extension_header_type::pdu_session_container;

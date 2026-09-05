@@ -108,10 +108,10 @@ TEST_F(ngap_pdu_session_resource_modify_procedure_test,
        when_valid_pdu_session_resource_modify_request_received_then_pdu_session_modification_succeeds)
 {
   // Test preamble
-  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(test_rng::uniform_int<uint16_t>(
-      pdu_session_id_to_uint(pdu_session_id_t::min), pdu_session_id_to_uint(pdu_session_id_t::max)));
-  cu_cp_ue_index_t ue_index       = this->start_procedure(pdu_session_id);
-  auto&            ue             = test_ues.at(ue_index);
+  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(
+      test_rng::uniform_int<uint16_t>(to_underlying(pdu_session_id_t::min), to_underlying(pdu_session_id_t::max)));
+  cu_cp_ue_index_t ue_index = this->start_procedure(pdu_session_id);
+  auto&            ue       = test_ues.at(ue_index);
 
   // Inject PDU Session Resource Modify Request
   ngap_message pdu_session_resource_modify_request = generate_valid_pdu_session_resource_modify_request_message(
@@ -130,10 +130,10 @@ TEST_F(ngap_pdu_session_resource_modify_procedure_test,
        when_invalid_pdu_session_resource_modify_request_received_then_pdu_session_modification_failed)
 {
   // Test preamble
-  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(test_rng::uniform_int<uint16_t>(
-      pdu_session_id_to_uint(pdu_session_id_t::min), pdu_session_id_to_uint(pdu_session_id_t::max)));
-  cu_cp_ue_index_t ue_index       = this->start_procedure(pdu_session_id);
-  auto&            ue             = test_ues.at(ue_index);
+  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(
+      test_rng::uniform_int<uint16_t>(to_underlying(pdu_session_id_t::min), to_underlying(pdu_session_id_t::max)));
+  cu_cp_ue_index_t ue_index = this->start_procedure(pdu_session_id);
+  auto&            ue       = test_ues.at(ue_index);
 
   // Inject invalid PDU Session Resource Modify Request
   ngap_message pdu_session_resource_modify_request = generate_invalid_pdu_session_resource_modify_request_message(
@@ -149,10 +149,10 @@ TEST_F(ngap_pdu_session_resource_modify_procedure_test,
        when_valid_pdu_session_resource_modify_request_received_twice_then_error_indication_is_send)
 {
   // Test preamble
-  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(test_rng::uniform_int<uint16_t>(
-      pdu_session_id_to_uint(pdu_session_id_t::min), pdu_session_id_to_uint(pdu_session_id_t::max)));
-  cu_cp_ue_index_t ue_index       = this->start_procedure(pdu_session_id);
-  auto&            ue             = test_ues.at(ue_index);
+  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(
+      test_rng::uniform_int<uint16_t>(to_underlying(pdu_session_id_t::min), to_underlying(pdu_session_id_t::max)));
+  cu_cp_ue_index_t ue_index = this->start_procedure(pdu_session_id);
+  auto&            ue       = test_ues.at(ue_index);
 
   // Inject PDU Session Resource Modify Request
   ngap_message pdu_session_resource_modify_request = generate_valid_pdu_session_resource_modify_request_message(

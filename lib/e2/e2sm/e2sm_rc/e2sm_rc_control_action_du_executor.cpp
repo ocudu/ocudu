@@ -183,7 +183,7 @@ e2sm_rc_control_action_2_6_du_executor::execute_ric_control_action(const e2sm_ri
   fmt::memory_buffer log_buffer;
   fmt::format_to(std::back_inserter(log_buffer),
                  "Slice-level PRB quota Control Request for UE gNB-DU-UE-F1AP-ID={}:\n",
-                 gnb_du_ue_f1ap_id_to_uint(ctrl_config.ue_id));
+                 to_underlying(ctrl_config.ue_id));
   fmt::format_to(std::back_inserter(log_buffer), "RRM Policy Ratio Group:\n");
   for (const auto& rrm_policy_ratio : ctrl_config.rrm_policy_ratio_list) {
     fmt::format_to(std::back_inserter(log_buffer), " RRM Policy:\n");

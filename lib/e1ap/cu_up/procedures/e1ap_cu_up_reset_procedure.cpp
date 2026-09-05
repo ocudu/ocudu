@@ -72,8 +72,7 @@ async_task<void> e1ap_cu_up_reset_procedure::handle_part_of_e1_interface_reset(
 
     const e1ap_ue_context* ue_ctx = ue_ctxt_list.find_ue(cu_up_e1ap_id);
     if (ue_ctx == nullptr) {
-      logger.log_error(
-          "\"{}\": Could not find UE. cu_up_e1ap_id={}", name(), gnb_cu_up_ue_e1ap_id_to_uint(cu_up_e1ap_id));
+      logger.log_error("\"{}\": Could not find UE. cu_up_e1ap_id={}", name(), to_underlying(cu_up_e1ap_id));
       continue;
     }
 

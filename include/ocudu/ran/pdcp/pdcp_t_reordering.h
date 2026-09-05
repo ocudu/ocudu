@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "ocudu/support/enum_utils.h"
 #include "fmt/base.h"
 #include <cstdint>
 
@@ -12,7 +13,7 @@ namespace ocudu {
 /// \brief PDCP NR t-Reordering timer values.
 /// This timer is used to detect loss of PDCP Data PDUs.
 /// See TS 38.322 for timer description and TS 38.331 for valid timer durations.
-enum class pdcp_t_reordering {
+enum class pdcp_t_reordering : int16_t {
   ms0      = 0,
   ms1      = 1,
   ms2      = 2,
@@ -100,12 +101,6 @@ inline bool pdcp_t_reordering_from_int(pdcp_t_reordering& t_reord, int num)
   }
 }
 
-/// \brief Convert PDCP NR t-Reordering from enum to integer.
-constexpr int16_t pdcp_t_reordering_to_int(pdcp_t_reordering t_reordering)
-{
-  return static_cast<int16_t>(t_reordering);
-}
-
 } // namespace ocudu
 
 // Formatters.
@@ -125,7 +120,7 @@ struct formatter<ocudu::pdcp_t_reordering> {
     if (t_reordering == ocudu::pdcp_t_reordering::infinity) {
       return format_to(ctx.out(), "infinity");
     }
-    return format_to(ctx.out(), "{}", ocudu::pdcp_t_reordering_to_int(t_reordering));
+    return format_to(ctx.out(), "{}", ocudu::to_underlying(t_reordering));
   }
 };
 } // namespace fmt

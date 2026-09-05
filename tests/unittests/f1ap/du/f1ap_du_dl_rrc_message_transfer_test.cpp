@@ -120,7 +120,7 @@ TEST_F(
   ASSERT_EQ(ret.value().pdu.init_msg().value.type().value,
             asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::rrc_delivery_report);
   const asn1::f1ap::rrc_delivery_report_s& report = ret.value().pdu.init_msg().value.rrc_delivery_report();
-  ASSERT_EQ(report->gnb_du_ue_f1ap_id, gnb_du_ue_f1ap_id_to_uint(du_ue_id));
+  ASSERT_EQ(report->gnb_du_ue_f1ap_id, to_underlying(du_ue_id));
   ASSERT_EQ(report->srb_id, 1);
   ASSERT_EQ(report->rrc_delivery_status.trigger_msg, pdcp_sn);
   ASSERT_EQ(report->rrc_delivery_status.delivery_status, pdcp_sn);

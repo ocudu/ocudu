@@ -68,8 +68,8 @@ bool ngap_ue_context_release_procedure::send_ue_context_release_complete()
   ngap_msg.pdu.successful_outcome().load_info_obj(ASN1_NGAP_ID_UE_CONTEXT_RELEASE);
 
   auto& asn1_ue_context_release_complete = ngap_msg.pdu.successful_outcome().value.ue_context_release_complete();
-  asn1_ue_context_release_complete->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ids.amf_ue_id);
-  asn1_ue_context_release_complete->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ids.ran_ue_id);
+  asn1_ue_context_release_complete->amf_ue_ngap_id = to_underlying(ue_ids.amf_ue_id);
+  asn1_ue_context_release_complete->ran_ue_ngap_id = to_underlying(ue_ids.ran_ue_id);
 
   fill_asn1_ue_context_release_complete(asn1_ue_context_release_complete, ue_context_release_complete);
 

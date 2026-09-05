@@ -162,7 +162,7 @@ void inter_cu_handover_target_routine::operator()(
     if (meas_cfg.has_value()) {
       if (ue_mng.get_measurement_context(request.ue_index).nci_to_meas_obj_id.find(request.target_cell_id.nci) !=
           ue_mng.get_measurement_context(request.ue_index).nci_to_meas_obj_id.end()) {
-        ue_context_setup_request.serving_cell_mo = meas_obj_id_to_uint(
+        ue_context_setup_request.serving_cell_mo = to_underlying(
             ue_mng.get_measurement_context(request.ue_index).nci_to_meas_obj_id.at(request.target_cell_id.nci));
       }
       // Forward the MeasConfig to the target DU so it can derive the measurement gap. The RRC UE doesn't exist yet on

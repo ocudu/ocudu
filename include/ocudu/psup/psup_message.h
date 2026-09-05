@@ -14,12 +14,6 @@ namespace ocudu {
 /// Ref: TS 38.415 Sec. 5.5.3.1.
 enum class psup_pdu_type : uint8_t { dl_pdu_session_information = 0, ul_pdu_session_information = 1 };
 
-/// Convert PSUP PDU Type to integer.
-constexpr uint8_t psup_pdu_type_to_uint(psup_pdu_type pdu_type)
-{
-  return static_cast<uint8_t>(pdu_type);
-}
-
 /// Convert integer to PSUP PDU Type.
 constexpr psup_pdu_type uint_to_psup_pdu_type(uint8_t num)
 {
@@ -33,12 +27,6 @@ constexpr uint8_t MAX_NOF_PPI = 8;
 ///
 /// Ref: TS 38.415 Sec. 5.5.3.7.
 enum class psup_ppi : uint8_t { min = 0, max = MAX_NOF_PPI - 1, invalid = MAX_NOF_PPI };
-
-/// Convert PSUP Paging Policy Indicator to integer.
-constexpr uint8_t psup_ppi_to_uint(psup_ppi ppi)
-{
-  return static_cast<uint8_t>(ppi);
-}
 
 /// Convert integer to PSUP Paging Policy Indicator.
 constexpr psup_ppi uint_to_psup_ppi(uint8_t num)

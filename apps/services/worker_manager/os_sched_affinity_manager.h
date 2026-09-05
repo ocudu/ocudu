@@ -4,12 +4,13 @@
 
 #pragma once
 
+#include "ocudu/support/enum_utils.h"
 #include "ocudu/support/executors/unique_thread.h"
 
 namespace ocudu {
 
 /// Types of CPU affinity masks.
-enum class sched_affinity_mask_types { ru, main, last };
+enum class sched_affinity_mask_types : unsigned { ru, main, last };
 
 /// Thread pinning policy to a CPU affinity mask.
 enum class sched_affinity_mask_policy {
@@ -46,12 +47,6 @@ inline sched_affinity_mask_policy to_affinity_mask_policy(const std::string& val
   }
 
   return sched_affinity_mask_policy::last;
-}
-
-/// Converts and returns the given affinity mask type to an integer.
-inline unsigned to_unsigned(sched_affinity_mask_types value)
-{
-  return static_cast<unsigned>(value);
 }
 
 /// Converts and returns the given value to an affinity mask type.
@@ -130,19 +125,19 @@ class os_sched_affinity_manager
 
 public:
   os_sched_affinity_manager(const std::vector<os_sched_affinity_config>& entries) :
-    cpu_masks(to_unsigned(sched_affinity_mask_types::last))
+    cpu_masks(to_underlying(sched_affinity_mask_types::last))
   {
     for (const auto& entry : entries) {
-      ocudu_assert(entry.type != sched_affinity_mask_types::last, "Invalid type '{}'", to_unsigned(entry.type));
+      ocudu_assert(entry.type != sched_affinity_mask_types::last, "Invalid type '{}'", to_underlying(entry.type));
       switch (entry.pinning_policy) {
         case sched_affinity_mask_policy::round_robin:
-          cpu_masks[to_unsigned(entry.type)] = std::make_unique<affinity_entry_rr>(entry.mask);
+          cpu_masks[to_underlying(entry.type)] = std::make_unique<affinity_entry_rr>(entry.mask);
           break;
         case sched_affinity_mask_policy::mask:
-          cpu_masks[to_unsigned(entry.type)] = std::make_unique<affinity_entry_mask>(entry.mask);
+          cpu_masks[to_underlying(entry.type)] = std::make_unique<affinity_entry_mask>(entry.mask);
           break;
         default:
-          cpu_masks[to_unsigned(entry.type)] = nullptr;
+          cpu_masks[to_underlying(entry.type)] = nullptr;
       }
     }
   }
@@ -150,10 +145,10 @@ public:
   /// Calculate and returns the affinity mask for the given type.
   os_sched_affinity_bitmask calcute_affinity_mask(sched_affinity_mask_types type) const
   {
-    ocudu_assert(type != sched_affinity_mask_types::last, "Invalid type '{}'", to_unsigned(type));
-    ocudu_assert(cpu_masks[to_unsigned(type)], "Invalid manager for type '{}'", to_unsigned(type));
+    ocudu_assert(type != sched_affinity_mask_types::last, "Invalid type '{}'", to_underlying(type));
+    ocudu_assert(cpu_masks[to_underlying(type)], "Invalid manager for type '{}'", to_underlying(type));
 
-    return cpu_masks[to_unsigned(type)]->calculate_mask();
+    return cpu_masks[to_underlying(type)]->calculate_mask();
   }
 
 private:

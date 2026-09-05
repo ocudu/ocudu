@@ -219,7 +219,7 @@ ocudu::ocuup::generate_bearer_context_modification_request_with_data_forwarding_
   item.pdu_session_data_forwarding_info.ie_exts_present                                             = true;
   item.pdu_session_data_forwarding_info.ie_exts.data_forwardingto_ng_ran_qos_flow_info_list_present = true;
   asn1::e1ap::data_forwardingto_ng_ran_qos_flow_info_list_item_s asn1_qos_flow_item;
-  asn1_qos_flow_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_id);
+  asn1_qos_flow_item.qos_flow_id = to_underlying(qos_flow_id);
   item.pdu_session_data_forwarding_info.ie_exts.data_forwardingto_ng_ran_qos_flow_info_list.push_back(
       asn1_qos_flow_item);
 
@@ -311,11 +311,11 @@ ocudu::ocuup::generate_e1_reset(const std::vector<std::pair<gnb_cu_cp_ue_e1ap_id
 
       if (ue_ids.first != gnb_cu_cp_ue_e1ap_id_t::invalid) {
         conn_item.gnb_cu_cp_ue_e1ap_id_present = true;
-        conn_item.gnb_cu_cp_ue_e1ap_id         = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ids.first);
+        conn_item.gnb_cu_cp_ue_e1ap_id         = to_underlying(ue_ids.first);
       }
       if (ue_ids.second != gnb_cu_up_ue_e1ap_id_t::invalid) {
         conn_item.gnb_cu_up_ue_e1ap_id_present = true;
-        conn_item.gnb_cu_up_ue_e1ap_id         = gnb_cu_up_ue_e1ap_id_to_uint(ue_ids.second);
+        conn_item.gnb_cu_up_ue_e1ap_id         = to_underlying(ue_ids.second);
       }
 
       reset_part_of_e1_interface.push_back(item_container);

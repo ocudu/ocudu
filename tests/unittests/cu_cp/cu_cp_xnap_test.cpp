@@ -224,7 +224,7 @@ TEST_F(cu_cp_xnap_repository_test, when_a_sibling_at_the_winners_node_has_its_ow
 
   // Both candidate cells are served by one peer, which gave each its own Target NG-RAN node UE XnAP ID.
   const peer_xnap_ue_id_t peer_ue_id_a = peer_xnap_ue_id_t::min;
-  const peer_xnap_ue_id_t peer_ue_id_b = uint_to_peer_xnap_ue_id(peer_xnap_ue_id_to_uint(peer_xnap_ue_id_t::min) + 1);
+  const peer_xnap_ue_id_t peer_ue_id_b = uint_to_peer_xnap_ue_id(to_underlying(peer_xnap_ue_id_t::min) + 1);
 
   source_ue->get_cho_context().emplace();
   for (const auto& [cgi, peer_ue_id] : {std::make_pair(cgi_a, peer_ue_id_a), std::make_pair(cgi_b, peer_ue_id_b)}) {

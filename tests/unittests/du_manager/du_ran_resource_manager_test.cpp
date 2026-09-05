@@ -81,10 +81,7 @@ protected:
     return sr_periodicity_to_slot(default_ue_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].period);
   }
 
-  unsigned get_config_csi_period() const
-  {
-    return csi_report_periodicity_to_uint(default_csi_pucch_res_cfg.report_slot_period);
-  }
+  unsigned get_config_csi_period() const { return to_underlying(default_csi_pucch_res_cfg.report_slot_period); }
 
   bool has_ue_csi_cfg(const serving_cell_config& serv_cell_cfg) const
   {
@@ -386,7 +383,7 @@ std::ostream& operator<<(std::ostream& out, const pucch_cnt_builder_params& para
                      params.nof_res_csi,
                      params.max_allowed_pucch_grants,
                      sr_periodicity_to_slot(params.sr_period),
-                     csi_report_periodicity_to_uint(params.csi_period));
+                     to_underlying(params.csi_period));
   return out;
 }
 
@@ -504,7 +501,7 @@ protected:
         nof_sr_offsets * cell_cfg_list[0].ran.init_bwp.pucch.resources.nof_cell_sr_resources;
 
     // Get the available offsets for CSI.
-    const unsigned csi_period_slots = csi_report_periodicity_to_uint(default_csi_pucch_res_cfg.report_slot_period);
+    const unsigned csi_period_slots = to_underlying(default_csi_pucch_res_cfg.report_slot_period);
     if (cell_cfg_list[0].ran.tdd_cfg.has_value()) {
       for (unsigned j = 0; j != csi_period_slots; ++j) {
         if (get_active_tdd_ul_symbols(*cell_cfg_list[0].ran.tdd_cfg, j % slots_per_frame, cyclic_prefix::NORMAL)
@@ -566,7 +563,7 @@ TEST_P(du_ran_res_mng_multiple_cfg_tester, test_correct_resource_creation_indexi
     ASSERT_FALSE(ue_csi_cfg.pucch_csi_res_list.empty());
     const unsigned ue_csi_pucch_res_id = ue_csi_cfg.pucch_csi_res_list.front().pucch_res_id.ded().cell_res_id;
     const unsigned ue_csi_pucch_offset = ue_csi_cfg.report_slot_offset;
-    ASSERT_EQ(csi_period, csi_report_periodicity_to_uint(ue_csi_cfg.report_slot_period));
+    ASSERT_EQ(csi_period, to_underlying(ue_csi_cfg.report_slot_period));
     // Make sure the CSI is in a fully-UL slot.
     if (cell_cfg_list[0].ran.tdd_cfg.has_value()) {
       ASSERT_TRUE(get_active_tdd_ul_symbols(
@@ -688,7 +685,7 @@ make_custom_du_cell_config_for_pucch_cnt(const pucch_cnt_builder_params&        
   du_cfg.ran.init_bwp.pucch.sr_period = pucch_params_.sr_period;
   if (du_cfg.ran.init_bwp.csi.has_value()) {
     auto&          csi_params       = du_cfg.ran.init_bwp.csi.value();
-    const unsigned csi_period_slots = csi_report_periodicity_to_uint(pucch_params_.csi_period);
+    const unsigned csi_period_slots = to_underlying(pucch_params_.csi_period);
     csi_params.csi_rs_period        = static_cast<csi_resource_periodicity>(csi_period_slots);
 
     // Ensure CSI offsets remain within the selected period.
@@ -724,8 +721,7 @@ protected:
                      std::holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
                          default_ue_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type),
                  "CSI report configuration is required for this unittest;");
-    lcm_csi_sr_period =
-        std::lcm(sr_periodicity_to_slot(GetParam().sr_period), csi_report_periodicity_to_uint(GetParam().csi_period));
+    lcm_csi_sr_period = std::lcm(sr_periodicity_to_slot(GetParam().sr_period), to_underlying(GetParam().csi_period));
     pucch_cnts.resize(lcm_csi_sr_period, 0);
   }
 

@@ -70,7 +70,7 @@ cu_cp_assoc_qos_flow_to_ngap_assoc_qos_flow_item(cu_cp_associated_qos_flow cu_cp
 {
   asn1::ngap::associated_qos_flow_item_s asn1_assoc_qos_item;
 
-  asn1_assoc_qos_item.qos_flow_id = qos_flow_id_to_uint(cu_cp_qos_flow.qos_flow_id);
+  asn1_assoc_qos_item.qos_flow_id = to_underlying(cu_cp_qos_flow.qos_flow_id);
 
   if (cu_cp_qos_flow.qos_flow_map_ind.has_value()) {
     asn1_assoc_qos_item.qos_flow_map_ind_present = true;
@@ -283,7 +283,7 @@ template <typename template_asn1_item>
 inline bool pdu_session_res_setup_response_item_to_asn1(template_asn1_item&                             asn1_resp,
                                                         const ngap_pdu_session_res_setup_response_item& resp)
 {
-  asn1_resp.pdu_session_id = pdu_session_id_to_uint(resp.pdu_session_id);
+  asn1_resp.pdu_session_id = to_underlying(resp.pdu_session_id);
 
   asn1::ngap::pdu_session_res_setup_resp_transfer_s response_transfer;
 
@@ -303,7 +303,7 @@ inline bool pdu_session_res_setup_response_item_to_asn1(template_asn1_item&     
   // Fill QoS flow failed to setup list.
   for (const auto& failed_item : resp.pdu_session_resource_setup_response_transfer.qos_flow_failed_to_setup_list) {
     asn1::ngap::qos_flow_with_cause_item_s asn1_failed_item;
-    asn1_failed_item.qos_flow_id = qos_flow_id_to_uint(failed_item.qos_flow_id);
+    asn1_failed_item.qos_flow_id = to_underlying(failed_item.qos_flow_id);
     asn1_failed_item.cause       = cause_to_asn1(failed_item.cause);
     response_transfer.qos_flow_failed_to_setup_list.push_back(asn1_failed_item);
   }
@@ -334,7 +334,7 @@ template <typename template_asn1_item>
 inline bool pdu_session_res_modify_response_item_to_asn1(template_asn1_item& asn1_resp,
                                                          const ngap_pdu_session_resource_modify_response_item& resp)
 {
-  asn1_resp.pdu_session_id = pdu_session_id_to_uint(resp.pdu_session_id);
+  asn1_resp.pdu_session_id = to_underlying(resp.pdu_session_id);
 
   asn1::ngap::pdu_session_res_modify_resp_transfer_s response_transfer;
 
@@ -349,7 +349,7 @@ inline bool pdu_session_res_modify_response_item_to_asn1(template_asn1_item& asn
   if (resp.transfer.qos_flow_add_or_modify_response_list.has_value()) {
     for (const auto& qos_flow : resp.transfer.qos_flow_add_or_modify_response_list.value()) {
       asn1::ngap::qos_flow_add_or_modify_resp_item_s asn1_item;
-      asn1_item.qos_flow_id = qos_flow_id_to_uint(qos_flow.qos_flow_id);
+      asn1_item.qos_flow_id = to_underlying(qos_flow.qos_flow_id);
       response_transfer.qos_flow_add_or_modify_resp_list.push_back(asn1_item);
     }
   }
@@ -373,7 +373,7 @@ template <typename template_asn1_item>
 inline bool pdu_session_res_failed_to_modify_item_to_asn1(template_asn1_item& asn1_resp,
                                                           const ngap_pdu_session_resource_failed_to_modify_item& resp)
 {
-  asn1_resp.pdu_session_id = pdu_session_id_to_uint(resp.pdu_session_id);
+  asn1_resp.pdu_session_id = to_underlying(resp.pdu_session_id);
 
   asn1::ngap::pdu_session_res_modify_unsuccessful_transfer_s response_transfer;
   response_transfer.cause = cause_to_asn1(resp.unsuccessful_transfer.cause);
@@ -397,7 +397,7 @@ template <typename template_asn1_item>
 inline bool pdu_session_res_setup_failed_item_to_asn1(template_asn1_item&                           asn1_resp,
                                                       const ngap_pdu_session_res_setup_failed_item& resp)
 {
-  asn1_resp.pdu_session_id = pdu_session_id_to_uint(resp.pdu_session_id);
+  asn1_resp.pdu_session_id = to_underlying(resp.pdu_session_id);
 
   asn1::ngap::pdu_session_res_setup_unsuccessful_transfer_s setup_unsuccessful_transfer;
   setup_unsuccessful_transfer.cause = cause_to_asn1(resp.unsuccessful_transfer.cause);
@@ -767,7 +767,7 @@ inline bool pdu_session_res_admitted_item_to_asn1(asn1::ngap::pdu_session_res_ad
                                                   const cu_cp_ng_pdu_session_res_admitted_item& admitted_item)
 {
   // Fill PDU session ID.
-  asn1_admitted_item.pdu_session_id = pdu_session_id_to_uint(admitted_item.pdu_session_id);
+  asn1_admitted_item.pdu_session_id = to_underlying(admitted_item.pdu_session_id);
 
   // Fill HO request ACK transfer.
   asn1::ngap::ho_request_ack_transfer_s asn1_req_ack_transfer;
@@ -794,7 +794,7 @@ inline bool pdu_session_res_admitted_item_to_asn1(asn1::ngap::pdu_session_res_ad
     asn1::ngap::qos_flow_item_with_data_forwarding_s asn1_qos_flow_item;
 
     // Fill QoS flow ID.
-    asn1_qos_flow_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_item.qos_flow_id);
+    asn1_qos_flow_item.qos_flow_id = to_underlying(qos_flow_item.qos_flow_id);
 
     // Fill data forwarding accepted.
     if (qos_flow_item.data_forwarding_accepted.has_value()) {
@@ -811,7 +811,7 @@ inline bool pdu_session_res_admitted_item_to_asn1(asn1::ngap::pdu_session_res_ad
       return false;
     }
     asn1::ngap::qos_flow_with_cause_item_s asn1_qos_flow_failed_item;
-    asn1_qos_flow_failed_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_failed_item.qos_flow_id);
+    asn1_qos_flow_failed_item.qos_flow_id = to_underlying(qos_flow_failed_item.qos_flow_id);
     asn1_qos_flow_failed_item.cause       = cause_to_asn1(std::get<ngap_cause_t>(qos_flow_failed_item.cause));
     asn1_req_ack_transfer.qos_flow_failed_to_setup_list.push_back(asn1_qos_flow_failed_item);
   }
@@ -821,7 +821,7 @@ inline bool pdu_session_res_admitted_item_to_asn1(asn1::ngap::pdu_session_res_ad
     asn1::ngap::data_forwarding_resp_drb_item_s asn1_drb_item;
 
     // Fill DRB ID.
-    asn1_drb_item.drb_id = drb_id_to_uint(drb_item.drb_id);
+    asn1_drb_item.drb_id = to_underlying(drb_item.drb_id);
 
     // Fill DL forwarding UP TNL info.
     if (drb_item.dl_forwarding_up_tnl.has_value()) {
@@ -858,7 +858,7 @@ inline bool pdu_session_res_failed_to_setup_item_ho_ack_to_asn1(
     const cu_cp_pdu_session_with_cause_item&                   failed_item)
 {
   // Fill PDU session ID.
-  asn1_failed_item.pdu_session_id = pdu_session_id_to_uint(failed_item.pdu_session_id);
+  asn1_failed_item.pdu_session_id = to_underlying(failed_item.pdu_session_id);
 
   // Fill HO res alloc unsuccessful transfer.
   asn1::ngap::ho_res_alloc_unsuccessful_transfer_s asn1_ho_res_alloc_unsuccessful_transfer;

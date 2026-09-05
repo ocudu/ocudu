@@ -339,8 +339,8 @@ void f1ap_du_impl::handle_ue_context_release_request(const f1ap_ue_context_relea
   msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_RELEASE_REQUEST);
   auto& rel_req = msg.pdu.init_msg().value.ue_context_release_request();
 
-  rel_req->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(ue->context.gnb_du_ue_f1ap_id);
-  rel_req->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue->context.gnb_cu_ue_f1ap_id);
+  rel_req->gnb_du_ue_f1ap_id = to_underlying(ue->context.gnb_du_ue_f1ap_id);
+  rel_req->gnb_cu_ue_f1ap_id = to_underlying(ue->context.gnb_cu_ue_f1ap_id);
 
   // Set F1AP cause.
   using cause_type = f1ap_ue_context_release_request::cause_type;
@@ -542,11 +542,11 @@ void f1ap_du_impl::send_error_indication(const asn1::f1ap::cause_c&         caus
   // the gNB-CU UE F1AP ID IE and gNBDU UE F1AP ID IE shall be included in the ERROR INDICATION message.
   err_ind->gnb_cu_ue_f1ap_id_present = cu_ue_id.has_value();
   if (err_ind->gnb_cu_ue_f1ap_id_present) {
-    err_ind->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(*cu_ue_id);
+    err_ind->gnb_cu_ue_f1ap_id = to_underlying(*cu_ue_id);
   }
   err_ind->gnb_du_ue_f1ap_id_present = du_ue_id.has_value();
   if (err_ind->gnb_du_ue_f1ap_id_present) {
-    err_ind->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(*du_ue_id);
+    err_ind->gnb_du_ue_f1ap_id = to_underlying(*du_ue_id);
   }
 
   // Send message to CU.
@@ -673,8 +673,8 @@ void f1ap_du_impl::handle_access_success(const f1ap_access_success_event& msg)
   f1ap_msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_ACCESS_SUCCESS);
   auto& access_succ = f1ap_msg.pdu.init_msg().value.access_success();
 
-  access_succ->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(ue->context.gnb_du_ue_f1ap_id);
-  access_succ->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue->context.gnb_cu_ue_f1ap_id);
+  access_succ->gnb_du_ue_f1ap_id = to_underlying(ue->context.gnb_du_ue_f1ap_id);
+  access_succ->gnb_cu_ue_f1ap_id = to_underlying(ue->context.gnb_cu_ue_f1ap_id);
   access_succ->nr_cgi            = cgi_to_asn1(msg.cgi);
 
   ue->f1ap_msg_notifier.on_new_message(f1ap_msg);

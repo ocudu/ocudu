@@ -5,6 +5,7 @@
 #include "ocudu/ran/ssb/ssb_mapping.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/ran/band_helper.h"
+#include "ocudu/support/enum_utils.h"
 #include "ocudu/support/error_handling.h"
 
 using namespace ocudu;
@@ -39,7 +40,7 @@ uint8_t ocudu::ssb_get_L_max(subcarrier_spacing ssb_scs, arfcn_t dl_arfcn, std::
       L_max = 64;
       break;
     case ssb_pattern_case::invalid:
-      report_fatal_error("Invalid SS/PBCH block case for n{} and {}.", nr_band_to_uint(gnb_band), to_string(ssb_scs));
+      report_fatal_error("Invalid SS/PBCH block case for n{} and {}.", to_underlying(gnb_band), to_string(ssb_scs));
   }
 
   return L_max;

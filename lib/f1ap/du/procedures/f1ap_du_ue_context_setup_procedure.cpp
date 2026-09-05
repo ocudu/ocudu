@@ -294,8 +294,8 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
   f1ap_msg.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
   ue_context_setup_resp_s& resp = f1ap_msg.pdu.successful_outcome().value.ue_context_setup_resp();
 
-  resp->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(ue->context.gnb_du_ue_f1ap_id);
-  resp->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue->context.gnb_cu_ue_f1ap_id);
+  resp->gnb_du_ue_f1ap_id = to_underlying(ue->context.gnb_du_ue_f1ap_id);
+  resp->gnb_cu_ue_f1ap_id = to_underlying(ue->context.gnb_cu_ue_f1ap_id);
 
   // Prepare DU to CU RRC Container.
   // > cellGroupConfig
@@ -369,7 +369,7 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_failure()
   resp->gnb_cu_ue_f1ap_id = msg->gnb_cu_ue_f1ap_id;
   if (ue != nullptr) {
     resp->gnb_du_ue_f1ap_id_present = true;
-    resp->gnb_du_ue_f1ap_id         = gnb_du_ue_f1ap_id_to_uint(ue->context.gnb_du_ue_f1ap_id);
+    resp->gnb_du_ue_f1ap_id         = to_underlying(ue->context.gnb_du_ue_f1ap_id);
   }
 
   resp->cause.set_radio_network().value = asn1::f1ap::cause_radio_network_opts::no_radio_res_available;

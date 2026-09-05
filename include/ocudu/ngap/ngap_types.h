@@ -14,12 +14,6 @@ namespace ocudu::ocucp {
 constexpr uint64_t MAX_NOF_AMF_UES = ((uint64_t)1 << 40);
 enum class amf_ue_id_t : uint64_t { min = 0, max = MAX_NOF_AMF_UES - 1, invalid = 0x1ffffffffff };
 
-/// Convert AMF_UE_ID type to integer.
-constexpr uint64_t amf_ue_id_to_uint(amf_ue_id_t id)
-{
-  return static_cast<uint64_t>(id);
-}
-
 /// Convert integer to AMF_UE_ID type.
 constexpr amf_ue_id_t uint_to_amf_ue_id(std::underlying_type_t<amf_ue_id_t> id)
 {

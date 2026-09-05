@@ -47,7 +47,7 @@ static rlc_bearer_cfg_s make_asn1_rrc_rlc_bearer(const rlc_bearer_config& cfg)
   if (is_srb(cfg.lcid)) {
     out.served_radio_bearer.set_srb_id() = srb_id_to_uint(to_srb_id(cfg.lcid));
   } else {
-    out.served_radio_bearer.set_drb_id() = drb_id_to_uint(*cfg.drb_id);
+    out.served_radio_bearer.set_drb_id() = to_underlying(*cfg.drb_id);
   }
 
   out.rlc_cfg_present = true;
@@ -415,7 +415,7 @@ static asn1::rrc_nr::dl_cfg_common_s make_asn1_rrc_dl_cfg_common(const du_cell_c
   // > frequencyInfoDL   FrequencyInfoDL   OPTIONAL   -- Cond InterFreqHOAndServCellAdd
   out.freq_info_dl_present = true;
   for (const auto& dl_band : cfg.ran.dl_cfg_common.freq_info_dl.freq_band_list) {
-    out.freq_info_dl.freq_band_list.push_back(nr_band_to_uint(dl_band.band));
+    out.freq_info_dl.freq_band_list.push_back(to_underlying(dl_band.band));
   }
   out.freq_info_dl.absolute_freq_ssb_present = true;
   // TODO: Check how to derive this value.
@@ -911,7 +911,7 @@ static asn1::rrc_nr::ul_cfg_common_s make_asn1_rrc_ul_cfg_common(const ul_config
   // > frequencyInfoUL FrequencyInfoUL OPTIONAL, -- Cond InterFreqHOAndServCellAdd
   out.freq_info_ul_present = true;
   for (const auto& ul_band : cfg.freq_info_ul.freq_band_list) {
-    out.freq_info_ul.freq_band_list.push_back(nr_band_to_uint(ul_band.band));
+    out.freq_info_ul.freq_band_list.push_back(to_underlying(ul_band.band));
   }
   out.freq_info_ul.absolute_freq_point_a_present = true;
   out.freq_info_ul.absolute_freq_point_a         = cfg.freq_info_ul.absolute_freq_point_a.value();

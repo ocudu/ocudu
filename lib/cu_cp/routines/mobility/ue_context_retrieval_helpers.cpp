@@ -81,7 +81,7 @@ ocudu::ocucp::collect_ue_context_for_retrieval(const xnap_retrieve_ue_context_re
                target_ssb_arfcn->value());
 
   auto& ue_context_info            = response.ue_context_info;
-  ue_context_info.amf_ue_id        = amf_ue_id_to_uint(amf_ue_id);
+  ue_context_info.amf_ue_id        = to_underlying(amf_ue_id);
   ue_context_info.amf_addr         = amf_addr;
   ue_context_info.security_context = target_sec_context;
   ue_context_info.ue_ambr          = ue.get_ue_ambr();

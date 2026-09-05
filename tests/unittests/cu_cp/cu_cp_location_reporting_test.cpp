@@ -109,8 +109,8 @@ TEST_F(cu_cp_location_reporting_test,
   const auto& location_report = ngap_pdu.pdu.init_msg().value.location_report();
 
   // Verify UE IDs.
-  ASSERT_EQ(location_report->amf_ue_ngap_id, amf_ue_id_to_uint(ue_ctx->amf_ue_id.value()));
-  ASSERT_EQ(location_report->ran_ue_ngap_id, ran_ue_id_to_uint(ue_ctx->ran_ue_id.value()));
+  ASSERT_EQ(location_report->amf_ue_ngap_id, to_underlying(ue_ctx->amf_ue_id.value()));
+  ASSERT_EQ(location_report->ran_ue_ngap_id, to_underlying(ue_ctx->ran_ue_id.value()));
 
   // Verify location report request type.
   ASSERT_EQ(location_report->location_report_request_type.event_type, asn1::ngap::event_type_opts::options::direct);
@@ -153,8 +153,8 @@ TEST_F(cu_cp_location_reporting_test,
   ASSERT_TRUE(test_helpers::is_valid_location_reporting_failure_indication(ngap_pdu));
 
   const auto& fail_ind = ngap_pdu.pdu.init_msg().value.location_report_fail_ind();
-  ASSERT_EQ(fail_ind->amf_ue_ngap_id, amf_ue_id_to_uint(ue_ctx->amf_ue_id.value()));
-  ASSERT_EQ(fail_ind->ran_ue_ngap_id, ran_ue_id_to_uint(ue_ctx->ran_ue_id.value()));
+  ASSERT_EQ(fail_ind->amf_ue_ngap_id, to_underlying(ue_ctx->amf_ue_id.value()));
+  ASSERT_EQ(fail_ind->ran_ue_ngap_id, to_underlying(ue_ctx->ran_ue_id.value()));
   ASSERT_EQ(fail_ind->cause.type(), asn1::ngap::cause_c::types_opts::protocol);
   ASSERT_EQ(fail_ind->cause.protocol().value,
             asn1::ngap::cause_protocol_opts::abstract_syntax_error_falsely_constructed_msg);
@@ -178,8 +178,8 @@ TEST_F(cu_cp_location_reporting_test,
   ASSERT_TRUE(test_helpers::is_valid_location_reporting_failure_indication(ngap_pdu));
 
   const auto& fail_ind = ngap_pdu.pdu.init_msg().value.location_report_fail_ind();
-  ASSERT_EQ(fail_ind->amf_ue_ngap_id, amf_ue_id_to_uint(ue_ctx->amf_ue_id.value()));
-  ASSERT_EQ(fail_ind->ran_ue_ngap_id, ran_ue_id_to_uint(ue_ctx->ran_ue_id.value()));
+  ASSERT_EQ(fail_ind->amf_ue_ngap_id, to_underlying(ue_ctx->amf_ue_id.value()));
+  ASSERT_EQ(fail_ind->ran_ue_ngap_id, to_underlying(ue_ctx->ran_ue_id.value()));
   ASSERT_EQ(fail_ind->cause.type(), asn1::ngap::cause_c::types_opts::radio_network);
   ASSERT_EQ(fail_ind->cause.radio_network().value,
             asn1::ngap::cause_radio_network_opts::multiple_location_report_ref_id_instances);
@@ -214,8 +214,8 @@ TEST_F(cu_cp_location_reporting_test,
   ASSERT_TRUE(test_helpers::is_valid_location_reporting_failure_indication(ngap_pdu));
 
   const auto& fail_ind = ngap_pdu.pdu.init_msg().value.location_report_fail_ind();
-  ASSERT_EQ(fail_ind->amf_ue_ngap_id, amf_ue_id_to_uint(ue_ctx->amf_ue_id.value()));
-  ASSERT_EQ(fail_ind->ran_ue_ngap_id, ran_ue_id_to_uint(ue_ctx->ran_ue_id.value()));
+  ASSERT_EQ(fail_ind->amf_ue_ngap_id, to_underlying(ue_ctx->amf_ue_id.value()));
+  ASSERT_EQ(fail_ind->ran_ue_ngap_id, to_underlying(ue_ctx->ran_ue_id.value()));
   ASSERT_EQ(fail_ind->cause.type(), asn1::ngap::cause_c::types_opts::radio_network);
   ASSERT_EQ(fail_ind->cause.radio_network().value,
             asn1::ngap::cause_radio_network_opts::multiple_location_report_ref_id_instances);
@@ -242,8 +242,8 @@ TEST_F(cu_cp_location_reporting_test,
   ASSERT_TRUE(test_helpers::is_valid_location_report(ngap_pdu));
 
   const auto& location_report = ngap_pdu.pdu.init_msg().value.location_report();
-  ASSERT_EQ(location_report->amf_ue_ngap_id, amf_ue_id_to_uint(ue_ctx->amf_ue_id.value()));
-  ASSERT_EQ(location_report->ran_ue_ngap_id, ran_ue_id_to_uint(ue_ctx->ran_ue_id.value()));
+  ASSERT_EQ(location_report->amf_ue_ngap_id, to_underlying(ue_ctx->amf_ue_id.value()));
+  ASSERT_EQ(location_report->ran_ue_ngap_id, to_underlying(ue_ctx->ran_ue_id.value()));
   ASSERT_EQ(location_report->location_report_request_type.event_type,
             asn1::ngap::event_type_opts::options::change_of_serving_cell_and_ue_presence_in_the_area_of_interest);
 }
@@ -286,8 +286,8 @@ TEST_F(cu_cp_location_reporting_test, when_ics_with_direct_type_is_received_then
 
   const auto& location_report = ngap_pdu.pdu.init_msg().value.location_report();
 
-  ASSERT_EQ(location_report->amf_ue_ngap_id, amf_ue_id_to_uint(ue_ctx->amf_ue_id.value()));
-  ASSERT_EQ(location_report->ran_ue_ngap_id, ran_ue_id_to_uint(ue_ctx->ran_ue_id.value()));
+  ASSERT_EQ(location_report->amf_ue_ngap_id, to_underlying(ue_ctx->amf_ue_id.value()));
+  ASSERT_EQ(location_report->ran_ue_ngap_id, to_underlying(ue_ctx->ran_ue_id.value()));
 
   ASSERT_EQ(location_report->location_report_request_type.event_type, asn1::ngap::event_type_opts::direct);
   ASSERT_EQ(location_report->location_report_request_type.report_area.value, asn1::ngap::report_area_opts::cell);
@@ -322,8 +322,8 @@ TEST_F(cu_cp_location_reporting_test,
 
   const auto& location_report = ngap_pdu.pdu.init_msg().value.location_report();
 
-  ASSERT_EQ(location_report->amf_ue_ngap_id, amf_ue_id_to_uint(ue_ctx->amf_ue_id.value()));
-  ASSERT_EQ(location_report->ran_ue_ngap_id, ran_ue_id_to_uint(ue_ctx->ran_ue_id.value()));
+  ASSERT_EQ(location_report->amf_ue_ngap_id, to_underlying(ue_ctx->amf_ue_id.value()));
+  ASSERT_EQ(location_report->ran_ue_ngap_id, to_underlying(ue_ctx->ran_ue_id.value()));
   ASSERT_EQ(location_report->location_report_request_type.event_type,
             asn1::ngap::event_type_opts::change_of_serve_cell);
   ASSERT_EQ(location_report->user_location_info.type(),

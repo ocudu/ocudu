@@ -62,7 +62,7 @@ inline void fill_asn1_rrc_ue_capability_enquiry(asn1::rrc_nr::ue_cap_enquiry_s& 
   ue_cap_request_filt_nr_s filter;
   for (const auto& band : bands) {
     freq_band_info_c band_info;
-    band_info.set_band_info_nr().band_nr = nr_band_to_uint(band);
+    band_info.set_band_info_nr().band_nr = to_underlying(band);
     filter.freq_band_list_filt.push_back(band_info);
   }
 

@@ -298,7 +298,7 @@ private:
       next_ran_ue_id = ran_ue_id_t::min;
     } else {
       // Increase RAN-UE-ID counter.
-      next_ran_ue_id = uint_to_ran_ue_id(ran_ue_id_to_uint(next_ran_ue_id) + 1);
+      next_ran_ue_id = uint_to_ran_ue_id(to_underlying(next_ran_ue_id) + 1);
     }
   }
 

@@ -97,7 +97,7 @@ bool xnap_new_node_retrieve_ue_context_procedure::send_retrieve_ue_context_reque
   retrieve_ue_context_request_s& asn1_request = msg.pdu.init_msg().value.retrieve_ue_context_request();
 
   // This is sent from the new to the old NG-RAN node, so the new NG-RAN node UE XnAP ID is the local XNAP UE ID.
-  asn1_request->new_ng_ra_nnode_ue_xn_ap_id = local_xnap_ue_id_to_uint(ue_ctxt->ue_ids.local_xnap_ue_id);
+  asn1_request->new_ng_ra_nnode_ue_xn_ap_id = to_underlying(ue_ctxt->ue_ids.local_xnap_ue_id);
 
   retrieve_ue_context_request_to_asn1(asn1_request, request);
 

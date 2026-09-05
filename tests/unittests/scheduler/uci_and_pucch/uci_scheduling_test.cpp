@@ -74,7 +74,7 @@ TEST_P(uci_sched_sr_test, test_different_periods)
       // The scheduler allocates:
       // - SR only on slots that are for SR only.
       // - CSI + SR on slots that are for CSI + SR.
-      if ((t_bench.sl_tx - csi_offset).count() % csi_report_periodicity_to_uint(csi_period) == 0) {
+      if ((t_bench.sl_tx - csi_offset).count() % to_underlying(csi_period) == 0) {
         ASSERT_TRUE(find_pucch_pdu(
             t_bench.res_grid[0].result.ul.pucchs.unsorted(),
             [&expected = pucch_sr_csi_test](const auto& pdu) { return pucch_info_match(expected, pdu); }));
@@ -167,7 +167,7 @@ class uci_sched_csi_test : public ::testing::TestWithParam<csi_resource_periodic
 public:
   uci_sched_csi_test() :
     csi_period(GetParam()),
-    csi_offset(test_rng::uniform_int<unsigned>(0, csi_resource_periodicity_to_uint(GetParam()) - 1)),
+    csi_offset(test_rng::uniform_int<unsigned>(0, to_underlying(GetParam()) - 1)),
     t_bench{test_bench_params{.csi_period = csi_period, .csi_offset = csi_offset}}
   {
     sr_period = sr_periodicity_to_slot(
@@ -203,14 +203,14 @@ protected:
 TEST_P(uci_sched_csi_test, test_different_periods)
 {
   // Check at the allocation for at least 2 the size of the resource grid.
-  const unsigned nof_slots_to_test = std::max(csi_resource_periodicity_to_uint(csi_period) * 8,
-                                              static_cast<unsigned>(t_bench.res_grid.max_ul_slot_alloc_delay) * 2);
+  const unsigned nof_slots_to_test =
+      std::max(to_underlying(csi_period) * 8, static_cast<unsigned>(t_bench.res_grid.max_ul_slot_alloc_delay) * 2);
 
   // Randomize initial slot, as the UCI scheduler will be called only after the UE is added.
   const auto starting_slot = test_rng::uniform_int<unsigned>(0, 1000U);
   for (unsigned sl_cnt = starting_slot; sl_cnt < starting_slot + nof_slots_to_test; ++sl_cnt) {
     t_bench.uci_sched.run_slot(t_bench.res_grid);
-    if ((t_bench.sl_tx - csi_offset).count() % csi_resource_periodicity_to_uint(csi_period) == 0) {
+    if ((t_bench.sl_tx - csi_offset).count() % to_underlying(csi_period) == 0) {
       ASSERT_EQ(1, t_bench.res_grid[0].result.ul.pucchs.size());
       // The scheduler allocates:
       // - CSI only on slots that are for CSI only.

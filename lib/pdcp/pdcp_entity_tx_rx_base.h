@@ -7,6 +7,7 @@
 #include "pdcp_sn.h"
 #include "ocudu/pdcp/pdcp_config.h"
 #include "ocudu/ran/rb_id.h"
+#include "ocudu/support/enum_utils.h"
 
 namespace ocudu {
 
@@ -65,7 +66,7 @@ protected:
     if (rb_id_.is_srb()) {
       bearer_id = srb_id_to_uint(rb_id_.get_srb_id()) - 1;
     } else {
-      bearer_id = drb_id_to_uint(rb_id_.get_drb_id()) - 1;
+      bearer_id = to_underlying(rb_id_.get_drb_id()) - 1;
     }
   }
 

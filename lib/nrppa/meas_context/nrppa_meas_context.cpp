@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "nrppa_meas_context.h"
+#include "ocudu/support/enum_utils.h"
 #include "ocudu/support/ocudu_assert.h"
 
 using namespace ocudu;
@@ -91,6 +92,6 @@ void nrppa_meas_context_list::increase_next_ran_meas_id()
     next_ran_meas_id = ran_meas_id_t::min;
   } else {
     // Increase RAN meas ID counter.
-    next_ran_meas_id = uint_to_ran_meas_id(ran_meas_id_to_uint(next_ran_meas_id) + 1);
+    next_ran_meas_id = uint_to_ran_meas_id(to_underlying(next_ran_meas_id) + 1);
   }
 }

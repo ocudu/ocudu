@@ -37,8 +37,8 @@ protected:
 
   static lmf_meas_id_t generate_random_lmf_meas_id()
   {
-    return uint_to_lmf_meas_id(test_rng::uniform_int<uint64_t>(lmf_meas_id_to_uint(lmf_meas_id_t::min),
-                                                               lmf_meas_id_to_uint(lmf_meas_id_t::max) - 1));
+    return uint_to_lmf_meas_id(
+        test_rng::uniform_int<uint64_t>(to_underlying(lmf_meas_id_t::min), to_underlying(lmf_meas_id_t::max) - 1));
   }
 
   ocudulog::basic_logger&      nrppa_logger = ocudulog::fetch_basic_logger("nrppa");

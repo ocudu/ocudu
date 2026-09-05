@@ -180,8 +180,7 @@ TEST_F(ngap_asn1_packer_test, when_dl_nas_message_packing_successful_then_unpack
   ASSERT_EQ(ngap->last_msg.pdu.type(), dl_nas_transport.pdu.type());
 
   // Assert that the AMF UE ID of the originally created message is equal to the one of the unpacked message.
-  ASSERT_EQ(ngap->last_msg.pdu.init_msg().value.dl_nas_transport()->amf_ue_ngap_id,
-            amf_ue_id_to_uint(amf_ue_id_t::max));
+  ASSERT_EQ(ngap->last_msg.pdu.init_msg().value.dl_nas_transport()->amf_ue_ngap_id, to_underlying(amf_ue_id_t::max));
 }
 
 /// Test unpacking packing and unpacking of UL NAS messages.
@@ -202,8 +201,7 @@ TEST_F(ngap_asn1_packer_test, when_ul_nas_message_packing_successful_then_unpack
   ASSERT_EQ(ngap->last_msg.pdu.type(), ul_nas_transport.pdu.type());
 
   // Assert that the AMF UE ID of the originally created message is equal to the one of the unpacked message.
-  ASSERT_EQ(ngap->last_msg.pdu.init_msg().value.ul_nas_transport()->amf_ue_ngap_id,
-            amf_ue_id_to_uint(amf_ue_id_t::max));
+  ASSERT_EQ(ngap->last_msg.pdu.init_msg().value.ul_nas_transport()->amf_ue_ngap_id, to_underlying(amf_ue_id_t::max));
 }
 
 // Test unsuccessful unpacking.

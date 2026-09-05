@@ -226,7 +226,7 @@ public:
     auto& entry = srbs[srb_id_to_uint(srb_id)].emplace();
 
     pdcp_entity_creation_message msg{};
-    msg.ue_index               = cu_cp_ue_index_to_uint(ue_index);
+    msg.ue_index               = to_underlying(ue_index);
     msg.rb_id                  = srb_id;
     msg.config                 = pdcp_make_default_srb_config();
     msg.tx_lower               = &entry.pdcp_tx_notifier;

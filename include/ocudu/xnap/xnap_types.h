@@ -16,12 +16,6 @@ constexpr uint64_t MAX_NOF_XNAP_UES = ((uint64_t)1 << 32);
 
 enum class local_xnap_ue_id_t : uint64_t { min = 0, max = MAX_NOF_XNAP_UES - 1, invalid = 0x1fffffff };
 
-/// Convert LOCAL_XNAP_UE_ID type to integer.
-constexpr uint64_t local_xnap_ue_id_to_uint(local_xnap_ue_id_t id)
-{
-  return static_cast<uint64_t>(id);
-}
-
 /// Convert integer to LOCAL_XNAP_UE_ID type.
 constexpr local_xnap_ue_id_t uint_to_local_xnap_ue_id(std::underlying_type_t<local_xnap_ue_id_t> id)
 {
@@ -29,12 +23,6 @@ constexpr local_xnap_ue_id_t uint_to_local_xnap_ue_id(std::underlying_type_t<loc
 }
 
 enum class peer_xnap_ue_id_t : uint64_t { min = 0, max = MAX_NOF_XNAP_UES - 1, invalid = 0x1fffffff };
-
-/// Convert PEER_XNAP_UE_ID type to integer.
-constexpr uint64_t peer_xnap_ue_id_to_uint(peer_xnap_ue_id_t id)
-{
-  return static_cast<uint64_t>(id);
-}
 
 /// Convert integer to PEER_XNAP_UE_ID type.
 constexpr peer_xnap_ue_id_t uint_to_peer_xnap_ue_id(std::underlying_type_t<peer_xnap_ue_id_t> id)

@@ -909,7 +909,7 @@ static void configure_cli11_pdcp_tx_args(CLI::App& app, cu_cp_unit_pdcp_tx_confi
       ->default_str(std::to_string(pdcp_sn_size_to_uint(pdcp_tx_params.sn_field_length)))
       ->check(CLI::IsMember({"12", "18"}));
   add_option(app, "--discard_timer", pdcp_tx_params.discard_timer, "PDCP TX discard timer (ms)")
-      ->default_str(std::to_string(pdcp_discard_timer_to_int(pdcp_tx_params.discard_timer)))
+      ->default_str(std::to_string(to_underlying(pdcp_tx_params.discard_timer)))
       ->check([](const std::string& value) -> std::string {
         int number = 0;
         try {
@@ -934,7 +934,7 @@ static void configure_cli11_pdcp_rx_args(CLI::App& app, cu_cp_unit_pdcp_rx_confi
       ->default_str(std::to_string(pdcp_sn_size_to_uint(pdcp_rx_params.sn_field_length)))
       ->check(CLI::IsMember({"12", "18"}));
   add_option(app, "--t_reordering", pdcp_rx_params.t_reordering, "PDCP RX t-Reordering (ms)")
-      ->default_str(std::to_string(pdcp_t_reordering_to_int(pdcp_rx_params.t_reordering)))
+      ->default_str(std::to_string(to_underlying(pdcp_rx_params.t_reordering)))
       ->check([](const std::string& value) -> std::string {
         int number = 0;
         try {

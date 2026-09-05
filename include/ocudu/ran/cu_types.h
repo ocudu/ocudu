@@ -22,12 +22,6 @@ constexpr uint16_t MAX_NOF_PDU_SESSIONS = 256;
 /// \remark See TS 38.463 Section 9.3.1.21: PDU Session ID valid values: (0..255)
 enum class pdu_session_id_t : uint16_t { min = 0, max = MAX_NOF_PDU_SESSIONS - 1, invalid = MAX_NOF_PDU_SESSIONS };
 
-/// Convert PDU Session ID type to integer.
-constexpr uint16_t pdu_session_id_to_uint(pdu_session_id_t id)
-{
-  return static_cast<uint16_t>(id);
-}
-
 /// Convert integer to PDU Session ID type.
 constexpr pdu_session_id_t uint_to_pdu_session_id(uint16_t idx)
 {
@@ -38,12 +32,6 @@ constexpr pdu_session_id_t uint_to_pdu_session_id(uint16_t idx)
 /// \remark See TS 38.413 Section 9.3.3.2: RAN_UE_NGAP_ID valid values: (0..2^32-1)
 constexpr uint64_t MAX_NOF_RAN_UES = (static_cast<uint64_t>(1) << 32);
 enum class ran_ue_id_t : uint64_t { min = 0, max = MAX_NOF_RAN_UES - 1, invalid = 0x1ffffffff };
-
-/// Convert RAN_UE_ID type to integer.
-constexpr uint64_t ran_ue_id_to_uint(ran_ue_id_t id)
-{
-  return static_cast<uint64_t>(id);
-}
 
 /// Convert integer to RAN_UE_ID type.
 constexpr ran_ue_id_t uint_to_ran_ue_id(std::underlying_type_t<ran_ue_id_t> id)
@@ -188,7 +176,7 @@ struct formatter<ocudu::pdu_session_id_t> {
   template <typename FormatContext>
   auto format(const ocudu::pdu_session_id_t& sid, FormatContext& ctx) const
   {
-    return format_to(ctx.out(), "psi={:#}", pdu_session_id_to_uint(sid));
+    return format_to(ctx.out(), "psi={:#}", to_underlying(sid));
   }
 };
 

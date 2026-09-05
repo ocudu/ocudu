@@ -43,7 +43,7 @@ public:
 
 private:
   ocudulog::basic_logger&   logger;
-  uint16_t                  ue_index = cu_cp_ue_index_to_uint(cu_cp_ue_index_t::min);
+  uint16_t                  ue_index = to_underlying(cu_cp_ue_index_t::min);
   fifo_async_task_scheduler task_sched{16};
 };
 

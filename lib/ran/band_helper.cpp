@@ -13,6 +13,7 @@
 #include "ocudu/ran/pdcch/pdcch_type0_css_occasions.h"
 #include "ocudu/ran/ssb/ssb_gscn.h"
 #include "ocudu/ran/subcarrier_spacing.h"
+#include "ocudu/support/enum_utils.h"
 #include "ocudu/support/math/math_utils.h"
 #include "ocudu/support/ocudu_assert.h"
 #include "fmt/std.h"
@@ -836,7 +837,7 @@ error_type<std::string> ocudu::band_helper::is_dl_arfcn_valid_given_band(nr_band
                     cb->dl_nref_first,
                     cb->dl_nref_last,
                     cb->dl_nref_step,
-                    nr_band_to_uint(cb->band)));
+                    to_underlying(cb->band)));
   }
 
   // Validates first the bands with non-standard ARFCN values.
@@ -913,7 +914,7 @@ error_type<std::string> ocudu::band_helper::is_ul_arfcn_valid_given_band(nr_band
                     cb->ul_nref_first,
                     cb->ul_nref_last,
                     cb->ul_nref_step,
-                    nr_band_to_uint(cb->band)));
+                    to_underlying(cb->band)));
   }
 
   if (get_duplex_mode(band) != duplex_mode::FDD) {

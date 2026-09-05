@@ -1250,7 +1250,7 @@ e1ap_data_forwarding_info_request_to_asn1(asn1::e1ap::data_forwarding_info_reque
 
   for (const auto& qos_flow_map_item : data_forwarding_info_request.qos_flows_forwarded_on_fwd_tunnels) {
     asn1::e1ap::qos_flow_map_item_s asn1_qos_flow_map_item;
-    asn1_qos_flow_map_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_map_item.qos_flow_id);
+    asn1_qos_flow_map_item.qos_flow_id = to_underlying(qos_flow_map_item.qos_flow_id);
     if (qos_flow_map_item.qos_flow_map_ind.has_value()) {
       asn1_qos_flow_map_item.qos_flow_map_ind_present = true;
       asn1_qos_flow_map_item.qos_flow_map_ind =
@@ -1302,7 +1302,7 @@ inline void e1ap_data_forwarding_info_to_asn1(asn1::e1ap::data_forwarding_info_s
     asn1_data_forwarding_info.ie_exts.data_forwardingto_ng_ran_qos_flow_info_list_present = true;
     for (qos_flow_id_t qos_flow_id : data_forwarding_info.data_forwarding_to_ng_ran_qos_flow_info_list) {
       asn1::e1ap::data_forwardingto_ng_ran_qos_flow_info_list_item_s asn1_qos_flow;
-      asn1_qos_flow.qos_flow_id = qos_flow_id_to_uint(qos_flow_id);
+      asn1_qos_flow.qos_flow_id = to_underlying(qos_flow_id);
       asn1_data_forwarding_info.ie_exts.data_forwardingto_ng_ran_qos_flow_info_list.push_back(asn1_qos_flow);
     }
   }
@@ -1339,7 +1339,7 @@ e1ap_drb_item_list_to_asn1(asn1::dyn_array<template_asn1_item>&                 
     template_asn1_item asn1_drb_setup_item;
 
     // Fill DRB ID.
-    asn1_drb_setup_item.drb_id = drb_id_to_uint(drb_setup_item_ng_ran.drb_id);
+    asn1_drb_setup_item.drb_id = to_underlying(drb_setup_item_ng_ran.drb_id);
 
     // Fill UL UP transport params.
     for (const auto& ul_up_transport_param : drb_setup_item_ng_ran.ul_up_transport_params) {
@@ -1351,14 +1351,14 @@ e1ap_drb_item_list_to_asn1(asn1::dyn_array<template_asn1_item>&                 
     // Fill flow setup list.
     for (const auto& qos_flow_item : drb_setup_item_ng_ran.flow_setup_list) {
       asn1::e1ap::qos_flow_item_s asn1_flow_item;
-      asn1_flow_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_item.qos_flow_id);
+      asn1_flow_item.qos_flow_id = to_underlying(qos_flow_item.qos_flow_id);
       asn1_drb_setup_item.flow_setup_list.push_back(asn1_flow_item);
     }
 
     // Fill flow failed list.
     for (const auto& flow_failed_item : drb_setup_item_ng_ran.flow_failed_list) {
       asn1::e1ap::qos_flow_failed_item_s asn1_flow_failed_item;
-      asn1_flow_failed_item.qos_flow_id = qos_flow_id_to_uint(flow_failed_item.qos_flow_id);
+      asn1_flow_failed_item.qos_flow_id = to_underlying(flow_failed_item.qos_flow_id);
       asn1_drb_setup_item.flow_failed_list.push_back(asn1_flow_failed_item);
     }
 
@@ -1381,7 +1381,7 @@ inline void e1ap_drb_failed_item_list_to_asn1(
   for (const auto& drb_failed_item : drb_failed_list_ng_ran) {
     template_asn1_item asn1_drb_failed_item;
     // Fill DRB ID.
-    asn1_drb_failed_item.drb_id = drb_id_to_uint(drb_failed_item.drb_id);
+    asn1_drb_failed_item.drb_id = to_underlying(drb_failed_item.drb_id);
     // Fill cause.
     asn1_drb_failed_item.cause = cause_to_asn1(drb_failed_item.cause);
     asn1_drb_item_list.push_back(asn1_drb_failed_item);

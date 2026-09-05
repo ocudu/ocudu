@@ -1320,8 +1320,8 @@ TEST_F(cu_cp_rrc_inactive_test, when_location_reporting_is_configured_and_ue_res
   ASSERT_TRUE(test_helpers::is_valid_location_report(ngap_pdu));
 
   const auto& location_report = ngap_pdu.pdu.init_msg().value.location_report();
-  ASSERT_EQ(location_report->amf_ue_ngap_id, amf_ue_id_to_uint(ue_ctx->amf_ue_id.value()));
-  ASSERT_EQ(location_report->ran_ue_ngap_id, ran_ue_id_to_uint(ue_ctx->ran_ue_id.value()));
+  ASSERT_EQ(location_report->amf_ue_ngap_id, to_underlying(ue_ctx->amf_ue_id.value()));
+  ASSERT_EQ(location_report->ran_ue_ngap_id, to_underlying(ue_ctx->ran_ue_id.value()));
   ASSERT_EQ(location_report->location_report_request_type.event_type,
             asn1::ngap::event_type_opts::options::change_of_serving_cell_and_ue_presence_in_the_area_of_interest);
 }

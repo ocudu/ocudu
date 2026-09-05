@@ -22,12 +22,6 @@ enum class srs_report_type : uint8_t {
   no_report = 255
 };
 
-/// Converts a SRS report type to unsigned.
-constexpr unsigned to_underlying(srs_report_type value)
-{
-  return static_cast<unsigned>(value);
-}
-
 /// Converts the given SRS report type to a string.
 constexpr const char* to_string(srs_report_type value)
 {

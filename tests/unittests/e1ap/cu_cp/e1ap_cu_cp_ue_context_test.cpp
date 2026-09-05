@@ -32,8 +32,8 @@ protected:
 
   cu_cp_ue_index_t generate_random_ue_index()
   {
-    return uint_to_ue_index(test_rng::uniform_int<uint64_t>(cu_cp_ue_index_to_uint(cu_cp_ue_index_t::min),
-                                                            cu_cp_ue_index_to_uint(cu_cp_ue_index_t::max) - 1));
+    return uint_to_ue_index(test_rng::uniform_int<uint64_t>(to_underlying(cu_cp_ue_index_t::min),
+                                                            to_underlying(cu_cp_ue_index_t::max) - 1));
   }
 
   timer_manager           timer_mng;

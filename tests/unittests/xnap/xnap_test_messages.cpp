@@ -98,7 +98,7 @@ xnap_message ocudu::ocucp::generate_handover_request(local_xnap_ue_id_t local_xn
 
   auto& ho_request = xnap_msg.pdu.init_msg().value.ho_request();
 
-  ho_request->source_ng_ra_nnode_ue_xn_ap_id = local_xnap_ue_id_to_uint(local_xnap_ue_id);
+  ho_request->source_ng_ra_nnode_ue_xn_ap_id = to_underlying(local_xnap_ue_id);
   ho_request->cause.set_radio_network() =
       asn1::xnap::cause_radio_network_layer_opts::options::ho_desirable_for_radio_reasons;
   ho_request->target_cell_global_id.set_nr() =
@@ -179,7 +179,7 @@ xnap_message ocudu::ocucp::generate_handover_preparation_failure(peer_xnap_ue_id
 
   auto& ho_prep_fail = xnap_msg.pdu.unsuccessful_outcome().value.ho_prep_fail();
 
-  ho_prep_fail->source_ng_ra_nnode_ue_xn_ap_id = peer_xnap_ue_id_to_uint(peer_xnap_ue_id);
+  ho_prep_fail->source_ng_ra_nnode_ue_xn_ap_id = to_underlying(peer_xnap_ue_id);
 
   // Fill cause.
   ho_prep_fail->cause.set_radio_network() = asn1::xnap::cause_radio_network_layer_opts::options::unspecified;
@@ -197,8 +197,8 @@ xnap_message ocudu::ocucp::generate_handover_request_ack(local_xnap_ue_id_t loca
 
   auto& ho_request_ack = xnap_msg.pdu.successful_outcome().value.ho_request_ack();
 
-  ho_request_ack->source_ng_ra_nnode_ue_xn_ap_id = peer_xnap_ue_id_to_uint(peer_xnap_ue_id);
-  ho_request_ack->target_ng_ra_nnode_ue_xn_ap_id = local_xnap_ue_id_to_uint(local_xnap_ue_id);
+  ho_request_ack->source_ng_ra_nnode_ue_xn_ap_id = to_underlying(peer_xnap_ue_id);
+  ho_request_ack->target_ng_ra_nnode_ue_xn_ap_id = to_underlying(local_xnap_ue_id);
 
   // Fill target to source ng ran node transparent container.
   // Create RRC container.
@@ -229,8 +229,8 @@ xnap_message ocudu::ocucp::generate_sn_status_transfer(local_xnap_ue_id_t       
 
   auto& sn_status_transfer = xnap_msg.pdu.init_msg().value.sn_status_transfer();
 
-  sn_status_transfer->source_ng_ra_nnode_ue_xn_ap_id = local_xnap_ue_id_to_uint(local_xnap_ue_id);
-  sn_status_transfer->target_ng_ra_nnode_ue_xn_ap_id = peer_xnap_ue_id_to_uint(peer_xnap_ue_id);
+  sn_status_transfer->source_ng_ra_nnode_ue_xn_ap_id = to_underlying(local_xnap_ue_id);
+  sn_status_transfer->target_ng_ra_nnode_ue_xn_ap_id = to_underlying(peer_xnap_ue_id);
 
   drbs_subject_to_status_transfer_item_s drb_item;
   drb_item.drb_id = 1;
@@ -261,8 +261,8 @@ xnap_message ocudu::ocucp::generate_ue_context_release(local_xnap_ue_id_t local_
 
   auto& ue_context_release = xnap_msg.pdu.init_msg().value.ue_context_release();
 
-  ue_context_release->source_ng_ra_nnode_ue_xn_ap_id = peer_xnap_ue_id_to_uint(peer_xnap_ue_id);
-  ue_context_release->target_ng_ra_nnode_ue_xn_ap_id = local_xnap_ue_id_to_uint(local_xnap_ue_id);
+  ue_context_release->source_ng_ra_nnode_ue_xn_ap_id = to_underlying(peer_xnap_ue_id);
+  ue_context_release->target_ng_ra_nnode_ue_xn_ap_id = to_underlying(local_xnap_ue_id);
 
   return xnap_msg;
 }
@@ -278,7 +278,7 @@ xnap_message ocudu::ocucp::generate_retrieve_ue_context_request(peer_xnap_ue_id_
   auto& request = xnap_msg.pdu.init_msg().value.retrieve_ue_context_request();
 
   // This is sent from the target to the source, so the new NG-RAN node UE XnAP ID is the peer XNAP UE ID.
-  request->new_ng_ra_nnode_ue_xn_ap_id = peer_xnap_ue_id_to_uint(peer_xnap_ue_id);
+  request->new_ng_ra_nnode_ue_xn_ap_id = to_underlying(peer_xnap_ue_id);
 
   auto& reest_id = request->ue_context_id.set_rrrc_reest();
   reest_id.c_rnti.from_number(to_underlying(rnti_t::MIN_CRNTI));
@@ -302,7 +302,7 @@ xnap_message ocudu::ocucp::generate_retrieve_ue_context_request_for_resume(peer_
   auto& request = xnap_msg.pdu.init_msg().value.retrieve_ue_context_request();
 
   // This is sent from the target to the source, so the new NG-RAN node UE XnAP ID is the peer XNAP UE ID.
-  request->new_ng_ra_nnode_ue_xn_ap_id = peer_xnap_ue_id_to_uint(peer_xnap_ue_id);
+  request->new_ng_ra_nnode_ue_xn_ap_id = to_underlying(peer_xnap_ue_id);
 
   auto& resume_id = request->ue_context_id.set_rrc_resume();
   resume_id.i_rnti.set_i_rnti_short().from_number(i_rnti.value());
@@ -326,8 +326,8 @@ xnap_message ocudu::ocucp::generate_retrieve_ue_context_response(local_xnap_ue_i
 
   // This is sent from the source to the target, so the new NG-RAN node UE XnAP ID is the local XNAP UE ID and the old
   // NG-RAN node UE XnAP ID is the peer XNAP UE ID.
-  response->new_ng_ra_nnode_ue_xn_ap_id = local_xnap_ue_id_to_uint(local_xnap_ue_id);
-  response->old_ng_ra_nnode_ue_xn_ap_id = peer_xnap_ue_id_to_uint(peer_xnap_ue_id);
+  response->new_ng_ra_nnode_ue_xn_ap_id = to_underlying(local_xnap_ue_id);
+  response->old_ng_ra_nnode_ue_xn_ap_id = to_underlying(peer_xnap_ue_id);
 
   response->guami = guami_to_asn1(
       guami_t{.plmn = plmn_identity::test_value(), .amf_set_id = 1, .amf_pointer = 1, .amf_region_id = 1});
@@ -388,7 +388,7 @@ xnap_message ocudu::ocucp::generate_retrieve_ue_context_failure(local_xnap_ue_id
   auto& failure = xnap_msg.pdu.unsuccessful_outcome().value.retrieve_ue_context_fail();
 
   // This is sent from the source to the target, so the new NG-RAN node UE XnAP ID is the local XNAP UE ID.
-  failure->new_ng_ra_nnode_ue_xn_ap_id = local_xnap_ue_id_to_uint(local_xnap_ue_id);
+  failure->new_ng_ra_nnode_ue_xn_ap_id = to_underlying(local_xnap_ue_id);
   failure->cause.set_radio_network()   = cause_radio_network_layer_opts::ue_context_id_not_known;
 
   return xnap_msg;
@@ -405,9 +405,9 @@ xnap_message ocudu::ocucp::generate_handover_cancel(local_xnap_ue_id_t         l
 
   auto& ho_cancel = xnap_msg.pdu.init_msg().value.ho_cancel();
 
-  ho_cancel->source_ng_ra_nnode_ue_xn_ap_id         = local_xnap_ue_id_to_uint(local_xnap_ue_id);
+  ho_cancel->source_ng_ra_nnode_ue_xn_ap_id         = to_underlying(local_xnap_ue_id);
   ho_cancel->target_ng_ra_nnode_ue_xn_ap_id_present = true;
-  ho_cancel->target_ng_ra_nnode_ue_xn_ap_id         = peer_xnap_ue_id_to_uint(peer_xnap_ue_id);
+  ho_cancel->target_ng_ra_nnode_ue_xn_ap_id         = to_underlying(peer_xnap_ue_id);
   ho_cancel->cause.set_radio_network()              = cause_radio_network_layer_opts::proc_cancelled;
 
   ho_cancel->target_cells_to_cancel_present = true;

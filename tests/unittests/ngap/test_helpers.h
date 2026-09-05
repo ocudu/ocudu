@@ -381,7 +381,7 @@ public:
   cu_cp_ue_index_t allocate_ue_index()
   {
     cu_cp_ue_index_t ue_index = cu_cp_ue_index_t::invalid;
-    if (ue_id < cu_cp_ue_index_to_uint(cu_cp_ue_index_t::max)) {
+    if (ue_id < to_underlying(cu_cp_ue_index_t::max)) {
       ue_index              = uint_to_ue_index(ue_id);
       last_created_ue_index = ue_index;
       ue_id++;
@@ -464,7 +464,7 @@ private:
   ngap_ue_context_removal_handler* ngap_handler = nullptr;
   fifo_async_task_scheduler        amf_task_sched{16};
 
-  uint64_t ue_id = cu_cp_ue_index_to_uint(cu_cp_ue_index_t::min);
+  uint64_t ue_id = to_underlying(cu_cp_ue_index_t::min);
 };
 
 class dummy_rrc_ngap_message_handler : public rrc_ngap_message_handler

@@ -140,7 +140,7 @@ public:
                                                    .rrc_pdu  = byte_buffer::create({0x0, 0x0}).value(),
                                                    .srb_id   = srb_id_t::srb0};
 
-    if (cu_cp_ue_index_to_uint(msg.ue_index) >= max_nof_supported_ues) {
+    if (to_underlying(msg.ue_index) >= max_nof_supported_ues) {
       logger.warning("UE creation failed. Maximum number of supported UEs ({}) exceeded", max_nof_supported_ues);
 
       if (f1ap != nullptr) {
@@ -237,7 +237,7 @@ private:
   const unsigned            max_nof_supported_ues;
   f1ap_cu*                  f1ap = nullptr;
   ocudulog::basic_logger&   logger;
-  unsigned                  ue_id = cu_cp_ue_index_to_uint(cu_cp_ue_index_t::min);
+  unsigned                  ue_id = to_underlying(cu_cp_ue_index_t::min);
   fifo_async_task_scheduler task_sched{16};
 };
 

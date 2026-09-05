@@ -269,8 +269,8 @@ TEST_F(du_high_pos_multi_cells_tester,
   // DU receives POSITIONING MEASUREMENT REQUEST.
   cu_notifier.f1ap_ul_msgs.clear();
   trp_id_t     trp_id_cell_0 = trp_id_t::min;
-  trp_id_t     trp_id_cell_1 = uint_to_trp_id(trp_id_to_uint(trp_id_t::min) + 1);
-  trp_id_t     trp_id_cell_2 = uint_to_trp_id(trp_id_to_uint(trp_id_t::min) + 2);
+  trp_id_t     trp_id_cell_1 = uint_to_trp_id(to_underlying(trp_id_t::min) + 1);
+  trp_id_t     trp_id_cell_2 = uint_to_trp_id(to_underlying(trp_id_t::min) + 2);
   f1ap_message pos_meas_req =
       test_helpers::generate_positioning_measurement_request({trp_id_cell_0, trp_id_cell_1, trp_id_cell_2},
                                                              lmf_meas_id_t::min,

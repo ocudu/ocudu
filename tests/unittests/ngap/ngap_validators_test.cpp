@@ -23,7 +23,7 @@ public:
   {
     asn1::ngap::pdu_session_res_setup_item_su_req_s pdu_session_res_item;
 
-    pdu_session_res_item.pdu_session_id = pdu_session_id_to_uint(psi);
+    pdu_session_res_item.pdu_session_id = to_underlying(psi);
 
     // Fill PDU Session NAS PDU.
     pdu_session_res_item.pdu_session_nas_pdu.from_string("7e02e9b0a23c027e006801006e2e0115c211000901000631310101ff08060"
@@ -134,7 +134,7 @@ public:
   {
     asn1::ngap::pdu_session_res_modify_item_mod_req_s pdu_session_res_item;
 
-    pdu_session_res_item.pdu_session_id = pdu_session_id_to_uint(psi);
+    pdu_session_res_item.pdu_session_id = to_underlying(psi);
 
     // Fill PDU session resource modify request transfer.
     asn1::ngap::pdu_session_res_modify_request_transfer_s pdu_session_res_modify_request_transfer;

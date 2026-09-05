@@ -406,7 +406,7 @@ public:
   gnb_cu_ue_f1ap_id_t cu_ue_id;
   rnti_t              crnti     = to_rnti(0x4601);
   amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
-      test_rng::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
+      test_rng::uniform_int<uint64_t>(to_underlying(amf_ue_id_t::min), to_underlying(amf_ue_id_t::max)));
   gnb_cu_up_ue_e1ap_id_t cu_up_e1ap_id = gnb_cu_up_ue_e1ap_id_t::min;
   gnb_cu_cp_ue_e1ap_id_t cu_cp_e1ap_id;
 
@@ -772,7 +772,7 @@ TEST_F(cu_cp_inter_cu_ng_handover_test, when_handover_completed_at_target_then_p
       bearer_ctxt_mod_req->sys_bearer_context_mod_request.ng_ran_bearer_context_mod_request()
           .pdu_session_res_to_setup_mod_list;
   ASSERT_EQ(pdu_sessions_to_setup.size(), 1U);
-  ASSERT_EQ(pdu_sessions_to_setup[0].pdu_session_id, pdu_session_id_to_uint(psi2));
+  ASSERT_EQ(pdu_sessions_to_setup[0].pdu_session_id, to_underlying(psi2));
 
   // Let the CU-UP reject the new PDU session to conclude the procedure.
   get_cu_up(cu_up_idx).push_tx_pdu(generate_bearer_context_modification_failure(cu_cp_e1ap_id, cu_up_e1ap_id));
@@ -800,7 +800,7 @@ TEST_F(cu_cp_inter_cu_ng_handover_test, when_source_proposes_dl_data_forwarding_
   const auto& flows_on_tunnel =
       e1ap_pdu_session.pdu_session_data_forwarding_info_request.qos_flows_forwarded_on_fwd_tunnels;
   ASSERT_EQ(flows_on_tunnel.size(), 1U);
-  ASSERT_EQ(flows_on_tunnel[0].qos_flow_id, qos_flow_id_to_uint(qfi));
+  ASSERT_EQ(flows_on_tunnel[0].qos_flow_id, to_underlying(qfi));
 
   // No DRB level tunnel is requested. Per DRB forwarding tunnels arrive with the support for the direct
   // forwarding path.

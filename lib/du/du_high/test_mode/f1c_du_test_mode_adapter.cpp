@@ -232,8 +232,8 @@ bool f1c_du_test_mode_adapter::release_ue(gnb_du_ue_f1ap_id_t du_ue_id)
   f1ap_message rel_cmd;
   rel_cmd.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_RELEASE);
   auto& cmd                            = rel_cmd.pdu.init_msg().value.ue_context_release_cmd();
-  cmd->gnb_du_ue_f1ap_id               = gnb_du_ue_f1ap_id_to_uint(du_ue_id);
-  cmd->gnb_cu_ue_f1ap_id               = gnb_cu_ue_f1ap_id_to_uint(*it->second.cu_ue_id);
+  cmd->gnb_du_ue_f1ap_id               = to_underlying(du_ue_id);
+  cmd->gnb_cu_ue_f1ap_id               = to_underlying(*it->second.cu_ue_id);
   cmd->cause.set_radio_network().value = asn1::f1ap::cause_radio_network_opts::options::normal_release;
 
   logger.debug("TEST_MODE rnti={}: Injecting UE Context Release Command", it->second.rnti);

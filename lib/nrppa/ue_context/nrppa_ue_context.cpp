@@ -4,6 +4,7 @@
 
 #include "nrppa_ue_context.h"
 #include "ocudu/adt/format.h"
+#include "ocudu/support/enum_utils.h"
 
 using namespace ocudu;
 using namespace ocucp;
@@ -116,6 +117,6 @@ void nrppa_ue_context_list::increase_next_ran_ue_meas_id()
     next_ran_ue_meas_id = ran_ue_meas_id_t::min;
   } else {
     // Increase RAN UE meas ID counter.
-    next_ran_ue_meas_id = uint_to_ran_ue_meas_id(ran_ue_meas_id_to_uint(next_ran_ue_meas_id) + 1);
+    next_ran_ue_meas_id = uint_to_ran_ue_meas_id(to_underlying(next_ran_ue_meas_id) + 1);
   }
 }

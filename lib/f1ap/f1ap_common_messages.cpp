@@ -5,6 +5,7 @@
 #include "f1ap_common_messages.h"
 #include "ocudu/asn1/f1ap/common.h"
 #include "ocudu/asn1/f1ap/f1ap_pdu_contents.h"
+#include "ocudu/support/enum_utils.h"
 
 using namespace ocudu;
 using namespace asn1::f1ap;
@@ -22,12 +23,12 @@ f1ap_message ocudu::generate_error_indication(uint8_t                           
 
   error_ind->gnb_du_ue_f1ap_id_present = du_ue_id.has_value();
   if (du_ue_id.has_value()) {
-    error_ind->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(*du_ue_id);
+    error_ind->gnb_du_ue_f1ap_id = to_underlying(*du_ue_id);
   }
 
   error_ind->gnb_cu_ue_f1ap_id_present = cu_ue_id.has_value();
   if (cu_ue_id.has_value()) {
-    error_ind->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(*cu_ue_id);
+    error_ind->gnb_cu_ue_f1ap_id = to_underlying(*cu_ue_id);
   }
 
   error_ind->cause_present = cause.has_value();

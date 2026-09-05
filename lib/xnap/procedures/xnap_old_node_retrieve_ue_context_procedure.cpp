@@ -82,8 +82,8 @@ void xnap_old_node_retrieve_ue_context_procedure::send_retrieve_ue_context_respo
 
   // This is sent from the old to the new NG-RAN node, so the new NG-RAN node UE XnAP ID is the peer XNAP UE ID and
   // the old NG-RAN node UE XnAP ID is the local XNAP UE ID.
-  asn1_response->new_ng_ra_nnode_ue_xn_ap_id = peer_xnap_ue_id_to_uint(peer_xnap_ue_id);
-  asn1_response->old_ng_ra_nnode_ue_xn_ap_id = local_xnap_ue_id_to_uint(local_xnap_ue_id);
+  asn1_response->new_ng_ra_nnode_ue_xn_ap_id = to_underlying(peer_xnap_ue_id);
+  asn1_response->old_ng_ra_nnode_ue_xn_ap_id = to_underlying(local_xnap_ue_id);
 
   retrieve_ue_context_response_to_asn1(asn1_response, response);
 
@@ -101,7 +101,7 @@ void xnap_old_node_retrieve_ue_context_procedure::send_retrieve_ue_context_failu
   auto& asn1_failure = xnap_msg.pdu.unsuccessful_outcome().value.retrieve_ue_context_fail();
 
   // This is sent from the old to the new NG-RAN node, so the new NG-RAN node UE XnAP ID is the peer XNAP UE ID.
-  asn1_failure->new_ng_ra_nnode_ue_xn_ap_id = peer_xnap_ue_id_to_uint(peer_xnap_ue_id);
+  asn1_failure->new_ng_ra_nnode_ue_xn_ap_id = to_underlying(peer_xnap_ue_id);
 
   retrieve_ue_context_failure_to_asn1(asn1_failure, cause);
 

@@ -8,6 +8,7 @@
 #include "ocudu/adt/interval.h"
 #include "ocudu/scheduler/result/vrb_alloc.h"
 #include "ocudu/scheduler/support/rb_helper.h"
+#include "ocudu/support/enum_utils.h"
 
 namespace ocudu {
 
@@ -67,7 +68,7 @@ public:
 
   const prb_bitmap& prbs() const { return prbs_; }
   const rbg_bitmap& rbgs() const { return rbgs_; }
-  uint32_t          P() const { return to_nominal_rbg_size_value(P_); }
+  uint32_t          P() const { return to_underlying(P_); }
   uint32_t          nof_prbs() const { return prbs_.size(); }
   uint32_t          nof_rbgs() const { return rbgs_.size(); }
 

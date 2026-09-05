@@ -58,7 +58,7 @@ ocudu::ocucp::generate_xnap_handover_request(cu_cp_ue_index_t                   
   request.cause                                       = xnap_cause_radio_network_t::ho_desirable_for_radio_reasons;
   request.nr_cgi                                      = target_nr_cgi;
   request.guami                                       = guami;
-  request.ue_context_info_ho_request.amf_ue_id        = amf_ue_id_to_uint(source_amf_ue_id);
+  request.ue_context_info_ho_request.amf_ue_id        = to_underlying(source_amf_ue_id);
   request.ue_context_info_ho_request.amf_addr         = amf_addr;
   request.ue_context_info_ho_request.security_context = security_context;
   request.ue_context_info_ho_request.ue_ambr          = ue_ambr;

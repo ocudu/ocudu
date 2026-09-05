@@ -126,8 +126,8 @@ bool ngap_handover_preparation_procedure::send_handover_required()
   msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_HO_PREP);
   ho_required_s& ho_required = msg.pdu.init_msg().value.ho_required();
 
-  ho_required->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ids.amf_ue_id);
-  ho_required->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ids.ran_ue_id);
+  ho_required->amf_ue_ngap_id = to_underlying(ue_ids.amf_ue_id);
+  ho_required->ran_ue_ngap_id = to_underlying(ue_ids.ran_ue_id);
 
   // Only intra5gs supported.
   ho_required->handov_type = handov_type_opts::intra5gs;
@@ -158,8 +158,8 @@ bool ngap_handover_preparation_procedure::send_handover_cancel()
   msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_HO_CANCEL);
   ho_cancel_s& ho_cancel = msg.pdu.init_msg().value.ho_cancel();
 
-  ho_cancel->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ids.amf_ue_id);
-  ho_cancel->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ids.ran_ue_id);
+  ho_cancel->amf_ue_ngap_id = to_underlying(ue_ids.amf_ue_id);
+  ho_cancel->ran_ue_ngap_id = to_underlying(ue_ids.ran_ue_id);
 
   ho_cancel->cause.set_radio_network();
   ho_cancel->cause.set_radio_network() = cause_radio_network_opts::ho_cancelled;
@@ -190,7 +190,7 @@ void ngap_handover_preparation_procedure::fill_asn1_pdu_session_res_list(
 {
   for (const auto& pdu_session : ho_ue_context.pdu_sessions) {
     pdu_session_res_item_ho_rqd_s pdu_session_item;
-    pdu_session_item.pdu_session_id = pdu_session_id_to_uint(pdu_session.first);
+    pdu_session_item.pdu_session_id = to_underlying(pdu_session.first);
 
     // Pack PDU into temporary buffer.
     ho_required_transfer_s ho_required_transfer = {};
@@ -211,17 +211,17 @@ byte_buffer ngap_handover_preparation_procedure::fill_asn1_source_to_target_tran
   transparent_container.rrc_container = std::move(ho_ue_context.rrc_container);
   for (const auto& pdu_session : ho_ue_context.pdu_sessions) {
     pdu_session_res_info_item_s pdu_session_res_info_item;
-    pdu_session_res_info_item.pdu_session_id = pdu_session_id_to_uint(pdu_session.first);
+    pdu_session_res_info_item.pdu_session_id = to_underlying(pdu_session.first);
     for (const auto& drb_item : pdu_session.second) {
       drbs_to_qos_flows_map_item_s asn1_drb_item;
-      asn1_drb_item.drb_id = drb_id_to_uint(drb_item.drb_id);
+      asn1_drb_item.drb_id = to_underlying(drb_item.drb_id);
       for (const auto& assoc_qos_flow : drb_item.associated_qos_flow_list) {
         asn1_drb_item.associated_qos_flow_list.push_back(
             cu_cp_assoc_qos_flow_to_ngap_assoc_qos_flow_item(assoc_qos_flow));
 
         // Every QoS flow reported in the DRB-to-QoS-flow mapping must also appear in the QoS Flow Information List.
         qos_flow_info_item_s qos_flow_info_item = {};
-        qos_flow_info_item.qos_flow_id          = qos_flow_id_to_uint(assoc_qos_flow.qos_flow_id);
+        qos_flow_info_item.qos_flow_id          = to_underlying(assoc_qos_flow.qos_flow_id);
         // Propose the QoS flow for DL data forwarding, leaving it to the target to decide which flows it accepts and
         // over which forwarding tunnels (TS 38.300 section 9.2.3.2.3).
         qos_flow_info_item.dl_forwarding_present = true;

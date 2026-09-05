@@ -8,6 +8,7 @@
 #include "ocudu/nrppa/nrppa.h"
 #include "ocudu/ran/meas_types.h"
 #include "ocudu/ran/pci.h"
+#include "ocudu/support/enum_utils.h"
 #include <map>
 
 namespace ocudu::ocucp {
@@ -35,7 +36,7 @@ public:
     if (new_meas_id == meas_id_t::max) {
       return meas_id_t::invalid;
     }
-    meas_ids.emplace(meas_id_to_uint(new_meas_id));
+    meas_ids.emplace(to_underlying(new_meas_id));
     return new_meas_id;
   }
 
@@ -61,7 +62,7 @@ public:
     if (new_meas_obj_id == meas_obj_id_t::max) {
       return meas_obj_id_t::invalid;
     }
-    meas_obj_ids.emplace(meas_obj_id_to_uint(new_meas_obj_id));
+    meas_obj_ids.emplace(to_underlying(new_meas_obj_id));
     return new_meas_obj_id;
   }
 

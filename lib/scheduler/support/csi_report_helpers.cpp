@@ -4,10 +4,11 @@
 
 #include "csi_report_helpers.h"
 #include "ocudu/adt/format.h"
+#include "ocudu/support/enum_utils.h"
 
 bool ocudu::csi_helper::is_csi_reporting_slot(const ue_periodic_csi_config& periodic_csi,
                                               csi_resource_periodicity      csi_period,
                                               slot_point                    sl_tx)
 {
-  return (sl_tx - periodic_csi.offset).count() % csi_resource_periodicity_to_uint(csi_period) == 0;
+  return (sl_tx - periodic_csi.offset).count() % to_underlying(csi_period) == 0;
 }

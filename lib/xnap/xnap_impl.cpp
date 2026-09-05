@@ -478,11 +478,11 @@ void xnap_impl::handle_cho_cancel_required(cu_cp_ue_index_t ue_index, const nr_c
     msg.pdu.set_init_msg();
     msg.pdu.init_msg().load_info_obj(ASN1_XNAP_ID_HO_CANCEL);
     ho_cancel_s& ho_cancel                    = msg.pdu.init_msg().value.ho_cancel();
-    ho_cancel->source_ng_ra_nnode_ue_xn_ap_id = local_xnap_ue_id_to_uint(ue_ctxt.ue_ids.local_xnap_ue_id);
+    ho_cancel->source_ng_ra_nnode_ue_xn_ap_id = to_underlying(ue_ctxt.ue_ids.local_xnap_ue_id);
     ho_cancel->cause.set_radio_network()      = cause_radio_network_layer_opts::proc_cancelled;
     if (ue_ctxt.ue_ids.peer_xnap_ue_id != peer_xnap_ue_id_t::invalid) {
       ho_cancel->target_ng_ra_nnode_ue_xn_ap_id_present = true;
-      ho_cancel->target_ng_ra_nnode_ue_xn_ap_id         = peer_xnap_ue_id_to_uint(ue_ctxt.ue_ids.peer_xnap_ue_id);
+      ho_cancel->target_ng_ra_nnode_ue_xn_ap_id         = to_underlying(ue_ctxt.ue_ids.peer_xnap_ue_id);
     }
     ho_cancel->target_cells_to_cancel_present = true;
     asn1::xnap::target_cell_list_item_s cell_item;
@@ -515,8 +515,8 @@ void xnap_impl::handle_handover_success_required(cu_cp_ue_index_t ue_index, cons
 
   ho_success_s& ho_success = xnap_msg.pdu.init_msg().value.ho_success();
   // HandoverSuccess: target -> source. source_id is the peer (source) XNAP UE ID; target_id is the local XNAP UE ID.
-  ho_success->source_ng_ra_nnode_ue_xn_ap_id           = peer_xnap_ue_id_to_uint(ue_ctxt.ue_ids.peer_xnap_ue_id);
-  ho_success->target_ng_ra_nnode_ue_xn_ap_id           = local_xnap_ue_id_to_uint(ue_ctxt.ue_ids.local_xnap_ue_id);
+  ho_success->source_ng_ra_nnode_ue_xn_ap_id           = to_underlying(ue_ctxt.ue_ids.peer_xnap_ue_id);
+  ho_success->target_ng_ra_nnode_ue_xn_ap_id           = to_underlying(ue_ctxt.ue_ids.local_xnap_ue_id);
   ho_success->requested_target_cell_global_id.set_nr() = cgi_to_asn1(cgi);
 
   if (!tx_notifier.on_new_message(xnap_msg)) {
@@ -542,8 +542,8 @@ void xnap_impl::handle_sn_status_transfer_required(const cu_cp_status_transfer& 
   sn_status_transfer_s& asn1_sn_status = xnap_msg.pdu.init_msg().value.sn_status_transfer();
   // This is sent from the source to the target, so the source XNAP UE ID is the local UE ID and the target XNAP UE ID
   // is the peer UE ID.
-  asn1_sn_status->source_ng_ra_nnode_ue_xn_ap_id = local_xnap_ue_id_to_uint(ue_ctxt.ue_ids.local_xnap_ue_id);
-  asn1_sn_status->target_ng_ra_nnode_ue_xn_ap_id = peer_xnap_ue_id_to_uint(ue_ctxt.ue_ids.peer_xnap_ue_id);
+  asn1_sn_status->source_ng_ra_nnode_ue_xn_ap_id = to_underlying(ue_ctxt.ue_ids.local_xnap_ue_id);
+  asn1_sn_status->target_ng_ra_nnode_ue_xn_ap_id = to_underlying(ue_ctxt.ue_ids.peer_xnap_ue_id);
 
   sn_status_transfer_to_asn1(asn1_sn_status, sn_status_transfer.drbs_subject_to_status_transfer_list);
 
@@ -632,8 +632,8 @@ bool xnap_impl::handle_ue_context_release_required(cu_cp_ue_index_t ue_index)
   ue_context_release_s& ue_ctxt_release = xnap_msg.pdu.init_msg().value.ue_context_release();
   // This is sent from the target to the source, so the local XNAP UE ID is the target and the peer XNAP UE ID is the
   // source.
-  ue_ctxt_release->source_ng_ra_nnode_ue_xn_ap_id = peer_xnap_ue_id_to_uint(ue_ctxt.ue_ids.peer_xnap_ue_id);
-  ue_ctxt_release->target_ng_ra_nnode_ue_xn_ap_id = local_xnap_ue_id_to_uint(ue_ctxt.ue_ids.local_xnap_ue_id);
+  ue_ctxt_release->source_ng_ra_nnode_ue_xn_ap_id = to_underlying(ue_ctxt.ue_ids.peer_xnap_ue_id);
+  ue_ctxt_release->target_ng_ra_nnode_ue_xn_ap_id = to_underlying(ue_ctxt.ue_ids.local_xnap_ue_id);
 
   // Forward message to XN-C peer CU-CP.
   if (!tx_notifier.on_new_message(xnap_msg)) {
@@ -692,7 +692,7 @@ void xnap_impl::handle_retrieve_ue_context_request(const asn1::xnap::retrieve_ue
     xnap_msg.pdu.set_unsuccessful_outcome();
     xnap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_XNAP_ID_RETRIEVE_UE_CONTEXT);
     auto& asn1_failure                        = xnap_msg.pdu.unsuccessful_outcome().value.retrieve_ue_context_fail();
-    asn1_failure->new_ng_ra_nnode_ue_xn_ap_id = peer_xnap_ue_id_to_uint(peer_xnap_ue_id);
+    asn1_failure->new_ng_ra_nnode_ue_xn_ap_id = to_underlying(peer_xnap_ue_id);
     asn1_failure->cause                       = cause_to_asn1(cause);
 
     if (!tx_notifier.on_new_message(xnap_msg)) {

@@ -7,6 +7,7 @@
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/nru/nru_message.h"
 #include "ocudu/ocudulog/logger.h"
+#include "ocudu/support/enum_utils.h"
 
 namespace ocudu {
 
@@ -19,12 +20,6 @@ enum class nru_pdu_type : uint8_t {
   assistance_information  = 2, ///< Assistance information (PDU type 2)
   reserved                = 3  ///< Reserved for future use (PDU type 3-15)
 };
-
-/// Convert NR-U PDU type to unsigned integer.
-constexpr uint8_t nru_pdu_type_to_uint(nru_pdu_type pdu_type)
-{
-  return static_cast<uint8_t>(pdu_type);
-}
 
 /// Convert unsigned integer to NR-U PDU type.
 constexpr nru_pdu_type uint_to_nru_pdu_type(uint8_t num)
@@ -69,10 +64,10 @@ struct formatter<ocudu::nru_pdu_type> {
   auto format(ocudu::nru_pdu_type pdu_type, FormatContext& ctx) const
   {
     static constexpr const char* options[] = {"dl_user_data", "dl_data_delivery_status", "assistance_information"};
-    if (nru_pdu_type_to_uint(pdu_type) < nru_pdu_type_to_uint(ocudu::nru_pdu_type::reserved)) {
-      format_to(ctx.out(), "{}", options[nru_pdu_type_to_uint(pdu_type)]);
+    if (to_underlying(pdu_type) < to_underlying(ocudu::nru_pdu_type::reserved)) {
+      format_to(ctx.out(), "{}", options[to_underlying(pdu_type)]);
     }
-    return format_to(ctx.out(), "reserved ({})", nru_pdu_type_to_uint(pdu_type));
+    return format_to(ctx.out(), "reserved ({})", to_underlying(pdu_type));
   }
 };
 } // namespace fmt

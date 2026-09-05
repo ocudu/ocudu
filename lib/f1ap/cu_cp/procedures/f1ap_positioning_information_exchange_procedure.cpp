@@ -78,8 +78,8 @@ void f1ap_positioning_information_exchange_procedure::send_positioning_informati
   f1ap_message f1ap_pos_info_request_msg;
   f1ap_pos_info_request_msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_POSITIONING_INFO_EXCHANGE);
   positioning_info_request_s& pos_info_req = f1ap_pos_info_request_msg.pdu.init_msg().value.positioning_info_request();
-  pos_info_req->gnb_du_ue_f1ap_id          = gnb_du_ue_f1ap_id_to_uint(*ue_ctxt.ue_ids.du_ue_f1ap_id);
-  pos_info_req->gnb_cu_ue_f1ap_id          = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.ue_ids.cu_ue_f1ap_id);
+  pos_info_req->gnb_du_ue_f1ap_id          = to_underlying(*ue_ctxt.ue_ids.du_ue_f1ap_id);
+  pos_info_req->gnb_cu_ue_f1ap_id          = to_underlying(ue_ctxt.ue_ids.cu_ue_f1ap_id);
 
   fill_asn1_positioning_information_request(pos_info_req, request);
 

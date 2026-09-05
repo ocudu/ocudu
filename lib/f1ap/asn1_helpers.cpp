@@ -120,7 +120,7 @@ static pdcp_sn_len_e pdcp_sn_size_to_f1ap_asn1(pdcp_sn_size sn_size)
 template <typename ASN1Type>
 static void fill_drb_setup_mod_common(ASN1Type& asn1obj, const f1ap_drb_setupmod& drb)
 {
-  asn1obj.drb_id       = drb_id_to_uint(drb.drb_id);
+  asn1obj.drb_id       = to_underlying(drb.drb_id);
   asn1obj.lcid_present = drb.lcid.has_value();
   if (asn1obj.lcid_present) {
     asn1obj.lcid = drb.lcid.value();
@@ -258,7 +258,7 @@ static asn1::f1ap::qos_characteristics_c qos_characteristics_to_f1ap_asn1(const 
 
     if (dyn_5qi.five_qi.has_value()) {
       asn1_dyn_5qi.five_qi_present = true;
-      asn1_dyn_5qi.five_qi         = five_qi_to_uint(dyn_5qi.five_qi.value());
+      asn1_dyn_5qi.five_qi         = to_underlying(dyn_5qi.five_qi.value());
     }
 
     if (dyn_5qi.is_delay_critical.has_value()) {
@@ -282,7 +282,7 @@ static asn1::f1ap::qos_characteristics_c qos_characteristics_to_f1ap_asn1(const 
     auto&                         asn1_non_dyn_5qi = asn1_qos_characteristics.set_non_dyn_5qi();
     const non_dyn_5qi_descriptor& non_dyn_5qi      = qos_desc.get_nondyn_5qi();
 
-    asn1_non_dyn_5qi.five_qi = five_qi_to_uint(non_dyn_5qi.five_qi);
+    asn1_non_dyn_5qi.five_qi = to_underlying(non_dyn_5qi.five_qi);
 
     if (non_dyn_5qi.qos_prio_level.has_value()) {
       asn1_non_dyn_5qi.qos_prio_level_present = true;
@@ -390,7 +390,7 @@ static qos_info_c qos_info_to_f1ap_asn1(const f1ap_drb_info& drb_info)
   // Fill flows mapped to DRB list.
   for (const auto& qos_flow : drb_info.flows_mapped_to_drb_list) {
     asn1::f1ap::flows_mapped_to_drb_item_s asn1_flow;
-    asn1_flow.qos_flow_id               = qos_flow_id_to_uint(qos_flow.qos_flow_id);
+    asn1_flow.qos_flow_id               = to_underlying(qos_flow.qos_flow_id);
     asn1_flow.qos_flow_level_qos_params = qos_flow_level_qos_params_to_f1ap_asn1(qos_flow.qos_flow_level_qos_params);
 
     asn1_drb_info.flows_mapped_to_drb_list.push_back(asn1_flow);
@@ -514,7 +514,7 @@ f1ap_drb_to_modify ocudu::make_drb_to_modify(const asn1::f1ap::drbs_to_be_modifi
 drbs_to_be_setup_item_s ocudu::make_drb_to_setup(const f1ap_drb_to_setup& drb_item)
 {
   drbs_to_be_setup_item_s asn1type;
-  asn1type.drb_id                          = drb_id_to_uint(drb_item.drb_id);
+  asn1type.drb_id                          = to_underlying(drb_item.drb_id);
   asn1type.qos_info                        = qos_info_to_f1ap_asn1(drb_item.qos_info);
   asn1type.ul_up_tnl_info_to_be_setup_list = make_asn1_ul_up_tnl_info_list(drb_item.uluptnl_info_list);
   asn1type.rlc_mode                        = rlc_mode_to_f1ap_asn1(drb_item.mode);
@@ -526,7 +526,7 @@ drbs_to_be_setup_item_s ocudu::make_drb_to_setup(const f1ap_drb_to_setup& drb_it
 drbs_to_be_setup_mod_item_s ocudu::make_drb_to_setupmod(const f1ap_drb_to_setup& drb_item)
 {
   drbs_to_be_setup_mod_item_s asn1type;
-  asn1type.drb_id                          = drb_id_to_uint(drb_item.drb_id);
+  asn1type.drb_id                          = to_underlying(drb_item.drb_id);
   asn1type.qos_info                        = qos_info_to_f1ap_asn1(drb_item.qos_info);
   asn1type.ul_up_tnl_info_to_be_setup_list = make_asn1_ul_up_tnl_info_list(drb_item.uluptnl_info_list);
   asn1type.rlc_mode                        = rlc_mode_to_f1ap_asn1(drb_item.mode);
@@ -539,7 +539,7 @@ drbs_to_be_setup_mod_item_s ocudu::make_drb_to_setupmod(const f1ap_drb_to_setup&
 drbs_to_be_modified_item_s ocudu::make_drb_to_mod(const f1ap_drb_to_modify& drb_item)
 {
   drbs_to_be_modified_item_s asn1type;
-  asn1type.drb_id                          = drb_id_to_uint(drb_item.drb_id);
+  asn1type.drb_id                          = to_underlying(drb_item.drb_id);
   asn1type.ul_up_tnl_info_to_be_setup_list = make_asn1_ul_up_tnl_info_list(drb_item.uluptnl_info_list);
   return asn1type;
 }
@@ -643,7 +643,7 @@ f1ap_drb_setupmod ocudu::make_drb_setupmod(const asn1::f1ap::drbs_modified_item_
 template <typename ASN1Type>
 void fill_drb_failed_item(ASN1Type& asn1obj, const f1ap_drb_failed_to_setupmod& drb_obj)
 {
-  asn1obj.drb_id        = drb_id_to_uint(drb_obj.drb_id);
+  asn1obj.drb_id        = to_underlying(drb_obj.drb_id);
   asn1obj.cause_present = drb_obj.cause.has_value();
   if (asn1obj.cause_present) {
     asn1obj.cause = cause_to_asn1(drb_obj.cause.value());
@@ -769,7 +769,7 @@ asn1::f1ap::trp_info_s ocudu::trp_info_to_asn1(const odu::du_trp_info& trp)
 {
   trp_info_s asn1out;
 
-  asn1out.trp_id = trp_id_to_uint(trp.trp_id);
+  asn1out.trp_id = to_underlying(trp.trp_id);
   if (trp.pci.has_value()) {
     trp_info_type_resp_item_c item;
     item.set_pci_nr() = trp.pci.value();

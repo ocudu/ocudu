@@ -110,7 +110,7 @@ protected:
                          [&drb](const auto& b) {
                            return b.served_radio_bearer.type().value ==
                                       asn1::rrc_nr::rlc_bearer_cfg_s::served_radio_bearer_c_::types::drb_id and
-                                  b.served_radio_bearer.drb_id() == drb_id_to_uint(drb.drb_id);
+                                  b.served_radio_bearer.drb_id() == to_underlying(drb.drb_id);
                          });
         ASSERT_NE(drb_it, cell_group.rlc_bearer_to_add_mod_list.end());
         ASSERT_FALSE(is_srb(uint_to_lcid(drb_it->lc_ch_id)));
@@ -152,7 +152,7 @@ protected:
                                   [&drb](const auto& b) {
                                     return b.served_radio_bearer.type().value ==
                                                asn1::rrc_nr::rlc_bearer_cfg_s::served_radio_bearer_c_::types::drb_id and
-                                           b.served_radio_bearer.drb_id() == drb_id_to_uint(drb.drb_id);
+                                           b.served_radio_bearer.drb_id() == to_underlying(drb.drb_id);
                                   });
       ASSERT_NE(drb_it, cell_group.rlc_bearer_to_add_mod_list.end());
       ASSERT_FALSE(is_srb(uint_to_lcid(drb_it->lc_ch_id)));

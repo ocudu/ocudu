@@ -124,7 +124,7 @@ e2sm_rc_control_action_3_1_cu_executor::execute_ric_control_action(const e2sm_ri
     if (action_params.find(ran_p.ran_param_id) != action_params.end()) {
       parse_ran_parameter_value(ran_p.ran_param_value_type,
                                 ran_p.ran_param_id,
-                                cu_cp_ue_index_to_uint(ue_index),
+                                to_underlying(ue_index),
                                 ho_ctrl_cfg,
                                 parse_action_ran_parameter_value_lambda);
     }

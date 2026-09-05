@@ -55,7 +55,7 @@ async_task<cu_up_e1_setup_response> cu_up_setup_routine::start_cu_up_e1_setup_re
   // Prepare request to send to E1.
   cu_up_e1_setup_request request_msg = {};
 
-  request_msg.gnb_cu_up_id   = gnb_cu_up_id_to_uint(cu_up_id);
+  request_msg.gnb_cu_up_id   = to_underlying(cu_up_id);
   request_msg.gnb_cu_up_name = cu_up_name;
 
   // We only support 5G

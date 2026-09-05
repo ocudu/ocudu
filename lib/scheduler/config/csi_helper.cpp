@@ -56,8 +56,7 @@ bool ocudu::csi_helper::is_csi_rs_period_valid(csi_resource_periodicity       cs
                                                           40 * nof_slots_per_subframe,
                                                           80 * nof_slots_per_subframe};
 
-  return std::find(csi_opt_msec.begin(), csi_opt_msec.end(), csi_resource_periodicity_to_uint(csi_rs_period)) !=
-         csi_opt_msec.end();
+  return std::find(csi_opt_msec.begin(), csi_opt_msec.end(), to_underlying(csi_rs_period)) != csi_opt_msec.end();
 }
 
 [[nodiscard]] bool ocudu::csi_helper::are_sr_and_csi_pucchs_scheduled_together(unsigned sr_period,
@@ -396,10 +395,10 @@ static nzp_csi_rs_resource make_common_nzp_csi_rs_resource(const csi_meas_config
 static nzp_csi_rs_resource make_channel_measurement_nzp_csi_rs_resource(const csi_meas_config_builder_params& params,
                                                                         unsigned slot_offset)
 {
-  ocudu_assert(slot_offset < csi_resource_periodicity_to_uint(params.csi_params.csi_rs_period),
+  ocudu_assert(slot_offset < to_underlying(params.csi_params.csi_rs_period),
                "Invalid CSI slot offset {} >= {}",
                slot_offset,
-               csi_resource_periodicity_to_uint(params.csi_params.csi_rs_period));
+               to_underlying(params.csi_params.csi_rs_period));
   nzp_csi_rs_resource res = make_common_nzp_csi_rs_resource(params);
 
   res.res_id                              = static_cast<nzp_csi_rs_res_id_t>(0);
@@ -461,8 +460,7 @@ static void fill_tracking_nzp_csi_rs_resource(span<nzp_csi_rs_resource>         
                                               nzp_csi_rs_res_id_t                   first_csi_res_id)
 {
   ocudu_assert(tracking_csi_rs.size() == nof_trs_nzp_csi_resources, "Invalid tracking CSI-RS resource list size");
-  ocudu_assert(params.csi_params.tracking_csi_slot_offset + 1 <
-                   csi_resource_periodicity_to_uint(params.csi_params.csi_rs_period),
+  ocudu_assert(params.csi_params.tracking_csi_slot_offset + 1 < to_underlying(params.csi_params.csi_rs_period),
                "Invalid CSI slot offset");
   nzp_csi_rs_resource res = make_common_nzp_csi_rs_resource(params);
 

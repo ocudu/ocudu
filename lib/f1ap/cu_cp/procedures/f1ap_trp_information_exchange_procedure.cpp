@@ -763,7 +763,7 @@ static void fill_asn1_trp_information_request(asn1::f1ap::trp_info_request_s&  a
   // Fill TRP list.
   for (const auto& trp_id : request.trp_list) {
     asn1::f1ap::trp_list_item_s asn1_trp_list_item;
-    asn1_trp_list_item.trp_id = trp_id_to_uint(trp_id);
+    asn1_trp_list_item.trp_id = to_underlying(trp_id);
 
     asn1_request->trp_list.push_back(asn1_trp_list_item);
   }

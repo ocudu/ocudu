@@ -71,10 +71,10 @@ void f1ap_du_initiated_reset_procedure::send_f1_reset()
         prot_ie.load_info_obj(ASN1_F1AP_ID_UE_ASSOCIATED_LC_F1_CONN_ITEM);
         ue_associated_lc_f1_conn_item_s& item = prot_ie->ue_associated_lc_f1_conn_item();
         item.gnb_du_ue_f1ap_id_present        = true;
-        item.gnb_du_ue_f1ap_id                = gnb_du_ue_f1ap_id_to_uint(u->context.gnb_du_ue_f1ap_id);
+        item.gnb_du_ue_f1ap_id                = to_underlying(u->context.gnb_du_ue_f1ap_id);
         if (u->context.gnb_cu_ue_f1ap_id != gnb_cu_ue_f1ap_id_t::invalid) {
           item.gnb_cu_ue_f1ap_id_present = true;
-          item.gnb_cu_ue_f1ap_id         = gnb_cu_ue_f1ap_id_to_uint(u->context.gnb_cu_ue_f1ap_id);
+          item.gnb_cu_ue_f1ap_id         = to_underlying(u->context.gnb_cu_ue_f1ap_id);
         }
         lst.push_back(std::move(prot_ie));
       } else {

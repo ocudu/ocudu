@@ -166,7 +166,7 @@ inline bool handover_request_ack_to_asn1(asn1::xnap::ho_request_ack_s&     asn1_
     for (const auto& not_admitted_item : ho_response.pdu_session_failed_to_setup_list) {
       asn1::xnap::pdu_session_res_not_admitted_item_s asn1_not_admitted_item;
       // Fill PDU session ID.
-      asn1_not_admitted_item.pdu_session_id = pdu_session_id_to_uint(not_admitted_item.pdu_session_id);
+      asn1_not_admitted_item.pdu_session_id = to_underlying(not_admitted_item.pdu_session_id);
       // Fill cause.
       if (!std::holds_alternative<xnap_cause_t>(not_admitted_item.cause)) {
         return false;

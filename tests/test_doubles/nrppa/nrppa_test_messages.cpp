@@ -25,7 +25,7 @@ byte_buffer ocudu::ocucp::generate_valid_nrppa_e_cid_measurement_initiation_requ
   pdu.init_msg().nrppatransaction_id                 = 5;
   asn1::nrppa::e_c_id_meas_initiation_request_s& req = pdu.init_msg().value.e_c_id_meas_initiation_request();
 
-  req->lmf_ue_meas_id = lmf_ue_meas_id_to_uint(lmf_ue_meas_id);
+  req->lmf_ue_meas_id = to_underlying(lmf_ue_meas_id);
 
   req->report_characteristics = report_characteristics_opts::on_demand;
 
@@ -49,7 +49,7 @@ byte_buffer ocudu::ocucp::generate_valid_nrppa_e_cid_measurement_initiation_requ
   pdu.init_msg().nrppatransaction_id                 = 5;
   asn1::nrppa::e_c_id_meas_initiation_request_s& req = pdu.init_msg().value.e_c_id_meas_initiation_request();
 
-  req->lmf_ue_meas_id = lmf_ue_meas_id_to_uint(lmf_ue_meas_id);
+  req->lmf_ue_meas_id = to_underlying(lmf_ue_meas_id);
 
   req->report_characteristics   = report_characteristics_opts::periodic;
   req->meas_periodicity_present = true;
@@ -73,8 +73,8 @@ byte_buffer ocudu::ocucp::generate_valid_nrppa_e_cid_measurement_termination_com
   pdu.init_msg().nrppatransaction_id              = 5;
   asn1::nrppa::e_c_id_meas_termination_cmd_s& cmd = pdu.init_msg().value.e_c_id_meas_termination_cmd();
 
-  cmd->lmf_ue_meas_id = lmf_ue_meas_id_to_uint(lmf_ue_meas_id);
-  cmd->ran_ue_meas_id = ran_ue_meas_id_to_uint(ran_ue_meas_id);
+  cmd->lmf_ue_meas_id = to_underlying(lmf_ue_meas_id);
+  cmd->ran_ue_meas_id = to_underlying(ran_ue_meas_id);
 
   return pack_into_pdu(pdu, "ECIDMeasTerminationCommand");
 }
@@ -211,7 +211,7 @@ byte_buffer ocudu::ocucp::generate_valid_nrppa_measurement_request(
   pdu.init_msg().nrppatransaction_id = 5;
   asn1::nrppa::meas_request_s& req   = pdu.init_msg().value.meas_request();
 
-  req->lmf_meas_id = lmf_meas_id_to_uint(lmf_meas_id);
+  req->lmf_meas_id = to_underlying(lmf_meas_id);
 
   for (const auto& trp_meas_request_item : trp_meas_request_list) {
     req->trp_meas_request_list.push_back(trp_meas_request_item_to_asn1(trp_meas_request_item));

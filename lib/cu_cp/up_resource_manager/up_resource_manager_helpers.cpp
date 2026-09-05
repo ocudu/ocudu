@@ -78,7 +78,7 @@ drb_id_t ocudu::ocucp::allocate_drb_id(const up_pdu_session_context_update& new_
   // The new DRB ID must not be allocated already.
   while (!is_drb_id_free(context, config_update, new_session_context, new_drb_id)) {
     // Try next.
-    new_drb_id = uint_to_drb_id(drb_id_to_uint(new_drb_id) + 1);
+    new_drb_id = uint_to_drb_id(to_underlying(new_drb_id) + 1);
 
     // Scanned all DRB IDs, none is available.
     if (new_drb_id == drb_id_t::invalid) {
@@ -519,7 +519,7 @@ up_config_update ocudu::ocucp::to_config_update(const up_context& old_context)
 
 unsigned ocudu::ocucp::get_used_drb_index(drb_id_t drb_id)
 {
-  unsigned index = drb_id_to_uint(drb_id) - 1;
+  unsigned index = to_underlying(drb_id) - 1;
   ocudu_assert(index < MAX_NOF_DRBS, "Invalid DRB ID when checking if DRB ID was already used");
   return index;
 }

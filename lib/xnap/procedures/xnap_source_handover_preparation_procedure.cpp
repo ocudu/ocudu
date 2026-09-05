@@ -135,7 +135,7 @@ bool xnap_source_handover_preparation_procedure::send_handover_request()
 
   // Fill XNAP UE ID.
   // This is sent from the source to the target, so the source UE ID is the local XNAP UE ID.
-  ho_request->source_ng_ra_nnode_ue_xn_ap_id = local_xnap_ue_id_to_uint(ue_ids.local_xnap_ue_id);
+  ho_request->source_ng_ra_nnode_ue_xn_ap_id = to_underlying(ue_ids.local_xnap_ue_id);
 
   // Fill cause.
   ho_request->cause.set_radio_network() = cause_radio_network_layer_opts::ho_desirable_for_radio_reasons;
@@ -225,7 +225,7 @@ bool xnap_source_handover_preparation_procedure::send_handover_cancel()
   ho_cancel_s& ho_cancel = msg.pdu.init_msg().value.ho_cancel();
 
   // This is sent from the source to the target, so the source UE ID is the local XNAP UE ID.
-  ho_cancel->source_ng_ra_nnode_ue_xn_ap_id = local_xnap_ue_id_to_uint(ue_ids.local_xnap_ue_id);
+  ho_cancel->source_ng_ra_nnode_ue_xn_ap_id = to_underlying(ue_ids.local_xnap_ue_id);
 
   ho_cancel->cause.set_radio_network() = cause_radio_network_layer_opts::txn_relo_cprep_expiry;
 
@@ -243,7 +243,7 @@ void xnap_source_handover_preparation_procedure::fill_asn1_pdu_session_res_list(
 {
   for (const auto& pdu_session_item : request.ue_context_info_ho_request.pdu_session_res_to_be_setup_list) {
     pdu_session_res_to_be_setup_item_s asn1_pdu_session_item;
-    asn1_pdu_session_item.pdu_session_id = pdu_session_id_to_uint(pdu_session_item.pdu_session_id);
+    asn1_pdu_session_item.pdu_session_id = to_underlying(pdu_session_item.pdu_session_id);
 
     // Fill S-NSSAI.
     asn1_pdu_session_item.s_nssai = s_nssai_to_asn1(pdu_session_item.s_nssai);
@@ -260,7 +260,7 @@ void xnap_source_handover_preparation_procedure::fill_asn1_pdu_session_res_list(
     for (const auto& qos_flow : pdu_session_item.qos_flow_setup_request_items) {
       qos_flows_to_be_setup_item_s qos_flow_setup_item = {};
       // Set QFI.
-      qos_flow_setup_item.qfi = qos_flow_id_to_uint(qos_flow.qos_flow_id);
+      qos_flow_setup_item.qfi = to_underlying(qos_flow.qos_flow_id);
       // Fill QoS flow level QoS parameters.
       qos_flow_setup_item.qos_flow_level_qos_params =
           qos_flow_level_qos_parameters_to_asn1(qos_flow.qos_flow_level_qos_params);

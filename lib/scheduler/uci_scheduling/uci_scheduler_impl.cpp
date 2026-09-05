@@ -126,7 +126,7 @@ void uci_scheduler_impl::add_ue_to_grid(const ue_cell_configuration& ue_cfg, boo
   add_resource(ue_cfg.crnti, ue_ul_cfg->pucch.sr_offset, sr_period_slots, true);
 
   if (ue_ul_cfg->periodic_csi_report.has_value()) {
-    const unsigned csi_period_slots = csi_resource_periodicity_to_uint(cell_cfg.params.init_bwp.csi->csi_rs_period);
+    const unsigned csi_period_slots = to_underlying(cell_cfg.params.init_bwp.csi->csi_rs_period);
     add_resource(ue_cfg.crnti, ue_ul_cfg->periodic_csi_report->offset, csi_period_slots, false);
   }
 
@@ -167,7 +167,7 @@ void uci_scheduler_impl::rem_ue(const ue_cell_configuration& ue_cfg)
   rem_resource(ue_cfg.crnti, ue_ul_cfg->pucch.sr_offset, sr_period_slots, true);
 
   if (ue_ul_cfg->periodic_csi_report.has_value()) {
-    const unsigned csi_period_slots = csi_resource_periodicity_to_uint(cell_cfg.params.init_bwp.csi->csi_rs_period);
+    const unsigned csi_period_slots = to_underlying(cell_cfg.params.init_bwp.csi->csi_rs_period);
     rem_resource(ue_cfg.crnti, ue_ul_cfg->periodic_csi_report->offset, csi_period_slots, false);
   }
 }

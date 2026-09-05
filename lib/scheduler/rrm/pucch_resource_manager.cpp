@@ -76,7 +76,7 @@ void pucch_resource_manager::add_cell(du_cell_index_t cell_idx, const ran_cell_c
   // Compute CSI period and CSI configuration list (if periodic CSI reporting is configured).
   // TODO: Handle more than one CSI report period.
   if (cell_ctx.default_csi_report_cfg.has_value()) {
-    cell_ctx.csi_period_slots = csi_resource_periodicity_to_uint(cell_ctx.cell_params.init_bwp.csi->csi_rs_period);
+    cell_ctx.csi_period_slots = to_underlying(cell_ctx.cell_params.init_bwp.csi->csi_rs_period);
     // Compute the LCM of SR and CSI periods, as they might not be multiples of each other.
     cell_ctx.lcm_csi_sr_period = std::lcm(cell_ctx.sr_period_slots, cell_ctx.csi_period_slots);
     for (unsigned res = 0; res < cell_ctx.cell_params.init_bwp.pucch.resources.nof_cell_csi_resources; ++res) {

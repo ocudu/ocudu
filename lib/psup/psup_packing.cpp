@@ -86,7 +86,7 @@ bool psup_packing::pack(byte_buffer& out_buf, const psup_dl_pdu_session_informat
   bit_encoder encoder{out_buf};
 
   // PDU Type
-  encoder.pack(psup_pdu_type_to_uint(dl_pdu_session_information.pdu_type), 4);
+  encoder.pack(to_underlying(dl_pdu_session_information.pdu_type), 4);
 
   // QMP
   encoder.pack(dl_pdu_session_information.dl_sending_time_stamp.has_value(), 1);
@@ -104,11 +104,11 @@ bool psup_packing::pack(byte_buffer& out_buf, const psup_dl_pdu_session_informat
   encoder.pack(dl_pdu_session_information.rqi, 1);
 
   // QoS Flow Identifier
-  encoder.pack(qos_flow_id_to_uint(dl_pdu_session_information.qos_flow_id), 6);
+  encoder.pack(to_underlying(dl_pdu_session_information.qos_flow_id), 6);
 
   if (dl_pdu_session_information.ppi.has_value()) {
     // PPI
-    encoder.pack(psup_ppi_to_uint(dl_pdu_session_information.ppi.value()), 3);
+    encoder.pack(to_underlying(dl_pdu_session_information.ppi.value()), 3);
     // Spare
     encoder.pack(0, 5);
   }

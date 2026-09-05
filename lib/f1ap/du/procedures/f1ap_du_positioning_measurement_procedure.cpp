@@ -200,7 +200,7 @@ void f1ap_du_positioning_measurement_procedure::send_response() const
     pos_meas_result_list_item_s& asn1_meas = resp->pos_meas_result_list[i];
     const pos_meas_result&       meas      = du_result.pos_meas_list[i];
 
-    asn1_meas.trp_id = trp_id_to_uint(meas.trp_id);
+    asn1_meas.trp_id = to_underlying(meas.trp_id);
 
     asn1_meas.pos_meas_result.resize(meas.results.size());
     for (unsigned j = 0, je = meas.results.size(); j != je; ++j) {

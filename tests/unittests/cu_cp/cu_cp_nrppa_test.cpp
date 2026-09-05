@@ -115,8 +115,8 @@ public:
     asn1::ngap::dl_ue_associated_nrppa_transport_s& nrppa_transport_msg =
         dl_ue_associated_nrppa_transport.pdu.init_msg().value.dl_ue_associated_nrppa_transport();
 
-    nrppa_transport_msg->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ctxt->amf_ue_id.value());
-    nrppa_transport_msg->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ctxt->ran_ue_id.value());
+    nrppa_transport_msg->amf_ue_ngap_id = to_underlying(ue_ctxt->amf_ue_id.value());
+    nrppa_transport_msg->ran_ue_ngap_id = to_underlying(ue_ctxt->ran_ue_id.value());
 
     nrppa_transport_msg->routing_id =
         make_byte_buffer("61666536653032392d626435662d343737362d383262342d636233353233356130663838").value();

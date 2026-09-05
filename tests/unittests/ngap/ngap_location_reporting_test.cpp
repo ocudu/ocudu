@@ -51,7 +51,7 @@ TEST_F(ngap_location_reporting_test,
 
   auto& ue     = test_ues.at(ue_index);
   ue.amf_ue_id = uint_to_amf_ue_id(
-      test_rng::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
+      test_rng::uniform_int<uint64_t>(to_underlying(amf_ue_id_t::min), to_underlying(amf_ue_id_t::max)));
 
   // Check that initial UE message is sent to AMF and that UE objects has been created.
   ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::init_msg);
@@ -101,9 +101,9 @@ TEST_F(ngap_location_reporting_test,
   // Check that AMF notifier received the location reporting failure indication message.
   ASSERT_TRUE(was_location_reporting_failure_indication_forwarded());
   ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.location_report_fail_ind()->amf_ue_ngap_id,
-            amf_ue_id_to_uint(ue.amf_ue_id.value()));
+            to_underlying(ue.amf_ue_id.value()));
   ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.location_report_fail_ind()->ran_ue_ngap_id,
-            ran_ue_id_to_uint(ue.ran_ue_id.value()));
+            to_underlying(ue.ran_ue_id.value()));
   ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.location_report_fail_ind()->cause.type(),
             asn1::ngap::cause_c::types_opts::radio_network);
   ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.location_report_fail_ind()->cause.radio_network().value,
@@ -140,9 +140,9 @@ TEST_F(ngap_location_reporting_test, when_ngap_receives_location_report_message_
   // Check that AMF notifier received the location report message.
   ASSERT_TRUE(was_location_report_forwarded());
   ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.location_report()->amf_ue_ngap_id,
-            amf_ue_id_to_uint(ue.amf_ue_id.value()));
+            to_underlying(ue.amf_ue_id.value()));
   ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.location_report()->ran_ue_ngap_id,
-            ran_ue_id_to_uint(ue.ran_ue_id.value()));
+            to_underlying(ue.ran_ue_id.value()));
   ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.location_report()->location_report_request_type.event_type,
             asn1::ngap::event_type_opts::options::direct);
   ASSERT_EQ(n2_gw.last_ngap_msgs.back()

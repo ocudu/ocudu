@@ -126,8 +126,8 @@ bool ngap_pdu_session_resource_modify_procedure::send_pdu_session_resource_modif
   ngap_msg.pdu.successful_outcome().load_info_obj(ASN1_NGAP_ID_PDU_SESSION_RES_MODIFY);
 
   auto& pdu_session_res_modify_resp           = ngap_msg.pdu.successful_outcome().value.pdu_session_res_modify_resp();
-  pdu_session_res_modify_resp->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ids.amf_ue_id);
-  pdu_session_res_modify_resp->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ids.ran_ue_id);
+  pdu_session_res_modify_resp->amf_ue_ngap_id = to_underlying(ue_ids.amf_ue_id);
+  pdu_session_res_modify_resp->ran_ue_ngap_id = to_underlying(ue_ids.ran_ue_id);
 
   // TODO: needs more handling in the coro above?
   if (not fill_asn1_pdu_session_res_modify_response(pdu_session_res_modify_resp, response)) {

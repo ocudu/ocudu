@@ -659,7 +659,7 @@ inline void fill_asn1_ue_context_release_request(asn1::ngap::ue_context_release_
     asn1_msg->pdu_session_res_list_cxt_rel_req_present = true;
     for (const auto& session_id : msg.pdu_session_res_list_cxt_rel_req) {
       asn1::ngap::pdu_session_res_item_cxt_rel_req_s pdu_session_item;
-      pdu_session_item.pdu_session_id = pdu_session_id_to_uint(session_id);
+      pdu_session_item.pdu_session_id = to_underlying(session_id);
       asn1_msg->pdu_session_res_list_cxt_rel_req.push_back(pdu_session_item);
     }
   }
@@ -786,7 +786,7 @@ inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release
 
     for (auto pdu_session_id : cu_cp_resp.pdu_session_res_list_cxt_rel_cpl) {
       asn1::ngap::pdu_session_res_item_cxt_rel_cpl_s asn1_rel_item;
-      asn1_rel_item.pdu_session_id = pdu_session_id_to_uint(pdu_session_id);
+      asn1_rel_item.pdu_session_id = to_underlying(pdu_session_id);
       asn1_resp->pdu_session_res_list_cxt_rel_cpl.push_back(asn1_rel_item);
     }
   }
@@ -1079,7 +1079,7 @@ inline void fill_asn1_ul_ran_status_transfer(
       asn1_msg->ran_status_transfer_transparent_container.drbs_subject_to_status_transfer_list;
   for (const cu_cp_drbs_subject_to_status_transfer_item& drb : drb_list) {
     asn1::ngap::drbs_subject_to_status_transfer_item_s asn1_drb_item = {};
-    asn1_drb_item.drb_id                                             = drb_id_to_uint(drb.drb_id);
+    asn1_drb_item.drb_id                                             = to_underlying(drb.drb_id);
     if (drb.drb_status_ul.sn_size == pdcp_sn_size::size12bits) {
       asn1_drb_item.drb_status_ul.set_drb_status_ul12();
       asn1_drb_item.drb_status_ul.drb_status_ul12().ul_count_value.hfn_pdcp_sn12 = drb.drb_status_ul.ul_count.hfn;

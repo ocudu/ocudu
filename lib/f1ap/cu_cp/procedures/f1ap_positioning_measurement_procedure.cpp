@@ -828,13 +828,13 @@ static inline asn1::f1ap::srs_configuration_s srs_configuration_to_asn1(const sr
 static void fill_asn1_positioning_measurement_request(asn1::f1ap::positioning_meas_request_s& asn1_request,
                                                       const measurement_request_t&            request)
 {
-  asn1_request->lmf_meas_id = lmf_meas_id_to_uint(request.lmf_meas_id);
-  asn1_request->ran_meas_id = ran_meas_id_to_uint(request.ran_meas_id);
+  asn1_request->lmf_meas_id = to_underlying(request.lmf_meas_id);
+  asn1_request->ran_meas_id = to_underlying(request.ran_meas_id);
 
   // Fill TRP meas request list.
   for (const auto& trp_meas_request_item : request.trp_meas_request_list) {
     asn1::f1ap::trp_meas_request_item_s asn1_trp_meas_request_item;
-    asn1_trp_meas_request_item.trp_id = trp_id_to_uint(trp_meas_request_item.trp_id);
+    asn1_trp_meas_request_item.trp_id = to_underlying(trp_meas_request_item.trp_id);
     if (trp_meas_request_item.search_win_info.has_value()) {
       asn1_trp_meas_request_item.search_win_info_present = true;
       asn1_trp_meas_request_item.search_win_info.expected_propagation_delay =

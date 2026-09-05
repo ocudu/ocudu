@@ -83,8 +83,8 @@ bool ngap_path_switch_procedure::send_path_switch_request()
 
   path_switch_request_s& asn1_path_switch_request = ngap_msg.pdu.init_msg().value.path_switch_request();
   // Fill UE IDs.
-  asn1_path_switch_request->ran_ue_ngap_id        = ran_ue_id_to_uint(ue_ids.ran_ue_id);
-  asn1_path_switch_request->source_amf_ue_ngap_id = amf_ue_id_to_uint(ue_ids.amf_ue_id);
+  asn1_path_switch_request->ran_ue_ngap_id        = to_underlying(ue_ids.ran_ue_id);
+  asn1_path_switch_request->source_amf_ue_ngap_id = to_underlying(ue_ids.amf_ue_id);
   // Fill User Location Information.
   asn1_path_switch_request->user_location_info.set_user_location_info_nr() =
       cu_cp_user_location_info_to_asn1(request.user_location_info);
@@ -96,7 +96,7 @@ bool ngap_path_switch_procedure::send_path_switch_request()
   // Fill PDU session resource to be switched list.
   for (const auto& pdu_session_res : request.pdu_session_res_to_be_switched_dl_list) {
     pdu_session_res_to_be_switched_dl_item_s asn1_item;
-    asn1_item.pdu_session_id = pdu_session_id_to_uint(pdu_session_res.pdu_session_id);
+    asn1_item.pdu_session_id = to_underlying(pdu_session_res.pdu_session_id);
 
     asn1::ngap::path_switch_request_transfer_s path_switch_request_transfer;
     // Fill DL NGU UP TNL info.
@@ -122,7 +122,7 @@ bool ngap_path_switch_procedure::send_path_switch_request()
     for (const auto& qos_flow_id : pdu_session_res.qos_flow_accepted_list) {
       qos_flow_accepted_item_s qos_flow_accepted_item;
       // Fill QoS flow ID.
-      qos_flow_accepted_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_id);
+      qos_flow_accepted_item.qos_flow_id = to_underlying(qos_flow_id);
       path_switch_request_transfer.qos_flow_accepted_list.push_back(qos_flow_accepted_item);
     }
 
@@ -145,7 +145,7 @@ bool ngap_path_switch_procedure::send_path_switch_request()
     }
     pdu_session_res_failed_to_setup_item_ps_req_s asn1_failed_item;
     // Fill PDU session ID.
-    asn1_failed_item.pdu_session_id = pdu_session_id_to_uint(failed_item.pdu_session_id);
+    asn1_failed_item.pdu_session_id = to_underlying(failed_item.pdu_session_id);
     // Fill Path Switch Request Setup Failed Transfer.
     path_switch_request_setup_failed_transfer_s asn1_failed_transfer;
     asn1_failed_transfer.cause = cause_to_asn1(std::get<ngap_cause_t>(failed_item.cause));

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "ocudu/pcap/rlc_pcap.h"
+#include "ocudu/support/enum_utils.h"
 
 using namespace ocudu;
 
@@ -78,7 +79,7 @@ void pcap_rlc_pdu_context::set_bearer_info(rb_id_t rb_id)
 {
   if (rb_id.is_drb()) {
     bearer_type = PCAP_RLC_BEARER_TYPE_DRB;
-    bearer_id   = drb_id_to_uint(rb_id.get_drb_id());
+    bearer_id   = to_underlying(rb_id.get_drb_id());
   } else if (rb_id.is_srb()) {
     switch (rb_id.get_srb_id()) {
       case srb_id_t::srb0:

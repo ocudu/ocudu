@@ -70,7 +70,7 @@ TEST_F(e2_entity_test, e2ap_setup_request_du_global_node_id_is_correct)
   uint32_t    expected_plmn = bcd_helper::plmn_string_to_bcd(test_plmn);
   ASSERT_EQ(gnb.global_gnb_id.plmn_id.to_number(), expected_plmn);
   ASSERT_TRUE(gnb.gnb_du_id_present);
-  ASSERT_EQ(gnb.gnb_du_id, gnb_du_id_to_int(test_du_id));
+  ASSERT_EQ(gnb.gnb_du_id, to_underlying(test_du_id));
   ASSERT_FALSE(gnb.gnb_cu_up_id_present);
 }
 
@@ -120,7 +120,7 @@ TEST_F(e2_entity_test, e2ap_setup_request_cu_up_global_node_id_is_correct)
   ASSERT_EQ(gnb.global_gnb_id.plmn_id.to_number(), expected_plmn);
   ASSERT_FALSE(gnb.gnb_du_id_present);
   ASSERT_TRUE(gnb.gnb_cu_up_id_present);
-  ASSERT_EQ(gnb.gnb_cu_up_id, gnb_cu_up_id_to_uint(static_cast<gnb_cu_up_id_t>(1)));
+  ASSERT_EQ(gnb.gnb_cu_up_id, to_underlying(static_cast<gnb_cu_up_id_t>(1)));
 }
 
 /// Test successful E2 setup procedure
@@ -406,6 +406,6 @@ TEST_F(e2_test, fill_e2ap_setup_request_uses_real_bytes_when_node_cfg_vector_pro
   ASSERT_EQ(gnb.global_gnb_id.gnb_id.gnb_id().to_number(), static_cast<uint64_t>(cfg.gnb_id.id));
   ASSERT_EQ(gnb.global_gnb_id.gnb_id.gnb_id().length(), static_cast<uint32_t>(cfg.gnb_id.bit_length));
   ASSERT_TRUE(gnb.gnb_du_id_present);
-  ASSERT_EQ(gnb.gnb_du_id, gnb_du_id_to_int(cfg.gnb_du_id.value()));
+  ASSERT_EQ(gnb.gnb_du_id, to_underlying(cfg.gnb_du_id.value()));
   ASSERT_FALSE(gnb.gnb_cu_up_id_present);
 }

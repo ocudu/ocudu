@@ -89,8 +89,8 @@ TEST_F(ngap_pdu_session_resource_release_procedure_test,
        when_pdu_sessions_to_release_not_found_then_pdu_session_release_fails)
 {
   // Test preamble
-  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(test_rng::uniform_int<uint16_t>(
-      pdu_session_id_to_uint(pdu_session_id_t::min), pdu_session_id_to_uint(pdu_session_id_t::max)));
+  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(
+      test_rng::uniform_int<uint16_t>(to_underlying(pdu_session_id_t::min), to_underlying(pdu_session_id_t::max)));
 
   cu_cp_ue_index_t ue_index = this->start_procedure(pdu_session_id);
 
@@ -117,8 +117,8 @@ TEST_F(ngap_pdu_session_resource_release_procedure_test,
        when_valid_pdu_session_resource_release_command_received_then_pdu_session_release_succeeds)
 {
   // Test preamble
-  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(test_rng::uniform_int<uint16_t>(
-      pdu_session_id_to_uint(pdu_session_id_t::min), pdu_session_id_to_uint(pdu_session_id_t::max)));
+  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(
+      test_rng::uniform_int<uint16_t>(to_underlying(pdu_session_id_t::min), to_underlying(pdu_session_id_t::max)));
 
   cu_cp_ue_index_t ue_index = this->start_procedure(pdu_session_id);
 
@@ -142,8 +142,8 @@ TEST_F(ngap_pdu_session_resource_release_procedure_test,
        when_ue_context_is_removed_while_release_procedure_is_suspended_then_procedure_finishes)
 {
   // Test preamble.
-  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(test_rng::uniform_int<uint16_t>(
-      pdu_session_id_to_uint(pdu_session_id_t::min), pdu_session_id_to_uint(pdu_session_id_t::max)));
+  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(
+      test_rng::uniform_int<uint16_t>(to_underlying(pdu_session_id_t::min), to_underlying(pdu_session_id_t::max)));
 
   cu_cp_ue_index_t ue_index = this->start_procedure(pdu_session_id);
 
@@ -172,8 +172,8 @@ TEST_F(ngap_pdu_session_resource_release_procedure_test,
        when_pdu_session_resource_setup_request_received_after_release_command_then_pdu_session_setup_succeeds)
 {
   // Test preamble.
-  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(test_rng::uniform_int<uint16_t>(
-      pdu_session_id_to_uint(pdu_session_id_t::min), pdu_session_id_to_uint(pdu_session_id_t::max)));
+  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(
+      test_rng::uniform_int<uint16_t>(to_underlying(pdu_session_id_t::min), to_underlying(pdu_session_id_t::max)));
 
   cu_cp_ue_index_t ue_index = this->start_procedure(pdu_session_id);
 

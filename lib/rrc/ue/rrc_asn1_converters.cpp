@@ -11,7 +11,7 @@ asn1::rrc_nr::pdcp_cfg_s::drb_s_::discard_timer_e_ ocudu::ocucp::discard_timer_t
 {
   asn1::rrc_nr::pdcp_cfg_s::drb_s_::discard_timer_e_ asn1_discard_timer;
 
-  asn1::number_to_enum(asn1_discard_timer, pdcp_discard_timer_to_int(discard_timer));
+  asn1::number_to_enum(asn1_discard_timer, to_underlying(discard_timer));
 
   return asn1_discard_timer;
 }
@@ -20,7 +20,7 @@ asn1::rrc_nr::pdcp_cfg_s::t_reordering_e_ ocudu::ocucp::t_reordering_to_asn1(pdc
 {
   asn1::rrc_nr::pdcp_cfg_s::t_reordering_e_ asn1_t_reordering;
 
-  asn1::number_to_enum(asn1_t_reordering, pdcp_t_reordering_to_int(t_reordering));
+  asn1::number_to_enum(asn1_t_reordering, to_underlying(t_reordering));
 
   return asn1_t_reordering;
 }
@@ -155,7 +155,7 @@ asn1::rrc_nr::sdap_cfg_s ocudu::ocucp::sdap_config_to_rrc_asn1(const sdap_config
   asn1::rrc_nr::sdap_cfg_s asn1_sdap_cfg;
 
   // Fill PDU session.
-  asn1_sdap_cfg.pdu_session = pdu_session_id_to_uint(sdap_cfg.pdu_session);
+  asn1_sdap_cfg.pdu_session = to_underlying(sdap_cfg.pdu_session);
 
   // Fill SDAP hdr DL.
   asn1_sdap_cfg.sdap_hdr_dl = sdap_hdr_dl_cfg_to_rrc_asn1(sdap_cfg.sdap_hdr_dl);
@@ -168,12 +168,12 @@ asn1::rrc_nr::sdap_cfg_s ocudu::ocucp::sdap_config_to_rrc_asn1(const sdap_config
 
   // Fill mapped QoS flows to add.
   for (const auto& mapped_qos_flow_to_add : sdap_cfg.mapped_qos_flows_to_add) {
-    asn1_sdap_cfg.mapped_qos_flows_to_add.push_back(qos_flow_id_to_uint(mapped_qos_flow_to_add));
+    asn1_sdap_cfg.mapped_qos_flows_to_add.push_back(to_underlying(mapped_qos_flow_to_add));
   }
 
   // Fill mapped QoS flows to release.
   for (const auto& mapped_qos_flow_to_release : sdap_cfg.mapped_qos_flows_to_release) {
-    asn1_sdap_cfg.mapped_qos_flows_to_release.push_back(qos_flow_id_to_uint(mapped_qos_flow_to_release));
+    asn1_sdap_cfg.mapped_qos_flows_to_release.push_back(to_underlying(mapped_qos_flow_to_release));
   }
 
   return asn1_sdap_cfg;
@@ -507,7 +507,7 @@ void ocudu::ocucp::radio_bearer_config_to_asn1(const rrc_radio_bearer_config&   
     ocudu_assert(drb_to_add.drb_id != drb_id_t::invalid, "Invalid DRB ID");
 
     asn1::rrc_nr::drb_to_add_mod_s asn1_drb_to_add;
-    asn1_drb_to_add.drb_id = drb_id_to_uint(drb_to_add.drb_id);
+    asn1_drb_to_add.drb_id = to_underlying(drb_to_add.drb_id);
 
     asn1_drb_to_add.reestablish_pdcp_present = drb_to_add.reestablish_pdcp_present;
 
@@ -535,7 +535,7 @@ void ocudu::ocucp::radio_bearer_config_to_asn1(const rrc_radio_bearer_config&   
   // Fill DRB to release list.
   for (const auto& drb_to_release : radio_bearer_cfg.drb_to_release_list) {
     ocudu_assert(drb_to_release != drb_id_t::invalid, "Invalid DRB ID");
-    asn1_radio_bearer_cfg.drb_to_release_list.push_back(drb_id_to_uint(drb_to_release));
+    asn1_radio_bearer_cfg.drb_to_release_list.push_back(to_underlying(drb_to_release));
   }
 
   // Fill security config.

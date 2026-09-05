@@ -68,7 +68,7 @@ sn_status_transfer_to_asn1(asn1::xnap::sn_status_transfer_s&                    
   asn1::xnap::drbs_subject_to_status_transfer_list_l& asn1_drb_list = asn1_msg->drbs_subject_to_status_transfer_list;
   for (const cu_cp_drbs_subject_to_status_transfer_item& drb : drb_list) {
     asn1::xnap::drbs_subject_to_status_transfer_item_s asn1_drb_item = {};
-    asn1_drb_item.drb_id                                             = drb_id_to_uint(drb.drb_id);
+    asn1_drb_item.drb_id                                             = to_underlying(drb.drb_id);
     if (drb.drb_status_ul.sn_size == pdcp_sn_size::size12bits) {
       asn1_drb_item.pdcp_status_transfer_ul.set_pdcp_sn_12bits();
       asn1_drb_item.pdcp_status_transfer_ul.pdcp_sn_12bits().count_value.hfn_pdcp_sn12 = drb.drb_status_ul.ul_count.hfn;

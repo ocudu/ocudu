@@ -241,7 +241,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_ues_matching_test_conditions(
     }
     ue_id_c        ueid;
     ue_id_gnb_du_s ueid_gnb_du{};
-    ueid_gnb_du.gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id.value());
+    ueid_gnb_du.gnb_cu_ue_f1ap_id = to_underlying(gnb_cu_ue_f1ap_id.value());
     ueid_gnb_du.ran_ue_id_present = false;
     ueid.set_gnb_du_ue_id()       = ueid_gnb_du;
     ues.push_back(ueid);
@@ -263,7 +263,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_ues_matching_test_conditions(
     }
     ue_id_c        ueid;
     ue_id_gnb_du_s ueid_gnb_du{};
-    ueid_gnb_du.gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id.value());
+    ueid_gnb_du.gnb_cu_ue_f1ap_id = to_underlying(gnb_cu_ue_f1ap_id.value());
     ueid_gnb_du.ran_ue_id_present = false;
     ueid.set_gnb_du_ue_id()       = ueid_gnb_du;
     ues.push_back(ueid);

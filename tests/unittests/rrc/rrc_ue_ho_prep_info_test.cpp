@@ -116,7 +116,7 @@ TEST_F(rrc_ue_ho_prep_info_test, when_ue_has_multiple_pdu_sessions_then_as_confi
   ASSERT_EQ(drb_list[0].drb_id, 1U);
   ASSERT_TRUE(drb_list[0].cn_assoc_present);
   ASSERT_EQ(drb_list[0].cn_assoc.type(), asn1::rrc_nr::drb_to_add_mod_s::cn_assoc_c_::types_opts::sdap_cfg);
-  EXPECT_EQ(drb_list[0].cn_assoc.sdap_cfg().pdu_session, pdu_session_id_to_uint(pdu_session_id_t::min));
+  EXPECT_EQ(drb_list[0].cn_assoc.sdap_cfg().pdu_session, to_underlying(pdu_session_id_t::min));
   ASSERT_EQ(drb_list[0].cn_assoc.sdap_cfg().mapped_qos_flows_to_add.size(), 1U);
   EXPECT_EQ(drb_list[0].cn_assoc.sdap_cfg().mapped_qos_flows_to_add[0], 0U);
 

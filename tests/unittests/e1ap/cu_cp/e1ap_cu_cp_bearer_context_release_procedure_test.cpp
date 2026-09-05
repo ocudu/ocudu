@@ -17,10 +17,10 @@ class e1ap_cu_cp_bearer_context_release_test : public e1ap_cu_cp_test
 protected:
   void start_procedure(const e1ap_bearer_context_release_command& req)
   {
-    run_bearer_context_setup(req.ue_index,
-                             int_to_gnb_cu_up_ue_e1ap_id(test_rng::uniform_int<uint64_t>(
-                                 gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::min),
-                                 gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::max) - 1)));
+    run_bearer_context_setup(
+        req.ue_index,
+        int_to_gnb_cu_up_ue_e1ap_id(test_rng::uniform_int<uint64_t>(to_underlying(gnb_cu_up_ue_e1ap_id_t::min),
+                                                                    to_underlying(gnb_cu_up_ue_e1ap_id_t::max) - 1)));
 
     t = e1ap->handle_bearer_context_release_command(req);
     t_launcher.emplace(t);
@@ -44,7 +44,7 @@ protected:
     }
     auto& req = this->e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg().value.bearer_context_release_cmd();
 
-    return req->gnb_cu_cp_ue_e1ap_id == gnb_cu_cp_ue_e1ap_id_to_uint(cu_cp_ue_e1ap_id);
+    return req->gnb_cu_cp_ue_e1ap_id == to_underlying(cu_cp_ue_e1ap_id);
   }
 
   bool was_bearer_context_release_complete_received() const
@@ -62,8 +62,8 @@ protected:
 TEST_F(e1ap_cu_cp_bearer_context_release_test, when_command_sent_then_procedure_waits_for_response)
 {
   // Test Preamble.
-  auto command = generate_bearer_context_release_command(uint_to_ue_index(test_rng::uniform_int<uint64_t>(
-      cu_cp_ue_index_to_uint(cu_cp_ue_index_t::min), cu_cp_ue_index_to_uint(cu_cp_ue_index_t::max))));
+  auto command = generate_bearer_context_release_command(uint_to_ue_index(
+      test_rng::uniform_int<uint64_t>(to_underlying(cu_cp_ue_index_t::min), to_underlying(cu_cp_ue_index_t::max))));
 
   // Start BEARER CONTEXT RELEASE procedure.
   this->start_procedure(command);
@@ -76,8 +76,8 @@ TEST_F(e1ap_cu_cp_bearer_context_release_test, when_command_sent_then_procedure_
 TEST_F(e1ap_cu_cp_bearer_context_release_test, when_bearer_release_complete_received_then_procedure_is_successful)
 {
   // Test Preamble.
-  auto command = generate_bearer_context_release_command(uint_to_ue_index(test_rng::uniform_int<uint64_t>(
-      cu_cp_ue_index_to_uint(cu_cp_ue_index_t::min), cu_cp_ue_index_to_uint(cu_cp_ue_index_t::max))));
+  auto command = generate_bearer_context_release_command(uint_to_ue_index(
+      test_rng::uniform_int<uint64_t>(to_underlying(cu_cp_ue_index_t::min), to_underlying(cu_cp_ue_index_t::max))));
 
   // Start BEARER CONTEXT RELEASE procedure and return back the response from the CU-UP.
   this->start_procedure(command);
@@ -95,8 +95,8 @@ TEST_F(e1ap_cu_cp_bearer_context_release_test,
        when_e1ap_stopped_while_bearer_release_in_flight_then_teardown_does_not_crash)
 {
   // Test Preamble.
-  auto command = generate_bearer_context_release_command(uint_to_ue_index(test_rng::uniform_int<uint64_t>(
-      cu_cp_ue_index_to_uint(cu_cp_ue_index_t::min), cu_cp_ue_index_to_uint(cu_cp_ue_index_t::max))));
+  auto command = generate_bearer_context_release_command(uint_to_ue_index(
+      test_rng::uniform_int<uint64_t>(to_underlying(cu_cp_ue_index_t::min), to_underlying(cu_cp_ue_index_t::max))));
 
   // Start BEARER CONTEXT RELEASE procedure, leaving its transaction unanswered.
   this->start_procedure(command);
