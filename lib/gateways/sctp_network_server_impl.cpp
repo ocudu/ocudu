@@ -206,25 +206,36 @@ void sctp_network_server_impl::sctp_associaton_context::receive_dtls()
 {
   ocudu_assert(parent.dtls_cfg.has_value(), "Receive DTLS called, but no DTLS config provided");
 
-  while (not parent.app_exec.defer([this, keepalive = parent.keepalive_token]() {
-    if (*keepalive) {
-      if (ssl == nullptr) {
-        return;
-      }
-      if (not ssl->is_init_finished()) {
-        if (ssl->handshake()) {
+  if (ssl == nullptr) {
+    return;
+  }
+  if (not ssl->is_init_finished()) {
+    if (ssl->handshake()) {
+      while (not parent.app_exec.defer([this, keepalive = parent.keepalive_token]() {
+        if (*keepalive) {
           parent.mark_connection_as_complete(addr);
         }
-        return;
-      }
-      auto plain = ssl->receive();
-
-      if (plain.has_value()) {
-        sctp_data_recv_notifier->on_new_sdu(std::move(*plain));
+      })) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
     }
-  })) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    return;
+  }
+
+  expected<byte_buffer> plain = ssl->receive();
+  if (not plain.has_value()) {
+    return;
+  }
+
+  auto payload_holder = std::make_shared<byte_buffer>(std::move(*plain));
+  if (plain.has_value()) {
+    while (not parent.app_exec.defer([this, keepalive = parent.keepalive_token, payload_holder]() mutable {
+      if (*keepalive) {
+        sctp_data_recv_notifier->on_new_sdu(std::move(*payload_holder));
+      }
+    })) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
   }
 }
 
@@ -563,21 +574,20 @@ void sctp_network_server_impl::handle_sctp_comm_up(const struct sctp_assoc_chang
 
   logger.info("{} assoc={}: New client SCTP association (client_addr={})", node_cfg.if_name, assoc_id, assoc_ctxt.addr);
 
-  // If this was a pending outgoing connection, defer to enqueue the success signal so that any tasks enqueued by the
-  // assoc_factory.create() callback can run before the awaiting coroutine resumes.
-  // Signaling inline here would resume the coroutine within this task, before the enqueued tasks that connect the
-  // notifiers have a chance to finish.
-  // unique_fd is move-only and defer() consumes the task on failure, so moving the fd into the lambda would close it
-  // on the first failed dispatch and leave later retries subscribing an already closed socket. Hold it behind a
-  // shared_ptr so ownership survives until an attempt is actually enqueued.
+  // If this was a pending outgoing connection, defer to enqueue the success signal so that any tasks enqueued by
+  // the assoc_factory.create() callback can run before the awaiting coroutine resumes. Signaling inline here would
+  // resume the coroutine within this task, before the enqueued tasks that connect the notifiers have a chance to
+  // finish. unique_fd is move-only and defer() consumes the task on failure, so moving the fd into the lambda would
+  // close it on the first failed dispatch and leave later retries subscribing an already closed socket. Hold it
+  // behind a shared_ptr so ownership survives until an attempt is actually enqueued.
   auto fd_holder = std::make_shared<unique_fd>(std::move(assoc_fd));
   while (not app_exec.defer([this, addr = assoc_ctxt.addr, fd_holder, &assoc_ctxt]() mutable {
     auto pending_it = std::find_if(pending_connects.begin(),
                                    pending_connects.end(),
                                    [&addr](const pending_connect& pending) { return pending.contains(addr); });
 
-    /// If DTLS is not configured, mark connection as complete. Otherwise, wait for the DTLS handshake before signaling
-    /// the connection is set up to upper layers.
+    /// If DTLS is not configured, mark connection as complete. Otherwise, wait for the DTLS handshake before
+    /// signaling the connection is set up to upper layers.
     if (pending_it != pending_connects.end() && !dtls_cfg.has_value()) {
       pending_it->event.set(true);
     }
@@ -599,8 +609,8 @@ void sctp_network_server_impl::mark_connection_as_complete(const transport_layer
                                  pending_connects.end(),
                                  [&addr](const pending_connect& pending) { return pending.contains(addr); });
 
-  /// If DTLS is not configured, mark connection as complete. Otherwise, wait for the DTLS handshake before signaling
-  /// the connection is set up to upper layers.
+  /// If DTLS is not configured, mark connection as complete. Otherwise, wait for the DTLS handshake before
+  /// signaling the connection is set up to upper layers.
   if (pending_it != pending_connects.end()) {
     pending_it->event.set(true);
   }
