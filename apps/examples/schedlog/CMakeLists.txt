@@ -3,9 +3,6 @@
 # Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 
-add_subdirectory(ofh)
-add_subdirectory(phy)
-add_subdirectory(radio)
-if (ENABLE_SCHEDTRACE)
-    add_subdirectory(schedlog)
-endif (ENABLE_SCHEDTRACE)
+add_executable(schedlog schedlog.cpp)
+target_include_directories(schedlog PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(schedlog trace_to_log ocudulog ocudu_support)

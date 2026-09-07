@@ -11,4 +11,8 @@ add_executable(sched_event_tracer_test
 target_link_libraries(sched_event_tracer_test schedtrace schedtrace_fbs scheduler_test_utils ocudu_support ocudulog gtest gtest_main)
 gtest_discover_tests(sched_event_tracer_test)
 
+add_executable(trace_to_log_test trace_to_log_test.cpp)
+target_link_libraries(trace_to_log_test schedtrace schedtrace_fbs trace_to_log sched_config ocudu_support ocudulog gtest gtest_main)
+gtest_discover_tests(trace_to_log_test)
+
 add_subdirectory(roundtrip)

@@ -6,10 +6,10 @@ include(FetchContent)
 set(FLATBUFFERS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(FLATBUFFERS_INSTALL OFF CACHE BOOL "" FORCE)
 set(FLATBUFFERS_BUILD_FLATHASH OFF CACHE BOOL "" FORCE)
-# FLATBUFFERS_TAG is set next to the SBOM entry in the top-level CMakeLists.txt.
+# FLATBUFFERS_VERSION is set next to the SBOM entry in the top-level CMakeLists.txt.
 FetchContent_Declare(flatbuffers
   GIT_REPOSITORY https://github.com/google/flatbuffers.git
-  GIT_TAG ${FLATBUFFERS_TAG}
+  GIT_TAG v${FLATBUFFERS_VERSION}
   GIT_SHALLOW TRUE)
 # Suppress warnings when compiling flatbuffers itself; the project's -Werror flags are not its concern.
 set(SAVED_CXX_FLAGS "${CMAKE_CXX_FLAGS}")

@@ -625,14 +625,13 @@ endif (SCTP_FOUND)
 # FlatBuffers, fetched at build time by the scheduler event tracer. Being fetched, it has no entry in
 # COPYRIGHTS.txt for parse_copyright_file() to pick up, so it is added to the SBOM here.
 if (ENABLE_SCHEDTRACE)
-    set(FLATBUFFERS_TAG "v25.12.19")
-    string(REGEX REPLACE "^v" "" FLATBUFFERS_SBOM_VERSION "${FLATBUFFERS_TAG}")
+    set(FLATBUFFERS_VERSION "25.12.19")
     sbom_add(
         PACKAGE            "FlatBuffers"
         DOWNLOAD_LOCATION  "https://github.com/google/flatbuffers"
         SUPPLIER           "Google LLC"
         LICENSE            "Apache-2.0"
-        VERSION            ${FLATBUFFERS_SBOM_VERSION}
+        VERSION            ${FLATBUFFERS_VERSION}
     )
 endif (ENABLE_SCHEDTRACE)
 
