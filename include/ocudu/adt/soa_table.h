@@ -6,7 +6,10 @@
 #include "ocudu/adt/span.h"
 #include "ocudu/adt/strong_type.h"
 #include "ocudu/support/ocudu_assert.h"
+#include <cstddef>
 #include <limits>
+#include <tuple>
+#include <utility>
 #include <vector>
 
 namespace ocudu {
