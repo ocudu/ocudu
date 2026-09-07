@@ -115,3 +115,55 @@ float ocudu::get_typeII_subband_amplitude(unsigned k2)
                typeII_subband_amplitudes.size());
   return typeII_subband_amplitudes[k2];
 }
+
+unsigned ocudu::get_typeII_nof_total_beam_groups(const pmi_codebook_typeII& codebook)
+{
+  // Extract antenna panel information.
+  const pmi_codebook_single_panel_info& panel_info = get_single_panel_info(codebook.n1_n2);
+
+  // Number of beam groups in the antenna panel.
+  unsigned nof_beam_groups = panel_info.n1 * panel_info.n2;
+
+  // Number of selected beams in the codebook.
+  unsigned nof_beams = codebook.nof_beams.value();
+
+  // Number of possible beam group combinations based on the number of beams. Uses Pascal's rule combinatorial identity
+  // to find C(N1N2, L), which is not indexed in TS38.214 Table 5.2.2.2.3-1.
+  unsigned nof_beam_groups_combination = combinatorial_coefficient(nof_beam_groups - 1, nof_beams) +
+                                         combinatorial_coefficient(nof_beam_groups - 1, nof_beams - 1);
+
+  return nof_beam_groups_combination;
+}
+
+pmi_typeII_param_ranges ocudu::get_pmi_ranges_typeII(const pmi_codebook_typeII& panel, uint8_t ri)
+{
+  // The Type II codebook supports rank 1 or 2 only.
+  ocudu_assert((ri == 1) || (ri == 2), "The Type II codebook supports one or two layers, requested ri={}.", ri);
+
+  // Extract antenna panel information.
+  const pmi_codebook_single_panel_info& panel_info = get_single_panel_info(panel.n1_n2);
+
+  // The i_1_1 range is the total number of beams per group.
+  unsigned i_1_1_range = panel_info.o1 * panel_info.o2;
+
+  // The i_1_2 range is the total number of possible beam group combinations.
+  unsigned i_1_2_range = get_typeII_nof_total_beam_groups(panel);
+
+  // The remaining parameters are reported per beam and polarization, so their range is the number of beams, i.e., 2*L.
+  unsigned nof_beams = 2 * panel.nof_beams.value();
+
+  pmi_typeII_param_ranges ranges = {
+      .i_1_1   = i_1_1_range,
+      .i_1_2   = i_1_2_range,
+      .i_1_3_1 = nof_beams,
+      .i_1_3_2 = (ri == 2) ? nof_beams : 0,
+      .i_1_4_1 = nof_beams,
+      .i_1_4_2 = (ri == 2) ? nof_beams : 0,
+      .i_2_1_1 = nof_beams,
+      .i_2_1_2 = (ri == 2) ? nof_beams : 0,
+      .i_2_2_1 = panel.subband_amplitude ? nof_beams : 0,
+      .i_2_2_2 = ((ri == 2) && panel.subband_amplitude) ? nof_beams : 0,
+  };
+
+  return ranges;
+}

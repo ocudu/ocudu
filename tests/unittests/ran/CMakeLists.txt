@@ -142,7 +142,8 @@ add_executable(meas_gap_config_test meas_gap_config_test.cpp)
 target_link_libraries(meas_gap_config_test ocudu_ran GTest::gtest ocudu_gtest_main)
 gtest_discover_tests(meas_gap_config_test)
 
-add_executable(precoding_codebooks_test precoding/precoding_codebooks_test.cpp)
+add_executable(precoding_codebooks_test precoding/precoding_codebooks_test.cpp
+                                         precoding/precoding_type2_codebooks_test.cpp)
 target_link_libraries(precoding_codebooks_test ocudu_ran GTest::gtest ocudu_gtest_main)
 add_test(precoding_codebooks_test precoding_codebooks_test)
 

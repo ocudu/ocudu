@@ -132,4 +132,45 @@ float get_typeII_wideband_amplitude(unsigned k1);
 /// \return The amplitude coefficient, \f$p^{(2)}\f$.
 float get_typeII_subband_amplitude(unsigned k2);
 
+/// \brief Get the number of possible beam groups combinations based on the number of beams and the antenna panel
+/// layout.
+///
+/// A beam group is the set of \f$O_1 * O_2\f$ oversampled beams sharing the same base index \f$(n_1, n_2)\f$. See \ref
+/// pmi_typeII_beam_group.
+unsigned get_typeII_nof_total_beam_groups(const pmi_codebook_typeII& codebook);
+
+/// \brief Precoding Matrix Indicator (PMI) parameter ranges for Type II codebooks.
+///
+/// Each of the values give the number of possible values for each of the parameters. The ranges are exclusive, meaning
+/// that the fields start at zero.
+struct pmi_typeII_param_ranges {
+  /// Parameter \f$i_{1,1}\f$.
+  unsigned i_1_1;
+  /// Parameter \f$i_{1,2}\f$.
+  unsigned i_1_2;
+  /// Parameter \f$i_{3,1}\f$.
+  unsigned i_1_3_1;
+  /// Parameter \f$i_{3,2}\f$.
+  unsigned i_1_3_2;
+  /// Parameter \f$i_{4,1}\f$.
+  unsigned i_1_4_1;
+  /// Parameter \f$i_{4,2}\f$.
+  unsigned i_1_4_2;
+  /// Parameter \f$i_{2,1,1}\f$.
+  unsigned i_2_1_1;
+  /// Parameter \f$i_{2,1,2}\f$.
+  unsigned i_2_1_2;
+  /// Parameter \f$i_{2,2,1}\f$.
+  unsigned i_2_2_1;
+  /// Parameter \f$i_{2,2,2}\f$.
+  unsigned i_2_2_2;
+};
+
+/// \brief Gets PMI parameter ranges for \e Type-II codebook configuration as per TS38.214 Section 5.2.2.2.3.
+///
+/// The range for each PMI parameter returned by this function is defined as in an exclusive range. Hence, each PMI
+/// range value indicates the number of possible values for the corresponding PMI parameter for the given panel
+/// topology.
+pmi_typeII_param_ranges get_pmi_ranges_typeII(const pmi_codebook_typeII& panel, uint8_t ri);
+
 } // namespace ocudu

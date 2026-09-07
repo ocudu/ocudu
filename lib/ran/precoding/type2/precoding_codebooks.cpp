@@ -19,6 +19,10 @@ static constexpr unsigned max_nof_typeII_layers = 2;
 /// The beam is added to the two polarizations of the given layer, each scaled by its own combining coefficient. The
 /// first half of the ports corresponds to the first polarization and the second half to the second polarization.
 ///
+/// This function implements the formula for \f$\nu_{l,m}\f$ given in TS38.214 Section 5.2.2.2.1, where the input
+/// parameters \f$l\f$ and \f$m\f$ are particularized for the Type II codebook by the parameters \f$m_1\f$ and \f$m_2\f$
+/// respectively, as per TS38.214 Section 5.2.2.2.3.
+///
 /// \param[in,out] result      Precoding weight matrix to accumulate into (must be zero-initialized beforehand).
 /// \param[in]     panel       Antenna panel information.
 /// \param[in]     i_layer     Layer index within the precoding weight matrix.
@@ -41,10 +45,10 @@ static void add_beam_type2(precoding_weight_matrix&              result,
   // Number of ports per polarization, i.e. half the total number of ports.
   unsigned nof_ports_pol = result.get_nof_ports() / 2;
 
-  cf_t     beam_coef_h = std::polar(1.0F, 0.0F);
+  cf_t     beam_coef_h = 1.0F;
   unsigned i_port      = 0;
   for (unsigned i_h = 0; i_h != panel.n1; ++i_h) {
-    cf_t beam_coef_v = std::polar(1.0F, 0.0F);
+    cf_t beam_coef_v = 1.0F;
     for (unsigned i_v = 0; i_v != panel.n2; ++i_v) {
       // Beam coefficient for this antenna element.
       cf_t v = beam_coef_h * beam_coef_v;

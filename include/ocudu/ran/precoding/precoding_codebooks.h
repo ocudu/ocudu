@@ -87,7 +87,7 @@ precoding_weight_matrix make_type1_sp_mode1(const precoding_matrix_indicator& pm
 /// or two layers. The generated precoding weights for the first half of ports corresponds to the first polarization,
 /// while the second half of ports corresponds to the second polarization.
 ///
-/// \param[in] pmi The Precoding Matrix Indicator (PMI) codebook parameters.
+/// \param[in] pmi        The Precoding Matrix Indicator (PMI) codebook parameters.
 /// \param[in] nof_layers The number of layers used for the transmission.
 /// \return A precoding weight matrix for the given number of layers and the given antenna panel distribution.
 precoding_weight_matrix make_type2(const precoding_matrix_indicator& pmi, unsigned nof_layers);
