@@ -71,7 +71,23 @@ variables:
           && ret=$(cat ${status_file}) || ret=124
 
         if [[ $TEST_MODE = "coverage" ]]; then
-          common_options="-j${CPU_JOBS} \
+          # gcovr must use a gcov tool that matches the compiler that produced
+          # the coverage data. clang emits LLVM-format .gcno/.gcda files that
+          # plain gcov cannot parse, so it needs 'llvm-cov gcov'. gcc uses the
+          # default gcov. gcovr runs the gcov tool as a subprocess (not via the
+          # shell), and $common_options is passed unquoted (word-split), so a
+          # two-word "llvm-cov gcov" value cannot be passed directly. Write a
+          # single-word wrapper executable and point --gcov-executable at it.
+          if [[ "${COMPILER}" == "clang" ]]; then
+            gcov_wrapper="$(mktemp -d)/llvm-cov-gcov"
+            printf '#!/usr/bin/env bash\nexec llvm-cov gcov "$@"\n' > "${gcov_wrapper}"
+            chmod +x "${gcov_wrapper}"
+            GCOV_EXEC="--gcov-executable ${gcov_wrapper}"
+          else
+            GCOV_EXEC=""
+          fi
+
+          common_options="-j${CPU_JOBS} ${GCOV_EXEC} \
             --exclude-unreachable-branches \
             --gcov-ignore-parse-errors=negative_hits.warn_once_per_file \
             --exclude=${CI_PROJECT_DIR}/tests/* \
