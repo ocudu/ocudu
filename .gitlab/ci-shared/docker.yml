@@ -288,6 +288,9 @@ variables:
   image: ${OCUDU_REGISTRY_URI}/buildkit-cli:$BUILDKIT_CLI_VERSION
   variables:
     VERSIONS_TO_IGNORE: ""
+    REGISTRY_AUTH_SERVER: ${CI_REGISTRY}
+    REGISTRY_AUTH_USERNAME: ${CI_REGISTRY_USER}
+    REGISTRY_AUTH_PASSWORD: ${CI_REGISTRY_PASSWORD}
   before_script:
     # Add docker config
     - *docker_login
