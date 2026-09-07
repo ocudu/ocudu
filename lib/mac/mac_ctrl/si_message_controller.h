@@ -83,13 +83,17 @@ private:
   /// Whether the System Information differs from the one the current encoders were built from.
   bool has_si_changed(const mac_cell_sys_info_config& req) const;
 
-  /// Rebuilds the encoders that changed and updates the command to apply.
-  void build_command(const mac_cell_sys_info_config& req);
+  /// \brief Rebuilds the encoders that changed and updates the command to apply.
+  /// \return Whether the command could be built. On failure, the previous one is left untouched.
+  bool build_command(const mac_cell_sys_info_config& req);
 
   /// \brief Repacks the SIB1 payload that the SI epoch broadcasting a given set of warnings carries.
+  /// \param cell_sib1 SIB1 payload the DU packed for the cell.
+  /// \param hypersfn_enabled Whether the SIB1 carries a hyper SFN that is patched at broadcast time.
   /// \param on_air SI messages carrying a warning. Empty for the epoch of the normal operation.
   /// \return The payload, or std::nullopt if the SIB1 of the cell could not be processed.
-  std::optional<byte_buffer> make_epoch_sib1(span<const sib_type_set> on_air) const;
+  std::optional<byte_buffer>
+  make_epoch_sib1(const byte_buffer& cell_sib1, bool hypersfn_enabled, span<const sib_type_set> on_air) const;
 
   /// Creates the encoder of a SIB1 payload.
   std::shared_ptr<bcch_dl_sch_msg_encoder> make_sib1_encoder(const byte_buffer& sib1) const;

@@ -52,8 +52,8 @@ void mac_cell_pcap_writer::write_si_pdus(slot_point sl_tx, const sched_result& s
         const auto si_msg_it = std::find_if(si_msgs.begin(), si_msgs.end(), [&dl_alloc](const si_msg_context& si_msg) {
           return si_msg.sibs == dl_alloc.sibs;
         });
+        ocudu_assert(si_msg_it != si_msgs.end(), "The SI message this grant carries is not one of the cell");
         if (si_msg_it == si_msgs.end()) {
-          // The SI message this grant carries is not one of the cell.
           continue;
         }
         dumped_version = &si_msg_it->dumped_version;

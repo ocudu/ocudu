@@ -395,7 +395,9 @@ si_message_controller::si_message_controller(du_cell_index_t                 cel
 
   // Version starts at 0.
   last_cmd.version = 0;
-  build_command(sys_info);
+  // A cell that cannot build its SIB1 encoder has nothing to broadcast.
+  report_fatal_error_if_not(
+      build_command(sys_info), "cell={}: Failed to build the initial System Information", fmt::underlying(cell_index));
 
   // Start broadcasting the System Information the cell was created with.
   dl_cell.start_broadcast(ext_handler, last_cmd, std::make_unique<pws_broadcast_end_adapter>(*this));
@@ -445,9 +447,11 @@ bool si_message_controller::push_si_epoch(const mac_cell_sys_info_config& req)
     return false;
   }
 
-  // Bump the SI epoch and rebuild the encoders that changed.
+  // Rebuild the encoders that changed and, only if that succeeded, bump the SI epoch.
+  if (not build_command(req)) {
+    return false;
+  }
   last_cmd.version = ++last_version;
-  build_command(req);
   dl_cell.handle_si_update(last_cmd);
 
   if (not active_pws_si_msgs.empty()) {
@@ -483,8 +487,17 @@ bool si_message_controller::has_si_changed(const mac_cell_sys_info_config& req) 
   return req.si_sched_cfg != cell_si_sched_cfg;
 }
 
-void si_message_controller::build_command(const mac_cell_sys_info_config& req)
+bool si_message_controller::build_command(const mac_cell_sys_info_config& req)
 {
+  // Derive the SIB1 of the normal operation before any state is committed, so that a failure leaves the encoders and
+  // the command of the previous epoch untouched.
+  std::optional<byte_buffer> epoch_sib1 = make_epoch_sib1(req.sib1, req.sib1_contains_hypersfn, {});
+  if (not epoch_sib1.has_value()) {
+    logger.error("cell={}: Failed to generate the SIB1 of the normal operation", cell_index);
+    return false;
+  }
+  const bool sib1_encoder_outdated = last_cmd.sib1 == nullptr or *epoch_sib1 != normal_epoch_sib1;
+
   last_sib1             = req.sib1.copy();
   last_hypersfn_enabled = req.sib1_contains_hypersfn;
 
@@ -509,25 +522,23 @@ void si_message_controller::build_command(const mac_cell_sys_info_config& req)
 
   cell_si_sched_cfg = req.si_sched_cfg;
 
-  std::optional<byte_buffer> epoch_sib1 = make_epoch_sib1({});
-  if (not epoch_sib1.has_value()) {
-    logger.error("cell={}: Failed to generate the SIB1 of the normal operation", cell_index);
-    return;
-  }
-  if (last_cmd.sib1 == nullptr or *epoch_sib1 != normal_epoch_sib1) {
+  if (sib1_encoder_outdated) {
     normal_epoch_sib1 = std::move(*epoch_sib1);
     last_cmd.sib1     = make_sib1_encoder(normal_epoch_sib1);
   }
   fill_epoch_si_config(last_cmd, {}, units::bytes{static_cast<unsigned>(normal_epoch_sib1.length())});
+  return true;
 }
 
-std::optional<byte_buffer> si_message_controller::make_epoch_sib1(span<const sib_type_set> on_air) const
+std::optional<byte_buffer> si_message_controller::make_epoch_sib1(const byte_buffer&       cell_sib1,
+                                                                  bool                     hypersfn_enabled,
+                                                                  span<const sib_type_set> on_air) const
 {
   if (pws_sequences.empty()) {
     // A cell with no warning to broadcast has nothing to add to or remove from the SIB1 the DU packed.
-    return last_sib1.copy();
+    return cell_sib1.copy();
   }
-  byte_buffer repacked = repack_sib1_si_sched_info(last_sib1, on_air, last_hypersfn_enabled);
+  byte_buffer repacked = repack_sib1_si_sched_info(cell_sib1, on_air, hypersfn_enabled);
   if (repacked.empty()) {
     return std::nullopt;
   }
@@ -649,8 +660,8 @@ void si_message_controller::push_pws_epoch(std::optional<sib_type_set> pws_sib_s
     }
   }
 
-  const static_vector<sib_type_set, MAX_PWS_SI_MESSAGES> on_air   = on_air_sib_sets();
-  const std::optional<byte_buffer>                       pws_sib1 = make_epoch_sib1(on_air);
+  const static_vector<sib_type_set, MAX_PWS_SI_MESSAGES> on_air = on_air_sib_sets();
+  const std::optional<byte_buffer> pws_sib1 = make_epoch_sib1(last_sib1, last_hypersfn_enabled, on_air);
   if (not pws_sib1.has_value()) {
     logger.error("cell={}: Failed to generate the SIB1 of a warning broadcast", cell_index);
     return;

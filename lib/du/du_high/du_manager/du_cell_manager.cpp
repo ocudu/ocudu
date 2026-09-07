@@ -25,7 +25,6 @@ du_cell_manager::du_cell_manager(const du_manager_params& cfg_) :
 
 static void fill_si_scheduler_config(si_scheduling_config&                si_sched_cfg,
                                      const du_cell_config&                cell_cfg,
-                                     const byte_buffer&                   sib1,
                                      span<const bcch_dl_sch_payload_type> si_messages)
 {
   // The SI messages that only carry a warning are not broadcast when the cell starts, so the SIB1 it starts out with
@@ -76,7 +75,7 @@ void du_cell_manager::add_cell(const du_cell_config& cell_cfg)
   cell.si_cfg.sib1_contains_hypersfn = cell_cfg.ran.init_bwp.paging.edrx_enabled;
 
   // Generate Scheduler SI scheduling config.
-  fill_si_scheduler_config(cell.si_cfg.si_sched_cfg, cell_cfg, sib1, si_messages);
+  fill_si_scheduler_config(cell.si_cfg.si_sched_cfg, cell_cfg, si_messages);
 }
 
 expected<du_cell_reconfig_result>
@@ -208,7 +207,7 @@ du_cell_manager::handle_cell_reconf_request(const du_cell_param_config_request& 
     }
 
     // Update SI scheduling config. The SI version is owned by the MAC.
-    fill_si_scheduler_config(cell.si_cfg.si_sched_cfg, cell_cfg, cell.si_cfg.sib1, cell.si_cfg.si_messages);
+    fill_si_scheduler_config(cell.si_cfg.si_sched_cfg, cell_cfg, cell.si_cfg.si_messages);
   }
 
   result.cell_index           = cell_index;

@@ -19,6 +19,7 @@ public:
     cfg.sib1 = make_random_pdu();
     cfg.si_messages.push_back(bcch_dl_sch_payload_type{make_random_pdu()});
     cfg.si_sched_cfg.si_messages.emplace_back();
+    cfg.si_sched_cfg.si_messages.back().sibs.add(sib_type::sib2);
     return cfg;
   }
 
@@ -77,6 +78,7 @@ TEST_F(si_message_controller_test, when_si_message_is_removed_then_readded_with_
   mac_cell_sys_info_config two_msgs = bench.sys_info_cfg;
   two_msgs.si_messages.push_back(bcch_dl_sch_payload_type{make_random_pdu()});
   two_msgs.si_sched_cfg.si_messages.emplace_back();
+  two_msgs.si_sched_cfg.si_messages.back().sibs.add(sib_type::sib3);
   ASSERT_TRUE(bench.update_si(two_msgs).has_value());
   ASSERT_TRUE(bench.update_si(bench.sys_info_cfg).has_value());
 
