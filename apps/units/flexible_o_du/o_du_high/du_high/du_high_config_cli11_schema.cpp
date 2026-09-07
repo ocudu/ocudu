@@ -2079,7 +2079,8 @@ static void configure_cli11_etws_args(CLI::App& app, du_high_unit_sib_config::et
              "--si_period",
              sib_params.si_period_rf,
              "Scheduling period, in radio frames, of the SI messages carrying SIB6 and SIB7")
-      ->capture_default_str();
+      ->capture_default_str()
+      ->enum_values({8, 16, 32, 64, 128, 256, 512});
 
   CLI::App* test_subcmd =
       add_subcommand(app, "test", "Fixed ETWS content that the cell broadcasts from its start, for testing purposes");
@@ -2121,7 +2122,8 @@ static void configure_cli11_cmas_args(CLI::App& app, du_high_unit_sib_config::cm
              "--si_period",
              sib_params.si_period_rf,
              "Scheduling period, in radio frames, of the SI message carrying SIB8")
-      ->capture_default_str();
+      ->capture_default_str()
+      ->enum_values({8, 16, 32, 64, 128, 256, 512});
 
   CLI::App* test_subcmd =
       add_subcommand(app, "test", "Fixed CMAS content that the cell broadcasts from its start, for testing purposes");
