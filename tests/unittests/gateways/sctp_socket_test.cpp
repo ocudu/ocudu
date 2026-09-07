@@ -4,6 +4,7 @@
 #include "ocudu/gateways/sctp_socket.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include <arpa/inet.h>
+#include <array>
 #include <cstring>
 #include <gtest/gtest.h>
 #include <netinet/in.h>
@@ -52,11 +53,34 @@ protected:
     return addr_storage;
   }
 
-  /// Verify bound addresses using sctp_getladdrs.
+  /// Buffer for an SCTP address list. One entry over the maximum this test binds covers the header, see below.
+  using sctp_addr_buf = std::array<sockaddr_storage, 8>;
+
+  /// \brief Drop-in for \c sctp_getladdrs() / \c sctp_getpaddrs() that reads into a caller-owned \p buf.
+  ///
+  /// Next to the address list, the kernel writes an \c sctp_getaddrs header in front of it, while the \c optlen it
+  /// reports back covers the list alone. Valgrind sizes the region it marks as initialized from that \c optlen and
+  /// therefore leaves the last 8 bytes of the list marked as uninitialized. For a \c sockaddr_in6 those are the tail
+  /// of \c sin6_addr, so comparing the address reports a false positive. libsctp allocates its buffer itself, which
+  /// leaves nothing to initialize, hence the direct \c getsockopt() call on a \p buf the caller zero-initializes.
+  ///
+  /// \return Number of addresses in the list, or -1 if it could not be retrieved.
+  static int get_sctp_addrs(int fd, int optname, sctp_addr_buf& buf, sockaddr** addrs, sctp_assoc_t assoc_id = 0)
+  {
+    auto* getaddrs     = reinterpret_cast<sctp_getaddrs*>(buf.data());
+    getaddrs->assoc_id = assoc_id;
+    *addrs             = reinterpret_cast<sockaddr*>(getaddrs->addrs);
+
+    socklen_t len = sizeof(buf);
+    return ::getsockopt(fd, IPPROTO_SCTP, optname, buf.data(), &len) == 0 ? static_cast<int>(getaddrs->addr_num) : -1;
+  }
+
+  /// Verify bound addresses using the SCTP local address list.
   static void verify_bound_address_ipv4(int fd, std::optional<uint16_t> expected_port, in_addr_t expected_addr)
   {
-    sockaddr* addrs = nullptr;
-    int       count = sctp_getladdrs(fd, 0, &addrs);
+    sctp_addr_buf buf   = {};
+    sockaddr*     addrs = nullptr;
+    int           count = get_sctp_addrs(fd, SCTP_GET_LOCAL_ADDRS, buf, &addrs);
     ASSERT_GT(count, 0);
 
     // Verify the first address matches expectations.
@@ -69,15 +93,14 @@ protected:
       EXPECT_GT(ntohs(sin->sin_port), 0);
     }
     EXPECT_EQ(ntohl(sin->sin_addr.s_addr), expected_addr);
-
-    sctp_freeladdrs(addrs);
   }
 
-  /// Verify bound addresses for IPv6 using sctp_getladdrs.
+  /// Verify bound addresses for IPv6 using the SCTP local address list.
   static void verify_bound_address_ipv6(int fd, std::optional<uint16_t> expected_port, const in6_addr& expected_addr)
   {
-    sockaddr* addrs = nullptr;
-    int       count = sctp_getladdrs(fd, 0, &addrs);
+    sctp_addr_buf buf   = {};
+    sockaddr*     addrs = nullptr;
+    int           count = get_sctp_addrs(fd, SCTP_GET_LOCAL_ADDRS, buf, &addrs);
     ASSERT_GT(count, 0);
 
     // Verify the first address matches expectations.
@@ -90,18 +113,17 @@ protected:
       EXPECT_GT(ntohs(sin6->sin6_port), 0);
     }
     EXPECT_EQ(std::memcmp(&sin6->sin6_addr, &expected_addr, sizeof(expected_addr)), 0);
-
-    sctp_freeladdrs(addrs);
   }
 
-  /// Verify multiple bound addresses using sctp_getladdrs.
+  /// Verify multiple bound addresses using the SCTP local address list.
   static void verify_multiple_bound_addresses(int                     fd,
                                               std::optional<uint16_t> expected_port,
                                               int                     expected_ipv4_count,
                                               int                     expected_ipv6_count)
   {
-    sockaddr* addrs = nullptr;
-    int       count = sctp_getladdrs(fd, 0, &addrs);
+    sctp_addr_buf buf   = {};
+    sockaddr*     addrs = nullptr;
+    int           count = get_sctp_addrs(fd, SCTP_GET_LOCAL_ADDRS, buf, &addrs);
     ASSERT_GT(count, 0) << "Expected at least one bound address";
 
     // Count addresses by family using offset-based parsing
@@ -132,19 +154,18 @@ protected:
     // Check exact address counts
     EXPECT_EQ(ipv4_count, expected_ipv4_count);
     EXPECT_EQ(ipv6_count, expected_ipv6_count);
-
-    sctp_freeladdrs(addrs);
   }
 
-  /// Verify multiple peer addresses using sctp_getpaddrs.
+  /// Verify multiple peer addresses using the SCTP peer address list.
   static void verify_multiple_peer_addresses(int                     fd,
                                              sctp_assoc_t            assoc_id,
                                              std::optional<uint16_t> expected_port,
                                              int                     expected_ipv4_count,
                                              int                     expected_ipv6_count)
   {
-    sockaddr* addrs = nullptr;
-    int       count = sctp_getpaddrs(fd, assoc_id, &addrs);
+    sctp_addr_buf buf   = {};
+    sockaddr*     addrs = nullptr;
+    int           count = get_sctp_addrs(fd, SCTP_GET_PEER_ADDRS, buf, &addrs, assoc_id);
     ASSERT_GT(count, 0) << "Expected at least one peer address";
 
     // Count addresses by family using offset-based parsing
@@ -175,8 +196,6 @@ protected:
     // Check exact address counts
     EXPECT_EQ(ipv4_count, expected_ipv4_count);
     EXPECT_EQ(ipv6_count, expected_ipv6_count);
-
-    sctp_freepaddrs(addrs);
   }
 };
 
@@ -416,7 +435,7 @@ TEST_F(sctp_socket_test, bindx_with_single_address)
 
   EXPECT_TRUE(sock.bindx(addrs, ""));
 
-  // Verify bound address using sctp_getladdrs
+  // Verify bound address using the SCTP local address list.
   verify_bound_address_ipv4(sock.fd().value(), std::nullopt, INADDR_LOOPBACK);
 }
 
