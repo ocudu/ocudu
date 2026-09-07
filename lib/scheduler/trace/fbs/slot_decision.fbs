@@ -1,0 +1,293 @@
+// SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+// SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+namespace ocudu.schedtrace.fbs;
+
+/// Type-0 (RBG bitmap) resource allocation.
+table RbgAlloc {
+  nof_rbgs: uint8;
+  /// Holds one bit per RBG (up to MAX_NOF_RBGS=18 bits).
+  bitmap: uint32;
+}
+
+/// Type-1 (contiguous VRB range) resource allocation.
+table VrbAlloc {
+  vrb_start: uint16;
+  vrb_length: uint16;
+  vrb_second_hop_start: uint16 = null;
+}
+
+union RbAlloc {
+  RbgAlloc,
+  VrbAlloc,
+}
+
+/// Information about an allocated PUSCH.
+table Pusch {
+  rnti: uint16;
+  rbs: RbAlloc;
+  // TODO: include PUSCH TD resource list on CellStartEvent and only indicate PUSCH TD resource index here.
+  sym_start: uint8;
+  sym_length: uint8;
+  rv_index: uint8;
+  nof_layers: uint8;
+  harq_id: uint8;
+  tb_size_bytes: uint32;
+  ue_index: uint16;
+  nof_retxs: uint8;
+  k2: uint8;
+}
+
+struct PdschCodeword {
+  rv_index: uint8;
+  mcs_index: uint8;
+  tb_size_bytes: uint32;
+  new_data: bool;
+}
+
+/// Information about an allocated UE PDSCH.
+table Pdsch {
+  rnti: uint16;
+  rbs: RbAlloc;
+  sym_start: uint8;
+  sym_length: uint8;
+  codewords: [PdschCodeword];
+  harq_id: uint8;
+  ue_index: uint16;
+  nof_retxs: uint8;
+  k1: uint8;
+}
+
+/// Format 0 specific parameters of a PUCCH transmission.
+table PucchTxF0 {
+  group_hopping: uint8;
+  n_id_hopping: uint16;
+}
+
+/// Format 1 specific parameters of a PUCCH transmission.
+table PucchTxF1 {
+  group_hopping: uint8;
+  n_id_hopping: uint16;
+}
+
+/// Format 2 specific parameters of a PUCCH transmission.
+table PucchTxF2 {
+  n_id_scrambling: uint16;
+  n_id_0_scrambling: uint16;
+  nof_prbs: uint8;
+}
+
+/// Format 3 specific parameters of a PUCCH transmission.
+table PucchTxF3 {
+  group_hopping: uint8;
+  n_id_hopping: uint16;
+  n_id_scrambling: uint16;
+  n_id_0_scrambling: uint16;
+  nof_prbs: uint8;
+}
+
+/// Format 4 specific parameters of a PUCCH transmission.
+table PucchTxF4 {
+  group_hopping: uint8;
+  n_id_hopping: uint16;
+  n_id_scrambling: uint16;
+  n_id_0_scrambling: uint16;
+}
+
+union PucchTxParams {
+  PucchTxF0,
+  PucchTxF1,
+  PucchTxF2,
+  PucchTxF3,
+  PucchTxF4,
+}
+
+/// Identifies a PUCCH transmission as part of a multi-slot PUCCH repetition burst. Applicable to all PUCCH formats.
+table PucchRepetition {
+  /// Slot of the first transmission of the burst, as per slot_point::count().
+  anchor_slot: uint32;
+  /// Position of this transmission within the burst, as per pucch_repetition_tx_slot.
+  position: uint8;
+}
+
+/// Information about an allocated PUCCH.
+table Pucch {
+  rnti: uint16;
+  res_idx: uint16;
+  format_params: PucchTxParams;
+  nof_bits_harq_ack: uint16;
+  nof_bits_sr: uint8;
+  nof_bits_csi1: uint16;
+  repetition: PucchRepetition;
+}
+
+/// Information about a SIB/SI PDSCH allocation.
+table SibPdsch {
+  is_sib1: bool;
+  rbs: RbAlloc;
+  sym_start: uint8;
+  sym_length: uint8;
+  codeword: PdschCodeword;
+}
+
+/// A single UL grant carried inside a RAR.
+struct RarUlGrant {
+  temp_crnti: uint16;
+  rapid: uint8;
+  ta: uint16;
+  time_resource_assignment: uint8;
+  freq_hop_flag: bool;
+  freq_resource_assignment: uint16;
+  mcs: uint8;
+  tpc: int8;
+  csi_req: bool;
+  /// rar_ul_grant::type's variant index: 0 four_step_info, 1 two_step_success_info, 2 two_step_fallback_info.
+  grant_type: uint8;
+  /// Only meaningful when grant_type == 1 (two_step_success_info).
+  harq_feedback_timing_indicator: uint8;
+  pucch_resource_indicator: uint8;
+}
+
+/// Information about a RAR PDSCH allocation.
+table RarPdsch {
+  rnti: uint16;
+  rbs: RbAlloc;
+  sym_start: uint8;
+  sym_length: uint8;
+  codeword: PdschCodeword;
+  grants: [RarUlGrant];
+}
+
+/// A single UE record within a paging message.
+struct PagingUe {
+  paging_identity: uint64;
+  is_cn_paging: bool;
+}
+
+/// Information about a Paging PDSCH allocation.
+table PagingPdsch {
+  rbs: RbAlloc;
+  sym_start: uint8;
+  sym_length: uint8;
+  codeword: PdschCodeword;
+  paging_ues: [PagingUe];
+}
+
+/// Information about an SSB allocation.
+struct Ssb {
+  ssb_index: uint8;
+  crb_start: uint16;
+  crb_length: uint16;
+  sym_start: uint8;
+  sym_length: uint8;
+}
+
+/// Information about a CSI-RS allocation.
+struct CsiRs {
+  crb_start: uint16;
+  crb_length: uint16;
+  type: uint8;
+  row: uint8;
+  freq_domain: uint16;
+  freq_domain_nof_bits: uint8;
+  symbol0: uint8;
+  symbol1: uint8;
+  cdm_type: uint8;
+  freq_density: uint8;
+  scrambling_id: uint16;
+  power_ctrl_offset: int8;
+  power_ctrl_offset_ss: int8;
+}
+
+/// Information about a PRACH occasion.
+struct Prach {
+  pci: uint16;
+  format: uint8;
+  nof_occasions: uint8;
+  index_fd_ra: uint8;
+  start_symbol: uint8;
+  nof_cs: uint16;
+  nof_fd_ra: uint8;
+  start_preamble_index: uint8;
+  nof_preamble_indexes: uint8;
+}
+
+/// Information about an SRS allocation.
+struct Srs {
+  rnti: uint16;
+  nof_antenna_ports: uint8;
+  sym_start: uint8;
+  sym_length: uint8;
+  nof_repetitions: uint8;
+  config_index: uint8;
+  sequence_id: uint16;
+  bw_index: uint8;
+  tx_comb: uint8;
+  comb_offset: uint8;
+  cyclic_shift: uint8;
+  freq_position: uint8;
+  freq_shift: uint16;
+  freq_hopping: uint8;
+  group_or_seq_hopping: uint8;
+  resource_type: uint8;
+  t_srs_period: uint16;
+  t_offset: uint16;
+  normalized_channel_iq_matrix_req: bool;
+  positioning_report_req: bool;
+}
+
+/// Information about a DL PDCCH allocation (UE-targeted DCI types only).
+struct DlPdcch {
+  rnti: uint16;
+  dci_type: uint8;
+  coreset_id: uint8;
+  ss_id: uint8;
+  cce: uint8;
+  aggr_lvl: uint8;
+  harq_id: uint8;
+  ndi: bool;
+  rv: uint8;
+  mcs: uint8;
+  pucch_res_ind: uint8;
+}
+
+/// Information about a UL PDCCH allocation.
+struct UlPdcch {
+  rnti: uint16;
+  dci_type: uint8;
+  coreset_id: uint8;
+  ss_id: uint8;
+  cce: uint8;
+  aggr_lvl: uint8;
+  harq_id: uint8;
+  ndi: bool;
+  rv: uint8;
+  mcs: uint8;
+}
+
+/// Information about failed allocation attempts.
+struct FailedAttempts {
+  dl_pdcch: uint16;
+  ul_pdcch: uint16;
+  common_dl_pdcch: uint16;
+  common_ul_pdcch: uint16;
+  uci: uint16;
+  fallback_uci_allocs: uint16;
+}
+
+/// Decisions made by the scheduler for a given slot.
+table SlotDecision {
+  dl_pdcchs: [DlPdcch];
+  ul_pdcchs: [UlPdcch];
+  sib_pdschs: [SibPdsch];
+  rar_pdschs: [RarPdsch];
+  paging_pdschs: [PagingPdsch];
+  ue_pdschs: [Pdsch];
+  puschs: [Pusch];
+  pucchs: [Pucch];
+  ssbs: [Ssb];
+  csi_rs: [CsiRs];
+  prachs: [Prach];
+  srss: [Srs];
+  failed_attempts: FailedAttempts;
+}

@@ -1,0 +1,61 @@
+// SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+// SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+include "common.fbs";
+
+namespace ocudu.schedtrace.fbs;
+
+table PucchF0 {
+  initial_cyclic_shift: uint8;
+}
+
+table PucchF1 {
+  initial_cyclic_shift: uint8;
+  time_domain_occ: uint8;
+}
+
+table PucchF2 {
+  nof_prbs: uint8;
+}
+
+table PucchF3 {
+  nof_prbs: uint8;
+  pi_2_bpsk: bool;
+  additional_dmrs: bool;
+}
+
+table PucchF4 {
+  occ_index: uint8;
+  occ_length: uint8;
+  pi_2_bpsk: bool;
+  additional_dmrs: bool;
+}
+
+union PucchFormat {
+  PucchF0,
+  PucchF1,
+  PucchF2,
+  PucchF3,
+  PucchF4,
+}
+
+/// Information about a PUCCH resource.
+table PucchResource {
+  format: PucchFormat;
+  prb_start: uint16;
+  prb_second_hop_start: uint16 = null;
+  sym_start: uint8;
+  sym_length: uint8;
+  rep_factor: uint8;
+}
+
+/// Event sent on cell start, containing information about the cell configuration.
+table CellStartEvent {
+  /// Physical Cell Identity.
+  pci: uint16;
+  init_ul_bwp: BwpConfiguration;
+  init_dl_bwp: BwpConfiguration;
+  /// List of PUCCH resources configured for the cell.
+  /// The list contains first the 16 common resources, followed by the UE-specific resources (if any).
+  pucch_resources: [PucchResource];
+}

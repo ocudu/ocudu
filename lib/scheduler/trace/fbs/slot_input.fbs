@@ -1,0 +1,110 @@
+// SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+// SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+namespace ocudu.schedtrace.fbs;
+
+struct RachPreamble {
+  preamble_id: uint8;
+  tc_rnti: uint16;
+  /// Timing advance, in units of Tc.
+  time_advance: int64;
+}
+
+table RachOccasion {
+  start_symbol: uint8;
+  freq_idx: uint8;
+  preambles: [RachPreamble];
+}
+
+/// Indication of a RACH reception.
+table RachIndication {
+  slot_rx: uint32;
+  occasions: [RachOccasion];
+}
+
+enum HarqAckReportStatus : ubyte {
+  Nack = 0,
+  Ack = 1,
+  Dtx = 2,
+}
+
+table HarqAckEvent {
+  slot_rx: uint32;
+  ue_idx: uint16;
+  rnti: uint16;
+  harq_id: uint8;
+  status: HarqAckReportStatus;
+  tbs: uint32;
+}
+
+table SrEvent {
+  slot_rx: uint32;
+  ue_idx: uint16;
+  rnti: uint16;
+}
+
+/// Reported PMI whose codebook is unknown, i.e. the monostate alternative of the PMI variant.
+table PmiUnknown {
+}
+
+table PmiTwoAntennaPorts {
+  pmi: uint8;
+}
+
+table PmiTypeISinglePanel {
+  n1_n2: uint8;
+  mode: uint8;
+  i_1_1: uint8;
+  i_1_2: uint8 = null;
+  i_1_3: uint8 = null;
+  i_2: uint8;
+}
+
+/// Type II combining coefficients of a single layer.
+table PmiTypeIILayer {
+  i_1_3: uint8;
+  i_1_4: [uint8];
+  i_2_1: [uint8];
+  i_2_2: [uint8];
+}
+
+table PmiTypeII {
+  n1_n2: uint8;
+  nof_beams: uint8;
+  phase_alphabet_size: uint8;
+  subband_amplitude: bool;
+  i_1_1: uint8;
+  i_1_2: uint16;
+  layers: [PmiTypeIILayer];
+}
+
+union PmiValue {
+  PmiUnknown,
+  PmiTwoAntennaPorts,
+  PmiTypeISinglePanel,
+  PmiTypeII,
+}
+
+table CsiReportEvent {
+  slot_rx: uint32;
+  ue_idx: uint16;
+  rnti: uint16;
+  cri: [uint8];
+  rsrp_dbm: [int16];
+  ri: uint8 = null;
+  li: uint8 = null;
+  pmi: PmiValue;
+  first_tb_wb_cqi: uint8 = null;
+  second_tb_wb_cqi: uint8 = null;
+  first_tb_subband_diff_cqi: [uint8];
+  second_tb_subband_diff_cqi: [uint8];
+  valid: bool;
+}
+
+/// Input processed by the scheduler on a given slot.
+union SlotInput {
+  RachIndication,
+  HarqAckEvent,
+  SrEvent,
+  CsiReportEvent,
+}

@@ -19,6 +19,9 @@ add_subdirectory(slicing)
 add_subdirectory(srs_scheduling)
 add_subdirectory(rrm)
 add_subdirectory(cg_scheduler)
+if (ENABLE_SCHEDTRACE)
+    add_subdirectory(trace)
+endif (ENABLE_SCHEDTRACE)
 
 add_executable(pdcch_resource_allocator_test pdcch/pdcch_resource_allocator_test.cpp)
 target_link_libraries(pdcch_resource_allocator_test

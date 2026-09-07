@@ -1,0 +1,25 @@
+// SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+// SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+namespace ocudu.schedtrace.fbs;
+
+enum CyclicPrefix : uint8 {
+  Normal = 0,
+  Extended = 1,
+}
+
+enum SubcarrierSpacing : uint8 {
+  Khz15 = 0,
+  Khz30 = 1,
+  Khz60 = 2,
+  Khz120 = 3,
+  Khz240 = 4,
+}
+
+/// Generic parameters of a bandwidth part.
+struct BwpConfiguration {
+  cp: CyclicPrefix;
+  scs: SubcarrierSpacing;
+  crb_start: uint16;
+  crb_length: uint16;
+}

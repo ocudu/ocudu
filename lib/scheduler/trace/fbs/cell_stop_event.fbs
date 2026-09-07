@@ -1,0 +1,10 @@
+// SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+// SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+namespace ocudu.schedtrace.fbs;
+
+/// Event sent on cell stop.
+table CellStopEvent {
+  /// DU cell index.
+  cell_idx: uint16;
+}

@@ -1,0 +1,18 @@
+// SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+// SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+include "slot_input.fbs";
+include "slot_decision.fbs";
+
+namespace ocudu.schedtrace.fbs;
+
+/// Event sent for each cell on every slot.
+table CellSlotEvent {
+  slot_tx: uint32;
+  /// Scheduler latency for this slot, in microseconds.
+  latency_us: int64;
+  /// Inputs processed by the scheduler on this slot.
+  inputs: [SlotInput];
+  /// Decisions made by the scheduler for this slot.
+  decision: SlotDecision;
+}

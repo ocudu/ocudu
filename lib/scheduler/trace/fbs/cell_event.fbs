@@ -1,0 +1,23 @@
+// SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+// SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+include "cell_start_event.fbs";
+include "cell_slot_event.fbs";
+include "cell_stop_event.fbs";
+
+namespace ocudu.schedtrace.fbs;
+
+union CellEventValue {
+  CellStartEvent,
+  CellSlotEvent,
+  CellStopEvent,
+}
+
+/// Container for all cell related events.
+table CellEvent {
+  /// Timestamp of the event, in microseconds since the Unix epoch.
+  timestamp_us: int64;
+  value: CellEventValue;
+}
+
+root_type CellEvent;

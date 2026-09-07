@@ -10,6 +10,9 @@ add_subdirectory(cell)
 add_subdirectory(common_scheduling)
 add_subdirectory(ue_context)
 add_subdirectory(ue_scheduling)
+if (ENABLE_SCHEDTRACE)
+    add_subdirectory(trace)
+endif (ENABLE_SCHEDTRACE)
 
 set(SOURCES
         pdcch_scheduling/pdcch_resource_allocator_impl.cpp

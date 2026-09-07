@@ -74,6 +74,7 @@ option(ENABLE_LIBNUMA        "Enable LibNUMA"                               OFF)
 option(ENABLE_EXPORT         "Enable PIC and export libraries"              OFF)
 option(ENABLE_TRX_DRIVER     "Enable Amarisoft TRX driver library"          OFF)
 option(ENABLE_PLUGINS        "Compile plugins in the plugin folder"         ON)
+option(ENABLE_SCHEDTRACE     "Enable the scheduler event tracer"            OFF)
 option(DISABLE_MBEDTLS       "Disable MBEDTLS library and related apps"     OFF)
 option(DISABLE_SCTP          "Disable SCTP library and related apps"        OFF)
 option(BUILD_TESTING         "Compile tests"                                ON)
@@ -620,6 +621,20 @@ if(SCTP_FOUND)
         VERSION            ${PC_SCTP_VERSION}
     )
 endif (SCTP_FOUND)
+
+# FlatBuffers, fetched at build time by the scheduler event tracer. Being fetched, it has no entry in
+# COPYRIGHTS.txt for parse_copyright_file() to pick up, so it is added to the SBOM here.
+if (ENABLE_SCHEDTRACE)
+    set(FLATBUFFERS_TAG "v25.12.19")
+    string(REGEX REPLACE "^v" "" FLATBUFFERS_SBOM_VERSION "${FLATBUFFERS_TAG}")
+    sbom_add(
+        PACKAGE            "FlatBuffers"
+        DOWNLOAD_LOCATION  "https://github.com/google/flatbuffers"
+        SUPPLIER           "Google LLC"
+        LICENSE            "Apache-2.0"
+        VERSION            ${FLATBUFFERS_SBOM_VERSION}
+    )
+endif (ENABLE_SCHEDTRACE)
 
 ########################################################################
 # Instruction Set Architecture setup
