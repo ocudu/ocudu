@@ -2084,17 +2084,16 @@ static void configure_cli11_etws_args(CLI::App& app, du_high_unit_sib_config::et
 
   CLI::App* test_subcmd =
       add_subcommand(app, "test", "Fixed ETWS content that the cell broadcasts from its start, for testing purposes");
-  static du_high_unit_sib_config::etws_config::test_config test_cfg;
-  configure_cli11_etws_test_args(*test_subcmd, test_cfg);
-  auto test_verify_callback = [&app, &sib_params]() {
+  auto test_cfg = std::make_shared<du_high_unit_sib_config::etws_config::test_config>();
+  configure_cli11_etws_test_args(*test_subcmd, *test_cfg);
+  test_subcmd->parse_complete_callback([&app, &sib_params, test_cfg]() {
     CLI::App* sub_cmd = app.get_subcommand("test");
     if (sub_cmd->count() != 0) {
-      sib_params.test.emplace(test_cfg);
+      sib_params.test.emplace(*test_cfg);
     } else {
       sub_cmd->disabled();
     }
-  };
-  test_subcmd->parse_complete_callback(test_verify_callback);
+  });
 }
 
 static void configure_cli11_cmas_test_args(CLI::App& app, du_high_unit_sib_config::cmas_config::test_config& params)
@@ -2127,17 +2126,16 @@ static void configure_cli11_cmas_args(CLI::App& app, du_high_unit_sib_config::cm
 
   CLI::App* test_subcmd =
       add_subcommand(app, "test", "Fixed CMAS content that the cell broadcasts from its start, for testing purposes");
-  static du_high_unit_sib_config::cmas_config::test_config test_cfg;
-  configure_cli11_cmas_test_args(*test_subcmd, test_cfg);
-  auto test_verify_callback = [&app, &sib_params]() {
+  auto test_cfg = std::make_shared<du_high_unit_sib_config::cmas_config::test_config>();
+  configure_cli11_cmas_test_args(*test_subcmd, *test_cfg);
+  test_subcmd->parse_complete_callback([&app, &sib_params, test_cfg]() {
     CLI::App* sub_cmd = app.get_subcommand("test");
     if (sub_cmd->count() != 0) {
-      sib_params.test.emplace(test_cfg);
+      sib_params.test.emplace(*test_cfg);
     } else {
       sub_cmd->disabled();
     }
-  };
-  test_subcmd->parse_complete_callback(test_verify_callback);
+  });
 }
 
 static void configure_cli11_sib_args(CLI::App& app, du_high_unit_sib_config& sib_params)
@@ -2158,98 +2156,91 @@ static void configure_cli11_sib_args(CLI::App& app, du_high_unit_sib_config& sib
       configure_cli11_si_sched_info,
       "Configures the scheduling for each of the SI-messages broadcast by the gNB");
 
-  CLI::App*                                   sib2_subcmd = add_subcommand(app, "sib2", "SIB2 parameters");
-  static du_high_unit_sib_config::sib2_config sib2_cfg;
-  configure_cli11_sib2_config_args(*sib2_subcmd, sib2_cfg);
-  auto sib2_verify_callback = [&]() {
-    CLI::App* sib2_sub_cmd = app.get_subcommand("sib2");
-    if (sib2_sub_cmd->count() != 0) {
-      sib_params.sib2_cfg.emplace(sib2_cfg);
+  CLI::App* sib2_subcmd = add_subcommand(app, "sib2", "SIB2 parameters");
+  auto      sib2_cfg    = std::make_shared<du_high_unit_sib_config::sib2_config>();
+  configure_cli11_sib2_config_args(*sib2_subcmd, *sib2_cfg);
+  sib2_subcmd->parse_complete_callback([&app, &sib_params, sib2_cfg]() {
+    CLI::App* sub_cmd = app.get_subcommand("sib2");
+    if (sub_cmd->count() != 0) {
+      sib_params.sib2_cfg.emplace(*sib2_cfg);
     } else {
-      sib2_subcmd->disabled();
+      sub_cmd->disabled();
     }
-  };
-  sib2_subcmd->parse_complete_callback(sib2_verify_callback);
+  });
 
-  CLI::App*                                   sib3_subcmd = add_subcommand(app, "sib3", "SIB3 parameters");
-  static du_high_unit_sib_config::sib3_config sib3_cfg;
-  configure_cli11_sib3_config_args(*sib3_subcmd, sib3_cfg);
-  auto sib3_verify_callback = [&]() {
-    CLI::App* sib3_sub_cmd = app.get_subcommand("sib3");
-    if (sib3_sub_cmd->count() != 0) {
-      sib_params.sib3_cfg.emplace(sib3_cfg);
+  CLI::App* sib3_subcmd = add_subcommand(app, "sib3", "SIB3 parameters");
+  auto      sib3_cfg    = std::make_shared<du_high_unit_sib_config::sib3_config>();
+  configure_cli11_sib3_config_args(*sib3_subcmd, *sib3_cfg);
+  sib3_subcmd->parse_complete_callback([&app, &sib_params, sib3_cfg]() {
+    CLI::App* sub_cmd = app.get_subcommand("sib3");
+    if (sub_cmd->count() != 0) {
+      sib_params.sib3_cfg.emplace(*sib3_cfg);
     } else {
-      sib3_subcmd->disabled();
+      sub_cmd->disabled();
     }
-  };
-  sib3_subcmd->parse_complete_callback(sib3_verify_callback);
+  });
 
-  CLI::App*                                   sib4_subcmd = add_subcommand(app, "sib4", "SIB4 parameters");
-  static du_high_unit_sib_config::sib4_config sib4_cfg;
-  configure_cli11_sib4_config_args(*sib4_subcmd, sib4_cfg);
-  auto sib4_verify_callback = [&]() {
-    CLI::App* sib4_sub_cmd = app.get_subcommand("sib4");
-    if (sib4_sub_cmd->count() != 0) {
-      sib_params.sib4_cfg.emplace(sib4_cfg);
+  CLI::App* sib4_subcmd = add_subcommand(app, "sib4", "SIB4 parameters");
+  auto      sib4_cfg    = std::make_shared<du_high_unit_sib_config::sib4_config>();
+  configure_cli11_sib4_config_args(*sib4_subcmd, *sib4_cfg);
+  sib4_subcmd->parse_complete_callback([&app, &sib_params, sib4_cfg]() {
+    CLI::App* sub_cmd = app.get_subcommand("sib4");
+    if (sub_cmd->count() != 0) {
+      sib_params.sib4_cfg.emplace(*sib4_cfg);
     } else {
-      sib4_subcmd->disabled();
+      sub_cmd->disabled();
     }
-  };
-  sib4_subcmd->parse_complete_callback(sib4_verify_callback);
+  });
 
-  CLI::App*                                   sib5_subcmd = add_subcommand(app, "sib5", "SIB5 parameters");
-  static du_high_unit_sib_config::sib5_config sib5_cfg;
-  configure_cli11_sib5_config_args(*sib5_subcmd, sib5_cfg);
-  auto sib5_verify_callback = [&]() {
-    CLI::App* sib5_sub_cmd = app.get_subcommand("sib5");
-    if (sib5_sub_cmd->count() != 0) {
-      sib_params.sib5_cfg.emplace(sib5_cfg);
+  CLI::App* sib5_subcmd = add_subcommand(app, "sib5", "SIB5 parameters");
+  auto      sib5_cfg    = std::make_shared<du_high_unit_sib_config::sib5_config>();
+  configure_cli11_sib5_config_args(*sib5_subcmd, *sib5_cfg);
+  sib5_subcmd->parse_complete_callback([&app, &sib_params, sib5_cfg]() {
+    CLI::App* sub_cmd = app.get_subcommand("sib5");
+    if (sub_cmd->count() != 0) {
+      sib_params.sib5_cfg.emplace(*sib5_cfg);
     } else {
-      sib5_subcmd->disabled();
+      sub_cmd->disabled();
     }
-  };
-  sib5_subcmd->parse_complete_callback(sib5_verify_callback);
+  });
 
-  CLI::App*                                    sib16_subcmd = add_subcommand(app, "sib16", "SIB16 parameters");
-  static du_high_unit_sib_config::sib16_config sib16_cfg;
-  configure_cli11_sib16_config_args(*sib16_subcmd, sib16_cfg);
-  auto sib16_verify_callback = [&]() {
-    CLI::App* sib16_sub_cmd = app.get_subcommand("sib16");
-    if (sib16_sub_cmd->count() != 0) {
-      sib_params.sib16_cfg.emplace(sib16_cfg);
+  CLI::App* sib16_subcmd = add_subcommand(app, "sib16", "SIB16 parameters");
+  auto      sib16_cfg    = std::make_shared<du_high_unit_sib_config::sib16_config>();
+  configure_cli11_sib16_config_args(*sib16_subcmd, *sib16_cfg);
+  sib16_subcmd->parse_complete_callback([&app, &sib_params, sib16_cfg]() {
+    CLI::App* sub_cmd = app.get_subcommand("sib16");
+    if (sub_cmd->count() != 0) {
+      sib_params.sib16_cfg.emplace(*sib16_cfg);
     } else {
-      sib16_subcmd->disabled();
+      sub_cmd->disabled();
     }
-  };
-  sib16_subcmd->parse_complete_callback(sib16_verify_callback);
+  });
 
   CLI::App* etws_subcmd = add_subcommand(
       app, "etws", "Earthquake and Tsunami Warning System (ETWS) parameters, broadcast over SIB6 and SIB7");
-  static du_high_unit_sib_config::etws_config etws_cfg;
-  configure_cli11_etws_args(*etws_subcmd, etws_cfg);
-  auto etws_verify_callback = [&]() {
-    CLI::App* etws_sub_cmd = app.get_subcommand("etws");
-    if (etws_sub_cmd->count() != 0) {
-      sib_params.etws_cfg.emplace(etws_cfg);
+  auto etws_cfg = std::make_shared<du_high_unit_sib_config::etws_config>();
+  configure_cli11_etws_args(*etws_subcmd, *etws_cfg);
+  etws_subcmd->parse_complete_callback([&app, &sib_params, etws_cfg]() {
+    CLI::App* sub_cmd = app.get_subcommand("etws");
+    if (sub_cmd->count() != 0) {
+      sib_params.etws_cfg.emplace(*etws_cfg);
     } else {
-      etws_sub_cmd->disabled();
+      sub_cmd->disabled();
     }
-  };
-  etws_subcmd->parse_complete_callback(etws_verify_callback);
+  });
 
-  static du_high_unit_sib_config::cmas_config cmas_cfg;
-  CLI::App*                                   cmas_subcmd =
+  CLI::App* cmas_subcmd =
       add_subcommand(app, "cmas", "Commercial Mobile Alert Service (CMAS) parameters, broadcast over SIB8");
-  configure_cli11_cmas_args(*cmas_subcmd, cmas_cfg);
-  auto cmas_verify_callback = [&]() {
-    CLI::App* cmas_sub_cmd = app.get_subcommand("cmas");
-    if (cmas_sub_cmd->count() != 0) {
-      sib_params.cmas_cfg.emplace(cmas_cfg);
+  auto cmas_cfg = std::make_shared<du_high_unit_sib_config::cmas_config>();
+  configure_cli11_cmas_args(*cmas_subcmd, *cmas_cfg);
+  cmas_subcmd->parse_complete_callback([&app, &sib_params, cmas_cfg]() {
+    CLI::App* sub_cmd = app.get_subcommand("cmas");
+    if (sub_cmd->count() != 0) {
+      sib_params.cmas_cfg.emplace(*cmas_cfg);
     } else {
-      cmas_sub_cmd->disabled();
+      sub_cmd->disabled();
     }
-  };
-  cmas_subcmd->parse_complete_callback(cmas_verify_callback);
+  });
 
   add_option(app,
              "--t300",
