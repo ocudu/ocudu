@@ -78,6 +78,18 @@ template <typename Context> class dynamic_format_arg_store {
 
   using char_type = typename Context::char_type;
 
+  // A custom type small and modestly-aligned enough to live in the inline slot
+  // storage. Destructibility is handled by a per-slot thunk, so a non-trivial
+  // destructor is no longer disqualifying.
+  template <typename T> struct fits_sso {
+    enum {
+      value = detail::mapped_type_constant<T, char_type>::value ==
+                  detail::type::custom_type &&
+              sizeof(T) <= MAX_SSO_BUFFER_SIZE &&
+              alignof(T) <= alignof(std::max_align_t)
+    };
+  };
+
   template <typename T> struct need_copy {
     static constexpr detail::type mapped_type =
         detail::mapped_type_constant<T, char_type>::value;
@@ -86,9 +98,7 @@ template <typename Context> class dynamic_format_arg_store {
       value = !(detail::is_reference_wrapper<T>::value ||
                 std::is_same<T, basic_string_view<char_type>>::value ||
                 std::is_same<T, detail::std_string_view<char_type>>::value ||
-                (mapped_type == detail::type::custom_type &&
-                  sizeof(T) <= MAX_SSO_BUFFER_SIZE &&
-                  std::is_trivially_destructible_v<T>) ||
+                fits_sso<T>::value ||
                 (mapped_type != detail::type::cstring_type &&
                  mapped_type != detail::type::string_type &&
                  mapped_type != detail::type::custom_type))
@@ -101,10 +111,79 @@ template <typename Context> class dynamic_format_arg_store {
           !detail::is_reference_wrapper<T>::value,
       std::basic_string<char_type>, T>;
 
+  // Non-relocating inline storage for small custom-type arguments. Each slot
+  // carries an optional destructor thunk, so stored objects need not be
+  // trivially destructible. Slots are never relocated: capacity is fixed by
+  // reserve() and push_back() falls back to dynamic_args_ once it is reached,
+  // which is what keeps the pointers held in data_ valid.
+  class sso_storage {
+    using dtor_fn = void (*)(void*);
+    using slot_t = std::aligned_storage_t<MAX_SSO_BUFFER_SIZE>;
+
+    std::vector<slot_t> slots_;
+    std::vector<dtor_fn> dtors_;
+
+    void run_dtors() {
+      for (size_t i = dtors_.size(); i-- != 0;)
+        if (dtors_[i]) dtors_[i](static_cast<void*>(&slots_[i]));
+    }
+
+   public:
+    sso_storage() = default;
+    sso_storage(const sso_storage&) = delete;
+    auto operator=(const sso_storage&) -> sso_storage& = delete;
+
+    sso_storage(sso_storage&& other) noexcept
+        : slots_(std::move(other.slots_)), dtors_(std::move(other.dtors_)) {
+      other.slots_.clear();
+      other.dtors_.clear();
+    }
+
+    auto operator=(sso_storage&& other) noexcept -> sso_storage& {
+      if (this != &other) {
+        run_dtors();
+        slots_ = std::move(other.slots_);
+        dtors_ = std::move(other.dtors_);
+        other.slots_.clear();
+        other.dtors_.clear();
+      }
+      return *this;
+    }
+
+    ~sso_storage() { run_dtors(); }
+
+    auto size() const -> size_t { return dtors_.size(); }
+    auto full() const -> bool { return dtors_.size() >= slots_.capacity(); }
+
+    void reserve(size_t n) {
+      slots_.reserve(n);
+      dtors_.reserve(n);
+    }
+
+    void clear() {
+      run_dtors();
+      dtors_.clear();
+      slots_.clear();
+    }
+
+    // Copy-constructs arg into a stable slot and returns a reference to it.
+    // Caller must have checked !full().
+    template <typename T> auto emplace(const T& arg) -> const T& {
+      // Null thunk goes in first: a throwing constructor must not leave a live
+      // thunk pointing at uninitialized bytes.
+      dtors_.push_back(nullptr);
+      slots_.emplace_back();
+      T* obj = ::new (static_cast<void*>(&slots_.back())) T(arg);
+      if (!std::is_trivially_destructible<T>::value)
+        dtors_.back() = +[](void* p) { static_cast<T*>(p)->~T(); };
+      return *obj;
+    }
+  };
+
   // Storage of basic_format_arg must be contiguous.
   std::vector<basic_format_arg<Context>> data_;
   std::vector<detail::named_arg_info<char_type>> named_info_;
-  std::vector<std::aligned_storage_t<MAX_SSO_BUFFER_SIZE>> sso_buffer;
+  sso_storage sso_buffer;
   static constexpr unsigned MAX_POOL_STRING_SIZE = 64;
   unsigned free_string_pool_pos = 0;
   std::vector<std::string> string_pool;
@@ -124,9 +203,7 @@ template <typename Context> class dynamic_format_arg_store {
   }
 
   template <typename T> void emplace_arg_sso(const T& arg) {
-    ::new (&sso_buffer.emplace_back()) T(arg);
-    data_.emplace_back(
-      *std::launder(reinterpret_cast<const T *>(&sso_buffer.back())));
+    data_.emplace_back(sso_buffer.emplace(arg));
   }
 
   template <typename T> void emplace_short_string(const T& arg) {
@@ -190,11 +267,8 @@ template <typename Context> class dynamic_format_arg_store {
       else
         emplace_arg(dynamic_args_.push<stored_t<T>>(arg));
     }
-    else if constexpr (detail::const_check(detail::mapped_type_constant<T, char_type>::value ==
-                       detail::type::custom_type &&
-                       sizeof(T) <= MAX_SSO_BUFFER_SIZE &&
-                       std::is_trivially_destructible_v<T>)) {
-      if (sso_buffer.capacity() > sso_buffer.size())
+    else if constexpr (detail::const_check(fits_sso<T>::value)) {
+      if (!sso_buffer.full())
         emplace_arg_sso(detail::unwrap(arg));
       else
         emplace_arg(dynamic_args_.push<stored_t<T>>(arg));
@@ -218,7 +292,7 @@ template <typename Context> class dynamic_format_arg_store {
    */
   template <typename T> void push_back(std::reference_wrapper<T> arg) {
     static_assert(
-        need_copy<T>::value,
+        need_copy<T>::value || fits_sso<T>::value,
         "objects of built-in types and string views are always copied");
     emplace_arg(arg.get());
   }
