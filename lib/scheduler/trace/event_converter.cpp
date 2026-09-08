@@ -321,12 +321,12 @@ flatbuffers::Offset<fbs::Pucch> schedtrace::convert_pucch_info_to_fb(flatbuffers
         fbb, pucch.repetition->anchor_slot.count(), static_cast<uint8_t>(pucch.repetition->position));
   }
   return fbs::CreatePucch(fbb,
-                          to_value(pucch.crnti),
+                          to_underlying(pucch.crnti),
                           res_idx,
                           params_type,
                           params,
                           pucch.uci_bits.harq_ack_nof_bits,
-                          static_cast<uint8_t>(sr_nof_bits_to_uint(pucch.uci_bits.sr_bits)),
+                          static_cast<uint8_t>(to_underlying(pucch.uci_bits.sr_bits)),
                           pucch.uci_bits.csi_part1_nof_bits,
                           repetition);
 }
@@ -402,7 +402,7 @@ flatbuffers::Offset<fbs::Pusch> schedtrace::convert_pusch_to_fb(flatbuffers::Fla
                                          : flatbuffers::nullopt;
   const rb_alloc_offset rbs        = convert_rbs_to_fb(fbb, pcfg.rbs, second_hop);
   return fbs::CreatePusch(fbb,
-                          to_value(pcfg.rnti),
+                          to_underlying(pcfg.rnti),
                           rbs.type,
                           rbs.value,
                           static_cast<uint8_t>(pcfg.symbols.start()),
@@ -451,7 +451,7 @@ flatbuffers::Offset<fbs::Pdsch> schedtrace::convert_pdsch_to_fb(flatbuffers::Fla
   const auto cws_vec = nof_cws == 0 ? 0 : fbb.CreateVectorOfStructs(cws.data(), nof_cws);
 
   return fbs::CreatePdsch(fbb,
-                          to_value(pcfg.rnti),
+                          to_underlying(pcfg.rnti),
                           rbs.type,
                           rbs.value,
                           static_cast<uint8_t>(pcfg.symbols.start()),
@@ -530,7 +530,7 @@ flatbuffers::Offset<fbs::RarPdsch> schedtrace::convert_rar_pdsch_to_fb(flatbuffe
       harq_feedback_timing_indicator = two_step->harq_feedback_timing_indicator;
       pucch_resource_indicator       = two_step->pucch_resource_indicator;
     }
-    grants[nof_grants++] = fbs::RarUlGrant(to_value(grant.temp_crnti),
+    grants[nof_grants++] = fbs::RarUlGrant(to_underlying(grant.temp_crnti),
                                            grant.rapid,
                                            static_cast<uint16_t>(grant.ta),
                                            static_cast<uint8_t>(grant.time_resource_assignment),
@@ -546,7 +546,7 @@ flatbuffers::Offset<fbs::RarPdsch> schedtrace::convert_rar_pdsch_to_fb(flatbuffe
   const auto grants_vec = nof_grants != 0 ? fbb.CreateVectorOfStructs(grants.data(), nof_grants) : 0;
 
   return fbs::CreateRarPdsch(fbb,
-                             to_value(pcfg.rnti),
+                             to_underlying(pcfg.rnti),
                              rbs.type,
                              rbs.value,
                              static_cast<uint8_t>(pcfg.symbols.start()),
@@ -644,7 +644,7 @@ void schedtrace::convert_fb_to_paging_pdsch(dl_paging_allocation&    paging,
 
 fbs::Srs schedtrace::convert_srs_to_fb(const srs_info& srs)
 {
-  return {to_value(srs.crnti),
+  return {to_underlying(srs.crnti),
           srs.nof_antenna_ports,
           static_cast<uint8_t>(srs.symbols.start()),
           static_cast<uint8_t>(srs.symbols.length()),
@@ -790,7 +790,7 @@ fbs::DlPdcch schedtrace::convert_dl_pdcch_to_fb(const pdcch_dl_information& pdcc
       pucch_res_ind   = static_cast<uint8_t>(dci.pucch_resource_indicator);
     } break;
   }
-  return {to_value(pdcch.ctx.rnti),
+  return {to_underlying(pdcch.ctx.rnti),
           static_cast<uint8_t>(pdcch.dci.type()),
           static_cast<uint8_t>(pdcch.ctx.coreset_cfg->get_id()),
           static_cast<uint8_t>(pdcch.ctx.context.ss_id),
@@ -877,7 +877,7 @@ fbs::UlPdcch schedtrace::convert_ul_pdcch_to_fb(const pdcch_ul_information& pdcc
       mcs             = static_cast<uint8_t>(dci.modulation_coding_scheme);
     } break;
   }
-  return {to_value(pdcch.ctx.rnti),
+  return {to_underlying(pdcch.ctx.rnti),
           static_cast<uint8_t>(pdcch.dci.type()),
           static_cast<uint8_t>(pdcch.ctx.coreset_cfg->get_id()),
           static_cast<uint8_t>(pdcch.ctx.context.ss_id),
@@ -1184,7 +1184,7 @@ schedtrace::convert_rach_indication_to_fb(flatbuffers::FlatBufferBuilder& fbb, c
     unsigned                                                        nof_preambles = 0;
     for (const auto& preamble_msg : occ_msg.preambles) {
       preambles[nof_preambles++] = fbs::RachPreamble(
-          preamble_msg.preamble_id, to_value(preamble_msg.tc_rnti), preamble_msg.time_advance.to_Tc());
+          preamble_msg.preamble_id, to_underlying(preamble_msg.tc_rnti), preamble_msg.time_advance.to_Tc());
     }
     const auto preambles_vec = nof_preambles == 0 ? 0 : fbb.CreateVectorOfStructs(preambles.data(), nof_preambles);
     occ_offs.push_back(fbs::CreateRachOccasion(fbb, occ_msg.start_symbol, occ_msg.frequency_index, preambles_vec));
@@ -1226,7 +1226,7 @@ flatbuffers::Offset<fbs::HarqAckEvent> schedtrace::convert_harq_ack_event_to_fb(
   return fbs::CreateHarqAckEvent(fbb,
                                  event.sl_ack_rx.count(),
                                  static_cast<uint16_t>(event.ue_index),
-                                 to_value(event.rnti),
+                                 to_underlying(event.rnti),
                                  static_cast<uint8_t>(event.h_id),
                                  static_cast<fbs::HarqAckReportStatus>(event.ack),
                                  static_cast<uint32_t>(event.tbs.value()));
@@ -1249,7 +1249,7 @@ void schedtrace::convert_fb_to_harq_ack_event(harq_ack_event&          event,
 flatbuffers::Offset<fbs::SrEvent> schedtrace::convert_sr_event_to_fb(flatbuffers::FlatBufferBuilder& fbb,
                                                                      const sr_event&                 event)
 {
-  return fbs::CreateSrEvent(fbb, 0, static_cast<uint16_t>(event.ue_index), to_value(event.rnti));
+  return fbs::CreateSrEvent(fbb, 0, static_cast<uint16_t>(event.ue_index), to_underlying(event.rnti));
 }
 
 void schedtrace::convert_fb_to_sr_event(sr_event& event, const fbs::SrEvent& input)
@@ -1411,7 +1411,7 @@ flatbuffers::Offset<fbs::CsiReportEvent> schedtrace::convert_csi_report_event_to
   return fbs::CreateCsiReportEvent(fbb,
                                    event.sl_rx.count(),
                                    static_cast<uint16_t>(event.ue_index),
-                                   to_value(event.rnti),
+                                   to_underlying(event.rnti),
                                    cri_vec,
                                    rsrp_vec,
                                    to_fb_optional<uint8_t>(csi.ri),
