@@ -177,7 +177,7 @@ public:
   {
     // Inject UL RRC Message (containing RRC Reconfiguration Complete) and wait for Path Switch Request.
     get_du(du_idx).push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
-        du_ue_id, cu_ue_id, srb_id_t::srb1, make_byte_buffer("80000800795ae600").value()));
+        du_ue_id, cu_ue_id, srb_id_t::srb1, make_byte_buffer("800008006cfadbf2").value()));
     return await_path_switch_request();
   }
 
@@ -185,7 +185,7 @@ public:
   {
     // Inject UL RRC Message containing RRC Reconfiguration Complete.
     get_du(du_idx).push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
-        du_ue_id, cu_ue_id, srb_id_t::srb1, make_byte_buffer("80000800795ae600").value()));
+        du_ue_id, cu_ue_id, srb_id_t::srb1, make_byte_buffer("800008006cfadbf2").value()));
     return true;
   }
 
@@ -801,7 +801,7 @@ TEST_F(cu_cp_inter_cu_xn_handover_test, when_zigzag_handover_is_performed_then_h
       du_ue_id,
       source_local_xnap_ue_id,
       target_peer_xnap_ue_id,
-      make_byte_buffer("000100420004015f741fe0808bf183fce4fc8052").value()));
+      make_byte_buffer("000100420004015f741fe0808bf183fcf868e7c5").value()));
 
   // Inject Handover Request Ack and await UE Context Modification Request (with RRC Reconfiguration).
   ASSERT_TRUE(send_handover_request_ack_and_await_ue_context_modification_request(target_local_xnap_ue_id,

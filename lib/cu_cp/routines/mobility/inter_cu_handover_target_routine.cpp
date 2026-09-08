@@ -102,21 +102,23 @@ void inter_cu_handover_target_routine::operator()(
 
   // Prepare E1AP Bearer Context Setup Request and call E1AP notifier.
   {
-    // Get security keys for Bearer Context Setup Request (RRC UE is not created yet).
     if (!ue->get_security_manager().is_security_context_initialized()) {
       logger.warning("ue={}: \"{}\" failed. Cause: Security context not initialized", request.ue_index, name());
       CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
     }
 
-    // Perform horizontal key derivation.
-    cell_cfg = cell_meas_mng.get_cell_config(request.target_cell_id.nci);
-    if (!cell_cfg.has_value() || !cell_cfg->serving_cell_cfg.pci.has_value() ||
-        !cell_cfg->serving_cell_cfg.ssb_arfcn.has_value()) {
-      logger.warning("ue={}: \"{}\" failed. Cause: Could not find PCI and SSB-ARFCN", request.ue_index, name());
-      CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
+    // On Xn the source already derived K_NG-RAN* for this cell (TS 33.501 Section 6.9.2.3.2); on N2 the AMF supplies
+    // the {NH, NCC} pair and this node derives from it (Section 6.9.2.3.3).
+    if (!is_xn_handover()) {
+      std::optional<cell_meas_config> cell_cfg = cell_meas_mng.get_cell_config(request.target_cell_id.nci);
+      if (!cell_cfg.has_value() || !cell_cfg->serving_cell_cfg.pci.has_value() ||
+          !cell_cfg->serving_cell_cfg.ssb_arfcn.has_value()) {
+        logger.warning("ue={}: \"{}\" failed. Cause: Could not find PCI and SSB-ARFCN", request.ue_index, name());
+        CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
+      }
+      ue->get_security_manager().perform_horizontal_key_derivation(
+          cell_cfg->serving_cell_cfg.pci.value(), cell_cfg->serving_cell_cfg.ssb_arfcn.value().value());
     }
-    ue->get_security_manager().perform_horizontal_key_derivation(cell_cfg->serving_cell_cfg.pci.value(),
-                                                                 cell_cfg->serving_cell_cfg.ssb_arfcn.value().value());
 
     if (!fill_e1ap_bearer_context_setup_request(ue->get_security_manager().get_up_as_config())) {
       logger.warning("ue={}: \"{}\" failed. Cause: Could not fill context at CU-UP", request.ue_index, name());

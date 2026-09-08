@@ -7,6 +7,7 @@
 #include "ocudu/adt/bounded_integer.h"
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/e1ap/common/e1ap_types.h"
+#include "ocudu/ran/arfcn.h"
 #include "ocudu/ran/cu_cp_types.h"
 #include <chrono>
 #include <optional>
@@ -29,6 +30,8 @@ struct cu_cp_cho_target_candidate {
   cu_cp_du_index_t    du_index = cu_cp_du_index_t::invalid; ///< Invalid for inter-CU (Xn) candidates.
   /// Xn-C peer index for inter-CU candidates. When set, the target is served by a remote CU-CP.
   std::optional<xnc_peer_index_t> xnc_index;
+  /// SSB ARFCN of the target cell, set for inter-CU (Xn) candidates. The source derives the candidate's key from it.
+  std::optional<arfcn_t> ssb_arfcn;
 };
 
 /// \brief Request for intra-CU CHO orchestration.

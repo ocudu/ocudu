@@ -119,6 +119,14 @@ security::security_context ue_security_manager::get_security_context() const
   return sec_context;
 }
 
+security::security_context ue_security_manager::get_handover_security_context(pci_t    target_pci,
+                                                                              unsigned target_ssb_arfcn) const
+{
+  security::security_context target_sec_context = sec_context;
+  target_sec_context.horizontal_key_derivation(target_pci, target_ssb_arfcn);
+  return target_sec_context;
+}
+
 security::sec_selected_algos ue_security_manager::get_security_algos() const
 {
   return sec_context.sel_algos;

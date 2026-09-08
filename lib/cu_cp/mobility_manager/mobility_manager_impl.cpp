@@ -195,7 +195,9 @@ void mobility_manager::handle_conditional_handover(
         logger.warning("ue={}: CHO candidate skipped. Could not find CGI for PCI {}", ue_index, target_pci);
         continue;
       }
-      targets.push_back({target_pci, cgi.value(), target_du, std::nullopt});
+      // An intra-CU candidate is keyed when its target RRC UE is created, from that cell's own context, so no
+      // ARFCN here.
+      targets.push_back({target_pci, cgi.value(), target_du, std::nullopt, std::nullopt});
     } else {
       // Inter-CU candidate: try to find a remote CU-CP via Xn.
       expected<std::pair<unsigned, nr_cell_identity>> nbr = cell_meas_mng.find_neighbour_nci(target_pci);
@@ -210,8 +212,16 @@ void mobility_manager::handle_conditional_handover(
             "ue={}: CHO candidate skipped. No Xn peer found for gNB-ID derived from PCI {}", ue_index, target_pci);
         continue;
       }
-      nr_cell_global_id_t cgi{u->get_ue_context().plmn, nbr->second};
-      targets.push_back({target_pci, cgi, cu_cp_du_index_t::invalid, xnc_index});
+      nr_cell_global_id_t             cgi{u->get_ue_context().plmn, nbr->second};
+      std::optional<cell_meas_config> target_cell_cfg = cell_meas_mng.get_cell_config(nbr->second);
+      if (!target_cell_cfg.has_value() || !target_cell_cfg->serving_cell_cfg.ssb_arfcn.has_value()) {
+        logger.warning("ue={}: CHO candidate skipped. No SSB ARFCN configured for PCI {}, cannot derive its key",
+                       ue_index,
+                       target_pci);
+        continue;
+      }
+      targets.push_back(
+          {target_pci, cgi, cu_cp_du_index_t::invalid, xnc_index, target_cell_cfg->serving_cell_cfg.ssb_arfcn});
     }
   }
   if (targets.empty()) {
@@ -451,6 +461,16 @@ void mobility_manager::handle_xnap_handover(ngap_interface&  ngap,
     return;
   }
 
+  // The key handed to the target is derived from its PCI and ARFCN-DL.
+  std::optional<cell_meas_config> target_cell_cfg = cell_meas_mng.get_cell_config(target_nci);
+  if (!target_cell_cfg.has_value() || !target_cell_cfg->serving_cell_cfg.pci.has_value() ||
+      !target_cell_cfg->serving_cell_cfg.ssb_arfcn.has_value()) {
+    logger.warning("ue={}: Handover to nci={:#x} skipped. No PCI or SSB ARFCN configured, cannot derive its key",
+                   ue.get_ue_index(),
+                   target_nci.value());
+    return;
+  }
+
   xnap_handover_request request = generate_xnap_handover_request(
       ue.get_ue_index(),
       nr_cell_global_id_t{served_guami->plmn, target_nci},
@@ -458,7 +478,8 @@ void mobility_manager::handle_xnap_handover(ngap_interface&  ngap,
       source_amf_ue_id,
       ngap_ctxt.amf_addr,
       ue.get_ue_ambr(),
-      ue.get_security_manager().get_security_context(),
+      ue.get_security_manager().get_handover_security_context(target_cell_cfg->serving_cell_cfg.pci.value(),
+                                                              target_cell_cfg->serving_cell_cfg.ssb_arfcn->value()),
       ue.get_up_resource_manager().get_pdu_sessions_map(),
       ue.get_rrc_ue()->get_rrc_ue_control_message_handler().get_packed_handover_preparation_message(),
       ue.get_location_manager().get_location_reporting_request());

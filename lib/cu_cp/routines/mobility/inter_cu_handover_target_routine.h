@@ -155,8 +155,6 @@ private:
   f1ap_ue_context_setup_response            ue_context_setup_response;
   e1ap_bearer_context_modification_response bearer_context_modification_response;
   byte_buffer                               handover_command_pdu;
-
-  std::optional<cell_meas_config> cell_cfg;
 };
 
 } // namespace ocudu::ocucp

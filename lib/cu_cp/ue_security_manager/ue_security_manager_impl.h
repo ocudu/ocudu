@@ -50,7 +50,14 @@ public:
   [[nodiscard]] bool is_security_enabled() const;
 
   // rrc_ue_security_manager
-  [[nodiscard]] security::security_context   get_security_context() const;
+  [[nodiscard]] security::security_context get_security_context() const;
+
+  /// \brief Returns the security context to hand to a handover target, with K_NG-RAN* already derived for the
+  /// target cell (TS 33.501 Section 6.9.2.3.2).
+  ///
+  /// Derives on a copy, so this UE's own key stays intact. The derivation is horizontal.
+  [[nodiscard]] security::security_context   get_handover_security_context(pci_t    target_pci,
+                                                                           unsigned target_ssb_arfcn) const;
   [[nodiscard]] security::sec_selected_algos get_security_algos() const;
   [[nodiscard]] security::sec_as_config      get_rrc_as_config() const;
   [[nodiscard]] security::sec_128_as_config  get_rrc_128_as_config() const;
