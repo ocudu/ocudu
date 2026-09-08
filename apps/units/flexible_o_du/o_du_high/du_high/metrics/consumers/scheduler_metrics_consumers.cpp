@@ -6,6 +6,7 @@
 #include "ocudu/support/engineering_notation.h"
 #include "ocudu/support/format/custom_formattable.h"
 #include "ocudu/support/format/fmt_to_c_str.h"
+#include <cstdio>
 
 using namespace ocudu;
 
@@ -36,10 +37,13 @@ static const char* event_to_string(scheduler_cell_event::event_type ev)
 
 void scheduler_cell_metrics_consumer_stdout::handle_metric(const scheduler_metrics_report& report)
 {
+  bool printed = false;
   for (const auto& cell : report.cells) {
     if (not cell.report_ue_metrics or cell.ue_metrics.empty()) {
       continue;
     }
+
+    printed = true;
 
     if (cell.ue_metrics.size() > MAX_NOF_STDOUT_METRIC_LINES_WITHOUT_HEADER) {
       print_sched_header();
@@ -137,6 +141,11 @@ void scheduler_cell_metrics_consumer_stdout::handle_metric(const scheduler_metri
 
       fmt::print("\n");
     }
+  }
+
+  if (printed) {
+    // stdout is fully buffered when not attached to a terminal (e.g. Docker logs); flush so tables appear on time.
+    ::fflush(stdout);
   }
 }
 
