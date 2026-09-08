@@ -13,6 +13,9 @@ FetchContent_Declare(flatbuffers
   GIT_SHALLOW TRUE)
 # Suppress warnings when compiling flatbuffers itself; the project's -Werror flags are not its concern.
 set(SAVED_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+# flatc is a host tool that the build has to execute to generate the headers, so don't inherit the target -march.
+# That way we support running the builder in a different machine.
+string(REGEX REPLACE "-m(arch|tune|cpu)=[^ ]+" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
 FetchContent_MakeAvailable(flatbuffers)
 set(CMAKE_CXX_FLAGS "${SAVED_CXX_FLAGS}")
