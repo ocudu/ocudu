@@ -271,6 +271,7 @@ variables:
     ENABLE_ZEROMQ: "True"
     ENABLE_DPDK: "True"
     DPDK_VERSION: "25.11_avx2"
+    ENABLE_SCHEDTRACE: "True"
     TEST_MODE: default
     MARCH: x86-64-v3
     LINKER: mold
@@ -317,6 +318,7 @@ variables:
     ENABLE_DPDK: "True"
     ENABLE_RTSAN: "True"
     DPDK_VERSION: "25.11_avx2"
+    ENABLE_SCHEDTRACE: "True"
     TEST_MODE: rtsan
     MARCH: x86-64-v3
     LINKER: mold
