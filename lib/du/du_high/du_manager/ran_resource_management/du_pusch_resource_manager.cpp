@@ -269,7 +269,8 @@ du_pusch_resource_manager::select_td_alloc_list(du_cell_index_t                 
 
   // From the UE perspective the dedicated Rel-16 TDRA list replaces the common list for DCI format 0_1. Mirror the
   // common list entries first, so that the DCI time-domain indices used by the scheduler keep their meaning, and
-  // append the repetition entry after them.
+  // append the repetition entry after them. The mirroring also keeps the two lists on the same k2 values, which the
+  // UL slice scheduler relies on: it derives the cell's candidate PUSCH slots from the common list alone.
   if (not cell_cfg.ran.ul_cfg_common.init_ul_bwp.pusch_cfg_common.has_value()) {
     return {};
   }

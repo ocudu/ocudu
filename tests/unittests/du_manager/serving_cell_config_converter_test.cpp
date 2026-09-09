@@ -331,6 +331,12 @@ TEST(serving_cell_config_converter_test, test_ue_pusch_td_alloc_list_dci_0_1_r16
   ASSERT_TRUE(rrc_pusch_cfg.ext);
   ASSERT_TRUE(rrc_pusch_cfg.pusch_time_domain_alloc_list_dci_0_1_r16.is_present());
   ASSERT_TRUE(rrc_pusch_cfg.pusch_time_domain_alloc_list_dci_0_1_r16->is_setup());
+  // pusch-RepTypeIndicatorDCI-0-1-r16 is mandatory whenever pusch-TimeDomainAllocationListDCI-0-1-r16 is configured.
+  ASSERT_TRUE(rrc_pusch_cfg.pusch_rep_type_ind_dci_0_1_r16_present);
+  ASSERT_EQ(rrc_pusch_cfg.pusch_rep_type_ind_dci_0_1_r16.value,
+            asn1::rrc_nr::pusch_cfg_s::pusch_rep_type_ind_dci_0_1_r16_opts::pusch_rep_type_a);
+  // availableSlotCounting-r17 is Cond PUSCH-RepTypeAIndicated: mandatory here since Type A is always indicated.
+  ASSERT_TRUE(rrc_pusch_cfg.available_slot_count_r17_present);
   const auto& rrc_list = rrc_pusch_cfg.pusch_time_domain_alloc_list_dci_0_1_r16->setup();
   ASSERT_EQ(rrc_list.size(), 2);
   ASSERT_TRUE(rrc_list[0].k2_r16_present);

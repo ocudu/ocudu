@@ -2318,8 +2318,14 @@ calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_config& 
       out.pusch_time_domain_alloc_list_present = true;
       out.pusch_time_domain_alloc_list.set_release();
     }
+    // pusch-RepTypeIndicatorDCI-0-1-r16 is a Cond field, mandatory whenever
+    // pusch-TimeDomainAllocationListDCI-0-1-r16 is configured. Only Rel-16 PUSCH repetition Type A is supported.
+    out.ext                                    = true;
+    out.pusch_rep_type_ind_dci_0_1_r16_present = true;
+    out.pusch_rep_type_ind_dci_0_1_r16.value   = pusch_cfg_s::pusch_rep_type_ind_dci_0_1_r16_opts::pusch_rep_type_a;
+    // availableSlotCounting-r17: the scheduler counts occasions over available (fully UL), not consecutive, slots.
+    out.available_slot_count_r17_present = true;
     if (not src_is_r16 || dest.pusch_td_alloc_list != src.pusch_td_alloc_list) {
-      out.ext = true;
       out.pusch_time_domain_alloc_list_dci_0_1_r16.set_present();
       auto& alloc_list = out.pusch_time_domain_alloc_list_dci_0_1_r16->set_setup();
       for (const auto& td_alloc : dest.pusch_td_alloc_list) {

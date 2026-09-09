@@ -146,6 +146,37 @@ TEST_F(du_pxsch_repetition_resource_manager_test, when_ue_supports_pusch_repetit
   ASSERT_EQ(rep_entry.symbols, common_list[0].symbols);
 }
 
+// The dedicated list must reach exactly the same slots as the common one: the UL slice scheduler derives a cell's
+// candidate PUSCH slots from the common list alone, before any UE is considered, so it has no dedicated list to
+// consult. A k2 offered only by the dedicated list would name a slot that never gets a slice candidate, making grants
+// that use it silently impossible; a k2 dropped from it would have candidate slots generated that a UE on DCI format
+// 0_1 could never use.
+TEST_F(du_pxsch_repetition_resource_manager_test, dedicated_pusch_list_offers_exactly_the_k2_values_of_the_common_one)
+{
+  cell_group_config ue = make_ue();
+  pusch_mng.update_resources(ue, make_caps(1, true));
+
+  const auto& common_list =
+      cell_cfg_list.front().ran.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list;
+  const auto& ded_list = get_pusch_cfg(ue).pusch_td_alloc_list;
+  ASSERT_FALSE(ded_list.empty());
+
+  const auto offers_k2 = [](const auto& list, uint8_t k2) {
+    return std::any_of(
+        list.begin(), list.end(), [k2](const pusch_time_domain_resource_allocation& res) { return res.k2 == k2; });
+  };
+  for (const pusch_time_domain_resource_allocation& ded : ded_list) {
+    EXPECT_TRUE(offers_k2(common_list, ded.k2)) << "dedicated k2=" << unsigned{ded.k2}
+                                                << " is not offered by the "
+                                                   "common list";
+  }
+  for (const pusch_time_domain_resource_allocation& common : common_list) {
+    EXPECT_TRUE(offers_k2(ded_list, common.k2)) << "common k2=" << unsigned{common.k2}
+                                                << " is missing from the "
+                                                   "dedicated list";
+  }
+}
+
 TEST_F(du_pxsch_repetition_resource_manager_test, when_ue_does_not_support_pusch_repetitions_then_list_r16_is_empty)
 {
   cell_group_config ue = make_ue();
