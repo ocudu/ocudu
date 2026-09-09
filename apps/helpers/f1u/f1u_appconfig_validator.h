@@ -8,7 +8,7 @@ namespace ocudu {
 
 struct f1u_sockets_appconfig;
 
-/// TODO write docs.
+/// \brief Validates the F1-U sockets appconfig.
 bool validate_f1u_sockets_appconfig(const f1u_sockets_appconfig& config);
 
 } // namespace ocudu

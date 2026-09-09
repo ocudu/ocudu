@@ -8,7 +8,7 @@ namespace ocudu {
 
 struct xnu_sockets_appconfig;
 
-/// TODO write docs.
+/// \brief Validates the Xn-U sockets appconfig.
 bool validate_xnu_sockets_appconfig(const xnu_sockets_appconfig& config);
 
 } // namespace ocudu
