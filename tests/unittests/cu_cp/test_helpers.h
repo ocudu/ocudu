@@ -965,7 +965,7 @@ public:
   {
     logger.info("ue={}: Received a new {} request to handle inter-CU target handover execution",
                 ue_index,
-                xnap_ho_target_execution_ctxt.has_value() ? "XN-C" : "NG");
+                xnap_ho_target_execution_ctxt.has_value() ? "Xn-C" : "NG");
   }
 
   void handle_handover_cancel_received(cu_cp_ue_index_t ue_index) override

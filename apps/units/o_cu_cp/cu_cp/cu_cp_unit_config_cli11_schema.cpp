@@ -776,7 +776,7 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_unit_config& cu_cp_p
                                                      configure_cli11_amf_item_args,
                                                      "Sets the list of extra AMFs for the CU-CP to connect to");
 
-  // XN-C parameters.
+  // Xn-C parameters.
   CLI::App* xnap_subcmd = add_subcommand(app, "xnap", "XNAP configuration");
   configure_cli11_xnap_args(*xnap_subcmd, cu_cp_params.xnap_config);
 

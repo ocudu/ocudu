@@ -92,8 +92,8 @@ inline xnap_message generate_asn1_ngran_node_cfg_update_failure(xnap_cause_t cau
   return cfg_update_fail;
 }
 
-/// \brief Apply the cell changes an XN-C peer reported to the cells stored for it.
-/// \param[out] peer_cells The cells the XN-C peer serves.
+/// \brief Apply the cell changes an Xn-C peer reported to the cells stored for it.
+/// \param[out] peer_cells The cells the Xn-C peer serves.
 /// \param[in] asn1_cells_to_upd The Served Cells To Update NR IE received from the peer.
 inline void update_peer_served_cells(std::vector<cu_cp_served_cell_info>&        peer_cells,
                                      const asn1::xnap::served_cells_to_upd_nr_s& asn1_cells_to_upd)

@@ -73,7 +73,7 @@ static void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
     ocudu_assert(n2_gw != nullptr, "Invalid N2 GW client handler");
   }
   if (!cfg.xnap.xnaps.empty()) {
-    ocudu_assert(!cfg.xnap.xnc_gws.empty(), "No XN-C gateways configured for XNAP peers");
+    ocudu_assert(!cfg.xnap.xnc_gws.empty(), "No Xn-C gateways configured for XNAP peers");
   }
   ocudu_assert(cfg.services.timers != nullptr, "Invalid timers");
 

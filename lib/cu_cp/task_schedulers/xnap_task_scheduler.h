@@ -11,7 +11,7 @@
 
 namespace ocudu::ocucp {
 
-/// \brief Service provided by CU-CP to schedule async tasks for a given XN-C peer.
+/// \brief Service provided by CU-CP to schedule async tasks for a given Xn-C peer.
 class xnap_task_scheduler
 {
 public:

@@ -32,7 +32,7 @@ public:
   static const char* name() { return "XN Setup Procedure"; }
 
 private:
-  /// Checks whether the XNAP should attempt again to connect to XN-C peer.
+  /// Checks whether the XNAP should attempt again to connect to Xn-C peer.
   bool retry_required();
 
   static bool is_failure_misconfiguration(const asn1::xnap::cause_c& cause);

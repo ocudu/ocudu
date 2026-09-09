@@ -96,7 +96,7 @@ private:
   ocudulog::basic_logger&                logger;
 };
 
-/// Adapter of the SCTP server to the XN-C interface of the CU-CP.
+/// Adapter of the SCTP server to the Xn-C interface of the CU-CP.
 class xnc_sctp_server final : public ocucp::xnc_connection_gateway, public sctp_network_association_factory
 {
 public:

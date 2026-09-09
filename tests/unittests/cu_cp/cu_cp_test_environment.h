@@ -108,10 +108,10 @@ public:
   mock_cu_up&     get_cu_up(size_t cu_up_index) { return *cu_ups.at(cu_up_index); }
   mock_xnc_cu_cp& get_xnc_cu_cp(size_t xnc_index = 0) { return *xnc_peers.at(xnc_index); }
 
-  /// Address of the SCTP association with the AMF, which the CU-CP reports to an XN-C peer that takes over a UE.
+  /// Address of the SCTP association with the AMF, which the CU-CP reports to an Xn-C peer that takes over a UE.
   const transport_layer_address amf_addr = transport_layer_address::create_from_string("10.12.1.100");
 
-  /// PCI of the cell each XN-C peer advertises at XN setup. A UE reporting this PCI as its failure cell resolves to
+  /// PCI of the cell each Xn-C peer advertises at XN setup. A UE reporting this PCI as its failure cell resolves to
   /// the peer, which is what a UE context retrieval relies on.
   static constexpr pci_t xnc_peer_served_pci = 42;
 
@@ -119,7 +119,7 @@ public:
   /// node has to resolve it to derive KgNB* for the target.
   static nr_cell_identity xnc_peer_served_nci() { return nr_cell_identity::create(0x19b0).value(); }
 
-  /// gNB ID each XN-C peer reports at XN setup. A resuming UE's I-RNTI has to encode it for the peer holding the
+  /// gNB ID each Xn-C peer reports at XN setup. A resuming UE's I-RNTI has to encode it for the peer holding the
   /// context to be resolvable.
   gnb_id_t get_xnc_peer_gnb_id() const
   {
@@ -137,10 +137,10 @@ public:
   /// Returns true if the AMF is successfully reconnected.
   bool reconnect_amf(unsigned amf_idx);
 
-  /// Start CU-CP connection to XN-C peer CU-CP and run XN setup procedure to completion.
+  /// Start CU-CP connection to Xn-C peer CU-CP and run XN setup procedure to completion.
   void run_xn_setup();
 
-  /// Run to completion the NG-RAN Node Configuration Update the CU-CP sends to each XN-C peer when the cells it serves
+  /// Run to completion the NG-RAN Node Configuration Update the CU-CP sends to each Xn-C peer when the cells it serves
   /// change, checking that it reports the given cells as added.
   void run_ngran_node_cfg_update(span<const test_helpers::served_cell_item_info> added_cells);
 
@@ -379,7 +379,7 @@ public:
 
   rrc_timers_t rrc_test_timer_values;
 
-  /// Last NG-RAN Node Configuration Update the CU-CP sent to an XN-C peer.
+  /// Last NG-RAN Node Configuration Update the CU-CP sent to an Xn-C peer.
   xnap_message last_ngran_node_cfg_update;
 
 private:
@@ -397,7 +397,7 @@ private:
   /// Notifiers for the CU-CP interface.
   std::map<unsigned, cu_cp_test_amf_config> amf_configs;
 
-  // Emulated XN-C peer CU-CP nodes.
+  // Emulated Xn-C peer CU-CP nodes.
   std::map<unsigned, std::unique_ptr<mock_xnc_cu_cp>> xnc_peers;
   unsigned                                            next_xnc_peer_idx = 0;
 

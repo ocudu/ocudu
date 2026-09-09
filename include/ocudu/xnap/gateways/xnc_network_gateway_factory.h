@@ -13,7 +13,7 @@ class dlt_pcap;
 class io_broker;
 class task_executor;
 
-/// Configuration of an SCTP-based XN-C Gateway.
+/// Configuration of an SCTP-based Xn-C Gateway.
 struct xnc_sctp_gateway_config {
   /// SCTP configuration.
   sctp_network_gateway_config sctp;
@@ -27,7 +27,7 @@ struct xnc_sctp_gateway_config {
   dlt_pcap& pcap;
 };
 
-/// Creates an XN-C Gateway server that listens for incoming SCTP connections, packs/unpacks XNAP PDUs and forwards
+/// Creates an Xn-C Gateway server that listens for incoming SCTP connections, packs/unpacks XNAP PDUs and forwards
 /// them to the GW/CU-CP XNAP handler.
 std::unique_ptr<ocucp::xnc_connection_gateway> create_xnc_connection_gateway(const xnc_sctp_gateway_config& cfg);
 

@@ -122,7 +122,7 @@ TEST_F(rrc_ue_reest, when_no_local_context_matches_then_context_is_retrieved_fro
 
 TEST_F(rrc_ue_reest, when_context_cannot_be_retrieved_from_peer_then_rrc_setup_sent)
 {
-  // No local context and no peer that can supply one, e.g. no XN-C peer serves the failure cell.
+  // No local context and no peer that can supply one, e.g. no Xn-C peer serves the failure cell.
   receive_valid_reestablishment_request(1, to_rnti(0x4601));
 
   ASSERT_TRUE(rrc_ue_cu_cp_notifier.last_context_retrieval_request.has_value())

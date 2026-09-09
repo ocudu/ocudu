@@ -55,7 +55,7 @@ void xnap_source_handover_preparation_procedure::operator()(
   // Subscribe to respective publisher to receive HANDOVER REQUEST ACK/HANDOVER PREPARATION FAILURE message.
   transaction_sink.subscribe_to(xn_handover_outcome, txn_reloc_prep_ms);
 
-  // Send Handover Request to XN-C peer.
+  // Send Handover Request to Xn-C peer.
   if (!send_handover_request()) {
     logger.log_warning("\"{}\" failed. Cause: Could not send Handover Request", name());
     CORO_EARLY_RETURN(xnap_handover_preparation_response{false});
@@ -205,7 +205,7 @@ bool xnap_source_handover_preparation_procedure::send_handover_request()
   last_visited_cell.set_ng_ran_cell() = last_visited_cell_information.value().copy();
   ho_request->ue_history_info.push_back(last_visited_cell);
 
-  // Forward message to XN-C peer.
+  // Forward message to Xn-C peer.
   if (!xnc_notifier.on_new_message(msg)) {
     logger.log_warning("Cannot send Handover Request");
     return false;
@@ -229,7 +229,7 @@ bool xnap_source_handover_preparation_procedure::send_handover_cancel()
 
   ho_cancel->cause.set_radio_network() = cause_radio_network_layer_opts::txn_relo_cprep_expiry;
 
-  // Forward message to XN-C peer.
+  // Forward message to Xn-C peer.
   if (!xnc_notifier.on_new_message(msg)) {
     logger.log_warning("Cannot send Handover Cancel");
     return false;

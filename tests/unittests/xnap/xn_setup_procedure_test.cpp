@@ -47,7 +47,7 @@ TEST_F(xnap_test, when_xn_setup_procedure_times_out_then_setup_failure_is_return
   ASSERT_EQ(setup_req.pdu.init_msg().value.type(),
             asn1::xnap::xnap_elem_procs_o::init_msg_c::types_opts::xn_setup_request);
 
-  // Status: Fail XN setup procedure (XN-C peer doesn't respond).
+  // Status: Fail XN setup procedure (Xn-C peer doesn't respond).
   ASSERT_TRUE(this->tick(t, std::chrono::milliseconds(5000)));
 
   ASSERT_TRUE(t.ready());
@@ -75,7 +75,7 @@ TEST_F(xn_setup_procedure_test,
       generate_asn1_xn_setup_failure(xnap_cause_radio_network_t::unspecified, asn1::xnap::time_to_wait_e::v10s);
   xnap->handle_message(setup_fail);
 
-  // Status: XN-C peer does not receive new XN Setup Request until time-to-wait has ended.
+  // Status: Xn-C peer does not receive new XN Setup Request until time-to-wait has ended.
   ASSERT_TRUE(this->tick(t, std::chrono::milliseconds(10000)));
 
   // Check XN setup request is sent again.

@@ -38,8 +38,8 @@ public:
   /// \returns true if the procedure completed successfully, false otherwise.
   virtual async_task<bool> handle_xn_setup_request_required() = 0;
 
-  /// \brief Trigger the report of the cells this node serves to the XN-C peer (TS 38.423 section 8.4.1).
-  /// \returns true if the XN-C peer acknowledged the reported cells, false otherwise.
+  /// \brief Trigger the report of the cells this node serves to the Xn-C peer (TS 38.423 section 8.4.1).
+  /// \returns true if the Xn-C peer acknowledged the reported cells, false otherwise.
   virtual async_task<bool> handle_served_cells_update_required() = 0;
 
   /// \brief Provide the SCTP association notifier after the SCTP association establishment.
@@ -156,7 +156,7 @@ public:
   /// \param[in] ue_index The index of the UE.
   virtual void on_ue_context_release_received(cu_cp_ue_index_t ue_index) = 0;
 
-  /// \brief Request the NR cells this node serves, to advertise them to the XN-C peer.
+  /// \brief Request the NR cells this node serves, to advertise them to the Xn-C peer.
   /// \returns The cells served by the connected DUs.
   virtual std::vector<cu_cp_served_cell_info> on_served_cells_required() = 0;
 
@@ -186,15 +186,15 @@ public:
 
   virtual xnap_ue_context_removal_handler& get_xnap_ue_context_removal_handler() = 0;
 
-  /// \brief Check if the connected XN-C peer has the given GNB ID.
+  /// \brief Check if the connected Xn-C peer has the given GNB ID.
   virtual bool has_peer_gnb_id(const gnb_id_t& peer_gnb_id) const = 0;
 
-  /// \brief Check if the gNB ID of the connected XN-C peer carries the given Local NG-RAN Node Identifier.
+  /// \brief Check if the gNB ID of the connected Xn-C peer carries the given Local NG-RAN Node Identifier.
   /// \param[in] node_id Local NG-RAN Node Identifier read out of an I-RNTI.
   /// \param[in] nof_node_id_bits Width the I-RNTI profile gives the identifier.
   virtual bool has_peer_local_node_id(uint32_t node_id, unsigned nof_node_id_bits) const = 0;
 
-  /// \brief Check if the connected XN-C peer serves a NR cell with the given PCI.
+  /// \brief Check if the connected Xn-C peer serves a NR cell with the given PCI.
   /// \remark The served cell list is only known once the XN setup procedure has completed with the peer.
   virtual bool has_peer_pci(pci_t peer_pci) const = 0;
 };

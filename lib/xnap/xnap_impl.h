@@ -116,7 +116,7 @@ private:
   /// \param[in] msg The received Retrieve UE Context Request message.
   void handle_retrieve_ue_context_request(const asn1::xnap::retrieve_ue_context_request_s& msg);
 
-  /// \brief Resolve the configuration of a cell served by the XN-C peer.
+  /// \brief Resolve the configuration of a cell served by the Xn-C peer.
   /// \param[in] nci Identity of the served cell.
   /// \return The served cell configuration, or std::nullopt if the peer did not advertise the cell at XN setup.
   std::optional<cu_cp_served_cell_info> find_peer_served_cell(nr_cell_identity nci) const;
@@ -144,7 +144,7 @@ private:
 
   const xnc_peer_index_t xnc_index;
   xnap_configuration     xnap_cfg;
-  /// NR cells this node advertised to the XN-C peer.
+  /// NR cells this node advertised to the Xn-C peer.
   std::vector<cu_cp_served_cell_info> advertised_cells;
   std::optional<xnap_context>         peer_ctxt;
   xnap_cu_cp_notifier&                cu_cp_notifier;

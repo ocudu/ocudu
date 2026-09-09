@@ -19,7 +19,7 @@ namespace ocudu::ocucp {
 cu_cp_served_cell_info generate_served_cell_info(pci_t pci, const nr_cell_global_id_t& cgi, tac_t tac = 7);
 
 /// \brief Generate an XN Setup Response that advertises a single served NR cell, so that the peer context stores a
-/// served cell list. Used to test lookups of the XN-C peer by served cell PCI.
+/// served cell list. Used to test lookups of the Xn-C peer by served cell PCI.
 xnap_message generate_xn_setup_response_with_served_cell(const xnap_configuration&  peer_cfg,
                                                          pci_t                      served_pci,
                                                          const nr_cell_global_id_t& served_cgi);

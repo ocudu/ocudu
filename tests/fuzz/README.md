@@ -205,7 +205,7 @@ AFL_FAST_CAL=1 afl-fuzz \
 | Component | Role |
 |---|---|
 | `fuzz_amf` | `n2_connection_client` stub; `push_tx_pdu()` injects a decoded `ngap_message` into the CU-CP, `try_pop_rx_pdu()` drains responses sent by the CU-CP |
-| `fuzz_xnc_gateway` | No-op `xnc_connection_gateway`; the XN-C interface is not under test |
+| `fuzz_xnc_gateway` | No-op `xnc_connection_gateway`; the Xn-C interface is not under test |
 | `task_worker` | Background thread that executes CU-CP tasks |
 | `timer_manager` | Driven from the fuzzer main thread via `tick()` to cover timer-expiry code paths |
 

@@ -88,7 +88,7 @@ void xnap_old_node_retrieve_ue_context_procedure::send_retrieve_ue_context_respo
   retrieve_ue_context_response_to_asn1(asn1_response, response);
 
   if (!tx_notifier.on_new_message(xnap_msg)) {
-    logger.warning("XN-C association is not set. Cannot send RetrieveUEContextResponse");
+    logger.warning("Xn-C association is not set. Cannot send RetrieveUEContextResponse");
   }
 }
 
@@ -106,6 +106,6 @@ void xnap_old_node_retrieve_ue_context_procedure::send_retrieve_ue_context_failu
   retrieve_ue_context_failure_to_asn1(asn1_failure, cause);
 
   if (!tx_notifier.on_new_message(xnap_msg)) {
-    logger.warning("XN-C association is not set. Cannot send RetrieveUEContextFailure");
+    logger.warning("Xn-C association is not set. Cannot send RetrieveUEContextFailure");
   }
 }

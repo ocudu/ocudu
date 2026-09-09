@@ -76,7 +76,7 @@ std::optional<xnc_peer_index_t> ue_context_retrieval_new_node_routine::find_peer
     const pci_t                     old_pci    = std::get<rrc_ue_context_retrieval_id_for_reest>(request.ue_id).old_pci;
     std::optional<xnc_peer_index_t> peer_index = xnap_db.find_xnap_index_by_served_pci(old_pci);
     if (!peer_index.has_value()) {
-      logger.debug("ue={}: \"{}\" failed. Cause: No XN-C peer serves pci={}", ue_index, name(), old_pci);
+      logger.debug("ue={}: \"{}\" failed. Cause: No Xn-C peer serves pci={}", ue_index, name(), old_pci);
     }
     return peer_index;
   }
@@ -94,7 +94,7 @@ std::optional<xnc_peer_index_t> ue_context_retrieval_new_node_routine::find_peer
   std::optional<xnc_peer_index_t> peer_index = xnap_db.find_xnap_index_by_local_node_id(node_id, nof_node_id_bits);
   if (!peer_index.has_value()) {
     logger.debug(
-        "ue={}: \"{}\" failed. Cause: No XN-C peer carries node-id={:#x} of the I-RNTI", ue_index, name(), node_id);
+        "ue={}: \"{}\" failed. Cause: No Xn-C peer carries node-id={:#x} of the I-RNTI", ue_index, name(), node_id);
   }
   return peer_index;
 }

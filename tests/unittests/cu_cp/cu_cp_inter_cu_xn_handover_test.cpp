@@ -83,7 +83,7 @@ public:
     report_fatal_error_if_not(not this->get_cu_up(cu_up_idx).try_pop_rx_pdu(e1ap_pdu),
                               "there are still E1AP messages to pop from CU-UP");
     report_fatal_error_if_not(not this->get_xnc_cu_cp(xnc_peer_idx).try_pop_rx_pdu(xnap_pdu),
-                              "there are still XNAP messages to pop from XN-C peer CU-CP");
+                              "there are still XNAP messages to pop from Xn-C peer CU-CP");
 
     // Inject Handover Request and wait for Bearer Context Setup Request.
     get_xnc_cu_cp(xnc_peer_idx)
@@ -274,7 +274,7 @@ public:
 
   [[nodiscard]] bool timeout_handover_command_and_await_handover_cancel()
   {
-    // Fail Handover Preparation (XN-C peer CU-CP doesn't respond) and await Handover Cancel.
+    // Fail Handover Preparation (Xn-C peer CU-CP doesn't respond) and await Handover Cancel.
     if (tick_until(std::chrono::milliseconds(1000), [&]() { return false; })) {
       return false;
     }
@@ -333,7 +333,7 @@ public:
         generate_bearer_context_modification_response_with_pdcp_status(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id));
 
     report_fatal_error_if_not(this->wait_for_xnap_tx_pdu(xnc_peer_idx, xnap_pdu),
-                              "Failed to transmist XNAP SN Status transfer to XN-C peer CU-CP");
+                              "Failed to transmist XNAP SN Status transfer to Xn-C peer CU-CP");
     report_fatal_error_if_not(test_helpers::is_valid_sn_status_transfer(xnap_pdu), "Invalid XNAP SN Status Transfer");
 
     return true;
@@ -359,7 +359,7 @@ public:
     report_fatal_error_if_not(not this->get_cu_up(cu_up_idx).try_pop_rx_pdu(e1ap_pdu),
                               "there are still E1AP messages to pop from CU-UP");
     report_fatal_error_if_not(not this->get_xnc_cu_cp(xnc_peer_idx).try_pop_rx_pdu(xnap_pdu),
-                              "there are still XNAP messages to pop from XN-C peer CU-CP");
+                              "there are still XNAP messages to pop from Xn-C peer CU-CP");
 
     // Inject XNAP UE Context Release and wait for Bearer Context Release Command.
     get_xnc_cu_cp(xnc_peer_idx).push_tx_pdu(generate_ue_context_release(local_xnap_ue_id, peer_xnap_ue_id));
@@ -792,7 +792,7 @@ TEST_F(cu_cp_inter_cu_xn_handover_test, when_zigzag_handover_is_performed_then_h
 
   // ... and now this CU-CP is the source.
 
-  // Pop messages from XN-C peer CU-CP before injecting the RRC Measurement Report.
+  // Pop messages from Xn-C peer CU-CP before injecting the RRC Measurement Report.
   this->get_xnc_cu_cp(xnc_peer_idx).try_pop_rx_pdu(xnap_pdu);
 
   // Inject RRC Measurement Report and await Handover Request.

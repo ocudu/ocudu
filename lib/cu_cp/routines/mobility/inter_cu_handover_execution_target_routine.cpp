@@ -154,7 +154,7 @@ std::vector<async_task<bool>> inter_cu_handover_execution_target_routine::build_
   } else {
     pending_events.push_back(launch_async([this](coro_context<async_task<bool>>& task_ctx) {
       CORO_BEGIN(task_ctx);
-      // Await SN Status Transfer from source XN-C.
+      // Await SN Status Transfer from source Xn-C.
       CORO_AWAIT_VALUE(sn_status, xnap->handle_sn_status_transfer_expected(ue->get_ue_index()));
       if (!sn_status.has_value()) {
         CORO_EARLY_RETURN(false);

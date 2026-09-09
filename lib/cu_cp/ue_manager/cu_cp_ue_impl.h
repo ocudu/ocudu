@@ -188,7 +188,7 @@ public:
   /// \brief Get the CU-UP index of the UE.
   [[nodiscard]] cu_cp_cu_up_index_t get_cu_up_index() const override { return ue_ctxt.cu_up_idx; }
 
-  /// \brief Get the XN-C peer index of the UE.
+  /// \brief Get the Xn-C peer index of the UE.
   [[nodiscard]] xnc_peer_index_t get_xnc_peer_index() const override { return ue_ctxt.xnc_peer_idx; }
 
   /// \brief Get the PCell index of the UE.
@@ -237,7 +237,7 @@ public:
   /// \brief Set the CU-UP index of the UE.
   void set_cu_up_index(cu_cp_cu_up_index_t cu_up_idx) { ue_ctxt.cu_up_idx = cu_up_idx; }
 
-  /// \brief Set the XN-C peer index of the UE.
+  /// \brief Set the Xn-C peer index of the UE.
   void set_xnc_peer_index(xnc_peer_index_t xnc_peer_idx) { ue_ctxt.xnc_peer_idx = xnc_peer_idx; }
 
   /// \brief Get the NGAP RRC UE notifier of the UE.

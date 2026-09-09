@@ -50,7 +50,7 @@ public:
     return launch_no_op_task(true);
   }
 
-  void attach_cu_cp(cu_cp_xnc_handler& xnc_handler_) override { logger.info("CU-CP attached to XN-C gateway"); }
+  void attach_cu_cp(cu_cp_xnc_handler& xnc_handler_) override { logger.info("CU-CP attached to Xn-C gateway"); }
 
   void stop() override {}
 

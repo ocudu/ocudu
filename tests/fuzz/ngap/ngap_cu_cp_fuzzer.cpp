@@ -147,7 +147,7 @@ private:
 };
 
 // ---------------------------------------------------------------------------
-// fuzz_xnc_gateway – no-op XN-C connection gateway
+// fuzz_xnc_gateway – no-op Xn-C connection gateway
 // ---------------------------------------------------------------------------
 
 class fuzz_xnc_gateway : public xnc_connection_gateway
@@ -193,7 +193,7 @@ struct fuzz_state {
     cfg.ngap.n2_gws.push_back(&amf);
     cfg.ngap.ngaps.push_back(cu_cp_configuration::ngap_config{{ta}});
 
-    // Attach our no-op XN-C gateway.
+    // Attach our no-op Xn-C gateway.
     cfg.xnap.xnc_gws.push_back(&xnc_gw);
 
     // Security preferences (NIA2/NEA0 as default).

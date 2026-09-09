@@ -29,7 +29,7 @@ public:
   /// \brief Get handler of the NG interface of the CU-CP.
   virtual cu_cp_ng_handler& get_ng_handler() = 0;
 
-  /// \brief Get handler of the XN-C interface of the CU-CP.
+  /// \brief Get handler of the Xn-C interface of the CU-CP.
   virtual cu_cp_xnc_handler& get_xnc_handler() = 0;
 
   /// \brief Get the handler of external commands/events to the CU-CP.

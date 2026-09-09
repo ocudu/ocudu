@@ -387,10 +387,10 @@ void mobility_manager::handle_inter_cu_handover(cu_cp_ue_index_t source_ue_index
     return;
   }
 
-  // Try to find target XN-C CU-CP peer. If it is not found, it means an NG handover is required.
+  // Try to find target Xn-C CU-CP peer. If it is not found, it means an NG handover is required.
   auto* xnap = xnap_db.find_xnap(target_gnb_id);
   if (xnap == nullptr) {
-    logger.debug("ue={}: Requesting NG handover. No XN-C peer CU-CP peer with gnb_id={} found",
+    logger.debug("ue={}: Requesting NG handover. No Xn-C peer CU-CP peer with gnb_id={} found",
                  source_ue_index,
                  target_gnb_id.id);
     handle_ngap_handover(*ngap, *ue, target_gnb_id, target_plmn, target_tac, target_nci);
@@ -463,7 +463,7 @@ void mobility_manager::handle_xnap_handover(ngap_interface&  ngap,
       ue.get_rrc_ue()->get_rrc_ue_control_message_handler().get_packed_handover_preparation_message(),
       ue.get_location_manager().get_location_reporting_request());
 
-  // Send handover preparation request to the XN-C handler.
+  // Send handover preparation request to the Xn-C handler.
   auto ho_trigger =
       [&xnap, request, response = xnap_handover_preparation_response{}](coro_context<async_task<void>>& ctx) mutable {
         CORO_BEGIN(ctx);

@@ -9,11 +9,11 @@ using namespace ocudu;
 using namespace ocudu::ocucp;
 using namespace asn1::xnap;
 
-/// \brief Determine the cell changes to report, by comparing the cells this node serves against the ones the XN-C peer
+/// \brief Determine the cell changes to report, by comparing the cells this node serves against the ones the Xn-C peer
 /// was last told about.
-/// \param[in] advertised_cells The cells this node advertised to the XN-C peer.
+/// \param[in] advertised_cells The cells this node advertised to the Xn-C peer.
 /// \param[in] served_cells The cells this node currently serves.
-/// \return The changes to report to the XN-C peer.
+/// \return The changes to report to the Xn-C peer.
 static xnap_served_cells_update create_served_cells_update(span<const cu_cp_served_cell_info> advertised_cells,
                                                            span<const cu_cp_served_cell_info> served_cells)
 {
@@ -85,7 +85,7 @@ void ngran_node_cfg_update_procedure::operator()(coro_context<async_task<bool>>&
   CORO_AWAIT(transaction_sink);
 
   if (transaction_sink.cancelled()) {
-    logger.info("\"{}\" aborted. Cause: The XN-C connection is being torn down", name());
+    logger.info("\"{}\" aborted. Cause: The Xn-C connection is being torn down", name());
     CORO_EARLY_RETURN(false);
   }
 
@@ -95,7 +95,7 @@ void ngran_node_cfg_update_procedure::operator()(coro_context<async_task<bool>>&
   }
 
   if (transaction_sink.failed()) {
-    logger.warning("\"{}\" failed. Cause: XN-C peer responded with \"{}\"",
+    logger.warning("\"{}\" failed. Cause: Xn-C peer responded with \"{}\"",
                    name(),
                    asn1_utils::get_cause_str(transaction_sink.failure()->cause));
     CORO_EARLY_RETURN(false);

@@ -230,7 +230,7 @@ void xnap_impl::handle_ngran_node_cfg_update(const ngran_node_cfg_upd_s& msg)
   if (asn1_init_node_choice.type() == cfg_upd_init_node_choice_c::types_opts::gnb and
       asn1_init_node_choice.gnb().served_cells_to_upd_nr_present) {
     update_peer_served_cells(peer_ctxt->list_of_served_cells_nr, asn1_init_node_choice.gnb().served_cells_to_upd_nr);
-    logger.info("XN-C peer serves {} cell(s)", peer_ctxt->list_of_served_cells_nr.size());
+    logger.info("Xn-C peer serves {} cell(s)", peer_ctxt->list_of_served_cells_nr.size());
   }
 
   if (not tx_notifier.on_new_message(generate_asn1_ngran_node_cfg_update_ack())) {
@@ -274,7 +274,7 @@ void xnap_impl::handle_handover_request(const asn1::xnap::ho_request_s& msg)
     ho_fail->cause                          = cause_to_asn1(cause);
 
     if (!tx_notifier.on_new_message(xnap_msg)) {
-      logger.warning("XN-C association is not set. Cannot send HandoverFailure");
+      logger.warning("Xn-C association is not set. Cannot send HandoverFailure");
       return;
     }
     logger.warning("Sending HandoverFailure");
@@ -520,7 +520,7 @@ void xnap_impl::handle_handover_success_required(cu_cp_ue_index_t ue_index, cons
   ho_success->requested_target_cell_global_id.set_nr() = cgi_to_asn1(cgi);
 
   if (!tx_notifier.on_new_message(xnap_msg)) {
-    ue_ctxt.logger.log_warning("XN-C association is not set. Cannot send HandoverSuccess");
+    ue_ctxt.logger.log_warning("Xn-C association is not set. Cannot send HandoverSuccess");
     return;
   }
 }
@@ -547,9 +547,9 @@ void xnap_impl::handle_sn_status_transfer_required(const cu_cp_status_transfer& 
 
   sn_status_transfer_to_asn1(asn1_sn_status, sn_status_transfer.drbs_subject_to_status_transfer_list);
 
-  // Forward message to XN-C peer CU-CP.
+  // Forward message to Xn-C peer CU-CP.
   if (!tx_notifier.on_new_message(xnap_msg)) {
-    ue_ctxt.logger.log_warning("XN-C association is not set. Cannot send SNStatusTransfer");
+    ue_ctxt.logger.log_warning("Xn-C association is not set. Cannot send SNStatusTransfer");
     return;
   }
 }
@@ -635,9 +635,9 @@ bool xnap_impl::handle_ue_context_release_required(cu_cp_ue_index_t ue_index)
   ue_ctxt_release->source_ng_ra_nnode_ue_xn_ap_id = to_underlying(ue_ctxt.ue_ids.peer_xnap_ue_id);
   ue_ctxt_release->target_ng_ra_nnode_ue_xn_ap_id = to_underlying(ue_ctxt.ue_ids.local_xnap_ue_id);
 
-  // Forward message to XN-C peer CU-CP.
+  // Forward message to Xn-C peer CU-CP.
   if (!tx_notifier.on_new_message(xnap_msg)) {
-    ue_ctxt.logger.log_warning("XN-C association is not set. Cannot send UEContextReleaseRequest");
+    ue_ctxt.logger.log_warning("Xn-C association is not set. Cannot send UEContextReleaseRequest");
     return false;
   }
 
@@ -696,7 +696,7 @@ void xnap_impl::handle_retrieve_ue_context_request(const asn1::xnap::retrieve_ue
     asn1_failure->cause                       = cause_to_asn1(cause);
 
     if (!tx_notifier.on_new_message(xnap_msg)) {
-      logger.warning("XN-C association is not set. Cannot send RetrieveUEContextFailure");
+      logger.warning("Xn-C association is not set. Cannot send RetrieveUEContextFailure");
       return;
     }
     logger.info("Sending RetrieveUEContextFailure");

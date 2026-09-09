@@ -12,7 +12,7 @@ namespace ocudu::ocucp {
 class cu_cp_xnc_handler;
 
 /// Connection gateway responsible for handling new connection requests/drops coming
-/// from neighbour gNBs via the XN-C interface and converting them to CU-CP commands.
+/// from neighbour gNBs via the Xn-C interface and converting them to CU-CP commands.
 class xnc_connection_gateway
 {
 public:
@@ -22,16 +22,16 @@ public:
   /// \return async_task that resolves to true when SCTP association is ready, false on failure.
   virtual async_task<bool> connect_to_peer(std::vector<transport_layer_address> peer_addrs) = 0;
 
-  /// Attach a CU-CP handler to the XN-C connection server.
+  /// Attach a CU-CP handler to the Xn-C connection server.
   virtual void attach_cu_cp(cu_cp_xnc_handler& xnc_handler_) = 0;
 
-  /// Stop the XN-C connection gateway.
+  /// Stop the Xn-C connection gateway.
   virtual void stop() = 0;
 
-  /// Get port on which the XN-C Server is listening for new connections.
+  /// Get port on which the Xn-C Server is listening for new connections.
   ///
   /// This method is useful in testing, where we don't want to use a specific port.
-  /// \return The port number on which the XN-C Server is listening for new connections.
+  /// \return The port number on which the Xn-C Server is listening for new connections.
   virtual std::optional<uint16_t> get_listen_port() const = 0;
 };
 

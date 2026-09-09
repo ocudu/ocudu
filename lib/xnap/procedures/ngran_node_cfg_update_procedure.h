@@ -15,7 +15,7 @@
 
 namespace ocudu::ocucp {
 
-/// \brief Reports the cells this node serves to an XN-C peer, as defined in TS 38.423 section 8.4.1.
+/// \brief Reports the cells this node serves to an Xn-C peer, as defined in TS 38.423 section 8.4.1.
 class ngran_node_cfg_update_procedure
 {
 public:

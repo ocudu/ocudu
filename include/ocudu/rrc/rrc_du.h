@@ -56,7 +56,7 @@ public:
   /// 6.2.2), as carried opaquely in the Measurement Timing Configuration IE of the XnAP Served Cell Information
   /// (TS 38.423 section 9.2.2.11).
   ///
-  /// \param[in] encoded The packed MeasurementTimingConfiguration advertised by an XN-C peer for one of its cells.
+  /// \param[in] encoded The packed MeasurementTimingConfiguration advertised by an Xn-C peer for one of its cells.
   /// \return The SSB ARFCN, or \c std::nullopt if \c encoded is not a valid MeasurementTimingConfiguration or carries
   /// no frequency and timing information.
   virtual std::optional<arfcn_t> get_ssb_arfcn(const byte_buffer& encoded) = 0;

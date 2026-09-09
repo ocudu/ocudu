@@ -519,7 +519,7 @@ TEST_F(cu_cp_inter_cu_ue_context_retrieval_resume_test, when_context_is_retrieve
 
 TEST_F(cu_cp_inter_cu_ue_context_retrieval_resume_test, when_i_rnti_points_at_no_peer_then_no_retrieval_is_attempted)
 {
-  // An I-RNTI allocated by a node this one has no XN-C link to cannot be resolved, so the UE gets a new connection
+  // An I-RNTI allocated by a node this one has no Xn-C link to cannot be resolved, so the UE gets a new connection
   // instead (TS 38.300 section 9.2.2.6 step 2).
   ue_sends_rrc_resume_request(make_unknown_i_rnti());
 

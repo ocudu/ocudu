@@ -18,7 +18,7 @@
 using namespace ocudu;
 using namespace ocucp;
 
-/// Fixture for the report of the cells this node serves to an XN-C peer (TS 38.423 section 8.4.1). The fixture leaves
+/// Fixture for the report of the cells this node serves to an Xn-C peer (TS 38.423 section 8.4.1). The fixture leaves
 /// a single DU connected, with the cell it reported at F1 setup advertised to the peer.
 class cu_cp_xn_served_cells_test : public cu_cp_test_environment, public ::testing::Test
 {
@@ -58,7 +58,7 @@ public:
     return true;
   }
 
-  /// Pop the NG-RAN Node Configuration Update the CU-CP sent to the XN-C peer and acknowledge it.
+  /// Pop the NG-RAN Node Configuration Update the CU-CP sent to the Xn-C peer and acknowledge it.
   bool pop_ngran_node_cfg_update(xnap_message& out)
   {
     if (!wait_for_xnap_tx_pdu(xnc_peer_idx, out)) {
@@ -114,7 +114,7 @@ TEST_F(cu_cp_xn_served_cells_test, when_a_cell_is_deactivated_then_it_is_reporte
   EXPECT_TRUE(wait_for_task_result(deactivation).success);
 
   xnap_message cfg_update;
-  ASSERT_TRUE(pop_ngran_node_cfg_update(cfg_update)) << "CU-CP did not report the deactivated cell to the XN-C peer";
+  ASSERT_TRUE(pop_ngran_node_cfg_update(cfg_update)) << "CU-CP did not report the deactivated cell to the Xn-C peer";
 
   const auto& asn1_cells_to_upd = get_served_cells_to_update(cfg_update);
   ASSERT_EQ(asn1_cells_to_upd.served_cells_to_delete_nr.size(), 1);
@@ -127,7 +127,7 @@ TEST_F(cu_cp_xn_served_cells_test, when_a_du_disconnects_then_its_cells_are_repo
   ASSERT_TRUE(drop_du_connection(du_idx));
 
   xnap_message cfg_update;
-  ASSERT_TRUE(pop_ngran_node_cfg_update(cfg_update)) << "CU-CP did not report the cells of the removed DU to the XN-C "
+  ASSERT_TRUE(pop_ngran_node_cfg_update(cfg_update)) << "CU-CP did not report the cells of the removed DU to the Xn-C "
                                                         "peer";
 
   const auto& asn1_cells_to_upd = get_served_cells_to_update(cfg_update);
@@ -135,7 +135,7 @@ TEST_F(cu_cp_xn_served_cells_test, when_a_du_disconnects_then_its_cells_are_repo
   EXPECT_EQ(asn1_cells_to_upd.served_cells_to_delete_nr[0].nr_ci.to_number(), served_cell.nci.value());
 }
 
-/// Fixture with an XN-C peer and a declared-locked logical cell: the DU reports two cells at F1 setup, one of
+/// Fixture with an Xn-C peer and a declared-locked logical cell: the DU reports two cells at F1 setup, one of
 /// which the CU-CP configuration keeps administratively locked.
 class cu_cp_xn_locked_cell_test : public cu_cp_test_environment, public ::testing::Test
 {

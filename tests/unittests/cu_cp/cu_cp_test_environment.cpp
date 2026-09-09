@@ -174,7 +174,7 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
       }
 
       if (!xnc_peers.empty()) {
-        // Create an external XN-C cell.
+        // Create an external Xn-C cell.
         {
           cell_meas_config cell_cfg_4;
           cell_cfg_4.periodic_report_cfg_id             = uint_to_report_cfg_id(1);
@@ -442,7 +442,7 @@ void cu_cp_test_environment::enqueue_procedure_outcome_pdus_and_start_cu_cp()
             nr_cell_global_id_t{plmn_identity::test_value(), xnc_peer_served_nci()}));
   }
 
-  // Attach XN-C handler before starting CU-CP (matching real app startup order).
+  // Attach Xn-C handler before starting CU-CP (matching real app startup order).
   for (auto* gateway : cu_cp_cfg.xnap.xnc_gws) {
     gateway->attach_cu_cp(get_cu_cp().get_xnc_handler());
   }
@@ -500,11 +500,11 @@ void cu_cp_test_environment::run_xn_setup()
   xnap_message xnap_pdu;
   for (const auto& [xnc_peer_idx, xnc_peer] : xnc_peers) {
     report_fatal_error_if_not(wait_for_xnap_tx_pdu(xnc_peer_idx, xnap_pdu),
-                              "CU-CP did not send the XN Setup Request to the XN-C peer CU-CP {}",
+                              "CU-CP did not send the XN Setup Request to the Xn-C peer CU-CP {}",
                               xnc_peer_idx);
     report_fatal_error_if_not(
         test_helpers::is_pdu_type(xnap_pdu, asn1::xnap::xnap_elem_procs_o::init_msg_c::types::xn_setup_request),
-        "CU-CP did not setup the XN-C connection");
+        "CU-CP did not setup the Xn-C connection");
   }
 }
 
@@ -513,11 +513,11 @@ void cu_cp_test_environment::run_ngran_node_cfg_update(span<const test_helpers::
   xnap_message xnap_pdu;
   for (const auto& [xnc_peer_idx, xnc_peer] : xnc_peers) {
     report_fatal_error_if_not(wait_for_xnap_tx_pdu(xnc_peer_idx, xnap_pdu),
-                              "CU-CP did not send the NG-RAN Node Configuration Update to the XN-C peer CU-CP {}",
+                              "CU-CP did not send the NG-RAN Node Configuration Update to the Xn-C peer CU-CP {}",
                               xnc_peer_idx);
     report_fatal_error_if_not(
         test_helpers::is_pdu_type(xnap_pdu, asn1::xnap::xnap_elem_procs_o::init_msg_c::types::ngran_node_cfg_upd),
-        "CU-CP did not report its served cells to the XN-C peer CU-CP {}",
+        "CU-CP did not report its served cells to the Xn-C peer CU-CP {}",
         xnc_peer_idx);
 
     const auto& asn1_cells_to_add = xnap_pdu.pdu.init_msg()
@@ -525,7 +525,7 @@ void cu_cp_test_environment::run_ngran_node_cfg_update(span<const test_helpers::
                                         ->cfg_upd_init_node_choice.gnb()
                                         .served_cells_to_upd_nr.served_cells_to_add_nr;
     report_fatal_error_if_not(asn1_cells_to_add.size() == added_cells.size(),
-                              "CU-CP reported {} added cells to the XN-C peer CU-CP {}, expected {}",
+                              "CU-CP reported {} added cells to the Xn-C peer CU-CP {}, expected {}",
                               asn1_cells_to_add.size(),
                               xnc_peer_idx,
                               added_cells.size());
@@ -537,7 +537,7 @@ void cu_cp_test_environment::run_ngran_node_cfg_update(span<const test_helpers::
                                 added_cells[i].nci,
                                 added_cells[i].pci);
       report_fatal_error_if_not(asn1_cell_info.cell_id.nr_ci.to_number() == added_cells[i].nci.value(),
-                                "CU-CP reported an unexpected cell to the XN-C peer CU-CP {}",
+                                "CU-CP reported an unexpected cell to the Xn-C peer CU-CP {}",
                                 xnc_peer_idx);
     }
 
@@ -579,7 +579,7 @@ bool cu_cp_test_environment::run_f1_setup(unsigned                              
   f1ap_message f1ap_pdu;
   bool         result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
 
-  // The cells of the DU are reported to the XN-C peers.
+  // The cells of the DU are reported to the Xn-C peers.
   run_ngran_node_cfg_update(cells);
 
   return result;

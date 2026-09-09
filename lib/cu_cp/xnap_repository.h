@@ -28,8 +28,8 @@ public:
   explicit xnap_repository(xnap_repository_config cfg_);
 
   /// \brief Adds an XNAP object to the CU-CP.
-  /// \param[in] xnc_index Index of the XN-C peer to which the XNAP object will be connected.
-  /// \param[in] peer_addrs Addresses of the XN-C peer (multiple for SCTP multihoming).
+  /// \param[in] xnc_index Index of the Xn-C peer to which the XNAP object will be connected.
+  /// \param[in] peer_addrs Addresses of the Xn-C peer (multiple for SCTP multihoming).
   /// \param[in] xnap_cfg Configuration of the XNAP object to be added.
   /// \return A pointer to the interface of the added XNAP object if it was successfully created, a nullptr otherwise.
   xnap_interface* add_xnap(xnc_peer_index_t                            xnc_index,
@@ -37,24 +37,24 @@ public:
                            const xnap_configuration&                   xnap_cfg);
 
   /// \brief Find an XNAP object in the repository.
-  /// \param[in] xnc_index Index of the XN-C peer to which the XNAP object is connected.
+  /// \param[in] xnc_index Index of the Xn-C peer to which the XNAP object is connected.
   /// \return A pointer to the interface of the added XNAP object if it was successfully found, a nullptr otherwise.
   xnap_interface* find_xnap(xnc_peer_index_t xnc_index);
 
   /// \brief Find an XNAP object in the repository.
-  /// \param[in] peer_addr Address of the XN-C peer to which the XNAP object is connected.
+  /// \param[in] peer_addr Address of the Xn-C peer to which the XNAP object is connected.
   /// The lookup matches if the address reported by SCTP COMM_UP equals any of the peer's configured addresses.
-  /// \return The index of the XN-C peer if the XNAP object was found, xnc_peer_index_t::invalid otherwise.
+  /// \return The index of the Xn-C peer if the XNAP object was found, xnc_peer_index_t::invalid otherwise.
   xnc_peer_index_t find_xnap(const transport_layer_address& peer_addr);
 
   /// \brief Find an XNAP object in the repository.
-  /// \param[in] peer_gnb_id GNB ID of the XN-C peer to which the XNAP object is connected.
+  /// \param[in] peer_gnb_id GNB ID of the Xn-C peer to which the XNAP object is connected.
   /// \return A pointer to the interface of the added XNAP object if it was successfully found, a nullptr otherwise.
   xnap_interface* find_xnap(const gnb_id_t& peer_gnb_id);
 
   /// \brief Find the index of an XNAP object in the repository by the PCI of one of the cells the peer serves.
-  /// \param[in] peer_pci PCI of a cell the XN-C peer advertised in its served cell list at XN setup.
-  /// \return The index of the XN-C peer serving that cell if found, std::nullopt otherwise.
+  /// \param[in] peer_pci PCI of a cell the Xn-C peer advertised in its served cell list at XN setup.
+  /// \return The index of the Xn-C peer serving that cell if found, std::nullopt otherwise.
   /// \remark PCIs are only unique within a neighbourhood, so the first peer advertising the PCI is returned. Picking
   /// the wrong one makes the retrieval fail and leaves the caller to fall back.
   std::optional<xnc_peer_index_t> find_xnap_index_by_served_pci(pci_t peer_pci);
@@ -62,17 +62,17 @@ public:
   /// \brief Find the index of an XNAP object in the repository by the Local NG-RAN Node Identifier its gNB ID carries.
   /// \param[in] node_id Local NG-RAN Node Identifier read out of an I-RNTI.
   /// \param[in] nof_node_id_bits Width the I-RNTI profile gives the identifier.
-  /// \return The index of the XN-C peer if found, std::nullopt otherwise.
+  /// \return The index of the Xn-C peer if found, std::nullopt otherwise.
   std::optional<xnc_peer_index_t> find_xnap_index_by_local_node_id(uint32_t node_id, unsigned nof_node_id_bits);
 
   /// \brief Find the index of an XNAP object in the repository by gNB ID.
-  /// \param[in] peer_gnb_id GNB ID of the XN-C peer to which the XNAP object is connected.
-  /// \return The index of the XN-C peer if found, std::nullopt otherwise.
+  /// \param[in] peer_gnb_id GNB ID of the Xn-C peer to which the XNAP object is connected.
+  /// \return The index of the Xn-C peer if found, std::nullopt otherwise.
   std::optional<xnc_peer_index_t> find_xnap_index(const gnb_id_t& peer_gnb_id);
 
   /// \brief Get the peer addresses of an XNAP connection.
-  /// \param[in] xnc_index Index of the XN-C peer in the XNAP repository.
-  /// \return Addresses of the XN-C peer (multiple if SCTP multihoming is used), or std::nullopt if not found.
+  /// \param[in] xnc_index Index of the Xn-C peer in the XNAP repository.
+  /// \return Addresses of the Xn-C peer (multiple if SCTP multihoming is used), or std::nullopt if not found.
   std::optional<std::vector<transport_layer_address>> get_peer_addrs(xnc_peer_index_t xnc_index) const;
 
   /// \brief Get the all XNAP interfaces.
@@ -80,7 +80,7 @@ public:
 
   xnap_task_scheduler& get_xnap_task_scheduler() { return xnc_task_sched; }
 
-  /// \brief Report the cells this node serves to all connected XN-C peers (TS 38.423 section 8.4.1).
+  /// \brief Report the cells this node serves to all connected Xn-C peers (TS 38.423 section 8.4.1).
   void update_served_cells();
 
   /// Number of XNAPs managed by the CU-CP.

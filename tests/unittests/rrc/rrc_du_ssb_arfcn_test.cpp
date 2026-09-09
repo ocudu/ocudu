@@ -13,7 +13,7 @@ using namespace ocucp;
 
 namespace {
 
-/// Packs a MeasurementTimingConfiguration as an XN-C peer advertises it for one of its served cells.
+/// Packs a MeasurementTimingConfiguration as an Xn-C peer advertises it for one of its served cells.
 byte_buffer pack_meas_timing_cfg(const std::vector<std::optional<uint32_t>>& carrier_freqs)
 {
   asn1::rrc_nr::meas_timing_cfg_s meas_timing_cfg;

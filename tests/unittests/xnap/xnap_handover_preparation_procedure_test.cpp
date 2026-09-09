@@ -108,7 +108,7 @@ TEST_F(xnap_handover_preparation_procedure_test, when_handover_preparation_failu
   async_task<xnap_handover_preparation_response>         t = xnap->handle_handover_request_required(request);
   lazy_task_launcher<xnap_handover_preparation_response> t_launcher(t);
 
-  // Status: XN-C peer received Handover Required.
+  // Status: Xn-C peer received Handover Required.
   ASSERT_EQ(get_last_message().pdu.type().value, asn1::xnap::xn_ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(get_last_message().pdu.init_msg().value.type().value,
             asn1::xnap::xnap_elem_procs_o::init_msg_c::types_opts::ho_request);
@@ -142,17 +142,17 @@ TEST_F(xnap_handover_preparation_procedure_test, when_handover_preparation_times
   async_task<xnap_handover_preparation_response>         t = xnap->handle_handover_request_required(request);
   lazy_task_launcher<xnap_handover_preparation_response> t_launcher(t);
 
-  // Status: XN-C peer received Handover Required.
+  // Status: Xn-C peer received Handover Required.
   ASSERT_EQ(get_last_message().pdu.type().value, asn1::xnap::xn_ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(get_last_message().pdu.init_msg().value.type().value,
             asn1::xnap::xnap_elem_procs_o::init_msg_c::types_opts::ho_request);
 
   ASSERT_FALSE(t.ready());
 
-  // Status: Fail Handover Preparation procedure (XN-C peer doesn't respond).
+  // Status: Fail Handover Preparation procedure (Xn-C peer doesn't respond).
   ASSERT_TRUE(this->tick(t, std::chrono::milliseconds{1000}));
 
-  // Status: XN-C peer received Handover Cancel.
+  // Status: Xn-C peer received Handover Cancel.
   ASSERT_EQ(get_last_message().pdu.type().value, asn1::xnap::xn_ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(get_last_message().pdu.init_msg().value.type().value,
             asn1::xnap::xnap_elem_procs_o::init_msg_c::types_opts::ho_cancel);
@@ -210,7 +210,7 @@ TEST_F(xnap_handover_preparation_procedure_test, when_handover_request_ack_recei
   async_task<xnap_handover_preparation_response>         t = xnap->handle_handover_request_required(request);
   lazy_task_launcher<xnap_handover_preparation_response> t_launcher(t);
 
-  // Status: XN-C peer received Handover Required.
+  // Status: Xn-C peer received Handover Required.
   ASSERT_EQ(get_last_message().pdu.type().value, asn1::xnap::xn_ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(get_last_message().pdu.init_msg().value.type().value,
             asn1::xnap::xnap_elem_procs_o::init_msg_c::types_opts::ho_request);

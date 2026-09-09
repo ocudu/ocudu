@@ -120,7 +120,7 @@ TEST_F(ngran_node_cfg_update_procedure_test, when_the_served_cells_are_unchanged
   ASSERT_TRUE(t.get());
   ASSERT_EQ(get_last_message().pdu.init_msg().value.type(),
             asn1::xnap::xnap_elem_procs_o::init_msg_c::types_opts::xn_setup_request)
-      << "The XN-C peer received a message although the served cells did not change";
+      << "The Xn-C peer received a message although the served cells did not change";
 }
 
 TEST_F(ngran_node_cfg_update_procedure_test, when_the_peer_reports_its_cells_then_the_update_is_acknowledged)

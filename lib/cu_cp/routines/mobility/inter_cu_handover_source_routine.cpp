@@ -78,7 +78,7 @@ void inter_cu_handover_source_routine::operator()(coro_context<async_task<bool>>
     // Send PDCP state to AMF.
     ngap.handle_ul_ran_status_transfer(status_transfer);
   } else {
-    // Send PDCP state to XN-C peer CU-CP.
+    // Send PDCP state to Xn-C peer CU-CP.
     xnap->handle_sn_status_transfer_required(status_transfer);
   }
 

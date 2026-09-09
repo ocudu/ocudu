@@ -33,7 +33,7 @@ public:
   /// Gets task executor used to parallelize the reception of F1-C messages.
   virtual task_executor& f1c_rx_executor() = 0;
 
-  /// Gets task executor used to parallelize the reception of XN-C messages.
+  /// Gets task executor used to parallelize the reception of Xn-C messages.
   virtual task_executor& xnc_rx_executor() = 0;
 
   /// Gets task executor used to parallelize the reception of E1 messages.

@@ -53,7 +53,7 @@ public:
 
   /// \brief Handle the reception of a new RRC Handover Command.
   /// \param[in] command The received Handover Command, including the data forwarding tunnels of the target.
-  /// \param[in] xnc_index The XN-C index if the handover is a XN-C handover, std::nullopt otherwise.
+  /// \param[in] xnc_index The Xn-C index if the handover is a Xn-C handover, std::nullopt otherwise.
   /// \returns True if the RRC Handover Command was successfully handled, false otherwise.
   virtual async_task<bool>
   handle_new_rrc_handover_command(cu_cp_rrc_handover_command      command,
@@ -74,7 +74,7 @@ public:
 
   /// \brief Handle the handover execution phase of the inter-CU handover at target gNB.
   /// \param[in] ue_index The index of the UE that is performing the handover.
-  /// \param[in] xnap_ho_target_execution_ctxt If the handover is a XN-C handover, the information required for the
+  /// \param[in] xnap_ho_target_execution_ctxt If the handover is a Xn-C handover, the information required for the
   /// target handover execution is included.
   virtual void handle_inter_cu_target_handover_execution(
       cu_cp_ue_index_t                                             ue_index,

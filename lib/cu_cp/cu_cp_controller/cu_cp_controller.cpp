@@ -39,7 +39,7 @@ void cu_cp_controller::stop()
     }
   }
 
-  // Stop and delete XN-C connections.
+  // Stop and delete Xn-C connections.
   xnc_mng.stop();
 
   // Stop and delete DU connections.
