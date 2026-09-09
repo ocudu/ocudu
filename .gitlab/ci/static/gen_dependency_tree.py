@@ -12,15 +12,9 @@ directory first and then the repo's fixed, unconditional include roots
 (the ones CMakeLists.txt adds via a plain `include_directories()`, independent
 of any ENABLE_* option: `include`, `external/fmt/include`, `external`).
 
-Deliberately not compile_commands.json-driven: no single cmake configuration
-enables every optional backend at once (some, like ARMPL and MKL, are
-mutually-exclusive alternatives), so a compiler-flag-driven resolver would
-only ever see whichever subset one particular build enabled. Resolving
-against the fixed roots instead covers every file regardless of build
-configuration, at the cost of not being compiler-exact for the
-conditionally-added system search paths (UHD, DPDK, ZeroMQ, NUMA) — those are
-third-party headers the caller is expected to allow-list by name rather than
-resolve by path.
+The scan against source roots covers every file regardless of build configuration
+(unlike a compiler-flag-driven resolver, such as compile_commands.json), at the
+cost of not being compiler-exact for the conditionally-added system search paths.
 
 Output is a flat per-file adjacency map: each edge is the resolved
 repo-relative path plus the line number of the #include that produced it, so

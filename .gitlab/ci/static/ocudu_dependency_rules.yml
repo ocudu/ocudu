@@ -7,16 +7,6 @@
 # Every rule here is green on the tree it was ported against. Never land a
 # rule that is red without `exempt` entries carrying issue links.
 #
-# The allowed-edge rules (*-allowed-includes) are ported from
-# include_directives_check.py's ALLOWED_INCLUDES, now retired — this file is
-# the single source of truth for the per-module allow-list. Porting surfaced
-# five entries that were already dead in that dict (never reachable by any
-# real edge in the tree, in either the old or new checker), dropped rather
-# than carried forward: `asn1/e2` (only `asn1/e2ap`/`asn1/e2sm` exist),
-# `asn1/rrc` (only `asn1/rrc_nr` exists), a bare `sdr` in ru/sdr's own allow
-# list (redundant with `ru`/`ru/sdr` itself), `tracy` (a real but unvendored
-# third-party header that never resolves), and `cmake-sbom` in
-# always_allowed (a build-time CMake helper, never reached by a C++ #include).
 
 version: 1
 always_allowed:

@@ -11,18 +11,6 @@ so include resolution, rule evaluation, exemptions and exit codes are
 exercised end to end rather than against the live OCUDU tree, whose contents
 change independently.
 
-Adapted from the test suite explored in ocudu_tools!17
-(tests/dependency/test_dependency_tools.py): that generator resolved via
-compile_commands.json, so its project fixture built one and its generator
-tests covered compile_commands.json discovery. This one resolves via fixed,
-build-independent roots instead (see gen_dependency_tree.py's own docstring
-for why), so the fixture needs no build directory at all, and the generator
-tests instead cover the fixed-roots and CMakeLists.txt-owned-directory
-resolution this version actually does. The checker tests are a direct port:
-check_dependency_rules.py's own rule-evaluation logic (glob matching,
-transitive BFS, peer isolation, exemptions, changed-files scoping) is
-unchanged from !17, YAML tree/rules format included.
-
 Usage:
     python3 test_dependency_tools.py
 """
