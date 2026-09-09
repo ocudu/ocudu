@@ -562,7 +562,11 @@ void sctp_network_server_impl::handle_sctp_comm_up(const struct sctp_assoc_chang
   }
 
   if (node_cfg.dtls_cfg.has_value()) {
-    assoc_ctxt.ssl = create_dtls_ssl(dtls_ssl_config{node_cfg.dtls_cfg->mode}, {*dtls_ctxt});
+    auto addr = assoc_ctxt.addr;
+    addr.set_port(0); // Ignore port from peer.
+    auto      mode_it = node_cfg.dtls_cfg->mode_map.find(addr);
+    dtls_mode mode    = (mode_it != node_cfg.dtls_cfg->mode_map.end()) ? mode_it->second : node_cfg.dtls_cfg->mode;
+    assoc_ctxt.ssl    = create_dtls_ssl(dtls_ssl_config{mode}, {*dtls_ctxt});
     if (not assoc_ctxt.ssl->init(assoc_ctxt.fd)) {
       logger.error("{} assoc={}: Could not initialize DTLS context for new association", node_cfg.if_name, assoc_id);
       /// Remove association as if it was lost. Do it directly, as we are running in the app executor already.

@@ -18,38 +18,57 @@ protected:
     ocudulog::fetch_basic_logger("SCTP-GW").set_level(ocudulog::basic_levels::debug);
     ocudulog::init();
 
+    /// Test addresses.
+    std::string node_addr1 = "127.0.0.1";
+    std::string node_addr2 = "127.0.0.2";
+    std::string node_addr3 = "127.0.0.3";
+
     test_dtls                       = GetParam();
     server_cfg1.sctp.if_name        = "SERVER1";
     server_cfg1.sctp.ppid           = XNAP_PPID;
-    server_cfg1.sctp.bind_addresses = {"127.0.0.1"};
+    server_cfg1.sctp.bind_addresses = {node_addr1};
     server_cfg1.sctp.bind_port      = 0;
     if (test_dtls) {
-      server_cfg1.sctp.dtls_cfg = {dtls_mode::server,
-                                   "1",
-                                   std::string(TEST_CERT_DIR) + "/link12.crt",
-                                   std::string(TEST_CERT_DIR) + "/link12.key"};
+      /// Map used for connections that do not follow the default mode.
+      /// In this test, node 1 is allways the server, so this map is empty.
+      std::map<transport_layer_address, dtls_mode> mode_map = {};
+      server_cfg1.sctp.dtls_cfg                             = {dtls_mode::server,
+                                                               "1",
+                                                               std::string(TEST_CERT_DIR) + "/link12.crt",
+                                                               std::string(TEST_CERT_DIR) + "/link12.key",
+                                                               mode_map};
     }
 
     server_cfg2.sctp.if_name        = "SERVER2";
     server_cfg2.sctp.ppid           = XNAP_PPID;
-    server_cfg2.sctp.bind_addresses = {"127.0.0.2"};
+    server_cfg2.sctp.bind_addresses = {node_addr2};
     server_cfg2.sctp.bind_port      = 0;
     if (test_dtls) {
-      server_cfg2.sctp.dtls_cfg = {dtls_mode::client,
-                                   "2",
-                                   std::string(TEST_CERT_DIR) + "/link21.crt",
-                                   std::string(TEST_CERT_DIR) + "/link21.key"};
+      /// Map used for connections that do not follow the default mode.
+      /// In this test, node 2 is allways the client, so this map is empty.
+      std::map<transport_layer_address, dtls_mode> mode_map = {};
+      server_cfg2.sctp.dtls_cfg                             = {dtls_mode::client,
+                                                               "2",
+                                                               std::string(TEST_CERT_DIR) + "/link21.crt",
+                                                               std::string(TEST_CERT_DIR) + "/link21.key",
+                                                               mode_map};
     }
 
     server_cfg3.sctp.if_name        = "SERVER3";
     server_cfg3.sctp.ppid           = XNAP_PPID;
-    server_cfg3.sctp.bind_addresses = {"127.0.0.3"};
+    server_cfg3.sctp.bind_addresses = {node_addr3};
     server_cfg3.sctp.bind_port      = 0;
     if (test_dtls) {
+      /// Map used for connections that do not follow the default mode.
+      /// In this test, node 1 is always the server and 2 the client, so this map sets them accordingly.
+      std::map<transport_layer_address, dtls_mode> mode_map = {
+          {transport_layer_address::create_from_string(node_addr1), dtls_mode::client},
+          {transport_layer_address::create_from_string(node_addr2), dtls_mode::server}};
       server_cfg3.sctp.dtls_cfg = {dtls_mode::server,
                                    "3",
                                    std::string(TEST_CERT_DIR) + "/link31.crt",
-                                   std::string(TEST_CERT_DIR) + "/link31.key"};
+                                   std::string(TEST_CERT_DIR) + "/link31.key",
+                                   mode_map};
     }
   }
 
@@ -151,48 +170,110 @@ TEST_P(sctp_network_server_peer_test, when_association_requested_association_ini
   ASSERT_EQ(0, assoc_factory3.association_count());
 
   // Setup DTLS handshake.
-  broker1.handle_receive(server_1_2_assoc_fd);
-  broker2.handle_receive(server_2_1_assoc_fd);
-  broker1.handle_receive(server_1_2_assoc_fd);
-  broker2.handle_receive(server_2_1_assoc_fd);
+  if (test_dtls) {
+    broker1.handle_receive(server_1_2_assoc_fd);
+    broker2.handle_receive(server_2_1_assoc_fd);
+    broker1.handle_receive(server_1_2_assoc_fd);
+    broker2.handle_receive(server_2_1_assoc_fd);
+  }
 
   // Create associations between S1 <-> S3
   async_task<bool>         connect2 = server1->connect({addr3});
   lazy_task_launcher<bool> l2(connect2);
 
   broker1.handle_receive(server1_listen_fd); // COMM_UP
+  int server_1_3_assoc_fd = broker1.get_last_registered_fd();
   broker3.handle_receive(server3_listen_fd); // COMM_UP
+  int server_3_1_assoc_fd = broker3.get_last_registered_fd();
   ASSERT_EQ(2, assoc_factory1.association_count());
   ASSERT_EQ(1, assoc_factory2.association_count());
   ASSERT_EQ(1, assoc_factory3.association_count());
+
+  // Setup DTLS handshake.
+  if (test_dtls) {
+    broker1.handle_receive(server_1_3_assoc_fd);
+    broker3.handle_receive(server_3_1_assoc_fd);
+    broker1.handle_receive(server_1_3_assoc_fd);
+    broker3.handle_receive(server_3_1_assoc_fd);
+  }
 
   // Create associations between S2 <-> S3
   async_task<bool>         connect3 = server2->connect({addr3});
   lazy_task_launcher<bool> l3(connect3);
 
   broker2.handle_receive(server2_listen_fd); // COMM_UP
+  int server_2_3_assoc_fd = broker2.get_last_registered_fd();
   broker3.handle_receive(server3_listen_fd); // COMM_UP
+  int server_3_2_assoc_fd = broker3.get_last_registered_fd();
   ASSERT_EQ(2, assoc_factory1.association_count());
   ASSERT_EQ(2, assoc_factory2.association_count());
   ASSERT_EQ(2, assoc_factory3.association_count());
 
+  // Setup DTLS handshake.
+  if (test_dtls) {
+    broker2.handle_receive(server_2_3_assoc_fd);
+    broker3.handle_receive(server_3_2_assoc_fd);
+    broker2.handle_receive(server_2_3_assoc_fd);
+    broker3.handle_receive(server_3_2_assoc_fd);
+  }
+
   // Send data from S1 to S2 over the first association.
-  std::array<uint8_t, 4> data1 = {0x00, 0x01, 0x02, 0x03};
-  byte_buffer            tx_sdu;
-  ASSERT_TRUE(tx_sdu.append(data1));
-  ASSERT_TRUE(assoc_factory1.association_senders[0]->on_new_sdu(tx_sdu.copy()));
-  broker2.handle_receive(server_2_1_assoc_fd); // RX DATA
-  ASSERT_EQ(assoc_factory2.last_sdu, tx_sdu);
-
+  {
+    std::array<uint8_t, 4> data12 = {0x01, 0x02, 0x01, 0x02};
+    byte_buffer            tx_sdu12;
+    ASSERT_TRUE(tx_sdu12.append(data12));
+    ASSERT_TRUE(assoc_factory1.association_senders[0]->on_new_sdu(tx_sdu12.copy()));
+    broker2.handle_receive(server_2_1_assoc_fd); // RX DATA
+    ASSERT_EQ(assoc_factory2.last_sdu, tx_sdu12);
+  }
   // Send data from S2 to S1.
-  std::array<uint8_t, 4> data2 = {0x04, 0x05, 0x06, 0x07};
-  byte_buffer            tx_sdu2;
-  ASSERT_TRUE(tx_sdu2.append(data2));
-  ASSERT_TRUE(assoc_factory2.association_senders[0]->on_new_sdu(tx_sdu2.copy()));
-  broker1.handle_receive(server_1_2_assoc_fd); // RX DATA
-  ASSERT_EQ(assoc_factory1.last_sdu, tx_sdu2);
+  {
+    std::array<uint8_t, 4> data21 = {0x02, 0x01, 0x02, 0x01};
+    byte_buffer            tx_sdu21;
+    ASSERT_TRUE(tx_sdu21.append(data21));
+    ASSERT_TRUE(assoc_factory2.association_senders[0]->on_new_sdu(tx_sdu21.copy()));
+    broker1.handle_receive(server_1_2_assoc_fd); // RX DATA
+    ASSERT_EQ(assoc_factory1.last_sdu, tx_sdu21);
+  }
+  // Send data from S1 to S3 over the first association.
+  {
+    std::array<uint8_t, 4> data13 = {0x01, 0x03, 0x01, 0x03};
+    byte_buffer            tx_sdu13;
+    ASSERT_TRUE(tx_sdu13.append(data13));
+    ASSERT_TRUE(assoc_factory1.association_senders[1]->on_new_sdu(tx_sdu13.copy()));
+    broker3.handle_receive(server_3_1_assoc_fd); // RX DATA
+    ASSERT_EQ(assoc_factory3.last_sdu, tx_sdu13);
+  }
 
-  // TODO check the rest of the associations.
+  // Send data from S3 to S1.
+  {
+    std::array<uint8_t, 4> data31 = {0x03, 0x01, 0x03, 0x01};
+    byte_buffer            tx_sdu31;
+    ASSERT_TRUE(tx_sdu31.append(data31));
+    ASSERT_TRUE(assoc_factory3.association_senders[0]->on_new_sdu(tx_sdu31.copy()));
+    broker1.handle_receive(server_1_3_assoc_fd); // RX DATA
+    ASSERT_EQ(assoc_factory1.last_sdu, tx_sdu31);
+  }
+
+  // Send data from S2 to S3 over the first association.
+  {
+    std::array<uint8_t, 4> data23 = {0x02, 0x03, 0x02, 0x03};
+    byte_buffer            tx_sdu23;
+    ASSERT_TRUE(tx_sdu23.append(data23));
+    ASSERT_TRUE(assoc_factory2.association_senders[1]->on_new_sdu(tx_sdu23.copy()));
+    broker3.handle_receive(server_3_2_assoc_fd); // RX DATA
+    ASSERT_EQ(assoc_factory3.last_sdu, tx_sdu23);
+  }
+
+  // Send data from S3 to S2.
+  {
+    std::array<uint8_t, 4> data32 = {0x03, 0x02, 0x03, 0x02};
+    byte_buffer            tx_sdu32;
+    ASSERT_TRUE(tx_sdu32.append(data32));
+    ASSERT_TRUE(assoc_factory3.association_senders[1]->on_new_sdu(tx_sdu32.copy()));
+    broker2.handle_receive(server_2_3_assoc_fd); // RX DATA
+    ASSERT_EQ(assoc_factory2.last_sdu, tx_sdu32);
+  }
 }
 
 TEST_P(sctp_network_server_peer_test, when_connect_called_with_empty_address_list_then_returns_false)
