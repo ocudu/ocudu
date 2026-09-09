@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../adt/bounded_integer.h"
+#include "ocudu/adt/bounded_integer.h"
 
 namespace ocudu {
 
