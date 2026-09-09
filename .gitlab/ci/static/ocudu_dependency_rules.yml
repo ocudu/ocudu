@@ -133,33 +133,290 @@ rules:
     reason: Module support may only depend on the modules listed in allow; anything else breaks its layering
       boundary.
   # Per-component checks (e.g. du, mac, rlc).
-  - id: mac-must-not-depend-on-du
+  - id: du-layers-must-not-depend-on-du
     kind: forbidden-edge
     from:
-      - lib/mac/**
       - include/ocudu/mac/**
-    to:
-      - include/ocudu/du/**
-      - lib/du/**
-    reason: MAC sits below the DU manager. Including DU headers inverts the layering and drags DU configuration
-      types into the cell-processing path.
-  - id: rlc-must-not-depend-on-du
-    kind: forbidden-edge
-    from:
-      - lib/rlc/**
+      - lib/mac/**
       - include/ocudu/rlc/**
+      - lib/rlc/**
+      - include/ocudu/f1ap/**
+      - lib/f1ap/**
+      - include/ocudu/scheduler/**
+      - lib/scheduler/**
+      - include/ocudu/phy/**
+      - lib/phy/**
+      - include/ocudu/ofh/**
+      - lib/ofh/**
+      - include/ocudu/fapi/**
     to:
       - include/ocudu/du/**
       - lib/du/**
-    reason: RLC sits below the DU manager. Including DU headers inverts the layering and couples per-bearer
-      processing to DU-level configuration types.
-  - id: f1ap-must-not-depend-on-du
+    reason: These subsystems sit below the DU manager, which drives them. Including DU headers inverts
+      that direction, drags DU configuration types into the cell-processing path and stops each subsystem
+      from being built or tested without the DU manager.
+  - id: du_high-must-not-depend-on-du_low
     kind: forbidden-edge
     from:
-      - lib/f1ap/**
-      - include/ocudu/f1ap/**
+      - include/ocudu/du/du_high/**
+      - lib/du/du_high/**
+    to:
+      - include/ocudu/du/du_low/**
+      - lib/du/du_low/**
+    reason: The two DU halves meet only through FAPI, and are deployed in separate processes in a split
+      setup. A direct include makes DU-high unbuildable without an L1.
+  - id: du_low-must-not-depend-on-du_high
+    kind: forbidden-edge
+    from:
+      - include/ocudu/du/du_low/**
+      - lib/du/du_low/**
+    to:
+      - include/ocudu/du/du_high/**
+      - lib/du/du_high/**
+    reason: The two DU halves meet only through FAPI, and are deployed in separate processes in a split
+      setup. A direct include makes DU-low unbuildable without an L2.
+  - id: du-must-not-depend-on-cu
+    kind: forbidden-edge
+    from:
+      - include/ocudu/du/**
+      - lib/du/**
+    to:
+      - include/ocudu/cu_cp/**
+      - lib/cu_cp/**
+      - include/ocudu/cu_up/**
+      - lib/cu_up/**
+      - include/ocudu/ngap/**
+      - lib/ngap/**
+      - include/ocudu/e1ap/**
+      - lib/e1ap/**
+    reason: DU and CU are separate network functions that talk over F1 only. Reaching across the split
+      couples the DU to CU internals and to interfaces it does not terminate.
+  - id: cu-must-not-depend-on-du
+    kind: forbidden-edge
+    from:
+      - include/ocudu/cu_cp/**
+      - lib/cu_cp/**
+      - include/ocudu/cu_up/**
+      - lib/cu_up/**
     to:
       - include/ocudu/du/**
       - lib/du/**
-    reason: F1AP is a transport-facing subsystem driven by the DU manager, not a consumer of it. Including
-      DU headers inverts that direction and prevents F1AP from being built or tested without the DU manager.
+      - include/ocudu/mac/**
+      - lib/mac/**
+      - include/ocudu/scheduler/**
+      - lib/scheduler/**
+      - include/ocudu/phy/**
+      - lib/phy/**
+    reason: DU and CU are separate network functions that talk over F1 only. The CU must not see DU-side
+      layers, which exist only below the split.
+  - id: cu_cp-must-not-depend-on-cu_up
+    kind: forbidden-edge
+    from:
+      - include/ocudu/cu_cp/**
+      - lib/cu_cp/**
+    to:
+      - include/ocudu/cu_up/**
+      - lib/cu_up/**
+    reason: CU-CP and CU-UP are separate network functions that talk over E1 only, and may run in different
+      processes.
+  - id: cu_up-must-not-depend-on-cu_cp
+    kind: forbidden-edge
+    from:
+      - include/ocudu/cu_up/**
+      - lib/cu_up/**
+    to:
+      - include/ocudu/cu_cp/**
+      - lib/cu_cp/**
+    reason: CU-CP and CU-UP are separate network functions that talk over E1 only, and may run in different
+      processes.
+  - id: user-plane-must-not-depend-on-control-plane
+    kind: forbidden-edge
+    from:
+      - include/ocudu/rlc/**
+      - lib/rlc/**
+      - include/ocudu/pdcp/**
+      - lib/pdcp/**
+      - include/ocudu/sdap/**
+      - lib/sdap/**
+      - include/ocudu/gtpu/**
+      - lib/gtpu/**
+      - include/ocudu/f1u/**
+      - lib/f1u/**
+    to:
+      - include/ocudu/rrc/**
+      - lib/rrc/**
+      - include/ocudu/cu_cp/**
+      - lib/cu_cp/**
+      - include/ocudu/cu_up/**
+      - lib/cu_up/**
+      - include/ocudu/ngap/**
+      - lib/ngap/**
+    reason: User-plane bearer processing is configured by the control plane, never the other way round.
+      Including control-plane headers puts signalling types on the per-packet path.
+  - id: rlc-must-not-depend-on-adjacent-layers
+    kind: forbidden-edge
+    from:
+      - include/ocudu/rlc/**
+      - lib/rlc/**
+    to:
+      - include/ocudu/mac/**
+      - lib/mac/**
+      - include/ocudu/pdcp/**
+      - lib/pdcp/**
+    reason: RLC exchanges SDUs with MAC and PDCP through interfaces it defines itself, so it must not
+      see either neighbour's types.
+  - id: pdcp-must-not-depend-on-adjacent-layers
+    kind: forbidden-edge
+    from:
+      - include/ocudu/pdcp/**
+      - lib/pdcp/**
+    to:
+      - include/ocudu/rlc/**
+      - lib/rlc/**
+      - include/ocudu/sdap/**
+      - lib/sdap/**
+    reason: PDCP exchanges SDUs with RLC and SDAP through interfaces it defines itself, so it must not
+      see either neighbour's types.
+  - id: phy-must-not-depend-on-l2
+    kind: forbidden-edge
+    from:
+      - include/ocudu/phy/**
+      - lib/phy/**
+    to:
+      - include/ocudu/mac/**
+      - lib/mac/**
+      - include/ocudu/scheduler/**
+      - lib/scheduler/**
+      - include/ocudu/fapi/**
+      - include/ocudu/ofh/**
+      - lib/ofh/**
+    reason: L1 is driven through FAPI and knows nothing above it. Including L2 or adaptor headers inverts
+      the split and pulls scheduling types into the sample path.
+  - id: l2-must-not-depend-on-phy
+    kind: forbidden-edge
+    from:
+      - include/ocudu/mac/**
+      - lib/mac/**
+      - include/ocudu/scheduler/**
+      - lib/scheduler/**
+      - include/ocudu/rlc/**
+      - lib/rlc/**
+    to:
+      - include/ocudu/phy/**
+      - lib/phy/**
+      - include/ocudu/fapi/**
+    reason: L2 reaches L1 only through the FAPI adaptor. A direct include ties L2 to one L1 implementation
+      and breaks the split-6 and split-7.2 deployments.
+  - id: fronthaul-must-not-depend-on-l2
+    kind: forbidden-edge
+    from:
+      - include/ocudu/ofh/**
+      - lib/ofh/**
+      - include/ocudu/fapi/**
+    to:
+      - include/ocudu/mac/**
+      - lib/mac/**
+      - include/ocudu/scheduler/**
+      - lib/scheduler/**
+      - include/ocudu/rlc/**
+      - lib/rlc/**
+      - include/ocudu/pdcp/**
+      - lib/pdcp/**
+    reason: The fronthaul and FAPI interfaces carry L1 data only. Including L2 headers gives them knowledge
+      of layers on the far side of the interface they define.
+  - id: cu-layers-must-not-depend-on-cu
+    kind: forbidden-edge
+    from:
+      - include/ocudu/ngap/**
+      - lib/ngap/**
+      - include/ocudu/e1ap/**
+      - lib/e1ap/**
+      - include/ocudu/f1ap/**
+      - lib/f1ap/**
+      - include/ocudu/xnap/**
+      - lib/xnap/**
+      - include/ocudu/nrppa/**
+      - lib/nrppa/**
+      - include/ocudu/lpp/**
+      - lib/lpp/**
+      - include/ocudu/rrc/**
+      - lib/rrc/**
+      - include/ocudu/pdcp/**
+      - lib/pdcp/**
+      - include/ocudu/sdap/**
+      - lib/sdap/**
+      - include/ocudu/gtpu/**
+      - lib/gtpu/**
+      - include/ocudu/f1u/**
+      - lib/f1u/**
+      - include/ocudu/nru/**
+      - lib/nru/**
+      - include/ocudu/security/**
+      - lib/security/**
+    to:
+      - include/ocudu/cu_cp/**
+      - lib/cu_cp/**
+      - include/ocudu/cu_up/**
+      - lib/cu_up/**
+    reason: These subsystems sit below the CU-CP and CU-UP, which drive them. Including CU headers inverts
+      that direction and stops each subsystem from being built or tested without the CU.
+    exempt:
+      - from: include/ocudu/e1ap/cu_up/e1ap_cu_up.h
+        to: include/ocudu/cu_up/cu_up_types.h
+        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. E1AP CU-UP interface takes CU-UP types directly.
+      - from: include/ocudu/e1ap/cu_up/e1ap_cu_up_bearer_context_update.h
+        to: include/ocudu/cu_up/cu_up_types.h
+        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. Bearer context update messages carry CU-UP types.
+      - from: lib/e1ap/cu_up/e1ap_cu_up_connection_handler.h
+        to: include/ocudu/cu_up/cu_up_manager.h
+        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. Connection handler calls back into the CU-UP manager.
+      - from: lib/e1ap/cu_up/ue_context/e1ap_ue_logger.h
+        to: include/ocudu/cu_up/cu_up_types.h
+        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. UE logger formats CU-UP identifiers.
+      - from: include/ocudu/f1ap/cu_cp/f1ap_cu.h
+        to: include/ocudu/cu_cp/cu_cp_ue_messages.h
+        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. F1AP CU interface takes CU-CP UE message types directly.
+      - from: include/ocudu/rrc/rrc_config.h
+        to: include/ocudu/cu_cp/cu_cp_types.h
+        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. RRC config embeds CU-CP types.
+      - from: include/ocudu/rrc/rrc_ue.h
+        to: include/ocudu/cu_cp/cu_cp_ue_messages.h
+        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. RRC UE interface takes CU-CP UE message types directly.
+      - from: lib/xnap/procedures/xn_handover_asn1_helpers.h
+        to: include/ocudu/cu_cp/cu_cp_cho_types.h
+        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. Xn handover helpers convert CU-CP conditional handover types.
+      - from: lib/xnap/procedures/xnap_source_handover_preparation_procedure.cpp
+        to: include/ocudu/cu_cp/cu_cp_cho_types.h
+        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. Handover preparation reads CU-CP conditional handover types.
+  - id: rrc-must-not-depend-on-transport-protocols
+    kind: forbidden-edge
+    from:
+      - include/ocudu/rrc/**
+      - lib/rrc/**
+    to:
+      - include/ocudu/ngap/**
+      - lib/ngap/**
+      - include/ocudu/f1ap/**
+      - lib/f1ap/**
+      - include/ocudu/e1ap/**
+      - lib/e1ap/**
+    reason: RRC terminates the Uu signalling protocol and is carried over F1AP, NGAP and E1AP by the CU-CP.
+      Including those headers couples message handling to the transports that carry it.
+  - id: security-must-not-depend-on-upper-layers
+    kind: forbidden-edge
+    from:
+      - include/ocudu/security/**
+      - lib/security/**
+    to:
+      - include/ocudu/rrc/**
+      - lib/rrc/**
+      - include/ocudu/pdcp/**
+      - lib/pdcp/**
+      - include/ocudu/cu_cp/**
+      - lib/cu_cp/**
+      - include/ocudu/cu_up/**
+      - lib/cu_up/**
+      - include/ocudu/ngap/**
+      - lib/ngap/**
+    reason: The security primitives are a leaf utility. Including any of their callers' headers makes
+      the ciphering and integrity code impossible to test in isolation.
