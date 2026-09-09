@@ -58,8 +58,6 @@ struct xnu_interface_config {
   std::chrono::milliseconds gtpu_rate_limiting_period;
   /// Error indication suppression time for released TEIDs.
   std::chrono::milliseconds gtpu_teid_release_linger_time;
-  /// Ignore DL UE-AMBR.
-  bool gtpu_ignore_ue_ambr;
   /// GTP-U queue size in PDUs.
   uint32_t gtpu_queue_size;
   /// Maximum number of GTP-U PDUs processed in a batch.

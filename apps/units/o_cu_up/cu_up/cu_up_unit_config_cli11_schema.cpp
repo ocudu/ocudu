@@ -132,8 +132,6 @@ static void configure_cli11_xnu_gtpu_args(CLI::App& app, cu_up_unit_xnu_gtpu_con
              gtpu_cfg.gtpu_teid_release_linger_time,
              "Error indication suppression time for released TEIDs (in milliseconds)")
       ->capture_default_str();
-  add_option(app, "--ignore_ue_ambr", gtpu_cfg.ignore_ue_ambr, "Ignore GTP-U DL UE-AMBR rate limiter")
-      ->capture_default_str();
 }
 
 static void configure_cli11_xnu_args(CLI::App& app, cu_up_unit_xnu_config& xnu_params)

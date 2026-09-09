@@ -29,7 +29,6 @@ ocuup::cu_up_config ocudu::generate_cu_up_config(const cu_up_unit_config& config
               .gtpu_reordering_timer     = std::chrono::milliseconds{config.xnu_cfg.gtpu_cfg.gtpu_reordering_timer_ms},
               .gtpu_rate_limiting_period = config.xnu_cfg.gtpu_cfg.rate_limiter_period,
               .gtpu_teid_release_linger_time = config.xnu_cfg.gtpu_cfg.gtpu_teid_release_linger_time,
-              .gtpu_ignore_ue_ambr           = config.xnu_cfg.gtpu_cfg.ignore_ue_ambr,
               .gtpu_queue_size               = config.xnu_cfg.gtpu_cfg.gtpu_queue_size,
               .gtpu_batch_size               = config.xnu_cfg.gtpu_cfg.gtpu_batch_size,
               .warn_on_drop                  = config.warn_on_drop},

@@ -48,7 +48,6 @@ static void fill_cu_up_xnu_gtpu_section(YAML::Node& node, const cu_up_unit_xnu_g
   gtpu_node["reordering_timer"]         = config.gtpu_reordering_timer_ms;
   gtpu_node["rate_limiter_period"]      = config.rate_limiter_period.count();
   gtpu_node["teid_release_linger_time"] = config.gtpu_teid_release_linger_time.count();
-  gtpu_node["ignore_ue_ambr"]           = config.ignore_ue_ambr;
 }
 
 static void fill_cu_up_xnu_section(YAML::Node& node, const cu_up_unit_xnu_config& config)
