@@ -149,6 +149,8 @@ rules:
       - include/ocudu/ofh/**
       - lib/ofh/**
       - include/ocudu/fapi/**
+      - include/ocudu/fapi_adaptor/**
+      - lib/fapi_adaptor/**
     to:
       - include/ocudu/du/**
       - lib/du/**
@@ -288,6 +290,8 @@ rules:
       - include/ocudu/scheduler/**
       - lib/scheduler/**
       - include/ocudu/fapi/**
+      - include/ocudu/fapi_adaptor/**
+      - lib/fapi_adaptor/**
       - include/ocudu/ofh/**
       - lib/ofh/**
     reason: L1 is driven through FAPI and knows nothing above it. Including L2 or adaptor headers inverts
@@ -305,8 +309,11 @@ rules:
       - include/ocudu/phy/**
       - lib/phy/**
       - include/ocudu/fapi/**
-    reason: L2 reaches L1 only through the FAPI adaptor. A direct include ties L2 to one L1 implementation
-      and breaks the split-6 and split-7.2 deployments.
+      - include/ocudu/fapi_adaptor/**
+      - lib/fapi_adaptor/**
+    reason: L2 is wired to L1 by the application, through interfaces L2 defines itself. Including L1,
+      FAPI or adaptor headers ties L2 to one L1 implementation and breaks the split-6 and split-7.2
+      deployments.
   - id: fronthaul-must-not-depend-on-l2
     kind: forbidden-edge
     from:
@@ -322,8 +329,10 @@ rules:
       - lib/rlc/**
       - include/ocudu/pdcp/**
       - lib/pdcp/**
-    reason: The fronthaul and FAPI interfaces carry L1 data only. Including L2 headers gives them knowledge
-      of layers on the far side of the interface they define.
+      - include/ocudu/fapi_adaptor/**
+      - lib/fapi_adaptor/**
+    reason: The fronthaul and FAPI interfaces carry L1 data only. Including L2 or adaptor headers gives
+      them knowledge of layers on the far side of the interface they define.
   - id: cu-layers-must-not-depend-on-cu
     kind: forbidden-edge
     from:
@@ -400,8 +409,9 @@ rules:
       - lib/f1ap/**
       - include/ocudu/e1ap/**
       - lib/e1ap/**
-    reason: RRC terminates the Uu signalling protocol and is carried over F1AP, NGAP and E1AP by the CU-CP.
-      Including those headers couples message handling to the transports that carry it.
+    reason: RRC is the Uu control-plane signalling protocol, terminated in the CU-CP and carried to the
+      DU over F1AP. Including transport headers couples message handling to the protocols that carry
+      it.
   - id: security-must-not-depend-on-upper-layers
     kind: forbidden-edge
     from:
