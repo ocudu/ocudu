@@ -161,7 +161,19 @@ static unsigned is_ulsch_tbs_valid(const ul_sched_info& grant)
 bool test_helper::is_valid_ul_sched_info(const ul_sched_info& grant)
 {
   TRUE_OR_RETURN(grant.pusch_cfg.nof_layers > 0);
-  TRUE_OR_RETURN((grant.context.nof_retxs == 0) == grant.pusch_cfg.new_data);
+  // A PDCCH-less occasion of a PUSCH repetition bundle always carries new_data=false, whatever the HARQ
+  // retransmission count: only the base occasion opens the PHY receive buffer, the later ones accumulate into it.
+  // The base occasion is the one whose repetition countdown is still untouched.
+  const bool is_later_repetition_occasion =
+      grant.pusch_cfg.repetitions.has_value() and
+      grant.pusch_cfg.repetitions->nof_remaining_repetitions + 1U < grant.pusch_cfg.repetitions->nof_repetitions;
+  if (is_later_repetition_occasion) {
+    TRUE_OR_RETURN(not grant.pusch_cfg.new_data,
+                   "rnti={}: PUSCH repetition occasion must carry new_data=false",
+                   grant.pusch_cfg.rnti);
+  } else {
+    TRUE_OR_RETURN((grant.context.nof_retxs == 0) == grant.pusch_cfg.new_data);
+  }
 
   // Check code rate.
   constexpr float           max_code_rate       = 0.95;

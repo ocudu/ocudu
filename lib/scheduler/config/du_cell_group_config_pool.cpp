@@ -6,33 +6,10 @@
 #include "cell_configuration.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/ran/bwp/bwp_id.h"
-#include "ocudu/scheduler/config/time_domain_resource_helper.h"
 #include "ocudu/scheduler/config/ue_bwp_config.h"
 #include "ocudu/scheduler/scheduler_configurator.h"
 
 using namespace ocudu;
-
-static ul_time_domain_mapper make_ul_td_mapper(const ran_cell_config& cfg)
-{
-  ul_time_domain_builder_params params;
-  params.scs     = cfg.ul_cfg_common.init_ul_bwp.generic_params.scs;
-  params.cp      = cfg.ul_cfg_common.init_ul_bwp.generic_params.cp;
-  params.tdd_cfg = cfg.tdd_cfg;
-
-  ul_time_domain_builder_params::pusch_explicit_resources pusch_explicit_res;
-  pusch_explicit_res.pusch_td_res_list =
-      cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.has_value()
-          ? cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list
-          : time_domain_resource_helper::generate_dedicated_pusch_td_res_list(
-                cfg.tdd_cfg, cfg.ul_cfg_common.init_ul_bwp.generic_params.cp, cfg.init_bwp.pusch.min_k2);
-  params.pusch_params = std::move(pusch_explicit_res);
-
-  ul_time_domain_builder_params::pucch_auto_resources pucch_auto_res;
-  pucch_auto_res.min_k1 = cfg.init_bwp.pucch.min_k1;
-  params.pucch_params   = pucch_auto_res;
-
-  return ul_time_domain_mapper(params);
-}
 
 bwp_config_pool::bwp_config_pool(const ran_cell_config&     cell_ran_cfg,
                                  bwp_id_t                   bwpid,
@@ -41,11 +18,11 @@ bwp_config_pool::bwp_config_pool(const ran_cell_config&     cell_ran_cfg,
   bwp_dl_cmn(cell_ran_cfg.dl_cfg_common.init_dl_bwp),
   bwp_ul_cmn(cell_ran_cfg.ul_cfg_common.init_ul_bwp),
   tdd_cfg(cell_ran_cfg.tdd_cfg),
-  ul_td_mapper(make_ul_td_mapper(cell_ran_cfg)),
+  pucch_min_k1(cell_ran_cfg.init_bwp.pucch.min_k1),
   pdcch_pool(cell_ran_cfg.pci, bwp_dl_cmn.generic_params, bwp_dl_cmn.pdcch_common, bwp_ded_res.dl),
   common_bwp_cfg{bwp_id,
                  sched_bwp_dl_config{bwp_dl_cmn, nullptr, pdcch_pool.init_cfg(), get_dl_td_mapper(nullptr)},
-                 sched_bwp_ul_config{bwp_ul_cmn, std::nullopt, std::nullopt, ul_td_mapper}}
+                 sched_bwp_ul_config{bwp_ul_cmn, std::nullopt, std::nullopt, get_ul_td_mapper(nullptr)}}
 {
 }
 
@@ -71,7 +48,7 @@ sched_bwp_config bwp_config_pool::add_ded_cfg(const bwp_downlink_dedicated* dl_d
                                                   ? pdcch_pool.ded_cfgs()[0]
                                                   : pdcch_pool.init_cfg(),
                                               get_dl_td_mapper(dl_ptr.get())},
-                          sched_bwp_ul_config{bwp_ul_cmn, std::move(ul_owned), ue_bwp_cfg.ul, ul_td_mapper}};
+                          sched_bwp_ul_config{bwp_ul_cmn, ul_owned, ue_bwp_cfg.ul, get_ul_td_mapper(ul_ded)}};
 }
 
 const dl_time_domain_mapper& bwp_config_pool::get_dl_td_mapper(const bwp_downlink_dedicated* dl_ded)
@@ -103,6 +80,42 @@ const dl_time_domain_mapper& bwp_config_pool::get_dl_td_mapper(const bwp_downlin
   params.params = std::move(explicit_res);
 
   return *dl_td_mapper_pool.create(dl_time_domain_mapper{params});
+}
+
+const ul_time_domain_mapper& bwp_config_pool::get_ul_td_mapper(const bwp_uplink_dedicated* ul_ded)
+{
+  // Get TDRA dedicated list, resolved to the common list if absent, matching ul_time_domain_mapper's own fallback
+  // behavior for DCI format 0_1. May carry repetition rows (TS 38.214, Table 6.1.2.1.1-1).
+  span<const pusch_time_domain_resource_allocation> ded_res = bwp_ul_cmn.pusch_cfg_common->pusch_td_alloc_list;
+  if (ul_ded != nullptr and ul_ded->pusch_cfg.has_value() and not ul_ded->pusch_cfg->pusch_td_alloc_list.empty()) {
+    ded_res = ul_ded->pusch_cfg->pusch_td_alloc_list;
+  }
+
+  // Check if mapper already exists in the pool in an efficient manner, without creating a full ul_time_domain_mapper.
+  auto obj = ul_td_mapper_pool.find_if(
+      [ded_res](const ul_time_domain_mapper& mapper) { return mapper.dedicated_pusch_td_resources() == ded_res; });
+  if (obj.has_value()) {
+    return *obj;
+  }
+
+  // Build unique TDRA mapper.
+  ul_time_domain_builder_params params;
+  params.scs     = bwp_ul_cmn.generic_params.scs;
+  params.cp      = bwp_ul_cmn.generic_params.cp;
+  params.tdd_cfg = tdd_cfg;
+  ul_time_domain_builder_params::pusch_explicit_resources pusch_explicit_res;
+  pusch_explicit_res.common_pusch_td_res_list = bwp_ul_cmn.pusch_cfg_common->pusch_td_alloc_list;
+  if (ul_ded != nullptr and ul_ded->pusch_cfg.has_value()) {
+    // If empty, DCI format 0_1 falls back to the common list.
+    pusch_explicit_res.dedicated_pusch_td_res_list = ul_ded->pusch_cfg->pusch_td_alloc_list;
+  }
+  params.pusch_params = std::move(pusch_explicit_res);
+
+  ul_time_domain_builder_params::pucch_auto_resources pucch_auto_res;
+  pucch_auto_res.min_k1 = pucch_min_k1;
+  params.pucch_params   = pucch_auto_res;
+
+  return *ul_td_mapper_pool.create(ul_time_domain_mapper{params});
 }
 
 static std::vector<std::unique_ptr<bwp_config_pool>>

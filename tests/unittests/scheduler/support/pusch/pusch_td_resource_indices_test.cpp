@@ -50,7 +50,7 @@ protected:
     pusch_td_res_indxes_list_per_slot =
         get_pusch_td_resource_indices_per_slot(cell_cfg->scs_common(),
                                                cell_cfg->params.tdd_cfg,
-                                               cell_cfg->init_bwp.ul.td_mapper().pusch_td_resources(),
+                                               cell_cfg->init_bwp.ul.td_mapper().common_pusch_td_resources(),
                                                cell_cfg->init_bwp.ul.td_mapper().min_k1());
 
     // Populate slot indexes.

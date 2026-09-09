@@ -101,7 +101,7 @@ TEST_F(ue_configuration_test, when_td_alloc_list_r16_is_configured_then_dci_tdra
               units::bits(log2_ceil(ss.bwp->dl.td_mapper().dedicated_pdsch_td_resources().size())));
     ASSERT_TRUE(ss.dci_sz.format0_1_ue_size.has_value());
     ASSERT_EQ(ss.dci_sz.format0_1_ue_size->time_resource,
-              units::bits(log2_ceil(ss.bwp->ul.td_mapper().pusch_td_resources().size())));
+              units::bits(log2_ceil(ss.bwp->ul.td_mapper().dedicated_pusch_td_resources().size())));
   }
 
   // Reconfigure the UE with Rel-16 TDRA lists that mirror the applied lists and append repetition entries.
@@ -124,7 +124,8 @@ TEST_F(ue_configuration_test, when_td_alloc_list_r16_is_configured_then_dci_tdra
     pdsch_cfg.pdsch_td_alloc_list.push_back(rep_alloc);
   }
   auto& pusch_cfg = serv_cell.ul_config->init_ul_bwp.pusch_cfg.value();
-  for (const auto& alloc : ue_cfg.search_space(to_search_space_id(2)).bwp->ul.td_mapper().pusch_td_resources()) {
+  for (const auto& alloc :
+       ue_cfg.search_space(to_search_space_id(2)).bwp->ul.td_mapper().dedicated_pusch_td_resources()) {
     pusch_cfg.pusch_td_alloc_list.push_back(alloc);
   }
   for (uint8_t rep : {2, 4, 8}) {

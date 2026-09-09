@@ -152,14 +152,30 @@ public:
     return cell_cfg.expert_cfg.ue.pusch_rv_sequence[nof_retxs % cell_cfg.expert_cfg.ue.pusch_rv_sequence.size()];
   }
 
+  /// Reason why a CRC PDU did not conclude an UL HARQ transmission of this UE cell.
+  enum class crc_not_concluded {
+    /// \brief No UL HARQ of this UE cell was expecting this CRC.
+    ///
+    /// Either the report is stale, or the HARQ it belongs to is owned elsewhere -- the Msg3 of a contention-free
+    /// access, for instance, which the RA scheduler drives.
+    unattributed,
+    /// \brief The CRC belongs to a PUSCH repetition bundle whose remaining occasions are still to be received.
+    ///
+    /// Its result has been folded into the transmission's accumulated CRC and will be acted upon at the last
+    /// occasion. This is an ordinary step of receiving a bundle, not a failure to attribute the report.
+    held_for_bundle
+  };
+
   /// \brief Handle CRC PDU indication.
   ///
   /// Dynamic PUSCH CRC always yields a "detected" outcome (i.e., ACK or NACK); whereas, the Configured Grant PUSCH CRC
   /// can yield a not-detected outcome, e.g., when the SINR associated with its PUSCH is below the detection threshold.
   ///
   /// \return A pair with the TBS that was (N)ACKed or not detected (DTX) and boolean indicating whether the PDU was
-  /// detected as transmitted (True if detected, false if not detected).
-  expected<std::pair<units::bytes, bool>> handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& crc_pdu);
+  /// detected as transmitted (True if detected, false if not detected). On failure, why the transmission was not
+  /// concluded; see \ref crc_not_concluded.
+  expected<std::pair<units::bytes, bool>, crc_not_concluded> handle_crc_pdu(slot_point                   pusch_slot,
+                                                                            const ul_crc_pdu_indication& crc_pdu);
 
   /// \brief Handle Sounding Reference Signal (SRS) channel matrix.
   void handle_srs_channel_matrix(const srs_channel_matrix& channel_matrix);

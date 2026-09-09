@@ -399,6 +399,77 @@ compute_retx_nof_rbs_mcs(const pusch_config_params&                  pusch_cfg,
   return std::nullopt;
 }
 
+/// Determine whether a CSI report has to be accounted for in the UL grant of \c pusch_slot.
+/// \param[in] bundle_tx_offsets When the grant is a PUSCH repetition bundle, the slot offsets of its occasions
+/// beyond the base one.
+static bool is_csi_included(const ue_cell& ue_cc, slot_point pusch_slot, span<const uint8_t> bundle_tx_offsets)
+{
+  const ue_cell_configuration& ue_cell_cfg = ue_cc.cfg();
+  const cell_configuration&    cell_cfg    = ue_cell_cfg.cell_cfg_common;
+
+  bool include_csi = false;
+  if (ue_cell_cfg.csi_meas_cfg() != nullptr) {
+    // TODO: pass this through the scheduler config instead.
+    auto aperiodic_csi_prohibit_time_slots =
+        static_cast<unsigned>(ue_cell_cfg.csi_meas_cfg()->nzp_csi_rs_res_list[0].csi_res_period.value());
+    if (std::holds_alternative<csi_report_config::aperiodic_report>(
+            ue_cell_cfg.csi_meas_cfg()->csi_report_cfg_list[0].report_cfg_type) and
+        ue_cc.channel_state_manager().is_aperiodic_csi_allowed(pusch_slot, aperiodic_csi_prohibit_time_slots)) {
+      include_csi = true;
+    } else if (std::holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+                   ue_cell_cfg.csi_meas_cfg()->csi_report_cfg_list[0].report_cfg_type)) {
+      // A bundle carries the UCI of any of its slots, so a periodic CSI report due in any of them has to be sized
+      // for here.
+      const auto is_csi_slot = [&](slot_point sl) {
+        return csi_helper::is_csi_reporting_slot(
+            *ue_cell_cfg.init_bwp().ul.ue_cfg()->periodic_csi_report, cell_cfg.params.init_bwp.csi->csi_rs_period, sl);
+      };
+      include_csi = is_csi_slot(pusch_slot) or
+                    std::any_of(bundle_tx_offsets.begin(), bundle_tx_offsets.end(), [&](uint8_t offset) {
+                      return is_csi_slot(pusch_slot + offset);
+                    });
+    }
+  }
+  return include_csi;
+}
+
+/// Fill in the UL grant parameters that depend on the UCI payload: the PUSCH config params and the resulting MCS
+/// and RB count. Everything else in \c ctxt is UCI-independent.
+/// \return false if no valid MCS/RB combination exists, in which case \c ctxt is left untouched.
+static bool size_ul_grant(ul_sched_context&                            ctxt,
+                          const ue_cell&                               ue_cc,
+                          const search_space_info&                     ss,
+                          const pusch_time_domain_resource_allocation& pusch_td_res,
+                          unsigned                                     uci_nof_harq_bits,
+                          const ul_harq_process_handle*                h_ul,
+                          bool                                         include_csi)
+{
+  pusch_config_params               pusch_cfg;
+  std::optional<mcs_prbs_selection> mcs_prbs_sel;
+  if (h_ul == nullptr) {
+    // NewTx Case.
+    dci_ul_rnti_config_type dci_type = ss.get_ul_dci_format() == dci_ul_format::f0_0
+                                           ? dci_ul_rnti_config_type::c_rnti_f0_0
+                                           : dci_ul_rnti_config_type::c_rnti_f0_1;
+    // Note: We assume k2 <= k1, which means that all the HARQ bits are set at this point for this UL slot and UE.
+    pusch_cfg    = compute_newtx_pusch_config_params(ue_cc, dci_type, pusch_td_res, uci_nof_harq_bits, include_csi);
+    mcs_prbs_sel = compute_newtx_required_mcs_and_prbs(pusch_cfg, ue_cc, ctxt.pending_bytes, ctxt.nof_rb_lims);
+  } else {
+    // ReTx Case.
+    // Compute if effective code rate does not go over the limit for this reTx, for instance, due to presence of UCI.
+    pusch_cfg    = compute_retx_pusch_config_params(ue_cc, *h_ul, pusch_td_res, uci_nof_harq_bits, include_csi);
+    mcs_prbs_sel = compute_retx_nof_rbs_mcs(pusch_cfg, h_ul->get_grant_params(), ue_cc, ctxt.nof_rb_lims);
+  }
+  if (not mcs_prbs_sel.has_value()) {
+    return false;
+  }
+
+  ctxt.recommended_mcs  = mcs_prbs_sel->mcs;
+  ctxt.expected_nof_rbs = mcs_prbs_sel->nof_prbs;
+  ctxt.pusch_cfg        = pusch_cfg;
+  return true;
+}
+
 static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&               u,
                                                             slot_point                    pdcch_slot,
                                                             slot_point                    pusch_slot,
@@ -434,6 +505,16 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
                  "DCI type cannot change across reTxs");
   }
 
+  // For a newTx, link adaptation decides how many Rel-16 PUSCH repetitions to request, or nullopt for a single
+  // transmission. A reTx reuses the scheme of the original transmission, so its count comes from the HARQ grant
+  // params (like the number of layers), not from the current link quality.
+  std::optional<uint8_t> nof_repetitions;
+  if (h_ul == nullptr) {
+    nof_repetitions = ue_cc.link_adaptation_controller().select_pusch_repetition_count(ss);
+  } else if (h_ul->get_grant_params().nof_repetitions > 1) {
+    nof_repetitions = h_ul->get_grant_params().nof_repetitions;
+  }
+
   // Determine RB allocation limits.
   // For reTx, additionally cap by the slice's max RB budget to prevent overflowing the slice allocation.
   const interval<unsigned> slice_max_lims =
@@ -455,64 +536,35 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
   // number of symbols used by the original transmission.
   const std::optional<uint8_t> retx_symbols =
       h_ul != nullptr ? std::optional<uint8_t>{h_ul->get_grant_params().nof_symbols} : std::nullopt;
-  const std::optional<uint8_t> pusch_td_index = bwp_cfg.ul.td_mapper().find_pusch_td_res_index(
-      pdcch_slot, pusch_slot, allowed_symbols, cell_cfg.ntn_cs_koffset, retx_symbols);
+  const std::optional<uint8_t> pusch_td_index = bwp_cfg.ul.td_mapper().find_pusch_td_res_index(ss.get_ul_dci_format(),
+                                                                                               pdcch_slot,
+                                                                                               pusch_slot,
+                                                                                               allowed_symbols,
+                                                                                               cell_cfg.ntn_cs_koffset,
+                                                                                               nof_repetitions,
+                                                                                               retx_symbols);
   if (not pusch_td_index.has_value()) {
     return std::nullopt;
   }
   const pusch_time_domain_resource_allocation& pusch_td_res =
-      bwp_cfg.ul.td_mapper().pusch_td_resources()[*pusch_td_index];
+      bwp_cfg.ul.td_mapper().pusch_td_resources(ss.get_ul_dci_format())[*pusch_td_index];
 
-  // Compute recommended number of layers, MCS and PRBs.
-
-  bool include_csi = false;
-  if (ue_cell_cfg.csi_meas_cfg() != nullptr) {
-    // TODO: pass this through the scheduler config instead.
-    auto aperiodic_csi_prohibit_time_slots =
-        static_cast<unsigned>(ue_cell_cfg.csi_meas_cfg()->nzp_csi_rs_res_list[0].csi_res_period.value());
-    if (std::holds_alternative<csi_report_config::aperiodic_report>(
-            ue_cell_cfg.csi_meas_cfg()->csi_report_cfg_list[0].report_cfg_type) and
-        ue_cc.channel_state_manager().is_aperiodic_csi_allowed(pusch_slot, aperiodic_csi_prohibit_time_slots)) {
-      include_csi = true;
-    } else if (std::holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
-                   ue_cell_cfg.csi_meas_cfg()->csi_report_cfg_list[0].report_cfg_type) and
-               csi_helper::is_csi_reporting_slot(*ue_cell_cfg.init_bwp().ul.ue_cfg()->periodic_csi_report,
-                                                 cell_cfg.params.init_bwp.csi->csi_rs_period,
-                                                 pusch_slot)) {
-      include_csi = true;
-    }
-  }
-
-  pusch_config_params               pusch_cfg;
-  std::optional<mcs_prbs_selection> mcs_prbs_sel;
-  if (h_ul == nullptr) {
-    // NewTx Case.
-    dci_ul_rnti_config_type dci_type = ss.get_ul_dci_format() == dci_ul_format::f0_0
-                                           ? dci_ul_rnti_config_type::c_rnti_f0_0
-                                           : dci_ul_rnti_config_type::c_rnti_f0_1;
-    // Note: We assume k2 <= k1, which means that all the HARQ bits are set at this point for this UL slot and UE.
-    pusch_cfg    = compute_newtx_pusch_config_params(ue_cc, dci_type, pusch_td_res, uci_nof_harq_bits, include_csi);
-    mcs_prbs_sel = compute_newtx_required_mcs_and_prbs(pusch_cfg, ue_cc, pending_bytes, nof_rb_lims);
-  } else {
-    // ReTx Case.
-    // Compute if effective code rate does not go over the limit for this reTx, for instance, due to presence of UCI.
-    pusch_cfg    = compute_retx_pusch_config_params(ue_cc, *h_ul, pusch_td_res, uci_nof_harq_bits, include_csi);
-    mcs_prbs_sel = compute_retx_nof_rbs_mcs(pusch_cfg, h_ul->get_grant_params(), ue_cc, nof_rb_lims);
-  }
-  if (not mcs_prbs_sel.has_value()) {
-    return std::nullopt;
-  }
-
-  // Successful selection of grant parameters.
+  // Fill in the grant parameters that do not depend on the UCI payload.
   ul_sched_context ctxt;
   ctxt.ss_id              = ss.cfg->get_id();
   ctxt.pusch_td_res_index = *pusch_td_index;
   ctxt.vrb_lims           = vrb_lims;
   ctxt.nof_rb_lims        = nof_rb_lims;
-  ctxt.recommended_mcs    = mcs_prbs_sel->mcs;
-  ctxt.expected_nof_rbs   = mcs_prbs_sel->nof_prbs;
-  ctxt.pending_bytes      = units::bytes{pending_bytes};
-  ctxt.pusch_cfg          = pusch_cfg;
+  ctxt.pending_bytes      = pending_bytes;
+  ctxt.nof_repetitions    = pusch_td_res.nof_repetitions;
+
+  // Compute recommended number of layers, MCS and PRBs.
+  if (not size_ul_grant(
+          ctxt, ue_cc, ss, pusch_td_res, uci_nof_harq_bits, h_ul, is_csi_included(ue_cc, pusch_slot, {}))) {
+    return std::nullopt;
+  }
+
+  // Successful selection of grant parameters.
   return ctxt;
 }
 
@@ -536,6 +588,41 @@ std::optional<ul_sched_context> sched_helper::get_retx_ul_sched_context(const sl
 {
   return get_ul_sched_context(
       u, pdcch_slot, pusch_slot, uci_nof_harq_bits, &h_ul, units::bytes{0}, allowed_symbols, max_rbs);
+}
+
+static bool resize_ul_grant_for_uci(ul_sched_context&             ctxt,
+                                    const slice_ue&               u,
+                                    slot_point                    pusch_slot,
+                                    unsigned                      uci_nof_harq_bits,
+                                    const ul_harq_process_handle* h_ul,
+                                    span<const uint8_t>           bundle_tx_offsets)
+{
+  const ue_cell&                               ue_cc = u.get_cc();
+  const search_space_info&                     ss    = ue_cc.cfg().search_space(ctxt.ss_id);
+  const pusch_time_domain_resource_allocation& pusch_td_res =
+      ue_cc.active_bwp().ul.td_mapper().pusch_td_resources(ss.get_ul_dci_format())[ctxt.pusch_td_res_index];
+
+  return size_ul_grant(
+      ctxt, ue_cc, ss, pusch_td_res, uci_nof_harq_bits, h_ul, is_csi_included(ue_cc, pusch_slot, bundle_tx_offsets));
+}
+
+bool sched_helper::resize_newtx_ul_grant_for_uci(ul_sched_context&   ctxt,
+                                                 const slice_ue&     u,
+                                                 slot_point          pusch_slot,
+                                                 unsigned            uci_nof_harq_bits,
+                                                 span<const uint8_t> bundle_tx_offsets)
+{
+  return resize_ul_grant_for_uci(ctxt, u, pusch_slot, uci_nof_harq_bits, nullptr, bundle_tx_offsets);
+}
+
+bool sched_helper::resize_retx_ul_grant_for_uci(ul_sched_context&             ctxt,
+                                                const slice_ue&               u,
+                                                slot_point                    pusch_slot,
+                                                unsigned                      uci_nof_harq_bits,
+                                                const ul_harq_process_handle& h_ul,
+                                                span<const uint8_t>           bundle_tx_offsets)
+{
+  return resize_ul_grant_for_uci(ctxt, u, pusch_slot, uci_nof_harq_bits, &h_ul, bundle_tx_offsets);
 }
 
 static vrb_interval

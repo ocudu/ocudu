@@ -39,6 +39,7 @@ add_executable(scheduler_test
         scheduler_ue_removal_test.cpp
         scheduler_tdd_test.cpp
         scheduler_pdsch_repetition_test.cpp
+        scheduler_pusch_repetition_test.cpp
         scheduler_ue_fallback_mode_test.cpp
         scheduler_ta_cmd_test.cpp
 		scheduler_multi_cell_test.cpp

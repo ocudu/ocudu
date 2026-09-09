@@ -464,6 +464,11 @@ void cell_event_manager::handle_ue_crc(slot_point sl_rx, const ul_crc_pdu_indica
   const bool was_pending_cfra = ue_cc->get_pcell_state().conres_st == ue_conres_state::pending_cfra;
   const auto crc_process_res  = ue_cc->handle_crc_pdu(sl_rx, crc);
   if (not crc_process_res.has_value()) {
+    if (crc_process_res.error() == ue_cell::crc_not_concluded::held_for_bundle) {
+      // An occasion of a PUSCH repetition bundle that is still being received. Its result was folded into the
+      // transmission's accumulated CRC; there is nothing to report until the bundle's last occasion.
+      return;
+    }
     // The Msg3 HARQ of a contention-free access is owned by the RA scheduler. Completing the contention resolution
     // needs the state shared by the UEs of the cell group, so hand it over to the UE scheduler.
     if (was_pending_cfra and crc.tb_crc_success) {

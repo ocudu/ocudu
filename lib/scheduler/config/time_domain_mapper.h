@@ -155,7 +155,12 @@ struct ul_time_domain_builder_params {
     uint8_t symbols_per_srs = 0;
   };
   struct pusch_explicit_resources {
-    std::vector<pusch_time_domain_resource_allocation> pusch_td_res_list;
+    /// PUSCH TD resource list used with DCI format 0_0, derived from PUSCH-ConfigCommon.
+    std::vector<pusch_time_domain_resource_allocation> common_pusch_td_res_list;
+    /// \brief PUSCH TD resource list used with DCI format 0_1, from a UE's dedicated PUSCH-Config. A Rel-16 TDRA
+    /// list may carry \e numberOfRepetitions-r16 entries, enabling PUSCH repetition Type A.
+    /// \remark When empty, DCI format 0_1 falls back to \c common_pusch_td_res_list.
+    std::vector<pusch_time_domain_resource_allocation> dedicated_pusch_td_res_list;
   };
   struct pucch_auto_resources {
     /// Minimum k1 value to consider when generating the list of k1 values.
@@ -185,28 +190,72 @@ struct ul_time_domain_mapper {
   /// Minimum k1 used to derive k1 candidates.
   uint8_t min_k1() const { return min_k1_val; }
 
-  /// Retrieve the list of available PUSCH time-domain resource allocations for the BWP.
-  span<const pusch_time_domain_resource_allocation> pusch_td_resources() const { return pusch_td_res_list; }
-
-  /// \brief Get the list of indices into \ref pusch_td_resources() that are applicable PUSCH TD resource candidates for
-  /// a given PDCCH slot index.
-  span<const uint8_t> pusch_td_res_indices(unsigned pdcch_slot_index) const
+  /// Retrieve the common (fallback) PUSCH TD resources, used with DCI format 0_0.
+  span<const pusch_time_domain_resource_allocation> common_pusch_td_resources() const
   {
-    return pusch_td_res_indices_per_slot[pdcch_slot_index % pusch_td_res_indices_per_slot.size()];
+    return common_pusch_td_res_list;
   }
 
-  /// \brief Get the index into \ref pusch_td_resources() of the best-matching PUSCH TD resource candidate for a PDCCH
-  /// in \c pdcch_slot, whose k2 (plus \c ntn_cs_koffset) leads to \c pusch_slot and whose symbols are fully contained
-  /// within \c usable_symbols. "Best" means the candidate with the largest \c symbols.length() among those that
-  /// qualify; ties keep the first one encountered.
+  /// \brief Retrieve the dedicated PUSCH TD resources, used with DCI format 0_1.
+  /// \remark Falls back to \ref common_pusch_td_resources() if no dedicated list was configured.
+  span<const pusch_time_domain_resource_allocation> dedicated_pusch_td_resources() const
+  {
+    return dedicated_pusch_td_res_list;
+  }
+
+  /// \brief Retrieve the list of available PUSCH time-domain resource allocations applicable for the given DCI UL
+  /// format, as per TS38.214, clause 6.1.2.1.
+  /// \remark Returns the common (fallback) resources for DCI format 0_0, and the dedicated ones otherwise.
+  span<const pusch_time_domain_resource_allocation> pusch_td_resources(dci_ul_format dci_format) const
+  {
+    return dci_format == dci_ul_format::f0_0 ? common_pusch_td_resources() : dedicated_pusch_td_resources();
+  }
+
+  /// \brief Get the list of indices into \ref common_pusch_td_resources() that are applicable PUSCH TD resource
+  /// candidates for a given PDCCH slot index.
+  span<const uint8_t> common_pusch_td_res_indices(unsigned pdcch_slot_index) const
+  {
+    return common_pusch_td_res_indices_per_slot[pdcch_slot_index % common_pusch_td_res_indices_per_slot.size()];
+  }
+
+  /// \brief Get the list of indices into \ref dedicated_pusch_td_resources() that are applicable PUSCH TD resource
+  /// candidates for a given PDCCH slot index.
+  span<const uint8_t> dedicated_pusch_td_res_indices(unsigned pdcch_slot_index) const
+  {
+    return dedicated_pusch_td_res_indices_per_slot[pdcch_slot_index % dedicated_pusch_td_res_indices_per_slot.size()];
+  }
+
+  /// \brief Get the list of indices into \ref pusch_td_resources(dci_ul_format) const that are applicable PUSCH TD
+  /// resource candidates for a given PDCCH slot index, for the given DCI UL format.
+  span<const uint8_t> pusch_td_res_indices(dci_ul_format dci_format, unsigned pdcch_slot_index) const
+  {
+    return dci_format == dci_ul_format::f0_0 ? common_pusch_td_res_indices(pdcch_slot_index)
+                                             : dedicated_pusch_td_res_indices(pdcch_slot_index);
+  }
+
+  /// \brief Get the index into \ref pusch_td_resources(dci_ul_format) const of the best-matching PUSCH TD resource
+  /// candidate for a PDCCH in \c pdcch_slot, whose k2 (plus \c ntn_cs_koffset) leads to \c pusch_slot and whose
+  /// symbols fit within \c usable_symbols. "Best" is the longest qualifying \c symbols.length(); ties keep the first.
+  /// \param dci_format Selects the common (0_0) or dedicated (0_1) TD resource list to search.
+  /// \param nof_repetitions Requested number of Rel-16 PUSCH repetitions (link-adaptation decision). When set, only
+  /// the TDRA row carrying that numberOfRepetitions-r16 is eligible; when unset, only single-transmission rows.
   /// \param retx_symbols For a retransmission, the number of symbols used by the original transmission; only
   /// candidates with a matching \c symbols.length() qualify. Empty for a new transmission.
   /// \return The matching index, or \c std::nullopt if no candidate qualifies.
-  std::optional<uint8_t> find_pusch_td_res_index(slot_point             pdcch_slot,
+  std::optional<uint8_t> find_pusch_td_res_index(dci_ul_format          dci_format,
+                                                 slot_point             pdcch_slot,
                                                  slot_point             pusch_slot,
                                                  ofdm_symbol_range      usable_symbols,
                                                  unsigned               ntn_cs_koffset,
+                                                 std::optional<uint8_t> nof_repetitions,
                                                  std::optional<uint8_t> retx_symbols = std::nullopt) const;
+
+  /// \brief Highest \e numberOfRepetitions-r16 in the dedicated PUSCH TDRA list, or nullopt if it has no repetition
+  /// row. This is the count requested when link quality triggers repetitions.
+  std::optional<uint8_t> max_pusch_repetitions(dci_ul_format dci_format) const
+  {
+    return dci_format == dci_ul_format::f0_0 ? std::nullopt : max_dedicated_pusch_repetitions;
+  }
 
   /// Retrieve the list of k1 candidates for PDSCH-to-HARQ timing used with UE-dedicated DCI.
   span<const uint8_t> dedicated_k1_candidates() const { return dedicated_k1_list; }
@@ -250,17 +299,38 @@ struct ul_time_domain_mapper {
                                              : dedicated_k1_candidates(pdsch_slot_index);
   }
 
+  /// Compares the underlying common and dedicated PUSCH TD resource lists, from which the rest is derived.
+  bool operator==(const ul_time_domain_mapper& rhs) const
+  {
+    return common_pusch_td_res_list == rhs.common_pusch_td_res_list and
+           dedicated_pusch_td_res_list == rhs.dedicated_pusch_td_res_list;
+  }
+  bool operator!=(const ul_time_domain_mapper& rhs) const { return not(*this == rhs); }
+
 private:
   /// Minimum k1 value used to derive candidates.
   uint8_t min_k1_val = 1;
 
-  /// \brief List of available PUSCH time-domain resource allocations for the BWP.
+  /// \brief Common (fallback) PUSCH time-domain resource allocations for the BWP, used with DCI format 0_0.
   /// Max size is pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS.
-  std::vector<pusch_time_domain_resource_allocation> pusch_td_res_list;
+  std::vector<pusch_time_domain_resource_allocation> common_pusch_td_res_list;
 
-  /// List of indices into \c pusch_td_res_list applicable for each slot within the TDD period.
+  /// \brief Dedicated PUSCH time-domain resource allocations for the BWP, used with DCI format 0_1 (legacy or Rel-16
+  /// TDRA list). Falls back to \c common_pusch_td_res_list if no dedicated list was configured.
+  std::vector<pusch_time_domain_resource_allocation> dedicated_pusch_td_res_list;
+
+  /// List of indices into \c common_pusch_td_res_list applicable for each slot within the TDD period.
   /// Note: Only used when TDD is enabled.
-  std::vector<static_vector<uint8_t, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>> pusch_td_res_indices_per_slot;
+  std::vector<static_vector<uint8_t, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>>
+      common_pusch_td_res_indices_per_slot;
+
+  /// \brief List of indices into \c dedicated_pusch_td_res_list applicable for each slot within the TDD period.
+  /// Note: Only used when TDD is enabled.
+  std::vector<static_vector<uint8_t, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>>
+      dedicated_pusch_td_res_indices_per_slot;
+
+  /// Precomputed value returned by \ref max_pusch_repetitions, the list being immutable after construction.
+  std::optional<uint8_t> max_dedicated_pusch_repetitions;
 
   /// List of k1 candidates for PDSCH-to-HARQ timing used with UE-dedicated DCI.
   static_vector<uint8_t, pucch_td_helper::MAX_K1_CANDIDATES> dedicated_k1_list;

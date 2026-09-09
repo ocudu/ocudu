@@ -147,25 +147,8 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
   // Fill out parameters for Format 0_1.
   // TODO: Once additional UL BWPs are added to uplinkConfig, populate below field from configs.
   dci_sz_cfg.nof_ul_bwp_rrc         = 0;
-  dci_sz_cfg.nof_ul_time_domain_res = active_bwp.ul.td_mapper().pusch_td_resources().size();
-  if (ss_info.get_ul_dci_format() == dci_ul_format::f0_1 and init_bwp.ul.ded() != nullptr and
-      init_bwp.ul.ded()->pusch_cfg.has_value()) {
-    const auto& td_list_r16 = init_bwp.ul.ded()->pusch_cfg->pusch_td_alloc_list;
-    const bool  is_r16      = std::any_of(
-        td_list_r16.begin(), td_list_r16.end(), [](const auto& alloc) { return alloc.nof_repetitions.has_value(); });
-    if (is_r16) {
-      // When pusch-TimeDomainAllocationListDCI-0-1-r16 is configured, the UE indexes that list with the DCI format
-      // 0_1 Time domain resource assignment field, as per TS 38.214, Table 6.1.2.1.1-1, and the field width follows
-      // its size.
-      span<const pusch_time_domain_resource_allocation> pusch_time_domain_list =
-          active_bwp.ul.td_mapper().pusch_td_resources();
-      ocudu_assert(td_list_r16.size() >= pusch_time_domain_list.size() and
-                       std::equal(pusch_time_domain_list.begin(), pusch_time_domain_list.end(), td_list_r16.begin()),
-                   "pusch-TimeDomainAllocationListDCI-0-1-r16 must mirror the applied TDRA list in its first entries");
-      dci_sz_cfg.nof_ul_time_domain_res = td_list_r16.size();
-    }
-  }
-  dci_sz_cfg.report_trigger_size = 0;
+  dci_sz_cfg.nof_ul_time_domain_res = active_bwp.ul.td_mapper().pusch_td_resources(ss_info.get_ul_dci_format()).size();
+  dci_sz_cfg.report_trigger_size    = 0;
   if (opt_csi_meas_cfg != nullptr and opt_csi_meas_cfg->report_trigger_size.has_value()) {
     dci_sz_cfg.report_trigger_size = opt_csi_meas_cfg->report_trigger_size.value();
   }

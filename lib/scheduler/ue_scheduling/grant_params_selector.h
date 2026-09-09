@@ -84,9 +84,14 @@ struct ul_sched_context {
   units::bytes pending_bytes;
   /// PUSCH config params.
   pusch_config_params pusch_cfg;
+  /// Number of Rel-16 PUSCH repetitions of the selected TDRA row, or nullopt for a single transmission.
+  std::optional<uint8_t> nof_repetitions;
 };
 
 /// Retrieve recommended PDCCH and PUSCH parameters for a newTx UL grant.
+/// The number of Rel-16 PUSCH repetitions to request is decided by link adaptation: when it asks for repetitions, the
+/// selector picks the TDRA row carrying that numberOfRepetitions-r16 and returns nullopt if it does not fit the slot;
+/// otherwise it picks a single-transmission row.
 std::optional<ul_sched_context> get_newtx_ul_sched_context(const slice_ue&   u,
                                                            slot_point        pdcch_slot,
                                                            slot_point        pusch_slot,
@@ -95,6 +100,9 @@ std::optional<ul_sched_context> get_newtx_ul_sched_context(const slice_ue&   u,
                                                            ofdm_symbol_range allowed_symbols);
 
 /// Retrieve recommended PDCCH and PUSCH parameters for a reTx UL grant.
+/// The reTx reuses the repetition scheme of the original transmission, taken from the HARQ grant params: when that was
+/// a Rel-16 repetition bundle, only the TDRA row carrying its numberOfRepetitions-r16 is eligible and nullopt is
+/// returned if it does not fit the slot; otherwise a single-transmission row is picked.
 std::optional<ul_sched_context> get_retx_ul_sched_context(const slice_ue&               u,
                                                           slot_point                    pdcch_slot,
                                                           slot_point                    pusch_slot,
@@ -102,6 +110,29 @@ std::optional<ul_sched_context> get_retx_ul_sched_context(const slice_ue&       
                                                           const ul_harq_process_handle& h_ul,
                                                           ofdm_symbol_range             allowed_symbols,
                                                           unsigned                      max_rbs = MAX_NOF_PRBS);
+
+/// Re-size an already selected UL grant for a UCI payload that became known only after the \c ul_sched_context was
+/// built, i.e. once a PUSCH repetition bundle's slots were resolved. Only the UCI-dependent parameters are
+/// recomputed (PUSCH config params, MCS, RB count); the searchSpace, TDRA row and RB limits stay as selected.
+/// \param[in] bundle_tx_offsets Slot offsets of the bundle's occasions beyond the base one, relative to
+/// \c pusch_slot. The UE multiplexes the UCI onto a single occasion, so a CSI report due in any of them rides here.
+/// \return false if no valid MCS/RB combination fits the new payload, in which case \c ctxt is left untouched and the
+/// grant is to be deferred.
+/// TODO: Refactor \c get_ul_sched_context to avoid this resizing in case of PUSCH repetitions.
+bool resize_newtx_ul_grant_for_uci(ul_sched_context&   ctxt,
+                                   const slice_ue&     u,
+                                   slot_point          pusch_slot,
+                                   unsigned            uci_nof_harq_bits,
+                                   span<const uint8_t> bundle_tx_offsets);
+
+/// Re-size an already selected reTx UL grant for a UCI payload known only after the bundle was resolved. See
+/// \ref resize_newtx_ul_grant_for_uci.
+bool resize_retx_ul_grant_for_uci(ul_sched_context&             ctxt,
+                                  const slice_ue&               u,
+                                  slot_point                    pusch_slot,
+                                  unsigned                      uci_nof_harq_bits,
+                                  const ul_harq_process_handle& h_ul,
+                                  span<const uint8_t>           bundle_tx_offsets);
 
 /// Select UL VRBs to allocate for a newTx.
 vrb_interval compute_newtx_ul_vrbs(const ul_sched_context& decision_ctxt,

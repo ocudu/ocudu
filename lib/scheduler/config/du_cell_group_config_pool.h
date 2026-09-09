@@ -48,13 +48,19 @@ private:
   /// Table 5.1.2.1.1-1).
   const dl_time_domain_mapper& get_dl_td_mapper(const bwp_downlink_dedicated* dl_ded);
 
+  /// \brief Retrieve the UL TD resource mapper for a UE with the given dedicated UL BWP config (or \c nullptr for
+  /// the cell-wide common config). Builds and interns a new mapper in \c ul_td_mapper_pool unless an equal one is
+  /// already there (flyweight). The dedicated list may carry repetition rows (TS 38.214, Table 6.1.2.1.1-1).
+  const ul_time_domain_mapper& get_ul_td_mapper(const bwp_uplink_dedicated* ul_ded);
+
   const bwp_id_t                               bwp_id;
   const bwp_downlink_common                    bwp_dl_cmn;
   const bwp_uplink_common                      bwp_ul_cmn;
   const std::optional<tdd_ul_dl_config_common> tdd_cfg;
-  ul_time_domain_mapper                        ul_td_mapper;
+  const uint8_t                                pucch_min_k1;
   pdcch_config_pool                            pdcch_pool;
   config_object_pool<dl_time_domain_mapper>    dl_td_mapper_pool;
+  config_object_pool<ul_time_domain_mapper>    ul_td_mapper_pool;
   sched_bwp_config                             common_bwp_cfg;
   config_object_pool<bwp_downlink_dedicated>   dl_ded_config_pool;
 };

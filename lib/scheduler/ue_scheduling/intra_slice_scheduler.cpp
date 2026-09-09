@@ -375,9 +375,15 @@ unsigned intra_slice_scheduler::schedule_ul_retx_candidates(ul_ran_slice_candida
     }
 
     if (result.has_value()) {
-      vrb_interval alloc_vrbs = result.value();
+      vrb_interval alloc_vrbs = result.value().vrbs;
       used_ul_vrbs.fill(alloc_vrbs.start(), alloc_vrbs.stop());
       slice.store_grant(alloc_vrbs.length());
+      // PUSCH repetition occasions land in future slots that are not covered by this slice candidate's own
+      // remaining_rbs() budget (scoped to pusch_slot); register their RB usage against the slice's budget for those
+      // slots directly.
+      for (slot_point occasion_slot : result.value().repetition_slots) {
+        slice.store_grant(alloc_vrbs.length(), occasion_slot);
+      }
       if (++alloc_count >= max_ue_grants_to_alloc or slice.remaining_rbs() == 0) {
         // Maximum number of allocations reached.
         break;
@@ -672,7 +678,7 @@ unsigned intra_slice_scheduler::schedule_ul_newtx_candidates(ul_ran_slice_candid
     }
 
     // Save CRBs, MCS and RI.
-    grant_builder.set_pusch_params(alloc_vrbs);
+    auto committed_repetition_slots = grant_builder.set_pusch_params(alloc_vrbs);
 
     // Fill used CRBs.
     unsigned nof_rbs_alloc = alloc_vrbs.length();
@@ -680,6 +686,10 @@ unsigned intra_slice_scheduler::schedule_ul_newtx_candidates(ul_ran_slice_candid
 
     // Update slice state.
     slice.store_grant(nof_rbs_alloc);
+    // Register the occasions' RB usage against the slice's budget for their own (future) slots, as above.
+    for (slot_point occasion_slot : committed_repetition_slots) {
+      slice.store_grant(nof_rbs_alloc, occasion_slot);
+    }
     rb_count += nof_rbs_alloc;
     rbs_missing = max_grant_size - nof_rbs_alloc;
   }

@@ -138,13 +138,16 @@ struct dl_harq_process_impl : public base_harq_process {
 struct ul_harq_process_impl : public base_harq_process {
   /// \brief Parameters relative to the last allocated PUSCH PDU for this HARQ process.
   struct alloc_params {
-    dci_ul_rnti_config_type       dci_cfg_type;
-    vrb_alloc                     rbs;
-    pusch_mcs_table               mcs_table;
-    sch_mcs_index                 mcs;
-    units::bytes                  tbs;
-    uint8_t                       nof_symbols;
-    uint8_t                       nof_layers;
+    dci_ul_rnti_config_type dci_cfg_type;
+    vrb_alloc               rbs;
+    pusch_mcs_table         mcs_table;
+    sch_mcs_index           mcs;
+    units::bytes            tbs;
+    uint8_t                 nof_symbols;
+    uint8_t                 nof_layers;
+    /// \brief Number of Rel-16 PUSCH repetitions of the grant. Value 1 means a single transmission. Fixed across
+    /// HARQ retxs, so reTxs reuse the repetition scheme of the original transmission.
+    uint8_t                       nof_repetitions{1};
     std::optional<ran_slice_id_t> slice_id;
     std::optional<sch_mcs_index>  olla_mcs;
     /// Whether the HARQ process was allocated for a Configured Grant PUSCH. Fixed across HARQ retxs.
@@ -153,6 +156,12 @@ struct ul_harq_process_impl : public base_harq_process {
 
   /// Parameters used for the last Tx of this HARQ process.
   alloc_params prev_tx_params;
+  /// \brief Decode result accumulated over the occasions of the current transmission, as a logical OR.
+  ///
+  /// A bundle draws one CRC report per occasion and the PHY keeps accumulating soft bits, so an occasion may decode
+  /// the TB before the last one while a single failure says nothing. OR-ing keeps the successful report, whichever
+  /// occasion it came from. Reset at the start of every transmission.
+  bool combined_crc = false;
 };
 
 class ntn_dl_harq_alloc_history;
@@ -233,9 +242,10 @@ struct cell_harq_repository {
   /// process must be free and, unless \c select_normal_mode's constraint below applies, not reserved.
   /// \param[in] select_normal_mode Whether the picked HARQ process must be currently operating in normal mode (as
   /// opposed to feedback-disabled/mode B). Only relevant for NTN cells.
-  /// \param[in] nof_repetitions Number of consecutive slots spanned by this transmission, starting at \c sl_tx (Rel-16
-  /// PDSCH repetitions; DL-only, UL always uses the default). Used solely to extend the UE entity's last known Tx
-  /// slot (see \c ue_harq_entity_impl::last_slot_tx) to the end of the whole transmission, not just \c sl_tx.
+  /// \param[in] nof_repetitions Number of consecutive slot-equivalents spanned by this transmission, starting at
+  /// \c sl_tx. Used solely to extend the UE entity's last known Tx slot to the end of the transmission. For DL this
+  /// is the literal repetition count; for UL, whose Rel-17 available-slot-counting window may skip DL/special slots,
+  /// the caller passes 1 + the last occasion's slot offset, which need not equal the repetition count.
   /// \return Pointer to the allocated HARQ process, or \c nullptr if the UE has no free (and, when applicable, no
   /// matching reserved or mode-matching) HARQ process available.
   harq_type* alloc_harq(du_ue_index_t                       ue_idx,
@@ -334,6 +344,8 @@ struct ul_harq_alloc_context {
   std::optional<sch_mcs_index> olla_mcs;
   /// RAN slice identifier of the slice to which PUSCH belongs to.
   std::optional<ran_slice_id_t> slice_id;
+  /// Number of Rel-16 PUSCH repetitions of the grant (1 = single transmission).
+  uint8_t nof_repetitions = 1;
 };
 
 /// \brief Interface used to fetch and update the status of a DL HARQ process.
@@ -415,7 +427,9 @@ public:
 
   using base_type::cancel_retxs;
 
-  [[nodiscard]] bool new_retx(slot_point pusch_slot);
+  /// \param[in] nof_repetitions Number of consecutive slots spanned by this transmission, starting at \c pusch_slot
+  /// (Rel-16 PUSCH repetitions; 1 for a single transmission).
+  [[nodiscard]] bool new_retx(slot_point pusch_slot, uint8_t nof_repetitions = 1);
 
   /// Update UL HARQ state given the received CRC indication.
   /// \return Transport Block size of the HARQ whose state was updated.
@@ -426,6 +440,16 @@ public:
   void save_grant_params(const ul_harq_alloc_context& ctx, const pusch_information& pusch);
 
   slot_point pusch_slot() const { return impl->slot_tx; }
+  /// Slot of the last occasion of this transmission. Equals \c pusch_slot() outside a PUSCH repetition bundle.
+  slot_point last_occasion_slot() const { return impl->last_occasion_slot; }
+  /// \brief Folds one occasion's decode result into this transmission's accumulated result and returns it.
+  ///
+  /// Call once per CRC report; the value returned at the last occasion is the one to pass to \c ul_crc_info.
+  bool accumulate_crc(bool crc_success)
+  {
+    impl->combined_crc = impl->combined_crc or crc_success;
+    return impl->combined_crc;
+  }
 
   const grant_params& get_grant_params() const { return impl->prev_tx_params; }
 
@@ -573,7 +597,8 @@ private:
                                               slot_point                          pusch_slot,
                                               unsigned                            max_harq_nof_retxs,
                                               std::optional<cg_harq_alloc_params> cg_params          = std::nullopt,
-                                              bool                                select_normal_mode = true);
+                                              bool                                select_normal_mode = true,
+                                              uint8_t                             nof_repetitions    = 1);
 
   const uint8_t                          max_harqs_per_ue;
   std::unique_ptr<harq_timeout_notifier> dl_timeout_notifier;
@@ -683,10 +708,13 @@ public:
                                                       bool                    select_normal_mode = true,
                                                       uint8_t                 nof_repetitions    = 1,
                                                       std::optional<unsigned> last_ack_delay     = std::nullopt);
+  /// \param[in] nof_repetitions Slot span of the PUSCH repetition bundle starting at \c sl_tx (1 for a single
+  /// transmission).
   std::optional<ul_harq_process_handle> alloc_ul_harq(slot_point                          sl_tx,
                                                       unsigned                            max_harq_nof_retxs,
                                                       std::optional<cg_harq_alloc_params> cg_params = std::nullopt,
-                                                      bool                                select_normal_mode = true);
+                                                      bool                                select_normal_mode = true,
+                                                      uint8_t                             nof_repetitions    = 1);
 
   std::optional<dl_harq_process_handle>       find_pending_dl_retx();
   std::optional<const dl_harq_process_handle> find_pending_dl_retx() const;

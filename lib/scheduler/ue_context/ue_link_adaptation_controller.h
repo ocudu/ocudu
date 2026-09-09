@@ -46,6 +46,11 @@ public:
   /// DCI format 1_1 SearchSpace using the Rel-16 TDRA list.
   std::optional<uint8_t> select_pdsch_repetition_count(const search_space_info& ss_info) const;
 
+  /// \brief Decides the number of Rel-16 PUSCH repetitions to request for a grant on the given SearchSpace, based on
+  /// the configured PUSCH SINR threshold and the UE's effective SNR, or nullopt for a single transmission. Only
+  /// applies to a DCI format 0_1 SearchSpace using the Rel-16 dedicated PUSCH TDRA list.
+  std::optional<uint8_t> select_pusch_repetition_count(const search_space_info& ss_info) const;
+
   /// \brief Get the value of the DL CQI offset that the OLLA algorithm is currently using.
   float dl_cqi_offset() const { return dl_olla.has_value() ? dl_olla->offset_db() : 0.0f; }
 

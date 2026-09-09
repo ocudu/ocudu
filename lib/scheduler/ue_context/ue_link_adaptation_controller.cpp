@@ -186,6 +186,33 @@ ue_link_adaptation_controller::select_pdsch_repetition_count(const search_space_
   return max_reps;
 }
 
+std::optional<uint8_t>
+ue_link_adaptation_controller::select_pusch_repetition_count(const search_space_info& ss_info) const
+{
+  if (not cell_cfg.expert_cfg.ue.pusch_force_rep and not cell_cfg.expert_cfg.ue.pusch_sinr_rep_threshold.has_value()) {
+    return std::nullopt;
+  }
+
+  // Repetitions only apply to a SearchSpace whose dedicated PUSCH TDRA list carries a repetition row (Rel-16 list).
+  const std::optional<uint8_t> max_reps =
+      ss_info.bwp->ul.td_mapper().max_pusch_repetitions(ss_info.get_ul_dci_format());
+  if (not max_reps.has_value()) {
+    return std::nullopt;
+  }
+
+  if (cell_cfg.expert_cfg.ue.pusch_force_rep) {
+    return max_reps;
+  }
+
+  // Repetitions are triggered when the effective SNR (estimated UL SINR corrected by OLLA) is below the threshold.
+  if (get_effective_snr() >= cell_cfg.expert_cfg.ue.pusch_sinr_rep_threshold.value()) {
+    return std::nullopt;
+  }
+
+  // Single repetition level for now: request the maximum configured.
+  return max_reps;
+}
+
 void ue_link_adaptation_controller::update_dl_mcs_lims(pdsch_mcs_table mcs_table)
 {
   if (last_dl_mcs_table == mcs_table) {

@@ -618,6 +618,10 @@ ue_cell_grid_allocator::allocate_dl_grant(const ue_retx_dl_grant_request& reques
 expected<ue_cell_grid_allocator::ul_newtx_grant_builder, alloc_status>
 ue_cell_grid_allocator::allocate_ul_grant(const ue_newtx_ul_grant_request& request)
 {
+  static constexpr search_space_id ue_ded_ss_id = to_search_space_id(2);
+  const ue_cell&                   ue_cc        = *ues[request.user.ue_index()].find_cell(cell_alloc.cell_index());
+  const search_space_info&         ss_info      = ue_cc.cfg().search_space(ue_ded_ss_id);
+
   unsigned pending_uci_harq_bits =
       uci_alloc.get_scheduled_pdsch_counter_in_ue_uci(request.pusch_slot, request.user.crnti());
 
@@ -629,12 +633,32 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_newtx_ul_grant_request& reque
                                                              request.pending_bytes,
                                                              request.allowed_symbols);
   if (not sched_ctxt.has_value()) {
-    // No valid parameters were found for this UE.
+    // A repetition grant is never downgraded to a single transmission: if no repetition row fits this slot, defer.
     return make_unexpected(alloc_status::skip_ue);
   }
 
+  // Build the repetition bundle, deferring likewise if it cannot start in this slot.
+  std::optional<ul_repetition_info> reps;
+  if (sched_ctxt->nof_repetitions.has_value()) {
+    reps = select_pusch_repetitions(ue_cc, ss_info, sched_ctxt->pusch_td_res_index);
+    if (not reps.has_value()) {
+      return make_unexpected(alloc_status::skip_ue);
+    }
+
+    // pending_uci_harq_bits covers the base slot only, but the bundle carries the HARQ-ACKs booked in any of its
+    // slots, known only now. Re-size for that payload; the TDRA row is kept, so reps stays valid.
+    if (not sched_helper::resize_newtx_ul_grant_for_uci(
+            *sched_ctxt,
+            request.user,
+            request.pusch_slot,
+            bundle_uci_harq_bits(request.user.crnti(), request.pusch_slot, *reps),
+            reps->tx_offsets)) {
+      return make_unexpected(alloc_status::skip_ue);
+    }
+  }
+
   // Set up a UL grant.
-  auto result = setup_ul_grant_builder(request.user, *sched_ctxt, std::nullopt);
+  auto result = setup_ul_grant_builder(request.user, *sched_ctxt, std::nullopt, reps);
   if (not result.has_value()) {
     return make_unexpected(result.error());
   }
@@ -644,9 +668,123 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_newtx_ul_grant_request& reque
   return ul_newtx_grant_builder{*this, static_cast<unsigned>(ul_grants.size()) - 1};
 }
 
-expected<vrb_interval, alloc_status>
+vrb_bitmap ue_cell_grid_allocator::bundle_used_vrbs(const vrb_bitmap&                     base_used_vrbs,
+                                                    const slice_ue&                       user,
+                                                    const sched_helper::ul_sched_context& ctxt,
+                                                    const ul_repetition_info&             reps) const
+{
+  vrb_bitmap used = base_used_vrbs;
+
+  const ue_cell&                               ue_cc   = *ues[user.ue_index()].find_cell(cell_alloc.cell_index());
+  const search_space_info&                     ss_info = ue_cc.cfg().search_space(ctxt.ss_id);
+  const pusch_time_domain_resource_allocation& td_res =
+      ss_info.bwp->ul.td_mapper().pusch_td_resources(ss_info.get_ul_dci_format())[ctxt.pusch_td_res_index];
+  const subcarrier_spacing scs      = ss_info.bwp->ul.common().generic_params.scs;
+  const unsigned           final_k2 = td_res.k2 + cell_alloc.cfg.ntn_cs_koffset;
+
+  for (const uint8_t offset : reps.tx_offsets) {
+    // An occasion spans the same symbols and CRB limits as the base grant, so the two bitmaps line up VRB by VRB.
+    used |= cell_alloc[final_k2 + offset]
+                .ul_res_grid.used_prbs(scs, ss_info.ul_crb_lims, td_res.symbols)
+                .convert_to<vrb_bitmap>();
+  }
+  return used;
+}
+
+unsigned
+ue_cell_grid_allocator::bundle_uci_harq_bits(rnti_t crnti, slot_point base_slot, const ul_repetition_info& reps) const
+{
+  unsigned nof_bits = uci_alloc.get_scheduled_pdsch_counter_in_ue_uci(base_slot, crnti);
+  for (const uint8_t offset : reps.tx_offsets) {
+    nof_bits += uci_alloc.get_scheduled_pdsch_counter_in_ue_uci(base_slot + offset, crnti);
+  }
+  return nof_bits;
+}
+
+std::optional<ue_cell_grid_allocator::ul_repetition_info>
+ue_cell_grid_allocator::select_pusch_repetitions(const ue_cell&           ue_cc,
+                                                 const search_space_info& ss_info,
+                                                 uint8_t                  pusch_td_res_index) const
+{
+  // Per Rel-17 "available slot counting" (puschTypeA-RepetitionsAvailSlot-r17), the UE repeats the PUSCH over the
+  // next nof_repetitions-1 UL slots, skipping DL/special ones. It transmits every occasion once it has the DCI, so
+  // an unusable slot defers the whole bundle rather than costing an occasion.
+  const ul_time_domain_mapper&                 ul_td_mapper = ss_info.bwp->ul.td_mapper();
+  const pusch_time_domain_resource_allocation& td_res = ul_td_mapper.dedicated_pusch_td_resources()[pusch_td_res_index];
+  const uint8_t                                nof_repetitions = *td_res.nof_repetitions;
+
+  const cell_configuration& cell_cfg   = cell_alloc.cfg;
+  const unsigned            final_k2   = td_res.k2 + cell_cfg.ntn_cs_koffset;
+  const slot_point          pusch_slot = cell_alloc[final_k2].slot;
+
+  ul_repetition_info reps{nof_repetitions, {}};
+  unsigned           offset = final_k2;
+  for (uint8_t count = 1; count != nof_repetitions; ++count) {
+    // Advance to the next full UL slot.
+    do {
+      ++offset;
+      if (offset > cell_alloc.max_ul_slot_alloc_delay) {
+        // Not enough UL slots left in the resource grid window; defer.
+        if (logger.debug.enabled()) {
+          logger.debug("ue={} rnti={}: PUSCH repetition deferred at slot={}. Cause: not enough UL slots in the "
+                       "resource grid window to fit the bundle.",
+                       fmt::underlying(ue_cc.ue_index),
+                       ue_cc.rnti(),
+                       pusch_slot);
+        }
+        return std::nullopt;
+      }
+    } while (not cell_cfg.is_fully_ul_enabled(cell_alloc[offset].slot));
+
+    // No room for another PUSCH in the occasion's slot: the bundle cannot start here.
+    if (cell_alloc[offset].result.ul.puschs.full()) {
+      if (logger.debug.enabled()) {
+        logger.debug("ue={} rnti={}: PUSCH repetition deferred at slot={}. Cause: occasion slot={} is full.",
+                     fmt::underlying(ue_cc.ue_index),
+                     ue_cc.rnti(),
+                     pusch_slot,
+                     cell_alloc[offset].slot);
+      }
+      return std::nullopt;
+    }
+
+    // Likewise for a PUCCH whose UCI cannot be moved onto a PUSCH: as per TS 38.213 Sections 9.2.1 and 9.2.6 the UE
+    // transmits the PUCCH and drops the overlapping PUSCH, so the occasion could never be received.
+    const slot_point occasion_slot = cell_alloc[offset].slot;
+    if (uci_alloc.has_harq_ack_on_common_pucch_res(ue_cc.rnti(), occasion_slot) or
+        uci_alloc.has_pucch_repetition(ue_cc.rnti(), occasion_slot)) {
+      if (logger.debug.enabled()) {
+        logger.debug("ue={} rnti={}: PUSCH repetition deferred at slot={}. Cause: occasion slot={} carries a PUCCH of "
+                     "this UE whose UCI cannot be multiplexed onto a PUSCH.",
+                     fmt::underlying(ue_cc.ue_index),
+                     ue_cc.rnti(),
+                     pusch_slot,
+                     occasion_slot);
+      }
+      return std::nullopt;
+    }
+    reps.tx_offsets.push_back(static_cast<uint8_t>(offset - final_k2));
+  }
+
+  if (logger.debug.enabled()) {
+    logger.debug("ue={} rnti={}: PUSCH repetition bundle selected at slot={}: nof_repetitions={} dci_row={}.",
+                 ue_cc.ue_index,
+                 ue_cc.rnti(),
+                 pusch_slot,
+                 reps.nof_occasions,
+                 pusch_td_res_index);
+  }
+
+  return reps;
+}
+
+expected<ue_cell_grid_allocator::ul_retx_grant_result, alloc_status>
 ue_cell_grid_allocator::allocate_ul_grant(const ue_retx_ul_grant_request& request) const
 {
+  static constexpr search_space_id ue_ded_ss_id = to_search_space_id(2);
+  const ue_cell&                   ue_cc        = request.user.get_cc();
+  const search_space_info&         ss_info      = ue_cc.cfg().search_space(ue_ded_ss_id);
+
   unsigned pending_uci_harq_bits =
       uci_alloc.get_scheduled_pdsch_counter_in_ue_uci(request.pusch_slot, request.user.crnti());
 
@@ -662,28 +800,55 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_retx_ul_grant_request& reques
     return make_unexpected(alloc_status::skip_ue);
   }
 
-  // Select UL CRBs.
-  vrb_interval vrbs = sched_helper::compute_retx_ul_vrbs(sched_ctxt.value(), request.used_ul_vrbs);
+  // Build the repetition bundle when a repetition row was selected.
+  std::optional<ul_repetition_info> reps;
+  if (sched_ctxt->nof_repetitions.has_value()) {
+    reps = select_pusch_repetitions(ue_cc, ss_info, sched_ctxt->pusch_td_res_index);
+    if (not reps.has_value()) {
+      // Defer the reTx rather than downgrade it to a single transmission.
+      return make_unexpected(alloc_status::skip_ue);
+    }
+
+    // Re-size for the HARQ-ACKs booked in the occasion slots too, now that those slots are known. The TDRA row
+    // does not depend on the UCI payload, so it stays as selected.
+    if (not sched_helper::resize_retx_ul_grant_for_uci(
+            *sched_ctxt,
+            request.user,
+            request.pusch_slot,
+            bundle_uci_harq_bits(request.user.crnti(), request.pusch_slot, *reps),
+            request.h_ul,
+            reps->tx_offsets)) {
+      return make_unexpected(alloc_status::skip_ue);
+    }
+  }
+
+  // Select UL CRBs. For a bundle, the VRBs are repeated on every occasion, so they must be free in all of its slots.
+  vrb_interval vrbs =
+      reps.has_value()
+          ? sched_helper::compute_retx_ul_vrbs(
+                sched_ctxt.value(), bundle_used_vrbs(request.used_ul_vrbs, request.user, sched_ctxt.value(), *reps))
+          : sched_helper::compute_retx_ul_vrbs(sched_ctxt.value(), request.used_ul_vrbs);
   if (vrbs.empty()) {
     return make_unexpected(alloc_status::skip_ue);
   }
 
   // Allocate PDCCH, PUSCH PDUs.
-  auto grant = setup_ul_grant_builder(request.user, sched_ctxt.value(), request.h_ul);
+  auto grant = setup_ul_grant_builder(request.user, sched_ctxt.value(), request.h_ul, reps);
   if (not grant.has_value()) {
     return make_unexpected(grant.error());
   }
 
   // Set PUSCH parameters.
-  set_pusch_params(grant.value(), vrbs);
+  ul_repetition_occasion_list committed_repetition_slots = set_pusch_params(grant.value(), vrbs);
 
-  return vrbs;
+  return ul_retx_grant_result{vrbs, committed_repetition_slots};
 }
 
 expected<ue_cell_grid_allocator::ul_grant_info, alloc_status>
 ue_cell_grid_allocator::setup_ul_grant_builder(const slice_ue&                       user,
                                                const sched_helper::ul_sched_context& params,
-                                               std::optional<ul_harq_process_handle> h_ul) const
+                                               std::optional<ul_harq_process_handle> h_ul,
+                                               std::optional<ul_repetition_info>     reps) const
 {
   // Derive remaining parameters from \c ul_grant_params.
   ue&                                          u                  = ues[user.ue_index()];
@@ -693,8 +858,12 @@ ue_cell_grid_allocator::setup_ul_grant_builder(const slice_ue&                  
   const search_space_configuration&            ss_cfg             = *ss_info.cfg;
   const uint8_t                                pusch_td_res_index = params.pusch_td_res_index;
   const pusch_time_domain_resource_allocation& pusch_td_cfg =
-      ss_info.bwp->ul.td_mapper().pusch_td_resources()[pusch_td_res_index];
+      ss_info.bwp->ul.td_mapper().pusch_td_resources(ss_info.get_ul_dci_format())[pusch_td_res_index];
   const bool is_retx = h_ul.has_value();
+  // Slot span used to extend the UE's last known Tx slot. Available slot counting may skip slots, so this is
+  // 1 + the last occasion's offset, not the repetition count.
+  const uint8_t harq_slot_span =
+      reps.has_value() ? static_cast<uint8_t>((reps->tx_offsets.empty() ? 0 : reps->tx_offsets.back()) + 1) : 1;
 
   // Fetch PDCCH and PUSCH resource grid allocators.
   cell_slot_resource_allocator& pdcch_alloc = cell_alloc[0];
@@ -753,11 +922,12 @@ ue_cell_grid_allocator::setup_ul_grant_builder(const slice_ue&                  
     h_ul = ue_cc.harqs.alloc_ul_harq(pusch_alloc.slot,
                                      expert_cfg.max_nof_ul_harq_retxs,
                                      /* cg_params */ std::nullopt,
-                                     user.ran_slice_id() == SRB_RAN_SLICE_ID);
+                                     user.ran_slice_id() == SRB_RAN_SLICE_ID,
+                                     harq_slot_span);
     ocudu_assert(h_ul.has_value(), "Failed to allocate UL HARQ");
   } else {
     // It is a retx.
-    bool result = h_ul->new_retx(pusch_alloc.slot);
+    bool result = h_ul->new_retx(pusch_alloc.slot, harq_slot_span);
     ocudu_assert(result, "Failed to allocate HARQ retx");
   }
 
@@ -765,10 +935,11 @@ ue_cell_grid_allocator::setup_ul_grant_builder(const slice_ue&                  
   auto& msg = pusch_alloc.result.ul.puschs.emplace_back();
 
   // Create a UL grant builder.
-  return ul_grant_info{&user, params, h_ul.value(), pdcch, &msg};
+  return ul_grant_info{&user, params, h_ul.value(), pdcch, &msg, reps};
 }
 
-void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_interval& vrbs) const
+ue_cell_grid_allocator::ul_repetition_occasion_list
+ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_interval& vrbs) const
 {
   ue&      u     = ues[grant.user->ue_index()];
   ue_cell& ue_cc = *u.find_cell(cell_alloc.cell_index());
@@ -786,7 +957,7 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_in
                                                                         : dci_ul_rnti_config_type::c_rnti_f0_1;
   uint8_t                                      pusch_td_res_index = grant.cfg.pusch_td_res_index;
   const pusch_time_domain_resource_allocation& pusch_td_cfg =
-      ss_info.bwp->ul.td_mapper().pusch_td_resources()[pusch_td_res_index];
+      ss_info.bwp->ul.td_mapper().pusch_td_resources(ss_info.get_ul_dci_format())[pusch_td_res_index];
   const pusch_config_params& pusch_cfg = grant.cfg.pusch_cfg;
   const bool                 is_retx   = grant.h_ul.nof_retxs() != 0;
 
@@ -800,7 +971,28 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_in
     grant.pdcch->ctx.rnti       = rnti_t::INVALID_RNTI;
     grant.pusch->pusch_cfg.rnti = rnti_t::INVALID_RNTI;
     grant.h_ul.reset();
-    return;
+    return {};
+  }
+
+  // The UE transmits every occasion once it has the DCI, and the occasion slots were checked a stage earlier: a
+  // bundle for another UE may since have taken the last room in one. Cancel the whole grant here, before any UCI is
+  // multiplexed on below -- past that point a PUCCH is gone in favour of this PUSCH and its UCI would be stranded.
+  if (grant.reps.has_value()) {
+    for (const uint8_t offset : grant.reps->tx_offsets) {
+      const cell_slot_resource_allocator& rep_alloc = cell_alloc[final_k2 + offset];
+      if (rep_alloc.result.ul.puschs.full()) {
+        logger.info("ue={} rnti={}: Cancelling PUSCH repetition bundle at slot={}. Cause: no room left for the "
+                    "occasion at slot={}.",
+                    u.ue_index,
+                    u.crnti,
+                    pusch_alloc.slot,
+                    rep_alloc.slot);
+        grant.pdcch->ctx.rnti       = rnti_t::INVALID_RNTI;
+        grant.pusch->pusch_cfg.rnti = rnti_t::INVALID_RNTI;
+        grant.h_ul.reset();
+        return {};
+      }
+    }
   }
 
   // Compute exact MCS and TBS for this transmission.
@@ -875,6 +1067,8 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_in
   // NOTE: DAI is encoded as per left most column in Table 9.1.3-2 of TS 38.213.
   unsigned dai = 3;
   if (dci_type == dci_ul_rnti_config_type::c_rnti_f0_1) {
+    // The DAI must cover the whole transmission, bundle included; pusch_cfg already carries that count. Getting it
+    // wrong is silent -- the UE would size its HARQ-ACK codebook differently than the gNB demaps it.
     unsigned total_harq_ack_in_uci = pusch_cfg.nof_harq_ack_bits;
     if (total_harq_ack_in_uci != 0) {
       // See TS 38.213, Table 9.1.3-2. dai value below maps to the leftmost column in the table.
@@ -943,6 +1137,10 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_in
   msg.context.k2         = final_k2;
   msg.context.nof_retxs  = grant.h_ul.nof_retxs();
   msg.context.nof_oh_prb = pusch_cfg.nof_oh_prb;
+  if (grant.reps.has_value()) {
+    msg.pusch_cfg.repetitions = pusch_information::repetition_info{grant.reps->nof_occasions,
+                                                                   static_cast<uint8_t>(grant.reps->nof_occasions - 1)};
+  }
   if (not is_retx and ue_cc.link_adaptation_controller().is_ul_olla_enabled()) {
     msg.context.olla_offset = ue_cc.link_adaptation_controller().ul_snr_offset_db();
   }
@@ -989,7 +1187,8 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_in
 
   // Save set PDCCH and PUSCH PDU parameters in HARQ process.
   ul_harq_alloc_context pusch_sched_ctx;
-  pusch_sched_ctx.dci_cfg_type = grant.pdcch->dci.type();
+  pusch_sched_ctx.dci_cfg_type    = grant.pdcch->dci.type();
+  pusch_sched_ctx.nof_repetitions = grant.reps.has_value() ? grant.reps->nof_occasions : 1;
   if (not is_retx) {
     pusch_sched_ctx.olla_mcs =
         ue_cc.link_adaptation_controller().calculate_ul_mcs(pusch_cfg.mcs_table, pusch_cfg.use_transform_precoder);
@@ -1011,6 +1210,49 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_in
     // Notify the channel state manager about the scheduled PUSCH for aperiodic CSI reporting.
     ue_cc.channel_state_manager().on_scheduled_aperiodic_csi_pusch(pusch_alloc.slot);
   }
+
+  // Allocate the PDCCH-less PUSCH repetition occasions: same TB, same HARQ process, same PRBs/symbols, with the RV
+  // cycled and the FAPI countdown decremented. new_data=false drives the soft combining -- only the base occasion
+  // opens the PHY receive buffer, the later ones accumulate into it.
+  ul_repetition_occasion_list committed_repetition_slots;
+  if (grant.reps.has_value()) {
+    // Note: an occasion's nominal position in the bundle (RV cycle, FAPI countdown) is its index in tx_offsets, not
+    // its slot offset; with Rel-17 available slot counting the two diverge when a slot was skipped.
+    for (unsigned occasion_idx = 1; occasion_idx <= grant.reps->tx_offsets.size(); ++occasion_idx) {
+      const uint8_t                 offset    = grant.reps->tx_offsets[occasion_idx - 1];
+      cell_slot_resource_allocator& rep_alloc = cell_alloc[final_k2 + offset];
+      // Such slots were refused when the bundle was selected, and PUCCHs are allocated before the UL grants.
+      ocudu_assert(not uci_alloc.has_harq_ack_on_common_pucch_res(u.crnti, rep_alloc.slot) and
+                       not uci_alloc.has_pucch_repetition(u.crnti, rep_alloc.slot),
+                   "rnti={}: PUSCH repetition occasion at slot={} carries a PUCCH whose UCI cannot be multiplexed",
+                   u.crnti,
+                   rep_alloc.slot);
+      // An occasion must reuse the base grant's exact PRBs; they were picked against every slot of the bundle.
+      ocudu_assert(not rep_alloc.ul_res_grid.collides(scs, pusch_td_cfg.symbols, crbs),
+                   "rnti={}: PUSCH repetition occasion at slot={} lands on PRBs taken by another grant",
+                   u.crnti,
+                   rep_alloc.slot);
+      ocudu_assert(not rep_alloc.result.ul.puschs.full(),
+                   "rnti={}: no room left for the PUSCH repetition occasion at slot={}",
+                   u.crnti,
+                   rep_alloc.slot);
+      rep_alloc.ul_res_grid.fill(grant_info{scs, pusch_td_cfg.symbols, crbs});
+      ul_sched_info& rep_msg     = rep_alloc.result.ul.puschs.emplace_back();
+      rep_msg                    = msg;
+      rep_msg.uci                = std::nullopt;
+      rep_msg.context.k2         = final_k2 + offset;
+      rep_msg.pusch_cfg.new_data = false;
+      rep_msg.pusch_cfg.rv_index = get_repetition_rv(rv, occasion_idx);
+      rep_msg.pusch_cfg.repetitions->nof_remaining_repetitions =
+          static_cast<uint8_t>(grant.reps->nof_occasions - 1U - occasion_idx);
+      // As per TS 38.213 Section 9.2.5.2, a PUCCH overlapping a PUSCH with repetitions is not transmitted: its UCI
+      // rides on the overlapped occasion. No-op without a PUCCH here; the DCI's aperiodic CSI stays on the base one.
+      uci_alloc.multiplex_uci_on_pusch(rep_msg, rep_alloc, ue_cell_cfg, /* include_aperiodic_csi */ false);
+      committed_repetition_slots.push_back(rep_alloc.slot);
+    }
+  }
+
+  return committed_repetition_slots;
 }
 
 void ue_cell_grid_allocator::post_process_results()
@@ -1132,11 +1374,14 @@ ue_cell_grid_allocator::dl_repetition_occasion_list ue_cell_grid_allocator::dl_n
   return committed_repetition_slots;
 }
 
-void ue_cell_grid_allocator::ul_newtx_grant_builder::set_pusch_params(const vrb_interval& alloc_vrbs)
+ue_cell_grid_allocator::ul_repetition_occasion_list
+ue_cell_grid_allocator::ul_newtx_grant_builder::set_pusch_params(const vrb_interval& alloc_vrbs)
 {
   // Transfer the PUSCH parameters to the parent UL grant.
-  parent->set_pusch_params(parent->ul_grants[grant_index], alloc_vrbs);
+  ul_repetition_occasion_list committed_repetition_slots =
+      parent->set_pusch_params(parent->ul_grants[grant_index], alloc_vrbs);
 
   // Set PUSCH parameters and set parent as nullptr to avoid further modifications.
   parent = nullptr;
+  return committed_repetition_slots;
 }

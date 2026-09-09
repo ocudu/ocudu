@@ -114,12 +114,15 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
   }
   dl_prio_queue.sort();
 
-  // TODO: Revisit when PUSCH time domain resource list is also defined in UE dedicated configuration.
+  // Candidate PUSCH slots come from the common list: this runs once per slot, before any UE is considered, so no
+  // dedicated list is available here. Nor is one needed -- a dedicated list is required to offer exactly the same
+  // k2 set as the common one, and only k2 is read below.
   span<const pusch_time_domain_resource_allocation> pusch_time_domain_list =
       cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list;
   for (const auto& slice : slices) {
     std::optional<unsigned> allocated_k2;
-    for (const uint8_t pusch_td_res_idx : cell_cfg.init_bwp.ul.td_mapper().pusch_td_res_indices(slot_tx.count())) {
+    for (const uint8_t pusch_td_res_idx :
+         cell_cfg.init_bwp.ul.td_mapper().common_pusch_td_res_indices(slot_tx.count())) {
       unsigned pusch_delay = pusch_time_domain_list[pusch_td_res_idx].k2 + cell_cfg.ntn_cs_koffset;
       const cell_slot_resource_allocator& pusch_alloc = res_grid[pusch_delay];
       slot_point                          pusch_slot  = slot_tx + pusch_delay;

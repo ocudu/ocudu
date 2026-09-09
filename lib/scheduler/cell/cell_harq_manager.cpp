@@ -771,17 +771,20 @@ harq_utils::ul_harq_process_impl* cell_harq_manager::new_ul_tx(du_ue_index_t    
                                                                slot_point                          pusch_slot,
                                                                unsigned                            max_harq_nof_retxs,
                                                                std::optional<cg_harq_alloc_params> cg_params,
-                                                               bool                                select_normal_mode)
+                                                               bool                                select_normal_mode,
+                                                               uint8_t                             nof_repetitions)
 {
-  ul_harq_process_impl* h =
-      ul.alloc_harq(ue_idx, pusch_slot, pusch_slot, pusch_slot, max_harq_nof_retxs, cg_params, select_normal_mode);
+  ul_harq_process_impl* h = ul.alloc_harq(
+      ue_idx, pusch_slot, pusch_slot, pusch_slot, max_harq_nof_retxs, cg_params, select_normal_mode, nof_repetitions);
   if (h == nullptr) {
     return nullptr;
   }
 
-  // Save UL-specific parameters.
+  // Save UL-specific parameters. Every occasion of this transmission contributes to combined_crc; start from
+  // "not decoded".
   h->prev_tx_params       = {};
   h->prev_tx_params.is_cg = cg_params.has_value();
+  h->combined_crc         = false;
 
   return h;
 }
@@ -877,9 +880,15 @@ void dl_harq_process_handle::save_grant_params(const dl_harq_alloc_context& ctx,
   prev_params.nof_symbols = pdsch.symbols.length();
 }
 
-bool ul_harq_process_handle::new_retx(slot_point pusch_slot)
+bool ul_harq_process_handle::new_retx(slot_point pusch_slot, uint8_t nof_repetitions)
 {
-  return harq_repo->handle_new_retx(*impl, pusch_slot, pusch_slot, pusch_slot);
+  if (not harq_repo->handle_new_retx(*impl, pusch_slot, pusch_slot, pusch_slot, nof_repetitions)) {
+    return false;
+  }
+  // Reset UL-only HARQ parameters. Every occasion of this transmission contributes to combined_crc; start from
+  // "not decoded".
+  impl->combined_crc = false;
+  return true;
 }
 
 expected<units::bytes> ul_harq_process_handle::ul_crc_info(bool ack)
@@ -907,14 +916,17 @@ void ul_harq_process_handle::save_grant_params(const ul_harq_alloc_context& ctx,
   ul_harq_process_impl::alloc_params& prev_tx_params = impl->prev_tx_params;
 
   if (impl->nof_retxs == 0) {
-    prev_tx_params.dci_cfg_type = ctx.dci_cfg_type;
-    prev_tx_params.olla_mcs     = ctx.olla_mcs;
-    prev_tx_params.tbs          = pusch.tb_size_bytes;
-    prev_tx_params.slice_id     = ctx.slice_id;
+    prev_tx_params.dci_cfg_type    = ctx.dci_cfg_type;
+    prev_tx_params.nof_repetitions = ctx.nof_repetitions;
+    prev_tx_params.olla_mcs        = ctx.olla_mcs;
+    prev_tx_params.tbs             = pusch.tb_size_bytes;
+    prev_tx_params.slice_id        = ctx.slice_id;
   } else {
     ocudu_assert(ctx.dci_cfg_type == prev_tx_params.dci_cfg_type,
                  "DCI format and RNTI type cannot change during HARQ retxs");
     ocudu_assert(prev_tx_params.tbs == pusch.tb_size_bytes, "TBS cannot change during HARQ retxs");
+    ocudu_assert(prev_tx_params.nof_repetitions == ctx.nof_repetitions,
+                 "Number of PUSCH repetitions cannot change during HARQ retxs");
   }
   prev_tx_params.mcs_table   = pusch.mcs_table;
   prev_tx_params.mcs         = pusch.mcs_index;
@@ -1144,10 +1156,11 @@ std::optional<ul_harq_process_handle>
 unique_ue_harq_entity::alloc_ul_harq(slot_point                          sl_tx,
                                      unsigned                            max_harq_nof_retxs,
                                      std::optional<cg_harq_alloc_params> cg_params,
-                                     bool                                select_normal_mode)
+                                     bool                                select_normal_mode,
+                                     uint8_t                             nof_repetitions)
 {
-  ul_harq_process_impl* h =
-      cell_harq_mgr->new_ul_tx(ue_index, crnti, sl_tx, max_harq_nof_retxs, cg_params, select_normal_mode);
+  ul_harq_process_impl* h = cell_harq_mgr->new_ul_tx(
+      ue_index, crnti, sl_tx, max_harq_nof_retxs, cg_params, select_normal_mode, nof_repetitions);
   if (h == nullptr) {
     return std::nullopt;
   }
@@ -1240,10 +1253,13 @@ std::optional<ul_harq_process_handle> unique_ue_harq_entity::find_ul_harq_waitin
     }
   }
 
+  // Note: a bundle draws one CRC report per occasion, in different slots, so match any slot from the base occasion
+  // to the last one and let the caller decide what a report means. Outside a bundle last_occasion_slot equals
+  // slot_tx, so this reduces to the plain equality it replaces.
   std::vector<ul_harq_process_impl>& ul_harqs = cell_harq_mgr->ul.ues[ue_index]->harqs;
   for (ul_harq_process_impl& h : ul_harqs) {
     if (h.mode == harq_utils::harq_mode_t::normal and h.status == harq_utils::harq_state_t::waiting_ack and
-        h.slot_tx == pusch_slot) {
+        h.slot_tx <= pusch_slot and pusch_slot <= h.last_occasion_slot) {
       return ul_harq_process_handle(cell_harq_mgr->ul, h);
     }
   }

@@ -18,6 +18,7 @@
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/test_doubles/scheduler/scheduler_result_finder.h"
+#include "tests/test_doubles/scheduler/scheduler_test_message_validators.h"
 #include "ocudu/adt/unique_function.h"
 #include "ocudu/ran/du_types.h"
 #include "ocudu/ran/duplex_mode.h"
@@ -920,6 +921,336 @@ TEST_P(ue_grid_allocator_pdsch_repetition_test,
 
 INSTANTIATE_TEST_SUITE_P(ue_grid_allocator_test,
                          ue_grid_allocator_pdsch_repetition_test,
+                         testing::Values(duplex_mode::FDD));
+
+class ue_grid_allocator_pusch_repetition_test : public ue_grid_allocator_test
+{
+protected:
+  static constexpr uint8_t nof_reps = 4;
+  const lcid_t             drb_lcid = uint_to_lcid(4);
+
+  /// \param pusch_crb_limits CRB window the UE PUSCH is confined to.
+  /// \param force_rep         Request repetitions regardless of the estimated SINR.
+  explicit ue_grid_allocator_pusch_repetition_test(crb_interval pusch_crb_limits, bool force_rep = false) :
+    ue_grid_allocator_test(test_params{[pusch_crb_limits, force_rep]() {
+      auto cfg                        = config_helpers::make_default_scheduler_expert_config();
+      cfg.ue.pusch_sinr_rep_threshold = 10.0F;
+      // Disable UL OLLA so the effective SNR equals the value set on the channel state manager.
+      cfg.ue.olla_ul_snr_inc  = 0;
+      cfg.ue.pusch_crb_limits = pusch_crb_limits;
+      cfg.ue.pusch_force_rep  = force_rep;
+      return cfg;
+    }()})
+  {
+  }
+
+  // Shifts the PUSCH grant away from CRB 0, so an occasion's repeated PRBs stay clear of the cell's PUCCH.
+  ue_grid_allocator_pusch_repetition_test() : ue_grid_allocator_pusch_repetition_test(crb_interval{10, 40}) {}
+
+  // Adds a UE configured with a Rel-16 PUSCH TDRA list that mirrors the common list and appends a repetition entry.
+  const ue& add_repetition_ue()
+  {
+    sched_ue_creation_request_message req =
+        sched_config_helper::create_default_sched_ue_creation_request(cell_cfg.params);
+    req.ue_index = to_du_ue_index(0);
+    req.crnti    = to_rnti(0x4601);
+    req.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(drb_lcid));
+    (*req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg = cell_cfg.bwp_res[to_bwp_id(0)].dl().ded_pdcchs[0];
+
+    auto&       pusch_cfg   = (*req.cfg.cells)[0].serv_cell_cfg.ul_config->init_ul_bwp.pusch_cfg.value();
+    const auto& common_list = cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
+    for (const auto& common_alloc : common_list) {
+      pusch_cfg.pusch_td_alloc_list.push_back(common_alloc);
+    }
+    rep_time_resource                               = pusch_cfg.pusch_td_alloc_list.size();
+    pusch_time_domain_resource_allocation rep_alloc = common_list.front();
+    rep_alloc.nof_repetitions                       = nof_reps;
+    rep_k2                                          = rep_alloc.k2;
+    pusch_cfg.pusch_td_alloc_list.push_back(rep_alloc);
+
+    return add_ue(req);
+  }
+
+  void set_pusch_snr(ue_cell& ue_cc, float snr_db) { ue_cc.channel_state_manager().update_pusch_snr(snr_db); }
+
+  // Time-domain resource of the UL DCI (format 0_1) scheduled for the UE in the current slot, if any.
+  std::optional<unsigned> current_ul_dci_time_resource(rnti_t rnti) const
+  {
+    const pdcch_ul_information* pdcch = find_ue_ul_pdcch(rnti, res_grid[0].result.dl);
+    if (pdcch == nullptr or pdcch->dci.type() != dci_ul_rnti_config_type::c_rnti_f0_1) {
+      return std::nullopt;
+    }
+    return pdcch->dci.as_c_rnti_f0_1().time_resource;
+  }
+
+  void allocate_ul_retx_grant(const slice_ue& user, ul_harq_process_handle h_ul)
+  {
+    // The repetition row's k2 is fixed (unlike DL's k0, commonly 0), so the candidate PUSCH slot is rep_k2 ahead
+    // of the PDCCH slot, not current_slot itself.
+    const slot_point pusch_slot   = current_slot + rep_k2;
+    const auto&      init_ul_bwp  = cell_cfg.params.ul_cfg_common.init_ul_bwp;
+    auto             used_ul_vrbs = res_grid[pusch_slot]
+                            .ul_res_grid
+                            .used_prbs(init_ul_bwp.generic_params.scs,
+                                       init_ul_bwp.generic_params.crbs,
+                                       init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].symbols)
+                            .convert_to<vrb_bitmap>();
+    auto result = alloc.allocate_ul_grant(ue_retx_ul_grant_request{
+        user, pusch_slot, h_ul, used_ul_vrbs, ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP}});
+    if (result.has_value()) {
+      used_ul_vrbs.fill(result.value().vrbs.start(), result.value().vrbs.stop());
+    }
+  }
+
+  uint8_t rep_time_resource = 0;
+  /// PDCCH-to-PUSCH delay (k2) of the repetition TDRA row, i.e. the offset from the PDCCH slot to occasion 0.
+  uint8_t rep_k2 = 0;
+};
+
+// A reTx reuses the original transmission's scheme (like the number of layers), so its repetition count comes from
+// the HARQ grant params, not the current link quality. Once the SINR recovers, a reTx of a grant started at low SINR
+// must still be a bundle, while a fresh newTx is a single transmission.
+TEST_P(ue_grid_allocator_pusch_repetition_test, retx_reuses_original_repetition_scheme_after_sinr_recovers)
+{
+  const ue& u     = add_repetition_ue();
+  ue_cell&  ue_cc = ues[u.ue_index].get_pcell();
+
+  auto ue_ul_grant = [&]() { return find_ue_pusch(u.crnti, res_grid[0].result.ul); };
+
+  // The PUSCH repetition row's k2 is never 0, so the PDCCH (written to slot 0) and the base occasion's PUSCH
+  // (written k2 ahead) are never both visible at res_grid[0] as run_until() advances one slot at a time. Capture the
+  // DCI's time_resource when the PDCCH is created rather than re-deriving it later.
+  std::optional<unsigned> newtx_time_resource;
+
+  // Low SINR: the newTx must be scheduled as a repetition bundle.
+  set_pusch_snr(ue_cc, 0.0F);
+  ASSERT_TRUE(run_until(
+      [&]() {
+        allocate_ul_newtx_grant(slice_ues[u.ue_index], units::bytes{1000});
+        if (auto tr = current_ul_dci_time_resource(u.crnti); tr.has_value()) {
+          newtx_time_resource = tr;
+        }
+      },
+      [&]() {
+        const ul_sched_info* g = ue_ul_grant();
+        return g != nullptr and g->context.nof_retxs == 0;
+      }));
+  ASSERT_TRUE(newtx_time_resource.has_value());
+  ASSERT_EQ(newtx_time_resource.value(), rep_time_resource)
+      << "newTx at low SINR was not scheduled as a repetition bundle";
+
+  // NACK the bundle to force a reTx.
+  std::optional<ul_harq_process_handle> h_ul = ue_cc.harqs.find_ul_harq_waiting_ack();
+  ASSERT_TRUE(h_ul.has_value());
+  ASSERT_TRUE(h_ul->ul_crc_info(false).has_value());
+
+  // SINR recovers: a fresh newTx would now be a single transmission, but the reTx must keep the bundle.
+  std::optional<unsigned> retx_time_resource;
+  set_pusch_snr(ue_cc, 30.0F);
+  ASSERT_TRUE(run_until(
+      [&]() {
+        std::optional<ul_harq_process_handle> h_retx = ue_cc.harqs.find_pending_ul_retx();
+        if (h_retx.has_value()) {
+          allocate_ul_retx_grant(slice_ues[u.ue_index], *h_retx);
+          if (auto tr = current_ul_dci_time_resource(u.crnti); tr.has_value()) {
+            retx_time_resource = tr;
+          }
+        }
+      },
+      [&]() {
+        const ul_sched_info* g = ue_ul_grant();
+        return g != nullptr and g->context.nof_retxs > 0;
+      }));
+  ASSERT_TRUE(retx_time_resource.has_value());
+  ASSERT_EQ(retx_time_resource.value(), rep_time_resource)
+      << "reTx did not keep its repetition scheme after SINR recovered (reTx repetitions were incorrectly re-decided "
+         "from the current SINR)";
+}
+
+// As per TS 38.213 Section 9.2.5.2 (confirmed against a real UE), a PUCCH overlapping a PUSCH with repetitions is
+// not transmitted: the UE multiplexes its UCI onto the single overlapping occasion, and the remaining occasions
+// carry UL-SCH only. So a dedicated HARQ-ACK PUCCH already scheduled in an occasion's slot -- for a DL PDSCH
+// allocated independently of this bundle, say -- must end up on that occasion, with the PUCCH grant dropped.
+TEST_P(ue_grid_allocator_pusch_repetition_test, uci_colliding_with_repetition_occasion_is_multiplexed_onto_it)
+{
+  const ue&                    u           = add_repetition_ue();
+  ue_cell&                     ue_cc       = ues[u.ue_index].get_pcell();
+  const ue_cell_configuration& ue_cell_cfg = ue_cc.cfg();
+
+  // Reach a known, ready slot first: with no run_until below, every occasion's slot is then known in advance.
+  slot_indication();
+
+  // Occasion 3 (last of 4) lands at current_slot + rep_k2 + 3 -- FDD, so the offsets are consecutive.
+  // Pre-allocate a dedicated HARQ-ACK PUCCH there.
+  constexpr unsigned            target_occasion_offset = 3;
+  const std::optional<unsigned> pucch_res_ind =
+      pucch_alloc.alloc_ded_harq_ack(res_grid, ue_cell_cfg, 0, rep_k2 + target_occasion_offset);
+  ASSERT_TRUE(pucch_res_ind.has_value());
+  const slot_point occasion_slot = current_slot + rep_k2 + target_occasion_offset;
+  ASSERT_FALSE(res_grid[occasion_slot].result.ul.pucchs.empty());
+
+  set_pusch_snr(ue_cc, 0.0F);
+  const slot_point pusch_slot = current_slot + rep_k2;
+  ASSERT_EQ(allocate_ul_newtx_grant(pusch_slot, slice_ues[u.ue_index], units::bytes{1000}), alloc_status::success);
+
+  // The PUCCH must be gone: the UE does not transmit it, the UCI rides on the occasion instead.
+  ASSERT_TRUE(res_grid[occasion_slot].result.ul.pucchs.empty())
+      << "The PUCCH was left in place even though its UCI moved to the repetition occasion";
+
+  // The colliding occasion must have been written, and must carry the HARQ-ACK bits taken off the PUCCH.
+  const ul_sched_info* occ = find_ue_pusch(u.crnti, res_grid[occasion_slot].result.ul);
+  ASSERT_NE(occ, nullptr) << "The repetition occasion colliding with the PUCCH was dropped instead of carrying the UCI";
+  ASSERT_TRUE(occ->uci.has_value()) << "The occasion overlapping the PUCCH carries no UCI";
+  ASSERT_TRUE(occ->uci->harq.has_value());
+  ASSERT_GT(occ->uci->harq->harq_ack_nof_bits, 0);
+
+  // The base occasion and every other occasion must be present and carry UL-SCH only.
+  const ul_sched_info* base_occ = find_ue_pusch(u.crnti, res_grid[pusch_slot].result.ul);
+  ASSERT_NE(base_occ, nullptr);
+  ASSERT_FALSE(base_occ->uci.has_value());
+  for (unsigned offset = 1; offset != nof_reps; ++offset) {
+    if (offset == target_occasion_offset) {
+      continue;
+    }
+    const ul_sched_info* other_occ = find_ue_pusch(u.crnti, res_grid[pusch_slot + offset].result.ul);
+    ASSERT_NE(other_occ, nullptr);
+    ASSERT_FALSE(other_occ->uci.has_value()) << "UCI was multiplexed onto more than one repetition occasion";
+  }
+}
+
+// The UL DAI covers the whole transmission, so a HARQ-ACK booked in a *repetition occasion's* slot must reach the
+// DCI like one in the base slot. Counting only the base slot leaves the DAI at its "no HARQ-ACK" default (3, i.e.
+// V_T_DAI_UL=4) while the gNB demaps a bit off the occasion: the codebooks disagree and the UCI is lost, silently.
+TEST_P(ue_grid_allocator_pusch_repetition_test, harq_ack_booked_on_a_repetition_occasion_is_counted_in_the_ul_dai)
+{
+  const ue& u     = add_repetition_ue();
+  ue_cell&  ue_cc = ues[u.ue_index].get_pcell();
+
+  slot_indication();
+
+  // Book a HARQ-ACK through the UCI allocator (it maintains the per-slot counter the DAI derives from), forcing it
+  // onto the slot of occasion 3.
+  constexpr unsigned           target_occasion_offset = 3;
+  const std::array<uint8_t, 1> k1_list                = {static_cast<uint8_t>(rep_k2 + target_occasion_offset)};
+  ASSERT_TRUE(uci_alloc.alloc_harq_ack(res_grid, ue_cc, 0, k1_list, pucch_repetition_factor::n1).has_value());
+  const slot_point occasion_slot = current_slot + rep_k2 + target_occasion_offset;
+  ASSERT_EQ(uci_alloc.get_scheduled_pdsch_counter_in_ue_uci(occasion_slot, u.crnti), 1);
+
+  set_pusch_snr(ue_cc, 0.0F);
+  const slot_point pusch_slot = current_slot + rep_k2;
+  ASSERT_EQ(allocate_ul_newtx_grant(pusch_slot, slice_ues[u.ue_index], units::bytes{1000}), alloc_status::success);
+
+  // Find the UL grant's PDCCH and check the DAI it carries.
+  const pdcch_ul_information* ul_pdcch = nullptr;
+  for (const pdcch_ul_information& pdcch : res_grid[0].result.dl.ul_pdcchs) {
+    if (pdcch.ctx.rnti == u.crnti) {
+      ul_pdcch = &pdcch;
+      break;
+    }
+  }
+  ASSERT_NE(ul_pdcch, nullptr);
+  ASSERT_EQ(ul_pdcch->dci.type(), dci_ul_rnti_config_type::c_rnti_f0_1);
+  // One HARQ-ACK bit on the bundle: TS 38.213 Table 9.1.3-2 leftmost column, (1 - 1) % 4 == 0.
+  ASSERT_EQ(ul_pdcch->dci.as_c_rnti_f0_1().first_dl_assignment_index, 0)
+      << "The HARQ-ACK booked on a repetition occasion was not counted in the UL DAI";
+}
+
+// An occasion repeats the base grant's RBs -- that is what lets the PHY combine them -- so RBs busy in any occasion
+// slot are unusable by the whole bundle. If the base grant ignores them the occasion is dropped, and the UE transmits
+// there regardless: a collision with whoever got those RBs. The bundle must route around them.
+TEST_P(ue_grid_allocator_pusch_repetition_test, bundle_avoids_rbs_busy_in_an_occasion_slot)
+{
+  const ue& u     = add_repetition_ue();
+  ue_cell&  ue_cc = ues[u.ue_index].get_pcell();
+
+  slot_indication();
+
+  // Occupy the lower half of the UE's PUSCH CRB window ({10, 40}) in the slot of occasion 3, standing in for another
+  // UE's grant landing there first.
+  constexpr unsigned target_occasion_offset = 3;
+  const slot_point   occasion_slot          = current_slot + rep_k2 + target_occasion_offset;
+  const crb_interval blocked_crbs{10, 25};
+  res_grid[occasion_slot].ul_res_grid.fill(
+      grant_info{cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.scs, ofdm_symbol_range{0, 14}, blocked_crbs});
+
+  set_pusch_snr(ue_cc, 0.0F);
+  const slot_point pusch_slot = current_slot + rep_k2;
+  ASSERT_EQ(allocate_ul_newtx_grant(pusch_slot, slice_ues[u.ue_index], units::bytes{1000}), alloc_status::success);
+
+  const ul_sched_info* base_occ = find_ue_pusch(u.crnti, res_grid[pusch_slot].result.ul);
+  ASSERT_NE(base_occ, nullptr);
+  // The RBs picked must not touch the busy ones. Checking the base grant is what matters: the occasions repeat its
+  // RBs verbatim (asserted below).
+  const vrb_interval blocked_vrbs = rb_helper::crb_to_vrb_ul_non_interleaved(
+      blocked_crbs, cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.crbs.start());
+  ASSERT_FALSE(base_occ->pusch_cfg.rbs.type1().overlaps(blocked_vrbs))
+      << fmt::format("PUSCH VRBs {} overlap the VRBs {} already busy in the slot of occasion {}",
+                     base_occ->pusch_cfg.rbs.type1(),
+                     blocked_vrbs,
+                     target_occasion_offset);
+
+  // Every occasion must be present, and must reuse the base grant's RBs.
+  for (unsigned offset = 1; offset != nof_reps; ++offset) {
+    const ul_sched_info* occ = find_ue_pusch(u.crnti, res_grid[pusch_slot + offset].result.ul);
+    ASSERT_NE(occ, nullptr) << "Occasion at offset " << offset
+                            << " was dropped: the bundle was sized against the base slot only";
+    ASSERT_EQ(occ->pusch_cfg.rbs.type1(), base_occ->pusch_cfg.rbs.type1())
+        << "Occasion at offset " << offset << " does not repeat the base grant's RBs";
+  }
+}
+
+// Same setup, but with the UE PUSCH free to span the whole BWP, as in a real deployment. Every repetition occasion
+// then overlaps in RBs with the UE's own PUCCH resources, which sit at the BWP edges.
+class ue_grid_allocator_pusch_repetition_wideband_test : public ue_grid_allocator_pusch_repetition_test
+{
+protected:
+  ue_grid_allocator_pusch_repetition_wideband_test() :
+    ue_grid_allocator_pusch_repetition_test(crb_interval{0, MAX_NOF_PRBS})
+  {
+  }
+};
+
+// Regression: with the PUSCH free to span the BWP, a PUCCH in an occasion slot used to cost that occasion -- the
+// grant was sized against the base slot alone, so its PRBs ran into the PUCCH and the occasion was dropped. The
+// grant now routes around everything busy in every slot of the bundle.
+TEST_P(ue_grid_allocator_pusch_repetition_wideband_test, pucch_in_an_occasion_slot_does_not_break_the_bundle)
+{
+  const ue&                    u           = add_repetition_ue();
+  ue_cell&                     ue_cc       = ues[u.ue_index].get_pcell();
+  const ue_cell_configuration& ue_cell_cfg = ue_cc.cfg();
+
+  slot_indication();
+
+  constexpr unsigned            target_occasion_offset = 3;
+  const std::optional<unsigned> pucch_res_ind =
+      pucch_alloc.alloc_ded_harq_ack(res_grid, ue_cell_cfg, 0, rep_k2 + target_occasion_offset);
+  ASSERT_TRUE(pucch_res_ind.has_value());
+  const slot_point occasion_slot = current_slot + rep_k2 + target_occasion_offset;
+  ASSERT_FALSE(res_grid[occasion_slot].result.ul.pucchs.empty());
+
+  set_pusch_snr(ue_cc, 0.0F);
+  const slot_point pusch_slot = current_slot + rep_k2;
+  ASSERT_EQ(allocate_ul_newtx_grant(pusch_slot, slice_ues[u.ue_index], units::bytes{1000}), alloc_status::success);
+
+  // The base grant must be wide enough to overlap the PUCCH, or this degenerates into the narrowband test.
+  const ul_sched_info* base_occ = find_ue_pusch(u.crnti, res_grid[pusch_slot].result.ul);
+  ASSERT_NE(base_occ, nullptr);
+  ASSERT_GT(base_occ->pusch_cfg.rbs.type1().length(), 40U) << "PUSCH is too narrow to exercise the RB overlap";
+
+  ASSERT_TRUE(res_grid[occasion_slot].result.ul.pucchs.empty());
+  const ul_sched_info* occ = find_ue_pusch(u.crnti, res_grid[occasion_slot].result.ul);
+  ASSERT_NE(occ, nullptr) << "The occasion overlapping the UE's own PUCCH in RBs was dropped";
+  ASSERT_TRUE(occ->uci.has_value());
+  ASSERT_TRUE(occ->uci->harq.has_value());
+  ASSERT_GT(occ->uci->harq->harq_ack_nof_bits, 0);
+}
+
+INSTANTIATE_TEST_SUITE_P(ue_grid_allocator_test,
+                         ue_grid_allocator_pusch_repetition_wideband_test,
+                         testing::Values(duplex_mode::FDD));
+
+INSTANTIATE_TEST_SUITE_P(ue_grid_allocator_test,
+                         ue_grid_allocator_pusch_repetition_test,
                          testing::Values(duplex_mode::FDD));
 
 INSTANTIATE_TEST_SUITE_P(ue_grid_allocator_test,

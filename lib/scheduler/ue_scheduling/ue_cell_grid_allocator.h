@@ -115,13 +115,23 @@ class ue_cell_grid_allocator
     std::optional<dl_repetition_info> reps;
   };
 
+  // Parameters of a UL grant using Rel-16 PUSCH repetitions. Occasion 0 is the PUSCH at the PUSCH slot, the rest are
+  // PDCCH-less PDUs of the same grant.
+  struct ul_repetition_info {
+    // Number of repetitions in the bundle.
+    uint8_t nof_occasions;
+    // Slot offsets (> 0) of the repetition occasions, relative to the base occasion's slot. Always nof_occasions - 1.
+    static_vector<uint8_t, 15> tx_offsets;
+  };
+
   // Information relative to a pending UL grant for this slot.
   struct ul_grant_info {
-    const slice_ue*                user;
-    sched_helper::ul_sched_context cfg;
-    ul_harq_process_handle         h_ul;
-    pdcch_ul_information*          pdcch;
-    ul_sched_info*                 pusch;
+    const slice_ue*                   user;
+    sched_helper::ul_sched_context    cfg;
+    ul_harq_process_handle            h_ul;
+    pdcch_ul_information*             pdcch;
+    ul_sched_info*                    pusch;
+    std::optional<ul_repetition_info> reps;
   };
 
 public:
@@ -139,6 +149,18 @@ public:
     /// Slots of any PDSCH repetition occasions actually committed to the resource grid (see \ref
     /// dl_repetition_occasion_list).
     dl_repetition_occasion_list repetition_slots;
+  };
+
+  /// \brief Slots where a PUSCH repetition occasion was committed to the resource grid. Unlike \ref
+  /// dl_repetition_occasion_list, this lists every occasion of the bundle. Empty without repetitions.
+  using ul_repetition_occasion_list = static_vector<slot_point, 15>;
+
+  /// Result of a successful reTx UL grant allocation.
+  struct ul_retx_grant_result {
+    /// Allocated VRBs for the (direct) reTx grant.
+    vrb_interval vrbs;
+    /// Slots of any PUSCH repetition occasions committed to the resource grid (see \ref ul_repetition_occasion_list).
+    ul_repetition_occasion_list repetition_slots;
   };
 
   /// \brief Interface for a DL grant, which allows deferred setting of PDSCH parameters.
@@ -189,13 +211,19 @@ public:
     ul_newtx_grant_builder& operator=(ul_newtx_grant_builder&&) noexcept = default;
     ~ul_newtx_grant_builder() { ocudu_assert(parent == nullptr, "PUSCH parameters were not set"); }
 
-    /// Sets the final VRBs for the PUSCH allocation.
-    void set_pusch_params(const vrb_interval& alloc_vrbs);
+    /// \brief Sets the final VRBs for the PUSCH allocation. Returns the slots of any PUSCH repetition occasions that
+    /// were committed to the resource grid (see \ref ul_repetition_occasion_list).
+    ul_repetition_occasion_list set_pusch_params(const vrb_interval& alloc_vrbs);
 
     /// For a given max number of RBs and a bitmap of used VRBs, returns the recommended parameters for the PUSCH grant.
     vrb_interval recommended_vrbs(const vrb_bitmap& used_vrbs, unsigned max_nof_rbs = MAX_NOF_PRBS) const
     {
       const ul_grant_info& grant = grant_info();
+      if (grant.reps.has_value()) {
+        // The picked VRBs are repeated on every occasion of the bundle, so they must be free in all of its slots.
+        const vrb_bitmap bundle_used = parent->bundle_used_vrbs(used_vrbs, *grant.user, grant.cfg, *grant.reps);
+        return compute_newtx_ul_vrbs(grant.cfg, bundle_used, max_nof_rbs);
+      }
       return compute_newtx_ul_vrbs(grant.cfg, used_vrbs, max_nof_rbs);
     }
 
@@ -237,7 +265,7 @@ public:
   expected<ul_newtx_grant_builder, alloc_status> allocate_ul_grant(const ue_newtx_ul_grant_request& request);
 
   /// Allocates UL grant for a UE HARQ reTx.
-  expected<vrb_interval, alloc_status> allocate_ul_grant(const ue_retx_ul_grant_request& request) const;
+  expected<ul_retx_grant_result, alloc_status> allocate_ul_grant(const ue_retx_ul_grant_request& request) const;
 
   /// \brief Called at the end of a slot to process the allocations that took place and make some final adjustments.
   ///
@@ -259,10 +287,37 @@ private:
   std::optional<dl_repetition_info>
   select_pdsch_repetitions(const ue_cell& ue_cc, const search_space_info& ss_info, uint8_t pdsch_td_res_index) const;
 
+  // Builds the PUSCH repetition bundle for a grant whose TDRA row is a repetition row: computes the occasion slot
+  // offsets and whether the bundle can start in this slot. nullopt means defer to a later slot; a repetition grant
+  // is never downgraded to a single transmission.
+  std::optional<ul_repetition_info>
+  select_pusch_repetitions(const ue_cell& ue_cc, const search_space_info& ss_info, uint8_t pusch_td_res_index) const;
+
+  /// \brief Number of HARQ-ACK bits that a PUSCH repetition bundle will carry.
+  ///
+  /// The UE multiplexes the UCI onto a single occasion, so every HARQ-ACK booked in any of the bundle's slots rides
+  /// on this grant and must be reflected in its size (RBs, MCS/TBS) and UL DAI.
+  /// \remark Final once the bundle's slots are known: a PUCCH is refused in a slot already holding an occasion.
+  unsigned bundle_uci_harq_bits(rnti_t crnti, slot_point base_slot, const ul_repetition_info& reps) const;
+
+  /// \brief Returns the VRBs used across a whole repetition bundle. The goal is to find unused interval across all
+  /// repetitions.
+  /// \param[in] base_used_vrbs VRBs already taken in the grant's PUSCH slot.
+  /// \param[in] user UE being scheduled.
+  /// \param[in] ctxt UL scheduling context of the grant.
+  /// \param[in] reps Bundle whose occasion slots are folded in.
+  /// \return Bitmap of VRBs used across the bundle.
+  vrb_bitmap bundle_used_vrbs(const vrb_bitmap&                     base_used_vrbs,
+                              const slice_ue&                       user,
+                              const sched_helper::ul_sched_context& ctxt,
+                              const ul_repetition_info&             reps) const;
+
   // Setup UL grant builder.
-  expected<ul_grant_info, alloc_status> setup_ul_grant_builder(const slice_ue&                       user,
-                                                               const sched_helper::ul_sched_context& params,
-                                                               std::optional<ul_harq_process_handle> h_ul) const;
+  expected<ul_grant_info, alloc_status>
+  setup_ul_grant_builder(const slice_ue&                       user,
+                         const sched_helper::ul_sched_context& params,
+                         std::optional<ul_harq_process_handle> h_ul,
+                         std::optional<ul_repetition_info>     reps = std::nullopt) const;
 
   // Set final PDSCH parameters and allocate remaining DL grant resources. Returns the slots of any PDSCH repetition
   // occasions actually committed to the resource grid.
@@ -271,8 +326,8 @@ private:
                                                std::pair<crb_interval, crb_interval> crbs,
                                                bool                                  enable_interleaving) const;
 
-  // Set final PUSCH parameters and allocate remaining UL grant resources.
-  void set_pusch_params(ul_grant_info& grant, const vrb_interval& vrbs) const;
+  // Set final PUSCH parameters and allocate remaining UL grant resources. Returns the committed occasion slots.
+  ul_repetition_occasion_list set_pusch_params(ul_grant_info& grant, const vrb_interval& vrbs) const;
 
   std::optional<sch_mcs_tbs> calculate_dl_mcs_tbs(const cell_slot_resource_allocator&          pdsch_alloc,
                                                   const search_space_info&                     ss_info,

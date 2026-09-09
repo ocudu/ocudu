@@ -107,7 +107,7 @@ TEST_F(default_slice_scheduler_test, when_no_lcid_exists_then_default_slice_is_n
 
   // Progress with the slots until there are valid k2 values for UL scheduling. If not, the UL slice candidate list will
   // be trivially empty.
-  while (cell_cfg.init_bwp.ul.td_mapper().pusch_td_res_indices((next_slot - 1).count()).empty()) {
+  while (cell_cfg.init_bwp.ul.td_mapper().common_pusch_td_res_indices((next_slot - 1).count()).empty()) {
     run_slot();
   }
 
@@ -121,7 +121,7 @@ TEST_F(default_slice_scheduler_test, when_lcid_is_part_of_default_slice_then_def
 
   for (unsigned count = 0, e = 10; count != e; ++count) {
     const bool is_dl_active = has_active_tdd_dl_symbols(cell_cfg.params.tdd_cfg.value(), next_slot.slot_index());
-    const bool dl_slot_has_k2_values = not cell_cfg.init_bwp.ul.td_mapper().pusch_td_res_indices(count).empty();
+    const bool dl_slot_has_k2_values = not cell_cfg.init_bwp.ul.td_mapper().common_pusch_td_res_indices(count).empty();
     run_slot();
 
     auto next_dl_slice = slice_sched.get_next_dl_candidate();
@@ -562,7 +562,7 @@ TEST_F(prioritised_slice_scheduler_test,
 
   for (unsigned count = 0, e = 10; count != e; ++count) {
     const bool is_pdcch_active = has_active_tdd_dl_symbols(cell_cfg.params.tdd_cfg.value(), next_slot.slot_index());
-    const bool dl_slot_has_k2_values = not cell_cfg.init_bwp.ul.td_mapper().pusch_td_res_indices(count).empty();
+    const bool dl_slot_has_k2_values = not cell_cfg.init_bwp.ul.td_mapper().common_pusch_td_res_indices(count).empty();
     run_slot();
 
     if (is_pdcch_active) {
@@ -647,7 +647,7 @@ TEST_F(dedicated_slice_scheduler_test, when_dedicated_resources_not_filled_then_
 
   for (unsigned count = 0, e = 10; count != e; ++count) {
     const bool is_pdcch_active = has_active_tdd_dl_symbols(cell_cfg.params.tdd_cfg.value(), next_slot.slot_index());
-    const bool dl_slot_has_k2_values = not cell_cfg.init_bwp.ul.td_mapper().pusch_td_res_indices(count).empty();
+    const bool dl_slot_has_k2_values = not cell_cfg.init_bwp.ul.td_mapper().common_pusch_td_res_indices(count).empty();
     run_slot();
 
     if (is_pdcch_active) {
@@ -763,7 +763,7 @@ TEST_F(dedicated_slice_scheduler_test_2nd, with_candidates_with_min_lim_remainin
 
   for (unsigned count = 0, e = 10; count != e; ++count) {
     const bool is_pdcch_active = has_active_tdd_dl_symbols(cell_cfg.params.tdd_cfg.value(), next_slot.slot_index());
-    const bool dl_slot_has_k2_values = not cell_cfg.init_bwp.ul.td_mapper().pusch_td_res_indices(count).empty();
+    const bool dl_slot_has_k2_values = not cell_cfg.init_bwp.ul.td_mapper().common_pusch_td_res_indices(count).empty();
     run_slot();
 
     if (is_pdcch_active) {
@@ -868,7 +868,7 @@ TEST_F(dedicated_empty_slice_scheduler_test, when_slice_has_no_ues_its_rbs_will_
 
   for (unsigned count = 0, e = 10; count != e; ++count) {
     const bool is_pdcch_active = has_active_tdd_dl_symbols(cell_cfg.params.tdd_cfg.value(), next_slot.slot_index());
-    const bool dl_slot_has_k2_values = not cell_cfg.init_bwp.ul.td_mapper().pusch_td_res_indices(count).empty();
+    const bool dl_slot_has_k2_values = not cell_cfg.init_bwp.ul.td_mapper().common_pusch_td_res_indices(count).empty();
     run_slot();
 
     if (is_pdcch_active) {

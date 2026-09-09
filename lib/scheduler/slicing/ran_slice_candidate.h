@@ -40,14 +40,17 @@ public:
     }
   }
 
-  /// \brief Register RBs used by a PDSCH repetition occasion landing in a slot other than this candidate's own \c
-  /// slot_tx. Unlike the single-argument \ref store_grant, this does not count against this candidate's own \ref
+  /// \brief Register RBs used by a PDSCH/PUSCH repetition occasion landing in a slot other than this candidate's own
+  /// \c slot_tx. Unlike the single-argument \ref store_grant, this does not count against this candidate's own \ref
   /// remaining_rbs budget, which is scoped to \c slot_tx; it only updates the slice's per-slot RB usage for
   /// admission control purposes.
   void store_grant(unsigned nof_rbs, slot_point occasion_slot)
   {
-    static_assert(IsDl, "PDSCH repetition occasions only apply to the DL candidate");
-    inst->store_pdsch_grant(nof_rbs, occasion_slot);
+    if constexpr (IsDl) {
+      inst->store_pdsch_grant(nof_rbs, occasion_slot);
+    } else {
+      inst->store_pusch_grant(nof_rbs, occasion_slot);
+    }
   }
 
   /// Remaining RBs available for allocation for the given slice.

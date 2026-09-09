@@ -1051,7 +1051,7 @@ ue_fallback_scheduler::ul_srb_sched_outcome ue_fallback_scheduler::schedule_ul_u
   }
 
   // Fetch applicable PUSCH Time Domain resource index list.
-  auto pusch_td_res_index_list = cell_cfg.init_bwp.ul.td_mapper().pusch_td_res_indices(pdcch_slot.count());
+  auto pusch_td_res_index_list = cell_cfg.init_bwp.ul.td_mapper().common_pusch_td_res_indices(pdcch_slot.count());
 
   if (is_retx) {
     ocudu_sanity_check(h_ul_retx->get_grant_params().dci_cfg_type == dci_ul_rnti_config_type::c_rnti_f0_0,
@@ -1066,7 +1066,7 @@ ue_fallback_scheduler::ul_srb_sched_outcome ue_fallback_scheduler::schedule_ul_u
 
   for (uint8_t pusch_td_res_idx : pusch_td_res_index_list) {
     const pusch_time_domain_resource_allocation& pusch_td =
-        cell_cfg.init_bwp.ul.td_mapper().pusch_td_resources()[pusch_td_res_idx];
+        cell_cfg.init_bwp.ul.td_mapper().common_pusch_td_resources()[pusch_td_res_idx];
     cell_slot_resource_allocator& pusch_alloc = res_alloc[pusch_td.k2 + cell_cfg.ntn_cs_koffset];
     const slot_point              pusch_slot  = pusch_alloc.slot;
 

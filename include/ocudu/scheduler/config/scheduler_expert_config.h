@@ -193,6 +193,13 @@ struct scheduler_ue_expert_config {
   /// \brief Effective CQI threshold below which the scheduler uses PDSCH repetitions
   /// for UEs configured with the Rel-16 dedicated PDSCH TDRA list. Value 0 disables CQI-triggered repetitions.
   float pdsch_cqi_rep_threshold{0.0f};
+  /// \brief Effective PUSCH SINR threshold, in dB, below which the scheduler uses PUSCH repetitions for UEs
+  /// configured with the Rel-16 dedicated PUSCH TDRA list. If not set, SINR-triggered repetitions are disabled.
+  std::optional<float> pusch_sinr_rep_threshold;
+  /// \brief If true, PUSCH repetitions are used for all UEs configured with the Rel-16 dedicated PUSCH TDRA list,
+  /// regardless of the estimated SINR. Intended for testing in setups without RF impairments, where the SINR never
+  /// drops below \c pusch_sinr_rep_threshold.
+  bool pusch_force_rep{false};
   /// Threshold for drop in CQI of the first HARQ transmission above which HARQ retransmissions are cancelled.
   uint8_t dl_harq_la_cqi_drop_threshold{2};
   /// Threshold for drop in nof. layers of the first HARQ transmission above which HARQ retransmission is cancelled.

@@ -67,14 +67,15 @@ TEST_P(scheduler_ntn_koffset_test, pusch_is_scheduled_k2_plus_koffset_slots_afte
 
   // The first UL DCI of the UE schedules its first PUSCH.
   ASSERT_TRUE(this->run_slot_until([this]() { return this->find_ue_ul_pdcch(ue_rnti) != nullptr; }));
-  const slot_point            pdcch_slot    = this->last_result_slot();
-  const pdcch_ul_information& pdcch         = *this->find_ue_ul_pdcch(ue_rnti);
-  const unsigned              time_resource = pdcch.dci.type() == dci_ul_rnti_config_type::c_rnti_f0_1
-                                                  ? pdcch.dci.as_c_rnti_f0_1().time_resource
-                                                  : pdcch.dci.as_c_rnti_f0_0().time_resource;
+  const slot_point            pdcch_slot = this->last_result_slot();
+  const pdcch_ul_information& pdcch      = *this->find_ue_ul_pdcch(ue_rnti);
+  const bool                  is_f0_1    = pdcch.dci.type() == dci_ul_rnti_config_type::c_rnti_f0_1;
+  const unsigned              time_resource =
+      is_f0_1 ? pdcch.dci.as_c_rnti_f0_1().time_resource : pdcch.dci.as_c_rnti_f0_0().time_resource;
 
   // TS 38.214, Section 6.1.2.1: the PUSCH slot is the DCI slot plus k2 plus Koffset. The DCI carries k2 alone.
-  const auto pusch_td_list = cell_cfg().init_bwp.ul.td_mapper().pusch_td_resources();
+  const auto pusch_td_list =
+      cell_cfg().init_bwp.ul.td_mapper().pusch_td_resources(is_f0_1 ? dci_ul_format::f0_1 : dci_ul_format::f0_0);
   ASSERT_LT(time_resource, pusch_td_list.size());
   const slot_point expected_pusch_slot = pdcch_slot + pusch_td_list[time_resource].k2 + koffset();
 

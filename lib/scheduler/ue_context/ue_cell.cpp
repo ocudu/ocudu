@@ -122,29 +122,46 @@ std::optional<dl_harq_process_handle> ue_cell::handle_dl_ack_info(slot_point    
   return h_dl;
 }
 
-expected<std::pair<units::bytes, bool>> ue_cell::handle_crc_pdu(slot_point                   pusch_slot,
-                                                                const ul_crc_pdu_indication& crc_pdu)
+expected<std::pair<units::bytes, bool>, ue_cell::crc_not_concluded>
+ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& crc_pdu)
 {
   // Find UL HARQ with matching PUSCH slot.
   std::optional<ul_harq_process_handle> h_ul = harqs.find_ul_harq_waiting_ack(pusch_slot);
   if (not h_ul.has_value() or h_ul->id() != crc_pdu.harq_id) {
     if (crc_pdu.harq_id == to_harq_id(0) and get_pcell_state().conres_st == ue_conres_state::pending_cfra) {
       // CFRA UE: the UL HARQ is managed by the RA scheduler; state transition is handled by the event manager.
-      return make_unexpected(default_error_t{});
+      return make_unexpected(crc_not_concluded::unattributed);
     }
 
     logger.warning("rnti={} h_id={}: Discarding CRC. Cause: UL HARQ process is not expecting CRC for PUSCH slot {}",
                    rnti(),
                    crc_pdu.harq_id,
                    pusch_slot);
-    return make_unexpected(default_error_t{});
+    return make_unexpected(crc_not_concluded::unattributed);
+  }
+
+  // A PUSCH repetition bundle draws one CRC report per occasion, in different slots, and the PHY keeps accumulating
+  // soft bits across them. Fold each report into the transmission's result with a logical OR and only conclude at the
+  // last occasion: a success at any occasion is conclusive, a failure at a single one is not, and the HARQ process --
+  // with its id -- must stay reserved for as long as the UE is still transmitting the bundle.
+  // Outside a bundle last_occasion_slot equals the PUSCH slot, so this reduces to acting on the single report.
+  const bool combined_crc_success = h_ul->accumulate_crc(crc_pdu.tb_crc_success);
+  if (pusch_slot != h_ul->last_occasion_slot()) {
+    logger.debug("rnti={} h_id={}: Holding CRC={} from PUSCH slot {}. Cause: more occasions of the same repetition "
+                 "bundle are still to be received (combined result so far: {})",
+                 rnti(),
+                 crc_pdu.harq_id,
+                 crc_pdu.tb_crc_success ? "OK" : "KO",
+                 pusch_slot,
+                 combined_crc_success ? "OK" : "KO");
+    return make_unexpected(crc_not_concluded::held_for_bundle);
   }
 
   // Update UL HARQ state.
-  auto tbs_ret = h_ul->ul_crc_info(crc_pdu.tb_crc_success);
+  auto tbs_ret = h_ul->ul_crc_info(combined_crc_success);
 
   if (not tbs_ret.has_value()) {
-    return make_unexpected(default_error_t{});
+    return make_unexpected(crc_not_concluded::unattributed);
   }
 
   // HARQ with matching ID and UCI slot was found.
@@ -152,7 +169,7 @@ expected<std::pair<units::bytes, bool>> ue_cell::handle_crc_pdu(slot_point      
   // With CG, if a CRC KO is found with SINR below threshold, we assume it's a DTX (PUSCH wasn't transmitted).
   bool pusch_transmitted = true;
 
-  if (h_ul->is_cg() and not crc_pdu.tb_crc_success and crc_pdu.ul_sinr_dB.has_value() and
+  if (h_ul->is_cg() and not combined_crc_success and crc_pdu.ul_sinr_dB.has_value() and
       crc_pdu.ul_sinr_dB.value() < expert_cfg.cg_pusch_sinr_threshold_dB) {
     pusch_transmitted = false;
     return std::make_pair(units::bytes(0U), pusch_transmitted);
@@ -161,7 +178,7 @@ expected<std::pair<units::bytes, bool>> ue_cell::handle_crc_pdu(slot_point      
   // With CG, MCS is fixed, thus we don't want to update OLLA or channel state.
   if (not h_ul->is_cg()) {
     // Update link adaptation controller.
-    components.ue_mcs_calculator->handle_ul_crc_info(crc_pdu.tb_crc_success,
+    components.ue_mcs_calculator->handle_ul_crc_info(combined_crc_success,
                                                      h_ul->get_grant_params().mcs,
                                                      h_ul->get_grant_params().mcs_table,
                                                      h_ul->get_grant_params().olla_mcs,
