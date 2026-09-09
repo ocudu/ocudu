@@ -19,6 +19,17 @@ namespace ocudu {
 
 /// Information relative to a PUSCH allocation.
 struct pusch_information {
+  /// \brief PUSCH repetition Type A / TTI-bundling parameters, set only when this PDU is one occasion of a Rel-16
+  /// bundle. Mirrors the FAPI \c ul_pusch_pdu::tti_bundling IE (SCF-222 v4.0, section 3.4.3.2), which the PHY uses
+  /// to soft-combine the occasions.
+  struct repetition_info {
+    /// Total number of repetitions in the bundle, constant across every occasion. FAPI \c tb_over_ms_num_total_slots.
+    uint8_t nof_repetitions;
+    /// \brief Repetitions remaining after this occasion: counts down from \c nof_repetitions - 1 to 0, the last one
+    /// triggering the PHY to decode the combined bundle. FAPI \c tb_over_ms_remaining_slots.
+    uint8_t nof_remaining_repetitions;
+  };
+
   rnti_t                   rnti;
   const bwp_configuration* bwp_cfg;
   vrb_alloc                rbs;
@@ -73,6 +84,8 @@ struct pusch_information {
   /// to zero in any of the following conditions: 1) CBG is not supported or requested 2) newData=1 (new transmission)
   /// 3) tbSize=0.
   uint16_t nof_cb;
+  /// Where this PDU sits in its repetition bundle. Absent when the PUSCH is a single transmission.
+  std::optional<repetition_info> repetitions;
 };
 
 struct uci_info {

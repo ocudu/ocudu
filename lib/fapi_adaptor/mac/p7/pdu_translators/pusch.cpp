@@ -111,6 +111,11 @@ void ocudu::fapi_adaptor::convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu_builder& 
     builder.add_optional_rapid(*mac_pdu.context.rapid);
   }
 
+  if (pusch_pdu.repetitions.has_value()) {
+    builder.add_tti_bundling_parameters(pusch_pdu.repetitions->nof_repetitions,
+                                        pusch_pdu.repetitions->nof_remaining_repetitions);
+  }
+
   // Set PUSCH HARQ identifier for logging.
   builder.set_harq_id(pusch_pdu.harq_id);
 }
