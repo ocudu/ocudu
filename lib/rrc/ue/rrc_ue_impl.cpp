@@ -96,9 +96,7 @@ rrc_state rrc_ue_impl::get_rrc_state() const
 
 void rrc_ue_impl::cancel_handover_reconfiguration_transaction(uint8_t transaction_id)
 {
-  // If the UE is awaiting a RRC Reconfiguration Complete for an ongoing handover, cancel the transaction.
-  logger.log_debug(
-      "Received a RRC Reestablishment Request during an ongoing handover. Cancelling the handover transaction");
+  logger.log_debug("Cancelling the ongoing handover reconfiguration transaction");
   if (not event_mng->transactions.cancel_transaction(transaction_id)) {
     logger.log_warning("Unexpected RRC transaction id={}", transaction_id);
   }
