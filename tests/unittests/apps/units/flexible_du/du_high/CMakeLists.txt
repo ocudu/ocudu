@@ -39,3 +39,12 @@ target_link_libraries(du_high_config_autoderivation_test
         gtest
         gtest_main)
 add_test(du_high_config_autoderivation_test du_high_config_autoderivation_test)
+
+add_executable(du_high_config_validator_test du_high_config_validator_test.cpp)
+target_include_directories(du_high_config_validator_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(du_high_config_validator_test
+        ocudu_du_high_unit_helpers
+        ocudu_app_services
+        ocudu_gtest_main
+        gtest)
+add_test(du_high_config_validator_test du_high_config_validator_test)

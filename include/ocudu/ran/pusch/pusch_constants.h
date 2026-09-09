@@ -64,6 +64,12 @@ constexpr unsigned MAX_NOF_PUSCH_TD_RES_ALLOCS = 16;
 /// See TS 38.331, \c PUSCH-Allocation-r16.
 constexpr std::array<uint8_t, 8> VALID_NOF_REPETITIONS = {1, 2, 3, 4, 7, 8, 12, 16};
 
+/// \brief Maximum number of PUSCH transmissions of a transport block that the PHY soft-combines. A repetition counts
+/// the same as a retransmission.
+/// \remark Must match \c rx_buffer_codeblock_pool::max_nof_repetitions.
+/// TODO: use a common constant for SCHED and PHY, to follow the limit from one source of truth.
+constexpr unsigned MAX_NOF_SOFT_COMBINED_PUSCH_TXS = 32;
+
 } // namespace pusch_constants
 
 } // namespace ocudu

@@ -388,11 +388,16 @@ static YAML::Node build_du_high_pusch_section(const du_high_unit_pusch_config& c
   node["max_ue_mcs"]  = config.max_ue_mcs;
   node["harq_mode_b"] = !config.harq_mode_b.empty() ? fmt::format("0x{:08x}", config.harq_mode_b.to_uint64()) : "false";
   node["nof_harqs"]   = config.nof_harqs;
-  node["max_nof_harq_retxs"]           = config.max_nof_harq_retxs;
-  node["harq_retx_timeout"]            = config.harq_retx_timeout;
-  node["max_consecutive_kos"]          = config.max_consecutive_kos;
-  node["mcs_table"]                    = to_string(config.mcs_table);
-  node["max_rank"]                     = config.max_rank;
+  node["max_nof_harq_retxs"]  = config.max_nof_harq_retxs;
+  node["harq_retx_timeout"]   = config.harq_retx_timeout;
+  node["max_consecutive_kos"] = config.max_consecutive_kos;
+  node["mcs_table"]           = to_string(config.mcs_table);
+  node["max_rank"]            = config.max_rank;
+  node["max_nof_rep"]         = config.max_nof_rep;
+  if (config.sinr_rep_threshold.has_value()) {
+    node["sinr_rep_threshold"] = config.sinr_rep_threshold.value();
+  }
+  node["force_rep"]                    = config.force_rep;
   node["msg3_delta_preamble"]          = config.msg3_delta_preamble;
   node["p0_nominal_with_grant"]        = config.p0_nominal_with_grant;
   node["p0_nominal_without_grant"]     = config.p0_nominal_without_grant;

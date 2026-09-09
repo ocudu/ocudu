@@ -1094,6 +1094,26 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
       ->capture_default_str()
       ->range(1, 4);
   add_option(app,
+             "--max_nof_rep",
+             pusch_params.max_nof_rep,
+             "Maximum number of PUSCH repetitions offered in the dedicated Rel-16 TDRA list of supporting UEs. Value "
+             "1 disables dynamic PUSCH repetitions.")
+      ->capture_default_str()
+      ->check(CLI::IsMember({1, 2, 3, 4, 7, 8, 12, 16}));
+  add_option(app,
+             "--sinr_rep_threshold",
+             pusch_params.sinr_rep_threshold,
+             "SINR threshold, in dB, below which the scheduler uses PUSCH repetitions for supporting UEs. If not "
+             "set, SINR-triggered repetitions are disabled.")
+      ->capture_default_str()
+      ->check(CLI::Range(-50.0, 50.0));
+  add_option(app,
+             "--force_rep",
+             pusch_params.force_rep,
+             "Force PUSCH repetitions for all supporting UEs regardless of the estimated SINR. Intended for testing "
+             "in setups without RF impairments, where the SINR never drops below sinr_rep_threshold.")
+      ->capture_default_str();
+  add_option(app,
              "--msg3_delta_preamble",
              pusch_params.msg3_delta_preamble,
              "msg3-DeltaPreamble, Power offset between msg3 and RACH preamble transmission")

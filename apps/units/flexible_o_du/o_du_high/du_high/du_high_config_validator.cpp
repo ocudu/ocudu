@@ -15,6 +15,7 @@
 #include "ocudu/ran/pucch/pucch_constants.h"
 #include "ocudu/ran/pucch/pucch_info.h"
 #include "ocudu/ran/pucch/pucch_mapping.h"
+#include "ocudu/ran/pusch/pusch_constants.h"
 #include "ocudu/ran/rb_id.h"
 #include "ocudu/ran/ssb/ssb_mapping.h"
 #include "ocudu/ran/transform_precoding/transform_precoding_helpers.h"
@@ -446,6 +447,19 @@ static bool validate_pusch_cell_unit_config(const du_high_unit_pusch_config& con
   }
 
   if (not validate_rv_sequence(config.rv_sequence)) {
+    return false;
+  }
+
+  // The PHY bounds how much it soft-combines, and a repetition counts the same as a retransmission.
+  const unsigned nof_soft_combined_txs = (1U + config.max_nof_harq_retxs) * config.max_nof_rep;
+  if (nof_soft_combined_txs > pusch_constants::MAX_NOF_SOFT_COMBINED_PUSCH_TXS) {
+    fmt::print("Invalid PUSCH repetition configuration. A transport block would be transmitted up to {} times "
+               "((1 + max_nof_harq_retxs={}) * max_nof_rep={}), above the {} receptions the receiver can combine. "
+               "Lower max_nof_rep or max_nof_harq_retxs.\n",
+               nof_soft_combined_txs,
+               config.max_nof_harq_retxs,
+               config.max_nof_rep,
+               pusch_constants::MAX_NOF_SOFT_COMBINED_PUSCH_TXS);
     return false;
   }
 

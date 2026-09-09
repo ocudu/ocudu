@@ -306,8 +306,13 @@ struct du_high_unit_pusch_config {
   pusch_mcs_table mcs_table = pusch_mcs_table::qam256;
   /// \brief Maximum number of PUSCH repetitions offered in the dedicated Rel-16 TDRA list of supporting UEs. Value 1
   /// disables dynamic PUSCH repetitions. Values: {1, 2, 3, 4, 7, 8, 12, 16}.
-  /// \note Not currently exposed via CLI11/YAML; PUSCH repetitions are not yet handled by the scheduler.
   unsigned max_nof_rep = 1;
+  /// \brief SINR threshold, in dB, below which the scheduler uses PUSCH repetitions for supporting UEs. The
+  /// effective SINR is compared against this value. If not set, SINR-triggered repetitions are disabled.
+  std::optional<float> sinr_rep_threshold;
+  /// \brief If true, PUSCH repetitions are used for all supporting UEs regardless of the estimated SINR. Intended
+  /// for testing in setups without RF impairments, where the SINR never drops below \c sinr_rep_threshold.
+  bool force_rep = false;
   /// \c msg3-DeltaPreamble, TS 38.331. Values: {-1,...,6}.
   int msg3_delta_preamble = 6;
   /// \c p0-NominalWithGrant, TS 38.331. Value in dBm. Only even values allowed within {-202,...,24}.
