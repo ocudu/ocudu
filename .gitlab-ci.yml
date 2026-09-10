@@ -291,6 +291,15 @@ dependency-checks:
       optional: true
       artifacts: false
 
+high-resolution-clock:
+  extends: .high-resolution-clock
+  rules:
+    - if: $ON_MR
+  needs:
+    - job: trigger static
+      optional: true
+      artifacts: false
+
 dco:
   extends: .dco
   rules:

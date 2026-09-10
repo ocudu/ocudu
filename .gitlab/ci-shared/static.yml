@@ -93,6 +93,12 @@ include:
     - cd $CPP_SRC_DIR
     - python3 -u $CI_PROJECT_DIR/.gitlab/ci/static/check_dependencies.py --repo $CI_PROJECT_DIR
 
+.high-resolution-clock:
+  extends: .static
+  script:
+    - cd $CPP_SRC_DIR
+    - $CI_PROJECT_DIR/.gitlab/ci/static/high-resolution-clock-check.sh
+
 .dco:
   extends: .static
   stage: ci
