@@ -27,9 +27,9 @@ install_dpdk_dependencies_debian_ubuntu() {
         libibverbs1 ibverbs-providers
     )
 
-    # Ubuntu 24.04 DPDK libraries link the runtime variants; development
-    # headers are only needed while building DPDK.
-    if [[ "${ID:-}:${VERSION_ID:-}" == "ubuntu:24.04" ]]; then
+    # Ubuntu DPDK libraries link the runtime variants; development headers are
+    # only needed while building DPDK.
+    if [[ "${ID:-}" == "ubuntu" ]]; then
         run_pkgs=(
             python3-pip libnuma1 pciutils libfdt1 libatomic1 iproute2
             libibverbs1 ibverbs-providers libnl-3-200 libnl-route-3-200
