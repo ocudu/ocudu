@@ -11,8 +11,8 @@ using namespace ocudu;
 static unsigned get_hfn_from_time(std::chrono::microseconds slot_duration, uint64_t nof_slots_in_hyper_frame)
 {
   // Get the time since the epoch.
-  auto time_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(
-      std::chrono::high_resolution_clock::now().time_since_epoch());
+  auto time_since_epoch =
+      std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch());
 
   return ((time_since_epoch / slot_duration) / nof_slots_in_hyper_frame) % NOF_HYPER_SFNS;
 }

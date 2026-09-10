@@ -19,8 +19,8 @@ using namespace ocudu;
 static uint64_t get_current_system_slot(std::chrono::microseconds slot_duration, uint64_t nof_slots_in_all_hyper_sfns)
 {
   // Get the time since the epoch.
-  auto time_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(
-      std::chrono::high_resolution_clock::now().time_since_epoch());
+  auto time_since_epoch =
+      std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch());
 
   return (time_since_epoch / slot_duration) % nof_slots_in_all_hyper_sfns;
 }

@@ -13,7 +13,7 @@ namespace app_helpers {
 /// Returns the current UTC time and date with millisecond precision.
 inline std::string get_time_stamp()
 {
-  auto    tp           = std::chrono::high_resolution_clock::now();
+  auto    tp           = std::chrono::system_clock::now();
   std::tm current_time = fmt::gmtime(tp);
   auto    ms_fraction  = std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch()).count() % 1000u;
   return fmt::format("{:%F}T{:%H:%M:%S}.{:03}", current_time, current_time, ms_fraction);
