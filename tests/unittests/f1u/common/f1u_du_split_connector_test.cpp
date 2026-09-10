@@ -119,7 +119,7 @@ protected:
     ASSERT_TRUE(tester_bind_port.has_value());
 
     // create GTP-U dmux
-    gtpu_demux_creation_request msg = {.cfg                 = gtpu_demux_cfg_t{.li           = gtpu_logical_interface::f1u_du,
+    gtpu_demux_creation_request msg = {.cfg                 = gtpu_demux_cfg_t{.lif          = gtpu_logical_interface::f1u_du,
                                                                                .name         = "Test",
                                                                                .warn_on_drop = true,
                                                                                .test_mode    = false,

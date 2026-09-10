@@ -26,7 +26,7 @@ public:
   gtpu_pdu_generator(gtpu_teid_t teid) : tx_upper_dummy(*this)
   {
     gtpu_tunnel_nru_config::gtpu_tunnel_nru_tx_config cfg = {};
-    cfg.li                                                = gtpu_logical_interface::f1u_cu_up;
+    cfg.lif                                               = gtpu_logical_interface::f1u_cu_up;
     cfg.peer_teid                                         = teid;
     cfg.peer_addr                                         = "127.0.0.1";
 
@@ -181,7 +181,7 @@ TEST_F(gtpu_tunnel_nru_rx_test, entity_creation)
 {
   // create Rx entity
   gtpu_tunnel_nru_config::gtpu_tunnel_nru_rx_config rx_cfg = {};
-  rx_cfg.li                                                = gtpu_logical_interface::f1u_cu_up;
+  rx_cfg.lif                                               = gtpu_logical_interface::f1u_cu_up;
   rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
 
   rx = std::make_unique<gtpu_tunnel_nru_rx_impl>(0, rx_cfg, rx_lower);
@@ -194,7 +194,7 @@ TEST_F(gtpu_tunnel_nru_rx_test, rx_no_sn)
 {
   // create Rx entity
   gtpu_tunnel_nru_config::gtpu_tunnel_nru_rx_config rx_cfg = {};
-  rx_cfg.li                                                = gtpu_logical_interface::f1u_du;
+  rx_cfg.lif                                               = gtpu_logical_interface::f1u_du;
   rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
 
   rx = std::make_unique<gtpu_tunnel_nru_rx_impl>(0, rx_cfg, rx_lower);

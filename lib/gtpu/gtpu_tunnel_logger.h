@@ -16,13 +16,16 @@ namespace ocudu {
 class gtpu_tunnel_log_prefix
 {
 public:
-  gtpu_tunnel_log_prefix(gtpu_logical_interface li, std::optional<uint32_t> ue_index, gtpu_teid_t teid, const char* dir)
+  gtpu_tunnel_log_prefix(gtpu_logical_interface  lif,
+                         std::optional<uint32_t> ue_index,
+                         gtpu_teid_t             teid,
+                         const char*             dir)
   {
     fmt::memory_buffer buffer;
     if (ue_index.has_value()) {
-      fmt::format_to(std::back_inserter(buffer), "li={} ue={} {} teid={}: ", li, *ue_index, dir, teid);
+      fmt::format_to(std::back_inserter(buffer), "lif={} ue={} {} teid={}: ", lif, *ue_index, dir, teid);
     } else {
-      fmt::format_to(std::back_inserter(buffer), "li={} {} teid={}: ", li, dir, teid);
+      fmt::format_to(std::back_inserter(buffer), "lif={} {} teid={}: ", lif, dir, teid);
     }
     prefix = ocudu::to_c_str(buffer);
   }

@@ -57,7 +57,7 @@ protected:
 
     // create DUT object
     gtpu_demux_creation_request msg = {
-        .cfg                 = gtpu_demux_cfg_t{.li           = gtpu_logical_interface::ngu,
+        .cfg                 = gtpu_demux_cfg_t{.lif          = gtpu_logical_interface::ngu,
                                                 .name         = "Test",
                                                 .warn_on_drop = true,
                                                 .test_mode    = false,

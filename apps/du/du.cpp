@@ -337,7 +337,7 @@ int main(int argc, char** argv)
   std::unique_ptr<gtpu_teid_pool> du_f1u_teid_allocator = create_gtpu_allocator(du_f1u_alloc_msg);
 
   // > Create GTP-U Demux.
-  gtpu_demux_creation_request du_f1u_gtpu_msg   = {.cfg = gtpu_demux_cfg_t{.li           = gtpu_logical_interface::f1u_du,
+  gtpu_demux_creation_request du_f1u_gtpu_msg   = {.cfg = gtpu_demux_cfg_t{.lif          = gtpu_logical_interface::f1u_du,
                                                                            .name         = "DU-NR-U-DEMUX",
                                                                            .warn_on_drop = true,
                                                                            .test_mode    = false,

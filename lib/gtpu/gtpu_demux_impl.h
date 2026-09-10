@@ -98,7 +98,7 @@ private:
   gtpu_tunnel_common_tx_upper_layer_notifier* tx_upper     = nullptr;
   gtpu_ie_gtpu_peer_address                   ei_peer_addr = {};
   uint16_t                                    ei_sn_next   = 0;
-  gtpu_tunnel_logger ei_logger{"GTPU", {gtpu_tunnel_log_prefix{cfg.li, {}, GTPU_PATH_MANAGEMENT_TEID, "UL"}}};
+  gtpu_tunnel_logger ei_logger{"GTPU", {gtpu_tunnel_log_prefix{cfg.lif, {}, GTPU_PATH_MANAGEMENT_TEID, "UL"}}};
 };
 
 } // namespace ocudu
@@ -117,8 +117,8 @@ struct formatter<ocudu::gtpu_demux_cfg_t> {
   auto format(ocudu::gtpu_demux_cfg_t cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
-                     "li={} name={} queue_size={} batch_size={} warn_on_drop={} test_mode={}",
-                     cfg.li,
+                     "lif={} name={} queue_size={} batch_size={} warn_on_drop={} test_mode={}",
+                     cfg.lif,
                      cfg.name,
                      cfg.queue_size,
                      cfg.batch_size,

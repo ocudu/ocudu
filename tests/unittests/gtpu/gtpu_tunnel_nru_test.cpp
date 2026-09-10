@@ -155,9 +155,9 @@ TEST_F(gtpu_tunnel_nru_test, entity_creation)
 {
   // init GTP-U entity
   gtpu_tunnel_nru_creation_message msg = {};
-  msg.cfg.rx.li                        = gtpu_logical_interface::f1u_cu_up;
+  msg.cfg.rx.lif                       = gtpu_logical_interface::f1u_cu_up;
   msg.cfg.rx.local_teid                = gtpu_teid_t{0x1};
-  msg.cfg.tx.li                        = gtpu_logical_interface::f1u_cu_up;
+  msg.cfg.tx.lif                       = gtpu_logical_interface::f1u_cu_up;
   msg.cfg.tx.peer_teid                 = gtpu_teid_t{0x2};
   msg.cfg.tx.peer_addr                 = "127.0.0.1";
   msg.gtpu_pcap                        = &pcap_helper.get_pcap();
@@ -173,9 +173,9 @@ TEST_F(gtpu_tunnel_nru_test, rx_tx_nru_dl_msg)
 {
   // init GTP-U entity
   gtpu_tunnel_nru_creation_message msg = {};
-  msg.cfg.rx.li                        = gtpu_logical_interface::f1u_du;
+  msg.cfg.rx.lif                       = gtpu_logical_interface::f1u_du;
   msg.cfg.rx.local_teid                = gtpu_teid_t{0x1};
-  msg.cfg.tx.li                        = gtpu_logical_interface::f1u_du;
+  msg.cfg.tx.lif                       = gtpu_logical_interface::f1u_du;
   msg.cfg.tx.peer_teid                 = gtpu_teid_t{0x2};
   msg.cfg.tx.peer_addr                 = "127.0.0.1";
   msg.gtpu_pcap                        = &pcap_helper.get_pcap();
@@ -211,9 +211,9 @@ TEST_F(gtpu_tunnel_nru_test, tx_rx_nru_dl_msg_with_t_pdu)
 {
   // init GTP-U entity
   gtpu_tunnel_nru_creation_message msg = {};
-  msg.cfg.rx.li                        = gtpu_logical_interface::f1u_du;
+  msg.cfg.rx.lif                       = gtpu_logical_interface::f1u_du;
   msg.cfg.rx.local_teid                = gtpu_teid_t{0x1};
-  msg.cfg.tx.li                        = gtpu_logical_interface::f1u_du;
+  msg.cfg.tx.lif                       = gtpu_logical_interface::f1u_du;
   msg.cfg.tx.peer_teid                 = gtpu_teid_t{0x2};
   msg.cfg.tx.peer_addr                 = "127.0.0.1";
   msg.gtpu_pcap                        = &pcap_helper.get_pcap();
@@ -248,9 +248,9 @@ TEST_F(gtpu_tunnel_nru_test, tx_rx_nru_ul_msg)
 {
   // init GTP-U entity
   gtpu_tunnel_nru_creation_message msg = {};
-  msg.cfg.rx.li                        = gtpu_logical_interface::f1u_cu_up;
+  msg.cfg.rx.lif                       = gtpu_logical_interface::f1u_cu_up;
   msg.cfg.rx.local_teid                = gtpu_teid_t{0x1};
-  msg.cfg.tx.li                        = gtpu_logical_interface::f1u_cu_up;
+  msg.cfg.tx.lif                       = gtpu_logical_interface::f1u_cu_up;
   msg.cfg.tx.peer_teid                 = gtpu_teid_t{0x2};
   msg.cfg.tx.peer_addr                 = "127.0.0.1";
   msg.gtpu_pcap                        = &pcap_helper.get_pcap();
@@ -285,9 +285,9 @@ TEST_F(gtpu_tunnel_nru_test, tx_rx_nru_ul_msg_with_t_pdu)
 {
   // init GTP-U entity
   gtpu_tunnel_nru_creation_message msg = {};
-  msg.cfg.rx.li                        = gtpu_logical_interface::f1u_cu_up;
+  msg.cfg.rx.lif                       = gtpu_logical_interface::f1u_cu_up;
   msg.cfg.rx.local_teid                = gtpu_teid_t{0x1};
-  msg.cfg.tx.li                        = gtpu_logical_interface::f1u_cu_up;
+  msg.cfg.tx.lif                       = gtpu_logical_interface::f1u_cu_up;
   msg.cfg.tx.peer_teid                 = gtpu_teid_t{0x2};
   msg.cfg.tx.peer_addr                 = "127.0.0.1";
   msg.gtpu_pcap                        = &pcap_helper.get_pcap();

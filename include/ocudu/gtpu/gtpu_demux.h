@@ -18,7 +18,7 @@ constexpr auto DEFAULT_GTPU_DEMUX_BATCH_SIZE = 256U;
 
 /// Holds the GTPU demux configuration.
 struct gtpu_demux_cfg_t {
-  gtpu_logical_interface li = gtpu_logical_interface::invalid;
+  gtpu_logical_interface lif = gtpu_logical_interface::invalid;
   std::string            name;
   bool                   warn_on_drop;
   bool                   test_mode  = false;

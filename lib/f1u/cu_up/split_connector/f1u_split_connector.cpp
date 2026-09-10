@@ -207,7 +207,7 @@ f1u_split_connector::create_cu_bearer(uint32_t                              ue_i
   // create GTP-U tunnel rx
   gtpu_tunnel_nru_rx_creation_message msg{};
   msg.ue_index          = ue_index;
-  msg.rx_cfg.li         = gtpu_logical_interface::f1u_cu_up;
+  msg.rx_cfg.lif        = gtpu_logical_interface::f1u_cu_up;
   msg.rx_cfg.local_teid = ul_up_tnl_info.gtp_teid;
   msg.rx_lower          = cu_bearer->gtpu_to_f1u_adapter.get();
 
@@ -248,7 +248,7 @@ void f1u_split_connector::attach_dl_teid(const up_transport_layer_info& ul_up_tn
   // create GTP-U tunnel tx
   gtpu_tunnel_nru_tx_creation_message msg{};
   msg.ue_index         = cu_bearer->ue_index;
-  msg.tx_cfg.li        = gtpu_logical_interface::f1u_cu_up;
+  msg.tx_cfg.lif       = gtpu_logical_interface::f1u_cu_up;
   msg.tx_cfg.peer_teid = dl_up_tnl_info.gtp_teid;
   msg.tx_cfg.peer_addr = dl_up_tnl_info.tp_address.to_string();
   msg.tx_cfg.peer_port = peer_port;

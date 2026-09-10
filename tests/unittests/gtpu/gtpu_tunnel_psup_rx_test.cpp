@@ -45,7 +45,7 @@ public:
   gtpu_pdu_generator(gtpu_teid_t teid) : tx_upper_dummy(*this)
   {
     gtpu_tunnel_psup_config::gtpu_tunnel_psup_tx_config cfg = {};
-    cfg.li                                                  = gtpu_logical_interface::ngu;
+    cfg.lif                                                 = gtpu_logical_interface::ngu;
     cfg.peer_teid                                           = teid;
     cfg.peer_addr                                           = "127.0.0.1";
 
@@ -177,7 +177,7 @@ protected:
 
     // create Rx entity
     gtpu_tunnel_psup_config::gtpu_tunnel_psup_rx_config rx_cfg = {};
-    rx_cfg.li                                                  = gtpu_logical_interface::ngu;
+    rx_cfg.lif                                                 = gtpu_logical_interface::ngu;
     rx_cfg.local_teid                                          = local_teid;
     rx_cfg.ue_ambr_limiter                                     = ue_ambr_limiter.get();
     rx_cfg.t_reordering                                        = std::chrono::milliseconds{10};

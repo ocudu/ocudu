@@ -109,11 +109,11 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   // Create GTPU entity
   gtpu_tunnel_psup_creation_message msg = {};
   msg.ue_index                          = ue_index;
-  msg.cfg.tx.li                         = gtpu_logical_interface::ngu;
+  msg.cfg.tx.lif                        = gtpu_logical_interface::ngu;
   msg.cfg.tx.peer_teid                  = int_to_gtpu_teid(ul_tunnel_info.gtp_teid.value());
   msg.cfg.tx.peer_addr                  = ul_tunnel_info.tp_address.to_string();
   msg.cfg.tx.peer_port                  = ngu_config.upf_port;
-  msg.cfg.rx.li                         = gtpu_logical_interface::ngu;
+  msg.cfg.rx.lif                        = gtpu_logical_interface::ngu;
   msg.cfg.rx.local_teid                 = new_session->local_teid;
   msg.cfg.rx.ignore_ue_ambr             = ngu_config.gtpu_ignore_ue_ambr;
   msg.cfg.rx.ue_ambr_limiter            = ue_ambr_limiter.get();

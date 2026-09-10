@@ -19,15 +19,15 @@ public:
   gtpu_tunnel_nru_rx_impl(uint32_t                                          ue_index,
                           gtpu_tunnel_nru_config::gtpu_tunnel_nru_rx_config cfg,
                           gtpu_tunnel_nru_rx_lower_layer_notifier&          rx_lower_) :
-    gtpu_tunnel_base_rx(gtpu_tunnel_log_prefix{cfg.li, ue_index, cfg.local_teid, "RX"}),
+    gtpu_tunnel_base_rx(gtpu_tunnel_log_prefix{cfg.lif, ue_index, cfg.local_teid, "RX"}),
     packer(logger.get_basic_logger()),
     lower_dn(rx_lower_),
     config(cfg)
   {
     logger.log_info("GTPU NRUP RX configured. {}", cfg);
-    ocudu_assert(cfg.li == gtpu_logical_interface::f1u_du || cfg.li == gtpu_logical_interface::f1u_cu_up,
-                 "GTP-U NRUP RX node not correctly initialized. li={}",
-                 cfg.li);
+    ocudu_assert(cfg.lif == gtpu_logical_interface::f1u_du || cfg.lif == gtpu_logical_interface::f1u_cu_up,
+                 "GTP-U NRUP RX node not correctly initialized. lif={}",
+                 cfg.lif);
   }
   ~gtpu_tunnel_nru_rx_impl() override = default;
 
@@ -59,7 +59,7 @@ protected:
     logger.log_debug(pdu.buf.begin(), pdu.buf.end(), "RX PDU. pdu_len={}", pdu_len);
 
     // DL message
-    if (config.li == gtpu_logical_interface::f1u_du) {
+    if (config.lif == gtpu_logical_interface::f1u_du) {
       if (not have_nr_ran_container) {
         logger.log_warning("Dropping DL message without NR RAN container. pdu_len={}", pdu_len);
         return;
@@ -80,7 +80,7 @@ protected:
     }
 
     // UL message
-    if (config.li == gtpu_logical_interface::f1u_cu_up) {
+    if (config.lif == gtpu_logical_interface::f1u_cu_up) {
       nru_ul_message ul_message = {};
 
       // Get DDDS, if exists.

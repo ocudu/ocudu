@@ -20,7 +20,7 @@ constexpr unsigned GTPU_PORT = 2152;
 /// \brief Configurable parameters for GTP-U PSUP tunnels
 struct gtpu_tunnel_psup_config {
   struct gtpu_tunnel_psup_rx_config {
-    gtpu_logical_interface    li = gtpu_logical_interface::invalid;
+    gtpu_logical_interface    lif = gtpu_logical_interface::invalid;
     gtpu_teid_t               local_teid;
     std::chrono::milliseconds t_reordering    = {};
     token_bucket*             ue_ambr_limiter = nullptr;
@@ -29,7 +29,7 @@ struct gtpu_tunnel_psup_config {
     bool                      test_mode       = false;
   } rx;
   struct gtpu_tunnel_psup_tx_config {
-    gtpu_logical_interface li = gtpu_logical_interface::invalid;
+    gtpu_logical_interface lif = gtpu_logical_interface::invalid;
     gtpu_teid_t            peer_teid;
     std::string            peer_addr;
     uint16_t               peer_port;
@@ -39,11 +39,11 @@ struct gtpu_tunnel_psup_config {
 /// \brief Configurable parameters for GTP-U NR-U tunnels
 struct gtpu_tunnel_nru_config {
   struct gtpu_tunnel_nru_rx_config {
-    gtpu_logical_interface li = gtpu_logical_interface::invalid;
+    gtpu_logical_interface lif = gtpu_logical_interface::invalid;
     gtpu_teid_t            local_teid;
   } rx;
   struct gtpu_tunnel_nru_tx_config {
-    gtpu_logical_interface li = gtpu_logical_interface::invalid;
+    gtpu_logical_interface lif = gtpu_logical_interface::invalid;
     gtpu_teid_t            peer_teid;
     std::string            peer_addr;
     uint16_t               peer_port;
@@ -70,8 +70,8 @@ struct formatter<ocudu::gtpu_tunnel_psup_config::gtpu_tunnel_psup_rx_config> {
   auto format(const ocudu::gtpu_tunnel_psup_config::gtpu_tunnel_psup_rx_config& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
-                     "li={} local_teid={} t_reordering={} warn_on_drop={} ignore_ue_ambr={}",
-                     cfg.li,
+                     "lif={} local_teid={} t_reordering={} warn_on_drop={} ignore_ue_ambr={}",
+                     cfg.lif,
                      cfg.local_teid,
                      cfg.t_reordering,
                      cfg.warn_on_drop,
@@ -91,8 +91,12 @@ struct formatter<ocudu::gtpu_tunnel_psup_config::gtpu_tunnel_psup_tx_config> {
   template <typename FormatContext>
   auto format(const ocudu::gtpu_tunnel_psup_config::gtpu_tunnel_psup_tx_config& cfg, FormatContext& ctx) const
   {
-    return format_to(
-        ctx.out(), "li={} peer_teid={} peer_addr={} peer_port={}", cfg.li, cfg.peer_teid, cfg.peer_addr, cfg.peer_port);
+    return format_to(ctx.out(),
+                     "lif={} peer_teid={} peer_addr={} peer_port={}",
+                     cfg.lif,
+                     cfg.peer_teid,
+                     cfg.peer_addr,
+                     cfg.peer_port);
   }
 };
 
@@ -124,7 +128,7 @@ struct formatter<ocudu::gtpu_tunnel_nru_config::gtpu_tunnel_nru_rx_config> {
   template <typename FormatContext>
   auto format(const ocudu::gtpu_tunnel_nru_config::gtpu_tunnel_nru_rx_config& cfg, FormatContext& ctx) const
   {
-    return format_to(ctx.out(), "li={} local_teid={}", cfg.li, cfg.local_teid);
+    return format_to(ctx.out(), "lif={} local_teid={}", cfg.lif, cfg.local_teid);
   }
 };
 
@@ -140,8 +144,12 @@ struct formatter<ocudu::gtpu_tunnel_nru_config::gtpu_tunnel_nru_tx_config> {
   template <typename FormatContext>
   auto format(const ocudu::gtpu_tunnel_nru_config::gtpu_tunnel_nru_tx_config& cfg, FormatContext& ctx) const
   {
-    return format_to(
-        ctx.out(), "li={} peer_teid={} peer_addr={} peer_port={}", cfg.li, cfg.peer_teid, cfg.peer_addr, cfg.peer_port);
+    return format_to(ctx.out(),
+                     "lif={} peer_teid={} peer_addr={} peer_port={}",
+                     cfg.lif,
+                     cfg.peer_teid,
+                     cfg.peer_addr,
+                     cfg.peer_port);
   }
 };
 

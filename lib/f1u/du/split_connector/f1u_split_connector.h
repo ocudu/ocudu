@@ -111,9 +111,9 @@ public:
 
     gtpu_tunnel_nru_creation_message msg{};
     // msg.ue_index                            = 0; TODO
-    msg.cfg.rx.li         = gtpu_logical_interface::f1u_du;
+    msg.cfg.rx.lif        = gtpu_logical_interface::f1u_du;
     msg.cfg.rx.local_teid = dl_tnl_info.gtp_teid;
-    msg.cfg.tx.li         = gtpu_logical_interface::f1u_du;
+    msg.cfg.tx.lif        = gtpu_logical_interface::f1u_du;
     msg.cfg.tx.peer_teid  = ul_tnl_info.gtp_teid;
     msg.cfg.tx.peer_addr  = ul_tnl_info.tp_address.to_string();
     msg.cfg.tx.peer_port  = peer_port;
