@@ -19,7 +19,7 @@ struct mac_dl_buffer_state_indication_message {
   unsigned bs;
   /// \brief Time-of-arrival of the oldest PDU in the RLC entity Tx buffer. This metric is relevant for delay
   /// prioritization in the scheduler.
-  std::optional<std::chrono::system_clock::time_point> hol_toa;
+  std::optional<std::chrono::steady_clock::time_point> hol_toa;
 };
 
 class mac_ue_control_information_handler
