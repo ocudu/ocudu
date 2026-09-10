@@ -41,9 +41,9 @@ public:
     {
       resource_usage_utils::scoped_resource_usage rusage_tracker(cpu_measurements);
       // Prepare base and save the base buffer.
-      auto tp_before = std::chrono::high_resolution_clock::now();
+      auto tp_before = std::chrono::steady_clock::now();
       base_buffer    = &base->demultiplex(sch_data, harq_ack, csi_part1, config);
-      auto tp_after  = std::chrono::high_resolution_clock::now();
+      auto tp_after  = std::chrono::steady_clock::now();
 
       // Save the initial elapsed time.
       elapsed_init = tp_after - tp_before;
@@ -72,9 +72,9 @@ private:
     {
       resource_usage_utils::scoped_resource_usage rusage_tracker(cpu_measurements);
 
-      auto tp_before = std::chrono::high_resolution_clock::now();
+      auto tp_before = std::chrono::steady_clock::now();
       base_buffer->on_new_block(data, scrambling_seq);
-      auto tp_after = std::chrono::high_resolution_clock::now();
+      auto tp_after = std::chrono::steady_clock::now();
 
       // Accumulate elapsed time and number of bits.
       elapsed_on_new_block += tp_after - tp_before;
@@ -93,9 +93,9 @@ private:
     {
       resource_usage_utils::scoped_resource_usage rusage_tracker(cpu_measurements);
 
-      auto tp_before = std::chrono::high_resolution_clock::now();
+      auto tp_before = std::chrono::steady_clock::now();
       base_buffer->on_end_codeword();
-      auto tp_after = std::chrono::high_resolution_clock::now();
+      auto tp_after = std::chrono::steady_clock::now();
 
       elapsed_on_end_codeword = tp_after - tp_before;
     }

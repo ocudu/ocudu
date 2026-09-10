@@ -25,7 +25,7 @@ public:
     n_pdus++;
 
     static bool first = true;
-    auto        t_now = std::chrono::high_resolution_clock::now();
+    auto        t_now = std::chrono::steady_clock::now();
     if (!first) {
       auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t_now - t_last);
       if (duration < t_min) {
@@ -45,7 +45,7 @@ public:
 
     t_last = t_now;
     if (n_pdus == max_pdus) {
-      t_end = std::chrono::high_resolution_clock::now();
+      t_end = std::chrono::steady_clock::now();
     }
   }
 
@@ -70,13 +70,13 @@ private:
   uint64_t n_pdus   = 0;
   uint64_t max_pdus;
 
-  std::chrono::high_resolution_clock::time_point t_last = std::chrono::high_resolution_clock::now();
-  std::chrono::microseconds                      t_min  = std::chrono::microseconds::max();
-  std::chrono::microseconds                      t_max  = std::chrono::microseconds::min();
-  std::chrono::microseconds                      t_sum  = std::chrono::microseconds::zero();
+  std::chrono::steady_clock::time_point t_last = std::chrono::steady_clock::now();
+  std::chrono::microseconds             t_min  = std::chrono::microseconds::max();
+  std::chrono::microseconds             t_max  = std::chrono::microseconds::min();
+  std::chrono::microseconds             t_sum  = std::chrono::microseconds::zero();
 
-  std::chrono::high_resolution_clock::time_point t_start;
-  std::chrono::high_resolution_clock::time_point t_end;
+  std::chrono::steady_clock::time_point t_start;
+  std::chrono::steady_clock::time_point t_end;
 };
 
 inline byte_buffer make_tx_byte_buffer(uint32_t length)

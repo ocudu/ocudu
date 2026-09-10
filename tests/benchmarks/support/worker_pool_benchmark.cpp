@@ -110,12 +110,12 @@ public:
   void reset_counters()
   {
     task_counter.store(0, std::memory_order_relaxed);
-    start_time = std::chrono::high_resolution_clock::now();
+    start_time = std::chrono::steady_clock::now();
   }
 
   void stop()
   {
-    auto stop_time     = std::chrono::high_resolution_clock::now();
+    auto stop_time     = std::chrono::steady_clock::now();
     result.task_count  = task_counter.load(std::memory_order_relaxed);
     result.duration    = std::chrono::duration_cast<std::chrono::microseconds>(stop_time - start_time);
     result.description = description;
@@ -147,8 +147,8 @@ private:
   void run_task()
   {
     if (running.load(std::memory_order_relaxed)) {
-      auto task_start = std::chrono::high_resolution_clock::now();
-      while (std::chrono::high_resolution_clock::now() - task_start < task_dur) {
+      auto task_start = std::chrono::steady_clock::now();
+      while (std::chrono::steady_clock::now() - task_start < task_dur) {
         // Simulate some work.
         do_not_optimize(running.load(std::memory_order_relaxed));
       }
@@ -173,9 +173,9 @@ private:
   std::string                     description;
   const std::chrono::microseconds task_dur;
 
-  std::atomic<bool>                              running{true};
-  std::chrono::high_resolution_clock::time_point start_time;
-  std::atomic<uint64_t>                          task_counter{0};
+  std::atomic<bool>                     running{true};
+  std::chrono::steady_clock::time_point start_time;
+  std::atomic<uint64_t>                 task_counter{0};
 
   benchmark_result result;
 };

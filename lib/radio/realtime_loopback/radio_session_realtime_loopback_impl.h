@@ -156,8 +156,8 @@ private:
   /// chains.
   unique_function<baseband_gateway_timestamp()> get_current_rf_timestamp_realtime_clock = [this]() {
     // Get the time since the epoch.
-    auto time_since_epoch = std::chrono::duration_cast<std::chrono::nanoseconds>(
-        std::chrono::high_resolution_clock::now().time_since_epoch());
+    auto time_since_epoch =
+        std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch());
 
     return (time_since_epoch.count() - ts0_epoch.count()) * sampling_rate_hz / 1000000000U;
   };

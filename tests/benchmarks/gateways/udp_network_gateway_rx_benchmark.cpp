@@ -97,12 +97,12 @@ int main(int argc, char** argv)
   }
 
   // Wait for all packets to be received
-  auto t_start = std::chrono::high_resolution_clock::now();
+  auto t_start = std::chrono::steady_clock::now();
   while (gw_dn.get_n_pdus() < params.nof_pdus) {
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
 
-  auto t_end    = std::chrono::high_resolution_clock::now();
+  auto t_end    = std::chrono::steady_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
   fmt::print("Rx done\n\n");
 

@@ -677,7 +677,7 @@ private:
     static constexpr std::chrono::microseconds sleep_margin = 5us;
 
     for (unsigned test_slot_id = 0; test_slot_id != nof_test_slots; ++test_slot_id) {
-      auto t0 = std::chrono::high_resolution_clock::now();
+      auto t0 = std::chrono::steady_clock::now();
 
       slot_point slot(to_numerology_value(test_params.scs), slot_val);
       unsigned   slot_id    = slot.slot_index() % tdd_pattern.dl_ul_tx_period_nof_slots;
@@ -727,7 +727,7 @@ private:
       }
 
       // Sleep until the end of the slot.
-      auto t1                 = std::chrono::high_resolution_clock::now();
+      auto t1                 = std::chrono::steady_clock::now();
       auto slot_sim_exec_time = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
       if (slot_sim_exec_time < slot_duration_us) {
         std::this_thread::sleep_for(slot_duration_us - slot_sim_exec_time - sleep_margin);

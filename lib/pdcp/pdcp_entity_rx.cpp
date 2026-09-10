@@ -382,7 +382,7 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu, std::chrono::steady_clock:
 
 void pdcp_entity_rx::apply_security(pdcp_rx_pdu_info&& pdu_info)
 {
-  auto     pre        = std::chrono::high_resolution_clock::now();
+  auto     pre        = std::chrono::steady_clock::now();
   uint32_t rcvd_count = pdu_info.count;
 
   // Apply deciphering and integrity check
@@ -436,7 +436,7 @@ void pdcp_entity_rx::apply_security(pdcp_rx_pdu_info&& pdu_info)
   unsigned hdr_size = cfg.sn_size == pdcp_sn_size::size12bits ? 2 : 3;
   pdu_info.buf.trim_head(hdr_size);
 
-  auto post           = std::chrono::high_resolution_clock::now();
+  auto post           = std::chrono::steady_clock::now();
   auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(post - pre);
   metrics.add_crypto_processing_latency(sdu_latency_ns.count());
 

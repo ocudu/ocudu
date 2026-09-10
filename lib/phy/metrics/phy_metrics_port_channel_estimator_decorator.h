@@ -27,9 +27,9 @@ public:
                                                 const dmrs_symbol_list&     pilots,
                                                 const configuration&        cfg) override
   {
-    auto                                  tp_before  = std::chrono::high_resolution_clock::now();
+    auto                                  tp_before  = std::chrono::steady_clock::now();
     const port_channel_estimator_results& ch_results = base->compute(grid, port, pilots, cfg);
-    auto                                  tp_after   = std::chrono::high_resolution_clock::now();
+    auto                                  tp_after   = std::chrono::steady_clock::now();
 
     notifier.on_new_metric({.elapsed = tp_after - tp_before});
     return ch_results;

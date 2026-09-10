@@ -30,7 +30,7 @@ public:
   explicit time_execution_measurer(bool is_enabled_) : is_enabled(is_enabled_)
   {
     if (is_enabled) {
-      start_tp = std::chrono::high_resolution_clock::now();
+      start_tp = std::chrono::steady_clock::now();
     }
   }
 
@@ -38,7 +38,7 @@ public:
   std::chrono::nanoseconds stop()
   {
     if (is_enabled) {
-      auto stop_tp = std::chrono::high_resolution_clock::now();
+      auto stop_tp = std::chrono::steady_clock::now();
       return std::chrono::duration_cast<std::chrono::nanoseconds>(stop_tp - start_tp);
     }
 
@@ -50,7 +50,7 @@ private:
   const bool is_enabled;
 
   /// Time point marking the start of a new measurement.
-  std::chrono::high_resolution_clock::time_point start_tp = {};
+  std::chrono::steady_clock::time_point start_tp = {};
 };
 
 } // namespace ofh

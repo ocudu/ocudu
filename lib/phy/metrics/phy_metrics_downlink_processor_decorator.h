@@ -32,14 +32,13 @@ public:
     void on_configure_grid(slot_point slot_)
     {
       slot = slot_;
-      time_configure.store(std::chrono::high_resolution_clock::now().time_since_epoch().count(),
-                           std::memory_order_relaxed);
+      time_configure.store(std::chrono::steady_clock::now().time_since_epoch().count(), std::memory_order_relaxed);
     }
 
     /// Notifies the call to finish PDU.
     void on_finish_processing_pdus()
     {
-      time_finish_processing_pdu.store(std::chrono::high_resolution_clock::now().time_since_epoch().count(),
+      time_finish_processing_pdu.store(std::chrono::steady_clock::now().time_since_epoch().count(),
                                        std::memory_order_relaxed);
     }
 
@@ -51,16 +50,15 @@ public:
     void send(const resource_grid_context& context, shared_resource_grid grid) override
     {
       // Get current time point.
-      auto end_tp = std::chrono::high_resolution_clock::now();
+      auto end_tp = std::chrono::steady_clock::now();
 
       // Recover slot configure time point.
-      std::chrono::high_resolution_clock::time_point configure_tp = std::chrono::high_resolution_clock::time_point(
+      std::chrono::steady_clock::time_point configure_tp = std::chrono::steady_clock::time_point(
           std::chrono::steady_clock::duration(time_configure.load(std::memory_order_relaxed)));
 
       // Recover finish processing PDU time point
-      std::chrono::high_resolution_clock::time_point finish_processing_pdu_tp =
-          std::chrono::high_resolution_clock::time_point(
-              std::chrono::steady_clock::duration(time_finish_processing_pdu.load(std::memory_order_relaxed)));
+      std::chrono::steady_clock::time_point finish_processing_pdu_tp = std::chrono::steady_clock::time_point(
+          std::chrono::steady_clock::duration(time_finish_processing_pdu.load(std::memory_order_relaxed)));
 
       // Notify metrics.
       notifier.on_new_metric({.slot              = slot,

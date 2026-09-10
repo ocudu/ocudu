@@ -181,26 +181,26 @@ private:
     return timestamp - start_time_sfn0;
   }
 
-  sampling_rate                                                              srate;
-  uint64_t                                                                   nof_samples_in_all_hyper_frames;
-  unsigned                                                                   rx_buffer_size;
-  std::chrono::microseconds                                                  slot_duration;
-  float                                                                      system_time_throttling_ratio;
-  task_executor&                                                             rx_executor;
-  task_executor&                                                             tx_executor;
-  task_executor&                                                             uplink_executor;
-  baseband_gateway_receiver&                                                 receiver;
-  baseband_gateway_transmitter&                                              transmitter;
-  uplink_processor_baseband&                                                 uplink_processor;
-  downlink_processor_baseband&                                               downlink_processor;
-  blocking_queue<std::unique_ptr<baseband_gateway_buffer_dynamic>>           rx_buffers;
-  baseband_gateway_timestamp                                                 tx_time_offset;
-  baseband_gateway_timestamp                                                 rx_to_tx_max_delay;
-  baseband_gateway_timestamp                                                 start_time_sfn0;
-  internal_fsm                                                               tx_state;
-  internal_fsm                                                               rx_state;
-  std::atomic<baseband_gateway_timestamp>                                    last_rx_timestamp;
-  std::optional<std::chrono::time_point<std::chrono::high_resolution_clock>> last_tx_time;
-  unsigned                                                                   last_tx_buffer_size = 0;
+  sampling_rate                                                     srate;
+  uint64_t                                                          nof_samples_in_all_hyper_frames;
+  unsigned                                                          rx_buffer_size;
+  std::chrono::microseconds                                         slot_duration;
+  float                                                             system_time_throttling_ratio;
+  task_executor&                                                    rx_executor;
+  task_executor&                                                    tx_executor;
+  task_executor&                                                    uplink_executor;
+  baseband_gateway_receiver&                                        receiver;
+  baseband_gateway_transmitter&                                     transmitter;
+  uplink_processor_baseband&                                        uplink_processor;
+  downlink_processor_baseband&                                      downlink_processor;
+  blocking_queue<std::unique_ptr<baseband_gateway_buffer_dynamic>>  rx_buffers;
+  baseband_gateway_timestamp                                        tx_time_offset;
+  baseband_gateway_timestamp                                        rx_to_tx_max_delay;
+  baseband_gateway_timestamp                                        start_time_sfn0;
+  internal_fsm                                                      tx_state;
+  internal_fsm                                                      rx_state;
+  std::atomic<baseband_gateway_timestamp>                           last_rx_timestamp;
+  std::optional<std::chrono::time_point<std::chrono::steady_clock>> last_tx_time;
+  unsigned                                                          last_tx_buffer_size = 0;
 };
 } // namespace ocudu

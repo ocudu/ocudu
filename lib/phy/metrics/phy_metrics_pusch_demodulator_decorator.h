@@ -62,9 +62,9 @@ private:
   {
     ocudu_assert(base_buffer != nullptr, "Invalid base buffer.");
 
-    auto tp_before = std::chrono::high_resolution_clock::now();
+    auto tp_before = std::chrono::steady_clock::now();
     base_buffer->on_new_block(data, scrambling_seq);
-    auto tp_after = std::chrono::high_resolution_clock::now();
+    auto tp_after = std::chrono::steady_clock::now();
 
     // Accumulate elapsed time.
     elapsed_on_new_block += tp_after - tp_before;
@@ -75,9 +75,9 @@ private:
   {
     ocudu_assert(base_buffer != nullptr, "Invalid base buffer.");
 
-    auto tp_before = std::chrono::high_resolution_clock::now();
+    auto tp_before = std::chrono::steady_clock::now();
     base_buffer->on_end_codeword();
-    auto tp_after = std::chrono::high_resolution_clock::now();
+    auto tp_after = std::chrono::steady_clock::now();
 
     elapsed_on_end_codeword = tp_after - tp_before;
   }

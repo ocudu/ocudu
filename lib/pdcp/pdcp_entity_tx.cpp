@@ -720,7 +720,7 @@ void pdcp_entity_tx::apply_security(pdcp_tx_buffer_info buf_info)
 
 {
   OCUDU_ZONE_SCOPED_NC("pdcp_tx::apply_security", tracy::Color::LightSeaGreen);
-  auto     pre      = std::chrono::high_resolution_clock::now();
+  auto     pre      = std::chrono::steady_clock::now();
   uint32_t tx_count = buf_info.count;
 
   // Apply deciphering and integrity check
@@ -766,7 +766,7 @@ void pdcp_entity_tx::apply_security(pdcp_tx_buffer_info buf_info)
                                .buf     = std::move(buf_info.buf),
                                .token   = std::move(buf_info.token)};
 
-  auto post           = std::chrono::high_resolution_clock::now();
+  auto post           = std::chrono::steady_clock::now();
   auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(post - pre);
   metrics.add_crypto_processing_latency(sdu_latency_ns.count());
 

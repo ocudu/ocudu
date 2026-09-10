@@ -266,9 +266,9 @@ public:
     result.measurements.reserve(nof_repetitions);
 
     for (uint64_t rep = 0; rep != nof_repetitions; ++rep) {
-      auto start = std::chrono::high_resolution_clock::now();
+      auto start = std::chrono::steady_clock::now();
       function();
-      auto end = std::chrono::high_resolution_clock::now();
+      auto end = std::chrono::steady_clock::now();
       result.measurements.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count());
       post_func();
     }
@@ -294,9 +294,9 @@ public:
 
     for (uint64_t rep = 0; rep != nof_repetitions; ++rep) {
       context_function();
-      auto start = std::chrono::high_resolution_clock::now();
+      auto start = std::chrono::steady_clock::now();
       function();
-      auto end = std::chrono::high_resolution_clock::now();
+      auto end = std::chrono::steady_clock::now();
       result.measurements.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count());
     }
 

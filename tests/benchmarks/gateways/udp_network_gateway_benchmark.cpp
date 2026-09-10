@@ -118,12 +118,12 @@ int main(int argc, char** argv)
 
   byte_buffer pdu = make_tx_byte_buffer(params.pdu_len);
 
-  auto t_start = std::chrono::high_resolution_clock::now();
+  auto t_start = std::chrono::steady_clock::now();
 
   for (unsigned n = 0; n < params.nof_pdus; n++) {
     gw1->handle_pdu(pdu.copy(), gw2_addr);
   }
-  auto t_end    = std::chrono::high_resolution_clock::now();
+  auto t_end    = std::chrono::steady_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
   fmt::print("Tx done\n\n");
 

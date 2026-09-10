@@ -169,7 +169,7 @@ private:
   /// UL-SCH demultiplexer metrics aggregator.
   ulsch_demultiplex_metrics_aggregator ulsch_demultiplex_aggregator;
   /// Save the time when the metrics where collected last time.
-  std::chrono::high_resolution_clock::time_point last_timestamp = {};
+  std::chrono::steady_clock::time_point last_timestamp = {};
 };
 
 } // namespace ocudu

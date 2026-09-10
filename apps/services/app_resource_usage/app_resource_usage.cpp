@@ -91,7 +91,7 @@ void app_resource_usage::update_power_consumption_metric(resource_usage_metrics&
 energy_snapshot app_resource_usage::energy_usage_now()
 {
   energy_snapshot current_snapshot;
-  current_snapshot.probe_time = std::chrono::high_resolution_clock::now();
+  current_snapshot.probe_time = std::chrono::steady_clock::now();
   current_snapshot.probe      = energy_reader->read_consumed_energy();
 
   return current_snapshot;

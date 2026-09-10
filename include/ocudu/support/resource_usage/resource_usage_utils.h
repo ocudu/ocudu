@@ -11,7 +11,7 @@
 namespace ocudu {
 namespace resource_usage_utils {
 
-using rusage_meas_clock      = std::chrono::high_resolution_clock;
+using rusage_meas_clock      = std::chrono::steady_clock;
 using rusage_meas_time_point = rusage_meas_clock::time_point;
 using rusage_meas_duration   = std::chrono::nanoseconds;
 

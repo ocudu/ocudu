@@ -14,7 +14,7 @@ metrics_collector_impl::metrics_collector_impl(receiver_metrics_collector*    rx
   sector_id(sector_id_),
   rx_metrics_collector(rx_metrics_collector_),
   tx_metrics_collector(tx_metrics_collector_),
-  last_timestamp(std::chrono::high_resolution_clock::now())
+  last_timestamp(std::chrono::steady_clock::now())
 {
   is_enabled = (rx_metrics_collector && tx_metrics_collector);
 }
@@ -25,7 +25,7 @@ void metrics_collector_impl::collect_metrics(sector_metrics& metric)
     return;
   }
 
-  auto tp_now      = std::chrono::high_resolution_clock::now();
+  auto tp_now      = std::chrono::steady_clock::now();
   metric.sector_id = sector_id;
 
   // Collect receiver metrics.

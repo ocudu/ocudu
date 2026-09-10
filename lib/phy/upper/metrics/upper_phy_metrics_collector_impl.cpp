@@ -8,8 +8,8 @@ using namespace ocudu;
 
 void upper_phy_metrics_collector_impl::collect_metrics(upper_phy_metrics& metrics)
 {
-  if (last_timestamp == std::chrono::time_point<std::chrono::high_resolution_clock>()) {
-    last_timestamp         = std::chrono::high_resolution_clock::now();
+  if (last_timestamp == std::chrono::time_point<std::chrono::steady_clock>()) {
+    last_timestamp         = std::chrono::steady_clock::now();
     metrics.metrics_period = {};
     return;
   }
@@ -26,7 +26,7 @@ void upper_phy_metrics_collector_impl::collect_metrics(upper_phy_metrics& metric
   // Collect downlink processing metrics.
   dl_processor_collector.collect_metrics(metrics.dl_processor_metrics);
 
-  auto tp_now            = std::chrono::high_resolution_clock::now();
+  auto tp_now            = std::chrono::steady_clock::now();
   metrics.metrics_period = std::chrono::duration_cast<std::chrono::microseconds>(tp_now - last_timestamp);
   last_timestamp         = tp_now;
 }

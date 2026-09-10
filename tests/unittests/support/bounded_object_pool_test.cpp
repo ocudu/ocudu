@@ -77,7 +77,7 @@ TYPED_TEST(common_bounded_object_pool_test, stress_pool)
   std::vector<std::chrono::nanoseconds> latencies(nof_workers);
   for (unsigned i = 0; i != nof_workers; ++i) {
     worker_pool.push_task_blocking([&, worker_id = i]() {
-      auto                                 start_tp = std::chrono::high_resolution_clock::now();
+      auto                                 start_tp = std::chrono::steady_clock::now();
       std::vector<typename TypeParam::ptr> allocated_objs;
       allocated_objs.reserve(nof_operations);
       for (unsigned j = 0; j != nof_operations; ++j) {
@@ -94,7 +94,7 @@ TYPED_TEST(common_bounded_object_pool_test, stress_pool)
           }
         }
       }
-      auto end_tp          = std::chrono::high_resolution_clock::now();
+      auto end_tp          = std::chrono::steady_clock::now();
       latencies[worker_id] = std::chrono::duration_cast<std::chrono::nanoseconds>(end_tp - start_tp);
     });
   }

@@ -94,7 +94,7 @@ void cell_scheduler::run_slot(slot_point_extended sl_tx_ext)
 {
   // Mark the start of the slot.
   slot_point sl_tx         = sl_tx_ext.without_hyper_sfn();
-  auto       slot_start_tp = std::chrono::high_resolution_clock::now();
+  auto       slot_start_tp = std::chrono::steady_clock::now();
 
   // If there are skipped slots, handle them. Otherwise, the cell grid and cached results are not correctly cleared.
   if (OCUDU_LIKELY(res_grid.slot_tx().valid())) {
@@ -151,7 +151,7 @@ void cell_scheduler::run_slot(slot_point_extended sl_tx_ext)
   uci_sel.handle_result(sl_tx, last_result());
 
   // > Mark stop of the slot processing
-  auto slot_stop_tp = std::chrono::high_resolution_clock::now();
+  auto slot_stop_tp = std::chrono::steady_clock::now();
   auto slot_dur     = std::chrono::duration_cast<std::chrono::microseconds>(slot_stop_tp - slot_start_tp);
 
   // > Log processed events.

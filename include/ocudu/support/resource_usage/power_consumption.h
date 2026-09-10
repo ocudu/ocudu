@@ -8,7 +8,7 @@
 namespace ocudu {
 namespace resource_usage_utils {
 
-using energy_probe_time_point = std::chrono::high_resolution_clock::time_point;
+using energy_probe_time_point = std::chrono::steady_clock::time_point;
 
 /// Energy consumption expressed in micro Joules.
 struct energy_consumption {

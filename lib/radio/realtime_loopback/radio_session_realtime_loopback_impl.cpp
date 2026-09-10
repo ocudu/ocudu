@@ -26,8 +26,7 @@ radio_session_realtime_loopback_impl::radio_session_realtime_loopback_impl(
     radio_event_notifier&                                notification_handler,
     const unique_function<baseband_gateway_timestamp()>& current_rf_timestamp_fn) :
   logger(ocudulog::fetch_basic_logger("RF")),
-  ts0_epoch(std::chrono::duration_cast<std::chrono::nanoseconds>(
-      std::chrono::high_resolution_clock::now().time_since_epoch())),
+  ts0_epoch(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch())),
   sampling_rate_hz(config.sampling_rate_Hz),
   next_receive_timestamp(0),
   next_transmit_timestamp(0),
