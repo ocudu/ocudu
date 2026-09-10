@@ -76,7 +76,7 @@ private:
 /// Builds a basic log entry.
 static detail::log_entry build_log_entry(sink* s, fmt::dynamic_format_arg_store<fmt::format_context>* store)
 {
-  using tp_ty = std::chrono::time_point<std::chrono::high_resolution_clock>;
+  using tp_ty = std::chrono::time_point<std::chrono::system_clock>;
   tp_ty tp;
 
   if (store) {
