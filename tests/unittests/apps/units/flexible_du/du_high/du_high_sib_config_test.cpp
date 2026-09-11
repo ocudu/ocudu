@@ -15,6 +15,11 @@ using namespace ocudu;
 
 namespace {
 
+using sib2_config = du_high_unit_sib_config::sib2_config;
+using sib3_config = du_high_unit_sib_config::sib3_config;
+using etws_config = du_high_unit_sib_config::etws_config;
+using cmas_config = du_high_unit_sib_config::cmas_config;
+
 /// \brief Single-cell configuration, with the parameters a parsed one has auto-derived.
 ///
 /// It goes through the CLI11 schema, as the application does, so that the defaults under test are the real ones.
@@ -75,7 +80,7 @@ std::vector<sib_type> warning_sibs_of(const si_scheduling_info_config& si_config
 TEST(du_high_sib_config_test, etws_block_alone_provisions_the_cell_for_a_warning)
 {
   du_high_config_bench bench;
-  bench.sib_cfg().etws_cfg.emplace();
+  bench.sib_cfg().etws_cfg               = etws_config{};
   bench.sib_cfg().etws_cfg->si_period_rf = 128;
 
   const si_scheduling_info_config si_config = si_config_of(bench.derived_config());
@@ -92,10 +97,10 @@ TEST(du_high_sib_config_test, etws_block_alone_provisions_the_cell_for_a_warning
 TEST(du_high_sib_config_test, etws_test_content_is_created_without_any_sib_mapping)
 {
   du_high_config_bench bench;
-  bench.sib_cfg().etws_cfg.emplace();
-  bench.sib_cfg().etws_cfg->test.emplace();
-  bench.sib_cfg().cmas_cfg.emplace();
-  bench.sib_cfg().cmas_cfg->test.emplace();
+  bench.sib_cfg().etws_cfg       = etws_config{};
+  bench.sib_cfg().etws_cfg->test = etws_config::test_config{};
+  bench.sib_cfg().cmas_cfg       = cmas_config{};
+  bench.sib_cfg().cmas_cfg->test = cmas_config::test_config{};
 
   const si_scheduling_info_config si_config = si_config_of(bench.derived_config());
 
@@ -130,15 +135,16 @@ TEST(du_high_sib_config_test, si_window_budget_reserves_room_for_the_warnings)
   bench.sib_cfg().si_sched_info[0].si_period_rf     = 32;
   bench.sib_cfg().si_sched_info[1].sib_mapping_info = {3};
   bench.sib_cfg().si_sched_info[1].si_period_rf     = 32;
-  bench.sib_cfg().sib2_cfg.emplace();
-  bench.sib_cfg().sib3_cfg.emplace();
+
+  bench.sib_cfg().sib2_cfg = sib2_config{};
+  bench.sib_cfg().sib3_cfg = sib3_config{};
   ASSERT_TRUE(validate_du_high_config(bench.derived_config()));
 
   // The warnings need an SI window of their own each, even while none of them is on air, so that the SI messages of
   // the normal operation keep theirs as warnings come and go.
-  bench.sib_cfg().etws_cfg.emplace();
+  bench.sib_cfg().etws_cfg               = etws_config{};
   bench.sib_cfg().etws_cfg->si_period_rf = 32;
-  bench.sib_cfg().cmas_cfg.emplace();
+  bench.sib_cfg().cmas_cfg               = cmas_config{};
   bench.sib_cfg().cmas_cfg->si_period_rf = 32;
   EXPECT_FALSE(validate_du_high_config(bench.derived_config()));
 }
@@ -216,12 +222,12 @@ cells:
   ASSERT_TRUE(first.has_value() and second.has_value());
 
   EXPECT_EQ(first->si_period_rf, 32);
-  EXPECT_EQ(second->si_period_rf, du_high_unit_sib_config::etws_config{}.si_period_rf)
+  EXPECT_EQ(second->si_period_rf, etws_config{}.si_period_rf)
       << "The second cell must keep the default SI period, not the one the first cell set";
 
   ASSERT_TRUE(first->test.has_value() and second->test.has_value());
-  EXPECT_EQ(second->test->message_id, du_high_unit_sib_config::etws_config::test_config{}.message_id)
+  EXPECT_EQ(second->test->message_id, etws_config::test_config{}.message_id)
       << "The second cell must keep the default message ID, not the one the first cell set";
-  EXPECT_EQ(second->test->warning_message, du_high_unit_sib_config::etws_config::test_config{}.warning_message)
+  EXPECT_EQ(second->test->warning_message, etws_config::test_config{}.warning_message)
       << "The second cell must keep the default warning message, not the one the first cell set";
 }
