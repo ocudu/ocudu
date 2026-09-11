@@ -425,3 +425,24 @@ TEST(cu_cp_area_of_interest_test, ue_is_outside_an_area_naming_an_unrelated_cell
 {
   EXPECT_EQ(presence_in_area_of(0x66c0fe, make_uli(0x66c000, 0x66c0ff)), ue_presence::out);
 }
+
+TEST(cu_cp_location_change_test, a_changed_mapped_cell_id_is_reported_without_a_change_of_cell)
+{
+  // TS 38.300 sec. 16.14.5 NOTE 2 lets areas of different Mapped Cell IDs differ from the tracking areas, so a UE can
+  // cross into an area naming another Mapped Cell ID while the serving cell and the derived TAC stay the same. The
+  // identity reported to the core changed, so the report must be sent.
+  const std::optional<location_report> report =
+      report_after(make_uli(0x66c000, 0x66c0ff), make_uli(0x66c000, 0x66c0fe));
+  ASSERT_TRUE(report.has_value());
+  ASSERT_TRUE(report->user_location_info.mapped_nci.has_value());
+  EXPECT_EQ(report->user_location_info.mapped_nci->value(), 0x66c0fe);
+}
+
+TEST(cu_cp_location_change_test, a_mapped_cell_id_that_appears_is_reported_without_a_change_of_cell)
+{
+  // The UE reported no position at first, so the core knew the cell by its Uu Cell ID alone.
+  const std::optional<location_report> report = report_after(make_uli(0x66c000), make_uli(0x66c000, 0x66c0ff));
+  ASSERT_TRUE(report.has_value());
+  ASSERT_TRUE(report->user_location_info.mapped_nci.has_value());
+  EXPECT_EQ(report->user_location_info.mapped_nci->value(), 0x66c0ff);
+}
