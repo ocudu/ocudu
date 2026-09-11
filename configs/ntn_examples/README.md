@@ -41,27 +41,28 @@ This will produce the required NTN configuration files (`sat.yml`, `ntn_du.yml`,
 
 ### Command-line options
 
-| Option                                | Description                                                                                                                           |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `--tle`                               | Path to the TLE file describing the satellite orbit.                                                                                  |
-| `--pass-start-time`                   | UTC pass start time (`YYYY-MM-DDTHH:MM:SS`); defaults to the current time.                                                            |
-| `--pass-start-offset`                 | Offset [seconds] added to the pass start time (default 0).                                                                            |
-| `--min-sat-elevation`                 | Minimum satellite elevation [degrees] used to find the pass (default 20).                                                             |
-| `--feeder-link-enabled`               | Enable feeder-link Doppler compensation (transparent payload). Adds `gateway_location` per satellite and `feeder_link` to the cell.   |
-| `--fl-dl-freq-hz` / `--fl-ul-freq-hz` | Feeder-link DL/UL centre frequencies [Hz].                                                                                            |
-| `--ephemeris-info-format`             | `ecef` (state vector) or `orbital` (orbital elements).                                                                                |
-| `--use-state-vector`                  | Whether the gNB broadcasts ephemeris as ECEF state vectors.                                                                           |
-| `--enable-sat-switch-with-resync`     | Add a second (target) satellite and a `sat_switch_with_resync` block for handover.                                                    |
-| `--ssb-time-offset-sf`                | SSB time offset [subframes] for the satellite switch (default 0).                                                                     |
-| `--add-example-ncells`                | Add two example neighbor cells to the DU config (`ntn_du.yml`) and the CU-CP config (`ntn_cu.yml`).                                   |
-| `--ta-report`                         | Set `ta_report` in the cell NTN config, so that UEs report their timing advance at random access, establishment, resume and handover. |
-| `--ta-report-offset-threshold`        | Add `ta_report_offset_threshold` [ms] so that UEs also report on timing advance variation (`0.5` or an integer from 1 to 15).         |
-| `--ta-report-sr-enabled`              | Set `ta_report_sr_enabled`, letting a triggered report raise an SR. Requires `--ta-report-offset-threshold`.                          |
-| `--gnb-id`                            | gNB ID of this CU-CP, used to build the internal serving `nr_cell_id` in `ntn_cu.yml` (default `411`; accepts `0x` hex).              |
-| `--gnb-id-bit-length`                 | gNB ID bit length; the NR Cell Identity is 36 bits (default `22`).                                                                    |
-| `--coarse-location`                   | Generate `coarse_location.yml`, mapping the coarse UE location to one of the TACs the cell broadcasts.                                |
-| `--coarse-location-tacs`              | TACs the cell broadcasts, in broadcast order (default `7,8,9`). Must match the TACs of `multi_tac.yml`.                               |
-| `--coarse-location-ue-tac`            | TAC of the area holding the UE (default `8`), so that the derived TAC differs from the TAI.                                           |
+| Option                                  | Description                                                                                                                                                               |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--tle`                                 | Path to the TLE file describing the satellite orbit.                                                                                                                      |
+| `--pass-start-time`                     | UTC pass start time (`YYYY-MM-DDTHH:MM:SS`); defaults to the current time.                                                                                                |
+| `--pass-start-offset`                   | Offset [seconds] added to the pass start time (default 0).                                                                                                                |
+| `--min-sat-elevation`                   | Minimum satellite elevation [degrees] used to find the pass (default 20).                                                                                                 |
+| `--feeder-link-enabled`                 | Enable feeder-link Doppler compensation (transparent payload). Adds `gateway_location` per satellite and `feeder_link` to the cell.                                       |
+| `--fl-dl-freq-hz` / `--fl-ul-freq-hz`   | Feeder-link DL/UL centre frequencies [Hz].                                                                                                                                |
+| `--ephemeris-info-format`               | `ecef` (state vector) or `orbital` (orbital elements).                                                                                                                    |
+| `--use-state-vector`                    | Whether the gNB broadcasts ephemeris as ECEF state vectors.                                                                                                               |
+| `--enable-sat-switch-with-resync`       | Add a second (target) satellite and a `sat_switch_with_resync` block for handover.                                                                                        |
+| `--ssb-time-offset-sf`                  | SSB time offset [subframes] for the satellite switch (default 0).                                                                                                         |
+| `--add-example-ncells`                  | Add two example neighbor cells to the DU config (`ntn_du.yml`) and the CU-CP config (`ntn_cu.yml`).                                                                       |
+| `--ta-report`                           | Set `ta_report` in the cell NTN config, so that UEs report their timing advance at random access, establishment, resume and handover.                                     |
+| `--ta-report-offset-threshold`          | Add `ta_report_offset_threshold` [ms] so that UEs also report on timing advance variation (`0.5` or an integer from 1 to 15).                                             |
+| `--ta-report-sr-enabled`                | Set `ta_report_sr_enabled`, letting a triggered report raise an SR. Requires `--ta-report-offset-threshold`.                                                              |
+| `--gnb-id`                              | gNB ID of this CU-CP, used to build the internal serving `nr_cell_id` in `ntn_cu.yml` (default `411`; accepts `0x` hex).                                                  |
+| `--gnb-id-bit-length`                   | gNB ID bit length; the NR Cell Identity is 36 bits (default `22`).                                                                                                        |
+| `--coarse-location`                     | Generate `coarse_location.yml`, mapping the coarse UE location to one of the TACs the cell broadcasts.                                                                    |
+| `--coarse-location-tacs`                | TACs the cell broadcasts, in broadcast order (default `7,8,9`). Must match the TACs of `multi_tac.yml`.                                                                   |
+| `--coarse-location-ue-tac`              | TAC of the area holding the UE (default `8`), so that the derived TAC differs from the TAI.                                                                               |
+| `--coarse-location-mapped-cell-id-base` | Give each coarse location area a Mapped Cell ID, counting up from this 36-bit identity (e.g. `0x66c0f0`). Omitted, every area reports the Uu Cell ID of the serving cell. |
 
 ### Generated NTN configuration format
 
@@ -282,7 +283,7 @@ sudo $GNB_PATH -c ./gnb.yml -c sat.yml -c ntn_du.yml -c ntn_cu.yml -c zmq.yml -c
 cu_cp:
   ntn_location_mapping:
     - nr_cell_id: 0x66c000
-      tac_areas: # The first area containing the position wins.
+      location_areas: # The first area containing the position wins.
         - tac: 7
           lat_min: 47.5
           lat_max: 49.5
@@ -294,6 +295,35 @@ cu_cp:
 `--coarse-location-ue-tac` defaults to `8` rather than the cell TAC `7`, so the derived TAC differs from the TAI and the
 reported value is easy to tell apart. Moving the reported position one band north or south selects a neighbouring TAC. A
 UE that reports no coarse location leaves the derived TAC absent.
+
+---
+
+### Naming the area by a Mapped Cell ID
+
+An NTN cell moves, so its own cell identity names no place. TS 38.300 sec. 16.14.5 has the gNB give the core network a
+`Mapped Cell ID` of the geographical area the UE is in, in place of the Uu Cell ID of the serving cell, in the User
+Location Information, an Area of Interest and a PWS warning area. The mapping is agreed between RAN and core.
+
+Pass `--coarse-location-mapped-cell-id-base` to give each band one, counting up in the same order:
+
+```bash
+python generate_ntn_configs.py --tle=./tle_example_leo.txt --coarse-location --coarse-location-mapped-cell-id-base=0x66c0f0
+```
+
+```yaml
+cu_cp:
+  ntn_location_mapping:
+    - nr_cell_id: 0x66c000
+      location_areas:
+        - tac: 7
+          mapped_nr_cell_id: 0x66c0f0 # Reported in place of the Uu Cell ID while the UE is in this band.
+          lat_min: 47.5
+          # ...
+```
+
+The identity is not checked against the cells this gNB serves: it names an area agreed with the core, and sec. 16.14.5
+NOTE 3 allows special values for areas outside the serving PLMN's country. An area without one, and a UE whose location
+is unknown or stale, keep reporting the Uu Cell ID.
 
 ---
 
