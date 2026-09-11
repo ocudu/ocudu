@@ -410,7 +410,6 @@ clang-tidy incremental:
   extends: clang-tidy
   rules:
     - if: $ON_MR
-      allow_failure: true
   variables:
     CCACHE_MAXSIZE: 3G
     CACHE_COMPRESSION_LEVEL: slowest
