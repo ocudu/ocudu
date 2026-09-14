@@ -21,6 +21,7 @@
 #include "ocudu/ran/ssb/ssb_mapping.h"
 #include "ocudu/ran/transform_precoding/transform_precoding_helpers.h"
 #include "ocudu/rlc/rlc_config.h"
+#include "ocudu/scheduler/rrm/ue_capability_summary.h"
 #include "ocudu/support/math/math_utils.h"
 #include <algorithm>
 #include <cmath>
@@ -2499,6 +2500,71 @@ static bool validate_qos_config(span<const du_high_unit_qos_config> config)
   return true;
 }
 
+/// Collects the UL HARQ modes the configuration asks for, over the 5QIs.
+static void collect_allowed_harq_modes(const du_high_unit_config& config, std::vector<ul_harq_mode>& modes)
+{
+  for (const auto& qos : config.qos_cfg) {
+    if (not qos.mac.allowed_harq_mode.has_value()) {
+      continue;
+    }
+    modes.push_back(*qos.mac.allowed_harq_mode == "mode_a" ? ul_harq_mode::mode_a : ul_harq_mode::mode_b);
+  }
+}
+
+/// Checks that every cell has a UL HARQ process in each mode the configuration needs: the ones the 5QIs ask for, plus
+/// mode A for the SRBs. A logical channel restricted to a mode no process carries would never be multiplexed into a
+/// grant.
+static bool validate_allowed_harq_mode_config(const du_high_unit_config& config)
+{
+  std::vector<ul_harq_mode> modes;
+  collect_allowed_harq_modes(config, modes);
+
+  for (const auto& cell : config.cells_cfg) {
+    const auto& pusch = cell.cell.pusch_cfg;
+    // A bit set in harq_mode_b identifies a process in mode B, the inverse of the uplinkHARQ-mode mask of TS 38.331.
+    const harq_ul_mode_mask mode_mask = ~pusch.harq_mode_b;
+    // A UE is given the processes of the cell capped to what it supports, so only the first ones are granted to every
+    // UE and a mode found beyond them does not serve all of them.
+    const unsigned nof_harqs = std::min(pusch.nof_harqs, ue_capability_summary::default_max_harq_process_num);
+
+    // [Implementation-defined] The scheduler always serves the SRBs on a mode A process, so at least one has to stay
+    // in mode A, even when no logical channel asks for a mode.
+    if (pusch.harq_mode_b.any() and not is_ul_harq_mode_available(mode_mask, nof_harqs, ul_harq_mode::mode_a)) {
+      fmt::print("None of the first {} UL HARQ processes of cell pci={} operates in UL HARQ mode A. A UE is given "
+                 "more only when it reports support for them, and the SRBs are served in mode A, so harq_mode_b must "
+                 "leave at least one of them out\n",
+                 nof_harqs,
+                 cell.cell.pci);
+      return false;
+    }
+
+    if (modes.empty()) {
+      continue;
+    }
+
+    // [Implementation-defined] A configured grant takes the HARQ process its periodicity lands on, so the scheduler
+    // cannot steer it to the mode a restricted logical channel allows.
+    if (cell.cell.cg_cfg.periodicity_slots.has_value()) {
+      fmt::print("allowed_harq_mode is not supported together with configured grants, configured for cell pci={}\n",
+                 cell.cell.pci);
+      return false;
+    }
+
+    for (ul_harq_mode mode : modes) {
+      if (not is_ul_harq_mode_available(mode_mask, nof_harqs, mode)) {
+        fmt::print("allowed_harq_mode={} cannot be met: none of the first {} UL HARQ processes of cell pci={} is "
+                   "configured in that mode. A UE is given more only when it reports support for them, so harq_mode_b "
+                   "must offer both modes among them\n",
+                   mode,
+                   nof_harqs,
+                   cell.cell.pci);
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 bool ocudu::validate_du_high_config(const du_high_unit_config& config)
 {
   if (!validate_rlc_config(config.rlc_cfg)) {
@@ -2522,6 +2588,10 @@ bool ocudu::validate_du_high_config(const du_high_unit_config& config)
   }
 
   if (!validate_qos_config(config.qos_cfg)) {
+    return false;
+  }
+
+  if (!validate_allowed_harq_mode_config(config)) {
     return false;
   }
 
