@@ -47,12 +47,16 @@ struct logical_channel_config {
   bool                                 lc_sr_delay_timer_applied;
   // [Implementation defined] Configuration of triggeded UL grant feature.
   std::optional<mac_lc_config::triggered_ul_grant_cfg> triggered_ul_grant;
+  /// UL HARQ mode a grant must use for this logical channel to be multiplexed into it, as per \c allowedHARQ-mode,
+  /// TS 38.331. Unrestricted when absent.
+  std::optional<ul_harq_mode> allowed_harq_mode;
 
   bool operator==(const logical_channel_config& rhs) const
   {
     return lcid == rhs.lcid and lc_group == rhs.lc_group and rrm_policy == rhs.rrm_policy and qos == rhs.qos and
            sr_id == rhs.sr_id and lc_sr_mask == rhs.lc_sr_mask and
-           lc_sr_delay_timer_applied == rhs.lc_sr_delay_timer_applied and triggered_ul_grant == rhs.triggered_ul_grant;
+           lc_sr_delay_timer_applied == rhs.lc_sr_delay_timer_applied and
+           triggered_ul_grant == rhs.triggered_ul_grant and allowed_harq_mode == rhs.allowed_harq_mode;
   }
 };
 

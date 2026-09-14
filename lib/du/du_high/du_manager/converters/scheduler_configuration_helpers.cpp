@@ -118,6 +118,7 @@ sched_ue_config_request ocudu::odu::create_scheduler_ue_config_request(const du_
     sched_lc_ch.lc_sr_delay_timer_applied = srb.mac_cfg.lc_sr_delay_applied;
     sched_lc_ch.sr_id.emplace(srb.mac_cfg.sr_id);
     sched_lc_ch.triggered_ul_grant = srb.mac_cfg.triggered_ul_grant;
+    sched_lc_ch.allowed_harq_mode  = srb.mac_cfg.allowed_harq_mode;
   }
   for (const auto& drb : ue_res_cfg.drbs) {
     auto& sched_lc_ch =
@@ -127,6 +128,7 @@ sched_ue_config_request ocudu::odu::create_scheduler_ue_config_request(const du_
     sched_lc_ch.lc_sr_delay_timer_applied = drb.mac_cfg.lc_sr_delay_applied;
     sched_lc_ch.sr_id.emplace(drb.mac_cfg.sr_id);
     sched_lc_ch.triggered_ul_grant = drb.mac_cfg.triggered_ul_grant;
+    sched_lc_ch.allowed_harq_mode  = drb.mac_cfg.allowed_harq_mode;
     sched_lc_ch.rrm_policy.s_nssai = drb.s_nssai;
     sched_lc_ch.rrm_policy.plmn_id = ue_ctx.nr_cgi.plmn_id;
 
