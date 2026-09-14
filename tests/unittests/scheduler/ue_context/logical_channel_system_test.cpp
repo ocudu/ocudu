@@ -1023,3 +1023,141 @@ TEST_F(single_ue_ul_logical_channel_system_test, all_ues_with_pending_data_provi
   ue_lchs.reset_lcg_ran_slice(uint_to_lcg_id(2));
   ASSERT_EQ(this->lch_system.get_ues_with_ul_pending_data(ran_slice_id_t{1}).count(), 0);
 }
+
+/// \brief Fixture for the allowedHARQ-mode mapping restriction, TS 38.331.
+///
+/// SRB1 sits in one logical channel group and the DRB in another, each in its own RAN slice, so the mode required for
+/// one can be resolved without the other. A third configuration puts both groups in the same slice, to cover channels
+/// that disagree.
+class ul_harq_mode_logical_channel_system_test : public logical_channel_system_test, public ::testing::Test
+{
+protected:
+  logical_channel_config_list_ptr create_config(std::optional<ul_harq_mode> srb_mode,
+                                                std::optional<ul_harq_mode> drb_mode)
+  {
+    std::vector<logical_channel_config> configs;
+    configs.push_back(config_helpers::create_default_logical_channel_config(LCID_SRB1));
+    configs.back().lc_group          = srb_lcg;
+    configs.back().allowed_harq_mode = srb_mode;
+    configs.push_back(config_helpers::create_default_logical_channel_config(LCID_MIN_DRB));
+    configs.back().lc_group          = drb_lcg;
+    configs.back().allowed_harq_mode = drb_mode;
+    return cfg_pool.create(configs);
+  }
+
+  void create_ue(std::optional<ul_harq_mode> srb_mode, std::optional<ul_harq_mode> drb_mode, bool one_slice = false)
+  {
+    ue_lchs =
+        lch_system.create_ue(to_du_ue_index(0), subcarrier_spacing::kHz30, false, create_config(srb_mode, drb_mode));
+    ue_lchs.set_lcg_ran_slice(srb_lcg, srb_slice);
+    ue_lchs.set_lcg_ran_slice(drb_lcg, one_slice ? srb_slice : drb_slice);
+  }
+
+  /// Puts both logical channels in the DRB group, so that one group holds channels with different restrictions.
+  void create_ue_with_one_lcg(std::optional<ul_harq_mode> first_mode, std::optional<ul_harq_mode> second_mode)
+  {
+    std::vector<logical_channel_config> configs;
+    configs.push_back(config_helpers::create_default_logical_channel_config(LCID_SRB1));
+    configs.back().lc_group          = drb_lcg;
+    configs.back().allowed_harq_mode = first_mode;
+    configs.push_back(config_helpers::create_default_logical_channel_config(LCID_MIN_DRB));
+    configs.back().lc_group          = drb_lcg;
+    configs.back().allowed_harq_mode = second_mode;
+    ue_lchs = lch_system.create_ue(to_du_ue_index(0), subcarrier_spacing::kHz30, false, cfg_pool.create(configs));
+    ue_lchs.set_lcg_ran_slice(drb_lcg, drb_slice);
+  }
+
+  const lcg_id_t       srb_lcg   = uint_to_lcg_id(1);
+  const lcg_id_t       drb_lcg   = uint_to_lcg_id(2);
+  const ran_slice_id_t srb_slice = ran_slice_id_t{0};
+  const ran_slice_id_t drb_slice = ran_slice_id_t{1};
+
+  ue_logical_channel_repository ue_lchs;
+};
+
+TEST_F(ul_harq_mode_logical_channel_system_test, unrestricted_channels_require_no_mode)
+{
+  create_ue(std::nullopt, std::nullopt);
+  ue_lchs.handle_bsr_indication(make_sbsr(srb_lcg, 100));
+
+  ASSERT_FALSE(ue_lchs.required_ul_harq_mode(srb_slice).has_value());
+}
+
+/// The restriction only applies to a group the UE has data in, since a grant is scheduled against the buffer status.
+TEST_F(ul_harq_mode_logical_channel_system_test, a_restricted_group_with_pending_data_requires_its_mode)
+{
+  create_ue(ul_harq_mode::mode_a, std::nullopt);
+  ue_lchs.handle_bsr_indication(make_sbsr(srb_lcg, 100));
+
+  ASSERT_TRUE(ue_lchs.required_ul_harq_mode(srb_slice).has_value());
+  EXPECT_EQ(*ue_lchs.required_ul_harq_mode(srb_slice), ul_harq_mode::mode_a);
+  EXPECT_FALSE(ue_lchs.required_ul_harq_mode(drb_slice).has_value()) << "the other slice has no restricted data";
+}
+
+/// A grant can be scheduled without buffer status, as the one an SR earns, and then the configuration decides.
+TEST_F(ul_harq_mode_logical_channel_system_test, a_restricted_group_without_pending_data_requires_its_configured_mode)
+{
+  create_ue(ul_harq_mode::mode_a, std::nullopt);
+
+  ASSERT_TRUE(ue_lchs.required_ul_harq_mode(srb_slice).has_value());
+  EXPECT_EQ(*ue_lchs.required_ul_harq_mode(srb_slice), ul_harq_mode::mode_a);
+}
+
+/// Mode A keeps its priority without buffer status, so a grant no data restricts still serves it first.
+TEST_F(ul_harq_mode_logical_channel_system_test, groups_without_pending_data_that_disagree_require_mode_a)
+{
+  create_ue(ul_harq_mode::mode_a, ul_harq_mode::mode_b, /* one_slice */ true);
+
+  ASSERT_TRUE(ue_lchs.required_ul_harq_mode(srb_slice).has_value());
+  EXPECT_EQ(*ue_lchs.required_ul_harq_mode(srb_slice), ul_harq_mode::mode_a);
+}
+
+TEST_F(ul_harq_mode_logical_channel_system_test, mode_b_is_required_the_same_way_as_mode_a)
+{
+  create_ue(std::nullopt, ul_harq_mode::mode_b);
+  ue_lchs.handle_bsr_indication(make_sbsr(drb_lcg, 100));
+
+  ASSERT_TRUE(ue_lchs.required_ul_harq_mode(drb_slice).has_value());
+  EXPECT_EQ(*ue_lchs.required_ul_harq_mode(drb_slice), ul_harq_mode::mode_b);
+}
+
+/// No single grant serves two groups that ask for different modes, so mode A goes first, whatever the volumes are.
+TEST_F(ul_harq_mode_logical_channel_system_test, groups_of_one_slice_that_disagree_require_mode_a)
+{
+  create_ue(ul_harq_mode::mode_a, ul_harq_mode::mode_b, /* one_slice */ true);
+  ue_lchs.handle_bsr_indication(make_sbsr(srb_lcg, 100));
+  ue_lchs.handle_bsr_indication(make_sbsr(drb_lcg, 200));
+
+  ASSERT_TRUE(ue_lchs.required_ul_harq_mode(srb_slice).has_value());
+  EXPECT_EQ(*ue_lchs.required_ul_harq_mode(srb_slice), ul_harq_mode::mode_a);
+}
+
+/// Mode A only goes first while it has something to send, so an idle group does not hold back the other one.
+TEST_F(ul_harq_mode_logical_channel_system_test, an_idle_mode_a_group_leaves_the_mode_to_the_group_with_data)
+{
+  create_ue(ul_harq_mode::mode_a, ul_harq_mode::mode_b, /* one_slice */ true);
+  ue_lchs.handle_bsr_indication(make_sbsr(drb_lcg, 200));
+
+  ASSERT_TRUE(ue_lchs.required_ul_harq_mode(srb_slice).has_value());
+  EXPECT_EQ(*ue_lchs.required_ul_harq_mode(srb_slice), ul_harq_mode::mode_b);
+}
+
+/// A grant serves the whole group, so an unrestricted channel sharing it does not lift the restriction.
+TEST_F(ul_harq_mode_logical_channel_system_test, an_unrestricted_channel_does_not_clear_the_restriction_of_its_group)
+{
+  create_ue_with_one_lcg(ul_harq_mode::mode_a, std::nullopt);
+  ue_lchs.handle_bsr_indication(make_sbsr(drb_lcg, 100));
+
+  ASSERT_TRUE(ue_lchs.required_ul_harq_mode(drb_slice).has_value());
+  EXPECT_EQ(*ue_lchs.required_ul_harq_mode(drb_slice), ul_harq_mode::mode_a);
+}
+
+/// The channels of a group are all read, so a restriction behind an unrestricted channel still binds the group.
+TEST_F(ul_harq_mode_logical_channel_system_test, a_restriction_after_an_unrestricted_channel_still_applies)
+{
+  create_ue_with_one_lcg(std::nullopt, ul_harq_mode::mode_b);
+  ue_lchs.handle_bsr_indication(make_sbsr(drb_lcg, 100));
+
+  ASSERT_TRUE(ue_lchs.required_ul_harq_mode(drb_slice).has_value());
+  EXPECT_EQ(*ue_lchs.required_ul_harq_mode(drb_slice), ul_harq_mode::mode_b);
+}
