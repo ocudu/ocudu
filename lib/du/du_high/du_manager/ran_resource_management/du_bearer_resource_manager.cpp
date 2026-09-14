@@ -201,6 +201,7 @@ std::vector<drb_id_t> du_bearer_resource_manager::setup_drbs(du_ue_resource_conf
       new_drb.mac_cfg = make_gbr_drb_mac_lc_config(*drb_to_setup.qos_info.drb_qos.gbr_qos_info);
     }
     new_drb.mac_cfg.triggered_ul_grant = qos.triggered_ul_grant;
+    new_drb.mac_cfg.allowed_harq_mode  = qos.allowed_harq_mode;
 
     // Update pdcp_sn_len in RLC config
     auto& rlc_cfg = new_drb.rlc_cfg;
