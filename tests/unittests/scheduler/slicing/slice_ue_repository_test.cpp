@@ -17,9 +17,10 @@ using namespace ocudu;
 namespace {
 
 struct test_lc_ch_cfg {
-  lcid_t         lcid;
-  lcg_id_t       lcg_id;
-  ran_slice_id_t slice_id;
+  lcid_t                      lcid;
+  lcg_id_t                    lcg_id;
+  ran_slice_id_t              slice_id;
+  std::optional<ul_harq_mode> allowed_harq_mode = std::nullopt;
 };
 
 ul_bsr_indication_message create_short_bsr(du_ue_index_t ue_idx, ul_bsr_lcg_report_list report)
@@ -72,6 +73,7 @@ protected:
     lc_cfg_list.push_back(logical_channel_config{LCID_SRB0, uint_to_lcg_id(0)});
     for (const auto& lc_ch : lc_chs) {
       lc_cfg_list.push_back(logical_channel_config{lc_ch.lcid, lc_ch.lcg_id});
+      lc_cfg_list.back().allowed_harq_mode = lc_ch.allowed_harq_mode;
     }
     req.cfg.lc_config_list         = lc_cfg_list;
     const ue_configuration* ue_cfg = test_cfg.add_ue(req);
@@ -191,4 +193,48 @@ TEST_F(
   ASSERT_GT((*slices[SRB_RAN_SLICE_ID.value()])[ue_idx].pending_ul_newtx_bytes(), 0);
   ASSERT_EQ((*slices[DEFAULT_DRB_RAN_SLICE_ID.value()])[ue_idx].pending_ul_newtx_bytes(), 0);
   ASSERT_EQ((*slices[ran_slice_id_t{2}.value()])[ue_idx].pending_ul_newtx_bytes(), 0);
+}
+
+/// A restricted logical channel with pending data decides the UL HARQ mode of the grants of its slice.
+TEST_F(slice_ue_repository_test, restricted_logical_channel_decides_the_ul_harq_mode_of_its_slice)
+{
+  const du_ue_index_t               ue_idx = to_du_ue_index(0);
+  const std::vector<test_lc_ch_cfg> lc_chs = {
+      test_lc_ch_cfg{LCID_SRB1, uint_to_lcg_id(0), SRB_RAN_SLICE_ID},
+      test_lc_ch_cfg{LCID_MIN_DRB, uint_to_lcg_id(1), DEFAULT_DRB_RAN_SLICE_ID, ul_harq_mode::mode_a}};
+  add_ue(ue_idx, lc_chs);
+  ue_db[ue_idx].handle_bsr_indication(create_short_bsr(ue_idx, ul_bsr_lcg_report_list{{lcg_id_t{1}, 1000}}));
+
+  const slice_ue& u = (*slices[DEFAULT_DRB_RAN_SLICE_ID.value()])[ue_idx];
+  ASSERT_TRUE(u.required_ul_harq_mode().has_value());
+  ASSERT_EQ(*u.required_ul_harq_mode(), ul_harq_mode::mode_a);
+  ASSERT_TRUE(u.select_normal_ul_harq_mode());
+}
+
+/// With no channel restricting it, a grant rides mode B, whichever RAN slice it belongs to.
+TEST_F(slice_ue_repository_test, unrestricted_data_rides_mode_b_in_every_slice)
+{
+  const du_ue_index_t ue_idx = to_du_ue_index(0);
+  add_ue(ue_idx);
+  ue_db[ue_idx].handle_bsr_indication(create_short_bsr(ue_idx, ul_bsr_lcg_report_list{{lcg_id_t{1}, 1000}}));
+
+  ASSERT_FALSE((*slices[DEFAULT_DRB_RAN_SLICE_ID.value()])[ue_idx].required_ul_harq_mode().has_value());
+  ASSERT_FALSE((*slices[DEFAULT_DRB_RAN_SLICE_ID.value()])[ue_idx].select_normal_ul_harq_mode());
+  ASSERT_FALSE((*slices[SRB_RAN_SLICE_ID.value()])[ue_idx].select_normal_ul_harq_mode());
+}
+
+/// The grant an SR earns follows the channels it is meant to serve, which hold no data to restrict it yet.
+TEST_F(slice_ue_repository_test, sr_grant_follows_the_configured_restriction)
+{
+  const du_ue_index_t               ue_idx = to_du_ue_index(0);
+  const std::vector<test_lc_ch_cfg> lc_chs = {
+      test_lc_ch_cfg{LCID_SRB1, uint_to_lcg_id(0), SRB_RAN_SLICE_ID, ul_harq_mode::mode_a},
+      test_lc_ch_cfg{LCID_MIN_DRB, uint_to_lcg_id(1), DEFAULT_DRB_RAN_SLICE_ID, ul_harq_mode::mode_b}};
+  add_ue(ue_idx, lc_chs);
+  ue_db[ue_idx].handle_sr_indication(next_slot);
+
+  const slice_ue& u = (*slices[SRB_RAN_SLICE_ID.value()])[ue_idx];
+  ASSERT_TRUE(u.select_normal_ul_harq_mode());
+  // The SR is reported per UE, so the other slices see it too and keep following their own channels.
+  ASSERT_FALSE((*slices[DEFAULT_DRB_RAN_SLICE_ID.value()])[ue_idx].select_normal_ul_harq_mode());
 }

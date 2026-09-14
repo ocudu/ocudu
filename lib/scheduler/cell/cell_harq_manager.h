@@ -640,6 +640,12 @@ public:
                    const harq_ul_mode_mask&              ul_harq_mode_mask,
                    unsigned                              nof_cg_reserved_harqs);
 
+  /// Checks whether \c alloc_ul_harq() picks a free process by its mode, rather than taking any of them.
+  bool is_ul_harq_mode_selective() const
+  {
+    return cell_harq_mgr->ul.ntn_cs_koffset > 0 and get_ul_ue().feedback_disabled_or_mode_b_harq_present;
+  }
+
   /// Checks whether there are free HARQ processes.
   bool   has_empty_dl_harqs(bool select_normal_mode_only = false) const;
   bool   has_empty_ul_harqs(bool select_normal_mode_only = false) const;

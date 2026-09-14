@@ -696,6 +696,38 @@ public:
     return lcg_rid.has_value() and parent->lc_mapper.ul_buf_st(*lcg_rid).value() > 0;
   }
 
+  /// \brief Returns the UL HARQ mode a new grant for the given slice must use, if any channel restricts it.
+  ///
+  /// A channel bound to mode A wins as soon as it has data: mode A holds each process a full round trip, so it cannot
+  /// crowd mode B out. Without buffer status, as in the grant an SR earns, the configuration decides, mode A first.
+  [[nodiscard]] std::optional<ul_harq_mode> required_ul_harq_mode(ran_slice_id_t slice_id) const
+  {
+    std::optional<ul_harq_mode> with_data;
+    std::optional<ul_harq_mode> configured;
+    for (const logical_channel_config_ptr& lc_cfg : cfg()) {
+      if (not lc_cfg->allowed_harq_mode.has_value()) {
+        continue;
+      }
+      const std::optional<soa::row_id> lcg_rid = parent->lc_mapper.find_row_id(ue_index, lc_cfg->lc_group);
+      if (not lcg_rid.has_value() or parent->lc_mapper.ul_slice_id(*lcg_rid) != slice_id) {
+        continue;
+      }
+      // Mode A outranks mode B, so it wins whichever channel is seen first.
+      const ul_harq_mode mode = *lc_cfg->allowed_harq_mode;
+      if (not configured.has_value() or mode == ul_harq_mode::mode_a) {
+        configured = mode;
+      }
+      if (parent->lc_mapper.ul_buf_st(*lcg_rid).value() > 0 and
+          (not with_data.has_value() or mode == ul_harq_mode::mode_a)) {
+        with_data = mode;
+      }
+    }
+    if (with_data.has_value()) {
+      return with_data;
+    }
+    return configured;
+  }
+
   /// \brief Checks whether a ConRes CE is pending for transmission.
   bool is_con_res_id_pending() const { return get_ue_row().at<ue_context>().pending_con_res_id; }
 

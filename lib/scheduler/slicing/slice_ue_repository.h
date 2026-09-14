@@ -43,6 +43,17 @@ public:
   /// Determines if LCG-ID is part of this slice.
   bool contains(lcg_id_t lcg_id) const { return u.logical_channels().get_slice_id(lcg_id) == slice_id; }
 
+  /// \brief Returns the UL HARQ mode a new grant must use for this slice, if the pending UL data restricts it.
+  ///
+  /// See \c allowedHARQ-mode, TS 38.331.
+  std::optional<ul_harq_mode> required_ul_harq_mode() const
+  {
+    return u.logical_channels().required_ul_harq_mode(slice_id);
+  }
+
+  /// Returns whether a new UL grant for this UE must use a HARQ process in normal mode, i.e. mode A.
+  bool select_normal_ul_harq_mode() const { return required_ul_harq_mode() == ul_harq_mode::mode_a; }
+
   /// \brief Checks if there are DL pending bytes that are yet to be allocated in a DL HARQ.
   /// This method is faster than computing \c pending_dl_newtx_bytes() > 0.
   /// \remark Excludes SRB0 and UE Contention Resolution Identity CE.
