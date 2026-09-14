@@ -94,6 +94,24 @@ TEST(ntn_location_mapping_test, area_without_a_mapped_cell_id_yields_none)
   EXPECT_FALSE(derive_mapped_cell_id_from_location(make_mapping(), {53.0, 15.0}).has_value());
 }
 
+/// TS 38.300 sec. 16.14.5 keeps the derived TAI and the Mapped Cell ID separate, so an area may name only one of them.
+TEST(ntn_location_mapping_test, area_without_a_tac_yields_its_mapped_cell_id_and_no_tac)
+{
+  ntn_location_mapping mapping;
+  ntn_location_area    area;
+  area.mapped_nci = nr_cell_identity::create(mapped_cell_id).value();
+  area.lat_min    = 50.0;
+  area.lat_max    = 52.0;
+  area.lon_min    = 14.0;
+  area.lon_max    = 17.0;
+  mapping.location_areas.push_back(area);
+
+  const std::optional<nr_cell_identity> nci = derive_mapped_cell_id_from_location(mapping, {51.0, 15.0});
+  ASSERT_TRUE(nci.has_value());
+  EXPECT_EQ(nci->value(), mapped_cell_id);
+  EXPECT_FALSE(derive_tac_from_location(mapping, {51.0, 15.0}).has_value());
+}
+
 TEST(ntn_location_mapping_test, position_outside_every_area_yields_no_mapped_cell_id)
 {
   EXPECT_FALSE(derive_mapped_cell_id_from_location(make_mapping(), {10.0, 10.0}).has_value());

@@ -302,7 +302,9 @@ static YAML::Node build_cu_cp_ntn_location_mapping_section(const cu_cp_unit_ntn_
   node["nr_cell_id"] = config.nr_cell_id;
   for (const auto& area : config.location_areas) {
     YAML::Node area_node;
-    area_node["tac"] = area.tac;
+    if (area.tac.has_value()) {
+      area_node["tac"] = area.tac.value();
+    }
     if (area.mapped_nr_cell_id.has_value()) {
       area_node["mapped_nr_cell_id"] = area.mapped_nr_cell_id.value();
     }

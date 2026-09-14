@@ -195,8 +195,9 @@ std::optional<tac_t> rrc_ue_impl::get_ue_location_derived_tac() const
                      std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() -
                                                                       context.coarse_location->received_at)
                          .count(),
-                     context.cell.location_mapping.empty() ? "the cell has no location mapping"
-                                                           : "the position is outside every configured area");
+                     context.cell.location_mapping.empty()
+                         ? "the cell has no location mapping"
+                         : "the position is outside every area, or inside one that maps no TAC");
     return std::nullopt;
   }
 

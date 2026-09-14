@@ -204,9 +204,6 @@ ntn_location_mapping du_configuration_manager::get_location_mapping(const du_cel
   logger.info(
       "Cell={}: Configured {} coarse UE location areas", cell.cgi.nci, mapping_it->mapping.location_areas.size());
 
-  logger.info(
-      "Cell={}: Configured {} coarse UE location areas", cell.cgi.nci, mapping_it->mapping.location_areas.size());
-
   return mapping_it->mapping;
 }
 

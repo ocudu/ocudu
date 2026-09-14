@@ -430,8 +430,7 @@ static void configure_cli11_cells_args(CLI::App& app, cu_cp_unit_cell_config_ite
 /// Configures the CLI11 NTN location area arguments.
 static void configure_cli11_ntn_location_area_args(CLI::App& app, cu_cp_unit_ntn_location_area& config)
 {
-  add_option(app, "--tac", config.tac, "TAC to report for a UE inside this area")
-      ->capture_default_str()
+  add_option(app, "--tac", config.tac, "TAC to report for a UE inside this area. Unset to derive no TAC")
       ->range(0U, 0xffffffU);
   add_option(app,
              "--mapped_nr_cell_id",

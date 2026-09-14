@@ -14,18 +14,16 @@
 
 namespace ocudu {
 
-/// \brief One geographic area of an NTN cell, mapped to a TAC.
-///
-/// A rectangle in latitude/longitude. The coarse UE location is only accurate to roughly 2 km, so a shape closer to
-/// the real tracking area border would not buy anything. A TAC may be listed more than once to cover an area that is
-/// not a single rectangle.
+/// One geographic area of an NTN cell, mapped to a TAC for the UE Location Derived TAC in NR NTN IE of TS 38.413, to
+/// a Mapped Cell ID of TS 38.300 sec. 16.14.5, or to both. Either may be listed more than once to cover ground that
+/// is not a single rectangle.
 struct ntn_location_area {
-  tac_t tac;
-  /// \brief Mapped Cell ID reported for this area, TS 38.300 sec. 16.14.5.
-  ///
-  /// Absent in an area that reports the Uu Cell ID of the serving cell. The identity is not checked against the cells
-  /// this gNB serves: it names a geographical area agreed between RAN and core, and sec. 16.14.5 NOTE 3 allows special
-  /// values for areas outside the serving PLMN's country.
+  /// TAC reported for this area as the UE Location Derived TAC in NR NTN, TS 38.413. Absent in an area that reports
+  /// none, leaving the AMF the broadcast TAI.
+  std::optional<tac_t> tac;
+  /// Mapped Cell ID reported for this area, TS 38.300 sec. 16.14.5. Absent in an area that reports the Uu Cell ID of
+  /// the serving cell. Not checked against the cells this gNB serves: it names an area agreed between RAN and core,
+  /// and sec. 16.14.5 NOTE 3 allows special values outside the serving PLMN's country.
   std::optional<nr_cell_identity> mapped_nci;
   double                          lat_min;
   double                          lat_max;

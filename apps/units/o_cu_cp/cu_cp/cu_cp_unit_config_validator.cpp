@@ -798,19 +798,27 @@ static bool validate_ntn_location_mapping_appconfig(const cu_cp_unit_config& con
       return false;
     }
 
-    for (const auto& area : cell_mapping.location_areas) {
-      if (area.lat_min >= area.lat_max) {
-        fmt::print("cell={:#x} ntn_location_mapping: tac={} lat_min must be smaller than lat_max\n",
+    for (unsigned area_idx = 0; area_idx != cell_mapping.location_areas.size(); ++area_idx) {
+      const auto& area = cell_mapping.location_areas[area_idx];
+      // An area that maps neither is configuration with no effect, which is more likely a mistake than an intent.
+      if (not area.tac.has_value() and not area.mapped_nr_cell_id.has_value()) {
+        fmt::print("cell={:#x} ntn_location_mapping: area {} must set tac, mapped_nr_cell_id, or both\n",
                    cell_mapping.nr_cell_id,
-                   area.tac);
+                   area_idx);
+        return false;
+      }
+      if (area.lat_min >= area.lat_max) {
+        fmt::print("cell={:#x} ntn_location_mapping: area {} lat_min must be smaller than lat_max\n",
+                   cell_mapping.nr_cell_id,
+                   area_idx);
         return false;
       }
       // A box crossing the antimeridian cannot be expressed as a single lon_min < lon_max rectangle.
       if (area.lon_min >= area.lon_max) {
-        fmt::print("cell={:#x} ntn_location_mapping: tac={} lon_min must be smaller than lon_max. An area crossing "
+        fmt::print("cell={:#x} ntn_location_mapping: area {} lon_min must be smaller than lon_max. An area crossing "
                    "the antimeridian must be split in two\n",
                    cell_mapping.nr_cell_id,
-                   area.tac);
+                   area_idx);
         return false;
       }
     }

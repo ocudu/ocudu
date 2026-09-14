@@ -131,8 +131,8 @@ struct cu_cp_user_location_info_nr {
   /// TACs broadcast by the serving cell (\c trackingAreaList, TS 38.331), reported as TAC List in NR NTN,
   /// TS 38.413. Empty unless several.
   tac_list_t tac_list;
-  /// TAC derived from the coarse UE location, reported as UE Location Derived TAC in NR NTN, TS 38.413. Absent when
-  /// the location is unknown, or maps outside the TACs the cell broadcasts.
+  /// TAC derived from the coarse UE location, reported as UE Location Derived TAC in NR NTN, TS 38.413. Absent
+  /// outside NTN, and in an NTN cell whose configured areas derive none for the UE position.
   std::optional<tac_t> ue_location_derived_tac;
   /// Mapped Cell ID an NTN cell reports in place of its Uu Cell ID, naming a geographical area rather than a cell,
   /// TS 38.300 sec. 16.14.5. Absent unless a configured area names one for the UE position.

@@ -35,6 +35,10 @@ std::optional<tac_t> ocudu::derive_tac_from_location(const ntn_location_mapping&
     return std::nullopt;
   }
 
+  if (not area->tac.has_value()) {
+    return std::nullopt;
+  }
+
   return area->tac;
 }
 
