@@ -15,6 +15,17 @@ bool ocudu::prs_valid_num_symbols_and_comb_size(prs_num_symbols nsymb, prs_comb_
   return (nsymb_u8 >= comb_sz_u8) && (nsymb_u8 % comb_sz_u8 == 0);
 }
 
+bool ocudu::prs_valid_periodicity(unsigned int periodicity_slots, unsigned int numerology)
+{
+  const unsigned scaling = 1U << numerology;
+  if (periodicity_slots % scaling != 0) {
+    return false;
+  }
+
+  const auto& valid = prs_constants::VALID_PERIODICITIES_NUMEROLOGY0;
+  return std::find(valid.begin(), valid.end(), periodicity_slots / scaling) != valid.end();
+}
+
 unsigned ocudu::get_prs_freq_offset(prs_comb_size comb_sz, unsigned l_minus_lstart)
 {
   switch (comb_sz) {

@@ -9,6 +9,7 @@
 
 #include "ocudu/adt/bounded_bitset.h"
 #include "ocudu/ran/prs/prs_constants.h"
+#include <algorithm>
 #include <cstdint>
 #include <optional>
 #include <vector>
@@ -69,6 +70,9 @@ struct prs_muting_option2 {
 ///
 /// The valid combinations are given in TS38.211 Section 7.4.1.7.3.
 bool prs_valid_num_symbols_and_comb_size(prs_num_symbols nsymb, prs_comb_size comb_sz);
+
+/// \brief Determines whether a PRS resource set periodicity, in slots, is valid for the given numerology.
+bool prs_valid_periodicity(unsigned periodicity_slots, unsigned numerology);
 
 /// \brief Frequency offset \f$k^{\prime}\f$ of a downlink PRS resource, as a function of the symbol index within the
 /// resource, \f$l - l_{start}^{PRS}\f$.

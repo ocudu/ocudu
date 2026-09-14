@@ -931,6 +931,7 @@ static check_outcome check_prs_resource_set(const prs_resource_set&             
   const unsigned nof_symbols       = static_cast<unsigned>(res_set.nof_symbols);
   const unsigned repetition_factor = static_cast<unsigned>(res_set.repetition_factor);
   const unsigned time_gap          = static_cast<unsigned>(res_set.time_gap);
+  const unsigned mu                = to_numerology_value(dl_carrier.scs);
 
   CHECK_TRUE(is_one_of(comb_size, prs_constants::VALID_COMB_SIZES),
              "Invalid comb size ({}) of PRS resource set {}",
@@ -948,10 +949,11 @@ static check_outcome check_prs_resource_set(const prs_resource_set&             
              "Invalid time gap ({} slots) of PRS resource set {}",
              time_gap,
              set_id);
-  CHECK_TRUE(is_one_of(res_set.periodicity_slots, prs_constants::VALID_PERIODICITIES),
-             "Invalid periodicity ({} slots) of PRS resource set {}",
+  CHECK_TRUE(prs_valid_periodicity(res_set.periodicity_slots, mu),
+             "Invalid periodicity ({} slots) of PRS resource set {} for numerology {}",
              res_set.periodicity_slots,
-             set_id);
+             set_id,
+             mu);
 
   // The valid combinations are given in TS 38.211, Section 7.4.1.7.3.
   CHECK_TRUE(prs_valid_num_symbols_and_comb_size(res_set.nof_symbols, res_set.comb_size),
@@ -1019,7 +1021,6 @@ static check_outcome check_prs_resource_set(const prs_resource_set&             
 
     // As per TS 38.214, Section 5.1.6.5, the UE does not expect the product of the periodicity, the muting bit
     // repetition factor and the muting pattern size of Muting Option 1 to exceed 2^mu x 10240.
-    const unsigned mu = to_numerology_value(dl_carrier.scs);
     CHECK_EQ_OR_BELOW(res_set.periodicity_slots * muting_bit_rep_factor * muting_pattern_size,
                       (1U << mu) * prs_constants::MAX_MUTING_OPTION1_PRODUCT_NUMEROLOGY0,
                       "product of the periodicity, the muting bit repetition factor and the muting pattern size of "

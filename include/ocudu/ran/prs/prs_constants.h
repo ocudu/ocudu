@@ -35,7 +35,13 @@ inline constexpr unsigned MAX_START_PRB = 2176;
 /// Valid comb size values, as per TS 38.455, Section 9.2.44, "Comb Size".
 inline constexpr auto VALID_COMB_SIZES = to_array<uint8_t>({2, 4, 6, 12});
 
-/// Valid resource set periodicity values, in slots, as per TS 38.455, Section 9.2.44, "Resource Set Periodicity".
+/// \brief Valid resource set periodicity values, in slots, for numerology 0 (i.e., \f$\mu=0\f$).
+///
+/// Periodicities valid for a numerology are these values scaled by \f$2^{\mu}\f$, as per TS 38.211, Section 7.4.1.7.4.
+inline constexpr auto VALID_PERIODICITIES_NUMEROLOGY0 =
+    to_array<unsigned>({4, 5, 8, 10, 16, 20, 32, 40, 64, 80, 160, 320, 640, 1280, 2560, 5120, 10240});
+
+/// \brief Valid resource set periodicity values, in slots, across all the supported numerologies.
 inline constexpr auto VALID_PERIODICITIES = to_array<unsigned>(
     {4, 5, 8, 10, 16, 20, 32, 40, 64, 80, 160, 320, 640, 1280, 2560, 5120, 10240, 20480, 40960, 81920, 128, 256, 512});
 
