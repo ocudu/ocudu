@@ -942,9 +942,14 @@ static void fill_du_high_f1u_qos_section(YAML::Node node, const du_high_unit_f1u
 
 static void fill_du_high_mac_qos_section(YAML::Node node, const du_high_unit_mac_config& config)
 {
-  YAML::Node trig_node    = node["triggered_ul_grant"];
-  trig_node["delay"]      = static_cast<unsigned>(config.triggered_ul_grant->delay.count());
-  trig_node["grant_size"] = static_cast<unsigned>(config.triggered_ul_grant->grant_size.value());
+  if (config.triggered_ul_grant.has_value()) {
+    YAML::Node trig_node    = node["triggered_ul_grant"];
+    trig_node["delay"]      = static_cast<unsigned>(config.triggered_ul_grant->delay.count());
+    trig_node["grant_size"] = static_cast<unsigned>(config.triggered_ul_grant->grant_size.value());
+  }
+  if (config.allowed_harq_mode.has_value()) {
+    node["allowed_harq_mode"] = *config.allowed_harq_mode;
+  }
 }
 
 static void fill_du_high_qos_entry(YAML::Node node, const du_high_unit_qos_config& config)
@@ -952,8 +957,8 @@ static void fill_du_high_qos_entry(YAML::Node node, const du_high_unit_qos_confi
   node["five_qi"] = to_underlying(config.five_qi);
   fill_du_high_rlc_qos_section(node["rlc"], config.rlc);
   fill_du_high_f1u_qos_section(node["f1u_du"], config.f1u_du);
-  // The MAC section is only emitted when it carries non-default values (optional triggered UL grant).
-  if (config.mac.triggered_ul_grant.has_value()) {
+  // The MAC section is only emitted when it carries non-default values.
+  if (config.mac.triggered_ul_grant.has_value() or config.mac.allowed_harq_mode.has_value()) {
     fill_du_high_mac_qos_section(node["mac"], config.mac);
   }
 }

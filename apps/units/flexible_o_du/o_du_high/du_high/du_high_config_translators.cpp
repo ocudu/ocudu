@@ -1238,6 +1238,15 @@ static rlc_am_config generate_du_rlc_am_config(const du_high_unit_rlc_am_config&
   return out_rlc;
 }
 
+/// Converts the configured allowed HARQ mode, if any. The value set is enforced by the CLI.
+static std::optional<ul_harq_mode> generate_allowed_harq_mode(const std::optional<std::string>& allowed_harq_mode)
+{
+  if (not allowed_harq_mode.has_value()) {
+    return std::nullopt;
+  }
+  return *allowed_harq_mode == "mode_a" ? ul_harq_mode::mode_a : ul_harq_mode::mode_b;
+}
+
 static std::map<five_qi_t, odu::du_qos_config> generate_du_qos_config(const du_high_unit_config& config)
 {
   std::map<five_qi_t, odu::du_qos_config> out_cfg = {};
@@ -1301,6 +1310,8 @@ static std::map<five_qi_t, odu::du_qos_config> generate_du_qos_config(const du_h
       out_trig.delay_ms   = qos.mac.triggered_ul_grant->delay;
       out_trig.grant_size = qos.mac.triggered_ul_grant->grant_size;
     }
+
+    out_cfg[qos.five_qi].allowed_harq_mode = generate_allowed_harq_mode(qos.mac.allowed_harq_mode);
   }
   return out_cfg;
 }

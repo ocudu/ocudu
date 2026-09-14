@@ -2973,6 +2973,12 @@ static void configure_cli11_qos_args(CLI::App& app, du_high_unit_qos_config& qos
   // MAC section (scheduler-facing parameters per 5QI).
   static du_high_unit_triggered_ul_grant_config trig_cfg;
   CLI::App* mac_subcmd = add_subcommand(app, "mac", "MAC scheduler parameters")->configurable();
+  add_option(*mac_subcmd,
+             "--allowed_harq_mode",
+             qos_params.mac.allowed_harq_mode,
+             "UL HARQ mode a grant must use for a logical channel of this 5QI to be multiplexed into it. "
+             "Unrestricted when unset")
+      ->enum_values({"mode_a", "mode_b"});
   CLI::App* trig_ul_subcmd =
       add_subcommand(*mac_subcmd, "triggered_ul_grant", "Proactive UL grant triggered by DL allocation")
           ->configurable();

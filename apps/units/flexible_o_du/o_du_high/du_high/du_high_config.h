@@ -1644,6 +1644,9 @@ struct du_high_unit_triggered_ul_grant_config {
 /// MAC scheduler configuration per 5QI.
 struct du_high_unit_mac_config {
   std::optional<du_high_unit_triggered_ul_grant_config> triggered_ul_grant;
+  /// UL HARQ mode a grant must use for a logical channel of this 5QI to be multiplexed into it, as per \c
+  /// allowedHARQ-mode, TS 38.331. One of {mode_a, mode_b}. Unrestricted when absent.
+  std::optional<std::string> allowed_harq_mode;
 };
 
 /// QoS configuration
