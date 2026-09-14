@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "ocudu/ran/harq_id.h"
 #include "ocudu/ran/sr_configuration.h"
 #include "ocudu/scheduler/config/logical_channel_group.h"
 #include "ocudu/support/error_handling.h"
@@ -163,12 +164,16 @@ struct mac_lc_config {
   /// Indicates whether this Logical Channel can be allocated on Configured Grant type 1, as per \c
   /// configuredGrantType1Allowed, TS 38.331.
   bool cg_type1_allowed = false;
+  /// UL HARQ mode a grant must use for this Logical Channel to be multiplexed into it, as per \c allowedHARQ-mode,
+  /// TS 38.331. When absent, the mapping is unrestricted.
+  std::optional<ul_harq_mode> allowed_harq_mode;
 
   bool operator==(const mac_lc_config& rhs) const
   {
     return priority == rhs.priority && pbr == rhs.pbr && bsd == rhs.bsd && lcg_id == rhs.lcg_id &&
            lc_sr_mask == rhs.lc_sr_mask && sr_id == rhs.sr_id && lc_sr_delay_applied == rhs.lc_sr_delay_applied &&
-           triggered_ul_grant == rhs.triggered_ul_grant && cg_type1_allowed == rhs.cg_type1_allowed;
+           triggered_ul_grant == rhs.triggered_ul_grant && cg_type1_allowed == rhs.cg_type1_allowed &&
+           allowed_harq_mode == rhs.allowed_harq_mode;
   }
   bool operator!=(const mac_lc_config& rhs) const { return !(rhs == *this); }
 };

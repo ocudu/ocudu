@@ -28,6 +28,22 @@ using harq_dl_feedback_disabled_mask = bounded_bitset<MAX_NOF_HARQS, true>;
 /// Bitset mask for UL HARQ mode configuration.
 using harq_ul_mode_mask = bounded_bitset<MAX_NOF_HARQS, true>;
 
+/// UL HARQ mode of a HARQ process, as per \c uplinkHARQ-mode, TS 38.331, Section 6.3.2.
+enum class ul_harq_mode : uint8_t { mode_a, mode_b };
+
+inline const char* format_as(ul_harq_mode mode)
+{
+  return mode == ul_harq_mode::mode_a ? "mode_a" : "mode_b";
+}
+
+/// Returns whether any of the first \c nof_harqs processes of the given mask operates in the given UL HARQ mode.
+inline bool is_ul_harq_mode_available(const harq_ul_mode_mask& mode_mask, unsigned nof_harqs, ul_harq_mode mode)
+{
+  const size_t nof_checked = std::min(static_cast<size_t>(nof_harqs), mode_mask.size());
+  // A bit set to one identifies a process in mode A, so mode B is left wherever a bit is still zero.
+  return mode == ul_harq_mode::mode_a ? mode_mask.any(0, nof_checked) : not mode_mask.all(0, nof_checked);
+}
+
 /// Outcomes of a HARQ-ACK report.
 enum class mac_harq_ack_report_status : int8_t { nack = 0, ack, dtx };
 
