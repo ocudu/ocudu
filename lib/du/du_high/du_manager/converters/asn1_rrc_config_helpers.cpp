@@ -209,6 +209,17 @@ static rlc_bearer_cfg_s make_asn1_rrc_rlc_bearer(const rlc_bearer_config& cfg)
   out.mac_lc_ch_cfg.ul_specific_params.lc_ch_sr_delay_timer_applied    = cfg.mac_cfg->lc_sr_delay_applied;
   out.mac_lc_ch_cfg.ul_specific_params.cfg_grant_type1_allowed_present = cfg.mac_cfg->cg_type1_allowed;
 
+  // Fill allowedHARQ-mode. An absent mode leaves the mapping unrestricted.
+  if (cfg.mac_cfg->allowed_harq_mode.has_value()) {
+    auto& ul_params                         = out.mac_lc_ch_cfg.ul_specific_params;
+    ul_params.ext                           = true;
+    ul_params.allowed_harq_mode_r17_present = true;
+    ul_params.allowed_harq_mode_r17.value =
+        *cfg.mac_cfg->allowed_harq_mode == ul_harq_mode::mode_a
+            ? lc_ch_cfg_s::ul_specific_params_s_::allowed_harq_mode_r17_opts::harq_mode_a
+            : lc_ch_cfg_s::ul_specific_params_s_::allowed_harq_mode_r17_opts::harq_mode_b;
+  }
+
   return out;
 }
 
