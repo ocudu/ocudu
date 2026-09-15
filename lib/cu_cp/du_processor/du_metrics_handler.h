@@ -7,8 +7,7 @@
 
 #include "ocudu/cu_cp/cu_cp_metrics_handler.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// Interface used to capture the DU metrics from a single CU-CP DU.
 class du_metrics_handler
@@ -30,5 +29,4 @@ public:
   virtual std::vector<cu_cp_metrics_report::du_info> handle_du_metrics_report_request() const = 0;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

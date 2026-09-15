@@ -7,7 +7,6 @@
 
 #include "cu_up_processor_context.h"
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp.h"
-#include "ocudu/support/async/async_task.h"
 
 namespace ocudu::ocucp {
 

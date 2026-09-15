@@ -5,20 +5,10 @@
 
 #pragma once
 
-#include "../adapters/ngap_adapters.h"
-#include "../adapters/rrc_ue_adapters.h"
-#include "../cell_meas_manager/measurement_context.h"
 #include "cu_cp_ue_impl.h"
 #include "ue_metrics_handler.h"
-#include "ue_task_scheduler_impl.h"
-#include "ocudu/cu_cp/security_manager_config.h"
 #include "ocudu/cu_cp/ue_configuration.h"
-#include "ocudu/ran/cu_cp_types.h"
-#include "ocudu/ran/i_rnti.h"
-#include "ocudu/ran/plmn_identity.h"
-#include <optional>
 #include <set>
-#include <unordered_map>
 
 namespace ocudu::ocucp {
 
@@ -53,6 +43,9 @@ public:
   /// \param[in] ue_index Index of the UE to be removed.
   void remove_ue(cu_cp_ue_index_t ue_index);
 
+  /// \brief Sets the given PLMN.
+  /// \param[in] ue_index Index of the UE to be removed.
+  /// \param[in] plmn PLMN to set.
   bool set_plmn(cu_cp_ue_index_t ue_index, const plmn_identity& plmn);
 
   /// \brief Add PLMNs to block and reject new UE connections for these.
@@ -109,7 +102,7 @@ public:
   /// \return Number of UEs.
   size_t get_nof_ues() const { return ues.size(); }
 
-  // common
+  /// Common methods.
 
   /// \brief Find the UE with the given UE index.
   /// \param[in] ue_index Index of the UE to be found.
@@ -121,7 +114,7 @@ public:
   /// \return Pointer to the UE task scheduler if found, nullptr otherwise.
   ue_task_scheduler* find_ue_task_scheduler(cu_cp_ue_index_t ue_index);
 
-  // du processor
+  /// DU processor methods.
 
   /// \brief Add a UE context to the CU-CP.
   /// \param[in] du_index Index of the DU the UE is connected to.
@@ -157,11 +150,10 @@ public:
 
   /// \brief Get the number of UEs connected to a specific DU.
   /// \return Number of UEs.
-  size_t get_nof_du_ues(cu_cp_du_index_t du_index);
+  size_t get_nof_du_ues(cu_cp_du_index_t du_index) const;
 
-  // ngap
+  // CU-CP UE manager methods.
 
-  // cu-cp ue manager
   /// \brief Get the NGAP to RRC UE adapter of the UE.
   ngap_rrc_ue_adapter& get_ngap_rrc_ue_adapter(cu_cp_ue_index_t ue_index)
   {
@@ -216,19 +208,15 @@ private:
   /// Increases the next UE index.
   void increase_next_ue_index()
   {
-    if (next_ue_index == cu_cp_ue_index_t::max) {
-      // Reset cu ue f1ap id counter.
-      next_ue_index = cu_cp_ue_index_t::min;
-    } else {
-      // Increase cu ue f1ap id counter.
-      next_ue_index = uint_to_ue_index(to_underlying(next_ue_index) + 1);
-    }
+    next_ue_index = (next_ue_index == cu_cp_ue_index_t::max) ? cu_cp_ue_index_t::min
+                                                             : uint_to_ue_index(to_underlying(next_ue_index) + 1);
   }
 
   /// \brief Get the next available Full- and Short-I-RNTI.
   /// \return The Full- and Short-I-RNTI if available, std::nullopt otherwise.
   std::optional<i_rntis_t> allocate_i_rntis();
 
+  /// Increases the given full I-RNTI.
   void increase_full_i_rnti(full_i_rnti_t& full_i_rnti) const
   {
     // Count the UE reference up, wrapping around at the width the I-RNTI profile leaves for it and keeping the node

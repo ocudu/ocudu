@@ -5,12 +5,6 @@
 
 #pragma once
 
-#include "../ue_security_manager/ue_security_manager_impl.h"
-#include "ocudu/nrppa/nrppa.h"
-#include "ocudu/ran/aggregate_maximum_bit_rate.h"
-#include "ocudu/ran/cu_cp_types.h"
-#include "ocudu/ran/nr_cgi.h"
-
 namespace ocudu::ocucp {
 
 // Forward declarations.

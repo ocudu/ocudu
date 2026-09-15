@@ -4,11 +4,9 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "xnc_connection_manager.h"
-#include "ocudu/adt/format.h"
-#include "ocudu/support/async/async_task_scheduler.h"
 #include "ocudu/support/async/async_timer.h"
+#include "ocudu/xnap/gateways/xnc_connection_gateway.h"
 #include "ocudu/xnap/xnap_message.h"
-#include "ocudu/xnap/xnap_message_notifier.h"
 
 using namespace ocudu;
 using namespace ocucp;
@@ -24,7 +22,7 @@ public:
   shared_xnc_connection_context& operator=(shared_xnc_connection_context&&)      = delete;
   ~shared_xnc_connection_context() { disconnect(); }
 
-  /// Assign a XNC repository index to the context. This is called when the SCTP assocation is created and
+  /// Assign a XNC repository index to the context. This is called when the SCTP association is created and
   /// attached to an XNAP handler.
   void connect_xnc(xnc_peer_index_t xnc_idx_)
   {
@@ -32,7 +30,7 @@ public:
     msg_handler = parent.xnaps.find_xnap(xnc_idx);
   }
 
-  /// Determines whether an XNAP message handlerrepository has been attached to this association.
+  /// Determines whether an XNAP message handler repository has been attached to this association.
   bool connected() const { return msg_handler != nullptr; }
 
   /// Deletes the associated XNC repository, if it exists.
@@ -211,7 +209,7 @@ void xnc_connection_manager::stop()
   }
 
   for (auto* gateway : xnc_gws) {
-    if (gateway != nullptr) {
+    if (gateway) {
       gateway->stop();
     }
   }
@@ -253,7 +251,7 @@ xnc_connection_manager::handle_new_xnc_cu_cp_connection(std::unique_ptr<xnap_mes
         // Register the XNAP peer in the shared XNAP connection context.
         shared_ctxt->connect_xnc(xnc_index);
 
-        if (not xnc_connections.insert(std::make_pair(xnc_index, std::move(shared_ctxt))).second) {
+        if (!xnc_connections.insert(std::make_pair(xnc_index, std::move(shared_ctxt))).second) {
           logger.error("Failed to store new CU-CP connection {}", xnc_index);
           return;
         }
@@ -303,7 +301,7 @@ void xnc_connection_manager::handle_xnc_gw_connection_closed(xnc_peer_index_t xn
 
         // Recreate a fresh XNAP instance so that the peer can reconnect.
         if (peer_addrs.has_value() && !peer_addrs->empty()) {
-          if (xnaps.add_xnap(xnc_idx, peer_addrs.value(), xnap_cfg) == nullptr) {
+          if (xnaps.add_xnap(xnc_idx, *peer_addrs, xnap_cfg) == nullptr) {
             logger.error("Failed to recreate XNAP instance for peer address {}", peer_addrs->front());
           } else if (xnap_cfg.no_connection_init) {
             logger.info(
@@ -314,9 +312,9 @@ void xnc_connection_manager::handle_xnc_gw_connection_closed(xnc_peer_index_t xn
                         xnc_idx,
                         std::chrono::duration_cast<std::chrono::seconds>(xnap_cfg.reconnect_timer));
             auto gw_it = xnc_gateways.find(xnc_idx);
-            if (gw_it != xnc_gateways.end() && gw_it->second != nullptr) {
+            if (gw_it != xnc_gateways.end() && gw_it->second) {
               // Schedule outbound reconnection attempt.
-              reconnect_peer(xnc_idx, peer_addrs.value(), gw_it->second);
+              reconnect_peer(xnc_idx, *peer_addrs, gw_it->second);
             }
           }
         }
@@ -357,7 +355,7 @@ void xnc_connection_manager::reconnect_peer(xnc_peer_index_t                    
 
         // Trigger XN Setup on the re-established association.
         xnap_if = xnaps.find_xnap(xnc_idx);
-        if (xnap_if != nullptr) {
+        if (xnap_if) {
           CORO_AWAIT(xnap_if->handle_xn_setup_request_required());
         }
 

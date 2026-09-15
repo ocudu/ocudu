@@ -12,7 +12,7 @@
 
 namespace ocudu::ocucp {
 
-/// \brief Generate an NGAP Handover Preparation Request message based on the provided parameters.
+/// \brief Generates an NGAP Handover Preparation Request message based on the provided parameters.
 /// \param[in] source_ue_index The UE index of the source UE context.
 /// \param[in] target_gnb_id The gNB ID of the target cell.
 /// \param[in] target_plmn The PLMN Identity of the target cell.
@@ -28,7 +28,7 @@ generate_ngap_handover_preparation_request(cu_cp_ue_index_t                     
                                            nr_cell_identity                                          target_nci,
                                            const std::map<pdu_session_id_t, up_pdu_session_context>& pdu_sessions);
 
-/// \brief Generate an XNAP Handover Request message based on the provided parameters.
+/// \brief Generates an XNAP Handover Request message based on the provided parameters.
 /// \param[in] source_ue_index The UE index of the source UE context.
 /// \param[in] target_nr_cgi The NR Cell Global ID of the target cell.
 /// \param[in] guami The GUAMI of the UE.

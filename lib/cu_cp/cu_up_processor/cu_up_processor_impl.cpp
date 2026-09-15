@@ -4,19 +4,18 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "cu_up_processor_impl.h"
-#include "ocudu/adt/format.h"
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp_factory.h"
 #include "ocudu/support/async/async_task_scheduler.h"
 
 using namespace ocudu;
 using namespace ocucp;
 
-/// Adapter between E1AP and CU-UP processor
+/// Adapter between E1AP and CU-UP processor.
 class cu_up_processor_impl::e1ap_cu_up_processor_adapter : public e1ap_cu_up_processor_notifier
 {
 public:
   e1ap_cu_up_processor_adapter(cu_up_processor_impl& parent_, async_task_scheduler& common_task_sched_) :
-    parent(parent_), common_task_sched(&common_task_sched_)
+    parent(parent_), common_task_sched(common_task_sched_)
   {
   }
 
@@ -27,11 +26,11 @@ public:
   }
 
   // See interface for documentation.
-  bool schedule_async_task(async_task<void> task) override { return common_task_sched->schedule(std::move(task)); }
+  bool schedule_async_task(async_task<void> task) override { return common_task_sched.schedule(std::move(task)); }
 
 private:
   cu_up_processor_impl& parent;
-  async_task_scheduler* common_task_sched = nullptr;
+  async_task_scheduler& common_task_sched;
 };
 
 cu_up_processor_impl::cu_up_processor_impl(const cu_up_processor_config&       cfg_,
@@ -44,7 +43,7 @@ cu_up_processor_impl::cu_up_processor_impl(const cu_up_processor_config&       c
   context.cu_cp_name  = cfg.name;
   context.cu_up_index = cfg.cu_up_index;
 
-  // create e1
+  // Create E1.
   e1ap = create_e1ap(cfg.e1ap,
                      context.cu_up_index,
                      e1ap_notifier,
@@ -64,7 +63,7 @@ void cu_up_processor_impl::stop(cu_cp_ue_index_t ue_idx)
 void cu_up_processor_impl::handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& msg)
 {
   if (msg.gnb_cu_up_name.has_value()) {
-    context.cu_up_name = msg.gnb_cu_up_name.value();
+    context.cu_up_name = *msg.gnb_cu_up_name;
   }
   context.id = msg.gnb_cu_up_id;
 
@@ -77,18 +76,24 @@ void cu_up_processor_impl::handle_cu_up_e1_setup_request(const cu_up_e1_setup_re
 /// Sender for F1AP messages
 void cu_up_processor_impl::send_cu_up_e1_setup_response()
 {
-  cu_up_e1_setup_response response;
-  response.success        = true;
-  response.gnb_cu_cp_name = context.cu_cp_name;
+  cu_up_e1_setup_response response{.success                  = true,
+                                   .gnb_cu_cp_name           = context.cu_cp_name,
+                                   .cause                    = std::nullopt,
+                                   .crit_diagnostics         = std::nullopt,
+                                   .packed_e1_setup_request  = {},
+                                   .packed_e1_setup_response = {}};
 
   e1ap->handle_cu_up_e1_setup_response(response);
 }
 
 void cu_up_processor_impl::send_cu_up_e1_setup_failure(e1ap_cause_t cause)
 {
-  cu_up_e1_setup_response response;
-  response.success = false;
-  response.cause   = cause;
+  cu_up_e1_setup_response response{.success                  = false,
+                                   .gnb_cu_cp_name           = std::nullopt,
+                                   .cause                    = cause,
+                                   .crit_diagnostics         = std::nullopt,
+                                   .packed_e1_setup_request  = {},
+                                   .packed_e1_setup_response = {}};
   e1ap->handle_cu_up_e1_setup_response(response);
 }
 

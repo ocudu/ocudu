@@ -4,12 +4,8 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "du_processor_repository.h"
-#include "du_processor_config.h"
 #include "du_processor_factory.h"
-#include "ocudu/adt/format.h"
 #include "ocudu/cu_cp/cu_cp_configuration_helpers.h"
-#include "ocudu/rrc/rrc_config.h"
-#include "ocudu/support/executors/sync_task_executor.h"
 
 using namespace ocudu;
 using namespace ocucp;
@@ -120,8 +116,7 @@ cu_cp_du_index_t du_processor_repository::get_next_du_index()
 {
   for (unsigned du_idx_int = cu_cp_du_index_to_uint(cu_cp_du_index_t::min), e = cfg.max_nof_dus; du_idx_int != e;
        ++du_idx_int) {
-    cu_cp_du_index_t du_idx = uint_to_cu_cp_du_index(du_idx_int);
-    if (du_db.find(du_idx) == du_db.end()) {
+    if (cu_cp_du_index_t du_idx = uint_to_cu_cp_du_index(du_idx_int); du_db.find(du_idx) == du_db.end()) {
       return du_idx;
     }
   }
@@ -174,10 +169,11 @@ cu_cp_du_index_t du_processor_repository::find_du_any_state(pci_t pci)
 
 du_processor* du_processor_repository::find_du_processor(cu_cp_du_index_t du_index)
 {
-  if (du_db.find(du_index) == du_db.end()) {
+  auto it = du_db.find(du_index);
+  if (it == du_db.end()) {
     return nullptr;
   }
-  return du_db.at(du_index).processor.get();
+  return it->second.processor.get();
 }
 
 du_processor& du_processor_repository::get_du_processor(cu_cp_du_index_t du_index)
@@ -203,7 +199,7 @@ std::vector<cu_cp_served_cell_info> du_processor_repository::get_served_cells()
   std::vector<cu_cp_served_cell_info> served_cells;
   for (const auto& [du_index, du_ctxt] : du_db) {
     const du_configuration_context* du_cfg = du_ctxt.processor->get_context();
-    if (du_cfg == nullptr) {
+    if (!du_cfg) {
       // DU has not completed F1 setup.
       continue;
     }

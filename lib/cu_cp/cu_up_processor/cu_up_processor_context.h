@@ -6,15 +6,18 @@
 #pragma once
 
 #include "ocudu/ran/cu_cp_types.h"
-#include <string>
 
 namespace ocudu::ocucp {
 
 struct cu_up_processor_context {
-  cu_cp_cu_up_index_t cu_up_index = cu_cp_cu_up_index_t::invalid; /// Index assisgned by CU-CP
-  uint64_t            id;                                         /// the gNB-CU-UP-ID
-  std::string         cu_up_name = "none";                        /// gNB-CU-UP-Name
-  std::string         cu_cp_name = "none";                        /// gNB-CU-CP-Name
+  /// Index assigned by CU-CP.
+  cu_cp_cu_up_index_t cu_up_index = cu_cp_cu_up_index_t::invalid;
+  /// the gNB-CU-UP-ID.
+  uint64_t id;
+  /// gNB-CU-UP-Name.
+  std::string cu_up_name = "none";
+  /// gNB-CU-CP-Name.
+  std::string cu_cp_name = "none";
 };
 
 } // namespace ocudu::ocucp

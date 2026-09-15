@@ -6,12 +6,8 @@
 #pragma once
 
 #include "../xnap_repository.h"
-#include "ocudu/support/async/async_task_scheduler.h"
 #include "ocudu/xnap/cu_cp_xnc_handler.h"
-#include "ocudu/xnap/gateways/xnc_connection_gateway.h"
-#include "ocudu/xnap/xnap_configuration.h"
 #include <condition_variable>
-#include <mutex>
 
 namespace ocudu::ocucp {
 

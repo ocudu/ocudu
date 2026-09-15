@@ -19,14 +19,16 @@ public:
   explicit xnap_task_scheduler(uint16_t max_nof_xnc_peers, ocudulog::basic_logger& logger_);
   ~xnap_task_scheduler() = default;
 
+  /// Handles the XNC asynchronous task.
   void handle_xnc_async_task(xnc_peer_index_t xnc_index, async_task<void>&& task);
 
+  /// Clears the pending tasks.
   void clear_pending_tasks(xnc_peer_index_t xnc_index);
 
 private:
   ocudulog::basic_logger& logger;
 
-  // task event loops indexed by xnc_peer_index
+  /// Task event loops indexed by xnc_peer_index.
   std::map<xnc_peer_index_t, fifo_async_task_scheduler> xnc_ctrl_loop;
 };
 

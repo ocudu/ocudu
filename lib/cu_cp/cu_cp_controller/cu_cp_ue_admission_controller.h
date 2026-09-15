@@ -5,10 +5,7 @@
 
 #pragma once
 
-#include "ocudu/ran/plmn_identity.h"
-
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 class cu_cp_ue_admission_controller
 {
@@ -19,5 +16,4 @@ public:
   virtual bool request_ue_setup() const = 0;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

@@ -5,14 +5,12 @@
 
 #pragma once
 
-#include "../ue_manager/ue_manager_impl.h"
 #include "du_processor.h"
 #include "du_processor_config.h"
-#include <memory>
 
 namespace ocudu::ocucp {
 
-/// Creates an instance of an DU processor interface
+/// Creates an instance of an DU processor interface.
 std::unique_ptr<du_processor> create_du_processor(const du_processor_config& cfg,
                                                   du_processor_dependencies  dependencies);
 

@@ -9,11 +9,8 @@
 #include "ocudu/cu_cp/du_processor_context.h"
 #include "ocudu/f1ap/cu_cp/du_setup_notifier.h"
 #include "ocudu/f1ap/cu_cp/f1ap_cu_configuration_update.h"
-#include "ocudu/ran/gnb_du_id.h"
-#include "ocudu/support/ocudu_assert.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// Current configuration of the DU being managed by the CU-CP.
 struct du_configuration_context {
@@ -62,7 +59,7 @@ struct du_configuration_context {
   /// admission paths but excludes locked cells.
   const du_cell_configuration* find_cell_any_state(nr_cell_global_id_t cgi) const
   {
-    if (auto* c = find_cell(cgi); c != nullptr) {
+    if (const auto* c = find_cell(cgi)) {
       return c;
     }
     auto it = std::find_if(
@@ -74,7 +71,7 @@ struct du_configuration_context {
   /// not know at all (inter-CU handover candidate).
   const du_cell_configuration* find_cell_any_state(pci_t pci) const
   {
-    if (auto* c = find_cell(pci); c != nullptr) {
+    if (const auto* c = find_cell(pci)) {
       return c;
     }
     auto it = std::find_if(
@@ -124,5 +121,4 @@ protected:
   const du_configuration_context* ctxt = nullptr;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

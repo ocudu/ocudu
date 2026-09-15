@@ -36,8 +36,8 @@ struct cu_up_connection_manager_dependencies {
 /// \brief This class is responsible for allocating the resources in the CU-CP required to handle the establishment
 /// or drop of E1 GW connections.
 ///
-/// This class acts as a facade, hiding the details associated with the dispatching of E1 GW events to the
-/// the CU-CP through the appropriate task executors.
+/// This class acts as a facade, hiding the details associated with the dispatching of E1 GW events to the CU-CP through
+/// the appropriate task executors.
 class cu_up_connection_manager : public cu_cp_e1_handler
 {
 public:

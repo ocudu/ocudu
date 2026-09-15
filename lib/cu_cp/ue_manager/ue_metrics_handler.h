@@ -5,10 +5,9 @@
 
 #pragma once
 
-#include "ocudu/cu_cp/cu_cp_metrics_handler.h"
+#include "ocudu/cu_cp/cu_cp_metrics_notifier.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// Interface used to capture the UE metrics from the CU-CP UE manager.
 class ue_metrics_handler
@@ -20,5 +19,4 @@ public:
   virtual std::vector<cu_cp_metrics_report::ue_info> handle_ue_metrics_report_request() const = 0;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

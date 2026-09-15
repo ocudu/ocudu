@@ -6,7 +6,6 @@
 #pragma once
 
 #include "ocudu/cu_cp/cu_cp_configuration.h"
-#include <string>
 
 namespace ocudu {
 

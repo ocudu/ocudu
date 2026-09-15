@@ -7,11 +7,10 @@
 
 #include "cu_up_processor.h"
 #include "cu_up_processor_config.h"
-#include <memory>
 
 namespace ocudu::ocucp {
 
-/// Creates an instance of an CU-UP processor interface
+/// Creates an instance of an CU-UP processor interface.
 std::unique_ptr<cu_up_processor> create_cu_up_processor(const cu_up_processor_config&       cfg,
                                                         const cu_up_processor_dependencies& dependencies);
 

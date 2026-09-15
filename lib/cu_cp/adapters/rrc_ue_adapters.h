@@ -8,6 +8,7 @@
 #include "../cu_cp_controller/cu_cp_ue_admission_controller.h"
 #include "../cu_cp_impl_interface.h"
 #include "../ue_manager/cu_cp_ue_impl_interface.h"
+#include "../ue_security_manager/ue_security_manager_impl.h"
 #include "../up_resource_manager/up_resource_manager_impl.h"
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/cu_cp/ue_task_scheduler.h"

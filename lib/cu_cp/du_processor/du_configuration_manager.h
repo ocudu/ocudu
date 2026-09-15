@@ -6,10 +6,7 @@
 #pragma once
 
 #include "du_configuration_handler.h"
-#include "ocudu/f1ap/cu_cp/f1ap_cu_configuration_update.h"
 #include "ocudu/ocudulog/logger.h"
-#include "ocudu/ran/ntn_location_mapping.h"
-#include "ocudu/ran/plmn_identity.h"
 
 namespace ocudu::ocucp {
 
@@ -24,6 +21,7 @@ public:
   /// Create a new DU configuration handler.
   std::unique_ptr<du_configuration_handler> create_du_handler();
 
+  /// Returns the number of DUs.
   size_t nof_dus() const { return dus.size(); }
 
 private:

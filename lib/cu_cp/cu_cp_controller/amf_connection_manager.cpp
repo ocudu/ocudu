@@ -4,18 +4,10 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "amf_connection_manager.h"
-#include "../cu_cp_impl_interface.h"
 #include "../routines/amf_connection_removal_routine.h"
 #include "../routines/amf_connection_setup_routine.h"
 #include "../routines/amf_reconnection_routine.h"
-#include "ocudu/adt/format.h"
-#include "ocudu/cu_cp/cu_cp_configuration.h"
-#include "ocudu/ngap/ngap.h"
-#include "ocudu/ran/plmn_identity.h"
 #include "ocudu/support/synchronization/sync_event.h"
-#include <algorithm>
-#include <chrono>
-#include <thread>
 
 using namespace ocudu;
 using namespace ocucp;
@@ -126,7 +118,7 @@ void amf_connection_manager::stop()
   auto       stop_token = stop_control.get_token();
 
   // Stop and delete AMF connections.
-  while (not cu_cp_exec.defer([this, stop_token]() mutable {
+  while (!cu_cp_exec.defer([this, stop_token]() mutable {
     bool err = common_task_sched.schedule(launch_async([this, stop_token](coro_context<async_task<void>>& ctx) mutable {
       CORO_BEGIN(ctx);
       // Disconnect AMF connection.
@@ -136,14 +128,14 @@ void amf_connection_manager::stop()
       // Dispatch main async task loop destruction via defer so that the current coroutine ends
       // successfully.
       // We capture the token, so that the observer is blocked until the callback is run.
-      while (not cu_cp_exec.defer([stop_token]() mutable {})) {
+      while (!cu_cp_exec.defer([stop_token]() mutable {})) {
         logger.warning("Unable to stop AMF Manager. Retrying...");
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
 
       CORO_RETURN();
     }));
-    if (not err) {
+    if (!err) {
       logger.warning("Failed start AMF disconnection routine");
     }
   })) {

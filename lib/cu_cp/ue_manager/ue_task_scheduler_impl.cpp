@@ -10,7 +10,7 @@ using namespace ocudu;
 using namespace ocucp;
 
 /// Maximum number of pending procedures per UE.
-static constexpr size_t number_of_pending_ue_procedures = 64;
+static constexpr size_t NUMBER_OF_PENDING_UE_PROCEDURES = 64;
 
 unique_timer ue_task_scheduler_impl::create_timer()
 {
@@ -30,10 +30,12 @@ task_executor& ue_task_scheduler_impl::get_executor()
 
 void ue_task_scheduler_impl::stop()
 {
-  if (parent != nullptr) {
-    parent->rem_ue_task_loop(ue_sched->first);
-    parent = nullptr;
+  if (parent == nullptr) {
+    return;
   }
+
+  parent->rem_ue_task_loop(ue_sched->first);
+  parent = nullptr;
 }
 
 ue_task_scheduler_manager::ue_task_scheduler_manager(timer_manager&          timers_,
@@ -59,7 +61,7 @@ ue_task_scheduler_impl ue_task_scheduler_manager::create_ue_task_sched(cu_cp_ue_
     logger.error("ue={}: UE task scheduler already exists", ue_idx);
     return {};
   }
-  auto ret = ue_ctrl_loop.emplace(ue_idx, std::make_unique<fifo_async_task_scheduler>(number_of_pending_ue_procedures));
+  auto ret = ue_ctrl_loop.emplace(ue_idx, std::make_unique<fifo_async_task_scheduler>(NUMBER_OF_PENDING_UE_PROCEDURES));
   return ue_task_scheduler_impl{*this, *ret.first};
 }
 
@@ -90,14 +92,14 @@ unique_timer ue_task_scheduler_manager::make_unique_timer()
 {
   return timers.create_unique_timer(exec);
 }
-timer_manager& ue_task_scheduler_manager::get_timer_manager()
+timer_manager& ue_task_scheduler_manager::get_timer_manager() const
 {
   return timers;
 }
 
 void ue_task_scheduler_manager::rem_ue_task_loop(cu_cp_ue_index_t ue_idx)
 {
-  auto it = ue_ctrl_loop.find(ue_idx);
+  const auto it = ue_ctrl_loop.find(ue_idx);
   if (it == ue_ctrl_loop.end()) {
     logger.warning("ue={}: UE task scheduler not found", ue_idx);
     return;

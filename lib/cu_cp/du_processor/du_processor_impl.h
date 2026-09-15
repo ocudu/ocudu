@@ -7,18 +7,9 @@
 
 #include "../adapters/f1ap_adapters.h"
 #include "../adapters/pdcp_adapters.h"
-#include "../adapters/rrc_ue_adapters.h"
-#include "../pdcp/srb_pdcp_ue_context.h"
 #include "../ue_manager/ue_manager_impl.h"
-#include "du_configuration_handler.h"
 #include "du_processor.h"
 #include "du_processor_config.h"
-#include "ocudu/cu_cp/cu_cp_ref_time_report_notifier.h"
-#include "ocudu/f1ap/cu_cp/f1ap_cu.h"
-#include "ocudu/f1ap/cu_cp/f1ap_cu_configuration_update.h"
-#include "ocudu/f1ap/f1ap_message_notifier.h"
-#include "ocudu/ran/cu_cp_types.h"
-#include "ocudu/ran/nr_cgi.h"
 
 namespace ocudu::ocucp {
 
@@ -151,22 +142,22 @@ private:
 
   pdcp_removal_handler_impl pdcp_removal{*this};
 
-  // F1AP to DU processor adapter.
+  /// F1AP to DU processor adapter.
   std::unique_ptr<f1ap_du_processor_notifier> f1ap_ev_notifier;
 
-  // Per-UE SRB PDCP entities (sit between F1AP and RRC, owned by the DU processor).
+  /// Per-UE SRB PDCP entities (sit between F1AP and RRC, owned by the DU processor).
   std::unordered_map<cu_cp_ue_index_t, srb_pdcp_ue_context> srb_pdcp_contexts;
 
-  // F1AP to RRC adapters for SRB0 (CCCH, unprotected path).
+  /// F1AP to RRC adapters for SRB0 (CCCH, unprotected path).
   std::unordered_map<cu_cp_ue_index_t, f1ap_rrc_ul_ccch_adapter> f1ap_rrc_ccch_adapters;
 
   // F1AP to PDCP adapters for SRB1/SRB2 (DCCH, ciphered/integrity-protected path).
   std::unordered_map<cu_cp_ue_index_t, f1ap_pdcp_ul_dcch_adapter_collection> f1ap_pdcp_dcch_adapters;
 
-  // RRC UE to F1AP adapters (DL path).
+  /// RRC UE to F1AP adapters (DL path).
   std::unordered_map<cu_cp_ue_index_t, rrc_ue_f1ap_pdu_adapter> rrc_ue_f1ap_adapters;
 
-  // Components
+  /// Components.
   std::unique_ptr<f1ap_cu> f1ap;
   std::unique_ptr<rrc_du>  rrc;
 };

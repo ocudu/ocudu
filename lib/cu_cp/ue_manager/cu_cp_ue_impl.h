@@ -10,18 +10,8 @@
 #include "../adapters/rrc_ue_adapters.h"
 #include "../cell_meas_manager/measurement_context.h"
 #include "../ue_location_manager/ue_location_manager.h"
-#include "../ue_security_manager/ue_security_manager_impl.h"
-#include "../up_resource_manager/up_resource_manager_impl.h"
-#include "cu_cp_ue_impl_interface.h"
 #include "ue_task_scheduler_impl.h"
-#include "ocudu/cu_cp/cu_cp_cho_types.h"
-#include "ocudu/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
-#include "ocudu/ran/cu_cp_types.h"
-#include "ocudu/ran/du_cell_index.h"
 #include "ocudu/ran/gnb_du_id.h"
-#include "ocudu/ran/plmn_identity.h"
-#include "ocudu/xnap/xnap_types.h"
-#include <optional>
 
 namespace ocudu::ocucp {
 
@@ -43,6 +33,7 @@ struct cu_cp_ue_context {
   std::optional<cu_cp_release_redirect_nr_info> pending_redirect_nr_info;
 };
 
+/// Holds the CU-CP UE handover context.
 struct cu_cp_ue_handover_context {
   cu_cp_ue_index_t target_ue_index = cu_cp_ue_index_t::invalid;
   uint8_t          rrc_reconfig_transaction_id;
@@ -72,13 +63,18 @@ struct cu_cp_ue_context_retrieval_context {
 
 /// \brief Single CHO candidate cell context.
 struct cu_cp_cho_candidate {
-  cond_recfg_id_t cond_recfg_id{
-      cond_recfg_id_t(bounded_integer_invalid_tag{})};          ///< Conditional reconfiguration ID (1-8 per 3GPP).
-  pci_t               target_pci = INVALID_PCI;                 ///< Target cell PCI.
-  nr_cell_global_id_t target_cgi;                               ///< Target cell global identity.
-  cu_cp_ue_index_t target_ue_index = cu_cp_ue_index_t::invalid; ///< Target UE index; invalid for inter-CU candidates.
-  byte_buffer      prepared_rrc_recfg;                          ///< Pre-packed RRCReconfiguration for this target.
-  unsigned         rrc_reconfig_transaction_id = 0; ///< RRC transaction ID for this candidate's reconfiguration.
+  /// Conditional reconfiguration ID (1-8 per 3GPP).
+  cond_recfg_id_t cond_recfg_id{cond_recfg_id_t(bounded_integer_invalid_tag{})};
+  /// Target cell PCI.
+  pci_t target_pci = INVALID_PCI;
+  /// Target cell global identity.
+  nr_cell_global_id_t target_cgi;
+  /// Target UE index; invalid for inter-CU candidates.
+  cu_cp_ue_index_t target_ue_index = cu_cp_ue_index_t::invalid;
+  /// Pre-packed RRCReconfiguration for this target.
+  byte_buffer prepared_rrc_recfg;
+  /// RRC transaction ID for this candidate's reconfiguration.
+  unsigned rrc_reconfig_transaction_id = 0;
 
   /// \brief E1AP bearer context modification request for CU-UP tunnel update after CHO completion.
   e1ap_bearer_context_modification_request bearer_context_mod_request;
@@ -97,24 +93,36 @@ struct cu_cp_ue_cho_context {
   /// \brief CHO state machine states.
   /// Phases follow the CHO flow: targets preparation -> source RRC reconfiguration -> execution -> completion.
   enum class state_t {
-    idle,                ///< No CHO configured.
-    targets_preparation, ///< Preparing candidate target contexts.
-    rrc_reconfiguration, ///< Sending/waiting source UE CHO reconfiguration.
-    execution,           ///< UE executing CHO towards a target.
-    completion           ///< Finalizing winner/cleanup before returning to idle.
+    /// No CHO configured.
+    idle,
+    /// Preparing candidate target contexts.
+    targets_preparation,
+    /// Sending/waiting source UE CHO reconfiguration.
+    rrc_reconfiguration,
+    /// UE executing CHO towards a target.
+    execution,
+    /// Finalizing winner/cleanup before returning to idle.
+    completion
   };
 
   /// \brief Role of the UE in the CHO procedure.
   enum class role_t {
-    source, ///< This UE is the CHO source.
-    target, ///< This UE is a CHO target candidate, awaiting Access Success.
+    /// This UE is the CHO source.
+    source,
+    /// This UE is a CHO target candidate, awaiting Access Success.
+    target,
   };
 
-  role_t           role            = role_t::source;            ///< CHO role of this UE.
-  cu_cp_ue_index_t source_ue_index = cu_cp_ue_index_t::invalid; ///< For target UEs: the source UE index.
-  state_t          state           = state_t::idle;             ///< Current CHO state.
-  std::vector<cu_cp_cho_candidate> candidates;                  ///< CHO candidate cells (1-8).
-  unique_timer cho_execution_timer; ///< Fires conditional_handover_cancellation_routine if UE never executes CHO.
+  /// CHO role of this UE.
+  role_t role = role_t::source;
+  /// For target UEs: the source UE index.
+  cu_cp_ue_index_t source_ue_index = cu_cp_ue_index_t::invalid;
+  /// Current CHO state.
+  state_t state = state_t::idle;
+  /// CHO candidate cells (1-8).
+  std::vector<cu_cp_cho_candidate> candidates;
+  /// Fires conditional_handover_cancellation_routine if UE never executes CHO.
+  unique_timer cho_execution_timer;
 
   /// \brief Find candidate by target UE index.
   /// \param[in] target_ue_idx Target UE index to search for.
@@ -154,25 +162,34 @@ struct cu_cp_ue_cho_context {
   }
 };
 
+/// Holds the CU-CP UE configuration parameters.
+struct cu_cp_ue_configuration {
+  cu_cp_ue_index_t               ue_index;
+  cu_cp_du_index_t               du_index;
+  const up_resource_manager_cfg& up_cfg;
+  const security_manager_config& sec_cfg;
+  std::optional<gnb_du_id_t>     du_id;
+  std::optional<pci_t>           pci;
+  std::optional<rnti_t>          c_rnti;
+  std::optional<du_cell_index_t> pcell_index;
+};
+
+/// Holds the CU-CP UE dependencies.
+struct cu_cp_ue_dependencies {
+  timer_manager&         timers;
+  task_executor&         task_exec;
+  ue_task_scheduler_impl task_sched;
+};
+
 class cu_cp_ue : public cu_cp_ue_impl_interface
 {
 public:
-  cu_cp_ue(cu_cp_ue_index_t               ue_index_,
-           cu_cp_du_index_t               du_index_,
-           timer_manager&                 timers_,
-           task_executor&                 task_exec_,
-           const up_resource_manager_cfg& up_cfg,
-           const security_manager_config& sec_cfg,
-           ue_task_scheduler_impl         task_sched_,
-           std::optional<gnb_du_id_t>     du_id_       = std::nullopt,
-           std::optional<pci_t>           pci_         = std::nullopt,
-           std::optional<rnti_t>          c_rnti_      = std::nullopt,
-           std::optional<du_cell_index_t> pcell_index_ = std::nullopt);
+  cu_cp_ue(const cu_cp_ue_configuration& cfg, cu_cp_ue_dependencies dependencies);
 
   /// \brief Cancel all pending UE tasks.
   void stop();
 
-  /// \brief Get the UE index of the UE.
+  // See interface for documentation.
   cu_cp_ue_index_t get_ue_index() const override { return ue_index; }
 
   /// \brief Get the PCI of the UE.
@@ -186,28 +203,31 @@ public:
 
   [[nodiscard]] gnb_du_id_t get_du_id() const { return ue_ctxt.du_id; }
 
-  /// \brief Get the DU index of the UE.
+  // See interface for documentation.
   [[nodiscard]] cu_cp_du_index_t get_du_index() const override { return ue_ctxt.du_idx; }
 
-  /// \brief Get the CU-UP index of the UE.
+  // See interface for documentation.
   [[nodiscard]] cu_cp_cu_up_index_t get_cu_up_index() const override { return ue_ctxt.cu_up_idx; }
 
-  /// \brief Get the Xn-C peer index of the UE.
+  // See interface for documentation.
   [[nodiscard]] xnc_peer_index_t get_xnc_peer_index() const override { return ue_ctxt.xnc_peer_idx; }
 
   /// \brief Get the PCell index of the UE.
-  du_cell_index_t get_pcell_index() { return pcell_index; }
+  du_cell_index_t get_pcell_index() const { return pcell_index; }
 
-  /// \brief Get the UP resource manager of the UE.
+  // See interface for documentation.
   up_resource_manager& get_up_resource_manager() override { return up_mng; }
 
-  /// \brief Get the task scheduler of the UE.
+  // See interface for documentation.
   ue_task_scheduler& get_task_sched() override { return task_sched; }
 
-  /// \brief Get the security manager of the UE.
+  // See interface for documentation.
   ue_security_manager& get_security_manager() override { return sec_mng; }
 
-  cu_cp_ue_context&                     get_ue_context() { return ue_ctxt; }
+  /// Returns the UE context.
+  cu_cp_ue_context& get_ue_context() { return ue_ctxt; }
+
+  /// Returns the UE context.
   [[nodiscard]] const cu_cp_ue_context& get_ue_context() const { return ue_ctxt; }
 
   /// \brief Get the location manager of the UE.
@@ -245,7 +265,7 @@ public:
   /// \brief Set the Xn-C peer index of the UE.
   void set_xnc_peer_index(xnc_peer_index_t xnc_peer_idx) { ue_ctxt.xnc_peer_idx = xnc_peer_idx; }
 
-  /// \brief Get the NGAP RRC UE notifier of the UE.
+  // See interface for documentation.
   ngap_rrc_ue_notifier& get_ngap_rrc_ue_notifier() override { return ngap_rrc_ue_ev_notifier; }
 
   /// \brief Get the NGAP CU-CP UE notifier of the UE.
@@ -274,7 +294,7 @@ public:
   /// \brief Get the RRC UE of the UE.
   rrc_ue_interface* get_rrc_ue() const { return rrc_ue; }
 
-  /// \brief Get the measurement results of the UE.
+  // See interface for documentation.
   std::optional<cell_measurement_positioning_info>& get_measurement_results() override
   {
     return meas_context.meas_results;
@@ -284,7 +304,7 @@ public:
   /// \param[in] ue_ambr The AMBR to set for the UE.
   void set_ue_ambr(aggregate_maximum_bit_rate_t ue_ambr) override;
 
-  /// \brief Get UE AMBR.
+  // See interface for documentation.
   aggregate_maximum_bit_rate_t get_ue_ambr() const override { return ue_ctxt.ue_ambr; }
 
   unique_timer& get_handover_ue_release_timer() { return handover_ue_release_timer; }
@@ -302,41 +322,42 @@ public:
   }
 
 private:
-  // Common context.
+  /// Common context.
   cu_cp_ue_index_t       ue_index = cu_cp_ue_index_t::invalid;
   ue_task_scheduler_impl task_sched;
   up_resource_manager    up_mng;
   ue_security_manager    sec_mng;
   ue_location_manager    loc_mng;
 
-  // DU/CU-UP UE context.
+  /// DU/CU-UP UE context.
   cu_cp_ue_context ue_ctxt;
   du_cell_index_t  pcell_index = INVALID_DU_CELL_INDEX;
   pci_t            pci         = INVALID_PCI;
   /// Global identity of the cell serving the UE.
   std::optional<nr_cell_global_id_t> serving_cell_id;
 
-  // RRC UE context.
+  /// RRC UE context.
   rrc_ue_interface*       rrc_ue = nullptr;
   rrc_ue_ngap_adapter     rrc_ue_ngap_ev_notifier;
   rrc_ue_cu_cp_ue_adapter rrc_ue_cu_cp_ue_ev_notifier;
 
-  // NGAP UE context.
+  /// NGAP UE context.
   ngap_cu_cp_ue_adapter ngap_cu_cp_ue_ev_notifier;
   ngap_rrc_ue_adapter   ngap_rrc_ue_ev_notifier;
 
-  // NRPPA UE context.
+  /// NRPPA UE context.
   nrppa_cu_cp_ue_adapter nrppa_cu_cp_ue_ev_notifier;
 
-  // CU-CP UE context.
+  /// CU-CP UE context.
   rrc_ue_cu_cp_adapter                     rrc_ue_cu_cp_ev_notifier;
   cell_meas_manager_ue_context             meas_context;
   unique_timer                             handover_ue_release_timer;
   unique_timer                             ran_paging_timer;
   unique_timer                             rna_update_timer;
   std::optional<cu_cp_ue_handover_context> ho_context;
-  std::optional<cu_cp_ue_cho_context>      cho_context; ///< Conditional Handover context.
-  /// Context retrieved from an Xn peer; empty unless this UE arrived through a UE context retrieval.
+  /// Conditional Handover context.
+  std::optional<cu_cp_ue_cho_context> cho_context;
+  /// Context retrieved from a Xn peer; empty unless this UE arrived through a UE context retrieval.
   std::optional<cu_cp_ue_context_retrieval_context> context_retrieval_context;
 };
 

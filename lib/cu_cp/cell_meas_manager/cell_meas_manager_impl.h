@@ -6,12 +6,6 @@
 #pragma once
 
 #include "../ue_manager/ue_manager_impl.h"
-#include "ocudu/adt/span.h"
-#include "ocudu/cu_cp/cell_meas_manager_config.h"
-#include "ocudu/ran/cu_cp_types.h"
-#include "ocudu/ran/meas_types.h"
-#include "ocudu/ran/plmn_identity.h"
-#include <unordered_map>
 
 namespace ocudu::ocucp {
 
@@ -43,19 +37,29 @@ public:
   cell_meas_manager(const cell_meas_manager_config& cfg_, const cell_meas_manager_dependencies& dependencies);
   ~cell_meas_manager() = default;
 
+  /// Returns the measurement configuration.
   std::optional<rrc_meas_cfg>
-                                  get_measurement_config(cu_cp_ue_index_t                   ue_index,
-                                                         nr_cell_identity                   nci,
-                                                         const std::optional<rrc_meas_cfg>& current_meas_config = std::nullopt,
-                                                         bool                               cond_meas      = false,
-                                                         span<const pci_t>                  candidate_pcis = {});
+  get_measurement_config(cu_cp_ue_index_t                   ue_index,
+                         nr_cell_identity                   nci,
+                         const std::optional<rrc_meas_cfg>& current_meas_config = std::nullopt,
+                         bool                               cond_meas           = false,
+                         span<const pci_t>                  candidate_pcis      = {});
+
+  /// Returns the cell configuration.
   std::optional<cell_meas_config> get_cell_config(nr_cell_identity nci);
-  std::vector<pci_t>              get_neighbor_pcis(nr_cell_identity serving_nci) const;
+
+  /// Returns the neighbour PCIs.
+  std::vector<pci_t> get_neighbor_pcis(nr_cell_identity serving_nci) const;
+
   /// \brief Add a cell or replace its serving-cell parameters as a whole: optional parameters left unset in
   /// \c serv_cell_cfg are cleared, and a cell that stops being complete is detached from its measurement object.
   /// The neighbor relations and the periodic report of the cell are kept.
   bool update_cell_config(nr_cell_identity nci, const serving_cell_meas_config& serv_cell_cfg);
+
+  /// Updates the NTN neighbour information. Returns true on success, false otherwise.
   bool update_ntn_neighbour_info(nr_cell_identity serving_nci, span<const rrc_ntn_neighbour_cell_info_item> ncells);
+
+  /// Reports the given measurement.
   void report_measurement(cu_cp_ue_index_t ue_index, const rrc_meas_results& meas_results);
 
   /// \brief Remove a cell and everything that references it: its measurement object attachment and the
@@ -102,6 +106,7 @@ private:
   /// \brief Generate measurement objects for the given cell configuration.
   void generate_measurement_objects_for_serving_cells();
 
+  /// \brief Updates the measurement object for the given NCI.
   void update_measurement_object(nr_cell_identity nci, const serving_cell_meas_config& serving_cell_cfg);
 
   /// \brief Detach a cell from the measurement object lookups, dropping the frequency's measurement object
@@ -119,8 +124,8 @@ private:
   cell_meas_mobility_manager_notifier& mobility_mng_notifier;
   ue_manager&                          ue_mng;
 
-  std::unordered_map<ssb_frequency_t, rrc_meas_obj_nr>
-      ssb_freq_to_meas_object; // unique measurement objects, indexed by SSB frequency.
+  /// Unique measurement objects, indexed by SSB frequency.
+  std::unordered_map<ssb_frequency_t, rrc_meas_obj_nr>               ssb_freq_to_meas_object;
   std::unordered_map<ssb_frequency_t, std::vector<nr_cell_identity>> ssb_freq_to_ncis;
   std::map<nr_cell_identity, serving_cell_meas_config>               nci_to_serving_cell_meas_config;
 

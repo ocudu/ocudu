@@ -5,14 +5,6 @@
 
 #include "cell_meas_manager_impl.h"
 #include "cell_meas_manager_helpers.h"
-#include "ocudu/adt/format.h"
-#include "ocudu/cu_cp/cell_meas_manager_config.h"
-#include "ocudu/ran/meas_types.h"
-#include "ocudu/ran/plmn_identity.h"
-#include "ocudu/support/ocudu_assert.h"
-#include <algorithm>
-#include <set>
-#include <utility>
 
 using namespace ocudu;
 using namespace ocucp;
@@ -212,7 +204,7 @@ cell_meas_manager::get_measurement_config(cu_cp_ue_index_t                   ue_
     std::sort(new_cfg.report_cfg_to_add_mod_list.begin(), new_cfg.report_cfg_to_add_mod_list.end(), cmp_id);
   } else {
     const cu_cp_ue* ue = ue_mng.find_ue(ue_index);
-    if (ue == nullptr || ue->get_rrc_ue() == nullptr) {
+    if (!ue || !ue->get_rrc_ue()) {
       logger.error("ue={}: CHO meas config requested but UE/RRC context is missing", ue_index);
       return std::nullopt;
     }
@@ -240,8 +232,10 @@ cell_meas_manager::get_measurement_config(cu_cp_ue_index_t                   ue_
   // Add quantity config.
   rrc_quant_cfg    quant_cfg;
   rrc_quant_cfg_nr quant_cfg_nr;
-  quant_cfg_nr.quant_cfg_cell.ssb_filt_cfg.filt_coef_rsrp    = 6; // TODO: remove hardcoded values
-  quant_cfg_nr.quant_cfg_cell.csi_rs_filt_cfg.filt_coef_rsrp = 6; // TODO: remove hardcoded values
+  // TODO: remove hardcoded values.
+  quant_cfg_nr.quant_cfg_cell.ssb_filt_cfg.filt_coef_rsrp = 6;
+  // TODO: remove hardcoded values.
+  quant_cfg_nr.quant_cfg_cell.csi_rs_filt_cfg.filt_coef_rsrp = 6;
   quant_cfg.quant_cfg_nr_list.push_back(quant_cfg_nr);
 
   new_cfg.quant_cfg = quant_cfg;
@@ -270,11 +264,12 @@ cell_meas_manager::remove_current_meas_config(cu_cp_ue_index_t                  
 
 std::optional<cell_meas_config> cell_meas_manager::get_cell_config(nr_cell_identity nci)
 {
-  std::optional<cell_meas_config> cell_cfg;
-  if (cfg.cells.find(nci) != cfg.cells.end()) {
-    cell_cfg = cfg.cells.at(nci);
+  auto it = cfg.cells.find(nci);
+  if (it != cfg.cells.end()) {
+    return it->second;
   }
-  return cell_cfg;
+
+  return std::nullopt;
 }
 
 std::vector<pci_t> cell_meas_manager::get_neighbor_pcis(nr_cell_identity serving_nci) const
@@ -567,13 +562,13 @@ bool cell_meas_manager::update_ntn_neighbour_info(nr_cell_identity              
 
 static std::optional<uint8_t> get_ssb_rsrp(const rrc_meas_result_nr& meas_result)
 {
-  std::optional<uint8_t> rsrp;
   if (meas_result.cell_results.results_ssb_cell.has_value()) {
     if (meas_result.cell_results.results_ssb_cell.value().rsrp.has_value()) {
-      rsrp = meas_result.cell_results.results_ssb_cell.value().rsrp.value();
+      return *meas_result.cell_results.results_ssb_cell.value().rsrp;
     }
   }
-  return rsrp;
+
+  return std::nullopt;
 }
 
 static std::optional<pci_t> find_strongest_neighbor(cu_cp_ue_index_t        ue_index,
@@ -582,9 +577,9 @@ static std::optional<pci_t> find_strongest_neighbor(cu_cp_ue_index_t        ue_i
                                                     std::optional<uint8_t>  periodic_ho_rsrp_offset = std::nullopt)
 {
   std::optional<pci_t> strongest_neighbor;
-  // Find strongest neighbor cell.
+  // Find the strongest neighbor cell.
   if (meas_results.meas_result_neigh_cells.has_value()) {
-    // Find strongest neighbor here.
+    // Find the strongest neighbor here.
     std::optional<uint8_t> serv_cell_rsrp;
 
     // Extract RSRP of SSB for servCellId 0.
@@ -593,14 +588,14 @@ static std::optional<pci_t> find_strongest_neighbor(cu_cp_ue_index_t        ue_i
     }
 
     if (serv_cell_rsrp.has_value()) {
-      uint8_t max_rsrp = serv_cell_rsrp.value();
+      uint8_t max_rsrp = *serv_cell_rsrp;
 
-      for (const auto& report : meas_results.meas_result_neigh_cells.value().meas_result_list_nr) {
+      for (const auto& report : meas_results.meas_result_neigh_cells->meas_result_list_nr) {
         std::optional<uint8_t> neighbor_rsrp = get_ssb_rsrp(report);
         if (neighbor_rsrp.has_value()) {
-          if (neighbor_rsrp.value() > max_rsrp + periodic_ho_rsrp_offset.value_or(0)) {
-            // Found stronger neighbor, take note of it's details.
-            max_rsrp           = neighbor_rsrp.value();
+          if (*neighbor_rsrp > max_rsrp + periodic_ho_rsrp_offset.value_or(0)) {
+            // Found the strongest neighbor, take note of its details.
+            max_rsrp           = *neighbor_rsrp;
             strongest_neighbor = report.pci;
           }
         }
@@ -609,9 +604,9 @@ static std::optional<pci_t> find_strongest_neighbor(cu_cp_ue_index_t        ue_i
       if (strongest_neighbor.has_value()) {
         logger.info("ue={}: Neighbor PCI={} (ssb_rsrp={}) stronger than current serving cell (ssb_rsrp={})",
                     ue_index,
-                    strongest_neighbor.value(),
+                    *strongest_neighbor,
                     max_rsrp,
-                    serv_cell_rsrp.value());
+                    *serv_cell_rsrp);
       }
     }
   }
@@ -667,10 +662,10 @@ void cell_meas_manager::report_measurement(cu_cp_ue_index_t ue_index, const rrc_
         logger.debug("ue={}: Handover from periodic measurements is disabled", ue_index);
         return;
       }
-      periodic_ho_rsrp_offset = uint8_t(periodical->periodic_ho_rsrp_offset);
+      periodic_ho_rsrp_offset = static_cast<uint8_t>(periodical->periodic_ho_rsrp_offset);
     }
 
-    // Find strongest neighbor cell.
+    // Find the strongest neighbor cell.
     std::optional<pci_t> strongest_neighbor =
         find_strongest_neighbor(ue_index, meas_results, logger, periodic_ho_rsrp_offset);
     if (strongest_neighbor.has_value()) {
@@ -715,14 +710,14 @@ void cell_meas_manager::report_measurement(cu_cp_ue_index_t ue_index, const rrc_
       }
     }
 
-    // Find strongest neighbor cell.
+    // Find the strongest neighbor cell.
     std::optional<pci_t> strongest_neighbor = find_strongest_neighbor(ue_index, meas_results, logger);
     if (strongest_neighbor.has_value()) {
       // Report cell.
       mobility_mng_notifier.on_neighbor_better_than_spcell(ue_index,
                                                            meas_ctxt.nci.gnb_id(meas_ctxt.gnb_id_bit_length),
                                                            meas_ctxt.nci,
-                                                           strongest_neighbor.value(),
+                                                           *strongest_neighbor,
                                                            serving_cell.serving_cell_cfg.plmn,
                                                            serving_cell.serving_cell_cfg.tac);
       return;
@@ -819,7 +814,7 @@ static expected<cell_measurement_positioning_info, std::string> generate_measure
     ocudulog::basic_logger&                                     logger)
 {
   cu_cp_ue* ue = ue_mng.find_ue(ue_index);
-  if (ue == nullptr) {
+  if (!ue) {
     return make_unexpected(fmt::format("UE not found", ue_index));
   }
 
@@ -888,23 +883,22 @@ static expected<cell_measurement_positioning_info, std::string> generate_measure
         }
 
         // Find the serving cell config of the neighbor cell.
-        expected<nr_cell_identity, std::string> nci = find_nci(cfg, neigh_meas_result.pci.value());
+        expected<nr_cell_identity, std::string> nci = find_nci(cfg, *neigh_meas_result.pci);
         if (!nci.has_value()) {
           return make_unexpected(fmt::format("{}", nci.error()));
         }
 
-        if (nci_to_serving_cell_meas_config.find(nci.value()) == nci_to_serving_cell_meas_config.end()) {
-          return make_unexpected(fmt::format("No serving cell config found for nci={:#x}", nci.value()));
+        if (nci_to_serving_cell_meas_config.find(*nci) == nci_to_serving_cell_meas_config.end()) {
+          return make_unexpected(fmt::format("No serving cell config found for nci={:#x}", *nci));
         }
-        serving_cell_meas_config ncell_meas_cfg = nci_to_serving_cell_meas_config.at(nci.value());
-        pos_info.cell_measurements.emplace(nci.value(),
-                                           cell_measurement_positioning_info::cell_measurement_item_t{
-                                               nr_cell_global_id_t{ncell_meas_cfg.plmn, nci.value()},
-                                               ncell_meas_cfg.ssb_arfcn.value(),
-                                               neigh_meas_result});
+        serving_cell_meas_config ncell_meas_cfg = nci_to_serving_cell_meas_config.at(*nci);
+        pos_info.cell_measurements.emplace(
+            *nci,
+            cell_measurement_positioning_info::cell_measurement_item_t{
+                nr_cell_global_id_t{ncell_meas_cfg.plmn, *nci}, *ncell_meas_cfg.ssb_arfcn, neigh_meas_result});
 
         // TODO: Configure rs_idx_results and replace hardcoded values.
-        rrc_meas_result_nr& meas_res = pos_info.cell_measurements.at(nci.value()).meas_result;
+        rrc_meas_result_nr& meas_res = pos_info.cell_measurements.at(*nci).meas_result;
 
         rrc_meas_result_nr::rs_idx_results_ rs_idx_results;
         if (meas_res.cell_results.results_ssb_cell.has_value()) {
@@ -924,7 +918,7 @@ static expected<cell_measurement_positioning_info, std::string> generate_measure
 
 void cell_meas_manager::store_measurement_results(cu_cp_ue_index_t ue_index, const rrc_meas_results& meas_results)
 {
-  if (ue_mng.find_ue(ue_index) == nullptr) {
+  if (!ue_mng.find_ue(ue_index)) {
     logger.info("ue={}: Not storing positioning measurement. Cause: UE not found", ue_index);
   }
 

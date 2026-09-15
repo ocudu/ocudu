@@ -7,7 +7,6 @@
 
 #include "cu_up_processor.h"
 #include "cu_up_processor_config.h"
-#include "ocudu/e1ap/cu_cp/e1ap_cu_cp.h"
 
 namespace ocudu::ocucp {
 
@@ -53,7 +52,7 @@ public:
 private:
   class e1ap_cu_up_processor_adapter;
 
-  // E1AP senders.
+  /// E1AP senders.
 
   /// Create and transmit the GNB-CU-UP E1 Setup response message.
   void send_cu_up_e1_setup_response();
@@ -72,7 +71,7 @@ private:
   // E1AP to CU-UP processor adapter.
   std::unique_ptr<e1ap_cu_up_processor_notifier> e1ap_ev_notifier;
 
-  // Components.
+  /// Components.
   std::unique_ptr<e1ap_cu_cp> e1ap;
 };
 

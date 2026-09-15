@@ -6,7 +6,6 @@
 #pragma once
 
 #include "../ue_manager/ue_manager_impl.h"
-#include "ocudu/ran/plmn_identity.h"
 #include <future>
 
 namespace ocudu {

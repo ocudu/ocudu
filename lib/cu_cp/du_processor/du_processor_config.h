@@ -6,12 +6,17 @@
 #pragma once
 
 #include "../cu_cp_controller/node_connection_notifier.h"
-#include "du_configuration_handler.h"
 #include "ocudu/cu_cp/cu_cp_ref_time_report_notifier.h"
 #include "ocudu/f1ap/cu_cp/f1ap_configuration.h"
 #include "ocudu/f1ap/f1ap_message_notifier.h"
 
-namespace ocudu::ocucp {
+namespace ocudu {
+
+class async_task_scheduler;
+
+namespace ocucp {
+
+class ue_manager;
 
 /// DU processor configuration.
 struct du_processor_config {
@@ -44,4 +49,5 @@ struct du_processor_dependencies {
   ocudulog::basic_logger&                   logger;
 };
 
-} // namespace ocudu::ocucp
+} // namespace ocucp
+} // namespace ocudu

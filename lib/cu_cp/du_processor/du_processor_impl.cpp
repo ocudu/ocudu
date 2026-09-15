@@ -4,17 +4,10 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "du_processor_impl.h"
-#include "ocudu/adt/expected.h"
-#include "ocudu/adt/format.h"
-#include "ocudu/cu_cp/cu_cp_ref_time_report_notifier.h"
 #include "ocudu/f1ap/cu_cp/f1ap_cu_factory.h"
-#include "ocudu/ran/cause/f1ap_cause.h"
 #include "ocudu/ran/cause/f1ap_cause_converters.h"
-#include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/rrc/rrc_du_factory.h"
-#include "ocudu/support/async/coroutine.h"
 #include "ocudu/support/cpu_architecture_info.h"
-#include <algorithm>
 
 using namespace ocudu;
 using namespace ocucp;
@@ -23,7 +16,7 @@ class du_processor_impl::f1ap_du_processor_adapter : public f1ap_du_processor_no
 {
 public:
   f1ap_du_processor_adapter(du_processor_impl& parent_, async_task_scheduler& common_task_sched_) :
-    parent(parent_), common_task_sched(&common_task_sched_)
+    parent(parent_), common_task_sched(common_task_sched_)
   {
   }
 
@@ -59,7 +52,7 @@ public:
   void on_access_success(const f1ap_access_success& msg) override { parent.handle_access_success(msg); }
 
   // See interface for documentation.
-  bool schedule_async_task(async_task<void> task) override { return common_task_sched->schedule(std::move(task)); }
+  bool schedule_async_task(async_task<void> task) override { return common_task_sched.schedule(std::move(task)); }
 
   // See interface for documentation.
   async_task<void> on_transaction_info_loss(const ue_transaction_info_loss_event& ev) override
@@ -85,7 +78,7 @@ public:
 
     cu_cp_ref_time_report_notifier& notifier = parent.ref_time_report_notifier;
     const du_configuration_context* du_ctx   = parent.get_context();
-    if (du_ctx == nullptr) {
+    if (!du_ctx) {
       return;
     }
     std::vector<nr_cell_global_id_t> served_cells;
@@ -99,7 +92,7 @@ public:
 
 private:
   du_processor_impl&    parent;
-  async_task_scheduler* common_task_sched = nullptr;
+  async_task_scheduler& common_task_sched;
 };
 
 // du_processor_impl
@@ -174,12 +167,16 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
 
   // Update cell config in cell measurement manager.
   for (const auto& [cgi, cell_info] : cell_info_db) {
-    serving_cell_meas_config meas_cfg;
-    meas_cfg.nci               = cgi.nci;
-    meas_cfg.gnb_id_bit_length = cfg.gnb_id.bit_length;
-    meas_cfg.plmn              = cgi.plmn_id;
-    meas_cfg.pci               = cell_info.nr_pci;
-    meas_cfg.band              = cell_info.band;
+    // Fill cell meas config.
+    serving_cell_meas_config meas_cfg{.nci               = cgi.nci,
+                                      .gnb_id_bit_length = cfg.gnb_id.bit_length,
+                                      .plmn              = cgi.plmn_id,
+                                      .tac               = std::nullopt,
+                                      .pci               = cell_info.nr_pci,
+                                      .band              = cell_info.band,
+                                      .ssb_mtc           = std::nullopt,
+                                      .ssb_arfcn         = std::nullopt,
+                                      .ssb_scs           = std::nullopt};
     if (!cell_info.meas_timings.empty() && cell_info.meas_timings.begin()->freq_and_timing.has_value()) {
       // TODO: which meas timing to use when multiple are present?
       const auto& freq_timing = cell_info.meas_timings.begin()->freq_and_timing.value();
@@ -464,26 +461,29 @@ bool du_processor_impl::create_rrc_ue(cu_cp_ue&                              ue,
   const du_cell_configuration& cell = *du_cfg_hdlr->get_context().find_cell(cgi);
 
   // Create new RRC UE entity.
-  rrc_ue_creation_message rrc_ue_create_msg{};
-  rrc_ue_create_msg.ue_index              = ue_index;
-  rrc_ue_create_msg.c_rnti                = c_rnti;
-  rrc_ue_create_msg.cell.cgi              = cgi;
-  rrc_ue_create_msg.cell.tac              = cell.tac;
-  rrc_ue_create_msg.cell.tac_list         = cell.tac_list;
-  rrc_ue_create_msg.cell.pci              = cell.pci;
-  rrc_ue_create_msg.cell.bands            = cell.bands;
-  rrc_ue_create_msg.cell.location_mapping = cell.location_mapping;
-  rrc_ue_create_msg.f1ap_pdu_notifier     = &rrc_ue_f1ap_adapters.at(ue_index);
-  rrc_ue_create_msg.ngap_notifier         = &ue.get_rrc_ue_ngap_adapter();
-  rrc_ue_create_msg.rrc_ue_cu_cp_notifier = &ue.get_rrc_ue_context_update_notifier();
-  rrc_ue_create_msg.measurement_notifier  = &ue.get_rrc_ue_measurement_notifier();
-  rrc_ue_create_msg.cu_cp_ue_notifier     = &ue.get_rrc_ue_cu_cp_ue_notifier();
-  rrc_ue_create_msg.pdcp_manager          = &srb_pdcp_contexts.at(ue_index);
-  rrc_ue_create_msg.du_to_cu_container    = std::move(du_to_cu_rrc_container);
-  rrc_ue_create_msg.rrc_context           = std::move(rrc_context);
-  rrc_ue_create_msg.remote_resume_context = std::move(remote_resume_context);
-  auto* rrc_ue                            = rrc->add_ue(rrc_ue_create_msg);
-  if (rrc_ue == nullptr) {
+  rrc_ue_creation_message rrc_ue_create_msg{.ue_index              = ue_index,
+                                            .c_rnti                = c_rnti,
+                                            .cell                  = rrc_cell_context{.cgi                = cgi,
+                                                                                      .tac                = cell.tac,
+                                                                                      .tac_list           = cell.tac_list,
+                                                                                      .pci                = cell.pci,
+                                                                                      .ssb_arfcn          = {},
+                                                                                      .bands              = cell.bands,
+                                                                                      .timers             = {},
+                                                                                      .plmn_identity_list = {},
+                                                                                      .location_mapping   = cell.location_mapping},
+                                            .f1ap_pdu_notifier     = &rrc_ue_f1ap_adapters.at(ue_index),
+                                            .ngap_notifier         = &ue.get_rrc_ue_ngap_adapter(),
+                                            .rrc_ue_cu_cp_notifier = &ue.get_rrc_ue_context_update_notifier(),
+                                            .measurement_notifier  = &ue.get_rrc_ue_measurement_notifier(),
+                                            .cu_cp_ue_notifier     = &ue.get_rrc_ue_cu_cp_ue_notifier(),
+                                            .pdcp_manager          = &srb_pdcp_contexts.at(ue_index),
+                                            .du_to_cu_container    = std::move(du_to_cu_rrc_container),
+                                            .rrc_context           = std::move(rrc_context),
+                                            .remote_resume_context = std::move(remote_resume_context)};
+
+  auto* rrc_ue = rrc->add_ue(rrc_ue_create_msg);
+  if (!rrc_ue) {
     logger.warning("Could not create RRC UE");
     pdcp_removal.remove_ue_context(ue_index);
     remove_ue_context(ue_index);
@@ -519,7 +519,7 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
     release_request.cause    = ngap_cause_radio_network_t::radio_res_not_available;
 
     cu_cp_ue* ue = ue_mng.find_ue(ue_index);
-    if (ue == nullptr) {
+    if (!ue) {
       logger.warning("ue={}: UE to release not found", ue_index);
       return;
     }
@@ -542,7 +542,7 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
   std::optional<rrc_resume_context_t> remote_resume_context;
 
   // Check if this is a RRC Resume request for an existing UE.
-  if (not req.rrc_container.empty()) {
+  if (!req.rrc_container.empty()) {
     std::optional<rrc_resume_context_t> resume_context = rrc->get_rrc_resume_context(req.rrc_container.copy());
     if (!resume_context.has_value()) {
       logger.warning("ue={}: Could not extract RRC Resume context from UL CCCH Message", req.ue_index);
@@ -553,16 +553,14 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
 
     if (resume_context->is_resume && resume_context->rrc_resume_id.has_value()) {
       cu_cp_ue_index_t resume_ue_index;
-      if (std::holds_alternative<short_i_rnti_t>(resume_context->rrc_resume_id.value())) {
-        resume_ue_index = ue_mng.get_ue_index(std::get<short_i_rnti_t>(resume_context->rrc_resume_id.value()));
-        logger.debug("ue={}: RRC Resume Request with {}",
-                     resume_ue_index,
-                     std::get<short_i_rnti_t>(resume_context->rrc_resume_id.value()));
+      if (const auto* full_i_rnti = std::get_if<full_i_rnti_t>(&(*resume_context->rrc_resume_id))) {
+        resume_ue_index = ue_mng.get_ue_index(*full_i_rnti);
+        logger.debug("ue={}: RRC Resume Request with {}", resume_ue_index, *full_i_rnti);
+      } else if (const auto* short_i_rnti = std::get_if<short_i_rnti_t>(&(*resume_context->rrc_resume_id))) {
+        resume_ue_index = ue_mng.get_ue_index(*short_i_rnti);
+        logger.debug("ue={}: RRC Resume Request with {}", resume_ue_index, *short_i_rnti);
       } else {
-        resume_ue_index = ue_mng.get_ue_index(std::get<full_i_rnti_t>(resume_context->rrc_resume_id.value()));
-        logger.debug("ue={}: RRC Resume Request with {}",
-                     resume_ue_index,
-                     std::get<full_i_rnti_t>(resume_context->rrc_resume_id.value()));
+        resume_ue_index = cu_cp_ue_index_t::invalid;
       }
 
       if (resume_ue_index == cu_cp_ue_index_t::invalid) {
@@ -589,7 +587,7 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
     }
   }
 
-  if (ue == nullptr) {
+  if (!ue) {
     // RRC Resume not requested or failed - update UE context.
 
     // Check that UE can be served by this CU.
@@ -607,7 +605,7 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
 
     // Check that creation message is valid.
     const du_cell_configuration* pcell = du_cfg_hdlr->get_context().find_cell(req.cgi);
-    if (pcell == nullptr) {
+    if (!pcell) {
       logger.warning("ue={} c-rnti={}: Could not find cell with nci={}", req.ue_index, req.c_rnti, req.cgi.nci);
       // Schedule UE context release and return error response.
       release_ue(req.ue_index);
@@ -627,13 +625,13 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
   }
 
   // If this is not a RRCResume, create an RRC UE. If the DU-to-CU-RRC-Container is empty, the UE will be rejected.
-  if (not is_resume_request) {
-    if (ue == nullptr) {
+  if (!is_resume_request) {
+    if (!ue) {
       logger.warning("ue={}: Could not find UE after updating context", req.ue_index);
       return make_unexpected(default_error_t{});
     }
 
-    if (not create_rrc_ue(
+    if (!create_rrc_ue(
             *ue, req.c_rnti, req.cgi, req.du_to_cu_rrc_container.copy(), req.prev_context, remote_resume_context)) {
       logger.warning("ue={}: Could not create RRC UE object", ue->get_ue_index());
       // Schedule UE context release and return error response.
@@ -646,10 +644,11 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
   logger.info(
       "ue={} c-rnti={}: UE created{}", ue->get_ue_index(), req.c_rnti, is_resume_request ? " (RRC Resume)" : "");
 
-  return ue_rrc_context_creation_response{ue->get_ue_index(),
-                                          &f1ap_rrc_ccch_adapters.at(ue->get_ue_index()),
-                                          &f1ap_pdcp_dcch_adapters.at(ue->get_ue_index()).get_srb1_notifier(),
-                                          &f1ap_pdcp_dcch_adapters.at(ue->get_ue_index()).get_srb2_notifier()};
+  return ue_rrc_context_creation_response{
+      .ue_index           = ue->get_ue_index(),
+      .f1ap_srb0_notifier = &f1ap_rrc_ccch_adapters.at(ue->get_ue_index()),
+      .f1ap_srb1_notifier = &f1ap_pdcp_dcch_adapters.at(ue->get_ue_index()).get_srb1_notifier(),
+      .f1ap_srb2_notifier = &f1ap_pdcp_dcch_adapters.at(ue->get_ue_index()).get_srb2_notifier()};
 }
 
 void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request)
@@ -657,7 +656,7 @@ void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1a
   ocudu_assert(request.ue_index != cu_cp_ue_index_t::invalid, "Invalid UE index", request.ue_index);
 
   cu_cp_ue* ue = ue_mng.find_du_ue(request.ue_index);
-  if (ue == nullptr) {
+  if (!ue) {
     logger.warning("ue={}: Dropping DU initiated UE context release request. UE does not exist", request.ue_index);
     return;
   }
@@ -666,7 +665,7 @@ void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1a
 
   // The DU requested a UE release, so we cancel all ongoing RRC transactions for the UE.
   auto* rrc_ue = ue->get_rrc_ue();
-  if (rrc_ue == nullptr) {
+  if (!rrc_ue) {
     logger.warning("ue={}: Dropping DU initiated UE context release request. RRC UE does not exist", request.ue_index);
     return;
   }
@@ -691,14 +690,13 @@ void du_processor_impl::handle_access_success(const f1ap_access_success& msg)
                msg.cgi.nci);
 
   cu_cp_ue* ue = ue_mng.find_du_ue(msg.ue_index);
-  if (ue == nullptr) {
+  if (!ue) {
     logger.warning("ue={}: Dropping Access Success notification. UE does not exist", msg.ue_index);
     return;
   }
 
-  cu_cp_access_success_indication ind;
-  ind.ue_index = msg.ue_index;
-  ind.cgi      = msg.cgi;
+  cu_cp_access_success_indication ind{
+      .ue_index = msg.ue_index, .source_ue_index = cu_cp_ue_index_t::invalid, .cgi = msg.cgi};
 
   // Resolve source UE via CHO backlink so the caller can schedule the source routine on the source UE's scheduler.
   if (ue->get_cho_context().has_value() && ue->get_cho_context()->role == cu_cp_ue_cho_context::role_t::target &&
@@ -707,7 +705,7 @@ void du_processor_impl::handle_access_success(const f1ap_access_success& msg)
   }
 
   cu_cp_ue* source_ue = ue_mng.find_du_ue(ind.source_ue_index);
-  if (source_ue == nullptr) {
+  if (!source_ue) {
     // For inter-CU CHO the source UE lives on a remote CU-CP; Access Success is not needed locally since
     // the target execution routine awaits RRCReconfigurationComplete instead.
     if (ind.source_ue_index == cu_cp_ue_index_t::invalid) {
@@ -761,10 +759,10 @@ du_processor_impl::handle_configuration_update(const f1ap_gnb_cu_configuration_u
 
 std::optional<nr_cell_global_id_t> du_processor_impl::get_cgi(pci_t pci)
 {
-  const du_cell_configuration* cell = du_cfg_hdlr->get_context().find_cell(pci);
-  if (cell != nullptr) {
+  if (const du_cell_configuration* cell = du_cfg_hdlr->get_context().find_cell(pci); cell) {
     return cell->cgi;
   }
+
   return std::nullopt;
 }
 

@@ -5,8 +5,6 @@
 
 #include "du_processor_factory.h"
 #include "du_processor_impl.h"
-#include "ocudu/adt/format.h"
-#include "ocudu/support/async/async_task_scheduler.h"
 
 /// Notice this would be the only place were we include concrete class implementation files.
 

@@ -5,9 +5,7 @@
 
 #include "du_connection_manager.h"
 #include "../du_processor/du_processor_repository.h"
-#include "ocudu/adt/format.h"
 #include "ocudu/f1ap/f1ap_message.h"
-#include <thread>
 
 using namespace ocudu;
 using namespace ocucp;

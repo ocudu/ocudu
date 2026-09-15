@@ -59,7 +59,16 @@ cu_cp_ue_index_t ue_manager::add_ue(cu_cp_du_index_t du_index)
   ues.emplace(
       std::piecewise_construct,
       std::forward_as_tuple(ue_index),
-      std::forward_as_tuple(ue_index, du_index, timers, cu_cp_executor, up_config, sec_config, std::move(ue_sched)));
+      std::forward_as_tuple(
+          cu_cp_ue_configuration{.ue_index    = ue_index,
+                                 .du_index    = du_index,
+                                 .up_cfg      = up_config,
+                                 .sec_cfg     = sec_config,
+                                 .du_id       = std::nullopt,
+                                 .pci         = std::nullopt,
+                                 .c_rnti      = std::nullopt,
+                                 .pcell_index = std::nullopt},
+          cu_cp_ue_dependencies{.timers = timers, .task_exec = cu_cp_executor, .task_sched = std::move(ue_sched)}));
 
   logger.info("ue={} du_index={}: Created new CU-CP UE", ue_index, du_index);
 
@@ -333,13 +342,12 @@ std::optional<full_i_rnti_t> ue_manager::get_full_i_rnti(cu_cp_ue_index_t ue_ind
     return std::nullopt;
   }
 
-  auto& ue = ues.at(ue_index);
-  if (ue.get_rrc_ue()->get_rrc_state() != rrc_state::inactive) {
+  if (auto& ue = ues.at(ue_index); ue.get_rrc_ue()->get_rrc_state() != rrc_state::inactive) {
     logger.warning("ue={}: Get I-RNTIs called for active UE", ue_index);
     return std::nullopt;
   }
 
-  for (auto it = full_i_rnti_to_ue_index.begin(); it != full_i_rnti_to_ue_index.end();) {
+  for (const auto it = full_i_rnti_to_ue_index.begin(); it != full_i_rnti_to_ue_index.end();) {
     if (it->second == ue_index) {
       return it->first;
     }
@@ -374,7 +382,7 @@ cu_cp_ue* ue_manager::find_du_ue(cu_cp_ue_index_t ue_index)
   return nullptr;
 }
 
-size_t ue_manager::get_nof_du_ues(cu_cp_du_index_t du_index)
+size_t ue_manager::get_nof_du_ues(cu_cp_du_index_t du_index) const
 {
   unsigned ue_count = 0;
   // Count UEs connected to the DU.
@@ -404,7 +412,7 @@ std::vector<cu_cp_metrics_report::ue_info> ue_manager::handle_ue_metrics_report_
     ue_report.du_id = ue.second.get_du_id();
     ue_report.pci   = ue.second.get_pci();
 
-    if (ue.second.get_rrc_ue() == nullptr) {
+    if (!ue.second.get_rrc_ue()) {
       ue_report.rrc_connection_state = rrc_state::idle;
     } else {
       ue_report.rrc_connection_state = ue.second.get_rrc_ue()->get_rrc_ue_control_message_handler().get_rrc_state();
@@ -413,8 +421,6 @@ std::vector<cu_cp_metrics_report::ue_info> ue_manager::handle_ue_metrics_report_
 
   return report;
 }
-
-// Private functions.
 
 cu_cp_ue_index_t ue_manager::allocate_ue_index()
 {
@@ -505,7 +511,7 @@ std::optional<i_rntis_t> ue_manager::allocate_i_rntis()
     // Increase the Short-I-RNTI stored in next_i_rntis.
     increase_short_i_rnti(next_i_rntis.short_i_rnti);
 
-    return i_rntis_t{next_short.value(), next_full.value()};
+    return i_rntis_t{*next_short, *next_full};
   }
 
   return std::nullopt;

@@ -10,9 +10,9 @@ using namespace ocucp;
 
 xnap_task_scheduler::xnap_task_scheduler(uint16_t max_nof_xnc_peers, ocudulog::basic_logger& logger_) : logger(logger_)
 {
-  const size_t number_of_pending_xnc_procedures = 16;
   for (size_t i = 0; i < max_nof_xnc_peers; ++i) {
-    xnc_ctrl_loop.emplace(uint_to_xnc_peer_index(i), number_of_pending_xnc_procedures);
+    static constexpr size_t NUMBER_OF_PENDING_XNC_PROCEDURES = 16;
+    xnc_ctrl_loop.emplace(uint_to_xnc_peer_index(i), NUMBER_OF_PENDING_XNC_PROCEDURES);
   }
 }
 
@@ -24,8 +24,7 @@ void xnap_task_scheduler::handle_xnc_async_task(xnc_peer_index_t xnc_index, asyn
 
 void xnap_task_scheduler::clear_pending_tasks(xnc_peer_index_t xnc_index)
 {
-  auto it = xnc_ctrl_loop.find(xnc_index);
-  if (it != xnc_ctrl_loop.end()) {
+  if (const auto it = xnc_ctrl_loop.find(xnc_index); it != xnc_ctrl_loop.end()) {
     it->second.clear_pending_tasks();
   }
 }

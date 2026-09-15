@@ -9,6 +9,7 @@
 #include "../paging/paging_message_handler.h"
 #include "../task_schedulers/ngap_task_scheduler.h"
 #include "../ue_manager/cu_cp_ue_impl_interface.h"
+#include "../ue_security_manager/ue_security_manager_impl.h"
 #include "ocudu/cu_cp/ue_task_scheduler.h"
 #include "ocudu/ngap/ngap.h"
 #include "ocudu/ran/plmn_identity.h"

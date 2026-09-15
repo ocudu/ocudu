@@ -18,12 +18,7 @@ ngap_handover_preparation_request ocudu::ocucp::generate_ngap_handover_preparati
     nr_cell_identity                                          target_nci,
     const std::map<pdu_session_id_t, up_pdu_session_context>& pdu_sessions)
 {
-  ngap_handover_preparation_request request;
-  request.ue_index         = source_ue_index;
-  request.target_id.gnb_id = target_gnb_id;
-  request.target_id.plmn   = target_plmn;
-  request.target_id.tac    = target_tac;
-  request.nci              = target_nci;
+  std::map<pdu_session_id_t, std::vector<cu_cp_drbs_to_qos_flows_map_item>> request_pdu_sessions;
 
   // Create a map of all PDU sessions and their associated QoS flows, grouped by this source's own DRB-to-QoS-flow
   // mapping, so the target can be given a chance to preserve the same DRB numbering (TS 38.413 Section 9.3.1.29).
@@ -33,13 +28,23 @@ ngap_handover_preparation_request ocudu::ocucp::generate_ngap_handover_preparati
       cu_cp_drbs_to_qos_flows_map_item drb_item;
       drb_item.drb_id = drb.first;
       for (const auto& qos_flow : drb.second.qos_flows) {
-        drb_item.associated_qos_flow_list.push_back(cu_cp_associated_qos_flow{qos_flow.first, std::nullopt});
+        drb_item.associated_qos_flow_list.push_back(
+            cu_cp_associated_qos_flow{.qos_flow_id = qos_flow.first, .qos_flow_map_ind = std::nullopt});
       }
       drbs_to_qos_flows_map.push_back(drb_item);
     }
-    request.pdu_sessions.insert({pdu_session.first, drbs_to_qos_flows_map});
+    request_pdu_sessions.insert({pdu_session.first, drbs_to_qos_flows_map});
   }
-  return request;
+
+  return {.ue_index = source_ue_index,
+          .target_id =
+              target_ran_node_id_t{
+                  .gnb_id = target_gnb_id,
+                  .plmn   = target_plmn,
+                  .tac    = target_tac,
+              },
+          .nci          = target_nci,
+          .pdu_sessions = std::move(request_pdu_sessions)};
 }
 
 xnap_handover_request
@@ -54,15 +59,8 @@ ocudu::ocucp::generate_xnap_handover_request(cu_cp_ue_index_t                   
                                              const byte_buffer& rrc_handover_preparation_information,
                                              const std::optional<location_report_request>& location_report_cfg)
 {
-  xnap_handover_request request;
-  request.ue_index                                    = source_ue_index;
-  request.cause                                       = xnap_cause_radio_network_t::ho_desirable_for_radio_reasons;
-  request.nr_cgi                                      = target_nr_cgi;
-  request.guami                                       = guami;
-  request.ue_context_info_ho_request.amf_ue_id        = to_underlying(source_amf_ue_id);
-  request.ue_context_info_ho_request.amf_addr         = amf_addr;
-  request.ue_context_info_ho_request.security_context = security_context;
-  request.ue_context_info_ho_request.ue_ambr          = ue_ambr;
+  slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item> pdu_session_res_to_be_setup_list;
+
   for (const auto& [pid, pdu_session_ctxt] : pdu_sessions) {
     cu_cp_pdu_session_res_setup_item pdu_session_item;
     pdu_session_item.pdu_session_id = pid;
@@ -86,24 +84,37 @@ ocudu::ocucp::generate_xnap_handover_request(cu_cp_ue_index_t                   
       drbs_to_qos_flows_map_item.drb_id = drb_id;
       for (const auto& [qfi, qos_flow] : drb_ctxt.qos_flows) {
         drbs_to_qos_flows_map_item.associated_qos_flow_list.push_back(cu_cp_associated_qos_flow{qfi, std::nullopt});
-        qos_flow_setup_request_item qos_flow_setup_item = {};
-        // Set QFI.
-        qos_flow_setup_item.qos_flow_id = qfi;
-        // Fill QoS flow level QoS parameters.
-        qos_flow_setup_item.qos_flow_level_qos_params = qos_flow.qos_params;
-        // Propose the QoS flow for DL data forwarding, leaving it to the target to decide which flows it accepts and
-        // over which forwarding tunnels (TS 38.300 section 9.2.3.2.3).
-        qos_flow_setup_item.dl_forwarding = true;
+        qos_flow_setup_request_item qos_flow_setup_item = {
+            // Set QFI.
+            .qos_flow_id = qfi,
+            // Fill QoS flow level QoS parameters.
+            .qos_flow_level_qos_params = qos_flow.qos_params,
+            .erab_id                   = std::nullopt,
+            // Propose the QoS flow for DL data forwarding, leaving it to the target to decide which flows it accepts
+            // and over which forwarding tunnels (TS 38.300 section 9.2.3.2.3).
+            .dl_forwarding = true};
 
         pdu_session_item.qos_flow_setup_request_items.emplace(qfi, qos_flow_setup_item);
       }
       pdu_session_item.source_drbs_to_qos_flows_map_list.push_back(drbs_to_qos_flows_map_item);
     }
 
-    request.ue_context_info_ho_request.pdu_session_res_to_be_setup_list.emplace(pid, pdu_session_item);
+    pdu_session_res_to_be_setup_list.emplace(pid, pdu_session_item);
   }
-  request.ue_context_info_ho_request.rrc_handover_preparation_information = rrc_handover_preparation_information.copy();
-  request.ue_context_info_ho_request.location_report_info                 = location_report_cfg;
 
-  return request;
+  return {.ue_index = source_ue_index,
+          .cause    = xnap_cause_radio_network_t::ho_desirable_for_radio_reasons,
+          .nr_cgi   = target_nr_cgi,
+          .guami    = guami,
+          .ue_context_info_ho_request =
+              xnap_ue_context_info_ho_request{.amf_ue_id        = static_cast<unsigned>(source_amf_ue_id),
+                                              .amf_addr         = amf_addr,
+                                              .security_context = security_context,
+                                              .ue_ambr          = ue_ambr,
+                                              .pdu_session_res_to_be_setup_list = pdu_session_res_to_be_setup_list,
+                                              .rrc_handover_preparation_information =
+                                                  rrc_handover_preparation_information.copy(),
+                                              .location_report_info = location_report_cfg},
+          .is_conditional_handover = false,
+          .cho_timeout             = std::chrono::milliseconds{0}};
 }

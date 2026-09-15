@@ -4,10 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "cu_up_processor_repository.h"
-#include "cu_up_processor_config.h"
 #include "cu_up_processor_factory.h"
-#include "ocudu/adt/format.h"
-#include "ocudu/ran/cu_cp_types.h"
 
 using namespace ocudu;
 using namespace ocucp;
@@ -35,7 +32,7 @@ cu_cp_cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_m
     return cu_cp_cu_up_index_t::invalid;
   }
 
-  // Create CU-UP object
+  // Create CU-UP object.
   auto it = cu_up_db.insert(std::make_pair(cu_up_index, cu_up_context{}));
   ocudu_assert(it.second, "Unable to insert CU-UP in map");
   cu_up_context& cu_up_ctxt       = it.first->second;
@@ -51,7 +48,7 @@ cu_cp_cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_m
                                                                              .common_task_sched = common_task_sched};
   std::unique_ptr<cu_up_processor> cu_up      = create_cu_up_processor(cu_up_cfg, cu_up_deps);
 
-  ocudu_assert(cu_up != nullptr, "Failed to create CU-UP processor");
+  ocudu_assert(cu_up, "Failed to create CU-UP processor");
   cu_up_ctxt.processor = std::move(cu_up);
 
   return cu_up_index;
@@ -78,7 +75,7 @@ async_task<void> cu_up_processor_repository::remove_cu_up(cu_cp_cu_up_index_t cu
   return launch_async([this, cu_up_index](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
 
-    // Remove CU-UP
+    // Remove CU-UP.
     if (cu_up_db.find(cu_up_index) == cu_up_db.end()) {
       logger.debug("Remove CU-UP called for non-existent cu_up_index={}", cu_up_index);
       CORO_EARLY_RETURN();

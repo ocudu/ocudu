@@ -6,13 +6,7 @@
 #pragma once
 
 #include "../adapters/du_processor_adapters.h"
-#include "../cu_cp_impl_interface.h"
-#include "../ue_manager/ue_manager_impl.h"
 #include "du_configuration_manager.h"
-#include "du_metrics_handler.h"
-#include "ocudu/ran/cu_cp_types.h"
-#include "ocudu/support/async/async_task.h"
-#include "ocudu/support/async/async_task_scheduler.h"
 
 namespace ocudu::ocucp {
 
@@ -119,7 +113,7 @@ public:
 private:
   /// Holds the DU context.
   struct du_context {
-    // CU-CP handler of DU processor events.
+    /// CU-CP handler of DU processor events.
     du_processor_cu_cp_adapter du_to_cu_cp_notifier;
 
     /// DU processor.

@@ -8,9 +8,7 @@
 #include "ocudu/adt/slotted_array.h"
 #include "ocudu/nrppa/nrppa.h"
 #include "ocudu/ran/meas_types.h"
-#include "ocudu/ran/pci.h"
 #include "ocudu/support/enum_utils.h"
-#include <map>
 
 namespace ocudu::ocucp {
 
@@ -33,7 +31,7 @@ public:
       return meas_id_t::invalid;
     }
 
-    auto new_meas_id = (meas_id_t)meas_ids.find_first_empty();
+    auto new_meas_id = static_cast<meas_id_t>(meas_ids.find_first_empty());
     if (new_meas_id == meas_id_t::max) {
       return meas_id_t::invalid;
     }
@@ -59,7 +57,7 @@ public:
       return meas_obj_id_t::invalid;
     }
 
-    auto new_meas_obj_id = (meas_obj_id_t)meas_obj_ids.find_first_empty();
+    auto new_meas_obj_id = static_cast<meas_obj_id_t>(meas_obj_ids.find_first_empty());
     if (new_meas_obj_id == meas_obj_id_t::max) {
       return meas_obj_id_t::invalid;
     }
@@ -77,8 +75,10 @@ public:
     meas_obj_ids.emplace(0);
   }
 
-  slotted_array<meas_id_t, MAX_NOF_MEAS>         meas_ids;     // 0 is reserved for invalid meas_id
-  slotted_array<meas_obj_id_t, MAX_NOF_MEAS_OBJ> meas_obj_ids; // 0 is reserved for invalid meas_obj_id
+  /// 0 is reserved for invalid meas_id.
+  slotted_array<meas_id_t, MAX_NOF_MEAS> meas_ids;
+  /// 0 is reserved for invalid meas_obj_id.
+  slotted_array<meas_obj_id_t, MAX_NOF_MEAS_OBJ> meas_obj_ids;
 
   std::map<meas_id_t, meas_context_t>              meas_id_to_meas_context;
   std::map<nr_cell_identity, meas_obj_id_t>        nci_to_meas_obj_id;

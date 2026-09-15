@@ -11,7 +11,6 @@
 #include "du_reported_cell.h"
 #include "ocudu/cu_cp/cell_meas_manager_config.h"
 #include "ocudu/f1ap/cu_cp/f1ap_cu.h"
-#include "ocudu/ran/nr_cgi.h"
 #include "ocudu/rrc/rrc_du.h"
 
 namespace ocudu::ocucp {
@@ -116,7 +115,7 @@ public:
 
   /// \brief Notifies about a successful RRC UE creation.
   /// \param[in] ue_index The index of the UE.
-  /// \param[in] rrc_ue_msg_handler The created RRC UE.
+  /// \param[in] rrc_ue The created RRC UE.
   virtual void on_rrc_ue_created(cu_cp_ue_index_t ue_index, rrc_ue_interface& rrc_ue) = 0;
 
   /// \brief Notify the CU-CP that the SIB1 for a given PCI of a DU is required.

@@ -17,6 +17,67 @@
 using namespace ocudu;
 using namespace ocucp;
 
+/// Creates the CU-CP CHO targets candidates.
+static std::vector<cu_cp_cho_target_candidate> create_targets(span<pci_t>              unique_target_pcis,
+                                                              cu_cp_ue_index_t         ue_index,
+                                                              du_processor_repository& du_db,
+                                                              cell_meas_manager&       cell_meas_mng,
+                                                              xnap_repository&         xnap_db,
+                                                              cu_cp_ue&                ue,
+                                                              ocudulog::basic_logger&  logger)
+{
+  std::vector<cu_cp_cho_target_candidate> targets;
+
+  for (pci_t target_pci : unique_target_pcis) {
+    if (cu_cp_du_index_t target_du = du_db.find_du(target_pci); target_du != cu_cp_du_index_t::invalid) {
+      // Intra-CU candidate: target cell served by a local DU.
+      std::optional<nr_cell_global_id_t> cgi =
+          du_db.get_du_processor(target_du).get_mobility_handler().get_cgi(target_pci);
+
+      if (!cgi.has_value()) {
+        logger.warning("ue={}: CHO candidate skipped. Could not find CGI for PCI {}", ue_index, target_pci);
+        continue;
+      }
+
+      // An intra-CU candidate is keyed when its target RRC UE is created, from that cell's own context, so no ARFCN
+      // here.
+      targets.push_back({target_pci, cgi.value(), target_du, std::nullopt, std::nullopt});
+    } else {
+      // Inter-CU candidate: try to find a remote CU-CP via Xn.
+      expected<std::pair<unsigned, nr_cell_identity>> nbr = cell_meas_mng.find_neighbour_nci(target_pci);
+
+      if (!nbr.has_value()) {
+        logger.warning("ue={}: CHO candidate skipped. PCI {} not found in neighbour NCI list", ue_index, target_pci);
+        continue;
+      }
+
+      gnb_id_t                        target_gnb_id = nbr->second.gnb_id(nbr->first);
+      std::optional<xnc_peer_index_t> xnc_index     = xnap_db.find_xnap_index(target_gnb_id);
+
+      if (!xnc_index.has_value()) {
+        logger.warning(
+            "ue={}: CHO candidate skipped. No Xn peer found for gNB-ID derived from PCI {}", ue_index, target_pci);
+        continue;
+      }
+
+      nr_cell_global_id_t             cgi{ue.get_ue_context().plmn, nbr->second};
+      std::optional<cell_meas_config> target_cell_cfg = cell_meas_mng.get_cell_config(nbr->second);
+
+      if (!target_cell_cfg.has_value() || !target_cell_cfg->serving_cell_cfg.ssb_arfcn.has_value()) {
+        logger.warning("ue={}: CHO candidate skipped. No SSB ARFCN configured for PCI {}, cannot derive its key",
+                       ue_index,
+                       target_pci);
+        continue;
+      }
+
+      targets.push_back(
+          {target_pci, cgi, cu_cp_du_index_t::invalid, xnc_index, target_cell_cfg->serving_cell_cfg.ssb_arfcn});
+    }
+  }
+
+  return targets;
+}
+
 mobility_manager::mobility_manager(const mobility_manager_config&       cfg_,
                                    const mobility_manager_dependencies& dependencies) :
   cfg(cfg_),
@@ -42,7 +103,7 @@ bool mobility_manager::trigger_handover(pci_t         source_pci,
     return false;
   }
   expected<std::pair<unsigned, nr_cell_identity>> target = cell_meas_mng.find_neighbour_nci(target_pci);
-  if (not target) {
+  if (!target) {
     logger.warning("Could not trigger handover, unknown target cell. pci={}", target_pci);
     return false;
   }
@@ -75,12 +136,12 @@ void mobility_manager::trigger_auto_conditional_handover(cu_cp_ue_index_t ue_ind
   }
 
   cu_cp_ue* u = ue_mng.find_du_ue(ue_index);
-  if (u == nullptr) {
+  if (!u) {
     logger.debug("ue={}: Skipping auto-CHO: UE not found", ue_index);
     return;
   }
 
-  if (u->get_rrc_ue() == nullptr) {
+  if (!u->get_rrc_ue()) {
     logger.debug("ue={}: Skipping auto-CHO: RRC UE missing", ue_index);
     return;
   }
@@ -134,21 +195,21 @@ void mobility_manager::handle_conditional_handover(
   }
 
   // Find the UE context.
-  cu_cp_ue* u = ue_mng.find_du_ue(ue_index);
-  if (u == nullptr) {
+  cu_cp_ue* ue_context = ue_mng.find_du_ue(ue_index);
+  if (!ue_context) {
     logger.error("ue={}: Couldn't find UE for CHO preparation", ue_index);
     return;
   }
 
   // Check UE supports CHO before doing any candidate work.
-  if (u->get_rrc_ue() == nullptr || !u->get_rrc_ue()->is_conditional_handover_supported()) {
+  if (!ue_context->get_rrc_ue() || !ue_context->get_rrc_ue()->is_conditional_handover_supported()) {
     logger.warning("ue={}: UE does not support CHO (Rel-16); aborting preparation", ue_index);
     return;
   }
 
   std::vector<pci_t> requested_target_pcis;
   if (target_pcis.empty()) {
-    const nr_cell_identity serving_nci = u->get_rrc_ue()->get_cell_context().cgi.nci;
+    const nr_cell_identity serving_nci = ue_context->get_rrc_ue()->get_cell_context().cgi.nci;
     requested_target_pcis              = cell_meas_mng.get_neighbor_pcis(serving_nci);
     if (requested_target_pcis.empty()) {
       logger.warning(
@@ -170,6 +231,7 @@ void mobility_manager::handle_conditional_handover(
       unique_target_pcis.push_back(target_pci);
     }
   }
+
   if (unique_target_pcis.size() != requested_target_pcis.size()) {
     logger.warning("ue={}: CHO request contains duplicate target PCIs. Duplicates were ignored", ue_index);
   }
@@ -181,59 +243,22 @@ void mobility_manager::handle_conditional_handover(
   }
 
   // Validate all targets are intra-CU.
-  cu_cp_du_index_t source_du = u->get_du_index();
+  cu_cp_du_index_t source_du = ue_context->get_du_index();
   if (source_du == cu_cp_du_index_t::invalid) {
     logger.warning("ue={}: CHO preparation failed. Source DU index is invalid", ue_index);
     return;
   }
 
-  std::vector<cu_cp_cho_target_candidate> targets;
-  for (pci_t target_pci : unique_target_pcis) {
-    cu_cp_du_index_t target_du = du_db.find_du(target_pci);
-    if (target_du != cu_cp_du_index_t::invalid) {
-      // Intra-CU candidate: target cell served by a local DU.
-      std::optional<nr_cell_global_id_t> cgi =
-          du_db.get_du_processor(target_du).get_mobility_handler().get_cgi(target_pci);
-      if (!cgi.has_value()) {
-        logger.warning("ue={}: CHO candidate skipped. Could not find CGI for PCI {}", ue_index, target_pci);
-        continue;
-      }
-      // An intra-CU candidate is keyed when its target RRC UE is created, from that cell's own context, so no
-      // ARFCN here.
-      targets.push_back({target_pci, cgi.value(), target_du, std::nullopt, std::nullopt});
-    } else {
-      // Inter-CU candidate: try to find a remote CU-CP via Xn.
-      expected<std::pair<unsigned, nr_cell_identity>> nbr = cell_meas_mng.find_neighbour_nci(target_pci);
-      if (!nbr.has_value()) {
-        logger.warning("ue={}: CHO candidate skipped. PCI {} not found in neighbour NCI list", ue_index, target_pci);
-        continue;
-      }
-      gnb_id_t                        target_gnb_id = nbr->second.gnb_id(nbr->first);
-      std::optional<xnc_peer_index_t> xnc_index     = xnap_db.find_xnap_index(target_gnb_id);
-      if (!xnc_index.has_value()) {
-        logger.warning(
-            "ue={}: CHO candidate skipped. No Xn peer found for gNB-ID derived from PCI {}", ue_index, target_pci);
-        continue;
-      }
-      nr_cell_global_id_t             cgi{u->get_ue_context().plmn, nbr->second};
-      std::optional<cell_meas_config> target_cell_cfg = cell_meas_mng.get_cell_config(nbr->second);
-      if (!target_cell_cfg.has_value() || !target_cell_cfg->serving_cell_cfg.ssb_arfcn.has_value()) {
-        logger.warning("ue={}: CHO candidate skipped. No SSB ARFCN configured for PCI {}, cannot derive its key",
-                       ue_index,
-                       target_pci);
-        continue;
-      }
-      targets.push_back(
-          {target_pci, cgi, cu_cp_du_index_t::invalid, xnc_index, target_cell_cfg->serving_cell_cfg.ssb_arfcn});
-    }
-  }
+  std::vector<cu_cp_cho_target_candidate> targets =
+      create_targets(unique_target_pcis, ue_index, du_db, cell_meas_mng, xnap_db, *ue_context, logger);
+
   if (targets.empty()) {
     logger.warning("ue={}: CHO preparation failed. No valid candidates after PCI lookup", ue_index);
     return;
   }
 
   // Check if CHO is already pending.
-  auto& cho_ctx = u->get_cho_context();
+  auto& cho_ctx = ue_context->get_cho_context();
   if (cho_ctx.has_value() && cho_ctx->state != cu_cp_ue_cho_context::state_t::idle) {
     logger.warning(
         "ue={}: CHO preparation failed. CHO already pending (state={})", ue_index, static_cast<int>(cho_ctx->state));
@@ -248,12 +273,11 @@ void mobility_manager::handle_conditional_handover(
 
   logger.info("ue={}: Starting CHO with {} candidate(s)", ue_index, targets.size());
 
-  cu_cp_intra_cu_cho_request cho_request{};
-  cho_request.source_ue_index   = ue_index;
-  cho_request.source_du_index   = source_du;
-  cho_request.targets           = std::move(targets);
-  cho_request.timeout           = timeout;
-  cho_request.t1_thres_override = t1_thres_override;
+  cu_cp_intra_cu_cho_request cho_request{.source_ue_index   = ue_index,
+                                         .source_du_index   = source_du,
+                                         .targets           = std::move(targets),
+                                         .timeout           = timeout,
+                                         .t1_thres_override = t1_thres_override};
 
   auto cho_trigger = [this, cho_request = std::move(cho_request), cho_response = cu_cp_intra_cu_cho_response{}](
                          coro_context<async_task<void>>& ctx) mutable {
@@ -265,7 +289,7 @@ void mobility_manager::handle_conditional_handover(
     CORO_RETURN();
   };
 
-  u->get_task_sched().schedule_async_task(launch_async(std::move(cho_trigger)));
+  ue_context->get_task_sched().schedule_async_task(launch_async(std::move(cho_trigger)));
 }
 
 void mobility_manager::handle_neighbor_better_than_spcell(cu_cp_ue_index_t     ue_index,
@@ -290,25 +314,28 @@ void mobility_manager::handle_handover(cu_cp_ue_index_t     ue_index,
                                        std::optional<tac_t> neighbor_tac)
 {
   // Find the UE context.
-  cu_cp_ue* u = ue_mng.find_du_ue(ue_index);
-  if (u == nullptr) {
+  cu_cp_ue* ue_context = ue_mng.find_du_ue(ue_index);
+
+  if (!ue_context) {
     logger.error("ue={}: Couldn't find UE", ue_index);
     return;
   }
-  cu_cp_ue_context& ue_ctxt = u->get_ue_context();
+
+  cu_cp_ue_context& ue_ctxt = ue_context->get_ue_context();
   if (ue_ctxt.reconfiguration_disabled) {
     logger.debug("ue={}: MeasurementReport ignored. Cause: UE cannot be reconfigured", ue_index);
     return;
   }
+
   if (neighbor_pci == INVALID_PCI) {
     logger.error("ue={}: Ignoring Handover Request. Cause: Invalid target PCI {} received", ue_index, neighbor_pci);
     return;
   }
 
-  // Try to find target DU. A PCI no local DU serves is either a cell this CU-CP owns but keeps
-  // administratively deactivated (the handover must be rejected — the cell is not available) or a
-  // genuinely foreign cell (an inter-CU handover is required). The reconfiguration guard is only set
-  // once a handover actually goes ahead, so a rejected target leaves the UE reconfigurable.
+  // Try to find target DU. A PCI no local DU serves is either a cell this CU-CP owns but keeps administratively
+  // deactivated (the handover must be rejected — the cell is not available) or a genuinely foreign cell (an inter-CU
+  // handover is required). The reconfiguration guard is only set once a handover actually goes ahead, so a rejected
+  // target leaves the UE reconfigurable.
   cu_cp_du_index_t target_du = du_db.find_du(neighbor_pci);
   if (target_du == cu_cp_du_index_t::invalid) {
     if (du_db.find_du_any_state(neighbor_pci) != cu_cp_du_index_t::invalid) {
@@ -317,11 +344,14 @@ void mobility_manager::handle_handover(cu_cp_ue_index_t     ue_index,
                      neighbor_pci);
       return;
     }
+
     logger.debug("ue={}: Requesting inter CU handover. No local DU/cell with pci={} found", ue_index, neighbor_pci);
+
     if (!neighbor_tac.has_value()) {
       logger.error("ue={}: Cannot trigger inter-CU handover. Target TAC is required but not set", ue_index);
       return;
     }
+
     // Disable new reconfigurations from now on (except for the Handover Command).
     ue_ctxt.reconfiguration_disabled = true;
     handle_inter_cu_handover(ue_index, neighbor_gnb_id, neighbor_plmn, neighbor_tac.value(), neighbor_nci);
@@ -352,20 +382,22 @@ void mobility_manager::handle_intra_cu_handover(cu_cp_ue_index_t source_ue_index
   // Lookup CGI at target DU.
   std::optional<nr_cell_global_id_t> cgi =
       du_db.get_du_processor(target_du_index).get_mobility_handler().get_cgi(neighbor_pci);
+
   if (!cgi.has_value()) {
     logger.warning(
         "ue={}: Couldn't retrieve CGI for pci={} at du_index={}", source_ue_index, neighbor_pci, target_du_index);
     return;
   }
 
-  cu_cp_intra_cu_handover_request request = {};
-  request.source_ue_index                 = source_ue_index;
-  request.target_pci                      = neighbor_pci;
-  request.cgi                             = cgi.value();
-  request.target_du_index                 = target_du_index;
+  cu_cp_intra_cu_handover_request request = {.source_ue_index = source_ue_index,
+                                             .target_du_index = target_du_index,
+                                             .cgi             = cgi.value(),
+                                             .target_pci      = neighbor_pci,
+                                             .cho_preparation = std::nullopt};
 
-  cu_cp_ue* u = ue_mng.find_du_ue(source_ue_index);
-  if (u == nullptr) {
+  cu_cp_ue* ue_context = ue_mng.find_du_ue(source_ue_index);
+
+  if (!ue_context) {
     logger.error("ue={}: Couldn't find UE", source_ue_index);
     return;
   }
@@ -377,7 +409,7 @@ void mobility_manager::handle_intra_cu_handover(cu_cp_ue_index_t source_ue_index
     CORO_AWAIT_VALUE(response, cu_cp_notifier.on_intra_cu_handover_required(request, source_du_index, target_du_index));
     CORO_RETURN();
   };
-  u->get_task_sched().schedule_async_task(launch_async(std::move(ho_trigger)));
+  ue_context->get_task_sched().schedule_async_task(launch_async(std::move(ho_trigger)));
 }
 
 void mobility_manager::handle_inter_cu_handover(cu_cp_ue_index_t source_ue_index,
@@ -386,32 +418,35 @@ void mobility_manager::handle_inter_cu_handover(cu_cp_ue_index_t source_ue_index
                                                 tac_t            target_tac,
                                                 nr_cell_identity target_nci)
 {
-  cu_cp_ue* ue = ue_mng.find_du_ue(source_ue_index);
-  if (ue == nullptr) {
+  cu_cp_ue* ue_context = ue_mng.find_du_ue(source_ue_index);
+
+  if (!ue_context) {
     logger.error("ue={}: Couldn't find UE", source_ue_index);
     return;
   }
 
-  cu_cp_ue_context& ue_ctxt = ue->get_ue_context();
+  cu_cp_ue_context& ue_ctxt = ue_context->get_ue_context();
 
   auto* ngap = ngap_db.find_ngap(ue_ctxt.plmn);
-  if (ngap == nullptr) {
+
+  if (!ngap) {
     logger.error("ue={}: Couldn't find NGAP", source_ue_index);
     return;
   }
 
   // Try to find target Xn-C CU-CP peer. If it is not found, it means an NG handover is required.
   auto* xnap = xnap_db.find_xnap(target_gnb_id);
-  if (xnap == nullptr) {
+
+  if (!xnap) {
     logger.debug("ue={}: Requesting NG handover. No Xn-C peer CU-CP peer with gnb_id={} found",
                  source_ue_index,
                  target_gnb_id.id);
-    handle_ngap_handover(*ngap, *ue, target_gnb_id, target_plmn, target_tac, target_nci);
+    handle_ngap_handover(*ngap, *ue_context, target_gnb_id, target_plmn, target_tac, target_nci);
     return;
   }
 
   logger.debug("ue={}: Requesting XN handover for gnb_id={}", source_ue_index, target_gnb_id.id);
-  handle_xnap_handover(*ngap, *xnap, *ue, ue_ctxt.plmn, target_nci);
+  handle_xnap_handover(*ngap, *xnap, *ue_context, ue_ctxt.plmn, target_nci);
 }
 
 void mobility_manager::handle_ngap_handover(ngap_interface&  ngap,
@@ -453,6 +488,7 @@ void mobility_manager::handle_xnap_handover(ngap_interface&  ngap,
       served_guami = guami;
     }
   }
+
   if (!served_guami.has_value()) {
     logger.error("ue={}: Couldn't find GUAMI for {}", ue.get_ue_index(), plmn);
     return;

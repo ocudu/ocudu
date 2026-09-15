@@ -9,48 +9,38 @@
 using namespace ocudu;
 using namespace ocucp;
 
-cu_cp_ue::cu_cp_ue(cu_cp_ue_index_t               ue_index_,
-                   cu_cp_du_index_t               du_index_,
-                   timer_manager&                 timers_,
-                   task_executor&                 task_exec_,
-                   const up_resource_manager_cfg& up_cfg,
-                   const security_manager_config& sec_cfg,
-                   ue_task_scheduler_impl         task_sched_,
-                   std::optional<gnb_du_id_t>     du_id_,
-                   std::optional<pci_t>           pci_,
-                   std::optional<rnti_t>          c_rnti_,
-                   std::optional<du_cell_index_t> pcell_index_) :
-  ue_index(ue_index_),
-  task_sched(std::move(task_sched_)),
-  up_mng(up_cfg),
-  sec_mng(sec_cfg),
+cu_cp_ue::cu_cp_ue(const cu_cp_ue_configuration& cfg, cu_cp_ue_dependencies dependencies) :
+  ue_index(cfg.ue_index),
+  task_sched(std::move(dependencies.task_sched)),
+  up_mng(cfg.up_cfg),
+  sec_mng(cfg.sec_cfg),
   rrc_ue_cu_cp_ev_notifier(ue_index)
 {
-  if (du_id_.has_value() && du_id_.value() != gnb_du_id_t::invalid) {
-    ue_ctxt.du_id = du_id_.value();
+  if (cfg.du_id.has_value() && *cfg.du_id != gnb_du_id_t::invalid) {
+    ue_ctxt.du_id = *cfg.du_id;
   }
 
-  if (pci_.has_value() && pci_.value() != INVALID_PCI) {
-    pci = pci_.value();
+  if (cfg.pci.has_value() && *cfg.pci != INVALID_PCI) {
+    pci = *cfg.pci;
   }
 
-  if (c_rnti_.has_value() && c_rnti_.value() != rnti_t::INVALID_RNTI) {
-    ue_ctxt.crnti = c_rnti_.value();
+  if (cfg.c_rnti.has_value() && *cfg.c_rnti != rnti_t::INVALID_RNTI) {
+    ue_ctxt.crnti = *cfg.c_rnti;
   }
 
-  if (pcell_index_.has_value() && pcell_index_.value() != INVALID_DU_CELL_INDEX) {
-    pcell_index = pcell_index_.value();
+  if (cfg.pcell_index.has_value() && *cfg.pcell_index != INVALID_DU_CELL_INDEX) {
+    pcell_index = *cfg.pcell_index;
   }
 
-  ue_ctxt.du_idx = du_index_;
+  ue_ctxt.du_idx = cfg.du_index;
 
   rrc_ue_cu_cp_ue_ev_notifier.connect_ue(*this);
   ngap_cu_cp_ue_ev_notifier.connect_ue(*this);
   nrppa_cu_cp_ue_ev_notifier.connect_ue(*this);
 
-  handover_ue_release_timer = timers_.create_unique_timer(task_exec_);
-  ran_paging_timer          = timers_.create_unique_timer(task_exec_);
-  rna_update_timer          = timers_.create_unique_timer(task_exec_);
+  handover_ue_release_timer = dependencies.timers.create_unique_timer(dependencies.task_exec);
+  ran_paging_timer          = dependencies.timers.create_unique_timer(dependencies.task_exec);
+  rna_update_timer          = dependencies.timers.create_unique_timer(dependencies.task_exec);
 }
 
 void cu_cp_ue::update_du_ue(gnb_du_id_t                        du_id_,

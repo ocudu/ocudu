@@ -4,24 +4,20 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "du_configuration_manager.h"
-#include "ocudu/adt/format.h"
 #include "ocudu/asn1/rrc_nr/sys_info.h"
-#include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/band_helper.h"
-#include "ocudu/ran/plmn_identity.h"
-#include <algorithm>
 
 using namespace ocudu;
 using namespace ocucp;
 
 static error_type<du_setup_result::rejected> validate_cell_config(const cu_cp_du_served_cells_item& served_cell)
 {
-  if (not served_cell.served_cell_info.five_gs_tac.has_value()) {
+  if (!served_cell.served_cell_info.five_gs_tac.has_value()) {
     return make_unexpected(du_setup_result::rejected{cause_protocol_t::msg_not_compatible_with_receiver_state,
                                                      fmt::format("Missing TAC for cell")});
   }
 
-  if (not served_cell.gnb_du_sys_info.has_value()) {
+  if (!served_cell.gnb_du_sys_info.has_value()) {
     return make_unexpected(du_setup_result::rejected{cause_protocol_t::semantic_error,
                                                      fmt::format("Missing system information for cell")});
   }
@@ -35,7 +31,7 @@ public:
   du_configuration_handler_impl(du_configuration_manager& parent_) : parent(parent_) {}
   ~du_configuration_handler_impl() override
   {
-    if (ctxt != nullptr) {
+    if (ctxt) {
       parent.rem_du(this->ctxt->id);
     }
   }
@@ -43,13 +39,13 @@ public:
   validation_result handle_new_du_config(const du_setup_request&         req,
                                          span<const nr_cell_global_id_t> readable_cells) override
   {
-    if (this->ctxt != nullptr) {
+    if (ctxt) {
       return make_unexpected(
           du_setup_result::rejected{cause_protocol_t::msg_not_compatible_with_receiver_state, "DU already configured"});
     }
     auto ret = parent.add_du_config(req, readable_cells);
     if (ret.has_value()) {
-      this->ctxt = ret.value();
+      this->ctxt = *ret;
       return {};
     }
     return make_unexpected(ret.error());
@@ -65,21 +61,21 @@ public:
 
     // Reconfiguration.
     auto ret = parent.handle_du_config_update(*this->ctxt, req, readable_cells);
-    if (not ret.has_value()) {
+    if (!ret.has_value()) {
       return make_unexpected(ret.error());
     }
-    this->ctxt = ret.value();
+    this->ctxt = *ret;
     return {};
   }
 
   void handle_gnb_cu_configuration_update(const f1ap_gnb_cu_configuration_update& req) override
   {
-    if (this->ctxt == nullptr) {
+    if (!ctxt) {
       ocudulog::fetch_basic_logger("CU-CP").debug(
           "Can't handle gNB CU Configuration Update. Cause: DU configuration context not found.");
       return;
     }
-    parent.handle_gnb_cu_configuration_update(req, this->ctxt->id);
+    parent.handle_gnb_cu_configuration_update(req, ctxt->id);
   }
 
 private:
@@ -123,7 +119,7 @@ extract_broadcast_tac_list(const nr_cell_global_id_t& cgi, const byte_buffer& pa
   }
 
   const auto& plmn_id_info_list = sib1.cell_access_related_info.plmn_id_info_list;
-  if (plmn_id_info_list.size() == 0 or not plmn_id_info_list[0].tracking_area_list_r17.is_present()) {
+  if (plmn_id_info_list.size() == 0 || !plmn_id_info_list[0].tracking_area_list_r17.is_present()) {
     return tac_list;
   }
 
@@ -154,7 +150,7 @@ du_configuration_manager::create_du_cell_config(du_cell_index_t                 
   cell.cell_index = cell_idx;
   cell.cgi        = cell_req.nr_cgi;
   if (cell_req.five_gs_tac.has_value()) {
-    cell.tac = cell_req.five_gs_tac.value();
+    cell.tac = *cell_req.five_gs_tac;
   }
   cell.pci               = cell_req.nr_pci;
   cell.served_plmns      = cell_req.served_plmns;
@@ -162,16 +158,16 @@ du_configuration_manager::create_du_cell_config(du_cell_index_t                 
   cell.nr_mode_info      = cell_req.nr_mode_info;
   cell.meas_timing_cfg   = cell_req.meas_timing_cfg.copy();
   // Add band information.
-  if (std::holds_alternative<cu_cp_fdd_info>(cell_req.nr_mode_info)) {
-    for (const auto& band : std::get<cu_cp_fdd_info>(cell_req.nr_mode_info).dl_nr_freq_info.freq_band_list_nr) {
+  if (const auto* fdd_info = std::get_if<cu_cp_fdd_info>(&cell_req.nr_mode_info)) {
+    for (const auto& band : fdd_info->dl_nr_freq_info.freq_band_list_nr) {
       cell.bands.push_back(uint_to_nr_band(band.freq_band_ind_nr));
     }
-  } else if (std::holds_alternative<cu_cp_tdd_info>(cell_req.nr_mode_info)) {
-    for (const auto& band : std::get<cu_cp_tdd_info>(cell_req.nr_mode_info).nr_freq_info.freq_band_list_nr) {
+  } else if (const auto tdd_info = std::get_if<cu_cp_tdd_info>(&cell_req.nr_mode_info)) {
+    for (const auto& band : tdd_info->nr_freq_info.freq_band_list_nr) {
       cell.bands.push_back(uint_to_nr_band(band.freq_band_ind_nr));
     }
   }
-  // Add packed MIB and SIB1
+  // Add packed MIB and SIB1.
   cell.sys_info.packed_mib  = f1ap_cell_cfg.gnb_du_sys_info->mib_msg.copy();
   cell.sys_info.packed_sib1 = f1ap_cell_cfg.gnb_du_sys_info->sib1_msg.copy();
   cell.tac_list             = extract_broadcast_tac_list(cell.cgi, cell.sys_info.packed_sib1, cell.tac);
@@ -215,7 +211,7 @@ du_configuration_manager::add_du_config(const du_setup_request& req, span<const 
 {
   // Validate the DU-level configuration.
   auto result = validate_new_du_config(req);
-  if (not result.has_value()) {
+  if (!result.has_value()) {
     return make_unexpected(result.error());
   }
 
@@ -327,7 +323,7 @@ du_configuration_manager::handle_du_config_update(const du_configuration_context
   }
 
   auto result = validate_du_config_update(current_ctxt, req);
-  if (not result.has_value()) {
+  if (!result.has_value()) {
     return make_unexpected(result.error());
   }
 
@@ -350,7 +346,7 @@ du_configuration_manager::handle_du_config_update(const du_configuration_context
 
   // > Remove the cells the DU stopped serving.
   for (const nr_cell_global_id_t& cgi : req.served_cells_to_rem) {
-    if (not remove_du_cell(du_context, cgi)) {
+    if (!remove_du_cell(du_context, cgi)) {
       logger.warning("du_id={}: Cannot remove cell nci={}. Cause: The DU does not serve it",
                      fmt::underlying(du_context.id),
                      cgi.nci);
@@ -560,8 +556,7 @@ error_type<du_setup_result::rejected>
 du_configuration_manager::validate_cell_config_request(const cu_cp_du_served_cells_item& cell_req,
                                                        gnb_du_id_t                       serving_du) const
 {
-  auto ret = validate_cell_config(cell_req);
-  if (not ret.has_value()) {
+  if (auto ret = validate_cell_config(cell_req); !ret.has_value()) {
     return make_unexpected(ret.error());
   }
 

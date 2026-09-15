@@ -7,8 +7,6 @@
 
 #include "cu_up_processor.h"
 #include "ocudu/e1ap/cu_cp/e1ap_configuration.h"
-#include "ocudu/ran/cu_cp_types.h"
-#include "ocudu/support/executors/task_executor.h"
 #include "ocudu/support/timers.h"
 #include <map>
 
