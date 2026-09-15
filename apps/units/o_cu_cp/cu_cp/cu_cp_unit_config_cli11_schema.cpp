@@ -427,8 +427,8 @@ static void configure_cli11_cells_args(CLI::App& app, cu_cp_unit_cell_config_ite
       app, "--ncells", config.ncells, configure_cli11_ncell_args, "Sets the list of neighbor cells known to the CU-CP");
 }
 
-/// Configures the CLI11 NTN TAC area arguments.
-static void configure_cli11_ntn_tac_area_args(CLI::App& app, cu_cp_unit_ntn_tac_area& config)
+/// Configures the CLI11 NTN location area arguments.
+static void configure_cli11_ntn_location_area_args(CLI::App& app, cu_cp_unit_ntn_location_area& config)
 {
   add_option(app, "--tac", config.tac, "TAC to report for a UE inside this area")
       ->capture_default_str()
@@ -444,8 +444,11 @@ static void configure_cli11_ntn_location_mapping_args(CLI::App& app, cu_cp_unit_
 {
   add_option(app, "--nr_cell_id", config.nr_cell_id, "Cell the mapping applies to")
       ->range(static_cast<uint64_t>(0U), nr_cell_identity::max().value());
-  add_option_object_list<cu_cp_unit_ntn_tac_area>(
-      app, "--tac_areas", config.tac_areas, configure_cli11_ntn_tac_area_args, "Sets the areas mapped to a TAC");
+  add_option_object_list<cu_cp_unit_ntn_location_area>(app,
+                                                       "--location_areas",
+                                                       config.location_areas,
+                                                       configure_cli11_ntn_location_area_args,
+                                                       "Sets the areas a coarse UE location is mapped to");
 }
 
 /// Configures the CLI11 mobility arguments.

@@ -15,9 +15,10 @@ std::optional<tac_t> ocudu::derive_tac_from_location(const ntn_location_mapping&
   }
 
   // Areas may overlap, so the first match in configuration order wins.
-  auto area = std::find_if(
-      mapping.tac_areas.begin(), mapping.tac_areas.end(), [&position](const auto& a) { return a.contains(position); });
-  if (area == mapping.tac_areas.end()) {
+  auto area = std::find_if(mapping.location_areas.begin(), mapping.location_areas.end(), [&position](const auto& a) {
+    return a.contains(position);
+  });
+  if (area == mapping.location_areas.end()) {
     // An NTN footprint is large and coverage plans are approximate, so a position outside every area is a normal
     // case, not an error.
     return std::nullopt;

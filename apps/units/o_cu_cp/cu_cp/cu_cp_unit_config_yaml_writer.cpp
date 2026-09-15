@@ -300,14 +300,14 @@ static YAML::Node build_cu_cp_ntn_location_mapping_section(const cu_cp_unit_ntn_
   YAML::Node node;
 
   node["nr_cell_id"] = config.nr_cell_id;
-  for (const auto& area : config.tac_areas) {
+  for (const auto& area : config.location_areas) {
     YAML::Node area_node;
     area_node["tac"]     = area.tac;
     area_node["lat_min"] = area.lat_min;
     area_node["lat_max"] = area.lat_max;
     area_node["lon_min"] = area.lon_min;
     area_node["lon_max"] = area.lon_max;
-    node["tac_areas"].push_back(area_node);
+    node["location_areas"].push_back(area_node);
   }
 
   return node;

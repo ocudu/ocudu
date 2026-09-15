@@ -18,7 +18,7 @@ namespace ocudu {
 /// A rectangle in latitude/longitude. The coarse UE location is only accurate to roughly 2 km, so a shape closer to
 /// the real tracking area border would not buy anything. A TAC may be listed more than once to cover an area that is
 /// not a single rectangle.
-struct ntn_tac_area {
+struct ntn_location_area {
   tac_t  tac;
   double lat_min;
   double lat_max;
@@ -38,9 +38,9 @@ struct ntn_tac_area {
 /// Empty in a cell without a configured mapping, in which case no TAC is ever derived.
 struct ntn_location_mapping {
   /// Areas in configuration order. The first area containing the position wins.
-  std::vector<ntn_tac_area> tac_areas;
+  std::vector<ntn_location_area> location_areas;
 
-  bool empty() const { return tac_areas.empty(); }
+  bool empty() const { return location_areas.empty(); }
 };
 
 /// \brief The location mapping configured for one NTN cell.

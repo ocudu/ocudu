@@ -127,7 +127,7 @@ struct cu_cp_unit_cell_ntn_config {
 
 /// One geographic area of an NTN cell mapped to a TAC, used to fill the UE Location Derived TAC in NR NTN IE,
 /// TS 38.413. A TAC may be repeated to cover an area that is not a single rectangle.
-struct cu_cp_unit_ntn_tac_area {
+struct cu_cp_unit_ntn_location_area {
   tac_t  tac     = 0;
   double lat_min = 0.0;
   double lat_max = 0.0;
@@ -140,7 +140,7 @@ struct cu_cp_unit_ntn_location_mapping_item {
   /// Cell id.
   uint64_t nr_cell_id = 0;
   /// Areas in configuration order. The first area containing the position wins.
-  std::vector<cu_cp_unit_ntn_tac_area> tac_areas;
+  std::vector<cu_cp_unit_ntn_location_area> location_areas;
 };
 
 struct cu_cp_unit_neighbor_cell_config_item {

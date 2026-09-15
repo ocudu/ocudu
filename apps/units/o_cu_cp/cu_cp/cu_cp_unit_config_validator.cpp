@@ -792,13 +792,13 @@ static bool validate_ntn_location_mapping_appconfig(const cu_cp_unit_config& con
       return false;
     }
 
-    if (cell_mapping.tac_areas.empty()) {
-      fmt::print("cell={:#x} ntn_location_mapping: at least one TAC area must be configured\n",
+    if (cell_mapping.location_areas.empty()) {
+      fmt::print("cell={:#x} ntn_location_mapping: at least one location area must be configured\n",
                  cell_mapping.nr_cell_id);
       return false;
     }
 
-    for (const auto& area : cell_mapping.tac_areas) {
+    for (const auto& area : cell_mapping.location_areas) {
       if (area.lat_min >= area.lat_max) {
         fmt::print("cell={:#x} ntn_location_mapping: tac={} lat_min must be smaller than lat_max\n",
                    cell_mapping.nr_cell_id,

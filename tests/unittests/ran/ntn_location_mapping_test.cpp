@@ -13,7 +13,7 @@ namespace {
 ntn_location_mapping make_mapping()
 {
   ntn_location_mapping mapping;
-  mapping.tac_areas = {{7, 50.0, 52.0, 14.0, 17.0}, {8, 52.0, 54.0, 14.0, 17.0}, {11, 40.0, 42.0, 0.0, 2.0}};
+  mapping.location_areas = {{7, 50.0, 52.0, 14.0, 17.0}, {8, 52.0, 54.0, 14.0, 17.0}, {11, 40.0, 42.0, 0.0, 2.0}};
   return mapping;
 }
 
