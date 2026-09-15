@@ -86,6 +86,15 @@ bool openssl_dtls_context::init(int socket)
     return false;
   }
 
+  if (!SSL_CTX_load_verify_locations(ssl_ctx, cfg.ca_cert_filename.c_str(), nullptr)) {
+    unsigned long err = ERR_get_error();
+    logger.error("Could not initialize DTLS context. Cause: invalid CA certificate. session={} filename={} err={}",
+                 cfg.session_id,
+                 cfg.ca_cert_filename,
+                 ERR_reason_error_string(err));
+    return false;
+  }
+
   // Set verify callback.
   SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, verify_callback);
 

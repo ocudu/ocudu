@@ -46,6 +46,7 @@ protected:
                                                                "1",
                                                                std::string(TEST_CERT_DIR) + "/link12.crt",
                                                                std::string(TEST_CERT_DIR) + "/link12.key",
+                                                               std::string(TEST_CERT_DIR) + "/ca.crt",
                                                                mode_map};
     }
 
@@ -61,6 +62,7 @@ protected:
                                                                "2",
                                                                std::string(TEST_CERT_DIR) + "/link21.crt",
                                                                std::string(TEST_CERT_DIR) + "/link21.key",
+                                                               std::string(TEST_CERT_DIR) + "/ca.crt",
                                                                mode_map};
     }
 
@@ -78,6 +80,7 @@ protected:
                                    "3",
                                    std::string(TEST_CERT_DIR) + "/link31.crt",
                                    std::string(TEST_CERT_DIR) + "/link31.key",
+                                   std::string(TEST_CERT_DIR) + "/ca.crt",
                                    mode_map};
     }
   }

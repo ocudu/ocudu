@@ -16,6 +16,7 @@ struct dtls_context_config {
   std::string session_id;
   std::string cert_filename;
   std::string key_filename;
+  std::string ca_cert_filename;
   // Mode for specific connections. Useful for peer to peer connections,
   // where the server client model between nodes is not clearly defined.
   std::map<transport_layer_address, dtls_mode> mode_map;
