@@ -4,6 +4,7 @@
 
 #include "ue_location_manager.h"
 #include "ocudu/ocudulog/ocudulog.h"
+#include <algorithm>
 
 using namespace ocudu;
 using namespace ocudu::ocucp;
@@ -109,6 +110,21 @@ std::optional<location_report_request> ue_location_manager::get_location_reporti
   return std::nullopt;
 }
 
+/// Whether the UE is reported to be in the tracking area \c tac. A UE Location Derived TAC is where the UE actually
+/// is, TS 23.502 sec. 4.10, so it decides alone and the cell's broadcast TACs do not enter into it. Without one the
+/// UE counts as being in every area the cell broadcasts.
+static bool is_ue_in_tac(const cu_cp_user_location_info_nr& loc, tac_t tac)
+{
+  if (loc.ue_location_derived_tac.has_value()) {
+    return loc.ue_location_derived_tac.value() == tac;
+  }
+  if (loc.tac_list.empty()) {
+    return loc.tai.tac == tac;
+  }
+  return std::any_of(
+      loc.tac_list.begin(), loc.tac_list.end(), [tac](tac_t broadcast_tac) { return broadcast_tac == tac; });
+}
+
 ue_presence ue_location_manager::check_ue_presence(const area_of_interest& aoi, const cu_cp_user_location_info_nr& loc)
 {
   // TS 38.300 sec. 16.14.5: in an NTN cell, and where one is configured for the UE's position, the Cell Identity of an
@@ -122,7 +138,7 @@ ue_presence ue_location_manager::check_ue_presence(const area_of_interest& aoi, 
   }
 
   for (const auto& tai : aoi.tai_list) {
-    if (tai.plmn_id == loc.tai.plmn_id && tai.tac == loc.tai.tac) {
+    if (tai.plmn_id == loc.tai.plmn_id && is_ue_in_tac(loc, tai.tac)) {
       return ue_presence::in;
     }
   }
