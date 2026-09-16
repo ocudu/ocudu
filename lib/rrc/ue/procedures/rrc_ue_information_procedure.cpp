@@ -3,8 +3,8 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "rrc_ue_information_procedure.h"
+#include "ue/rrc_ue_helpers.h"
 #include "ocudu/asn1/rrc_nr/dl_dcch_msg.h"
-#include "ocudu/lpp/reference_location.h"
 
 using namespace ocudu;
 using namespace ocudu::ocucp;
@@ -95,29 +95,5 @@ void rrc_ue_information_procedure::store_coarse_location(const ue_info_resp_r16_
     return;
   }
 
-  // coarseLocationInfo has no presence flag of its own, so an empty octet string means "not available".
-  const asn1::dyn_octstring& coarse_location_info = ies.non_crit_ext.coarse_location_info_r17;
-  if (coarse_location_info.size() == 0) {
-    logger.log_debug("No coarse UE location reported. Cause: the UE does not have one available");
-    return;
-  }
-
-  std::optional<reference_location> position = lpp::unpack_reference_location(coarse_location_info);
-  if (not position.has_value()) {
-    logger.log_warning("Failed to decode the reported coarse UE location");
-    return;
-  }
-
-  // Only a position that moved can derive a new TAC.
-  const bool moved = not context.coarse_location.has_value() or
-                     context.coarse_location->position.latitude != position->latitude or
-                     context.coarse_location->position.longitude != position->longitude;
-
-  context.coarse_location = coarse_ue_location{position.value(), std::chrono::steady_clock::now()};
-  logger.log_debug("Stored coarse UE location lat={:.4f} lon={:.4f}", position->latitude, position->longitude);
-
-  if (moved) {
-    // A new position may mean a new derived TAC, so report it now rather than wait for the next message carrying one.
-    cu_cp_notifier.on_ue_location_update();
-  }
+  store_coarse_ue_location(context.coarse_location, ies.non_crit_ext.coarse_location_info_r17, cu_cp_notifier, logger);
 }

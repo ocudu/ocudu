@@ -404,6 +404,11 @@ void rrc_ue_impl::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_info_
 
 void rrc_ue_impl::handle_measurement_report(const asn1::rrc_nr::meas_report_s& msg)
 {
+  store_coarse_ue_location(context.coarse_location,
+                           msg.crit_exts.meas_report().meas_results.coarse_location_info_r17,
+                           cu_cp_notifier,
+                           logger);
+
   // Convert asn1 to common type.
   rrc_meas_results meas_results =
       asn1_to_measurement_results(msg.crit_exts.meas_report().meas_results, ocudulog::fetch_basic_logger("RRC"));
