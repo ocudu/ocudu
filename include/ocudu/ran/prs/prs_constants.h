@@ -38,7 +38,7 @@ inline constexpr auto VALID_COMB_SIZES = to_array<uint8_t>({2, 4, 6, 12});
 /// \brief Valid resource set periodicity values, in slots, for numerology 0 (i.e., \f$\mu=0\f$).
 ///
 /// Periodicities valid for a numerology are these values scaled by \f$2^{\mu}\f$, as per TS 38.211, Section 7.4.1.7.4.
-inline constexpr auto VALID_PERIODICITIES_NUMEROLOGY0 =
+inline constexpr auto VALID_PERIODICITIES_NUMEROLOGY_0 =
     to_array<unsigned>({4, 5, 8, 10, 16, 20, 32, 40, 64, 80, 160, 320, 640, 1280, 2560, 5120, 10240});
 
 /// \brief Valid resource set periodicity values, in slots, across all the supported numerologies.
@@ -84,7 +84,7 @@ inline constexpr auto VALID_MUTING_BIT_REPETITION_FACTORS = to_array<uint8_t>({1
 /// Equal to the number of slots in one system frame cycle at numerology 0.
 ///
 /// See TS 38.214, Section 5.1.6.5.
-inline constexpr unsigned MAX_MUTING_OPTION1_PRODUCT_NUMEROLOGY0 =
+inline constexpr unsigned MAX_MUTING_OPTION1_PRODUCT_NUMEROLOGY_0 =
     radio_frame_constants::NOF_SFNS * radio_frame_constants::NOF_SUBFRAMES_PER_FRAME;
 
 } // namespace ocudu::prs_constants

@@ -22,7 +22,7 @@ bool ocudu::prs_valid_periodicity(unsigned int periodicity_slots, unsigned int n
     return false;
   }
 
-  const auto& valid = prs_constants::VALID_PERIODICITIES_NUMEROLOGY0;
+  const auto& valid = prs_constants::VALID_PERIODICITIES_NUMEROLOGY_0;
   return std::find(valid.begin(), valid.end(), periodicity_slots / scaling) != valid.end();
 }
 

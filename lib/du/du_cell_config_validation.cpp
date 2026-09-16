@@ -1022,7 +1022,7 @@ static check_outcome check_prs_resource_set(const prs_resource_set&             
     // As per TS 38.214, Section 5.1.6.5, the UE does not expect the product of the periodicity, the muting bit
     // repetition factor and the muting pattern size of Muting Option 1 to exceed 2^mu x 10240.
     CHECK_EQ_OR_BELOW(res_set.periodicity_slots * muting_bit_rep_factor * muting_pattern_size,
-                      (1U << mu) * prs_constants::MAX_MUTING_OPTION1_PRODUCT_NUMEROLOGY0,
+                      (1U << mu) * prs_constants::MAX_MUTING_OPTION1_PRODUCT_NUMEROLOGY_0,
                       "product of the periodicity, the muting bit repetition factor and the muting pattern size of "
                       "Muting Option 1 of PRS resource set {}",
                       set_id);
