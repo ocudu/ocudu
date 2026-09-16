@@ -1026,6 +1026,10 @@ static check_outcome check_prs_resource_set(const prs_resource_set&             
                       "product of the periodicity, the muting bit repetition factor and the muting pattern size of "
                       "Muting Option 1 of PRS resource set {}",
                       set_id);
+
+    CHECK_TRUE(res_set.muting_option1->muting_pattern.any(),
+               "Every instance of PRS resource set {} is disabled by Muting Option 1",
+               set_id);
   }
 
   if (res_set.muting_option2.has_value()) {
@@ -1036,6 +1040,10 @@ static check_outcome check_prs_resource_set(const prs_resource_set&             
              "muting pattern size of Muting Option 2 of PRS resource set {}. It must be equal to the resource "
              "repetition factor",
              set_id);
+
+    CHECK_TRUE(res_set.muting_option2->muting_pattern.any(),
+               "Every repetition in PRS resource set {} is disabled by Muting Option 2.",
+               set_id);
   }
 
   CHECK_TRUE(not res_set.resources.empty(), "No PRS resource configured in PRS resource set {}", set_id);
