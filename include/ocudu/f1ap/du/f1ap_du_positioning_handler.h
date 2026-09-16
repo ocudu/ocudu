@@ -23,6 +23,8 @@ struct du_trp_info {
   std::optional<pci_t>               pci;
   std::optional<nr_cell_global_id_t> cgi;
   std::optional<arfcn_t>             arfcn;
+  /// DL-PRS configuration of the TRP, as per TS 38.473, Section 9.3.1.177.
+  std::optional<prs_cfg_t> prs_cfg;
   /// Geographical coordinates of the TRP antenna, as per TS 38.473, Section 9.3.1.184.
   std::optional<geographical_coordinates_t> geo_coords;
 };

@@ -765,6 +765,111 @@ ha_access_point_position_to_asn1(const ng_ran_high_accuracy_access_point_positio
   return asn1_position;
 }
 
+static asn1::f1ap::dl_prs_muting_pattern_c muting_pattern_to_asn1(const dl_prs_muting_pattern_t& muting_pattern)
+{
+  asn1::f1ap::dl_prs_muting_pattern_c asn1_pattern;
+
+  switch (muting_pattern.length) {
+    case 2:
+      asn1_pattern.set_two().from_number(muting_pattern.value);
+      break;
+    case 4:
+      asn1_pattern.set_four().from_number(muting_pattern.value);
+      break;
+    case 6:
+      asn1_pattern.set_six().from_number(muting_pattern.value);
+      break;
+    case 8:
+      asn1_pattern.set_eight().from_number(muting_pattern.value);
+      break;
+    case 16:
+      asn1_pattern.set_sixteen().from_number(muting_pattern.value);
+      break;
+    default:
+      asn1_pattern.set_thirty_two().from_number(muting_pattern.value);
+      break;
+  }
+
+  return asn1_pattern;
+}
+
+static asn1::f1ap::prs_cfg_s prs_cfg_to_asn1(const prs_cfg_t& prs_cfg)
+{
+  asn1::f1ap::prs_cfg_s asn1_prs_cfg;
+
+  asn1_prs_cfg.prs_res_set_list.resize(prs_cfg.prs_res_set_list.size());
+  for (unsigned i = 0, e = prs_cfg.prs_res_set_list.size(); i != e; ++i) {
+    const prs_resource_set_item_t& res_set      = prs_cfg.prs_res_set_list[i];
+    prs_res_set_item_s&            asn1_res_set = asn1_prs_cfg.prs_res_set_list[i];
+
+    asn1_res_set.prs_res_set_id = res_set.prs_res_set_id;
+    asn1::number_to_enum(asn1_res_set.subcarrier_spacing, scs_to_khz(res_set.scs));
+    asn1_res_set.pr_sbw    = res_set.prs_bw;
+    asn1_res_set.start_prb = res_set.start_prb;
+    asn1_res_set.point_a   = res_set.point_a;
+    asn1::number_to_enum(asn1_res_set.comb_size, res_set.comb_size);
+    asn1_res_set.cp_type.value = res_set.cp_type == cyclic_prefix::NORMAL
+                                     ? prs_res_set_item_s::cp_type_opts::options::normal
+                                     : prs_res_set_item_s::cp_type_opts::options::extended;
+    asn1::number_to_enum(asn1_res_set.res_set_periodicity, res_set.res_set_periodicity);
+    asn1_res_set.res_set_slot_offset = res_set.res_set_slot_offset;
+    asn1::number_to_enum(asn1_res_set.res_repeat_factor, res_set.res_repeat_factor);
+    asn1::number_to_enum(asn1_res_set.res_time_gap, res_set.res_time_gap);
+    asn1::number_to_enum(asn1_res_set.res_numof_symbols, res_set.res_numof_symbols);
+
+    if (res_set.prs_muting.has_value()) {
+      asn1_res_set.prs_muting_present = true;
+      const prs_muting_t& muting      = res_set.prs_muting.value();
+      if (muting.prs_muting_option1.has_value()) {
+        asn1_res_set.prs_muting.prs_muting_option1_present = true;
+        asn1_res_set.prs_muting.prs_muting_option1.muting_pattern =
+            muting_pattern_to_asn1(muting.prs_muting_option1->muting_pattern);
+        asn1::number_to_enum(asn1_res_set.prs_muting.prs_muting_option1.muting_bit_repeat_factor,
+                             muting.prs_muting_option1->muting_bit_repeat_factor);
+      }
+      if (muting.prs_muting_option2.has_value()) {
+        asn1_res_set.prs_muting.prs_muting_option2_present = true;
+        asn1_res_set.prs_muting.prs_muting_option2.muting_pattern =
+            muting_pattern_to_asn1(muting.prs_muting_option2->muting_pattern);
+      }
+    }
+    asn1_res_set.prs_res_tx_pwr = res_set.prs_res_tx_pwr;
+
+    asn1_res_set.prs_res_list.resize(res_set.prs_res_list.size());
+    for (unsigned j = 0, nof_res = res_set.prs_res_list.size(); j != nof_res; ++j) {
+      const prs_res_item_t& res      = res_set.prs_res_list[j];
+      prs_res_item_s&       asn1_res = asn1_res_set.prs_res_list[j];
+
+      asn1_res.prs_res_id        = res.prs_res_id;
+      asn1_res.seq_id            = res.seq_id;
+      asn1_res.re_offset         = res.re_offset;
+      asn1_res.res_slot_offset   = res.res_slot_offset;
+      asn1_res.res_symbol_offset = res.res_symbol_offset;
+
+      if (res.qcl_info.has_value()) {
+        asn1_res.qcl_info_present = true;
+        if (std::holds_alternative<ssb_t>(res.qcl_info.value())) {
+          const ssb_t& qcl_ssb                          = std::get<ssb_t>(res.qcl_info.value());
+          asn1_res.qcl_info.set_qcl_source_ssb().pci_nr = qcl_ssb.pci_nr;
+          if (qcl_ssb.ssb_idx.has_value()) {
+            asn1_res.qcl_info.qcl_source_ssb().ssb_idx_present = true;
+            asn1_res.qcl_info.qcl_source_ssb().ssb_idx         = qcl_ssb.ssb_idx.value();
+          }
+        } else {
+          const prs_resource_qcl_source_prs_t& qcl_prs = std::get<prs_resource_qcl_source_prs_t>(res.qcl_info.value());
+          asn1_res.qcl_info.set_qcl_source_prs().qcl_source_prs_res_set_id = qcl_prs.qcl_source_prs_res_set_id;
+          if (qcl_prs.qcl_source_prs_res_id.has_value()) {
+            asn1_res.qcl_info.qcl_source_prs().qcl_source_prs_res_id_present = true;
+            asn1_res.qcl_info.qcl_source_prs().qcl_source_prs_res_id         = qcl_prs.qcl_source_prs_res_id.value();
+          }
+        }
+      }
+    }
+  }
+
+  return asn1_prs_cfg;
+}
+
 asn1::f1ap::trp_info_s ocudu::trp_info_to_asn1(const odu::du_trp_info& trp)
 {
   trp_info_s asn1out;
@@ -784,6 +889,11 @@ asn1::f1ap::trp_info_s ocudu::trp_info_to_asn1(const odu::du_trp_info& trp)
   if (trp.arfcn.has_value()) {
     trp_info_type_resp_item_c item;
     item.set_nr_arfcn() = trp.arfcn.value().value();
+    asn1out.trp_info_type_resp_list.push_back(item);
+  }
+  if (trp.prs_cfg.has_value()) {
+    trp_info_type_resp_item_c item;
+    item.set_prs_cfg() = prs_cfg_to_asn1(trp.prs_cfg.value());
     asn1out.trp_info_type_resp_list.push_back(item);
   }
   if (trp.geo_coords.has_value()) {

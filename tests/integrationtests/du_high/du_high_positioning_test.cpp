@@ -69,6 +69,108 @@ TEST_F(du_high_tester, when_positioning_information_request_is_received_then_res
 
 namespace {
 
+/// Builds a DL-PRS configuration with a single resource set holding one resource, with Muting Option 2 enabled.
+prs_config make_test_prs_config()
+{
+  prs_resource_set res_set{};
+  res_set.bandwidth_prbs    = 24;
+  res_set.start_prb         = 0;
+  res_set.comb_size         = prs_comb_size::two;
+  res_set.periodicity_slots = 20;
+  res_set.slot_offset       = 3;
+  res_set.repetition_factor = prs_repetition_factor::two;
+  res_set.time_gap          = prs_time_gap::one;
+  res_set.nof_symbols       = prs_num_symbols::two;
+  res_set.power_offset_db   = 5;
+  res_set.resources.push_back(prs_resource{.sequence_id = 123, .re_offset = 0, .slot_offset = 0, .symbol_offset = 4});
+  // Only the first of the two repetitions is transmitted.
+  res_set.muting_option2.emplace();
+  res_set.muting_option2->muting_pattern.resize(2);
+  res_set.muting_option2->muting_pattern.set(0);
+
+  prs_config cfg;
+  cfg.resource_sets.push_back(res_set);
+  return cfg;
+}
+
+} // namespace
+
+class du_high_prs_tester : public du_high_env_simulator, public testing::Test
+{
+public:
+  du_high_prs_tester() : du_high_env_simulator(make_cfg()) {}
+
+private:
+  static du_high_configuration make_cfg()
+  {
+    du_high_configuration cfg    = create_du_high_configuration();
+    cfg.ran.cells[0].ran.prs_cfg = make_test_prs_config();
+    return cfg;
+  }
+};
+
+TEST_F(du_high_prs_tester, when_trp_information_request_is_received_then_prs_configuration_is_sent_to_cu)
+{
+  // DU receives TRP INFORMATION REQUEST.
+  cu_notifier.f1ap_ul_msgs.clear();
+  f1ap_message trp_info_req = test_helpers::generate_trp_information_request();
+  this->du_hi->get_f1ap_pdu_handler().handle_message(trp_info_req);
+
+  // Wait for TRP INFORMATION RESPONSE to be sent to the CU.
+  EXPECT_TRUE(this->run_until([this]() { return not cu_notifier.f1ap_ul_msgs.empty(); }));
+  const f1ap_message& trp_info_resp = cu_notifier.f1ap_ul_msgs.rbegin()->second;
+  ASSERT_TRUE(test_helpers::is_valid_f1ap_trp_information_response(trp_info_resp));
+
+  const auto& resp = trp_info_resp.pdu.successful_outcome().value.trp_info_resp();
+  ASSERT_EQ(resp->trp_info_list_trp_resp.size(), 1);
+  const auto& resp_items = resp->trp_info_list_trp_resp[0].value().trp_info_item().trp_info.trp_info_type_resp_list;
+
+  // The response must carry the PRS configuration of the cell.
+  const auto* prs_item = std::find_if(resp_items.begin(), resp_items.end(), [](const auto& item) {
+    return item.type() == trp_info_type_resp_item_c::types_opts::prs_cfg;
+  });
+  ASSERT_NE(prs_item, resp_items.end());
+  const auto& asn1_prs_cfg = prs_item->prs_cfg();
+  ASSERT_EQ(asn1_prs_cfg.prs_res_set_list.size(), 1);
+  const auto& asn1_res_set = asn1_prs_cfg.prs_res_set_list[0];
+
+  const du_cell_config& cell_cfg = du_high_cfg.ran.cells[0];
+  ASSERT_EQ(asn1_res_set.prs_res_set_id, 0);
+  ASSERT_EQ(asn1_res_set.subcarrier_spacing.to_number(),
+            scs_to_khz(cell_cfg.ran.dl_cfg_common.init_dl_bwp.generic_params.scs));
+  // A PRS bandwidth of 24 PRBs, the minimum, is encoded as value 1.
+  ASSERT_EQ(asn1_res_set.pr_sbw, 1);
+  ASSERT_EQ(asn1_res_set.start_prb, 0);
+  ASSERT_EQ(asn1_res_set.point_a, cell_cfg.ran.dl_cfg_common.freq_info_dl.absolute_freq_point_a.value());
+  ASSERT_EQ(asn1_res_set.comb_size.to_number(), 2);
+  ASSERT_EQ(asn1_res_set.cp_type, prs_res_set_item_s::cp_type_opts::normal);
+  ASSERT_EQ(asn1_res_set.res_set_periodicity.to_number(), 20);
+  ASSERT_EQ(asn1_res_set.res_set_slot_offset, 3);
+  ASSERT_EQ(asn1_res_set.res_repeat_factor.to_number(), 2);
+  ASSERT_EQ(asn1_res_set.res_time_gap.to_number(), 1);
+  ASSERT_EQ(asn1_res_set.res_numof_symbols.to_number(), 2);
+  ASSERT_EQ(asn1_res_set.prs_res_tx_pwr, 5);
+
+  // The bit of the muting pattern applying to the first repetition is the leftmost one.
+  ASSERT_TRUE(asn1_res_set.prs_muting_present);
+  ASSERT_FALSE(asn1_res_set.prs_muting.prs_muting_option1_present);
+  ASSERT_TRUE(asn1_res_set.prs_muting.prs_muting_option2_present);
+  ASSERT_EQ(asn1_res_set.prs_muting.prs_muting_option2.muting_pattern.type(),
+            asn1::f1ap::dl_prs_muting_pattern_c::types_opts::two);
+  ASSERT_EQ(asn1_res_set.prs_muting.prs_muting_option2.muting_pattern.two().to_string(), "10");
+
+  ASSERT_EQ(asn1_res_set.prs_res_list.size(), 1);
+  const auto& asn1_res = asn1_res_set.prs_res_list[0];
+  ASSERT_EQ(asn1_res.prs_res_id, 0);
+  ASSERT_EQ(asn1_res.seq_id, 123);
+  ASSERT_EQ(asn1_res.re_offset, 0);
+  ASSERT_EQ(asn1_res.res_slot_offset, 0);
+  ASSERT_EQ(asn1_res.res_symbol_offset, 4);
+  ASSERT_FALSE(asn1_res.qcl_info_present);
+}
+
+namespace {
+
 struct pos_req_params {
   bool ue_connected;
   bool rsrp_meas;
