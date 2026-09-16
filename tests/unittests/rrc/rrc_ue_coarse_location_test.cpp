@@ -7,6 +7,7 @@
 #include "ocudu/asn1/rrc_nr/dl_dcch_msg.h"
 #include "ocudu/asn1/rrc_nr/ul_dcch_msg.h"
 #include "ocudu/lpp/reference_location.h"
+#include <chrono>
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -128,6 +129,15 @@ protected:
 
   /// The Mapped Cell ID the RRC UE derives for the stored position, TS 38.300 sec. 16.14.5.
   std::optional<nr_cell_identity> derived_mapped_nci() { return derived_location().mapped_nci; }
+
+  /// The Age of Location of TS 38.413 sec. 9.3.1.16, in seconds since 1900-01-01, as this moment reads on the clock.
+  static uint64_t now_as_a_time_stamp()
+  {
+    constexpr uint64_t seconds_from_1900_to_1970 = 2208988800;
+    return seconds_from_1900_to_1970 + static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::seconds>(
+                                                                 std::chrono::system_clock::now().time_since_epoch())
+                                                                 .count());
+  }
 
   /// An Ellipsoid-Point of TS 37.355, the shape the UE reports its coarse location in.
   static std::vector<uint8_t> packed_position(const reference_location& loc)
@@ -273,5 +283,26 @@ TEST_F(rrc_ue_coarse_location, an_area_naming_no_mapped_cell_id_reports_the_uu_c
 
   EXPECT_EQ(derived_tac(), 8);
   EXPECT_FALSE(derived_mapped_nci().has_value());
+}
+
+TEST_F(rrc_ue_coarse_location, a_derived_tac_alone_is_dated_too)
+{
+  // The TAC derived from a position is exactly as old as the position, whether or not its area named a Mapped Cell
+  // ID. Left undated, a TAC from a position reported hours ago reads as current at the AMF.
+  init_and_request();
+
+  receive_ue_information_response(packed_position({53.0, 15.0}));
+
+  const cu_cp_user_location_info_nr location = derived_location();
+  ASSERT_FALSE(location.mapped_nci.has_value());
+  ASSERT_TRUE(location.time_stamp.has_value());
+  EXPECT_NEAR(static_cast<double>(location.time_stamp.value()), static_cast<double>(now_as_a_time_stamp()), 5.0);
+}
+
+TEST_F(rrc_ue_coarse_location, a_location_derived_from_no_position_is_not_dated)
+{
+  init_cell(nr_band::n256, /* with_mapping */ true);
+
+  EXPECT_FALSE(derived_location().time_stamp.has_value());
 }
 

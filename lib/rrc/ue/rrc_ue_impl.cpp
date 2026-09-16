@@ -178,6 +178,15 @@ void rrc_ue_impl::fill_ue_derived_location(cu_cp_user_location_info_nr& user_loc
 
   user_location_info.ue_location_derived_tac = derived_tac;
   user_location_info.mapped_nci              = mapped_nci;
+
+  // The Time Stamp of TS 38.413 sec. 9.3.1.75 is the first four octets of an RFC 5905 timestamp: seconds since
+  // 1900-01-01. The UE sends no time with its position, so this dates it by its arrival, measured as an age on the
+  // monotonic clock so that correcting the wall clock in between corrects the result rather than skewing it.
+  constexpr uint64_t seconds_from_1900_to_1970 = 2208988800;
+  const auto         reported_at =
+      std::chrono::system_clock::now() - (std::chrono::steady_clock::now() - context.coarse_location->received_at);
+  const auto reported_at_s      = std::chrono::duration_cast<std::chrono::seconds>(reported_at.time_since_epoch());
+  user_location_info.time_stamp = seconds_from_1900_to_1970 + static_cast<uint64_t>(reported_at_s.count());
 }
 
 std::optional<tac_t> rrc_ue_impl::get_ue_location_derived_tac() const
