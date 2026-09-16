@@ -363,6 +363,8 @@ struct rrc_periodical_report_cfg {
   bool                                 use_allowed_cell_list;
   // Implementation specific config value.
   int8_t periodic_ho_rsrp_offset;
+  /// Asks the UE to include its coarse location in every report, \c coarseLocationRequest, TS 38.331 sec. 5.5.5.
+  bool coarse_location_request = false;
 };
 
 struct rrc_meas_trigger_quant {
@@ -481,6 +483,8 @@ struct rrc_event_trigger_cfg {
   bool                                 include_beam_meass;
   // group 0
   std::optional<unsigned> t312;
+  /// Asks the UE to include its coarse location in every report, \c coarseLocationRequest, TS 38.331 sec. 5.5.5.
+  bool coarse_location_request = false;
 };
 
 struct rrc_report_cgi {

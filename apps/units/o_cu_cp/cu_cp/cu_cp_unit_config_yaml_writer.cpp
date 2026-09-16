@@ -222,9 +222,10 @@ static YAML::Node build_cu_cp_mobility_report_section(const cu_cp_unit_report_co
 
   node["report_cfg_id"] = config.report_cfg_id;
   node["report_type"]   = config.report_type;
-  // Cond-trigger report configs do not have report interval semantics.
+  // A cond-trigger report config has no report interval semantics, and carries no coarse location request.
   if (config.report_type != "cond_trigger") {
-    node["report_interval_ms"] = config.report_interval_ms;
+    node["report_interval_ms"]      = config.report_interval_ms;
+    node["coarse_location_request"] = config.coarse_location_request;
   }
 
   if (!config.event_triggered_report_type) {

@@ -76,6 +76,9 @@ struct cu_cp_unit_report_config {
   unsigned    report_cfg_id;
   std::string report_type;
   unsigned    report_interval_ms;
+  /// Whether the UE includes its coarse location in every report, \c coarseLocationRequest, TS 38.331 sec. 5.5.5.
+  /// Only an NTN UE is expected to have one, and it reports one only if available.
+  bool coarse_location_request = false;
 
   std::optional<ocucp::rrc_event_id::event_id_t> event_triggered_report_type;
   /// "rsrp", "rsrq", "sinr".

@@ -130,9 +130,8 @@ generate_cu_cp_periodical_report_config(const cu_cp_unit_report_config& report_c
       .max_nrof_rs_idxes_to_report = 4,
       .include_beam_meass          = true,
       .use_allowed_cell_list       = false,
-      .periodic_ho_rsrp_offset     = static_cast<int8_t>(report_cfg_item.periodic_ho_rsrp_offset)
-
-  };
+      .periodic_ho_rsrp_offset     = static_cast<int8_t>(report_cfg_item.periodic_ho_rsrp_offset),
+      .coarse_location_request     = report_cfg_item.coarse_location_request};
 }
 
 /// Build a measurement trigger quantity for absolute thresholds (A1, A2, A4, A5).
@@ -315,7 +314,8 @@ static ocucp::rrc_event_trigger_cfg create_event_trigger_cfg(const cu_cp_unit_re
       .report_quant_rs_idxes         = ocucp::rrc_meas_report_quant{.rsrp = true, .rsrq = true, .sinr = true},
       .max_nrof_rs_idxes_to_report   = std::nullopt,
       .include_beam_meass            = true,
-      .t312                          = report_cfg_item.t312_ms};
+      .t312                          = report_cfg_item.t312_ms,
+      .coarse_location_request       = report_cfg_item.coarse_location_request};
 }
 
 /// Generates the CU-CP trigger report configuration and returns it.

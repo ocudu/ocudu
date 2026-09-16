@@ -903,6 +903,11 @@ ocudu::ocucp::periodical_report_cfg_to_rrc_asn1(const rrc_periodical_report_cfg&
   // Fill use allowed cell list.
   asn1_periodical_report_cfg.use_allowed_cell_list = periodical_report_cfg.use_allowed_cell_list;
 
+  if (periodical_report_cfg.coarse_location_request) {
+    asn1_periodical_report_cfg.ext                                 = true;
+    asn1_periodical_report_cfg.coarse_location_request_r17_present = true;
+  }
+
   return asn1_periodical_report_cfg;
 }
 
@@ -1069,6 +1074,11 @@ ocudu::ocucp::event_triggered_report_cfg_to_rrc_asn1(const rrc_event_trigger_cfg
     asn1_event_trigger_cfg.ext                  = true;
     asn1_event_trigger_cfg.use_t312_r16_present = true;
     asn1_event_trigger_cfg.use_t312_r16         = true;
+  }
+
+  if (event_trigger_cfg.coarse_location_request) {
+    asn1_event_trigger_cfg.ext                                 = true;
+    asn1_event_trigger_cfg.coarse_location_request_r17_present = true;
   }
 
   return asn1_event_trigger_cfg;

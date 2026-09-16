@@ -254,6 +254,11 @@ static void configure_cli11_report_args(CLI::App& app, cu_cp_unit_report_config&
   add_option(app, "--report_interval_ms", report_params.report_interval_ms, "Report interval in ms")
       ->enum_values({120, 240, 480, 640, 1024, 2048, 5120, 10240, 20480, 40960, 60000, 360000, 720000, 1800000});
   add_option(app,
+             "--coarse_location_request",
+             report_params.coarse_location_request,
+             "Ask an NTN UE to include its coarse location, if available, in every report of this configuration")
+      ->capture_default_str();
+  add_option(app,
              "--periodic_ho_rsrp_offset_db",
              report_params.periodic_ho_rsrp_offset,
              "Measurement trigger quantity offset in dB used to trigger handovers by periodic measurement reports. "
