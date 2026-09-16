@@ -23,4 +23,12 @@ target_link_libraries(common_scheduler_test
         sched_test_doubles
         gtest
         ocudu_gtest_main)
-add_test(common_scheduler_test common_scheduler_test)
+# The PRS tests are registered separately below, so that they can carry the MVP-FUNC-POS-16-2 label.
+# --gtest_fail_if_no_test_selected makes a filter that no longer matches anything (e.g. after a test rename) fail
+# instead of silently reporting a passing, empty run.
+add_test(NAME common_scheduler_test
+         COMMAND common_scheduler_test "--gtest_filter=-prs_scheduler_test.*")
+
+add_test(NAME prs_scheduler_test
+         COMMAND common_scheduler_test "--gtest_filter=prs_scheduler_test.*" --gtest_fail_if_no_test_selected)
+set_tests_properties(prs_scheduler_test PROPERTIES LABELS "MVP-FUNC-POS-16-2")
