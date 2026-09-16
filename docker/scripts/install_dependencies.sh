@@ -27,15 +27,23 @@ install_dependencies_debian_ubuntu() {
         cmake make gcc g++ pkg-config
         libfftw3-dev libmbedtls-dev libsctp-dev libyaml-cpp-dev libgtest-dev
     )
+    # Customer binaries link only the single-precision FFTW, mbedcrypto, SCTP and
+    # yaml-cpp shared libraries. Development packages, the mbedTLS TLS/X.509
+    # libraries and GoogleTest are build-only and are not shipped at runtime.
     local -a run_pkgs=(
-        libfftw3-dev libmbedtls-dev libsctp-dev libyaml-cpp-dev libgtest-dev libcap2-bin
+        libfftw3-single3 libsctp1 libyaml-cpp0.8 libcap2-bin
     )
 
-    # Ubuntu 24.04 customer binaries link only these runtime libraries. Avoid
-    # retaining unused development, mbedTLS TLS/X.509 and GoogleTest packages.
-    if [[ "${ID:-}:${VERSION_ID:-}" == "ubuntu:24.04" ]]; then
-        run_pkgs=(libfftw3-single3 libmbedcrypto7t64 libsctp1 libyaml-cpp0.8 libcap2-bin)
-    fi
+    # Runtime images are only built from Ubuntu 24.04 and newer, where mbedcrypto
+    # is the one runtime library whose soname changed after 24.04.
+    case "${VERSION_ID:-}" in
+        24.04)
+            run_pkgs+=(libmbedcrypto7t64)
+            ;;
+        *)
+            run_pkgs+=(libmbedcrypto16)
+            ;;
+    esac
     local -a extra_pkgs=(
         libzmq3-dev libuhd-dev uhd-host libboost-program-options-dev libdpdk-dev libelf-dev libdwarf-dev libdw-dev capnproto libcapnp-dev
     )
@@ -219,7 +227,7 @@ install_dependencies_arch() {
         cmake fftw mbedtls3 yaml-cpp lksctp-tools gtest pkgconf
     )
     local -a run_pkgs=(
-        fftw mbedtls3 yaml-cpp lksctp-tools gtest libcap
+        fftw mbedtls3 yaml-cpp lksctp-tools libcap
     )
     local -a extra_pkgs=(
         zeromq libuhd boost dpdk libelf libdwarf elfutils capnproto
