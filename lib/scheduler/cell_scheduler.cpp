@@ -21,6 +21,7 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   pdcch_sch(cell_cfg),
   si_sch(cell_cfg, pdcch_sch, msg),
   csi_sch(cell_cfg),
+  prs_sch(cell_cfg),
   pucch_alloc(cell_cfg, sched_cfg.ue.max_pucchs_per_slot, sched_cfg.ue.max_ul_grants_per_slot),
   uci_alloc(cell_cfg, pucch_alloc),
   ra_ue_repo(cell_cfg, logger),
@@ -126,6 +127,9 @@ void cell_scheduler::run_slot(slot_point_extended sl_tx_ext)
   // > Schedule CSI-RS.
   csi_sch.run_slot(res_grid[0]);
 
+  // > Schedule DL-PRS.
+  prs_sch.run_slot(res_grid);
+
   // > Schedule SIB1 and SI-message signalling.
   si_sch.run_slot(res_grid, sl_tx_ext.hyper_sfn());
 
@@ -216,6 +220,7 @@ void cell_scheduler::stop()
 
   // Stop sub-schedulers.
   ssb_sch.stop();
+  prs_sch.stop();
   si_sch.stop();
   prach_sch.stop();
   ra_sch.stop();

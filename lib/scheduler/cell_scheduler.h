@@ -9,6 +9,7 @@
 #include "common_scheduling/csi_rs_scheduler.h"
 #include "common_scheduling/paging_scheduler.h"
 #include "common_scheduling/prach_scheduler.h"
+#include "common_scheduling/prs_scheduler.h"
 #include "common_scheduling/ra_scheduler.h"
 #include "common_scheduling/si_scheduler.h"
 #include "common_scheduling/ssb_scheduler.h"
@@ -115,6 +116,7 @@ private:
   pdcch_resource_allocator_impl pdcch_sch;
   si_scheduler                  si_sch;
   csi_rs_scheduler              csi_sch;
+  prs_scheduler                 prs_sch;
   pucch_allocator_impl          pucch_alloc;
   uci_allocator_impl            uci_alloc;
   ra_ue_repository              ra_ue_repo;
