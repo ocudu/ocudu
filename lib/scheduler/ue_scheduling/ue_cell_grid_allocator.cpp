@@ -129,20 +129,13 @@ std::optional<uci_allocation> ue_cell_grid_allocator::alloc_uci(const ue_cell&  
 expected<ue_cell_grid_allocator::dl_newtx_grant_builder, dl_alloc_failure_cause>
 ue_cell_grid_allocator::allocate_dl_grant(const ue_newtx_dl_grant_request& request)
 {
-  // Decide the transmission regime up front (link adaptation): the number of Rel-16 PDSCH repetitions to request, or
-  // nullopt for a single transmission. The selector then picks the TDRA row carrying that repetition count.
   static constexpr search_space_id ue_ded_ss_id = to_search_space_id(2);
   const ue_cell&                   ue_cc        = *ues[request.user.ue_index()].find_cell(cell_alloc.cell_index());
   const search_space_info&         ss_info      = ue_cc.cfg().search_space(ue_ded_ss_id);
-  const std::optional<uint8_t> desired_reps = ue_cc.link_adaptation_controller().select_pdsch_repetition_count(ss_info);
 
   // Select PDCCH searchSpace and PDSCH time-domain resource config.
-  auto sched_ctxt = sched_helper::get_newtx_dl_sched_context(request.user,
-                                                             cell_alloc[0].slot,
-                                                             request.pdsch_slot,
-                                                             request.interleaving_enabled,
-                                                             request.pending_bytes,
-                                                             desired_reps);
+  auto sched_ctxt = sched_helper::get_newtx_dl_sched_context(
+      request.user, cell_alloc[0].slot, request.pdsch_slot, request.interleaving_enabled, request.pending_bytes);
   if (not sched_ctxt.has_value()) {
     // No valid parameters were found for this UE. When repetitions were requested but no repetition row fits this slot
     // (e.g. a special slot), the grant is deferred to a later slot rather than downgraded to a single transmission.
@@ -556,13 +549,9 @@ ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&                        g
 expected<ue_cell_grid_allocator::dl_retx_grant_result, dl_alloc_failure_cause>
 ue_cell_grid_allocator::allocate_dl_grant(const ue_retx_dl_grant_request& request) const
 {
-  // A reTx reuses the transmission scheme of the original transmission, so the number of PDSCH repetitions is taken
-  // directly from the HARQ grant parameters (like the number of layers), not re-decided from the current link quality.
   static constexpr search_space_id ue_ded_ss_id = to_search_space_id(2);
   const ue_cell&                   ue_cc        = request.user.get_cc();
   const search_space_info&         ss_info      = ue_cc.cfg().search_space(ue_ded_ss_id);
-  const uint8_t                    orig_reps    = request.h_dl.get_grant_params().nof_repetitions;
-  const std::optional<uint8_t>     desired_reps = orig_reps > 1 ? std::optional<uint8_t>{orig_reps} : std::nullopt;
 
   // Select PDCCH searchSpace and PDSCH time-domain resource config.
   auto sched_ctxt = sched_helper::get_retx_dl_sched_context(request.user,
@@ -570,7 +559,6 @@ ue_cell_grid_allocator::allocate_dl_grant(const ue_retx_dl_grant_request& reques
                                                             request.pdsch_slot,
                                                             request.interleaving_enabled,
                                                             request.h_dl,
-                                                            desired_reps,
                                                             request.max_rbs);
   if (not sched_ctxt) {
     // No valid parameters were found. When repetitions were requested but no repetition row fits this slot, the reTx

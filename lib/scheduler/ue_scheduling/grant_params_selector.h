@@ -32,30 +32,28 @@ struct dl_sched_context {
   /// Pending bytes for newTx.
   units::bytes pending_bytes;
   /// Number of Rel-16 slot-based PDSCH repetitions of the selected TDRA row, or nullopt for a single transmission.
-  /// Equals the \c nof_repetitions requested by the caller when a repetition row was selected.
   std::optional<uint8_t> nof_repetitions;
 };
 
 /// Retrieve recommended PDCCH and PDSCH parameters for a newTx DL grant.
-/// \param[in] nof_repetitions Requested number of PDSCH repetitions (link-adaptation decision). When set, the selector
-/// picks the Rel-16 TDRA row carrying that repetitionNumber-r16 and returns nullopt if it does not fit the slot; when
-/// unset, it picks a single-transmission row.
-std::optional<dl_sched_context> get_newtx_dl_sched_context(const slice_ue&        u,
-                                                           slot_point             pdcch_slot,
-                                                           slot_point             pdsch_slot,
-                                                           bool                   interleaving_enabled,
-                                                           units::bytes           pending_bytes,
-                                                           std::optional<uint8_t> nof_repetitions);
+/// The number of Rel-16 PDSCH repetitions to request is decided by link adaptation: when it asks for repetitions, the
+/// selector picks the TDRA row carrying that repetitionNumber-r16 and returns nullopt if it does not fit the slot;
+/// otherwise it picks a single-transmission row.
+std::optional<dl_sched_context> get_newtx_dl_sched_context(const slice_ue& u,
+                                                           slot_point      pdcch_slot,
+                                                           slot_point      pdsch_slot,
+                                                           bool            interleaving_enabled,
+                                                           units::bytes    pending_bytes);
 
 /// Retrieve recommended PDCCH and PDSCH parameters for a reTx DL grant.
-/// \param[in] nof_repetitions Requested number of PDSCH repetitions (link-adaptation decision). See
-/// \ref get_newtx_dl_sched_context.
+/// The reTx reuses the repetition scheme of the original transmission, taken from the HARQ grant params: when that was
+/// a Rel-16 repetition bundle, only the TDRA row carrying its repetitionNumber-r16 is eligible and nullopt is returned
+/// if it does not fit the slot; otherwise a single-transmission row is picked.
 std::optional<dl_sched_context> get_retx_dl_sched_context(const slice_ue&               u,
                                                           slot_point                    pdcch_slot,
                                                           slot_point                    pdsch_slot,
                                                           bool                          interleaving_enabled,
                                                           const dl_harq_process_handle& h_dl,
-                                                          std::optional<uint8_t>        nof_repetitions,
                                                           unsigned                      max_rbs = MAX_NOF_PRBS);
 
 /// Select DL VRBs to allocate for a newTx.

@@ -205,7 +205,6 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
                                                             bool                          interleaving_enabled,
                                                             const dl_harq_process_handle* h_dl,
                                                             units::bytes                  pending_bytes,
-                                                            std::optional<uint8_t>        nof_repetitions,
                                                             unsigned                      max_rbs = MAX_NOF_PRBS)
 {
   const ue_cell& ue_cc = u.get_cc();
@@ -227,6 +226,16 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
     // ReTx case.
     ocudu_assert(ss.get_dl_dci_format() == get_dci_format(h_dl->get_grant_params().dci_cfg_type),
                  "DCI type cannot change across reTxs");
+  }
+
+  // For a newTx, link adaptation decides how many Rel-16 PDSCH repetitions to request, or nullopt for a single
+  // transmission. A reTx reuses the scheme of the original transmission, so its count comes from the HARQ grant
+  // params (like the number of layers), not from the current link quality.
+  std::optional<uint8_t> nof_repetitions;
+  if (h_dl == nullptr) {
+    nof_repetitions = ue_cc.link_adaptation_controller().select_pdsch_repetition_count(ss);
+  } else if (h_dl->get_grant_params().nof_repetitions > 1) {
+    nof_repetitions = h_dl->get_grant_params().nof_repetitions;
   }
 
   // Determine RB allocation limits.
@@ -324,14 +333,13 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
   return ctxt;
 }
 
-std::optional<dl_sched_context> sched_helper::get_newtx_dl_sched_context(const slice_ue&        u,
-                                                                         slot_point             pdcch_slot,
-                                                                         slot_point             pdsch_slot,
-                                                                         bool                   interleaving_enabled,
-                                                                         units::bytes           pending_bytes,
-                                                                         std::optional<uint8_t> nof_repetitions)
+std::optional<dl_sched_context> sched_helper::get_newtx_dl_sched_context(const slice_ue& u,
+                                                                         slot_point      pdcch_slot,
+                                                                         slot_point      pdsch_slot,
+                                                                         bool            interleaving_enabled,
+                                                                         units::bytes    pending_bytes)
 {
-  return get_dl_sched_context(u, pdcch_slot, pdsch_slot, interleaving_enabled, nullptr, pending_bytes, nof_repetitions);
+  return get_dl_sched_context(u, pdcch_slot, pdsch_slot, interleaving_enabled, nullptr, pending_bytes);
 }
 
 std::optional<dl_sched_context> sched_helper::get_retx_dl_sched_context(const slice_ue& u,
@@ -339,11 +347,9 @@ std::optional<dl_sched_context> sched_helper::get_retx_dl_sched_context(const sl
                                                                         slot_point      pdsch_slot,
                                                                         bool            interleaving_enabled,
                                                                         const dl_harq_process_handle& h_dl,
-                                                                        std::optional<uint8_t>        nof_repetitions,
                                                                         unsigned                      max_rbs)
 {
-  return get_dl_sched_context(
-      u, pdcch_slot, pdsch_slot, interleaving_enabled, &h_dl, units::bytes{0}, nof_repetitions, max_rbs);
+  return get_dl_sched_context(u, pdcch_slot, pdsch_slot, interleaving_enabled, &h_dl, units::bytes{0}, max_rbs);
 }
 
 static vrb_interval
