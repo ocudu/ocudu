@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <istream>
 #include <map>
+#include <set>
 
 using namespace ocudu;
 
@@ -561,9 +562,10 @@ static void configure_cli11_security_args(CLI::App& app, cu_cp_unit_security_con
       app,
       "--nea_pref_list",
       [&config](const std::string& value) {
-        config.nea_preference_list = {};
-        unsigned idx               = 0;
-        for (const std::string& algo : split_algo_pref_list(value)) {
+        config.nea_preference_list      = {};
+        std::vector<std::string> tokens = split_algo_pref_list(value);
+        unsigned                 idx    = 0;
+        for (const std::string& algo : tokens) {
           if (algo == "nea0") {
             config.nea_preference_list[idx] = security::ciphering_algorithm::nea0;
           } else if (algo == "nea1") {
@@ -575,19 +577,35 @@ static void configure_cli11_security_args(CLI::App& app, cu_cp_unit_security_con
           }
           ++idx;
         }
+        // The ->check() validator below guarantees tokens is non-empty and has at most nof_pref_algos entries. Pad
+        // any remaining slots by repeating the lowest-priority configured algorithm, instead of leaving them
+        // default/zero-initialized. Zero-initialized slots would evaluate to NEA0 (ciphering_algorithm::nea0 == 0),
+        // which would silently and unintentionally re-introduce null ciphering as a fallback even for deployments
+        // whose nea_pref_list deliberately omits "nea0" to disable it.
+        for (; idx < security::nof_pref_algos; ++idx) {
+          config.nea_preference_list[idx] = config.nea_preference_list[0];
+        }
       },
       "Ordered preference list for the selection of encryption algorithm (NEA) (default: NEA0, NEA2, NEA1)")
       ->default_str(to_string(config.nea_preference_list))
       ->transform(normalize_algo_pref_list)
       ->check([](const std::string& value) -> std::string {
         std::vector<std::string> tokens = split_algo_pref_list(value);
+        if (tokens.empty()) {
+          return "No ciphering algorithm specified; at least one of \"nea0\", \"nea1\", \"nea2\" or \"nea3\" is "
+                 "required.";
+        }
         if (tokens.size() > 4) {
           return fmt::format("Too many ciphering algorithms specified ({}); at most 4 are allowed.", tokens.size());
         }
+        std::set<std::string> unique_algos;
         for (const std::string& algo : tokens) {
           if (algo != "nea0" && algo != "nea1" && algo != "nea2" && algo != "nea3") {
             return fmt::format(
                 R"(Invalid ciphering algorithm. Valid values are "nea0", "nea1", "nea2" and "nea3". algo={})", algo);
+          }
+          if (!unique_algos.insert(algo).second) {
+            return fmt::format("Duplicate ciphering algorithm {} specified.", algo);
           }
         }
         return {};
@@ -597,9 +615,10 @@ static void configure_cli11_security_args(CLI::App& app, cu_cp_unit_security_con
       app,
       "--nia_pref_list",
       [&config](const std::string& value) {
-        config.nia_preference_list = {};
-        unsigned idx               = 0;
-        for (const std::string& algo : split_algo_pref_list(value)) {
+        config.nia_preference_list      = {};
+        std::vector<std::string> tokens = split_algo_pref_list(value);
+        unsigned                 idx    = 0;
+        for (const std::string& algo : tokens) {
           if (algo == "nia1") {
             config.nia_preference_list[idx] = security::integrity_algorithm::nia1;
           } else if (algo == "nia2") {
@@ -609,16 +628,26 @@ static void configure_cli11_security_args(CLI::App& app, cu_cp_unit_security_con
           }
           ++idx;
         }
+        // The ->check() validator below guarantees tokens is non-empty and has at most 3 entries (NIA0 cannot be
+        // selected). Pad any remaining slots by repeating the lowest-priority configured algorithm, instead of
+        // leaving them default/zero-initialized (which would evaluate to NIA0).
+        for (; idx < security::nof_pref_algos; ++idx) {
+          config.nia_preference_list[idx] = config.nia_preference_list[0];
+        }
       },
       "Ordered preference list for the selection of encryption algorithm (NIA) (default: NIA2, NIA1)")
       ->default_str(to_string(config.nia_preference_list))
       ->transform(normalize_algo_pref_list)
       ->check([](const std::string& value) -> std::string {
         std::vector<std::string> tokens = split_algo_pref_list(value);
+        if (tokens.empty()) {
+          return "No integrity algorithm specified; at least one of \"nia1\", \"nia2\" or \"nia3\" is required.";
+        }
         if (tokens.size() > 3) {
           return fmt::format("Too many integrity algorithms specified ({}); at most 3 are allowed (NIA0 is implicit).",
                              tokens.size());
         }
+        std::set<std::string> unique_algos;
         for (const std::string& algo : tokens) {
           if (algo == "nia0") {
             return "NIA0 cannot be selected in the algorithm preferences.";
@@ -626,6 +655,9 @@ static void configure_cli11_security_args(CLI::App& app, cu_cp_unit_security_con
           if (algo != "nia1" && algo != "nia2" && algo != "nia3") {
             return fmt::format(R"(Invalid integrity algorithm. Valid values are "nia1", "nia2" and "nia3". algo={})",
                                algo);
+          }
+          if (!unique_algos.insert(algo).second) {
+            return fmt::format("Duplicate integrity algorithm {} specified.", algo);
           }
         }
         return {};

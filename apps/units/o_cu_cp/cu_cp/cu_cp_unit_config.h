@@ -25,6 +25,7 @@
 #include "ocudu/ran/s_nssai.h"
 #include "ocudu/ran/tac.h"
 #include "ocudu/security/security.h"
+#include <algorithm>
 #include <chrono>
 #include <optional>
 #include <vector>
@@ -247,10 +248,17 @@ struct cu_cp_unit_security_config {
 };
 
 /// Converts a ciphering algorithm preference list to its "nea0,nea1,..." string representation.
+///
+/// The parser pads any slots beyond the configured ones by repeating the highest-priority configured
+/// algorithm (see configure_cli11_security_args), rather than leaving them unconfigured, so a slot that
+/// repeats an earlier entry marks the end of the actually configured list and is not written back.
 inline std::string to_string(const security::preferred_ciphering_algorithms& algos)
 {
   std::string out;
   for (unsigned i = 0; i != algos.size(); ++i) {
+    if (std::find(algos.begin(), algos.begin() + i, algos[i]) != algos.begin() + i) {
+      break;
+    }
     out += fmt::format("{}nea{}", i == 0 ? "" : ",", security::to_number(algos[i]));
   }
   return out;
@@ -258,12 +266,18 @@ inline std::string to_string(const security::preferred_ciphering_algorithms& alg
 
 /// Converts an integrity algorithm preference list to its "nia1,nia2,..." string representation.
 ///
-/// NIA0 is implicit/mandatory and is used by the parser to pad any unspecified trailing slots, so it is never
-/// written back explicitly: the string stops at the first NIA0 slot, wherever it occurs.
+/// NIA0 cannot be explicitly selected, so a NIA0 slot is always an unconfigured/default one and stops the
+/// string. In addition, the parser pads any slots beyond the configured ones by repeating the
+/// highest-priority configured algorithm (see configure_cli11_security_args) rather than leaving them
+/// unconfigured, so a slot that repeats an earlier entry also marks the end of the actually configured list.
 inline std::string to_string(const security::preferred_integrity_algorithms& algos)
 {
   std::string out;
-  for (unsigned i = 0; i != algos.size() && algos[i] != security::integrity_algorithm::nia0; ++i) {
+  for (unsigned i = 0; i != algos.size(); ++i) {
+    if (algos[i] == security::integrity_algorithm::nia0 ||
+        std::find(algos.begin(), algos.begin() + i, algos[i]) != algos.begin() + i) {
+      break;
+    }
     out += fmt::format("{}nia{}", i == 0 ? "" : ",", security::to_number(algos[i]));
   }
   return out;
