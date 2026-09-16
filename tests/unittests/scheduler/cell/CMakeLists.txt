@@ -3,11 +3,11 @@
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 # Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
-
 add_executable(scheduler_cell_resource_test
         sched_prb_test.cpp
         cell_resource_grid_test.cpp
-        cell_harq_manager_test.cpp)
+        cell_harq_manager_test.cpp
+        sched_result_grid_test.cpp)
 target_link_libraries(scheduler_cell_resource_test
         ocudu_sched
         ocudulog
