@@ -94,7 +94,9 @@ TEST(prs_scheduler_test, resource_is_scheduled_on_the_slots_of_its_period_and_of
   cfg.resource_sets.push_back(make_prs_resource_set(period, slot_offset));
   prs_test_bench bench{cfg};
 
-  for (unsigned i = 0; i != 4 * period; ++i) {
+  // Run for long enough that the resource grid ring wraps around several times, so that PDUs left over from a previous
+  // use of a ring slot would show up as an extra, or a spurious, DL-PRS transmission.
+  for (unsigned i = 0; i != 40 * period; ++i) {
     bench.run_slot();
 
     const bool is_prs_slot = (bench.last_slot_count() % period) == slot_offset;

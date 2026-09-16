@@ -193,8 +193,7 @@ TEST_F(mac_to_fapi_translator_fixture, dl_tti_message_with_all_pdus_passes)
   ASSERT_EQ(ul_dci_msg.pdus.size(), MAX_UL_PDCCH_PDUS_PER_SLOT);
 
   const fapi::dl_tti_request& dl_tti_msg = gateway_spy.dl_tti_request_msg();
-  // As the MAC struct does still not contain MAX_PRS_PDUS_PER_SLOT, substract the value.
-  ASSERT_EQ(dl_tti_msg.pdus.size(), MAX_DL_PDUS_PER_SLOT - MAX_PRS_PDUS_PER_SLOT);
+  ASSERT_EQ(dl_tti_msg.pdus.size(), MAX_DL_PDUS_PER_SLOT);
 }
 
 TEST_F(mac_to_fapi_translator_fixture, tx_data_message_with_all_pdus_passes)
@@ -216,8 +215,7 @@ TEST_F(mac_to_fapi_translator_fixture, tx_data_message_with_all_pdus_passes)
   ASSERT_EQ(ul_dci_msg.pdus.size(), MAX_UL_PDCCH_PDUS_PER_SLOT);
 
   const fapi::dl_tti_request& dl_tti_msg = gateway_spy.dl_tti_request_msg();
-  // As the MAC struct does still not contain MAX_PRS_PDUS_PER_SLOT, substract the value.
-  ASSERT_EQ(dl_tti_msg.pdus.size(), MAX_DL_PDUS_PER_SLOT - MAX_PRS_PDUS_PER_SLOT);
+  ASSERT_EQ(dl_tti_msg.pdus.size(), MAX_DL_PDUS_PER_SLOT);
 }
 
 TEST_F(mac_to_fapi_translator_fixture, ul_tti_message_with_all_pdus_passes)

@@ -331,6 +331,7 @@ void cell_slot_resource_allocator::clear()
   result.dl.paging_grants.clear();
   result.dl.ue_grants.clear();
   result.dl.csi_rs.clear();
+  result.dl.prs.clear();
   result.ul.puschs.clear();
   result.ul.prachs.clear();
   result.ul.pucchs.clear();

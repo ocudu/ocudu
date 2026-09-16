@@ -483,6 +483,11 @@ mac_dl_sched_result_test_helper unittests::build_valid_mac_dl_sched_result_with_
     helper.sched_result.csi_rs.push_back(build_valid_csi_pdu(helper));
   }
 
+  // Add DL-PRS PDUs.
+  for (unsigned i = 0; i != MAX_PRS_PDUS_PER_SLOT; ++i) {
+    helper.sched_result.prs.push_back(build_valid_prs_pdu());
+  }
+
   // Add SSBs.
   for (unsigned i = 0; i != MAX_SSB_PER_SLOT; ++i) {
     result.ssb_pdus.push_back(build_valid_dl_ssb_pdu());

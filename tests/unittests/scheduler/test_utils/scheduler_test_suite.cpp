@@ -511,9 +511,20 @@ void ocudu::test_dl_resource_grid_collisions(const cell_configuration& cell_cfg,
   std::vector<test_grant_info> dl_grants = get_dl_grants(cell_cfg, result);
   for (const test_grant_info& test_grant : dl_grants) {
     ASSERT_FALSE(test_grant.grant.crbs.empty()) << "Resource is empty";
+    // The DL-PRS resources of a resource set are multiplexed in the comb, so they share the RBs of the set and cannot
+    // be checked against each other. They are checked against the rest of the DL grants below.
+    if (test_grant.type == test_grant_info::PRS) {
+      continue;
+    }
     ASSERT_FALSE(grid.collides(test_grant.grant))
         << fmt::format("Resource collision for grant with rnti={}", test_grant.rnti);
     grid.fill(test_grant.grant);
+  }
+
+  for (const test_grant_info& test_grant : dl_grants) {
+    if (test_grant.type == test_grant_info::PRS) {
+      ASSERT_FALSE(grid.collides(test_grant.grant)) << "Resource collision for a DL-PRS resource";
+    }
   }
 }
 

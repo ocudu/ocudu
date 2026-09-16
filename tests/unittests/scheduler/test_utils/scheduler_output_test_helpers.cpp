@@ -171,6 +171,15 @@ std::vector<test_grant_info> ocudu::get_dl_grants(const cell_configuration& cell
     grants.back().grant = get_pdsch_grant_info(cell_cfg.params.dl_cfg_common.init_dl_bwp, pg);
   }
 
+  // Register DL-PRS resources. The resource grid is RB-granular, so the whole PRS bandwidth is reserved even though the
+  // resource only uses one subcarrier out of every comb size.
+  for (const prs_info& prs : dl_res.prs) {
+    grants.emplace_back();
+    grants.back().type  = test_grant_info::PRS;
+    grants.back().rnti  = rnti_t::INVALID_RNTI;
+    grants.back().grant = grant_info{prs.scs, prs.symbols, prs.crbs};
+  }
+
   return grants;
 }
 

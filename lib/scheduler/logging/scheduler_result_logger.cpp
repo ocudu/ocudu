@@ -472,6 +472,23 @@ static auto make_csi_rs_log_entry(const csi_rs_info& csi_rs)
   });
 }
 
+static auto make_prs_log_entry(const prs_info& prs)
+{
+  return make_formattable([crbs        = prs.crbs,
+                           symbols     = prs.symbols,
+                           n_id_prs    = prs.n_id_prs,
+                           comb_size   = prs.comb_size,
+                           comb_offset = prs.comb_offset](auto& ctx) {
+    return fmt::format_to(ctx.out(),
+                          "\n- PRS: crbs={} symb={} n_id={} comb_size={} comb_offset={}",
+                          crbs,
+                          symbols,
+                          n_id_prs,
+                          to_underlying(comb_size),
+                          comb_offset);
+  });
+}
+
 static auto make_sib_debug_log_entry(const sib_information& sib_info)
 {
   // SIB grants always carry exactly one codeword.
@@ -817,6 +834,7 @@ static auto make_debug_log_entry(const sched_result& result, bool log_broadcast,
   using dl_pdcch_entry_t = decltype(make_dl_pdcch_log_entry(std::declval<pdcch_dl_information>()));
   using ul_pdcch_entry_t = decltype(make_ul_pdcch_log_entry(std::declval<pdcch_ul_information>()));
   using csi_rs_entry_t   = decltype(make_csi_rs_log_entry(std::declval<csi_rs_info>()));
+  using prs_entry_t      = decltype(make_prs_log_entry(std::declval<prs_info>()));
   using sib_entry_t      = decltype(make_sib_debug_log_entry(std::declval<sib_information>()));
   using rar_entry_t      = decltype(make_rar_debug_log_entry(std::declval<rar_information>()));
   using ue_grant_entry_t = decltype(make_ue_dl_msg_debug_log_entry(std::declval<dl_msg_alloc>()));
@@ -830,6 +848,7 @@ static auto make_debug_log_entry(const sched_result& result, bool log_broadcast,
                                          dl_pdcch_entry_t,
                                          ul_pdcch_entry_t,
                                          csi_rs_entry_t,
+                                         prs_entry_t,
                                          sib_entry_t,
                                          rar_entry_t,
                                          ue_grant_entry_t,
@@ -852,6 +871,9 @@ static auto make_debug_log_entry(const sched_result& result, bool log_broadcast,
     }
     for (const auto& csi : result.dl.csi_rs) {
       checked_push(make_csi_rs_log_entry(csi));
+    }
+    for (const auto& prs : result.dl.prs) {
+      checked_push(make_prs_log_entry(prs));
     }
     for (const auto& sib : result.dl.bc.sibs) {
       checked_push(make_sib_debug_log_entry(sib));
@@ -906,7 +928,7 @@ scheduler_result_logger::scheduler_result_logger(bool log_broadcast_, pci_t pci_
 void scheduler_result_logger::log_debug(const sched_result& result, std::chrono::microseconds decision_latency)
 {
   const bool broadcast_is_empty = result.dl.bc.ssb_info.empty() and result.dl.bc.sibs.empty() and
-                                  result.dl.csi_rs.empty() and result.ul.prachs.empty();
+                                  result.dl.csi_rs.empty() and result.dl.prs.empty() and result.ul.prachs.empty();
 
   const bool non_broadcast_is_empty =
       std::none_of(result.dl.dl_pdcchs.begin(),
