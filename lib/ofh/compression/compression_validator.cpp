@@ -17,6 +17,13 @@ error_type<std::string> ofh::validate_compression_params(const ru_compression_pa
         fmt::format("compression method '{}' is not supported. Valid values are [none,bfp]", to_string(params.type)));
   }
 
+  if ((params.type == compression_type::none) && (params.data_width < MIN_IQ_WIDTH)) {
+    return make_unexpected(
+        fmt::format("compression bit width '{}' is not supported without compression. The minimum is {}",
+                    params.data_width,
+                    MIN_IQ_WIDTH));
+  }
+
   static constexpr std::array<unsigned, 5> supported_bfp_bitwidths = {8, 9, 12, 14, 16};
   if ((params.type == compression_type::BFP) &&
       (std::find(supported_bfp_bitwidths.begin(), supported_bfp_bitwidths.end(), params.data_width) ==

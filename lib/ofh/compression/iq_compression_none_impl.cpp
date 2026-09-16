@@ -50,6 +50,11 @@ bool iq_compression_none_impl::decompress(span<cbf16_t>                output,
                                           span<const uint8_t>          input,
                                           const ru_compression_params& params)
 {
+  // The width arrives from the wire in the dynamic case, and the quantizer has no gain to divide by below this.
+  if (OCUDU_UNLIKELY(params.data_width < MIN_IQ_WIDTH)) {
+    return false;
+  }
+
   // Quantizer object.
   quantizer q(params.data_width);
 

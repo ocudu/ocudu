@@ -491,6 +491,24 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, supported_compression_types_should_
   }
 }
 
+TEST(ofh_uplane_packet_decoder_dynamic_impl, no_compression_below_the_minimum_width_should_fail)
+{
+  ocudulog::basic_logger&                         logger = ocudulog::fetch_basic_logger("TEST");
+  uplane_message_decoder_dynamic_compression_impl decoder(logger,
+                                                          subcarrier_spacing::kHz30,
+                                                          get_nsymb_per_slot(cyclic_prefix::NORMAL),
+                                                          273,
+                                                          0,
+                                                          create_production_decompressors(logger));
+
+  // The udIqWidth nibble carries this width, so a peer picks it, not the configuration. Without the check the
+  // quantizer divides by a gain of zero and every sample reaching the resource grid is a NaN.
+  std::vector<uint8_t>           packet = build_uplane_packet({compression_type::none, MIN_IQ_WIDTH - 1}, 1);
+  uplane_message_decoder_results results;
+
+  ASSERT_FALSE(decoder.decode(results, packet));
+}
+
 TEST(ofh_uplane_packet_decoder_dynamic_impl, failed_decompression_should_drop_the_message)
 {
   // A complete BFP section, so the type is supported and only the decompressor can fail the decode.

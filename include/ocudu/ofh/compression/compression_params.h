@@ -13,6 +13,12 @@ namespace ofh {
 /// Maximum allowed bit width of compressed IQ data.
 constexpr unsigned MAX_IQ_WIDTH = 16U;
 
+/// \brief Minimum bit width the quantizer can represent.
+///
+/// The quantizer gain is 2^(bit width - 1) - 1, which is zero at one bit and shifts by more than the width of the
+/// type at zero bits.
+constexpr unsigned MIN_IQ_WIDTH = 2U;
+
 /// Bit width used by quantization of input complex IQ samples.
 constexpr unsigned Q_BIT_WIDTH = MAX_IQ_WIDTH;
 

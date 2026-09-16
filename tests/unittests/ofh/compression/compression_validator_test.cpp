@@ -10,9 +10,17 @@ using namespace ofh;
 
 TEST(ofh_compression_validator, no_compression_is_accepted)
 {
-  // The bit width is not looked at without compression, so every width the udIqWidth nibble can carry passes.
-  for (unsigned width = 1; width <= MAX_IQ_WIDTH; ++width) {
+  // Only the minimum is looked at without compression, the rest of what the udIqWidth nibble can carry passes.
+  for (unsigned width = MIN_IQ_WIDTH; width <= MAX_IQ_WIDTH; ++width) {
     EXPECT_TRUE(validate_compression_params({compression_type::none, width}).has_value()) << width;
+  }
+}
+
+TEST(ofh_compression_validator, no_compression_rejects_a_width_the_quantizer_cannot_represent)
+{
+  // One bit leaves the quantizer with a gain of zero and zero bits shifts by more than the width of the type.
+  for (unsigned width : {0U, 1U}) {
+    EXPECT_FALSE(validate_compression_params({compression_type::none, width}).has_value()) << width;
   }
 }
 
@@ -41,6 +49,10 @@ TEST(ofh_compression_validator, the_reason_names_what_was_rejected)
   auto bad_width = validate_compression_params({compression_type::BFP, 11});
   ASSERT_FALSE(bad_width.has_value());
   EXPECT_EQ(bad_width.error(), "BFP compression bit width '11' is not supported. Valid values are [8,9,12,14,16]");
+
+  auto narrow_width = validate_compression_params({compression_type::none, 1});
+  ASSERT_FALSE(narrow_width.has_value());
+  EXPECT_EQ(narrow_width.error(), "compression bit width '1' is not supported without compression. The minimum is 2");
 }
 
 TEST(ofh_compression_validator, the_methods_without_an_implementation_are_rejected)
