@@ -22,19 +22,13 @@ install_dpdk_dependencies_debian_ubuntu() {
     local -a extra_pkgs=(
         libatomic1 iproute2
     )
+    # DPDK links the runtime libraries; the development headers are only needed
+    # while building DPDK. All of these exist on every supported Debian and
+    # Ubuntu release, so no per-release selection is required.
     local -a run_pkgs=(
-        python3-pip libnuma-dev pciutils libfdt-dev libatomic1 iproute2
-        libibverbs1 ibverbs-providers
+        python3-pip libnuma1 pciutils libfdt1 libatomic1 iproute2
+        libibverbs1 ibverbs-providers libnl-3-200 libnl-route-3-200
     )
-
-    # Ubuntu DPDK libraries link the runtime variants; development headers are
-    # only needed while building DPDK.
-    if [[ "${ID:-}" == "ubuntu" ]]; then
-        run_pkgs=(
-            python3-pip libnuma1 pciutils libfdt1 libatomic1 iproute2
-            libibverbs1 ibverbs-providers libnl-3-200 libnl-route-3-200
-        )
-    fi
     local -a pip_build_pkgs=(meson pyelftools)
     local -a pip_run_pkgs=(pyelftools)
 
