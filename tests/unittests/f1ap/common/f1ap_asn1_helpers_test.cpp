@@ -136,3 +136,38 @@ TEST(transport_layer_address_test, asn1_to_ipv6_transport_layer_address)
   ASSERT_EQ(up_tp_layer_info.tp_address,
             tla_from_asn1_bitstring(asn1_transport_layer_info.gtp_tunnel().transport_layer_address));
 }
+
+/// Test that the GBR QoS Flow Information of a GBR DRB is converted into the common type.
+TEST(f1ap_asn1_helpers_test, gbr_qos_flow_information_of_gbr_drb_is_converted)
+{
+  asn1::f1ap::drbs_to_be_setup_item_s asn1_drb_item;
+  asn1_drb_item.drb_id   = 1;
+  asn1_drb_item.rlc_mode = asn1::f1ap::rlc_mode_opts::rlc_um_bidirectional;
+
+  auto& asn1_drb_info = asn1_drb_item.qos_info.set_choice_ext().value().drb_info();
+  // 5QI 1 is a GBR 5QI.
+  asn1_drb_info.drb_qos.qos_characteristics.set_non_dyn_5qi().five_qi = 1;
+  asn1_drb_info.snssai.sst.from_number(1);
+
+  auto& asn1_gbr_qos_info                           = asn1_drb_info.drb_qos.gbr_qos_flow_info;
+  asn1_drb_info.drb_qos.gbr_qos_flow_info_present   = true;
+  asn1_gbr_qos_info.max_flow_bit_rate_dl            = 2000000;
+  asn1_gbr_qos_info.max_flow_bit_rate_ul            = 1000000;
+  asn1_gbr_qos_info.guaranteed_flow_bit_rate_dl     = 200000;
+  asn1_gbr_qos_info.guaranteed_flow_bit_rate_ul     = 100000;
+  asn1_gbr_qos_info.max_packet_loss_rate_dl_present = true;
+  asn1_gbr_qos_info.max_packet_loss_rate_dl         = 20;
+  asn1_gbr_qos_info.max_packet_loss_rate_ul_present = true;
+  asn1_gbr_qos_info.max_packet_loss_rate_ul         = 10;
+
+  f1ap_drb_to_setup drb = make_drb_to_setup(asn1_drb_item);
+
+  ASSERT_TRUE(drb.qos_info.drb_qos.gbr_qos_info.has_value());
+  const gbr_qos_flow_information& gbr_qos_info = drb.qos_info.drb_qos.gbr_qos_info.value();
+  ASSERT_EQ(gbr_qos_info.max_br_dl, 2000000);
+  ASSERT_EQ(gbr_qos_info.max_br_ul, 1000000);
+  ASSERT_EQ(gbr_qos_info.gbr_dl, 200000);
+  ASSERT_EQ(gbr_qos_info.gbr_ul, 100000);
+  ASSERT_EQ(gbr_qos_info.max_packet_loss_rate_dl, 20);
+  ASSERT_EQ(gbr_qos_info.max_packet_loss_rate_ul, 10);
+}

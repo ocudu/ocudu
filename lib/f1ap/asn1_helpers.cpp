@@ -230,7 +230,7 @@ static f1ap_drb_info drb_info_from_f1ap_asn1(const asn1::f1ap::qos_info_c& asn1_
       gbr.max_packet_loss_rate_dl.emplace(asn1_drb_info.drb_qos.gbr_qos_flow_info.max_packet_loss_rate_dl);
     }
     if (asn1_drb_info.drb_qos.gbr_qos_flow_info.max_packet_loss_rate_ul_present) {
-      gbr.max_packet_loss_rate_dl.emplace(asn1_drb_info.drb_qos.gbr_qos_flow_info.max_packet_loss_rate_ul);
+      gbr.max_packet_loss_rate_ul.emplace(asn1_drb_info.drb_qos.gbr_qos_flow_info.max_packet_loss_rate_ul);
     }
   }
 
