@@ -77,10 +77,10 @@ void pdu_session_resource_release_routine::operator()(
     // Prepare BearerContextModificationRequest and call E1 notifier.
     bearer_context_modification_request.ue_index = release_cmd.ue_index;
 
+    bearer_context_modification_request.ng_ran_bearer_context_mod_request.emplace();
     for (const auto& pdu_session_res_to_release : next_config.pdu_sessions_to_remove_list) {
-      e1ap_ng_ran_bearer_context_mod_request bearer_context_mod_request;
-      bearer_context_mod_request.pdu_session_res_to_rem_list.push_back(pdu_session_res_to_release);
-      bearer_context_modification_request.ng_ran_bearer_context_mod_request = bearer_context_mod_request;
+      bearer_context_modification_request.ng_ran_bearer_context_mod_request->pdu_session_res_to_rem_list.push_back(
+          pdu_session_res_to_release);
     }
 
     // Call E1AP procedure and wait for BearerContextModificationResponse.
