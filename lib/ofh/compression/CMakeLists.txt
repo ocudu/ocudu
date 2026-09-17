@@ -3,6 +3,7 @@
 
 
 set(SOURCES
+        beamforming_weights_compressor.cpp
         compression_factory.cpp
         compression_validator.cpp
         iq_compression_bfp_impl.cpp

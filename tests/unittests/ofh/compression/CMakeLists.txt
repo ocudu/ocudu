@@ -4,6 +4,11 @@
 
 set_directory_properties(PROPERTIES LABELS "compression")
 
+add_executable(ofh_beamforming_weights_compressor_test ofh_beamforming_weights_compressor_test.cpp)
+target_include_directories(ofh_beamforming_weights_compressor_test PRIVATE ${CMAKE_SOURCE_DIR}/lib/ofh/compression)
+target_link_libraries(ofh_beamforming_weights_compressor_test ocudu_ofh_compression ocudulog GTest::gtest GTest::gtest_main)
+gtest_discover_tests(ofh_beamforming_weights_compressor_test)
+
 add_executable(compression_validator_test compression_validator_test.cpp)
 target_link_libraries(compression_validator_test ocudu_ofh_compression ocudulog GTest::gtest GTest::gtest_main)
 gtest_discover_tests(compression_validator_test)
