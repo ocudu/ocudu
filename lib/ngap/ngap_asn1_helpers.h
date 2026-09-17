@@ -214,17 +214,29 @@ inline bool fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_re
     // Fill QoS flow level QoS parameters.
     if (asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.type() ==
         asn1::ngap::qos_characteristics_c::types::dyn5qi) {
-      dyn_5qi_descriptor dyn_5qi = {};
-      if (asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.dyn5qi().five_qi_present) {
-        dyn_5qi.five_qi =
-            uint_to_five_qi(asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.dyn5qi().five_qi);
+      const auto& asn1_dyn_5qi = asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.dyn5qi();
+
+      dyn_5qi_descriptor dyn_5qi  = {};
+      dyn_5qi.qos_prio_level      = qos_prio_level_t{asn1_dyn_5qi.prio_level_qos};
+      dyn_5qi.packet_delay_budget = asn1_dyn_5qi.packet_delay_budget;
+      dyn_5qi.per.exponent        = asn1_dyn_5qi.packet_error_rate.per_exponent;
+      dyn_5qi.per.scalar          = asn1_dyn_5qi.packet_error_rate.per_scalar;
+
+      if (asn1_dyn_5qi.five_qi_present) {
+        dyn_5qi.five_qi = uint_to_five_qi(asn1_dyn_5qi.five_qi);
       }
-      // TODO: Add optional values.
+      // The Delay Critical and Averaging Window IEs are only present for GBR QoS flows.
+      if (asn1_dyn_5qi.delay_crit_present) {
+        dyn_5qi.is_delay_critical = asn1_dyn_5qi.delay_crit.value == asn1::ngap::delay_crit_opts::delay_crit;
+      }
+      if (asn1_dyn_5qi.averaging_win_present) {
+        dyn_5qi.averaging_win = asn1_dyn_5qi.averaging_win;
+      }
+      if (asn1_dyn_5qi.max_data_burst_volume_present) {
+        dyn_5qi.max_data_burst_volume = asn1_dyn_5qi.max_data_burst_volume;
+      }
 
       qos_flow_setup_req_item.qos_flow_level_qos_params.qos_desc = dyn_5qi;
-
-      // TODO: Add optional values.
-
     } else if (asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.type() ==
                asn1::ngap::qos_characteristics_c::types::non_dyn5qi) {
       non_dyn_5qi_descriptor non_dyn_5qi = {};
