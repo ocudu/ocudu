@@ -4,10 +4,47 @@
 
 #include "ngap_validators.h"
 #include "ocudu/ran/cause/common.h"
+#include "ocudu/ran/qos/five_qi_qos_mapping.h"
 #include <unordered_set>
 
 using namespace ocudu;
 using namespace ocucp;
+
+/// \brief Determine whether a QoS flow is a GBR QoS flow, as per TS 23.501 section 5.7.3.2.
+///
+/// For a standardized 5QI, the resource type is given by TS 23.501 table 5.7.4-1. For a dynamic 5QI, the Delay Critical
+/// and Averaging Window IEs are present for GBR QoS flows only, see TS 38.413 section 9.3.1.18.
+static bool is_gbr_qos_flow(const qos_flow_level_qos_parameters& qos_params)
+{
+  if (qos_params.qos_desc.is_dyn_5qi()) {
+    const dyn_5qi_descriptor& dyn_5qi = qos_params.qos_desc.get_dyn_5qi();
+    return dyn_5qi.is_delay_critical.has_value() or dyn_5qi.averaging_win.has_value();
+  }
+
+  const standardized_qos_characteristics* qos_char =
+      get_5qi_to_qos_characteristics_mapping(qos_params.qos_desc.get_nondyn_5qi().five_qi);
+  return qos_char != nullptr and qos_char->res_type != qos_flow_resource_type::non_gbr;
+}
+
+/// \brief Determine whether the companion IEs required for the QoS characteristics of a QoS flow are present, as per
+/// TS 38.413 section 8.2.1.4.
+static bool has_required_qos_companion_ies(const qos_flow_level_qos_parameters& qos_params)
+{
+  // The GBR QoS Flow Information IE shall be present for GBR QoS flows.
+  if (is_gbr_qos_flow(qos_params) and not qos_params.gbr_qos_info.has_value()) {
+    return false;
+  }
+
+  // The Maximum Data Burst Volume IE shall be present if the Delay Critical IE is set to "delay critical".
+  if (qos_params.qos_desc.is_dyn_5qi()) {
+    const dyn_5qi_descriptor& dyn_5qi = qos_params.qos_desc.get_dyn_5qi();
+    if (dyn_5qi.is_delay_critical.value_or(false) and not dyn_5qi.max_data_burst_volume.has_value()) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 pdu_session_resource_setup_validation_outcome
 ocudu::ocucp::verify_pdu_session_resource_setup_request(const ngap_pdu_session_resource_setup_request&     request,
@@ -58,24 +95,57 @@ ocudu::ocucp::verify_pdu_session_resource_setup_request(const ngap_pdu_session_r
     return verification_outcome;
   }
 
-  // If Non-GBR QoS flow present then PDU Session Aggregate Maximum Bit Rate must be present.
+  // Add a PDU session to the response as failed, with a cause reporting an invalid QoS combination.
+  auto fail_pdu_session = [&](pdu_session_id_t psi) {
+    failed_psis.emplace(psi);
+    ngap_pdu_session_res_setup_failed_item failed_item;
+    failed_item.pdu_session_id              = psi;
+    failed_item.unsuccessful_transfer.cause = ngap_cause_radio_network_t::invalid_qos_combination;
+    verification_outcome.response.pdu_session_res_failed_to_setup_items.emplace(psi, failed_item);
+  };
+
+  // Check that the IEs required by the QoS parameters of the requested QoS flows are present.
   for (const auto& psi : psis) {
-    for (const auto& qos_flow_item : request.pdu_session_res_setup_items[psi].qos_flow_setup_request_items) {
-      if (qos_flow_item.qos_flow_level_qos_params.reflective_qos_attribute_subject_to ||
-          qos_flow_item.qos_flow_level_qos_params.add_qos_flow_info) {
-        if (!asn1_request->ue_aggr_max_bit_rate_present) {
-          ue_logger.log_warning("Non-GBR QoS flow for {} present but PduSessionAggregateMaximumBitRate not set", psi);
-          failed_psis.emplace(psi);
-          // Add failed psi to response.
-          ngap_pdu_session_res_setup_failed_item failed_item;
-          failed_item.pdu_session_id              = psi;
-          failed_item.unsuccessful_transfer.cause = ngap_cause_radio_network_t::invalid_qos_combination;
-          verification_outcome.response.pdu_session_res_failed_to_setup_items.emplace(psi, failed_item);
-          // If single QoS flow fails, then the whole PDU session fails.
-          break;
-        }
-      }
+    const auto& setup_item = request.pdu_session_res_setup_items[psi];
+
+    // If a Non-GBR QoS flow is requested then the PDU Session Aggregate Maximum Bit Rate must be present.
+    bool non_gbr_qos_flow_requested = std::any_of(setup_item.qos_flow_setup_request_items.begin(),
+                                                  setup_item.qos_flow_setup_request_items.end(),
+                                                  [](const qos_flow_setup_request_item& qos_flow_item) {
+                                                    return not is_gbr_qos_flow(qos_flow_item.qos_flow_level_qos_params);
+                                                  });
+    if (non_gbr_qos_flow_requested and not setup_item.pdu_session_aggregate_maximum_bit_rate_dl.has_value()) {
+      ue_logger.log_warning("Non-GBR QoS flow for {} present but PduSessionAggregateMaximumBitRate not set", psi);
+      // If the PDU Session Aggregate Maximum Bit Rate is missing, then the whole PDU session fails.
+      fail_pdu_session(psi);
+      continue;
     }
+
+    // Collect the QoS flows whose QoS parameters lack a required IE.
+    ngap_pdu_session_res_setup_response_item response_item;
+    response_item.pdu_session_id = psi;
+    auto& failed_qos_flows = response_item.pdu_session_resource_setup_response_transfer.qos_flow_failed_to_setup_list;
+    for (const auto& qos_flow_item : setup_item.qos_flow_setup_request_items) {
+      if (has_required_qos_companion_ies(qos_flow_item.qos_flow_level_qos_params)) {
+        continue;
+      }
+      ue_logger.log_warning("Incomplete QoS parameters for {} of {}", qos_flow_item.qos_flow_id, psi);
+      ngap_qos_flow_failed_to_setup_item failed_qos_flow;
+      failed_qos_flow.qos_flow_id = qos_flow_item.qos_flow_id;
+      failed_qos_flow.cause       = ngap_cause_radio_network_t::invalid_qos_combination;
+      failed_qos_flows.emplace(failed_qos_flow.qos_flow_id, failed_qos_flow);
+    }
+
+    if (failed_qos_flows.empty()) {
+      continue;
+    }
+    if (failed_qos_flows.size() == setup_item.qos_flow_setup_request_items.size()) {
+      // If all requested QoS flows fail, then the whole PDU session fails.
+      fail_pdu_session(psi);
+      continue;
+    }
+    // The remaining QoS flows of the PDU session are set up, so report the failed ones in the response.
+    verification_outcome.response.pdu_session_res_setup_response_items.emplace(psi, std::move(response_item));
   }
 
   // Remove failed psis from psis.
@@ -83,9 +153,17 @@ ocudu::ocucp::verify_pdu_session_resource_setup_request(const ngap_pdu_session_r
     psis.erase(failed_psi);
   }
 
-  // Add remaining PDU sessions to verified request.
+  // Add remaining PDU sessions to verified request, leaving out the QoS flows that failed the verification.
   for (const auto& psi : psis) {
-    verification_outcome.request.pdu_session_res_setup_items.emplace(psi, request.pdu_session_res_setup_items[psi]);
+    auto& setup_item =
+        verification_outcome.request.pdu_session_res_setup_items.emplace(psi, request.pdu_session_res_setup_items[psi]);
+    if (verification_outcome.response.pdu_session_res_setup_response_items.contains(psi)) {
+      for (const auto& failed_qos_flow :
+           verification_outcome.response.pdu_session_res_setup_response_items[psi]
+               .pdu_session_resource_setup_response_transfer.qos_flow_failed_to_setup_list) {
+        setup_item.qos_flow_setup_request_items.erase(failed_qos_flow.qos_flow_id);
+      }
+    }
   }
   verification_outcome.request.ue_index     = request.ue_index;
   verification_outcome.request.ue_ambr      = request.ue_ambr;

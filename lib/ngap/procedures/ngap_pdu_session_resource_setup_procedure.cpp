@@ -75,7 +75,17 @@ void ngap_pdu_session_resource_setup_procedure::operator()(coro_context<async_ta
 void ngap_pdu_session_resource_setup_procedure::combine_pdu_session_resource_setup_response()
 {
   for (const auto& setup_item : verification_outcome.response.pdu_session_res_setup_response_items) {
-    response.pdu_session_res_setup_response_items.emplace(setup_item.pdu_session_id, setup_item);
+    if (not response.pdu_session_res_setup_response_items.contains(setup_item.pdu_session_id)) {
+      response.pdu_session_res_setup_response_items.emplace(setup_item.pdu_session_id, setup_item);
+      continue;
+    }
+    // Report the QoS flows that failed the verification next to the QoS flows that were set up.
+    auto& transfer = response.pdu_session_res_setup_response_items[setup_item.pdu_session_id]
+                         .pdu_session_resource_setup_response_transfer;
+    for (const auto& failed_qos_flow :
+         setup_item.pdu_session_resource_setup_response_transfer.qos_flow_failed_to_setup_list) {
+      transfer.qos_flow_failed_to_setup_list.emplace(failed_qos_flow.qos_flow_id, failed_qos_flow);
+    }
   }
   for (const auto& failed_item : verification_outcome.response.pdu_session_res_failed_to_setup_items) {
     response.pdu_session_res_failed_to_setup_items.emplace(failed_item.pdu_session_id, failed_item);
