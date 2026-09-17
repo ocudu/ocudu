@@ -79,14 +79,24 @@ ocudu::ocucp::generate_xnap_handover_request(cu_cp_ue_index_t                   
 
     // Iterate over all DRBs of the PDU session and collect all QoS flows.
     for (const auto& [drb_id, drb_ctxt] : pdu_session_ctxt.drbs) {
+      // Report this source's own DRB-to-QoS-flow mapping, so that the target can keep the DRB numbering
+      // (TS 38.423 section 9.2.1.17).
+      cu_cp_drbs_to_qos_flows_map_item drbs_to_qos_flows_map_item;
+      drbs_to_qos_flows_map_item.drb_id = drb_id;
       for (const auto& [qfi, qos_flow] : drb_ctxt.qos_flows) {
+        drbs_to_qos_flows_map_item.associated_qos_flow_list.push_back(cu_cp_associated_qos_flow{qfi, std::nullopt});
         qos_flow_setup_request_item qos_flow_setup_item = {};
         // Set QFI.
         qos_flow_setup_item.qos_flow_id = qfi;
         // Fill QoS flow level QoS parameters.
         qos_flow_setup_item.qos_flow_level_qos_params = qos_flow.qos_params;
+        // Propose the QoS flow for DL data forwarding, leaving it to the target to decide which flows it accepts and
+        // over which forwarding tunnels (TS 38.300 section 9.2.3.2.3).
+        qos_flow_setup_item.dl_forwarding = true;
+
         pdu_session_item.qos_flow_setup_request_items.emplace(qfi, qos_flow_setup_item);
       }
+      pdu_session_item.source_drbs_to_qos_flows_map_list.push_back(drbs_to_qos_flows_map_item);
     }
 
     request.ue_context_info_ho_request.pdu_session_res_to_be_setup_list.emplace(pid, pdu_session_item);

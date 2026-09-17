@@ -54,7 +54,13 @@ public:
     qos_flow_setup_request_item qos_flow_item{.qos_flow_id               = qos_flow_id_t::min,
                                               .qos_flow_level_qos_params = qos_params};
 
+    qos_flow_item.dl_forwarding = true;
     item.qos_flow_setup_request_items.emplace(qos_flow_id_t::min, qos_flow_item);
+
+    cu_cp_drbs_to_qos_flows_map_item drbs_to_qos_flows_map_item;
+    drbs_to_qos_flows_map_item.drb_id = drb_id_t::drb1;
+    drbs_to_qos_flows_map_item.associated_qos_flow_list.push_back({qos_flow_id_t::min, std::nullopt});
+    item.source_drbs_to_qos_flows_map_list.push_back(drbs_to_qos_flows_map_item);
 
     request.ue_context_info_ho_request.pdu_session_res_to_be_setup_list.emplace(item.pdu_session_id, item);
 
@@ -297,6 +303,48 @@ TEST_F(xnap_handover_preparation_procedure_test,
   const auto& ho_request = sent_msg.pdu.init_msg().value.ho_request();
 
   EXPECT_EQ(ho_request->ue_context_info_ho_request.rrc_context, rrc_handover_preparation_info);
+}
+
+/// Test that the Handover Request proposes the UE's QoS flows for DL data forwarding via the Data Forwarding and
+/// Offloading Info from source NG-RAN node IE (TS 38.423 Section 9.2.1.17), so the target can set up forwarding
+/// tunnels for them, and reports this source's own DRB-to-QoS-flow mapping in the same IE, so the target can keep
+/// the DRB numbering.
+TEST_F(xnap_handover_preparation_procedure_test, when_handover_request_sent_then_dl_data_forwarding_is_proposed)
+{
+  run_xn_setup(xnap_peer_cfg);
+
+  cu_cp_ue_index_t           ue_index = create_ue();
+  security::security_context sec_ctxt = generate_security_context(ue_mng.find_ue(ue_index)->get_security_manager());
+  xnap_handover_request      request  = generate_handover_request(ue_index, sec_ctxt);
+
+  async_task<xnap_handover_preparation_response>         t = xnap->handle_handover_request_required(request);
+  lazy_task_launcher<xnap_handover_preparation_response> t_launcher(t);
+
+  xnap_message sent_msg = get_last_message();
+  ASSERT_EQ(sent_msg.pdu.init_msg().value.type().value,
+            asn1::xnap::xnap_elem_procs_o::init_msg_c::types_opts::ho_request);
+
+  // The Handover Request must encode, so that every mandatory IE of the proposal carries a packable value.
+  byte_buffer   packed_pdu;
+  asn1::bit_ref bref(packed_pdu);
+  ASSERT_EQ(sent_msg.pdu.pack(bref), asn1::OCUDUASN_SUCCESS);
+
+  const auto& ho_request = sent_msg.pdu.init_msg().value.ho_request();
+
+  ASSERT_EQ(ho_request->ue_context_info_ho_request.pdu_session_res_to_be_setup_list.size(), 1U);
+  const auto& asn1_pdu_session = ho_request->ue_context_info_ho_request.pdu_session_res_to_be_setup_list[0];
+  ASSERT_TRUE(asn1_pdu_session.dataforwardinginfofrom_source_present);
+
+  const auto& flows_to_be_forwarded = asn1_pdu_session.dataforwardinginfofrom_source.qos_flows_to_be_forwarded;
+  ASSERT_EQ(flows_to_be_forwarded.size(), 1U);
+  EXPECT_EQ(flows_to_be_forwarded[0].qos_flow_id, to_underlying(qos_flow_id_t::min));
+  EXPECT_EQ(flows_to_be_forwarded[0].dl_dataforwarding.value, asn1::xnap::dl_forwarding_opts::dl_forwarding_proposed);
+
+  const auto& source_drb_map = asn1_pdu_session.dataforwardinginfofrom_source.source_drb_to_qos_flow_map;
+  ASSERT_EQ(source_drb_map.size(), 1U);
+  EXPECT_EQ(source_drb_map[0].drb_id, to_underlying(drb_id_t::drb1));
+  ASSERT_EQ(source_drb_map[0].qos_flows_list.size(), 1U);
+  EXPECT_EQ(source_drb_map[0].qos_flows_list[0].qfi, to_underlying(qos_flow_id_t::min));
 }
 
 ///////////////////////////////////////////////////////////////////////////////

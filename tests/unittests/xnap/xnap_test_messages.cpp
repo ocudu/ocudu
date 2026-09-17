@@ -87,9 +87,8 @@ xnap_message ocudu::ocucp::generate_xn_setup_response_with_served_cell(const xna
   return generate_asn1_xn_setup_response(peer_cfg, {&served_cell, 1});
 }
 
-xnap_message ocudu::ocucp::generate_handover_request(local_xnap_ue_id_t local_xnap_ue_id,
-                                                     bool               include_drb_to_qos_flow_mapping,
-                                                     bool               include_as_config_drb_mapping)
+xnap_message ocudu::ocucp::generate_handover_request(local_xnap_ue_id_t                local_xnap_ue_id,
+                                                     const xn_handover_request_params& params)
 {
   xnap_message xnap_msg;
 
@@ -139,7 +138,16 @@ xnap_message ocudu::ocucp::generate_handover_request(local_xnap_ue_id_t local_xn
 
   pdu_session_item.qos_flows_to_be_setup_list.push_back(qos_flow_item);
 
-  if (include_drb_to_qos_flow_mapping) {
+  if (params.propose_dl_data_forwarding) {
+    // Propose the QoS flow of the PDU session for DL data forwarding.
+    pdu_session_item.dataforwardinginfofrom_source_present = true;
+    qos_f_lows_to_be_forwarded_item_s qos_flow_to_be_forwarded;
+    qos_flow_to_be_forwarded.qos_flow_id       = 1;
+    qos_flow_to_be_forwarded.dl_dataforwarding = asn1::xnap::dl_forwarding_opts::dl_forwarding_proposed;
+    pdu_session_item.dataforwardinginfofrom_source.qos_flows_to_be_forwarded.push_back(qos_flow_to_be_forwarded);
+  }
+
+  if (params.include_drb_to_qos_flow_mapping) {
     // Report this source's own DRB-to-QoS-flow mapping (DRB1 <-> QFI1, matching the admitted PDU session).
     pdu_session_item.dataforwardinginfofrom_source_present = true;
     drb_to_qos_flow_map_item_s drb_to_qos_flow_map_item;
@@ -158,7 +166,7 @@ xnap_message ocudu::ocucp::generate_handover_request(local_xnap_ue_id_t local_xn
           "00000040000000247001040000259650100400002596500052388008404008010100200400200801052050")
           .value();
 
-  if (include_as_config_drb_mapping) {
+  if (params.include_as_config_drb_mapping) {
     ho_request->ue_context_info_ho_request.rrc_context =
         add_as_config_drb_mapping(ho_request->ue_context_info_ho_request.rrc_context);
   }

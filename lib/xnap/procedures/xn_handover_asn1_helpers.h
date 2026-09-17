@@ -70,12 +70,21 @@ inline bool asn1_to_ue_context_info_ho_request(xnap_ue_context_info_ho_request& 
 
     request.pdu_session_res_to_be_setup_list.emplace(pdu_session_id, pdu_session_item);
 
-    // Fill the source's DRB-to-QoS-flow mapping, if the peer signalled it in the Data Forwarding and Offloading Info
-    // from source NG-RAN node IE (TS 38.423 Section 9.2.1.17). This node reports the mapping through AS-Config in the
-    // RRC container instead, but peers may use this XnAP-native IE, so both are accepted and merged at the target.
+    // Fill the QoS flows the source proposed for data forwarding and its DRB-to-QoS-flow mapping, if the peer
+    // signalled them in the Data Forwarding and Offloading Info from source NG-RAN node IE (TS 38.423 Section
+    // 9.2.1.17). The target also derives the mapping from AS-Config in the RRC container, which takes precedence
+    // where the two disagree.
     if (asn1_pdu_session.dataforwardinginfofrom_source_present) {
       cu_cp_pdu_session_res_info_item pdu_session_res_info_item;
       pdu_session_res_info_item.pdu_session_id = pdu_session_id;
+      for (const auto& asn1_qos_flow_to_be_forwarded :
+           asn1_pdu_session.dataforwardinginfofrom_source.qos_flows_to_be_forwarded) {
+        cu_cp_qos_flow_info_item qos_flow_info_item;
+        qos_flow_info_item.qos_flow_id = uint_to_qos_flow_id(asn1_qos_flow_to_be_forwarded.qos_flow_id);
+        qos_flow_info_item.dl_forwarding =
+            asn1_qos_flow_to_be_forwarded.dl_dataforwarding == asn1::xnap::dl_forwarding_opts::dl_forwarding_proposed;
+        pdu_session_res_info_item.qos_flow_info_list.push_back(qos_flow_info_item);
+      }
       for (const auto& asn1_drb_to_qos_flow_map :
            asn1_pdu_session.dataforwardinginfofrom_source.source_drb_to_qos_flow_map) {
         cu_cp_drbs_to_qos_flows_map_item drb_to_qos_flow_map;

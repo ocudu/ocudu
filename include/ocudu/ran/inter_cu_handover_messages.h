@@ -31,11 +31,6 @@ struct cu_cp_qos_flow_info_item {
   std::optional<bool> dl_forwarding;
 };
 
-struct cu_cp_drbs_to_qos_flows_map_item {
-  drb_id_t                               drb_id = drb_id_t::invalid;
-  std::vector<cu_cp_associated_qos_flow> associated_qos_flow_list;
-};
-
 struct cu_cp_pdu_session_res_info_item {
   pdu_session_id_t                              pdu_session_id = pdu_session_id_t::invalid;
   std::vector<cu_cp_qos_flow_info_item>         qos_flow_info_list;

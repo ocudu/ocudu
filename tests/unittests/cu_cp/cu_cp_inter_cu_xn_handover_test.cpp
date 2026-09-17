@@ -75,9 +75,8 @@ public:
   }
 
   [[nodiscard]] bool
-  send_handover_request_and_await_bearer_context_setup_request(local_xnap_ue_id_t local_xnap_ue_id,
-                                                               bool include_drb_to_qos_flow_mapping = true,
-                                                               bool include_as_config_drb_mapping   = false)
+  send_handover_request_and_await_bearer_context_setup_request(local_xnap_ue_id_t                local_xnap_ue_id,
+                                                               const xn_handover_request_params& ho_params = {})
   {
     report_fatal_error_if_not(not this->get_amf().try_pop_rx_pdu(ngap_pdu),
                               "there are still NGAP messages to pop from AMF");
@@ -89,9 +88,7 @@ public:
                               "there are still XNAP messages to pop from Xn-C peer CU-CP");
 
     // Inject Handover Request and wait for Bearer Context Setup Request.
-    get_xnc_cu_cp(xnc_peer_idx)
-        .push_tx_pdu(generate_handover_request(
-            local_xnap_ue_id, include_drb_to_qos_flow_mapping, include_as_config_drb_mapping));
+    get_xnc_cu_cp(xnc_peer_idx).push_tx_pdu(generate_handover_request(local_xnap_ue_id, ho_params));
     report_fatal_error_if_not(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu),
                               "Failed to receive Bearer Context Setup Request");
     report_fatal_error_if_not(test_helpers::is_valid_bearer_context_setup_request(e1ap_pdu),
@@ -575,9 +572,10 @@ TEST_F(cu_cp_inter_cu_xn_handover_test, when_sn_status_transfer_contains_drb_not
 TEST_F(cu_cp_inter_cu_xn_handover_test, when_drb_to_qos_flow_mapping_is_signalled_via_as_config_then_it_is_confirmed)
 {
   // Inject Handover Request reporting the mapping only via AS-Config, not via the XnAP-native IE.
-  ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request(source_local_xnap_ue_id,
-                                                                           /*include_drb_to_qos_flow_mapping=*/false,
-                                                                           /*include_as_config_drb_mapping=*/true));
+  xn_handover_request_params ho_params;
+  ho_params.include_drb_to_qos_flow_mapping = false;
+  ho_params.include_as_config_drb_mapping   = true;
+  ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request(source_local_xnap_ue_id, ho_params));
 
   // Inject Bearer Context Setup Response and await UE Context Setup Request.
   ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_setup_request());
@@ -616,8 +614,9 @@ TEST_F(cu_cp_inter_cu_xn_handover_test, when_drb_to_qos_flow_mapping_is_signalle
 TEST_F(cu_cp_inter_cu_xn_handover_test, when_sn_status_transfer_reports_an_unconfirmed_drb_id_then_it_is_ignored)
 {
   // Inject Handover Request (without the source's DRB-to-QoS-flow mapping) and await Bearer Context Setup Request.
-  ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request(source_local_xnap_ue_id,
-                                                                           /*include_drb_to_qos_flow_mapping=*/false));
+  xn_handover_request_params ho_params;
+  ho_params.include_drb_to_qos_flow_mapping = false;
+  ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request(source_local_xnap_ue_id, ho_params));
 
   // Inject Bearer Context Setup Response and await UE Context Setup Request.
   ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_setup_request());
@@ -831,4 +830,41 @@ TEST_F(cu_cp_inter_cu_xn_handover_test, when_zigzag_handover_is_performed_then_h
   // STATUS: UE should be removed at this stage
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ues.size(), 0) << "UE should be removed";
+}
+
+// When the source proposes DL data forwarding for its QoS flows in the Data Forwarding and Offloading Info from
+// source NG-RAN node IE (TS 38.423 section 9.2.1.17), the target asks its CU-UP for a forwarding tunnel carrying
+// those flows (TS 37.483 section 9.3.2.5).
+TEST_F(cu_cp_inter_cu_xn_handover_test, when_source_proposes_dl_data_forwarding_then_target_requests_fwd_tunnels)
+{
+  xn_handover_request_params ho_params;
+  ho_params.propose_dl_data_forwarding = true;
+  ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request(source_local_xnap_ue_id, ho_params));
+
+  const auto& ng_ran_bearer_ctxt = e1ap_pdu.pdu.init_msg()
+                                       .value.bearer_context_setup_request()
+                                       ->sys_bearer_context_setup_request.ng_ran_bearer_context_setup_request();
+  const asn1::e1ap::pdu_session_res_to_setup_item_s& e1ap_pdu_session =
+      ng_ran_bearer_ctxt[0]->pdu_session_res_to_setup_list()[0];
+
+  ASSERT_TRUE(e1ap_pdu_session.pdu_session_data_forwarding_info_request_present);
+  ASSERT_EQ(e1ap_pdu_session.pdu_session_data_forwarding_info_request.data_forwarding_request.value,
+            asn1::e1ap::data_forwarding_request_opts::dl);
+
+  // The proposed QoS flow is listed as forwarded over that tunnel.
+  const auto& flows_on_tunnel =
+      e1ap_pdu_session.pdu_session_data_forwarding_info_request.qos_flows_forwarded_on_fwd_tunnels;
+  ASSERT_EQ(flows_on_tunnel.size(), 1U);
+  ASSERT_EQ(flows_on_tunnel[0].qos_flow_id, 1U);
+
+  // The handover must still complete normally afterwards.
+  ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_setup_request());
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_handover_request_ack());
+  ASSERT_TRUE(send_sn_status_transfer_and_await_bearer_context_modification_request(source_local_xnap_ue_id,
+                                                                                    source_peer_xnap_ue_id));
+  ASSERT_TRUE(send_bearer_context_modification_response());
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_path_switch_request());
+  ASSERT_TRUE(send_path_switch_request_ack_and_await_ue_context_modification_request());
+  ASSERT_TRUE(send_ue_context_modification_response_empty(cu_ue_id, du_ue_id));
 }

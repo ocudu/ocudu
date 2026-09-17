@@ -24,15 +24,22 @@ xnap_message generate_xn_setup_response_with_served_cell(const xnap_configuratio
                                                          pci_t                      served_pci,
                                                          const nr_cell_global_id_t& served_cgi);
 
-/// \brief Generate a dummy Handover Request message. \c include_drb_to_qos_flow_mapping controls whether the
-/// source's DRB-to-QoS-flow mapping (DRB1 <-> QFI1, matching the admitted PDU session) is included via the Data
-/// Forwarding and Offloading Info from source NG-RAN node IE, letting the target confirm and prefer DRB1's
-/// numbering (TS 38.423 Section 9.2.1.17). Pass false to simulate a source that didn't signal it.
-/// \c include_as_config_drb_mapping reports the same mapping through AS-Config in the RRC container instead
-/// (TS 38.331 Section 11.2.3), as this node does; use it to simulate a source that only signals it that way.
-xnap_message generate_handover_request(local_xnap_ue_id_t local_xnap_ue_id,
-                                       bool               include_drb_to_qos_flow_mapping = true,
-                                       bool               include_as_config_drb_mapping   = false);
+/// \brief Contents of the Handover Request a peer source NG-RAN node sends to this node.
+struct xn_handover_request_params {
+  /// Includes the source's DRB-to-QoS-flow mapping (DRB1 <-> QFI1, matching the admitted PDU session) via the Data
+  /// Forwarding and Offloading Info from source NG-RAN node IE, letting the target confirm and prefer DRB1's
+  /// numbering (TS 38.423 Section 9.2.1.17). Set to false to simulate a source that didn't signal it.
+  bool include_drb_to_qos_flow_mapping = true;
+  /// Reports the same mapping through AS-Config in the RRC container instead (TS 38.331 Section 11.2.3), as this node
+  /// does; use it to simulate a source that only signals it that way.
+  bool include_as_config_drb_mapping = false;
+  /// Proposes every QoS flow of the PDU session for DL data forwarding (TS 38.423 Section 9.2.1.17).
+  bool propose_dl_data_forwarding = false;
+};
+
+/// \brief Generate a dummy Handover Request message.
+xnap_message generate_handover_request(local_xnap_ue_id_t                local_xnap_ue_id,
+                                       const xn_handover_request_params& params = {});
 
 /// \brief Generate a dummy Handover Preparation Failure message.
 xnap_message generate_handover_preparation_failure(peer_xnap_ue_id_t peer_xnap_ue_id);
