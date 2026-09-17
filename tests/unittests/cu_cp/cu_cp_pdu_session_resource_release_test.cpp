@@ -170,6 +170,27 @@ public:
     return true;
   }
 
+  [[nodiscard]] bool
+  send_pdu_session_release_command_with_duplicate_pdu_session_id_and_await_bearer_context_release_command()
+  {
+    report_fatal_error_if_not(not this->get_amf().try_pop_rx_pdu(ngap_pdu),
+                              "there are still NGAP messages to pop from AMF");
+    report_fatal_error_if_not(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu),
+                              "there are still F1AP DL messages to pop from DU");
+    report_fatal_error_if_not(not this->get_cu_up(cu_up_idx).try_pop_rx_pdu(e1ap_pdu),
+                              "there are still E1AP messages to pop from CU-UP");
+
+    // Inject PDU Session Resource Release Command listing the same PDU Session ID twice and wait for Bearer Context
+    // Release Command
+    get_amf().push_tx_pdu(generate_pdu_session_resource_release_command_with_duplicate_pdu_session_id(
+        amf_ue_id, ue_ctx->ran_ue_id.value(), psi));
+    report_fatal_error_if_not(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu),
+                              "Failed to receive Bearer Context Release Command");
+    report_fatal_error_if_not(test_helpers::is_valid_bearer_context_release_command(e1ap_pdu),
+                              "Invalid Bearer Context Release Command");
+    return true;
+  }
+
   [[nodiscard]] bool send_bearer_context_modification_failure_and_await_ue_context_modification_request()
   {
     // Inject Bearer Context Modification Failure and wait for UE Context Modification Request
@@ -328,4 +349,29 @@ TEST_F(cu_cp_pdu_session_resource_release_test, when_only_pdu_session_released_t
 
   // Inject RRC Reconfiguration Complete and await PDU Session Resource Release Response
   ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_pdu_session_release_response(0, 8));
+}
+
+TEST_F(cu_cp_pdu_session_resource_release_test,
+       when_release_command_contains_duplicate_pdu_session_id_then_single_pdu_session_is_released)
+{
+  // Inject NGAP PDU Session Resource Release Command listing the same PDU Session ID twice and await Bearer Context
+  // Release Command
+  ASSERT_TRUE(
+      send_pdu_session_release_command_with_duplicate_pdu_session_id_and_await_bearer_context_release_command());
+
+  // Inject Bearer Context Release Complete and await UE Context Modification Request
+  ASSERT_TRUE(send_bearer_context_release_complete_and_await_ue_context_modification_request());
+
+  // Inject UE Context Modification Response and await RRC Reconfiguration
+  ASSERT_TRUE(send_ue_context_modification_response_and_await_rrc_reconfiguration());
+
+  // Inject RRC Reconfiguration Complete and await PDU Session Resource Release Response
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_pdu_session_release_response(0, 8));
+
+  // Check that the duplicated instance is ignored and the PDU session is reported as released once, as required by
+  // TS 38.413 section 8.2.2.4.
+  const auto& released_list =
+      ngap_pdu.pdu.successful_outcome().value.pdu_session_res_release_resp()->pdu_session_res_released_list_rel_res;
+  ASSERT_EQ(released_list.size(), 1);
+  ASSERT_EQ(released_list[0].pdu_session_id, to_underlying(psi));
 }

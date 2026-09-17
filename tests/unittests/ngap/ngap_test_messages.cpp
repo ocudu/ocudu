@@ -667,9 +667,10 @@ ngap_message ocudu::ocucp::generate_pdu_session_resource_release_command_base(am
   return ngap_msg;
 }
 
-ngap_message ocudu::ocucp::generate_valid_pdu_session_resource_release_command(amf_ue_id_t      amf_ue_id,
-                                                                               ran_ue_id_t      ran_ue_id,
-                                                                               pdu_session_id_t pdu_session_id)
+ngap_message
+ocudu::ocucp::generate_valid_pdu_session_resource_release_command(amf_ue_id_t                          amf_ue_id,
+                                                                  ran_ue_id_t                          ran_ue_id,
+                                                                  const std::vector<pdu_session_id_t>& pdu_session_ids)
 {
   ngap_message ngap_msg = generate_pdu_session_resource_release_command_base(amf_ue_id, ran_ue_id);
 
@@ -680,13 +681,32 @@ ngap_message ocudu::ocucp::generate_valid_pdu_session_resource_release_command(a
   pdu_session_res_release_cmd->nas_pdu         = make_byte_buffer("7e02bcb47dc1137e00680100052e01b3d3241201").value();
 
   // Fill  PDU session resource to release list.
-  asn1::ngap::pdu_session_res_to_release_item_rel_cmd_s pdu_session_res_to_release_item_rel_cmd;
-  pdu_session_res_to_release_item_rel_cmd.pdu_session_id                       = to_underlying(pdu_session_id);
-  pdu_session_res_to_release_item_rel_cmd.pdu_session_res_release_cmd_transfer = make_byte_buffer("10").value();
-  pdu_session_res_release_cmd->pdu_session_res_to_release_list_rel_cmd.push_back(
-      pdu_session_res_to_release_item_rel_cmd);
+  for (pdu_session_id_t pdu_session_id : pdu_session_ids) {
+    asn1::ngap::pdu_session_res_to_release_item_rel_cmd_s pdu_session_res_to_release_item_rel_cmd;
+    pdu_session_res_to_release_item_rel_cmd.pdu_session_id                       = to_underlying(pdu_session_id);
+    pdu_session_res_to_release_item_rel_cmd.pdu_session_res_release_cmd_transfer = make_byte_buffer("10").value();
+    pdu_session_res_release_cmd->pdu_session_res_to_release_list_rel_cmd.push_back(
+        pdu_session_res_to_release_item_rel_cmd);
+  }
 
   return ngap_msg;
+}
+
+ngap_message ocudu::ocucp::generate_valid_pdu_session_resource_release_command(amf_ue_id_t      amf_ue_id,
+                                                                               ran_ue_id_t      ran_ue_id,
+                                                                               pdu_session_id_t pdu_session_id)
+{
+  return generate_valid_pdu_session_resource_release_command(
+      amf_ue_id, ran_ue_id, std::vector<pdu_session_id_t>{pdu_session_id});
+}
+
+ngap_message ocudu::ocucp::generate_pdu_session_resource_release_command_with_duplicate_pdu_session_id(
+    amf_ue_id_t      amf_ue_id,
+    ran_ue_id_t      ran_ue_id,
+    pdu_session_id_t pdu_session_id)
+{
+  return generate_valid_pdu_session_resource_release_command(
+      amf_ue_id, ran_ue_id, std::vector<pdu_session_id_t>{pdu_session_id, pdu_session_id});
 }
 
 ngap_message ocudu::ocucp::generate_invalid_pdu_session_resource_release_command(amf_ue_id_t amf_ue_id,

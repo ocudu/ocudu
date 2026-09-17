@@ -194,9 +194,20 @@ generate_ngap_pdu_session_resource_setup_response(ngap_pdu_session_resource_setu
 ngap_message generate_pdu_session_resource_release_command_base(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
 
 /// \brief Generate a valid dummy PDU Session Resource Release Command.
+ngap_message generate_valid_pdu_session_resource_release_command(amf_ue_id_t                          amf_ue_id,
+                                                                 ran_ue_id_t                          ran_ue_id,
+                                                                 const std::vector<pdu_session_id_t>& pdu_session_ids);
+
+/// \brief Generate a valid dummy PDU Session Resource Release Command for a single PDU session.
 ngap_message generate_valid_pdu_session_resource_release_command(amf_ue_id_t      amf_ue_id,
                                                                  ran_ue_id_t      ran_ue_id,
                                                                  pdu_session_id_t pdu_session_id);
+
+/// \brief Generate a dummy PDU Session Resource Release Command listing the same PDU Session ID twice.
+ngap_message
+generate_pdu_session_resource_release_command_with_duplicate_pdu_session_id(amf_ue_id_t      amf_ue_id,
+                                                                            ran_ue_id_t      ran_ue_id,
+                                                                            pdu_session_id_t pdu_session_id);
 
 /// \brief Generate an invalid dummy PDU Session Resource Release Command.
 ngap_message generate_invalid_pdu_session_resource_release_command(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);

@@ -135,6 +135,38 @@ TEST_F(ngap_pdu_session_resource_release_procedure_test,
   ASSERT_TRUE(was_pdu_session_resource_release_command_valid());
 }
 
+/// Test that a PDU Session Resource Release Command listing the same PDU Session ID twice triggers the release of a
+/// single PDU session, as required by TS 38.413 section 8.2.2.4.
+TEST_F(ngap_pdu_session_resource_release_procedure_test,
+       when_release_command_contains_duplicate_pdu_session_id_then_single_pdu_session_is_released)
+{
+  // Test preamble.
+  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(
+      test_rng::uniform_int<uint16_t>(to_underlying(pdu_session_id_t::min), to_underlying(pdu_session_id_t::max)));
+
+  cu_cp_ue_index_t ue_index = this->start_procedure(pdu_session_id);
+
+  auto& ue = test_ues.at(ue_index);
+
+  ngap_message pdu_session_resource_release_command =
+      generate_pdu_session_resource_release_command_with_duplicate_pdu_session_id(
+          ue.amf_ue_id.value(), ue.ran_ue_id.value(), pdu_session_id);
+  ASSERT_EQ(pdu_session_resource_release_command.pdu.init_msg()
+                .value.pdu_session_res_release_cmd()
+                ->pdu_session_res_to_release_list_rel_cmd.size(),
+            2);
+
+  ngap->handle_message(pdu_session_resource_release_command);
+
+  // Check that the duplicated instance is ignored and a single PDU session is requested to be released.
+  ASSERT_EQ(cu_cp_notifier.last_release_command.pdu_session_res_to_release_list_rel_cmd.size(), 1);
+  ASSERT_EQ(cu_cp_notifier.last_release_command.pdu_session_res_to_release_list_rel_cmd[pdu_session_id].pdu_session_id,
+            pdu_session_id);
+
+  // Check that PDU Session Resource Release Command was valid.
+  ASSERT_TRUE(was_pdu_session_resource_release_command_valid());
+}
+
 /// Test that the procedure survives the removal of the NGAP UE context while it is suspended. The NGAP UE context is
 /// transferred between UEs on handover, so it can be removed from a task loop other than the one this procedure runs
 /// on.
