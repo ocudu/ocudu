@@ -5,6 +5,7 @@
 #include "du_bearer_resource_manager.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/mac/config/mac_config_helpers.h"
+#include "ocudu/ran/qos/five_qi_qos_mapping.h"
 #include "ocudu/rlc/rlc_srb_config_factory.h"
 
 using namespace ocudu;
@@ -52,6 +53,11 @@ static error_type<std::string> validate_drb_setup_request(const f1ap_drb_to_setu
                     fiveqi,
                     qos.rlc.mode,
                     drb.mode));
+  }
+
+  // The GBR QoS Flow Information IE is required for a GBR QoS DRB, as per TS 38.473 sections 8.3.1.4 and 8.3.4.4.
+  if (is_gbr_five_qi(fiveqi) and not drb.qos_info.drb_qos.gbr_qos_info.has_value()) {
+    return make_unexpected(fmt::format("No GBR QoS Flow Information provided for GBR {}", fiveqi));
   }
 
   // Validate UL UP TNL INFO.

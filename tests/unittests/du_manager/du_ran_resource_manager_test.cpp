@@ -76,6 +76,27 @@ protected:
     return req;
   }
 
+  /// \brief Build a request to set up a DRB that uses a GBR 5QI, optionally without the GBR QoS Flow Information.
+  static f1ap_ue_context_update_request gbr_drb_creation_req(du_ue_index_t ue_index, bool set_gbr_qos_info)
+  {
+    f1ap_ue_context_update_request req;
+    req.ue_index = ue_index;
+
+    f1ap_drb_to_setup& drb = req.drbs_to_setup.emplace_back();
+    drb.drb_id             = drb_id_t::drb1;
+    // The default QoS configuration of 5QI 1, a GBR 5QI, uses the UM bidirectional RLC mode.
+    drb.mode        = rlc_mode::um_bidir;
+    drb.pdcp_sn_len = pdcp_sn_size::size12bits;
+    drb.uluptnl_info_list.push_back(
+        up_transport_layer_info{transport_layer_address::create_from_string("127.0.0.1"), int_to_gtpu_teid(1)});
+    drb.qos_info.drb_qos.qos_desc = non_dyn_5qi_descriptor{uint_to_five_qi(1), {}, {}, {}};
+    if (set_gbr_qos_info) {
+      drb.qos_info.drb_qos.gbr_qos_info.emplace(gbr_qos_flow_information{1000000, 1000000, 1000000, 1000000});
+    }
+
+    return req;
+  }
+
   unsigned get_config_sr_period() const
   {
     return sr_periodicity_to_slot(default_ue_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].period);
@@ -216,6 +237,34 @@ TEST_P(du_ran_resource_manager_tester, when_srb1_is_added_then_ue_resource_confi
   ASSERT_EQ(ue_res->value().srbs.size(), 1);
   ASSERT_TRUE(ue_res->value().srbs.contains(srb_id_t::srb1));
   ASSERT_EQ(ue_res->value().srbs[srb_id_t::srb1].rlc_cfg.mode, rlc_mode::am);
+}
+
+TEST_P(du_ran_resource_manager_tester, when_gbr_drb_has_no_gbr_qos_information_then_drb_setup_fails)
+{
+  const du_ue_index_t           ue_idx1 = to_du_ue_index(0);
+  ue_ran_resource_configurator* ue_res  = create_ue(ue_idx1);
+  ASSERT_NE(ue_res, nullptr);
+  ASSERT_FALSE(ue_res->update(to_du_cell_index(0), srb1_creation_req(ue_idx1)).failed());
+
+  auto resp = ue_res->update(to_du_cell_index(0), gbr_drb_creation_req(ue_idx1, false));
+
+  // The DRB is reported as failed to setup and isn't added to the UE configuration.
+  ASSERT_EQ(resp.failed_drbs.size(), 1);
+  ASSERT_EQ(resp.failed_drbs[0], drb_id_t::drb1);
+  ASSERT_TRUE(ue_res->value().drbs.empty());
+}
+
+TEST_P(du_ran_resource_manager_tester, when_gbr_drb_has_gbr_qos_information_then_drb_setup_succeeds)
+{
+  const du_ue_index_t           ue_idx1 = to_du_ue_index(0);
+  ue_ran_resource_configurator* ue_res  = create_ue(ue_idx1);
+  ASSERT_NE(ue_res, nullptr);
+  ASSERT_FALSE(ue_res->update(to_du_cell_index(0), srb1_creation_req(ue_idx1)).failed());
+
+  auto resp = ue_res->update(to_du_cell_index(0), gbr_drb_creation_req(ue_idx1, true));
+
+  ASSERT_TRUE(resp.failed_drbs.empty());
+  ASSERT_TRUE(ue_res->value().drbs.contains(drb_id_t::drb1));
 }
 
 TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_use_different_sr_offsets)
