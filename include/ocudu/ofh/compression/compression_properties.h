@@ -29,5 +29,21 @@ inline units::bytes get_compressed_prb_size(const ru_compression_params& params)
   return units::bits(prb_size).round_up_to_bytes();
 }
 
+/// \brief Returns the size of a set of beamforming weights packed with the given compression parameters.
+///
+/// The size comprises the optional bfwCompParam field and the bfwI and bfwQ pair of each weight, see O-RAN.WG4.CUS,
+/// 7.7.1.
+inline units::bytes get_packed_beamforming_weights_size(unsigned nof_weights, const ru_compression_params& params)
+{
+  static constexpr units::bytes compr_param_size{1};
+
+  units::bytes size = units::bits(nof_weights * 2 * params.data_width).round_up_to_bytes();
+  if (is_compression_param_present(params.type)) {
+    size += compr_param_size;
+  }
+
+  return size;
+}
+
 } // namespace ofh
 } // namespace ocudu

@@ -123,6 +123,18 @@ constexpr unsigned get_total_nof_beams(antenna_topology topology)
   return get_total_nof_ports(topology) + nof_panels * nof_beams_dim1 * nof_beams_dim2 * nof_polarizations;
 }
 
+/// Gets the maximum number of antenna ports that any of the supported antenna topologies defines.
+constexpr unsigned get_max_nof_ports()
+{
+  unsigned max_nof_ports = 0;
+  for (antenna_topology topology : all_antenna_topologies) {
+    unsigned nof_ports = get_total_nof_ports(topology);
+    max_nof_ports      = std::max(max_nof_ports, nof_ports);
+  }
+
+  return max_nof_ports;
+}
+
 /// Gets the maximum number of beams that any of the supported antenna topologies defines.
 constexpr unsigned get_max_nof_beams()
 {

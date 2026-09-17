@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "../../../../lib/ofh/serdes/ofh_cplane_message_builder_static_compression_impl.h"
+#include "ocudu/ofh/compression/compression_properties.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -59,6 +60,178 @@ TEST(ofh_control_plane_packet_builder_impl_test, build_valid_invented_control_pa
   section.nof_symbols                           = 14;
 
   packet_params.compr_params = {compression_type::none, 16};
+
+  cplane_message_builder_static_compression_impl builder;
+
+  unsigned nof_bytes = builder.build_dl_ul_radio_channel_message(result_packet, packet_params);
+
+  ASSERT_EQ(packet, result_packet);
+  ASSERT_EQ(nof_bytes, packet.size());
+}
+
+#ifdef ASSERTS_ENABLED
+TEST(ofh_control_plane_packet_builder_impl_test, build_control_packet_with_beam_id_and_no_weights_should_fail)
+{
+  std::vector<uint8_t> result_packet(64, 0);
+
+  cplane_section_type1_parameters  packet_params;
+  cplane_radio_application_header& header = packet_params.radio_hdr;
+  header.direction                        = data_direction::downlink;
+  header.filter_index                     = filter_index_type::standard_channel_filter;
+  header.slot                             = slot_point(0, 0, 0);
+  header.start_symbol                     = 0;
+
+  cplane_common_section_0_1_3_5_fields& section = packet_params.section_fields.common_fields;
+  section.section_id                            = 0;
+  section.prb_start                             = 0;
+  section.nof_prb                               = 0;
+  section.re_mask                               = 0xfff;
+  section.nof_symbols                           = 14;
+  packet_params.compr_params                    = {compression_type::none, 16};
+
+  // Beam identifier without the section extension 1 that defines its weights.
+  packet_params.section_fields.beam_id = 0x1234;
+
+  cplane_message_builder_static_compression_impl builder;
+
+  ASSERT_DEATH(builder.build_dl_ul_radio_channel_message(result_packet, packet_params),
+               "A non-zero beam identifier must be accompanied by the section extension 1 beamforming weights");
+}
+
+TEST(ofh_control_plane_packet_builder_impl_test, build_control_packet_with_empty_section_extension_1_should_fail)
+{
+  std::vector<uint8_t> result_packet(64, 0);
+
+  cplane_section_type1_parameters  packet_params;
+  cplane_radio_application_header& header = packet_params.radio_hdr;
+  header.direction                        = data_direction::downlink;
+  header.filter_index                     = filter_index_type::standard_channel_filter;
+  header.slot                             = slot_point(0, 0, 0);
+  header.start_symbol                     = 0;
+
+  cplane_common_section_0_1_3_5_fields& section = packet_params.section_fields.common_fields;
+  section.section_id                            = 0;
+  section.prb_start                             = 0;
+  section.nof_prb                               = 0;
+  section.re_mask                               = 0xfff;
+  section.nof_symbols                           = 14;
+  packet_params.compr_params                    = {compression_type::none, 16};
+
+  // Section extension 1 without beamforming weights.
+  packet_params.section_fields.beam_id = 0x1234;
+  packet_params.section_fields.extensions.emplace_back(cplane_section_extension_1_params{});
+
+  cplane_message_builder_static_compression_impl builder;
+
+  ASSERT_DEATH(builder.build_dl_ul_radio_channel_message(result_packet, packet_params),
+               "Section extension 1 must carry the beamforming weights");
+}
+
+TEST(ofh_control_plane_packet_builder_impl_test, build_control_packet_with_zero_beam_id_and_weights_should_fail)
+{
+  std::vector<uint8_t> result_packet(64, 0);
+
+  cplane_section_type1_parameters  packet_params;
+  cplane_radio_application_header& header = packet_params.radio_hdr;
+  header.direction                        = data_direction::downlink;
+  header.filter_index                     = filter_index_type::standard_channel_filter;
+  header.slot                             = slot_point(0, 0, 0);
+  header.start_symbol                     = 0;
+
+  cplane_common_section_0_1_3_5_fields& section = packet_params.section_fields.common_fields;
+  section.section_id                            = 0;
+  section.prb_start                             = 0;
+  section.nof_prb                               = 0;
+  section.re_mask                               = 0xfff;
+  section.nof_symbols                           = 14;
+  packet_params.compr_params                    = {compression_type::none, 16};
+
+  std::vector<uint8_t> packed_weights = {
+      0x7f, 0xff, 0x00, 0x00, 0x00, 0x00, 0x7f, 0xff, 0x80, 0x01, 0x00, 0x00, 0x00, 0x00, 0x80, 0x01};
+
+  // Beamforming weights associated with the reserved beam identifier zero.
+  packet_params.section_fields.beam_id = 0;
+  packet_params.section_fields.extensions.emplace_back(cplane_section_extension_1_params{
+      .weights = {.compr_params = {compression_type::none, 16}, .packed_weights = packed_weights}});
+
+  cplane_message_builder_static_compression_impl builder;
+
+  ASSERT_DEATH(builder.build_dl_ul_radio_channel_message(result_packet, packet_params),
+               "Beamforming weights must be associated with a non-zero beam identifier");
+}
+#endif
+
+TEST(ofh_control_plane_packet_builder_impl_test, build_control_packet_with_section_extension_1_should_pass)
+{
+  std::vector<uint8_t> packet = {0x90, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                 0xff, 0xfe, 0x92, 0x34, 0x01, 0x05, 0x00, 0x7f, 0xff, 0x00, 0x00, 0x00,
+                                 0x00, 0x7f, 0xff, 0x80, 0x01, 0x00, 0x00, 0x00, 0x00, 0x80, 0x01, 0x00};
+
+  std::vector<uint8_t> result_packet(packet.size(), 0);
+
+  cplane_section_type1_parameters  packet_params;
+  cplane_radio_application_header& header = packet_params.radio_hdr;
+  header.direction                        = data_direction::downlink;
+  header.filter_index                     = filter_index_type::standard_channel_filter;
+  header.slot                             = slot_point(0, 0, 0);
+  header.start_symbol                     = 0;
+
+  cplane_common_section_0_1_3_5_fields& section = packet_params.section_fields.common_fields;
+  section.section_id                            = 0;
+  section.prb_start                             = 0;
+  section.nof_prb                               = 0;
+  section.re_mask                               = 0xfff;
+  section.nof_symbols                           = 14;
+  packet_params.compr_params                    = {compression_type::none, 16};
+
+  // Beamforming weights of 4 TRXs, uncompressed and 16 bits wide.
+  std::vector<uint8_t> packed_weights = {
+      0x7f, 0xff, 0x00, 0x00, 0x00, 0x00, 0x7f, 0xff, 0x80, 0x01, 0x00, 0x00, 0x00, 0x00, 0x80, 0x01};
+
+  packet_params.section_fields.beam_id = 0x1234;
+  packet_params.section_fields.extensions.emplace_back(cplane_section_extension_1_params{
+      .weights = {.compr_params = {compression_type::none, 16}, .packed_weights = packed_weights}});
+
+  cplane_message_builder_static_compression_impl builder;
+
+  unsigned nof_bytes = builder.build_dl_ul_radio_channel_message(result_packet, packet_params);
+
+  ASSERT_EQ(packet, result_packet);
+  ASSERT_EQ(nof_bytes, packet.size());
+}
+
+TEST(ofh_control_plane_packet_builder_impl_test, build_control_packet_with_bfp_compressed_section_extension_1)
+{
+  std::vector<uint8_t> packet = {0x90, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                 0x00, 0xff, 0xfe, 0x80, 0x07, 0x01, 0x04, 0x91, 0x03, 0x12, 0x34,
+                                 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x11, 0x00, 0x00, 0x00};
+
+  std::vector<uint8_t> result_packet(packet.size(), 0);
+
+  cplane_section_type1_parameters  packet_params;
+  cplane_radio_application_header& header = packet_params.radio_hdr;
+  header.direction                        = data_direction::downlink;
+  header.filter_index                     = filter_index_type::standard_channel_filter;
+  header.slot                             = slot_point(0, 0, 0);
+  header.start_symbol                     = 0;
+
+  cplane_common_section_0_1_3_5_fields& section = packet_params.section_fields.common_fields;
+  section.section_id                            = 0;
+  section.prb_start                             = 0;
+  section.nof_prb                               = 0;
+  section.re_mask                               = 0xfff;
+  section.nof_symbols                           = 14;
+  packet_params.compr_params                    = {compression_type::none, 16};
+
+  // Invented beamforming weights of 4 TRXs, BFP compressed and 9 bits wide. The first Byte is the bfwCompParam field
+  // holding the block exponent, followed by 9 Bytes of mantissas.
+  const ru_compression_params bfw_compr_params = {compression_type::BFP, 9};
+  std::vector<uint8_t>        packed_weights   = {0x03, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x11};
+  ASSERT_EQ(get_packed_beamforming_weights_size(4, bfw_compr_params).value(), packed_weights.size());
+
+  packet_params.section_fields.beam_id = 0x0007;
+  packet_params.section_fields.extensions.emplace_back(cplane_section_extension_1_params{
+      .weights = {.compr_params = bfw_compr_params, .packed_weights = packed_weights}});
 
   cplane_message_builder_static_compression_impl builder;
 

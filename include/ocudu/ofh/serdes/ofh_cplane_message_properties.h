@@ -3,10 +3,13 @@
 
 #pragma once
 
+#include "ocudu/adt/span.h"
+#include "ocudu/adt/static_vector.h"
 #include "ocudu/ofh/compression/compression_params.h"
 #include "ocudu/ofh/serdes/ofh_message_properties.h"
 #include "ocudu/ran/cyclic_prefix.h"
 #include "ocudu/ran/slot_point.h"
+#include <variant>
 
 namespace ocudu {
 namespace ofh {
@@ -25,9 +28,43 @@ struct cplane_common_section_0_1_3_5_fields {
   uint8_t nof_symbols;
 };
 
+/// Open Fronthaul beamforming weights conveyed in the C-Plane section extension 1, see O-RAN.WG4.CUS, 7.7.1.
+struct cplane_section_extension_1_weights {
+  /// Compression applied to the weights.
+  ru_compression_params compr_params;
+  /// \brief Compressed packed beamforming weights.
+  ///
+  /// Includes the optional bfwCompParam field followed by the bfwI and bfwQ pair per O-RU TRX.
+  span<const uint8_t> packed_weights;
+};
+
+/// Open Fronthaul C-Plane section extension 1 parameters, see O-RAN.WG4.CUS, Table 7.7.1.1-1.
+struct cplane_section_extension_1_params {
+  /// Beamforming weights associated with the beam identifier of the section.
+  cplane_section_extension_1_weights weights;
+};
+
+/// \brief Open Fronthaul C-Plane section extension type.
+///
+/// Adding a new alternative enables support for a new section extension.
+using cplane_section_extension = std::variant<cplane_section_extension_1_params>;
+
+/// Maximum number of section extensions supported in a single C-Plane section.
+constexpr unsigned MAX_NOF_CPLANE_SECTION_EXTENSIONS = 1U;
+
 /// Open Fronthaul Control-Plane DL/UL radio channel section fields.
 struct cplane_dl_ul_radio_channel_section_fields {
   cplane_common_section_0_1_3_5_fields common_fields;
+  /// \brief Beam identifier. A value of zero means no beamforming is applied, see O-RAN.WG4.CUS, 7.5.3.9.
+  ///
+  /// A non-zero beam identifier must always come with the beamforming weights that define it, carried in the section
+  /// extension 1 of this section.
+  ///
+  /// \note O-RAN.WG4.CUS, 7.7.1.1 allows referencing a beam identifier whose weights were conveyed earlier. However we
+  /// don't use this approach, as the C-Plane provides no means of detecting that a message was lost.
+  uint16_t beam_id = 0;
+  /// Section extensions appended to the section. An empty list clears the extension flag of the section.
+  static_vector<cplane_section_extension, MAX_NOF_CPLANE_SECTION_EXTENSIONS> extensions;
 };
 
 /// Open Fronthaul Control-Plane idle/guard period section fields.
