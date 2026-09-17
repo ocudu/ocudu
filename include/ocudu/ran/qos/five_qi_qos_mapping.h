@@ -52,4 +52,10 @@ struct standardized_qos_characteristics {
 /// 5QI is not present in the table.
 const standardized_qos_characteristics* get_5qi_to_qos_characteristics_mapping(five_qi_t five_qi);
 
+/// \brief Determine whether a standardized 5QI is of a GBR resource type, as per TS 23.501 table 5.7.4-1.
+/// \param[in] five_qi Standardized 5QI.
+/// \return True for the GBR and delay critical GBR resource types. False for the non-GBR resource type and for a 5QI
+/// that is not present in the table.
+bool is_gbr_five_qi(five_qi_t five_qi);
+
 } // namespace ocudu

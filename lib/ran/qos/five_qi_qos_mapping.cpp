@@ -94,3 +94,9 @@ const qos_chars* ocudu::get_5qi_to_qos_characteristics_mapping(five_qi_t five_qi
   const auto qos_char = five_qi_to_qos_mapping.find(five_qi);
   return qos_char != five_qi_to_qos_mapping.end() ? &qos_char->second : nullptr;
 }
+
+bool ocudu::is_gbr_five_qi(five_qi_t five_qi)
+{
+  const qos_chars* qos_char = get_5qi_to_qos_characteristics_mapping(five_qi);
+  return qos_char != nullptr and qos_char->res_type != flow_type::non_gbr;
+}

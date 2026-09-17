@@ -21,9 +21,7 @@ static bool is_gbr_qos_flow(const qos_flow_level_qos_parameters& qos_params)
     return dyn_5qi.is_delay_critical.has_value() or dyn_5qi.averaging_win.has_value();
   }
 
-  const standardized_qos_characteristics* qos_char =
-      get_5qi_to_qos_characteristics_mapping(qos_params.qos_desc.get_nondyn_5qi().five_qi);
-  return qos_char != nullptr and qos_char->res_type != qos_flow_resource_type::non_gbr;
+  return is_gbr_five_qi(qos_params.qos_desc.get_nondyn_5qi().five_qi);
 }
 
 /// \brief Determine whether the companion IEs required for the QoS characteristics of a QoS flow are present, as per
