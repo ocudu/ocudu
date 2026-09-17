@@ -141,10 +141,10 @@ ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& crc_
   }
 
   // A PUSCH repetition bundle draws one CRC report per occasion, in different slots, and the PHY keeps accumulating
-  // soft bits across them. Fold each report into the transmission's result with a logical OR and only conclude at the
-  // last occasion: a success at any occasion is conclusive, a failure at a single one is not, and the HARQ process --
-  // with its id -- must stay reserved for as long as the UE is still transmitting the bundle.
-  // Outside a bundle last_occasion_slot equals the PUSCH slot, so this reduces to acting on the single report.
+  // soft bits across them. Fold each report into the transmission's result with a logical OR and only return result at
+  // the last occasion: a success at any occasion is conclusive, a failure at a single one is not, and the HARQ process
+  // -- with its id -- must stay reserved for as long as the UE is still transmitting the bundle. When no repetitions
+  // are used, last_occasion_slot equals the PUSCH slot, so this reduces to acting on the single report.
   const bool combined_crc_success = h_ul->accumulate_crc(crc_pdu.tb_crc_success);
   if (pusch_slot != h_ul->last_occasion_slot()) {
     logger.debug("rnti={} h_id={}: Holding CRC={} from PUSCH slot {}. Cause: more occasions of the same repetition "

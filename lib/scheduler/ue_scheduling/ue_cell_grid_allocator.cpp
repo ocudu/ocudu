@@ -12,6 +12,9 @@
 
 using namespace ocudu;
 
+/// Number of possible Downlink Assignment Indexes {0, ..., 3} as per TS 38.213 Section 9.1.3.
+static constexpr unsigned DAI_MOD = 4U;
+
 ue_cell_grid_allocator::ue_cell_grid_allocator(const scheduler_ue_expert_config& expert_cfg_,
                                                ue_repository&                    ues_,
                                                pdcch_resource_allocator&         pdcch_sched_,
@@ -138,12 +141,12 @@ ue_cell_grid_allocator::allocate_dl_grant(const ue_newtx_dl_grant_request& reque
       request.user, cell_alloc[0].slot, request.pdsch_slot, request.interleaving_enabled, request.pending_bytes);
   if (not sched_ctxt.has_value()) {
     // No valid parameters were found for this UE. When repetitions were requested but no repetition row fits this slot
-    // (e.g. a special slot), the grant is deferred to a later slot rather than downgraded to a single transmission.
+    // (e.g. a special slot), the grant is deferred to a later one.
     return make_unexpected(dl_alloc_failure_cause::other);
   }
 
-  // Build the repetition bundle when a repetition row was selected. A qualifying UE is never downgraded to a single
-  // transmission; if the bundle cannot start in this slot, the allocation is deferred.
+  // Build the repetition bundle when a repetition row was selected. The allocation is deferred when the bundle cannot
+  // start in this slot.
   std::optional<dl_repetition_info> reps;
   if (sched_ctxt->nof_repetitions.has_value()) {
     reps = select_pdsch_repetitions(ue_cc, ss_info, sched_ctxt->pdsch_td_res_index);
@@ -168,15 +171,14 @@ ue_cell_grid_allocator::select_pdsch_repetitions(const ue_cell&           ue_cc,
                                                  const search_space_info& ss_info,
                                                  uint8_t                  pdsch_td_res_index) const
 {
-  // The selected TDRA row is a repetition row; the UE qualifies for repetitions. If the bundle cannot start in this
-  // slot, defer the allocation to a later slot instead of falling back to a single transmission (a single transmission
-  // is not an option, as the DCI would still signal the repetition row).
+  // The DCI signals the selected TDRA row, repetitionNumber-r16 included, so the grant is bound to the whole bundle.
+  // A bundle that cannot start in this slot therefore defers the allocation to a later one.
   const dl_time_domain_mapper&                 dl_td_mapper = ss_info.bwp->dl.td_mapper();
   const pdsch_time_domain_resource_allocation& td_res = dl_td_mapper.dedicated_pdsch_td_resources()[pdsch_td_res_index];
   const uint8_t                                nof_repetitions = *td_res.rep_number;
 
   // All occasions must fit the DL allocation window of the resource grid. This can only fail for pathological
-  // configurations (k0 close to the ring limit); defer, as the repetition row cannot carry a single transmission.
+  // configurations (k0 close to the ring limit).
   if (static_cast<unsigned>(td_res.k0 + nof_repetitions - 1) > cell_alloc.max_dl_slot_alloc_delay) {
     return std::nullopt;
   }
@@ -403,9 +405,7 @@ ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&                        g
   }
 
   // Fill DL PDCCH DCI PDU.
-  // Number of possible Downlink Assignment Indexes {0, ..., 3} as per TS38.213 Section 9.1.3.
-  static constexpr unsigned DAI_MOD = 4U;
-  const uint8_t             rv      = ue_cc.get_pdsch_rv(grant.h_dl.nof_retxs());
+  const uint8_t rv = ue_cc.get_pdsch_rv(grant.h_dl.nof_retxs());
   // For allocation on PUSCH, we use a PUCCH resource indicator set to 0, as it will get ignored by the UE.
   const unsigned pucch_res_indicator = grant.uci_alloc.pucch_res_indicator.value_or(0);
   switch (ss_info.get_dl_dci_format()) {
@@ -562,7 +562,7 @@ ue_cell_grid_allocator::allocate_dl_grant(const ue_retx_dl_grant_request& reques
                                                             request.max_rbs);
   if (not sched_ctxt) {
     // No valid parameters were found. When repetitions were requested but no repetition row fits this slot, the reTx
-    // is deferred to a later slot rather than downgraded to a single transmission.
+    // is deferred to a later one.
     return make_unexpected(dl_alloc_failure_cause::other);
   }
 
@@ -571,7 +571,7 @@ ue_cell_grid_allocator::allocate_dl_grant(const ue_retx_dl_grant_request& reques
   if (sched_ctxt->nof_repetitions.has_value()) {
     reps = select_pdsch_repetitions(ue_cc, ss_info, sched_ctxt->pdsch_td_res_index);
     if (not reps.has_value()) {
-      // The bundle cannot start in this slot. Defer the reTx to a later slot instead of a single transmission.
+      // The bundle cannot start in this slot. Defer the reTx to a later one.
       return make_unexpected(dl_alloc_failure_cause::other);
     }
   }
@@ -621,26 +621,27 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_newtx_ul_grant_request& reque
                                                              request.pending_bytes,
                                                              request.allowed_symbols);
   if (not sched_ctxt.has_value()) {
-    // A repetition grant is never downgraded to a single transmission: if no repetition row fits this slot, defer.
     return make_unexpected(alloc_status::skip_ue);
   }
 
-  // Build the repetition bundle, deferring likewise if it cannot start in this slot.
+  // Build the repetition bundle when a repetition row was selected. A bundle that cannot be scheduled in this slot
+  // does not defer the grant: it is downgraded to the single-transmission row the selector picked alongside.
   std::optional<ul_repetition_info> reps;
   if (sched_ctxt->nof_repetitions.has_value()) {
     reps = select_pusch_repetitions(ue_cc, ss_info, sched_ctxt->pusch_td_res_index);
-    if (not reps.has_value()) {
-      return make_unexpected(alloc_status::skip_ue);
-    }
-
-    // pending_uci_harq_bits covers the base slot only, but the bundle carries the HARQ-ACKs booked in any of its
-    // slots, known only now. Re-size for that payload; the TDRA row is kept, so reps stays valid.
-    if (not sched_helper::resize_newtx_ul_grant_for_uci(
+    if (reps.has_value() and
+        // pending_uci_harq_bits covers the base slot only, but the bundle carries the HARQ-ACKs booked in any of its
+        // slots, known only now. Re-size for that payload; the TDRA row is kept, so reps stays valid.
+        not sched_helper::resize_newtx_ul_grant_for_uci(
             *sched_ctxt,
             request.user,
             request.pusch_slot,
             bundle_uci_harq_bits(request.user.crnti(), request.pusch_slot, *reps),
             reps->tx_offsets)) {
+      reps.reset();
+    }
+    if (not reps.has_value() and not sched_helper::downgrade_newtx_ul_grant_to_single_tx(
+                                     *sched_ctxt, request.user, request.pusch_slot, pending_uci_harq_bits)) {
       return make_unexpected(alloc_status::skip_ue);
     }
   }
@@ -689,6 +690,14 @@ ue_cell_grid_allocator::bundle_uci_harq_bits(rnti_t crnti, slot_point base_slot,
   return nof_bits;
 }
 
+/// UL DAI carried by DCI format 0_1 for a HARQ-ACK codebook of the given number of bits, as per TS 38.213,
+/// Table 9.1.3-2 (leftmost column).
+static unsigned ul_dai_value(unsigned nof_harq_ack_bits)
+{
+  ocudu_assert(nof_harq_ack_bits != 0, "A HARQ-ACK codebook of no bits has no DAI to carry");
+  return (nof_harq_ack_bits - 1) % DAI_MOD;
+}
+
 std::optional<ue_cell_grid_allocator::ul_repetition_info>
 ue_cell_grid_allocator::select_pusch_repetitions(const ue_cell&           ue_cc,
                                                  const search_space_info& ss_info,
@@ -696,7 +705,7 @@ ue_cell_grid_allocator::select_pusch_repetitions(const ue_cell&           ue_cc,
 {
   // Per Rel-17 "available slot counting" (puschTypeA-RepetitionsAvailSlot-r17), the UE repeats the PUSCH over the
   // next nof_repetitions-1 UL slots, skipping DL/special ones. It transmits every occasion once it has the DCI, so
-  // an unusable slot defers the whole bundle rather than costing an occasion.
+  // an unusable slot rejects the whole bundle rather than costing an occasion.
   const ul_time_domain_mapper&                 ul_td_mapper = ss_info.bwp->ul.td_mapper();
   const pusch_time_domain_resource_allocation& td_res = ul_td_mapper.dedicated_pusch_td_resources()[pusch_td_res_index];
   const uint8_t                                nof_repetitions = *td_res.nof_repetitions;
@@ -705,7 +714,12 @@ ue_cell_grid_allocator::select_pusch_repetitions(const ue_cell&           ue_cc,
   const unsigned            final_k2   = td_res.k2 + cell_cfg.ntn_cs_koffset;
   const slot_point          pusch_slot = cell_alloc[final_k2].slot;
 
-  ul_repetition_info reps{nof_repetitions, {}};
+  // As per TS 38.213 clause 9, the UE multiplexes in each slot of the bundle the HARQ-ACKs it would have reported on
+  // a PUCCH there, and the single DAI of the grant's only DCI applies to every one of those slots alike. One value
+  // can only describe them all if they agree on it, so a bundle whose slots disagree is rejected here.
+  const unsigned base_harq_ack_bits = uci_alloc.get_scheduled_pdsch_counter_in_ue_uci(pusch_slot, ue_cc.rnti());
+
+  ul_repetition_info reps{nof_repetitions, {}, base_harq_ack_bits};
   unsigned           offset = final_k2;
   for (uint8_t count = 1; count != nof_repetitions; ++count) {
     // Advance to the next full UL slot.
@@ -714,9 +728,9 @@ ue_cell_grid_allocator::select_pusch_repetitions(const ue_cell&           ue_cc,
       if (offset > cell_alloc.max_ul_slot_alloc_delay) {
         // Not enough UL slots left in the resource grid window; defer.
         if (logger.debug.enabled()) {
-          logger.debug("ue={} rnti={}: PUSCH repetition deferred at slot={}. Cause: not enough UL slots in the "
-                       "resource grid window to fit the bundle.",
-                       fmt::underlying(ue_cc.ue_index),
+          logger.debug("ue={} rnti={}: PUSCH repetition bundle rejected at slot={}. Cause: not enough UL slots in "
+                       "the resource grid window to fit the bundle.",
+                       ue_cc.ue_index,
                        ue_cc.rnti(),
                        pusch_slot);
         }
@@ -724,32 +738,83 @@ ue_cell_grid_allocator::select_pusch_repetitions(const ue_cell&           ue_cc,
       }
     } while (not cell_cfg.is_fully_ul_enabled(cell_alloc[offset].slot));
 
+    const slot_point occasion_slot = cell_alloc[offset].slot;
+
     // No room for another PUSCH in the occasion's slot: the bundle cannot start here.
     if (cell_alloc[offset].result.ul.puschs.full()) {
       if (logger.debug.enabled()) {
-        logger.debug("ue={} rnti={}: PUSCH repetition deferred at slot={}. Cause: occasion slot={} is full.",
-                     fmt::underlying(ue_cc.ue_index),
+        logger.debug("ue={} rnti={}: PUSCH repetition bundle rejected at slot={}. Cause: occasion slot={} is full.",
+                     ue_cc.ue_index,
                      ue_cc.rnti(),
                      pusch_slot,
-                     cell_alloc[offset].slot);
+                     occasion_slot);
+      }
+      return std::nullopt;
+    }
+
+    // Per-UE restrictions on an occasion's slot, which the base slot gets when its UL scheduling context is built.
+    // The UE counts a slot as available for repetition from the semi-static UL/DL configuration alone, so it keeps
+    // the remaining occasions where they are: a slot it must not transmit in costs the bundle, it cannot be skipped
+    // over. First, an uplink measurement gap, which the UE leaves to measure (TS 38.133, Section 9.1C.2).
+    if (not ue_cc.is_ul_enabled(occasion_slot)) {
+      if (logger.debug.enabled()) {
+        logger.debug("ue={} rnti={}: PUSCH repetition bundle rejected at slot={}. Cause: the UE uplink is disabled "
+                     "in the occasion slot={}.",
+                     ue_cc.ue_index,
+                     ue_cc.rnti(),
+                     pusch_slot,
+                     occasion_slot);
+      }
+      return std::nullopt;
+    }
+
+    // Then a Configured Grant occasion of this UE, which the dynamic grant would have it transmit on top of.
+    if (ue_cc.cfg().is_cg_slot(occasion_slot)) {
+      if (logger.debug.enabled()) {
+        logger.debug("ue={} rnti={}: PUSCH repetition bundle rejected at slot={}. Cause: occasion slot={} is a "
+                     "Configured Grant occasion of this UE.",
+                     ue_cc.ue_index,
+                     ue_cc.rnti(),
+                     pusch_slot,
+                     occasion_slot);
       }
       return std::nullopt;
     }
 
     // Likewise for a PUCCH whose UCI cannot be moved onto a PUSCH: as per TS 38.213 Sections 9.2.1 and 9.2.6 the UE
     // transmits the PUCCH and drops the overlapping PUSCH, so the occasion could never be received.
-    const slot_point occasion_slot = cell_alloc[offset].slot;
     if (uci_alloc.has_harq_ack_on_common_pucch_res(ue_cc.rnti(), occasion_slot) or
         uci_alloc.has_pucch_repetition(ue_cc.rnti(), occasion_slot)) {
       if (logger.debug.enabled()) {
-        logger.debug("ue={} rnti={}: PUSCH repetition deferred at slot={}. Cause: occasion slot={} carries a PUCCH of "
-                     "this UE whose UCI cannot be multiplexed onto a PUSCH.",
-                     fmt::underlying(ue_cc.ue_index),
+        logger.debug("ue={} rnti={}: PUSCH repetition bundle rejected at slot={}. Cause: occasion slot={} carries a "
+                     "PUCCH of this UE whose UCI cannot be multiplexed onto a PUSCH.",
+                     ue_cc.ue_index,
                      ue_cc.rnti(),
                      pusch_slot,
                      occasion_slot);
       }
       return std::nullopt;
+    }
+
+    // A slot carrying no HARQ-ACK constrains nothing: the UE reports none there, whatever the DAI says.
+    const unsigned occasion_harq_ack_bits =
+        uci_alloc.get_scheduled_pdsch_counter_in_ue_uci(occasion_slot, ue_cc.rnti());
+    if (occasion_harq_ack_bits != 0) {
+      if (reps.harq_ack_bits_per_slot == 0) {
+        reps.harq_ack_bits_per_slot = occasion_harq_ack_bits;
+      } else if (ul_dai_value(occasion_harq_ack_bits) != ul_dai_value(reps.harq_ack_bits_per_slot)) {
+        if (logger.debug.enabled()) {
+          logger.debug("ue={} rnti={}: PUSCH repetition bundle rejected at slot={}. Cause: occasion slot={} needs a "
+                       "UL DAI of {} HARQ-ACK bits, incompatible with the {} bits of an earlier slot.",
+                       ue_cc.ue_index,
+                       ue_cc.rnti(),
+                       pusch_slot,
+                       occasion_slot,
+                       occasion_harq_ack_bits,
+                       reps.harq_ack_bits_per_slot);
+        }
+        return std::nullopt;
+      }
     }
     reps.tx_offsets.push_back(static_cast<uint8_t>(offset - final_k2));
   }
@@ -788,24 +853,27 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_retx_ul_grant_request& reques
     return make_unexpected(alloc_status::skip_ue);
   }
 
-  // Build the repetition bundle when a repetition row was selected.
+  // Build the repetition bundle when a repetition row was selected, downgrading to a single transmission as for a
+  // newTx when it cannot be scheduled. A reTx only ever downgrades: it asks for the scheme of the original
+  // transmission, never for more.
   std::optional<ul_repetition_info> reps;
   if (sched_ctxt->nof_repetitions.has_value()) {
     reps = select_pusch_repetitions(ue_cc, ss_info, sched_ctxt->pusch_td_res_index);
-    if (not reps.has_value()) {
-      // Defer the reTx rather than downgrade it to a single transmission.
-      return make_unexpected(alloc_status::skip_ue);
-    }
-
-    // Re-size for the HARQ-ACKs booked in the occasion slots too, now that those slots are known. The TDRA row
-    // does not depend on the UCI payload, so it stays as selected.
-    if (not sched_helper::resize_retx_ul_grant_for_uci(
+    if (reps.has_value() and
+        // Re-size for the HARQ-ACKs booked in the occasion slots too, now that those slots are known. The TDRA row
+        // does not depend on the UCI payload, so it stays as selected.
+        not sched_helper::resize_retx_ul_grant_for_uci(
             *sched_ctxt,
             request.user,
             request.pusch_slot,
             bundle_uci_harq_bits(request.user.crnti(), request.pusch_slot, *reps),
             request.h_ul,
             reps->tx_offsets)) {
+      reps.reset();
+    }
+    if (not reps.has_value() and
+        not sched_helper::downgrade_retx_ul_grant_to_single_tx(
+            *sched_ctxt, request.user, request.pusch_slot, pending_uci_harq_bits, request.h_ul)) {
       return make_unexpected(alloc_status::skip_ue);
     }
   }
@@ -1055,12 +1123,15 @@ ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_interva
   // NOTE: DAI is encoded as per left most column in Table 9.1.3-2 of TS 38.213.
   unsigned dai = 3;
   if (dci_type == dci_ul_rnti_config_type::c_rnti_f0_1) {
-    // The DAI must cover the whole transmission, bundle included; pusch_cfg already carries that count. Getting it
-    // wrong is silent -- the UE would size its HARQ-ACK codebook differently than the gNB demaps it.
-    unsigned total_harq_ack_in_uci = pusch_cfg.nof_harq_ack_bits;
+    // A bundle reports in each of its slots only the HARQ-ACKs booked for that slot, and the DAI applies to each of
+    // them alike, so it carries that per-slot count -- not the total across slots the grant was sized for. The
+    // bundle was only accepted because every slot carrying HARQ-ACK agrees on the count. Getting the DAI wrong is
+    // silent: the UE would size its HARQ-ACK codebook differently than the gNB demaps it.
+    unsigned total_harq_ack_in_uci =
+        grant.reps.has_value() ? grant.reps->harq_ack_bits_per_slot : pusch_cfg.nof_harq_ack_bits;
     if (total_harq_ack_in_uci != 0) {
       // See TS 38.213, Table 9.1.3-2. dai value below maps to the leftmost column in the table.
-      dai = ((total_harq_ack_in_uci - 1) % 4);
+      dai = ul_dai_value(total_harq_ack_in_uci);
     }
   }
 

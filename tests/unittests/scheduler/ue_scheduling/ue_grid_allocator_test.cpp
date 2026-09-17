@@ -948,12 +948,17 @@ protected:
   ue_grid_allocator_pusch_repetition_test() : ue_grid_allocator_pusch_repetition_test(crb_interval{10, 40}) {}
 
   // Adds a UE configured with a Rel-16 PUSCH TDRA list that mirrors the common list and appends a repetition entry.
-  const ue& add_repetition_ue()
+  const ue& add_repetition_ue(std::optional<meas_gap_config>  meas_gap = std::nullopt,
+                              std::optional<cg_configuration> cg_cfg   = std::nullopt)
   {
     sched_ue_creation_request_message req =
         sched_config_helper::create_default_sched_ue_creation_request(cell_cfg.params);
-    req.ue_index = to_du_ue_index(0);
-    req.crnti    = to_rnti(0x4601);
+    req.ue_index         = to_du_ue_index(0);
+    req.crnti            = to_rnti(0x4601);
+    req.cfg.meas_gap_cfg = meas_gap;
+    if (cg_cfg.has_value()) {
+      (*req.cfg.cells)[0].serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg = std::move(cg_cfg);
+    }
     req.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(drb_lcid));
     (*req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg = cell_cfg.bwp_res[to_bwp_id(0)].dl().ded_pdcchs[0];
 
@@ -969,6 +974,26 @@ protected:
     pusch_cfg.pusch_td_alloc_list.push_back(rep_alloc);
 
     return add_ue(req);
+  }
+
+  /// Builds a Type 1 Configured Grant configuration whose only occasion within its period is \c cg_slot.
+  static cg_configuration make_cg_config_at(slot_point cg_slot)
+  {
+    constexpr auto   period = cg_configuration::periodicity_t::sl80;
+    cg_configuration cg{};
+    cg.mcs_table          = pusch_mcs_table::qam64;
+    cg.nof_harq_processes = 8;
+    cg.periodicity        = period;
+
+    cg_configuration::rrc_configured_ul_grant grant{};
+    grant.time_domain_offset       = cg_slot.count() % static_cast<unsigned>(period);
+    grant.time_domain_allocation   = 0;
+    grant.freq_domain_res          = ra_frequency_type1_configuration{};
+    grant.antenna_port             = 0;
+    grant.precoding_and_nof_layers = 0;
+    grant.mcs                      = 10;
+    cg.rrc_configured_ul_grant_cfg = grant;
+    return cg;
   }
 
   void set_pusch_snr(ue_cell& ue_cc, float snr_db) { ue_cc.channel_state_manager().update_pusch_snr(snr_db); }
@@ -1197,6 +1222,235 @@ TEST_P(ue_grid_allocator_pusch_repetition_test, bundle_avoids_rbs_busy_in_an_occ
     ASSERT_EQ(occ->pusch_cfg.rbs.type1(), base_occ->pusch_cfg.rbs.type1())
         << "Occasion at offset " << offset << " does not repeat the base grant's RBs";
   }
+}
+
+// The base slot is refused if the UE cannot transmit in it, and an occasion's slot has to be held to the same rule.
+// A UE inside an uplink measurement gap leaves the uplink to measure (TS 38.133, Section 9.1C.2), while still
+// counting the slot as available for repetition -- that count follows the semi-static UL/DL configuration alone --
+// so the occasion is simply lost and the ones after it do not move up. The bundle must give way instead.
+TEST_P(ue_grid_allocator_pusch_repetition_test, bundle_whose_occasion_falls_in_an_ul_meas_gap_gives_way_to_a_single_tx)
+{
+  // Reach a known, ready slot first: every occasion's slot is then known in advance.
+  slot_indication();
+
+  // Place a 6ms measurement gap on the slot of occasion 3. With no T_TA tracked the uplink window is neither shifted
+  // nor guarded, so it covers the gap offset and the 6 subframes after it -- at the 15kHz of this suite, one slot per
+  // subframe, which leaves the base slot and the earlier occasions outside.
+  constexpr unsigned target_occasion_offset = 3;
+  const uint8_t      common_k2 = cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].k2;
+  const slot_point   gap_slot  = current_slot + common_k2 + target_occasion_offset;
+  const unsigned     gap_offset =
+      (gap_slot.count() / gap_slot.nof_slots_per_subframe()) % static_cast<unsigned>(meas_gap_repetition_period::ms80);
+
+  const ue& u = add_repetition_ue(meas_gap_config{gap_offset, meas_gap_length::ms6, meas_gap_repetition_period::ms80});
+  ue_cell&  ue_cc             = ues[u.ue_index].get_pcell();
+  const slot_point pusch_slot = current_slot + rep_k2;
+  ASSERT_EQ(pusch_slot + target_occasion_offset, gap_slot);
+  ASSERT_TRUE(ue_cc.is_ul_enabled(pusch_slot)) << "the base slot itself fell in the gap, the test proves nothing";
+  ASSERT_FALSE(ue_cc.is_ul_enabled(gap_slot));
+
+  set_pusch_snr(ue_cc, 0.0F);
+  ASSERT_EQ(allocate_ul_newtx_grant(pusch_slot, slice_ues[u.ue_index], units::bytes{1000}), alloc_status::success);
+
+  const std::optional<unsigned> time_resource = current_ul_dci_time_resource(u.crnti);
+  ASSERT_TRUE(time_resource.has_value());
+  ASSERT_NE(time_resource.value(), rep_time_resource)
+      << "a bundle was scheduled over a slot the UE spends in a measurement gap";
+
+  // A single transmission occupies its own slot alone, so no occasion reaches the grid.
+  ASSERT_NE(find_ue_pusch(u.crnti, res_grid[pusch_slot].result.ul), nullptr);
+  for (unsigned offset = 1; offset != nof_reps; ++offset) {
+    ASSERT_EQ(find_ue_pusch(u.crnti, res_grid[pusch_slot + offset].result.ul), nullptr)
+        << "Occasion at offset " << offset << " was scheduled for a grant downgraded to a single transmission";
+  }
+}
+
+// Likewise for a slot the UE holds for a Configured Grant: the base slot never takes one (the UL scheduling context
+// gives up on it), and an occasion must not either, or the dynamic bundle and the UE's own CG PUSCH would land in the
+// same slot.
+TEST_P(ue_grid_allocator_pusch_repetition_test, bundle_whose_occasion_falls_on_a_cg_slot_gives_way_to_a_single_tx)
+{
+  // Reach a known, ready slot first: every occasion's slot is then known in advance.
+  slot_indication();
+
+  constexpr unsigned target_occasion_offset = 3;
+  const uint8_t      common_k2 = cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].k2;
+  const slot_point   cg_slot   = current_slot + common_k2 + target_occasion_offset;
+
+  const ue&        u          = add_repetition_ue(std::nullopt, make_cg_config_at(cg_slot));
+  ue_cell&         ue_cc      = ues[u.ue_index].get_pcell();
+  const slot_point pusch_slot = current_slot + rep_k2;
+  ASSERT_EQ(pusch_slot + target_occasion_offset, cg_slot);
+  ASSERT_FALSE(ue_cc.cfg().is_cg_slot(pusch_slot)) << "the base slot itself is a CG slot, the test proves nothing";
+  ASSERT_TRUE(ue_cc.cfg().is_cg_slot(cg_slot));
+
+  set_pusch_snr(ue_cc, 0.0F);
+  ASSERT_EQ(allocate_ul_newtx_grant(pusch_slot, slice_ues[u.ue_index], units::bytes{1000}), alloc_status::success);
+
+  const std::optional<unsigned> time_resource = current_ul_dci_time_resource(u.crnti);
+  ASSERT_TRUE(time_resource.has_value());
+  ASSERT_NE(time_resource.value(), rep_time_resource)
+      << "a bundle was scheduled over a slot the UE holds for a Configured Grant";
+
+  // A single transmission occupies its own slot alone, so no occasion reaches the grid.
+  ASSERT_NE(find_ue_pusch(u.crnti, res_grid[pusch_slot].result.ul), nullptr);
+  for (unsigned offset = 1; offset != nof_reps; ++offset) {
+    ASSERT_EQ(find_ue_pusch(u.crnti, res_grid[pusch_slot + offset].result.ul), nullptr)
+        << "Occasion at offset " << offset << " was scheduled for a grant downgraded to a single transmission";
+  }
+}
+
+// The reTx counterpart of the test above, and a stricter one: a reTx must repeat the original transmission's RB
+// count exactly, so it cannot shrink around the busy RBs the way a newTx can -- it has to move aside as a whole.
+TEST_P(ue_grid_allocator_pusch_repetition_test, retx_bundle_avoids_rbs_busy_in_an_occasion_slot)
+{
+  const ue& u     = add_repetition_ue();
+  ue_cell&  ue_cc = ues[u.ue_index].get_pcell();
+
+  slot_indication();
+
+  // Low SINR: the newTx is scheduled as a bundle. Cap its RBs, so that the reTx, which needs the very same number of
+  // them, still has room to land elsewhere in the UE's PUSCH CRB window ({10, 40}).
+  constexpr unsigned nof_grant_rbs = 10;
+  set_pusch_snr(ue_cc, 0.0F);
+  ASSERT_EQ(allocate_ul_newtx_grant(current_slot + rep_k2, slice_ues[u.ue_index], units::bytes{1000}, nof_grant_rbs),
+            alloc_status::success);
+  const ul_sched_info* newtx_grant = find_ue_pusch(u.crnti, res_grid[current_slot + rep_k2].result.ul);
+  ASSERT_NE(newtx_grant, nullptr);
+  ASSERT_EQ(newtx_grant->pusch_cfg.rbs.type1().length(), nof_grant_rbs);
+
+  // NACK the bundle and step past it, so the reTx is searched on a grid clear of the original transmission.
+  std::optional<ul_harq_process_handle> h_ul = ue_cc.harqs.find_ul_harq_waiting_ack();
+  ASSERT_TRUE(h_ul.has_value());
+  ASSERT_TRUE(h_ul->ul_crc_info(false).has_value());
+  for (unsigned i = 0; i != nof_reps; ++i) {
+    slot_indication();
+  }
+  std::optional<ul_harq_process_handle> h_retx = ue_cc.harqs.find_pending_ul_retx();
+  ASSERT_TRUE(h_retx.has_value());
+
+  // Occupy, in the slot of occasion 3, the RBs at the bottom of the UE's PUSCH CRB window -- exactly where the reTx
+  // would land, its own slot being free.
+  constexpr unsigned target_occasion_offset = 3;
+  const slot_point   pusch_slot             = current_slot + rep_k2;
+  const crb_interval blocked_crbs{10, 10 + nof_grant_rbs};
+  res_grid[pusch_slot + target_occasion_offset].ul_res_grid.fill(
+      grant_info{cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.scs, ofdm_symbol_range{0, 14}, blocked_crbs});
+  const vrb_interval blocked_vrbs = rb_helper::crb_to_vrb_ul_non_interleaved(
+      blocked_crbs, cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.crbs.start());
+  ASSERT_EQ(newtx_grant->pusch_cfg.rbs.type1(), blocked_vrbs)
+      << "the blocked RBs are not the ones the reTx would pick, so the test would pass without moving anything";
+
+  allocate_ul_retx_grant(slice_ues[u.ue_index], *h_retx);
+
+  const ul_sched_info* retx_grant = find_ue_pusch(u.crnti, res_grid[pusch_slot].result.ul);
+  ASSERT_NE(retx_grant, nullptr) << "the reTx bundle was not scheduled at all";
+  ASSERT_EQ(retx_grant->context.nof_retxs, 1);
+  ASSERT_EQ(retx_grant->pusch_cfg.rbs.type1().length(), nof_grant_rbs);
+  ASSERT_FALSE(retx_grant->pusch_cfg.rbs.type1().overlaps(blocked_vrbs))
+      << fmt::format("reTx VRBs {} overlap the VRBs {} already busy in the slot of occasion {}",
+                     retx_grant->pusch_cfg.rbs.type1(),
+                     blocked_vrbs,
+                     target_occasion_offset);
+
+  // Every occasion must be present, and must reuse the reTx grant's RBs.
+  for (unsigned offset = 1; offset != nof_reps; ++offset) {
+    const ul_sched_info* occ = find_ue_pusch(u.crnti, res_grid[pusch_slot + offset].result.ul);
+    ASSERT_NE(occ, nullptr) << "Occasion at offset " << offset
+                            << " was dropped: the reTx bundle was sized against the base slot only";
+    ASSERT_EQ(occ->pusch_cfg.rbs.type1(), retx_grant->pusch_cfg.rbs.type1())
+        << "Occasion at offset " << offset << " does not repeat the reTx grant's RBs";
+  }
+}
+
+// The UE multiplexes in each slot of a bundle the HARQ-ACKs booked for that slot, and the single UL DAI of the
+// bundle's only DCI applies to every one of those slots alike (TS 38.213, clause 9). Slots whose codebooks need
+// different DAI values therefore cannot be served by one bundle: the grant gives way to a single transmission, which
+// answers for its own slot only. Scheduling the bundle anyway would size the UE's codebook wrongly in at least one
+// slot, and the UCI there would be lost silently.
+TEST_P(ue_grid_allocator_pusch_repetition_test, bundle_whose_slots_need_different_ul_dai_gives_way_to_a_single_tx)
+{
+  const ue& u     = add_repetition_ue();
+  ue_cell&  ue_cc = ues[u.ue_index].get_pcell();
+
+  // Reach a known, ready slot first: with no run_until below, every occasion's slot is then known in advance.
+  slot_indication();
+
+  const slot_point pusch_slot = current_slot + rep_k2;
+  // One HARQ-ACK on the base occasion's slot and two on occasion 3's: their codebooks need DAI values
+  // (1 - 1) % 4 == 0 and (2 - 1) % 4 == 1, which one DCI cannot carry at once.
+  constexpr unsigned           target_occasion_offset = 3;
+  const std::array<uint8_t, 1> base_k1                = {rep_k2};
+  const std::array<uint8_t, 1> occasion_k1            = {static_cast<uint8_t>(rep_k2 + target_occasion_offset)};
+  ASSERT_TRUE(uci_alloc.alloc_harq_ack(res_grid, ue_cc, 0, base_k1, pucch_repetition_factor::n1).has_value());
+  for (unsigned i = 0; i != 2; ++i) {
+    ASSERT_TRUE(uci_alloc.alloc_harq_ack(res_grid, ue_cc, 0, occasion_k1, pucch_repetition_factor::n1).has_value());
+  }
+  const slot_point occasion_slot = pusch_slot + target_occasion_offset;
+  ASSERT_EQ(uci_alloc.get_scheduled_pdsch_counter_in_ue_uci(pusch_slot, u.crnti), 1);
+  ASSERT_EQ(uci_alloc.get_scheduled_pdsch_counter_in_ue_uci(occasion_slot, u.crnti), 2);
+
+  set_pusch_snr(ue_cc, 0.0F);
+  ASSERT_EQ(allocate_ul_newtx_grant(pusch_slot, slice_ues[u.ue_index], units::bytes{1000}), alloc_status::success);
+
+  const std::optional<unsigned> time_resource = current_ul_dci_time_resource(u.crnti);
+  ASSERT_TRUE(time_resource.has_value());
+  ASSERT_NE(time_resource.value(), rep_time_resource)
+      << "A bundle was scheduled over slots that cannot share one UL DAI";
+
+  // A single transmission occupies its own slot alone, so no occasion reaches the grid.
+  ASSERT_NE(find_ue_pusch(u.crnti, res_grid[pusch_slot].result.ul), nullptr);
+  for (unsigned offset = 1; offset != nof_reps; ++offset) {
+    ASSERT_EQ(find_ue_pusch(u.crnti, res_grid[pusch_slot + offset].result.ul), nullptr)
+        << "Occasion at offset " << offset << " was scheduled for a grant downgraded to a single transmission";
+  }
+}
+
+// The counterpart of the test above: slots agreeing on the UL DAI keep their bundle. Together they pin down that it
+// is the DAI that decides, not the mere presence of HARQ-ACK in several slots of the bundle.
+TEST_P(ue_grid_allocator_pusch_repetition_test, bundle_whose_slots_agree_on_the_ul_dai_is_scheduled)
+{
+  const ue& u     = add_repetition_ue();
+  ue_cell&  ue_cc = ues[u.ue_index].get_pcell();
+
+  slot_indication();
+
+  const slot_point pusch_slot = current_slot + rep_k2;
+  // Two HARQ-ACKs in each of the two slots: both codebooks need a DAI of (2 - 1) % 4 == 1.
+  constexpr unsigned           target_occasion_offset = 3;
+  const std::array<uint8_t, 1> base_k1                = {rep_k2};
+  const std::array<uint8_t, 1> occasion_k1            = {static_cast<uint8_t>(rep_k2 + target_occasion_offset)};
+  for (unsigned i = 0; i != 2; ++i) {
+    ASSERT_TRUE(uci_alloc.alloc_harq_ack(res_grid, ue_cc, 0, base_k1, pucch_repetition_factor::n1).has_value());
+    ASSERT_TRUE(uci_alloc.alloc_harq_ack(res_grid, ue_cc, 0, occasion_k1, pucch_repetition_factor::n1).has_value());
+  }
+  const slot_point occasion_slot = pusch_slot + target_occasion_offset;
+  ASSERT_EQ(uci_alloc.get_scheduled_pdsch_counter_in_ue_uci(pusch_slot, u.crnti), 2);
+  ASSERT_EQ(uci_alloc.get_scheduled_pdsch_counter_in_ue_uci(occasion_slot, u.crnti), 2);
+
+  set_pusch_snr(ue_cc, 0.0F);
+  ASSERT_EQ(allocate_ul_newtx_grant(pusch_slot, slice_ues[u.ue_index], units::bytes{1000}), alloc_status::success);
+
+  const std::optional<unsigned> time_resource = current_ul_dci_time_resource(u.crnti);
+  ASSERT_TRUE(time_resource.has_value());
+  ASSERT_EQ(time_resource.value(), rep_time_resource)
+      << "The bundle was given up even though its slots agree on the UL DAI";
+  for (unsigned offset = 1; offset != nof_reps; ++offset) {
+    ASSERT_NE(find_ue_pusch(u.crnti, res_grid[pusch_slot + offset].result.ul), nullptr)
+        << "Occasion at offset " << offset << " is missing from the bundle";
+  }
+
+  // The DAI describes one slot's codebook, which both slots share -- not their sum.
+  const pdcch_ul_information* ul_pdcch = nullptr;
+  for (const pdcch_ul_information& pdcch : res_grid[0].result.dl.ul_pdcchs) {
+    if (pdcch.ctx.rnti == u.crnti) {
+      ul_pdcch = &pdcch;
+      break;
+    }
+  }
+  ASSERT_NE(ul_pdcch, nullptr);
+  ASSERT_EQ(ul_pdcch->dci.as_c_rnti_f0_1().first_dl_assignment_index, 1)
+      << "The UL DAI does not describe the 2 HARQ-ACK bits each slot of the bundle reports";
 }
 
 // Same setup, but with the UE PUSCH free to span the whole BWP, as in a real deployment. Every repetition occasion

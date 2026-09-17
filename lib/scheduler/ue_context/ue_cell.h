@@ -170,10 +170,11 @@ public:
   ///
   /// Dynamic PUSCH CRC always yields a "detected" outcome (i.e., ACK or NACK); whereas, the Configured Grant PUSCH CRC
   /// can yield a not-detected outcome, e.g., when the SINR associated with its PUSCH is below the detection threshold.
+  /// When PUSCH repetitions are scheduled, the concluded crc is returned only in last slot occasion.
   ///
   /// \return A pair with the TBS that was (N)ACKed or not detected (DTX) and boolean indicating whether the PDU was
-  /// detected as transmitted (True if detected, false if not detected). On failure, why the transmission was not
-  /// concluded; see \ref crc_not_concluded.
+  /// detected as transmitted (True if detected, false if not detected). Return unexpected, when the transmission was
+  /// not concluded for PUSCH repetition bundle; see \ref crc_not_concluded.
   expected<std::pair<units::bytes, bool>, crc_not_concluded> handle_crc_pdu(slot_point                   pusch_slot,
                                                                             const ul_crc_pdu_indication& crc_pdu);
 

@@ -925,8 +925,8 @@ void ul_harq_process_handle::save_grant_params(const ul_harq_alloc_context& ctx,
     ocudu_assert(ctx.dci_cfg_type == prev_tx_params.dci_cfg_type,
                  "DCI format and RNTI type cannot change during HARQ retxs");
     ocudu_assert(prev_tx_params.tbs == pusch.tb_size_bytes, "TBS cannot change during HARQ retxs");
-    ocudu_assert(prev_tx_params.nof_repetitions == ctx.nof_repetitions,
-                 "Number of PUSCH repetitions cannot change during HARQ retxs");
+    ocudu_assert(ctx.nof_repetitions == prev_tx_params.nof_repetitions or ctx.nof_repetitions == 1,
+                 "A reTx repeats the PUSCH as many times as the original transmission did, or not at all");
   }
   prev_tx_params.mcs_table   = pusch.mcs_table;
   prev_tx_params.mcs         = pusch.mcs_index;

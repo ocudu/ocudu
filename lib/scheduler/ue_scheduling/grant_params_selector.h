@@ -46,9 +46,8 @@ std::optional<dl_sched_context> get_newtx_dl_sched_context(const slice_ue& u,
                                                            units::bytes    pending_bytes);
 
 /// Retrieve recommended PDCCH and PDSCH parameters for a reTx DL grant.
-/// The reTx reuses the repetition scheme of the original transmission, taken from the HARQ grant params: when that was
-/// a Rel-16 repetition bundle, only the TDRA row carrying its repetitionNumber-r16 is eligible and nullopt is returned
-/// if it does not fit the slot; otherwise a single-transmission row is picked.
+/// The reTx keeps the repetition scheme of the original transmission, so only the TDRA row carrying its
+/// repetitionNumber-r16 is eligible. Returns nullopt, deferring the grant, when that row does not fit the slot.
 std::optional<dl_sched_context> get_retx_dl_sched_context(const slice_ue&               u,
                                                           slot_point                    pdcch_slot,
                                                           slot_point                    pdsch_slot,
@@ -84,6 +83,13 @@ struct ul_sched_context {
   pusch_config_params pusch_cfg;
   /// Number of Rel-16 PUSCH repetitions of the selected TDRA row, or nullopt for a single transmission.
   std::optional<uint8_t> nof_repetitions;
+  /// \brief TDRA index of the single-transmission row to fall back to, when the bundle implied by
+  /// \c pusch_td_res_index turns out not to be schedulable in this slot.
+  ///
+  /// Picked by the very search that picked \c pusch_td_res_index, which walks the same candidates either way, so it
+  /// costs nothing. Empty when the selected row is already a single transmission, or when no single-transmission row
+  /// qualifies for this slot.
+  std::optional<uint8_t> single_tx_pusch_td_res_index;
 };
 
 /// Retrieve recommended PDCCH and PUSCH parameters for a newTx UL grant.
@@ -98,9 +104,8 @@ std::optional<ul_sched_context> get_newtx_ul_sched_context(const slice_ue&   u,
                                                            ofdm_symbol_range allowed_symbols);
 
 /// Retrieve recommended PDCCH and PUSCH parameters for a reTx UL grant.
-/// The reTx reuses the repetition scheme of the original transmission, taken from the HARQ grant params: when that was
-/// a Rel-16 repetition bundle, only the TDRA row carrying its numberOfRepetitions-r16 is eligible and nullopt is
-/// returned if it does not fit the slot; otherwise a single-transmission row is picked.
+/// The reTx tries to reuse the repetition scheme of the original transmission, if it's not possible, fallback to single
+/// transmission.
 std::optional<ul_sched_context> get_retx_ul_sched_context(const slice_ue&               u,
                                                           slot_point                    pdcch_slot,
                                                           slot_point                    pusch_slot,
@@ -122,6 +127,27 @@ bool resize_newtx_ul_grant_for_uci(ul_sched_context&   ctxt,
                                    slot_point          pusch_slot,
                                    unsigned            uci_nof_harq_bits,
                                    span<const uint8_t> bundle_tx_offsets);
+
+/// \brief Downgrade an already selected newTx UL grant to the single-transmission TDRA row picked alongside the
+/// repetition one, for when the bundle cannot be scheduled after all.
+///
+/// The row taking over spans a different number of symbols, so the grant is re-sized for it (PUSCH config params,
+/// MCS, RB count); the searchSpace and RB limits stay as selected.
+/// \param[in] uci_nof_harq_bits HARQ-ACK bits booked in \c pusch_slot, the only slot a single transmission occupies.
+/// \return false if the selector found no single-transmission row, or if no valid MCS/RB combination fits it, in
+/// which case \c ctxt is left untouched and the grant is to be skipped.
+bool downgrade_newtx_ul_grant_to_single_tx(ul_sched_context& ctxt,
+                                           const slice_ue&   u,
+                                           slot_point        pusch_slot,
+                                           unsigned          uci_nof_harq_bits);
+
+/// Downgrade an already selected reTx UL grant to a single transmission. See
+/// \ref downgrade_newtx_ul_grant_to_single_tx.
+bool downgrade_retx_ul_grant_to_single_tx(ul_sched_context&             ctxt,
+                                          const slice_ue&               u,
+                                          slot_point                    pusch_slot,
+                                          unsigned                      uci_nof_harq_bits,
+                                          const ul_harq_process_handle& h_ul);
 
 /// Re-size an already selected reTx UL grant for a UCI payload known only after the bundle was resolved. See
 /// \ref resize_newtx_ul_grant_for_uci.

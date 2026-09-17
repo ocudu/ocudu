@@ -120,8 +120,11 @@ class ue_cell_grid_allocator
   struct ul_repetition_info {
     // Number of repetitions in the bundle.
     uint8_t nof_occasions;
-    // Slot offsets (> 0) of the repetition occasions, relative to the base occasion's slot. Always nof_occasions - 1.
+    // Slot offsets (> 0) of the repetition occasions, relative to the base occasion's slot.
     static_vector<uint8_t, 15> tx_offsets;
+    // \brief Number of HARQ-ACK bits the UE reports in each slot of the bundle that carries any, or 0 if no slot
+    // does. Every such slot has the same count, which is what makes one UL DAI describe them all.
+    unsigned harq_ack_bits_per_slot;
   };
 
   // Information relative to a pending UL grant for this slot.
@@ -282,14 +285,13 @@ private:
 
   // Builds the PDSCH repetition bundle for a grant whose selected TDRA row is a repetition row: computes the
   // transmitted occasions within the window and decides whether the bundle can start in this slot. Returns nullopt
-  // when it cannot, meaning the allocation shall be deferred to a later slot (a repetition grant is never downgraded
-  // to a single transmission).
+  // when it cannot, deferring the allocation to a later slot.
   std::optional<dl_repetition_info>
   select_pdsch_repetitions(const ue_cell& ue_cc, const search_space_info& ss_info, uint8_t pdsch_td_res_index) const;
 
   // Builds the PUSCH repetition bundle for a grant whose TDRA row is a repetition row: computes the occasion slot
-  // offsets and whether the bundle can start in this slot. nullopt means defer to a later slot; a repetition grant
-  // is never downgraded to a single transmission.
+  // offsets and whether the bundle can start in this slot. Returns nullopt when it cannot, in which case the caller
+  // downgrades the grant to a single transmission.
   std::optional<ul_repetition_info>
   select_pusch_repetitions(const ue_cell& ue_cc, const search_space_info& ss_info, uint8_t pusch_td_res_index) const;
 

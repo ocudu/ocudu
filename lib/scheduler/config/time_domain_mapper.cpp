@@ -234,38 +234,47 @@ ul_time_domain_mapper::ul_time_domain_mapper(const ul_time_domain_builder_params
   }
 }
 
-std::optional<uint8_t> ul_time_domain_mapper::find_pusch_td_res_index(dci_ul_format          dci_format,
-                                                                      slot_point             pdcch_slot,
-                                                                      slot_point             pusch_slot,
-                                                                      ofdm_symbol_range      usable_symbols,
-                                                                      unsigned               ntn_cs_koffset,
-                                                                      std::optional<uint8_t> nof_repetitions,
-                                                                      std::optional<uint8_t> retx_symbols) const
+ul_time_domain_mapper::pusch_td_res_selection
+ul_time_domain_mapper::find_pusch_td_res_indices(dci_ul_format          dci_format,
+                                                 slot_point             pdcch_slot,
+                                                 slot_point             pusch_slot,
+                                                 ofdm_symbol_range      usable_symbols,
+                                                 unsigned               ntn_cs_koffset,
+                                                 std::optional<uint8_t> nof_repetitions,
+                                                 std::optional<uint8_t> retx_symbols) const
 {
-  const auto             pusch_td_res_list = pusch_td_resources(dci_format);
-  std::optional<uint8_t> best;
+  const auto pusch_td_res_list = pusch_td_resources(dci_format);
+
+  // Keeps the best of the rows of one kind: the first qualifying one for a reTx, whose symbols are pinned to the
+  // original transmission's anyway, and the longest one otherwise.
+  auto keep_best = [&pusch_td_res_list, &retx_symbols](std::optional<uint8_t>& best, uint8_t idx) {
+    if (not best.has_value() or (not retx_symbols.has_value() and
+                                 pusch_td_res_list[*best].symbols.length() < pusch_td_res_list[idx].symbols.length())) {
+      best = idx;
+    }
+  };
+
+  pusch_td_res_selection sel;
   for (uint8_t idx : pusch_td_res_indices(dci_format, pdcch_slot.count())) {
     const pusch_time_domain_resource_allocation& pusch_td_res = pusch_td_res_list[idx];
 
-    // Consider only rows matching the requested repetition count (nullopt = single transmission).
-    if (pusch_td_res.nof_repetitions != nof_repetitions) {
-      continue;
-    }
     if (pdcch_slot + pusch_td_res.k2 + ntn_cs_koffset != pusch_slot) {
       continue;
     }
     if (not usable_symbols.contains(pusch_td_res.symbols)) {
       continue;
     }
-    if (retx_symbols.has_value()) {
-      if (pusch_td_res.symbols.length() != *retx_symbols) {
-        continue;
-      }
-      return idx;
+    if (retx_symbols.has_value() and pusch_td_res.symbols.length() != *retx_symbols) {
+      continue;
     }
-    if (not best.has_value() or pusch_td_res_list[*best].symbols.length() < pusch_td_res.symbols.length()) {
-      best = idx;
+
+    if (pusch_td_res.nof_repetitions == nof_repetitions) {
+      keep_best(sel.selected, idx);
+    } else if (nof_repetitions.has_value() and not pusch_td_res.nof_repetitions.has_value()) {
+      // A single-transmission row qualifying for the same slot: the fallback, had the caller not asked for
+      // repetitions. Found here for free, as the search walks these candidates anyway.
+      keep_best(sel.single_tx, idx);
     }
   }
-  return best;
+  return sel;
 }

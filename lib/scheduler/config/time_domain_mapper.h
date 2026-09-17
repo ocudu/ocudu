@@ -233,22 +233,34 @@ struct ul_time_domain_mapper {
                                              : dedicated_pusch_td_res_indices(pdcch_slot_index);
   }
 
+  /// Outcome of a PUSCH TD resource search: the requested row and, when repetitions were requested, the
+  /// single-transmission row to fall back to if their bundle turns out not to be schedulable.
+  struct pusch_td_res_selection {
+    /// Index of the row matching the requested repetition count, or nullopt if none qualifies.
+    std::optional<uint8_t> selected;
+    /// \brief Index of the best qualifying single-transmission row.
+    ///
+    /// Only filled when repetitions were requested, i.e. when it is a different row than \c selected.
+    std::optional<uint8_t> single_tx;
+  };
+
   /// \brief Get the index into \ref pusch_td_resources(dci_ul_format) const of the best-matching PUSCH TD resource
   /// candidate for a PDCCH in \c pdcch_slot, whose k2 (plus \c ntn_cs_koffset) leads to \c pusch_slot and whose
   /// symbols fit within \c usable_symbols. "Best" is the longest qualifying \c symbols.length(); ties keep the first.
   /// \param dci_format Selects the common (0_0) or dedicated (0_1) TD resource list to search.
   /// \param nof_repetitions Requested number of Rel-16 PUSCH repetitions (link-adaptation decision). When set, only
-  /// the TDRA row carrying that numberOfRepetitions-r16 is eligible; when unset, only single-transmission rows.
+  /// the TDRA row carrying that numberOfRepetitions-r16 qualifies as \c selected; when unset, only
+  /// single-transmission rows do.
   /// \param retx_symbols For a retransmission, the number of symbols used by the original transmission; only
   /// candidates with a matching \c symbols.length() qualify. Empty for a new transmission.
-  /// \return The matching index, or \c std::nullopt if no candidate qualifies.
-  std::optional<uint8_t> find_pusch_td_res_index(dci_ul_format          dci_format,
-                                                 slot_point             pdcch_slot,
-                                                 slot_point             pusch_slot,
-                                                 ofdm_symbol_range      usable_symbols,
-                                                 unsigned               ntn_cs_koffset,
-                                                 std::optional<uint8_t> nof_repetitions,
-                                                 std::optional<uint8_t> retx_symbols = std::nullopt) const;
+  /// \return The qualifying rows; \c selected is \c std::nullopt if no candidate qualifies.
+  pusch_td_res_selection find_pusch_td_res_indices(dci_ul_format          dci_format,
+                                                   slot_point             pdcch_slot,
+                                                   slot_point             pusch_slot,
+                                                   ofdm_symbol_range      usable_symbols,
+                                                   unsigned               ntn_cs_koffset,
+                                                   std::optional<uint8_t> nof_repetitions,
+                                                   std::optional<uint8_t> retx_symbols = std::nullopt) const;
 
   /// \brief Highest \e numberOfRepetitions-r16 in the dedicated PUSCH TDRA list, or nullopt if it has no repetition
   /// row. This is the count requested when link quality triggers repetitions.

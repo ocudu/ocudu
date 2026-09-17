@@ -32,6 +32,9 @@ struct scheduler_test_sim_config {
   bool auto_crc = false;
   /// Cell-Specific K-offset for NTN cells expressed in slots for a subcarrier spacing of 15 kHz, i.e., milliseconds.
   std::chrono::milliseconds ntn_cs_koffset{0};
+  /// \brief Slot the simulation starts at. When unset, it starts at a random slot, so that tests are not tied to one
+  /// alignment between the slot indices and the periodic resources. Set it when a test needs that alignment fixed.
+  std::optional<slot_point> start_slot;
 };
 
 /// Helper class to help setup a scheduler unit test.

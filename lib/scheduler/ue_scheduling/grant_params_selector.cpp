@@ -13,6 +13,7 @@
 #include "ocudu/ran/sch/tbs_calculator.h"
 #include "ocudu/ran/transform_precoding/transform_precoding_helpers.h"
 #include "ocudu/scheduler/support/rb_helper.h"
+#include <utility>
 #include <variant>
 
 using namespace ocudu;
@@ -542,13 +543,23 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
   // number of symbols used by the original transmission.
   const std::optional<uint8_t> retx_symbols =
       h_ul != nullptr ? std::optional<uint8_t>{h_ul->get_grant_params().nof_symbols} : std::nullopt;
-  const std::optional<uint8_t> pusch_td_index = bwp_cfg.ul.td_mapper().find_pusch_td_res_index(ss.get_ul_dci_format(),
-                                                                                               pdcch_slot,
-                                                                                               pusch_slot,
-                                                                                               allowed_symbols,
-                                                                                               cell_cfg.ntn_cs_koffset,
-                                                                                               nof_repetitions,
-                                                                                               retx_symbols);
+  // The search also reports the single-transmission row qualifying for this slot, so that a bundle found later not
+  // to be schedulable can be downgraded to it without searching again.
+  const ul_time_domain_mapper::pusch_td_res_selection td_res_sel =
+      bwp_cfg.ul.td_mapper().find_pusch_td_res_indices(ss.get_ul_dci_format(),
+                                                       pdcch_slot,
+                                                       pusch_slot,
+                                                       allowed_symbols,
+                                                       cell_cfg.ntn_cs_koffset,
+                                                       nof_repetitions,
+                                                       retx_symbols);
+  std::optional<uint8_t> pusch_td_index  = td_res_sel.selected;
+  std::optional<uint8_t> single_tx_index = td_res_sel.single_tx;
+  if (not pusch_td_index.has_value()) {
+    // No row carries the requested repetition count in this slot, so the single-transmission row found alongside it
+    // takes over right away -- leaving nothing to fall back to later.
+    pusch_td_index = std::exchange(single_tx_index, std::nullopt);
+  }
   if (not pusch_td_index.has_value()) {
     return std::nullopt;
   }
@@ -557,12 +568,13 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
 
   // Fill in the grant parameters that do not depend on the UCI payload.
   ul_sched_context ctxt;
-  ctxt.ss_id              = ss.cfg->get_id();
-  ctxt.pusch_td_res_index = *pusch_td_index;
-  ctxt.vrb_lims           = vrb_lims;
-  ctxt.nof_rb_lims        = nof_rb_lims;
-  ctxt.pending_bytes      = pending_bytes;
-  ctxt.nof_repetitions    = pusch_td_res.nof_repetitions;
+  ctxt.ss_id                        = ss.cfg->get_id();
+  ctxt.pusch_td_res_index           = *pusch_td_index;
+  ctxt.vrb_lims                     = vrb_lims;
+  ctxt.nof_rb_lims                  = nof_rb_lims;
+  ctxt.pending_bytes                = pending_bytes;
+  ctxt.nof_repetitions              = pusch_td_res.nof_repetitions;
+  ctxt.single_tx_pusch_td_res_index = single_tx_index;
 
   // Compute recommended number of layers, MCS and PRBs.
   if (not size_ul_grant(
@@ -610,6 +622,52 @@ static bool resize_ul_grant_for_uci(ul_sched_context&             ctxt,
 
   return size_ul_grant(
       ctxt, ue_cc, ss, pusch_td_res, uci_nof_harq_bits, h_ul, is_csi_included(ue_cc, pusch_slot, bundle_tx_offsets));
+}
+
+static bool downgrade_ul_grant_to_single_tx(ul_sched_context&             ctxt,
+                                            const slice_ue&               u,
+                                            slot_point                    pusch_slot,
+                                            unsigned                      uci_nof_harq_bits,
+                                            const ul_harq_process_handle* h_ul)
+{
+  if (not ctxt.single_tx_pusch_td_res_index.has_value()) {
+    return false;
+  }
+  const ue_cell&                               ue_cc = u.get_cc();
+  const search_space_info&                     ss    = ue_cc.cfg().search_space(ctxt.ss_id);
+  const pusch_time_domain_resource_allocation& pusch_td_res =
+      ue_cc.active_bwp().ul.td_mapper().pusch_td_resources(ss.get_ul_dci_format())[*ctxt.single_tx_pusch_td_res_index];
+
+  // The row taking over spans its own number of symbols, so the sizing of the repetition row does not carry over.
+  // Size a copy, leaving the caller's context untouched if nothing fits.
+  ul_sched_context single_tx_ctxt   = ctxt;
+  single_tx_ctxt.pusch_td_res_index = *ctxt.single_tx_pusch_td_res_index;
+  single_tx_ctxt.nof_repetitions    = pusch_td_res.nof_repetitions;
+  single_tx_ctxt.single_tx_pusch_td_res_index.reset();
+  if (not size_ul_grant(
+          single_tx_ctxt, ue_cc, ss, pusch_td_res, uci_nof_harq_bits, h_ul, is_csi_included(ue_cc, pusch_slot, {}))) {
+    return false;
+  }
+
+  ctxt = single_tx_ctxt;
+  return true;
+}
+
+bool sched_helper::downgrade_newtx_ul_grant_to_single_tx(ul_sched_context& ctxt,
+                                                         const slice_ue&   u,
+                                                         slot_point        pusch_slot,
+                                                         unsigned          uci_nof_harq_bits)
+{
+  return downgrade_ul_grant_to_single_tx(ctxt, u, pusch_slot, uci_nof_harq_bits, nullptr);
+}
+
+bool sched_helper::downgrade_retx_ul_grant_to_single_tx(ul_sched_context&             ctxt,
+                                                        const slice_ue&               u,
+                                                        slot_point                    pusch_slot,
+                                                        unsigned                      uci_nof_harq_bits,
+                                                        const ul_harq_process_handle& h_ul)
+{
+  return downgrade_ul_grant_to_single_tx(ctxt, u, pusch_slot, uci_nof_harq_bits, &h_ul);
 }
 
 bool sched_helper::resize_newtx_ul_grant_for_uci(ul_sched_context&   ctxt,

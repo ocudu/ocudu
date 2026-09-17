@@ -53,6 +53,11 @@ scheduler_test_simulator::scheduler_test_simulator(const scheduler_test_sim_conf
   auto_uci       = cfg.auto_uci;
   auto_crc       = cfg.auto_crc;
   ntn_cs_koffset = cfg.ntn_cs_koffset;
+  if (cfg.start_slot.has_value()) {
+    next_slot = slot_point_extended{cfg.start_slot.value()};
+    logger.set_context(next_slot.sfn(), next_slot.slot_index());
+    test_logger.set_context(next_slot.sfn(), next_slot.slot_index());
+  }
 }
 
 scheduler_test_simulator::~scheduler_test_simulator()

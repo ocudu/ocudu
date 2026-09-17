@@ -110,9 +110,7 @@ struct dl_harq_process_impl : public base_harq_process {
     vrb_alloc               rbs;
     uint8_t                 nof_symbols;
     uint8_t                 nof_layers{1};
-    /// Number of Rel-16 slot-based PDSCH repetitions of the grant. Value 1 means a single transmission. Fixed across
-    /// HARQ retxs, so reTxs reuse the repetition scheme of the original transmission. The actual number of repetitions
-    /// used during reTx depends on available slots in TDD pattern.
+    /// Number of Rel-16 slot-based PDSCH repetitions of the grant. Value 1 means a single transmission.
     uint8_t                                     nof_repetitions{1};
     bool                                        is_fallback{false};
     cqi_value                                   cqi;
@@ -145,8 +143,7 @@ struct ul_harq_process_impl : public base_harq_process {
     units::bytes            tbs;
     uint8_t                 nof_symbols;
     uint8_t                 nof_layers;
-    /// \brief Number of Rel-16 PUSCH repetitions of the grant. Value 1 means a single transmission. Fixed across
-    /// HARQ retxs, so reTxs reuse the repetition scheme of the original transmission.
+    /// Number of Rel-16 PUSCH repetitions of the original transmission. Value 1 means a single transmission.
     uint8_t                       nof_repetitions{1};
     std::optional<ran_slice_id_t> slice_id;
     std::optional<sch_mcs_index>  olla_mcs;
