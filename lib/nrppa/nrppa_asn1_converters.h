@@ -455,8 +455,8 @@ asn1_to_trp_info_type_item(const asn1::nrppa::trp_info_type_item_e& asn1_trp_inf
       trp_info_type_item = trp_information_type_item_t::beam_ant_info;
       break;
     default:
-      ocudulog::fetch_basic_logger("NRPPA").debug("Unsupported NRPPa TRP info type item ({}). Ignoring it",
-                                                  asn1_trp_info_type_item.to_string());
+      ocudulog::fetch_basic_logger("NRPPA").warning("Unsupported NRPPa TRP info type item ({}). Ignoring it",
+                                                    asn1_trp_info_type_item.to_string());
       return std::nullopt;
   }
 

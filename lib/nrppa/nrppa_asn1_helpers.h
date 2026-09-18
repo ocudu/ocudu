@@ -226,12 +226,12 @@ fill_e_cid_measurement_result(cu_cp_ue_index_t                               ue_
             meas_quantity.meas_quantities_value != nrppa_meas_quantities_value::csi_rsrq) {
           if (meas_quantity.meas_quantities_value == nrppa_meas_quantities_value::rsrp ||
               meas_quantity.meas_quantities_value == nrppa_meas_quantities_value::rsrq) {
-            ocudulog::fetch_basic_logger("NRPPA").debug("Unsupported measurement quantity requested ({}). RSRP/RSRQ "
-                                                        "without SS/CSI resource type is not supported",
-                                                        meas_quantity.meas_quantities_value);
+            ocudulog::fetch_basic_logger("NRPPA").warning("Unsupported measurement quantity requested ({}). RSRP/RSRQ "
+                                                          "without SS/CSI resource type is not supported",
+                                                          meas_quantity.meas_quantities_value);
           } else {
-            ocudulog::fetch_basic_logger("NRPPA").debug("Unsupported measurement quantity requested ({})",
-                                                        meas_quantity.meas_quantities_value);
+            ocudulog::fetch_basic_logger("NRPPA").warning("Unsupported measurement quantity requested ({})",
+                                                          meas_quantity.meas_quantities_value);
           }
 
           continue;
