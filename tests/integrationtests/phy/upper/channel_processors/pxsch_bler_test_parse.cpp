@@ -97,6 +97,12 @@ std::optional<pxsch_bler_test_configuration> parse_configuration(int argc, char*
 
   app.add_option("-m,--mcs-index", cfg.mcs_index, "MCS index")->check(CLI::Range(0u, 31u));
 
+  app.add_option("-K,--ul-slot-offset",
+                 cfg.ul_slot_offset,
+                 "Offset in slots between the slot the receiver processes and the slot the transmitter generates, i.e. "
+                 "the NTN K_mac")
+      ->check(CLI::Range(0U, 1024U));
+
   app.add_option("-R,--repetitions", cfg.nof_repetitions, "Number of slots to process")
       ->check(CLI::Range(1u, static_cast<unsigned>(std::numeric_limits<unsigned>::max())));
 

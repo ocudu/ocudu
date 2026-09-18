@@ -38,6 +38,7 @@ struct pxsch_bler_test_configuration {
       port_channel_estimator_fd_smoothing_strategy::filter;
   dmrs_additional_positions dmrs_additional_pos = dmrs_additional_positions::pos2;
   unsigned                  nof_ldpc_iterations = 10;
+  unsigned                  ul_slot_offset      = 0;
   std::vector<unsigned>     rep_rv_sequence     = {0};
   std::string               log_level           = "warning";
 };

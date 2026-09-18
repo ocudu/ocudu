@@ -267,7 +267,8 @@ private:
       // Prepare PUSCH processor configuration.
       pusch_config.push_back(pusch_processor::pdu_t{
           .harq_id            = INVALID_HARQ_ID,
-          .slot               = slot_point(to_numerology_value(scs), 0),
+          .slot               = slot_point(to_numerology_value(scs), 0) + cfg.ul_slot_offset,
+          .slot_offset        = cfg.ul_slot_offset,
           .rnti               = rnti,
           .bwp_size_rb        = cfg.bwp_size_rb,
           .bwp_start_rb       = bwp_start_rb,
