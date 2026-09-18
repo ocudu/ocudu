@@ -15,8 +15,6 @@
 /// See tests/fuzz/README.md for build instructions, run commands, and the
 /// test double architecture (fuzz_amf, fuzz_xnc_gateway).
 
-#include "tests/fuzz/cu_cp/cu_cp_fuzz_env.h"
-#include "tests/unittests/ngap/ngap_test_messages.h"
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/adt/mutexed_mpmc_queue.h"
 #include "ocudu/asn1/asn1_utils.h"
@@ -43,9 +41,126 @@
 
 using namespace ocudu;
 using namespace ocucp;
-using namespace ocucp::fuzz;
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 namespace {
+
+/// Build an NGSetupResponse that matches the test PLMN used in cu_cp_configuration_helpers.
+static ngap_message make_ng_setup_response()
+{
+  ngap_message msg{};
+  msg.pdu.set_successful_outcome();
+  msg.pdu.successful_outcome().load_info_obj(ASN1_NGAP_ID_NG_SETUP);
+
+  auto& res = msg.pdu.successful_outcome().value.ng_setup_resp();
+  res->amf_name.from_string("fuzz-amf0");
+
+  asn1::ngap::served_guami_item_s guami_item;
+  // test PLMN: 00 f1 10 (MCC=001, MNC=01)
+  guami_item.guami.plmn_id = {0x00u, 0xf1u, 0x10u};
+  guami_item.guami.amf_region_id.from_number(2);
+  guami_item.guami.amf_set_id.from_number(1);
+  guami_item.guami.amf_pointer.from_number(0);
+  res->served_guami_list.push_back(guami_item);
+  res->relative_amf_capacity = 255;
+
+  asn1::ngap::plmn_support_item_s plmn_item{};
+  plmn_item.plmn_id = {0x00u, 0xf1u, 0x10u};
+  asn1::ngap::slice_support_item_s slice_item{};
+  slice_item.s_nssai.sst.from_number(1);
+  plmn_item.slice_support_list.push_back(slice_item);
+  res->plmn_support_list.push_back(plmn_item);
+
+  return msg;
+}
+
+// ---------------------------------------------------------------------------
+// fuzz_amf – replaces the SCTP N2 gateway
+// ---------------------------------------------------------------------------
+
+/// Thread-safe N2 connection client used instead of a real SCTP gateway.
+///
+/// Calling push_tx_pdu() delivers a decoded ngap_message to the CU-CP as if
+/// it arrived from the AMF over N2.  Responses sent by the CU-CP are queued
+/// and can be drained with try_pop_rx_pdu().
+class fuzz_amf : public n2_connection_client
+{
+  using pdu_queue = concurrent_queue<ngap_message,
+                                     concurrent_queue_policy::locking_mpmc,
+                                     concurrent_queue_wait_policy::condition_variable>;
+
+public:
+  fuzz_amf() : rx_pdus(512), pending_auto_tx(16) {}
+
+  /// Called by the CU-CP at startup to obtain the AMF-side Tx/Rx notifiers.
+  std::unique_ptr<ngap_message_notifier>
+  handle_cu_cp_connection_request(std::unique_ptr<ngap_rx_message_notifier> notifier) override
+  {
+    rx_pdu_notifier = std::move(notifier);
+    return std::make_unique<tx_notifier>(*this);
+  }
+
+  /// Deliver a decoded NGAP message to the CU-CP (AMF → CU-CP direction).
+  void push_tx_pdu(const ngap_message& msg)
+  {
+    if (rx_pdu_notifier) {
+      rx_pdu_notifier->on_new_message(msg);
+    }
+  }
+
+  /// Pre-queue a response that the AMF will send automatically in reply to the
+  /// next CU-CP message (used to complete the NG Setup exchange on startup).
+  void enqueue_auto_response(const ngap_message& msg) { pending_auto_tx.push_blocking(msg); }
+
+  /// Pop the next PDU sent by the CU-CP to the AMF.  Returns false if empty.
+  bool try_pop_rx_pdu(ngap_message& pdu) { return rx_pdus.try_pop(pdu); }
+
+private:
+  /// Notifier returned to the CU-CP; called when the CU-CP sends a PDU to AMF.
+  class tx_notifier : public ngap_message_notifier
+  {
+  public:
+    explicit tx_notifier(fuzz_amf& parent_) : parent(parent_) {}
+    ~tx_notifier() override { parent.rx_pdu_notifier.reset(); }
+
+    [[nodiscard]] bool on_new_message(const ngap_message& msg) override
+    {
+      // If an auto-response is pending, send it back to the CU-CP.
+      ngap_message auto_resp;
+      if (parent.pending_auto_tx.try_pop(auto_resp)) {
+        parent.push_tx_pdu(auto_resp);
+      }
+      parent.rx_pdus.push_blocking(msg);
+      return true;
+    }
+
+  private:
+    fuzz_amf& parent;
+  };
+
+  std::unique_ptr<ngap_rx_message_notifier> rx_pdu_notifier;
+  pdu_queue                                 rx_pdus;
+  pdu_queue                                 pending_auto_tx;
+};
+
+// ---------------------------------------------------------------------------
+// fuzz_xnc_gateway – no-op Xn-C connection gateway
+// ---------------------------------------------------------------------------
+
+class fuzz_xnc_gateway : public xnc_connection_gateway
+{
+public:
+  async_task<bool> connect_to_peer(std::vector<transport_layer_address> /*peer_addrs*/) override
+  {
+    return launch_no_op_task(true);
+  }
+  void                    attach_cu_cp(cu_cp_xnc_handler& /*handler*/) override {}
+  void                    stop() override {}
+  std::optional<uint16_t> get_listen_port() const override { return std::nullopt; }
+};
 
 // ---------------------------------------------------------------------------
 // Full CU-CP fuzz state
@@ -96,7 +211,7 @@ struct fuzz_state {
 
     // Pre-queue the NGSetupResponse so cu_cp->start() can complete the NG
     // setup handshake without a real AMF.
-    amf.enqueue_auto_response(generate_ng_setup_response());
+    amf.enqueue_auto_response(make_ng_setup_response());
 
     // Start the CU-CP.  Blocks until the NG Setup procedure completes.
     if (!cu_cp_inst->start()) {
