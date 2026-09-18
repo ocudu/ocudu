@@ -114,3 +114,26 @@ TEST(ue_channel_state_manager_test, ri_above_nof_ports_is_rejected)
 
   EXPECT_FALSE(csm.handle_csi_report(report));
 }
+
+// The recommended beam is recorded for the fallback scheduler and does not change the reported precoding.
+TEST(ue_channel_state_manager_test, the_recommended_beam_does_not_change_the_precoding)
+{
+  // A beam other than the first one, so that the assertions discriminate against a hardcoded default.
+  constexpr beam_identifier recommended_beam = static_cast<beam_identifier>(3);
+
+  ue_channel_state_manager csm = make_channel_state_manager(4);
+  csm.set_recommended_beam(recommended_beam);
+
+  EXPECT_EQ(csm.get_recommended_beam(), recommended_beam);
+
+  for (unsigned nof_layers = 1; nof_layers <= 4; ++nof_layers) {
+    EXPECT_TRUE(std::holds_alternative<precoding_matrix_indicator>(csm.get_precoding(nof_layers)))
+        << "unexpected beamforming for nof_layers=" << nof_layers;
+  }
+}
+
+// A beam is not recommended before the UE reaches the cell on an SS/PBCH block.
+TEST(ue_channel_state_manager_test, no_beam_is_recommended_by_default)
+{
+  EXPECT_FALSE(make_channel_state_manager(4).get_recommended_beam().has_value());
+}

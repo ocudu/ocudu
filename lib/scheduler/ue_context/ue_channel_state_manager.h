@@ -59,6 +59,12 @@ public:
     return precoding_and_beamforming_info{recommended_prg_info[nof_layers_to_index(chosen_nof_layers)]};
   }
 
+  /// Gets the beam that the UE reached the cell on, if it is known.
+  std::optional<beam_identifier> get_recommended_beam() const { return recommended_beam; }
+
+  /// Sets the beam that the UE reached the cell on.
+  void set_recommended_beam(beam_identifier beam_id) { recommended_beam = beam_id; }
+
   /// Update UE with the latest CSI report for a given cell.
   bool handle_csi_report(const csi_report_data& csi_report);
 
@@ -109,6 +115,9 @@ private:
 
   /// \brief List of Recommended PMIs for different number of active layers. Position n is for layer n+1.
   static_vector<precoding_matrix_indicator, NOF_LAYER_CHOICES> recommended_prg_info;
+
+  /// Beam that the UE reached the cell on.
+  std::optional<beam_identifier> recommended_beam;
 
   /// Latest CSI report received from the UE.
   std::optional<csi_report_data> latest_csi_report;

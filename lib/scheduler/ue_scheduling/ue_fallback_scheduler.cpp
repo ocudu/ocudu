@@ -284,6 +284,13 @@ bool ue_fallback_scheduler::schedule_dl_new_tx(cell_resource_allocator& res_allo
       continue;
     }
 
+    // The RA scheduler stops tracking the UE once contention is resolved, so the beam of the SS/PBCH block that the UE
+    // reached the cell on is recorded while its entry is still alive.
+    if (ra_it != ra_ue_repo.end()) {
+      u.get_pcell().channel_state_manager().set_recommended_beam(
+          cell_cfg.params.ssb_cfg.ssb_beams.get_beam(ra_it->ssb_index.value()));
+    }
+
     const auto alloc_type = get_dl_new_tx_alloc_type(u);
     if (alloc_type == dl_new_tx_alloc_type::error) {
       // The UE is not in a state for scheduling
@@ -705,7 +712,11 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
   // Allocate PDCCH resources.
   cell_slot_resource_allocator& pdcch_alloc = res_alloc[slot_offset];
   pdcch_dl_information*         pdcch =
-      pdcch_sch.alloc_dl_pdcch_common(pdcch_alloc, u.crnti, ss_cfg.get_id(), aggregation_level::n4, std::nullopt);
+      pdcch_sch.alloc_dl_pdcch_common(pdcch_alloc,
+                                      u.crnti,
+                                      ss_cfg.get_id(),
+                                      aggregation_level::n4,
+                                      u.get_pcell().channel_state_manager().get_recommended_beam());
   if (pdcch == nullptr) {
     logger.debug("rnti={}: Postponed PDU scheduling for slot={}. Cause: No space in PDCCH.", u.crnti, pdcch_alloc.slot);
     // If there is no PDCCH space on this slot for this UE, then this slot should be avoided by the other UEs too.
@@ -993,6 +1004,11 @@ dl_harq_process_handle ue_fallback_scheduler::fill_dl_srb_grant(ue&             
     default: {
       ocudu_assert(false, "Invalid DCI type for SRB0 or SRB1");
     }
+  }
+
+  if (const std::optional<beam_identifier> beam = u.get_pcell().channel_state_manager().get_recommended_beam();
+      beam.has_value()) {
+    msg.pdsch_cfg.precoding_and_beamforming = make_single_beam_precoding(*beam);
   }
 
   // Set MAC logical channels to schedule in this PDU.

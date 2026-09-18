@@ -1828,3 +1828,90 @@ TEST_F(fallback_sched_ue_w_out_pucch_cfg, when_srb1_is_scheduled_with_crnti_both
 
   ASSERT_TRUE(srb_transmitted);
 }
+
+/// Beam that the test cell maps its SS/PBCH block onto.
+constexpr beam_identifier test_ssb_beam = static_cast<beam_identifier>(3);
+
+/// Beam that a transmission is mapped onto, or \c beam_identifier::invalid if it is not beamformed.
+static beam_identifier beam_of(const precoding_and_beamforming_info& info)
+{
+  const beam_identifier* beam = std::get_if<beam_identifier>(&info);
+  return beam != nullptr ? *beam : beam_identifier::invalid;
+}
+
+/// \brief Test suite for the beam that the fallback scheduler maps the ConRes CE transmissions onto.
+///
+/// The cell transmits a single SS/PBCH block on \c test_ssb_beam, so that every UE reaches the cell on that beam and
+/// its ConRes CE is expected to be carried by it.
+class fallback_sched_beam_test : public base_fallback_tester, public ::testing::Test
+{
+protected:
+  fallback_sched_beam_test() : base_fallback_tester(duplex_mode::FDD, false)
+  {
+    const unsigned k0       = 0;
+    auto           cell_req = create_custom_cell_config_request(k0);
+    // A beam other than the first one, so that the assertions discriminate against a hardcoded default.
+    cell_req.ran.ssb_cfg.ssb_beams.reset();
+    cell_req.ran.ssb_cfg.ssb_beams.set_beam(0, test_ssb_beam);
+    setup_sched(create_expert_config(max_msg4_mcs_index), cell_req);
+  }
+
+  // Seeds the RA attempt that the UE is created out of, as the RA scheduler would have.
+  void add_ra_ue(rnti_t tc_rnti, ssb_id_t ssb_index)
+  {
+    rach_indication_message::preamble preamble{};
+    preamble.tc_rnti = tc_rnti;
+    ASSERT_NE(bench->ra_ue_repo.add(preamble, current_slot, ssb_index), nullptr);
+  }
+
+  // Runs slots until the UE is allocated a PDSCH, and returns it.
+  const dl_msg_alloc* run_until_pdsch(const ue& u)
+  {
+    for (unsigned i = 0; i != MAX_TEST_RUN_SLOTS; ++i) {
+      run_slot();
+      const dl_msg_alloc* pdsch = get_ue_allocated_pdsch(u);
+      if (pdsch != nullptr) {
+        return pdsch;
+      }
+    }
+    return nullptr;
+  }
+
+  static constexpr sch_mcs_index max_msg4_mcs_index = 8;
+  static constexpr unsigned      MAC_SRB0_SDU_SIZE  = 101;
+  static constexpr unsigned      MAX_TEST_RUN_SLOTS = 50;
+};
+
+TEST_F(fallback_sched_beam_test, conres_pdsch_and_pdcch_use_the_beam_of_the_ssb)
+{
+  const rnti_t tc_rnti = to_rnti(0x4601);
+  ASSERT_NO_FATAL_FAILURE(add_ra_ue(tc_rnti, ssb_id_t{0}));
+  ASSERT_TRUE(add_ue(tc_rnti, to_du_ue_index(0)));
+  push_buffer_state_to_dl_ue(to_du_ue_index(0), current_slot, MAC_SRB0_SDU_SIZE, true);
+
+  const ue&           test_ue = get_ue(to_du_ue_index(0));
+  const dl_msg_alloc* pdsch   = run_until_pdsch(test_ue);
+  ASSERT_NE(pdsch, nullptr) << "No ConRes CE PDSCH was scheduled";
+  ASSERT_EQ(beam_of(pdsch->pdsch_cfg.precoding_and_beamforming), test_ssb_beam);
+
+  const pdcch_dl_information* pdcch = get_ue_allocated_pdcch(test_ue);
+  ASSERT_NE(pdcch, nullptr) << "No PDCCH scheduling the ConRes CE was found";
+  ASSERT_EQ(beam_of(pdcch->ctx.precoding_and_beamforming), test_ssb_beam);
+}
+
+/// Verifies that a UE that the RA scheduler no longer tracks falls back to the default beams, which the cell
+/// transmits on all the time.
+TEST_F(fallback_sched_beam_test, ue_not_tracked_by_the_ra_scheduler_uses_the_default_beams)
+{
+  ASSERT_TRUE(add_ue(to_rnti(0x4601), to_du_ue_index(0)));
+  push_buffer_state_to_dl_ue(to_du_ue_index(0), current_slot, MAC_SRB0_SDU_SIZE, true);
+
+  const ue&           test_ue = get_ue(to_du_ue_index(0));
+  const dl_msg_alloc* pdsch   = run_until_pdsch(test_ue);
+  ASSERT_NE(pdsch, nullptr) << "No ConRes CE PDSCH was scheduled";
+  ASSERT_FALSE(std::holds_alternative<beam_identifier>(pdsch->pdsch_cfg.precoding_and_beamforming));
+
+  const pdcch_dl_information* pdcch = get_ue_allocated_pdcch(test_ue);
+  ASSERT_NE(pdcch, nullptr) << "No PDCCH scheduling the ConRes CE was found";
+  ASSERT_FALSE(std::holds_alternative<beam_identifier>(pdcch->ctx.precoding_and_beamforming));
+}
