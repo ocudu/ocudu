@@ -12,7 +12,8 @@ void ocudu::fapi_adaptor::convert_srs_fapi_to_phy(uplink_pdu_slot_repository::sr
                                                   const fapi::ul_srs_pdu&              fapi_pdu,
                                                   unsigned                             sector_id,
                                                   unsigned                             nof_rx_antennas,
-                                                  slot_point                           slot)
+                                                  slot_point                           slot,
+                                                  unsigned                             ntn_k_mac_slots)
 {
   // Fill main context fields.
   ul_srs_context& context                                  = pdu.context;
@@ -24,6 +25,7 @@ void ocudu::fapi_adaptor::convert_srs_fapi_to_phy(uplink_pdu_slot_repository::sr
   // Fill SRS resource configuration.
   pdu.config.context                      = srs_context(sector_id, fapi_pdu.rnti);
   pdu.config.slot                         = slot;
+  pdu.config.slot_offset                  = ntn_k_mac_slots;
   pdu.config.resource.nof_antenna_ports   = fapi_pdu.num_ant_ports;
   pdu.config.resource.nof_symbols         = static_cast<srs_nof_symbols>(fapi_pdu.ofdm_symbols.length());
   pdu.config.resource.start_symbol        = fapi_pdu.time_start_position;

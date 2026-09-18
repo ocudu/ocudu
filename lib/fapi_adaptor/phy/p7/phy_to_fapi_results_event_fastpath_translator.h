@@ -18,6 +18,8 @@ struct phy_to_fapi_results_event_fastpath_translator_config {
   float    db_to_dbfs_conversion_factor;
   /// Random access subcarrier spacing, parameter \f$\Delta f^{RA}\f$, from \c msg1-SubcarrierSpacing.
   subcarrier_spacing msg1_scs;
+  /// NTN k_mac in slots at the cell SCS; zero for terrestrial cells.
+  unsigned ntn_k_mac_slots = 0;
 };
 
 /// PHY to FAPI results event fastpath translator dependencies.
@@ -74,6 +76,11 @@ private:
   float db_to_dbfs_conversion_factor;
   /// Random access subcarrier spacing, used to report the PRACH occasion slot index.
   const subcarrier_spacing msg1_scs;
+  /// \brief NTN k_mac in slots at the cell SCS; zero for terrestrial cells.
+  ///
+  /// The PRACH detection PDU is scheduled at the gNB DL-clock slot (UL occasion + k_mac), so the detection slot must
+  /// be rebased to the UL occasion before deriving the occasion slot index, whose t_id lives in the UE UL frame.
+  const unsigned ntn_k_mac_slots;
   /// FAPI logger.
   ocudulog::basic_logger& logger;
   /// FAPI P7 indications notifier.

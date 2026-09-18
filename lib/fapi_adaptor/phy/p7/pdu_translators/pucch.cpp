@@ -12,13 +12,15 @@ static void fill_format0_parameters(uplink_pdu_slot_repository::pucch_pdu& phy_p
                                     ul_pucch_context&                      context,
                                     const fapi::ul_pucch_pdu&              fapi_pdu,
                                     slot_point                             slot,
-                                    uint16_t                               num_rx_ant)
+                                    uint16_t                               num_rx_ant,
+                                    unsigned                               ntn_k_mac_slots)
 {
   phy_pdu.context.format = pucch_format::FORMAT_0;
 
   auto& format0 = phy_pdu.config.emplace<pucch_processor::format0_configuration>();
 
   format0.slot         = slot;
+  format0.slot_offset  = ntn_k_mac_slots;
   format0.bwp_size_rb  = fapi_pdu.bwp.length();
   format0.bwp_start_rb = fapi_pdu.bwp.start();
   format0.cp           = fapi_pdu.cp;
@@ -53,13 +55,15 @@ static void fill_format1_parameters(uplink_pdu_slot_repository::pucch_pdu& phy_p
                                     ul_pucch_context&                      context,
                                     const fapi::ul_pucch_pdu&              fapi_pdu,
                                     slot_point                             slot,
-                                    uint16_t                               num_rx_ant)
+                                    uint16_t                               num_rx_ant,
+                                    unsigned                               ntn_k_mac_slots)
 {
   phy_pdu.context.format = pucch_format::FORMAT_1;
 
   auto& format1 = phy_pdu.config.emplace<pucch_processor::format1_configuration>();
 
   format1.slot         = slot;
+  format1.slot_offset  = ntn_k_mac_slots;
   format1.bwp_size_rb  = fapi_pdu.bwp.length();
   format1.bwp_start_rb = fapi_pdu.bwp.start();
   format1.cp           = fapi_pdu.cp;
@@ -93,13 +97,15 @@ static void fill_format1_parameters(uplink_pdu_slot_repository::pucch_pdu& phy_p
 static void fill_format2_parameters(uplink_pdu_slot_repository::pucch_pdu& phy_pdu,
                                     const fapi::ul_pucch_pdu&              fapi_pdu,
                                     slot_point                             slot,
-                                    uint16_t                               num_rx_ant)
+                                    uint16_t                               num_rx_ant,
+                                    unsigned                               ntn_k_mac_slots)
 {
   phy_pdu.context.format = pucch_format::FORMAT_2;
 
   auto& format2 = phy_pdu.config.emplace<pucch_processor::format2_configuration>();
 
   format2.slot         = slot;
+  format2.slot_offset  = ntn_k_mac_slots;
   format2.cp           = fapi_pdu.cp;
   format2.bwp_size_rb  = fapi_pdu.bwp.length();
   format2.bwp_start_rb = fapi_pdu.bwp.start();
@@ -134,13 +140,15 @@ static void fill_format2_parameters(uplink_pdu_slot_repository::pucch_pdu& phy_p
 static void fill_format3_parameters(uplink_pdu_slot_repository::pucch_pdu& phy_pdu,
                                     const fapi::ul_pucch_pdu&              fapi_pdu,
                                     slot_point                             slot,
-                                    uint16_t                               num_rx_ant)
+                                    uint16_t                               num_rx_ant,
+                                    unsigned                               ntn_k_mac_slots)
 {
   phy_pdu.context.format = pucch_format::FORMAT_3;
 
   auto& format3 = phy_pdu.config.emplace<pucch_processor::format3_configuration>();
 
   format3.slot         = slot;
+  format3.slot_offset  = ntn_k_mac_slots;
   format3.cp           = fapi_pdu.cp;
   format3.bwp_size_rb  = fapi_pdu.bwp.length();
   format3.bwp_start_rb = fapi_pdu.bwp.start();
@@ -179,13 +187,15 @@ static void fill_format3_parameters(uplink_pdu_slot_repository::pucch_pdu& phy_p
 static void fill_format4_parameters(uplink_pdu_slot_repository::pucch_pdu& phy_pdu,
                                     const fapi::ul_pucch_pdu&              fapi_pdu,
                                     slot_point                             slot,
-                                    uint16_t                               num_rx_ant)
+                                    uint16_t                               num_rx_ant,
+                                    unsigned                               ntn_k_mac_slots)
 {
   phy_pdu.context.format = pucch_format::FORMAT_4;
 
   auto& format4 = phy_pdu.config.emplace<pucch_processor::format4_configuration>();
 
   format4.slot         = slot;
+  format4.slot_offset  = ntn_k_mac_slots;
   format4.cp           = fapi_pdu.cp;
   format4.bwp_size_rb  = fapi_pdu.bwp.length();
   format4.bwp_start_rb = fapi_pdu.bwp.start();
@@ -226,7 +236,8 @@ static void fill_format4_parameters(uplink_pdu_slot_repository::pucch_pdu& phy_p
 void ocudu::fapi_adaptor::convert_pucch_fapi_to_phy(uplink_pdu_slot_repository::pucch_pdu& pdu,
                                                     const fapi::ul_pucch_pdu&              fapi_pdu,
                                                     slot_point                             slot,
-                                                    uint16_t                               num_rx_ant)
+                                                    uint16_t                               num_rx_ant,
+                                                    unsigned                               ntn_k_mac_slots)
 {
   // Fill main context fields.
   ul_pucch_context& context = pdu.context;
@@ -234,15 +245,15 @@ void ocudu::fapi_adaptor::convert_pucch_fapi_to_phy(uplink_pdu_slot_repository::
   context.rnti              = fapi_pdu.rnti;
 
   if (std::holds_alternative<fapi::ul_pucch_pdu_format_0>(fapi_pdu.format)) {
-    fill_format0_parameters(pdu, context, fapi_pdu, slot, num_rx_ant);
+    fill_format0_parameters(pdu, context, fapi_pdu, slot, num_rx_ant, ntn_k_mac_slots);
   } else if (std::holds_alternative<fapi::ul_pucch_pdu_format_1>(fapi_pdu.format)) {
-    fill_format1_parameters(pdu, context, fapi_pdu, slot, num_rx_ant);
+    fill_format1_parameters(pdu, context, fapi_pdu, slot, num_rx_ant, ntn_k_mac_slots);
   } else if (std::holds_alternative<fapi::ul_pucch_pdu_format_2>(fapi_pdu.format)) {
-    fill_format2_parameters(pdu, fapi_pdu, slot, num_rx_ant);
+    fill_format2_parameters(pdu, fapi_pdu, slot, num_rx_ant, ntn_k_mac_slots);
   } else if (std::holds_alternative<fapi::ul_pucch_pdu_format_3>(fapi_pdu.format)) {
-    fill_format3_parameters(pdu, fapi_pdu, slot, num_rx_ant);
+    fill_format3_parameters(pdu, fapi_pdu, slot, num_rx_ant, ntn_k_mac_slots);
   } else if (std::holds_alternative<fapi::ul_pucch_pdu_format_4>(fapi_pdu.format)) {
-    fill_format4_parameters(pdu, fapi_pdu, slot, num_rx_ant);
+    fill_format4_parameters(pdu, fapi_pdu, slot, num_rx_ant, ntn_k_mac_slots);
   } else {
     ocudu_assert(0, "Unsupported PUCCH format {}", fmt::underlying(context.format));
   }

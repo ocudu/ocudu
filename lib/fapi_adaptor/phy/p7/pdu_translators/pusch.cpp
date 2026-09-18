@@ -81,11 +81,13 @@ void ocudu::fapi_adaptor::convert_pusch_fapi_to_phy(uplink_pdu_slot_repository::
                                                     const fapi::ul_pusch_pdu&              fapi_pdu,
                                                     slot_point                             slot,
                                                     uint16_t                               num_rx_ant,
-                                                    uci_part2_correspondence_repository&   part2_repo)
+                                                    uci_part2_correspondence_repository&   part2_repo,
+                                                    unsigned                               ntn_k_mac_slots)
 {
   // Fill the PUSCH processor parameters.
   pusch_processor::pdu_t& proc_pdu    = pdu.pdu;
   proc_pdu.slot                       = slot;
+  proc_pdu.slot_offset                = ntn_k_mac_slots;
   proc_pdu.rnti                       = fapi_pdu.rnti;
   proc_pdu.bwp_start_rb               = fapi_pdu.bwp.start();
   proc_pdu.bwp_size_rb                = fapi_pdu.bwp.length();

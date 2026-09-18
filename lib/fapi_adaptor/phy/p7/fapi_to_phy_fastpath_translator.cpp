@@ -65,7 +65,8 @@ fapi_to_phy_fastpath_translator::fapi_to_phy_fastpath_translator(
   scs_common(config.scs_common),
   prach_cfg(config.prach_cfg),
   carrier_cfg(config.carrier_cfg),
-  prach_ports(config.prach_ports.begin(), config.prach_ports.end())
+  prach_ports(config.prach_ports.begin(), config.prach_ports.end()),
+  ntn_k_mac_slots(config.ntn_k_mac_slots)
 {
   ocudu_assert(pm_repo, "Invalid precoding matrix repository");
   ocudu_assert(part2_repo, "Invalid UCI Part2 repository");
@@ -395,7 +396,8 @@ static expected<uplink_pdus> translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tt
                                                                ocudulog::basic_logger&              logger,
                                                                uci_part2_correspondence_repository& part2_repo,
                                                                unsigned                             sector_id,
-                                                               subcarrier_spacing                   scs)
+                                                               subcarrier_spacing                   scs,
+                                                               unsigned                             ntn_k_mac_slots)
 {
   uplink_pdus pdus;
   for (const auto& pdu : msg.pdus) {
@@ -419,7 +421,7 @@ static expected<uplink_pdus> translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tt
 
     if (const auto* pucch_pdu = std::get_if<fapi::ul_pucch_pdu>(&pdu.pdu)) {
       uplink_pdu_slot_repository::pucch_pdu& ul_pdu = pdus.pucch.emplace_back();
-      convert_pucch_fapi_to_phy(ul_pdu, *pucch_pdu, msg.slot, carrier_cfg.num_rx_ant);
+      convert_pucch_fapi_to_phy(ul_pdu, *pucch_pdu, msg.slot, carrier_cfg.num_rx_ant, ntn_k_mac_slots);
       if (error_type<std::string> phy_pucch_validation = is_pucch_pdu_valid(ul_pdu_validator, ul_pdu);
           !phy_pucch_validation.has_value()) {
         logger.warning("Sector#{}: Skipping UL_TTI.request: PUCCH PDU flagged as invalid by the Upper PHY with the "
@@ -435,7 +437,7 @@ static expected<uplink_pdus> translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tt
 
     if (const auto* pusch_pdu = std::get_if<fapi::ul_pusch_pdu>(&pdu.pdu)) {
       uplink_pdu_slot_repository::pusch_pdu& ul_pdu = pdus.pusch.emplace_back();
-      convert_pusch_fapi_to_phy(ul_pdu, *pusch_pdu, msg.slot, carrier_cfg.num_rx_ant, part2_repo);
+      convert_pusch_fapi_to_phy(ul_pdu, *pusch_pdu, msg.slot, carrier_cfg.num_rx_ant, part2_repo, ntn_k_mac_slots);
       if (error_type<std::string> phy_pusch_validator = ul_pdu_validator.is_valid(ul_pdu.pdu);
           !phy_pusch_validator.has_value()) {
         logger.warning("Sector#{}: Skipping UL_TTI.request: PUSCH PDU flagged as invalid by the Upper PHY with the "
@@ -450,7 +452,7 @@ static expected<uplink_pdus> translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tt
 
     if (const auto* srs_pdu = std::get_if<fapi::ul_srs_pdu>(&pdu.pdu)) {
       uplink_pdu_slot_repository::srs_pdu& ul_pdu = pdus.srs.emplace_back();
-      convert_srs_fapi_to_phy(ul_pdu, *srs_pdu, sector_id, carrier_cfg.num_rx_ant, msg.slot);
+      convert_srs_fapi_to_phy(ul_pdu, *srs_pdu, sector_id, carrier_cfg.num_rx_ant, msg.slot, ntn_k_mac_slots);
       if (error_type<std::string> srs_validation = ul_pdu_validator.is_valid(ul_pdu.config);
           !srs_validation.has_value()) {
         logger.warning(
@@ -511,8 +513,16 @@ void fapi_to_phy_fastpath_translator::send_ul_tti_request(const fapi::ul_tti_req
     return;
   }
 
-  expected<uplink_pdus> pdus = translate_ul_tti_pdus_to_phy_pdus(
-      msg, ul_pdu_validator, prach_cfg, carrier_cfg, prach_ports, logger, *part2_repo, sector_id, scs_common);
+  expected<uplink_pdus> pdus = translate_ul_tti_pdus_to_phy_pdus(msg,
+                                                                 ul_pdu_validator,
+                                                                 prach_cfg,
+                                                                 carrier_cfg,
+                                                                 prach_ports,
+                                                                 logger,
+                                                                 *part2_repo,
+                                                                 sector_id,
+                                                                 scs_common,
+                                                                 ntn_k_mac_slots);
 
   // Raise invalid format error.
   if (!pdus.has_value()) {

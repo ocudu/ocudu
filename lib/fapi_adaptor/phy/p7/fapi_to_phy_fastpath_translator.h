@@ -49,6 +49,8 @@ struct fapi_to_phy_fastpath_translator_config {
   fapi::carrier_config carrier_cfg;
   /// PRACH port list.
   std::vector<uint8_t> prach_ports;
+  /// NTN k_mac in slots at the cell SCS; zero for terrestrial cells.
+  unsigned ntn_k_mac_slots = 0;
 };
 
 /// FAPI-to-PHY fastpath translator dependencies.
@@ -272,6 +274,8 @@ private:
   const fapi::carrier_config carrier_cfg;
   /// PRACH receive ports.
   const static_vector<uint8_t, MAX_PORTS> prach_ports;
+  /// NTN k_mac offset, in slots at the cell SCS. Zero for terrestrial.
+  const unsigned ntn_k_mac_slots;
   /// PDSCH PDU repository.
   pdsch_pdu_repository pdsch_repository;
 

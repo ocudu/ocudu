@@ -48,6 +48,12 @@ struct phy_fapi_p7_sector_fastpath_adaptor_config {
   /// Value in dB relative to Full Scale (dBFS) equivalent to 0 dB in normalized units, i.e., as coming from the
   /// physical layer.
   float db_to_dbfs_conversion_factor;
+  /// \brief NTN k_mac in slots at the cell SCS; zero for terrestrial cells.
+  ///
+  /// The gNB DL and UL frames are misaligned by k_mac, so uplink that the UE transmits in its UL slot p is received
+  /// at DL-clock slot p + k_mac. The adaptor passes it to the PHY as the PDU slot offset, and reports the
+  /// RACH.indication occasion slot in the UE UL frame.
+  unsigned ntn_k_mac_slots = 0;
 };
 
 /// PHY-FAPI P7 sector fastpath adaptor dependencies.

@@ -59,9 +59,10 @@ TEST(FAPIPPHYULPUCCHAdaptorTest, ValidFormat1PDUPass)
   unsigned slot_index      = 2U;
   auto     slot            = slot_point(scs, sfn, slot_index);
   unsigned nof_rx_antennas = 1U;
+  unsigned ntn_k_mac_slots = 4U;
 
   uplink_pdu_slot_repository::pucch_pdu pdu;
-  convert_pucch_fapi_to_phy(pdu, fapi_pdu, slot, nof_rx_antennas);
+  convert_pucch_fapi_to_phy(pdu, fapi_pdu, slot, nof_rx_antennas, ntn_k_mac_slots);
 
   const auto* format1 = std::get_if<fapi::ul_pucch_pdu_format_1>(&fapi_pdu.format);
 
@@ -76,6 +77,7 @@ TEST(FAPIPPHYULPUCCHAdaptorTest, ValidFormat1PDUPass)
 
   // Common parameters.
   ASSERT_EQ(slot, phy_pdu.slot);
+  ASSERT_EQ(ntn_k_mac_slots, phy_pdu.slot_offset);
   ASSERT_EQ(fapi_pdu.bwp.start(), phy_pdu.bwp_start_rb);
   ASSERT_EQ(fapi_pdu.bwp.length(), phy_pdu.bwp_size_rb);
   ASSERT_EQ(fapi_pdu.cp, phy_pdu.cp);
@@ -108,9 +110,10 @@ TEST(FAPIPPHYULPUCCHAdaptorTest, ValidFormat2PDUPass)
   unsigned slot_index      = 2U;
   auto     slot            = slot_point(scs, sfn, slot_index);
   unsigned nof_rx_antennas = 1U;
+  unsigned ntn_k_mac_slots = 4U;
 
   uplink_pdu_slot_repository::pucch_pdu pdu;
-  convert_pucch_fapi_to_phy(pdu, fapi_pdu, slot, nof_rx_antennas);
+  convert_pucch_fapi_to_phy(pdu, fapi_pdu, slot, nof_rx_antennas, ntn_k_mac_slots);
 
   const auto* format2 = std::get_if<fapi::ul_pucch_pdu_format_2>(&fapi_pdu.format);
   ASSERT_TRUE(format2 != nullptr);
@@ -132,9 +135,10 @@ TEST(FAPIPPHYULPUCCHAdaptorTest, ValidFormat3PDUPass)
   unsigned slot_index      = 2U;
   auto     slot            = slot_point(scs, sfn, slot_index);
   unsigned nof_rx_antennas = 1U;
+  unsigned ntn_k_mac_slots = 4U;
 
   uplink_pdu_slot_repository::pucch_pdu pdu;
-  convert_pucch_fapi_to_phy(pdu, fapi_pdu, slot, nof_rx_antennas);
+  convert_pucch_fapi_to_phy(pdu, fapi_pdu, slot, nof_rx_antennas, ntn_k_mac_slots);
 
   const auto* format3 = std::get_if<fapi::ul_pucch_pdu_format_3>(&fapi_pdu.format);
   ASSERT_TRUE(format3 != nullptr);
@@ -156,9 +160,10 @@ TEST(FAPIPPHYULPUCCHAdaptorTest, ValidFormat4PDUPass)
   unsigned slot_index      = 2U;
   auto     slot            = slot_point(scs, sfn, slot_index);
   unsigned nof_rx_antennas = 1U;
+  unsigned ntn_k_mac_slots = 4U;
 
   uplink_pdu_slot_repository::pucch_pdu pdu;
-  convert_pucch_fapi_to_phy(pdu, fapi_pdu, slot, nof_rx_antennas);
+  convert_pucch_fapi_to_phy(pdu, fapi_pdu, slot, nof_rx_antennas, ntn_k_mac_slots);
 
   const auto* format4 = std::get_if<fapi::ul_pucch_pdu_format_4>(&fapi_pdu.format);
   ASSERT_TRUE(format4 != nullptr);

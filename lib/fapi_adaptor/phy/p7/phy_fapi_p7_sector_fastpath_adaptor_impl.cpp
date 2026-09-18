@@ -19,7 +19,8 @@ generate_fapi_to_phy_translator_config(const phy_fapi_p7_sector_fastpath_adaptor
           .scs_common                    = config.scs_common,
           .prach_cfg                     = config.prach_cfg,
           .carrier_cfg                   = config.carrier_cfg,
-          .prach_ports                   = config.prach_ports};
+          .prach_ports                   = config.prach_ports,
+          .ntn_k_mac_slots               = config.ntn_k_mac_slots};
 }
 
 /// Generates and returns a FAPI-to-PHY translator dependencies from the given PHY adaptor dependencies.
@@ -45,7 +46,8 @@ phy_fapi_p7_sector_fastpath_adaptor_impl::phy_fapi_p7_sector_fastpath_adaptor_im
                                                                               config.dbfs_to_dbm_conversion_factor,
                                                                           .db_to_dbfs_conversion_factor =
                                                                               config.db_to_dbfs_conversion_factor,
-                                                                          .msg1_scs = config.prach_cfg.msg1_scs},
+                                                                          .msg1_scs        = config.prach_cfg.msg1_scs,
+                                                                          .ntn_k_mac_slots = config.ntn_k_mac_slots},
                      phy_to_fapi_results_event_fastpath_translator_dependencies{.logger = dependencies.logger}),
   fapi_translator(generate_fapi_to_phy_translator_config(config),
                   generate_fapi_to_phy_translator_dependencies(std::move(dependencies))),

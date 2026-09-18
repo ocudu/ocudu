@@ -14,6 +14,15 @@
 using namespace ocudu;
 using namespace fapi_adaptor;
 
+/// \brief Converts a slot on the gNB DL clock into the UE UL slot that lands on it.
+///
+/// An uplink transmission the UE makes in its UL slot p reaches the gNB in DL slot p + k_mac, because DL and UL frame
+/// timing are misaligned at the gNB by k_mac (TS 38.300 Section 16.14.2.1).
+static slot_point dl_to_ue_ul_slot(slot_point dl_slot, unsigned ntn_k_mac_slots)
+{
+  return dl_slot - ntn_k_mac_slots;
+}
+
 namespace {
 
 class p7_indications_notifier_dummy : public fapi::p7_indications_notifier
@@ -40,6 +49,7 @@ phy_to_fapi_results_event_fastpath_translator::phy_to_fapi_results_event_fastpat
   dbfs_to_dbm_conversion_factor(cfg.dbfs_to_dbm_conversion_factor),
   db_to_dbfs_conversion_factor(cfg.db_to_dbfs_conversion_factor),
   msg1_scs(cfg.msg1_scs),
+  ntn_k_mac_slots(cfg.ntn_k_mac_slots),
   logger(dependencies.logger),
   p7_notifier(&dummy_p7_notifier)
 {
@@ -74,7 +84,8 @@ void phy_to_fapi_results_event_fastpath_translator::on_new_prach_results(const u
   static constexpr unsigned         fd_ra_index = 0U;
   fapi::rach_indication_pdu_builder builder_pdu = builder.set_pdu(
       result.context.start_symbol,
-      ra_helper::get_prach_occasion_slot_index(slot, result.context.format, msg1_scs),
+      ra_helper::get_prach_occasion_slot_index(
+          dl_to_ue_ul_slot(slot, ntn_k_mac_slots), result.context.format, msg1_scs),
       fd_ra_index,
       fapi::fapi_power_unit(result.result.rssi_dB, dbfs_to_dbm_conversion_factor, db_to_dbfs_conversion_factor),
       std::nullopt);

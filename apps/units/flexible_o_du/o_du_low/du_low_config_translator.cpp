@@ -127,6 +127,9 @@ static odu::du_low_config generate_du_low_config(const du_low_unit_config&      
     if (cell.ntn_cs_koffset) {
       expire_pusch_harq_timeout_slots += cell.ntn_cs_koffset->count() * nof_slots_per_subframe;
     }
+    if (cell.ntn_k_mac) {
+      expire_pusch_harq_timeout_slots += cell.ntn_k_mac->count() * nof_slots_per_subframe;
+    }
 
     // Calculate the number of UL slots in a frame and in a PUSCH HARQ process lifetime.
     unsigned nof_ul_slots_in_harq_lifetime = expire_pusch_harq_timeout_slots;
