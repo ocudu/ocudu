@@ -20,6 +20,8 @@ RUN apt-get update \
     file \
     pipx \
     python3-yaml \
+    nodejs \
+    npm \
     && rm -f /usr/bin/pebble \
     && apt-get autoremove \
     && apt-get clean \
@@ -29,10 +31,13 @@ ENV PATH="/root/.local/bin:${PATH}"
 ENV PIP_NO_CACHE_DIR=1
 RUN pipx install "reuse<7"
 
+RUN npm install -g prettier
+
 ADD hex2lowercase.sh \
     include-guards-check.sh \
     is-pristine-repo.sh \
     run-clang-format-diff.sh \
+    run-prettier-diff.sh \
     update_headers.sh \
     annotate_headers.sh \
     /usr/local/bin/

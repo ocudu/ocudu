@@ -248,6 +248,7 @@ code-format:
     - if: $ON_MR
       changes:
         - .clang-format
+        - .prettierrc
       when: never
     - if: $ON_MR
   needs:
@@ -261,6 +262,7 @@ full-code-format:
     - if: $ON_MR
       changes:
         - .clang-format
+        - .prettierrc
   needs:
     - job: trigger static
       optional: true

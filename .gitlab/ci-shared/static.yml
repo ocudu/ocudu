@@ -41,6 +41,7 @@ include:
     - |
       check_code_format() {
         run-clang-format-diff.sh $CI_MERGE_REQUEST_DIFF_BASE_SHA
+        run-prettier-diff.sh $CI_MERGE_REQUEST_DIFF_BASE_SHA
         hex2lowercase.sh
         is-pristine-repo.sh
       }
@@ -60,6 +61,9 @@ include:
         FILE_EXTENSION_REGEX='.*\.(cpp|cc|c\+\+|cxx|c|cl|h|hh|hpp)$'
         files=$(find . | grep -E "${FILE_EXTENSION_REGEX}" | tr '\n' ' ')
         clang-format -style=file -i ${files}
+        MD_FILE_EXTENSION_REGEX='.*\.md$'
+        md_files=$(find . | grep -E "${MD_FILE_EXTENSION_REGEX}" | tr '\n' ' ')
+        [ "$md_files" ] && prettier --config .prettierrc --write ${md_files}
         hex2lowercase.sh
         is-pristine-repo.sh
       }
