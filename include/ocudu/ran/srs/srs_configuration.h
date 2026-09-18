@@ -16,8 +16,6 @@
 
 namespace ocudu {
 
-struct srs_resource_configuration;
-
 /// Used to configure Sounding Reference Signal transmissions or to configure Sounding Reference Signal
 /// measurements for CLI.
 /// \remark See TS 38.331, "SRS-Config".
@@ -375,9 +373,5 @@ struct srs_config {
   }
   bool operator!=(const srs_config& rhs) const { return !(rhs == *this); }
 };
-
-/// \brief Converts a \c SRS-Resource, as per TS 38.331, into the physical layer parameters needed to derive its RE
-/// mapping, as per TS 38.211, Section 6.4.1.4.
-srs_resource_configuration to_srs_resource_configuration(const srs_config::srs_resource& res);
 
 } // namespace ocudu

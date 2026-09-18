@@ -6,17 +6,9 @@
 #include "../cell/resource_grid.h"
 #include "../config/ue_configuration.h"
 #include "ocudu/ran/srs/srs_bandwidth_configuration.h"
+#include "ocudu/ran/srs/srs_configuration_helpers.h"
 
 using namespace ocudu;
-
-static ofdm_symbol_range get_srs_symbols(const bwp_configuration&        ul_bwp_cfg,
-                                         const srs_config::srs_resource& srs_res_cfg)
-{
-  const unsigned nof_symbs_per_slot = get_nsymb_per_slot(ul_bwp_cfg.cp);
-  const unsigned starting_symb      = nof_symbs_per_slot - srs_res_cfg.res_mapping.start_pos - 1;
-
-  return {starting_symb, starting_symb + static_cast<unsigned>(srs_res_cfg.res_mapping.nof_symb)};
-}
 
 // Helper to generate an SRS info PDU for a given SRS resource.
 static srs_info
@@ -26,7 +18,7 @@ create_srs_pdu(rnti_t rnti, const bwp_configuration& ul_bwp_cfg, const srs_confi
   pdu.crnti             = rnti;
   pdu.bwp_cfg           = &ul_bwp_cfg;
   pdu.nof_antenna_ports = static_cast<uint8_t>(srs_res_cfg.nof_ports);
-  pdu.symbols           = get_srs_symbols(ul_bwp_cfg, srs_res_cfg);
+  pdu.symbols           = get_srs_symbol_range(srs_res_cfg, ul_bwp_cfg.cp);
   pdu.nof_repetitions   = srs_res_cfg.res_mapping.rept_factor;
 
   pdu.config_index         = srs_res_cfg.freq_hop.c_srs;
@@ -60,7 +52,7 @@ static grant_info get_srs_res_grid_grant(const bwp_configuration&        ul_bwp_
                      "The SRS configuration is not valid");
   const unsigned     starting_crb = (nof_ul_bwp_rbs - srs_params.value().m_srs) / 2;
   const crb_interval srs_crbs{starting_crb, starting_crb + srs_res_cfg.freq_hop.b_srs};
-  return {ul_bwp_cfg.scs, get_srs_symbols(ul_bwp_cfg, srs_res_cfg), srs_crbs};
+  return {ul_bwp_cfg.scs, get_srs_symbol_range(srs_res_cfg, ul_bwp_cfg.cp), srs_crbs};
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

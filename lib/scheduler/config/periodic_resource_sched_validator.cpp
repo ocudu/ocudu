@@ -20,6 +20,7 @@
 #include "ocudu/ran/resource_allocation/rb_interval.h"
 #include "ocudu/ran/resource_block.h"
 #include "ocudu/ran/srs/srs_configuration.h"
+#include "ocudu/ran/srs/srs_configuration_helpers.h"
 #include "ocudu/ran/srs/srs_information.h"
 #include "ocudu/ran/srs/srs_resource_configuration.h"
 #include "ocudu/ran/ssb/ssb_mapping.h"
@@ -354,9 +355,10 @@ std::vector<periodic_occasion> get_srs_occasions(const srs_config& srs_cfg, cons
       continue;
     }
 
-    const srs_resource_configuration res_cfg      = to_srs_resource_configuration(res);
-    const unsigned                   nof_ports    = static_cast<unsigned>(res.nof_ports);
-    const unsigned                   symbol_start = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - res.res_mapping.start_pos - 1;
+    const srs_resource_configuration res_cfg   = to_srs_resource_configuration(res, cyclic_prefix::NORMAL);
+    const unsigned                   nof_ports = static_cast<unsigned>(res.nof_ports);
+    const ofdm_symbol_range          symbol_range =
+        ofdm_symbol_range::start_and_len(res_cfg.start_symbol.value(), res.res_mapping.nof_symb);
 
     periodic_occasion occ;
     occ.origin      = {occasion_origin::signal_type::SRS, static_cast<uint8_t>(res.id.cell_res_id), 0};
@@ -374,7 +376,7 @@ std::vector<periodic_occasion> get_srs_occasions(const srs_config& srs_cfg, cons
       }
 
       const unsigned k_tc = info.mapping_initial_subcarrier % NOF_SUBCARRIERS_PER_RB;
-      for (unsigned sym = symbol_start, sym_end = symbol_start + res.res_mapping.nof_symb; sym != sym_end; ++sym) {
+      for (unsigned sym = symbol_range.start(), sym_end = symbol_range.stop(); sym != sym_end; ++sym) {
         for (unsigned re = k_tc; re < NOF_SUBCARRIERS_PER_RB; re += info.comb_size) {
           occ.re_masks[sym].set(re);
         }

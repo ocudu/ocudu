@@ -59,7 +59,7 @@ add_library(ocudu_ran
         sch/sch_segmentation.cpp
         sib/sib_helper.cpp
         srs/srs_bandwidth_configuration.cpp
-        srs/srs_configuration.cpp
+        srs/srs_configuration_helpers.cpp
         srs/srs_information.cpp
         ssb/pbch_mib_pack.cpp
         ssb/ssb_freq_position_generator.cpp

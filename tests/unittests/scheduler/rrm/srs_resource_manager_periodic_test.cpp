@@ -9,6 +9,7 @@
 #include "ocudu/adt/format.h"
 #include "ocudu/du/du_cell_config_helpers.h"
 #include "ocudu/ran/srs/srs_bandwidth_configuration.h"
+#include "ocudu/ran/srs/srs_configuration_helpers.h"
 #include "ocudu/scheduler/config/pucch_guardbands.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
 #include "fmt/ostream.h"
@@ -249,9 +250,7 @@ protected:
     explicit srs_res_params(const srs_config::srs_resource& srs_res) :
       offset(srs_res.periodicity_and_offset->offset),
       tx_comb_offset(srs_res.tx_comb.tx_comb_offset),
-      symbols(ofdm_symbol_range{NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - srs_res.res_mapping.start_pos - 1,
-                                NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - srs_res.res_mapping.start_pos - 1 +
-                                    srs_res.res_mapping.nof_symb}),
+      symbols(get_srs_symbol_range(srs_res, cyclic_prefix::NORMAL)),
       sequence_id(srs_res.sequence_id),
       cs(srs_res.tx_comb.tx_comb_cyclic_shift)
     {

@@ -6,7 +6,7 @@
 
 #include "ocudu/ran/resource_allocation/ofdm_symbol_range.h"
 #include "ocudu/ran/rnti.h"
-#include "ocudu/ran/srs/srs_configuration.h"
+#include "ocudu/ran/srs/srs_properties.h"
 #include "ocudu/scheduler/config/bwp_configuration.h"
 
 namespace ocudu {
