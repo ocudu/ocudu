@@ -22,7 +22,8 @@ not otherwise touching.
   `just`, `obviously`.
 - Describe the code as it stands, never its history. No `added`, `removed`, `changed`,
   `now handles`, `previously`: the reader cannot see the earlier version.
-- Facts, not intentions. No `should be`, `for now`.
+- Facts, not intentions. No `should be`, `for now`, outside a `TODO`, `FIXME`,
+  `Note:`, `\note`, `\remark` or `\warning`.
 - No em dashes.
 
 ## What to say
