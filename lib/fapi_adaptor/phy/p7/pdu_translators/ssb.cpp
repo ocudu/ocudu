@@ -51,6 +51,8 @@ void ocudu::fapi_adaptor::convert_ssb_fapi_to_phy(ssb_processor::pdu_t&   proc_p
 
   unpack_bch_payload(proc_pdu.mib_payload, fapi_pdu);
 
-  // Use only a single port for SSB, with identity precoding and no beamforming.
-  proc_pdu.precoding_and_beamforming = precoding_beamforming_configuration(1, 1, 1, MAX_NOF_PRBS);
+  // The SS/PBCH block is transmitted on a single antenna port, as per TS38.211 Section 7.4.3, so it carries one layer
+  // and no MIMO precoding applies.
+  proc_pdu.precoding_and_beamforming =
+      precoding_beamforming_configuration::make_wideband(precoding_beam_list({fapi_pdu.beam_id}));
 }

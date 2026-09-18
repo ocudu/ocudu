@@ -74,6 +74,16 @@ public:
     return *this;
   }
 
+  /// \brief Sets the beamforming parameters for the fields of the SSB/PBCH PDU.
+  ///
+  /// These parameters are specified in SCF-222 v4.0 section 3.4.2.5, in table Tx precoding and beamforming PDU.
+  dl_ssb_pdu_builder& set_beamforming_parameters(beam_identifier beam_id)
+  {
+    pdu.beam_id = beam_id;
+
+    return *this;
+  }
+
   /// \brief Sets the BCH payload and returns a reference to the builder. PHY configures the timing PBCH bits.
   ///
   /// Use this function when the PHY generates the timing PBCH information.

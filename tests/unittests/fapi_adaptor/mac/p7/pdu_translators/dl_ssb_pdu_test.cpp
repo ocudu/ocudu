@@ -48,6 +48,7 @@ TEST(mac_fapi_ssb_pdu_conversor_test, valid_pdu_should_pass)
   ASSERT_EQ(static_cast<unsigned>(pdu.ssb_case), static_cast<unsigned>(fapi_pdu.case_type));
   ASSERT_EQ(pdu.L_max, fapi_pdu.L_max);
   ASSERT_EQ(static_cast<unsigned>(pdu.scs), static_cast<unsigned>(fapi_pdu.scs));
+  ASSERT_EQ(std::get<beam_identifier>(pdu.precoding_and_beamforming), fapi_pdu.beam_id);
 
   // MIB.
   ASSERT_EQ(generate_bch_payload(pdu, slot.sfn(), slot.is_odd_hrf(), slot.scs()) >> 8, fapi_pdu.bch_payload);

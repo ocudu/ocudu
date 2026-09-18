@@ -82,12 +82,15 @@ TEST(fapi_to_phy_ssb_conversion_test, valid_pdu_conversion_success)
               bool                  cell_barred            = binary_dist(gen);
               bool                  intra_freq_reselection = binary_dist(gen);
 
+              beam_identifier beam_id = to_beam_id(ssb_idx % max_nof_beams);
+
               fapi::dl_ssb_pdu         fapi_pdu;
               fapi::dl_ssb_pdu_builder builder(fapi_pdu);
               builder.set_carrier_parameters(scs)
                   .set_cell_parameters(pci)
                   .set_nr_power_parameters(beta_pss)
-                  .set_ssb_parameters(ssb_idx, subcarrier_offset, offset_pointA, pattern_case, lmax);
+                  .set_ssb_parameters(ssb_idx, subcarrier_offset, offset_pointA, pattern_case, lmax)
+                  .set_beamforming_parameters(beam_id);
 
               uint32_t mib_payload = generate_bch_payload(subcarrier_offset,
                                                           dmrs_type_a_position,
@@ -116,7 +119,8 @@ TEST(fapi_to_phy_ssb_conversion_test, valid_pdu_conversion_success)
               ASSERT_EQ(pdu.subcarrier_offset, subcarrier_offset);
               ASSERT_EQ(pdu.offset_to_pointA.value(), offset_pointA);
               ASSERT_EQ(pdu.pattern_case, pattern_case);
-              ASSERT_EQ(pdu.precoding_and_beamforming, precoding_beamforming_configuration(1, 1, 1, MAX_NOF_PRBS));
+              ASSERT_EQ(pdu.precoding_and_beamforming,
+                        precoding_beamforming_configuration::make_wideband(precoding_beam_list({beam_id})));
 
               std::array<uint8_t, ssb_processor::MIB_PAYLOAD_SIZE> dest;
               ocuduvec::bit_unpack(dest, mib_payload, dest.size());

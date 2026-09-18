@@ -102,6 +102,7 @@ dl_ssb_pdu unittests::build_valid_dl_ssb_pdu()
   pdu.mib_data.pdcch_config_sib1      = generate_byte();
   pdu.mib_data.cell_barred            = generate_bool();
   pdu.mib_data.intra_freq_reselection = generate_bool();
+  pdu.precoding_and_beamforming       = make_single_beam_precoding(to_beam_id(3));
 
   return pdu;
 }

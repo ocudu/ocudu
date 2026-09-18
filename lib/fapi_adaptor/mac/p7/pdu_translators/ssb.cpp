@@ -4,6 +4,7 @@
 
 #include "ssb.h"
 #include "ocudu/ran/ssb/pbch_mib_pack.h"
+#include "ocudu/support/ocudu_assert.h"
 
 using namespace ocudu;
 using namespace fapi_adaptor;
@@ -31,6 +32,9 @@ void ocudu::fapi_adaptor::convert_ssb_mac_to_fapi(fapi::dl_ssb_pdu_builder& buil
                                                   const dl_ssb_pdu&         mac_pdu,
                                                   slot_point                slot)
 {
+  ocudu_assert(std::holds_alternative<beam_identifier>(mac_pdu.precoding_and_beamforming),
+               "The SS/PBCH block is not mapped onto a single beam.");
+
   builder.set_carrier_parameters(mac_pdu.scs)
       .set_cell_parameters(mac_pdu.pci)
       .set_nr_power_parameters(mac_pdu.pss_to_sss_epre)
@@ -38,7 +42,8 @@ void ocudu::fapi_adaptor::convert_ssb_mac_to_fapi(fapi::dl_ssb_pdu_builder& buil
                           mac_pdu.subcarrier_offset.value(),
                           mac_pdu.offset_to_pointA,
                           mac_pdu.ssb_case,
-                          mac_pdu.L_max);
+                          mac_pdu.L_max)
+      .set_beamforming_parameters(std::get<beam_identifier>(mac_pdu.precoding_and_beamforming));
 
   builder.set_bch_payload_phy_timing_info(generate_bch_payload(mac_pdu, slot.sfn(), slot.is_odd_hrf(), slot.scs()) >>
                                           8);

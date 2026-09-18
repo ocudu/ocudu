@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "ocudu/ran/beamforming/beam_identifier_formatters.h"
 #include "ocudu/ran/pci.h"
 #include "ocudu/ran/ssb/ssb_configuration.h"
 #include <type_traits>
@@ -35,6 +36,8 @@ struct dl_ssb_pdu {
   ssb_pattern_case   case_type;
   subcarrier_spacing scs;
   uint8_t            L_max;
+  /// Beam that carries the SS/PBCH block.
+  beam_identifier beam_id = beam_identifier::n0;
 };
 
 } // namespace fapi
@@ -54,7 +57,7 @@ struct formatter<ocudu::fapi::dl_ssb_pdu> {
   {
     format_to(ctx.out(),
               "\n\t- SSB pci={} ssb_block_index={} k_SSB={} pointA={} bch_payload={}"
-              "ssb_pattern_case={} scs={} L_max={}",
+              "ssb_pattern_case={} scs={} L_max={} beam_id={}",
               pdu.phys_cell_id,
               pdu.ssb_block_index,
               pdu.subcarrier_offset.value(),
@@ -62,7 +65,8 @@ struct formatter<ocudu::fapi::dl_ssb_pdu> {
               pdu.bch_payload,
               to_string(pdu.case_type),
               to_string(pdu.scs),
-              pdu.L_max);
+              pdu.L_max,
+              pdu.beam_id);
 
     if (const auto* profile_nr = std::get_if<ocudu::fapi::dl_ssb_pdu::power_profile_nr>(&pdu.power_config)) {
       format_to(ctx.out(),

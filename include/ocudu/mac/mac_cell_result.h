@@ -52,8 +52,7 @@ struct dl_ssb_pdu {
   uint8_t L_max;
   /// Subcarrier spacing of the SSB.
   subcarrier_spacing scs;
-  /// \brief Precoding and beamforming of this SSB.
-  /// \note Not forwarded to the PHY yet: every SSB is transmitted on the same beam.
+  /// Precoding and beamforming of this SSB.
   precoding_and_beamforming_info precoding_and_beamforming;
   /// Data for MIB generation.
   ssb_mib_data_pdu mib_data;
