@@ -265,33 +265,57 @@ AFL_FAST_CAL=1 afl-fuzz \
     -- ./build_fuzz/tests/fuzz/rrc/rrc_cu_cp_fuzzer @@
 ```
 
-Injects RRC messages through a complete CU-CP with an AMF stub and a DU stub attached, so that the F1AP, PDCP and CU-CP
-layers around RRC are exercised on every input. The F1AP wrapper and the PDCP header are scaffolding the harness builds;
-only the RRC container is mutated. Fuzzing the F1AP wrapper itself belongs in a target under `tests/fuzz/f1ap`.
+Injects RRC messages through a complete CU-CP with stub AMF, CU-UP and DU peers attached, so that the F1AP, PDCP and
+CU-CP layers around RRC are exercised on every input. The F1AP wrapper and the PDCP PDU are scaffolding the harness
+builds; only the RRC message inside is mutated. Fuzzing the F1AP wrapper itself belongs in a target under
+`tests/fuzz/f1ap`.
 
 A UE is created and released for every input, so a crash reproduces from its input file alone. The UE pool is capped at
 8, which turns a UE that fails to be released into an immediate failure to create the next one rather than a slow leak.
 
 #### Input format of the full-stack fuzzer
 
-The first byte is a control byte; the remaining bytes are the RRC PDU. It carries neither the `integrity_verified` bit
-nor an SRB selector that `rrc_ue_fuzzer` has: PDCP derives the first from the MAC-I, and SRB2 only exists after security
-activation.
+The first byte is a control byte; the remaining bytes are the RRC message. It carries no `integrity_verified` bit,
+unlike `rrc_ue_fuzzer`: here PDCP derives that from the MAC-I the harness computes.
 
-| Bit | Meaning                                                  |
-| --- | -------------------------------------------------------- |
-| 0   | Logical channel: 0 = UL-CCCH, 1 = UL-DCCH on SRB1        |
-| 1   | UE state: 0 = awaiting `RRCSetupComplete`, 1 = connected |
-| 2-7 | Unused                                                   |
+| Bit | Meaning                                                     |
+| --- | ----------------------------------------------------------- |
+| 0   | Logical channel: 0 = UL-CCCH, 1 = UL-DCCH                   |
+| 1   | SRB: 0 = SRB1, 1 = SRB2                                     |
+| 2-3 | UE state reached before the message is injected (see below) |
+| 4-7 | Unused                                                      |
+
+| Value | UE state                                                                      |
+| ----- | ----------------------------------------------------------------------------- |
+| 0     | UE created by an Initial UL RRC Message Transfer, awaiting `RRCSetupComplete` |
+| 1     | `RRCSetupComplete` handled. SRB1 is up, AS security is not active             |
+| 2, 3  | AS security activated on SRB1, UE capabilities transferred, SRB2 created      |
+
+#### Reaching the post-security states
+
+Once AS security is active, the CU-CP's SRB entity verifies a MAC-I over every RRC PDU. A payload carrying a zero MAC
+would be dropped on integrity failure and the UE released, so the fuzzer would never reach RRC at all.
+
+The DU side therefore runs its own PDCP TX entities, keyed with the AS keys the CU-CP derives for the UE: the harness
+rebuilds the security context from the K_gNB that the injected Initial Context Setup Request carries, using the same
+algorithm preferences as the CU-CP configuration. Mutated payloads are then packed the way the UE packs them, MAC-I
+included, and the CU-CP accepts them.
+
+A wrong key, direction or algorithm would fail silently: every input dropped, the harness still reporting healthy
+throughput while covering nothing past RRC Setup. To make that impossible to miss, the harness brings one UE all the way
+up at startup and aborts if security did not activate.
 
 #### Choosing between the two RRC targets
 
-|                          | `rrc_ue_fuzzer`                       | `rrc_cu_cp_fuzzer`     |
-| ------------------------ | ------------------------------------- | ---------------------- |
-| Layers under test        | RRC UE only                           | F1AP, CU-CP, PDCP, RRC |
-| Post-security states     | Yes, via the `integrity_verified` bit | No, see above          |
-| Throughput (ASan, Debug) | ~1000 exec/s                          | ~450-900 exec/s        |
-| Cross-layer bugs         | Out of reach                          | In reach               |
+|                                  | `rrc_ue_fuzzer` | `rrc_cu_cp_fuzzer`                         |
+| -------------------------------- | --------------- | ------------------------------------------ |
+| Layers under test                | RRC UE only     | F1AP, CU-CP, PDCP, RRC                     |
+| `integrity_verified` as an input | Yes             | No, derived from the MAC-I                 |
+| Throughput (ASan, Debug)         | ~1000 exec/s    | ~450 exec/s connected, ~110 exec/s secured |
+| Cross-layer bugs                 | Out of reach    | In reach                                   |
+
+The secured state costs a full Initial Context Setup exchange per input, which is where the throughput difference
+between the two states comes from.
 
 ### Running in parallel (recommended)
 

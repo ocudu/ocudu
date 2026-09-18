@@ -41,6 +41,9 @@ asn1::rrc_nr::ul_dcch_msg_s create_rrc_setup_complete(uint8_t                 se
 /// \brief Generates a dummy UE Capability Info message.
 asn1::rrc_nr::ul_dcch_msg_s create_ue_capability_info(uint8_t transaction_id = 0, bool rrc_inactive_supported = true);
 
+/// \brief Generates a dummy Security Mode Complete message.
+asn1::rrc_nr::ul_dcch_msg_s create_security_mode_complete(uint8_t transaction_id = 0);
+
 /// \brief Generates a dummy RRC Reestablishment Complete message.
 asn1::rrc_nr::ul_dcch_msg_s create_rrc_reestablishment_complete();
 

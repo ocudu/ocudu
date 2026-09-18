@@ -393,7 +393,18 @@ ul_dcch_msg_s ocudu::test_helpers::create_ue_capability_info(uint8_t transaction
   return msg;
 }
 
-asn1::rrc_nr::ul_dcch_msg_s ocudu::test_helpers::create_rrc_reestablishment_complete()
+asn1::rrc_nr::ul_dcch_msg_s ocudu::test_helpers::create_security_mode_complete(uint8_t transaction_id)
+{
+  ul_dcch_msg_s ul_dcch_msg;
+
+  security_mode_complete_s& smc_complete = ul_dcch_msg.msg.set_c1().set_security_mode_complete();
+  smc_complete.rrc_transaction_id        = transaction_id;
+  smc_complete.crit_exts.set_security_mode_complete();
+
+  return ul_dcch_msg;
+}
+
+ul_dcch_msg_s ocudu::test_helpers::create_rrc_reestablishment_complete()
 {
   ul_dcch_msg_s msg;
 

@@ -38,6 +38,7 @@ add_executable(rrc_cu_cp_fuzzer
 )
 target_include_directories(rrc_cu_cp_fuzzer PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(rrc_cu_cp_fuzzer
+    security_test_doubles
     e1ap_test_doubles
     f1ap_test_doubles
     rrc_test_doubles

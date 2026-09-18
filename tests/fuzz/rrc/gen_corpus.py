@@ -96,35 +96,47 @@ RRC_SEEDS = {
 # rrc_cu_cp corpus seeds
 # ---------------------------------------------------------------------------
 # The full-stack harness uses a control byte of its own: bit 0 selects the
-# logical channel and bit 1 the UE state. It has no integrity_verified bit,
-# because PDCP derives that from the MAC-I, and no SRB bit, because SRB2 only
-# exists after security activation.
+# logical channel, bit 1 the SRB and bits 2-3 the UE state. It has no
+# integrity_verified bit, because PDCP derives that from the MAC-I the harness
+# computes.
 # ---------------------------------------------------------------------------
 
 CU_CP_DCCH = 0b0000_0001
-CU_CP_CONNECTED = 0b0000_0010
+CU_CP_SRB2 = 0b0000_0010
+CU_CP_AWAITING_SETUP_COMPLETE = 0 << 2
+CU_CP_CONNECTED = 1 << 2
+CU_CP_SECURED = 2 << 2
 
 RRC_CU_CP_SEEDS = {
     # RRCSetupRequest on UL-CCCH: the pre-authentication entry point.
-    "ccch_setup_request": seed(0, "1dec89d05766"),
+    "ccch_setup_request": seed(CU_CP_AWAITING_SETUP_COMPLETE, "1dec89d05766"),
 
     # Corrupted UL-CCCH message (triggers the unpack failure path).
-    "ccch_invalid": seed(0, "9dec89de5766"),
+    "ccch_invalid": seed(CU_CP_AWAITING_SETUP_COMPLETE, "9dec89de5766"),
 
     # RRCResumeRequest on UL-CCCH, which the CU-CP routes by its resume identity.
-    "ccch_resume_request": seed(0, "20202066f020"),
+    "ccch_resume_request": seed(CU_CP_AWAITING_SETUP_COMPLETE, "20202066f020"),
 
     # RRCSetupComplete on SRB1 against a UE awaiting it.
-    "dcch_setup_complete": seed(CU_CP_DCCH, RRC_SETUP_COMPLETE),
+    "dcch_setup_complete": seed(CU_CP_DCCH | CU_CP_AWAITING_SETUP_COMPLETE, RRC_SETUP_COMPLETE),
 
     # UL-DCCH against a connected UE, before security activation.
     "dcch_ul_info_transfer": seed(CU_CP_DCCH | CU_CP_CONNECTED, "0000"),
 
+    # RRCReconfigurationComplete on SRB1 after security activation.
+    "dcch_reconfig_complete": seed(CU_CP_DCCH | CU_CP_SECURED, "0a00"),
+
+    # MeasurementReport on SRB1 after security activation.
+    "dcch_meas_report": seed(CU_CP_DCCH | CU_CP_SECURED, "0800"),
+
+    # UL-DCCH on SRB2, which only exists after security activation.
+    "dcch_srb2": seed(CU_CP_DCCH | CU_CP_SRB2 | CU_CP_SECURED, "0000"),
+
     # Truncated payload (triggers the early-exit path).
-    "dcch_truncated": seed(CU_CP_DCCH | CU_CP_CONNECTED, "2a"),
+    "dcch_truncated": seed(CU_CP_DCCH | CU_CP_SECURED, "2a"),
 
     # Corrupt / non-RRC payload (triggers the unpack failure path).
-    "dcch_invalid": seed(CU_CP_DCCH | CU_CP_CONNECTED, "deadbeef"),
+    "dcch_invalid": seed(CU_CP_DCCH | CU_CP_SECURED, "deadbeef"),
 }
 
 # ---------------------------------------------------------------------------
