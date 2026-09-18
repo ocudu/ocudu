@@ -40,6 +40,10 @@ struct formatter<ocudu::srs_estimator_configuration> {
       helper.format_always(ctx, "{}", *config.context);
     }
     helper.format_if_verbose(ctx, "slot={}", config.slot);
+    if (config.slot_offset != 0) {
+      helper.format_always(ctx, "ue_ul_slot={}", config.slot - config.slot_offset);
+      helper.format_if_verbose(ctx, "slot_offset={}", config.slot_offset);
+    }
 
     // Format CRBs and REs only if the resource is supported.
     if (config.resource.is_valid() && !config.resource.has_frequency_hopping() &&

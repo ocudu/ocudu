@@ -35,6 +35,10 @@ struct formatter<ocudu::pucch_processor::format0_configuration> {
       helper.format_always(ctx, *config.context);
     }
     helper.format_always(ctx, "format=0");
+    if (config.slot_offset != 0) {
+      helper.format_always(ctx, "ue_ul_slot={}", config.slot - config.slot_offset);
+      helper.format_if_verbose(ctx, "slot_offset={}", config.slot_offset);
+    }
     helper.format_if_verbose(ctx, "bwp=[{}, {})", config.bwp_start_rb, config.bwp_start_rb + config.bwp_size_rb);
     helper.format_if_verbose(ctx, "slot={}", config.slot);
     helper.format_always(ctx, "prb1={}", config.starting_prb);
@@ -73,6 +77,10 @@ struct formatter<ocudu::pucch_processor::format1_configuration> {
       helper.format_always(ctx, *config.context);
     }
     helper.format_always(ctx, "format=1");
+    if (config.slot_offset != 0) {
+      helper.format_always(ctx, "ue_ul_slot={}", config.slot - config.slot_offset);
+      helper.format_if_verbose(ctx, "slot_offset={}", config.slot_offset);
+    }
     helper.format_if_verbose(ctx, "bwp=[{}, {})", config.bwp_start_rb, config.bwp_start_rb + config.bwp_size_rb);
     helper.format_always(ctx, "prb1={}", config.starting_prb);
     helper.format_always(
@@ -114,6 +122,10 @@ struct formatter<ocudu::pucch_processor::format2_configuration> {
       helper.format_always(ctx, "rnti=0x{:04x}", config.rnti);
     }
     helper.format_always(ctx, "format=2");
+    if (config.slot_offset != 0) {
+      helper.format_always(ctx, "ue_ul_slot={}", config.slot - config.slot_offset);
+      helper.format_if_verbose(ctx, "slot_offset={}", config.slot_offset);
+    }
     helper.format_if_verbose(ctx, "bwp=[{}, {})", config.bwp_start_rb, config.bwp_start_rb + config.bwp_size_rb);
     helper.format_always(ctx, "prb=[{}, {})", config.prbs.start(), config.prbs.stop());
     helper.format_always(
@@ -155,6 +167,10 @@ struct formatter<ocudu::pucch_processor::format3_configuration> {
       helper.format_always(ctx, "rnti=0x{:04x}", config.rnti);
     }
     helper.format_always(ctx, "format=3");
+    if (config.slot_offset != 0) {
+      helper.format_always(ctx, "ue_ul_slot={}", config.slot - config.slot_offset);
+      helper.format_if_verbose(ctx, "slot_offset={}", config.slot_offset);
+    }
     helper.format_if_verbose(ctx, "bwp=[{}, {})", config.bwp_start_rb, config.bwp_start_rb + config.bwp_size_rb);
     helper.format_always(ctx, "prb=[{}, {})", config.prbs.start(), config.prbs.stop());
     helper.format_always(
@@ -198,6 +214,10 @@ struct formatter<ocudu::pucch_processor::format4_configuration> {
       helper.format_always(ctx, "rnti=0x{:04x}", config.rnti);
     }
     helper.format_always(ctx, "format=4");
+    if (config.slot_offset != 0) {
+      helper.format_always(ctx, "ue_ul_slot={}", config.slot - config.slot_offset);
+      helper.format_if_verbose(ctx, "slot_offset={}", config.slot_offset);
+    }
     helper.format_if_verbose(ctx, "bwp=[{}, {})", config.bwp_start_rb, config.bwp_start_rb + config.bwp_size_rb);
     helper.format_always(ctx, "prb=[{}, {})", config.starting_prb, config.starting_prb + 1);
     helper.format_always(

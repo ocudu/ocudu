@@ -113,6 +113,10 @@ struct formatter<ocudu::pusch_processor::pdu_t> {
   {
     helper.format_always(ctx, "rnti={}", pdu.rnti);
     helper.format_always(ctx, "harq_id={}", underlying(pdu.harq_id));
+    if (pdu.slot_offset != 0) {
+      helper.format_always(ctx, "ue_ul_slot={}", pdu.slot - pdu.slot_offset);
+      helper.format_if_verbose(ctx, "slot_offset={}", pdu.slot_offset);
+    }
     helper.format_if_verbose(ctx, "bwp=[{}, {})", pdu.bwp_start_rb, pdu.bwp_start_rb + pdu.bwp_size_rb);
     helper.format_always(ctx, "prb={}", pdu.freq_alloc);
     helper.format_always(ctx, "symb=[{}, {})", pdu.start_symbol_index, pdu.start_symbol_index + pdu.nof_symbols);
