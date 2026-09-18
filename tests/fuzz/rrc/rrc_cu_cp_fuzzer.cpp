@@ -91,13 +91,6 @@ input_header decode_header(uint8_t byte)
 }
 
 // ---------------------------------------------------------------------------
-// Canned messages
-// ---------------------------------------------------------------------------
-
-/// UL-CCCH RRCSetupRequest, from tests/unittests/rrc/rrc_ue_test_helpers.h.
-constexpr std::array<uint8_t, 6> rrc_setup_request = {0x1d, 0xec, 0x89, 0xd0, 0x57, 0x66};
-
-// ---------------------------------------------------------------------------
 // fuzz_du - replaces the SCTP F1-C gateway
 // ---------------------------------------------------------------------------
 
@@ -209,7 +202,7 @@ constexpr unsigned nof_timer_ticks = 4;
 /// Building a CU-CP and running F1 Setup costs far more than handling a message, so this is done
 /// once. The UE is what gets rebuilt per input.
 struct fuzz_state {
-  task_worker                    worker{"rrc_fuzz_worker", 1024};
+  task_worker                    worker{"cu_cp_fuzz_wrkr", 1024};
   std::unique_ptr<task_executor> exec{std::make_unique<task_worker_executor>(worker)};
 
   timer_manager    timers{64};
@@ -313,7 +306,11 @@ public:
   {
     // Create the UE with an RRCSetupRequest, as the DU does for a UE arriving on SRB0.
     state.du->push_ul_pdu(test_helpers::generate_init_ul_rrc_message_transfer(
-        du_ue_id, to_rnti(0x4601), plmn_identity::test_value(), byte_buffer{}, make_buffer(rrc_setup_request)));
+        du_ue_id,
+        to_rnti(0x4601),
+        plmn_identity::test_value(),
+        byte_buffer{},
+        test_helpers::pack_ul_ccch_msg(test_helpers::create_rrc_setup_request())));
     state.drain();
 
     // Pick up the CU-CP UE ID from the DL RRC Message Transfer carrying the RRC Setup.

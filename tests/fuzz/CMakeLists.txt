@@ -42,13 +42,19 @@ add_custom_target(fuzz_targets)
 # ---------------------------------------------------------------------------
 # Test doubles
 #
-# Full-stack harnesses reuse the message builders the unit tests are written against, so that a
-# harness exercises the same well-formed scaffolding the tests do. tests/fuzz is configured with
+# The harnesses reuse the message and key builders that the unit tests are written against, so that
+# a harness uses the same correct scaffolding as the tests. But tests/fuzz is configured with
 # BUILD_TESTING=OFF, where tests/test_doubles is not added, so the libraries are defined here when
 # they are missing. They are built exactly as tests/test_doubles defines them, UNITY_BUILD included:
 # rrc_packed_test_messages.cpp and f1ap_test_messages.cpp call into their sibling translation unit
 # unqualified and do not compile on their own.
 # ---------------------------------------------------------------------------
+if (NOT TARGET security_test_doubles)
+    add_library(security_test_doubles ${CMAKE_SOURCE_DIR}/tests/test_doubles/security/security_test_keys.cpp)
+    target_include_directories(security_test_doubles PRIVATE ${CMAKE_SOURCE_DIR})
+    target_link_libraries(security_test_doubles ocudu_support ocudulog ocudu_security)
+endif ()
+
 if (NOT TARGET test_rng)
     add_library(test_rng ${CMAKE_SOURCE_DIR}/tests/test_doubles/utils/test_rng.cpp)
     target_link_libraries(test_rng PRIVATE ocudu_support)

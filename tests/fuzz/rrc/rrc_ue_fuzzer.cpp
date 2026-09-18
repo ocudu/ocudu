@@ -22,6 +22,8 @@
 #include "lib/cu_cp/pdcp/srb_pdcp_ue_context.h"
 #include "lib/cu_cp/ue_manager/ue_manager_impl.h"
 #include "lib/rrc/ue/rrc_ue_impl.h"
+#include "tests/test_doubles/rrc/rrc_test_messages.h"
+#include "tests/test_doubles/security/security_test_keys.h"
 #include "tests/unittests/rrc/test_helpers.h"
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/cu_cp/cu_cp_configuration.h"
@@ -86,9 +88,6 @@ input_header decode_header(uint8_t byte)
 // Taken from tests/unittests/rrc/rrc_ue_test_helpers.h. The DCCH vectors there are PDCP PDUs; the
 // 2-byte PDCP header and the 4-byte MAC-I are stripped here because the harness injects above PDCP.
 
-/// UL-CCCH RRCSetupRequest.
-constexpr std::array<uint8_t, 6> rrc_setup_request = {0x1d, 0xec, 0x89, 0xd0, 0x57, 0x66};
-
 /// UL-DCCH RRCSetupComplete, carrying a NAS Registration Request.
 constexpr std::array<uint8_t, 125> rrc_setup_complete = {
     0x10, 0xc0, 0x10, 0x00, 0x08, 0x27, 0x27, 0xe0, 0x1c, 0x3f, 0xf1, 0x00, 0xc0, 0x47, 0xe0, 0x04, 0x13, 0x90,
@@ -104,16 +103,6 @@ constexpr std::array<uint8_t, 2> rrc_smc_complete = {0x2a, 0x00};
 
 /// K_gNB the harness installs, so that the security context can be finalized.
 constexpr std::string_view k_gnb_hex = "45cbc3f8a81193fd5c5229300d59edf812e998a115ec4e0ce903ba89367e2628";
-
-/// Convert a hex string into a security key.
-security::sec_key make_sec_key(std::string_view hex_str)
-{
-  security::sec_key key = {};
-  for (unsigned i = 0, e = key.size(); i != e; ++i) {
-    key[i] = std::stoul(std::string{hex_str.substr(i * 2, 2)}, nullptr, 16);
-  }
-  return key;
-}
 
 // ---------------------------------------------------------------------------
 // Persistent harness state
@@ -242,7 +231,7 @@ public:
       return;
     }
 
-    inject_ccch(rrc_setup_request);
+    inject_ccch(test_helpers::pack_ul_ccch_msg(test_helpers::create_rrc_setup_request()));
     if (target == ue_state::awaiting_setup_complete) {
       return;
     }
@@ -271,10 +260,14 @@ public:
   void inject_ccch(span<const uint8_t> pdu)
   {
     auto buf = byte_buffer::create(pdu);
-    if (!buf.has_value()) {
-      return;
+    if (buf.has_value()) {
+      inject_ccch(std::move(buf.value()));
     }
-    rrc_ue->get_ul_pdu_handler().handle_ul_ccch_pdu(std::move(buf.value()), to_rnti(0x1234));
+  }
+
+  void inject_ccch(byte_buffer pdu)
+  {
+    rrc_ue->get_ul_pdu_handler().handle_ul_ccch_pdu(std::move(pdu), to_rnti(0x1234));
     run_tasks();
   }
 
@@ -306,7 +299,7 @@ private:
   bool init_security_context()
   {
     security::security_context sec_ctxt = {};
-    sec_ctxt.k                          = make_sec_key(k_gnb_hex);
+    sec_ctxt.k                          = test_helpers::make_sec_key(std::string{k_gnb_hex});
     std::fill(sec_ctxt.supported_int_algos.begin(), sec_ctxt.supported_int_algos.end(), true);
     std::fill(sec_ctxt.supported_enc_algos.begin(), sec_ctxt.supported_enc_algos.end(), true);
 

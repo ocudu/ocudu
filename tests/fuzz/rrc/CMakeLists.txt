@@ -13,6 +13,8 @@ set_directory_properties(PROPERTIES LABELS "fuzz|rrc")
 add_executable(rrc_ue_fuzzer rrc_ue_fuzzer.cpp)
 target_include_directories(rrc_ue_fuzzer PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(rrc_ue_fuzzer
+    rrc_test_doubles
+    security_test_doubles
     ocudu_rrc
     ocudu_cu_cp
     ocudu_support
