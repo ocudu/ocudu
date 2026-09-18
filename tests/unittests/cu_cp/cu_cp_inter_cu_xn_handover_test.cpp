@@ -853,15 +853,15 @@ TEST_F(cu_cp_inter_cu_xn_handover_test, when_source_proposes_dl_data_forwarding_
   const asn1::e1ap::pdu_session_res_to_setup_item_s& e1ap_pdu_session =
       ng_ran_bearer_ctxt[0]->pdu_session_res_to_setup_list()[0];
 
-  ASSERT_TRUE(e1ap_pdu_session.pdu_session_data_forwarding_info_request_present);
-  ASSERT_EQ(e1ap_pdu_session.pdu_session_data_forwarding_info_request.data_forwarding_request.value,
+  // The source forwards straight to this target over Xn, and it reused the source's DRB ID for every proposed QoS
+  // flow of the DRB, so the DRB gets its own tunnel and keeps the PDCP sequence numbers.
+  ASSERT_EQ(e1ap_pdu_session.drb_to_setup_list_ng_ran.size(), 1U);
+  ASSERT_TRUE(e1ap_pdu_session.drb_to_setup_list_ng_ran[0].drb_data_forwarding_info_request_present);
+  ASSERT_EQ(e1ap_pdu_session.drb_to_setup_list_ng_ran[0].drb_data_forwarding_info_request.data_forwarding_request.value,
             asn1::e1ap::data_forwarding_request_opts::dl);
 
-  // The proposed QoS flow is listed as forwarded over that tunnel.
-  const auto& flows_on_tunnel =
-      e1ap_pdu_session.pdu_session_data_forwarding_info_request.qos_flows_forwarded_on_fwd_tunnels;
-  ASSERT_EQ(flows_on_tunnel.size(), 1U);
-  ASSERT_EQ(flows_on_tunnel[0].qos_flow_id, 1U);
+  // No PDU session level tunnel is needed, since no proposed flow is left uncovered.
+  ASSERT_FALSE(e1ap_pdu_session.pdu_session_data_forwarding_info_request_present);
 
   // The handover must still complete normally afterwards.
   ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_setup_request());
@@ -895,7 +895,13 @@ TEST_F(cu_cp_inter_cu_xn_handover_test, when_target_allocated_fwd_tunnels_then_t
   const auto& forwarding_info = admitted_info.data_forwarding_info_from_target;
   ASSERT_EQ(forwarding_info.qos_flows_accepted_for_data_forwarding_list.size(), 1U);
   EXPECT_EQ(forwarding_info.qos_flows_accepted_for_data_forwarding_list[0].qos_flow_id, 1U);
-  ASSERT_TRUE(forwarding_info.pdu_session_level_dl_data_forwarding_info_present);
+
+  // The DRB level tunnel the CU-UP allocated is reported per DRB. The DRB covers every proposed QoS flow, so the PDU
+  // session level tunnel the CU-UP offered on top is left unadvertised.
+  ASSERT_EQ(forwarding_info.data_forwarding_resp_drb_item_list.size(), 1U);
+  EXPECT_EQ(forwarding_info.data_forwarding_resp_drb_item_list[0].drb_id, 1U);
+  EXPECT_TRUE(forwarding_info.data_forwarding_resp_drb_item_list[0].dl_forwarding_up_tnl_present);
+  ASSERT_FALSE(forwarding_info.pdu_session_level_dl_data_forwarding_info_present);
 
   // The handover must still complete normally afterwards.
   ASSERT_TRUE(send_sn_status_transfer_and_await_bearer_context_modification_request(source_local_xnap_ue_id,

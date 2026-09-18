@@ -549,11 +549,16 @@ TEST_F(cu_cp_inter_cu_ng_handover_test, when_handover_command_reports_fwd_tunnel
   ASSERT_EQ(pdu_session.pdu_session_data_forwarding_info.ie_exts.data_forwardingto_ng_ran_qos_flow_info_list.size(),
             1U);
 
-  // No DRB level tunnel is programmed. Per DRB forwarding tunnels arrive with the support for the direct
-  // forwarding path.
+  // A DRB level tunnel the 5GC relayed is programmed too, so that this DRB's PDCP SDUs keep their sequence numbers.
   ASSERT_EQ(pdu_session.drb_to_modify_list_ng_ran.size(), 1U);
   const auto& drb_to_modify = pdu_session.drb_to_modify_list_ng_ran[0];
-  ASSERT_FALSE(drb_to_modify.drb_data_forwarding_info_present);
+  ASSERT_TRUE(drb_to_modify.drb_data_forwarding_info_present);
+  ASSERT_TRUE(drb_to_modify.drb_data_forwarding_info.dl_data_forwarding_present);
+  ASSERT_FALSE(drb_to_modify.drb_data_forwarding_info.ul_data_forwarding_present);
+
+  // The DRB level and the PDU session level endpoints are the distinct ones the Handover Command reported.
+  ASSERT_NE(drb_to_modify.drb_data_forwarding_info.dl_data_forwarding.gtp_tunnel().gtp_teid.to_number(),
+            pdu_session.pdu_session_data_forwarding_info.dl_data_forwarding.gtp_tunnel().gtp_teid.to_number());
 
   // The PDCP SN status is still queried alongside the forwarding tunnel.
   ASSERT_TRUE(drb_to_modify.pdcp_sn_status_request_present);
@@ -809,6 +814,36 @@ TEST_F(cu_cp_inter_cu_ng_handover_test, when_source_proposes_dl_data_forwarding_
   // forwarding path.
   ASSERT_EQ(e1ap_pdu_session.drb_to_setup_list_ng_ran.size(), 1U);
   ASSERT_FALSE(e1ap_pdu_session.drb_to_setup_list_ng_ran[0].drb_data_forwarding_info_request_present);
+
+  // The handover must still complete normally afterwards.
+  ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_setup_request());
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_handover_request_ack());
+  ASSERT_TRUE(send_dl_ran_status_transfer_and_await_bearer_context_modification_request());
+  ASSERT_TRUE(send_bearer_context_modification_response());
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_handover_notify_and_ue_context_modification_request());
+  ASSERT_TRUE(send_ue_context_modification_response_empty(cu_ue_id, du_ue_id));
+}
+
+// When the 5GC reports a direct forwarding path, the forwarded data reaches this target's own CU-UP, so the target
+// asks for a DRB level tunnel that preserves the PDCP sequence numbers (TS 38.413 section 9.3.1.64,
+// TS 38.300 section 9.2.3.2.3).
+TEST_F(cu_cp_inter_cu_ng_handover_test, when_direct_forwarding_path_is_available_then_target_requests_drb_fwd_tunnels)
+{
+  handover_request_params ho_params;
+  ho_params.propose_dl_data_forwarding       = true;
+  ho_params.direct_forwarding_path_available = true;
+  ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request(ho_params));
+
+  const asn1::e1ap::pdu_session_res_to_setup_item_s& e1ap_pdu_session = get_pdu_session_res_to_setup_item(e1ap_pdu);
+
+  ASSERT_EQ(e1ap_pdu_session.drb_to_setup_list_ng_ran.size(), 1U);
+  ASSERT_TRUE(e1ap_pdu_session.drb_to_setup_list_ng_ran[0].drb_data_forwarding_info_request_present);
+  ASSERT_EQ(e1ap_pdu_session.drb_to_setup_list_ng_ran[0].drb_data_forwarding_info_request.data_forwarding_request.value,
+            asn1::e1ap::data_forwarding_request_opts::dl);
+
+  // No PDU session level tunnel is needed, since no proposed flow is left uncovered.
+  ASSERT_FALSE(e1ap_pdu_session.pdu_session_data_forwarding_info_request_present);
 
   // The handover must still complete normally afterwards.
   ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_setup_request());

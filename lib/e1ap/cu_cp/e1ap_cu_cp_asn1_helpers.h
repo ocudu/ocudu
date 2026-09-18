@@ -544,6 +544,12 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
 
           asn1_drb_to_mod_item.drb_id = to_underlying(drb_to_mod_item.drb_id);
 
+          if (drb_to_mod_item.drb_data_forwarding_info.has_value()) {
+            asn1_drb_to_mod_item.drb_data_forwarding_info_present = true;
+            e1ap_data_forwarding_info_to_asn1(asn1_drb_to_mod_item.drb_data_forwarding_info,
+                                              drb_to_mod_item.drb_data_forwarding_info.value());
+          }
+
           for (const auto& dl_up_param : drb_to_mod_item.dl_up_params) {
             asn1::e1ap::up_params_item_s asn1_dl_up_param;
             up_transport_layer_info_to_asn1(asn1_dl_up_param.up_tnl_info, dl_up_param.up_tnl_info);

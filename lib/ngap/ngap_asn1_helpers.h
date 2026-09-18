@@ -270,6 +270,10 @@ inline bool fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_re
   setup_item.ul_ngu_up_tnl_info = asn1_to_up_transport_layer_info(asn1_setup_req_transfer->ul_ngu_up_tnl_info);
 
   // Fill data forwarding not possible.
+  if (asn1_setup_req_transfer->direct_forwarding_path_availability_present) {
+    setup_item.direct_forwarding_path_available = true;
+  }
+
   if (asn1_setup_req_transfer->data_forwarding_not_possible_present) {
     setup_item.data_forwarding_not_possible = true;
   }

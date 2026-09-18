@@ -1044,6 +1044,9 @@ ngap_message ocudu::ocucp::generate_valid_handover_request(amf_ue_id_t amf_ue_id
     transfer->data_forwarding_not_possible_present = params.data_forwarding_not_possible;
     transfer->data_forwarding_not_possible =
         asn1::ngap::data_forwarding_not_possible_opts::data_forwarding_not_possible;
+    transfer->direct_forwarding_path_availability_present = params.direct_forwarding_path_available;
+    transfer->direct_forwarding_path_availability =
+        asn1::ngap::direct_forwarding_path_availability_opts::direct_path_available;
     setup_item.ho_request_transfer = pack_into_pdu(transfer);
   }
   ho_request->pdu_session_res_setup_list_ho_req.push_back(setup_item);
@@ -1168,6 +1171,17 @@ ngap_message ocudu::ocucp::generate_valid_handover_command(amf_ue_id_t amf_ue_id
     asn1::ngap::qos_flow_to_be_forwarded_item_s flow_to_be_forwarded;
     flow_to_be_forwarded.qos_flow_id = 1;
     ho_cmd_transfer.qos_flow_to_be_forwarded_list.push_back(flow_to_be_forwarded);
+
+    if (with_forwarding_tunnel) {
+      // Report a DRB level tunnel alongside it, as a 5GC that relays the target's per DRB endpoints does.
+      asn1::ngap::data_forwarding_resp_drb_item_s drb_item;
+      drb_item.drb_id                            = 1;
+      drb_item.dl_forwarding_up_tnl_info_present = true;
+      auto& drb_tunnel                           = drb_item.dl_forwarding_up_tnl_info.set_gtp_tunnel();
+      drb_tunnel.transport_layer_address.from_number(2887058953);
+      drb_tunnel.gtp_teid.from_string("40000283");
+      ho_cmd_transfer.data_forwarding_resp_drb_list.push_back(drb_item);
+    }
 
     ho_item.ho_cmd_transfer = pack_into_pdu(ho_cmd_transfer);
   }

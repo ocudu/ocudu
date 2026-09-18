@@ -77,6 +77,9 @@ struct pdu_session {
   gtpu_teid_t             local_teid;     // the local teid used by the gNB for this PDU session
   up_transport_layer_info ul_tunnel_info; // the peer GTP-U address and TEID
 
+  /// NG-U bind address of this PDU session.
+  std::string ngu_addr;
+
   /// Local endpoint of the PDU session level DL data forwarding tunnel, where this node receives the forwarded data.
   /// Allocated when the gNB-CU-CP requests PDU session level data forwarding (TS 37.483 section 9.3.2.5).
   std::optional<up_transport_layer_info> ingress_dl_data_forwarding_tnl_info;

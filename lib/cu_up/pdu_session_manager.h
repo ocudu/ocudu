@@ -28,6 +28,8 @@ struct drb_setup_result {
   e1ap_cause_t                       cause; // Cause if setup was unsuccessful.
   up_transport_layer_info            gtp_tunnel;
   std::vector<qos_flow_setup_result> qos_flow_results;
+  /// Local endpoint of the DRB level data forwarding tunnel, if the gNB-CU-CP requested it.
+  std::optional<e1ap_data_forwarding_info> data_forwarding_info;
 };
 
 // Result when modifying a DRB

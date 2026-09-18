@@ -139,7 +139,14 @@ TEST_F(ngap_test, when_handover_command_reports_forwarding_tunnels_then_they_are
   ASSERT_EQ(forwarding_info.qos_flows_accepted_for_data_forwarding_list.size(), 1U);
   EXPECT_EQ(forwarding_info.qos_flows_accepted_for_data_forwarding_list[0], uint_to_qos_flow_id(1));
 
-  EXPECT_TRUE(forwarding_info.data_forwarding_resp_drb_item_list.empty());
+  ASSERT_EQ(forwarding_info.data_forwarding_resp_drb_item_list.size(), 1U);
+  EXPECT_EQ(forwarding_info.data_forwarding_resp_drb_item_list[0].drb_id, uint_to_drb_id(1));
+  ASSERT_TRUE(forwarding_info.data_forwarding_resp_drb_item_list[0].dl_forwarding_up_tnl.has_value());
+  EXPECT_FALSE(forwarding_info.data_forwarding_resp_drb_item_list[0].ul_forwarding_up_tnl.has_value());
+
+  // The DRB level and the PDU session level tunnels are distinct endpoints.
+  EXPECT_NE(forwarding_info.data_forwarding_resp_drb_item_list[0].dl_forwarding_up_tnl.value(),
+            forwarding_info.pdu_session_level_dl_data_forwarding_info.value());
 }
 
 /// Test that the Handover Required correctly encodes the target PLMN in the TargetID's Global gNB-ID and in the

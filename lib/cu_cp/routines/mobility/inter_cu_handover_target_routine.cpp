@@ -10,6 +10,7 @@
 #include "ocudu/asn1/rrc_nr/rrc_nr.h"
 #include "ocudu/f1ap/cu_cp/f1ap_cu_ue_context_update.h"
 #include "ocudu/ran/cause/e1ap_cause_converters.h"
+#include <algorithm>
 #include <set>
 
 using namespace ocudu;
@@ -414,6 +415,11 @@ void inter_cu_handover_target_routine::fill_e1ap_data_forwarding_info_requests()
       continue;
     }
 
+    // Only a direct forwarding path reaches this node's own CU-UP, so only then can a DRB level tunnel be used
+    // (TS 38.413 section 9.3.1.64).
+    const bool direct_data_forwarding_path =
+        request.pdu_session_res_setup_list[psi].direct_forwarding_path_available.value_or(false);
+
     // Collect the QoS flows the source proposed for DL forwarding (TS 38.413 section 9.3.1.33).
     std::set<qos_flow_id_t> proposed_flows;
     for (const cu_cp_pdu_session_res_info_item& res_info : request.pdu_session_res_info_list) {
@@ -430,12 +436,25 @@ void inter_cu_handover_target_routine::fill_e1ap_data_forwarding_info_requests()
       continue;
     }
 
-    // Request a single PDU session level forwarding tunnel for every admitted QoS flow the source proposed. The
-    // forwarded packets are SDAP SDUs, so their PDCP sequence numbers are not preserved
-    // (TS 38.300 section 9.2.3.2.3).
+    // Request a DRB level forwarding tunnel for every admitted DRB that carries the same QoS flows as at the source,
+    // so that the forwarded PDCP SDUs keep their sequence numbers. Flows on any other DRB are forwarded over a single
+    // PDU session level tunnel as SDAP SDUs instead (TS 38.300 section 9.2.3.2.3). This node reports a DRB level
+    // tunnel on Xn-U, which only the source NG-RAN node reaches, so it asks for one only over a direct path.
     slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_map_item> flows_on_pdu_session_tunnel;
     const auto& next_session = next_config.pdu_sessions_to_setup_list.at(psi);
     for (const auto& [drb_id, drb_ctx] : next_session.drb_to_add) {
+      const bool all_flows_proposed =
+          std::all_of(drb_ctx.qos_flows.begin(), drb_ctx.qos_flows.end(), [&proposed_flows](const auto& flow) {
+            return proposed_flows.count(flow.first) != 0;
+          });
+
+      if (direct_data_forwarding_path and drb_ctx.source_drb_id_confirmed and all_flows_proposed) {
+        e1ap_data_forwarding_info_request drb_request;
+        drb_request.data_forwarding_request = e1ap_data_forwarding_request::dl;
+        pdu_session.drb_to_setup_list_ng_ran[drb_id].drb_data_forwarding_info_request = drb_request;
+        continue;
+      }
+
       for (const auto& [qfi, flow_ctx] : drb_ctx.qos_flows) {
         if (proposed_flows.count(qfi) != 0) {
           flows_on_pdu_session_tunnel.emplace(qfi, e1ap_qos_flow_map_item{qfi, std::nullopt});
@@ -463,41 +482,75 @@ void inter_cu_handover_target_routine::create_srb(srb_id_t srb_id)
   ue_mng.find_du_ue(request.ue_index)->get_rrc_ue()->create_srb(srb_msg);
 }
 
-// The DL forwarding tunnel the CU-UP established for a PDU session, together with the QoS flows this target accepts
-// for forwarding over it.
+// The DL forwarding tunnels the CU-UP established for a PDU session, together with the QoS flows this target accepts
+// for forwarding over them. A session can hold both levels at once: a tunnel of its own for each DRB that keeps the
+// DRB of the source, and one session level tunnel for the flows of every other DRB.
 struct pdu_session_dl_data_forwarding {
-  std::optional<up_transport_layer_info> tnl_info;
-  std::set<qos_flow_id_t>                accepted_flows;
+  std::optional<up_transport_layer_info>           tnl_info;
+  std::vector<cu_cp_data_forwarding_resp_drb_item> drb_items;
+  std::set<qos_flow_id_t>                          accepted_flows;
 };
 
-// Determines what this target can accept for data forwarding: the QoS flows that were both requested to be forwarded
-// over the PDU session level tunnel and actually set up, and the tunnel the CU-UP established for them. Returns
-// nothing when no such flow remains, since the tunnel must not be advertised unless forwarding is accepted for at
-// least one QoS flow (TS 38.413 section 8.4.2.2).
+// Determines what this target accepts for data forwarding:
+// - Each DRB the CU-UP gave a tunnel to accepts all of its QoS flows.
+// - The PDU session level tunnel accepts the requested flows that were set up on a DRB without a tunnel of its own.
+// The PDU session level tunnel is left out when no such flow remains, since a tunnel must not be advertised unless
+// forwarding is accepted for at least one QoS flow (TS 38.413 section 8.4.2.2).
 static pdu_session_dl_data_forwarding
 get_pdu_session_dl_data_forwarding(const e1ap_pdu_session_res_to_setup_item&                requested_session,
-                                   const e1ap_pdu_session_resource_setup_modification_item& setup_session)
+                                   const e1ap_pdu_session_resource_setup_modification_item& response_session,
+                                   ocudulog::basic_logger&                                  logger)
 {
   pdu_session_dl_data_forwarding forwarding;
-  if (not setup_session.pdu_session_data_forwarding_info_resp.has_value() or
-      not setup_session.pdu_session_data_forwarding_info_resp->dl_data_forwarding.has_value() or
+
+  // Every DRB a tunnel was requested and given for forwards all of its QoS flows over it.
+  for (const auto& drb_setup_item : response_session.drb_setup_list_ng_ran) {
+    if (not drb_setup_item.drb_data_forwarding_info_resp.has_value() or
+        not drb_setup_item.drb_data_forwarding_info_resp->dl_data_forwarding.has_value()) {
+      continue;
+    }
+    if (not requested_session.drb_to_setup_list_ng_ran.contains(drb_setup_item.drb_id) or
+        not requested_session.drb_to_setup_list_ng_ran[drb_setup_item.drb_id]
+                .drb_data_forwarding_info_request.has_value()) {
+      continue;
+    }
+    cu_cp_data_forwarding_resp_drb_item drb_item;
+    drb_item.drb_id               = drb_setup_item.drb_id;
+    drb_item.dl_forwarding_up_tnl = drb_setup_item.drb_data_forwarding_info_resp->dl_data_forwarding;
+    forwarding.drb_items.push_back(drb_item);
+    for (const auto& flow_setup_item : drb_setup_item.flow_setup_list) {
+      forwarding.accepted_flows.insert(flow_setup_item.qos_flow_id);
+    }
+  }
+
+  if (not response_session.pdu_session_data_forwarding_info_resp.has_value() or
+      not response_session.pdu_session_data_forwarding_info_resp->dl_data_forwarding.has_value() or
       not requested_session.pdu_session_data_forwarding_info_request.has_value()) {
     return forwarding;
   }
 
+  std::set<qos_flow_id_t> flows_on_pdu_session_tunnel;
   for (const e1ap_qos_flow_map_item& requested_flow :
        requested_session.pdu_session_data_forwarding_info_request->qos_flows_forwarded_on_fwd_tunnels) {
-    for (const auto& drb_setup_item : setup_session.drb_setup_list_ng_ran) {
+    for (const auto& drb_setup_item : response_session.drb_setup_list_ng_ran) {
       if (drb_setup_item.flow_setup_list.contains(requested_flow.qos_flow_id)) {
-        forwarding.accepted_flows.insert(requested_flow.qos_flow_id);
+        flows_on_pdu_session_tunnel.insert(requested_flow.qos_flow_id);
         break;
       }
     }
   }
 
-  if (not forwarding.accepted_flows.empty()) {
-    forwarding.tnl_info = setup_session.pdu_session_data_forwarding_info_resp->dl_data_forwarding;
+  if (flows_on_pdu_session_tunnel.empty()) {
+    // The CU-UP built the tunnel, but none of the requested flows was set up on a DRB. The tunnel stays unused until
+    // this node removes the PDU session.
+    logger.warning(
+        "Not advertising the data forwarding tunnel of {}. Cause: none of the requested QoS flows was set up",
+        response_session.pdu_session_id);
+    return forwarding;
   }
+
+  forwarding.tnl_info = response_session.pdu_session_data_forwarding_info_resp->dl_data_forwarding;
+  forwarding.accepted_flows.insert(flows_on_pdu_session_tunnel.begin(), flows_on_pdu_session_tunnel.end());
   return forwarding;
 }
 
@@ -505,13 +558,13 @@ get_pdu_session_dl_data_forwarding(const e1ap_pdu_session_res_to_setup_item&    
 // data forwarding (TS 38.413 section 9.3.2.13).
 template <typename admitted_item_type>
 static void fill_admitted_item_common(admitted_item_type&                                      admitted_item,
-                                      const e1ap_pdu_session_resource_setup_modification_item& setup_session,
+                                      const e1ap_pdu_session_resource_setup_modification_item& response_session,
                                       const std::set<qos_flow_id_t>&                           accepted_flows)
 {
-  admitted_item.pdu_session_id     = setup_session.pdu_session_id;
-  admitted_item.dl_ngu_up_tnl_info = setup_session.ng_dl_up_tnl_info;
+  admitted_item.pdu_session_id     = response_session.pdu_session_id;
+  admitted_item.dl_ngu_up_tnl_info = response_session.ng_dl_up_tnl_info;
 
-  for (const auto& drb_setup_item : setup_session.drb_setup_list_ng_ran) {
+  for (const auto& drb_setup_item : response_session.drb_setup_list_ng_ran) {
     // Fill QoS flow setup resp list.
     for (const auto& flow_setup_item : drb_setup_item.flow_setup_list) {
       cu_cp_qos_flow_with_data_forwarding_item qos_flow_item;
@@ -550,12 +603,13 @@ static inline void fill_ng_pdu_session_res_admitted_list(
       continue;
     }
 
-    const pdu_session_dl_data_forwarding forwarding =
-        get_pdu_session_dl_data_forwarding(pdu_session_res_to_setup_list[pdu_session.pdu_session_id], pdu_session);
+    const pdu_session_dl_data_forwarding forwarding = get_pdu_session_dl_data_forwarding(
+        pdu_session_res_to_setup_list[pdu_session.pdu_session_id], pdu_session, logger);
 
     cu_cp_ng_pdu_session_res_admitted_item admitted_item;
     fill_admitted_item_common(admitted_item, pdu_session, forwarding.accepted_flows);
-    admitted_item.dl_forwarding_up_tnl_info = forwarding.tnl_info;
+    admitted_item.dl_forwarding_up_tnl_info                                           = forwarding.tnl_info;
+    admitted_item.data_forwarding_info_from_target.data_forwarding_resp_drb_item_list = forwarding.drb_items;
 
     pdu_session_res_admitted_list.push_back(admitted_item);
   }
@@ -578,14 +632,15 @@ static inline void fill_xn_pdu_session_res_admitted_list(
       continue;
     }
 
-    const pdu_session_dl_data_forwarding forwarding =
-        get_pdu_session_dl_data_forwarding(pdu_session_res_to_setup_list[pdu_session.pdu_session_id], pdu_session);
+    const pdu_session_dl_data_forwarding forwarding = get_pdu_session_dl_data_forwarding(
+        pdu_session_res_to_setup_list[pdu_session.pdu_session_id], pdu_session, logger);
 
     cu_cp_xn_pdu_session_res_admitted_item admitted_item;
     fill_admitted_item_common(admitted_item, pdu_session, forwarding.accepted_flows);
 
     admitted_item.data_forwarding_info_from_target.emplace();
     admitted_item.data_forwarding_info_from_target->pdu_session_level_dl_data_forwarding_info = forwarding.tnl_info;
+    admitted_item.data_forwarding_info_from_target->data_forwarding_resp_drb_item_list        = forwarding.drb_items;
     admitted_item.data_forwarding_info_from_target->qos_flows_accepted_for_data_forwarding_list.assign(
         forwarding.accepted_flows.begin(), forwarding.accepted_flows.end());
 

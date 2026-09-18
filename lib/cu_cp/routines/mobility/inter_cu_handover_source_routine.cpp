@@ -121,6 +121,26 @@ void inter_cu_handover_source_routine::fill_e1ap_bearer_context_modification_req
       drb_to_mod.drb_id                 = drb.first;
       drb_to_mod.pdcp_sn_status_request = true;
 
+      // Give the CU-UP the DRB level forwarding tunnel, so that it forwards the PDCP SDUs of this DRB with their
+      // sequence numbers preserved (TS 38.300 section 9.2.3.2.3).
+      if (has_forwarding_info) {
+        for (const cu_cp_data_forwarding_resp_drb_item& drb_item :
+             forwarding_info->second.data_forwarding_resp_drb_item_list) {
+          if (drb_item.drb_id != drb.first or not drb_item.dl_forwarding_up_tnl.has_value()) {
+            continue;
+          }
+          e1ap_data_forwarding_info drb_forwarding_info;
+          drb_forwarding_info.dl_data_forwarding = drb_item.dl_forwarding_up_tnl;
+          drb_to_mod.drb_data_forwarding_info    = drb_forwarding_info;
+          forwarding_tunnel_programmed           = true;
+          logger.info("ue={}: Forwarding {} over its own tunnel. tnl_info={}",
+                      ue_index,
+                      drb.first,
+                      drb_item.dl_forwarding_up_tnl.value());
+          break;
+        }
+      }
+
       e1ap_pdu_session_item.drb_to_modify_list_ng_ran.emplace(drb.first, drb_to_mod);
     }
 

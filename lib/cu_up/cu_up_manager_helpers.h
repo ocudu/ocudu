@@ -26,7 +26,8 @@ inline void process_successful_pdu_resource_modification_outcome(
       logger.debug("Adding DRB setup result item. {}, success={}", drb_setup_item.drb_id, drb_setup_item.success);
       if (drb_setup_item.success) {
         e1ap_drb_setup_item_ng_ran res_drb_setup_item;
-        res_drb_setup_item.drb_id = drb_setup_item.drb_id;
+        res_drb_setup_item.drb_id                        = drb_setup_item.drb_id;
+        res_drb_setup_item.drb_data_forwarding_info_resp = drb_setup_item.data_forwarding_info;
 
         e1ap_up_params_item up_param_item;
         up_param_item.up_tnl_info = drb_setup_item.gtp_tunnel;
@@ -100,7 +101,8 @@ inline void process_successful_pdu_resource_setup_mod_outcome(
     for (const auto& drb_setup_item : result.drb_setup_results) {
       if (drb_setup_item.success) {
         e1ap_drb_setup_item_ng_ran res_drb_setup_item;
-        res_drb_setup_item.drb_id = drb_setup_item.drb_id;
+        res_drb_setup_item.drb_id                        = drb_setup_item.drb_id;
+        res_drb_setup_item.drb_data_forwarding_info_resp = drb_setup_item.data_forwarding_info;
 
         e1ap_up_params_item up_param_item;
         up_param_item.up_tnl_info = drb_setup_item.gtp_tunnel;

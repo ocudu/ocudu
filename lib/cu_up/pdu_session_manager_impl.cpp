@@ -101,6 +101,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   }
   pdu_session_result.gtp_tunnel =
       up_transport_layer_info(transport_layer_address::create_from_string(ngu_addr), new_session->local_teid);
+  new_session->ngu_addr = ngu_addr;
 
   // Create SDAP entity
   sdap_entity_creation_message sdap_msg = {ue_index, session.pdu_session_id, &new_session->sdap_to_gtpu_adapter};
@@ -233,7 +234,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   }
 
   // get DRB from list and create context
-  new_session.drbs.emplace(drb_to_setup.drb_id, std::make_unique<drb_context>(drb_to_setup.drb_id));
+  new_session.drbs.emplace(drb_to_setup.drb_id, std::make_unique<drb_context>(drb_to_setup.drb_id, ngu_teid_allocator));
   drb_context* new_drb = new_session.drbs.at(drb_to_setup.drb_id).get();
 
   // Create Qos Flows
@@ -411,6 +412,18 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
     new_drb->pdcp_to_sdap_adapter.connect_sdap(new_session.sdap->get_sdap_rx_pdu_handler(drb_to_setup.drb_id));
   }
 
+  // Allocate the DRB level DL data forwarding tunnel endpoint.
+  if (requests_dl_data_forwarding(drb_to_setup.drb_data_forwarding_info_request)) {
+    new_drb->ingress_dl_data_forwarding_tnl_info = allocate_dl_data_forwarding_tnl_info(new_session.ngu_addr);
+    if (new_drb->ingress_dl_data_forwarding_tnl_info.has_value()) {
+      drb_result.data_forwarding_info.emplace();
+      drb_result.data_forwarding_info->dl_data_forwarding = new_drb->ingress_dl_data_forwarding_tnl_info;
+      logger.log_info("Allocated DL data forwarding tunnel for {}. tnl_info={}",
+                      drb_to_setup.drb_id,
+                      new_drb->ingress_dl_data_forwarding_tnl_info.value());
+    }
+  }
+
   // Add result
   drb_result.success = true;
 
@@ -461,6 +474,15 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                  drb_iter->second->drb_id);
 
     std::unique_ptr<drb_context>& drb = drb_iter->second;
+
+    // Store the peer endpoint of the DRB level DL data forwarding tunnel (TS 37.483 section 9.3.2.6).
+    if (drb_to_mod.drb_data_forwarding_info.has_value() and
+        drb_to_mod.drb_data_forwarding_info->dl_data_forwarding.has_value()) {
+      drb->egress_dl_data_forwarding_tnl_info = drb_to_mod.drb_data_forwarding_info->dl_data_forwarding;
+      logger.log_info("Received DL data forwarding tunnel for {}. tnl_info={}",
+                      drb_to_mod.drb_id,
+                      drb->egress_dl_data_forwarding_tnl_info.value());
+    }
 
     if (new_ul_tnl_info_required) {
       // Allocate new UL TEID for DRB

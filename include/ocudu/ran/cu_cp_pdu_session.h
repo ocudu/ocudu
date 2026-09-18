@@ -51,6 +51,9 @@ struct cu_cp_pdu_session_res_setup_item {
   ///
   /// Only carried by HANDOVER REQUEST and ignored otherwise (TS 38.413 section 9.3.4.1).
   std::optional<bool> data_forwarding_not_possible;
+  /// Whether a direct forwarding path towards this target is available (TS 38.413 section 9.3.1.64).
+  std::optional<bool> direct_forwarding_path_available;
+
   /// \brief This source's own DRB-to-QoS-flow mapping for this PDU session.
   ///
   /// Reported in the Data Forwarding and Offloading Info from source NG-RAN node IE, so that the target can keep the

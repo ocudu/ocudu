@@ -261,6 +261,8 @@ struct handover_request_params {
   bool propose_dl_data_forwarding = false;
   /// Whether the 5GC rules out data forwarding for the PDU session (TS 38.413 section 9.3.1.63).
   bool data_forwarding_not_possible = false;
+  /// Whether the 5GC reports a direct forwarding path towards this target (TS 38.413 section 9.3.1.64).
+  bool direct_forwarding_path_available = false;
 };
 
 /// \brief Generate a valid dummy Handover Request message.
