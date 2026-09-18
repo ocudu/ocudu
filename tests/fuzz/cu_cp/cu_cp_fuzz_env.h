@@ -506,6 +506,10 @@ public:
   /// Whether AS security was activated, which is what lets a mutated payload reach RRC on a secured UE.
   bool is_secured() const { return srb2_pdcp != nullptr; }
 
+  /// Identifiers naming this UE over NGAP, once it has sent its Initial UE Message.
+  std::optional<ran_ue_id_t> get_ran_ue_id() const { return ran_ue_id; }
+  static amf_ue_id_t         get_amf_ue_id() { return amf_ue_id; }
+
   /// Drive the UE into \c target by replaying the canned setup exchange.
   void drive_to(ue_state target)
   {
@@ -755,5 +759,95 @@ private:
   /// Any AMF UE ID works: the stub AMF holds no state of its own.
   static constexpr amf_ue_id_t amf_ue_id = uint_to_amf_ue_id(0x1234);
 };
+
+// ---------------------------------------------------------------------------
+// NGAP UE identifier rewriting
+// ---------------------------------------------------------------------------
+
+/// Point an initiating NGAP message at the given UE.
+///
+/// A mutated message almost always names a UE that does not exist, and the CU-CP drops it at the UE
+/// lookup before any procedure runs. Rewriting the identifiers is what lets a fuzzed message reach
+/// the UE-associated procedures at all.
+///
+/// Mirrors the case list of asn1_utils::get_ran_ue_id()/get_amf_ue_id() for initiating messages,
+/// which is the direction the AMF sends. Returns whether the message carries identifiers to set.
+inline bool set_ue_ids(asn1::ngap::init_msg_s& init_msg, ran_ue_id_t ran_ue_id, amf_ue_id_t amf_ue_id)
+{
+  using namespace asn1::ngap;
+  using init_types      = ngap_elem_procs_o::init_msg_c::types_opts;
+  const uint64_t ran_id = to_underlying(ran_ue_id);
+  const uint64_t amf_id = to_underlying(amf_ue_id);
+
+  switch (init_msg.value.type()) {
+    case init_types::init_context_setup_request:
+      init_msg.value.init_context_setup_request()->ran_ue_ngap_id = ran_id;
+      init_msg.value.init_context_setup_request()->amf_ue_ngap_id = amf_id;
+      return true;
+    case init_types::pdu_session_res_setup_request:
+      init_msg.value.pdu_session_res_setup_request()->ran_ue_ngap_id = ran_id;
+      init_msg.value.pdu_session_res_setup_request()->amf_ue_ngap_id = amf_id;
+      return true;
+    case init_types::pdu_session_res_modify_request:
+      init_msg.value.pdu_session_res_modify_request()->ran_ue_ngap_id = ran_id;
+      init_msg.value.pdu_session_res_modify_request()->amf_ue_ngap_id = amf_id;
+      return true;
+    case init_types::pdu_session_res_release_cmd:
+      init_msg.value.pdu_session_res_release_cmd()->ran_ue_ngap_id = ran_id;
+      init_msg.value.pdu_session_res_release_cmd()->amf_ue_ngap_id = amf_id;
+      return true;
+    case init_types::ue_context_mod_request:
+      init_msg.value.ue_context_mod_request()->ran_ue_ngap_id = ran_id;
+      init_msg.value.ue_context_mod_request()->amf_ue_ngap_id = amf_id;
+      return true;
+    case init_types::ue_context_release_cmd:
+      if (init_msg.value.ue_context_release_cmd()->ue_ngap_ids.type().value ==
+          ue_ngap_ids_c::types_opts::ue_ngap_id_pair) {
+        init_msg.value.ue_context_release_cmd()->ue_ngap_ids.ue_ngap_id_pair().ran_ue_ngap_id = ran_id;
+        init_msg.value.ue_context_release_cmd()->ue_ngap_ids.ue_ngap_id_pair().amf_ue_ngap_id = amf_id;
+      } else {
+        init_msg.value.ue_context_release_cmd()->ue_ngap_ids.amf_ue_ngap_id() = amf_id;
+      }
+      return true;
+    case init_types::ue_context_resume_request:
+      init_msg.value.ue_context_resume_request()->ran_ue_ngap_id = ran_id;
+      init_msg.value.ue_context_resume_request()->amf_ue_ngap_id = amf_id;
+      return true;
+    case init_types::ue_context_suspend_request:
+      init_msg.value.ue_context_suspend_request()->ran_ue_ngap_id = ran_id;
+      init_msg.value.ue_context_suspend_request()->amf_ue_ngap_id = amf_id;
+      return true;
+    case init_types::dl_nas_transport:
+      init_msg.value.dl_nas_transport()->ran_ue_ngap_id = ran_id;
+      init_msg.value.dl_nas_transport()->amf_ue_ngap_id = amf_id;
+      return true;
+    case init_types::dl_ue_associated_nrppa_transport:
+      init_msg.value.dl_ue_associated_nrppa_transport()->ran_ue_ngap_id = ran_id;
+      init_msg.value.dl_ue_associated_nrppa_transport()->amf_ue_ngap_id = amf_id;
+      return true;
+    case init_types::ho_request:
+      init_msg.value.ho_request()->amf_ue_ngap_id = amf_id;
+      return true;
+    case init_types::error_ind:
+      if (init_msg.value.error_ind()->ran_ue_ngap_id_present) {
+        init_msg.value.error_ind()->ran_ue_ngap_id = ran_id;
+      }
+      if (init_msg.value.error_ind()->amf_ue_ngap_id_present) {
+        init_msg.value.error_ind()->amf_ue_ngap_id = amf_id;
+      }
+      return true;
+    default:
+      return false;
+  }
+}
+
+/// Point an NGAP PDU at the given UE. Only initiating messages carry identifiers this rewrites.
+inline bool set_ue_ids(asn1::ngap::ngap_pdu_c& pdu, ran_ue_id_t ran_ue_id, amf_ue_id_t amf_ue_id)
+{
+  if (pdu.type().value != asn1::ngap::ngap_pdu_c::types_opts::init_msg) {
+    return false;
+  }
+  return set_ue_ids(pdu.init_msg(), ran_ue_id, amf_ue_id);
+}
 
 } // namespace ocudu::ocucp::fuzz

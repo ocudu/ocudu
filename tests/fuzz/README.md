@@ -116,11 +116,10 @@ Each script accepts an optional flag to write seeds as a zip file suitable for t
 convention expected by OSS-Fuzz:
 
 ```bash
-# NGAP: one zip covers both NGAP targets
+# NGAP: one zip per target
 python3 tests/fuzz/ngap/gen_corpus.py \
-    --zip $OUT/ngap_pdu_decoder_fuzzer_seed_corpus.zip
-cp $OUT/ngap_pdu_decoder_fuzzer_seed_corpus.zip \
-   $OUT/ngap_cu_cp_fuzzer_seed_corpus.zip
+    --zip $OUT/ngap_pdu_decoder_fuzzer_seed_corpus.zip \
+    --zip-cu-cp $OUT/ngap_cu_cp_fuzzer_seed_corpus.zip
 
 # OFH: one zip per target
 python3 tests/fuzz/ofh/gen_corpus.py --zip-dir $OUT/
@@ -191,9 +190,9 @@ afl-fuzz \
 ### NGAP full-stack CU-CP fuzzer
 
 ```bash
-# Recommended: AFL_FAST_CAL for higher throughput (CU-CP stays alive across iterations)
+# Recommended: AFL_FAST_CAL for higher throughput (the CU-CP stays alive across iterations)
 AFL_FAST_CAL=1 afl-fuzz \
-    -i tests/fuzz/ngap/corpus/ngap \
+    -i tests/fuzz/ngap/corpus/ngap_cu_cp \
     -o findings/ngap_cu_cp \
     -- ./build_fuzz/tests/fuzz/ngap/ngap_cu_cp_fuzzer @@
 ```
@@ -201,14 +200,31 @@ AFL_FAST_CAL=1 afl-fuzz \
 > **Note:** Use `AFL_FAST_CAL=1` (persistent mode) or libFuzzer for throughput; in standard fork mode each child re-runs
 > the NG Setup handshake before processing its input.
 
-#### Test double architecture
+Spins up a real CU-CP with stub AMF, CU-UP and DU peers attached and injects decoded NGAP messages into it, so that the
+validators, procedure dispatcher and state machines all run.
 
-| Component          | Role                                                                                                                                                |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `fuzz_amf`         | `n2_connection_client` stub; `push_tx_pdu()` injects a decoded `ngap_message` into the CU-CP, `try_pop_rx_pdu()` drains responses sent by the CU-CP |
-| `fuzz_xnc_gateway` | No-op `xnc_connection_gateway`; the Xn-C interface is not under test                                                                                |
-| `task_worker`      | Background thread that executes CU-CP tasks                                                                                                         |
-| `timer_manager`    | Driven from the fuzzer main thread via `tick()` to cover timer-expiry code paths                                                                    |
+A UE is brought up before each input, and the message is pointed at it by a rewrite of the AMF-UE-NGAP-ID and the
+RAN-UE-NGAP-ID that the message carries. Both halves are necessary: most of NGAP is UE-associated, so without a UE, or
+with one that the message does not name, the CU-CP rejects each input at the UE lookup before a procedure runs. Only
+initiating messages are rewritten, because that is the direction the AMF sends.
+
+#### Input format
+
+The first byte is a control byte; the remaining bytes are the NGAP PDU.
+
+| Bit | Meaning                                         |
+| --- | ----------------------------------------------- |
+| 0-1 | UE state reached before the message is injected |
+| 2-7 | Unused                                          |
+
+| Value | UE state                                                                      |
+| ----- | ----------------------------------------------------------------------------- |
+| 0     | UE created by an Initial UL RRC Message Transfer, awaiting `RRCSetupComplete` |
+| 1     | `RRCSetupComplete` handled. SRB1 is up, AS security is not active             |
+| 2, 3  | AS security activated on SRB1, UE capabilities transferred, SRB2 created      |
+
+As with the RRC harness, the bring-up is checked once at startup and the harness aborts if it did not complete, so that
+a UE that silently fails to come up cannot look like a healthy run.
 
 ### RRC UE uplink fuzzer
 

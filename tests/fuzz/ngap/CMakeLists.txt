@@ -24,10 +24,22 @@ target_compile_options(ngap_pdu_decoder_fuzzer PRIVATE ${FUZZ_SANITIZER_FLAGS_CO
 # message dispatcher so that all procedure state-machines, validators, and
 # response generators are exercised on every iteration.
 # ---------------------------------------------------------------------------
-add_executable(ngap_cu_cp_fuzzer ngap_cu_cp_fuzzer.cpp)
+add_executable(ngap_cu_cp_fuzzer
+    ngap_cu_cp_fuzzer.cpp
+    ${CMAKE_SOURCE_DIR}/tests/unittests/ngap/ngap_test_messages.cpp
+)
 target_include_directories(ngap_cu_cp_fuzzer PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(ngap_cu_cp_fuzzer
+    e1ap_test_doubles
+    security_test_doubles
+    f1ap_test_doubles
+    rrc_test_doubles
     ocudu_cu_cp
+    ocudu_rrc
+    ocudu_f1ap_common
+    f1ap_asn1
+    e1ap_asn1
+    rrc_nr_asn1
     ngap_asn1
     ocudu_support
     ocudulog

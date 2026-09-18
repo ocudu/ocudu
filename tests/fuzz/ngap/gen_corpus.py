@@ -13,6 +13,7 @@ Usage:
 
 Seeds are written to:
     tests/fuzz/ngap/corpus/ngap/
+    tests/fuzz/ngap/corpus/ngap_cu_cp/
 """
 
 import argparse
@@ -54,6 +55,28 @@ NGAP_SEEDS = {
 }
 
 # ---------------------------------------------------------------------------
+# ngap_cu_cp corpus seeds
+# ---------------------------------------------------------------------------
+# The full-stack harness prefixes a control byte selecting the UE state it
+# brings up before injecting the message, so it needs its own corpus.
+# ---------------------------------------------------------------------------
+
+CU_CP_AWAITING_SETUP_COMPLETE = 0
+CU_CP_CONNECTED = 1
+CU_CP_SECURED = 2
+
+# The Initial Context Setup Request drives the UE from connected to secured, so
+# it is seeded against a connected UE; everything else against a secured one.
+NGAP_CU_CP_STATES = {
+    "initial_context_setup_request": CU_CP_CONNECTED,
+}
+
+NGAP_CU_CP_SEEDS = {
+    name: bytes([NGAP_CU_CP_STATES.get(name, CU_CP_SECURED)]) + data
+    for name, data in NGAP_SEEDS.items()
+}
+
+# ---------------------------------------------------------------------------
 # Write seeds to disk
 # ---------------------------------------------------------------------------
 
@@ -77,13 +100,18 @@ def write_zip(seeds: dict, zip_path: pathlib.Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--zip", metavar="PATH", type=pathlib.Path,
-                        help="also write seeds to a zip file (for OSS-Fuzz)")
+                        help="also write ngap seeds to a zip file (for OSS-Fuzz)")
+    parser.add_argument("--zip-cu-cp", metavar="PATH", type=pathlib.Path,
+                        help="also write ngap_cu_cp seeds to a zip file (for OSS-Fuzz)")
     args = parser.parse_args()
 
     print("Generating NGAP fuzz corpus seeds...")
     write_seeds(NGAP_SEEDS, "ngap")
+    write_seeds(NGAP_CU_CP_SEEDS, "ngap_cu_cp")
     if args.zip:
         write_zip(NGAP_SEEDS, args.zip)
+    if args.zip_cu_cp:
+        write_zip(NGAP_CU_CP_SEEDS, args.zip_cu_cp)
     print("Done.")
 
 
