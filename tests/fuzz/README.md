@@ -210,12 +210,18 @@ initiating messages are rewritten, because that is the direction the AMF sends.
 
 #### Input format
 
-The first byte is a control byte; the remaining bytes are the NGAP PDU.
+The first byte is a control byte. The rest is a chain of length-prefixed messages: one length byte, then that number of
+bytes of NGAP PDU. A short final message ends the chain, so that a mutation that shortens the input removes one message
+and does not make the remainder invalid. The harness takes at most 16 messages from one input.
 
-| Bit | Meaning                                         |
-| --- | ----------------------------------------------- |
-| 0-1 | UE state reached before the message is injected |
-| 2-7 | Unused                                          |
+One input carries a chain and not a single PDU, because use-after-free and state confusion occur in the orderings
+between procedures. A context that a handover re-keys while a release runs is only reachable if you drive the sequence
+that gets there, and a single malformed message cannot do that.
+
+| Bit | Meaning                                           |
+| --- | ------------------------------------------------- |
+| 0-1 | UE state reached before the messages are injected |
+| 2-7 | Unused                                            |
 
 | Value | UE state                                                                      |
 | ----- | ----------------------------------------------------------------------------- |

@@ -71,10 +71,28 @@ NGAP_CU_CP_STATES = {
     "initial_context_setup_request": CU_CP_CONNECTED,
 }
 
+def chain(state: int, *pdus: bytes) -> bytes:
+    """Control byte followed by length-prefixed messages."""
+    out = bytes([state])
+    for pdu in pdus:
+        assert len(pdu) < 256, "a seed message must fit a single length byte"
+        out += bytes([len(pdu)]) + pdu
+    return out
+
+
 NGAP_CU_CP_SEEDS = {
-    name: bytes([NGAP_CU_CP_STATES.get(name, CU_CP_SECURED)]) + data
+    name: chain(NGAP_CU_CP_STATES.get(name, CU_CP_SECURED), data)
     for name, data in NGAP_SEEDS.items()
 }
+
+# A chain, to seed the mutator with the shape the format exists for: the same
+# procedure run twice against one UE, which the single-message seeds cannot
+# express.
+NGAP_CU_CP_SEEDS["initial_context_setup_request_twice"] = chain(
+    CU_CP_CONNECTED,
+    NGAP_SEEDS["initial_context_setup_request"],
+    NGAP_SEEDS["initial_context_setup_request"],
+)
 
 # ---------------------------------------------------------------------------
 # Write seeds to disk
