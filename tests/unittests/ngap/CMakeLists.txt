@@ -5,7 +5,7 @@
 
 add_library(ngap_test_helpers ngap_test_helpers.cpp ngap_test_messages.cpp)
 target_include_directories(ngap_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(ngap_test_helpers ocudu_support ngap_asn1 ocudulog)
+target_link_libraries(ngap_test_helpers security_test_doubles ocudu_support ngap_asn1 ocudulog)
 
 set(SOURCES
         ng_setup_procedure_test.cpp

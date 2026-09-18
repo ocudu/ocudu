@@ -7,6 +7,7 @@
 #include "lib/ngap/ngap_asn1_utils.h"
 #include "ngap_test_messages.h"
 #include "test_helpers.h"
+#include "tests/test_doubles/security/security_test_keys.h"
 #include "tests/unittests/gateways/test_helpers.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/ngap/common.h"
@@ -15,14 +16,6 @@
 
 using namespace ocudu;
 using namespace ocucp;
-
-security::sec_key make_sec_key(std::string hex_str)
-{
-  byte_buffer       key_buf = make_byte_buffer(hex_str).value();
-  security::sec_key key     = {};
-  std::copy(key_buf.begin(), key_buf.end(), key.begin());
-  return key;
-}
 
 /// Fixture class for NGAP ASN1 packer.
 class ngap_asn1_packer_test : public ::testing::Test
@@ -133,7 +126,7 @@ TEST_F(ngap_asn1_packer_test, when_unpack_init_ctx_extract_sec_params_correctly)
 
   // Get expected security key.
   const char*       security_key_cstr = "50636e38151d62356d9a1a0c9f2391885177307ad494be15281dfe5fdac06302";
-  security::sec_key security_key      = make_sec_key(security_key_cstr);
+  security::sec_key security_key      = test_helpers::make_sec_key(security_key_cstr);
 
   byte_buffer buf = make_byte_buffer(ngap_init_ctx_req).value();
 

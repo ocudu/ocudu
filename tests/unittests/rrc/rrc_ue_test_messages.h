@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "tests/test_doubles/security/security_test_keys.h"
 #include "ocudu/asn1/rrc_nr/ul_ccch_msg_ies.h"
 #include "ocudu/asn1/rrc_nr/ul_dcch_msg_ies.h"
 #include "ocudu/ran/rnti.h"
@@ -12,11 +13,8 @@
 namespace ocudu {
 namespace ocucp {
 
-/// Converts a hex string (e.g. 01FA02) to a sec_as_key.
-security::sec_key make_sec_key(std::string hex_str);
-
-/// Converts a hex string (e.g. 01FA02) to a sec_128_as_key.
-security::sec_128_key make_sec_128_key(std::string hex_str);
+using test_helpers::make_sec_128_key;
+using test_helpers::make_sec_key;
 
 /// \brief Generates a dummy meas config
 rrc_meas_cfg generate_dummy_meas_config();

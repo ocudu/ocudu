@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "tests/test_doubles/security/security_test_keys.h"
 #include "ocudu/security/ciphering.h"
 #include "ocudu/security/integrity.h"
 #include "ocudu/security/security.h"
@@ -9,24 +10,8 @@
 
 using namespace ocudu;
 using namespace ocudu::security;
-
-/// Converts a hex string (e.g. 01FA02) to a sec_as_key.
-sec_key make_sec_key(std::string hex_str)
-{
-  byte_buffer key_buf = make_byte_buffer(hex_str).value();
-  sec_key     key     = {};
-  std::copy(key_buf.begin(), key_buf.end(), key.begin());
-  return key;
-}
-
-/// Converts a hex string (e.g. 01FA02) to a sec_128_as_key.
-sec_128_key make_sec_128_key(std::string hex_str)
-{
-  byte_buffer key_buf = make_byte_buffer(hex_str).value();
-  sec_128_key key     = {};
-  std::copy(key_buf.begin(), key_buf.end(), key.begin());
-  return key;
-}
+using ocudu::test_helpers::make_sec_128_key;
+using ocudu::test_helpers::make_sec_key;
 
 /// Compares two byte arrays
 int arrcmp(uint8_t const* const a, uint8_t const* const b, uint32_t len)

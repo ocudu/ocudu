@@ -13,22 +13,6 @@
 using namespace ocudu;
 using namespace ocucp;
 
-security::sec_key ocudu::ocucp::make_sec_key(std::string hex_str)
-{
-  byte_buffer       key_buf = make_byte_buffer(hex_str).value();
-  security::sec_key key     = {};
-  std::copy(key_buf.begin(), key_buf.end(), key.begin());
-  return key;
-}
-
-security::sec_128_key ocudu::ocucp::make_sec_128_key(std::string hex_str)
-{
-  byte_buffer           key_buf = make_byte_buffer(hex_str).value();
-  security::sec_128_key key     = {};
-  std::copy(key_buf.begin(), key_buf.end(), key.begin());
-  return key;
-}
-
 rrc_meas_cfg ocudu::ocucp::generate_dummy_meas_config()
 {
   rrc_meas_cfg meas_cfg;

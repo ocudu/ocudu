@@ -7,7 +7,7 @@ set_directory_properties(PROPERTIES LABELS "rrc")
 
 add_library(rrc_ue_test_helpers rrc_ue_test_messages.cpp)
 target_include_directories(rrc_ue_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(rrc_ue_test_helpers ocudu_support ocudulog)
+target_link_libraries(rrc_ue_test_helpers security_test_doubles ocudu_support ocudulog)
 
 set(SOURCES
         rrc_asn1_helpers_test.cpp

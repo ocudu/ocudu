@@ -9,12 +9,15 @@
 #include "nia1_test_set.h"
 #include "nia2_test_set.h"
 #include "nia3_test_set.h"
+#include "tests/test_doubles/security/security_test_keys.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/security/integrity_engine.h"
 #include "ocudu/security/security.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
+using ocudu::test_helpers::make_sec_128_key;
+using ocudu::test_helpers::make_sec_key;
 using namespace ocudu::security;
 
 /// Fixture class for integrity engine tests
@@ -55,24 +58,6 @@ class fxt_nia2 : public fxt_nia_base
 /// Fixture class for integrity engine tests with NIA3
 class fxt_nia3 : public fxt_nia_base
 {};
-
-/// Converts a hex string (e.g. 01FA02) to a sec_as_key.
-sec_key make_sec_key(const std::string& hex_str)
-{
-  byte_buffer key_buf = make_byte_buffer(hex_str).value();
-  sec_key     key     = {};
-  std::copy(key_buf.begin(), key_buf.end(), key.begin());
-  return key;
-}
-
-/// Converts a hex string (e.g. 01FA02) to a sec_128_as_key.
-sec_128_key make_sec_128_key(const std::string& hex_str)
-{
-  byte_buffer key_buf = make_byte_buffer(hex_str).value();
-  sec_128_key key     = {};
-  std::copy(key_buf.begin(), key_buf.end(), key.begin());
-  return key;
-}
 
 /// Compares two byte arrays
 int arrcmp(uint8_t const* const a, uint8_t const* const b, uint32_t len)
