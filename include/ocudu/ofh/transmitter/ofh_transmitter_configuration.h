@@ -11,12 +11,22 @@
 #include "ocudu/ofh/ofh_constants.h"
 #include "ocudu/ofh/serdes/ofh_cplane_message_properties.h"
 #include "ocudu/ofh/transmitter/ofh_transmitter_timing_parameters.h"
+#include "ocudu/ran/antenna_topology.h"
 #include "ocudu/ran/bs_channel_bandwidth.h"
 #include "ocudu/ran/cyclic_prefix.h"
 #include "ocudu/ran/tdd/tdd_ul_dl_config.h"
+#include <optional>
 
 namespace ocudu {
 namespace ofh {
+
+/// Open Fronthaul transmitter downlink beamforming (Category B) configuration.
+struct transmitter_beamforming_config {
+  /// Antenna topology used for beamforming weights codebook generation.
+  antenna_topology topology;
+  /// Compression parameters applied to the beamforming weights.
+  ru_compression_params bfw_compr_params;
+};
 
 /// Open Fronthaul transmitter configuration.
 struct transmitter_config {
@@ -80,6 +90,8 @@ struct transmitter_config {
   bool are_metrics_enabled = false;
   /// If set to true, logs late events as warnings, otherwise as info.
   bool enable_log_warnings_for_lates;
+  /// Downlink beamforming configuration. Unset value means Category A (no beamforming).
+  std::optional<transmitter_beamforming_config> beamforming;
 };
 
 } // namespace ofh

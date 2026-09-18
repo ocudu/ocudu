@@ -9,6 +9,7 @@ add_subdirectory(receiver)
 add_subdirectory(serdes)
 add_subdirectory(timing)
 add_subdirectory(transmitter)
+add_subdirectory(support)
 
 add_library(ocudu_ofh ofh_factories.cpp ofh_metrics_collector_impl.cpp ofh_sector_impl.cpp ofh_sector_controller.cpp)
 target_link_libraries(ocudu_ofh ocudu_ofh_receiver ocudu_ofh_timing ocudu_ofh_transmitter ocudu_ofh_ethernet)

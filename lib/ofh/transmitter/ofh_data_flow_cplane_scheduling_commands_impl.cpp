@@ -38,7 +38,8 @@ static void init_common_section_0_1_3_5_fields(cplane_common_section_0_1_3_5_fie
 static cplane_section_type1_parameters
 generate_section1_control_parameters(const data_flow_cplane_type_1_context& context,
                                      unsigned                               nof_prb,
-                                     const ru_compression_params&           comp)
+                                     const ru_compression_params&           comp,
+                                     const beamforming_weights_repository*  bf_weights_repo)
 {
   cplane_section_type1_parameters msg_params;
 
@@ -49,6 +50,22 @@ generate_section1_control_parameters(const data_flow_cplane_type_1_context& cont
       msg_params.radio_hdr, context.slot, context.symbol_range.start(), context.direction, context.filter_type);
   // Initialize common fields.
   init_common_section_0_1_3_5_fields(msg_params.section_fields.common_fields, nof_prb, context.symbol_range.length());
+
+  if (bf_weights_repo != nullptr) {
+    // Offset applied to a beam identifier coming from higher layer to obtain the Open Fronthaul beamId.
+    // Open Fronthaul beamId=0 is reserved to "no beamforming" (see O-RAN.WG4.CUS, 7.5.3.9), so every internal beam
+    // identifier (which starts at 0) is shifted by one.
+    static constexpr uint16_t BEAM_ID_OFFSET = 1;
+
+    msg_params.section_fields.beam_id = static_cast<uint16_t>(to_underlying(context.beam_id) + BEAM_ID_OFFSET);
+    msg_params.section_fields.extensions.emplace_back(cplane_section_extension_1_params{
+        .weights =
+            {
+                .compr_params   = bf_weights_repo->get_compression_params(),
+                .packed_weights = bf_weights_repo->get_weights(context.beam_id),
+            },
+    });
+  }
 
   return msg_params;
 }
@@ -135,7 +152,8 @@ data_flow_cplane_scheduling_commands_impl::data_flow_cplane_scheduling_commands_
   frame_pool(std::move(dependencies.frame_pool)),
   eth_builder(std::move(dependencies.eth_builder)),
   ecpri_builder(std::move(dependencies.ecpri_builder)),
-  cp_builder(std::move(dependencies.cp_builder))
+  cp_builder(std::move(dependencies.cp_builder)),
+  bf_weights_repo(std::move(dependencies.bf_weights_repo))
 {
   ocudu_assert(eth_builder, "Invalid Ethernet VLAN packet builder");
   ocudu_assert(ecpri_builder, "Invalid eCPRI packet builder");
@@ -178,8 +196,11 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_1_message(
   units::bytes                    ecpri_hdr_size = ecpri_builder->get_header_size(ecpri::message_type::rt_control_data);
   units::bytes                    offset         = ether_hdr_size + ecpri_hdr_size;
   span<uint8_t>                   ofh_buffer     = span<uint8_t>(buffer).last(buffer.size() - offset.value());
-  cplane_section_type1_parameters ofh_ctrl_params = generate_section1_control_parameters(
-      context, ru_nof_prbs, (direction == data_direction::downlink) ? dl_compr_params : ul_compr_params);
+  cplane_section_type1_parameters ofh_ctrl_params =
+      generate_section1_control_parameters(context,
+                                           ru_nof_prbs,
+                                           (direction == data_direction::downlink) ? dl_compr_params : ul_compr_params,
+                                           bf_weights_repo.get());
   unsigned bytes_written = cp_builder->build_dl_ul_radio_channel_message(ofh_buffer, ofh_ctrl_params);
 
   unsigned eaxc = context.eaxc;

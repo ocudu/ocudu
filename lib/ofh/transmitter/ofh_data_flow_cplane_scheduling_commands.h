@@ -5,7 +5,7 @@
 
 #include "ofh_data_flow_cuplane_encoding_metrics_collector.h"
 #include "ocudu/ofh/serdes/ofh_message_properties.h"
-#include "ocudu/ofh/transmitter/ofh_transmitter_data_flow_metrics.h"
+#include "ocudu/ran/beamforming/beam_identifier.h"
 #include "ocudu/ran/prach/prach_subcarrier_spacing.h"
 #include "ocudu/ran/resource_allocation/ofdm_symbol_range.h"
 #include "ocudu/ran/slot_point.h"
@@ -51,6 +51,8 @@ struct data_flow_cplane_type_1_context {
   data_direction direction;
   /// Symbol range.
   ofdm_symbol_range symbol_range;
+  /// Beam identifier. Used only for Category B transmissions, ignored otherwise.
+  beam_identifier beam_id = beam_identifier::n0;
 };
 
 /// Open Fronthaul Control-Plane scheduling and beamforming commands data flow.

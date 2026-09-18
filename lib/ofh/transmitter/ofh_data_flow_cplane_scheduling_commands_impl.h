@@ -4,6 +4,7 @@
 #pragma once
 
 #include "../operation_controller_dummy.h"
+#include "../support/beamforming_weights_repository.h"
 #include "../support/uplink_cplane_context_repository.h"
 #include "ofh_data_flow_cplane_scheduling_commands.h"
 #include "sequence_identifier_generator.h"
@@ -49,6 +50,8 @@ struct data_flow_cplane_scheduling_commands_impl_dependencies {
   std::unique_ptr<ecpri::packet_builder> ecpri_builder;
   /// Control-Plane message builder.
   std::unique_ptr<cplane_message_builder> cp_builder;
+  /// Optional downlink beamforming weights repository, provided only for Category B O-RUs.
+  std::unique_ptr<beamforming_weights_repository> bf_weights_repo;
 };
 
 /// Open Fronthaul Control-Plane scheduling and beamforming commands data flow implementation.
@@ -88,6 +91,7 @@ private:
   std::unique_ptr<ether::frame_builder>             eth_builder;
   std::unique_ptr<ecpri::packet_builder>            ecpri_builder;
   std::unique_ptr<cplane_message_builder>           cp_builder;
+  std::unique_ptr<beamforming_weights_repository>   bf_weights_repo;
 };
 
 } // namespace ofh

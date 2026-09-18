@@ -19,6 +19,7 @@ target_link_libraries(ocudu_ofh_transmitter
         ocudu_ofh_compression
         ocudu_ofh_message_serdes
         ocudu_ofh_ethernet
+        ocudu_ofh_support
         ocudu_ran
         ocudu_instrumentation
         ocudulog

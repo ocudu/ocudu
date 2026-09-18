@@ -9,6 +9,9 @@ target_include_directories(ofh_beamforming_weights_compressor_test PRIVATE ${CMA
 target_link_libraries(ofh_beamforming_weights_compressor_test ocudu_ofh_compression ocudulog GTest::gtest GTest::gtest_main)
 gtest_discover_tests(ofh_beamforming_weights_compressor_test)
 
+add_test(NAME ofh_beamforming_weights_compressor_test COMMAND ofh_beamforming_weights_compressor_test)
+set_tests_properties(ofh_beamforming_weights_compressor_test PROPERTIES LABELS "RU-OFH-CATB-WDBF")
+
 add_executable(compression_validator_test compression_validator_test.cpp)
 target_link_libraries(compression_validator_test ocudu_ofh_compression ocudulog GTest::gtest GTest::gtest_main)
 gtest_discover_tests(compression_validator_test)

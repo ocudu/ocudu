@@ -5,6 +5,7 @@
 
 #include "../support/metrics_helpers.h"
 #include "ofh_data_flow_cplane_scheduling_commands.h"
+#include "ocudu/ofh/transmitter/ofh_transmitter_data_flow_metrics.h"
 #include "ocudu/support/resource_usage/scoped_resource_usage.h"
 #include <memory>
 
