@@ -130,7 +130,7 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
   }
 
   pucch_detector::format0_configuration detector_config;
-  detector_config.slot                                                     = config.slot;
+  detector_config.slot                                                     = config.slot - config.slot_offset;
   detector_config.starting_prb                                             = config.starting_prb + config.bwp_start_rb;
   detector_config.second_hop_prb                                           = second_hop_prb;
   detector_config.start_symbol_index                                       = config.start_symbol_index;
@@ -155,6 +155,7 @@ pucch_format1_map<pucch_processor_result> pucch_processor_impl::process(const re
   const format1_common_configuration& common_config = batch_config.common_config;
   format1_configuration               proc_config   = {.context              = {},
                                                        .slot                 = common_config.slot,
+                                                       .slot_offset          = common_config.slot_offset,
                                                        .bwp_size_rb          = common_config.bwp_size_rb,
                                                        .bwp_start_rb         = common_config.bwp_start_rb,
                                                        .cp                   = common_config.cp,
@@ -189,7 +190,7 @@ pucch_format1_map<pucch_processor_result> pucch_processor_impl::process(const re
   // Fill the detector configuration - recall that time_domain_occ, initial_cyclic_shift and nof_harq_ack are set
   // via mux_harq_size.
   pucch_detector::format1_configuration detector_config = {
-      .slot               = common_config.slot,
+      .slot               = common_config.slot - common_config.slot_offset,
       .cp                 = common_config.cp,
       .starting_prb       = common_config.starting_prb + common_config.bwp_start_rb,
       .second_hop_prb     = transform_optional(common_config.second_hop_prb, std::plus(), common_config.bwp_start_rb),
@@ -235,7 +236,7 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
 
   // Channel estimator configuration.
   dmrs_pucch_estimator::format2_configuration estimator_config;
-  estimator_config.slot               = config.slot;
+  estimator_config.slot               = config.slot - config.slot_offset;
   estimator_config.cp                 = config.cp;
   estimator_config.group_hopping      = pucch_group_hopping::NEITHER;
   estimator_config.start_symbol_index = config.start_symbol_index;
@@ -319,7 +320,7 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
 
   // Channel estimator configuration.
   dmrs_pucch_estimator::format3_configuration estimator_config;
-  estimator_config.slot               = config.slot;
+  estimator_config.slot               = config.slot - config.slot_offset;
   estimator_config.cp                 = config.cp;
   estimator_config.group_hopping      = pucch_group_hopping::NEITHER;
   estimator_config.start_symbol_index = config.start_symbol_index;
@@ -410,7 +411,7 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
 
   // Channel estimator configuration.
   dmrs_pucch_estimator::format4_configuration estimator_config;
-  estimator_config.slot               = config.slot;
+  estimator_config.slot               = config.slot - config.slot_offset;
   estimator_config.cp                 = config.cp;
   estimator_config.group_hopping      = pucch_group_hopping::NEITHER;
   estimator_config.start_symbol_index = config.start_symbol_index;

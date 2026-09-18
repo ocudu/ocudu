@@ -19,6 +19,15 @@ struct srs_estimator_configuration {
   std::optional<srs_context> context;
   /// Numerology, SFN and slot index.
   slot_point slot;
+  /// \brief Slot delay with which the message is processed.
+  ///
+  /// Determines the number of slot that have passed since the UE transmitted to the gNB received. In other words,
+  /// the UE transmitted in slot \e n while the gNB is receiving in slot <em>n + slot_offset</em>.
+  ///
+  /// The effect of this offset is applied to the sequence generators that depend on the slot.
+  ///
+  /// This parameter is derived from the higher layers K-MAC which is specific for NTN.
+  unsigned slot_offset;
   /// SRS resource configuration.
   srs_resource_configuration resource;
   /// Receive port list.

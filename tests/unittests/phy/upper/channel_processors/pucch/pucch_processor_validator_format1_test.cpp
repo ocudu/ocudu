@@ -21,6 +21,8 @@ const pucch_processor::format1_configuration base_format_1_config = {
     std::nullopt,
     // Slot.
     {0, 9},
+    // Slot offset.
+    {},
     // BWP size.
     50,
     // BWP start.

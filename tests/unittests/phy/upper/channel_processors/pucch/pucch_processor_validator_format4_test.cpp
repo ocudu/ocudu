@@ -22,6 +22,8 @@ const pucch_processor::format4_configuration base_format_4_config = {
     std::nullopt,
     // Slot.
     {0, 9},
+    // Slot offset.
+    {},
     // CP.
     cyclic_prefix::NORMAL,
     // Rx Ports.

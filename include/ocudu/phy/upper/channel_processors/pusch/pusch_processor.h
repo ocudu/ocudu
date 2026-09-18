@@ -107,6 +107,15 @@ public:
     harq_id_t harq_id = INVALID_HARQ_ID;
     /// Indicates the slot and numerology.
     slot_point slot;
+    /// \brief Slot delay with which the message is processed.
+    ///
+    /// Determines the number of slot that have passed since the UE transmitted to the gNB received. In other words,
+    /// the UE transmitted in slot \e n while the gNB is receiving in slot <em>n + slot_offset</em>.
+    ///
+    /// The effect of this offset is applied to the sequence generators that depend on the slot.
+    ///
+    /// This parameter is derived from the higher layers K-MAC which is specific for NTN.
+    unsigned slot_offset;
     /// Provides \f$n_{RNTI}\f$ from TS38.211 Section 6.3.1.1 Scrambling.
     rnti_t rnti;
     /// Number of contiguous PRBs allocated to the BWP {1...275}.

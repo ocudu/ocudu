@@ -168,7 +168,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
 
   // Configure the channel estimator.
   dmrs_pusch_estimator::configuration ch_est_config;
-  ch_est_config.slot = pdu.slot;
+  ch_est_config.slot = pdu.slot - pdu.slot_offset;
   if (enable_transform_precoding) {
     ch_est_config.sequence_config = dmrs_pusch_estimator::low_papr_sequence_configuration{.n_rs_id = n_rs_id};
   } else {
