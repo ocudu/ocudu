@@ -103,7 +103,7 @@ struct cu_cp_rrc_handover_command {
   /// \brief Data forwarding tunnels to send the data still held for the UE to, per PDU session.
   ///
   /// For direct data forwarding these are the endpoints of the handover target, for indirect data forwarding those of
-  /// the UPF the 5GC inserted (TS 38.413 section 9.3.4.10).
+  /// the UPF the 5GC inserted (TS 38.413 section 9.3.4.10, TS 38.423 section 9.2.1.19).
   std::map<pdu_session_id_t, cu_cp_data_forwarding_info_from_target_ng_ran_node> data_forwarding_info_from_target;
 };
 

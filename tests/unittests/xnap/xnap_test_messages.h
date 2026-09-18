@@ -45,7 +45,9 @@ xnap_message generate_handover_request(local_xnap_ue_id_t                local_x
 xnap_message generate_handover_preparation_failure(peer_xnap_ue_id_t peer_xnap_ue_id);
 
 /// \brief Generate a dummy Handover Request Ack message.
-xnap_message generate_handover_request_ack(local_xnap_ue_id_t local_xnap_ue_id, peer_xnap_ue_id_t peer_xnap_ue_id);
+xnap_message generate_handover_request_ack(local_xnap_ue_id_t local_xnap_ue_id,
+                                           peer_xnap_ue_id_t  peer_xnap_ue_id,
+                                           bool               with_data_forwarding_info = false);
 
 /// \brief Generate a Handover Request Ack for a conditional handover, carrying the requested target cell in the
 /// CHOinformation-Ack IE (TS 38.423 Section 9.1.1.2), which tells parallel CHO preparations apart.

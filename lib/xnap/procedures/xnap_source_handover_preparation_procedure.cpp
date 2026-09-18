@@ -104,9 +104,19 @@ void xnap_source_handover_preparation_procedure::operator()(
     ue_ctxt_list.update_peer_xnap_ue_id(ue_ids.local_xnap_ue_id, peer_xnap_ue_id);
 
     // Immediate HO: forward RRC Handover Command to DU Processor.
-    // TODO: Report the data forwarding tunnels of the Data Forwarding Info From Target IE (TS 38.423 section 9.2.1.19).
     ho_command.ue_index      = request.ue_index;
     ho_command.rrc_container = transaction_sink.response()->target2_source_ng_ra_nnode_transp_container.copy();
+    // Report the forwarding tunnels the target allocated, so that the source CU-UP can be pointed at them
+    // (TS 38.423 section 9.2.1.19).
+    for (const auto& asn1_admitted_item : transaction_sink.response()->pdu_session_res_admitted_list) {
+      if (not asn1_admitted_item.pdu_session_res_admitted_info.data_forwarding_info_from_target_present) {
+        continue;
+      }
+      ho_command.data_forwarding_info_from_target.emplace(
+          uint_to_pdu_session_id(asn1_admitted_item.pdu_session_id),
+          asn1_to_data_forwarding_info_from_target(
+              asn1_admitted_item.pdu_session_res_admitted_info.data_forwarding_info_from_target));
+    }
     CORO_AWAIT_VALUE(rrc_reconfig_success, cu_cp_notifier.on_new_rrc_handover_command(std::move(ho_command)));
     if (!rrc_reconfig_success) {
       logger.log_warning("\"{}\" failed. Cause: Received invalid Handover Command", name());
@@ -118,6 +128,8 @@ void xnap_source_handover_preparation_procedure::operator()(
   } else {
     // CHO: return the pre-packed RRC bytes and peer UE ID to the coordinator.
     // Execution is deferred until the UE satisfies the CHO conditions.
+    // TODO: Carry the data forwarding tunnels of this candidate to the CHO execution, so that the source CU-UP can be
+    // pointed at the tunnels of the winning target (TS 38.423 section 9.2.1.19).
     auto packed_rrc = transaction_sink.response()->target2_source_ng_ra_nnode_transp_container.copy();
     if (packed_rrc.empty()) {
       logger.log_warning("\"{}\" failed. Cause: Empty RRC container in HandoverRequest Ack (CHO)", name());

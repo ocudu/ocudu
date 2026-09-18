@@ -196,7 +196,8 @@ xnap_message ocudu::ocucp::generate_handover_preparation_failure(peer_xnap_ue_id
 }
 
 xnap_message ocudu::ocucp::generate_handover_request_ack(local_xnap_ue_id_t local_xnap_ue_id,
-                                                         peer_xnap_ue_id_t  peer_xnap_ue_id)
+                                                         peer_xnap_ue_id_t  peer_xnap_ue_id,
+                                                         bool               with_data_forwarding_info)
 {
   xnap_message xnap_msg;
 
@@ -222,6 +223,33 @@ xnap_message ocudu::ocucp::generate_handover_request_ack(local_xnap_ue_id_t loca
           "020000002086020406080706800071c40000002004000806000809002200a60000231002271c00600040")
           .value();
   ho_request_ack->target2_source_ng_ra_nnode_transp_container = std::move(rrc_container);
+
+  if (with_data_forwarding_info) {
+    // Report a PDU session level and a DRB level forwarding tunnel of the handover target.
+    pdu_session_res_admitted_item_s admitted_item;
+    admitted_item.pdu_session_id                                                         = 1;
+    admitted_item.pdu_session_res_admitted_info.data_forwarding_info_from_target_present = true;
+    auto& asn1_forwarding_info = admitted_item.pdu_session_res_admitted_info.data_forwarding_info_from_target;
+
+    qos_f_lows_accepted_to_be_forwarded_item_s accepted_flow;
+    accepted_flow.qos_flow_id = 1;
+    asn1_forwarding_info.qos_flows_accepted_for_data_forwarding_list.push_back(accepted_flow);
+
+    asn1_forwarding_info.pdu_session_level_dl_data_forwarding_info_present = true;
+    up_transport_layer_info_to_asn1(
+        asn1_forwarding_info.pdu_session_level_dl_data_forwarding_info,
+        up_transport_layer_info{transport_layer_address::create_from_string("127.0.0.3"), gtpu_teid_t{0x20000283}});
+
+    data_forwarding_resp_drb_item_s drb_item;
+    drb_item.drb_id                       = 1;
+    drb_item.dl_forwarding_up_tnl_present = true;
+    up_transport_layer_info_to_asn1(
+        drb_item.dl_forwarding_up_tnl,
+        up_transport_layer_info{transport_layer_address::create_from_string("127.0.0.3"), gtpu_teid_t{0x40000283}});
+    asn1_forwarding_info.data_forwarding_resp_drb_item_list.push_back(drb_item);
+
+    ho_request_ack->pdu_session_res_admitted_list.push_back(admitted_item);
+  }
 
   return xnap_msg;
 }

@@ -99,10 +99,16 @@ public:
     return true;
   }
 
-  [[nodiscard]] bool send_bearer_context_setup_response_and_await_ue_context_setup_request()
+  [[nodiscard]] bool
+  send_bearer_context_setup_response_and_await_ue_context_setup_request(bool with_data_forwarding_info = false)
   {
     // Inject Bearer Context Setup Response and wait for UE Context Setup Request.
-    get_cu_up(cu_up_idx).push_tx_pdu(generate_bearer_context_setup_response(cu_cp_e1ap_id, cu_up_e1ap_id));
+    get_cu_up(cu_up_idx).push_tx_pdu(generate_bearer_context_setup_response(
+        cu_cp_e1ap_id,
+        cu_up_e1ap_id,
+        {{uint_to_pdu_session_id(1), {{drb_id_t::drb1, uint_to_qos_flow_id(1)}}}},
+        {},
+        with_data_forwarding_info));
     report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu),
                               "Failed to receive UE Context Setup Request");
     report_fatal_error_if_not(test_helpers::is_valid_ue_context_setup_request(f1ap_pdu),
@@ -861,6 +867,37 @@ TEST_F(cu_cp_inter_cu_xn_handover_test, when_source_proposes_dl_data_forwarding_
   ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_setup_request());
   ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
   ASSERT_TRUE(send_bearer_context_modification_response_and_await_handover_request_ack());
+  ASSERT_TRUE(send_sn_status_transfer_and_await_bearer_context_modification_request(source_local_xnap_ue_id,
+                                                                                    source_peer_xnap_ue_id));
+  ASSERT_TRUE(send_bearer_context_modification_response());
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_path_switch_request());
+  ASSERT_TRUE(send_path_switch_request_ack_and_await_ue_context_modification_request());
+  ASSERT_TRUE(send_ue_context_modification_response_empty(cu_ue_id, du_ue_id));
+}
+
+// The forwarding tunnel endpoints the CU-UP allocated must reach the source node, so the target reports them in the
+// Data Forwarding Info from target NG-RAN node IE of the Handover Request Acknowledge, together with the QoS flows it
+// accepts for forwarding (TS 38.423 section 9.2.1.19).
+TEST_F(cu_cp_inter_cu_xn_handover_test, when_target_allocated_fwd_tunnels_then_they_are_advertised_to_the_source)
+{
+  xn_handover_request_params ho_params;
+  ho_params.propose_dl_data_forwarding = true;
+  ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request(source_local_xnap_ue_id, ho_params));
+  ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_setup_request(true));
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_handover_request_ack());
+
+  const auto& ho_request_ack = xnap_pdu.pdu.successful_outcome().value.ho_request_ack();
+  ASSERT_EQ(ho_request_ack->pdu_session_res_admitted_list.size(), 1U);
+  const auto& admitted_info = ho_request_ack->pdu_session_res_admitted_list[0].pdu_session_res_admitted_info;
+
+  ASSERT_TRUE(admitted_info.data_forwarding_info_from_target_present);
+  const auto& forwarding_info = admitted_info.data_forwarding_info_from_target;
+  ASSERT_EQ(forwarding_info.qos_flows_accepted_for_data_forwarding_list.size(), 1U);
+  EXPECT_EQ(forwarding_info.qos_flows_accepted_for_data_forwarding_list[0].qos_flow_id, 1U);
+  ASSERT_TRUE(forwarding_info.pdu_session_level_dl_data_forwarding_info_present);
+
+  // The handover must still complete normally afterwards.
   ASSERT_TRUE(send_sn_status_transfer_and_await_bearer_context_modification_request(source_local_xnap_ue_id,
                                                                                     source_peer_xnap_ue_id));
   ASSERT_TRUE(send_bearer_context_modification_response());

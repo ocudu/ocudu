@@ -482,54 +482,103 @@ inline bool pdu_session_res_admitted_item_to_asn1(asn1::xnap::pdu_session_res_ad
     asn1_admitted_item.pdu_session_res_admitted_info.qos_flows_not_admitted_list.push_back(
         asn1_qos_flow_not_admitted_item);
   }
-  // > Fill data forwarding info from target.
+  // > Fill data forwarding info from target. The QoS flows accepted for data forwarding are mandatory in that IE, so
+  // it is only reported once this target accepted at least one of them (TS 38.423 section 9.2.1.19).
   const auto& data_forwarding_info_from_target = admitted_item.data_forwarding_info_from_target;
-  // >> Fill QoS flows accepted for data forwarding list.
-  for (const auto& qfi : data_forwarding_info_from_target->qos_flows_accepted_for_data_forwarding_list) {
-    asn1::xnap::qos_f_lows_accepted_to_be_forwarded_item_s asn1_qos_flow_accepted_for_data_forwarding_item;
-    // Fill QoS flow ID.
-    asn1_qos_flow_accepted_for_data_forwarding_item.qos_flow_id = to_underlying(qfi);
-    asn1_admitted_item.pdu_session_res_admitted_info.data_forwarding_info_from_target
-        .qos_flows_accepted_for_data_forwarding_list.push_back(asn1_qos_flow_accepted_for_data_forwarding_item);
-  }
-  // >> Fill PDU session level DL data forwarding info.
-  if (data_forwarding_info_from_target->pdu_session_level_dl_data_forwarding_info.has_value()) {
-    asn1_admitted_item.pdu_session_res_admitted_info.data_forwarding_info_from_target
-        .pdu_session_level_dl_data_forwarding_info_present = true;
-    up_transport_layer_info_to_asn1(
-        asn1_admitted_item.pdu_session_res_admitted_info.data_forwarding_info_from_target
-            .pdu_session_level_dl_data_forwarding_info,
-        data_forwarding_info_from_target->pdu_session_level_dl_data_forwarding_info.value());
-  }
-  // >> Fill PDU session level UL data forwarding info.
-  if (data_forwarding_info_from_target->pdu_session_level_ul_data_forwarding_info.has_value()) {
-    asn1_admitted_item.pdu_session_res_admitted_info.data_forwarding_info_from_target
-        .pdu_session_level_ul_data_forwarding_info_present = true;
-    up_transport_layer_info_to_asn1(
-        asn1_admitted_item.pdu_session_res_admitted_info.data_forwarding_info_from_target
-            .pdu_session_level_ul_data_forwarding_info,
-        data_forwarding_info_from_target->pdu_session_level_ul_data_forwarding_info.value());
-  }
-  // >> Fill data forwarding resp DRB item list.
-  for (const auto& drb_item : data_forwarding_info_from_target->data_forwarding_resp_drb_item_list) {
-    asn1::xnap::data_forwarding_resp_drb_item_s asn1_drb_item;
-    // Fill DRB ID.
-    asn1_drb_item.drb_id = to_underlying(drb_item.drb_id);
-    // Fill DL forwarding UP TNL.
-    if (drb_item.dl_forwarding_up_tnl.has_value()) {
-      asn1_drb_item.dl_forwarding_up_tnl_present = true;
-      up_transport_layer_info_to_asn1(asn1_drb_item.dl_forwarding_up_tnl, drb_item.dl_forwarding_up_tnl.value());
+  if (data_forwarding_info_from_target.has_value() and
+      not data_forwarding_info_from_target->qos_flows_accepted_for_data_forwarding_list.empty()) {
+    asn1_admitted_item.pdu_session_res_admitted_info.data_forwarding_info_from_target_present = true;
+    // >> Fill QoS flows accepted for data forwarding list.
+    for (const auto& qfi : data_forwarding_info_from_target->qos_flows_accepted_for_data_forwarding_list) {
+      asn1::xnap::qos_f_lows_accepted_to_be_forwarded_item_s asn1_qos_flow_accepted_for_data_forwarding_item;
+      // Fill QoS flow ID.
+      asn1_qos_flow_accepted_for_data_forwarding_item.qos_flow_id = to_underlying(qfi);
+      asn1_admitted_item.pdu_session_res_admitted_info.data_forwarding_info_from_target
+          .qos_flows_accepted_for_data_forwarding_list.push_back(asn1_qos_flow_accepted_for_data_forwarding_item);
     }
-    // Fill UL forwarding UP TNL.
-    if (drb_item.ul_forwarding_up_tnl.has_value()) {
-      asn1_drb_item.ul_forwarding_up_tnl_present = true;
-      up_transport_layer_info_to_asn1(asn1_drb_item.ul_forwarding_up_tnl, drb_item.ul_forwarding_up_tnl.value());
+    // >> Fill PDU session level DL data forwarding info.
+    if (data_forwarding_info_from_target->pdu_session_level_dl_data_forwarding_info.has_value()) {
+      asn1_admitted_item.pdu_session_res_admitted_info.data_forwarding_info_from_target
+          .pdu_session_level_dl_data_forwarding_info_present = true;
+      up_transport_layer_info_to_asn1(
+          asn1_admitted_item.pdu_session_res_admitted_info.data_forwarding_info_from_target
+              .pdu_session_level_dl_data_forwarding_info,
+          data_forwarding_info_from_target->pdu_session_level_dl_data_forwarding_info.value());
     }
-    asn1_admitted_item.pdu_session_res_admitted_info.data_forwarding_info_from_target.data_forwarding_resp_drb_item_list
-        .push_back(asn1_drb_item);
+    // >> Fill PDU session level UL data forwarding info.
+    if (data_forwarding_info_from_target->pdu_session_level_ul_data_forwarding_info.has_value()) {
+      asn1_admitted_item.pdu_session_res_admitted_info.data_forwarding_info_from_target
+          .pdu_session_level_ul_data_forwarding_info_present = true;
+      up_transport_layer_info_to_asn1(
+          asn1_admitted_item.pdu_session_res_admitted_info.data_forwarding_info_from_target
+              .pdu_session_level_ul_data_forwarding_info,
+          data_forwarding_info_from_target->pdu_session_level_ul_data_forwarding_info.value());
+    }
+    // >> Fill data forwarding resp DRB item list.
+    for (const auto& drb_item : data_forwarding_info_from_target->data_forwarding_resp_drb_item_list) {
+      asn1::xnap::data_forwarding_resp_drb_item_s asn1_drb_item;
+      // Fill DRB ID.
+      asn1_drb_item.drb_id = to_underlying(drb_item.drb_id);
+      // Fill DL forwarding UP TNL.
+      if (drb_item.dl_forwarding_up_tnl.has_value()) {
+        asn1_drb_item.dl_forwarding_up_tnl_present = true;
+        up_transport_layer_info_to_asn1(asn1_drb_item.dl_forwarding_up_tnl, drb_item.dl_forwarding_up_tnl.value());
+      }
+      // Fill UL forwarding UP TNL.
+      if (drb_item.ul_forwarding_up_tnl.has_value()) {
+        asn1_drb_item.ul_forwarding_up_tnl_present = true;
+        up_transport_layer_info_to_asn1(asn1_drb_item.ul_forwarding_up_tnl, drb_item.ul_forwarding_up_tnl.value());
+      }
+      asn1_admitted_item.pdu_session_res_admitted_info.data_forwarding_info_from_target
+          .data_forwarding_resp_drb_item_list.push_back(asn1_drb_item);
+    }
   }
 
   return true;
+}
+
+/// \brief Convert an XNAP ASN.1 Data Forwarding Info from target NG-RAN node to
+/// \c cu_cp_data_forwarding_info_from_target_ng_ran_node.
+/// \param[in] asn1_data_forwarding_info The ASN.1 Data Forwarding Info from target NG-RAN node
+/// (TS 38.423 section 9.2.1.19).
+/// \return The forwarding tunnels the source shall send the data it still holds for the UE to.
+inline cu_cp_data_forwarding_info_from_target_ng_ran_node asn1_to_data_forwarding_info_from_target(
+    const asn1::xnap::data_forwarding_info_from_target_ngra_nnode_s& asn1_data_forwarding_info)
+{
+  cu_cp_data_forwarding_info_from_target_ng_ran_node data_forwarding_info;
+
+  // Fill QoS flows accepted for data forwarding.
+  for (const auto& asn1_qos_flow : asn1_data_forwarding_info.qos_flows_accepted_for_data_forwarding_list) {
+    data_forwarding_info.qos_flows_accepted_for_data_forwarding_list.push_back(
+        uint_to_qos_flow_id(asn1_qos_flow.qos_flow_id));
+  }
+
+  // Fill PDU session level DL data forwarding info.
+  if (asn1_data_forwarding_info.pdu_session_level_dl_data_forwarding_info_present) {
+    data_forwarding_info.pdu_session_level_dl_data_forwarding_info =
+        asn1_to_up_transport_layer_info(asn1_data_forwarding_info.pdu_session_level_dl_data_forwarding_info);
+  }
+
+  // Fill PDU session level UL data forwarding info.
+  if (asn1_data_forwarding_info.pdu_session_level_ul_data_forwarding_info_present) {
+    data_forwarding_info.pdu_session_level_ul_data_forwarding_info =
+        asn1_to_up_transport_layer_info(asn1_data_forwarding_info.pdu_session_level_ul_data_forwarding_info);
+  }
+
+  // Fill data forwarding response DRB list.
+  for (const auto& asn1_drb_item : asn1_data_forwarding_info.data_forwarding_resp_drb_item_list) {
+    cu_cp_data_forwarding_resp_drb_item drb_item;
+    drb_item.drb_id = uint_to_drb_id(asn1_drb_item.drb_id);
+    if (asn1_drb_item.dl_forwarding_up_tnl_present) {
+      drb_item.dl_forwarding_up_tnl = asn1_to_up_transport_layer_info(asn1_drb_item.dl_forwarding_up_tnl);
+    }
+    if (asn1_drb_item.ul_forwarding_up_tnl_present) {
+      drb_item.ul_forwarding_up_tnl = asn1_to_up_transport_layer_info(asn1_drb_item.ul_forwarding_up_tnl);
+    }
+    data_forwarding_info.data_forwarding_resp_drb_item_list.push_back(drb_item);
+  }
+
+  return data_forwarding_info;
 }
 
 /// \brief Convert XNAP ASN.1 to \c cu_cp_tx_bw.

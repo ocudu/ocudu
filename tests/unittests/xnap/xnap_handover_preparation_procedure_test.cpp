@@ -347,6 +347,47 @@ TEST_F(xnap_handover_preparation_procedure_test, when_handover_request_sent_then
   EXPECT_EQ(source_drb_map[0].qos_flows_list[0].qfi, to_underlying(qos_flow_id_t::min));
 }
 
+/// Test that the forwarding tunnels the target reports in the Data Forwarding Info from target NG-RAN node IE
+/// (TS 38.423 section 9.2.1.19) are handed to the CU-CP with the RRC Handover Command, so that it can point the
+/// source CU-UP at them.
+TEST_F(xnap_handover_preparation_procedure_test,
+       when_handover_request_ack_reports_fwd_tunnels_then_they_reach_the_cu_cp)
+{
+  run_xn_setup(xnap_peer_cfg);
+
+  cu_cp_ue_index_t           ue_index = create_ue();
+  security::security_context sec_ctxt = generate_security_context(ue_mng.find_ue(ue_index)->get_security_manager());
+  xnap_handover_request      request  = generate_handover_request(ue_index, sec_ctxt);
+
+  async_task<xnap_handover_preparation_response>         t = xnap->handle_handover_request_required(request);
+  lazy_task_launcher<xnap_handover_preparation_response> t_launcher(t);
+
+  // Inject a Handover Request Acknowledge carrying the target's forwarding tunnels.
+  xnap->handle_message(::generate_handover_request_ack(
+      local_xnap_ue_id_t::min, peer_xnap_ue_id_t::min, /*with_data_forwarding_info=*/true));
+
+  ASSERT_TRUE(t.ready());
+  ASSERT_TRUE(t.get().success);
+
+  const auto& ho_command = cu_cp_notifier.last_handover_command;
+  ASSERT_EQ(ho_command.data_forwarding_info_from_target.size(), 1U);
+  const auto& forwarding_info = ho_command.data_forwarding_info_from_target.at(uint_to_pdu_session_id(1));
+
+  ASSERT_EQ(forwarding_info.qos_flows_accepted_for_data_forwarding_list.size(), 1U);
+  EXPECT_EQ(forwarding_info.qos_flows_accepted_for_data_forwarding_list[0], uint_to_qos_flow_id(1));
+
+  ASSERT_TRUE(forwarding_info.pdu_session_level_dl_data_forwarding_info.has_value());
+  EXPECT_FALSE(forwarding_info.pdu_session_level_ul_data_forwarding_info.has_value());
+
+  ASSERT_EQ(forwarding_info.data_forwarding_resp_drb_item_list.size(), 1U);
+  EXPECT_EQ(forwarding_info.data_forwarding_resp_drb_item_list[0].drb_id, uint_to_drb_id(1));
+  ASSERT_TRUE(forwarding_info.data_forwarding_resp_drb_item_list[0].dl_forwarding_up_tnl.has_value());
+
+  // The DRB level and the PDU session level tunnels are distinct endpoints.
+  EXPECT_NE(forwarding_info.data_forwarding_resp_drb_item_list[0].dl_forwarding_up_tnl.value(),
+            forwarding_info.pdu_session_level_dl_data_forwarding_info.value());
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //                             Target CU-CP
 ///////////////////////////////////////////////////////////////////////////////
