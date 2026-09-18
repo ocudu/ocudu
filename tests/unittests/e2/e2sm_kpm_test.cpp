@@ -4,6 +4,7 @@
 
 #include "common/e2ap_asn1_packer.h"
 #include "lib/e2/common/e2ap_asn1_utils.h"
+#include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_report_service_impl.h"
 #include "lib/pcap/dlt_pcap_impl.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/unittests/e2/common/e2_test_helpers.h"
@@ -139,6 +140,95 @@ void get_presence_starting_with_cond_satisfied(const std::vector<uint32_t>& pres
       cond_presence[i] = 0;
     }
   }
+}
+
+class style2_ordering_meas_provider : public dummy_e2sm_kpm_du_meas_provider
+{
+public:
+  bool get_meas_data(const meas_type_c&               meas_type,
+                     const label_info_list_l          label_info_list,
+                     const std::vector<ue_id_c>&      ues,
+                     const std::optional<cgi_c>       cell_global_id,
+                     std::vector<meas_record_item_c>& items) override
+  {
+    const std::string metric_name = meas_type.meas_name().to_string();
+    if (metric_name == "valid") {
+      items.emplace_back().set_integer() = 42;
+      return true;
+    }
+    if (metric_name == "no-value") {
+      items.emplace_back().set_no_value();
+      return true;
+    }
+    return false;
+  }
+};
+
+static e2sm_kpm_action_definition_s make_style2_action(const std::vector<std::string>& metric_names)
+{
+  e2sm_kpm_action_definition_s action_def;
+  action_def.ric_style_type = 2;
+  auto& action_def_f2       = action_def.action_definition_formats.set_action_definition_format2();
+
+  action_def_f2.ue_id.set_gnb_du_ue_id()              = generate_ueid_gnb_du(31);
+  action_def_f2.subscript_info.cell_global_id_present = false;
+  action_def_f2.subscript_info.granul_period          = 100;
+
+  for (const std::string& metric_name : metric_names) {
+    meas_info_item_s meas_info_item;
+    meas_info_item.meas_type.set_meas_name().from_string(metric_name);
+    label_info_item_s label_info_item{};
+    label_info_item.meas_label.no_label_present = true;
+    label_info_item.meas_label.no_label         = meas_label_s::no_label_opts::true_value;
+    meas_info_item.label_info_list.push_back(label_info_item);
+    action_def_f2.subscript_info.meas_info_list.push_back(meas_info_item);
+  }
+
+  return action_def;
+}
+
+TEST(e2sm_kpm_report_service_style2_test, readiness_and_record_order_are_independent_of_metric_order)
+{
+  style2_ordering_meas_provider meas_provider;
+
+  for (const char* unavailable_metric : {"no-value", "empty"}) {
+    for (bool valid_metric_first : {true, false}) {
+      const std::vector<std::string> metric_names = valid_metric_first
+                                                        ? std::vector<std::string>{"valid", unavailable_metric}
+                                                        : std::vector<std::string>{unavailable_metric, "valid"};
+      SCOPED_TRACE(fmt::format("unavailable_metric={} valid_metric_first={}", unavailable_metric, valid_metric_first));
+
+      e2sm_kpm_report_service_style2 report_service(make_style2_action(metric_names), meas_provider);
+      report_service.collect_measurements();
+      ASSERT_TRUE(report_service.is_ind_msg_ready());
+
+      byte_buffer        ind_msg_bytes = report_service.get_indication_message();
+      e2sm_kpm_ind_msg_s ric_ind_msg;
+      asn1::cbit_ref     ric_ind_bref(ind_msg_bytes);
+      ASSERT_EQ(ric_ind_msg.unpack(ric_ind_bref), asn1::OCUDUASN_SUCCESS);
+
+      const auto& meas_records = ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data[0].meas_record;
+      ASSERT_EQ(meas_records.size(), metric_names.size());
+      for (unsigned i = 0; i != metric_names.size(); ++i) {
+        if (metric_names[i] == "valid") {
+          ASSERT_EQ(meas_records[i].type(), meas_record_item_c::types_opts::integer);
+          EXPECT_EQ(meas_records[i].integer(), 42);
+        } else {
+          EXPECT_EQ(meas_records[i].type(), meas_record_item_c::types_opts::no_value);
+        }
+      }
+    }
+  }
+}
+
+TEST(e2sm_kpm_report_service_style2_test, indication_is_not_ready_when_all_metrics_are_unavailable)
+{
+  style2_ordering_meas_provider  meas_provider;
+  e2sm_kpm_report_service_style2 report_service(make_style2_action({"no-value", "empty"}), meas_provider);
+
+  report_service.collect_measurements();
+
+  EXPECT_FALSE(report_service.is_ind_msg_ready());
 }
 
 void get_presence_starting_with_cond_satisfied(const std::vector<std::vector<uint32_t>>& presence,

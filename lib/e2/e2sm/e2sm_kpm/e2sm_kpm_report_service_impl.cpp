@@ -190,20 +190,20 @@ bool e2sm_kpm_report_service_style2::collect_measurements()
     meas_provider.get_meas_data(
         meas_info.meas_type, meas_info.label_info_list, {ue_id}, cell_global_id, meas_records_items);
     if (meas_records_items.empty()) {
-      continue;
+      // Keep the measurement record aligned with the measurement information list.
+      meas_records_items.emplace_back().set_no_value();
     }
     // Fill measurements data.
     meas_data_item.meas_record.push_back(meas_records_items[0]);
   }
   ric_ind_message.meas_data.push_back(meas_data_item);
   if (not is_ind_msg_ready_) {
-    if (meas_records_items.empty()) {
-      return false;
-    }
     // Indication is ready when filled with at least one valid value.
-    if (meas_records_items[0].type() != meas_record_item_c::types_opts::no_value) {
-      is_ind_msg_ready_ = true;
-    }
+    is_ind_msg_ready_ = std::any_of(meas_data_item.meas_record.begin(),
+                                    meas_data_item.meas_record.end(),
+                                    [](const meas_record_item_c& meas_record) {
+                                      return meas_record.type() != meas_record_item_c::types_opts::no_value;
+                                    });
   }
   return true;
 }
