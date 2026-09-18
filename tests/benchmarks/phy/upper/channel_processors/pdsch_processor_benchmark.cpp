@@ -581,11 +581,11 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
       dmrs_mask        = dmrs_single_mask;
       break;
     case test_profile::mimo_topology::two_port_two_layer:
-      precoding_config = precoding_beamforming_configuration::make_wideband(make_two_layer_two_ports(0));
+      precoding_config = precoding_beamforming_configuration::make_wideband(make_precoding(pmi_two_antenna_port{0}, 2));
       dmrs_mask        = dmrs_single_mask;
       break;
     case test_profile::mimo_topology::four_port_four_layer:
-      precoding_config = precoding_beamforming_configuration::make_wideband(make_type1_sp_mode1(
+      precoding_config = precoding_beamforming_configuration::make_wideband(make_precoding(
           pmi_typeI_single_panel{{pmi_codebook_single_panel_config::two_one, pmi_codebook_typeI_mode::one},
                                  0,
                                  std::nullopt,
@@ -595,7 +595,7 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
       dmrs_mask        = dmrs_single_mask;
       break;
     case test_profile::mimo_topology::eight_port_eight_layer:
-      precoding_config = precoding_beamforming_configuration::make_wideband(make_type1_sp_mode1(
+      precoding_config = precoding_beamforming_configuration::make_wideband(make_precoding(
           pmi_typeI_single_panel{{pmi_codebook_single_panel_config::four_one, pmi_codebook_typeI_mode::one},
                                  0,
                                  std::nullopt,

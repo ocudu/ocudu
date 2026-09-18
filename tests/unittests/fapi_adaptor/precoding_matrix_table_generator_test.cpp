@@ -63,7 +63,7 @@ TEST(precoding_matrix_table_generator, two_port_one_layer)
 
     precoding_weight_matrix matrix = repository->get_precoding_matrix(index);
 
-    precoding_weight_matrix expected_matrix = make_one_layer_two_ports(pmi);
+    precoding_weight_matrix expected_matrix = make_precoding(pmi_two_antenna_port{pmi}, 1);
 
     ASSERT_EQ(matrix, expected_matrix);
   }
@@ -84,7 +84,7 @@ TEST(precoding_matrix_table_generator, two_port_two_layer)
 
     precoding_weight_matrix matrix = repository->get_precoding_matrix(index);
 
-    precoding_weight_matrix expected_matrix = make_two_layer_two_ports(pmi);
+    precoding_weight_matrix expected_matrix = make_precoding(pmi_two_antenna_port{pmi}, 2);
 
     ASSERT_EQ(matrix, expected_matrix);
   }
@@ -126,7 +126,7 @@ TEST_P(typeI_single_panel_fixture, TypeI_single_panel)
 
             precoding_weight_matrix matrix = repository->get_precoding_matrix(index);
 
-            precoding_weight_matrix expected_matrix = make_type1_sp_mode1(pmi, nof_layers);
+            precoding_weight_matrix expected_matrix = make_precoding(pmi, nof_layers);
 
             ASSERT_EQ(matrix, expected_matrix) << fmt::format("nof_layers={} i_1_1={} i_1_2={} i_1_3={} i_2={}",
                                                               nof_layers,

@@ -64,17 +64,13 @@ static void add_beam_type2(precoding_weight_matrix&              result,
   }
 }
 
-precoding_weight_matrix ocudu::make_type2(const precoding_matrix_indicator& pmi, unsigned nof_layers)
+precoding_weight_matrix ocudu::make_type2(const pmi_typeII& pmi, unsigned nof_layers)
 {
   ocudu_assert((nof_layers > 0) && (nof_layers <= max_nof_typeII_layers),
                "The Type II codebook supports one or two layers, requested {}.",
                nof_layers);
 
-  // Get the underlying Type II PMI type from the parameter PMI.
-  const auto* type2_pmi = std::get_if<pmi_typeII>(&pmi);
-  ocudu_assert(type2_pmi != nullptr, "The precoding matrix indicator (PMI) must be of type Type II.");
-
-  const pmi_codebook_typeII&            config = type2_pmi->config;
+  const pmi_codebook_typeII&            config = pmi.config;
   const pmi_codebook_single_panel_info& panel  = get_single_panel_info(config.n1_n2);
 
   unsigned L         = config.nof_beams.value();
@@ -87,20 +83,20 @@ precoding_weight_matrix ocudu::make_type2(const precoding_matrix_indicator& pmi,
                nof_ports,
                precoding_constants::MAX_NOF_PORTS);
 
-  ocudu_assert(type2_pmi->layers.size() == nof_layers,
+  ocudu_assert(pmi.layers.size() == nof_layers,
                "The number of layer coefficient sets (i.e., {}) does not match the number of layers (i.e., {}).",
-               type2_pmi->layers.size(),
+               pmi.layers.size(),
                nof_layers);
 
   // Decode the wideband beam selection and the L selected beam groups.
-  pmi_typeII_beam_selection beam_selection = get_typeII_beam_selection(type2_pmi->i_1_1, panel.o1, panel.o2);
+  pmi_typeII_beam_selection beam_selection = get_typeII_beam_selection(pmi.i_1_1, panel.o1, panel.o2);
   static_vector<pmi_typeII_beam_group, max_nof_typeII_beams> beam_groups =
-      get_typeII_beam_groups(type2_pmi->i_1_2, panel.n1, panel.n2, L);
+      get_typeII_beam_groups(pmi.i_1_2, panel.n1, panel.n2, L);
 
   precoding_weight_matrix result(nof_layers, nof_ports);
 
   for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
-    const pmi_typeII::layer_coefficients& coefficients = type2_pmi->layers[i_layer];
+    const pmi_typeII::layer_coefficients& coefficients = pmi.layers[i_layer];
 
     // Validate the reported per-layer coefficient sizes, L beams by two polarizations.
     ocudu_assert(coefficients.i_1_4.size() == 2 * L,

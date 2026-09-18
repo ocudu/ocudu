@@ -104,7 +104,7 @@ static unsigned generate_pdsch_2_ports_1_layer(unsigned offset, precoding_matrix
 {
   unsigned base_offset = offset;
   for (unsigned i = 0, e = 4; i != e; ++i) {
-    precoding_weight_matrix precoding = make_one_layer_two_ports(i);
+    precoding_weight_matrix precoding = make_precoding(pmi_two_antenna_port{.pmi = static_cast<uint8_t>(i)}, 1);
     unsigned                pm_index  = base_offset + get_pdsch_two_port_precoding_matrix_index(i);
     repo_builder.add(pm_index, precoding);
     offset = pm_index;
@@ -117,7 +117,7 @@ static unsigned generate_pdsch_2_ports_2_layers(unsigned offset, precoding_matri
 {
   unsigned base_offset = offset;
   for (unsigned i = 0, e = 2; i != e; ++i) {
-    precoding_weight_matrix precoding = make_two_layer_two_ports(i);
+    precoding_weight_matrix precoding = make_precoding(pmi_two_antenna_port{.pmi = static_cast<uint8_t>(i)}, 2);
     unsigned                pm_index  = base_offset + get_pdsch_two_port_precoding_matrix_index(i);
     repo_builder.add(pm_index, precoding);
     offset = pm_index;
@@ -152,7 +152,7 @@ static unsigned generate_pdsch_sp_type1(unsigned                              of
                                         .i_1_3        = (param_ranges.i_1_3 > 0) ? std::optional(i_1_3) : std::nullopt,
                                         .i_2          = i_2};
 
-          precoding_weight_matrix precoding = make_type1_sp_mode1(pmi, nof_layers);
+          precoding_weight_matrix precoding = make_precoding(pmi, nof_layers);
           unsigned pm_index = base_offset + get_pdsch_single_panel_type1_precoding_matrix_index(param_ranges, pmi);
           repo_builder.add(pm_index, precoding);
 

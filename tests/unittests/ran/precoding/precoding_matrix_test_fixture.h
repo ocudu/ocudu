@@ -101,15 +101,7 @@ protected:
     beam_codebook = generate_beam_weights_codebook(topology);
 
     // Generate the reference precoding matrix.
-    precoding_weight_matrix reference_weights;
-
-    if (std::holds_alternative<pmi_typeI_single_panel>(pmi)) {
-      reference_weights = make_type1_sp_mode1(pmi, param.nof_layers);
-    } else if (std::holds_alternative<pmi_typeII>(pmi)) {
-      reference_weights = make_type2(pmi, param.nof_layers);
-    } else {
-      report_error("Unsupported PMI codebook configuration.");
-    }
+    precoding_weight_matrix reference_weights = make_precoding(pmi, param.nof_layers);
 
     reference = precoding_configuration::make_wideband(reference_weights);
     ASSERT_EQ(reference.get_nof_layers(), param.nof_layers);
