@@ -124,3 +124,23 @@ TEST(mac_fapi_pdsch_pdu_conversor_test, valid_dl_msg_alloc_pdu_should_pass)
   ASSERT_EQ(nof_prbs, fapi_prec.prg_size);
   ASSERT_FALSE(std::get<1>(pm_tools)->get_precoding_matrix(fapi_prec.prg.pm_index).get_nof_layers() == 0);
 }
+
+TEST(mac_fapi_pdsch_pdu_conversor_test, beamformed_rar_carries_its_beam)
+{
+  rar_information_test_helper pdu_test     = build_valid_rar_information_pdu();
+  rar_information             pdu          = pdu_test.pdu;
+  unsigned                    nof_csi_pdus = 2;
+  unsigned                    nof_prbs     = 51U;
+
+  const beam_identifier beam_id           = to_beam_id(3);
+  pdu.pdsch_cfg.nof_layers                = 1;
+  pdu.pdsch_cfg.precoding_and_beamforming = make_single_beam_precoding(beam_id);
+
+  fapi::dl_pdsch_pdu         fapi_pdu;
+  fapi::dl_pdsch_pdu_builder builder(fapi_pdu);
+  auto                       pm_tools = generate_precoding_matrix_tables(pmi_codebook_two_port{}, 0);
+  convert_pdsch_mac_to_fapi(builder, pdu, nof_csi_pdus, *std::get<0>(pm_tools), nof_prbs);
+
+  ASSERT_EQ(nof_prbs, fapi_pdu.precoding_and_beamforming.prg_size);
+  ASSERT_EQ(precoding_beam_list({beam_id}), fapi_pdu.precoding_and_beamforming.prg.beams);
+}

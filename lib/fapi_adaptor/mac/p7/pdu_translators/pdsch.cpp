@@ -80,15 +80,19 @@ static void fill_precoding_and_beamforming(fapi::dl_pdsch_pdu_builder&          
                                            unsigned                              nof_layers,
                                            unsigned                              cell_nof_prbs)
 {
-  // FAPI does not support PDSCH beamforming outside of a Precoding Matrix Indicator.
-  ocudu_assert(std::holds_alternative<precoding_matrix_indicator>(mac_info),
-               "The PDSCH precoding and beamforming must hold a Precoding Matrix Indicator");
-  const auto& pmi = std::get<precoding_matrix_indicator>(mac_info);
-
   fapi::tx_precoding_and_beamforming_pdu_builder pm_bf_builder = builder.get_tx_precoding_and_beamforming_pdu_builder();
   // FAPI carries a single PRG per transmission, spanning the complete allocation, which this interface expresses
   // in cell PRBs.
   pm_bf_builder.set_prg_parameters(cell_nof_prbs);
+
+  if (const auto* beam_id = std::get_if<beam_identifier>(&mac_info)) {
+    ocudu_assert(nof_layers == 1, "A beamformed PDSCH must carry one layer, but it carries {}.", nof_layers);
+    pm_bf_builder.set_beams({*beam_id});
+
+    return;
+  }
+
+  const auto& pmi = std::get<precoding_matrix_indicator>(mac_info);
 
   mac_pdsch_precoding_info info;
   // A monostate PMI selects no precoding, which this interface expresses as an omnidirectional matrix.
@@ -209,8 +213,9 @@ void ocudu::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& 
   // Fill all the parameters contained in the MAC PDSCH information struct.
   fill_pdsch_information(builder, mac_pdu.pdsch_cfg);
 
-  // Omnidirectional precoding.
-  fill_omnidirectional_precoding(builder, pm_mapper, mac_pdu.pdsch_cfg.nof_layers, cell_nof_prbs);
+  // Precoding and beamforming.
+  fill_precoding_and_beamforming(
+      builder, mac_pdu.pdsch_cfg.precoding_and_beamforming, pm_mapper, mac_pdu.pdsch_cfg.nof_layers, cell_nof_prbs);
 
   // Codeword information.
   fill_codeword_information(

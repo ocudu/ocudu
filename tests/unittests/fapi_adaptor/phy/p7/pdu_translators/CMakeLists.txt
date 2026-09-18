@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 # Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
-
 set_directory_properties(PROPERTIES LABELS "fapi_adaptor")
 
 add_executable(fapi_phy_ssb_adaptor_test dl_ssb_pdu_test.cpp)
@@ -16,7 +15,7 @@ target_include_directories(fapi_phy_pdcch_adaptor_test PRIVATE ${CMAKE_SOURCE_DI
 gtest_discover_tests(fapi_phy_pdcch_adaptor_test)
 
 add_executable(fapi_phy_pdsch_adaptor_test dl_pdsch_pdu_test.cpp)
-target_link_libraries(fapi_phy_pdsch_adaptor_test ocudu_fapi_phy_message_adaptors ocudu_upper_phy_support ocudulog gtest gtest_main)
+target_link_libraries(fapi_phy_pdsch_adaptor_test ocudu_fapi_phy_message_adaptors ocudu_fapi_message_builder_test_helpers ocudu_upper_phy_support ocudulog gtest gtest_main)
 target_include_directories(fapi_phy_pdsch_adaptor_test PRIVATE ${CMAKE_SOURCE_DIR}/lib/fapi_adaptor/phy/p7/pdu_translators)
 gtest_discover_tests(fapi_phy_pdsch_adaptor_test)
 
