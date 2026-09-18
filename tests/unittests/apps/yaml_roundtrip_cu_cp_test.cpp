@@ -119,4 +119,27 @@ TEST(cu_cp_logical_cells_config_test, shutting_down_cannot_be_configured)
   EXPECT_THROW(load_and_emit(config_with_logical_cells("shutting_down")), CLI::ParseError);
 }
 
+/// Return the example config with a "security:" block declaring the given nea_pref_list/nia_pref_list added
+/// under cu_cp.
+static std::string config_with_security_pref_lists(const std::string& nea_pref_list, const std::string& nia_pref_list)
+{
+  std::string       text   = read_file(CONFIGS + "/cu_cp.yml");
+  const std::string anchor = "  e1ap:\n";
+  const std::string block  = "  security:\n"
+                             "    nea_pref_list: " +
+                            nea_pref_list + "\n" + "    nia_pref_list: " + nia_pref_list + "\n";
+  auto pos = text.find(anchor);
+  EXPECT_NE(pos, std::string::npos) << "example config lost its e1ap block";
+  return text.insert(pos, block);
+}
+
+TEST(cu_cp_security_config_test, short_pref_lists_round_trip)
+{
+  // Regression test for MR !1498: nea_pref_list/nia_pref_list shorter than their full slot count are padded
+  // internally by repeating the highest-priority entry, and the dumped config must reparse without error.
+  assert_roundtrip(config_with_security_pref_lists("nea2,nea1,nea3", "nia2,nia1"),
+                   &load_and_emit,
+                   "cu_cp.yml with short nea/nia pref lists");
+}
+
 } // namespace
