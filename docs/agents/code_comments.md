@@ -20,7 +20,9 @@ not otherwise touching.
 - One idea per sentence.
 - Cut filler: `in order to` to `to`, `is used to hold` to `holds`. Drop `simply`,
   `just`, `obviously`.
-- Facts only. No `added`, `changed`, `now handles`, `should be`, `for now`.
+- Describe the code as it stands, never its history. No `added`, `removed`, `changed`,
+  `now handles`, `previously`: the reader cannot see the earlier version.
+- Facts, not intentions. No `should be`, `for now`.
 - No em dashes.
 
 ## What to say
