@@ -186,6 +186,17 @@ public:
     return unique_uplink_pdu_slot_repository(*this);
   }
 
+  const std::vector<pusch_pdu>& get_pusch_pdus() const { return pusch_pdus; }
+
+  const std::vector<pucch_pdu>& get_pucch_pdus() const { return pucch_pdus; }
+
+  void clear_pdus()
+  {
+    pusch_pdus.clear();
+    pucch_pdus.clear();
+    srs_pdus.clear();
+  }
+
 private:
   shared_resource_grid finish_adding_pdus() override { return {*this, grid_ref_count}; }
 
@@ -456,4 +467,200 @@ TEST_F(fapi_to_phy_translator_fixture, empty_ul_tti_generates_request_when_allow
   translator_allow.send_ul_tti_request(msg);
 
   ASSERT_TRUE(ul_request_processor.has_uplink_been_requested());
+}
+
+// ---- NTN k_mac uplink slot tests -----------------------------------------------------
+
+/// Verify that with ntn_k_mac_slots != 0 the FAPI translator sets the PUSCH PDU slot offset to k_mac, so that the PHY
+/// seeds the DMRS PN sequence with the UE uplink slot. The PDU slot stays on the gNB downlink clock.
+TEST_F(fapi_to_phy_translator_fixture, ntn_k_mac_pusch_pdu_carries_the_uplink_slot_offset)
+{
+  static constexpr unsigned k_mac = 12;
+
+  // Build a translator with ntn_k_mac_slots = k_mac using the same shared infrastructure.
+  fapi_to_phy_fastpath_translator_config ntn_cfg = config;
+  ntn_cfg.ntn_k_mac_slots                        = k_mac;
+  fapi_to_phy_fastpath_translator ntn_translator(
+      ntn_cfg,
+      {ocudulog::fetch_basic_logger("FAPI"),
+       dl_processor_pool,
+       rg_pool,
+       dl_pdu_validator,
+       ul_request_processor,
+       pdu_repo,
+       ul_pdu_validator,
+       std::move(std::get<std::unique_ptr<precoding_matrix_repository>>(
+           generate_precoding_matrix_tables(pmi_codebook_one_port{}, 0))),
+       std::move(
+           std::get<std::unique_ptr<uci_part2_correspondence_repository>>(generate_uci_part2_correspondence(1)))});
+  ntn_translator.set_error_indication_notifier(error_notifier_spy);
+
+  // DL slot at which the FAPI message arrives (= DL clock time when samples reach gNB).
+  const slot_point dl_slot{scs, 1, 0};
+  ntn_translator.handle_new_slot(dl_slot);
+
+  // Build a minimal UL_TTI.request carrying one PUSCH PDU at the DL slot.
+  fapi::ul_tti_request msg;
+  msg.slot = dl_slot;
+  {
+    auto& entry = msg.pdus.emplace_back();
+    auto& pusch = entry.pdu.emplace<fapi::ul_pusch_pdu>();
+    pusch       = unittest::build_valid_ul_pusch_pdu();
+  }
+  ntn_translator.send_ul_tti_request(msg);
+
+  // The translator must have stored exactly one PUSCH PDU.
+  const auto& pdus = pdu_repo.get_pusch_pdus();
+  ASSERT_EQ(pdus.size(), 1U);
+
+  const auto& stored = pdus[0];
+
+  ASSERT_EQ(stored.pdu.slot, dl_slot) << "pdu.slot must carry the slot the gNB receives in";
+  ASSERT_EQ(stored.pdu.slot_offset, k_mac) << "pdu.slot_offset must carry k_mac for DMRS PN init";
+
+  ASSERT_FALSE(error_notifier_spy.has_on_error_indication_been_called());
+}
+
+/// Verify that with ntn_k_mac_slots == 0 (terrestrial) the PUSCH PDU slot offset is zero.
+TEST_F(fapi_to_phy_translator_fixture, terrestrial_pusch_pdu_slot_offset_is_zero)
+{
+  // Terrestrial: translator already has k_mac == 0 (default config).
+  // The fixture translator was constructed first and consumed the move-only deps, so build inline.
+  fapi_to_phy_fastpath_translator terr_translator(
+      config,
+      {ocudulog::fetch_basic_logger("FAPI"),
+       dl_processor_pool,
+       rg_pool,
+       dl_pdu_validator,
+       ul_request_processor,
+       pdu_repo,
+       ul_pdu_validator,
+       std::move(std::get<std::unique_ptr<precoding_matrix_repository>>(
+           generate_precoding_matrix_tables(pmi_codebook_one_port{}, 0))),
+       std::move(
+           std::get<std::unique_ptr<uci_part2_correspondence_repository>>(generate_uci_part2_correspondence(1)))});
+  terr_translator.set_error_indication_notifier(error_notifier_spy);
+
+  const slot_point msg_slot{scs, 2, 0};
+  terr_translator.handle_new_slot(msg_slot);
+
+  fapi::ul_tti_request msg;
+  msg.slot = msg_slot;
+  {
+    auto& entry = msg.pdus.emplace_back();
+    auto& pusch = entry.pdu.emplace<fapi::ul_pusch_pdu>();
+    pusch       = unittest::build_valid_ul_pusch_pdu();
+  }
+  terr_translator.send_ul_tti_request(msg);
+
+  const auto& pdus = pdu_repo.get_pusch_pdus();
+  ASSERT_EQ(pdus.size(), 1U);
+
+  const auto& stored = pdus[0];
+
+  ASSERT_EQ(stored.pdu.slot, msg_slot) << "pdu.slot must equal the message slot";
+  ASSERT_EQ(stored.pdu.slot_offset, 0U) << "pdu.slot_offset must be zero for terrestrial";
+
+  ASSERT_FALSE(error_notifier_spy.has_on_error_indication_been_called());
+}
+
+// ---- NTN k_mac PUCCH slot tests -------------------------------------------------------
+
+/// Verify that with ntn_k_mac_slots != 0 the FAPI translator sets the PUCCH format configuration slot offset to
+/// k_mac, so the PHY uses the UE's UL slot for sequence generation
+/// (TS 38.211 Section 6.3.2 - PUCCH cyclic shift and DMRS c_init use slot_index from the UE's UL frame).
+/// The PUCCH context slot (used for HARQ-ACK reporting) must remain at the DL-time slot.
+TEST_F(fapi_to_phy_translator_fixture, ntn_k_mac_pucch_config_slot_is_shifted_to_ue_ul_slot)
+{
+  static constexpr unsigned k_mac = 12;
+
+  fapi_to_phy_fastpath_translator_config ntn_cfg = config;
+  ntn_cfg.ntn_k_mac_slots                        = k_mac;
+  fapi_to_phy_fastpath_translator ntn_translator(
+      ntn_cfg,
+      {ocudulog::fetch_basic_logger("FAPI"),
+       dl_processor_pool,
+       rg_pool,
+       dl_pdu_validator,
+       ul_request_processor,
+       pdu_repo,
+       ul_pdu_validator,
+       std::move(std::get<std::unique_ptr<precoding_matrix_repository>>(
+           generate_precoding_matrix_tables(pmi_codebook_one_port{}, 0))),
+       std::move(
+           std::get<std::unique_ptr<uci_part2_correspondence_repository>>(generate_uci_part2_correspondence(1)))});
+  ntn_translator.set_error_indication_notifier(error_notifier_spy);
+
+  const slot_point dl_slot{scs, 3, 0};
+  ntn_translator.handle_new_slot(dl_slot);
+
+  fapi::ul_tti_request msg;
+  msg.slot = dl_slot;
+  {
+    auto& entry = msg.pdus.emplace_back();
+    auto& pucch = entry.pdu.emplace<fapi::ul_pucch_pdu>();
+    pucch       = unittest::build_valid_ul_pucch_f1_pdu();
+  }
+  ntn_translator.send_ul_tti_request(msg);
+
+  const auto& pdus = pdu_repo.get_pucch_pdus();
+  ASSERT_EQ(pdus.size(), 1U);
+
+  const auto& stored = pdus[0];
+
+  // context.slot holds the DL-time slot for HARQ-ACK reporting - must be unchanged.
+  ASSERT_EQ(stored.context.slot, dl_slot) << "PUCCH context.slot must carry DL-time slot for HARQ-ACK reporting";
+
+  // config.slot_offset holds k_mac, so that the PHY generates the sequences with the UE's UL slot.
+  const slot_point config_slot        = std::visit([](const auto& cfg) { return cfg.slot; }, stored.config);
+  const unsigned   config_slot_offset = std::visit([](const auto& cfg) { return cfg.slot_offset; }, stored.config);
+  ASSERT_EQ(config_slot, dl_slot) << "PUCCH config.slot must carry the slot the gNB receives in";
+  ASSERT_EQ(config_slot_offset, k_mac) << "PUCCH config.slot_offset must carry k_mac for sequence generation";
+
+  ASSERT_FALSE(error_notifier_spy.has_on_error_indication_been_called());
+}
+
+/// Verify that with ntn_k_mac_slots == 0 (terrestrial) the PUCCH format configuration slot offset is zero and both
+/// context.slot and config.slot equal the message slot.
+TEST_F(fapi_to_phy_translator_fixture, terrestrial_pucch_config_slot_offset_is_zero)
+{
+  fapi_to_phy_fastpath_translator terr_translator(
+      config,
+      {ocudulog::fetch_basic_logger("FAPI"),
+       dl_processor_pool,
+       rg_pool,
+       dl_pdu_validator,
+       ul_request_processor,
+       pdu_repo,
+       ul_pdu_validator,
+       std::move(std::get<std::unique_ptr<precoding_matrix_repository>>(
+           generate_precoding_matrix_tables(pmi_codebook_one_port{}, 0))),
+       std::move(
+           std::get<std::unique_ptr<uci_part2_correspondence_repository>>(generate_uci_part2_correspondence(1)))});
+  terr_translator.set_error_indication_notifier(error_notifier_spy);
+
+  const slot_point msg_slot{scs, 4, 0};
+  terr_translator.handle_new_slot(msg_slot);
+
+  fapi::ul_tti_request msg;
+  msg.slot = msg_slot;
+  {
+    auto& entry = msg.pdus.emplace_back();
+    auto& pucch = entry.pdu.emplace<fapi::ul_pucch_pdu>();
+    pucch       = unittest::build_valid_ul_pucch_f1_pdu();
+  }
+  terr_translator.send_ul_tti_request(msg);
+
+  const auto& pdus = pdu_repo.get_pucch_pdus();
+  ASSERT_EQ(pdus.size(), 1U);
+
+  const auto&      stored             = pdus[0];
+  const slot_point config_slot        = std::visit([](const auto& cfg) { return cfg.slot; }, stored.config);
+  const unsigned   config_slot_offset = std::visit([](const auto& cfg) { return cfg.slot_offset; }, stored.config);
+
+  ASSERT_EQ(stored.context.slot, msg_slot) << "PUCCH context.slot must equal message slot for terrestrial";
+  ASSERT_EQ(config_slot, msg_slot) << "PUCCH config.slot must equal message slot for terrestrial";
+  ASSERT_EQ(config_slot_offset, 0U) << "PUCCH config.slot_offset must be zero for terrestrial";
+
+  ASSERT_FALSE(error_notifier_spy.has_on_error_indication_been_called());
 }

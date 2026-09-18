@@ -116,3 +116,45 @@ INSTANTIATE_TEST_SUITE_P(
         prach_slot_index_params{subcarrier_spacing::kHz30, subcarrier_spacing::invalid, prach_format_type::one, 14, 7},
         // Short format whose PRACH SCS is coarser than the PUSCH SCS: t_id counts the coarser slots.
         prach_slot_index_params{subcarrier_spacing::kHz30, subcarrier_spacing::kHz15, prach_format_type::A1, 15, 7}));
+
+/// \brief With NTN k_mac != 0 the gNB DL and UL frames are misaligned, so the PRACH detection PDU is scheduled at the
+/// DL-clock slot (UL occasion + k_mac). The reported t_id must name the UE's UL occasion, which is what the UE used to
+/// derive the RA-RNTI (TS 38.321 Section 5.1.3).
+TEST(prach_slot_index_ntn_test, reported_slot_index_is_rebased_to_the_ue_ul_occasion)
+{
+  static constexpr unsigned           K_MAC_SLOTS      = 4;
+  static constexpr subcarrier_spacing SCS              = subcarrier_spacing::kHz30;
+  static constexpr unsigned           UL_OCCASION_SLOT = 10;
+  static constexpr unsigned           DETECTION_SLOT   = UL_OCCASION_SLOT + K_MAC_SLOTS;
+  // Long format at 30 kHz: t_id is the subframe index of the UL occasion slot.
+  static constexpr unsigned EXPECTED_SLOT_INDEX = UL_OCCASION_SLOT / 2;
+
+  p7_indications_notifier_spy                   notifier;
+  phy_to_fapi_results_event_fastpath_translator translator(
+      phy_to_fapi_results_event_fastpath_translator_config{.sector_id                     = 0,
+                                                           .dbfs_to_dbm_conversion_factor = 0.F,
+                                                           .db_to_dbfs_conversion_factor  = 0.F,
+                                                           .msg1_scs                      = subcarrier_spacing::invalid,
+                                                           .ntn_k_mac_slots               = K_MAC_SLOTS},
+      phy_to_fapi_results_event_fastpath_translator_dependencies{.logger = ocudulog::fetch_basic_logger("FAPI")});
+  translator.set_p7_indications_notifier(notifier);
+
+  ul_prach_results result;
+  result.context.slot         = slot_point(SCS, 0, DETECTION_SLOT);
+  result.context.start_symbol = 0;
+  result.context.format       = prach_format_type::one;
+  result.result.rssi_dB       = 0.F;
+
+  prach_detection_result::preamble_indication& preamble = result.result.preambles.emplace_back();
+  preamble.preamble_index                               = 0;
+  preamble.time_advance                                 = phy_time_unit::from_seconds(0);
+  preamble.preamble_power_dB                            = 0.F;
+
+  translator.on_new_prach_results(result);
+
+  ASSERT_TRUE(notifier.last_rach_ind.has_value()) << "No RACH.indication was generated";
+  ASSERT_EQ(EXPECTED_SLOT_INDEX, notifier.last_rach_ind->pdu.slot_index)
+      << "The reported t_id must be rebased by k_mac to the UE UL occasion";
+  // The message header keeps reporting the DL-clock detection slot.
+  ASSERT_EQ(DETECTION_SLOT, notifier.last_rach_ind->slot.slot_index());
+}
