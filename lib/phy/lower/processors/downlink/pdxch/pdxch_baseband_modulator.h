@@ -250,12 +250,16 @@ private:
     current_result.metrics.clipping =
         clipping_counters{.nof_clipped_samples = nof_clipped_samples, .nof_processed_samples = total_processed_samples};
 
-    // Notify completion of the OFDM modulation.
-    notifier.on_modulation_completion(std::move(current_result), current_context);
+    // Move context and result to the stack.
+    resource_grid_context                 this_context = current_context;
+    pdxch_processor_baseband::slot_result this_result  = std::move(current_result);
 
     // Transition modulator state to idle which becomes available for the next use.
     [[maybe_unused]] uint32_t expected_mask = current_state.exchange(state_idle);
     ocudu_assert(expected_mask == state_modulate_mask, "Unexpected state 0x{:08x}.", prev);
+
+    // Notify completion of the OFDM modulation.
+    notifier.on_modulation_completion(std::move(this_result), this_context);
   }
 
   /// State value for when the modulator is not processing any transmisson request.
