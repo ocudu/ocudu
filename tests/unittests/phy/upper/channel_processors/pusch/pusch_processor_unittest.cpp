@@ -150,6 +150,7 @@ protected:
 
     // Generate PDU.
     pdu.slot                 = slot_point(numerology, slot_count_dist(rgen) % (10240 * nof_slots_per_subframe));
+    pdu.slot_offset          = slot_offset_dist(rgen);
     pdu.rnti                 = to_rnti(rnti_dist(rgen));
     pdu.bwp_start_rb         = bwp_start_dist(rgen);
     pdu.bwp_size_rb          = std::min(static_cast<unsigned>(MAX_NOF_PRBS) - pdu.bwp_start_rb, bwp_size_dist(rgen));
@@ -236,6 +237,7 @@ protected:
 
   static std::mt19937                            rgen;
   static std::uniform_int_distribution<unsigned> slot_count_dist;
+  static std::uniform_int_distribution<unsigned> slot_offset_dist;
   static std::uniform_int_distribution<uint16_t> rnti_dist;
   static std::uniform_int_distribution<unsigned> bwp_size_dist;
   static std::uniform_int_distribution<unsigned> bwp_start_dist;
@@ -270,6 +272,7 @@ std::unique_ptr<pusch_pdu_validator> PuschProcessorFixture::validator        = n
 
 std::mt19937                            PuschProcessorFixture::rgen;
 std::uniform_int_distribution<unsigned> PuschProcessorFixture::slot_count_dist(0, 10240 * 8);
+std::uniform_int_distribution<unsigned> PuschProcessorFixture::slot_offset_dist(0, 512);
 std::uniform_int_distribution<uint16_t> PuschProcessorFixture::rnti_dist(1, std::numeric_limits<uint16_t>::max());
 std::uniform_int_distribution<unsigned> PuschProcessorFixture::bwp_size_dist(1, MAX_NOF_PRBS);
 std::uniform_int_distribution<unsigned> PuschProcessorFixture::bwp_start_dist(0, MAX_NOF_PRBS - 1);
@@ -379,7 +382,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   const auto&                              dmrs_sequence_config =
       std::get<dmrs_pusch_estimator::pseudo_random_sequence_configuration>(estimator_entry.config.sequence_config);
   ASSERT_EQ(&rg_spy, estimator_entry.grid);
-  ASSERT_EQ(pdu.slot, estimator_entry.config.slot);
+  ASSERT_EQ(pdu.slot - pdu.slot_offset, estimator_entry.config.slot);
   ASSERT_EQ(dmrs_config.dmrs, dmrs_sequence_config.type);
   ASSERT_EQ(dmrs_config.scrambling_id, dmrs_sequence_config.scrambling_id);
   ASSERT_EQ(dmrs_config.n_scid, dmrs_sequence_config.n_scid);
