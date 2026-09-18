@@ -48,6 +48,14 @@ struct ntn_location_mapping {
 
   bool empty() const { return location_areas.empty(); }
 
+  /// Whether any area names a Mapped Cell ID at all, TS 38.300 sec. 16.14.5.
+  bool names_mapped_cell_ids() const
+  {
+    return std::any_of(location_areas.begin(), location_areas.end(), [](const ntn_location_area& area) {
+      return area.mapped_nci.has_value();
+    });
+  }
+
   /// Whether any area reports \c nci as its Mapped Cell ID, TS 38.300 sec. 16.14.5.
   bool reports_mapped_cell_id(nr_cell_identity nci) const
   {

@@ -349,12 +349,9 @@ cu_cp_user_location_info_nr make_uli(uint64_t                uu_nci,
   return uli;
 }
 
-/// Reports the UE presence in an Area of Interest holding \c aoi_nci alone.
-ue_presence presence_in_area_of(uint64_t aoi_nci, const cu_cp_user_location_info_nr& uli)
+/// Reports the UE presence in \c aoi, the only Area of Interest configured.
+ue_presence presence_in(const area_of_interest& aoi, const cu_cp_user_location_info_nr& uli)
 {
-  area_of_interest aoi;
-  aoi.cell_list.push_back({plmn_identity::test_value(), nr_cell_identity::create(aoi_nci).value()});
-
   ue_location_manager_cfg cfg;
   cfg.report_ue_presence_in_aoi = true;
   cfg.area_of_interest_list.emplace(1, aoi);
@@ -366,6 +363,30 @@ ue_presence presence_in_area_of(uint64_t aoi_nci, const cu_cp_user_location_info
   EXPECT_TRUE(report.ue_presence_in_area_of_interest_list.has_value());
   EXPECT_EQ(report.ue_presence_in_area_of_interest_list->size(), 1);
   return report.ue_presence_in_area_of_interest_list->front().ue_presence_in_aio;
+}
+
+/// Reports the UE presence in an Area of Interest holding the cell \c aoi_nci alone.
+ue_presence presence_in_area_of(uint64_t aoi_nci, const cu_cp_user_location_info_nr& uli)
+{
+  area_of_interest aoi;
+  aoi.cell_list.push_back({plmn_identity::test_value(), nr_cell_identity::create(aoi_nci).value()});
+  return presence_in(aoi, uli);
+}
+
+/// Reports the UE presence in an Area of Interest holding the tracking area \c aoi_tac alone.
+ue_presence presence_in_tracking_area_of(tac_t aoi_tac, const cu_cp_user_location_info_nr& uli)
+{
+  area_of_interest aoi;
+  aoi.tai_list.push_back({plmn_identity::test_value(), aoi_tac});
+  return presence_in(aoi, uli);
+}
+
+/// Reports the UE presence in an Area of Interest holding the RAN node \c aoi_gnb_id alone.
+ue_presence presence_in_ran_node_of(gnb_id_t aoi_gnb_id, const cu_cp_user_location_info_nr& uli)
+{
+  area_of_interest aoi;
+  aoi.ran_node_list.push_back({plmn_identity::test_value(), aoi_gnb_id});
+  return presence_in(aoi, uli);
 }
 
 /// Reports the second of two consecutive locations, with change_of_serve_cell reporting alone active.
@@ -419,6 +440,49 @@ TEST(cu_cp_area_of_interest_test, ue_is_inside_an_area_naming_the_uu_cell_id_wit
 {
   // A terrestrial cell, or an NTN cell whose UE location is unknown, keeps reporting its Uu Cell ID.
   EXPECT_EQ(presence_in_area_of(0x66c000, make_uli(0x66c000)), ue_presence::in);
+}
+
+TEST(cu_cp_area_of_interest_test, ue_presence_is_unknown_while_the_position_naming_the_area_is_missing)
+{
+  // The cell names its areas by Mapped Cell ID, TS 38.300 sec. 16.14.5, but the UE position that picks one never
+  // arrived. Whether the UE is in the area is not something this gNB can answer, and TS 38.413 sec. 9.3.1.67 keeps a
+  // third value for exactly that.
+  cu_cp_user_location_info_nr uli = make_uli(0x66c000);
+  uli.mapped_nci_unknown          = true;
+
+  EXPECT_EQ(presence_in_area_of(0x66c0ff, uli), ue_presence::unknown);
+}
+
+TEST(cu_cp_area_of_interest_test, a_missing_position_does_not_hide_an_area_naming_the_uu_cell_id)
+{
+  // The serving cell is named outright, so no Mapped Cell ID is needed to place the UE.
+  cu_cp_user_location_info_nr uli = make_uli(0x66c000);
+  uli.mapped_nci_unknown          = true;
+
+  EXPECT_EQ(presence_in_area_of(0x66c000, uli), ue_presence::in);
+}
+
+TEST(cu_cp_area_of_interest_test, a_missing_position_does_not_hide_a_tracking_area_the_cell_broadcasts)
+{
+  // Only the cells of an Area of Interest are named by Mapped Cell ID, TS 38.300 sec. 16.14.5. A tracking area is
+  // answered from what the cell broadcasts, so it is decided without a position and TS 23.502 Annex D.2 leaves no
+  // room for reporting it unknown.
+  cu_cp_user_location_info_nr uli = make_uli(0x66c000);
+  uli.mapped_nci_unknown          = true;
+
+  EXPECT_EQ(presence_in_tracking_area_of(7, uli), ue_presence::in);
+  EXPECT_EQ(presence_in_tracking_area_of(99, uli), ue_presence::out);
+}
+
+TEST(cu_cp_area_of_interest_test, a_missing_position_does_not_hide_a_ran_node_area)
+{
+  // The RAN node of an Area of Interest is matched against the gNB ID of the serving cell, which no position is
+  // needed to read.
+  cu_cp_user_location_info_nr uli = make_uli(0x66c000);
+  uli.mapped_nci_unknown          = true;
+
+  EXPECT_EQ(presence_in_ran_node_of(gnb_id_t{411, 22}, uli), ue_presence::in);
+  EXPECT_EQ(presence_in_ran_node_of(gnb_id_t{412, 22}, uli), ue_presence::out);
 }
 
 TEST(cu_cp_area_of_interest_test, ue_is_outside_an_area_naming_an_unrelated_cell)

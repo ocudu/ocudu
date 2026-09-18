@@ -152,13 +152,19 @@ void rrc_ue_impl::on_as_security_activated()
   request_coarse_ue_location();
 }
 
+/// \brief Whether the coarse UE location is put to use in \c cell.
+///
+/// Only an NTN cell, whose footprint can span several tracking areas, and only one configured with the areas that turn
+/// a position into a TAC or a Mapped Cell ID. Elsewhere no position is ever asked for, so none is awaited either.
+static bool uses_coarse_ue_location(const rrc_cell_context& cell)
+{
+  return not cell.location_mapping.empty() and
+         std::any_of(cell.bands.begin(), cell.bands.end(), band_helper::is_ntn_band);
+}
+
 void rrc_ue_impl::request_coarse_ue_location()
 {
-  // Only worth asking for in an NTN cell, whose footprint can span several tracking areas, and only when the cell
-  // configures the areas that turn a position into a TAC. Without them the answer has no use, and the UE is spared
-  // the exchange.
-  if (context.cell.location_mapping.empty() or
-      std::none_of(context.cell.bands.begin(), context.cell.bands.end(), band_helper::is_ntn_band)) {
+  if (not uses_coarse_ue_location(context.cell)) {
     return;
   }
 
@@ -170,6 +176,14 @@ void rrc_ue_impl::fill_ue_derived_location(cu_cp_user_location_info_nr& user_loc
 {
   const std::optional<tac_t>            derived_tac = get_ue_location_derived_tac();
   const std::optional<nr_cell_identity> mapped_nci  = get_ue_mapped_cell_id();
+
+  // A cell that names its areas by Mapped Cell ID cannot place a UE whose position never arrived, so say so rather
+  // than let the CU-CP read the absent identity as the UE being outside every area, TS 38.413 sec. 9.3.1.67.
+  // Only a cell that asks for a position can be waiting for one: a mapping on a terrestrial cell still resolves the
+  // identities the core names, but derives none for a UE, so it must not report every UE of that cell unknown.
+  user_location_info.mapped_nci_unknown = not context.coarse_location.has_value() and
+                                          uses_coarse_ue_location(context.cell) and
+                                          context.cell.location_mapping.names_mapped_cell_ids();
 
   // An area whose TAC the cell does not broadcast still names a Mapped Cell ID, so the two are taken separately.
   if (not derived_tac.has_value() and not mapped_nci.has_value()) {

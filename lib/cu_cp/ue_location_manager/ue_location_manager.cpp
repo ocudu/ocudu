@@ -151,7 +151,9 @@ ue_presence ue_location_manager::check_ue_presence(const area_of_interest& aoi, 
     }
   }
 
-  return ue_presence::out;
+  // Without the position, an NTN cell naming its areas by Mapped Cell ID cannot tell the UE is outside them,
+  // TS 38.413 sec. 9.3.1.67. Only the cell list needs the position, so only it can leave the presence unknown.
+  return (loc.mapped_nci_unknown && !aoi.cell_list.empty()) ? ue_presence::unknown : ue_presence::out;
 }
 
 std::optional<location_report>

@@ -306,3 +306,29 @@ TEST_F(rrc_ue_coarse_location, a_location_derived_from_no_position_is_not_dated)
   EXPECT_FALSE(derived_location().time_stamp.has_value());
 }
 
+TEST_F(rrc_ue_coarse_location, ue_is_unplaceable_while_no_position_reached_a_cell_naming_mapped_cell_ids)
+{
+  // The areas are named by Mapped Cell ID, so without a position the gNB cannot say whether the UE is in one of
+  // them. TS 38.413 sec. 9.3.1.67 keeps a third value for that, rather than reporting the UE outside every area.
+  init_cell(nr_band::n256, /* with_mapping */ true);
+
+  EXPECT_TRUE(derived_location().mapped_nci_unknown);
+}
+
+TEST_F(rrc_ue_coarse_location, a_reported_position_places_the_ue)
+{
+  init_and_request();
+
+  receive_ue_information_response(packed_position({51.0, 15.0}));
+
+  EXPECT_FALSE(derived_location().mapped_nci_unknown);
+}
+
+TEST_F(rrc_ue_coarse_location, a_mapping_on_a_terrestrial_cell_does_not_leave_the_ue_unplaceable)
+{
+  // The mapping is kept on a TN cell but never used: no position is asked for, so none is awaited. Reporting the UE
+  // unplaceable would hide every Area of Interest answer for as long as the misconfigured cell is up.
+  init_cell(nr_band::n78, /* with_mapping */ true);
+
+  EXPECT_FALSE(derived_location().mapped_nci_unknown);
+}
