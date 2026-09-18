@@ -13,16 +13,20 @@ Before creating an issue make sure to:
 -->
 
 ## Description
+
 <!-- Provide a clear and concise description of what the issue is. -->
 
 ## Setup Details
+
 <!-- Provide details of the test setup. This would help us reproduce the problem reliably.
 Include hardware setup, operation system, OCUDU git hash, etc. -->
 
 ## Actual Behavior
+
 <!-- Describe what is currently happening. -->
 
 ## Expected Behavior
+
 <!-- Describe what should happen according to specs or requirements. -->
 
 ## Steps to Reproduce

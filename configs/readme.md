@@ -1,24 +1,22 @@
 # Configuration Examples
 
-This folder contains a number of selected example configuration files that represent some
-of the most common use-cases and configuration options. Their main goal is to simplify
-the bring up and, therefore, they only expose the most important as well as the most likely
-to change configuration options. For the sake of simplicity and readability they do not
-list all available configuration sections, subsection and fields.
+This folder contains a number of selected example configuration files that represent some of the most common use-cases
+and configuration options. Their main goal is to simplify the bring up and, therefore, they only expose the most
+important as well as the most likely to change configuration options. For the sake of simplicity and readability they do
+not list all available configuration sections, subsection and fields.
 
 ## Usage
 
-The OCUDU gNB can be configured via one or multiple configuration files and/or via
-the command line. When multiple configuration files are specified, their content gets combined
-by the gNB application. In case there are repeated parameters across configuration files, the
-parameter values of the last file are selected. Similarly, the parameters passed via command
-line overwrite the parameters specified via configuration files. If the value of a parameter is
-not specified by neither the configuration files nor through the command line, a default value
-is selected by the application.
+The OCUDU gNB can be configured via one or multiple configuration files and/or via the command line. When multiple
+configuration files are specified, their content gets combined by the gNB application. In case there are repeated
+parameters across configuration files, the parameter values of the last file are selected. Similarly, the parameters
+passed via command line overwrite the parameters specified via configuration files. If the value of a parameter is not
+specified by neither the configuration files nor through the command line, a default value is selected by the
+application.
 
-The capability to overlay parameters via multiple configuration files and through the command line
-is useful to minimize config duplication. For example users can share the same QoS configuration
-across many experiments in different bands as follows:
+The capability to overlay parameters via multiple configuration files and through the command line is useful to minimize
+config duplication. For example users can share the same QoS configuration across many experiments in different bands as
+follows:
 
 ```bash
 sudo ./gnb -c qos.yml -c gnb_ru_ran550_tdd_n78_20mhz.yml
@@ -26,15 +24,14 @@ sudo ./gnb -c qos.yml -c gnb_ru_ran550_tdd_n78_20mhz.yml
 
 ## Full list of configuration options
 
-Look [here](https://docs.ocudu.org/user_manual/config_reference/) for
-the main configuration reference. We update this list regularly and aim to always keep it up-to-date
-with the actual code.
+Look [here](https://docs.ocudu.org/user_manual/config_reference/) for the main configuration reference. We update this
+list regularly and aim to always keep it up-to-date with the actual code.
 
-This process, however, is done manually and might not always be 100% accurate.
-To obtain a full list of configuration options available on the command line and in configuration files
-it is best to invoke the respective binary with the `-h` parameter and navigate through the subsections.
-Note that the each section might contain multiple subsections. To obtain the list of available config
-options for a subsection it is again required to call the binary with the `subsectioname -h` parameter.
+This process, however, is done manually and might not always be 100% accurate. To obtain a full list of configuration
+options available on the command line and in configuration files it is best to invoke the respective binary with the
+`-h` parameter and navigate through the subsections. Note that the each section might contain multiple subsections. To
+obtain the list of available config options for a subsection it is again required to call the binary with the
+`subsectioname -h` parameter.
 
 For example, to obtain the list of all main gNB configuration options run:
 

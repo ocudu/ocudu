@@ -1,30 +1,27 @@
 # Building with CUDA acceleration
 
-CUDA acceleration is opt-in at build time. With `ENABLE_CUDA=OFF`, the default, the
-build, the sources and the tests are exactly as they are without CUDA support.
+CUDA acceleration is opt-in at build time. With `ENABLE_CUDA=OFF`, the default, the build, the sources and the tests are
+exactly as they are without CUDA support.
 
-This page covers the build prerequisites only. The accelerated components, their
-configuration and their benchmarks are documented alongside the code that provides
-them.
+This page covers the build prerequisites only. The accelerated components, their configuration and their benchmarks are
+documented alongside the code that provides them.
 
 ## Prerequisites
 
 - An NVIDIA CUDA Toolkit installation, providing `nvcc` and the CUDA runtime.
-- A VkFFT checkout. VkFFT is a header-only library and is not distributed by the
-  common package managers, so it is installed manually; see below.
+- A VkFFT checkout. VkFFT is a header-only library and is not distributed by the common package managers, so it is
+  installed manually; see below.
 
 ## Installing VkFFT
 
-VkFFT is header-only, so "installing" it means placing a checkout somewhere the build
-can find it:
+VkFFT is header-only, so "installing" it means placing a checkout somewhere the build can find it:
 
 ```bash
 git clone https://github.com/DTolm/VkFFT.git /opt/vkfft
 ```
 
-The directory passed to the build must contain `vkFFT/vkFFT.h`. The build locates it
-through the `VKFFT_ROOT` CMake variable or an environment variable of the same name,
-falling back to the standard system include directories:
+The directory passed to the build must contain `vkFFT/vkFFT.h`. The build locates it through the `VKFFT_ROOT` CMake
+variable or an environment variable of the same name, falling back to the standard system include directories:
 
 ```bash
 export VKFFT_ROOT=/opt/vkfft
@@ -34,9 +31,8 @@ VkFFT is MIT licensed. It is not vendored into this repository.
 
 ## Selecting the CUDA architecture
 
-`CMAKE_CUDA_ARCHITECTURES` is mandatory when `ENABLE_CUDA=ON`. It cannot be guessed:
-`nvcc` needs it to emit device code for the target GPU, and an incorrect value is not
-detected until run time, where it surfaces as
+`CMAKE_CUDA_ARCHITECTURES` is mandatory when `ENABLE_CUDA=ON`. It cannot be guessed: `nvcc` needs it to emit device code
+for the target GPU, and an incorrect value is not detected until run time, where it surfaces as
 
 ```
 CUDA Error: no kernel image is available for execution on the device
@@ -75,7 +71,6 @@ grep -nE '^ENABLE_CUDA|^CMAKE_CUDA_ARCHITECTURES|^VKFFT_ROOT' build/CMakeCache.t
 
 ## Cross-compiling and non-default toolchains
 
-The CUDA host compiler must match the compiler used for the rest of the project. When
-building for an Arm platform whose exact core is not known to the compiler, select the
-closest supported target explicitly with `-DMCPU=<target>` rather than relying on
-`-mcpu=native`, which can silently fall back to a generic baseline.
+The CUDA host compiler must match the compiler used for the rest of the project. When building for an Arm platform whose
+exact core is not known to the compiler, select the closest supported target explicitly with `-DMCPU=<target>` rather
+than relying on `-mcpu=native`, which can silently fall back to a generic baseline.

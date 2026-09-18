@@ -1,6 +1,7 @@
 # Setting Up Your OCUDU Fork
 
-This guide explains how to fork and configure the OCUDU repository to replicate the CI/CD infrastructure in your own GitLab instance.
+This guide explains how to fork and configure the OCUDU repository to replicate the CI/CD infrastructure in your own
+GitLab instance.
 
 ## 1. Fork the Repository
 
@@ -24,19 +25,20 @@ OCUDU supports three CI/CD modes depending on your requirements:
 
 OCUDU CI/CD uses two variables to resolve the registry and images it will use:
 
-| Variable | Default Value | Description |
-|----------|---------------|-------------|
+| Variable                | Default Value         | Description               |
+| ----------------------- | --------------------- | ------------------------- |
 | `OCUDU_REGISTRY_SERVER` | `registry.gitlab.com` | Container registry server |
-| `OCUDU_PROJECT_PATH` | `ocudu/ocudu` | Project path for images |
+| `OCUDU_PROJECT_PATH`    | `ocudu/ocudu`         | Project path for images   |
 
-These variables point to the public OCUDU repository by default. You can override them by creating variables in your project or group.
+These variables point to the public OCUDU repository by default. You can override them by creating variables in your
+project or group.
 
 **Option B - Use Public Images:**
 
 In your GitLab project, go to **Settings → CI/CD → Variables** and add:
 
-| Variable | Value |
-|----------|-------|
+| Variable                            | Value  |
+| ----------------------------------- | ------ |
 | `SKIP_OCUDU_BUILDING_CONTAINERS_CI` | `true` |
 
 This uses default public images without building custom ones.
@@ -45,18 +47,20 @@ This uses default public images without building custom ones.
 
 Override the registry variables with your values:
 
-| Variable | Value | Example |
-|----------|-------|---------|
+| Variable                | Value                | Example                                               |
+| ----------------------- | -------------------- | ----------------------------------------------------- |
 | `OCUDU_REGISTRY_SERVER` | Your registry server | `registry.gitlab.com` or `$CI_TEMPLATE_REGISTRY_HOST` |
-| `OCUDU_PROJECT_PATH` | Your project path | `your_group/ocudu` or `$CI_PROJECT_PATH` |
+| `OCUDU_PROJECT_PATH`    | Your project path    | `your_group/ocudu` or `$CI_PROJECT_PATH`              |
 
-You can use [predefined GitLab CI/CD variables](https://docs.gitlab.com/ee/ci/variables/predefined_variables.html) for dynamic configuration.
+You can use [predefined GitLab CI/CD variables](https://docs.gitlab.com/ee/ci/variables/predefined_variables.html) for
+dynamic configuration.
 
 ### 2.2. Configure the GitLab Project
 
 #### GitOps
 
-OCUDU uses a Terraform/OpenTofu solution to configure the GitLab project itself, including project settings, pipeline schedules, protected branches, approval rules, and more.
+OCUDU uses a Terraform/OpenTofu solution to configure the GitLab project itself, including project settings, pipeline
+schedules, protected branches, approval rules, and more.
 
 **Setup:**
 
@@ -75,7 +79,8 @@ For more details, see the [terraform module documentation](./ci-shared/gitlab_se
 
 If you don't create the `GITLAB_TOKEN` variable, GitOps won't be used and you can manage configuration manually.
 
-In that case, check the scheduled pipelines defined at the end of [.gitlab/main.tf](./main.tf) to replicate them manually in your project's **Settings → CI/CD → Schedules**.
+In that case, check the scheduled pipelines defined at the end of [.gitlab/main.tf](./main.tf) to replicate them
+manually in your project's **Settings → CI/CD → Schedules**.
 
 ### 2.3. GitLab Runners
 
@@ -85,15 +90,18 @@ OCUDU CI/CD is designed to work primarily with GitLab Shared Runners, with optio
 
 Different pipeline types use different runner tags:
 
-| Tag | When Used | Runner Type | Requirements |
-| ----- | ----------- | ------------- | -------------- |
-| (no tag) | All pipelines | Free GitLab Shared Runners | Small tasks, minimal resources |
-| `saas-linux-medium-amd64` | MR pipelines & Scheduled pipelines | Free GitLab Shared Runners | Available to all GitLab users |
-| `saas-linux-medium-arm64` | Scheduled pipelines | GitLab Shared Runners / Custom Runners | Available to Premium / Ultimate GitLab users |
-| `avx512` | Scheduled pipelines | Custom Runner | AVX512 instruction set support (combined with `saas-linux-medium-amd64`) |
-| `sctp` | Scheduled pipelines | Custom Runner | SCTP kernel module active (combined with `saas-linux-medium-amd64` or `saas-linux-medium-arm64`) |
+| Tag                       | When Used                          | Runner Type                            | Requirements                                                                                     |
+| ------------------------- | ---------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| (no tag)                  | All pipelines                      | Free GitLab Shared Runners             | Small tasks, minimal resources                                                                   |
+| `saas-linux-medium-amd64` | MR pipelines & Scheduled pipelines | Free GitLab Shared Runners             | Available to all GitLab users                                                                    |
+| `saas-linux-medium-arm64` | Scheduled pipelines                | GitLab Shared Runners / Custom Runners | Available to Premium / Ultimate GitLab users                                                     |
+| `avx512`                  | Scheduled pipelines                | Custom Runner                          | AVX512 instruction set support (combined with `saas-linux-medium-amd64`)                         |
+| `sctp`                    | Scheduled pipelines                | Custom Runner                          | SCTP kernel module active (combined with `saas-linux-medium-amd64` or `saas-linux-medium-arm64`) |
 
-> The CI is using `OCUDU_RUNNER_TAG` variable with value `saas-linux-medium` to define the default runner type for OCUDU builds. You can change that variable at group / project level and select other runners in your forked repo. For example, setting `OCUDU_RUNNER_TAG` to `saas-linux-large` will use `saas-linux-large-amd64` / `saas-linux-large-arm64` in all OCUDU build jobs. `saas-linux-large` are available in Premium / Ultimate GitLab tiers.
+> The CI is using `OCUDU_RUNNER_TAG` variable with value `saas-linux-medium` to define the default runner type for OCUDU
+> builds. You can change that variable at group / project level and select other runners in your forked repo. For
+> example, setting `OCUDU_RUNNER_TAG` to `saas-linux-large` will use `saas-linux-large-amd64` / `saas-linux-large-arm64`
+> in all OCUDU build jobs. `saas-linux-large` are available in Premium / Ultimate GitLab tiers.
 
 #### Default Behavior
 
@@ -113,7 +121,8 @@ You have several options for configuring runners:
 
 - Disable GitLab shared runners
 - Set up your own on-premise or cloud runners with matching tags:
-  - `saas-linux-medium-amd64` and/or `saas-linux-medium-arm64` for build jobs. These tags should match `${OCUDU_RUNNER_TAG}-amd64` / `${OCUDU_RUNNER_TAG}-arm64` in case you want to modify that variable.
+  - `saas-linux-medium-amd64` and/or `saas-linux-medium-arm64` for build jobs. These tags should match
+    `${OCUDU_RUNNER_TAG}-amd64` / `${OCUDU_RUNNER_TAG}-arm64` in case you want to modify that variable.
   - `avx512` for jobs requiring AVX512 instruction set
   - `sctp` for jobs requiring SCTP protocol support
 - See [GitLab Runner installation guide](https://docs.gitlab.com/runner/install/)

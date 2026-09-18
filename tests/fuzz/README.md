@@ -1,9 +1,8 @@
 # Fuzz Test Harnesses
 
-Coverage-guided fuzz testing, targeting [AFL++](https://github.com/AFLplusplus/AFLplusplus). The
-harnesses use the `LLVMFuzzerTestOneInput` interface so they also run unmodified
-under [libFuzzer](https://llvm.org/docs/LibFuzzer.html) and are compatible with
-[OSS-Fuzz](https://github.com/google/oss-fuzz).
+Coverage-guided fuzz testing, targeting [AFL++](https://github.com/AFLplusplus/AFLplusplus). The harnesses use the
+`LLVMFuzzerTestOneInput` interface so they also run unmodified under [libFuzzer](https://llvm.org/docs/LibFuzzer.html)
+and are compatible with [OSS-Fuzz](https://github.com/google/oss-fuzz).
 
 ---
 
@@ -25,13 +24,10 @@ sudo apt-get install -y \
     ninja-build
 ```
 
-`afl++` pulls in `afl-clang-fast++`, `afl-fuzz`, `afl-cmin`, `afl-tmin`,
-`afl-whatsup`, and `afl-plot`.  `llvm` / `llvm-dev` provide
-`llvm-symbolizer`, which is needed to resolve symbol names in ASAN crash
-reports.
+`afl++` pulls in `afl-clang-fast++`, `afl-fuzz`, `afl-cmin`, `afl-tmin`, `afl-whatsup`, and `afl-plot`. `llvm` /
+`llvm-dev` provide `llvm-symbolizer`, which is needed to resolve symbol names in ASAN crash reports.
 
-> **Version note:** The `afl++` package in Ubuntu 26.04 LTS ships AFL++
-> 4.33c. If you need a newer release, see the
+> **Version note:** The `afl++` package in Ubuntu 26.04 LTS ships AFL++ 4.33c. If you need a newer release, see the
 > [AFL++ installation instructions](https://github.com/AFLplusplus/AFLplusplus/blob/stable/docs/INSTALL.md).
 
 ### Verify the installation
@@ -46,8 +42,8 @@ llvm-symbolizer --version
 
 ## Building
 
-The fuzz targets are gated behind the `ENABLE_FUZZTESTS` CMake option, which
-is **off by default** to avoid affecting normal builds.
+The fuzz targets are gated behind the `ENABLE_FUZZTESTS` CMake option, which is **off by default** to avoid affecting
+normal builds.
 
 ### Recommended configuration (AFL++ + AddressSanitizer)
 
@@ -68,21 +64,19 @@ cd ..   # return to the repository root
 
 ```
 
-`fuzz_targets` is an aggregate target that builds every fuzz binary, so no
-target list needs updating when a new harness is added.
+`fuzz_targets` is an aggregate target that builds every fuzz binary, so no target list needs updating when a new harness
+is added.
 
-`ENABLE_ASAN=ON` adds `-fsanitize=address` on top of the fuzzer
-instrumentation, which is the recommended combination for catching memory
-safety bugs.
+`ENABLE_ASAN=ON` adds `-fsanitize=address` on top of the fuzzer instrumentation, which is the recommended combination
+for catching memory safety bugs.
 
-> **Note:** `BUILD_TESTING=OFF` is optional but speeds up the build by
-> skipping the full unit-test suite.  The fuzz targets have no dependency on
-> it.
+> **Note:** `BUILD_TESTING=OFF` is optional but speeds up the build by skipping the full unit-test suite. The fuzz
+> targets have no dependency on it.
 
 ### libFuzzer (alternative, no AFL++ required)
 
-The same source files compile directly with libFuzzer if you do not have
-AFL++ installed.  Replace the compiler wrappers with plain `clang++`:
+The same source files compile directly with libFuzzer if you do not have AFL++ installed. Replace the compiler wrappers
+with plain `clang++`:
 
 ```bash
 mkdir build_libfuzz && cd build_libfuzz
@@ -114,13 +108,12 @@ python3 tests/fuzz/ngap/gen_corpus.py
 python3 tests/fuzz/rrc/gen_corpus.py
 ```
 
-Each script writes binary seed files into the corpus sub-directories of its
-own layer.
+Each script writes binary seed files into the corpus sub-directories of its own layer.
 
 ### OSS-Fuzz zip format
 
-Each script accepts an optional flag to write seeds as a zip file suitable
-for the `$OUT/<target>_seed_corpus.zip` convention expected by OSS-Fuzz:
+Each script accepts an optional flag to write seeds as a zip file suitable for the `$OUT/<target>_seed_corpus.zip`
+convention expected by OSS-Fuzz:
 
 ```bash
 # NGAP: one zip covers both NGAP targets
@@ -156,8 +149,8 @@ mkdir -p $FUZZ_OUTPUT_DIR/uplane $FUZZ_OUTPUT_DIR/ecpri $FUZZ_OUTPUT_DIR/vlan \
          $FUZZ_OUTPUT_DIR/rrc_cu_cp
 ```
 
-`FUZZ_OUTPUT_DIR` is picked up automatically by `run_fuzzers.sh`.  For manual
-`afl-fuzz` invocations, pass the path directly via `-o`.
+`FUZZ_OUTPUT_DIR` is picked up automatically by `run_fuzzers.sh`. For manual `afl-fuzz` invocations, pass the path
+directly via `-o`.
 
 ### OFH U-Plane decoder fuzzer
 
@@ -205,17 +198,17 @@ AFL_FAST_CAL=1 afl-fuzz \
     -- ./build_fuzz/tests/fuzz/ngap/ngap_cu_cp_fuzzer @@
 ```
 
-> **Note:** Use `AFL_FAST_CAL=1` (persistent mode) or libFuzzer for throughput; in standard fork
-> mode each child re-runs the NG Setup handshake before processing its input.
+> **Note:** Use `AFL_FAST_CAL=1` (persistent mode) or libFuzzer for throughput; in standard fork mode each child re-runs
+> the NG Setup handshake before processing its input.
 
 #### Test double architecture
 
-| Component | Role |
-|---|---|
-| `fuzz_amf` | `n2_connection_client` stub; `push_tx_pdu()` injects a decoded `ngap_message` into the CU-CP, `try_pop_rx_pdu()` drains responses sent by the CU-CP |
-| `fuzz_xnc_gateway` | No-op `xnc_connection_gateway`; the Xn-C interface is not under test |
-| `task_worker` | Background thread that executes CU-CP tasks |
-| `timer_manager` | Driven from the fuzzer main thread via `tick()` to cover timer-expiry code paths |
+| Component          | Role                                                                                                                                                |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fuzz_amf`         | `n2_connection_client` stub; `push_tx_pdu()` injects a decoded `ngap_message` into the CU-CP, `try_pop_rx_pdu()` drains responses sent by the CU-CP |
+| `fuzz_xnc_gateway` | No-op `xnc_connection_gateway`; the Xn-C interface is not under test                                                                                |
+| `task_worker`      | Background thread that executes CU-CP tasks                                                                                                         |
+| `timer_manager`    | Driven from the fuzzer main thread via `tick()` to cover timer-expiry code paths                                                                    |
 
 ### RRC UE uplink fuzzer
 
@@ -226,42 +219,42 @@ AFL_FAST_CAL=1 afl-fuzz \
     -- ./build_fuzz/tests/fuzz/rrc/rrc_ue_fuzzer @@
 ```
 
-This harness drives an `rrc_ue_impl` directly, with no CU-CP, PDCP or F1AP around it. RRC is the
-only CU-CP layer an unauthenticated attacker reaches: `RRCSetupRequest`, `RRCSetupComplete` and
-`RRCReestablishmentRequest` are processed before AS security is activated.
+This harness drives an `rrc_ue_impl` directly, with no CU-CP, PDCP or F1AP around it. RRC is the only CU-CP layer an
+unauthenticated attacker reaches: `RRCSetupRequest`, `RRCSetupComplete` and `RRCReestablishmentRequest` are processed
+before AS security is activated.
 
-Injecting above PDCP is what makes the layer fuzzable at all. Once security is activated, PDCP
-verifies a MAC-I over the RRC PDU, so a mutated payload is rejected before RRC ever sees it and the
-UE is released. Above PDCP the `integrity_verified` flag becomes a fuzzer-controlled input bit,
-which is what reaches the TS 38.331 Annex B1 gating branches in `rrc_ue_impl::handle_pdu()`: a
-protected message arriving unprotected, and an unprotected message arriving protected.
+Injecting above PDCP is what makes the layer fuzzable at all. Once security is activated, PDCP verifies a MAC-I over the
+RRC PDU, so a mutated payload is rejected before RRC ever sees it and the UE is released. Above PDCP the
+`integrity_verified` flag becomes a fuzzer-controlled input bit, which is what reaches the TS 38.331 Annex B1 gating
+branches in `rrc_ue_impl::handle_pdu()`: a protected message arriving unprotected, and an unprotected message arriving
+protected.
 
 #### Input format
 
 The first byte is a control byte; the remaining bytes are the RRC PDU.
 
-| Bit | Meaning |
-|---|---|
-| 0 | Logical channel: 0 = UL-CCCH, 1 = UL-DCCH |
-| 1 | `integrity_verified` flag passed to the UL-DCCH handler |
-| 2 | SRB: 0 = SRB1, 1 = SRB2 |
+| Bit | Meaning                                                     |
+| --- | ----------------------------------------------------------- |
+| 0   | Logical channel: 0 = UL-CCCH, 1 = UL-DCCH                   |
+| 1   | `integrity_verified` flag passed to the UL-DCCH handler     |
+| 2   | SRB: 0 = SRB1, 1 = SRB2                                     |
 | 3-4 | UE state reached before the payload is injected (see below) |
-| 5-7 | Unused |
+| 5-7 | Unused                                                      |
 
-| Value | UE state |
-|---|---|
-| 0 | Fresh. No RRC connection; only UL-CCCH is meaningful |
-| 1 | `RRCSetupRequest` handled, `RRCSetup` sent, awaiting `RRCSetupComplete` |
-| 2 | `RRCSetupComplete` handled. SRB1 is up, AS security is not active |
-| 3 | AS security activated on SRB1 and SRB2 created |
+| Value | UE state                                                                |
+| ----- | ----------------------------------------------------------------------- |
+| 0     | Fresh. No RRC connection; only UL-CCCH is meaningful                    |
+| 1     | `RRCSetupRequest` handled, `RRCSetup` sent, awaiting `RRCSetupComplete` |
+| 2     | `RRCSetupComplete` handled. SRB1 is up, AS security is not active       |
+| 3     | AS security activated on SRB1 and SRB2 created                          |
 
-The UE is rebuilt for every input, so a crash reproduces from its input file alone rather than
-depending on the inputs the fuzzer happened to run before it. The canned messages used to reach
-each state come from `tests/unittests/rrc/rrc_ue_test_helpers.h`.
+The UE is rebuilt for every input, so a crash reproduces from its input file alone rather than depending on the inputs
+the fuzzer happened to run before it. The canned messages used to reach each state come from
+`tests/unittests/rrc/rrc_ue_test_helpers.h`.
 
-Logs are routed to `/dev/null` at debug level rather than switched off: `log_rrc_message()` and the
-`to_json()` call in `rrc_ue_impl::store_ue_capabilities()` walk the decoded, attacker-controlled
-ASN.1 structures, which makes them part of the surface under test.
+Logs are routed to `/dev/null` at debug level rather than switched off: `log_rrc_message()` and the `to_json()` call in
+`rrc_ue_impl::store_ue_capabilities()` walk the decoded, attacker-controlled ASN.1 structures, which makes them part of
+the surface under test.
 
 ### Full-stack RRC / CU-CP fuzzer
 
@@ -272,41 +265,38 @@ AFL_FAST_CAL=1 afl-fuzz \
     -- ./build_fuzz/tests/fuzz/rrc/rrc_cu_cp_fuzzer @@
 ```
 
-Injects RRC messages through a complete CU-CP with an AMF stub and a DU stub attached, so that the
-F1AP, PDCP and CU-CP layers around RRC are exercised on every input. The F1AP wrapper and the PDCP
-header are scaffolding the harness builds; only the RRC container is mutated. Fuzzing the F1AP
-wrapper itself belongs in a target under `tests/fuzz/f1ap`.
+Injects RRC messages through a complete CU-CP with an AMF stub and a DU stub attached, so that the F1AP, PDCP and CU-CP
+layers around RRC are exercised on every input. The F1AP wrapper and the PDCP header are scaffolding the harness builds;
+only the RRC container is mutated. Fuzzing the F1AP wrapper itself belongs in a target under `tests/fuzz/f1ap`.
 
-A UE is created and released for every input, so a crash reproduces from its input file alone. The
-UE pool is capped at 8, which turns a UE that fails to be released into an immediate failure to
-create the next one rather than a slow leak.
+A UE is created and released for every input, so a crash reproduces from its input file alone. The UE pool is capped at
+8, which turns a UE that fails to be released into an immediate failure to create the next one rather than a slow leak.
 
 #### Input format
 
-The first byte is a control byte; the remaining bytes are the RRC PDU. It carries neither the
-`integrity_verified` bit nor an SRB selector that `rrc_ue_fuzzer` has: PDCP derives the first from
-the MAC-I, and SRB2 only exists after security activation.
+The first byte is a control byte; the remaining bytes are the RRC PDU. It carries neither the `integrity_verified` bit
+nor an SRB selector that `rrc_ue_fuzzer` has: PDCP derives the first from the MAC-I, and SRB2 only exists after security
+activation.
 
-| Bit | Meaning |
-|---|---|
-| 0 | Logical channel: 0 = UL-CCCH, 1 = UL-DCCH on SRB1 |
-| 1 | UE state: 0 = awaiting `RRCSetupComplete`, 1 = connected |
-| 2-7 | Unused |
+| Bit | Meaning                                                  |
+| --- | -------------------------------------------------------- |
+| 0   | Logical channel: 0 = UL-CCCH, 1 = UL-DCCH on SRB1        |
+| 1   | UE state: 0 = awaiting `RRCSetupComplete`, 1 = connected |
+| 2-7 | Unused                                                   |
 
 #### Choosing between the two RRC targets
 
-| | `rrc_ue_fuzzer` | `rrc_cu_cp_fuzzer` |
-|---|---|---|
-| Layers under test | RRC UE only | F1AP, CU-CP, PDCP, RRC |
-| Post-security states | Yes, via the `integrity_verified` bit | No, see above |
-| Throughput (ASan, Debug) | ~1000 exec/s | ~450-900 exec/s |
-| Cross-layer bugs | Out of reach | In reach |
+|                          | `rrc_ue_fuzzer`                       | `rrc_cu_cp_fuzzer`     |
+| ------------------------ | ------------------------------------- | ---------------------- |
+| Layers under test        | RRC UE only                           | F1AP, CU-CP, PDCP, RRC |
+| Post-security states     | Yes, via the `integrity_verified` bit | No, see above          |
+| Throughput (ASan, Debug) | ~1000 exec/s                          | ~450-900 exec/s        |
+| Cross-layer bugs         | Out of reach                          | In reach               |
 
 ### Running in parallel (recommended)
 
-AFL++ scales linearly with additional CPU cores.  Use one main instance
-(`-M`) and one or more secondary instances (`-S`) pointing at the same output
-directory:
+AFL++ scales linearly with additional CPU cores. Use one main instance (`-M`) and one or more secondary instances (`-S`)
+pointing at the same output directory:
 
 ```bash
 # Terminal 1 - main instance
@@ -322,8 +312,8 @@ afl-fuzz -S worker1 \
     -- ./build_fuzz/tests/fuzz/ofh/ofh_uplane_decoder_fuzzer @@
 ```
 
-In parallel mode, AFL++ writes each instance's findings to a named
-subdirectory: `findings/uplane/main/`, `findings/uplane/worker1/`, etc.
+In parallel mode, AFL++ writes each instance's findings to a named subdirectory: `findings/uplane/main/`,
+`findings/uplane/worker1/`, etc.
 
 ### Monitoring progress
 
@@ -341,9 +331,8 @@ afl-plot findings/uplane/main plot_dir && open plot_dir/index.html
 
 ### Locating crash files
 
-Crash inputs are written to `findings/<target>/crashes/` for single-instance
-runs and to `findings/<target>/<instance>/crashes/` for parallel runs (e.g.
-`findings/uplane/main/crashes/`).  To reproduce a crash:
+Crash inputs are written to `findings/<target>/crashes/` for single-instance runs and to
+`findings/<target>/<instance>/crashes/` for parallel runs (e.g. `findings/uplane/main/crashes/`). To reproduce a crash:
 
 ```bash
 ./build_fuzz/tests/fuzz/ofh/ofh_uplane_decoder_fuzzer \
@@ -363,8 +352,7 @@ afl-tmin \
 
 ### Symbolising ASAN output
 
-ASAN prints a full stack trace when the crash is reproduced.  Pipe through
-`llvm-symbolizer` if symbol names are missing:
+ASAN prints a full stack trace when the crash is reproduced. Pipe through `llvm-symbolizer` if symbol names are missing:
 
 ```bash
 ASAN_SYMBOLIZER_PATH=$(which llvm-symbolizer) \
@@ -374,8 +362,7 @@ ASAN_SYMBOLIZER_PATH=$(which llvm-symbolizer) \
 
 ### Converting a crash to a unit-test literal
 
-`crash_to_hex.py` converts AFL++ crash/hang input files into formats that can
-be pasted directly into a C++ unit test:
+`crash_to_hex.py` converts AFL++ crash/hang input files into formats that can be pasted directly into a C++ unit test:
 
 ```bash
 # Print a C array literal for a single crash file
@@ -387,16 +374,15 @@ python3 tests/fuzz/crash_to_hex.py --format c \
     findings/uplane/crashes/
 ```
 
-Available formats: `hex` (default), `xxd` (annotated hex dump), `c` (C/C++
-`uint8_t` array literal).  Add the resulting literal to the appropriate unit
-test under `tests/unittests/` to prevent regressions.
+Available formats: `hex` (default), `xxd` (annotated hex dump), `c` (C/C++ `uint8_t` array literal). Add the resulting
+literal to the appropriate unit test under `tests/unittests/` to prevent regressions.
 
 ---
 
 ## Updating the corpus
 
-After a long local run, merge the newly discovered inputs back into the seed
-corpus so future runs start with a richer base:
+After a long local run, merge the newly discovered inputs back into the seed corpus so future runs start with a richer
+base:
 
 ```bash
 # Merge and deduplicate queue entries into the seed corpus
@@ -406,19 +392,16 @@ afl-cmin \
     -- ./build_fuzz/tests/fuzz/ofh/ofh_uplane_decoder_fuzzer @@
 ```
 
-Commit the updated corpus alongside code changes.  In CI the corpus
-accumulates automatically across weekly runs via AFL++ resume mode — see
-[CI integration](#ci-integration) below.
+Commit the updated corpus alongside code changes. In CI the corpus accumulates automatically across weekly runs via
+AFL++ resume mode — see [CI integration](#ci-integration) below.
 
 ---
 
 ## Docker
 
-The `Dockerfile` in `tests/fuzz/` defines a build-environment image containing
-only system dependencies (AFL++, Clang, LLVM, cmake, and the mandatory project
-libraries).  Fuzz targets are compiled at run time from the checked-out source,
-so the image only needs to be rebuilt when its dependencies change — not on
-every code change.
+The `Dockerfile` in `tests/fuzz/` defines a build-environment image containing only system dependencies (AFL++, Clang,
+LLVM, cmake, and the mandatory project libraries). Fuzz targets are compiled at run time from the checked-out source, so
+the image only needs to be rebuilt when its dependencies change — not on every code change.
 
 ### Building the image
 
@@ -426,13 +409,11 @@ every code change.
 docker build -f tests/fuzz/Dockerfile -t ocudu-fuzz-deps .
 ```
 
-Bump `FUZZ_IMAGE_VERSION` in `.gitlab-ci.yml` after pushing a new image so
-the CI jobs pick it up.
+Bump `FUZZ_IMAGE_VERSION` in `.gitlab-ci.yml` after pushing a new image so the CI jobs pick it up.
 
 ### Running locally
 
-Mount the repository and a findings directory into the container, then build
-and run inside it:
+Mount the repository and a findings directory into the container, then build and run inside it:
 
 ```bash
 docker run --rm --privileged \
@@ -469,8 +450,7 @@ docker run --rm --privileged \
     "
 ```
 
-`--privileged` allows setting `/proc/sys/kernel/core_pattern` for accurate
-crash detection.
+`--privileged` allows setting `/proc/sys/kernel/core_pattern` for accurate crash detection.
 
 ### Output layout
 
@@ -498,19 +478,15 @@ findings/
 
 ### Corpus accumulation
 
-`run_fuzzers.sh` detects a prior queue automatically: if
-`findings/<target>/queue/` exists when a run starts, AFL++ resumes from it
-(`-i -`); otherwise it starts from the seed corpus (`-i <corpus>`).  The
-GitLab CI cache restores `findings/` at the start of each weekly job, so
-coverage accumulates across runs without any manual intervention.
+`run_fuzzers.sh` detects a prior queue automatically: if `findings/<target>/queue/` exists when a run starts, AFL++
+resumes from it (`-i -`); otherwise it starts from the seed corpus (`-i <corpus>`). The GitLab CI cache restores
+`findings/` at the start of each weekly job, so coverage accumulates across runs without any manual intervention.
 
 ---
 
 ## OSS-Fuzz
 
-The build is compatible with [OSS-Fuzz](https://github.com/google/oss-fuzz).
-When `$LIB_FUZZING_ENGINE` is set, `tests/fuzz/CMakeLists.txt` uses it as the
-link target instead of `-fsanitize=fuzzer`, and leaves compile flags empty so
-OSS-Fuzz's own instrumentation (injected via `$CXXFLAGS`) takes precedence.
-Seed corpus zips can be generated with the `--zip` / `--zip-dir` flags
-described in [Seed corpus](#seed-corpus).
+The build is compatible with [OSS-Fuzz](https://github.com/google/oss-fuzz). When `$LIB_FUZZING_ENGINE` is set,
+`tests/fuzz/CMakeLists.txt` uses it as the link target instead of `-fsanitize=fuzzer`, and leaves compile flags empty so
+OSS-Fuzz's own instrumentation (injected via `$CXXFLAGS`) takes precedence. Seed corpus zips can be generated with the
+`--zip` / `--zip-dir` flags described in [Seed corpus](#seed-corpus).

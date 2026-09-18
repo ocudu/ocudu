@@ -44,7 +44,7 @@ And finally, the UE's RF configuration shall be:
     // ocudu logging level.
     log_level: "info",
 
-    // Enables a noise generator in the uplink path. Determines the noise power spectral density in dBm/Hz for each gNb 
+    // Enables a noise generator in the uplink path. Determines the noise power spectral density in dBm/Hz for each gNb
     // receive channel.
     noise_spd: -174,
   },

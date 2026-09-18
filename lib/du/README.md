@@ -6,7 +6,7 @@
 
 ![image](du.png)
 
-## Components 
+## Components
 
-* [DU-high](du_high/README.md)
-* [DU-low](du_low/README.md)
+- [DU-high](du_high/README.md)
+- [DU-low](du_low/README.md)
