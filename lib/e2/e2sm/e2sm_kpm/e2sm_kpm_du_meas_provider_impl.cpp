@@ -378,7 +378,8 @@ bool e2sm_kpm_du_meas_provider_impl::get_prb_avail_dl(const asn1::e2sm::label_in
                                                       std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;
-  if (last_ue_metrics.empty()) {
+  // Cell-level metric: available without UEs.
+  if (nof_cell_prbs == 0) {
     return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
   }
   if ((label_info_list.size() > 1 or
@@ -394,7 +395,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_prb_avail_dl(const asn1::e2sm::label_in
 
   for (size_t i = 0; i < std::max(ues.size(), size_t(1)); ++i) {
     meas_record_item_c meas_record_item;
-    meas_record_item.set_integer() = (nof_cell_prbs - mean_dl_prbs_used);
+    meas_record_item.set_integer() = std::max(static_cast<int>(nof_cell_prbs) - mean_dl_prbs_used, 0);
     items.push_back(meas_record_item);
     meas_collected = true;
   }
@@ -408,7 +409,8 @@ bool e2sm_kpm_du_meas_provider_impl::get_prb_avail_ul(const asn1::e2sm::label_in
                                                       std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;
-  if (last_ue_metrics.empty()) {
+  // Cell-level metric: available without UEs.
+  if (nof_cell_prbs == 0) {
     return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
   }
   if ((label_info_list.size() > 1 or
@@ -424,7 +426,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_prb_avail_ul(const asn1::e2sm::label_in
 
   for (size_t i = 0; i < std::max(ues.size(), size_t(1)); ++i) {
     meas_record_item_c meas_record_item;
-    meas_record_item.set_integer() = (nof_cell_prbs - mean_ul_prbs_used);
+    meas_record_item.set_integer() = std::max(static_cast<int>(nof_cell_prbs) - mean_ul_prbs_used, 0);
     items.push_back(meas_record_item);
     meas_collected = true;
   }
