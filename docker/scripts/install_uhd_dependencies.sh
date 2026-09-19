@@ -19,16 +19,34 @@ install_uhd_dependencies_debian_ubuntu() {
         libboost-all-dev libusb-1.0-0-dev
         python3-mako python3-numpy python3-setuptools python3-requests
     )
-    # UHD binaries only link these Boost and USB runtime libraries. The image
-    # downloader needs Python and requests, not headers. Runtime images are only
-    # built from Ubuntu 24.04 and newer, which all ship the same Boost 1.83.
     local -a run_pkgs=(
-        inetutils-tools
-        libboost-chrono1.83.0t64 libboost-filesystem1.83.0
-        libboost-program-options1.83.0 libboost-serialization1.83.0
-        libboost-thread1.83.0 libusb-1.0-0
-        python3 python3-requests
+        inetutils-tools libboost-all-dev libncurses5-dev libusb-1.0-0 libusb-1.0-0-dev
+        libusb-dev python3-dev python3-requests
     )
+
+    # UHD binaries only link these Boost and USB runtime libraries. The image
+    # downloader needs Python and requests, not headers. Boost package names
+    # include the ABI version, which differs between Ubuntu releases.
+    case "${ID:-}:${VERSION_ID:-}" in
+        ubuntu:24.04)
+            run_pkgs=(
+                inetutils-tools
+                libboost-chrono1.83.0t64 libboost-filesystem1.83.0
+                libboost-program-options1.83.0 libboost-serialization1.83.0
+                libboost-thread1.83.0 libusb-1.0-0
+                python3 python3-requests
+            )
+            ;;
+        ubuntu:26.04)
+            run_pkgs=(
+                inetutils-tools
+                libboost-chrono1.90.0 libboost-filesystem1.90.0
+                libboost-program-options1.90.0 libboost-serialization1.90.0
+                libboost-thread1.90.0 libusb-1.0-0
+                python3 python3-requests
+            )
+            ;;
+    esac
     local -a extra_pkgs=(
         inetutils-tools libncurses5-dev libusb-1.0-0 libusb-1.0-0-dev
         libusb-dev python3-dev
