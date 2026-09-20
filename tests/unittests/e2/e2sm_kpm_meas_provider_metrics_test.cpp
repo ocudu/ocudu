@@ -541,6 +541,81 @@ TEST_F(e2sm_kpm_meas_provider_metrics_test, e2sm_kpm_drb_latency_with_zero_sdus_
   ASSERT_EQ(meas_records[0].type(), meas_record_item_c::types::no_value);
 }
 
+TEST_F(e2sm_kpm_meas_provider_metrics_test, e2sm_kpm_drb_throughput_preserves_fractional_values)
+{
+  rlc_metrics rlc_metric                             = generate_non_zero_rlc_metrics(0, 1);
+  rlc_metric.metrics_period                          = std::chrono::seconds(2);
+  rlc_metric.tx.tx_low.num_pdu_bytes_no_segmentation = 100;
+  std::get<rlc_am_tx_metrics_lower>(rlc_metric.tx.tx_low.mode_specific).num_pdu_bytes_with_segmentation = 0;
+  rlc_metric.rx.num_pdu_bytes                                                                           = 100;
+  metrics->report_metrics(rlc_metric);
+
+  label_info_list_l label_info_list;
+  label_info_item_s label_info_item           = {};
+  label_info_item.meas_label.no_label_present = true;
+  label_info_item.meas_label.no_label         = meas_label_s::no_label_e_::true_value;
+  label_info_list.push_back(label_info_item);
+
+  ue_id_c        ue_id;
+  ue_id_gnb_du_s ueid_gnb_du{};
+  ueid_gnb_du.gnb_cu_ue_f1ap_id = 0;
+  ueid_gnb_du.ran_ue_id_present = false;
+  ue_id.set_gnb_du_ue_id()      = ueid_gnb_du;
+
+  const std::optional<asn1::e2sm::cgi_c> cell_global_id = {};
+  meas_type_c                            meas_type;
+  std::vector<meas_record_item_c>        meas_records;
+
+  for (const char* metric_name : {"DRB.UEThpDl", "DRB.UEThpUl"}) {
+    meas_type.set_meas_name().from_string(metric_name);
+    for (const std::vector<ue_id_c>& ues : {std::vector<ue_id_c>{}, std::vector<ue_id_c>{ue_id}}) {
+      meas_records.clear();
+      ASSERT_TRUE(du_meas_provider->get_meas_data(meas_type, label_info_list, ues, cell_global_id, meas_records));
+      ASSERT_EQ(meas_records.size(), 1);
+      ASSERT_EQ(meas_records[0].type(), meas_record_item_c::types::real);
+      EXPECT_FLOAT_EQ(meas_records[0].real().value, 0.4F);
+    }
+  }
+}
+
+TEST_F(e2sm_kpm_meas_provider_metrics_test, e2sm_kpm_drb_latency_does_not_overflow_signed_integer)
+{
+  rlc_metrics rlc_metric                  = generate_non_zero_rlc_metrics(0, 1);
+  rlc_metric.tx.tx_low.sum_sdu_latency_us = 3000000000U;
+  rlc_metric.tx.tx_low.num_of_pulled_sdus = 3000000U;
+  rlc_metric.tx.tx_high.num_sdus          = 3000000U;
+  rlc_metric.rx.sdu_latency_us            = 3000000000U;
+  rlc_metric.rx.num_sdus                  = 3000000U;
+  metrics->report_metrics(rlc_metric);
+
+  label_info_list_l label_info_list;
+  label_info_item_s label_info_item           = {};
+  label_info_item.meas_label.no_label_present = true;
+  label_info_item.meas_label.no_label         = meas_label_s::no_label_e_::true_value;
+  label_info_list.push_back(label_info_item);
+
+  ue_id_c        ue_id;
+  ue_id_gnb_du_s ueid_gnb_du{};
+  ueid_gnb_du.gnb_cu_ue_f1ap_id = 0;
+  ueid_gnb_du.ran_ue_id_present = false;
+  ue_id.set_gnb_du_ue_id()      = ueid_gnb_du;
+
+  const std::optional<asn1::e2sm::cgi_c> cell_global_id = {};
+  meas_type_c                            meas_type;
+  std::vector<meas_record_item_c>        meas_records;
+
+  for (const char* metric_name : {"DRB.RlcSduDelayDl", "DRB.RlcDelayUl"}) {
+    meas_type.set_meas_name().from_string(metric_name);
+    for (const std::vector<ue_id_c>& ues : {std::vector<ue_id_c>{}, std::vector<ue_id_c>{ue_id}}) {
+      meas_records.clear();
+      ASSERT_TRUE(du_meas_provider->get_meas_data(meas_type, label_info_list, ues, cell_global_id, meas_records));
+      ASSERT_EQ(meas_records.size(), 1);
+      ASSERT_EQ(meas_records[0].type(), meas_record_item_c::types::real);
+      EXPECT_DOUBLE_EQ(meas_records[0].real().value, 10.0);
+    }
+  }
+}
+
 class e2sm_kpm_cu_cp_meas_provider_metrics_test : public ::testing::Test
 {
 protected:

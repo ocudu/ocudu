@@ -683,7 +683,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_prach_cell_count(const asn1::e2sm::labe
   return meas_collected;
 }
 
-float e2sm_kpm_du_meas_provider_impl::bytes_to_kbits(float value)
+double e2sm_kpm_du_meas_provider_impl::bytes_to_kbits(double value)
 {
   constexpr unsigned nof_bits_per_byte = 8;
   return (nof_bits_per_byte * value / 1e3);
@@ -703,21 +703,21 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_mean_throughput(const asn1::e2sm
     logger.debug("Metric: DRB.UEThpDl supports only NO_LABEL label.");
     return meas_collected;
   }
-  double                       seconds = 1;
-  std::map<uint16_t, unsigned> ue_throughput;
+  double                     seconds = 1;
+  std::map<uint16_t, double> ue_throughput;
   for (auto& ue : ue_aggr_rlc_metrics) {
     size_t num_pdu_bytes_with_segmentation;
     if (std::holds_alternative<rlc_um_tx_metrics_lower>(ue.second.front().tx.tx_low.mode_specific)) {
       // get average from queue
       num_pdu_bytes_with_segmentation =
-          std::accumulate(ue.second.begin(), ue.second.end(), 0, [](size_t sum, const rlc_metrics& metric) {
+          std::accumulate(ue.second.begin(), ue.second.end(), size_t{0}, [](size_t sum, const rlc_metrics& metric) {
             auto& um = std::get<rlc_um_tx_metrics_lower>(metric.tx.tx_low.mode_specific);
             return sum + um.num_pdu_bytes_with_segmentation;
           });
       num_pdu_bytes_with_segmentation /= ue.second.size();
     } else if (std::holds_alternative<rlc_am_tx_metrics_lower>(ue.second.front().tx.tx_low.mode_specific)) {
       num_pdu_bytes_with_segmentation =
-          std::accumulate(ue.second.begin(), ue.second.end(), 0, [](size_t sum, const rlc_metrics& metric) {
+          std::accumulate(ue.second.begin(), ue.second.end(), size_t{0}, [](size_t sum, const rlc_metrics& metric) {
             auto& am = std::get<rlc_am_tx_metrics_lower>(metric.tx.tx_low.mode_specific);
             return sum + am.num_pdu_bytes_with_segmentation;
           });
@@ -726,7 +726,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_mean_throughput(const asn1::e2sm
       num_pdu_bytes_with_segmentation = 0;
     }
     auto num_pdu_bytes_no_segmentation =
-        std::accumulate(ue.second.begin(), ue.second.end(), 0, [](size_t sum, const rlc_metrics& metric) {
+        std::accumulate(ue.second.begin(), ue.second.end(), size_t{0}, [](size_t sum, const rlc_metrics& metric) {
           return sum + metric.tx.tx_low.num_pdu_bytes_no_segmentation;
         });
     num_pdu_bytes_no_segmentation /= ue.second.size();
@@ -736,7 +736,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_mean_throughput(const asn1::e2sm
   }
   if (ues.empty()) {
     meas_record_item_c meas_record_item;
-    int                total_throughput = 0;
+    double             total_throughput = 0;
     for (auto& ue : ue_throughput) {
       total_throughput += ue.second;
     }
@@ -777,11 +777,11 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_mean_throughput(const asn1::e2sm
     return meas_collected;
   }
 
-  double                       seconds = 1;
-  std::map<uint16_t, unsigned> ue_throughput;
+  double                     seconds = 1;
+  std::map<uint16_t, double> ue_throughput;
   for (auto& ue : ue_aggr_rlc_metrics) {
     auto num_pdu_bytes =
-        std::accumulate(ue.second.begin(), ue.second.end(), 0, [](size_t sum, const rlc_metrics& metric) {
+        std::accumulate(ue.second.begin(), ue.second.end(), size_t{0}, [](size_t sum, const rlc_metrics& metric) {
           return sum + metric.rx.num_pdu_bytes;
         });
     num_pdu_bytes /= ue.second.size();
@@ -791,7 +791,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_mean_throughput(const asn1::e2sm
   }
   if (ues.empty()) {
     meas_record_item_c meas_record_item;
-    int                total_throughput = 0;
+    double             total_throughput = 0;
     for (auto& ue : ue_throughput) {
       total_throughput += ue.second;
     }
@@ -1034,18 +1034,18 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_rlc_sdu_latency(const asn1::e2sm
 
   if (ues.empty()) {
     meas_record_item_c meas_record_item;
-    float              av_ue_sdu_latency_us = 0;
+    double             av_ue_sdu_latency_us = 0;
     for (auto& rlc_metric : ue_aggr_rlc_metrics) {
-      int tot_num_of_pulled_sdus = std::accumulate(
-          rlc_metric.second.begin(), rlc_metric.second.end(), 0, [](size_t sum, const rlc_metrics& metric) {
+      uint64_t tot_num_of_pulled_sdus = std::accumulate(
+          rlc_metric.second.begin(), rlc_metric.second.end(), uint64_t{0}, [](uint64_t sum, const rlc_metrics& metric) {
             return sum + metric.tx.tx_low.num_of_pulled_sdus;
           });
-      int tot_sum_sdu_latency_us = std::accumulate(
-          rlc_metric.second.begin(), rlc_metric.second.end(), 0, [](size_t sum, const rlc_metrics& metric) {
+      uint64_t tot_sum_sdu_latency_us = std::accumulate(
+          rlc_metric.second.begin(), rlc_metric.second.end(), uint64_t{0}, [](uint64_t sum, const rlc_metrics& metric) {
             return sum + metric.tx.tx_low.sum_sdu_latency_us;
           });
       if (tot_num_of_pulled_sdus && tot_sum_sdu_latency_us) {
-        av_ue_sdu_latency_us += (float)tot_sum_sdu_latency_us / (float)tot_num_of_pulled_sdus;
+        av_ue_sdu_latency_us += static_cast<double>(tot_sum_sdu_latency_us) / tot_num_of_pulled_sdus;
       }
     }
     if (av_ue_sdu_latency_us) {
@@ -1072,18 +1072,18 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_rlc_sdu_latency(const asn1::e2sm
         meas_collected = true;
         continue;
       }
-      int tot_sdu_latency_us = std::accumulate(
+      uint64_t tot_sdu_latency_us = std::accumulate(
           ue_aggr_rlc_metrics[ue_idx].begin(),
           ue_aggr_rlc_metrics[ue_idx].end(),
-          0,
-          [](size_t sum, const rlc_metrics& metric) { return sum + metric.tx.tx_low.sum_sdu_latency_us; });
-      int tot_num_sdus =
+          uint64_t{0},
+          [](uint64_t sum, const rlc_metrics& metric) { return sum + metric.tx.tx_low.sum_sdu_latency_us; });
+      uint64_t tot_num_sdus =
           std::accumulate(ue_aggr_rlc_metrics[ue_idx].begin(),
                           ue_aggr_rlc_metrics[ue_idx].end(),
-                          0,
-                          [](size_t sum, const rlc_metrics& metric) { return sum + metric.tx.tx_high.num_sdus; });
+                          uint64_t{0},
+                          [](uint64_t sum, const rlc_metrics& metric) { return sum + metric.tx.tx_high.num_sdus; });
       if (tot_sdu_latency_us && tot_num_sdus) {
-        float av_ue_sdu_latency_ms = (static_cast<float>(tot_sdu_latency_us) / tot_num_sdus) / 100; // Unit is 0.1 ms.
+        float av_ue_sdu_latency_ms = (static_cast<double>(tot_sdu_latency_us) / tot_num_sdus) / 100; // Unit is 0.1 ms.
         av_ue_sdu_latency_ms       = std::round(av_ue_sdu_latency_ms * 10.0f) / 10.0f;
         meas_record_item.set_real();
         meas_record_item.real().value = av_ue_sdu_latency_ms;
@@ -1117,18 +1117,18 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_rlc_sdu_latency(const asn1::e2sm
 
   if (ues.empty()) {
     meas_record_item_c meas_record_item;
-    float              av_ue_sdu_latency_us = 0;
+    double             av_ue_sdu_latency_us = 0;
     for (auto& rlc_metric : ue_aggr_rlc_metrics) {
-      int tot_num_sdus = std::accumulate(
-          rlc_metric.second.begin(), rlc_metric.second.end(), 0, [](size_t sum, const rlc_metrics& metric) {
+      uint64_t tot_num_sdus = std::accumulate(
+          rlc_metric.second.begin(), rlc_metric.second.end(), uint64_t{0}, [](uint64_t sum, const rlc_metrics& metric) {
             return sum + metric.rx.num_sdus;
           });
-      int tot_sdu_latency_us = std::accumulate(
-          rlc_metric.second.begin(), rlc_metric.second.end(), 0, [](size_t sum, const rlc_metrics& metric) {
+      uint64_t tot_sdu_latency_us = std::accumulate(
+          rlc_metric.second.begin(), rlc_metric.second.end(), uint64_t{0}, [](uint64_t sum, const rlc_metrics& metric) {
             return sum + metric.rx.sdu_latency_us;
           });
       if (tot_num_sdus && tot_sdu_latency_us) {
-        av_ue_sdu_latency_us += (float)tot_sdu_latency_us / (float)tot_num_sdus;
+        av_ue_sdu_latency_us += static_cast<double>(tot_sdu_latency_us) / tot_num_sdus;
       }
     }
     if (av_ue_sdu_latency_us) {
@@ -1153,19 +1153,20 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_rlc_sdu_latency(const asn1::e2sm
         meas_collected = true;
         continue;
       }
-      int tot_sdu_latency_us =
+      uint64_t tot_sdu_latency_us =
           std::accumulate(ue_aggr_rlc_metrics[ue_idx].begin(),
                           ue_aggr_rlc_metrics[ue_idx].end(),
-                          0,
-                          [](size_t sum, const rlc_metrics& metric) { return sum + metric.rx.sdu_latency_us; });
-      int tot_num_sdus =
+                          uint64_t{0},
+                          [](uint64_t sum, const rlc_metrics& metric) { return sum + metric.rx.sdu_latency_us; });
+      uint64_t tot_num_sdus =
           std::accumulate(ue_aggr_rlc_metrics[ue_idx].begin(),
                           ue_aggr_rlc_metrics[ue_idx].end(),
-                          0,
-                          [](size_t sum, const rlc_metrics& metric) { return sum + metric.rx.num_sdus; });
+                          uint64_t{0},
+                          [](uint64_t sum, const rlc_metrics& metric) { return sum + metric.rx.num_sdus; });
       if (tot_sdu_latency_us && tot_num_sdus) {
         meas_record_item.set_real();
-        meas_record_item.real().value = (static_cast<float>(tot_sdu_latency_us) / tot_num_sdus) / 100; // Unit is 0.1ms.
+        meas_record_item.real().value =
+            (static_cast<double>(tot_sdu_latency_us) / tot_num_sdus) / 100; // Unit is 0.1ms.
         items.push_back(meas_record_item);
         meas_collected = true;
       } else {
