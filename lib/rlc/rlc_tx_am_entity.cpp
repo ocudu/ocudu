@@ -874,8 +874,8 @@ bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
   logger.log_debug("Handling nack={}.", nack);
 
   // Check if NACK applies to a SN within tx window
-  if (!(tx_mod_base(st.tx_next_ack) <= tx_mod_base(nack.nack_sn) &&
-        tx_mod_base(nack.nack_sn) <= tx_mod_base(st.tx_next))) {
+  if (tx_mod_base(nack.nack_sn) < tx_mod_base(st.tx_next_ack) ||
+      (tx_mod_base(nack.nack_sn) >= tx_mod_base(st.tx_next) && nack.nack_sn != sn_under_segmentation)) {
     logger.log_info("Invalid nack_sn={}. tx_next_ack={} tx_next={}", nack.nack_sn, st.tx_next_ack, st.tx_next);
     return false;
   }

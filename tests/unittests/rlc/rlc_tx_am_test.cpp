@@ -1541,6 +1541,33 @@ TEST_P(rlc_tx_am_test, invalid_nack_nack_sn_outside_rx_window)
   ASSERT_EQ(st1.tx_next_ack, 7); // TX_NEXT_ACK should have not changed
 }
 
+TEST_P(rlc_tx_am_test, invalid_nack_nack_sn_not_yet_added_to_tx_window)
+{
+  const uint32_t sdu_size = 4;
+  const uint32_t n_pdus   = 12;
+
+  std::vector<std::vector<uint8_t>> pdus = tx_full_pdus(n_pdus, sdu_size);
+
+  // ACK up until 5
+  rlc_am_status_pdu status_pdu0(sn_size);
+  status_pdu0.ack_sn = 5;
+  rlc->on_status_pdu(std::move(status_pdu0));
+
+  // Status PDU 1
+  rlc_am_status_pdu status_pdu1(sn_size);
+  status_pdu1.ack_sn = 12;
+  {
+    rlc_am_status_nack nack = {};
+    nack.nack_sn            = 12; // NACK an SN just above tx window that would be added next but still doesen't exist.
+    status_pdu1.push_nack(nack);
+  }
+
+  rlc->on_status_pdu(std::move(status_pdu1));          // NACK should be rejected.
+  ASSERT_EQ(rlc->get_buffer_state().pending_bytes, 0); // Should have ignored status report.
+  rlc_tx_am_state st1 = rlc->get_state();
+  ASSERT_EQ(st1.tx_next_ack, 5); // TX_NEXT_ACK should have not changed.
+}
+
 TEST_P(rlc_tx_am_test, invalid_nack_sn_larger_than_ack_sn)
 {
   const uint32_t sdu_size = 4;
