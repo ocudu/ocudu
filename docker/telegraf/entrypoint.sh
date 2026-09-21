@@ -6,11 +6,14 @@
 
 set -o pipefail
 
-if [ -n "$RETINA_PORTS" ]; then
-  # In this mode, we expect to receive data over UDP, telling websocket ip/port of the server.
-  export WS_URL=$(socat -u UDP-RECVFROM:"${RETINA_PORTS}",reuseaddr STDOUT)
+if [ -z "$INFLUXDB3_EXTERNAL_URL" ]; then
+  # Stay up (so the container remains "ready") without ever starting telegraf, so a
+  # misconfigured/absent InfluxDB destination produces no connection-retry log spam.
+  echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ') W! INFLUXDB3_EXTERNAL_URL is empty, not starting telegraf" >&2
+  sleep infinity &
+else
+  telegraf --non-strict-env-handling --config /etc/ocudu/telegraf.conf $TELEGRAF_CLI_EXTRA_ARGS &
 fi
-telegraf --non-strict-env-handling --config /etc/ocudu/telegraf.conf $TELEGRAF_CLI_EXTRA_ARGS &
 child=$!
 
 health_code=0
