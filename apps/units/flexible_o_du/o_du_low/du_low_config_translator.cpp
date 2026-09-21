@@ -184,8 +184,12 @@ static odu::du_low_config generate_du_low_config(const du_low_unit_config&      
                  to_string(cell.freq_range),
                  to_string(cell.duplex));
 
+    // Convert the number of antennas to an antenna topology.
+    std::optional<antenna_topology> tx_ant_topology = get_single_panel_antenna_topology(cell.nof_tx_antennas);
+    ocudu_assert(tx_ant_topology.has_value(), "Unsupported number of transmit antenna ports.");
+
     upper_phy_cell.sector                     = i;
-    upper_phy_cell.nof_tx_ports               = cell.nof_tx_antennas;
+    upper_phy_cell.tx_ant_topology            = tx_ant_topology.value();
     upper_phy_cell.nof_rx_ports               = cell.nof_rx_antennas;
     upper_phy_cell.nof_dl_rg                  = dl_pipeline_depth + 2;
     upper_phy_cell.nof_ul_rg                  = ul_pipeline_depth;

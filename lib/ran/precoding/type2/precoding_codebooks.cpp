@@ -242,7 +242,7 @@ precoding_beamforming_composite ocudu::calculate_mimo_matrix(const pmi_typeII& p
     ocudu_assert(energy > 0.0F, "The layer coefficient energy must be strictly positive.");
 
     // Normalize by the number of layers and energy.
-    float scaling = std::sqrt(2.0F / (static_cast<float>(nof_layers) * energy));
+    float scaling = std::sqrt(1.0F / (static_cast<float>(nof_layers) * energy));
 
     // The layer is mapped onto all the beams.
     for (unsigned i_beam = 0; i_beam != nof_beams; ++i_beam) {

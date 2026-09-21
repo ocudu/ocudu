@@ -23,11 +23,10 @@ beam_identifier ocudu::get_beam_id(antenna_topology topology, uint8_t i_port)
 beam_identifier
 ocudu::get_beam_id(antenna_topology topology, uint8_t i_panel, uint8_t i_pol, uint8_t i_beam_dim1, uint8_t i_beam_dim2)
 {
-  [[maybe_unused]] unsigned nof_panels         = get_nof_antenna_panels(topology);
-  unsigned                  nof_polarizations  = get_nof_antenna_polarizations(topology);
-  unsigned                  nof_beams_dim1     = get_nof_beams_dim1(topology);
-  unsigned                  nof_beams_dim2     = get_nof_beams_dim2(topology);
-  unsigned                  total_nof_antennas = get_total_nof_ports(topology);
+  [[maybe_unused]] unsigned nof_panels        = get_nof_antenna_panels(topology);
+  unsigned                  nof_polarizations = get_nof_antenna_polarizations(topology);
+  unsigned                  nof_beams_dim1    = get_nof_beams_dim1(topology);
+  unsigned                  nof_beams_dim2    = get_nof_beams_dim2(topology);
 
   ocudu_assert(i_panel < nof_panels,
                "The panel index (i.e., {}) exceeds the maximum (i.e., {}) for the topology {}",
@@ -50,10 +49,18 @@ ocudu::get_beam_id(antenna_topology topology, uint8_t i_panel, uint8_t i_pol, ui
                nof_beams_dim2 - 1,
                to_string(topology));
 
+  // Beam identifier offset - The first beam identifiers are for direct beam to antenna port.
+  unsigned beam_id_offset = get_total_nof_ports(topology);
+
+  // If only one beam is supported across all panels, the beams are directly mapped onto physical antenna ports.
+  if ((nof_beams_dim1 == 1) && (nof_beams_dim2 == 1)) {
+    beam_id_offset = 0;
+  }
+
   unsigned i_beam = i_panel;
   i_beam          = nof_polarizations * i_beam + i_pol;
   i_beam          = nof_beams_dim1 * i_beam + i_beam_dim1;
   i_beam          = nof_beams_dim2 * i_beam + i_beam_dim2;
 
-  return to_beam_id(i_beam + total_nof_antennas);
+  return to_beam_id(i_beam + beam_id_offset);
 }

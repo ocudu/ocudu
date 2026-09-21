@@ -115,12 +115,22 @@ constexpr unsigned get_total_nof_ports(antenna_topology topology)
 /// Gets the antenna topology total number of beams.
 constexpr unsigned get_total_nof_beams(antenna_topology topology)
 {
+  // Get total number of antenna ports.
+  unsigned total_nof_ports = get_total_nof_ports(topology);
+
+  // Get number of combinations of beams.
   unsigned nof_panels        = get_nof_antenna_panels(topology);
   unsigned nof_beams_dim1    = get_nof_beams_dim1(topology);
   unsigned nof_beams_dim2    = get_nof_beams_dim2(topology);
   unsigned nof_polarizations = get_nof_antenna_polarizations(topology);
 
-  return get_total_nof_ports(topology) + nof_panels * nof_beams_dim1 * nof_beams_dim2 * nof_polarizations;
+  // If the panels are 1x1 elements, the beam to antenna port is direct.
+  if ((nof_beams_dim1 == 1) && (nof_beams_dim2 == 1)) {
+    return total_nof_ports;
+  }
+
+  // Otherwise return the sum of ports and beams.
+  return total_nof_ports + nof_panels * nof_beams_dim1 * nof_beams_dim2 * nof_polarizations;
 }
 
 /// Gets the maximum number of antenna ports that any of the supported antenna topologies defines.
@@ -158,9 +168,9 @@ constexpr std::optional<antenna_topology> get_single_panel_antenna_topology(unsi
     case 2:
       return antenna_topology::two_port;
     case 4:
-      return antenna_topology::single_panel_two_one;
+      return antenna_topology::four_ports;
     case 8:
-      return antenna_topology::single_panel_four_one;
+      return antenna_topology::eight_ports;
     default:
       return std::nullopt;
   }

@@ -210,8 +210,8 @@ std::unique_ptr<downlink_processor_pool> create_dl_processor_pool(downlink_proce
 struct upper_phy_configuration {
   /// Sector identifier.
   unsigned sector;
-  /// Number of transmit antenna ports.
-  unsigned nof_tx_ports;
+  /// Transmit antenna topology.
+  antenna_topology tx_ant_topology;
   /// Number of receive antenna ports.
   unsigned nof_rx_ports;
   /// Number of downlink resource grids. Downlink resource grids minimum reuse time is \c dl_rg_expire_timeout_slots

@@ -545,6 +545,10 @@ precoding_beamforming_composite ocudu::calculate_mimo_matrix(const pmi_typeI_sin
   // Extract the selected beam list from the PMI.
   precoding_beam_list beams = get_beams_from_pmi(pmi, nof_layers);
 
+  // Get number of CSI ports.
+  const pmi_codebook_single_panel_info& info      = get_single_panel_info(pmi.panel_config.n1_n2);
+  unsigned                              nof_ports = 2 * info.n1 * info.n2;
+
   // Number of beams without the polarization dimension.
   unsigned nof_beams = beams.size() / 2;
 
@@ -556,8 +560,9 @@ precoding_beamforming_composite ocudu::calculate_mimo_matrix(const pmi_typeI_sin
   // Resulting MIMO precoding matrix.
   precoding_weight_matrix weights(nof_layers, beams.size());
 
-  // Normalize precoding by the number of layers.
-  float scaling = 1.0F / std::sqrt(static_cast<float>(nof_layers));
+  // Normalize precoding by the number of layers and ports, apply the reciprocal of the beamforming scaling.
+  float scaling =
+      std::sqrt(static_cast<float>(info.n1 * info.n2)) / std::sqrt(static_cast<float>(nof_layers * nof_ports));
 
   for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
     // Index of the allocated beam for the layer.

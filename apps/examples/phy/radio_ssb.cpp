@@ -26,6 +26,7 @@
 #include "ocudu/phy/lower/lower_phy_controller.h"
 #include "ocudu/phy/lower/lower_phy_rx_symbol_context.h"
 #include "ocudu/radio/radio_factory.h"
+#include "ocudu/ran/antenna_topology.h"
 #include "ocudu/support/executors/task_worker.h"
 #include "ocudu/support/math/math_utils.h"
 #include "ocudu/support/signal_handling.h"
@@ -359,27 +360,11 @@ static void parse_args(int argc, char** argv)
       case 'a':
         if (optarg != nullptr) {
           unsigned parsed = std::strtol(optarg, nullptr, 10);
-          switch (parsed) {
-            case 1:
-              tx_ant_topology = antenna_topology::one_port;
-              nof_ports       = 1;
-              break;
-            case 2:
-              tx_ant_topology = antenna_topology::two_port;
-              nof_ports       = 2;
-              break;
-            case 4:
-              tx_ant_topology = antenna_topology::four_ports;
-              nof_ports       = 4;
-              break;
-            case 8:
-              tx_ant_topology = antenna_topology::four_ports;
-              nof_ports       = 4;
-              break;
-            default:
-              fmt::print("Invalid number of ports {}. Expected 1, 2, 4 or 8.\n", parsed);
-              std::exit(0);
+          if (!get_single_panel_antenna_topology(parsed).has_value()) {
+            fmt::print("Invalid number of ports {}. Expected 1, 2, 4 or 8.\n", parsed);
+            std::exit(0);
           }
+          nof_ports = parsed;
         }
         break;
       case 'm':

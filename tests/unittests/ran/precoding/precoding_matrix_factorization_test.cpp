@@ -8,6 +8,8 @@
 #include "ocudu/ran/beamforming/beam_weights_codebook.h"
 #include "ocudu/ran/beamforming/beam_weights_codebook_generator.h"
 #include "ocudu/ran/precoding/precoding_codebooks.h"
+#include "ocudu/ran/precoding/precoding_weight_matrix_formatters.h"
+#include "fmt/format.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;

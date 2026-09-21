@@ -42,6 +42,9 @@ TEST_P(BeamCodebookGeneratorFixture, Generate)
   // Generate beam weights.
   beam_weights_codebook beam_weights = generate_beam_weights_codebook(topology);
 
+  // Calculate the beamforming coefficient normalization by the number of transmit antenna ports.
+  float amplitude = std::sqrt(1.0F / static_cast<float>(nof_elements_dim1 * nof_elements_dim2));
+
   // Iterate over the panel.
   for (unsigned i_panel = 0; i_panel != nof_panels; ++i_panel) {
     // Iterate over polarizations.
@@ -55,9 +58,6 @@ TEST_P(BeamCodebookGeneratorFixture, Generate)
 
           // Calculate starting antenna port index.
           unsigned i_port = nof_elements_dim1 * nof_elements_dim2 * (nof_polarizations * i_panel + i_pol);
-
-          // Calculate the beamforming coefficient normalization by the number of transmit antenna ports.
-          float amplitude = std::sqrt(1.0F / static_cast<float>(nof_total_antennas));
 
           // Generate expected coefficients for the panel, beams, and polarization.
           std::vector<cf_t> expected_coefficients(nof_total_antennas, 0.0);

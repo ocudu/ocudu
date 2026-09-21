@@ -43,7 +43,7 @@ static std::mt19937 rgen;
 
 inline std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
 {
-  return os << fmt::format("nof_layers={} pmi={}", test_case.nof_layers, test_case.pmi);
+  return os << fmt::format("pmi={{{}}} nof_layers={}", test_case.pmi, test_case.nof_layers);
 }
 
 class precoding_matrix_fixture : public ::testing::TestWithParam<test_case_t>

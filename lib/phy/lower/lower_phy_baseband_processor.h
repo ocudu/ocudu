@@ -23,7 +23,7 @@ struct lower_phy_baseband_processor_configuration {
   sampling_rate srate;
   /// Subcarrier spacing.
   subcarrier_spacing scs;
-  /// Number of transmit ports.
+  /// Number of actual transmit antenna ports.
   unsigned nof_tx_ports;
   /// Number of receive ports.
   unsigned nof_rx_ports;

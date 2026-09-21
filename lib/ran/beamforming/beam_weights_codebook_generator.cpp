@@ -27,8 +27,13 @@ beam_weights_codebook ocudu::generate_beam_weights_codebook(antenna_topology top
     beam_weights.set_coefficient(1.0, get_beam_id(topology, i_antenna), i_antenna);
   }
 
-  // Calculate the beamforming coefficient normalization by the number of transmit antenna ports.
-  float amplitude = std::sqrt(1.0F / static_cast<float>(nof_total_antennas));
+  // Only direct beam to port mapping if the panels are 1x1 elements.
+  if ((nof_beams_dim1 == 1) && (nof_beams_dim2 == 1)) {
+    return beam_weights;
+  }
+
+  // Calculate the beamforming coefficient normalization by the number of coefficients per beam.
+  float amplitude = std::sqrt(1.0F / static_cast<float>(nof_elements_dim1 * nof_elements_dim2));
 
   // Iterate over the panel.
   for (unsigned i_panel = 0; i_panel != nof_panels; ++i_panel) {
