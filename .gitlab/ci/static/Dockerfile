@@ -3,6 +3,20 @@
 
 
 ARG OS_VERSION=26.04
+ARG PRETTIER_VERSION=3.9.8
+
+# npm pulls modules that ship known CVEs, so it is kept out of the final image and only prettier is copied over.
+FROM ubuntu:$OS_VERSION AS prettier
+ARG PRETTIER_VERSION
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    npm \
+    && npm install -g --prefix /opt/prettier prettier@${PRETTIER_VERSION}
+
 FROM ubuntu:$OS_VERSION AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -21,17 +35,16 @@ RUN apt-get update \
     pipx \
     python3-yaml \
     nodejs \
-    npm \
     && rm -f /usr/bin/pebble \
     && apt-get autoremove \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-ENV PATH="/root/.local/bin:${PATH}"
+ENV PATH="/opt/prettier/bin:/root/.local/bin:${PATH}"
 ENV PIP_NO_CACHE_DIR=1
 RUN pipx install "reuse<7"
 
-RUN npm install -g prettier
+COPY --from=prettier /opt/prettier /opt/prettier
 
 ADD hex2lowercase.sh \
     include-guards-check.sh \
