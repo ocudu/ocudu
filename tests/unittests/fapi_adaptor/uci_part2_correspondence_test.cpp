@@ -51,7 +51,8 @@ TEST_P(uci_part2_correspondence_generator_test, correct_generation_test)
 
   unsigned            nof_csi_rs_ports = get_precoding_codebook_antenna_ports(codebook);
   ri_restriction_type ri_restiction(nof_csi_rs_ports);
-  ri_restiction.fill(0, nof_csi_rs_ports);
+  // The RI restriction bitmap only selects ranks that the codebook can report.
+  ri_restiction.fill(0, get_precoding_codebook_max_rank(codebook));
 
   csi_report_configuration report_cfg;
   report_cfg.nof_csi_rs_resources = nof_csi_rs_resources;
@@ -83,13 +84,23 @@ TEST_P(uci_part2_correspondence_generator_test, correct_generation_test)
   }
 }
 
-INSTANTIATE_TEST_SUITE_P(uci_part2,
-                         uci_part2_correspondence_generator_test,
-                         testing::Combine(testing::Values(pmi_codebook_one_port{},
-                                                          pmi_codebook_two_port{},
-                                                          pmi_codebook_typeI_single_panel{
-                                                              pmi_codebook_single_panel_config::two_one,
-                                                              pmi_codebook_typeI_mode::one}),
-                                          testing::Values(csi_report_quantities::cri_ri_cqi,
-                                                          csi_report_quantities::cri_ri_pmi_cqi,
-                                                          csi_report_quantities::cri_ri_li_pmi_cqi)));
+INSTANTIATE_TEST_SUITE_P(
+    uci_part2,
+    uci_part2_correspondence_generator_test,
+    testing::Combine(testing::Values(pmi_codebook_one_port{},
+                                     pmi_codebook_two_port{},
+                                     pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::two_one,
+                                                                     pmi_codebook_typeI_mode::one},
+                                     pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::four_one,
+                                                                     pmi_codebook_typeI_mode::one},
+                                     pmi_codebook_typeII{pmi_codebook_single_panel_config::two_one,
+                                                         2,
+                                                         pmi_codebook_typeII_phase_size::qpsk,
+                                                         false},
+                                     pmi_codebook_typeII{pmi_codebook_single_panel_config::four_one,
+                                                         4,
+                                                         pmi_codebook_typeII_phase_size::psk8,
+                                                         false}),
+                     testing::Values(csi_report_quantities::cri_ri_cqi,
+                                     csi_report_quantities::cri_ri_pmi_cqi,
+                                     csi_report_quantities::cri_ri_li_pmi_cqi)));

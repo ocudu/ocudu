@@ -4,6 +4,7 @@
 #include "ocudu/fapi_adaptor/uci_part2_correspondence_generator.h"
 #include "uci_part2_mapper_functions.h"
 #include "ocudu/ran/csi_report/csi_report_on_pusch_helpers.h"
+#include "ocudu/ran/precoding/precoding_constants.h"
 #include "ocudu/support/math/math_utils.h"
 
 using namespace ocudu;
@@ -23,7 +24,7 @@ static auto add_map_entry(T& container, unsigned index) -> typename T::reference
 std::pair<std::unique_ptr<uci_part2_correspondence_mapper>, std::unique_ptr<uci_part2_correspondence_repository>>
 ocudu::fapi_adaptor::generate_uci_part2_correspondence(unsigned nof_csi_rs_resources)
 {
-  ocudu_assert(nof_csi_rs_resources && nof_csi_rs_resources <= MAX_NUM_CSI_RESOURCES,
+  ocudu_assert(nof_csi_rs_resources && nof_csi_rs_resources <= MAX_NOF_CSI_RESOURCES,
                "Unsupported number of CSI-RS resources");
 
   unsigned map_index = 0;
@@ -33,17 +34,23 @@ ocudu::fapi_adaptor::generate_uci_part2_correspondence(unsigned nof_csi_rs_resou
 
   // Skip generating entries with nof_csi_rs_resources set to 0.
   for (unsigned csi_resource_index = 1; csi_resource_index != (nof_csi_rs_resources + 1); ++csi_resource_index) {
-    for (unsigned codebook_index = 0; codebook_index != MAX_NUM_CODEBOOKS; ++codebook_index) {
+    for (unsigned codebook_index = 0; codebook_index != MAX_NOF_CODEBOOKS; ++codebook_index) {
       const pmi_codebook_config& pmi_codebook = to_pmi_codebook_config(codebook_index);
 
-      // The maximum value of the RI restriction field depends on the number of CSI-RS ports which is derived from the
-      // used codebook.
+      // Skip the codebooks with more than eight CSI-RS antenna ports, which are not supported.
+      if (get_precoding_codebook_antenna_ports(pmi_codebook) > precoding_constants::MAX_NOF_PORTS) {
+        continue;
+      }
+
+      // The RI restriction field is a bitmap with one bit per reportable layer, so its maximum value is given by the
+      // maximum rank of the codebook. It matches the number of CSI-RS ports for the Type I codebooks, and it is at
+      // most two for the Type II ones.
       for (unsigned ri_index         = 1,
                     nof_csi_rs_ports = get_precoding_codebook_antenna_ports(pmi_codebook),
-                    ri_index_end     = pow2(nof_csi_rs_ports);
+                    ri_index_end     = pow2(get_precoding_codebook_max_rank(pmi_codebook));
            ri_index != ri_index_end;
            ++ri_index) {
-        for (unsigned quantities_index = 0; quantities_index != MAX_NUM_QUANTITIES; ++quantities_index) {
+        for (unsigned quantities_index = 0; quantities_index != MAX_NOF_QUANTITIES; ++quantities_index) {
           csi_report_quantities quantities = static_cast<csi_report_quantities>(quantities_index);
 
           // Skip cri-RSRP and ssb-Index-RSRP quantities.
