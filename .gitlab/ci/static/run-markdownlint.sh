@@ -44,4 +44,4 @@ fi
 
 # Unlike prettier, markdownlint does not rewrite the files: it reports the violations it finds and exits non-zero,
 # so its exit code must be propagated instead of relying on is-pristine-repo.sh
-"$markdownlint" --config .markdownlint.jsonc ${files}
+"$markdownlint" ${files}
