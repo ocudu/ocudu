@@ -64,9 +64,10 @@ using pmi_codebook_config = std::variant<std::monostate,
 /// - 0: one port codebook (and monostate)
 /// - 1: two port codebook
 /// - [2, 14]: Type I single-panel, mode 1 codebook
+/// - [15, 22]: Type II codebook
 ///
 /// \remark Any other combination triggers an assertion.
-using pmi_codebook_id = bounded_integer<unsigned, 0, 14>;
+using pmi_codebook_id = bounded_integer<unsigned, 0, 22>;
 
 /// Converts the codebook configuration to an identifier.
 pmi_codebook_id to_pmi_codebook_identifier(const pmi_codebook_config& codebook);

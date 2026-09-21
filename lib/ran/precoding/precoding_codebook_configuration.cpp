@@ -29,9 +29,20 @@ static constexpr auto codebook_configurations = to_array<pmi_codebook_config>(
      pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::twelve_one, pmi_codebook_typeI_mode::one},
      pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::four_four, pmi_codebook_typeI_mode::one},
      pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::eight_two, pmi_codebook_typeI_mode::one},
-     pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::sixteen_one, pmi_codebook_typeI_mode::one}});
+     pmi_codebook_typeI_single_panel{pmi_codebook_single_panel_config::sixteen_one, pmi_codebook_typeI_mode::one},
+     pmi_codebook_typeII{pmi_codebook_single_panel_config::two_one, 2, pmi_codebook_typeII_phase_size::qpsk, false},
+     pmi_codebook_typeII{pmi_codebook_single_panel_config::two_one, 2, pmi_codebook_typeII_phase_size::psk8, false},
+     pmi_codebook_typeII{pmi_codebook_single_panel_config::four_one, 2, pmi_codebook_typeII_phase_size::qpsk, false},
+     pmi_codebook_typeII{pmi_codebook_single_panel_config::four_one, 2, pmi_codebook_typeII_phase_size::psk8, false},
+     pmi_codebook_typeII{pmi_codebook_single_panel_config::four_one, 3, pmi_codebook_typeII_phase_size::qpsk, false},
+     pmi_codebook_typeII{pmi_codebook_single_panel_config::four_one, 3, pmi_codebook_typeII_phase_size::psk8, false},
+     pmi_codebook_typeII{pmi_codebook_single_panel_config::four_one, 4, pmi_codebook_typeII_phase_size::qpsk, false},
+     pmi_codebook_typeII{pmi_codebook_single_panel_config::four_one, 4, pmi_codebook_typeII_phase_size::psk8, false}});
 static_assert(codebook_configurations.size() == pmi_codebook_id::max() + 1,
               "The number of codebook configurations does not match the number of identifiers.");
+
+/// Identifier of the first Type II codebook, see \ref pmi_codebook_id.
+static constexpr unsigned FIRST_TYPE_II_PMI_CODEBOOK_ID = 15;
 
 static pmi_codebook_id to_id(std::monostate)
 {
@@ -54,9 +65,36 @@ static pmi_codebook_id to_id(const pmi_codebook_typeI_single_panel& codebook)
   return 2 + static_cast<unsigned>(codebook.n1_n2);
 }
 
-static pmi_codebook_id to_id(const pmi_codebook_typeII&)
+static pmi_codebook_id to_id(const pmi_codebook_typeII& codebook)
 {
-  report_error("The Type II codebook configuration does not have a codebook identifier.");
+  /// Number of Type II codebook identifiers taken by the \f$(2, 1)\f$ panel topology.
+  static constexpr unsigned nof_typeII_two_one_codebooks = 2;
+
+  // Only the configurations listed in codebook_configurations have an identifier. Reject anything else instead of
+  // silently returning the identifier of a different codebook.
+  report_error_if_not(!codebook.subband_amplitude,
+                      "The Type II codebook configuration with subband amplitude reporting does not have a codebook "
+                      "identifier.");
+
+  unsigned nof_beams = codebook.nof_beams.value();
+  unsigned phase_id  = (codebook.phase_alphabet_size == pmi_codebook_typeII_phase_size::psk8) ? 1 : 0;
+
+  if (codebook.n1_n2 == pmi_codebook_single_panel_config::two_one) {
+    report_error_if_not(nof_beams == 2,
+                        "The Type II codebook configuration with panel topology (2, 1) and {} beams does not have a "
+                        "codebook identifier.",
+                        nof_beams);
+
+    return FIRST_TYPE_II_PMI_CODEBOOK_ID + phase_id;
+  }
+
+  report_error_if_not(codebook.n1_n2 == pmi_codebook_single_panel_config::four_one,
+                      "The Type II codebook configuration with panel topology {} does not have a codebook identifier.",
+                      static_cast<unsigned>(codebook.n1_n2));
+
+  // The (4, 1) panel topology follows the (2, 1) one. Within it, the identifiers are ordered by number of beams, and
+  // each number of beams takes both phase alphabet sizes.
+  return FIRST_TYPE_II_PMI_CODEBOOK_ID + nof_typeII_two_one_codebooks + (nof_beams - 2) * 2 + phase_id;
 }
 
 pmi_codebook_id ocudu::to_pmi_codebook_identifier(const pmi_codebook_config& codebook)

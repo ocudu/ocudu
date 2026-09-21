@@ -923,7 +923,10 @@ TEST(csi_report_size, no_supported_configuration_exceeds_the_maximum_report_size
       continue;
     }
 
-    for (unsigned ri_bitmap = 1, ri_bitmap_end = 1U << nof_csi_rs_ports; ri_bitmap != ri_bitmap_end; ++ri_bitmap) {
+    // The RI restriction bitmap only selects ranks that the codebook can report.
+    unsigned max_rank = get_precoding_codebook_max_rank(pmi_codebook);
+
+    for (unsigned ri_bitmap = 1, ri_bitmap_end = 1U << max_rank; ri_bitmap != ri_bitmap_end; ++ri_bitmap) {
       for (csi_report_quantities quantities : {csi_report_quantities::cri_ri_pmi_cqi,
                                                csi_report_quantities::cri_ri_cqi,
                                                csi_report_quantities::cri_ri_li_pmi_cqi}) {
@@ -943,8 +946,11 @@ TEST(csi_report_size, no_supported_configuration_exceeds_the_maximum_report_size
         ASSERT_LE(pusch_size.part2_max_size, csi_report_max_size)
             << "PUSCH CSI Part 2 of codebook " << to_string(pmi_codebook) << " exceeds the maximum report size.";
 
-        ASSERT_LE(get_csi_report_pucch_size(config).part1_size, csi_report_max_size)
-            << "PUCCH CSI Part 1 of codebook " << to_string(pmi_codebook) << " exceeds the maximum report size.";
+        // The Type II PMI is reported in CSI Part 2, which is only multiplexed in PUSCH.
+        if (!std::holds_alternative<pmi_codebook_typeII>(pmi_codebook)) {
+          ASSERT_LE(get_csi_report_pucch_size(config).part1_size, csi_report_max_size)
+              << "PUCCH CSI Part 1 of codebook " << to_string(pmi_codebook) << " exceeds the maximum report size.";
+        }
       }
     }
   }
