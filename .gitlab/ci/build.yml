@@ -1573,7 +1573,7 @@ ubuntu-24.04 avx512 dpdk 25.11:
         ENABLE_FFTW: "False"
         ENABLE_MKL: "True"
 
-ubuntu-26.10 avx2 dpdk 24.11:
+ubuntu-26.10 avx2 dpdk 25.11:
   extends: .build_and_unit
   rules:
     - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Weekly/
@@ -1582,40 +1582,7 @@ ubuntu-26.10 avx2 dpdk 24.11:
   variables:
     OS: ubuntu-26.10
     MARCH: x86-64-v3
-    DPDK_VERSION: "24.11.2_avx2"
-  parallel:
-    matrix:
-      - <<: *basic_combinations_dpdk
-
-ubuntu-26.10 avx2 dpdk 25.11:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Weekly/
-      when: delayed
-      start_in: 21 hours
-  variables:
-    OS: ubuntu-26.10
-    MARCH: x86-64-v3
     DPDK_VERSION: "25.11.3_avx2"
-  parallel:
-    matrix:
-      - <<: *basic_combinations_dpdk
-
-ubuntu-26.10 avx512 dpdk 24.11:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Weekly/
-      when: delayed
-      start_in: 22 hours
-  variables:
-    OS: ubuntu-26.10
-    MARCH: x86-64-v4
-    TEST_MODE: full
-    DPDK_VERSION: "24.11.2_avx512"
-  tags:
-    - ${OCUDU_RUNNER_TAG}-amd64
-    - avx512
-    - sctp
   parallel:
     matrix:
       - <<: *basic_combinations_dpdk
@@ -1625,7 +1592,7 @@ ubuntu-26.10 avx512 dpdk 25.11:
   rules:
     - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 23 hours
+      start_in: 21 hours
   variables:
     OS: ubuntu-26.10
     MARCH: x86-64-v4
@@ -1644,7 +1611,7 @@ ubuntu-26.04 avx2 dpdk 25.11:
   rules:
     - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 24 hours
+      start_in: 22 hours
   variables:
     OS: ubuntu-26.04
     MARCH: x86-64-v3
@@ -1658,7 +1625,7 @@ ubuntu-26.04 avx512 dpdk 25.11:
   rules:
     - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 25 hours
+      start_in: 23 hours
   variables:
     OS: ubuntu-26.04
     MARCH: x86-64-v4
