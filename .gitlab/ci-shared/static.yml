@@ -44,6 +44,7 @@ include:
         run-prettier-diff.sh $CI_MERGE_REQUEST_DIFF_BASE_SHA
         hex2lowercase.sh
         is-pristine-repo.sh
+        run-markdownlint.sh $CI_MERGE_REQUEST_DIFF_BASE_SHA
       }
     - cd $CPP_SRC_DIR
     - check_code_format
@@ -66,6 +67,7 @@ include:
         [ "$md_files" ] && prettier --config .prettierrc --write ${md_files}
         hex2lowercase.sh
         is-pristine-repo.sh
+        run-markdownlint.sh
       }
     - cd $CPP_SRC_DIR
     - full_code_format

@@ -249,6 +249,7 @@ code-format:
       changes:
         - .clang-format
         - .prettierrc
+        - .markdownlint.jsonc
       when: never
     - if: $ON_MR
   needs:
@@ -263,6 +264,7 @@ full-code-format:
       changes:
         - .clang-format
         - .prettierrc
+        - .markdownlint.jsonc
   needs:
     - job: trigger static
       optional: true
