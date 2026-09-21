@@ -749,10 +749,9 @@ inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release
       asn1::ngap::recommended_cell_item_s asn1_recommended_cell_item;
 
       // Fill NG RAN CGI.
-      asn1_recommended_cell_item.ngran_cgi.set_nr_cgi().nr_cell_id.from_number(
-          cu_cp_recommended_cell_item.ngran_cgi.nci.value());
-      asn1_recommended_cell_item.ngran_cgi.set_nr_cgi().plmn_id =
-          cu_cp_recommended_cell_item.ngran_cgi.plmn_id.to_bytes();
+      auto& asn1_nr_cgi = asn1_recommended_cell_item.ngran_cgi.set_nr_cgi();
+      asn1_nr_cgi.nr_cell_id.from_number(cu_cp_recommended_cell_item.ngran_cgi.nci.value());
+      asn1_nr_cgi.plmn_id = cu_cp_recommended_cell_item.ngran_cgi.plmn_id.to_bytes();
 
       // Fill time stayed in cell.
       if (cu_cp_recommended_cell_item.time_stayed_in_cell.has_value()) {
