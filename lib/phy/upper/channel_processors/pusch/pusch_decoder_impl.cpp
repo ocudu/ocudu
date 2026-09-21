@@ -93,6 +93,9 @@ pusch_decoder_buffer& pusch_decoder_impl::new_data(span<uint8_t>                
   softbits_count   = 0;
   codeblock_llrs.clear();
 
+  // Reset the number of iterations per codeblock.
+  ocuduvec::zero(cb_stats);
+
   // Unset the expected number of UL-SCH softbits.
   nof_ulsch_softbits.reset();
 
