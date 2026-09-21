@@ -39,6 +39,8 @@ struct downlink_handler_impl_config {
   tx_window_timing_parameters tx_timing_params;
   /// If set to true, logs late events as warnings, otherwise as info.
   bool enable_log_warnings_for_lates;
+  /// If set to true, the downlink transmission is beamformed (Category B), otherwise it is not (Category A).
+  bool is_beamforming_enabled;
 };
 
 /// Downlink handler implementation dependencies.
@@ -86,6 +88,7 @@ private:
   const cyclic_prefix                                   cp;
   const std::optional<tdd_ul_dl_config_common>          tdd_config;
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
+  const bool                                            is_beamforming_enabled;
   tx_window_checker                                     window_checker;
   std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow_cplane;
   std::unique_ptr<data_flow_uplane_downlink_data>       data_flow_uplane;

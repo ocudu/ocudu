@@ -10,9 +10,38 @@
 #include "ocudu/phy/support/resource_grid_context.h"
 #include "ocudu/phy/support/resource_grid_reader.h"
 #include "ocudu/phy/support/shared_resource_grid.h"
+#include "ocudu/ran/beamforming/beam_identifier.h"
 
 using namespace ocudu;
 using namespace ofh;
+
+/// \brief Returns the number of eAxCs that the transmission of the given resource grid requires.
+///
+/// The resource grid is sized to the total number of beams that the antenna topology defines.
+static unsigned get_nof_required_eaxc(const resource_grid_reader& reader, bool is_beamforming_enabled)
+{
+  // Category B maps the k-th non-empty beam-port onto the k-th eAxC.
+  if (is_beamforming_enabled) {
+    unsigned nof_active_ports = 0;
+    for (unsigned port = 0, e = reader.get_nof_ports(); port != e; ++port) {
+      nof_active_ports += reader.is_empty(port) ? 0 : 1;
+    }
+
+    return nof_active_ports;
+  }
+
+  // Category A maps each beam-port onto the eAxC with the same index, hence all data must be contained in the first K
+  // beam-ports, where K is the number of antenna ports of the configured topology. Returning the highest non-empty
+  // port detects a transmission mapped beyond them.
+  unsigned nof_required_eaxc = 0;
+  for (unsigned port = 0, e = reader.get_nof_ports(); port != e; ++port) {
+    if (!reader.is_empty(port)) {
+      nof_required_eaxc = port + 1;
+    }
+  }
+
+  return nof_required_eaxc;
+}
 
 downlink_handler_impl::downlink_handler_impl(const downlink_handler_impl_config&  config,
                                              downlink_handler_impl_dependencies&& dependencies) :
@@ -21,6 +50,7 @@ downlink_handler_impl::downlink_handler_impl(const downlink_handler_impl_config&
   cp(config.cp),
   tdd_config(config.tdd_config),
   dl_eaxc(config.dl_eaxc),
+  is_beamforming_enabled(config.is_beamforming_enabled),
   window_checker(
       dependencies.logger,
       config.sector,
@@ -80,10 +110,16 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
   }
 
   const resource_grid_reader& reader = grid.get_reader();
-  ocudu_assert(reader.get_nof_ports() <= dl_eaxc.size(),
-               "Number of RU ports is '{}' and must be equal or greater than the number of cell ports which is '{}'",
-               dl_eaxc.size(),
-               reader.get_nof_ports());
+
+  ocudu_assert(dl_eaxc.size() <= reader.get_nof_ports(),
+               "Resource grid has '{}' beam-ports, but at least '{}' are required, one per configured downlink eAxC",
+               reader.get_nof_ports(),
+               dl_eaxc.size());
+
+  ocudu_assert(get_nof_required_eaxc(reader, is_beamforming_enabled) <= dl_eaxc.size(),
+               "Resource grid needs '{}' downlink eAxCs and only '{}' are configured",
+               get_nof_required_eaxc(reader, is_beamforming_enabled),
+               dl_eaxc.size());
 
   trace_point tp = ofh_tracer.now();
 
@@ -125,14 +161,26 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
   uplane_context.sector       = context.sector;
   uplane_context.symbol_range = cplane_context.symbol_range;
 
-  for (unsigned cell_port_id = 0, e = reader.get_nof_ports(); cell_port_id != e; ++cell_port_id) {
+  // For backward compatibility, Category A transmits every configured eAxC, regardless of whether its beam-port is
+  // empty, whilst Category B scans every beam-port and transmits the non-empty ones.
+  const unsigned nof_scanned_beams = is_beamforming_enabled ? reader.get_nof_ports() : dl_eaxc.size();
+
+  for (unsigned eaxc_index = 0, i_beam = 0; i_beam != nof_scanned_beams; ++i_beam) {
+    if (is_beamforming_enabled && reader.is_empty(i_beam)) {
+      continue;
+    }
+
+    const unsigned eaxc = dl_eaxc[eaxc_index++];
+
     // Control-Plane data flow.
-    cplane_context.eaxc = dl_eaxc[cell_port_id];
+    cplane_context.eaxc    = eaxc;
+    cplane_context.beam_id = to_beam_id(i_beam);
     data_flow_cplane->enqueue_section_type_1_message(cplane_context);
 
-    // User-Plane data flow.
-    uplane_context.port = cell_port_id;
-    uplane_context.eaxc = dl_eaxc[cell_port_id];
+    // User-Plane data flow. Note that the port of the resource grid is a beam-port, which in Category A, where no
+    // beamforming is applied, coincides with the antenna port.
+    uplane_context.port = i_beam;
+    uplane_context.eaxc = eaxc;
     data_flow_uplane->enqueue_section_type_1_message(uplane_context, grid);
   }
 

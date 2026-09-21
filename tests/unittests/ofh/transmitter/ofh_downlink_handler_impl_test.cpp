@@ -10,7 +10,9 @@
 #include "ocudu/ofh/ofh_error_notifier.h"
 #include "ocudu/phy/support/resource_grid_context.h"
 #include "ocudu/phy/support/shared_resource_grid.h"
+#include "ocudu/ran/antenna_topology.h"
 #include <gtest/gtest.h>
+#include <numeric>
 
 using namespace ocudu;
 using namespace ofh;
@@ -22,10 +24,12 @@ namespace {
 /// Spy User-Plane downlink data data flow.
 class data_flow_uplane_downlink_data_spy : public data_flow_uplane_downlink_data, public operation_controller
 {
-  bool     has_enqueue_section_type_1_message_method_been_called = false;
-  unsigned eaxc                                                  = -1;
-
 public:
+  struct spy_info {
+    unsigned eaxc = -1;
+    unsigned port = -1;
+  };
+
   // See interface for documentation.
   void start() override {}
 
@@ -41,6 +45,7 @@ public:
   {
     has_enqueue_section_type_1_message_method_been_called = true;
     eaxc                                                  = context.eaxc;
+    section_type_1_calls.push_back({context.eaxc, context.port});
   }
 
   // See interface for documentation.
@@ -54,6 +59,14 @@ public:
 
   /// Returns the configured eAxC.
   unsigned get_eaxc() const { return eaxc; }
+
+  /// Returns the information of every enqueued section type 1 message, in enqueueing order.
+  span<const spy_info> get_section_type_1_calls() const { return section_type_1_calls; }
+
+private:
+  bool                  has_enqueue_section_type_1_message_method_been_called = false;
+  unsigned              eaxc                                                  = -1;
+  std::vector<spy_info> section_type_1_calls;
 };
 
 /// Error notifier spy implementation.
@@ -91,6 +104,7 @@ static downlink_handler_impl_config generate_default_config()
   config.scs                           = subcarrier_spacing::kHz30;
   config.dl_processing_time            = std::chrono::milliseconds(400);
   config.enable_log_warnings_for_lates = true;
+  config.is_beamforming_enabled        = false;
   // Transmission timing parameters corresponding to:
   // T1a_max_cp_dl=500us, T1a_min_cp_dl=200us,
   // T1a_max_cp_ul=300us, T1a_min_cp_ul=150us,
@@ -99,34 +113,55 @@ static downlink_handler_impl_config generate_default_config()
   return config;
 }
 
+static downlink_handler_impl_dependencies
+generate_dependencies(error_notifier&                                           notifier,
+                      std::unique_ptr<data_flow_cplane_scheduling_commands_spy> cplane,
+                      std::unique_ptr<data_flow_uplane_downlink_data_spy>       uplane)
+{
+  return {ocudulog::fetch_basic_logger("TEST"),
+          notifier,
+          std::move(cplane),
+          std::move(uplane),
+          std::make_shared<ether::eth_frame_pool>(ocudulog::fetch_basic_logger("TEST"),
+                                                  mtu_size,
+                                                  2,
+                                                  ofh::message_type::control_plane,
+                                                  ofh::data_direction::downlink),
+          std::make_shared<ether::eth_frame_pool>(ocudulog::fetch_basic_logger("TEST"),
+                                                  mtu_size,
+                                                  2,
+                                                  ofh::message_type::user_plane,
+                                                  ofh::data_direction::downlink)};
+}
+
+/// Returns the number of symbols that a resource grid must precede its slot by to be transmitted in time.
+static unsigned get_nof_symbols_before_ota(const downlink_handler_impl_config& config)
+{
+  return calculate_nof_symbols_before_ota(config.cp, config.scs, config.dl_processing_time, config.tx_timing_params);
+}
+
+/// Notifies the given handler an OTA time that precedes the given slot by the given number of symbols.
+static void notify_ota_time(downlink_handler_impl&              handler,
+                            const downlink_handler_impl_config& config,
+                            slot_point                          slot,
+                            unsigned                            nof_symbols_before_slot)
+{
+  slot_symbol_point ota_time(slot, 0, get_nsymb_per_slot(config.cp));
+  ota_time -= nof_symbols_before_slot;
+  handler.get_ota_symbol_boundary_notifier().on_new_symbol({ota_time, {}});
+}
+
 TEST(ofh_downlink_handler_impl, handling_downlink_data_use_control_and_user_plane)
 {
-  downlink_handler_impl_config config      = generate_default_config();
-  unsigned                     nof_symbols = get_nsymb_per_slot(config.cp);
+  downlink_handler_impl_config config = generate_default_config();
 
-  error_notifier_spy                                        notifier_spy;
-  std::unique_ptr<data_flow_cplane_scheduling_commands_spy> cplane =
-      std::make_unique<data_flow_cplane_scheduling_commands_spy>();
-  const auto&                                         cplane_spy = *cplane;
-  std::unique_ptr<data_flow_uplane_downlink_data_spy> uplane = std::make_unique<data_flow_uplane_downlink_data_spy>();
-  const auto&                                         uplane_spy   = *uplane;
-  downlink_handler_impl_dependencies                  dependencies = {
-      ocudulog::fetch_basic_logger("TEST"),
-      notifier_spy,
-      std::move(cplane),
-      std::move(uplane),
-      std::make_shared<ether::eth_frame_pool>(ocudulog::fetch_basic_logger("TEST"),
-                                              mtu_size,
-                                              2,
-                                              ofh::message_type::control_plane,
-                                              ofh::data_direction::downlink),
-      std::make_shared<ether::eth_frame_pool>(ocudulog::fetch_basic_logger("TEST"),
-                                              mtu_size,
-                                              2,
-                                              ofh::message_type::user_plane,
-                                              ofh::data_direction::downlink)};
+  error_notifier_spy notifier_spy;
+  auto               cplane     = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
+  const auto&        cplane_spy = *cplane;
+  auto               uplane     = std::make_unique<data_flow_uplane_downlink_data_spy>();
+  const auto&        uplane_spy = *uplane;
 
-  downlink_handler_impl handler(config, std::move(dependencies));
+  downlink_handler_impl handler(config, generate_dependencies(notifier_spy, std::move(cplane), std::move(uplane)));
   handler.start();
 
   resource_grid_reader_spy rg_reader_spy(1, 1, 1);
@@ -139,13 +174,8 @@ TEST(ofh_downlink_handler_impl, handling_downlink_data_use_control_and_user_plan
   rg_context.slot   = slot_point(1, 1, 1);
   rg_context.sector = 1;
 
-  // Set the OTA to the same slot as the grid.
-  slot_symbol_point ota_time(rg_context.slot, 0, nof_symbols);
-
-  // Delay the OTA 3 slots.
-  ota_time -=
-      (3 * calculate_nof_symbols_before_ota(config.cp, config.scs, config.dl_processing_time, config.tx_timing_params));
-  handler.get_ota_symbol_boundary_notifier().on_new_symbol({ota_time, {}});
+  // Set the OTA well before the grid slot, so that the grid is not late.
+  notify_ota_time(handler, config, rg_context.slot, 3 * get_nof_symbols_before_ota(config));
 
   handler.handle_dl_data(rg_context, rg.get_grid());
 
@@ -167,32 +197,15 @@ TEST(ofh_downlink_handler_impl, handling_downlink_data_use_control_and_user_plan
 
 TEST(ofh_downlink_handler_impl, late_rg_is_not_handled)
 {
-  downlink_handler_impl_config config      = generate_default_config();
-  unsigned                     nof_symbols = get_nsymb_per_slot(config.cp);
+  downlink_handler_impl_config config = generate_default_config();
 
-  error_notifier_spy                                        notifier_spy;
-  std::unique_ptr<data_flow_cplane_scheduling_commands_spy> cplane =
-      std::make_unique<data_flow_cplane_scheduling_commands_spy>();
-  const auto&                                         cplane_spy = *cplane;
-  std::unique_ptr<data_flow_uplane_downlink_data_spy> uplane = std::make_unique<data_flow_uplane_downlink_data_spy>();
-  const auto&                                         uplane_spy   = *uplane;
-  downlink_handler_impl_dependencies                  dependencies = {
-      ocudulog::fetch_basic_logger("TEST"),
-      notifier_spy,
-      std::move(cplane),
-      std::move(uplane),
-      std::make_shared<ether::eth_frame_pool>(ocudulog::fetch_basic_logger("TEST"),
-                                              mtu_size,
-                                              2,
-                                              ofh::message_type::control_plane,
-                                              ofh::data_direction::downlink),
-      std::make_shared<ether::eth_frame_pool>(ocudulog::fetch_basic_logger("TEST"),
-                                              mtu_size,
-                                              2,
-                                              ofh::message_type::user_plane,
-                                              ofh::data_direction::downlink)};
+  error_notifier_spy notifier_spy;
+  auto               cplane     = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
+  const auto&        cplane_spy = *cplane;
+  auto               uplane     = std::make_unique<data_flow_uplane_downlink_data_spy>();
+  const auto&        uplane_spy = *uplane;
 
-  downlink_handler_impl handler(config, std::move(dependencies));
+  downlink_handler_impl handler(config, generate_dependencies(notifier_spy, std::move(cplane), std::move(uplane)));
   handler.start();
 
   resource_grid_reader_spy rg_reader_spy(1, 1, 1);
@@ -205,14 +218,8 @@ TEST(ofh_downlink_handler_impl, late_rg_is_not_handled)
   rg_context.slot   = slot_point(1, 1, 1);
   rg_context.sector = 1;
 
-  // Set the OTA to the same slot as the grid.
-  slot_symbol_point ota_time(rg_context.slot, 0, nof_symbols);
-
-  // Delay the OTA, as the grid should always be advanced in slot.
-  ota_time -=
-      calculate_nof_symbols_before_ota(config.cp, config.scs, config.dl_processing_time, config.tx_timing_params);
-
-  handler.get_ota_symbol_boundary_notifier().on_new_symbol({ota_time, {}});
+  // Set the OTA exactly at the transmission window boundary, which makes the grid late.
+  notify_ota_time(handler, config, rg_context.slot, get_nof_symbols_before_ota(config));
 
   handler.handle_dl_data(rg_context, rg.get_grid());
 
@@ -224,32 +231,15 @@ TEST(ofh_downlink_handler_impl, late_rg_is_not_handled)
 
 TEST(ofh_downlink_handler_impl, same_slot_fails)
 {
-  downlink_handler_impl_config config      = generate_default_config();
-  unsigned                     nof_symbols = get_nsymb_per_slot(config.cp);
+  downlink_handler_impl_config config = generate_default_config();
 
-  error_notifier_spy                                        notifier_spy;
-  std::unique_ptr<data_flow_cplane_scheduling_commands_spy> cplane =
-      std::make_unique<data_flow_cplane_scheduling_commands_spy>();
-  const auto&                                         cplane_spy = *cplane;
-  std::unique_ptr<data_flow_uplane_downlink_data_spy> uplane = std::make_unique<data_flow_uplane_downlink_data_spy>();
-  const auto&                                         uplane_spy   = *uplane;
-  downlink_handler_impl_dependencies                  dependencies = {
-      ocudulog::fetch_basic_logger("TEST"),
-      notifier_spy,
-      std::move(cplane),
-      std::move(uplane),
-      std::make_shared<ether::eth_frame_pool>(ocudulog::fetch_basic_logger("TEST"),
-                                              mtu_size,
-                                              2,
-                                              ofh::message_type::control_plane,
-                                              ofh::data_direction::downlink),
-      std::make_shared<ether::eth_frame_pool>(ocudulog::fetch_basic_logger("TEST"),
-                                              mtu_size,
-                                              2,
-                                              ofh::message_type::user_plane,
-                                              ofh::data_direction::downlink)};
+  error_notifier_spy notifier_spy;
+  auto               cplane     = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
+  const auto&        cplane_spy = *cplane;
+  auto               uplane     = std::make_unique<data_flow_uplane_downlink_data_spy>();
+  const auto&        uplane_spy = *uplane;
 
-  downlink_handler_impl handler(config, std::move(dependencies));
+  downlink_handler_impl handler(config, generate_dependencies(notifier_spy, std::move(cplane), std::move(uplane)));
   handler.start();
 
   resource_grid_reader_spy rg_reader_spy(1, 1, 1);
@@ -262,10 +252,8 @@ TEST(ofh_downlink_handler_impl, same_slot_fails)
   rg_context.slot   = slot_point(1, 1, 1);
   rg_context.sector = 1;
 
-  // Set the OTA to the same slot as the grid.
-  slot_symbol_point ota_time(rg_context.slot, 0, nof_symbols);
-  // Same slot and symbol than the resource grid.
-  handler.get_ota_symbol_boundary_notifier().on_new_symbol({ota_time, {}});
+  // Set the OTA to the same slot and symbol as the grid, which makes the grid late.
+  notify_ota_time(handler, config, rg_context.slot, 0);
 
   handler.handle_dl_data(rg_context, rg.get_grid());
 
@@ -277,32 +265,15 @@ TEST(ofh_downlink_handler_impl, same_slot_fails)
 
 TEST(ofh_downlink_handler_impl, rg_in_the_frontier_is_handled)
 {
-  downlink_handler_impl_config config      = generate_default_config();
-  unsigned                     nof_symbols = get_nsymb_per_slot(config.cp);
+  downlink_handler_impl_config config = generate_default_config();
 
-  error_notifier_spy                                        notifier_spy;
-  std::unique_ptr<data_flow_cplane_scheduling_commands_spy> cplane =
-      std::make_unique<data_flow_cplane_scheduling_commands_spy>();
-  const auto&                                         cplane_spy = *cplane;
-  std::unique_ptr<data_flow_uplane_downlink_data_spy> uplane = std::make_unique<data_flow_uplane_downlink_data_spy>();
-  const auto&                                         uplane_spy   = *uplane;
-  downlink_handler_impl_dependencies                  dependencies = {
-      ocudulog::fetch_basic_logger("TEST"),
-      notifier_spy,
-      std::move(cplane),
-      std::move(uplane),
-      std::make_shared<ether::eth_frame_pool>(ocudulog::fetch_basic_logger("TEST"),
-                                              mtu_size,
-                                              2,
-                                              ofh::message_type::control_plane,
-                                              ofh::data_direction::downlink),
-      std::make_shared<ether::eth_frame_pool>(ocudulog::fetch_basic_logger("TEST"),
-                                              mtu_size,
-                                              2,
-                                              ofh::message_type::user_plane,
-                                              ofh::data_direction::downlink)};
+  error_notifier_spy notifier_spy;
+  auto               cplane     = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
+  const auto&        cplane_spy = *cplane;
+  auto               uplane     = std::make_unique<data_flow_uplane_downlink_data_spy>();
+  const auto&        uplane_spy = *uplane;
 
-  downlink_handler_impl handler(config, std::move(dependencies));
+  downlink_handler_impl handler(config, generate_dependencies(notifier_spy, std::move(cplane), std::move(uplane)));
   handler.start();
 
   resource_grid_reader_spy rg_reader_spy(1, 1, 1);
@@ -315,14 +286,8 @@ TEST(ofh_downlink_handler_impl, rg_in_the_frontier_is_handled)
   rg_context.slot   = slot_point(1, 1, 1);
   rg_context.sector = 1;
 
-  // Set the OTA to the same slot as the grid.
-  slot_symbol_point ota_time(rg_context.slot, 0, nof_symbols);
-
-  // Delay the OTA, as the grid should always be advanced in slot.
-  ota_time -=
-      (calculate_nof_symbols_before_ota(config.cp, config.scs, config.dl_processing_time, config.tx_timing_params) + 1);
-
-  handler.get_ota_symbol_boundary_notifier().on_new_symbol({ota_time, {}});
+  // Set the OTA one symbol before the transmission window boundary, the earliest OTA that is not late.
+  notify_ota_time(handler, config, rg_context.slot, get_nof_symbols_before_ota(config) + 1);
 
   handler.handle_dl_data(rg_context, rg.get_grid());
 
@@ -331,3 +296,137 @@ TEST(ofh_downlink_handler_impl, rg_in_the_frontier_is_handled)
   ASSERT_TRUE(uplane_spy.has_enqueue_section_type_1_method_been_called());
   ASSERT_FALSE(notifier_spy.is_downlink_late());
 }
+
+TEST(ofh_downlink_handler_impl, category_a_transmits_one_beam_port_per_eaxc)
+{
+  downlink_handler_impl_config config = generate_default_config();
+  config.dl_eaxc                      = {24, 25};
+
+  error_notifier_spy notifier_spy;
+  auto               cplane     = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
+  const auto&        cplane_spy = *cplane;
+  auto               uplane     = std::make_unique<data_flow_uplane_downlink_data_spy>();
+  const auto&        uplane_spy = *uplane;
+
+  downlink_handler_impl handler(config, generate_dependencies(notifier_spy, std::move(cplane), std::move(uplane)));
+  handler.start();
+
+  // The resource grid is sized to the total number of beams, which exceeds the number of antenna ports.
+  // Write the second antenna port only, the first one is left empty.
+  resource_grid_reader_spy rg_reader_spy(8, 1, 1);
+  rg_reader_spy.write(resource_grid_reader_spy::expected_entry_t{1, 0, 0, {1.0F, 0.0F}});
+  resource_grid_writer_spy rg_writer_spy(8, 1, 1);
+  resource_grid_spy        rg_spy(rg_reader_spy, rg_writer_spy);
+  shared_resource_grid_spy rg(rg_spy);
+
+  resource_grid_context rg_context;
+  rg_context.slot   = slot_point(1, 1, 1);
+  rg_context.sector = 1;
+  notify_ota_time(handler, config, rg_context.slot, 3 * get_nof_symbols_before_ota(config));
+
+  handler.handle_dl_data(rg_context, rg.get_grid());
+
+  ASSERT_FALSE(notifier_spy.is_downlink_late());
+
+  // All beam-ports (including empty ones) corresponding to the configured eAxCs are transmitted.
+  span<const data_flow_cplane_scheduling_commands_spy::spy_info> cplane_calls = cplane_spy.get_section_type_1_calls();
+  ASSERT_EQ(2, cplane_calls.size());
+  ASSERT_EQ(config.dl_eaxc[0], cplane_calls[0].eaxc);
+  ASSERT_EQ(config.dl_eaxc[1], cplane_calls[1].eaxc);
+  ASSERT_EQ(to_beam_id(0), cplane_calls[0].beam_id);
+  ASSERT_EQ(to_beam_id(1), cplane_calls[1].beam_id);
+
+  span<const data_flow_uplane_downlink_data_spy::spy_info> uplane_calls = uplane_spy.get_section_type_1_calls();
+  ASSERT_EQ(2, uplane_calls.size());
+  ASSERT_EQ(0, uplane_calls[0].port);
+  ASSERT_EQ(config.dl_eaxc[0], uplane_calls[0].eaxc);
+  ASSERT_EQ(1, uplane_calls[1].port);
+  ASSERT_EQ(config.dl_eaxc[1], uplane_calls[1].eaxc);
+}
+
+TEST(ofh_downlink_handler_impl, category_b_maps_non_empty_beam_ports_onto_eaxcs)
+{
+  downlink_handler_impl_config config = generate_default_config();
+  config.dl_eaxc                      = {24, 25};
+  config.is_beamforming_enabled       = true;
+
+  error_notifier_spy notifier_spy;
+  auto               cplane     = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
+  const auto&        cplane_spy = *cplane;
+  auto               uplane     = std::make_unique<data_flow_uplane_downlink_data_spy>();
+  const auto&        uplane_spy = *uplane;
+
+  downlink_handler_impl handler(config, generate_dependencies(notifier_spy, std::move(cplane), std::move(uplane)));
+  handler.start();
+
+  // Sparse resource grid: only the beam-ports 1 and 3 carry a transmission.
+  resource_grid_reader_spy rg_reader_spy(4, 1, 1);
+  rg_reader_spy.write(resource_grid_reader_spy::expected_entry_t{1, 0, 0, {1.0F, 0.0F}});
+  rg_reader_spy.write(resource_grid_reader_spy::expected_entry_t{3, 0, 0, {1.0F, 0.0F}});
+  resource_grid_writer_spy rg_writer_spy(4, 1, 1);
+  resource_grid_spy        rg_spy(rg_reader_spy, rg_writer_spy);
+  shared_resource_grid_spy rg(rg_spy);
+
+  resource_grid_context rg_context;
+  rg_context.slot   = slot_point(1, 1, 1);
+  rg_context.sector = 1;
+  notify_ota_time(handler, config, rg_context.slot, 3 * get_nof_symbols_before_ota(config));
+
+  handler.handle_dl_data(rg_context, rg.get_grid());
+
+  ASSERT_FALSE(notifier_spy.is_downlink_late());
+
+  // The non-empty beam-ports are compacted onto the eAxC pool, whilst the beam identifier keeps the beam-port index.
+  span<const data_flow_cplane_scheduling_commands_spy::spy_info> cplane_calls = cplane_spy.get_section_type_1_calls();
+  ASSERT_EQ(2, cplane_calls.size());
+  ASSERT_EQ(config.dl_eaxc[0], cplane_calls[0].eaxc);
+  ASSERT_EQ(to_beam_id(1), cplane_calls[0].beam_id);
+  ASSERT_EQ(config.dl_eaxc[1], cplane_calls[1].eaxc);
+  ASSERT_EQ(to_beam_id(3), cplane_calls[1].beam_id);
+
+  span<const data_flow_uplane_downlink_data_spy::spy_info> uplane_calls = uplane_spy.get_section_type_1_calls();
+  ASSERT_EQ(2, uplane_calls.size());
+  ASSERT_EQ(1, uplane_calls[0].port);
+  ASSERT_EQ(config.dl_eaxc[0], uplane_calls[0].eaxc);
+  ASSERT_EQ(3, uplane_calls[1].port);
+  ASSERT_EQ(config.dl_eaxc[1], uplane_calls[1].eaxc);
+}
+
+#ifdef ASSERTS_ENABLED
+TEST(ofh_downlink_handler_impl, category_a_rejects_a_beam_port_beyond_the_antenna_ports)
+{
+  std::optional<antenna_topology> topology = get_single_panel_antenna_topology(4);
+  ASSERT_TRUE(topology.has_value());
+
+  const unsigned nof_antenna_ports = get_total_nof_ports(*topology);
+
+  downlink_handler_impl_config config = generate_default_config();
+  config.dl_eaxc.resize(nof_antenna_ports);
+  std::iota(config.dl_eaxc.begin(), config.dl_eaxc.end(), 24);
+
+  error_notifier_spy notifier_spy;
+  auto               cplane = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
+  auto               uplane = std::make_unique<data_flow_uplane_downlink_data_spy>();
+
+  downlink_handler_impl handler(config, generate_dependencies(notifier_spy, std::move(cplane), std::move(uplane)));
+  handler.start();
+
+  resource_grid_reader_spy rg_reader_spy(get_total_nof_beams(*topology), 1, 1);
+  resource_grid_writer_spy rg_writer_spy(get_total_nof_beams(*topology), 1, 1);
+  // Write the first beam-port that selects a DFT beam instead of an antenna port, which Category A cannot transmit.
+  rg_reader_spy.write(
+      resource_grid_reader_spy::expected_entry_t{static_cast<uint8_t>(nof_antenna_ports), 0, 0, {1.0F, 0.0F}});
+  resource_grid_spy        rg_spy(rg_reader_spy, rg_writer_spy);
+  shared_resource_grid_spy rg(rg_spy);
+
+  resource_grid_context rg_context;
+  rg_context.slot   = slot_point(1, 1, 1);
+  rg_context.sector = 1;
+  notify_ota_time(handler, config, rg_context.slot, 3 * get_nof_symbols_before_ota(config));
+
+  ASSERT_DEATH(handler.handle_dl_data(rg_context, rg.get_grid()),
+               fmt::format("Resource grid needs '{}' downlink eAxCs and only '{}' are configured",
+                           nof_antenna_ports + 1,
+                           config.dl_eaxc.size()));
+}
+#endif // ASSERTS_ENABLED

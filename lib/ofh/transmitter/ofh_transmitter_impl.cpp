@@ -52,6 +52,7 @@ static downlink_handler_impl_config generate_downlink_handler_config(const trans
   out_cfg.dl_processing_time            = tx_config.dl_processing_time;
   out_cfg.tx_timing_params              = tx_config.tx_timing_params;
   out_cfg.enable_log_warnings_for_lates = tx_config.enable_log_warnings_for_lates;
+  out_cfg.is_beamforming_enabled        = tx_config.beamforming.has_value();
 
   return out_cfg;
 }

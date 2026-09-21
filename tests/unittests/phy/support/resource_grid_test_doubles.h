@@ -288,7 +288,14 @@ public:
 
   unsigned get_nof_symbols() const override { return max_symb; }
 
-  bool is_empty(unsigned port) const override { return entries.empty(); }
+  bool is_empty(unsigned port) const override
+  {
+    // Entries are sorted by port, hence the first entry that is not before the given port determines whether the port
+    // was written.
+    auto entry = entries.lower_bound(entry_key_t{static_cast<uint8_t>(port), 0, 0});
+
+    return (entry == entries.end()) || (std::get<0>(entry->first) != port);
+  }
 
   crb_interval get_allocation_range(unsigned port, unsigned symbol) const override
   {
