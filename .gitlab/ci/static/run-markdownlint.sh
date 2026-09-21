@@ -42,6 +42,12 @@ if [ -z "$files" ]; then
   exit 0
 fi
 
+# Use the configuration file given by MARKDOWNLINT_FILE, or let markdownlint look for one itself
+config_arg=""
+if [ -n "${MARKDOWNLINT_FILE:-}" ]; then
+  config_arg="--config ${MARKDOWNLINT_FILE}"
+fi
+
 # Unlike prettier, markdownlint does not rewrite the files: it reports the violations it finds and exits non-zero,
 # so its exit code must be propagated instead of relying on is-pristine-repo.sh
-"$markdownlint" ${files}
+"$markdownlint" ${config_arg} ${files}

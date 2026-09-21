@@ -40,5 +40,11 @@ fi
 echo "Using clang-format version:"
 "$clang_format" --version
 
+# Use the configuration file given by CLANG_FORMAT_FILE, or let clang-format look for one next to each file
+style="file"
+if [ -n "${CLANG_FORMAT_FILE:-}" ]; then
+  style="file:${CLANG_FORMAT_FILE}"
+fi
+
 # Run clang-format for those files and apply changes
-[ "$files" ] && "$clang_format" -style=file -i ${files} || echo "No files changed"
+[ "$files" ] && "$clang_format" -style="$style" -i ${files} || echo "No files changed"

@@ -40,5 +40,12 @@ fi
 echo "Using prettier version:"
 "$prettier" --version
 
+# Use the configuration file given by PRETTIER_FILE. Without it prettier searches for its own, starting in the
+# directory of each formatted file, so passing an unset path would only break that search
+config_arg=""
+if [ -n "${PRETTIER_FILE:-}" ]; then
+  config_arg="--config ${PRETTIER_FILE}"
+fi
+
 # Run prettier for those files and apply changes
-[ "$files" ] && "$prettier" --config .prettierrc --write ${files} || echo "No files changed"
+[ "$files" ] && "$prettier" ${config_arg} --write ${files} || echo "No files changed"
