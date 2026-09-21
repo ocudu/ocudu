@@ -106,7 +106,7 @@ install_dependencies_fedora() {
     )
     local -a extra_pkgs=(
         boost-devel capnproto capnproto-devel cppzmq-devel dpdk-devel elfutils-devel elfutils-libelf-devel
-        libdwarf-devel libusb1-devel numactl-devel zeromq-devel
+        libdwarf-devel libusb1-devel numactl-devel zeromq-devel openssl openssl-devel
     )
 
     case "$mode" in
