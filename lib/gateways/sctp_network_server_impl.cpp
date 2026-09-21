@@ -278,6 +278,7 @@ bool sctp_network_server_impl::create_and_bind()
     if (not dtls_ctxt->init(socket.fd().value())) {
       report_error("Could not initialize DTLS context in SCTP gateway. if={}", node_cfg.if_name);
     }
+    logger.debug("Created DTLS context. if={} cert={}", node_cfg.if_name, node_cfg.dtls_cfg->cert_filename);
   }
   return true;
 }

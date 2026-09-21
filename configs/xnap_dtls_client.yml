@@ -1,0 +1,25 @@
+# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+# Example configuration file for XnAP configuration with DTLS enabled.
+#
+# Each XnAP gateway with DTLS enabled will require:
+# - mode: wether this link will be a DTLS server or client
+# - ca_cert_filename: filename of the certificate provided by the CA
+# - cert_filename: our own certificate
+# - key_filename: our own key
+
+cu_cp:
+  xnap:
+    gateways:
+      # Gateway 0 — bound to subnet 10.10.50.0/24.
+      - bind_addrs:
+          - 127.0.50.2
+        connections:
+          - peer_addrs:
+              - 127.0.50.1
+        dtls:
+          mode: "client"
+          cert_filename: "/tmp/client-cert.pem"
+          key_filename: "/tmp/client-key.pem"
+          ca_cert_filename: "/tmp/ca-cert.pem"

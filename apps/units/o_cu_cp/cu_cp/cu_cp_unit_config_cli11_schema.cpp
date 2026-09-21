@@ -5,6 +5,7 @@
 #include "cu_cp_unit_config_cli11_schema.h"
 #include "apps/helpers/logger/logger_appconfig_cli11_utils.h"
 #include "apps/helpers/metrics/metrics_config_cli11_schema.h"
+#include "apps/helpers/network/dtls_cli11_schema.h"
 #include "apps/helpers/network/sctp_cli11_schema.h"
 #include "apps/helpers/ntn/ntn_config_cli11_schema.h"
 #include "cu_cp_unit_config.h"
@@ -206,6 +207,8 @@ static void configure_cli11_xnap_gateway_args(CLI::App& app, cu_cp_unit_xnap_gat
   // SCTP socket parameters specific to this gateway, nested under `sctp:`.
   CLI::App* sctp_subcmd = add_subcommand(app, "sctp", "SCTP socket options");
   configure_cli11_sctp_socket_args(*sctp_subcmd, config.sctp);
+  CLI::App* dtls_subcmd = add_subcommand(app, "dtls", "DTLS options");
+  configure_cli11_dtls_args(*dtls_subcmd, config.dtls);
 
   add_option_object_list<cu_cp_unit_xnap_peer_config>(
       app,

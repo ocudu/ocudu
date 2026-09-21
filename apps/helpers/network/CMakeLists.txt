@@ -4,7 +4,8 @@
 
 
 set(SOURCES sctp_cli11_schema.cpp
-	sctp_config_yaml_writer.cpp
+	dtls_cli11_schema.cpp
+ 	sctp_config_yaml_writer.cpp
 	udp_cli11_schema.cpp
 	udp_config_yaml_writer.cpp
 )

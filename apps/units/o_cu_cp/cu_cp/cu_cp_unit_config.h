@@ -5,6 +5,7 @@
 #pragma once
 
 #include "apps/helpers/metrics/metrics_config.h"
+#include "apps/helpers/network/dtls_appconfig.h"
 #include "apps/helpers/network/sctp_appconfig.h"
 #include "apps/helpers/ntn/ntn_satellite_config.h"
 #include "apps/units/o_cu_cp/cu_cp/cu_cp_unit_pcap_config.h"
@@ -334,6 +335,7 @@ struct cu_cp_unit_xnap_gateway_config {
   std::vector<std::string>                 bind_addrs = {"127.0.30.1"};
   std::vector<cu_cp_unit_xnap_peer_config> connections;
   sctp_appconfig                           sctp;
+  dtls_appconfig                           dtls;
 };
 
 struct cu_cp_unit_xnap_config {

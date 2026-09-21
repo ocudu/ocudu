@@ -29,7 +29,11 @@ openssl_dtls_context::openssl_dtls_context(dtls_context_config cfg_) :
 {
   report_error_if_not(cfg.key_filename != "", "Invalid DTLS key filename");
   report_error_if_not(cfg.cert_filename != "", "Invalid DTLS cert filename");
-  logger.info("Initializing DTLS context. cert={} key={}", cfg.cert_filename, cfg.key_filename);
+  report_error_if_not(cfg.ca_cert_filename != "", "Invalid DTLS CA cert filename");
+  logger.info("Initializing DTLS context. cert={} key={} ca_cert={}",
+              cfg.cert_filename,
+              cfg.key_filename,
+              cfg.ca_cert_filename);
 }
 
 openssl_dtls_context::~openssl_dtls_context()
