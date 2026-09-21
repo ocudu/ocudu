@@ -6,7 +6,7 @@ grants.
 
 ## Component Hierarchy
 
-```
+```text
 scheduler_impl
 ├── sched_config_manager          # Validates and distributes cell/UE config
 ├── cell_scheduler  [per cell]    # All resources specific to one cell
@@ -175,7 +175,7 @@ log line and field.
 
 ## Directory Layout
 
-```
+```text
 lib/scheduler/
 ├── scheduler_impl.{h,cpp}      # mac_scheduler implementation
 ├── scheduler_factory.cpp       # create_scheduler() factory

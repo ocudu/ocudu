@@ -27,7 +27,7 @@ In [open5gs.env](open5gs.env) the following parameters can be set:
 - UE_IP_BASE: Defines the IP base used for connected UEs (here: 10.45.0).
 - DEBUG (default: false): This can be set to true to run Open5GS in debug mode.
 
-```
+```csv
 # Kept in the following format: "Name,IMSI,Key,OP_Type,OP/OPc,AMF,QCI,IP_alloc"
 #
 # Name:     Human readable name to help distinguish UE's. Ignored by the HSS
@@ -66,7 +66,10 @@ You can overwrite open5gs version by adding `--build-arg OPEN5GS_VERSION=v2.6.6`
 
 Then run the docker container with:
 
-`docker run --net open5gsnet --ip 10.53.1.2 --env-file open5gs.env --privileged --publish 9999:9999 open5gs-docker ./build/tests/app/5gc -c open5gs-5gc.yml`
+```bash
+docker run --net open5gsnet --ip 10.53.1.2 --env-file open5gs.env --privileged --publish 9999:9999 open5gs-docker \
+    ./build/tests/app/5gc -c open5gs-5gc.yml
+```
 
 To use this container with ocudu, the `addrs` option under `amf` section in gnb configuration must be set to OPEN5GS_IP
 (here: 10.53.1.2). It could also be required to modify `bind_addrs` option under `amf` section in gnb configuration to

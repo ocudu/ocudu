@@ -17,7 +17,7 @@ pip install numpy skyfield pyyaml
 
 ---
 
-## 1. Start Open5gs core.
+## 1. Start Open5gs core
 
 ```bash
 cd ./ocudu/docker

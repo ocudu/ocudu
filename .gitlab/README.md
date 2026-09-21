@@ -112,12 +112,12 @@ Different pipeline types use different runner tags:
 
 You have several options for configuring runners:
 
-**Option 1 - GitLab Shared Runners Only (Default)**
+##### Option 1 - GitLab Shared Runners Only (Default)
 
 - Enable shared runners in **Settings → CI/CD → Runners**
 - Scheduled pipeline: Some features (AVX512, SCTP) won't be tested because they require custom runners
 
-**Option 2 - Custom Runners Only**
+##### Option 2 - Custom Runners Only
 
 - Disable GitLab shared runners
 - Set up your own on-premise or cloud runners with matching tags:
@@ -127,7 +127,7 @@ You have several options for configuring runners:
   - `sctp` for jobs requiring SCTP protocol support
 - See [GitLab Runner installation guide](https://docs.gitlab.com/runner/install/)
 
-**Option 3 - Hybrid (Shared + Custom)**
+##### Option 3 - Hybrid (Shared + Custom)
 
 - Enable both GitLab shared runners and custom runners
 - Shared runners handle standard jobs

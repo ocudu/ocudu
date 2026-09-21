@@ -1,7 +1,6 @@
 # OCUDU Software Architecture Documentation
 
-A primer on the O-RAN gNB architecture has already been outlined in the Knowledge Base, this can be found
-[here](https://docs.ocudu.org).
+A primer on the O-RAN gNB architecture has already been outlined in the [Knowledge Base](https://docs.ocudu.org).
 
 This documentation aims to outline how this architecture is implemented in the OCUDU codebase. The function and
 implementation of each component will be discussed in subsequent sections.

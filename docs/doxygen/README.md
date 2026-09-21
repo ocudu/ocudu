@@ -1,7 +1,7 @@
 # Doxygen API documentation
 
-Doxygen project for the OCUDU API documentation, plus a Docker Compose setup that
-builds it without installing Doxygen locally.
+Doxygen project for the OCUDU API documentation, plus a Docker Compose setup that builds it without installing Doxygen
+locally.
 
 ## Structure
 
@@ -41,8 +41,6 @@ The generated HTML is written to `build_doxygen/docs/doxygen/html`.
 
 Adjust the variables in `.env` if the defaults do not suit the host:
 
-- `UID`/`GID`: user/group IDs used inside the container, so generated files are owned
-  by the invoking user.
-- `DOXYGEN_VERSION`/`PLANTUML_VERSION`: image tag components. They must match
-  `.gitlab/ci/doxygen/version.yml`.
+- `UID`/`GID`: user/group IDs used inside the container, so generated files are owned by the invoking user.
+- `DOXYGEN_VERSION`/`PLANTUML_VERSION`: image tag components. They must match `.gitlab/ci/doxygen/version.yml`.
 - `CI_REGISTRY_IMAGE`: registry holding the pre-built Doxygen image.

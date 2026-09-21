@@ -41,9 +41,9 @@ data PDUs.
 
 ## Data reception
 
-We can see in [this](#rlcrxentity) figure a simplified illustration of the RLC AM Rx entity. There we can see that only
-a single thread will push PDUs into the RLC Rx entity, the _UE executor_ thread. When receiving a PDU, first the thing
-the entity will do is to check whether this is a Data PDU or a Control PDU (i.e. a status report.)
+We can see in the figure below a simplified illustration of the RLC AM Rx entity. There we can see that only a single
+thread will push PDUs into the RLC Rx entity, the _UE executor_ thread. When receiving a PDU, first the thing the entity
+will do is to check whether this is a Data PDU or a Control PDU (i.e. a status report.)
 
 ![image](images/rlc_rx_entity.svg)
 
@@ -51,15 +51,15 @@ If it is a Data PDU, the SDU or SDU segment will be added/appended to the RX win
 has been fully received, SDU will be passed to the upper layers. The RX window will release the SDU information, when
 all SDUs have been received in order.
 
-This is illustrated in [this](#rlcrxwindow) figure, where we can see four state variables: _RX_Next_,
-_RX_Highest_Status_, _RX_Next_Status_Trigger_ and _RX_Next_Highest_. There _RX_Next_, the lower edge of the RX window,
-will contain the first PDU that has not been fully received. _RX_Next_Higest_, the higher edge of the Rx window, is the
-highest PDU received. The RX window will also keep _RX_Highest_Status_, which is the SN of the first SDU that is
-considered lost, as determined by the _t-Reassembly_ timer. Finally, the _RX_Next_Status_trigger_, will keep the SN that
-triggered the _t-Reassembly_. This is for updating _RX_Highest_Status_ to the first known lost PDU, when _t-Reassembly_
-expires and new losses are detected.
+This is illustrated in the figure below, where we can see four state variables: _RX_Next_, _RX_Highest_Status_,
+_RX_Next_Status_Trigger_ and _RX_Next_Highest_. There _RX_Next_, the lower edge of the RX window, will contain the first
+PDU that has not been fully received. _RX_Next_Higest_, the higher edge of the Rx window, is the highest PDU received.
+The RX window will also keep _RX_Highest_Status_, which is the SN of the first SDU that is considered lost, as
+determined by the _t-Reassembly_ timer. Finally, the _RX_Next_Status_trigger_, will keep the SN that triggered the
+_t-Reassembly_. This is for updating _RX_Highest_Status_ to the first known lost PDU, when _t-Reassembly_ expires and
+new losses are detected.
 
-<a id="rlcrxwindow"></a> ![image](images/rlc_rx_window.svg)
+![image](images/rlc_rx_window.svg)
 
 ## ARQ and status reporting
 
@@ -71,16 +71,16 @@ If the status report is required, the TX entity will retrieve a cached status re
 status report is updated at the reception of every PDU, to avoid blocking blocking the MAC generating a status report
 during the _pull_pdu()_.
 
-An illustration of the process of generating the Status Report can be found in [this](#rlcstatusgeneration) figure.
+An illustration of the process of generating the Status Report can be found in the figure below.
 
-<a id="rlcstatusgeneration"></a> ![image](images/rlc_status_report_transmission.svg)
+![image](images/rlc_status_report_transmission.svg)
 
 When the RLC receives a Status Report, it must be passed to the TX entity for processing. The TX entity will use the
 received status report to update the TX window and the RETX queue. Because both the _UE executor_ thread and _Cell
 Executor_ thread can update both the TX window and RETX queue, both of these variables need to be protected with a lock.
-An illustration of the process of handling the Status Report can be found in [this](#rlcstatushandling) figure.
+An illustration of the process of handling the Status Report can be found in the figure below.
 
-<a id="rlcstatushandling"></a> ![image](images/rlc_status_report_handling.svg)
+![image](images/rlc_status_report_handling.svg)
 
 ## MAC buffer status reporting
 

@@ -23,4 +23,4 @@ AM can be used in data and control traffic (mandatory for SRBs, optional for DRB
 with segmentation and ARQ procedures. This mode is usually used for traffic that is more loss-sensitive, but more
 delay-tolerant.
 
-More details about our implementation can be found [here](rlc_am.md).
+More details about our implementation can be found in the [RLC AM documentation](rlc_am.md).

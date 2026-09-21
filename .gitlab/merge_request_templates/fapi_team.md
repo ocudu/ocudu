@@ -1,3 +1,5 @@
+# OCUDU FAPI Merge Request Template
+
 ## Description
 
 ## Related Issues

@@ -29,7 +29,7 @@ broadcast allocations do not flood the log across all cells.
 
 ## Log line anatomy
 
-```
+```text
 2026-07-02T09:29:21.835770 [SCHED   ] [D] [     1.5] Slot decisions pci=0 t=0us (1 PDSCH, ...):
 └─ timestamp                 └─ logger  │    │        └─ message
                                         │    └─ slot as <SFN>.<slot-in-frame>
@@ -50,13 +50,13 @@ A slot is logged only if it carries something worth reporting: a UE DL/UL grant,
 
 **info:**
 
-```
+```text
 Slot decisions pci=0 t=0us (1 PDSCH, 1 PUSCH, 1 PUCCH): <entries...>
 ```
 
 **debug** (adds attempted-but-failed allocation counters):
 
-```
+```text
 Slot decisions pci=1 t=0us (1 PDSCH, 0 PUSCHs, 0 PUCCHs, 0 attempted PDCCHs, 0 attempted UCIs): <entries...>
 ```
 
@@ -70,23 +70,23 @@ Slot decisions pci=1 t=0us (1 PDSCH, 0 PUSCHs, 0 PUCCHs, 0 attempted PDCCHs, 0 a
 | `N attempted UCI`   | Failed UCI allocation attempts (`debug` only)                                  |
 
 At **info** level the entries follow the summary on the _same line_, comma-separated. At **debug** level each entry is
-on its own line prefixed with `- `.
+on its own line prefixed with a `-` and a space.
 
 ### info-level entries (compact, comma-separated)
 
-| Prefix            | Format                                                                                                                                                                                                                                                             |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `SIB1` / `SI-<n>` | `SIB1: rb=<prbs> tbs=<bytes>`                                                                                                                                                                                                                                      |
-| `RAR`             | `RAR: ra-rnti=<rnti> rb=<prbs> tbs=<bytes>`                                                                                                                                                                                                                        |
-| `DL`              | `DL: ue=<idx> c-rnti=<rnti> h_id=<harq> ss_id=<ss> rb=<prbs> k1=<k1> newtx=<0/1> rv=<rv> tbs=<bytes>` — on new transmissions appends ` ri=<layers> dl_bo=<buffer-occupancy>`; when part of a Rel-16 PDSCH repetition bundle appends ` reps=<n> reps_remaining=<n>` |
-| `UL`              | `UL: ue=<idx> rnti=<rnti> h_id=<harq> ss_id=<ss> rb=<prbs> newtx=<0/1> rv=<rv> tbs=<bytes>` — then ` k2=<k2>`, or ` msg3_delay=<n>` for a Msg3 grant (invalid UE index, first tx)                                                                                  |
-| `PG`              | `PG: rb=<prbs> tbs=<bytes> ues: <cn\|ran>-pg-id=<0x..>, ...`                                                                                                                                                                                                       |
+| Prefix            | Format                                                                                                                                                                                                                                                           |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SIB1` / `SI-<n>` | `SIB1: rb=<prbs> tbs=<bytes>`                                                                                                                                                                                                                                    |
+| `RAR`             | `RAR: ra-rnti=<rnti> rb=<prbs> tbs=<bytes>`                                                                                                                                                                                                                      |
+| `DL`              | `DL: ue=<idx> c-rnti=<rnti> h_id=<harq> ss_id=<ss> rb=<prbs> k1=<k1> newtx=<0/1> rv=<rv> tbs=<bytes>` — on new transmissions appends `ri=<layers> dl_bo=<buffer-occupancy>`; when part of a Rel-16 PDSCH repetition bundle appends `reps=<n> reps_remaining=<n>` |
+| `UL`              | `UL: ue=<idx> rnti=<rnti> h_id=<harq> ss_id=<ss> rb=<prbs> newtx=<0/1> rv=<rv> tbs=<bytes>` — then `k2=<k2>`, or `msg3_delay=<n>` for a Msg3 grant (invalid UE index, first tx)                                                                                  |
+| `PG`              | `PG: rb=<prbs> tbs=<bytes> ues: <cn\|ran>-pg-id=<0x..>, ...`                                                                                                                                                                                                     |
 
-### debug-level entries (one per line, `- ` prefix)
+### debug-level entries (one per line, `-` prefix)
 
 **Control channels:**
 
-```
+```text
 - DL PDCCH: rnti=0x4601 type=c-rnti cs_id=1 ss_id=2 format=1_1 cce=8 al=2 dci: h_id=0 ndi=1 rv=0 mcs=3 res_ind=0 tdra_idx=3 tpc=1 dai=0
 - UL PDCCH: rnti=0x4601 type=c-rnti cs_id=1 ss_id=2 format=0_1 cce=10 al=2 dci: h_id=0 ndi=1 rv=0 mcs=9 tpc=1 dai=0 mimo=0 ant=2
 ```
@@ -101,7 +101,7 @@ on its own line prefixed with `- `.
 
 **DL shared channel:**
 
-```
+```text
 - SSB: ssbIdx=0 crbs=[5..26) symb=[2..6)
 - CSI-RS: type=nzp crbs=[0..52) row=1 freq=0010 symb0=4 cdm_type=no_CDM freq_density=three scramb_id=1
 - SIB1 PDSCH: rb=[0..4) symb=[2..14) tbs=120 mcs=5 rv=0
@@ -118,7 +118,7 @@ on its own line prefixed with `- `.
 
 **UL shared channel and control:**
 
-```
+```text
 - UE PUSCH: ue=0 c-rnti=0x4601 h_id=0 rb=[1..52) symb=[0..14) tbs=1121 rv=0 nrtx=0 nof_layers=1 olla=0 k2=4 uci: harq_bits=1 csi-1_bits=0 csi-2_present=No
 - PUCCH: c-rnti=0x4601 format=1 prb=[0..1) prb2=50 symb=[0..14) cs=0 occ=0 uci: harq_bits=1 sr=0
 - SRS: c-rnti=0x4601 symb=[8..10) tx-comb=(n2 o=0 cs=0) c_srs=0 f_sh=0 seq_id=0 requests=[ch_mtx=yes pos=no]
@@ -143,13 +143,13 @@ Emitted once per slot in which one or more UE/cell events were processed.
 
 **info** (space-separated, only events with an info formatter):
 
-```
+```text
 Processed slot events pci=1: prach(ra-rnti=0x2 preamble=5 tc-rnti=0x4601), RACH Ind slot_rx=100.3, ErrorIndication slot=100.5
 ```
 
 **debug** (one event per line):
 
-```
+```text
 Processed slot events pci=1:
 - UE creation: ue=0 rnti=0x4601
 - CRC: ue=0 rnti=0x4601 rx_slot=401.9 h_id=0 crc=true sinr=100dB

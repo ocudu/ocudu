@@ -34,7 +34,7 @@ VkFFT is MIT licensed. It is not vendored into this repository.
 `CMAKE_CUDA_ARCHITECTURES` is mandatory when `ENABLE_CUDA=ON`. It cannot be guessed: `nvcc` needs it to emit device code
 for the target GPU, and an incorrect value is not detected until run time, where it surfaces as
 
-```
+```text
 CUDA Error: no kernel image is available for execution on the device
 ```
 
@@ -44,7 +44,7 @@ Query the compute capability of the target GPU and drop the period:
 nvidia-smi --query-gpu=gpu_name,compute_cap --format=csv
 ```
 
-```
+```text
 name, compute_cap
 NVIDIA RTX 5000 Ada Generation Laptop GPU, 8.9
 ```

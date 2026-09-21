@@ -229,7 +229,7 @@ RRC PDU, so a mutated payload is rejected before RRC ever sees it and the UE is 
 branches in `rrc_ue_impl::handle_pdu()`: a protected message arriving unprotected, and an unprotected message arriving
 protected.
 
-#### Input format
+#### Input format of the RRC UE uplink fuzzer
 
 The first byte is a control byte; the remaining bytes are the RRC PDU.
 
@@ -272,7 +272,7 @@ only the RRC container is mutated. Fuzzing the F1AP wrapper itself belongs in a 
 A UE is created and released for every input, so a crash reproduces from its input file alone. The UE pool is capped at
 8, which turns a UE that fails to be released into an immediate failure to create the next one rather than a slow leak.
 
-#### Input format
+#### Input format of the full-stack fuzzer
 
 The first byte is a control byte; the remaining bytes are the RRC PDU. It carries neither the `integrity_verified` bit
 nor an SRB selector that `rrc_ue_fuzzer` has: PDCP derives the first from the MAC-I, and SRB2 only exists after security
@@ -393,7 +393,7 @@ afl-cmin \
 ```
 
 Commit the updated corpus alongside code changes. In CI the corpus accumulates automatically across weekly runs via
-AFL++ resume mode — see [CI integration](#ci-integration) below.
+AFL++ resume mode — see [Corpus accumulation](#corpus-accumulation) below.
 
 ---
 
@@ -456,7 +456,7 @@ docker run --rm --privileged \
 
 After the run, `findings/` on the host contains:
 
-```
+```text
 findings/
 ├── ofh_uplane_decoder_fuzzer.log   afl-fuzz stdout for this target
 ├── ofh_ecpri_decoder_fuzzer.log

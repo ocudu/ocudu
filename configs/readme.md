@@ -24,8 +24,8 @@ sudo ./gnb -c qos.yml -c gnb_ru_ran550_tdd_n78_20mhz.yml
 
 ## Full list of configuration options
 
-Look [here](https://docs.ocudu.org/user_manual/config_reference/) for the main configuration reference. We update this
-list regularly and aim to always keep it up-to-date with the actual code.
+Look at the [configuration reference](https://docs.ocudu.org/user_manual/config_reference/) for the main configuration
+options. We update this list regularly and aim to always keep it up-to-date with the actual code.
 
 This process, however, is done manually and might not always be 100% accurate. To obtain a full list of configuration
 options available on the command line and in configuration files it is best to invoke the respective binary with the
@@ -35,7 +35,7 @@ obtain the list of available config options for a subsection it is again require
 
 For example, to obtain the list of all main gNB configuration options run:
 
-```
+```console
 $ ./apps/gnb/gnb -h
 ocudu application
 Usage: ./apps/gnb/gnb [OPTIONS] [SUBCOMMAND]
@@ -66,7 +66,7 @@ Subcommands:
 
 To then list all options for the `cell_cfg` subcommand, run the binary again with:
 
-```
+```console
 $ ./apps/gnb/gnb cell_cfg -h
 Default cell configuration
 Usage: ./apps/gnb/gnb cell_cfg [OPTIONS] [SUBCOMMAND]

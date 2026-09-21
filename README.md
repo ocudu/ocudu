@@ -18,7 +18,7 @@ dependencies. OCUDU is governed under the Linux Foundation.
 
 This repository contains the RAN source code, architecture documentation, and tooling.
 
-For general information, visit https://ocudu.org.
+For general information, visit [ocudu.org](https://ocudu.org).
 
 ## Getting started
 
@@ -28,8 +28,8 @@ Build instructions and user guides are provided in the
 ## Documentation
 
 Complete project documentation including developer guideline, configuration reference, tutorials, etc. is hosted in
-[this](https://gitlab.com/ocudu/ocudu_docs) repo. The most recent version of the documentation is available
-[here](https://docs.ocudu.org).
+[this](https://gitlab.com/ocudu/ocudu_docs) repo. The most recent version of the documentation is available at
+[docs.ocudu.org](https://docs.ocudu.org).
 
 ## Contributing
 
