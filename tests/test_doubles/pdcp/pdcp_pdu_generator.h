@@ -9,7 +9,6 @@
 
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/ran/pdcp/pdcp_sn_size.h"
-#include <gtest/gtest.h>
 
 namespace ocudu::test_helpers {
 

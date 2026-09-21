@@ -8,6 +8,7 @@
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "ocudu/asn1/f1ap/f1ap_pdu_contents.h"
 #include "ocudu/asn1/f1ap/f1ap_pdu_contents_ue.h"
+#include <gtest/gtest.h>
 
 using namespace ocudu;
 using namespace odu;
