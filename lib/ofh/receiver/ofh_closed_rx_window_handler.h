@@ -96,9 +96,9 @@ private:
   std::shared_ptr<uplink_context_repository> uplink_repo;
   std::shared_ptr<uplane_rx_symbol_notifier> notifier;
   /// Counts every symbol not received when reception window closes.
-  std::atomic<unsigned> nof_missed_uplink_symbols;
+  std::atomic<unsigned> nof_missed_uplink_symbols{0};
   /// Counts every PRACH not received when the reception window closes.
-  std::atomic<unsigned> nof_missed_prach_contexts;
+  std::atomic<unsigned> nof_missed_prach_contexts{0};
   rt_stop_event_source  stop_manager;
 };
 
