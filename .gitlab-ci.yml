@@ -732,3 +732,48 @@ fuzz:
       - findings/
     expire_in: 4 weeks
   dependencies: []
+
+# Verify the actual OSS-Fuzz build (projects/ocudu/{Dockerfile,build.sh} in
+# google/oss-fuzz) still succeeds against the current commit. OSS-Fuzz only
+# rebuilds the project periodically on its own infrastructure, so a break is
+# otherwise only noticed on introspector.oss-fuzz.com, well after the
+# breaking change has merged. This job builds against the local checkout
+# instead of letting OSS-Fuzz `git clone` its own copy, so it fails here on
+# the exact commit that broke it.
+oss-fuzz build:
+  stage: extended
+  image: docker:29.6.1-dind
+  rules:
+    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
+    - if: $ON_MR_FORK
+      when: never
+    # Manual button on MR pipelines, to try out changes to this job (or to the OSS-Fuzz
+    # build itself) before they only get exercised on the next Nightly pipeline.
+    - if: $ON_MR
+      when: manual
+      allow_failure: true
+  tags:
+    - ${OCUDU_RUNNER_TAG}-amd64
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+  before_script:
+    - |
+      export DOCKER_HOST=unix:///var/run/docker.sock
+      dockerd-entrypoint.sh --host=${DOCKER_HOST} --tls=false 2>&1 &
+    - |
+      i=0
+      while ! docker info >/dev/null 2>&1; do
+        i=$((i+1))
+        if [ "$i" -ge 60 ]; then
+          echo "ERROR: dockerd not ready after 60s"
+          exit 1
+        fi
+        sleep 1
+      done
+    - apk add --no-cache git python3
+  script:
+    - git clone --depth 1 https://github.com/google/oss-fuzz.git /oss-fuzz
+    - cd /oss-fuzz
+    - python3 infra/helper.py build_fuzzers ocudu "$CI_PROJECT_DIR"
+    - python3 infra/helper.py check_build ocudu
+  dependencies: []
