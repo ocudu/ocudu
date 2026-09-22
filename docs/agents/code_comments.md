@@ -23,12 +23,17 @@ Apply to comments you write or are already modifying. Never rewrite a comment yo
 - Facts, not intentions. No `should be`, `for now`, outside a `TODO`, `FIXME`, `Note:`, `\note`, `\remark` or
   `\warning`.
 - No em dashes.
+- Short and concise.
 
 ## What to say
 
 - Public interface: terse, usually one line. Never why. Never name callers.
 - Private member: one line. What it holds, not how it is used.
 - Function body: why, not what.
+
+## What not to say
+
+- Conversation details that are irrelevant to the code.
 
 ## Specifications
 
