@@ -40,6 +40,15 @@ public:
                                                const du_ue_resource_config*                reestablished_context);
 
 private:
+  /// \brief Returns the allowed UL HARQ mode a logical channel of this UE can keep, if any.
+  ///
+  /// The UL HARQ processes of a UE that does not support mode B all operate in mode A, whichever mode the cell
+  /// configures. A restriction no process of this UE can meet is dropped, since a logical channel carrying it would
+  /// be left out of every grant, as per \c allowedHARQ-mode, TS 38.331.
+  std::optional<ul_harq_mode> supported_allowed_harq_mode(const du_ue_resource_config& ue_cfg,
+                                                          std::optional<ul_harq_mode>  allowed_harq_mode,
+                                                          lcid_t                       lcid) const;
+
   void                  setup_srbs(du_ue_resource_config& ue_cfg, const du_ue_bearer_resource_update_request& request);
   std::vector<drb_id_t> setup_drbs(du_ue_resource_config& ue_cfg, const du_ue_bearer_resource_update_request& request);
   std::vector<drb_id_t> modify_drbs(du_ue_resource_config& ue_cfg, const du_ue_bearer_resource_update_request& request);

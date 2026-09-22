@@ -110,6 +110,48 @@ du_bearer_resource_manager::du_bearer_resource_manager(const std::map<srb_id_t, 
 {
 }
 
+std::optional<ul_harq_mode>
+du_bearer_resource_manager::supported_allowed_harq_mode(const du_ue_resource_config& ue_cfg,
+                                                        std::optional<ul_harq_mode>  allowed_harq_mode,
+                                                        lcid_t                       lcid) const
+{
+  if (not allowed_harq_mode.has_value()) {
+    return std::nullopt;
+  }
+
+  // [Implementation-defined] TS 38.331 gives the mask a meaning only when uplinkHARQ-mode is present, so an absent
+  // PUSCH serving cell config is taken to leave every process in mode A.
+  harq_ul_mode_mask mode_mask = ~harq_ul_mode_mask(MAX_NOF_HARQS);
+  unsigned          nof_harqs = static_cast<unsigned>(pusch_serving_cell_config::nof_harq_proc_for_pusch::n16);
+  const auto&       serv_cell = ue_cfg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg;
+  if (serv_cell.ul_config.has_value() and serv_cell.ul_config->pusch_serv_cell_cfg.has_value()) {
+    mode_mask = serv_cell.ul_config->pusch_serv_cell_cfg->ul_harq_mode;
+    nof_harqs = static_cast<unsigned>(serv_cell.ul_config->pusch_serv_cell_cfg->nof_harq_proc);
+  }
+
+  if (not is_ul_harq_mode_available(mode_mask, nof_harqs, *allowed_harq_mode)) {
+    logger.warning("lcid={}: Dropping the allowed HARQ mode {}. Cause: no UL HARQ process of this UE operates in that "
+                   "mode",
+                   lcid,
+                   *allowed_harq_mode);
+    return std::nullopt;
+  }
+
+  // The restriction selects nothing when every process already operates in the allowed mode. Such a UE does not report
+  // the UL HARQ mode B capability the restriction belongs to either, as per TS 38.306, Section 4.2.6.1.
+  const ul_harq_mode other_mode =
+      *allowed_harq_mode == ul_harq_mode::mode_a ? ul_harq_mode::mode_b : ul_harq_mode::mode_a;
+  if (not is_ul_harq_mode_available(mode_mask, nof_harqs, other_mode)) {
+    logger.debug("lcid={}: Dropping the allowed HARQ mode {}. Cause: every UL HARQ process of this UE operates in that "
+                 "mode",
+                 lcid,
+                 *allowed_harq_mode);
+    return std::nullopt;
+  }
+
+  return allowed_harq_mode;
+}
+
 du_ue_bearer_resource_update_response
 du_bearer_resource_manager::update(du_ue_resource_config&                      ue_cfg,
                                    const du_ue_bearer_resource_update_request& upd_req,
@@ -195,10 +237,12 @@ std::vector<drb_id_t> du_bearer_resource_manager::setup_drbs(du_ue_resource_conf
     new_drb.qos               = drb_to_setup.qos_info.drb_qos;
     new_drb.f1u               = qos.f1u;
     new_drb.rlc_cfg           = qos.rlc;
-    new_drb.mac_cfg = make_non_gbr_drb_mac_lc_config(qos.allowed_harq_mode);
+    const std::optional<ul_harq_mode> allowed_harq_mode =
+        supported_allowed_harq_mode(ue_cfg, qos.allowed_harq_mode, lcid);
+    new_drb.mac_cfg = make_non_gbr_drb_mac_lc_config(allowed_harq_mode);
     if (drb_to_setup.qos_info.drb_qos.gbr_qos_info.has_value()) {
       // Populate MAC LC configuration for GBR DRB if GBR QoS information is present.
-      new_drb.mac_cfg = make_gbr_drb_mac_lc_config(*drb_to_setup.qos_info.drb_qos.gbr_qos_info, qos.allowed_harq_mode);
+      new_drb.mac_cfg = make_gbr_drb_mac_lc_config(*drb_to_setup.qos_info.drb_qos.gbr_qos_info, allowed_harq_mode);
     }
     new_drb.mac_cfg.triggered_ul_grant = qos.triggered_ul_grant;
 

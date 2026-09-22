@@ -274,6 +274,62 @@ TEST_P(du_ran_resource_manager_tester, when_gbr_drb_has_gbr_qos_information_then
   ASSERT_TRUE(ue_res->value().drbs.contains(drb_id_t::drb1));
 }
 
+/// The UL HARQ processes of a UE that does not support mode B all operate in mode A, so a restriction none of them
+/// meets is dropped rather than left to keep the logical channel out of every grant.
+TEST_P(du_ran_resource_manager_tester, when_no_ul_harq_process_is_in_mode_b_then_the_allowed_harq_mode_is_dropped)
+{
+  qos_cfg_list.at(uint_to_five_qi(1)).allowed_harq_mode = ul_harq_mode::mode_b;
+
+  const du_ue_index_t           ue_idx1 = to_du_ue_index(0);
+  ue_ran_resource_configurator* ue_res  = create_ue(ue_idx1);
+  ASSERT_NE(ue_res, nullptr);
+  ASSERT_FALSE(ue_res->update(to_du_cell_index(0), srb1_creation_req(ue_idx1)).failed());
+  ASSERT_FALSE(ue_res->update(to_du_cell_index(0), gbr_drb_creation_req(ue_idx1, true)).failed());
+
+  ASSERT_TRUE(ue_res->value().drbs.contains(drb_id_t::drb1));
+  ASSERT_FALSE(ue_res->value().drbs[drb_id_t::drb1].mac_cfg.allowed_harq_mode.has_value());
+}
+
+/// A restriction every UL HARQ process of the UE meets selects nothing, so it is dropped as well.
+TEST_P(du_ran_resource_manager_tester, when_every_ul_harq_process_is_in_mode_a_then_the_allowed_harq_mode_is_dropped)
+{
+  qos_cfg_list.at(uint_to_five_qi(1)).allowed_harq_mode = ul_harq_mode::mode_a;
+
+  const du_ue_index_t           ue_idx1 = to_du_ue_index(0);
+  ue_ran_resource_configurator* ue_res  = create_ue(ue_idx1);
+  ASSERT_NE(ue_res, nullptr);
+  ASSERT_FALSE(ue_res->update(to_du_cell_index(0), srb1_creation_req(ue_idx1)).failed());
+  ASSERT_FALSE(ue_res->update(to_du_cell_index(0), gbr_drb_creation_req(ue_idx1, true)).failed());
+
+  ASSERT_TRUE(ue_res->value().drbs.contains(drb_id_t::drb1));
+  ASSERT_FALSE(ue_res->value().drbs[drb_id_t::drb1].mac_cfg.allowed_harq_mode.has_value());
+}
+
+/// A restriction that selects a part of the UL HARQ processes of the UE reaches the logical channel configuration.
+TEST_P(du_ran_resource_manager_tester, when_a_ul_harq_process_is_in_mode_a_then_the_allowed_harq_mode_is_kept)
+{
+  qos_cfg_list.at(uint_to_five_qi(1)).allowed_harq_mode = ul_harq_mode::mode_a;
+  // The UE only takes the UL HARQ mode mask of the cell when it reports support for mode B, as per TS 38.306,
+  // Section 4.2.6.1. A bit set to zero identifies a process in mode B, and only the processes the UE is given exist,
+  // so the mask puts the second half of those in mode B to offer both modes.
+  const unsigned nof_harqs = std::min<unsigned>(cell_cfg_list[0].ran.init_bwp.pusch.max_harq_procs,
+                                                ue_capability_summary::default_max_harq_process_num);
+  cell_cfg_list[0].ran.init_bwp.pusch.ul_harq_mode.fill(nof_harqs / 2, nof_harqs, false);
+  ue_capability_summary ue_caps;
+  ue_caps.ntn_supported            = true;
+  ue_caps.ul_harq_mode_b_supported = true;
+
+  const du_ue_index_t           ue_idx1 = to_du_ue_index(0);
+  ue_ran_resource_configurator* ue_res  = create_ue(ue_idx1);
+  ASSERT_NE(ue_res, nullptr);
+  ASSERT_FALSE(ue_res->update(to_du_cell_index(0), srb1_creation_req(ue_idx1)).failed());
+  ASSERT_FALSE(ue_res->update(to_du_cell_index(0), gbr_drb_creation_req(ue_idx1, true), nullptr, &ue_caps).failed());
+
+  ASSERT_TRUE(ue_res->value().drbs.contains(drb_id_t::drb1));
+  ASSERT_TRUE(ue_res->value().drbs[drb_id_t::drb1].mac_cfg.allowed_harq_mode.has_value());
+  ASSERT_EQ(*ue_res->value().drbs[drb_id_t::drb1].mac_cfg.allowed_harq_mode, ul_harq_mode::mode_a);
+}
+
 TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_use_different_sr_offsets)
 {
   const unsigned sr_period = get_config_sr_period();
