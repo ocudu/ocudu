@@ -13,7 +13,7 @@
 # XML report, which the CI then folds into the ctest JUnit output:
 #
 #   OCUDU_GTEST_XML_DIR=$PWD/gtest_xml ctest --output-junit xunit.xml ...
-#   merge_gtest_requirements.py xunit.xml --gtest-xml-dir gtest_xml --strict
+#   add_junit_properties.py xunit.xml --gtest-xml-dir gtest_xml --strict
 
 option(OCUDU_TEST_REQUIREMENT_REPORTS "Give each test process its own gtest XML report" OFF)
 

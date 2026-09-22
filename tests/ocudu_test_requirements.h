@@ -40,7 +40,7 @@ inline void record_test_requirements(std::initializer_list<const char*> ids)
 /// \endcode
 ///
 /// The tag reaches the report only if the test actually runs: gtest writes it into the XML report of
-/// the test process, and merge_gtest_requirements.py copies it onto the matching ctest JUnit entry.
+/// the test process, and add_junit_properties.py copies it onto the matching ctest JUnit entry.
 /// Unlike a ctest label, it cannot claim coverage for a test that never executed.
 ///
 /// Works in TEST, TEST_F, TEST_P and TYPED_TEST alike.
