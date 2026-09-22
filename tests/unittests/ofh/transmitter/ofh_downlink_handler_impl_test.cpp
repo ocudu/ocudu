@@ -392,7 +392,38 @@ TEST(ofh_downlink_handler_impl, category_b_maps_non_empty_beam_ports_onto_eaxcs)
   ASSERT_EQ(config.dl_eaxc[1], uplane_calls[1].eaxc);
 }
 
-#ifdef ASSERTS_ENABLED
+TEST(ofh_downlink_handler_impl, category_b_rejects_more_active_beam_ports_than_configured_eaxcs)
+{
+  downlink_handler_impl_config config = generate_default_config();
+  config.dl_eaxc                      = {24, 25};
+  config.is_beamforming_enabled       = true;
+
+  error_notifier_spy notifier_spy;
+  auto               cplane = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
+  auto               uplane = std::make_unique<data_flow_uplane_downlink_data_spy>();
+
+  downlink_handler_impl handler(config, generate_dependencies(notifier_spy, std::move(cplane), std::move(uplane)));
+  handler.start();
+
+  // Three active beam-ports, but only two eAxCs are configured.
+  resource_grid_reader_spy rg_reader_spy(4, 1, 1);
+  rg_reader_spy.write(resource_grid_reader_spy::expected_entry_t{0, 0, 0, {1.0F, 0.0F}});
+  rg_reader_spy.write(resource_grid_reader_spy::expected_entry_t{1, 0, 0, {1.0F, 0.0F}});
+  rg_reader_spy.write(resource_grid_reader_spy::expected_entry_t{2, 0, 0, {1.0F, 0.0F}});
+  resource_grid_writer_spy rg_writer_spy(4, 1, 1);
+  resource_grid_spy        rg_spy(rg_reader_spy, rg_writer_spy);
+  shared_resource_grid_spy rg(rg_spy);
+
+  resource_grid_context rg_context;
+  rg_context.slot   = slot_point(1, 1, 1);
+  rg_context.sector = 1;
+  notify_ota_time(handler, config, rg_context.slot, 3 * get_nof_symbols_before_ota(config));
+
+  ASSERT_DEATH(
+      handler.handle_dl_data(rg_context, rg.get_grid()),
+      fmt::format("Resource grid needs '{}' downlink eAxCs and only '{}' are configured", 3, config.dl_eaxc.size()));
+}
+
 TEST(ofh_downlink_handler_impl, category_a_rejects_a_beam_port_beyond_the_antenna_ports)
 {
   std::optional<antenna_topology> topology = get_single_panel_antenna_topology(4);
@@ -429,4 +460,3 @@ TEST(ofh_downlink_handler_impl, category_a_rejects_a_beam_port_beyond_the_antenn
                            nof_antenna_ports + 1,
                            config.dl_eaxc.size()));
 }
-#endif // ASSERTS_ENABLED

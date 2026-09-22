@@ -116,10 +116,11 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
                reader.get_nof_ports(),
                dl_eaxc.size());
 
-  ocudu_assert(get_nof_required_eaxc(reader, is_beamforming_enabled) <= dl_eaxc.size(),
-               "Resource grid needs '{}' downlink eAxCs and only '{}' are configured",
-               get_nof_required_eaxc(reader, is_beamforming_enabled),
-               dl_eaxc.size());
+  const unsigned nof_required_eaxc = get_nof_required_eaxc(reader, is_beamforming_enabled);
+  report_error_if_not(nof_required_eaxc <= dl_eaxc.size(),
+                      "Resource grid needs '{}' downlink eAxCs and only '{}' are configured",
+                      nof_required_eaxc,
+                      dl_eaxc.size());
 
   trace_point tp = ofh_tracer.now();
 

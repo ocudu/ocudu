@@ -229,7 +229,7 @@ public:
   void pop_pending(static_vector<scoped_frame_buffer, MAX_TX_BURST_SIZE>& burst_of_frames)
   {
     unsigned idx;
-    while (pending_list.try_pop(idx)) {
+    while (!burst_of_frames.full() && pending_list.try_pop(idx)) {
       ocudu_sanity_check(idx < entries.size(), "Invalid buffer popped from pending list");
       burst_of_frames.emplace_back(scoped_frame_buffer{&entries[idx], buffer_deleter{this}});
     }
@@ -333,9 +333,9 @@ struct frame_pool_interval {
 class eth_frame_pool
 {
   /// Number of slots the pool can accommodate.
-  static constexpr size_t NUM_SLOTS = 20L;
+  static constexpr size_t NUM_SLOTS = 10;
 
-  /// Maximum number of entries contained by the pool (one entry per OFDM symbol), sized to accommodate 20 slots.
+  /// Maximum number of entries contained by the pool (one entry per OFDM symbol).
   static constexpr size_t NUM_ENTRIES = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP * NUM_SLOTS;
 
   /// Returns pool entry for the given slot and symbol.
@@ -414,30 +414,35 @@ public:
   {
     unsigned nof_lates = 0;
     {
-      static_vector<scoped_frame_buffer, MAX_TX_BURST_SIZE> frame_burst;
-
       auto& entry = get_pool_entry(slot, 0);
-      entry.pop_pending(frame_burst);
 
-      slot_point late_slot = {};
+      // The entry may store more pending buffers than a single 'frame_burst' can accommodate, hence 'pop_pending' is
+      // called repeatedly until the entry is fully cleared.
+      for (bool entry_cleared = false; !entry_cleared;) {
+        static_vector<scoped_frame_buffer, MAX_TX_BURST_SIZE> frame_burst;
+        entry.pop_pending(frame_burst);
+        entry_cleared = !frame_burst.full();
 
-      for (auto& scoped_buffer : frame_burst) {
-        if (scoped_buffer->get_slot_symbol().get_slot() != slot) {
-          ++nof_lates;
-          if (!late_slot.valid()) {
-            late_slot = scoped_buffer->get_slot_symbol().get_slot();
+        slot_point late_slot = {};
+
+        for (auto& scoped_buffer : frame_burst) {
+          if (scoped_buffer->get_slot_symbol().get_slot() != slot) {
+            ++nof_lates;
+            if (!late_slot.valid()) {
+              late_slot = scoped_buffer->get_slot_symbol().get_slot();
+            }
+          } else {
+            entry.return_to_pending(*scoped_buffer.get());
           }
-        } else {
-          entry.return_to_pending(*scoped_buffer.get());
         }
-      }
-      if (nof_lates) {
-        logger.info("Sector #{}: Detected {} late {} {} message(s) in the transmitter queue for slot '{}'",
-                    sector,
-                    nof_lates,
-                    pool_frames_data_direction == ofh::data_direction::downlink ? "downlink" : "uplink",
-                    pool_frames_type == ofh::message_type::control_plane ? "C-Plane" : "U-Plane",
-                    late_slot);
+        if (nof_lates) {
+          logger.info("Sector #{}: Detected {} late {} {} message(s) in the transmitter queue for slot '{}'",
+                      sector,
+                      nof_lates,
+                      pool_frames_data_direction == ofh::data_direction::downlink ? "downlink" : "uplink",
+                      pool_frames_type == ofh::message_type::control_plane ? "C-Plane" : "U-Plane",
+                      late_slot);
+        }
       }
     }
 
@@ -449,28 +454,33 @@ public:
 
     slot_point late_slot = {};
     for (unsigned symbol = 1; symbol != NOF_OFDM_SYM_PER_SLOT_NORMAL_CP; ++symbol) {
-      static_vector<scoped_frame_buffer, MAX_TX_BURST_SIZE> frame_burst;
-
       auto& cup_entry = get_pool_entry(slot, symbol);
-      cup_entry.pop_pending(frame_burst);
 
-      for (auto& scoped_buffer : frame_burst) {
-        if (scoped_buffer->get_slot_symbol().get_slot() != slot) {
-          ++nof_lates;
-          if (!late_slot.valid()) {
-            late_slot = scoped_buffer->get_slot_symbol().get_slot();
+      // The entry may store more pending buffers than a single 'frame_burst' can accommodate, hence 'pop_pending' is
+      // called repeatedly until the entry is fully cleared.
+      for (bool entry_cleared = false; !entry_cleared;) {
+        static_vector<scoped_frame_buffer, MAX_TX_BURST_SIZE> frame_burst;
+        cup_entry.pop_pending(frame_burst);
+        entry_cleared = !frame_burst.full();
+
+        for (auto& scoped_buffer : frame_burst) {
+          if (scoped_buffer->get_slot_symbol().get_slot() != slot) {
+            ++nof_lates;
+            if (!late_slot.valid()) {
+              late_slot = scoped_buffer->get_slot_symbol().get_slot();
+            }
+          } else {
+            cup_entry.return_to_pending(*scoped_buffer.get());
           }
-        } else {
-          cup_entry.return_to_pending(*scoped_buffer.get());
         }
-      }
-      if (nof_lates) {
-        logger.info("Sector #{}: Detected {} late {} {} message(s) in the transmitter queue for slot '{}'",
-                    sector,
-                    nof_lates,
-                    pool_frames_data_direction == ofh::data_direction::downlink ? "downlink" : "uplink",
-                    pool_frames_type == ofh::message_type::control_plane ? "C-Plane" : "U-Plane",
-                    late_slot);
+        if (nof_lates) {
+          logger.info("Sector #{}: Detected {} late {} {} message(s) in the transmitter queue for slot '{}'",
+                      sector,
+                      nof_lates,
+                      pool_frames_data_direction == ofh::data_direction::downlink ? "downlink" : "uplink",
+                      pool_frames_type == ofh::message_type::control_plane ? "C-Plane" : "U-Plane",
+                      late_slot);
+        }
       }
     }
     return nof_lates;
