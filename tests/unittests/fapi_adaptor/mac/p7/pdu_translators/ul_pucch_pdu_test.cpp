@@ -4,6 +4,7 @@
 
 #include "helpers.h"
 #include "pucch.h"
+#include "tests/ocudu_test_requirements.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -53,6 +54,8 @@ TEST(mac_fapi_ul_pucch_format1_pdu_conversor_test, ul_pucch_format1_pdu_valid_sh
 
 TEST(mac_fapi_ul_pucch_format1_pdu_conversor_test, multi_slot_tx_indicator_is_forwarded)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-17-1");
+
   // Repetition state used to be a per-format field that was silently dropped at the FAPI boundary; verify that it now
   // reaches the FAPI PDU's multi_slot_tx_indicator from the common part of pucch_info.
   pucch_info_test_helper pdu_test    = build_valid_pucch_format_1_pdu();

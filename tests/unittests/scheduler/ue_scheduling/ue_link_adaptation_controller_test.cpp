@@ -4,6 +4,7 @@
 
 #include "lib/scheduler/support/mcs_calculator.h"
 #include "lib/scheduler/ue_context/ue_link_adaptation_controller.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
@@ -154,6 +155,8 @@ TEST_F(ue_link_adaptation_controller_mcs_derivation_test,
 
 TEST(ue_link_adaptation_controller_pucch_rep_test, no_rep_config_always_returns_n1)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-17-1");
+
   scheduler_expert_config                 sched_cfg = config_helpers::make_default_scheduler_expert_config();
   test_helpers::test_sched_config_manager cfg_mng{sched_cfg};
   const cell_configuration&               cell_cfg =
@@ -170,6 +173,8 @@ TEST(ue_link_adaptation_controller_pucch_rep_test, no_rep_config_always_returns_
 
 TEST(ue_link_adaptation_controller_pucch_rep_test, rep_factor_follows_sinr_thresholds)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-17-1");
+
   // SINR thresholds, in order [max SINR for n2, max SINR for n4, max SINR for n8].
   constexpr float n2_thres = 9.0F;
   constexpr float n4_thres = 3.0F;

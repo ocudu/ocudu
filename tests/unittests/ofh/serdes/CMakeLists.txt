@@ -10,15 +10,8 @@ gtest_discover_tests(ofh_cplane_packet_builder_dynamic_compression_impl_test)
 
 add_executable(ofh_cplane_packet_builder_impl_test ofh_cplane_packet_builder_impl_test.cpp)
 target_link_libraries(ofh_cplane_packet_builder_impl_test ocudu_ofh_message_serdes ocudu_support GTest::gtest GTest::gtest_main)
+target_include_directories(ofh_cplane_packet_builder_impl_test PRIVATE ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(ofh_cplane_packet_builder_impl_test)
-
-# The section extension 1 (beamforming weights) tests are registered separately below, so that they can carry the
-# RU-OFH-CATB-WDBF label.
-add_test(NAME ofh_cplane_packet_builder_section_extension_1_test
-         COMMAND ofh_cplane_packet_builder_impl_test
-                 "--gtest_filter=ofh_control_plane_packet_builder_impl_test.build_control_packet_with_*"
-                 --gtest_fail_if_no_test_selected)
-set_tests_properties(ofh_cplane_packet_builder_section_extension_1_test PROPERTIES LABELS "RU-OFH-CATB-WDBF")
 
 add_executable(ofh_cplane_packet_builder_static_compression_impl_test ofh_cplane_packet_builder_static_compression_impl_test.cpp)
 target_link_libraries(ofh_cplane_packet_builder_static_compression_impl_test ocudu_ofh_message_serdes ocudu_support GTest::gtest GTest::gtest_main)

@@ -26,18 +26,4 @@ target_link_libraries(uci_pucch_sched_test
         sched_rrm
         gtest
         ocudu_gtest_main)
-# The PUCCH repetition tests are registered separately below, so that they can carry the MVP-FUNC-BW-17-1 label.
-# --gtest_fail_if_no_test_selected makes a filter that no longer matches anything (e.g. after a test rename) fail
-# instead of silently reporting a passing, empty run.
-gtest_discover_tests(uci_pucch_sched_test
-        TEST_FILTER "-pucch_alloc_repetition*:uci_indication_selector_test.*burst*")
-
-add_test(NAME pucch_alloc_repetition_test
-         COMMAND uci_pucch_sched_test "--gtest_filter=pucch_alloc_repetition*" --gtest_fail_if_no_test_selected)
-add_test(NAME uci_indication_selector_repetition_test
-         COMMAND uci_pucch_sched_test "--gtest_filter=uci_indication_selector_test.*burst*"
-                 --gtest_fail_if_no_test_selected)
-set_tests_properties(
-    pucch_alloc_repetition_test
-    uci_indication_selector_repetition_test
-    PROPERTIES LABELS "MVP-FUNC-BW-17-1")
+gtest_discover_tests(uci_pucch_sched_test)

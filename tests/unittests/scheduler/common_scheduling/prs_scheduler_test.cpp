@@ -4,6 +4,7 @@
 
 #include "lib/scheduler/common_scheduling/prs_scheduler.h"
 #include "sub_scheduler_test_environment.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "ocudu/ran/prs/prs.h"
 #include <gtest/gtest.h>
@@ -77,6 +78,8 @@ private:
 
 TEST(prs_scheduler_test, no_resource_set_configured_schedules_nothing)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-2");
+
   prs_test_bench bench{prs_config{}};
 
   for (unsigned i = 0; i != 40; ++i) {
@@ -87,6 +90,8 @@ TEST(prs_scheduler_test, no_resource_set_configured_schedules_nothing)
 
 TEST(prs_scheduler_test, resource_is_scheduled_on_the_slots_of_its_period_and_offset)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-2");
+
   constexpr unsigned period      = 10;
   constexpr unsigned slot_offset = 4;
 
@@ -107,6 +112,8 @@ TEST(prs_scheduler_test, resource_is_scheduled_on_the_slots_of_its_period_and_of
 
 TEST(prs_scheduler_test, scheduled_pdu_matches_the_resource_configuration)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-2");
+
   constexpr unsigned period      = 10;
   constexpr unsigned slot_offset = 0;
 
@@ -129,6 +136,8 @@ TEST(prs_scheduler_test, scheduled_pdu_matches_the_resource_configuration)
 
 TEST(prs_scheduler_test, scheduled_resource_is_reserved_in_the_resource_grid)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-2");
+
   constexpr unsigned period      = 10;
   constexpr unsigned slot_offset = 0;
 
@@ -145,6 +154,8 @@ TEST(prs_scheduler_test, scheduled_resource_is_reserved_in_the_resource_grid)
 
 TEST(prs_scheduler_test, every_repetition_of_a_resource_is_scheduled)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-2");
+
   constexpr unsigned period      = 20;
   constexpr unsigned slot_offset = 1;
   constexpr unsigned time_gap    = 2;
@@ -172,6 +183,8 @@ TEST(prs_scheduler_test, every_repetition_of_a_resource_is_scheduled)
 
 TEST(prs_scheduler_test, repetitions_muted_by_muting_option2_are_not_scheduled)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-2");
+
   constexpr unsigned period      = 20;
   constexpr unsigned slot_offset = 0;
   constexpr unsigned time_gap    = 2;
@@ -200,6 +213,8 @@ TEST(prs_scheduler_test, repetitions_muted_by_muting_option2_are_not_scheduled)
 
 TEST(prs_scheduler_test, instances_muted_by_muting_option1_are_not_scheduled)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-2");
+
   constexpr unsigned period      = 10;
   constexpr unsigned slot_offset = 3;
   // Bit i of the pattern is resource set instance i, so only even instances are transmitted.
@@ -228,6 +243,8 @@ TEST(prs_scheduler_test, instances_muted_by_muting_option1_are_not_scheduled)
 
 TEST(prs_scheduler_test, resources_multiplexed_on_the_comb_are_scheduled_on_the_same_slot)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-2");
+
   constexpr unsigned period      = 10;
   constexpr unsigned slot_offset = 2;
 
@@ -251,6 +268,8 @@ TEST(prs_scheduler_test, resources_multiplexed_on_the_comb_are_scheduled_on_the_
 
 TEST(prs_scheduler_test, resources_with_different_slot_offsets_are_scheduled_on_different_slots)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-2");
+
   constexpr unsigned period          = 10;
   constexpr unsigned set_slot_offset = 1;
   constexpr unsigned res_slot_offset = 3;

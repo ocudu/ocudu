@@ -6,6 +6,7 @@
 /// \brief Unit tests for CQI-triggered Rel-16 PDSCH repetitions.
 
 #include "test_utils/scheduler_test_simulator.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include <gtest/gtest.h>
@@ -133,6 +134,8 @@ protected:
 
 TEST_F(scheduler_pdsch_repetition_test, when_cqi_below_threshold_then_pdsch_repetition_bundles_are_scheduled)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   // Enqueue enough bytes for continuous DL tx.
   dl_buffer_state_indication_message dl_buf_st{ue_idx, ue_drb_lcid, 10000000};
   this->push_dl_buffer_state(dl_buf_st);
@@ -227,6 +230,8 @@ TEST_F(scheduler_pdsch_repetition_test, when_cqi_below_threshold_then_pdsch_repe
 
 TEST_F(scheduler_pdsch_repetition_test, when_harq_is_nacked_then_retx_is_scheduled_as_repetition_bundle)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   // Report NACK for all HARQ-ACK bits, forcing HARQ reTxs.
   this->register_uci_handler([](uci_indication& uci) {
     for (auto& pdu : uci.ucis) {
@@ -284,6 +289,8 @@ TEST_F(scheduler_pdsch_repetition_test, when_harq_is_nacked_then_retx_is_schedul
 // that both read past the end of the empty candidate range and left the bundle unallocated.
 TEST_F(scheduler_pdsch_repetition_test, when_trailing_occasions_fall_in_ul_slots_then_harq_ack_follows_last_tx_occasion)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   const unsigned tdd_period = nof_slots_per_tdd_period(*cell_cfg(to_du_cell_index(0)).params.tdd_cfg);
 
   // Bursty traffic whose phase advances by one slot per iteration, so that bundles start at every position of the TDD
@@ -334,6 +341,8 @@ protected:
 
 TEST_F(scheduler_pdsch_repetition_high_cqi_test, when_cqi_above_threshold_then_no_repetitions_are_scheduled)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   dl_buffer_state_indication_message dl_buf_st{ue_idx, ue_drb_lcid, 10000000};
   this->push_dl_buffer_state(dl_buf_st);
 
@@ -362,6 +371,8 @@ protected:
 
 TEST_F(scheduler_pdsch_repetition_disabled_test, when_threshold_is_zero_then_no_repetitions_are_scheduled)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   dl_buffer_state_indication_message dl_buf_st{ue_idx, ue_drb_lcid, 10000000};
   this->push_dl_buffer_state(dl_buf_st);
 

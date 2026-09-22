@@ -11,19 +11,7 @@ target_link_libraries(pucch_resource_manager_test
         sched_rrm
         gtest
         gtest_main)
-# The PUCCH repetition test is registered separately below, so that it can carry the MVP-FUNC-BW-17-1 label.
-# --gtest_fail_if_no_test_selected makes a filter that no longer matches anything (e.g. after a test rename) fail
-# instead of silently reporting a passing, empty run.
-gtest_discover_tests(pucch_resource_manager_test
-        TEST_FILTER "-pucch_resource_manager_tester.repetition_disabled_until_capabilities_confirm_support")
-
-add_test(NAME pucch_resource_manager_tester.repetition_disabled_until_capabilities_confirm_support
-         COMMAND pucch_resource_manager_test
-                 "--gtest_filter=pucch_resource_manager_tester.repetition_disabled_until_capabilities_confirm_support"
-                 --gtest_fail_if_no_test_selected)
-set_tests_properties(
-    pucch_resource_manager_tester.repetition_disabled_until_capabilities_confirm_support
-    PROPERTIES LABELS "MVP-FUNC-BW-17-1")
+gtest_discover_tests(pucch_resource_manager_test)
 
 add_executable(cg_type1_res_mng_test cg_type1_res_mng_test.cpp)
 target_include_directories(cg_type1_res_mng_test PRIVATE ${CMAKE_SOURCE_DIR})

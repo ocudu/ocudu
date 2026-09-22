@@ -18,13 +18,4 @@ target_link_libraries(ue_scheduler_test
         sched_config
         gtest
         ocudu_gtest_main)
-# The PUCCH repetition tests are registered separately below, so that they can carry the MVP-FUNC-BW-17-1 label.
-# --gtest_fail_if_no_test_selected makes a filter that no longer matches anything (e.g. after a test rename) fail
-# instead of silently reporting a passing, empty run.
-gtest_discover_tests(ue_scheduler_test
-        TEST_FILTER "-ue_link_adaptation_controller_pucch_rep_test.*")
-
-add_test(NAME ue_link_adaptation_controller_pucch_rep_test
-         COMMAND ue_scheduler_test "--gtest_filter=ue_link_adaptation_controller_pucch_rep_test.*"
-                 --gtest_fail_if_no_test_selected)
-set_tests_properties(ue_link_adaptation_controller_pucch_rep_test PROPERTIES LABELS "MVP-FUNC-BW-17-1")
+gtest_discover_tests(ue_scheduler_test)

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "../../../../lib/ofh/serdes/ofh_cplane_message_builder_static_compression_impl.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/ofh/compression/compression_properties.h"
 #include <gtest/gtest.h>
 
@@ -72,6 +73,8 @@ TEST(ofh_control_plane_packet_builder_impl_test, build_valid_invented_control_pa
 #ifdef ASSERTS_ENABLED
 TEST(ofh_control_plane_packet_builder_impl_test, build_control_packet_with_beam_id_and_no_weights_should_fail)
 {
+  OCUDU_TEST_REQUIREMENTS("RU-OFH-CATB-WDBF");
+
   std::vector<uint8_t> result_packet(64, 0);
 
   cplane_section_type1_parameters  packet_params;
@@ -100,6 +103,8 @@ TEST(ofh_control_plane_packet_builder_impl_test, build_control_packet_with_beam_
 
 TEST(ofh_control_plane_packet_builder_impl_test, build_control_packet_with_empty_section_extension_1_should_fail)
 {
+  OCUDU_TEST_REQUIREMENTS("RU-OFH-CATB-WDBF");
+
   std::vector<uint8_t> result_packet(64, 0);
 
   cplane_section_type1_parameters  packet_params;
@@ -129,6 +134,8 @@ TEST(ofh_control_plane_packet_builder_impl_test, build_control_packet_with_empty
 
 TEST(ofh_control_plane_packet_builder_impl_test, build_control_packet_with_zero_beam_id_and_weights_should_fail)
 {
+  OCUDU_TEST_REQUIREMENTS("RU-OFH-CATB-WDBF");
+
   std::vector<uint8_t> result_packet(64, 0);
 
   cplane_section_type1_parameters  packet_params;
@@ -163,6 +170,8 @@ TEST(ofh_control_plane_packet_builder_impl_test, build_control_packet_with_zero_
 
 TEST(ofh_control_plane_packet_builder_impl_test, build_control_packet_with_section_extension_1_should_pass)
 {
+  OCUDU_TEST_REQUIREMENTS("RU-OFH-CATB-WDBF");
+
   std::vector<uint8_t> packet = {0x90, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                  0xff, 0xfe, 0x92, 0x34, 0x01, 0x05, 0x00, 0x7f, 0xff, 0x00, 0x00, 0x00,
                                  0x00, 0x7f, 0xff, 0x80, 0x01, 0x00, 0x00, 0x00, 0x00, 0x80, 0x01, 0x00};
@@ -202,6 +211,8 @@ TEST(ofh_control_plane_packet_builder_impl_test, build_control_packet_with_secti
 
 TEST(ofh_control_plane_packet_builder_impl_test, build_control_packet_with_bfp_compressed_section_extension_1)
 {
+  OCUDU_TEST_REQUIREMENTS("RU-OFH-CATB-WDBF");
+
   std::vector<uint8_t> packet = {0x90, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
                                  0x00, 0xff, 0xfe, 0x80, 0x07, 0x01, 0x04, 0x91, 0x03, 0x12, 0x34,
                                  0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x11, 0x00, 0x00, 0x00};

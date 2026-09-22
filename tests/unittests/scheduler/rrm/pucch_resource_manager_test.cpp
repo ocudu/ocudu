@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/scheduler/config/cell_configuration.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "ocudu/adt/format.h"
@@ -99,6 +100,8 @@ TEST_F(pucch_resource_manager_tester, when_ues_are_added_their_cfg_have_differen
 
 TEST_F(pucch_resource_manager_tester, repetition_disabled_until_capabilities_confirm_support)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-17-1");
+
   // Configure PUCCH HARQ-ACK repetition at cell level, so that the HARQ-ACK resources are generated with a repetition
   // factor greater than n1.
   ran_cell_config cell_params_rep  = cell_cfg.params;

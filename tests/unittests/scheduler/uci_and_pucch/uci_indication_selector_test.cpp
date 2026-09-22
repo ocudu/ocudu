@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/scheduler/uci_scheduling/uci_indication_selector.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include <algorithm>
 #include <gtest/gtest.h>
@@ -573,6 +574,8 @@ TEST_F(uci_indication_selector_test, on_slot_discard_multiple_ucis_timeout)
 
 TEST_F(uci_indication_selector_test, first_valid_repetition_of_burst_is_forwarded_without_waiting_for_the_rest)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-17-1");
+
   // Event: A PUCCH repetition burst spanning 3 slots is scheduled.
   const std::vector<slot_point> burst_slots = schedule_burst(first_rnti, 3);
 
@@ -606,6 +609,8 @@ TEST_F(uci_indication_selector_test, first_valid_repetition_of_burst_is_forwarde
 
 TEST_F(uci_indication_selector_test, burst_without_valid_repetition_is_forwarded_after_the_last_one)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-17-1");
+
   const std::vector<slot_point> burst_slots = schedule_burst(first_rnti, 3, 2);
 
   // Event: The feedback of all the repetitions arrives with nothing detected.
@@ -633,6 +638,8 @@ TEST_F(uci_indication_selector_test, burst_without_valid_repetition_is_forwarded
 
 TEST_F(uci_indication_selector_test, burst_with_missing_feedback_times_out_after_its_last_repetition)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-17-1");
+
   const std::vector<slot_point> burst_slots = schedule_burst(first_rnti, 3);
 
   // Event: Only the feedback of the first repetition arrives, with nothing detected.
@@ -659,6 +666,8 @@ TEST_F(uci_indication_selector_test, burst_with_missing_feedback_times_out_after
 
 TEST_F(uci_indication_selector_test, burst_whose_outcome_was_already_forwarded_does_not_time_out)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-17-1");
+
   const std::vector<slot_point> burst_slots = schedule_burst(first_rnti, 4);
 
   // Event: The first repetition is decoded, but the feedback of the remaining ones never arrives.
@@ -678,6 +687,8 @@ TEST_F(uci_indication_selector_test, burst_whose_outcome_was_already_forwarded_d
 
 TEST_F(uci_indication_selector_test, discarded_repetition_slot_does_not_discard_the_whole_burst)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-17-1");
+
   const std::vector<slot_point> burst_slots = schedule_burst(first_rnti, 3);
 
   // Event: An error indication arrives for the slot of the second repetition.
@@ -699,6 +710,8 @@ TEST_F(uci_indication_selector_test, discarded_repetition_slot_does_not_discard_
 
 TEST_F(uci_indication_selector_test, discarded_first_slot_of_burst_keeps_tracking_the_remaining_repetitions)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-17-1");
+
   const std::vector<slot_point> burst_slots = schedule_burst(first_rnti, 3);
 
   // Event: An error indication arrives for the first slot of the burst, which is the one the UCI grant is anchored at
@@ -724,6 +737,8 @@ TEST_F(uci_indication_selector_test, discarded_first_slot_of_burst_keeps_trackin
 
 TEST_F(uci_indication_selector_test, burst_with_all_its_slots_discarded_forces_nack)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-17-1");
+
   const std::vector<slot_point> burst_slots = schedule_burst(first_rnti, 3);
 
   // Event: An error indication arrives for every slot of the burst.

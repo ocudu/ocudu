@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "pucch_alloc_base_tester.h"
+#include "tests/ocudu_test_requirements.h"
 #include "uci_test_utils.h"
 #include "ocudu/ran/band_helper.h"
 #include "ocudu/ran/pucch/pucch_configuration.h"
@@ -96,6 +97,8 @@ public:
 
 TEST_F(pucch_alloc_repetition_test, successful_repetition_burst_uses_cell_configured_factor)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-17-1");
+
   const ue& ue = t_bench.get_main_ue();
 
   const std::optional<unsigned> pri = alloc_ded_harq_ack(ue, pucch_repetition_factor::n4);
@@ -113,6 +116,8 @@ TEST_F(pucch_alloc_repetition_test, successful_repetition_burst_uses_cell_config
 
 TEST_F(pucch_alloc_repetition_test, falls_back_to_smaller_factor_when_a_future_slot_is_unavailable)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-17-1");
+
   const ue& ue = t_bench.get_main_ue();
 
   // Block the 4th slot of a would-be n4 burst (delay +3) with an unrelated SR grant for the same UE. This leaves
@@ -135,6 +140,8 @@ TEST_F(pucch_alloc_repetition_test, falls_back_to_smaller_factor_when_a_future_s
 
 TEST_F(pucch_alloc_repetition_test, falls_back_to_legacy_single_slot_allocation_when_no_factor_fits)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-17-1");
+
   const ue& ue = t_bench.get_main_ue();
 
   // Block both the 2nd slot (delay +1, needed by n2) and the 4th slot (delay +3, needed by n4) for the same UE, so
@@ -156,6 +163,8 @@ TEST_F(pucch_alloc_repetition_test, falls_back_to_legacy_single_slot_allocation_
 
 TEST_F(pucch_alloc_repetition_test, repetition_burst_rejects_sr_and_csi_grants_in_its_slots)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-17-1");
+
   const ue& ue = t_bench.get_main_ue();
 
   ASSERT_TRUE(alloc_ded_harq_ack(ue, pucch_repetition_factor::n4).has_value());
@@ -171,6 +180,8 @@ TEST_F(pucch_alloc_repetition_test, repetition_burst_rejects_sr_and_csi_grants_i
 
 TEST_F(pucch_alloc_repetition_test, harq_ack_bit_targeting_a_non_anchor_burst_slot_is_rejected)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-17-1");
+
   const ue& ue = t_bench.get_main_ue();
 
   ASSERT_TRUE(alloc_ded_harq_ack(ue, pucch_repetition_factor::n4).has_value());
@@ -192,6 +203,8 @@ TEST_F(pucch_alloc_repetition_test, harq_ack_bit_targeting_a_non_anchor_burst_sl
 
 TEST_F(pucch_alloc_repetition_test, every_slot_of_the_burst_is_reported_as_barred_for_pusch)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-17-1");
+
   const ue& ue = t_bench.get_main_ue();
 
   // As per TS 38.213, Section 9.2.6, a UE whose PUCCH with repetitions overlaps a PUSCH transmits the PUCCH and drops
@@ -222,6 +235,8 @@ TEST_F(pucch_alloc_repetition_test, every_slot_of_the_burst_is_reported_as_barre
 
 TEST_F(pucch_alloc_repetition_test, single_slot_harq_ack_grant_is_not_reported_as_a_repetition_burst)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-17-1");
+
   const ue& ue = t_bench.get_main_ue();
 
   // A plain single-slot grant can have its UCI multiplexed on a PUSCH as usual, so it must not bar the slot.
@@ -232,6 +247,8 @@ TEST_F(pucch_alloc_repetition_test, single_slot_harq_ack_grant_is_not_reported_a
 
 TEST_F(pucch_alloc_repetition_test, additional_harq_ack_bit_is_propagated_to_every_slot_of_the_burst)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-17-1");
+
   const ue& ue = t_bench.get_main_ue();
 
   const std::optional<unsigned> first_pri = alloc_ded_harq_ack(ue, pucch_repetition_factor::n4);
@@ -261,6 +278,8 @@ public:
 
 TEST_F(pucch_alloc_repetition_promotion_test, third_harq_ack_bit_promotes_the_whole_burst_to_resource_set_1)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-17-1");
+
   const ue& ue = t_bench.get_main_ue();
 
   ASSERT_TRUE(alloc_ded_harq_ack(ue, pucch_repetition_factor::n4).has_value());
@@ -279,6 +298,8 @@ TEST_F(pucch_alloc_repetition_promotion_test, third_harq_ack_bit_promotes_the_wh
 
 TEST_F(pucch_alloc_repetition_test, promotion_falls_back_to_a_single_slot_grant_when_no_res_set_1_factor_fits)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-17-1");
+
   const ue& ue = t_bench.get_main_ue();
 
   ASSERT_TRUE(alloc_ded_harq_ack(ue, pucch_repetition_factor::n4).has_value());
@@ -306,6 +327,8 @@ TEST_F(pucch_alloc_repetition_test, promotion_falls_back_to_a_single_slot_grant_
 
 TEST_F(pucch_alloc_repetition_test, ongoing_burst_is_kept_when_promotion_finds_no_usable_resource)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-17-1");
+
   const ue& ue = t_bench.get_main_ue();
 
   ASSERT_TRUE(alloc_ded_harq_ack(ue, pucch_repetition_factor::n4).has_value());
@@ -332,6 +355,8 @@ public:
 
 TEST_F(pucch_alloc_repetition_no_caps_test, capability_unaware_ue_never_gets_repetition)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-17-1");
+
   // pucch_resource_manager::alloc_resources() alone always clamps rep_factor to n1, regardless of the cell's
   // harq_ack_rep configuration, until update_resources() is called with the UE's reported capabilities.
   const ue& ue = t_bench.get_main_ue();
@@ -407,6 +432,8 @@ protected:
 
 TEST_F(pucch_alloc_repetition_tdd_partial_ul_test, promotion_re_derives_the_burst_slots_for_the_new_resource)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-17-1");
+
   const ue& ue = t_bench.get_main_ue();
 
   // Anchor on delay 7, the first full-UL slot of the TDD period.
@@ -445,6 +472,8 @@ TEST_F(pucch_alloc_repetition_tdd_partial_ul_test, promotion_re_derives_the_burs
 
 TEST_F(pucch_alloc_repetition_tdd_test, burst_skips_dl_only_slots_to_reach_the_next_ul_slot)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-17-1");
+
   const ue& ue = t_bench.get_main_ue();
 
   // With this TDD pattern, only slot delays {7,8,9} and {17,18,19} (mod 10) are UL-enabled. Anchoring on delay 9
