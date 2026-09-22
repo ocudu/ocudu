@@ -13,7 +13,8 @@ using namespace ocudu;
 
 std::unique_ptr<radio_unit> ocudu::create_ofh_radio_unit(const ru_ofh_unit_config&            ru_cfg,
                                                          const flexible_o_du_ru_config&       ru_config,
-                                                         const flexible_o_du_ru_dependencies& ru_dependencies)
+                                                         const flexible_o_du_ru_dependencies& ru_dependencies,
+                                                         bool                                 uses_dpdk)
 {
   auto& ofh_exec_map = ru_dependencies.workers.get_ofh_ru_executor_mapper();
 
@@ -33,6 +34,6 @@ std::unique_ptr<radio_unit> ocudu::create_ofh_radio_unit(const ru_ofh_unit_confi
         ofh::sector_dependencies{.logger = dependencies.logger, .exec_mapper = ofh_exec_map[i]});
   }
 
-  return create_ofh_ru(generate_ru_ofh_config(ru_cfg, ru_config.cells, ru_config.max_processing_delay),
+  return create_ofh_ru(generate_ru_ofh_config(ru_cfg, ru_config.cells, ru_config.max_processing_delay, uses_dpdk),
                        std::move(dependencies));
 }

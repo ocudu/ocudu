@@ -4,6 +4,8 @@
 #include "apps/du/du_appconfig.h"
 #include "apps/du/du_appconfig_cli11_schema.h"
 #include "apps/du/du_appconfig_yaml_writer.h"
+#include "apps/helpers/hal/hal_appconfig.h"
+#include "apps/helpers/hal/hal_cli11_schema.h"
 #include "apps/units/flexible_o_du/flexible_o_du_application_unit.h"
 #include "yaml_roundtrip_test_helpers.h"
 #include "ocudu/support/config_parsers.h"
@@ -74,6 +76,43 @@ TEST(du_default_config_test, roundtrip)
 {
   YAML::Node a = emit_defaults();
   assert_roundtrip(YAML::Dump(a), &load_and_emit, "du defaults");
+}
+
+TEST(du_hal_config_test, enable_pdump_init_defaults_to_false)
+{
+  hal_appconfig cfg;
+  EXPECT_FALSE(cfg.enable_pdump_init);
+}
+
+TEST(du_hal_config_test, enable_pdump_init_can_be_enabled_from_cli)
+{
+  CLI::App      app("hal pdump-cli-test");
+  hal_appconfig cfg;
+  configure_cli11_with_hal_appconfig_schema(app, cfg);
+
+  std::vector<const char*> argv = {"pdump-test", "hal", "--enable_pdump_init=true"};
+  app.parse(static_cast<int>(argv.size()), argv.data());
+
+  EXPECT_TRUE(cfg.enable_pdump_init);
+}
+
+TEST(du_hal_config_test, enable_pdump_init_can_be_enabled_from_config_file)
+{
+  temp_yaml_file tmp("hal:\n  enable_pdump_init: true\n");
+
+  CLI::App app("hal pdump-config-file-test");
+  app.config_formatter(create_yaml_config_parser());
+  app.allow_config_extras(CLI::config_extras_mode::error);
+  std::string cfg_path;
+  app.set_config("-c,", cfg_path, "Read config from file", false);
+
+  hal_appconfig hal_cfg;
+  configure_cli11_with_hal_appconfig_schema(app, hal_cfg);
+
+  std::vector<const char*> argv = {"pdump-test", "-c", tmp.path().c_str()};
+  app.parse(static_cast<int>(argv.size()), argv.data());
+
+  EXPECT_TRUE(hal_cfg.enable_pdump_init);
 }
 
 /// The ETWS and CMAS blocks are the only way to provision a cell for a warning, so a dumped configuration that leaves

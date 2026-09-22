@@ -4,14 +4,13 @@
 
 #pragma once
 
-#include "CLI/CLI11.hpp"
+#include <yaml-cpp/yaml.h>
 
 namespace ocudu {
 
-struct ru_ofh_unit_config;
-struct ru_ofh_unit_parsed_config;
+struct hal_appconfig;
 
-/// Configures the given CLI11 application with the Open Fronthaul Radio Unit configuration schema.
-void configure_cli11_with_ru_ofh_config_schema(CLI::App& app, ru_ofh_unit_parsed_config& parsed_cfg);
+/// Fills the HAL configuration in the given YAML node.
+void fill_hal_appconfig_section(YAML::Node node, const hal_appconfig& config);
 
 } // namespace ocudu

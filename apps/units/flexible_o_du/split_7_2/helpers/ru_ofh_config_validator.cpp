@@ -205,17 +205,6 @@ static bool validate_ru_ofh_unit_config(span<const ru_ofh_unit_cell_config>     
   return true;
 }
 
-static bool validate_hal_config(const std::optional<ru_ofh_unit_hal_config>& config)
-{
-#ifdef DPDK_FOUND
-  if (config && config->eal_args.empty()) {
-    fmt::print("It is mandatory to fill the EAL configuration arguments to initialize DPDK correctly\n");
-    return false;
-  }
-#endif
-  return true;
-}
-
 bool ocudu::validate_ru_ofh_config(const ru_ofh_unit_config&                 config,
                                    span<const ru_ofh_cell_validation_config> cell_config)
 {
@@ -246,10 +235,6 @@ bool ocudu::validate_ru_ofh_config(const ru_ofh_unit_config&                 con
   }
 
   if (!validate_ru_ofh_unit_config(config.cells, cell_config)) {
-    return false;
-  }
-
-  if (!validate_hal_config(config.hal_config)) {
     return false;
   }
 

@@ -290,7 +290,8 @@ split6_flexible_o_du_low_session_factory::create_radio_unit(split6_flexible_o_du
       return nullptr;
     }
 
-    return create_ofh_radio_unit(cfg->config, ru_config, ru_dependencies);
+    return create_ofh_radio_unit(
+        cfg->config, ru_config, ru_dependencies, unit_config.du_low_cfg.hal_config.has_value());
   }
 
   if (const auto* cfg = std::get_if<ru_sdr_unit_config>(&ru_cfg)) {

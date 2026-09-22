@@ -65,6 +65,8 @@ static void configure_cli11_ru_emu_dpdk_args(CLI::App& app, std::optional<ru_emu
   config.emplace();
 
   add_option(app, "--eal_args", config->eal_args, "EAL configuration parameters used to initialize DPDK");
+  app.add_option("--enable_pdump_init", config->enable_pdump_init, "Enable DPDK pdump initialization")
+      ->always_capture_default();
 }
 
 static void configure_cli11_ru_emu_args(CLI::App& app, ru_emulator_ofh_appconfig& config)

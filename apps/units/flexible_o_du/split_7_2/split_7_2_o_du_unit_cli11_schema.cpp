@@ -21,8 +21,6 @@ void ocudu::configure_cli11_with_split_7_2_o_du_unit_config_schema(CLI::App&    
 void ocudu::autoderive_split_7_2_o_du_parameters_after_parsing(CLI::App& app, split_7_2_o_du_unit_config& parsed_cfg)
 {
   autoderive_o_du_high_parameters_after_parsing(app, parsed_cfg.odu_high_cfg);
-  // Auto derive OFH parameters.
-  autoderive_ru_ofh_parameters_after_parsing(app, parsed_cfg.ru_cfg);
 
   // Auto derive DU low parameters. Split 7.2 does not use blocking mode.
   const auto& cell = parsed_cfg.odu_high_cfg.du_high_cfg.config.cells_cfg.front().cell;

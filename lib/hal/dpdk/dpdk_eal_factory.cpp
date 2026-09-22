@@ -27,7 +27,8 @@ static std::vector<std::string> split_string_by_space(const std::string& input)
   return strings;
 }
 
-std::unique_ptr<dpdk_eal> ocudu::dpdk::create_dpdk_eal(const std::string& args, ocudulog::basic_logger& logger)
+std::unique_ptr<dpdk_eal>
+ocudu::dpdk::create_dpdk_eal(const std::string& args, ocudulog::basic_logger& logger, bool enable_pdump_init)
 {
   auto               strings = split_string_by_space(args);
   std::vector<char*> argv;
@@ -40,5 +41,12 @@ std::unique_ptr<dpdk_eal> ocudu::dpdk::create_dpdk_eal(const std::string& args, 
     return nullptr;
   }
 
-  return std::make_unique<dpdk_eal>(logger);
+#if !defined(DPDK_PDUMP_AVAILABLE)
+  if (enable_pdump_init) {
+    logger.warning("dpdk: pdump support was requested by the configuration, but it is not supported by this build as "
+                   "the DPDK pdump library could not be resolved; ignoring the request");
+  }
+#endif
+
+  return std::make_unique<dpdk_eal>(logger, enable_pdump_init);
 }

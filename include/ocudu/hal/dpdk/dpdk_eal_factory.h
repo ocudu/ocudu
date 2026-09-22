@@ -9,8 +9,12 @@
 namespace ocudu {
 namespace dpdk {
 
-/// Returns a dpdk_eal instance on success, otherwise returns nullptr.
-std::unique_ptr<dpdk_eal> create_dpdk_eal(const std::string& args, ocudulog::basic_logger& logger);
+/// \brief Returns a dpdk_eal instance on success, otherwise returns nullptr.
+///
+/// When \c enable_pdump_init is set to true, the DPDK pdump library, which is required to capture packets on DPDK
+/// ports with the dpdk-pdump tool, is initialized right after the EAL.
+std::unique_ptr<dpdk_eal>
+create_dpdk_eal(const std::string& args, ocudulog::basic_logger& logger, bool enable_pdump_init = false);
 
 } // namespace dpdk
 } // namespace ocudu

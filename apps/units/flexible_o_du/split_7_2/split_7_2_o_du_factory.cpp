@@ -11,5 +11,6 @@ std::unique_ptr<radio_unit>
 split_7_2_o_du_factory::create_radio_unit(const flexible_o_du_ru_config&       ru_config,
                                           const flexible_o_du_ru_dependencies& ru_dependencies)
 {
-  return create_ofh_radio_unit(unit_config.ru_cfg.config, ru_config, ru_dependencies);
+  return create_ofh_radio_unit(
+      unit_config.ru_cfg.config, ru_config, ru_dependencies, unit_config.du_low_cfg.hal_config.has_value());
 }

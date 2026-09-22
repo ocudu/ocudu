@@ -12,6 +12,9 @@ namespace ocudu {
 struct hal_appconfig {
   /// EAL configuration arguments.
   std::string eal_args;
+  /// Enables DPDK pdump initialization after EAL startup, which is required to capture packets on DPDK ports with
+  /// the dpdk-pdump tool.
+  bool enable_pdump_init = false;
 };
 
 } // namespace ocudu

@@ -137,8 +137,6 @@ void ocudu::autoderive_dynamic_o_du_parameters_after_parsing(CLI::App& app, dyna
   autoderive_o_du_high_parameters_after_parsing(app, parsed_cfg.odu_high_cfg);
   // Auto derive SDR parameters.
   autoderive_ru_sdr_parameters_after_parsing(app, sdr_cfg, nof_cells);
-  // Auto derive OFH parameters.
-  autoderive_ru_ofh_parameters_after_parsing(app, ofh_cfg);
 
   // Set the parsed RU.
   manage_ru(app, parsed_cfg);

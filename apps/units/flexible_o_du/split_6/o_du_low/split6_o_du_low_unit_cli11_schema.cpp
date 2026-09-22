@@ -82,8 +82,6 @@ void ocudu::autoderive_split6_o_du_low_parameters_after_parsing(CLI::App& app, s
 
   // Auto derive SDR parameters.
   autoderive_ru_sdr_parameters_after_parsing(app, sdr_cfg, split6_du_low::NOF_CELLS_SUPPORTED);
-  // Auto derive OFH parameters.
-  autoderive_ru_ofh_parameters_after_parsing(app, ofh_cfg);
 
   // Set the parsed RU.
   manage_ru(app, config);

@@ -442,15 +442,6 @@ static void configure_cli11_expert_execution_args(CLI::App& app, ru_ofh_unit_exp
       ->capture_default_str();
 }
 
-#ifdef DPDK_FOUND
-static void configure_cli11_hal_args(CLI::App& app, std::optional<ru_ofh_unit_hal_config>& config)
-{
-  config.emplace();
-
-  add_option(app, "--eal_args", config->eal_args, "EAL configuration parameters used to initialize DPDK");
-}
-#endif
-
 static void configure_cli11_metrics_args(CLI::App& app, ru_ofh_unit_metrics_config& config)
 {
   CLI::App* layers_subcmd = add_subcommand(app, "layers", "Layer basis metrics configuration")->configurable();
@@ -472,33 +463,8 @@ void ocudu::configure_cli11_with_ru_ofh_config_schema(CLI::App& app, ru_ofh_unit
   CLI::App* expert_subcmd = add_subcommand(app, "expert_execution", "Expert execution configuration")->configurable();
   configure_cli11_expert_execution_args(*expert_subcmd, parsed_cfg.config.expert_execution_cfg);
 
-  // HAL section only available when DPDK is present.
-#ifdef DPDK_FOUND
-  CLI::App* hal_subcmd = add_subcommand(app, "hal", "HAL configuration")->configurable();
-  configure_cli11_hal_args(*hal_subcmd, parsed_cfg.config.hal_config);
-#endif
-
   // Metrics section.
   app_helpers::configure_cli11_with_metrics_appconfig_schema(app, parsed_cfg.config.metrics_cfg.metrics_cfg);
   CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
   configure_cli11_metrics_args(*metrics_subcmd, parsed_cfg.config.metrics_cfg);
-}
-
-#ifdef DPDK_FOUND
-static void manage_hal_optional(CLI::App& app, std::optional<ru_ofh_unit_hal_config>& hal_config)
-{
-  // Clean the HAL optional.
-  if (auto subcmd = app.get_subcommand("hal"); subcmd->count_all() == 0) {
-    hal_config.reset();
-    // As HAL configuration is optional, disable the command when it is not present in the configuration.
-    subcmd->disabled();
-  }
-}
-#endif
-
-void ocudu::autoderive_ru_ofh_parameters_after_parsing(CLI::App& app, ru_ofh_unit_parsed_config& parsed_cfg)
-{
-#ifdef DPDK_FOUND
-  manage_hal_optional(app, parsed_cfg.config.hal_config);
-#endif
 }

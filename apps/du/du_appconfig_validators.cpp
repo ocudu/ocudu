@@ -4,6 +4,7 @@
 
 #include "du_appconfig_validators.h"
 #include "apps/helpers/f1u/f1u_appconfig_validator.h"
+#include "apps/helpers/hal/hal_appconfig_validator.h"
 #include "apps/helpers/logger/logger_appconfig_validator.h"
 
 using namespace ocudu;
@@ -11,6 +12,10 @@ using namespace ocudu;
 bool ocudu::validate_appconfig(const du_appconfig& config)
 {
   if (!validate_logger_appconfig(config.log_cfg)) {
+    return false;
+  }
+
+  if (!validate_hal_appconfig(config.hal_config)) {
     return false;
   }
 

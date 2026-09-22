@@ -174,12 +174,6 @@ struct ru_ofh_unit_expert_execution_config {
   std::vector<ru_ofh_unit_cpu_affinities_cell_config> cell_affinities = {{}};
 };
 
-/// HAL configuration.
-struct ru_ofh_unit_hal_config {
-  /// EAL configuration arguments.
-  std::string eal_args;
-};
-
 /// Metrics configuration.
 struct ru_ofh_unit_metrics_config {
   /// Metrics configuration.
@@ -208,8 +202,6 @@ struct ru_ofh_unit_config {
   ///
   /// \note Add one cell by default.
   ru_ofh_unit_expert_execution_config expert_execution_cfg;
-  /// HAL configuration.
-  std::optional<ru_ofh_unit_hal_config> hal_config;
   /// Metrics configuration.
   ru_ofh_unit_metrics_config metrics_cfg;
 };

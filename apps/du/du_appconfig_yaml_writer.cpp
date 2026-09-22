@@ -4,6 +4,7 @@
 
 #include "du_appconfig_yaml_writer.h"
 #include "apps/helpers/f1u/f1u_config_yaml_writer.h"
+#include "apps/helpers/hal/hal_appconfig_yaml_writer.h"
 #include "apps/helpers/logger/logger_appconfig_yaml_writer.h"
 #include "apps/helpers/network/sctp_config_yaml_writer.h"
 #include "apps/helpers/tracing/tracer_appconfig_yaml_writer.h"
@@ -20,8 +21,7 @@ static void fill_du_appconfig_hal_section(YAML::Node node, const std::optional<h
   if (!config.has_value()) {
     return;
   }
-  YAML::Node hal_node  = node["hal"];
-  hal_node["eal_args"] = config.value().eal_args;
+  fill_hal_appconfig_section(node, *config);
 }
 
 static void fill_du_appconfig_expert_execution_section(YAML::Node node, const expert_execution_appconfig& config)

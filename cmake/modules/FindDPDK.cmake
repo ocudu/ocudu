@@ -2,12 +2,15 @@
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 
+include(CheckIncludeFile)
+
 # Try to find DPDK
 #
 # Once done, this will define:
-#  DPDK_FOUND        - System has DPDK
-#  DPDK_INCLUDE_DIRS - The DPDK include directories
-#  DPDK_LIBRARIES    - The DPDK library
+#  DPDK_FOUND            - System has DPDK
+#  DPDK_INCLUDE_DIRS     - The DPDK include directories
+#  DPDK_LIBRARIES        - The DPDK library
+#  DPDK_PDUMP_AVAILABLE  - True when the optional DPDK pdump library is available
 
 # DPDK requires PkgConfig
 find_package(PkgConfig REQUIRED)
@@ -38,4 +41,17 @@ if (DPDK_FOUND)
     set(DPDK_LIBRARIES ${DPDK_LDFLAGS})
     message(STATUS "DPDK LIBRARIES: " ${DPDK_LIBRARIES})
     message(STATUS "DPDK INCLUDE DIRS: ${DPDK_INCLUDE_DIRS}")
+
+    # The pdump library is optional in DPDK and its header is only installed when the library is built, so probe for
+    # its availability.
+    set(DPDK_PDUMP_CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES})
+    set(CMAKE_REQUIRED_INCLUDES ${DPDK_INCLUDE_DIRS})
+    check_include_file(rte_pdump.h DPDK_PDUMP_AVAILABLE)
+    set(CMAKE_REQUIRED_INCLUDES ${DPDK_PDUMP_CMAKE_REQUIRED_INCLUDES})
+    unset(DPDK_PDUMP_CMAKE_REQUIRED_INCLUDES)
+    if (DPDK_PDUMP_AVAILABLE)
+        message(STATUS "DPDK pdump library: found")
+    else ()
+        message(STATUS "DPDK pdump library: not found, building without pdump support")
+    endif ()
 endif (DPDK_FOUND)

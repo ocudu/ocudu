@@ -61,7 +61,8 @@ tx_timing_window_params_us_to_symbols(std::chrono::microseconds                T
 static void generate_config(ru_ofh_configuration&                            out_cfg,
                             const ru_ofh_unit_config&                        ru_cfg,
                             span<const flexible_o_du_ru_config::cell_config> cells,
-                            unsigned                                         max_processing_delay_slots)
+                            unsigned                                         max_processing_delay_slots,
+                            bool                                             uses_dpdk)
 {
   out_cfg.gps_Alpha = ru_cfg.gps_Alpha;
   out_cfg.gps_Beta  = ru_cfg.gps_Beta;
@@ -78,7 +79,7 @@ static void generate_config(ru_ofh_configuration&                            out
     sector_cfg.max_processing_delay_slots   = max_processing_delay_slots;
     sector_cfg.dl_processing_time           = std::chrono::microseconds(ru_cfg.dl_processing_time);
     sector_cfg.ul_processing_time           = std::chrono::microseconds(ru_cfg.ul_processing_time);
-    sector_cfg.uses_dpdk                    = ru_cfg.hal_config.has_value();
+    sector_cfg.uses_dpdk                    = uses_dpdk;
     sector_cfg.interface                    = ofh_cell_cfg.network_interface;
     sector_cfg.is_promiscuous_mode_enabled  = ofh_cell_cfg.enable_promiscuous_mode;
     sector_cfg.is_link_status_check_enabled = ofh_cell_cfg.check_link_status;
@@ -174,10 +175,11 @@ static void generate_config(ru_ofh_configuration&                            out
 
 ru_ofh_configuration ocudu::generate_ru_ofh_config(const ru_ofh_unit_config&                        ru_cfg,
                                                    span<const flexible_o_du_ru_config::cell_config> cells,
-                                                   unsigned max_processing_delay_slots)
+                                                   unsigned max_processing_delay_slots,
+                                                   bool     uses_dpdk)
 {
   ru_ofh_configuration out_cfg;
-  generate_config(out_cfg, ru_cfg, cells, max_processing_delay_slots);
+  generate_config(out_cfg, ru_cfg, cells, max_processing_delay_slots, uses_dpdk);
 
   return out_cfg;
 }

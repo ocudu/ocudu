@@ -11,6 +11,8 @@ using namespace ocudu;
 static void configure_cli11_hal_args(CLI::App& app, hal_appconfig& config)
 {
   add_option(app, "--eal_args", config.eal_args, "EAL configuration parameters used to initialize DPDK");
+  add_option(app, "--enable_pdump_init", config.enable_pdump_init, "Enable DPDK pdump initialization")
+      ->always_capture_default();
 }
 
 void ocudu::configure_cli11_with_hal_appconfig_schema(CLI::App& app, hal_appconfig& config)

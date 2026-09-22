@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "gnb_appconfig_validators.h"
+#include "apps/helpers/hal/hal_appconfig_validator.h"
 #include "apps/helpers/logger/logger_appconfig_validator.h"
 #include "apps/services/worker_manager/worker_manager_appconfig_validator.h"
 #include "apps/units/flexible_o_du/o_du_high/du_high/du_high_config.h"
@@ -10,17 +11,6 @@
 #include "ocudu/adt/format.h"
 
 using namespace ocudu;
-
-static bool validate_hal_config(const std::optional<hal_appconfig>& config)
-{
-#ifdef DPDK_FOUND
-  if (config && config->eal_args.empty()) {
-    fmt::print("It is mandatory to fill the EAL configuration arguments to initialize DPDK correctly\n");
-    return false;
-  }
-#endif
-  return true;
-}
 
 bool ocudu::validate_appconfig(const gnb_appconfig& config)
 {
@@ -32,7 +22,7 @@ bool ocudu::validate_appconfig(const gnb_appconfig& config)
     return false;
   }
 
-  if (!validate_hal_config(config.hal_config)) {
+  if (!validate_hal_appconfig(config.hal_config)) {
     return false;
   }
 

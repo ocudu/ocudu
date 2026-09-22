@@ -988,7 +988,8 @@ int main(int argc, char** argv)
   if (uses_dpdk) {
     // Prepend the application name in argv[0] as it is expected by EAL.
     eal = dpdk::create_dpdk_eal(std::string(argv[0]) + " " + ru_emulator_parsed_cfg.dpdk_config->eal_args,
-                                ocudulog::fetch_basic_logger("EAL", false));
+                                ocudulog::fetch_basic_logger("EAL", false),
+                                ru_emulator_parsed_cfg.dpdk_config->enable_pdump_init);
     if (!eal) {
       report_error("Failed to initialize DPDK EAL\n");
     }

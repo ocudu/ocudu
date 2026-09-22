@@ -15,6 +15,7 @@ struct flexible_o_du_ru_dependencies;
 /// Creates an Open Fronthaul Radio Unit using the given configuration.
 std::unique_ptr<radio_unit> create_ofh_radio_unit(const ru_ofh_unit_config&            ru_cfg,
                                                   const flexible_o_du_ru_config&       ru_config,
-                                                  const flexible_o_du_ru_dependencies& ru_dependencies);
+                                                  const flexible_o_du_ru_dependencies& ru_dependencies,
+                                                  bool                                 uses_dpdk);
 
 } // namespace ocudu

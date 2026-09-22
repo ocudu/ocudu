@@ -4,7 +4,8 @@
 
 
 set(SOURCES
-        hal_cli11_schema.cpp)
+        hal_cli11_schema.cpp
+        hal_appconfig_yaml_writer.cpp)
 
 add_library(ocudu_hal_app_helpers STATIC ${SOURCES})
 target_include_directories(ocudu_hal_app_helpers PRIVATE ${CMAKE_SOURCE_DIR})

@@ -244,7 +244,8 @@ int main(int argc, char** argv)
   if (du_cfg.hal_config) {
     // Prepend the application name in argv[0] as it is expected by EAL.
     eal = dpdk::create_dpdk_eal(std::string(argv[0]) + " " + du_cfg.hal_config->eal_args,
-                                ocudulog::fetch_basic_logger("EAL", false));
+                                ocudulog::fetch_basic_logger("EAL", false),
+                                du_cfg.hal_config->enable_pdump_init);
   }
 #endif
 
