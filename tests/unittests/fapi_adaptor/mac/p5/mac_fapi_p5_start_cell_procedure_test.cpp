@@ -88,7 +88,7 @@ protected:
   std::unique_ptr<config_message_gateway_spy> gateway_spy;
   fapi::cell_configuration                    cell_cfg;
   std::chrono::milliseconds                   timeout{100};
-  mac_fapi_start_cell_procedure_config        config{cell_cfg, timeout};
+  mac_fapi_start_cell_procedure_config        config{true, cell_cfg, timeout};
   /// Procedure objects.
   async_task<bool>                                      proc;
   std::optional<unittest::waitable_task_launcher<bool>> proc_launcher;

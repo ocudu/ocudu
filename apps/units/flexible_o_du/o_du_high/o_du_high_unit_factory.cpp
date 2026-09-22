@@ -208,6 +208,8 @@ o_du_high_unit ocudu::make_o_du_high_unit(const o_du_high_unit_config&  o_du_hig
   odu::du_high_configuration& du_hi_cfg        = o_du_high_cfg.du_hi;
   const du_high_unit_config&  du_high_unit_cfg = o_du_high_unit_cfg.du_high_cfg.config;
 
+  o_du_high_cfg.is_rt_mode_enabled = o_du_high_unit_cfg.fapi_cfg.is_rt_mode_enabled;
+
   // Generate DU high config from the unit config.
   generate_du_high_config(du_hi_cfg, du_high_unit_cfg);
 

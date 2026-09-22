@@ -15,5 +15,5 @@ void ocudu::configure_cli11_with_split6_o_du_unit_config_schema(CLI::App& app, s
 
 void ocudu::autoderive_split6_o_du_parameters_after_parsing(CLI::App& app, split6_o_du_unit_config& config)
 {
-  autoderive_o_du_high_parameters_after_parsing(app, config.odu_high_cfg);
+  autoderive_o_du_high_parameters_after_parsing(app, config.odu_high_cfg, true);
 }

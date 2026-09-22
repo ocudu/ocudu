@@ -53,6 +53,7 @@ struct flexible_o_du_ru_config {
   std::vector<cell_config> cells;
   unsigned                 max_processing_delay;
   unsigned                 prach_nof_ports;
+  bool                     is_rt_mode_enabled;
 };
 
 /// Radio Unit dependencies of the flexible O-RAN DU.

@@ -22,6 +22,7 @@ struct p5_transaction_outcome_manager;
 
 /// MAC-FAPI start procedure configuration.
 struct mac_fapi_start_cell_procedure_config {
+  bool                            is_rt_mode_enabled;
   const fapi::cell_configuration& cell_cfg;
   std::chrono::milliseconds       timeout;
 };
@@ -64,6 +65,7 @@ private:
   bool handle_start_transaction_result();
 
 private:
+  const bool                                  is_rt_mode_enabled;
   const fapi::param_request                   param_req;
   const fapi::config_request                  config_req;
   const fapi::start_request                   start_req;

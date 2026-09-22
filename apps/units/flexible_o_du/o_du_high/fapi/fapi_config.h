@@ -12,6 +12,8 @@ namespace ocudu {
 struct fapi_unit_config {
   /// FAPI log level.
   ocudulog::basic_levels fapi_level = ocudulog::basic_levels::warning;
+  /// Flags that indicates if realtime mode is enabled or not.
+  bool is_rt_mode_enabled;
 };
 
 } // namespace ocudu

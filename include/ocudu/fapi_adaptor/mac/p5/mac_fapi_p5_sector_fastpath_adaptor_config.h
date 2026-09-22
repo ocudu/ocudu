@@ -18,6 +18,7 @@ namespace fapi_adaptor {
 
 /// MAC-FAPI P5 sector fastpath adaptor configuration.
 struct mac_fapi_p5_sector_fastpath_adaptor_config {
+  bool                     is_rt_mode_enabled;
   fapi::cell_configuration cell_cfg;
 };
 

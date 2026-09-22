@@ -131,10 +131,23 @@ static void manage_ru(CLI::App& app, dynamic_o_du_unit_config& parsed_cfg)
   ofh_subcmd->disabled();
 }
 
+static bool
+get_is_rt_mode_enabled(const std::variant<ru_sdr_unit_config, ru_ofh_unit_parsed_config, ru_dummy_unit_config>& ru_cfg)
+{
+  if (std::holds_alternative<ru_dummy_unit_config>(ru_cfg)) {
+    return true;
+  }
+
+  if (std::holds_alternative<ru_ofh_unit_parsed_config>(ru_cfg)) {
+    return true;
+  }
+
+  return std::get<ru_sdr_unit_config>(ru_cfg).device_driver != "zmq";
+}
+
 void ocudu::autoderive_dynamic_o_du_parameters_after_parsing(CLI::App& app, dynamic_o_du_unit_config& parsed_cfg)
 {
   const unsigned nof_cells = parsed_cfg.odu_high_cfg.du_high_cfg.config.cells_cfg.size();
-  autoderive_o_du_high_parameters_after_parsing(app, parsed_cfg.odu_high_cfg);
   // Auto derive SDR parameters.
   autoderive_ru_sdr_parameters_after_parsing(app, sdr_cfg, nof_cells);
 
@@ -147,6 +160,10 @@ void ocudu::autoderive_dynamic_o_du_parameters_after_parsing(CLI::App& app, dyna
       dummy.cell_affinities.resize(nof_cells);
     }
   }
+
+  // Derive the O-DU high parameters.
+  autoderive_o_du_high_parameters_after_parsing(
+      app, parsed_cfg.odu_high_cfg, get_is_rt_mode_enabled(parsed_cfg.ru_cfg));
 
   // Auto derive DU low parameters.
   const auto&   cell = parsed_cfg.odu_high_cfg.du_high_cfg.config.cells_cfg.front().cell;

@@ -19,6 +19,7 @@ static fapi::config_request generate_config_request(const fapi::cell_configurati
 mac_fapi_start_cell_procedure::mac_fapi_start_cell_procedure(
     const mac_fapi_start_cell_procedure_config&       config,
     const mac_fapi_start_cell_procedure_dependencies& dependencies) :
+  is_rt_mode_enabled(config.is_rt_mode_enabled),
   param_req(),
   config_req(generate_config_request(config.cell_cfg)),
   start_req(),
@@ -72,13 +73,16 @@ void mac_fapi_start_cell_procedure::operator()(coro_context<async_task<bool>>& c
 
   p5_gateway.send_start_request(start_req);
 
-  CORO_AWAIT(transaction_start);
+  // For non-real time implementations, skip the transaction and checking the outcome of the transaction.
+  if (is_rt_mode_enabled) {
+    CORO_AWAIT(transaction_start);
 
-  if (!handle_start_transaction_result()) {
-    // Switch back to MAC control executor context.
-    CORO_AWAIT(defer_on_blocking(mac_ctrl_executor, timers));
+    if (!handle_start_transaction_result()) {
+      // Switch back to MAC control executor context.
+      CORO_AWAIT(defer_on_blocking(mac_ctrl_executor, timers));
 
-    CORO_EARLY_RETURN(false);
+      CORO_EARLY_RETURN(false);
+    }
   }
 
   // Switch back to MAC control executor context.

@@ -21,10 +21,12 @@ inline void configure_cli11_with_o_du_high_config_schema(CLI::App& app, o_du_hig
 }
 
 /// Auto derive O-DU high parameters after the parsing.
-inline void autoderive_o_du_high_parameters_after_parsing(CLI::App& app, o_du_high_unit_config& unit_cfg)
+inline void
+autoderive_o_du_high_parameters_after_parsing(CLI::App& app, o_du_high_unit_config& unit_cfg, bool is_rt_mode_enabled)
 {
   autoderive_du_high_parameters_after_parsing(unit_cfg.du_high_cfg.config);
   autoderive_o_du_high_e2_parameters_after_parsing(unit_cfg.e2_cfg);
+  unit_cfg.fapi_cfg.is_rt_mode_enabled = is_rt_mode_enabled;
 }
 
 } // namespace ocudu

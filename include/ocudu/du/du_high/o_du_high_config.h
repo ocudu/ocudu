@@ -26,6 +26,8 @@ struct o_du_high_config {
   du_high_configuration du_hi;
   /// E2AP configuration.
   e2ap_config e2ap_cfg;
+  /// Flag that indicates if realtime mode is enabled or disabled.
+  bool is_rt_mode_enabled;
 };
 
 /// O-RAN DU high sector dependencies. Contains the dependencies of one sector.

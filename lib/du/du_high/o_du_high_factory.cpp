@@ -31,7 +31,7 @@ generate_mac_fapi_p5_sector_adaptor_dependencies(const o_du_high_sector_dependen
 }
 
 static fapi_adaptor::mac_fapi_p5_sector_fastpath_adaptor_config
-generate_fapi_p5_cell_config(const du_cell_config& du_cell)
+generate_fapi_p5_cell_config(const du_cell_config& du_cell, bool is_rt_mode_enabled)
 {
   fapi::cell_configuration cell_cfg;
   const subcarrier_spacing scs_common = du_cell.ran.dl_cfg_common.init_dl_bwp.generic_params.scs;
@@ -67,7 +67,7 @@ generate_fapi_p5_cell_config(const du_cell_config& du_cell)
 
   cell_cfg.prach_cfg = *du_cell.ran.ul_cfg_common.init_ul_bwp.rach_cfg_common;
 
-  return {cell_cfg};
+  return {.is_rt_mode_enabled = is_rt_mode_enabled, .cell_cfg = cell_cfg};
 }
 
 static fapi_adaptor::mac_fapi_fastpath_adaptor_config
@@ -83,7 +83,8 @@ generate_fapi_fastpath_adaptor_config(const o_du_high_config& config)
     fapi_adaptor::mac_fapi_p7_sector_fastpath_adaptor_config p7_cfg = {
         .sector_id = i, .cell_nof_prbs = nof_prb, .scs = scs_common};
 
-    out_config.sectors.push_back({.p5_config = generate_fapi_p5_cell_config(du_cell), .p7_config = p7_cfg});
+    out_config.sectors.push_back(
+        {.p5_config = generate_fapi_p5_cell_config(du_cell, config.is_rt_mode_enabled), .p7_config = p7_cfg});
   }
 
   return out_config;

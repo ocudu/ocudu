@@ -24,6 +24,7 @@ class operation_controller;
 
 /// MAC-FAPI P5 fastpath cell operation controller implementation configuration.
 struct mac_fapi_p5_fastpath_cell_operation_controller_impl_config {
+  bool                     is_rt_mode_enabled;
   fapi::cell_configuration cell_cfg;
 };
 
@@ -55,6 +56,7 @@ public:
   async_task<bool> stop() override;
 
 private:
+  const bool                      is_rt_mode_enabled;
   const fapi::cell_configuration  cell_cfg;
   ocudulog::basic_logger&         logger;
   fapi::p5_requests_gateway&      p5_gateway;

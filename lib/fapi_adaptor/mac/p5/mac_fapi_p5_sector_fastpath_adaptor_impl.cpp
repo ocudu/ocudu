@@ -13,7 +13,8 @@ mac_fapi_p5_sector_fastpath_adaptor_impl::mac_fapi_p5_sector_fastpath_adaptor_im
     const mac_fapi_p5_sector_fastpath_adaptor_dependencies& dependencies) :
   transaction_manager({dependencies.timers, dependencies.fapi_ctrl_executor}),
   responses_handler(dependencies.logger, transaction_manager, dependencies.fapi_ctrl_executor),
-  controller(mac_fapi_p5_fastpath_cell_operation_controller_impl_config{.cell_cfg = config.cell_cfg},
+  controller(mac_fapi_p5_fastpath_cell_operation_controller_impl_config{.is_rt_mode_enabled = config.is_rt_mode_enabled,
+                                                                        .cell_cfg           = config.cell_cfg},
              mac_fapi_p5_fastpath_cell_operation_controller_impl_dependencies{
                  .logger              = dependencies.logger,
                  .p5_gateway          = dependencies.p5_gateway,

@@ -20,9 +20,10 @@ void ocudu::configure_cli11_with_split_8_o_du_unit_config_schema(CLI::App& app, 
 void ocudu::autoderive_split_8_o_du_parameters_after_parsing(CLI::App& app, split_8_o_du_unit_config& parsed_cfg)
 {
   const unsigned nof_cells = parsed_cfg.odu_high_cfg.du_high_cfg.config.cells_cfg.size();
-  autoderive_o_du_high_parameters_after_parsing(app, parsed_cfg.odu_high_cfg);
   // Auto derive SDR parameters.
   autoderive_ru_sdr_parameters_after_parsing(app, parsed_cfg.ru_cfg, nof_cells);
+
+  autoderive_o_du_high_parameters_after_parsing(app, parsed_cfg.odu_high_cfg, parsed_cfg.ru_cfg.device_driver != "zmq");
 
   // Auto derive DU low parameters.
   const auto& cell = parsed_cfg.odu_high_cfg.du_high_cfg.config.cells_cfg.front().cell;
