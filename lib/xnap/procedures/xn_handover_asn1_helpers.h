@@ -68,22 +68,19 @@ inline bool asn1_to_ue_context_info_ho_request(xnap_ue_context_info_ho_request& 
       pdu_session_item.qos_flow_setup_request_items.emplace(qos_flow_id, qos_flow_item);
     }
 
-    request.pdu_session_res_to_be_setup_list.emplace(pdu_session_id, pdu_session_item);
-
     // Fill the QoS flows the source proposed for data forwarding and its DRB-to-QoS-flow mapping, if the peer
     // signalled them in the Data Forwarding and Offloading Info from source NG-RAN node IE (TS 38.423 Section
     // 9.2.1.17). The target also derives the mapping from AS-Config in the RRC container, which takes precedence
     // where the two disagree.
     if (asn1_pdu_session.dataforwardinginfofrom_source_present) {
-      cu_cp_pdu_session_res_info_item pdu_session_res_info_item;
-      pdu_session_res_info_item.pdu_session_id = pdu_session_id;
       for (const auto& asn1_qos_flow_to_be_forwarded :
            asn1_pdu_session.dataforwardinginfofrom_source.qos_flows_to_be_forwarded) {
-        cu_cp_qos_flow_info_item qos_flow_info_item;
-        qos_flow_info_item.qos_flow_id = uint_to_qos_flow_id(asn1_qos_flow_to_be_forwarded.qos_flow_id);
-        qos_flow_info_item.dl_forwarding =
+        qos_flow_id_t qos_flow_id = uint_to_qos_flow_id(asn1_qos_flow_to_be_forwarded.qos_flow_id);
+        if (not pdu_session_item.qos_flow_setup_request_items.contains(qos_flow_id)) {
+          continue;
+        }
+        pdu_session_item.qos_flow_setup_request_items[qos_flow_id].dl_forwarding =
             asn1_qos_flow_to_be_forwarded.dl_dataforwarding == asn1::xnap::dl_forwarding_opts::dl_forwarding_proposed;
-        pdu_session_res_info_item.qos_flow_info_list.push_back(qos_flow_info_item);
       }
       for (const auto& asn1_drb_to_qos_flow_map :
            asn1_pdu_session.dataforwardinginfofrom_source.source_drb_to_qos_flow_map) {
@@ -94,10 +91,11 @@ inline bool asn1_to_ue_context_info_ho_request(xnap_ue_context_info_ho_request& 
           assoc_qos_flow.qos_flow_id = uint_to_qos_flow_id(asn1_qos_flow.qfi);
           drb_to_qos_flow_map.associated_qos_flow_list.push_back(assoc_qos_flow);
         }
-        pdu_session_res_info_item.drbs_to_qos_flows_map_list.push_back(drb_to_qos_flow_map);
+        pdu_session_item.source_drbs_to_qos_flows_map_list.push_back(drb_to_qos_flow_map);
       }
-      request.pdu_session_res_info_list.push_back(pdu_session_res_info_item);
     }
+
+    request.pdu_session_res_to_be_setup_list.emplace(pdu_session_id, pdu_session_item);
   }
 
   // Fill RRC container (RRC handover preparation information).

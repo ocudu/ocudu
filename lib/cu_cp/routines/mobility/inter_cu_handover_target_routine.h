@@ -44,10 +44,6 @@ struct cu_cp_inter_cu_handover_request {
   byte_buffer                                                           rrc_handover_preparation_information;
   std::optional<location_report_request>                                location_report_request_type;
   bool                                                                  is_conditional_handover = false;
-  /// Source DRB-to-QoS-flow mapping, when known (TS 38.413 Section 9.3.1.29 for NG, TS 38.423 Section 9.2.1.17 for
-  /// Xn). Used to prefer the source's DRB ID at the target during admission, since DRB IDs are otherwise allocated
-  /// independently by each RAN node.
-  std::vector<cu_cp_pdu_session_res_info_item> pdu_session_res_info_list;
 
   void from_ngap_handover_request(const ngap_handover_request& ng_handover_request)
   {
@@ -64,7 +60,25 @@ struct cu_cp_inter_cu_handover_request {
     rrc_handover_preparation_information =
         ng_handover_request.source_to_target_transparent_container.rrc_container.copy();
     location_report_request_type = ng_handover_request.location_report_request_type;
-    pdu_session_res_info_list    = ng_handover_request.source_to_target_transparent_container.pdu_session_res_info_list;
+    // Fold the source's forwarding proposal and its DRB-to-QoS-flow mapping into the PDU sessions, so that both
+    // handover types report them in the same place (TS 38.413 Section 9.3.1.29). The AMF may leave out a PDU session
+    // the source reported, so only the sessions to set up are filled.
+    for (const auto& pdu_session_res_info :
+         ng_handover_request.source_to_target_transparent_container.pdu_session_res_info_list) {
+      if (not pdu_session_res_setup_list.contains(pdu_session_res_info.pdu_session_id)) {
+        continue;
+      }
+      cu_cp_pdu_session_res_setup_item& pdu_session_res_setup_item =
+          pdu_session_res_setup_list[pdu_session_res_info.pdu_session_id];
+      for (const auto& qos_flow_info : pdu_session_res_info.qos_flow_info_list) {
+        if (not pdu_session_res_setup_item.qos_flow_setup_request_items.contains(qos_flow_info.qos_flow_id)) {
+          continue;
+        }
+        pdu_session_res_setup_item.qos_flow_setup_request_items[qos_flow_info.qos_flow_id].dl_forwarding =
+            qos_flow_info.dl_forwarding;
+      }
+      pdu_session_res_setup_item.source_drbs_to_qos_flows_map_list = pdu_session_res_info.drbs_to_qos_flows_map_list;
+    }
 
     // Fill NG handover specific fields.
     handov_type                            = ng_handover_request.handov_type;
@@ -94,7 +108,6 @@ struct cu_cp_inter_cu_handover_request {
     rrc_handover_preparation_information =
         xnap_request.ue_context_info_ho_request.rrc_handover_preparation_information.copy();
     location_report_request_type = xnap_request.ue_context_info_ho_request.location_report_info;
-    pdu_session_res_info_list    = xnap_request.ue_context_info_ho_request.pdu_session_res_info_list;
     // Over Xn the source forwards straight to this node, without a 5GC in the path.
     for (auto& pdu_session_res_setup_item : pdu_session_res_setup_list) {
       pdu_session_res_setup_item.direct_forwarding_path_available = true;

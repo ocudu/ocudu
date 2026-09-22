@@ -37,12 +37,12 @@ static bool handle_ue_context_setup_response(e1ap_bearer_context_modification_re
 // Builds the source's DRB-to-QoS-flow mapping, when known, so DRB allocation at this target can prefer reusing the
 // same DRB ID for the same QoS flow, keeping DRB numbering consistent with the source where possible (DRB IDs are
 // otherwise allocated independently by each RAN node; see TS 38.300 Section 9.2.3.2.3).
-static up_old_drb_association
-build_old_drb_association(const std::vector<cu_cp_pdu_session_res_info_item>& pdu_session_res_info_list)
+static up_old_drb_association build_old_drb_association(
+    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& pdu_session_res_setup_list)
 {
   up_old_drb_association old_drb_association;
-  for (const auto& pdu_session : pdu_session_res_info_list) {
-    for (const auto& drb_item : pdu_session.drbs_to_qos_flows_map_list) {
+  for (const auto& pdu_session : pdu_session_res_setup_list) {
+    for (const auto& drb_item : pdu_session.source_drbs_to_qos_flows_map_list) {
       for (const auto& assoc_flow : drb_item.associated_qos_flow_list) {
         old_drb_association[pdu_session.pdu_session_id][assoc_flow.qos_flow_id] = drb_item.drb_id;
       }
@@ -95,7 +95,7 @@ void inter_cu_handover_target_routine::operator()(
 
   {
     // Calculate next user-plane configuration based on incoming setup message.
-    up_old_drb_association old_drb_association = build_old_drb_association(request.pdu_session_res_info_list);
+    up_old_drb_association old_drb_association = build_old_drb_association(request.pdu_session_res_setup_list);
     merge_old_drb_association_from_as_config(old_drb_association, request.rrc_handover_preparation_information, logger);
     next_config =
         ue->get_up_resource_manager().calculate_update(request.pdu_session_res_setup_list, old_drb_association);
@@ -422,14 +422,10 @@ void inter_cu_handover_target_routine::fill_e1ap_data_forwarding_info_requests()
 
     // Collect the QoS flows the source proposed for DL forwarding (TS 38.413 section 9.3.1.33).
     std::set<qos_flow_id_t> proposed_flows;
-    for (const cu_cp_pdu_session_res_info_item& res_info : request.pdu_session_res_info_list) {
-      if (res_info.pdu_session_id != psi) {
-        continue;
-      }
-      for (const cu_cp_qos_flow_info_item& flow_info : res_info.qos_flow_info_list) {
-        if (flow_info.dl_forwarding.value_or(false)) {
-          proposed_flows.insert(flow_info.qos_flow_id);
-        }
+    for (const qos_flow_setup_request_item& flow_info :
+         request.pdu_session_res_setup_list[psi].qos_flow_setup_request_items) {
+      if (flow_info.dl_forwarding.value_or(false)) {
+        proposed_flows.insert(flow_info.qos_flow_id);
       }
     }
     if (proposed_flows.empty()) {
