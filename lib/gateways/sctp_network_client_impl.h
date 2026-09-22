@@ -3,7 +3,9 @@
 
 #pragma once
 
+#include "sctp_dtls.h"
 #include "sctp_network_gateway_common_impl.h"
+#include "sctp_network_gateway_dtls_interface.h"
 #include "ocudu/gateways/sctp_network_client.h"
 #include "ocudu/support/io/transport_layer_address.h"
 #include <condition_variable>
@@ -16,7 +18,9 @@ namespace ocudu {
 /// \brief SCTP client implementation
 ///
 /// This implementation assumes single-threaded access to its public interface.
-class sctp_network_client_impl : public sctp_network_client, public sctp_network_gateway_common_impl
+class sctp_network_client_impl : public sctp_network_client,
+                                 public sctp_network_gateway_dtls_interface,
+                                 public sctp_network_gateway_common_impl
 {
   explicit sctp_network_client_impl(const sctp_network_connector_config& sctp_cfg,
                                     io_broker&                           broker,
@@ -45,6 +49,10 @@ private:
                            const struct sctp_sndrcvinfo& sri,
                            const sockaddr&               src_addr,
                            socklen_t                     src_addr_len);
+
+  void handle_dtls_notification(const union sctp_notification* notif, int assoc) override {}
+
+  void handle_connection_up();
   void handle_connection_shutdown(const char* cause);
   void handle_connection_terminated(const std::string& cause);
 
@@ -80,6 +88,10 @@ private:
 
   std::mutex              connection_mutex;
   std::condition_variable connection_cvar;
+
+  /// DTLS Context
+  bool                          ssl_enabled = false;
+  std::unique_ptr<dtls_context> dtls_ctxt;
 };
 
 } // namespace ocudu

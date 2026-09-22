@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "sctp_network_client_impl.h"
+#include "sctp_dtls_ssl.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/support/io/sockets.h"
 #include <algorithm>
@@ -44,15 +45,15 @@ public:
 
     auto dest_addr  = server_addr.native();
     int  bytes_sent = ::sctp_sendmsg(fd,
-                                    pdu_span.data(),
-                                    pdu_span.size(),
-                                    const_cast<struct sockaddr*>(dest_addr.addr),
-                                    dest_addr.addrlen,
-                                    htonl(ppid),
-                                    0,
-                                    stream_no,
-                                    0,
-                                    0);
+                                     pdu_span.data(),
+                                     pdu_span.size(),
+                                     const_cast<struct sockaddr*>(dest_addr.addr),
+                                     dest_addr.addrlen,
+                                     htonl(ppid),
+                                     0,
+                                     stream_no,
+                                     0,
+                                     0);
     if (bytes_sent == -1) {
       logger.error("{}: Closing SCTP association. Cause: Couldn't send {} B of data. errno={}",
                    client_name,
@@ -76,15 +77,15 @@ private:
     // Send EOF to SCTP server.
     auto dest_addr  = server_addr.native();
     int  bytes_sent = ::sctp_sendmsg(fd,
-                                    nullptr,
-                                    0,
-                                    const_cast<struct sockaddr*>(dest_addr.addr),
-                                    dest_addr.addrlen,
-                                    htonl(ppid),
-                                    SCTP_EOF,
-                                    stream_no,
-                                    0,
-                                    0);
+                                     nullptr,
+                                     0,
+                                     const_cast<struct sockaddr*>(dest_addr.addr),
+                                     dest_addr.addrlen,
+                                     htonl(ppid),
+                                     SCTP_EOF,
+                                     stream_no,
+                                     0,
+                                     0);
 
     if (bytes_sent == -1) {
       // Failed to send EOF.
@@ -236,6 +237,15 @@ sctp_network_client_impl::connect(std::unique_ptr<sctp_association_sdu_notifier>
         return nullptr;
       }
     }
+  }
+
+  /// Socket has been created, initialize DTLS context.
+  if (OCUDU_DTLS_SCTP_SUPPORT and node_cfg.dtls_cfg.has_value()) {
+    dtls_ctxt = create_dtls_context(*node_cfg.dtls_cfg);
+    if (not dtls_ctxt->init(socket.fd().value())) {
+      report_error("Could not initialize DTLS context in SCTP gateway. if={}", node_cfg.if_name);
+    }
+    logger.debug("Created DTLS context. if={} cert={}", node_cfg.if_name, node_cfg.dtls_cfg->cert_filename);
   }
 
   sctp_assoc_t assoc_id           = 0;
@@ -431,6 +441,21 @@ void sctp_network_client_impl::handle_connection_shutdown(const char* cause)
   }
 }
 
+void sctp_network_client_impl::handle_connection_up()
+{
+  logger.error("handling connection UP");
+
+  if (ssl_enabled) {
+    auto ssl = create_dtls_ssl(dtls_ssl_config{dtls_mode::client, 0}, {*dtls_ctxt, *this});
+    if (not ssl->init(socket.fd().value())) {
+      logger.error("{} assoc={}: Could not initialize DTLS context for new association", node_cfg.if_name, 0);
+      /// Remove association as if it was lost. Do it directly, as we are running in the app executor already.
+      handle_connection_shutdown("DTLS initialization error");
+      return;
+    }
+  }
+}
+
 void sctp_network_client_impl::handle_connection_terminated(const std::string& cause)
 {
   logger.info("{}: {}. Notifying connection drop to upper layers", node_cfg.if_name, cause);
@@ -476,6 +501,7 @@ void sctp_network_client_impl::handle_notification(span<const uint8_t>          
       const struct sctp_assoc_change* n = &notif->sn_assoc_change;
       switch (n->sac_state) {
         case SCTP_COMM_UP:
+          handle_connection_up();
           break;
         case SCTP_COMM_LOST:
           handle_connection_terminated("Communication to the server was lost");
