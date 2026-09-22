@@ -737,9 +737,9 @@ void logical_channel_system::handle_mac_ce_indication(soa::row_id ue_row_id, con
   auto ce_rid = pending_ces.insert(mac_ce_context{ce, {}});
   ce_list.insert_after(tail, ce_rid);
   // Update sum of pending CE bytes.
-  unsigned                  new_ce_bytes         = ue_ctx.pending_ce_bytes + (ce.ce_lcid.is_var_len_ce()
-                                                                                  ? get_mac_sdu_required_bytes(ce.ce_lcid.sizeof_ce())
-                                                                                  : FIXED_SIZED_MAC_CE_SUBHEADER_SIZE + ce.ce_lcid.sizeof_ce());
+  unsigned new_ce_bytes = ue_ctx.pending_ce_bytes +
+                          (ce.ce_lcid.is_var_len_ce() ? get_mac_sdu_required_bytes(ce.ce_lcid.sizeof_ce())
+                                                      : get_mac_ce_subheader_size(ce.ce_lcid) + ce.ce_lcid.sizeof_ce());
   static constexpr unsigned MAX_PENDING_CE_BYTES = 1U << 14U;
   ocudu_assert(new_ce_bytes <= MAX_PENDING_CE_BYTES, "Exceeded maximum pending CE bytes per UE");
   ue_ctx.pending_ce_bytes = new_ce_bytes;
@@ -921,7 +921,7 @@ unsigned logical_channel_system::allocate_mac_ce(soa::row_id ue_rid, dl_msg_lc_i
   if (lcid.is_var_len_ce()) {
     alloc_bytes = get_mac_sdu_required_bytes(ce_size);
   } else {
-    alloc_bytes = ce_size + FIXED_SIZED_MAC_CE_SUBHEADER_SIZE;
+    alloc_bytes = ce_size + get_mac_ce_subheader_size(lcid);
   }
 
   // Verify there is space for both MAC CE and subheader.

@@ -9,6 +9,25 @@
 
 namespace ocudu {
 
+/// TS 38.321, Table 6.2.1-1b - Values of one-octet eLCID for DL-SCH.
+enum class elcid_dl_sch_t : uint8_t {
+  /// [Implementation-defined] Codepoints 0 to 215 are reserved, so none of them identifies a MAC CE.
+  INVALID_ELCID        = 0,
+  DIFFERENTIAL_KOFFSET = 230
+};
+
+/// Number of payload bytes of the MAC CE identified by the provided one-octet eLCID.
+constexpr uint32_t sizeof_elcid_ce(elcid_dl_sch_t elcid)
+{
+  // Values taken from TS 38.321, Section 6.1.3.
+  switch (elcid) {
+    case elcid_dl_sch_t::DIFFERENTIAL_KOFFSET:
+      return 1;
+    default:
+      return 0;
+  }
+}
+
 /// \brief LCID representation for PDSCH.
 class lcid_dl_sch_t
 {
@@ -23,6 +42,9 @@ public:
     LCID1 = 1,
     // ...
     LCID32 = 32,
+
+    /// Extended logical channel ID field (one-octet eLCID field)
+    EXT_LCID_1_OCTET = 0b100010,
 
     /// Reserved
     MIN_RESERVED = 35,
@@ -55,6 +77,13 @@ public:
     ocudu_assert(lcid_val <= PADDING, "Invalid LCID");
   }
   constexpr lcid_dl_sch_t(options lcid_) : lcid_val(lcid_) {}
+  /// Returns the LCID of the MAC CE identified by the provided one-octet eLCID.
+  static constexpr lcid_dl_sch_t from_elcid(elcid_dl_sch_t elcid_)
+  {
+    lcid_dl_sch_t lcid{EXT_LCID_1_OCTET};
+    lcid.elcid_val = elcid_;
+    return lcid;
+  }
   constexpr lcid_dl_sch_t& operator=(underlying_type lcid)
   {
     ocudu_assert(lcid <= PADDING, "Invalid LCID");
@@ -69,7 +98,17 @@ public:
   constexpr underlying_type value() const { return lcid_val; }
 
   /// Whether LCID is an MAC CE
-  constexpr bool is_ce() const { return lcid_val <= PADDING and lcid_val >= RECOMMENDED_BIT_RATE; }
+  constexpr bool is_ce() const { return is_elcid() or (lcid_val <= PADDING and lcid_val >= RECOMMENDED_BIT_RATE); }
+
+  /// Whether the MAC CE is identified by a one-octet eLCID rather than by the LCID alone.
+  constexpr bool is_elcid() const { return lcid_val == EXT_LCID_1_OCTET; }
+
+  /// eLCID of the MAC CE, as per TS 38.321, Table 6.2.1-1b.
+  constexpr elcid_dl_sch_t to_elcid() const
+  {
+    ocudu_assert(is_elcid(), "Invalid to_elcid() access to lcid={}", lcid_val);
+    return elcid_val;
+  }
 
   /// Whether LCID belongs to a Radio Bearer Logical Channel
   constexpr bool is_sdu() const { return lcid_val <= LCID32 and lcid_val >= CCCH; }
@@ -90,6 +129,9 @@ public:
 
   constexpr uint32_t sizeof_ce() const
   {
+    if (is_elcid()) {
+      return sizeof_elcid_ce(elcid_val);
+    }
     // Values taken from TS38.321, Section 6.1.3.
     switch (lcid_val) {
       case SCELL_ACTIV_4_OCTET:
@@ -111,11 +153,16 @@ public:
     return 0;
   }
 
-  constexpr bool operator==(lcid_dl_sch_t other) const { return lcid_val == other.lcid_val; }
-  constexpr bool operator!=(lcid_dl_sch_t other) const { return lcid_val != other.lcid_val; }
+  constexpr bool operator==(lcid_dl_sch_t other) const
+  {
+    return lcid_val == other.lcid_val and (not is_elcid() or elcid_val == other.elcid_val);
+  }
+  constexpr bool operator!=(lcid_dl_sch_t other) const { return not(*this == other); }
 
 private:
   underlying_type lcid_val;
+  /// eLCID of the MAC CE. Only meaningful when the LCID is the one-octet eLCID field.
+  elcid_dl_sch_t elcid_val = elcid_dl_sch_t::INVALID_ELCID;
 };
 
 constexpr uint16_t format_as(lcid_dl_sch_t lcid)

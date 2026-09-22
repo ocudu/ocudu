@@ -9,9 +9,19 @@
 namespace ocudu {
 
 constexpr unsigned FIXED_SIZED_MAC_CE_SUBHEADER_SIZE = 1;
+constexpr unsigned ELCID_1_OCTET_FIELD_SIZE          = 1;
 constexpr unsigned MAC_SDU_SUBHEADER_LENGTH_THRES    = 256;
 constexpr unsigned MIN_MAC_SDU_SUBHEADER_SIZE        = 2;
 constexpr unsigned MAX_MAC_SDU_SUBHEADER_SIZE        = 3;
+
+/// \brief Derive the subheader size in bytes of a fixed-sized MAC CE as per TS 38.321, Section 6.1.2.
+///
+/// The subheader of a fixed-sized MAC CE carries no length field. It is one octet holding the LCID, or two when an
+/// eLCID identifies the CE.
+constexpr unsigned get_mac_ce_subheader_size(lcid_dl_sch_t lcid)
+{
+  return FIXED_SIZED_MAC_CE_SUBHEADER_SIZE + (lcid.is_elcid() ? ELCID_1_OCTET_FIELD_SIZE : 0);
+}
 
 /// \brief Derive MAC SDU subheader size in bytes as per TS38.321, Section 6.1.
 constexpr unsigned get_mac_sdu_subheader_size(unsigned payload)
