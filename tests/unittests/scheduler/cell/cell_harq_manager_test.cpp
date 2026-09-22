@@ -1295,6 +1295,24 @@ TEST_F(single_ntn_ue_ul_harq_mode_b_process_test, when_ul_harq_allocated_then_it
   }
 }
 
+/// A grant that asks for normal mode is given a process operating in that mode.
+TEST_F(single_ntn_ue_ul_harq_mode_b_process_test, when_normal_mode_is_requested_then_a_normal_mode_process_is_allocated)
+{
+  auto h = harq_ent.alloc_ul_harq(current_slot + k2 + ntn_cs_koffset, max_retxs, std::nullopt, true);
+  ASSERT_TRUE(h.has_value());
+  ASSERT_EQ(h->mode(), harq_utils::harq_mode_t::normal);
+}
+
+/// The allocation fails instead of falling back to a process operating in the other mode.
+TEST_F(single_ntn_ue_ul_harq_mode_b_process_test, when_every_process_of_the_requested_mode_is_busy_then_alloc_fails)
+{
+  for (unsigned i = 0; i != nof_normal_mode_harqs; ++i) {
+    ASSERT_TRUE(harq_ent.alloc_ul_harq(current_slot + k2 + ntn_cs_koffset, max_retxs, std::nullopt, true).has_value());
+  }
+  ASSERT_TRUE(harq_ent.has_empty_ul_harqs()) << "the mode B processes are still free";
+  ASSERT_FALSE(harq_ent.alloc_ul_harq(current_slot + k2 + ntn_cs_koffset, max_retxs, std::nullopt, true).has_value());
+}
+
 TEST_F(single_ntn_ue_ul_harq_mode_b_process_test, ul_harq_history_is_reachable_after_harq_release)
 {
   OCUDU_TEST_REQUIREMENTS("DU-NTN-HARQ-2");
