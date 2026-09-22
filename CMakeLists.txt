@@ -514,6 +514,9 @@ if (BUILD_TESTING)
             DISCOVERY_TIMEOUT ${GTEST_DISCOVERY_TIMEOUT_VALUE}
         )
     endfunction()
+
+    # Collection of the requirement tags that the tests record. Set before any test target exists.
+    include(gtest_requirements)
 else()
     message(STATUS "Skipping Tests. Set BUILD_TESTING to On to compile tests.")
 endif (BUILD_TESTING)
