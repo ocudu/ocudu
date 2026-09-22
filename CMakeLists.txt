@@ -115,9 +115,10 @@ set(EXIT_TIMEOUT "AUTO" CACHE STRING "Timer to wait for a clean exit")
 
 if (ENABLE_WERROR)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
-    # Disable gcc's maybe uninitialized analysis as it raises false positives
+    # Add GCC-specific flags
     if (CMAKE_COMPILER_IS_GNUCXX)
         include(CheckCXXCompilerFlag)
+        # Disable GCC's maybe uninitialized analysis as it raises false positives
         check_cxx_compiler_flag("-Wstringop-overflow" HAS_STRINGOP_OVERFLOW)
         if (HAS_STRINGOP_OVERFLOW)
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=stringop-overflow")
@@ -126,6 +127,14 @@ if (ENABLE_WERROR)
             check_cxx_compiler_flag("-Warray-bounds" HAS_ARRAY_BOUNDS)
             if (HAS_ARRAY_BOUNDS)
                 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=array-bounds")
+            endif()
+        endif()
+        # Disable GCC's noisy reports on ABI changes on ARM such as
+        # "parameter passing for argument of type ... when C++17 is enabled changed to match C++14 in GCC 10.1".
+        if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+            check_cxx_compiler_flag("-Wno-psabi" HAS_NO_PSABI)
+            if (HAS_NO_PSABI)
+                set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
             endif()
         endif()
     endif()
