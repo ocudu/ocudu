@@ -14,6 +14,7 @@ namespace ocudu {
 class byte_buffer_chain;
 class cell_dl_harq_buffer_pool;
 struct ta_cmd_ce_payload;
+struct differential_koffset_ce_payload;
 struct dl_msg_tb_info;
 struct dl_msg_lc_info;
 
@@ -61,6 +62,9 @@ public:
 
   /// Adds a Timing Advance Command CE as a subPDU.
   void add_tag_cmd(const ta_cmd_ce_payload& ce_payload);
+
+  /// Adds a Differential Koffset CE as a subPDU.
+  void add_differential_koffset(const differential_koffset_ce_payload& ce_payload);
 
   /// Adds a padding CE as a subPDU.
   void add_padding(unsigned len);

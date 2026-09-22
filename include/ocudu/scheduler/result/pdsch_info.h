@@ -20,6 +20,7 @@
 #include "ocudu/scheduler/result/dmrs_info.h"
 #include "ocudu/scheduler/result/vrb_alloc.h"
 #include "ocudu/support/units.h"
+#include <chrono>
 #include <optional>
 
 namespace ocudu {
@@ -86,13 +87,26 @@ struct ta_cmd_ce_payload {
   unsigned                   ta_cmd;
 };
 
+/// Differential Koffset CE payload, as per TS 38.321, Section 6.1.3.57.
+struct differential_koffset_ce_payload {
+  /// \brief Differential Koffset the UE subtracts from the cell-specific Koffset, as per TS 38.213, Section 4.2.
+  ///
+  /// \note In the specifications, the field is expressed as a number of slots assuming a subcarrier spacing of
+  /// 15 kHz (i.e., 1 slot = 1 ms). To avoid ambiguity with other subcarrier spacings, this parameter is represented
+  /// in the implementation as std::chrono::milliseconds.
+  std::chrono::milliseconds koffset;
+};
+
+/// Payload of a DL MAC CE, except the UE Contention Resolution Identity.
+using dl_mac_ce_payload = std::variant<ta_cmd_ce_payload, differential_koffset_ce_payload, dummy_ce_payload>;
+
 struct dl_msg_lc_info {
   /// Values of LCID for DL-SCH. See TS 38.321, Table 6.2.1-1.
   lcid_dl_sch_t lcid;
   /// Number of bytes available to fill in this SDU for the specified logical channel. {0..65535}.
   unsigned sched_bytes;
   /// Holds payload of CE except UE Contention Resolution Identity.
-  std::variant<ta_cmd_ce_payload, dummy_ce_payload> ce_payload;
+  dl_mac_ce_payload ce_payload;
 };
 
 /// Information relative to the transport blocks scheduled for a given PDSCH.

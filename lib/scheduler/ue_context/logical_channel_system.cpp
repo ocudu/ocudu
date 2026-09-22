@@ -721,13 +721,15 @@ void logical_channel_system::handle_mac_ce_indication(soa::row_id ue_row_id, con
     ue_ctx.pending_con_res_id = true;
     return;
   }
-  auto& ue_ch_ctx = u.at<ue_dl_channel_context>();
-  auto  ce_list   = ue_ch_ctx.pending_ces.get_list(pending_ces);
-  auto  tail      = ce_list.before_begin();
+  auto&      ue_ch_ctx          = u.at<ue_dl_channel_context>();
+  auto       ce_list            = ue_ch_ctx.pending_ces.get_list(pending_ces);
+  auto       tail               = ce_list.before_begin();
+  const bool supersedes_pending = ce.ce_lcid == lcid_dl_sch_t::TA_CMD or
+                                  ce.ce_lcid == lcid_dl_sch_t::from_elcid(elcid_dl_sch_t::DIFFERENTIAL_KOFFSET);
   for (auto it = ce_list.begin(); it != ce_list.end(); ++it) {
-    if (ce.ce_lcid == lcid_dl_sch_t::TA_CMD and it->info.ce_lcid == lcid_dl_sch_t::TA_CMD) {
-      // Overwrite previous TA CMD CE.
-      // Note: Size of TA CMD CE is fixed, so no need to update pending CE bytes.
+    if (supersedes_pending and ce.ce_lcid == it->info.ce_lcid) {
+      // A newer command of the same kind replaces the one still queued.
+      // Note: The LCIDs match and both are fixed size, so the pending CE bytes do not change.
       pending_ces[it.id()].info.ce_payload = ce.ce_payload;
       return;
     }

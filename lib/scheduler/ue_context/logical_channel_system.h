@@ -254,7 +254,7 @@ public:
     /// LCID of the MAC CE.
     lcid_dl_sch_t ce_lcid;
     /// Holds payload of CE except UE Contention Resolution Identity.
-    std::variant<ta_cmd_ce_payload, dummy_ce_payload> ce_payload = dummy_ce_payload{0};
+    dl_mac_ce_payload ce_payload = dummy_ce_payload{0};
   };
 
   logical_channel_system();

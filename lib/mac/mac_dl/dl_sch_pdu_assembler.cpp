@@ -161,6 +161,22 @@ void dl_sch_pdu::add_tag_cmd(const ta_cmd_ce_payload& ce_payload)
   pdu[byte_offset++] = (ce_payload.tag_id.value() & 0xc0U) | (ce_payload.ta_cmd & 0x3fU);
 }
 
+void dl_sch_pdu::add_differential_koffset(const differential_koffset_ce_payload& ce_payload)
+{
+  const lcid_dl_sch_t lcid        = lcid_dl_sch_t::from_elcid(elcid_dl_sch_t::DIFFERENTIAL_KOFFSET);
+  const unsigned      header_len  = get_mac_ce_subheader_size(lcid);
+  const unsigned      payload_len = lcid.sizeof_ce();
+
+  // Encode header and payload.
+  encode_subheader(false, lcid, header_len, payload_len);
+
+  // The Differential Koffset field is 6 bits wide and counts slots of 15kHz SCS, as per TS 38.321, Section 6.1.3.57.
+  ocudu_assert(ce_payload.koffset.count() >= 0 and ce_payload.koffset.count() <= 0x3f,
+               "Invalid Differential Koffset value ({}ms)",
+               ce_payload.koffset.count());
+  pdu[byte_offset++] = static_cast<uint8_t>(ce_payload.koffset.count()) & 0x3fU;
+}
+
 void dl_sch_pdu::add_padding(unsigned len)
 {
   // 1 Byte R/LCID MAC subheader.
@@ -176,6 +192,12 @@ void dl_sch_pdu::add_padding(unsigned len)
 void dl_sch_pdu::encode_subheader(bool F_bit, lcid_dl_sch_t lcid, unsigned header_len, unsigned payload_len)
 {
   pdu[byte_offset++] = ((F_bit ? 1U : 0U) << 6U) | (lcid.value() & 0x3fU);
+  if (lcid.is_elcid()) {
+    // 2 Byte R/LCID/eLCID MAC subheader of a fixed-sized MAC CE, as per TS 38.321, Figure 6.1.2-3. It carries no
+    // L field.
+    pdu[byte_offset++] = static_cast<uint8_t>(lcid.to_elcid());
+    return;
+  }
   if (header_len == 3) {
     // 3 Byte R/F/LCID/L MAC subheader with 16-bit L field.
     pdu[byte_offset++] = (payload_len & 0xff00U) >> 8U;
@@ -250,6 +272,14 @@ public:
                    separator(),
                    ce_payload.tag_id.value(),
                    ce_payload.ta_cmd);
+  }
+
+  void add_differential_koffset(const differential_koffset_ce_payload& ce_payload)
+  {
+    if (not enabled) {
+      return;
+    }
+    fmt::format_to(std::back_inserter(fmtbuf), "{}DIFF_KOFFSET: koffset={}ms", separator(), ce_payload.koffset.count());
   }
 
   void log()
@@ -450,6 +480,18 @@ void dl_sch_pdu_assembler::assemble_ce(dl_sch_pdu&           ue_pdu,
       const auto ce_payload = std::get<ta_cmd_ce_payload>(subpdu.ce_payload);
       ue_pdu.add_tag_cmd(ce_payload);
       pdu_logger.add_ta_cmd(ce_payload);
+    } break;
+    case lcid_dl_sch_t::EXT_LCID_1_OCTET: {
+      // Every MAC CE identified by a one-octet eLCID shares this LCID, so the eLCID decides which one it is.
+      if (subpdu.lcid.to_elcid() != elcid_dl_sch_t::DIFFERENTIAL_KOFFSET) {
+        report_fatal_error("Invalid MAC CE elcid={}", static_cast<unsigned>(subpdu.lcid.to_elcid()));
+      }
+      ocudu_assert(std::holds_alternative<differential_koffset_ce_payload>(subpdu.ce_payload) == true,
+                   "Invalid MAC CE payload for elcid={}",
+                   static_cast<unsigned>(subpdu.lcid.to_elcid()));
+      const auto ce_payload = std::get<differential_koffset_ce_payload>(subpdu.ce_payload);
+      ue_pdu.add_differential_koffset(ce_payload);
+      pdu_logger.add_differential_koffset(ce_payload);
     } break;
     default:
       report_fatal_error("Invalid MAC CE lcid={}", subpdu.lcid);
