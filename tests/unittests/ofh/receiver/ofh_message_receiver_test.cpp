@@ -52,7 +52,10 @@ class data_flow_uplane_uplink_prach_spy : public data_flow_uplane_uplink_prach
 
 public:
   // See interface for documentation.
-  void decode_type1_message(unsigned eaxc, span<const uint8_t> msg) override { decode_function_called = true; }
+  void decode_type1_message(unsigned eaxc, span<const uint8_t> msg, bool is_seq_id_correct) override
+  {
+    decode_function_called = true;
+  }
 
   // See interface for documentation.
   data_flow_message_decoding_metrics_collector& get_metrics_collector() override { return metrics_collector; }
@@ -69,7 +72,10 @@ class data_flow_uplane_uplink_data_spy : public data_flow_uplane_uplink_data
 
 public:
   // See interface for documentation.
-  void decode_type1_message(unsigned eaxc, span<const uint8_t> msg) override { decode_function_called = true; }
+  void decode_type1_message(unsigned eaxc, span<const uint8_t> msg, bool is_seq_id_correct) override
+  {
+    decode_function_called = true;
+  }
 
   // See interface for documentation.
   data_flow_message_decoding_metrics_collector& get_metrics_collector() override { return metrics_collector; }

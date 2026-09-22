@@ -127,7 +127,7 @@ TEST_F(data_flow_uplane_uplink_data_impl_fixture, valid_message_containing_all_s
 {
   uplane_message_decoder_results deco_results = build_valid_decoder_results();
   uplane_decoder->set_results(deco_results);
-  data_flow.decode_type1_message(eaxc, {});
+  data_flow.decode_type1_message(eaxc, {}, true);
 
   ASSERT_TRUE(notifier->has_new_uplink_symbol_function_been_called());
   ASSERT_FALSE(notifier->has_new_prach_function_been_called());
@@ -139,7 +139,7 @@ TEST_F(data_flow_uplane_uplink_data_impl_fixture, invalid_filter_index_does_not_
   uplane_message_decoder_results deco_results = build_valid_decoder_results();
   deco_results.params.filter_index            = ocudu::ofh::filter_index_type::ul_prach_preamble_1p25khz;
   uplane_decoder->set_results(deco_results);
-  data_flow.decode_type1_message(eaxc, {});
+  data_flow.decode_type1_message(eaxc, {}, true);
 
   ASSERT_FALSE(notifier->has_new_uplink_symbol_function_been_called());
   ASSERT_FALSE(notifier->has_new_prach_function_been_called());
@@ -151,7 +151,7 @@ TEST_F(data_flow_uplane_uplink_data_impl_fixture, invalid_prb_range_does_not_wri
   uplane_message_decoder_results deco_results = build_valid_decoder_results();
   deco_results.sections.front().start_prb     = 51;
   uplane_decoder->set_results(deco_results);
-  data_flow.decode_type1_message(eaxc, {});
+  data_flow.decode_type1_message(eaxc, {}, true);
 
   ASSERT_FALSE(notifier->has_new_uplink_symbol_function_been_called());
   ASSERT_FALSE(notifier->has_new_prach_function_been_called());
@@ -164,7 +164,7 @@ TEST_F(data_flow_uplane_uplink_data_impl_fixture, partial_prb_falling_outside_cp
   deco_results.sections.front().start_prb     = 41;
   deco_results.sections.front().nof_prbs      = 51;
   uplane_decoder->set_results(deco_results);
-  data_flow.decode_type1_message(eaxc, {});
+  data_flow.decode_type1_message(eaxc, {}, true);
 
   ASSERT_FALSE(notifier->has_new_uplink_symbol_function_been_called());
   ASSERT_FALSE(notifier->has_new_prach_function_been_called());
@@ -178,7 +178,7 @@ TEST_F(data_flow_uplane_uplink_data_impl_fixture, partial_prb_inside_cplane_prbs
   deco_results.sections.front().start_prb     = 10;
   deco_results.sections.front().nof_prbs      = num_prbs;
   uplane_decoder->set_results(deco_results);
-  data_flow.decode_type1_message(eaxc, {});
+  data_flow.decode_type1_message(eaxc, {}, true);
 
   ASSERT_FALSE(notifier->has_new_uplink_symbol_function_been_called());
   ASSERT_FALSE(notifier->has_new_prach_function_been_called());

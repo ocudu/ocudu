@@ -16,6 +16,9 @@ struct rx_data_flow_perf_metrics {
   /// Number of dropped messages by the data flow.
   unsigned nof_dropped_messages;
 
+  /// Number of corrupted messages by the data flow.
+  unsigned nof_corrupted_messages;
+
   /// CPU usage in microseconds of the message processing in the receiver.
   float cpu_usage_us;
 };

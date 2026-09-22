@@ -51,7 +51,7 @@ public:
                                      data_flow_uplane_uplink_prach_impl_dependencies&& dependencies);
 
   // See interface for documentation.
-  void decode_type1_message(unsigned eaxc, span<const uint8_t> message) override;
+  void decode_type1_message(unsigned eaxc, span<const uint8_t> message, bool is_seq_id_correct) override;
 
   // See interface for documentation.
   data_flow_message_decoding_metrics_collector& get_metrics_collector() override { return metrics_collector; }

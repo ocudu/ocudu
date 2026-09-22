@@ -112,13 +112,13 @@ void message_receiver_impl::process_new_frame(ether::unique_rx_buffer buffer)
 
   trace_point decode_tp = ofh_tracer.now();
   if (is_a_prach_message(*filter_type)) {
-    data_flow_prach->decode_type1_message(eaxc, ofh_pdu);
+    data_flow_prach->decode_type1_message(eaxc, ofh_pdu, nof_skipped_seq_id == 0);
     metrics_collector.update_prach_stats(meas.stop());
     ofh_tracer << trace_event("ofh_receiver_decode_prach", decode_tp);
     return;
   }
 
-  data_flow_uplink->decode_type1_message(eaxc, ofh_pdu);
+  data_flow_uplink->decode_type1_message(eaxc, ofh_pdu, nof_skipped_seq_id == 0);
   metrics_collector.update_uplink_stats(meas.stop());
   ofh_tracer << trace_event("ofh_receiver_decode_data", decode_tp);
 }

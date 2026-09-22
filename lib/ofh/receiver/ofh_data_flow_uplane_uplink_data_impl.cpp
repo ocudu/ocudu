@@ -25,19 +25,28 @@ data_flow_uplane_uplink_data_impl::data_flow_uplane_uplink_data_impl(
   ocudu_assert(uplane_decoder, "Invalid User-Plane decoder");
 }
 
-void data_flow_uplane_uplink_data_impl::decode_type1_message(unsigned eaxc, span<const uint8_t> message)
+void data_flow_uplane_uplink_data_impl::decode_type1_message(unsigned            eaxc,
+                                                             span<const uint8_t> message,
+                                                             bool                is_seq_id_correct)
 {
   trace_point decode_tp = ofh_tracer.now();
 
   uplane_message_decoder_results results;
   if (!uplane_decoder->decode(results, message)) {
     metrics_collector.increase_dropped_messages();
+    if (is_seq_id_correct) {
+      metrics_collector.increase_corrupted_messages();
+    }
+
     return;
   }
   ofh_tracer << trace_event("ofh_receiver_uplane_decode", decode_tp);
 
   if (should_uplane_packet_be_filtered(eaxc, results)) {
     metrics_collector.increase_dropped_messages();
+    if (is_seq_id_correct) {
+      metrics_collector.increase_corrupted_messages();
+    }
 
     return;
   }

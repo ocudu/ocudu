@@ -88,17 +88,25 @@ bool data_flow_uplane_uplink_prach_impl::should_uplane_packet_be_filtered(
   return !are_uplane_prb_fields_valid(results, context, sector_id, logger);
 }
 
-void data_flow_uplane_uplink_prach_impl::decode_type1_message(unsigned eaxc, span<const uint8_t> message)
+void data_flow_uplane_uplink_prach_impl::decode_type1_message(unsigned            eaxc,
+                                                              span<const uint8_t> message,
+                                                              bool                is_seq_id_correct)
 {
   uplane_message_decoder_results results;
   if (!uplane_decoder->decode(results, message)) {
     metrics_collector.increase_dropped_messages();
+    if (is_seq_id_correct) {
+      metrics_collector.increase_corrupted_messages();
+    }
 
     return;
   }
 
   if (should_uplane_packet_be_filtered(eaxc, results)) {
     metrics_collector.increase_dropped_messages();
+    if (is_seq_id_correct) {
+      metrics_collector.increase_corrupted_messages();
+    }
 
     return;
   }

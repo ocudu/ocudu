@@ -62,10 +62,11 @@ static nlohmann::json generate_message_decoder_item(const ofh::rx_data_flow_perf
 {
   nlohmann::json json;
 
-  json["nof_dropped_messages"] = metrics.nof_dropped_messages;
-  json["average_latency_us"]   = validate_fp_value(metrics.message_unpacking_avg_latency_us);
-  json["max_latency_us"]       = validate_fp_value(metrics.message_unpacking_max_latency_us);
-  json["cpu_usage_percent"]    = validate_fp_value(metrics.cpu_usage_us / (metrics_period_ms * 1e3) * 100.0f);
+  json["nof_dropped_messages"]   = metrics.nof_dropped_messages;
+  json["nof_corrupted_messages"] = metrics.nof_corrupted_messages;
+  json["average_latency_us"]     = validate_fp_value(metrics.message_unpacking_avg_latency_us);
+  json["max_latency_us"]         = validate_fp_value(metrics.message_unpacking_max_latency_us);
+  json["cpu_usage_percent"]      = validate_fp_value(metrics.cpu_usage_us / (metrics_period_ms * 1e3) * 100.0f);
 
   return json;
 }

@@ -81,20 +81,24 @@ static void log_ru_ofh_performance_metrics_verbose(fmt::basic_memory_buffer<char
   float data_unpacking_cpu_usage =
       ul_data_df_metrics.cpu_usage_us / (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f;
 
-  fmt::format_to(std::back_inserter(buffer),
-                 "{} nof_dropped_msg={} cpu_usage={:.1f}% max_latency={:.2f}us avg_latency={:.2f}us; ",
-                 "rcv_prach:",
-                 ul_prach_df_metrics.nof_dropped_messages,
-                 validate_fp_value(prach_unpacking_cpu_usage),
-                 validate_fp_value(ul_prach_df_metrics.message_unpacking_max_latency_us),
-                 validate_fp_value(ul_prach_df_metrics.message_unpacking_avg_latency_us));
-  fmt::format_to(std::back_inserter(buffer),
-                 "{} nof_dropped_msg={} cpu_usage={:.1f}% max_latency={:.2f}us avg_latency={:.2f}us; ",
-                 "rcv_ul:",
-                 ul_data_df_metrics.nof_dropped_messages,
-                 validate_fp_value(data_unpacking_cpu_usage),
-                 validate_fp_value(ul_data_df_metrics.message_unpacking_max_latency_us),
-                 validate_fp_value(ul_data_df_metrics.message_unpacking_avg_latency_us));
+  fmt::format_to(
+      std::back_inserter(buffer),
+      "{} nof_corrupted_msg={} nof_dropped_msg={} cpu_usage={:.1f}% max_latency={:.2f}us avg_latency={:.2f}us; ",
+      "rcv_prach:",
+      ul_prach_df_metrics.nof_corrupted_messages,
+      ul_prach_df_metrics.nof_dropped_messages,
+      validate_fp_value(prach_unpacking_cpu_usage),
+      validate_fp_value(ul_prach_df_metrics.message_unpacking_max_latency_us),
+      validate_fp_value(ul_prach_df_metrics.message_unpacking_avg_latency_us));
+  fmt::format_to(
+      std::back_inserter(buffer),
+      "{} nof_corrupted_msg={} nof_dropped_msg={} cpu_usage={:.1f}% max_latency={:.2f}us avg_latency={:.2f}us; ",
+      "rcv_ul:",
+      ul_data_df_metrics.nof_corrupted_messages,
+      ul_data_df_metrics.nof_dropped_messages,
+      validate_fp_value(data_unpacking_cpu_usage),
+      validate_fp_value(ul_data_df_metrics.message_unpacking_max_latency_us),
+      validate_fp_value(ul_data_df_metrics.message_unpacking_avg_latency_us));
 
   const auto& dl_cp_df_metrics = cell_metrics.tx_metrics.dl_metrics.dl_cp_metrics;
   const auto& dl_up_df_metrics = cell_metrics.tx_metrics.dl_metrics.dl_up_metrics;
