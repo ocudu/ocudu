@@ -155,6 +155,15 @@ static const auto benchmark_profiles = to_array<benchmark_configuration_profile>
        otw_format           = radio_configuration::over_the_wire_format::DEFAULT;
        block_size           = sampling_rate_Hz / 15e3;
      }},
+    {"realtime_loopback_20MHz",
+     "Single channel realtime loopback.",
+     []() {
+       driver_name      = "realtime_loopback";
+       device_arguments = "";
+       sampling_rate_Hz = 23.04e6;
+       otw_format       = radio_configuration::over_the_wire_format::DEFAULT;
+       block_size       = sampling_rate_Hz / 15e3;
+     }},
 });
 
 /// Set to true to stop.
@@ -272,6 +281,11 @@ int main(int argc, char** argv)
   // Create radio factory.
   std::unique_ptr<radio_factory> factory = create_radio_factory(driver_name);
   report_fatal_error_if_not(factory, "Driver {} is not available.", driver_name.c_str());
+
+  // Decorate the radio factory.
+  if (log_level >= ocudulog::basic_levels::info) {
+    factory = create_radio_decorator_factory(std::move(factory), log_level);
+  }
 
   // Create radio configuration.
   radio_configuration::radio config;

@@ -4,7 +4,8 @@
 
 add_library(ocudu_radio STATIC
         plugin_radio_factory.cpp
-        radio_factory.cpp)
+        radio_factory.cpp
+        radio_decorator_factory.cpp)
 
 set(OCUDU_RADIO_DEFINITIONS "")
 set(OCUDU_RADIO_LIBRARIES "")
