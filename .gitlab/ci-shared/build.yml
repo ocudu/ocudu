@@ -150,12 +150,21 @@ include:
           mkdir -p gtest_xml
           export OCUDU_GTEST_XML_DIR="${PWD}/gtest_xml"
         fi
-        set -x
+        echo "+ ctest -j${CPU_JOBS} --schedule-random --output-on-failure --test-output-size-passed 1024 --test-output-size-failed 1048576 --output-junit xunit.xml --output-log ctest_output.log ${CTEST_ARGS}"
         ctest -j${CPU_JOBS} --schedule-random --output-on-failure \
-          --test-output-size-passed 1048576 --test-output-size-failed 1048576 \
-          --output-junit xunit.xml --output-log ctest_output.log $CTEST_ARGS
-        local ctest_ret=$?
-        { set +x; } 2>/dev/null
+          --test-output-size-passed 1024 --test-output-size-failed 1048576 \
+          --output-junit xunit.xml --output-log ctest_output.log $CTEST_ARGS \
+          | awk '
+              /^[[:space:]]*Start[[:space:]]+[0-9]+:/ { next }
+              /^[[:space:]]*[0-9]+\/[0-9]+[[:space:]]+Test[[:space:]]*#[0-9]+:.*(Passed|Skipped)/ {
+                printf "."
+                fflush()
+                if (++n % 100 == 0) printf "\n"
+                next
+              }
+              { if (n % 100 != 0 && n > 0) printf "\n"; n = 0; print }
+            '
+        local ctest_ret=${PIPESTATUS[0]}
         if [ -f xunit.xml ]; then
           OCUDU_COMMIT="${OCUDU_COMMIT:-${CI_COMMIT_SHA}}" python3 /usr/local/bin/add_junit_properties.py xunit.xml ${OCUDU_GTEST_XML_DIR:+--strict} || ctest_ret=1
         fi
