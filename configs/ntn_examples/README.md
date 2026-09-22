@@ -296,6 +296,22 @@ cu_cp:
 reported value is easy to tell apart. Moving the reported position one band north or south selects a neighbouring TAC. A
 UE that reports no coarse location leaves the derived TAC absent.
 
+The position is asked for once per connection. To have it refreshed as the UE moves, set `coarse_location_request` on
+the report config the cell uses, and every measurement report carries it too:
+
+```yaml
+cu_cp:
+  mobility:
+    report_configs:
+      - report_cfg_id: 1
+        report_type: periodical
+        report_interval_ms: 1024
+        coarse_location_request: true
+```
+
+Only an NTN UE is expected to have a position, and it reports one only if available, TS 38.331 sec. 5.5.5. It is coarse
+on purpose, to about 2 km, so an area has to be wide enough that the UE still falls in the right one.
+
 ---
 
 ### Naming the area by a Mapped Cell ID
