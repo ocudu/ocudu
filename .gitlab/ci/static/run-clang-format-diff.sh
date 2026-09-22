@@ -40,11 +40,7 @@ fi
 echo "Using clang-format version:"
 "$clang_format" --version
 
-# Use the configuration file given by CLANG_FORMAT_FILE, or let clang-format look for one next to each file
-style="file"
-if [ -n "${CLANG_FORMAT_FILE:-}" ]; then
-  style="file:${CLANG_FORMAT_FILE}"
-fi
-
+# Search for a configuration next to each file, so the per-directory overrides of third-party code keep applying, and
+# leave a file alone when the search finds none instead of falling back to the LLVM style
 # Run clang-format for those files and apply changes
-[ "$files" ] && "$clang_format" -style="$style" -i ${files} || echo "No files changed"
+[ "$files" ] && "$clang_format" -style=file -fallback-style=none -i ${files} || echo "No files changed"

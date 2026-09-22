@@ -37,7 +37,8 @@ include:
 .code-format:
   extends: .static
   # This template is shared with repositories that do not use every formatter, so each check is skipped when its
-  # configuration file is missing. Override these paths when a repository keeps its configuration elsewhere
+  # configuration file is missing. Override these paths when a repository keeps its configuration elsewhere, except
+  # for CLANG_FORMAT_FILE, which only gates the check: clang-format finds its own configuration
   variables: &format_config_files
     CLANG_FORMAT_FILE: ${CPP_SRC_DIR}/.clang-format
     PRETTIER_FILE: ${CI_PROJECT_DIR}/.prettierrc
