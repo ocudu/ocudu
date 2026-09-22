@@ -2,8 +2,7 @@
 
 Advisory. Full developer guidelines: <https://docs.ocudu.org/dev_guide/>.
 
-Apply to comments you write or are already modifying. Never rewrite a comment you were
-not otherwise touching.
+Apply to comments you write or are already modifying. Never rewrite a comment you were not otherwise touching.
 
 ## Shape
 
@@ -18,12 +17,11 @@ not otherwise touching.
 - Active voice.
 - No `This function`, `This class` or `This method` openers.
 - One idea per sentence.
-- Cut filler: `in order to` to `to`, `is used to hold` to `holds`. Drop `simply`,
-  `just`, `obviously`.
-- Describe the code as it stands, never its history. No `added`, `removed`, `changed`,
-  `now handles`, `previously`: the reader cannot see the earlier version.
-- Facts, not intentions. No `should be`, `for now`, outside a `TODO`, `FIXME`,
-  `Note:`, `\note`, `\remark` or `\warning`.
+- Cut filler: `in order to` to `to`, `is used to hold` to `holds`. Drop `simply`, `just`, `obviously`.
+- Describe the code as it stands, never its history. No `added`, `removed`, `changed`, `now handles`, `previously`: the
+  reader cannot see the earlier version.
+- Facts, not intentions. No `should be`, `for now`, outside a `TODO`, `FIXME`, `Note:`, `\note`, `\remark` or
+  `\warning`.
 - No em dashes.
 
 ## What to say
@@ -35,6 +33,6 @@ not otherwise touching.
 ## Specifications
 
 - Cite the clause: `as per TS 38.331, Section 6.3.2`.
-- Prefix a public constant with `[Implementation-defined]` when OCUDU chooses the
-  value rather than a 3GPP, O-RAN or SCF specification. Otherwise cite the clause.
+- Prefix a public constant with `[Implementation-defined]` when OCUDU chooses the value rather than a 3GPP, O-RAN or SCF
+  specification. Otherwise cite the clause.
 - Never name another vendor or implementation.
