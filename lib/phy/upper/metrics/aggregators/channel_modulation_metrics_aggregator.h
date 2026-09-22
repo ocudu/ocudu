@@ -38,6 +38,7 @@ public:
                                     qam16_metrics_collection.sum_elapsed_ns.load(std::memory_order_relaxed) +
                                     qam64_metrics_collection.sum_elapsed_ns.load(std::memory_order_relaxed) +
                                     qam256_metrics_collection.sum_elapsed_ns.load(std::memory_order_relaxed) +
+                                    qam1024_metrics_collection.sum_elapsed_ns.load(std::memory_order_relaxed) +
                                     other_metrics_collection.sum_elapsed_ns.load(std::memory_order_relaxed));
   }
 
@@ -48,6 +49,7 @@ public:
                                qam16_metrics_collection.sum_elapsed_ns.load(std::memory_order_relaxed) +
                                qam64_metrics_collection.sum_elapsed_ns.load(std::memory_order_relaxed) +
                                qam256_metrics_collection.sum_elapsed_ns.load(std::memory_order_relaxed) +
+                               qam1024_metrics_collection.sum_elapsed_ns.load(std::memory_order_relaxed) +
                                other_metrics_collection.sum_elapsed_ns.load(std::memory_order_relaxed)) /
            1000.0;
   }
@@ -59,6 +61,7 @@ public:
     qam16_metrics_collection.reset();
     qam64_metrics_collection.reset();
     qam256_metrics_collection.reset();
+    qam1024_metrics_collection.reset();
     other_metrics_collection.reset();
   }
 
@@ -87,6 +90,8 @@ private:
         return qam64_metrics_collection;
       case modulation_scheme::QAM256:
         return qam256_metrics_collection;
+      case modulation_scheme::QAM1024:
+        return qam1024_metrics_collection;
       case modulation_scheme::PI_2_BPSK:
       case modulation_scheme::BPSK:
       default:
@@ -106,6 +111,8 @@ private:
         return qam64_metrics_collection;
       case modulation_scheme::QAM256:
         return qam256_metrics_collection;
+      case modulation_scheme::QAM1024:
+        return qam1024_metrics_collection;
       case modulation_scheme::PI_2_BPSK:
       case modulation_scheme::BPSK:
       default:
@@ -125,6 +132,7 @@ private:
   metrics_per_modulation qam16_metrics_collection;
   metrics_per_modulation qam64_metrics_collection;
   metrics_per_modulation qam256_metrics_collection;
+  metrics_per_modulation qam1024_metrics_collection;
   metrics_per_modulation other_metrics_collection;
 };
 

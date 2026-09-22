@@ -172,12 +172,14 @@ static void log_upper_phy_metrics_verbose(fmt::basic_memory_buffer<char, str_buf
   const auto& pusch_evm       = upper_metrics.pusch_metrics.evm_calculator_metrics;
   const auto& pdsch_mod       = upper_metrics.pdsch_metrics.modulator_metrics;
   fmt::format_to(std::back_inserter(buffer),
-                 "{:<25} QPSK={:.2f} Mbps, 16QAM={:.2f} Mbps, 64QAM={:.2f} Mbps, 256QAM={:.2f} Mbps\n",
+                 "{:<25} QPSK={:.2f} Mbps, 16QAM={:.2f} Mbps, 64QAM={:.2f} Mbps, 256QAM={:.2f} Mbps, "
+                 "1024QAM={:.2f} Mbps\n",
                  "  Modulation rates:",
                  validate_fp_value(pdsch_mod.qpsk_avg_rate_Mbps),
                  validate_fp_value(pdsch_mod.qam16_avg_rate_Mbps),
                  validate_fp_value(pdsch_mod.qam64_avg_rate_Mbps),
-                 validate_fp_value(pdsch_mod.qam256_avg_rate_Mbps));
+                 validate_fp_value(pdsch_mod.qam256_avg_rate_Mbps),
+                 validate_fp_value(pdsch_mod.qam1024_avg_rate_Mbps));
   fmt::format_to(std::back_inserter(buffer),
                  "{:<25} QPSK={:.2f} Mbps, 16QAM={:.2f} Mbps, 64QAM={:.2f} Mbps, 256QAM={:.2f} Mbps\n",
                  "  Demodulation rates:",

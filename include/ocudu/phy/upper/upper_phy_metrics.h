@@ -122,6 +122,7 @@ struct upper_phy_mod_demod_evm_metrics {
   double qam16_avg_rate_Mbps;
   double qam64_avg_rate_Mbps;
   double qam256_avg_rate_Mbps;
+  double qam1024_avg_rate_Mbps;
   /// Total time spent in the modulation/demodulation mapper.
   std::chrono::nanoseconds total_proc_time;
   /// CPU usage in microseconds of the modulation/demodulation.

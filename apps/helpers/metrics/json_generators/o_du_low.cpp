@@ -57,10 +57,11 @@ static nlohmann::json generate_modulation_mapper(const upper_phy_mod_demod_evm_m
 {
   nlohmann::json json;
 
-  json["qpsk_mod_throughput_mbps"]   = validate_fp_value(metrics.qpsk_avg_rate_Mbps);
-  json["qam16_mod_throughput_mbps"]  = validate_fp_value(metrics.qam16_avg_rate_Mbps);
-  json["qam64_mod_throughput_mbps"]  = validate_fp_value(metrics.qam64_avg_rate_Mbps);
-  json["qam256_mod_throughput_mbps"] = validate_fp_value(metrics.qam256_avg_rate_Mbps);
+  json["qpsk_mod_throughput_mbps"]    = validate_fp_value(metrics.qpsk_avg_rate_Mbps);
+  json["qam16_mod_throughput_mbps"]   = validate_fp_value(metrics.qam16_avg_rate_Mbps);
+  json["qam64_mod_throughput_mbps"]   = validate_fp_value(metrics.qam64_avg_rate_Mbps);
+  json["qam256_mod_throughput_mbps"]  = validate_fp_value(metrics.qam256_avg_rate_Mbps);
+  json["qam1024_mod_throughput_mbps"] = validate_fp_value(metrics.qam1024_avg_rate_Mbps);
 
   double cpu_usage          = validate_fp_value(100.0 * metrics.cpu_usage_us / metric_period_us);
   json["cpu_usage_percent"] = validate_fp_value(cpu_usage);

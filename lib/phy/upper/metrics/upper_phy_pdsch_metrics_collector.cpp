@@ -49,6 +49,8 @@ void upper_phy_pdsch_metrics_collector::collect_metrics(upper_phy_pdsch_metrics&
       pdsch_modulation_mapper_aggregator.get_avg_rate_Mbps(modulation_scheme::QAM64);
   metrics.modulator_metrics.qam256_avg_rate_Mbps =
       pdsch_modulation_mapper_aggregator.get_avg_rate_Mbps(modulation_scheme::QAM256);
+  metrics.modulator_metrics.qam1024_avg_rate_Mbps =
+      pdsch_modulation_mapper_aggregator.get_avg_rate_Mbps(modulation_scheme::QAM1024);
   metrics.modulator_metrics.cpu_usage_us = pdsch_modulation_mapper_aggregator.get_cpu_usage_us();
   pdsch_modulation_mapper_aggregator.reset();
 
