@@ -14,6 +14,7 @@
 #include "ocudu/ofh/ethernet/ethernet_receiver_metrics_collector.h"
 #include "ocudu/ofh/ethernet/ethernet_transmitter.h"
 #include "ocudu/ofh/ethernet/ethernet_transmitter_metrics_collector.h"
+#include "ocudu/ofh/ofh_metrics.h"
 #include "ocudu/phy/support/resource_grid_context.h"
 #include "ocudu/phy/support/resource_grid_writer.h"
 #include "ocudu/phy/support/shared_resource_grid.h"
@@ -24,6 +25,8 @@
 #include "ocudu/ru/ru_controller.h"
 #include "ocudu/ru/ru_downlink_plane.h"
 #include "ocudu/ru/ru_error_notifier.h"
+#include "ocudu/ru/ru_metrics.h"
+#include "ocudu/ru/ru_metrics_collector.h"
 #include "ocudu/ru/ru_timing_notifier.h"
 #include "ocudu/ru/ru_uplink_plane.h"
 #include "ocudu/support/executors/task_execution_manager.h"
@@ -91,7 +94,9 @@ class dummy_frame_notifier : public ether::frame_notifier
 dummy_frame_notifier dummy_notifier;
 
 /// Test Ethernet receiver interface.
-class test_ether_receiver : public ether::receiver, public ether::receiver_operation_controller
+class test_ether_receiver : public ether::receiver,
+                            public ether::receiver_operation_controller,
+                            private ether::receiver_metrics_collector
 {
 public:
   test_ether_receiver(ocudulog::basic_logger& logger_) : logger(logger_), notifier(dummy_notifier) {}
@@ -115,15 +120,27 @@ public:
   }
 
   // See interface for documentation.
-  ether::receiver_metrics_collector* get_metrics_collector() override { return nullptr; }
+  ether::receiver_metrics_collector* get_metrics_collector() override { return this; }
 
   virtual void push_new_data(span<const uint8_t> frame) = 0;
 
 protected:
+  /// Accounts a frame delivered to the OFH receiver.
+  void update_rx_metrics(span<const uint8_t> frame) { nof_rx_bytes.fetch_add(frame.size(), std::memory_order_relaxed); }
+
+  std::atomic<uint64_t>                         nof_rx_bytes{0};
   ocudulog::basic_logger&                       logger;
   std::reference_wrapper<ether::frame_notifier> notifier;
   std::atomic<bool>                             is_running{false};
   std::atomic<bool>                             stop_requested{false};
+
+private:
+  // See interface for documentation.
+  void collect_metrics(ether::receiver_metrics& metric) override
+  {
+    metric                 = {};
+    metric.total_nof_bytes = nof_rx_bytes.exchange(0, std::memory_order_relaxed);
+  }
 };
 
 /// Dummy Ethernet receiver that receives data from RU emulator and pushes them to the OFH receiver without using real
@@ -153,6 +170,7 @@ public:
     std::memcpy(buffer.storage().data(), frame.data(), frame.size());
     buffer.resize(frame.size());
 
+    update_rx_metrics(frame);
     notifier.get().on_new_frame(ether::unique_rx_buffer(std::move(buffer)));
     is_running.store(false, std::memory_order::memory_order_relaxed);
   }
@@ -581,7 +599,7 @@ private:
 
 /// Ethernet transmitter gateway that analyzes incoming packets and checks integrity of the DL packets, as well as asks
 /// RU emulator for UL traffic generation.
-class test_gateway : public ether::transmitter
+class test_gateway : public ether::transmitter, private ether::transmitter_metrics_collector
 {
 public:
   test_gateway() :
@@ -601,6 +619,7 @@ public:
   {
     slot_point sent_ul_slot = {};
     for (auto frame : frames) {
+      nof_tx_bytes.fetch_add(frame.size(), std::memory_order_relaxed);
       // For DL messages check seq id and make sure packets for all antennas were transmitted.
       if (peek_direction(frame) == data_direction::downlink) {
         if (peek_message_type(frame) == ecpri::message_type::iq_data) {
@@ -619,9 +638,16 @@ public:
   }
 
   // See interface for documentation.
-  ether::transmitter_metrics_collector* get_metrics_collector() override { return nullptr; }
+  ether::transmitter_metrics_collector* get_metrics_collector() override { return this; }
 
 private:
+  // See interface for documentation.
+  void collect_metrics(ether::transmitter_metrics& metric) override
+  {
+    metric                 = {};
+    metric.total_nof_bytes = nof_tx_bytes.exchange(0, std::memory_order_relaxed);
+  }
+
   void check_and_update_sequence_id(span<const uint8_t> message)
   {
     // Retrieve eAxC and SeqID from codified message.
@@ -687,6 +713,7 @@ private:
   static_circular_map<uint8_t, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> seq_counters;
   bounded_bitset<MAX_SUPPORTED_EAXC_ID_VALUE>                        seq_counter_initialized;
   test_ru_emulator*                                                  ru_emulator;
+  std::atomic<uint64_t>                                              nof_tx_bytes{0};
 };
 
 /// Manages the workers of the test application and OFH RU.
@@ -818,6 +845,7 @@ static void configure_ofh_sector(ofh::sector_configuration& sector_cfg)
   sector_cfg.max_processing_delay_slots = processing_delay_slots;
   sector_cfg.dl_processing_time         = dl_processing_time;
   sector_cfg.uses_dpdk                  = false;
+  sector_cfg.are_metrics_enabled        = true;
   sector_cfg.sector_id                  = 0;
 
   std::chrono::duration<double, std::nano> symbol_duration(
@@ -953,6 +981,63 @@ create_ul_resource_grid_pool(std::shared_ptr<resource_grid_factory> rg_factory, 
   return create_generic_resource_grid_pool(std::move(ul_resource_grids));
 }
 
+/// \brief Prints the RU metrics accumulated during the whole test and checks them for errors.
+///
+/// \return true if no error was detected, false otherwise.
+static bool check_ru_metrics(const ofh::metrics& metrics)
+{
+  fmt::println("Timing: nof_skipped_symbols={}, skipped_symbols_max_burst={}",
+               metrics.timing.nof_skipped_symbols,
+               metrics.timing.skipped_symbols_max_burst);
+
+  bool success = true;
+  for (const sector_metrics& sector : metrics.sectors) {
+    const transmitter_dl_metrics&               dl      = sector.tx_metrics.dl_metrics;
+    const transmitter_ul_metrics&               ul      = sector.tx_metrics.ul_metrics;
+    const received_messages_metrics&            rx_msgs = sector.rx_metrics.rx_messages_metrics;
+    const closed_rx_window_metrics&             rx_win  = sector.rx_metrics.closed_window_metrics;
+    const message_decoding_performance_metrics& rx_dec  = sector.rx_metrics.rx_decoding_perf_metrics;
+
+    fmt::println("Sector#{} TX: tx_bytes={}, late_dl_grids={}, late_ul_requests={}, late_cp_dl={}, late_up_dl={}, "
+                 "late_cp_ul={}",
+                 sector.sector_id,
+                 sector.tx_metrics.eth_transmitter_metrics.total_nof_bytes,
+                 dl.nof_late_dl_grids,
+                 ul.nof_late_ul_requests,
+                 dl.nof_late_cp_dl,
+                 dl.nof_late_up_dl,
+                 ul.nof_late_cp_ul);
+    fmt::println("Sector#{} RX: rx_bytes={}, on_time={}, early={}, late={}, missing_ul_symbols={}, "
+                 "missing_prach_contexts={}, dropped_data={}, dropped_prach={}, past_seq_id={}, future_seq_id={}",
+                 sector.sector_id,
+                 sector.rx_metrics.eth_receiver_metrics.total_nof_bytes,
+                 rx_msgs.nof_on_time_messages,
+                 rx_msgs.nof_early_messages,
+                 rx_msgs.nof_late_messages,
+                 rx_win.nof_missing_uplink_symbols,
+                 rx_win.nof_missing_prach_contexts,
+                 rx_dec.data_processing_metrics.nof_dropped_messages,
+                 rx_dec.prach_processing_metrics.nof_dropped_messages,
+                 rx_dec.ecpri_metrics.nof_past_seq_id_messages,
+                 rx_dec.ecpri_metrics.nof_future_seq_id_messages);
+
+    // Late downlink grids and uplink requests depend on the test execution environment, so they are not counted as
+    // errors. RX early messages are expected as the RU emulator sends the whole uplink slot upon receiving its
+    // Control-Plane message.
+    const unsigned nof_errors =
+        dl.nof_late_cp_dl + dl.nof_late_up_dl + ul.nof_late_cp_ul + rx_msgs.nof_late_messages +
+        rx_win.nof_missing_uplink_symbols + rx_win.nof_missing_prach_contexts +
+        rx_dec.data_processing_metrics.nof_dropped_messages + rx_dec.prach_processing_metrics.nof_dropped_messages +
+        rx_dec.ecpri_metrics.nof_past_seq_id_messages + rx_dec.ecpri_metrics.nof_future_seq_id_messages;
+    const unsigned nof_rx_messages = rx_msgs.nof_on_time_messages + rx_msgs.nof_early_messages;
+    if (nof_errors != 0 || sector.tx_metrics.eth_transmitter_metrics.total_nof_bytes == 0 || nof_rx_messages == 0) {
+      success = false;
+    }
+  }
+
+  return success;
+}
+
 int main(int argc, char** argv)
 {
   static constexpr unsigned            BUFFER_SIZE = 9600;
@@ -1045,9 +1130,16 @@ int main(int argc, char** argv)
   workers.stop();
   ocudulog::flush();
 
+  // Collects the metrics once for the entire test run.
+  ru_metrics metrics;
+  ru_object->get_metrics_collector()->collect_metrics(metrics);
+  bool success = check_ru_metrics(std::get<ofh::metrics>(metrics.metrics));
+
   fmt::print("Test finished, nof_missing_dl_packets={}, nof_malformed_packets={}\n",
              nof_missing_dl_packets,
              nof_malformed_packets);
+  success = success && (nof_missing_dl_packets == 0) && (nof_malformed_packets == 0);
+  fmt::println("Test {}", success ? "PASSED" : "FAILED");
 
-  return 0;
+  return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }
