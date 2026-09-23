@@ -65,11 +65,13 @@ public:
 
 private:
   static void dtls_notification_cb(BIO* bio, void* context, void* buf);
+  void        send_test_data(int line);
 
   dtls_ssl_config cfg;
   BIO*            bio = nullptr;
   SSL*            ssl = nullptr;
 
+  int                                  socket_;
   dtls_context&                        ssl_ctx;
   sctp_network_gateway_dtls_interface& gw;
   static constexpr uint32_t            dtls_max_len = 9100;

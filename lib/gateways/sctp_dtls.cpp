@@ -30,10 +30,17 @@ openssl_dtls_context::openssl_dtls_context(dtls_context_config cfg_) :
   report_error_if_not(cfg.key_filename != "", "Invalid DTLS key filename");
   report_error_if_not(cfg.cert_filename != "", "Invalid DTLS cert filename");
   report_error_if_not(cfg.ca_cert_filename != "", "Invalid DTLS CA cert filename");
-  logger.info("Initializing DTLS context. cert={} key={} ca_cert={}",
+  logger.info("Initializing DTLS context. mode={} cert={} key={} ca_cert={}",
+              format_as(cfg.mode),
               cfg.cert_filename,
               cfg.key_filename,
               cfg.ca_cert_filename);
+  fmt::println("Initializing DTLS context. mode={} cert={} key={} ca_cert={}",
+               format_as(cfg.mode),
+               cfg.cert_filename,
+               cfg.key_filename,
+               cfg.ca_cert_filename);
+  ocudulog::flush();
 }
 
 openssl_dtls_context::~openssl_dtls_context()
@@ -45,6 +52,7 @@ openssl_dtls_context::~openssl_dtls_context()
 
 bool openssl_dtls_context::init(int socket)
 {
+  fmt::println("init DTLS context. socket={}", socket);
   // Create SSL context. We will decide later if a particular SSL
   // session will act as server or client.
   ssl_ctx = SSL_CTX_new(DTLS_method());
@@ -101,6 +109,11 @@ bool openssl_dtls_context::init(int socket)
 
   // Set verify callback.
   SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, verify_callback);
+
+  // If client mode, no need to configure server socket, the client socket will do it.
+  // if (cfg.mode == dtls_mode::client) {
+  //  return true;
+  //}
 
   // Create BIO to set all necessary socket options required for DTLS, e.g. SCTP-AUTH.
   // This BIO will not be used.

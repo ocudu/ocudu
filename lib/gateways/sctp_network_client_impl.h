@@ -4,6 +4,7 @@
 #pragma once
 
 #include "sctp_dtls.h"
+#include "sctp_dtls_ssl.h"
 #include "sctp_network_gateway_common_impl.h"
 #include "sctp_network_gateway_dtls_interface.h"
 #include "ocudu/gateways/sctp_network_client.h"
@@ -43,6 +44,8 @@ private:
   class sctp_send_notifier;
 
   void receive();
+  void receive_plain();
+  void receive_dtls();
 
   void handle_data(span<const uint8_t> payload);
   void handle_notification(span<const uint8_t>           payload,
@@ -50,7 +53,10 @@ private:
                            const sockaddr&               src_addr,
                            socklen_t                     src_addr_len);
 
-  void handle_dtls_notification(const union sctp_notification* notif, int assoc) override {}
+  void handle_dtls_notification(const union sctp_notification* notif, int assoc) override
+  {
+    fmt::println("got notification!!!");
+  }
 
   void dtls_connect();
   void handle_connection_shutdown(const char* cause);
@@ -92,6 +98,7 @@ private:
   /// DTLS Context
   bool                          ssl_enabled = false;
   std::unique_ptr<dtls_context> dtls_ctxt;
+  std::unique_ptr<dtls_ssl>     ssl;
 };
 
 } // namespace ocudu

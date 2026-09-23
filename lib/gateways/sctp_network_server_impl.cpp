@@ -270,7 +270,7 @@ void sctp_network_server_impl::stop()
 
 bool sctp_network_server_impl::create_and_bind()
 {
-  if (not this->create_and_bind_common()) {
+  if (not this->create_and_bind_common(SOCK_SEQPACKET)) {
     return false;
   }
   fmt::println("if={} create_and_bind {}", node_cfg.if_name, node_cfg.dtls_cfg.has_value());

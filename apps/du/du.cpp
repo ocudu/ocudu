@@ -327,7 +327,7 @@ int main(int argc, char** argv)
   } else {
     dtls_appconfig tmp_cfg{
         .enabled          = true,
-        .mode             = dtls_appconfig_mode::server,
+        .mode             = dtls_appconfig_mode::client,
         .cert_filename    = "/tmp/client-cert.pem",
         .key_filename     = "/tmp/client-key.pem",
         .ca_cert_filename = "/tmp/ca-cert.pem",

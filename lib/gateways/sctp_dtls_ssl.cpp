@@ -24,6 +24,9 @@ std::unique_ptr<dtls_ssl> ocudu::create_dtls_ssl(const dtls_ssl_config& cfg_, co
 openssl_dtls_ssl::openssl_dtls_ssl(const dtls_ssl_config& cfg_, const dtls_ssl_dependencies& deps_) :
   cfg(cfg_), ssl_ctx(deps_.ssl_ctx), gw(deps_.gw), logger(ocudulog::fetch_basic_logger("SCTP"))
 {
+  logger.info("SSL created. mode={} ctx={} gw={}", format_as(cfg.mode), fmt::ptr(&ssl_ctx), fmt::ptr(&gw));
+  fmt::println("SSL created. mode={} ctx={} gw={}", format_as(cfg.mode), fmt::ptr(&ssl_ctx), fmt::ptr(&gw));
+  ocudulog::flush();
 }
 
 openssl_dtls_ssl::~openssl_dtls_ssl()
@@ -33,6 +36,8 @@ openssl_dtls_ssl::~openssl_dtls_ssl()
 
 bool openssl_dtls_ssl::init(int socket)
 {
+  socket_ = socket;
+  fmt::println("init SSL. socket={}", socket);
   /// Create SSL connection and BIO. We associate this BIO with the correct association at this point.
   SSL_CTX* ctx = static_cast<openssl_dtls_context&>(ssl_ctx).get_ssl_ctx();
   if (ctx == nullptr) {
@@ -43,15 +48,24 @@ bool openssl_dtls_ssl::init(int socket)
     logger.error("Could not initialize SSL. Cause: failure to create SSL. err={}", openssl_error{ERR_get_error()});
     return false;
   }
+  int       type = 0;
+  socklen_t len  = sizeof(type);
+
+  int rc = getsockopt(socket, SOL_SOCKET, SO_TYPE, &type, &len);
+
+  logger.error("SCTP fd={}, SO_TYPE={}, getsockopt rc={}, errno={}", socket, type, rc, errno);
   bio = BIO_new_dgram_sctp(socket, BIO_NOCLOSE);
   if (bio == nullptr) {
     logger.error("Could not initialize SSL. Cause: failure to create BIO. err={}", openssl_error{ERR_get_error()});
     return false;
   }
   SSL_set_bio(ssl, bio, bio);
-
   BIO_dgram_sctp_notification_handler_fn cb = &openssl_dtls_ssl::dtls_notification_cb;
   BIO_dgram_sctp_notification_cb(bio, cb, this);
+
+  SSL_set_info_callback(ssl, [](const SSL* ssl_, int where, int ret) {
+    fprintf(stderr, "SSL info: where=0x%x ret=%d state=%s\n", where, ret, SSL_state_string_long(ssl_));
+  });
 
   // Initiate handshake.
   int ret = -1;
@@ -60,9 +74,12 @@ bool openssl_dtls_ssl::init(int socket)
   } else {
     ret = SSL_connect(ssl);
   }
+  int saved_errno = errno;
 
   if (ret <= 0) {
     int err = SSL_get_error(ssl, ret);
+    logger.error(
+        "DTLS CONNECT failed: ret={} ssl_error={} errno={} ({})", ret, err, saved_errno, strerror(saved_errno));
     if (err != SSL_ERROR_WANT_READ && err != SSL_ERROR_WANT_WRITE) {
       logger.error(
           "DTLS {} failed. err={}", cfg.mode == dtls_mode::server ? "accept" : "connect", get_ssl_error_string(err));
@@ -156,6 +173,18 @@ void openssl_dtls_ssl::dtls_notification_cb(BIO* bio, void* context, void* buf)
   auto*       ssl   = static_cast<openssl_dtls_ssl*>(context);
   const auto* notif = static_cast<const union sctp_notification*>(buf);
   ssl->gw.handle_dtls_notification(notif, ssl->cfg.assoc);
+}
+
+void openssl_dtls_ssl::send_test_data(int line)
+{
+  char test = 'X';
+
+  errno     = 0;
+  ssize_t n = send(socket_, &test, 1, MSG_NOSIGNAL);
+
+  int saved_errno = errno;
+
+  logger.error("SCTP test send: n={} errno={} ({}), line={}", n, saved_errno, strerror(saved_errno), line);
 }
 
 static std::string get_ssl_error_string(int err)

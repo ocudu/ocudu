@@ -7,4 +7,9 @@ namespace ocudu {
 
 enum class dtls_mode { client, server };
 
+inline const char* format_as(dtls_mode mode)
+{
+  static constexpr const char* options[] = {"client", "server"};
+  return options[static_cast<unsigned>(mode)];
+}
 } // namespace ocudu

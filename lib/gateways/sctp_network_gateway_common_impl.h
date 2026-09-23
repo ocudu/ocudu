@@ -45,7 +45,7 @@ protected:
   // Creates an SCTP socket with the provided protocol.
   [[nodiscard]] expected<sctp_socket> create_socket(int ai_family, int ai_socktype) const;
 
-  bool create_and_bind_common();
+  bool create_and_bind_common(int sock_type);
 
   [[nodiscard]] bool validate_and_log_sctp_notification(span<const uint8_t> payload) const;
 

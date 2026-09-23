@@ -146,7 +146,7 @@ expected<sctp_socket> sctp_network_gateway_common_impl::create_socket(int ai_fam
 }
 
 /// \brief Create and bind socket to given address.
-bool sctp_network_gateway_common_impl::create_and_bind_common()
+bool sctp_network_gateway_common_impl::create_and_bind_common(int sock_type)
 {
   // Resolve all bind addresses, remove duplicates and determine required socket family.
   bool                          has_ipv6_bind_addr = false;
@@ -178,7 +178,7 @@ bool sctp_network_gateway_common_impl::create_and_bind_common()
   // Create socket using the determined socket family.
   int socket_family = has_ipv6_bind_addr ? AF_INET6 : AF_INET;
 
-  auto outcome = this->create_socket(socket_family, SOCK_SEQPACKET);
+  auto outcome = this->create_socket(socket_family, sock_type);
   if (not outcome.has_value()) {
     logger.error("Failed to create SCTP socket");
     return false;

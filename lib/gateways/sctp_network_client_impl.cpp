@@ -7,6 +7,7 @@
 #include "ocudu/support/io/sockets.h"
 #include <algorithm>
 #include <netinet/sctp.h>
+#include <signal.h>
 
 using namespace ocudu;
 
@@ -22,6 +23,8 @@ public:
     fd(parent_.socket.fd().value()),
     logger(parent_.logger),
     server_addr(server_addr_),
+    ssl_enabled(parent_.ssl_enabled),
+    ssl(parent_.ssl.get()),
     closed_flag(parent_.shutdown_received)
   {
   }
@@ -41,20 +44,25 @@ public:
     logger.debug("{}: Sending PDU of {} bytes", client_name, sdu.length());
 
     // Note: each sender needs its own buffer to avoid race conditions with the recv.
-    span<const uint8_t> pdu_span = to_span(sdu, send_buffer);
-
-    auto dest_addr  = server_addr.native();
-    int  bytes_sent = ::sctp_sendmsg(fd,
-                                     pdu_span.data(),
-                                     pdu_span.size(),
-                                     const_cast<struct sockaddr*>(dest_addr.addr),
-                                     dest_addr.addrlen,
-                                     htonl(ppid),
-                                     0,
-                                     stream_no,
-                                     0,
-                                     0);
-    if (bytes_sent == -1) {
+    span<const uint8_t> pdu_span   = to_span(sdu, send_buffer);
+    int                 bytes_sent = -1;
+    if (not ssl_enabled) {
+      auto dest_addr = server_addr.native();
+      bytes_sent     = ::sctp_sendmsg(fd,
+                                      pdu_span.data(),
+                                      pdu_span.size(),
+                                      const_cast<struct sockaddr*>(dest_addr.addr),
+                                      dest_addr.addrlen,
+                                      htonl(ppid),
+                                      0,
+                                      stream_no,
+                                      0,
+                                      0);
+    } else {
+      ocudu_assert(ssl, "Trying to send a PDU with SSL enabled, but no SSL association is present");
+      bytes_sent = ssl->write(pdu_span);
+    }
+    if (bytes_sent < 0) {
       logger.error("{}: Closing SCTP association. Cause: Couldn't send {} B of data. errno={}",
                    client_name,
                    pdu_span.size_bytes(),
@@ -105,6 +113,8 @@ private:
   int                           fd;
   ocudulog::basic_logger&       logger;
   const transport_layer_address server_addr;
+  bool                          ssl_enabled;
+  dtls_ssl*                     ssl = nullptr;
 
   std::array<uint8_t, network_gateway_sctp_max_len> send_buffer;
 
@@ -114,7 +124,11 @@ private:
 sctp_network_client_impl::sctp_network_client_impl(const sctp_network_connector_config& sctp_cfg,
                                                    io_broker&                           broker_,
                                                    task_executor&                       io_rx_executor_) :
-  sctp_network_gateway_common_impl(sctp_cfg), client_cfg(sctp_cfg), broker(broker_), io_rx_executor(io_rx_executor_)
+  sctp_network_gateway_common_impl(sctp_cfg),
+  client_cfg(sctp_cfg),
+  broker(broker_),
+  io_rx_executor(io_rx_executor_),
+  ssl_enabled(sctp_cfg.dtls_cfg.has_value())
 {
 }
 
@@ -172,7 +186,7 @@ sctp_network_client_impl::connect(std::unique_ptr<sctp_association_sdu_notifier>
   // If a bind address is provided, create a socket here and bind it.
   if (not node_cfg.bind_addresses.empty()) {
     if (not node_cfg.bind_addresses[0].empty()) {
-      if (not create_and_bind_common()) {
+      if (not create_and_bind_common(SOCK_STREAM)) {
         return nullptr;
       }
     }
@@ -181,7 +195,7 @@ sctp_network_client_impl::connect(std::unique_ptr<sctp_association_sdu_notifier>
   auto start = std::chrono::steady_clock::now();
   // Create SCTP socket only if not created earlier during bind. Otherwise, reuse socket.
   bool reuse_socket = socket.is_open();
-
+  fmt::println("reuse_socket={}", reuse_socket);
   // Resolve all destination addresses, remove duplicates and determine required socket family.
   // If socket was already created during bind, its family is already set and cannot be changed.
   // If it was created as an IPv4 socket, but destination addresses list contains some IPv6 addresses,
@@ -210,7 +224,7 @@ sctp_network_client_impl::connect(std::unique_ptr<sctp_association_sdu_notifier>
   if (not reuse_socket) {
     // Create SCTP socket only if not created earlier through bind or another connection.
     int                   socket_family = has_ipv6_dest_addr ? AF_INET6 : AF_INET;
-    expected<sctp_socket> outcome       = create_socket(socket_family, SOCK_SEQPACKET);
+    expected<sctp_socket> outcome       = create_socket(socket_family, SOCK_STREAM);
     if (outcome.has_value()) {
       socket = std::move(outcome.value());
     }
@@ -250,6 +264,23 @@ sctp_network_client_impl::connect(std::unique_ptr<sctp_association_sdu_notifier>
 
   sctp_assoc_t assoc_id           = 0;
   bool         connection_success = socket.connectx(resolved_addrs, assoc_id);
+  //{
+  //  char test = 'X';
+
+  //  errno = 0;
+  //  int n = sctp_sendmsg(socket.fd().value(),
+  //                       &test,
+  //                       1,
+  //                       nullptr,
+  //                       0,
+  //                       0,  // ppid
+  //                       0,  // flags
+  //                       0,  // stream
+  //                       0,  // timetolive
+  //                       0); // context
+  //  int e = errno;
+  //  logger.error("POST-CONNECTX sctp_sendmsg: n={} errno={} ({})", n, e, strerror(e));
+  //}
 
   if (not connection_success or assoc_id == 0) {
     if (not reuse_socket) {
@@ -324,8 +355,18 @@ sctp_network_client_impl::connect(std::unique_ptr<sctp_association_sdu_notifier>
                 client_cfg.connect_port,
                 fmt::format("{}", fmt::join(established_addrs, ", ")));
   }
+  struct sockaddr_storage peer{};
+  socklen_t               len = sizeof(peer);
+  int                     rc  = getpeername(socket.fd().value(), reinterpret_cast<sockaddr*>(&peer), &len);
 
-  // DTLS connect.
+  fprintf(stderr, "getpeername: rc=%d errno=%d (%s)\n", rc, errno, strerror(errno));
+  int       so_error = 0;
+  socklen_t so_len   = sizeof(so_error);
+
+  getsockopt(socket.fd().value(), SOL_SOCKET, SO_ERROR, &so_error, &so_len);
+
+  fprintf(stderr, "SO_ERROR=%d (%s)\n", so_error, strerror(so_error));
+
   dtls_connect();
 
   // Register the socket in the IO broker.
@@ -395,6 +436,15 @@ void sctp_network_client_impl::handle_connect_failure(const std::string& cause)
 
 void sctp_network_client_impl::receive()
 {
+  if (node_cfg.dtls_cfg.has_value()) {
+    receive_dtls();
+  } else {
+    receive_plain();
+  }
+}
+
+void sctp_network_client_impl::receive_plain()
+{
   struct sctp_sndrcvinfo                            sri       = {};
   int                                               msg_flags = 0;
   std::array<uint8_t, network_gateway_sctp_max_len> temp_recv_buffer;
@@ -432,6 +482,24 @@ void sctp_network_client_impl::receive()
   }
 }
 
+void sctp_network_client_impl::receive_dtls()
+{
+  if (ssl == nullptr) {
+    return;
+  }
+  if (not ssl->is_init_finished()) {
+    /// Client is used in blocking mode. As such initialization must be finished by now.
+    return;
+  }
+
+  expected<byte_buffer> plain = ssl->receive();
+  if (not plain.has_value()) {
+    return;
+  }
+
+  recv_handler->on_new_sdu(std::move(plain.value()));
+}
+
 void sctp_network_client_impl::handle_connection_shutdown(const char* cause)
 {
   // Signal that the upper layer sender should stop sending new SCTP data (including the EOF, which would fail
@@ -446,10 +514,27 @@ void sctp_network_client_impl::handle_connection_shutdown(const char* cause)
 
 void sctp_network_client_impl::dtls_connect()
 {
-  fmt::println("shat init start?");
+  struct sctp_status status{};
+  socklen_t          len = sizeof(status);
+
+  if (getsockopt(socket.fd().value(), SOL_SCTP, SCTP_STATUS, &status, &len) == 0) {
+    fmt::println(stderr,
+                 "SCTP status: fd={} state={} assoc_id={} rwnd={} unack={} unord={}",
+                 socket.fd().value(),
+                 status.sstat_state,
+                 status.sstat_assoc_id,
+                 status.sstat_rwnd,
+                 status.sstat_unackdata,
+                 status.sstat_penddata);
+  } else {
+    fmt::println(stderr, "SCTP_STATUS failed: errno={} ({})", errno, strerror(errno));
+  }
+
+  fmt::println("shall init start?");
   if (ssl_enabled) {
     fmt::println("init started");
-    auto ssl = create_dtls_ssl(dtls_ssl_config{dtls_mode::client, 0}, {*dtls_ctxt, *this});
+    ssl = create_dtls_ssl(dtls_ssl_config{dtls_mode::client, 0}, {*dtls_ctxt, *this});
+    fmt::println("init started. ssl={}", fmt::ptr(ssl.get()));
     if (not ssl->init(socket.fd().value())) {
       logger.error("{} assoc={}: Could not initialize DTLS context for new association", node_cfg.if_name, 0);
       /// Remove association as if it was lost. Do it directly, as we are running in the app executor already.
@@ -493,18 +578,21 @@ void sctp_network_client_impl::handle_notification(span<const uint8_t>          
                                                    const sockaddr&               src_addr,
                                                    socklen_t                     src_addr_len)
 {
+  const auto* notif = reinterpret_cast<const union sctp_notification*>(payload.data());
+  fmt::println("Got notification1!!! {}", notif->sn_header.sn_type);
   if (not validate_and_log_sctp_notification(payload)) {
     // Handle error.
     handle_connection_terminated("Received invalid message");
     return;
   }
 
-  const auto* notif = reinterpret_cast<const union sctp_notification*>(payload.data());
   switch (notif->sn_header.sn_type) {
     case SCTP_ASSOC_CHANGE: {
       const struct sctp_assoc_change* n = &notif->sn_assoc_change;
       switch (n->sac_state) {
         case SCTP_COMM_UP:
+          // dtls_connect();
+          //
           break;
         case SCTP_COMM_LOST:
           handle_connection_terminated("Communication to the server was lost");
