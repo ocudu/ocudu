@@ -42,7 +42,7 @@ static void fill_dci(pdcch_processor::pdu_t&            proc_pdu,
   const fapi::tx_precoding_and_beamforming_pdu::prgs_info& prg = fapi_dci.precoding_and_beamforming.prg;
   if (prg.beams.empty()) {
     dci.precoding_and_beamforming =
-        precoding_beamforming_configuration::make_wideband(pm_repo.get_precoding_matrix(prg.pm_index));
+        precoding_beamforming_configuration::make_wideband(pm_repo.get_precoding(prg.pm_index));
   } else {
     dci.precoding_and_beamforming = precoding_beamforming_configuration::make_wideband(prg.beams);
   }

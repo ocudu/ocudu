@@ -6,11 +6,35 @@
 #include "precoding_matrix_repository_builder.h"
 #include "ocudu/adt/slotted_array.h"
 #include "ocudu/fapi_adaptor/precoding_matrix_mapper.h"
+#include "ocudu/ran/antenna_topology.h"
 #include "ocudu/ran/precoding/precoding_codebook_type1_helpers.h"
 #include "ocudu/ran/precoding/precoding_codebooks.h"
 
 using namespace ocudu;
 using namespace fapi_adaptor;
+
+/// \brief Builds the composite precoding that the given PMI selects for the given antenna topology.
+///
+/// The precoding of a PMI is the product of two matrices, as per TS38.214 Section 5.2.2.2:
+/// \f$W_{PMI} = W_{BF} \cdot W_{MIMO}\f$. \f$W_{BF}\f$ points the spatial beams. \f$W_{MIMO}\f$ maps the
+/// transmission layers onto those beams.
+///
+/// A topology with a beam grid keeps the two matrices separate. The configuration contains \f$W_{MIMO}\f$ and the
+/// beams. The lower physical layer or a Category B O-RU applies \f$W_{BF}\f$.
+///
+/// A topology with no beam grid cannot steer a beam. \f$W_{BF}\f$ is the identity matrix. The configuration
+/// contains \f$W_{PMI}\f$ and selects the antenna ports.
+static precoding_beamforming_composite
+make_composite(const precoding_matrix_indicator& pmi, unsigned nof_layers, antenna_topology topology)
+{
+  if (has_beam_grid(topology)) {
+    return get_mimo_matrix_from_pmi(pmi, nof_layers);
+  }
+
+  precoding_weight_matrix precoding = make_precoding(pmi, nof_layers);
+
+  return {precoding, get_default_beam_list(precoding.get_nof_ports())};
+}
 
 /// Returns the maximum number of codebooks for the given number of antenna ports.
 static unsigned get_max_num_codebooks(unsigned nof_ports)
@@ -130,6 +154,7 @@ static unsigned generate_pdsch_2_ports_2_layers(unsigned offset, precoding_matri
 static unsigned generate_pdsch_sp_type1(unsigned                              offset,
                                         const pmi_codebook_typeI_single_panel panel,
                                         unsigned                              nof_layers,
+                                        antenna_topology                      topology,
                                         precoding_matrix_repository_builder&  repo_builder)
 {
   unsigned base_offset = offset;
@@ -152,9 +177,8 @@ static unsigned generate_pdsch_sp_type1(unsigned                              of
                                         .i_1_3        = (param_ranges.i_1_3 > 0) ? std::optional(i_1_3) : std::nullopt,
                                         .i_2          = i_2};
 
-          precoding_weight_matrix precoding = make_precoding(pmi, nof_layers);
           unsigned pm_index = base_offset + get_pdsch_single_panel_type1_precoding_matrix_index(param_ranges, pmi);
-          repo_builder.add(pm_index, precoding);
+          repo_builder.add(pm_index, make_composite(pmi, nof_layers, topology));
 
           offset = pm_index;
         }
@@ -171,6 +195,7 @@ namespace {
 struct codebook_table_generator {
   precoding_matrix_mapper_codebook_offset_configuration& mapper_offsets;
   precoding_matrix_repository_builder&                   repo_builder;
+  antenna_topology                                       topology;
 
   void operator()(std::monostate) const { ocudu_assertion_failure("Unsupported PMI codebook configuration"); }
 
@@ -230,7 +255,7 @@ struct codebook_table_generator {
     offset                           = generate_pdsch_omnidirectional(offset, nof_ports, repo_builder);
     for (unsigned nof_layers = 1; nof_layers <= nof_ports; ++nof_layers) {
       mapper_offsets.pdsch_codebook_offsets.push_back(offset);
-      offset = generate_pdsch_sp_type1(offset, codebook_config, nof_layers, repo_builder);
+      offset = generate_pdsch_sp_type1(offset, codebook_config, nof_layers, topology, repo_builder);
     }
     mapper_offsets.csi_rs_codebook_offsets.push_back(offset);
     offset = generate_csi_rs(offset, nof_ports, repo_builder);
@@ -249,11 +274,17 @@ struct codebook_table_generator {
 std::pair<std::unique_ptr<precoding_matrix_mapper>, std::unique_ptr<precoding_matrix_repository>>
 ocudu::fapi_adaptor::generate_precoding_matrix_tables(const pmi_codebook_config& codebook_config, unsigned sector_id)
 {
-  precoding_matrix_mapper_codebook_offset_configuration mapper_offsets;
-  precoding_matrix_repository_builder                   repo_builder(
-      get_max_num_codebooks(get_precoding_codebook_antenna_ports(codebook_config)));
+  unsigned nof_ports = get_precoding_codebook_antenna_ports(codebook_config);
 
-  std::visit(codebook_table_generator{mapper_offsets, repo_builder}, codebook_config);
+  // [Implementation-defined] The number of ports gives the topology, as in the rest of the system. Both sides of FAPI
+  // use the same rule. A precoding matrix index then has the same meaning on each side.
+  std::optional<antenna_topology> topology = get_single_panel_antenna_topology(nof_ports);
+  report_fatal_error_if_not(topology.has_value(), "No antenna topology is defined for {} antenna ports.", nof_ports);
+
+  precoding_matrix_mapper_codebook_offset_configuration mapper_offsets;
+  precoding_matrix_repository_builder                   repo_builder(get_max_num_codebooks(nof_ports));
+
+  std::visit(codebook_table_generator{mapper_offsets, repo_builder, topology.value()}, codebook_config);
 
   return {std::make_unique<precoding_matrix_mapper>(sector_id, mapper_offsets), repo_builder.build()};
 }

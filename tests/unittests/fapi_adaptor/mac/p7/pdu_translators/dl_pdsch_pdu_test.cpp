@@ -79,7 +79,7 @@ TEST(mac_fapi_pdsch_pdu_conversor_test, valid_rar_pdu_should_pass)
 
   const auto& fapi_prec = fapi_pdu.precoding_and_beamforming;
   ASSERT_EQ(nof_prbs, fapi_prec.prg_size);
-  ASSERT_FALSE(std::get<1>(pm_tools)->get_precoding_matrix(fapi_prec.prg.pm_index).get_nof_layers() == 0);
+  ASSERT_FALSE(std::get<1>(pm_tools)->get_precoding(fapi_prec.prg.pm_index).mimo.get_nof_layers() == 0);
 }
 
 TEST(mac_fapi_pdsch_pdu_conversor_test, valid_dl_paging_pdu_should_pass)
@@ -122,7 +122,7 @@ TEST(mac_fapi_pdsch_pdu_conversor_test, valid_dl_msg_alloc_pdu_should_pass)
 
   const auto& fapi_prec = fapi_pdu.precoding_and_beamforming;
   ASSERT_EQ(nof_prbs, fapi_prec.prg_size);
-  ASSERT_FALSE(std::get<1>(pm_tools)->get_precoding_matrix(fapi_prec.prg.pm_index).get_nof_layers() == 0);
+  ASSERT_FALSE(std::get<1>(pm_tools)->get_precoding(fapi_prec.prg.pm_index).mimo.get_nof_layers() == 0);
 }
 
 TEST(mac_fapi_pdsch_pdu_conversor_test, beamformed_rar_carries_its_beam)

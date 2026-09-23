@@ -28,7 +28,7 @@ beam_weights_codebook ocudu::generate_beam_weights_codebook(antenna_topology top
   }
 
   // Only direct beam to port mapping if the panels are 1x1 elements.
-  if ((nof_beams_dim1 == 1) && (nof_beams_dim2 == 1)) {
+  if (!has_beam_grid(topology)) {
     return beam_weights;
   }
 

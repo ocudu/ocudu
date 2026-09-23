@@ -143,7 +143,7 @@ void ocudu::fapi_adaptor::convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t&     
   const fapi::tx_precoding_and_beamforming_pdu::prgs_info& prg = fapi_pdu.precoding_and_beamforming.prg;
   if (prg.beams.empty()) {
     proc_pdu.precoding_and_beamforming =
-        precoding_beamforming_configuration::make_wideband(pm_repo.get_precoding_matrix(prg.pm_index));
+        precoding_beamforming_configuration::make_wideband(pm_repo.get_precoding(prg.pm_index));
   } else {
     proc_pdu.precoding_and_beamforming = precoding_beamforming_configuration::make_wideband(prg.beams);
   }

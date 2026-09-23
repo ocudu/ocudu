@@ -112,22 +112,31 @@ constexpr unsigned get_total_nof_ports(antenna_topology topology)
   return nof_panels * nof_elements_dim1 * nof_elements_dim2 * nof_polarizations;
 }
 
+/// \brief Determines if the antenna topology defines a grid of beams.
+///
+/// A panel with one element in each dimension cannot steer a beam. Its beams map directly onto the antenna ports.
+/// The topology applies no beamforming.
+constexpr bool has_beam_grid(antenna_topology topology)
+{
+  return (get_nof_beams_dim1(topology) != 1) || (get_nof_beams_dim2(topology) != 1);
+}
+
 /// Gets the antenna topology total number of beams.
 constexpr unsigned get_total_nof_beams(antenna_topology topology)
 {
   // Get total number of antenna ports.
   unsigned total_nof_ports = get_total_nof_ports(topology);
 
+  // If the panels are 1x1 elements, the beam to antenna port is direct.
+  if (!has_beam_grid(topology)) {
+    return total_nof_ports;
+  }
+
   // Get number of combinations of beams.
   unsigned nof_panels        = get_nof_antenna_panels(topology);
   unsigned nof_beams_dim1    = get_nof_beams_dim1(topology);
   unsigned nof_beams_dim2    = get_nof_beams_dim2(topology);
   unsigned nof_polarizations = get_nof_antenna_polarizations(topology);
-
-  // If the panels are 1x1 elements, the beam to antenna port is direct.
-  if ((nof_beams_dim1 == 1) && (nof_beams_dim2 == 1)) {
-    return total_nof_ports;
-  }
 
   // Otherwise return the sum of ports and beams.
   return total_nof_ports + nof_panels * nof_beams_dim1 * nof_beams_dim2 * nof_polarizations;

@@ -41,7 +41,7 @@ TEST(precoding_matrix_table_generator, one_port)
 
   unsigned index = mapper->map(info, 1);
 
-  precoding_weight_matrix matrix = repository->get_precoding_matrix(index);
+  precoding_weight_matrix matrix = repository->get_precoding(index).mimo;
 
   precoding_weight_matrix expected_matrix = make_single_port();
 
@@ -61,7 +61,7 @@ TEST(precoding_matrix_table_generator, two_port_one_layer)
 
     unsigned index = mapper->map(info, 1);
 
-    precoding_weight_matrix matrix = repository->get_precoding_matrix(index);
+    precoding_weight_matrix matrix = repository->get_precoding(index).mimo;
 
     precoding_weight_matrix expected_matrix = make_precoding(pmi_two_antenna_port{pmi}, 1);
 
@@ -82,7 +82,7 @@ TEST(precoding_matrix_table_generator, two_port_two_layer)
 
     unsigned index = mapper->map(info, 2);
 
-    precoding_weight_matrix matrix = repository->get_precoding_matrix(index);
+    precoding_weight_matrix matrix = repository->get_precoding(index).mimo;
 
     precoding_weight_matrix expected_matrix = make_precoding(pmi_two_antenna_port{pmi}, 2);
 
@@ -124,7 +124,7 @@ TEST_P(typeI_single_panel_fixture, TypeI_single_panel)
 
             unsigned index = mapper->map(info, nof_layers);
 
-            precoding_weight_matrix matrix = repository->get_precoding_matrix(index);
+            precoding_weight_matrix matrix = repository->get_precoding(index).mimo;
 
             precoding_weight_matrix expected_matrix = make_precoding(pmi, nof_layers);
 

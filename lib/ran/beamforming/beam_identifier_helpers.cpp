@@ -53,7 +53,7 @@ ocudu::get_beam_id(antenna_topology topology, uint8_t i_panel, uint8_t i_pol, ui
   unsigned beam_id_offset = get_total_nof_ports(topology);
 
   // If only one beam is supported across all panels, the beams are directly mapped onto physical antenna ports.
-  if ((nof_beams_dim1 == 1) && (nof_beams_dim2 == 1)) {
+  if (!has_beam_grid(topology)) {
     beam_id_offset = 0;
   }
 

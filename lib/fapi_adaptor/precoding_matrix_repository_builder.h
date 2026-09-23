@@ -4,6 +4,7 @@
 #pragma once
 
 #include "ocudu/fapi_adaptor/precoding_matrix_repository.h"
+#include "ocudu/ran/beamforming/beam_identifier_helpers.h"
 #include <memory>
 
 namespace ocudu {
@@ -15,14 +16,22 @@ class precoding_matrix_repository_builder
 public:
   explicit precoding_matrix_repository_builder(unsigned size) { repository.reserve(size); }
 
-  /// Adds the given precoding configuration to the repository with the given index.
-  void add(unsigned index, const precoding_weight_matrix& precoding)
+  /// Adds the given composite precoding configuration to the repository with the given index.
+  void add(unsigned index, const precoding_beamforming_composite& composite)
   {
     if (index >= repository.size()) {
       repository.resize(index + 1U);
     }
 
-    repository[index] = precoding;
+    repository[index] = composite;
+  }
+
+  /// \brief Adds the given precoding matrix to the repository with the given index.
+  ///
+  /// The matrix contains the complete precoding. Its ports select the antenna ports. No beamforming applies.
+  void add(unsigned index, const precoding_weight_matrix& precoding)
+  {
+    add(index, precoding_beamforming_composite{precoding, get_default_beam_list(precoding.get_nof_ports())});
   }
 
   /// Builds and returns a precoding matrix repository.
@@ -32,7 +41,7 @@ public:
   }
 
 private:
-  std::vector<precoding_weight_matrix> repository;
+  std::vector<precoding_beamforming_composite> repository;
 };
 
 } // namespace fapi_adaptor
