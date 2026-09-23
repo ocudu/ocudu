@@ -140,8 +140,6 @@ variables:
         #   awk:    removes FileName: element blocks (File sections from dpkg lists)
         #   grep 1: removes evident-by RelationshipComment lines paired with file refs
         #   grep 2: removes CONTAINS/OTHER Relationship lines pointing to SPDXRef-File-
-        #   grep 3: removes DEPENDENCY_OF relationships (keeps CONTAINS/DESCRIBES)
-        #   grep 4: removes guessed cpe23Type security ExternalRefs (keeps purl refs)
 
         SYFT_REGISTRY_AUTH_USERNAME="${REGISTRY_AUTH_USERNAME}" \
           SYFT_REGISTRY_AUTH_PASSWORD="${REGISTRY_AUTH_PASSWORD}" \
@@ -151,8 +149,6 @@ variables:
           | awk '/^FileName:/{skip=1;next} /^$/{if(skip){skip=0;next}} !skip' \
           | grep -v "^RelationshipComment: evident-by:" \
           | grep -v "^Relationship:.*SPDXRef-File-" \
-          | grep -v "^Relationship:.*DEPENDENCY_OF" \
-          | grep -v "^ExternalRef: SECURITY cpe23Type" \
           > container.spdx
       }
 
@@ -196,6 +192,11 @@ variables:
 
         echo "=== Signing image ==="
         cosign sign ${IMAGE_DIGEST}
+
+        # If we don't clean the attestation, every iteration amends the sbom/grype reporter and it can grow unbounded
+        # We clean up the attested files and then re-push everything again
+        echo "=== Cleaning previous attestations ==="
+        cosign clean --type=attestation --force ${IMAGE_DIGEST}
 
         echo "=== Generating container SPDX ==="
         generate_container_spdx
