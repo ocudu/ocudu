@@ -92,27 +92,31 @@ bool bit_decoder::unpack(T& val, uint32_t n_bits)
 {
   ocudu_assert(n_bits <= sizeof(T) * 8U, "unpack_bits() only supports up to {} bits", sizeof(T) * 8U);
 
-  val = 0;
+  // Assemble the bits in an unsigned accumulator and convert to T only at the end, to avoid left-shifting negative
+  // values when T is signed.
+  uint64_t acc = 0;
   while (n_bits > 0U) {
     if (it == buffer.end()) {
+      val = static_cast<T>(acc);
       return false;
     }
 
     if (static_cast<uint32_t>(8U - offset) > n_bits) {
       uint8_t mask = static_cast<uint8_t>(1u << (8u - offset)) - static_cast<uint8_t>(1u << (8u - offset - n_bits));
-      val += (static_cast<uint8_t>((*it) & mask)) >> (8u - offset - n_bits);
+      acc += (static_cast<uint8_t>((*it) & mask)) >> (8u - offset - n_bits);
       offset += n_bits;
       n_bits = 0;
       continue;
     }
 
     auto mask = static_cast<uint8_t>((1u << (8u - offset)) - 1u);
-    val += (static_cast<T>((*it) & mask)) << (n_bits - 8 + offset);
+    acc += static_cast<uint64_t>((*it) & mask) << (n_bits - 8 + offset);
     n_bits -= 8 - offset;
     offset = 0;
     ++it;
   }
 
+  val = static_cast<T>(acc);
   return true;
 }
 
