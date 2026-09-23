@@ -23,7 +23,7 @@ TEST(f1_gateway_helpers, make_sctp_network_gateway_config_sets_expected_values)
   app_cfg.rto_initial_ms = 1000;
   app_cfg.nodelay        = true;
 
-  const auto cfg = make_sctp_network_gateway_config("F1-C", {"127.0.10.1"}, 38472, 1, app_cfg);
+  const auto cfg = make_sctp_network_gateway_config("F1-C", {"127.0.10.1"}, 38472, 1, app_cfg, {});
 
   EXPECT_EQ(cfg.if_name, "F1-C");
   EXPECT_EQ(cfg.bind_addresses, std::vector<std::string>{"127.0.10.1"});
@@ -41,7 +41,7 @@ TEST(f1_gateway_helpers, make_sctp_network_gateway_config_uses_defaults_when_uns
 {
   const sctp_appconfig app_cfg;
 
-  const auto cfg = make_sctp_network_gateway_config("F1-C", {"127.0.10.1"}, F1AP_PORT, F1AP_PPID, app_cfg);
+  const auto cfg = make_sctp_network_gateway_config("F1-C", {"127.0.10.1"}, F1AP_PORT, F1AP_PPID, app_cfg, {});
 
   EXPECT_EQ(cfg.bind_port, F1AP_PORT);
   EXPECT_EQ(cfg.ppid, F1AP_PPID);

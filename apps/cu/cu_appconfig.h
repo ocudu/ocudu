@@ -6,6 +6,7 @@
 
 #include "apps/helpers/f1u/f1u_appconfig.h"
 #include "apps/helpers/logger/logger_appconfig.h"
+#include "apps/helpers/network/dtls_appconfig.h"
 #include "apps/helpers/network/sctp_appconfig.h"
 #include "apps/helpers/tracing/tracer_appconfig.h"
 #include "apps/services/app_execution_metrics/executor_metrics_config.h"
@@ -25,6 +26,8 @@ struct cu_f1ap_appconfig {
   std::vector<std::string> bind_addrs = {"127.0.10.1"};
   /// SCTP socket options.
   sctp_appconfig sctp;
+  /// DTLS options.
+  dtls_appconfig dtls;
 };
 
 /// Metrics report configuration.

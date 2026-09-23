@@ -273,7 +273,9 @@ bool sctp_network_server_impl::create_and_bind()
   if (not this->create_and_bind_common()) {
     return false;
   }
+  fmt::println("if={} create_and_bind {}", node_cfg.if_name, node_cfg.dtls_cfg.has_value());
   if (OCUDU_DTLS_SCTP_SUPPORT and node_cfg.dtls_cfg.has_value()) {
+    fmt::println("if={} dtls", node_cfg.if_name);
     dtls_ctxt = create_dtls_context(*node_cfg.dtls_cfg);
     if (not dtls_ctxt->init(socket.fd().value())) {
       report_error("Could not initialize DTLS context in SCTP gateway. if={}", node_cfg.if_name);

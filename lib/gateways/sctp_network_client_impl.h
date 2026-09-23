@@ -52,7 +52,7 @@ private:
 
   void handle_dtls_notification(const union sctp_notification* notif, int assoc) override {}
 
-  void handle_connection_up();
+  void dtls_connect();
   void handle_connection_shutdown(const char* cause);
   void handle_connection_terminated(const std::string& cause);
 

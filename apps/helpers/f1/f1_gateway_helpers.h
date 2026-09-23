@@ -5,6 +5,7 @@
 #pragma once
 
 #include "apps/helpers/f1u/f1u_appconfig.h"
+#include "apps/helpers/network/dtls_appconfig.h"
 #include "apps/helpers/network/sctp_appconfig.h"
 #include "ocudu/f1ap/gateways/f1c_network_server_factory.h"
 #include "ocudu/f1u/cu_up/split_connector/f1u_split_connector_factory.h"
@@ -22,6 +23,7 @@ namespace ocudu {
 struct f1c_gateway_config {
   const std::vector<std::string>& bind_addrs;
   const sctp_appconfig&           sctp_cfg;
+  const dtls_appconfig&           dtls_cfg;
   std::string                     if_name;
   uint16_t                        bind_port = F1AP_PORT;
   uint16_t                        ppid      = F1AP_PPID;

@@ -324,9 +324,20 @@ int main(int argc, char** argv)
     xnc_gws.push_back(create_xnc_connection_gateway(xnc_server_cfg));
   }
 
+  dtls_appconfig tmp_cfg{
+      .enabled          = true,
+      .mode             = dtls_appconfig_mode::server,
+      .cert_filename    = "/tmp/server-cert.pem",
+      .key_filename     = "/tmp/server-key.pem",
+      .ca_cert_filename = "/tmp/ca-cert.pem",
+  };
+
+  cu_cp_cfg.f1ap_cfg.dtls                                 = tmp_cfg;
   std::unique_ptr<ocucp::f1c_connection_server> cu_f1c_gw = ocudu::create_f1c_gateway_server(
-      ocudu::f1c_gateway_config{
-          .bind_addrs = cu_cp_cfg.f1ap_cfg.bind_addrs, .sctp_cfg = cu_cp_cfg.f1ap_cfg.sctp, .if_name = "F1-C"},
+      ocudu::f1c_gateway_config{.bind_addrs = cu_cp_cfg.f1ap_cfg.bind_addrs,
+                                .sctp_cfg   = cu_cp_cfg.f1ap_cfg.sctp,
+                                .dtls_cfg   = cu_cp_cfg.f1ap_cfg.dtls,
+                                .if_name    = "F1-C"},
       ocudu::f1c_gateway_dependencies{.broker         = *epoll_broker,
                                       .io_rx_executor = workers.get_cu_cp_executor_mapper().f1c_rx_executor(),
                                       .ctrl_exec      = workers.get_cu_cp_executor_mapper().ctrl_executor(),

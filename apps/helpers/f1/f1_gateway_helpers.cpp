@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "f1_gateway_helpers.h"
+#include "apps/helpers/network/dtls_config_translators.h"
 #include "apps/helpers/network/sctp_config_translators.h"
 #include "ocudu/gateways/sctp_network_gateway.h"
 #include "ocudu/gateways/udp_network_gateway.h"
@@ -15,7 +16,8 @@ static sctp_network_gateway_config make_sctp_network_gateway_config(const std::s
                                                                     const std::vector<std::string>& bind_addresses,
                                                                     uint16_t                        bind_port,
                                                                     uint16_t                        ppid,
-                                                                    const sctp_appconfig&           app_cfg)
+                                                                    const sctp_appconfig&           app_cfg,
+                                                                    const dtls_appconfig&           dtls_cfg)
 {
   auto sctp_cfg = sctp_network_gateway_config{.if_name           = if_name,
                                               .bind_addresses    = bind_addresses,
@@ -33,6 +35,11 @@ static sctp_network_gateway_config make_sctp_network_gateway_config(const std::s
   sctp_cfg.bind_port = bind_port;
 
   fill_sctp_network_gateway_config_socket_params(sctp_cfg, app_cfg);
+  if (dtls_cfg.enabled) {
+    sctp_cfg.dtls_cfg.emplace();
+    fill_dtls_network_gateway_config_params(*sctp_cfg.dtls_cfg, dtls_cfg);
+    fmt::println("filled DTLS config for F1!!!");
+  }
   return sctp_cfg;
 }
 
@@ -60,12 +67,13 @@ static udp_network_gateway_config make_udp_gtpu_gateway_config(const f1u_socket_
 std::unique_ptr<ocucp::f1c_connection_server> create_f1c_gateway_server(const f1c_gateway_config&       cfg,
                                                                         const f1c_gateway_dependencies& dependencies)
 {
-  return ocudu::create_f1c_gateway_server(f1c_cu_sctp_gateway_config{
-      make_sctp_network_gateway_config(cfg.if_name, cfg.bind_addrs, cfg.bind_port, cfg.ppid, cfg.sctp_cfg),
-      dependencies.broker,
-      dependencies.io_rx_executor,
-      dependencies.ctrl_exec,
-      dependencies.pcap});
+  return ocudu::create_f1c_gateway_server(
+      f1c_cu_sctp_gateway_config{make_sctp_network_gateway_config(
+                                     cfg.if_name, cfg.bind_addrs, cfg.bind_port, cfg.ppid, cfg.sctp_cfg, cfg.dtls_cfg),
+                                 dependencies.broker,
+                                 dependencies.io_rx_executor,
+                                 dependencies.ctrl_exec,
+                                 dependencies.pcap});
 }
 
 std::unique_ptr<gtpu_gateway> create_f1u_gtpu_gateway(const f1u_gateway_config&       cfg,

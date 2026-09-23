@@ -7,6 +7,7 @@
 #include "apps/helpers/f1u/f1u_appconfig.h"
 #include "apps/helpers/hal/hal_appconfig.h"
 #include "apps/helpers/logger/logger_appconfig.h"
+#include "apps/helpers/network/dtls_appconfig.h"
 #include "apps/helpers/network/sctp_appconfig.h"
 #include "apps/helpers/tracing/tracer_appconfig.h"
 #include "apps/services/app_execution_metrics/executor_metrics_config.h"
@@ -33,6 +34,8 @@ struct f1ap_appconfig {
   bool retry_connection = false;
   /// SCTP socket options.
   sctp_appconfig sctp;
+  /// DTLS options.
+  dtls_appconfig dtls;
 };
 
 struct f1u_appconfig {

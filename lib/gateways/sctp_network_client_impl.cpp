@@ -325,6 +325,9 @@ sctp_network_client_impl::connect(std::unique_ptr<sctp_association_sdu_notifier>
                 fmt::format("{}", fmt::join(established_addrs, ", ")));
   }
 
+  // DTLS connect.
+  dtls_connect();
+
   // Register the socket in the IO broker.
   socket.release();
   io_sub = broker.register_fd(
@@ -441,11 +444,11 @@ void sctp_network_client_impl::handle_connection_shutdown(const char* cause)
   }
 }
 
-void sctp_network_client_impl::handle_connection_up()
+void sctp_network_client_impl::dtls_connect()
 {
-  logger.error("handling connection UP");
-
+  fmt::println("shat init start?");
   if (ssl_enabled) {
+    fmt::println("init started");
     auto ssl = create_dtls_ssl(dtls_ssl_config{dtls_mode::client, 0}, {*dtls_ctxt, *this});
     if (not ssl->init(socket.fd().value())) {
       logger.error("{} assoc={}: Could not initialize DTLS context for new association", node_cfg.if_name, 0);
@@ -453,6 +456,7 @@ void sctp_network_client_impl::handle_connection_up()
       handle_connection_shutdown("DTLS initialization error");
       return;
     }
+    fmt::println("init fin");
   }
 }
 
@@ -501,7 +505,6 @@ void sctp_network_client_impl::handle_notification(span<const uint8_t>          
       const struct sctp_assoc_change* n = &notif->sn_assoc_change;
       switch (n->sac_state) {
         case SCTP_COMM_UP:
-          handle_connection_up();
           break;
         case SCTP_COMM_LOST:
           handle_connection_terminated("Communication to the server was lost");
