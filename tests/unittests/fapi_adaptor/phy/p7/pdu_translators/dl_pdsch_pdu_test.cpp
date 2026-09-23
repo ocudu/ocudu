@@ -122,8 +122,8 @@ TEST(fapi_to_phy_pdsch_conversion_test, valid_pdu_conversion_success)
   std::uniform_int_distribution<unsigned> nr_of_symbols_dist(1, 14);
   std::uniform_int_distribution<unsigned> start_symbol_index_dist(0, 13);
 
-  auto                                 pm_tools = generate_precoding_codebooks(pmi_codebook_one_port{}, 0);
-  const precoding_codebook_repository& pm_repo  = *std::get<std::unique_ptr<precoding_codebook_repository>>(pm_tools);
+  auto pm_tools = generate_precoding_codebooks(pmi_codebook_one_port{}, antenna_topology::one_port, 0);
+  const precoding_codebook_repository& pm_repo = *std::get<std::unique_ptr<precoding_codebook_repository>>(pm_tools);
 
   for (auto cyclic_p : {cyclic_prefix::NORMAL, cyclic_prefix::EXTENDED}) {
     for (auto ref_point : {fapi::pdsch_ref_point_type::point_a, fapi::pdsch_ref_point_type::subcarrier_0}) {
@@ -265,8 +265,8 @@ TEST(fapi_to_phy_pdsch_conversion_test, valid_pdu_conversion_success)
 
 TEST(fapi_to_phy_pdsch_conversion_test, beamformed_pdsch_is_mapped_onto_its_beam)
 {
-  auto                                 pm_tools = generate_precoding_codebooks(pmi_codebook_one_port{}, 0);
-  const precoding_codebook_repository& pm_repo  = *std::get<std::unique_ptr<precoding_codebook_repository>>(pm_tools);
+  auto pm_tools = generate_precoding_codebooks(pmi_codebook_one_port{}, antenna_topology::one_port, 0);
+  const precoding_codebook_repository& pm_repo = *std::get<std::unique_ptr<precoding_codebook_repository>>(pm_tools);
 
   const beam_identifier beam_id = to_beam_id(3);
 

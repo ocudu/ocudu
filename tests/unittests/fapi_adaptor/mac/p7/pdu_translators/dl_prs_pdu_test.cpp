@@ -19,7 +19,7 @@ TEST(mac_fapi_prs_pdu_conversor_test, valid_pdu_should_pass)
   const prs_info pdu = build_valid_prs_pdu();
 
   constexpr unsigned cell_nof_prbs = 51;
-  auto               pm_tools      = generate_precoding_codebooks(pmi_codebook_one_port{}, 0);
+  auto               pm_tools = generate_precoding_codebooks(pmi_codebook_one_port{}, antenna_topology::one_port, 0);
 
   fapi::dl_tti_request         msg;
   fapi::dl_tti_request_builder builder(msg);

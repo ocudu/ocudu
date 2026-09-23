@@ -91,7 +91,7 @@ protected:
   const unsigned                                                                                      nof_prbs  = 51U;
   const unsigned                                                                                      sector_id = 1U;
   std::pair<std::unique_ptr<precoding_matrix_mapper>, std::unique_ptr<precoding_codebook_repository>> pm_tools =
-      generate_precoding_codebooks(pmi_codebook_one_port{}, 0);
+      generate_precoding_codebooks(pmi_codebook_one_port{}, antenna_topology::one_port, 0);
   std::pair<std::unique_ptr<uci_part2_correspondence_mapper>, std::unique_ptr<uci_part2_correspondence_repository>>
                                   uci_part2_tools = generate_uci_part2_correspondence(1);
   mac_to_fapi_fastpath_translator translator;

@@ -274,19 +274,21 @@ struct codebook_table_generator {
 } // namespace
 
 std::pair<std::unique_ptr<precoding_matrix_mapper>, std::unique_ptr<precoding_codebook_repository>>
-ocudu::fapi_adaptor::generate_precoding_codebooks(const pmi_codebook_config& codebook_config, unsigned sector_id)
+ocudu::fapi_adaptor::generate_precoding_codebooks(const pmi_codebook_config& codebook_config,
+                                                  antenna_topology           topology,
+                                                  unsigned                   sector_id)
 {
   unsigned nof_ports = get_precoding_codebook_antenna_ports(codebook_config);
 
-  // [Implementation-defined] The number of ports gives the topology, as in the rest of the system. Both sides of FAPI
-  // use the same rule. A precoding matrix index then has the same meaning on each side.
-  std::optional<antenna_topology> topology = get_single_panel_antenna_topology(nof_ports);
-  report_fatal_error_if_not(topology.has_value(), "No antenna topology is defined for {} antenna ports.", nof_ports);
+  report_fatal_error_if_not(get_total_nof_ports(topology) == nof_ports,
+                            "The antenna topology has {} ports, but the codebook has {}.",
+                            get_total_nof_ports(topology),
+                            nof_ports);
 
   precoding_matrix_mapper_codebook_offset_configuration mapper_offsets;
   precoding_codebook_repository_builder                 repo_builder(get_max_num_codebooks(nof_ports));
 
-  std::visit(codebook_table_generator{mapper_offsets, repo_builder, topology.value()}, codebook_config);
+  std::visit(codebook_table_generator{mapper_offsets, repo_builder, topology}, codebook_config);
 
   return {std::make_unique<precoding_matrix_mapper>(sector_id, mapper_offsets), repo_builder.build()};
 }

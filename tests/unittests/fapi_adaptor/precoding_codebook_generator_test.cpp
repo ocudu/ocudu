@@ -34,7 +34,7 @@ TEST(precoding_codebook_generator, one_port)
 {
   std::unique_ptr<precoding_matrix_mapper>       mapper;
   std::unique_ptr<precoding_codebook_repository> repository;
-  std::tie(mapper, repository) = generate_precoding_codebooks(pmi_codebook_one_port{}, 0);
+  std::tie(mapper, repository) = generate_precoding_codebooks(pmi_codebook_one_port{}, antenna_topology::one_port, 0);
 
   mac_pdsch_precoding_info info;
   info.report.reset();
@@ -52,7 +52,7 @@ TEST(precoding_codebook_generator, two_port_one_layer)
 {
   std::unique_ptr<precoding_matrix_mapper>       mapper;
   std::unique_ptr<precoding_codebook_repository> repository;
-  std::tie(mapper, repository) = generate_precoding_codebooks(pmi_codebook_two_port{}, 0);
+  std::tie(mapper, repository) = generate_precoding_codebooks(pmi_codebook_two_port{}, antenna_topology::two_port, 0);
 
   // Iterate over all possible PMI.
   for (uint8_t pmi = 0; pmi != 4; ++pmi) {
@@ -73,7 +73,7 @@ TEST(precoding_codebook_generator, two_port_two_layer)
 {
   std::unique_ptr<precoding_matrix_mapper>       mapper;
   std::unique_ptr<precoding_codebook_repository> repository;
-  std::tie(mapper, repository) = generate_precoding_codebooks(pmi_codebook_two_port{}, 0);
+  std::tie(mapper, repository) = generate_precoding_codebooks(pmi_codebook_two_port{}, antenna_topology::two_port, 0);
 
   // Iterate over all possible PMI.
   for (uint8_t pmi = 0; pmi != 2; ++pmi) {
@@ -97,11 +97,12 @@ TEST_P(typeI_single_panel_fixture, TypeI_single_panel)
 {
   const pmi_codebook_typeI_single_panel& codebook_config = GetParam();
 
+  unsigned         nof_ports = get_precoding_codebook_antenna_ports(codebook_config);
+  antenna_topology topology  = get_single_panel_antenna_topology(nof_ports).value();
+
   std::unique_ptr<precoding_matrix_mapper>       mapper;
   std::unique_ptr<precoding_codebook_repository> repository;
-  std::tie(mapper, repository) = generate_precoding_codebooks(codebook_config, 0);
-
-  unsigned nof_ports = get_precoding_codebook_antenna_ports(codebook_config);
+  std::tie(mapper, repository) = generate_precoding_codebooks(codebook_config, topology, 0);
 
   for (unsigned nof_layers = 1; nof_layers <= nof_ports; ++nof_layers) {
     pmi_typeI_single_panel_param_ranges param_ranges = get_pmi_ranges_typeI_single_panel(codebook_config, nof_layers);

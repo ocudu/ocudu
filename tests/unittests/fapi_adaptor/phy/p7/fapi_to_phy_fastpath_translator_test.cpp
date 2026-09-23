@@ -250,7 +250,7 @@ protected:
       pdu_repo,
       ul_pdu_validator,
       std::move(std::get<std::unique_ptr<precoding_codebook_repository>>(
-          generate_precoding_codebooks(pmi_codebook_one_port{}, 0))),
+          generate_precoding_codebooks(pmi_codebook_one_port{}, antenna_topology::one_port, 0))),
       std::move(std::get<std::unique_ptr<uci_part2_correspondence_repository>>(generate_uci_part2_correspondence(1)))};
   fapi_to_phy_fastpath_translator translator;
 
@@ -456,7 +456,7 @@ TEST_F(fapi_to_phy_translator_fixture, empty_ul_tti_generates_request_when_allow
        pdu_repo,
        ul_pdu_validator,
        std::move(std::get<std::unique_ptr<precoding_codebook_repository>>(
-           generate_precoding_codebooks(pmi_codebook_one_port{}, 0))),
+           generate_precoding_codebooks(pmi_codebook_one_port{}, antenna_topology::one_port, 0))),
        std::move(
            std::get<std::unique_ptr<uci_part2_correspondence_repository>>(generate_uci_part2_correspondence(1)))});
 
@@ -490,7 +490,7 @@ TEST_F(fapi_to_phy_translator_fixture, ntn_k_mac_pusch_pdu_carries_the_uplink_sl
        pdu_repo,
        ul_pdu_validator,
        std::move(std::get<std::unique_ptr<precoding_codebook_repository>>(
-           generate_precoding_codebooks(pmi_codebook_one_port{}, 0))),
+           generate_precoding_codebooks(pmi_codebook_one_port{}, antenna_topology::one_port, 0))),
        std::move(
            std::get<std::unique_ptr<uci_part2_correspondence_repository>>(generate_uci_part2_correspondence(1)))});
   ntn_translator.set_error_indication_notifier(error_notifier_spy);
@@ -536,7 +536,7 @@ TEST_F(fapi_to_phy_translator_fixture, terrestrial_pusch_pdu_slot_offset_is_zero
        pdu_repo,
        ul_pdu_validator,
        std::move(std::get<std::unique_ptr<precoding_codebook_repository>>(
-           generate_precoding_codebooks(pmi_codebook_one_port{}, 0))),
+           generate_precoding_codebooks(pmi_codebook_one_port{}, antenna_topology::one_port, 0))),
        std::move(
            std::get<std::unique_ptr<uci_part2_correspondence_repository>>(generate_uci_part2_correspondence(1)))});
   terr_translator.set_error_indication_notifier(error_notifier_spy);
@@ -586,7 +586,7 @@ TEST_F(fapi_to_phy_translator_fixture, ntn_k_mac_pucch_config_slot_is_shifted_to
        pdu_repo,
        ul_pdu_validator,
        std::move(std::get<std::unique_ptr<precoding_codebook_repository>>(
-           generate_precoding_codebooks(pmi_codebook_one_port{}, 0))),
+           generate_precoding_codebooks(pmi_codebook_one_port{}, antenna_topology::one_port, 0))),
        std::move(
            std::get<std::unique_ptr<uci_part2_correspondence_repository>>(generate_uci_part2_correspondence(1)))});
   ntn_translator.set_error_indication_notifier(error_notifier_spy);
@@ -634,7 +634,7 @@ TEST_F(fapi_to_phy_translator_fixture, terrestrial_pucch_config_slot_offset_is_z
        pdu_repo,
        ul_pdu_validator,
        std::move(std::get<std::unique_ptr<precoding_codebook_repository>>(
-           generate_precoding_codebooks(pmi_codebook_one_port{}, 0))),
+           generate_precoding_codebooks(pmi_codebook_one_port{}, antenna_topology::one_port, 0))),
        std::move(
            std::get<std::unique_ptr<uci_part2_correspondence_repository>>(generate_uci_part2_correspondence(1)))});
   terr_translator.set_error_indication_notifier(error_notifier_spy);

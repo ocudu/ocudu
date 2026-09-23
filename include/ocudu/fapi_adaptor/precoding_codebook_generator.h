@@ -5,14 +5,18 @@
 
 #include "ocudu/fapi_adaptor/precoding_codebook_repository.h"
 #include "ocudu/fapi_adaptor/precoding_matrix_mapper.h"
+#include "ocudu/ran/antenna_topology.h"
 #include <memory>
 
 namespace ocudu {
 namespace fapi_adaptor {
 
-/// Generates the precoding matrix mapper and the precoding codebook repository for the given codebook.
+/// \brief Generates the precoding matrix mapper and the precoding codebook repository.
+///
+/// The codebook gives the precoding that the user equipment reports. The topology gives the antenna array that
+/// transmits it. Both must describe the same number of antenna ports.
 std::pair<std::unique_ptr<precoding_matrix_mapper>, std::unique_ptr<precoding_codebook_repository>>
-generate_precoding_codebooks(const pmi_codebook_config& codebook_config, unsigned sector_id);
+generate_precoding_codebooks(const pmi_codebook_config& codebook_config, antenna_topology topology, unsigned sector_id);
 
 } // namespace fapi_adaptor
 } // namespace ocudu
