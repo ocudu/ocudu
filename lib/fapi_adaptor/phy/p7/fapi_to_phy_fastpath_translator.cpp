@@ -68,7 +68,7 @@ fapi_to_phy_fastpath_translator::fapi_to_phy_fastpath_translator(
   prach_ports(config.prach_ports.begin(), config.prach_ports.end()),
   ntn_k_mac_slots(config.ntn_k_mac_slots)
 {
-  ocudu_assert(pm_repo, "Invalid precoding matrix repository");
+  ocudu_assert(pm_repo, "Invalid precoding codebook repository");
   ocudu_assert(part2_repo, "Invalid UCI Part2 repository");
   ocudu_assert(!prach_ports.empty(), "The PRACH ports must not be empty.");
 }
@@ -170,13 +170,13 @@ generate_csi_re_pattern_list(const fapi::dl_tti_request& msg, uint16_t cell_band
 
 /// \brief Translates, validates and returns the FAPI PDUs to PHY PDUs.
 /// \note If a PDU fails the validation, the whole DL_TTI.request message is dropped.
-static expected<downlink_pdus> translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_request&        msg,
-                                                                 const downlink_pdu_validator&      dl_pdu_validator,
-                                                                 ocudulog::basic_logger&            logger,
-                                                                 subcarrier_spacing                 scs_common,
-                                                                 uint16_t                           cell_bandwidth_prb,
-                                                                 const precoding_matrix_repository& pm_repo,
-                                                                 unsigned                           sector_id)
+static expected<downlink_pdus> translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_request&   msg,
+                                                                 const downlink_pdu_validator& dl_pdu_validator,
+                                                                 ocudulog::basic_logger&       logger,
+                                                                 subcarrier_spacing            scs_common,
+                                                                 uint16_t                      cell_bandwidth_prb,
+                                                                 const precoding_codebook_repository& pm_repo,
+                                                                 unsigned                             sector_id)
 {
   downlink_pdus pdus;
   const auto&   csi_re_patterns = generate_csi_re_pattern_list(msg, cell_bandwidth_prb);

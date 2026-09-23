@@ -5,7 +5,7 @@
 #include "helpers.h"
 #include "ocudu_test_requirements.h"
 #include "prs.h"
-#include "ocudu/fapi_adaptor/precoding_matrix_table_generator.h"
+#include "ocudu/fapi_adaptor/precoding_codebook_generator.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -19,7 +19,7 @@ TEST(mac_fapi_prs_pdu_conversor_test, valid_pdu_should_pass)
   const prs_info pdu = build_valid_prs_pdu();
 
   constexpr unsigned cell_nof_prbs = 51;
-  auto               pm_tools      = generate_precoding_matrix_tables(pmi_codebook_one_port{}, 0);
+  auto               pm_tools      = generate_precoding_codebooks(pmi_codebook_one_port{}, 0);
 
   fapi::dl_tti_request         msg;
   fapi::dl_tti_request_builder builder(msg);

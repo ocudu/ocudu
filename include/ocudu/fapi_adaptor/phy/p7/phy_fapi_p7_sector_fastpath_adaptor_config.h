@@ -5,7 +5,7 @@
 #pragma once
 
 #include "ocudu/fapi/cell_config.h"
-#include "ocudu/fapi_adaptor/precoding_matrix_repository.h"
+#include "ocudu/fapi_adaptor/precoding_codebook_repository.h"
 #include "ocudu/fapi_adaptor/uci_part2_correspondence_repository.h"
 #include "ocudu/ocudulog/logger.h"
 #include "ocudu/ran/prach/rach_config_common.h"
@@ -72,8 +72,8 @@ struct phy_fapi_p7_sector_fastpath_adaptor_dependencies {
   uplink_pdu_slot_repository_pool& ul_pdu_repository;
   /// Uplink PDU validator.
   const uplink_pdu_validator& ul_pdu_validator;
-  /// Precoding matrix repository.
-  std::unique_ptr<precoding_matrix_repository> pm_repo;
+  /// Precoding codebook repository.
+  std::unique_ptr<precoding_codebook_repository> pm_repo;
   /// UCI Part2 correspondence repository.
   std::unique_ptr<uci_part2_correspondence_repository> part2_repo;
 };

@@ -4,7 +4,7 @@
 
 #include "pdsch.h"
 #include "ocudu/adt/format.h"
-#include "ocudu/fapi_adaptor/precoding_matrix_repository.h"
+#include "ocudu/fapi_adaptor/precoding_codebook_repository.h"
 #include "ocudu/ocudulog/logger.h"
 #include "ocudu/ran/resource_allocation/vrb_to_prb.h"
 #include "ocudu/ran/sch/sch_dmrs_power.h"
@@ -104,11 +104,11 @@ static void fill_rb_allocation(pdsch_processor::pdu_t& proc_pdu, const fapi::dl_
       fapi_pdu.resource_alloc.vrbs.start(), fapi_pdu.resource_alloc.vrbs.length(), vrb_to_prb_config);
 }
 
-void ocudu::fapi_adaptor::convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t&            proc_pdu,
-                                                    const fapi::dl_pdsch_pdu&          fapi_pdu,
-                                                    slot_point                         slot,
-                                                    span<const re_pattern_list>        csi_re_pattern_list,
-                                                    const precoding_matrix_repository& pm_repo)
+void ocudu::fapi_adaptor::convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t&              proc_pdu,
+                                                    const fapi::dl_pdsch_pdu&            fapi_pdu,
+                                                    slot_point                           slot,
+                                                    span<const re_pattern_list>          csi_re_pattern_list,
+                                                    const precoding_codebook_repository& pm_repo)
 {
   proc_pdu.slot         = slot;
   proc_pdu.rnti         = fapi_pdu.rnti;
@@ -143,7 +143,7 @@ void ocudu::fapi_adaptor::convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t&     
   const fapi::tx_precoding_and_beamforming_pdu::prgs_info& prg = fapi_pdu.precoding_and_beamforming.prg;
   if (prg.beams.empty()) {
     proc_pdu.precoding_and_beamforming =
-        precoding_beamforming_configuration::make_wideband(pm_repo.get_precoding(prg.pm_index));
+        precoding_beamforming_configuration::make_wideband(pm_repo.get_precoding_config(prg.pm_index));
   } else {
     proc_pdu.precoding_and_beamforming = precoding_beamforming_configuration::make_wideband(prg.beams);
   }

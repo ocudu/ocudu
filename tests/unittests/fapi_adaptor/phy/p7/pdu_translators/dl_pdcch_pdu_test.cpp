@@ -6,7 +6,7 @@
 #include "pdcch.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/fapi/p7/builders/dl_pdcch_pdu_builder.h"
-#include "ocudu/fapi_adaptor/precoding_matrix_table_generator.h"
+#include "ocudu/fapi_adaptor/precoding_codebook_generator.h"
 #include <gtest/gtest.h>
 #include <random>
 
@@ -31,8 +31,8 @@ TEST(fapi_to_phy_pdcch_conversion_test, valid_pdu_conversion_success)
   std::uniform_int_distribution<unsigned> nid_dmrs_dist(0, 65535);
   std::uniform_int_distribution<unsigned> nid_data_dist(0, 65535);
 
-  auto                               pm_tools = generate_precoding_matrix_tables(pmi_codebook_one_port{}, 0);
-  const precoding_matrix_repository& pm_repo  = *std::get<std::unique_ptr<precoding_matrix_repository>>(pm_tools);
+  auto                                 pm_tools = generate_precoding_codebooks(pmi_codebook_one_port{}, 0);
+  const precoding_codebook_repository& pm_repo  = *std::get<std::unique_ptr<precoding_codebook_repository>>(pm_tools);
 
   for (auto cp : {cyclic_prefix::NORMAL, cyclic_prefix::EXTENDED}) {
     for (auto interleaved : {0U, 1U}) {
@@ -170,8 +170,8 @@ TEST(fapi_to_phy_pdcch_conversion_test, valid_pdu_conversion_success)
 
 TEST(fapi_to_phy_pdcch_conversion_test, beamformed_dci_is_mapped_onto_its_beam)
 {
-  auto                               pm_tools = generate_precoding_matrix_tables(pmi_codebook_one_port{}, 0);
-  const precoding_matrix_repository& pm_repo  = *std::get<std::unique_ptr<precoding_matrix_repository>>(pm_tools);
+  auto                                 pm_tools = generate_precoding_codebooks(pmi_codebook_one_port{}, 0);
+  const precoding_codebook_repository& pm_repo  = *std::get<std::unique_ptr<precoding_codebook_repository>>(pm_tools);
 
   const beam_identifier beam_id = to_beam_id(3);
 

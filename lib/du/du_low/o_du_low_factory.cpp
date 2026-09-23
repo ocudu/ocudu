@@ -8,7 +8,7 @@
 #include "ocudu/du/du_low/du_low_factory.h"
 #include "ocudu/du/du_low/o_du_low_config.h"
 #include "ocudu/fapi_adaptor/phy/phy_fapi_fastpath_adaptor_factory.h"
-#include "ocudu/fapi_adaptor/precoding_matrix_table_generator.h"
+#include "ocudu/fapi_adaptor/precoding_codebook_generator.h"
 #include "ocudu/fapi_adaptor/uci_part2_correspondence_generator.h"
 #include "ocudu/ocudulog/ocudulog.h"
 
@@ -59,8 +59,8 @@ generate_fapi_fastpath_adaptor_dependencies(du_low&                             
         .ul_request_processor = upper.get_uplink_request_processor(),
         .ul_pdu_repository    = upper.get_uplink_pdu_slot_repository(),
         .ul_pdu_validator     = upper.get_uplink_pdu_validator(),
-        .pm_repo              = std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_repository>>(
-            fapi_adaptor::generate_precoding_matrix_tables(codebook_config, i))),
+        .pm_repo              = std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_codebook_repository>>(
+            fapi_adaptor::generate_precoding_codebooks(codebook_config, i))),
         .part2_repo           = std::move(std::get<std::unique_ptr<fapi_adaptor::uci_part2_correspondence_repository>>(
             fapi_adaptor::generate_uci_part2_correspondence(1)))};
 

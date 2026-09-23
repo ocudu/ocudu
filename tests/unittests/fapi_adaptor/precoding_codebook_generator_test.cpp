@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
-#include "ocudu/fapi_adaptor/precoding_matrix_table_generator.h"
+#include "ocudu/fapi_adaptor/precoding_codebook_generator.h"
 #include "ocudu/ran/precoding/precoding_codebook_configuration.h"
 #include "ocudu/ran/precoding/precoding_codebook_type1_helpers.h"
 #include "ocudu/ran/precoding/precoding_codebooks.h"
@@ -30,29 +30,29 @@ std::ostream& operator<<(std::ostream& os, const pmi_codebook_typeI_single_panel
 
 } // namespace ocudu
 
-TEST(precoding_matrix_table_generator, one_port)
+TEST(precoding_codebook_generator, one_port)
 {
-  std::unique_ptr<precoding_matrix_mapper>     mapper;
-  std::unique_ptr<precoding_matrix_repository> repository;
-  std::tie(mapper, repository) = generate_precoding_matrix_tables(pmi_codebook_one_port{}, 0);
+  std::unique_ptr<precoding_matrix_mapper>       mapper;
+  std::unique_ptr<precoding_codebook_repository> repository;
+  std::tie(mapper, repository) = generate_precoding_codebooks(pmi_codebook_one_port{}, 0);
 
   mac_pdsch_precoding_info info;
   info.report.reset();
 
   unsigned index = mapper->map(info, 1);
 
-  precoding_weight_matrix matrix = repository->get_precoding(index).mimo;
+  precoding_weight_matrix matrix = repository->get_precoding_config(index).mimo;
 
   precoding_weight_matrix expected_matrix = make_single_port();
 
   ASSERT_EQ(matrix, expected_matrix);
 }
 
-TEST(precoding_matrix_table_generator, two_port_one_layer)
+TEST(precoding_codebook_generator, two_port_one_layer)
 {
-  std::unique_ptr<precoding_matrix_mapper>     mapper;
-  std::unique_ptr<precoding_matrix_repository> repository;
-  std::tie(mapper, repository) = generate_precoding_matrix_tables(pmi_codebook_two_port{}, 0);
+  std::unique_ptr<precoding_matrix_mapper>       mapper;
+  std::unique_ptr<precoding_codebook_repository> repository;
+  std::tie(mapper, repository) = generate_precoding_codebooks(pmi_codebook_two_port{}, 0);
 
   // Iterate over all possible PMI.
   for (uint8_t pmi = 0; pmi != 4; ++pmi) {
@@ -61,7 +61,7 @@ TEST(precoding_matrix_table_generator, two_port_one_layer)
 
     unsigned index = mapper->map(info, 1);
 
-    precoding_weight_matrix matrix = repository->get_precoding(index).mimo;
+    precoding_weight_matrix matrix = repository->get_precoding_config(index).mimo;
 
     precoding_weight_matrix expected_matrix = make_precoding(pmi_two_antenna_port{pmi}, 1);
 
@@ -69,11 +69,11 @@ TEST(precoding_matrix_table_generator, two_port_one_layer)
   }
 }
 
-TEST(precoding_matrix_table_generator, two_port_two_layer)
+TEST(precoding_codebook_generator, two_port_two_layer)
 {
-  std::unique_ptr<precoding_matrix_mapper>     mapper;
-  std::unique_ptr<precoding_matrix_repository> repository;
-  std::tie(mapper, repository) = generate_precoding_matrix_tables(pmi_codebook_two_port{}, 0);
+  std::unique_ptr<precoding_matrix_mapper>       mapper;
+  std::unique_ptr<precoding_codebook_repository> repository;
+  std::tie(mapper, repository) = generate_precoding_codebooks(pmi_codebook_two_port{}, 0);
 
   // Iterate over all possible PMI.
   for (uint8_t pmi = 0; pmi != 2; ++pmi) {
@@ -82,7 +82,7 @@ TEST(precoding_matrix_table_generator, two_port_two_layer)
 
     unsigned index = mapper->map(info, 2);
 
-    precoding_weight_matrix matrix = repository->get_precoding(index).mimo;
+    precoding_weight_matrix matrix = repository->get_precoding_config(index).mimo;
 
     precoding_weight_matrix expected_matrix = make_precoding(pmi_two_antenna_port{pmi}, 2);
 
@@ -97,9 +97,9 @@ TEST_P(typeI_single_panel_fixture, TypeI_single_panel)
 {
   const pmi_codebook_typeI_single_panel& codebook_config = GetParam();
 
-  std::unique_ptr<precoding_matrix_mapper>     mapper;
-  std::unique_ptr<precoding_matrix_repository> repository;
-  std::tie(mapper, repository) = generate_precoding_matrix_tables(codebook_config, 0);
+  std::unique_ptr<precoding_matrix_mapper>       mapper;
+  std::unique_ptr<precoding_codebook_repository> repository;
+  std::tie(mapper, repository) = generate_precoding_codebooks(codebook_config, 0);
 
   unsigned nof_ports = get_precoding_codebook_antenna_ports(codebook_config);
 
@@ -124,7 +124,7 @@ TEST_P(typeI_single_panel_fixture, TypeI_single_panel)
 
             unsigned index = mapper->map(info, nof_layers);
 
-            precoding_weight_matrix matrix = repository->get_precoding(index).mimo;
+            precoding_weight_matrix matrix = repository->get_precoding_config(index).mimo;
 
             precoding_weight_matrix expected_matrix = make_precoding(pmi, nof_layers);
 

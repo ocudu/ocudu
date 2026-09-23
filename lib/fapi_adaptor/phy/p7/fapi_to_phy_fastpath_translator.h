@@ -12,7 +12,7 @@
 #include "ocudu/fapi/p7/messages/ul_tti_request.h"
 #include "ocudu/fapi/p7/p7_last_request_notifier.h"
 #include "ocudu/fapi/p7/p7_requests_gateway.h"
-#include "ocudu/fapi_adaptor/precoding_matrix_repository.h"
+#include "ocudu/fapi_adaptor/precoding_codebook_repository.h"
 #include "ocudu/fapi_adaptor/uci_part2_correspondence_repository.h"
 #include "ocudu/ocudulog/logger.h"
 #include "ocudu/phy/upper/channel_processors/pdsch/pdsch_processor.h"
@@ -69,8 +69,8 @@ struct fapi_to_phy_fastpath_translator_dependencies {
   uplink_pdu_slot_repository_pool& ul_pdu_repository;
   /// Uplink PDU validator.
   const uplink_pdu_validator& ul_pdu_validator;
-  /// Precoding matrix repository.
-  std::unique_ptr<precoding_matrix_repository> pm_repo;
+  /// Precoding codebook repository.
+  std::unique_ptr<precoding_codebook_repository> pm_repo;
   /// UCI Part2 correspondence repository.
   std::unique_ptr<uci_part2_correspondence_repository> part2_repo;
 };
@@ -260,8 +260,8 @@ private:
   std::atomic<slot_point> current_slot_point;
   /// Slot controller manager.
   slot_based_upper_phy_controller_manager slot_controller_mngr;
-  /// Precoding matrix repository.
-  std::unique_ptr<precoding_matrix_repository> pm_repo;
+  /// Precoding codebook repository.
+  std::unique_ptr<precoding_codebook_repository> pm_repo;
   /// UCI Part2 correspondence repository.
   std::unique_ptr<uci_part2_correspondence_repository> part2_repo;
   /// Error indication notifier.

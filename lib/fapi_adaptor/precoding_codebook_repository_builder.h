@@ -3,18 +3,18 @@
 
 #pragma once
 
-#include "ocudu/fapi_adaptor/precoding_matrix_repository.h"
+#include "ocudu/fapi_adaptor/precoding_codebook_repository.h"
 #include "ocudu/ran/beamforming/beam_identifier_helpers.h"
 #include <memory>
 
 namespace ocudu {
 namespace fapi_adaptor {
 
-/// Precoding matrix repository builder.
-class precoding_matrix_repository_builder
+/// Precoding codebook repository builder.
+class precoding_codebook_repository_builder
 {
 public:
-  explicit precoding_matrix_repository_builder(unsigned size) { repository.reserve(size); }
+  explicit precoding_codebook_repository_builder(unsigned size) { repository.reserve(size); }
 
   /// Adds the given composite precoding configuration to the repository with the given index.
   void add(unsigned index, const precoding_beamforming_composite& composite)
@@ -34,10 +34,10 @@ public:
     add(index, precoding_beamforming_composite{precoding, get_default_beam_list(precoding.get_nof_ports())});
   }
 
-  /// Builds and returns a precoding matrix repository.
-  std::unique_ptr<precoding_matrix_repository> build()
+  /// Builds and returns a precoding codebook repository.
+  std::unique_ptr<precoding_codebook_repository> build()
   {
-    return std::make_unique<precoding_matrix_repository>(std::move(repository));
+    return std::make_unique<precoding_codebook_repository>(std::move(repository));
   }
 
 private:

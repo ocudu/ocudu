@@ -4,15 +4,15 @@
 
 #include "pdcch.h"
 #include "ocudu/adt/format.h"
-#include "ocudu/fapi_adaptor/precoding_matrix_repository.h"
+#include "ocudu/fapi_adaptor/precoding_codebook_repository.h"
 
 using namespace ocudu;
 using namespace fapi_adaptor;
 
 /// Fills the DL DCI parameters of the PDCCH processor PDU.
-static void fill_dci(pdcch_processor::pdu_t&            proc_pdu,
-                     const fapi::dl_pdcch_pdu&          fapi_pdu,
-                     const precoding_matrix_repository& pm_repo)
+static void fill_dci(pdcch_processor::pdu_t&              proc_pdu,
+                     const fapi::dl_pdcch_pdu&            fapi_pdu,
+                     const precoding_codebook_repository& pm_repo)
 {
   const auto& fapi_dci = fapi_pdu.dl_dci;
 
@@ -42,7 +42,7 @@ static void fill_dci(pdcch_processor::pdu_t&            proc_pdu,
   const fapi::tx_precoding_and_beamforming_pdu::prgs_info& prg = fapi_dci.precoding_and_beamforming.prg;
   if (prg.beams.empty()) {
     dci.precoding_and_beamforming =
-        precoding_beamforming_configuration::make_wideband(pm_repo.get_precoding(prg.pm_index));
+        precoding_beamforming_configuration::make_wideband(pm_repo.get_precoding_config(prg.pm_index));
   } else {
     dci.precoding_and_beamforming = precoding_beamforming_configuration::make_wideband(prg.beams);
   }
@@ -88,10 +88,10 @@ static void fill_coreset(pdcch_processor::coreset_description& coreset, const fa
   }
 }
 
-void ocudu::fapi_adaptor::convert_pdcch_fapi_to_phy(pdcch_processor::pdu_t&            proc_pdu,
-                                                    const fapi::dl_pdcch_pdu&          fapi_pdu,
-                                                    slot_point                         slot,
-                                                    const precoding_matrix_repository& pm_repo)
+void ocudu::fapi_adaptor::convert_pdcch_fapi_to_phy(pdcch_processor::pdu_t&              proc_pdu,
+                                                    const fapi::dl_pdcch_pdu&            fapi_pdu,
+                                                    slot_point                           slot,
+                                                    const precoding_codebook_repository& pm_repo)
 {
   proc_pdu.slot = slot;
   proc_pdu.cp   = fapi_pdu.cp;

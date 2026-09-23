@@ -7,8 +7,8 @@ add_subdirectory(phy)
 
 set(PRECODING_SOURCES
         precoding_matrix_mapper.cpp
-        precoding_matrix_repository.cpp
-        precoding_matrix_table_generator.cpp
+        precoding_codebook_repository.cpp
+        precoding_codebook_generator.cpp
         )
 
 set(UCI_SOURCES

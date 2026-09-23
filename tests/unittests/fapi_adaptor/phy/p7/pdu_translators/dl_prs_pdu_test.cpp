@@ -5,7 +5,7 @@
 #include "../message_builder_helpers.h"
 #include "prs.h"
 #include "ocudu/adt/format.h"
-#include "ocudu/fapi_adaptor/precoding_matrix_table_generator.h"
+#include "ocudu/fapi_adaptor/precoding_codebook_generator.h"
 #include "ocudu/phy/upper/signal_processors/prs/prs_generator_configuration.h"
 #include <gtest/gtest.h>
 
@@ -15,11 +15,11 @@ using namespace unittest;
 
 TEST(fapi_phy_dl_prs_pdu_adaptor, valid_pdu_pass)
 {
-  fapi::dl_prs_pdu                   fapi_pdu = build_valid_dl_prs_pdu();
-  prs_generator_configuration        prs_config;
-  slot_point                         slot(fapi_pdu.scs, 0, 1);
-  auto                               pm_tools = generate_precoding_matrix_tables({pmi_codebook_one_port{}}, 0);
-  const precoding_matrix_repository& pm_repo  = *std::get<std::unique_ptr<precoding_matrix_repository>>(pm_tools);
+  fapi::dl_prs_pdu                     fapi_pdu = build_valid_dl_prs_pdu();
+  prs_generator_configuration          prs_config;
+  slot_point                           slot(fapi_pdu.scs, 0, 1);
+  auto                                 pm_tools = generate_precoding_codebooks({pmi_codebook_one_port{}}, 0);
+  const precoding_codebook_repository& pm_repo  = *std::get<std::unique_ptr<precoding_codebook_repository>>(pm_tools);
 
   convert_prs_fapi_to_phy(prs_config, fapi_pdu, slot, pm_repo);
 

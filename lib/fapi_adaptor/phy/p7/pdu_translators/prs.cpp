@@ -4,16 +4,16 @@
 
 #include "prs.h"
 #include "ocudu/adt/format.h"
-#include "ocudu/fapi_adaptor/precoding_matrix_repository.h"
+#include "ocudu/fapi_adaptor/precoding_codebook_repository.h"
 #include "ocudu/phy/upper/signal_processors/prs/prs_generator_configuration.h"
 
 using namespace ocudu;
 using namespace fapi_adaptor;
 
-void ocudu::fapi_adaptor::convert_prs_fapi_to_phy(prs_generator_configuration&       generator_config,
-                                                  const fapi::dl_prs_pdu&            fapi_pdu,
-                                                  slot_point                         slot,
-                                                  const precoding_matrix_repository& pm_repo)
+void ocudu::fapi_adaptor::convert_prs_fapi_to_phy(prs_generator_configuration&         generator_config,
+                                                  const fapi::dl_prs_pdu&              fapi_pdu,
+                                                  slot_point                           slot,
+                                                  const precoding_codebook_repository& pm_repo)
 {
   generator_config.slot         = slot;
   generator_config.cp           = fapi_pdu.cp;
@@ -27,5 +27,5 @@ void ocudu::fapi_adaptor::convert_prs_fapi_to_phy(prs_generator_configuration&  
   generator_config.power_offset_dB =
       fapi_pdu.prs_power_offset_db.has_value() ? fapi_pdu.prs_power_offset_db.value() : 0.f;
   generator_config.precoding_and_beamforming = precoding_beamforming_configuration::make_wideband(
-      pm_repo.get_precoding(fapi_pdu.precoding_and_beamforming.prg.pm_index));
+      pm_repo.get_precoding_config(fapi_pdu.precoding_and_beamforming.prg.pm_index));
 }

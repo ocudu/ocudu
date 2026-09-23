@@ -10,18 +10,18 @@
 namespace ocudu {
 namespace fapi_adaptor {
 
-class precoding_matrix_repository;
+class precoding_codebook_repository;
 
 /// Helper function that converts from a PDCCH FAPI PDU to a PDCCH processor PDU.
 ///
 /// \param[out] proc_pdu PDCCH processor PDU.
 /// \param[in] fapi_pdu FAPI PDU received that contains all the CSI-RS parameters.
 /// \param[in] slot Slot when the FAPI PDU was received.
-/// \param[in] pm_repo Precoding matrix repository.
-void convert_pdcch_fapi_to_phy(pdcch_processor::pdu_t&            proc_pdu,
-                               const fapi::dl_pdcch_pdu&          fapi_pdu,
-                               slot_point                         slot,
-                               const precoding_matrix_repository& pm_repo);
+/// \param[in] pm_repo Precoding codebook repository.
+void convert_pdcch_fapi_to_phy(pdcch_processor::pdu_t&              proc_pdu,
+                               const fapi::dl_pdcch_pdu&            fapi_pdu,
+                               slot_point                           slot,
+                               const precoding_codebook_repository& pm_repo);
 
 } // namespace fapi_adaptor
 } // namespace ocudu

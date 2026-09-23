@@ -8,7 +8,7 @@
 #include "message_builder_helpers.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/fapi/common/error_indication.h"
-#include "ocudu/fapi_adaptor/precoding_matrix_table_generator.h"
+#include "ocudu/fapi_adaptor/precoding_codebook_generator.h"
 #include "ocudu/fapi_adaptor/uci_part2_correspondence_generator.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/phy/support/resource_grid_pool.h"
@@ -249,8 +249,8 @@ protected:
       ul_request_processor,
       pdu_repo,
       ul_pdu_validator,
-      std::move(std::get<std::unique_ptr<precoding_matrix_repository>>(
-          generate_precoding_matrix_tables(pmi_codebook_one_port{}, 0))),
+      std::move(std::get<std::unique_ptr<precoding_codebook_repository>>(
+          generate_precoding_codebooks(pmi_codebook_one_port{}, 0))),
       std::move(std::get<std::unique_ptr<uci_part2_correspondence_repository>>(generate_uci_part2_correspondence(1)))};
   fapi_to_phy_fastpath_translator translator;
 
@@ -455,8 +455,8 @@ TEST_F(fapi_to_phy_translator_fixture, empty_ul_tti_generates_request_when_allow
        ul_request_processor,
        pdu_repo,
        ul_pdu_validator,
-       std::move(std::get<std::unique_ptr<precoding_matrix_repository>>(
-           generate_precoding_matrix_tables(pmi_codebook_one_port{}, 0))),
+       std::move(std::get<std::unique_ptr<precoding_codebook_repository>>(
+           generate_precoding_codebooks(pmi_codebook_one_port{}, 0))),
        std::move(
            std::get<std::unique_ptr<uci_part2_correspondence_repository>>(generate_uci_part2_correspondence(1)))});
 
@@ -489,8 +489,8 @@ TEST_F(fapi_to_phy_translator_fixture, ntn_k_mac_pusch_pdu_carries_the_uplink_sl
        ul_request_processor,
        pdu_repo,
        ul_pdu_validator,
-       std::move(std::get<std::unique_ptr<precoding_matrix_repository>>(
-           generate_precoding_matrix_tables(pmi_codebook_one_port{}, 0))),
+       std::move(std::get<std::unique_ptr<precoding_codebook_repository>>(
+           generate_precoding_codebooks(pmi_codebook_one_port{}, 0))),
        std::move(
            std::get<std::unique_ptr<uci_part2_correspondence_repository>>(generate_uci_part2_correspondence(1)))});
   ntn_translator.set_error_indication_notifier(error_notifier_spy);
@@ -535,8 +535,8 @@ TEST_F(fapi_to_phy_translator_fixture, terrestrial_pusch_pdu_slot_offset_is_zero
        ul_request_processor,
        pdu_repo,
        ul_pdu_validator,
-       std::move(std::get<std::unique_ptr<precoding_matrix_repository>>(
-           generate_precoding_matrix_tables(pmi_codebook_one_port{}, 0))),
+       std::move(std::get<std::unique_ptr<precoding_codebook_repository>>(
+           generate_precoding_codebooks(pmi_codebook_one_port{}, 0))),
        std::move(
            std::get<std::unique_ptr<uci_part2_correspondence_repository>>(generate_uci_part2_correspondence(1)))});
   terr_translator.set_error_indication_notifier(error_notifier_spy);
@@ -585,8 +585,8 @@ TEST_F(fapi_to_phy_translator_fixture, ntn_k_mac_pucch_config_slot_is_shifted_to
        ul_request_processor,
        pdu_repo,
        ul_pdu_validator,
-       std::move(std::get<std::unique_ptr<precoding_matrix_repository>>(
-           generate_precoding_matrix_tables(pmi_codebook_one_port{}, 0))),
+       std::move(std::get<std::unique_ptr<precoding_codebook_repository>>(
+           generate_precoding_codebooks(pmi_codebook_one_port{}, 0))),
        std::move(
            std::get<std::unique_ptr<uci_part2_correspondence_repository>>(generate_uci_part2_correspondence(1)))});
   ntn_translator.set_error_indication_notifier(error_notifier_spy);
@@ -633,8 +633,8 @@ TEST_F(fapi_to_phy_translator_fixture, terrestrial_pucch_config_slot_offset_is_z
        ul_request_processor,
        pdu_repo,
        ul_pdu_validator,
-       std::move(std::get<std::unique_ptr<precoding_matrix_repository>>(
-           generate_precoding_matrix_tables(pmi_codebook_one_port{}, 0))),
+       std::move(std::get<std::unique_ptr<precoding_codebook_repository>>(
+           generate_precoding_codebooks(pmi_codebook_one_port{}, 0))),
        std::move(
            std::get<std::unique_ptr<uci_part2_correspondence_repository>>(generate_uci_part2_correspondence(1)))});
   terr_translator.set_error_indication_notifier(error_notifier_spy);

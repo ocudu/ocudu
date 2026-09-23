@@ -11,7 +11,7 @@
 #include "ocudu/du/du_high/o_du_high_config.h"
 #include "ocudu/e2/e2_du_factory.h"
 #include "ocudu/fapi_adaptor/mac/mac_fapi_fastpath_adaptor_factory.h"
-#include "ocudu/fapi_adaptor/precoding_matrix_table_generator.h"
+#include "ocudu/fapi_adaptor/precoding_codebook_generator.h"
 #include "ocudu/fapi_adaptor/uci_part2_correspondence_generator.h"
 #include "ocudu/ran/band_helper.h"
 #include "ocudu/ran/ssb/ssb_mapping.h"
@@ -98,7 +98,7 @@ generate_mac_fapi_p7_sector_adaptor_dependencies(const o_du_high_sector_dependen
   return {.p7_gateway           = sector_dependencies.p7_gateway,
           .p7_last_req_notifier = sector_dependencies.p7_last_req_notifier,
           .pm_mapper            = std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_mapper>>(
-              fapi_adaptor::generate_precoding_matrix_tables(codebook_config, sector))),
+              fapi_adaptor::generate_precoding_codebooks(codebook_config, sector))),
           .part2_mapper         = std::move(std::get<std::unique_ptr<fapi_adaptor::uci_part2_correspondence_mapper>>(
               fapi_adaptor::generate_uci_part2_correspondence(1))),
           .fapi_logger          = sector_dependencies.fapi_logger};

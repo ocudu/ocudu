@@ -4,7 +4,7 @@
 
 #include "helpers.h"
 #include "pdcch.h"
-#include "ocudu/fapi_adaptor/precoding_matrix_table_generator.h"
+#include "ocudu/fapi_adaptor/precoding_codebook_generator.h"
 #include "ocudu/mac/mac_cell_result.h"
 #include <gtest/gtest.h>
 
@@ -22,7 +22,7 @@ TEST(mac_fapi_pdcch_pdu_conversor_test, mac_to_fapi_conversion_is_valid)
 
   fapi::dl_pdcch_pdu         fapi_pdu;
   fapi::dl_pdcch_pdu_builder builder(fapi_pdu);
-  auto                       pm_tools = generate_precoding_matrix_tables(pmi_codebook_one_port{}, 0);
+  auto                       pm_tools = generate_precoding_codebooks(pmi_codebook_one_port{}, 0);
   convert_pdcch_mac_to_fapi(builder, context_information, payload, *std::get<0>(pm_tools), nof_prbs);
 
   // BWP.
@@ -73,7 +73,7 @@ TEST(mac_fapi_pdcch_pdu_conversor_test, beamformed_dci_carries_its_beam)
 
   fapi::dl_pdcch_pdu         fapi_pdu;
   fapi::dl_pdcch_pdu_builder builder(fapi_pdu);
-  auto                       pm_tools = generate_precoding_matrix_tables(pmi_codebook_one_port{}, 0);
+  auto                       pm_tools = generate_precoding_codebooks(pmi_codebook_one_port{}, 0);
   convert_pdcch_mac_to_fapi(builder, context, payload, *std::get<0>(pm_tools), nof_prbs);
 
   ASSERT_EQ(precoding_beam_list({beam_id}), fapi_pdu.dl_dci.precoding_and_beamforming.prg.beams);
@@ -91,7 +91,7 @@ TEST(mac_fapi_pdcch_pdu_conversor_test, dci_without_a_beam_selects_a_precoding_m
 
   fapi::dl_pdcch_pdu             fapi_pdu;
   fapi::dl_pdcch_pdu_builder     builder(fapi_pdu);
-  auto                           pm_tools = generate_precoding_matrix_tables(pmi_codebook_one_port{}, 0);
+  auto                           pm_tools = generate_precoding_codebooks(pmi_codebook_one_port{}, 0);
   const precoding_matrix_mapper& mapper   = *std::get<0>(pm_tools);
   convert_pdcch_mac_to_fapi(builder, context, payload, mapper, nof_prbs);
 
