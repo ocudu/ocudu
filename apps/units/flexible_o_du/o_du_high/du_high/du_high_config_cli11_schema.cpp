@@ -182,14 +182,12 @@ static void configure_cli11_pdcch_common_args(CLI::App& app, pdcch_common_unit_c
 
   add_option(app, "--ss0_index", common_params.ss0_index, "SearchSpace#0 index")->capture_default_str()->range(0, 15);
 
-  // NOTE: The CORESET duration of 3 symbols is only permitted if the dmrs-typeA-Position information element has
-  // been set to 3. And, we use only pos2 or pos1.
   add_option(app,
              "--max_coreset0_duration",
              common_params.max_coreset0_duration,
              "Maximum CORESET#0 duration in OFDM symbols to consider when deriving CORESET#0 index")
       ->capture_default_str()
-      ->range(1, 2);
+      ->range(1, 3);
 }
 
 static void configure_cli11_pdcch_dedicated_args(CLI::App& app, pdcch_dedicated_unit_config& ded_params)
