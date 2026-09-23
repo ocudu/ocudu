@@ -154,7 +154,7 @@ void PrintTo(const test_params& value, ::std::ostream* os)
   *os << fmt::format("ports={} cqi={} ri={}", value.nof_ports, value.test_ue_cfg.cqi, value.test_ue_cfg.ri);
   if (value.nof_ports == 2) {
     *os << fmt::format(" pmi={}", value.test_ue_cfg.pmi);
-  } else if (value.nof_ports == 4) {
+  } else if (value.nof_ports > 2) {
     *os << fmt::format(" i1_1={} i1_2={} i1_3={} i2={}",
                        value.test_ue_cfg.i_1_1,
                        value.test_ue_cfg.i_1_2,
@@ -545,6 +545,9 @@ INSTANTIATE_TEST_SUITE_P(test_configs,
   test_params{2, {to_rnti(0x4601), 1, 10, 8, true, true, 3,   1,  3}},
   test_params{4, {to_rnti(0x4601), 1, 10, 8, true, true, 12,  4,  0,   2,  std::nullopt, 0,  1}},
   test_params{4, {to_rnti(0x4601), 1, 10, 8, true, true, 12,  1,  0,   1,  std::nullopt, 0,  3}},
-  test_params{4, {to_rnti(0x4601), 1, 10, 8, true, true, 12,  2,  0,   7,  std::nullopt, 1,  0}}
+  test_params{4, {to_rnti(0x4601), 1, 10, 8, true, true, 12,  2,  0,   7,  std::nullopt, 1,  0}},
+  test_params{8, {to_rnti(0x4601), 1, 10, 8, true, true, 12,  1,  0,   9,  std::nullopt, 0,  3}},
+  test_params{8, {to_rnti(0x4601), 1, 10, 8, true, true, 9,   2,  0,   15, std::nullopt, 3,  1}},
+  test_params{8, {to_rnti(0x4601), 1, 10, 8, true, true, 6,   4,  0,   2,  std::nullopt, 2,  0}}
 ));
 // clang-format on

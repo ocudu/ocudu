@@ -3,9 +3,13 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "mac_test_mode_helpers.h"
+#include "ocudu/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "ocudu/ran/csi_report/csi_report_packed.h"
+#include "ocudu/ran/csi_report/csi_report_size.h"
+#include "ocudu/ran/precoding/precoding_codebook_type1_helpers.h"
 #include "ocudu/scheduler/result/pucch_info.h"
 #include "ocudu/scheduler/result/pusch_info.h"
+#include <algorithm>
 
 using namespace ocudu;
 using namespace odu;
@@ -46,61 +50,101 @@ expected<mac_rx_data_indication> odu::create_test_pdu_with_rrc_setup_complete(du
       sl_rx, cell_index, mac_rx_pdu_list{mac_rx_pdu{test_rnti, harq_id, std::move(buf.value())}}};
 }
 
-static void fill_csi_bits(csi_report_packed&                              payload,
-                          rnti_t                                          rnti,
-                          unsigned                                        nof_ports,
-                          unsigned                                        nof_allowed_ri,
-                          const du_test_mode_config::test_mode_ue_config& test_ue_cfg)
+/// \brief Selects the rank reported by the test mode UE.
+///
+/// Returns the highest rank allowed by the RI restriction that does not exceed the configured rank.
+static unsigned select_reported_rank(const ri_restriction_type& ri_restriction, unsigned configured_rank)
 {
-  static constexpr size_t CQI_BITLEN = 4;
-
-  payload.resize(0);
-  if (nof_ports == 2) {
-    const size_t RI_BITLEN  = std::min(1U, log2_ceil(nof_allowed_ri));
-    const size_t PMI_BITLEN = 2;
-    payload.push_back(test_ue_cfg.ri - 1, RI_BITLEN);
-    payload.push_back(test_ue_cfg.pmi, PMI_BITLEN);
-  } else if (nof_ports > 2) {
-    const size_t RI_BITLEN    = std::min(2U, log2_ceil(nof_allowed_ri));
-    const size_t I_1_1_BITLEN = 3;
-    const size_t I_1_3_BITLEN = test_ue_cfg.ri == 2 ? 1 : 0;
-    const size_t I_2_BITLEN   = test_ue_cfg.ri == 1 ? 2 : 1;
-    payload.push_back(test_ue_cfg.ri - 1, RI_BITLEN);
-    if (I_2_BITLEN + I_1_1_BITLEN + I_1_3_BITLEN < 5) {
-      payload.push_back(false);
-    }
-    payload.push_back(test_ue_cfg.i_1_1, I_1_1_BITLEN);
-    if (I_1_3_BITLEN > 0) {
-      payload.push_back(*test_ue_cfg.i_1_3, I_1_3_BITLEN);
-    }
-    payload.push_back(test_ue_cfg.i_2, I_2_BITLEN);
+  if (ri_restriction.none()) {
+    return 1;
   }
-  payload.push_back(test_ue_cfg.cqi, CQI_BITLEN);
+
+  const int rank_bit = ri_restriction.find_highest(0, std::min<size_t>(configured_rank, ri_restriction.size()), true);
+  return static_cast<unsigned>((rank_bit >= 0) ? rank_bit : ri_restriction.find_lowest(true)) + 1;
 }
 
-static void fill_csi_bits(csi_report_packed&                              payload,
-                          rnti_t                                          rnti,
-                          const pucch_info&                               pucch,
-                          const du_test_mode_config::test_mode_ue_config& test_ue_cfg)
+/// Gets the index of a rank within the allowed rank values, as per TS 38.214 Section 5.2.2.2.1.
+static unsigned get_rank_index(const ri_restriction_type& ri_restriction, unsigned rank)
 {
-  unsigned nof_ports =
-      pucch.csi_rep_cfg.has_value() ? get_precoding_codebook_antenna_ports(pucch.csi_rep_cfg->pmi_codebook) : 1;
-  unsigned nof_allowed_ri = pucch.csi_rep_cfg.has_value() ? pucch.csi_rep_cfg->ri_restriction.count() : nof_ports;
-  fill_csi_bits(payload, rnti, nof_ports, nof_allowed_ri, test_ue_cfg);
+  // The rank is the number of layers, starting at one, whereas bit i of the RI restriction enables rank i + 1.
+  const auto  allowed_ranks = ri_restriction.get_bit_positions();
+  const auto* rank_it       = std::find(allowed_ranks.begin(), allowed_ranks.end(), static_cast<size_t>(rank - 1));
+  return (rank_it != allowed_ranks.end()) ? static_cast<unsigned>(rank_it - allowed_ranks.begin()) : 0;
 }
 
-static void fill_csi_bits(csi_report_packed&                              payload,
-                          rnti_t                                          rnti,
-                          const ul_sched_info&                            pusch,
+/// Appends the PMI fields configured for the test mode UE, whose bit-widths are given in TS 38.212 Table 6.3.1.1.2-1.
+static void fill_pmi_bits(csi_report_packed&                              packed,
+                          const pmi_codebook_config&                      pmi_codebook,
+                          unsigned                                        rank,
                           const du_test_mode_config::test_mode_ue_config& test_ue_cfg)
 {
-  if (not pusch.uci.has_value() or not pusch.uci.value().csi.has_value()) {
+  if (std::holds_alternative<pmi_codebook_two_port>(pmi_codebook)) {
+    packed.push_back(test_ue_cfg.pmi, (rank == 1) ? 2U : 1U);
     return;
   }
-  const auto& csi_rep_cfg    = pusch.uci.value().csi.value().csi_rep_cfg;
-  unsigned    nof_ports      = get_precoding_codebook_antenna_ports(csi_rep_cfg.pmi_codebook);
-  unsigned    nof_allowed_ri = csi_rep_cfg.ri_restriction.count();
-  fill_csi_bits(payload, rnti, nof_ports, nof_allowed_ri, test_ue_cfg);
+
+  const auto* single_panel = std::get_if<pmi_codebook_typeI_single_panel>(&pmi_codebook);
+  if (single_panel == nullptr) {
+    return;
+  }
+
+  // The fields that the panel topology and the rank do not report have a zero bit-width.
+  const pmi_typeI_single_panel_param_sizes sizes =
+      get_pmi_sizes_typeI_single_panel(get_single_panel_info(single_panel->n1_n2), rank);
+  packed.push_back(test_ue_cfg.i_1_1, sizes.i_1_1);
+  packed.push_back(test_ue_cfg.i_1_2.value_or(0), sizes.i_1_2);
+  packed.push_back(test_ue_cfg.i_1_3.value_or(0), sizes.i_1_3);
+  packed.push_back(test_ue_cfg.i_2, sizes.i_2);
+}
+
+/// Fills a CSI Part 1 payload with the values configured for the test mode UE, following TS 38.212 Table 6.3.1.1.2-7.
+static void fill_csi_bits(csi_report_packed&                              payload,
+                          const csi_report_configuration&                 csi_rep_cfg,
+                          const du_test_mode_config::test_mode_ue_config& test_ue_cfg)
+{
+  payload.resize(0);
+
+  const bool has_pmi = (csi_rep_cfg.quantities == csi_report_quantities::cri_ri_pmi_cqi) ||
+                       (csi_rep_cfg.quantities == csi_report_quantities::cri_ri_li_pmi_cqi);
+  const bool has_cqi = has_pmi || (csi_rep_cfg.quantities == csi_report_quantities::cri_ri_cqi);
+  if (not has_cqi) {
+    return;
+  }
+
+  const unsigned            rank  = select_reported_rank(csi_rep_cfg.ri_restriction, test_ue_cfg.ri);
+  const ri_li_cqi_cri_sizes sizes = get_ri_li_cqi_cri_sizes(
+      csi_rep_cfg.pmi_codebook, csi_rep_cfg.ri_restriction, rank, csi_rep_cfg.nof_csi_rs_resources);
+
+  // CRI. The test mode UE always reports the first CSI-RS resource.
+  payload.push_back(0U, sizes.cri);
+
+  // RI.
+  payload.push_back(get_rank_index(csi_rep_cfg.ri_restriction, rank), sizes.ri);
+
+  // LI.
+  if (csi_rep_cfg.quantities == csi_report_quantities::cri_ri_li_pmi_cqi) {
+    payload.push_back(0U, sizes.li);
+  }
+
+  // Padding, which makes the report size independent of the reported rank, precedes the PMI.
+  const unsigned nof_pmi_bits   = has_pmi ? csi_report_get_size_pmi(csi_rep_cfg.pmi_codebook, rank) : 0;
+  const unsigned nof_cqi_bits   = sizes.wideband_cqi_first_tb + sizes.wideband_cqi_second_tb;
+  const unsigned report_size    = get_csi_report_pucch_size(csi_rep_cfg).part1_size.value();
+  const unsigned nof_field_bits = payload.size() + nof_pmi_bits + nof_cqi_bits;
+  ocudu_assert(report_size >= nof_field_bits,
+               "The CSI report size (i.e., {} bits) is smaller than the generated fields (i.e., {} bits).",
+               report_size,
+               nof_field_bits);
+  payload.push_back(0U, report_size - nof_field_bits);
+
+  // PMI.
+  if (has_pmi) {
+    fill_pmi_bits(payload, csi_rep_cfg.pmi_codebook, rank, test_ue_cfg);
+  }
+
+  // Wideband CQI for the first TB and, for a rank higher than four, for the second TB.
+  payload.push_back(test_ue_cfg.cqi, sizes.wideband_cqi_first_tb);
+  payload.push_back(test_ue_cfg.cqi, sizes.wideband_cqi_second_tb);
 }
 
 static mac_uci_pdu::pucch_f0_or_f1_type make_f0f1_uci_pdu(const pucch_info&                               pucch,
@@ -168,7 +212,7 @@ make_f2f3f4_uci_pdu(const pucch_info& pucch, const du_test_mode_config::test_mod
   if (pucch.csi_rep_cfg.has_value()) {
     pucch_ind.csi_part1_info.emplace();
     pucch_ind.csi_part1_info->is_valid = true;
-    fill_csi_bits(pucch_ind.csi_part1_info->payload, pucch.crnti, pucch, test_ue_cfg);
+    fill_csi_bits(pucch_ind.csi_part1_info->payload, pucch.csi_rep_cfg.value(), test_ue_cfg);
   }
   return pucch_ind;
 }
@@ -210,7 +254,7 @@ mac_uci_pdu odu::create_uci_pdu(const ul_sched_info& pusch, const du_test_mode_c
   if (uci_info.csi.has_value() and uci_info.csi->csi_part1_nof_bits > 0) {
     pusch_ind.csi_part1_info.emplace();
     pusch_ind.csi_part1_info->is_valid = true;
-    fill_csi_bits(pusch_ind.csi_part1_info->payload, pusch.pusch_cfg.rnti, pusch, test_ue_cfg);
+    fill_csi_bits(pusch_ind.csi_part1_info->payload, uci_info.csi->csi_rep_cfg, test_ue_cfg);
   }
   return pdu;
 }
