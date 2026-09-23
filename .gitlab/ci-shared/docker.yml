@@ -140,6 +140,8 @@ variables:
         #   awk:    removes FileName: element blocks (File sections from dpkg lists)
         #   grep 1: removes evident-by RelationshipComment lines paired with file refs
         #   grep 2: removes CONTAINS/OTHER Relationship lines pointing to SPDXRef-File-
+        #   grep 3: removes DEPENDENCY_OF relationships (keeps CONTAINS/DESCRIBES)
+        #   grep 4: removes guessed cpe23Type security ExternalRefs (keeps purl refs)
 
         SYFT_REGISTRY_AUTH_USERNAME="${REGISTRY_AUTH_USERNAME}" \
           SYFT_REGISTRY_AUTH_PASSWORD="${REGISTRY_AUTH_PASSWORD}" \
@@ -149,6 +151,8 @@ variables:
           | awk '/^FileName:/{skip=1;next} /^$/{if(skip){skip=0;next}} !skip' \
           | grep -v "^RelationshipComment: evident-by:" \
           | grep -v "^Relationship:.*SPDXRef-File-" \
+          | grep -v "^Relationship:.*DEPENDENCY_OF" \
+          | grep -v "^ExternalRef: SECURITY cpe23Type" \
           > container.spdx
       }
 
