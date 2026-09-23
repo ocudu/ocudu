@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/rrc/ue/rrc_measurement_types_asn1_converters.h"
+#include "tests/ocudu_test_requirements.h"
 #include <array>
 #include <chrono>
 #include <ctime>
@@ -98,6 +99,8 @@ TEST(cond_trigger_asn1, cond_event_a5_encodes_correctly)
 /// hysteresis (10 m steps), and time_to_trigger.
 TEST(cond_trigger_asn1, cond_event_d1_encodes_correctly)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-3");
+
   rrc_cond_trigger_cfg cfg;
   cfg.rs_type = rrc_nr_rs_type::ssb;
 
@@ -129,6 +132,8 @@ TEST(cond_trigger_asn1, cond_event_d1_encodes_correctly)
 /// Layout (6 bytes, MSB first): [1-bit sign][23-bit lat][24-bit lon_enc]
 TEST(cond_trigger_asn1, cond_event_d1_ref_location_bytes)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-3");
+
   struct test_vector {
     reference_location     loc;
     std::array<uint8_t, 6> expected;
@@ -173,6 +178,8 @@ TEST(cond_trigger_asn1, cond_event_d1_ref_location_bytes)
 /// cond_event_t1 encodes t1_thres_r17 (10 ms units since 1900) and dur_r17 (100 ms steps).
 TEST(cond_trigger_asn1, cond_event_t1_encodes_correctly)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-3");
+
   // 2025-01-01T00:00:00 UTC = 1735689600 seconds since Unix epoch.
   constexpr time_t   t_unix          = 1735689600;
   constexpr int64_t  ms_1970         = static_cast<int64_t>(t_unix) * 1000LL;
@@ -244,6 +251,8 @@ static rrc_event_trigger_cfg make_event_trigger_cfg()
 /// event_d1 encodes the same distance fields as its conditional counterpart, plus report_on_leave.
 TEST(event_trigger_asn1, event_d1_encodes_correctly)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-2");
+
   rrc_event_trigger_cfg cfg = make_event_trigger_cfg();
 
   cfg.event_id.id                        = rrc_event_id::event_id_t::d1;
@@ -272,6 +281,8 @@ TEST(event_trigger_asn1, event_d1_encodes_correctly)
 /// be moved between the two without changing what the UE is asked to measure.
 TEST(event_trigger_asn1, event_d1_matches_its_conditional_counterpart)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-2", "CU-NTN-MOB-3");
+
   rrc_event_id event_id;
   event_id.id                        = rrc_event_id::event_id_t::d1;
   event_id.distance_thresh_from_ref1 = 5000;

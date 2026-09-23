@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/du/du_high/du_manager/ran_resource_management/du_meas_config_manager.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/rrc_nr/sys_info.h"
 #include "ocudu/ran/ssb/ssb_properties.h"
@@ -467,6 +468,8 @@ meas_gap_config create_ntn_meas_gap(std::optional<std::chrono::microseconds> ul_
 // In a terrestrial cell the uplink window sits at the gap offset, so the first candidate offset is already free.
 TEST(du_meas_config_manager_ntn_test, without_timing_advance_the_gap_is_placed_at_the_smtc_offset)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-MOB-1");
+
   const meas_gap_config gap = create_ntn_meas_gap(std::nullopt);
 
   EXPECT_EQ(0, gap.offset);
@@ -478,6 +481,8 @@ TEST(du_meas_config_manager_ntn_test, without_timing_advance_the_gap_is_placed_a
 // good enough for a terrestrial cell now collides and another one must be picked.
 TEST(du_meas_config_manager_ntn_test, timing_advance_moves_the_gap_off_the_uplink_occasion)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-MOB-1");
+
   constexpr std::chrono::microseconds ul_ta{7000};
 
   const slot_point occasion_slot{ntn_scs, ul_occasion_slot};

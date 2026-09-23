@@ -4,6 +4,7 @@
 
 #include "du_manager_procedure_test_helpers.h"
 #include "lib/du/du_high/du_manager/procedures/ue_creation_procedure.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/rrc_nr/cell_group_config.h"
@@ -228,6 +229,8 @@ TEST_F(du_manager_ue_creation_tester, when_ul_ccch_flush_fails_then_ue_is_destro
 
 TEST_F(du_manager_ue_creation_tester, when_ue_is_created_on_non_ntn_cell_then_mac_dl_harq_buffer_uses_nof_harq_proc)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-HARQ-1");
+
   start_procedure();
 
   ASSERT_TRUE(this->mac.last_ue_create_msg.has_value());
@@ -280,6 +283,8 @@ protected:
 TEST_F(du_manager_ntn_ue_creation_tester,
        when_ue_is_created_on_ntn_cell_then_mac_dl_harq_buffer_is_pre_sized_to_cell_maximum)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-HARQ-1");
+
   start_procedure();
 
   ASSERT_TRUE(this->mac.last_ue_create_msg.has_value());

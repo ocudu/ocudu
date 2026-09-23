@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/ntn/ntn_configuration_manager.h"
 #include "ocudu/ntn/ntn_configuration_manager_config.h"
 #include "ocudu/ntn/ntn_configuration_manager_dependencies.h"
@@ -187,6 +188,8 @@ protected:
 
 TEST_F(ntn_configuration_manager_test, meas_cell_publishes_ntn_neighbour_info_with_epoch_in_serving_sfn)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-1");
+
   ntn_configuration_manager_config cfg = make_meas_cell_config();
   create_manager(cfg);
   time_provider->mapping = make_mapping(100);
@@ -212,6 +215,8 @@ TEST_F(ntn_configuration_manager_test, meas_cell_publishes_ntn_neighbour_info_wi
 
 TEST_F(ntn_configuration_manager_test, no_publication_until_time_mapping_is_available)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-2");
+
   create_manager(make_meas_cell_config());
 
   // No time-slot mapping available yet (no reference time report received).
@@ -226,6 +231,8 @@ TEST_F(ntn_configuration_manager_test, no_publication_until_time_mapping_is_avai
 
 TEST_F(ntn_configuration_manager_test, ncell_without_nci_is_not_published)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-1");
+
   ntn_configuration_manager_config cfg = make_meas_cell_config();
   // Add a second neighbour without NCI (SIB19-only neighbour).
   ntn_neighbor_cell_config& ncell = cfg.cells.front().ncells.emplace_back();
@@ -245,6 +252,8 @@ TEST_F(ntn_configuration_manager_test, ncell_without_nci_is_not_published)
 // SI-window and epoch derivation depend on the numerology. On the pre-fix code this requested kHz15 for every cell.
 TEST_F(ntn_configuration_manager_test, periodic_update_requests_the_cell_common_scs)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-2");
+
   ntn_configuration_manager_config cfg = make_meas_cell_config();
   cfg.cells.front().common_scs         = subcarrier_spacing::kHz30;
   create_manager(cfg);
@@ -263,6 +272,8 @@ TEST_F(ntn_configuration_manager_test, periodic_update_requests_the_cell_common_
 // update and check it.
 TEST_F(ntn_configuration_manager_test, si_window_start_is_correct_for_window_position_above_one)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-2");
+
   ntn_configuration_manager_config cfg = make_sib19_cell_config(
       ntn_si_scheduling_info{/*si_period_rf=*/8, /*si_window_len_slots=*/5, /*si_window_position=*/2});
   create_manager(cfg);

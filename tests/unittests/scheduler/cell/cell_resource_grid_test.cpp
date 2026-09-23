@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/scheduler/cell/resource_grid.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "ocudu/scheduler/config/scheduler_expert_config_factory.h"
@@ -208,6 +209,8 @@ TEST(pusch_resource_allocation_test, test_all)
 /// many more slots ahead without the ring wrapping onto them.
 TEST(cell_resource_grid_test, ntn_grid_keeps_allocations_up_to_the_koffset_delayed_ul_slot)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-TIM-1");
+
   // Cell-specific Koffset, in milliseconds, of LEO and GEO cells.
   for (unsigned koffset_ms : {16U, 240U, 480U}) {
     scheduler_expert_config                  sched_cfg = config_helpers::make_default_scheduler_expert_config();

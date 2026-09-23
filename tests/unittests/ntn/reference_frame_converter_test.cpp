@@ -4,6 +4,7 @@
 
 #include "lib/ntn/converters/reference_frame_converter.h"
 #include "lib/ntn/coordinates_types.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/support/test_utils.h"
 #include "fmt/chrono.h"
 #include <cmath>
@@ -29,6 +30,8 @@ static std::chrono::system_clock::time_point string_to_timepoint(const std::stri
 
 TEST(test_converters, ecef_2_eci_test)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-4");
+
   double pos_tolerance = 1e-3; // m -> 0.1cm
   double vel_tolerance = 1e-6; // m/s
   double pos_error     = 0;
@@ -69,6 +72,8 @@ TEST(test_converters, ecef_2_eci_test)
 
 TEST(test_converters, eci_2_ecef_test)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-4");
+
   double pos_tolerance = 1e-3; // m -> 0.1cm
   double vel_tolerance = 1e-6; // m/s
   double pos_error     = 0;
@@ -109,6 +114,8 @@ TEST(test_converters, eci_2_ecef_test)
 
 TEST(test_converters, ecef_2_eci_2_ecef_test)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-4");
+
   double pos_tolerance = 1e-3; // m -> 0.1cm
   double vel_tolerance = 1e-6; // m/s
   double pos_error     = 0;

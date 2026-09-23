@@ -4,6 +4,7 @@
 
 #include "apps/units/flexible_o_du/split_helpers/commands/ntn_config_update_remote_command.h"
 #include "nlohmann/json.hpp"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/ntn/ntn_configuration_manager.h"
 #include "ocudu/ocudulog/logger.h"
 #include "fmt/format.h"
@@ -52,6 +53,8 @@ protected:
 
 TEST_F(ntn_config_update_remote_command_test, single_cell_update_succeeds)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   // Create remote command.
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
@@ -143,6 +146,8 @@ TEST_F(ntn_config_update_remote_command_test, single_cell_update_succeeds)
 
 TEST_F(ntn_config_update_remote_command_test, multi_cell_with_complete_config)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   // Create remote command.
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
@@ -249,6 +254,8 @@ TEST_F(ntn_config_update_remote_command_test, multi_cell_with_complete_config)
 
 TEST_F(ntn_config_update_remote_command_test, common_config_with_overrides)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   // Create remote command.
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
@@ -387,6 +394,8 @@ TEST_F(ntn_config_update_remote_command_test, common_config_with_overrides)
 
 TEST_F(ntn_config_update_remote_command_test, common_config_without_cells_fails)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   // Create remote command.
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
@@ -424,6 +433,8 @@ TEST_F(ntn_config_update_remote_command_test, common_config_without_cells_fails)
 
 TEST_F(ntn_config_update_remote_command_test, when_cells_array_is_empty_then_error_is_returned)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   // Create remote command.
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
@@ -443,6 +454,8 @@ TEST_F(ntn_config_update_remote_command_test, when_cells_array_is_empty_then_err
 
 TEST_F(ntn_config_update_remote_command_test, when_some_cells_fail_then_error_is_returned)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   // Create remote command.
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
@@ -490,6 +503,8 @@ TEST_F(ntn_config_update_remote_command_test, when_some_cells_fail_then_error_is
 
 TEST_F(ntn_config_update_remote_command_test, when_invalid_format_then_error_is_returned)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   // Create remote command.
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
@@ -509,6 +524,8 @@ TEST_F(ntn_config_update_remote_command_test, when_invalid_format_then_error_is_
 
 TEST_F(ntn_config_update_remote_command_test, when_request_has_invalid_field_then_error_is_returned)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
   auto future_time_ms =
@@ -544,6 +561,8 @@ TEST_F(ntn_config_update_remote_command_test, when_request_has_invalid_field_the
 
 TEST_F(ntn_config_update_remote_command_test, when_one_cell_has_invalid_config_then_entire_request_is_rejected)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   // Create remote command.
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
@@ -600,6 +619,8 @@ TEST_F(ntn_config_update_remote_command_test, when_one_cell_has_invalid_config_t
 TEST_F(ntn_config_update_remote_command_test,
        when_common_config_with_one_invalid_cell_override_then_entire_request_is_rejected)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   // Create remote command.
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
@@ -650,6 +671,8 @@ TEST_F(ntn_config_update_remote_command_test,
 
 TEST_F(ntn_config_update_remote_command_test, single_cell_update_from_json_string)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   // Create remote command.
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
@@ -904,6 +927,8 @@ TEST_F(ntn_config_update_remote_command_test, single_cell_update_from_json_strin
 
 TEST_F(ntn_config_update_remote_command_test, single_cell_update_with_iso_timestamp_string)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   // Create remote command.
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
@@ -970,6 +995,8 @@ TEST_F(ntn_config_update_remote_command_test, single_cell_update_with_iso_timest
 
 TEST_F(ntn_config_update_remote_command_test, multi_cell_update_from_json_string)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   // Create remote command.
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
@@ -1096,6 +1123,8 @@ TEST_F(ntn_config_update_remote_command_test, multi_cell_update_from_json_string
 
 TEST_F(ntn_config_update_remote_command_test, common_config_with_overrides_from_json_string)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   // Create remote command.
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
@@ -1254,6 +1283,8 @@ TEST_F(ntn_config_update_remote_command_test, common_config_with_overrides_from_
 
 TEST_F(ntn_config_update_remote_command_test, single_cell_update_with_ncells_pci_and_carrier_freq)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
   auto future_time_ms =
@@ -1304,6 +1335,8 @@ TEST_F(ntn_config_update_remote_command_test, single_cell_update_with_ncells_pci
 
 TEST_F(ntn_config_update_remote_command_test, single_cell_update_with_ncells_partial_entries)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
   auto future_time_ms =
@@ -1351,6 +1384,8 @@ TEST_F(ntn_config_update_remote_command_test, single_cell_update_with_ncells_par
 
 TEST_F(ntn_config_update_remote_command_test, single_cell_update_with_sat_switch_ntn_cfg_fields)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
   auto future_time_ms =
@@ -1425,6 +1460,8 @@ TEST_F(ntn_config_update_remote_command_test, single_cell_update_with_sat_switch
 
 TEST_F(ntn_config_update_remote_command_test, when_epoch_timestamp_is_in_past_then_error_is_returned)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
   auto past_time_ms =
@@ -1458,6 +1495,8 @@ TEST_F(ntn_config_update_remote_command_test, when_epoch_timestamp_is_in_past_th
 
 TEST_F(ntn_config_update_remote_command_test, when_ephemeris_info_has_no_known_subkey_then_error_is_returned)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
   auto future_time_ms =
@@ -1487,6 +1526,8 @@ TEST_F(ntn_config_update_remote_command_test, when_ephemeris_info_has_no_known_s
 
 TEST_F(ntn_config_update_remote_command_test, when_sat_switch_with_resync_has_no_ntn_cfg_then_error_is_returned)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
   auto future_time_ms =
@@ -1521,6 +1562,8 @@ TEST_F(ntn_config_update_remote_command_test, when_sat_switch_with_resync_has_no
 
 TEST_F(ntn_config_update_remote_command_test, when_ncells_entry_has_unsupported_field_then_error_is_returned)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
   auto future_time_ms =
@@ -1557,6 +1600,8 @@ TEST_F(ntn_config_update_remote_command_test, when_ncells_entry_has_unsupported_
 
 TEST_F(ntn_config_update_remote_command_test, when_ssb_time_offset_sf_is_out_of_range_then_error_is_returned)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
   auto future_time_ms =
@@ -1592,6 +1637,8 @@ TEST_F(ntn_config_update_remote_command_test, when_ssb_time_offset_sf_is_out_of_
 
 TEST_F(ntn_config_update_remote_command_test, when_ncells_pci_is_out_of_range_then_error_is_returned)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
   auto future_time_ms =
@@ -1626,6 +1673,8 @@ TEST_F(ntn_config_update_remote_command_test, when_ncells_pci_is_out_of_range_th
 
 TEST_F(ntn_config_update_remote_command_test, when_ncells_carrier_freq_is_out_of_range_then_error_is_returned)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
   auto future_time_ms =
@@ -1660,6 +1709,8 @@ TEST_F(ntn_config_update_remote_command_test, when_ncells_carrier_freq_is_out_of
 
 TEST_F(ntn_config_update_remote_command_test, when_ncells_exceeds_max_count_then_error_is_returned)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
   auto future_time_ms =
@@ -1699,6 +1750,8 @@ TEST_F(ntn_config_update_remote_command_test, when_ncells_exceeds_max_count_then
 
 TEST_F(ntn_config_update_remote_command_test, single_cell_update_with_linear_polarization)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
   auto future_time_ms =
@@ -1744,6 +1797,8 @@ TEST_F(ntn_config_update_remote_command_test, single_cell_update_with_linear_pol
 
 TEST_F(ntn_config_update_remote_command_test, single_cell_update_with_ta_info_only_ta_common)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-OAM-1");
+
   ntn_config_update_remote_command cmd(ntn_cfg_manager);
 
   auto future_time_ms =

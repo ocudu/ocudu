@@ -5,6 +5,7 @@
 #include "lib/ntn/converters/reference_frame_converter.h"
 #include "lib/ntn/coordinates_types.h"
 #include "lib/ntn/ntn_orbital_compute_module.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/ran/ntn.h"
 #include "ocudu/ran/slot_point.h"
 #include "ocudu/support/test_utils.h"
@@ -29,6 +30,8 @@ static std::chrono::system_clock::time_point string_to_timepoint(const std::stri
 
 TEST(test_ntn_assistance_info_cfg_generator, access_link_only_scenario)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-1");
+
   // Tolerances.
   double pos_tolerance_m   = 3;   // 3m -> delay error of 10ns
   double vel_tolerance_m_s = 0.1; // 0.1m/s -> doppler error at 2GHz of 0.67Hz
@@ -95,6 +98,8 @@ TEST(test_ntn_assistance_info_cfg_generator, access_link_only_scenario)
 
 TEST(test_ntn_assistance_info_cfg_generator, feeder_link_scenario)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-DEP-2", "DU-NTN-SI-1");
+
   // Tolerances.
   double pos_tolerance_m                 = 3;     // 3m -> delay error of 10ns
   double vel_tolerance_m_s               = 0.1;   // 0.1m/s -> doppler error at 2GHz of 0.67Hz

@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "cu_cp_test_environment.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
 #include "ocudu/adt/format.h"
@@ -365,6 +366,8 @@ protected:
 
 TEST_F(cu_cp_write_replace_warning_mapped_cell_id_test, warning_area_naming_a_mapped_cell_id_reaches_the_du)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-4");
+
   // The AMF names the cell by the Mapped Cell ID the gNB reports for it, not by its Uu Cell ID.
   const nr_cell_global_id_t mapped_cgi{plmn_identity::test_value(), nr_cell_identity::create(mapped_nci).value()};
   get_amf().push_tx_pdu(generate_write_replace_warning_request_with_nr_cgi_list({mapped_cgi}));
@@ -382,6 +385,8 @@ TEST_F(cu_cp_write_replace_warning_mapped_cell_id_test, warning_area_naming_a_ma
 TEST_F(cu_cp_write_replace_warning_mapped_cell_id_test,
        warning_area_naming_a_cell_by_both_identities_reaches_the_du_once)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-4");
+
   // TS 38.300 sec. 16.14.5 leaves the Uu Cell ID in place alongside the Mapped Cell ID, so a warning area may name the
   // same cell by both. It has to be broadcast in once.
   const nr_cell_global_id_t uu_cgi{plmn_identity::test_value(), nr_cell_identity::create(uu_nci).value()};
@@ -399,6 +404,8 @@ TEST_F(cu_cp_write_replace_warning_mapped_cell_id_test,
 
 TEST_F(cu_cp_write_replace_warning_mapped_cell_id_test, warning_area_naming_an_unknown_identity_reaches_no_du)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-4");
+
   const nr_cell_global_id_t unknown_cgi{plmn_identity::test_value(), nr_cell_identity::create(0x66c0fe).value()};
   get_amf().push_tx_pdu(generate_write_replace_warning_request_with_nr_cgi_list({unknown_cgi}));
 

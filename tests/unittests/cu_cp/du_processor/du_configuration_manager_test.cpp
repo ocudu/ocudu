@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/cu_cp/du_processor/du_configuration_manager.h"
+#include "tests/ocudu_test_requirements.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -92,6 +93,8 @@ TEST_F(du_configuration_manager_test, when_two_dus_have_valid_configs_then_the_t
 
 TEST(du_configuration_manager_ntn_test, a_cell_broadcasting_a_single_tac_keeps_its_location_mapping)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   // TS 38.300 sec. 16.14.3.1 leaves broadcasting several TACs optional, and TS 38.331 keeps the single TAC of such a
   // cell in trackingAreaCode, which leaves trackingAreaList empty. That cell still derives its own TAC, reported as
   // the single entry of the TAC List in NR NTN, and a Mapped Cell ID regardless of what it broadcasts, so the mapping
@@ -213,6 +216,8 @@ TEST(du_configuration_context_test, cell_is_found_by_its_own_cgi)
 
 TEST(du_configuration_context_test, cell_is_found_by_a_mapped_cell_id_it_reports)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   du_configuration_context ctxt;
   ctxt.served_cells.push_back(create_cell(0x66c000, 0x66c001));
 
@@ -224,6 +229,8 @@ TEST(du_configuration_context_test, cell_is_found_by_a_mapped_cell_id_it_reports
 
 TEST(du_configuration_context_test, a_cell_is_found_by_every_mapped_cell_id_its_areas_name)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   // TS 38.300 sec. 16.14.5 NOTE 2 lets Mapped Cell IDs name different geographical areas, so the areas of one cell may
   // name several. A warning area naming any of them has to reach the cell.
   du_configuration_context ctxt;
@@ -249,6 +256,8 @@ TEST(du_configuration_context_test, a_cell_is_found_by_every_mapped_cell_id_its_
 
 TEST(du_configuration_context_test, a_cell_without_a_mapping_is_found_by_its_own_cgi_alone)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   du_configuration_context ctxt;
   ctxt.served_cells.push_back(create_cell(0x66c000));
 
@@ -258,6 +267,8 @@ TEST(du_configuration_context_test, a_cell_without_a_mapping_is_found_by_its_own
 
 TEST(du_configuration_context_test, a_mapped_cell_id_of_another_plmn_finds_no_cell)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   du_configuration_context ctxt;
   ctxt.served_cells.push_back(create_cell(0x66c000, 0x66c001));
 
@@ -275,6 +286,8 @@ TEST(du_configuration_context_test, an_unknown_identity_finds_no_cell)
 
 TEST(du_configuration_context_test, every_cell_covering_a_mapped_cell_id_is_found)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   // TS 38.300 sec. 16.14.5 leaves the mapping between a Mapped Cell ID and its geographical area to configuration, so
   // more than one cell may cover the area and report the same identity. A warning area naming it has to reach all of
   // them, not the first one alone.
@@ -290,6 +303,8 @@ TEST(du_configuration_context_test, every_cell_covering_a_mapped_cell_id_is_foun
 
 TEST(du_configuration_context_test, a_mapped_cell_id_equal_to_the_uu_cell_id_of_another_cell_finds_both)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   // Nothing keeps a Mapped Cell ID clear of the Uu Cell ID of a served cell: it names an area agreed between RAN and
   // core, and TS 38.300 sec. 16.14.5 NOTE 3 even allows special values for it. Stopping at the cell whose Uu Cell ID
   // matches would leave the cell covering the area unserved.

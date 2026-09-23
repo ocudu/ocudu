@@ -4,6 +4,7 @@
 
 #include "lib/ntn/converters/coordinate_converter.h"
 #include "lib/ntn/coordinates_types.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <vector>
@@ -13,6 +14,8 @@ using namespace ocudu_ntn;
 
 TEST(test_converters, geodetic_2_ecef_test)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-4");
+
   double                                                     tolerance  = 1e-3; // 0.1cm
   std::vector<std::pair<geodetic_coordinates, state_vector>> test_cases = {
       {{52.52, 13.405, 34}, {{3783265.1801, 901649.7966, 5038246.0811}, {0, 0, 0}}},     // Berlin
@@ -30,6 +33,8 @@ TEST(test_converters, geodetic_2_ecef_test)
 
 TEST(test_converters, ecef_2_geodetic_test)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-4");
+
   double                                                     tolerance  = 1e-2; // 0.01 deg
   std::vector<std::pair<state_vector, geodetic_coordinates>> test_cases = {
       {{{1334000.5447, -4654052.1292, 4138306.7614}, {0, 0, 0}}, {40.7128, -74.0060, 10}},   // New York
@@ -47,6 +52,8 @@ TEST(test_converters, ecef_2_geodetic_test)
 
 TEST(test_converters, geodetic_2_ecef_2_geodetic_test)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-4");
+
   double                                                     tolerance  = 1e-3; // 0.1cm
   std::vector<std::pair<geodetic_coordinates, state_vector>> test_cases = {
       {{52.52, 13.405, 34}, {{3783265.1801, 901649.7966, 5038246.0811}, {0, 0, 0}}},         // Berlin

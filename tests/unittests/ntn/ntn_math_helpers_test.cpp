@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/ntn/ntn_math_helpers.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -11,6 +12,8 @@ using namespace ocudu_ntn;
 
 TEST(func_fitting_test, fit_quadratic_func)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-4");
+
   {
     // y = 10 + 2x + 3x^2
     std::vector<double> x = {0, 1, 2, 3, 4, 5};
@@ -33,6 +36,8 @@ TEST(func_fitting_test, fit_quadratic_func)
 
 TEST(func_fitting_test, fit_linear_func)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-4");
+
   {
     // y = 0.5 + 3x
     std::vector<double> x = {0, 1, 2, 3, 4, 5};
@@ -55,6 +60,8 @@ TEST(func_fitting_test, fit_linear_func)
 
 TEST(func_fitting_test, fit_constant_func)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-4");
+
   {
     // y = 9.0
     std::vector<double> x = {0, 1, 2, 3, 4, 5};

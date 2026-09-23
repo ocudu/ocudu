@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/du/du_high/du_manager/converters/asn1_sys_info_packer.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/asn1/rrc_nr/sys_info.h"
 #include "ocudu/du/du_cell_config_helpers.h"
 #include "ocudu/pcap/mac_pcap.h"
@@ -41,6 +42,8 @@ static du_cell_config make_cell_config_with_tac_list(unsigned tac_list_size)
 
 TEST(asn1_sib1_tac_list_test, terrestrial_cell_broadcasts_tracking_area_code_and_no_list)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-LOC-1");
+
   du_cell_config cell_cfg = config_helpers::make_default_du_cell_config();
   ASSERT_TRUE(cell_cfg.tac_list.empty()) << "A default cell must not broadcast a TAC list";
 
@@ -57,6 +60,8 @@ TEST(asn1_sib1_tac_list_test, terrestrial_cell_broadcasts_tracking_area_code_and
 
 TEST(asn1_sib1_tac_list_test, ntn_cell_broadcasts_tracking_area_list_and_omits_tracking_area_code)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-LOC-1");
+
   du_cell_config cell_cfg = make_cell_config_with_tac_list(3);
 
   asn1::rrc_nr::sib1_s sib1;
@@ -78,6 +83,8 @@ TEST(asn1_sib1_tac_list_test, ntn_cell_broadcasts_tracking_area_list_and_omits_t
 
 TEST(asn1_sib1_tac_list_test, tracking_area_list_supports_the_maximum_number_of_tacs)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-LOC-1");
+
   du_cell_config cell_cfg = make_cell_config_with_tac_list(MAX_NOF_TACS_NTN);
 
   asn1::rrc_nr::sib1_s sib1;

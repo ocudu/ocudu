@@ -4,6 +4,7 @@
 
 #include "lib/du/du_high/du_manager/converters/asn1_ntn_config_helpers.h"
 #include "lib/ntn/ntn_sib19_helpers.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/rrc_nr/bcch_dl_sch_msg.h"
 #include "ocudu/asn1/rrc_nr/sys_info.h"
@@ -89,6 +90,8 @@ const slot_point test_epoch_slot{0, 100};
 
 TEST(sib19_ncells_test, first_entry_is_always_present_and_epoch_time_omitted_when_serving_is_ntn)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-3");
+
   ntn_cell_config cell_cfg = make_cell_config(/*serving_is_ntn=*/true);
   cell_cfg.ncells.push_back(make_ncell(/*satellite_index=*/1));
 
@@ -105,6 +108,8 @@ TEST(sib19_ncells_test, first_entry_is_always_present_and_epoch_time_omitted_whe
 
 TEST(sib19_ncells_test, epoch_time_is_filled_when_serving_cell_is_tn)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-3");
+
   ntn_cell_config cell_cfg = make_cell_config(/*serving_is_ntn=*/false);
   cell_cfg.ncells.push_back(make_ncell(/*satellite_index=*/1));
 
@@ -122,6 +127,8 @@ TEST(sib19_ncells_test, epoch_time_is_filled_when_serving_cell_is_tn)
 
 TEST(sib19_ncells_test, ntn_ul_sync_validity_dur_is_always_filled_when_serving_cell_is_tn)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-3");
+
   ntn_cell_config cell_cfg = make_cell_config(/*serving_is_ntn=*/false);
   cell_cfg.ncells.push_back(make_ncell(/*satellite_index=*/1, /*ntn_ul_sync_validity_dur=*/30U));
 
@@ -139,6 +146,8 @@ TEST(sib19_ncells_test, ntn_ul_sync_validity_dur_is_always_filled_when_serving_c
 
 TEST(sib19_ncells_test, ntn_ul_sync_validity_dur_omitted_only_when_it_matches_serving_cell)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-3");
+
   ntn_cell_config cell_cfg = make_cell_config(/*serving_is_ntn=*/true, /*serving_sync_dur=*/30U);
   cell_cfg.ncells.push_back(make_ncell(/*satellite_index=*/1, /*ntn_ul_sync_validity_dur=*/30U));
   cell_cfg.ncells.push_back(make_ncell(/*satellite_index=*/2, /*ntn_ul_sync_validity_dur=*/60U));
@@ -160,6 +169,8 @@ TEST(sib19_ncells_test, ntn_ul_sync_validity_dur_omitted_only_when_it_matches_se
 
 TEST(sib19_ncells_test, second_entry_inherits_whole_block_when_identical_to_first)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-3");
+
   ntn_cell_config cell_cfg = make_cell_config(/*serving_is_ntn=*/false);
   cell_cfg.ncells.push_back(make_ncell(/*satellite_index=*/1));
   cell_cfg.ncells.push_back(make_ncell(/*satellite_index=*/1));
@@ -176,6 +187,8 @@ TEST(sib19_ncells_test, second_entry_inherits_whole_block_when_identical_to_firs
 
 TEST(sib19_ncells_test, second_entry_explicit_when_any_static_field_differs_even_on_same_satellite)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-3");
+
   auto expect_both_explicit = [](const ntn_neighbor_cell_config& first, const ntn_neighbor_cell_config& second) {
     ntn_cell_config cell_cfg = make_cell_config(/*serving_is_ntn=*/false);
     cell_cfg.ncells.push_back(first);
@@ -228,6 +241,8 @@ TEST(sib19_ncells_test, second_entry_explicit_when_any_static_field_differs_even
 
 TEST(sib19_ncells_test, ta_info_is_omitted_for_regenerative_neighbour_even_when_computed)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-3");
+
   ntn_cell_config cell_cfg = make_cell_config(/*serving_is_ntn=*/false);
   cell_cfg.ncells.push_back(make_ncell(/*satellite_index=*/1));
 
@@ -244,6 +259,8 @@ TEST(sib19_ncells_test, ta_info_is_omitted_for_regenerative_neighbour_even_when_
 
 TEST(sib19_ncells_test, ta_info_is_broadcast_for_neighbour_with_feeder_link)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-3");
+
   ntn_cell_config cell_cfg = make_cell_config(/*serving_is_ntn=*/false);
   cell_cfg.ncells.push_back(make_ncell(/*satellite_index=*/1,
                                        /*ntn_ul_sync_validity_dur=*/30U,
@@ -264,6 +281,8 @@ TEST(sib19_ncells_test, ta_info_is_broadcast_for_neighbour_with_feeder_link)
 
 TEST(sib19_ncells_test, ta_info_with_feeder_link_but_not_computed_stays_absent)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-3");
+
   ntn_cell_config cell_cfg = make_cell_config(/*serving_is_ntn=*/false);
   cell_cfg.ncells.push_back(make_ncell(/*satellite_index=*/1,
                                        /*ntn_ul_sync_validity_dur=*/30U,
@@ -284,6 +303,8 @@ TEST(sib19_ncells_test, ta_info_with_feeder_link_but_not_computed_stays_absent)
 
 TEST(sib19_ncells_test, run_of_identical_entries_fully_compresses_not_just_alternate_entries)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-3");
+
   ntn_cell_config cell_cfg = make_cell_config(/*serving_is_ntn=*/false);
   for (unsigned i = 0; i != 4; ++i) {
     cell_cfg.ncells.push_back(make_ncell(/*satellite_index=*/9));
@@ -303,6 +324,8 @@ TEST(sib19_ncells_test, run_of_identical_entries_fully_compresses_not_just_alter
 
 TEST(sib19_ncells_test, entry_with_failed_ocm_lookup_is_dropped_and_first_remaining_entry_is_still_mandatory)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-3");
+
   ntn_cell_config cell_cfg = make_cell_config(/*serving_is_ntn=*/false);
   cell_cfg.ncells.push_back(make_ncell(/*satellite_index=*/1)); // OCM fails for this one.
   cell_cfg.ncells.push_back(make_ncell(/*satellite_index=*/2));
@@ -318,6 +341,8 @@ TEST(sib19_ncells_test, entry_with_failed_ocm_lookup_is_dropped_and_first_remain
 
 TEST(sib19_ncells_test, failed_ocm_lookup_in_the_middle_does_not_break_the_inheritance_chain)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-3");
+
   ntn_cell_config cell_cfg = make_cell_config(/*serving_is_ntn=*/false);
   cell_cfg.ncells.push_back(make_ncell(/*satellite_index=*/5));
   cell_cfg.ncells.push_back(make_ncell(/*satellite_index=*/6)); // OCM fails for this one, dropped.
@@ -336,6 +361,8 @@ TEST(sib19_ncells_test, failed_ocm_lookup_in_the_middle_does_not_break_the_inher
 
 TEST(sib19_ncells_test, ext_list_entry_is_explicit_when_same_position_base_entry_omitted_its_ntn_cfg)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-3");
+
   ntn_cell_config cell_cfg = make_cell_config(/*serving_is_ntn=*/false);
   // Six identical entries: base list positions 0-3 and ext list positions 4-5.
   for (unsigned i = 0; i != 6; ++i) {
@@ -360,6 +387,8 @@ TEST(sib19_ncells_test, ext_list_entry_is_explicit_when_same_position_base_entry
 
 TEST(sib19_ncells_test, ext_list_entry_inherits_from_same_position_base_entry_not_the_previous_entry)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-3");
+
   ntn_cell_config cell_cfg = make_cell_config(/*serving_is_ntn=*/false);
   // Four distinct base-list entries (positions 0-3).
   cell_cfg.ncells.push_back(make_ncell(/*satellite_index=*/1, 30U, /*k_mac=*/1U));
@@ -384,6 +413,8 @@ TEST(sib19_ncells_test, ext_list_entry_inherits_from_same_position_base_entry_no
 
 TEST(sib19_ncells_test, ext_list_entry_is_explicit_when_it_only_matches_the_previous_entry_not_the_same_position)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-3");
+
   ntn_cell_config cell_cfg = make_cell_config(/*serving_is_ntn=*/false);
   cell_cfg.ncells.push_back(make_ncell(/*satellite_index=*/1, 30U, /*k_mac=*/1U));
   cell_cfg.ncells.push_back(make_ncell(/*satellite_index=*/2, 30U, /*k_mac=*/2U));
@@ -616,6 +647,8 @@ void write_sib19_to_pcap(const byte_buffer& bcch_buf, unsigned sfn, unsigned sub
 
 TEST(sib19_pcap_test, generate_full_sib19_pcap_with_edge_case_locations)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-1");
+
   struct sib19_variant {
     const char*            label;
     bool                   serving_orbital;

@@ -4,6 +4,7 @@
 
 #include "cu_cp_test_environment.h"
 #include "lib/cu_cp/ue_location_manager/ue_location_manager.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/ngap/ngap_test_message_validators.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
 #include "ocudu/adt/format.h"
@@ -407,6 +408,8 @@ std::optional<location_report> report_after(const cu_cp_user_location_info_nr& f
 
 TEST(cu_cp_location_change_test, an_unchanged_location_is_not_reported_again)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   const cu_cp_user_location_info_nr uli = make_uli(0x66c000, std::nullopt, 9);
 
   EXPECT_FALSE(report_after(uli, uli).has_value());
@@ -414,6 +417,8 @@ TEST(cu_cp_location_change_test, an_unchanged_location_is_not_reported_again)
 
 TEST(cu_cp_location_change_test, a_changed_derived_tac_is_reported_without_a_change_of_cell)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   // The UE moved into another area of the same cell, so the TAC reported to the AMF changed while the serving cell
   // did not.
   const std::optional<location_report> report =
@@ -425,6 +430,8 @@ TEST(cu_cp_location_change_test, a_changed_derived_tac_is_reported_without_a_cha
 
 TEST(cu_cp_area_of_interest_test, ue_is_inside_an_area_naming_the_mapped_cell_id_it_reports)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   // TS 38.300 sec. 16.14.5: the AMF names the cells of an Area of Interest by the Mapped Cell ID the gNB reports, so
   // matching the Uu Cell ID of the serving cell would place the UE outside every area.
   EXPECT_EQ(presence_in_area_of(0x66c0ff, make_uli(0x66c000, 0x66c0ff)), ue_presence::in);
@@ -432,18 +439,24 @@ TEST(cu_cp_area_of_interest_test, ue_is_inside_an_area_naming_the_mapped_cell_id
 
 TEST(cu_cp_area_of_interest_test, ue_is_outside_an_area_naming_the_uu_cell_id_it_no_longer_reports)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   // Once a Mapped Cell ID applies, it is the identity the core knows the UE by.
   EXPECT_EQ(presence_in_area_of(0x66c000, make_uli(0x66c000, 0x66c0ff)), ue_presence::out);
 }
 
 TEST(cu_cp_area_of_interest_test, ue_is_inside_an_area_naming_the_uu_cell_id_without_a_mapped_cell_id)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   // A terrestrial cell, or an NTN cell whose UE location is unknown, keeps reporting its Uu Cell ID.
   EXPECT_EQ(presence_in_area_of(0x66c000, make_uli(0x66c000)), ue_presence::in);
 }
 
 TEST(cu_cp_area_of_interest_test, ue_presence_is_unknown_while_the_position_naming_the_area_is_missing)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   // The cell names its areas by Mapped Cell ID, TS 38.300 sec. 16.14.5, but the UE position that picks one never
   // arrived. Whether the UE is in the area is not something this gNB can answer, and TS 38.413 sec. 9.3.1.67 keeps a
   // third value for exactly that.
@@ -455,6 +468,8 @@ TEST(cu_cp_area_of_interest_test, ue_presence_is_unknown_while_the_position_nami
 
 TEST(cu_cp_area_of_interest_test, a_missing_position_does_not_hide_an_area_naming_the_uu_cell_id)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   // The serving cell is named outright, so no Mapped Cell ID is needed to place the UE.
   cu_cp_user_location_info_nr uli = make_uli(0x66c000);
   uli.mapped_nci_unknown          = true;
@@ -464,6 +479,8 @@ TEST(cu_cp_area_of_interest_test, a_missing_position_does_not_hide_an_area_namin
 
 TEST(cu_cp_area_of_interest_test, a_missing_position_does_not_hide_a_tracking_area_the_cell_broadcasts)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   // Only the cells of an Area of Interest are named by Mapped Cell ID, TS 38.300 sec. 16.14.5. A tracking area is
   // answered from what the cell broadcasts, so it is decided without a position and TS 23.502 Annex D.2 leaves no
   // room for reporting it unknown.
@@ -476,6 +493,8 @@ TEST(cu_cp_area_of_interest_test, a_missing_position_does_not_hide_a_tracking_ar
 
 TEST(cu_cp_area_of_interest_test, a_missing_position_does_not_hide_a_ran_node_area)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   // The RAN node of an Area of Interest is matched against the gNB ID of the serving cell, which no position is
   // needed to read.
   cu_cp_user_location_info_nr uli = make_uli(0x66c000);
@@ -487,11 +506,15 @@ TEST(cu_cp_area_of_interest_test, a_missing_position_does_not_hide_a_ran_node_ar
 
 TEST(cu_cp_area_of_interest_test, ue_is_outside_an_area_naming_an_unrelated_cell)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   EXPECT_EQ(presence_in_area_of(0x66c0fe, make_uli(0x66c000, 0x66c0ff)), ue_presence::out);
 }
 
 TEST(cu_cp_location_change_test, a_changed_mapped_cell_id_is_reported_without_a_change_of_cell)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   // TS 38.300 sec. 16.14.5 NOTE 2 lets areas of different Mapped Cell IDs differ from the tracking areas, so a UE can
   // cross into an area naming another Mapped Cell ID while the serving cell and the derived TAC stay the same. The
   // identity reported to the core changed, so the report must be sent.
@@ -504,6 +527,8 @@ TEST(cu_cp_location_change_test, a_changed_mapped_cell_id_is_reported_without_a_
 
 TEST(cu_cp_location_change_test, a_mapped_cell_id_that_appears_is_reported_without_a_change_of_cell)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   // The UE reported no position at first, so the core knew the cell by its Uu Cell ID alone.
   const std::optional<location_report> report = report_after(make_uli(0x66c000), make_uli(0x66c000, 0x66c0ff));
   ASSERT_TRUE(report.has_value());

@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/du/du_high/du_manager/converters/asn1_sys_info_packer.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/rrc_nr/sys_info.h"
 #include "ocudu/ran/sib/system_info_config.h"
@@ -15,6 +16,8 @@ using namespace odu;
 
 TEST(srs_sib19_test, make_asn1_rrc_cell_sib19_buffer)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-1");
+
   sib19_info sib19;
   sib19.ntn_cfg.emplace();
   sib19.ntn_cfg->cell_specific_koffset.emplace(std::chrono::milliseconds(260));

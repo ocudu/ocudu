@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/ngap/ngap_asn1_helpers.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/asn1/ngap/common.h"
 #include "ocudu/asn1/ngap/ngap.h"
 #include <gtest/gtest.h>
@@ -43,6 +44,8 @@ asn1::ngap::ng_setup_request_s pack_and_unpack_ng_setup_request(std::vector<supp
 
 TEST(ngap_satellite_rat_test, terrestrial_tracking_area_carries_no_rat_information)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-5");
+
   asn1::ngap::ng_setup_request_s req = pack_and_unpack_ng_setup_request({make_supported_ta(7, std::nullopt)});
 
   ASSERT_EQ(req->supported_ta_list.size(), 1);
@@ -51,6 +54,8 @@ TEST(ngap_satellite_rat_test, terrestrial_tracking_area_carries_no_rat_informati
 
 TEST(ngap_satellite_rat_test, ntn_tracking_area_carries_its_satellite_rat_type)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-5");
+
   // TS 38.413, Section 9.3.1.125.
   const std::array<std::pair<satellite_rat_type, asn1::ngap::rat_info_opts::options>, 4> rats = {
       {{satellite_rat_type::nr_leo, asn1::ngap::rat_info_opts::nr_leo},
@@ -71,6 +76,8 @@ TEST(ngap_satellite_rat_test, ntn_tracking_area_carries_its_satellite_rat_type)
 
 TEST(ngap_satellite_rat_test, satellite_rat_type_is_signalled_per_tracking_area)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-5");
+
   asn1::ngap::ng_setup_request_s req = pack_and_unpack_ng_setup_request(
       {make_supported_ta(7, satellite_rat_type::nr_geo), make_supported_ta(8, std::nullopt)});
 

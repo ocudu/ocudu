@@ -9,6 +9,7 @@
 #include "test_utils/indication_generators.h"
 #include "test_utils/result_test_helpers.h"
 #include "test_utils/scheduler_test_simulator.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/test_doubles/utils/test_rng.h"
@@ -507,6 +508,8 @@ TEST_P(scheduler_conres_expiry_test, when_conres_retx_goes_after_conres_timer_ex
 
 TEST_P(scheduler_conres_expiry_test, when_ntn_cell_conres_timer_extended_with_rtt)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-TIM-1");
+
   // Create UE with a delay equal to conres_win_slots when NTN RTT extension is enabled.
   create_ue(nof_rtt_slots > 0 ? conres_win_slots : 0);
   static constexpr unsigned msg4_size = 128;

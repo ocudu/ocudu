@@ -4,6 +4,7 @@
 
 #include "lib/du/du_high/du_manager/ran_resource_management/ue_capability_manager.h"
 #include "lib/scheduler/rrm/ue_capability_summary_formatter.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/adt/to_array.h"
 #include "ocudu/asn1/rrc_nr/ue_cap.h"
@@ -565,6 +566,8 @@ static byte_buffer pack_ue_cap_with_ntn_caps(const ntn_caps_builder_params& para
 
 TEST(decode_ue_nr_cap_container_ntn_test, all_ntn_caps_reported)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-CAP-1");
+
   byte_buffer container = pack_ue_cap_with_ntn_caps(
       {.harq_feedback_disabled = true,
        .ul_harq_mode_b         = true,
@@ -592,6 +595,8 @@ TEST(decode_ue_nr_cap_container_ntn_test, all_ntn_caps_reported)
 
 TEST(decode_ue_nr_cap_container_ntn_test, max_harq_process_number_is_decoded_per_direction)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-CAP-1");
+
   using max_harq_opts = asn1::rrc_nr::band_nr_s::max_harq_process_num_r17_opts;
   const std::array<std::tuple<max_harq_opts::options, unsigned, unsigned>, 3> cases = {
       {{max_harq_opts::u16d32, 16, 32}, {max_harq_opts::u32d16, 32, 16}, {max_harq_opts::u32d32, 32, 32}}};
@@ -610,6 +615,8 @@ TEST(decode_ue_nr_cap_container_ntn_test, max_harq_process_number_is_decoded_per
 
 TEST(decode_ue_nr_cap_container_ntn_test, ue_without_uplink_pre_compensation_is_not_ntn_capable)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-CAP-1");
+
   byte_buffer container =
       pack_ue_cap_with_ntn_caps({.ul_pre_compensation = false, .ul_ta_report = true, .ue_specific_k_offset = true});
 
@@ -624,6 +631,8 @@ TEST(decode_ue_nr_cap_container_ntn_test, ue_without_uplink_pre_compensation_is_
 
 TEST(decode_ue_nr_cap_container_ntn_test, ue_specific_k_offset_is_not_supported_without_ta_reporting)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-CAP-1");
+
   byte_buffer container = pack_ue_cap_with_ntn_caps({.ul_ta_report = false, .ue_specific_k_offset = true});
 
   expected<ue_capability_summary, std::string> caps = decode_ue_nr_cap_container(container);
@@ -638,6 +647,8 @@ TEST(decode_ue_nr_cap_container_ntn_test, ue_specific_k_offset_is_not_supported_
 
 TEST(decode_ue_nr_cap_container_ntn_test, ntn_band_caps_are_ignored_without_non_terrestrial_network_support)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-CAP-1");
+
   byte_buffer container = pack_ue_cap_with_ntn_caps(
       {.ntn                  = false,
        .ul_ta_report         = true,
@@ -655,6 +666,8 @@ TEST(decode_ue_nr_cap_container_ntn_test, ntn_band_caps_are_ignored_without_non_
 
 TEST(decode_ue_nr_cap_container_ntn_test, captured_ntn_ue_capabilities_are_reported)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-CAP-1");
+
   // UE Capability Information of an NTN UE on band n256 (accessStratumRelease rel18). For n256 it declares
   // uplinkPreCompensation-r17, uplink-TA-Reporting-r17, ue-Specific-K-Offset-r17 and maxHARQ-ProcessNumber-r17 u32d32,
   // and in its NTN MAC parameters harq-FeedbackDisabled-r17 and uplink-HARQ-ModeB-r17.

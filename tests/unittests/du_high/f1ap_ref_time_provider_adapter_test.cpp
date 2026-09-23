@@ -4,6 +4,7 @@
 
 #include "lib/du/du_high/adapters/f1ap_adapters.h"
 #include "lib/du/du_high/du_manager/converters/asn1_ref_time_r16_helpers.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/rrc_nr/sys_info.h"
 #include <gtest/gtest.h>
@@ -49,12 +50,16 @@ protected:
 
 TEST_F(f1ap_ref_time_provider_adapter_test, no_mapping_returns_nullopt)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-TIM-3");
+
   mapper.next_mapping.reset();
   EXPECT_FALSE(adapter.get_last_mapping(subcarrier_spacing::kHz15).has_value());
 }
 
 TEST_F(f1ap_ref_time_provider_adapter_test, whole_second_time_encodes_losslessly)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-TIM-3");
+
   mac_slot_time_info m;
   m.sl_tx             = slot_point{subcarrier_spacing::kHz15, 42, 0};
   m.time_point        = std::chrono::system_clock::time_point{std::chrono::seconds{1735689600LL}};
@@ -77,6 +82,8 @@ TEST_F(f1ap_ref_time_provider_adapter_test, whole_second_time_encodes_losslessly
 
 TEST_F(f1ap_ref_time_provider_adapter_test, subsecond_component_encodes_losslessly)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-TIM-3");
+
   mac_slot_time_info m;
   m.sl_tx = slot_point{subcarrier_spacing::kHz15, 42, 0};
   // 123456780 ns = 12345678 * 10 ns, an exact multiple of the 10 ns field granularity.
@@ -99,6 +106,8 @@ TEST_F(f1ap_ref_time_provider_adapter_test, subsecond_component_encodes_lossless
 
 TEST(f1ap_ref_time_r16_codec_test, gps_epoch_time_encodes_losslessly)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-TIM-3");
+
   auto time_point = std::chrono::system_clock::time_point{std::chrono::seconds{1735689600LL}};
 
   // GPS epoch offset (315964800 s = 3657 days) is subtracted before decomposition: 20089 - 3657 = 16432 days.

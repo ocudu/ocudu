@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "rrc_ue_test_helpers.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "ocudu/asn1/rrc_nr/dl_dcch_msg.h"
 #include "ocudu/asn1/rrc_nr/ul_dcch_msg.h"
@@ -149,6 +150,8 @@ protected:
 
 TEST_F(rrc_ue_coarse_location, ntn_cell_with_a_mapping_is_asked_for_the_coarse_location)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   init_cell(nr_band::n256, /* with_mapping */ true);
 
   rrc_ue->request_coarse_ue_location();
@@ -158,6 +161,8 @@ TEST_F(rrc_ue_coarse_location, ntn_cell_with_a_mapping_is_asked_for_the_coarse_l
 
 TEST_F(rrc_ue_coarse_location, ntn_cell_without_a_mapping_is_not_asked)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   // Nothing turns a position into a TAC in this cell, so the answer would have no use.
   init_cell(nr_band::n256, /* with_mapping */ false);
 
@@ -168,6 +173,8 @@ TEST_F(rrc_ue_coarse_location, ntn_cell_without_a_mapping_is_not_asked)
 
 TEST_F(rrc_ue_coarse_location, terrestrial_cell_is_not_asked)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   // A TN cell does not span several tracking areas, whatever the configuration says.
   init_cell(nr_band::n78, /* with_mapping */ true);
 
@@ -178,6 +185,8 @@ TEST_F(rrc_ue_coarse_location, terrestrial_cell_is_not_asked)
 
 TEST_F(rrc_ue_coarse_location, ue_that_left_connected_mode_is_not_asked)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   // The request is queued, so the UE may have been suspended by the time it runs.
   init_cell(nr_band::n256, /* with_mapping */ true);
   rrc_ue->set_rrc_state(rrc_state::inactive);
@@ -189,6 +198,8 @@ TEST_F(rrc_ue_coarse_location, ue_that_left_connected_mode_is_not_asked)
 
 TEST_F(rrc_ue_coarse_location, ue_without_as_security_is_not_asked)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   // TS 38.331 sec. 5.7.10.2 allows the request only once AS security is active.
   init_cell(nr_band::n256, /* with_mapping */ true, /* with_security */ false);
 
@@ -199,6 +210,8 @@ TEST_F(rrc_ue_coarse_location, ue_without_as_security_is_not_asked)
 
 TEST_F(rrc_ue_coarse_location, reported_position_is_stored_and_reported_to_the_cu_cp)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   init_and_request();
 
   receive_ue_information_response(packed_position({51.0, 15.0}));
@@ -210,6 +223,8 @@ TEST_F(rrc_ue_coarse_location, reported_position_is_stored_and_reported_to_the_c
 
 TEST_F(rrc_ue_coarse_location, a_position_that_did_not_move_is_reported_once)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   init_and_request();
   receive_ue_information_response(packed_position({51.0, 15.0}));
 
@@ -223,6 +238,8 @@ TEST_F(rrc_ue_coarse_location, a_position_that_did_not_move_is_reported_once)
 
 TEST_F(rrc_ue_coarse_location, a_position_that_moved_is_reported_again)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   init_and_request();
   receive_ue_information_response(packed_position({51.0, 15.0}));
 
@@ -236,6 +253,8 @@ TEST_F(rrc_ue_coarse_location, a_position_that_moved_is_reported_again)
 
 TEST_F(rrc_ue_coarse_location, response_without_the_v1700_extension_reports_nothing)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   // A UE that does not implement the r17 extension answers without it.
   init_and_request();
 
@@ -246,6 +265,8 @@ TEST_F(rrc_ue_coarse_location, response_without_the_v1700_extension_reports_noth
 
 TEST_F(rrc_ue_coarse_location, response_without_a_position_reports_nothing)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   // coarseLocationInfo has no presence flag, so "not available" arrives as an empty octet string.
   init_and_request();
 
@@ -256,6 +277,8 @@ TEST_F(rrc_ue_coarse_location, response_without_a_position_reports_nothing)
 
 TEST_F(rrc_ue_coarse_location, undecodable_position_reports_nothing)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   init_and_request();
 
   receive_ue_information_response({0xff, 0xff, 0xff});
@@ -265,6 +288,8 @@ TEST_F(rrc_ue_coarse_location, undecodable_position_reports_nothing)
 
 TEST_F(rrc_ue_coarse_location, reported_position_yields_the_mapped_cell_id_of_its_area)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   // TS 38.300 sec. 16.14.5: the position picks the area, and the area names the identity the core knows the UE by.
   init_and_request();
 
@@ -275,6 +300,8 @@ TEST_F(rrc_ue_coarse_location, reported_position_yields_the_mapped_cell_id_of_it
 
 TEST_F(rrc_ue_coarse_location, an_area_naming_no_mapped_cell_id_reports_the_uu_cell_id)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   // An area is free to name no Mapped Cell ID, TS 38.300 sec. 16.14.5, which leaves the Uu Cell ID of the serving
   // cell in place while the TAC of the area is still derived.
   init_and_request();
@@ -287,6 +314,8 @@ TEST_F(rrc_ue_coarse_location, an_area_naming_no_mapped_cell_id_reports_the_uu_c
 
 TEST_F(rrc_ue_coarse_location, a_derived_tac_alone_is_dated_too)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   // The TAC derived from a position is exactly as old as the position, whether or not its area named a Mapped Cell
   // ID. Left undated, a TAC from a position reported hours ago reads as current at the AMF.
   init_and_request();
@@ -301,6 +330,8 @@ TEST_F(rrc_ue_coarse_location, a_derived_tac_alone_is_dated_too)
 
 TEST_F(rrc_ue_coarse_location, a_location_derived_from_no_position_is_not_dated)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   init_cell(nr_band::n256, /* with_mapping */ true);
 
   EXPECT_FALSE(derived_location().time_stamp.has_value());
@@ -308,6 +339,8 @@ TEST_F(rrc_ue_coarse_location, a_location_derived_from_no_position_is_not_dated)
 
 TEST_F(rrc_ue_coarse_location, ue_is_unplaceable_while_no_position_reached_a_cell_naming_mapped_cell_ids)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   // The areas are named by Mapped Cell ID, so without a position the gNB cannot say whether the UE is in one of
   // them. TS 38.413 sec. 9.3.1.67 keeps a third value for that, rather than reporting the UE outside every area.
   init_cell(nr_band::n256, /* with_mapping */ true);
@@ -317,6 +350,8 @@ TEST_F(rrc_ue_coarse_location, ue_is_unplaceable_while_no_position_reached_a_cel
 
 TEST_F(rrc_ue_coarse_location, a_reported_position_places_the_ue)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   init_and_request();
 
   receive_ue_information_response(packed_position({51.0, 15.0}));
@@ -326,6 +361,8 @@ TEST_F(rrc_ue_coarse_location, a_reported_position_places_the_ue)
 
 TEST_F(rrc_ue_coarse_location, a_mapping_on_a_terrestrial_cell_does_not_leave_the_ue_unplaceable)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2");
+
   // The mapping is kept on a TN cell but never used: no position is asked for, so none is awaited. Reporting the UE
   // unplaceable would hide every Area of Interest answer for as long as the misconfigured cell is up.
   init_cell(nr_band::n78, /* with_mapping */ true);

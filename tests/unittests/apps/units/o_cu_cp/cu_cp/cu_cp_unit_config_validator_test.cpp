@@ -4,6 +4,7 @@
 
 #include "apps/units/o_cu_cp/cu_cp/cu_cp_unit_config.h"
 #include "apps/units/o_cu_cp/cu_cp/cu_cp_unit_config_validator.h"
+#include "tests/ocudu_test_requirements.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -67,6 +68,8 @@ bool validate(const cu_cp_unit_report_config& report_cfg)
 /// TS 38.331 sec. 6.3.2 gives CondTriggerConfig condEventA3, A4, A5, D1, D2 and T1 alone.
 TEST(cu_cp_unit_config_validator_test, conditional_trigger_accepts_the_events_the_spec_defines_for_it)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-3");
+
   for (auto event : {ocucp::rrc_event_id::event_id_t::a3,
                      ocucp::rrc_event_id::event_id_t::a4,
                      ocucp::rrc_event_id::event_id_t::a5}) {
@@ -79,6 +82,8 @@ TEST(cu_cp_unit_config_validator_test, conditional_trigger_accepts_the_events_th
 
 TEST(cu_cp_unit_config_validator_test, conditional_trigger_rejects_the_events_the_spec_does_not_define_for_it)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-3");
+
   for (auto event : {ocucp::rrc_event_id::event_id_t::a1,
                      ocucp::rrc_event_id::event_id_t::a2,
                      ocucp::rrc_event_id::event_id_t::a6}) {
@@ -89,6 +94,8 @@ TEST(cu_cp_unit_config_validator_test, conditional_trigger_rejects_the_events_th
 /// Only D1 is offered as a measurement report; T1 and D2 appear under CondTriggerConfig alone.
 TEST(cu_cp_unit_config_validator_test, event_triggered_report_accepts_d1_but_not_the_other_distance_or_time_events)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-2");
+
   EXPECT_TRUE(validate(make_distance_report_config(ocucp::rrc_event_id::event_id_t::d1, "event_triggered")));
   EXPECT_FALSE(validate(make_distance_report_config(ocucp::rrc_event_id::event_id_t::d2, "event_triggered")));
 }
@@ -96,6 +103,8 @@ TEST(cu_cp_unit_config_validator_test, event_triggered_report_accepts_d1_but_not
 /// TS 38.331 sec. 6.3.2 encodes an event-triggered distance threshold from step 1, so 40 m has no encoding there.
 TEST(cu_cp_unit_config_validator_test, an_event_triggered_distance_threshold_below_one_step_is_rejected)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-2");
+
   cu_cp_unit_report_config cfg = make_distance_report_config(ocucp::rrc_event_id::event_id_t::d1, "event_triggered");
   cfg.distance_thresh_from_ref1_km = 0.04; // 40 m, under one 50 m step
   EXPECT_FALSE(validate(cfg));
@@ -107,6 +116,8 @@ TEST(cu_cp_unit_config_validator_test, an_event_triggered_distance_threshold_bel
 /// A conditional trigger encodes the same threshold from step 0, so it reaches one step below a measurement report.
 TEST(cu_cp_unit_config_validator_test, a_conditional_distance_threshold_of_zero_is_accepted)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-3");
+
   cu_cp_unit_report_config cfg     = make_distance_report_config(ocucp::rrc_event_id::event_id_t::d1, "cond_trigger");
   cfg.distance_thresh_from_ref1_km = 0.0;
   cfg.distance_thresh_from_ref2_km = 0.0;
@@ -119,6 +130,8 @@ TEST(cu_cp_unit_config_validator_test, a_conditional_distance_threshold_of_zero_
 /// D1 stops at 65525 steps and D2 at 65535, so their upper bounds differ.
 TEST(cu_cp_unit_config_validator_test, distance_thresholds_respect_the_per_event_upper_bound)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-2", "CU-NTN-MOB-3");
+
   cu_cp_unit_report_config d1_cfg = make_distance_report_config(ocucp::rrc_event_id::event_id_t::d1, "cond_trigger");
   d1_cfg.distance_thresh_from_ref1_km = 3276.25;
   EXPECT_TRUE(validate(d1_cfg));
@@ -133,6 +146,8 @@ TEST(cu_cp_unit_config_validator_test, distance_thresholds_respect_the_per_event
 /// The location hysteresis is counted in 10 m steps, up to 32768.
 TEST(cu_cp_unit_config_validator_test, location_hysteresis_respects_its_upper_bound)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-3");
+
   cu_cp_unit_report_config cfg = make_distance_report_config(ocucp::rrc_event_id::event_id_t::d1, "cond_trigger");
   cfg.hysteresis_location_km   = 327.68;
   EXPECT_TRUE(validate(cfg));

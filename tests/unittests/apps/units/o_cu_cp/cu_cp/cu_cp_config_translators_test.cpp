@@ -4,6 +4,7 @@
 
 #include "apps/units/o_cu_cp/cu_cp/cu_cp_config_translators.h"
 #include "apps/units/o_cu_cp/cu_cp/cu_cp_unit_config.h"
+#include "tests/ocudu_test_requirements.h"
 #include <gtest/gtest.h>
 #include <variant>
 
@@ -86,6 +87,8 @@ void expect_d1_parameters(const ocucp::rrc_event_id& event)
 /// A D1 configuration carries no T1 threshold or duration, so requiring them would reject a valid configuration.
 TEST(cu_cp_config_translators_test, d1_conditional_trigger_needs_no_time_based_parameters)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-3");
+
   const ocucp::rrc_report_cfg_nr report_cfg = translate(make_d1_report_config("cond_trigger"));
 
   ASSERT_TRUE(std::holds_alternative<ocucp::rrc_cond_trigger_cfg>(report_cfg));
@@ -96,6 +99,8 @@ TEST(cu_cp_config_translators_test, d1_conditional_trigger_needs_no_time_based_p
 /// measurement report reaches the CU-CP as an event trigger carrying the same distances.
 TEST(cu_cp_config_translators_test, d1_event_triggered_report_carries_the_distance_parameters)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-2");
+
   const ocucp::rrc_report_cfg_nr report_cfg = translate(make_d1_report_config("event_triggered"));
 
   ASSERT_TRUE(std::holds_alternative<ocucp::rrc_event_trigger_cfg>(report_cfg));
@@ -158,6 +163,8 @@ TEST(cu_cp_config_translators_test, d2_conditional_trigger_needs_no_reference_lo
 /// A T1 configuration names no distances, so requiring them would reject a valid configuration.
 TEST(cu_cp_config_translators_test, t1_conditional_trigger_needs_no_distance_parameters)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-3");
+
   cu_cp_unit_report_config cfg;
   cfg.report_cfg_id               = 1;
   cfg.report_type                 = "cond_trigger";
@@ -318,6 +325,8 @@ TEST(cu_cp_config_translators_test, unset_rrc_reject_wait_time_s_leaves_no_wait_
 
 TEST(cu_cp_config_translators_test, satellite_rat_type_of_a_tracking_area_is_propagated_to_the_ngap_configuration)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-5");
+
   cu_cp_unit_config cfg;
   cfg.amf_config.amf.supported_tas.front().satellite_rat = "nr_leo";
   cfg.amf_config.amf.supported_tas.push_back({8, cfg.amf_config.amf.supported_tas.front().plmn_list, std::nullopt});
@@ -333,6 +342,8 @@ TEST(cu_cp_config_translators_test, satellite_rat_type_of_a_tracking_area_is_pro
 
 TEST(cu_cp_config_translators_test, tracking_areas_carry_no_satellite_rat_type_when_it_is_not_configured)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-5");
+
   cu_cp_unit_config cfg;
   cfg.amf_config.amf.supported_tas.push_back({8, cfg.amf_config.amf.supported_tas.front().plmn_list, std::nullopt});
 

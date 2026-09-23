@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/ngap/ngap_asn1_converters.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/ran/cu_cp_types.h"
 #include <gtest/gtest.h>
 
@@ -30,6 +31,8 @@ cu_cp_user_location_info_nr make_uli(std::initializer_list<tac_t> broadcast_tacs
 
 TEST(ngap_ntn_tai_info_test, terrestrial_cell_reports_no_ntn_tai_information)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-1");
+
   const asn1::ngap::user_location_info_nr_s asn1_uli = cu_cp_user_location_info_to_asn1(make_uli({}));
 
   EXPECT_FALSE(asn1_uli.ie_exts.nr_ntn_tai_info_present);
@@ -38,6 +41,8 @@ TEST(ngap_ntn_tai_info_test, terrestrial_cell_reports_no_ntn_tai_information)
 
 TEST(ngap_ntn_tai_info_test, multi_tac_cell_reports_every_broadcast_tac)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-1");
+
   const asn1::ngap::user_location_info_nr_s asn1_uli = cu_cp_user_location_info_to_asn1(make_uli({7, 8, 9}));
 
   ASSERT_TRUE(asn1_uli.ie_exts_present);
@@ -61,6 +66,8 @@ TEST(ngap_ntn_tai_info_test, multi_tac_cell_reports_every_broadcast_tac)
 
 TEST(ngap_ntn_tai_info_test, ue_location_derived_tac_is_absent_without_a_coarse_ue_location)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-1");
+
   const asn1::ngap::user_location_info_nr_s asn1_uli = cu_cp_user_location_info_to_asn1(make_uli({7, 8, 9}));
 
   EXPECT_FALSE(asn1_uli.ie_exts.nr_ntn_tai_info.ue_location_derived_tac_in_nr_ntn_present);
@@ -68,6 +75,8 @@ TEST(ngap_ntn_tai_info_test, ue_location_derived_tac_is_absent_without_a_coarse_
 
 TEST(ngap_ntn_tai_info_test, ue_location_derived_tac_is_reported_when_it_was_derived)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-1");
+
   cu_cp_user_location_info_nr uli = make_uli({7, 8, 9});
   uli.ue_location_derived_tac     = 8;
 
@@ -83,6 +92,8 @@ TEST(ngap_ntn_tai_info_test, ue_location_derived_tac_is_reported_when_it_was_der
 
 TEST(ngap_ntn_tai_info_test, single_tac_ntn_cell_reports_ntn_tai_information_once_a_tac_is_derived)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-1");
+
   // TS 38.300 sec. 16.14.3.1 leaves broadcasting several TACs optional, so an NTN cell may broadcast one TAC and still
   // report the TAC derived from the UE location, sec. 16.14.5. A derived TAC only exists where a location mapping is
   // configured, which no terrestrial cell has, so this state is reached by an NTN cell alone.
@@ -102,6 +113,8 @@ TEST(ngap_ntn_tai_info_test, single_tac_ntn_cell_reports_ntn_tai_information_onc
 
 TEST(ngap_ntn_tai_info_test, mapped_cell_id_replaces_the_uu_cell_id_of_the_reported_cgi)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-1");
+
   cu_cp_user_location_info_nr uli = make_uli({7, 8, 9});
   uli.mapped_nci                  = nr_cell_identity::create(0x66c001).value();
 
@@ -112,6 +125,8 @@ TEST(ngap_ntn_tai_info_test, mapped_cell_id_replaces_the_uu_cell_id_of_the_repor
 
 TEST(ngap_ntn_tai_info_test, uu_cell_id_is_reported_without_a_mapped_cell_id)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-1");
+
   const asn1::ngap::user_location_info_nr_s asn1_uli = cu_cp_user_location_info_to_asn1(make_uli({7, 8, 9}));
 
   // TS 38.300 sec. 16.14.5 constructs the Mapped Cell ID from the UE location, so an unknown location keeps the Uu
@@ -121,6 +136,8 @@ TEST(ngap_ntn_tai_info_test, uu_cell_id_is_reported_without_a_mapped_cell_id)
 
 TEST(ngap_ntn_tai_info_test, mapped_cell_id_does_not_change_the_plmn_of_the_reported_cgi)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-1");
+
   cu_cp_user_location_info_nr uli = make_uli({7, 8, 9});
   uli.mapped_nci                  = nr_cell_identity::create(0x66c001).value();
 
@@ -136,6 +153,8 @@ TEST(ngap_ntn_tai_info_test, mapped_cell_id_does_not_change_the_plmn_of_the_repo
 
 TEST(ngap_ntn_tai_info_test, ntn_tai_information_survives_a_pack_unpack_round_trip)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-1");
+
   cu_cp_user_location_info_nr uli = make_uli({7, 8, 9});
   uli.ue_location_derived_tac     = 8;
 

@@ -8,6 +8,7 @@
 #include "lib/ntn/orbit_ephemeris_info.h"
 #include "lib/ntn/propagators/keplerian_propagator.h"
 #include "lib/ntn/propagators/rk4_propagator.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/support/test_utils.h"
 #include "fmt/chrono.h"
 #include <cmath>
@@ -37,6 +38,8 @@ static std::chrono::system_clock::time_point string_to_timepoint(const std::stri
 
 TEST(test_converters, propagate_leo_orbit_with_initial_eci_rv_test)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-4");
+
   double dl_freq_hz = 2e9; // Hz, used to compute Doppler Shifts
   // Tolerances.
   double pos_tolerance           = 3;   // 3m -> delay error of 10ns
@@ -136,6 +139,8 @@ TEST(test_converters, propagate_leo_orbit_with_initial_eci_rv_test)
 
 TEST(test_converters, propagate_leo_orbit_with_initial_ecef_rv_test)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-4");
+
   double dl_freq_hz = 2e9; // Hz, used to compute Doppler Shifts
   // Tolerances.
   double pos_tolerance           = 3;   // 3m -> delay error of 10ns
@@ -232,6 +237,8 @@ TEST(test_converters, propagate_leo_orbit_with_initial_ecef_rv_test)
 
 TEST(test_converters, propagate_geo_orbit_with_initial_ecef_rv_test)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-4");
+
   double dl_freq_hz = 2e9; // Hz, used to compute Doppler Shifts
   // Tolerances.
   double pos_tolerance           = 40;  // m -> delay error of 133ns
@@ -337,6 +344,8 @@ TEST(test_converters, propagate_geo_orbit_with_initial_ecef_rv_test)
 
 TEST(test_converters, propagate_leo_orbit_with_initial_oe_test)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-4");
+
   double dl_freq_hz = 2e9; // Hz, used to compute Doppler Shifts
 
   // Tolerances.
@@ -463,6 +472,8 @@ TEST(test_converters, propagate_leo_orbit_with_initial_oe_test)
 
 TEST(test_converters, propagate_leo_orbit_backwards_with_initial_oe_test)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-4");
+
   double dl_freq_hz = 2e9; // Hz, used to compute Doppler Shifts
 
   // Tolerances.
@@ -584,6 +595,8 @@ TEST(test_converters, propagate_leo_orbit_backwards_with_initial_oe_test)
 
 TEST(test_converters, propagate_leo_orbit_for_long_time_with_initial_ecef_rv_test)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-4");
+
   double dl_freq_hz = 2e9; // Hz, used to compute Doppler Shifts
   // Tolerances.
   double pos_tolerance           = 60;  // 3m -> delay error of 200ns
@@ -735,6 +748,8 @@ TEST(test_converters, propagate_leo_orbit_for_long_time_with_initial_ecef_rv_tes
 
 TEST(test_converters, propagate_leo_orbit_with_ref_from_matlab_sgp4_propagator)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-4");
+
   // Tolerances.
   double pos_tolerance_m         = 3.1;
   double vel_tolerance_m_s       = 0.1;
@@ -891,6 +906,8 @@ TEST(test_converters, propagate_leo_orbit_with_ref_from_matlab_sgp4_propagator)
 
 TEST(test_converters, propagate_leo_orbit_with_ref_from_matlab_numerical_propagator)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-4");
+
   // Tolerances.
   double pos_tolerance_m         = 17;
   double vel_tolerance_m_s       = 0.11;
@@ -1047,6 +1064,8 @@ TEST(test_converters, propagate_leo_orbit_with_ref_from_matlab_numerical_propaga
 
 TEST(test_converters, propagate_leo_orbit_for_5s_step_160ms_with_ref_from_matlab_numerical_propagator)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-4");
+
   // Tolerances.
   double pos_tolerance_m         = 0.2;
   double vel_tolerance_m_s       = 0.02;
@@ -1190,6 +1209,8 @@ TEST(test_converters, propagate_leo_orbit_for_5s_step_160ms_with_ref_from_matlab
 
 TEST(test_converters, compare_rk4_vs_keplerian_leo_5min)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-4");
+
   std::string init_utc_time   = "2025-06-24T09:00:00";
   time_point  init_epoch_time = string_to_timepoint(init_utc_time);
 

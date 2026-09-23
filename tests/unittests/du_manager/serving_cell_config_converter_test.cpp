@@ -1475,6 +1475,8 @@ static std::string to_json_string(const T& obj)
 
 TEST(serving_cell_config_converter_test, handover_to_an_ntn_cell_carries_the_ntn_config_of_the_target_cell)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-MOB-2");
+
   odu::du_cell_config target_cell = config_helpers::make_default_du_cell_config();
   target_cell.ran.ntn_params.emplace();
   target_cell.ran.ntn_params->ntn_cfg.cell_specific_koffset = std::chrono::milliseconds{20};
@@ -1499,6 +1501,8 @@ TEST(serving_cell_config_converter_test, handover_to_an_ntn_cell_carries_the_ntn
 
 TEST(serving_cell_config_converter_test, handover_to_a_terrestrial_cell_carries_no_ntn_config)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-MOB-2");
+
   const odu::du_cell_config target_cell = config_helpers::make_default_du_cell_config();
 
   asn1::rrc_nr::recfg_with_sync_s recfg_with_sync;

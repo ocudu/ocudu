@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/adt/span.h"
@@ -145,6 +146,8 @@ TEST(test_arfcn_freq_conversion, arfcn_to_freq_corner_cases)
 
 TEST(test_ntn_bands, rel17_satellite_bands_are_ntn_bands)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-DEP-3");
+
   // TS 38.101-5: n255 (L-band) and n256 (S-band) are the Rel-17 satellite bands.
   for (nr_band b : {nr_band::n255, nr_band::n256}) {
     ASSERT_TRUE(is_ntn_band(b)) << "n" << static_cast<unsigned>(b) << " must be an NTN band";
@@ -156,6 +159,8 @@ TEST(test_ntn_bands, rel17_satellite_bands_are_ntn_bands)
 
 TEST(test_ntn_bands, every_ntn_band_is_a_licensed_paired_fr1_band)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-DEP-3");
+
   unsigned nof_ntn_bands = 0;
   for (nr_band b : all_nr_bands_fr1) {
     if (not is_ntn_band(b)) {
@@ -177,6 +182,8 @@ TEST(test_ntn_bands, every_ntn_band_is_a_licensed_paired_fr1_band)
 
 TEST(test_ntn_bands, n256_carrier_of_the_ntn_e2e_tests_is_valid_and_paired)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-DEP-3");
+
   // Carrier used by the NTN e2e tests: DL 2185 MHz and UL 1995 MHz in n256.
   const arfcn_t dl_arfcn = freq_to_nr_arfcn(2185e6);
   const arfcn_t ul_arfcn = freq_to_nr_arfcn(1995e6);

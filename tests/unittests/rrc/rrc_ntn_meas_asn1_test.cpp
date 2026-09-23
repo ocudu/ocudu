@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/rrc/ue/rrc_measurement_types_asn1_converters.h"
+#include "tests/ocudu_test_requirements.h"
 #include <gtest/gtest.h>
 #include <variant>
 
@@ -46,6 +47,8 @@ static rrc_ntn_neighbour_cell_info make_ntn_info(bool with_ref_location = true)
 /// Without NTN info the v1800 extension list must be absent.
 TEST(ntn_meas_asn1, without_ntn_info_ext_list_is_absent)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-1");
+
   rrc_meas_obj_nr meas_obj;
   meas_obj.cells_to_add_mod_list.push_back(make_cell(1));
   meas_obj.cells_to_add_mod_list.push_back(make_cell(2));
@@ -60,6 +63,8 @@ TEST(ntn_meas_asn1, without_ntn_info_ext_list_is_absent)
 /// reference location left absent (empty octet string).
 TEST(ntn_meas_asn1, ntn_info_without_ref_location_still_emits_ie)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-1");
+
   rrc_meas_obj_nr meas_obj;
   meas_obj.cells_to_add_mod_list.push_back(make_cell(1));
   meas_obj.cells_to_add_mod_list.back().ntn_neighbour_info = make_ntn_info(/*with_ref_location=*/false);
@@ -77,6 +82,8 @@ TEST(ntn_meas_asn1, ntn_info_without_ref_location_still_emits_ie)
 /// cells that carry NTN info.
 TEST(ntn_meas_asn1, ext_list_is_parallel_to_cells_to_add_mod_list)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-1");
+
   rrc_meas_obj_nr meas_obj;
   meas_obj.cells_to_add_mod_list.push_back(make_cell(1));
   meas_obj.cells_to_add_mod_list.push_back(make_cell(2));
@@ -97,6 +104,8 @@ TEST(ntn_meas_asn1, ext_list_is_parallel_to_cells_to_add_mod_list)
 /// Epoch time, ECEF ephemeris quantization, and reference location encoding.
 TEST(ntn_meas_asn1, epoch_and_ecef_ephemeris_encode_correctly)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-1");
+
   rrc_meas_obj_nr meas_obj;
   meas_obj.cells_to_add_mod_list.push_back(make_cell(1));
   meas_obj.cells_to_add_mod_list.back().ntn_neighbour_info = make_ntn_info();
@@ -134,6 +143,8 @@ TEST(ntn_meas_asn1, epoch_and_ecef_ephemeris_encode_correctly)
 /// Orbital ephemeris quantization per TS 38.331.
 TEST(ntn_meas_asn1, orbital_ephemeris_encodes_correctly)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-1");
+
   orbital_coordinates_t orb;
   orb.semi_major_axis = 6900000.0;
   orb.eccentricity    = 0.001;
@@ -173,6 +184,8 @@ using ntn_pol = ntn_polarization_t;
 /// carry it.
 TEST(ntn_meas_asn1, polarization_ext_v1710_is_parallel_to_cells_to_add_mod_list)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-1");
+
   rrc_meas_obj_nr meas_obj;
   meas_obj.cells_to_add_mod_list.push_back(make_cell(1));
   meas_obj.cells_to_add_mod_list.push_back(make_cell(2));
@@ -197,6 +210,8 @@ TEST(ntn_meas_asn1, polarization_ext_v1710_is_parallel_to_cells_to_add_mod_list)
 /// DL and UL polarization enums map correctly.
 TEST(ntn_meas_asn1, polarization_dl_ul_enums_encode_correctly)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-1");
+
   using ext_v1710 = asn1::rrc_nr::cells_to_add_mod_ext_v1710_s;
 
   rrc_meas_obj_nr meas_obj;
@@ -217,6 +232,8 @@ TEST(ntn_meas_asn1, polarization_dl_ul_enums_encode_correctly)
 /// A single configured direction (DL only) marks only that direction present.
 TEST(ntn_meas_asn1, polarization_dl_only_leaves_ul_absent)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-1");
+
   using ext_v1710 = asn1::rrc_nr::cells_to_add_mod_ext_v1710_s;
 
   rrc_meas_obj_nr meas_obj;

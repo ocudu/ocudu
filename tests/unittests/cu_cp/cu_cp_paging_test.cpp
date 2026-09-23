@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "cu_cp_test_environment.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/test_doubles/rrc/rrc_packed_test_messages.h"
@@ -198,6 +199,8 @@ TEST_F(cu_cp_paging_test, when_no_du_for_tac_exists_then_paging_is_not_sent_to_d
 
 TEST_F(cu_cp_paging_test, when_paged_tac_is_a_secondary_broadcast_tac_then_paging_is_sent_to_du)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-3");
+
   // Cell broadcasts TACs 7, 8 and 9 in trackingAreaList, TS 38.331. F1AP carries only the primary TAC, so the CU-CP
   // recovers the list from the SIB1 the DU provides.
   static const std::array<tac_t, 3> broadcast_tacs = {7, 8, 9};
@@ -218,6 +221,8 @@ TEST_F(cu_cp_paging_test, when_paged_tac_is_a_secondary_broadcast_tac_then_pagin
 
 TEST_F(cu_cp_paging_test, when_paged_tac_is_outside_the_broadcast_tac_list_then_paging_is_not_sent_to_du)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-3");
+
   static const std::array<tac_t, 3> broadcast_tacs = {7, 8, 9};
   unsigned                          du_idx         = setup_du(test_helpers::generate_f1_setup_request(
       int_to_gnb_du_id(0x11),
@@ -437,6 +442,8 @@ protected:
 
 TEST_F(cu_cp_paging_mapped_cell_id_test, a_cell_recommended_by_its_mapped_cell_id_is_paged_by_its_uu_cell_id)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2", "CU-NTN-LOC-3");
+
   // The core names the cell by the identity the gNB reported for it, TS 38.300 sec. 16.14.5, while the gNB-DU pages
   // the cells it knows by their Uu Cell ID, TS 38.473 sec. 8.7.1.2.
   connect_du_serving({uu_nci});
@@ -449,6 +456,8 @@ TEST_F(cu_cp_paging_mapped_cell_id_test, a_cell_recommended_by_its_mapped_cell_i
 
 TEST_F(cu_cp_paging_mapped_cell_id_test, a_mapped_cell_id_covering_two_cells_pages_both)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2", "CU-NTN-LOC-3");
+
   // A Mapped Cell ID names a geographical area, and TS 38.300 sec. 16.14.5 leaves the mapping to configuration, so
   // more than one cell may cover it. Paging only the first would leave the rest of the area unpaged.
   connect_du_serving({uu_nci, second_uu_nci});
@@ -461,6 +470,8 @@ TEST_F(cu_cp_paging_mapped_cell_id_test, a_mapped_cell_id_covering_two_cells_pag
 
 TEST_F(cu_cp_paging_mapped_cell_id_test, a_cell_recommended_by_both_identities_is_paged_once)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2", "CU-NTN-LOC-3");
+
   // The core may name one cell by its Uu Cell ID and by the Mapped Cell ID of an area it covers. Both resolve to the
   // same cell, which must not be paged twice.
   connect_du_serving({uu_nci});
@@ -473,6 +484,8 @@ TEST_F(cu_cp_paging_mapped_cell_id_test, a_cell_recommended_by_both_identities_i
 
 TEST_F(cu_cp_paging_mapped_cell_id_test, a_recommended_cell_is_paged_before_the_rest_of_the_tracking_area)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2", "CU-NTN-LOC-3");
+
   // Every served cell of a paged tracking area is paged whether or not the core recommended it, so what a
   // recommendation decides is the order, TS 38.413 sec. 9.3.1.70 making it assistance data rather than a selection.
   connect_du_serving({unmapped_uu_nci, uu_nci});
@@ -486,6 +499,8 @@ TEST_F(cu_cp_paging_mapped_cell_id_test, a_recommended_cell_is_paged_before_the_
 
 TEST_F(cu_cp_paging_mapped_cell_id_test, a_mapped_cell_id_does_not_page_a_cell_outside_the_paged_tracking_area)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-2", "CU-NTN-LOC-3");
+
   // The cells one Mapped Cell ID covers need not broadcast the same TAC: TS 38.300 sec. 16.14.3.1 does not
   // synchronise the TAC in system information with the illumination on ground. The paged tracking area still decides.
   connect_du_serving({{uu_nci, paged_tac}, {second_uu_nci, 9}});

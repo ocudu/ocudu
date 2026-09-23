@@ -4,6 +4,7 @@
 
 #include "lib/du/du_high/du_manager/converters/asn1_ntn_config_helpers.h"
 #include "lib/du/du_high/du_manager/converters/asn1_sys_info_packer.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/rrc_nr/bcch_dl_sch_msg.h"
 #include "ocudu/asn1/rrc_nr/sys_info.h"
@@ -97,6 +98,8 @@ ntn_config make_test_ntn_config(unsigned koffset_ms       = 260,
 
 TEST(srs_sib19_ntn_test, orbital_ephemeris_retrograde_inclination_packs)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-1");
+
   const double sun_sync_inclination = 1.7104;
 
   sib19_info sib19;
@@ -131,6 +134,8 @@ TEST(srs_sib19_ntn_test, orbital_ephemeris_retrograde_inclination_packs)
 
 TEST(srs_sib19_ntn_test, distance_thresh_encoding)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-1");
+
   sib19_info sib19;
   sib19.distance_thres = 5000; // 5000 meters / 50 = 100
 
@@ -174,6 +179,8 @@ TEST(srs_sib19_ntn_test, make_asn1_rrc_cell_sib19_moving_ref_location)
 
 TEST(srs_sib19_ntn_test, make_asn1_rrc_cell_sib19_ref_location_positive_longitude)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-1");
+
   sib19_info sib19;
   sib19.ref_location.emplace();
   sib19.ref_location->latitude  = 48.135;
@@ -249,6 +256,8 @@ TEST(srs_sib19_ntn_test, make_asn1_rrc_cell_sib19_sat_switch)
 
 TEST(srs_sib19_ntn_test, make_asn1_rrc_cell_sib19_neighbor_cells)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-3");
+
   sib19_info sib19;
   // Add 2 neighbor cells with mixed optional fields
   neighbor_ntn_cell neighbor1;
@@ -285,6 +294,8 @@ TEST(srs_sib19_ntn_test, make_asn1_rrc_cell_sib19_neighbor_cells)
 
 TEST(srs_sib19_ntn_test, make_asn1_rrc_cell_sib19_neighbor_cells_extended)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-3");
+
   sib19_info sib19;
   // Add 6 neighbors (first 4 in base list, remaining 2 in extension list)
   for (int i = 0; i < 6; i++) {
@@ -358,6 +369,8 @@ TEST(srs_sib19_ntn_test, make_asn1_rrc_cell_sib19_all_r18_fields)
 
 TEST(srs_sib19_ntn_test, max_ncells_supported)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-3");
+
   sib19_info sib19;
   // Add maximum 8 neighbors (4 base + 4 extension)
   for (int i = 0; i < 8; i++) {
@@ -385,6 +398,8 @@ TEST(srs_sib19_ntn_test, max_ncells_supported)
 
 TEST(srs_sib19_ntn_test, complete_sib19_all_fields_with_pcap)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-1");
+
   sib19_info sib19;
 
   // ===== Base R17 Fields =====

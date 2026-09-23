@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "si_test_helpers.h"
+#include "tests/ocudu_test_requirements.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -588,6 +589,8 @@ public:
 
 TEST_F(si_message_controller_si_pdu_update_test, when_no_warning_is_on_air_then_the_update_is_served_from_its_position)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-2");
+
   const byte_buffer pdu = push_ntn_si_pdu_update();
 
   // With no warning on air, the epoch holds the SIB2 and the SIB19 SI messages, so the latter sits at position 1.
@@ -597,6 +600,8 @@ TEST_F(si_message_controller_si_pdu_update_test, when_no_warning_is_on_air_then_
 
 TEST_F(si_message_controller_si_pdu_update_test, when_no_si_message_carries_the_sib_then_the_update_is_rejected)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-2");
+
   std::vector<byte_buffer>     segments{make_random_pdu()};
   mac_cell_sys_info_pdu_update req;
   req.sib_idx     = sib_type::sib4;
@@ -607,6 +612,8 @@ TEST_F(si_message_controller_si_pdu_update_test, when_no_si_message_carries_the_
 
 TEST_F(si_message_controller_si_pdu_update_test, when_a_warning_goes_on_air_then_the_update_is_still_served)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-2");
+
   // The warning joins the epoch ahead of the SIB19 SI message, pushing it from position 1 to position 2.
   std::vector<byte_buffer>     segments = make_random_segmented_pdu(50, 1);
   mac_cell_sys_info_pdu_update pws_req;

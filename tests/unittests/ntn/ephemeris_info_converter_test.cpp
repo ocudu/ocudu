@@ -5,6 +5,7 @@
 #include "lib/ntn/converters/ephemeris_info_converter.h"
 #include "lib/ntn/converters/reference_frame_converter.h"
 #include "lib/ntn/coordinates_types.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/support/test_utils.h"
 #include "fmt/chrono.h"
 #include <cmath>
@@ -70,6 +71,8 @@ std::vector<std::tuple<std::string, state_vector, state_vector, orbital_elements
 
 TEST(test_converters, ecef_rv_2_oe_test)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-1");
+
   double sma_tolerance = 1e-2; // 1cm
   double tolerance     = 1e-6;
   double pos_tolerance = 1e-3; // m -> 0.1cm
@@ -107,6 +110,8 @@ TEST(test_converters, ecef_rv_2_oe_test)
 
 TEST(test_converters, oe_2_ecef_rvs_test)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-1");
+
   double sma_tolerance = 1e-2; // 1cm
   double tolerance     = 1e-6;
   double pos_tolerance = 1e-3; // m -> 0.1cm
@@ -196,6 +201,8 @@ const orbital_elements circular_equatorial_orbit{7000e3, 0.0, 0.0, 0.0, 0.0, 1.0
 
 TEST(test_converters, eci_to_orbital_at_apoapsis_stays_finite)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-1");
+
   // Near-circular inclined orbit sampled at apoapsis (mean anomaly = pi), where the true-anomaly cosine is -1:
   // the case that historically returned NaN and propagated it into mean_anomaly.
   const orbital_elements oe{7000e3, 1e-3, 30.0 * M_PI / 180.0, 0.8, 1.1, M_PI};
@@ -207,6 +214,8 @@ TEST(test_converters, eci_to_orbital_at_apoapsis_stays_finite)
 
 TEST(test_converters, eci_to_orbital_boundary_geometries_stay_finite)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-1");
+
   // Sweep periapsis and apoapsis over eccentricity and orientation, staying clear of the e=0 / i=0 singularities
   // (covered separately below). A large fraction of these historically produced NaN.
   for (double e : {1e-3, 1e-2, 0.1, 0.4}) {
@@ -229,6 +238,8 @@ TEST(test_converters, eci_to_orbital_boundary_geometries_stay_finite)
 
 TEST(test_converters, eci_to_orbital_circular_inclined_orbit_is_finite_and_round_trips)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-1");
+
   // Exactly circular (e = 0): the eccentricity vector vanishes, so argument of periapsis and true anomaly are
   // 0/0. Convention: periapsis = 0, and the in-plane phase is carried by the argument of latitude in mean_anomaly.
   const orbital_elements& oe  = circular_inclined_orbit;
@@ -248,6 +259,8 @@ TEST(test_converters, eci_to_orbital_circular_inclined_orbit_is_finite_and_round
 
 TEST(test_converters, eci_to_orbital_equatorial_elliptical_orbit_is_finite_and_round_trips)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-1");
+
   // Exactly equatorial (i = 0): the node vector vanishes, so the ascending node (longitude) and the periapsis
   // measured from it are undefined. Convention: longitude = 0, periapsis = longitude of periapsis from the x-axis.
   const orbital_elements& oe  = equatorial_elliptical_orbit;
@@ -267,6 +280,8 @@ TEST(test_converters, eci_to_orbital_equatorial_elliptical_orbit_is_finite_and_r
 
 TEST(test_converters, eci_to_orbital_circular_equatorial_orbit_is_finite_and_round_trips)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-1");
+
   // Both singularities at once (e = 0 and i = 0): longitude and periapsis undefined. Convention: both 0, and the
   // phase is the true longitude carried by mean_anomaly.
   const orbital_elements& oe  = circular_equatorial_orbit;
@@ -295,6 +310,8 @@ TEST(test_converters, eci_to_orbital_circular_equatorial_orbit_is_finite_and_rou
 
 TEST(test_converters, eci_to_orbital_degenerate_orbits_round_trip_at_boundary_phases)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-1");
+
   // The same three degenerate geometries as the tests above, each swept over the boundary phases. For the
   // circular ones the swept element is the argument of latitude rather than a true anomaly, which is the
   // quantity that vanishes at the ascending node.
@@ -321,6 +338,8 @@ TEST(test_converters, eci_to_orbital_degenerate_orbits_round_trip_at_boundary_ph
 
 TEST(test_converters, eci_to_orbital_round_trips_at_the_apsides_and_with_periapsis_on_the_line_of_nodes)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-1");
+
   // Ordinary, fully non-degenerate orbits: no eccentricity or node vector is anywhere near vanishing, so this
   // exercises the shared elliptical path rather than either singularity branch. Two angles are ill-conditioned
   // here for reasons that have nothing to do with degeneracy: the true anomaly at the apsides (swept via the
@@ -345,6 +364,8 @@ TEST(test_converters, eci_to_orbital_round_trips_at_the_apsides_and_with_periaps
 
 TEST(test_converters, eci_to_orbital_recovers_inclinations_just_above_the_equatorial_threshold)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-1");
+
   // The band between the equatorial threshold and the smallest inclination the other tests cover. Nothing here is
   // degenerate -- the node vector is small but perfectly well determined -- yet cos(inclination) is 1.0 to within
   // a rounding error across this whole range, so recovering the inclination from that cosine would floor it to 0

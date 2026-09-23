@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "cu_cp_test_environment.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/test_doubles/ngap/ngap_test_message_validators.h"
@@ -79,6 +80,8 @@ void cu_cp_ntn_tai_info_test::attach_ue_and_get_reported_location(span<const tac
 
 TEST_F(cu_cp_ntn_tai_info_test, when_cell_broadcasts_several_tacs_then_initial_ue_message_lists_them_all)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-1");
+
   asn1::ngap::user_location_info_nr_s user_loc_info;
   attach_ue_and_get_reported_location(broadcast_tacs, user_loc_info);
 
@@ -98,6 +101,8 @@ TEST_F(cu_cp_ntn_tai_info_test, when_cell_broadcasts_several_tacs_then_initial_u
 TEST_F(cu_cp_ntn_tai_info_test,
        when_broadcast_tac_list_does_not_lead_with_the_5gs_tac_then_it_is_reported_in_broadcast_order)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-1");
+
   // TS 38.331 does not order trackingAreaList, so a gNB-DU may broadcast the F1AP 5GS TAC anywhere in the list.
   static constexpr std::array<tac_t, 3> unordered_tacs = {8, 7, 9};
 
@@ -118,6 +123,8 @@ TEST_F(cu_cp_ntn_tai_info_test,
 
 TEST_F(cu_cp_ntn_tai_info_test, when_broadcast_tac_list_lacks_the_5gs_tac_then_no_ntn_tai_information_is_reported)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-1");
+
   // A list without the F1AP 5GS TAC would disagree with the TAI the CU-CP reports.
   static constexpr std::array<tac_t, 2> foreign_tacs = {8, 9};
 
@@ -130,6 +137,8 @@ TEST_F(cu_cp_ntn_tai_info_test, when_broadcast_tac_list_lacks_the_5gs_tac_then_n
 
 TEST_F(cu_cp_ntn_tai_info_test, when_cell_broadcasts_a_single_tac_then_no_ntn_tai_information_is_reported)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-LOC-1");
+
   asn1::ngap::user_location_info_nr_s user_loc_info;
   attach_ue_and_get_reported_location({}, user_loc_info);
 

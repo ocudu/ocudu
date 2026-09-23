@@ -8,6 +8,7 @@
 
 #include "test_utils/result_test_helpers.h"
 #include "test_utils/scheduler_test_simulator.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include <functional>
@@ -55,6 +56,8 @@ protected:
 
 TEST_P(scheduler_ntn_koffset_test, pusch_is_scheduled_k2_plus_koffset_slots_after_its_dci)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-TIM-1");
+
   ASSERT_EQ(koffset(), GetParam());
   this->push_bsr(ul_bsr_indication_message{to_du_cell_index(0),
                                            ue_idx,
@@ -87,6 +90,8 @@ TEST_P(scheduler_ntn_koffset_test, pusch_is_scheduled_k2_plus_koffset_slots_afte
 
 TEST_P(scheduler_ntn_koffset_test, harq_ack_is_scheduled_k1_plus_koffset_slots_after_its_pdsch)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-TIM-1");
+
   ASSERT_EQ(koffset(), GetParam());
   this->push_dl_buffer_state(dl_buffer_state_indication_message{ue_idx, ue_drb_lcid, 100000});
 

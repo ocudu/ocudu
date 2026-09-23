@@ -7,6 +7,7 @@
 #include "lib/mac/rnti_manager.h"
 #include "mac_ctrl_test_dummies.h"
 #include "mac_test_helpers.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/scheduler/scheduler_feedback_handler.h"
 #include "ocudu/support/async/async_test_utils.h"
 #include "ocudu/support/executors/manual_task_worker.h"
@@ -552,6 +553,8 @@ TEST(mac_ul_processor, verify_single_entry_phr)
 
 TEST(mac_ul_processor, verify_timing_advance_report)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-TIM-2");
+
   // Define UE and create test_bench.
   const rnti_t          ue1_rnti = to_rnti(0x4601);
   const du_ue_index_t   ue1_idx  = to_du_ue_index(1U);

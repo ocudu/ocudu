@@ -4,6 +4,7 @@
 
 #include "du_manager_test_helpers.h"
 #include "lib/du/du_high/du_manager/du_high_ntn_sib19_update_handler_impl.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/rrc_nr/bcch_dl_sch_msg.h"
 #include "ocudu/asn1/rrc_nr/sys_info.h"
@@ -132,6 +133,8 @@ protected:
 // [&req], or only the owning vector back to a span, each makes this test abort.)
 TEST_F(du_ntn_sib19_update_test, si_messages_survive_deferred_update_and_reach_mac_intact)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-2");
+
   du_high_ntn_sib19_update_handler_impl handler{du_mng->get_operation_configurator()};
   const ntn_sib19_update_request        req = make_ntn_request(cell_cfgs[0].nr_cgi);
 

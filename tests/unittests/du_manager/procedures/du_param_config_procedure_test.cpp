@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "../du_manager_test_helpers.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/rrc_nr/bcch_dl_sch_msg.h"
 #include "ocudu/asn1/rrc_nr/sys_info.h"
@@ -484,6 +485,8 @@ TEST_F(du_manager_value_tag_test, when_value_tag_reaches_31_then_wraps_to_0)
 
 TEST_F(du_manager_value_tag_test, when_sib19_updated_then_value_tag_increments_independently)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-2");
+
   // Send SIB19 update request (initial value_tag is 0 from fixture setup).
   du_param_config_request  req  = make_sib_update_request(create_modified_sib19());
   du_param_config_response resp = du_mng->get_operation_configurator().handle_sync_operator_config(req);

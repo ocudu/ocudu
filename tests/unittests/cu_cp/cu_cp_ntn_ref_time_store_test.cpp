@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/cu_cp/cu_cp_ntn_ref_time_store.h"
 #include <gtest/gtest.h>
 
@@ -37,11 +38,15 @@ protected:
 
 TEST_F(cu_cp_ntn_ref_time_store_test, tracked_cell_has_no_mapping_until_its_du_reports_one)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-1");
+
   ASSERT_FALSE(store.get_last_mapping(make_cgi(ntn_nci_1), subcarrier_spacing::kHz15).has_value());
 }
 
 TEST_F(cu_cp_ntn_ref_time_store_test, reported_mapping_is_returned_as_reported)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-1");
+
   const std::array<nr_cell_global_id_t, 1> served = {make_cgi(ntn_nci_1)};
   store.on_ref_time_info_report(served, make_report(100, t0));
 
@@ -54,6 +59,8 @@ TEST_F(cu_cp_ntn_ref_time_store_test, reported_mapping_is_returned_as_reported)
 
 TEST_F(cu_cp_ntn_ref_time_store_test, report_applies_to_every_tracked_cell_served_by_the_du)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-1");
+
   const std::array<nr_cell_global_id_t, 2> served = {make_cgi(ntn_nci_1), make_cgi(ntn_nci_2)};
   store.on_ref_time_info_report(served, make_report(100, t0));
 
@@ -66,6 +73,8 @@ TEST_F(cu_cp_ntn_ref_time_store_test, report_applies_to_every_tracked_cell_serve
 
 TEST_F(cu_cp_ntn_ref_time_store_test, report_reaches_only_the_tracked_cells_the_du_serves)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-1");
+
   // The DU serves one of the two tracked NTN cells and a cell the store does not track.
   const std::array<nr_cell_global_id_t, 2> served = {make_cgi(ntn_nci_1), make_cgi(tn_nci)};
   store.on_ref_time_info_report(served, make_report(100, t0));
@@ -77,6 +86,8 @@ TEST_F(cu_cp_ntn_ref_time_store_test, report_reaches_only_the_tracked_cells_the_
 
 TEST_F(cu_cp_ntn_ref_time_store_test, latest_report_replaces_the_previous_one)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-1");
+
   const std::array<nr_cell_global_id_t, 1> served = {make_cgi(ntn_nci_1)};
   store.on_ref_time_info_report(served, make_report(100, t0));
   store.on_ref_time_info_report(served, make_report(200, t0 + 1s));

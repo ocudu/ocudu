@@ -4,6 +4,7 @@
 
 #include "cell_meas_manager_test_helpers.h"
 #include "lib/cu_cp/cell_meas_manager/cell_meas_manager_helpers.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/ran/plmn_identity.h"
@@ -636,6 +637,8 @@ static rrc_ntn_neighbour_cell_info make_test_ntn_neighbour_info()
 
 TEST_F(cell_meas_manager_test, when_no_ntn_neighbour_info_then_meas_config_has_no_cells_to_add_mod)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-1");
+
   create_default_manager();
 
   cu_cp_ue_index_t ue_index = ue_mng.add_ue(uint_to_cu_cp_du_index(0));
@@ -655,6 +658,8 @@ TEST_F(cell_meas_manager_test, when_no_ntn_neighbour_info_then_meas_config_has_n
 
 TEST_F(cell_meas_manager_test, when_ntn_neighbour_info_updated_then_meas_config_contains_it)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-1");
+
   create_default_manager();
 
   gnb_id_t         gnb_id{0x19b, 32};
@@ -691,6 +696,8 @@ TEST_F(cell_meas_manager_test, when_ntn_neighbour_info_updated_then_meas_config_
 
 TEST_F(cell_meas_manager_test, when_ntn_update_refers_to_unknown_serving_cell_then_update_fails)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-1");
+
   create_default_manager();
 
   gnb_id_t         gnb_id{0x19b, 32};
@@ -703,6 +710,8 @@ TEST_F(cell_meas_manager_test, when_ntn_update_refers_to_unknown_serving_cell_th
 
 TEST_F(cell_meas_manager_test, when_ntn_update_refers_to_unknown_neighbour_then_update_fails)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-1");
+
   create_default_manager();
 
   gnb_id_t         gnb_id{0x19b, 32};
@@ -715,6 +724,8 @@ TEST_F(cell_meas_manager_test, when_ntn_update_refers_to_unknown_neighbour_then_
 
 TEST_F(cell_meas_manager_test, when_cho_meas_config_requested_then_ntn_neighbour_info_is_included)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-NTN-MOB-1");
+
   create_cho_manager_single_frequency();
 
   gnb_id_t         gnb_id{0x19b, 32};

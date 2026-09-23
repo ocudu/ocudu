@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/scheduler/cell/cell_harq_manager.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/scheduler/result/sched_result.h"
 #include <gtest/gtest.h>
@@ -1006,6 +1007,8 @@ protected:
 
 TEST_F(harq_extension_test, when_reconfigure_with_more_harqs_then_nof_harqs_increases)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-HARQ-1");
+
   unique_ue_harq_entity harq_ent = cell_harqs.add_ue(ue_index, rnti, init_harqs, init_harqs);
 
   ASSERT_EQ(harq_ent.nof_dl_harqs(), init_harqs);
@@ -1022,6 +1025,8 @@ TEST_F(harq_extension_test, when_reconfigure_with_more_harqs_then_nof_harqs_incr
 
 TEST_F(harq_extension_test, when_reconfigure_with_same_count_then_no_change)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-HARQ-1");
+
   unique_ue_harq_entity harq_ent = cell_harqs.add_ue(ue_index, rnti, init_harqs, init_harqs);
 
   ASSERT_EQ(harq_ent.nof_dl_harqs(), init_harqs);
@@ -1037,6 +1042,8 @@ TEST_F(harq_extension_test, when_reconfigure_with_same_count_then_no_change)
 
 TEST_F(harq_extension_test, when_reconfigure_extends_then_new_harqs_are_allocatable)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-HARQ-1");
+
   unique_ue_harq_entity harq_ent = cell_harqs.add_ue(ue_index, rnti, init_harqs, init_harqs);
 
   // Allocate all initial HARQs.
@@ -1080,6 +1087,8 @@ TEST_F(harq_extension_test, when_reconfigure_extends_then_new_harqs_are_allocata
 
 TEST_F(harq_extension_test, when_reconfigure_extends_asymmetrically_then_dl_and_ul_differ)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-HARQ-1");
+
   unique_ue_harq_entity harq_ent = cell_harqs.add_ue(ue_index, rnti, init_harqs, init_harqs);
 
   // Extend DL to 32, UL to 24 via reconfigure.
@@ -1094,6 +1103,8 @@ TEST_F(harq_extension_test, when_reconfigure_extends_asymmetrically_then_dl_and_
 
 TEST_F(single_ntn_ue_harq_normal_mode_process_test, when_ntn_normal_mode_wait_rtt_for_ack)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-TIM-1");
+
   float      pucch_snr   = 5;
   slot_point dl_ack_slot = current_slot + k1 + NTN_CELL_SPECIFIC_KOFFSET_MAX;
   slot_point ul_ack_slot = current_slot + k2 + NTN_CELL_SPECIFIC_KOFFSET_MAX;
@@ -1137,6 +1148,8 @@ TEST_F(single_ntn_ue_harq_normal_mode_process_test, when_ntn_normal_mode_wait_rt
 }
 TEST_F(single_ntn_ue_ul_harq_mode_b_process_test, when_ul_harq_allocated_then_it_flushes_soon_after)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-HARQ-2");
+
   ASSERT_EQ(h_dl.mode(), harq_utils::harq_mode_t::normal);
   ASSERT_EQ(h_ul.mode(), harq_utils::harq_mode_t::feedback_disabled_or_mode_b);
 
@@ -1156,6 +1169,8 @@ TEST_F(single_ntn_ue_ul_harq_mode_b_process_test, when_ul_harq_allocated_then_it
 
 TEST_F(single_ntn_ue_ul_harq_mode_b_process_test, ul_harq_history_is_reachable_after_harq_release)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-HARQ-2");
+
   ASSERT_EQ(h_dl.mode(), harq_utils::harq_mode_t::normal);
   ASSERT_EQ(h_ul.mode(), harq_utils::harq_mode_t::feedback_disabled_or_mode_b);
 
@@ -1203,6 +1218,8 @@ TEST_F(single_ntn_ue_ul_harq_mode_b_process_test, ul_harq_history_is_reachable_a
 
 TEST_F(single_ntn_ue_ul_harq_mode_b_process_test, when_ul_harq_gets_acked_then_it_reports_the_correct_tbs)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-HARQ-2");
+
   ASSERT_EQ(h_dl.mode(), harq_utils::harq_mode_t::normal);
   ASSERT_EQ(h_ul.mode(), harq_utils::harq_mode_t::feedback_disabled_or_mode_b);
 
@@ -1231,6 +1248,8 @@ TEST_F(single_ntn_ue_ul_harq_mode_b_process_test, when_ul_harq_gets_acked_then_i
 
 TEST_F(single_ntn_ue_harq_dl_feedback_disabled_process_test, release_dl_harq_after_timeout)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-HARQ-2");
+
   ASSERT_EQ(h_dl.mode(), harq_utils::harq_mode_t::feedback_disabled_or_mode_b);
   ASSERT_EQ(h_ul.mode(), harq_utils::harq_mode_t::normal);
 
@@ -1282,6 +1301,8 @@ protected:
 
 TEST_F(non_ntn_harq_count_test, when_non_ntn_cell_then_max_harqs_is_16)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-HARQ-1");
+
   // Verify the max_harqs_per_ue is 16 for non-NTN cells.
   ASSERT_EQ(max_harqs_per_ue, MAX_NOF_HARQS_NON_NTN);
   ASSERT_EQ(max_harqs_per_ue, 16U);
@@ -1308,6 +1329,8 @@ TEST_F(non_ntn_harq_count_test, when_non_ntn_cell_then_max_harqs_is_16)
 
 TEST_F(ntn_harq_count_test, when_ntn_cell_then_max_harqs_is_32)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-HARQ-1");
+
   // Verify the max_harqs_per_ue is 32 for NTN cells.
   ASSERT_EQ(max_harqs_per_ue, MAX_NOF_HARQS);
   ASSERT_EQ(max_harqs_per_ue, 32U);

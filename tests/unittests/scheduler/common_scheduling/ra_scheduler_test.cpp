@@ -8,6 +8,7 @@
 #include "lib/scheduler/ue_context/ue_cell_repository.h"
 #include "lib/scheduler/ue_context/ue_repository.h"
 #include "sub_scheduler_test_environment.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/test_doubles/scheduler/scheduler_result_finder.h"
@@ -398,6 +399,8 @@ public:
 
 TEST_F(ra_scheduler_ntn_test, msg3_is_scheduled_the_cell_specific_koffset_after_its_msg3_delay)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-TIM-4");
+
   ASSERT_GT(cell_cfg.ntn_cs_koffset, 0U);
   handle_rach_indication(create_rach_indication(1));
 
@@ -429,6 +432,8 @@ TEST_F(ra_scheduler_ntn_test, msg3_is_scheduled_the_cell_specific_koffset_after_
 
 TEST_F(ra_scheduler_ntn_test, ra_procedure_completes_with_msg3_retransmissions)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-TIM-4");
+
   const unsigned nof_preambles = 2;
   handle_rach_indication(create_rach_indication(nof_preambles));
 

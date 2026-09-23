@@ -6,6 +6,7 @@
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "lib/scheduler/support/paging_helpers.h"
 #include "sub_scheduler_test_environment.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "ocudu/adt/bounded_bitset.h"
 #include "ocudu/ran/pdcch/dci_packing.h"
@@ -157,6 +158,8 @@ TEST_F(si_scheduler_test, when_si_is_updated_then_new_version_is_applied_at_si_c
 
 TEST_F(si_scheduler_test, when_si_is_updated_then_new_msg_len_is_applied_right_after_the_request)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-2");
+
   si_scheduling_config new_si_sched_cfg = DEFAULT_SI_SCHED_CFG;
   new_si_sched_cfg.si_messages[0].msg_len += units::bytes{64U};
   // Immediate content (e.g. NTN SIB19): grant sizing is expected to update right after the request.

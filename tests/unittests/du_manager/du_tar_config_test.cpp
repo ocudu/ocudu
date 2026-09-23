@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/du/du_high/du_manager/ran_resource_management/du_ran_resource_manager_impl.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/du/du_cell_config_helpers.h"
 #include "ocudu/du/du_high/du_qos_config_helpers.h"
@@ -94,6 +95,8 @@ protected:
 
 TEST_P(du_tar_config_tester, tar_config_is_signalled_only_by_an_ntn_cell_that_configures_it)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-TIM-2");
+
   // The UE supports everything, so only the cell configuration decides.
   const std::optional<tar_config>& tar_cfg = update_ue_caps(make_ta_report_caps(cell_band(), true, true));
 
@@ -107,12 +110,16 @@ TEST_P(du_tar_config_tester, tar_config_is_signalled_only_by_an_ntn_cell_that_co
 
 TEST_P(du_tar_config_tester, tar_config_is_not_signalled_to_a_ue_without_uplink_ta_reporting)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-TIM-2");
+
   // Asking for a procedure the UE does not implement gets no reports and risks the UE rejecting the reconfiguration.
   ASSERT_FALSE(update_ue_caps(make_ta_report_caps(cell_band(), false, true)).has_value());
 }
 
 TEST_P(du_tar_config_tester, tar_config_is_not_signalled_when_the_ue_does_not_support_the_band)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-TIM-2");
+
   // The capability is per band, so a UE that reports another band gets no tar-Config either.
   ue_capability_summary caps = make_ta_report_caps(cell_band(), true, true);
   caps.bands.clear();
@@ -121,6 +128,8 @@ TEST_P(du_tar_config_tester, tar_config_is_not_signalled_when_the_ue_does_not_su
 
 TEST_P(du_tar_config_tester, timing_advance_sr_is_dropped_when_the_ue_cannot_raise_it)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-TIM-2");
+
   // sr-TriggeredBy-TA-Report-r17 is a capability of its own: without it, the rest of tar-Config still applies.
   const std::optional<tar_config>& tar_cfg = update_ue_caps(make_ta_report_caps(cell_band(), true, false));
 

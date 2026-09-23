@@ -5,6 +5,7 @@
 #include "lib/ntn/converters/ephemeris_info_converter.h"
 #include "lib/ntn/orbit_ephemeris_info.h"
 #include "lib/ntn/propagators/keplerian_propagator.h"
+#include "tests/ocudu_test_requirements.h"
 #include <cmath>
 #include <gtest/gtest.h>
 
@@ -21,6 +22,8 @@ static std::chrono::system_clock::time_point make_epoch()
 // Zero duration must leave the ECI state and epoch unchanged.
 TEST(keplerian_propagator_test, zero_duration_is_no_op)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-4");
+
   keplerian_propagator propagator;
   auto                 epoch = make_epoch();
   orbital_elements oe{6877286.310, 0.0012074892907, 0.9295782970760, 2.0359402522293, 0.8669148350739, 5.4309100278415};
@@ -39,6 +42,8 @@ TEST(keplerian_propagator_test, zero_duration_is_no_op)
 // ECI state after dt must match orbital_to_eci(oe with M advanced by n*dt).
 TEST(keplerian_propagator_test, eci_state_matches_advanced_mean_anomaly)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-4");
+
   const orbital_elements oe{
       6877286.310, 0.0012074892907, 0.9295782970760, 2.0359402522293, 0.8669148350739, 5.4309100278415};
   auto   epoch = make_epoch();
@@ -70,6 +75,8 @@ TEST(keplerian_propagator_test, eci_state_matches_advanced_mean_anomaly)
 // Negative dt propagates backward correctly.
 TEST(keplerian_propagator_test, backward_propagation)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-4");
+
   const orbital_elements oe{
       6877286.310, 0.0012074892907, 0.9295782970760, 2.0359402522293, 0.8669148350739, 5.4309100278415};
   auto   epoch = make_epoch();
@@ -96,6 +103,8 @@ TEST(keplerian_propagator_test, backward_propagation)
 // After one full orbital period T = 2pi/n, ECI state is recovered.
 TEST(keplerian_propagator_test, full_period_recovers_initial_state)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-4");
+
   // Circular orbit (e=0) for exact ECI recovery.
   const orbital_elements oe{7000000.0, 0.0, 0.5, 1.0, 0.0, 0.3};
   auto                   epoch = make_epoch();
@@ -118,6 +127,8 @@ TEST(keplerian_propagator_test, full_period_recovers_initial_state)
 // For a circular orbit (e=0) the orbital radius |r| must equal a at every time step.
 TEST(keplerian_propagator_test, circular_orbit_constant_radius)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-4");
+
   const orbital_elements oe{7000000.0, 0.0, 0.5, 1.0, 0.0, 0.0};
   auto                   epoch = make_epoch();
 
