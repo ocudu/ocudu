@@ -3,8 +3,8 @@
 
 set_directory_properties(PROPERTIES LABELS "ofh;MVP-ARCH-INTF-4")
 
-add_executable(ofh_integration_test ofh_integration_test.cpp ofh_integration_test_config.cpp)
-target_include_directories(ofh_integration_test PRIVATE ${CMAKE_SOURCE_DIR}/lib/ofh)
+add_executable(ofh_integration_test ofh_integration_test.cpp ofh_integration_test_config.cpp ofh_integration_test_non_rt_ru_factory.cpp)
+target_include_directories(ofh_integration_test PRIVATE ${CMAKE_SOURCE_DIR}/lib/ofh ${CMAKE_SOURCE_DIR}/lib/ru/ofh)
 target_link_libraries(ofh_integration_test
         ocudulog
         ocudu_ru_ofh
@@ -14,3 +14,5 @@ target_link_libraries(ofh_integration_test
         ocudu_yaml_util)
 add_test(ofh_integration_test ofh_integration_test --dl_port_id 0 1)
 set_tests_properties(ofh_integration_test PROPERTIES LABELS "tsan;NO_MEMCHECK")
+add_test(ofh_integration_test_non_rt ofh_integration_test --dl_port_id 0 1 --non_realtime true)
+set_tests_properties(ofh_integration_test_non_rt PROPERTIES LABELS "tsan;NO_MEMCHECK")

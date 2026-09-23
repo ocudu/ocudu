@@ -138,6 +138,11 @@ static void configure_cli11_test_args(CLI::App& app, test_parameters& config)
       ->capture_default_str();
   add_option(app, "--nof_test_slots", config.nof_test_slots, "Number of slots processed in the test")
       ->capture_default_str();
+  add_option(app,
+             "--non_realtime",
+             config.is_non_realtime,
+             "Runs the test in non-realtime mode, where the OTA time advances one symbol duration sleep at a time")
+      ->capture_default_str();
 }
 
 /// Validates the cross-parameter constraints of the test configuration.

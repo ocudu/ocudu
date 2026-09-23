@@ -3,6 +3,7 @@
 
 #include "ethernet/ethernet_rx_buffer_pool.h"
 #include "ofh_integration_test_config.h"
+#include "ofh_integration_test_non_rt_ru_factory.h"
 #include "ocudu/adt/bounded_bitset.h"
 #include "ocudu/adt/circular_map.h"
 #include "ocudu/adt/format.h"
@@ -63,8 +64,6 @@ static const unsigned processing_delay_slots = 6;
 static unsigned       nof_antennas_dl        = 4;
 static unsigned       nof_antennas_ul        = 2;
 
-static std::atomic<bool>     slot_synchronized{false};
-static std::atomic<unsigned> slot_val{0};
 static std::atomic<unsigned> nof_malformed_packets{0};
 static std::atomic<unsigned> nof_missing_dl_packets{0};
 
@@ -221,28 +220,6 @@ public:
 
   // See interface for documentation.
   void on_new_prach_window_data(const prach_buffer_context& context, shared_prach_buffer buffer) override {}
-};
-
-/// Dummy RU notifier class for timing events.
-/// It is used to synchronize time between OFH RU implementation and the DU emulator used in this test.
-class dummy_timing_notifier : public ru_timing_notifier
-{
-public:
-  // See interface for documentation.
-  void on_tti_boundary(const tti_boundary_context& slot_context) override
-  {
-    if (!slot_synchronized) {
-      slot_val          = (slot_context.slot.without_hyper_sfn() + processing_delay_slots).count();
-      slot_synchronized = true;
-      fmt::print("Initial slot set to {}\n", slot_point(slot_context.slot.numerology(), slot_val));
-    }
-  }
-
-  // See interface for documentation.
-  void on_ul_half_slot_boundary(slot_point slot) override {}
-
-  // See interface for documentation.
-  void on_ul_full_slot_boundary(slot_point slot) override {}
 };
 
 /// RU emulator class responsible for generating uplink packets with random IQ data.
@@ -459,9 +436,15 @@ private:
   static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC>               ul_eaxc;
 };
 
-/// DU emulator that pushes resource grids to the OFH RU implementation.
+/// \brief DU emulator that pushes resource grids to the OFH RU implementation.
+///
+/// Every slot notified by RU is processed in the DU emulator executor, until the configured number of test slots has
+/// been processed.
 class test_du_emulator
 {
+  /// Number of slots to wait after the OTA time of the last processed slot. This allows to finish uplink processing.
+  static constexpr unsigned nof_rx_window_slots = 3;
+
 public:
   test_du_emulator(ocudulog::basic_logger&    logger_,
                    task_executor&             executor_,
@@ -478,90 +461,83 @@ public:
   {
   }
 
-  /// Starts the DU emulator.
-  void start()
+  /// \brief Handles a new TTI boundary notified by the RU.
+  ///
+  /// \note this method is called from the RU timing thread.
+  void handle_tti_boundary(slot_point slot)
   {
-    slot_point slot(to_numerology_value(test_params.scs), 0);
-    slot_duration_us   = std::chrono::microseconds(1000 * SUBFRAME_DURATION_MSEC / slot.nof_slots_per_subframe());
-    symbol_duration_us = std::chrono::microseconds(static_cast<unsigned>(
-        std::ceil(1e3 / (get_nsymb_per_slot(cyclic_prefix::NORMAL) * get_nof_slots_per_subframe(test_params.scs)))));
-    if (!executor.execute([this]() { run_test(); })) {
-      report_fatal_error("Failed to start DU emulator");
+    // If we arrived at the end of the test, wait for the processing delay, as the TTI boundary leads the OTA time by
+    // the processing delay.
+    if (nof_dispatched_slots == test_params.nof_test_slots) {
+      if (!is_test_finished() && (last_slot + processing_delay_slots + nof_rx_window_slots <= slot)) {
+        test_finished.store(true, std::memory_order_relaxed);
+      }
+      return;
+    }
+
+    if (nof_dispatched_slots == 0) {
+      fmt::print("Initial slot set to {}\n", slot);
+    }
+    ++nof_dispatched_slots;
+    last_slot = slot;
+
+    if (!executor.execute([this, slot]() { process_slot(slot); })) {
+      logger.warning("Failed to dispatch DU emulator task for slot {}", slot);
     }
   }
 
   bool is_test_finished() const { return test_finished.load(std::memory_order_relaxed); }
 
 private:
-  void run_test()
+  void process_slot(slot_point slot)
   {
     // Max attempts of allocating resource grid from the pool.
     static constexpr unsigned rg_alloc_max_attempts = 10;
-    // Sleep time of the simulator is reduced by this value to mitigate wake up latency.
-    static constexpr std::chrono::microseconds sleep_margin = 5us;
 
-    for (unsigned test_slot_id = 0; test_slot_id != test_params.nof_test_slots; ++test_slot_id) {
-      auto t0 = std::chrono::steady_clock::now();
+    unsigned slot_id    = slot.slot_index() % tdd_pattern.dl_ul_tx_period_nof_slots;
+    bool     is_dl_slot = (slot_id < tdd_pattern.nof_dl_slots);
+    bool     is_ul_slot = (slot_id >= tdd_pattern.dl_ul_tx_period_nof_slots - tdd_pattern.nof_ul_slots);
 
-      slot_point slot(to_numerology_value(test_params.scs), slot_val);
-      unsigned   slot_id    = slot.slot_index() % tdd_pattern.dl_ul_tx_period_nof_slots;
-      bool       is_dl_slot = (slot_id < tdd_pattern.nof_dl_slots);
-      bool       is_ul_slot = (slot_id >= tdd_pattern.dl_ul_tx_period_nof_slots - tdd_pattern.nof_ul_slots);
+    ocudu_assert(!(is_dl_slot && is_ul_slot), "Invalid slot type: both DL and UL can not be set simultaneously");
 
-      ocudu_assert(!(is_dl_slot & is_ul_slot), "Invalid slot type: both DL and UL can not be set simultaneously");
-
-      int alloc_attempts = rg_alloc_max_attempts;
-      // Push downlink data.
-      if (is_dl_slot) {
-        resource_grid_context context{slot, 0};
-        shared_resource_grid  dl_grid;
-        while (!dl_grid && alloc_attempts--) {
-          dl_grid = dl_rg_pool.allocate_resource_grid(slot);
-          if (!dl_grid) {
-            std::this_thread::sleep_for(std::chrono::microseconds(10));
-          }
-        }
-
-        if (dl_grid) {
-          dl_handler.handle_dl_data(context, dl_grid);
-          logger.info("DU emulator pushed DL data in slot {}", slot);
-        } else {
-          logger.warning("No resource grid is available for processing DL slot");
+    int alloc_attempts = rg_alloc_max_attempts;
+    // Push downlink data.
+    if (is_dl_slot) {
+      resource_grid_context context{slot, 0};
+      shared_resource_grid  dl_grid;
+      while (!dl_grid && alloc_attempts--) {
+        dl_grid = dl_rg_pool.allocate_resource_grid(slot);
+        if (!dl_grid) {
+          std::this_thread::sleep_for(std::chrono::microseconds(10));
         }
       }
 
-      // Request uplink data.
-      if (is_ul_slot) {
-        slot_id = tdd_pattern.dl_ul_tx_period_nof_slots - slot_id - 1;
-        resource_grid_context context{slot, 0};
-        shared_resource_grid  ul_grid;
-        while (!ul_grid && alloc_attempts--) {
-          ul_grid = ul_rg_pool.allocate_resource_grid(slot);
-          if (!ul_grid) {
-            std::this_thread::sleep_for(std::chrono::microseconds(10));
-          }
-        }
-
-        if (ul_grid) {
-          ul_handler.handle_new_uplink_slot(context, ul_grid);
-          logger.info("DU emulator requested UL data in slot {}", slot);
-        } else {
-          logger.warning("No resource grid is available for processing UL slot");
-        }
+      if (dl_grid) {
+        dl_handler.handle_dl_data(context, dl_grid);
+        logger.info("DU emulator pushed DL data in slot {}", slot);
+      } else {
+        logger.warning("No resource grid is available for processing DL slot");
       }
-
-      // Sleep until the end of the slot.
-      auto t1                 = std::chrono::steady_clock::now();
-      auto slot_sim_exec_time = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
-      if (slot_sim_exec_time < slot_duration_us) {
-        std::this_thread::sleep_for(slot_duration_us - slot_sim_exec_time - sleep_margin);
-      }
-      slot_val = (++slot).count();
     }
-    // Leave time for the uplink slots to be processed.
-    auto proc_time = processing_delay_slots * slot_duration_us + (T1a_max_cp_ul * symbol_duration_us) + 100ms;
-    std::this_thread::sleep_for(proc_time);
-    test_finished.store(true, std::memory_order_relaxed);
+
+    // Request uplink data.
+    if (is_ul_slot) {
+      resource_grid_context context{slot, 0};
+      shared_resource_grid  ul_grid;
+      while (!ul_grid && alloc_attempts--) {
+        ul_grid = ul_rg_pool.allocate_resource_grid(slot);
+        if (!ul_grid) {
+          std::this_thread::sleep_for(std::chrono::microseconds(10));
+        }
+      }
+
+      if (ul_grid) {
+        ul_handler.handle_new_uplink_slot(context, ul_grid);
+        logger.info("DU emulator requested UL data in slot {}", slot);
+      } else {
+        logger.warning("No resource grid is available for processing UL slot");
+      }
+    }
   }
 
   ocudulog::basic_logger&    logger;
@@ -571,9 +547,36 @@ private:
   ru_downlink_plane_handler& dl_handler;
   ru_uplink_plane_handler&   ul_handler;
 
-  std::chrono::microseconds slot_duration_us;
-  std::chrono::microseconds symbol_duration_us;
-  std::atomic<bool>         test_finished{false};
+  /// Number of slots dispatched for processing.
+  unsigned nof_dispatched_slots = 0;
+  /// Last slot dispatched for processing.
+  slot_point        last_slot;
+  std::atomic<bool> test_finished{false};
+};
+
+/// Dummy RU notifier class for timing events that forwards the TTI boundaries to the DU emulator.
+class dummy_timing_notifier : public ru_timing_notifier
+{
+public:
+  /// Connects the DU emulator.
+  void connect_du(test_du_emulator& du_emulator_) { du_emulator = &du_emulator_; }
+
+  // See interface for documentation.
+  void on_tti_boundary(const tti_boundary_context& slot_context) override
+  {
+    if (du_emulator != nullptr) {
+      du_emulator->handle_tti_boundary(slot_context.slot.without_hyper_sfn());
+    }
+  }
+
+  // See interface for documentation.
+  void on_ul_half_slot_boundary(slot_point slot) override {}
+
+  // See interface for documentation.
+  void on_ul_full_slot_boundary(slot_point slot) override {}
+
+private:
+  test_du_emulator* du_emulator = nullptr;
 };
 
 /// Ethernet transmitter gateway that analyzes incoming packets and checks integrity of the DL packets, as well as asks
@@ -689,6 +692,8 @@ private:
 /// Manages the workers of the test application and OFH RU.
 struct worker_manager {
   static constexpr uint32_t task_worker_queue_size = 2048;
+  /// DU emulator queue size.
+  static constexpr uint32_t du_sim_queue_size = 8;
 
   worker_manager() { create_ofh_executors(); }
 
@@ -767,7 +772,7 @@ struct worker_manager {
       const std::string exec_name = "du_sim_exec";
 
       const single_worker du_sim_worker{name,
-                                        {exec_name, concurrent_queue_policy::locking_mpmc, 2},
+                                        {exec_name, concurrent_queue_policy::locking_mpmc, du_sim_queue_size},
                                         std::nullopt,
                                         os_thread_realtime_priority::max() - 10};
       if (!exec_mng.add_execution_context(create_execution_context(du_sim_worker))) {
@@ -1002,7 +1007,9 @@ int main(int argc, char** argv)
     eth_receiver_ptr = std::make_unique<lo_eth_receiver>(logger);
     eth_receiver     = eth_receiver_ptr.get();
   }
-  std::unique_ptr<radio_unit> ru_object = create_ofh_ru(ru_cfg, std::move(ru_deps));
+  std::unique_ptr<radio_unit> ru_object = test_params.is_non_realtime
+                                              ? test::create_non_rt_ofh_ru(ru_cfg, std::move(ru_deps))
+                                              : create_ofh_ru(ru_cfg, std::move(ru_deps));
 
   // Get RU downlink plane handler.
   auto& ru_dl_handler = ru_object->get_downlink_plane_handler();
@@ -1016,19 +1023,13 @@ int main(int argc, char** argv)
   test_du_emulator du_emulator(
       logger, *workers.test_du_sim_exec, *dl_rg_pool, *ul_rg_pool, ru_dl_handler, ru_ul_handler);
 
-  // Connect Ethernet gateway to the RU emulator.
+  // Connect Ethernet gateway to the RU emulator and the RU timing notifications to the DU emulator.
   tx_gateway->connect_ru(&ru_emulator);
+  timing_notifier.connect_du(du_emulator);
 
-  // Start the RU.
+  // Start the RU, it notifies the DU emulator through the TTI boundary notifications.
   fmt::print("Starting RU...\n");
   ru_object->get_controller().get_operation_controller().start();
-
-  // Wait until TTI callback is called and slot point gets initialized.
-  while (!slot_synchronized) {
-    std::this_thread::sleep_for(std::chrono::microseconds(2));
-  }
-  // Start the DU emulator.
-  du_emulator.start();
   fmt::print("Running the test...\n");
 
   // Wait until test is finished.

@@ -54,6 +54,7 @@ struct test_parameters {
   std::string           tdd_pattern_str                     = "7d2u";
   bool                  use_loopback_receiver               = false;
   unsigned              nof_test_slots                      = 1000;
+  bool                  is_non_realtime                     = false;
   beamforming_config    beamforming_cfg                     = {};
 };
 
