@@ -743,6 +743,7 @@ fuzz:
 oss-fuzz build:
   stage: extended
   image: docker:29.6.1-dind
+  needs: []
   rules:
     - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
     - if: $ON_MR_FORK
