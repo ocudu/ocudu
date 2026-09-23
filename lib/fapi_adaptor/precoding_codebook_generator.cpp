@@ -19,11 +19,12 @@ using namespace fapi_adaptor;
 /// \f$W_{PMI} = W_{BF} \cdot W_{MIMO}\f$. \f$W_{BF}\f$ points the spatial beams. \f$W_{MIMO}\f$ maps the
 /// transmission layers onto those beams.
 ///
-/// A topology with a beam grid keeps the two matrices separate. The configuration contains \f$W_{MIMO}\f$ and the
-/// beams. The lower physical layer or a Category B O-RU applies \f$W_{BF}\f$.
+/// A topology with a beam grid keeps the two matrices separate. The configuration contains \f$W_{MIMO}\f$ and a
+/// list of beams. The channel processors apply \f$W_{MIMO}\f$ at the upper physical layer. The radio unit applies
+/// \f$W_{BF}\f$.
 ///
-/// A topology with no beam grid cannot steer a beam. \f$W_{BF}\f$ is the identity matrix. The configuration
-/// contains \f$W_{PMI}\f$ and selects the antenna ports.
+/// A topology with no beam grid cannot steer a beam. The configuration contains the complete \f$W_{PMI}\f$. The
+/// channel processors apply it at the upper physical layer. The radio unit transmits on the antenna ports.
 static precoding_beamforming_composite
 make_composite(const precoding_matrix_indicator& pmi, unsigned nof_layers, antenna_topology topology)
 {

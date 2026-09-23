@@ -11,8 +11,8 @@ namespace fapi_adaptor {
 /// \brief Precoding codebook repository.
 ///
 /// The repository stores precoding configurations. A precoding matrix index selects one of them. A configuration
-/// contains a precoding matrix and one beam for each of its ports. The upper physical layer applies the matrix. The
-/// beams are applied by the lower physical layer, or by the radio unit when the radio unit does the beamforming.
+/// contains a precoding matrix and one beam for each of its ports. The channel processors apply the matrix at the
+/// upper physical layer. The radio unit applies the beams.
 class precoding_codebook_repository
 {
 public:
