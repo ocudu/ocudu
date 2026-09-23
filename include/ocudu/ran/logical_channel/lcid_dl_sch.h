@@ -25,8 +25,11 @@ public:
     LCID32 = 32,
 
     /// Reserved
-    MIN_RESERVED = 33,
-    MAX_RESERVED = 51,
+    MIN_RESERVED = 35,
+    MAX_RESERVED = 46,
+
+    /// [Implementation-defined] Marks a subPDU that carries nothing. Reserved by the table, so never a real LCID.
+    INVALID = MIN_RESERVED,
 
     RECOMMENDED_BIT_RATE = 0b101111,
 

@@ -884,7 +884,7 @@ logical_channel_system::allocate_mac_sdu(soa::row_id ue_rid, dl_msg_lc_info& sub
 unsigned
 logical_channel_system::allocate_mac_sdu(soa::row_id ue_rid, dl_msg_lc_info& subpdu, unsigned rem_bytes, lcid_t lcid)
 {
-  subpdu.lcid        = lcid_dl_sch_t::MIN_RESERVED;
+  subpdu.lcid        = lcid_dl_sch_t::INVALID;
   subpdu.sched_bytes = 0;
 
   lcid_t lcid_with_prio = lcid == INVALID_LCID ? get_max_prio_lcid(get_ue(ue_rid)) : lcid;
@@ -898,7 +898,7 @@ logical_channel_system::allocate_mac_sdu(soa::row_id ue_rid, dl_msg_lc_info& sub
 
 unsigned logical_channel_system::allocate_mac_ce(soa::row_id ue_rid, dl_msg_lc_info& subpdu, unsigned rem_bytes)
 {
-  subpdu.lcid        = lcid_dl_sch_t::MIN_RESERVED;
+  subpdu.lcid        = lcid_dl_sch_t::INVALID;
   subpdu.sched_bytes = 0;
 
   // Allocate ConRes CE ID if pending.
@@ -953,7 +953,7 @@ logical_channel_system::allocate_ue_con_res_id_mac_ce(soa::row_id ue_rid, dl_msg
     return 0;
   }
 
-  subpdu.lcid        = lcid_dl_sch_t::MIN_RESERVED;
+  subpdu.lcid        = lcid_dl_sch_t::INVALID;
   subpdu.sched_bytes = 0;
 
   static constexpr auto ce_size     = lcid_dl_sch_t{lcid_dl_sch_t::UE_CON_RES_ID}.sizeof_ce();
