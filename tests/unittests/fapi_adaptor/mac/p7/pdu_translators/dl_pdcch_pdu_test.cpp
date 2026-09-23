@@ -59,3 +59,42 @@ TEST(mac_fapi_pdcch_pdu_conversor_test, mac_to_fapi_conversion_is_valid)
   ASSERT_EQ(context_information.n_id_pdcch_dmrs, fapi_pdu.dl_dci.nid_pdcch_dmrs);
   ASSERT_EQ(payload, fapi_pdu.dl_dci.payload);
 }
+
+TEST(mac_fapi_pdcch_pdu_conversor_test, beamformed_dci_carries_its_beam)
+{
+  unsigned                               nof_prbs    = 51;
+  const mac_dl_sched_result_test_helper& result_test = build_valid_mac_dl_sched_result();
+  const mac_dl_sched_result&             result      = result_test.result;
+  dci_context_information                context     = result.dl_res->dl_pdcchs.front().ctx;
+  const dci_payload                      payload     = result.dl_pdcch_pdus.front();
+
+  const beam_identifier beam_id     = to_beam_id(3);
+  context.precoding_and_beamforming = make_single_beam_precoding(beam_id);
+
+  fapi::dl_pdcch_pdu         fapi_pdu;
+  fapi::dl_pdcch_pdu_builder builder(fapi_pdu);
+  auto                       pm_tools = generate_precoding_matrix_tables(pmi_codebook_one_port{}, 0);
+  convert_pdcch_mac_to_fapi(builder, context, payload, *std::get<0>(pm_tools), nof_prbs);
+
+  ASSERT_EQ(precoding_beam_list({beam_id}), fapi_pdu.dl_dci.precoding_and_beamforming.prg.beams);
+}
+
+TEST(mac_fapi_pdcch_pdu_conversor_test, dci_without_a_beam_selects_a_precoding_matrix)
+{
+  unsigned                               nof_prbs    = 51;
+  const mac_dl_sched_result_test_helper& result_test = build_valid_mac_dl_sched_result();
+  const mac_dl_sched_result&             result      = result_test.result;
+  dci_context_information                context     = result.dl_res->dl_pdcchs.front().ctx;
+  const dci_payload                      payload     = result.dl_pdcch_pdus.front();
+
+  context.precoding_and_beamforming = make_default_precoding();
+
+  fapi::dl_pdcch_pdu             fapi_pdu;
+  fapi::dl_pdcch_pdu_builder     builder(fapi_pdu);
+  auto                           pm_tools = generate_precoding_matrix_tables(pmi_codebook_one_port{}, 0);
+  const precoding_matrix_mapper& mapper   = *std::get<0>(pm_tools);
+  convert_pdcch_mac_to_fapi(builder, context, payload, mapper, nof_prbs);
+
+  ASSERT_TRUE(fapi_pdu.dl_dci.precoding_and_beamforming.prg.beams.empty());
+  ASSERT_EQ(mapper.map(mac_pdcch_precoding_info{}), fapi_pdu.dl_dci.precoding_and_beamforming.prg.pm_index);
+}

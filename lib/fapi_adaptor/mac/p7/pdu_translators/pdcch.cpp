@@ -39,12 +39,19 @@ static void fill_coreset_parameters(fapi::dl_pdcch_pdu_builder&  builder,
                                  coreset_cfg.get_precoder_granularity());
 }
 
-static void fill_precoding_and_beamforming(fapi::dl_dci_pdu_builder&      builder,
-                                           const precoding_matrix_mapper& pm_mapper,
-                                           unsigned                       cell_nof_prbs)
+static void fill_precoding_and_beamforming(fapi::dl_dci_pdu_builder&             builder,
+                                           const precoding_and_beamforming_info& mac_info,
+                                           const precoding_matrix_mapper&        pm_mapper,
+                                           unsigned                              cell_nof_prbs)
 {
   fapi::tx_precoding_and_beamforming_pdu_builder pm_bf_builder = builder.get_tx_precoding_and_beamforming_pdu_builder();
   pm_bf_builder.set_prg_parameters(cell_nof_prbs);
+
+  if (const auto* beam_id = std::get_if<beam_identifier>(&mac_info)) {
+    pm_bf_builder.set_beams({*beam_id});
+
+    return;
+  }
 
   mac_pdcch_precoding_info info;
   pm_bf_builder.set_pmi(pm_mapper.map(info));
@@ -76,7 +83,7 @@ void ocudu::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder& 
   // Fill the DCI.
   fapi::dl_dci_pdu_builder dci_builder = builder.get_dl_dci_pdu_builder();
 
-  fill_precoding_and_beamforming(dci_builder, pm_mapper, cell_nof_prbs);
+  fill_precoding_and_beamforming(dci_builder, context_information.precoding_and_beamforming, pm_mapper, cell_nof_prbs);
 
   dci_builder.set_ue_specific_parameters(context_information.rnti)
       .set_control_channel_parameters(context_information.cces.ncce, context_information.cces.aggr_lvl)

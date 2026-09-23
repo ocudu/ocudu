@@ -39,8 +39,13 @@ static void fill_dci(pdcch_processor::pdu_t&            proc_pdu,
   dci.payload.resize(fapi_dci.payload.size());
   fapi_dci.payload.to_unpacked_bits(span<uint8_t>{dci.payload.data(), dci.payload.size()});
 
-  dci.precoding_and_beamforming = precoding_beamforming_configuration::make_wideband(
-      pm_repo.get_precoding_matrix(fapi_dci.precoding_and_beamforming.prg.pm_index));
+  const fapi::tx_precoding_and_beamforming_pdu::prgs_info& prg = fapi_dci.precoding_and_beamforming.prg;
+  if (prg.beams.empty()) {
+    dci.precoding_and_beamforming =
+        precoding_beamforming_configuration::make_wideband(pm_repo.get_precoding_matrix(prg.pm_index));
+  } else {
+    dci.precoding_and_beamforming = precoding_beamforming_configuration::make_wideband(prg.beams);
+  }
 
   // Fill PDCCH context for logging.
   proc_pdu.context = fapi_pdu.dl_dci.context;
