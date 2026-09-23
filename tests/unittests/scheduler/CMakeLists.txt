@@ -57,7 +57,7 @@ target_link_libraries(scheduler_test
         ocudu_du_config_validators
         gtest
         ocudu_gtest_main)
-add_test(scheduler_test scheduler_test)
+gtest_discover_tests(scheduler_test)
 
 add_executable(scheduler_metrics_handler_test scheduler_metrics_handler_test.cpp)
 target_link_libraries(scheduler_metrics_handler_test

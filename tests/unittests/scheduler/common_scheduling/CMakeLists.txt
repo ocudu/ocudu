@@ -23,4 +23,4 @@ target_link_libraries(common_scheduler_test
         sched_test_doubles
         gtest
         ocudu_gtest_main)
-add_test(NAME common_scheduler_test COMMAND common_scheduler_test)
+gtest_discover_tests(common_scheduler_test)
