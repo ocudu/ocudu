@@ -5,6 +5,7 @@
 #include "ocudu/support/bit_encoding.h"
 #include "fmt/format.h"
 #include <gtest/gtest.h>
+#include <limits>
 
 using namespace ocudu;
 
@@ -382,4 +383,57 @@ TEST(bit_encoding_test, bit_decoder_uint64_offset)
   ASSERT_EQ(65, dec.nof_bits());
   ASSERT_EQ(1, dec.next_bit_offset());
   ASSERT_EQ(val, 0xc00f00000000f001);
+}
+
+TEST(bit_encoding_test, bit_decoder_int8_aligned)
+{
+  for (unsigned i = 0; i != 256; ++i) {
+    byte_buffer bytes = byte_buffer::create({static_cast<uint8_t>(i)}).value();
+    bit_decoder dec(bytes);
+    int8_t      val = 0;
+
+    ASSERT_TRUE(dec.unpack(val, 8));
+    ASSERT_EQ(static_cast<int8_t>(i), val);
+    ASSERT_EQ(8, dec.nof_bits());
+    ASSERT_EQ(1, dec.nof_bytes());
+    ASSERT_EQ(0, dec.next_bit_offset());
+  }
+}
+
+TEST(bit_encoding_test, bit_decoder_int8_offset)
+{
+  for (unsigned i = 0; i != 256; ++i) {
+    // One leading bit, followed by the byte value spread over two bytes.
+    byte_buffer bytes =
+        byte_buffer::create({static_cast<uint8_t>(0x80U | (i >> 1U)), static_cast<uint8_t>(i << 7U)}).value();
+    bit_decoder dec(bytes);
+    bool        bit = false;
+    int8_t      val = 0;
+
+    ASSERT_TRUE(dec.unpack(bit, 1));
+    ASSERT_TRUE(bit);
+    ASSERT_TRUE(dec.unpack(val, 8));
+    ASSERT_EQ(static_cast<int8_t>(i), val);
+    ASSERT_EQ(9, dec.nof_bits());
+    ASSERT_EQ(1, dec.next_bit_offset());
+  }
+}
+
+TEST(bit_encoding_test, bit_decoder_signed_high_bit)
+{
+  // int16_t: 0xfffe, int32_t: 0x80000001, int64_t: 0x8000000000000000.
+  const uint8_t data[] = {0xff, 0xfe, 0x80, 0x00, 0x00, 0x01, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  byte_buffer   bytes  = byte_buffer::create(data).value();
+  bit_decoder   dec(bytes);
+  int16_t       val16 = 0;
+  int32_t       val32 = 0;
+  int64_t       val64 = 0;
+
+  ASSERT_TRUE(dec.unpack(val16, 16));
+  ASSERT_EQ(-2, val16);
+  ASSERT_TRUE(dec.unpack(val32, 32));
+  ASSERT_EQ(std::numeric_limits<int32_t>::min() + 1, val32);
+  ASSERT_TRUE(dec.unpack(val64, 64));
+  ASSERT_EQ(std::numeric_limits<int64_t>::min(), val64);
+  ASSERT_EQ(14, dec.nof_bytes());
 }
