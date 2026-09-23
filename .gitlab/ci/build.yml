@@ -258,6 +258,7 @@ variables:
     MARCH: x86-64-v3
     LINKER: mold
     CTEST_XUNIT_NAME: xunit
+    OCUDU_TEST_REQUIREMENT_REPORTS: "True"
 
 .smoke relwithdeb:
   extends: .build_and_unit

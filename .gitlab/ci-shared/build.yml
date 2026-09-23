@@ -33,6 +33,7 @@ include:
     ENABLE_SPLIT_DWARF: "" # Empty for cmake default
     TEST_GDB_PRINTERS: "" # Empty for cmake default
     FORCE_DEBUG_INFO: "" # Empty for cmake default
+    OCUDU_TEST_REQUIREMENT_REPORTS: "" # Empty for cmake default
     MARCH: "" # Empty for cmake default
     MTUNE: "" # Empty for cmake default
     MCPU: ""  # Empty for cmake default
@@ -67,7 +68,7 @@ include:
         ENABLE_UBSAN ENABLE_UBSAN_MIN ENABLE_RTSAN \
         ENABLE_SCHEDTRACE \
         ENABLE_WERROR ENABLE_SPLIT_DWARF TEST_GDB_PRINTERS \
-        FORCE_DEBUG_INFO MARCH MTUNE MCPU \
+        FORCE_DEBUG_INFO OCUDU_TEST_REQUIREMENT_REPORTS MARCH MTUNE MCPU \
       ; do
         if [ -n "${!var}" ]; then
           BUILD_ARGS="-D${var}=${!var} ${BUILD_ARGS}"
@@ -144,6 +145,11 @@ include:
       launch_tests_ocudu() {
         cd ${OCUDU_DIR}/${OCUDU_BUILD_DIR}
         echo "Using LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
+        if [ -n "${OCUDU_TEST_REQUIREMENT_REPORTS}" ]; then
+          # Each test process writes its gtest XML report here, carrying the requirement tags it recorded.
+          mkdir -p gtest_xml
+          export OCUDU_GTEST_XML_DIR="${PWD}/gtest_xml"
+        fi
         set -x
         ctest -j${CPU_JOBS} --schedule-random --output-on-failure \
           --test-output-size-passed 1048576 --test-output-size-failed 1048576 \
@@ -151,7 +157,7 @@ include:
         local ctest_ret=$?
         { set +x; } 2>/dev/null
         if [ -f xunit.xml ]; then
-          OCUDU_COMMIT="${OCUDU_COMMIT:-${CI_COMMIT_SHA}}" python3 /usr/local/bin/add_junit_properties.py xunit.xml
+          OCUDU_COMMIT="${OCUDU_COMMIT:-${CI_COMMIT_SHA}}" python3 /usr/local/bin/add_junit_properties.py xunit.xml ${OCUDU_GTEST_XML_DIR:+--strict} || ctest_ret=1
         fi
         grep -l "ERROR SUMMARY: 0 errors" Testing/Temporary/MemoryChecker.*.log | xargs rm || true
         return ${ctest_ret}
