@@ -32,3 +32,17 @@ TEST(tx_precoding_and_beamforming_pdu_builder, add_prg_passes)
 
   ASSERT_EQ(pm_index, pdu.prg.pm_index);
 }
+
+TEST(tx_precoding_and_beamforming_pdu_builder, add_beam_passes)
+{
+  tx_precoding_and_beamforming_pdu         pdu;
+  tx_precoding_and_beamforming_pdu_builder builder(pdu);
+
+  beam_identifier beam_id = to_beam_id(6);
+
+  ASSERT_TRUE(pdu.prg.beams.empty());
+
+  builder.set_beams({beam_id});
+
+  ASSERT_EQ(precoding_beam_list({beam_id}), pdu.prg.beams);
+}

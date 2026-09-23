@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "ocudu/ran/beamforming/beam_identifier.h"
 #include <cstdint>
 
 namespace ocudu {
@@ -12,7 +13,11 @@ namespace fapi {
 struct tx_precoding_and_beamforming_pdu {
   /// Physical resource groups information.
   struct prgs_info {
-    uint16_t pm_index;
+    uint16_t pm_index = 0;
+    /// \brief Beam that carries each of the precoding matrix virtual ports.
+    ///
+    /// An empty list selects the antenna ports, that is, no beamforming.
+    precoding_beam_list beams;
   };
 
   uint16_t prg_size;

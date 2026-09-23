@@ -35,6 +35,16 @@ public:
 
     return *this;
   }
+
+  /// \brief Sets the beam of each precoding matrix virtual port in the transmission precoding and beamforming PDU.
+  ///
+  /// These parameters are specified in SCF-222 v4.0 section 3.4.2.5, in table Tx precoding and beamforming PDU.
+  tx_precoding_and_beamforming_pdu_builder& set_beams(const precoding_beam_list& beams)
+  {
+    pdu.prg.beams = beams;
+
+    return *this;
+  }
 };
 
 } // namespace fapi
