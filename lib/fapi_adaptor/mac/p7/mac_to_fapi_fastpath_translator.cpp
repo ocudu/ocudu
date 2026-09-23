@@ -74,12 +74,14 @@ static void add_pdcch_pdus_to_builder(builder_type&                  builder,
   }
 }
 
-static void
-add_ssb_pdus_to_dl_request(fapi::dl_tti_request_builder& builder, span<const dl_ssb_pdu> ssb_pdus, slot_point slot)
+static void add_ssb_pdus_to_dl_request(fapi::dl_tti_request_builder& builder,
+                                       span<const dl_ssb_pdu>        ssb_pdus,
+                                       slot_point                    slot,
+                                       unsigned                      cell_nof_prbs)
 {
   for (const auto& pdu : ssb_pdus) {
     fapi::dl_ssb_pdu_builder ssb_builder = builder.add_ssb_pdu();
-    convert_ssb_mac_to_fapi(ssb_builder, pdu, slot);
+    convert_ssb_mac_to_fapi(ssb_builder, pdu, slot, cell_nof_prbs);
   }
 }
 
@@ -152,7 +154,7 @@ void mac_to_fapi_fastpath_translator::on_new_downlink_scheduler_results(const ma
                             cell_nof_prbs);
 
   // Add SSB PDUs to the DL_TTI.request message.
-  add_ssb_pdus_to_dl_request(builder, dl_res.ssb_pdus, dl_res.slot);
+  add_ssb_pdus_to_dl_request(builder, dl_res.ssb_pdus, dl_res.slot, cell_nof_prbs);
 
   // Add CSI-RS PDUs to the DL_TTI.request message.
   add_csi_rs_pdus_to_dl_request(builder, dl_res.dl_res->csi_rs);

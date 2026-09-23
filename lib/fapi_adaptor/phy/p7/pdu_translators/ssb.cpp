@@ -51,8 +51,11 @@ void ocudu::fapi_adaptor::convert_ssb_fapi_to_phy(ssb_processor::pdu_t&   proc_p
 
   unpack_bch_payload(proc_pdu.mib_payload, fapi_pdu);
 
-  // The SS/PBCH block is transmitted on a single antenna port, as per TS38.211 Section 7.4.3, so it carries one layer
-  // and no MIMO precoding applies.
+  // The SS/PBCH block is transmitted on a single antenna port, as per TS38.211 Section 7.4.3. It carries one layer
+  // and no MIMO precoding applies, so one beam carries the complete block.
+  ocudu_assert(fapi_pdu.precoding_and_beamforming.prg.beams.size() == 1,
+               "The SS/PBCH block must select one beam, but it selects {}.",
+               fapi_pdu.precoding_and_beamforming.prg.beams.size());
   proc_pdu.precoding_and_beamforming =
-      precoding_beamforming_configuration::make_wideband(precoding_beam_list({fapi_pdu.beam_id}));
+      precoding_beamforming_configuration::make_wideband(fapi_pdu.precoding_and_beamforming.prg.beams);
 }

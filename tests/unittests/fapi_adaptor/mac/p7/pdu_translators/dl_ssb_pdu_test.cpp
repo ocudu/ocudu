@@ -36,7 +36,7 @@ TEST(mac_fapi_ssb_pdu_conversor_test, valid_pdu_should_pass)
   fapi::dl_ssb_pdu         fapi_pdu;
   fapi::dl_ssb_pdu_builder builder(fapi_pdu);
   slot_point               slot(1, 0);
-  convert_ssb_mac_to_fapi(builder, pdu, slot_point(1, 0));
+  convert_ssb_mac_to_fapi(builder, pdu, slot_point(1, 0), 51U);
 
   ASSERT_EQ(pdu.pci, fapi_pdu.phys_cell_id);
   const auto* profile_nr = std::get_if<fapi::dl_ssb_pdu::power_profile_nr>(&fapi_pdu.power_config);
@@ -48,7 +48,9 @@ TEST(mac_fapi_ssb_pdu_conversor_test, valid_pdu_should_pass)
   ASSERT_EQ(static_cast<unsigned>(pdu.ssb_case), static_cast<unsigned>(fapi_pdu.case_type));
   ASSERT_EQ(pdu.L_max, fapi_pdu.L_max);
   ASSERT_EQ(static_cast<unsigned>(pdu.scs), static_cast<unsigned>(fapi_pdu.scs));
-  ASSERT_EQ(std::get<beam_identifier>(pdu.precoding_and_beamforming), fapi_pdu.beam_id);
+  ASSERT_EQ(precoding_beam_list({std::get<beam_identifier>(pdu.precoding_and_beamforming)}),
+            fapi_pdu.precoding_and_beamforming.prg.beams);
+  ASSERT_EQ(51U, fapi_pdu.precoding_and_beamforming.prg_size);
 
   // MIB.
   ASSERT_EQ(generate_bch_payload(pdu, slot.sfn(), slot.is_odd_hrf(), slot.scs()) >> 8, fapi_pdu.bch_payload);

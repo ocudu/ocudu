@@ -15,7 +15,10 @@ namespace fapi_adaptor {
 /// \param[out] builder   SSB FAPI builder that helps to fill the PDU.
 /// \param[in] mac_pdu    SSB MAC PDU to convert to SSB FAPI PDU.
 /// \param[in] slot       Slot point associated to this PDU.
-void convert_ssb_mac_to_fapi(fapi::dl_ssb_pdu_builder& builder, const ocudu::dl_ssb_pdu& mac_pdu, slot_point slot);
+void convert_ssb_mac_to_fapi(fapi::dl_ssb_pdu_builder& builder,
+                             const ocudu::dl_ssb_pdu&  mac_pdu,
+                             slot_point                slot,
+                             unsigned                  cell_nof_prbs);
 
 } // namespace fapi_adaptor
 } // namespace ocudu

@@ -90,7 +90,8 @@ TEST(fapi_to_phy_ssb_conversion_test, valid_pdu_conversion_success)
                   .set_cell_parameters(pci)
                   .set_nr_power_parameters(beta_pss)
                   .set_ssb_parameters(ssb_idx, subcarrier_offset, offset_pointA, pattern_case, lmax)
-                  .set_beamforming_parameters(beam_id);
+                  .get_tx_precoding_and_beamforming_pdu_builder()
+                  .set_beams({beam_id});
 
               uint32_t mib_payload = generate_bch_payload(subcarrier_offset,
                                                           dmrs_type_a_position,

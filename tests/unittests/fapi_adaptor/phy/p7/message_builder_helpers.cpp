@@ -162,6 +162,10 @@ dl_ssb_pdu unittest::build_valid_dl_ssb_pdu()
   pdu.scs               = subcarrier_spacing::kHz240;
   pdu.L_max             = 4;
 
+  // One beam carries the complete SS/PBCH block.
+  pdu.precoding_and_beamforming           = build_valid_tx_precoding_and_beamforming_pdu();
+  pdu.precoding_and_beamforming.prg.beams = ocudu::precoding_beam_list({ocudu::to_beam_id(0)});
+
   return pdu;
 }
 

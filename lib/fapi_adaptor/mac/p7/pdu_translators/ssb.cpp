@@ -30,7 +30,8 @@ static uint32_t generate_bch_payload(const dl_ssb_pdu& mac_pdu, uint32_t sfn, bo
 
 void ocudu::fapi_adaptor::convert_ssb_mac_to_fapi(fapi::dl_ssb_pdu_builder& builder,
                                                   const dl_ssb_pdu&         mac_pdu,
-                                                  slot_point                slot)
+                                                  slot_point                slot,
+                                                  unsigned                  cell_nof_prbs)
 {
   ocudu_assert(std::holds_alternative<beam_identifier>(mac_pdu.precoding_and_beamforming),
                "The SS/PBCH block is not mapped onto a single beam.");
@@ -42,8 +43,13 @@ void ocudu::fapi_adaptor::convert_ssb_mac_to_fapi(fapi::dl_ssb_pdu_builder& buil
                           mac_pdu.subcarrier_offset.value(),
                           mac_pdu.offset_to_pointA,
                           mac_pdu.ssb_case,
-                          mac_pdu.L_max)
-      .set_beamforming_parameters(std::get<beam_identifier>(mac_pdu.precoding_and_beamforming));
+                          mac_pdu.L_max);
+
+  fapi::tx_precoding_and_beamforming_pdu_builder pm_bf_builder = builder.get_tx_precoding_and_beamforming_pdu_builder();
+  // FAPI carries a single PRG per transmission, spanning the complete allocation, which this interface expresses
+  // in cell PRBs.
+  pm_bf_builder.set_prg_parameters(cell_nof_prbs);
+  pm_bf_builder.set_beams({std::get<beam_identifier>(mac_pdu.precoding_and_beamforming)});
 
   builder.set_bch_payload_phy_timing_info(generate_bch_payload(mac_pdu, slot.sfn(), slot.is_odd_hrf(), slot.scs()) >>
                                           8);

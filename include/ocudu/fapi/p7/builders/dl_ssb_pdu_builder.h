@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "ocudu/fapi/p7/builders/tx_precoding_and_beamforming_pdu_builder.h"
 #include "ocudu/fapi/p7/messages/dl_ssb_pdu.h"
 
 namespace ocudu {
@@ -74,14 +75,14 @@ public:
     return *this;
   }
 
-  /// \brief Sets the beamforming parameters for the fields of the SSB/PBCH PDU.
+  /// \brief Returns a transmission precoding and beamforming PDU builder of this SSB/PBCH PDU.
   ///
   /// These parameters are specified in SCF-222 v4.0 section 3.4.2.5, in table Tx precoding and beamforming PDU.
-  dl_ssb_pdu_builder& set_beamforming_parameters(beam_identifier beam_id)
+  tx_precoding_and_beamforming_pdu_builder get_tx_precoding_and_beamforming_pdu_builder()
   {
-    pdu.beam_id = beam_id;
+    tx_precoding_and_beamforming_pdu_builder builder(pdu.precoding_and_beamforming);
 
-    return *this;
+    return builder;
   }
 
   /// \brief Sets the BCH payload and returns a reference to the builder. PHY configures the timing PBCH bits.

@@ -26,7 +26,8 @@ TEST(dl_ssb_pdu_builder, valid_basic_parameters_passes)
       .set_cell_parameters(pci)
       .set_nr_power_parameters(pss_profile)
       .set_ssb_parameters(block_index, subcarrier_offset, offset_pointA, case_type, L_max)
-      .set_beamforming_parameters(beam_id);
+      .get_tx_precoding_and_beamforming_pdu_builder()
+      .set_beams({beam_id});
 
   ASSERT_EQ(pci, pdu.phys_cell_id);
   const auto* profile_nr = std::get_if<dl_ssb_pdu::power_profile_nr>(&pdu.power_config);
@@ -38,7 +39,7 @@ TEST(dl_ssb_pdu_builder, valid_basic_parameters_passes)
   ASSERT_EQ(case_type, pdu.case_type);
   ASSERT_EQ(scs, pdu.scs);
   ASSERT_EQ(L_max, pdu.L_max);
-  ASSERT_EQ(beam_id, pdu.beam_id);
+  ASSERT_EQ(precoding_beam_list({beam_id}), pdu.precoding_and_beamforming.prg.beams);
 }
 
 TEST(dl_ssb_pdu_builder, valid_bch_payload_mixed_passes)
