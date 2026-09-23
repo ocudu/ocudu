@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "beamforming_weights_compressor.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/ofh/compression/compression_properties.h"
 #include "ocudu/support/math/math_utils.h"
 #include <cmath>
@@ -112,6 +113,8 @@ class beamforming_weights_compressor_fixture
 
 TEST_P(beamforming_weights_compressor_fixture, compression_matches_the_specification)
 {
+  OCUDU_TEST_REQUIREMENTS("RU-OFH-CATB-WDBF");
+
   const ru_compression_params compr_params = {std::get<1>(GetParam()), std::get<2>(GetParam())};
   span<const cf_t>            weights      = std::get<0>(GetParam()).weights;
 
@@ -140,6 +143,8 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST(ofh_beamforming_weights_compressor_test, compressed_size_matches_the_number_of_weights)
 {
+  OCUDU_TEST_REQUIREMENTS("RU-OFH-CATB-WDBF");
+
   ASSERT_EQ(get_packed_beamforming_weights_size(4, {compression_type::none, 16}).value(), 16);
   ASSERT_EQ(get_packed_beamforming_weights_size(2, {compression_type::none, 12}).value(), 6);
   ASSERT_EQ(get_packed_beamforming_weights_size(8, {compression_type::none, 9}).value(), 18);
@@ -151,6 +156,8 @@ TEST(ofh_beamforming_weights_compressor_test, compressed_size_matches_the_number
 
 TEST(ofh_beamforming_weights_compressor_test, uncompressed_16_bit_weights_should_pass)
 {
+  OCUDU_TEST_REQUIREMENTS("RU-OFH-CATB-WDBF");
+
   const std::vector<cf_t> weights = {{1.0F, 0.0F}, {0.0F, 1.0F}, {-1.0F, 0.0F}, {0.0F, -1.0F}};
 
   const std::vector<uint8_t> expected = {
@@ -166,6 +173,8 @@ TEST(ofh_beamforming_weights_compressor_test, uncompressed_16_bit_weights_should
 
 TEST(ofh_beamforming_weights_compressor_test, uncompressed_12_bit_weights_should_pass)
 {
+  OCUDU_TEST_REQUIREMENTS("RU-OFH-CATB-WDBF");
+
   const std::vector<cf_t> weights = {{1.0F, 0.0F}, {-1.0F, 0.5F}};
 
   // Quantized weights are 0x7ff, 0x000, 0x801 and 0x400, packed without byte alignment between them.
@@ -181,6 +190,8 @@ TEST(ofh_beamforming_weights_compressor_test, uncompressed_12_bit_weights_should
 
 TEST(ofh_beamforming_weights_compressor_test, bfp_9_bit_weights_should_pass)
 {
+  OCUDU_TEST_REQUIREMENTS("RU-OFH-CATB-WDBF");
+
   const std::vector<cf_t> weights = {{1.0F, 0.0F}, {0.0F, -1.0F}};
 
   // Quantized at 16 bits the maximum absolute value is 0x7fff, which has 15 significant bits, so the shared exponent
@@ -197,6 +208,8 @@ TEST(ofh_beamforming_weights_compressor_test, bfp_9_bit_weights_should_pass)
 
 TEST(ofh_beamforming_weights_compressor_test, out_of_range_weights_should_clip)
 {
+  OCUDU_TEST_REQUIREMENTS("RU-OFH-CATB-WDBF");
+
   const std::vector<cf_t> weights = {{2.0F, -3.0F}};
 
   const std::vector<uint8_t> expected = {0x7f, 0xff, 0x80, 0x01};

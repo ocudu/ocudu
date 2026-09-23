@@ -3,6 +3,7 @@
 
 #include "compression/beamforming_weights_compressor.h"
 #include "support/beamforming_weights_repository.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/ofh/compression/compression_properties.h"
 #include "ocudu/ofh/ofh_constants.h"
 #include "ocudu/ran/beamforming/beam_weights_codebook_generator.h"
@@ -23,6 +24,8 @@ class beamforming_weights_repository_fixture
 
 TEST_P(beamforming_weights_repository_fixture, stored_weights_match_direct_compression)
 {
+  OCUDU_TEST_REQUIREMENTS("RU-OFH-CATB-WDBF");
+
   antenna_topology            topology = std::get<0>(GetParam());
   const ru_compression_params compr_params{std::get<1>(GetParam()), std::get<2>(GetParam())};
 
@@ -55,6 +58,8 @@ INSTANTIATE_TEST_SUITE_P(beamforming_weights_repository_test,
 #ifdef ASSERTS_ENABLED
 TEST(beamforming_weights_repository_test, death_when_beam_id_out_of_range)
 {
+  OCUDU_TEST_REQUIREMENTS("RU-OFH-CATB-WDBF");
+
   beam_weights_codebook          codebook = generate_beam_weights_codebook(antenna_topology::two_port);
   beamforming_weights_repository repository(codebook, {compression_type::none, 16});
 

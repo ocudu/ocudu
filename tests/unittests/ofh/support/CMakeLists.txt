@@ -6,11 +6,8 @@ set_directory_properties(PROPERTIES LABELS "support")
 
 add_executable(beamforming_weights_repository_test beamforming_weights_repository_test.cpp)
 target_link_libraries(beamforming_weights_repository_test ocudu_ofh_transmitter ocudu_support GTest::gtest GTest::gtest_main)
-target_include_directories(beamforming_weights_repository_test PRIVATE ${CMAKE_SOURCE_DIR}/lib/ofh)
+target_include_directories(beamforming_weights_repository_test PRIVATE ${CMAKE_SOURCE_DIR}/lib/ofh ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(beamforming_weights_repository_test)
-
-add_test(NAME ofh_beamforming_weights_repository_test COMMAND beamforming_weights_repository_test)
-set_tests_properties(ofh_beamforming_weights_repository_test PROPERTIES LABELS "RU-OFH-CATB-WDBF")
 
 add_executable(context_repository_helpers_test context_repository_helpers_test.cpp)
 target_link_libraries(context_repository_helpers_test ocudu_support GTest::gtest GTest::gtest_main)

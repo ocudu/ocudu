@@ -3,6 +3,7 @@
 
 #include "ethernet/ethernet_rx_buffer_pool.h"
 #include "ofh_integration_test_config.h"
+#include "ofh_integration_test_helpers.h"
 #include "ofh_integration_test_non_rt_ru_factory.h"
 #include "ocudu/adt/bounded_bitset.h"
 #include "ocudu/adt/circular_map.h"
@@ -234,10 +235,21 @@ public:
                             bool                               is_valid) override
   {
     ocudu_assert(grid, "Invalid grid.");
+    (is_valid ? nof_valid_symbols : nof_invalid_symbols).fetch_add(1, std::memory_order_relaxed);
   }
 
   // See interface for documentation.
-  void on_new_prach_window_data(const prach_buffer_context& context, shared_prach_buffer buffer) override {}
+  void on_new_prach_window_data(const prach_buffer_context& context, shared_prach_buffer buffer) override
+  {
+    nof_prach_windows.fetch_add(1, std::memory_order_relaxed);
+  }
+
+  /// Number of valid uplink symbols notified.
+  std::atomic<unsigned> nof_valid_symbols{0};
+  /// Number of invalid uplink symbols notified, i.e., not fully received within the reception window.
+  std::atomic<unsigned> nof_invalid_symbols{0};
+  /// Number of PRACH windows notified.
+  std::atomic<unsigned> nof_prach_windows{0};
 };
 
 /// RU emulator class responsible for generating uplink packets with random IQ data.
@@ -274,6 +286,7 @@ public:
   /// Generates UL packets with random IQ data for the specified slot and sends to an ethernet receiver.
   void send_uplink_data(slot_point slot)
   {
+    nof_requested_slots.fetch_add(1, std::memory_order_relaxed);
     if (!executor.execute([this, slot]() { send_uplink(slot); })) {
       logger.warning("Failed to dispatch uplink task");
     }
@@ -304,6 +317,7 @@ private:
     for (const auto& frame : frames) {
       receiver.push_new_data(frame);
     }
+    nof_sent_messages.fetch_add(frames.size(), std::memory_order_relaxed);
   }
 
   void set_header_parameters(span<uint8_t> frame, slot_point slot, unsigned symbol, unsigned eaxc)
@@ -427,7 +441,7 @@ private:
         // Prepare header.
         span<uint8_t>     frame_header(frame.data(), headers_size);
         header_parameters params;
-        params.port         = port;
+        params.port         = ul_eaxc[port];
         params.payload_size = data_size + ofh_header_size.value() + ecpri::ECPRI_COMMON_HEADER_SIZE.value();
         params.start_prb    = start_prb;
         params.nof_prbs     = nof_frame_prbs[j];
@@ -440,6 +454,15 @@ private:
       }
     }
   }
+
+public:
+  /// Returns the number of uplink U-Plane messages sent per symbol and eAxC.
+  unsigned get_nof_messages_per_symbol() const { return test_data.front().size(); }
+
+  /// Number of uplink slots requested through the uplink C-Plane.
+  std::atomic<unsigned> nof_requested_slots{0};
+  /// Number of uplink U-Plane messages sent.
+  std::atomic<unsigned> nof_sent_messages{0};
 
 private:
   ocudulog::basic_logger&     logger;
@@ -494,6 +517,10 @@ public:
     }
 
     if (nof_dispatched_slots == 0) {
+      // Start on a frame boundary, so that the test starts at the beginning of the TDD pattern.
+      if (slot.slot_index() != 0) {
+        return;
+      }
       fmt::print("Initial slot set to {}\n", slot);
     }
     ++nof_dispatched_slots;
@@ -505,6 +532,11 @@ public:
   }
 
   bool is_test_finished() const { return test_finished.load(std::memory_order_relaxed); }
+
+  /// Number of downlink resource grids handed to the RU.
+  std::atomic<unsigned> nof_dl_grids{0};
+  /// Number of uplink requests handed to the RU.
+  std::atomic<unsigned> nof_ul_requests{0};
 
 private:
   void process_slot(slot_point slot)
@@ -532,6 +564,7 @@ private:
 
       if (dl_grid) {
         dl_handler.handle_dl_data(context, dl_grid);
+        nof_dl_grids.fetch_add(1, std::memory_order_relaxed);
         logger.info("DU emulator pushed DL data in slot {}", slot);
       } else {
         logger.warning("No resource grid is available for processing DL slot");
@@ -551,6 +584,7 @@ private:
 
       if (ul_grid) {
         ul_handler.handle_new_uplink_slot(context, ul_grid);
+        nof_ul_requests.fetch_add(1, std::memory_order_relaxed);
         logger.info("DU emulator requested UL data in slot {}", slot);
       } else {
         logger.warning("No resource grid is available for processing UL slot");
@@ -601,6 +635,9 @@ private:
 /// RU emulator for UL traffic generation.
 class test_gateway : public ether::transmitter, private ether::transmitter_metrics_collector
 {
+  /// Minimum size of a message transmitted by the DU, it covers all the header fields peeked by the gateway.
+  static constexpr unsigned min_message_size = 30;
+
 public:
   test_gateway() :
     scs(test_params.scs),
@@ -617,28 +654,51 @@ public:
   // See interface for documentation.
   void send(span<span<const uint8_t>> frames) override
   {
-    slot_point sent_ul_slot = {};
     for (auto frame : frames) {
       nof_tx_bytes.fetch_add(frame.size(), std::memory_order_relaxed);
+      if (frame.size() < min_message_size) {
+        nof_malformed_packets++;
+        continue;
+      }
+
+      unsigned eaxc = peek_eaxc(frame);
+      ocudu_assert(eaxc < MAX_SUPPORTED_EAXC_ID_VALUE, "Invalid eAxC={} detected", eaxc);
+      bool is_uplane = (peek_message_type(frame) == ecpri::message_type::iq_data);
+
       // For DL messages check seq id and make sure packets for all antennas were transmitted.
       if (peek_direction(frame) == data_direction::downlink) {
-        if (peek_message_type(frame) == ecpri::message_type::iq_data) {
+        (is_uplane ? dl_uplane_counters : dl_cplane_counters)[eaxc].fetch_add(1, std::memory_order_relaxed);
+        if (is_uplane) {
           check_and_update_sequence_id(frame);
         }
         continue;
       }
-      // For UL message ask the RU emulator to send UP packets to the loopback interface.
+
+      // The DU only transmits uplink C-Plane messages.
+      ocudu_assert(!is_uplane, "Unexpected uplink U-Plane message transmitted by the DU");
+      ul_cplane_counters[eaxc].fetch_add(1, std::memory_order_relaxed);
+
+      // For UL message ask the RU emulator to send UP packets to the loopback interface, once per slot.
       ocudu_assert(ru_emulator != nullptr, "RU emulator uninitialized");
       slot_point slot = peek_slot_point(frame);
-      if (slot != sent_ul_slot) {
+      if (slot != last_ul_slot) {
         ru_emulator->send_uplink_data(slot);
-        sent_ul_slot = slot;
+        last_ul_slot = slot;
       }
     }
   }
 
   // See interface for documentation.
   ether::transmitter_metrics_collector* get_metrics_collector() override { return this; }
+
+  /// Message counters indexed by eAxC.
+  using eaxc_counters = std::array<std::atomic<unsigned>, MAX_SUPPORTED_EAXC_ID_VALUE>;
+  /// Downlink C-Plane messages.
+  eaxc_counters dl_cplane_counters = {};
+  /// Downlink U-Plane messages.
+  eaxc_counters dl_uplane_counters = {};
+  /// Uplink CPlane messages.
+  eaxc_counters ul_cplane_counters = {};
 
 private:
   // See interface for documentation.
@@ -652,7 +712,7 @@ private:
   {
     // Retrieve eAxC and SeqID from codified message.
     unsigned seq_id = message[24];
-    unsigned eaxc   = (unsigned(message[22]) << 8u | message[23]);
+    unsigned eaxc   = peek_eaxc(message);
 
     ocudu_assert(eaxc < MAX_SUPPORTED_EAXC_ID_VALUE, "Invalid eAxC={} detected", eaxc);
 
@@ -672,12 +732,14 @@ private:
     expected_seq_id = seq_id + 1;
   }
 
+  static unsigned peek_eaxc(span<const uint8_t> message)
+  {
+    // eAxC is codified in the bytes 22-23 of the Ethernet packet.
+    return (unsigned(message[22]) << 8u) | message[23];
+  }
+
   static data_direction peek_direction(span<const uint8_t> message)
   {
-    if (message.size() < 27) {
-      nof_malformed_packets++;
-      return data_direction::downlink;
-    }
     // Filter index is codified in the byte 26, bit 7.
     unsigned direction = (message[26] & 0x80) >> 7u;
     return (direction == 1) ? data_direction::downlink : data_direction::uplink;
@@ -714,6 +776,8 @@ private:
   bounded_bitset<MAX_SUPPORTED_EAXC_ID_VALUE>                        seq_counter_initialized;
   test_ru_emulator*                                                  ru_emulator;
   std::atomic<uint64_t>                                              nof_tx_bytes{0};
+  /// Last uplink slot requested to the RU emulator, only accessed from the transmitter thread.
+  slot_point last_ul_slot;
 };
 
 /// Manages the workers of the test application and OFH RU.
@@ -1021,19 +1085,147 @@ static bool check_ru_metrics(const ofh::metrics& metrics)
                  rx_dec.ecpri_metrics.nof_past_seq_id_messages,
                  rx_dec.ecpri_metrics.nof_future_seq_id_messages);
 
-    // Late downlink grids and uplink requests depend on the test execution environment, so they are not counted as
-    // errors. RX early messages are expected as the RU emulator sends the whole uplink slot upon receiving its
-    // Control-Plane message.
-    const unsigned nof_errors =
-        dl.nof_late_cp_dl + dl.nof_late_up_dl + ul.nof_late_cp_ul + rx_msgs.nof_late_messages +
-        rx_win.nof_missing_uplink_symbols + rx_win.nof_missing_prach_contexts +
-        rx_dec.data_processing_metrics.nof_dropped_messages + rx_dec.prach_processing_metrics.nof_dropped_messages +
-        rx_dec.ecpri_metrics.nof_past_seq_id_messages + rx_dec.ecpri_metrics.nof_future_seq_id_messages;
-    const unsigned nof_rx_messages = rx_msgs.nof_on_time_messages + rx_msgs.nof_early_messages;
-    if (nof_errors != 0 || sector.tx_metrics.eth_transmitter_metrics.total_nof_bytes == 0 || nof_rx_messages == 0) {
+    // Late and missing messages depend on the test execution environment stalls, so they are not counted as errors.
+    // Instead, the message counters account for them.
+    //
+    // RX early messages are expected as the RU emulator sends the whole uplink slot upon receiving its C-Plane message.
+    // Only late messages can be dropped by the receiver.
+    unsigned nof_errors = rx_win.nof_missing_prach_contexts + rx_dec.prach_processing_metrics.nof_dropped_messages +
+                          rx_dec.ecpri_metrics.nof_past_seq_id_messages +
+                          rx_dec.ecpri_metrics.nof_future_seq_id_messages;
+    unsigned nof_rx_messages = rx_msgs.nof_on_time_messages + rx_msgs.nof_early_messages;
+    if (nof_errors != 0 || sector.tx_metrics.eth_transmitter_metrics.total_nof_bytes == 0 || nof_rx_messages == 0 ||
+        rx_dec.data_processing_metrics.nof_dropped_messages > rx_msgs.nof_late_messages) {
       success = false;
     }
   }
+
+  return success;
+}
+
+/// Checks that the given counter matches its expected value, printing the mismatch otherwise.
+static bool check_counter(std::string_view name, unsigned value, unsigned expected)
+{
+  if (value == expected) {
+    return true;
+  }
+  fmt::println("Unexpected number of {}: {}, expected {}", name, value, expected);
+  return false;
+}
+
+/// Checks that the given counter does not exceed its maximum expected value, printing the mismatch otherwise.
+static bool check_counter_upper_bound(std::string_view name, unsigned value, unsigned max_expected)
+{
+  if (value <= max_expected) {
+    return true;
+  }
+  fmt::println("Unexpected number of {}: {}, expected at most {}", name, value, max_expected);
+  return false;
+}
+
+/// Returns true if the given eAxC is present in the list of ports.
+static bool contains_eaxc(span<const unsigned> ports, unsigned eaxc)
+{
+  return std::find(ports.begin(), ports.end(), eaxc) != ports.end();
+}
+
+/// \brief Checks the number of messages of one type transmitted by the DU against the expected values.
+///
+/// Late messages are dropped by the OFH transmitter, and the late counter is not given per eAxC. Therefore, the total
+/// over the configured eAxCs must match exactly, while every eAxC is bounded by the number of messages expected in it.
+/// eAxCs that are not configured must not carry any message.
+static bool check_eaxc_counters(std::string_view                   name,
+                                const test_gateway::eaxc_counters& counters,
+                                span<const unsigned>               ports,
+                                unsigned                           nof_expected_per_eaxc,
+                                unsigned                           nof_late)
+{
+  bool     success = true;
+  unsigned total   = 0;
+
+  for (unsigned eaxc = 0; eaxc != MAX_SUPPORTED_EAXC_ID_VALUE; ++eaxc) {
+    unsigned value        = counters[eaxc].load(std::memory_order_relaxed);
+    unsigned max_expected = contains_eaxc(ports, eaxc) ? nof_expected_per_eaxc : 0;
+    total += value;
+    success &= check_counter_upper_bound(fmt::format("{} messages in eAxC={}", name, eaxc), value, max_expected);
+  }
+  unsigned total_nof_expected_msgs = nof_expected_per_eaxc * ports.size() - nof_late;
+  success &= check_counter(fmt::format("{} messages", name), total, total_nof_expected_msgs);
+
+  return success;
+}
+
+/// \brief Checks the number of messages exchanged during the test against the expected values.
+///
+/// The expected values are derived from the resource grids and uplink requests handed by the DU emulator to the RU, as
+/// every grid carries data in all its ports and symbols. The late grids, requests and messages reported by the RU
+/// metrics are tolerated and accounted for.
+/// \return \c true if all the counters match their expected values, \c false otherwise.
+static bool check_message_counters(const sector_metrics&           metrics,
+                                   const test_gateway&             gateway,
+                                   const test_du_emulator&         du_emulator,
+                                   const test_ru_emulator&         ru_emulator,
+                                   const dummy_rx_symbol_notifier& rx_symbol_notifier,
+                                   unsigned                        nof_prb)
+{
+  const transmitter_dl_metrics&    dl      = metrics.tx_metrics.dl_metrics;
+  const transmitter_ul_metrics&    ul      = metrics.tx_metrics.ul_metrics;
+  const received_messages_metrics& rx_msgs = metrics.rx_metrics.rx_messages_metrics;
+
+  unsigned nof_symbols  = get_nsymb_per_slot(cyclic_prefix::NORMAL);
+  unsigned nof_dl_slots = du_emulator.nof_dl_grids.load() - dl.nof_late_dl_grids;
+  unsigned nof_ul_slots = du_emulator.nof_ul_requests.load() - ul.nof_late_ul_requests;
+  unsigned nof_dl_uplane_per_symbol =
+      test::calculate_nof_dl_uplane_messages_per_symbol(test_params.mtu,
+                                                        nof_prb,
+                                                        test_params.data_compr_params,
+                                                        test_params.is_downlink_static_comp_hdr_enabled,
+                                                        true,
+                                                        ocudulog::fetch_basic_logger("OFH_TEST"));
+  unsigned nof_ul_requested_slots = ru_emulator.nof_requested_slots.load();
+
+  fmt::println("Messages: dl_slots={}, ul_slots={}, ul_slots_answered_by_ru={}, dl_uplane_per_symbol={}, "
+               "ul_uplane_per_symbol={}, invalid_ul_symbols={}",
+               nof_dl_slots,
+               nof_ul_slots,
+               nof_ul_requested_slots,
+               nof_dl_uplane_per_symbol,
+               ru_emulator.get_nof_messages_per_symbol(),
+               rx_symbol_notifier.nof_invalid_symbols.load());
+
+  bool success = (nof_dl_slots != 0) && (nof_ul_slots != 0);
+
+  // Every DL slot carries one C-Plane message and the U-Plane messages of every symbol per DL eAxC. Every UL
+  // slot carries one C-Plane message per UL eAxC.
+  success &= check_eaxc_counters(
+      "DL C-Plane", gateway.dl_cplane_counters, test_params.dl_port_id, nof_dl_slots, dl.nof_late_cp_dl);
+  success &= check_eaxc_counters("DL U-Plane",
+                                 gateway.dl_uplane_counters,
+                                 test_params.dl_port_id,
+                                 nof_dl_slots * nof_symbols * nof_dl_uplane_per_symbol,
+                                 dl.nof_late_up_dl);
+  success &= check_eaxc_counters(
+      "UL C-Plane", gateway.ul_cplane_counters, test_params.ul_port_id, nof_ul_slots, ul.nof_late_cp_ul);
+
+  // Dropped late DL U-Plane messages leave gaps in the sequence identifiers.
+  success &= check_counter_upper_bound("missing DL packets", nof_missing_dl_packets, dl.nof_late_up_dl);
+  success &= check_counter("malformed packets", nof_malformed_packets, 0);
+
+  // The test RU emulator answers every UL slot with at least one C-Plane message transmitted, and the OFH receiver
+  // must account for every sent message.
+  unsigned nof_ul_uplane_sent =
+      nof_ul_requested_slots * nof_symbols * test_params.ul_port_id.size() * ru_emulator.get_nof_messages_per_symbol();
+  success &= check_counter_upper_bound("UL slots answered by the RU emulator", nof_ul_requested_slots, nof_ul_slots);
+  success &= check_counter("UL U-Plane messages sent", ru_emulator.nof_sent_messages.load(), nof_ul_uplane_sent);
+  success &= check_counter("UL U-Plane messages received",
+                           rx_msgs.nof_on_time_messages + rx_msgs.nof_early_messages + rx_msgs.nof_late_messages,
+                           nof_ul_uplane_sent);
+
+  // Every symbol of every UL slot is notified to the upper PHY, as invalid if it was not received on time.
+  success &= check_counter("notified UL symbols",
+                           rx_symbol_notifier.nof_valid_symbols.load() + rx_symbol_notifier.nof_invalid_symbols.load(),
+                           nof_ul_slots * nof_symbols);
+  success &= check_counter("PRACH windows", rx_symbol_notifier.nof_prach_windows.load(), 0);
 
   return success;
 }
@@ -1133,12 +1325,14 @@ int main(int argc, char** argv)
   // Collects the metrics once for the entire test run.
   ru_metrics metrics;
   ru_object->get_metrics_collector()->collect_metrics(metrics);
-  bool success = check_ru_metrics(std::get<ofh::metrics>(metrics.metrics));
+  const ofh::metrics& ofh_metrics = std::get<ofh::metrics>(metrics.metrics);
+  bool                success     = check_ru_metrics(ofh_metrics);
+  success &= check_message_counters(
+      ofh_metrics.sectors.front(), *tx_gateway, du_emulator, ru_emulator, rx_symbol_notifier, nof_prb);
 
   fmt::print("Test finished, nof_missing_dl_packets={}, nof_malformed_packets={}\n",
              nof_missing_dl_packets,
              nof_malformed_packets);
-  success = success && (nof_missing_dl_packets == 0) && (nof_malformed_packets == 0);
   fmt::println("Test {}", success ? "PASSED" : "FAILED");
 
   return success ? EXIT_SUCCESS : EXIT_FAILURE;

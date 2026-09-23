@@ -1,11 +1,12 @@
 // SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
-#include "../../../../lib/ofh/transmitter/helpers.h"
-#include "../../../../lib/ofh/transmitter/ofh_data_flow_uplane_downlink_data.h"
-#include "../../../../lib/ofh/transmitter/ofh_downlink_handler_impl.h"
 #include "../../phy/support/resource_grid_test_doubles.h"
 #include "ofh_data_flow_cplane_scheduling_commands_test_doubles.h"
+#include "tests/ocudu_test_requirements.h"
+#include "transmitter/helpers.h"
+#include "transmitter/ofh_data_flow_uplane_downlink_data.h"
+#include "transmitter/ofh_downlink_handler_impl.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/ofh/ofh_error_notifier.h"
 #include "ocudu/phy/support/resource_grid_context.h"
@@ -346,6 +347,8 @@ TEST(ofh_downlink_handler_impl, category_a_transmits_one_beam_port_per_eaxc)
 
 TEST(ofh_downlink_handler_impl, category_b_maps_non_empty_beam_ports_onto_eaxcs)
 {
+  OCUDU_TEST_REQUIREMENTS("RU-OFH-CATB-WDBF");
+
   downlink_handler_impl_config config = generate_default_config();
   config.dl_eaxc                      = {24, 25};
   config.is_cat_b_enabled             = true;
@@ -394,6 +397,8 @@ TEST(ofh_downlink_handler_impl, category_b_maps_non_empty_beam_ports_onto_eaxcs)
 
 TEST(ofh_downlink_handler_impl, category_b_rejects_more_active_beam_ports_than_configured_eaxcs)
 {
+  OCUDU_TEST_REQUIREMENTS("RU-OFH-CATB-WDBF");
+
   downlink_handler_impl_config config = generate_default_config();
   config.dl_eaxc                      = {24, 25};
   config.is_cat_b_enabled             = true;
