@@ -6,6 +6,7 @@
 #include "ocudu/adt/format.h"
 #include "ocudu/ofh/compression/compression_params.h"
 #include "ocudu/ofh/compression/compression_validator.h"
+#include "ocudu/ran/antenna_topology.h"
 #include "ocudu/ran/cyclic_prefix.h"
 
 using namespace ocudu;
@@ -63,6 +64,28 @@ static bool validate_scaling_params(
   return true;
 }
 
+/// Validates the given downlink beamforming configuration. Returns true on success, otherwise false.
+static bool validate_beamforming_config(const ru_ofh_beamforming_config&     bf_cfg,
+                                        const ru_ofh_cell_validation_config& cell_cfg)
+{
+  if (!get_single_panel_antenna_topology(cell_cfg.nof_antennas_dl).has_value()) {
+    fmt::println("Downlink beamforming requires an antenna topology, which is not defined for {} transmit antennas",
+                 cell_cfg.nof_antennas_dl);
+
+    return false;
+  }
+
+  if (auto result = ofh::validate_compression_params(ofh::ru_compression_params{
+          .type = ofh::to_compression_type(bf_cfg.compression_method), .data_width = bf_cfg.compression_bitwidth});
+      !result.has_value()) {
+    fmt::println("Beamforming weights {}", result.error());
+
+    return false;
+  }
+
+  return true;
+}
+
 /// Validates the given Open Fronthaul Radio Unit application configuration. Returns true on success, otherwise
 /// false.
 static bool validate_ru_ofh_unit_config(span<const ru_ofh_unit_cell_config>       ofh_cells,
@@ -96,6 +119,11 @@ static bool validate_ru_ofh_unit_config(span<const ru_ofh_unit_cell_config>     
         !result.has_value()) {
       fmt::println("PRACH {}", result.error());
 
+      return false;
+    }
+
+    if (ofh_cell.cell.dl_beamforming.has_value() &&
+        !validate_beamforming_config(*ofh_cell.cell.dl_beamforming, cell_cfg)) {
       return false;
     }
 

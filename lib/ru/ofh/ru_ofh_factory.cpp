@@ -63,7 +63,7 @@ std::unique_ptr<radio_unit> ocudu::create_ofh_ru(const ru_ofh_configuration& con
     sectors.emplace_back(std::move(sector));
 
     fmt::println("Initializing the Open Fronthaul Interface for sector#{}: ul_compr=[{},{}], dl_compr=[{},{}], "
-                 "prach_compr=[{},{}], prach_cp_enabled={}{}",
+                 "prach_compr=[{},{}], prach_cp_enabled={}, {}{}",
                  i,
                  to_string(sector_cfg.ul_compression_params.type),
                  sector_cfg.ul_compression_params.data_width,
@@ -72,6 +72,11 @@ std::unique_ptr<radio_unit> ocudu::create_ofh_ru(const ru_ofh_configuration& con
                  to_string(sector_cfg.prach_compression_params.type),
                  sector_cfg.prach_compression_params.data_width,
                  sector_cfg.is_prach_control_plane_enabled,
+                 sector_cfg.dl_beamforming ? fmt::format("cat_b_beamforming=[{},{},{}]",
+                                                         to_string(sector_cfg.dl_beamforming->topology),
+                                                         to_string(sector_cfg.dl_beamforming->bfw_compr_params.type),
+                                                         sector_cfg.dl_beamforming->bfw_compr_params.data_width)
+                                           : "",
                  (sector_cfg.bw != sector_cfg.ru_operating_bw)
                      ? fmt::format(".\nOperating a {}MHz cell over a RU with instantaneous bandwidth of {}MHz",
                                    fmt::underlying(sector_cfg.bw),

@@ -100,6 +100,7 @@ static transmitter_config generate_transmitter_config(const sector_configuration
   tx_config.are_metrics_enabled                  = sector_cfg.are_metrics_enabled;
   tx_config.c_plane_prach_fft_len                = sector_cfg.c_plane_prach_fft_len;
   tx_config.enable_log_warnings_for_lates        = sector_cfg.enable_log_warnings_for_lates;
+  tx_config.beamforming                          = sector_cfg.dl_beamforming;
 
   return tx_config;
 }

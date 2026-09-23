@@ -67,6 +67,15 @@ bool ocudu::is_valid_ru_ofh_config(const ru_ofh_configuration& config)
       return false;
     }
 
+    if (sector.dl_beamforming.has_value()) {
+      if (auto result = ofh::validate_compression_params(sector.dl_beamforming->bfw_compr_params);
+          !result.has_value()) {
+        fmt::println("Beamforming weights {}", result.error());
+
+        return false;
+      }
+    }
+
     if (!check_eaxcs_id(sector)) {
       return false;
     }

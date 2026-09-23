@@ -13,6 +13,34 @@
 
 using namespace ocudu;
 
+static void configure_cli11_ru_ofh_beamforming_args(CLI::App& app, std::optional<ru_ofh_beamforming_config>& config)
+{
+  // Parse into a separate buffer. The current value might be inherited from the base cell beamforming configuration,
+  // while the schema allows the cell to define its own params.
+  auto bf_cfg = std::make_shared<ru_ofh_beamforming_config>(config.value_or(ru_ofh_beamforming_config{}));
+
+  CLI::App* bf_subcmd =
+      add_subcommand(app, "beamforming", "Downlink beamforming (Category B) configuration. Omit it for Category A");
+  add_option(*bf_subcmd, "--bfw_compr_method", bf_cfg->compression_method, "Beamforming weights compression method")
+      ->capture_default_str()
+      ->check(CLI::IsMember({"none", "bfp"}));
+  add_option(
+      *bf_subcmd, "--bfw_compr_bitwidth", bf_cfg->compression_bitwidth, "Beamforming weights compression bit width")
+      ->capture_default_str()
+      ->range(1, 16);
+
+  bf_subcmd->parse_complete_callback([&config, bf_subcmd, bf_cfg]() {
+    if (bf_subcmd->count() == 0) {
+      return;
+    }
+    if (bf_subcmd->count("--bfw_compr_method") != bf_subcmd->count("--bfw_compr_bitwidth")) {
+      report_error("Invalid Open Fronthaul Radio Unit configuration detected: both compression method and compression "
+                   "bitwidth must be specified for the beamforming weights\n");
+    }
+    config.emplace(*bf_cfg);
+  });
+}
+
 static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_unit_base_cell_config& config)
 {
   add_option_function<std::string>(
@@ -264,6 +292,8 @@ static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_unit_bas
       "PRACH FFT length (used in C-Plane Type-3 messages)")
       ->capture_default_str()
       ->check(cplane_prach_fft_size_check);
+
+  configure_cli11_ru_ofh_beamforming_args(app, config.dl_beamforming);
 
   // Callback function for validating that both compression method and bitwidth parameters were specified.
   auto validate_compression_input = [](CLI::App& cli_app, const std::string& direction) {

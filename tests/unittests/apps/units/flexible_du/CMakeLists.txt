@@ -3,3 +3,4 @@
 
 
 add_subdirectory(du_high)
+add_subdirectory(split_7_2)

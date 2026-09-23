@@ -106,6 +106,11 @@ static void fill_ru_ofh_base_cell_section(YAML::Node node, const ru_ofh_unit_bas
   } else if (const auto* legacy_scaling_params = std::get_if<ru_ofh_legacy_scaling_config>(&config.iq_scaling_config)) {
     node["iq_scaling"] = legacy_scaling_params->iq_scaling;
   }
+  if (config.dl_beamforming.has_value()) {
+    YAML::Node bf_node            = node["beamforming"];
+    bf_node["bfw_compr_method"]   = config.dl_beamforming->compression_method;
+    bf_node["bfw_compr_bitwidth"] = config.dl_beamforming->compression_bitwidth;
+  }
 }
 
 static YAML::Node build_ru_ofh_cell_section(const ru_ofh_unit_cell_config& config)

@@ -104,7 +104,7 @@ static downlink_handler_impl_config generate_default_config()
   config.scs                           = subcarrier_spacing::kHz30;
   config.dl_processing_time            = std::chrono::milliseconds(400);
   config.enable_log_warnings_for_lates = true;
-  config.is_beamforming_enabled        = false;
+  config.is_cat_b_enabled              = false;
   // Transmission timing parameters corresponding to:
   // T1a_max_cp_dl=500us, T1a_min_cp_dl=200us,
   // T1a_max_cp_ul=300us, T1a_min_cp_ul=150us,
@@ -348,7 +348,7 @@ TEST(ofh_downlink_handler_impl, category_b_maps_non_empty_beam_ports_onto_eaxcs)
 {
   downlink_handler_impl_config config = generate_default_config();
   config.dl_eaxc                      = {24, 25};
-  config.is_beamforming_enabled       = true;
+  config.is_cat_b_enabled             = true;
 
   error_notifier_spy notifier_spy;
   auto               cplane     = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
@@ -396,7 +396,7 @@ TEST(ofh_downlink_handler_impl, category_b_rejects_more_active_beam_ports_than_c
 {
   downlink_handler_impl_config config = generate_default_config();
   config.dl_eaxc                      = {24, 25};
-  config.is_beamforming_enabled       = true;
+  config.is_cat_b_enabled             = true;
 
   error_notifier_spy notifier_spy;
   auto               cplane = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
@@ -426,10 +426,12 @@ TEST(ofh_downlink_handler_impl, category_b_rejects_more_active_beam_ports_than_c
 
 TEST(ofh_downlink_handler_impl, category_a_rejects_a_beam_port_beyond_the_antenna_ports)
 {
-  std::optional<antenna_topology> topology = get_single_panel_antenna_topology(4);
-  ASSERT_TRUE(topology.has_value());
+  // Use a topology that defines DFT beams on top of the port-selection ones.
+  static constexpr antenna_topology topology = antenna_topology::single_panel_two_one;
+  static_assert(get_total_nof_beams(topology) > get_total_nof_ports(topology),
+                "The topology must define beams beyond the antenna ports");
 
-  const unsigned nof_antenna_ports = get_total_nof_ports(*topology);
+  const unsigned nof_antenna_ports = get_total_nof_ports(topology);
 
   downlink_handler_impl_config config = generate_default_config();
   config.dl_eaxc.resize(nof_antenna_ports);
@@ -442,8 +444,8 @@ TEST(ofh_downlink_handler_impl, category_a_rejects_a_beam_port_beyond_the_antenn
   downlink_handler_impl handler(config, generate_dependencies(notifier_spy, std::move(cplane), std::move(uplane)));
   handler.start();
 
-  resource_grid_reader_spy rg_reader_spy(get_total_nof_beams(*topology), 1, 1);
-  resource_grid_writer_spy rg_writer_spy(get_total_nof_beams(*topology), 1, 1);
+  resource_grid_reader_spy rg_reader_spy(get_total_nof_beams(topology), 1, 1);
+  resource_grid_writer_spy rg_writer_spy(get_total_nof_beams(topology), 1, 1);
   // Write the first beam-port that selects a DFT beam instead of an antenna port, which Category A cannot transmit.
   rg_reader_spy.write(
       resource_grid_reader_spy::expected_entry_t{static_cast<uint8_t>(nof_antenna_ports), 0, 0, {1.0F, 0.0F}});

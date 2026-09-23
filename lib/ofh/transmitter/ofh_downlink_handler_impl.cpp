@@ -48,9 +48,9 @@ downlink_handler_impl::downlink_handler_impl(const downlink_handler_impl_config&
   sector_id(config.sector),
   logger(dependencies.logger),
   cp(config.cp),
+  is_cat_b_enabled(config.is_cat_b_enabled),
   tdd_config(config.tdd_config),
   dl_eaxc(config.dl_eaxc),
-  is_beamforming_enabled(config.is_beamforming_enabled),
   window_checker(
       dependencies.logger,
       config.sector,
@@ -116,7 +116,7 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
                reader.get_nof_ports(),
                dl_eaxc.size());
 
-  const unsigned nof_required_eaxc = get_nof_required_eaxc(reader, is_beamforming_enabled);
+  unsigned nof_required_eaxc = get_nof_required_eaxc(reader, is_cat_b_enabled);
   report_error_if_not(nof_required_eaxc <= dl_eaxc.size(),
                       "Resource grid needs '{}' downlink eAxCs and only '{}' are configured",
                       nof_required_eaxc,
@@ -164,14 +164,14 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
 
   // For backward compatibility, Category A transmits every configured eAxC, regardless of whether its beam-port is
   // empty, whilst Category B scans every beam-port and transmits the non-empty ones.
-  const unsigned nof_scanned_beams = is_beamforming_enabled ? reader.get_nof_ports() : dl_eaxc.size();
+  unsigned nof_scanned_beams = is_cat_b_enabled ? reader.get_nof_ports() : dl_eaxc.size();
 
   for (unsigned eaxc_index = 0, i_beam = 0; i_beam != nof_scanned_beams; ++i_beam) {
-    if (is_beamforming_enabled && reader.is_empty(i_beam)) {
+    if (is_cat_b_enabled && reader.is_empty(i_beam)) {
       continue;
     }
 
-    const unsigned eaxc = dl_eaxc[eaxc_index++];
+    unsigned eaxc = dl_eaxc[eaxc_index++];
 
     // Control-Plane data flow.
     cplane_context.eaxc    = eaxc;

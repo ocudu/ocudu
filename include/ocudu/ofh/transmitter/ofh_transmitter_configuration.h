@@ -90,7 +90,7 @@ struct transmitter_config {
   bool are_metrics_enabled = false;
   /// If set to true, logs late events as warnings, otherwise as info.
   bool enable_log_warnings_for_lates;
-  /// Downlink beamforming configuration. Unset value means Category A (no beamforming).
+  /// Downlink beamforming configuration. Unset value means Category A.
   std::optional<transmitter_beamforming_config> beamforming;
 };
 

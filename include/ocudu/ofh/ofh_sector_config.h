@@ -114,6 +114,8 @@ struct sector_configuration {
   bool uses_dpdk;
   /// Optional TDD configuration.
   std::optional<tdd_ul_dl_config_common> tdd_config;
+  /// Optional downlink beamforming configuration (used for Category B only).
+  std::optional<transmitter_beamforming_config> dl_beamforming;
 };
 
 /// Open Fronthaul sector dependencies.
