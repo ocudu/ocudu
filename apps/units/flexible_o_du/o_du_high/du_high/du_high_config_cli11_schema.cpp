@@ -3099,13 +3099,8 @@ static unsigned get_or_add_ref_beam(std::vector<du_high_unit_ref_beam_config>& b
 /// dimension and last the second dimension. The beams that the sweep needs are added to the cell.
 static void derive_ssb_beams(du_high_unit_base_cell_config& cell_cfg)
 {
-  const std::optional<antenna_topology> topology = get_single_panel_antenna_topology(cell_cfg.nof_antennas_dl);
-  if (not topology.has_value()) {
-    return;
-  }
-
-  const unsigned nof_pol      = get_nof_antenna_polarizations(*topology);
-  const unsigned nof_beams_d1 = get_nof_beams_dim1(*topology);
+  const unsigned nof_pol      = get_nof_antenna_polarizations(cell_cfg.tx_ant_topology);
+  const unsigned nof_beams_d1 = get_nof_beams_dim1(cell_cfg.tx_ant_topology);
 
   std::vector<du_high_unit_ssb_beam_config*> sorted_beams;
   sorted_beams.reserve(cell_cfg.ssb_cfg.beams.size());
@@ -3167,8 +3162,15 @@ static void derive_cell_auto_params(du_high_unit_base_cell_config& cell_cfg)
     cell_cfg.prach_cfg.ra_resp_window = 10U << to_numerology_value(cell_cfg.common_scs);
   }
 
-  // Derive SSB beam parameters, if not manually set.
-  derive_ssb_beams(cell_cfg);
+  // Derive the antenna topology from the number of downlink antennas. Every stack component of the cell uses this
+  // topology. The configuration validator rejects a number of antennas that defines no topology.
+  std::optional<antenna_topology> topology = get_single_panel_antenna_topology(cell_cfg.nof_antennas_dl);
+  if (topology.has_value()) {
+    cell_cfg.tx_ant_topology = *topology;
+
+    // Derive SSB beam parameters, if not manually set.
+    derive_ssb_beams(cell_cfg);
+  }
 }
 
 static void derive_auto_params(du_high_unit_config& config)

@@ -8,6 +8,7 @@
 #include "apps/helpers/ntn/ntn_satellite_config.h"
 #include "ntn/du_high_unit_cell_ntn_config.h"
 #include "ocudu/ocudulog/logger.h"
+#include "ocudu/ran/antenna_topology.h"
 #include "ocudu/ran/band_helper.h"
 #include "ocudu/ran/bs_channel_bandwidth.h"
 #include "ocudu/ran/csi_report/csi_report_configuration.h"
@@ -1349,6 +1350,11 @@ struct du_high_unit_base_cell_config {
   bs_channel_bandwidth channel_bw_mhz = bs_channel_bandwidth::MHz20;
   /// Number of antennas in downlink.
   unsigned nof_antennas_dl = 1;
+  /// \brief Topology of the downlink antennas.
+  ///
+  /// The number of downlink antennas gives the topology. It is derived once, so that all stack components of a
+  /// cell/sector use the same topology.
+  antenna_topology tx_ant_topology = antenna_topology::one_port;
   /// Number of antennas in uplink.
   unsigned nof_antennas_ul = 1;
   /// Human readable full PLMN (without possible filler digit).

@@ -1362,25 +1362,28 @@ static bool validate_tdd_ul_dl_unit_config(const du_high_unit_tdd_ul_dl_config& 
 
 /// Validates that the beams assigned to the transmitted SSB candidates fit the antenna topology and are distinct.
 /// Validates that the beams of a cell fit its antenna topology and are distinct.
-static bool validate_ref_beams(const std::vector<du_high_unit_ref_beam_config>& beams, unsigned nof_antennas_dl)
+static bool validate_ref_beams(const std::vector<du_high_unit_ref_beam_config>& beams,
+                               unsigned                                         nof_antennas_dl,
+                               antenna_topology                                 topology)
 {
-  const std::optional<antenna_topology> topology = get_single_panel_antenna_topology(nof_antennas_dl);
-  if (!topology.has_value()) {
+  // The topology is derived from the number of downlink antennas. It keeps its default value if no topology is
+  // defined for that number, so the two disagree.
+  if (get_total_nof_ports(topology) != nof_antennas_dl) {
     fmt::print("Number of DL antennas {} does not define an antenna topology. Valid values are 1, 2, 4 and 8.\n",
                nof_antennas_dl);
     return false;
   }
 
-  const unsigned nof_pol      = get_nof_antenna_polarizations(*topology);
-  const unsigned nof_beams_d1 = get_nof_beams_dim1(*topology);
-  const unsigned nof_beams_d2 = get_nof_beams_dim2(*topology);
+  const unsigned nof_pol      = get_nof_antenna_polarizations(topology);
+  const unsigned nof_beams_d1 = get_nof_beams_dim1(topology);
+  const unsigned nof_beams_d2 = get_nof_beams_dim2(topology);
 
   for (const auto& beam : beams) {
     if (beam.i_pol >= nof_pol) {
       fmt::print("Polarization index {} of beam {} is out of range. Antenna topology {} defines {} polarizations.\n",
                  beam.i_pol,
                  beam.ref_beam_id,
-                 to_string(*topology),
+                 to_string(topology),
                  nof_pol);
       return false;
     }
@@ -1389,7 +1392,7 @@ static bool validate_ref_beams(const std::vector<du_high_unit_ref_beam_config>& 
                  "the first dimension.\n",
                  beam.i_beam_dim1,
                  beam.ref_beam_id,
-                 to_string(*topology),
+                 to_string(topology),
                  nof_beams_d1);
       return false;
     }
@@ -1398,7 +1401,7 @@ static bool validate_ref_beams(const std::vector<du_high_unit_ref_beam_config>& 
                  "the second dimension.\n",
                  beam.i_beam_dim2,
                  beam.ref_beam_id,
-                 to_string(*topology),
+                 to_string(topology),
                  nof_beams_d2);
       return false;
     }
@@ -1935,7 +1938,7 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
     return false;
   }
 
-  if (!validate_ref_beams(config.ref_beams, config.nof_antennas_dl)) {
+  if (!validate_ref_beams(config.ref_beams, config.nof_antennas_dl, config.tx_ant_topology)) {
     return false;
   }
 

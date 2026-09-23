@@ -132,18 +132,11 @@ generate_fapi_fastpath_adaptor_dependencies(const o_du_high_config& config, o_du
             "Unsupported {} antenna ports in sector {}", config.du_hi.ran.cells[i].ran.dl_carrier.nof_ant, i);
     }
 
-    std::optional<antenna_topology> topology =
-        get_single_panel_antenna_topology(config.du_hi.ran.cells[i].ran.dl_carrier.nof_ant);
-    report_fatal_error_if_not(topology.has_value(),
-                              "No antenna topology is defined for {} antenna ports in sector {}",
-                              config.du_hi.ran.cells[i].ran.dl_carrier.nof_ant,
-                              i);
-
     const auto& sector_dependencies = odu_dependencies.sectors[i];
     out_dependencies.sectors.push_back(
         {.p5_dependencies = generate_mac_fapi_p5_sector_adaptor_dependencies(sector_dependencies),
          .p7_dependencies = generate_mac_fapi_p7_sector_adaptor_dependencies(
-             sector_dependencies, codebook_config, topology.value(), i)});
+             sector_dependencies, codebook_config, config.du_hi.ran.cells[i].ran.dl_carrier.topology, i)});
   }
 
   return out_dependencies;

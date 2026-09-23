@@ -5,6 +5,7 @@
 #pragma once
 
 #include "arfcn.h"
+#include "ocudu/ran/antenna_topology.h"
 #include "ocudu/ran/bs_channel_bandwidth.h"
 #include "ocudu/ran/nr_band.h"
 #include <cstdint>
@@ -23,6 +24,8 @@ struct carrier_configuration {
   nr_band band = nr_band::invalid;
   /// Number of antennas. Values: (0..65355).
   uint16_t nof_ant = 1;
+  /// Topology of the antennas.
+  antenna_topology topology = antenna_topology::one_port;
 };
 
 } // namespace ocudu
