@@ -325,9 +325,17 @@ int main(int argc, char** argv)
   if (o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config.is_testmode_enabled()) {
     f1c_gw = make_test_mode_f1c_connection_client();
   } else {
+    dtls_appconfig tmp_cfg{
+        .enabled          = true,
+        .mode             = dtls_appconfig_mode::server,
+        .cert_filename    = "/tmp/client-cert.pem",
+        .key_filename     = "/tmp/client-key.pem",
+        .ca_cert_filename = "/tmp/ca-cert.pem",
+    };
     f1c_gw = create_f1c_client_gateway(du_cfg.f1ap_cfg.cu_cp_addresses,
                                        du_cfg.f1ap_cfg.bind_addresses,
                                        du_cfg.f1ap_cfg.sctp,
+                                       tmp_cfg,
                                        du_cfg.f1ap_cfg.retry_connection,
                                        *epoll_broker,
                                        workers.get_du_high_executor_mapper().f1c_rx_executor(),
@@ -337,9 +345,9 @@ int main(int argc, char** argv)
   // Create F1-U GW.
 
   // Create F1-U TEID allocator (DU)
-  gtpu_allocator_creation_request du_f1u_alloc_msg      = {.max_nof_teids            = MAX_NOF_DU_UES * MAX_NOF_DRBS,
-                                                           .teid_release_linger_time = GTPU_DEFAULT_TEID_RELEASE_LINGER_TIME,
-                                                           .timers                   = time_ctrl->get_timer_manager()};
+  gtpu_allocator_creation_request du_f1u_alloc_msg = {.max_nof_teids            = MAX_NOF_DU_UES * MAX_NOF_DRBS,
+                                                      .teid_release_linger_time = GTPU_DEFAULT_TEID_RELEASE_LINGER_TIME,
+                                                      .timers                   = time_ctrl->get_timer_manager()};
   std::unique_ptr<gtpu_teid_pool> du_f1u_teid_allocator = create_gtpu_allocator(du_f1u_alloc_msg);
 
   // > Create GTP-U Demux.

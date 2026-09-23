@@ -393,7 +393,7 @@ int main(int argc, char** argv)
       .mode             = dtls_appconfig_mode::server,
       .cert_filename    = "/tmp/server-cert.pem",
       .key_filename     = "/tmp/server-key.pem",
-      .ca_cert_filename = "/tmp/ca_cert.pem",
+      .ca_cert_filename = "/tmp/ca-cert.pem",
   };
 
   cu_cfg.f1ap_cfg.dtls = tmp_cfg;

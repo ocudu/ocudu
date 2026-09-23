@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "apps/helpers/network/dtls_appconfig.h"
+#include "apps/helpers/network/dtls_config_translators.h"
 #include "apps/helpers/network/sctp_config_translators.h"
 #include "ocudu/f1ap/gateways/f1c_network_client_factory.h"
 
@@ -14,6 +16,7 @@ inline std::unique_ptr<odu::f1c_connection_client>
 create_f1c_client_gateway(const std::vector<std::string>& cu_cp_addresses,
                           const std::vector<std::string>& bind_addresses,
                           const sctp_appconfig&           sctp_cfg,
+                          const dtls_appconfig&           dtls_cfg,
                           bool                            retry_connection,
                           io_broker&                      broker,
                           task_executor&                  io_rx_executor,
@@ -28,6 +31,10 @@ create_f1c_client_gateway(const std::vector<std::string>& cu_cp_addresses,
   f1c_sctp.bind_addresses        = bind_addresses;
   f1c_sctp.connection_is_retried = retry_connection;
   fill_sctp_network_gateway_config_socket_params(f1c_sctp, sctp_cfg);
+  if (dtls_cfg.enabled) {
+    f1c_sctp.dtls_cfg.emplace();
+    fill_dtls_network_gateway_config_params(*f1c_sctp.dtls_cfg, dtls_cfg);
+  }
 
   return create_f1c_gateway_client(f1c_du_sctp_gateway_config{f1c_sctp, broker, io_rx_executor, f1ap_pcap});
 }
