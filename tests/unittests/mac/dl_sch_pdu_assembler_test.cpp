@@ -45,6 +45,71 @@ TEST(mac_dl_sch_pdu, mac_ce_con_res_id_pack)
   ASSERT_EQ(result, expected);
 }
 
+TEST(mac_dl_sch_pdu, reserved_lcids_match_the_specification)
+{
+  // Table 6.2.1-1 reserves 35 to 46 only: 33 and 34 are the eLCID escapes, and 47 to 51 are defined MAC CEs.
+  ASSERT_TRUE(lcid_dl_sch_t{uint16_t{33}}.is_valid());
+  ASSERT_TRUE(lcid_dl_sch_t{uint16_t{34}}.is_valid());
+  for (uint16_t lcid = 35; lcid != 47; ++lcid) {
+    ASSERT_FALSE(lcid_dl_sch_t{lcid}.is_valid()) << "lcid=" << lcid;
+  }
+  ASSERT_TRUE(lcid_dl_sch_t{lcid_dl_sch_t::RECOMMENDED_BIT_RATE}.is_valid());
+
+  // The sentinel marking a subPDU that carries nothing is reserved by the table, so it is never a real LCID.
+  ASSERT_FALSE(lcid_dl_sch_t{lcid_dl_sch_t::INVALID}.is_valid());
+}
+
+TEST(mac_dl_sch_pdu, differential_koffset_ce_is_identified_by_a_one_octet_elcid)
+{
+  const lcid_dl_sch_t koffset_lcid = lcid_dl_sch_t::from_elcid(elcid_dl_sch_t::DIFFERENTIAL_KOFFSET);
+
+  ASSERT_TRUE(koffset_lcid.is_ce());
+  ASSERT_TRUE(koffset_lcid.is_elcid());
+  ASSERT_TRUE(koffset_lcid.is_valid());
+  ASSERT_EQ(koffset_lcid.to_elcid(), elcid_dl_sch_t::DIFFERENTIAL_KOFFSET);
+
+  // The eLCID adds an octet to the subheader and says nothing about the payload, which is one octet of its own.
+  ASSERT_EQ(koffset_lcid.sizeof_ce(), 1);
+  ASSERT_EQ(get_mac_ce_subheader_size(koffset_lcid), 2);
+  ASSERT_EQ(get_mac_ce_subheader_size(lcid_dl_sch_t::TA_CMD), 1);
+
+  // A CE identified by an eLCID is not the same CE as the escape codepoint on its own.
+  ASSERT_NE(koffset_lcid, lcid_dl_sch_t{lcid_dl_sch_t::TA_CMD});
+}
+
+TEST(mac_dl_sch_pdu, mac_ce_differential_koffset_pack)
+{
+  // MAC PDU with DL-SCH subheader carrying a one-octet eLCID and a Differential Koffset MAC CE (1 B payload + 2 B
+  // header)
+  // |   |   |   |   |   |   |   |   |
+  // | R |F=0|       LCID = 34       |  Octet 1
+  // |-------------------------------|
+  // |         eLCID = 230           |  Octet 2
+  // |-------------------------------|
+  // | R | R |  Differential Koffset |  Octet 3
+
+  std::vector<uint8_t> bytes(MAX_DL_PDU_LENGTH);
+  dl_sch_pdu           pdu(bytes);
+
+  pdu.add_differential_koffset(differential_koffset_ce_payload{std::chrono::milliseconds{15}});
+
+  const byte_buffer expected = byte_buffer::create({0b00100010, 230, 15}).value();
+  ASSERT_EQ(pdu.get(), expected);
+}
+
+TEST(mac_dl_sch_pdu, mac_ce_differential_koffset_pack_largest_value)
+{
+  // The field is 6 bits wide, as per TS 38.321, Section 6.1.3.57, so the largest value fills it and leaves the
+  // reserved bits clear.
+  std::vector<uint8_t> bytes(MAX_DL_PDU_LENGTH);
+  dl_sch_pdu           pdu(bytes);
+
+  pdu.add_differential_koffset(differential_koffset_ce_payload{std::chrono::milliseconds{63}});
+
+  const byte_buffer expected = byte_buffer::create({0b00100010, 230, 0b00111111}).value();
+  ASSERT_EQ(pdu.get(), expected);
+}
+
 TEST(mac_dl_sch_pdu, mac_sdu_8bit_L_pack)
 {
   // MAC PDU with DL-SCH subheader with 8-bit L field and MAC SDU (<256 B payload + 2 B header)

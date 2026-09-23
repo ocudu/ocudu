@@ -333,6 +333,42 @@ TEST_F(single_ue_dl_logical_channel_system_test, mac_ce_indication_updates_tx_pe
             lcid_dl_sch_t{lcid_dl_sch_t::TA_CMD}.sizeof_ce() + FIXED_SIZED_MAC_CE_SUBHEADER_SIZE);
 }
 
+TEST_F(single_ue_dl_logical_channel_system_test, elcid_mac_ce_accounts_for_its_longer_subheader)
+{
+  const lcid_dl_sch_t ce_lcid = lcid_dl_sch_t::from_elcid(elcid_dl_sch_t::DIFFERENTIAL_KOFFSET);
+  ue_lchs.handle_mac_ce_indication(
+      {.ce_lcid = ce_lcid, .ce_payload = differential_koffset_ce_payload{std::chrono::milliseconds{15}}});
+
+  // One octet of payload behind a two octet subheader, as per TS 38.321, Sections 6.1.2 and 6.1.3.57.
+  ASSERT_EQ(ue_lchs.total_dl_pending_bytes(), 3);
+
+  dl_msg_lc_info subpdu;
+  ASSERT_EQ(ue_lchs.allocate_mac_ce(subpdu, 2), 0) << "A TB too small for the subheader must not carry the CE";
+  ASSERT_EQ(ue_lchs.allocate_mac_ce(subpdu, 3), 3);
+  ASSERT_EQ(subpdu.lcid, ce_lcid);
+  ASSERT_EQ(subpdu.sched_bytes, 1);
+  ASSERT_EQ(std::get<differential_koffset_ce_payload>(subpdu.ce_payload).koffset, std::chrono::milliseconds{15});
+  ASSERT_FALSE(ue_lchs.has_pending_ces());
+}
+
+TEST_F(single_ue_dl_logical_channel_system_test, latest_differential_koffset_supersedes_the_pending_one)
+{
+  const lcid_dl_sch_t ce_lcid = lcid_dl_sch_t::from_elcid(elcid_dl_sch_t::DIFFERENTIAL_KOFFSET);
+  ue_lchs.handle_mac_ce_indication(
+      {.ce_lcid = ce_lcid, .ce_payload = differential_koffset_ce_payload{std::chrono::milliseconds{15}}});
+  ue_lchs.handle_mac_ce_indication(
+      {.ce_lcid = ce_lcid, .ce_payload = differential_koffset_ce_payload{std::chrono::milliseconds{20}}});
+
+  // Only the latest value is meaningful to the UE, so the second CE replaces the first rather than queueing behind
+  // it.
+  ASSERT_EQ(ue_lchs.total_dl_pending_bytes(), 3);
+
+  dl_msg_lc_info subpdu;
+  ASSERT_EQ(ue_lchs.allocate_mac_ce(subpdu, 3), 3);
+  ASSERT_EQ(std::get<differential_koffset_ce_payload>(subpdu.ce_payload).koffset, std::chrono::milliseconds{20});
+  ASSERT_FALSE(ue_lchs.has_pending_ces());
+}
+
 TEST_F(single_ue_dl_logical_channel_system_test, no_mac_subpdus_scheduled_if_no_bytes_pending)
 {
   dl_msg_lc_info subpdu;
