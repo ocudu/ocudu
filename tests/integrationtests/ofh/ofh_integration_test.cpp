@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
-#include "../../../lib/ofh/ethernet/ethernet_rx_buffer_pool.h"
-#include "helpers.h"
+#include "ethernet/ethernet_rx_buffer_pool.h"
+#include "ofh_integration_test_config.h"
 #include "ocudu/adt/bounded_bitset.h"
 #include "ocudu/adt/circular_map.h"
 #include "ocudu/adt/format.h"
@@ -17,6 +17,7 @@
 #include "ocudu/phy/support/resource_grid_writer.h"
 #include "ocudu/phy/support/shared_resource_grid.h"
 #include "ocudu/phy/support/support_factories.h"
+#include "ocudu/ru/ofh/ru_ofh_configuration.h"
 #include "ocudu/ru/ofh/ru_ofh_executor_mapper_factory.h"
 #include "ocudu/ru/ofh/ru_ofh_factory.h"
 #include "ocudu/ru/ru_controller.h"
@@ -28,7 +29,6 @@
 #include "ocudu/support/executors/task_executor.h"
 #include "fmt/std.h"
 #include <arpa/inet.h>
-#include <getopt.h>
 #include <linux/if_packet.h>
 #include <mutex>
 #include <net/if.h>
@@ -67,33 +67,8 @@ static std::atomic<bool>     slot_synchronized{false};
 static std::atomic<unsigned> slot_val{0};
 static std::atomic<unsigned> nof_malformed_packets{0};
 static std::atomic<unsigned> nof_missing_dl_packets{0};
-static unsigned              nof_test_slots{1000};
 
 namespace {
-
-/// User-defined test parameters.
-struct test_parameters {
-  bool                   silent                              = false;
-  ocudulog::basic_levels log_level                           = ocudulog::basic_levels::warning;
-  std::string            log_filename                        = "stdout";
-  bool                   is_prach_control_plane_enabled      = true;
-  bool                   ignore_ecpri_payload_size_field     = false;
-  std::string            data_compr_method                   = "bfp";
-  unsigned               data_bitwidth                       = 9;
-  std::string            prach_compr_method                  = "bfp";
-  unsigned               prach_bitwidth                      = 9;
-  bool                   is_downlink_static_comp_hdr_enabled = false;
-  bool                   is_uplink_static_comp_hdr_enabled   = false;
-  bool                   is_downlink_parallelized            = true;
-  units::bytes           mtu                                 = units::bytes(9000);
-  std::vector<unsigned>  prach_port_id                       = {4, 5};
-  std::vector<unsigned>  dl_port_id                          = {0, 1, 2, 3};
-  std::vector<unsigned>  ul_port_id                          = {0, 1};
-  bs_channel_bandwidth   bw                                  = ocudu::bs_channel_bandwidth::MHz20;
-  subcarrier_spacing     scs                                 = subcarrier_spacing::kHz30;
-  std::string            tdd_pattern_str                     = "7d2u";
-  bool                   use_loopback_receiver               = false;
-};
 
 /// Dummy Radio Unit error notifier.
 class dummy_ru_error_notifier : public ru_error_notifier
@@ -105,159 +80,7 @@ public:
 };
 } // namespace
 
-static test_parameters test_params;
-
-/// Prints usage information of the app.
-static void usage(const char* prog)
-{
-  fmt::print("Usage: {} [-s silent]\n", prog);
-  fmt::print("\t-w Channel bandwidth [Default {}]\n", fmt::underlying(test_params.bw));
-  fmt::print("\t-c Subcarrier spacing. [Default {}]\n", to_string(test_params.scs));
-  fmt::print("\t-d Array of downlink eAxCs [default is {}]\n", port_ids_to_str(test_params.dl_port_id));
-  fmt::print("\t-u Array of uplink eAxCs [default is {}]\n", port_ids_to_str(test_params.ul_port_id));
-  fmt::print("\t-p Array of PRACH eAxCs [default is {}]\n", port_ids_to_str(test_params.prach_port_id));
-  fmt::print("\t-T Type of compression for DL/UL data ['none', 'bfp', default is {}]\n", test_params.data_compr_method);
-  fmt::print("\t-t Type of compression for PRACH ['none', 'bfp', default is {}]\n", test_params.prach_compr_method);
-  fmt::print("\t-B Bitwidth of compressed DL/UL data [9, 16, default is {}]\n", test_params.data_bitwidth);
-  fmt::print("\t-b Bitwidth of compressed PRACH data [9, 16, default is {}]\n", test_params.prach_bitwidth);
-  fmt::print("\t-A Use static compression header for DL data [Default {}]\n",
-             test_params.is_downlink_static_comp_hdr_enabled);
-  fmt::print("\t-a Use static compression header for UL data [Default {}]\n",
-             test_params.is_uplink_static_comp_hdr_enabled);
-  fmt::print("\t-r Enable the Control-Plane PRACH message signalling [Default {}]\n",
-             test_params.is_prach_control_plane_enabled);
-  fmt::print("\t-i If set to true, the payload size encoded in a eCPRI header is ignored [Default {}]\n",
-             test_params.ignore_ecpri_payload_size_field);
-  fmt::print("\t-P TDD pattern ['7d2u', '6d3u', default is {}]\n", test_params.tdd_pattern_str);
-  fmt::print("\t-m Ethernet frame size [1500-9600, default is {}]\n", test_params.mtu.value());
-  fmt::print("\t-l Use loopback Ethernet interface (requires root permissions) [default is {}]\n",
-             test_params.use_loopback_receiver);
-  fmt::print("\t-N Number of slots processed in the test [Default {}]]\n", nof_test_slots);
-  fmt::print("\t-s Toggle silent operation [Default {}]\n", test_params.silent);
-  fmt::print("\t-v Logging level. [Default {}]\n", fmt::underlying(test_params.log_level));
-  fmt::print("\t-f Log file name. [Default {}]\n", test_params.log_filename);
-  fmt::print("\t-h Show this message\n");
-}
-
-/// Parses arguments of the app.
-static void parse_args(int argc, char** argv)
-{
-  int  opt         = 0;
-  bool invalid_arg = false;
-
-  while ((opt = ::getopt(argc, argv, "f:T:t:B:b:w:c:d:u:p:P:v:m:N:lAaerish")) != -1) {
-    switch (opt) {
-      case 'T':
-        test_params.data_compr_method = std::string(optarg);
-        break;
-      case 't':
-        test_params.prach_compr_method = std::string(optarg);
-        break;
-      case 'B':
-        test_params.data_bitwidth = std::strtol(optarg, nullptr, 10);
-        break;
-      case 'b':
-        test_params.prach_bitwidth = std::strtol(optarg, nullptr, 10);
-        break;
-      case 'A':
-        test_params.is_downlink_static_comp_hdr_enabled = true;
-        break;
-      case 'a':
-        test_params.is_uplink_static_comp_hdr_enabled = true;
-        break;
-      case 'r':
-        test_params.is_prach_control_plane_enabled = true;
-        break;
-      case 'i':
-        test_params.ignore_ecpri_payload_size_field = true;
-        break;
-      case 'w':
-        if (optarg != nullptr) {
-          if (!is_valid_bandwidth(std::strtol(optarg, nullptr, 10))) {
-            fmt::print("Invalid bandwidth\n");
-            invalid_arg = true;
-          } else {
-            test_params.bw = MHz_to_bs_channel_bandwidth(std::strtol(optarg, nullptr, 10));
-          }
-        }
-        break;
-      case 'c':
-        if (optarg != nullptr) {
-          test_params.scs = to_subcarrier_spacing(std::string(optarg));
-          if (test_params.scs == subcarrier_spacing::invalid) {
-            fmt::print("Invalid subcarrier spacing\n");
-            invalid_arg = true;
-          }
-        }
-        break;
-      case 'P':
-        if (std::string(optarg) == "7d2u") {
-          tdd_pattern = tdd_pattern_7d2u;
-        } else if (std::string(optarg) == "6d3u") {
-          tdd_pattern = tdd_pattern_6d3u;
-        } else {
-          fmt::print("Invalid TDD pattern provided\n");
-          invalid_arg = true;
-        }
-        break;
-      case 'd':
-        test_params.dl_port_id = parse_port_id(std::string(optarg));
-        if (test_params.dl_port_id.empty()) {
-          fmt::print("Invalid array of DL ports provided\n");
-          invalid_arg = true;
-        }
-        break;
-      case 'u':
-        test_params.ul_port_id = parse_port_id(std::string(optarg));
-        if (test_params.ul_port_id.empty()) {
-          fmt::print("Invalid array of UL ports provided\n");
-          invalid_arg = true;
-        }
-        break;
-      case 'p':
-        test_params.prach_port_id = parse_port_id(std::string(optarg));
-        if (test_params.prach_port_id.empty()) {
-          fmt::print("Invalid array of PRACH ports provided\n");
-          invalid_arg = true;
-        }
-        break;
-      case 'm':
-        test_params.mtu = units::bytes(std::strtol(optarg, nullptr, 10));
-        if (test_params.mtu.value() < 1500 || test_params.mtu.value() > 9600) {
-          fmt::print("MTU size is out of valid range of [1500; 9600]\n");
-          invalid_arg = true;
-        }
-        break;
-      case 'N':
-        nof_test_slots = std::strtol(optarg, nullptr, 10);
-        break;
-      case 'l':
-        test_params.use_loopback_receiver = (!test_params.use_loopback_receiver);
-        break;
-      case 's':
-        test_params.silent = (!test_params.silent);
-        break;
-      case 'v': {
-        auto value            = ocudulog::str_to_basic_level(std::string(optarg));
-        test_params.log_level = value.has_value() ? value.value() : ocudulog::basic_levels::none;
-        break;
-      }
-      case 'f':
-        test_params.log_filename = std::string(optarg);
-        break;
-      case 'h':
-      default:
-        usage(argv[0]);
-        std::exit(0);
-    }
-    if (invalid_arg) {
-      usage(argv[0]);
-      std::exit(0);
-    }
-    nof_antennas_dl = test_params.dl_port_id.size();
-    nof_antennas_ul = test_params.ul_port_id.size();
-  }
-}
+static test::test_parameters test_params;
 
 namespace {
 
@@ -677,7 +500,7 @@ private:
     // Sleep time of the simulator is reduced by this value to mitigate wake up latency.
     static constexpr std::chrono::microseconds sleep_margin = 5us;
 
-    for (unsigned test_slot_id = 0; test_slot_id != nof_test_slots; ++test_slot_id) {
+    for (unsigned test_slot_id = 0; test_slot_id != test_params.nof_test_slots; ++test_slot_id) {
       auto t0 = std::chrono::steady_clock::now();
 
       slot_point slot(to_numerology_value(test_params.scs), slot_val);
@@ -1002,7 +825,7 @@ static void configure_ofh_sector(ofh::sector_configuration& sector_cfg)
   sector_cfg.vlan_cfg_cp                     = ether::vlan_parameters{.tci_vid = vlan_tag};
   sector_cfg.vlan_cfg_up                     = ether::vlan_parameters{.tci_vid = vlan_tag};
   sector_cfg.scs                             = test_params.scs;
-  sector_cfg.bw                              = test_params.bw;
+  sector_cfg.bw                              = test_params.channel_bw_mhz;
   sector_cfg.ru_operating_bw                 = sector_cfg.bw;
   sector_cfg.cp                              = cyclic_prefix::NORMAL;
   sector_cfg.is_prach_control_plane_enabled  = test_params.is_prach_control_plane_enabled;
@@ -1012,13 +835,9 @@ static void configure_ofh_sector(ofh::sector_configuration& sector_cfg)
   sector_cfg.rx_window_timing_params = {Ta4_min, Ta4_max};
 
   // Configure compression
-  ru_compression_params dl_ul_compression_params{to_compression_type(test_params.data_compr_method),
-                                                 test_params.data_bitwidth};
-  ru_compression_params prach_compression_params{to_compression_type(test_params.prach_compr_method),
-                                                 test_params.prach_bitwidth};
-  sector_cfg.dl_compression_params                = dl_ul_compression_params;
-  sector_cfg.ul_compression_params                = dl_ul_compression_params;
-  sector_cfg.prach_compression_params             = prach_compression_params;
+  sector_cfg.dl_compression_params                = test_params.data_compr_params;
+  sector_cfg.ul_compression_params                = test_params.data_compr_params;
+  sector_cfg.prach_compression_params             = test_params.prach_compr_params;
   sector_cfg.iq_scaling                           = iq_scaling;
   sector_cfg.is_downlink_static_compr_hdr_enabled = test_params.is_downlink_static_comp_hdr_enabled;
   sector_cfg.is_uplink_static_compr_hdr_enabled   = test_params.is_uplink_static_comp_hdr_enabled;
@@ -1028,6 +847,14 @@ static void configure_ofh_sector(ofh::sector_configuration& sector_cfg)
   sector_cfg.dl_eaxc.assign(test_params.dl_port_id.begin(), test_params.dl_port_id.end());
   sector_cfg.ul_eaxc.assign(test_params.ul_port_id.begin(), test_params.ul_port_id.end());
   sector_cfg.nof_antennas_ul = nof_antennas_ul;
+
+  // Configure downlink beamforming, the configuration validation guarantees a valid antenna topology.
+  if (test_params.beamforming_cfg.enable) {
+    sector_cfg.dl_beamforming = transmitter_beamforming_config{
+        .topology         = *test::get_dl_antenna_topology(nof_antennas_dl),
+        .bfw_compr_params = test_params.beamforming_cfg.bfw_compr_params,
+    };
+  }
 }
 
 static ru_ofh_configuration generate_ru_config()
@@ -1126,12 +953,19 @@ int main(int argc, char** argv)
   static constexpr unsigned            BUFFER_SIZE = 9600;
   std::unique_ptr<test_ether_receiver> eth_receiver_ptr;
 
-  parse_args(argc, argv);
+  auto parsed_params = test::parse_test_configuration(argc, argv);
+  if (!parsed_params.has_value()) {
+    return parsed_params.error();
+  }
+  test_params     = std::move(*parsed_params);
+  tdd_pattern     = (test_params.tdd_pattern_str == "6d3u") ? tdd_pattern_6d3u : tdd_pattern_7d2u;
+  nof_antennas_dl = test_params.dl_port_id.size();
+  nof_antennas_ul = test_params.ul_port_id.size();
 
   // Set up logging.
-  ocudulog::sink* log_sink = (test_params.log_filename == "stdout")
-                                 ? ocudulog::create_stdout_sink()
-                                 : ocudulog::create_file_sink(test_params.log_filename);
+  const std::string& log_filename = test_params.logger_cfg.filename;
+  ocudulog::sink*    log_sink =
+      (log_filename == "stdout") ? ocudulog::create_stdout_sink() : ocudulog::create_file_sink(log_filename);
   if (log_sink == nullptr) {
     report_error("Could not create application main log sink.\n");
   }
@@ -1139,10 +973,10 @@ int main(int argc, char** argv)
   ocudulog::init();
 
   ocudulog::basic_logger& logger = ocudulog::fetch_basic_logger("OFH_TEST", false);
-  logger.set_level(test_params.log_level);
+  logger.set_level(test_params.logger_cfg.level);
   ocudulog::fetch_basic_logger("PHY").set_level(ocudulog::basic_levels::error);
 
-  unsigned nof_prb = get_max_Nprb(test_params.bw, test_params.scs, frequency_range::FR1);
+  unsigned nof_prb = get_max_Nprb(test_params.channel_bw_mhz, test_params.scs, frequency_range::FR1);
 
   // Set up resources used by the DU emulator.
   std::shared_ptr<resource_grid_factory> rg_factory = create_resource_grid_factory();
@@ -1175,9 +1009,8 @@ int main(int argc, char** argv)
   auto& ru_ul_handler = ru_object->get_uplink_plane_handler();
 
   // Create RU emulator instance.
-  ru_compression_params ul_compression_params{to_compression_type(test_params.data_compr_method),
-                                              test_params.data_bitwidth};
-  test_ru_emulator      ru_emulator(logger, *workers.test_ru_sim_exec, *eth_receiver, ul_compression_params, nof_prb);
+  test_ru_emulator ru_emulator(
+      logger, *workers.test_ru_sim_exec, *eth_receiver, test_params.data_compr_params, nof_prb);
 
   // Create DU emulator instance.
   test_du_emulator du_emulator(
