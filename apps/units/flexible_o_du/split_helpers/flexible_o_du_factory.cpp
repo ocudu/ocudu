@@ -80,6 +80,7 @@ static o_du_low_unit_config generate_o_du_low_config(const du_low_unit_config&  
         .scs                           = scs_common,
         .scs_common                    = scs_common,
         .carrier_cfg                   = generate_carrier_config_tlv(cell),
+        .tx_ant_topology               = cell.ran.dl_carrier.topology,
         .prach_cfg                     = *cell.ran.ul_cfg_common.init_ul_bwp.rach_cfg_common,
         .prach_ports                   = du_hi_cell.cell.prach_cfg.ports,
         // The SDR Radio Unit gain is known to this application unit, so it is subtracted from the configured
@@ -102,6 +103,7 @@ static o_du_low_unit_config generate_o_du_low_config(const du_low_unit_config&  
         band_helper::get_n_rbs_from_bw(cell.ran.dl_carrier.carrier_bw, scs_common, du_low_cell.freq_range);
     du_low_cell.nof_rx_antennas = cell.ran.ul_carrier.nof_ant;
     du_low_cell.nof_tx_antennas = cell.ran.dl_carrier.nof_ant;
+    du_low_cell.tx_ant_topology = cell.ran.dl_carrier.topology;
     du_low_cell.prach_ports     = du_hi_cell.cell.prach_cfg.ports;
     du_low_cell.scs_common      = scs_common;
     du_low_cell.prach_config_index =
@@ -129,6 +131,7 @@ generate_o_du_ru_config(span<const odu::du_cell_config> cells, unsigned max_proc
     auto&                    out_cell   = out_cfg.cells.emplace_back();
     const subcarrier_spacing scs_common = cell.ran.dl_cfg_common.init_dl_bwp.generic_params.scs;
     out_cell.nof_tx_antennas            = cell.ran.dl_carrier.nof_ant;
+    out_cell.tx_ant_topology            = cell.ran.dl_carrier.topology;
     out_cell.nof_rx_antennas            = cell.ran.ul_carrier.nof_ant;
     out_cell.scs                        = scs_common;
     out_cell.dl_arfcn                   = cell.ran.dl_carrier.arfcn_f_ref.value();

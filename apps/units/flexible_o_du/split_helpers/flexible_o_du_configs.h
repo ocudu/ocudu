@@ -44,6 +44,7 @@ struct flexible_o_du_ru_config {
     bs_channel_bandwidth                   bw;
     unsigned                               nof_rx_antennas;
     unsigned                               nof_tx_antennas;
+    antenna_topology                       tx_ant_topology = antenna_topology::one_port;
     std::optional<tdd_ul_dl_config_common> tdd_config;
     arfcn_t                                dl_arfcn;
     arfcn_t                                ul_arfcn;

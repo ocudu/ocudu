@@ -25,6 +25,18 @@
 
 using namespace ocudu;
 
+/// \brief Returns the topology of the given number of transmit antennas.
+///
+/// Split 6 has no DU high, so this process derives the topology of the carrier that it receives.
+static antenna_topology get_tx_antenna_topology(unsigned nof_tx_antennas)
+{
+  std::optional<antenna_topology> topology = get_single_panel_antenna_topology(nof_tx_antennas);
+  report_fatal_error_if_not(
+      topology.has_value(), "No antenna topology is defined for {} transmit antennas.", nof_tx_antennas);
+
+  return *topology;
+}
+
 std::optional<std::chrono::system_clock::time_point>
 split6_flexible_o_du_low_session_factory::start_time_calculator::calculate_start_time() const
 {
@@ -169,6 +181,7 @@ split6_flexible_o_du_low_session_factory::create_o_du_low(const fapi::cell_confi
   du_low_cell.bw_rb                = config.carrier_cfg.dl_grid_size;
   du_low_cell.nof_rx_antennas      = config.carrier_cfg.num_rx_ant;
   du_low_cell.nof_tx_antennas      = config.carrier_cfg.num_tx_ant;
+  du_low_cell.tx_ant_topology      = get_tx_antenna_topology(config.carrier_cfg.num_tx_ant);
   du_low_cell.prach_ports          = prach_ports;
   du_low_cell.scs_common           = config.scs_common;
   du_low_cell.prach_config_index   = config.prach_cfg.rach_cfg_generic.prach_config_index;
@@ -201,6 +214,7 @@ generate_o_du_ru_config(const fapi::cell_configuration& config, unsigned expecte
   auto& out_cell           = out_cfg.cells.emplace_back();
   out_cell.nof_rx_antennas = config.carrier_cfg.num_rx_ant;
   out_cell.nof_tx_antennas = config.carrier_cfg.num_tx_ant;
+  out_cell.tx_ant_topology = get_tx_antenna_topology(config.carrier_cfg.num_tx_ant);
   out_cell.scs             = config.scs_common;
   out_cell.dl_arfcn        = config.carrier_cfg.dl_f_ref_arfcn;
   out_cell.ul_arfcn        = config.carrier_cfg.ul_f_ref_arfcn;

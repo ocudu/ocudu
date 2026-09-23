@@ -142,13 +142,8 @@ static void generate_config(ru_ofh_configuration&                            out
     sector_cfg.tdd_config = cell.tdd_config;
 
     if (ofh_cell_cfg.cell.dl_beamforming.has_value()) {
-      // Derive the topology from the number of transmit antennas.
-      std::optional<antenna_topology> tx_ant_topology = get_single_panel_antenna_topology(cell.nof_tx_antennas);
-      report_error_if_not(tx_ant_topology.has_value(),
-                          "Failed selecting a transmit antenna topology from the number of transmit antennas.");
-
       sector_cfg.dl_beamforming = ofh::transmitter_beamforming_config{
-          .topology         = *tx_ant_topology,
+          .topology         = cell.tx_ant_topology,
           .bfw_compr_params = ofh::ru_compression_params{
               .type       = ofh::to_compression_type(ofh_cell_cfg.cell.dl_beamforming->compression_method),
               .data_width = ofh_cell_cfg.cell.dl_beamforming->compression_bitwidth}};

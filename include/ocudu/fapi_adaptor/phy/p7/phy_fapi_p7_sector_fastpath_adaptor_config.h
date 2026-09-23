@@ -8,6 +8,7 @@
 #include "ocudu/fapi_adaptor/precoding_codebook_repository.h"
 #include "ocudu/fapi_adaptor/uci_part2_correspondence_repository.h"
 #include "ocudu/ocudulog/logger.h"
+#include "ocudu/ran/antenna_topology.h"
 #include "ocudu/ran/prach/rach_config_common.h"
 
 namespace ocudu {
@@ -39,6 +40,8 @@ struct phy_fapi_p7_sector_fastpath_adaptor_config {
   subcarrier_spacing scs_common;
   /// Carrier cell configuration.
   fapi::carrier_config carrier_cfg;
+  /// Topology of the transmit antennas.
+  antenna_topology tx_ant_topology = antenna_topology::one_port;
   /// PRACH cell configuration.
   rach_config_common prach_cfg;
   /// PRACH port list.

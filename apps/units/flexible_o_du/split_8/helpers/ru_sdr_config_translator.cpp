@@ -25,11 +25,6 @@ static lower_phy_configuration generate_lower_phy_config(const flexible_o_du_ru_
   const unsigned bandwidth_sc =
       NOF_SUBCARRIERS_PER_RB * band_helper::get_n_rbs_from_bw(config.bw, config.scs, config.freq_range);
 
-  // Select the antenna topology that best fits the number of transmit antennas.
-  std::optional<antenna_topology> tx_ant_topology = get_single_panel_antenna_topology(config.nof_tx_antennas);
-  ocudu_assert(tx_ant_topology.has_value(),
-               "Failed select a transmit antenna topology from the number of transmit antennas.");
-
   lower_phy_configuration out_cfg;
 
   out_cfg.sector_id                  = sector_id;
@@ -38,7 +33,7 @@ static lower_phy_configuration generate_lower_phy_config(const flexible_o_du_ru_
   out_cfg.bandwidth_rb               = band_helper::get_n_rbs_from_bw(config.bw, config.scs, config.freq_range);
   out_cfg.dl_freq_hz                 = band_helper::nr_arfcn_to_freq(config.dl_arfcn);
   out_cfg.ul_freq_hz                 = band_helper::nr_arfcn_to_freq(config.ul_arfcn);
-  out_cfg.tx_ant_topology            = tx_ant_topology.value();
+  out_cfg.tx_ant_topology            = config.tx_ant_topology;
   out_cfg.nof_rx_ports               = config.nof_rx_antennas;
   out_cfg.dft_window_offset          = 0.5F;
   out_cfg.max_processing_delay_slots = max_processing_delay_slot;

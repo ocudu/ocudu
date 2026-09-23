@@ -51,13 +51,6 @@ generate_fapi_fastpath_adaptor_dependencies(du_low&                             
             "Unsupported {} antenna ports in sector {}", fapi_cfg.sectors[i].p7_config.carrier_cfg.num_tx_ant, i);
     }
 
-    std::optional<antenna_topology> topology =
-        get_single_panel_antenna_topology(fapi_cfg.sectors[i].p7_config.carrier_cfg.num_tx_ant);
-    report_fatal_error_if_not(topology.has_value(),
-                              "No antenna topology is defined for {} antenna ports in sector {}",
-                              fapi_cfg.sectors[i].p7_config.carrier_cfg.num_tx_ant,
-                              i);
-
     fapi_adaptor::phy_fapi_p7_sector_fastpath_adaptor_dependencies p7_dependencies = {
         .logger               = logger,
         .dl_processor_pool    = upper.get_downlink_processor_pool(),
@@ -67,7 +60,8 @@ generate_fapi_fastpath_adaptor_dependencies(du_low&                             
         .ul_pdu_repository    = upper.get_uplink_pdu_slot_repository(),
         .ul_pdu_validator     = upper.get_uplink_pdu_validator(),
         .pm_repo              = std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_codebook_repository>>(
-            fapi_adaptor::generate_precoding_codebooks(codebook_config, topology.value(), i))),
+            fapi_adaptor::generate_precoding_codebooks(
+                codebook_config, fapi_cfg.sectors[i].p7_config.tx_ant_topology, i))),
         .part2_repo           = std::move(std::get<std::unique_ptr<fapi_adaptor::uci_part2_correspondence_repository>>(
             fapi_adaptor::generate_uci_part2_correspondence(1)))};
 
