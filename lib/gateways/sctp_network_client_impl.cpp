@@ -82,20 +82,11 @@ private:
       return;
     }
 
-    // Send EOF to SCTP server.
-    auto dest_addr  = server_addr.native();
-    int  bytes_sent = ::sctp_sendmsg(fd,
-                                     nullptr,
-                                     0,
-                                     const_cast<struct sockaddr*>(dest_addr.addr),
-                                     dest_addr.addrlen,
-                                     htonl(ppid),
-                                     SCTP_EOF,
-                                     stream_no,
-                                     0,
-                                     0);
+    ssl->shutdown();
 
-    if (bytes_sent == -1) {
+    int ret = ::shutdown(fd, SHUT_RDWR);
+
+    if (ret == -1) {
       // Failed to send EOF.
       // Note: It may happen when the sender notifier is removed just before the SCTP shutdown event is handled in
       // the server recv thread.
@@ -264,23 +255,6 @@ sctp_network_client_impl::connect(std::unique_ptr<sctp_association_sdu_notifier>
 
   sctp_assoc_t assoc_id           = 0;
   bool         connection_success = socket.connectx(resolved_addrs, assoc_id);
-  //{
-  //  char test = 'X';
-
-  //  errno = 0;
-  //  int n = sctp_sendmsg(socket.fd().value(),
-  //                       &test,
-  //                       1,
-  //                       nullptr,
-  //                       0,
-  //                       0,  // ppid
-  //                       0,  // flags
-  //                       0,  // stream
-  //                       0,  // timetolive
-  //                       0); // context
-  //  int e = errno;
-  //  logger.error("POST-CONNECTX sctp_sendmsg: n={} errno={} ({})", n, e, strerror(e));
-  //}
 
   if (not connection_success or assoc_id == 0) {
     if (not reuse_socket) {
@@ -355,17 +329,6 @@ sctp_network_client_impl::connect(std::unique_ptr<sctp_association_sdu_notifier>
                 client_cfg.connect_port,
                 fmt::format("{}", fmt::join(established_addrs, ", ")));
   }
-  struct sockaddr_storage peer{};
-  socklen_t               len = sizeof(peer);
-  int                     rc  = getpeername(socket.fd().value(), reinterpret_cast<sockaddr*>(&peer), &len);
-
-  fprintf(stderr, "getpeername: rc=%d errno=%d (%s)\n", rc, errno, strerror(errno));
-  int       so_error = 0;
-  socklen_t so_len   = sizeof(so_error);
-
-  getsockopt(socket.fd().value(), SOL_SOCKET, SO_ERROR, &so_error, &so_len);
-
-  fprintf(stderr, "SO_ERROR=%d (%s)\n", so_error, strerror(so_error));
 
   dtls_connect();
 
@@ -476,7 +439,7 @@ void sctp_network_client_impl::receive_plain()
 
   span<const uint8_t> payload(temp_recv_buffer.data(), rx_bytes);
   if (msg_flags & MSG_NOTIFICATION) {
-    handle_notification(payload, sri, *reinterpret_cast<const sockaddr*>(&msg_src_addr), msg_src_addrlen);
+    handle_notification(payload);
   } else {
     handle_data(payload);
   }
@@ -498,6 +461,28 @@ void sctp_network_client_impl::receive_dtls()
   }
 
   recv_handler->on_new_sdu(std::move(plain.value()));
+}
+
+void sctp_network_client_impl::handle_dtls_notification(const union sctp_notification* notif, int assoc)
+{
+  logger.debug("{}: received SCTP notification from DTLS association. type={}",
+               node_cfg.if_name,
+               static_cast<sctp_sn_type>(notif->sn_header.sn_type));
+
+  if (notif->sn_header.sn_length > sizeof(sctp_notification)) {
+    logger.error("{}: received SCTP notification with larger length then allowed. type={} len={}",
+                 node_cfg.if_name,
+                 static_cast<sctp_sn_type>(notif->sn_header.sn_type),
+                 notif->sn_header.sn_length);
+    return;
+  }
+
+  // Copy notification from DTLS buffers to our own.
+  std::vector<uint8_t> payload;
+  payload.resize(notif->sn_header.sn_length);
+  memcpy(payload.data(), notif, payload.size());
+
+  handle_notification(payload);
 }
 
 void sctp_network_client_impl::handle_connection_shutdown(const char* cause)
@@ -573,13 +558,9 @@ void sctp_network_client_impl::handle_data(span<const uint8_t> payload)
   recv_handler->on_new_sdu(byte_buffer{byte_buffer::fallback_allocation_tag{}, payload});
 }
 
-void sctp_network_client_impl::handle_notification(span<const uint8_t>           payload,
-                                                   const struct sctp_sndrcvinfo& sri,
-                                                   const sockaddr&               src_addr,
-                                                   socklen_t                     src_addr_len)
+void sctp_network_client_impl::handle_notification(span<const uint8_t> payload)
 {
   const auto* notif = reinterpret_cast<const union sctp_notification*>(payload.data());
-  fmt::println("Got notification1!!! {}", notif->sn_header.sn_type);
   if (not validate_and_log_sctp_notification(payload)) {
     // Handle error.
     handle_connection_terminated("Received invalid message");
@@ -591,8 +572,6 @@ void sctp_network_client_impl::handle_notification(span<const uint8_t>          
       const struct sctp_assoc_change* n = &notif->sn_assoc_change;
       switch (n->sac_state) {
         case SCTP_COMM_UP:
-          // dtls_connect();
-          //
           break;
         case SCTP_COMM_LOST:
           handle_connection_terminated("Communication to the server was lost");

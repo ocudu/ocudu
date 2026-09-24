@@ -38,6 +38,7 @@ class dtls_ssl
 {
 public:
   virtual bool                  init(int socket)                    = 0;
+  virtual bool                  shutdown()                          = 0;
   virtual bool                  is_init_finished()                  = 0;
   virtual bool                  handshake()                         = 0;
   virtual expected<byte_buffer> receive()                           = 0;
@@ -58,6 +59,7 @@ public:
   openssl_dtls_ssl(const dtls_ssl_config& cfg_, const dtls_ssl_dependencies& ssl_ctx_);
   ~openssl_dtls_ssl() override;
   bool                  init(int socket) override;
+  bool                  shutdown() override;
   bool                  is_init_finished() override;
   bool                  handshake() override;
   expected<byte_buffer> receive() override;

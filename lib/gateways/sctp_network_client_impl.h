@@ -48,15 +48,9 @@ private:
   void receive_dtls();
 
   void handle_data(span<const uint8_t> payload);
-  void handle_notification(span<const uint8_t>           payload,
-                           const struct sctp_sndrcvinfo& sri,
-                           const sockaddr&               src_addr,
-                           socklen_t                     src_addr_len);
+  void handle_notification(span<const uint8_t> payload);
 
-  void handle_dtls_notification(const union sctp_notification* notif, int assoc) override
-  {
-    fmt::println("got notification!!!");
-  }
+  void handle_dtls_notification(const union sctp_notification* notif, int assoc) override;
 
   void dtls_connect();
   void handle_connection_shutdown(const char* cause);

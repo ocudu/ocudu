@@ -90,6 +90,13 @@ bool openssl_dtls_ssl::init(int socket)
   return true;
 }
 
+bool openssl_dtls_ssl::shutdown()
+{
+  SSL_shutdown(ssl);
+  fmt::println("shutdown SSL!");
+  return true;
+}
+
 bool openssl_dtls_ssl::is_init_finished()
 {
   return SSL_is_init_finished(ssl);
