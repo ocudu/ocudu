@@ -143,6 +143,52 @@ TEST(test_arfcn_freq_conversion, arfcn_to_freq_corner_cases)
   ASSERT_DOUBLE_EQ(99.99996e9, nr_arfcn_to_freq(max_valid_nr_arfcn));
 }
 
+TEST(test_ntn_bands, rel17_satellite_bands_are_ntn_bands)
+{
+  // TS 38.101-5: n255 (L-band) and n256 (S-band) are the Rel-17 satellite bands.
+  for (nr_band b : {nr_band::n255, nr_band::n256}) {
+    ASSERT_TRUE(is_ntn_band(b)) << "n" << static_cast<unsigned>(b) << " must be an NTN band";
+  }
+  for (nr_band b : {nr_band::n1, nr_band::n3, nr_band::n65, nr_band::n78}) {
+    ASSERT_FALSE(is_ntn_band(b)) << "n" << static_cast<unsigned>(b) << " must not be an NTN band";
+  }
+}
+
+TEST(test_ntn_bands, every_ntn_band_is_a_licensed_paired_fr1_band)
+{
+  unsigned nof_ntn_bands = 0;
+  for (nr_band b : all_nr_bands_fr1) {
+    if (not is_ntn_band(b)) {
+      continue;
+    }
+    ++nof_ntn_bands;
+    const unsigned n = static_cast<unsigned>(b);
+    ASSERT_TRUE(is_band_known(b)) << "n" << n;
+    ASSERT_EQ(duplex_mode::FDD, get_duplex_mode(b)) << "n" << n;
+    ASSERT_TRUE(is_paired_spectrum(b)) << "n" << n;
+    ASSERT_EQ(frequency_range::FR1, get_freq_range(b)) << "n" << n;
+    ASSERT_FALSE(is_unlicensed_band(b)) << "n" << n;
+    ASSERT_FALSE(is_band_for_shared_spectrum(b)) << "n" << n;
+    ASSERT_NE(ssb_pattern_case::invalid, get_ssb_pattern(b, subcarrier_spacing::kHz15)) << "n" << n;
+    ASSERT_NE(min_channel_bandwidth::invalid, get_min_channel_bw(b, subcarrier_spacing::kHz15)) << "n" << n;
+  }
+  ASSERT_GE(nof_ntn_bands, 2U);
+}
+
+TEST(test_ntn_bands, n256_carrier_of_the_ntn_e2e_tests_is_valid_and_paired)
+{
+  // Carrier used by the NTN e2e tests: DL 2185 MHz and UL 1995 MHz in n256.
+  const arfcn_t dl_arfcn = freq_to_nr_arfcn(2185e6);
+  const arfcn_t ul_arfcn = freq_to_nr_arfcn(1995e6);
+
+  ASSERT_TRUE(is_dl_arfcn_valid_given_band(nr_band::n256, dl_arfcn, subcarrier_spacing::kHz15).has_value());
+  ASSERT_TRUE(is_ul_arfcn_valid_given_band(nr_band::n256, ul_arfcn).has_value());
+  ASSERT_EQ(ul_arfcn, get_ul_arfcn_from_dl_arfcn(dl_arfcn, nr_band::n256));
+
+  // The DL of n256 overlaps the terrestrial n65, so the NTN band cannot be derived from the ARFCN and is always given.
+  ASSERT_NE(nr_band::n256, get_band_from_dl_arfcn(dl_arfcn));
+}
+
 TEST(test_band_duplexing, all_bands)
 {
   for (nr_band b : all_nr_bands_fr1) {
