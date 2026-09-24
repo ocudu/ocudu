@@ -10,7 +10,7 @@ add_library(ocudu_fapi_message_builder_test_helpers STATIC message_builder_helpe
 add_executable(fapi_to_phy_fastpath_translator_test fapi_to_phy_fastpath_translator_test.cpp)
 target_include_directories(fapi_to_phy_fastpath_translator_test PRIVATE ${CMAKE_SOURCE_DIR}/lib/fapi_adaptor/phy/p7)
 target_link_libraries(fapi_to_phy_fastpath_translator_test PRIVATE ocudu_fapi_to_phy_p7_fastpath_translator
-    ocudu_fapi_precoding_matrix_tools
+    ocudu_fapi_precoding_codebook_tools
     ocudu_fapi_uci_part2_tools
     ocudulog
     ocudu_fapi_message_builder_test_helpers

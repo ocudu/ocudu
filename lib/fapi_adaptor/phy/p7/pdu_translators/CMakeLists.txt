@@ -15,4 +15,4 @@ set(SOURCES
         ssb.cpp)
 
 add_library(ocudu_fapi_phy_message_adaptors STATIC ${SOURCES})
-target_link_libraries(ocudu_fapi_phy_message_adaptors ocuduvec ocudu_phy_support ocudu_fapi_precoding_matrix_tools ocudu_fapi_uci_part2_tools ocudu_upper_phy_support ocudu_ran)
+target_link_libraries(ocudu_fapi_phy_message_adaptors ocuduvec ocudu_phy_support ocudu_fapi_precoding_codebook_tools ocudu_fapi_uci_part2_tools ocudu_upper_phy_support ocudu_ran)

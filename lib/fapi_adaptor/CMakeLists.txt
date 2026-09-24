@@ -17,8 +17,8 @@ set(UCI_SOURCES
         uci_part2_correspondence_repository.cpp
         )
 
-add_library(ocudu_fapi_precoding_matrix_tools STATIC ${PRECODING_SOURCES})
-target_link_libraries(ocudu_fapi_precoding_matrix_tools ocudu_ran ocudulog)
+add_library(ocudu_fapi_precoding_codebook_tools STATIC ${PRECODING_SOURCES})
+target_link_libraries(ocudu_fapi_precoding_codebook_tools ocudu_ran ocudulog)
 
 add_library(ocudu_fapi_uci_part2_tools STATIC ${UCI_SOURCES})
 target_link_libraries(ocudu_fapi_uci_part2_tools ocudu_ran ocudulog)

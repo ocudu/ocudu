@@ -7,7 +7,7 @@ add_subdirectory(pdu_translators)
 
 add_library(ocudu_mac_to_fapi_p7_fastpath_translator STATIC mac_to_fapi_fastpath_translator.cpp)
 target_link_libraries(ocudu_mac_to_fapi_p7_fastpath_translator PRIVATE ocudu_mac_fapi_adaptors
-        ocudu_fapi_precoding_matrix_tools)
+        ocudu_fapi_precoding_codebook_tools)
 
 
 set(SOURCES

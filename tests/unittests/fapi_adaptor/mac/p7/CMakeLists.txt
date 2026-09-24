@@ -23,7 +23,7 @@ target_include_directories(mac_to_fapi_fastpath_translator_test PRIVATE ${CMAKE_
 target_link_libraries(mac_to_fapi_fastpath_translator_test PRIVATE
         ocudu_support
         ocudu_mac_to_fapi_p7_fastpath_translator
-        ocudu_fapi_precoding_matrix_tools
+        ocudu_fapi_precoding_codebook_tools
         ocudulog
         ocudu_mac_translator_helpers
         gtest
