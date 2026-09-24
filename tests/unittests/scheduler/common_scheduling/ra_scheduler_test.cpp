@@ -380,6 +380,73 @@ INSTANTIATE_TEST_SUITE_P(
         test_params{frequency_range::FR2, 1, create_tdd_pattern(tdd_pattern_profile_fr2_120khz::DDDSU)},
         test_params{frequency_range::FR2, 1, create_tdd_pattern(tdd_pattern_profile_fr2_120khz::DDDSU), true}));
 
+/// RA procedure in an NTN cell, where every DL-signalled UL transmission is delayed by the cell-specific Koffset.
+class ra_scheduler_ntn_test : public ra_scheduler_setup, public ::testing::Test
+{
+public:
+  ra_scheduler_ntn_test() : ra_scheduler_setup(get_sched_req(), false, false) {}
+
+  static sched_cell_configuration_request_message get_sched_req()
+  {
+    sched_cell_configuration_request_message req = sched_config_helper::make_default_sched_cell_configuration_request(
+        create(duplex_mode::FDD, frequency_range::FR1));
+    req.ran.ntn_params.emplace();
+    req.ran.ntn_params->ntn_cfg.cell_specific_koffset = std::chrono::milliseconds{20};
+    return req;
+  }
+};
+
+TEST_F(ra_scheduler_ntn_test, msg3_is_scheduled_the_cell_specific_koffset_after_its_msg3_delay)
+{
+  ASSERT_GT(cell_cfg.ntn_cs_koffset, 0U);
+  handle_rach_indication(create_rach_indication(1));
+
+  const rar_information* rar = nullptr;
+  for (unsigned slot_count = 0; slot_count != 100 and rar == nullptr; ++slot_count) {
+    run_slot();
+    if (not res_grid[0].result.dl.rar_grants.empty()) {
+      rar = &res_grid[0].result.dl.rar_grants.front();
+    }
+  }
+  ASSERT_NE(rar, nullptr) << "No RAR was scheduled";
+  ASSERT_EQ(rar->grants.size(), 1U);
+  const rar_ul_grant& grant = rar->grants.front();
+
+  // TS 38.213, Section 8.3: the Msg3 PUSCH is transmitted K2 + delta slots after the RAR, extended by K_offset in NTN.
+  const auto&    ul_bwp     = cell_cfg.params.ul_cfg_common.init_ul_bwp;
+  const unsigned k2         = ul_bwp.pusch_cfg_common->pusch_td_alloc_list[grant.time_resource_assignment].k2;
+  const unsigned msg3_delay = ra_helper::get_msg3_delay(ul_bwp.generic_params.scs, k2);
+
+  const auto has_msg3 = [&grant](const cell_slot_resource_allocator& alloc) {
+    return std::any_of(alloc.result.ul.puschs.begin(), alloc.result.ul.puschs.end(), [&grant](const ul_sched_info& p) {
+      return p.pusch_cfg.rnti == grant.temp_crnti;
+    });
+  };
+  ASSERT_TRUE(has_msg3(res_grid[msg3_delay + cell_cfg.ntn_cs_koffset]))
+      << "Msg3 must be scheduled K_offset slots after the Msg3 delay";
+  ASSERT_FALSE(has_msg3(res_grid[msg3_delay])) << "Msg3 must not be scheduled at the terrestrial Msg3 delay";
+}
+
+TEST_F(ra_scheduler_ntn_test, ra_procedure_completes_with_msg3_retransmissions)
+{
+  const unsigned nof_preambles = 2;
+  handle_rach_indication(create_rach_indication(nof_preambles));
+
+  // NACK the first Msg3 transmissions, so that their retransmissions are scheduled over the NTN delay too.
+  for (unsigned slot_count = 0; slot_count != 1000 and tracker.nof_msg3_newtxs() < nof_preambles; ++slot_count) {
+    run_slot();
+    handle_crc_for_pending_puschs(false);
+  }
+  for (unsigned slot_count = 0; slot_count != 1000 and tracker.nof_msg3_acked() < nof_preambles; ++slot_count) {
+    run_slot();
+    handle_crc_for_pending_puschs(true);
+  }
+
+  ASSERT_EQ(tracker.nof_msg3_newtxs(), nof_preambles);
+  ASSERT_GE(tracker.nof_msg3_retxs(), nof_preambles);
+  ASSERT_EQ(tracker.nof_msg3_acked(), nof_preambles);
+}
+
 class ra_scheduler_failed_rar_test : public ra_scheduler_setup, public ::testing::TestWithParam<test_params>
 {
 public:
