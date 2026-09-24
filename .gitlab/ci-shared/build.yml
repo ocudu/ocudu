@@ -168,6 +168,6 @@ include:
         if [ -f xunit.xml ]; then
           OCUDU_COMMIT="${OCUDU_COMMIT:-${CI_COMMIT_SHA}}" python3 /usr/local/bin/add_junit_properties.py xunit.xml ${OCUDU_GTEST_XML_DIR:+--strict} || ctest_ret=1
         fi
-        grep -l "ERROR SUMMARY: 0 errors" Testing/Temporary/MemoryChecker.*.log | xargs rm || true
+        grep -l "ERROR SUMMARY: 0 errors" Testing/Temporary/MemoryChecker.*.log 2>/dev/null | xargs -r rm
         return ${ctest_ret}
       }
