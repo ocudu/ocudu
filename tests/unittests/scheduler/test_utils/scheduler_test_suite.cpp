@@ -490,10 +490,12 @@ static void assert_rar_grant_msg3_pusch_consistency(const cell_configuration&   
 
       // 4-step RAR and 2-step FallbackRAR: a Msg3 PUSCH must be scheduled.
       ASSERT_LT(rar_grant.time_resource_assignment, pusch_td_list.size());
-      uint8_t k2 = ra_helper::get_msg3_delay(cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.scs,
-                                             pusch_td_list[rar_grant.time_resource_assignment].k2);
+      // In NTN, the Msg3 is further delayed by the cell-specific K_offset (TS 38.213, Section 8.3).
+      unsigned msg3_delay = ra_helper::get_msg3_delay(cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.scs,
+                                                      pusch_td_list[rar_grant.time_resource_assignment].k2) +
+                            cell_cfg.ntn_cs_koffset;
 
-      span<const ul_sched_info> ul_grants = res_grid[k2].result.ul.puschs;
+      span<const ul_sched_info> ul_grants = res_grid[msg3_delay].result.ul.puschs;
       const auto* it = std::find_if(ul_grants.begin(), ul_grants.end(), [&rar_grant](const auto& ulgrant) {
         return ulgrant.pusch_cfg.rnti == rar_grant.temp_crnti;
       });
@@ -899,9 +901,11 @@ void test_helper::ra_scheduler_tracker::on_new_result(slot_point sl_tx, const sc
           preamble_context& p = pending_preambles.emplace_back();
           p.preamble.tc_rnti  = ul_grant.temp_crnti;
           p.rar_slot          = sl_tx;
-          p.first_msg3_slot   = sl_tx + ra_helper::get_msg3_delay(cell_cfg.scs_common(),
-                                                                pusch_td_list[ul_grant.time_resource_assignment].k2);
-          p.first_grant       = ul_grant;
+          p.first_msg3_slot =
+              sl_tx +
+              ra_helper::get_msg3_delay(cell_cfg.scs_common(), pusch_td_list[ul_grant.time_resource_assignment].k2) +
+              cell_cfg.ntn_cs_koffset;
+          p.first_grant = ul_grant;
         }
       } else {
         // 4-step RAR UL grant: find matching RACH preamble.
@@ -918,7 +922,8 @@ void test_helper::ra_scheduler_tracker::on_new_result(slot_point sl_tx, const sc
         ASSERT_TRUE(is_rar_ul_grant_consistent_with_rach_preamble(cell_cfg, ul_grant, ctxt.preamble));
         ctxt.first_msg3_slot =
             ctxt.rar_slot +
-            ra_helper::get_msg3_delay(cell_cfg.scs_common(), pusch_td_list[ul_grant.time_resource_assignment].k2);
+            ra_helper::get_msg3_delay(cell_cfg.scs_common(), pusch_td_list[ul_grant.time_resource_assignment].k2) +
+            cell_cfg.ntn_cs_koffset;
         ctxt.first_grant = ul_grant;
       }
     }
@@ -942,7 +947,7 @@ void test_helper::ra_scheduler_tracker::on_new_result(slot_point sl_tx, const sc
     const auto& dci    = ul_pdcch.dci.as_tc_rnti_f0_0();
     const auto& td_res = pusch_td_list[dci.time_resource];
 
-    const slot_point pusch_slot      = sl_tx + td_res.k2;
+    const slot_point pusch_slot      = sl_tx + td_res.k2 + cell_cfg.ntn_cs_koffset;
     auto             pending_msg3_it = std::find_if(pending_msg3_retxs.begin(),
                                         pending_msg3_retxs.end(),
                                         [&ul_pdcch, pusch_slot](const msg3_retx_context& pending_msg3) {
