@@ -124,6 +124,10 @@ def add_ci_properties(content: str, args: argparse.Namespace) -> str:
         if args.suite_name:
             # Anchored, so that the trailing "name=" of hostname= is not renamed along with it.
             tag = re.sub(r'(?<![\w-])name="[^"]*"', f'name="{args.suite_name}"', tag, count=1)
+        # CTest self-closes <testsuite .../> when it found no tests; open it back up so the
+        # properties block becomes its child instead of a second, sibling root element.
+        if tag.endswith("/>"):
+            return f"{tag[:-2]}>{prop_block}</testsuite>"
         return tag + prop_block
 
     return re.sub(r"(<testsuite\b[^>]*>)", patch_testsuite, content)
