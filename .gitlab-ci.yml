@@ -775,6 +775,9 @@ oss-fuzz build:
   script:
     - git clone --depth 1 https://github.com/google/oss-fuzz.git /oss-fuzz
     - cd /oss-fuzz
-    - python3 infra/helper.py build_fuzzers ocudu "$CI_PROJECT_DIR"
-    - python3 infra/helper.py check_build ocudu
+    - |
+      for sanitizer in address undefined; do
+        python3 infra/helper.py build_fuzzers --clean --sanitizer "$sanitizer" ocudu "$CI_PROJECT_DIR" || exit 1
+        python3 infra/helper.py check_build --sanitizer "$sanitizer" ocudu || exit 1
+      done
   dependencies: []
