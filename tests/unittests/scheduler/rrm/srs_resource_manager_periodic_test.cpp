@@ -315,7 +315,7 @@ protected:
 
 TEST_P(srs_resource_manager_periodic_tester, ue_are_assigned_orthogonal_srs_resources)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-PHY-16-3");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-PHY-16-3", "MVP-FUNC-PHY-16-5", "MVP-FUNC-PHY-16-6");
 
   // Keeps track of which SRS resources have been assigned to the UEs.
   std::vector<srs_res_params> used_srs_resources;
@@ -367,7 +367,7 @@ TEST_P(srs_resource_manager_periodic_tester, ue_are_assigned_orthogonal_srs_reso
 
 TEST_P(srs_resource_manager_periodic_tester, srs_resources_parameters_are_valid)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-PHY-16-3");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-PHY-16-3", "MVP-FUNC-PHY-16-5", "MVP-FUNC-PHY-16-6");
 
   // > Created UEs have unique SRS resources.
   for (unsigned i = 0; i != MAX_NOF_DU_UES; ++i) {
