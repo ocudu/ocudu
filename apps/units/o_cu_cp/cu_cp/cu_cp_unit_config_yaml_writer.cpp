@@ -46,6 +46,9 @@ static YAML::Node build_cu_cp_supported_tas_section(const cu_cp_unit_supported_t
   for (const auto& plmn_item : config.plmn_list) {
     plmn_node.push_back(build_cu_cp_plmn_list_section(plmn_item));
   }
+  if (config.satellite_rat.has_value()) {
+    node["satellite_rat"] = *config.satellite_rat;
+  }
 
   return node;
 }

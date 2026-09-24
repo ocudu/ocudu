@@ -315,3 +315,33 @@ TEST(cu_cp_config_translators_test, unset_rrc_reject_wait_time_s_leaves_no_wait_
 
   EXPECT_FALSE(out_cfg.rrc.rrc_reject_wait_time.has_value());
 }
+
+TEST(cu_cp_config_translators_test, satellite_rat_type_of_a_tracking_area_is_propagated_to_the_ngap_configuration)
+{
+  cu_cp_unit_config cfg;
+  cfg.amf_config.amf.supported_tas.front().satellite_rat = "nr_leo";
+  cfg.amf_config.amf.supported_tas.push_back({8, cfg.amf_config.amf.supported_tas.front().plmn_list, std::nullopt});
+
+  const ocucp::cu_cp_configuration out_cfg = generate_cu_cp_config(cfg);
+
+  ASSERT_EQ(out_cfg.ngap.ngaps.size(), 1);
+  const auto& supported_tas = out_cfg.ngap.ngaps.front().supported_tas;
+  ASSERT_EQ(supported_tas.size(), 2);
+  ASSERT_EQ(supported_tas[0].satellite_rat, ocucp::satellite_rat_type::nr_leo);
+  ASSERT_FALSE(supported_tas[1].satellite_rat.has_value()) << "A terrestrial tracking area must carry no satellite RAT";
+}
+
+TEST(cu_cp_config_translators_test, tracking_areas_carry_no_satellite_rat_type_when_it_is_not_configured)
+{
+  cu_cp_unit_config cfg;
+  cfg.amf_config.amf.supported_tas.push_back({8, cfg.amf_config.amf.supported_tas.front().plmn_list, std::nullopt});
+
+  const ocucp::cu_cp_configuration out_cfg = generate_cu_cp_config(cfg);
+
+  ASSERT_EQ(out_cfg.ngap.ngaps.size(), 1);
+  const auto& supported_tas = out_cfg.ngap.ngaps.front().supported_tas;
+  ASSERT_EQ(supported_tas.size(), 2);
+  for (const auto& ta : supported_tas) {
+    ASSERT_FALSE(ta.satellite_rat.has_value()) << "TAC " << ta.tac << " must carry no satellite RAT";
+  }
+}

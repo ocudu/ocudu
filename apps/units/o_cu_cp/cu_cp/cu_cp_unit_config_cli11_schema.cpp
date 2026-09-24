@@ -110,6 +110,13 @@ static void configure_cli11_supported_ta_args(CLI::App& app, cu_cp_unit_supporte
                                                config.plmn_list,
                                                configure_cli11_plmn_item_args,
                                                "Sets the list of PLMN items for this tracking area");
+
+  add_option(app,
+             "--satellite_rat",
+             config.satellite_rat,
+             "Satellite RAT type signalled to the AMF for an NTN tracking area (TS 23.501, Section 5.4.10). Leave "
+             "unset for a terrestrial tracking area")
+      ->enum_values({"nr_leo", "nr_meo", "nr_geo", "nr_othersat"});
 }
 
 /// Configures the CLI11 AMF item arguments.

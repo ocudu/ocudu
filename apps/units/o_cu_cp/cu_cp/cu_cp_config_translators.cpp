@@ -376,7 +376,12 @@ static std::vector<ocucp::supported_tracking_area> get_supported_tas(span<const 
             s_nssai_t{slice_service_type{elem.sst}, slice_differentiator::create(elem.sd).value()});
       }
     }
-    supported_tas.push_back({supported_ta.tac, plmn_list});
+    std::optional<ocucp::satellite_rat_type> satellite_rat;
+    if (supported_ta.satellite_rat.has_value()) {
+      satellite_rat = ocucp::satellite_rat_type_from_string(*supported_ta.satellite_rat);
+      report_error_if_not(satellite_rat, "Invalid satellite RAT type: {}", *supported_ta.satellite_rat);
+    }
+    supported_tas.push_back({supported_ta.tac, plmn_list, satellite_rat});
   }
   return supported_tas;
 }

@@ -23,6 +23,7 @@
 #include "ocudu/ran/qos/five_qi.h"
 #include "ocudu/ran/rlc_mode.h"
 #include "ocudu/ran/s_nssai.h"
+#include "ocudu/ran/supported_tracking_area.h"
 #include "ocudu/ran/tac.h"
 #include "ocudu/security/security.h"
 #include <algorithm>
@@ -46,6 +47,8 @@ struct cu_cp_unit_plmn_item {
 struct cu_cp_unit_supported_ta_item {
   tac_t                             tac;
   std::vector<cu_cp_unit_plmn_item> plmn_list;
+  /// Satellite RAT type signalled to the AMF for an NTN tracking area. Left empty for a terrestrial tracking area.
+  std::optional<std::string> satellite_rat;
 };
 
 struct cu_cp_unit_amf_config_item {
