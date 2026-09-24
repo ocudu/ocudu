@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "helpers.h"
+#include "ocudu_test_requirements.h"
 #include "prs.h"
 #include "ocudu/fapi_adaptor/precoding_matrix_table_generator.h"
 #include <gtest/gtest.h>
@@ -13,6 +14,8 @@ using namespace unittests;
 
 TEST(mac_fapi_prs_pdu_conversor_test, valid_pdu_should_pass)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-2");
+
   const prs_info pdu = build_valid_prs_pdu();
 
   constexpr unsigned cell_nof_prbs = 51;

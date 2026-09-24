@@ -22,6 +22,7 @@ gtest_discover_tests(dl_pdsch_builder_test)
 
 add_executable(dl_prs_pdu_test dl_prs_pdu_test.cpp)
 target_link_libraries(dl_prs_pdu_test ocudu_support ocudulog GTest::gtest GTest::gtest_main)
+target_include_directories(dl_prs_pdu_test PRIVATE ${CMAKE_SOURCE_DIR}/tests)
 gtest_discover_tests(dl_prs_pdu_test)
 
 add_executable(dl_ssb_builder_test dl_ssb_pdu_test.cpp)
@@ -70,6 +71,7 @@ gtest_discover_tests(ul_prach_builder_test)
 
 add_executable(ul_pucch_builder_test ul_pucch_pdu_test.cpp)
 target_link_libraries(ul_pucch_builder_test ocudu_support GTest::gtest gtest_main)
+target_include_directories(ul_pucch_builder_test PRIVATE ${CMAKE_SOURCE_DIR}/tests)
 gtest_discover_tests(ul_pucch_builder_test)
 
 add_executable(ul_pusch_builder_test ul_pusch_pdu_test.cpp)

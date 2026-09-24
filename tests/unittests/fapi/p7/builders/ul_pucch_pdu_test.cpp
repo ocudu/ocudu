@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
+#include "ocudu_test_requirements.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/fapi/p7/builders/ul_pucch_pdu_builder.h"
 #include "ocudu/support/units.h"
@@ -36,6 +37,8 @@ TEST(ul_pucch_pdu_builder, valid_allocation_time_parameters_passes)
 
 TEST(ul_pucch_pdu_builder, valid_format0_parameters_passes)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-PHY-1");
+
   uint16_t    nid_pucch_hopping    = 200;
   uint16_t    initial_cyclic_shift = 7;
   bool        sr_present           = true;
@@ -56,6 +59,8 @@ TEST(ul_pucch_pdu_builder, valid_format0_parameters_passes)
 
 TEST(ul_pucch_pdu_builder, valid_format1_parameters_passes)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-PHY-1");
+
   uint16_t    nid_pucch_hopping     = 200;
   uint16_t    initial_cyclic_shift  = 7;
   uint8_t     time_domain_occ_index = 3;
@@ -79,6 +84,8 @@ TEST(ul_pucch_pdu_builder, valid_format1_parameters_passes)
 
 TEST(ul_pucch_pdu_builder, valid_format2_parameters_passes)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-PHY-1");
+
   uint16_t    nid_pucch_scrambling       = 500;
   uint16_t    nid0_pucch_dmrs_scrambling = 34567;
   sr_nof_bits sr_bit_len                 = sr_nof_bits::one;
@@ -100,6 +107,8 @@ TEST(ul_pucch_pdu_builder, valid_format2_parameters_passes)
 
 TEST(ul_pucch_pdu_builder, valid_format3_parameters_passes)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-PHY-1");
+
   bool        pi2                        = false;
   uint16_t    nid_pucch_hopping          = 200;
   uint16_t    nid_pucch_scrambling       = 500;
@@ -132,6 +141,8 @@ TEST(ul_pucch_pdu_builder, valid_format3_parameters_passes)
 
 TEST(ul_pucch_pdu_builder, valid_format4_parameters_passes)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-PHY-1");
+
   bool        pi2                        = false;
   uint16_t    nid_pucch_hopping          = 200;
   uint8_t     pre_dft_occ_idx            = 1;
