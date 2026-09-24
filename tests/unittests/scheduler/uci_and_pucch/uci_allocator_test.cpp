@@ -165,6 +165,20 @@ TEST_F(uci_alloc_test, csi_over_existing_pusch)
 
 ///////   UCI allocation on PUCCH    ///////
 
+// A PDSCH anchors the k1 lookup at the slot where its reception ends, which a repetition bundle can place in a slot
+// carrying no DL symbol. Such a slot has no k1 candidate, and the search takes the min and max of the list before it
+// walks it, so an empty list has to be answered before that.
+TEST_F(uci_alloc_test, uci_harq_alloc_with_empty_k1_list_is_refused)
+{
+  const std::vector<uint8_t>          k1_candidates = {};
+  const std::optional<uci_allocation> uci =
+      t_bench.uci_alloc.alloc_harq_ack(t_bench.res_grid, t_bench.get_main_ue().get_pcell(), t_bench.k0, k1_candidates);
+
+  ASSERT_FALSE(uci.has_value());
+  // Nothing was booked anywhere in the grid on the way out.
+  ASSERT_EQ(0, t_bench.res_grid[t_bench.k0 + default_k1].result.ul.pucchs.size());
+}
+
 TEST_F(uci_alloc_test, uci_harq_alloc_with_no_pusch_grants)
 {
   const std::vector<uint8_t> k1_candidates = {static_cast<uint8_t>(default_k1)};
