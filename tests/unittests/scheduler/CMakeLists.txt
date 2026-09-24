@@ -46,6 +46,7 @@ add_executable(scheduler_test
         scheduler_qos_test.cpp
         scheduler_multi_grants_test.cpp
         scheduler_multi_ue_test.cpp
+        scheduler_ntn_koffset_test.cpp
 		scheduler_no_ue_test.cpp
 )
 target_link_libraries(scheduler_test
