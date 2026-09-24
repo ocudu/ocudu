@@ -71,17 +71,25 @@ static nlohmann::json generate_message_decoder_item(const ofh::rx_data_flow_perf
   return json;
 }
 
+static nlohmann::json generate_message_decoder_item(const ecpri::ecpri_decoder_metrics& metrics)
+{
+  nlohmann::json json;
+
+  json["nof_future_seqid_messages"] = metrics.nof_future_seq_id_messages;
+  json["nof_past_seqid_messages"]   = metrics.nof_past_seq_id_messages;
+  json["nof_corrupted_messages"]    = metrics.nof_corrupted_messages;
+
+  return json;
+}
+
 static nlohmann::json generate_message_decoder(const ofh::message_decoding_performance_metrics& metrics,
                                                unsigned                                         metrics_period_ms)
 {
   nlohmann::json json;
 
+  json["ecpri"] = generate_message_decoder_item(metrics.ecpri_metrics);
   json["prach"] = generate_message_decoder_item(metrics.prach_processing_metrics, metrics_period_ms);
   json["data"]  = generate_message_decoder_item(metrics.data_processing_metrics, metrics_period_ms);
-
-  auto& ecpri_json                        = json["ecpri"];
-  ecpri_json["nof_future_seqid_messages"] = metrics.nof_future_seq_id_messages;
-  ecpri_json["nof_past_seqid_messages"]   = metrics.nof_past_seq_id_messages;
 
   return json;
 }

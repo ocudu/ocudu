@@ -59,6 +59,7 @@ void message_receiver_impl::process_new_frame(ether::unique_rx_buffer buffer)
   ecpri::packet_parameters ecpri_params;
   span<const uint8_t>      ofh_pdu = ecpri_decoder->decode(ecpri_pdu, ecpri_params);
   if (OCUDU_UNLIKELY(ofh_pdu.empty() || should_ecpri_packet_be_filtered(ecpri_params))) {
+    metrics_collector.increase_ecpri_corrupted_messages();
     return;
   }
 

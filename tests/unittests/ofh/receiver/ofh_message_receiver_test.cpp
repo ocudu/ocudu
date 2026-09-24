@@ -44,6 +44,7 @@ public:
 private:
   std::vector<uint8_t> buffer;
 };
+
 /// Data flow User-Plane uplink PRACH spy.
 class data_flow_uplane_uplink_prach_spy : public data_flow_uplane_uplink_prach
 {
@@ -445,8 +446,8 @@ TEST_F(ofh_message_receiver_seq_id_fixture, out_of_order_messages_registered_cor
   send_uplink_message(1);
 
   message_decoding_performance_metrics metrics = collect_metrics();
-  ASSERT_EQ(1, metrics.nof_future_seq_id_messages);
-  ASSERT_EQ(1, metrics.nof_past_seq_id_messages);
+  ASSERT_EQ(1, metrics.ecpri_metrics.nof_future_seq_id_messages);
+  ASSERT_EQ(1, metrics.ecpri_metrics.nof_past_seq_id_messages);
 }
 
 TEST_F(ofh_message_receiver_seq_id_fixture, lost_messages_registered_correctly_in_metrics)
@@ -456,6 +457,60 @@ TEST_F(ofh_message_receiver_seq_id_fixture, lost_messages_registered_correctly_i
   send_uplink_message(4);
 
   message_decoding_performance_metrics metrics = collect_metrics();
-  ASSERT_EQ(2, metrics.nof_future_seq_id_messages);
-  ASSERT_EQ(0, metrics.nof_past_seq_id_messages);
+  ASSERT_EQ(2, metrics.ecpri_metrics.nof_future_seq_id_messages);
+  ASSERT_EQ(0, metrics.ecpri_metrics.nof_past_seq_id_messages);
+}
+
+/// Message receiver fixture that checks the eCPRI sequence identifier of the received messages.
+class ofh_message_receiver_ecpri_corrupted_msg_fixture : public ofh_message_receiver_fixture
+{
+protected:
+  ofh_message_receiver_ecpri_corrupted_msg_fixture() : ofh_message_receiver_fixture(true) {}
+
+  /// Sends an uplink User-Plane message carrying the given eCPRI sequence identifier.
+  void send_uplink_message(ecpri::packet_parameters params)
+  {
+    ecpri_decoder->set_ecpri_params(params);
+    std::get<ecpri::iq_data_parameters>(params.type_params).pc_id = 8888;
+
+    df_uplink->clear();
+    ul_handler.on_new_frame(ether::unique_rx_buffer(dummy_eth_rx_buffer(std::vector<uint8_t>{0, 0, 0, 0})));
+  }
+
+  /// Collects and resets the message receiver metrics.
+  message_decoding_performance_metrics collect_metrics()
+  {
+    message_decoding_performance_metrics metrics   = {};
+    message_receiver_metrics_collector*  collector = ul_handler.get_metrics_collector();
+    EXPECT_NE(collector, nullptr) << "Metrics must be enabled in the message receiver";
+    if (collector != nullptr) {
+      collector->collect_metrics(metrics);
+    }
+
+    return metrics;
+  }
+};
+
+TEST_F(ofh_message_receiver_ecpri_corrupted_msg_fixture, incorrect_eaxc_increases_corrupted_messages)
+{
+  ecpri::packet_parameters params                               = ecpri_params;
+  std::get<ecpri::iq_data_parameters>(params.type_params).pc_id = 8888;
+  send_uplink_message(params);
+
+  message_decoding_performance_metrics metrics = collect_metrics();
+  ASSERT_EQ(1, metrics.ecpri_metrics.nof_corrupted_messages);
+}
+
+TEST_F(ofh_message_receiver_ecpri_corrupted_msg_fixture, incorrect_ecpri_type_increases_corrupted_messages)
+{
+  ecpri::packet_parameters params = ecpri_params;
+  params.header.msg_type          = ecpri::message_type::rt_control_data;
+
+  const unsigned nof_corrupted_packets = 3;
+  for (unsigned i = 0; i != nof_corrupted_packets; ++i) {
+    send_uplink_message(params);
+  }
+
+  message_decoding_performance_metrics metrics = collect_metrics();
+  ASSERT_EQ(nof_corrupted_packets, metrics.ecpri_metrics.nof_corrupted_messages);
 }

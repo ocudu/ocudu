@@ -56,7 +56,9 @@ public:
 private:
   /// Returns true if the User-Plane packet represented by the given User-Plane results and eAxC should be filtered,
   /// otherwise false.
-  bool should_uplane_packet_be_filtered(unsigned eaxc, const uplane_message_decoder_results& results) const;
+  bool should_uplane_packet_be_filtered(unsigned                              eaxc,
+                                        const uplane_message_decoder_results& results,
+                                        bool                                  is_seq_id_correct);
 
 private:
   ocudulog::basic_logger&                           logger;

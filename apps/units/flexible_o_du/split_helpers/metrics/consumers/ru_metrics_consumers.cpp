@@ -67,11 +67,13 @@ static void log_ru_ofh_performance_metrics_verbose(fmt::basic_memory_buffer<char
 
   // Message decoder.
   const auto& decoder_metrics = cell_metrics.rx_metrics.rx_decoding_perf_metrics;
+  const auto& ecpri_metrics   = decoder_metrics.ecpri_metrics;
   fmt::format_to(std::back_inserter(buffer),
-                 "{} nof_past_seqid_msg={} nof_future_seqid_msg={}; ",
+                 "{} nof_past_seqid_msg={} nof_future_seqid_msg={} nof_corrupted_msg={} ",
                  "ecpri:",
-                 decoder_metrics.nof_past_seq_id_messages,
-                 decoder_metrics.nof_future_seq_id_messages);
+                 ecpri_metrics.nof_past_seq_id_messages,
+                 ecpri_metrics.nof_future_seq_id_messages,
+                 ecpri_metrics.nof_corrupted_messages);
 
   const auto& ul_prach_df_metrics = decoder_metrics.prach_processing_metrics;
   const auto& ul_data_df_metrics  = decoder_metrics.data_processing_metrics;

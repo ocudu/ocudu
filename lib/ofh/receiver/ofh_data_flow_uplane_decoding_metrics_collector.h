@@ -80,12 +80,12 @@ private:
     max_latency_ns.store(default_max_latency_ns, std::memory_order_relaxed);
   }
 
-  std::atomic<uint32_t> count                  = {};
+  std::atomic<uint32_t> count                  = {0};
   std::atomic<uint64_t> sum_elapsed_ns         = {};
   std::atomic<uint32_t> min_latency_ns         = default_min_latency_ns;
   std::atomic<uint32_t> max_latency_ns         = default_max_latency_ns;
   std::atomic<uint32_t> nof_dropped_messages   = {0};
-  std::atomic<uint32_t> nof_corrupted_messages = {0};
+  std::atomic<uint64_t> nof_corrupted_messages = {0};
 
   const bool is_disabled;
 };

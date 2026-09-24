@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "ocudu/ofh/ecpri/ecpri_decoder_metrics.h"
 #include "ocudu/ofh/ethernet/ethernet_receiver_metrics.h"
 #include "ocudu/ofh/receiver/ofh_receiver_data_flow_metrics.h"
 
@@ -35,10 +36,8 @@ struct closed_rx_window_metrics {
 struct message_decoding_performance_metrics {
   rx_data_flow_perf_metrics data_processing_metrics;
   rx_data_flow_perf_metrics prach_processing_metrics;
-  /// Number of received messages with a sequence identifier from the past.
-  unsigned nof_past_seq_id_messages;
-  /// Number of sequence identifiers skipped by the received messages.
-  unsigned nof_future_seq_id_messages;
+  /// eCPRI decoder metrics.
+  ecpri::ecpri_decoder_metrics ecpri_metrics;
 };
 
 /// Open Fronthaul receiver metrics.
