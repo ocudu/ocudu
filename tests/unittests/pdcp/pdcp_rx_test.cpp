@@ -4,6 +4,7 @@
 
 #include "pdcp_rx_test.h"
 #include "pdcp_test_vectors.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/pdcp/pdcp_config.h"
 #include "ocudu/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -14,6 +15,8 @@ using namespace ocudu;
 /// Test creation of PDCP RX entities
 TEST_P(pdcp_rx_test_drb, create_new_entity)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-SEC-O-CU-13");
+
   set_sn_size(std::get<pdcp_sn_size>(GetParam()));
   set_algo(std::get<unsigned>(GetParam()));
   set_header_compression(std::get<rohc_test_params>(GetParam()).config);
@@ -35,6 +38,8 @@ TEST_P(pdcp_rx_test_drb, create_new_entity)
 /// Test extraction of PDCP sequence numbers
 TEST_P(pdcp_rx_test_drb, sn_unpack)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-SEC-O-CU-13");
+
   set_sn_size(std::get<pdcp_sn_size>(GetParam()));
   set_algo(std::get<unsigned>(GetParam()));
   set_header_compression(std::get<rohc_test_params>(GetParam()).config);
@@ -78,6 +83,8 @@ TEST_P(pdcp_rx_test_drb, sn_unpack)
 /// Test in-order reception of PDCP PDUs
 TEST_P(pdcp_rx_test_drb, rx_in_order)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-SEC-O-CU-13");
+
   set_sn_size(std::get<pdcp_sn_size>(GetParam()));
   set_algo(std::get<unsigned>(GetParam()));
   set_header_compression(std::get<rohc_test_params>(GetParam()).config);
@@ -134,6 +141,8 @@ TEST_P(pdcp_rx_test_drb, rx_in_order)
 /// All PDUs are received before the t-Reordering expires.
 TEST_P(pdcp_rx_test_drb, rx_out_of_order)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-SEC-O-CU-13");
+
   set_sn_size(std::get<pdcp_sn_size>(GetParam()));
   set_algo(std::get<unsigned>(GetParam()));
   set_header_compression(std::get<rohc_test_params>(GetParam()).config);
@@ -228,6 +237,8 @@ TEST_P(pdcp_rx_test_drb, rx_out_of_order)
 /// Test reception of duplicate PDCP PDUs
 TEST_P(pdcp_rx_test_drb, rx_duplicate)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-SEC-O-CU-13");
+
   set_sn_size(std::get<pdcp_sn_size>(GetParam()));
   set_algo(std::get<unsigned>(GetParam()));
   set_header_compression(std::get<rohc_test_params>(GetParam()).config);
@@ -336,6 +347,8 @@ TEST_P(pdcp_rx_test_drb, rx_duplicate)
 /// The out-of-order PDU is received after the t-Reordering expires (except if OOO delivery is configured).
 TEST_P(pdcp_rx_test_drb, rx_reordering_timer)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-SEC-O-CU-13");
+
   set_sn_size(std::get<pdcp_sn_size>(GetParam()));
   set_algo(std::get<unsigned>(GetParam()));
   set_header_compression(std::get<rohc_test_params>(GetParam()).config);
@@ -404,6 +417,8 @@ TEST_P(pdcp_rx_test_drb, rx_reordering_timer)
 /// t-Reordering is set to 0, so PDUs are immediately delivered.
 TEST_P(pdcp_rx_test_drb, rx_reordering_timer_0ms)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-SEC-O-CU-13");
+
   set_sn_size(std::get<pdcp_sn_size>(GetParam()));
   set_algo(std::get<unsigned>(GetParam()));
   set_header_compression(std::get<rohc_test_params>(GetParam()).config);
@@ -467,6 +482,8 @@ TEST_P(pdcp_rx_test_drb, rx_reordering_timer_0ms)
 /// until they are received in order (except if OOO delivery is configured).
 TEST_P(pdcp_rx_test_drb, rx_reordering_timer_infinite)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-SEC-O-CU-13");
+
   set_sn_size(std::get<pdcp_sn_size>(GetParam()));
   set_algo(std::get<unsigned>(GetParam()));
   set_header_compression(std::get<rohc_test_params>(GetParam()).config);
@@ -539,6 +556,8 @@ TEST_P(pdcp_rx_test_drb, rx_reordering_timer_infinite)
 /// The PDCP should notify the RRC of the integrity error.
 TEST_P(pdcp_rx_test_drb, rx_integrity_fail)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-SEC-O-CU-13");
+
   set_sn_size(std::get<pdcp_sn_size>(GetParam()));
   set_algo(std::get<unsigned>(GetParam()));
   set_header_compression(std::get<rohc_test_params>(GetParam()).config);
@@ -706,6 +725,8 @@ TEST_P(pdcp_rx_test_srb, rx_non_zero_padded_mac)
 /// limit and one after the hard limit.
 TEST_P(pdcp_rx_test_drb, count_wraparound)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-SEC-O-CU-13");
+
   uint32_t       rx_next_notify = 262144;
   uint32_t       rx_next_max    = 262148;
   uint32_t       rx_next_start  = 262143;
@@ -759,6 +780,8 @@ TEST_P(pdcp_rx_test_drb, count_wraparound)
 /// Test TX SDU buffering.
 TEST_P(pdcp_rx_test_drb, rx_buffer)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-SEC-O-CU-13");
+
   uint32_t n_no_buffer_pdus = 1;
   uint32_t n_buffer_pdus    = 2;
   set_sn_size(std::get<pdcp_sn_size>(GetParam()));
