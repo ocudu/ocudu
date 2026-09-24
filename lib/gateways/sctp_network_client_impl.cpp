@@ -24,7 +24,7 @@ public:
     logger(parent_.logger),
     server_addr(server_addr_),
     ssl_enabled(parent_.ssl_enabled),
-    ssl(parent_.ssl.get()),
+    ssl(parent_.ssl),
     closed_flag(parent_.shutdown_received)
   {
   }
@@ -82,9 +82,17 @@ private:
       return;
     }
 
-    ssl->shutdown();
+    // Signal sender closed the channel.
+    *closed_flag = true;
+    if (ssl_enabled) {
+      ssl->shutdown();
+      logger.debug("{}: called shutdown for DTLS association", client_name);
+    } else {
+      logger.debug("{}: did not call shutdown for DTLS association", client_name);
+    }
 
-    int ret = ::shutdown(fd, SHUT_RDWR);
+    logger.error("{}: calling shutdown for association", client_name);
+    int ret = ::shutdown(fd, SHUT_WR);
 
     if (ret == -1) {
       // Failed to send EOF.
@@ -92,11 +100,12 @@ private:
       // the server recv thread.
       logger.info("{}: Couldn't send EOF during shut down (errno=\"{}\")", client_name, ::strerror(errno));
     } else {
-      logger.debug("{}: Sent EOF to SCTP client and closed SCTP association", client_name);
+      logger.debug("{}: called shutdown to SCTP client to close SCTP association", client_name);
     }
+    ocudulog::flush();
 
     // Signal sender closed the channel.
-    closed_flag->store(true, std::memory_order_relaxed);
+    // closed_flag->store(true, std::memory_order_relaxed);
   }
 
   const std::string             client_name;
@@ -105,7 +114,7 @@ private:
   ocudulog::basic_logger&       logger;
   const transport_layer_address server_addr;
   bool                          ssl_enabled;
-  dtls_ssl*                     ssl = nullptr;
+  std::unique_ptr<dtls_ssl>&    ssl;
 
   std::array<uint8_t, network_gateway_sctp_max_len> send_buffer;
 
@@ -142,16 +151,16 @@ sctp_network_client_impl::~sctp_network_client_impl()
 
   // Signal that the upper layer sender should stop sending new SCTP data (including the EOF).
   if (eof_needed) {
-    ::sctp_sendmsg(socket.fd().value(),
-                   nullptr,
-                   0,
-                   const_cast<struct sockaddr*>(server_addr_cpy.native().addr),
-                   server_addr_cpy.native().addrlen,
-                   htonl(node_cfg.ppid),
-                   SCTP_EOF,
-                   stream_no,
-                   0,
-                   0);
+    int ret = ::shutdown(socket.fd().value(), SHUT_WR);
+
+    if (ret == -1) {
+      // Failed to send EOF.
+      // Note: It may happen when the sender notifier is removed just before the SCTP shutdown event is handled in
+      // the server recv thread.
+      logger.info("{}: Couldn't send EOF during shut down (errno=\"{}\")", node_cfg.if_name, ::strerror(errno));
+    } else {
+      logger.debug("{}: called shutdown to SCTP client to close SCTP association", node_cfg.if_name);
+    }
   }
 
   // No subscription is on-going. It is now safe to close the socket.
@@ -399,10 +408,10 @@ void sctp_network_client_impl::handle_connect_failure(const std::string& cause)
 
 void sctp_network_client_impl::receive()
 {
-  if (node_cfg.dtls_cfg.has_value()) {
-    receive_dtls();
-  } else {
+  if (not node_cfg.dtls_cfg.has_value() || shutdown_received->load()) {
     receive_plain();
+  } else {
+    receive_dtls();
   }
 }
 
@@ -434,6 +443,12 @@ void sctp_network_client_impl::receive_plain()
         logger.debug("{}: Socket timeout reached", node_cfg.if_name);
       }
     }
+    return;
+  }
+  if (rx_bytes == 0) {
+    logger.error("{}: RX EOF", node_cfg.if_name);
+    handle_connection_terminated("Received SCTP EOF");
+    ocudulog::flush();
     return;
   }
 

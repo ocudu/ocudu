@@ -24,9 +24,7 @@ std::unique_ptr<dtls_ssl> ocudu::create_dtls_ssl(const dtls_ssl_config& cfg_, co
 openssl_dtls_ssl::openssl_dtls_ssl(const dtls_ssl_config& cfg_, const dtls_ssl_dependencies& deps_) :
   cfg(cfg_), ssl_ctx(deps_.ssl_ctx), gw(deps_.gw), logger(ocudulog::fetch_basic_logger("SCTP"))
 {
-  logger.info("SSL created. mode={} ctx={} gw={}", format_as(cfg.mode), fmt::ptr(&ssl_ctx), fmt::ptr(&gw));
-  fmt::println("SSL created. mode={} ctx={} gw={}", format_as(cfg.mode), fmt::ptr(&ssl_ctx), fmt::ptr(&gw));
-  ocudulog::flush();
+  logger.info("DTLS session created. mode={} assoc={}", format_as(cfg.mode), cfg.assoc);
 }
 
 openssl_dtls_ssl::~openssl_dtls_ssl()
@@ -37,7 +35,6 @@ openssl_dtls_ssl::~openssl_dtls_ssl()
 bool openssl_dtls_ssl::init(int socket)
 {
   socket_ = socket;
-  fmt::println("init SSL. socket={}", socket);
   /// Create SSL connection and BIO. We associate this BIO with the correct association at this point.
   SSL_CTX* ctx = static_cast<openssl_dtls_context&>(ssl_ctx).get_ssl_ctx();
   if (ctx == nullptr) {
@@ -45,27 +42,21 @@ bool openssl_dtls_ssl::init(int socket)
   }
   ssl = SSL_new(ctx);
   if (ssl == nullptr) {
-    logger.error("Could not initialize SSL. Cause: failure to create SSL. err={}", openssl_error{ERR_get_error()});
+    logger.error("Could not initialize DTLS session. Cause: failure to create SSL. err={}",
+                 openssl_error{ERR_get_error()});
     return false;
   }
-  int       type = 0;
-  socklen_t len  = sizeof(type);
 
-  int rc = getsockopt(socket, SOL_SOCKET, SO_TYPE, &type, &len);
-
-  logger.error("SCTP fd={}, SO_TYPE={}, getsockopt rc={}, errno={}", socket, type, rc, errno);
   bio = BIO_new_dgram_sctp(socket, BIO_NOCLOSE);
   if (bio == nullptr) {
-    logger.error("Could not initialize SSL. Cause: failure to create BIO. err={}", openssl_error{ERR_get_error()});
+    logger.error("Could not initialize DTLS session. Cause: failure to create BIO. err={}",
+                 openssl_error{ERR_get_error()});
     return false;
   }
+
   SSL_set_bio(ssl, bio, bio);
   BIO_dgram_sctp_notification_handler_fn cb = &openssl_dtls_ssl::dtls_notification_cb;
   BIO_dgram_sctp_notification_cb(bio, cb, this);
-
-  SSL_set_info_callback(ssl, [](const SSL* ssl_, int where, int ret) {
-    fprintf(stderr, "SSL info: where=0x%x ret=%d state=%s\n", where, ret, SSL_state_string_long(ssl_));
-  });
 
   // Initiate handshake.
   int ret = -1;
@@ -74,27 +65,38 @@ bool openssl_dtls_ssl::init(int socket)
   } else {
     ret = SSL_connect(ssl);
   }
-  int saved_errno = errno;
 
   if (ret <= 0) {
     int err = SSL_get_error(ssl, ret);
-    logger.error(
-        "DTLS CONNECT failed: ret={} ssl_error={} errno={} ({})", ret, err, saved_errno, strerror(saved_errno));
     if (err != SSL_ERROR_WANT_READ && err != SSL_ERROR_WANT_WRITE) {
       logger.error(
           "DTLS {} failed. err={}", cfg.mode == dtls_mode::server ? "accept" : "connect", get_ssl_error_string(err));
       return false;
     }
   }
-  logger.debug("DTLS SSL context initialized");
+  logger.debug("DTLS SSL session initialized");
   return true;
 }
 
 bool openssl_dtls_ssl::shutdown()
 {
-  SSL_shutdown(ssl);
-  fmt::println("shutdown SSL!");
-  return true;
+  int ret = SSL_shutdown(ssl);
+  if (ret == 1) {
+    logger.debug("SSL_shutdown success: ret={}", ret);
+    return true;
+  }
+
+  if (ret == 0) {
+    // Our close_notify was sent.
+    // We're intentionally not waiting for the peer's.
+    logger.debug("SSL_shutdown success: ret={}", ret);
+    return true;
+  }
+
+  int err = SSL_get_error(ssl, ret);
+
+  logger.error("SSL_shutdown failed: ret={}, ssl_error={}", ret, err);
+  return false;
 }
 
 bool openssl_dtls_ssl::is_init_finished()
@@ -142,25 +144,28 @@ expected<byte_buffer> openssl_dtls_ssl::receive()
 {
   /// SSL should be initialized from here on.
   std::array<uint8_t, dtls_max_len> buff;
-  int                               len = SSL_read(ssl, buff.data(), dtls_max_len);
+  int                               ret = SSL_read(ssl, buff.data(), dtls_max_len);
 
-  if (len <= 0) {
-    int err = 0;
-    while ((err = SSL_get_error(ssl, len)) != 0) {
-      if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
-        break;
-      }
-
-      char buf[256];
-      ERR_error_string_n(err, buf, sizeof(buf));
-      logger.error("SSL_read returned {}, SSL_get_error={} {} {}", len, err, get_ssl_error_string(err), buf);
+  if (ret <= 0) {
+    unsigned long ssl_error = SSL_get_error(ssl, ret);
+    if (ssl_error == SSL_ERROR_ZERO_RETURN) {
+      logger.error("SSL_read returned SSL_ERROR_ZERO_RETURN, SSL_get_error={}", openssl_error{ssl_error});
+      SSL_shutdown(ssl);
+      return make_unexpected(default_error_t{});
+    }
+    logger.error("SSL_read returned {}, SSL_get_error={}", ret, ssl_error);
+    unsigned long err;
+    while ((err = ERR_get_error()) != 0) {
+      char error_buf[256];
+      ERR_error_string_n(err, error_buf, sizeof(error_buf));
+      logger.error("OpenSSL error: {}", error_buf);
     }
     return make_unexpected(default_error_t{});
   }
 
-  logger.debug("Read {} bytes from DTLS connection", len);
+  logger.debug("Read {} bytes from DTLS connection", ret);
   auto buffer =
-      byte_buffer{byte_buffer::fallback_allocation_tag{}, span<const uint8_t>(buff.begin(), buff.begin() + len)};
+      byte_buffer{byte_buffer::fallback_allocation_tag{}, span<const uint8_t>(buff.begin(), buff.begin() + ret)};
   return buffer;
 }
 

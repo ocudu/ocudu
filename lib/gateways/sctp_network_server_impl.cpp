@@ -224,6 +224,8 @@ void sctp_network_server_impl::sctp_associaton_context::receive_dtls()
 
   expected<byte_buffer> plain = ssl->receive();
   if (not plain.has_value()) {
+    parent.logger.error("got READ error. trying to read any pending notifications.");
+    receive_plain();
     return;
   }
 
