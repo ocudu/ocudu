@@ -6,6 +6,7 @@
 #include "tests/integrationtests/du_high/test_utils/du_high_worker_manager.h"
 #include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/f1ap/f1c_test_local_gateway.h"
+#include "tests/test_doubles/mac/dummy_phy_cell_operation_controller.h"
 #include "tests/unittests/cu_cp/test_doubles/mock_amf.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
 #include "tests/unittests/ngap/test_helpers.h"
@@ -77,12 +78,13 @@ protected:
     du_cfg.ran.gnb_du_name = "test_du";
 
     du_high_dependencies du_dependencies;
-    du_dependencies.exec_mapper        = workers.exec_mapper.get();
-    du_dependencies.f1c_client         = &f1c_gw;
-    du_dependencies.f1u_teid_allocator = &f1u_teid_allocator;
-    du_dependencies.f1u_gw             = &f1u_gw;
-    du_dependencies.phy_adapter        = &phy;
-    du_dependencies.timer_ctrl         = timer_ctrl.get();
+    du_dependencies.exec_mapper             = workers.exec_mapper.get();
+    du_dependencies.f1c_client              = &f1c_gw;
+    du_dependencies.f1u_teid_allocator      = &f1u_teid_allocator;
+    du_dependencies.f1u_gw                  = &f1u_gw;
+    du_dependencies.phy_adapter             = &phy;
+    du_dependencies.timer_ctrl              = timer_ctrl.get();
+    du_dependencies.phy_cell_op_controllers = {&phy_cell_op_ctrl};
 
     // create DU object
     du_obj = make_du_high(du_cfg, du_dependencies);
@@ -108,9 +110,10 @@ public:
   gtpu_teid_pool_impl f1u_teid_allocator{MAX_NOF_DU_UES * MAX_NOF_DRBS, GTPU_DEFAULT_TEID_RELEASE_LINGER_TIME, timers};
   f1u_test_local_gateway f1u_gw{};
 
-  std::unique_ptr<ocucp::mock_amf> amf{ocucp::create_mock_amf()};
-  std::unique_ptr<ocucp::cu_cp>    cu_cp_obj;
-  std::unique_ptr<du_high>         du_obj;
+  std::unique_ptr<ocucp::mock_amf>    amf{ocucp::create_mock_amf()};
+  std::unique_ptr<ocucp::cu_cp>       cu_cp_obj;
+  dummy_phy_cell_operation_controller phy_cell_op_ctrl;
+  std::unique_ptr<du_high>            du_obj;
 };
 
 /// Test the f1 setup procedure was successful

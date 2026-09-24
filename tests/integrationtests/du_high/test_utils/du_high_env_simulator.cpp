@@ -103,6 +103,7 @@ du_high_env_simulator::du_high_env_simulator(const du_high_configuration& du_hi_
   cu_notifier(workers.test_worker, active_cells_on_start),
   du_metrics(workers.test_worker),
   du_high_cfg(du_hi_cfg_),
+  phy_cell_op_ctrls(du_high_cfg.ran.cells.size()),
   du_hi_dependencies([this]() {
     init_loggers();
     du_high_dependencies dependencies;
@@ -115,6 +116,9 @@ du_high_env_simulator::du_high_env_simulator(const du_high_configuration& du_hi_
     dependencies.timer_ctrl         = timer_ctrl.get();
     dependencies.mac_p              = &mac_pcap;
     dependencies.rlc_p              = &rlc_pcap;
+    for (auto& ctrl : phy_cell_op_ctrls) {
+      dependencies.phy_cell_op_controllers.push_back(&ctrl);
+    }
     return dependencies;
   }()),
   du_hi(make_du_high(du_high_cfg, du_hi_dependencies)),

@@ -58,7 +58,6 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
   sched(sched_),
   time_source(std::move(dependencies.timer_source)),
   metrics(cell_cfg.pci, cell_cfg.scs_common, dependencies.notifier),
-  phy_cell_op_controller(dependencies.phy_cell_op_controller),
   pcap_writer(pcap_, cell_cfg.sched_req.ran.tdd_cfg.has_value(), cell_cfg.sched_req.si_scheduling.si_messages),
   sfn_time_mapper(sfn_time_mapper_)
 {
@@ -69,13 +68,13 @@ async_task<void> mac_cell_processor::start()
   return launch_async([this](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
 
-    // Start the PHY cell through the operation controller if one is configured.
+    // Start the PHY cell through its operation controller.
     // The PHY must be ready to receive DL grants before the MAC scheduler begins issuing them. The
     // PHY start completes on the first slot indication, so the startup sequence ensures slot
     // indications are already flowing when the first cell is activated and the handshake completes
     // without stalling.
-    if (phy_cell_op_controller != nullptr) {
-      CORO_AWAIT_VALUE(bool phy_ok, phy_cell_op_controller->start());
+    {
+      CORO_AWAIT_VALUE(bool phy_ok, cell_cfg.phy_cell_op_controller.start());
       if (!phy_ok) {
         logger.warning("cell={}: PHY start failed; cell remains inactive.", cell_cfg.cell_index);
         CORO_EARLY_RETURN();
@@ -129,8 +128,8 @@ async_task<void> mac_cell_processor::stop()
     // Stop the PHY cell through the operation controller if one is configured. This halts RF transmission for this
     // cell. Without it the MAC stops scheduling but the PHY keeps transmitting the cell's SSB on its configured
     // cadence.
-    if (phy_cell_op_controller != nullptr) {
-      CORO_AWAIT_VALUE(bool phy_ok, phy_cell_op_controller->stop());
+    {
+      CORO_AWAIT_VALUE(bool phy_ok, cell_cfg.phy_cell_op_controller.stop());
       if (!phy_ok) {
         logger.warning("cell={}: PHY stop did not complete cleanly.", fmt::underlying(cell_cfg.cell_index));
       }

@@ -30,9 +30,9 @@ static mac_cell_creation_request make_mac_cell_config(du_cell_index_t           
                                                       const sched_cell_configuration_request_message& sched_cell_cfg,
                                                       unsigned                       max_nof_established_ue_ctxts,
                                                       unsigned                       max_nof_rejected_ue_ctxts,
-                                                      phy_cell_operation_controller* phy_cell_op_ctrl)
+                                                      phy_cell_operation_controller& phy_cell_op_ctrl)
 {
-  mac_cell_creation_request mac_cfg{};
+  mac_cell_creation_request mac_cfg{.phy_cell_op_controller = phy_cell_op_ctrl};
   mac_cfg.cell_index = cell_index;
   mac_cfg.pci        = du_cfg.ran.pci;
   mac_cfg.scs_common = du_cfg.ran.dl_cfg_common.init_dl_bwp.generic_params.scs;
@@ -61,7 +61,6 @@ static mac_cell_creation_request make_mac_cell_config(du_cell_index_t           
   mac_cfg.sched_req                       = sched_cell_cfg;
   mac_cfg.cell_barred                     = du_cfg.cell_barred;
   mac_cfg.intra_freq_reselection          = du_cfg.intra_freq_reselection;
-  mac_cfg.phy_cell_op_controller          = phy_cell_op_ctrl;
 
   // Dimension the MAC DL HARQ buffer pool based on the number of UEs the cell can actually support (each using the
   // configured number of DL HARQ processes) plus the UE contexts that only need a single HARQ to be RRC Rejected.
@@ -205,13 +204,13 @@ void odu::configure_du_cells(const du_proc_context_view& ctxt)
       report_error("Invalid cell={} configuration. Cause: {}", cell_index, result.error());
     }
 
-    // Look up the per-cell PHY operation controller. The vector is indexed by du_cell_index and may
-    // be empty (e.g. test mode) or shorter than nof_cells — null entries leave the PHY untouched on
-    // MAC stop, which preserves the legacy behaviour.
-    phy_cell_operation_controller* phy_cell_op_ctrl = nullptr;
-    if (idx < ctxt.params.mac.phy_cell_op_controllers.size()) {
-      phy_cell_op_ctrl = ctxt.params.mac.phy_cell_op_controllers[idx];
-    }
+    // The per-cell PHY operation controller, indexed by du_cell_index. A cell cannot be started or stopped
+    // without one, so a missing entry is a wiring error of the layer that assembled the DU.
+    report_fatal_error_if_not(idx < ctxt.params.mac.phy_cell_op_controllers.size() &&
+                                  ctxt.params.mac.phy_cell_op_controllers[idx] != nullptr,
+                              "cell={}: No PHY cell operation controller provided",
+                              cell_index);
+    phy_cell_operation_controller& phy_cell_op_ctrl = *ctxt.params.mac.phy_cell_op_controllers[idx];
 
     // Forward config to MAC.
     ctxt.params.mac.mgr.get_cell_manager().add_cell(make_mac_cell_config(cell_index,

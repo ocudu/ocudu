@@ -10,6 +10,7 @@
 #include "lib/gtpu/gtpu_teid_pool_impl.h"
 #include "tests/test_doubles/f1u/dummy_f1u_du_gateway.h"
 #include "tests/test_doubles/mac/dummy_mac_result_notifier.h"
+#include "tests/test_doubles/mac/dummy_phy_cell_operation_controller.h"
 #include "tests/test_doubles/mac/mac_test_messages.h"
 #include "ocudu/adt/unique_function.h"
 #include "ocudu/du/du_high/du_high.h"
@@ -144,12 +145,14 @@ public:
   cu_up_simulator     cu_up_sim;
   dummy_du_metrics_notifier du_metrics;
 
-  du_high_configuration    du_high_cfg;
-  du_high_dependencies     du_hi_dependencies;
-  std::unique_ptr<du_high> du_hi;
-  phy_test_dummy           phy;
-  null_mac_pcap            mac_pcap;
-  null_rlc_pcap            rlc_pcap;
+  du_high_configuration du_high_cfg;
+  /// One PHY cell operation controller per cell, declared before the dependencies that point at them.
+  std::vector<dummy_phy_cell_operation_controller> phy_cell_op_ctrls;
+  du_high_dependencies                             du_hi_dependencies;
+  std::unique_ptr<du_high>                         du_hi;
+  phy_test_dummy                                   phy;
+  null_mac_pcap                                    mac_pcap;
+  null_rlc_pcap                                    rlc_pcap;
 
   slot_point_extended next_slot;
 

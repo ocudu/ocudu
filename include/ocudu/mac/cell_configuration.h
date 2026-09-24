@@ -71,13 +71,13 @@ struct mac_cell_creation_request {
   /// Cell-specific encoded system information.
   mac_cell_sys_info_config sys_info;
 
-  /// \brief Optional non-owning pointer to the PHY cell operation controller for this cell.
+  /// \brief PHY cell operation controller of this cell.
   ///
-  /// When set, MAC cell start/stop propagates to the PHY through this operation controller. The
-  /// pointer is supplied by the layer that owns the controller and forwarded through the MAC cell
-  /// creation path into mac_cell_config_dependencies. Null leaves PHY untouched on MAC cell stop,
-  /// which preserves the legacy behaviour for builds without a controller.
-  phy_cell_operation_controller* phy_cell_op_controller = nullptr;
+  /// MAC cell start/stop drives the PHY through it: a cell cannot be started or stopped without one. It is supplied
+  /// by the layer that owns the controller and must outlive the cell. Keep it the last member: the request is an
+  /// aggregate, and this reference is initialised on its own with a designated initialiser while every other member
+  /// keeps its default.
+  phy_cell_operation_controller& phy_cell_op_controller;
 };
 
 } // namespace ocudu

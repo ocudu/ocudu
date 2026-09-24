@@ -5,6 +5,7 @@
 #pragma once
 
 #include "lib/mac/mac_dl/mac_scheduler_cell_info_handler.h"
+#include "tests/test_doubles/mac/dummy_phy_cell_operation_controller.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/adt/slotted_array.h"
 #include "ocudu/mac/cell_configuration.h"
@@ -24,9 +25,11 @@
 namespace ocudu::test_helpers {
 
 /// Generates default MAC Cell Configuration to be used in unit tests.
-inline mac_cell_creation_request make_default_mac_cell_config(const cell_config_builder_params& params = {})
+inline mac_cell_creation_request
+make_default_mac_cell_config(const cell_config_builder_params& params        = {},
+                             phy_cell_operation_controller& phy_cell_op_ctrl = default_dummy_phy_cell_op_controller())
 {
-  mac_cell_creation_request req{};
+  mac_cell_creation_request req{.phy_cell_op_controller = phy_cell_op_ctrl};
 
   config_helpers::cell_config_builder_params_extended params_ext{params};
 

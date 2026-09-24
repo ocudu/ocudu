@@ -7,6 +7,7 @@
 #include "lib/du/du_high/du_manager/du_cell_manager.h"
 #include "lib/du/du_high/du_manager/ran_resource_management/du_ran_resource_manager.h"
 #include "lib/gtpu/gtpu_teid_pool_impl.h"
+#include "tests/test_doubles/mac/dummy_phy_cell_operation_controller.h"
 #include "ocudu/du/du_high/du_manager/du_manager_mem_resources.h"
 #include "ocudu/du/du_high/du_manager/du_manager_params.h"
 #include "ocudu/gtpu/gtpu_teid_pool.h"
@@ -356,7 +357,8 @@ public:
 
   mac_cell_controller& add_cell(const mac_cell_creation_request& cell_cfg) override
   {
-    last_cell_creation_req.emplace();
+    last_cell_creation_req.emplace(
+        mac_cell_creation_request{.phy_cell_op_controller = cell_cfg.phy_cell_op_controller});
     last_cell_creation_req->cell_index                      = cell_cfg.cell_index;
     last_cell_creation_req->sys_info.si_sched_cfg           = cell_cfg.sys_info.si_sched_cfg;
     last_cell_creation_req->sys_info.sib1_contains_hypersfn = cell_cfg.sys_info.sib1_contains_hypersfn;
@@ -490,11 +492,14 @@ public:
   f1u_gateway_dummy   f1u_gw;
   mac_test_dummy      mac;
   null_rlc_pcap       rlc_pcap;
-  du_manager_params   params;
-  du_manager_mem_resources               mem_resources;
-  du_cell_manager                        cell_mng;
-  dummy_ue_resource_configurator_factory cell_res_alloc;
-  ocudulog::basic_logger&                logger;
+  /// One PHY cell operation controller per cell, declared before the params that point at them.
+  std::vector<dummy_phy_cell_operation_controller> phy_cell_op_ctrls;
+  std::vector<phy_cell_operation_controller*>      phy_cell_op_ctrl_ptrs;
+  du_manager_params                                params;
+  du_manager_mem_resources                         mem_resources;
+  du_cell_manager                                  cell_mng;
+  dummy_ue_resource_configurator_factory           cell_res_alloc;
+  ocudulog::basic_logger&                          logger;
 };
 
 } // namespace odu

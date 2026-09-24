@@ -90,11 +90,10 @@ struct du_manager_params {
     /// Interface to configure the MAC layer.
     mac_manager&            mgr;
     scheduler_expert_config sched_cfg;
-    /// \brief Optional per-cell PHY operation controllers, indexed by du_cell_index.
+    /// \brief Per-cell PHY operation controllers, indexed by du_cell_index: exactly one non-null entry per cell.
     ///
-    /// Forwarded by du_setup_procedure into mac_cell_creation_request.phy_cell_op_controller
-    /// when adding cells, so MAC cell start/stop drives the PHY operation controller. Empty leaves
-    /// the pointer null and the PHY untouched on MAC cell stop.
+    /// Forwarded by du_setup_procedure into mac_cell_creation_request.phy_cell_op_controller when adding cells, so
+    /// MAC cell start/stop drives the PHY operation controller. The setup aborts when a cell has no controller.
     std::vector<phy_cell_operation_controller*> phy_cell_op_controllers;
   };
 

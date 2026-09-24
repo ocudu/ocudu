@@ -110,13 +110,11 @@ struct du_high_dependencies {
   /// deployments that apply no Doppler compensation, in which case the computed values are simply not applied. It
   /// must outlive the DU-high.
   ocudu_ntn::ntn_doppler_compensation_handler* ntn_doppler_handler = nullptr;
-  /// \brief Optional per-cell PHY operation controllers, indexed by du_cell_index.
+  /// \brief Per-cell PHY operation controllers, indexed by du_cell_index: exactly one non-null entry per cell.
   ///
-  /// Supplied by the layer that owns the PHY operation controllers. When non-empty, each entry must
-  /// be either a valid pointer or null; the DU forwards the pointer for cell index i into
-  /// mac_cell_creation_request.phy_cell_op_controller, which lets MAC cell start/stop drive the PHY
-  /// operation controller. An empty vector preserves the legacy behaviour (no PHY notification on
-  /// MAC cell stop).
+  /// Supplied by the layer that owns the PHY operation controllers, which must outlive the DU-high. The DU hands
+  /// the controller of cell index i to the MAC as mac_cell_creation_request.phy_cell_op_controller, so MAC cell
+  /// start/stop drives the PHY. The DU aborts its setup when a cell has no controller.
   std::vector<phy_cell_operation_controller*> phy_cell_op_controllers;
 };
 

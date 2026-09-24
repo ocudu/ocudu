@@ -150,6 +150,10 @@ void du_high_cu_test_simulator::start_dus()
     du_dependencies.timer_ctrl         = timer_ctrl.get();
     du_dependencies.mac_p              = &du_ctxt.mac_pcap;
     du_dependencies.rlc_p              = &du_ctxt.rlc_pcap;
+    du_ctxt.phy_cell_op_ctrls.resize(du_hi_cfg.ran.cells.size());
+    for (auto& ctrl : du_ctxt.phy_cell_op_ctrls) {
+      du_dependencies.phy_cell_op_controllers.push_back(&ctrl);
+    }
 
     du_ctxt.du_high_inst = make_du_high(du_hi_cfg, du_dependencies);
 

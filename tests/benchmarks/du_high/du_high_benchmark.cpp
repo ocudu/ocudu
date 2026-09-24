@@ -26,6 +26,7 @@
 #include "lib/mac/mac_ul/ul_bsr.h"
 #include "tests/test_doubles/du/test_du_high_worker_manager.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
+#include "tests/test_doubles/mac/dummy_phy_cell_operation_controller.h"
 #include "tests/test_doubles/mac/mac_test_messages.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
@@ -606,6 +607,10 @@ public:
     dependencies.du_notifier        = &metrics_handler;
     dependencies.mac_p              = &mac_pcap;
     dependencies.rlc_p              = &rlc_pcap;
+    phy_cell_op_ctrls.resize(cfg.ran.cells.size());
+    for (auto& ctrl : phy_cell_op_ctrls) {
+      dependencies.phy_cell_op_controllers.push_back(&ctrl);
+    }
 
     // Increase nof. PUCCH resources to accommodate more UEs.
     auto& pucch_resources                       = cfg.ran.cells[0].ran.init_bwp.pucch.resources;
@@ -1148,7 +1153,9 @@ public:
   const unsigned             tx_rx_delay = 4;
   cell_config_builder_params params;
   du_high_configuration      cfg{};
-  du_high_dependencies       dependencies{};
+  /// One PHY cell operation controller per cell, declared before the dependencies that point at them.
+  std::vector<dummy_phy_cell_operation_controller> phy_cell_op_ctrls;
+  du_high_dependencies                             dependencies{};
   /// Size of the DL buffer status to push for DL Tx.
   unsigned     f1u_dl_pdu_bytes_per_slot;
   units::bytes f1u_pdu_size{DEFAULT_DL_PDU_SIZE};

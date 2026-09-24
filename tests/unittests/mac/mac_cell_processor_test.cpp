@@ -4,6 +4,7 @@
 
 #include "lib/mac/mac_dl/mac_cell_processor.h"
 #include "mac_test_helpers.h"
+#include "tests/test_doubles/mac/dummy_phy_cell_operation_controller.h"
 #include "ocudu/mac/mac_cell_timing_context.h"
 #include "ocudu/mac/phy_cell_operation_controller.h"
 #include "ocudu/support/async/async_test_utils.h"
@@ -242,39 +243,6 @@ TEST_F(mac_cell_processor_ue_update_test, ues_created_and_removed_in_batches)
 /// These tests pin that contract: every start() drives the controller's start(), and every stop()
 /// drives its stop().
 
-namespace {
-
-/// Spy that records every invocation of start()/stop() and returns success.
-class phy_cell_operation_controller_spy : public phy_cell_operation_controller
-{
-  unsigned start_count = 0;
-  unsigned stop_count  = 0;
-
-public:
-  async_task<bool> start() override
-  {
-    ++start_count;
-    return launch_async([](coro_context<async_task<bool>>& ctx) {
-      CORO_BEGIN(ctx);
-      CORO_RETURN(true);
-    });
-  }
-
-  async_task<bool> stop() override
-  {
-    ++stop_count;
-    return launch_async([](coro_context<async_task<bool>>& ctx) {
-      CORO_BEGIN(ctx);
-      CORO_RETURN(true);
-    });
-  }
-
-  unsigned get_start_count() const { return start_count; }
-  unsigned get_stop_count() const { return stop_count; }
-};
-
-} // namespace
-
 class mac_cell_processor_fapi_lifecycle_fixture : public ::testing::Test
 {
 protected:
@@ -294,8 +262,7 @@ protected:
   mac_cell_processor_fapi_lifecycle_fixture()
   {
     mac_cell_config_dependencies deps{timer_ctrl.add_cell(to_du_cell_index(0))};
-    deps.phy_cell_op_controller = &phy_spy;
-    mac_cell = std::make_unique<mac_cell_processor>(test_helpers::make_default_mac_cell_config(builder_params),
+    mac_cell = std::make_unique<mac_cell_processor>(test_helpers::make_default_mac_cell_config(builder_params, phy_spy),
                                                     sched_adapter,
                                                     sfn_time_adapter,
                                                     rnti_table,

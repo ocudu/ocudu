@@ -120,6 +120,14 @@ du_manager_test_bench::du_manager_test_bench(span<const du_cell_config> cells) :
   du_mng_exec(worker),
   ue_exec_mapper(worker),
   cell_exec_mapper(worker),
+  phy_cell_op_ctrls(du_cells.size()),
+  phy_cell_op_ctrl_ptrs([this]() {
+    std::vector<phy_cell_operation_controller*> ptrs;
+    for (auto& ctrl : phy_cell_op_ctrls) {
+      ptrs.push_back(&ctrl);
+    }
+    return ptrs;
+  }()),
   params{{"ocudu", (gnb_du_id_t)1, 1, du_cells},
          {timers, du_mng_exec, ue_exec_mapper, cell_exec_mapper},
          {f1ap, f1ap, f1ap},
@@ -137,7 +145,7 @@ du_manager_test_bench::du_manager_test_bench(span<const du_cell_config> cells) :
           rlc_srb_rx_window_seg_pool_size,
           rlc_srb_tx_window_seg_size,
           rlc_srb_tx_window_seg_pool_size},
-         {mac}},
+         {mac, {}, phy_cell_op_ctrl_ptrs}},
   mem_resources(create_du_manager_mem_resources(params)),
   cell_mng(params),
   logger(ocudulog::fetch_basic_logger("DU-MNG"))

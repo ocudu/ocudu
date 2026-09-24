@@ -7,6 +7,7 @@
 #include "lib/gtpu/gtpu_teid_pool_impl.h"
 #include "tests/test_doubles/f1ap/f1c_test_local_gateway.h"
 #include "tests/test_doubles/mac/dummy_mac_result_notifier.h"
+#include "tests/test_doubles/mac/dummy_phy_cell_operation_controller.h"
 #include "tests/unittests/ngap/test_helpers.h"
 #include "ocudu/du/du_high/du_high.h"
 #include "ocudu/du/du_high/du_high_configuration.h"
@@ -48,11 +49,13 @@ class du_high_cu_test_simulator
 {
 public:
   struct du_sim {
-    odu::du_high_configuration    du_high_cfg;
-    phy_test_dummy                phy;
-    null_mac_pcap                 mac_pcap;
-    null_rlc_pcap                 rlc_pcap;
-    std::unique_ptr<odu::du_high> du_high_inst;
+    odu::du_high_configuration du_high_cfg;
+    phy_test_dummy             phy;
+    null_mac_pcap              mac_pcap;
+    null_rlc_pcap              rlc_pcap;
+    /// One PHY cell operation controller per cell; sized once, before the DU-high takes their addresses.
+    std::vector<dummy_phy_cell_operation_controller> phy_cell_op_ctrls;
+    std::unique_ptr<odu::du_high>                    du_high_inst;
 
     slot_point_extended next_slot;
 
