@@ -158,10 +158,6 @@ std::optional<uci_allocation> uci_allocator_impl::alloc_harq_ack(cell_resource_a
 {
   const ue_cell_configuration& ue_cell_cfg = ue_cc.cfg();
 
-  if (k1_list.empty()) {
-    return std::nullopt;
-  }
-
   // [Implementation-defined] We restrict the number of HARQ bits per PUCCH that are expected to carry CSI reporting to
   // 2 , until the PUCCH allocator supports more than this.
   // TODO: remove this, as with the new refactor we are not constrained by this anymore.

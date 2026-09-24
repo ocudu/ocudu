@@ -110,7 +110,7 @@ std::optional<uci_allocation> ue_cell_grid_allocator::alloc_uci(const ue_cell&  
       ss_info.bwp->dl.td_mapper().pdsch_td_resources(ss_info.get_dl_dci_format())[pdsch_td_res_index];
 
   // Allocate UCI. UCI destination (i.e., PUCCH or PUSCH) depends on whether there exist a PUSCH grant for the UE.
-  // NOTE: With PDSCH repetitions, the UE counts k1 from the last transmitted occasion, so the UCI is booked relative
+  // NOTE: With PDSCH repetitions, the UE counts k1 from the last repetition occasion, so the UCI is booked relative
   // to that slot.
   const slot_point    last_pdsch_slot = cell_alloc[pdsch_td_cfg.k0 + last_occasion_offset].slot;
   span<const uint8_t> k1_list =
@@ -234,14 +234,11 @@ ue_cell_grid_allocator::setup_dl_grant_builder(const slice_ue&                  
                                                std::optional<dl_harq_process_handle> h_dl,
                                                std::optional<dl_repetition_info>     reps) const
 {
-  const bool            is_retx            = h_dl.has_value();
-  const search_space_id ss_id              = params.ss_id;
-  const uint8_t         pdsch_td_res_index = params.pdsch_td_res_index;
-  const uint8_t         nof_repetitions    = reps.has_value() ? reps->nof_occasions : uint8_t{1};
-  // The UE counts k1 from the DL slot where the PDSCH reception ends (TS 38.213, 9.2.3). Occasions dropped because
-  // their slot cannot carry the PDSCH symbols are not received at all (TS 38.213, 11.1), so the reference is the last
-  // transmitted occasion, not the last slot of the nominal repetition window.
-  const unsigned last_occasion_offset = reps.has_value() ? reps->tx_offsets.back() : 0U;
+  const bool            is_retx              = h_dl.has_value();
+  const search_space_id ss_id                = params.ss_id;
+  const uint8_t         pdsch_td_res_index   = params.pdsch_td_res_index;
+  const uint8_t         nof_repetitions      = reps.has_value() ? reps->nof_occasions : uint8_t{1};
+  const unsigned        last_occasion_offset = nof_repetitions - 1U;
 
   // Derive remaining parameters from \c dl_grant_params.
   ue&                                          u           = ues[user.ue_index()];
@@ -293,14 +290,14 @@ ue_cell_grid_allocator::setup_dl_grant_builder(const slice_ue&                  
   pdcch->ctx.context.harq_feedback_timing = k1;
 
   // Both delays are counted from \c pdsch_alloc.slot, the first PDSCH occasion. With PDSCH repetitions, the UE counts
-  // k1 from the last transmitted occasion, so \c last_occasion_offset must be added on top.
+  // k1 from the last repetition occasion, so \c last_occasion_offset must be added on top.
   // In the case of a multi-slot PUCCH repetition burst, the HARQ-ACK feedback can only be considered lost once the
   // last repetition has been transmitted.
   const unsigned ack_delay      = last_occasion_offset + k1 + ue_cell_cfg.cell_cfg_common.ntn_cs_koffset;
   const unsigned last_ack_delay = last_occasion_offset + uci.k1_last_rep + ue_cell_cfg.cell_cfg_common.ntn_cs_koffset;
 
   // Allocate UE DL HARQ.
-  // NOTE: With PDSCH repetitions, the HARQ-ACK is expected k1 slots after the last transmitted occasion.
+  // NOTE: With PDSCH repetitions, the HARQ-ACK is expected k1 slots after the last repetition occasion.
   if (not is_retx) {
     // It is a new tx.
     h_dl = ue_cc.harqs
@@ -394,8 +391,8 @@ ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&                        g
     pdsch_alloc.dl_res_grid.fill(grant_info{scs, pdsch_td_cfg.symbols, crbs.second});
   }
 
-  // Compute TPC for PUCCH. With PDSCH repetitions, the PUCCH takes place k1 slots after the last transmitted occasion.
-  const unsigned last_occasion_offset = grant.reps.has_value() ? grant.reps->tx_offsets.back() : 0U;
+  // Compute TPC for PUCCH. With PDSCH repetitions, the PUCCH takes place k1 slots after the last occasion.
+  const unsigned last_occasion_offset = grant.reps.has_value() ? grant.reps->nof_occasions - 1 : 0;
   const uint8_t  tpc                  = ue_cc.get_pucch_power_controller().compute_tpc_command(
       pdsch_alloc.slot + last_occasion_offset + k1 + ue_cell_cfg.cell_cfg_common.ntn_cs_koffset);
 

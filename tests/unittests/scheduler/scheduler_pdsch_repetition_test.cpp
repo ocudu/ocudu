@@ -168,12 +168,10 @@ TEST_F(scheduler_pdsch_repetition_test, when_cqi_below_threshold_then_pdsch_repe
       ASSERT_EQ(occ0->pdsch_cfg.codewords[0].rv_index, dci.tb1_redundancy_version);
 
       // Occasions 1..K-1: transmitted in fully-DL slots with the same TBS/PRBs and the cycled RV; dropped otherwise.
-      unsigned last_tx_occasion = 0;
       for (unsigned i = 1; i != nof_reps; ++i) {
         const slot_point    occ_slot = pdcch_slot + i;
         const dl_msg_alloc* occ      = find_grant_with_harq(occ_slot, dci.harq_process_number);
         if (is_fully_dl(occ_slot)) {
-          last_tx_occasion = i;
           ASSERT_NE(occ, nullptr) << fmt::format("Missing repetition occasion at slot {}", occ_slot);
           ASSERT_FALSE(occ->pdsch_cfg.codewords[0].new_data);
           ASSERT_EQ(occ->pdsch_cfg.codewords[0].rv_index, expected_repetition_rv(dci.tb1_redundancy_version, i));
@@ -185,12 +183,11 @@ TEST_F(scheduler_pdsch_repetition_test, when_cqi_below_threshold_then_pdsch_repe
         }
       }
 
-      // The HARQ-ACK PUCCH takes place k1 slots after the last transmitted occasion. A dropped occasion is not
-      // received at all (TS 38.213, 11.1), so it cannot be the DL slot the PDSCH reception ends in (TS 38.213, 9.2.3).
+      // The HARQ-ACK PUCCH takes place k1 slots after the last (nominal) occasion.
       ASSERT_TRUE(dci.pdsch_harq_fb_timing_indicator.has_value());
       const auto dedicated_k1_list = cell_cfg(to_du_cell_index(0)).init_bwp.ul.td_mapper().dedicated_k1_candidates();
       const unsigned   k1          = dedicated_k1_list[dci.pdsch_harq_fb_timing_indicator.value()];
-      const slot_point expected_pucch_slot = pdcch_slot + last_tx_occasion + k1;
+      const slot_point expected_pucch_slot = pdcch_slot + (nof_reps - 1) + k1;
       if (expected_pucch_slot <= last_collected_slot) {
         ASSERT_EQ(pucch_slots.count(expected_pucch_slot), 1)
             << fmt::format("No PUCCH at slot {} for the bundle scheduled at slot {}", expected_pucch_slot, pdcch_slot);
