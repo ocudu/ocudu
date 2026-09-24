@@ -85,5 +85,44 @@ TEST_P(scheduler_ntn_koffset_test, pusch_is_scheduled_k2_plus_koffset_slots_afte
   });
 }
 
+TEST_P(scheduler_ntn_koffset_test, harq_ack_is_scheduled_k1_plus_koffset_slots_after_its_pdsch)
+{
+  ASSERT_EQ(koffset(), GetParam());
+  this->push_dl_buffer_state(dl_buffer_state_indication_message{ue_idx, ue_drb_lcid, 100000});
+
+  // The first DL DCI of the UE schedules its first PDSCH.
+  ASSERT_TRUE(this->run_slot_until([this]() { return this->find_ue_dl_pdcch(ue_rnti) != nullptr; }));
+  const slot_point            pdcch_slot = this->last_result_slot();
+  const pdcch_dl_information& pdcch      = *this->find_ue_dl_pdcch(ue_rnti);
+  ASSERT_EQ(pdcch.dci.type(), dci_dl_rnti_config_type::c_rnti_f1_1);
+  const dci_1_1_configuration& dci = pdcch.dci.as_c_rnti_f1_1();
+  ASSERT_TRUE(dci.pdsch_harq_fb_timing_indicator.has_value());
+
+  // TS 38.213, Section 9.2.3: the HARQ-ACK is reported k1 plus Koffset slots after the PDSCH. The DCI carries k1 alone.
+  const auto pdsch_td_list = cell_cfg().init_bwp.dl.td_mapper().pdsch_td_resources(dci_dl_format::f1_1);
+  ASSERT_LT(dci.time_resource, pdsch_td_list.size());
+  const auto k1_list = cell_cfg().init_bwp.ul.td_mapper().dedicated_k1_candidates();
+  ASSERT_LT(dci.pdsch_harq_fb_timing_indicator.value(), k1_list.size());
+  const slot_point expected_ack_slot = pdcch_slot + pdsch_td_list[dci.time_resource].k0 +
+                                       k1_list[dci.pdsch_harq_fb_timing_indicator.value()] + koffset();
+
+  // No UL data is pending, so the HARQ-ACK is reported on PUCCH.
+  const auto has_harq_ack = [this]() {
+    for (const pucch_info& pucch : this->last_sched_result()->ul.pucchs) {
+      if (pucch.crnti == ue_rnti and pucch.uci_bits.harq_ack_nof_bits > 0) {
+        return true;
+      }
+    }
+    return false;
+  };
+  run_until_slot(expected_ack_slot, [expected_ack_slot, &has_harq_ack](slot_point sl) {
+    if (sl < expected_ack_slot) {
+      ASSERT_FALSE(has_harq_ack()) << fmt::format("HARQ-ACK at slot {}, before the Koffset delayed slot", sl);
+    } else {
+      ASSERT_TRUE(has_harq_ack()) << fmt::format("No HARQ-ACK at slot {}, k1 plus Koffset after its PDSCH", sl);
+    }
+  });
+}
+
 // Koffset of a LEO and a GEO cell.
 INSTANTIATE_TEST_SUITE_P(scheduler_ntn_koffset_test, scheduler_ntn_koffset_test, ::testing::Values(16U, 240U));
