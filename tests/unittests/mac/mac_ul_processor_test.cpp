@@ -265,7 +265,7 @@ TEST(mac_ul_processor, decode_ul_ccch_48bit)
   t_bench.send_rx_indication_msg(tc_rnti, payload);
 
   // Create UL CCCH indication msg to verify MAC processing of PDU.
-  struct ul_ccch_indication_message ul_ccch_msg {};
+  struct ul_ccch_indication_message ul_ccch_msg{};
   ul_ccch_msg.cell_index = cell_idx;
   ul_ccch_msg.slot_rx    = slot_point{0, 1};
   ul_ccch_msg.tc_rnti    = tc_rnti;
@@ -293,7 +293,7 @@ TEST(mac_ul_processor, decode_ul_ccch_64bit)
   t_bench.send_rx_indication_msg(tc_rnti, payload);
 
   // Create UL CCCH indication msg to verify MAC processing of PDU.
-  struct ul_ccch_indication_message ul_ccch_msg {};
+  struct ul_ccch_indication_message ul_ccch_msg{};
   ul_ccch_msg.cell_index = cell_idx;
   ul_ccch_msg.slot_rx    = slot_point{0, 1};
   ul_ccch_msg.tc_rnti    = tc_rnti;
