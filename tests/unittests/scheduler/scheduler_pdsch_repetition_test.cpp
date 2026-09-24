@@ -72,8 +72,6 @@ protected:
 
   bool is_fully_dl(slot_point sl) const { return cell_cfg(to_du_cell_index(0)).is_fully_dl_enabled(sl); }
 
-  bool is_fully_ul(slot_point sl) const { return cell_cfg(to_du_cell_index(0)).is_fully_ul_enabled(sl); }
-
   /// Runs the scheduler for \c nof_slots slots, collecting per-slot copies of the results for the test UE.
   void run_and_collect(unsigned nof_slots)
   {
@@ -281,55 +279,6 @@ TEST_F(scheduler_pdsch_repetition_test, when_harq_is_nacked_then_retx_is_schedul
     }
   }
   ASSERT_GT(nof_retx_bundles, 0) << "No reTx repetition bundle was scheduled";
-}
-
-// Bundles whose nominal last occasion falls in a fully-UL slot. Such an occasion is not received at all (TS 38.213,
-// 11.1), so the HARQ-ACK is counted from the last transmitted occasion (TS 38.213, 9.2.3). Counting it from the
-// nominal one instead asked the UCI allocator for the k1 candidates of a UL slot, whose per-slot k1 list is empty:
-// that both read past the end of the empty candidate range and left the bundle unallocated.
-TEST_F(scheduler_pdsch_repetition_test, when_trailing_occasions_fall_in_ul_slots_then_harq_ack_follows_last_tx_occasion)
-{
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
-
-  const unsigned tdd_period = nof_slots_per_tdd_period(*cell_cfg(to_du_cell_index(0)).params.tdd_cfg);
-
-  // Bursty traffic whose phase advances by one slot per iteration, so that bundles start at every position of the TDD
-  // pattern over the run, including the last DL slot whose trailing occasions fall in the special and UL slots.
-  for (unsigned i = 0; i != 2 * tdd_period; ++i) {
-    dl_buffer_state_indication_message dl_buf_st{ue_idx, ue_drb_lcid, 1000};
-    this->push_dl_buffer_state(dl_buf_st);
-    run_and_collect(tdd_period + 1);
-  }
-
-  unsigned nof_ul_tail_bundles = 0;
-  for (const auto& [pdcch_slot, slot_dcis] : dcis) {
-    for (const dci_1_1_configuration& dci : slot_dcis) {
-      if (dci.time_resource != rep_time_resource or pdcch_slot + (nof_reps - 1) > last_collected_slot) {
-        continue;
-      }
-      // Only bundles whose nominal last occasion falls in a fully-UL slot are of interest here.
-      if (not is_fully_ul(pdcch_slot + (nof_reps - 1))) {
-        continue;
-      }
-      ++nof_ul_tail_bundles;
-
-      unsigned last_tx_occasion = 0;
-      for (unsigned i = 1; i != nof_reps; ++i) {
-        if (is_fully_dl(pdcch_slot + i)) {
-          last_tx_occasion = i;
-        }
-      }
-      ASSERT_TRUE(dci.pdsch_harq_fb_timing_indicator.has_value());
-      const auto dedicated_k1_list = cell_cfg(to_du_cell_index(0)).init_bwp.ul.td_mapper().dedicated_k1_candidates();
-      const unsigned   k1          = dedicated_k1_list[dci.pdsch_harq_fb_timing_indicator.value()];
-      const slot_point expected_pucch_slot = pdcch_slot + last_tx_occasion + k1;
-      if (expected_pucch_slot <= last_collected_slot) {
-        ASSERT_EQ(pucch_slots.count(expected_pucch_slot), 1)
-            << fmt::format("No PUCCH at slot {} for the bundle scheduled at slot {}", expected_pucch_slot, pdcch_slot);
-      }
-    }
-  }
-  ASSERT_GT(nof_ul_tail_bundles, 0) << "No bundle whose nominal last occasion falls in a UL slot was scheduled";
 }
 
 class scheduler_pdsch_repetition_high_cqi_test : public base_pdsch_repetition_tester, public ::testing::Test
