@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "lib/du/du_high/du_manager/converters/asn1_ntn_config_helpers.h"
 #include "lib/du/du_high/du_manager/converters/asn1_rrc_config_helpers.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/asn1_utils.h"
 #include "ocudu/asn1/rrc_nr/cell_group_config.h"
+#include "ocudu/asn1/rrc_nr/rrc_nr.h"
+#include "ocudu/du/du_cell_config_helpers.h"
 #include "ocudu/mac/config/mac_cell_group_config_factory.h"
 #include "ocudu/scheduler/config/csi_helper.h"
 #include "ocudu/scheduler/config/ran_cell_config_helper.h"
@@ -1456,4 +1459,52 @@ TEST(serving_cell_config_converter_test, test_rlm_cfg_conversion)
   std::array<uint8_t, 3U> csi_rs_res_new_indices = {1, 2, 3};
   validate_rlm_csi_rs_resources(
       rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded, rlm_res_new_indices, csi_rs_res_new_indices);
+}
+
+/// Returns the JSON representation of an ASN.1 object, to compare two objects in full.
+template <typename T>
+static std::string to_json_string(const T& obj)
+{
+  asn1::json_writer js;
+  obj.to_json(js);
+  return js.to_string();
+}
+
+TEST(serving_cell_config_converter_test, handover_to_an_ntn_cell_carries_the_ntn_config_of_the_target_cell)
+{
+  odu::du_cell_config target_cell = config_helpers::make_default_du_cell_config();
+  target_cell.ran.ntn_params.emplace();
+  target_cell.ran.ntn_params->ntn_cfg.cell_specific_koffset = std::chrono::milliseconds{20};
+  target_cell.ran.ntn_params->ntn_cfg.k_mac                 = std::chrono::milliseconds{4};
+
+  asn1::rrc_nr::recfg_with_sync_s recfg_with_sync;
+  ASSERT_TRUE(odu::calculate_reconfig_with_sync_diff(recfg_with_sync,
+                                                     target_cell,
+                                                     make_initial_du_ue_resource_config(),
+                                                     asn1::rrc_nr::ho_prep_info_s{},
+                                                     to_rnti(0x4601)));
+
+  // TS 38.331, ServingCellConfigCommon: the UE learns the NTN-Config of the target cell from the handover command,
+  // since it cannot read SIB19 of the target cell before accessing it.
+  ASSERT_TRUE(recfg_with_sync.sp_cell_cfg_common_present);
+  ASSERT_TRUE(recfg_with_sync.sp_cell_cfg_common.ntn_cfg_r17.is_present());
+  ASSERT_EQ(to_json_string(*recfg_with_sync.sp_cell_cfg_common.ntn_cfg_r17),
+            to_json_string(odu::make_asn1_rrc_cell_ntn_cfg(target_cell.ran.ntn_params->ntn_cfg)));
+  ASSERT_TRUE(recfg_with_sync.sp_cell_cfg_common.ntn_cfg_r17->cell_specific_koffset_r17_present);
+  ASSERT_EQ(recfg_with_sync.sp_cell_cfg_common.ntn_cfg_r17->cell_specific_koffset_r17, 20);
+}
+
+TEST(serving_cell_config_converter_test, handover_to_a_terrestrial_cell_carries_no_ntn_config)
+{
+  const odu::du_cell_config target_cell = config_helpers::make_default_du_cell_config();
+
+  asn1::rrc_nr::recfg_with_sync_s recfg_with_sync;
+  ASSERT_TRUE(odu::calculate_reconfig_with_sync_diff(recfg_with_sync,
+                                                     target_cell,
+                                                     make_initial_du_ue_resource_config(),
+                                                     asn1::rrc_nr::ho_prep_info_s{},
+                                                     to_rnti(0x4601)));
+
+  ASSERT_TRUE(recfg_with_sync.sp_cell_cfg_common_present);
+  ASSERT_FALSE(recfg_with_sync.sp_cell_cfg_common.ntn_cfg_r17.is_present());
 }
