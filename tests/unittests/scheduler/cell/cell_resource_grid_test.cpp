@@ -6,6 +6,7 @@
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "ocudu/scheduler/config/scheduler_expert_config_factory.h"
+#include "ocudu/scheduler/resource_grid_util.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -201,4 +202,38 @@ TEST(pusch_resource_allocation_test, test_all)
 
   // Test: Current slot_tx allocations match the ones done with "slot_tx + 1" in the previous slot
   ASSERT_EQ(res_grid_alloc[0].ul_res_grid.used_crbs(bwp_cfg, {0, 14}).count(), ul_grant2.prbs.length());
+}
+
+/// In an NTN cell, the UL grant of a DCI lands up to Koffset slots later, so the grid must keep the allocations of that
+/// many more slots ahead without the ring wrapping onto them.
+TEST(cell_resource_grid_test, ntn_grid_keeps_allocations_up_to_the_koffset_delayed_ul_slot)
+{
+  // Cell-specific Koffset, in milliseconds, of LEO and GEO cells.
+  for (unsigned koffset_ms : {16U, 240U, 480U}) {
+    scheduler_expert_config                  sched_cfg = config_helpers::make_default_scheduler_expert_config();
+    test_helpers::test_sched_config_manager  cfg_mng{sched_cfg};
+    sched_cell_configuration_request_message cell_req =
+        sched_config_helper::make_default_sched_cell_configuration_request();
+    cell_req.ran.ntn_params.emplace();
+    cell_req.ran.ntn_params->ntn_cfg.cell_specific_koffset = std::chrono::milliseconds{koffset_ms};
+    const cell_configuration& cell_cfg                     = *cfg_mng.add_cell(cell_req);
+    cell_resource_allocator   res_grid{cell_cfg};
+
+    ASSERT_GT(cell_cfg.ntn_cs_koffset, 0U);
+    const unsigned max_ul_delay = get_max_slot_ul_alloc_delay(cell_cfg.ntn_cs_koffset);
+    // The ring must reach the furthest UL slot: operator[] accepts delays up to and including max_ul_delay.
+    ASSERT_GE(res_grid.ring_size(), max_ul_delay) << fmt::format("Koffset={}ms", koffset_ms);
+
+    // An allocation in the furthest UL slot stays in place until that slot is reached.
+    slot_point sl_tx{0, 0};
+    res_grid.slot_indication(sl_tx);
+    const slot_point alloc_slot = sl_tx + max_ul_delay;
+    res_grid[alloc_slot].result.ul.puschs.emplace_back();
+    for (unsigned i = 0; i != max_ul_delay; ++i) {
+      res_grid.slot_indication(++sl_tx);
+      ASSERT_EQ(res_grid[alloc_slot].result.ul.puschs.size(), 1U)
+          << fmt::format("Koffset={}ms: allocation lost at slot {}", koffset_ms, sl_tx);
+    }
+    ASSERT_EQ(res_grid[0].slot, alloc_slot);
+  }
 }
