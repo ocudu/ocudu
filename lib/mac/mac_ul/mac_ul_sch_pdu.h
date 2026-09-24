@@ -110,6 +110,12 @@ struct formatter<ocudu::mac_ul_sch_subpdu> {
       case lcid_ul_sch_t::CCCH_SIZE_48:
         format_to(ctx.out(), "CCCH48: len={}", subpdu.sdu_length());
         break;
+      case lcid_ul_sch_t::CCCH_SIZE_48_REDCAP:
+        format_to(ctx.out(), "RedCap CCCH48: len={}", subpdu.sdu_length());
+        break;
+      case lcid_ul_sch_t::CCCH_SIZE_64_REDCAP:
+        format_to(ctx.out(), "RedCap CCCH64: len={}", subpdu.sdu_length());
+        break;
       case lcid_ul_sch_t::CRNTI:
         format_to(ctx.out(), "C-RNTI: {}", decode_crnti_ce(subpdu.payload()));
         break;

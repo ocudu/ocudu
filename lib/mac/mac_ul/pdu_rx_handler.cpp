@@ -97,6 +97,14 @@ bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index,
     logger.info("{} subPDUs: [{}]", create_prefix(ctx), to_c_str(fmtbuf));
   }
 
+  // The DU creation interface cannot preserve RedCap identity. Reject the whole PDU before any dispatch side effects.
+  for (const mac_ul_sch_subpdu& subpdu : ctx.decoded_subpdus) {
+    if (subpdu.lcid().is_redcap_ccch()) {
+      logger.info("{}: Discarding PDU. Cause: RedCap UE creation is not supported", create_prefix(ctx, subpdu));
+      return false;
+    }
+  }
+
   // > If Msg3 (UE index is still not assigned) is received, check if MAC CRNTI CE or UL-CCCH CE are present.
   if (not is_du_ue_index_valid(ctx.ue_index)) {
     for (unsigned n = ctx.decoded_subpdus.nof_subpdus(); n > 0; --n) {

@@ -11,6 +11,8 @@
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/support/bit_encoding.h"
 #include <gtest/gtest.h>
+#include <utility>
+#include <vector>
 
 using namespace ocudu;
 
@@ -644,4 +646,100 @@ TEST(mac_ul_pdu, handle_the_case_when_pdu_length_is_too_short_to_decode_length_p
 
   mac_ul_sch_pdu pdu;
   ASSERT_FALSE(pdu.unpack(msg)); // Should not crash.
+}
+
+class ul_ccch_codec_test : public ::testing::TestWithParam<std::pair<uint8_t, unsigned>>
+{
+protected:
+  byte_buffer make_ccch(unsigned payload_size) const
+  {
+    std::vector<uint8_t> bytes(payload_size + 1, 0xa5);
+    bytes[0] = GetParam().first;
+    return byte_buffer::create(bytes).value();
+  }
+};
+
+INSTANTIATE_TEST_SUITE_P(ordinary_and_redcap,
+                         ul_ccch_codec_test,
+                         ::testing::Values(std::make_pair(uint8_t{0}, 8U),
+                                           std::make_pair(uint8_t{52}, 6U),
+                                           std::make_pair(uint8_t{35}, 6U),
+                                           std::make_pair(uint8_t{36}, 8U)));
+
+TEST_P(ul_ccch_codec_test, decodes_fixed_payload_without_length_field_and_preserves_lcid)
+{
+  const auto        lcid         = GetParam().first;
+  const unsigned    payload_size = GetParam().second;
+  byte_buffer       msg          = make_ccch(payload_size);
+  mac_ul_sch_subpdu subpdu;
+
+  auto result = subpdu.unpack(msg);
+
+  ASSERT_TRUE(result.has_value()) << result.error();
+  EXPECT_EQ(subpdu.lcid().value(), lcid);
+  EXPECT_TRUE(subpdu.lcid().is_ccch());
+  EXPECT_FALSE(subpdu.lcid().is_sdu());
+  EXPECT_FALSE(subpdu.lcid().is_ce());
+  EXPECT_FALSE(subpdu.lcid().has_length_field());
+  EXPECT_EQ(subpdu.sdu_length(), payload_size);
+  EXPECT_EQ(subpdu.total_length(), payload_size + 1);
+  EXPECT_EQ(subpdu.payload(), byte_buffer_view(msg).view(1, payload_size));
+}
+
+TEST_P(ul_ccch_codec_test, preserves_boundaries_before_bsr_and_padding)
+{
+  const unsigned payload_size = GetParam().second;
+  byte_buffer    msg          = make_ccch(payload_size);
+  ASSERT_TRUE(msg.append({0x3d, 0x59, 0x3f, 0xfe, 0xaa}));
+  mac_ul_sch_pdu pdu;
+
+  auto result = pdu.unpack(msg);
+
+  ASSERT_TRUE(result.has_value()) << result.error();
+  ASSERT_EQ(pdu.nof_subpdus(), 3U);
+  EXPECT_EQ(pdu.subpdu(0).lcid().value(), GetParam().first);
+  EXPECT_EQ(pdu.subpdu(0).sdu_length(), payload_size);
+  EXPECT_EQ(pdu.subpdu(1).lcid(), lcid_ul_sch_t::SHORT_BSR);
+  EXPECT_EQ(pdu.subpdu(1).sdu_length(), 1U);
+  EXPECT_EQ(pdu.subpdu(1).payload()[0], 0x59);
+  EXPECT_EQ(pdu.subpdu(2).lcid(), lcid_ul_sch_t::PADDING);
+  EXPECT_EQ(pdu.subpdu(2).sdu_length(), 2U);
+}
+
+TEST_P(ul_ccch_codec_test, rejects_every_truncated_payload_and_discards_preceding_subpdus)
+{
+  for (unsigned size = 0; size != GetParam().second; ++size) {
+    SCOPED_TRACE(size);
+    byte_buffer msg = byte_buffer::create({0x3d, 0x59}).value();
+    ASSERT_TRUE(msg.append(make_ccch(size)));
+    mac_ul_sch_pdu pdu;
+
+    EXPECT_FALSE(pdu.unpack(msg).has_value());
+    EXPECT_EQ(pdu.nof_subpdus(), 0U);
+  }
+}
+
+TEST_P(ul_ccch_codec_test, rejects_reserved_lcid_after_ccch_without_leaving_partial_decode)
+{
+  byte_buffer msg = make_ccch(GetParam().second);
+  ASSERT_TRUE(msg.append({0x25, 0x00}));
+  mac_ul_sch_pdu pdu;
+
+  EXPECT_FALSE(pdu.unpack(msg).has_value());
+  EXPECT_EQ(pdu.nof_subpdus(), 0U);
+}
+
+TEST(mac_ul_subpdu, redcap_lcid_acceptance_does_not_widen_other_unsupported_codepoints)
+{
+  for (uint8_t value = 0; value != 64; ++value) {
+    SCOPED_TRACE(unsigned(value));
+    const bool accepted = value <= 32 || value == 35 || value == 36 || value == 44 || value >= 52;
+    EXPECT_EQ(lcid_ul_sch_t{value}.is_valid_lcid(), accepted);
+    if (!accepted) {
+      std::vector<uint8_t> bytes(16, 0);
+      bytes[0] = value;
+      mac_ul_sch_subpdu subpdu;
+      EXPECT_FALSE(subpdu.unpack(byte_buffer::create(bytes).value()).has_value());
+    }
+  }
 }

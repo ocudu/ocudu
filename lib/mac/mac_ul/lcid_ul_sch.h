@@ -15,7 +15,7 @@ class lcid_ul_sch_t
   using underlying_type = std::underlying_type_t<lcid_t>;
 
 public:
-  /// 3GPP 38.321 v15.3.0, Table 6.2.1-2 - Values of LCID for UL-SCH Index
+  /// UL-SCH LCID values, as per TS 38.321 v17.13.0, Table 6.2.1-2.
   enum options : underlying_type {
     /// CCCH of 64 bits
     CCCH_SIZE_64 = 0b000000,
@@ -25,9 +25,14 @@ public:
     // ...
     LCID32 = 32,
 
-    /// Codepoints this MAC does not handle: Reserved (37-42 and 47) or features not implemented.
+    /// Unsupported range, except for RedCap CCCH and Timing Advance Report.
     MIN_UNSUPPORTED = 33,
     MAX_UNSUPPORTED = 51,
+
+    /// RedCap CCCH of 48 bits.
+    CCCH_SIZE_48_REDCAP = 35,
+    /// RedCap CCCH of 64 bits.
+    CCCH_SIZE_64_REDCAP = 36,
 
     /// Timing Advance Report (44), see TS 38.321, 6.1.3.56.
     TIMING_ADVANCE_REPORT = 0b101100,
@@ -64,7 +69,10 @@ public:
   underlying_type value() const { return lcid_val; }
 
   /// Whether LCID belongs to CCCH
-  bool is_ccch() const { return (lcid_val == CCCH_SIZE_48 || lcid_val == CCCH_SIZE_64); }
+  bool is_ccch() const { return lcid_val == CCCH_SIZE_48 || lcid_val == CCCH_SIZE_64 || is_redcap_ccch(); }
+
+  /// Returns whether the LCID identifies RedCap UL CCCH.
+  bool is_redcap_ccch() const { return lcid_val == CCCH_SIZE_48_REDCAP || lcid_val == CCCH_SIZE_64_REDCAP; }
 
   /// Whether LCID is an MAC CE
   bool is_ce() const
@@ -80,14 +88,14 @@ public:
   /// Returns false for the LCID values this MAC does not accept, see \c MIN_UNSUPPORTED.
   bool is_valid_lcid() const
   {
-    return lcid_val == TIMING_ADVANCE_REPORT or
+    return is_redcap_ccch() or lcid_val == TIMING_ADVANCE_REPORT or
            (lcid_val <= PADDING and (lcid_val < MIN_UNSUPPORTED or lcid_val > MAX_UNSUPPORTED));
   }
 
   /// Whether LCID subPDU has associated length field
   bool has_length_field() const
   {
-    // CCCH (both versions) don't have a length field in the UL
+    // Ordinary and RedCap UL CCCH have fixed payload sizes, as per TS 38.321, Section 6.1.2.
     if (is_ccch()) {
       return false;
     }
@@ -109,8 +117,10 @@ public:
   {
     switch (lcid_val) {
       case CCCH_SIZE_48:
+      case CCCH_SIZE_48_REDCAP:
         return 6;
       case CCCH_SIZE_64:
+      case CCCH_SIZE_64_REDCAP:
         return 8;
       case CRNTI:
         return 2;

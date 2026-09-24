@@ -14,6 +14,7 @@
 #include "ocudu/support/executors/manual_task_worker.h"
 #include "ocudu/support/test_utils.h"
 #include <gtest/gtest.h>
+#include <vector>
 
 using namespace ocudu;
 using namespace test_helpers;
@@ -264,7 +265,7 @@ TEST(mac_ul_processor, decode_ul_ccch_48bit)
   t_bench.send_rx_indication_msg(tc_rnti, payload);
 
   // Create UL CCCH indication msg to verify MAC processing of PDU.
-  struct ul_ccch_indication_message ul_ccch_msg{};
+  struct ul_ccch_indication_message ul_ccch_msg {};
   ul_ccch_msg.cell_index = cell_idx;
   ul_ccch_msg.slot_rx    = slot_point{0, 1};
   ul_ccch_msg.tc_rnti    = tc_rnti;
@@ -292,7 +293,7 @@ TEST(mac_ul_processor, decode_ul_ccch_64bit)
   t_bench.send_rx_indication_msg(tc_rnti, payload);
 
   // Create UL CCCH indication msg to verify MAC processing of PDU.
-  struct ul_ccch_indication_message ul_ccch_msg{};
+  struct ul_ccch_indication_message ul_ccch_msg {};
   ul_ccch_msg.cell_index = cell_idx;
   ul_ccch_msg.slot_rx    = slot_point{0, 1};
   ul_ccch_msg.tc_rnti    = tc_rnti;
@@ -724,4 +725,86 @@ TEST(mac_ul_processor, when_pdu_is_filled_with_zerosfor_existing_ue_then_the_mac
 
   // Test if notification sent to DU manager has been received and it is correct.
   ASSERT_TRUE(t_bench.verify_no_ul_ccch_msg());
+}
+
+TEST(mac_ul_processor, redcap_ccch_does_not_create_an_ordinary_ue)
+{
+  for (uint8_t lcid : {uint8_t{35}, uint8_t{36}}) {
+    SCOPED_TRACE(unsigned(lcid));
+    test_bench           t_bench(to_du_cell_index(0U));
+    rnti_t               tc_rnti = t_bench.allocate_tc_rnti();
+    std::vector<uint8_t> bytes(lcid == 35 ? 7 : 9, 0xa5);
+    bytes[0]            = lcid;
+    byte_buffer payload = byte_buffer::create(bytes).value();
+
+    t_bench.send_rx_indication_msg(tc_rnti, payload);
+
+    EXPECT_TRUE(t_bench.verify_no_ul_ccch_msg());
+  }
+}
+
+TEST(mac_ul_processor, mixed_redcap_and_ordinary_ccch_cannot_bypass_unsupported_ue_guard)
+{
+  for (uint8_t lcid : {uint8_t{35}, uint8_t{36}}) {
+    for (bool redcap_first : {false, true}) {
+      SCOPED_TRACE(unsigned(lcid));
+      SCOPED_TRACE(redcap_first);
+      test_bench           t_bench(to_du_cell_index(0U));
+      rnti_t               tc_rnti = t_bench.allocate_tc_rnti();
+      std::vector<uint8_t> bytes(lcid == 35 ? 7 : 9, 0xa5);
+      bytes[0]             = lcid;
+      byte_buffer redcap   = byte_buffer::create(bytes).value();
+      byte_buffer ordinary = byte_buffer::create({0x34, 1, 2, 3, 4, 5, 6}).value();
+      byte_buffer payload  = redcap_first ? redcap.copy() : ordinary.copy();
+      ASSERT_TRUE(payload.append(redcap_first ? ordinary : redcap));
+
+      t_bench.send_rx_indication_msg(tc_rnti, payload);
+
+      EXPECT_TRUE(t_bench.verify_no_ul_ccch_msg());
+    }
+  }
+}
+
+TEST(mac_ul_processor, redcap_ccch_rejection_precedes_bsr_dispatch_for_existing_ue)
+{
+  for (uint8_t lcid : {uint8_t{35}, uint8_t{36}}) {
+    SCOPED_TRACE(unsigned(lcid));
+    const rnti_t         rnti = to_rnti(0x4601);
+    test_bench           t_bench(rnti, to_du_ue_index(0), to_du_cell_index(0));
+    std::vector<uint8_t> bytes(lcid == 35 ? 7 : 9, 0xa5);
+    bytes[0]            = lcid;
+    byte_buffer payload = byte_buffer::create({0x3d, 0x59}).value();
+    ASSERT_TRUE(payload.append(byte_buffer::create(bytes).value()));
+
+    t_bench.send_rx_indication_msg(rnti, payload);
+
+    EXPECT_TRUE(t_bench.verify_no_bsr_notification());
+    EXPECT_TRUE(t_bench.verify_no_ul_ccch_msg());
+  }
+}
+
+TEST(mac_ul_processor, redcap_ccch_rejection_precedes_crnti_dispatch)
+{
+  for (uint8_t lcid : {uint8_t{35}, uint8_t{36}}) {
+    for (bool redcap_first : {false, true}) {
+      SCOPED_TRACE(unsigned(lcid));
+      SCOPED_TRACE(redcap_first);
+      test_bench           t_bench(to_rnti(0x4601), to_du_ue_index(0), to_du_cell_index(0));
+      rnti_t               tc_rnti = t_bench.allocate_tc_rnti();
+      std::vector<uint8_t> bytes(lcid == 35 ? 7 : 9, 0xa5);
+      bytes[0]           = lcid;
+      byte_buffer redcap = byte_buffer::create(bytes).value();
+      byte_buffer crnti  = byte_buffer::create({0x3a, 0x46, 0x01}).value();
+      byte_buffer pdu    = byte_buffer::create({0x3d, 0x59}).value();
+      ASSERT_TRUE(pdu.append(redcap_first ? redcap : crnti));
+      ASSERT_TRUE(pdu.append(redcap_first ? crnti : redcap));
+
+      t_bench.send_rx_indication_msg(tc_rnti, pdu);
+
+      EXPECT_FALSE(t_bench.sched_ce_notifier().last_crnti_ce.has_value());
+      EXPECT_TRUE(t_bench.verify_no_sr_notification());
+      EXPECT_TRUE(t_bench.verify_no_bsr_notification());
+      EXPECT_TRUE(t_bench.verify_no_ul_ccch_msg());
+    }
+  }
 }
